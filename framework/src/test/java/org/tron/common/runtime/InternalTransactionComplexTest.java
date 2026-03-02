@@ -1,79 +1,55 @@
 package org.tron.common.runtime;
 
-import java.io.File;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
+import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
-import org.testng.Assert;
-import org.tron.common.application.Application;
-import org.tron.common.application.ApplicationFactory;
-import org.tron.common.application.TronApplicationContext;
+import org.tron.common.BaseTest;
 import org.tron.common.runtime.vm.DataWord;
-import org.tron.common.storage.DepositImpl;
-import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
-import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
-import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.VMIllegalException;
+import org.tron.core.store.StoreFactory;
+import org.tron.core.vm.repository.RepositoryImpl;
 import org.tron.protos.Protocol.AccountType;
 
 @Slf4j
-public class InternalTransactionComplexTest {
+public class InternalTransactionComplexTest extends BaseTest {
 
-  private static final String dbPath = "output_InternalTransactionComplexTest";
   private static final String OWNER_ADDRESS;
   private static Runtime runtime;
-  private static Manager dbManager;
-  private static TronApplicationContext context;
-  private static Application appT;
-  private static DepositImpl deposit;
+  private static RepositoryImpl repository;
+  private static boolean init;
 
   static {
-    Args.setParam(new String[]{"--output-directory", dbPath, "--debug", "--support-constant"},
+    Args.setParam(new String[]{"--output-directory", dbPath(), "--debug", "--support-constant"},
         Constant.TEST_CONF);
-    context = new TronApplicationContext(DefaultConfig.class);
-    appT = ApplicationFactory.create(context);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
   }
 
   /**
    * Init data.
    */
-  @BeforeClass
-  public static void init() {
-    dbManager = context.getBean(Manager.class);
-    deposit = DepositImpl.createRoot(dbManager);
-    deposit.createAccount(Hex.decode(OWNER_ADDRESS), AccountType.Normal);
-    deposit.addBalance(Hex.decode(OWNER_ADDRESS), 100000000);
-  }
-
-  /**
-   * Release resources.
-   */
-  @AfterClass
-  public static void destroy() {
-    Args.clearParam();
-    context.destroy();
-    if (FileUtil.deleteDir(new File(dbPath))) {
-      logger.info("Release resources successful.");
-    } else {
-      logger.info("Release resources failure.");
+  @Before
+  public void init() {
+    if (init) {
+      return;
     }
+    repository = RepositoryImpl.createRoot(StoreFactory.getInstance());
+    repository.createAccount(Hex.decode(OWNER_ADDRESS), AccountType.Normal);
+    repository.addBalance(Hex.decode(OWNER_ADDRESS), 100000000);
+    init = true;
   }
 
   /**
    * pragma solidity 0.4.24;
-   *
    * // this is to test wither the TVM is returning vars from one contract calling another //
    * contract's functions.
-   *
    * contract callerContract { // lets set up our instance of the new contract calledContract
    * CALLED_INSTANCE; // lets set the contract instance address in the constructor
    * constructor(address _addr) public { CALLED_INSTANCE = calledContract(_addr); } // lets create a
@@ -84,7 +60,6 @@ public class InternalTransactionComplexTest {
    * in to temp vars (bool _bool, uint256 _uint, bytes32 _bytes32) = CALLED_INSTANCE.testReturns();
    * // lets write those temp vars to state testCallbackReturns_.someBool = _bool;
    * testCallbackReturns_.someUint = _uint; testCallbackReturns_.someBytes32 = _bytes32; } }
-   *
    * contract calledContract { function testReturns() external pure returns(bool, uint256, bytes32)
    * { return(true, 314159, 0x123456); } }
    */
@@ -99,13 +74,13 @@ public class InternalTransactionComplexTest {
     byte[] triggerData1 = TvmTestUtils.parseAbi("makeTheCall()", "");
     runtime = TvmTestUtils
         .triggerContractWholeProcessReturnContractAddress(Hex.decode(OWNER_ADDRESS),
-            callerContractAddress, triggerData1, 0, 100000000, deposit, null);
+            callerContractAddress, triggerData1, 0, 100000000, repository, null);
 
     /* =============== CALL testCallbackReturns_ to check data ====================== */
     byte[] triggerData2 = TvmTestUtils.parseAbi("testCallbackReturns_()", "");
     runtime = TvmTestUtils
         .triggerContractWholeProcessReturnContractAddress(Hex.decode(OWNER_ADDRESS),
-            callerContractAddress, triggerData2, 0, 100000000, deposit, null);
+            callerContractAddress, triggerData2, 0, 100000000, repository, null);
 
     // bool true => 0000000000000000000000000000000000000000000000000000000000000001,
     // uint256 314159 =>000000000000000000000000000000000000000000000000000000000004cb2f,
@@ -144,7 +119,7 @@ public class InternalTransactionComplexTest {
 
     return TvmTestUtils
         .deployContractWholeProcessReturnContractAddress(contractName, address, ABI, code, value,
-            feeLimit, consumeUserResourcePercent, null, deposit, null);
+            feeLimit, consumeUserResourcePercent, null, repository, null);
   }
 
   // Just for the caller/called example above
@@ -192,7 +167,7 @@ public class InternalTransactionComplexTest {
 
     return TvmTestUtils
         .deployContractWholeProcessReturnContractAddress(contractName, address, ABI, code, value,
-            feeLimit, consumeUserResourcePercent, null, deposit, null);
+            feeLimit, consumeUserResourcePercent, null, repository, null);
   }
 
 }

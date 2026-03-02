@@ -1,6 +1,8 @@
 package org.tron.common.logsfilter.trigger;
 
 import java.util.List;
+import java.util.Map;
+
 import lombok.Getter;
 import lombok.Setter;
 
@@ -75,6 +77,25 @@ public class TransactionLogTrigger extends Trigger {
   @Getter
   @Setter
   private String data;
+  @Getter
+  @Setter
+  private int transactionIndex;
+  @Getter
+  @Setter
+  private long cumulativeEnergyUsed;
+  @Getter
+  @Setter
+  private long preCumulativeLogCount;
+  @Getter
+  @Setter
+  private List<LogPojo> logList;
+  @Getter
+  @Setter
+  private long energyUnitPrice;
+
+  @Getter
+  @Setter
+  private Map<String, Long> extMap;
 
   public TransactionLogTrigger() {
     setTriggerName(Trigger.TRANSACTION_TRIGGER_NAME);

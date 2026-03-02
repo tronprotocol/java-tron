@@ -84,10 +84,10 @@ public class AccountStateCallBack extends AccountStateCallBackUtils {
       newRoot = Hash.EMPTY_TRIE_HASH;
     }
     if (!oldRoot.isEmpty() && !Arrays.equals(oldRoot.toByteArray(), newRoot)) {
-      logger.error("the accountStateRoot hash is error. {}, oldRoot: {}, newRoot: {}",
-          blockCapsule, ByteArray.toHexString(oldRoot.toByteArray()),
-          ByteArray.toHexString(newRoot));
-      throw new BadBlockException("the accountStateRoot hash is error");
+      throw new BadBlockException(
+          String.format("accountStateRoot hash is error, %s, oldRoot: %s, newRoot: %s.",
+              blockCapsule,
+              ByteArray.toHexString(oldRoot.toByteArray()), ByteArray.toHexString(newRoot)));
     }
   }
 

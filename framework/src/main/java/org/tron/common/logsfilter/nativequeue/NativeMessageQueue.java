@@ -1,10 +1,12 @@
 package org.tron.common.logsfilter.nativequeue;
 
 import java.util.Objects;
+import lombok.extern.slf4j.Slf4j;
 import org.zeromq.SocketType;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
 
+@Slf4j
 public class NativeMessageQueue {
 
   private static final int DEFAULT_BIND_PORT = 5555;
@@ -57,11 +59,18 @@ public class NativeMessageQueue {
   }
 
   public void publishTrigger(String data, String topic) {
-    if (Objects.isNull(publisher) || Objects.isNull(context.isClosed()) || context.isClosed()) {
+    if (Objects.isNull(publisher) || Objects.isNull(context) || context.isClosed()) {
       return;
     }
 
-    publisher.sendMore(topic);
-    publisher.send(data);
+    try {
+      synchronized (this) {
+        publisher.sendMore(topic);
+        publisher.send(data);
+      }
+    } catch (RuntimeException e) {
+      logger.error("write data to zeromq failed, data:{}, topic:{}, error:{}", data, topic,
+          e.getMessage());
+    }
   }
 }

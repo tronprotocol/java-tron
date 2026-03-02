@@ -18,14 +18,22 @@
 
 package org.tron.common.runtime.vm;
 
+import static org.apache.commons.lang3.ArrayUtils.isNotEmpty;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
+import static org.tron.common.runtime.vm.DataWord.isZero;
 
 import java.math.BigInteger;
 import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.ArrayUtils;
 import org.bouncycastle.util.encoders.Hex;
+import org.eclipse.jetty.util.ArrayUtil;
 import org.junit.Test;
+import org.tron.core.db.ByteArrayWrapper;
 
 @Slf4j
 public class DataWordTest {
@@ -70,16 +78,16 @@ public class DataWordTest {
         DataWord x = new DataWord(one);
         x.add(x);
       }
-      System.out.println("Add1: " + (System.currentTimeMillis() - now1) + "ms");
+      logger.info("Add1: " + (System.currentTimeMillis() - now1) + "ms");
 
       long now2 = System.currentTimeMillis();
       for (int i = 0; i < ITERATIONS; i++) {
         DataWord x = new DataWord(one);
         x.add2(x);
       }
-      System.out.println("Add2: " + (System.currentTimeMillis() - now2) + "ms");
+      logger.info("Add2: " + (System.currentTimeMillis() - now2) + "ms");
     } else {
-      System.out.println("ADD performance test is disabled.");
+      logger.info("ADD performance test is disabled.");
     }
   }
 
@@ -90,11 +98,11 @@ public class DataWordTest {
 
     DataWord x = new DataWord(two);
     x.add(new DataWord(two));
-    System.out.println(Hex.toHexString(x.getData()));
+    logger.info(Hex.toHexString(x.getData()));
 
     DataWord y = new DataWord(two);
     y.add2(new DataWord(two));
-    System.out.println(Hex.toHexString(y.getData()));
+    logger.info(Hex.toHexString(y.getData()));
   }
 
   @Test
@@ -107,12 +115,12 @@ public class DataWordTest {
     DataWord x = new DataWord(three);
     x.add(new DataWord(three));
     assertEquals(32, x.getData().length);
-    System.out.println(Hex.toHexString(x.getData()));
+    logger.info(Hex.toHexString(x.getData()));
 
     // FAIL
     //      DataWord y = new DataWord(three);
     //      y.add2(new DataWord(three));
-    //      System.out.println(Hex.toHexString(y.getData()));
+    //      logger.info(Hex.toHexString(y.getData()));
   }
 
   @Test
@@ -128,8 +136,8 @@ public class DataWordTest {
     }
     two[31] = 0x56; // 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff56
 
-    DataWord x = new DataWord(one);// System.out.println(x.value());
-    DataWord y = new DataWord(two);// System.out.println(y.value());
+    DataWord x = new DataWord(one);// logger.info(x.value());
+    DataWord y = new DataWord(two);// logger.info(y.value());
     y.mod(x);
     assertEquals(32, y.getData().length);
     assertEquals(expected, Hex.toHexString(y.getData()));
@@ -143,8 +151,8 @@ public class DataWordTest {
     byte[] two = new byte[32];
     two[11] = 0x1; // 0x0000000000000000000000010000000000000000000000000000000000000000
 
-    DataWord x = new DataWord(one);// System.out.println(x.value());
-    DataWord y = new DataWord(two);// System.out.println(y.value());
+    DataWord x = new DataWord(one);// logger.info(x.value());
+    DataWord y = new DataWord(two);// logger.info(y.value());
     x.mul(y);
     assertEquals(32, y.getData().length);
     assertEquals("0000000000000000000000010000000000000000000000000000000000000000",
@@ -160,8 +168,8 @@ public class DataWordTest {
     byte[] two = new byte[32];
     two[0] = 0x1; //  0x1000000000000000000000000000000000000000000000000000000000000000
 
-    DataWord x = new DataWord(one);// System.out.println(x.value());
-    DataWord y = new DataWord(two);// System.out.println(y.value());
+    DataWord x = new DataWord(one);// logger.info(x.value());
+    DataWord y = new DataWord(two);// logger.info(y.value());
     x.mul(y);
     assertEquals(32, y.getData().length);
     assertEquals("0100000000000000000000000000000000000000000000000000000000000000",
@@ -226,8 +234,8 @@ public class DataWordTest {
 
     BigInteger result1 = x.modPow(x, y);
     BigInteger result2 = pow(x, y);
-    System.out.println(result1);
-    System.out.println(result2);
+    logger.info(result1.toString());
+    logger.info(result2.toString());
   }
 
   @Test
@@ -238,7 +246,7 @@ public class DataWordTest {
     String expected = "fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff2";
 
     x.signExtend(k);
-    System.out.println(x.toString());
+    logger.info(x.toString());
     assertEquals(expected, x.toString());
   }
 
@@ -249,7 +257,7 @@ public class DataWordTest {
     String expected = "00000000000000000000000000000000000000000000000000000000000000f2";
 
     x.signExtend(k);
-    System.out.println(x.toString());
+    logger.info(x.toString());
     assertEquals(expected, x.toString());
   }
 
@@ -261,7 +269,7 @@ public class DataWordTest {
     String expected = "00000000000000000000000000000000000000000000000000000000000000ab";
 
     x.signExtend(k);
-    System.out.println(x.toString());
+    logger.info(x.toString());
     assertEquals(expected, x.toString());
   }
 
@@ -273,7 +281,7 @@ public class DataWordTest {
     String expected = "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff";
 
     x.signExtend(k);
-    System.out.println(x.toString());
+    logger.info(x.toString());
     assertEquals(expected, x.toString());
   }
 
@@ -285,7 +293,7 @@ public class DataWordTest {
     String expected = "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff";
 
     x.signExtend(k);
-    System.out.println(x.toString());
+    logger.info(x.toString());
     assertEquals(expected, x.toString());
   }
 
@@ -297,7 +305,7 @@ public class DataWordTest {
     String expected = "0000000000000000000000000000000000000000000000000000000002345678";
 
     x.signExtend(k);
-    System.out.println(x.toString());
+    logger.info(x.toString());
     assertEquals(expected, x.toString());
   }
 
@@ -309,7 +317,7 @@ public class DataWordTest {
     String expected = "ffffffffffffffffffffffffffffffffffffffffffffffffffffffff82345678";
 
     x.signExtend(k);
-    System.out.println(x.toString());
+    logger.info(x.toString());
     assertEquals(expected, x.toString());
   }
 
@@ -322,7 +330,7 @@ public class DataWordTest {
     String expected = "0034567882345678823456788234567882345678823456788234567882345678";
 
     x.signExtend(k);
-    System.out.println(x.toString());
+    logger.info(x.toString());
     assertEquals(expected, x.toString());
   }
 
@@ -576,8 +584,38 @@ public class DataWordTest {
       DataWord arg = new DataWord(c[1]);
       DataWord expected = new DataWord(c[2]);
       DataWord actual = value.shiftRightSigned(arg);
-      assertEquals(i + " " + Arrays.asList(c).toString(), expected, actual);
+      assertEquals(i + " " + Arrays.asList(c), expected, actual);
     }
+  }
+
+  @Test
+  public void testIsZero() {
+    DataWord dataWord = new DataWord(new byte[0]);
+    DataWord d = new DataWord(new ByteArrayWrapper(new byte[0]));
+    assertTrue(d.isZero());
+    d.negate();
+    assertThrows(IllegalArgumentException.class, () -> new ByteArrayWrapper(null));
+    assertTrue(dataWord.isZero());
+    assertTrue(isZero(new byte[0]));
+    assertFalse(isZero(new byte[]{1}));
+    DataWord dataWord1 = new DataWord(new byte[]{0, 1});
+    assertFalse(dataWord1.isZero());
+    assertTrue(isNotEmpty(new DataWord((byte[]) null).getClonedData()));
+    assertTrue(isNotEmpty(dataWord1.getClonedData()));
+    logger.info(dataWord.toPrefixString());
+    logger.info(dataWord1.toPrefixString());
+    logger.info(new DataWord((new byte[]{0, 1, 2, 3, 4, 5, 6, 7, 8})).toPrefixString());
+    logger.info(dataWord.shortHex());
+    logger.info(DataWord.shortHex(new byte[0]));
+    logger.info(DataWord.bigIntValue(new byte[]{1}));
+    logger.info(dataWord.bigIntValue());
+    logger.info("dataWord is Hex: {}", dataWord.isHex("test"));
+    logger.info(dataWord.asString());
+    logger.info(Arrays.toString(dataWord.getNoEndZeroesData()));
+    DataWord tmp = dataWord;
+    assertEquals(dataWord, tmp);
+    assertNotEquals(dataWord, null);
+    assertEquals(-1, dataWord.compareTo(null));
   }
 
 

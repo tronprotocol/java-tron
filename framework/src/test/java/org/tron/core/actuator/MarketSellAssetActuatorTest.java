@@ -1,25 +1,20 @@
 package org.tron.core.actuator;
 
-import static org.testng.Assert.fail;
+import static org.junit.Assert.fail;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
-import java.io.File;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
-import org.tron.common.application.TronApplicationContext;
+import org.tron.common.BaseTest;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.FileUtil;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
-import org.tron.core.capsule.AccountAssetCapsule;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.MarketAccountOrderCapsule;
@@ -27,9 +22,7 @@ import org.tron.core.capsule.MarketOrderCapsule;
 import org.tron.core.capsule.MarketOrderIdListCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.utils.MarketUtils;
-import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
-import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ItemNotFoundException;
@@ -47,9 +40,8 @@ import org.tron.protos.contract.MarketContract.MarketSellAssetContract;
 
 @Slf4j
 
-public class MarketSellAssetActuatorTest {
+public class MarketSellAssetActuatorTest extends BaseTest {
 
-  private static final String dbPath = "output_MarketSellAsset_test";
   private static final String ACCOUNT_NAME_FIRST = "ownerF";
   private static final String OWNER_ADDRESS_FIRST;
   private static final String ACCOUNT_NAME_SECOND = "ownerS";
@@ -59,12 +51,9 @@ public class MarketSellAssetActuatorTest {
   private static final String TOKEN_ID_ONE = String.valueOf(1L);
   private static final String TOKEN_ID_TWO = String.valueOf(2L);
   private static final String TRX = "_";
-  private static TronApplicationContext context;
-  private static Manager dbManager;
 
   static {
-    Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
-    context = new TronApplicationContext(DefaultConfig.class);
+    Args.setParam(new String[]{"--output-directory", dbPath()}, Constant.TEST_CONF);
     OWNER_ADDRESS_FIRST =
         Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     OWNER_ADDRESS_SECOND =
@@ -74,50 +63,18 @@ public class MarketSellAssetActuatorTest {
   }
 
   /**
-   * Init data.
+   * create temp Capsule test need.
    */
-  @BeforeClass
-  public static void init() {
-    dbManager = context.getBean(Manager.class);
+  @Before
+  public void initTest() {
     dbManager.getDynamicPropertiesStore().saveAllowMarketTransaction(1L);
     dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(1000000);
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderNumber(10);
     dbManager.getDynamicPropertiesStore().saveNextMaintenanceTime(2000000);
-  }
 
-  /**
-   * Release resources.
-   */
-  @AfterClass
-  public static void destroy() {
-    Args.clearParam();
-    context.destroy();
-    if (FileUtil.deleteDir(new File(dbPath))) {
-      logger.info("Release resources successful.");
-    } else {
-      logger.info("Release resources failure.");
-    }
-  }
-
-  /**
-   * create temp Capsule test need.
-   */
-  @Before
-  public void initTest() {
     byte[] ownerAddressFirstBytes = ByteArray.fromHexString(OWNER_ADDRESS_FIRST);
     byte[] ownerAddressSecondBytes = ByteArray.fromHexString(OWNER_ADDRESS_SECOND);
-
-    AccountAssetCapsule ownerAddressFirstAsset =
-            new AccountAssetCapsule(ByteString.copyFrom(
-                    ByteArray.fromHexString(OWNER_ADDRESS_FIRST)));
-    AccountAssetCapsule ownerAddressSecondAsset =
-            new AccountAssetCapsule(
-                    ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS_SECOND)));
-    dbManager.getAccountAssetStore().put(ownerAddressFirstAsset.getAddress().toByteArray(),
-            ownerAddressFirstAsset);
-    dbManager.getAccountAssetStore().put(ownerAddressSecondAsset.getAddress().toByteArray(),
-            ownerAddressSecondAsset);
 
     AccountCapsule ownerAccountFirstCapsule =
         new AccountCapsule(
@@ -552,7 +509,7 @@ public class MarketSellAssetActuatorTest {
         dbManager.getDynamicPropertiesStore(), dbManager.getAssetIssueStore());
     dbManager.getAccountStore().put(ownerAddress, accountCapsule);
     Assert.assertEquals(sellTokenQuant * orderNum,
-        (long) accountCapsule.getAssetMapV2().get(sellTokenId));
+        (long) accountCapsule.getAssetV2MapForTest().get(sellTokenId));
 
     // Initialize the order book
 
@@ -618,7 +575,8 @@ public class MarketSellAssetActuatorTest {
     accountCapsule.addAssetAmountV2(sellTokenId.getBytes(), sellTokenQuant,
         dbManager.getDynamicPropertiesStore(), dbManager.getAssetIssueStore());
     dbManager.getAccountStore().put(ownerAddress, accountCapsule);
-    Assert.assertEquals(sellTokenQuant, (long) accountCapsule.getAssetMapV2().get(sellTokenId));
+    Assert.assertEquals(sellTokenQuant,
+            (long) accountCapsule.getAssetV2MapForTest().get(sellTokenId));
   }
 
 
@@ -760,7 +718,8 @@ public class MarketSellAssetActuatorTest {
         dbManager.getDynamicPropertiesStore(), dbManager.getAssetIssueStore());
     dbManager.getAccountStore().put(ownerAddress, accountCapsule);
     long balanceBefore = accountCapsule.getBalance();
-    Assert.assertEquals(sellTokenQuant, (long) accountCapsule.getAssetMapV2().get(sellTokenId));
+    Assert.assertEquals(sellTokenQuant,
+            (long) accountCapsule.getAssetV2MapForTest().get(sellTokenId));
 
     MarketSellAssetActuator actuator = new MarketSellAssetActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
@@ -782,7 +741,7 @@ public class MarketSellAssetActuatorTest {
     accountCapsule = dbManager.getAccountStore().get(ownerAddress);
     Assert.assertEquals(balanceBefore,
         dbManager.getDynamicPropertiesStore().getMarketSellFee() + accountCapsule.getBalance());
-    Assert.assertEquals(0L, (long) accountCapsule.getAssetMapV2().get(sellTokenId));
+    Assert.assertEquals(0L, (long) accountCapsule.getAssetV2MapForTest().get(sellTokenId));
 
     //check accountOrder
     MarketAccountOrderCapsule accountOrderCapsule = marketAccountStore.get(ownerAddress);
@@ -840,7 +799,8 @@ public class MarketSellAssetActuatorTest {
         dbManager.getDynamicPropertiesStore(), dbManager.getAssetIssueStore());
     dbManager.getAccountStore().put(ownerAddress, accountCapsule);
     long balanceBefore = accountCapsule.getBalance();
-    Assert.assertEquals(sellTokenQuant, (long) accountCapsule.getAssetMapV2().get(sellTokenId));
+    Assert.assertEquals(sellTokenQuant,
+            (long) accountCapsule.getAssetV2MapForTest().get(sellTokenId));
 
     MarketSellAssetActuator actuator = new MarketSellAssetActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
@@ -862,7 +822,8 @@ public class MarketSellAssetActuatorTest {
     accountCapsule = dbManager.getAccountStore().get(ownerAddress);
     Assert.assertEquals(balanceBefore,
         dbManager.getDynamicPropertiesStore().getMarketSellFee() + accountCapsule.getBalance());
-    Assert.assertEquals(0L, (long) accountCapsule.getAssetMapV2().get(sellTokenId));
+    Assert.assertEquals(0L,
+            (long) accountCapsule.getAssetV2MapForTest().get(sellTokenId));
 
     //check accountOrder
     MarketAccountOrderCapsule accountOrderCapsule = marketAccountStore.get(ownerAddress);
@@ -921,7 +882,8 @@ public class MarketSellAssetActuatorTest {
     accountCapsule.addAssetAmountV2(sellTokenId.getBytes(), sellTokenQuant,
         dbManager.getDynamicPropertiesStore(), dbManager.getAssetIssueStore());
     dbManager.getAccountStore().put(ownerAddress, accountCapsule);
-    Assert.assertEquals(sellTokenQuant, (long) accountCapsule.getAssetMapV2().get(sellTokenId));
+    Assert.assertEquals(sellTokenQuant,
+            (long) accountCapsule.getAssetV2MapForTest().get(sellTokenId));
 
     // Initialize the order book
 
@@ -1006,7 +968,8 @@ public class MarketSellAssetActuatorTest {
     accountCapsule.addAssetAmountV2(sellTokenId.getBytes(), sellTokenQuant,
         dbManager.getDynamicPropertiesStore(), dbManager.getAssetIssueStore());
     dbManager.getAccountStore().put(ownerAddress, accountCapsule);
-    Assert.assertEquals(sellTokenQuant, (long) accountCapsule.getAssetMapV2().get(sellTokenId));
+    Assert.assertEquals(sellTokenQuant,
+            (long) accountCapsule.getAssetV2MapForTest().get(sellTokenId));
 
     // Initialize the order book
 
@@ -1092,7 +1055,8 @@ public class MarketSellAssetActuatorTest {
     accountCapsule.addAssetAmountV2(sellTokenId.getBytes(), sellTokenQuant,
         dbManager.getDynamicPropertiesStore(), dbManager.getAssetIssueStore());
     dbManager.getAccountStore().put(ownerAddress, accountCapsule);
-    Assert.assertEquals(sellTokenQuant, (long) accountCapsule.getAssetMapV2().get(sellTokenId));
+    Assert.assertEquals(sellTokenQuant,
+            (long) accountCapsule.getAssetV2MapForTest().get(sellTokenId));
 
     // Initialize the order book
     //add three order with different price by the same account
@@ -1124,7 +1088,8 @@ public class MarketSellAssetActuatorTest {
 
     //check balance and token
     accountCapsule = dbManager.getAccountStore().get(ownerAddress);
-    Assert.assertEquals(0L, (long) accountCapsule.getAssetMapV2().get(sellTokenId));
+    Assert.assertEquals(0L,
+            (long) accountCapsule.getAssetV2MapForTest().get(sellTokenId));
 
     //check accountOrder
     MarketAccountOrderCapsule accountOrderCapsule = marketAccountStore.get(ownerAddress);
@@ -1185,7 +1150,8 @@ public class MarketSellAssetActuatorTest {
     accountCapsule.addAssetAmountV2(sellTokenId.getBytes(), sellTokenQuant,
         dbManager.getDynamicPropertiesStore(), dbManager.getAssetIssueStore());
     dbManager.getAccountStore().put(ownerAddress, accountCapsule);
-    Assert.assertEquals(sellTokenQuant, (long) accountCapsule.getAssetMapV2().get(sellTokenId));
+    Assert.assertEquals(sellTokenQuant,
+            (long) accountCapsule.getAssetV2MapForTest().get(sellTokenId));
 
     // Initialize the order book
 
@@ -1227,7 +1193,8 @@ public class MarketSellAssetActuatorTest {
     //check balance and token
     accountCapsule = dbManager.getAccountStore().get(ownerAddress);
     // Assert.assertTrue(accountCapsule.getAssetMapV2().get(sellTokenId) == 0L);
-    Assert.assertEquals(0L, accountCapsule.getAssetMapV2().get(sellTokenId).longValue());
+    Assert.assertEquals(0L,
+            accountCapsule.getAssetV2MapForTest().get(sellTokenId).longValue());
 
     //check accountOrder
     MarketAccountOrderCapsule accountOrderCapsule = marketAccountStore.get(ownerAddress);
@@ -1296,7 +1263,8 @@ public class MarketSellAssetActuatorTest {
     accountCapsule.addAssetAmountV2(sellTokenId.getBytes(), sellTokenQuant,
         dbManager.getDynamicPropertiesStore(), dbManager.getAssetIssueStore());
     dbManager.getAccountStore().put(ownerAddress, accountCapsule);
-    Assert.assertEquals(sellTokenQuant, (long) accountCapsule.getAssetMapV2().get(sellTokenId));
+    Assert.assertEquals(sellTokenQuant,
+            (long) accountCapsule.getAssetV2MapForTest().get(sellTokenId));
 
     // Initialize the order book
 
@@ -1340,7 +1308,8 @@ public class MarketSellAssetActuatorTest {
     accountCapsule.addAssetAmountV2(sellTokenId.getBytes(), sellTokenQuant,
         dbManager.getDynamicPropertiesStore(), dbManager.getAssetIssueStore());
     dbManager.getAccountStore().put(ownerAddress, accountCapsule);
-    Assert.assertEquals(sellTokenQuant, (long) accountCapsule.getAssetMapV2().get(sellTokenId));
+    Assert.assertEquals(sellTokenQuant,
+            (long) accountCapsule.getAssetV2MapForTest().get(sellTokenId));
 
     // Initialize the order book
 
@@ -1381,12 +1350,15 @@ public class MarketSellAssetActuatorTest {
 
     //check balance and token
     accountCapsule = dbManager.getAccountStore().get(ownerAddress);
-    Assert.assertEquals(0L, (long) accountCapsule.getAssetMapV2().get(sellTokenId));
-    Assert.assertEquals(200L, (long) accountCapsule.getAssetMapV2().get(buyTokenId));
+    Assert.assertEquals(0L,
+            (long) accountCapsule.getAssetV2MapForTest().get(sellTokenId));
+    Assert.assertEquals(200L,
+            (long) accountCapsule.getAssetV2MapForTest().get(buyTokenId));
 
     byte[] makerAddress = ByteArray.fromHexString(OWNER_ADDRESS_SECOND);
     AccountCapsule makerAccountCapsule = dbManager.getAccountStore().get(makerAddress);
-    Assert.assertEquals(400L, (long) makerAccountCapsule.getAssetMapV2().get(sellTokenId));
+    Assert.assertEquals(400L,
+            (long) makerAccountCapsule.getAssetV2MapForTest().get(sellTokenId));
 
     //check accountOrder
     MarketAccountOrderCapsule accountOrderCapsule = marketAccountStore.get(ownerAddress);
@@ -1488,7 +1460,8 @@ public class MarketSellAssetActuatorTest {
     accountCapsule.addAssetAmountV2(sellTokenId.getBytes(), sellTokenQuant,
         dbManager.getDynamicPropertiesStore(), dbManager.getAssetIssueStore());
     dbManager.getAccountStore().put(ownerAddress, accountCapsule);
-    Assert.assertEquals(sellTokenQuant, (long) accountCapsule.getAssetMapV2().get(sellTokenId));
+    Assert.assertEquals(sellTokenQuant,
+            (long) accountCapsule.getAssetV2MapForTest().get(sellTokenId));
 
     //get storeDB instance
     ChainBaseManager chainBaseManager = dbManager.getChainBaseManager();
@@ -1523,12 +1496,15 @@ public class MarketSellAssetActuatorTest {
 
     //check balance and token
     accountCapsule = dbManager.getAccountStore().get(ownerAddress);
-    Assert.assertEquals(0L, (long) accountCapsule.getAssetMapV2().get(sellTokenId));
-    Assert.assertEquals(200L, (long) accountCapsule.getAssetMapV2().get(buyTokenId));
+    Assert.assertEquals(0L,
+            (long) accountCapsule.getAssetV2MapForTest().get(sellTokenId));
+    Assert.assertEquals(200L,
+            (long) accountCapsule.getAssetV2MapForTest().get(buyTokenId));
 
     byte[] makerAddress = ByteArray.fromHexString(OWNER_ADDRESS_SECOND);
     AccountCapsule makerAccountCapsule = dbManager.getAccountStore().get(makerAddress);
-    Assert.assertEquals(500L, (long) makerAccountCapsule.getAssetMapV2().get(sellTokenId));
+    Assert.assertEquals(500L,
+            (long) makerAccountCapsule.getAssetV2MapForTest().get(sellTokenId));
 
     //check accountOrder
     MarketAccountOrderCapsule accountOrderCapsule = marketAccountStore.get(ownerAddress);
@@ -1632,7 +1608,8 @@ public class MarketSellAssetActuatorTest {
     accountCapsule.addAssetAmountV2(sellTokenId.getBytes(), sellTokenQuant,
         dbManager.getDynamicPropertiesStore(), dbManager.getAssetIssueStore());
     dbManager.getAccountStore().put(ownerAddress, accountCapsule);
-    Assert.assertEquals(sellTokenQuant, (long) accountCapsule.getAssetMapV2().get(sellTokenId));
+    Assert.assertEquals(sellTokenQuant,
+            (long) accountCapsule.getAssetV2MapForTest().get(sellTokenId));
 
     // Initialize the order book
 
@@ -1667,12 +1644,15 @@ public class MarketSellAssetActuatorTest {
 
     //check balance and token
     accountCapsule = dbManager.getAccountStore().get(ownerAddress);
-    Assert.assertEquals(0L, (long) accountCapsule.getAssetMapV2().get(sellTokenId));
-    Assert.assertEquals(250L, (long) accountCapsule.getAssetMapV2().get(buyTokenId));
+    Assert.assertEquals(0L,
+            (long) accountCapsule.getAssetV2MapForTest().get(sellTokenId));
+    Assert.assertEquals(250L,
+            (long) accountCapsule.getAssetV2MapForTest().get(buyTokenId));
 
     byte[] makerAddress = ByteArray.fromHexString(OWNER_ADDRESS_SECOND);
     AccountCapsule makerAccountCapsule = dbManager.getAccountStore().get(makerAddress);
-    Assert.assertEquals(800L, (long) makerAccountCapsule.getAssetMapV2().get(sellTokenId));
+    Assert.assertEquals(800L,
+            (long) makerAccountCapsule.getAssetV2MapForTest().get(sellTokenId));
 
     //check accountOrder
     MarketAccountOrderCapsule accountOrderCapsule = marketAccountStore.get(ownerAddress);
@@ -1750,7 +1730,8 @@ public class MarketSellAssetActuatorTest {
     accountCapsule.addAssetAmountV2(sellTokenId.getBytes(), sellTokenQuant,
         dbManager.getDynamicPropertiesStore(), dbManager.getAssetIssueStore());
     dbManager.getAccountStore().put(ownerAddress, accountCapsule);
-    Assert.assertEquals(sellTokenQuant, (long) accountCapsule.getAssetMapV2().get(sellTokenId));
+    Assert.assertEquals(sellTokenQuant,
+            (long) accountCapsule.getAssetV2MapForTest().get(sellTokenId));
 
     // Initialize the order book
 
@@ -1782,12 +1763,15 @@ public class MarketSellAssetActuatorTest {
 
     //check balance and token
     accountCapsule = dbManager.getAccountStore().get(ownerAddress);
-    Assert.assertEquals(1L, (long) accountCapsule.getAssetMapV2().get(sellTokenId));
-    Assert.assertEquals(100L, (long) accountCapsule.getAssetMapV2().get(buyTokenId));
+    Assert.assertEquals(1L,
+            (long) accountCapsule.getAssetV2MapForTest().get(sellTokenId));
+    Assert.assertEquals(100L,
+            (long) accountCapsule.getAssetV2MapForTest().get(buyTokenId));
 
     byte[] makerAddress = ByteArray.fromHexString(OWNER_ADDRESS_SECOND);
     AccountCapsule makerAccountCapsule = dbManager.getAccountStore().get(makerAddress);
-    Assert.assertEquals(200L, (long) makerAccountCapsule.getAssetMapV2().get(sellTokenId));
+    Assert.assertEquals(200L,
+            (long) makerAccountCapsule.getAssetV2MapForTest().get(sellTokenId));
 
     //check accountOrder
     MarketAccountOrderCapsule accountOrderCapsule = marketAccountStore.get(ownerAddress);
@@ -1858,7 +1842,8 @@ public class MarketSellAssetActuatorTest {
     accountCapsule.addAssetAmountV2(sellTokenId.getBytes(), sellTokenQuant,
         dbManager.getDynamicPropertiesStore(), dbManager.getAssetIssueStore());
     dbManager.getAccountStore().put(ownerAddress, accountCapsule);
-    Assert.assertEquals(sellTokenQuant, (long) accountCapsule.getAssetMapV2().get(sellTokenId));
+    Assert.assertEquals(sellTokenQuant,
+            (long) accountCapsule.getAssetV2MapForTest().get(sellTokenId));
 
     // Initialize the order book
 

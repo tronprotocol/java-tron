@@ -17,6 +17,12 @@ package org.tron.common.utils;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.tron.common.utils.ByteArray.fromHex;
+import static org.tron.common.utils.ByteArray.jsonHexToInt;
 
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
@@ -79,5 +85,34 @@ public class ByteArrayTest {
     byte[] bss = new byte[]{8, 9, 12, 13, 14, 15, 16};
     assertEquals("ByteArray.toHexString is not equals Hex.toHexString", ByteArray.toHexString(bss),
         Hex.toHexString(bss));
+  }
+
+  @Test
+  public void testFromObject_SerializableObject() {
+    String testString = "Hello, World!";
+    byte[] result = ByteArray.fromObject(testString);
+    assertNotNull(result);
+    assertTrue(result.length > 0);
+  }
+
+  @Test
+  public void testJsonHexToInt_ValidHex() {
+    try {
+      int result = jsonHexToInt("0x1A");
+      assertEquals(26, result);
+    } catch (Exception e) {
+      fail("Exception should not have been thrown for valid hex string.");
+    }
+    assertThrows(Exception.class, () -> ByteArray.jsonHexToInt("1A"));
+  }
+
+  @Test
+  public void testFromHexWithPrefix() {
+    String input = "0x1A3F";
+    String expected = "1A3F";
+    String result = fromHex(input);
+    assertEquals(expected, result);
+    String input1 = "1A3";
+    assertEquals("01A3", fromHex(input1));
   }
 }

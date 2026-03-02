@@ -224,6 +224,10 @@ service Wallet {
   //Use this function instead of FreezeBalance.
   rpc FreezeBalance2 (FreezeBalanceContract) returns (TransactionExtention) {
   }
+  //Use this function when FreezeBalanceV2.
+  rpc FreezeBalanceV2 (FreezeBalanceV2Contract) returns (TransactionExtention) {
+  }
+
   //Please use UnfreezeBalance2 instead of this function.
   rpc UnfreezeBalance (UnfreezeBalanceContract) returns (Transaction) {
     option (google.api.http) = {
@@ -237,6 +241,10 @@ service Wallet {
   //Use this function instead of UnfreezeBalance.
   rpc UnfreezeBalance2 (UnfreezeBalanceContract) returns (TransactionExtention) {
   }
+  //Use this function when UnfreezeBalanceV2.
+  rpc UnfreezeBalanceV2 (UnfreezeBalanceV2Contract) returns (TransactionExtention) {
+  }
+
   //Please use UnfreezeAsset2 instead of this function.
   rpc UnfreezeAsset (UnfreezeAssetContract) returns (Transaction) {
     option (google.api.http) = {
@@ -263,6 +271,19 @@ service Wallet {
   //Use this function instead of WithdrawBalance.
   rpc WithdrawBalance2 (WithdrawBalanceContract) returns (TransactionExtention) {
   }
+
+  rpc WithdrawExpireUnfreeze (WithdrawExpireUnfreezeContract) returns (TransactionExtention) {
+  }
+
+  rpc DelegateResource (DelegateResourceContract) returns (TransactionExtention) {
+  }
+
+  rpc UnDelegateResource (UnDelegateResourceContract) returns (TransactionExtention) {
+  }
+
+  rpc CancelAllUnfreezeV2 (CancelAllUnfreezeV2Contract) returns (TransactionExtention) {
+  }
+
   //Please use UpdateAsset2 instead of this function.
   rpc UpdateAsset (UpdateAssetContract) returns (Transaction) {
     option (google.api.http) = {
@@ -462,6 +483,9 @@ service Wallet {
   rpc TriggerConstantContract (TriggerSmartContract) returns (TransactionExtention) {
   }
 
+  rpc EstimateEnergy (TriggerSmartContract) returns (EstimateEnergyMessage) {
+  }
+
   rpc ClearContractABI (ClearABIContract) returns (TransactionExtention) {
   }
 
@@ -479,8 +503,25 @@ service Wallet {
   rpc GetDelegatedResource (DelegatedResourceMessage) returns (DelegatedResourceList) {
   };
 
+  rpc GetDelegatedResourceV2 (DelegatedResourceMessage) returns (DelegatedResourceList) {
+  };
+
   rpc GetDelegatedResourceAccountIndex (BytesMessage) returns (DelegatedResourceAccountIndex) {
   };
+
+  rpc GetDelegatedResourceAccountIndexV2 (BytesMessage) returns (DelegatedResourceAccountIndex) {
+  };
+
+  rpc GetCanDelegatedMaxSize (CanDelegatedMaxSizeRequestMessage) returns (CanDelegatedMaxSizeResponseMessage) {
+  };
+
+  rpc GetAvailableUnfreezeCount (GetAvailableUnfreezeCountRequestMessage)
+      returns (GetAvailableUnfreezeCountResponseMessage) {
+  };
+
+  rpc GetCanWithdrawUnfreezeAmount (CanWithdrawUnfreezeAmountRequestMessage)
+      returns (CanWithdrawUnfreezeAmountResponseMessage) {
+  }
 
   rpc ListProposals (EmptyMessage) returns (ProposalList) {
     option (google.api.http) = {
@@ -586,68 +627,6 @@ service Wallet {
       }
     };
   }
-  //Warning: do not invoke this interface provided by others.
-  //Please use GetTransactionSign2 instead of this function.
-  rpc GetTransactionSign (TransactionSign) returns (Transaction) {
-    option (google.api.http) = {
-      post: "/wallet/gettransactionsign"
-      body: "*"
-      additional_bindings {
-        get: "/wallet/gettransactionsign"
-      }
-    };
-  };
-  //Warning: do not invoke this interface provided by others.
-  //Use this function instead of GetTransactionSign.
-  rpc GetTransactionSign2 (TransactionSign) returns (TransactionExtention) {
-  };
-  //Warning: do not invoke this interface provided by others.
-  rpc CreateAddress (BytesMessage) returns (BytesMessage) {
-    option (google.api.http) = {
-      post: "/wallet/createaddress"
-      body: "*"
-      additional_bindings {
-        get: "/wallet/createaddress"
-      }
-    };
-  };
-  //Warning: do not invoke this interface provided by others.
-  rpc EasyTransferAsset (EasyTransferAssetMessage) returns (EasyTransferResponse) {
-  };
-  //Warning: do not invoke this interface provided by others.
-  rpc EasyTransferAssetByPrivate (EasyTransferAssetByPrivateMessage) returns (EasyTransferResponse) {
-  };
-  //Warning: do not invoke this interface provided by others.
-  rpc EasyTransfer (EasyTransferMessage) returns (EasyTransferResponse) {
-    option (google.api.http) = {
-      post: "/wallet/easytransfer"
-      body: "*"
-      additional_bindings {
-        get: "/wallet/easytransfer"
-      }
-    };
-  };
-  //Warning: do not invoke this interface provided by others.
-  rpc EasyTransferByPrivate (EasyTransferByPrivateMessage) returns (EasyTransferResponse) {
-    option (google.api.http) = {
-      post: "/wallet/easytransferbyprivate"
-      body: "*"
-      additional_bindings {
-        get: "/wallet/easytransferbyprivate"
-      }
-    };
-  };
-  //Warning: do not invoke this interface provided by others.
-  rpc GenerateAddress (EmptyMessage) returns (AddressPrKeyPairMessage) {
-
-    option (google.api.http) = {
-      post: "/wallet/generateaddress"
-      body: "*"
-      additional_bindings {
-        get: "/wallet/generateaddress"
-      }
-    };
-  }
 
   rpc GetTransactionInfoById (BytesMessage) returns (TransactionInfo) {
     option (google.api.http) = {
@@ -667,10 +646,6 @@ service Wallet {
         get: "/wallet/accountpermissionupdate"
       }
     };
-  }
-
-  rpc AddSign (TransactionSign) returns (TransactionExtention) {
-
   }
 
   rpc GetTransactionSignWeight (Transaction) returns (TransactionSignWeight) {
@@ -789,6 +764,18 @@ service Wallet {
 
   rpc GetPendingSize (EmptyMessage) returns (NumberMessage) {
   }
+
+  rpc GetBlock (BlockReq) returns (BlockExtention) {
+  }
+
+  rpc GetBandwidthPrices (EmptyMessage) returns (PricesResponseMessage) {
+  }
+
+  rpc GetEnergyPrices (EmptyMessage) returns (PricesResponseMessage) {
+  }
+
+  rpc GetMemoFee (EmptyMessage) returns (PricesResponseMessage) {
+  }
 };
 
 service WalletSolidity {
@@ -880,8 +867,25 @@ service WalletSolidity {
   rpc GetDelegatedResource (DelegatedResourceMessage) returns (DelegatedResourceList) {
   };
 
+  rpc GetDelegatedResourceV2 (DelegatedResourceMessage) returns (DelegatedResourceList) {
+  };
+
   rpc GetDelegatedResourceAccountIndex (BytesMessage) returns (DelegatedResourceAccountIndex) {
   };
+
+  rpc GetDelegatedResourceAccountIndexV2 (BytesMessage) returns (DelegatedResourceAccountIndex) {
+  };
+
+  rpc GetCanDelegatedMaxSize (CanDelegatedMaxSizeRequestMessage) returns (CanDelegatedMaxSizeResponseMessage) {
+  };
+
+  rpc GetAvailableUnfreezeCount (GetAvailableUnfreezeCountRequestMessage)
+      returns (GetAvailableUnfreezeCountResponseMessage) {
+  };
+
+  rpc GetCanWithdrawUnfreezeAmount (CanWithdrawUnfreezeAmountRequestMessage)
+      returns (CanWithdrawUnfreezeAmountResponseMessage) {
+  }
 
   rpc GetExchangeById (BytesMessage) returns (Exchange) {
   };
@@ -906,17 +910,6 @@ service WalletSolidity {
       body: "*"
       additional_bindings {
         get: "/walletsolidity/gettransactioninfobyid"
-      }
-    };
-  }
-
-  //Warning: do not invoke this interface provided by others.
-  rpc GenerateAddress (EmptyMessage) returns (AddressPrKeyPairMessage) {
-    option (google.api.http) = {
-      post: "/walletsolidity/generateaddress"
-      body: "*"
-      additional_bindings {
-        get: "/walletsolidity/generateaddress"
       }
     };
   }
@@ -954,6 +947,9 @@ service WalletSolidity {
   rpc TriggerConstantContract (TriggerSmartContract) returns (TransactionExtention) {
   }
 
+  rpc EstimateEnergy (TriggerSmartContract) returns (EstimateEnergyMessage) {
+  }
+
   rpc GetTransactionInfoByBlockNum (NumberMessage) returns (TransactionInfoList) {
   }
 
@@ -973,6 +969,13 @@ service WalletSolidity {
   }
 
   rpc GetBurnTrx (EmptyMessage) returns (NumberMessage) {
+  }
+  rpc GetBlock (BlockReq) returns (BlockExtention) {
+  }
+  rpc GetBandwidthPrices (EmptyMessage) returns (PricesResponseMessage) {
+  }
+
+  rpc GetEnergyPrices (EmptyMessage) returns (PricesResponseMessage) {
   }
 };
 
@@ -1048,6 +1051,8 @@ message Return {
     SERVER_BUSY = 9;
     NO_CONNECTION = 10;
     NOT_ENOUGH_EFFECTIVE_CONNECTION = 11;
+    BLOCK_UNSOLIDIFIED = 12;
+
     OTHER_ERROR = 20;
   }
 
@@ -1095,6 +1100,33 @@ message DelegatedResourceList {
   repeated DelegatedResource delegatedResource = 1;
 }
 
+message GetAvailableUnfreezeCountRequestMessage {
+  bytes owner_address = 1;
+}
+message GetAvailableUnfreezeCountResponseMessage {
+  int64 count = 1;
+}
+
+message CanDelegatedMaxSizeRequestMessage {
+  int32 type = 1;
+  bytes owner_address = 2;
+}
+message CanDelegatedMaxSizeResponseMessage {
+  int64 max_size = 1;
+}
+
+message CanWithdrawUnfreezeAmountRequestMessage {
+  bytes owner_address = 1;
+  int64 timestamp = 2;
+}
+message CanWithdrawUnfreezeAmountResponseMessage {
+  int64 amount = 1;
+}
+
+message PricesResponseMessage {
+  string prices = 1;
+}
+
 // Gossip node list
 message NodeList {
   repeated Node nodes = 1;
@@ -1122,6 +1154,10 @@ message BytesMessage {
 message TimeMessage {
   int64 beginInMilliseconds = 1;
   int64 endInMilliseconds = 2;
+}
+message BlockReq {
+  string id_or_num = 1;
+  bool   detail = 2;
 }
 message BlockLimit {
   int64 startNum = 1;
@@ -1179,49 +1215,20 @@ message PaginatedMessage {
   int64 limit = 2;
 }
 
-message EasyTransferMessage {
-  bytes passPhrase = 1;
-  bytes toAddress = 2;
-  int64 amount = 3;
-}
-
-message EasyTransferAssetMessage {
-  bytes passPhrase = 1;
-  bytes toAddress = 2;
-  string assetId = 3;
-  int64 amount = 4;
-}
-
-message EasyTransferByPrivateMessage {
-  bytes privateKey = 1;
-  bytes toAddress = 2;
-  int64 amount = 3;
-}
-
-message EasyTransferAssetByPrivateMessage {
-  bytes privateKey = 1;
-  bytes toAddress = 2;
-  string assetId = 3;
-  int64 amount = 4;
-}
-
-message EasyTransferResponse {
-  Transaction transaction = 1;
-  Return result = 2;
-  bytes txid = 3; //transaction id =  sha256(transaction.rowdata)
-}
-
-message AddressPrKeyPairMessage {
-  string address = 1;
-  string privateKey = 2;
-}
-
 message TransactionExtention {
   Transaction transaction = 1;
   bytes txid = 2; //transaction id =  sha256(transaction.rowdata)
   repeated bytes constant_result = 3;
   Return result = 4;
   int64 energy_used = 5;
+  repeated TransactionInfo.Log logs = 6;
+  repeated InternalTransaction internal_transactions = 7;
+  int64 energy_penalty = 8;
+}
+
+message EstimateEnergyMessage {
+  Return result = 1;
+  int64 energy_required = 2;
 }
 
 message BlockExtention {

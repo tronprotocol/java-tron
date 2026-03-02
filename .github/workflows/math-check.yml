@@ -1,0 +1,93 @@
+name: Check Math Usage
+
+on:
+  push:
+    branches: [ 'master', 'release_**' ]
+  pull_request:
+    branches: [ 'develop', 'release_**' ]
+  workflow_dispatch:
+
+jobs:
+  check-math:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check for java.lang.Math usage
+        id: check-math
+        shell: bash
+        run: |
+          echo "Checking for java.lang.Math usage..."
+          
+          touch math_usage.txt
+          
+          while IFS= read -r file; do
+            filename=$(basename "$file")
+            if [[ "$filename" == "StrictMathWrapper.java" || "$filename" == "MathWrapper.java" ]]; then
+              continue
+            fi
+          
+            perl -0777 -ne '
+              s/"([^"\\]|\\.)*"//g;
+              s/'\''([^'\''\\]|\\.)*'\''//g;
+              s!/\*([^*]|\*[^/])*\*/!!g;
+              s!//[^\n]*!!g;
+              $hasMath = 0;
+              $hasMath = 1 if /^[\s]*import[\s]+java\.lang\.Math\b/m;
+              $hasMath = 1 if /\bjava\s*\.\s*lang\s*\.\s*Math\s*\./;
+              $hasMath = 1 if /(?<![\w\.])(?<!Strict)Math\s*\./;
+              print "$ARGV\n" if $hasMath;
+            ' "$file" >> math_usage.txt
+          done < <(find . -type f -name "*.java")
+          
+          sort -u math_usage.txt -o math_usage.txt
+          
+          if [ -s math_usage.txt ]; then
+            echo "❌ Error: Forbidden Math usage found in the following files:"
+            cat math_usage.txt
+            echo "math_found=true" >> $GITHUB_OUTPUT
+            echo "Please use org.tron.common.math.StrictMathWrapper instead of direct Math usage."
+          else
+            echo "✅ No forbidden Math usage found"
+            echo "math_found=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Upload findings
+        if: steps.check-math.outputs.math_found == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: math-usage-report
+          path: math_usage.txt
+
+      - name: Create comment
+        if: github.event_name == 'pull_request' && steps.check-math.outputs.math_found == 'true'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            const findings = fs.readFileSync('math_usage.txt', 'utf8');
+            const body = `### ❌ Math Usage Detection Results
+            
+            Found forbidden usage of \`java.lang.Math\` in the following files:
+            
+            \`\`\`
+            ${findings}
+            \`\`\`
+            
+            **Please review if this usage is intended.**
+            > [!CAUTION]
+            > Note: You should use \`org.tron.common.math.StrictMathWrapper\`.
+            > If you need to use \`java.lang.Math\`, please provide a justification.
+            `;
+            
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: body
+            });
+
+      - name: Fail if Math usage found
+        if: steps.check-math.outputs.math_found == 'true'
+        run: exit 1

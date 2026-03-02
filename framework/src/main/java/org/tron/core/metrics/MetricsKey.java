@@ -23,5 +23,6 @@ public class MetricsKey {
   public static final String NET_API_DETAIL_QPS = "net.api.detail.qps.";
   public static final String NET_API_DETAIL_FAIL_QPS = "net.api.detail.failQps.";
   public static final String NET_API_DETAIL_OUT_TRAFFIC = "net.api.detail.outTraffic.";
+  public static final String NET_LATENCY_FETCH_BLOCK = "net.latency.fetch.block.";
 
 }

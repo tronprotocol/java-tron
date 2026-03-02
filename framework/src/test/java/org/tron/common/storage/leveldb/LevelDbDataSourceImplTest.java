@@ -22,30 +22,41 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThrows;
 
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
+import org.tron.common.utils.PublicMethod;
 import org.tron.core.Constant;
 import org.tron.core.config.args.Args;
+import org.tron.core.db2.common.WrappedByteArray;
+import org.tron.core.exception.TronError;
 
 @Slf4j
 public class LevelDbDataSourceImplTest {
 
-  private static final String dbPath = "output-levelDb-test";
+  @ClassRule
+  public static final TemporaryFolder temporaryFolder = new TemporaryFolder();
   private static LevelDbDataSourceImpl dataSourceTest;
 
   private byte[] value1 = "10000".getBytes();
@@ -68,23 +79,20 @@ public class LevelDbDataSourceImplTest {
   @AfterClass
   public static void destroy() {
     Args.clearParam();
-    if (FileUtil.deleteDir(new File(dbPath))) {
-      logger.info("Release resources successful.");
-    } else {
-      logger.info("Release resources failure.");
-    }
   }
 
   @Before
-  public void initDb() {
-    Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
-    dataSourceTest = new LevelDbDataSourceImpl(dbPath + File.separator, "test_levelDb");
+  public void initDb() throws IOException {
+    Args.setParam(new String[]{"--output-directory",
+        temporaryFolder.newFolder().toString()}, Constant.TEST_CONF);
+    dataSourceTest = new LevelDbDataSourceImpl(
+        Args.getInstance().getOutputDirectory() + File.separator, "test_levelDb");
   }
 
   @Test
   public void testPutGet() {
     dataSourceTest.resetDb();
-    String key1 = "2c0937534dd1b3832d05d865e8e6f2bf23218300b33a992740d45ccab7d4f519";
+    String key1 = PublicMethod.getRandomPrivateKey();
     byte[] key = key1.getBytes();
     dataSourceTest.initDB();
     String value1 = "50000";
@@ -104,6 +112,13 @@ public class LevelDbDataSourceImplTest {
         Args.getInstance().getOutputDirectory(), "test_reset");
     dataSource.resetDb();
     assertEquals(0, dataSource.allKeys().size());
+    assertEquals("LEVELDB", dataSource.getEngine());
+    assertEquals("test_reset", dataSource.getName());
+    assertEquals(Sets.newHashSet(), dataSource.getlatestValues(0));
+    assertEquals(Collections.emptyMap(), dataSource.getNext(key1, 0));
+    assertEquals(new ArrayList<>(), dataSource.getKeysNext(key1, 0));
+    assertEquals(Sets.newHashSet(), dataSource.getValuesNext(key1, 0));
+    assertEquals(Sets.newHashSet(), dataSource.getlatestValues(0));
     dataSource.closeDB();
   }
 
@@ -113,9 +128,9 @@ public class LevelDbDataSourceImplTest {
         Args.getInstance().getOutputDirectory(), "test_updateByBatch");
     dataSource.initDB();
     dataSource.resetDb();
-    String key1 = "431cd8c8d5abe5cb5944b0889b32482d85772fbb98987b10fbb7f17110757350";
+    String key1 = PublicMethod.getRandomPrivateKey();
     String value1 = "50000";
-    String key2 = "431cd8c8d5abe5cb5944b0889b32482d85772fbb98987b10fbb7f17110757351";
+    String key2 =  PublicMethod.getRandomPrivateKey();
     String value2 = "10000";
 
     Map<byte[], byte[]> rows = new HashMap<>();
@@ -135,7 +150,7 @@ public class LevelDbDataSourceImplTest {
     LevelDbDataSourceImpl dataSource = new LevelDbDataSourceImpl(
         Args.getInstance().getOutputDirectory(), "test_delete");
     dataSource.initDB();
-    String key1 = "431cd8c8d5abe5cb5944b0889b32482d85772fbb98987b10fbb7f17110757350";
+    String key1 = PublicMethod.getRandomPrivateKey();
     byte[] key = key1.getBytes();
     dataSource.deleteData(key);
     byte[] value = dataSource.getData(key);
@@ -151,14 +166,14 @@ public class LevelDbDataSourceImplTest {
     dataSource.initDB();
     dataSource.resetDb();
 
-    String key1 = "431cd8c8d5abe5cb5944b0889b32482d85772fbb98987b10fbb7f17110757321";
+    String key1 = PublicMethod.getRandomPrivateKey();
     byte[] key = key1.getBytes();
 
     String value1 = "50000";
     byte[] value = value1.getBytes();
 
     dataSource.putData(key, value);
-    String key3 = "431cd8c8d5abe5cb5944b0889b32482d85772fbb98987b10fbb7f17110757091";
+    String key3 = PublicMethod.getRandomPrivateKey();
     byte[] key2 = key3.getBytes();
 
     String value3 = "30000";
@@ -258,25 +273,6 @@ public class LevelDbDataSourceImplTest {
   }
 
   @Test
-  public void getValuesPrev() {
-    LevelDbDataSourceImpl dataSource = new LevelDbDataSourceImpl(
-        Args.getInstance().getOutputDirectory(), "test_getValuesPrev_key");
-    dataSource.initDB();
-    dataSource.resetDb();
-
-    putSomeKeyValue(dataSource);
-    Set<byte[]> seekKeyLimitNext = dataSource.getValuesPrev("0000000300".getBytes(), 2);
-    HashSet<String> hashSet = Sets.newHashSet(ByteArray.toStr(value1), ByteArray.toStr(value2));
-    seekKeyLimitNext.forEach(valeu -> {
-      Assert.assertTrue("getValuesPrev1", hashSet.contains(ByteArray.toStr(valeu)));
-    });
-    seekKeyLimitNext = dataSource.getValuesPrev("0000000100".getBytes(), 2);
-    Assert.assertEquals("getValuesPrev2", 0, seekKeyLimitNext.size());
-    dataSource.resetDb();
-    dataSource.closeDB();
-  }
-
-  @Test
   public void testGetTotal() {
     LevelDbDataSourceImpl dataSource = new LevelDbDataSourceImpl(
         Args.getInstance().getOutputDirectory(), "test_getTotal_key");
@@ -312,4 +308,59 @@ public class LevelDbDataSourceImplTest {
     dataSource.resetDb();
     dataSource.closeDB();
   }
+
+  @Test
+  public void prefixQueryTest() {
+    LevelDbDataSourceImpl dataSource = new LevelDbDataSourceImpl(
+        Args.getInstance().getOutputDirectory(), "test_prefixQuery");
+    dataSource.initDB();
+    dataSource.resetDb();
+
+    putSomeKeyValue(dataSource);
+    // put a kv that will not be queried.
+    byte[] key7 = "0000001".getBytes();
+    byte[] value7 = "0000001v".getBytes();
+    dataSource.putData(key7, value7);
+
+    byte[] prefix = "0000000".getBytes();
+
+    List<String> result = dataSource.prefixQuery(prefix)
+        .keySet()
+        .stream()
+        .map(WrappedByteArray::getBytes)
+        .map(ByteArray::toStr)
+        .collect(Collectors.toList());
+    List<String> list = Arrays.asList(
+        ByteArray.toStr(key1),
+        ByteArray.toStr(key2),
+        ByteArray.toStr(key3),
+        ByteArray.toStr(key4),
+        ByteArray.toStr(key5),
+        ByteArray.toStr(key6));
+
+    Assert.assertEquals(list.size(), result.size());
+    list.forEach(entry -> Assert.assertTrue(result.contains(entry)));
+
+    dataSource.resetDb();
+    dataSource.closeDB();
+  }
+
+  @Test
+  public void initDbTest() {
+    makeExceptionDb("test_initDb");
+    LevelDbDataSourceImpl dataSource = new LevelDbDataSourceImpl(
+        Args.getInstance().getOutputDirectory(), "test_initDb");
+    TronError thrown = assertThrows(TronError.class, dataSource::initDB);
+    assertEquals(TronError.ErrCode.LEVELDB_INIT, thrown.getErrCode());
+  }
+
+  private void makeExceptionDb(String dbName) {
+    LevelDbDataSourceImpl dataSource = new LevelDbDataSourceImpl(
+        Args.getInstance().getOutputDirectory(), "test_initDb");
+    dataSource.initDB();
+    dataSource.closeDB();
+    FileUtil.saveData(dataSource.getDbPath().toString() + "/CURRENT",
+        "...", Boolean.FALSE);
+  }
+
 }

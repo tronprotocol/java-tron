@@ -3,6 +3,7 @@ package org.tron.core.capsule.utils;
 import static java.util.Arrays.copyOfRange;
 import static org.bouncycastle.util.Arrays.concatenate;
 import static org.bouncycastle.util.BigIntegers.asUnsignedByteArray;
+import static org.tron.common.math.Maths.pow;
 import static org.tron.common.utils.ByteUtil.byteArrayToInt;
 import static org.tron.common.utils.ByteUtil.intToBytesNoLeadZeroes;
 import static org.tron.common.utils.ByteUtil.isNullOrZeroArray;
@@ -49,7 +50,7 @@ public class RLP {
   /**
    * Allow for content up to size of 2^64 bytes *
    */
-  private static final double MAX_ITEM_LENGTH = Math.pow(256, 8);
+  private static final double MAX_ITEM_LENGTH = pow(256, 8, true);
   /**
    * Reason for threshold according to Vitalik Buterin: - 56 bytes maximizes the benefit of both
    * options - if we went with 60 then we would have only had 4 slots for long strings so RLP would
@@ -204,7 +205,7 @@ public class RLP {
     return value;
   }
 
-  private static String decodeStringItem(byte[] data, int index) {
+  public static String decodeStringItem(byte[] data, int index) {
 
     final byte[] valueBytes = decodeItemBytes(data, index);
 
@@ -229,12 +230,12 @@ public class RLP {
     }
   }
 
-  private static byte[] decodeByteArray(byte[] data, int index) {
+  public static byte[] decodeByteArray(byte[] data, int index) {
 
     return decodeItemBytes(data, index);
   }
 
-  private static int nextItemLength(byte[] data, int index) {
+  public static int nextItemLength(byte[] data, int index) {
 
     if (index >= data.length) {
       return -1;

@@ -76,16 +76,12 @@ public class ExchangeWithdrawActuator extends AbstractActuator {
       BigInteger bigTokenQuant = new BigInteger(String.valueOf(tokenQuant));
       if (Arrays.equals(tokenID, firstTokenID)) {
         anotherTokenID = secondTokenID;
-//        anotherTokenQuant = Math
-//            .floorDiv(Math.multiplyExact(secondTokenBalance, tokenQuant), firstTokenBalance);
         anotherTokenQuant = bigSecondTokenBalance.multiply(bigTokenQuant)
             .divide(bigFirstTokenBalance).longValueExact();
         exchangeCapsule.setBalance(firstTokenBalance - tokenQuant,
             secondTokenBalance - anotherTokenQuant);
       } else {
         anotherTokenID = firstTokenID;
-//        anotherTokenQuant = Math
-//            .floorDiv(Math.multiplyExact(firstTokenBalance, tokenQuant), secondTokenBalance);
         anotherTokenQuant = bigFirstTokenBalance.multiply(bigTokenQuant)
             .divide(bigSecondTokenBalance).longValueExact();
         exchangeCapsule.setBalance(firstTokenBalance - anotherTokenQuant,
@@ -210,8 +206,6 @@ public class ExchangeWithdrawActuator extends AbstractActuator {
     BigDecimal bigSecondTokenBalance = new BigDecimal(String.valueOf(secondTokenBalance));
     BigDecimal bigTokenQuant = new BigDecimal(String.valueOf(tokenQuant));
     if (Arrays.equals(tokenID, firstTokenID)) {
-//      anotherTokenQuant = Math
-//          .floorDiv(Math.multiplyExact(secondTokenBalance, tokenQuant), firstTokenBalance);
       anotherTokenQuant = bigSecondTokenBalance.multiply(bigTokenQuant)
           .divideToIntegralValue(bigFirstTokenBalance).longValueExact();
       if (firstTokenBalance < tokenQuant || secondTokenBalance < anotherTokenQuant) {
@@ -230,8 +224,6 @@ public class ExchangeWithdrawActuator extends AbstractActuator {
       }
 
     } else {
-//      anotherTokenQuant = Math
-//          .floorDiv(Math.multiplyExact(firstTokenBalance, tokenQuant), secondTokenBalance);
       anotherTokenQuant = bigFirstTokenBalance.multiply(bigTokenQuant)
           .divideToIntegralValue(bigSecondTokenBalance).longValueExact();
       if (secondTokenBalance < tokenQuant || firstTokenBalance < anotherTokenQuant) {

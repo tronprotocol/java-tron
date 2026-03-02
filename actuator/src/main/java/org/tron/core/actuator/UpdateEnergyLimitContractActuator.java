@@ -6,15 +6,16 @@ import java.util.Arrays;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.DecodeUtil;
-import org.tron.common.utils.StorageUtils;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.ContractCapsule;
+import org.tron.core.capsule.ReceiptCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.ContractStore;
+import org.tron.core.vm.repository.RepositoryImpl;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.contract.SmartContractOuterClass.UpdateEnergyLimitContract;
@@ -44,6 +45,7 @@ public class UpdateEnergyLimitContractActuator extends AbstractActuator {
       contractStore.put(contractAddress, new ContractCapsule(
           deployedContract.getInstance().toBuilder().setOriginEnergyLimit(newOriginEnergyLimit)
               .build()));
+      RepositoryImpl.removeLruCache(contractAddress);
 
       ret.setStatus(fee, code.SUCESS);
     } catch (InvalidProtocolBufferException e) {
@@ -56,15 +58,15 @@ public class UpdateEnergyLimitContractActuator extends AbstractActuator {
 
   @Override
   public boolean validate() throws ContractValidateException {
-    if (!StorageUtils.getEnergyLimitHardFork()) {
-      throw new ContractValidateException(
-          "contract type error, unexpected type [UpdateEnergyLimitContract]");
-    }
     if (this.any == null) {
       throw new ContractValidateException(ActuatorConstant.CONTRACT_NOT_EXIST);
     }
     if (chainBaseManager == null) {
       throw new ContractValidateException(ActuatorConstant.STORE_NOT_EXIST);
+    }
+    if (!ReceiptCapsule.checkForEnergyLimit(chainBaseManager.getDynamicPropertiesStore())) {
+      throw new ContractValidateException(
+          "contract type error, unexpected type [UpdateEnergyLimitContract]");
     }
     AccountStore accountStore = chainBaseManager.getAccountStore();
     ContractStore contractStore = chainBaseManager.getContractStore();

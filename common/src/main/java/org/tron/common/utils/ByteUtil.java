@@ -18,13 +18,21 @@
 
 package org.tron.common.utils;
 
+import static org.tron.common.math.Maths.min;
+
 import com.google.common.base.Preconditions;
 import com.google.common.primitives.UnsignedBytes;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.zip.DataFormatException;
+import java.util.zip.Deflater;
+import java.util.zip.Inflater;
+import org.tron.core.exception.EventBloomException;
 
 public class ByteUtil {
 
@@ -64,7 +72,7 @@ public class ByteUtil {
     byte[] bytes = new byte[numBytes];
     byte[] biBytes = b.toByteArray();
     int start = (biBytes.length == numBytes + 1) ? 1 : 0;
-    int length = Math.min(biBytes.length, numBytes);
+    int length = min(biBytes.length, numBytes, true);
     System.arraycopy(biBytes, start, bytes, numBytes - length, length);
     return bytes;
   }
@@ -340,7 +348,7 @@ public class ByteUtil {
     }
 
     byte[] bytes = new byte[len];
-    System.arraycopy(input, offset, bytes, 0, Math.min(input.length - offset, len));
+    System.arraycopy(input, offset, bytes, 0, min(input.length - offset, len, true));
     return bytes;
   }
 
@@ -440,9 +448,71 @@ public class ByteUtil {
   }
 
   public static byte[] longTo32Bytes(long value) {
+    if (value == 0) {
+      return new byte[32];
+    }
     byte[] longBytes = ByteArray.fromLong(value);
     byte[] zeroBytes = new byte[24];
     return ByteUtil.merge(zeroBytes, longBytes);
+  }
+
+  public static byte[] setBit(byte[] data, int pos, int val) {
+
+    if ((data.length * 8) - 1 < pos) {
+      throw new Error("outside byte array limit, pos: " + pos);
+    }
+
+    int posByte = data.length - 1 - (pos) / 8;
+    int posBit = (pos) % 8;
+    byte setter = (byte) (1 << (posBit));
+    byte toBeSet = data[posByte];
+    byte result;
+    if (val == 1) {
+      result = (byte) (toBeSet | setter);
+    } else {
+      result = (byte) (toBeSet & ~setter);
+    }
+
+    data[posByte] = result;
+    return data;
+  }
+
+  public static byte[] compress(byte[] data) throws EventBloomException {
+    Deflater deflater = new Deflater();
+    deflater.setInput(data);
+
+    ByteArrayOutputStream outputStream = new ByteArrayOutputStream(data.length);
+
+    deflater.finish();
+    byte[] buffer = new byte[1024];
+    while (!deflater.finished()) {
+      int count = deflater.deflate(buffer); // returns the generated code... index
+      outputStream.write(buffer, 0, count);
+    }
+    try {
+      outputStream.close();
+    } catch (IOException e) {
+      throw new EventBloomException("compress data failed");
+    }
+    byte[] output = outputStream.toByteArray();
+
+    return output;
+  }
+
+  public static byte[] decompress(byte[] data) throws IOException, DataFormatException {
+    Inflater inflater = new Inflater();
+    inflater.setInput(data);
+
+    ByteArrayOutputStream outputStream = new ByteArrayOutputStream(data.length);
+    byte[] buffer = new byte[1024];
+    while (!inflater.finished()) {
+      int count = inflater.inflate(buffer);
+      outputStream.write(buffer, 0, count);
+    }
+    outputStream.close();
+    byte[] output = outputStream.toByteArray();
+
+    return output;
   }
 
 }

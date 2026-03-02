@@ -1,5 +1,6 @@
 package org.tron.core.capsule;
 
+import com.google.common.primitives.Bytes;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
@@ -8,6 +9,9 @@ import org.tron.protos.Protocol.DelegatedResource;
 
 @Slf4j(topic = "capsule")
 public class DelegatedResourceCapsule implements ProtoCapsule<DelegatedResource> {
+
+  protected static final byte[] V2_PREFIX = new byte[]{0x01};
+  protected static final byte[] V2_LOCK_PREFIX = new byte[]{0x02};
 
   private DelegatedResource delegatedResource;
 
@@ -35,6 +39,13 @@ public class DelegatedResourceCapsule implements ProtoCapsule<DelegatedResource>
     System.arraycopy(from, 0, key, 0, from.length);
     System.arraycopy(to, 0, key, from.length, to.length);
     return key;
+  }
+
+  public static byte[] createDbKeyV2(byte[] from, byte[] to, boolean lock) {
+    if (lock) {
+      return Bytes.concat(V2_LOCK_PREFIX, from, to);
+    }
+    return Bytes.concat(V2_PREFIX, from, to);
   }
 
   public ByteString getFrom() {
@@ -67,17 +78,26 @@ public class DelegatedResourceCapsule implements ProtoCapsule<DelegatedResource>
     return this.delegatedResource.getFrozenBalanceForBandwidth();
   }
 
-  public void setFrozenBalanceForBandwidth(long Bandwidth, long expireTime) {
+  public long getFrozenBalance(boolean isBandwidth) {
+    if (isBandwidth) {
+      return getFrozenBalanceForBandwidth();
+    } else {
+      return getFrozenBalanceForEnergy();
+    }
+
+  }
+
+  public void setFrozenBalanceForBandwidth(long bandwidth, long expireTime) {
     this.delegatedResource = this.delegatedResource.toBuilder()
-        .setFrozenBalanceForBandwidth(Bandwidth)
+        .setFrozenBalanceForBandwidth(bandwidth)
         .setExpireTimeForBandwidth(expireTime)
         .build();
   }
 
-  public void addFrozenBalanceForBandwidth(long Bandwidth, long expireTime) {
+  public void addFrozenBalanceForBandwidth(long bandwidth, long expireTime) {
     this.delegatedResource = this.delegatedResource.toBuilder()
         .setFrozenBalanceForBandwidth(this.delegatedResource.getFrozenBalanceForBandwidth()
-            + Bandwidth)
+            + bandwidth)
         .setExpireTimeForBandwidth(expireTime)
         .build();
   }
@@ -90,9 +110,9 @@ public class DelegatedResourceCapsule implements ProtoCapsule<DelegatedResource>
     return this.delegatedResource.getExpireTimeForEnergy();
   }
 
-  public void setExpireTimeForBandwidth(long ExpireTime) {
+  public void setExpireTimeForBandwidth(long expireTime) {
     this.delegatedResource = this.delegatedResource.toBuilder()
-        .setExpireTimeForBandwidth(ExpireTime)
+        .setExpireTimeForBandwidth(expireTime)
         .build();
   }
 
@@ -104,9 +124,9 @@ public class DelegatedResourceCapsule implements ProtoCapsule<DelegatedResource>
     }
   }
 
-  public void setExpireTimeForEnergy(long ExpireTime) {
+  public void setExpireTimeForEnergy(long expireTime) {
     this.delegatedResource = this.delegatedResource.toBuilder()
-        .setExpireTimeForEnergy(ExpireTime)
+        .setExpireTimeForEnergy(expireTime)
         .build();
   }
 

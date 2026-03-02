@@ -3,15 +3,18 @@ package org.tron.core.db.common.iterator;
 import java.io.IOException;
 import java.util.Map.Entry;
 import java.util.NoSuchElementException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.extern.slf4j.Slf4j;
 import org.rocksdb.RocksIterator;
 
 
-@Slf4j
+@Slf4j(topic = "DB")
 public final class RockStoreIterator implements DBIterator {
 
-  private RocksIterator dbIterator;
+  private final RocksIterator dbIterator;
   private boolean first = true;
+
+  private final AtomicBoolean close = new AtomicBoolean(false);
 
   public RockStoreIterator(RocksIterator dbIterator) {
     this.dbIterator = dbIterator;
@@ -19,11 +22,16 @@ public final class RockStoreIterator implements DBIterator {
 
   @Override
   public void close() throws IOException {
-    dbIterator.close();
+    if (close.compareAndSet(false, true)) {
+      dbIterator.close();
+    }
   }
 
   @Override
   public boolean hasNext() {
+    if (close.get()) {
+      return false;
+    }
     boolean hasNext = false;
     // true is first item
     try {
@@ -32,14 +40,14 @@ public final class RockStoreIterator implements DBIterator {
         first = false;
       }
       if (!(hasNext = dbIterator.isValid())) { // false is last item
-        dbIterator.close();
+        close();
       }
     } catch (Exception e) {
-      System.out.println("e:" + e);
+      logger.error(e.getMessage(), e);
       try {
-        dbIterator.close();
+        close();
       } catch (Exception e1) {
-        System.out.println("e1:" + e1);
+        logger.error(e.getMessage(), e);
       }
     }
     return hasNext;
@@ -47,7 +55,7 @@ public final class RockStoreIterator implements DBIterator {
 
   @Override
   public Entry<byte[], byte[]> next() {
-    if (!dbIterator.isValid()) {
+    if (close.get()) {
       throw new NoSuchElementException();
     }
     byte[] key = dbIterator.key();
@@ -69,5 +77,51 @@ public final class RockStoreIterator implements DBIterator {
         throw new UnsupportedOperationException();
       }
     };
+  }
+
+  @Override
+  public void seek(byte[] key) {
+    checkState();
+    dbIterator.seek(key);
+    this.first = false;
+  }
+
+  @Override
+  public void seekToFirst() {
+    checkState();
+    dbIterator.seekToFirst();
+    this.first = false;
+  }
+
+  @Override
+  public void seekToLast() {
+    checkState();
+    dbIterator.seekToLast();
+    this.first = false;
+  }
+
+  @Override
+  public boolean valid() {
+    checkState();
+    return dbIterator.isValid();
+  }
+
+  @Override
+  public byte[] getKey() {
+    checkValid();
+    return dbIterator.key();
+  }
+
+  @Override
+  public byte[] getValue() {
+    checkValid();
+    return dbIterator.value();
+  }
+
+  @Override
+  public void checkState() {
+    if (close.get()) {
+      throw new IllegalStateException("iterator has been closed");
+    }
   }
 }

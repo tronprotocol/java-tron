@@ -9,6 +9,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
 import org.pf4j.CompoundPluginDescriptorFinder;
@@ -24,11 +26,14 @@ import org.tron.common.logsfilter.trigger.ContractTrigger;
 import org.tron.common.logsfilter.trigger.SolidityTrigger;
 import org.tron.common.logsfilter.trigger.TransactionLogTrigger;
 import org.tron.common.logsfilter.trigger.Trigger;
+import org.tron.common.utils.JsonUtil;
 
 @Slf4j
 public class EventPluginLoader {
 
   private static EventPluginLoader instance;
+
+  private long MAX_PENDING_SIZE = 50000;
 
   private PluginManager pluginManager = null;
 
@@ -42,22 +47,37 @@ public class EventPluginLoader {
 
   private List<TriggerConfig> triggerConfigList;
 
+  private int version = 0;
+
+  private long startSyncBlockNum = 0;
+
   private boolean blockLogTriggerEnable = false;
 
+  private boolean blockLogTriggerSolidified = false;
+
   private boolean transactionLogTriggerEnable = false;
+
+  private boolean transactionLogTriggerSolidified = false;
+
+  private boolean transactionLogTriggerEthCompatible = false;
 
   private boolean contractEventTriggerEnable = false;
 
   private boolean contractLogTriggerEnable = false;
 
+  private boolean contractLogTriggerRedundancy = false;
+
   private boolean solidityEventTriggerEnable = false;
 
   private boolean solidityLogTriggerEnable = false;
+
+  private boolean solidityLogTriggerRedundancy = false;
 
   private boolean solidityTriggerEnable = false;
 
   private FilterQuery filterQuery;
 
+  @Getter
   private boolean useNativeQueue = false;
 
   public static EventPluginLoader getInstance() {
@@ -209,6 +229,10 @@ public class EventPluginLoader {
       return false;
     }
 
+    this.version = config.getVersion();
+
+    this.startSyncBlockNum = config.getStartSyncBlockNum();
+
     this.triggerConfigList = config.getTriggerConfigList();
 
     useNativeQueue = config.isUseNativeQueue();
@@ -241,8 +265,12 @@ public class EventPluginLoader {
     if (EventPluginConfig.BLOCK_TRIGGER_NAME.equalsIgnoreCase(triggerConfig.getTriggerName())) {
       if (triggerConfig.isEnabled()) {
         blockLogTriggerEnable = true;
+        if (triggerConfig.isSolidified()) {
+          blockLogTriggerSolidified = true;
+        }
       } else {
         blockLogTriggerEnable = false;
+        blockLogTriggerSolidified = false;
       }
 
       if (!useNativeQueue) {
@@ -253,8 +281,16 @@ public class EventPluginLoader {
         .equalsIgnoreCase(triggerConfig.getTriggerName())) {
       if (triggerConfig.isEnabled()) {
         transactionLogTriggerEnable = true;
+        if (triggerConfig.isEthCompatible()) {
+          transactionLogTriggerEthCompatible = true;
+        }
+        if (triggerConfig.isSolidified()) {
+          transactionLogTriggerSolidified = true;
+        }
       } else {
         transactionLogTriggerEnable = false;
+        transactionLogTriggerEthCompatible = false;
+        transactionLogTriggerSolidified = false;
       }
 
       if (!useNativeQueue) {
@@ -277,8 +313,12 @@ public class EventPluginLoader {
         .equalsIgnoreCase(triggerConfig.getTriggerName())) {
       if (triggerConfig.isEnabled()) {
         contractLogTriggerEnable = true;
+        if (triggerConfig.isRedundancy()) {
+          contractLogTriggerRedundancy = true;
+        }
       } else {
         contractLogTriggerEnable = false;
+        contractLogTriggerRedundancy = false;
       }
 
       if (!useNativeQueue) {
@@ -309,8 +349,12 @@ public class EventPluginLoader {
         .equalsIgnoreCase(triggerConfig.getTriggerName())) {
       if (triggerConfig.isEnabled()) {
         solidityLogTriggerEnable = true;
+        if (triggerConfig.isRedundancy()) {
+          solidityLogTriggerRedundancy = true;
+        }
       } else {
         solidityLogTriggerEnable = false;
+        solidityLogTriggerRedundancy = false;
       }
       if (!useNativeQueue) {
         setPluginTopic(Trigger.SOLIDITY_LOG_TRIGGER, triggerConfig.getTopic());
@@ -328,8 +372,20 @@ public class EventPluginLoader {
     }
   }
 
+  public synchronized int getVersion() {
+    return version;
+  }
+
+  public synchronized long getStartSyncBlockNum() {
+    return startSyncBlockNum;
+  }
+
   public synchronized boolean isBlockLogTriggerEnable() {
     return blockLogTriggerEnable;
+  }
+
+  public synchronized boolean isBlockLogTriggerSolidified() {
+    return blockLogTriggerSolidified;
   }
 
   public synchronized boolean isSolidityTriggerEnable() {
@@ -344,8 +400,20 @@ public class EventPluginLoader {
     return solidityLogTriggerEnable;
   }
 
+  public synchronized boolean isSolidityLogTriggerRedundancy() {
+    return solidityLogTriggerRedundancy;
+  }
+
   public synchronized boolean isTransactionLogTriggerEnable() {
     return transactionLogTriggerEnable;
+  }
+
+  public synchronized boolean isTransactionLogTriggerEthCompatible() {
+    return transactionLogTriggerEthCompatible;
+  }
+
+  public synchronized boolean isTransactionLogTriggerSolidified() {
+    return transactionLogTriggerSolidified;
   }
 
   public synchronized boolean isContractEventTriggerEnable() {
@@ -354,6 +422,10 @@ public class EventPluginLoader {
 
   public synchronized boolean isContractLogTriggerEnable() {
     return contractLogTriggerEnable;
+  }
+
+  public synchronized boolean isContractLogTriggerRedundancy() {
+    return contractLogTriggerRedundancy;
   }
 
   private void setPluginTopic(int eventType, String topic) {
@@ -468,6 +540,21 @@ public class EventPluginLoader {
       eventListeners.forEach(listener ->
           listener.handleContractEventTrigger(toJsonString(trigger)));
     }
+  }
+
+  public boolean isBusy() {
+    if (useNativeQueue) {
+      return false;
+    }
+    int queueSize = 0;
+    for (IPluginEventListener listener : eventListeners) {
+      try {
+        queueSize += listener.getPendingSize();
+      } catch (AbstractMethodError error) {
+        break;
+      }
+    }
+    return queueSize >= MAX_PENDING_SIZE;
   }
 
   private String toJsonString(Object data) {

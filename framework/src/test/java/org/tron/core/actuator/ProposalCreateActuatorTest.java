@@ -1,29 +1,29 @@
 package org.tron.core.actuator;
 
 import static junit.framework.TestCase.fail;
+import static org.junit.Assert.assertThrows;
+import static org.tron.core.Constant.CREATE_ACCOUNT_TRANSACTION_MAX_BYTE_SIZE;
+import static org.tron.core.Constant.CREATE_ACCOUNT_TRANSACTION_MIN_BYTE_SIZE;
+import static org.tron.core.config.Parameter.ChainConstant.ONE_YEAR_BLOCK_NUMBERS;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
-import java.io.File;
 import java.util.HashMap;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
-import org.tron.common.application.TronApplicationContext;
+import org.mockito.Mockito;
+import org.tron.common.BaseTest;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.FileUtil;
+import org.tron.common.utils.ForkController;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.WitnessCapsule;
-import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
-import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ItemNotFoundException;
@@ -33,10 +33,8 @@ import org.tron.protos.contract.AssetIssueContractOuterClass;
 import org.tron.protos.contract.ProposalContract.ProposalCreateContract;
 
 @Slf4j
+public class ProposalCreateActuatorTest extends BaseTest {
 
-public class ProposalCreateActuatorTest {
-
-  private static final String dbPath = "output_ProposalCreate_test";
   private static final String ACCOUNT_NAME_FIRST = "ownerF";
   private static final String OWNER_ADDRESS_FIRST;
   private static final String ACCOUNT_NAME_SECOND = "ownerS";
@@ -44,43 +42,15 @@ public class ProposalCreateActuatorTest {
   private static final String URL = "https://tron.network";
   private static final String OWNER_ADDRESS_INVALID = "aaaa";
   private static final String OWNER_ADDRESS_NOACCOUNT;
-  private static final String OWNER_ADDRESS_BALANCENOTSUFFIENT;
-  private static TronApplicationContext context;
-  private static Manager dbManager;
 
   static {
-    Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
-    context = new TronApplicationContext(DefaultConfig.class);
+    Args.setParam(new String[]{"--output-directory", dbPath()}, Constant.TEST_CONF);
     OWNER_ADDRESS_FIRST =
         Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     OWNER_ADDRESS_SECOND =
         Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
     OWNER_ADDRESS_NOACCOUNT =
         Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1aed";
-    OWNER_ADDRESS_BALANCENOTSUFFIENT =
-        Wallet.getAddressPreFixString() + "548794500882809695a8a687866e06d4271a1ced";
-  }
-
-  /**
-   * Init data.
-   */
-  @BeforeClass
-  public static void init() {
-    dbManager = context.getBean(Manager.class);
-  }
-
-  /**
-   * Release resources.
-   */
-  @AfterClass
-  public static void destroy() {
-    Args.clearParam();
-    context.destroy();
-    if (FileUtil.deleteDir(new File(dbPath))) {
-      logger.info("Release resources successful.");
-    } else {
-      logger.info("Release resources failure.");
-    }
   }
 
   /**
@@ -315,6 +285,50 @@ public class ProposalCreateActuatorTest {
       Assert.assertEquals("This value[REMOVE_THE_POWER_OF_THE_GR] is only allowed to be 1",
           e.getMessage());
     }
+    // verify Proposal No. 78
+    paras = new HashMap<>();
+    paras.put(78L, 10L);
+    actuator = new ProposalCreateActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setForkUtils(dbManager.getChainBaseManager().getForkController())
+        .setAny(getContract(OWNER_ADDRESS_FIRST, paras));
+    assertThrows(
+        "Bad chain parameter id [MAX_DELEGATE_LOCK_PERIOD]",
+        ContractValidateException.class, actuator::validate);
+
+    actuator = new ProposalCreateActuator();
+    ForkController forkController = Mockito.mock(ForkController.class);
+    Mockito.when(forkController.pass(Mockito.any())).thenReturn(true);
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setForkUtils(forkController)
+        .setAny(getContract(OWNER_ADDRESS_FIRST, paras));
+    dbManager.getDynamicPropertiesStore().saveMaxDelegateLockPeriod(86400L);
+    long maxDelegateLockPeriod = dbManager.getDynamicPropertiesStore().getMaxDelegateLockPeriod();
+    assertThrows(
+        "This value[MAX_DELEGATE_LOCK_PERIOD] is only allowed to be greater than "
+            + maxDelegateLockPeriod + " and less than or equal to " + ONE_YEAR_BLOCK_NUMBERS + "!",
+        ContractValidateException.class, actuator::validate);
+
+    // verify Proposal No. 82
+    paras = new HashMap<>();
+    paras.put(82L, 0L);
+    actuator = new ProposalCreateActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setForkUtils(dbManager.getChainBaseManager().getForkController())
+        .setAny(getContract(OWNER_ADDRESS_FIRST, paras));
+    assertThrows(
+        "Bad chain parameter id [ALLOW_ENERGY_ADJUSTMENT]",
+        ContractValidateException.class, actuator::validate);
+
+    actuator = new ProposalCreateActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setForkUtils(forkController)
+        .setAny(getContract(OWNER_ADDRESS_FIRST, paras));
+    assertThrows(
+        "This value[MAX_CREATE_ACCOUNT_TX_SIZE] is only allowed to be greater than or equal "
+            + "to " + CREATE_ACCOUNT_TRANSACTION_MIN_BYTE_SIZE + " and less than or equal to "
+            + CREATE_ACCOUNT_TRANSACTION_MAX_BYTE_SIZE + "!",
+        ContractValidateException.class, actuator::validate);
   }
 
   /**

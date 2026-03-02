@@ -3,12 +3,13 @@ package org.tron.common.runtime.vm;
 import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
+import org.junit.Assert;
 import org.junit.Test;
-import org.testng.Assert;
 import org.tron.common.runtime.TVMTestResult;
 import org.tron.common.runtime.TvmTestUtils;
 import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.WalletUtil;
+import org.tron.common.utils.client.utils.AbiUtil;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
@@ -16,7 +17,6 @@ import org.tron.core.exception.VMIllegalException;
 import org.tron.core.vm.config.ConfigLoader;
 import org.tron.core.vm.config.VMConfig;
 import org.tron.protos.Protocol.Transaction;
-import stest.tron.wallet.common.client.utils.AbiUtil;
 
 @Slf4j
 public class IsContractTest extends VMTestBase {
@@ -170,7 +170,7 @@ contract isTestCtr {
         null);
     byte[] factoryAddress = WalletUtil.generateContractAddress(trx);
     String factoryAddressStr = StringUtil.encode58Check(factoryAddress);
-    runtime = TvmTestUtils.processTransactionAndReturnRuntime(trx, rootDeposit, null);
+    runtime = TvmTestUtils.processTransactionAndReturnRuntime(trx, rootRepository, null);
     Assert.assertNull(runtime.getRuntimeError());
 
     trx = TvmTestUtils.generateDeploySmartContractAndGetTransaction(
@@ -178,7 +178,7 @@ contract isTestCtr {
         null);
     byte[] factoryAddressOther = WalletUtil.generateContractAddress(trx);
     String factoryAddressStrOther = StringUtil.encode58Check(factoryAddressOther);
-    runtime = TvmTestUtils.processTransactionAndReturnRuntime(trx, rootDeposit, null);
+    runtime = TvmTestUtils.processTransactionAndReturnRuntime(trx, rootRepository, null);
     Assert.assertNull(runtime.getRuntimeError());
 
     // Trigger contract method: isTest(address)

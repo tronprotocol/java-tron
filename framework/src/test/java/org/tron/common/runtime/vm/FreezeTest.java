@@ -4,9 +4,9 @@ import static org.tron.core.config.Parameter.ChainConstant.FROZEN_PERIOD;
 import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 import static org.tron.protos.Protocol.Transaction.Result.contractResult.REVERT;
 import static org.tron.protos.Protocol.Transaction.Result.contractResult.SUCCESS;
+import static org.tron.protos.contract.Common.ResourceCode.ENERGY;
 
 import com.google.protobuf.ByteString;
-import java.io.File;
 import java.util.Arrays;
 import java.util.function.Consumer;
 import lombok.extern.slf4j.Slf4j;
@@ -14,19 +14,19 @@ import org.bouncycastle.util.encoders.Hex;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.runtime.Runtime;
 import org.tron.common.runtime.RuntimeImpl;
 import org.tron.common.runtime.TVMTestResult;
 import org.tron.common.runtime.TvmTestUtils;
-import org.tron.common.storage.Deposit;
-import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.FastByteComparisons;
-import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.WalletUtil;
+import org.tron.common.utils.client.utils.AbiUtil;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
@@ -43,9 +43,10 @@ import org.tron.core.store.StoreFactory;
 import org.tron.core.vm.EnergyCost;
 import org.tron.core.vm.config.ConfigLoader;
 import org.tron.core.vm.config.VMConfig;
+import org.tron.core.vm.repository.Repository;
+import org.tron.core.vm.repository.RepositoryImpl;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Transaction.Result.contractResult;
-import stest.tron.wallet.common.client.utils.AbiUtil;
 
 @Slf4j
 public class FreezeTest {
@@ -120,33 +121,35 @@ public class FreezeTest {
   private static final String userCStr = "27juXSbMvL6pb8VgmKRgW6ByCfw5RqZjUuo";
   private static final byte[] userC = Commons.decode58Check(userCStr);
 
-  private static String dbPath;
+  @Rule
+  public final TemporaryFolder temporaryFolder = new TemporaryFolder();
   private static TronApplicationContext context;
   private static Manager manager;
   private static byte[] owner;
-  private static Deposit rootDeposit;
+  private static Repository rootRepository;
 
   @Before
   public void init() throws Exception {
-    dbPath = "output_" + FreezeTest.class.getName();
-    Args.setParam(new String[]{"--output-directory", dbPath, "--debug"}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory",
+        temporaryFolder.newFolder().toString(), "--debug"}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     manager = context.getBean(Manager.class);
     owner = Hex.decode(Wallet.getAddressPreFixString()
         + "abd4b9367799eaa3197fecb144eb71de1e049abc");
-    rootDeposit = DepositImpl.createRoot(manager);
-    rootDeposit.createAccount(owner, Protocol.AccountType.Normal);
-    rootDeposit.addBalance(owner, 900_000_000_000_000_000L);
-    rootDeposit.commit();
+    rootRepository = RepositoryImpl.createRoot(StoreFactory.getInstance());
+    rootRepository.createAccount(owner, Protocol.AccountType.Normal);
+    rootRepository.addBalance(owner, 900_000_000_000_000_000L);
+    rootRepository.commit();
 
     ConfigLoader.disable = true;
-    //manager.getDynamicPropertiesStore().saveAllowTvmFreeze(1);
+    manager.getDynamicPropertiesStore().saveAllowTvmFreeze(1);
     VMConfig.initVmHardFork(true);
     VMConfig.initAllowTvmTransferTrc10(1);
     VMConfig.initAllowTvmConstantinople(1);
     VMConfig.initAllowTvmSolidity059(1);
     VMConfig.initAllowTvmIstanbul(1);
     VMConfig.initAllowTvmFreeze(1);
+    VMConfig.initAllowTvmFreezeV2(0);
   }
 
   private byte[] deployContract(String contractName, String code) throws Exception {
@@ -334,7 +337,7 @@ public class FreezeTest {
 
     long energyWithoutCreatingAccountA = freezeForOther(contract, userA, frozenBalance, 0)
         .getReceipt().getEnergyUsageTotal();
-    Assert.assertEquals(energyWithCreatingAccountA - EnergyCost.getInstance().getNEW_ACCT_CALL(),
+    Assert.assertEquals(energyWithCreatingAccountA - EnergyCost.getNewAcctCall(),
         energyWithoutCreatingAccountA);
 
     freezeForOther(contract, userA, frozenBalance, 1);
@@ -344,7 +347,7 @@ public class FreezeTest {
 
     long energyWithoutCreatingAccountB = freezeForOther(contract, userB, frozenBalance, 1)
         .getReceipt().getEnergyUsageTotal();
-    Assert.assertEquals(energyWithCreatingAccountB - EnergyCost.getInstance().getNEW_ACCT_CALL(),
+    Assert.assertEquals(energyWithCreatingAccountB - EnergyCost.getNewAcctCall(),
         energyWithoutCreatingAccountB);
 
     freezeForOther(contract, userB, frozenBalance, 0);
@@ -526,7 +529,7 @@ public class FreezeTest {
     long frozenBalance = 1_000_000;
     freezeForSelf(contract, frozenBalance, 0);
     freezeForSelf(contract, frozenBalance, 1);
-    long salt = 1;
+    long salt = 2;
     byte[] predictedAddr = getCreate2Addr(factory, salt);
     freezeForOther(contract, predictedAddr, frozenBalance, 0);
     freezeForOther(contract, predictedAddr, frozenBalance, 1);
@@ -798,7 +801,9 @@ public class FreezeTest {
     if (oldReceiver != null) {
       newReceiver.setBalance(oldReceiver.getBalance());
       oldReceiver.setEnergyUsage(0);
+      oldReceiver.setNewWindowSize(ENERGY, 28800);
       newReceiver.setEnergyUsage(0);
+      newReceiver.setNewWindowSize(ENERGY,28800);
       if (res == 0) {
         oldReceiver.setAcquiredDelegatedFrozenBalanceForBandwidth(0);
         newReceiver.setAcquiredDelegatedFrozenBalanceForBandwidth(0);
@@ -912,7 +917,9 @@ public class FreezeTest {
           || acquiredBalance - newAcquiredBalance == delegatedFrozenBalance);
       newReceiver.setBalance(oldReceiver.getBalance());
       newReceiver.setEnergyUsage(0);
+      newReceiver.setNewWindowSize(ENERGY,28800);
       oldReceiver.setEnergyUsage(0);
+      oldReceiver.setNewWindowSize(ENERGY,28800);
       if (res == 0) {
         oldReceiver.setAcquiredDelegatedFrozenBalanceForBandwidth(0);
         newReceiver.setAcquiredDelegatedFrozenBalanceForBandwidth(0);
@@ -1036,10 +1043,5 @@ public class FreezeTest {
     VMConfig.initVmHardFork(false);
     Args.clearParam();
     context.destroy();
-    if (FileUtil.deleteDir(new File(dbPath))) {
-      logger.info("Release resources successful.");
-    } else {
-      logger.error("Release resources failure.");
-    }
   }
 }

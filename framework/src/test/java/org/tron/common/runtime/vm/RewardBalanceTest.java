@@ -3,13 +3,14 @@ package org.tron.common.runtime.vm;
 import java.util.Collections;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
+import org.junit.Assert;
 import org.junit.Test;
-import org.testng.Assert;
 import org.tron.common.runtime.InternalTransaction;
 import org.tron.common.runtime.TvmTestUtils;
 import org.tron.common.utils.Base58;
 import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.WalletUtil;
+import org.tron.common.utils.client.utils.AbiUtil;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
@@ -21,12 +22,10 @@ import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.program.Program;
 import org.tron.core.vm.program.invoke.ProgramInvoke;
 import org.tron.core.vm.program.invoke.ProgramInvokeFactory;
-import org.tron.core.vm.program.invoke.ProgramInvokeFactoryImpl;
 import org.tron.core.vm.repository.Repository;
 import org.tron.core.vm.repository.RepositoryImpl;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Transaction;
-import stest.tron.wallet.common.client.utils.AbiUtil;
 
 @Slf4j
 public class RewardBalanceTest extends VMTestBase {
@@ -88,8 +87,6 @@ public class RewardBalanceTest extends VMTestBase {
     manager.getDynamicPropertiesStore().saveChangeDelegation(1);
     StoreFactory storeFactory = StoreFactory.getInstance();
     Repository repository;
-    ProgramInvokeFactory programInvokeFactory = new ProgramInvokeFactoryImpl();
-    VMConfig vmConfig = VMConfig.getInstance();
 
     String contractName = "TestRewardBalance";
     byte[] address = Hex.decode(OWNER_ADDRESS);
@@ -152,7 +149,7 @@ public class RewardBalanceTest extends VMTestBase {
         null);
     byte[] factoryAddress = WalletUtil.generateContractAddress(trx);
     String factoryAddressStr = StringUtil.encode58Check(factoryAddress);
-    runtime = TvmTestUtils.processTransactionAndReturnRuntime(trx, rootDeposit, null);
+    runtime = TvmTestUtils.processTransactionAndReturnRuntime(trx, rootRepository, null);
     Assert.assertNull(runtime.getRuntimeError());
 
     // Trigger contract method: rewardBalanceTest(address)
@@ -166,12 +163,12 @@ public class RewardBalanceTest extends VMTestBase {
     InternalTransaction rootInternalTransaction = new InternalTransaction(trx,
         InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE);
     repository = RepositoryImpl.createRoot(storeFactory);
-    ProgramInvoke programInvoke = programInvokeFactory
+    ProgramInvoke programInvoke = ProgramInvokeFactory
         .createProgramInvoke(InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE,
             InternalTransaction.ExecutorType.ET_PRE_TYPE, trx,
             0, 0, blockCap.getInstance(), repository, System.nanoTime() / 1000,
             System.nanoTime() / 1000 + 50000, 3_000_000L);
-    Program program = new Program(null, programInvoke, rootInternalTransaction, vmConfig);
+    Program program = new Program(null, null, programInvoke, rootInternalTransaction);
     byte[] result = program.getRewardBalance(new DataWord(Base58.decode(nonexistentAccount)))
         .getData();
 
@@ -186,12 +183,12 @@ public class RewardBalanceTest extends VMTestBase {
     rootInternalTransaction = new InternalTransaction(trx,
         InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE);
     repository = RepositoryImpl.createRoot(storeFactory);
-    programInvoke = programInvokeFactory
+    programInvoke = ProgramInvokeFactory
         .createProgramInvoke(InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE,
             InternalTransaction.ExecutorType.ET_PRE_TYPE, trx,
             0, 0, blockCap.getInstance(), repository, System.nanoTime() / 1000,
             System.nanoTime() / 1000 + 50000, 3_000_000L);
-    program = new Program(null, programInvoke, rootInternalTransaction, vmConfig);
+    program = new Program(null, null, programInvoke, rootInternalTransaction);
     result = program.getRewardBalance(new DataWord(Base58.decode(factoryAddressStr))).getData();
     Assert.assertEquals(Hex.toHexString(result),
         "0000000000000000000000000000000000000000000000000000000000000000");
@@ -205,12 +202,12 @@ public class RewardBalanceTest extends VMTestBase {
     rootInternalTransaction = new InternalTransaction(trx,
         InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE);
     repository = RepositoryImpl.createRoot(storeFactory);
-    programInvoke = programInvokeFactory
+    programInvoke = ProgramInvokeFactory
         .createProgramInvoke(InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE,
             InternalTransaction.ExecutorType.ET_PRE_TYPE, trx,
             0, 0, blockCap.getInstance(), repository, System.nanoTime() / 1000,
             System.nanoTime() / 1000 + 50000, 3_000_000L);
-    program = new Program(null, programInvoke, rootInternalTransaction, vmConfig);
+    program = new Program(null, null, programInvoke, rootInternalTransaction);
     result = program.getRewardBalance(new DataWord(Base58.decode(witnessAccount))).getData();
     Assert.assertEquals(Hex.toHexString(result),
         "0000000000000000000000000000000000000000000000000000000000000000");
@@ -224,12 +221,12 @@ public class RewardBalanceTest extends VMTestBase {
     rootInternalTransaction = new InternalTransaction(trx,
         InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE);
     repository = RepositoryImpl.createRoot(storeFactory);
-    programInvoke = programInvokeFactory
+    programInvoke = ProgramInvokeFactory
         .createProgramInvoke(InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE,
             InternalTransaction.ExecutorType.ET_PRE_TYPE, trx,
             0, 0, blockCap.getInstance(), repository, System.nanoTime() / 1000,
             System.nanoTime() / 1000 + 50000, 3_000_000L);
-    program = new Program(null, programInvoke, rootInternalTransaction, vmConfig);
+    program = new Program(null, null, programInvoke, rootInternalTransaction);
     result = program.getRewardBalance(DataWord.ZERO()).getData();
     Assert.assertEquals(Hex.toHexString(result),
         "0000000000000000000000000000000000000000000000000000000000000000");
@@ -243,12 +240,12 @@ public class RewardBalanceTest extends VMTestBase {
     rootInternalTransaction = new InternalTransaction(trx,
         InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE);
     repository = RepositoryImpl.createRoot(storeFactory);
-    programInvoke = programInvokeFactory
+    programInvoke = ProgramInvokeFactory
         .createProgramInvoke(InternalTransaction.TrxType.TRX_CONTRACT_CALL_TYPE,
             InternalTransaction.ExecutorType.ET_PRE_TYPE, trx,
             0, 0, blockCap.getInstance(), repository, System.nanoTime() / 1000,
             System.nanoTime() / 1000 + 50000, 3_000_000L);
-    program = new Program(null, programInvoke, rootInternalTransaction, vmConfig);
+    program = new Program(null, null, programInvoke, rootInternalTransaction);
     result = program.getRewardBalance(new DataWord(Base58.decode(factoryAddressStr))).getData();
     Assert.assertEquals(Hex.toHexString(result),
         "0000000000000000000000000000000000000000000000000000000000000000");

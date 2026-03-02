@@ -5,7 +5,6 @@ import java.util.Map;
 
 import lombok.extern.slf4j.Slf4j;
 import org.tron.core.ChainBaseManager;
-import org.tron.core.capsule.AbiCapsule;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.store.AbiStore;
 import org.tron.core.store.ContractStore;

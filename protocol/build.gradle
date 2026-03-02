@@ -1,18 +1,23 @@
 apply plugin: 'com.google.protobuf'
 
+def protobufVersion = '3.25.5'
+def grpcVersion = '1.60.0'
+
 dependencies {
-    compile group: 'com.google.protobuf', name: 'protobuf-java', version: '3.4.0'
-    compile group: 'com.google.protobuf', name: 'protobuf-java-util', version: '3.4.0'
-    compile group: 'net.jcip', name: 'jcip-annotations', version: '1.0'
+    api group: 'com.google.protobuf', name: 'protobuf-java', version: protobufVersion
+    api group: 'com.google.protobuf', name: 'protobuf-java-util', version: protobufVersion
+    api group: 'net.jcip', name: 'jcip-annotations', version: '1.0'
 
 //    checkstyleConfig "com.puppycrawl.tools:checkstyle:${versions.checkstyle}"
     // google grpc
-    compile group: 'io.grpc', name: 'grpc-netty', version: '1.14.0'
-    compile group: 'io.grpc', name: 'grpc-protobuf', version: '1.14.0'
-    compile group: 'io.grpc', name: 'grpc-stub', version: '1.14.0'
+    api group: 'io.grpc', name: 'grpc-netty', version: grpcVersion
+    api group: 'io.grpc', name: 'grpc-protobuf', version: grpcVersion
+    api group: 'io.grpc', name: 'grpc-stub', version: grpcVersion
+    api group: 'io.grpc', name: 'grpc-services', version: grpcVersion
+
     // end google grpc
 
-    compile group: 'com.google.api.grpc', name: 'googleapis-common-protos', version: '0.0.3'
+    api group: 'com.google.api.grpc', name: 'proto-google-common-protos', version: '2.15.0'
 }
 
 tasks.matching { it instanceof Test }.all {
@@ -35,12 +40,12 @@ sourceSets {
 protobuf {
     generatedFilesBaseDir = "$projectDir/src/"
     protoc {
-        artifact = "com.google.protobuf:protoc:3.5.1-1"
+        artifact = "com.google.protobuf:protoc:${protobufVersion}"
     }
 
     plugins {
         grpc {
-            artifact = 'io.grpc:protoc-gen-grpc-java:1.9.0'
+            artifact = "io.grpc:protoc-gen-grpc-java:${grpcVersion}"
         }
     }
     generateProtoTasks {
@@ -61,3 +66,4 @@ clean.doFirst {
     delete "src/main/java"
 }
 
+processResources.dependsOn(generateProto) // explicit_dependency

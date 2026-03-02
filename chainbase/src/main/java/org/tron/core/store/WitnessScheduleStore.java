@@ -49,11 +49,11 @@ public class WitnessScheduleStore extends TronStoreWithRevoking<BytesCapsule> {
             System.arraycopy(ba, i * ADDRESS_BYTE_ARRAY_LENGTH, b, 0, ADDRESS_BYTE_ARRAY_LENGTH);
             witnessesAddressList.add(ByteString.copyFrom(b));
           }
-          logger.debug("getWitnesses:" + ByteArray.toStr(species) + witnessesAddressList);
+          logger.debug("GetWitnesses: {}, {}.", ByteArray.toStr(species), witnessesAddressList);
           return witnessesAddressList;
         }).orElseThrow(
             () -> new IllegalArgumentException(
-                "not found " + ByteArray.toStr(species) + "Witnesses"));
+                String.format("not found %s Witnesses", ByteArray.toStr(species))));
   }
 
   public void saveActiveWitnesses(List<ByteString> witnessesAddressList) {

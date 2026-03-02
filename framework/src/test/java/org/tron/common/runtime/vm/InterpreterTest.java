@@ -27,7 +27,10 @@ import org.tron.common.runtime.InternalTransaction;
 import org.tron.common.runtime.InternalTransaction.TrxType;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.core.vm.VM;
+import org.tron.core.vm.JumpTable;
+import org.tron.core.vm.Op;
+import org.tron.core.vm.Operation;
+import org.tron.core.vm.OperationRegistry;
 import org.tron.core.vm.program.Program;
 import org.tron.core.vm.program.invoke.ProgramInvokeMockImpl;
 import org.tron.protos.Protocol.Transaction;
@@ -37,6 +40,7 @@ public class InterpreterTest {
 
   private ProgramInvokeMockImpl invoke;
   private Program program;
+  private final JumpTable jumpTable = OperationRegistry.newBaseOperationSet();
 
   @BeforeClass
   public static void init() {
@@ -50,21 +54,33 @@ public class InterpreterTest {
 
   @Test
   public void testVMException() throws ContractValidateException {
-    VM vm = new VM();
-    invoke = new ProgramInvokeMockImpl();
     byte[] op = {0x5b, 0x60, 0x00, 0x56};
     // 0x5b      - JUMPTEST
     // 0x60 0x00 - PUSH 0x00
     // 0x56      - JUMP to 0
     Transaction trx = Transaction.getDefaultInstance();
     InternalTransaction interTrx = new InternalTransaction(trx, TrxType.TRX_UNKNOWN_TYPE);
-    program = new Program(op, invoke, interTrx);
+    invoke = new ProgramInvokeMockImpl(op, op);
+    program = new Program(op, op, invoke, interTrx);
 
     boolean result = false;
 
     try {
       while (!program.isStopped()) {
-        vm.step(program);
+        Operation operation = jumpTable.get(program.getCurrentOpIntValue());
+        if (operation == null) {
+          throw Program.Exception.invalidOpCode(program.getCurrentOp());
+        }
+        program.setLastOp((byte) operation.getOpcode());
+        program.verifyStackSize(operation.getRequire());
+        //Check not exceeding stack limits
+        program.verifyStackOverflow(operation.getRequire(), operation.getRet());
+
+        program.spendEnergy(operation.getEnergyCost(program),
+            Op.getNameOf(operation.getOpcode()));
+        program.checkCPUTimeLimit(Op.getNameOf(operation.getOpcode()));
+        operation.execute(program);
+        program.setPreviouslyExecutedOp((byte) operation.getOpcode());
       }
     } catch (Program.OutOfEnergyException e) {
       result = true;
@@ -75,19 +91,32 @@ public class InterpreterTest {
 
   @Test
   public void JumpSingleOperation() throws ContractValidateException {
-    VM vm = new VM();
     invoke = new ProgramInvokeMockImpl();
     byte[] op = {0x56};
     // 0x56      - JUMP
     Transaction trx = Transaction.getDefaultInstance();
     InternalTransaction interTrx = new InternalTransaction(trx, TrxType.TRX_UNKNOWN_TYPE);
-    program = new Program(op, invoke, interTrx);
+    invoke = new ProgramInvokeMockImpl(op, op);
+    program = new Program(op, op, invoke, interTrx);
 
     boolean result = false;
 
     try {
       while (!program.isStopped()) {
-        vm.step(program);
+        Operation operation = jumpTable.get(program.getCurrentOpIntValue());
+        if (operation == null) {
+          throw Program.Exception.invalidOpCode(program.getCurrentOp());
+        }
+        program.setLastOp((byte) operation.getOpcode());
+        program.verifyStackSize(operation.getRequire());
+        //Check not exceeding stack limits
+        program.verifyStackOverflow(operation.getRequire(), operation.getRet());
+
+        program.spendEnergy(operation.getEnergyCost(program),
+            Op.getNameOf(operation.getOpcode()));
+        program.checkCPUTimeLimit(Op.getNameOf(operation.getOpcode()));
+        operation.execute(program);
+        program.setPreviouslyExecutedOp((byte) operation.getOpcode());
       }
     } catch (Program.StackTooSmallException e) {
       // except to get stack too small exception for Jump
@@ -99,7 +128,6 @@ public class InterpreterTest {
 
   @Test
   public void JumpToInvalidDestination() throws ContractValidateException {
-    VM vm = new VM();
     invoke = new ProgramInvokeMockImpl();
     byte[] op = {0x60, 0x20, 0x56};
     // 0x60      - PUSH1
@@ -107,13 +135,27 @@ public class InterpreterTest {
     // 0x56      - JUMP
     Transaction trx = Transaction.getDefaultInstance();
     InternalTransaction interTrx = new InternalTransaction(trx, TrxType.TRX_UNKNOWN_TYPE);
-    program = new Program(op, invoke, interTrx);
+    invoke = new ProgramInvokeMockImpl(op, op);
+    program = new Program(op, op, invoke, interTrx);
 
     boolean result = false;
 
     try {
       while (!program.isStopped()) {
-        vm.step(program);
+        Operation operation = jumpTable.get(program.getCurrentOpIntValue());
+        if (operation == null) {
+          throw Program.Exception.invalidOpCode(program.getCurrentOp());
+        }
+        program.setLastOp((byte) operation.getOpcode());
+        program.verifyStackSize(operation.getRequire());
+        //Check not exceeding stack limits
+        program.verifyStackOverflow(operation.getRequire(), operation.getRet());
+
+        program.spendEnergy(operation.getEnergyCost(program),
+            Op.getNameOf(operation.getOpcode()));
+        program.checkCPUTimeLimit(Op.getNameOf(operation.getOpcode()));
+        operation.execute(program);
+        program.setPreviouslyExecutedOp((byte) operation.getOpcode());
       }
     } catch (Program.BadJumpDestinationException e) {
       // except to get BadJumpDestinationException for Jump
@@ -126,7 +168,6 @@ public class InterpreterTest {
 
   @Test
   public void JumpToLargeNumberDestination() throws ContractValidateException {
-    VM vm = new VM();
     invoke = new ProgramInvokeMockImpl();
     byte[] op = {0x64, 0x7f, 0x7f, 0x7f, 0x7f, 0x7f, 0x56};
     // 0x60              - PUSH5
@@ -134,13 +175,27 @@ public class InterpreterTest {
     // 0x56              - JUMP
     Transaction trx = Transaction.getDefaultInstance();
     InternalTransaction interTrx = new InternalTransaction(trx, TrxType.TRX_UNKNOWN_TYPE);
-    program = new Program(op, invoke, interTrx);
+    invoke = new ProgramInvokeMockImpl(op, op);
+    program = new Program(op, op, invoke, interTrx);
 
     boolean result = false;
 
     try {
       while (!program.isStopped()) {
-        vm.step(program);
+        Operation operation = jumpTable.get(program.getCurrentOpIntValue());
+        if (operation == null) {
+          throw Program.Exception.invalidOpCode(program.getCurrentOp());
+        }
+        program.setLastOp((byte) operation.getOpcode());
+        program.verifyStackSize(operation.getRequire());
+        //Check not exceeding stack limits
+        program.verifyStackOverflow(operation.getRequire(), operation.getRet());
+
+        program.spendEnergy(operation.getEnergyCost(program),
+            Op.getNameOf(operation.getOpcode()));
+        program.checkCPUTimeLimit(Op.getNameOf(operation.getOpcode()));
+        operation.execute(program);
+        program.setPreviouslyExecutedOp((byte) operation.getOpcode());
       }
     } catch (Program.BadJumpDestinationException e) {
       // except to get BadJumpDestinationException for Jump

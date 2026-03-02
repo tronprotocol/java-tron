@@ -1,5 +1,6 @@
 package org.tron.core.db.accountstate;
 
+import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.StringUtil;
 import org.tron.protos.Protocol.Account;
@@ -24,8 +25,8 @@ public class AccountStateEntity {
   public static AccountStateEntity parse(byte[] data) {
     try {
       return new AccountStateEntity().setAccount(Account.parseFrom(data));
-    } catch (Exception e) {
-      logger.error("parse to AccountStateEntity error! reason: {}", e.getMessage());
+    } catch (InvalidProtocolBufferException e) {
+      logger.error("Parse to AccountStateEntity error! reason: {}", e.getMessage());
     }
     return null;
   }

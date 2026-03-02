@@ -1,110 +1,61 @@
 package org.tron.core.vm.repository;
 
-public class Type {
+public class Type implements Cloneable {
 
-  /**
-   * Default Mode : VALUE_TYPE_NORMAL
-   */
-  public static final int VALUE_TYPE_NORMAL = 0;
-  public static final int VALUE_TYPE_DIRTY = 1 << 0;
-  public static final int VALUE_TYPE_CREATE = 1 << 1;
-  public static final int VALUE_TYPE_UNKNOWN = 0xFFFFFFFC;
+  // Default Mode : NORMAL
+  public static final int NORMAL = 0;
+  public static final int DIRTY = 1;
+  public static final int CREATE = 1 << 1;
+  public static final int UNKNOWN = 0xFFFFFFFC;
 
-  protected int type = VALUE_TYPE_NORMAL;
+  protected int type = NORMAL;
 
-  /**
-   * @param type
-   */
+  public Type() {}
+
   public Type(int type) {
     this.type |= type;
   }
 
-  /**
-   * default constructor
-   */
-  public Type() {
+  private Type(Type t) {
+    this.type = t.type;
   }
 
-  /**
-   * @param T
-   */
-  private Type(Type T) {
-    this.type = T.getType();
-  }
-
-  /**
-   * @return
-   */
   public Type clone() {
     return new Type(this);
   }
 
-  /**
-   * @return
-   */
   public boolean isDirty() {
-    return (this.type & VALUE_TYPE_DIRTY) == VALUE_TYPE_DIRTY;
+    return (this.type & DIRTY) == DIRTY;
   }
 
-  /**
-   * @return
-   */
   public boolean isNormal() {
-    return this.type == VALUE_TYPE_NORMAL;
+    return this.type == NORMAL;
   }
 
-  /**
-   * @return
-   */
   public boolean isCreate() {
-    return (this.type & VALUE_TYPE_CREATE) == VALUE_TYPE_CREATE;
+    return (this.type & CREATE) == CREATE;
   }
 
-  /**
-   * @return
-   */
   public boolean shouldCommit() {
-    return this.type != VALUE_TYPE_NORMAL;
+    return this.type != NORMAL;
   }
 
-  /**
-   * @return
-   */
-  public int getType() {
-    return type;
-  }
-
-  /**
-   * @param type
-   */
-  public void setType(int type) {
+  public Type setType(int type) {
     if (isValidType(type)) {
       this.type = type;
     }
+    return this;
   }
 
-  /**
-   * @param type
-   * @return
-   */
   public boolean isValidType(int type) {
-    return (type & VALUE_TYPE_UNKNOWN) == VALUE_TYPE_NORMAL;
+    return (type & UNKNOWN) == NORMAL;
   }
 
-  /**
-   * @param type
-   */
-  public void addType(int type) {
+  public int addType(int type) {
     if (isValidType(type)) {
       this.type |= type;
     }
-  }
-
-  /**
-   * @param T
-   */
-  public void addType(Type T) {
-    addType(T.getType());
+    return this.type;
   }
 
   @Override
@@ -116,8 +67,8 @@ public class Type {
       return false;
     }
 
-    Type T = (Type) obj;
-    return this.type == T.getType();
+    Type other = (Type) obj;
+    return this.type == other.type;
   }
 
   @Override
@@ -127,8 +78,6 @@ public class Type {
 
   @Override
   public String toString() {
-    return "Type{" +
-        "type=" + type +
-        '}';
+    return "Type{" + "type=" + type + '}';
   }
 }

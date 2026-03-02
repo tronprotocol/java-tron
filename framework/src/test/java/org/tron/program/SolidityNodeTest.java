@@ -1,73 +1,29 @@
 package org.tron.program;
 
-import java.io.File;
+import javax.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.junit.Test;
-import org.tron.common.application.Application;
-import org.tron.common.application.ApplicationFactory;
-import org.tron.common.application.TronApplicationContext;
-import org.tron.common.overlay.client.DatabaseGrpcClient;
+import org.tron.common.BaseTest;
+import org.tron.common.client.DatabaseGrpcClient;
 import org.tron.core.Constant;
-import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.services.RpcApiService;
+import org.tron.core.services.http.solidity.SolidityNodeHttpApiService;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.DynamicProperties;
 
 @Slf4j
-public class SolidityNodeTest {
+public class SolidityNodeTest extends BaseTest {
 
-  private static TronApplicationContext context;
-
-  private static RpcApiService rpcApiService;
-  private static Application appT;
-  private static String dbPath = "output_witness_test";
+  @Resource
+  RpcApiService rpcApiService;
+  @Resource
+  SolidityNodeHttpApiService solidityNodeHttpApiService;
 
   static {
-    Args.setParam(new String[]{"-d", dbPath}, Constant.TEST_CONF);
-    context = new TronApplicationContext(DefaultConfig.class);
+    Args.setParam(new String[]{"-d", dbPath()}, Constant.TEST_CONF);
     Args.getInstance().setSolidityNode(true);
-    appT = ApplicationFactory.create(context);
-    rpcApiService = context.getBean(RpcApiService.class);
-  }
-
-  /**
-   * init db.
-   */
-  @BeforeClass
-  public static void init() {
-    rpcApiService.start();
-  }
-
-  /**
-   * remo db when after test.
-   */
-  @AfterClass
-  public static void removeDb() {
-    Args.clearParam();
-    rpcApiService.stop();
-    context.destroy();
-    File dbFolder = new File(dbPath);
-    if (deleteFolder(dbFolder)) {
-      logger.info("Release resources successful.");
-    } else {
-      logger.info("Release resources failure.");
-    }
-  }
-
-  private static Boolean deleteFolder(File index) {
-    if (!index.isDirectory() || index.listFiles().length <= 0) {
-      return index.delete();
-    }
-    for (File file : index.listFiles()) {
-      if (null != file && !deleteFolder(file)) {
-        return false;
-      }
-    }
-    return index.delete();
   }
 
   @Test
@@ -78,12 +34,13 @@ public class SolidityNodeTest {
 
   @Test
   public void testSolidityGrpcCall() {
+    rpcApiService.start();
     DatabaseGrpcClient databaseGrpcClient = null;
-    String addr = Args.getInstance().getTrustNodeAddr();
+    String address = Args.getInstance().getTrustNodeAddr();
     try {
-      databaseGrpcClient = new DatabaseGrpcClient(addr);
+      databaseGrpcClient = new DatabaseGrpcClient(address);
     } catch (Exception e) {
-      logger.error("Failed to create database grpc client {}", addr);
+      logger.error("Failed to create database grpc client {}", address);
     }
 
     Assert.assertNotNull(databaseGrpcClient);
@@ -93,6 +50,23 @@ public class SolidityNodeTest {
     Block genesisBlock = databaseGrpcClient.getBlock(0);
     Assert.assertNotNull(genesisBlock);
     Assert.assertFalse(genesisBlock.getTransactionsList().isEmpty());
+    Block invalidBlock = databaseGrpcClient.getBlock(-1);
+    Assert.assertNotNull(invalidBlock);
+    try {
+      databaseGrpcClient = new DatabaseGrpcClient(address, -1);
+    } catch (Exception e) {
+      logger.error("Failed to create database grpc client {}", address);
+    }
+    databaseGrpcClient.shutdown();
+    rpcApiService.stop();
   }
 
+  @Test
+  public void testSolidityNodeHttpApiService() {
+    solidityNodeHttpApiService.start();
+    // start again
+    solidityNodeHttpApiService.start();
+    solidityNodeHttpApiService.stop();
+    Assert.assertTrue(true);
+  }
 }

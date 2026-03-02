@@ -1,5 +1,6 @@
 package org.tron.core.config;
 
+import com.alibaba.fastjson.parser.ParserConfig;
 import lombok.extern.slf4j.Slf4j;
 import org.rocksdb.RocksDB;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,8 +12,6 @@ import org.springframework.context.annotation.Import;
 import org.tron.common.utils.StorageUtils;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.RevokingDatabase;
-import org.tron.core.db.RevokingStore;
-import org.tron.core.db.TransactionCache;
 import org.tron.core.db.backup.BackupRocksDBAspect;
 import org.tron.core.db.backup.NeedBeanCondition;
 import org.tron.core.db2.core.SnapshotManager;
@@ -28,6 +27,7 @@ public class DefaultConfig {
 
   static {
     RocksDB.loadLibrary();
+    ParserConfig.getGlobalInstance().setSafeMode(true);
   }
 
   @Autowired
@@ -37,23 +37,13 @@ public class DefaultConfig {
   public CommonConfig commonConfig;
 
   public DefaultConfig() {
-    Thread.setDefaultUncaughtExceptionHandler((t, e) -> logger.error("Uncaught exception", e));
   }
 
-  @Bean
+  @Bean(destroyMethod = "")
   public RevokingDatabase revokingDatabase() {
-    int dbVersion = Args.getInstance().getStorage().getDbVersion();
-    RevokingDatabase revokingDatabase;
     try {
-      if (dbVersion == 1) {
-        revokingDatabase = RevokingStore.getInstance();
-      } else if (dbVersion == 2) {
-        revokingDatabase = new SnapshotManager(
-            StorageUtils.getOutputDirectoryByDbName("block"));
-      } else {
-        throw new RuntimeException("db version is error.");
-      }
-      return revokingDatabase;
+      return new SnapshotManager(
+          StorageUtils.getOutputDirectoryByDbName("block"));
     } finally {
       logger.info("key-value data source created.");
     }
@@ -63,8 +53,7 @@ public class DefaultConfig {
   @Bean
   public RpcApiServiceOnSolidity getRpcApiServiceOnSolidity() {
     boolean isSolidityNode = Args.getInstance().isSolidityNode();
-    int dbVersion = Args.getInstance().getStorage().getDbVersion();
-    if (!isSolidityNode && dbVersion == 2) {
+    if (!isSolidityNode) {
       return new RpcApiServiceOnSolidity();
     }
 
@@ -74,8 +63,7 @@ public class DefaultConfig {
   @Bean
   public HttpApiOnSolidityService getHttpApiOnSolidityService() {
     boolean isSolidityNode = Args.getInstance().isSolidityNode();
-    int dbVersion = Args.getInstance().getStorage().getDbVersion();
-    if (!isSolidityNode && dbVersion == 2) {
+    if (!isSolidityNode) {
       return new HttpApiOnSolidityService();
     }
 
@@ -85,8 +73,7 @@ public class DefaultConfig {
   @Bean
   public RpcApiServiceOnPBFT getRpcApiServiceOnPBFT() {
     boolean isSolidityNode = Args.getInstance().isSolidityNode();
-    int dbVersion = Args.getInstance().getStorage().getDbVersion();
-    if (!isSolidityNode && dbVersion == 2) {
+    if (!isSolidityNode) {
       return new RpcApiServiceOnPBFT();
     }
 
@@ -96,19 +83,8 @@ public class DefaultConfig {
   @Bean
   public HttpApiOnPBFTService getHttpApiOnPBFTService() {
     boolean isSolidityNode = Args.getInstance().isSolidityNode();
-    int dbVersion = Args.getInstance().getStorage().getDbVersion();
-    if (!isSolidityNode && dbVersion == 2) {
+    if (!isSolidityNode) {
       return new HttpApiOnPBFTService();
-    }
-
-    return null;
-  }
-
-  @Bean
-  public TransactionCache transactionCache() {
-    int dbVersion = Args.getInstance().getStorage().getDbVersion();
-    if (dbVersion == 2) {
-      return new TransactionCache("trans-cache");
     }
 
     return null;

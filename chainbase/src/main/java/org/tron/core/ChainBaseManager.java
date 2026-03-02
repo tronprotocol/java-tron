@@ -4,12 +4,14 @@ import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERV
 
 import com.google.protobuf.ByteString;
 import java.util.List;
+import javax.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.common.storage.metric.DbStatService;
 import org.tron.common.utils.ForkController;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.zksnark.MerkleContainer;
@@ -25,8 +27,8 @@ import org.tron.core.db.CommonStore;
 import org.tron.core.db.KhaosDatabase;
 import org.tron.core.db.PbftSignDataStore;
 import org.tron.core.db.RecentBlockStore;
+import org.tron.core.db.RecentTransactionStore;
 import org.tron.core.db.TransactionStore;
-import org.tron.core.db2.core.ITronChainBase;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.HeaderNotFound;
 import org.tron.core.exception.ItemNotFoundException;
@@ -41,6 +43,7 @@ import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.AssetIssueV2Store;
 import org.tron.core.store.BalanceTraceStore;
 import org.tron.core.store.CodeStore;
+import org.tron.core.store.ContractStateStore;
 import org.tron.core.store.ContractStore;
 import org.tron.core.store.DelegatedResourceAccountIndexStore;
 import org.tron.core.store.DelegatedResourceStore;
@@ -55,6 +58,7 @@ import org.tron.core.store.MarketPairPriceToOrderStore;
 import org.tron.core.store.MarketPairToPriceStore;
 import org.tron.core.store.NullifierStore;
 import org.tron.core.store.ProposalStore;
+import org.tron.core.store.SectionBloomStore;
 import org.tron.core.store.StorageRowStore;
 import org.tron.core.store.TransactionHistoryStore;
 import org.tron.core.store.TransactionRetStore;
@@ -67,6 +71,9 @@ import org.tron.core.store.ZKProofStore;
 @Slf4j(topic = "DB")
 @Component
 public class ChainBaseManager {
+
+  @Getter
+  private static volatile ChainBaseManager chainBaseManager;
 
   // db store
   @Autowired
@@ -137,6 +144,9 @@ public class ChainBaseManager {
   private ContractStore contractStore;
   @Autowired
   @Getter
+  private ContractStateStore contractStateStore;
+  @Autowired
+  @Getter
   private DelegatedResourceStore delegatedResourceStore;
   @Autowired
   @Getter
@@ -186,6 +196,9 @@ public class ChainBaseManager {
   private RecentBlockStore recentBlockStore;
   @Autowired
   @Getter
+  private RecentTransactionStore recentTransactionStore;
+  @Autowired
+  @Getter
   private TransactionHistoryStore transactionHistoryStore;
 
   @Getter
@@ -216,49 +229,24 @@ public class ChainBaseManager {
   @Setter
   private TreeBlockIndexStore merkleTreeIndexStore;
 
-  public void closeOneStore(ITronChainBase database) {
-    logger.info("******** begin to close " + database.getName() + " ********");
-    try {
-      database.close();
-    } catch (Exception e) {
-      logger.info("failed to close  " + database.getName() + ". " + e);
-    } finally {
-      logger.info("******** end to close " + database.getName() + " ********");
-    }
-  }
+  @Autowired
+  @Getter
+  private SectionBloomStore sectionBloomStore;
 
-  public void closeAllStore() {
-    closeOneStore(transactionRetStore);
-    closeOneStore(recentBlockStore);
-    closeOneStore(transactionHistoryStore);
-    closeOneStore(transactionStore);
-    closeOneStore(accountStore);
-    closeOneStore(blockStore);
-    closeOneStore(blockIndexStore);
-    closeOneStore(accountIdIndexStore);
-    closeOneStore(accountIndexStore);
-    closeOneStore(witnessScheduleStore);
-    closeOneStore(assetIssueStore);
-    closeOneStore(dynamicPropertiesStore);
-    closeOneStore(abiStore);
-    closeOneStore(codeStore);
-    closeOneStore(contractStore);
-    closeOneStore(storageRowStore);
-    closeOneStore(exchangeStore);
-    closeOneStore(proposalStore);
-    closeOneStore(votesStore);
-    closeOneStore(delegatedResourceStore);
-    closeOneStore(delegatedResourceAccountIndexStore);
-    closeOneStore(assetIssueV2Store);
-    closeOneStore(exchangeV2Store);
-    closeOneStore(nullifierStore);
-    closeOneStore(merkleTreeStore);
-    closeOneStore(delegationStore);
-    closeOneStore(proofStore);
-    closeOneStore(commonStore);
-    closeOneStore(commonDataBase);
-    closeOneStore(pbftSignDataStore);
-  }
+  @Autowired
+  private DbStatService dbStatService;
+
+  @Getter
+  @Setter
+  private NodeType nodeType;
+
+  @Getter
+  @Setter
+  private long lowestBlockNum = -1; // except num = 0.
+
+  @Getter
+  @Setter
+  private long latestSaveBlockTime;
 
   // for test only
   public List<ByteString> getWitnesses() {
@@ -278,15 +266,12 @@ public class ChainBaseManager {
     if (CollectionUtils.isNotEmpty(blocks)) {
       return blocks.get(0);
     } else {
-      logger.info("Header block Not Found");
-      throw new HeaderNotFound("Header block Not Found");
+      throw new HeaderNotFound("header block not found");
     }
   }
 
   public synchronized BlockId getHeadBlockId() {
-    return new BlockId(
-        dynamicPropertiesStore.getLatestBlockHeaderHash(),
-        dynamicPropertiesStore.getLatestBlockHeaderNumber());
+    return new BlockId(dynamicPropertiesStore.getLatestBlockHeaderHash());
   }
 
   public long getHeadBlockNum() {
@@ -330,6 +315,9 @@ public class ChainBaseManager {
     }
   }
 
+  public BlockCapsule getKhaosDbHead(){
+    return this.khaosDb.getHead();
+  }
 
   /**
    * Get a BlockCapsule by id.
@@ -382,8 +370,51 @@ public class ChainBaseManager {
     return getBlockById(getBlockIdByNum(num));
   }
 
-  public void init() {
-    AssetUtil.setAccountAssetStore(accountAssetStore);
-    AssetUtil.setDynamicPropertiesStore(dynamicPropertiesStore);
+  public static ChainBaseManager getInstance() {
+    return chainBaseManager;
+  }
+
+  public static synchronized void init(ChainBaseManager manager) {
+    chainBaseManager = manager;
+    AssetUtil.setAccountAssetStore(manager.getAccountAssetStore());
+    AssetUtil.setDynamicPropertiesStore(manager.getDynamicPropertiesStore());
+  }
+
+  public long getNextBlockSlotTime() {
+    long slotCount = 1;
+    if (dynamicPropertiesStore.getStateFlag() == 1) {
+      slotCount += dynamicPropertiesStore.getMaintenanceSkipSlots();
+    }
+    return dynamicPropertiesStore.getLatestBlockHeaderTimestamp()
+        + slotCount * BLOCK_PRODUCED_INTERVAL;
+  }
+
+  @PostConstruct
+  private void init() {
+    this.lowestBlockNum = this.blockIndexStore.getLimitNumber(1, 1).stream()
+            .map(BlockId::getNum).findFirst().orElse(0L);
+    this.nodeType = getLowestBlockNum() > 1 ? NodeType.LITE : NodeType.FULL;
+    this.latestSaveBlockTime = System.currentTimeMillis();
+  }
+
+  public void shutdown() {
+    dbStatService.shutdown();
+  }
+
+  public boolean isLiteNode() {
+    return getNodeType() == NodeType.LITE;
+  }
+
+  public enum  NodeType  {
+    FULL(0),
+    LITE(1);
+
+    @Getter
+    private final int type;
+
+    NodeType(int type) {
+      this.type = type;
+    }
   }
 }
+

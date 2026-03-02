@@ -5,29 +5,19 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
 import com.google.protobuf.ProtocolStringList;
-import io.grpc.Server;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import io.grpc.netty.NettyServerBuilder;
 import io.grpc.stub.StreamObserver;
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.codec.binary.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.api.DatabaseGrpc.DatabaseImplBase;
 import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.AccountNetMessage;
 import org.tron.api.GrpcAPI.AccountResourceMessage;
-import org.tron.api.GrpcAPI.Address;
-import org.tron.api.GrpcAPI.AddressPrKeyPairMessage;
 import org.tron.api.GrpcAPI.AssetIssueList;
 import org.tron.api.GrpcAPI.BlockExtention;
 import org.tron.api.GrpcAPI.BlockLimit;
@@ -35,31 +25,28 @@ import org.tron.api.GrpcAPI.BlockList;
 import org.tron.api.GrpcAPI.BlockListExtention;
 import org.tron.api.GrpcAPI.BlockReference;
 import org.tron.api.GrpcAPI.BytesMessage;
+import org.tron.api.GrpcAPI.CanWithdrawUnfreezeAmountRequestMessage;
 import org.tron.api.GrpcAPI.DecryptNotes;
 import org.tron.api.GrpcAPI.DecryptNotesMarked;
 import org.tron.api.GrpcAPI.DecryptNotesTRC20;
 import org.tron.api.GrpcAPI.DelegatedResourceList;
 import org.tron.api.GrpcAPI.DelegatedResourceMessage;
 import org.tron.api.GrpcAPI.DiversifierMessage;
-import org.tron.api.GrpcAPI.EasyTransferAssetByPrivateMessage;
-import org.tron.api.GrpcAPI.EasyTransferAssetMessage;
-import org.tron.api.GrpcAPI.EasyTransferByPrivateMessage;
-import org.tron.api.GrpcAPI.EasyTransferMessage;
-import org.tron.api.GrpcAPI.EasyTransferResponse;
 import org.tron.api.GrpcAPI.EmptyMessage;
+import org.tron.api.GrpcAPI.EstimateEnergyMessage;
 import org.tron.api.GrpcAPI.ExchangeList;
 import org.tron.api.GrpcAPI.ExpandedSpendingKeyMessage;
 import org.tron.api.GrpcAPI.IncomingViewingKeyDiversifierMessage;
 import org.tron.api.GrpcAPI.IncomingViewingKeyMessage;
 import org.tron.api.GrpcAPI.IvkDecryptTRC20Parameters;
 import org.tron.api.GrpcAPI.NfTRC20Parameters;
-import org.tron.api.GrpcAPI.Node;
 import org.tron.api.GrpcAPI.NodeList;
 import org.tron.api.GrpcAPI.NoteParameters;
 import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.api.GrpcAPI.OvkDecryptTRC20Parameters;
 import org.tron.api.GrpcAPI.PaginatedMessage;
 import org.tron.api.GrpcAPI.PaymentAddressMessage;
+import org.tron.api.GrpcAPI.PricesResponseMessage;
 import org.tron.api.GrpcAPI.PrivateParameters;
 import org.tron.api.GrpcAPI.PrivateParametersWithoutAsk;
 import org.tron.api.GrpcAPI.PrivateShieldedTRC20Parameters;
@@ -85,16 +72,11 @@ import org.tron.api.MonitorGrpc;
 import org.tron.api.WalletExtensionGrpc;
 import org.tron.api.WalletGrpc.WalletImplBase;
 import org.tron.api.WalletSolidityGrpc.WalletSolidityImplBase;
-import org.tron.common.application.Service;
-import org.tron.common.crypto.SignInterface;
-import org.tron.common.crypto.SignUtils;
-import org.tron.common.overlay.discover.node.NodeHandler;
-import org.tron.common.overlay.discover.node.NodeManager;
+import org.tron.common.application.RpcService;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.StringUtil;
-import org.tron.common.utils.Utils;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
@@ -104,6 +86,7 @@ import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.BadItemException;
+import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.NonUniqueObjectException;
@@ -111,8 +94,6 @@ import org.tron.core.exception.StoreException;
 import org.tron.core.exception.VMIllegalException;
 import org.tron.core.exception.ZksnarkException;
 import org.tron.core.metrics.MetricsApiService;
-import org.tron.core.services.filter.LiteFnQueryGrpcInterceptor;
-import org.tron.core.services.ratelimiter.RateLimiterInterceptor;
 import org.tron.core.utils.TransactionUtil;
 import org.tron.core.zen.address.DiversifierT;
 import org.tron.core.zen.address.IncomingViewingKey;
@@ -131,7 +112,6 @@ import org.tron.protos.Protocol.Proposal;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.TransactionInfo;
-import org.tron.protos.Protocol.TransactionSign;
 import org.tron.protos.contract.AccountContract.AccountCreateContract;
 import org.tron.protos.contract.AccountContract.AccountPermissionUpdateContract;
 import org.tron.protos.contract.AccountContract.AccountUpdateContract;
@@ -141,13 +121,18 @@ import org.tron.protos.contract.AssetIssueContractOuterClass.ParticipateAssetIss
 import org.tron.protos.contract.AssetIssueContractOuterClass.TransferAssetContract;
 import org.tron.protos.contract.AssetIssueContractOuterClass.UnfreezeAssetContract;
 import org.tron.protos.contract.AssetIssueContractOuterClass.UpdateAssetContract;
+import org.tron.protos.contract.BalanceContract;
 import org.tron.protos.contract.BalanceContract.AccountBalanceRequest;
 import org.tron.protos.contract.BalanceContract.AccountBalanceResponse;
 import org.tron.protos.contract.BalanceContract.BlockBalanceTrace;
+import org.tron.protos.contract.BalanceContract.CancelAllUnfreezeV2Contract;
+import org.tron.protos.contract.BalanceContract.DelegateResourceContract;
 import org.tron.protos.contract.BalanceContract.FreezeBalanceContract;
 import org.tron.protos.contract.BalanceContract.TransferContract;
+import org.tron.protos.contract.BalanceContract.UnDelegateResourceContract;
 import org.tron.protos.contract.BalanceContract.UnfreezeBalanceContract;
 import org.tron.protos.contract.BalanceContract.WithdrawBalanceContract;
+import org.tron.protos.contract.BalanceContract.WithdrawExpireUnfreezeContract;
 import org.tron.protos.contract.ExchangeContract.ExchangeCreateContract;
 import org.tron.protos.contract.ExchangeContract.ExchangeInjectContract;
 import org.tron.protos.contract.ExchangeContract.ExchangeTransactionContract;
@@ -173,38 +158,25 @@ import org.tron.protos.contract.WitnessContract.WitnessUpdateContract;
 
 @Component
 @Slf4j(topic = "API")
-public class RpcApiService implements Service {
+public class RpcApiService extends RpcService {
 
   public static final String CONTRACT_VALIDATE_EXCEPTION = "ContractValidateException: {}";
   private static final String EXCEPTION_CAUGHT = "exception caught";
+  private static final String UNKNOWN_EXCEPTION_CAUGHT = "unknown exception caught: ";
   private static final long BLOCK_LIMIT_NUM = 100;
   private static final long TRANSACTION_LIMIT_NUM = 1000;
-  private int port = Args.getInstance().getRpcPort();
-  private Server apiServer;
   @Autowired
   private Manager dbManager;
-
   @Autowired
   private ChainBaseManager chainBaseManager;
-
-  @Autowired
-  private NodeManager nodeManager;
   @Autowired
   private Wallet wallet;
-
   @Autowired
   private TransactionUtil transactionUtil;
-
   @Autowired
   private NodeInfoService nodeInfoService;
   @Autowired
-  private RateLimiterInterceptor rateLimiterInterceptor;
-  @Autowired
-  private LiteFnQueryGrpcInterceptor liteFnQueryGrpcInterceptor;
-
-  @Autowired
   private MetricsApiService metricsApiService;
-
   @Getter
   private DatabaseApi databaseApi = new DatabaseApi();
   private WalletApi walletApi = new WalletApi();
@@ -213,69 +185,28 @@ public class RpcApiService implements Service {
   @Getter
   private MonitorApi monitorApi = new MonitorApi();
 
-  @Override
-  public void init() {
-
+  public RpcApiService() {
+    port = Args.getInstance().getRpcPort();
+    enable = Args.getInstance().isRpcEnable();
+    executorName = "rpc-full-executor";
   }
 
   @Override
-  public void init(CommonParameter args) {
-  }
-
-  @Override
-  public void start() {
-    try {
-      NettyServerBuilder serverBuilder = NettyServerBuilder.forPort(port).addService(databaseApi);
-      CommonParameter parameter = Args.getInstance();
-
-      if (parameter.getRpcThreadNum() > 0) {
-        serverBuilder = serverBuilder
-            .executor(Executors.newFixedThreadPool(parameter.getRpcThreadNum()));
+  protected void addService(NettyServerBuilder serverBuilder) {
+    serverBuilder.addService(databaseApi);
+    CommonParameter parameter = Args.getInstance();
+    if (parameter.isSolidityNode()) {
+      serverBuilder.addService(walletSolidityApi);
+      if (parameter.isWalletExtensionApi()) {
+        serverBuilder.addService(new WalletExtensionApi());
       }
-
-      if (parameter.isSolidityNode()) {
-        serverBuilder = serverBuilder.addService(walletSolidityApi);
-        if (parameter.isWalletExtensionApi()) {
-          serverBuilder = serverBuilder.addService(new WalletExtensionApi());
-        }
-      } else {
-        serverBuilder = serverBuilder.addService(walletApi);
-      }
-
-      if (parameter.isNodeMetricsEnable()) {
-        serverBuilder = serverBuilder.addService(monitorApi);
-      }
-
-      // Set configs from config.conf or default value
-      serverBuilder
-          .maxConcurrentCallsPerConnection(parameter.getMaxConcurrentCallsPerConnection())
-          .flowControlWindow(parameter.getFlowControlWindow())
-          .maxConnectionIdle(parameter.getMaxConnectionIdleInMillis(), TimeUnit.MILLISECONDS)
-          .maxConnectionAge(parameter.getMaxConnectionAgeInMillis(), TimeUnit.MILLISECONDS)
-          .maxMessageSize(parameter.getMaxMessageSize())
-          .maxHeaderListSize(parameter.getMaxHeaderListSize());
-
-      // add a rate limiter interceptor
-      serverBuilder.intercept(rateLimiterInterceptor);
-
-      // add lite fullnode query interceptor
-      serverBuilder.intercept(liteFnQueryGrpcInterceptor);
-
-      apiServer = serverBuilder.build();
-      rateLimiterInterceptor.init(apiServer);
-
-      apiServer.start();
-    } catch (IOException e) {
-      logger.debug(e.getMessage(), e);
+    } else {
+      serverBuilder.addService(walletApi);
     }
 
-    logger.info("RpcApiService has started, listening on " + port);
-
-    Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-      System.err.println("*** shutting down gRPC server since JVM is shutting down");
-      //server.this.stop();
-      System.err.println("*** server is shutdown");
-    }));
+    if (parameter.isNodeMetricsEnable()) {
+      serverBuilder.addService(monitorApi);
+    }
   }
 
 
@@ -310,7 +241,7 @@ public class RpcApiService implements Service {
       retBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
           .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
       trxExtBuilder.setResult(retBuilder);
-      logger.warn("unknown exception caught: " + e.getMessage(), e);
+      logger.warn(UNKNOWN_EXCEPTION_CAUGHT + e.getMessage(), e);
     } finally {
       responseObserver.onNext(trxExtBuilder.build());
       responseObserver.onCompleted();
@@ -371,27 +302,6 @@ public class RpcApiService implements Service {
     String msg = "Not support Shielded TRC20 Transaction, need to be opened by the committee";
     if (!dbManager.getDynamicPropertiesStore().supportShieldedTRC20Transaction()) {
       throw new ZksnarkException(msg);
-    }
-  }
-
-  @Override
-  public void stop() {
-    if (apiServer != null) {
-      apiServer.shutdown();
-    }
-  }
-
-  /**
-   * ...
-   */
-  public void blockUntilShutdown() {
-    if (apiServer != null) {
-      try {
-        apiServer.awaitTermination();
-      } catch (InterruptedException e) {
-        logger.warn("{}", e);
-        Thread.currentThread().interrupt();
-      }
     }
   }
 
@@ -591,10 +501,77 @@ public class RpcApiService implements Service {
     }
 
     @Override
+    public void getDelegatedResourceV2(DelegatedResourceMessage request,
+        StreamObserver<DelegatedResourceList> responseObserver) {
+      try {
+        responseObserver.onNext(wallet.getDelegatedResourceV2(
+                request.getFromAddress(), request.getToAddress())
+        );
+      } catch (Exception e) {
+        responseObserver.onError(getRunTimeException(e));
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
     public void getDelegatedResourceAccountIndex(BytesMessage request,
         StreamObserver<org.tron.protos.Protocol.DelegatedResourceAccountIndex> responseObserver) {
-      responseObserver
+      try {
+        responseObserver
           .onNext(wallet.getDelegatedResourceAccountIndex(request.getValue()));
+      } catch (Exception e) {
+        responseObserver.onError(getRunTimeException(e));
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getDelegatedResourceAccountIndexV2(BytesMessage request,
+        StreamObserver<org.tron.protos.Protocol.DelegatedResourceAccountIndex> responseObserver) {
+      try {
+        responseObserver
+                .onNext(wallet.getDelegatedResourceAccountIndexV2(request.getValue()));
+      } catch (Exception e) {
+        responseObserver.onError(getRunTimeException(e));
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getCanDelegatedMaxSize(GrpcAPI.CanDelegatedMaxSizeRequestMessage request,
+        StreamObserver<GrpcAPI.CanDelegatedMaxSizeResponseMessage> responseObserver) {
+      try {
+        responseObserver.onNext(wallet.getCanDelegatedMaxSize(
+                        request.getOwnerAddress(),request.getType()));
+      } catch (Exception e) {
+        responseObserver.onError(getRunTimeException(e));
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getAvailableUnfreezeCount(GrpcAPI.GetAvailableUnfreezeCountRequestMessage request,
+        StreamObserver<GrpcAPI.GetAvailableUnfreezeCountResponseMessage> responseObserver) {
+      try {
+        responseObserver.onNext(wallet.getAvailableUnfreezeCount(
+                request.getOwnerAddress()));
+      } catch (Exception e) {
+        responseObserver.onError(getRunTimeException(e));
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getCanWithdrawUnfreezeAmount(CanWithdrawUnfreezeAmountRequestMessage request,
+        StreamObserver<GrpcAPI.CanWithdrawUnfreezeAmountResponseMessage> responseObserver) {
+      try {
+        responseObserver
+                .onNext(wallet.getCanWithdrawUnfreezeAmount(
+                        request.getOwnerAddress(), request.getTimestamp())
+        );
+      } catch (Exception e) {
+        responseObserver.onError(getRunTimeException(e));
+      }
       responseObserver.onCompleted();
     }
 
@@ -650,12 +627,6 @@ public class RpcApiService implements Service {
         responseObserver.onNext(null);
       }
       responseObserver.onCompleted();
-    }
-
-    @Override
-    public void generateAddress(EmptyMessage request,
-        StreamObserver<GrpcAPI.AddressPrKeyPairMessage> responseObserver) {
-      generateAddressCommon(request, responseObserver);
     }
 
     @Override
@@ -891,6 +862,38 @@ public class RpcApiService implements Service {
     }
 
     @Override
+    public void estimateEnergy(TriggerSmartContract request,
+        StreamObserver<EstimateEnergyMessage> responseObserver) {
+      TransactionExtention.Builder trxExtBuilder = TransactionExtention.newBuilder();
+      Return.Builder retBuilder = Return.newBuilder();
+      EstimateEnergyMessage.Builder estimateBuilder
+          = EstimateEnergyMessage.newBuilder();
+
+      try {
+        TransactionCapsule trxCap = createTransactionCapsule(request,
+            ContractType.TriggerSmartContract);
+        wallet.estimateEnergy(request, trxCap, trxExtBuilder, retBuilder, estimateBuilder);
+      } catch (ContractValidateException | VMIllegalException e) {
+        retBuilder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
+            .setMessage(ByteString.copyFromUtf8(Wallet
+                .CONTRACT_VALIDATE_ERROR + e.getMessage()));
+        logger.warn(CONTRACT_VALIDATE_EXCEPTION, e.getMessage());
+      } catch (RuntimeException e) {
+        retBuilder.setResult(false).setCode(response_code.CONTRACT_EXE_ERROR)
+            .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
+        logger.warn("When run estimate energy in VM, have Runtime Exception: " + e.getMessage());
+      } catch (Exception e) {
+        retBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
+            .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
+        logger.warn(UNKNOWN_EXCEPTION_CAUGHT + e.getMessage(), e);
+      } finally {
+        estimateBuilder.setResult(retBuilder);
+        responseObserver.onNext(estimateBuilder.build());
+        responseObserver.onCompleted();
+      }
+    }
+
+    @Override
     public void getTransactionInfoByBlockNum(NumberMessage request,
         StreamObserver<TransactionInfoList> responseObserver) {
       try {
@@ -899,6 +902,34 @@ public class RpcApiService implements Service {
         responseObserver.onError(getRunTimeException(e));
       }
 
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getBlock(GrpcAPI.BlockReq  request,
+        StreamObserver<BlockExtention> responseObserver) {
+      getBlockCommon(request, responseObserver);
+    }
+
+    @Override
+    public void getBandwidthPrices(EmptyMessage request,
+        StreamObserver<PricesResponseMessage> responseObserver) {
+      try {
+        responseObserver.onNext(wallet.getBandwidthPrices());
+      } catch (Exception e) {
+        responseObserver.onError(getRunTimeException(e));
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getEnergyPrices(EmptyMessage request,
+        StreamObserver<PricesResponseMessage> responseObserver) {
+      try {
+        responseObserver.onNext(wallet.getEnergyPrices());
+      } catch (Exception e) {
+        responseObserver.onError(getRunTimeException(e));
+      }
       responseObserver.onCompleted();
     }
   }
@@ -1033,55 +1064,6 @@ public class RpcApiService implements Service {
       responseObserver.onCompleted();
     }
 
-
-    @Override
-    public void getTransactionSign(TransactionSign req,
-        StreamObserver<Transaction> responseObserver) {
-      TransactionCapsule result = TransactionUtil.getTransactionSign(req);
-      responseObserver.onNext(result.getInstance());
-      responseObserver.onCompleted();
-    }
-
-    @Override
-    public void getTransactionSign2(TransactionSign req,
-        StreamObserver<TransactionExtention> responseObserver) {
-      TransactionExtention.Builder trxExtBuilder = TransactionExtention.newBuilder();
-      Return.Builder retBuilder = Return.newBuilder();
-      try {
-        TransactionCapsule trx = TransactionUtil.getTransactionSign(req);
-        trxExtBuilder.setTransaction(trx.getInstance());
-        trxExtBuilder.setTxid(trx.getTransactionId().getByteString());
-        retBuilder.setResult(true).setCode(response_code.SUCCESS);
-      } catch (Exception e) {
-        retBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
-            .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
-        logger.info(EXCEPTION_CAUGHT + e.getMessage());
-      }
-      trxExtBuilder.setResult(retBuilder);
-      responseObserver.onNext(trxExtBuilder.build());
-      responseObserver.onCompleted();
-    }
-
-    @Override
-    public void addSign(TransactionSign req,
-        StreamObserver<TransactionExtention> responseObserver) {
-      TransactionExtention.Builder trxExtBuilder = TransactionExtention.newBuilder();
-      Return.Builder retBuilder = Return.newBuilder();
-      try {
-        TransactionCapsule trx = transactionUtil.addSign(req);
-        trxExtBuilder.setTransaction(trx.getInstance());
-        trxExtBuilder.setTxid(trx.getTransactionId().getByteString());
-        retBuilder.setResult(true).setCode(response_code.SUCCESS);
-      } catch (Exception e) {
-        retBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
-            .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
-        logger.info(EXCEPTION_CAUGHT + e.getMessage());
-      }
-      trxExtBuilder.setResult(retBuilder);
-      responseObserver.onNext(trxExtBuilder.build());
-      responseObserver.onCompleted();
-    }
-
     @Override
     public void getTransactionSignWeight(Transaction req,
         StreamObserver<TransactionSignWeight> responseObserver) {
@@ -1095,121 +1077,6 @@ public class RpcApiService implements Service {
         StreamObserver<TransactionApprovedList> responseObserver) {
       TransactionApprovedList tal = wallet.getTransactionApprovedList(req);
       responseObserver.onNext(tal);
-      responseObserver.onCompleted();
-    }
-
-    @Override
-    public void createAddress(BytesMessage req,
-        StreamObserver<BytesMessage> responseObserver) {
-      byte[] address = wallet.createAddress(req.getValue().toByteArray());
-      BytesMessage.Builder builder = BytesMessage.newBuilder();
-      builder.setValue(ByteString.copyFrom(address));
-      responseObserver.onNext(builder.build());
-      responseObserver.onCompleted();
-    }
-
-    private EasyTransferResponse easyTransfer(byte[] privateKey, ByteString toAddress,
-        long amount) {
-      TransactionCapsule transactionCapsule;
-      GrpcAPI.Return.Builder returnBuilder = GrpcAPI.Return.newBuilder();
-      EasyTransferResponse.Builder responseBuild = EasyTransferResponse.newBuilder();
-      try {
-        SignInterface cryptoEngine = SignUtils.fromPrivate(privateKey, Args.getInstance()
-            .isECKeyCryptoEngine());
-        byte[] owner = cryptoEngine.getAddress();
-        TransferContract.Builder builder = TransferContract.newBuilder();
-        builder.setOwnerAddress(ByteString.copyFrom(owner));
-        builder.setToAddress(toAddress);
-        builder.setAmount(amount);
-        transactionCapsule = createTransactionCapsule(builder.build(),
-            ContractType.TransferContract);
-        transactionCapsule.sign(privateKey);
-        GrpcAPI.Return result = wallet.broadcastTransaction(transactionCapsule.getInstance());
-        responseBuild.setTransaction(transactionCapsule.getInstance());
-        responseBuild.setTxid(transactionCapsule.getTransactionId().getByteString());
-        responseBuild.setResult(result);
-      } catch (ContractValidateException e) {
-        returnBuilder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
-            .setMessage(ByteString.copyFromUtf8(e.getMessage()));
-        responseBuild.setResult(returnBuilder.build());
-      } catch (Exception e) {
-        returnBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
-            .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
-        responseBuild.setResult(returnBuilder.build());
-      }
-
-      return responseBuild.build();
-    }
-
-    @Override
-    public void easyTransfer(EasyTransferMessage req,
-        StreamObserver<EasyTransferResponse> responseObserver) {
-      byte[] privateKey = wallet.pass2Key(req.getPassPhrase().toByteArray());
-      EasyTransferResponse response = easyTransfer(privateKey, req.getToAddress(), req.getAmount());
-      responseObserver.onNext(response);
-      responseObserver.onCompleted();
-    }
-
-    @Override
-    public void easyTransferAsset(EasyTransferAssetMessage req,
-        StreamObserver<EasyTransferResponse> responseObserver) {
-      byte[] privateKey = wallet.pass2Key(req.getPassPhrase().toByteArray());
-      EasyTransferResponse response = easyTransferAsset(privateKey, req.getToAddress(),
-          req.getAssetId(), req.getAmount());
-      responseObserver.onNext(response);
-      responseObserver.onCompleted();
-    }
-
-    private EasyTransferResponse easyTransferAsset(byte[] privateKey, ByteString toAddress,
-        String assetId, long amount) {
-      TransactionCapsule transactionCapsule;
-      GrpcAPI.Return.Builder returnBuilder = GrpcAPI.Return.newBuilder();
-      EasyTransferResponse.Builder responseBuild = EasyTransferResponse.newBuilder();
-      try {
-        SignInterface cryptoEngine = SignUtils.fromPrivate(privateKey,
-            Args.getInstance().isECKeyCryptoEngine());
-        byte[] owner = cryptoEngine.getAddress();
-        TransferAssetContract.Builder builder = TransferAssetContract.newBuilder();
-        builder.setOwnerAddress(ByteString.copyFrom(owner));
-        builder.setToAddress(toAddress);
-        builder.setAssetName(ByteString.copyFrom(assetId.getBytes()));
-        builder.setAmount(amount);
-        transactionCapsule = createTransactionCapsule(builder.build(),
-            ContractType.TransferAssetContract);
-        transactionCapsule.sign(privateKey);
-        GrpcAPI.Return result = wallet.broadcastTransaction(transactionCapsule.getInstance());
-        responseBuild.setTransaction(transactionCapsule.getInstance());
-        responseBuild.setTxid(transactionCapsule.getTransactionId().getByteString());
-        responseBuild.setResult(result);
-      } catch (ContractValidateException e) {
-        returnBuilder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
-            .setMessage(ByteString.copyFromUtf8(e.getMessage()));
-        responseBuild.setResult(returnBuilder.build());
-      } catch (Exception e) {
-        returnBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
-            .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
-        responseBuild.setResult(returnBuilder.build());
-      }
-
-      return responseBuild.build();
-    }
-
-    @Override
-    public void easyTransferByPrivate(EasyTransferByPrivateMessage req,
-        StreamObserver<EasyTransferResponse> responseObserver) {
-      byte[] privateKey = req.getPrivateKey().toByteArray();
-      EasyTransferResponse response = easyTransfer(privateKey, req.getToAddress(), req.getAmount());
-      responseObserver.onNext(response);
-      responseObserver.onCompleted();
-    }
-
-    @Override
-    public void easyTransferAssetByPrivate(EasyTransferAssetByPrivateMessage req,
-        StreamObserver<EasyTransferResponse> responseObserver) {
-      byte[] privateKey = req.getPrivateKey().toByteArray();
-      EasyTransferResponse response = easyTransferAsset(privateKey, req.getToAddress(),
-          req.getAssetId(), req.getAmount());
-      responseObserver.onNext(response);
       responseObserver.onCompleted();
     }
 
@@ -1469,6 +1336,12 @@ public class RpcApiService implements Service {
     }
 
     @Override
+    public void freezeBalanceV2(BalanceContract.FreezeBalanceV2Contract request,
+                                StreamObserver<TransactionExtention> responseObserver) {
+      createTransactionExtention(request, ContractType.FreezeBalanceV2Contract, responseObserver);
+    }
+
+    @Override
     public void unfreezeBalance(UnfreezeBalanceContract request,
         StreamObserver<Transaction> responseObserver) {
       try {
@@ -1490,6 +1363,12 @@ public class RpcApiService implements Service {
     }
 
     @Override
+    public void unfreezeBalanceV2(BalanceContract.UnfreezeBalanceV2Contract request,
+                                  StreamObserver<TransactionExtention> responseObserver) {
+      createTransactionExtention(request, ContractType.UnfreezeBalanceV2Contract, responseObserver);
+    }
+
+    @Override
     public void withdrawBalance(WithdrawBalanceContract request,
         StreamObserver<Transaction> responseObserver) {
       try {
@@ -1508,6 +1387,34 @@ public class RpcApiService implements Service {
     public void withdrawBalance2(WithdrawBalanceContract request,
         StreamObserver<TransactionExtention> responseObserver) {
       createTransactionExtention(request, ContractType.WithdrawBalanceContract, responseObserver);
+    }
+
+    @Override
+    public void withdrawExpireUnfreeze(WithdrawExpireUnfreezeContract request,
+                                       StreamObserver<TransactionExtention> responseObserver) {
+      createTransactionExtention(request, ContractType.WithdrawExpireUnfreezeContract,
+              responseObserver);
+    }
+
+    @Override
+    public void delegateResource(DelegateResourceContract request,
+                                 StreamObserver<TransactionExtention> responseObserver) {
+      createTransactionExtention(request, ContractType.DelegateResourceContract,
+          responseObserver);
+    }
+
+    @Override
+    public void unDelegateResource(UnDelegateResourceContract request,
+                                       StreamObserver<TransactionExtention> responseObserver) {
+      createTransactionExtention(request, ContractType.UnDelegateResourceContract,
+          responseObserver);
+    }
+
+    @Override
+    public void cancelAllUnfreezeV2(CancelAllUnfreezeV2Contract request,
+                                    StreamObserver<TransactionExtention> responseObserver) {
+      createTransactionExtention(request, ContractType.CancelAllUnfreezeV2Contract,
+          responseObserver);
     }
 
     @Override
@@ -1591,25 +1498,7 @@ public class RpcApiService implements Service {
 
     @Override
     public void listNodes(EmptyMessage request, StreamObserver<NodeList> responseObserver) {
-      List<NodeHandler> handlerList = nodeManager.dumpActiveNodes();
-
-      Map<String, NodeHandler> nodeHandlerMap = new HashMap<>();
-      for (NodeHandler handler : handlerList) {
-        String key = handler.getNode().getHexId() + handler.getNode().getHost();
-        nodeHandlerMap.put(key, handler);
-      }
-
-      NodeList.Builder nodeListBuilder = NodeList.newBuilder();
-
-      nodeHandlerMap.entrySet().stream()
-          .forEach(v -> {
-            org.tron.common.overlay.discover.node.Node node = v.getValue().getNode();
-            nodeListBuilder.addNodes(Node.newBuilder().setAddress(
-                Address.newBuilder()
-                    .setHost(ByteString.copyFrom(ByteArray.fromString(node.getHost())))
-                    .setPort(node.getPort())));
-          });
-      responseObserver.onNext(nodeListBuilder.build());
+      responseObserver.onNext(wallet.listNodes());
       responseObserver.onCompleted();
     }
 
@@ -1846,7 +1735,7 @@ public class RpcApiService implements Service {
 
     @Override
     public void deployContract(CreateSmartContract request,
-        io.grpc.stub.StreamObserver<TransactionExtention> responseObserver) {
+        StreamObserver<TransactionExtention> responseObserver) {
       createTransactionExtention(request, ContractType.CreateSmartContract, responseObserver);
     }
 
@@ -1875,6 +1764,38 @@ public class RpcApiService implements Service {
         StreamObserver<TransactionExtention> responseObserver) {
 
       callContract(request, responseObserver, false);
+    }
+
+    @Override
+    public void estimateEnergy(TriggerSmartContract request,
+        StreamObserver<EstimateEnergyMessage> responseObserver) {
+      TransactionExtention.Builder trxExtBuilder = TransactionExtention.newBuilder();
+      Return.Builder retBuilder = Return.newBuilder();
+      EstimateEnergyMessage.Builder estimateBuilder
+          = EstimateEnergyMessage.newBuilder();
+
+      try {
+        TransactionCapsule trxCap = createTransactionCapsule(request,
+            ContractType.TriggerSmartContract);
+        wallet.estimateEnergy(request, trxCap, trxExtBuilder, retBuilder, estimateBuilder);
+      } catch (ContractValidateException | VMIllegalException e) {
+        retBuilder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
+            .setMessage(ByteString.copyFromUtf8(Wallet
+                .CONTRACT_VALIDATE_ERROR + e.getMessage()));
+        logger.warn(CONTRACT_VALIDATE_EXCEPTION, e.getMessage());
+      } catch (RuntimeException e) {
+        retBuilder.setResult(false).setCode(response_code.CONTRACT_EXE_ERROR)
+            .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
+        logger.warn("When run estimate energy in VM, have Runtime Exception: " + e.getMessage());
+      } catch (Exception e) {
+        retBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
+            .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
+        logger.warn(UNKNOWN_EXCEPTION_CAUGHT + e.getMessage(), e);
+      } finally {
+        estimateBuilder.setResult(retBuilder);
+        responseObserver.onNext(estimateBuilder.build());
+        responseObserver.onCompleted();
+      }
     }
 
     @Override
@@ -1916,7 +1837,7 @@ public class RpcApiService implements Service {
         retBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
             .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
         trxExtBuilder.setResult(retBuilder);
-        logger.warn("unknown exception caught: " + e.getMessage(), e);
+        logger.warn(UNKNOWN_EXCEPTION_CAUGHT + e.getMessage(), e);
       } finally {
         responseObserver.onNext(trxExtBuilder.build());
         responseObserver.onCompleted();
@@ -1967,10 +1888,113 @@ public class RpcApiService implements Service {
       responseObserver.onCompleted();
     }
 
+    @Override
+    public void getDelegatedResourceV2(DelegatedResourceMessage request,
+        StreamObserver<DelegatedResourceList> responseObserver) {
+      try {
+        responseObserver.onNext(wallet.getDelegatedResourceV2(
+                request.getFromAddress(), request.getToAddress())
+        );
+      } catch (Exception e) {
+        responseObserver.onError(getRunTimeException(e));
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
     public void getDelegatedResourceAccountIndex(BytesMessage request,
         StreamObserver<org.tron.protos.Protocol.DelegatedResourceAccountIndex> responseObserver) {
-      responseObserver
+      try {
+        responseObserver
           .onNext(wallet.getDelegatedResourceAccountIndex(request.getValue()));
+      } catch (Exception e) {
+        responseObserver.onError(getRunTimeException(e));
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getDelegatedResourceAccountIndexV2(BytesMessage request,
+        StreamObserver<org.tron.protos.Protocol.DelegatedResourceAccountIndex> responseObserver) {
+      try {
+        responseObserver
+                .onNext(wallet.getDelegatedResourceAccountIndexV2(request.getValue()));
+      } catch (Exception e) {
+        responseObserver.onError(getRunTimeException(e));
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getCanDelegatedMaxSize(GrpcAPI.CanDelegatedMaxSizeRequestMessage request,
+        StreamObserver<GrpcAPI.CanDelegatedMaxSizeResponseMessage> responseObserver) {
+      try {
+        responseObserver.onNext(wallet.getCanDelegatedMaxSize(
+                        request.getOwnerAddress(), request.getType()));
+      } catch (Exception e) {
+        responseObserver.onError(getRunTimeException(e));
+      }
+
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getAvailableUnfreezeCount(GrpcAPI.GetAvailableUnfreezeCountRequestMessage request,
+         StreamObserver<GrpcAPI.GetAvailableUnfreezeCountResponseMessage> responseObserver) {
+      try {
+        responseObserver.onNext(wallet.getAvailableUnfreezeCount(
+                request.getOwnerAddress()));
+      } catch (Exception e) {
+        responseObserver.onError(getRunTimeException(e));
+      }
+
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getCanWithdrawUnfreezeAmount(CanWithdrawUnfreezeAmountRequestMessage request,
+        StreamObserver<GrpcAPI.CanWithdrawUnfreezeAmountResponseMessage> responseObserver) {
+      try {
+        responseObserver
+                .onNext(wallet.getCanWithdrawUnfreezeAmount(
+                        request.getOwnerAddress(), request.getTimestamp()
+        ));
+      } catch (Exception e) {
+        responseObserver.onError(getRunTimeException(e));
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getBandwidthPrices(EmptyMessage request,
+        StreamObserver<PricesResponseMessage> responseObserver) {
+      try {
+        responseObserver.onNext(wallet.getBandwidthPrices());
+      } catch (Exception e) {
+        responseObserver.onError(getRunTimeException(e));
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getEnergyPrices(EmptyMessage request,
+        StreamObserver<PricesResponseMessage> responseObserver) {
+      try {
+        responseObserver.onNext(wallet.getEnergyPrices());
+      } catch (Exception e) {
+        responseObserver.onError(getRunTimeException(e));
+      }
+      responseObserver.onCompleted();
+    }
+
+    @Override
+    public void getMemoFee(EmptyMessage request,
+        StreamObserver<PricesResponseMessage> responseObserver) {
+      try {
+        responseObserver.onNext(wallet.getMemoFeePrices());
+      } catch (Exception e) {
+        responseObserver.onError(getRunTimeException(e));
+      }
       responseObserver.onCompleted();
     }
 
@@ -2004,12 +2028,6 @@ public class RpcApiService implements Service {
         StreamObserver<Protocol.ChainParameters> responseObserver) {
       responseObserver.onNext(wallet.getChainParameters());
       responseObserver.onCompleted();
-    }
-
-    @Override
-    public void generateAddress(EmptyMessage request,
-        StreamObserver<GrpcAPI.AddressPrKeyPairMessage> responseObserver) {
-      generateAddressCommon(request, responseObserver);
     }
 
     @Override
@@ -2403,9 +2421,13 @@ public class RpcApiService implements Service {
         ShieldedTRC20Parameters shieldedTRC20Parameters = wallet
             .createShieldedContractParameters(request);
         responseObserver.onNext(shieldedTRC20Parameters);
+      } catch (ZksnarkException | ContractValidateException | ContractExeException e) {
+        responseObserver.onError(getRunTimeException(e));
+        logger.info("createShieldedContractParameters: {}", e.getMessage());
+        return;
       } catch (Exception e) {
         responseObserver.onError(getRunTimeException(e));
-        logger.info("createShieldedContractParameters exception caught: " + e.getMessage());
+        logger.error("createShieldedContractParameters: ", e);
         return;
       }
       responseObserver.onCompleted();
@@ -2446,9 +2468,13 @@ public class RpcApiService implements Service {
             request.getNk().toByteArray(),
             request.getEventsList());
         responseObserver.onNext(decryptNotes);
+      } catch (BadItemException | ZksnarkException e) {
+        responseObserver.onError(getRunTimeException(e));
+        logger.info("scanShieldedTRC20NotesByIvk: {}", e.getMessage());
+        return;
       } catch (Exception e) {
         responseObserver.onError(getRunTimeException(e));
-        logger.info("scanShieldedTRC20NotesByIvk exception caught: " + e.getMessage());
+        logger.error("scanShieldedTRC20NotesByIvk:", e);
         return;
       }
       responseObserver.onCompleted();
@@ -2495,7 +2521,7 @@ public class RpcApiService implements Service {
     @Override
     public void getTriggerInputForShieldedTRC20Contract(
         ShieldedTRC20TriggerContractParameters request,
-        io.grpc.stub.StreamObserver<org.tron.api.GrpcAPI.BytesMessage> responseObserver) {
+        StreamObserver<org.tron.api.GrpcAPI.BytesMessage> responseObserver) {
       try {
         checkSupportShieldedTRC20Transaction();
 
@@ -2651,6 +2677,13 @@ public class RpcApiService implements Service {
         StreamObserver<NumberMessage> responseObserver) {
       getPendingSizeCommon(request, responseObserver);
     }
+
+
+    @Override
+    public void getBlock(GrpcAPI.BlockReq  request,
+        StreamObserver<BlockExtention> responseObserver) {
+      getBlockCommon(request, responseObserver);
+    }
   }
 
   public class MonitorApi extends MonitorGrpc.MonitorImplBase {
@@ -2661,21 +2694,6 @@ public class RpcApiService implements Service {
       responseObserver.onNext(metricsApiService.getMetricProtoInfo());
       responseObserver.onCompleted();
     }
-  }
-
-  public void generateAddressCommon(EmptyMessage request,
-      StreamObserver<GrpcAPI.AddressPrKeyPairMessage> responseObserver) {
-    SignInterface cryptoEngine = SignUtils.getGeneratedRandomSign(Utils.getRandom(),
-        Args.getInstance().isECKeyCryptoEngine());
-    byte[] priKey = cryptoEngine.getPrivateKey();
-    byte[] address = cryptoEngine.getAddress();
-    String addressStr = StringUtil.encode58Check(address);
-    String priKeyStr = Hex.encodeHexString(priKey);
-    AddressPrKeyPairMessage.Builder builder = AddressPrKeyPairMessage.newBuilder();
-    builder.setAddress(addressStr);
-    builder.setPrivateKey(priKeyStr);
-    responseObserver.onNext(builder.build());
-    responseObserver.onCompleted();
   }
 
   public void getRewardInfoCommon(BytesMessage request,
@@ -2768,4 +2786,20 @@ public class RpcApiService implements Service {
     }
     responseObserver.onCompleted();
   }
+
+  public void getBlockCommon(GrpcAPI.BlockReq request,
+      StreamObserver<BlockExtention> responseObserver) {
+    try {
+      responseObserver.onNext(block2Extention(wallet.getBlock(request)));
+    } catch (Exception e) {
+      if (e instanceof IllegalArgumentException) {
+        responseObserver.onError(Status.INVALID_ARGUMENT.withDescription(e.getMessage())
+            .withCause(e).asRuntimeException());
+      } else {
+        responseObserver.onError(getRunTimeException(e));
+      }
+    }
+    responseObserver.onCompleted();
+  }
+
 }

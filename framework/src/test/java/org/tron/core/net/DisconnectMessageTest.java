@@ -4,13 +4,11 @@ import com.google.protobuf.Message;
 import org.tron.protos.Protocol.DisconnectMessageOrBuilder;
 
 public class DisconnectMessageTest extends com.google.protobuf.GeneratedMessageV3 implements
-    // @@protoc_insertion_point(message_implements:protocol.DisconnectMessage)
     DisconnectMessageOrBuilder {
 
   public static final int REASON_FIELD_NUMBER = 1;
   public static final int NAME_FIELD_NUMBER = 2;
   private static final long serialVersionUID = 0L;
-  // @@protoc_insertion_point(class_scope:protocol.DisconnectMessage)
   private static final DisconnectMessageTest DEFAULT_INSTANCE;
   private static final com.google.protobuf.Parser<DisconnectMessageTest> PARSER =
       new com.google.protobuf.AbstractParser<DisconnectMessageTest>() {

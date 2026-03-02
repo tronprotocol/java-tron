@@ -1,21 +1,16 @@
 package org.tron.core.net.message;
 
 import org.apache.commons.lang3.ArrayUtils;
-import org.tron.common.overlay.message.MessageFactory;
 import org.tron.consensus.pbft.message.PbftBaseMessage;
 import org.tron.consensus.pbft.message.PbftMessage;
 import org.tron.core.exception.P2pException;
 
-/**
- * msg factory.
- */
-public class PbftMessageFactory extends MessageFactory {
+public class PbftMessageFactory {
 
   private static String LEN = ", len=";
   private static String TYPE = "type=";
 
-  @Override
-  public PbftBaseMessage create(byte[] data) throws Exception {
+  public static PbftBaseMessage create(byte[] data) throws Exception {
     try {
       byte type = data[0];
       byte[] rawData = ArrayUtils.subarray(data, 1, data.length);
@@ -28,7 +23,7 @@ public class PbftMessageFactory extends MessageFactory {
     }
   }
 
-  private PbftBaseMessage create(byte type, byte[] packed) throws Exception {
+  private static PbftBaseMessage create(byte type, byte[] packed) throws Exception {
     MessageTypes receivedTypes = MessageTypes.fromByte(type);
     if (receivedTypes == null) {
       throw new P2pException(P2pException.TypeEnum.NO_SUCH_MESSAGE,

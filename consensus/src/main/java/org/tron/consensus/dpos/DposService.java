@@ -1,5 +1,6 @@
 package org.tron.consensus.dpos;
 
+import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 import static org.tron.core.config.Parameter.ChainConstant.MAX_ACTIVE_WITNESS_NUM;
 import static org.tron.core.config.Parameter.ChainConstant.SOLIDIFIED_THRESHOLD;
 
@@ -116,6 +117,12 @@ public class DposService implements ConsensusInterface {
     }
     ByteString witnessAddress = blockCapsule.getWitnessAddress();
     long timeStamp = blockCapsule.getTimeStamp();
+    if (timeStamp % BLOCK_PRODUCED_INTERVAL != 0
+      && consensusDelegate.getDynamicPropertiesStore().allowConsensusLogicOptimization()) {
+      logger.warn("ValidBlock failed: witness: {}, timeStamp: {}",
+        ByteArray.toHexString(witnessAddress.toByteArray()), timeStamp);
+      return false;
+    }
     long bSlot = dposSlot.getAbSlot(timeStamp);
     long hSlot = dposSlot.getAbSlot(consensusDelegate.getLatestBlockHeaderTimestamp());
     if (bSlot <= hSlot) {
@@ -124,6 +131,12 @@ public class DposService implements ConsensusInterface {
     }
 
     long slot = dposSlot.getSlot(timeStamp);
+    if (slot == 0
+      && consensusDelegate.getDynamicPropertiesStore().allowConsensusLogicOptimization()) {
+      logger.warn("ValidBlock failed: slot error, witness: {}, timeStamp: {}",
+        ByteArray.toHexString(witnessAddress.toByteArray()), new DateTime(timeStamp));
+      return false;
+    }
     final ByteString scheduledWitness = dposSlot.getScheduledWitness(slot);
     if (!scheduledWitness.equals(witnessAddress)) {
       logger.warn("ValidBlock failed: sWitness: {}, bWitness: {}, bTimeStamp: {}, slot: {}",
@@ -163,11 +176,7 @@ public class DposService implements ConsensusInterface {
   }
 
   public void updateWitness(List<ByteString> list) {
-    list.sort(Comparator.comparingLong((ByteString b) ->
-        consensusDelegate.getWitness(b.toByteArray()).getVoteCount())
-        .reversed()
-        .thenComparing(Comparator.comparingInt(ByteString::hashCode).reversed()));
-
+    consensusDelegate.sortWitness(list);
     if (list.size() > MAX_ACTIVE_WITNESS_NUM) {
       consensusDelegate
           .saveActiveWitnesses(list.subList(0, MAX_ACTIVE_WITNESS_NUM));

@@ -28,7 +28,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.bouncycastle.util.encoders.Hex;
+import org.tron.common.bloom.Bloom;
 import org.tron.common.crypto.SignInterface;
 import org.tron.common.crypto.SignUtils;
 import org.tron.common.parameter.CommonParameter;
@@ -56,8 +56,10 @@ public class BlockCapsule implements ProtoCapsule<Block> {
 
   private Block block;
   private List<TransactionCapsule> transactions = new ArrayList<>();
-  private StringBuilder toStringBuff = new StringBuilder();
   private boolean isSwitch;
+  @Getter
+  @Setter
+  private Bloom bloom;
 
   public boolean isSwitch() {
     return isSwitch;
@@ -138,6 +140,13 @@ public class BlockCapsule implements ProtoCapsule<Block> {
   public void addTransaction(TransactionCapsule pendingTrx) {
     this.block = this.block.toBuilder().addTransactions(pendingTrx.getInstance()).build();
     getTransactions().add(pendingTrx);
+  }
+
+  public void addAllTransactions(List<TransactionCapsule> pendingTrxs) {
+    List<Transaction> list = pendingTrxs.stream().map(TransactionCapsule::getInstance).collect(
+        Collectors.toList());
+    this.block = this.block.toBuilder().addAllTransactions(list).build();
+    getTransactions().addAll(pendingTrxs);
   }
 
   public List<TransactionCapsule> getTransactions() {
@@ -260,6 +269,10 @@ public class BlockCapsule implements ProtoCapsule<Block> {
     return this.block.getBlockHeader().getRawData().getWitnessAddress();
   }
 
+  public boolean isMerkleRootEmpty() {
+    return this.block.getBlockHeader().getRawData().getTxTrieRoot().toByteArray().length == 0;
+  }
+
   @Override
   public byte[] getData() {
     return this.block.toByteArray();
@@ -268,6 +281,10 @@ public class BlockCapsule implements ProtoCapsule<Block> {
   @Override
   public Block getInstance() {
     return this.block;
+  }
+
+  public long getSerializedSize() {
+    return this.block.getSerializedSize();
   }
 
   public Sha256Hash getParentHash() {
@@ -296,7 +313,7 @@ public class BlockCapsule implements ProtoCapsule<Block> {
 
   @Override
   public String toString() {
-    toStringBuff.setLength(0);
+    StringBuilder toStringBuff = new StringBuilder();
 
     toStringBuff.append("BlockCapsule \n[ ");
     toStringBuff.append("hash=").append(getBlockId()).append("\n");

@@ -14,6 +14,7 @@ import org.tron.core.capsule.TransactionRetCapsule;
 import org.tron.core.db.TransactionStore;
 import org.tron.core.db.TronStoreWithRevoking;
 import org.tron.core.exception.BadItemException;
+import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.TransactionInfo;
 
 @Slf4j(topic = "DB")
@@ -54,6 +55,17 @@ public class TransactionRetStore extends TronStoreWithRevoking<TransactionRetCap
     ByteString id = ByteString.copyFrom(key);
     for (TransactionInfo transactionResultInfo : result.getInstance().getTransactioninfoList()) {
       if (transactionResultInfo.getId().equals(id)) {
+        Protocol.ResourceReceipt receipt = transactionResultInfo.getReceipt();
+        // If query a result with dirty origin usage in receipt, we just reset it.
+        if (receipt.getEnergyUsageTotal() == 0 && receipt.getOriginEnergyUsage() > 0) {
+          transactionResultInfo =
+              transactionResultInfo.toBuilder()
+                  .setReceipt(
+                      receipt.toBuilder()
+                          .clearOriginEnergyUsage()
+                          .build())
+                  .build();
+        }
         return new TransactionInfoCapsule(transactionResultInfo);
       }
     }

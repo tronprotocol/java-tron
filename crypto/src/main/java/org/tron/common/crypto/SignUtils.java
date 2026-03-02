@@ -26,10 +26,14 @@ public class SignUtils {
   public static byte[] signatureToAddress(
       byte[] messageHash, String signatureBase64, boolean isECKeyCryptoEngine)
       throws SignatureException {
-    if (isECKeyCryptoEngine) {
-      return ECKey.signatureToAddress(messageHash, signatureBase64);
+    try {
+      if (isECKeyCryptoEngine) {
+        return ECKey.signatureToAddress(messageHash, signatureBase64);
+      }
+      return SM2.signatureToAddress(messageHash, signatureBase64);
+    } catch (Exception e) {
+      throw new SignatureException(e);
     }
-    return SM2.signatureToAddress(messageHash, signatureBase64);
   }
 
   public static SignatureInterface fromComponents(

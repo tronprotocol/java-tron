@@ -4,11 +4,12 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Streams;
+import com.google.common.primitives.Bytes;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import lombok.Getter;
 import org.tron.core.db2.common.HashDB;
@@ -23,13 +24,16 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
   protected Snapshot root;
 
   SnapshotImpl(Snapshot snapshot) {
-    synchronized (this) {
-      db = new HashDB(SnapshotImpl.class.getSimpleName());
-    }
-
     root = snapshot.getRoot();
+    synchronized (this) {
+      db = new HashDB(SnapshotImpl.class.getSimpleName() + ":" + root.getDbName());
+    }
     previous = snapshot;
     snapshot.setNext(this);
+    isOptimized = snapshot.isOptimized();
+    if (isOptimized &&  root == previous) {
+      Streams.stream(root.iterator()).forEach( e -> put(e.getKey(),e.getValue()));
+    }
   }
 
   @Override
@@ -40,6 +44,7 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
   private byte[] get(Snapshot head, byte[] key) {
     Snapshot snapshot = head;
     Value value;
+
     while (Snapshot.isImpl(snapshot)) {
       if ((value = ((SnapshotImpl) snapshot).db.get(Key.of(key))) != null) {
         return value.getBytes();
@@ -83,6 +88,19 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
     Streams.stream(fromImpl.db).forEach(e -> db.put(e.getKey(), e.getValue()));
   }
 
+  public void mergeAhead(Snapshot from) {
+    if (from instanceof SnapshotRoot) {
+      return ;
+    }
+    SnapshotImpl fromImpl = (SnapshotImpl) from;
+    Streams.stream(fromImpl.db).forEach(e -> {
+      if (db.get(e.getKey()) == null) {
+        db.put(e.getKey(), e.getValue());
+      }
+    }
+    );
+  }
+
   @Override
   public Snapshot retreat() {
     return previous;
@@ -111,6 +129,17 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
     Snapshot next = getRoot().getNext();
     while (next != null) {
       Streams.stream(((SnapshotImpl) next).db)
+          .forEach(e -> all.put(WrappedByteArray.of(e.getKey().getBytes()),
+              WrappedByteArray.of(e.getValue().getBytes())));
+      next = next.getNext();
+    }
+  }
+
+  synchronized void collect(Map<WrappedByteArray, WrappedByteArray> all, byte[] prefix) {
+    Snapshot next = getRoot().getNext();
+    while (next != null) {
+      Streams.stream(((SnapshotImpl) next).db).filter(e -> Bytes.indexOf(
+              Objects.requireNonNull(e.getKey().getBytes()), prefix) == 0)
           .forEach(e -> all.put(WrappedByteArray.of(e.getKey().getBytes()),
               WrappedByteArray.of(e.getValue().getBytes())));
       next = next.getNext();
@@ -165,5 +194,10 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
   @Override
   public Snapshot newInstance() {
     return new SnapshotImpl(this);
+  }
+
+  @Override
+  public void reloadToMem() {
+      mergeAhead(previous);
   }
 }

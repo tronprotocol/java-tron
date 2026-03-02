@@ -70,4 +70,10 @@ public class AccountStateStoreTrie extends TronStoreWithRevoking<BytesCapsule> i
   public DB<byte[], BytesCapsule> newInstance() {
     return null;
   }
+
+  @Override
+  public void stat() {
+
+  }
+
 }

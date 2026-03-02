@@ -1,5 +1,8 @@
 package org.tron.common.utils;
 
+import static org.tron.common.math.Maths.addExact;
+import static org.tron.common.math.Maths.subtractExact;
+
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.tron.common.parameter.CommonParameter;
@@ -55,16 +58,18 @@ public class Commons {
     return address;
   }
 
-  public static void adjustBalance(AccountStore accountStore, byte[] accountAddress, long amount)
+  public static void adjustBalance(AccountStore accountStore, byte[] accountAddress, long amount,
+                                   boolean useStrict)
       throws BalanceInsufficientException {
     AccountCapsule account = accountStore.getUnchecked(accountAddress);
-    adjustBalance(accountStore, account, amount);
+    adjustBalance(accountStore, account, amount, useStrict);
   }
 
   /**
    * judge balance.
    */
-  public static void adjustBalance(AccountStore accountStore, AccountCapsule account, long amount)
+  public static void adjustBalance(AccountStore accountStore, AccountCapsule account, long amount,
+                                   boolean useStrict)
       throws BalanceInsufficientException {
 
     long balance = account.getBalance();
@@ -74,9 +79,10 @@ public class Commons {
 
     if (amount < 0 && balance < -amount) {
       throw new BalanceInsufficientException(
-          StringUtil.createReadableString(account.createDbKey()) + " insufficient balance");
+          String.format("%s insufficient balance, balance: %d, amount: %d",
+              StringUtil.createReadableString(account.createDbKey()), balance, -amount));
     }
-    account.setBalance(Math.addExact(balance, amount));
+    account.setBalance(addExact(balance, amount, useStrict));
     accountStore.put(account.getAddress().toByteArray(), account);
   }
 
@@ -120,22 +126,28 @@ public class Commons {
     if (amount < 0) {
       if (!account.reduceAssetAmountV2(AssetID.getBytes(), -amount, dynamicPropertiesStore,
           assetIssueStore)) {
-        throw new BalanceInsufficientException("reduceAssetAmount failed !");
+        throw new BalanceInsufficientException(
+            String.format("reduceAssetAmount failed! account: %s",
+                    StringUtil.encode58Check(account.createDbKey())));
       }
     } else if (amount > 0 &&
         !account.addAssetAmountV2(AssetID.getBytes(), amount, dynamicPropertiesStore,
             assetIssueStore)) {
-      throw new BalanceInsufficientException("addAssetAmount failed !");
+      throw new BalanceInsufficientException(
+          String.format("addAssetAmount failed! account: %s",
+                  StringUtil.encode58Check(account.createDbKey())));
     }
     accountStore.put(account.getAddress().toByteArray(), account);
   }
 
   public static void adjustTotalShieldedPoolValue(long valueBalance,
       DynamicPropertiesStore dynamicPropertiesStore) throws BalanceInsufficientException {
-    long totalShieldedPoolValue = Math
-        .subtractExact(dynamicPropertiesStore.getTotalShieldedPoolValue(), valueBalance);
+    long totalShieldedPoolValue = subtractExact(
+        dynamicPropertiesStore.getTotalShieldedPoolValue(), valueBalance,
+        dynamicPropertiesStore.disableJavaLangMath());
     if (totalShieldedPoolValue < 0) {
-      throw new BalanceInsufficientException("Total shielded pool value can not below 0");
+      throw new BalanceInsufficientException(String.format(
+          "total shielded pool value can not below 0, actual: %d", totalShieldedPoolValue));
     }
     dynamicPropertiesStore.saveTotalShieldedPoolValue(totalShieldedPoolValue);
   }

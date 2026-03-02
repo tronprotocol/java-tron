@@ -15,17 +15,25 @@
 
 package org.tron.core.capsule;
 
-import com.google.common.collect.Lists;
+import static org.tron.common.math.Maths.addExact;
+import static org.tron.common.math.Maths.max;
+import static org.tron.common.math.Maths.subtractExact;
+import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
+import static org.tron.core.config.Parameter.ChainConstant.WINDOW_SIZE_MS;
+import static org.tron.core.config.Parameter.ChainConstant.WINDOW_SIZE_PRECISION;
+import static org.tron.protos.contract.Common.ResourceCode;
+import static org.tron.protos.contract.Common.ResourceCode.BANDWIDTH;
+import static org.tron.protos.contract.Common.ResourceCode.ENERGY;
+import static org.tron.protos.contract.Common.ResourceCode.TRON_POWER;
+
 import com.google.common.collect.Maps;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
-
 import java.util.List;
 import java.util.Map;
-
-import lombok.Getter;
-import lombok.Setter;
+import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.utils.AssetUtil;
 import org.tron.core.store.AssetIssueStore;
@@ -33,7 +41,9 @@ import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Account.AccountResource;
 import org.tron.protos.Protocol.Account.Builder;
+import org.tron.protos.Protocol.Account.FreezeV2;
 import org.tron.protos.Protocol.Account.Frozen;
+import org.tron.protos.Protocol.Account.UnFreezeV2;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Key;
 import org.tron.protos.Protocol.Permission;
@@ -46,10 +56,7 @@ import org.tron.protos.contract.AccountContract.AccountUpdateContract;
 public class AccountCapsule implements ProtoCapsule<Account>, Comparable<AccountCapsule> {
 
   private Account account;
-
-  @Getter
-  @Setter
-  private Boolean isAssetImport = false;
+  private boolean flag = false;
 
   /**
    * get account from bytes data.
@@ -328,24 +335,24 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     return this.account.getLatestOprationTime();
   }
 
-  public void setLatestOperationTime(long latest_time) {
-    this.account = this.account.toBuilder().setLatestOprationTime(latest_time).build();
+  public void setLatestOperationTime(long latestTime) {
+    this.account = this.account.toBuilder().setLatestOprationTime(latestTime).build();
   }
 
   public long getLatestConsumeTime() {
     return this.account.getLatestConsumeTime();
   }
 
-  public void setLatestConsumeTime(long latest_time) {
-    this.account = this.account.toBuilder().setLatestConsumeTime(latest_time).build();
+  public void setLatestConsumeTime(long latestTime) {
+    this.account = this.account.toBuilder().setLatestConsumeTime(latestTime).build();
   }
 
   public long getLatestConsumeFreeTime() {
     return this.account.getLatestConsumeFreeTime();
   }
 
-  public void setLatestConsumeFreeTime(long latest_time) {
-    this.account = this.account.toBuilder().setLatestConsumeFreeTime(latest_time).build();
+  public void setLatestConsumeFreeTime(long latestTime) {
+    this.account = this.account.toBuilder().setLatestConsumeFreeTime(latestTime).build();
   }
 
   public void addDelegatedFrozenBalanceForBandwidth(long balance) {
@@ -353,12 +360,34 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
         this.account.getDelegatedFrozenBalanceForBandwidth() + balance).build();
   }
 
+  public void addDelegatedFrozenV2BalanceForBandwidth(long balance) {
+    this.account = this.account.toBuilder().setDelegatedFrozenV2BalanceForBandwidth(
+            this.account.getDelegatedFrozenV2BalanceForBandwidth() + balance).build();
+  }
+
   public long getAcquiredDelegatedFrozenBalanceForBandwidth() {
     return this.account.getAcquiredDelegatedFrozenBalanceForBandwidth();
   }
 
+  public long getAcquiredDelegatedFrozenV2BalanceForBandwidth() {
+    return this.account.getAcquiredDelegatedFrozenV2BalanceForBandwidth();
+  }
+
+  public long getTotalAcquiredDelegatedFrozenBalanceForBandwidth() {
+    return getAcquiredDelegatedFrozenBalanceForBandwidth() + getAcquiredDelegatedFrozenV2BalanceForBandwidth();
+  }
+
+  public void addFrozenBalanceForBandwidthV2(long balance) {
+    this.addFrozenBalanceForResource(BANDWIDTH, balance);
+  }
+
   public void setAcquiredDelegatedFrozenBalanceForBandwidth(long balance) {
     this.account = this.account.toBuilder().setAcquiredDelegatedFrozenBalanceForBandwidth(balance)
+        .build();
+  }
+
+  public void setAcquiredDelegatedFrozenV2BalanceForBandwidth(long balance) {
+    this.account = this.account.toBuilder().setAcquiredDelegatedFrozenV2BalanceForBandwidth(balance)
         .build();
   }
 
@@ -368,14 +397,36 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
         .build();
   }
 
-  public void safeAddAcquiredDelegatedFrozenBalanceForBandwidth(long balance) {
+  public void addAcquiredDelegatedFrozenV2BalanceForBandwidth(long balance) {
+    this.account = this.account.toBuilder().setAcquiredDelegatedFrozenV2BalanceForBandwidth(
+            this.account.getAcquiredDelegatedFrozenV2BalanceForBandwidth() + balance).build();
+  }
+
+  public void safeAddAcquiredDelegatedFrozenBalanceForBandwidth(long balance, boolean useStrict) {
     this.account = this.account.toBuilder().setAcquiredDelegatedFrozenBalanceForBandwidth(
-        Math.max(0, this.account.getAcquiredDelegatedFrozenBalanceForBandwidth() + balance))
+        max(0, this.account.getAcquiredDelegatedFrozenBalanceForBandwidth() + balance,
+            useStrict))
         .build();
+  }
+
+  @SuppressWarnings("unused")
+  public void safeAddAcquiredDelegatedFrozenV2BalanceForBandwidth(long balance, boolean useStrict) {
+    this.account = this.account.toBuilder().setAcquiredDelegatedFrozenV2BalanceForBandwidth(
+            max(0, this.account.getAcquiredDelegatedFrozenV2BalanceForBandwidth() + balance,
+                useStrict))
+            .build();
   }
 
   public long getAcquiredDelegatedFrozenBalanceForEnergy() {
     return getAccountResource().getAcquiredDelegatedFrozenBalanceForEnergy();
+  }
+
+  public long getAcquiredDelegatedFrozenV2BalanceForEnergy() {
+    return getAccountResource().getAcquiredDelegatedFrozenV2BalanceForEnergy();
+  }
+
+  public long getTotalAcquiredDelegatedFrozenBalanceForEnergy() {
+    return getAcquiredDelegatedFrozenBalanceForEnergy() + getAcquiredDelegatedFrozenV2BalanceForEnergy();
   }
 
   public void setAcquiredDelegatedFrozenBalanceForEnergy(long balance) {
@@ -387,12 +438,34 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
         .build();
   }
 
+  public void setAcquiredDelegatedFrozenV2BalanceForEnergy(long balance) {
+    AccountResource newAccountResource = getAccountResource().toBuilder()
+            .setAcquiredDelegatedFrozenV2BalanceForEnergy(balance).build();
+    this.account = this.account.toBuilder().setAccountResource(newAccountResource).build();
+  }
+
   public long getDelegatedFrozenBalanceForEnergy() {
     return getAccountResource().getDelegatedFrozenBalanceForEnergy();
   }
 
+  public long getDelegatedFrozenV2BalanceForEnergy() {
+    return getAccountResource().getDelegatedFrozenV2BalanceForEnergy();
+  }
+
+  public long getTotalDelegatedFrozenBalanceForEnergy() {
+    return getDelegatedFrozenBalanceForEnergy() + getDelegatedFrozenV2BalanceForEnergy();
+  }
+
   public long getDelegatedFrozenBalanceForBandwidth() {
     return this.account.getDelegatedFrozenBalanceForBandwidth();
+  }
+
+  public long getDelegatedFrozenV2BalanceForBandwidth() {
+    return this.account.getDelegatedFrozenV2BalanceForBandwidth();
+  }
+
+  public long getTotalDelegatedFrozenBalanceForBandwidth() {
+    return getDelegatedFrozenBalanceForBandwidth() + getDelegatedFrozenV2BalanceForBandwidth();
   }
 
   public void setDelegatedFrozenBalanceForBandwidth(long balance) {
@@ -420,15 +493,31 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
         .build();
   }
 
-  public void safeAddAcquiredDelegatedFrozenBalanceForEnergy(long balance) {
+  public void addAcquiredDelegatedFrozenV2BalanceForEnergy(long balance) {
+    AccountResource newAccountResource = getAccountResource().toBuilder()
+            .setAcquiredDelegatedFrozenV2BalanceForEnergy(getAccountResource()
+                    .getAcquiredDelegatedFrozenV2BalanceForEnergy() + balance).build();
+    this.account = this.account.toBuilder().setAccountResource(newAccountResource).build();
+  }
+
+  public void safeAddAcquiredDelegatedFrozenBalanceForEnergy(long balance, boolean useStrict) {
     AccountResource newAccountResource = getAccountResource().toBuilder()
         .setAcquiredDelegatedFrozenBalanceForEnergy(
-            Math.max(0, getAccountResource().getAcquiredDelegatedFrozenBalanceForEnergy() + balance))
+            max(0, getAccountResource().getAcquiredDelegatedFrozenBalanceForEnergy() + balance,
+                useStrict))
         .build();
 
     this.account = this.account.toBuilder()
         .setAccountResource(newAccountResource)
         .build();
+  }
+
+  @SuppressWarnings("unused")
+  public void safeAddAcquiredDelegatedFrozenV2BalanceForEnergy(long balance, boolean useStrict) {
+    AccountResource newAccountResource = getAccountResource().toBuilder()
+            .setAcquiredDelegatedFrozenV2BalanceForEnergy(max(0, getAccountResource()
+                    .getAcquiredDelegatedFrozenV2BalanceForEnergy() + balance, useStrict)).build();
+    this.account = this.account.toBuilder().setAccountResource(newAccountResource).build();
   }
 
   public void addDelegatedFrozenBalanceForEnergy(long balance) {
@@ -439,6 +528,42 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     this.account = this.account.toBuilder()
         .setAccountResource(newAccountResource)
         .build();
+  }
+
+  public void addDelegatedFrozenV2BalanceForEnergy(long balance) {
+    AccountResource newAccountResource = getAccountResource().toBuilder()
+            .setDelegatedFrozenV2BalanceForEnergy(
+                    getAccountResource().getDelegatedFrozenV2BalanceForEnergy() + balance).build();
+
+    this.account = this.account.toBuilder().setAccountResource(newAccountResource).build();
+  }
+
+  public void addFrozenBalanceForEnergyV2(long balance) {
+    this.addFrozenBalanceForResource(ENERGY, balance);
+  }
+
+  private void addFrozenBalanceForResource(ResourceCode type, long balance) {
+    boolean doUpdate = false;
+    for (int i = 0; i < this.account.getFrozenV2List().size(); i++) {
+      if (this.account.getFrozenV2List().get(i).getType().equals(type)) {
+        long newAmount = this.account.getFrozenV2(i).getAmount() + balance;
+        FreezeV2 freezeV2 = FreezeV2.newBuilder()
+                .setType(type)
+                .setAmount(newAmount)
+                .build();
+        this.updateFrozenV2List(i, freezeV2);
+        doUpdate = true;
+        break;
+      }
+    }
+
+    if (!doUpdate) {
+      FreezeV2 freezeV2 = FreezeV2.newBuilder()
+              .setType(type)
+              .setAmount(balance)
+              .build();
+      this.addFrozenV2List(freezeV2);
+    }
   }
 
   @Override
@@ -455,22 +580,17 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
         .build();
   }
 
-  public void clearAssetV2() {
-    importAsset();
-    this.account = this.account.toBuilder()
-        .clearAssetV2()
-        .build();
+  public void addAllVotes(List<Vote> votesToAdd) {
+    this.account = this.account.toBuilder().addAllVotes(votesToAdd).build();
   }
 
   public void clearLatestAssetOperationTimeV2() {
-    importAsset();
     this.account = this.account.toBuilder()
         .clearLatestAssetOperationTimeV2()
         .build();
   }
 
   public void clearFreeAssetNetUsageV2() {
-    importAsset();
     this.account = this.account.toBuilder()
         .clearFreeAssetNetUsageV2()
         .build();
@@ -486,19 +606,14 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
    * get votes.
    */
   public List<Vote> getVotesList() {
-    if (this.account.getVotesList() != null) {
-      return this.account.getVotesList();
-    } else {
-      return Lists.newArrayList();
-    }
+    return this.account.getVotesList();
   }
 
   public long getTronPowerUsage() {
-    if (this.account.getVotesList() != null) {
-      return this.account.getVotesList().stream().mapToLong(Vote::getVoteCount).sum();
-    } else {
+    if (getVotesList().isEmpty()) {
       return 0L;
     }
+    return this.account.getVotesList().stream().mapToLong(Vote::getVoteCount).sum();
   }
 
   //tp:Tron_Power
@@ -511,34 +626,81 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     tp += account.getAccountResource().getFrozenBalanceForEnergy().getFrozenBalance();
     tp += account.getDelegatedFrozenBalanceForBandwidth();
     tp += account.getAccountResource().getDelegatedFrozenBalanceForEnergy();
+
+    tp += getFrozenV2List().stream().filter(o -> o.getType() != TRON_POWER)
+            .mapToLong(FreezeV2::getAmount).sum();
+    tp += account.getDelegatedFrozenV2BalanceForBandwidth();
+    tp += account.getAccountResource().getDelegatedFrozenV2BalanceForEnergy();
     return tp;
   }
 
   public long getAllTronPower() {
     if (account.getOldTronPower() == -1) {
-      return getTronPowerFrozenBalance();
+      return getTronPowerFrozenBalance() + getTronPowerFrozenV2Balance();
     } else if (account.getOldTronPower() == 0) {
-      return getTronPower() + getTronPowerFrozenBalance();
+      return getTronPower() + getTronPowerFrozenBalance() + getTronPowerFrozenV2Balance();
     } else {
-      return account.getOldTronPower() + getTronPowerFrozenBalance();
+      return account.getOldTronPower() + getTronPowerFrozenBalance()
+          + getTronPowerFrozenV2Balance();
     }
   }
 
-  /**
-   * asset balance enough
-   */
-  public boolean assetBalanceEnough(byte[] key, long amount) {
-    importAsset();
-    Map<String, Long> assetMap = this.account.getAssetMap();
-    String nameKey = ByteArray.toStr(key);
-    Long currentAmount = assetMap.get(nameKey);
 
-    return amount > 0 && null != currentAmount && amount <= currentAmount;
+
+  public List<FreezeV2> getFrozenV2List() {
+    return account.getFrozenV2List();
+  }
+
+  public List<UnFreezeV2> getUnfrozenV2List() {
+    return account.getUnfrozenV2List();
+  }
+
+  public void updateFrozenV2List(int index, FreezeV2 frozenV2) {
+    if (Objects.isNull(frozenV2)) {
+      return;
+    }
+    this.account = this.account.toBuilder().setFrozenV2(index, frozenV2).build();
+  }
+
+  public void addFrozenV2List(FreezeV2 frozenV2) {
+    this.account = this.account.toBuilder().addFrozenV2(frozenV2).build();
+  }
+
+  public void addUnfrozenV2List(ResourceCode type, long unfreezeAmount, long expireTime) {
+    UnFreezeV2 unFreezeV2 = UnFreezeV2.newBuilder()
+            .setType(type)
+            .setUnfreezeAmount(unfreezeAmount)
+            .setUnfreezeExpireTime(expireTime)
+            .build();
+    this.account = this.account.toBuilder().addUnfrozenV2(unFreezeV2).build();
+  }
+
+
+  public int getUnfreezingV2Count(long now) {
+    int count = 0;
+    List<UnFreezeV2> unFreezeV2List = account.getUnfrozenV2List();
+    for (UnFreezeV2 item : unFreezeV2List) {
+      if (item.getUnfreezeExpireTime() > now) {
+        count++;
+      }
+    }
+    return count;
+  }
+
+
+  /*************************** start asset ****************************************/
+
+  public boolean getAssetOptimized() {
+    return this.account.getAssetOptimized();
+  }
+
+  public void setAssetOptimized(boolean flag) {
+    this.account = this.account.toBuilder().setAssetOptimized(flag).build();
   }
 
   public boolean assetBalanceEnoughV2(byte[] key, long amount,
       DynamicPropertiesStore dynamicPropertiesStore) {
-    importAsset();
+    importAsset(key);
     Map<String, Long> assetMap;
     String nameKey;
     Long currentAmount;
@@ -555,82 +717,23 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     return amount > 0 && null != currentAmount && amount <= currentAmount;
   }
 
-  /**
-   * reduce asset amount.
-   */
-  public boolean reduceAssetAmount(byte[] key, long amount) {
-    importAsset();
-    Map<String, Long> assetMap = this.account.getAssetMap();
-    String nameKey = ByteArray.toStr(key);
-    Long currentAmount = assetMap.get(nameKey);
-    if (amount > 0 && null != currentAmount && amount <= currentAmount) {
-      this.account = this.account.toBuilder()
-          .putAsset(nameKey, Math.subtractExact(currentAmount, amount)).build();
-      return true;
-    }
-
-    return false;
-  }
-
-  /**
-   * reduce asset amount.
-   */
-  public boolean reduceAssetAmountV2(byte[] key, long amount,
-      DynamicPropertiesStore dynamicPropertiesStore, AssetIssueStore assetIssueStore) {
-    //key is token name
-    importAsset();
-    if (dynamicPropertiesStore.getAllowSameTokenName() == 0) {
-      Map<String, Long> assetMap = this.account.getAssetMap();
-      AssetIssueCapsule assetIssueCapsule = assetIssueStore.get(key);
-      String tokenID = assetIssueCapsule.getId();
-      String nameKey = ByteArray.toStr(key);
-      Long currentAmount = assetMap.get(nameKey);
-      if (amount > 0 && null != currentAmount && amount <= currentAmount) {
-        this.account = this.account.toBuilder()
-            .putAsset(nameKey, Math.subtractExact(currentAmount, amount))
-            .putAssetV2(tokenID, Math.subtractExact(currentAmount, amount))
-            .build();
-        return true;
-      }
-    }
-    //key is token id
-    if (dynamicPropertiesStore.getAllowSameTokenName() == 1) {
-      String tokenID = ByteArray.toStr(key);
-      Map<String, Long> assetMapV2 = this.account.getAssetV2Map();
-      Long currentAmount = assetMapV2.get(tokenID);
-      if (amount > 0 && null != currentAmount && amount <= currentAmount) {
-        this.account = this.account.toBuilder()
-            .putAssetV2(tokenID, Math.subtractExact(currentAmount, amount))
-            .build();
-        return true;
-      }
-    }
-
-    return false;
-  }
-
-  /**
-   * add asset amount.
-   */
-  public boolean addAssetAmount(byte[] key, long amount) {
-    importAsset();
+  public boolean addAssetAmount(byte[] key, long amount, boolean useStrict) {
     Map<String, Long> assetMap = this.account.getAssetMap();
     String nameKey = ByteArray.toStr(key);
     Long currentAmount = assetMap.get(nameKey);
     if (currentAmount == null) {
       currentAmount = 0L;
     }
-    this.account = this.account.toBuilder().putAsset(nameKey, Math.addExact(currentAmount, amount))
+    this.account = this.account.toBuilder().putAsset(nameKey,
+            addExact(currentAmount, amount, useStrict))
         .build();
     return true;
   }
 
-  /**
-   * add asset amount.
-   */
   public boolean addAssetAmountV2(byte[] key, long amount,
       DynamicPropertiesStore dynamicPropertiesStore, AssetIssueStore assetIssueStore) {
-    importAsset();
+    importAsset(key);
+    boolean useStrict2 = dynamicPropertiesStore.disableJavaLangMath();
     //key is token name
     if (dynamicPropertiesStore.getAllowSameTokenName() == 0) {
       Map<String, Long> assetMap = this.account.getAssetMap();
@@ -642,8 +745,8 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
         currentAmount = 0L;
       }
       this.account = this.account.toBuilder()
-          .putAsset(nameKey, Math.addExact(currentAmount, amount))
-          .putAssetV2(tokenID, Math.addExact(currentAmount, amount))
+          .putAsset(nameKey, addExact(currentAmount, amount, useStrict2))
+          .putAssetV2(tokenID, addExact(currentAmount, amount, useStrict2))
           .build();
     }
     //key is token id
@@ -655,17 +758,74 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
         currentAmount = 0L;
       }
       this.account = this.account.toBuilder()
-          .putAssetV2(tokenIDStr, Math.addExact(currentAmount, amount))
+          .putAssetV2(tokenIDStr, addExact(currentAmount, amount, useStrict2))
           .build();
     }
     return true;
   }
 
-  /**
-   * add asset.
-   */
+  public boolean reduceAssetAmount(byte[] key, long amount, boolean useStrict2) {
+    Map<String, Long> assetMap = this.account.getAssetMap();
+    String nameKey = ByteArray.toStr(key);
+    Long currentAmount = assetMap.get(nameKey);
+    if (amount > 0 && null != currentAmount && amount <= currentAmount) {
+      this.account = this.account.toBuilder()
+              .putAsset(nameKey, subtractExact(currentAmount, amount, useStrict2)).build();
+      return true;
+    }
+
+    return false;
+  }
+
+  public boolean reduceAssetAmountV2(byte[] key, long amount,
+                                     DynamicPropertiesStore dynamicPropertiesStore, AssetIssueStore assetIssueStore) {
+    importAsset(key);
+    //key is token name
+    boolean useStrict2 = dynamicPropertiesStore.disableJavaLangMath();
+    if (dynamicPropertiesStore.getAllowSameTokenName() == 0) {
+      Map<String, Long> assetMap = this.account.getAssetMap();
+      AssetIssueCapsule assetIssueCapsule = assetIssueStore.get(key);
+      String tokenID = assetIssueCapsule.getId();
+      String nameKey = ByteArray.toStr(key);
+      Long currentAmount = assetMap.get(nameKey);
+      if (amount > 0 && null != currentAmount && amount <= currentAmount) {
+        this.account = this.account.toBuilder()
+                .putAsset(nameKey, subtractExact(currentAmount, amount, useStrict2))
+                .putAssetV2(tokenID, subtractExact(currentAmount, amount, useStrict2))
+                .build();
+        return true;
+      }
+    }
+    //key is token id
+    if (dynamicPropertiesStore.getAllowSameTokenName() == 1) {
+      String tokenID = ByteArray.toStr(key);
+      Map<String, Long> assetMapV2 = this.account.getAssetV2Map();
+      Long currentAmount = assetMapV2.get(tokenID);
+      if (amount > 0 && null != currentAmount && amount <= currentAmount) {
+        this.account = this.account.toBuilder()
+                .putAssetV2(tokenID, subtractExact(currentAmount, amount, useStrict2))
+                .build();
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  public void clearAssetV2() {
+    this.account = this.account.toBuilder()
+            .clearAssetV2()
+            .build();
+  }
+
+  public void clearAsset() {
+    this.account = this.account.toBuilder()
+            .clearAsset()
+            .clearAssetV2()
+            .build();
+  }
+
   public boolean addAsset(byte[] key, long value) {
-    importAsset();
     Map<String, Long> assetMap = this.account.getAssetMap();
     String nameKey = ByteArray.toStr(key);
     if (!assetMap.isEmpty() && assetMap.containsKey(nameKey)) {
@@ -676,81 +836,89 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   }
 
   public boolean addAssetV2(byte[] key, long value) {
-    importAsset();
-    String tokenID = ByteArray.toStr(key);
-    Map<String, Long> assetV2Map = this.account.getAssetV2Map();
-    if (!assetV2Map.isEmpty() && assetV2Map.containsKey(tokenID)) {
+    if (AssetUtil.hasAssetV2(this.account, key)) {
       return false;
     }
 
     this.account = this.account.toBuilder()
-        .putAssetV2(tokenID, value)
+        .putAssetV2(ByteArray.toStr(key), value)
         .build();
     return true;
   }
 
-  /**
-   * add asset.
-   */
-  public boolean addAssetMapV2(Map<String, Long> assetMap) {
-    importAsset();
+  public void addAssetMapV2(Map<String, Long> assetMap) {
     this.account = this.account.toBuilder().putAllAssetV2(assetMap).build();
-    return true;
+  }
+
+  public Long getAsset(DynamicPropertiesStore dynamicStore, String key) {
+    Long balance;
+    if (dynamicStore.getAllowSameTokenName() == 0) {
+      balance = this.account.getAssetMap().get(key);
+    } else {
+      importAsset(key.getBytes());
+      balance = this.account.getAssetV2Map().get(key);
+    }
+    return balance;
+  }
+
+  public long getAssetV2(String key) {
+    importAsset(key.getBytes());
+    Long balance = this.account.getAssetV2Map().get(key);
+    return balance == null ? 0 : balance;
   }
 
   public Map<String, Long> getAssetMap() {
-    importAsset();
     Map<String, Long> assetMap = this.account.getAssetMap();
     if (assetMap.isEmpty()) {
       assetMap = Maps.newHashMap();
     }
-
     return assetMap;
   }
 
   public Map<String, Long> getAssetMapV2() {
-    importAsset();
+    importAllAsset();
     Map<String, Long> assetMap = this.account.getAssetV2Map();
     if (assetMap.isEmpty()) {
       assetMap = Maps.newHashMap();
     }
-
     return assetMap;
   }
 
-  public boolean addAllLatestAssetOperationTimeV2(Map<String, Long> map) {
-    importAsset();
+  public Map<String, Long> getAssetMapForTest() {
+    return getAssetMap();
+  }
+
+  public Map<String, Long> getAssetV2MapForTest() {
+    return getAssetMapV2();
+  }
+
+  /*************************** end asset ****************************************/
+
+  public void addAllLatestAssetOperationTimeV2(Map<String, Long> map) {
     this.account = this.account.toBuilder().putAllLatestAssetOperationTimeV2(map).build();
-    return true;
   }
 
   public Map<String, Long> getLatestAssetOperationTimeMap() {
-    importAsset();
     return this.account.getLatestAssetOperationTimeMap();
   }
 
   public Map<String, Long> getLatestAssetOperationTimeMapV2() {
-    importAsset();
     return this.account.getLatestAssetOperationTimeV2Map();
   }
 
   public long getLatestAssetOperationTime(String assetName) {
-    importAsset();
     return this.account.getLatestAssetOperationTimeOrDefault(assetName, 0);
   }
 
   public long getLatestAssetOperationTimeV2(String assetName) {
-    importAsset();
     return this.account.getLatestAssetOperationTimeV2OrDefault(assetName, 0);
   }
 
   public void putLatestAssetOperationTimeMap(String key, Long value) {
-    importAsset();
     this.account = this.account.toBuilder().putLatestAssetOperationTime(key, value).build();
   }
 
   public void putLatestAssetOperationTimeMapV2(String key, Long value) {
-    importAsset();
     this.account = this.account.toBuilder().putLatestAssetOperationTimeV2(key, value).build();
   }
 
@@ -770,17 +938,25 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     return frozenBalance[0];
   }
 
+  public long getFrozenV2BalanceForBandwidth() {
+    List<FreezeV2> frozenList = getFrozenV2List();
+    if (frozenList.isEmpty()) {
+      return 0;
+    }
+    return frozenList.stream().filter(o -> o.getType() == BANDWIDTH)
+            .mapToLong(FreezeV2::getAmount).sum();
+  }
+
   public long getAllFrozenBalanceForBandwidth() {
-    return getFrozenBalance() + getAcquiredDelegatedFrozenBalanceForBandwidth();
+    return getFrozenBalance() + getAcquiredDelegatedFrozenBalanceForBandwidth()
+        + getFrozenV2BalanceForBandwidth() + getAcquiredDelegatedFrozenV2BalanceForBandwidth();
   }
 
   public int getFrozenSupplyCount() {
-    importAsset();
     return getInstance().getFrozenSupplyCount();
   }
 
   public List<Frozen> getFrozenSupplyList() {
-    importAsset();
     return getInstance().getFrozenSupplyList();
   }
 
@@ -793,23 +969,19 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   }
 
   public ByteString getAssetIssuedName() {
-    importAsset();
     return getInstance().getAssetIssuedName();
   }
 
   public void setAssetIssuedName(byte[] nameKey) {
-    importAsset();
     ByteString assetIssuedName = ByteString.copyFrom(nameKey);
     this.account = this.account.toBuilder().setAssetIssuedName(assetIssuedName).build();
   }
 
   public ByteString getAssetIssuedID() {
-    importAsset();
     return getInstance().getAssetIssuedID();
   }
 
   public void setAssetIssuedID(byte[] id) {
-    importAsset();
     ByteString assetIssuedID = ByteString.copyFrom(id);
     this.account = this.account.toBuilder().setAssetIssuedID(assetIssuedID).build();
   }
@@ -885,6 +1057,14 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     return this.account.getNetUsage();
   }
 
+  public long getUsage(ResourceCode resourceCode) {
+    if (resourceCode == BANDWIDTH) {
+      return this.account.getNetUsage();
+    } else {
+      return this.account.getAccountResource().getEnergyUsage();
+    }
+  }
+
   public void setNetUsage(long netUsage) {
     this.account = this.account.toBuilder()
         .setNetUsage(netUsage).build();
@@ -910,6 +1090,15 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
 
   public long getEnergyFrozenBalance() {
     return this.account.getAccountResource().getFrozenBalanceForEnergy().getFrozenBalance();
+  }
+
+  public long getFrozenV2BalanceForEnergy() {
+    List<FreezeV2> frozenList = getFrozenV2List();
+    if (frozenList.isEmpty()) {
+      return 0;
+    }
+    return frozenList.stream().filter(o -> o.getType() == ENERGY)
+            .mapToLong(FreezeV2::getAmount).sum();
   }
 
   public boolean oldTronPowerIsNotInitialized() {
@@ -954,8 +1143,17 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
         .build());
   }
 
+  public void addFrozenForTronPowerV2(long balance) {
+    this.addFrozenBalanceForResource(TRON_POWER, balance);
+  }
+
   public long getTronPowerFrozenBalance() {
     return this.account.getTronPower().getFrozenBalance();
+  }
+
+  public long getTronPowerFrozenV2Balance() {
+    return getFrozenV2List().stream().filter(o-> o.getType() == TRON_POWER)
+            .mapToLong(FreezeV2::getAmount).sum();
   }
 
   public long getEnergyUsage() {
@@ -970,17 +1168,18 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   }
 
   public long getAllFrozenBalanceForEnergy() {
-    return getEnergyFrozenBalance() + getAcquiredDelegatedFrozenBalanceForEnergy();
+    return getEnergyFrozenBalance() + getAcquiredDelegatedFrozenBalanceForEnergy()
+        + getFrozenV2BalanceForEnergy() + getAcquiredDelegatedFrozenV2BalanceForEnergy();
   }
 
   public long getLatestConsumeTimeForEnergy() {
     return this.account.getAccountResource().getLatestConsumeTimeForEnergy();
   }
 
-  public void setLatestConsumeTimeForEnergy(long latest_time) {
+  public void setLatestConsumeTimeForEnergy(long latestTime) {
     this.account = this.account.toBuilder()
         .setAccountResource(
-            this.account.getAccountResource().toBuilder().setLatestConsumeTimeForEnergy(latest_time)
+            this.account.getAccountResource().toBuilder().setLatestConsumeTimeForEnergy(latestTime)
                 .build()).build();
   }
 
@@ -989,44 +1188,35 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   }
 
   public void setFreeNetUsage(long freeNetUsage) {
-    this.account = this.account.toBuilder()
-        .setFreeNetUsage(freeNetUsage).build();
+    this.account = this.account.toBuilder().setFreeNetUsage(freeNetUsage).build();
   }
 
-  public boolean addAllFreeAssetNetUsageV2(Map<String, Long> map) {
-    importAsset();
+  public void addAllFreeAssetNetUsageV2(Map<String, Long> map) {
     this.account = this.account.toBuilder().putAllFreeAssetNetUsageV2(map).build();
-    return true;
   }
 
   public long getFreeAssetNetUsage(String assetName) {
-    importAsset();
     return this.account.getFreeAssetNetUsageOrDefault(assetName, 0);
   }
 
   public long getFreeAssetNetUsageV2(String assetName) {
-    importAsset();
     return this.account.getFreeAssetNetUsageV2OrDefault(assetName, 0);
   }
 
   public Map<String, Long> getAllFreeAssetNetUsage() {
-    importAsset();
     return this.account.getFreeAssetNetUsageMap();
   }
 
   public Map<String, Long> getAllFreeAssetNetUsageV2() {
-    importAsset();
     return this.account.getFreeAssetNetUsageV2Map();
   }
 
   public void putFreeAssetNetUsage(String s, long freeAssetNetUsage) {
-    importAsset();
     this.account = this.account.toBuilder()
         .putFreeAssetNetUsage(s, freeAssetNetUsage).build();
   }
 
   public void putFreeAssetNetUsageV2(String s, long freeAssetNetUsage) {
-    importAsset();
     this.account = this.account.toBuilder()
         .putFreeAssetNetUsageV2(s, freeAssetNetUsage).build();
   }
@@ -1110,17 +1300,22 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
 
   public void updatePermissions(Permission owner, Permission witness, List<Permission> actives) {
     Builder builder = this.account.toBuilder();
+
     owner = owner.toBuilder().setId(0).build();
     builder.setOwnerPermission(owner);
-    if (builder.getIsWitness()) {
+    if (witness != null && builder.getIsWitness()) {
       witness = witness.toBuilder().setId(1).build();
       builder.setWitnessPermission(witness);
     }
+
     builder.clearActivePermission();
-    for (int i = 0; i < actives.size(); i++) {
-      Permission permission = actives.get(i).toBuilder().setId(i + 2).build();
-      builder.addActivePermission(permission);
+    if (actives != null) {
+      for (int i = 0; i < actives.size(); i++) {
+        Permission permission = actives.get(i).toBuilder().setId(i + 2).build();
+        builder.addActivePermission(permission);
+      }
     }
+
     this.account = builder.build();
   }
 
@@ -1132,22 +1327,153 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   public void clearDelegatedResource() {
     Builder builder = account.toBuilder();
     AccountResource newAccountResource = getAccountResource().toBuilder()
-        .setAcquiredDelegatedFrozenBalanceForEnergy(0L).build();
+        .setAcquiredDelegatedFrozenBalanceForEnergy(0L)
+            .setAcquiredDelegatedFrozenV2BalanceForEnergy(0L)
+            .build();
     builder.setAccountResource(newAccountResource);
-    builder.setAcquiredDelegatedFrozenBalanceForBandwidth(0L);
+    builder.setAcquiredDelegatedFrozenBalanceForBandwidth(0L)
+            .setAcquiredDelegatedFrozenV2BalanceForBandwidth(0L);
     this.account = builder.build();
   }
 
-  public void importAsset() {
-    if (!AssetUtil.isAllowAssetOptimization()) {
+  public void importAsset(byte[] key) {
+    this.account = AssetUtil.importAsset(this.account, key);
+  }
+
+  public void importAllAsset() {
+    if (!flag) {
+      this.account = AssetUtil.importAllAsset(this.account);
+      flag = true;
+    }
+  }
+
+  public void addUnfrozenV2(UnFreezeV2 unfrozenV2) {
+    if (Objects.isNull(unfrozenV2)) {
       return;
     }
-    if (!this.isAssetImport) {
-      Account account = AssetUtil.importAsset(this.account);
-      if (null != account) {
-        this.account = account;
-      }
-      this.isAssetImport = true;
+    this.account = this.account.toBuilder().addUnfrozenV2(unfrozenV2).build();
+  }
+
+  public void addAllUnfrozenV2(List<UnFreezeV2> unFreezeV2List) {
+    if (CollectionUtils.isEmpty(unFreezeV2List)) {
+      return;
+    }
+    this.account = this.account.toBuilder().addAllUnfrozenV2(unFreezeV2List).build();
+  }
+
+  public void clearUnfrozenV2() {
+    this.account = this.account.toBuilder().clearUnfrozenV2().build();
+  }
+
+  public void clearFrozenV2() {
+    this.account = this.account.toBuilder().clearFrozenV2().build();
+  }
+
+  public void setNewWindowSize(ResourceCode resourceCode, long newWindowSize) {
+    if (resourceCode == BANDWIDTH) {
+      this.account = this.account.toBuilder().setNetWindowSize(newWindowSize).build();
+    } else {
+      this.account = this.account.toBuilder().setAccountResource(this.account.getAccountResource()
+              .toBuilder().setEnergyWindowSize(newWindowSize).build()).build();
+    }
+  }
+
+  public long getWindowSize(ResourceCode resourceCode) {
+    long windowSize;
+    boolean windowOptimized;
+    if (resourceCode == BANDWIDTH) {
+      windowSize = this.account.getNetWindowSize();
+      windowOptimized = this.account.getNetWindowOptimized();
+    } else {
+      windowSize = this.account.getAccountResource().getEnergyWindowSize();
+      windowOptimized = this.account.getAccountResource().getEnergyWindowOptimized();
+    }
+    if (windowSize == 0) {
+      return WINDOW_SIZE_MS / BLOCK_PRODUCED_INTERVAL;
+    }
+    if (windowOptimized) {
+      return windowSize < WINDOW_SIZE_PRECISION ? WINDOW_SIZE_MS / BLOCK_PRODUCED_INTERVAL :
+          windowSize / WINDOW_SIZE_PRECISION;
+    } else {
+      return windowSize;
+    }
+  }
+
+  public long getWindowSizeV2(ResourceCode resourceCode) {
+    long windowSize;
+    boolean windowOptimized;
+    if (resourceCode == BANDWIDTH) {
+      windowSize = this.account.getNetWindowSize();
+      windowOptimized = this.account.getNetWindowOptimized();
+    } else {
+      windowSize = this.account.getAccountResource().getEnergyWindowSize();
+      windowOptimized = this.account.getAccountResource().getEnergyWindowOptimized();
+    }
+    if (windowSize == 0) {
+      return WINDOW_SIZE_MS / BLOCK_PRODUCED_INTERVAL * WINDOW_SIZE_PRECISION;
+    }
+    if (windowOptimized) {
+      return windowSize;
+    } else {
+      return windowSize * WINDOW_SIZE_PRECISION;
+    }
+  }
+
+  public boolean getWindowOptimized(ResourceCode resourceCode) {
+    boolean windowOptimized;
+    if (resourceCode == BANDWIDTH) {
+      windowOptimized = this.account.getNetWindowOptimized();
+    } else {
+      windowOptimized = this.account.getAccountResource().getEnergyWindowOptimized();
+    }
+    return windowOptimized;
+  }
+
+  public void setWindowOptimized(ResourceCode resourceCode, boolean windowOptimized) {
+    if (resourceCode == BANDWIDTH) {
+      this.account = this.account.toBuilder().setNetWindowOptimized(windowOptimized).build();
+    } else {
+      this.account = this.account.toBuilder().setAccountResource(this.account.getAccountResource()
+          .toBuilder().setEnergyWindowOptimized(windowOptimized).build()).build();
+    }
+  }
+
+  public long getLastConsumeTime(ResourceCode resourceCode) {
+    if (resourceCode == BANDWIDTH) {
+      return this.account.getLatestConsumeTime();
+    } else {
+      return this.account.getAccountResource().getLatestConsumeTimeForEnergy();
+    }
+  }
+
+  public long getFrozenV2BalanceWithDelegated(ResourceCode resourceCode) {
+    if (resourceCode == BANDWIDTH) {
+      return getFrozenV2BalanceForBandwidth() + getDelegatedFrozenV2BalanceForBandwidth();
+    } else {
+      return getFrozenV2BalanceForEnergy() + getDelegatedFrozenV2BalanceForEnergy();
+    }
+  }
+
+  public void setNewWindowSizeV2( ResourceCode resourceCode, long newWindowSize) {
+    this.setNewWindowSize(resourceCode, newWindowSize);
+    if (!this.getWindowOptimized(resourceCode)) {
+      this.setWindowOptimized(resourceCode, true);
+    }
+  }
+
+  public void setUsage(ResourceCode resourceCode, long usage) {
+    if (resourceCode == BANDWIDTH) {
+      setNetUsage(usage);
+    } else {
+      setEnergyUsage(usage);
+    }
+  }
+
+  public void setLatestTime(ResourceCode resourceCode, long time) {
+    if (resourceCode == BANDWIDTH) {
+      setLatestConsumeTime(time);
+    } else {
+      setLatestConsumeTimeForEnergy(time);
     }
   }
 

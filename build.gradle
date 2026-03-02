@@ -1,28 +1,34 @@
 allprojects {
     version = "1.0.0"
-    apply plugin: "java"
+    apply plugin: "java-library"
 }
 
+logger.warn("WARN: the Nile branch of the Java-tron GitHub repository is deprecated.\n" +
+            "The new GitHub repository is https://github.com/tron-nile-testnet/nile-testnet")
+
 subprojects {
-    apply plugin: "java"
     apply plugin: "jacoco"
-    apply plugin: "maven"
     apply plugin: "maven-publish"
 
     sourceCompatibility = JavaVersion.VERSION_1_8
     targetCompatibility = JavaVersion.VERSION_1_8
 
     [compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
+    jacoco {
+        toolVersion = "0.8.12" // see https://www.jacoco.org/jacoco/trunk/doc/changes.html
+    }
 
     buildscript {
         repositories {
             mavenCentral()
-            jcenter()
             maven { url 'https://jitpack.io' }
+            maven {
+                url "https://plugins.gradle.org/m2/"
+            }
         }
         dependencies {
-            classpath 'com.google.protobuf:protobuf-gradle-plugin:0.8.12'
-            classpath 'com.github.jengelman.gradle.plugins:shadow:5.2.0'
+            classpath 'com.google.protobuf:protobuf-gradle-plugin:0.9.1'
+            classpath "gradle.plugin.com.github.johnrengelman:shadow:7.1.2"
         }
     }
 
@@ -34,34 +40,39 @@ subprojects {
     }
 
     dependencies {
-        compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.25'
-        compile group: 'org.slf4j', name: 'jcl-over-slf4j', version: '1.7.25'
-        compile "org.slf4j:jcl-over-slf4j:1.7.25"
-        compile group: 'ch.qos.logback', name: 'logback-classic', version: '1.2.3'
+        implementation group: 'org.slf4j', name: 'slf4j-api', version: '1.7.25'
+        implementation group: 'org.slf4j', name: 'jcl-over-slf4j', version: '1.7.25'
+        implementation group: 'ch.qos.logback', name: 'logback-classic', version: '1.2.13'
+        implementation "com.google.code.findbugs:jsr305:3.0.0"
+        implementation group: 'org.springframework', name: 'spring-context', version: '5.3.18'
+        implementation group: 'org.springframework', name: 'spring-tx', version: '5.3.18'
+        implementation "org.apache.commons:commons-lang3:3.4"
+        implementation group: 'org.apache.commons', name: 'commons-math', version: '2.2'
+        implementation "org.apache.commons:commons-collections4:4.1"
+        implementation group: 'joda-time', name: 'joda-time', version: '2.3'
+        implementation group: 'org.bouncycastle', name: 'bcprov-jdk15on', version: '1.69'
+
         compileOnly 'org.projectlombok:lombok:1.18.12'
         annotationProcessor 'org.projectlombok:lombok:1.18.12'
         testCompileOnly 'org.projectlombok:lombok:1.18.12'
         testAnnotationProcessor 'org.projectlombok:lombok:1.18.12'
-        compile group: 'com.google.guava', name: 'guava', version: '24.1-jre'
-        compile "com.google.code.findbugs:jsr305:3.0.0"
-        compile group: 'org.springframework', name: 'spring-context', version: '4.2.4.RELEASE'
-        compile group: 'org.springframework', name: 'spring-tx', version: '4.2.4.RELEASE'
-        compile "org.apache.commons:commons-lang3:3.4"
-        compile group: 'org.apache.commons', name: 'commons-math', version: '2.2'
-        compile "org.apache.commons:commons-collections4:4.0"
-        compile group: 'joda-time', name: 'joda-time', version: '2.3'
 
+        testImplementation group: 'junit', name: 'junit', version: '4.13.2'
+        testImplementation "org.mockito:mockito-core:4.11.0"
+        testImplementation "org.mockito:mockito-inline:4.11.0"
     }
 
     task sourcesJar(type: Jar, dependsOn: classes) {
         classifier = "sources"
         from sourceSets.main.allSource
+        duplicatesStrategy = DuplicatesStrategy.INCLUDE // allow duplicates
     }
 
 
     tasks.withType(AbstractArchiveTask) {
         preserveFileTimestamps = false
         reproducibleFileOrder = true
+        duplicatesStrategy = DuplicatesStrategy.INCLUDE // allow duplicates
     }
 }
 
@@ -74,3 +85,10 @@ task copyToParent(type: Copy) {
 
 build.finalizedBy(copyToParent)
 
+gradle.buildFinished {
+    if (project.hasProperty('cleanSubBuild')) {
+        subprojects {
+            buildDir.deleteDir()
+        }
+    }
+}

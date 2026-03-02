@@ -1,5 +1,6 @@
 package org.tron.keystore;
 
+import java.util.Objects;
 import org.tron.common.crypto.SignInterface;
 import org.tron.common.crypto.sm2.SM2;
 import org.tron.common.utils.StringUtil;
@@ -46,12 +47,11 @@ public class Credentials {
 
     Credentials that = (Credentials) o;
 
-    if (cryptoEngine != null ? !cryptoEngine
-        .equals(that.cryptoEngine) : that.cryptoEngine != null) {
+    if (!Objects.equals(cryptoEngine, that.cryptoEngine)) {
       return false;
     }
 
-    return address != null ? address.equals(that.address) : that.address == null;
+    return Objects.equals(address, that.address);
   }
 
   @Override

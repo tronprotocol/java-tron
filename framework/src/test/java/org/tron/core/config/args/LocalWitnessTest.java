@@ -20,27 +20,33 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.utils.LocalWitnesses;
+import org.tron.common.utils.PublicMethod;
 
 public class LocalWitnessTest {
 
-  private LocalWitnesses localWitness = new LocalWitnesses();
+  private final LocalWitnesses localWitness = new LocalWitnesses();
+  private static final String PRIVATE_KEY = PublicMethod.getRandomPrivateKey();
 
   @Before
   public void setLocalWitness() {
     localWitness
         .setPrivateKeys(
             Lists.newArrayList(
-                "f31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62"));
+                    PRIVATE_KEY));
   }
 
   @Test
   public void whenSetNullPrivateKey() {
     localWitness.setPrivateKeys(null);
+    Assert.assertNotNull(localWitness.getPrivateKey());
+    Assert.assertNotNull(localWitness.getPublicKey());
   }
 
   @Test
   public void whenSetEmptyPrivateKey() {
     localWitness.setPrivateKeys(Lists.newArrayList(""));
+    Assert.assertNotNull(localWitness.getPrivateKey());
+    Assert.assertNotNull(localWitness.getPublicKey());
   }
 
   @Test(expected = IllegalArgumentException.class)
@@ -52,16 +58,33 @@ public class LocalWitnessTest {
   public void whenSetPrefixPrivateKey() {
     localWitness
         .setPrivateKeys(Lists
-            .newArrayList("0xf31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62"));
+            .newArrayList("0x" + PRIVATE_KEY));
     localWitness
         .setPrivateKeys(Lists
-            .newArrayList("0Xf31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62"));
+            .newArrayList("0X" + PRIVATE_KEY));
+    Assert.assertNotNull(localWitness.getPrivateKey());
   }
 
   @Test
   public void getPrivateKey() {
     Assert.assertEquals(Lists
-            .newArrayList("f31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62"),
+            .newArrayList(PRIVATE_KEY),
         localWitness.getPrivateKeys());
+  }
+
+  @Test
+  public void testConstructor() {
+    LocalWitnesses localWitnesses = new LocalWitnesses(PublicMethod.getRandomPrivateKey());
+    LocalWitnesses localWitnesses1 =
+        new LocalWitnesses(Lists.newArrayList(PublicMethod.getRandomPrivateKey()));
+    localWitnesses.setWitnessAccountAddress(new byte[0]);
+    Assert.assertNotNull(localWitnesses1.getPublicKey());
+
+    LocalWitnesses localWitnesses2 = new LocalWitnesses();
+    Assert.assertNull(localWitnesses2.getPrivateKey());
+    Assert.assertNull(localWitnesses2.getPublicKey());
+    localWitnesses2.initWitnessAccountAddress(true);
+    LocalWitnesses localWitnesses3 = new LocalWitnesses();
+    Assert.assertNotNull(localWitnesses3.getWitnessAccountAddress(true));
   }
 }

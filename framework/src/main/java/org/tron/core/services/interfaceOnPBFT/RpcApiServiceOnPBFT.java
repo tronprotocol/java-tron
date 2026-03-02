@@ -1,26 +1,26 @@
 package org.tron.core.services.interfaceOnPBFT;
 
-import io.grpc.Server;
 import io.grpc.netty.NettyServerBuilder;
 import io.grpc.stub.StreamObserver;
-import java.io.IOException;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.codec.binary.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.api.DatabaseGrpc.DatabaseImplBase;
 import org.tron.api.GrpcAPI;
-import org.tron.api.GrpcAPI.AddressPrKeyPairMessage;
 import org.tron.api.GrpcAPI.AssetIssueList;
 import org.tron.api.GrpcAPI.BlockExtention;
 import org.tron.api.GrpcAPI.BlockReference;
 import org.tron.api.GrpcAPI.BytesMessage;
+import org.tron.api.GrpcAPI.CanDelegatedMaxSizeRequestMessage;
+import org.tron.api.GrpcAPI.CanDelegatedMaxSizeResponseMessage;
+import org.tron.api.GrpcAPI.CanWithdrawUnfreezeAmountRequestMessage;
+import org.tron.api.GrpcAPI.CanWithdrawUnfreezeAmountResponseMessage;
 import org.tron.api.GrpcAPI.DecryptNotesTRC20;
 import org.tron.api.GrpcAPI.DelegatedResourceList;
 import org.tron.api.GrpcAPI.DelegatedResourceMessage;
 import org.tron.api.GrpcAPI.EmptyMessage;
 import org.tron.api.GrpcAPI.ExchangeList;
+import org.tron.api.GrpcAPI.GetAvailableUnfreezeCountRequestMessage;
+import org.tron.api.GrpcAPI.GetAvailableUnfreezeCountResponseMessage;
 import org.tron.api.GrpcAPI.IvkDecryptTRC20Parameters;
 import org.tron.api.GrpcAPI.NfTRC20Parameters;
 import org.tron.api.GrpcAPI.NoteParameters;
@@ -28,21 +28,17 @@ import org.tron.api.GrpcAPI.NullifierResult;
 import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.api.GrpcAPI.OvkDecryptTRC20Parameters;
 import org.tron.api.GrpcAPI.PaginatedMessage;
+import org.tron.api.GrpcAPI.PricesResponseMessage;
 import org.tron.api.GrpcAPI.SpendResult;
 import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.api.WalletSolidityGrpc.WalletSolidityImplBase;
-import org.tron.common.application.Service;
-import org.tron.common.crypto.ECKey;
-import org.tron.common.parameter.CommonParameter;
-import org.tron.common.utils.StringUtil;
-import org.tron.common.utils.Utils;
+import org.tron.common.application.RpcService;
 import org.tron.core.config.args.Args;
 import org.tron.core.services.RpcApiService;
-import org.tron.core.services.filter.LiteFnQueryGrpcInterceptor;
-import org.tron.core.services.ratelimiter.RateLimiterInterceptor;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
+import org.tron.protos.Protocol.DelegatedResourceAccountIndex;
 import org.tron.protos.Protocol.DynamicProperties;
 import org.tron.protos.Protocol.Exchange;
 import org.tron.protos.Protocol.MarketOrder;
@@ -57,11 +53,9 @@ import org.tron.protos.contract.ShieldContract.IncrementalMerkleVoucherInfo;
 import org.tron.protos.contract.ShieldContract.OutputPointInfo;
 import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 
-@Slf4j(topic = "API")
-public class RpcApiServiceOnPBFT implements Service {
 
-  private int port = Args.getInstance().getRpcOnPBFTPort();
-  private Server apiServer;
+@Slf4j(topic = "API")
+public class RpcApiServiceOnPBFT extends RpcService {
 
   @Autowired
   private WalletOnPBFT walletOnPBFT;
@@ -69,74 +63,16 @@ public class RpcApiServiceOnPBFT implements Service {
   @Autowired
   private RpcApiService rpcApiService;
 
-  @Autowired
-  private RateLimiterInterceptor rateLimiterInterceptor;
-
-  @Autowired
-  private LiteFnQueryGrpcInterceptor liteFnQueryGrpcInterceptor;
-
-  @Override
-  public void init() {
+  public RpcApiServiceOnPBFT() {
+    port = Args.getInstance().getRpcOnPBFTPort();
+    enable = isFullNode() && Args.getInstance().isRpcPBFTEnable();
+    executorName = "rpc-pbft-executor";
   }
 
   @Override
-  public void init(CommonParameter parameter) {
-
-  }
-
-  @Override
-  public void start() {
-    try {
-      NettyServerBuilder serverBuilder = NettyServerBuilder.forPort(port)
-          .addService(new DatabaseApi());
-
-      CommonParameter args = CommonParameter.getInstance();
-
-      if (args.getRpcThreadNum() > 0) {
-        serverBuilder = serverBuilder
-            .executor(Executors.newFixedThreadPool(args.getRpcThreadNum()));
-      }
-
-      serverBuilder = serverBuilder.addService(new WalletPBFTApi());
-
-      // Set configs from config.conf or default value
-      serverBuilder
-          .maxConcurrentCallsPerConnection(args.getMaxConcurrentCallsPerConnection())
-          .flowControlWindow(args.getFlowControlWindow())
-          .maxConnectionIdle(args.getMaxConnectionIdleInMillis(), TimeUnit.MILLISECONDS)
-          .maxConnectionAge(args.getMaxConnectionAgeInMillis(), TimeUnit.MILLISECONDS)
-          .maxMessageSize(args.getMaxMessageSize())
-          .maxHeaderListSize(args.getMaxHeaderListSize());
-
-      // add a ratelimiter interceptor
-      serverBuilder.intercept(rateLimiterInterceptor);
-
-      // add lite fullnode query interceptor
-      serverBuilder.intercept(liteFnQueryGrpcInterceptor);
-
-      apiServer = serverBuilder.build();
-      rateLimiterInterceptor.init(apiServer);
-
-      apiServer.start();
-
-    } catch (IOException e) {
-      logger.debug(e.getMessage(), e);
-    }
-
-    logger.info("RpcApiServiceOnPBFT started, listening on " + port);
-
-    Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-      System.err.println("*** shutting down gRPC server on PBFT since JVM is shutting down");
-      //server.this.stop();
-      System.err.println("*** server on PBFT shut down");
-    }));
-  }
-
-  @Override
-  public void stop() {
-    if (apiServer != null) {
-      apiServer.shutdown();
-    }
+  protected void addService(NettyServerBuilder serverBuilder) {
+    serverBuilder.addService(new DatabaseApi());
+    serverBuilder.addService(new WalletPBFTApi());
   }
 
   /**
@@ -292,11 +228,56 @@ public class RpcApiServiceOnPBFT implements Service {
     }
 
     @Override
+    public void getDelegatedResourceV2(DelegatedResourceMessage request,
+        StreamObserver<DelegatedResourceList> responseObserver) {
+      walletOnPBFT.futureGet(
+          () -> rpcApiService.getWalletSolidityApi()
+              .getDelegatedResourceV2(request, responseObserver)
+      );
+    }
+
+    @Override
     public void getDelegatedResourceAccountIndex(BytesMessage request,
-        StreamObserver<org.tron.protos.Protocol.DelegatedResourceAccountIndex> responseObserver) {
+        StreamObserver<DelegatedResourceAccountIndex> responseObserver) {
       walletOnPBFT.futureGet(
           () -> rpcApiService.getWalletSolidityApi()
               .getDelegatedResourceAccountIndex(request, responseObserver)
+      );
+    }
+
+    @Override
+    public void getDelegatedResourceAccountIndexV2(BytesMessage request,
+        StreamObserver<DelegatedResourceAccountIndex> responseObserver) {
+      walletOnPBFT.futureGet(
+          () -> rpcApiService.getWalletSolidityApi()
+              .getDelegatedResourceAccountIndexV2(request, responseObserver)
+      );
+    }
+
+    @Override
+    public void getCanDelegatedMaxSize(CanDelegatedMaxSizeRequestMessage request,
+         StreamObserver<CanDelegatedMaxSizeResponseMessage> responseObserver) {
+      walletOnPBFT.futureGet(
+          () -> rpcApiService.getWalletSolidityApi()
+              .getCanDelegatedMaxSize(request, responseObserver)
+      );
+    }
+
+    @Override
+    public void getAvailableUnfreezeCount(GetAvailableUnfreezeCountRequestMessage request,
+          StreamObserver<GetAvailableUnfreezeCountResponseMessage> responseObserver) {
+      walletOnPBFT.futureGet(
+          () -> rpcApiService.getWalletSolidityApi()
+              .getAvailableUnfreezeCount(request, responseObserver)
+      );
+    }
+
+    @Override
+    public void getCanWithdrawUnfreezeAmount(CanWithdrawUnfreezeAmountRequestMessage request,
+         StreamObserver<CanWithdrawUnfreezeAmountResponseMessage> responseObserver) {
+      walletOnPBFT.futureGet(
+          () -> rpcApiService.getWalletSolidityApi()
+              .getCanWithdrawUnfreezeAmount(request, responseObserver)
       );
     }
 
@@ -345,20 +326,13 @@ public class RpcApiServiceOnPBFT implements Service {
       );
     }
 
-
     @Override
-    public void generateAddress(EmptyMessage request,
-        StreamObserver<AddressPrKeyPairMessage> responseObserver) {
-      ECKey ecKey = new ECKey(Utils.getRandom());
-      byte[] priKey = ecKey.getPrivKeyBytes();
-      byte[] address = ecKey.getAddress();
-      String addressStr = StringUtil.encode58Check(address);
-      String priKeyStr = Hex.encodeHexString(priKey);
-      AddressPrKeyPairMessage.Builder builder = AddressPrKeyPairMessage.newBuilder();
-      builder.setAddress(addressStr);
-      builder.setPrivateKey(priKeyStr);
-      responseObserver.onNext(builder.build());
-      responseObserver.onCompleted();
+    public void estimateEnergy(TriggerSmartContract request,
+        StreamObserver<GrpcAPI.EstimateEnergyMessage> responseObserver) {
+      walletOnPBFT.futureGet(
+          () -> rpcApiService.getWalletSolidityApi()
+              .estimateEnergy(request, responseObserver)
+      );
     }
 
     @Override
@@ -494,6 +468,27 @@ public class RpcApiServiceOnPBFT implements Service {
       walletOnPBFT.futureGet(
           () -> rpcApiService.getWalletSolidityApi().getBurnTrx(request, responseObserver)
       );
+    }
+
+    @Override
+    public void getBlock(GrpcAPI.BlockReq  request,
+                         StreamObserver<BlockExtention> responseObserver) {
+      walletOnPBFT.futureGet(
+          () -> rpcApiService.getWalletSolidityApi().getBlock(request, responseObserver));
+    }
+
+    @Override
+    public void getBandwidthPrices(EmptyMessage request,
+        StreamObserver<PricesResponseMessage> responseObserver) {
+      walletOnPBFT.futureGet(
+          () -> rpcApiService.getWalletSolidityApi().getBandwidthPrices(request, responseObserver));
+    }
+
+    @Override
+    public void getEnergyPrices(EmptyMessage request,
+        StreamObserver<PricesResponseMessage> responseObserver) {
+      walletOnPBFT.futureGet(
+          () -> rpcApiService.getWalletSolidityApi().getEnergyPrices(request, responseObserver));
     }
 
   }

@@ -1,44 +1,28 @@
 package org.tron.core.db;
 
 import com.google.protobuf.ByteString;
-import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+import javax.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
-import org.tron.common.application.TronApplicationContext;
-import org.tron.common.utils.FileUtil;
+import org.tron.common.BaseTest;
 import org.tron.core.Constant;
 import org.tron.core.capsule.WitnessCapsule;
-import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.store.WitnessStore;
 
 @Slf4j
-public class WitnessStoreTest {
-
-  private static final String dbPath = "output-witnessStore-test";
-  private static TronApplicationContext context;
+public class WitnessStoreTest extends BaseTest {
 
   static {
-    Args.setParam(new String[]{"-d", dbPath}, Constant.TEST_CONF);
-    context = new TronApplicationContext(DefaultConfig.class);
+    Args.setParam(new String[]{"-d", dbPath()}, Constant.TEST_CONF);
   }
 
-  WitnessStore witnessStore;
-
-  @AfterClass
-  public static void destroy() {
-    Args.clearParam();
-    context.destroy();
-    FileUtil.deleteDir(new File(dbPath));
-  }
-
-  @Before
-  public void initDb() {
-    this.witnessStore = context.getBean(WitnessStore.class);
-  }
+  @Resource
+  private WitnessStore witnessStore;
 
   @Test
   public void putAndGetWitness() {
@@ -65,5 +49,27 @@ public class WitnessStoreTest {
     Assert.assertEquals(100L, witnessSource.getVoteCount());
   }
 
-
+  @Test
+  public void testSortWitness() {
+    this.witnessStore.reset();
+    WitnessCapsule s1 = new WitnessCapsule(
+        ByteString.copyFrom(new byte[]{1, 2, 3}), 100L, "URL-1");
+    this.witnessStore.put(s1.getAddress().toByteArray(), s1);
+    WitnessCapsule s2 = new WitnessCapsule(
+        ByteString.copyFrom(new byte[]{1, 1, 34}), 100L, "URL-2");
+    this.witnessStore.put(s2.getAddress().toByteArray(), s2);
+    List<WitnessCapsule> allWitnesses = this.witnessStore.getAllWitnesses();
+    List<ByteString> witnessAddress = allWitnesses.stream().map(WitnessCapsule::getAddress)
+        .collect(Collectors.toList());
+    this.witnessStore.sortWitness(witnessAddress, false);
+    this.witnessStore.sortWitnesses(allWitnesses, false);
+    Assert.assertEquals(witnessAddress, allWitnesses.stream().map(WitnessCapsule::getAddress)
+        .collect(Collectors.toList()));
+    List<ByteString> pre = new ArrayList<>(witnessAddress);
+    this.witnessStore.sortWitness(witnessAddress, true);
+    this.witnessStore.sortWitnesses(allWitnesses, true);
+    Assert.assertEquals(witnessAddress, allWitnesses.stream().map(WitnessCapsule::getAddress)
+        .collect(Collectors.toList()));
+    Assert.assertNotEquals(pre, witnessAddress);
+  }
 }

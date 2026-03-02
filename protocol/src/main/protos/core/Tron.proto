@@ -2,6 +2,7 @@ syntax = "proto3";
 
 import "google/protobuf/any.proto";
 import "core/Discover.proto";
+import "core/contract/common.proto";
 
 package protocol;
 
@@ -161,6 +162,8 @@ message Account {
   int64 old_tron_power = 46;
   Frozen tron_power = 47;
 
+  bool asset_optimized = 60;
+
   // this account create time
   int64 create_time = 0x09;
   // this last operation time, including transfer, voting and so on. //FIXME fix grammar
@@ -189,6 +192,9 @@ message Account {
   // the identity of this account, case insensitive
   bytes account_id = 23;
 
+  int64 net_window_size = 24;
+  bool net_window_optimized = 25;
+
   message AccountResource {
     // energy resource, get from frozen
     int64 energy_usage = 1;
@@ -206,45 +212,33 @@ message Account {
     int64 storage_usage = 7;
     int64 latest_exchange_storage_time = 8;
 
+    int64 energy_window_size = 9;
+
+    int64 delegated_frozenV2_balance_for_energy = 10;
+    int64 acquired_delegated_frozenV2_balance_for_energy = 11;
+    bool energy_window_optimized = 12;
   }
   AccountResource account_resource = 26;
   bytes codeHash = 30;
   Permission owner_permission = 31;
   Permission witness_permission = 32;
   repeated Permission active_permission = 33;
-}
 
-/* AccountAsset */
-message AccountAsset {
-
-  /* frozen balance */
-  message Frozen {
-    int64 frozen_balance = 1; // the frozen trx balance
-    int64 expire_time = 2; // the expire time
+  message FreezeV2 {
+    ResourceCode type = 1;
+    int64 amount = 2;
   }
+  message UnFreezeV2 {
+    ResourceCode type = 1;
+    int64 unfreeze_amount = 3;
+    int64 unfreeze_expire_time = 4;
+  }
+  repeated FreezeV2 frozenV2 = 34;
+  repeated UnFreezeV2 unfrozenV2 = 35;
 
-  // the create address
-  bytes address = 1;
-
-  // the other asset owned by this account
-  map<string, int64> asset = 2;
-
-  // the other asset owned by this account，key is assetId
-  map<string, int64> assetV2 = 3;
-
-  bytes asset_issued_name = 4;
-  bytes asset_issued_ID = 5;
-
-  map<string, int64> latest_asset_operation_time = 6;
-  map<string, int64> latest_asset_operation_timeV2 = 7;
-
-  map<string, int64> free_asset_net_usage = 8;
-  map<string, int64> free_asset_net_usageV2 = 9;
-
-  // frozen asset(for asset issuer)
-  repeated Frozen frozen_supply = 10;
+  int64 delegated_frozenV2_balance_for_bandwidth = 36;
+  int64 acquired_delegated_frozenV2_balance_for_bandwidth = 37;
 }
-
 
 message Key {
   bytes address = 1;
@@ -329,6 +323,7 @@ message ResourceReceipt {
   int64 net_usage = 5;
   int64 net_fee = 6;
   Transaction.Result.contractResult result = 7;
+  int64 energy_penalty_total = 8;
 }
 
 message MarketOrderDetail {
@@ -376,6 +371,12 @@ message Transaction {
       ShieldedTransferContract = 51;
       MarketSellAssetContract = 52;
       MarketCancelOrderContract = 53;
+      FreezeBalanceV2Contract = 54;
+      UnfreezeBalanceV2Contract = 55;
+      WithdrawExpireUnfreezeContract = 56;
+      DelegateResourceContract = 57;
+      UnDelegateResourceContract = 58;
+      CancelAllUnfreezeV2Contract = 59;
     }
     ContractType type = 1;
     google.protobuf.Any parameter = 2;
@@ -405,6 +406,8 @@ message Transaction {
       JVM_STACK_OVER_FLOW = 12;
       UNKNOWN = 13;
       TRANSFER_FAILED = 14;
+      INVALID_CODE = 15;
+      // please fill in the order according to the serial number
     }
     int64 fee = 1;
     code ret = 2;
@@ -422,6 +425,8 @@ message Transaction {
 
     bytes orderId = 25;
     repeated MarketOrderDetail orderDetails = 26;
+    int64 withdraw_expire_amount = 27;
+    map<string, int64> cancel_unfreezeV2_amount = 28;
   }
 
   message raw {
@@ -481,6 +486,8 @@ message TransactionInfo {
   repeated MarketOrderDetail orderDetails = 26;
   int64 packingFee = 27;
 
+  int64 withdraw_expire_amount = 28;
+  map<string, int64> cancel_unfreezeV2_amount = 29;
 }
 
 message TransactionRet {
@@ -491,11 +498,6 @@ message TransactionRet {
 
 message Transactions {
   repeated Transaction transactions = 1;
-}
-
-message TransactionSign {
-  Transaction transaction = 1;
-  bytes privateKey = 2;
 }
 
 message BlockHeader {
@@ -580,7 +582,7 @@ enum ReasonCode {
   TOO_MANY_PEERS = 0x04;
   DUPLICATE_PEER = 0x05;
   INCOMPATIBLE_PROTOCOL = 0x06;
-  NULL_IDENTITY = 0x07;
+  RANDOM_ELIMINATION = 0x07;
   PEER_QUITING = 0x08;
   UNEXPECTED_IDENTITY = 0x09;
   LOCAL_IDENTITY = 0x0A;
@@ -598,6 +600,10 @@ enum ReasonCode {
   TIME_OUT = 0x20;
   CONNECT_FAIL = 0x21;
   TOO_MANY_PEERS_WITH_SAME_IP = 0x22;
+  LIGHT_NODE_SYNC_FAIL = 0x23;
+  BELOW_THAN_ME = 0X24;
+  NOT_WITNESS = 0x25;
+  NO_SUCH_MESSAGE = 0x26;
   UNKNOWN = 0xFF;
 }
 
@@ -619,6 +625,9 @@ message HelloMessage {
   BlockId headBlockId = 6;
   bytes address = 7;
   bytes signature = 8;
+  int32 nodeType = 9;
+  int64 lowestBlockNum = 10;
+  bytes codeVersion = 11;
 }
 
 message InternalTransaction {
@@ -645,6 +654,7 @@ message DelegatedResourceAccountIndex {
   bytes account = 1;
   repeated bytes fromAccounts = 2;
   repeated bytes toAccounts = 3;
+  int64 timestamp = 4;
 }
 
 message NodeInfo {

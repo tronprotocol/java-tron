@@ -1,5 +1,6 @@
 package org.tron.core.store;
 
+import com.google.protobuf.ByteString;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -31,6 +32,44 @@ public class DelegatedResourceStore extends TronStoreWithRevoking<DelegatedResou
         .map(DelegatedResourceCapsule::new)
         .filter(Objects::nonNull)
         .collect(Collectors.toList());
+  }
+
+  public void unLockExpireResource(byte[] from, byte[] to, long now) {
+    byte[] lockKey = DelegatedResourceCapsule
+        .createDbKeyV2(from, to, true);
+    DelegatedResourceCapsule lockResource = get(lockKey);
+    if (lockResource == null) {
+      return;
+    }
+    if (lockResource.getExpireTimeForEnergy() >= now
+        && lockResource.getExpireTimeForBandwidth() >= now) {
+      return;
+    }
+
+    byte[] unlockKey = DelegatedResourceCapsule
+        .createDbKeyV2(from, to, false);
+    DelegatedResourceCapsule unlockResource = get(unlockKey);
+    if (unlockResource == null) {
+      unlockResource = new DelegatedResourceCapsule(ByteString.copyFrom(from),
+          ByteString.copyFrom(to));
+    }
+    if (lockResource.getExpireTimeForEnergy() < now) {
+      unlockResource.addFrozenBalanceForEnergy(
+          lockResource.getFrozenBalanceForEnergy(), 0);
+      lockResource.setFrozenBalanceForEnergy(0, 0);
+    }
+    if (lockResource.getExpireTimeForBandwidth() < now) {
+      unlockResource.addFrozenBalanceForBandwidth(
+          lockResource.getFrozenBalanceForBandwidth(), 0);
+      lockResource.setFrozenBalanceForBandwidth(0, 0);
+    }
+    if (lockResource.getFrozenBalanceForBandwidth() == 0
+        && lockResource.getFrozenBalanceForEnergy() == 0) {
+      delete(lockKey);
+    } else {
+      put(lockKey, lockResource);
+    }
+    put(unlockKey, unlockResource);
   }
 
 }

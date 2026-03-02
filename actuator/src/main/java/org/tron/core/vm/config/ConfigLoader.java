@@ -1,6 +1,5 @@
 package org.tron.core.vm.config;
 
-
 import static org.tron.core.capsule.ReceiptCapsule.checkForEnergyLimit;
 
 import lombok.extern.slf4j.Slf4j;
@@ -28,6 +27,23 @@ public class ConfigLoader {
         VMConfig.initAllowTvmIstanbul(ds.getAllowTvmIstanbul());
         VMConfig.initAllowTvmFreeze(ds.getAllowTvmFreeze());
         VMConfig.initAllowTvmVote(ds.getAllowTvmVote());
+        VMConfig.initAllowTvmLondon(ds.getAllowTvmLondon());
+        VMConfig.initAllowTvmCompatibleEvm(ds.getAllowTvmCompatibleEvm());
+        VMConfig.initAllowHigherLimitForMaxCpuTimeOfOneTx(
+            ds.getAllowHigherLimitForMaxCpuTimeOfOneTx());
+        VMConfig.initAllowTvmFreezeV2(ds.supportUnfreezeDelay() ? 1 : 0);
+        VMConfig.initAllowOptimizedReturnValueOfChainId(
+            ds.getAllowOptimizedReturnValueOfChainId());
+        VMConfig.initAllowDynamicEnergy(ds.getAllowDynamicEnergy());
+        VMConfig.initDynamicEnergyThreshold(ds.getDynamicEnergyThreshold());
+        VMConfig.initDynamicEnergyIncreaseFactor(ds.getDynamicEnergyIncreaseFactor());
+        VMConfig.initDynamicEnergyMaxFactor(ds.getDynamicEnergyMaxFactor());
+        VMConfig.initAllowTvmShangHai(ds.getAllowTvmShangHai());
+        VMConfig.initAllowEnergyAdjustment(ds.getAllowEnergyAdjustment());
+        VMConfig.initAllowStrictMath(ds.getAllowStrictMath());
+        VMConfig.initAllowTvmCancun(ds.getAllowTvmCancun());
+        VMConfig.initDisableJavaLangMath(ds.getConsensusLogicOptimization());
+        VMConfig.initAllowTvmBlob(ds.getAllowTvmBlob());
       }
     }
   }

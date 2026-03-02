@@ -19,7 +19,7 @@ import org.tron.core.vm.repository.Repository;
 import org.tron.core.vm.utils.VoteRewardUtil;
 import org.tron.protos.Protocol;
 
-@Slf4j(topic = "Processor")
+@Slf4j(topic = "VMProcessor")
 public class UnfreezeBalanceProcessor {
 
   public void validate(UnfreezeBalanceParam param, Repository repo)
@@ -65,8 +65,8 @@ public class UnfreezeBalanceProcessor {
           }
           break;
         default:
-          throw new ContractValidateException("ResourceCode error."
-              + "valid ResourceCode[BANDWIDTH、Energy]");
+          throw new ContractValidateException("Unknown ResourceCode, "
+              + "valid ResourceCode[BANDWIDTH、ENERGY]");
       }
     } else {
       switch (param.getResourceType()) {
@@ -95,8 +95,8 @@ public class UnfreezeBalanceProcessor {
           }
           break;
         default:
-          throw new ContractValidateException("ResourceCode error."
-              + "valid ResourceCode[BANDWIDTH、Energy]");
+          throw new ContractValidateException("Unknown ResourceCode, "
+              + "valid ResourceCode[BANDWIDTH、ENERGY]");
       }
     }
   }
@@ -136,10 +136,12 @@ public class UnfreezeBalanceProcessor {
       if (receiverCapsule != null) {
         switch (param.getResourceType()) {
           case BANDWIDTH:
-            receiverCapsule.safeAddAcquiredDelegatedFrozenBalanceForBandwidth(-unfreezeBalance);
+            receiverCapsule.safeAddAcquiredDelegatedFrozenBalanceForBandwidth(-unfreezeBalance,
+                VMConfig.disableJavaLangMath());
             break;
           case ENERGY:
-            receiverCapsule.safeAddAcquiredDelegatedFrozenBalanceForEnergy(-unfreezeBalance);
+            receiverCapsule.safeAddAcquiredDelegatedFrozenBalanceForEnergy(-unfreezeBalance,
+                VMConfig.disableJavaLangMath());
             break;
           default:
             //this should never happen

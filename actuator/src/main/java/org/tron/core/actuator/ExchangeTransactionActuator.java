@@ -66,7 +66,8 @@ public class ExchangeTransactionActuator extends AbstractActuator {
       long tokenQuant = exchangeTransactionContract.getQuant();
 
       byte[] anotherTokenID;
-      long anotherTokenQuant = exchangeCapsule.transaction(tokenID, tokenQuant);
+      long anotherTokenQuant = exchangeCapsule.transaction(tokenID, tokenQuant,
+          dynamicStore.allowStrictMath());
 
       if (Arrays.equals(tokenID, firstTokenID)) {
         anotherTokenID = secondTokenID;
@@ -205,7 +206,8 @@ public class ExchangeTransactionActuator extends AbstractActuator {
       }
     }
 
-    long anotherTokenQuant = exchangeCapsule.transaction(tokenID, tokenQuant);
+    long anotherTokenQuant = exchangeCapsule.transaction(tokenID, tokenQuant,
+        dynamicStore.allowStrictMath());
     if (anotherTokenQuant < tokenExpected) {
       throw new ContractValidateException("token required must greater than expected");
     }

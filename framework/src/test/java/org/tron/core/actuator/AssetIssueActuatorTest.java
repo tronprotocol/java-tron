@@ -1,35 +1,27 @@
 package org.tron.core.actuator;
 
-import static org.testng.Assert.fail;
+import static org.junit.Assert.fail;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
-import org.tron.common.application.TronApplicationContext;
+import org.tron.common.BaseTest;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.FileUtil;
-import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
-import org.tron.core.capsule.AccountAssetCapsule;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
-import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.Parameter.ForkBlockVersionConsts;
 import org.tron.core.config.args.Args;
-import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Protocol.AccountType;
@@ -39,9 +31,8 @@ import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract.FrozenSupply;
 
 @Slf4j
-public class AssetIssueActuatorTest {
+public class AssetIssueActuatorTest extends BaseTest {
 
-  private static final String dbPath = "output_assetIssue_test";
   private static final String OWNER_ADDRESS;
   private static final String OWNER_ADDRESS_SECOND;
   private static final String NAME = "trx-my";
@@ -51,42 +42,15 @@ public class AssetIssueActuatorTest {
   private static final String DESCRIPTION = "myCoin";
   private static final String URL = "tron-my.com";
   private static final String ASSET_NAME_SECOND = "asset_name2";
-  private static TronApplicationContext context;
-  private static Manager dbManager;
-  private static ChainBaseManager chainBaseManager;
   private static long now = 0;
   private static long startTime = 0;
   private static long endTime = 0;
 
   static {
-    Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
-    context = new TronApplicationContext(DefaultConfig.class);
+    Args.setParam(new String[]{"--output-directory", dbPath()}, Constant.TEST_CONF);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049150";
     OWNER_ADDRESS_SECOND = Wallet
         .getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
-  }
-
-  /**
-   * Init data.
-   */
-  @BeforeClass
-  public static void init() {
-    dbManager = context.getBean(Manager.class);
-    chainBaseManager = context.getBean(ChainBaseManager.class);
-  }
-
-  /**
-   * Release resources.
-   */
-  @AfterClass
-  public static void destroy() {
-    Args.clearParam();
-    context.destroy();
-    if (FileUtil.deleteDir(new File(dbPath))) {
-      logger.info("Release resources successful.");
-    } else {
-      logger.info("Release resources failure.");
-    }
   }
 
   /**
@@ -94,17 +58,6 @@ public class AssetIssueActuatorTest {
    */
   @Before
   public void createCapsule() {
-
-    AccountAssetCapsule ownerAddressFirstAsset =
-            new AccountAssetCapsule(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)));
-    AccountAssetCapsule ownerAddressSecondAsset =
-            new AccountAssetCapsule(
-                    ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS_SECOND)));
-    dbManager.getAccountAssetStore().put(ownerAddressFirstAsset.getAddress().toByteArray(),
-            ownerAddressFirstAsset);
-    dbManager.getAccountAssetStore().put(ownerAddressSecondAsset.getAddress().toByteArray(),
-            ownerAddressSecondAsset);
-
     AccountCapsule ownerCapsule = new AccountCapsule(ByteString.copyFromUtf8("owner"),
         ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)), AccountType.Normal,
         dbManager.getDynamicPropertiesStore().getAssetIssueFee());
@@ -169,7 +122,7 @@ public class AssetIssueActuatorTest {
       Assert.assertEquals(6, assetIssueCapsule.getPrecision());
       Assert.assertEquals(NUM, assetIssueCapsule.getNum());
       Assert.assertEquals(TRX_NUM, assetIssueCapsule.getTrxNum());
-      Assert.assertEquals(owner.getAssetMap().get(NAME).longValue(), TOTAL_SUPPLY);
+      Assert.assertEquals(owner.getAssetMapForTest().get(NAME).longValue(), TOTAL_SUPPLY);
       // check V2
       long tokenIdNum = dbManager.getDynamicPropertiesStore().getTokenIdNum();
       AssetIssueCapsule assetIssueCapsuleV2 = dbManager.getAssetIssueV2Store()
@@ -178,7 +131,7 @@ public class AssetIssueActuatorTest {
       Assert.assertEquals(0, assetIssueCapsuleV2.getPrecision());
       Assert.assertEquals(NUM, assetIssueCapsuleV2.getNum());
       Assert.assertEquals(TRX_NUM, assetIssueCapsuleV2.getTrxNum());
-      Assert.assertEquals(owner.getAssetMapV2().get(String.valueOf(tokenIdNum)).longValue(),
+      Assert.assertEquals(owner.getAssetV2MapForTest().get(String.valueOf(tokenIdNum)).longValue(),
           TOTAL_SUPPLY);
 
     } catch (ContractValidateException e) {
@@ -222,7 +175,7 @@ public class AssetIssueActuatorTest {
       Assert.assertEquals(6, assetIssueCapsuleV2.getPrecision());
       Assert.assertEquals(NUM, assetIssueCapsuleV2.getNum());
       Assert.assertEquals(TRX_NUM, assetIssueCapsuleV2.getTrxNum());
-      Assert.assertEquals(owner.getAssetMapV2().get(String.valueOf(tokenIdNum)).longValue(),
+      Assert.assertEquals(owner.getAssetV2MapForTest().get(String.valueOf(tokenIdNum)).longValue(),
           TOTAL_SUPPLY);
 
     } catch (ContractValidateException e) {
@@ -265,7 +218,7 @@ public class AssetIssueActuatorTest {
       Assert.assertEquals(6, assetIssueCapsuleV2.getPrecision());
       Assert.assertEquals(NUM, assetIssueCapsuleV2.getNum());
       Assert.assertEquals(TRX_NUM, assetIssueCapsuleV2.getTrxNum());
-      Assert.assertEquals(owner.getAssetMapV2().get(String.valueOf(tokenIdNum)).longValue(),
+      Assert.assertEquals(owner.getAssetV2MapForTest().get(String.valueOf(tokenIdNum)).longValue(),
           TOTAL_SUPPLY);
 
     } catch (ContractValidateException e) {
@@ -732,8 +685,8 @@ public class AssetIssueActuatorTest {
       Assert.assertEquals(owner.getBalance(), 0L);
       Assert.assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(),
           blackholeBalance + dbManager.getDynamicPropertiesStore().getAssetIssueFee());
-      Assert.assertEquals(owner.getAssetMap().get("testname0123456789abcdefghijgklm").longValue(),
-          TOTAL_SUPPLY);
+      Assert.assertEquals(owner.getAssetMapForTest()
+                      .get("testname0123456789abcdefghijgklm").longValue(), TOTAL_SUPPLY);
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);
     } catch (ContractExeException e) {
@@ -769,7 +722,7 @@ public class AssetIssueActuatorTest {
       Assert.assertEquals(owner.getBalance(), 0L);
       Assert.assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(),
           blackholeBalance + dbManager.getDynamicPropertiesStore().getAssetIssueFee());
-      Assert.assertEquals(owner.getAssetMap().get("0").longValue(), TOTAL_SUPPLY);
+      Assert.assertEquals(owner.getAssetMapForTest().get("0").longValue(), TOTAL_SUPPLY);
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);
     } catch (ContractExeException e) {
@@ -891,7 +844,7 @@ public class AssetIssueActuatorTest {
       Assert.assertEquals(owner.getBalance(), 0L);
       Assert.assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(),
           blackholeBalance + dbManager.getDynamicPropertiesStore().getAssetIssueFee());
-      Assert.assertEquals(owner.getAssetMap().get(NAME).longValue(), TOTAL_SUPPLY);
+      Assert.assertEquals(owner.getAssetMapForTest().get(NAME).longValue(), TOTAL_SUPPLY);
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);
     } catch (ContractExeException e) {
@@ -927,7 +880,7 @@ public class AssetIssueActuatorTest {
       Assert.assertEquals(owner.getBalance(), 0L);
       Assert.assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(),
           blackholeBalance + dbManager.getDynamicPropertiesStore().getAssetIssueFee());
-      Assert.assertEquals(owner.getAssetMap().get(NAME).longValue(), TOTAL_SUPPLY);
+      Assert.assertEquals(owner.getAssetMapForTest().get(NAME).longValue(), TOTAL_SUPPLY);
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);
     } catch (ContractExeException e) {
@@ -963,7 +916,7 @@ public class AssetIssueActuatorTest {
       Assert.assertEquals(owner.getBalance(), 0L);
       Assert.assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(),
           blackholeBalance + dbManager.getDynamicPropertiesStore().getAssetIssueFee());
-      Assert.assertEquals(owner.getAssetMap().get(NAME).longValue(), TOTAL_SUPPLY);
+      Assert.assertEquals(owner.getAssetMapForTest().get(NAME).longValue(), TOTAL_SUPPLY);
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);
     } catch (ContractExeException e) {
@@ -1048,7 +1001,7 @@ public class AssetIssueActuatorTest {
       Assert.assertEquals(owner.getBalance(), 0L);
       Assert.assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(),
           blackholeBalance + dbManager.getDynamicPropertiesStore().getAssetIssueFee());
-      Assert.assertEquals(owner.getAssetMap().get(NAME).longValue(), TOTAL_SUPPLY);
+      Assert.assertEquals(owner.getAssetMapForTest().get(NAME).longValue(), TOTAL_SUPPLY);
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);
     } catch (ContractExeException e) {
@@ -1084,7 +1037,7 @@ public class AssetIssueActuatorTest {
       Assert.assertEquals(owner.getBalance(), 0L);
       Assert.assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(),
           blackholeBalance + dbManager.getDynamicPropertiesStore().getAssetIssueFee());
-      Assert.assertEquals(owner.getAssetMap().get(NAME).longValue(), TOTAL_SUPPLY);
+      Assert.assertEquals(owner.getAssetMapForTest().get(NAME).longValue(), TOTAL_SUPPLY);
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);
     } catch (ContractExeException e) {
@@ -1120,7 +1073,7 @@ public class AssetIssueActuatorTest {
       Assert.assertEquals(owner.getBalance(), 0L);
       Assert.assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(),
           blackholeBalance + dbManager.getDynamicPropertiesStore().getAssetIssueFee());
-      Assert.assertEquals(owner.getAssetMap().get(NAME).longValue(), TOTAL_SUPPLY);
+      Assert.assertEquals(owner.getAssetMapForTest().get(NAME).longValue(), TOTAL_SUPPLY);
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);
     } catch (ContractExeException e) {
@@ -1505,7 +1458,7 @@ public class AssetIssueActuatorTest {
           .get(ByteArray.fromHexString(OWNER_ADDRESS));
       Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
       Assert.assertEquals(account.getAssetIssuedName().toStringUtf8(), NAME);
-      Assert.assertEquals(account.getAssetMap().size(), 1);
+      Assert.assertEquals(account.getAssetMapForTest().size(), 1);
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);
     } catch (ContractExeException e) {
@@ -1789,7 +1742,7 @@ public class AssetIssueActuatorTest {
       Assert.assertEquals(owner.getBalance(), 0L);
       Assert.assertEquals(dbManager.getAccountStore().getBlackhole().getBalance(),
           blackholeBalance + dbManager.getDynamicPropertiesStore().getAssetIssueFee());
-      Assert.assertEquals(owner.getAssetMapV2().get(String.valueOf(tokenIdNum)).longValue(),
+      Assert.assertEquals(owner.getAssetV2MapForTest().get(String.valueOf(tokenIdNum)).longValue(),
           TOTAL_SUPPLY);
     } catch (ContractValidateException e) {
       Assert.assertFalse(e instanceof ContractValidateException);

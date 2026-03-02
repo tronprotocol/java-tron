@@ -1,6 +1,5 @@
 package org.tron.core.db2.common;
 
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -57,5 +56,10 @@ public class HashDB implements DB<Key, Value> {
   @Override
   public HashDB newInstance() {
     return new HashDB(name);
+  }
+
+  @Override
+  public void stat() {
+
   }
 }

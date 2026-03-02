@@ -1,43 +1,44 @@
 package org.tron.core;
 
+import static org.junit.Assert.assertThrows;
+
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
-import java.io.File;
+import java.nio.charset.StandardCharsets;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
-import org.tron.common.application.TronApplicationContext;
+import org.tron.common.BaseTest;
 import org.tron.common.runtime.RuntimeImpl;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.FileUtil;
-import org.tron.core.capsule.AccountAssetCapsule;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
-import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.BandwidthProcessor;
-import org.tron.core.db.Manager;
 import org.tron.core.db.TransactionTrace;
 import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.TooBigTransactionException;
 import org.tron.core.exception.TooBigTransactionResultException;
 import org.tron.core.store.StoreFactory;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.AccountType;
+import org.tron.protos.Protocol.Transaction;
+import org.tron.protos.Protocol.Transaction.Contract;
+import org.tron.protos.Protocol.Transaction.Contract.ContractType;
+import org.tron.protos.Protocol.Transaction.Result;
+import org.tron.protos.Protocol.Transaction.raw;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 import org.tron.protos.contract.AssetIssueContractOuterClass.TransferAssetContract;
 import org.tron.protos.contract.BalanceContract.TransferContract;
 
 @Slf4j
-public class BandwidthProcessorTest {
+public class BandwidthProcessorTest extends BaseTest {
 
-  private static final String dbPath = "output_bandwidth_test";
   private static final String ASSET_NAME;
   private static final String ASSET_NAME_V2;
   private static final String OWNER_ADDRESS;
@@ -50,16 +51,12 @@ public class BandwidthProcessorTest {
   private static final int VOTE_SCORE = 2;
   private static final String DESCRIPTION = "TRX";
   private static final String URL = "https://tron.network";
-  private static Manager dbManager;
-  private static ChainBaseManager chainBaseManager;
-  private static TronApplicationContext context;
-  private static long START_TIME;
-  private static long END_TIME;
+  private static final long START_TIME;
+  private static final long END_TIME;
 
 
   static {
-    Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
-    context = new TronApplicationContext(DefaultConfig.class);
+    Args.setParam(new String[]{"--output-directory", dbPath()}, Constant.TEST_CONF);
     ASSET_NAME = "test_token";
     ASSET_NAME_V2 = "2";
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
@@ -68,29 +65,6 @@ public class BandwidthProcessorTest {
     ASSET_ADDRESS_V2 = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a7890";
     START_TIME = DateTime.now().minusDays(1).getMillis();
     END_TIME = DateTime.now().getMillis();
-  }
-
-  /**
-   * Init data.
-   */
-  @BeforeClass
-  public static void init() {
-    dbManager = context.getBean(Manager.class);
-    chainBaseManager = context.getBean(ChainBaseManager.class);
-  }
-
-  /**
-   * Release resources.
-   */
-  @AfterClass
-  public static void destroy() {
-    Args.clearParam();
-    context.destroy();
-    if (FileUtil.deleteDir(new File(dbPath))) {
-      logger.info("Release resources successful.");
-    } else {
-      logger.info("Release resources failure.");
-    }
   }
 
   /**
@@ -148,6 +122,8 @@ public class BandwidthProcessorTest {
             AccountType.AssetIssue,
             chainBaseManager.getDynamicPropertiesStore().getAssetIssueFee());
 
+    assetCapsule2.addAcquiredDelegatedFrozenBalanceForBandwidth(999999L);
+
     chainBaseManager.getAccountStore().reset();
     chainBaseManager.getAccountAssetStore().reset();
     chainBaseManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
@@ -155,9 +131,6 @@ public class BandwidthProcessorTest {
         .put(toAccountCapsule.getAddress().toByteArray(), toAccountCapsule);
     chainBaseManager.getAccountStore().put(assetCapsule.getAddress().toByteArray(), assetCapsule);
     chainBaseManager.getAccountStore().put(assetCapsule2.getAddress().toByteArray(), assetCapsule2);
-
-    chainBaseManager.getAccountAssetStore().put(ownerCapsule.getAddress().toByteArray(),
-            new AccountAssetCapsule(ownerCapsule.getAddress()));
   }
 
   private TransferAssetContract getTransferAssetContract() {
@@ -486,9 +459,6 @@ public class BandwidthProcessorTest {
         .get(ByteArray.fromHexString(OWNER_ADDRESS));
     ownerCapsule.setFrozen(10_000_000L, 0L);
 
-    AccountAssetCapsule ownerAssetCapsule = chainBaseManager.getAccountAssetStore()
-            .get(ByteArray.fromHexString(OWNER_ADDRESS));
-
     chainBaseManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
 
     TransactionResultCapsule ret = new TransactionResultCapsule();
@@ -576,6 +546,32 @@ public class BandwidthProcessorTest {
 
     chainBaseManager.getAccountStore().delete(ByteArray.fromHexString(TO_ADDRESS));
     dbManager.consumeBandwidth(trx, trace);
+  }
+
+  @Test
+  public void testConsumeBandwidthTooBigTransactionResultException() {
+    TransferContract transferContract =
+        TransferContract.newBuilder()
+            .setAmount(10)
+            .setOwnerAddress(ByteString.copyFromUtf8("aaa"))
+            .setToAddress(ByteString.copyFromUtf8("bbb"))
+            .build();
+    StringBuilder sb = new StringBuilder();
+    for (int i = 0; i < 6666; i++) {
+      sb.append("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+    }
+    Transaction transaction = Transaction.newBuilder().setRawData(raw.newBuilder()
+            .setData(ByteString.copyFrom(sb.toString().getBytes(StandardCharsets.UTF_8)))
+            .addContract(Contract.newBuilder().setParameter(Any.pack(transferContract))
+                .setType(ContractType.TransferContract)))
+        .addRet(Result.newBuilder().setAssetIssueID(sb.toString()).build()).build();
+    TransactionCapsule trx = new TransactionCapsule(transaction);
+    trx.setInBlock(false);
+    TransactionTrace trace = new TransactionTrace(trx, StoreFactory
+        .getInstance(), new RuntimeImpl());
+    assertThrows(
+        "Too big transaction result, TxId %s, the result size is %d bytes, maxResultSize %d",
+        TooBigTransactionResultException.class, () -> dbManager.consumeBandwidth(trx, trace));
   }
 
   /**
@@ -685,6 +681,8 @@ public class BandwidthProcessorTest {
       Assert.assertFalse(e instanceof TooBigTransactionResultException);
     } catch (AccountResourceInsufficientException e) {
       Assert.assertFalse(e instanceof AccountResourceInsufficientException);
+    } catch (TooBigTransactionException e) {
+      Assert.fail();
     } finally {
       chainBaseManager.getAccountStore().delete(ByteArray.fromHexString(OWNER_ADDRESS));
       chainBaseManager.getAccountStore().delete(ByteArray.fromHexString(TO_ADDRESS));
@@ -791,6 +789,8 @@ public class BandwidthProcessorTest {
       Assert.assertFalse(e instanceof TooBigTransactionResultException);
     } catch (AccountResourceInsufficientException e) {
       Assert.assertFalse(e instanceof AccountResourceInsufficientException);
+    } catch (TooBigTransactionException e) {
+      Assert.fail();
     } finally {
       chainBaseManager.getAccountStore().delete(ByteArray.fromHexString(OWNER_ADDRESS));
       chainBaseManager.getAccountStore().delete(ByteArray.fromHexString(TO_ADDRESS));
@@ -860,9 +860,24 @@ public class BandwidthProcessorTest {
       Assert.assertFalse(e instanceof TooBigTransactionResultException);
     } catch (AccountResourceInsufficientException e) {
       Assert.assertFalse(e instanceof AccountResourceInsufficientException);
+    } catch (TooBigTransactionException e) {
+      Assert.fail();
     } finally {
       chainBaseManager.getAccountStore().delete(ByteArray.fromHexString(OWNER_ADDRESS));
       chainBaseManager.getAccountStore().delete(ByteArray.fromHexString(TO_ADDRESS));
     }
+  }
+
+  @Test
+  public void testCalculateGlobalNetLimit() {
+    chainBaseManager.getDynamicPropertiesStore().saveTotalNetWeight(6310L);
+    BandwidthProcessor processor = new BandwidthProcessor(chainBaseManager);
+    AccountCapsule accountCapsule = chainBaseManager.getAccountStore()
+            .get(ByteArray.fromHexString(ASSET_ADDRESS_V2));
+    long netLimit = processor.calculateGlobalNetLimit(accountCapsule);
+    Assert.assertEquals(0, netLimit);
+    long netLimitV2 = processor
+            .calculateGlobalNetLimitV2(accountCapsule.getAllFrozenBalanceForBandwidth());
+    Assert.assertTrue(netLimitV2 > 0);
   }
 }

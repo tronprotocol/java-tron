@@ -11,12 +11,17 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.parameter.CommonParameter;
+import org.tron.core.ChainBaseManager;
 
 @Component
 @Slf4j(topic = "API")
 public class LiteFnQueryHttpFilter implements Filter {
+
+  @Autowired
+  private ChainBaseManager chainBaseManager;
 
   private static Set<String> filterPaths = Sets.newHashSet();
 
@@ -106,13 +111,10 @@ public class LiteFnQueryHttpFilter implements Filter {
   public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse,
                        FilterChain filterChain) throws IOException, ServletException {
     String requestPath = ((HttpServletRequest) servletRequest).getRequestURI();
-    boolean shouldBeFiltered = false;
-    if (CommonParameter.getInstance().isLiteFullNode
+    if (chainBaseManager.isLiteNode()
             && !CommonParameter.getInstance().openHistoryQueryWhenLiteFN
             && filterPaths.contains(requestPath)) {
-      shouldBeFiltered = true;
-    }
-    if (shouldBeFiltered) {
+      servletResponse.setContentType("application/json; charset=utf-8");
       servletResponse.getWriter().write("this API is closed because this node is a lite fullnode");
     } else {
       filterChain.doFilter(servletRequest, servletResponse);

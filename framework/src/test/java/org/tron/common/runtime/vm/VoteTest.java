@@ -1,10 +1,10 @@
 package org.tron.common.runtime.vm;
 
+import static org.tron.common.math.Maths.max;
 import static org.tron.protos.Protocol.Transaction.Result.contractResult;
 import static org.tron.protos.Protocol.Transaction.Result.contractResult.REVERT;
 import static org.tron.protos.Protocol.Transaction.Result.contractResult.SUCCESS;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -19,19 +19,20 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.Runtime;
 import org.tron.common.runtime.RuntimeImpl;
 import org.tron.common.runtime.TVMTestResult;
 import org.tron.common.runtime.TvmTestUtils;
-import org.tron.common.storage.Deposit;
-import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.Commons;
-import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.WalletUtil;
+import org.tron.common.utils.client.utils.AbiUtil;
+import org.tron.common.utils.client.utils.DataWord;
 import org.tron.consensus.dpos.MaintenanceManager;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
@@ -46,9 +47,9 @@ import org.tron.core.service.MortgageService;
 import org.tron.core.store.StoreFactory;
 import org.tron.core.vm.config.ConfigLoader;
 import org.tron.core.vm.config.VMConfig;
+import org.tron.core.vm.repository.Repository;
+import org.tron.core.vm.repository.RepositoryImpl;
 import org.tron.protos.Protocol;
-import stest.tron.wallet.common.client.utils.AbiUtil;
-import stest.tron.wallet.common.client.utils.DataWord;
 
 @Slf4j
 public class VoteTest {
@@ -264,19 +265,20 @@ public class VoteTest {
     return getConsumer("<", expected);
   }
 
-  private static String dbPath;
+  @Rule
+  public TemporaryFolder temporaryFolder = new TemporaryFolder();
   private static TronApplicationContext context;
   private static Manager manager;
   private static MaintenanceManager maintenanceManager;
   private static ConsensusService consensusService;
   private static MortgageService mortgageService;
   private static byte[] owner;
-  private static Deposit rootDeposit;
+  private static Repository rootRepository;
 
   @Before
   public void init() throws Exception {
-    dbPath = "output_" + VoteTest.class.getName();
-    Args.setParam(new String[]{"--output-directory", dbPath, "--debug"}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory",
+        temporaryFolder.newFolder().toString(), "--debug"}, Constant.TEST_CONF);
     CommonParameter.getInstance().setCheckFrozenTime(0);
     context = new TronApplicationContext(DefaultConfig.class);
     manager = context.getBean(Manager.class);
@@ -286,10 +288,10 @@ public class VoteTest {
     mortgageService = context.getBean(MortgageService.class);
     owner = Hex.decode(Wallet.getAddressPreFixString()
         + "abd4b9367799eaa3197fecb144eb71de1e049abc");
-    rootDeposit = DepositImpl.createRoot(manager);
-    rootDeposit.createAccount(owner, Protocol.AccountType.Normal);
-    rootDeposit.addBalance(owner, 900_000_000_000_000_000L);
-    rootDeposit.commit();
+    rootRepository = RepositoryImpl.createRoot(StoreFactory.getInstance());
+    rootRepository.createAccount(owner, Protocol.AccountType.Normal);
+    rootRepository.addBalance(owner, 900_000_000_000_000_000L);
+    rootRepository.commit();
 
     ConfigLoader.disable = true;
     VMConfig.initVmHardFork(true);
@@ -301,6 +303,7 @@ public class VoteTest {
     VMConfig.initAllowTvmVote(1);
     manager.getDynamicPropertiesStore().saveChangeDelegation(1);
     manager.getDynamicPropertiesStore().saveAllowTvmVote(1);
+    manager.getDynamicPropertiesStore().saveNewRewardAlgorithmEffectiveCycle();
   }
 
   @After
@@ -309,11 +312,6 @@ public class VoteTest {
     VMConfig.initVmHardFork(false);
     Args.clearParam();
     context.destroy();
-    if (FileUtil.deleteDir(new File(dbPath))) {
-      logger.info("Release resources successful.");
-    } else {
-      logger.error("Release resources failure.");
-    }
   }
 
   private byte[] deployContract(String contractName, String abi, String code) throws Exception {
@@ -864,7 +862,8 @@ public class VoteTest {
     long rewardBySystem = mortgageService.queryReward(contract);
     long beginCycle = manager.getDelegationStore().getBeginCycle(contract);
     long currentCycle = manager.getDynamicPropertiesStore().getCurrentCycleNumber();
-    long passedCycle = Math.max(0, currentCycle - beginCycle);
+    long passedCycle = max(0, currentCycle - beginCycle,
+        manager.getDynamicPropertiesStore().disableJavaLangMath());
     Assert.assertTrue(isZero ? rewardBySystem == 0 : rewardBySystem > 0);
     triggerContract(contract, SUCCESS,
         getConsumer(">=", rewardBySystem)

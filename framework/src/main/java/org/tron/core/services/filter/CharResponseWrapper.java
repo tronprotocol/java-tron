@@ -7,7 +7,7 @@ import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpServletResponseWrapper;
 
-class CharResponseWrapper extends HttpServletResponseWrapper {
+public class CharResponseWrapper extends HttpServletResponseWrapper {
 
   private ServletOutputStream outputStream;
   private PrintWriter writer;
@@ -58,7 +58,7 @@ class CharResponseWrapper extends HttpServletResponseWrapper {
   }
 
   public int getByteSize() {
-    return streamCopy.getStreamByteSize();
+    return streamCopy == null ? 0 : streamCopy.getStreamByteSize();
   }
 
 }

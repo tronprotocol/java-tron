@@ -131,6 +131,10 @@ public class RuntimeImpl implements Runtime {
       result.setResultCode(contractResult.TRANSFER_FAILED);
       return;
     }
+    if (exception instanceof Program.InvalidCodeException) {
+      result.setResultCode(contractResult.INVALID_CODE);
+      return;
+    }
     result.setResultCode(contractResult.UNKNOWN);
   }
 

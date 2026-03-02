@@ -21,30 +21,24 @@ import org.tron.core.config.args.Args;
 import org.tron.core.metrics.MetricsKey;
 import org.tron.core.metrics.MetricsUtil;
 import org.tron.core.services.ratelimiter.adapter.DefaultBaseQqsAdapter;
-import org.tron.core.services.ratelimiter.adapter.GlobalPreemptibleAdapter;
-import org.tron.core.services.ratelimiter.adapter.IPQPSRateLimiterAdapter;
 import org.tron.core.services.ratelimiter.adapter.IPreemptibleRateLimiter;
 import org.tron.core.services.ratelimiter.adapter.IRateLimiter;
-import org.tron.core.services.ratelimiter.adapter.QpsRateLimiterAdapter;
+import org.tron.core.services.ratelimiter.strategy.QpsStrategy;
 
 
 @Slf4j
 @Component
 public class RateLimiterInterceptor implements ServerInterceptor {
-
   private static final String KEY_PREFIX_RPC = "rpc_";
-
   @Autowired
   private RateLimiterContainer container;
 
-
   public void init(Server server) {
-
     // add default
     for (ServerServiceDefinition service : server.getServices()) {
       for (ServerMethodDefinition<?, ?> method : service.getMethods()) {
         container.add(KEY_PREFIX_RPC, method.getMethodDescriptor().getFullMethodName(),
-            new DefaultBaseQqsAdapter("qps=1000"));
+            new DefaultBaseQqsAdapter(QpsStrategy.DEFAULT_QPS_PARAM));
       }
     }
 
@@ -110,10 +104,13 @@ public class RateLimiterInterceptor implements ServerInterceptor {
     IRateLimiter rateLimiter = container
         .get(KEY_PREFIX_RPC, call.getMethodDescriptor().getFullMethodName());
 
+    RuntimeData runtimeData = new RuntimeData(call);
+    GlobalRateLimiter.acquire(runtimeData);
+
     boolean acquireResource = true;
 
     if (rateLimiter != null) {
-      acquireResource = rateLimiter.acquire(new RuntimeData(call));
+      acquireResource = rateLimiter.acquire(runtimeData);
     }
 
     Listener<ReqT> listener = new ServerCall.Listener<ReqT>() {

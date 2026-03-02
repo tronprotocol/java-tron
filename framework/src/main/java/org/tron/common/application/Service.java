@@ -15,15 +15,25 @@
 
 package org.tron.common.application;
 
-import org.tron.common.parameter.CommonParameter;
+import java.util.concurrent.CompletableFuture;
 
 public interface Service {
 
-  void init();
+  /**
+   * Starts the service and all needed backend systems.
+   *
+   * @return completion state
+   */
+  CompletableFuture<Boolean> start();
 
-  void init(CommonParameter parameter);
+  /**
+   * Stops the service and performs needed cleanup.
+   *
+   * @return completion state
+   */
+  CompletableFuture<Boolean> stop();
 
-  void start();
+  boolean isEnable();
 
-  void stop();
+  String getName();
 }

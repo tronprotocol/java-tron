@@ -1,26 +1,21 @@
-/*
- * Copyright (c) [2016] [ <ether.camp> ]
- * This file is part of the ethereumJ library.
- *
- * The ethereumJ library is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * The ethereumJ library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with the ethereumJ library. If not, see <http://www.gnu.org/licenses/>.
- */
 package org.tron.core.vm.program;
 
-
+import org.apache.commons.lang3.tuple.Pair;
 import org.tron.common.runtime.vm.DataWord;
-import org.tron.core.capsule.*;
-import org.tron.core.store.*;
+import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.AssetIssueCapsule;
+import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.BytesCapsule;
+import org.tron.core.capsule.ContractCapsule;
+import org.tron.core.capsule.ContractStateCapsule;
+import org.tron.core.capsule.DelegatedResourceAccountIndexCapsule;
+import org.tron.core.capsule.DelegatedResourceCapsule;
+import org.tron.core.capsule.VotesCapsule;
+import org.tron.core.capsule.WitnessCapsule;
+import org.tron.core.store.AssetIssueStore;
+import org.tron.core.store.AssetIssueV2Store;
+import org.tron.core.store.DelegationStore;
+import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.vm.program.invoke.ProgramInvoke;
 import org.tron.core.vm.program.listener.ProgramListener;
 import org.tron.core.vm.program.listener.ProgramListenerAware;
@@ -112,8 +107,18 @@ public class ContractState implements Repository, ProgramListenerAware {
   }
 
   @Override
+  public ContractStateCapsule getContractState(byte[] address) {
+    return repository.getContractState(address);
+  }
+
+  @Override
   public void updateContract(byte[] address, ContractCapsule contractCapsule) {
     repository.updateContract(address, contractCapsule);
+  }
+
+  @Override
+  public void updateContractState(byte[] address, ContractStateCapsule contractStateCapsule) {
+    repository.updateContractState(address, contractStateCapsule);
   }
 
   @Override
@@ -189,6 +194,10 @@ public class ContractState implements Repository, ProgramListenerAware {
     repository.putContract(key, value);
   }
 
+  @Override
+  public void putContractState(Key key, Value value) {
+    repository.putContractState(key, value);
+  }
 
   public void putStorage(Key key, Storage cache) {
     repository.putStorage(key, cache);
@@ -216,6 +225,16 @@ public class ContractState implements Repository, ProgramListenerAware {
   }
 
   @Override
+  public void putDelegatedResourceAccountIndex(Key key, Value value) {
+    repository.putDelegatedResourceAccountIndex(key, value);
+  }
+
+  @Override
+  public void putTransientStorageValue(Key address, Key key, Value value) {
+    repository.putTransientStorageValue(address, key, value);
+  }
+
+  @Override
   public long addTokenBalance(byte[] address, byte[] tokenId, long value) {
     return repository.addTokenBalance(address, tokenId, value);
   }
@@ -228,6 +247,21 @@ public class ContractState implements Repository, ProgramListenerAware {
   @Override
   public long getAccountLeftEnergyFromFreeze(AccountCapsule accountCapsule) {
     return repository.getAccountLeftEnergyFromFreeze(accountCapsule);
+  }
+
+  @Override
+  public long getAccountEnergyUsage(AccountCapsule accountCapsule) {
+    return repository.getAccountEnergyUsage(accountCapsule);
+  }
+
+  @Override
+  public Pair<Long, Long> getAccountEnergyUsageBalanceAndRestoreSeconds(AccountCapsule accountCapsule) {
+    return repository.getAccountEnergyUsageBalanceAndRestoreSeconds(accountCapsule);
+  }
+
+  @Override
+  public Pair<Long, Long> getAccountNetUsageBalanceAndRestoreSeconds(AccountCapsule accountCapsule) {
+    return repository.getAccountNetUsageBalanceAndRestoreSeconds(accountCapsule);
   }
 
   @Override
@@ -281,6 +315,16 @@ public class ContractState implements Repository, ProgramListenerAware {
   }
 
   @Override
+  public DelegatedResourceAccountIndexCapsule getDelegatedResourceAccountIndex(byte[] key) {
+    return repository.getDelegatedResourceAccountIndex(key);
+  }
+
+  @Override
+  public byte[] getTransientStorageValue(byte[] address, byte[] key) {
+    return repository.getTransientStorageValue(address, key);
+  }
+
+  @Override
   public void updateDynamicProperty(byte[] word, BytesCapsule bytesCapsule) {
     repository.updateDynamicProperty(word, bytesCapsule);
   }
@@ -316,6 +360,16 @@ public class ContractState implements Repository, ProgramListenerAware {
   }
 
   @Override
+  public void updateDelegatedResourceAccountIndex(byte[] word, DelegatedResourceAccountIndexCapsule delegatedResourceAccountIndexCapsule) {
+    repository.updateDelegatedResourceAccountIndex(word, delegatedResourceAccountIndexCapsule);
+  }
+
+  @Override
+  public void updateTransientStorageValue(byte[] address, byte[] key, byte[] value) {
+    repository.updateTransientStorageValue(address, key, value);
+  }
+
+  @Override
   public void putDynamicProperty(Key key, Value value) {
     repository.putDynamicProperty(key, value);
   }
@@ -336,6 +390,11 @@ public class ContractState implements Repository, ProgramListenerAware {
   }
 
   @Override
+  public void addTotalTronPowerWeight(long amount) {
+    repository.addTotalTronPowerWeight(amount);
+  }
+
+  @Override
   public void saveTotalNetWeight(long totalNetWeight) {
     repository.saveTotalNetWeight(totalNetWeight);
   }
@@ -346,6 +405,11 @@ public class ContractState implements Repository, ProgramListenerAware {
   }
 
   @Override
+  public void saveTotalTronPowerWeight(long totalTronPowerWeight) {
+    repository.saveTotalTronPowerWeight(totalTronPowerWeight);
+  }
+
+  @Override
   public long getTotalNetWeight() {
     return repository.getTotalNetWeight();
   }
@@ -353,6 +417,21 @@ public class ContractState implements Repository, ProgramListenerAware {
   @Override
   public long getTotalEnergyWeight() {
     return repository.getTotalEnergyWeight();
+  }
+
+  @Override
+  public long getTotalTronPowerWeight() {
+    return repository.getTotalTronPowerWeight();
+  }
+
+  @Override
+  public long getHeadSlot() {
+    return repository.getHeadSlot();
+  }
+
+  @Override
+  public long getSlotByTimestampMs(long timestamp) {
+    return repository.getSlotByTimestampMs(timestamp);
   }
 
 }

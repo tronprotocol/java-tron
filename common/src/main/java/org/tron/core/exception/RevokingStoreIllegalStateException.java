@@ -51,4 +51,9 @@ public class RevokingStoreIllegalStateException extends RuntimeException {
   public RevokingStoreIllegalStateException(Throwable cause) {
     super("", cause);
   }
+
+  public RevokingStoreIllegalStateException(int activeSession) {
+    this(String.format("activeSession %d has to be greater than 0", activeSession));
+  }
+
 }

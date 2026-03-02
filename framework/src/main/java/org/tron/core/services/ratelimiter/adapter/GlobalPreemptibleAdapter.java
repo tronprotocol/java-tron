@@ -8,7 +8,6 @@ public class GlobalPreemptibleAdapter implements IPreemptibleRateLimiter {
   private GlobalPreemptibleStrategy strategy;
 
   public GlobalPreemptibleAdapter(String paramString) {
-
     strategy = new GlobalPreemptibleStrategy(paramString);
   }
 

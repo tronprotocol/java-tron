@@ -21,8 +21,10 @@ import org.tron.core.store.DynamicPropertiesStore;
 public abstract class Message {
 
   protected static final Logger logger = LoggerFactory.getLogger("Message");
+  // https://developers.google.com/protocol-buffers/docs/proto3#unknowns
+  // https://github.com/protocolbuffers/protobuf/issues/272
   private static final Field field = ReflectionUtils
-      .findField(CodedInputStream.class, "explicitDiscardUnknownFields");
+      .findField(CodedInputStream.class, "shouldDiscardUnknownFields");
   @Setter
   private static DynamicPropertiesStore dynamicPropertiesStore;
 
@@ -65,6 +67,10 @@ public abstract class Message {
 
   public ByteBuf getSendData() {
     return Unpooled.wrappedBuffer(ArrayUtils.add(this.getData(), 0, type));
+  }
+
+  public byte[] getSendBytes() {
+    return ArrayUtils.add(this.getData(), 0, type);
   }
 
   public Sha256Hash getMessageId() {

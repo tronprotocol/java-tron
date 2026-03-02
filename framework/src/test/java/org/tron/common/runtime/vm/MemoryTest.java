@@ -18,15 +18,15 @@
 
 package org.tron.common.runtime.vm;
 
-import static java.lang.Math.ceil;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertTrue;
+import static org.tron.common.math.Maths.ceil;
 
 import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
+import org.junit.Assert;
 import org.junit.Test;
-import org.testng.Assert;
 import org.tron.core.vm.program.Memory;
 
 @Slf4j
@@ -43,7 +43,7 @@ public class MemoryTest {
   }
 
   private static int calcSize(int dataSize, int chunkSize) {
-    return (int) ceil((double) dataSize / chunkSize) * chunkSize;
+    return (int) ceil((double) dataSize / chunkSize, true) * chunkSize;
   }
 
   @Test

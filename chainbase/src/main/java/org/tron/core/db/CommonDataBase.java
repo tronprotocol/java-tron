@@ -5,7 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.tron.common.utils.ByteArray;
 
-@Slf4j
+@Slf4j(topic = "DB")
 @Component
 public class CommonDataBase extends TronDatabase<byte[]> {
 
@@ -37,7 +37,7 @@ public class CommonDataBase extends TronDatabase<byte[]> {
 
   public void saveLatestPbftBlockNum(long number) {
     if (number <= getLatestPbftBlockNum()) {
-      logger.warn("pbft number {} <= latest number {}", number, getLatestPbftBlockNum());
+      logger.warn("PBFT number {} <= latest number {}.", number, getLatestPbftBlockNum());
       return;
     }
     this.put(LATEST_PBFT_BLOCK_NUM, ByteArray.fromLong(number));

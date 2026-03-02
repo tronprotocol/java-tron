@@ -112,9 +112,9 @@ public class ExchangeCapsule implements ProtoCapsule<Exchange> {
     return calculateDbKey(getID());
   }
 
-  public long transaction(byte[] sellTokenID, long sellTokenQuant) {
+  public long transaction(byte[] sellTokenID, long sellTokenQuant, boolean useStrictMath) {
     long supply = 1_000_000_000_000_000_000L;
-    ExchangeProcessor processor = new ExchangeProcessor(supply);
+    ExchangeProcessor processor = new ExchangeProcessor(supply, useStrictMath);
 
     long buyTokenQuant = 0;
     long firstTokenBalance = this.exchange.getFirstTokenBalance();

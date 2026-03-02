@@ -7,9 +7,10 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Arrays;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
-import org.tron.common.utils.Commons;
 import org.tron.common.utils.DecodeUtil;
+import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
@@ -56,13 +57,13 @@ public class TransferActuator extends AbstractActuator {
         fee = fee + dynamicStore.getCreateNewAccountFeeInSystemContract();
       }
 
-      Commons.adjustBalance(accountStore, ownerAddress, -(Math.addExact(fee, amount)));
+      adjustBalance(accountStore, ownerAddress, -(addExact(fee, amount)));
       if (dynamicStore.supportBlackHoleOptimization()) {
         dynamicStore.burnTrx(fee);
       } else {
-        Commons.adjustBalance(accountStore, accountStore.getBlackhole(), fee);
+        adjustBalance(accountStore, accountStore.getBlackhole(), fee);
       }
-      Commons.adjustBalance(accountStore, toAddress, amount);
+      adjustBalance(accountStore, toAddress, amount);
       ret.setStatus(fee, code.SUCESS);
     } catch (BalanceInsufficientException | ArithmeticException | InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
@@ -137,13 +138,32 @@ public class TransferActuator extends AbstractActuator {
 
       }
 
-      if (balance < Math.addExact(amount, fee)) {
+      // after AllowTvmCompatibleEvm proposal, send trx to smartContract which version is one
+      // by actuator is not allowed.
+      if (dynamicStore.getAllowTvmCompatibleEvm() == 1
+          && toAccount != null
+          && toAccount.getType() == AccountType.Contract) {
+
+        ContractCapsule contractCapsule = chainBaseManager.getContractStore().get(toAddress);
+        if (contractCapsule == null) { //  this can not happen
+          throw new ContractValidateException(
+              "Account type is Contract, but it is not exist in contract store.");
+        } else if (contractCapsule.getContractVersion() == 1) {
+          throw new ContractValidateException(
+              "Cannot transfer TRX to a smartContract which version is one. "
+                  + "Instead please use TriggerSmartContract ");
+        }
+      }
+
+      if (balance < addExact(amount, fee)) {
+        logger.warn("Balance is not sufficient. Account: {}, balance: {}, amount: {}, fee: {}.",
+            StringUtil.encode58Check(ownerAddress), balance, amount, fee);
         throw new ContractValidateException(
             "Validate TransferContract error, balance is not sufficient.");
       }
 
       if (toAccount != null) {
-        Math.addExact(toAccount.getBalance(), amount);
+        addExact(toAccount.getBalance(), amount);
       }
     } catch (ArithmeticException e) {
       logger.debug(e.getMessage(), e);

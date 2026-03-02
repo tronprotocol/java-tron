@@ -1,5 +1,9 @@
 package org.tron.core.exception;
 
+import java.util.Locale;
+import org.tron.common.prometheus.MetricKeys;
+import org.tron.common.prometheus.Metrics;
+
 public class P2pException extends Exception {
 
   private TypeEnum type;
@@ -7,16 +11,24 @@ public class P2pException extends Exception {
   public P2pException(TypeEnum type, String errMsg) {
     super(errMsg);
     this.type = type;
+    report();
   }
 
   public P2pException(TypeEnum type, Throwable throwable) {
     super(throwable);
     this.type = type;
+    report();
   }
 
   public P2pException(TypeEnum type, String errMsg, Throwable throwable) {
     super(errMsg, throwable);
     this.type = type;
+    report();
+  }
+
+  private void report () {
+    Metrics.counterInc(MetricKeys.Counter.P2P_ERROR, 1,
+        type.name().toLowerCase(Locale.ROOT));
   }
 
   public TypeEnum getType() {
@@ -38,6 +50,8 @@ public class P2pException extends Exception {
     TRX_EXE_FAILED(12, "trx exe failed"),
     DB_ITEM_NOT_FOUND(13, "DB item not found"),
     PROTOBUF_ERROR(14, "protobuf inconsistent"),
+    BLOCK_SIGN_ERROR(15, "block sign error"),
+    BLOCK_MERKLE_ERROR(16, "block merkle error"),
 
     DEFAULT(100, "default exception");
 

@@ -236,7 +236,7 @@ public class SumActuatorTest {
     appTest.startServices();
     appTest.startup();
     channelFull = ManagedChannelBuilder.forTarget(serviceNode)
-            .usePlaintext(true)
+            .usePlaintext()
             .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
   }
@@ -259,7 +259,7 @@ public class SumActuatorTest {
   @Test
   public void sumActuatorTest() {
     // this key is defined in config-localtest.conf as accountName=Sun
-    String key = "cba92a516ea09f620a16ff7ee95ce0df1d56550a8babe9964981a7144c8a784a";
+    String key = "<your_private_key>";
     byte[] address = PublicMethed.getFinalAddress(key);
     ECKey ecKey = null;
     try {

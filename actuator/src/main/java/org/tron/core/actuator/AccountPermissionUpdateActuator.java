@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.tron.common.utils.Commons;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
@@ -52,11 +51,11 @@ public class AccountPermissionUpdateActuator extends AbstractActuator {
           accountPermissionUpdateContract.getActivesList());
       accountStore.put(ownerAddress, account);
 
-      Commons.adjustBalance(accountStore, ownerAddress, -fee);
+      adjustBalance(accountStore, ownerAddress, -fee);
       if (chainBaseManager.getDynamicPropertiesStore().supportBlackHoleOptimization()) {
         chainBaseManager.getDynamicPropertiesStore().burnTrx(fee);
       } else {
-        Commons.adjustBalance(accountStore, accountStore.getBlackhole(), fee);
+        adjustBalance(accountStore, accountStore.getBlackhole(), fee);
       }
 
       result.setStatus(fee, code.SUCESS);
@@ -111,7 +110,7 @@ public class AccountPermissionUpdateActuator extends AbstractActuator {
         throw new ContractValidateException("key's weight should be greater than 0");
       }
       try {
-        weightSum = Math.addExact(weightSum, key.getWeight());
+        weightSum = addExact(weightSum, key.getWeight());
       } catch (ArithmeticException e) {
         throw new ContractValidateException(e.getMessage());
       }

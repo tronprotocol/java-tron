@@ -66,6 +66,20 @@ public class MetricsUtil {
     }
   }
 
+  /**
+   * Histogram update uncheck.
+   *
+   * @param key String
+   * @param value long
+   */
+  public static void histogramUpdateUnCheck(String key, long value) {
+    try {
+      metricRegistry.histogram(key).update(value);
+    } catch (Exception e) {
+      logger.warn("update histogram uncheck failed, key:{}, value:{}", key, value);
+    }
+  }
+
   public static Meter getMeter(String name) {
     return metricRegistry.meter(name);
   }

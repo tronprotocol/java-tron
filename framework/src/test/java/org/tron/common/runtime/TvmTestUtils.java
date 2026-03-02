@@ -10,9 +10,10 @@ import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
 import org.tron.common.crypto.Hash;
-import org.tron.common.storage.Deposit;
-import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.WalletUtil;
+import org.tron.common.utils.client.Parameter.CommonConstant;
+import org.tron.common.utils.client.WalletClient;
+import org.tron.common.utils.client.utils.AbiUtil;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
@@ -23,15 +24,14 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.VMIllegalException;
 import org.tron.core.store.StoreFactory;
+import org.tron.core.vm.repository.Repository;
+import org.tron.core.vm.repository.RepositoryImpl;
+
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
-import stest.tron.wallet.common.client.Parameter.CommonConstant;
-import stest.tron.wallet.common.client.WalletClient;
-import stest.tron.wallet.common.client.utils.AbiUtil;
-import stest.tron.wallet.common.client.utils.PublicMethed;
 
 
 /**
@@ -45,36 +45,36 @@ public class TvmTestUtils {
   public static byte[] deployContractWholeProcessReturnContractAddress(String contractName,
       byte[] callerAddress,
       String abi, String code, long value, long feeLimit, long consumeUserResourcePercent,
-      String libraryAddressPair, DepositImpl deposit, BlockCapsule block)
+      String libraryAddressPair, RepositoryImpl repository, BlockCapsule block)
       throws ContractExeException, ReceiptCheckErrException,
       ContractValidateException, VMIllegalException {
     Transaction trx = generateDeploySmartContractAndGetTransaction(contractName, callerAddress, abi,
         code, value, feeLimit, consumeUserResourcePercent, libraryAddressPair);
-    processTransactionAndReturnRuntime(trx, deposit, block);
+    processTransactionAndReturnRuntime(trx, repository, block);
     return WalletUtil.generateContractAddress(trx);
   }
 
   public static byte[] deployContractWholeProcessReturnContractAddress(String contractName,
       byte[] callerAddress,
       String abi, String code, long value, long feeLimit, long consumeUserResourcePercent,
-      String libraryAddressPair, long tokenValue, long tokenId, DepositImpl deposit,
+      String libraryAddressPair, long tokenValue, long tokenId, RepositoryImpl repository,
       BlockCapsule block)
       throws ContractExeException, ReceiptCheckErrException,
       ContractValidateException, VMIllegalException {
     Transaction trx = generateDeploySmartContractAndGetTransaction(contractName, callerAddress, abi,
         code, value, feeLimit, consumeUserResourcePercent, tokenValue, tokenId, libraryAddressPair);
-    processTransactionAndReturnRuntime(trx, deposit, block);
+    processTransactionAndReturnRuntime(trx, repository, block);
     return WalletUtil.generateContractAddress(trx);
   }
 
   public static Runtime triggerContractWholeProcessReturnContractAddress(byte[] callerAddress,
-      byte[] contractAddress, byte[] data, long callValue, long feeLimit, DepositImpl deposit,
+      byte[] contractAddress, byte[] data, long callValue, long feeLimit, RepositoryImpl repository,
       BlockCapsule block)
       throws ContractExeException, ReceiptCheckErrException,
       ContractValidateException, VMIllegalException {
     Transaction trx = generateTriggerSmartContractAndGetTransaction(callerAddress, contractAddress,
         data, callValue, feeLimit);
-    return processTransactionAndReturnRuntime(trx, deposit, block);
+    return processTransactionAndReturnRuntime(trx, repository, block);
   }
 
   /**
@@ -163,16 +163,16 @@ public class TvmTestUtils {
   }
 
   /**
-   * use given input Transaction,deposit,block and execute TVM  (for both Deploy and Trigger
+   * use given input Transaction,repository,block and execute TVM  (for both Deploy and Trigger
    * contracts).
    */
 
   public static Runtime processTransactionAndReturnRuntime(Transaction trx,
-      Deposit deposit, BlockCapsule block)
+      Repository repository, BlockCapsule block)
       throws ContractExeException, ContractValidateException,
       ReceiptCheckErrException, VMIllegalException {
     TransactionCapsule trxCap = new TransactionCapsule(trx);
-    deposit.commit();
+    repository.commit();
     TransactionTrace trace = new TransactionTrace(trxCap, StoreFactory.getInstance(),
         new RuntimeImpl());    // init
     trace.init(block);
@@ -203,11 +203,11 @@ public class TvmTestUtils {
   }
 
   public static TransactionTrace processTransactionAndReturnTrace(Transaction trx,
-      DepositImpl deposit, BlockCapsule block)
+      RepositoryImpl repository, BlockCapsule block)
       throws ContractExeException, ContractValidateException,
       ReceiptCheckErrException, VMIllegalException {
     TransactionCapsule trxCap = new TransactionCapsule(trx);
-    deposit.commit();
+    repository.commit();
     TransactionTrace trace = new TransactionTrace(trxCap, StoreFactory.getInstance(),
         new RuntimeImpl());    // init
     trace.init(block);
@@ -621,7 +621,7 @@ public class TvmTestUtils {
       String abiString, String code, long value, long consumeUserResourcePercent) {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
 
-    SmartContract.ABI abi = PublicMethed.jsonStr2Abi(abiString);
+    SmartContract.ABI abi = jsonStr2Abi(abiString);
     if (abi == null) {
       return null;
     }

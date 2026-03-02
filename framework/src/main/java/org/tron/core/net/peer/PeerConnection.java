@@ -2,8 +2,13 @@ package org.tron.core.net.peer;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import com.google.protobuf.ByteString;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.util.Deque;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -15,22 +20,72 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-import org.tron.common.overlay.message.HelloMessage;
 import org.tron.common.overlay.message.Message;
-import org.tron.common.overlay.server.Channel;
+import org.tron.common.prometheus.MetricKeys;
+import org.tron.common.prometheus.Metrics;
 import org.tron.common.utils.Pair;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.consensus.pbft.message.PbftBaseMessage;
 import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.config.Parameter.NetConstants;
+import org.tron.core.config.args.Args;
+import org.tron.core.metrics.MetricsKey;
+import org.tron.core.metrics.MetricsUtil;
 import org.tron.core.net.TronNetDelegate;
-import org.tron.core.net.service.AdvService;
-import org.tron.core.net.service.SyncService;
+import org.tron.core.net.message.adv.InventoryMessage;
+import org.tron.core.net.message.adv.TransactionsMessage;
+import org.tron.core.net.message.base.DisconnectMessage;
+import org.tron.core.net.message.handshake.HelloMessage;
+import org.tron.core.net.message.keepalive.PingMessage;
+import org.tron.core.net.message.keepalive.PongMessage;
+import org.tron.core.net.service.adv.AdvService;
+import org.tron.core.net.service.statistics.NodeStatistics;
+import org.tron.core.net.service.statistics.PeerStatistics;
+import org.tron.core.net.service.statistics.TronStatsManager;
+import org.tron.core.net.service.sync.SyncService;
+import org.tron.p2p.connection.Channel;
+import org.tron.protos.Protocol;
 
 @Slf4j(topic = "net")
 @Component
 @Scope("prototype")
-public class PeerConnection extends Channel {
+public class PeerConnection {
+
+  private static List<InetSocketAddress> relayNodes = Args.getInstance().getFastForwardNodes();
+
+  @Getter
+  private PeerStatistics peerStatistics = new PeerStatistics();
+
+  @Getter
+  private NodeStatistics nodeStatistics;
+
+  @Getter
+  private Channel channel;
+
+  @Getter
+  @Setter
+  private volatile boolean isRelayPeer;
+
+  @Setter
+  @Getter
+  private volatile boolean fetchAble;
+
+  @Setter
+  @Getter
+  private volatile boolean isBadPeer;
+
+  @Getter
+  @Setter
+  private ByteString address;
+
+  @Getter
+  @Setter
+  private volatile long lastInteractiveTime;
+
+  @Getter
+  @Setter
+  private TronState tronState = TronState.INIT;
 
   @Autowired
   private TronNetDelegate tronNetDelegate;
@@ -43,9 +98,15 @@ public class PeerConnection extends Channel {
 
   @Setter
   @Getter
-  private HelloMessage helloMessage;
+  private HelloMessage helloMessageReceive;
 
-  private int invCacheSize = 100_000;
+  @Setter
+  @Getter
+  private HelloMessage helloMessageSend;
+
+  private int invCacheSize = 20_000;
+
+  private long BAD_PEER_BAN_TIME = 3_600_000;
 
   @Setter
   @Getter
@@ -96,30 +157,42 @@ public class PeerConnection extends Channel {
   @Getter
   private volatile boolean needSyncFromUs = true;
 
+  public void setChannel(Channel channel) {
+    this.channel = channel;
+    if (relayNodes.stream().anyMatch(n -> n.getAddress().equals(channel.getInetAddress()))) {
+      this.isRelayPeer = true;
+    }
+    this.nodeStatistics = TronStatsManager.getNodeStatistics(channel.getInetAddress());
+    lastInteractiveTime = System.currentTimeMillis();
+  }
+
   public void setBlockBothHave(BlockId blockId) {
     this.blockBothHave = blockId;
     this.blockBothHaveUpdateTime = System.currentTimeMillis();
   }
 
   public boolean isIdle() {
-    return advInvRequest.isEmpty() && syncBlockRequested.isEmpty() && syncChainRequested == null;
+    return advInvRequest.isEmpty() && isSyncIdle();
+  }
+
+  public boolean isSyncIdle() {
+    return syncBlockRequested.isEmpty() && syncChainRequested == null;
   }
 
   public void sendMessage(Message message) {
-    msgQueue.sendMessage(message);
-  }
-
-  public void fastSend(Message message) {
-    msgQueue.fastSend(message);
+    if (needToLog(message)) {
+      logger.info("Send peer {} message {}", channel.getInetSocketAddress(), message);
+    }
+    channel.send(message.getSendBytes());
+    peerStatistics.messageStatistics.addTcpOutMessage(message);
   }
 
   public void onConnect() {
-    long headBlockNum = tronNetDelegate.getHeadBlockId().getNum();
-    long peerHeadBlockNum = getHelloMessage().getHeadBlockId().getNum();
+    long headBlockNum = helloMessageSend.getHeadBlockId().getNum();
+    long peerHeadBlockNum = helloMessageReceive.getHeadBlockId().getNum();
 
     if (peerHeadBlockNum > headBlockNum) {
       needSyncFromUs = false;
-      setTronState(TronState.SYNCING);
       syncService.startSync(this);
     } else {
       needSyncFromPeer = false;
@@ -133,22 +206,22 @@ public class PeerConnection extends Channel {
   public void onDisconnect() {
     syncService.onDisconnect(this);
     advService.onDisconnect(this);
-    advInvReceive.cleanUp();
-    advInvSpread.cleanUp();
+    advInvReceive.invalidateAll();
+    advInvSpread.invalidateAll();
     advInvRequest.clear();
-    syncBlockIdCache.cleanUp();
+    syncBlockIdCache.invalidateAll();
     syncBlockToFetch.clear();
     syncBlockRequested.clear();
-    syncBlockInProcess.clear();
     syncBlockInProcess.clear();
   }
 
   public String log() {
     long now = System.currentTimeMillis();
+    BlockId syncBlockId = syncBlockToFetch.peek();
+    Pair<Deque<BlockId>, Long> requested = syncChainRequested;
     return String.format(
-        "Peer %s [%8s]\n"
-            + "ping msg: count %d, max-average-min-last: %d %d %d %d\n"
-            + "connect time: %ds\n"
+        "Peer %s\n"
+            + "connect time: %ds [%sms]\n"
             + "last know block num: %s\n"
             + "needSyncFromPeer:%b\n"
             + "needSyncFromUs:%b\n"
@@ -157,32 +230,103 @@ public class PeerConnection extends Channel {
             + "syncBlockRequestedSize:%d\n"
             + "remainNum:%d\n"
             + "syncChainRequested:%d\n"
+            + "inactiveSeconds:%d\n"
             + "blockInProcess:%d\n",
-        getNode().getHost() + ":" + getNode().getPort(),
-        getNode().getHexIdShort(),
-
-        getNodeStatistics().pingMessageLatency.getCount(),
-        getNodeStatistics().pingMessageLatency.getMax(),
-        getNodeStatistics().pingMessageLatency.getAvg(),
-        getNodeStatistics().pingMessageLatency.getMin(),
-        getNodeStatistics().pingMessageLatency.getLast(),
-
-        (now - getStartTime()) / Constant.ONE_THOUSAND,
-        fastForwardBlock != null ? fastForwardBlock.getNum() : blockBothHave.getNum(),
+        channel.getInetSocketAddress(),
+        (now - channel.getStartTime()) / Constant.ONE_THOUSAND,
+        channel.getAvgLatency(),
+        fastForwardBlock != null ? fastForwardBlock.getNum() : String.format("%d [%ds]",
+            blockBothHave.getNum(), (now - blockBothHaveUpdateTime) / Constant.ONE_THOUSAND),
         isNeedSyncFromPeer(),
         isNeedSyncFromUs(),
         syncBlockToFetch.size(),
-        !syncBlockToFetch.isEmpty() ? syncBlockToFetch.peek().getNum() : -1,
+        syncBlockId != null ? syncBlockId.getNum() : -1,
         syncBlockRequested.size(),
         remainNum,
-        syncChainRequested == null ? 0 : (now - syncChainRequested.getValue()) 
+        requested == null ? 0 : (now - requested.getValue())
                 / Constant.ONE_THOUSAND,
-        syncBlockInProcess.size())
-        + nodeStatistics.toString() + "\n";
+        (now - lastInteractiveTime) / Constant.ONE_THOUSAND,
+        syncBlockInProcess.size());
   }
 
   public boolean isSyncFinish() {
     return !(needSyncFromPeer || needSyncFromUs);
+  }
+
+  public void disconnect(Protocol.ReasonCode code) {
+    sendMessage(new DisconnectMessage(code));
+    processDisconnect(code);
+    nodeStatistics.nodeDisconnectedLocal(code);
+  }
+
+  public InetSocketAddress getInetSocketAddress() {
+    return channel.getInetSocketAddress();
+  }
+
+  public InetAddress getInetAddress() {
+    return channel.getInetAddress();
+  }
+
+  public boolean isDisconnect() {
+    return channel.isDisconnect();
+  }
+
+  private void processDisconnect(Protocol.ReasonCode reason) {
+    InetAddress inetAddress = channel.getInetAddress();
+    if (inetAddress == null) {
+      return;
+    }
+    switch (reason) {
+      case BAD_PROTOCOL:
+      case BAD_BLOCK:
+      case BAD_TX:
+        channel.close(BAD_PEER_BAN_TIME);
+        break;
+      default:
+        channel.close();
+        break;
+    }
+    MetricsUtil.counterInc(MetricsKey.NET_DISCONNECTION_COUNT);
+    MetricsUtil.counterInc(MetricsKey.NET_DISCONNECTION_DETAIL + reason);
+    Metrics.counterInc(MetricKeys.Counter.P2P_DISCONNECT, 1,
+            reason.name().toLowerCase(Locale.ROOT));
+  }
+
+  public static boolean needToLog(Message msg) {
+    if (msg instanceof PingMessage
+            || msg instanceof PongMessage
+            || msg instanceof TransactionsMessage
+            || msg instanceof PbftBaseMessage) {
+      return false;
+    }
+
+    if (msg instanceof InventoryMessage && ((InventoryMessage) msg)
+            .getInventoryType().equals(Protocol.Inventory.InventoryType.TRX)) {
+      return false;
+    }
+
+    return true;
+  }
+
+  public synchronized boolean checkAndPutAdvInvRequest(Item key, Long value) {
+    if (advInvRequest.containsKey(key)) {
+      return false;
+    }
+    advInvRequest.put(key, value);
+    return true;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (!(o instanceof PeerConnection)) {
+      return false;
+    }
+    return this.channel.equals(((PeerConnection) o).getChannel());
+  }
+
+  @Override
+  public int hashCode() {
+    return this.channel.hashCode();
   }
 
 }

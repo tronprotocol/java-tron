@@ -2,10 +2,7 @@ package org.tron.common.application;
 
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
-import org.tron.common.overlay.discover.DiscoverServer;
-import org.tron.common.overlay.discover.node.NodeManager;
-import org.tron.common.overlay.server.ChannelManager;
-import org.tron.core.db.Manager;
+import org.tron.core.config.TronLogShutdownHook;
 
 public class TronApplicationContext extends AnnotationConfigApplicationContext {
 
@@ -25,22 +22,18 @@ public class TronApplicationContext extends AnnotationConfigApplicationContext {
   }
 
   @Override
-  public void destroy() {
-
+  public void doClose() {
+    logger.info("******** start to close ********");
     Application appT = ApplicationFactory.create(this);
-    appT.shutdownServices();
     appT.shutdown();
+    super.doClose();
+    logger.info("******** close end ********");
+    TronLogShutdownHook.shutDown = true;
+  }
 
-    DiscoverServer discoverServer = getBean(DiscoverServer.class);
-    discoverServer.close();
-    ChannelManager channelManager = getBean(ChannelManager.class);
-    channelManager.close();
-    NodeManager nodeManager = getBean(NodeManager.class);
-    nodeManager.close();
-
-    Manager dbManager = getBean(Manager.class);
-    dbManager.stopRePushThread();
-    dbManager.stopRePushTriggerThread();
-    super.destroy();
+  @Override
+  public void registerShutdownHook() {
+    super.registerShutdownHook();
+    TronLogShutdownHook.shutDown = false;
   }
 }

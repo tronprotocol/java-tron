@@ -12,7 +12,7 @@ import org.tron.consensus.base.State;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.db.Manager;
 import org.tron.core.net.TronNetService;
-import org.tron.core.net.message.BlockMessage;
+import org.tron.core.net.message.adv.BlockMessage;
 
 @Slf4j(topic = "consensus")
 @Component
@@ -50,13 +50,16 @@ public class BlockHandleImpl implements BlockHandle {
     try {
       consensus.receiveBlock(blockCapsule);
       BlockMessage blockMessage = new BlockMessage(blockCapsule);
-      tronNetService.fastForward(blockMessage);
-      manager.pushBlock(blockCapsule);
       tronNetService.broadcast(blockMessage);
+      manager.pushBlock(blockCapsule);
     } catch (Exception e) {
       logger.error("Handle block {} failed.", blockCapsule.getBlockId().getString(), e);
       return null;
     }
     return blockCapsule;
+  }
+
+  public void setBlockWaitLock(boolean flag) {
+    manager.setBlockWaitLock(flag);
   }
 }

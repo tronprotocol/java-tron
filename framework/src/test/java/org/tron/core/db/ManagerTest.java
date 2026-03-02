@@ -1,14 +1,25 @@
 package org.tron.core.db;
 
+import static org.junit.Assert.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.spy;
 import static org.tron.common.utils.Commons.adjustAssetBalanceV2;
-import static org.tron.common.utils.Commons.adjustBalance;
 import static org.tron.common.utils.Commons.adjustTotalShieldedPoolValue;
 import static org.tron.common.utils.Commons.getExchangeStoreFinal;
+import static org.tron.common.utils.StringUtil.encode58Check;
+import static org.tron.core.exception.BadBlockException.TypeEnum.CALC_MERKLE_ROOT_FAILED;
+import static org.tron.protos.Protocol.Transaction.Result.contractResult.SUCCESS;
 
+import com.beust.jcommander.internal.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
+import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
-import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -16,15 +27,21 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import lombok.extern.slf4j.Slf4j;
-import org.bouncycastle.util.encoders.Hex;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.crypto.ECKey;
+import org.tron.common.runtime.RuntimeImpl;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.FileUtil;
+import org.tron.common.utils.Commons;
+import org.tron.common.utils.JsonUtil;
+import org.tron.common.utils.LocalWitnesses;
+import org.tron.common.utils.PublicMethod;
+import org.tron.common.utils.ReflectUtils;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.Utils;
@@ -38,8 +55,12 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.DefaultConfig;
+import org.tron.core.config.Parameter;
 import org.tron.core.config.args.Args;
 import org.tron.core.consensus.ConsensusService;
+import org.tron.core.db.accountstate.AccountStateEntity;
+import org.tron.core.db.accountstate.TrieService;
+import org.tron.core.db.accountstate.storetrie.AccountStateStoreTrie;
 import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.exception.BadBlockException;
 import org.tron.core.exception.BadItemException;
@@ -48,6 +69,7 @@ import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.DupTransactionException;
+import org.tron.core.exception.EventBloomException;
 import org.tron.core.exception.HeaderNotFound;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.NonCommonBlockException;
@@ -56,16 +78,19 @@ import org.tron.core.exception.TaposException;
 import org.tron.core.exception.TooBigTransactionException;
 import org.tron.core.exception.TooBigTransactionResultException;
 import org.tron.core.exception.TransactionExpirationException;
+import org.tron.core.exception.TronError;
 import org.tron.core.exception.UnLinkedBlockException;
 import org.tron.core.exception.VMIllegalException;
 import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.exception.ZksnarkException;
+import org.tron.core.store.AccountStore;
 import org.tron.core.store.CodeStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.ExchangeStore;
 import org.tron.core.store.ExchangeV2Store;
 import org.tron.core.store.IncrementalMerkleTreeStore;
+import org.tron.core.store.StoreFactory;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
@@ -75,7 +100,6 @@ import org.tron.protos.contract.AccountContract;
 import org.tron.protos.contract.AssetIssueContractOuterClass;
 import org.tron.protos.contract.BalanceContract.TransferContract;
 import org.tron.protos.contract.ShieldContract;
-import stest.tron.wallet.dailybuild.operationupdate.MutiSignSmartContractTest;
 
 
 @Slf4j
@@ -88,14 +112,18 @@ public class ManagerTest extends BlockGenerate {
   private static DposSlot dposSlot;
   private static TronApplicationContext context;
   private static BlockCapsule blockCapsule2;
-  private static String dbPath = "output_manager_test";
+  @Rule
+  public TemporaryFolder temporaryFolder = new TemporaryFolder();
   private static AtomicInteger port = new AtomicInteger(0);
   private static String accountAddress =
       Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
+  private final String privateKey = PublicMethod.getRandomPrivateKey();
+  private LocalWitnesses localWitnesses;
 
   @Before
-  public void init() {
-    Args.setParam(new String[]{"-d", dbPath, "-w"}, Constant.TEST_CONF);
+  public void init() throws IOException {
+    Args.setParam(new String[]{"-d",
+        temporaryFolder.newFolder().toString()}, Constant.TEST_CONF);
     Args.getInstance().setNodeListenPort(10000 + port.incrementAndGet());
     context = new TronApplicationContext(DefaultConfig.class);
 
@@ -105,6 +133,12 @@ public class ManagerTest extends BlockGenerate {
     consensusService = context.getBean(ConsensusService.class);
     consensusService.start();
     chainManager = dbManager.getChainBaseManager();
+
+    localWitnesses = new LocalWitnesses();
+    localWitnesses.setPrivateKeys(Arrays.asList(privateKey));
+    localWitnesses.initWitnessAccountAddress(true);
+    Args.setLocalWitnesses(localWitnesses);
+
     blockCapsule2 =
         new BlockCapsule(
             1,
@@ -120,13 +154,56 @@ public class ManagerTest extends BlockGenerate {
     blockCapsule2.setMerkleRoot();
     blockCapsule2.sign(
         ByteArray.fromHexString(Args.getLocalWitnesses().getPrivateKey()));
+    Assert.assertTrue(dbManager.getMaxFlushCount() == 200);
+
+    byte[] address = PublicMethod.getAddressByteByPrivateKey(privateKey);
+    ByteString addressByte = ByteString.copyFrom(address);
+    WitnessCapsule witnessCapsule = new WitnessCapsule(addressByte);
+    chainManager.getWitnessStore().put(addressByte.toByteArray(), witnessCapsule);
+    chainManager.addWitness(addressByte);
+
+    AccountCapsule accountCapsule =
+            new AccountCapsule(Protocol.Account.newBuilder().setAddress(addressByte).build());
+    chainManager.getAccountStore().put(addressByte.toByteArray(), accountCapsule);
   }
 
   @After
   public void removeDb() {
     Args.clearParam();
     context.destroy();
-    FileUtil.deleteDir(new File(dbPath));
+  }
+
+  @Test
+  public void updateRecentTransaction() throws Exception {
+    TransferContract tc =
+            TransferContract.newBuilder()
+                    .setAmount(10)
+                    .setOwnerAddress(ByteString.copyFromUtf8("aaa"))
+                    .setToAddress(ByteString.copyFromUtf8("bbb"))
+                    .build();
+    TransactionCapsule trx = new TransactionCapsule(tc, ContractType.TransferContract);
+    BlockCapsule b = new BlockCapsule(1, chainManager.getGenesisBlockId(),
+            0, ByteString.copyFrom(new byte[64]));
+    b.addTransaction(trx);
+    dbManager.updateRecentTransaction(b);
+    try {
+      dbManager.consumeBandwidth(trx, new TransactionTrace(trx, StoreFactory.getInstance(),
+          new RuntimeImpl()));
+    } catch (Exception e) {
+      Assert.assertTrue(e instanceof ContractValidateException);
+    }
+    dbManager.consumeMemoFee(trx, new TransactionTrace(trx, StoreFactory.getInstance(),
+        new RuntimeImpl()));
+    Assert.assertTrue(dbManager.getTxListFromPending().isEmpty());
+    Assert.assertNull(dbManager.getTxFromPending(trx.getTransactionId().toString()));
+    Assert.assertEquals(0, dbManager.getPendingSize());
+    Assert.assertEquals(1, chainManager.getRecentTransactionStore().size());
+    byte[] key = ByteArray.subArray(ByteArray.fromLong(1), 6, 8);
+    byte[] value = chainManager.getRecentTransactionStore().get(key).getData();
+    RecentTransactionItem item = JsonUtil.json2Obj(new String(value), RecentTransactionItem.class);
+    Assert.assertEquals(1, item.getNum());
+    Assert.assertEquals(1, item.getTransactionIds().size());
+    Assert.assertEquals(trx.getTransactionId().toString(), item.getTransactionIds().get(0));
   }
 
   @Test
@@ -136,7 +213,7 @@ public class ManagerTest extends BlockGenerate {
       AccountResourceInsufficientException, TransactionExpirationException,
       TooBigTransactionException, DupTransactionException, TaposException, BadNumberBlockException,
       NonCommonBlockException, ReceiptCheckErrException, VMIllegalException,
-      TooBigTransactionResultException, ZksnarkException {
+      TooBigTransactionResultException, ZksnarkException, EventBloomException {
 
     BlockCapsule blockCapsule =
         new BlockCapsule(
@@ -159,6 +236,7 @@ public class ManagerTest extends BlockGenerate {
             .setToAddress(ByteString.copyFromUtf8("bbb"))
             .build();
     TransactionCapsule trx = new TransactionCapsule(tc, ContractType.TransferContract);
+
     if (chainManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber() == 0) {
       dbManager.pushBlock(blockCapsule);
       Assert.assertEquals(1,
@@ -190,6 +268,9 @@ public class ManagerTest extends BlockGenerate {
     } catch (Exception e) {
       Assert.assertTrue("pushBlock is error", false);
     }
+    TrieService trieService = context.getBean(TrieService.class);
+    Assert.assertTrue(trieService.getFullAccountStateRootHash().length > 0);
+    Assert.assertTrue(trieService.getSolidityAccountStateRootHash().length > 0);
 
     if (isUnlinked) {
       Assert.assertEquals("getBlockIdByNum is error",
@@ -205,7 +286,54 @@ public class ManagerTest extends BlockGenerate {
       }
     }
 
+    try {
+      chainManager.getBlockIdByNum(-1);
+      Assert.fail();
+    } catch (ItemNotFoundException e) {
+      Assert.assertTrue(true);
+    }
+    try {
+      dbManager.getBlockChainHashesOnFork(blockCapsule2.getBlockId());
+    } catch (Exception e) {
+      Assert.assertTrue(e instanceof NonCommonBlockException);
+    }
     Assert.assertTrue("hasBlocks is error", chainManager.hasBlocks());
+  }
+
+  @Test
+  public void transactionTest() {
+    TransactionCapsule trans0 = new TransactionCapsule(Transaction.newBuilder()
+            .setRawData(Transaction.raw.newBuilder().setData(ByteString.copyFrom(
+                    new byte[Parameter.ChainConstant.BLOCK_SIZE + Constant.ONE_THOUSAND]))).build(),
+            ContractType.ShieldedTransferContract);
+    ShieldContract.ShieldedTransferContract trx1 = ShieldContract.ShieldedTransferContract
+            .newBuilder()
+            .setFromAmount(10)
+            .setToAmount(10)
+            .build();
+    TransactionCapsule trans = new TransactionCapsule(trx1, ContractType.ShieldedTransferContract);
+    try {
+      dbManager.pushTransaction(trans0);
+      dbManager.pushTransaction(trans);
+    } catch (Exception e) {
+      Assert.assertTrue(e instanceof TaposException);
+    }
+    dbManager.rePush(trans0);
+    ReflectUtils.invokeMethod(dbManager,"filterOwnerAddress",
+        new Class[]{trans.getClass(), Set.class},trans, Sets.newHashSet());
+    Assert.assertNotNull(dbManager.getTxListFromPending());
+
+    try {
+      dbManager.validateTapos(trans);
+    } catch (Exception e) {
+      Assert.assertTrue(e instanceof TaposException);
+    }
+    try {
+      dbManager.pushVerifiedBlock(chainManager.getHead());
+      dbManager.getBlockChainHashesOnFork(chainManager.getHeadBlockId());
+    } catch (Exception e) {
+      Assert.assertTrue(e instanceof TaposException);
+    }
   }
 
   @Test
@@ -231,22 +359,23 @@ public class ManagerTest extends BlockGenerate {
 
   }
 
-
   @Test
-  public void pushBlockInvalidSignature() {
-    // invalid witness address cause invalid signature
-    String invalidWitness = "bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f";
-    blockCapsule2.setWitness(invalidWitness);
-    try {
-      dbManager.pushBlock(blockCapsule2);
-      Assert.assertTrue(false);
-    } catch (BadBlockException e) {
-      Assert.assertEquals("The signature is not validated", e.getMessage());
-    } catch (Exception e) {
-      Assert.assertFalse(e instanceof Exception);
-    }
-  }
+  public void entityTest() {
+    AccountStateStoreTrie trie = context.getBean(AccountStateStoreTrie.class);
+    Assert.assertNull(trie.getAccount("".getBytes()));
+    Assert.assertNull(trie.getAccount("".getBytes(), "".getBytes()));
+    Assert.assertNull(trie.getSolidityAccount("".getBytes()));
+    Assert.assertTrue(trie.isEmpty());
+    AccountStateEntity entity = new AccountStateEntity();
+    AccountStateEntity parsedEntity = AccountStateEntity.parse("".getBytes());
+    Assert.assertNotNull(parsedEntity);
+    Assert.assertNotNull(parsedEntity.getAccount());
+    Assert.assertNotNull(org.tron.core.db.api.pojo.Account.of());
+    Assert.assertNotNull(org.tron.core.db.api.pojo.AssetIssue.of());
+    Assert.assertNotNull(org.tron.core.db.api.pojo.Block.of());
+    Assert.assertNotNull(org.tron.core.db.api.pojo.Transaction.of());
 
+  }
 
   @Test
   public void getHeadTest() {
@@ -295,7 +424,8 @@ public class ManagerTest extends BlockGenerate {
       Assert.assertTrue(false);
     } catch (BalanceInsufficientException e) {
       Assert.assertEquals(
-          StringUtil.createReadableString(account.createDbKey()) + " insufficient balance",
+          StringUtil.createReadableString(account.createDbKey()) + " insufficient balance"
+                  + ", balance: " + account.getBalance() + ", amount: " + 40,
           e.getMessage());
     }
 
@@ -351,7 +481,8 @@ public class ManagerTest extends BlockGenerate {
     } catch (BalanceInsufficientException e) {
       Assert.assertTrue(e instanceof BalanceInsufficientException);
       Assert.assertEquals(
-          "reduceAssetAmount failed !", e.getMessage());
+          "reduceAssetAmount failed! account: " + encode58Check(account.createDbKey()),
+              e.getMessage());
     }
 
     account.setBalance(30);
@@ -362,8 +493,8 @@ public class ManagerTest extends BlockGenerate {
           chainManager.getAccountStore(), chainManager.getAssetIssueStore(),
           chainManager.getDynamicPropertiesStore());
       AccountCapsule copyAccount = chainManager.getAccountStore().get(ownerAddress);
-      Assert.assertEquals(copyAccount.getAssetMap().size(), 1);
-      copyAccount.getAssetMap().forEach((k, v) -> {
+      Assert.assertEquals(copyAccount.getAssetMapForTest().size(), 1);
+      copyAccount.getAssetMapForTest().forEach((k, v) -> {
         Assert.assertEquals(k, assetID);
         Assert.assertEquals(v.compareTo(10L), 0);
       });
@@ -386,7 +517,9 @@ public class ManagerTest extends BlockGenerate {
       Assert.assertTrue(false);
     } catch (BadBlockException e) {
       Assert.assertTrue(e instanceof BadBlockException);
-      Assert.assertEquals("The merkle hash is not validated", e.getMessage());
+      Assert.assertTrue(e.getType().equals(CALC_MERKLE_ROOT_FAILED));
+      Assert.assertEquals("The merkle hash is not validated for "
+              + blockCapsule2.getNum(), e.getMessage());
     } catch (Exception e) {
       Assert.assertFalse(e instanceof Exception);
     }
@@ -400,7 +533,7 @@ public class ManagerTest extends BlockGenerate {
       Assert.assertTrue(false);
     } catch (BalanceInsufficientException e) {
       Assert.assertTrue(e instanceof BalanceInsufficientException);
-      Assert.assertEquals("Total shielded pool value can not below 0", e.getMessage());
+      Assert.assertEquals("total shielded pool value can not below 0, actual: -1", e.getMessage());
     }
 
     long beforeTotalShieldValue = chainManager.getDynamicPropertiesStore()
@@ -441,7 +574,8 @@ public class ManagerTest extends BlockGenerate {
       Assert.assertTrue(false);
     } catch (BadBlockException e) {
       Assert.assertTrue(e instanceof BadBlockException);
-      Assert.assertEquals("shielded transaction count > " + SHIELDED_TRANS_IN_BLOCK_COUNTS,
+      Assert.assertEquals("num: " + blockCapsule2.getNum()
+                      + ", shielded transaction count > " + SHIELDED_TRANS_IN_BLOCK_COUNTS,
           e.getMessage());
     } catch (Exception e) {
       Assert.assertFalse(e instanceof Exception);
@@ -455,17 +589,38 @@ public class ManagerTest extends BlockGenerate {
       BadNumberBlockException, DupTransactionException, ContractExeException,
       ValidateSignatureException, TooBigTransactionResultException, TransactionExpirationException,
       TaposException, ReceiptCheckErrException, TooBigTransactionException,
-      AccountResourceInsufficientException {
+      AccountResourceInsufficientException, EventBloomException {
 
-    String key = "f31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62";
+    String key = PublicMethod.getRandomPrivateKey();
+    String key2 = PublicMethod.getRandomPrivateKey();
     byte[] privateKey = ByteArray.fromHexString(key);
     final ECKey ecKey = ECKey.fromPrivate(privateKey);
     byte[] address = ecKey.getAddress();
 
+    ByteString addressByte = ByteString.copyFrom(address);
+    AccountCapsule accountCapsule =
+            new AccountCapsule(Protocol.Account.newBuilder()
+                    .setAddress(addressByte).build());
+    chainManager.getAccountStore()
+            .put(addressByte.toByteArray(), accountCapsule);
+
+    WitnessCapsule sr1 = new WitnessCapsule(
+        ByteString.copyFrom(address), "www.tron.net/first");
+    sr1.setVoteCount(1000000000L);
+
+
+    byte[] privateKey2 = ByteArray.fromHexString(key2);
+    final ECKey ecKey2 = ECKey.fromPrivate(privateKey2);
+    byte[] address2 = ecKey2.getAddress();
+    WitnessCapsule sr2 = new WitnessCapsule(
+        ByteString.copyFrom(address2), "www.tron.net/second");
+    sr2.setVoteCount(100000L);
+    chainManager.getWitnessStore().put(address, sr1);
     WitnessCapsule witnessCapsule = new WitnessCapsule(ByteString.copyFrom(address));
     chainManager.getWitnessScheduleStore().saveActiveWitnesses(new ArrayList<>());
     chainManager.addWitness(ByteString.copyFrom(address));
-
+    List<WitnessCapsule> witnessStandby1 = chainManager.getWitnessStore().getWitnessStandby(
+        chainManager.getDynamicPropertiesStore().allowWitnessSortOptimization());
     Block block = getSignedBlock(witnessCapsule.getAddress(), 1533529947843L, privateKey);
     dbManager.pushBlock(new BlockCapsule(block));
 
@@ -502,6 +657,10 @@ public class ManagerTest extends BlockGenerate {
     } catch (Exception e) {
       Assert.assertTrue(e instanceof Exception);
     }
+    chainManager.getWitnessStore().put(address, sr2);
+    List<WitnessCapsule> witnessStandby2 = chainManager.getWitnessStore().getWitnessStandby(
+        chainManager.getDynamicPropertiesStore().allowWitnessSortOptimization());
+    Assert.assertNotEquals(witnessStandby1, witnessStandby2);
   }
 
 
@@ -563,19 +722,29 @@ public class ManagerTest extends BlockGenerate {
       TransactionExpirationException, TooBigTransactionException, DupTransactionException,
       BadBlockException, TaposException, BadNumberBlockException, NonCommonBlockException,
       ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException,
-      ZksnarkException {
-    Args.setParam(new String[]{"--witness"}, Constant.TEST_CONF);
+      ZksnarkException, EventBloomException {
+    Args.setParam(new String[]{}, Constant.TEST_CONF);
     long size = chainManager.getBlockStore().size();
     //  System.out.print("block store size:" + size + "\n");
-    String key = "f31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62";
+    String key = PublicMethod.getRandomPrivateKey();
     byte[] privateKey = ByteArray.fromHexString(key);
     final ECKey ecKey = ECKey.fromPrivate(privateKey);
     byte[] address = ecKey.getAddress();
+
+    ByteString addressByte = ByteString.copyFrom(address);
+    AccountCapsule accountCapsule =
+            new AccountCapsule(Protocol.Account.newBuilder()
+                    .setAddress(addressByte).build());
+    chainManager.getAccountStore()
+            .put(addressByte.toByteArray(), accountCapsule);
+
+
     WitnessCapsule witnessCapsule = new WitnessCapsule(ByteString.copyFrom(address));
     chainManager.getWitnessScheduleStore().saveActiveWitnesses(new ArrayList<>());
     chainManager.addWitness(ByteString.copyFrom(address));
+    chainManager.getWitnessStore().put(address, witnessCapsule);
 
-    Block block = getSignedBlock(witnessCapsule.getAddress(), 1533529947843L, privateKey);
+    Block block = getSignedBlock(witnessCapsule.getAddress(), 1533529947000L, privateKey);
 
     dbManager.pushBlock(new BlockCapsule(block));
 
@@ -585,7 +754,7 @@ public class ManagerTest extends BlockGenerate {
     long num = chainManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber();
     BlockCapsule blockCapsule0 =
         createTestBlockCapsule(
-            1533529947843L + 3000,
+            1533529947000L + 3000,
             num + 1,
             chainManager.getDynamicPropertiesStore().getLatestBlockHeaderHash()
                 .getByteString(),
@@ -593,7 +762,7 @@ public class ManagerTest extends BlockGenerate {
 
     BlockCapsule blockCapsule1 =
         createTestBlockCapsule(
-            1533529947843L + 3000,
+            1533529947000L + 3000,
             num + 1,
             chainManager.getDynamicPropertiesStore().getLatestBlockHeaderHash()
                 .getByteString(),
@@ -604,7 +773,7 @@ public class ManagerTest extends BlockGenerate {
 
     BlockCapsule blockCapsule2 =
         createTestBlockCapsule(
-            1533529947843L + 6000,
+            1533529947000L + 6000,
             num + 2, blockCapsule1.getBlockId().getByteString(), addressToProvateKeys);
 
     dbManager.pushBlock(blockCapsule2);
@@ -631,6 +800,24 @@ public class ManagerTest extends BlockGenerate {
     Assert.assertEquals(
         chainManager.getHead().getBlockId(),
         chainManager.getDynamicPropertiesStore().getLatestBlockHeaderHash());
+
+    dbManager.getDynamicPropertiesStore().saveConsensusLogicOptimization(1);
+    BlockCapsule blockCapsule3 =
+        createTestBlockCapsule2(1533529947000L + 9000,
+            num + 3, blockCapsule2.getBlockId().getByteString(), addressToProvateKeys);
+
+    assertThrows(BadBlockException.class, () -> dbManager.pushBlock(blockCapsule3));
+  }
+
+  private Transaction buildTransaction(com.google.protobuf.Message message,
+                                       ContractType contractType) {
+    Transaction.raw.Builder rawBuilder = Transaction.raw.newBuilder().addContract(
+        Transaction.Contract.newBuilder().setType(contractType).setParameter(
+            (message instanceof Any ? (Any) message : Any.pack(message))).build());
+    Transaction.Builder transactionBuilder = Transaction.newBuilder().setRawData(rawBuilder)
+        .addRet(Transaction.Result.newBuilder().setContractRet(SUCCESS).build())
+        .addRet(Transaction.Result.newBuilder().setContractRet(SUCCESS).build());
+    return transactionBuilder.build();
   }
 
   @Test
@@ -682,18 +869,24 @@ public class ManagerTest extends BlockGenerate {
       DupTransactionException, BadBlockException,
       TaposException, BadNumberBlockException, NonCommonBlockException,
       ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException,
-      ZksnarkException {
-    Args.setParam(new String[]{"--witness"}, Constant.TEST_CONF);
+      ZksnarkException, EventBloomException {
+    Args.setParam(new String[]{}, Constant.TEST_CONF);
     long size = chainManager.getBlockStore().size();
     System.out.print("block store size:" + size + "\n");
-    String key = "f31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62";
+    String key = PublicMethod.getRandomPrivateKey();
     byte[] privateKey = ByteArray.fromHexString(key);
     final ECKey ecKey = ECKey.fromPrivate(privateKey);
     byte[] address = ecKey.getAddress();
-
+    ByteString addressByte = ByteString.copyFrom(address);
+    AccountCapsule accountCapsule =
+            new AccountCapsule(Protocol.Account.newBuilder()
+                    .setAddress(addressByte).build());
+    chainManager.getAccountStore()
+            .put(addressByte.toByteArray(), accountCapsule);
     WitnessCapsule witnessCapsule = new WitnessCapsule(ByteString.copyFrom(address));
     chainManager.getWitnessScheduleStore().saveActiveWitnesses(new ArrayList<>());
     chainManager.addWitness(ByteString.copyFrom(address));
+    chainManager.getWitnessStore().put(address, witnessCapsule);
 
     Block block = getSignedBlock(witnessCapsule.getAddress(), 1533529947843L, privateKey);
     dbManager.pushBlock(new BlockCapsule(block));
@@ -788,18 +981,26 @@ public class ManagerTest extends BlockGenerate {
       TransactionExpirationException, TooBigTransactionException, DupTransactionException,
       BadBlockException, TaposException, BadNumberBlockException, NonCommonBlockException,
       ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException,
-      ZksnarkException {
-    Args.setParam(new String[]{"--witness"}, Constant.TEST_CONF);
+      ZksnarkException, EventBloomException {
+    Args.setParam(new String[]{}, Constant.TEST_CONF);
     long size = chainManager.getBlockStore().size();
     System.out.print("block store size:" + size + "\n");
-    String key = "f31db24bfbd1a2ef19beddca0a0fa37632eded9ac666a05d3bd925f01dde1f62";
+    String key = PublicMethod.getRandomPrivateKey();;
     byte[] privateKey = ByteArray.fromHexString(key);
     final ECKey ecKey = ECKey.fromPrivate(privateKey);
     byte[] address = ecKey.getAddress();
+
+    ByteString addressByte = ByteString.copyFrom(address);
+    AccountCapsule accountCapsule =
+            new AccountCapsule(Protocol.Account.newBuilder()
+                    .setAddress(addressByte).build());
+    chainManager.getAccountStore()
+            .put(addressByte.toByteArray(), accountCapsule);
+
     WitnessCapsule witnessCapsule = new WitnessCapsule(ByteString.copyFrom(address));
     chainManager.getWitnessScheduleStore().saveActiveWitnesses(new ArrayList<>());
     chainManager.addWitness(ByteString.copyFrom(address));
-
+    chainManager.getWitnessStore().put(address, witnessCapsule);
     Block block = getSignedBlock(witnessCapsule.getAddress(), 1533529947843L, privateKey);
     dbManager.pushBlock(new BlockCapsule(block));
 
@@ -912,6 +1113,36 @@ public class ManagerTest extends BlockGenerate {
     return blockCapsule;
   }
 
+  private BlockCapsule createTestBlockCapsule2(long time, long number, ByteString hash,
+                                              Map<ByteString, String> addressToProvateKeys) {
+    TransferContract c1 = TransferContract.newBuilder()
+        .setOwnerAddress(ByteString.copyFrom("f1".getBytes()))
+        .setAmount(1).build();
+    ByteString witnessAddress = dposSlot.getScheduledWitness(dposSlot.getSlot(time));
+    Protocol.BlockHeader.raw.Builder blockHeaderRawBuild = Protocol.BlockHeader.raw.newBuilder();
+    Protocol.BlockHeader.raw blockHeaderRaw = blockHeaderRawBuild
+        .setTimestamp(time)
+        .setParentHash(hash)
+        .setWitnessAddress(witnessAddress)
+        .setNumber(number)
+        .build();
+
+    // block header
+    Protocol.BlockHeader.Builder blockHeaderBuild = Protocol.BlockHeader.newBuilder();
+    Protocol.BlockHeader blockHeader = blockHeaderBuild.setRawData(blockHeaderRaw).build();
+
+    // block
+    Block.Builder blockBuild = Block.newBuilder();
+    List<Transaction> transactions = Lists.newArrayList(buildTransaction(c1,
+        ContractType.TransferContract));
+    transactions.forEach(blockBuild::addTransactions);
+    BlockCapsule blockCapsule = new BlockCapsule(blockBuild.setBlockHeader(blockHeader).build());
+    blockCapsule.generatedByMyself = true;
+    blockCapsule.setMerkleRoot();
+    blockCapsule.sign(ByteArray.fromHexString(addressToProvateKeys.get(witnessAddress)));
+    return blockCapsule;
+  }
+
   private BlockCapsule createTestBlockCapsuleError(long time,
       long number, ByteString hash,
       Map<ByteString, String> addressToProvateKeys) {
@@ -922,5 +1153,98 @@ public class ManagerTest extends BlockGenerate {
     blockCapsule.setMerkleRoot();
     blockCapsule.sign(ByteArray.fromHexString(addressToProvateKeys.get(witnessAddress)));
     return blockCapsule;
+  }
+
+  @Test
+  public void testExpireTransaction() {
+    TransferContract tc =
+        TransferContract.newBuilder()
+            .setAmount(10)
+            .setOwnerAddress(ByteString.copyFromUtf8("aaa"))
+            .setToAddress(ByteString.copyFromUtf8("bbb"))
+            .build();
+    TransactionCapsule trx = new TransactionCapsule(tc, ContractType.TransferContract);
+    long latestBlockTime = dbManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp();
+    trx.setExpiration(latestBlockTime - 100);
+    try {
+      dbManager.validateCommon(trx);
+      Assert.fail();
+    } catch (TransactionExpirationException e) {
+      Assert.assertTrue(true);
+    } catch (TooBigTransactionException e) {
+      Assert.fail();
+    }
+  }
+
+  @Test
+  public void testTooBigTransaction() {
+    TransferContract transferContract =
+        TransferContract.newBuilder()
+            .setAmount(10)
+            .setOwnerAddress(ByteString.copyFromUtf8("aaa"))
+            .setToAddress(ByteString.copyFromUtf8("bbb"))
+            .build();
+    StringBuilder sb = new StringBuilder();
+    for (int i = 0; i < 6666; i++) {
+      sb.append("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+    }
+    Transaction transaction = Transaction.newBuilder().setRawData(Transaction.raw.newBuilder()
+        .setData(ByteString.copyFrom(sb.toString().getBytes(StandardCharsets.UTF_8)))
+        .addContract(Transaction.Contract.newBuilder().setParameter(Any.pack(transferContract))
+            .setType(ContractType.TransferContract))).build();
+    TransactionCapsule trx = new TransactionCapsule(transaction);
+    trx.setInBlock(false);
+    assertThrows(
+        "Too big transaction with result, "
+            + "TxId 1c05e9fca6a2d0c366ed4430456527eb40198e70c8b20f5ceca4739c68a79af8, "
+            + "the size is 533483 bytes, maxTxSize 512000",
+        TooBigTransactionException.class, () -> dbManager.validateCommon(trx));
+
+    trx.setInBlock(true);
+    assertThrows(
+        "Too big transaction, "
+            + "TxId 1c05e9fca6a2d0c366ed4430456527eb40198e70c8b20f5ceca4739c68a79af8, "
+            + "the size is 1066643 bytes, maxTxSize 512000",
+        TooBigTransactionException.class, () -> dbManager.validateCommon(trx));
+
+  }
+
+  @Test
+  public void testExpiration() {
+    dbManager.getDynamicPropertiesStore().saveConsensusLogicOptimization(1);
+    TransferContract transferContract =
+        TransferContract.newBuilder()
+            .setAmount(10)
+            .setOwnerAddress(ByteString.copyFromUtf8("aaa"))
+            .setToAddress(ByteString.copyFromUtf8("bbb"))
+            .build();
+    StringBuilder sb = new StringBuilder();
+    for (int i = 0; i < 100; i++) {
+      sb.append("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+    }
+    Transaction transaction = Transaction.newBuilder().setRawData(Transaction.raw.newBuilder()
+        .setData(ByteString.copyFrom(sb.toString().getBytes(StandardCharsets.UTF_8)))
+        .addContract(Transaction.Contract.newBuilder().setParameter(Any.pack(transferContract))
+            .setType(ContractType.TransferContract))).build();
+    TransactionCapsule trx = new TransactionCapsule(transaction);
+    trx.setInBlock(true);
+
+    assertThrows(TransactionExpirationException.class, () -> dbManager.validateCommon(trx));
+
+  }
+
+  @Test
+  public void blockTrigger() {
+    Manager manager = spy(new Manager());
+    doThrow(new RuntimeException("postBlockTrigger mock")).when(manager).postBlockTrigger(any());
+    TronError thrown = Assert.assertThrows(TronError.class, () ->
+        manager.blockTrigger(new BlockCapsule(Block.newBuilder().build()), 1, 1));
+    Assert.assertEquals(TronError.ErrCode.EVENT_SUBSCRIBE_ERROR, thrown.getErrCode());
+  }
+
+  public void adjustBalance(AccountStore accountStore, byte[] accountAddress, long amount)
+      throws BalanceInsufficientException {
+    Commons.adjustBalance(accountStore, accountAddress, amount,
+        chainManager.getDynamicPropertiesStore().disableJavaLangMath());
   }
 }

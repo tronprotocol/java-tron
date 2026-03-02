@@ -80,9 +80,21 @@ public class StorageTest {
     Assert.assertTrue(options.verifyChecksums());
     Assert.assertEquals(CompressionType.SNAPPY, options.compressionType());
     Assert.assertEquals(4 * 1024, options.blockSize());
-    Assert.assertEquals(10 * 1024 * 1024, options.writeBufferSize());
-    Assert.assertEquals(10 * 1024 * 1024L, options.cacheSize());
-    Assert.assertEquals(100, options.maxOpenFiles());
+    Assert.assertEquals(16 * 1024 * 1024, options.writeBufferSize());
+    Assert.assertEquals(32 * 1024 * 1024L, options.cacheSize());
+    Assert.assertEquals(50, options.maxOpenFiles());
+
+    options = StorageUtils.getOptionsByDbName("code");
+    Assert.assertEquals(64 * 1024 * 1024, options.writeBufferSize());
+    Assert.assertEquals(500, options.maxOpenFiles());
+
+    options = StorageUtils.getOptionsByDbName("delegation");
+    Assert.assertEquals(64 * 1024 * 1024, options.writeBufferSize());
+    Assert.assertEquals(1000, options.maxOpenFiles());
+
+    options = StorageUtils.getOptionsByDbName("trans");
+    Assert.assertEquals(16 * 1024 * 1024, options.writeBufferSize());
+    Assert.assertEquals(50, options.maxOpenFiles());
   }
 
 }

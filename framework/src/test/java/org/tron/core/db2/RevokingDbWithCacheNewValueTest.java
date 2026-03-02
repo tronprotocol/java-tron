@@ -7,6 +7,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -34,9 +35,12 @@ public class RevokingDbWithCacheNewValueTest {
   private Application appT;
   private TestRevokingTronStore tronDatabase;
 
+  private String databasePath = "";
+
   @Before
   public void init() {
-    Args.setParam(new String[]{"-d", "output_revokingStore_test"},
+    databasePath = "output_revokingStore_test_" + RandomStringUtils.randomAlphanumeric(10);
+    Args.setParam(new String[]{"-d", databasePath},
         Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     appT = ApplicationFactory.create(context);
@@ -47,7 +51,7 @@ public class RevokingDbWithCacheNewValueTest {
     Args.clearParam();
     context.destroy();
     tronDatabase.close();
-    FileUtil.deleteDir(new File("output_revokingStore_test"));
+    FileUtil.deleteDir(new File(databasePath));
   }
 
   @Test
@@ -384,7 +388,8 @@ public class RevokingDbWithCacheNewValueTest {
   public synchronized void testGetKeysNextWithSameKeyOrderCheck() {
     revokingDatabase = context.getBean(SnapshotManager.class);
     revokingDatabase.enable();
-    tronDatabase = new TestRevokingTronStore("testSnapshotManager-testGetKeysNextWithSameKey");
+    tronDatabase = new TestRevokingTronStore(
+        "testSnapshotManager-testGetKeysNextWithSameKeyOrderCheck");
     revokingDatabase.add(tronDatabase.getRevokingDB());
     while (revokingDatabase.size() != 0) {
       revokingDatabase.pop();

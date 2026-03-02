@@ -1,5 +1,9 @@
 package org.tron.core.store;
 
+import static org.tron.common.math.Maths.max;
+import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
+import static org.tron.core.config.Parameter.ChainConstant.DELEGATE_PERIOD;
+
 import com.google.protobuf.ByteString;
 import java.util.Arrays;
 import java.util.Optional;
@@ -14,9 +18,10 @@ import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BytesCapsule;
-import org.tron.core.config.Parameter;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.db.TronStoreWithRevoking;
+import org.tron.core.exception.BadItemException;
+import org.tron.core.exception.ItemNotFoundException;
 
 @Slf4j(topic = "DB")
 @Component
@@ -64,6 +69,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   private static final byte[] WITNESS_STANDBY_ALLOWANCE = "WITNESS_STANDBY_ALLOWANCE".getBytes();
   private static final byte[] ENERGY_FEE = "ENERGY_FEE".getBytes();
+  private static final long DEFAULT_ENERGY_FEE = 100L;
+  public static final String DEFAULT_ENERGY_PRICE_HISTORY = "0:" + DEFAULT_ENERGY_FEE;
   private static final byte[] MAX_CPU_TIME_OF_ONE_TX = "MAX_CPU_TIME_OF_ONE_TX".getBytes();
   //abandon
   private static final byte[] CREATE_ACCOUNT_FEE = "CREATE_ACCOUNT_FEE".getBytes();
@@ -73,6 +80,9 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       "CREATE_NEW_ACCOUNT_BANDWIDTH_RATE"
           .getBytes();
   private static final byte[] TRANSACTION_FEE = "TRANSACTION_FEE".getBytes(); // 1 byte
+  private static final long DEFAULT_TRANSACTION_FEE = 10L;
+  public static final String DEFAULT_BANDWIDTH_PRICE_HISTORY = "0:" + DEFAULT_TRANSACTION_FEE;
+
   private static final byte[] ASSET_ISSUE_FEE = "ASSET_ISSUE_FEE".getBytes();
   private static final byte[] UPDATE_ACCOUNT_PERMISSION_FEE = "UPDATE_ACCOUNT_PERMISSION_FEE"
       .getBytes();
@@ -94,6 +104,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] STORAGE_EXCHANGE_TAX_RATE = "STORAGE_EXCHANGE_TAX_RATE".getBytes();
   private static final String FORK_CONTROLLER = "FORK_CONTROLLER";
   private static final String FORK_PREFIX = "FORK_VERSION_";
+  private static final byte[] VERSION_NUMBER = "VERSION_NUMBER".getBytes();
   //This value is only allowed to be 0, 1, -1
   private static final byte[] REMOVE_THE_POWER_OF_THE_GR = "REMOVE_THE_POWER_OF_THE_GR".getBytes();
   //This value is only allowed to be 0, 1, -1
@@ -152,15 +163,74 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   private static final byte[] MAX_FEE_LIMIT = "MAX_FEE_LIMIT".getBytes();
   private static final byte[] BURN_TRX_AMOUNT = "BURN_TRX_AMOUNT".getBytes();
-  private static final byte[] ALLOW_BLACKHOLE_OPTIMIZATION = "ALLOW_BLACKHOLE_OPTIMIZATION".getBytes();
+  private static final byte[] ALLOW_BLACKHOLE_OPTIMIZATION =
+      "ALLOW_BLACKHOLE_OPTIMIZATION".getBytes();
   private static final byte[] ALLOW_NEW_RESOURCE_MODEL = "ALLOW_NEW_RESOURCE_MODEL".getBytes();
   private static final byte[] ALLOW_TVM_FREEZE = "ALLOW_TVM_FREEZE".getBytes();
   private static final byte[] ALLOW_TVM_VOTE = "ALLOW_TVM_VOTE".getBytes();
+  private static final byte[] ALLOW_TVM_LONDON = "ALLOW_TVM_LONDON".getBytes();
+  private static final byte[] ALLOW_TVM_COMPATIBLE_EVM = "ALLOW_TVM_COMPATIBLE_EVM".getBytes();
   private static final byte[] NEW_REWARD_ALGORITHM_EFFECTIVE_CYCLE =
       "NEW_REWARD_ALGORITHM_EFFECTIVE_CYCLE".getBytes();
   //This value is only allowed to be 1
-  private static final byte[] ALLOW_ACCOUNT_ASSET_OPTIMIZATION = "ALLOW_ACCOUNT_ASSET_OPTIMIZATION".getBytes();
+  private static final byte[] ALLOW_ACCOUNT_ASSET_OPTIMIZATION =
+      "ALLOW_ACCOUNT_ASSET_OPTIMIZATION".getBytes();
 
+  private static final byte[] ALLOW_ASSET_OPTIMIZATION =
+      "ALLOW_ASSET_OPTIMIZATION".getBytes();
+
+
+  private static final byte[] ENERGY_PRICE_HISTORY = "ENERGY_PRICE_HISTORY".getBytes();
+  private static final byte[] ENERGY_PRICE_HISTORY_DONE = "ENERGY_PRICE_HISTORY_DONE".getBytes();
+  private static final byte[] BANDWIDTH_PRICE_HISTORY = "BANDWIDTH_PRICE_HISTORY".getBytes();
+  private static final byte[] BANDWIDTH_PRICE_HISTORY_DONE =
+      "BANDWIDTH_PRICE_HISTORY_DONE".getBytes();
+
+  private static final byte[] SET_BLACKHOLE_ACCOUNT_PERMISSION =
+      "SET_BLACKHOLE_ACCOUNT_PERMISSION".getBytes();
+  private static final byte[] ALLOW_HIGHER_LIMIT_FOR_MAX_CPU_TIME_OF_ONE_TX =
+      "ALLOW_HIGHER_LIMIT_FOR_MAX_CPU_TIME_OF_ONE_TX".getBytes();
+
+  private static final byte[] ALLOW_NEW_REWARD = "ALLOW_NEW_REWARD".getBytes();
+  private static final byte[] MEMO_FEE = "MEMO_FEE".getBytes();
+  private static final byte[] MEMO_FEE_HISTORY = "MEMO_FEE_HISTORY".getBytes();
+  private static final byte[] ALLOW_DELEGATE_OPTIMIZATION =
+      "ALLOW_DELEGATE_OPTIMIZATION".getBytes();
+  private static final byte[] ALLOW_DYNAMIC_ENERGY =
+      "ALLOW_DYNAMIC_ENERGY".getBytes();
+  private static final byte[] DYNAMIC_ENERGY_THRESHOLD =
+      "DYNAMIC_ENERGY_THRESHOLD".getBytes();
+  private static final byte[] DYNAMIC_ENERGY_INCREASE_FACTOR =
+      "DYNAMIC_ENERGY_INCREASE_FACTOR".getBytes();
+  private static final byte[] DYNAMIC_ENERGY_MAX_FACTOR =
+      "DYNAMIC_ENERGY_MAX_FACTOR".getBytes();
+
+  private static final byte[] UNFREEZE_DELAY_DAYS = "UNFREEZE_DELAY_DAYS".getBytes();
+
+  private static final byte[] ALLOW_OPTIMIZED_RETURN_VALUE_OF_CHAIN_ID =
+      "ALLOW_OPTIMIZED_RETURN_VALUE_OF_CHAIN_ID".getBytes();
+
+  private static final byte[] ALLOW_TVM_SHANGHAI = "ALLOW_TVM_SHANGHAI".getBytes();
+
+  private static final byte[] ALLOW_CANCEL_ALL_UNFREEZE_V2 = "ALLOW_CANCEL_ALL_UNFREEZE_V2"
+      .getBytes();
+
+  private static final byte[] MAX_DELEGATE_LOCK_PERIOD =
+      "MAX_DELEGATE_LOCK_PERIOD".getBytes();
+
+  private static final byte[] ALLOW_OLD_REWARD_OPT = "ALLOW_OLD_REWARD_OPT".getBytes();
+
+  private static final byte[] ALLOW_ENERGY_ADJUSTMENT = "ALLOW_ENERGY_ADJUSTMENT".getBytes();
+
+  private static final byte[] MAX_CREATE_ACCOUNT_TX_SIZE = "MAX_CREATE_ACCOUNT_TX_SIZE".getBytes();
+  private static final byte[] ALLOW_STRICT_MATH = "ALLOW_STRICT_MATH".getBytes();
+
+  private static final byte[] CONSENSUS_LOGIC_OPTIMIZATION
+      = "CONSENSUS_LOGIC_OPTIMIZATION".getBytes();
+
+  private static final byte[] ALLOW_TVM_CANCUN = "ALLOW_TVM_CANCUN".getBytes();
+
+  private static final byte[] ALLOW_TVM_BLOB = "ALLOW_TVM_BLOB".getBytes();
 
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
@@ -360,7 +430,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.saveTotalTronPowerWeight(0L);
     }
 
-
     try {
       this.getAllowAdaptiveEnergy();
     } catch (IllegalArgumentException e) {
@@ -383,7 +452,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     try {
       this.getEnergyFee();
     } catch (IllegalArgumentException e) {
-      this.saveEnergyFee(100L);// 100 sun per energy
+      this.saveEnergyFee(DEFAULT_ENERGY_FEE); // 100 sun per energy
     }
 
     try {
@@ -431,7 +500,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     try {
       this.getTransactionFee();
     } catch (IllegalArgumentException e) {
-      this.saveTransactionFee(10L); // 10sun/byte
+      this.saveTransactionFee(DEFAULT_TRANSACTION_FEE); // 10sun/byte
     }
 
     try {
@@ -733,7 +802,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     try {
       this.getAllowBlackHoleOptimization();
     } catch (IllegalArgumentException e) {
-      this.saveAllowBlackHoleOptimization(CommonParameter.getInstance().getAllowBlackHoleOptimization());
+      this.saveAllowBlackHoleOptimization(
+          CommonParameter.getInstance().getAllowBlackHoleOptimization());
     }
 
     try {
@@ -759,10 +829,143 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     }
 
     try {
+      this.getAllowTvmLondon();
+    } catch (IllegalArgumentException e) {
+      this.saveAllowTvmLondon(CommonParameter.getInstance().getAllowTvmLondon());
+    }
+
+    try {
+      this.getAllowTvmCompatibleEvm();
+    } catch (IllegalArgumentException e) {
+      this.saveAllowTvmCompatibleEvm(CommonParameter.getInstance().getAllowTvmCompatibleEvm());
+    }
+
+    try {
+      this.getAllowAssetOptimization();
+    } catch (IllegalArgumentException e) {
+      this.setAllowAssetOptimization(CommonParameter
+          .getInstance().getAllowAssetOptimization());
+    }
+
+    try {
       this.getAllowAccountAssetOptimization();
     } catch (IllegalArgumentException e) {
       this.setAllowAccountAssetOptimization(CommonParameter
-              .getInstance().getAllowAccountAssetOptimization());
+          .getInstance().getAllowAccountAssetOptimization());
+    }
+
+    try {
+      this.getEnergyPriceHistoryDone();
+    } catch (IllegalArgumentException e) {
+      this.saveEnergyPriceHistoryDone(0);
+    }
+
+    try {
+      this.getEnergyPriceHistory();
+    } catch (IllegalArgumentException e) {
+      this.saveEnergyPriceHistory(DEFAULT_ENERGY_PRICE_HISTORY);
+    }
+
+    try {
+      this.getBandwidthPriceHistoryDone();
+    } catch (IllegalArgumentException e) {
+      this.saveBandwidthPriceHistoryDone(0);
+    }
+
+    try {
+      this.getBandwidthPriceHistory();
+    } catch (IllegalArgumentException e) {
+      this.saveBandwidthPriceHistory(DEFAULT_BANDWIDTH_PRICE_HISTORY);
+    }
+
+    try {
+      this.getSetBlackholeAccountPermission();
+    } catch (IllegalArgumentException e) {
+      this.saveSetBlackholePermission(0);
+    }
+
+    try {
+      this.getAllowHigherLimitForMaxCpuTimeOfOneTx();
+    } catch (IllegalArgumentException e) {
+      this.saveAllowHigherLimitForMaxCpuTimeOfOneTx(
+          CommonParameter.getInstance().getAllowHigherLimitForMaxCpuTimeOfOneTx());
+    }
+
+    try {
+      this.getNewRewardAlgorithmEffectiveCycle();
+    } catch (IllegalArgumentException e) {
+      if (CommonParameter.getInstance().getAllowNewRewardAlgorithm() == 1) {
+        this.put(NEW_REWARD_ALGORITHM_EFFECTIVE_CYCLE,
+            new BytesCapsule(ByteArray.fromLong(getCurrentCycleNumber())));
+      } else {
+        this.put(NEW_REWARD_ALGORITHM_EFFECTIVE_CYCLE,
+            new BytesCapsule(ByteArray.fromLong(Long.MAX_VALUE)));
+      }
+    }
+
+    try {
+      this.getAllowNewReward();
+    } catch (IllegalArgumentException e) {
+      this.saveAllowNewReward(CommonParameter.getInstance().getAllowNewReward());
+      if (CommonParameter.getInstance().getAllowNewReward() == 1) {
+        this.put(NEW_REWARD_ALGORITHM_EFFECTIVE_CYCLE,
+                new BytesCapsule(ByteArray.fromLong(getCurrentCycleNumber())));
+      }
+    }
+
+    try {
+      this.getMemoFee();
+    } catch (IllegalArgumentException e) {
+      long memoFee = CommonParameter.getInstance().getMemoFee();
+      this.saveMemoFee(memoFee);
+      this.saveMemoFeeHistory("0:" + memoFee);
+    }
+
+    try {
+      this.getAllowDelegateOptimization();
+    } catch (IllegalArgumentException e) {
+      this.saveAllowDelegateOptimization(
+          CommonParameter.getInstance().getAllowDelegateOptimization());
+    }
+
+    try {
+      this.getUnfreezeDelayDays();
+    } catch (IllegalArgumentException e) {
+      this.saveUnfreezeDelayDays(
+          CommonParameter.getInstance().getUnfreezeDelayDays()
+      );
+    }
+
+    try {
+      this.getAllowOptimizedReturnValueOfChainId();
+    } catch (IllegalArgumentException e) {
+      this.saveAllowOptimizedReturnValueOfChainId(
+          CommonParameter.getInstance().getAllowOptimizedReturnValueOfChainId()
+      );
+    }
+
+    try {
+      this.getAllowDynamicEnergy();
+    } catch (IllegalArgumentException e) {
+      this.saveAllowDynamicEnergy(CommonParameter.getInstance().getAllowDynamicEnergy());
+    }
+
+    try {
+      this.getDynamicEnergyThreshold();
+    } catch (IllegalArgumentException e) {
+      this.saveDynamicEnergyThreshold(CommonParameter.getInstance().getDynamicEnergyThreshold());
+    }
+
+    try {
+      this.getDynamicEnergyIncreaseFactor();
+    } catch (IllegalArgumentException e) {
+      this.saveDynamicEnergyIncreaseFactor(CommonParameter.getInstance().getDynamicEnergyIncreaseFactor());
+    }
+
+    try {
+      this.getDynamicEnergyMaxFactor();
+    } catch (IllegalArgumentException e) {
+      this.saveDynamicEnergyMaxFactor(CommonParameter.getInstance().getDynamicEnergyMaxFactor());
     }
   }
 
@@ -823,7 +1026,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
   public void saveBlockFilledSlotsIndex(int blockFilledSlotsIndex) {
-    logger.debug("blockFilledSlotsIndex:" + blockFilledSlotsIndex);
+    logger.debug("BlockFilledSlotsIndex: {}.", blockFilledSlotsIndex);
     this.put(BLOCK_FILLED_SLOTS_INDEX,
         new BytesCapsule(ByteArray.fromInt(blockFilledSlotsIndex)));
   }
@@ -1854,7 +2057,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
   public void saveBlockFilledSlots(int[] blockFilledSlots) {
-    logger.debug("blockFilledSlots:" + intArrayToString(blockFilledSlots));
+    logger.debug("BlockFilledSlots: {}.", intArrayToString(blockFilledSlots));
     this.put(BLOCK_FILLED_SLOTS,
         new BytesCapsule(ByteArray.fromString(intArrayToString(blockFilledSlots))));
   }
@@ -1944,6 +2147,19 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
             () -> new IllegalArgumentException("not found latest block header number"));
   }
 
+  public long getLatestBlockHeaderNumberFromDB() {
+    try {
+      return Optional.ofNullable(getFromRoot(LATEST_BLOCK_HEADER_NUMBER))
+          .map(BytesCapsule::getData)
+          .map(ByteArray::toLong)
+          .orElseThrow(
+              () -> new IllegalArgumentException("not found latest block header number"));
+    } catch (ItemNotFoundException | BadItemException e) {
+      logger.error("Get header from DB, {}.", e.getMessage());
+    }
+    return -1;
+  }
+
   public int getStateFlag() {
     return Optional.ofNullable(getUnchecked(STATE_FLAG))
         .map(BytesCapsule::getData)
@@ -1966,7 +2182,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
    * save timestamp of creating global latest block.
    */
   public void saveLatestBlockHeaderTimestamp(long t) {
-    logger.info("update latest block header timestamp = {}", t);
+    logger.info("Update latest block header timestamp = {}.", t);
     this.put(LATEST_BLOCK_HEADER_TIMESTAMP, new BytesCapsule(ByteArray.fromLong(t)));
   }
 
@@ -1974,7 +2190,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
    * save number of global latest block.
    */
   public void saveLatestBlockHeaderNumber(long n) {
-    logger.info("update latest block header number = {}", n);
+    logger.info("Update latest block header number = {}.", n);
     this.put(LATEST_BLOCK_HEADER_NUMBER, new BytesCapsule(ByteArray.fromLong(n)));
   }
 
@@ -1982,12 +2198,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
    * save id of global latest block.
    */
   public void saveLatestBlockHeaderHash(ByteString h) {
-    logger.info("update latest block header id = {}", ByteArray.toHexString(h.toByteArray()));
+    logger.info("Update latest block header id = {}.", ByteArray.toHexString(h.toByteArray()));
     this.put(LATEST_BLOCK_HEADER_HASH, new BytesCapsule(h.toByteArray()));
   }
 
   public void saveStateFlag(int n) {
-    logger.info("update state flag = {}", n);
+    logger.info("Update state flag = {}.", n);
     this.put(STATE_FLAG, new BytesCapsule(ByteArray.fromInt(n)));
   }
 
@@ -2000,7 +2216,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
   public long getMaintenanceSkipSlots() {
-    return Parameter.ChainConstant.MAINTENANCE_SKIP_SLOTS;
+    return ChainConstant.MAINTENANCE_SKIP_SLOTS;
   }
 
   public void saveNextMaintenanceTime(long nextMaintenanceTime) {
@@ -2017,8 +2233,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     saveNextMaintenanceTime(nextMaintenanceTime);
 
     logger.info(
-        "do update nextMaintenanceTime,currentMaintenanceTime:{}, blockTime:{},"
-            + "nextMaintenanceTime:{}",
+        "Do update nextMaintenanceTime, currentMaintenanceTime: {}, blockTime: {}, "
+            + "nextMaintenanceTime: {}.",
         new DateTime(currentMaintenanceTime), new DateTime(blockTime),
         new DateTime(nextMaintenanceTime)
     );
@@ -2026,22 +2242,40 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   //The unit is trx
   public void addTotalNetWeight(long amount) {
+    if (amount == 0) {
+      return;
+    }
     long totalNetWeight = getTotalNetWeight();
     totalNetWeight += amount;
+    if (allowNewReward()) {
+      totalNetWeight = max(0, totalNetWeight, disableJavaLangMath());
+    }
     saveTotalNetWeight(totalNetWeight);
   }
 
   //The unit is trx
   public void addTotalEnergyWeight(long amount) {
+    if (amount == 0) {
+      return;
+    }
     long totalEnergyWeight = getTotalEnergyWeight();
     totalEnergyWeight += amount;
+    if (allowNewReward()) {
+      totalEnergyWeight = max(0, totalEnergyWeight, disableJavaLangMath());
+    }
     saveTotalEnergyWeight(totalEnergyWeight);
   }
 
   //The unit is trx
   public void addTotalTronPowerWeight(long amount) {
+    if (amount == 0) {
+      return;
+    }
     long totalWeight = getTotalTronPowerWeight();
     totalWeight += amount;
+    if (allowNewReward()) {
+      totalWeight = max(0, totalWeight, disableJavaLangMath());
+    }
     saveTotalTronPowerWeight(totalWeight);
   }
 
@@ -2081,6 +2315,19 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     return value == null ? null : Boolean.valueOf(new String(value));
   }
 
+  public void saveLatestVersion(int version) {
+    this.put(VERSION_NUMBER, new BytesCapsule(ByteArray.fromInt(version)));
+  }
+
+  public int getLatestVersion() {
+    BytesCapsule data = getUnchecked(VERSION_NUMBER);
+    if (data == null) {
+      saveLatestVersion(0);
+      return 0;
+    }
+    return ByteArray.toInt(data.getData());
+  }
+
   /**
    * get allow protobuf number.
    */
@@ -2095,7 +2342,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
    * save allow protobuf  number.
    */
   public void saveAllowProtoFilterNum(long num) {
-    logger.info("update allow protobuf number = {}", num);
+    logger.info("Update allow protobuf number = {}.", num);
     this.put(ALLOW_PROTO_FILTER_NUM, new BytesCapsule(ByteArray.fromLong(num)));
   }
 
@@ -2215,6 +2462,10 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     return getAllowAccountAssetOptimization() == 1L;
   }
 
+  public boolean supportAllowAssetOptimization() {
+    return getAllowAssetOptimization() == 1L;
+  }
+
   public void saveAllowNewResourceModel(long value) {
     this.put(ALLOW_NEW_RESOURCE_MODEL, new BytesCapsule(ByteArray.fromLong(value)));
   }
@@ -2255,8 +2506,36 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
             () -> new IllegalArgumentException(msg));
   }
 
+  public void saveAllowTvmLondon(long allowTvmLondon) {
+    this.put(DynamicPropertiesStore.ALLOW_TVM_LONDON,
+        new BytesCapsule(ByteArray.fromLong(allowTvmLondon)));
+  }
+
+  public long getAllowTvmLondon() {
+    String msg = "not found ALLOW_TVM_LONDON";
+    return Optional.ofNullable(getUnchecked(ALLOW_TVM_LONDON))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException(msg));
+  }
+
+  public void saveAllowTvmCompatibleEvm(long allowTvmCompatibleEvm) {
+    this.put(DynamicPropertiesStore.ALLOW_TVM_COMPATIBLE_EVM,
+        new BytesCapsule(ByteArray.fromLong(allowTvmCompatibleEvm)));
+  }
+
+  public long getAllowTvmCompatibleEvm() {
+    String msg = "not found ALLOW_TVM_COMPATIBLE_EVM";
+    return Optional.ofNullable(getUnchecked(ALLOW_TVM_COMPATIBLE_EVM))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException(msg));
+  }
+
   public boolean useNewRewardAlgorithm() {
-    return getAllowTvmVote() == 1;
+    return getNewRewardAlgorithmEffectiveCycle() != Long.MAX_VALUE;
   }
 
   public void saveNewRewardAlgorithmEffectiveCycle() {
@@ -2271,19 +2550,400 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     return Optional.ofNullable(getUnchecked(NEW_REWARD_ALGORITHM_EFFECTIVE_CYCLE))
         .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
-        .orElse(Long.MAX_VALUE);
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found NEW_REWARD_ALGORITHM_EFFECTIVE_CYCLE"));
+  }
+
+  public long getAllowAccountAssetOptimizationFromRoot() {
+    try {
+      return Optional.ofNullable(getFromRoot(ALLOW_ASSET_OPTIMIZATION))
+          .map(BytesCapsule::getData)
+          .map(ByteArray::toLong)
+          .orElseThrow(
+              () -> new IllegalArgumentException("not found ALLOW_ASSET_OPTIMIZATION"));
+    } catch (Exception e) {
+      logger.debug("{}", e.getMessage());
+      return CommonParameter.getInstance().getAllowAssetOptimization();
+    }
   }
 
   // 1: enable
   public long getAllowAccountAssetOptimization() {
     return Optional.ofNullable(getUnchecked(ALLOW_ACCOUNT_ASSET_OPTIMIZATION))
-            .map(BytesCapsule::getData)
-            .map(ByteArray::toLong)
-            .orElseThrow(() -> new IllegalArgumentException("not found ALLOW_ACCOUNT_ASSET_OPTIMIZATION"));
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found ALLOW_ACCOUNT_ASSET_OPTIMIZATION"));
   }
 
   public void setAllowAccountAssetOptimization(long value) {
     this.put(ALLOW_ACCOUNT_ASSET_OPTIMIZATION, new BytesCapsule(ByteArray.fromLong(value)));
+  }
+
+  // 1: enable
+  public long getAllowAssetOptimization() {
+    return Optional.ofNullable(getUnchecked(ALLOW_ASSET_OPTIMIZATION))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found ALLOW_ASSET_OPTIMIZATION"));
+  }
+
+  public void setAllowAssetOptimization(long value) {
+    this.put(ALLOW_ASSET_OPTIMIZATION, new BytesCapsule(ByteArray.fromLong(value)));
+  }
+
+  // for energy price history
+  public void saveEnergyPriceHistoryDone(long value) {
+    this.put(ENERGY_PRICE_HISTORY_DONE,
+        new BytesCapsule(ByteArray.fromLong(value)));
+  }
+
+  public long getEnergyPriceHistoryDone() {
+    return Optional.ofNullable(getUnchecked(ENERGY_PRICE_HISTORY_DONE))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found ENERGY_PRICE_HISTORY_DONE"));
+  }
+
+  public String getEnergyPriceHistory() {
+    return Optional.ofNullable(getUnchecked(ENERGY_PRICE_HISTORY))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toStr)
+        .orElseThrow(() -> new IllegalArgumentException("not found ENERGY_PRICE_HISTORY"));
+  }
+
+  public void saveEnergyPriceHistory(String value) {
+    this.put(ENERGY_PRICE_HISTORY, new BytesCapsule(ByteArray.fromString(value)));
+  }
+
+  // for bandwidth price history
+  public void saveBandwidthPriceHistoryDone(long value) {
+    this.put(BANDWIDTH_PRICE_HISTORY_DONE,
+        new BytesCapsule(ByteArray.fromLong(value)));
+  }
+
+  public long getBandwidthPriceHistoryDone() {
+    return Optional.ofNullable(getUnchecked(BANDWIDTH_PRICE_HISTORY_DONE))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found BANDWIDTH_PRICE_HISTORY_DONE"));
+  }
+
+  public String getBandwidthPriceHistory() {
+    return Optional.ofNullable(getUnchecked(BANDWIDTH_PRICE_HISTORY))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toStr)
+        .orElseThrow(() -> new IllegalArgumentException("not found BANDWIDTH_PRICE_HISTORY"));
+  }
+
+  public void saveBandwidthPriceHistory(String value) {
+    this.put(BANDWIDTH_PRICE_HISTORY, new BytesCapsule(ByteArray.fromString(value)));
+  }
+
+  public long getSetBlackholeAccountPermission() {
+    return Optional.of(getUnchecked(SET_BLACKHOLE_ACCOUNT_PERMISSION))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found SET_BLACKHOLE_ACCOUNT_PERMISSION"));
+  }
+
+  public void saveSetBlackholePermission(long value) {
+    this.put(SET_BLACKHOLE_ACCOUNT_PERMISSION, new BytesCapsule(ByteArray.fromLong(value)));
+  }
+
+  public void saveAllowHigherLimitForMaxCpuTimeOfOneTx(long value) {
+    this.put(ALLOW_HIGHER_LIMIT_FOR_MAX_CPU_TIME_OF_ONE_TX,
+        new BytesCapsule(ByteArray.fromLong(value)));
+  }
+
+  public long getAllowHigherLimitForMaxCpuTimeOfOneTx() {
+    String msg = "not found ALLOW_HIGHER_LIMIT_FOR_MAX_CPU_TIME_OF_ONE_TX";
+    return Optional.ofNullable(getUnchecked(ALLOW_HIGHER_LIMIT_FOR_MAX_CPU_TIME_OF_ONE_TX))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException(msg));
+  }
+
+  public long getMemoFee() {
+    return Optional.ofNullable(getUnchecked(MEMO_FEE))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(() -> new IllegalArgumentException("not found MEMO_FEE"));
+  }
+
+  public void saveMemoFee(long value) {
+    this.put(MEMO_FEE, new BytesCapsule(ByteArray.fromLong(value)));
+  }
+
+  public String getMemoFeeHistory() {
+    return Optional.ofNullable(getUnchecked(MEMO_FEE_HISTORY))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toStr)
+        .orElseThrow(() -> new IllegalArgumentException("not found MEMO_FEE_HISTORY"));
+  }
+
+  public void saveMemoFeeHistory(String value) {
+    this.put(MEMO_FEE_HISTORY, new BytesCapsule(ByteArray.fromString(value)));
+  }
+
+  public long getAllowNewReward() {
+    return Optional.ofNullable(getUnchecked(ALLOW_NEW_REWARD))
+            .map(BytesCapsule::getData)
+            .map(ByteArray::toLong)
+            .orElseThrow(() -> new IllegalArgumentException("not found AllowNewReward"));
+  }
+
+  public void saveAllowNewReward(long newReward) {
+    this.put(ALLOW_NEW_REWARD, new BytesCapsule(ByteArray.fromLong(newReward)));
+  }
+
+  public long getAllowDelegateOptimization() {
+    return Optional.ofNullable(getUnchecked(ALLOW_DELEGATE_OPTIMIZATION))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found ALLOW_DELEGATE_OPTIMIZATION"));
+  }
+
+  public boolean supportAllowDelegateOptimization() {
+    return getAllowDelegateOptimization() == 1L;
+  }
+
+  public void saveAllowDelegateOptimization(long value) {
+    this.put(ALLOW_DELEGATE_OPTIMIZATION, new BytesCapsule(ByteArray.fromLong(value)));
+  }
+
+  public long getAllowDynamicEnergy() {
+    return Optional.ofNullable(getUnchecked(ALLOW_DYNAMIC_ENERGY))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found ALLOW_DYNAMIC_ENERGY"));
+  }
+
+  public boolean supportAllowDynamicEnergy() {
+    return getAllowDynamicEnergy() == 1L;
+  }
+
+  public void saveAllowDynamicEnergy(long value) {
+    this.put(ALLOW_DYNAMIC_ENERGY, new BytesCapsule(ByteArray.fromLong(value)));
+  }
+
+  public long getDynamicEnergyThreshold() {
+    return Optional.ofNullable(getUnchecked(DYNAMIC_ENERGY_THRESHOLD))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found DYNAMIC_ENERGY_THRESHOLD"));
+  }
+
+  public void saveDynamicEnergyThreshold(long value) {
+    this.put(DYNAMIC_ENERGY_THRESHOLD, new BytesCapsule(ByteArray.fromLong(value)));
+  }
+
+  public long getDynamicEnergyIncreaseFactor() {
+    return Optional.ofNullable(getUnchecked(DYNAMIC_ENERGY_INCREASE_FACTOR))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found DYNAMIC_ENERGY_INCREASE_FACTOR"));
+  }
+
+  public void saveDynamicEnergyIncreaseFactor(long value) {
+    this.put(DYNAMIC_ENERGY_INCREASE_FACTOR, new BytesCapsule(ByteArray.fromLong(value)));
+  }
+
+  public long getDynamicEnergyMaxFactor() {
+    return Optional.ofNullable(getUnchecked(DYNAMIC_ENERGY_MAX_FACTOR))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found DYNAMIC_ENERGY_MAX_FACTOR"));
+  }
+
+  public void saveDynamicEnergyMaxFactor(long value) {
+    this.put(DYNAMIC_ENERGY_MAX_FACTOR, new BytesCapsule(ByteArray.fromLong(value)));
+  }
+
+  public boolean allowNewReward() {
+    return getAllowNewReward() == 1;
+  }
+
+  public long getUnfreezeDelayDays() {
+    return Optional.ofNullable(getUnchecked(UNFREEZE_DELAY_DAYS))
+            .map(BytesCapsule::getData)
+            .map(ByteArray::toLong)
+            .orElseThrow(() -> new IllegalArgumentException("not found UNFREEZE_DELAY_DAYS"));
+  }
+
+  public boolean supportUnfreezeDelay() {
+    return getUnfreezeDelayDays() > 0;
+  }
+
+  public void saveUnfreezeDelayDays(long value) {
+    this.put(UNFREEZE_DELAY_DAYS, new BytesCapsule(ByteArray.fromLong(value)));
+  }
+
+  public void saveAllowOptimizedReturnValueOfChainId(long value) {
+    this.put(ALLOW_OPTIMIZED_RETURN_VALUE_OF_CHAIN_ID,
+        new BytesCapsule(ByteArray.fromLong(value)));
+  }
+
+  public long getAllowOptimizedReturnValueOfChainId() {
+    String msg = "not found ALLOW_OPTIMIZED_RETURN_VALUE_OF_CHAIN_ID";
+    return Optional.ofNullable(getUnchecked(ALLOW_OPTIMIZED_RETURN_VALUE_OF_CHAIN_ID))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException(msg));
+  }
+
+  public void saveAllowTvmShangHai(long allowTvmShangHai) {
+    this.put(DynamicPropertiesStore.ALLOW_TVM_SHANGHAI,
+        new BytesCapsule(ByteArray.fromLong(allowTvmShangHai)));
+  }
+
+  public long getAllowTvmShangHai() {
+    return Optional.ofNullable(getUnchecked(ALLOW_TVM_SHANGHAI))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElse(CommonParameter.getInstance().getAllowTvmShangHai());
+  }
+
+  public void saveAllowCancelAllUnfreezeV2(long allowCancelAllUnfreezeV2) {
+    this.put(DynamicPropertiesStore.ALLOW_CANCEL_ALL_UNFREEZE_V2,
+        new BytesCapsule(ByteArray.fromLong(allowCancelAllUnfreezeV2)));
+  }
+
+  public long getAllowCancelAllUnfreezeV2() {
+    return Optional.ofNullable(getUnchecked(ALLOW_CANCEL_ALL_UNFREEZE_V2))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElse(CommonParameter.getInstance().getAllowCancelAllUnfreezeV2());
+  }
+
+  public boolean supportAllowCancelAllUnfreezeV2() {
+    return getAllowCancelAllUnfreezeV2() == 1L && getUnfreezeDelayDays() > 0;
+  }
+
+  public void saveMaxDelegateLockPeriod(long maxDelegateLockPeriod) {
+    this.put(DynamicPropertiesStore.MAX_DELEGATE_LOCK_PERIOD,
+        new BytesCapsule(ByteArray.fromLong(maxDelegateLockPeriod)));
+  }
+
+  public long getMaxDelegateLockPeriod() {
+    return Optional.ofNullable(getUnchecked(MAX_DELEGATE_LOCK_PERIOD))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElse(DELEGATE_PERIOD / BLOCK_PRODUCED_INTERVAL);
+  }
+
+  public boolean supportMaxDelegateLockPeriod() {
+    return (getMaxDelegateLockPeriod() > DELEGATE_PERIOD / BLOCK_PRODUCED_INTERVAL) &&
+            getUnfreezeDelayDays() > 0;
+  }
+
+  public void saveAllowOldRewardOpt(long allowOldRewardOpt) {
+    this.put(ALLOW_OLD_REWARD_OPT, new BytesCapsule(ByteArray.fromLong(allowOldRewardOpt)));
+  }
+
+  public boolean allowOldRewardOpt() {
+    return getAllowOldRewardOpt() == 1L;
+  }
+
+  public long getAllowOldRewardOpt() {
+    return Optional.ofNullable(getUnchecked(ALLOW_OLD_REWARD_OPT))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElse(CommonParameter.getInstance().getAllowOldRewardOpt());
+  }
+
+  public void saveAllowEnergyAdjustment(long allowEnergyAdjustment) {
+    this.put(ALLOW_ENERGY_ADJUSTMENT, new BytesCapsule(ByteArray.fromLong(allowEnergyAdjustment)));
+  }
+
+  public long getAllowEnergyAdjustment() {
+    return Optional.ofNullable(getUnchecked(ALLOW_ENERGY_ADJUSTMENT))
+            .map(BytesCapsule::getData)
+            .map(ByteArray::toLong)
+            .orElse(CommonParameter.getInstance().getAllowEnergyAdjustment());
+  }
+
+  public void saveMaxCreateAccountTxSize(long maxCreateAccountTxSize) {
+    this.put(MAX_CREATE_ACCOUNT_TX_SIZE,
+        new BytesCapsule(ByteArray.fromLong(maxCreateAccountTxSize)));
+  }
+
+  public long getMaxCreateAccountTxSize() {
+    return Optional.ofNullable(getUnchecked(MAX_CREATE_ACCOUNT_TX_SIZE))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElse(CommonParameter.getInstance().getMaxCreateAccountTxSize());
+  }
+  public long getAllowStrictMath() {
+    return Optional.ofNullable(getUnchecked(ALLOW_STRICT_MATH))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElse(CommonParameter.getInstance().getAllowStrictMath());
+  }
+  public void saveAllowStrictMath(long allowStrictMath) {
+    this.put(ALLOW_STRICT_MATH, new BytesCapsule(ByteArray.fromLong(allowStrictMath)));
+  }
+
+  public boolean allowStrictMath() {
+    return getAllowStrictMath() == 1L;
+  }
+
+  public boolean disableJavaLangMath() {
+    return this.allowConsensusLogicOptimization();
+  }
+
+  public void saveConsensusLogicOptimization(long value) {
+    this.put(CONSENSUS_LOGIC_OPTIMIZATION,
+      new BytesCapsule(ByteArray.fromLong(value)));
+  }
+
+  public long getConsensusLogicOptimization() {
+    return Optional.ofNullable(getUnchecked(CONSENSUS_LOGIC_OPTIMIZATION))
+      .map(BytesCapsule::getData)
+      .map(ByteArray::toLong)
+      .orElse(CommonParameter.getInstance().getConsensusLogicOptimization());
+  }
+
+  public boolean allowConsensusLogicOptimization() {
+    return getConsensusLogicOptimization() == 1L;
+  }
+
+  public boolean allowWitnessSortOptimization() {
+    return this.allowConsensusLogicOptimization();
+  }
+
+  public void saveAllowTvmCancun(long allowTvmCancun) {
+    this.put(ALLOW_TVM_CANCUN,
+        new BytesCapsule(ByteArray.fromLong(allowTvmCancun)));
+  }
+
+  public long getAllowTvmCancun() {
+    return Optional.ofNullable(getUnchecked(ALLOW_TVM_CANCUN))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElse(CommonParameter.getInstance().getAllowTvmCancun());
+  }
+
+  public void saveAllowTvmBlob(long allowTvmBlob) {
+    this.put(ALLOW_TVM_BLOB, new BytesCapsule(ByteArray.fromLong(allowTvmBlob)));
+  }
+
+  public long getAllowTvmBlob() {
+    return Optional.ofNullable(getUnchecked(ALLOW_TVM_BLOB))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElse(CommonParameter.getInstance().getAllowTvmBlob());
   }
 
   private static class DynamicResourceProperties {
@@ -2314,6 +2974,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     private static final byte[] ADAPTIVE_RESOURCE_LIMIT_TARGET_RATIO =
         "ADAPTIVE_RESOURCE_LIMIT_TARGET_RATIO"
             .getBytes();
+
   }
 
 }

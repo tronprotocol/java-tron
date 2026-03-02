@@ -1,33 +1,26 @@
 package org.tron.core.actuator;
 
-import static org.testng.Assert.fail;
+import static org.junit.Assert.fail;
 import static org.tron.core.config.Parameter.ChainSymbol.TRX_SYMBOL_BYTES;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
-import java.io.File;
 import java.util.Arrays;
 import java.util.Map;
 import junit.framework.TestCase;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
-import org.tron.common.application.TronApplicationContext;
+import org.tron.common.BaseTest;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
-import org.tron.core.capsule.AccountAssetCapsule;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.ExchangeCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
-import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
-import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ItemNotFoundException;
@@ -39,53 +32,23 @@ import org.tron.protos.contract.ExchangeContract.ExchangeTransactionContract;
 
 @Slf4j
 
-public class ExchangeTransactionActuatorTest {
+public class ExchangeTransactionActuatorTest extends BaseTest {
 
-  private static final String dbPath = "output_ExchangeTransaction_test";
   private static final String ACCOUNT_NAME_FIRST = "ownerF";
   private static final String OWNER_ADDRESS_FIRST;
   private static final String ACCOUNT_NAME_SECOND = "ownerS";
   private static final String OWNER_ADDRESS_SECOND;
-  private static final String URL = "https://tron.network";
   private static final String OWNER_ADDRESS_INVALID = "aaaa";
   private static final String OWNER_ADDRESS_NOACCOUNT;
-  private static final String OWNER_ADDRESS_BALANCENOTSUFFIENT;
-  private static TronApplicationContext context;
-  private static Manager dbManager;
 
   static {
-    Args.setParam(new String[]{"--output-directory", dbPath}, Constant.TEST_CONF);
-    context = new TronApplicationContext(DefaultConfig.class);
+    Args.setParam(new String[]{"--output-directory", dbPath()}, Constant.TEST_CONF);
     OWNER_ADDRESS_FIRST =
         Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     OWNER_ADDRESS_SECOND =
         Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
     OWNER_ADDRESS_NOACCOUNT =
         Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1aed";
-    OWNER_ADDRESS_BALANCENOTSUFFIENT =
-        Wallet.getAddressPreFixString() + "548794500882809695a8a687866e06d4271a1ced";
-  }
-
-  /**
-   * Init data.
-   */
-  @BeforeClass
-  public static void init() {
-    dbManager = context.getBean(Manager.class);
-  }
-
-  /**
-   * Release resources.
-   */
-  @AfterClass
-  public static void destroy() {
-    Args.clearParam();
-    context.destroy();
-    if (FileUtil.deleteDir(new File(dbPath))) {
-      logger.info("Release resources successful.");
-    } else {
-      logger.info("Release resources failure.");
-    }
   }
 
   /**
@@ -93,19 +56,6 @@ public class ExchangeTransactionActuatorTest {
    */
   @Before
   public void initTest() {
-    AccountAssetCapsule ownerAddressFirstAsset =
-            new AccountAssetCapsule(ByteString.copyFrom(
-                    ByteArray.fromHexString(OWNER_ADDRESS_FIRST)));
-    AccountAssetCapsule ownerAddressSecondAsset =
-            new AccountAssetCapsule(ByteString.copyFrom(
-                    ByteArray.fromHexString(OWNER_ADDRESS_SECOND)));
-    dbManager.getAccountAssetStore().put(
-            ownerAddressFirstAsset.getAddress().toByteArray(),
-            ownerAddressFirstAsset);
-    dbManager.getAccountAssetStore().put(
-            ownerAddressSecondAsset.getAddress().toByteArray(),
-            ownerAddressSecondAsset);
-
     AccountCapsule ownerAccountFirstCapsule =
         new AccountCapsule(
             ByteString.copyFromUtf8(ACCOUNT_NAME_FIRST),
@@ -247,7 +197,7 @@ public class ExchangeTransactionActuatorTest {
 
     byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_SECOND);
     AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
-    Map<String, Long> assetMap = accountCapsule.getAssetMap();
+    Map<String, Long> assetMap = accountCapsule.getAssetMapForTest();
     Assert.assertEquals(20000_000000L, accountCapsule.getBalance());
     Assert.assertEquals(null, assetMap.get("def"));
 
@@ -293,7 +243,7 @@ public class ExchangeTransactionActuatorTest {
       Assert.assertEquals(9999001L, exchangeCapsule2.getSecondTokenBalance());
 
       accountCapsule = dbManager.getAccountStore().get(ownerAddress);
-      assetMap = accountCapsule.getAssetMap();
+      assetMap = accountCapsule.getAssetMapForTest();
       Assert.assertEquals(20000_000000L - quant, accountCapsule.getBalance());
       Assert.assertEquals(999L, assetMap.get("abc").longValue());
 
@@ -325,7 +275,7 @@ public class ExchangeTransactionActuatorTest {
 
     byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_SECOND);
     AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
-    Map<String, Long> assetMap = accountCapsule.getAssetMap();
+    Map<String, Long> assetMap = accountCapsule.getAssetMapForTest();
     Assert.assertEquals(20000_000000L, accountCapsule.getBalance());
     Assert.assertEquals(null, assetMap.get("def"));
 
@@ -372,7 +322,7 @@ public class ExchangeTransactionActuatorTest {
       Assert.assertEquals(9999001L, exchangeCapsule2.getSecondTokenBalance());
 
       accountCapsule = dbManager.getAccountStore().get(ownerAddress);
-      assetMap = accountCapsule.getAssetMapV2();
+      assetMap = accountCapsule.getAssetV2MapForTest();
       Assert.assertEquals(20000_000000L - quant, accountCapsule.getBalance());
       Assert.assertEquals(999L, assetMap.get("1").longValue());
 
@@ -404,7 +354,7 @@ public class ExchangeTransactionActuatorTest {
 
     byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_SECOND);
     AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
-    Map<String, Long> assetV2Map = accountCapsule.getAssetMapV2();
+    Map<String, Long> assetV2Map = accountCapsule.getAssetV2MapForTest();
     Assert.assertEquals(20000_000000L, accountCapsule.getBalance());
     Assert.assertEquals(null, assetV2Map.get("456"));
 
@@ -445,7 +395,7 @@ public class ExchangeTransactionActuatorTest {
       Assert.assertEquals(9999001L, exchangeV2Capsule.getSecondTokenBalance());
 
       accountCapsule = dbManager.getAccountStore().get(ownerAddress);
-      assetV2Map = accountCapsule.getAssetMapV2();
+      assetV2Map = accountCapsule.getAssetV2MapForTest();
       Assert.assertEquals(20000_000000L - quant, accountCapsule.getBalance());
       Assert.assertEquals(999L, assetV2Map.get("123").longValue());
 
@@ -480,8 +430,8 @@ public class ExchangeTransactionActuatorTest {
 
     byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_SECOND);
     AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
-    accountCapsule.addAssetAmount(tokenId.getBytes(), 10000);
-    Map<String, Long> assetMap = accountCapsule.getAssetMap();
+    accountCapsule.addAssetAmount(tokenId.getBytes(), 10000, true);
+    Map<String, Long> assetMap = accountCapsule.getAssetMapForTest();
     Assert.assertEquals(20000_000000L, accountCapsule.getBalance());
     Assert.assertEquals(null, assetMap.get(buyTokenId));
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
@@ -528,7 +478,7 @@ public class ExchangeTransactionActuatorTest {
       Assert.assertEquals(199998001L, exchangeCapsule2.getSecondTokenBalance());
 
       accountCapsule = dbManager.getAccountStore().get(ownerAddress);
-      assetMap = accountCapsule.getAssetMap();
+      assetMap = accountCapsule.getAssetMapForTest();
       Assert.assertEquals(9000L, assetMap.get("abc").longValue());
       Assert.assertEquals(1999L, assetMap.get("def").longValue());
 
@@ -563,7 +513,7 @@ public class ExchangeTransactionActuatorTest {
     AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
     accountCapsule.addAssetAmountV2(tokenId.getBytes(), 10000,
         dbManager.getDynamicPropertiesStore(), dbManager.getAssetIssueStore());
-    Map<String, Long> assetV2Map = accountCapsule.getAssetMapV2();
+    Map<String, Long> assetV2Map = accountCapsule.getAssetV2MapForTest();
     Assert.assertEquals(20000_000000L, accountCapsule.getBalance());
     Assert.assertEquals(null, assetV2Map.get(buyTokenId));
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
@@ -605,7 +555,7 @@ public class ExchangeTransactionActuatorTest {
       Assert.assertEquals(199998001L, exchangeCapsuleV2.getSecondTokenBalance());
 
       accountCapsule = dbManager.getAccountStore().get(ownerAddress);
-      assetV2Map = accountCapsule.getAssetMapV2();
+      assetV2Map = accountCapsule.getAssetV2MapForTest();
       Assert.assertEquals(9000L, assetV2Map.get("123").longValue());
       Assert.assertEquals(1999L, assetV2Map.get("456").longValue());
 
@@ -638,8 +588,8 @@ public class ExchangeTransactionActuatorTest {
 
     byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_SECOND);
     AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
-    accountCapsule.addAssetAmount(tokenId.getBytes(), 10000);
-    Map<String, Long> assetMap = accountCapsule.getAssetMap();
+    accountCapsule.addAssetAmount(tokenId.getBytes(), 10000, false);
+    Map<String, Long> assetMap = accountCapsule.getAssetMapForTest();
     Assert.assertEquals(20000_000000L, accountCapsule.getBalance());
     Assert.assertEquals(null, assetMap.get(buyTokenId));
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
@@ -685,7 +635,7 @@ public class ExchangeTransactionActuatorTest {
     accountCapsule.addAssetAmountV2(tokenId.getBytes(), 10000,
         dbManager.getDynamicPropertiesStore(), dbManager.getAssetIssueStore());
 
-    Map<String, Long> assetV2Map = accountCapsule.getAssetMapV2();
+    Map<String, Long> assetV2Map = accountCapsule.getAssetV2MapForTest();
     Assert.assertEquals(20000_000000L, accountCapsule.getBalance());
     Assert.assertEquals(null, assetV2Map.get(buyTokenId));
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
@@ -729,8 +679,8 @@ public class ExchangeTransactionActuatorTest {
 
     byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_SECOND);
     AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
-    accountCapsule.addAssetAmount(tokenId.getBytes(), 10000);
-    Map<String, Long> assetMap = accountCapsule.getAssetMap();
+    accountCapsule.addAssetAmount(tokenId.getBytes(), 10000, false);
+    Map<String, Long> assetMap = accountCapsule.getAssetMapForTest();
     Assert.assertEquals(20000_000000L, accountCapsule.getBalance());
     Assert.assertEquals(null, assetMap.get(buyTokenId));
 
@@ -779,8 +729,8 @@ public class ExchangeTransactionActuatorTest {
 
     byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_SECOND);
     AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
-    accountCapsule.addAssetAmount(tokenId.getBytes(), 10000);
-    Map<String, Long> assetMap = accountCapsule.getAssetMap();
+    accountCapsule.addAssetAmount(tokenId.getBytes(), 10000, true);
+    Map<String, Long> assetMap = accountCapsule.getAssetMapForTest();
     Assert.assertEquals(20000_000000L, accountCapsule.getBalance());
     Assert.assertEquals(null, assetMap.get(buyTokenId));
 
@@ -829,8 +779,8 @@ public class ExchangeTransactionActuatorTest {
 
     byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_SECOND);
     AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
-    accountCapsule.addAssetAmount(tokenId.getBytes(), 10000);
-    Map<String, Long> assetMap = accountCapsule.getAssetMap();
+    accountCapsule.addAssetAmount(tokenId.getBytes(), 10000, true);
+    Map<String, Long> assetMap = accountCapsule.getAssetMapForTest();
     Assert.assertEquals(20000_000000L, accountCapsule.getBalance());
     Assert.assertEquals(null, assetMap.get(buyTokenId));
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
@@ -877,7 +827,7 @@ public class ExchangeTransactionActuatorTest {
     accountCapsule.addAssetAmountV2(tokenId.getBytes(), 10000,
         dbManager.getDynamicPropertiesStore(), dbManager.getAssetIssueStore());
 
-    Map<String, Long> assetV2Map = accountCapsule.getAssetMapV2();
+    Map<String, Long> assetV2Map = accountCapsule.getAssetV2MapForTest();
     Assert.assertEquals(20000_000000L, accountCapsule.getBalance());
     Assert.assertEquals(null, assetV2Map.get(buyTokenId));
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
@@ -920,8 +870,8 @@ public class ExchangeTransactionActuatorTest {
 
     byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_SECOND);
     AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
-    accountCapsule.addAssetAmount(tokenId.getBytes(), 10000);
-    Map<String, Long> assetMap = accountCapsule.getAssetMap();
+    accountCapsule.addAssetAmount(tokenId.getBytes(), 10000, true);
+    Map<String, Long> assetMap = accountCapsule.getAssetMapForTest();
     Assert.assertEquals(20000_000000L, accountCapsule.getBalance());
     Assert.assertEquals(null, assetMap.get(buyTokenId));
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
@@ -966,7 +916,7 @@ public class ExchangeTransactionActuatorTest {
     AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
     accountCapsule.addAssetAmountV2(tokenId.getBytes(), 10000,
         dbManager.getDynamicPropertiesStore(), dbManager.getAssetIssueStore());
-    Map<String, Long> assetV2Map = accountCapsule.getAssetMapV2();
+    Map<String, Long> assetV2Map = accountCapsule.getAssetV2MapForTest();
     Assert.assertEquals(20000_000000L, accountCapsule.getBalance());
     Assert.assertEquals(null, assetV2Map.get(buyTokenId));
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
@@ -1009,8 +959,8 @@ public class ExchangeTransactionActuatorTest {
 
     byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_SECOND);
     AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
-    accountCapsule.addAssetAmount(tokenId.getBytes(), 10000);
-    Map<String, Long> assetMap = accountCapsule.getAssetMap();
+    accountCapsule.addAssetAmount(tokenId.getBytes(), 10000, true);
+    Map<String, Long> assetMap = accountCapsule.getAssetMapForTest();
     Assert.assertEquals(20000_000000L, accountCapsule.getBalance());
     Assert.assertEquals(null, assetMap.get(buyTokenId));
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
@@ -1056,7 +1006,7 @@ public class ExchangeTransactionActuatorTest {
     accountCapsule
         .addAssetAmountV2(tokenId.getBytes(), 10000, dbManager.getDynamicPropertiesStore(),
             dbManager.getAssetIssueStore());
-    Map<String, Long> assetV2Map = accountCapsule.getAssetMapV2();
+    Map<String, Long> assetV2Map = accountCapsule.getAssetV2MapForTest();
     Assert.assertEquals(20000_000000L, accountCapsule.getBalance());
     Assert.assertEquals(null, assetV2Map.get(buyTokenId));
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
@@ -1099,8 +1049,8 @@ public class ExchangeTransactionActuatorTest {
 
     byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_SECOND);
     AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
-    accountCapsule.addAssetAmount(tokenId.getBytes(), 10000);
-    Map<String, Long> assetMap = accountCapsule.getAssetMap();
+    accountCapsule.addAssetAmount(tokenId.getBytes(), 10000, true);
+    Map<String, Long> assetMap = accountCapsule.getAssetMapForTest();
     Assert.assertEquals(20000_000000L, accountCapsule.getBalance());
     Assert.assertEquals(null, assetMap.get(buyTokenId));
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
@@ -1154,7 +1104,7 @@ public class ExchangeTransactionActuatorTest {
     accountCapsule
         .addAssetAmountV2(tokenId.getBytes(), 10000, dbManager.getDynamicPropertiesStore(),
             dbManager.getAssetIssueStore());
-    Map<String, Long> assetV2Map = accountCapsule.getAssetMapV2();
+    Map<String, Long> assetV2Map = accountCapsule.getAssetV2MapForTest();
     Assert.assertEquals(20000_000000L, accountCapsule.getBalance());
     Assert.assertEquals(null, assetV2Map.get(buyTokenId));
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
@@ -1205,8 +1155,8 @@ public class ExchangeTransactionActuatorTest {
 
     byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_SECOND);
     AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
-    accountCapsule.addAssetAmount(tokenId.getBytes(), 10000);
-    Map<String, Long> assetMap = accountCapsule.getAssetMap();
+    accountCapsule.addAssetAmount(tokenId.getBytes(), 10000, true);
+    Map<String, Long> assetMap = accountCapsule.getAssetMapForTest();
     Assert.assertEquals(20000_000000L, accountCapsule.getBalance());
     Assert.assertEquals(null, assetMap.get(buyTokenId));
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
@@ -1252,7 +1202,7 @@ public class ExchangeTransactionActuatorTest {
     accountCapsule
         .addAssetAmountV2(tokenId.getBytes(), 10000, dbManager.getDynamicPropertiesStore(),
             dbManager.getAssetIssueStore());
-    Map<String, Long> assetV2Map = accountCapsule.getAssetMapV2();
+    Map<String, Long> assetV2Map = accountCapsule.getAssetV2MapForTest();
     Assert.assertEquals(20000_000000L, accountCapsule.getBalance());
     Assert.assertEquals(null, assetV2Map.get(buyTokenId));
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
@@ -1295,8 +1245,8 @@ public class ExchangeTransactionActuatorTest {
 
     byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_SECOND);
     AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
-    accountCapsule.addAssetAmount(tokenId.getBytes(), 10000);
-    Map<String, Long> assetMap = accountCapsule.getAssetMap();
+    accountCapsule.addAssetAmount(tokenId.getBytes(), 10000, true);
+    Map<String, Long> assetMap = accountCapsule.getAssetMapForTest();
     Assert.assertEquals(20000_000000L, accountCapsule.getBalance());
     Assert.assertEquals(null, assetMap.get(buyTokenId));
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
@@ -1342,7 +1292,7 @@ public class ExchangeTransactionActuatorTest {
     accountCapsule
         .addAssetAmountV2(tokenId.getBytes(), 10000, dbManager.getDynamicPropertiesStore(),
             dbManager.getAssetIssueStore());
-    Map<String, Long> assetV2Map = accountCapsule.getAssetMapV2();
+    Map<String, Long> assetV2Map = accountCapsule.getAssetV2MapForTest();
     Assert.assertEquals(20000_000000L, accountCapsule.getBalance());
     Assert.assertEquals(null, assetV2Map.get(buyTokenId));
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
@@ -1385,7 +1335,7 @@ public class ExchangeTransactionActuatorTest {
 
     byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_SECOND);
     AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
-    Map<String, Long> assetMap = accountCapsule.getAssetMap();
+    Map<String, Long> assetMap = accountCapsule.getAssetMapForTest();
     accountCapsule.setBalance(quant - 1);
     Assert.assertEquals(null, assetMap.get(buyTokenId));
     dbManager.getAccountStore().put(ownerAddress, accountCapsule);
@@ -1428,7 +1378,7 @@ public class ExchangeTransactionActuatorTest {
 
     byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_SECOND);
     AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
-    Map<String, Long> assetV2Map = accountCapsule.getAssetMapV2();
+    Map<String, Long> assetV2Map = accountCapsule.getAssetV2MapForTest();
     accountCapsule.setBalance(quant - 1);
     Assert.assertEquals(null, assetV2Map.get(buyTokenId));
     dbManager.getAccountStore().put(ownerAddress, accountCapsule);
@@ -1471,8 +1421,8 @@ public class ExchangeTransactionActuatorTest {
 
     byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_SECOND);
     AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
-    accountCapsule.addAssetAmount(tokenId.getBytes(), quant - 1);
-    Map<String, Long> assetMap = accountCapsule.getAssetMap();
+    accountCapsule.addAssetAmount(tokenId.getBytes(), quant - 1, true);
+    Map<String, Long> assetMap = accountCapsule.getAssetMapForTest();
     Assert.assertEquals(20000_000000L, accountCapsule.getBalance());
     Assert.assertEquals(null, assetMap.get(buyTokenId));
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
@@ -1517,7 +1467,7 @@ public class ExchangeTransactionActuatorTest {
     AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
     accountCapsule.addAssetAmountV2(tokenId.getBytes(), quant - 1,
         dbManager.getDynamicPropertiesStore(), dbManager.getAssetIssueStore());
-    Map<String, Long> assetV2Map = accountCapsule.getAssetMapV2();
+    Map<String, Long> assetV2Map = accountCapsule.getAssetV2MapForTest();
     Assert.assertEquals(20000_000000L, accountCapsule.getBalance());
     Assert.assertEquals(null, assetV2Map.get(buyTokenId));
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
@@ -1552,6 +1502,7 @@ public class ExchangeTransactionActuatorTest {
   @Test
   public void SameTokenNameCloseTokenRequiredNotEnough() {
     dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(0);
+    final boolean useStrictMath = dbManager.getDynamicPropertiesStore().allowStrictMath();
     InitExchangeBeforeSameTokenNameActive();
     long exchangeId = 2;
     String tokenId = "abc";
@@ -1560,8 +1511,8 @@ public class ExchangeTransactionActuatorTest {
 
     byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_SECOND);
     AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
-    accountCapsule.addAssetAmount(tokenId.getBytes(), quant);
-    Map<String, Long> assetMap = accountCapsule.getAssetMap();
+    accountCapsule.addAssetAmount(tokenId.getBytes(), quant, true);
+    Map<String, Long> assetMap = accountCapsule.getAssetMapForTest();
     Assert.assertEquals(20000_000000L, accountCapsule.getBalance());
     Assert.assertEquals(null, assetMap.get(buyTokenId));
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
@@ -1570,7 +1521,7 @@ public class ExchangeTransactionActuatorTest {
     try {
       ExchangeCapsule exchangeCapsule = dbManager.getExchangeStore()
           .get(ByteArray.fromLong(exchangeId));
-      expected = exchangeCapsule.transaction(tokenId.getBytes(), quant);
+      expected = exchangeCapsule.transaction(tokenId.getBytes(), quant, useStrictMath);
     } catch (ItemNotFoundException e) {
       fail();
     }
@@ -1605,6 +1556,7 @@ public class ExchangeTransactionActuatorTest {
   @Test
   public void SameTokenNameOpenTokenRequiredNotEnough() {
     dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
+    final boolean useStrictMath = dbManager.getDynamicPropertiesStore().allowStrictMath();
     InitExchangeSameTokenNameActive();
     long exchangeId = 2;
     String tokenId = "123";
@@ -1616,7 +1568,7 @@ public class ExchangeTransactionActuatorTest {
     accountCapsule
         .addAssetAmountV2(tokenId.getBytes(), quant, dbManager.getDynamicPropertiesStore(),
             dbManager.getAssetIssueStore());
-    Map<String, Long> assetV2Map = accountCapsule.getAssetMapV2();
+    Map<String, Long> assetV2Map = accountCapsule.getAssetV2MapForTest();
     Assert.assertEquals(20000_000000L, accountCapsule.getBalance());
     Assert.assertEquals(null, assetV2Map.get(buyTokenId));
     dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
@@ -1625,7 +1577,7 @@ public class ExchangeTransactionActuatorTest {
     try {
       ExchangeCapsule exchangeCapsuleV2 = dbManager.getExchangeV2Store()
           .get(ByteArray.fromLong(exchangeId));
-      expected = exchangeCapsuleV2.transaction(tokenId.getBytes(), quant);
+      expected = exchangeCapsuleV2.transaction(tokenId.getBytes(), quant, useStrictMath);
     } catch (ItemNotFoundException e) {
       fail();
     }

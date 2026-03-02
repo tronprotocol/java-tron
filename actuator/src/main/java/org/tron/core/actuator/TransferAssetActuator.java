@@ -18,7 +18,6 @@ package org.tron.core.actuator;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Arrays;
-import java.util.Map;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
@@ -84,11 +83,11 @@ public class TransferAssetActuator extends AbstractActuator {
           .addAssetAmountV2(assetName.toByteArray(), amount, dynamicStore, assetIssueStore);
       accountStore.put(toAddress, toAccountCapsule);
 
-      Commons.adjustBalance(accountStore, ownerAccountCapsule, -fee);
+      adjustBalance(accountStore, ownerAccountCapsule, -fee);
       if (dynamicStore.supportBlackHoleOptimization()) {
         dynamicStore.burnTrx(fee);
       } else {
-        Commons.adjustBalance(accountStore, accountStore.getBlackhole(), fee);
+        adjustBalance(accountStore, accountStore.getBlackhole(), fee);
       }
       ret.setStatus(fee, code.SUCESS);
     } catch (BalanceInsufficientException e) {
@@ -159,17 +158,7 @@ public class TransferAssetActuator extends AbstractActuator {
       throw new ContractValidateException("No asset!");
     }
 
-    Map<String, Long> asset;
-    if (dynamicStore.getAllowSameTokenName() == 0) {
-      asset = ownerAccount.getAssetMap();
-    } else {
-      asset = ownerAccount.getAssetMapV2();
-    }
-    if (asset.isEmpty()) {
-      throw new ContractValidateException("Owner has no asset!");
-    }
-
-    Long assetBalance = asset.get(ByteArray.toStr(assetName));
+    Long assetBalance = ownerAccount.getAsset(dynamicStore, ByteArray.toStr(assetName));
     if (null == assetBalance || assetBalance <= 0) {
       throw new ContractValidateException("assetBalance must be greater than 0.");
     }
@@ -185,14 +174,10 @@ public class TransferAssetActuator extends AbstractActuator {
         throw new ContractValidateException("Cannot transfer asset to smartContract.");
       }
 
-      if (dynamicStore.getAllowSameTokenName() == 0) {
-        assetBalance = toAccount.getAssetMap().get(ByteArray.toStr(assetName));
-      } else {
-        assetBalance = toAccount.getAssetMapV2().get(ByteArray.toStr(assetName));
-      }
+      assetBalance = toAccount.getAsset(dynamicStore, ByteArray.toStr(assetName));
       if (assetBalance != null) {
         try {
-          assetBalance = Math.addExact(assetBalance, amount); //check if overflow
+          assetBalance = addExact(assetBalance, amount); //check if overflow
         } catch (Exception e) {
           logger.debug(e.getMessage(), e);
           throw new ContractValidateException(e.getMessage());

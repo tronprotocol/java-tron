@@ -6,24 +6,22 @@ import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.atomic.AtomicLong;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.BooleanUtils;
-import org.springframework.context.ApplicationContext;
-import org.springframework.util.StringUtils;
+import org.springframework.beans.factory.support.DefaultListableBeanFactory;
+import org.springframework.util.ObjectUtils;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
-import org.tron.common.overlay.client.DatabaseGrpcClient;
-import org.tron.common.overlay.discover.DiscoverServer;
-import org.tron.common.overlay.discover.node.NodeManager;
+import org.tron.common.client.DatabaseGrpcClient;
+import org.tron.common.exit.ExitManager;
 import org.tron.common.parameter.CommonParameter;
+import org.tron.common.prometheus.Metrics;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
-import org.tron.core.net.TronNetService;
-import org.tron.core.services.RpcApiService;
-import org.tron.core.services.http.solidity.SolidityNodeHttpApiService;
+import org.tron.core.exception.TronError;
 import org.tron.protos.Protocol.Block;
 
 @Slf4j(topic = "app")
@@ -39,7 +37,7 @@ public class SolidityNode {
 
   private AtomicLong remoteBlockNum = new AtomicLong();
 
-  private LinkedBlockingDeque<Block> blockQueue = new LinkedBlockingDeque(100);
+  private LinkedBlockingDeque<Block> blockQueue = new LinkedBlockingDeque<>(100);
 
   private int exceptionSleepTime = 1000;
 
@@ -50,7 +48,7 @@ public class SolidityNode {
     this.chainBaseManager = dbManager.getChainBaseManager();
     resolveCompatibilityIssueIfUsingFullNodeDatabase();
     ID.set(chainBaseManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum());
-    databaseGrpcClient = new DatabaseGrpcClient(Args.getInstance().getTrustNodeAddr());
+    databaseGrpcClient = new DatabaseGrpcClient(CommonParameter.getInstance().getTrustNodeAddr());
     remoteBlockNum.set(getLastSolidityBlockNum());
   }
 
@@ -58,65 +56,52 @@ public class SolidityNode {
    * Start the SolidityNode.
    */
   public static void main(String[] args) {
+    ExitManager.initExceptionHandler();
     logger.info("Solidity node is running.");
     Args.setParam(args, Constant.TESTNET_CONF);
-    CommonParameter parameter = Args.getInstance();
+    CommonParameter parameter = CommonParameter.getInstance();
 
     logger.info("index switch is {}",
         BooleanUtils.toStringOnOff(BooleanUtils
             .toBoolean(parameter.getStorage().getIndexSwitch())));
 
-    if (StringUtils.isEmpty(parameter.getTrustNodeAddr())) {
+    if (ObjectUtils.isEmpty(parameter.getTrustNodeAddr())) {
       logger.error("Trust node is not set.");
       return;
     }
     parameter.setSolidityNode(true);
 
-    ApplicationContext context = new TronApplicationContext(DefaultConfig.class);
-
     if (parameter.isHelp()) {
       logger.info("Here is the help message.");
       return;
     }
+    // init metrics first
+    Metrics.init();
+
+    DefaultListableBeanFactory beanFactory = new DefaultListableBeanFactory();
+    beanFactory.setAllowCircularReferences(false);
+    TronApplicationContext context =
+        new TronApplicationContext(beanFactory);
+    context.register(DefaultConfig.class);
+    context.refresh();
     Application appT = ApplicationFactory.create(context);
-    FullNode.shutdown(appT);
-
-    RpcApiService rpcApiService = context.getBean(RpcApiService.class);
-    appT.addService(rpcApiService);
-    //http
-    SolidityNodeHttpApiService httpApiService = context.getBean(SolidityNodeHttpApiService.class);
-    if (CommonParameter.getInstance().solidityNodeHttpEnable) {
-      appT.addService(httpApiService);
-    }
-
-    appT.initServices(parameter);
-    appT.startServices();
+    context.registerShutdownHook();
     appT.startup();
-
-    //Disable peer discovery for solidity node
-    DiscoverServer discoverServer = context.getBean(DiscoverServer.class);
-    discoverServer.close();
-    NodeManager nodeManager = context.getBean(NodeManager.class);
-    nodeManager.close();
-    TronNetService tronNetService = context.getBean(TronNetService.class);
-    tronNetService.stop();
-
     SolidityNode node = new SolidityNode(appT.getDbManager());
     node.start();
-
-    rpcApiService.blockUntilShutdown();
+    appT.blockUntilShutdown();
   }
 
   private void start() {
     try {
-      new Thread(() -> getBlock()).start();
-      new Thread(() -> processBlock()).start();
+      new Thread(this::getBlock).start();
+      new Thread(this::processBlock).start();
       logger.info("Success to start solid node, ID: {}, remoteBlockNum: {}.", ID.get(),
           remoteBlockNum);
     } catch (Exception e) {
-      logger
-          .error("Failed to start solid node, address: {}.", Args.getInstance().getTrustNodeAddr());
-      System.exit(0);
+      logger.error("Failed to start solid node, address: {}.",
+          CommonParameter.getInstance().getTrustNodeAddr());
+      throw new TronError(e, TronError.ErrCode.SOLID_NODE_INIT);
     }
   }
 

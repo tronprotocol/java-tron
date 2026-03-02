@@ -24,7 +24,6 @@ public class CheckTmpStore extends TronDatabase<byte[]> {
 
   @Override
   public void delete(byte[] key) {
-
   }
 
   @Override

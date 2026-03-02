@@ -23,7 +23,6 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
-import org.tron.common.utils.Commons;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.MarketOrderCapsule;
@@ -100,7 +99,7 @@ public class MarketCancelOrderActuator extends AbstractActuator {
       if (dynamicStore.supportBlackHoleOptimization()) {
         dynamicStore.burnTrx(fee);
       } else {
-        Commons.adjustBalance(accountStore, accountStore.getBlackhole(), fee);
+        adjustBalance(accountStore, accountStore.getBlackhole(), fee);
       }
       // 1. return balance and token
       MarketUtils

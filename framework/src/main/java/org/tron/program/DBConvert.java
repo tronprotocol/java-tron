@@ -1,6 +1,7 @@
 package org.tron.program;
 
 import static org.fusesource.leveldbjni.JniDBFactory.factory;
+import static org.tron.common.math.Maths.max;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -30,6 +31,7 @@ import org.rocksdb.Options;
 import org.rocksdb.RocksDB;
 import org.rocksdb.RocksDBException;
 import org.rocksdb.RocksIterator;
+import org.rocksdb.Status;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.MarketOrderPriceComparatorForLevelDB;
 import org.tron.common.utils.MarketOrderPriceComparatorForRockDB;
@@ -57,14 +59,8 @@ public class DBConvert implements Callable<Boolean> {
   private final long startTime;
   private static final int CPUS  = Runtime.getRuntime().availableProcessors();
   private static final int BATCH  = 256;
-  private static final ThreadPoolExecutor esDb = new ThreadPoolExecutor(
-      CPUS, 16 * CPUS, 1, TimeUnit.MINUTES,
-      new ArrayBlockingQueue<>(CPUS, true), Executors.defaultThreadFactory(),
-      new ThreadPoolExecutor.CallerRunsPolicy());
+  private static final String CHECKPOINT_V2_DIR_NAME = "checkpoint";
 
-  static {
-    esDb.allowCoreThreadTimeOut(true);
-  }
 
   @Override
   public Boolean call() throws Exception {
@@ -80,7 +76,7 @@ public class DBConvert implements Callable<Boolean> {
     this.startTime = System.currentTimeMillis();
   }
 
-  private static org.iq80.leveldb.Options newDefaultLevelDbOptions() {
+  public static org.iq80.leveldb.Options newDefaultLevelDbOptions() {
     org.iq80.leveldb.Options dbOptions = new org.iq80.leveldb.Options();
     dbOptions.createIfMissing(true);
     dbOptions.paranoidChecks(true);
@@ -94,6 +90,13 @@ public class DBConvert implements Callable<Boolean> {
   }
 
   public static void main(String[] args) {
+    int code = run(args);
+    logger.info("exit code {}.", code);
+    System.out.printf("exit code %d.\n", code);
+    System.exit(code);
+  }
+
+  public static int run(String[] args) {
     String dbSrc;
     String dbDst;
     if (args.length < 2) {
@@ -106,20 +109,43 @@ public class DBConvert implements Callable<Boolean> {
     File dbDirectory = new File(dbSrc);
     if (!dbDirectory.exists()) {
       logger.info(" {} does not exist.", dbSrc);
-      return;
+      return 404;
     }
     List<File> files = Arrays.stream(Objects.requireNonNull(dbDirectory.listFiles()))
-        .filter(File::isDirectory).collect(
-            Collectors.toList());
+        .filter(File::isDirectory)
+        .filter(e -> !CHECKPOINT_V2_DIR_NAME.equals(e.getName()))
+        .collect(Collectors.toList());
+
+    // add checkpoint v2 convert
+    File cpV2Dir = new File(Paths.get(dbSrc, CHECKPOINT_V2_DIR_NAME).toString());
+    List<File> cpList = null;
+    if (cpV2Dir.exists()) {
+      cpList = Arrays.stream(Objects.requireNonNull(cpV2Dir.listFiles()))
+          .filter(File::isDirectory)
+          .collect(Collectors.toList());
+    }
 
     if (files.isEmpty()) {
       logger.info("{} does not contain any database.", dbSrc);
-      return;
+      return 0;
     }
     final long time = System.currentTimeMillis();
     final List<Future<Boolean>> res = new ArrayList<>();
 
+    final ThreadPoolExecutor esDb = new ThreadPoolExecutor(
+        CPUS, 16 * CPUS, 1, TimeUnit.MINUTES,
+        new ArrayBlockingQueue<>(CPUS, true), Executors.defaultThreadFactory(),
+        new ThreadPoolExecutor.CallerRunsPolicy());
+
+    esDb.allowCoreThreadTimeOut(true);
+
     files.forEach(f -> res.add(esDb.submit(new DBConvert(dbSrc, dbDst, f.getName()))));
+    // convert v2
+    if (cpList != null) {
+      cpList.forEach(f -> res.add(esDb.submit(
+          new DBConvert(dbSrc + "/" + CHECKPOINT_V2_DIR_NAME,
+              dbDst + "/" + CHECKPOINT_V2_DIR_NAME, f.getName()))));
+    }
 
     int fails = res.size();
 
@@ -142,7 +168,7 @@ public class DBConvert implements Callable<Boolean> {
     if (fails > 0) {
       logger.error("failed!!!!!!!!!!!!!!!!!!!!!!!! size:{}", fails);
     }
-    System.exit(fails);
+    return fails;
   }
 
   public DB newLevelDb(Path db) throws Exception {
@@ -165,7 +191,7 @@ public class DBConvert implements Callable<Boolean> {
     options.setTargetFileSizeBase(64 * 1024 * 1024);
     options.setTargetFileSizeMultiplier(1);
     options.setMaxBytesForLevelBase(512 * 1024 * 1024);
-    options.setMaxBackgroundCompactions(Math.max(1, Runtime.getRuntime().availableProcessors()));
+    options.setMaxBackgroundCompactions(max(1, Runtime.getRuntime().availableProcessors(), true));
     options.setLevel0FileNumCompactionTrigger(4);
     options.setLevelCompactionDynamicLevelBytes(true);
     if ("market_pair_price_to_order".equalsIgnoreCase(this.dbName)) {
@@ -206,18 +232,35 @@ public class DBConvert implements Callable<Boolean> {
     values.clear();
   }
 
+  /**
+   * https://github.com/facebook/rocksdb/issues/6625
+   * @param rocks db
+   * @param batch write batch
+   * @throws Exception RocksDBException
+   */
   private void write(RocksDB rocks, org.rocksdb.WriteBatch batch) throws Exception {
     try {
       rocks.write(new org.rocksdb.WriteOptions(), batch);
     } catch (RocksDBException e) {
       // retry
-      if (e.getMessage() != null && "Write stall".equalsIgnoreCase(e.getMessage())) {
+      if (maybeRetry(e)) {
         TimeUnit.MILLISECONDS.sleep(1);
         write(rocks, batch);
       } else {
         throw e;
       }
     }
+  }
+
+  private boolean maybeRetry(RocksDBException e) {
+    boolean retry = false;
+    if (e.getStatus() != null) {
+      retry = e.getStatus().getCode() == Status.Code.TryAgain
+          || e.getStatus().getCode() == Status.Code.Busy
+          || e.getStatus().getCode() == Status.Code.Incomplete;
+    }
+    return retry || (e.getMessage() != null && ("Write stall".equalsIgnoreCase(e.getMessage())
+        || ("Incomplete").equalsIgnoreCase(e.getMessage())));
   }
 
   /**

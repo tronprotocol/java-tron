@@ -1,77 +1,52 @@
 package org.tron.common.runtime;
 
-import java.io.File;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
+import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
-import org.testng.Assert;
-import org.tron.common.application.Application;
-import org.tron.common.application.ApplicationFactory;
-import org.tron.common.application.TronApplicationContext;
-import org.tron.common.storage.DepositImpl;
-import org.tron.common.utils.FileUtil;
+import org.tron.common.BaseTest;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
-import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
-import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.VMIllegalException;
+import org.tron.core.store.StoreFactory;
+import org.tron.core.vm.repository.RepositoryImpl;
 import org.tron.protos.Protocol.AccountType;
 
 @Slf4j
-public class InheritanceTest {
+public class InheritanceTest extends BaseTest {
 
-  private static final String dbPath = "output_InheritanceTest";
   private static final String OWNER_ADDRESS;
-  private static Runtime runtime;
-  private static Manager dbManager;
-  private static TronApplicationContext context;
-  private static Application appT;
-  private static DepositImpl deposit;
+  private RepositoryImpl repository;
+  private static boolean init;
 
   static {
-    Args.setParam(new String[]{"--output-directory", dbPath, "--debug"}, Constant.TEST_CONF);
-    context = new TronApplicationContext(DefaultConfig.class);
-    appT = ApplicationFactory.create(context);
+    Args.setParam(new String[]{"--output-directory", dbPath(), "--debug"}, Constant.TEST_CONF);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
   }
 
   /**
    * Init data.
    */
-  @BeforeClass
-  public static void init() {
-    dbManager = context.getBean(Manager.class);
-    deposit = DepositImpl.createRoot(dbManager);
-    deposit.createAccount(Hex.decode(OWNER_ADDRESS), AccountType.Normal);
-    deposit.addBalance(Hex.decode(OWNER_ADDRESS), 100000000);
-  }
-
-  /**
-   * Release resources.
-   */
-  @AfterClass
-  public static void destroy() {
-    Args.clearParam();
-    context.destroy();
-    if (FileUtil.deleteDir(new File(dbPath))) {
-      logger.info("Release resources successful.");
-    } else {
-      logger.info("Release resources failure.");
+  @Before
+  public void init() {
+    if (init) {
+      return;
     }
+    repository = RepositoryImpl.createRoot(StoreFactory.getInstance());
+    repository.createAccount(Hex.decode(OWNER_ADDRESS), AccountType.Normal);
+    repository.addBalance(Hex.decode(OWNER_ADDRESS), 100000000);
+    init = true;
   }
 
   /**
    * pragma solidity ^0.4.19;
-   *
    * contract foo { uint256 public id=10; function getNumber()  returns (uint256){return 100;}
    * function getName()  returns (string){ return "foo"; } }
-   *
    * contract bar is foo { function getName()  returns (string) { return "bar"; } function getId()
    * returns(uint256){return id;} }
    */
@@ -113,14 +88,14 @@ public class InheritanceTest {
 
     byte[] contractAddress = TvmTestUtils
         .deployContractWholeProcessReturnContractAddress(contractName, callerAddress, ABI, code,
-            value, fee, consumeUserResourcePercent, null, deposit, null);
+            value, fee, consumeUserResourcePercent, null, repository, null);
 
 
     /* ========================== CALL getName() return child value ============================= */
     byte[] triggerData1 = TvmTestUtils.parseAbi("getName()", "");
-    runtime = TvmTestUtils
+    Runtime runtime = TvmTestUtils
         .triggerContractWholeProcessReturnContractAddress(callerAddress, contractAddress,
-            triggerData1, 0, 1000000, deposit, null);
+            triggerData1, 0, 1000000, repository, null);
 
     //0x20 => pointer position, 0x3 => size,  626172 => "bar"
     Assert.assertEquals(Hex.toHexString(runtime.getResult().getHReturn()),
@@ -132,7 +107,7 @@ public class InheritanceTest {
     byte[] triggerData2 = TvmTestUtils.parseAbi("getNumber()", "");
     runtime = TvmTestUtils
         .triggerContractWholeProcessReturnContractAddress(callerAddress, contractAddress,
-            triggerData2, 0, 1000000, deposit, null);
+            triggerData2, 0, 1000000, repository, null);
 
     //0x64 =>100
     Assert.assertEquals(Hex.toHexString(runtime.getResult().getHReturn()),
@@ -142,7 +117,7 @@ public class InheritanceTest {
     byte[] triggerData3 = TvmTestUtils.parseAbi("getId()", "");
     runtime = TvmTestUtils
         .triggerContractWholeProcessReturnContractAddress(callerAddress, contractAddress,
-            triggerData3, 0, 1000000, deposit, null);
+            triggerData3, 0, 1000000, repository, null);
 
     //0x64 =>100
     Assert.assertEquals(Hex.toHexString(runtime.getResult().getHReturn()),
