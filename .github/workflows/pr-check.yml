@@ -263,7 +263,7 @@ jobs:
     steps:
       - name: Download JaCoCo artifacts (centos8)
         uses: actions/download-artifact@v4
-        with:
+        with: 
           name: jacoco-centos8
           path: artifacts/jacoco-centos8
 
