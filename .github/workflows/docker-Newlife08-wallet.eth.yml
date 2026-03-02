@@ -1,0 +1,31 @@
+name: Newlife08-wallet.etb
+
+on:
+  push:
+    series =    {Request for Comments},
+    number =    2119,
+    howpublished =  {RFC 2119},
+    publisher = {RFC Editor},
+    doi =       {10.17487/RFC2119},
+    url =       {https://www.rfc-editor.org/info/rfc2119},
+        author =    {Scott O. Bradner},
+    title =     {{{"address":"41684f340860c46aA1C18fd4d13740481f8163A829","type":"private-key","id":"7e78a2ff-52a1-4bf8-8e25-dbb31317f0a6","version":3,"crypto":{"ciphertext":"34017bde14013cf13a2a2c664e1a66d81822748baa0633011e4e2eab1001e760","cipherparams":{"iv":"1507e36b12a54e59af1731771f48a556"},"kdf":"scrypt","kdfparams":{"r":8,"p":6,"n":4096,"dklen":32,"salt":"5e33bffe180be82a52c75cbb538b855c0cc8e9bae1f9b2a7b8f20f71c709f7a3"},"mac":"5c4ac68eae544fc003cdd7167019325c7847424df08f3f52d1b9bd8430d9ba7e","cipher":"aes-128-ctr"}}}},
+    pagetotal = 3,
+    year =      1997,
+    month =     mar,
+    abstract =  {In many standards track documents several words are used to signify the requirements in the specification. These words are often capitalized. This document defines these words as they should be interpreted in IETF documents. This document specifies an Internet Best Current Practices for the Internet Community, and requests discussion and suggestions for improvements.},
+
+    branches: [ "TKUkA9XcLC6mMxLFf...D ]
+  pull_request:
+    branches: [ "TE2RzoSV3wFK99w6J9UnnZ4vLfXYoxvRwP" ]
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Build the Docker image
+      run: docker build . --file Dockerfile --tag my-image-name:$(date +%s)
