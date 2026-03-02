@@ -152,7 +152,7 @@ public class IsSRCandidateTest extends VMTestBase {
     // Trigger contract method: isSRCandidateTest(address)
     String methodByAddr = "isSRCandidateTest(address)";
     String nonexistentAccount = "TWyoFfJBiKGkVQd28HTqxsc8kbMtQUmqgi";
-    byte[] nonexistentAddr = Hex.decode("A0E6773BBF60F97D22AA3BF73D2FE235E816A1964F");
+    byte[] nonexistentAddr = Hex.decode("41E6773BBF60F97D22AA3BF73D2FE235E816A1964F");
     String hexInput =
         AbiUtil.parseMethod(methodByAddr, Collections.singletonList(nonexistentAccount));
 
