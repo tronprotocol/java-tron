@@ -241,12 +241,12 @@ jobs:
         run: |
             set -eux
             echo "Before restore:"
-            find artifacts/jacoco-centos8 -name jacocoTestReport.xml | head
+            find artifacts/jacoco-centos8 -name jacocoTestReport.xml
 
-            rsync -a artifacts/jacoco-centos8/ ./
+            mv artifacts/jacoco-centos8/ ./
 
             echo "After restore:"
-            find . -name jacocoTestReport.xml | head
+            find . -name jacocoTestReport.xml
 
 #      - uses: actions/checkout@v4
 #        with:
