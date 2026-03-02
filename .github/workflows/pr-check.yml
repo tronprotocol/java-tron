@@ -250,6 +250,18 @@ jobs:
       - name: Check report mtime
         run: |
           set -euxo pipefail
+
+          if [ ! -d artifacts/jacoco-centos8 ]; then
+            echo "ERROR: artifacts/jacoco-centos8 does not exist."
+            echo "Listing workspace:"
+            ls -lah
+            echo "Listing artifacts dir:"
+            ls -lah artifacts || true
+            echo "Failing now."
+            exit 1
+          fi
+
+          echo "Found jacoco reports:"
           find artifacts/jacoco-centos8 -name jacocoTestReport.xml -printf '%TY-%Tm-%Td %TH:%TM:%TS %p\n' | head -n 20
 
       - name: Upload coverage to Codecov
