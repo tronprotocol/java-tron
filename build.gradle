@@ -1,8 +1,16 @@
 import org.gradle.nativeplatform.platform.internal.Architectures
 import org.gradle.internal.os.OperatingSystem
 
-plugins {
-    id "org.sonarqube" version "5.1.0.4882" apply false
+// SonarQube plugin: only resolve on JDK 17+ to avoid verification-metadata issues on JDK 8
+if (JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_17)) {
+    buildscript {
+        repositories {
+            maven { url 'https://plugins.gradle.org/m2/' }
+        }
+        dependencies {
+            classpath 'org.sonarsource.scanner.gradle:sonarqube-gradle-plugin:5.1.0.4882'
+        }
+    }
 }
 
 allprojects {
