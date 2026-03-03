@@ -261,159 +261,156 @@ jobs:
         shell: bash
 
     steps:
+      - name: Checkout code (needed by codecov-action for git context)
+        uses: actions/checkout@v4
+
       - name: Download JaCoCo artifacts (centos8)
         uses: actions/download-artifact@v4
-        with: 
+        with:
           name: jacoco-centos8
           path: artifacts/jacoco-centos8
 
-      - name: Restore coverage paths
+      - name: List downloaded reports
         run: |
-            set -eux
-            echo "Before restore:"
-            find artifacts/jacoco-centos8 -name jacocoTestReport.xml
-
-#            mv artifacts/jacoco-centos8/* .
-#
-#            # echo "After restore:"
-#            # find . -name jacocoTestReport.xml
-
-#      - uses: actions/checkout@v4
-#        with:
-#          fetch-depth: 0
-#
-#      - name: Debug repo identity
-#        run: |
-#          echo "GITHUB_REPOSITORY=$GITHUB_REPOSITORY"
-#          echo "repo_owner=${{ github.repository_owner }}"
-#          echo "repo=${{ github.event.repository.name }}"
-#
-#      - name: Check report mtime
-#        run: |
-#          set -euxo pipefail
-#
-#          if [ ! -d artifacts/jacoco-centos8 ]; then
-#            echo "ERROR: artifacts/jacoco-centos8 does not exist."
-#            echo "Listing workspace:"
-#            ls -lah
-#            echo "Listing artifacts dir:"
-#            ls -lah artifacts || true
-#            echo "Failing now."
-#            exit 1
-#          fi
-#
-#          echo "Found jacoco reports:"
-#          find artifacts/jacoco-centos8 -name jacocoTestReport.xml -printf '%TY-%Tm-%Td %TH:%TM:%TS %p\n' | head -n 20
+          set -eux
+          echo "JaCoCo XML reports found:"
+          find artifacts/jacoco-centos8 -name jacocoTestReport.xml
 
       - name: Upload coverage to Codecov
-        # if: github.event.pull_request.head.repo.fork == false
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          # tronprotocol/java-tron
-          # slug: ${{ github.repository_owner }}/${{ github.event.repository.name }}
           directory: artifacts/jacoco-centos8
+          override_commit: ${{ github.event.pull_request.head.sha }}
+          override_branch: ${{ github.event.pull_request.head.ref }}
+          override_pr: ${{ github.event.pull_request.number }}
           verbose: true
           fail_ci_if_error: true
 
-      - name: Wait for Codecov processing
-        run: sleep 3m
+      - name: Install tools
+        run: sudo apt-get update && sudo apt-get install -y jq bc curl
 
-      - name: Coverage gate via Codecov GraphQL
+      - name: Wait for Codecov processing
         env:
-          # CODECOV_OWNER: tronprotocol
+          CODECOV_API_TOKEN: ${{ secrets.CODECOV_API_TOKEN }}
           CODECOV_OWNER: ${{ github.repository_owner }}
-          CODECOV_REPO: java-tron
-          COMMIT_ID: ${{ github.sha }}
-          #COMMIT_ID: ${{ github.event.pull_request.head.sha }}
-          BASE_BRANCH: ${{ github.event.pull_request.base.ref }}
-          # if ADDED_NUM is 0，skip patch coverage gate
-          ADDED_NUM: "0"
+          CODECOV_REPO: ${{ github.event.repository.name }}
+          COMMIT_ID: ${{ github.event.pull_request.head.sha }}
         run: |
           set -euxo pipefail
 
-          echo "===== DEBUG SHA ====="
-          echo "github.sha=${{ github.sha }}"
-          echo "head.sha=${{ github.event.pull_request.head.sha }}"
-          echo "COMMIT_ID=$COMMIT_ID"
-          echo "repo_owner=$CODECOV_OWNER"
-          echo "repo=$CODECOV_REPO"
-          echo "====================="
+          API_URL="https://api.codecov.io/api/v2/github/${CODECOV_OWNER}/repos/${CODECOV_REPO}/commits/${COMMIT_ID}"
+          MAX_ATTEMPTS=20
+          INTERVAL=30
 
-          sudo apt-get update
-          sudo apt-get install -y jq bc curl
+          for i in $(seq 1 $MAX_ATTEMPTS); do
+            echo "=== Polling attempt $i / $MAX_ATTEMPTS ==="
 
-          echo "commit: $COMMIT_ID"
-          echo "base branch: $BASE_BRANCH"
+            http_code=$(curl -sS -o /tmp/poll.json -w '%{http_code}' \
+              -H "Authorization: Bearer ${CODECOV_API_TOKEN}" \
+              "$API_URL")
 
-          # 1) current commit coverage、parent commit coverage、patch coverage
-          currentRes=$(
-            curl -sS 'https://api.codecov.io/graphql/github' \
-              -H 'content-type: application/json' \
-              --data '{
-                "query": "query Commit($owner: String!, $repo: String!, $commitid: String!, $filters: ImpactedFilesFilters, $isTeamPlan: Boolean!) { owner(username: $owner) { repository(name: $repo) { ... on Repository { commit(id: $commitid) { coverageAnalytics { totals { coverage: percentCovered } } parent { coverageAnalytics { totals { coverage: percentCovered } } } compareWithParent { ... on Comparison { patchTotals { coverage: percentCovered } } } } } } } }",
-                "variables": {
-                  "provider": "github",
-                  "owner": "'"$CODECOV_OWNER"'",
-                  "repo": "'"$CODECOV_REPO"'",
-                  "commitid": "'"$COMMIT_ID"'",
-                  "filters": {},
-                  "isTeamPlan": false
-                }
-              }' | jq -r '.data.owner.repository.commit'
-          )
+            if [ "$http_code" = "200" ]; then
+              state=$(jq -r '.state // "unknown"' /tmp/poll.json)
+              echo "Commit processing state: $state"
+              if [ "$state" = "complete" ]; then
+                echo "Codecov has finished processing."
+                exit 0
+              fi
+            else
+              echo "HTTP $http_code — commit not yet available."
+              cat /tmp/poll.json 2>/dev/null || true
+            fi
 
-          self_cov=$(echo "$currentRes" | jq -r '.coverageAnalytics.totals.coverage // 0')
-          base_cov=$(echo "$currentRes" | jq -r '.parent.coverageAnalytics.totals.coverage // 0')
-          patch_cov=$(echo "$currentRes" | jq -r '.compareWithParent.patchTotals.coverage // 0')
+            if [ "$i" -lt "$MAX_ATTEMPTS" ]; then
+              sleep "$INTERVAL"
+            fi
+          done
 
-          echo "self_cov=$self_cov"
-          echo "base_cov(parent commit)=$base_cov"
-          echo "patch_cov=$patch_cov"
+          echo "Timed out waiting for Codecov (${MAX_ATTEMPTS} x ${INTERVAL}s)."
+          exit 1
 
-          # 2) base branch head coverage（target）
-          parent_cov=$(
-            curl -sS 'https://api.codecov.io/graphql/github' \
-              -H 'content-type: application/json; charset=utf-8' \
-              --data '{
-                "query": "query GetRepoCoverage($owner: String!, $repo: String!, $branch: String!) { owner(username: $owner) { repository(name: $repo) { ... on Repository { branch(name: $branch) { head { coverageAnalytics { totals { percentCovered } } } } } } } }",
-                "variables": {
-                  "owner": "'"$CODECOV_OWNER"'",
-                  "repo": "'"$CODECOV_REPO"'",
-                  "branch": "'"$BASE_BRANCH"'"
-                }
-              }' | jq -r '.data.owner.repository.branch.head.coverageAnalytics.totals.percentCovered // 0'
-          )
+      - name: Coverage gate via Codecov REST API
+        env:
+          CODECOV_API_TOKEN: ${{ secrets.CODECOV_API_TOKEN }}
+          CODECOV_OWNER: ${{ github.repository_owner }}
+          CODECOV_REPO: ${{ github.event.repository.name }}
+          COMMIT_ID: ${{ github.event.pull_request.head.sha }}
+          BASE_BRANCH: ${{ github.event.pull_request.base.ref }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          set -euxo pipefail
 
-          echo "parent_cov(base branch head)=$parent_cov"
+          API_BASE="https://api.codecov.io/api/v2/github/${CODECOV_OWNER}/repos/${CODECOV_REPO}"
+          AUTH="Authorization: Bearer ${CODECOV_API_TOKEN}"
 
-          # 3) Gate rule
+          # Helper: GET with error handling
+          api_get() {
+            local url="$1"
+            local http_code
+            http_code=$(curl -sS -o /tmp/api_out.json -w '%{http_code}' \
+              -H "$AUTH" "$url")
+            if [ "$http_code" != "200" ]; then
+              echo "ERROR: GET $url => HTTP $http_code" >&2
+              cat /tmp/api_out.json >&2
+              return 1
+            fi
+            cat /tmp/api_out.json
+          }
+
+          # 1) Current commit coverage
+          echo "=== 1. Current commit coverage (sha: ${COMMIT_ID}) ==="
+          commit_resp=$(api_get "${API_BASE}/totals/?sha=${COMMIT_ID}")
+          self_cov=$(echo "$commit_resp" | jq -r '.totals.coverage // 0')
+          echo "self_cov = ${self_cov}%"
+
+          # 2) Base branch head coverage
+          echo "=== 2. Base branch coverage (branch: ${BASE_BRANCH}) ==="
+          base_resp=$(api_get "${API_BASE}/totals/?branch=${BASE_BRANCH}")
+          base_branch_cov=$(echo "$base_resp" | jq -r '.totals.coverage // 0')
+          echo "base_branch_cov = ${base_branch_cov}%"
+
+          # 3) PR comparison — patch coverage
+          echo "=== 3. PR #${PR_NUMBER} comparison ==="
+          compare_resp=$(api_get "${API_BASE}/compare/?pullid=${PR_NUMBER}")
+          patch_cov=$(echo "$compare_resp" | jq -r '.totals.patch.coverage // 0')
+          impacted_files=$(echo "$compare_resp" | jq -r '(.files // []) | length')
+          echo "patch_cov = ${patch_cov}%"
+          echo "impacted_files = ${impacted_files}"
+
+          # ===== Gate Rules =====
+
+          # Rule 1: current commit must have valid coverage
           if [ "$(echo "$self_cov <= 0" | bc)" -eq 1 ]; then
-            echo "get current commit coverage failed !!!!"
+            echo "FAIL: Could not retrieve valid coverage for commit ${COMMIT_ID}."
             exit 1
           fi
 
-          if [ "$(echo "$self_cov - $parent_cov < 0" | bc)" -eq 1 ]; then
-            echo "self_cov: $self_cov   target: $parent_cov"
-            echo "111-target code coverage has decreased, please add unit test!"
+          # Rule 2: overall coverage must not decrease vs base branch
+          if [ "$(echo "$self_cov < $base_branch_cov" | bc)" -eq 1 ]; then
+            echo "FAIL: Overall coverage decreased!"
+            echo "  Current commit : ${self_cov}%"
+            echo "  Base branch    : ${base_branch_cov}%"
+            echo "Please add unit tests to maintain coverage."
             exit 1
           fi
 
-          if [ "$(echo "$self_cov - $base_cov < 0" | bc)" -eq 1 ]; then
-            echo "self_cov: $self_cov   parent: $base_cov"
-            echo "222-parent code coverage has decreased, please add unit test!"
-            # exit 1  # skip compare ?
+          # Rule 3: patch coverage on changed files >= 80%
+          if [ "$impacted_files" -gt 0 ] && [ "$(echo "$patch_cov > 0" | bc)" -eq 1 ]; then
+            if [ "$(echo "$patch_cov < 80" | bc)" -eq 1 ]; then
+              echo "FAIL: Patch coverage is ${patch_cov}% (minimum 80%)."
+              echo "Please add tests for new/changed code."
+              exit 1
+            fi
+          else
+            echo "No impacted files or no patch data; skipping patch coverage check."
           fi
 
-          if [ "$ADDED_NUM" -eq 0 ]; then
-            echo "no need to compare patch coverage ............"
-            exit 0
-          fi
-
-          if [ "$(echo "$patch_cov <= 80" | bc)" -eq 1 ]; then
-            echo "patch coverage is too low !!!!"
-            # exit 1  # skip compare ?
-          fi
+          echo ""
+          echo "All coverage gates passed!"
+          echo "  Current commit : ${self_cov}%"
+          echo "  Base branch    : ${base_branch_cov}%"
+          echo "  Patch coverage : ${patch_cov}%"
 
   checkstyle:
     name: Checkstyle
