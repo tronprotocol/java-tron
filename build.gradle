@@ -174,4 +174,24 @@ gradle.buildFinished {
 // Apply SonarQube plugin only when running with JDK 17+ (sonar analysis requires JDK 17)
 if (JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_17)) {
     apply plugin: "org.sonarqube"
+
+    sonar {
+        properties {
+            property "sonar.sourceEncoding", "UTF-8"
+        }
+    }
+
+    // Only analyze these modules; skip the rest
+    ["protocol", "platform", "example:actuator-example"].each { name ->
+        project(":${name}").sonar.skipProject = true
+    }
+
+    // Only analyze main sources, exclude test sources
+    subprojects {
+        sonar {
+            properties {
+                property "sonar.tests", ""
+            }
+        }
+    }
 }
