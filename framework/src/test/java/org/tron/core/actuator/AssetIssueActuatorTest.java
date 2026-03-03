@@ -1700,7 +1700,7 @@ public class AssetIssueActuatorTest extends BaseTest {
   @Test
   public void IssueSameTokenNameAssert() {
     dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(0);
-    String ownerAddress = "a08beaa1a8e2d45367af7bae7c49009876a4fa4301";
+    String ownerAddress = "418beaa1a8e2d45367af7bae7c49009876a4fa4301";
 
     long id = dbManager.getDynamicPropertiesStore().getTokenIdNum() + 1;
     dbManager.getDynamicPropertiesStore().saveTokenIdNum(id);

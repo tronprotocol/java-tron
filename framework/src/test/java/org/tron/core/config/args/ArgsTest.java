@@ -38,7 +38,6 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.LocalWitnesses;
 import org.tron.common.utils.PublicMethod;
-import org.tron.core.Constant;
 import org.tron.core.config.Configuration;
 
 @Slf4j
@@ -59,7 +58,7 @@ public class ArgsTest {
   @Test
   public void get() {
     Args.setParam(new String[] {"-c", TestConstants.TEST_CONF, "--keystore-factory"},
-        Constant.NET_CONF);
+        "config.conf");
 
     CommonParameter parameter = Args.getInstance();
 
@@ -71,7 +70,9 @@ public class ArgsTest {
     Args.setLocalWitnesses(localWitnesses);
     address = ByteArray.toHexString(Args.getLocalWitnesses()
         .getWitnessAccountAddress());
-    Assert.assertEquals(Constant.ADD_PRE_FIX_STRING_TESTNET, DecodeUtil.addressPreFixString);
+    Assert.assertEquals("41", DecodeUtil.addressPreFixString);
+    // configFilePath should be set to shellConfFileName when -c is specified
+    Assert.assertEquals(TestConstants.TEST_CONF, parameter.getConfigFilePath());
     Assert.assertEquals(0, parameter.getBackupPriority());
 
     Assert.assertEquals(3000, parameter.getKeepAliveInterval());
@@ -138,12 +139,14 @@ public class ArgsTest {
       throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
     Args.setParam(new String[] {}, TestConstants.TEST_CONF);
     CommonParameter parameter = Args.getInstance();
+    // configFilePath should fall back to confFileName when -c is not specified
+    Assert.assertEquals(TestConstants.TEST_CONF, parameter.getConfigFilePath());
 
     String configuredExternalIp = parameter.getNodeExternalIp();
     Assert.assertEquals("46.168.1.1", configuredExternalIp);
 
     Config config = Configuration.getByFileName(null, TestConstants.TEST_CONF);
-    Config config3 = config.withoutPath(Constant.NODE_DISCOVERY_EXTERNAL_IP);
+    Config config3 = config.withoutPath(ConfigKey.NODE_DISCOVERY_EXTERNAL_IP);
 
     CommonParameter.getInstance().setNodeExternalIp(null);
 
@@ -157,7 +160,7 @@ public class ArgsTest {
   @Test
   public void testOldRewardOpt() {
     thrown.expect(IllegalArgumentException.class);
-    Args.setParam(new String[] {"-c", "args-test.conf"}, Constant.NET_CONF);
+    Args.setParam(new String[] {"-c", "args-test.conf"}, "config.conf");
   }
 
   @Test
