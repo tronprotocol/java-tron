@@ -51,6 +51,12 @@ import org.tron.protos.Protocol.Transaction.Result.contractResult;
 @Slf4j
 public class FreezeTest {
 
+  // Compiled from FreezeTest.sol (tron-solc ^0.5.16).
+  // FreezeContract — inner contract with TRON freeze/unfreeze opcodes:
+  //   destroy(address)               [0x00f55d9d] selfdestruct
+  //   freeze(address,uint256,uint256) [0x30e1e4e5] opcode 0xd5 FREEZE
+  //   unfreeze(address,uint256)       [0x7b46b80b] opcode 0xd6 UNFREEZE
+  //   getExpireTime(address,uint256)  [0xe7aa4e0b] opcode 0xd7 FREEZEEXPIRETIME
   private static final String CONTRACT_CODE = "608060405261037e806100136000396000f3fe6080604052"
       + "34801561001057600080fd5b50d3801561001d57600080fd5b50d2801561002a57600080fd5b506004361061"
       + "00655760003560e01c8062f55d9d1461006a57806330e1e4e5146100ae5780637b46b80b1461011a578063e7"
@@ -73,6 +79,13 @@ public class FreezeTest {
       + "506001905092915050565b60008273ffffffffffffffffffffffffffffffffffffffff1682d7905092915050"
       + "56fea26474726f6e58200fd975eab4a8c8afe73bf3841efe4da7832d5a0d09f07115bb695c7260ea64216473"
       + "6f6c63430005100031";
+  // Compiled from FreezeTest.sol (tron-solc ^0.5.16).
+  // Factory — deploys FreezeContract and predicts CREATE2 addresses:
+  //   deployCreate2Contract(uint256)  [0x41aa9014] CREATE deploy
+  //   getCreate2Addr(uint256)         [0xbb63e785] CREATE2 address prediction
+  // Note: getCreate2Addr uses bytes1(0x41) as the TRON mainnet prefix
+  // in keccak256(abi.encodePacked(0x41, address(this), salt, codeHash)).
+  // This value is hardcoded at compile time by tron-solc.
   private static final String FACTORY_CODE = "6080604052610640806100136000396000f3fe60806040523"
       + "4801561001057600080fd5b50d3801561001d57600080fd5b50d2801561002a57600080fd5b5060043610610"
       + "0505760003560e01c806341aa901414610055578063bb63e785146100c3575b600080fd5b610081600480360"
@@ -82,7 +95,7 @@ public class FreezeTest {
       + "020019092919050505061017d565b604051808273ffffffffffffffffffffffffffffffffffffffff1673fff"
       + "fffffffffffffffffffffffffffffffffffff16815260200191505060405180910390f35b600080606060405"
       + "1806020016101469061026e565b6020820181038252601f19601f82011660405250905083815160208301600"
-      + "0f59150813b61017357600080fd5b8192505050919050565b60008060a060f81b30846040518060200161019"
+      + "0f59150813b61017357600080fd5b8192505050919050565b600080604160f81b30846040518060200161019"
       + "79061026e565b6020820181038252601f19601f820116604052508051906020012060405160200180857efff"
       + "fffffffffffffffffffffffffffffffffffffffffffffffffffffffffff19167efffffffffffffffffffffff"
       + "fffffffffffffffffffffffffffffffffffffff191681526001018473fffffffffffffffffffffffffffffff"
@@ -114,11 +127,11 @@ public class FreezeTest {
 
   private static final long value = 100_000_000_000_000_000L;
   private static final long fee = 1_000_000_000;
-  private static final String userAStr = "27k66nycZATHzBasFT9782nTsYWqVtxdtAc";
+  private static final String userAStr = "TWyoFfJBiKGkVQd28HTqxsc8kbMtQUmqgi";
   private static final byte[] userA = Commons.decode58Check(userAStr);
-  private static final String userBStr = "27jzp7nVEkH4Hf3H1PHPp4VDY7DxTy5eydL";
+  private static final String userBStr = "TWtWaUAsJ933xs2n4RkXzaMoKJUrQmctBH";
   private static final byte[] userB = Commons.decode58Check(userBStr);
-  private static final String userCStr = "27juXSbMvL6pb8VgmKRgW6ByCfw5RqZjUuo";
+  private static final String userCStr = "TWoDuH3YsxoMSKSXza3E2H7Tt1bpK5QZgm";
   private static final byte[] userC = Commons.decode58Check(userCStr);
 
   @Rule

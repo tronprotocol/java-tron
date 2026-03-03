@@ -11,7 +11,6 @@ import org.tron.common.crypto.SignInterface;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.LocalWitnesses;
-import org.tron.core.Constant;
 import org.tron.core.exception.CipherException;
 import org.tron.core.exception.TronError;
 import org.tron.keystore.Credentials;
@@ -70,12 +69,12 @@ public class WitnessInitializer {
   }
 
   private boolean tryInitFromConfig() {
-    if (!config.hasPath(Constant.LOCAL_WITNESS) || config.getStringList(Constant.LOCAL_WITNESS)
+    if (!config.hasPath(ConfigKey.LOCAL_WITNESS) || config.getStringList(ConfigKey.LOCAL_WITNESS)
         .isEmpty()) {
       return false;
     }
 
-    List<String> localWitness = config.getStringList(Constant.LOCAL_WITNESS);
+    List<String> localWitness = config.getStringList(ConfigKey.LOCAL_WITNESS);
     this.localWitnesses.setPrivateKeys(localWitness);
     logger.debug("Got privateKey from config.conf");
     byte[] witnessAddress = getWitnessAddress();
@@ -85,12 +84,12 @@ public class WitnessInitializer {
   }
 
   private void tryInitFromKeystore() {
-    if (!config.hasPath(Constant.LOCAL_WITNESS_KEYSTORE)
-        || config.getStringList(Constant.LOCAL_WITNESS_KEYSTORE).isEmpty()) {
+    if (!config.hasPath(ConfigKey.LOCAL_WITNESS_KEYSTORE)
+        || config.getStringList(ConfigKey.LOCAL_WITNESS_KEYSTORE).isEmpty()) {
       return;
     }
 
-    List<String> localWitness = config.getStringList(Constant.LOCAL_WITNESS_KEYSTORE);
+    List<String> localWitness = config.getStringList(ConfigKey.LOCAL_WITNESS_KEYSTORE);
     if (localWitness.size() > 1) {
       logger.warn(
           "Multiple keystores detected. Only the first keystore will be used as witness, all "
@@ -127,7 +126,7 @@ public class WitnessInitializer {
   }
 
   private byte[] getWitnessAddress() {
-    if (!config.hasPath(Constant.LOCAL_WITNESS_ACCOUNT_ADDRESS)) {
+    if (!config.hasPath(ConfigKey.LOCAL_WITNESS_ACCOUNT_ADDRESS)) {
       return null;
     }
 
@@ -137,7 +136,7 @@ public class WitnessInitializer {
           TronError.ErrCode.WITNESS_INIT);
     }
     byte[] witnessAddress = Commons
-        .decodeFromBase58Check(config.getString(Constant.LOCAL_WITNESS_ACCOUNT_ADDRESS));
+        .decodeFromBase58Check(config.getString(ConfigKey.LOCAL_WITNESS_ACCOUNT_ADDRESS));
     if (witnessAddress != null) {
       logger.debug("Got localWitnessAccountAddress from config.conf");
     } else {

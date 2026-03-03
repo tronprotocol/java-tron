@@ -46,9 +46,8 @@ public class VMContractTestBase {
   MortgageService mortgageService;
 
   static {
-    // 27Ssb1WE8FArwJVRRb8Dwy3ssVGuLY8L3S1 (test.config)
-    WITNESS_SR1_ADDRESS =
-        Constant.ADD_PRE_FIX_STRING_TESTNET + "299F3DB80A24B20A254B89CE639D59132F157F13";
+    // TDmHUBuko2qhcKBCGGafu928hMRj1tX2RW (test.config)
+    WITNESS_SR1_ADDRESS = "41" + "299F3DB80A24B20A254B89CE639D59132F157F13";
   }
 
   @Before

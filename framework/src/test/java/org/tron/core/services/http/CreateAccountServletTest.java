@@ -41,7 +41,7 @@ public class CreateAccountServletTest extends BaseTest {
   public void init() {
     AccountCapsule accountCapsule = new AccountCapsule(
             ByteString.copyFrom(ByteArray
-                    .fromHexString("A099357684BC659F5166046B56C95A0E99F1265CD1")),
+                    .fromHexString("4199357684BC659F5166046B56C95A0E99F1265CD1")),
             ByteString.copyFromUtf8("owner"),
             Protocol.AccountType.forNumber(1));
 
@@ -52,8 +52,8 @@ public class CreateAccountServletTest extends BaseTest {
   @Test
   public void testCreate() {
     String jsonParam = "{"
-            + "\"owner_address\": \"A099357684BC659F5166046B56C95A0E99F1265CD1\","
-            + "\"account_address\": \"A0B4750E2CD76E19DCA331BF5D089B71C3C2798541\""
+            + "\"owner_address\": \"4199357684BC659F5166046B56C95A0E99F1265CD1\","
+            + "\"account_address\": \"41B4750E2CD76E19DCA331BF5D089B71C3C2798541\""
             + "}";
     MockHttpServletRequest request = createRequest(HttpPost.METHOD_NAME);
     request.setContentType("application/json");
