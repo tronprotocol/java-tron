@@ -71,7 +71,6 @@ public class ArgsTest {
     address = ByteArray.toHexString(Args.getLocalWitnesses()
         .getWitnessAccountAddress());
     Assert.assertEquals("41", DecodeUtil.addressPreFixString);
-    // configFilePath should be set to shellConfFileName when -c is specified
     Assert.assertEquals(TestConstants.TEST_CONF, parameter.getConfigFilePath());
     Assert.assertEquals(0, parameter.getBackupPriority());
 
@@ -139,7 +138,6 @@ public class ArgsTest {
       throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
     Args.setParam(new String[] {}, TestConstants.TEST_CONF);
     CommonParameter parameter = Args.getInstance();
-    // configFilePath should fall back to confFileName when -c is not specified
     Assert.assertEquals(TestConstants.TEST_CONF, parameter.getConfigFilePath());
 
     String configuredExternalIp = parameter.getNodeExternalIp();

@@ -8,6 +8,7 @@ import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.tron.common.crypto.SignInterface;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.LocalWitnesses;
@@ -29,7 +30,7 @@ public class WitnessInitializer {
   }
 
   public LocalWitnesses initLocalWitnesses() {
-    if (!Args.PARAMETER.isWitness()) {
+    if (!Args.getInstance().isWitness()) {
       return localWitnesses;
     }
 
@@ -47,14 +48,15 @@ public class WitnessInitializer {
   }
 
   private boolean tryInitFromCommandLine() {
-    if (StringUtils.isBlank(Args.PARAMETER.privateKey)) {
+    CommonParameter parameter = Args.getInstance();
+    if (StringUtils.isBlank(parameter.privateKey)) {
       return false;
     }
 
     byte[] witnessAddress = null;
-    this.localWitnesses = new LocalWitnesses(Args.PARAMETER.privateKey);
-    if (StringUtils.isNotEmpty(Args.PARAMETER.witnessAddress)) {
-      witnessAddress = Commons.decodeFromBase58Check(Args.PARAMETER.witnessAddress);
+    this.localWitnesses = new LocalWitnesses(parameter.privateKey);
+    if (StringUtils.isNotEmpty(parameter.witnessAddress)) {
+      witnessAddress = Commons.decodeFromBase58Check(parameter.witnessAddress);
       if (witnessAddress == null) {
         throw new TronError("LocalWitnessAccountAddress format from cmd is incorrect",
             TronError.ErrCode.WITNESS_INIT);
@@ -63,7 +65,7 @@ public class WitnessInitializer {
     }
 
     this.localWitnesses.initWitnessAccountAddress(witnessAddress,
-        Args.PARAMETER.isECKeyCryptoEngine());
+        parameter.isECKeyCryptoEngine());
     logger.debug("Got privateKey from cmd");
     return true;
   }
@@ -79,7 +81,7 @@ public class WitnessInitializer {
     logger.debug("Got privateKey from config.conf");
     byte[] witnessAddress = getWitnessAddress();
     this.localWitnesses.initWitnessAccountAddress(witnessAddress,
-        Args.PARAMETER.isECKeyCryptoEngine());
+        Args.getInstance().isECKeyCryptoEngine());
     return true;
   }
 
@@ -96,15 +98,16 @@ public class WitnessInitializer {
               + "others will be ignored.");
     }
 
+    CommonParameter parameter = Args.getInstance();
     List<String> privateKeys = new ArrayList<>();
     String fileName = System.getProperty("user.dir") + "/" + localWitness.get(0);
     String password;
-    if (StringUtils.isEmpty(Args.PARAMETER.password)) {
+    if (StringUtils.isEmpty(parameter.password)) {
       System.out.println("Please input your password.");
       password = WalletUtils.inputPassword();
     } else {
-      password = Args.PARAMETER.password;
-      Args.PARAMETER.password = null;
+      password = parameter.password;
+      parameter.password = null;
     }
 
     try {
@@ -121,7 +124,7 @@ public class WitnessInitializer {
     this.localWitnesses.setPrivateKeys(privateKeys);
     byte[] witnessAddress = getWitnessAddress();
     this.localWitnesses.initWitnessAccountAddress(witnessAddress,
-        Args.PARAMETER.isECKeyCryptoEngine());
+        parameter.isECKeyCryptoEngine());
     logger.debug("Got privateKey from keystore");
   }
 

@@ -45,7 +45,7 @@ public class TransactionExpireTest {
   public void init() throws IOException {
     Args.setParam(new String[] {"--output-directory",
         temporaryFolder.newFolder().toString()}, TestConstants.TEST_CONF);
-    CommonParameter.PARAMETER.setMinEffectiveConnection(0);
+    CommonParameter.getInstance().setMinEffectiveConnection(0);
     CommonParameter.getInstance().setP2pDisable(true);
 
     context = new TronApplicationContext(DefaultConfig.class);

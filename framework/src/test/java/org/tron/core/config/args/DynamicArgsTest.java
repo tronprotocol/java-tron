@@ -40,13 +40,11 @@ public class DynamicArgsTest {
   @Test
   public void start() {
     CommonParameter parameter = Args.getInstance();
-    // configFilePath should be resolved from confFileName at startup
     Assert.assertEquals(TestConstants.TEST_CONF, parameter.getConfigFilePath());
     Assert.assertTrue(parameter.isDynamicConfigEnable());
     Assert.assertEquals(600, parameter.getDynamicConfigCheckInterval());
 
     dynamicArgs.init();
-    // configFile should be initialized from configFilePath during init()
     File configFile = (File) ReflectUtils.getFieldObject(dynamicArgs, "configFile");
     Assert.assertNotNull(configFile);
     Assert.assertEquals(TestConstants.TEST_CONF, configFile.getName());

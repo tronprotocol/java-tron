@@ -62,13 +62,13 @@ public class WitnessInitializerTest {
 
   @Test
   public void testInitLocalWitnessesEmpty() {
-    Args.PARAMETER.setWitness(false);
+    Args.getInstance().setWitness(false);
 
     LocalWitnesses result = witnessInitializer.initLocalWitnesses();
     assertNotNull(result);
     assertTrue(result.getPrivateKeys().isEmpty());
 
-    Args.PARAMETER.setWitness(true);
+    Args.getInstance().setWitness(true);
     LocalWitnesses localWitnesses = witnessInitializer.initLocalWitnesses();
     assertTrue(localWitnesses.getPrivateKeys().isEmpty());
 
@@ -191,7 +191,7 @@ public class WitnessInitializerTest {
   @Test
   public void testTryInitFromKeyStore2()
       throws NoSuchFieldException, IllegalAccessException {
-    Args.PARAMETER.setWitness(true);
+    Args.getInstance().setWitness(true);
     Config mockConfig = mock(Config.class);
     when(mockConfig.hasPath(ConfigKey.LOCAL_WITNESS_KEYSTORE)).thenReturn(false);
     witnessInitializer = new WitnessInitializer(mockConfig);

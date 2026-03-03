@@ -100,163 +100,8 @@ public class Args extends CommonParameter {
 
 
   public static void clearParam() {
-    PARAMETER.shellConfFileName = "";
-    PARAMETER.configFilePath = "";
-    PARAMETER.outputDirectory = "output-directory";
-    PARAMETER.help = false;
-    PARAMETER.witness = false;
-    PARAMETER.seedNodes = new ArrayList<>();
-    PARAMETER.privateKey = "";
-    PARAMETER.witnessAddress = "";
-    PARAMETER.storageDbDirectory = "";
-    PARAMETER.storageIndexDirectory = "";
-    PARAMETER.storageIndexSwitch = "";
-
-    // FIXME: PARAMETER.storage maybe null ?
-    if (PARAMETER.storage != null) {
-      // WARNING: WILL DELETE DB STORAGE PATHS
-      PARAMETER.storage.deleteAllStoragePaths();
-      PARAMETER.storage = null;
-    }
-
-    PARAMETER.overlay = null;
-    PARAMETER.seedNode = null;
-    PARAMETER.genesisBlock = null;
-    PARAMETER.chainId = null;
+    CommonParameter.reset();
     localWitnesses = null;
-    PARAMETER.needSyncCheck = false;
-    PARAMETER.nodeDiscoveryEnable = false;
-    PARAMETER.nodeDiscoveryPersist = false;
-    PARAMETER.nodeEffectiveCheckEnable = false;
-    PARAMETER.nodeConnectionTimeout = 2000;
-    PARAMETER.activeNodes = new ArrayList<>();
-    PARAMETER.passiveNodes = new ArrayList<>();
-    PARAMETER.fastForwardNodes = new ArrayList<>();
-    PARAMETER.maxFastForwardNum = 4;
-    PARAMETER.nodeChannelReadTimeout = 0;
-    PARAMETER.maxConnections = 30;
-    PARAMETER.minConnections = 8;
-    PARAMETER.minActiveConnections = 3;
-    PARAMETER.maxConnectionsWithSameIp = 2;
-    PARAMETER.maxTps = 1000;
-    PARAMETER.minParticipationRate = 0;
-    PARAMETER.nodeListenPort = 0;
-    PARAMETER.nodeLanIp = "";
-    PARAMETER.nodeExternalIp = "";
-    PARAMETER.nodeP2pVersion = 0;
-    PARAMETER.nodeEnableIpv6 = false;
-    PARAMETER.dnsTreeUrls = new ArrayList<>();
-    PARAMETER.dnsPublishConfig = null;
-    PARAMETER.syncFetchBatchNum = 2000;
-    PARAMETER.rpcPort = 0;
-    PARAMETER.rpcOnSolidityPort = 0;
-    PARAMETER.rpcOnPBFTPort = 0;
-    PARAMETER.fullNodeHttpPort = 0;
-    PARAMETER.solidityHttpPort = 0;
-    PARAMETER.pBFTHttpPort = 0;
-    PARAMETER.pBFTExpireNum = 20;
-    PARAMETER.jsonRpcHttpFullNodePort = 0;
-    PARAMETER.jsonRpcHttpSolidityPort = 0;
-    PARAMETER.jsonRpcHttpPBFTPort = 0;
-    PARAMETER.maintenanceTimeInterval = 0;
-    PARAMETER.proposalExpireTime = 0;
-    PARAMETER.checkFrozenTime = 1;
-    PARAMETER.allowCreationOfContracts = 0;
-    PARAMETER.allowAdaptiveEnergy = 0;
-    PARAMETER.allowTvmTransferTrc10 = 0;
-    PARAMETER.allowTvmConstantinople = 0;
-    PARAMETER.allowDelegateResource = 0;
-    PARAMETER.allowSameTokenName = 0;
-    PARAMETER.allowTvmSolidity059 = 0;
-    PARAMETER.forbidTransferToContract = 0;
-    PARAMETER.tcpNettyWorkThreadNum = 0;
-    PARAMETER.udpNettyWorkThreadNum = 0;
-    PARAMETER.solidityNode = false;
-    PARAMETER.keystoreFactory = false;
-    PARAMETER.trustNodeAddr = "";
-    PARAMETER.walletExtensionApi = false;
-    PARAMETER.estimateEnergy = false;
-    PARAMETER.estimateEnergyMaxRetry = 3;
-    PARAMETER.receiveTcpMinDataLength = 2048;
-    PARAMETER.isOpenFullTcpDisconnect = false;
-    PARAMETER.nodeDetectEnable = false;
-    PARAMETER.inactiveThreshold = 600;
-    PARAMETER.supportConstant = false;
-    PARAMETER.debug = false;
-    PARAMETER.minTimeRatio = 0.0;
-    PARAMETER.maxTimeRatio = 5.0;
-    PARAMETER.longRunningTime = 10;
-    // PARAMETER.allowShieldedTransaction = 0;
-    PARAMETER.maxHttpConnectNumber = 50;
-    PARAMETER.allowMultiSign = 0;
-    PARAMETER.trxExpirationTimeInMilliseconds = 0;
-    PARAMETER.allowShieldedTransactionApi = true;
-    PARAMETER.zenTokenId = "000000";
-    PARAMETER.allowProtoFilterNum = 0;
-    PARAMETER.allowAccountStateRoot = 0;
-    PARAMETER.validContractProtoThreadNum = 1;
-    PARAMETER.shieldedTransInPendingMaxCounts = 10;
-    PARAMETER.changedDelegation = 0;
-    PARAMETER.rpcEnable = true;
-    PARAMETER.rpcSolidityEnable = true;
-    PARAMETER.rpcPBFTEnable = true;
-    PARAMETER.fullNodeHttpEnable = true;
-    PARAMETER.solidityNodeHttpEnable = true;
-    PARAMETER.pBFTHttpEnable = true;
-    PARAMETER.jsonRpcHttpFullNodeEnable = false;
-    PARAMETER.jsonRpcHttpSolidityNodeEnable = false;
-    PARAMETER.jsonRpcHttpPBFTNodeEnable = false;
-    PARAMETER.jsonRpcMaxBlockRange = 5000;
-    PARAMETER.jsonRpcMaxSubTopics = 1000;
-    PARAMETER.jsonRpcMaxBlockFilterNum = 50000;
-    PARAMETER.nodeMetricsEnable = false;
-    PARAMETER.metricsStorageEnable = false;
-    PARAMETER.metricsPrometheusEnable = false;
-    PARAMETER.agreeNodeCount = MAX_ACTIVE_WITNESS_NUM * 2 / 3 + 1;
-    PARAMETER.allowPBFT = 0;
-    PARAMETER.allowShieldedTRC20Transaction = 0;
-    PARAMETER.allowMarketTransaction = 0;
-    PARAMETER.allowTransactionFeePool = 0;
-    PARAMETER.allowBlackHoleOptimization = 0;
-    PARAMETER.allowNewResourceModel = 0;
-    PARAMETER.allowTvmIstanbul = 0;
-    PARAMETER.allowTvmFreeze = 0;
-    PARAMETER.allowTvmVote = 0;
-    PARAMETER.allowTvmLondon = 0;
-    PARAMETER.allowTvmCompatibleEvm = 0;
-    PARAMETER.historyBalanceLookup = false;
-    PARAMETER.openPrintLog = true;
-    PARAMETER.openTransactionSort = false;
-    PARAMETER.allowAccountAssetOptimization = 0;
-    PARAMETER.allowAssetOptimization = 0;
-    PARAMETER.disabledApiList = Collections.emptyList();
-    PARAMETER.shutdownBlockTime = null;
-    PARAMETER.shutdownBlockHeight = -1;
-    PARAMETER.shutdownBlockCount = -1;
-    PARAMETER.blockCacheTimeout = 60;
-    PARAMETER.allowNewRewardAlgorithm = 0;
-    PARAMETER.allowNewReward = 0;
-    PARAMETER.memoFee = 0;
-    PARAMETER.rateLimiterGlobalQps = 50000;
-    PARAMETER.rateLimiterGlobalIpQps = 10000;
-    PARAMETER.rateLimiterGlobalApiQps = 1000;
-    PARAMETER.rateLimiterSyncBlockChain = 3.0;
-    PARAMETER.rateLimiterFetchInvData = 3.0;
-    PARAMETER.rateLimiterDisconnect = 1.0;
-    PARAMETER.p2pDisable = false;
-    PARAMETER.dynamicConfigEnable = false;
-    PARAMETER.dynamicConfigCheckInterval = 600;
-    PARAMETER.allowTvmShangHai = 0;
-    PARAMETER.unsolidifiedBlockCheck = false;
-    PARAMETER.maxUnsolidifiedBlocks = 54;
-    PARAMETER.allowOldRewardOpt = 0;
-    PARAMETER.allowEnergyAdjustment = 0;
-    PARAMETER.allowStrictMath = 0;
-    PARAMETER.consensusLogicOptimization = 0;
-    PARAMETER.allowTvmCancun = 0;
-    PARAMETER.allowTvmBlob = 0;
-    PARAMETER.rpcMaxRstStream = 0;
-    PARAMETER.rpcSecondsPerWindow = 0;
   }
 
   /**
@@ -366,7 +211,7 @@ public class Args extends CommonParameter {
     for (String[] optionList : optionGroupMap.values()) {
       for (String option : optionList) {
         try {
-          CommonParameter.class.getField(option);
+          CLIParameter.class.getField(option);
         } catch (NoSuchFieldException e) {
           logger.warn("NoSuchFieldException:{},{}", option, e.getMessage());
         }
@@ -378,36 +223,48 @@ public class Args extends CommonParameter {
   /**
    * set parameters.
    */
-  public static void setParam(final String[] args, final String confFileName) {
+  public static void setParam(final String[] args,
+      final String confFileName) {
     try {
       Arch.throwIfUnsupportedJavaVersion();
     } catch (UnsupportedOperationException e) {
       AnsiConsole.systemInstall();
-      // To avoid confusion caused by silent execution when using -h or -v flags,
-      // errors are explicitly logged to the console in this context.
-      // Console output is not required for errors in other scenarios.
-      System.out.println(ansi().fgRed().a(e.getMessage()).reset());
+      System.out.println(
+          ansi().fgRed().a(e.getMessage()).reset());
       AnsiConsole.systemUninstall();
       throw new TronError(e, TronError.ErrCode.JDK_VERSION);
     }
-    JCommander.newBuilder().addObject(PARAMETER).build().parse(args);
-    if (PARAMETER.version) {
+
+    // 1. Parse CLI args into a separate object
+    CLIParameter cmd = new CLIParameter();
+    JCommander jc =
+        JCommander.newBuilder().addObject(cmd).build();
+    jc.parse(args);
+
+    if (cmd.version) {
       printVersion();
       exit(0);
     }
-
-    if (PARAMETER.isHelp()) {
-      JCommander jCommander = JCommander.newBuilder().addObject(Args.PARAMETER).build();
-      jCommander.parse(args);
-      Args.printHelp(jCommander);
+    if (cmd.help) {
+      Args.printHelp(jc);
       exit(0);
     }
 
-    PARAMETER.setConfigFilePath(
-        StringUtils.isNoneBlank(PARAMETER.shellConfFileName)
-            ? PARAMETER.shellConfFileName : confFileName);
-    Config config = Configuration.getByFileName(PARAMETER.shellConfFileName, confFileName);
+    // Resolve config file path
+    PARAMETER.configFilePath =
+        StringUtils.isNoneBlank(cmd.shellConfFileName)
+            ? cmd.shellConfFileName : confFileName;
+    Config config = Configuration.getByFileName(
+        cmd.shellConfFileName, confFileName);
+
+    // 2. Config overrides defaults
     setParam(config);
+
+    // 3. CLI overrides Config (highest priority)
+    setCommandParam(cmd, jc);
+
+    // 4. Init witness (depends on CLI witness flag)
+    initLocalWitnesses(config);
   }
 
   /**
@@ -420,13 +277,6 @@ public class Args extends CommonParameter {
 
     PARAMETER.cryptoEngine = config.hasPath(ConfigKey.CRYPTO_ENGINE) ? config
         .getString(ConfigKey.CRYPTO_ENGINE) : Constant.ECKey_ENGINE;
-
-    localWitnesses = new WitnessInitializer(config).initLocalWitnesses();
-    if (PARAMETER.isWitness()
-        && CollectionUtils.isEmpty(localWitnesses.getPrivateKeys())) {
-      throw new TronError("This is a witness node, but localWitnesses is null",
-          TronError.ErrCode.WITNESS_INIT);
-    }
 
     if (config.hasPath(ConfigKey.VM_SUPPORT_CONSTANT)) {
       PARAMETER.supportConstant = config.getBoolean(ConfigKey.VM_SUPPORT_CONSTANT);
@@ -1290,6 +1140,158 @@ public class Args extends CommonParameter {
             .getInt(ConfigKey.COMMITTEE_ALLOW_TVM_BLOB) : 0;
 
     logConfig();
+  }
+
+  /**
+   * Apply CLI parameters that were explicitly passed.
+   * Only assigned parameters override Config values.
+   */
+  private static void setCommandParam(CLIParameter cmd,
+      JCommander jc) {
+    Map<String, ParameterDescription> assigned =
+        jc.getParameters().stream()
+            .filter(ParameterDescription::isAssigned)
+            .collect(Collectors.toMap(
+                ParameterDescription::getLongestName,
+                p -> p));
+
+    if (assigned.containsKey("--output-directory")) {
+      PARAMETER.outputDirectory = cmd.outputDirectory;
+    }
+    if (assigned.containsKey("--witness")) {
+      PARAMETER.witness = cmd.witness;
+    }
+    if (assigned.containsKey("--support-constant")) {
+      PARAMETER.supportConstant = cmd.supportConstant;
+    }
+    if (assigned.containsKey(
+        "--max-energy-limit-for-constant")) {
+      PARAMETER.maxEnergyLimitForConstant =
+          cmd.maxEnergyLimitForConstant;
+    }
+    if (assigned.containsKey("--lru-cache-size")) {
+      PARAMETER.lruCacheSize = cmd.lruCacheSize;
+    }
+    if (assigned.containsKey("--debug")) {
+      PARAMETER.debug = cmd.debug;
+    }
+    if (assigned.containsKey("--min-time-ratio")) {
+      PARAMETER.minTimeRatio = cmd.minTimeRatio;
+    }
+    if (assigned.containsKey("--max-time-ratio")) {
+      PARAMETER.maxTimeRatio = cmd.maxTimeRatio;
+    }
+    if (assigned.containsKey("--save-internaltx")) {
+      PARAMETER.saveInternalTx = cmd.saveInternalTx;
+    }
+    if (assigned.containsKey(
+        "--save-featured-internaltx")) {
+      PARAMETER.saveFeaturedInternalTx =
+          cmd.saveFeaturedInternalTx;
+    }
+    if (assigned.containsKey(
+        "--save-cancel-all-unfreeze-v2-details")) {
+      PARAMETER.saveCancelAllUnfreezeV2Details =
+          cmd.saveCancelAllUnfreezeV2Details;
+    }
+    if (assigned.containsKey("--long-running-time")) {
+      PARAMETER.longRunningTime = cmd.longRunningTime;
+    }
+    if (assigned.containsKey("--max-connect-number")) {
+      PARAMETER.maxHttpConnectNumber =
+          cmd.maxHttpConnectNumber;
+    }
+    if (assigned.containsKey("--storage-db-directory")) {
+      PARAMETER.storageDbDirectory =
+          cmd.storageDbDirectory;
+    }
+    if (assigned.containsKey("--storage-db-engine")) {
+      PARAMETER.storageDbEngine = cmd.storageDbEngine;
+    }
+    if (assigned.containsKey(
+        "--storage-db-synchronous")) {
+      PARAMETER.storageDbSynchronous =
+          cmd.storageDbSynchronous;
+    }
+    if (assigned.containsKey(
+        "--contract-parse-enable")) {
+      PARAMETER.contractParseEnable =
+          cmd.contractParseEnable;
+    }
+    if (assigned.containsKey(
+        "--storage-index-directory")) {
+      PARAMETER.storageIndexDirectory =
+          cmd.storageIndexDirectory;
+    }
+    if (assigned.containsKey(
+        "--storage-index-switch")) {
+      PARAMETER.storageIndexSwitch =
+          cmd.storageIndexSwitch;
+    }
+    if (assigned.containsKey(
+        "--storage-transactionHistory-switch")) {
+      PARAMETER.storageTransactionHistorySwitch =
+          cmd.storageTransactionHistorySwitch;
+    }
+    if (assigned.containsKey("--fast-forward")) {
+      PARAMETER.fastForward = cmd.fastForward;
+    }
+    if (assigned.containsKey("--solidity")) {
+      PARAMETER.solidityNode = cmd.solidityNode;
+    }
+    if (assigned.containsKey("--keystore-factory")) {
+      PARAMETER.keystoreFactory = cmd.keystoreFactory;
+    }
+    if (assigned.containsKey("--rpc-thread")) {
+      PARAMETER.rpcThreadNum = cmd.rpcThreadNum;
+    }
+    if (assigned.containsKey("--solidity-thread")) {
+      PARAMETER.solidityThreads = cmd.solidityThreads;
+    }
+    if (assigned.containsKey(
+        "--validate-sign-thread")) {
+      PARAMETER.validateSignThreadNum =
+          cmd.validateSignThreadNum;
+    }
+    if (assigned.containsKey("--trust-node")) {
+      PARAMETER.trustNodeAddr = cmd.trustNodeAddr;
+    }
+    if (assigned.containsKey("--es")) {
+      PARAMETER.eventSubscribe = cmd.eventSubscribe;
+    }
+    if (assigned.containsKey("--p2p-disable")) {
+      PARAMETER.p2pDisable = cmd.p2pDisable;
+    }
+    if (assigned.containsKey(
+        "--history-balance-lookup")) {
+      PARAMETER.historyBalanceLookup =
+          cmd.historyBalanceLookup;
+    }
+    if (assigned.containsKey("--log-config")) {
+      PARAMETER.logbackPath = cmd.logbackPath;
+    }
+    if (assigned.containsKey("--private-key")) {
+      PARAMETER.privateKey = cmd.privateKey;
+    }
+    if (assigned.containsKey("--witness-address")) {
+      PARAMETER.witnessAddress = cmd.witnessAddress;
+    }
+    if (assigned.containsKey("--password")) {
+      PARAMETER.password = cmd.password;
+    }
+  }
+
+  private static void initLocalWitnesses(Config config) {
+    localWitnesses =
+        new WitnessInitializer(config).initLocalWitnesses();
+    if (PARAMETER.isWitness()
+        && CollectionUtils.isEmpty(
+            localWitnesses.getPrivateKeys())) {
+      throw new TronError(
+          "This is a witness node, "
+              + "but localWitnesses is null",
+          TronError.ErrCode.WITNESS_INIT);
+    }
   }
 
   private static long getProposalExpirationTime(final Config config) {

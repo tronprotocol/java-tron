@@ -13,6 +13,7 @@ import org.junit.rules.TemporaryFolder;
 import org.tron.common.TestConstants;
 import org.tron.common.parameter.RateLimiterInitialization;
 import org.tron.core.config.args.Args;
+import org.tron.core.config.args.CLIParameter;
 
 public class ArgsTest {
 
@@ -53,7 +54,7 @@ public class ArgsTest {
 
   @Test
   public void testHelpMessage() {
-    JCommander jCommander = JCommander.newBuilder().addObject(Args.PARAMETER).build();
+    JCommander jCommander = JCommander.newBuilder().addObject(new CLIParameter()).build();
     Method method;
     try {
       method = Args.class.getDeclaredMethod("printVersion");
