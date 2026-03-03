@@ -1,18 +1,6 @@
 import org.gradle.nativeplatform.platform.internal.Architectures
 import org.gradle.internal.os.OperatingSystem
 
-// SonarQube plugin: only resolve on JDK 17+ to avoid verification-metadata issues on JDK 8
-if (JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_17)) {
-    buildscript {
-        repositories {
-            maven { url 'https://plugins.gradle.org/m2/' }
-        }
-        dependencies {
-            classpath 'org.sonarsource.scanner.gradle:sonarqube-gradle-plugin:5.1.0.4882'
-        }
-    }
-}
-
 allprojects {
     version = "1.0.0"
     apply plugin: "java-library"
@@ -179,10 +167,8 @@ gradle.buildFinished {
     }
 }
 
-// Apply SonarQube plugin only when running with JDK 17+ (sonar analysis requires JDK 17)
-if (JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_17)) {
-    apply plugin: "org.sonarqube"
-
+// SonarQube configuration — only activates when the plugin is applied (via CI init script)
+pluginManager.withPlugin('org.sonarqube') {
     sonar {
         properties {
             property "sonar.sourceEncoding", "UTF-8"
