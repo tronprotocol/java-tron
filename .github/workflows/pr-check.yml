@@ -147,8 +147,8 @@ jobs:
             --init-script /tmp/sonar-init.gradle \
             -PskipJdkCheck \
             -Dsonar.host.url=https://sonarcloud.io \
-            -Dsonar.organization=tron-zhaohong \
-            -Dsonar.projectKey=java-tron
+            -Dsonar.organization=${{ github.repository_owner }} \
+            -Dsonar.projectKey=${{ github.repository_owner }}_${{ github.event.repository.name }}
 
   checkstyle:
     name: Checkstyle
