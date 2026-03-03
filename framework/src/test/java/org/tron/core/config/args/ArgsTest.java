@@ -71,7 +71,7 @@ public class ArgsTest {
     address = ByteArray.toHexString(Args.getLocalWitnesses()
         .getWitnessAccountAddress());
     Assert.assertEquals("41", DecodeUtil.addressPreFixString);
-    Assert.assertEquals(TestConstants.TEST_CONF, parameter.getConfigFilePath());
+    Assert.assertEquals(TestConstants.TEST_CONF, Args.getConfigFilePath());
     Assert.assertEquals(0, parameter.getBackupPriority());
 
     Assert.assertEquals(3000, parameter.getKeepAliveInterval());
@@ -138,12 +138,12 @@ public class ArgsTest {
       throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
     Args.setParam(new String[] {}, TestConstants.TEST_CONF);
     CommonParameter parameter = Args.getInstance();
-    Assert.assertEquals(TestConstants.TEST_CONF, parameter.getConfigFilePath());
+    Assert.assertEquals(TestConstants.TEST_CONF, Args.getConfigFilePath());
 
     String configuredExternalIp = parameter.getNodeExternalIp();
     Assert.assertEquals("46.168.1.1", configuredExternalIp);
 
-    Config config = Configuration.getByFileName(null, TestConstants.TEST_CONF);
+    Config config = Configuration.getByFileName(TestConstants.TEST_CONF);
     Config config3 = config.withoutPath(ConfigKey.NODE_DISCOVERY_EXTERNAL_IP);
 
     CommonParameter.getInstance().setNodeExternalIp(null);
@@ -168,7 +168,7 @@ public class ArgsTest {
     storage.put("storage.db.directory", "database");
     Config config = ConfigFactory.defaultOverrides().withFallback(ConfigFactory.parseMap(storage));
     // test default value
-    Args.setParam(config);
+    Args.applyConfigParams(config);
     Assert.assertTrue(Args.getInstance().isRpcEnable());
     Assert.assertTrue(Args.getInstance().isRpcSolidityEnable());
     Assert.assertTrue(Args.getInstance().isRpcPBFTEnable());
@@ -195,7 +195,7 @@ public class ArgsTest {
     storage.put("node.jsonrpc.maxSubTopics", "20");
     config = ConfigFactory.defaultOverrides().withFallback(ConfigFactory.parseMap(storage));
     // test value
-    Args.setParam(config);
+    Args.applyConfigParams(config);
     Assert.assertTrue(Args.getInstance().isRpcEnable());
     Assert.assertTrue(Args.getInstance().isRpcSolidityEnable());
     Assert.assertTrue(Args.getInstance().isRpcPBFTEnable());
@@ -222,7 +222,7 @@ public class ArgsTest {
     storage.put("node.jsonrpc.maxSubTopics", "1000");
     config = ConfigFactory.defaultOverrides().withFallback(ConfigFactory.parseMap(storage));
     // test value
-    Args.setParam(config);
+    Args.applyConfigParams(config);
     Assert.assertFalse(Args.getInstance().isRpcEnable());
     Assert.assertFalse(Args.getInstance().isRpcSolidityEnable());
     Assert.assertFalse(Args.getInstance().isRpcPBFTEnable());
@@ -249,7 +249,7 @@ public class ArgsTest {
     storage.put("node.jsonrpc.maxSubTopics", "40");
     config = ConfigFactory.defaultOverrides().withFallback(ConfigFactory.parseMap(storage));
     // test value
-    Args.setParam(config);
+    Args.applyConfigParams(config);
     Assert.assertFalse(Args.getInstance().isRpcEnable());
     Assert.assertFalse(Args.getInstance().isRpcSolidityEnable());
     Assert.assertTrue(Args.getInstance().isRpcPBFTEnable());
@@ -267,7 +267,7 @@ public class ArgsTest {
     storage.put("node.jsonrpc.maxSubTopics", "0");
     config = ConfigFactory.defaultOverrides().withFallback(ConfigFactory.parseMap(storage));
     // check value
-    Args.setParam(config);
+    Args.applyConfigParams(config);
     Assert.assertEquals(0, Args.getInstance().getJsonRpcMaxBlockRange());
     Assert.assertEquals(0, Args.getInstance().getJsonRpcMaxSubTopics());
 
@@ -276,7 +276,7 @@ public class ArgsTest {
     storage.put("node.jsonrpc.maxSubTopics", "-4");
     config = ConfigFactory.defaultOverrides().withFallback(ConfigFactory.parseMap(storage));
     // check value
-    Args.setParam(config);
+    Args.applyConfigParams(config);
     Assert.assertEquals(-2, Args.getInstance().getJsonRpcMaxBlockRange());
     Assert.assertEquals(-4, Args.getInstance().getJsonRpcMaxSubTopics());
 

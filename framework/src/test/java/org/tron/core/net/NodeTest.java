@@ -79,7 +79,7 @@ public class NodeTest {
 
   @Test
   public void testPublishConfig() {
-    Config config = Configuration.getByFileName(TestConstants.TEST_CONF, TestConstants.TEST_CONF);
+    Config config = Configuration.getByFileName(TestConstants.TEST_CONF);
 
     PublishConfig publishConfig = new PublishConfig();
     Assert.assertFalse(publishConfig.isDnsPublishEnable());

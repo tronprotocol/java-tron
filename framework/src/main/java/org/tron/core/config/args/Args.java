@@ -1,7 +1,6 @@
 package org.tron.core.config.args;
 
 import static java.lang.System.exit;
-import static org.fusesource.jansi.Ansi.ansi;
 import static org.tron.common.math.Maths.max;
 import static org.tron.common.math.Maths.min;
 import static org.tron.core.Constant.ADD_PRE_FIX_BYTE_MAINNET;
@@ -45,9 +44,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.fusesource.jansi.AnsiConsole;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.arch.Arch;
@@ -85,6 +82,9 @@ import org.tron.program.Version;
 public class Args extends CommonParameter {
 
   @Getter
+  private static String configFilePath = "";
+
+  @Getter
   @Setter
   private static LocalWitnesses localWitnesses = new LocalWitnesses();
 
@@ -99,142 +99,11 @@ public class Args extends CommonParameter {
       solidityContractEventTriggerMap = new ConcurrentHashMap<>();
 
 
-  public static void clearParam() {
-    CommonParameter.reset();
-    localWitnesses = null;
-  }
-
-  /**
-   * print Version.
-   */
-  private static void printVersion() {
-    Properties properties = new Properties();
-    boolean noGitProperties = true;
-    try {
-      InputStream in = Thread.currentThread()
-          .getContextClassLoader().getResourceAsStream("git.properties");
-      if (in != null) {
-        noGitProperties = false;
-        properties.load(in);
-      }
-    } catch (IOException e) {
-      logger.error(e.getMessage());
-    }
-    JCommander jCommander = new JCommander();
-    jCommander.getConsole().println("OS : " + System.getProperty("os.name"));
-    jCommander.getConsole().println("JVM : " + System.getProperty("java.vendor") + " "
-        + System.getProperty("java.version") + " " + System.getProperty("os.arch"));
-    if (!noGitProperties) {
-      jCommander.getConsole().println("Git : " + properties.getProperty("git.commit.id"));
-    }
-    jCommander.getConsole().println("Version : " + Version.getVersion());
-    jCommander.getConsole().println("Code : " + Version.VERSION_CODE);
-  }
-
-  public static void printHelp(JCommander jCommander) {
-    List<ParameterDescription> parameterDescriptionList = jCommander.getParameters();
-    Map<String, ParameterDescription> stringParameterDescriptionMap = new HashMap<>();
-    for (ParameterDescription parameterDescription : parameterDescriptionList) {
-      String parameterName = parameterDescription.getParameterized().getName();
-      stringParameterDescriptionMap.put(parameterName, parameterDescription);
-    }
-
-    StringBuilder helpStr = new StringBuilder();
-    helpStr.append("Name:\n\tFullNode - the java-tron command line interface\n");
-    String programName = Strings.isNullOrEmpty(jCommander.getProgramName()) ? "FullNode.jar" :
-        jCommander.getProgramName();
-    helpStr.append(String.format("%nUsage: java -jar %s [options] [seedNode <seedNode> ...]%n",
-        programName));
-    helpStr.append(String.format("%nVERSION: %n%s-%s%n", Version.getVersion(),
-        getCommitIdAbbrev()));
-
-    Map<String, String[]> groupOptionListMap = Args.getOptionGroup();
-    for (Map.Entry<String, String[]> entry : groupOptionListMap.entrySet()) {
-      String group = entry.getKey();
-      helpStr.append(String.format("%n%s OPTIONS:%n", group.toUpperCase()));
-      int optionMaxLength = Arrays.stream(entry.getValue()).mapToInt(p -> {
-        ParameterDescription tmpParameterDescription = stringParameterDescriptionMap.get(p);
-        if (tmpParameterDescription == null) {
-          return 1;
-        }
-        return tmpParameterDescription.getNames().length();
-      }).max().orElse(1);
-
-      for (String option : groupOptionListMap.get(group)) {
-        ParameterDescription parameterDescription = stringParameterDescriptionMap.get(option);
-        if (parameterDescription == null) {
-          logger.warn("Miss option:{}", option);
-          continue;
-        }
-        String tmpOptionDesc = String.format("%s\t\t\t%s%n",
-            Strings.padEnd(parameterDescription.getNames(), optionMaxLength, ' '),
-            upperFirst(parameterDescription.getDescription()));
-        helpStr.append(tmpOptionDesc);
-      }
-    }
-    jCommander.getConsole().println(helpStr.toString());
-  }
-
-  public static String upperFirst(String name) {
-    if (name.length() <= 1) {
-      return name;
-    }
-    name = name.substring(0, 1).toUpperCase() + name.substring(1);
-    return name;
-  }
-
-  private static String getCommitIdAbbrev() {
-    Properties properties = new Properties();
-    try {
-      InputStream in = Thread.currentThread()
-          .getContextClassLoader().getResourceAsStream("git.properties");
-      properties.load(in);
-    } catch (IOException e) {
-      logger.warn("Load resource failed,git.properties {}", e.getMessage());
-    }
-    return properties.getProperty("git.commit.id.abbrev");
-  }
-
-  private static Map<String, String[]> getOptionGroup() {
-    String[] tronOption = new String[] {"version", "help", "shellConfFileName", "logbackPath",
-        "eventSubscribe", "solidityNode", "keystoreFactory"};
-    String[] dbOption = new String[] {"outputDirectory"};
-    String[] witnessOption = new String[] {"witness", "privateKey"};
-    String[] vmOption = new String[] {"debug"};
-
-    Map<String, String[]> optionGroupMap = new LinkedHashMap<>();
-    optionGroupMap.put("tron", tronOption);
-    optionGroupMap.put("db", dbOption);
-    optionGroupMap.put("witness", witnessOption);
-    optionGroupMap.put("virtual machine", vmOption);
-
-    for (String[] optionList : optionGroupMap.values()) {
-      for (String option : optionList) {
-        try {
-          CLIParameter.class.getField(option);
-        } catch (NoSuchFieldException e) {
-          logger.warn("NoSuchFieldException:{},{}", option, e.getMessage());
-        }
-      }
-    }
-    return optionGroupMap;
-  }
-
   /**
    * set parameters.
    */
   public static void setParam(final String[] args,
       final String confFileName) {
-    try {
-      Arch.throwIfUnsupportedJavaVersion();
-    } catch (UnsupportedOperationException e) {
-      AnsiConsole.systemInstall();
-      System.out.println(
-          ansi().fgRed().a(e.getMessage()).reset());
-      AnsiConsole.systemUninstall();
-      throw new TronError(e, TronError.ErrCode.JDK_VERSION);
-    }
-
     // 1. Parse CLI args into a separate object
     CLIParameter cmd = new CLIParameter();
     JCommander jc =
@@ -251,26 +120,25 @@ public class Args extends CommonParameter {
     }
 
     // Resolve config file path
-    PARAMETER.configFilePath =
-        StringUtils.isNoneBlank(cmd.shellConfFileName)
-            ? cmd.shellConfFileName : confFileName;
-    Config config = Configuration.getByFileName(
-        cmd.shellConfFileName, confFileName);
+    configFilePath = StringUtils.isNoneBlank(cmd.shellConfFileName)
+        ? cmd.shellConfFileName : confFileName;
+    Config config = Configuration.getByFileName(configFilePath);
 
     // 2. Config overrides defaults
-    setParam(config);
+    applyConfigParams(config);
 
     // 3. CLI overrides Config (highest priority)
-    setCommandParam(cmd, jc);
+    applyCLIParams(cmd, jc);
 
     // 4. Init witness (depends on CLI witness flag)
-    initLocalWitnesses(config);
+    initLocalWitnesses(config, cmd);
   }
 
   /**
-   * set parameters.
+   * Apply parameters from config file.
    */
-  public static void setParam(final Config config) {
+  public static void applyConfigParams(
+      final Config config) {
 
     Wallet.setAddressPreFixByte(ADD_PRE_FIX_BYTE_MAINNET);
     Wallet.setAddressPreFixString(Constant.ADD_PRE_FIX_STRING_MAINNET);
@@ -1146,7 +1014,7 @@ public class Args extends CommonParameter {
    * Apply CLI parameters that were explicitly passed.
    * Only assigned parameters override Config values.
    */
-  private static void setCommandParam(CLIParameter cmd,
+  private static void applyCLIParams(CLIParameter cmd,
       JCommander jc) {
     Map<String, ParameterDescription> assigned =
         jc.getParameters().stream()
@@ -1270,28 +1138,67 @@ public class Args extends CommonParameter {
     if (assigned.containsKey("--log-config")) {
       PARAMETER.logbackPath = cmd.logbackPath;
     }
-    if (assigned.containsKey("--private-key")) {
-      PARAMETER.privateKey = cmd.privateKey;
-    }
-    if (assigned.containsKey("--witness-address")) {
-      PARAMETER.witnessAddress = cmd.witnessAddress;
-    }
-    if (assigned.containsKey("--password")) {
-      PARAMETER.password = cmd.password;
-    }
   }
 
-  private static void initLocalWitnesses(Config config) {
-    localWitnesses =
-        new WitnessInitializer(config).initLocalWitnesses();
-    if (PARAMETER.isWitness()
-        && CollectionUtils.isEmpty(
-            localWitnesses.getPrivateKeys())) {
-      throw new TronError(
-          "This is a witness node, "
-              + "but localWitnesses is null",
-          TronError.ErrCode.WITNESS_INIT);
+  private static void initLocalWitnesses(
+      Config config, CLIParameter cmd) {
+    // not a witness node, skip
+    if (!PARAMETER.isWitness()) {
+      localWitnesses = new LocalWitnesses();
+      return;
     }
+
+    // path 1: CLI --private-key
+    if (StringUtils.isNotBlank(cmd.privateKey)) {
+      localWitnesses =
+          WitnessInitializer.initFromCLIPrivateKey(
+              cmd.privateKey, cmd.witnessAddress);
+      return;
+    }
+
+    String witnessAddr = config.hasPath(
+        ConfigKey.LOCAL_WITNESS_ACCOUNT_ADDRESS)
+        ? config.getString(
+            ConfigKey.LOCAL_WITNESS_ACCOUNT_ADDRESS)
+        : null;
+
+    // path 2: config localwitness (private key list)
+    if (config.hasPath(ConfigKey.LOCAL_WITNESS)) {
+      List<String> keys = config.getStringList(
+          ConfigKey.LOCAL_WITNESS);
+      if (!keys.isEmpty()) {
+        localWitnesses =
+            WitnessInitializer.initFromCFGPrivateKey(
+                keys, witnessAddr);
+        return;
+      }
+    }
+
+    // path 3: config localwitnesskeystore + password
+    if (config.hasPath(
+        ConfigKey.LOCAL_WITNESS_KEYSTORE)) {
+      List<String> keystores = config.getStringList(
+          ConfigKey.LOCAL_WITNESS_KEYSTORE);
+      if (!keystores.isEmpty()) {
+        localWitnesses =
+            WitnessInitializer.initFromKeystore(
+                keystores, cmd.password,
+                witnessAddr);
+        return;
+      }
+    }
+
+    // no private key source configured
+    throw new TronError(
+        "This is a witness node, "
+            + "but localWitnesses is null",
+        TronError.ErrCode.WITNESS_INIT);
+  }
+
+  public static void clearParam() {
+    CommonParameter.reset();
+    configFilePath = "";
+    localWitnesses = null;
   }
 
   private static long getProposalExpirationTime(final Config config) {
@@ -1794,6 +1701,121 @@ public class Args extends CommonParameter {
       return this.outputDirectory + File.separator;
     }
     return this.outputDirectory;
+  }
+
+  // ── CLI help / version utilities ─────────────────
+
+  private static void printVersion() {
+    Properties properties = new Properties();
+    boolean noGitProperties = true;
+    try {
+      InputStream in = Thread.currentThread()
+          .getContextClassLoader().getResourceAsStream("git.properties");
+      if (in != null) {
+        noGitProperties = false;
+        properties.load(in);
+      }
+    } catch (IOException e) {
+      logger.error(e.getMessage());
+    }
+    JCommander jCommander = new JCommander();
+    jCommander.getConsole().println("OS : " + System.getProperty("os.name"));
+    jCommander.getConsole().println("JVM : " + System.getProperty("java.vendor") + " "
+        + System.getProperty("java.version") + " " + System.getProperty("os.arch"));
+    if (!noGitProperties) {
+      jCommander.getConsole().println("Git : " + properties.getProperty("git.commit.id"));
+    }
+    jCommander.getConsole().println("Version : " + Version.getVersion());
+    jCommander.getConsole().println("Code : " + Version.VERSION_CODE);
+  }
+
+  public static void printHelp(JCommander jCommander) {
+    List<ParameterDescription> parameterDescriptionList = jCommander.getParameters();
+    Map<String, ParameterDescription> stringParameterDescriptionMap = new HashMap<>();
+    for (ParameterDescription parameterDescription : parameterDescriptionList) {
+      String parameterName = parameterDescription.getParameterized().getName();
+      stringParameterDescriptionMap.put(parameterName, parameterDescription);
+    }
+
+    StringBuilder helpStr = new StringBuilder();
+    helpStr.append("Name:\n\tFullNode - the java-tron command line interface\n");
+    String programName = Strings.isNullOrEmpty(jCommander.getProgramName()) ? "FullNode.jar" :
+        jCommander.getProgramName();
+    helpStr.append(String.format("%nUsage: java -jar %s [options] [seedNode <seedNode> ...]%n",
+        programName));
+    helpStr.append(String.format("%nVERSION: %n%s-%s%n", Version.getVersion(),
+        getCommitIdAbbrev()));
+
+    Map<String, String[]> groupOptionListMap = Args.getOptionGroup();
+    for (Map.Entry<String, String[]> entry : groupOptionListMap.entrySet()) {
+      String group = entry.getKey();
+      helpStr.append(String.format("%n%s OPTIONS:%n", group.toUpperCase()));
+      int optionMaxLength = Arrays.stream(entry.getValue()).mapToInt(p -> {
+        ParameterDescription tmpParameterDescription = stringParameterDescriptionMap.get(p);
+        if (tmpParameterDescription == null) {
+          return 1;
+        }
+        return tmpParameterDescription.getNames().length();
+      }).max().orElse(1);
+
+      for (String option : groupOptionListMap.get(group)) {
+        ParameterDescription parameterDescription = stringParameterDescriptionMap.get(option);
+        if (parameterDescription == null) {
+          logger.warn("Miss option:{}", option);
+          continue;
+        }
+        String tmpOptionDesc = String.format("%s\t\t\t%s%n",
+            Strings.padEnd(parameterDescription.getNames(), optionMaxLength, ' '),
+            upperFirst(parameterDescription.getDescription()));
+        helpStr.append(tmpOptionDesc);
+      }
+    }
+    jCommander.getConsole().println(helpStr.toString());
+  }
+
+  public static String upperFirst(String name) {
+    if (name.length() <= 1) {
+      return name;
+    }
+    name = name.substring(0, 1).toUpperCase() + name.substring(1);
+    return name;
+  }
+
+  private static String getCommitIdAbbrev() {
+    Properties properties = new Properties();
+    try {
+      InputStream in = Thread.currentThread()
+          .getContextClassLoader().getResourceAsStream("git.properties");
+      properties.load(in);
+    } catch (IOException e) {
+      logger.warn("Load resource failed,git.properties {}", e.getMessage());
+    }
+    return properties.getProperty("git.commit.id.abbrev");
+  }
+
+  private static Map<String, String[]> getOptionGroup() {
+    String[] tronOption = new String[] {"version", "help", "shellConfFileName", "logbackPath",
+        "eventSubscribe", "solidityNode", "keystoreFactory"};
+    String[] dbOption = new String[] {"outputDirectory"};
+    String[] witnessOption = new String[] {"witness", "privateKey"};
+    String[] vmOption = new String[] {"debug"};
+
+    Map<String, String[]> optionGroupMap = new LinkedHashMap<>();
+    optionGroupMap.put("tron", tronOption);
+    optionGroupMap.put("db", dbOption);
+    optionGroupMap.put("witness", witnessOption);
+    optionGroupMap.put("virtual machine", vmOption);
+
+    for (String[] optionList : optionGroupMap.values()) {
+      for (String option : optionList) {
+        try {
+          CLIParameter.class.getField(option);
+        } catch (NoSuchFieldException e) {
+          logger.warn("NoSuchFieldException:{},{}", option, e.getMessage());
+        }
+      }
+    }
+    return optionGroupMap;
   }
 }
 

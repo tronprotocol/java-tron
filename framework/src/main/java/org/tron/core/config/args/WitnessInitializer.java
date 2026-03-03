@@ -1,6 +1,5 @@
 package org.tron.core.config.args;
 
-import com.typesafe.config.Config;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -8,7 +7,6 @@ import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.tron.common.crypto.SignInterface;
-import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.LocalWitnesses;
@@ -20,132 +18,128 @@ import org.tron.keystore.WalletUtils;
 @Slf4j
 public class WitnessInitializer {
 
-  private final Config config;
+  /**
+   * Init from a single private key (and optional
+   * witness address).
+   */
+  public static LocalWitnesses initFromCLIPrivateKey(
+      String privateKey, String witnessAddress) {
+    LocalWitnesses witnesses =
+        new LocalWitnesses(privateKey);
 
-  private LocalWitnesses localWitnesses;
-
-  public WitnessInitializer(Config config) {
-    this.config = config;
-    this.localWitnesses = new LocalWitnesses();
-  }
-
-  public LocalWitnesses initLocalWitnesses() {
-    if (!Args.getInstance().isWitness()) {
-      return localWitnesses;
-    }
-
-    if (tryInitFromCommandLine()) {
-      return localWitnesses;
-    }
-
-    if (tryInitFromConfig()) {
-      return localWitnesses;
-    }
-
-    tryInitFromKeystore();
-
-    return localWitnesses;
-  }
-
-  private boolean tryInitFromCommandLine() {
-    CommonParameter parameter = Args.getInstance();
-    if (StringUtils.isBlank(parameter.privateKey)) {
-      return false;
-    }
-
-    byte[] witnessAddress = null;
-    this.localWitnesses = new LocalWitnesses(parameter.privateKey);
-    if (StringUtils.isNotEmpty(parameter.witnessAddress)) {
-      witnessAddress = Commons.decodeFromBase58Check(parameter.witnessAddress);
-      if (witnessAddress == null) {
-        throw new TronError("LocalWitnessAccountAddress format from cmd is incorrect",
+    byte[] address = null;
+    if (StringUtils.isNotEmpty(witnessAddress)) {
+      address = Commons.decodeFromBase58Check(
+          witnessAddress);
+      if (address == null) {
+        throw new TronError(
+            "LocalWitnessAccountAddress format"
+                + " from cmd is incorrect",
             TronError.ErrCode.WITNESS_INIT);
       }
-      logger.debug("Got localWitnessAccountAddress from cmd");
+      logger.debug(
+          "Got localWitnessAccountAddress from cmd");
     }
 
-    this.localWitnesses.initWitnessAccountAddress(witnessAddress,
-        parameter.isECKeyCryptoEngine());
-    logger.debug("Got privateKey from cmd");
-    return true;
-  }
-
-  private boolean tryInitFromConfig() {
-    if (!config.hasPath(ConfigKey.LOCAL_WITNESS) || config.getStringList(ConfigKey.LOCAL_WITNESS)
-        .isEmpty()) {
-      return false;
-    }
-
-    List<String> localWitness = config.getStringList(ConfigKey.LOCAL_WITNESS);
-    this.localWitnesses.setPrivateKeys(localWitness);
-    logger.debug("Got privateKey from config.conf");
-    byte[] witnessAddress = getWitnessAddress();
-    this.localWitnesses.initWitnessAccountAddress(witnessAddress,
+    witnesses.initWitnessAccountAddress(address,
         Args.getInstance().isECKeyCryptoEngine());
-    return true;
+    logger.debug("Got privateKey from cmd");
+    return witnesses;
   }
 
-  private void tryInitFromKeystore() {
-    if (!config.hasPath(ConfigKey.LOCAL_WITNESS_KEYSTORE)
-        || config.getStringList(ConfigKey.LOCAL_WITNESS_KEYSTORE).isEmpty()) {
-      return;
+  /**
+   * Init from a list of private keys.
+   */
+  public static LocalWitnesses initFromCFGPrivateKey(
+      List<String> privateKeys,
+      String witnessAccountAddress) {
+    LocalWitnesses witnesses = new LocalWitnesses();
+    witnesses.setPrivateKeys(privateKeys);
+    logger.debug("Got privateKey from config.conf");
+
+    byte[] address = resolveWitnessAddress(
+        witnesses, witnessAccountAddress);
+    witnesses.initWitnessAccountAddress(address,
+        Args.getInstance().isECKeyCryptoEngine());
+    return witnesses;
+  }
+
+  /**
+   * Init from keystore files with password.
+   */
+  public static LocalWitnesses initFromKeystore(
+      List<String> keystoreFiles, String password,
+      String witnessAccountAddress) {
+    if (keystoreFiles.size() > 1) {
+      logger.warn("Multiple keystores detected."
+          + " Only the first keystore will be used"
+          + " as witness, all others will be"
+          + " ignored.");
     }
 
-    List<String> localWitness = config.getStringList(ConfigKey.LOCAL_WITNESS_KEYSTORE);
-    if (localWitness.size() > 1) {
-      logger.warn(
-          "Multiple keystores detected. Only the first keystore will be used as witness, all "
-              + "others will be ignored.");
-    }
-
-    CommonParameter parameter = Args.getInstance();
-    List<String> privateKeys = new ArrayList<>();
-    String fileName = System.getProperty("user.dir") + "/" + localWitness.get(0);
-    String password;
-    if (StringUtils.isEmpty(parameter.password)) {
-      System.out.println("Please input your password.");
-      password = WalletUtils.inputPassword();
+    String fileName =
+        System.getProperty("user.dir") + "/"
+            + keystoreFiles.get(0);
+    String pwd;
+    if (StringUtils.isEmpty(password)) {
+      System.out.println(
+          "Please input your password.");
+      pwd = WalletUtils.inputPassword();
     } else {
-      password = parameter.password;
-      parameter.password = null;
+      pwd = password;
     }
 
+    List<String> privateKeys = new ArrayList<>();
     try {
       Credentials credentials = WalletUtils
-          .loadCredentials(password, new File(fileName));
-      SignInterface sign = credentials.getSignInterface();
-      String prikey = ByteArray.toHexString(sign.getPrivateKey());
+          .loadCredentials(pwd, new File(fileName));
+      SignInterface sign =
+          credentials.getSignInterface();
+      String prikey =
+          ByteArray.toHexString(sign.getPrivateKey());
       privateKeys.add(prikey);
     } catch (IOException | CipherException e) {
       logger.error("Witness node start failed!");
-      throw new TronError(e, TronError.ErrCode.WITNESS_KEYSTORE_LOAD);
+      throw new TronError(e,
+          TronError.ErrCode.WITNESS_KEYSTORE_LOAD);
     }
 
-    this.localWitnesses.setPrivateKeys(privateKeys);
-    byte[] witnessAddress = getWitnessAddress();
-    this.localWitnesses.initWitnessAccountAddress(witnessAddress,
-        parameter.isECKeyCryptoEngine());
+    LocalWitnesses witnesses = new LocalWitnesses();
+    witnesses.setPrivateKeys(privateKeys);
+    byte[] address = resolveWitnessAddress(
+        witnesses, witnessAccountAddress);
+    witnesses.initWitnessAccountAddress(address,
+        Args.getInstance().isECKeyCryptoEngine());
     logger.debug("Got privateKey from keystore");
+    return witnesses;
   }
 
-  private byte[] getWitnessAddress() {
-    if (!config.hasPath(ConfigKey.LOCAL_WITNESS_ACCOUNT_ADDRESS)) {
+  static byte[] resolveWitnessAddress(
+      LocalWitnesses witnesses,
+      String witnessAccountAddress) {
+    if (StringUtils.isEmpty(witnessAccountAddress)) {
       return null;
     }
 
-    if (localWitnesses.getPrivateKeys().size() != 1) {
+    if (witnesses.getPrivateKeys().size() != 1) {
       throw new TronError(
-          "LocalWitnessAccountAddress can only be set when there is only one private key",
+          "LocalWitnessAccountAddress can only be"
+              + " set when there is only one"
+              + " private key",
           TronError.ErrCode.WITNESS_INIT);
     }
-    byte[] witnessAddress = Commons
-        .decodeFromBase58Check(config.getString(ConfigKey.LOCAL_WITNESS_ACCOUNT_ADDRESS));
-    if (witnessAddress != null) {
-      logger.debug("Got localWitnessAccountAddress from config.conf");
+    byte[] address = Commons
+        .decodeFromBase58Check(witnessAccountAddress);
+    if (address != null) {
+      logger.debug(
+          "Got localWitnessAccountAddress"
+              + " from config.conf");
     } else {
-      throw new TronError("LocalWitnessAccountAddress format from config is incorrect",
+      throw new TronError(
+          "LocalWitnessAccountAddress format"
+              + " from config is incorrect",
           TronError.ErrCode.WITNESS_INIT);
     }
-    return witnessAddress;
+    return address;
   }
 }

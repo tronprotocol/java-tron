@@ -34,7 +34,7 @@ public class DynamicArgs {
       reloadExecutor = ExecutorServiceManager.newSingleThreadScheduledExecutor(esName);
       logger.info("Start the dynamic loading configuration service");
       long checkInterval = parameter.getDynamicConfigCheckInterval();
-      configFile = new File(parameter.getConfigFilePath());
+      configFile = new File(Args.getConfigFilePath());
       if (!configFile.exists()) {
         logger.warn("Configuration path is required! No such file {}", configFile);
         return;
@@ -60,7 +60,7 @@ public class DynamicArgs {
 
   public void reload() {
     logger.debug("Reloading ... ");
-    Config config = Configuration.getByFileName(parameter.getConfigFilePath(), null);
+    Config config = Configuration.getByFileName(Args.getConfigFilePath());
 
     updateActiveNodes(config);
 

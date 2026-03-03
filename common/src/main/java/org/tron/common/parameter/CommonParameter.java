@@ -23,26 +23,20 @@ import org.tron.p2p.dns.update.PublishConfig;
 
 public class CommonParameter {
 
-  public static final String IGNORE_WRONG_WITNESS_ADDRESS_FORMAT =
-      "The localWitnessAccountAddress format is incorrect,"
-          + " ignored";
-
   protected static CommonParameter PARAMETER = new CommonParameter();
 
+  // Runtime chain state: set by VMConfig.initVmHardFork()
+  // when the energy-limit governance proposal is activated.
+  // Legacy: should belong to VMConfig, not here.
   @Setter
   public static boolean ENERGY_LIMIT_HARD_FORK = false;
 
-  // ── Config / path ────────────────────────────────
-  @Getter
-  public String configFilePath = "";
+  // ── Startup parameters ─────────────────────────
   @Getter
   public String outputDirectory = "output-directory";
   @Getter
   public String logbackPath = "";
-
-  // ── CLI-only flags ───────────────────────────────
-  @Getter
-  public boolean help = false;
+  // ── Flags (CLI + Config) ─────────────────────────
   @Getter
   @Setter
   public boolean witness = false;
@@ -81,9 +75,6 @@ public class CommonParameter {
   public int maxHttpConnectNumber = 50;
   @Getter
   public List<String> seedNodes = new ArrayList<>();
-  public String privateKey = "";
-  public String witnessAddress = "";
-  public String password;
   public String storageDbDirectory = "";
   public String storageDbEngine = "";
   public String storageDbSynchronous = "";
@@ -93,7 +84,6 @@ public class CommonParameter {
   public String storageTransactionHistorySwitch = "";
   @Getter
   public boolean fastForward = false;
-
   // ── Network / P2P ───────────────────────────────
   @Getter
   @Setter
@@ -362,7 +352,8 @@ public class CommonParameter {
   @Getter
   @Setter
   public long trxExpirationTimeInMilliseconds;
-  public boolean version;
+
+  // ── Shielded / ZK ────────────────────────────────
   @Getter
   @Setter
   public String zenTokenId; // clearParam: "000000"

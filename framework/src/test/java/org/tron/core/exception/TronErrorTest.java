@@ -141,7 +141,7 @@ public class TronErrorTest {
     params.put("storage.db.directory", "database");
     Config config = ConfigFactory.defaultOverrides().withFallback(
         ConfigFactory.parseMap(params));
-    TronError thrown = assertThrows(TronError.class, () -> Args.setParam(config));
+    TronError thrown = assertThrows(TronError.class, () -> Args.applyConfigParams(config));
     assertEquals(TronError.ErrCode.AUTO_STOP_PARAMS, thrown.getErrCode());
   }
 
@@ -177,15 +177,16 @@ public class TronErrorTest {
       mocked.when(Arch::throwIfUnsupportedJavaVersion).thenCallRealMethod();
 
       if (expectThrow) {
-        TronError err = assertThrows(
-            TronError.class, () -> Args.setParam(new String[]{}, TestConstants.TEST_CONF));
+        UnsupportedOperationException err = assertThrows(
+            UnsupportedOperationException.class,
+            Arch::throwIfUnsupportedJavaVersion);
 
         String expectedJavaVersion = isX86 ? "1.8" : "17";
         String expectedMessage = String.format(
-            "Java %s is required for %s architecture. Detected version %s",
+            "Java %s is required for %s architecture."
+                + " Detected version %s",
             expectedJavaVersion, osArch, javaVersion);
-        assertEquals(expectedMessage, err.getCause().getMessage());
-        assertEquals(TronError.ErrCode.JDK_VERSION, err.getErrCode());
+        assertEquals(expectedMessage, err.getMessage());
         mocked.verify(Arch::withAll, times(1));
       } else {
         try {

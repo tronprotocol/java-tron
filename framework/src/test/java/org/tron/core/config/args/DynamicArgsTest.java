@@ -40,7 +40,7 @@ public class DynamicArgsTest {
   @Test
   public void start() {
     CommonParameter parameter = Args.getInstance();
-    Assert.assertEquals(TestConstants.TEST_CONF, parameter.getConfigFilePath());
+    Assert.assertEquals(TestConstants.TEST_CONF, Args.getConfigFilePath());
     Assert.assertTrue(parameter.isDynamicConfigEnable());
     Assert.assertEquals(600, parameter.getDynamicConfigCheckInterval());
 
@@ -52,7 +52,7 @@ public class DynamicArgsTest {
 
     TronNetService tronNetService = context.getBean(TronNetService.class);
     ReflectUtils.setFieldValue(tronNetService, "p2pConfig", new P2pConfig());
-    File config = new File(parameter.getConfigFilePath());
+    File config = new File(Args.getConfigFilePath());
     if (!config.exists()) {
       try {
         config.createNewFile();

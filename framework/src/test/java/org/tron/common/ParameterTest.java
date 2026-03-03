@@ -63,7 +63,6 @@ public class ParameterTest {
     assertEquals(1000000L, parameter.getMaxEnergyLimitForConstant());
     assertEquals(5, parameter.getLruCacheSize());
     assertEquals(60, parameter.getLongRunningTime());
-    assertFalse(parameter.isHelp());
     assertFalse(parameter.isSaveFeaturedInternalTx());
     assertFalse(parameter.isSaveInternalTx());
     CollectionUtils.isEmpty(parameter.getSeedNodes());
