@@ -96,7 +96,7 @@ jobs:
   sonar-check:
     name: SonarCloud Analysis
     needs: pr-lint
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
 
     steps:
       - uses: actions/checkout@v4
@@ -131,14 +131,12 @@ jobs:
         run: |
                ./gradlew clean classes testClasses sonar --info -PskipJdkCheck \
                -Dsonar.host.url=https://sonarcloud.io \
-#               -Dsonar.organization=${{ github.repository_owner }} \
                -Dsonar.organization=tron-zhaohong \
-#               -Dsonar.projectKey=${{ github.repository_owner }}_${{ github.event.repository.name }}
                -Dsonar.projectKey=java-tron
 
   checkstyle:
     name: Checkstyle
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
 
     steps:
       - uses: actions/checkout@v4
