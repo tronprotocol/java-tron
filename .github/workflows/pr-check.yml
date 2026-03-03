@@ -139,8 +139,8 @@ jobs:
 #      - name: Build
 #        run: ./gradlew clean build --no-daemon
 
-  docker-build-centos8:
-    name: Build centos8 (JDK 8 / x86_64)
+  docker-build-rockylinux:
+    name: Build rockylinux (JDK 8 / x86_64)
     needs: pr-lint
     runs-on: ubuntu-latest
 
@@ -169,9 +169,9 @@ jobs:
           path: |
             /github/home/.gradle/caches
             /github/home/.gradle/wrapper
-          key: ${{ runner.os }}-centos8-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          key: ${{ runner.os }}-rockylinux-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: |
-            ${{ runner.os }}-centos8-gradle-
+            ${{ runner.os }}-rockylinux-gradle-
 
       - name: Prepare checkstyle config copy
         run: |
@@ -185,10 +185,10 @@ jobs:
         run: ./gradlew --stop || true
 
       - name: Build
-        #run: ./gradlew clean build --no-daemon --no-build-cache
-        run: |
-          ./gradlew clean build -x test --no-daemon --no-build-cache
-          ./gradlew framework:test --tests org.tron.core.zksnark.ShieldedReceiveTest
+        run: ./gradlew clean build --no-daemon --no-build-cache
+        #run: |
+        #  ./gradlew clean build -x test --no-daemon --no-build-cache
+        #  ./gradlew framework:test --tests org.tron.core.zksnark.ShieldedReceiveTest
 
       - name: Generate JaCoCo report
         run: ./gradlew jacocoTestReport --no-daemon --no-build-cache
@@ -196,7 +196,7 @@ jobs:
       - name: Upload JaCoCo artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: jacoco-centos8
+          name: jacoco-rockylinux
           path: |
             **/build/reports/jacoco/test/jacocoTestReport.xml
             **/build/reports/**
@@ -249,8 +249,8 @@ jobs:
 
 
   coverage-gate:
-    name: Coverage Gate (from centos8 build)
-    needs: docker-build-centos8
+    name: Coverage Gate (from rockylinux build)
+    needs: docker-build-rockylinux
     runs-on: ubuntu-latest
 
     permissions:
@@ -264,23 +264,23 @@ jobs:
       - name: Checkout code (needed by codecov-action for git context)
         uses: actions/checkout@v4
 
-      - name: Download JaCoCo artifacts (centos8)
+      - name: Download JaCoCo artifacts (rockylinux)
         uses: actions/download-artifact@v4
         with:
-          name: jacoco-centos8
-          path: artifacts/jacoco-centos8
+          name: jacoco-rockylinux
+          path: artifacts/jacoco-rockylinux
 
       - name: List downloaded reports
         run: |
           set -eux
           echo "JaCoCo XML reports found:"
-          find artifacts/jacoco-centos8 -name jacocoTestReport.xml
+          find artifacts/jacoco-rockylinux -name jacocoTestReport.xml
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          directory: artifacts/jacoco-centos8
+          directory: artifacts/jacoco-rockylinux
           override_commit: ${{ github.event.pull_request.head.sha }}
           override_branch: ${{ github.event.pull_request.head.ref }}
           override_pr: ${{ github.event.pull_request.number }}
