@@ -145,7 +145,7 @@ jobs:
 
           ./gradlew clean classes testClasses sonar --info \
             --init-script /tmp/sonar-init.gradle \
-            -PskipJdkCheck \
+            -PskipJdkCheck \ 
             -Dsonar.host.url=https://sonarcloud.io \
             -Dsonar.organization=${{ github.repository_owner }} \
             -Dsonar.projectKey=${{ github.repository_owner }}_${{ github.event.repository.name }}
