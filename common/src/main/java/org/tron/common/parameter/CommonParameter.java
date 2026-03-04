@@ -75,12 +75,26 @@ public class CommonParameter {
   public int maxHttpConnectNumber = 50;
   @Getter
   public List<String> seedNodes = new ArrayList<>();
+  @Getter
+  @Setter
   public String storageDbDirectory = "";
+  @Getter
+  @Setter
   public String storageDbEngine = "";
+  @Getter
+  @Setter
   public String storageDbSynchronous = "";
+  @Getter
+  @Setter
   public String contractParseEnable = "";
+  @Getter
+  @Setter
   public String storageIndexDirectory = "";
+  @Getter
+  @Setter
   public String storageIndexSwitch = "";
+  @Getter
+  @Setter
   public String storageTransactionHistorySwitch = "";
   @Getter
   public boolean fastForward = false;
