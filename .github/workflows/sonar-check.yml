@@ -1,0 +1,67 @@
+name: SonarCloud Analysis
+
+on:
+  pull_request:
+    branches: [ 'develop_ci', 'release_**' ]
+    types: [ opened, edited, synchronize, reopened ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  sonar-check:
+    name: SonarCloud Analysis
+    runs-on: ubuntu-24.04-arm
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Cache SonarCloud packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.sonar/cache
+          key: ${{ runner.os }}-sonar
+          restore-keys: ${{ runner.os }}-sonar
+
+      - name: Cache Gradle packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle', '**/gradle-wrapper.properties') }}
+          restore-keys: ${{ runner.os }}-gradle-
+
+      - name: Build and analyze
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          cat > /tmp/sonar-init.gradle << 'EOF'
+          initscript {
+              repositories {
+                  maven { url 'https://plugins.gradle.org/m2/' }
+              }
+              dependencies {
+                  classpath 'org.sonarsource.scanner.gradle:sonarqube-gradle-plugin:5.1.0.4882'
+              }
+          }
+          rootProject {
+              apply plugin: org.sonarqube.gradle.SonarQubePlugin
+          }
+          EOF
+
+          ./gradlew clean classes testClasses sonar --info \
+            --init-script /tmp/sonar-init.gradle \
+            -PskipJdkCheck \
+            -Dsonar.host.url=https://sonarcloud.io \
+            -Dsonar.organization=${{ github.repository_owner }} \
+            -Dsonar.projectKey=${{ github.repository_owner }}_${{ github.event.repository.name }}
