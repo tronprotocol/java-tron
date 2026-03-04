@@ -31,12 +31,12 @@ public class CommonParameter {
   @Setter
   public static boolean ENERGY_LIMIT_HARD_FORK = false;
 
-  // ── Startup parameters ─────────────────────────
+  // ── Startup parameters ────────────────────────
   @Getter
   public String outputDirectory = "output-directory";
   @Getter
   public String logbackPath = "";
-  // ── Flags (CLI + Config) ─────────────────────────
+  // ── Flags (CLI + Config) ──────────────────────
   @Getter
   @Setter
   public boolean witness = false;
@@ -98,7 +98,7 @@ public class CommonParameter {
   public String storageTransactionHistorySwitch = "";
   @Getter
   public boolean fastForward = false;
-  // ── Network / P2P ───────────────────────────────
+  // ── Network / P2P ─────────────────────────────
   @Getter
   @Setter
   public String chainId;
@@ -180,7 +180,7 @@ public class CommonParameter {
   @Setter
   public boolean keystoreFactory = false;
 
-  // ── RPC / HTTP ──────────────────────────────────
+  // ── RPC / HTTP ────────────────────────────────
   @Getter
   @Setter
   public int rpcPort;
@@ -254,7 +254,7 @@ public class CommonParameter {
   @Setter
   public int checkFrozenTime; // clearParam: 1
 
-  // ── Committee parameters ────────────────────────
+  // ── Committee parameters ──────────────────────
   @Getter
   @Setter
   public long allowCreationOfContracts;
@@ -280,7 +280,7 @@ public class CommonParameter {
   @Setter
   public long forbidTransferToContract;
 
-  // ── Netty ───────────────────────────────────────
+  // ── Netty ─────────────────────────────────────
   @Getter
   @Setter
   public int tcpNettyWorkThreadNum;
@@ -367,7 +367,7 @@ public class CommonParameter {
   @Setter
   public long trxExpirationTimeInMilliseconds;
 
-  // ── Shielded / ZK ────────────────────────────────
+  // ── Shielded / ZK ─────────────────────────────
   @Getter
   @Setter
   public String zenTokenId; // clearParam: "000000"
@@ -420,10 +420,12 @@ public class CommonParameter {
   public boolean p2pDisable = false;
   @Getter
   @Setter
-  public List<InetSocketAddress> activeNodes = new ArrayList<>(); // from clearParam(), consistent with mainnet.conf
+  // from clearParam(), consistent with mainnet.conf
+  public List<InetSocketAddress> activeNodes = new ArrayList<>();
   @Getter
   @Setter
-  public List<InetAddress> passiveNodes = new ArrayList<>(); // from clearParam(), consistent with mainnet.conf
+  // from clearParam(), consistent with mainnet.conf
+  public List<InetAddress> passiveNodes = new ArrayList<>();
   @Getter
   public List<InetSocketAddress> fastForwardNodes; // clearParam: new ArrayList<>()
   @Getter

@@ -102,12 +102,10 @@ public class Args extends CommonParameter {
   /**
    * set parameters.
    */
-  public static void setParam(final String[] args,
-      final String confFileName) {
+  public static void setParam(final String[] args, final String confFileName) {
     // 1. Parse CLI args into a separate object
     CLIParameter cmd = new CLIParameter();
-    JCommander jc =
-        JCommander.newBuilder().addObject(cmd).build();
+    JCommander jc = JCommander.newBuilder().addObject(cmd).build();
     jc.parse(args);
 
     if (cmd.version) {
@@ -1014,14 +1012,10 @@ public class Args extends CommonParameter {
    * Apply CLI parameters that were explicitly passed.
    * Only assigned parameters override Config values.
    */
-  private static void applyCLIParams(CLIParameter cmd,
-      JCommander jc) {
-    Map<String, ParameterDescription> assigned =
-        jc.getParameters().stream()
-            .filter(ParameterDescription::isAssigned)
-            .collect(Collectors.toMap(
-                ParameterDescription::getLongestName,
-                p -> p));
+  private static void applyCLIParams(CLIParameter cmd, JCommander jc) {
+    Map<String, ParameterDescription> assigned = jc.getParameters().stream()
+        .filter(ParameterDescription::isAssigned)
+        .collect(Collectors.toMap(ParameterDescription::getLongestName, p -> p));
 
     if (assigned.containsKey("--output-directory")) {
       PARAMETER.outputDirectory = cmd.outputDirectory;
@@ -1032,10 +1026,8 @@ public class Args extends CommonParameter {
     if (assigned.containsKey("--support-constant")) {
       PARAMETER.supportConstant = cmd.supportConstant;
     }
-    if (assigned.containsKey(
-        "--max-energy-limit-for-constant")) {
-      PARAMETER.maxEnergyLimitForConstant =
-          cmd.maxEnergyLimitForConstant;
+    if (assigned.containsKey("--max-energy-limit-for-constant")) {
+      PARAMETER.maxEnergyLimitForConstant = cmd.maxEnergyLimitForConstant;
     }
     if (assigned.containsKey("--lru-cache-size")) {
       PARAMETER.lruCacheSize = cmd.lruCacheSize;
@@ -1052,54 +1044,38 @@ public class Args extends CommonParameter {
     if (assigned.containsKey("--save-internaltx")) {
       PARAMETER.saveInternalTx = cmd.saveInternalTx;
     }
-    if (assigned.containsKey(
-        "--save-featured-internaltx")) {
-      PARAMETER.saveFeaturedInternalTx =
-          cmd.saveFeaturedInternalTx;
+    if (assigned.containsKey("--save-featured-internaltx")) {
+      PARAMETER.saveFeaturedInternalTx = cmd.saveFeaturedInternalTx;
     }
-    if (assigned.containsKey(
-        "--save-cancel-all-unfreeze-v2-details")) {
-      PARAMETER.saveCancelAllUnfreezeV2Details =
-          cmd.saveCancelAllUnfreezeV2Details;
+    if (assigned.containsKey("--save-cancel-all-unfreeze-v2-details")) {
+      PARAMETER.saveCancelAllUnfreezeV2Details = cmd.saveCancelAllUnfreezeV2Details;
     }
     if (assigned.containsKey("--long-running-time")) {
       PARAMETER.longRunningTime = cmd.longRunningTime;
     }
     if (assigned.containsKey("--max-connect-number")) {
-      PARAMETER.maxHttpConnectNumber =
-          cmd.maxHttpConnectNumber;
+      PARAMETER.maxHttpConnectNumber = cmd.maxHttpConnectNumber;
     }
     if (assigned.containsKey("--storage-db-directory")) {
-      PARAMETER.storageDbDirectory =
-          cmd.storageDbDirectory;
+      PARAMETER.storageDbDirectory = cmd.storageDbDirectory;
     }
     if (assigned.containsKey("--storage-db-engine")) {
       PARAMETER.storageDbEngine = cmd.storageDbEngine;
     }
-    if (assigned.containsKey(
-        "--storage-db-synchronous")) {
-      PARAMETER.storageDbSynchronous =
-          cmd.storageDbSynchronous;
+    if (assigned.containsKey("--storage-db-synchronous")) {
+      PARAMETER.storageDbSynchronous = cmd.storageDbSynchronous;
     }
-    if (assigned.containsKey(
-        "--contract-parse-enable")) {
-      PARAMETER.contractParseEnable =
-          cmd.contractParseEnable;
+    if (assigned.containsKey("--contract-parse-enable")) {
+      PARAMETER.contractParseEnable = cmd.contractParseEnable;
     }
-    if (assigned.containsKey(
-        "--storage-index-directory")) {
-      PARAMETER.storageIndexDirectory =
-          cmd.storageIndexDirectory;
+    if (assigned.containsKey("--storage-index-directory")) {
+      PARAMETER.storageIndexDirectory = cmd.storageIndexDirectory;
     }
-    if (assigned.containsKey(
-        "--storage-index-switch")) {
-      PARAMETER.storageIndexSwitch =
-          cmd.storageIndexSwitch;
+    if (assigned.containsKey("--storage-index-switch")) {
+      PARAMETER.storageIndexSwitch = cmd.storageIndexSwitch;
     }
-    if (assigned.containsKey(
-        "--storage-transactionHistory-switch")) {
-      PARAMETER.storageTransactionHistorySwitch =
-          cmd.storageTransactionHistorySwitch;
+    if (assigned.containsKey("--storage-transactionHistory-switch")) {
+      PARAMETER.storageTransactionHistorySwitch = cmd.storageTransactionHistorySwitch;
     }
     if (assigned.containsKey("--fast-forward")) {
       PARAMETER.fastForward = cmd.fastForward;
@@ -1116,10 +1092,8 @@ public class Args extends CommonParameter {
     if (assigned.containsKey("--solidity-thread")) {
       PARAMETER.solidityThreads = cmd.solidityThreads;
     }
-    if (assigned.containsKey(
-        "--validate-sign-thread")) {
-      PARAMETER.validateSignThreadNum =
-          cmd.validateSignThreadNum;
+    if (assigned.containsKey("--validate-sign-thread")) {
+      PARAMETER.validateSignThreadNum = cmd.validateSignThreadNum;
     }
     if (assigned.containsKey("--trust-node")) {
       PARAMETER.trustNodeAddr = cmd.trustNodeAddr;
@@ -1130,18 +1104,15 @@ public class Args extends CommonParameter {
     if (assigned.containsKey("--p2p-disable")) {
       PARAMETER.p2pDisable = cmd.p2pDisable;
     }
-    if (assigned.containsKey(
-        "--history-balance-lookup")) {
-      PARAMETER.historyBalanceLookup =
-          cmd.historyBalanceLookup;
+    if (assigned.containsKey("--history-balance-lookup")) {
+      PARAMETER.historyBalanceLookup = cmd.historyBalanceLookup;
     }
     if (assigned.containsKey("--log-config")) {
       PARAMETER.logbackPath = cmd.logbackPath;
     }
   }
 
-  private static void initLocalWitnesses(
-      Config config, CLIParameter cmd) {
+  private static void initLocalWitnesses(Config config, CLIParameter cmd) {
     // not a witness node, skip
     if (!PARAMETER.isWitness()) {
       localWitnesses = new LocalWitnesses();
@@ -1150,48 +1121,35 @@ public class Args extends CommonParameter {
 
     // path 1: CLI --private-key
     if (StringUtils.isNotBlank(cmd.privateKey)) {
-      localWitnesses =
-          WitnessInitializer.initFromCLIPrivateKey(
-              cmd.privateKey, cmd.witnessAddress);
+      localWitnesses = WitnessInitializer.initFromCLIPrivateKey(
+          cmd.privateKey, cmd.witnessAddress);
       return;
     }
 
-    String witnessAddr = config.hasPath(
-        ConfigKey.LOCAL_WITNESS_ACCOUNT_ADDRESS)
-        ? config.getString(
-            ConfigKey.LOCAL_WITNESS_ACCOUNT_ADDRESS)
-        : null;
+    String witnessAddr = config.hasPath(ConfigKey.LOCAL_WITNESS_ACCOUNT_ADDRESS)
+        ? config.getString(ConfigKey.LOCAL_WITNESS_ACCOUNT_ADDRESS) : null;
 
     // path 2: config localwitness (private key list)
     if (config.hasPath(ConfigKey.LOCAL_WITNESS)) {
-      List<String> keys = config.getStringList(
-          ConfigKey.LOCAL_WITNESS);
+      List<String> keys = config.getStringList(ConfigKey.LOCAL_WITNESS);
       if (!keys.isEmpty()) {
-        localWitnesses =
-            WitnessInitializer.initFromCFGPrivateKey(
-                keys, witnessAddr);
+        localWitnesses = WitnessInitializer.initFromCFGPrivateKey(keys, witnessAddr);
         return;
       }
     }
 
     // path 3: config localwitnesskeystore + password
-    if (config.hasPath(
-        ConfigKey.LOCAL_WITNESS_KEYSTORE)) {
-      List<String> keystores = config.getStringList(
-          ConfigKey.LOCAL_WITNESS_KEYSTORE);
+    if (config.hasPath(ConfigKey.LOCAL_WITNESS_KEYSTORE)) {
+      List<String> keystores = config.getStringList(ConfigKey.LOCAL_WITNESS_KEYSTORE);
       if (!keystores.isEmpty()) {
-        localWitnesses =
-            WitnessInitializer.initFromKeystore(
-                keystores, cmd.password,
-                witnessAddr);
+        localWitnesses = WitnessInitializer.initFromKeystore(
+            keystores, cmd.password, witnessAddr);
         return;
       }
     }
 
     // no private key source configured
-    throw new TronError(
-        "This is a witness node, "
-            + "but localWitnesses is null",
+    throw new TronError("This is a witness node, but localWitnesses is null",
         TronError.ErrCode.WITNESS_INIT);
   }
 

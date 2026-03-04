@@ -32,14 +32,10 @@ import org.tron.keystore.WalletUtils;
 
 public class WitnessInitializerTest {
 
-  private static final String privateKey =
-      PublicMethod.getRandomPrivateKey();
-  private static final String address =
-      Base58.encode58Check(ByteArray.fromHexString(
-          PublicMethod.getHexAddressByPrivateKey(
-              privateKey)));
-  private static final String invalidAddress =
-      "RJCzdnv88Hvqa2jB1C9dMmMYHr5DFdF2R3";
+  private static final String privateKey = PublicMethod.getRandomPrivateKey();
+  private static final String address = Base58.encode58Check(
+      ByteArray.fromHexString(PublicMethod.getHexAddressByPrivateKey(privateKey)));
+  private static final String invalidAddress = "RJCzdnv88Hvqa2jB1C9dMmMYHr5DFdF2R3";
 
   @After
   public void clear() {
@@ -50,16 +46,13 @@ public class WitnessInitializerTest {
   public void testInitFromCLI() {
     // privateKey only
     LocalWitnesses result =
-        WitnessInitializer.initFromCLIPrivateKey(
-            privateKey, null);
+        WitnessInitializer.initFromCLIPrivateKey(privateKey, null);
     assertNotNull(result);
     assertFalse(result.getPrivateKeys().isEmpty());
-    assertEquals(privateKey,
-        result.getPrivateKeys().get(0));
+    assertEquals(privateKey, result.getPrivateKeys().get(0));
 
     // with valid witnessAddress
-    result = WitnessInitializer.initFromCLIPrivateKey(
-        privateKey, address);
+    result = WitnessInitializer.initFromCLIPrivateKey(privateKey, address);
     assertNotNull(result);
     assertFalse(result.getPrivateKeys().isEmpty());
 
@@ -67,23 +60,19 @@ public class WitnessInitializerTest {
     TronError err = assertThrows(TronError.class,
         () -> WitnessInitializer.initFromCLIPrivateKey(
             privateKey, invalidAddress));
-    assertEquals(ErrCode.WITNESS_INIT,
-        err.getErrCode());
+    assertEquals(ErrCode.WITNESS_INIT, err.getErrCode());
   }
 
   @Test
   public void testInitFromConfig() {
     // single private key, no address
-    LocalWitnesses result =
-        WitnessInitializer.initFromCFGPrivateKey(
-            Collections.singletonList(privateKey),
-            null);
+    LocalWitnesses result = WitnessInitializer.initFromCFGPrivateKey(
+        Collections.singletonList(privateKey), null);
     assertFalse(result.getPrivateKeys().isEmpty());
 
     // single key + valid address
     result = WitnessInitializer.initFromCFGPrivateKey(
-        Collections.singletonList(privateKey),
-        address);
+        Collections.singletonList(privateKey), address);
     assertFalse(result.getPrivateKeys().isEmpty());
 
     // multiple keys, no address
@@ -94,86 +83,61 @@ public class WitnessInitializerTest {
     // single key + invalid address
     TronError err = assertThrows(TronError.class,
         () -> WitnessInitializer.initFromCFGPrivateKey(
-            Collections.singletonList(privateKey),
-            invalidAddress));
-    assertEquals(ErrCode.WITNESS_INIT,
-        err.getErrCode());
+            Collections.singletonList(privateKey), invalidAddress));
+    assertEquals(ErrCode.WITNESS_INIT, err.getErrCode());
 
     // multiple keys + address = error
     err = assertThrows(TronError.class,
         () -> WitnessInitializer.initFromCFGPrivateKey(
-            Arrays.asList(privateKey, privateKey),
-            address));
-    assertEquals(ErrCode.WITNESS_INIT,
-        err.getErrCode());
+            Arrays.asList(privateKey, privateKey), address));
+    assertEquals(ErrCode.WITNESS_INIT, err.getErrCode());
   }
 
   @Test
   public void testInitFromKeystore() {
-    List<String> keystores =
-        Arrays.asList("keystore1.json",
-            "keystore2.json");
+    List<String> keystores = Arrays.asList("keystore1.json", "keystore2.json");
 
-    try (MockedStatic<WalletUtils> mockedWallet =
-             mockStatic(WalletUtils.class);
-         MockedStatic<ByteArray> mockedByteArray =
-             mockStatic(ByteArray.class)) {
+    try (MockedStatic<WalletUtils> mockedWallet = mockStatic(WalletUtils.class);
+         MockedStatic<ByteArray> mockedByteArray = mockStatic(ByteArray.class)) {
 
-      Credentials credentials =
-          mock(Credentials.class);
-      SignInterface signInterface =
-          mock(SignInterface.class);
-      when(credentials.getSignInterface())
-          .thenReturn(signInterface);
+      Credentials credentials = mock(Credentials.class);
+      SignInterface signInterface = mock(SignInterface.class);
+      when(credentials.getSignInterface()).thenReturn(signInterface);
       byte[] keyBytes = Hex.decode(privateKey);
-      when(signInterface.getPrivateKey())
-          .thenReturn(keyBytes);
-      mockedWallet.when(() ->
-          WalletUtils.loadCredentials(
-              anyString(), any(File.class)))
-          .thenReturn(credentials);
-      mockedByteArray.when(() ->
-          ByteArray.toHexString(any()))
+      when(signInterface.getPrivateKey()).thenReturn(keyBytes);
+      mockedWallet.when(() -> WalletUtils.loadCredentials(
+          anyString(), any(File.class))).thenReturn(credentials);
+      mockedByteArray.when(() -> ByteArray.toHexString(any()))
           .thenReturn(privateKey);
-      mockedByteArray.when(() ->
-          ByteArray.fromHexString(anyString()))
+      mockedByteArray.when(() -> ByteArray.fromHexString(anyString()))
           .thenReturn(keyBytes);
 
-      LocalWitnesses result =
-          WitnessInitializer.initFromKeystore(
-              keystores, "password", null);
-      assertFalse(
-          result.getPrivateKeys().isEmpty());
+      LocalWitnesses result = WitnessInitializer.initFromKeystore(
+          keystores, "password", null);
+      assertFalse(result.getPrivateKeys().isEmpty());
     }
   }
 
   @Test
   public void testResolveWitnessAddress() {
     // null address -> null
-    LocalWitnesses witnesses =
-        new LocalWitnesses(privateKey);
-    byte[] result =
-        WitnessInitializer.resolveWitnessAddress(
-            witnesses, null);
+    LocalWitnesses witnesses = new LocalWitnesses(privateKey);
+    byte[] result = WitnessInitializer.resolveWitnessAddress(witnesses, null);
     assertNull(result);
 
     // empty address -> null
-    result = WitnessInitializer.resolveWitnessAddress(
-        witnesses, "");
+    result = WitnessInitializer.resolveWitnessAddress(witnesses, "");
     assertNull(result);
 
     // valid address with single key
-    result = WitnessInitializer.resolveWitnessAddress(
-        witnesses, address);
+    result = WitnessInitializer.resolveWitnessAddress(witnesses, address);
     assertNotNull(result);
 
     // invalid address
     TronError err = assertThrows(TronError.class,
         () -> WitnessInitializer.resolveWitnessAddress(
-            new LocalWitnesses(privateKey),
-            invalidAddress));
-    assertEquals(ErrCode.WITNESS_INIT,
-        err.getErrCode());
+            new LocalWitnesses(privateKey), invalidAddress));
+    assertEquals(ErrCode.WITNESS_INIT, err.getErrCode());
 
     // multiple keys + address = error
     LocalWitnesses multiKey = new LocalWitnesses();
@@ -182,9 +146,7 @@ public class WitnessInitializerTest {
     keys.add(privateKey);
     multiKey.setPrivateKeys(keys);
     err = assertThrows(TronError.class,
-        () -> WitnessInitializer.resolveWitnessAddress(
-            multiKey, address));
-    assertEquals(ErrCode.WITNESS_INIT,
-        err.getErrCode());
+        () -> WitnessInitializer.resolveWitnessAddress(multiKey, address));
+    assertEquals(ErrCode.WITNESS_INIT, err.getErrCode());
   }
 }
