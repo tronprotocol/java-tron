@@ -68,4 +68,5 @@ jobs:
             -Dsonar.host.url=https://sonarcloud.io \
             -Dsonar.organization=${{ github.repository_owner }} \
             -Dsonar.projectKey=${{ github.repository_owner }}_${{ github.event.repository.name }} \
-            -Dsonar.qualitygate.wait=false
+            -Dsonar.qualitygate.wait=false \
+            -Dsonar.pullrequest.github.summary_comment=false
