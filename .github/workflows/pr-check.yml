@@ -281,7 +281,7 @@ jobs:
         run: chmod +x gradlew
 
       - name: Build
-        run: ./gradlew clean build --no-daemon
+        run: ./gradlew clean build --no-daemon --no-build-cache
 
 
   coverage-gate:
