@@ -9,6 +9,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read # don't comment in PR after check
+
 jobs:
   sonar-check:
     name: SonarCloud Analysis
@@ -64,4 +67,5 @@ jobs:
             -PskipJdkCheck \
             -Dsonar.host.url=https://sonarcloud.io \
             -Dsonar.organization=${{ github.repository_owner }} \
-            -Dsonar.projectKey=${{ github.repository_owner }}_${{ github.event.repository.name }}
+            -Dsonar.projectKey=${{ github.repository_owner }}_${{ github.event.repository.name }} \
+            -Dsonar.qualitygate.wait=false
