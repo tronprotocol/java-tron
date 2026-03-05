@@ -122,12 +122,18 @@ jobs:
             const path = require('path');
 
             // --- JaCoCo XML Parser ---
+            // Use the last match of each counter type, which is the report-level summary.
+            // JaCoCo XML nests counters at method → class → package → report level.
             function parseCounter(xml, type) {
-              const regex = new RegExp(`<counter type="${type}" missed="(\\d+)" covered="(\\d+)"\\s*/>`);
-              const match = xml.match(regex);
-              if (!match) return null;
-              const missed = parseInt(match[1], 10);
-              const covered = parseInt(match[2], 10);
+              const regex = new RegExp(`<counter type="${type}" missed="(\\d+)" covered="(\\d+)"\\s*/>`, 'g');
+              let match;
+              let last = null;
+              while ((match = regex.exec(xml)) !== null) {
+                last = match;
+              }
+              if (!last) return null;
+              const missed = parseInt(last[1], 10);
+              const covered = parseInt(last[2], 10);
               const total = missed + covered;
               return { missed, covered, total, pct: total > 0 ? (covered / total * 100) : 0 };
             }
