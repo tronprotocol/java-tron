@@ -1,0 +1,364 @@
+name: Coverage Check
+
+on:
+  pull_request:
+    branches: [ 'develop', 'release_**' ]
+    types: [ opened, synchronize, reopened ]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Fail the check if total coverage drops more than this percentage
+  COVERAGE_DROP_THRESHOLD: 1.0
+
+jobs:
+  # Run tests on PR branch and base branch in parallel
+  coverage-pr:
+    name: Coverage (PR Branch)
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          java-version: '8'
+          distribution: 'temurin'
+
+      - name: Cache Gradle packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-coverage-gradle-${{ hashFiles('**/*.gradle', '**/gradle-wrapper.properties') }}
+          restore-keys: ${{ runner.os }}-coverage-gradle-
+
+      - name: Run tests with coverage
+        run: ./gradlew test jacocoTestReport
+
+      - name: Upload coverage reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-pr
+          path: '**/build/reports/jacoco/test/jacocoTestReport.xml'
+          retention-days: 1
+
+  coverage-base:
+    name: Coverage (Base Branch)
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          java-version: '8'
+          distribution: 'temurin'
+
+      - name: Cache Gradle packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-coverage-gradle-${{ hashFiles('**/*.gradle', '**/gradle-wrapper.properties') }}
+          restore-keys: ${{ runner.os }}-coverage-gradle-
+
+      - name: Run tests with coverage
+        run: ./gradlew test jacocoTestReport
+
+      - name: Upload coverage reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-base
+          path: '**/build/reports/jacoco/test/jacocoTestReport.xml'
+          retention-days: 1
+
+  coverage-compare:
+    name: Compare Coverage
+    needs: [ coverage-pr, coverage-base ]
+    runs-on: ubuntu-latest
+    if: always() && needs.coverage-pr.result == 'success'
+
+    steps:
+      - name: Download PR coverage
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-pr
+          path: coverage-pr
+
+      - name: Download base coverage
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-base
+          path: coverage-base
+        continue-on-error: true
+
+      - name: Compare coverage
+        id: compare
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+
+            // --- JaCoCo XML Parser ---
+            function parseCounter(xml, type) {
+              const regex = new RegExp(`<counter type="${type}" missed="(\\d+)" covered="(\\d+)"\\s*/>`);
+              const match = xml.match(regex);
+              if (!match) return null;
+              const missed = parseInt(match[1], 10);
+              const covered = parseInt(match[2], 10);
+              const total = missed + covered;
+              return { missed, covered, total, pct: total > 0 ? (covered / total * 100) : 0 };
+            }
+
+            function parseJacocoXml(xmlContent) {
+              return {
+                instruction: parseCounter(xmlContent, 'INSTRUCTION'),
+                branch: parseCounter(xmlContent, 'BRANCH'),
+                line: parseCounter(xmlContent, 'LINE'),
+                method: parseCounter(xmlContent, 'METHOD'),
+                class: parseCounter(xmlContent, 'CLASS'),
+              };
+            }
+
+            // --- Find all JaCoCo XML reports ---
+            function findReports(dir) {
+              const reports = {};
+              if (!fs.existsSync(dir)) return reports;
+
+              function walk(d) {
+                for (const entry of fs.readdirSync(d, { withFileTypes: true })) {
+                  const full = path.join(d, entry.name);
+                  if (entry.isDirectory()) {
+                    walk(full);
+                  } else if (entry.name === 'jacocoTestReport.xml') {
+                    // Extract module name from path
+                    const rel = path.relative(dir, full);
+                    const module = rel.split(path.sep)[0];
+                    reports[module] = fs.readFileSync(full, 'utf8');
+                  }
+                }
+              }
+              walk(dir);
+              return reports;
+            }
+
+            // --- Aggregate coverage across modules ---
+            function aggregateCoverage(reportsMap) {
+              const types = ['instruction', 'branch', 'line', 'method', 'class'];
+              const agg = {};
+              for (const t of types) {
+                agg[t] = { missed: 0, covered: 0, total: 0, pct: 0 };
+              }
+
+              for (const [mod, xml] of Object.entries(reportsMap)) {
+                const parsed = parseJacocoXml(xml);
+                for (const t of types) {
+                  if (parsed[t]) {
+                    agg[t].missed += parsed[t].missed;
+                    agg[t].covered += parsed[t].covered;
+                    agg[t].total += parsed[t].total;
+                  }
+                }
+              }
+              for (const t of types) {
+                agg[t].pct = agg[t].total > 0 ? (agg[t].covered / agg[t].total * 100) : 0;
+              }
+              return agg;
+            }
+
+            // --- Per-module coverage ---
+            function perModuleCoverage(reportsMap) {
+              const result = {};
+              for (const [mod, xml] of Object.entries(reportsMap)) {
+                result[mod] = parseJacocoXml(xml);
+              }
+              return result;
+            }
+
+            // --- Format helpers ---
+            function fmtPct(val) {
+              return val != null ? val.toFixed(2) + '%' : 'N/A';
+            }
+
+            function diffIcon(diff) {
+              if (diff > 0.01) return '🟢';
+              if (diff < -0.01) return '🔴';
+              return '⚪';
+            }
+
+            function fmtDiff(diff) {
+              if (diff == null) return 'N/A';
+              const sign = diff >= 0 ? '+' : '';
+              return `${sign}${diff.toFixed(2)}%`;
+            }
+
+            // --- Main ---
+            const prReports = findReports('coverage-pr');
+            const baseReports = findReports('coverage-base');
+            const hasBase = Object.keys(baseReports).length > 0;
+
+            const prAgg = aggregateCoverage(prReports);
+            const baseAgg = hasBase ? aggregateCoverage(baseReports) : null;
+
+            const prModules = perModuleCoverage(prReports);
+            const baseModules = hasBase ? perModuleCoverage(baseReports) : null;
+
+            // --- Build Summary Table ---
+            let body = '### 📊 Code Coverage Report\n\n';
+
+            // Overall summary
+            body += '#### Overall Coverage\n\n';
+            body += '| Metric | ';
+            if (hasBase) body += 'Base | ';
+            body += 'PR | ';
+            if (hasBase) body += 'Diff | ';
+            body += '\n';
+            body += '| --- | ';
+            if (hasBase) body += '--- | ';
+            body += '--- | ';
+            if (hasBase) body += '--- | ';
+            body += '\n';
+
+            const metrics = [
+              ['Line', 'line'],
+              ['Branch', 'branch'],
+              ['Instruction', 'instruction'],
+              ['Method', 'method'],
+            ];
+
+            let coverageDrop = 0;
+
+            for (const [label, key] of metrics) {
+              const prVal = prAgg[key].pct;
+              body += `| ${label} | `;
+              if (hasBase) {
+                const baseVal = baseAgg[key].pct;
+                const diff = prVal - baseVal;
+                if (key === 'line') coverageDrop = diff;
+                body += `${fmtPct(baseVal)} | `;
+                body += `${fmtPct(prVal)} | `;
+                body += `${diffIcon(diff)} ${fmtDiff(diff)} | `;
+              } else {
+                body += `${fmtPct(prVal)} | `;
+              }
+              body += '\n';
+            }
+
+            // Per-module breakdown
+            const allModules = [...new Set([...Object.keys(prModules), ...(baseModules ? Object.keys(baseModules) : [])])].sort();
+
+            if (allModules.length > 1) {
+              body += '\n<details>\n<summary>📦 Per-Module Coverage (Line)</summary>\n\n';
+              body += '| Module | ';
+              if (hasBase) body += 'Base | ';
+              body += 'PR | ';
+              if (hasBase) body += 'Diff | ';
+              body += '\n';
+              body += '| --- | ';
+              if (hasBase) body += '--- | ';
+              body += '--- | ';
+              if (hasBase) body += '--- | ';
+              body += '\n';
+
+              for (const mod of allModules) {
+                const prLine = prModules[mod]?.line;
+                const baseLine = baseModules?.[mod]?.line;
+                const prPct = prLine ? prLine.pct : null;
+                const basePct = baseLine ? baseLine.pct : null;
+
+                body += `| \`${mod}\` | `;
+                if (hasBase) {
+                  body += `${basePct != null ? fmtPct(basePct) : 'N/A'} | `;
+                  body += `${prPct != null ? fmtPct(prPct) : 'N/A'} | `;
+                  if (prPct != null && basePct != null) {
+                    const diff = prPct - basePct;
+                    body += `${diffIcon(diff)} ${fmtDiff(diff)} | `;
+                  } else {
+                    body += 'N/A | ';
+                  }
+                } else {
+                  body += `${prPct != null ? fmtPct(prPct) : 'N/A'} | `;
+                }
+                body += '\n';
+              }
+              body += '\n</details>\n';
+            }
+
+            // --- Threshold check ---
+            const threshold = parseFloat('${{ env.COVERAGE_DROP_THRESHOLD }}');
+            let passed = true;
+
+            if (hasBase && coverageDrop < -threshold) {
+              passed = false;
+              body += `\n> [!CAUTION]\n> Line coverage dropped by **${fmtDiff(coverageDrop)}**, exceeding the allowed threshold of **-${threshold}%**.\n`;
+              body += `> Please add tests to cover the new or modified code.\n`;
+            } else if (hasBase && coverageDrop < 0) {
+              body += `\n> [!WARNING]\n> Line coverage decreased by **${fmtDiff(coverageDrop)}**, but within the allowed threshold of **-${threshold}%**.\n`;
+            } else if (!hasBase) {
+              body += `\n> [!NOTE]\n> Base branch coverage is unavailable. Only PR branch coverage is shown.\n`;
+            } else {
+              body += `\n> [!TIP]\n> Coverage is stable or improved. Great job! 🎉\n`;
+            }
+
+            core.setOutput('report', body);
+            core.setOutput('passed', passed.toString());
+            core.setOutput('coverage_drop', coverageDrop.toFixed(2));
+
+      - name: Find existing comment
+        id: find-comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const comments = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            const marker = '### 📊 Code Coverage Report';
+            const existing = comments.data.find(c => c.body.includes(marker));
+            core.setOutput('comment_id', existing ? existing.id.toString() : '');
+
+      - name: Post or update PR comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const body = `${{ steps.compare.outputs.report }}`;
+            const commentId = '${{ steps.find-comment.outputs.comment_id }}';
+
+            if (commentId) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: parseInt(commentId),
+                body: body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: body,
+              });
+            }
+
+      - name: Check coverage threshold
+        if: steps.compare.outputs.passed == 'false'
+        run: |
+          echo "::error::Line coverage dropped by ${{ steps.compare.outputs.coverage_drop }}%, exceeding the threshold of -${{ env.COVERAGE_DROP_THRESHOLD }}%"
+          exit 1
