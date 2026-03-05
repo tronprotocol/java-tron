@@ -43,7 +43,7 @@ These channels provide faster responses for general inquiries.
 
 - Java-tron version: <!-- e.g., 4.7.4 -->
 - Operating System: <!-- e.g., Ubuntu 20.04 -->
-- Java version: <!-- e.g., OpenJDK 1.8.0_161 -->
+- Java version: <!-- e.g., java version "1.8.0_391" -->
 
 ## Additional Information
 
