@@ -324,19 +324,18 @@ public class ArgsTest {
    *
    * <p>config-test.conf defines: db.directory = "database", db.engine = "LEVELDB".
    * Without any CLI storage arguments, the Storage object should use these config values.
-   * On ARM64, LEVELDB is not supported and validateConfig() should throw.
+   * On ARM64, the silent override in Storage.getDbEngineFromConfig() forces ROCKSDB.
    */
   @Test
   public void testConfigStorageDefaults() {
+    Args.setParam(new String[] {}, TestConstants.TEST_CONF);
+
+    CommonParameter parameter = Args.getInstance();
+
+    Assert.assertEquals("database", parameter.getStorage().getDbDirectory());
     if (Arch.isArm64()) {
-      Assert.assertThrows(IllegalArgumentException.class,
-          () -> Args.setParam(new String[] {}, TestConstants.TEST_CONF));
+      Assert.assertEquals("ROCKSDB", parameter.getStorage().getDbEngine());
     } else {
-      Args.setParam(new String[] {}, TestConstants.TEST_CONF);
-
-      CommonParameter parameter = Args.getInstance();
-
-      Assert.assertEquals("database", parameter.getStorage().getDbDirectory());
       Assert.assertEquals("LEVELDB", parameter.getStorage().getDbEngine());
     }
 

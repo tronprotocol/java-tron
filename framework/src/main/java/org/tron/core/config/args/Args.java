@@ -130,20 +130,6 @@ public class Args extends CommonParameter {
 
     // 4. Init witness (depends on CLI witness flag)
     initLocalWitnesses(config, cmd);
-
-    // 5. Validate final configuration
-    validateConfig();
-  }
-
-  /**
-   * Validate the final configuration after all layers (defaults, config, CLI) are applied.
-   * Fails fast on incompatible configurations.
-   */
-  private static void validateConfig() {
-    if (Arch.isArm64() && "LEVELDB".equalsIgnoreCase(PARAMETER.storage.getDbEngine())) {
-      throw new IllegalArgumentException(
-          "LevelDB is not supported on ARM64 architecture, please use ROCKSDB");
-    }
   }
 
   /**
