@@ -1,7 +1,7 @@
 name: Coverage Check
 
 on:
-  pull_request:
+  pull_request_target:
     branches: [ 'develop', 'release_**' ]
     types: [ opened, synchronize, reopened ]
 
@@ -28,6 +28,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Set up JDK 8
         uses: actions/setup-java@v4
