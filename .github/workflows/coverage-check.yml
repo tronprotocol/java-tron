@@ -209,8 +209,8 @@ jobs:
             }
 
             function diffIcon(diff) {
-              if (diff > 0.01) return '🟢';
-              if (diff < -0.01) return '🔴';
+              if (diff > 0.1) return '🟢';
+              if (diff < -0.1) return '🔴';
               return '⚪';
             }
 
