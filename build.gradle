@@ -175,7 +175,7 @@ pluginManager.withPlugin('org.sonarqube') {
         }
     }
 
-    // Only analyze these modules; skip the rest
+    // Skip these projects
     ["protocol", "platform", "example:actuator-example"].each { name ->
         project(":${name}").sonar.skipProject = true
     }
