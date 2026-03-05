@@ -225,37 +225,14 @@ public class Args extends CommonParameter {
 
     PARAMETER.storage = new Storage();
 
-    PARAMETER.storage.setDbEngine(Optional.ofNullable(PARAMETER.storageDbEngine)
-        .filter(StringUtils::isNotEmpty)
-        .orElse(Storage.getDbEngineFromConfig(config)));
-
-    PARAMETER.storage.setDbSync(Optional.ofNullable(PARAMETER.storageDbSynchronous)
-        .filter(StringUtils::isNotEmpty)
-        .map(Boolean::valueOf)
-        .orElse(Storage.getDbVersionSyncFromConfig(config)));
-
-    PARAMETER.storage.setContractParseSwitch(Optional.ofNullable(PARAMETER.contractParseEnable)
-        .filter(StringUtils::isNotEmpty)
-        .map(Boolean::valueOf)
-        .orElse(Storage.getContractParseSwitchFromConfig(config)));
-
-    PARAMETER.storage.setDbDirectory(Optional.ofNullable(PARAMETER.storageDbDirectory)
-        .filter(StringUtils::isNotEmpty)
-        .orElse(Storage.getDbDirectoryFromConfig(config)));
-
-    PARAMETER.storage.setIndexDirectory(Optional.ofNullable(PARAMETER.storageIndexDirectory)
-        .filter(StringUtils::isNotEmpty)
-        .orElse(Storage.getIndexDirectoryFromConfig(config)));
-
-    PARAMETER.storage.setIndexSwitch(Optional.ofNullable(PARAMETER.storageIndexSwitch)
-        .filter(StringUtils::isNotEmpty)
-        .orElse(Storage.getIndexSwitchFromConfig(config)));
-
-    PARAMETER.storage
-        .setTransactionHistorySwitch(
-            Optional.ofNullable(PARAMETER.storageTransactionHistorySwitch)
-                .filter(StringUtils::isNotEmpty)
-                .orElse(Storage.getTransactionHistorySwitchFromConfig(config)));
+    PARAMETER.storage.setDbEngine(Storage.getDbEngineFromConfig(config));
+    PARAMETER.storage.setDbSync(Storage.getDbVersionSyncFromConfig(config));
+    PARAMETER.storage.setContractParseSwitch(Storage.getContractParseSwitchFromConfig(config));
+    PARAMETER.storage.setDbDirectory(Storage.getDbDirectoryFromConfig(config));
+    PARAMETER.storage.setIndexDirectory(Storage.getIndexDirectoryFromConfig(config));
+    PARAMETER.storage.setIndexSwitch(Storage.getIndexSwitchFromConfig(config));
+    PARAMETER.storage.setTransactionHistorySwitch(
+        Storage.getTransactionHistorySwitchFromConfig(config));
 
     PARAMETER.storage
         .setCheckpointVersion(Storage.getCheckpointVersionFromConfig(config));
@@ -1057,25 +1034,25 @@ public class Args extends CommonParameter {
       PARAMETER.maxHttpConnectNumber = cmd.maxHttpConnectNumber;
     }
     if (assigned.containsKey("--storage-db-directory")) {
-      PARAMETER.storageDbDirectory = cmd.storageDbDirectory;
+      PARAMETER.storage.setDbDirectory(cmd.storageDbDirectory);
     }
     if (assigned.containsKey("--storage-db-engine")) {
-      PARAMETER.storageDbEngine = cmd.storageDbEngine;
+      PARAMETER.storage.setDbEngine(cmd.storageDbEngine);
     }
     if (assigned.containsKey("--storage-db-synchronous")) {
-      PARAMETER.storageDbSynchronous = cmd.storageDbSynchronous;
+      PARAMETER.storage.setDbSync(Boolean.valueOf(cmd.storageDbSynchronous));
     }
     if (assigned.containsKey("--contract-parse-enable")) {
-      PARAMETER.contractParseEnable = cmd.contractParseEnable;
+      PARAMETER.storage.setContractParseSwitch(Boolean.valueOf(cmd.contractParseEnable));
     }
     if (assigned.containsKey("--storage-index-directory")) {
-      PARAMETER.storageIndexDirectory = cmd.storageIndexDirectory;
+      PARAMETER.storage.setIndexDirectory(cmd.storageIndexDirectory);
     }
     if (assigned.containsKey("--storage-index-switch")) {
-      PARAMETER.storageIndexSwitch = cmd.storageIndexSwitch;
+      PARAMETER.storage.setIndexSwitch(cmd.storageIndexSwitch);
     }
     if (assigned.containsKey("--storage-transactionHistory-switch")) {
-      PARAMETER.storageTransactionHistorySwitch = cmd.storageTransactionHistorySwitch;
+      PARAMETER.storage.setTransactionHistorySwitch(cmd.storageTransactionHistorySwitch);
     }
     if (assigned.containsKey("--fast-forward")) {
       PARAMETER.fastForward = cmd.fastForward;

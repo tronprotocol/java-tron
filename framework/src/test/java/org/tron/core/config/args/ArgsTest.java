@@ -282,5 +282,58 @@ public class ArgsTest {
 
     Args.clearParam();
   }
+
+  /**
+   * Verify that CLI storage parameters correctly override config file values.
+   *
+   * <p>config-test.conf defines: db.directory = "database", db.engine = "LEVELDB".
+   * When CLI passes different values (e.g. --storage-db-directory cli-db-dir),
+   * the Storage object should reflect the CLI values, not the config file values.
+   *
+   * <p>This ensures the three-layer override chain works:
+   * Storage defaults -> config file -> CLI arguments.
+   */
+  @Test
+  public void testCliOverridesStorageConfig() {
+    Args.setParam(new String[] {
+        "--storage-db-directory", "cli-db-dir",
+        "--storage-db-engine", "ROCKSDB",
+        "--storage-db-synchronous", "true",
+        "--storage-index-directory", "cli-index-dir",
+        "--storage-index-switch", "cli-index-switch",
+        "--storage-transactionHistory-switch", "off",
+        "--contract-parse-enable", "false"
+    }, TestConstants.TEST_CONF);
+
+    CommonParameter parameter = Args.getInstance();
+
+    Assert.assertEquals("cli-db-dir", parameter.getStorage().getDbDirectory());
+    Assert.assertEquals("ROCKSDB", parameter.getStorage().getDbEngine());
+    Assert.assertTrue(parameter.getStorage().isDbSync());
+    Assert.assertEquals("cli-index-dir", parameter.getStorage().getIndexDirectory());
+    Assert.assertEquals("cli-index-switch", parameter.getStorage().getIndexSwitch());
+    Assert.assertEquals("off", parameter.getStorage().getTransactionHistorySwitch());
+    Assert.assertFalse(parameter.getStorage().isContractParseSwitch());
+
+    Args.clearParam();
+  }
+
+  /**
+   * Verify that config file storage values are applied when no CLI override is present.
+   *
+   * <p>config-test.conf defines: db.directory = "database", db.engine = "LEVELDB".
+   * Without any CLI storage arguments, the Storage object should use these config values.
+   */
+  @Test
+  public void testConfigStorageDefaults() {
+    Args.setParam(new String[] {}, TestConstants.TEST_CONF);
+
+    CommonParameter parameter = Args.getInstance();
+
+    Assert.assertEquals("database", parameter.getStorage().getDbDirectory());
+    Assert.assertEquals("LEVELDB", parameter.getStorage().getDbEngine());
+
+    Args.clearParam();
+  }
 }
 
