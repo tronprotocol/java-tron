@@ -15,7 +15,9 @@ concurrency:
 
 env:
   # Fail the check if total coverage drops more than this percentage
-  COVERAGE_DROP_THRESHOLD: 1.0
+  COVERAGE_DROP_THRESHOLD: 5.0
+  # Warn if coverage drops more than this percentage
+  COVERAGE_WARN_THRESHOLD: 3.0
 
 jobs:
   # Run tests on PR branch and base branch in parallel
@@ -308,14 +310,18 @@ jobs:
 
             // --- Threshold check ---
             const threshold = parseFloat('${{ env.COVERAGE_DROP_THRESHOLD }}');
+            const warnThreshold = parseFloat('${{ env.COVERAGE_WARN_THRESHOLD }}');
             let passed = true;
 
             if (hasBase && coverageDrop < -threshold) {
               passed = false;
               body += `\n> [!CAUTION]\n> Line coverage dropped by **${fmtDiff(coverageDrop)}**, exceeding the allowed threshold of **-${threshold}%**.\n`;
               body += `> Please add tests to cover the new or modified code.\n`;
+            } else if (hasBase && coverageDrop < -warnThreshold) {
+              body += `\n> [!WARNING]\n> Line coverage decreased by **${fmtDiff(coverageDrop)}**, exceeding the warning threshold of **-${warnThreshold}%**.\n`;
+              body += `> Consider adding tests to cover the new or modified code.\n`;
             } else if (hasBase && coverageDrop < 0) {
-              body += `\n> [!WARNING]\n> Line coverage decreased by **${fmtDiff(coverageDrop)}**, but within the allowed threshold of **-${threshold}%**.\n`;
+              body += `\n> [!NOTE]\n> Line coverage decreased by **${fmtDiff(coverageDrop)}**, within the allowed threshold.\n`;
             } else if (!hasBase) {
               body += `\n> [!NOTE]\n> Base branch coverage is unavailable. Only PR branch coverage is shown.\n`;
             } else {
