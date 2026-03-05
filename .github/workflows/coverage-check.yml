@@ -316,7 +316,7 @@ jobs:
               body += `\n> [!TIP]\n> Coverage is stable or improved. Great job! 🎉\n`;
             }
 
-            core.setOutput('report', body);
+            fs.writeFileSync('coverage-report.md', body);
             core.setOutput('passed', passed.toString());
             core.setOutput('coverage_drop', coverageDrop.toFixed(2));
 
@@ -338,7 +338,8 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const body = `${{ steps.compare.outputs.report }}`;
+            const fs = require('fs');
+            const body = fs.readFileSync('coverage-report.md', 'utf8');
             const commentId = '${{ steps.find-comment.outputs.comment_id }}';
 
             if (commentId) {
