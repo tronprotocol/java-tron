@@ -344,7 +344,7 @@ public class Args extends CommonParameter {
       InputStream in = Thread.currentThread()
           .getContextClassLoader().getResourceAsStream("git.properties");
       properties.load(in);
-    } catch (IOException e) {
+    } catch (Exception e) {
       logger.warn("Load resource failed,git.properties {}", e.getMessage());
     }
     return properties.getProperty("git.commit.id.abbrev");

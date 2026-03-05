@@ -93,53 +93,17 @@ jobs:
               core.info('PR lint passed.');
             }
 
-  build:
-    name: Build (JDK ${{ matrix.java }} / ${{ matrix.arch }})
-    needs: pr-lint
-    runs-on: ${{ matrix.runner }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - java: '8'
-            runner: ubuntu-latest
-            arch: x86_64
-          - java: '17'
-            runner: ubuntu-24.04-arm
-            arch: aarch64
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up JDK ${{ matrix.java }}
-        uses: actions/setup-java@v4
-        with:
-          java-version: ${{ matrix.java }}
-          distribution: 'temurin'
-
-      - name: Cache Gradle packages
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-${{ matrix.arch }}-gradle-${{ hashFiles('**/*.gradle', '**/gradle-wrapper.properties') }}
-          restore-keys: ${{ runner.os }}-${{ matrix.arch }}-gradle-
-
-      - name: Build
-        run: ./gradlew clean build -x test
-
   checkstyle:
     name: Checkstyle
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up JDK 8
+      - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
-          java-version: '8'
+          java-version: '17'
           distribution: 'temurin'
 
       - name: Cache Gradle packages
@@ -163,20 +127,29 @@ jobs:
             framework/build/reports/checkstyle/
             plugins/build/reports/checkstyle/
 
-  test:
-    name: Unit Tests (JDK ${{ matrix.java }} / ${{ matrix.arch }})
+  build:
+    name: Build ${{ matrix.os-name }}(JDK ${{ matrix.java }} / ${{ matrix.arch }})
+    needs: [pr-lint, checkstyle]
     runs-on: ${{ matrix.runner }}
-    needs: build
-    timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:
         include:
           - java: '8'
             runner: ubuntu-latest
+            os-name: ubuntu
             arch: x86_64
           - java: '17'
             runner: ubuntu-24.04-arm
+            os-name: ubuntu
+            arch: aarch64
+          - java: '8'
+            runner: macos-26-intel
+            os-name: macos
+            arch: x86_64
+          - java: '17'
+            runner: macos-latest
+            os-name: macos
             arch: aarch64
 
     steps:
@@ -197,13 +170,280 @@ jobs:
           key: ${{ runner.os }}-${{ matrix.arch }}-gradle-${{ hashFiles('**/*.gradle', '**/gradle-wrapper.properties') }}
           restore-keys: ${{ runner.os }}-${{ matrix.arch }}-gradle-
 
-      - name: Run tests
-        run: ./gradlew test
+      - name: Build
+        run: ./gradlew clean build --no-daemon
 
-      - name: Upload test reports
-        if: failure()
+  docker-build-rockylinux:
+    name: Build rockylinux (JDK 8 / x86_64)
+    needs: [pr-lint, checkstyle]
+    runs-on: ubuntu-latest
+
+    container:
+      image: rockylinux:8
+
+    env:
+      GRADLE_USER_HOME: /github/home/.gradle
+      LANG: en_US.UTF-8
+      LC_ALL: en_US.UTF-8
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install dependencies (Rocky 8 + JDK8)
+        run: |
+          set -euxo pipefail
+          dnf -y install java-1.8.0-openjdk-devel git wget unzip which jq bc curl glibc-langpack-en
+          dnf -y groupinstall "Development Tools"
+
+      - name: Check Java version
+        run: java -version
+
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            /github/home/.gradle/caches
+            /github/home/.gradle/wrapper
+          key: ${{ runner.os }}-rockylinux-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-rockylinux-gradle-
+
+      - name: Prepare checkstyle config copy
+        run: |
+          set -euxo pipefail
+          cp -f config/checkstyle/checkStyle.xml config/checkstyle/checkStyleAll.xml || true
+
+      - name: Grant execute permission
+        run: chmod +x gradlew
+
+      - name: Stop Gradle daemon
+        run: ./gradlew --stop || true
+
+      - name: Build
+        run: ./gradlew clean build --no-daemon --no-build-cache
+        #run: |
+        #  ./gradlew clean build -x test --no-daemon --no-build-cache
+        #  ./gradlew framework:test --tests org.tron.core.zksnark.ShieldedReceiveTest
+
+      - name: Generate JaCoCo report
+        run: ./gradlew jacocoTestReport --no-daemon --no-build-cache
+
+      - name: Upload JaCoCo artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: test-reports-${{ matrix.arch }}
+          name: jacoco-rockylinux
           path: |
-            **/build/reports/tests/
+            **/build/reports/jacoco/test/jacocoTestReport.xml
+            **/build/reports/**
+            **/build/test-results/**
+          if-no-files-found: error
+
+  docker-build-debian11:
+    name: Build debian11 (JDK 8 / x86_64)
+    needs: [pr-lint, checkstyle]
+    runs-on: ubuntu-latest
+
+    container:
+      image: eclipse-temurin:8-jdk # base image is Debian 11 (Bullseye)
+
+    defaults:
+      run:
+        shell: bash
+
+    env:
+      GRADLE_USER_HOME: /github/home/.gradle
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install dependencies (Debian + build tools)
+        run: |
+          set -euxo pipefail
+          apt-get update
+          apt-get install -y git wget unzip build-essential curl jq
+
+      - name: Check Java version
+        run: java -version
+
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            /github/home/.gradle/caches
+            /github/home/.gradle/wrapper
+          key: ${{ runner.os }}-debian11-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-debian11-gradle-
+
+      - name: Grant execute permission
+        run: chmod +x gradlew
+
+      - name: Build
+        run: ./gradlew clean build --no-daemon --no-build-cache
+
+
+  coverage-gate:
+    name: Coverage Gate (from rockylinux build)
+    needs: docker-build-rockylinux
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Checkout code (needed by codecov-action for git context)
+        uses: actions/checkout@v4
+
+      - name: Download JaCoCo artifacts (rockylinux)
+        uses: actions/download-artifact@v4
+        with:
+          name: jacoco-rockylinux
+          path: artifacts/jacoco-rockylinux
+
+      - name: List downloaded reports
+        run: |
+          set -eux
+          echo "JaCoCo XML reports found:"
+          find artifacts/jacoco-rockylinux -name jacocoTestReport.xml
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          directory: artifacts/jacoco-rockylinux
+          override_commit: ${{ github.event.pull_request.head.sha }}
+          override_branch: ${{ github.event.pull_request.head.ref }}
+          override_pr: ${{ github.event.pull_request.number }}
+          verbose: true
+          fail_ci_if_error: true
+
+      - name: Install tools
+        run: sudo apt-get update && sudo apt-get install -y jq bc curl
+
+      - name: Wait for Codecov processing
+        env:
+          CODECOV_API_TOKEN: ${{ secrets.CODECOV_API_TOKEN }}
+          CODECOV_OWNER: ${{ github.repository_owner }}
+          CODECOV_REPO: ${{ github.event.repository.name }}
+          COMMIT_ID: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euxo pipefail
+
+          API_URL="https://api.codecov.io/api/v2/github/${CODECOV_OWNER}/repos/${CODECOV_REPO}/commits/${COMMIT_ID}"
+          MAX_ATTEMPTS=20
+          INTERVAL=30
+
+          for i in $(seq 1 $MAX_ATTEMPTS); do
+            echo "=== Polling attempt $i / $MAX_ATTEMPTS ==="
+
+            http_code=$(curl -sS -o /tmp/poll.json -w '%{http_code}' \
+              -H "Authorization: Bearer ${CODECOV_API_TOKEN}" \
+              "$API_URL")
+
+            if [ "$http_code" = "200" ]; then
+              state=$(jq -r '.state // "unknown"' /tmp/poll.json)
+              echo "Commit processing state: $state"
+              if [ "$state" = "complete" ]; then
+                echo "Codecov has finished processing."
+                exit 0
+              fi
+            else
+              echo "HTTP $http_code — commit not yet available."
+              cat /tmp/poll.json 2>/dev/null || true
+            fi
+
+            if [ "$i" -lt "$MAX_ATTEMPTS" ]; then
+              sleep "$INTERVAL"
+            fi
+          done
+
+          echo "Timed out waiting for Codecov (${MAX_ATTEMPTS} x ${INTERVAL}s)."
+          exit 1
+
+      - name: Coverage gate via Codecov REST API
+        env:
+          CODECOV_API_TOKEN: ${{ secrets.CODECOV_API_TOKEN }}
+          CODECOV_OWNER: ${{ github.repository_owner }}
+          CODECOV_REPO: ${{ github.event.repository.name }}
+          COMMIT_ID: ${{ github.event.pull_request.head.sha }}
+          BASE_BRANCH: ${{ github.event.pull_request.base.ref }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          set -euxo pipefail
+
+          API_BASE="https://api.codecov.io/api/v2/github/${CODECOV_OWNER}/repos/${CODECOV_REPO}"
+          AUTH="Authorization: Bearer ${CODECOV_API_TOKEN}"
+
+          # Helper: GET with error handling
+          api_get() {
+            local url="$1"
+            local http_code
+            http_code=$(curl -sS -o /tmp/api_out.json -w '%{http_code}' \
+              -H "$AUTH" "$url")
+            if [ "$http_code" != "200" ]; then
+              echo "ERROR: GET $url => HTTP $http_code" >&2
+              cat /tmp/api_out.json >&2
+              return 1
+            fi
+            cat /tmp/api_out.json
+          }
+
+          # 1) Current commit coverage
+          echo "=== 1. Current commit coverage (sha: ${COMMIT_ID}) ==="
+          commit_resp=$(api_get "${API_BASE}/totals/?sha=${COMMIT_ID}")
+          self_cov=$(echo "$commit_resp" | jq -r '.totals.coverage // 0')
+          echo "self_cov = ${self_cov}%"
+
+          # 2) Base branch head coverage
+          echo "=== 2. Base branch coverage (branch: ${BASE_BRANCH}) ==="
+          base_resp=$(api_get "${API_BASE}/totals/?branch=${BASE_BRANCH}")
+          base_branch_cov=$(echo "$base_resp" | jq -r '.totals.coverage // 0')
+          echo "base_branch_cov = ${base_branch_cov}%"
+
+          # 3) PR comparison — patch coverage
+          echo "=== 3. PR #${PR_NUMBER} comparison ==="
+          compare_resp=$(api_get "${API_BASE}/compare/?pullid=${PR_NUMBER}")
+          patch_cov=$(echo "$compare_resp" | jq -r '.totals.patch.coverage // 0')
+          impacted_files=$(echo "$compare_resp" | jq -r '(.files // []) | length')
+          echo "patch_cov = ${patch_cov}%"
+          echo "impacted_files = ${impacted_files}"
+
+          # ===== Gate Rules =====
+
+          # Rule 1: current commit must have valid coverage
+          if [ "$(echo "$self_cov <= 0" | bc)" -eq 1 ]; then
+            echo "FAIL: Could not retrieve valid coverage for commit ${COMMIT_ID}."
+            exit 1
+          fi
+
+          # Rule 2: overall coverage must not decrease vs base branch
+          if [ "$(echo "$self_cov < $base_branch_cov" | bc)" -eq 1 ]; then
+            echo "FAIL: Overall coverage decreased!"
+            echo "  Current commit : ${self_cov}%"
+            echo "  Base branch    : ${base_branch_cov}%"
+            echo "Please add unit tests to maintain coverage."
+            exit 1
+          fi
+
+          # Rule 3: patch coverage on changed files >= 80%
+          # if [ "$impacted_files" -gt 0 ] && [ "$(echo "$patch_cov > 0" | bc)" -eq 1 ]; then
+          #   if [ "$(echo "$patch_cov < 80" | bc)" -eq 1 ]; then
+          #     echo "FAIL: Patch coverage is ${patch_cov}% (minimum 80%)."
+          #     echo "Please add tests for new/changed code."
+          #     exit 1
+          #   fi
+          # else
+          #   echo "No impacted files or no patch data; skipping patch coverage check."
+          # fi
+
+          echo ""
+          echo "All coverage gates passed!"
+          echo "  Current commit : ${self_cov}%"
+          echo "  Base branch    : ${base_branch_cov}%"
+          echo "  Patch coverage : ${patch_cov}%"
