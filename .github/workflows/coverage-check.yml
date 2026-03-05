@@ -42,11 +42,8 @@ jobs:
           key: ${{ runner.os }}-coverage-gradle-${{ hashFiles('**/*.gradle', '**/gradle-wrapper.properties') }}
           restore-keys: ${{ runner.os }}-coverage-gradle-
 
-      - name: Run tests
-        run: ./gradlew test
-
-      - name: Generate coverage reports
-        run: ./gradlew jacocoTestReport
+      - name: Run tests and generate coverage reports
+        run: ./gradlew test jacocoTestReport
 
       - name: Upload coverage reports
         uses: actions/upload-artifact@v4
@@ -80,11 +77,8 @@ jobs:
           key: ${{ runner.os }}-coverage-gradle-${{ hashFiles('**/*.gradle', '**/gradle-wrapper.properties') }}
           restore-keys: ${{ runner.os }}-coverage-gradle-
 
-      - name: Run tests
-        run: ./gradlew test
-
-      - name: Generate coverage reports
-        run: ./gradlew jacocoTestReport
+      - name: Run tests and generate coverage reports
+        run: ./gradlew test jacocoTestReport
 
       - name: Upload coverage reports
         uses: actions/upload-artifact@v4
