@@ -38,6 +38,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.LocalWitnesses;
 import org.tron.common.utils.PublicMethod;
+import org.tron.common.arch.Arch;
 import org.tron.core.config.Configuration;
 
 @Slf4j
@@ -323,15 +324,21 @@ public class ArgsTest {
    *
    * <p>config-test.conf defines: db.directory = "database", db.engine = "LEVELDB".
    * Without any CLI storage arguments, the Storage object should use these config values.
+   * On ARM64, LEVELDB is not supported and validateConfig() should throw.
    */
   @Test
   public void testConfigStorageDefaults() {
-    Args.setParam(new String[] {}, TestConstants.TEST_CONF);
+    if (Arch.isArm64()) {
+      Assert.assertThrows(IllegalArgumentException.class,
+          () -> Args.setParam(new String[] {}, TestConstants.TEST_CONF));
+    } else {
+      Args.setParam(new String[] {}, TestConstants.TEST_CONF);
 
-    CommonParameter parameter = Args.getInstance();
+      CommonParameter parameter = Args.getInstance();
 
-    Assert.assertEquals("database", parameter.getStorage().getDbDirectory());
-    Assert.assertEquals("LEVELDB", parameter.getStorage().getDbEngine());
+      Assert.assertEquals("database", parameter.getStorage().getDbDirectory());
+      Assert.assertEquals("LEVELDB", parameter.getStorage().getDbEngine());
+    }
 
     Args.clearParam();
   }
