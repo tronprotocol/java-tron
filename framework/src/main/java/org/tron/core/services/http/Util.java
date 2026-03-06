@@ -95,7 +95,7 @@ public class Util {
 
   public static String printBlockList(BlockList list, boolean selfType) {
     List<Block> blocks = list.getBlockList();
-    JSONObject jsonObject = JSONObject.parseObject(JsonFormat.printToString(list, selfType));
+    JSONObject jsonObject = new JSONObject();
     JSONArray jsonArray = new JSONArray();
     blocks.stream().forEach(block -> jsonArray.add(printBlockToJSON(block, selfType)));
     jsonObject.put("block", jsonArray);
@@ -110,8 +110,10 @@ public class Util {
   public static JSONObject printBlockToJSON(Block block, boolean selfType) {
     BlockCapsule blockCapsule = new BlockCapsule(block);
     String blockID = ByteArray.toHexString(blockCapsule.getBlockId().getBytes());
-    JSONObject jsonObject = JSONObject.parseObject(JsonFormat.printToString(block, selfType));
+    JSONObject jsonObject = new JSONObject();
     jsonObject.put("blockID", blockID);
+    jsonObject.put("block_header",
+        JSONObject.parseObject(JsonFormat.printToString(block.getBlockHeader(), selfType)));
     if (!blockCapsule.getTransactions().isEmpty()) {
       jsonObject.put("transactions",
           printTransactionListToJSON(blockCapsule.getTransactions(), selfType));
