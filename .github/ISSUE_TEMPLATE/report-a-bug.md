@@ -20,6 +20,9 @@ assignees: ''
 
 ## Environment
 
+**Network**
+<!-- Specify the network type: Mainnet, Testnet, or Private network -->
+
 **Software Versions**
 <!-- Run `java -jar FullNode.jar -v` to get version information -->
 

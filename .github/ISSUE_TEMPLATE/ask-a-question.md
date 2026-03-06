@@ -41,6 +41,7 @@ These channels provide faster responses for general inquiries.
 
 ## Environment (if applicable)
 
+- Network: <!-- e.g., Mainnet -->
 - java-tron version: <!-- e.g., 4.7.4 -->
 - Operating System: <!-- e.g., Ubuntu 20.04 -->
 - Java version: <!-- e.g., java version "1.8.0_391" -->
