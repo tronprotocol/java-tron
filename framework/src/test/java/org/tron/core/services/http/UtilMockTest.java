@@ -1,5 +1,6 @@
 package org.tron.core.services.http;
 
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.google.protobuf.ByteString;
 
@@ -44,7 +45,7 @@ public class UtilMockTest  {
   public void testPrintBlockList() {
     BlockCapsule blockCapsule1 = new BlockCapsule(1, Sha256Hash.ZERO_HASH,
         System.currentTimeMillis(), Sha256Hash.ZERO_HASH.getByteString());
-    BlockCapsule blockCapsule2 = new BlockCapsule(1, Sha256Hash.ZERO_HASH,
+    BlockCapsule blockCapsule2 = new BlockCapsule(2, Sha256Hash.ZERO_HASH,
         System.currentTimeMillis(), Sha256Hash.ZERO_HASH.getByteString());
     GrpcAPI.BlockList list = GrpcAPI.BlockList.newBuilder()
         .addBlock(blockCapsule1.getInstance())
@@ -52,6 +53,20 @@ public class UtilMockTest  {
         .build();
     String out = Util.printBlockList(list, true);
     Assert.assertNotNull(out);
+
+    JSONObject json = JSONObject.parseObject(out);
+    Assert.assertTrue(json.containsKey("block"));
+    JSONArray blockArray = json.getJSONArray("block");
+    Assert.assertEquals(2, blockArray.size());
+
+    // verify each block has correct structure
+    for (int i = 0; i < blockArray.size(); i++) {
+      JSONObject blockJson = blockArray.getJSONObject(i);
+      Assert.assertTrue(blockJson.containsKey("blockID"));
+      Assert.assertTrue(blockJson.containsKey("block_header"));
+      Assert.assertFalse(blockJson.getString("blockID").isEmpty());
+      Assert.assertNotNull(blockJson.getJSONObject("block_header"));
+    }
   }
 
   @Test
