@@ -1,0 +1,194 @@
+name: Codecov Upload
+
+on:
+  workflow_run:
+    workflows: ["PR Check"]
+    types: [completed]
+
+jobs:
+  coverage-gate:
+    name: Coverage Gate
+    if: github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      actions: read
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Get PR info from triggering workflow
+        id: pr-info
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const run_id = context.payload.workflow_run.id;
+            const prs = context.payload.workflow_run.pull_requests;
+            if (!prs || prs.length === 0) {
+              core.setFailed('No pull request associated with this workflow run.');
+              return;
+            }
+            const pr = prs[0];
+            core.setOutput('pr_number', pr.number);
+            core.setOutput('head_sha', pr.head.sha);
+            core.setOutput('head_ref', pr.head.ref);
+            core.setOutput('base_ref', pr.base.ref);
+            core.setOutput('run_id', run_id);
+
+      - name: Checkout code (needed by codecov-action for git context)
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.pr-info.outputs.head_sha }}
+
+      - name: Download JaCoCo artifacts from PR Check
+        uses: actions/download-artifact@v4
+        with:
+          name: jacoco-rockylinux
+          path: artifacts/jacoco-rockylinux
+          run-id: ${{ steps.pr-info.outputs.run_id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: List downloaded reports
+        run: |
+          set -eux
+          echo "JaCoCo XML reports found:"
+          find artifacts/jacoco-rockylinux -name jacocoTestReport.xml
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          directory: artifacts/jacoco-rockylinux
+          override_commit: ${{ steps.pr-info.outputs.head_sha }}
+          override_branch: ${{ steps.pr-info.outputs.head_ref }}
+          override_pr: ${{ steps.pr-info.outputs.pr_number }}
+          verbose: true
+          fail_ci_if_error: true
+
+      - name: Install tools
+        run: sudo apt-get update && sudo apt-get install -y jq bc curl
+
+      - name: Wait for Codecov processing
+        env:
+          CODECOV_API_TOKEN: ${{ secrets.CODECOV_API_TOKEN }}
+          CODECOV_OWNER: ${{ github.repository_owner }}
+          CODECOV_REPO: ${{ github.event.repository.name }}
+          COMMIT_ID: ${{ steps.pr-info.outputs.head_sha }}
+        run: |
+          set -euxo pipefail
+
+          API_URL="https://api.codecov.io/api/v2/github/${CODECOV_OWNER}/repos/${CODECOV_REPO}/commits/${COMMIT_ID}"
+          MAX_ATTEMPTS=20
+          INTERVAL=30
+
+          for i in $(seq 1 $MAX_ATTEMPTS); do
+            echo "=== Polling attempt $i / $MAX_ATTEMPTS ==="
+
+            http_code=$(curl -sS -o /tmp/poll.json -w '%{http_code}' \
+              -H "Authorization: Bearer ${CODECOV_API_TOKEN}" \
+              "$API_URL")
+
+            if [ "$http_code" = "200" ]; then
+              state=$(jq -r '.state // "unknown"' /tmp/poll.json)
+              echo "Commit processing state: $state"
+              if [ "$state" = "complete" ]; then
+                echo "Codecov has finished processing."
+                exit 0
+              fi
+            else
+              echo "HTTP $http_code — commit not yet available."
+              cat /tmp/poll.json 2>/dev/null || true
+            fi
+
+            if [ "$i" -lt "$MAX_ATTEMPTS" ]; then
+              sleep "$INTERVAL"
+            fi
+          done
+
+          echo "Timed out waiting for Codecov (${MAX_ATTEMPTS} x ${INTERVAL}s)."
+          exit 1
+
+      - name: Coverage gate via Codecov REST API
+        env:
+          CODECOV_API_TOKEN: ${{ secrets.CODECOV_API_TOKEN }}
+          CODECOV_OWNER: ${{ github.repository_owner }}
+          CODECOV_REPO: ${{ github.event.repository.name }}
+          COMMIT_ID: ${{ steps.pr-info.outputs.head_sha }}
+          BASE_BRANCH: ${{ steps.pr-info.outputs.base_ref }}
+          PR_NUMBER: ${{ steps.pr-info.outputs.pr_number }}
+        run: |
+          set -euxo pipefail
+
+          API_BASE="https://api.codecov.io/api/v2/github/${CODECOV_OWNER}/repos/${CODECOV_REPO}"
+          AUTH="Authorization: Bearer ${CODECOV_API_TOKEN}"
+
+          # Helper: GET with error handling
+          api_get() {
+            local url="$1"
+            local http_code
+            http_code=$(curl -sS -o /tmp/api_out.json -w '%{http_code}' \
+              -H "$AUTH" "$url")
+            if [ "$http_code" != "200" ]; then
+              echo "ERROR: GET $url => HTTP $http_code" >&2
+              cat /tmp/api_out.json >&2
+              return 1
+            fi
+            cat /tmp/api_out.json
+          }
+
+          # 1) Current commit coverage
+          echo "=== 1. Current commit coverage (sha: ${COMMIT_ID}) ==="
+          commit_resp=$(api_get "${API_BASE}/totals/?sha=${COMMIT_ID}")
+          self_cov=$(echo "$commit_resp" | jq -r '.totals.coverage // 0')
+          echo "self_cov = ${self_cov}%"
+
+          # 2) Base branch head coverage
+          echo "=== 2. Base branch coverage (branch: ${BASE_BRANCH}) ==="
+          base_resp=$(api_get "${API_BASE}/totals/?branch=${BASE_BRANCH}")
+          base_branch_cov=$(echo "$base_resp" | jq -r '.totals.coverage // 0')
+          echo "base_branch_cov = ${base_branch_cov}%"
+
+          # 3) PR comparison — patch coverage
+          echo "=== 3. PR #${PR_NUMBER} comparison ==="
+          compare_resp=$(api_get "${API_BASE}/compare/?pullid=${PR_NUMBER}")
+          patch_cov=$(echo "$compare_resp" | jq -r '.totals.patch.coverage // 0')
+          impacted_files=$(echo "$compare_resp" | jq -r '(.files // []) | length')
+          echo "patch_cov = ${patch_cov}%"
+          echo "impacted_files = ${impacted_files}"
+
+          # ===== Gate Rules =====
+
+          # Rule 1: current commit must have valid coverage
+          if [ "$(echo "$self_cov <= 0" | bc)" -eq 1 ]; then
+            echo "FAIL: Could not retrieve valid coverage for commit ${COMMIT_ID}."
+            exit 1
+          fi
+
+          # Rule 2: overall coverage must not decrease vs base branch
+          if [ "$(echo "$self_cov < $base_branch_cov" | bc)" -eq 1 ]; then
+            echo "FAIL: Overall coverage decreased!"
+            echo "  Current commit : ${self_cov}%"
+            echo "  Base branch    : ${base_branch_cov}%"
+            echo "Please add unit tests to maintain coverage."
+            exit 1
+          fi
+
+          # Rule 3: patch coverage on changed files >= 80%
+          # if [ "$impacted_files" -gt 0 ] && [ "$(echo "$patch_cov > 0" | bc)" -eq 1 ]; then
+          #   if [ "$(echo "$patch_cov < 80" | bc)" -eq 1 ]; then
+          #     echo "FAIL: Patch coverage is ${patch_cov}% (minimum 80%)."
+          #     echo "Please add tests for new/changed code."
+          #     exit 1
+          #   fi
+          # else
+          #   echo "No impacted files or no patch data; skipping patch coverage check."
+          # fi
+
+          echo ""
+          echo "All coverage gates passed!"
+          echo "  Current commit : ${self_cov}%"
+          echo "  Base branch    : ${base_branch_cov}%"
+          echo "  Patch coverage : ${patch_cov}%"
