@@ -69,4 +69,4 @@ jobs:
             -Dsonar.organization=tron-zhaohong \
             -Dsonar.projectKey=java-tron \
             -Dsonar.qualitygate.wait=false \
-            -Dsonar.pullrequest.github.summary_comment=false
+            -Dsonar.pullrequest.github.summary_comment=false 
