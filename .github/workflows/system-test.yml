@@ -1,0 +1,71 @@
+name: System Test
+
+on:
+  pull_request:
+    branches: [ 'develop', 'release_**' ]
+    types: [ opened, edited, synchronize, reopened ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  system-test:
+    name: System Test (JDK 8 / x86_64)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          java-version: '8'
+          distribution: 'temurin'
+
+      - name: Clone system-test
+        run: |
+          git clone https://github.com/tronprotocol/system-test.git
+          cd system-test
+          git checkout release_workflow
+
+      - name: Checkout java-tron
+        uses: actions/checkout@v4
+        with:
+          path: java-tron
+
+      - name: Cache Gradle packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-system-test-${{ hashFiles('java-tron/**/*.gradle', 'java-tron/**/gradle-wrapper.properties') }}
+          restore-keys: ${{ runner.os }}-gradle-system-test-
+
+      - name: Build java-tron
+        working-directory: java-tron
+        run: ./gradlew clean build -x test --no-daemon
+
+      - name: Copy config and start FullNode
+        run: |
+          cp system-test/testcase/src/test/resources/config-system-test.conf java-tron/
+          cd java-tron
+          nohup java -jar build/libs/FullNode.jar --witness -c config-system-test.conf > fullnode.log 2>&1 &
+          echo "FullNode started, waiting 30 seconds..."
+          sleep 30
+          echo "=== FullNode log (last 30 lines) ==="
+          tail -30 fullnode.log || true
+
+      - name: Run system tests
+        working-directory: system-test
+        run: |
+          cp solcDIR/solc-linux-0.8.6 solcDIR/solc
+          ./gradlew clean --no-daemon
+          ./gradlew --info stest --no-daemon
+
+      - name: Upload FullNode log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fullnode-log
+          path: java-tron/fullnode.log
+          if-no-files-found: warn
