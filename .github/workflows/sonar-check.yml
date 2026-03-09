@@ -66,7 +66,7 @@ jobs:
             --init-script /tmp/sonar-init.gradle \
             -PskipJdkCheck \
             -Dsonar.host.url=https://sonarcloud.io \
-            -Dsonar.organization=${{ github.repository_owner }} \
-            -Dsonar.projectKey=${{ github.repository_owner }}_${{ github.event.repository.name }} \
+            -Dsonar.organization=tron-zhaohong \
+            -Dsonar.projectKey=java-tron \
             -Dsonar.qualitygate.wait=false \
             -Dsonar.pullrequest.github.summary_comment=false
