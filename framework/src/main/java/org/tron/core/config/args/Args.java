@@ -251,7 +251,8 @@ public class Args extends CommonParameter {
     PARAMETER.storage.setDbRoots(config);
 
     PARAMETER.seedNode = new SeedNode();
-    PARAMETER.seedNode.setAddressList(loadSeeds(config));
+    PARAMETER.seedNode.setAddressList(
+        getInetSocketAddress(config, ConfigKey.SEED_NODE_IP_LIST, false));
 
     if (config.hasPath(ConfigKey.GENESIS_BLOCK)) {
       PARAMETER.genesisBlock = new GenesisBlock();
@@ -1087,6 +1088,13 @@ public class Args extends CommonParameter {
     if (assigned.containsKey("--log-config")) {
       PARAMETER.logbackPath = cmd.logbackPath;
     }
+    if (!cmd.seedNodes.isEmpty()) {
+      List<InetSocketAddress> seeds = new ArrayList<>();
+      for (String s : cmd.seedNodes) {
+        seeds.add(NetUtil.parseInetSocketAddress(s));
+      }
+      PARAMETER.seedNode.setAddressList(seeds);
+    }
   }
 
   private static void initLocalWitnesses(Config config, CLIParameter cmd) {
@@ -1312,19 +1320,6 @@ public class Args extends CommonParameter {
     return eventPluginConfig;
   }
 
-  private static List<InetSocketAddress> loadSeeds(final com.typesafe.config.Config config) {
-    List<InetSocketAddress> inetSocketAddressList = new ArrayList<>();
-    if (PARAMETER.seedNodes != null && !PARAMETER.seedNodes.isEmpty()) {
-      for (String s : PARAMETER.seedNodes) {
-        InetSocketAddress inetSocketAddress = NetUtil.parseInetSocketAddress(s);
-        inetSocketAddressList.add(inetSocketAddress);
-      }
-    } else {
-      inetSocketAddressList = getInetSocketAddress(config, ConfigKey.SEED_NODE_IP_LIST, false);
-    }
-
-    return inetSocketAddressList;
-  }
 
   public static PublishConfig loadDnsPublishConfig(final com.typesafe.config.Config config) {
     PublishConfig publishConfig = new PublishConfig();
