@@ -3,7 +3,7 @@ name: PR Check
 on:
   pull_request:
     branches: [ 'develop', 'release_**' ]
-    types: [ opened, edited, synchronize, reopened ]
+    types: [ opened, synchronize, reopened ]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
