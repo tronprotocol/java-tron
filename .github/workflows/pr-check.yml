@@ -213,11 +213,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-rockylinux-gradle-
 
-      - name: Prepare checkstyle config copy
-        run: |
-          set -euxo pipefail
-          cp -f config/checkstyle/checkStyle.xml config/checkstyle/checkStyleAll.xml || true
-
       - name: Grant execute permission
         run: chmod +x gradlew
 
