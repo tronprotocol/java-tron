@@ -1,9 +1,11 @@
 name: PR Check
 
 on:
+  push:
+    branches: [ 'master', 'release_**' ]
   pull_request:
     branches: [ 'develop', 'release_**' ]
-    types: [ opened, synchronize, reopened ]
+    types: [ opened, edited, synchronize, reopened ]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
@@ -129,6 +131,7 @@ jobs:
 
   build:
     name: Build ${{ matrix.os-name }}(JDK ${{ matrix.java }} / ${{ matrix.arch }})
+    if: github.event.action != 'edited'
     needs: [pr-lint, checkstyle]
     runs-on: ${{ matrix.runner }}
     strategy:
@@ -175,6 +178,7 @@ jobs:
 
   docker-build-rockylinux:
     name: Build rockylinux (JDK 8 / x86_64)
+    if: github.event.action != 'edited'
     needs: [pr-lint, checkstyle]
     runs-on: ubuntu-latest
 
@@ -241,6 +245,7 @@ jobs:
 
   docker-build-debian11:
     name: Build debian11 (JDK 8 / x86_64)
+    if: github.event.action != 'edited'
     needs: [pr-lint, checkstyle]
     runs-on: ubuntu-latest
 

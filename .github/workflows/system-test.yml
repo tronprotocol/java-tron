@@ -1,6 +1,8 @@
 name: System Test
 
 on:
+  push:
+    branches: [ 'master', 'release_**' ]
   pull_request:
     branches: [ 'develop', 'release_**' ]
     types: [ opened, synchronize, reopened ]
@@ -13,6 +15,7 @@ jobs:
   system-test:
     name: System Test (JDK 8 / x86_64)
     runs-on: ubuntu-latest
+    timeout-minutes: 60
 
     steps:
       - name: Set up JDK 8
@@ -50,10 +53,23 @@ jobs:
           cp system-test/testcase/src/test/resources/config-system-test.conf java-tron/
           cd java-tron
           nohup java -jar build/libs/FullNode.jar --witness -c config-system-test.conf > fullnode.log 2>&1 &
-          echo "FullNode started, waiting 30 seconds..."
-          sleep 30
-          echo "=== FullNode log (last 30 lines) ==="
-          tail -30 fullnode.log || true
+          echo "FullNode started, waiting for it to be ready..."
+
+          MAX_ATTEMPTS=60
+          INTERVAL=5
+          for i in $(seq 1 $MAX_ATTEMPTS); do
+            if curl -s --fail "http://localhost:9090/wallet/getblockbynum?num=1" > /dev/null 2>&1; then
+              echo "FullNode is ready! (attempt $i)"
+              exit 0
+            fi
+            echo "Waiting... (attempt $i/$MAX_ATTEMPTS)"
+            sleep $INTERVAL
+          done
+
+          echo "FullNode failed to start within $((MAX_ATTEMPTS * INTERVAL)) seconds."
+          echo "=== FullNode log (last 50 lines) ==="
+          tail -50 fullnode.log || true
+          exit 1
 
       - name: Run system tests
         working-directory: system-test
