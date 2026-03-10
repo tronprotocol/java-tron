@@ -58,7 +58,7 @@ jobs:
           MAX_ATTEMPTS=60
           INTERVAL=5
           for i in $(seq 1 $MAX_ATTEMPTS); do
-            if curl -s --fail "http://localhost:9090/wallet/getblockbynum?num=1" > /dev/null 2>&1; then
+            if curl -s --fail "http://localhost:8090/wallet/getblockbynum?num=1" > /dev/null 2>&1; then
               echo "FullNode is ready! (attempt $i)"
               exit 0
             fi
