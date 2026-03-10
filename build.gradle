@@ -1,5 +1,6 @@
 import org.gradle.nativeplatform.platform.internal.Architectures
 import org.gradle.internal.os.OperatingSystem
+
 allprojects {
     version = "1.0.0"
     apply plugin: "java-library"
@@ -40,7 +41,7 @@ ext.archInfo = [
         VMOptions: isArm64 ? "${rootDir}/gradle/jdk17/java-tron.vmoptions" : "${rootDir}/gradle/java-tron.vmoptions"
 ]
 
-if (!archInfo.java.is(archInfo.requires.JavaVersion)) {
+if (!archInfo.java.is(archInfo.requires.JavaVersion) && !project.hasProperty('skipJdkCheck')) {
     throw new GradleException("Java ${archInfo.requires.JavaVersion} is required for ${archInfo.name}. Detected version ${archInfo.java}")
 }
 
@@ -162,6 +163,29 @@ gradle.buildFinished {
     if (project.hasProperty('cleanSubBuild')) {
         subprojects {
             buildDir.deleteDir()
+        }
+    }
+}
+
+// SonarQube configuration — only activates when the plugin is applied (via CI init script)
+pluginManager.withPlugin('org.sonarqube') {
+    sonar {
+        properties {
+            property "sonar.sourceEncoding", "UTF-8"
+        }
+    }
+
+    // Skip these projects
+    ["protocol", "platform", "example:actuator-example"].each { name ->
+        project(":${name}").sonar.skipProject = true
+    }
+
+    // Only analyze main sources, exclude test sources
+    subprojects {
+        sonar {
+            properties {
+                property "sonar.tests", ""
+            }
         }
     }
 }
