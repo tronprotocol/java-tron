@@ -135,6 +135,7 @@ jobs:
     if: github.event.action != 'edited' && !failure()
     needs: [pr-lint, checkstyle]
     runs-on: ${{ matrix.runner }}
+    timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:
@@ -182,6 +183,7 @@ jobs:
     if: github.event.action != 'edited' && !failure()
     needs: [pr-lint, checkstyle]
     runs-on: ubuntu-latest
+    timeout-minutes: 60
 
     container:
       image: rockylinux:8
@@ -241,6 +243,7 @@ jobs:
     if: github.event.action != 'edited' && !failure()
     needs: [pr-lint, checkstyle]
     runs-on: ubuntu-latest
+    timeout-minutes: 60
 
     container:
       image: eclipse-temurin:8-jdk # base image is Debian 11 (Bullseye)

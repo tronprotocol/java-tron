@@ -25,10 +25,11 @@ jobs:
           distribution: 'temurin'
 
       - name: Clone system-test
-        run: |
-          git clone https://github.com/tronprotocol/system-test.git
-          cd system-test
-          git checkout release_workflow
+        uses: actions/checkout@v4
+        with:
+          repository: tronprotocol/system-test
+          ref: release_workflow
+          path: system-test
 
       - name: Checkout java-tron
         uses: actions/checkout@v4
@@ -74,6 +75,10 @@ jobs:
       - name: Run system tests
         working-directory: system-test
         run: |
+          if [ ! -f solcDIR/solc-linux-0.8.6 ]; then
+            echo "ERROR: solc binary not found at solcDIR/solc-linux-0.8.6"
+            exit 1
+          fi
           cp solcDIR/solc-linux-0.8.6 solcDIR/solc
           ./gradlew clean --no-daemon
           ./gradlew --info stest --no-daemon
