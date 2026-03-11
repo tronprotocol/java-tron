@@ -15,6 +15,7 @@ import static org.tron.core.exception.TronError.ErrCode.PARAMETER_INIT;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.ParameterDescription;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigObject;
@@ -37,6 +38,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -991,101 +993,102 @@ public class Args extends CommonParameter {
    * Only assigned parameters override Config values.
    */
   private static void applyCLIParams(CLIParameter cmd, JCommander jc) {
-    Map<String, ParameterDescription> assigned = jc.getParameters().stream()
+    Set<String> assigned = jc.getParameters().stream()
         .filter(ParameterDescription::isAssigned)
-        .collect(Collectors.toMap(ParameterDescription::getLongestName, p -> p));
+        .map(ParameterDescription::getLongestName)
+        .collect(Collectors.toSet());
 
-    if (assigned.containsKey("--output-directory")) {
+    if (assigned.contains("--output-directory")) {
       PARAMETER.outputDirectory = cmd.outputDirectory;
     }
-    if (assigned.containsKey("--witness")) {
+    if (assigned.contains("--witness")) {
       PARAMETER.witness = cmd.witness;
     }
-    if (assigned.containsKey("--support-constant")) {
+    if (assigned.contains("--support-constant")) {
       PARAMETER.supportConstant = cmd.supportConstant;
     }
-    if (assigned.containsKey("--max-energy-limit-for-constant")) {
+    if (assigned.contains("--max-energy-limit-for-constant")) {
       PARAMETER.maxEnergyLimitForConstant = cmd.maxEnergyLimitForConstant;
     }
-    if (assigned.containsKey("--lru-cache-size")) {
+    if (assigned.contains("--lru-cache-size")) {
       PARAMETER.lruCacheSize = cmd.lruCacheSize;
     }
-    if (assigned.containsKey("--debug")) {
+    if (assigned.contains("--debug")) {
       PARAMETER.debug = cmd.debug;
     }
-    if (assigned.containsKey("--min-time-ratio")) {
+    if (assigned.contains("--min-time-ratio")) {
       PARAMETER.minTimeRatio = cmd.minTimeRatio;
     }
-    if (assigned.containsKey("--max-time-ratio")) {
+    if (assigned.contains("--max-time-ratio")) {
       PARAMETER.maxTimeRatio = cmd.maxTimeRatio;
     }
-    if (assigned.containsKey("--save-internaltx")) {
+    if (assigned.contains("--save-internaltx")) {
       PARAMETER.saveInternalTx = cmd.saveInternalTx;
     }
-    if (assigned.containsKey("--save-featured-internaltx")) {
+    if (assigned.contains("--save-featured-internaltx")) {
       PARAMETER.saveFeaturedInternalTx = cmd.saveFeaturedInternalTx;
     }
-    if (assigned.containsKey("--save-cancel-all-unfreeze-v2-details")) {
+    if (assigned.contains("--save-cancel-all-unfreeze-v2-details")) {
       PARAMETER.saveCancelAllUnfreezeV2Details = cmd.saveCancelAllUnfreezeV2Details;
     }
-    if (assigned.containsKey("--long-running-time")) {
+    if (assigned.contains("--long-running-time")) {
       PARAMETER.longRunningTime = cmd.longRunningTime;
     }
-    if (assigned.containsKey("--max-connect-number")) {
+    if (assigned.contains("--max-connect-number")) {
       PARAMETER.maxHttpConnectNumber = cmd.maxHttpConnectNumber;
     }
-    if (assigned.containsKey("--storage-db-directory")) {
+    if (assigned.contains("--storage-db-directory")) {
       PARAMETER.storage.setDbDirectory(cmd.storageDbDirectory);
     }
-    if (assigned.containsKey("--storage-db-engine")) {
+    if (assigned.contains("--storage-db-engine")) {
       PARAMETER.storage.setDbEngine(cmd.storageDbEngine);
     }
-    if (assigned.containsKey("--storage-db-synchronous")) {
+    if (assigned.contains("--storage-db-synchronous")) {
       PARAMETER.storage.setDbSync(Boolean.valueOf(cmd.storageDbSynchronous));
     }
-    if (assigned.containsKey("--contract-parse-enable")) {
+    if (assigned.contains("--contract-parse-enable")) {
       PARAMETER.storage.setContractParseSwitch(Boolean.valueOf(cmd.contractParseEnable));
     }
-    if (assigned.containsKey("--storage-index-directory")) {
+    if (assigned.contains("--storage-index-directory")) {
       PARAMETER.storage.setIndexDirectory(cmd.storageIndexDirectory);
     }
-    if (assigned.containsKey("--storage-index-switch")) {
+    if (assigned.contains("--storage-index-switch")) {
       PARAMETER.storage.setIndexSwitch(cmd.storageIndexSwitch);
     }
-    if (assigned.containsKey("--storage-transactionHistory-switch")) {
+    if (assigned.contains("--storage-transactionHistory-switch")) {
       PARAMETER.storage.setTransactionHistorySwitch(cmd.storageTransactionHistorySwitch);
     }
-    if (assigned.containsKey("--fast-forward")) {
+    if (assigned.contains("--fast-forward")) {
       PARAMETER.fastForward = cmd.fastForward;
     }
-    if (assigned.containsKey("--solidity")) {
+    if (assigned.contains("--solidity")) {
       PARAMETER.solidityNode = cmd.solidityNode;
     }
-    if (assigned.containsKey("--keystore-factory")) {
+    if (assigned.contains("--keystore-factory")) {
       PARAMETER.keystoreFactory = cmd.keystoreFactory;
     }
-    if (assigned.containsKey("--rpc-thread")) {
+    if (assigned.contains("--rpc-thread")) {
       PARAMETER.rpcThreadNum = cmd.rpcThreadNum;
     }
-    if (assigned.containsKey("--solidity-thread")) {
+    if (assigned.contains("--solidity-thread")) {
       PARAMETER.solidityThreads = cmd.solidityThreads;
     }
-    if (assigned.containsKey("--validate-sign-thread")) {
+    if (assigned.contains("--validate-sign-thread")) {
       PARAMETER.validateSignThreadNum = cmd.validateSignThreadNum;
     }
-    if (assigned.containsKey("--trust-node")) {
+    if (assigned.contains("--trust-node")) {
       PARAMETER.trustNodeAddr = cmd.trustNodeAddr;
     }
-    if (assigned.containsKey("--es")) {
+    if (assigned.contains("--es")) {
       PARAMETER.eventSubscribe = cmd.eventSubscribe;
     }
-    if (assigned.containsKey("--p2p-disable")) {
+    if (assigned.contains("--p2p-disable")) {
       PARAMETER.p2pDisable = cmd.p2pDisable;
     }
-    if (assigned.containsKey("--history-balance-lookup")) {
+    if (assigned.contains("--history-balance-lookup")) {
       PARAMETER.historyBalanceLookup = cmd.historyBalanceLookup;
     }
-    if (assigned.containsKey("--log-config")) {
+    if (assigned.contains("--log-config")) {
       PARAMETER.logbackPath = cmd.logbackPath;
     }
     if (!cmd.seedNodes.isEmpty()) {
@@ -1138,6 +1141,7 @@ public class Args extends CommonParameter {
         TronError.ErrCode.WITNESS_INIT);
   }
 
+  @VisibleForTesting
   public static void clearParam() {
     CommonParameter.reset();
     configFilePath = "";

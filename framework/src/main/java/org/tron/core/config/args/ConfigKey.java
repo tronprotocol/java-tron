@@ -10,7 +10,7 @@ final class ConfigKey {
   }
 
   // local witness
-  public static final String LOCAL_WITNESS = "localwitness"; //private key
+  public static final String LOCAL_WITNESS = "localwitness"; // private key
   public static final String LOCAL_WITNESS_ACCOUNT_ADDRESS = "localWitnessAccountAddress";
   public static final String LOCAL_WITNESS_KEYSTORE = "localwitnesskeystore";
 

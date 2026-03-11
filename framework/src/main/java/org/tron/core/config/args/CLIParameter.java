@@ -14,7 +14,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class CLIParameter {
 
-  // ── Startup parameters ──────────────────────────
+  // -- Startup parameters --
 
   @Parameter(names = {"-c", "--config"}, description = "Config file (default:config.conf)")
   public String shellConfFileName;
@@ -57,13 +57,13 @@ public class CLIParameter {
   public boolean eventSubscribe;
 
   @Parameter(names = {"--p2p-disable"}, description = "Switch for p2p module initialization. "
-      + "(defalut: false)", arity = 1)
+      + "(default: false)", arity = 1)
   public boolean p2pDisable;
 
   @Parameter(description = "--seed-nodes")
   public List<String> seedNodes = new ArrayList<>();
 
-  // ── Storage parameters ──────────────────────────
+  // -- Storage parameters --
 
   @Parameter(names = {"--storage-db-directory"}, description = "Storage db directory")
   public String storageDbDirectory;
@@ -91,10 +91,10 @@ public class CLIParameter {
       + "java-tron. (default: true)")
   public String contractParseEnable;
 
-  // ── Runtime parameters ──────────────────────────
+  // -- Runtime parameters --
 
   @Parameter(names = {"--support-constant"}, description = "Support constant calling for TVM. "
-      + "(defalut: false)")
+      + "(default: false)")
   public boolean supportConstant;
 
   @Parameter(names = {"--max-energy-limit-for-constant"},
