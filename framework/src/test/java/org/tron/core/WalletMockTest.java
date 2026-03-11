@@ -17,9 +17,6 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
-import com.google.protobuf.LazyStringArrayList;
-import com.google.protobuf.ProtocolStringList;
-
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -1058,19 +1055,16 @@ public class WalletMockTest {
     Wallet wallet = new Wallet();
     Protocol.TransactionInfo.Log log = Protocol.TransactionInfo.Log.newBuilder().build();
     byte[] contractAddress = "contractAddress".getBytes(StandardCharsets.UTF_8);
-    LazyStringArrayList topicsList = new LazyStringArrayList();
 
     Throwable thrown = assertThrows(InvocationTargetException.class, () -> {
       Method privateMethod = Wallet.class.getDeclaredMethod(
           "getShieldedTRC20LogType",
           Protocol.TransactionInfo.Log.class,
-          byte[].class,
-          ProtocolStringList.class);
+          byte[].class);
       privateMethod.setAccessible(true);
       privateMethod.invoke(wallet,
           log,
-          contractAddress,
-          topicsList);
+          contractAddress);
     });
     Throwable cause = thrown.getCause();
     assertTrue(cause instanceof ZksnarkException);
@@ -1088,18 +1082,15 @@ public class WalletMockTest {
         .setAddress(ByteString.copyFrom(addressWithoutPrefix))
         .build();
 
-    LazyStringArrayList topicsList = new LazyStringArrayList();
     try {
       Method privateMethod = Wallet.class.getDeclaredMethod(
           "getShieldedTRC20LogType",
           Protocol.TransactionInfo.Log.class,
-          byte[].class,
-          ProtocolStringList.class);
+          byte[].class);
       privateMethod.setAccessible(true);
       privateMethod.invoke(wallet,
           log,
-          contractAddress,
-          topicsList);
+          contractAddress);
     } catch (Exception e) {
       assertTrue(false);
     }
@@ -1119,19 +1110,15 @@ public class WalletMockTest {
         .addTopics(ByteString.copyFrom("topic".getBytes()))
         .build();
 
-    LazyStringArrayList topicsList = new LazyStringArrayList();
-    topicsList.add("topic");
     try {
       Method privateMethod = Wallet.class.getDeclaredMethod(
           "getShieldedTRC20LogType",
           Protocol.TransactionInfo.Log.class,
-          byte[].class,
-          ProtocolStringList.class);
+          byte[].class);
       privateMethod.setAccessible(true);
       privateMethod.invoke(wallet,
           log,
-          contractAddress,
-          topicsList);
+          contractAddress);
     } catch (Exception e) {
       assertTrue(false);
     }

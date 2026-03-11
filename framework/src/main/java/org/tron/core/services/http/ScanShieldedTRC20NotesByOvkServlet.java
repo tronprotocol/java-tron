@@ -1,6 +1,5 @@
 package org.tron.core.services.http;
 
-import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -24,14 +23,15 @@ public class ScanShieldedTRC20NotesByOvkServlet extends RateLimiterServlet {
       OvkDecryptTRC20Parameters.Builder ovkDecryptTRC20Parameters = OvkDecryptTRC20Parameters
           .newBuilder();
       JsonFormat.merge(params.getParams(), ovkDecryptTRC20Parameters, params.isVisible());
+      if (!ovkDecryptTRC20Parameters.getEventsList().isEmpty()) {
+        logger.warn("'events' field in OvkDecryptTRC20Parameters is deprecated and ignored");
+      }
 
       GrpcAPI.DecryptNotesTRC20 notes = wallet
           .scanShieldedTRC20NotesByOvk(ovkDecryptTRC20Parameters.getStartBlockIndex(),
               ovkDecryptTRC20Parameters.getEndBlockIndex(),
               ovkDecryptTRC20Parameters.getOvk().toByteArray(),
-              ovkDecryptTRC20Parameters.getShieldedTRC20ContractAddress().toByteArray(),
-              ovkDecryptTRC20Parameters.getEventsList()
-          );
+              ovkDecryptTRC20Parameters.getShieldedTRC20ContractAddress().toByteArray());
       response.getWriter()
           .println(ScanShieldedTRC20NotesByIvkServlet.convertOutput(notes, params.isVisible()));
     } catch (Exception e) {
@@ -51,7 +51,7 @@ public class ScanShieldedTRC20NotesByOvkServlet extends RateLimiterServlet {
       }
       GrpcAPI.DecryptNotesTRC20 notes = wallet
           .scanShieldedTRC20NotesByOvk(startBlockIndex, endBlockIndex,
-              ByteArray.fromHexString(ovk), ByteArray.fromHexString(contractAddress), null);
+              ByteArray.fromHexString(ovk), ByteArray.fromHexString(contractAddress));
 
       response.getWriter()
           .println(ScanShieldedTRC20NotesByIvkServlet.convertOutput(notes, visible));
