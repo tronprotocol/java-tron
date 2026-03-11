@@ -2,7 +2,6 @@ package org.tron.core.services.http;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -41,6 +40,10 @@ public class ScanShieldedTRC20NotesByIvkServlet extends RateLimiterServlet {
       IvkDecryptTRC20Parameters.Builder ivkDecryptTRC20Parameters = IvkDecryptTRC20Parameters
           .newBuilder();
       JsonFormat.merge(params.getParams(), ivkDecryptTRC20Parameters, params.isVisible());
+      if (!ivkDecryptTRC20Parameters.getEventsList().isEmpty()) {
+        throw new IllegalArgumentException(
+            "'events' field is deprecated and no longer supported");
+      }
 
       GrpcAPI.DecryptNotesTRC20 notes = wallet
           .scanShieldedTRC20NotesByIvk(ivkDecryptTRC20Parameters.getStartBlockIndex(),
@@ -48,8 +51,7 @@ public class ScanShieldedTRC20NotesByIvkServlet extends RateLimiterServlet {
               ivkDecryptTRC20Parameters.getShieldedTRC20ContractAddress().toByteArray(),
               ivkDecryptTRC20Parameters.getIvk().toByteArray(),
               ivkDecryptTRC20Parameters.getAk().toByteArray(),
-              ivkDecryptTRC20Parameters.getNk().toByteArray(),
-              ivkDecryptTRC20Parameters.getEventsList());
+              ivkDecryptTRC20Parameters.getNk().toByteArray());
       response.getWriter().println(convertOutput(notes, params.isVisible()));
     } catch (Exception e) {
       Util.processError(e, response);
@@ -58,6 +60,10 @@ public class ScanShieldedTRC20NotesByIvkServlet extends RateLimiterServlet {
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
+      if (request.getParameter("events") != null) {
+        throw new IllegalArgumentException(
+            "'events' field is deprecated and no longer supported");
+      }
       boolean visible = Util.getVisible(request);
       long startNum = Long.parseLong(request.getParameter("start_block_index"));
       long endNum = Long.parseLong(request.getParameter("end_block_index"));
@@ -74,7 +80,7 @@ public class ScanShieldedTRC20NotesByIvkServlet extends RateLimiterServlet {
       GrpcAPI.DecryptNotesTRC20 notes = wallet
           .scanShieldedTRC20NotesByIvk(startNum, endNum,
               ByteArray.fromHexString(contractAddress), ByteArray.fromHexString(ivk),
-              ByteArray.fromHexString(ak), ByteArray.fromHexString(nk), null);
+              ByteArray.fromHexString(ak), ByteArray.fromHexString(nk));
       response.getWriter().println(convertOutput(notes, visible));
     } catch (Exception e) {
       Util.processError(e, response);

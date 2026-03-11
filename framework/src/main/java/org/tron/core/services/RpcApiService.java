@@ -4,7 +4,6 @@ import com.google.common.base.Preconditions;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
-import com.google.protobuf.ProtocolStringList;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import io.grpc.netty.NettyServerBuilder;
@@ -722,18 +721,21 @@ public class RpcApiService extends RpcService {
     @Override
     public void scanShieldedTRC20NotesByIvk(IvkDecryptTRC20Parameters request,
         StreamObserver<DecryptNotesTRC20> responseObserver) {
+      if (!request.getEventsList().isEmpty()) {
+        responseObserver.onError(getRunTimeException(
+            new IllegalArgumentException("'events' field is deprecated and no longer supported")));
+        return;
+      }
       long startNum = request.getStartBlockIndex();
       long endNum = request.getEndBlockIndex();
       byte[] contractAddress = request.getShieldedTRC20ContractAddress().toByteArray();
       byte[] ivk = request.getIvk().toByteArray();
       byte[] ak = request.getAk().toByteArray();
       byte[] nk = request.getNk().toByteArray();
-      ProtocolStringList topicsList = request.getEventsList();
 
       try {
         responseObserver.onNext(
-            wallet.scanShieldedTRC20NotesByIvk(startNum, endNum, contractAddress, ivk, ak, nk,
-                topicsList));
+            wallet.scanShieldedTRC20NotesByIvk(startNum, endNum, contractAddress, ivk, ak, nk));
 
       } catch (Exception e) {
         responseObserver.onError(getRunTimeException(e));
@@ -744,15 +746,18 @@ public class RpcApiService extends RpcService {
     @Override
     public void scanShieldedTRC20NotesByOvk(OvkDecryptTRC20Parameters request,
         StreamObserver<DecryptNotesTRC20> responseObserver) {
+      if (!request.getEventsList().isEmpty()) {
+        responseObserver.onError(getRunTimeException(
+            new IllegalArgumentException("'events' field is deprecated and no longer supported")));
+        return;
+      }
       long startNum = request.getStartBlockIndex();
       long endNum = request.getEndBlockIndex();
       byte[] contractAddress = request.getShieldedTRC20ContractAddress().toByteArray();
       byte[] ovk = request.getOvk().toByteArray();
-      ProtocolStringList topicList = request.getEventsList();
       try {
         responseObserver
-            .onNext(wallet
-                .scanShieldedTRC20NotesByOvk(startNum, endNum, ovk, contractAddress, topicList));
+            .onNext(wallet.scanShieldedTRC20NotesByOvk(startNum, endNum, ovk, contractAddress));
       } catch (Exception e) {
         responseObserver.onError(getRunTimeException(e));
       }
@@ -2412,6 +2417,11 @@ public class RpcApiService extends RpcService {
     public void scanShieldedTRC20NotesByIvk(
         IvkDecryptTRC20Parameters request,
         StreamObserver<org.tron.api.GrpcAPI.DecryptNotesTRC20> responseObserver) {
+      if (!request.getEventsList().isEmpty()) {
+        responseObserver.onError(getRunTimeException(
+            new IllegalArgumentException("'events' field is deprecated and no longer supported")));
+        return;
+      }
       long startNum = request.getStartBlockIndex();
       long endNum = request.getEndBlockIndex();
       try {
@@ -2419,8 +2429,7 @@ public class RpcApiService extends RpcService {
             request.getShieldedTRC20ContractAddress().toByteArray(),
             request.getIvk().toByteArray(),
             request.getAk().toByteArray(),
-            request.getNk().toByteArray(),
-            request.getEventsList());
+            request.getNk().toByteArray());
         responseObserver.onNext(decryptNotes);
       } catch (BadItemException | ZksnarkException e) {
         responseObserver.onError(getRunTimeException(e));
@@ -2438,13 +2447,17 @@ public class RpcApiService extends RpcService {
     public void scanShieldedTRC20NotesByOvk(
         OvkDecryptTRC20Parameters request,
         StreamObserver<org.tron.api.GrpcAPI.DecryptNotesTRC20> responseObserver) {
+      if (!request.getEventsList().isEmpty()) {
+        responseObserver.onError(getRunTimeException(
+            new IllegalArgumentException("'events' field is deprecated and no longer supported")));
+        return;
+      }
       long startNum = request.getStartBlockIndex();
       long endNum = request.getEndBlockIndex();
       try {
         DecryptNotesTRC20 decryptNotes = wallet.scanShieldedTRC20NotesByOvk(startNum, endNum,
             request.getOvk().toByteArray(),
-            request.getShieldedTRC20ContractAddress().toByteArray(),
-            request.getEventsList());
+            request.getShieldedTRC20ContractAddress().toByteArray());
         responseObserver.onNext(decryptNotes);
       } catch (Exception e) {
         responseObserver.onError(getRunTimeException(e));
