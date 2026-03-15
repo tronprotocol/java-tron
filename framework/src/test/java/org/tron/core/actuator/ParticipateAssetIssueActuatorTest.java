@@ -1,5 +1,7 @@
 package org.tron.core.actuator;
 
+import static org.tron.common.TestEnv.withDbEngineOverride;
+
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import org.joda.time.DateTime;
@@ -7,7 +9,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.BaseTest;
-import org.tron.common.TestConstants;
+import org.tron.common.TestEnv;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
@@ -41,7 +43,7 @@ public class ParticipateAssetIssueActuatorTest extends BaseTest {
   private static long AMOUNT = TOTAL_SUPPLY - (1000L) / TRX_NUM * NUM;
 
   static {
-    Args.setParam(new String[]{"--output-directory", dbPath()}, TestConstants.TEST_CONF);
+    Args.setParam(withDbEngineOverride("--output-directory", dbPath()), TestEnv.TEST_CONF);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1234";
     TO_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     TO_ADDRESS_2 = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e048892";
@@ -315,7 +317,6 @@ public class ParticipateAssetIssueActuatorTest extends BaseTest {
       Assert.assertFalse(e instanceof ContractExeException);
     }
   }
-
 
   /**
    * Init close SameTokenName,after init data,open SameTokenName
@@ -740,7 +741,6 @@ public class ParticipateAssetIssueActuatorTest extends BaseTest {
     }
   }
 
-
   /**
    * SameTokenName close, Owner account is not exit
    */
@@ -774,7 +774,6 @@ public class ParticipateAssetIssueActuatorTest extends BaseTest {
       Assert.assertFalse(e instanceof ContractExeException);
     }
   }
-
 
   /**
    * SameTokenName open, Owner account is not exit
@@ -850,7 +849,6 @@ public class ParticipateAssetIssueActuatorTest extends BaseTest {
       Assert.assertFalse(e instanceof ContractExeException);
     }
   }
-
 
   /**
    * SameTokenName open, To account is not exit.
@@ -1176,7 +1174,6 @@ public class ParticipateAssetIssueActuatorTest extends BaseTest {
     }
   }
 
-
   /**
    * SameTokenName open, not enough trx
    */
@@ -1258,7 +1255,6 @@ public class ParticipateAssetIssueActuatorTest extends BaseTest {
     }
   }
 
-
   /**
    * SameTokenName open, not enough asset
    */
@@ -1339,7 +1335,6 @@ public class ParticipateAssetIssueActuatorTest extends BaseTest {
     }
   }
 
-
   /**
    * SameTokenName open, nont exist asset
    */
@@ -1417,7 +1412,6 @@ public class ParticipateAssetIssueActuatorTest extends BaseTest {
       Assert.assertEquals(toAccount.getAssetMapForTest().get(ASSET_NAME).longValue(), TOTAL_SUPPLY);
     }
   }
-
 
   /**
    * SameTokenName open, add over flow
@@ -1510,7 +1504,6 @@ public class ParticipateAssetIssueActuatorTest extends BaseTest {
       Assert.assertFalse(e instanceof ContractExeException);
     }
   }
-
 
   /**
    * SameTokenName open, multiply over flow
@@ -1612,7 +1605,6 @@ public class ParticipateAssetIssueActuatorTest extends BaseTest {
     }
   }
 
-
   /**
    * SameTokenName open, exchangeAmount <= 0 trx, throw exception
    */
@@ -1668,7 +1660,6 @@ public class ParticipateAssetIssueActuatorTest extends BaseTest {
       Assert.assertFalse(e instanceof ContractExeException);
     }
   }
-
 
   /**
    * SameTokenName close, invalid oweraddress

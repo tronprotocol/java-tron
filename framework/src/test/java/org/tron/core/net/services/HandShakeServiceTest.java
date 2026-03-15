@@ -1,6 +1,7 @@
 package org.tron.core.net.services;
 
 import static org.mockito.Mockito.mock;
+import static org.tron.common.TestEnv.withDbEngineOverride;
 import static org.tron.core.net.message.handshake.HelloMessage.getEndpointFromNode;
 
 import com.google.protobuf.ByteString;
@@ -17,7 +18,7 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.mockito.Mockito;
 import org.springframework.context.ApplicationContext;
-import org.tron.common.TestConstants;
+import org.tron.common.TestEnv;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.common.utils.Sha256Hash;
@@ -52,8 +53,9 @@ public class HandShakeServiceTest {
 
   @BeforeClass
   public static void init() throws Exception {
-    Args.setParam(new String[] {"--output-directory",
-        temporaryFolder.newFolder().toString(), "--debug"}, TestConstants.TEST_CONF);
+    Args.setParam(withDbEngineOverride("--output-directory",
+        temporaryFolder.newFolder().toString(), "--debug"),
+        TestEnv.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     p2pEventHandler = context.getBean(P2pEventHandlerImpl.class);
     ctx = (ApplicationContext) ReflectUtils.getFieldObject(p2pEventHandler, "ctx");

@@ -1,5 +1,7 @@
 package org.tron.core.net.service.nodepersist;
 
+import static org.tron.common.TestEnv.withDbEngineOverride;
+
 import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.Resource;
@@ -7,11 +9,10 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.tron.common.BaseTest;
-import org.tron.common.TestConstants;
+import org.tron.common.TestEnv;
 import org.tron.common.utils.JsonUtil;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.config.args.Args;
-
 
 public class NodePersistServiceTest extends BaseTest {
 
@@ -20,8 +21,9 @@ public class NodePersistServiceTest extends BaseTest {
 
   @BeforeClass
   public static void init() {
-    Args.setParam(new String[] {"--output-directory", dbPath(), "--debug"},
-        TestConstants.TEST_CONF);
+    Args.setParam(
+        withDbEngineOverride("--output-directory", dbPath(), "--debug"),
+        TestEnv.TEST_CONF);
   }
 
   @Test

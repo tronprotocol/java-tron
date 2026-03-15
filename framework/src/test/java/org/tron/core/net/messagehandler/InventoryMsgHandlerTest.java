@@ -6,9 +6,10 @@ import java.lang.reflect.Field;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
+import org.junit.AfterClass;
 import org.junit.Test;
 import org.mockito.Mockito;
-import org.tron.common.TestConstants;
+import org.tron.common.TestEnv;
 import org.tron.core.config.args.Args;
 import org.tron.core.net.TronNetDelegate;
 import org.tron.core.net.message.adv.InventoryMessage;
@@ -18,10 +19,15 @@ import org.tron.protos.Protocol.Inventory.InventoryType;
 
 public class InventoryMsgHandlerTest {
 
+  @AfterClass
+  public static void destroy() {
+    Args.clearParam();
+  }
+
   @Test
   public void testProcessMessage() throws Exception {
     InventoryMsgHandler handler = new InventoryMsgHandler();
-    Args.setParam(new String[] {}, TestConstants.TEST_CONF);
+    Args.setParam(new String[] {}, TestEnv.TEST_CONF);
     Args.logConfig();
 
     InventoryMessage msg = new InventoryMessage(new ArrayList<>(), InventoryType.TRX);

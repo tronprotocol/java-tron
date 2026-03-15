@@ -15,6 +15,9 @@
 
 package org.tron.common.runtime.vm;
 
+import static org.tron.common.TestEnv.MAINNET_CONF;
+import static org.tron.common.TestEnv.withDbEngineOverride;
+
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import org.junit.Assert;
@@ -68,14 +71,13 @@ public class BandWidthRuntimeOutOfTimeTest extends BaseTest {
   private static boolean init;
 
   static {
-    Args.setParam(
-        new String[]{
+    Args.setParam(withDbEngineOverride(
             "--output-directory", dbPath(),
             "--storage-db-directory", dbDirectory,
             "--storage-index-directory", indexDirectory,
             "--debug"
-        },
-        "config-test-mainnet.conf"
+        ),
+        MAINNET_CONF
     );
   }
 

@@ -1,5 +1,7 @@
 package org.tron.core.witness;
 
+import static org.tron.common.TestEnv.withDbEngineOverride;
+
 import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
 import java.util.HashMap;
@@ -10,7 +12,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.BaseTest;
-import org.tron.common.TestConstants;
+import org.tron.common.TestEnv;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.ProposalCapsule;
@@ -29,7 +31,7 @@ public class ProposalControllerTest extends BaseTest {
   private static boolean init;
 
   static {
-    Args.setParam(new String[]{"-d", dbPath()}, TestConstants.TEST_CONF);
+    Args.setParam(withDbEngineOverride("-d", dbPath()), TestEnv.TEST_CONF);
   }
 
   @Before
@@ -121,7 +123,6 @@ public class ProposalControllerTest extends BaseTest {
     }
     Assert.assertEquals(State.APPROVED, proposalCapsule.getState());
   }
-
 
   @Test
   public void testProcessProposals() {

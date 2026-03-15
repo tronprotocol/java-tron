@@ -1,12 +1,14 @@
 package org.tron.core.zksnark;
 
+import static org.tron.common.TestEnv.withDbEngineOverride;
+
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import javax.annotation.Resource;
 import org.junit.Assert;
 import org.junit.Test;
 import org.tron.common.BaseTest;
-import org.tron.common.TestConstants;
+import org.tron.common.TestEnv;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
@@ -37,9 +39,8 @@ public class MerkleContainerTest extends BaseTest {
   private Wallet wallet;
   //  private static MerkleContainer merkleContainer;
 
-
   static {
-    Args.setParam(new String[]{"-d", dbPath()}, TestConstants.TEST_CONF);
+    Args.setParam(withDbEngineOverride("-d", dbPath()), TestEnv.TEST_CONF);
   }
 
   /*@Before

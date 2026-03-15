@@ -21,6 +21,7 @@ import org.iq80.leveldb.Options;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Test;
+import org.tron.common.TestEnv;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.StorageUtils;
 
@@ -29,7 +30,7 @@ public class StorageTest {
   private static Storage storage;
 
   static {
-    Args.setParam(new String[]{}, "config-test-storagetest.conf");
+    Args.setParam(new String[]{}, TestEnv.STORAGE_CONF);
     storage = Args.getInstance().getStorage();
   }
 

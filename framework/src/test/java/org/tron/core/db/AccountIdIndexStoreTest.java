@@ -1,5 +1,7 @@
 package org.tron.core.db;
 
+import static org.tron.common.TestEnv.withDbEngineOverride;
+
 import com.google.protobuf.ByteString;
 import java.util.Random;
 import javax.annotation.Resource;
@@ -8,7 +10,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.tron.common.BaseTest;
-import org.tron.common.TestConstants;
+import org.tron.common.TestEnv;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.config.args.Args;
@@ -34,8 +36,7 @@ public class AccountIdIndexStoreTest extends BaseTest {
   private static AccountCapsule accountCapsule4;
 
   static {
-    Args.setParam(new String[]{"--output-directory", dbPath()},
-        TestConstants.TEST_CONF);
+    Args.setParam(withDbEngineOverride("--output-directory", dbPath()), TestEnv.TEST_CONF);
   }
 
   @BeforeClass

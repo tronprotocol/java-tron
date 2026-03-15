@@ -1,5 +1,7 @@
 package org.tron.core.net.messagehandler;
 
+import static org.tron.common.TestEnv.withDbEngineOverride;
+
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.lang.reflect.Field;
@@ -17,7 +19,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.tron.common.BaseTest;
-import org.tron.common.TestConstants;
+import org.tron.common.TestEnv;
 import org.tron.common.runtime.TvmTestUtils;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.config.args.Args;
@@ -33,8 +35,9 @@ import org.tron.protos.contract.BalanceContract;
 public class TransactionsMsgHandlerTest extends BaseTest {
   @BeforeClass
   public static void init() {
-    Args.setParam(new String[]{"--output-directory", dbPath(), "--debug"},
-        TestConstants.TEST_CONF);
+    Args.setParam(
+        withDbEngineOverride("--output-directory", dbPath(), "--debug"),
+        TestEnv.TEST_CONF);
 
   }
 

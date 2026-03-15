@@ -1,5 +1,6 @@
 package org.tron.core.services.http;
 
+import static org.tron.common.TestEnv.withDbEngineOverride;
 import static org.tron.common.utils.Commons.decodeFromBase58Check;
 
 import com.alibaba.fastjson.JSONObject;
@@ -17,7 +18,7 @@ import org.junit.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.tron.common.BaseTest;
-import org.tron.common.TestConstants;
+import org.tron.common.TestEnv;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
@@ -40,10 +41,9 @@ public class GetRewardServletTest extends BaseTest {
   GetRewardServlet getRewardServlet;
 
   static {
-    Args.setParam(
-            new String[]{
-                "--output-directory", dbPath(),
-            }, TestConstants.TEST_CONF
+    Args.setParam(withDbEngineOverride(
+                "--output-directory", dbPath()
+            ), TestEnv.TEST_CONF
     );
   }
 

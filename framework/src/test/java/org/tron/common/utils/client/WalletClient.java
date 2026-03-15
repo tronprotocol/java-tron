@@ -24,6 +24,7 @@ import org.tron.api.GrpcAPI.BlockList;
 import org.tron.api.GrpcAPI.NodeList;
 import org.tron.api.GrpcAPI.TransactionList;
 import org.tron.api.GrpcAPI.WitnessList;
+import org.tron.common.TestEnv;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
@@ -110,7 +111,7 @@ public class WalletClient {
 
   public static String selectFullNode() {
     Map<String, String> witnessMap = new HashMap<>();
-    Config config = Configuration.getByPath("config.conf");
+    Config config = Configuration.getByPath(TestEnv.NET_CONF);
     List list = config.getObjectList("witnesses.witnessList");
     for (int i = 0; i < list.size(); i++) {
       ConfigObject obj = (ConfigObject) list.get(i);

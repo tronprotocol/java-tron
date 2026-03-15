@@ -2,6 +2,7 @@ package org.tron.program;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
+import static org.tron.common.TestEnv.withDbEngineOverride;
 
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Resource;
@@ -11,7 +12,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.Timeout;
 import org.tron.common.BaseTest;
-import org.tron.common.TestConstants;
+import org.tron.common.TestEnv;
 import org.tron.common.client.DatabaseGrpcClient;
 import org.tron.common.utils.PublicMethod;
 import org.tron.core.config.args.Args;
@@ -35,7 +36,7 @@ public class SolidityNodeTest extends BaseTest {
   public Timeout timeout = new Timeout(30, TimeUnit.SECONDS);
 
   static {
-    Args.setParam(new String[] {"-d", dbPath(), "--solidity"}, TestConstants.TEST_CONF);
+    Args.setParam(withDbEngineOverride("-d", dbPath(), "--solidity"), TestEnv.TEST_CONF);
     Args.getInstance().setRpcPort(rpcPort);
     Args.getInstance().setSolidityHttpPort(solidityHttpPort);
   }

@@ -2,6 +2,7 @@ package org.tron.core.actuator;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
+import static org.tron.common.TestEnv.withDbEngineOverride;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
@@ -12,7 +13,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.BaseTest;
-import org.tron.common.TestConstants;
+import org.tron.common.TestEnv;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
@@ -52,7 +53,7 @@ public class AccountPermissionUpdateActuatorTest extends BaseTest {
   private static final String KEY_ADDRESS_INVALID = "bbbb";
 
   static {
-    Args.setParam(new String[]{"--output-directory", dbPath()}, TestConstants.TEST_CONF);
+    Args.setParam(withDbEngineOverride("--output-directory", dbPath()), TestEnv.TEST_CONF);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     WITNESS_ADDRESS = Wallet.getAddressPreFixString() + "8CFC572CC20CA18B636BDD93B4FB15EA84CC2B4E";
     KEY_ADDRESS = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";

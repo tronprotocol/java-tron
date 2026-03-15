@@ -1,5 +1,7 @@
 package org.tron.core.db;
 
+import static org.tron.common.TestEnv.withDbEngineOverride;
+
 import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
 import java.lang.ref.Reference;
@@ -10,7 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.junit.Test;
 import org.tron.common.BaseTest;
-import org.tron.common.TestConstants;
+import org.tron.common.TestEnv;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Pair;
@@ -31,9 +33,8 @@ public class KhaosDatabaseTest extends BaseTest {
   private KhaosDatabase khaosDatabase;
 
   static {
-    Args.setParam(new String[]{"--output-directory", dbPath()}, TestConstants.TEST_CONF);
+    Args.setParam(withDbEngineOverride("--output-directory", dbPath()), TestEnv.TEST_CONF);
   }
-
 
   @Test
   public void testStartBlock() {
@@ -70,7 +71,6 @@ public class KhaosDatabaseTest extends BaseTest {
 
     Assert.assertNull("removeBlk is error", khaosDatabase.getBlock(blockCapsule2.getBlockId()));
   }
-
 
   @Test
   public void checkWeakReference() throws UnLinkedBlockException, BadNumberBlockException {

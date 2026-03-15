@@ -1,5 +1,6 @@
 package org.tron.common.runtime.vm;
 
+import static org.tron.common.TestEnv.withDbEngineOverride;
 import static org.tron.common.utils.ByteUtil.stripLeadingZeroes;
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 import static org.tron.core.db.TransactionTrace.convertToTronAddress;
@@ -16,7 +17,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.BaseTest;
-import org.tron.common.TestConstants;
+import org.tron.common.TestEnv;
 import org.tron.common.runtime.ProgramResult;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
@@ -106,7 +107,9 @@ public class PrecompiledContractsTest extends BaseTest {
   private static final long latestTimestamp = 1_000_000L;
 
   static {
-    Args.setParam(new String[]{"--output-directory", dbPath(), "--debug"}, TestConstants.TEST_CONF);
+    Args.setParam(
+        withDbEngineOverride("--output-directory", dbPath(), "--debug"),
+        TestEnv.TEST_CONF);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     WITNESS_ADDRESS = Wallet.getAddressPreFixString() + WITNESS_ADDRESS_BASE;
 
@@ -246,8 +249,6 @@ public class PrecompiledContractsTest extends BaseTest {
       Assert.assertEquals(1000000, proposalCapsule.getCreateTime());
       Assert.assertEquals(261200000, proposalCapsule.getExpirationTime()
       ); // 2000000 + 3 * 4 * 21600000
-
-
 
       /*
        *  approve proposal Test
@@ -568,7 +569,6 @@ public class PrecompiledContractsTest extends BaseTest {
             ByteArray.fromLong(10_000_000L),
             ByteArray.fromLong(2 * currentSlot * 3)), res.getRight());
   }
-
 
   @Test
   public void getChainParameterTest() {

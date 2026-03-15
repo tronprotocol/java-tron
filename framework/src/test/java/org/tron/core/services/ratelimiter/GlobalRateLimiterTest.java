@@ -4,6 +4,7 @@ import java.lang.reflect.Field;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Test;
+import org.tron.common.TestEnv;
 import org.tron.core.config.args.Args;
 
 public class GlobalRateLimiterTest {
@@ -11,7 +12,7 @@ public class GlobalRateLimiterTest {
   @Test
   public void testAcquire() throws Exception {
     String[] a = new String[0];
-    Args.setParam(a, "config.conf");
+    Args.setParam(a, TestEnv.NET_CONF);
     RuntimeData runtimeData = new RuntimeData(null);
     Field field =  runtimeData.getClass().getDeclaredField("address");
     field.setAccessible(true);

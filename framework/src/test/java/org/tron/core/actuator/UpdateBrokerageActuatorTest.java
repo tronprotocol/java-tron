@@ -1,6 +1,7 @@
 package org.tron.core.actuator;
 
 import static junit.framework.TestCase.fail;
+import static org.tron.common.TestEnv.withDbEngineOverride;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
@@ -10,7 +11,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.BaseTest;
-import org.tron.common.TestConstants;
+import org.tron.common.TestEnv;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
@@ -34,7 +35,7 @@ public class UpdateBrokerageActuatorTest extends BaseTest {
   private static final int BROKEN_AGE = 10;
 
   static {
-    Args.setParam(new String[]{"--output-directory", dbPath()}, TestConstants.TEST_CONF);
+    Args.setParam(withDbEngineOverride("--output-directory", dbPath()), TestEnv.TEST_CONF);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     OWNER_ADDRESS_NOTEXIST =
         Wallet.getAddressPreFixString() + "1234b9367799eaa3197fecb144eb71de1e049123";
@@ -60,7 +61,6 @@ public class UpdateBrokerageActuatorTest extends BaseTest {
         .put(ByteArray.fromHexString(OWNER_ADDRESS), account);
 
   }
-
 
   private Any getContract(String ownerAddress, int brokerage) {
     return Any.pack(UpdateBrokerageContract.newBuilder()
@@ -131,7 +131,6 @@ public class UpdateBrokerageActuatorTest extends BaseTest {
     processAndCheckInvalid(actuator, ret, "Invalid ownerAddress",
         "Invalid ownerAddress");
   }
-
 
   /**
    * invalid brokerage,too much

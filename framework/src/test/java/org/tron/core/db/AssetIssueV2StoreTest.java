@@ -1,26 +1,25 @@
 package org.tron.core.db;
 
+import static org.tron.common.TestEnv.withDbEngineOverride;
+
 import com.google.protobuf.ByteString;
 import javax.annotation.Resource;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.BaseTest;
-import org.tron.common.TestConstants;
+import org.tron.common.TestEnv;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.store.AssetIssueV2Store;
 import org.tron.protos.contract.AssetIssueContractOuterClass;
 
-
 public class AssetIssueV2StoreTest extends BaseTest {
 
   static {
-    Args.setParam(
-          new String[]{
-              "--output-directory", dbPath(),
-          },
-          TestConstants.TEST_CONF
+    Args.setParam(withDbEngineOverride(
+              "--output-directory", dbPath()
+          ), TestEnv.TEST_CONF
     );
   }
 

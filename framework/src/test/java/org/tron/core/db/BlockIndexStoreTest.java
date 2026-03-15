@@ -1,11 +1,13 @@
 package org.tron.core.db;
 
+import static org.tron.common.TestEnv.withDbEngineOverride;
+
 import com.google.protobuf.ByteString;
 import javax.annotation.Resource;
 import org.junit.Assert;
 import org.junit.Test;
 import org.tron.common.BaseTest;
-import org.tron.common.TestConstants;
+import org.tron.common.TestEnv;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
@@ -19,11 +21,9 @@ public class BlockIndexStoreTest extends BaseTest {
   private BlockIndexStore blockIndexStore;
 
   static {
-    Args.setParam(
-            new String[]{
+    Args.setParam(withDbEngineOverride(
                 "--output-directory", dbPath()
-            },
-            TestConstants.TEST_CONF
+            ), TestEnv.TEST_CONF
     );
   }
 

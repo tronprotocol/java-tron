@@ -1,5 +1,7 @@
 package org.tron.core.db;
 
+import static org.tron.common.TestEnv.withDbEngineOverride;
+
 import com.google.protobuf.ByteString;
 import java.util.List;
 import javax.annotation.Resource;
@@ -7,7 +9,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.BaseTest;
-import org.tron.common.TestConstants;
+import org.tron.common.TestEnv;
 import org.tron.core.capsule.ExchangeCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.ItemNotFoundException;
@@ -22,11 +24,9 @@ public class ExchangeStoreTest extends BaseTest {
   private byte[] exchangeKey2;
 
   static {
-    Args.setParam(
-        new String[] {
+    Args.setParam(withDbEngineOverride(
             "--output-directory", dbPath()
-        },
-        TestConstants.TEST_CONF
+        ), TestEnv.TEST_CONF
     );
   }
 
@@ -42,7 +42,6 @@ public class ExchangeStoreTest extends BaseTest {
     exchangeKey2 = exchangeCapsule.createDbKey();
     chainBaseManager.getExchangeStore().put(exchangeKey2, exchangeCapsule);
   }
-
 
   @Test
   public void testGet() throws Exception {

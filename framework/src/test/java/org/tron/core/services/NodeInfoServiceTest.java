@@ -1,5 +1,7 @@
 package org.tron.core.services;
 
+import static org.tron.common.TestEnv.withDbEngineOverride;
+
 import com.alibaba.fastjson.JSON;
 import com.google.protobuf.ByteString;
 import java.net.InetSocketAddress;
@@ -11,7 +13,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.springframework.context.ApplicationContext;
 import org.tron.common.BaseTest;
-import org.tron.common.TestConstants;
+import org.tron.common.TestEnv;
 import org.tron.common.entity.NodeInfo;
 import org.tron.common.utils.PublicMethod;
 import org.tron.common.utils.ReflectUtils;
@@ -25,7 +27,6 @@ import org.tron.p2p.P2pConfig;
 import org.tron.p2p.connection.Channel;
 import org.tron.program.Version;
 
-
 @Slf4j
 public class NodeInfoServiceTest extends BaseTest {
 
@@ -38,11 +39,11 @@ public class NodeInfoServiceTest extends BaseTest {
   @Resource
   private TronNetService tronNetService;
 
-
   @BeforeClass
   public static void init() {
-    Args.setParam(new String[] {"--output-directory", dbPath(), "--debug"},
-        TestConstants.TEST_CONF);
+    Args.setParam(
+        withDbEngineOverride("--output-directory", dbPath(), "--debug"),
+        TestEnv.TEST_CONF);
   }
 
   @After

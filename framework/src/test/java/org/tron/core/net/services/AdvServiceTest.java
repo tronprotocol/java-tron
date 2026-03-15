@@ -1,6 +1,7 @@
 package org.tron.core.net.services;
 
 import static org.mockito.Mockito.mock;
+import static org.tron.common.TestEnv.withDbEngineOverride;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -13,7 +14,7 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.mockito.Mockito;
 import org.springframework.context.ApplicationContext;
-import org.tron.common.TestConstants;
+import org.tron.common.TestEnv;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ReflectUtils;
@@ -43,8 +44,9 @@ public class AdvServiceTest {
 
   @BeforeClass
   public static void init() throws IOException {
-    Args.setParam(new String[]{"--output-directory",
-        temporaryFolder.newFolder().toString(), "--debug"}, TestConstants.TEST_CONF);
+    Args.setParam(withDbEngineOverride("--output-directory",
+        temporaryFolder.newFolder().toString(), "--debug"),
+        TestEnv.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     service = context.getBean(AdvService.class);
     p2pEventHandler = context.getBean(P2pEventHandlerImpl.class);

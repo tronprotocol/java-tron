@@ -11,14 +11,9 @@ import java.util.Arrays;
 import java.util.function.Consumer;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.tron.common.TestConstants;
-import org.tron.common.application.TronApplicationContext;
+import org.tron.common.BaseMethodTest;
 import org.tron.common.runtime.Runtime;
 import org.tron.common.runtime.RuntimeImpl;
 import org.tron.common.runtime.TVMTestResult;
@@ -32,9 +27,6 @@ import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.DelegatedResourceCapsule;
 import org.tron.core.capsule.TransactionCapsule;
-import org.tron.core.config.DefaultConfig;
-import org.tron.core.config.args.Args;
-import org.tron.core.db.Manager;
 import org.tron.core.db.TransactionTrace;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.DelegatedResourceStore;
@@ -49,7 +41,7 @@ import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Transaction.Result.contractResult;
 
 @Slf4j
-public class FreezeTest {
+public class FreezeTest extends BaseMethodTest {
 
   // Compiled from FreezeTest.sol (tron-solc ^0.5.16).
   // FreezeContract — inner contract with TRON freeze/unfreeze opcodes:
@@ -134,19 +126,16 @@ public class FreezeTest {
   private static final String userCStr = "TWoDuH3YsxoMSKSXza3E2H7Tt1bpK5QZgm";
   private static final byte[] userC = Commons.decode58Check(userCStr);
 
-  @Rule
-  public final TemporaryFolder temporaryFolder = new TemporaryFolder();
-  private static TronApplicationContext context;
-  private static Manager manager;
   private static byte[] owner;
   private static Repository rootRepository;
 
-  @Before
-  public void init() throws Exception {
-    Args.setParam(new String[]{"--output-directory",
-        temporaryFolder.newFolder().toString(), "--debug"}, TestConstants.TEST_CONF);
-    context = new TronApplicationContext(DefaultConfig.class);
-    manager = context.getBean(Manager.class);
+  @Override
+  protected String[] extraArgs() {
+    return new String[]{"--debug"};
+  }
+
+  @Override
+  protected void afterInit() {
     owner = Hex.decode(Wallet.getAddressPreFixString()
         + "abd4b9367799eaa3197fecb144eb71de1e049abc");
     rootRepository = RepositoryImpl.createRoot(StoreFactory.getInstance());
@@ -155,7 +144,7 @@ public class FreezeTest {
     rootRepository.commit();
 
     ConfigLoader.disable = true;
-    manager.getDynamicPropertiesStore().saveAllowTvmFreeze(1);
+    dbManager.getDynamicPropertiesStore().saveAllowTvmFreeze(1);
     VMConfig.initVmHardFork(true);
     VMConfig.initAllowTvmTransferTrc10(1);
     VMConfig.initAllowTvmConstantinople(1);
@@ -188,7 +177,7 @@ public class FreezeTest {
     trace.finalization();
     Runtime runtime = trace.getRuntime();
     Assert.assertEquals(SUCCESS, runtime.getResult().getResultCode());
-    Assert.assertEquals(value, manager.getAccountStore().get(contractAddr).getBalance());
+    Assert.assertEquals(value, dbManager.getAccountStore().get(contractAddr).getBalance());
 
     return contractAddr;
   }
@@ -252,23 +241,23 @@ public class FreezeTest {
 
   private void setBalance(byte[] accountAddr,
                           long balance) {
-    AccountCapsule accountCapsule = manager.getAccountStore().get(accountAddr);
+    AccountCapsule accountCapsule = dbManager.getAccountStore().get(accountAddr);
     if (accountCapsule == null) {
       accountCapsule = new AccountCapsule(ByteString.copyFrom(accountAddr),
           Protocol.AccountType.Normal);
     }
     accountCapsule.setBalance(balance);
-    manager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
+    dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
   }
 
   private void setFrozenForEnergy(byte[] accountAddr, long frozenBalance) {
-    AccountCapsule accountCapsule = manager.getAccountStore().get(accountAddr);
+    AccountCapsule accountCapsule = dbManager.getAccountStore().get(accountAddr);
     if (accountCapsule == null) {
       accountCapsule = new AccountCapsule(ByteString.copyFrom(accountAddr),
           Protocol.AccountType.Normal);
     }
     accountCapsule.setFrozenForEnergy(frozenBalance, 0);
-    manager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
+    dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
   }
 
   private byte[] getCreate2Addr(byte[] factoryAddr,
@@ -291,12 +280,12 @@ public class FreezeTest {
   public void testWithCallerEnergyChangedInTx() throws Exception {
     byte[] contractAddr = deployContract("TestFreeze", CONTRACT_CODE);
     long frozenBalance = 10_000_000;
-    AccountStore accountStore = manager.getAccountStore();
+    AccountStore accountStore = dbManager.getAccountStore();
     AccountCapsule account = new AccountCapsule(ByteString.copyFromUtf8("Yang"),
         ByteString.copyFrom(userA), Protocol.AccountType.Normal, 10_000_000);
     account.setFrozenForEnergy(10_000_000, 1);
     accountStore.put(account.createDbKey(), account);
-    manager.getDynamicPropertiesStore().addTotalEnergyWeight(10);
+    dbManager.getDynamicPropertiesStore().addTotalEnergyWeight(10);
 
     TVMTestResult result = freezeForOther(userA, contractAddr, userA, frozenBalance, 1);
 
@@ -395,9 +384,9 @@ public class FreezeTest {
     long frozenBalance = 1_000_000;
     long salt = 1;
     byte[] predictedAddr = getCreate2Addr(factoryAddr, salt);
-    Assert.assertNull(manager.getAccountStore().get(predictedAddr));
+    Assert.assertNull(dbManager.getAccountStore().get(predictedAddr));
     freezeForOther(contractAddr, predictedAddr, frozenBalance, 0);
-    Assert.assertNotNull(manager.getAccountStore().get(predictedAddr));
+    Assert.assertNotNull(dbManager.getAccountStore().get(predictedAddr));
     freezeForOther(contractAddr, predictedAddr, frozenBalance, 1);
     unfreezeForOtherWithException(contractAddr, predictedAddr, 0);
     unfreezeForOtherWithException(contractAddr, predictedAddr, 1);
@@ -573,8 +562,8 @@ public class FreezeTest {
     freezeForSelf(contract, frozenBalance, 1);
     setBalance(userA, 100_000_000);
     setFrozenForEnergy(owner, frozenBalance);
-    AccountCapsule caller = manager.getAccountStore().get(userA);
-    AccountCapsule deployer = manager.getAccountStore().get(owner);
+    AccountCapsule caller = dbManager.getAccountStore().get(userA);
+    AccountCapsule deployer = dbManager.getAccountStore().get(owner);
     TVMTestResult result = freezeForOther(userA, contract, userA, frozenBalance, 1);
     checkReceipt(result, caller, deployer);
   }
@@ -587,8 +576,8 @@ public class FreezeTest {
     freezeForSelf(contract, frozenBalance, 1);
     setBalance(userA, 100_000_000);
     setFrozenForEnergy(owner, frozenBalance);
-    AccountCapsule caller = manager.getAccountStore().get(userA);
-    AccountCapsule deployer = manager.getAccountStore().get(owner);
+    AccountCapsule caller = dbManager.getAccountStore().get(userA);
+    AccountCapsule deployer = dbManager.getAccountStore().get(owner);
     TVMTestResult result = freezeForOther(userA, contract, owner, frozenBalance, 1);
     checkReceipt(result, caller, deployer);
   }
@@ -604,8 +593,8 @@ public class FreezeTest {
     freezeForOther(contract, userA, frozenBalance, 1);
     freezeForOther(contract, owner, frozenBalance, 1);
     clearDelegatedExpireTime(contract, userA);
-    AccountCapsule caller = manager.getAccountStore().get(userA);
-    AccountCapsule deployer = manager.getAccountStore().get(owner);
+    AccountCapsule caller = dbManager.getAccountStore().get(userA);
+    AccountCapsule deployer = dbManager.getAccountStore().get(owner);
     TVMTestResult result = unfreezeForOther(userA, contract, userA, 1);
     checkReceipt(result, caller, deployer);
   }
@@ -621,28 +610,28 @@ public class FreezeTest {
     freezeForOther(contract, userA, frozenBalance, 1);
     freezeForOther(contract, owner, frozenBalance, 1);
     clearDelegatedExpireTime(contract, owner);
-    AccountCapsule caller = manager.getAccountStore().get(userA);
-    AccountCapsule deployer = manager.getAccountStore().get(owner);
+    AccountCapsule caller = dbManager.getAccountStore().get(userA);
+    AccountCapsule deployer = dbManager.getAccountStore().get(owner);
     TVMTestResult result = unfreezeForOther(userA, contract, owner, 1);
     checkReceipt(result, caller, deployer);
   }
 
   private void clearExpireTime(byte[] owner) {
-    AccountCapsule accountCapsule = manager.getAccountStore().get(owner);
-    long now = manager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp();
+    AccountCapsule accountCapsule = dbManager.getAccountStore().get(owner);
+    long now = dbManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp();
     accountCapsule.setFrozenForBandwidth(accountCapsule.getFrozenBalance(), now);
     accountCapsule.setFrozenForEnergy(accountCapsule.getEnergyFrozenBalance(), now);
-    manager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
+    dbManager.getAccountStore().put(accountCapsule.createDbKey(), accountCapsule);
   }
 
   private void clearDelegatedExpireTime(byte[] owner,
                                         byte[] receiver) {
     byte[] key = DelegatedResourceCapsule.createDbKey(owner, receiver);
-    DelegatedResourceCapsule delegatedResource = manager.getDelegatedResourceStore().get(key);
-    long now = manager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp();
+    DelegatedResourceCapsule delegatedResource = dbManager.getDelegatedResourceStore().get(key);
+    long now = dbManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp();
     delegatedResource.setExpireTimeForBandwidth(now);
     delegatedResource.setExpireTimeForEnergy(now);
-    manager.getDelegatedResourceStore().put(key, delegatedResource);
+    dbManager.getDelegatedResourceStore().put(key, delegatedResource);
   }
 
   private TVMTestResult freezeForSelf(byte[] contractAddr,
@@ -655,11 +644,11 @@ public class FreezeTest {
                                       byte[] contractAddr,
                                       long frozenBalance,
                                       long res) throws Exception {
-    DynamicPropertiesStore dynamicStore = manager.getDynamicPropertiesStore();
+    DynamicPropertiesStore dynamicStore = dbManager.getDynamicPropertiesStore();
     long oldTotalNetWeight = dynamicStore.getTotalNetWeight();
     long oldTotalEnergyWeight = dynamicStore.getTotalEnergyWeight();
 
-    AccountStore accountStore = manager.getAccountStore();
+    AccountStore accountStore = dbManager.getAccountStore();
     AccountCapsule oldOwner = accountStore.get(contractAddr);
 
     TVMTestResult result = triggerFreeze(callerAddr, contractAddr, contractAddr, frozenBalance, res,
@@ -706,11 +695,11 @@ public class FreezeTest {
   private TVMTestResult unfreezeForSelf(byte[] callerAddr,
                                         byte[] contractAddr,
                                         long res) throws Exception {
-    DynamicPropertiesStore dynamicStore = manager.getDynamicPropertiesStore();
+    DynamicPropertiesStore dynamicStore = dbManager.getDynamicPropertiesStore();
     long oldTotalNetWeight = dynamicStore.getTotalNetWeight();
     long oldTotalEnergyWeight = dynamicStore.getTotalEnergyWeight();
 
-    AccountStore accountStore = manager.getAccountStore();
+    AccountStore accountStore = dbManager.getAccountStore();
     AccountCapsule oldOwner = accountStore.get(contractAddr);
     long frozenBalance = res == 0 ? oldOwner.getFrozenBalance() : oldOwner.getEnergyFrozenBalance();
     Assert.assertTrue(frozenBalance > 0);
@@ -762,11 +751,11 @@ public class FreezeTest {
                                        byte[] receiverAddr,
                                        long frozenBalance,
                                        long res) throws Exception {
-    DynamicPropertiesStore dynamicStore = manager.getDynamicPropertiesStore();
+    DynamicPropertiesStore dynamicStore = dbManager.getDynamicPropertiesStore();
     long oldTotalNetWeight = dynamicStore.getTotalNetWeight();
     long oldTotalEnergyWeight = dynamicStore.getTotalEnergyWeight();
 
-    AccountStore accountStore = manager.getAccountStore();
+    AccountStore accountStore = dbManager.getAccountStore();
     AccountCapsule oldOwner = accountStore.get(contractAddr);
     Assert.assertNotNull(receiverAddr);
     AccountCapsule oldReceiver = accountStore.get(receiverAddr);
@@ -776,7 +765,7 @@ public class FreezeTest {
           oldReceiver.getAcquiredDelegatedFrozenBalanceForEnergy();
     }
 
-    DelegatedResourceStore delegatedResourceStore = manager.getDelegatedResourceStore();
+    DelegatedResourceStore delegatedResourceStore = dbManager.getDelegatedResourceStore();
     DelegatedResourceCapsule oldDelegatedResource = delegatedResourceStore.get(
         DelegatedResourceCapsule.createDbKey(contractAddr, receiverAddr));
     if (oldDelegatedResource == null) {
@@ -873,11 +862,11 @@ public class FreezeTest {
                                          byte[] contractAddr,
                                          byte[] receiverAddr,
                                          long res) throws Exception {
-    DynamicPropertiesStore dynamicStore = manager.getDynamicPropertiesStore();
+    DynamicPropertiesStore dynamicStore = dbManager.getDynamicPropertiesStore();
     long oldTotalNetWeight = dynamicStore.getTotalNetWeight();
     long oldTotalEnergyWeight = dynamicStore.getTotalEnergyWeight();
 
-    AccountStore accountStore = manager.getAccountStore();
+    AccountStore accountStore = dbManager.getAccountStore();
     AccountCapsule oldOwner = accountStore.get(contractAddr);
     long delegatedBalance = res == 0 ? oldOwner.getDelegatedFrozenBalanceForBandwidth() :
         oldOwner.getDelegatedFrozenBalanceForEnergy();
@@ -889,7 +878,7 @@ public class FreezeTest {
           oldReceiver.getAcquiredDelegatedFrozenBalanceForEnergy();
     }
 
-    DelegatedResourceStore delegatedResourceStore = manager.getDelegatedResourceStore();
+    DelegatedResourceStore delegatedResourceStore = dbManager.getDelegatedResourceStore();
     DelegatedResourceCapsule oldDelegatedResource = delegatedResourceStore.get(
         DelegatedResourceCapsule.createDbKey(contractAddr, receiverAddr));
     Assert.assertNotNull(oldDelegatedResource);
@@ -993,13 +982,13 @@ public class FreezeTest {
                                          byte[] contractAddr,
                                          byte[] inheritorAddr) throws Exception {
     if (FastByteComparisons.isEqual(contractAddr, inheritorAddr)) {
-      inheritorAddr = manager.getAccountStore().getBlackholeAddress();
+      inheritorAddr = dbManager.getAccountStore().getBlackholeAddress();
     }
-    DynamicPropertiesStore dynamicStore = manager.getDynamicPropertiesStore();
+    DynamicPropertiesStore dynamicStore = dbManager.getDynamicPropertiesStore();
     long oldTotalNetWeight = dynamicStore.getTotalNetWeight();
     long oldTotalEnergyWeight = dynamicStore.getTotalEnergyWeight();
 
-    AccountStore accountStore = manager.getAccountStore();
+    AccountStore accountStore = dbManager.getAccountStore();
     AccountCapsule contract = accountStore.get(contractAddr);
     AccountCapsule oldInheritor = accountStore.get(inheritorAddr);
     long oldBalanceOfInheritor = 0;
@@ -1013,7 +1002,7 @@ public class FreezeTest {
     AccountCapsule newInheritor = accountStore.get(inheritorAddr);
     Assert.assertNotNull(newInheritor);
     if (FastByteComparisons.isEqual(inheritorAddr,
-        manager.getAccountStore().getBlackholeAddress())) {
+        dbManager.getAccountStore().getBlackholeAddress())) {
       Assert.assertEquals(contract.getBalance() + contract.getTronPower(),
           newInheritor.getBalance() - oldBalanceOfInheritor - result.getReceipt().getEnergyFee());
     } else {
@@ -1037,7 +1026,7 @@ public class FreezeTest {
   private void checkReceipt(TVMTestResult result,
                             AccountCapsule caller,
                             AccountCapsule deployer) {
-    AccountStore accountStore = manager.getAccountStore();
+    AccountStore accountStore = dbManager.getAccountStore();
     long callerEnergyUsage = result.getReceipt().getEnergyUsage();
     long deployerEnergyUsage = result.getReceipt().getOriginEnergyUsage();
     long burnedTrx = result.getReceipt().getEnergyFee();
@@ -1050,11 +1039,9 @@ public class FreezeTest {
         caller.getBalance() - accountStore.get(caller.createDbKey()).getBalance());
   }
 
-  @After
-  public void destroy() {
+  @Override
+  protected void beforeDestroy() {
     ConfigLoader.disable = false;
     VMConfig.initVmHardFork(false);
-    Args.clearParam();
-    context.destroy();
   }
 }

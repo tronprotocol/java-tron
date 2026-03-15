@@ -15,6 +15,8 @@
 
 package org.tron.common.runtime.vm;
 
+import static org.tron.common.TestEnv.MAINNET_CONF;
+import static org.tron.common.TestEnv.withDbEngineOverride;
 import static org.tron.common.math.Maths.max;
 
 import com.google.protobuf.Any;
@@ -64,13 +66,12 @@ public class BandWidthRuntimeTest extends BaseTest {
 
   @BeforeClass
   public static void init() {
-    Args.setParam(
-        new String[]{
+    Args.setParam(withDbEngineOverride(
             "--output-directory", dbPath(),
             "--storage-db-directory", dbDirectory,
-            "--storage-index-directory", indexDirectory,
-        },
-        "config-test-mainnet.conf"
+            "--storage-index-directory", indexDirectory
+        ),
+        MAINNET_CONF
     );
   }
 

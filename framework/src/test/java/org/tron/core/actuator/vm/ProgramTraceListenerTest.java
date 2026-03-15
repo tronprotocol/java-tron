@@ -12,7 +12,7 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import org.tron.common.TestConstants;
+import org.tron.common.TestEnv;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.TransactionStoreTest;
@@ -38,7 +38,7 @@ public class ProgramTraceListenerTest {
   @BeforeClass
   public static void init() throws IOException {
     Args.setParam(new String[] {"--output-directory",
-        temporaryFolder.newFolder().toString(), "--debug"}, TestConstants.TEST_CONF);
+        temporaryFolder.newFolder().toString(), "--debug"}, TestEnv.TEST_CONF);
 
   }
 

@@ -1,5 +1,7 @@
 package org.tron.core.services.filter;
 
+import static org.tron.common.TestEnv.withDbEngineOverride;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -16,7 +18,7 @@ import org.apache.http.impl.client.HttpClients;
 import org.junit.Assert;
 import org.junit.Test;
 import org.tron.common.BaseTest;
-import org.tron.common.TestConstants;
+import org.tron.common.TestEnv;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.PublicMethod;
 import org.tron.core.config.args.Args;
@@ -37,7 +39,7 @@ public class HttpApiAccessFilterTest extends BaseTest {
   private static final CloseableHttpClient httpClient = HttpClients.createDefault();
 
   static {
-    Args.setParam(new String[]{"-d", dbPath()}, TestConstants.TEST_CONF);
+    Args.setParam(withDbEngineOverride("-d", dbPath()), TestEnv.TEST_CONF);
     Args.getInstance().setAllowShieldedTransactionApi(false);
     Args.getInstance().setFullNodeHttpEnable(true);
     Args.getInstance().setFullNodeHttpPort(PublicMethod.chooseRandomPort());

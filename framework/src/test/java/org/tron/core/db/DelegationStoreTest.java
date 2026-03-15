@@ -1,17 +1,18 @@
 package org.tron.core.db;
 
+import static org.tron.common.TestEnv.withDbEngineOverride;
+
 import javax.annotation.Resource;
 import org.bouncycastle.util.encoders.Hex;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.BaseTest;
-import org.tron.common.TestConstants;
+import org.tron.common.TestEnv;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.store.DelegationStore;
-
 
 public class DelegationStoreTest extends BaseTest {
 
@@ -23,11 +24,9 @@ public class DelegationStoreTest extends BaseTest {
   private DelegationStore delegationStore;
 
   static {
-    Args.setParam(
-            new String[]{
-                "--output-directory", dbPath(),
-            },
-            TestConstants.TEST_CONF
+    Args.setParam(withDbEngineOverride(
+                "--output-directory", dbPath()
+            ), TestEnv.TEST_CONF
     );
   }
 

@@ -22,6 +22,7 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.tron.common.TestEnv.withDbEngineOverride;
 import static org.tron.core.config.Parameter.ChainConstant.DELEGATE_PERIOD;
 import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 import static org.tron.protos.contract.Common.ResourceCode.BANDWIDTH;
@@ -49,7 +50,7 @@ import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.api.GrpcAPI.PricesResponseMessage;
 import org.tron.api.GrpcAPI.ProposalList;
 import org.tron.common.BaseTest;
-import org.tron.common.TestConstants;
+import org.tron.common.TestEnv;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
@@ -98,7 +99,6 @@ import org.tron.protos.contract.BalanceContract;
 import org.tron.protos.contract.BalanceContract.TransferContract;
 import org.tron.protos.contract.Common;
 import org.tron.protos.contract.SmartContractOuterClass;
-
 
 @Slf4j
 public class WalletTest extends BaseTest {
@@ -149,7 +149,7 @@ public class WalletTest extends BaseTest {
   private static boolean init;
 
   static {
-    Args.setParam(new String[] {"-d", dbPath()}, TestConstants.TEST_CONF);
+    Args.setParam(withDbEngineOverride("-d", dbPath()), TestEnv.TEST_CONF);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
     RECEIVER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049150";
   }
@@ -245,7 +245,6 @@ public class WalletTest extends BaseTest {
     chainBaseManager.getTransactionHistoryStore().put(trxId, transactionInfo);
   }
 
-
   private static Transaction getBuildTransaction(
       TransferContract transferContract, long transactionTimestamp, long refBlockNum) {
     return Transaction.newBuilder().setRawData(
@@ -308,7 +307,6 @@ public class WalletTest extends BaseTest {
                 .build()).build()).addTransactions(transaction).addTransactions(transactionNext)
         .build();
   }
-
 
   private void buildAssetIssue() {
     AssetIssueContract.Builder builder = AssetIssueContract.newBuilder();
@@ -726,7 +724,6 @@ public class WalletTest extends BaseTest {
     }
   }
 
-
   @Test
   public void testGetDelegatedResourceAccountIndex() {
     long frozenBalance = 1_000_000_000L;
@@ -974,7 +971,6 @@ public class WalletTest extends BaseTest {
         witnessList2.getWitnesses(9).getAddress().toStringUtf8());
     Assert.assertEquals(maxVoteCount + 1000000L - 100L,
         witnessList2.getWitnesses(9).getVoteCount());
-
 
     logger.info("after paged");
     GrpcAPI.WitnessList witnessList3 = wallet.getWitnessList();

@@ -1,5 +1,8 @@
 package org.tron.core;
 
+import static org.tron.common.TestEnv.MAINNET_CONF;
+import static org.tron.common.TestEnv.withDbEngineOverride;
+
 import com.google.protobuf.ByteString;
 import java.math.BigInteger;
 import java.util.Arrays;
@@ -62,7 +65,8 @@ public class ShieldedTRC20BuilderTest extends BaseTest {
   private static final byte[] PUBLIC_TO_ADDRESS;
 
   static {
-    Args.setParam(new String[]{"--output-directory", dbPath()}, "config-test-mainnet.conf");
+    Args.setParam(withDbEngineOverride("--output-directory", dbPath()),
+        MAINNET_CONF);
     SHIELDED_CONTRACT_ADDRESS = WalletClient.decodeFromBase58Check(SHIELDED_CONTRACT_ADDRESS_STR);
     DEFAULT_OVK = ByteArray
         .fromHexString("030c8c2bc59fb3eb8afb047a8ea4b028743d23e7d38c6fa30908358431e2314d");
@@ -2295,7 +2299,6 @@ public class ShieldedTRC20BuilderTest extends BaseTest {
     Assert.assertTrue(result.getIsSpent());
   }
 
-
   private byte[] abiEncodeForBurn(ShieldedTRC20Parameters params, long value) {
     byte[] mergedBytes;
     ShieldContract.SpendDescription spendDesc = params.getSpendDescription(0);
@@ -2461,6 +2464,5 @@ public class ShieldedTRC20BuilderTest extends BaseTest {
     byte[] zeroBytes = new byte[24];
     return ByteUtil.merge(zeroBytes, longBytes);
   }
-
 
 }

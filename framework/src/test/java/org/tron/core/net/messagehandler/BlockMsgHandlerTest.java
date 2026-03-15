@@ -3,6 +3,7 @@ package org.tron.core.net.messagehandler;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.tron.common.TestEnv.withDbEngineOverride;
 
 import com.google.common.collect.ImmutableList;
 import com.google.protobuf.ByteString;
@@ -19,7 +20,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.tron.common.BaseTest;
-import org.tron.common.TestConstants;
+import org.tron.common.TestEnv;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Constant;
@@ -49,8 +50,9 @@ public class BlockMsgHandlerTest extends BaseTest {
    */
   @BeforeClass
   public static void init() {
-    Args.setParam(new String[] {"--output-directory", dbPath(), "--debug"},
-        TestConstants.TEST_CONF);
+    Args.setParam(
+        withDbEngineOverride("--output-directory", dbPath(), "--debug"),
+        TestEnv.TEST_CONF);
   }
 
   @Before

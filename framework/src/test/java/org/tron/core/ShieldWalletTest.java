@@ -2,6 +2,7 @@ package org.tron.core;
 
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
+import static org.tron.common.TestEnv.withDbEngineOverride;
 import static org.tron.core.zen.ZksnarkInitService.librustzcashInitZksnarkParams;
 
 import java.math.BigInteger;
@@ -16,7 +17,7 @@ import org.tron.api.GrpcAPI.PrivateShieldedTRC20ParametersWithoutAsk;
 import org.tron.api.GrpcAPI.ShieldedAddressInfo;
 import org.tron.api.GrpcAPI.ShieldedTRC20Parameters;
 import org.tron.common.BaseTest;
-import org.tron.common.TestConstants;
+import org.tron.common.TestEnv;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.args.Args;
@@ -25,7 +26,6 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.core.services.http.JsonFormat;
 import org.tron.core.services.http.JsonFormat.ParseException;
 
-
 public class ShieldWalletTest extends BaseTest {
 
   @Resource
@@ -33,7 +33,7 @@ public class ShieldWalletTest extends BaseTest {
 
   @BeforeClass
   public static void init() {
-    Args.setParam(new String[]{"-d", dbPath()}, TestConstants.TEST_CONF);
+    Args.setParam(withDbEngineOverride("-d", dbPath()), TestEnv.TEST_CONF);
     librustzcashInitZksnarkParams();
   }
 

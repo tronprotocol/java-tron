@@ -1,6 +1,8 @@
 package org.tron.common.runtime.vm;
 
 import static org.junit.Assert.assertNotNull;
+import static org.tron.common.TestEnv.TEST_CONF;
+import static org.tron.common.TestEnv.withDbEngineOverride;
 import static org.tron.common.math.Maths.random;
 import static org.tron.common.math.Maths.round;
 
@@ -60,7 +62,8 @@ public class PrecompiledContractsVerifyProofTest extends BaseTest {
 
   @BeforeClass
   public static void init() {
-    Args.setParam(new String[]{"--output-directory", dbPath()}, "config-test.conf");
+    Args.setParam(withDbEngineOverride("--output-directory", dbPath()),
+        TEST_CONF);
     DEFAULT_OVK = ByteArray
         .fromHexString("030c8c2bc59fb3eb8afb047a8ea4b028743d23e7d38c6fa30908358431e2314d");
     SHIELDED_CONTRACT_ADDRESS = WalletClient.decodeFromBase58Check(SHIELDED_CONTRACT_ADDRESS_STR);
@@ -750,7 +753,6 @@ public class PrecompiledContractsVerifyProofTest extends BaseTest {
       }
     }
   }
-
 
   @Test
   public void verifyBurnProofCorrect() throws ZksnarkException {
@@ -1445,7 +1447,6 @@ public class PrecompiledContractsVerifyProofTest extends BaseTest {
       Assert.assertEquals(0, result[31]);
     }
   }
-
 
   @Test
   public void verifyMintProofWrongCV() throws ZksnarkException {
@@ -3157,7 +3158,6 @@ public class PrecompiledContractsVerifyProofTest extends BaseTest {
     }
   }
 
-
   @Test
   public void verifyBurnWrongCV() throws ZksnarkException {
     int totalCountNum = 1;
@@ -3605,7 +3605,6 @@ public class PrecompiledContractsVerifyProofTest extends BaseTest {
     return path;
   }
 
-
   private byte[] abiEncodeForMint(ShieldedTRC20Parameters params, long value,
       byte[] frontier, long leafCount) {
     byte[] mergedBytes;
@@ -3870,7 +3869,6 @@ public class PrecompiledContractsVerifyProofTest extends BaseTest {
     return mergedBytes;
   }
 
-
   private byte[] abiEncodeForTransferWrongSpendCV(ShieldedTRC20Parameters params, byte[] frontier,
       long leafCount) {
     byte[] input = new byte[0];
@@ -4080,7 +4078,6 @@ public class PrecompiledContractsVerifyProofTest extends BaseTest {
     return mergedBytes;
   }
 
-
   private byte[] abiEncodeForTransferWrongReceiveCV(ShieldedTRC20Parameters params, byte[] frontier,
       long leafCount) {
     byte[] input = new byte[0];
@@ -4184,7 +4181,6 @@ public class PrecompiledContractsVerifyProofTest extends BaseTest {
     );
     return mergedBytes;
   }
-
 
   private byte[] abiEncodeForTransferWrongReceivProof(ShieldedTRC20Parameters params,
       byte[] frontier,
@@ -4291,7 +4287,6 @@ public class PrecompiledContractsVerifyProofTest extends BaseTest {
     );
     return mergedBytes;
   }
-
 
   private byte[] abiEncodeForTransferWrongHash(ShieldedTRC20Parameters params, byte[] frontier,
       long leafCount) {

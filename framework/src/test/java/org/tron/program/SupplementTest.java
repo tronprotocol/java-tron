@@ -4,6 +4,7 @@ import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.tron.common.TestEnv.withDbEngineOverride;
 import static org.tron.keystore.WalletUtils.passwordValid;
 
 import java.io.File;
@@ -15,7 +16,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.tron.common.BaseTest;
-import org.tron.common.TestConstants;
+import org.tron.common.TestEnv;
 import org.tron.common.config.DbBackupConfig;
 import org.tron.common.entity.PeerInfo;
 import org.tron.common.utils.CompactEncoder;
@@ -42,7 +43,9 @@ public class SupplementTest extends BaseTest {
   @BeforeClass
   public static void init() throws IOException {
     dbPath = dbPath();
-    Args.setParam(new String[]{"--output-directory", dbPath, "--debug"}, TestConstants.TEST_CONF);
+    Args.setParam(
+        withDbEngineOverride("--output-directory", dbPath, "--debug"),
+        TestEnv.TEST_CONF);
   }
 
   @Test

@@ -1,11 +1,13 @@
 package org.tron.core.db;
 
+import static org.tron.common.TestEnv.withDbEngineOverride;
+
 import javax.annotation.Resource;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.BaseTest;
-import org.tron.common.TestConstants;
+import org.tron.common.TestEnv;
 import org.tron.core.capsule.IncrementalMerkleTreeCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.store.IncrementalMerkleTreeStore;
@@ -18,11 +20,9 @@ public class IncrementalMerkleTreeStoreTest extends BaseTest {
   private IncrementalMerkleTreeStore incrementalMerkleTreeStore;
 
   static {
-    Args.setParam(
-        new String[] {
+    Args.setParam(withDbEngineOverride(
             "--output-directory", dbPath()
-        },
-        TestConstants.TEST_CONF
+        ), TestEnv.TEST_CONF
     );
   }
 

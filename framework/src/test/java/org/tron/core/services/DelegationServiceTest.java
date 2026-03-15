@@ -1,5 +1,7 @@
 package org.tron.core.services;
 
+import static org.tron.common.TestEnv.NET_CONF;
+import static org.tron.common.TestEnv.withDbEngineOverride;
 import static org.tron.common.utils.Commons.decodeFromBase58Check;
 import static org.tron.common.utils.client.Parameter.CommonConstant.ADD_PRE_FIX_BYTE_MAINNET;
 
@@ -23,8 +25,8 @@ public class DelegationServiceTest extends BaseTest {
 
   @BeforeClass
   public static void init() {
-    Args.setParam(new String[] {"--output-directory", dbPath(), "--debug"},
-        "config.conf");
+    Args.setParam(withDbEngineOverride("--output-directory", dbPath(), "--debug"),
+        NET_CONF);
   }
 
   private void testPay(int cycle) {

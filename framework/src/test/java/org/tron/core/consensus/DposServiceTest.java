@@ -8,7 +8,7 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
-import org.tron.common.TestConstants;
+import org.tron.common.TestEnv;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.consensus.ConsensusDelegate;
 import org.tron.consensus.dpos.DposService;
@@ -60,7 +60,7 @@ public class DposServiceTest {
 
   @Test
   public void testValidSlot() throws Exception {
-    Args.setParam(new String[] {}, TestConstants.TEST_CONF);
+    Args.setParam(new String[] {}, TestEnv.TEST_CONF);
     long headTime = 1724036757000L;
     ByteString witness = ByteString.copyFrom(NetUtil.getNodeId());
     ByteString witness2 = ByteString.copyFrom(NetUtil.getNodeId());

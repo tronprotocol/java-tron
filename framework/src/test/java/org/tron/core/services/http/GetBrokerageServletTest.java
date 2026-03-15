@@ -1,5 +1,7 @@
 package org.tron.core.services.http;
 
+import static org.tron.common.TestEnv.withDbEngineOverride;
+
 import com.alibaba.fastjson.JSONObject;
 
 import java.io.UnsupportedEncodingException;
@@ -10,7 +12,7 @@ import org.junit.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.tron.common.BaseTest;
-import org.tron.common.TestConstants;
+import org.tron.common.TestEnv;
 import org.tron.core.config.args.Args;
 
 public class GetBrokerageServletTest extends BaseTest {
@@ -19,10 +21,9 @@ public class GetBrokerageServletTest extends BaseTest {
   private  GetBrokerageServlet getBrokerageServlet;
 
   static {
-    Args.setParam(
-            new String[]{
-                "--output-directory", dbPath(),
-            }, TestConstants.TEST_CONF
+    Args.setParam(withDbEngineOverride(
+                "--output-directory", dbPath()
+            ), TestEnv.TEST_CONF
     );
   }
 
@@ -51,7 +52,6 @@ public class GetBrokerageServletTest extends BaseTest {
       Assert.fail(e.getMessage());
     }
   }
-
 
   @Test
   public void getBrokerageByJsonUTF8Test() {

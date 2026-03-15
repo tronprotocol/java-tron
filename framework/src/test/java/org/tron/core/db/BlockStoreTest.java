@@ -1,18 +1,19 @@
 package org.tron.core.db;
 
+import static org.tron.common.TestEnv.withDbEngineOverride;
+
 import com.google.protobuf.ByteString;
 import javax.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.junit.Test;
 import org.tron.common.BaseTest;
-import org.tron.common.TestConstants;
+import org.tron.common.TestEnv;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ItemNotFoundException;
-
 
 @Slf4j
 public class BlockStoreTest extends BaseTest {
@@ -21,8 +22,7 @@ public class BlockStoreTest extends BaseTest {
   private BlockStore blockStore;
 
   static {
-    Args.setParam(new String[]{"--output-directory", dbPath()},
-        TestConstants.TEST_CONF);
+    Args.setParam(withDbEngineOverride("--output-directory", dbPath()), TestEnv.TEST_CONF);
   }
 
   private BlockCapsule getBlockCapsule(long number) {

@@ -1,5 +1,7 @@
 package org.tron.core.db;
 
+import static org.tron.common.TestEnv.withDbEngineOverride;
+
 import com.google.common.primitives.Bytes;
 import com.google.protobuf.ByteString;
 import java.util.Collections;
@@ -7,13 +9,12 @@ import javax.annotation.Resource;
 import org.junit.Assert;
 import org.junit.Test;
 import org.tron.common.BaseTest;
-import org.tron.common.TestConstants;
+import org.tron.common.TestEnv;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.core.capsule.DelegatedResourceAccountIndexCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.store.DelegatedResourceAccountIndexStore;
-
 
 public class DelegatedResourceAccountIndexStoreTest extends BaseTest {
 
@@ -27,11 +28,9 @@ public class DelegatedResourceAccountIndexStoreTest extends BaseTest {
   private static final byte[] V2_TO_PREFIX = {0x04};
 
   static {
-    Args.setParam(
-        new String[]{
+    Args.setParam(withDbEngineOverride(
             "--output-directory", dbPath()
-        },
-        TestConstants.TEST_CONF
+        ), TestEnv.TEST_CONF
     );
   }
 

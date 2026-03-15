@@ -1,13 +1,14 @@
 package org.tron.core.actuator;
 
+import static org.tron.common.TestEnv.withDbEngineOverride;
+
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.tron.common.BaseTest;
-import org.tron.common.TestConstants;
+import org.tron.common.TestEnv;
 import org.tron.core.config.args.Args;
-
 
 @Slf4j(topic = "actuator")
 public class ActuatorConstantTest extends BaseTest {
@@ -17,7 +18,7 @@ public class ActuatorConstantTest extends BaseTest {
    */
   @BeforeClass
   public static void init() {
-    Args.setParam(new String[]{"--output-directory", dbPath()}, TestConstants.TEST_CONF);
+    Args.setParam(withDbEngineOverride("--output-directory", dbPath()), TestEnv.TEST_CONF);
   }
 
   @Test

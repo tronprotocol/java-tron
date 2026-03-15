@@ -15,6 +15,9 @@
 
 package org.tron.core.db;
 
+import static org.tron.common.TestEnv.MAINNET_CONF;
+import static org.tron.common.TestEnv.withDbEngineOverride;
+
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -60,14 +63,13 @@ public class TransactionTraceTest extends BaseTest {
   private static boolean init;
 
   static {
-    Args.setParam(
-        new String[]{
+    Args.setParam(withDbEngineOverride(
             "--output-directory", dbPath(),
             "--storage-db-directory", dbDirectory,
             "--storage-index-directory", indexDirectory,
             "--debug"
-        },
-        "config-test-mainnet.conf"
+        ),
+        MAINNET_CONF
     );
   }
 
@@ -381,7 +383,6 @@ public class TransactionTraceTest extends BaseTest {
     transactionTrace.pay();
     AccountCapsule accountCapsule1 = dbManager.getAccountStore().get(ownerAddress.toByteArray());
   }
-
 
   @Test
   public void testTriggerUseUsageInWindowSizeV2() throws VMIllegalException, ContractExeException,

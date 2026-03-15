@@ -2,6 +2,7 @@ package org.tron.core.actuator;
 
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.fail;
+import static org.tron.common.TestEnv.withDbEngineOverride;
 import static org.tron.core.config.Parameter.ChainSymbol.TRX_SYMBOL_BYTES;
 
 import com.google.protobuf.Any;
@@ -16,7 +17,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.BaseTest;
-import org.tron.common.TestConstants;
+import org.tron.common.TestEnv;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ForkController;
@@ -57,7 +58,7 @@ public class ExchangeTransactionActuatorTest extends BaseTest {
   private static final String OWNER_ADDRESS_NOACCOUNT;
 
   static {
-    Args.setParam(new String[]{"--output-directory", dbPath()}, TestConstants.TEST_CONF);
+    Args.setParam(withDbEngineOverride("--output-directory", dbPath()), TestEnv.TEST_CONF);
     OWNER_ADDRESS_FIRST =
         Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     OWNER_ADDRESS_SECOND =
@@ -632,7 +633,6 @@ public class ExchangeTransactionActuatorTest extends BaseTest {
     }
   }
 
-
   /**
    * SameTokenName open,use Invalid Address, result is failed, exception is "Invalid address".
    */
@@ -677,7 +677,6 @@ public class ExchangeTransactionActuatorTest extends BaseTest {
       dbManager.getExchangeV2Store().delete(ByteArray.fromLong(2L));
     }
   }
-
 
   /**
    * SameTokenName close,use No enough balance, result is failed, exception is "No enough balance
@@ -728,7 +727,6 @@ public class ExchangeTransactionActuatorTest extends BaseTest {
     }
   }
 
-
   /**
    * SameTokenName open,use No enough balance, result is failed, exception is "No enough balance for
    * exchange transaction fee!".
@@ -777,7 +775,6 @@ public class ExchangeTransactionActuatorTest extends BaseTest {
       dbManager.getExchangeV2Store().delete(ByteArray.fromLong(2L));
     }
   }
-
 
   /**
    * SameTokenName close,use AccountStore not exists, result is failed, exception is "account not
@@ -1673,7 +1670,6 @@ public class ExchangeTransactionActuatorTest extends BaseTest {
     }
 
   }
-
 
   @Test
   public void noContract() {

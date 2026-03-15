@@ -1,11 +1,13 @@
 package org.tron.core.services.jsonrpc;
 
+import static org.tron.common.TestEnv.withDbEngineOverride;
+
 import javax.annotation.Resource;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.BaseTest;
-import org.tron.common.TestConstants;
+import org.tron.common.TestEnv;
 import org.tron.core.Wallet;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.jsonrpc.JsonRpcInvalidParamsException;
@@ -21,7 +23,7 @@ public class CallArgumentsTest extends BaseTest {
   private CallArguments callArguments;
 
   static {
-    Args.setParam(new String[]{"-d", dbPath()}, TestConstants.TEST_CONF);
+    Args.setParam(withDbEngineOverride("-d", dbPath()), TestEnv.TEST_CONF);
   }
 
   @Before

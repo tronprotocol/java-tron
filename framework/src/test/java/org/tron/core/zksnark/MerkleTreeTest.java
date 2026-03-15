@@ -1,5 +1,8 @@
 package org.tron.core.zksnark;
 
+import static org.tron.common.TestEnv.MAINNET_CONF;
+import static org.tron.common.TestEnv.withDbEngineOverride;
+
 import com.alibaba.fastjson.JSONArray;
 import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
@@ -31,14 +34,13 @@ public class MerkleTreeTest extends BaseTest {
   private static boolean init;
 
   static {
-    Args.setParam(
-        new String[]{
+    Args.setParam(withDbEngineOverride(
             "--output-directory", dbPath(),
             "--storage-db-directory", dbDirectory,
             "--storage-index-directory", indexDirectory,
             "--debug"
-        },
-        "config-test-mainnet.conf"
+        ),
+        MAINNET_CONF
     );
   }
 

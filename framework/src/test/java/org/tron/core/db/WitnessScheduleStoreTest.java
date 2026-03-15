@@ -1,5 +1,7 @@
 package org.tron.core.db;
 
+import static org.tron.common.TestEnv.withDbEngineOverride;
+
 import com.google.protobuf.ByteString;
 import java.util.Arrays;
 import java.util.List;
@@ -9,7 +11,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.BaseTest;
-import org.tron.common.TestConstants;
+import org.tron.common.TestEnv;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.config.args.Args;
 import org.tron.core.store.WitnessScheduleStore;
@@ -29,9 +31,8 @@ public class WitnessScheduleStoreTest extends BaseTest {
   private static List<ByteString> witnessAddresses;
   private static List<ByteString> currentShuffledWitnesses;
 
-
   static {
-    Args.setParam(new String[]{"-d", dbPath()}, TestConstants.TEST_CONF);
+    Args.setParam(withDbEngineOverride("-d", dbPath()), TestEnv.TEST_CONF);
   }
 
   @Before

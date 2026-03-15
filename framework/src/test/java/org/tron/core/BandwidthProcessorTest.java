@@ -1,6 +1,7 @@
 package org.tron.core;
 
 import static org.junit.Assert.assertThrows;
+import static org.tron.common.TestEnv.withDbEngineOverride;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
@@ -11,7 +12,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.BaseTest;
-import org.tron.common.TestConstants;
+import org.tron.common.TestEnv;
 import org.tron.common.runtime.RuntimeImpl;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.AccountCapsule;
@@ -55,9 +56,8 @@ public class BandwidthProcessorTest extends BaseTest {
   private static final long START_TIME;
   private static final long END_TIME;
 
-
   static {
-    Args.setParam(new String[]{"--output-directory", dbPath()}, TestConstants.TEST_CONF);
+    Args.setParam(withDbEngineOverride("--output-directory", dbPath()), TestEnv.TEST_CONF);
     ASSET_NAME = "test_token";
     ASSET_NAME_V2 = "2";
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
@@ -204,7 +204,6 @@ public class BandwidthProcessorTest extends BaseTest {
         .put(toAccountCapsule.getAddress().toByteArray(), toAccountCapsule);
   }
 
-
   @Test
   public void testCreateNewAccount() throws Exception {
     BandwidthProcessor processor = new BandwidthProcessor(chainBaseManager);
@@ -245,7 +244,6 @@ public class BandwidthProcessorTest extends BaseTest {
         ownerCapsuleNew.getNetUsage());
     Assert.assertEquals(netUsage, trace.getReceipt().getNetUsage());
   }
-
 
   @Test
   public void testFree() throws Exception {
@@ -301,7 +299,6 @@ public class BandwidthProcessorTest extends BaseTest {
         chainBaseManager.getDynamicPropertiesStore().getPublicNetTime());
     Assert.assertEquals(0L, ret.getFee());
   }
-
 
   @Test
   public void testConsumeAssetAccount() throws Exception {
@@ -498,7 +495,6 @@ public class BandwidthProcessorTest extends BaseTest {
     Assert.assertEquals(0L, ret.getFee());
 
   }
-
 
   @Test
   public void testUsingFee() throws Exception {

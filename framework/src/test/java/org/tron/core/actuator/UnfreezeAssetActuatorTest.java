@@ -1,5 +1,7 @@
 package org.tron.core.actuator;
 
+import static org.tron.common.TestEnv.withDbEngineOverride;
+
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
@@ -7,7 +9,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.BaseTest;
-import org.tron.common.TestConstants;
+import org.tron.common.TestEnv;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.Wallet;
@@ -36,7 +38,7 @@ public class UnfreezeAssetActuatorTest extends BaseTest {
   private static final String assetName = "testCoin";
 
   static {
-    Args.setParam(new String[]{"--output-directory", dbPath()}, TestConstants.TEST_CONF);
+    Args.setParam(withDbEngineOverride("--output-directory", dbPath()), TestEnv.TEST_CONF);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
     OWNER_ACCOUNT_INVALID =
         Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a3456";
@@ -59,7 +61,6 @@ public class UnfreezeAssetActuatorTest extends BaseTest {
             .setOwnerAddress(StringUtil.hexString2ByteString(ownerAddress))
             .build());
   }
-
 
   private void createAssertBeforSameTokenNameActive() {
     dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(0);
@@ -198,7 +199,6 @@ public class UnfreezeAssetActuatorTest extends BaseTest {
       Assert.assertFalse(e instanceof ContractExeException);
     }
   }
-
 
   /**
    * when init data, SameTokenName is close, then open SameTokenName, Unfreeze assert success.
@@ -377,7 +377,6 @@ public class UnfreezeAssetActuatorTest extends BaseTest {
       Assert.assertFalse(e instanceof ContractExeException);
     }
   }
-
 
   @Test
   public void commonErrorCheck() {

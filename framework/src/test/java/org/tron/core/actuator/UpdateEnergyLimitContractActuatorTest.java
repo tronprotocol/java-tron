@@ -1,6 +1,7 @@
 package org.tron.core.actuator;
 
 import static junit.framework.TestCase.fail;
+import static org.tron.common.TestEnv.withDbEngineOverride;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
@@ -12,7 +13,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.tron.common.BaseTest;
-import org.tron.common.TestConstants;
+import org.tron.common.TestEnv;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.StringUtil;
@@ -30,7 +31,6 @@ import org.tron.protos.contract.AssetIssueContractOuterClass;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.UpdateEnergyLimitContract;
 
-
 @Slf4j
 public class UpdateEnergyLimitContractActuatorTest extends BaseTest {
 
@@ -47,7 +47,7 @@ public class UpdateEnergyLimitContractActuatorTest extends BaseTest {
   private static String OWNER_ADDRESS_NOTEXIST;
 
   static {
-    Args.setParam(new String[]{"--output-directory", dbPath()}, TestConstants.TEST_CONF);
+    Args.setParam(withDbEngineOverride("--output-directory", dbPath()), TestEnv.TEST_CONF);
   }
 
   /**
@@ -262,7 +262,6 @@ public class UpdateEnergyLimitContractActuatorTest extends BaseTest {
     }
   }
 
-
   @Test
   public void nullDBManger() {
     UpdateEnergyLimitContractActuator actuator = new UpdateEnergyLimitContractActuator();
@@ -326,6 +325,5 @@ public class UpdateEnergyLimitContractActuatorTest extends BaseTest {
       Assert.assertEquals(expectedMsg, e.getMessage());
     }
   }
-
 
 }

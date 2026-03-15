@@ -1,5 +1,7 @@
 package org.tron.core.actuator;
 
+import static org.tron.common.TestEnv.withDbEngineOverride;
+
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
@@ -7,7 +9,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.BaseTest;
-import org.tron.common.TestConstants;
+import org.tron.common.TestEnv;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
@@ -30,7 +32,7 @@ public class SetAccountIdActuatorTest extends BaseTest {
   private static final String OWNER_ADDRESS_INVALID = "aaaa";
 
   static {
-    Args.setParam(new String[]{"--output-directory", dbPath()}, TestConstants.TEST_CONF);
+    Args.setParam(withDbEngineOverride("--output-directory", dbPath()), TestEnv.TEST_CONF);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
     OWNER_ADDRESS_1 = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
   }
@@ -364,7 +366,6 @@ public class SetAccountIdActuatorTest extends BaseTest {
     }
   }
 
-
   @Test
   public void commonErrorCheck() {
 
@@ -386,6 +387,5 @@ public class SetAccountIdActuatorTest extends BaseTest {
     actuatorTest.nullDBManger();
 
   }
-
 
 }

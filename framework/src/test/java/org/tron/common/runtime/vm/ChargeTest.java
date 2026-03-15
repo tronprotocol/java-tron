@@ -1,12 +1,14 @@
 package org.tron.common.runtime.vm;
 
+import static org.tron.common.TestEnv.withDbEngineOverride;
+
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.BaseTest;
-import org.tron.common.TestConstants;
+import org.tron.common.TestEnv;
 import org.tron.common.runtime.TVMTestResult;
 import org.tron.common.runtime.TvmTestUtils;
 import org.tron.core.Wallet;
@@ -27,10 +29,11 @@ public class ChargeTest extends BaseTest {
   private long totalBalance = 100_000_000_000_000L;
 
   static {
-    Args.setParam(new String[]{"--output-directory", dbPath(), "--debug"}, TestConstants.TEST_CONF);
+    Args.setParam(
+        withDbEngineOverride("--output-directory", dbPath(), "--debug"),
+        TestEnv.TEST_CONF);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
   }
-
 
   /**
    * Init data.
@@ -164,7 +167,6 @@ public class ChargeTest extends BaseTest {
         .assertTrue(result.getRuntime().getResult().getException() instanceof ArithmeticException);
     Assert.assertEquals(dbManager.getAccountStore().get(address).getBalance(),
         totalBalance - (expectEnergyUsageTotal + expectEnergyUsageTotal2) * 100);
-
 
     /* ==================CALL testNegative() with -100 callvalue ================================ */
     triggerData = TvmTestUtils.parseAbi("testNegative()", "");
@@ -322,7 +324,6 @@ public class ChargeTest extends BaseTest {
         + "3b1580156101f157600080fd5b505af1158015610205573d6000803e3d6000fd5b5050600190920191506101"
         + "8e9050565b50505600a165627a7a72305820a9e7e1401001d6c131ebf4727fbcedede08d16416dc0447cef60"
         + "e0b9516c6a260029";
-
 
     TVMTestResult result = TvmTestUtils
         .deployContractAndReturnTvmTestResult(contractName, address, ABI, code, value, feeLimit,

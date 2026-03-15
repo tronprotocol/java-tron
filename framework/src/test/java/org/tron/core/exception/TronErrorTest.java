@@ -31,7 +31,7 @@ import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.slf4j.LoggerFactory;
-import org.tron.common.TestConstants;
+import org.tron.common.TestEnv;
 import org.tron.common.arch.Arch;
 import org.tron.common.log.LogService;
 import org.tron.common.parameter.RateLimiterInitialization;
@@ -111,14 +111,14 @@ public class TronErrorTest {
   @Test
   public void witnessInitTest() {
     TronError thrown = assertThrows(TronError.class, () -> {
-      Args.setParam(new String[]{"--witness"}, TestConstants.TEST_CONF);
+      Args.setParam(new String[]{"--witness"}, TestEnv.TEST_CONF);
     });
     assertEquals(TronError.ErrCode.WITNESS_INIT, thrown.getErrCode());
   }
 
   @Test
   public void rateLimiterServletInitTest() {
-    Args.setParam(new String[]{}, TestConstants.TEST_CONF);
+    Args.setParam(new String[]{}, TestEnv.TEST_CONF);
     RateLimiterInitialization rateLimiter = new RateLimiterInitialization();
     Args.getInstance().setRateLimiterInitialization(rateLimiter);
     Map<String, String> item = new HashMap<>();

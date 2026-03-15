@@ -6,6 +6,7 @@ import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 import static org.apache.http.entity.ContentType.APPLICATION_FORM_URLENCODED;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.tron.common.TestEnv.withDbEngineOverride;
 
 import com.alibaba.fastjson.JSONObject;
 import java.io.UnsupportedEncodingException;
@@ -14,7 +15,7 @@ import org.junit.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.tron.common.BaseTest;
-import org.tron.common.TestConstants;
+import org.tron.common.TestEnv;
 import org.tron.core.config.args.Args;
 
 public class GetNowBlockServletTest extends BaseTest {
@@ -23,10 +24,9 @@ public class GetNowBlockServletTest extends BaseTest {
   private GetNowBlockServlet getNowBlockServlet;
 
   static {
-    Args.setParam(
-        new String[]{
-            "--output-directory", dbPath(),
-        }, TestConstants.TEST_CONF
+    Args.setParam(withDbEngineOverride(
+            "--output-directory", dbPath()
+        ), TestEnv.TEST_CONF
     );
   }
 

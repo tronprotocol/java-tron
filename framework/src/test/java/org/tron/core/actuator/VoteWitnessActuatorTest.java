@@ -1,6 +1,7 @@
 package org.tron.core.actuator;
 
 import static junit.framework.TestCase.fail;
+import static org.tron.common.TestEnv.withDbEngineOverride;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
@@ -10,7 +11,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.BaseTest;
-import org.tron.common.TestConstants;
+import org.tron.common.TestEnv;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.StringUtil;
 import org.tron.consensus.dpos.MaintenanceManager;
@@ -51,7 +52,7 @@ public class VoteWitnessActuatorTest extends BaseTest {
   private static boolean consensusStart;
 
   static {
-    Args.setParam(new String[]{"--output-directory", dbPath()}, TestConstants.TEST_CONF);
+    Args.setParam(withDbEngineOverride("--output-directory", dbPath()), TestEnv.TEST_CONF);
     Args.getInstance().setConsensusLogicOptimization(1);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     WITNESS_ADDRESS = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
@@ -554,7 +555,6 @@ public class VoteWitnessActuatorTest extends BaseTest {
     actuatorTest.nullDBManger();
   }
 
-
   @Test
   public void voteWitnessWithoutEnoughOldTronPowerAfterNewResourceModel() {
 
@@ -608,7 +608,6 @@ public class VoteWitnessActuatorTest extends BaseTest {
     dbManager.getDynamicPropertiesStore().saveAllowNewResourceModel(0L);
   }
 
-
   @Test
   public void voteWitnessWithOldAndNewTronPowerAfterNewResourceModel() {
 
@@ -641,7 +640,6 @@ public class VoteWitnessActuatorTest extends BaseTest {
     }
     dbManager.getDynamicPropertiesStore().saveAllowNewResourceModel(0L);
   }
-
 
   @Test
   public void voteWitnessWithoutEnoughOldAndNewTronPowerAfterNewResourceModel() {

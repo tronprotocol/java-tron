@@ -2,6 +2,7 @@ package org.tron.core.services.interfaceOnSolidity.http;
 
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.tron.common.TestEnv.withDbEngineOverride;
 import static org.tron.common.utils.client.utils.HttpMethed.createRequest;
 
 import com.alibaba.fastjson.JSONObject;
@@ -14,7 +15,7 @@ import org.junit.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.tron.common.BaseTest;
-import org.tron.common.TestConstants;
+import org.tron.common.TestEnv;
 import org.tron.core.config.args.Args;
 
 public class GetEnergyPricesOnSolidityServletTest extends BaseTest {
@@ -24,7 +25,7 @@ public class GetEnergyPricesOnSolidityServletTest extends BaseTest {
 
   @BeforeClass
   public static void init() {
-    Args.setParam(new String[]{"-d", dbPath()}, TestConstants.TEST_CONF);
+    Args.setParam(withDbEngineOverride("-d", dbPath()), TestEnv.TEST_CONF);
   }
 
   @Test

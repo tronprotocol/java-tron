@@ -3,6 +3,7 @@ package org.tron.core.actuator.utils;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.tron.common.TestEnv.withDbEngineOverride;
 import static org.tron.common.math.Maths.max;
 import static org.tron.core.capsule.utils.TransactionUtil.isNumber;
 import static org.tron.core.config.Parameter.ChainConstant.DELEGATE_COST_BASE_SIZE;
@@ -23,7 +24,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.tron.common.BaseTest;
-import org.tron.common.TestConstants;
+import org.tron.common.TestEnv;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
@@ -49,7 +50,7 @@ public class TransactionUtilTest extends BaseTest {
    */
   @BeforeClass
   public static void init() {
-    Args.setParam(new String[]{"--output-directory", dbPath()}, TestConstants.TEST_CONF);
+    Args.setParam(withDbEngineOverride("--output-directory", dbPath()), TestEnv.TEST_CONF);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
   }
 
@@ -251,7 +252,6 @@ public class TransactionUtilTest extends BaseTest {
     chainBaseManager.getDynamicPropertiesStore().saveMaxDelegateLockPeriod(DELEGATE_PERIOD / 3000);
   }
 
-
   @Test
   public void testEstimateConsumeBandWidthSizeOld() {
     dbManager.getDynamicPropertiesStore().saveAllowCreationOfContracts(1L);
@@ -299,7 +299,6 @@ public class TransactionUtilTest extends BaseTest {
     Assert.assertEquals(282, estimateConsumeBandWidthSize4);
   }
 
-
   @Test
   public void testEstimateConsumeBandWidthSizeNew() {
     long balance = 1000_000L;
@@ -319,7 +318,6 @@ public class TransactionUtilTest extends BaseTest {
     long estimateConsumeBandWidthSize4 = TransactionUtil.estimateConsumeBandWidthSize(dps, balance);
     Assert.assertEquals(282, estimateConsumeBandWidthSize4);
   }
-
 
   @Test
   public void testEstimateConsumeBandWidthSize3() {

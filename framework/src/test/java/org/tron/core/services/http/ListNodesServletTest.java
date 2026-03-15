@@ -3,6 +3,7 @@ package org.tron.core.services.http;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
+import static org.tron.common.TestEnv.withDbEngineOverride;
 
 import java.io.UnsupportedEncodingException;
 import javax.annotation.Resource;
@@ -10,7 +11,7 @@ import org.junit.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.tron.common.BaseTest;
-import org.tron.common.TestConstants;
+import org.tron.common.TestEnv;
 import org.tron.core.config.args.Args;
 
 public class ListNodesServletTest extends BaseTest {
@@ -19,10 +20,9 @@ public class ListNodesServletTest extends BaseTest {
   private ListNodesServlet listNodesServlet;
 
   static {
-    Args.setParam(
-        new String[]{
-            "--output-directory", dbPath(),
-        }, TestConstants.TEST_CONF
+    Args.setParam(withDbEngineOverride(
+            "--output-directory", dbPath()
+        ), TestEnv.TEST_CONF
     );
   }
 

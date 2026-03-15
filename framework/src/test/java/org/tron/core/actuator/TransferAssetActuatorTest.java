@@ -16,6 +16,7 @@
 package org.tron.core.actuator;
 
 import static junit.framework.TestCase.fail;
+import static org.tron.common.TestEnv.withDbEngineOverride;
 import static org.tron.common.utils.Commons.adjustBalance;
 
 import com.google.protobuf.Any;
@@ -26,7 +27,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.BaseTest;
-import org.tron.common.TestConstants;
+import org.tron.common.TestEnv;
 import org.tron.common.runtime.TvmTestUtils;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
@@ -72,7 +73,7 @@ public class TransferAssetActuatorTest extends BaseTest {
   private static final String URL = "https://tron.network";
 
   static {
-    Args.setParam(new String[]{"--output-directory", dbPath()}, TestConstants.TEST_CONF);
+    Args.setParam(withDbEngineOverride("--output-directory", dbPath()), TestEnv.TEST_CONF);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049150";
     TO_ADDRESS = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a146a";
     NOT_EXIT_ADDRESS = Wallet.getAddressPreFixString() + "B56446E617E924805E4D6CA021D341FEF6E2013B";
@@ -373,7 +374,6 @@ public class TransferAssetActuatorTest extends BaseTest {
     }
   }
 
-
   /**
    * Init close SameTokenName,after init data,open SameTokenName
    */
@@ -601,7 +601,6 @@ public class TransferAssetActuatorTest extends BaseTest {
     }
   }
 
-
   /**
    * SameTokenName open, zere amount
    */
@@ -663,7 +662,6 @@ public class TransferAssetActuatorTest extends BaseTest {
       Assert.assertFalse(e instanceof ContractExeException);
     }
   }
-
 
   /**
    * SameTokenName open, negative amount
@@ -760,7 +758,6 @@ public class TransferAssetActuatorTest extends BaseTest {
       Assert.assertFalse(e instanceof ContractExeException);
     }
   }
-
 
   /**
    * SameTokenName close,If to account not exit, create it.
@@ -873,7 +870,6 @@ public class TransferAssetActuatorTest extends BaseTest {
     }
   }
 
-
   /**
    * SameTokenName open, add over flow
    */
@@ -939,7 +935,6 @@ public class TransferAssetActuatorTest extends BaseTest {
       Assert.assertFalse(e instanceof ContractExeException);
     }
   }
-
 
   /**
    * SameTokenName open,transfer asset to yourself,result is error
@@ -1267,7 +1262,6 @@ public class TransferAssetActuatorTest extends BaseTest {
       Assert.assertFalse(e instanceof ContractExeException);
     }
   }
-
 
   @Test
   /**

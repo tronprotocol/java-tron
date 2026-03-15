@@ -1,5 +1,7 @@
 package org.tron.core.capsule;
 
+import static org.tron.common.TestEnv.withDbEngineOverride;
+
 import com.google.protobuf.ByteString;
 import java.util.List;
 import java.util.Map;
@@ -8,7 +10,7 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.tron.common.BaseTest;
-import org.tron.common.TestConstants;
+import org.tron.common.TestEnv;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
 import org.tron.core.config.args.Args;
@@ -31,15 +33,13 @@ public class AccountCapsuleTest extends BaseTest {
   private static final String DESCRIPTION = "TRX";
   private static final String URL = "https://tron.network";
 
-
   static AccountCapsule accountCapsuleTest;
   static AccountCapsule accountCapsule;
 
   static {
-    Args.setParam(new String[]{"-d",  dbPath()}, TestConstants.TEST_CONF);
+    Args.setParam(withDbEngineOverride("-d",  dbPath()), TestEnv.TEST_CONF);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "a06a17a49648a8ad32055c06f60fa14ae46df91234";
   }
-
 
   @BeforeClass
   public static void init() {

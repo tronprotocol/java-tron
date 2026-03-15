@@ -51,10 +51,15 @@ public class NativeMessageQueue {
   public void stop() {
     if (Objects.nonNull(publisher)) {
       publisher.close();
+      publisher = null;
     }
 
     if (Objects.nonNull(context)) {
       context.close();
+      context = null;
+    }
+    synchronized (NativeMessageQueue.class) {
+      instance = null;
     }
   }
 

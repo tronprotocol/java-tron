@@ -1,12 +1,14 @@
 package org.tron.common.runtime;
 
+import static org.tron.common.TestEnv.withDbEngineOverride;
+
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.BaseTest;
-import org.tron.common.TestConstants;
+import org.tron.common.TestEnv;
 import org.tron.core.Wallet;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.ContractExeException;
@@ -25,7 +27,9 @@ public class InheritanceTest extends BaseTest {
   private static boolean init;
 
   static {
-    Args.setParam(new String[]{"--output-directory", dbPath(), "--debug"}, TestConstants.TEST_CONF);
+    Args.setParam(
+        withDbEngineOverride("--output-directory", dbPath(), "--debug"),
+        TestEnv.TEST_CONF);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
   }
 
@@ -89,7 +93,6 @@ public class InheritanceTest extends BaseTest {
     byte[] contractAddress = TvmTestUtils
         .deployContractWholeProcessReturnContractAddress(contractName, callerAddress, ABI, code,
             value, fee, consumeUserResourcePercent, null, repository, null);
-
 
     /* ========================== CALL getName() return child value ============================= */
     byte[] triggerData1 = TvmTestUtils.parseAbi("getName()", "");

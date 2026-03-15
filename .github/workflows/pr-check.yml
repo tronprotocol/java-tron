@@ -178,6 +178,10 @@ jobs:
       - name: Build
         run: ./gradlew clean build --no-daemon
 
+      - name: Test with RocksDB engine
+        if: matrix.arch == 'x86_64'
+        run: ./gradlew :framework:testWithRocksDb --no-daemon
+
   docker-build-rockylinux:
     name: Build rockylinux (JDK 8 / x86_64)
     if: github.event.action != 'edited' && !failure()

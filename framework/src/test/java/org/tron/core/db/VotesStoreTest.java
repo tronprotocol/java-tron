@@ -1,5 +1,7 @@
 package org.tron.core.db;
 
+import static org.tron.common.TestEnv.withDbEngineOverride;
+
 import com.google.protobuf.ByteString;
 import java.util.ArrayList;
 import java.util.List;
@@ -8,7 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.junit.Test;
 import org.tron.common.BaseTest;
-import org.tron.common.TestConstants;
+import org.tron.common.TestEnv;
 import org.tron.core.capsule.VotesCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.store.VotesStore;
@@ -17,9 +19,8 @@ import org.tron.protos.Protocol.Vote;
 @Slf4j
 public class VotesStoreTest extends BaseTest {
 
-
   static {
-    Args.setParam(new String[]{"-d", dbPath()}, TestConstants.TEST_CONF);
+    Args.setParam(withDbEngineOverride("-d", dbPath()), TestEnv.TEST_CONF);
   }
 
   @Resource

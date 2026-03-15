@@ -1,6 +1,7 @@
 package org.tron.core.event;
 
 import static org.mockito.Mockito.mock;
+import static org.tron.common.TestEnv.withDbEngineOverride;
 
 import com.google.protobuf.ByteString;
 import java.io.IOException;
@@ -20,7 +21,7 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.mockito.Mockito;
 import org.tron.api.GrpcAPI;
-import org.tron.common.TestConstants;
+import org.tron.common.TestEnv;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.logsfilter.EventPluginConfig;
 import org.tron.common.logsfilter.EventPluginLoader;
@@ -84,7 +85,9 @@ public class BlockEventGetTest extends BlockGenerate {
 
   @BeforeClass
   public static void init() {
-    Args.setParam(new String[] {"--output-directory", dbPath()}, TestConstants.TEST_CONF);
+    Args.setParam(
+        withDbEngineOverride("--output-directory", dbPath()),
+        TestEnv.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
   }
 

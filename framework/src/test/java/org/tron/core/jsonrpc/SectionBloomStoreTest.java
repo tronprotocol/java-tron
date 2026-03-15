@@ -1,5 +1,7 @@
 package org.tron.core.jsonrpc;
 
+import static org.tron.common.TestEnv.withDbEngineOverride;
+
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.List;
@@ -9,7 +11,7 @@ import javax.annotation.Resource;
 import org.junit.Assert;
 import org.junit.Test;
 import org.tron.common.BaseTest;
-import org.tron.common.TestConstants;
+import org.tron.common.TestEnv;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.LogInfo;
 import org.tron.common.utils.ByteArray;
@@ -29,7 +31,7 @@ public class SectionBloomStoreTest extends BaseTest {
   SectionBloomStore sectionBloomStore;
 
   static {
-    Args.setParam(new String[] {"--output-directory", dbPath()}, TestConstants.TEST_CONF);
+    Args.setParam(withDbEngineOverride("--output-directory", dbPath()), TestEnv.TEST_CONF);
   }
 
   @Test
