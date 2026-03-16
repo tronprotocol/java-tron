@@ -19,20 +19,20 @@ jobs:
 
     steps:
       - name: Set up JDK 8
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           java-version: '8'
           distribution: 'temurin'
 
       - name: Clone system-test
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: tronprotocol/system-test
           ref: release_workflow
           path: system-test
 
       - name: Checkout java-tron
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           path: java-tron
 
@@ -85,7 +85,7 @@ jobs:
 
       - name: Upload FullNode log
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: fullnode-log
           path: java-tron/fullnode.log
