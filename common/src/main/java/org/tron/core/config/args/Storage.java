@@ -89,7 +89,6 @@ public class Storage {
    * Default values of directory
    */
   private static final String DEFAULT_DB_ENGINE = "LEVELDB";
-  private static final String ROCKS_DB_ENGINE = "ROCKSDB";
   private static final boolean DEFAULT_DB_SYNC = false;
   private static final boolean DEFAULT_EVENT_SUBSCRIBE_CONTRACT_PARSE = true;
   private static final String DEFAULT_DB_DIRECTORY = "database";
