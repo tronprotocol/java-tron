@@ -1698,6 +1698,9 @@ public class Args extends CommonParameter {
         jCommander.getProgramName();
     helpStr.append(String.format("%nUsage: java -jar %s [options] [seedNode <seedNode> ...]%n",
         programName));
+    helpStr.append(String.format(
+        "%nNote: Positional seedNode arguments are deprecated."
+            + " Use seed.node.ip.list in the config file instead.%n"));
     helpStr.append(String.format("%nVERSION: %n%s-%s%n", Version.getVersion(),
         getCommitIdAbbrev()));
 
@@ -1719,9 +1722,21 @@ public class Args extends CommonParameter {
           logger.warn("Miss option:{}", option);
           continue;
         }
+        boolean isDeprecated;
+        try {
+          isDeprecated = CLIParameter.class.getDeclaredField(
+              parameterDescription.getParameterized().getName())
+              .isAnnotationPresent(Deprecated.class);
+        } catch (NoSuchFieldException e) {
+          isDeprecated = false;
+        }
+        String desc = upperFirst(parameterDescription.getDescription());
+        if (isDeprecated) {
+          desc += " (deprecated)";
+        }
         String tmpOptionDesc = String.format("%s\t\t\t%s%n",
             Strings.padEnd(parameterDescription.getNames(), optionMaxLength, ' '),
-            upperFirst(parameterDescription.getDescription()));
+            desc);
         helpStr.append(tmpOptionDesc);
       }
     }
