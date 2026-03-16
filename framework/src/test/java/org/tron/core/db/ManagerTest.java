@@ -30,7 +30,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.tron.api.GrpcAPI;
 import org.tron.common.BaseMethodTest;
-import org.tron.common.TestEnv;
+import org.tron.common.TestConstants;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.runtime.RuntimeImpl;
 import org.tron.common.utils.ByteArray;
@@ -710,7 +710,7 @@ public class ManagerTest extends BaseMethodTest {
       BadBlockException, TaposException, BadNumberBlockException, NonCommonBlockException,
       ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException,
       ZksnarkException, EventBloomException {
-    Args.setParam(new String[]{}, TestEnv.TEST_CONF);
+    Args.setParam(new String[]{}, TestConstants.TEST_CONF);
     long size = chainManager.getBlockStore().size();
     //  System.out.print("block store size:" + size + "\n");
     String key = PublicMethod.getRandomPrivateKey();
@@ -887,7 +887,7 @@ public class ManagerTest extends BaseMethodTest {
       TaposException, BadNumberBlockException, NonCommonBlockException,
       ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException,
       ZksnarkException, EventBloomException {
-    Args.setParam(new String[]{}, TestEnv.TEST_CONF);
+    Args.setParam(new String[]{}, TestConstants.TEST_CONF);
     long size = chainManager.getBlockStore().size();
     System.out.print("block store size:" + size + "\n");
     String key = PublicMethod.getRandomPrivateKey();
@@ -1000,7 +1000,7 @@ public class ManagerTest extends BaseMethodTest {
       BadBlockException, TaposException, BadNumberBlockException, NonCommonBlockException,
       ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException,
       ZksnarkException, EventBloomException {
-    Args.setParam(new String[]{}, TestEnv.TEST_CONF);
+    Args.setParam(new String[]{}, TestConstants.TEST_CONF);
     long size = chainManager.getBlockStore().size();
     System.out.print("block store size:" + size + "\n");
     String key = PublicMethod.getRandomPrivateKey();;

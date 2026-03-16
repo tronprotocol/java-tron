@@ -31,7 +31,7 @@ import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-import org.tron.common.TestEnv;
+import org.tron.common.TestConstants;
 import org.tron.common.args.GenesisBlock;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
@@ -57,8 +57,8 @@ public class ArgsTest {
 
   @Test
   public void get() {
-    Args.setParam(new String[] {"-c", TestEnv.TEST_CONF, "--keystore-factory"},
-        TestEnv.NET_CONF);
+    Args.setParam(new String[] {"-c", TestConstants.TEST_CONF, "--keystore-factory"},
+        TestConstants.NET_CONF);
 
     CommonParameter parameter = Args.getInstance();
 
@@ -71,7 +71,7 @@ public class ArgsTest {
     address = ByteArray.toHexString(Args.getLocalWitnesses()
         .getWitnessAccountAddress());
     Assert.assertEquals("41", DecodeUtil.addressPreFixString);
-    Assert.assertEquals(TestEnv.TEST_CONF, Args.getConfigFilePath());
+    Assert.assertEquals(TestConstants.TEST_CONF, Args.getConfigFilePath());
     Assert.assertEquals(0, parameter.getBackupPriority());
 
     Assert.assertEquals(3000, parameter.getKeepAliveInterval());
@@ -136,14 +136,14 @@ public class ArgsTest {
   @Test
   public void testIpFromLibP2p()
       throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
-    Args.setParam(new String[] {}, TestEnv.TEST_CONF);
+    Args.setParam(new String[] {}, TestConstants.TEST_CONF);
     CommonParameter parameter = Args.getInstance();
-    Assert.assertEquals(TestEnv.TEST_CONF, Args.getConfigFilePath());
+    Assert.assertEquals(TestConstants.TEST_CONF, Args.getConfigFilePath());
 
     String configuredExternalIp = parameter.getNodeExternalIp();
     Assert.assertEquals("46.168.1.1", configuredExternalIp);
 
-    Config config = Configuration.getByFileName(TestEnv.TEST_CONF);
+    Config config = Configuration.getByFileName(TestConstants.TEST_CONF);
     Config config3 = config.withoutPath(ConfigKey.NODE_DISCOVERY_EXTERNAL_IP);
 
     CommonParameter.getInstance().setNodeExternalIp(null);
@@ -158,7 +158,7 @@ public class ArgsTest {
   @Test
   public void testOldRewardOpt() {
     thrown.expect(IllegalArgumentException.class);
-    Args.setParam(new String[] {"-c", "args-test.conf"}, TestEnv.NET_CONF);
+    Args.setParam(new String[] {"-c", "args-test.conf"}, TestConstants.NET_CONF);
   }
 
   @Test
@@ -303,7 +303,7 @@ public class ArgsTest {
         "--storage-index-switch", "cli-index-switch",
         "--storage-transactionHistory-switch", "off",
         "--contract-parse-enable", "false"
-    }, TestEnv.TEST_CONF);
+    }, TestConstants.TEST_CONF);
 
     CommonParameter parameter = Args.getInstance();
 
@@ -327,7 +327,7 @@ public class ArgsTest {
    */
   @Test
   public void testConfigStorageDefaults() {
-    Args.setParam(new String[] {}, TestEnv.TEST_CONF);
+    Args.setParam(new String[] {}, TestConstants.TEST_CONF);
 
     CommonParameter parameter = Args.getInstance();
 

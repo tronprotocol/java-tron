@@ -2,8 +2,8 @@ package org.tron.common.storage.rocksdb;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
-import static org.tron.common.TestEnv.DBBACKUP_CONF;
-import static org.tron.common.TestEnv.assumeLevelDbAvailable;
+import static org.tron.common.TestConstants.DBBACKUP_CONF;
+import static org.tron.common.TestConstants.assumeLevelDbAvailable;
 
 import java.io.File;
 import java.io.IOException;

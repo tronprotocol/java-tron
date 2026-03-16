@@ -1,7 +1,6 @@
 package org.tron.core.zksnark;
 
-import static org.tron.common.TestEnv.LOCAL_CONF;
-import static org.tron.common.TestEnv.withDbEngineOverride;
+import static org.tron.common.TestConstants.LOCAL_CONF;
 import static org.tron.common.utils.PublicMethod.getHexAddressByPrivateKey;
 import static org.tron.common.utils.PublicMethod.getRandomPrivateKey;
 
@@ -148,7 +147,7 @@ public class ShieldedReceiveTest extends BaseTest {
   private static boolean init;
 
   static {
-    Args.setParam(withDbEngineOverride("--output-directory", dbPath(), "-w"),
+    Args.setParam(new String[]{"--output-directory", dbPath(), "-w"},
         LOCAL_CONF);
     ADDRESS_ONE_PRIVATE_KEY = getRandomPrivateKey();
     FROM_ADDRESS = getHexAddressByPrivateKey(ADDRESS_ONE_PRIVATE_KEY);

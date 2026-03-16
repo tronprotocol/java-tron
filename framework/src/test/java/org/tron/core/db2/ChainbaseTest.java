@@ -1,6 +1,6 @@
 package org.tron.core.db2;
 
-import static org.tron.common.TestEnv.assumeLevelDbAvailable;
+import static org.tron.common.TestConstants.assumeLevelDbAvailable;
 
 import java.util.HashMap;
 import java.util.Map;

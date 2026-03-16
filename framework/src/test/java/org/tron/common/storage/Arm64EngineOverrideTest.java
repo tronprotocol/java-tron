@@ -13,7 +13,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.mockito.MockedStatic;
-import org.tron.common.TestEnv;
+import org.tron.common.TestConstants;
 import org.tron.common.arch.Arch;
 import org.tron.core.config.args.Args;
 import org.tron.core.config.args.Storage;
@@ -51,7 +51,7 @@ public class Arm64EngineOverrideTest {
       Args.setParam(new String[]{
           "--output-directory", temporaryFolder.newFolder().toString(),
           "--storage-db-engine", "LEVELDB"
-      }, TestEnv.TEST_CONF);
+      }, TestConstants.TEST_CONF);
 
       TronError error = assertThrows(TronError.class, Args::validateConfig);
       assertEquals(TronError.ErrCode.PARAMETER_INIT, error.getErrCode());
@@ -66,7 +66,7 @@ public class Arm64EngineOverrideTest {
       // config-test.conf has db.engine=LEVELDB
       Args.setParam(new String[]{
           "--output-directory", temporaryFolder.newFolder().toString()
-      }, TestEnv.TEST_CONF);
+      }, TestConstants.TEST_CONF);
 
       TronError error = assertThrows(TronError.class, Args::validateConfig);
       assertEquals(TronError.ErrCode.PARAMETER_INIT, error.getErrCode());
@@ -81,7 +81,7 @@ public class Arm64EngineOverrideTest {
       Args.setParam(new String[]{
           "--output-directory", temporaryFolder.newFolder().toString(),
           "--storage-db-engine", "ROCKSDB"
-      }, TestEnv.DBBACKUP_CONF);
+      }, TestConstants.DBBACKUP_CONF);
 
       Args.validateConfig(); // should not throw
       assertEquals("ROCKSDB",
@@ -96,7 +96,7 @@ public class Arm64EngineOverrideTest {
 
       Args.setParam(new String[]{
           "--output-directory", temporaryFolder.newFolder().toString()
-      }, TestEnv.TEST_CONF);
+      }, TestConstants.TEST_CONF);
 
       Args.validateConfig(); // should not throw
       assertEquals("LEVELDB",
@@ -112,7 +112,7 @@ public class Arm64EngineOverrideTest {
       Args.setParam(new String[]{
           "--output-directory", temporaryFolder.newFolder().toString(),
           "--storage-db-engine", "ROCKSDB"
-      }, TestEnv.TEST_CONF);
+      }, TestConstants.TEST_CONF);
 
       Args.validateConfig(); // should not throw
       assertEquals("ROCKSDB",

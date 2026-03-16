@@ -52,13 +52,13 @@ public abstract class BaseMethodTest {
   }
 
   protected String configFile() {
-    return TestEnv.TEST_CONF;
+    return TestConstants.TEST_CONF;
   }
 
   @Before
   public final void initContext() throws IOException {
-    String[] baseArgs = TestEnv.withDbEngineOverride(
-        "--output-directory", temporaryFolder.newFolder().toString());
+    String[] baseArgs = new String[]{
+        "--output-directory", temporaryFolder.newFolder().toString()};
     String[] allArgs = mergeArgs(baseArgs, extraArgs());
     Args.setParam(allArgs, configFile());
     beforeContext();

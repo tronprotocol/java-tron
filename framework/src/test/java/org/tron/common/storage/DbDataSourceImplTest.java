@@ -33,7 +33,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 import org.rocksdb.RocksDB;
-import org.tron.common.TestEnv;
+import org.tron.common.TestConstants;
 import org.tron.common.arch.Arch;
 import org.tron.common.storage.WriteOptionsWrapper;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
@@ -96,7 +96,7 @@ public class DbDataSourceImplTest {
   @Before
   public void initDb() throws IOException {
     Args.setParam(new String[]{"--output-directory",
-        temporaryFolder.newFolder().toString()}, TestEnv.TEST_CONF);
+        temporaryFolder.newFolder().toString()}, TestConstants.TEST_CONF);
     dataSourceTest = createDataSource(
         Args.getInstance().getOutputDirectory() + File.separator, "test_db");
   }

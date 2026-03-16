@@ -137,7 +137,7 @@ test {
         classDumpDir = file("$buildDir/jacoco/classpathdumps")
     }
     if (rootProject.archInfo.isArm64) {
-        systemProperty 'tron.test.db.engine', 'ROCKSDB'
+        systemProperty 'storage.db.engine', 'ROCKSDB'
         exclude '**/LevelDbDataSourceImplTest.class'
     }
 }
@@ -146,7 +146,7 @@ task testWithRocksDb(type: Test) {
     description = 'Run tests with RocksDB engine'
     group = 'verification'
     configureTestTask(it)
-    systemProperty 'tron.test.db.engine', 'ROCKSDB'
+    systemProperty 'storage.db.engine', 'ROCKSDB'
     exclude '**/LevelDbDataSourceImplTest.class'
 }
 

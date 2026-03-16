@@ -4,7 +4,7 @@ import java.io.File;
 import org.junit.Assert;
 import org.junit.Test;
 import org.tron.common.BaseMethodTest;
-import org.tron.common.TestEnv;
+import org.tron.common.TestConstants;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.core.net.TronNetService;
@@ -21,14 +21,14 @@ public class DynamicArgsTest extends BaseMethodTest {
   @Test
   public void start() {
     CommonParameter parameter = Args.getInstance();
-    Assert.assertEquals(TestEnv.TEST_CONF, Args.getConfigFilePath());
+    Assert.assertEquals(TestConstants.TEST_CONF, Args.getConfigFilePath());
     Assert.assertTrue(parameter.isDynamicConfigEnable());
     Assert.assertEquals(600, parameter.getDynamicConfigCheckInterval());
 
     dynamicArgs.init();
     File configFile = (File) ReflectUtils.getFieldObject(dynamicArgs, "configFile");
     Assert.assertNotNull(configFile);
-    Assert.assertEquals(TestEnv.TEST_CONF, configFile.getName());
+    Assert.assertEquals(TestConstants.TEST_CONF, configFile.getName());
     Assert.assertEquals(0, (long) ReflectUtils.getFieldObject(dynamicArgs, "lastModified"));
 
     TronNetService tronNetService = context.getBean(TronNetService.class);
