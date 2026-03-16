@@ -75,7 +75,8 @@ jobs:
                 const checks = await github.rest.checks.listForRef({
                   owner,
                   repo,
-                  ref
+                  ref,
+                  per_page: 100
                 });
 
                 const checkRuns = checks.data.check_runs || [];
