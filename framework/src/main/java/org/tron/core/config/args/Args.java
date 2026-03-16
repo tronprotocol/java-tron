@@ -998,6 +998,21 @@ public class Args extends CommonParameter {
         .map(ParameterDescription::getLongestName)
         .collect(Collectors.toSet());
 
+    jc.getParameters().stream()
+        .filter(ParameterDescription::isAssigned)
+        .filter(pd -> {
+          try {
+            return CLIParameter.class.getDeclaredField(pd.getParameterized().getName())
+                .isAnnotationPresent(Deprecated.class);
+          } catch (NoSuchFieldException e) {
+            return false;
+          }
+        })
+        .forEach(pd -> logger.warn(
+            "CLI option '{}' is deprecated and will be removed in a future release. "
+                + "Please use the corresponding config-file option instead.",
+            pd.getLongestName()));
+
     if (assigned.contains("--output-directory")) {
       PARAMETER.outputDirectory = cmd.outputDirectory;
     }
@@ -1008,7 +1023,8 @@ public class Args extends CommonParameter {
       PARAMETER.supportConstant = cmd.supportConstant;
     }
     if (assigned.contains("--max-energy-limit-for-constant")) {
-      PARAMETER.maxEnergyLimitForConstant = cmd.maxEnergyLimitForConstant;
+      PARAMETER.maxEnergyLimitForConstant = max(3_000_000L,
+          cmd.maxEnergyLimitForConstant, true);
     }
     if (assigned.contains("--lru-cache-size")) {
       PARAMETER.lruCacheSize = cmd.lruCacheSize;
@@ -1091,7 +1107,12 @@ public class Args extends CommonParameter {
     if (assigned.contains("--log-config")) {
       PARAMETER.logbackPath = cmd.logbackPath;
     }
+    // seedNodes is a JCommander positional (main) parameter, which does not support
+    // isAssigned(). An empty-check is used instead — this is safe because the default
+    // is an empty list, so non-empty means the user explicitly passed values on CLI.
     if (!cmd.seedNodes.isEmpty()) {
+      logger.warn("Positional seed-node arguments are deprecated. "
+          + "Please use seed.node.ip.list in the config file instead.");
       List<InetSocketAddress> seeds = new ArrayList<>();
       for (String s : cmd.seedNodes) {
         seeds.add(NetUtil.parseInetSocketAddress(s));
