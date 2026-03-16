@@ -1,7 +1,5 @@
 package org.tron.core.jsonrpc;
 
-import static org.tron.common.TestEnv.withDbEngineOverride;
-
 import java.lang.reflect.Method;
 import java.util.BitSet;
 import java.util.concurrent.ExecutorService;
@@ -12,7 +10,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.BaseTest;
-import org.tron.common.TestEnv;
+import org.tron.common.TestConstants;
 import org.tron.core.config.args.Args;
 import org.tron.core.services.jsonrpc.TronJsonRpc.FilterRequest;
 import org.tron.core.services.jsonrpc.filters.LogBlockQuery;
@@ -28,7 +26,7 @@ public class LogBlockQueryTest extends BaseTest {
   private static final long CURRENT_MAX_BLOCK_NUM = 50000L;
 
   static {
-    Args.setParam(withDbEngineOverride("--output-directory", dbPath()), TestEnv.TEST_CONF);
+    Args.setParam(new String[] {"--output-directory", dbPath()}, TestConstants.TEST_CONF);
   }
 
   @Before

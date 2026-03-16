@@ -1,7 +1,5 @@
 package org.tron.common.logsfilter;
 
-import java.io.IOException;
-import java.net.ServerSocket;
 import org.junit.Assert;
 import org.junit.Test;
 import org.tron.common.logsfilter.nativequeue.NativeMessageQueue;
@@ -11,7 +9,7 @@ import org.zeromq.ZMQ;
 
 public class NativeMessageQueueTest {
 
-  public int bindPort = getRandomPort();
+  public int bindPort = 5555;
   public String dataToSend = "################";
   public String topic = "testTopic";
 
@@ -53,14 +51,6 @@ public class NativeMessageQueueTest {
     }
 
     NativeMessageQueue.getInstance().stop();
-  }
-
-  private static int getRandomPort() {
-    try (ServerSocket socket = new ServerSocket(0)) {
-      return socket.getLocalPort();
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
   }
 
   public void startSubscribeThread() {

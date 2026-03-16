@@ -1,6 +1,5 @@
 package org.tron.core.db;
 
-import static org.tron.common.TestEnv.withDbEngineOverride;
 import static org.tron.core.store.DynamicPropertiesStore.DEFAULT_BANDWIDTH_PRICE_HISTORY;
 import static org.tron.core.utils.ProposalUtil.ProposalType.ALLOW_CREATION_OF_CONTRACTS;
 import static org.tron.core.utils.ProposalUtil.ProposalType.ALLOW_TVM_FREEZE;
@@ -22,7 +21,7 @@ import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import org.tron.common.TestEnv;
+import org.tron.common.TestConstants;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.ProposalCapsule;
@@ -51,8 +50,8 @@ public class BandwidthPriceHistoryLoaderTest {
   // because it needs to initialize DB before the single test every time
   @Before
   public void init() throws IOException {
-    Args.setParam(withDbEngineOverride("--output-directory",
-        temporaryFolder.newFolder().toString()), TestEnv.TEST_CONF);
+    Args.setParam(new String[] {"--output-directory",
+        temporaryFolder.newFolder().toString()}, TestConstants.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     chainBaseManager = context.getBean(ChainBaseManager.class);
   }

@@ -1,14 +1,12 @@
 package org.tron.core.db;
 
-import static org.tron.common.TestEnv.withDbEngineOverride;
-
 import javax.annotation.Resource;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.tron.common.BaseTest;
-import org.tron.common.TestEnv;
+import org.tron.common.TestConstants;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionInfoCapsule;
@@ -34,9 +32,9 @@ public class TransactionRetStoreTest extends BaseTest {
   private static TransactionRetCapsule transactionRetCapsule;
 
   static {
-    Args.setParam(withDbEngineOverride("--output-directory", dbPath(),
+    Args.setParam(new String[]{"--output-directory", dbPath(),
         "--storage-db-directory", dbDirectory,
-        "--storage-index-directory", indexDirectory), TestEnv.TEST_CONF);
+        "--storage-index-directory", indexDirectory}, TestConstants.TEST_CONF);
   }
 
   @BeforeClass

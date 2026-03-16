@@ -1,7 +1,5 @@
 package org.tron.core.db;
 
-import static org.tron.common.TestEnv.withDbEngineOverride;
-
 import com.google.protobuf.ByteString;
 import java.util.ArrayList;
 import java.util.List;
@@ -11,7 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.junit.Test;
 import org.tron.common.BaseTest;
-import org.tron.common.TestEnv;
+import org.tron.common.TestConstants;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.store.WitnessStore;
@@ -20,7 +18,7 @@ import org.tron.core.store.WitnessStore;
 public class WitnessStoreTest extends BaseTest {
 
   static {
-    Args.setParam(withDbEngineOverride("-d", dbPath()), TestEnv.TEST_CONF);
+    Args.setParam(new String[]{"-d", dbPath()}, TestConstants.TEST_CONF);
   }
 
   @Resource

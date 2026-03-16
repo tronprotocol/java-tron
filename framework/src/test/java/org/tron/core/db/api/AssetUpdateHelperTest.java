@@ -1,7 +1,5 @@
 package org.tron.core.db.api;
 
-import static org.tron.common.TestEnv.INDEX_CONF;
-import static org.tron.common.TestEnv.withDbEngineOverride;
 import static org.tron.core.config.Parameter.ChainSymbol.TRX_SYMBOL_BYTES;
 
 import com.google.protobuf.ByteString;
@@ -29,8 +27,7 @@ public class AssetUpdateHelperTest extends BaseTest {
   private static boolean init;
 
   static {
-    Args.setParam(withDbEngineOverride("-d", dbPath()),
-        INDEX_CONF);
+    Args.setParam(new String[]{"-d", dbPath()}, "config-test-index.conf");
     Args.getInstance().setSolidityNode(true);
   }
 

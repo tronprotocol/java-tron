@@ -1,14 +1,12 @@
 package org.tron.common.runtime;
 
-import static org.tron.common.TestEnv.withDbEngineOverride;
-
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.BaseTest;
-import org.tron.common.TestEnv;
+import org.tron.common.TestConstants;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.core.Wallet;
 import org.tron.core.config.args.Args;
@@ -29,10 +27,8 @@ public class InternalTransactionComplexTest extends BaseTest {
   private static boolean init;
 
   static {
-    Args.setParam(
-        withDbEngineOverride("--output-directory", dbPath(),
-            "--debug", "--support-constant"),
-        TestEnv.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath(), "--debug", "--support-constant"},
+        TestConstants.TEST_CONF);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
   }
 
@@ -93,6 +89,7 @@ public class InternalTransactionComplexTest extends BaseTest {
         "0000000000000000000000000000000000000000000000000000000000000001"
             + "000000000000000000000000000000000000000000000000000000000004cb2f"
             + "0000000000000000000000000000000000000000000000000000000000123456");
+
 
   }
 

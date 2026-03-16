@@ -1,7 +1,5 @@
 package org.tron.core.actuator;
 
-import static org.tron.common.TestEnv.withDbEngineOverride;
-
 import com.google.protobuf.ByteString;
 import javax.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
@@ -10,7 +8,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.tron.common.BaseTest;
-import org.tron.common.TestEnv;
+import org.tron.common.TestConstants;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.PublicMethod;
 import org.tron.common.utils.client.utils.TransactionUtils;
@@ -70,7 +68,7 @@ public class ShieldedTransferActuatorTest extends BaseTest {
   private Wallet wallet;
 
   static {
-    Args.setParam(withDbEngineOverride("--output-directory", dbPath()), TestEnv.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath()}, TestConstants.TEST_CONF);
     ADDRESS_ONE_PRIVATE_KEY = PublicMethod.getRandomPrivateKey();
     PUBLIC_ADDRESS_ONE = PublicMethod.getHexAddressByPrivateKey(ADDRESS_ONE_PRIVATE_KEY);
 
@@ -217,6 +215,7 @@ public class ShieldedTransferActuatorTest extends BaseTest {
       Assert.assertTrue(false);
     }
   }
+
 
   /**
    * public address to public address + zero value shieldAddress

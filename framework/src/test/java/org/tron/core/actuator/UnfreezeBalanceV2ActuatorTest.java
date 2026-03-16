@@ -1,7 +1,6 @@
 package org.tron.core.actuator;
 
 import static junit.framework.TestCase.fail;
-import static org.tron.common.TestEnv.withDbEngineOverride;
 import static org.tron.core.config.Parameter.ChainConstant.FROZEN_PERIOD;
 import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 
@@ -12,7 +11,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.BaseTest;
-import org.tron.common.TestEnv;
+import org.tron.common.TestConstants;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
@@ -39,7 +38,7 @@ public class UnfreezeBalanceV2ActuatorTest extends BaseTest {
   private static final long frozenBalance = 1_000_000_000L;
 
   static {
-    Args.setParam(withDbEngineOverride("--output-directory", dbPath()), TestEnv.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath()}, TestConstants.TEST_CONF);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
     RECEIVER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049150";
     OWNER_ACCOUNT_INVALID =
@@ -116,6 +115,7 @@ public class UnfreezeBalanceV2ActuatorTest extends BaseTest {
         .setResource(resourceCode).build());
   }
 
+
   private Any getContractForTronPowerV2_001(String ownerAddress, long unfreezeBalance) {
     return Any.pack(BalanceContract.UnfreezeBalanceV2Contract.newBuilder()
             .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(ownerAddress)))
@@ -164,6 +164,7 @@ public class UnfreezeBalanceV2ActuatorTest extends BaseTest {
     }
   }
 
+
   @Test
   public void testUnfreezeBalanceForEnergy() {
     long now = System.currentTimeMillis();
@@ -201,6 +202,7 @@ public class UnfreezeBalanceV2ActuatorTest extends BaseTest {
       Assert.assertFalse(e instanceof ContractExeException);
     }
   }
+
 
   @Test
   public void invalidOwnerAddress() {
@@ -369,6 +371,7 @@ public class UnfreezeBalanceV2ActuatorTest extends BaseTest {
     actuatorTest.nullDBManger();
   }
 
+
   @Test
   public void testUnfreezeBalanceForEnergyWithOldTronPowerAfterNewResourceModel() {
     long now = System.currentTimeMillis();
@@ -406,6 +409,7 @@ public class UnfreezeBalanceV2ActuatorTest extends BaseTest {
     }
   }
 
+
   @Test
   public void testUnfreezeBalanceForEnergyWithoutOldTronPowerAfterNewResourceModel() {
     long now = System.currentTimeMillis();
@@ -441,6 +445,7 @@ public class UnfreezeBalanceV2ActuatorTest extends BaseTest {
       Assert.assertFalse(e instanceof ContractExeException);
     }
   }
+
 
   @Test
   public void testUnfreezeBalanceForTronPowerWithOldTronPowerAfterNewResourceModel() {
@@ -478,6 +483,7 @@ public class UnfreezeBalanceV2ActuatorTest extends BaseTest {
     }
   }
 
+
   @Test
   public void testUnfreezeBalanceForTronPowerWithOldTronPowerAfterNewResourceModelError() {
     long now = System.currentTimeMillis();
@@ -505,6 +511,7 @@ public class UnfreezeBalanceV2ActuatorTest extends BaseTest {
       Assert.assertTrue(e instanceof ContractValidateException);
     }
   }
+
 
   @Test
   public void testUnfreezeBalanceCheckExistFreezedBalance() {
@@ -537,6 +544,7 @@ public class UnfreezeBalanceV2ActuatorTest extends BaseTest {
 
   }
 
+
   @Test
   public void testUnfreezeBalanceCheckUnfreezeBalance() {
     long now = System.currentTimeMillis();
@@ -563,6 +571,7 @@ public class UnfreezeBalanceV2ActuatorTest extends BaseTest {
     );
     Assert.assertTrue(bret1);
   }
+
 
   @Test
   public void testUnfreezeBalanceGetFreezeType() {
@@ -654,6 +663,7 @@ public class UnfreezeBalanceV2ActuatorTest extends BaseTest {
     Assert.assertEquals(1, accountCapsule.getAllFrozenBalanceForBandwidth());
   }
 
+
   @Test
   public void testUnfreezeBalanceUnfreezeExpire() {
 
@@ -697,6 +707,7 @@ public class UnfreezeBalanceV2ActuatorTest extends BaseTest {
     Assert.assertEquals(accountCapsule.getUnfrozenV2List().size(), 1);
     Assert.assertEquals(accountCapsule.getUnfrozenV2List().get(0).getUnfreezeAmount(), 20);
   }
+
 
   @Test
   public void testAddTotalResourceWeight() {
@@ -776,10 +787,12 @@ public class UnfreezeBalanceV2ActuatorTest extends BaseTest {
     actuator.unfreezeExpire(accountCapsule,
             dbManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp());
 
+
     int after_count = accountCapsule.getUnfreezingV2Count(now);
     Assert.assertEquals(0, after_count);
 
   }
+
 
 }
 

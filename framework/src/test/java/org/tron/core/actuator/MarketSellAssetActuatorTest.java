@@ -1,7 +1,6 @@
 package org.tron.core.actuator;
 
 import static org.junit.Assert.fail;
-import static org.tron.common.TestEnv.withDbEngineOverride;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
@@ -12,7 +11,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.BaseTest;
-import org.tron.common.TestEnv;
+import org.tron.common.TestConstants;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.Wallet;
@@ -54,7 +53,7 @@ public class MarketSellAssetActuatorTest extends BaseTest {
   private static final String TRX = "_";
 
   static {
-    Args.setParam(withDbEngineOverride("--output-directory", dbPath()), TestEnv.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath()}, TestConstants.TEST_CONF);
     OWNER_ADDRESS_FIRST =
         Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     OWNER_ADDRESS_SECOND =
@@ -180,6 +179,7 @@ public class MarketSellAssetActuatorTest extends BaseTest {
   // validate:
   // ownerAddress,token,Account,TokenQuantity,position
   // balance(fee) not enough,token not enough
+
 
   @Test
   public void invalidOwnerAddress() {
@@ -372,6 +372,7 @@ public class MarketSellAssetActuatorTest extends BaseTest {
     }
   }
 
+
   /**
    * no Enough Balance For Selling Token, result is failed, exception is "No enough balance !".
    */
@@ -403,6 +404,7 @@ public class MarketSellAssetActuatorTest extends BaseTest {
       Assert.assertEquals(errorMessage, e.getMessage());
     }
   }
+
 
   /**
    * no sell Token Id, result is failed, exception is "No sellTokenID".
@@ -576,6 +578,7 @@ public class MarketSellAssetActuatorTest extends BaseTest {
     Assert.assertEquals(sellTokenQuant,
             (long) accountCapsule.getAssetV2MapForTest().get(sellTokenId));
   }
+
 
   private void addOrder(String sellTokenId, long sellTokenQuant,
       String buyTokenId, long buyTokenQuant, String ownAddress) throws Exception {
@@ -776,6 +779,7 @@ public class MarketSellAssetActuatorTest extends BaseTest {
         orderId.toByteArray());
   }
 
+
   /**
    * no buy orders before,add first sell order,selling Token and buying token
    */
@@ -856,6 +860,7 @@ public class MarketSellAssetActuatorTest extends BaseTest {
     Assert.assertArrayEquals(orderIdListCapsule.getHead(),
         orderId.toByteArray());
   }
+
 
   /**
    * no buy orders before，add multiple sell orders,need to maintain the correct sequence
@@ -941,6 +946,7 @@ public class MarketSellAssetActuatorTest extends BaseTest {
     Assert.assertArrayEquals(orderIdListCapsule.getHead(),
         orderId.toByteArray());
   }
+
 
   /**
    * no buy orders before，add multiple sell orders,need to maintain the correct sequence,same price
@@ -1028,6 +1034,7 @@ public class MarketSellAssetActuatorTest extends BaseTest {
         .assertArrayEquals(orderIdListCapsule.getOrderByIndex(1, orderStore).getID().toByteArray(),
             orderId.toByteArray());
   }
+
 
   /**
    * has buy orders before，add first sell order，not match
@@ -1120,6 +1127,7 @@ public class MarketSellAssetActuatorTest extends BaseTest {
     Assert.assertArrayEquals(orderIdListCapsule.getHead(),
         orderId.toByteArray());
   }
+
 
   /**
    * has buy orders and sell orders before，add sell order ，not match,need to maintain the sequence
@@ -1279,6 +1287,7 @@ public class MarketSellAssetActuatorTest extends BaseTest {
     // System.out.println("time:"+(System.currentTimeMillis() - l));
     return (System.nanoTime() - l);
   }
+
 
   /**
    * all match with 2 existing same price buy orders and complete this order
@@ -1699,6 +1708,7 @@ public class MarketSellAssetActuatorTest extends BaseTest {
         .getUnchecked(pairPriceKey);
     Assert.assertNull(orderIdListCapsule);
   }
+
 
   /**
    * match with 2 existing buy orders and complete the maker, taker left not enough and return

@@ -3,11 +3,10 @@ package org.tron.core.net;
 import static org.mockito.Mockito.mock;
 
 import java.lang.reflect.Field;
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
-import org.tron.common.TestEnv;
+import org.tron.common.TestConstants;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.ChainBaseManager;
@@ -16,14 +15,9 @@ import org.tron.core.config.args.Args;
 
 public class TronNetDelegateTest {
 
-  @AfterClass
-  public static void destroy() {
-    Args.clearParam();
-  }
-
   @Test
   public void test() throws Exception {
-    Args.setParam(new String[] {}, TestEnv.TEST_CONF);
+    Args.setParam(new String[] {}, TestConstants.TEST_CONF);
     CommonParameter parameter = Args.getInstance();
     Args.logConfig();
     parameter.setUnsolidifiedBlockCheck(true);

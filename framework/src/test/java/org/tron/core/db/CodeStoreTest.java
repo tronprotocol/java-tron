@@ -1,7 +1,6 @@
 package org.tron.core.db;
 
 import static org.junit.Assert.assertEquals;
-import static org.tron.common.TestEnv.withDbEngineOverride;
 
 import java.util.Arrays;
 import javax.annotation.Resource;
@@ -10,7 +9,7 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.tron.common.BaseTest;
-import org.tron.common.TestEnv;
+import org.tron.common.TestConstants;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.CodeCapsule;
 import org.tron.core.config.args.Args;
@@ -43,9 +42,11 @@ public class CodeStoreTest extends BaseTest {
   private CodeStore codeStore;
 
   static {
-    Args.setParam(withDbEngineOverride(
+    Args.setParam(
+        new String[]{
             "--output-directory", dbPath()
-        ), TestEnv.TEST_CONF
+        },
+        TestConstants.TEST_CONF
     );
   }
 

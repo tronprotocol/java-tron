@@ -1,7 +1,6 @@
 package org.tron.core.actuator;
 
 import static junit.framework.TestCase.fail;
-import static org.tron.common.TestEnv.withDbEngineOverride;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
@@ -12,7 +11,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.BaseTest;
-import org.tron.common.TestEnv;
+import org.tron.common.TestConstants;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
@@ -41,7 +40,7 @@ public class UnfreezeBalanceActuatorTest extends BaseTest {
   private static final long frozenBalance = 1_000_000_000L;
 
   static {
-    Args.setParam(withDbEngineOverride("--output-directory", dbPath()), TestEnv.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath()}, TestConstants.TEST_CONF);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
     RECEIVER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049150";
     OWNER_ACCOUNT_INVALID =
@@ -99,6 +98,7 @@ public class UnfreezeBalanceActuatorTest extends BaseTest {
         .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(ownerAddress)))
         .setResource(resourceCode).build());
   }
+
 
   @Test
   public void testUnfreezeBalanceForBandwidth() {
@@ -189,6 +189,8 @@ public class UnfreezeBalanceActuatorTest extends BaseTest {
       dbManager.getDelegatedResourceAccountIndexStore()
               .put(ByteArray.fromHexString(RECEIVER_ADDRESS), delegatedResourceAccountIndex);
     }
+
+
 
     UnfreezeBalanceActuator actuator1 = new UnfreezeBalanceActuator();
     actuator1.setChainBaseManager(dbManager.getChainBaseManager())
@@ -1014,6 +1016,7 @@ public class UnfreezeBalanceActuatorTest extends BaseTest {
     }
   }*/
 
+
   @Test
   public void commonErrorCheck() {
     UnfreezeBalanceActuator actuator = new UnfreezeBalanceActuator();
@@ -1044,6 +1047,7 @@ public class UnfreezeBalanceActuatorTest extends BaseTest {
     actuatorTest.setNullDBManagerMsg("No account store or dynamic store!");
     actuatorTest.nullDBManger();
   }
+
 
   @Test
   public void testUnfreezeBalanceForEnergyWithOldTronPowerAfterNewResourceModel() {
@@ -1078,6 +1082,7 @@ public class UnfreezeBalanceActuatorTest extends BaseTest {
     }
   }
 
+
   @Test
   public void testUnfreezeBalanceForEnergyWithoutOldTronPowerAfterNewResourceModel() {
     long now = System.currentTimeMillis();
@@ -1110,6 +1115,7 @@ public class UnfreezeBalanceActuatorTest extends BaseTest {
     }
   }
 
+
   @Test
   public void testUnfreezeBalanceForTronPowerWithOldTronPowerAfterNewResourceModel() {
     long now = System.currentTimeMillis();
@@ -1141,6 +1147,7 @@ public class UnfreezeBalanceActuatorTest extends BaseTest {
       Assert.fail();
     }
   }
+
 
   @Test
   public void testUnfreezeBalanceForTronPowerWithOldTronPowerAfterNewResourceModelError() {

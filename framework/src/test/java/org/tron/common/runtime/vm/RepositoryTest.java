@@ -1,7 +1,5 @@
 package org.tron.common.runtime.vm;
 
-import static org.tron.common.TestEnv.withDbEngineOverride;
-
 import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
@@ -10,7 +8,7 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.tron.common.BaseTest;
-import org.tron.common.TestEnv;
+import org.tron.common.TestConstants;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.Runtime;
 import org.tron.common.runtime.TVMTestResult;
@@ -36,9 +34,7 @@ public class RepositoryTest extends BaseTest {
   private Repository rootRepository;
   
   static {
-    Args.setParam(
-        withDbEngineOverride("--output-directory", dbPath(), "--debug"),
-        TestEnv.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath(), "--debug"}, TestConstants.TEST_CONF);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
   }
 
@@ -69,6 +65,7 @@ public class RepositoryTest extends BaseTest {
       addr.call(methodId, address(this), _n2);
     }
 
+
     function changeN(uint256 _n2) {
       n2 = _n2;
     }
@@ -89,6 +86,7 @@ public class RepositoryTest extends BaseTest {
       revert();
     }
     }*/
+
 
   @Test
   @Ignore
@@ -214,6 +212,7 @@ public class RepositoryTest extends BaseTest {
     TVMTestResult checkN2 = TvmTestUtils
         .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
             aAddress, checkN2Data, 0, fee, dbManager, null);
+
 
     Assert.assertArrayEquals(checkN1.getRuntime().getResult().getHReturn(),
         new DataWord(1).getData());
@@ -362,6 +361,7 @@ public class RepositoryTest extends BaseTest {
     TVMTestResult checkN2 = TvmTestUtils
         .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),
             aAddress, checkN2Data, 0, fee, dbManager, null);
+
 
     Assert.assertArrayEquals(checkN1.getRuntime().getResult().getHReturn(),
         new DataWord(1).getData());

@@ -1,7 +1,6 @@
 package org.tron.core.db;
 
 import static org.fusesource.leveldbjni.JniDBFactory.factory;
-import static org.tron.common.TestEnv.assumeLevelDbAvailable;
 
 import java.io.File;
 import java.io.IOException;
@@ -32,7 +31,6 @@ public class DBIteratorTest {
 
   @Test
   public void testLevelDb() throws IOException {
-    assumeLevelDbAvailable();
     File file = temporaryFolder.newFolder();
     try (DB db = factory.open(file, new Options().createIfMissing(true))) {
       db.put("1".getBytes(StandardCharsets.UTF_8), "1".getBytes(StandardCharsets.UTF_8));

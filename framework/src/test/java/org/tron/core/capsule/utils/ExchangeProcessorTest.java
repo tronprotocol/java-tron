@@ -1,13 +1,11 @@
 package org.tron.core.capsule.utils;
 
-import static org.tron.common.TestEnv.withDbEngineOverride;
-
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.tron.common.BaseTest;
-import org.tron.common.TestEnv;
+import org.tron.common.TestConstants;
 import org.tron.core.capsule.ExchangeProcessor;
 import org.tron.core.config.args.Args;
 
@@ -17,7 +15,7 @@ public class ExchangeProcessorTest extends BaseTest {
   private static ExchangeProcessor processor;
 
   static {
-    Args.setParam(withDbEngineOverride("--output-directory", dbPath()), TestEnv.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath()}, TestConstants.TEST_CONF);
   }
 
   /**
@@ -56,6 +54,7 @@ public class ExchangeProcessorTest extends BaseTest {
     Assert.assertEquals(2694881440L - 1360781717L, result2);
 
   }
+
 
   @Test
   public void testSellAndBuy() {

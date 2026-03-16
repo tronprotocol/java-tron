@@ -8,7 +8,6 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.tron.common.TestEnv;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.args.Args;
@@ -22,7 +21,7 @@ public class ApiUtilTest {
 
   @BeforeClass
   public static void init() {
-    Args.setParam(new String[]{}, TestEnv.LOCAL_CONF);
+    Args.setParam(new String[]{}, "config-localtest.conf");
   }
 
   @AfterClass

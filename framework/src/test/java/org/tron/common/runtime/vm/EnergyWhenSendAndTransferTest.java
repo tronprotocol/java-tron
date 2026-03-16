@@ -1,14 +1,12 @@
 package org.tron.common.runtime.vm;
 
-import static org.tron.common.TestEnv.withDbEngineOverride;
-
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.BaseTest;
-import org.tron.common.TestEnv;
+import org.tron.common.TestConstants;
 import org.tron.common.runtime.TVMTestResult;
 import org.tron.common.runtime.TvmTestUtils;
 import org.tron.core.Wallet;
@@ -29,9 +27,7 @@ public class EnergyWhenSendAndTransferTest extends BaseTest {
   private long totalBalance = 30_000_000_000_000L;
 
   static {
-    Args.setParam(
-        withDbEngineOverride("--output-directory", dbPath(), "--debug"),
-        TestEnv.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath(), "--debug"}, TestConstants.TEST_CONF);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
   }
 
@@ -153,6 +149,7 @@ public class EnergyWhenSendAndTransferTest extends BaseTest {
   //   }
   //
   // }
+
 
   @Test
   public void sendTest()

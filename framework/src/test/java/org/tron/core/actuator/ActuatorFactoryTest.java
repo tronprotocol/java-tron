@@ -1,14 +1,12 @@
 package org.tron.core.actuator;
 
-import static org.tron.common.TestEnv.withDbEngineOverride;
-
 import com.google.protobuf.ByteString;
 import java.util.List;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.BaseTest;
-import org.tron.common.TestEnv;
+import org.tron.common.TestConstants;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
@@ -25,9 +23,11 @@ public class ActuatorFactoryTest extends BaseTest {
           + "abd4b9367799eaa3197fecb144eb71de1e049abc";
 
   static {
-    Args.setParam(withDbEngineOverride(
+    Args.setParam(
+            new String[] {
                 "--output-directory", dbPath()
-            ), TestEnv.TEST_CONF
+            },
+            TestConstants.TEST_CONF
     );
   }
 
@@ -56,6 +56,7 @@ public class ActuatorFactoryTest extends BaseTest {
     dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
     dbManager.getAccountStore().put(toAccountCapsule.getAddress().toByteArray(), toAccountCapsule);
   }
+
 
   @Test
   public void testCreateActuator() {

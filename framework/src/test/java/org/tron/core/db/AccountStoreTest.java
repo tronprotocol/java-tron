@@ -2,7 +2,6 @@ package org.tron.core.db;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
-import static org.tron.common.TestEnv.withDbEngineOverride;
 
 import com.google.protobuf.ByteString;
 import com.typesafe.config.Config;
@@ -18,7 +17,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.tron.common.BaseTest;
-import org.tron.common.TestEnv;
+import org.tron.common.TestConstants;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.config.args.Args;
@@ -46,11 +45,13 @@ public class AccountStoreTest extends BaseTest {
   private static boolean init;
 
   static {
-    Args.setParam(withDbEngineOverride(
+    Args.setParam(
+        new String[]{
             "--output-directory", dbPath(),
             "--storage-db-directory", dbDirectory,
             "--storage-index-directory", indexDirectory
-        ), TestEnv.TEST_CONF
+        },
+        TestConstants.TEST_CONF
     );
   }
 

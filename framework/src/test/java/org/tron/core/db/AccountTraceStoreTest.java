@@ -1,7 +1,5 @@
 package org.tron.core.db;
 
-import static org.tron.common.TestEnv.withDbEngineOverride;
-
 import com.google.common.primitives.Bytes;
 import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
@@ -11,7 +9,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.BaseTest;
-import org.tron.common.TestEnv;
+import org.tron.common.TestConstants;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AccountTraceCapsule;
@@ -29,11 +27,14 @@ public class AccountTraceStoreTest extends BaseTest {
   private static byte[] address = TransactionStoreTest.randomBytes(32);
 
   static {
-    Args.setParam(withDbEngineOverride(
+    Args.setParam(
+        new String[]{
             "--output-directory", dbPath()
-        ), TestEnv.TEST_CONF
+        },
+        TestConstants.TEST_CONF
     );
   }
+
 
   @Test
   public void testRecordBalanceWithBlock() throws BadItemException, ItemNotFoundException {

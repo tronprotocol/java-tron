@@ -2,7 +2,6 @@ package org.tron.core.services.http;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.fail;
-import static org.tron.common.TestEnv.withDbEngineOverride;
 import static org.tron.common.utils.client.utils.HttpMethed.createRequest;
 
 import com.alibaba.fastjson.JSONObject;
@@ -18,7 +17,7 @@ import org.junit.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.tron.common.BaseTest;
-import org.tron.common.TestEnv;
+import org.tron.common.TestConstants;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
@@ -33,9 +32,10 @@ public class CreateWitnessServletTest extends BaseTest {
   private CreateWitnessServlet createWitnessServlet;
 
   static {
-    Args.setParam(withDbEngineOverride(
-                "--output-directory", dbPath()
-            ), TestEnv.TEST_CONF
+    Args.setParam(
+            new String[]{
+                "--output-directory", dbPath(),
+            }, TestConstants.TEST_CONF
     );
   }
 
@@ -84,4 +84,5 @@ public class CreateWitnessServletTest extends BaseTest {
   }
 
 }
+
 

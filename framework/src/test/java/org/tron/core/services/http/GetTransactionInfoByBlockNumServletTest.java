@@ -1,7 +1,6 @@
 package org.tron.core.services.http;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.tron.common.TestEnv.withDbEngineOverride;
 import static org.tron.common.utils.client.utils.HttpMethed.createRequest;
 
 import com.alibaba.fastjson.JSONArray;
@@ -17,7 +16,7 @@ import org.junit.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.tron.common.BaseTest;
-import org.tron.common.TestEnv;
+import org.tron.common.TestConstants;
 import org.tron.common.utils.ByteArray;
 
 import org.tron.core.capsule.TransactionInfoCapsule;
@@ -33,9 +32,10 @@ public class GetTransactionInfoByBlockNumServletTest extends BaseTest {
   private static TransactionRetCapsule transactionRetCapsule;
 
   static {
-    Args.setParam(withDbEngineOverride(
-                "--output-directory", dbPath()
-            ), TestEnv.TEST_CONF
+    Args.setParam(
+            new String[]{
+                "--output-directory", dbPath(),
+            }, TestConstants.TEST_CONF
     );
   }
 

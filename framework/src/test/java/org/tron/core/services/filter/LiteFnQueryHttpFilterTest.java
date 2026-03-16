@@ -1,6 +1,5 @@
 package org.tron.core.services.filter;
 
-import static org.tron.common.TestEnv.withDbEngineOverride;
 import static org.tron.core.ChainBaseManager.NodeType.FULL;
 import static org.tron.core.ChainBaseManager.NodeType.LITE;
 
@@ -19,7 +18,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.BaseTest;
-import org.tron.common.TestEnv;
+import org.tron.common.TestConstants;
 import org.tron.common.utils.PublicMethod;
 import org.tron.core.config.args.Args;
 
@@ -31,7 +30,7 @@ public class LiteFnQueryHttpFilterTest extends BaseTest {
   private final CloseableHttpClient httpClient = HttpClients.createDefault();
 
   static {
-    Args.setParam(withDbEngineOverride("-d", dbPath()), TestEnv.TEST_CONF);
+    Args.setParam(new String[]{"-d", dbPath()}, TestConstants.TEST_CONF);
     Args.getInstance().setAllowShieldedTransactionApi(false);
     Args.getInstance().setRpcEnable(false);
     Args.getInstance().setRpcSolidityEnable(false);

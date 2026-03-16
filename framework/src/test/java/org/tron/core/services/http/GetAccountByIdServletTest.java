@@ -1,7 +1,6 @@
 package org.tron.core.services.http;
 
 import static org.apache.commons.lang3.StringUtils.isNotEmpty;
-import static org.tron.common.TestEnv.withDbEngineOverride;
 
 import javax.annotation.Resource;
 import org.junit.Assert;
@@ -9,15 +8,16 @@ import org.junit.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.tron.common.BaseTest;
-import org.tron.common.TestEnv;
+import org.tron.common.TestConstants;
 import org.tron.core.config.args.Args;
 
 public class GetAccountByIdServletTest extends BaseTest {
 
   static {
-    Args.setParam(withDbEngineOverride(
-                "--output-directory", dbPath()
-            ), TestEnv.TEST_CONF
+    Args.setParam(
+            new String[]{
+                "--output-directory", dbPath(),
+            }, TestConstants.TEST_CONF
     );
   }
 

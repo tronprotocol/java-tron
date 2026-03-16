@@ -1,7 +1,5 @@
 package org.tron.program;
 
-import static org.tron.common.TestEnv.withDbEngineOverride;
-
 import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
 import java.io.File;
@@ -10,7 +8,7 @@ import javax.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.tron.common.BaseTest;
-import org.tron.common.TestEnv;
+import org.tron.common.TestConstants;
 import org.tron.consensus.dpos.MaintenanceManager;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.WitnessCapsule;
@@ -24,7 +22,7 @@ public class AccountVoteWitnessTest extends BaseTest {
   private MaintenanceManager maintenanceManager;
 
   static {
-    Args.setParam(withDbEngineOverride("-d", dbPath()), TestEnv.TEST_CONF);
+    Args.setParam(new String[]{"-d", dbPath()}, TestConstants.TEST_CONF);
   }
 
   private static Boolean deleteFolder(File index) {

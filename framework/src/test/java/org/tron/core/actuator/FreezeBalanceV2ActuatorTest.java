@@ -1,7 +1,6 @@
 package org.tron.core.actuator;
 
 import static junit.framework.TestCase.fail;
-import static org.tron.common.TestEnv.withDbEngineOverride;
 import static org.tron.core.config.Parameter.ChainConstant.TRANSFER_FEE;
 
 import com.google.protobuf.Any;
@@ -11,7 +10,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.BaseTest;
-import org.tron.common.TestEnv;
+import org.tron.common.TestConstants;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
@@ -38,7 +37,7 @@ public class FreezeBalanceV2ActuatorTest extends BaseTest {
   private static final long initBalance = 10_000_000_000L;
 
   static {
-    Args.setParam(withDbEngineOverride("--output-directory", dbPath()), TestEnv.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath()}, TestConstants.TEST_CONF);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
     RECEIVER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049150";
     OWNER_ACCOUNT_INVALID =
@@ -87,6 +86,7 @@ public class FreezeBalanceV2ActuatorTest extends BaseTest {
             .setResource(ResourceCode.ENERGY)
             .build());
   }
+
 
   private Any getContractForTronPowerV2(String ownerAddress, long frozenBalance) {
     return Any.pack(
@@ -166,6 +166,7 @@ public class FreezeBalanceV2ActuatorTest extends BaseTest {
       Assert.fail();
     }
   }
+
 
   @Test
   public void freezeLessThanZero() {
@@ -293,6 +294,7 @@ public class FreezeBalanceV2ActuatorTest extends BaseTest {
     }
   }
 
+
   @Test
   public void commonErrorCheck() {
     FreezeBalanceV2Actuator actuator = new FreezeBalanceV2Actuator();
@@ -313,6 +315,7 @@ public class FreezeBalanceV2ActuatorTest extends BaseTest {
     actuatorTest.setNullDBManagerMsg("No account store or dynamic store!");
     actuatorTest.nullDBManger();
   }
+
 
   @Test
   public void testFreezeBalanceForEnergyWithoutOldTronPowerAfterNewResourceModel() {
@@ -337,6 +340,7 @@ public class FreezeBalanceV2ActuatorTest extends BaseTest {
       Assert.fail();
     }
   }
+
 
   @Test
   public void testFreezeBalanceForEnergyWithOldTronPowerAfterNewResourceModel() {
@@ -367,6 +371,7 @@ public class FreezeBalanceV2ActuatorTest extends BaseTest {
       Assert.fail();
     }
   }
+
 
   @Test
   public void testFreezeBalanceForTronPowerWithOldTronPowerAfterNewResourceModel() {

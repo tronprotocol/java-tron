@@ -1,7 +1,5 @@
 package org.tron.core.capsule.utils;
 
-import static org.tron.common.TestEnv.withDbEngineOverride;
-
 import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
 import java.util.ArrayList;
@@ -12,7 +10,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.tron.api.GrpcAPI.AssetIssueList;
 import org.tron.common.BaseTest;
-import org.tron.common.TestEnv;
+import org.tron.common.TestConstants;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
@@ -24,8 +22,9 @@ import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 @Slf4j
 public class AssetUtilTest extends BaseTest {
 
+
   static {
-    Args.setParam(withDbEngineOverride("-d", dbPath()), TestEnv.TEST_CONF);
+    Args.setParam(new String[] {"-d", dbPath()}, TestConstants.TEST_CONF);
   }
 
   public static byte[] randomBytes(int length) {
@@ -64,6 +63,7 @@ public class AssetUtilTest extends BaseTest {
     }
     return frozenList;
   }
+
 
   @Test
   public void testUpdateUsage() {

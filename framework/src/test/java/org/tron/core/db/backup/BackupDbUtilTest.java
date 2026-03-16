@@ -1,8 +1,5 @@
 package org.tron.core.db.backup;
 
-import static org.tron.common.TestEnv.DBBACKUP_CONF;
-import static org.tron.common.TestEnv.withDbEngineOverride;
-
 import java.io.File;
 import javax.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
@@ -41,12 +38,13 @@ public class BackupDbUtilTest extends BaseTest {
 
   static {
     dbPath = dbPath();
-    Args.setParam(withDbEngineOverride(
+    Args.setParam(
+        new String[]{
             "--output-directory", dbPath,
             "--storage-db-directory", "database",
             "--storage-index-directory", "index"
-        ),
-        DBBACKUP_CONF
+        },
+        "config-test-dbbackup.conf"
     );
   }
 

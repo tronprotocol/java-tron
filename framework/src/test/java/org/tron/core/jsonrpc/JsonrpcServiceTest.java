@@ -1,6 +1,5 @@
 package org.tron.core.jsonrpc;
 
-import static org.tron.common.TestEnv.withDbEngineOverride;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getByJsonBlockId;
 import static org.tron.core.services.jsonrpc.TronJsonRpcImpl.TAG_PENDING_SUPPORT_ERROR;
 
@@ -25,7 +24,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.BaseTest;
-import org.tron.common.TestEnv;
+import org.tron.common.TestConstants;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.prometheus.Metrics;
 import org.tron.common.utils.ByteArray;
@@ -54,6 +53,7 @@ import org.tron.core.services.jsonrpc.types.TransactionResult;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.contract.BalanceContract.TransferContract;
+
 
 @Slf4j
 public class JsonrpcServiceTest extends BaseTest {
@@ -84,7 +84,7 @@ public class JsonrpcServiceTest extends BaseTest {
   private JsonRpcServiceOnSolidity jsonRpcServiceOnSolidity;
 
   static {
-    Args.setParam(withDbEngineOverride("--output-directory", dbPath()), TestEnv.TEST_CONF);
+    Args.setParam(new String[] {"--output-directory", dbPath()}, TestConstants.TEST_CONF);
     CommonParameter.getInstance().setJsonRpcHttpFullNodeEnable(true);
     CommonParameter.getInstance().setJsonRpcHttpFullNodePort(PublicMethod.chooseRandomPort());
     CommonParameter.getInstance().setJsonRpcHttpPBFTNodeEnable(true);
@@ -131,6 +131,7 @@ public class JsonrpcServiceTest extends BaseTest {
             ByteString.copyFrom(ByteArray.fromHexString(
                 (Wallet.getAddressPreFixString() + "ED738B3A0FE390EAA71B768B6D02CDBD18FB207B"))))
         .build();
+
 
     transactionCapsule1 = new TransactionCapsule(transferContract1, ContractType.TransferContract);
     transactionCapsule1.setBlockNum(blockCapsule1.getNum());

@@ -1,7 +1,6 @@
 package org.tron.core.actuator;
 
 import static org.junit.Assert.fail;
-import static org.tron.common.TestEnv.withDbEngineOverride;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
@@ -10,7 +9,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.BaseTest;
-import org.tron.common.TestEnv;
+import org.tron.common.TestConstants;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.Wallet;
@@ -33,7 +32,7 @@ public class CreateAccountActuatorTest extends BaseTest {
   private static final String INVALID_ACCOUNT_ADDRESS;
 
   static {
-    Args.setParam(withDbEngineOverride("--output-directory", dbPath()), TestEnv.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath()}, TestConstants.TEST_CONF);
     OWNER_ADDRESS_FIRST =
         Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     OWNER_ADDRESS_SECOND =
@@ -147,6 +146,7 @@ public class CreateAccountActuatorTest extends BaseTest {
     }
   }
 
+
   /**
    * owner address not exit in DB
    */
@@ -197,6 +197,7 @@ public class CreateAccountActuatorTest extends BaseTest {
     processAndCheckInvalid(actuator, ret, "Invalid account address", "Invalid account address");
   }
 
+
   @Test
   public void commonErrorCheck() {
 
@@ -237,5 +238,6 @@ public class CreateAccountActuatorTest extends BaseTest {
       Assert.assertEquals(expectedMsg, e.getMessage());
     }
   }
+
 
 }

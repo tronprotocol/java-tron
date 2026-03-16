@@ -1,7 +1,6 @@
 package org.tron.core.db;
 
 import static org.junit.Assert.assertEquals;
-import static org.tron.common.TestEnv.withDbEngineOverride;
 import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferContract;
 import static org.tron.protos.Protocol.Transaction.Result.contractResult.SUCCESS;
 
@@ -13,7 +12,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.BaseTest;
-import org.tron.common.TestEnv;
+import org.tron.common.TestConstants;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.BlockBalanceTraceCapsule;
 import org.tron.core.capsule.BlockCapsule;
@@ -22,6 +21,7 @@ import org.tron.core.config.args.Args;
 import org.tron.core.store.BalanceTraceStore;
 import org.tron.protos.Protocol;
 import org.tron.protos.contract.BalanceContract;
+
 
 public class BalanceTraceStoreTest extends BaseTest {
 
@@ -45,9 +45,11 @@ public class BalanceTraceStoreTest extends BaseTest {
           .build();
 
   static {
-    Args.setParam(withDbEngineOverride(
+    Args.setParam(
+        new String[]{
             "--output-directory", dbPath()
-        ), TestEnv.TEST_CONF
+        },
+        TestConstants.TEST_CONF
     );
   }
 
@@ -56,6 +58,7 @@ public class BalanceTraceStoreTest extends BaseTest {
     balanceTraceStoreUnderTest.resetCurrentTransactionTrace();
     balanceTraceStoreUnderTest.resetCurrentBlockTrace();
   }
+
 
   @Test
   public void testSetCurrentTransactionId() throws Exception {

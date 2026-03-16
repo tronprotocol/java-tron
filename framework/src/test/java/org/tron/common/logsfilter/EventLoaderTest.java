@@ -4,8 +4,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import java.io.IOException;
-import java.net.ServerSocket;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.Assert;
@@ -19,7 +17,7 @@ public class EventLoaderTest {
   public void launchNativeQueue() {
     EventPluginConfig config = new EventPluginConfig();
     config.setSendQueueLength(1000);
-    config.setBindPort(getRandomPort());
+    config.setBindPort(5555);
     config.setUseNativeQueue(true);
     config.setPluginPath("pluginPath");
     config.setServerAddress("serverAddress");
@@ -97,13 +95,5 @@ public class EventLoaderTest {
     tlt.setEnergyUnitPrice(tlt.getEnergyUnitPrice());
     tlt.setTimeStamp(1L);
     Assert.assertNotNull(tlt.toString());
-  }
-
-  private static int getRandomPort() {
-    try (ServerSocket socket = new ServerSocket(0)) {
-      return socket.getLocalPort();
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
   }
 }

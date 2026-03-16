@@ -1,7 +1,5 @@
 package org.tron.core.metrics.prometheus;
 
-import static org.tron.common.TestEnv.withDbEngineOverride;
-
 import com.google.common.collect.Maps;
 import com.google.protobuf.ByteString;
 import io.prometheus.client.CollectorRegistry;
@@ -19,7 +17,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.BaseTest;
-import org.tron.common.TestEnv;
+import org.tron.common.TestConstants;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.prometheus.MetricLabels;
@@ -57,7 +55,7 @@ public class PrometheusApiServiceTest extends BaseTest {
   private ChainBaseManager chainManager;
 
   static {
-    Args.setParam(withDbEngineOverride("-d", dbPath()), TestEnv.TEST_CONF);
+    Args.setParam(new String[] {"-d", dbPath()}, TestConstants.TEST_CONF);
     Args.getInstance().setNodeListenPort(10000 + port.incrementAndGet());
     initParameter(Args.getInstance());
     Metrics.init();

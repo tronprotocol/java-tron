@@ -2,7 +2,6 @@ package org.tron.core.services.http;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.fail;
-import static org.tron.common.TestEnv.withDbEngineOverride;
 
 import com.alibaba.fastjson.JSONObject;
 import java.io.UnsupportedEncodingException;
@@ -11,7 +10,7 @@ import org.junit.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.tron.common.BaseTest;
-import org.tron.common.TestEnv;
+import org.tron.common.TestConstants;
 import org.tron.core.config.args.Args;
 
 public class GetAssetIssueListServletTest extends BaseTest {
@@ -20,9 +19,10 @@ public class GetAssetIssueListServletTest extends BaseTest {
   private GetAssetIssueListServlet getAssetIssueListServlet;
 
   static {
-    Args.setParam(withDbEngineOverride(
-            "--output-directory", dbPath()
-        ), TestEnv.TEST_CONF
+    Args.setParam(
+        new String[]{
+            "--output-directory", dbPath(),
+        }, TestConstants.TEST_CONF
     );
   }
 

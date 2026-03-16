@@ -1,6 +1,5 @@
 package org.tron.core.db;
 
-import static org.tron.common.TestEnv.withDbEngineOverride;
 import static org.tron.common.math.Maths.random;
 import static org.tron.common.math.Maths.round;
 
@@ -10,7 +9,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
 import org.tron.common.BaseTest;
-import org.tron.common.TestEnv;
+import org.tron.common.TestConstants;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.core.ChainBaseManager;
@@ -27,7 +26,7 @@ import org.tron.protos.Protocol.MarketPrice;
 public class MarketPairPriceToOrderStoreTest extends BaseTest {
 
   static {
-    Args.setParam(withDbEngineOverride("-d", dbPath()), TestEnv.TEST_CONF);
+    Args.setParam(new String[]{"-d", dbPath()}, TestConstants.TEST_CONF);
   }
 
   @After
@@ -402,6 +401,7 @@ public class MarketPairPriceToOrderStoreTest extends BaseTest {
 
     Assert.assertArrayEquals("nextKey should be pairPriceKey3", pairPriceKey3, nextKey);
   }
+
 
   @Test
   public void testDecodePriceKey() {

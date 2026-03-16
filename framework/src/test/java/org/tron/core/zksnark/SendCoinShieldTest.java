@@ -1,7 +1,5 @@
 package org.tron.core.zksnark;
 
-import static org.tron.common.TestEnv.MAINNET_CONF;
-import static org.tron.common.TestEnv.withDbEngineOverride;
 import static org.tron.core.capsule.TransactionCapsule.getShieldTransactionHashIgnoreTypeException;
 
 import com.alibaba.fastjson.JSONArray;
@@ -113,8 +111,7 @@ public class SendCoinShieldTest extends BaseTest {
   private static boolean init;
 
   static {
-    Args.setParam(withDbEngineOverride("--output-directory", dbPath()),
-        MAINNET_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath()}, "config-test-mainnet.conf");
     Args.getInstance().setZenTokenId(String.valueOf(tokenId));
     PUBLIC_ADDRESS_ONE =
         Wallet.getAddressPreFixString() + "a7d8a35b260395c14aa456297662092ba3b76fc0";
@@ -318,6 +315,7 @@ public class SendCoinShieldTest extends BaseTest {
       JLibrustzcash.librustzcashSaplingVerificationCtxFree(ctx);
     }
   }
+
 
   @Test
   public void testDecryptReceiveWithIvk() throws ZksnarkException {
@@ -866,6 +864,7 @@ public class SendCoinShieldTest extends BaseTest {
     Optional<String> optional = readLines.stream().reduce((s, s2) -> s + s2);
     return optional.map(JSONArray::parseArray).orElse(null);
   }
+
 
   @Test
   public void testComputeCm() throws Exception {
@@ -1513,6 +1512,7 @@ public class SendCoinShieldTest extends BaseTest {
               spendDescriptionInfo.getAlpha(), dataToBeSigned, result));
     }
   }
+
 
   @Test
   public void TestGeneratesProofWithWrongRcm() throws Exception {

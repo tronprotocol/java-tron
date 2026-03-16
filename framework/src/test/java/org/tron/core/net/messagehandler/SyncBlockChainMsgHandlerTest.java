@@ -1,7 +1,5 @@
 package org.tron.core.net.messagehandler;
 
-import static org.tron.common.TestEnv.withDbEngineOverride;
-
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -16,7 +14,7 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import org.tron.common.TestEnv;
+import org.tron.common.TestConstants;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
@@ -48,9 +46,7 @@ public class SyncBlockChainMsgHandlerTest {
 
   @BeforeClass
   public static void before() {
-    Args.setParam(
-        withDbEngineOverride("--output-directory", dbPath()),
-        TestEnv.TEST_CONF);
+    Args.setParam(new String[] {"--output-directory", dbPath()}, TestConstants.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
   }
 

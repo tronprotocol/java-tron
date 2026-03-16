@@ -1,7 +1,5 @@
 package org.tron.core.services;
 
-import static org.tron.common.TestEnv.withDbEngineOverride;
-
 import io.grpc.ManagedChannelBuilder;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
@@ -16,7 +14,7 @@ import org.junit.rules.TemporaryFolder;
 import org.junit.rules.Timeout;
 import org.tron.api.GrpcAPI.EmptyMessage;
 import org.tron.api.WalletGrpc;
-import org.tron.common.TestEnv;
+import org.tron.common.TestConstants;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
@@ -41,9 +39,8 @@ public class WalletApiTest {
 
   @BeforeClass
   public static void init() throws IOException {
-    Args.setParam(withDbEngineOverride("-d",
-        temporaryFolder.newFolder().toString(),
-        "--p2p-disable", "true"), TestEnv.TEST_CONF);
+    Args.setParam(new String[] {"-d", temporaryFolder.newFolder().toString(),
+        "--p2p-disable", "true"}, TestConstants.TEST_CONF);
     Args.getInstance().setRpcPort(PublicMethod.chooseRandomPort());
     Args.getInstance().setRpcEnable(true);
     context = new TronApplicationContext(DefaultConfig.class);

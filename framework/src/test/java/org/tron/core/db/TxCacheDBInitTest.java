@@ -1,7 +1,5 @@
 package org.tron.core.db;
 
-import static org.tron.common.TestEnv.withDbEngineOverride;
-
 import java.io.IOException;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
@@ -11,7 +9,7 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
-import org.tron.common.TestEnv;
+import org.tron.common.TestConstants;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.BytesCapsule;
@@ -41,9 +39,8 @@ public class TxCacheDBInitTest {
    */
   @BeforeClass
   public static void init() throws IOException {
-    Args.setParam(withDbEngineOverride("--output-directory",
-        temporaryFolder.newFolder().toString(),
-        "--p2p-disable", "true"), TestEnv.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", temporaryFolder.newFolder().toString(),
+        "--p2p-disable", "true"}, TestConstants.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
   }
 

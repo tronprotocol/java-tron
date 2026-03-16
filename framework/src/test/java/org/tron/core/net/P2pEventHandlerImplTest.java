@@ -1,7 +1,6 @@
 package org.tron.core.net;
 
 import static org.mockito.Mockito.mock;
-import static org.tron.common.TestEnv.withDbEngineOverride;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -11,7 +10,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.tron.common.BaseTest;
-import org.tron.common.TestEnv;
+import org.tron.common.TestConstants;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.config.args.Args;
@@ -27,9 +26,8 @@ public class P2pEventHandlerImplTest extends BaseTest {
 
   @BeforeClass
   public static void init() throws Exception {
-    Args.setParam(
-        withDbEngineOverride("--output-directory", dbPath(), "--debug"),
-        TestEnv.TEST_CONF);
+    Args.setParam(new String[] {"--output-directory", dbPath(), "--debug"},
+        TestConstants.TEST_CONF);
   }
 
   @Test

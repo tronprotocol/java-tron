@@ -1,14 +1,12 @@
 package org.tron.common.runtime.vm;
 
-import static org.tron.common.TestEnv.withDbEngineOverride;
-
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.BaseTest;
-import org.tron.common.TestEnv;
+import org.tron.common.TestConstants;
 import org.tron.common.runtime.TVMTestResult;
 import org.tron.common.runtime.TvmTestUtils;
 import org.tron.core.Wallet;
@@ -31,7 +29,8 @@ public class EnergyWhenTimeoutStyleTest extends BaseTest {
   private long totalBalance = 30_000_000_000_000L;
 
   static {
-    Args.setParam(withDbEngineOverride("--output-directory", dbPath()), TestEnv.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath()},
+        TestConstants.TEST_CONF);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
   }
 
@@ -131,6 +130,7 @@ public class EnergyWhenTimeoutStyleTest extends BaseTest {
         + "04803603810190808035906020019092919050505060a9565b005b60008054905090565b806000819055505b"
         + "60011560cb576001600080828254019250508190555060b1565b505600a165627a7a72305820290a38c9bbaf"
         + "ccaf6c7f752ab56d229e354da767efb72715ee9fdb653b9f4b6c0029";
+
 
     return TvmTestUtils
         .deployContractAndReturnTvmTestResult(contractName, address, ABI, code,

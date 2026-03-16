@@ -2,7 +2,6 @@ package org.tron.core.net.services;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.spy;
-import static org.tron.common.TestEnv.withDbEngineOverride;
 
 import io.netty.channel.ChannelHandlerContext;
 import java.io.IOException;
@@ -17,7 +16,7 @@ import org.junit.Test;
 import org.mockito.Mockito;
 import org.springframework.context.ApplicationContext;
 import org.tron.common.BaseTest;
-import org.tron.common.TestEnv;
+import org.tron.common.TestConstants;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.core.config.args.Args;
 import org.tron.core.net.P2pEventHandlerImpl;
@@ -34,11 +33,11 @@ public class ResilienceServiceTest extends BaseTest {
   @Resource
   private P2pEventHandlerImpl p2pEventHandler;
 
+
   @BeforeClass
   public static void init() throws IOException {
-    Args.setParam(
-        withDbEngineOverride("--output-directory", dbPath(), "--debug"),
-        TestEnv.TEST_CONF);
+    Args.setParam(new String[] {"--output-directory", dbPath(), "--debug"},
+        TestConstants.TEST_CONF);
   }
 
   @After

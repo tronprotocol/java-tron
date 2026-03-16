@@ -1,7 +1,5 @@
 package org.tron.core.pbft;
 
-import static org.tron.common.TestEnv.withDbEngineOverride;
-
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.google.protobuf.ByteString;
@@ -18,7 +16,7 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.tron.common.BaseTest;
-import org.tron.common.TestEnv;
+import org.tron.common.TestConstants;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.PublicMethod;
@@ -39,7 +37,7 @@ public class PbftApiTest extends BaseTest {
 
   @BeforeClass
   public static void init() {
-    Args.setParam(withDbEngineOverride("-d", dbPath()), TestEnv.TEST_CONF);
+    Args.setParam(new String[]{"-d", dbPath()}, TestConstants.TEST_CONF);
     CommonParameter.getInstance().setPBFTHttpEnable(true);
     CommonParameter.getInstance().setPBFTHttpPort(PublicMethod.chooseRandomPort());
   }

@@ -1,7 +1,5 @@
 package org.tron.common.runtime.vm;
 
-import static org.tron.common.TestEnv.withDbEngineOverride;
-
 import com.google.protobuf.ByteString;
 import java.util.ArrayList;
 import java.util.List;
@@ -11,7 +9,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.BaseTest;
-import org.tron.common.TestEnv;
+import org.tron.common.TestConstants;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.runtime.Runtime;
 import org.tron.common.runtime.TvmTestUtils;
@@ -41,9 +39,7 @@ public class BatchSendTest extends BaseTest {
   private static final AccountCapsule ownerCapsule;
 
   static {
-    Args.setParam(
-        withDbEngineOverride("--output-directory", dbPath(), "--debug"),
-        TestEnv.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath(), "--debug"}, TestConstants.TEST_CONF);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     TRANSFER_TO = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
 
@@ -54,6 +50,7 @@ public class BatchSendTest extends BaseTest {
             AccountType.AssetIssue);
 
     ownerCapsule.setBalance(1000_1000_1000L);
+
 
   }
 

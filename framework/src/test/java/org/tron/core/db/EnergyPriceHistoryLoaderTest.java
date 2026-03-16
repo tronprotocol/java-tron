@@ -1,6 +1,5 @@
 package org.tron.core.db;
 
-import static org.tron.common.TestEnv.withDbEngineOverride;
 import static org.tron.core.store.DynamicPropertiesStore.DEFAULT_ENERGY_PRICE_HISTORY;
 import static org.tron.core.utils.ProposalUtil.ProposalType.ALLOW_CREATION_OF_CONTRACTS;
 import static org.tron.core.utils.ProposalUtil.ProposalType.ASSET_ISSUE_FEE;
@@ -15,13 +14,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.junit.Test;
 import org.tron.common.BaseTest;
-import org.tron.common.TestEnv;
+import org.tron.common.TestConstants;
 import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.api.EnergyPriceHistoryLoader;
 import org.tron.core.store.ProposalStore;
 import org.tron.protos.Protocol.Proposal;
 import org.tron.protos.Protocol.Proposal.State;
+
 
 @Slf4j
 public class EnergyPriceHistoryLoaderTest extends BaseTest {
@@ -36,7 +36,7 @@ public class EnergyPriceHistoryLoaderTest extends BaseTest {
   private static long price5 = 140L;
 
   static {
-    Args.setParam(withDbEngineOverride("--output-directory", dbPath()), TestEnv.TEST_CONF);
+    Args.setParam(new String[] {"--output-directory", dbPath()}, TestConstants.TEST_CONF);
   }
 
   public void initDB() {

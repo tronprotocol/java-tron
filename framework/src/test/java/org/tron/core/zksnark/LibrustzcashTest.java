@@ -4,8 +4,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
-import static org.tron.common.TestEnv.MAINNET_CONF;
-import static org.tron.common.TestEnv.withDbEngineOverride;
 import static org.tron.common.math.Maths.random;
 import static org.tron.common.math.Maths.round;
 import static org.tron.common.zksnark.JLibrustzcash.librustzcashCheckDiversifier;
@@ -77,13 +75,14 @@ public class LibrustzcashTest extends BaseTest {
 
   @BeforeClass
   public static void init() {
-    Args.setParam(withDbEngineOverride(
+    Args.setParam(
+        new String[]{
             "--output-directory", dbPath(),
             "--storage-db-directory", dbDirectory,
             "--storage-index-directory", indexDirectory,
             "--debug"
-        ),
-        MAINNET_CONF
+        },
+        "config-test-mainnet.conf"
     );
     Args.getInstance().setAllowShieldedTransactionApi(true);
     ZksnarkInitService.librustzcashInitZksnarkParams();
@@ -396,6 +395,7 @@ public class LibrustzcashTest extends BaseTest {
 
   }
 
+
   public long benchmarkCreateSaplingOutput() throws BadItemException, ZksnarkException {
     long startTime = System.currentTimeMillis();
 
@@ -616,6 +616,7 @@ public class LibrustzcashTest extends BaseTest {
     }
 
   }
+
 
   @Test
   public void testPedersenHash() throws Exception {

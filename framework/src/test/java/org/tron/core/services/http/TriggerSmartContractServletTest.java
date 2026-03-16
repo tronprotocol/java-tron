@@ -1,7 +1,5 @@
 package org.tron.core.services.http;
 
-import static org.tron.common.TestEnv.withDbEngineOverride;
-
 import com.google.gson.JsonObject;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpResponse;
@@ -11,7 +9,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.tron.common.BaseTest;
-import org.tron.common.TestEnv;
+import org.tron.common.TestConstants;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.PublicMethod;
 import org.tron.common.utils.client.utils.HttpMethed;
@@ -33,8 +31,7 @@ public class TriggerSmartContractServletTest extends BaseTest {
   @BeforeClass
   public static void init() throws Exception {
     Args.setParam(
-        withDbEngineOverride("--output-directory", dbPath(), "--debug"),
-        TestEnv.TEST_CONF);
+        new String[]{"--output-directory", dbPath(), "--debug"}, TestConstants.TEST_CONF);
     Args.getInstance().needSyncCheck = false;
     Args.getInstance().setFullNodeHttpEnable(true);
     Args.getInstance().setFullNodeHttpPort(PublicMethod.chooseRandomPort());
@@ -61,6 +58,7 @@ public class TriggerSmartContractServletTest extends BaseTest {
             + "033"));
     rootRepository.commit();
   }
+
 
   @Test
   public void testNormalCall() {

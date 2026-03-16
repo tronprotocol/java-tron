@@ -1,7 +1,5 @@
 package org.tron.core.services.filter;
 
-import static org.tron.common.TestEnv.withDbEngineOverride;
-
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.StatusRuntimeException;
@@ -20,7 +18,7 @@ import org.junit.rules.Timeout;
 import org.tron.api.GrpcAPI;
 import org.tron.api.WalletGrpc;
 import org.tron.api.WalletSolidityGrpc;
-import org.tron.common.TestEnv;
+import org.tron.common.TestConstants;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
@@ -59,9 +57,8 @@ public class LiteFnQueryGrpcInterceptorTest {
    */
   @BeforeClass
   public static void init() throws IOException {
-    Args.setParam(
-        withDbEngineOverride("-d", temporaryFolder.newFolder().toString()),
-        TestEnv.TEST_CONF);
+    Args.setParam(new String[] {"-d", temporaryFolder.newFolder().toString()},
+        TestConstants.TEST_CONF);
     Args.getInstance().setRpcEnable(true);
     Args.getInstance().setRpcPort(PublicMethod.chooseRandomPort());
     Args.getInstance().setRpcSolidityEnable(true);

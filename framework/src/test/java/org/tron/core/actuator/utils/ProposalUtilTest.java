@@ -2,7 +2,6 @@ package org.tron.core.actuator.utils;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
-import static org.tron.common.TestEnv.withDbEngineOverride;
 
 import com.google.protobuf.ByteString;
 import java.util.ArrayList;
@@ -17,7 +16,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.function.ThrowingRunnable;
 import org.tron.common.BaseTest;
-import org.tron.common.TestEnv;
+import org.tron.common.TestConstants;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ForkController;
 import org.tron.core.Constant;
@@ -50,7 +49,7 @@ public class ProposalUtilTest extends BaseTest {
    */
   @BeforeClass
   public static void init() {
-    Args.setParam(withDbEngineOverride("--output-directory", dbPath()), TestEnv.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath()}, TestConstants.TEST_CONF);
   }
   
   @Test

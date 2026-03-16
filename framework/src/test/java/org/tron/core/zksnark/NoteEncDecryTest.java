@@ -1,8 +1,5 @@
 package org.tron.core.zksnark;
 
-import static org.tron.common.TestEnv.LOCAL_CONF;
-import static org.tron.common.TestEnv.withDbEngineOverride;
-
 import com.google.protobuf.ByteString;
 import java.util.Optional;
 import javax.annotation.Resource;
@@ -42,8 +39,7 @@ public class NoteEncDecryTest extends BaseTest {
   private Wallet wallet;
 
   static {
-    Args.setParam(withDbEngineOverride("--output-directory", dbPath()),
-        LOCAL_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath()}, "config-localtest.conf");
     FROM_ADDRESS = Wallet.getAddressPreFixString() + "a7d8a35b260395c14aa456297662092ba3b76fc0";
   }
 

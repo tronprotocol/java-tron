@@ -1,7 +1,6 @@
 package org.tron.core.witness;
 
 import static org.junit.Assert.assertEquals;
-import static org.tron.common.TestEnv.withDbEngineOverride;
 
 import com.google.protobuf.ByteString;
 import java.util.ArrayList;
@@ -9,7 +8,7 @@ import java.util.List;
 import javax.annotation.Resource;
 import org.junit.Test;
 import org.tron.common.BaseTest;
-import org.tron.common.TestEnv;
+import org.tron.common.TestConstants;
 import org.tron.common.utils.ByteArray;
 import org.tron.consensus.dpos.DposSlot;
 import org.tron.core.config.args.Args;
@@ -19,8 +18,9 @@ public class WitnessControllerTest extends BaseTest {
   @Resource
   private DposSlot dposSlot;
 
+
   static {
-    Args.setParam(withDbEngineOverride("-d", dbPath()), TestEnv.TEST_CONF);
+    Args.setParam(new String[]{"-d", dbPath()}, TestConstants.TEST_CONF);
   }
 
   @Test

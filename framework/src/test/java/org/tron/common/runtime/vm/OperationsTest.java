@@ -2,7 +2,6 @@ package org.tron.common.runtime.vm;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
-import static org.tron.common.TestEnv.withDbEngineOverride;
 import static org.tron.core.config.Parameter.ChainConstant.FROZEN_PERIOD;
 
 import java.util.List;
@@ -20,7 +19,7 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.StringUtils;
 import org.tron.common.BaseTest;
-import org.tron.common.TestEnv;
+import org.tron.common.TestConstants;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.InternalTransaction;
 import org.tron.common.utils.DecodeUtil;
@@ -57,9 +56,7 @@ public class OperationsTest extends BaseTest {
 
   @BeforeClass
   public static void init() {
-    Args.setParam(
-        withDbEngineOverride("--output-directory", dbPath(), "--debug"),
-        TestEnv.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath(), "--debug"}, TestConstants.TEST_CONF);
     CommonParameter.getInstance().setDebug(true);
     VMConfig.initAllowTvmTransferTrc10(1);
     VMConfig.initAllowTvmConstantinople(1);
@@ -1010,6 +1007,7 @@ public class OperationsTest extends BaseTest {
     OperationActions.suicideAction2(program);
 
     Assert.assertEquals(1, program.getResult().getDeleteAccounts().size());
+
 
     invoke = new ProgramInvokeMockImpl(StoreFactory.getInstance(), new byte[0], contractAddr);
     program = new Program(null, null, invoke,

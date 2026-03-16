@@ -1,7 +1,6 @@
 package org.tron.core.net.messagehandler;
 
 import static org.mockito.Mockito.mock;
-import static org.tron.common.TestEnv.withDbEngineOverride;
 
 import com.google.protobuf.ByteString;
 import java.io.File;
@@ -13,7 +12,7 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.Mockito;
-import org.tron.common.TestEnv;
+import org.tron.common.TestConstants;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.crypto.SignInterface;
 import org.tron.common.crypto.SignUtils;
@@ -47,9 +46,8 @@ public class PbftMsgHandlerTest {
 
   @BeforeClass
   public static void init() {
-    Args.setParam(
-        withDbEngineOverride("--output-directory", dbPath, "--debug"),
-        TestEnv.TEST_CONF);
+    Args.setParam(new String[] {"--output-directory", dbPath, "--debug"},
+        TestConstants.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
 
     TronNetService tronNetService = context.getBean(TronNetService.class);
