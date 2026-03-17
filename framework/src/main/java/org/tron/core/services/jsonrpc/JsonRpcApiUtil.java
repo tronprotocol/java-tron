@@ -56,6 +56,11 @@ import org.tron.protos.contract.WitnessContract.VoteWitnessContract.Vote;
 
 @Slf4j(topic = "API")
 public class JsonRpcApiUtil {
+  /**
+   * Maximum allowed length for block identifiers to prevent DDoS attacks.
+   * Supports block hashes (66 chars) + safety buffer.
+   */
+  private static final int MAX_BLOCK_IDENTIFIER_LENGTH = 128;
 
   public static byte[] convertToTronAddress(byte[] address) {
     byte[] newAddress = new byte[21];
@@ -83,6 +88,13 @@ public class JsonRpcApiUtil {
     byte[] selector = new byte[4];
     System.arraycopy(Hash.sha3(method.getBytes()), 0, selector, 0, 4);
     return Hex.toHexString(selector);
+  }
+
+  public static void validateBlockNumOrHashOrTag(String input)
+      throws JsonRpcInvalidParamsException {
+    if (input == null || input.length() > MAX_BLOCK_IDENTIFIER_LENGTH) {
+      throw new JsonRpcInvalidParamsException("input is null or length exceeds maximum allowed");
+    }
   }
 
   public static TriggerSmartContract triggerCallContract(byte[] address, byte[] contractAddress,
