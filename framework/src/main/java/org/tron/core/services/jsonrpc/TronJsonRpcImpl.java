@@ -115,6 +115,7 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
   private static final String FILTER_NOT_FOUND = "filter not found";
   public static final int EXPIRE_SECONDS = 5 * 60;
   private static final int maxBlockFilterNum = Args.getInstance().getJsonRpcMaxBlockFilterNum();
+
   private static final Cache<LogFilterElement, LogFilterElement> logElementCache =
       CacheBuilder.newBuilder()
           .maximumSize(300_000L) // 300s * tps(1000) * 1 log/tx ≈ 300_000
@@ -308,6 +309,7 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
   @Override
   public String ethGetBlockTransactionCountByNumber(String blockNumOrTag)
       throws JsonRpcInvalidParamsException {
+    JsonRpcApiUtil.validateBlockNumOrHashOrTag(blockNumOrTag);
     List<Transaction> list = wallet.getTransactionsByJsonBlockId(blockNumOrTag);
     if (list == null) {
       return null;
@@ -327,6 +329,7 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
   @Override
   public BlockResult ethGetBlockByNumber(String blockNumOrTag, Boolean fullTransactionObjects)
       throws JsonRpcInvalidParamsException {
+    JsonRpcApiUtil.validateBlockNumOrHashOrTag(blockNumOrTag);
     final Block b = wallet.getByJsonBlockId(blockNumOrTag);
     return (b == null ? null : getBlockResult(b, fullTransactionObjects));
   }
@@ -393,6 +396,9 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
   @Override
   public String getTrxBalance(String address, String blockNumOrTag)
       throws JsonRpcInvalidParamsException {
+    // Add length check and validate hex format to prevent DDoS attacks
+    JsonRpcApiUtil.validateBlockNumOrHashOrTag(blockNumOrTag);
+
     if (EARLIEST_STR.equalsIgnoreCase(blockNumOrTag)
         || PENDING_STR.equalsIgnoreCase(blockNumOrTag)
         || FINALIZED_STR.equalsIgnoreCase(blockNumOrTag)) {
@@ -803,6 +809,9 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
   @Override
   public TransactionResult getTransactionByBlockNumberAndIndex(String blockNumOrTag, String index)
       throws JsonRpcInvalidParamsException {
+    // Add length check and validate hex format to prevent DDoS attacks
+    JsonRpcApiUtil.validateBlockNumOrHashOrTag(blockNumOrTag);
+
     Block block = wallet.getByJsonBlockId(blockNumOrTag);
     if (block == null) {
       return null;
@@ -888,6 +897,8 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
   @Override
   public List<TransactionReceipt> getBlockReceipts(String blockNumOrHashOrTag)
       throws JsonRpcInvalidParamsException, JsonRpcInternalException {
+    // Add length check and validate hex format to prevent DDoS attacks
+    JsonRpcApiUtil.validateBlockNumOrHashOrTag(blockNumOrHashOrTag);
 
     Block block = null;
 
