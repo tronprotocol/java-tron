@@ -152,6 +152,12 @@ public class ByteArray {
   }
 
   public static long jsonHexToLong(String x) throws JsonRpcInvalidParamsException {
+    // Constants for input length validation to prevent DDoS attacks
+    int MAX_HEX_LONG_LENGTH = 20; // For 64-bit long values (18 chars for 0x7FFFFFFFFFFFFFFF) + safety buffer
+    if (x == null || x.length() > MAX_HEX_LONG_LENGTH) {
+      throw new JsonRpcInvalidParamsException("Input cannot be null or too long");
+    }
+
     if (!x.startsWith("0x")) {
       throw new JsonRpcInvalidParamsException("Incorrect hex syntax");
     }
@@ -160,6 +166,12 @@ public class ByteArray {
   }
 
   public static int jsonHexToInt(String x) throws Exception {
+    // Constants for input length validation to prevent DDoS attacks
+    int MAX_HEX_INT_LENGTH = 12; // For 32-bit int values (10 chars for 0x7FFFFFFF) + safety buffer 
+    if (x == null || x.length() > MAX_HEX_INT_LENGTH) {
+      throw new Exception("Incorrect string length");
+    }
+
     if (!x.startsWith("0x")) {
       throw new Exception("Incorrect hex syntax");
     }

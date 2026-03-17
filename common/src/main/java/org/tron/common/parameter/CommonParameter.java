@@ -25,6 +25,11 @@ public class CommonParameter {
 
   protected static CommonParameter PARAMETER = new CommonParameter();
 
+  // Default QPS values for rate limiters
+  public static final int DEFAULT_RATE_LIMITER_GLOBAL_QPS = 1000;
+  public static final int DEFAULT_RATE_LIMITER_GLOBAL_IP_QPS = 1000;
+  public static final int DEFAULT_RATE_LIMITER_GLOBAL_API_QPS = 1000;
+
   // Runtime chain state: set by VMConfig.initVmHardFork()
   // when the energy-limit governance proposal is activated.
   // Legacy: should belong to VMConfig, not here.
@@ -373,12 +378,12 @@ public class CommonParameter {
   public RateLimiterInitialization rateLimiterInitialization;
   @Getter
   @Setter
-  public int rateLimiterGlobalQps = 50000; // from clearParam(), consistent with mainnet.conf
+  public int rateLimiterGlobalQps = DEFAULT_RATE_LIMITER_GLOBAL_QPS; // from clearParam(), consistent with mainnet.conf
   @Getter
   @Setter
-  public int rateLimiterGlobalIpQps = 10000; // from clearParam(), consistent with mainnet.conf
+  public int rateLimiterGlobalIpQps = DEFAULT_RATE_LIMITER_GLOBAL_IP_QPS; // from clearParam(), consistent with mainnet.conf
   @Getter
-  public int rateLimiterGlobalApiQps = 1000; // from clearParam(), consistent with mainnet.conf
+  public int rateLimiterGlobalApiQps = DEFAULT_RATE_LIMITER_GLOBAL_API_QPS; // from clearParam(), consistent with mainnet.conf
   @Getter
   @Setter
   public double rateLimiterSyncBlockChain; // clearParam: 3.0
