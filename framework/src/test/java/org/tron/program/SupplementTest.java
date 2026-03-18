@@ -15,12 +15,12 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.tron.common.BaseTest;
+import org.tron.common.TestConstants;
 import org.tron.common.config.DbBackupConfig;
 import org.tron.common.entity.PeerInfo;
 import org.tron.common.utils.CompactEncoder;
 import org.tron.common.utils.JsonUtil;
 import org.tron.common.utils.Value;
-import org.tron.core.Constant;
 import org.tron.core.capsule.StorageRowCapsule;
 import org.tron.core.capsule.utils.RLP;
 import org.tron.core.config.TronLogShutdownHook;
@@ -42,7 +42,7 @@ public class SupplementTest extends BaseTest {
   @BeforeClass
   public static void init() throws IOException {
     dbPath = dbPath();
-    Args.setParam(new String[]{"--output-directory", dbPath, "--debug"}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath, "--debug"}, TestConstants.TEST_CONF);
   }
 
   @Test

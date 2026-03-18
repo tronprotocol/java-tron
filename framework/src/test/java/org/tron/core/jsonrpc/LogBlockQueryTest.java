@@ -10,7 +10,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.BaseTest;
-import org.tron.core.Constant;
+import org.tron.common.TestConstants;
 import org.tron.core.config.args.Args;
 import org.tron.core.services.jsonrpc.TronJsonRpc.FilterRequest;
 import org.tron.core.services.jsonrpc.filters.LogBlockQuery;
@@ -26,7 +26,7 @@ public class LogBlockQueryTest extends BaseTest {
   private static final long CURRENT_MAX_BLOCK_NUM = 50000L;
 
   static {
-    Args.setParam(new String[] {"--output-directory", dbPath()}, Constant.TEST_CONF);
+    Args.setParam(new String[] {"--output-directory", dbPath()}, TestConstants.TEST_CONF);
   }
 
   @Before

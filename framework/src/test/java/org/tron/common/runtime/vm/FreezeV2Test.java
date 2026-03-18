@@ -22,6 +22,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.tron.common.TestConstants;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.Runtime;
@@ -34,7 +35,6 @@ import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.WalletUtil;
 import org.tron.common.utils.client.utils.AbiUtil;
 import org.tron.core.ChainBaseManager;
-import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.actuator.UnfreezeBalanceV2Actuator;
 import org.tron.core.capsule.AccountCapsule;
@@ -151,11 +151,11 @@ public class FreezeV2Test {
 
   private static final long value = 100_000_000_000_000_000L;
   private static final long fee = 1_000_000_000;
-  private static final String userAStr = "27k66nycZATHzBasFT9782nTsYWqVtxdtAc";
+  private static final String userAStr = "TWyoFfJBiKGkVQd28HTqxsc8kbMtQUmqgi";
   private static final byte[] userA = Commons.decode58Check(userAStr);
-  private static final String userBStr = "27jzp7nVEkH4Hf3H1PHPp4VDY7DxTy5eydL";
+  private static final String userBStr = "TWtWaUAsJ933xs2n4RkXzaMoKJUrQmctBH";
   private static final byte[] userB = Commons.decode58Check(userBStr);
-  private static final String userCStr = "27juXSbMvL6pb8VgmKRgW6ByCfw5RqZjUuo";
+  private static final String userCStr = "TWoDuH3YsxoMSKSXza3E2H7Tt1bpK5QZgm";
   private static final byte[] userC = Commons.decode58Check(userCStr);
 
   @Rule
@@ -168,7 +168,7 @@ public class FreezeV2Test {
   @Before
   public void init() throws Exception {
     Args.setParam(new String[]{"--output-directory",
-        temporaryFolder.newFolder().toString(), "--debug"}, Constant.TEST_CONF);
+        temporaryFolder.newFolder().toString(), "--debug"}, TestConstants.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     manager = context.getBean(Manager.class);
     owner = Hex.decode(Wallet.getAddressPreFixString()

@@ -7,7 +7,7 @@
 </h4>
 
 <p align="center">
-  <a href="https://gitter.im/tronprotocol/allcoredev"><img src="https://img.shields.io/gitter/room/tronprotocol/java-tron.svg"></a>
+  <a href="https://discord.gg/hqKvyAM"><img src="https://img.shields.io/badge/chat-on%20discord-7289da.svg"></a>
   <a href="https://codecov.io/gh/tronprotocol/java-tron"><img src="https://codecov.io/gh/tronprotocol/java-tron/branch/develop/graph/badge.svg" /></a>
   <a href="https://github.com/tronprotocol/java-tron/issues"><img src="https://img.shields.io/github/issues/tronprotocol/java-tron.svg"></a>
   <a href="https://github.com/tronprotocol/java-tron/pulls"><img src="https://img.shields.io/github/issues-pr/tronprotocol/java-tron.svg"></a>
@@ -84,7 +84,7 @@ The java-tron project comes with several runnable artifacts and helper scripts f
 | Deployment Tier | CPU Cores | Memory | High-performance SSD Storage    | Network Downstream |
 |--------------------------|-------|--------|---------------------------|-----------------|
 | FullNode (Minimum)        | 8 | 16 GB | 200 GB ([Lite](https://tronprotocol.github.io/documentation-en/using_javatron/litefullnode/#lite-fullnode))                  | ≥ 5 MBit/sec  |
-| FullNode (Stable)         | 8 | 32 GB | 200 GB (Lite) 3.5 TB (Full) | ≥ 5 MBit/sec  |
+| FullNode (Stable)         | 8 | 32 GB | 200 GB (Lite) / 3.5 TB (Full) | ≥ 5 MBit/sec  |
 | FullNode (Recommend)      | 16+ | 32 GB+ | 4 TB         | ≥ 50 MBit/sec  |
 | Super Representative      | 32+ | 64 GB+ | 4 TB              | ≥ 50 MBit/sec  |
 
@@ -201,6 +201,7 @@ Thank you for considering to help out with the source code! If you'd like to con
 
 # Resources
 
+<<<<<<< HEAD
 - [Medium](https://medium.com/@coredevs) - java-tron's official technical articles are published here.
 - [Documentation](https://tronprotocol.github.io/documentation-en/) and [TRON Developer Hub](https://developers.tron.network/) serve as java-tron’s primary documentation websites.
 - [TronScan](https://tronscan.org/#/) - TRON main network blockchain browser.
@@ -209,6 +210,16 @@ Thank you for considering to help out with the source code! If you'd like to con
 - [Wallet-cli](https://github.com/tronprotocol/wallet-cli) - TRON network wallet using command line.
 - [TIP](https://github.com/tronprotocol/tips) - TRON Improvement Proposal (TIP) describes standards for the TRON network.
 - [TP](https://github.com/tronprotocol/tips/tree/master/tp) - TRON Protocol (TP) describes standards already implemented in TRON network but not published as a TIP.
+=======
+- [Medium](https://medium.com/@coredevs) — Official technical articles from the java-tron core development team.
+- [Documentation](https://tronprotocol.github.io/documentation-en/) and [TRON Developer Hub](https://developers.tron.network/) — Primary documentation for java-tron developers.
+- [TronScan](https://tronscan.org/#/) — TRON mainnet blockchain explorer.
+- [Nile Test Network](http://nileex.io/) — A stable test network for TRON development and testing.
+- [Shasta Test Network](https://shasta.tronex.io/) — A stable test network mirroring mainnet features.
+- [Wallet-cli](https://github.com/tronprotocol/wallet-cli) — Command-line wallet for the TRON network.
+- [TIP](https://github.com/tronprotocol/tips) — TRON Improvement Proposals describing standards for the TRON network.
+- [TP](https://github.com/tronprotocol/tips/tree/master/tp) — TRON Protocols already implemented but not yet published as TIPs.
+>>>>>>> 7e5bbbd21e26f2fb0c60de0e5f88be9dc5e807db
 
 # Integrity Check
 

@@ -18,11 +18,11 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.tron.common.TestConstants;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.Sha256Hash;
-import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
@@ -48,7 +48,7 @@ public class SnapshotManagerTest {
   @Before
   public void init() throws IOException {
     Args.setParam(new String[]{"-d", temporaryFolder.newFolder().toString()},
-        Constant.TEST_CONF);
+        TestConstants.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     appT = ApplicationFactory.create(context);
     revokingDatabase = context.getBean(SnapshotManager.class);

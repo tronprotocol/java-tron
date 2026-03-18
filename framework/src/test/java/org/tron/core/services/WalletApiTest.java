@@ -14,12 +14,12 @@ import org.junit.rules.TemporaryFolder;
 import org.junit.rules.Timeout;
 import org.tron.api.GrpcAPI.EmptyMessage;
 import org.tron.api.WalletGrpc;
+import org.tron.common.TestConstants;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.PublicMethod;
 import org.tron.common.utils.TimeoutInterceptor;
-import org.tron.core.Constant;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 
@@ -40,7 +40,7 @@ public class WalletApiTest {
   @BeforeClass
   public static void init() throws IOException {
     Args.setParam(new String[] {"-d", temporaryFolder.newFolder().toString(),
-        "--p2p-disable", "true"}, Constant.TEST_CONF);
+        "--p2p-disable", "true"}, TestConstants.TEST_CONF);
     Args.getInstance().setRpcPort(PublicMethod.chooseRandomPort());
     Args.getInstance().setRpcEnable(true);
     context = new TronApplicationContext(DefaultConfig.class);

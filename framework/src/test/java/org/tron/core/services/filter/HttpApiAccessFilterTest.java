@@ -16,9 +16,9 @@ import org.apache.http.impl.client.HttpClients;
 import org.junit.Assert;
 import org.junit.Test;
 import org.tron.common.BaseTest;
+import org.tron.common.TestConstants;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.PublicMethod;
-import org.tron.core.Constant;
 import org.tron.core.config.args.Args;
 import org.tron.core.services.http.FullNodeHttpApiService;
 import org.tron.core.services.interfaceOnPBFT.http.PBFT.HttpApiOnPBFTService;
@@ -37,7 +37,7 @@ public class HttpApiAccessFilterTest extends BaseTest {
   private static final CloseableHttpClient httpClient = HttpClients.createDefault();
 
   static {
-    Args.setParam(new String[]{"-d", dbPath()}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"-d", dbPath()}, TestConstants.TEST_CONF);
     Args.getInstance().setAllowShieldedTransactionApi(false);
     Args.getInstance().setFullNodeHttpEnable(true);
     Args.getInstance().setFullNodeHttpPort(PublicMethod.chooseRandomPort());

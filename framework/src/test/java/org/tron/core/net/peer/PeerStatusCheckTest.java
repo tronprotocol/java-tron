@@ -13,9 +13,9 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.mockito.Mockito;
+import org.tron.common.TestConstants;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.ReflectUtils;
-import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.Parameter.NetConstants;
@@ -33,7 +33,7 @@ public class PeerStatusCheckTest {
   @Before
   public void init() throws IOException {
     Args.setParam(new String[] {"--output-directory",
-        temporaryFolder.newFolder().toString(), "--debug"}, Constant.TEST_CONF);
+        temporaryFolder.newFolder().toString(), "--debug"}, TestConstants.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     service = context.getBean(PeerStatusCheck.class);
   }

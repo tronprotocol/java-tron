@@ -9,12 +9,12 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.tron.common.TestConstants;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.runtime.Runtime;
 import org.tron.common.runtime.TvmTestUtils;
-import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
@@ -47,7 +47,7 @@ public class InternalTransactionCallTest {
     Args.clearParam();
     Args.setParam(new String[]{"--output-directory",
             temporaryFolder.newFolder().toString(), "--support-constant", "--debug"},
-        Constant.TEST_CONF);
+        TestConstants.TEST_CONF);
 
     context = new TronApplicationContext(DefaultConfig.class);
     AppT = ApplicationFactory.create(context);
