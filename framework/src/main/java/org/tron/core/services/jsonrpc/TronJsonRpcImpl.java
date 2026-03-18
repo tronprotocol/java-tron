@@ -535,9 +535,6 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
   @Override
   public String getStorageAt(String address, String storageIdx, String blockNumOrTag)
       throws JsonRpcInvalidParamsException {
-    // Add length check to prevent DDoS attacks
-    JsonRpcApiUtil.validateBlockNumOrHashOrTag(blockNumOrTag);
-    
     if (EARLIEST_STR.equalsIgnoreCase(blockNumOrTag)
         || PENDING_STR.equalsIgnoreCase(blockNumOrTag)
         || FINALIZED_STR.equalsIgnoreCase(blockNumOrTag)) {
@@ -568,9 +565,6 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
   @Override
   public String getABIOfSmartContract(String contractAddress, String blockNumOrTag)
       throws JsonRpcInvalidParamsException {
-    // Add length check to prevent DDoS attacks
-    JsonRpcApiUtil.validateBlockNumOrHashOrTag(blockNumOrTag);
-    
     if (EARLIEST_STR.equalsIgnoreCase(blockNumOrTag)
         || PENDING_STR.equalsIgnoreCase(blockNumOrTag)
         || FINALIZED_STR.equalsIgnoreCase(blockNumOrTag)) {
