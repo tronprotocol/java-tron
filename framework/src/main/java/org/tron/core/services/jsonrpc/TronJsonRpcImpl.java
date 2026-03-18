@@ -309,7 +309,7 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
   @Override
   public String ethGetBlockTransactionCountByNumber(String blockNumOrTag)
       throws JsonRpcInvalidParamsException {
-    JsonRpcApiUtil.validateBlockNumOrHashOrTag(blockNumOrTag);
+    validateBlockNumOrHashOrTag(blockNumOrTag);
     List<Transaction> list = wallet.getTransactionsByJsonBlockId(blockNumOrTag);
     if (list == null) {
       return null;
@@ -329,7 +329,7 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
   @Override
   public BlockResult ethGetBlockByNumber(String blockNumOrTag, Boolean fullTransactionObjects)
       throws JsonRpcInvalidParamsException {
-    JsonRpcApiUtil.validateBlockNumOrHashOrTag(blockNumOrTag);
+    validateBlockNumOrHashOrTag(blockNumOrTag);
     final Block b = wallet.getByJsonBlockId(blockNumOrTag);
     return (b == null ? null : getBlockResult(b, fullTransactionObjects));
   }
@@ -397,7 +397,7 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
   public String getTrxBalance(String address, String blockNumOrTag)
       throws JsonRpcInvalidParamsException {
     // Add length check and validate hex format to prevent DDoS attacks
-    JsonRpcApiUtil.validateBlockNumOrHashOrTag(blockNumOrTag);
+    validateBlockNumOrHashOrTag(blockNumOrTag);
 
     if (EARLIEST_STR.equalsIgnoreCase(blockNumOrTag)
         || PENDING_STR.equalsIgnoreCase(blockNumOrTag)
@@ -792,7 +792,7 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
   public TransactionResult getTransactionByBlockNumberAndIndex(String blockNumOrTag, String index)
       throws JsonRpcInvalidParamsException {
     // Add length check and validate hex format to prevent DDoS attacks
-    JsonRpcApiUtil.validateBlockNumOrHashOrTag(blockNumOrTag);
+    validateBlockNumOrHashOrTag(blockNumOrTag);
 
     Block block = wallet.getByJsonBlockId(blockNumOrTag);
     if (block == null) {
@@ -880,7 +880,7 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
   public List<TransactionReceipt> getBlockReceipts(String blockNumOrHashOrTag)
       throws JsonRpcInvalidParamsException, JsonRpcInternalException {
     // Add length check and validate hex format to prevent DDoS attacks
-    JsonRpcApiUtil.validateBlockNumOrHashOrTag(blockNumOrHashOrTag);
+    validateBlockNumOrHashOrTag(blockNumOrHashOrTag);
 
     Block block = null;
 
@@ -1009,14 +1009,6 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
       return call(addressData, contractAddressData, transactionCall.parseValue(),
           ByteArray.fromHexString(transactionCall.getData()));
     } else {
-      try {
-        // Add length check to prevent DDoS attacks
-        JsonRpcApiUtil.validateBlockNumOrHashOrTag(blockNumOrTag);
-        ByteArray.hexToBigInteger(blockNumOrTag);
-      } catch (Exception e) {
-        throw new JsonRpcInvalidParamsException(BLOCK_NUM_ERROR);
-      }
-
       throw new JsonRpcInvalidParamsException(QUANTITY_NOT_SUPPORT_ERROR);
     }
   }
