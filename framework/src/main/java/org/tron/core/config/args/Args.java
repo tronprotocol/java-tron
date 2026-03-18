@@ -99,13 +99,6 @@ public class Args extends CommonParameter {
   @Getter
   private static final ConcurrentHashMap<Long, BlockingQueue<ContractEventTrigger>>
       solidityContractEventTriggerMap = new ConcurrentHashMap<>();
-
-  // Default QPS values for rate limiters
-  private static final int DEFAULT_RATE_LIMITER_GLOBAL_QPS = 1000;
-  private static final int DEFAULT_RATE_LIMITER_GLOBAL_IP_QPS = 1000;
-  private static final int DEFAULT_RATE_LIMITER_GLOBAL_API_QPS = 1000;
-
-
   /**
    * set parameters.
    */
