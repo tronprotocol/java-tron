@@ -126,12 +126,12 @@ public class ByteArrayTest {
       assertEquals(255L, jsonHexToLong("0xFF"));
       assertEquals(0L, jsonHexToLong("0x0"));
       assertEquals(1L, jsonHexToLong("0x1"));
-      
+
       // Test large values
       assertEquals(4294967295L, jsonHexToLong("0xFFFFFFFF"));
 
       // Test maximum long value
-      assertEquals(Long.MAX_VALUE, jsonHexToLong("0x7FFFFFFFFFFFFFFF"));  
+      assertEquals(Long.MAX_VALUE, jsonHexToLong("0x7FFFFFFFFFFFFFFF"));
     } catch (JsonRpcInvalidParamsException e) {
       fail("Exception should not have been thrown for valid hex strings: " + e.getMessage());
     }
@@ -141,10 +141,10 @@ public class ByteArrayTest {
   public void testJsonHexToLong_InvalidInputs() {
     // Test null input
     assertThrows(JsonRpcInvalidParamsException.class, () -> jsonHexToLong(null));
-    
+
     // Test missing 0x prefix
     assertThrows(JsonRpcInvalidParamsException.class, () -> jsonHexToLong("1A"));
-    
+
     // Test too long input (DDoS protection)
     StringBuilder tooLongStr = new StringBuilder("0x");
     for (int i = 0; i < 20; i++) {
@@ -152,7 +152,7 @@ public class ByteArrayTest {
     }
     String tooLongHex = tooLongStr.toString(); // 22 characters total, exceeds MAX_HEX_LONG_LENGTH
     assertThrows(JsonRpcInvalidParamsException.class, () -> jsonHexToLong(tooLongHex));
-    
+
     // Test invalid hex characters
     assertThrows(NumberFormatException.class, () -> jsonHexToLong("0xGG"));
   }
@@ -165,10 +165,10 @@ public class ByteArrayTest {
       assertEquals(255, jsonHexToInt("0xFF"));
       assertEquals(0, jsonHexToInt("0x0"));
       assertEquals(1, jsonHexToInt("0x1"));
-      
+
       // Test maximum int value
       assertEquals(Integer.MAX_VALUE, jsonHexToInt("0x7FFFFFFF"));
-      
+
       // Test large values
       assertEquals(65535, jsonHexToInt("0xFFFF"));
     } catch (Exception e) {
@@ -180,10 +180,10 @@ public class ByteArrayTest {
   public void testJsonHexToInt_InvalidInputs() {
     // Test null input
     assertThrows(Exception.class, () -> jsonHexToInt(null));
-    
+
     // Test missing 0x prefix
     assertThrows(Exception.class, () -> jsonHexToInt("1A"));
-    
+
     // Test too long input (DDoS protection)
     StringBuilder tooLongStr = new StringBuilder("0x");
     for (int i = 0; i < 12; i++) {
@@ -191,7 +191,7 @@ public class ByteArrayTest {
     }
     String tooLongHex = tooLongStr.toString(); // 14 characters total, exceeds MAX_HEX_INT_LENGTH
     assertThrows(Exception.class, () -> jsonHexToInt(tooLongHex));
-    
+
     // Test invalid hex characters
     assertThrows(NumberFormatException.class, () -> jsonHexToInt("0xGG"));
   }
@@ -201,10 +201,10 @@ public class ByteArrayTest {
     try {
       // Test minimum length valid input
       assertEquals(0L, jsonHexToLong("0x0"));
-      
+
       // Test a long hex string that's within limits but doesn't overflow
       assertEquals(4095L, jsonHexToLong("0xFFF")); // 3 F's = 4095, safe value
-      
+
       // Test length validation - this should pass length check
       assertEquals(1048575L, jsonHexToLong("0xFFFFF")); // 5 F's = 1048575, safe value
     } catch (JsonRpcInvalidParamsException e) {
@@ -217,10 +217,10 @@ public class ByteArrayTest {
     try {
       // Test minimum length valid input
       assertEquals(0, jsonHexToInt("0x0"));
-      
+
       // Test a hex string that's within limits but doesn't overflow
       assertEquals(4095, jsonHexToInt("0xFFF")); // 3 F's = 4095, safe value
-      
+
       // Test length validation - this should pass length check
       assertEquals(1048575, jsonHexToInt("0xFFFFF")); // 5 F's = 1048575, safe value
     } catch (Exception e) {
@@ -232,13 +232,15 @@ public class ByteArrayTest {
   public void testJsonHexToLong_OverflowHandling() {
     // Test that Long.parseLong properly handles overflow by throwing NumberFormatException
     // This tests values that pass length validation but cause overflow
-    assertThrows(NumberFormatException.class, () -> jsonHexToLong("0x8000000000000000")); // Long.MAX_VALUE + 1
+    assertThrows(NumberFormatException.class,
+        () -> jsonHexToLong("0x8000000000000000")); // Long.MAX_VALUE + 1
   }
 
   @Test
   public void testJsonHexToInt_OverflowHandling() {
     // Test that Integer.parseInt properly handles overflow by throwing NumberFormatException
     // This tests values that pass length validation but cause overflow
-    assertThrows(NumberFormatException.class, () -> jsonHexToInt("0x80000000")); // Integer.MAX_VALUE + 1
+    assertThrows(NumberFormatException.class,
+        () -> jsonHexToInt("0x80000000")); // Integer.MAX_VALUE + 1
   }
 }
