@@ -99,6 +99,7 @@ public class Args extends CommonParameter {
   @Getter
   private static final ConcurrentHashMap<Long, BlockingQueue<ContractEventTrigger>>
       solidityContractEventTriggerMap = new ConcurrentHashMap<>();
+
   /**
    * set parameters.
    */
