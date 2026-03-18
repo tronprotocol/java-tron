@@ -148,7 +148,7 @@ public class ByteArrayTest {
     // Test too long input (DDoS protection)
     StringBuilder tooLongStr = new StringBuilder("0x");
     for (int i = 0; i < 20; i++) {
-      lontooLongStrgStr.append("F");
+      tooLongStr.append("F");
     }
     String tooLongHex = tooLongStr.toString(); // 22 characters total, exceeds MAX_HEX_LONG_LENGTH
     assertThrows(JsonRpcInvalidParamsException.class, () -> jsonHexToLong(tooLongHex));
