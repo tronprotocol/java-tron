@@ -144,10 +144,6 @@ public class ByteArray {
   }
 
   public static BigInteger hexToBigInteger(String input) {
-    if (input == null) {
-      throw new IllegalArgumentException("Input cannot be null");
-    }
-    
     if (input.startsWith("0x")) {
       return new BigInteger(input.substring(2), 16);
     } else {
