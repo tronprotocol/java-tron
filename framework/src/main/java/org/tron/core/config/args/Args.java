@@ -213,6 +213,16 @@ public class Args extends CommonParameter {
           config.getInt(ConfigKey.NODE_JSONRPC_MAX_BLOCK_FILTER_NUM);
     }
 
+    if (config.hasPath(ConfigKey.NODE_JSONRPC_MAX_BATCH_SIZE)) {
+      PARAMETER.jsonRpcMaxBatchSize =
+          config.getInt(ConfigKey.NODE_JSONRPC_MAX_BATCH_SIZE);
+    }
+
+    if (config.hasPath(ConfigKey.NODE_JSONRPC_MAX_RESPONSE_SIZE)) {
+      PARAMETER.jsonRpcMaxResponseSize =
+          config.getInt(ConfigKey.NODE_JSONRPC_MAX_RESPONSE_SIZE);
+    }
+
     if (config.hasPath(ConfigKey.VM_MIN_TIME_RATIO)) {
       PARAMETER.minTimeRatio = config.getDouble(ConfigKey.VM_MIN_TIME_RATIO);
     }

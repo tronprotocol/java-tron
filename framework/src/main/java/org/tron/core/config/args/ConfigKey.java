@@ -150,6 +150,9 @@ final class ConfigKey {
   public static final String NODE_JSONRPC_MAX_SUB_TOPICS = "node.jsonrpc.maxSubTopics";
   public static final String NODE_JSONRPC_MAX_BLOCK_FILTER_NUM =
       "node.jsonrpc.maxBlockFilterNum";
+  public static final String NODE_JSONRPC_MAX_BATCH_SIZE = "node.jsonrpc.maxBatchSize";
+  public static final String NODE_JSONRPC_MAX_RESPONSE_SIZE =
+      "node.jsonrpc.maxResponseSize";
 
   // node - dns
   public static final String NODE_DNS_TREE_URLS = "node.dns.treeUrls";
