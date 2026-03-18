@@ -135,6 +135,18 @@ public class Args extends CommonParameter {
   }
 
   /**
+   * Validate final configuration after all sources (defaults, config, CLI) are applied.
+   */
+  public static void validateConfig() {
+    if (Arch.isArm64() && !"ROCKSDB".equals(PARAMETER.storage.getDbEngine())) {
+      throw new TronError(
+          "ARM64 architecture only supports RocksDB. Current engine: "
+              + PARAMETER.storage.getDbEngine(),
+          TronError.ErrCode.PARAMETER_INIT);
+    }
+  }
+
+  /**
    * Apply parameters from config file.
    */
   public static void applyConfigParams(

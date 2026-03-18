@@ -1,40 +1,21 @@
 package org.tron.core.config.args;
 
 import java.io.File;
-import java.io.IOException;
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.ClassRule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.tron.common.BaseMethodTest;
 import org.tron.common.TestConstants;
-import org.tron.common.application.TronApplicationContext;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ReflectUtils;
-import org.tron.core.config.DefaultConfig;
 import org.tron.core.net.TronNetService;
 import org.tron.p2p.P2pConfig;
 
-public class DynamicArgsTest {
-  protected TronApplicationContext context;
+public class DynamicArgsTest extends BaseMethodTest {
   private DynamicArgs dynamicArgs;
-  @ClassRule
-  public static final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
-  @Before
-  public void init() throws IOException {
-    Args.setParam(new String[]{"--output-directory", temporaryFolder.newFolder().toString()},
-        TestConstants.TEST_CONF);
-    context = new TronApplicationContext(DefaultConfig.class);
+  @Override
+  protected void afterInit() {
     dynamicArgs = context.getBean(DynamicArgs.class);
-
-  }
-
-  @After
-  public void destroy() {
-    Args.clearParam();
-    context.destroy();
   }
 
   @Test
