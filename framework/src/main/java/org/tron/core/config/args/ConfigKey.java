@@ -272,6 +272,7 @@ final class ConfigKey {
 
   // event
   public static final String EVENT_SUBSCRIBE = "event.subscribe";
+  public static final String EVENT_SUBSCRIBE_ENABLE = "event.subscribe.enable";
   public static final String EVENT_SUBSCRIBE_FILTER = "event.subscribe.filter";
   public static final String EVENT_SUBSCRIBE_VERSION = "event.subscribe.version";
   public static final String EVENT_SUBSCRIBE_START_SYNC_BLOCK_NUM =

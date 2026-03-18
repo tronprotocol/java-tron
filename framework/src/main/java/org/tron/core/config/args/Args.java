@@ -114,8 +114,7 @@ public class Args extends CommonParameter {
     m.put("--validate-sign-thread", "node.validateSignThreadNum");
     m.put("--trust-node", "node.trustNode");
     m.put("--history-balance-lookup", "storage.balance.history.lookup");
-    m.put("--es", "event.subscribe");
-    m.put("--fast-forward", "node.fastForward");
+    m.put("--es", "event.subscribe.enable");
     DEPRECATED_CLI_TO_CONFIG = Collections.unmodifiableMap(m);
   }
 
@@ -696,6 +695,9 @@ public class Args extends CommonParameter {
 
     PARAMETER.eventFilter =
         config.hasPath(ConfigKey.EVENT_SUBSCRIBE_FILTER) ? getEventFilter(config) : null;
+
+    PARAMETER.eventSubscribe = config.hasPath(ConfigKey.EVENT_SUBSCRIBE_ENABLE)
+        && config.getBoolean(ConfigKey.EVENT_SUBSCRIBE_ENABLE);
 
     if (config.hasPath(ConfigKey.ALLOW_SHIELDED_TRANSACTION_API)) {
       PARAMETER.allowShieldedTransactionApi =
