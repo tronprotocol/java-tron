@@ -201,16 +201,6 @@ Thank you for considering to help out with the source code! If you'd like to con
 
 # Resources
 
-<<<<<<< HEAD
-- [Medium](https://medium.com/@coredevs) - java-tron's official technical articles are published here.
-- [Documentation](https://tronprotocol.github.io/documentation-en/) and [TRON Developer Hub](https://developers.tron.network/) serve as java-tron’s primary documentation websites.
-- [TronScan](https://tronscan.org/#/) - TRON main network blockchain browser.
-- [Nile Test Network](https://nileex.io/) - A stable test network of TRON contributed by the TRON community.
-- [Shasta Test Network](https://shasta.tronex.io/) - A stable test network of TRON contributed by the TRON community.
-- [Wallet-cli](https://github.com/tronprotocol/wallet-cli) - TRON network wallet using command line.
-- [TIP](https://github.com/tronprotocol/tips) - TRON Improvement Proposal (TIP) describes standards for the TRON network.
-- [TP](https://github.com/tronprotocol/tips/tree/master/tp) - TRON Protocol (TP) describes standards already implemented in TRON network but not published as a TIP.
-=======
 - [Medium](https://medium.com/@coredevs) — Official technical articles from the java-tron core development team.
 - [Documentation](https://tronprotocol.github.io/documentation-en/) and [TRON Developer Hub](https://developers.tron.network/) — Primary documentation for java-tron developers.
 - [TronScan](https://tronscan.org/#/) — TRON mainnet blockchain explorer.
@@ -219,7 +209,6 @@ Thank you for considering to help out with the source code! If you'd like to con
 - [Wallet-cli](https://github.com/tronprotocol/wallet-cli) — Command-line wallet for the TRON network.
 - [TIP](https://github.com/tronprotocol/tips) — TRON Improvement Proposals describing standards for the TRON network.
 - [TP](https://github.com/tronprotocol/tips/tree/master/tp) — TRON Protocols already implemented but not yet published as TIPs.
->>>>>>> 7e5bbbd21e26f2fb0c60de0e5f88be9dc5e807db
 
 # Integrity Check
 
