@@ -26,11 +26,9 @@ coverage:
       default:
         # Compare against the base branch automatically
         target: auto
-
         # Allow a small coverage drop tolerance
         threshold: 0.02%
-    patch: off
-#    patch: # PR coverage/patch UI
-#      default:
-#        # No minimum requirement for changed-line coverage
-#        target: 0%
+#    patch: off
+    patch: # PR coverage/patch UI
+      default:
+        target: 60%
