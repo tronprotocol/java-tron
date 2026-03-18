@@ -1017,24 +1017,28 @@ public class JsonrpcServiceTest extends BaseTest {
     }
   }
 
+  private String generateLongHexString(int length) {
+    StringBuilder longInput = new StringBuilder();
+    for (int i = 0; i < length; i++) {
+      longInput.append("a");
+    }
+    return longInput.toString();
+  }
+
   @Test
   public void testGetBlockReceipts() {
     // Test null blockNumOrTag
     try {
-      tronJsonRpc.getBlockReceipts( null);
+      tronJsonRpc.getBlockReceipts(null);
       Assert.fail("Should throw JsonRpcInvalidParamsException for null blockNumOrTag");
     } catch (Exception e) {
       Assert.assertTrue("Should be JsonRpcInvalidParamsException",
           e instanceof JsonRpcInvalidParamsException);
     }
 
-    // Test too long blockNumOrTag (DDoS protection)
-    StringBuilder longInput = new StringBuilder();
-    for (int i = 0; i < 130; i++) { // Exceeds MAX_BLOCK_IDENTIFIER_LENGTH (128)
-      longInput.append("a");
-    }
     try {
-      tronJsonRpc.getBlockReceipts(longInput.toString());
+      // Test Exceeds MAX_BLOCK_IDENTIFIER_LENGTH (128)
+      tronJsonRpc.getBlockReceipts(generateLongHexString(130));
       Assert.fail("Should throw JsonRpcInvalidParamsException for too long blockNumOrTag");
     } catch (Exception e) {
       Assert.assertTrue("Should be JsonRpcInvalidParamsException",
@@ -1044,7 +1048,7 @@ public class JsonrpcServiceTest extends BaseTest {
     try {
       List<TransactionReceipt> transactionReceiptList = tronJsonRpc.getBlockReceipts("0x2710");
       Assert.assertFalse(transactionReceiptList.isEmpty());
-      for (TransactionReceipt transactionReceipt: transactionReceiptList) {
+      for (TransactionReceipt transactionReceipt : transactionReceiptList) {
         TransactionReceipt transactionReceipt1
             = tronJsonRpc.getTransactionReceipt(transactionReceipt.getTransactionHash());
 
@@ -1131,19 +1135,17 @@ public class JsonrpcServiceTest extends BaseTest {
       tronJsonRpc.ethGetBlockTransactionCountByNumber(null);
       Assert.fail("Should throw JsonRpcInvalidParamsException for null input");
     } catch (Exception e) {
-      Assert.assertTrue("Should be JsonRpcInvalidParamsException", e instanceof JsonRpcInvalidParamsException);
+      Assert.assertTrue("Should be JsonRpcInvalidParamsException",
+          e instanceof JsonRpcInvalidParamsException);
     }
 
-    // Test too long input (DDoS protection)
-    StringBuilder longInput = new StringBuilder();
-    for (int i = 0; i < 130; i++) { // Exceeds MAX_BLOCK_IDENTIFIER_LENGTH (128)
-      longInput.append("a");
-    }
     try {
-      tronJsonRpc.ethGetBlockTransactionCountByNumber(longInput.toString());
+      // Test Exceeds MAX_BLOCK_IDENTIFIER_LENGTH (128)
+      tronJsonRpc.ethGetBlockTransactionCountByNumber(generateLongHexString(130));
       Assert.fail("Should throw JsonRpcInvalidParamsException for too long input");
     } catch (Exception e) {
-      Assert.assertTrue("Should be JsonRpcInvalidParamsException", e instanceof JsonRpcInvalidParamsException);
+      Assert.assertTrue("Should be JsonRpcInvalidParamsException",
+          e instanceof JsonRpcInvalidParamsException);
     }
 
     // Test valid input (should not throw exception)
@@ -1163,19 +1165,17 @@ public class JsonrpcServiceTest extends BaseTest {
       tronJsonRpc.ethGetBlockByNumber(null, false);
       Assert.fail("Should throw JsonRpcInvalidParamsException for null input");
     } catch (Exception e) {
-      Assert.assertTrue("Should be JsonRpcInvalidParamsException", e instanceof JsonRpcInvalidParamsException);
+      Assert.assertTrue("Should be JsonRpcInvalidParamsException",
+          e instanceof JsonRpcInvalidParamsException);
     }
 
-    // Test too long input (DDoS protection)
-    StringBuilder longInput = new StringBuilder();
-    for (int i = 0; i < 130; i++) { // Exceeds MAX_BLOCK_IDENTIFIER_LENGTH (128)
-      longInput.append("a");
-    }
     try {
-      tronJsonRpc.ethGetBlockByNumber(longInput.toString(), false);
+      // Test Exceeds MAX_BLOCK_IDENTIFIER_LENGTH (128)
+      tronJsonRpc.ethGetBlockByNumber(generateLongHexString(130), false);
       Assert.fail("Should throw JsonRpcInvalidParamsException for too long input");
     } catch (Exception e) {
-      Assert.assertTrue("Should be JsonRpcInvalidParamsException", e instanceof JsonRpcInvalidParamsException);
+      Assert.assertTrue("Should be JsonRpcInvalidParamsException",
+          e instanceof JsonRpcInvalidParamsException);
     }
 
     // Test valid input (should not throw exception)
@@ -1195,19 +1195,17 @@ public class JsonrpcServiceTest extends BaseTest {
       tronJsonRpc.getTrxBalance(OWNER_ADDRESS, null);
       Assert.fail("Should throw JsonRpcInvalidParamsException for null blockNumOrTag");
     } catch (Exception e) {
-      Assert.assertTrue("Should be JsonRpcInvalidParamsException", e instanceof JsonRpcInvalidParamsException);
+      Assert.assertTrue("Should be JsonRpcInvalidParamsException",
+          e instanceof JsonRpcInvalidParamsException);
     }
 
-    // Test too long blockNumOrTag (DDoS protection)
-    StringBuilder longInput = new StringBuilder();
-    for (int i = 0; i < 130; i++) { // Exceeds MAX_BLOCK_IDENTIFIER_LENGTH (128)
-      longInput.append("a");
-    }
     try {
-      tronJsonRpc.getTrxBalance(OWNER_ADDRESS, longInput.toString());
+      // Test Exceeds MAX_BLOCK_IDENTIFIER_LENGTH (128)
+      tronJsonRpc.getTrxBalance(OWNER_ADDRESS, generateLongHexString(130));
       Assert.fail("Should throw JsonRpcInvalidParamsException for too long blockNumOrTag");
     } catch (Exception e) {
-      Assert.assertTrue("Should be JsonRpcInvalidParamsException", e instanceof JsonRpcInvalidParamsException);
+      Assert.assertTrue("Should be JsonRpcInvalidParamsException",
+          e instanceof JsonRpcInvalidParamsException);
     }
 
     // Test valid blockNumOrTag (should not throw validation exception)
@@ -1224,20 +1222,16 @@ public class JsonrpcServiceTest extends BaseTest {
   public void testValidateBlockNumOrHashOrTag_getTransactionByBlockNumberAndIndex() {
     // Test null blockNumOrTag
     try {
-      tronJsonRpc.getTransactionByBlockNumberAndIndex( null, "index");
+      tronJsonRpc.getTransactionByBlockNumberAndIndex(null, "0x0");
       Assert.fail("Should throw JsonRpcInvalidParamsException for null blockNumOrTag");
     } catch (Exception e) {
       Assert.assertTrue("Should be JsonRpcInvalidParamsException",
           e instanceof JsonRpcInvalidParamsException);
     }
 
-    // Test too long blockNumOrTag (DDoS protection)
-    StringBuilder longInput = new StringBuilder();
-    for (int i = 0; i < 130; i++) { // Exceeds MAX_BLOCK_IDENTIFIER_LENGTH (128)
-      longInput.append("a");
-    }
     try {
-      tronJsonRpc.getTransactionByBlockNumberAndIndex(longInput.toString(), "index");
+      // Test Exceeds MAX_BLOCK_IDENTIFIER_LENGTH (128)
+      tronJsonRpc.getTransactionByBlockNumberAndIndex(generateLongHexString(130), "0x0");
       Assert.fail("Should throw JsonRpcInvalidParamsException for too long blockNumOrTag");
     } catch (Exception e) {
       Assert.assertTrue("Should be JsonRpcInvalidParamsException",
@@ -1245,4 +1239,4 @@ public class JsonrpcServiceTest extends BaseTest {
     }
   }
 
-  }
+}
