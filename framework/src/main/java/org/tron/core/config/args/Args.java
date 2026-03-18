@@ -100,6 +100,11 @@ public class Args extends CommonParameter {
   private static final ConcurrentHashMap<Long, BlockingQueue<ContractEventTrigger>>
       solidityContractEventTriggerMap = new ConcurrentHashMap<>();
 
+  // Default QPS values for rate limiters
+  private static final int DEFAULT_RATE_LIMITER_GLOBAL_QPS = 1000;
+  private static final int DEFAULT_RATE_LIMITER_GLOBAL_IP_QPS = 1000;
+  private static final int DEFAULT_RATE_LIMITER_GLOBAL_API_QPS = 1000;
+
 
   /**
    * set parameters.
@@ -711,15 +716,15 @@ public class Args extends CommonParameter {
 
     PARAMETER.rateLimiterGlobalQps =
         config.hasPath(ConfigKey.RATE_LIMITER_GLOBAL_QPS) ? config
-            .getInt(ConfigKey.RATE_LIMITER_GLOBAL_QPS) : 50000;
+            .getInt(ConfigKey.RATE_LIMITER_GLOBAL_QPS) : DEFAULT_RATE_LIMITER_GLOBAL_QPS;
 
     PARAMETER.rateLimiterGlobalIpQps =
         config.hasPath(ConfigKey.RATE_LIMITER_GLOBAL_IP_QPS) ? config
-            .getInt(ConfigKey.RATE_LIMITER_GLOBAL_IP_QPS) : 10000;
+            .getInt(ConfigKey.RATE_LIMITER_GLOBAL_IP_QPS) : DEFAULT_RATE_LIMITER_GLOBAL_IP_QPS;
 
     PARAMETER.rateLimiterGlobalApiQps =
       config.hasPath(ConfigKey.RATE_LIMITER_GLOBAL_API_QPS) ? config
-        .getInt(ConfigKey.RATE_LIMITER_GLOBAL_API_QPS) : 1000;
+        .getInt(ConfigKey.RATE_LIMITER_GLOBAL_API_QPS) : DEFAULT_RATE_LIMITER_GLOBAL_API_QPS;
 
     PARAMETER.rateLimiterInitialization = getRateLimiterFromConfig(config);
 
