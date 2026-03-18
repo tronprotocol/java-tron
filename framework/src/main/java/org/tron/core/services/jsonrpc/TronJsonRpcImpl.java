@@ -9,6 +9,7 @@ import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getEnergyUsageTotal;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getTransactionIndex;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getTxID;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.triggerCallContract;
+import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.validateBlockNumOrHashOrTag;
 
 import com.alibaba.fastjson.JSON;
 import com.google.common.cache.Cache;
@@ -115,7 +116,6 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
   private static final String FILTER_NOT_FOUND = "filter not found";
   public static final int EXPIRE_SECONDS = 5 * 60;
   private static final int maxBlockFilterNum = Args.getInstance().getJsonRpcMaxBlockFilterNum();
-
   private static final Cache<LogFilterElement, LogFilterElement> logElementCache =
       CacheBuilder.newBuilder()
           .maximumSize(300_000L) // 300s * tps(1000) * 1 log/tx ≈ 300_000
@@ -415,12 +415,6 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
       }
       return ByteArray.toJsonHex(balance);
     } else {
-      try {
-        ByteArray.hexToBigInteger(blockNumOrTag);
-      } catch (Exception e) {
-        throw new JsonRpcInvalidParamsException(BLOCK_NUM_ERROR);
-      }
-
       throw new JsonRpcInvalidParamsException(QUANTITY_NOT_SUPPORT_ERROR);
     }
   }
@@ -541,6 +535,9 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
   @Override
   public String getStorageAt(String address, String storageIdx, String blockNumOrTag)
       throws JsonRpcInvalidParamsException {
+    // Add length check to prevent DDoS attacks
+    JsonRpcApiUtil.validateBlockNumOrHashOrTag(blockNumOrTag);
+    
     if (EARLIEST_STR.equalsIgnoreCase(blockNumOrTag)
         || PENDING_STR.equalsIgnoreCase(blockNumOrTag)
         || FINALIZED_STR.equalsIgnoreCase(blockNumOrTag)) {
@@ -564,12 +561,6 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
       DataWord value = storage.getValue(new DataWord(ByteArray.fromHexString(storageIdx)));
       return ByteArray.toJsonHex(value == null ? new byte[32] : value.getData());
     } else {
-      try {
-        ByteArray.hexToBigInteger(blockNumOrTag);
-      } catch (Exception e) {
-        throw new JsonRpcInvalidParamsException(BLOCK_NUM_ERROR);
-      }
-
       throw new JsonRpcInvalidParamsException(QUANTITY_NOT_SUPPORT_ERROR);
     }
   }
@@ -577,6 +568,9 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
   @Override
   public String getABIOfSmartContract(String contractAddress, String blockNumOrTag)
       throws JsonRpcInvalidParamsException {
+    // Add length check to prevent DDoS attacks
+    JsonRpcApiUtil.validateBlockNumOrHashOrTag(blockNumOrTag);
+    
     if (EARLIEST_STR.equalsIgnoreCase(blockNumOrTag)
         || PENDING_STR.equalsIgnoreCase(blockNumOrTag)
         || FINALIZED_STR.equalsIgnoreCase(blockNumOrTag)) {
@@ -595,12 +589,6 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
       }
 
     } else {
-      try {
-        ByteArray.hexToBigInteger(blockNumOrTag);
-      } catch (Exception e) {
-        throw new JsonRpcInvalidParamsException(BLOCK_NUM_ERROR);
-      }
-
       throw new JsonRpcInvalidParamsException(QUANTITY_NOT_SUPPORT_ERROR);
     }
   }
@@ -984,6 +972,8 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
 
         long blockNumber;
         try {
+          // Add length check to prevent DDoS attacks
+          validateBlockNumOrHashOrTag(blockNumOrTag);
           blockNumber = ByteArray.hexToBigInteger(blockNumOrTag).longValue();
         } catch (Exception e) {
           throw new JsonRpcInvalidParamsException(BLOCK_NUM_ERROR);
@@ -1026,6 +1016,8 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
           ByteArray.fromHexString(transactionCall.getData()));
     } else {
       try {
+        // Add length check to prevent DDoS attacks
+        JsonRpcApiUtil.validateBlockNumOrHashOrTag(blockNumOrTag);
         ByteArray.hexToBigInteger(blockNumOrTag);
       } catch (Exception e) {
         throw new JsonRpcInvalidParamsException(BLOCK_NUM_ERROR);

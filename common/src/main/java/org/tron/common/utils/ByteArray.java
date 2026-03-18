@@ -156,10 +156,10 @@ public class ByteArray {
   }
 
   public static long jsonHexToLong(String x) throws JsonRpcInvalidParamsException {
-     // Constants for input length validation to prevent DDoS attacks
-    int MAX_HEX_LONG_LENGTH = 20; // For 64-bit long values (18 chars for 0x7FFFFFFFFFFFFFFF) + safety bufferty buffer
+    // Constants for input length validation to prevent DDoS attacks
+    int MAX_HEX_LONG_LENGTH = 20; // For 64-bit long values (18 chars for 0x7FFFFFFFFFFFFFFF) + safety buffer
     if (x == null || x.length() > MAX_HEX_LONG_LENGTH) {
-      throw new IllegalArgumentException("Incorrect string length");
+      throw new JsonRpcInvalidParamsException("Input cannot be null or too long");
     }
 
     if (!x.startsWith("0x")) {
