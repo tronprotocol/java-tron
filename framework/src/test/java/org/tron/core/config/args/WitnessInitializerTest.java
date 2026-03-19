@@ -21,14 +21,14 @@ import org.junit.After;
 import org.junit.Test;
 import org.mockito.MockedStatic;
 import org.tron.common.crypto.SignInterface;
+import org.tron.common.crypto.keystore.Credentials;
+import org.tron.common.crypto.keystore.WalletUtils;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.LocalWitnesses;
 import org.tron.common.utils.PublicMethod;
 import org.tron.common.utils.client.utils.Base58;
 import org.tron.core.exception.TronError;
 import org.tron.core.exception.TronError.ErrCode;
-import org.tron.keystore.Credentials;
-import org.tron.keystore.WalletUtils;
 
 public class WitnessInitializerTest {
 

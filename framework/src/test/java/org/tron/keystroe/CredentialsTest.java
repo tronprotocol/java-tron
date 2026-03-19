@@ -4,7 +4,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.tron.common.crypto.SignInterface;
-import org.tron.keystore.Credentials;
+import org.tron.common.crypto.keystore.Credentials;
 
 public class CredentialsTest {
 

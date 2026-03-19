@@ -153,12 +153,6 @@ public class CommonParameter {
   @Setter
   public boolean solidityNode = false;
 
-  // If you are running KeystoreFactory,
-  // this flag is set to true
-  @Getter
-  @Setter
-  public boolean keystoreFactory = false;
-
   // -- RPC / HTTP --
   @Getter
   @Setter

@@ -6,6 +6,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.junit.Test;
 import org.tron.common.crypto.SignUtils;
+import org.tron.common.crypto.keystore.Wallet;
+import org.tron.common.crypto.keystore.WalletFile;
 import org.tron.core.exception.CipherException;
 
 @Slf4j

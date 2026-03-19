@@ -1,4 +1,4 @@
-package org.tron.keystore;
+package org.tron.common.crypto.keystore;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -17,7 +17,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.tron.common.crypto.SignInterface;
 import org.tron.common.crypto.SignUtils;
 import org.tron.common.utils.Utils;
-import org.tron.core.config.args.Args;
 import org.tron.core.exception.CipherException;
 
 /**
@@ -48,11 +47,9 @@ public class WalletUtils {
 
   public static String generateNewWalletFile(
       String password, File destinationDirectory, boolean useFullScrypt)
-      throws CipherException, IOException, InvalidAlgorithmParameterException,
-      NoSuchAlgorithmException, NoSuchProviderException {
+      throws CipherException, IOException {
 
-    SignInterface ecKeyPair = SignUtils.getGeneratedRandomSign(Utils.getRandom(),
-        Args.getInstance().isECKeyCryptoEngine());
+    SignInterface ecKeyPair = SignUtils.getGeneratedRandomSign(Utils.getRandom(), true);
     return generateWalletFile(password, ecKeyPair, destinationDirectory, useFullScrypt);
   }
 

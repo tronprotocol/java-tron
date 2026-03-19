@@ -11,12 +11,12 @@ import org.junit.rules.TemporaryFolder;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.tron.common.TestConstants;
 import org.tron.common.application.TronApplicationContext;
+import org.tron.common.crypto.keystore.Wallet;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.store.DynamicPropertiesStore;
-import org.tron.keystore.Wallet;
 
 @Slf4j
 public class TxCacheDBInitTest {

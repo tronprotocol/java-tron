@@ -143,3 +143,51 @@ NOTE: large db may GC overhead limit exceeded.
 - `<src>`: Source path for database. Default: output-directory/database
 - `--db`: db name.
 - `-h | --help`: provide the help info
+
+## Keystore Factory
+
+Keystore factory provides the ability to generate wallet keystore files or import private keys.
+
+### Available commands:
+
+- `GenKeystore`: Generate a new wallet keystore file with a random private key.
+- `ImportPrivateKey`: Import an existing private key and create a keystore file.
+- `Exit` or `Quit`: Exit the tool.
+
+### Examples:
+
+```shell script
+# start keystore factory
+java -jar Toolkit.jar keystore-factory
+
+# interactive commands
+keystore-factory> GenKeystore
+keystore-factory> ImportPrivateKey
+keystore-factory> Exit
+```
+
+### Usage flow:
+
+1. Run `java -jar Toolkit.jar keystore-factory` to start the tool.
+2. Enter `GenKeystore` to generate a new wallet, you will be prompted to:
+   - Input password (hidden input)
+   - Input password again for confirmation
+   - View the generated keystore file name and wallet address
+3. Enter `ImportPrivateKey` to import an existing private key, you will be prompted to:
+   - Input the 64-character hex private key
+   - Input password (hidden input)
+   - Input password again for confirmation
+   - View the generated keystore file name and wallet address
+4. Enter `Exit` or `Quit` to exit the tool.
+
+### Output:
+
+Keystore files are saved in the `Wallet` directory with the following naming convention:
+```
+UTC--yyyy-MM-ddTHH-mm-ss.nVV--<address>.json
+```
+
+Example:
+```
+UTC--2024-01-15T10-30-45.123Z--TJRyHRFpmjG6mZ95mZaMvHx5fU7fGvRQoN.json
+```

@@ -780,7 +780,7 @@ public class Wallet {
     if (limit > WITNESS_COUNT_LIMIT_MAX) {
       limit = WITNESS_COUNT_LIMIT_MAX;
     }
-    
+
     /*
       In the maintenance period, the VoteStores will be cleared.
       To avoid the race condition of VoteStores deleted but Witness vote counts not updated,
@@ -1502,8 +1502,8 @@ public class Wallet {
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
         .setKey("getAllowTvmSelfdestructRestriction")
         .setValue(dbManager.getDynamicPropertiesStore().getAllowTvmSelfdestructRestriction())
-        .build());                      
-    
+        .build());
+
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
         .setKey("getProposalExpireTime")
         .setValue(dbManager.getDynamicPropertiesStore().getProposalExpireTime())
@@ -2608,7 +2608,7 @@ public class Wallet {
 
     byte[] d;
     while (true) {
-      d = org.tron.keystore.Wallet.generateRandomBytes(Constant.ZC_DIVERSIFIER_SIZE);
+      d = org.tron.common.crypto.keystore.Wallet.generateRandomBytes(Constant.ZC_DIVERSIFIER_SIZE);
       if (JLibrustzcash.librustzcashCheckDiversifier(d)) {
         break;
       }

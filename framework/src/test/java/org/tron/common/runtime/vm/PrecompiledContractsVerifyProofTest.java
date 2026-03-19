@@ -15,6 +15,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.tron.api.GrpcAPI.ShieldedTRC20Parameters;
 import org.tron.common.BaseTest;
+import org.tron.common.crypto.keystore.Wallet;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.FileUtil;
@@ -41,7 +42,6 @@ import org.tron.core.zen.address.IncomingViewingKey;
 import org.tron.core.zen.address.PaymentAddress;
 import org.tron.core.zen.address.SpendingKey;
 import org.tron.core.zen.note.Note;
-import org.tron.keystore.Wallet;
 import org.tron.protos.contract.ShieldContract;
 
 @Slf4j

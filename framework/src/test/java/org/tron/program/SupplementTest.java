@@ -4,7 +4,7 @@ import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.tron.keystore.WalletUtils.passwordValid;
+import static org.tron.common.crypto.keystore.WalletUtils.passwordValid;
 
 import java.io.File;
 import java.io.IOException;
@@ -17,6 +17,7 @@ import org.junit.rules.ExpectedException;
 import org.tron.common.BaseTest;
 import org.tron.common.TestConstants;
 import org.tron.common.config.DbBackupConfig;
+import org.tron.common.crypto.keystore.WalletUtils;
 import org.tron.common.entity.PeerInfo;
 import org.tron.common.utils.CompactEncoder;
 import org.tron.common.utils.JsonUtil;
@@ -27,7 +28,6 @@ import org.tron.core.config.TronLogShutdownHook;
 import org.tron.core.config.args.Args;
 import org.tron.core.services.http.HttpSelfFormatFieldName;
 import org.tron.core.store.StorageRowStore;
-import org.tron.keystore.WalletUtils;
 
 public class SupplementTest extends BaseTest {
 

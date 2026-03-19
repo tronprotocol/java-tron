@@ -1,4 +1,4 @@
-package org.tron.keystore;
+package org.tron.common.crypto.keystore;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -23,7 +23,6 @@ import org.tron.common.crypto.SignInterface;
 import org.tron.common.crypto.SignUtils;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.StringUtil;
-import org.tron.core.config.args.Args;
 import org.tron.core.exception.CipherException;
 
 /**
@@ -212,7 +211,7 @@ public class Wallet {
     byte[] encryptKey = Arrays.copyOfRange(derivedKey, 0, 16);
     byte[] privateKey = performCipherOperation(Cipher.DECRYPT_MODE, iv, encryptKey, cipherText);
 
-    return SignUtils.fromPrivate(privateKey, Args.getInstance().isECKeyCryptoEngine());
+    return SignUtils.fromPrivate(privateKey, true);
   }
 
   static void validate(WalletFile walletFile) throws CipherException {

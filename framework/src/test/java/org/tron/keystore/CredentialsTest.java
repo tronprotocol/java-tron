@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.springframework.util.Assert;
 import org.tron.common.crypto.SignUtils;
+import org.tron.common.crypto.keystore.Credentials;
 import org.tron.common.crypto.sm2.SM2;
 import org.tron.common.utils.ByteUtil;
 
@@ -44,5 +45,4 @@ public class CredentialsTest extends TestCase {
     Assert.isTrue(!(credentials1.hashCode() == credentials2.hashCode()),
         "Credentials instance hashcode should be not equal!");
   }
-
 }

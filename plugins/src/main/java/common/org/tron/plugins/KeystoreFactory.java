@@ -1,4 +1,4 @@
-package org.tron.program;
+package org.tron.plugins;
 
 import java.io.File;
 import java.io.IOException;
@@ -7,22 +7,22 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.tron.common.crypto.SignInterface;
 import org.tron.common.crypto.SignUtils;
+import org.tron.common.crypto.keystore.Credentials;
+import org.tron.common.crypto.keystore.WalletUtils;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.exception.CipherException;
-import org.tron.keystore.Credentials;
-import org.tron.keystore.WalletUtils;
+import picocli.CommandLine;
 
 @Slf4j(topic = "app")
-public class KeystoreFactory {
+@CommandLine.Command(name = "keystore-factory",
+    mixinStandardHelpOptions = true,
+    version = "keystore-factory 1.0",
+    description = "Generate wallet keystores or import private keys.")
+public class KeystoreFactory implements Runnable {
 
   private static final String FilePath = "Wallet";
-
-  public static void start() {
-    KeystoreFactory cli = new KeystoreFactory();
-    cli.run();
-  }
 
   private boolean priKeyValid(String priKey) {
     if (StringUtils.isEmpty(priKey)) {
@@ -102,7 +102,8 @@ public class KeystoreFactory {
     System.out.println("Input any one of them, you will get more tips.");
   }
 
-  private void run() {
+  @Override
+  public void run() {
     Scanner in = new Scanner(System.in);
     help();
     while (in.hasNextLine()) {

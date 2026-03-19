@@ -1,7 +1,7 @@
 package org.tron.core.jsonrpc;
 
+import static org.tron.common.crypto.keystore.Wallet.generateRandomBytes;
 import static org.tron.common.utils.Commons.decodeFromBase58Check;
-import static org.tron.keystore.Wallet.generateRandomBytes;
 
 import com.google.protobuf.ByteString;
 import org.junit.AfterClass;

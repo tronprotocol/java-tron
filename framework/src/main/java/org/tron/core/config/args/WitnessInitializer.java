@@ -7,13 +7,13 @@ import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.tron.common.crypto.SignInterface;
+import org.tron.common.crypto.keystore.Credentials;
+import org.tron.common.crypto.keystore.WalletUtils;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.LocalWitnesses;
 import org.tron.core.exception.CipherException;
 import org.tron.core.exception.TronError;
-import org.tron.keystore.Credentials;
-import org.tron.keystore.WalletUtils;
 
 @Slf4j
 public class WitnessInitializer {

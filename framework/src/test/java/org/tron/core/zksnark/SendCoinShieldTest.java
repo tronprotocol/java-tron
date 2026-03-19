@@ -245,7 +245,7 @@ public class SendCoinShieldTest extends BaseTest {
     DiversifierT diversifierT = new DiversifierT();
     byte[] d;
     do {
-      d = org.tron.keystore.Wallet.generateRandomBytes(Constant.ZC_DIVERSIFIER_SIZE);
+      d = org.tron.common.crypto.keystore.Wallet.generateRandomBytes(Constant.ZC_DIVERSIFIER_SIZE);
     } while (!JLibrustzcash.librustzcashCheckDiversifier(d));
     diversifierT.setData(d);
 
@@ -331,7 +331,7 @@ public class SendCoinShieldTest extends BaseTest {
       PaymentAddress paymentAddress = optional.get();
 
       long ctx = JLibrustzcash.librustzcashSaplingProvingCtxInit();
-      byte[] memo = org.tron.keystore.Wallet.generateRandomBytes(512);
+      byte[] memo = org.tron.common.crypto.keystore.Wallet.generateRandomBytes(512);
       builder.addOutput(fullViewingKey.getOvk(), paymentAddress, 4000, memo);
 
       ZenTransactionBuilder.ReceiveDescriptionInfo output = builder.getReceives().get(0);
@@ -401,7 +401,7 @@ public class SendCoinShieldTest extends BaseTest {
     Note note = new Note(paymentAddress2, 4000);//construct function:this.pkD = address.getPkD();
     note.setRcm(ByteArray
         .fromHexString("83d36fd4c8eebec516c3a8ce2fe4832e01eb57bd7f9f9c9e0bd68cc69a5b0f06"));
-    byte[] memo = org.tron.keystore.Wallet.generateRandomBytes(512);
+    byte[] memo = org.tron.common.crypto.keystore.Wallet.generateRandomBytes(512);
     note.setMemo(memo);
 
     byte[] cmuOpt = note.cm();
@@ -486,7 +486,7 @@ public class SendCoinShieldTest extends BaseTest {
     Optional<PaymentAddress> optional = incomingViewingKey.address(new DiversifierT());
     if (optional.isPresent()) {
       PaymentAddress paymentAddress = optional.get();
-      byte[] memo = org.tron.keystore.Wallet.generateRandomBytes(512);
+      byte[] memo = org.tron.common.crypto.keystore.Wallet.generateRandomBytes(512);
       builder.addOutput(senderOvk, paymentAddress,
           1000 * 1000000L - wallet.getShieldedTransactionFee(), memo);
 
@@ -574,7 +574,7 @@ public class SendCoinShieldTest extends BaseTest {
     Optional<PaymentAddress> optional = incomingViewingKey.address(new DiversifierT());
     if (optional.isPresent()) {
       PaymentAddress paymentAddress = optional.get();
-      byte[] memo = org.tron.keystore.Wallet.generateRandomBytes(512);
+      byte[] memo = org.tron.common.crypto.keystore.Wallet.generateRandomBytes(512);
       builder.addOutput(senderOvk, paymentAddress,
           1000 * 1000000L - wallet.getShieldedTransactionFee(), memo);
 
@@ -909,7 +909,8 @@ public class SendCoinShieldTest extends BaseTest {
       DiversifierT diversifierT = new DiversifierT();
       byte[] d;
       do {
-        d = org.tron.keystore.Wallet.generateRandomBytes(Constant.ZC_DIVERSIFIER_SIZE);
+        d = org.tron.common.crypto.keystore.Wallet.generateRandomBytes(
+            Constant.ZC_DIVERSIFIER_SIZE);
       } while (!JLibrustzcash.librustzcashCheckDiversifier(d));
       diversifierT.setData(d);
       System.out.println("d is: " + ByteArray.toHexString(d));
