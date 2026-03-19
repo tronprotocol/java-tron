@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Set;
 import lombok.Getter;
 import lombok.Setter;
+import org.slf4j.bridge.SLF4JBridgeHandler;
 import org.tron.common.args.GenesisBlock;
 import org.tron.common.config.DbBackupConfig;
 import org.tron.common.cron.CronExpression;
@@ -22,6 +23,16 @@ import org.tron.p2p.P2pConfig;
 import org.tron.p2p.dns.update.PublishConfig;
 
 public class CommonParameter {
+
+  // Install the JUL->SLF4J bridge early so that JUL log records emitted during
+  // static init of netty/grpc classes (or from unit tests that don't invoke
+  // LogService.load()) still reach Logback.
+  static {
+    SLF4JBridgeHandler.removeHandlersForRootLogger();
+    if (!SLF4JBridgeHandler.isInstalled()) {
+      SLF4JBridgeHandler.install();
+    }
+  }
 
   protected static CommonParameter PARAMETER = new CommonParameter();
 

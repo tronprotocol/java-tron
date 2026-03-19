@@ -2,6 +2,13 @@
 
 <configuration>
 
+  <!-- Propagate logback level changes back to JUL, eliminating the 60x overhead
+       for disabled log statements when using the jul-to-slf4j bridge.
+       resetJUL=true clears any pre-existing JUL handlers to avoid double output. -->
+  <contextListener class="ch.qos.logback.classic.jul.LevelChangePropagator">
+    <resetJUL>true</resetJUL>
+  </contextListener>
+
   <!-- Be sure to flush latest logs on exit -->
   <shutdownHook class="org.tron.core.config.TronLogShutdownHook"/>
   <conversionRule conversionWord="m"
@@ -61,19 +68,17 @@
     <!-- (the smaller value -> flush occurs often) -->
     <queueSize>100</queueSize>
     <includeCallerData>true</includeCallerData>
+    <!-- Allow up to 5 s to drain the queue on shutdown before giving up -->
+    <maxFlushTime>5000</maxFlushTime>
     <appender-ref ref="FILE"/>
   </appender>
-
-  <root level="INFO">
-    <!--<appender-ref ref="CONSOLE"/>-->
-    <appender-ref ref="ASYNC"/>
-  </root>
-
 
   <appender name="METRICS" class="org.tron.common.prometheus.InstrumentedAppender" />
 
   <root level="INFO">
-    <appender-ref ref="METRICS" />
+    <!--<appender-ref ref="CONSOLE"/>-->
+    <appender-ref ref="ASYNC"/>
+    <appender-ref ref="METRICS"/>
   </root>
 
   <logger level="INFO" name="app"/>
