@@ -75,7 +75,6 @@ public class MerklePath {
   }
 
   public byte[] encode() throws ZksnarkException {
-    assert (authenticationPath.size() == index.size());
     List<List<Byte>> pathByteList = Lists.newArrayList();
     long indexLong; // 64
     for (int i = 0; i < authenticationPath.size(); i++) {

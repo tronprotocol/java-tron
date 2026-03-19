@@ -153,7 +153,6 @@ public class EnergyProcessor extends ResourceProcessor {
     if (dynamicPropertiesStore.allowNewReward() && totalEnergyWeight <= 0) {
       return 0;
     } else {
-      assert totalEnergyWeight > 0;
     }
     return (long) (energyWeight * ((double) totalEnergyLimit / totalEnergyWeight));
   }
@@ -186,5 +185,4 @@ public class EnergyProcessor extends ResourceProcessor {
 
 
 }
-
 

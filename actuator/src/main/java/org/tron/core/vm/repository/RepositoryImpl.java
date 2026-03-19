@@ -900,7 +900,6 @@ public class RepositoryImpl implements Repository {
     long averageUsage = divideCeil(usage * precision, windowSize);
 
     if (lastTime != now) {
-      assert now > lastTime;
       if (lastTime + windowSize > now) {
         long delta = now - lastTime;
         double decay = (windowSize - delta) / (double) windowSize;
@@ -929,8 +928,6 @@ public class RepositoryImpl implements Repository {
     long energyWeight = frozeBalance / 1_000_000L;
     long totalEnergyLimit = getDynamicPropertiesStore().getTotalEnergyCurrentLimit();
     long totalEnergyWeight = getDynamicPropertiesStore().getTotalEnergyWeight();
-
-    assert totalEnergyWeight > 0;
 
     return (long) (energyWeight * ((double) totalEnergyLimit / totalEnergyWeight));
   }

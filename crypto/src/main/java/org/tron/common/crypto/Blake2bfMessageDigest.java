@@ -79,7 +79,6 @@ public class Blake2bfMessageDigest extends BCMessageDigest implements Cloneable 
     // for tests
     Blake2bfDigest(
         final long[] h, final long[] m, final long[] t, final boolean f, final long rounds) {
-      assert rounds <= 4294967295L; // uint max value
       buffer = new byte[MESSAGE_LENGTH_BYTES];
       bufferPos = 0;
 
@@ -269,4 +268,3 @@ public class Blake2bfMessageDigest extends BCMessageDigest implements Cloneable 
     }
   }
 }
-
