@@ -31,12 +31,12 @@ import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.slf4j.LoggerFactory;
+import org.tron.common.TestConstants;
 import org.tron.common.arch.Arch;
 import org.tron.common.log.LogService;
 import org.tron.common.parameter.RateLimiterInitialization;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.common.zksnark.JLibrustzcash;
-import org.tron.core.Constant;
 import org.tron.core.config.args.Args;
 import org.tron.core.services.http.GetBlockServlet;
 import org.tron.core.services.http.RateLimiterServlet;
@@ -111,14 +111,14 @@ public class TronErrorTest {
   @Test
   public void witnessInitTest() {
     TronError thrown = assertThrows(TronError.class, () -> {
-      Args.setParam(new String[]{"--witness"}, Constant.TEST_CONF);
+      Args.setParam(new String[]{"--witness"}, TestConstants.TEST_CONF);
     });
     assertEquals(TronError.ErrCode.WITNESS_INIT, thrown.getErrCode());
   }
 
   @Test
   public void rateLimiterServletInitTest() {
-    Args.setParam(new String[]{}, Constant.TEST_CONF);
+    Args.setParam(new String[]{}, TestConstants.TEST_CONF);
     RateLimiterInitialization rateLimiter = new RateLimiterInitialization();
     Args.getInstance().setRateLimiterInitialization(rateLimiter);
     Map<String, String> item = new HashMap<>();
@@ -137,11 +137,11 @@ public class TronErrorTest {
   @Test
   public void shutdownBlockTimeInitTest() {
     Map<String, String> params = new HashMap<>();
-    params.put(Constant.NODE_SHUTDOWN_BLOCK_TIME, "0");
+    params.put("node.shutdown.BlockTime", "0");
     params.put("storage.db.directory", "database");
     Config config = ConfigFactory.defaultOverrides().withFallback(
         ConfigFactory.parseMap(params));
-    TronError thrown = assertThrows(TronError.class, () -> Args.setParam(config));
+    TronError thrown = assertThrows(TronError.class, () -> Args.applyConfigParams(config));
     assertEquals(TronError.ErrCode.AUTO_STOP_PARAMS, thrown.getErrCode());
   }
 
@@ -177,15 +177,16 @@ public class TronErrorTest {
       mocked.when(Arch::throwIfUnsupportedJavaVersion).thenCallRealMethod();
 
       if (expectThrow) {
-        TronError err = assertThrows(
-            TronError.class, () -> Args.setParam(new String[]{}, Constant.TEST_CONF));
+        UnsupportedOperationException err = assertThrows(
+            UnsupportedOperationException.class,
+            Arch::throwIfUnsupportedJavaVersion);
 
         String expectedJavaVersion = isX86 ? "1.8" : "17";
         String expectedMessage = String.format(
-            "Java %s is required for %s architecture. Detected version %s",
+            "Java %s is required for %s architecture."
+                + " Detected version %s",
             expectedJavaVersion, osArch, javaVersion);
-        assertEquals(expectedMessage, err.getCause().getMessage());
-        assertEquals(TronError.ErrCode.JDK_VERSION, err.getErrCode());
+        assertEquals(expectedMessage, err.getMessage());
         mocked.verify(Arch::withAll, times(1));
       } else {
         try {

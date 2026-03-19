@@ -19,7 +19,6 @@
 package org.tron.core.config;
 
 import static org.apache.commons.lang3.StringUtils.isBlank;
-import static org.apache.commons.lang3.StringUtils.isNoneBlank;
 
 import com.typesafe.config.ConfigFactory;
 import java.io.File;
@@ -36,21 +35,15 @@ public class Configuration {
    * @param confFileName path to configuration file
    * @return loaded configuration
    */
-  public static com.typesafe.config.Config getByFileName(final String shellConfFileName,
+  public static com.typesafe.config.Config getByFileName(
       final String confFileName) {
-    if (isNoneBlank(shellConfFileName)) {
-      File shellConfFile = new File(shellConfFileName);
-      resolveConfigFile(shellConfFileName, shellConfFile);
-      return config;
-    }
-
     if (isBlank(confFileName)) {
-      throw new IllegalArgumentException("Configuration path is required!");
-    } else {
-      File confFile = new File(confFileName);
-      resolveConfigFile(confFileName, confFile);
-      return config;
+      throw new IllegalArgumentException(
+          "Configuration path is required!");
     }
+    File confFile = new File(confFileName);
+    resolveConfigFile(confFileName, confFile);
+    return config;
   }
 
   private static void resolveConfigFile(String fileName, File confFile) {

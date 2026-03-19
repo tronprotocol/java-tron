@@ -49,6 +49,7 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.rules.TemporaryFolder;
 import org.rocksdb.RocksDB;
+import org.tron.common.TestConstants;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.storage.WriteOptionsWrapper;
 import org.tron.common.storage.rocksdb.RocksDbDataSourceImpl;
@@ -57,7 +58,6 @@ import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.PropUtil;
 import org.tron.common.utils.PublicMethod;
 import org.tron.common.utils.StorageUtils;
-import org.tron.core.Constant;
 import org.tron.core.config.args.Args;
 import org.tron.core.db2.common.WrappedByteArray;
 import org.tron.core.exception.TronError;
@@ -102,7 +102,7 @@ public class LevelDbDataSourceImplTest {
   @Before
   public void initDb() throws IOException {
     Args.setParam(new String[]{"--output-directory",
-        temporaryFolder.newFolder().toString()}, Constant.TEST_CONF);
+        temporaryFolder.newFolder().toString()}, TestConstants.TEST_CONF);
     dataSourceTest = new LevelDbDataSourceImpl(
         Args.getInstance().getOutputDirectory() + File.separator, "test_levelDb");
   }

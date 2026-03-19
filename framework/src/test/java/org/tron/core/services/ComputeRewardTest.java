@@ -18,12 +18,12 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.tron.common.TestConstants;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.error.TronDBException;
 import org.tron.common.es.ExecutorServiceManager;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ReflectUtils;
-import org.tron.core.Constant;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.capsule.WitnessCapsule;
@@ -126,7 +126,7 @@ public class ComputeRewardTest {
   @Before
   public void init() throws IOException {
     Args.setParam(new String[]{"--output-directory", temporaryFolder.newFolder().toString(),
-        "--p2p-disable", "true"}, Constant.TEST_CONF);
+        "--p2p-disable", "true"}, TestConstants.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
     propertiesStore = context.getBean(DynamicPropertiesStore.class);
     delegationStore = context.getBean(DelegationStore.class);

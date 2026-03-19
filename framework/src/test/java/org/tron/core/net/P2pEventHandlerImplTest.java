@@ -10,9 +10,9 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.tron.common.BaseTest;
+import org.tron.common.TestConstants;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.Sha256Hash;
-import org.tron.core.Constant;
 import org.tron.core.config.args.Args;
 import org.tron.core.net.message.TronMessage;
 import org.tron.core.net.message.adv.FetchInvDataMessage;
@@ -26,7 +26,8 @@ public class P2pEventHandlerImplTest extends BaseTest {
 
   @BeforeClass
   public static void init() throws Exception {
-    Args.setParam(new String[] {"--output-directory", dbPath(), "--debug"}, Constant.TEST_CONF);
+    Args.setParam(new String[] {"--output-directory", dbPath(), "--debug"},
+        TestConstants.TEST_CONF);
   }
 
   @Test
