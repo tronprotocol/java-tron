@@ -136,13 +136,14 @@ public class Args extends CommonParameter {
 
   /**
    * Validate final configuration after all sources (defaults, config, CLI) are applied.
+   * ARM64 only supports RocksDB; db.engine config is ignored with a warning.
    */
   public static void validateConfig() {
-    if (Arch.isArm64() && !"ROCKSDB".equals(PARAMETER.storage.getDbEngine())) {
-      throw new TronError(
-          "ARM64 architecture only supports RocksDB. Current engine: "
-              + PARAMETER.storage.getDbEngine(),
-          TronError.ErrCode.PARAMETER_INIT);
+    if (Arch.isArm64()
+        && !Constant.ROCKSDB.equalsIgnoreCase(PARAMETER.storage.getDbEngine())) {
+      logger.warn("ARM64 only supports RocksDB, ignoring db.engine='{}'",
+          PARAMETER.storage.getDbEngine());
+      PARAMETER.storage.setDbEngine(Constant.ROCKSDB);
     }
   }
 
