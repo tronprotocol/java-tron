@@ -4,6 +4,7 @@ import com.google.common.io.ByteStreams;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
+import java.util.concurrent.TimeUnit;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -89,7 +90,7 @@ public class SizeLimitHandlerTest {
 
     int port = PublicMethod.chooseRandomPort();
     httpService = new TestHttpService(port);
-    httpService.start();
+    httpService.start().get(10, TimeUnit.SECONDS);
 
     serverUri = new URI(String.format("http://localhost:%d/", port));
     client = HttpClients.createDefault();
