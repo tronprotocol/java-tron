@@ -327,6 +327,7 @@ public class Util {
     }
   }
 
+  @Deprecated
   public static void checkBodySize(String body) throws Exception {
     CommonParameter parameter = Args.getInstance();
     if (body.getBytes().length > parameter.getMaxMessageSize()) {
