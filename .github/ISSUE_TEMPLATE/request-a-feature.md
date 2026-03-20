@@ -35,7 +35,7 @@ Please provide as much detail as possible to help us evaluate your feature reque
 
 ## Scope of Impact
 
-<!-- What parts of the system will be affected?, choose among  
+<!-- Select the system components that will be affected by this feature:  
 - Core protocol
 - API/RPC
 - Database
