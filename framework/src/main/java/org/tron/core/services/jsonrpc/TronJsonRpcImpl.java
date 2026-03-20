@@ -297,6 +297,7 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
   @Override
   public String ethGetBlockTransactionCountByHash(String blockHash)
       throws JsonRpcInvalidParamsException {
+    validateBlockNumOrHashOrTag(blockHash);
     Block b = getBlockByJsonHash(blockHash);
     if (b == null) {
       return null;
@@ -535,6 +536,7 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
   @Override
   public String getStorageAt(String address, String storageIdx, String blockNumOrTag)
       throws JsonRpcInvalidParamsException {
+    validateBlockNumOrHashOrTag(blockNumOrTag);
     if (EARLIEST_STR.equalsIgnoreCase(blockNumOrTag)
         || PENDING_STR.equalsIgnoreCase(blockNumOrTag)
         || FINALIZED_STR.equalsIgnoreCase(blockNumOrTag)) {
@@ -565,6 +567,7 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
   @Override
   public String getABIOfSmartContract(String contractAddress, String blockNumOrTag)
       throws JsonRpcInvalidParamsException {
+    validateBlockNumOrHashOrTag(blockNumOrTag);
     if (EARLIEST_STR.equalsIgnoreCase(blockNumOrTag)
         || PENDING_STR.equalsIgnoreCase(blockNumOrTag)
         || FINALIZED_STR.equalsIgnoreCase(blockNumOrTag)) {
@@ -779,6 +782,7 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
   @Override
   public TransactionResult getTransactionByBlockHashAndIndex(String blockHash, String index)
       throws JsonRpcInvalidParamsException {
+    validateBlockNumOrHashOrTag(blockHash);
     final Block block = getBlockByJsonHash(blockHash);
 
     if (block == null) {

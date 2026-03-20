@@ -35,7 +35,7 @@ public class Chainbase implements IRevokingDB {
   //true:fullnode, false:soliditynode
   private ThreadLocal<Cursor> cursor = new ThreadLocal<>();
   private ThreadLocal<Long> offset = new ThreadLocal<>();
-  private Snapshot head;
+  private volatile Snapshot head;
 
   public Chainbase(Snapshot head) {
     this.head = head;
