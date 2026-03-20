@@ -12,28 +12,9 @@ Thank you for contributing to java-tron!
 Please provide as much detail as possible to help us evaluate your feature request.
 -->
 
-## Background
-
-<!-- Describe the context and motivation for this feature request -->
-
 ## Problem Statement
 
-<!-- What problem does this feature solve? What pain points does it address? -->
-
-## Rationale
-
-**Why should this feature exist?**
-<!-- Explain the benefits and value this feature would provide -->
-
-**What are the use cases?**
-<!-- Describe specific scenarios where this feature would be useful -->
-
-1. 
-2. 
-3. 
-
-**Who would benefit from this feature?**
-<!-- e.g., node operators, developers, end users, validators -->
+<!-- Describe the problem this feature solves, the context/motivation, and who would benefit -->
 
 ## Proposed Solution
 
@@ -51,19 +32,6 @@ Please provide as much detail as possible to help us evaluate your feature reque
 
 **Protocol Changes** (if applicable)
 <!-- Describe any changes to the TRON protocol -->
-
-## Testing Strategy
-
-<!-- How should this feature be tested? -->
-
-**Test Scenarios**
-
-1. 
-2. 
-3. 
-
-**Performance Considerations**
-<!-- Describe any performance implications -->
 
 ## Scope of Impact
 
@@ -102,11 +70,24 @@ Please provide as much detail as possible to help us evaluate your feature reque
 - [ ] High (significant changes)
 - [ ] Unknown
 
-## Alternatives Considered
+## Testing Strategy
+
+<!-- How should this feature be tested? -->
+
+**Test Scenarios**
+
+1.
+2.
+3.
+
+**Performance Considerations**
+<!-- Describe any performance implications -->
+
+## Alternatives Considered (Optional)
 
 <!-- Describe any alternative solutions or features you've considered -->
 
-## Additional Context
+## Additional Context (Optional)
 
 <!-- Add any other context, mockups, diagrams, or examples -->
 
