@@ -72,7 +72,7 @@ Include relevant logs from FullNode.jar or other components
 [Paste error messages, stack traces, or relevant logs here]
 ```
 
-## Additional Context
+## Additional Context (Optional)
 
 <!-- Add any other context about the problem -->
 
