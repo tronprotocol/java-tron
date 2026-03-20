@@ -343,13 +343,11 @@ public class PublicMethod {
   }
 
   private static boolean checkPortAvailable(int port) throws IOException {
-    InetAddress theAddress = InetAddress.getByName("127.0.0.1");
-    try (Socket socket = new Socket(theAddress, port)) {
-      // only check
-      socket.getPort();
-    } catch (IOException e) {
+    try (java.net.ServerSocket ss = new java.net.ServerSocket(port)) {
+      ss.setReuseAddress(true);
       return true;
+    } catch (IOException e) {
+      return false;
     }
-    return false;
   }
 }
