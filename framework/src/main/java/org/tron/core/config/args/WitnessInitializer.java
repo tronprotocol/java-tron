@@ -36,8 +36,7 @@ public class WitnessInitializer {
       logger.debug("Got localWitnessAccountAddress from cmd");
     }
 
-    witnesses.initWitnessAccountAddress(
-        address, Args.getInstance().isECKeyCryptoEngine());
+    witnesses.initWitnessAccountAddress(address);
     logger.debug("Got privateKey from cmd");
     return witnesses;
   }
@@ -52,8 +51,7 @@ public class WitnessInitializer {
     logger.debug("Got privateKey from config.conf");
 
     byte[] address = resolveWitnessAddress(witnesses, witnessAccountAddress);
-    witnesses.initWitnessAccountAddress(
-        address, Args.getInstance().isECKeyCryptoEngine());
+    witnesses.initWitnessAccountAddress(address);
     return witnesses;
   }
 
@@ -91,8 +89,7 @@ public class WitnessInitializer {
     LocalWitnesses witnesses = new LocalWitnesses();
     witnesses.setPrivateKeys(privateKeys);
     byte[] address = resolveWitnessAddress(witnesses, witnessAccountAddress);
-    witnesses.initWitnessAccountAddress(
-        address, Args.getInstance().isECKeyCryptoEngine());
+    witnesses.initWitnessAccountAddress(address);
     logger.debug("Got privateKey from keystore");
     return witnesses;
   }

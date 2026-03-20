@@ -128,7 +128,7 @@ public class BlockCapsuleTest {
 
     localWitnesses = new LocalWitnesses();
     localWitnesses.setPrivateKeys(Arrays.asList(privateKey));
-    localWitnesses.initWitnessAccountAddress(null, true);
+    localWitnesses.initWitnessAccountAddress(null);
     Args.setLocalWitnesses(localWitnesses);
 
     Assert.assertFalse(blockCapsule0.hasWitnessSignature());

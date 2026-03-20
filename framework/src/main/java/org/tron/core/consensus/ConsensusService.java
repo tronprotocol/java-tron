@@ -50,7 +50,7 @@ public class ConsensusService {
       for (String key : privateKeys) {
         byte[] privateKey = fromHexString(key);
         byte[] privateKeyAddress = SignUtils
-            .fromPrivate(privateKey, Args.getInstance().isECKeyCryptoEngine()).getAddress();
+            .fromPrivate(privateKey).getAddress();
         WitnessCapsule witnessCapsule = witnessStore.get(privateKeyAddress);
         if (null == witnessCapsule) {
           logger.warn("Witness {} is not in witnessStore.", Hex.toHexString(privateKeyAddress));
@@ -64,8 +64,7 @@ public class ConsensusService {
     } else if (privateKeys.size() == 1) {
       byte[] privateKey =
           fromHexString(Args.getLocalWitnesses().getPrivateKey());
-      byte[] privateKeyAddress = SignUtils.fromPrivate(privateKey,
-          Args.getInstance().isECKeyCryptoEngine()).getAddress();
+      byte[] privateKeyAddress = SignUtils.fromPrivate(privateKey).getAddress();
       byte[] witnessAddress = Args.getLocalWitnesses().getWitnessAccountAddress();
       WitnessCapsule witnessCapsule = witnessStore.get(witnessAddress);
       if (null == witnessCapsule) {

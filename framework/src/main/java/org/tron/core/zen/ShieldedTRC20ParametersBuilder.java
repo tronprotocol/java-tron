@@ -309,7 +309,7 @@ public class ShieldedTRC20ParametersBuilder {
           throw new ZksnarkException("unknown parameters type");
       }
 
-      dataHashToBeSigned = Sha256Hash.of(true, mergedBytes).getBytes();
+      dataHashToBeSigned = Sha256Hash.of(mergedBytes).getBytes();
       if (dataHashToBeSigned == null) {
         throw new ZksnarkException("calculate transaction hash failed");
       }

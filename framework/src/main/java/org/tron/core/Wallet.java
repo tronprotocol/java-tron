@@ -302,8 +302,7 @@ public class Wallet {
    * Creates a new Wallet with a random ECKey.
    */
   public Wallet() {
-    this.cryptoEngine = SignUtils.getGeneratedRandomSign(Utils.getRandom(),
-            CommonParameter.getInstance().isECKeyCryptoEngine());
+    this.cryptoEngine = SignUtils.getGeneratedRandomSign(Utils.getRandom());
   }
 
   /**
@@ -625,8 +624,7 @@ public class Wallet {
     TransactionApprovedList.Builder tswBuilder = TransactionApprovedList.newBuilder();
     TransactionExtention.Builder trxExBuilder = TransactionExtention.newBuilder();
     trxExBuilder.setTransaction(trx);
-    trxExBuilder.setTxid(ByteString.copyFrom(Sha256Hash.hash(CommonParameter
-        .getInstance().isECKeyCryptoEngine(), trx.getRawData().toByteArray())));
+    trxExBuilder.setTxid(ByteString.copyFrom(Sha256Hash.hash(trx.getRawData().toByteArray())));
     Return.Builder retBuilder = Return.newBuilder();
     retBuilder.setResult(true).setCode(response_code.SUCCESS);
     trxExBuilder.setResult(retBuilder);
@@ -648,16 +646,14 @@ public class Wallet {
 
         if (trx.getSignatureCount() > 0) {
           List<ByteString> approveList = new ArrayList<ByteString>();
-          byte[] hash = Sha256Hash.hash(CommonParameter
-              .getInstance().isECKeyCryptoEngine(), trx.getRawData().toByteArray());
+          byte[] hash = Sha256Hash.hash(trx.getRawData().toByteArray());
           for (ByteString sig : trx.getSignatureList()) {
             if (sig.size() < 65) {
               throw new SignatureFormatException(
                   "Signature size is " + sig.size());
             }
             String base64 = TransactionCapsule.getBase64FromByteString(sig);
-            byte[] address = SignUtils.signatureToAddress(hash, base64, Args.getInstance()
-                .isECKeyCryptoEngine());
+            byte[] address = SignUtils.signatureToAddress(hash, base64);
             approveList.add(ByteString.copyFrom(address)); //out put approve list.
           }
           tswBuilder.addAllApprovedList(approveList);
@@ -780,7 +776,7 @@ public class Wallet {
     if (limit > WITNESS_COUNT_LIMIT_MAX) {
       limit = WITNESS_COUNT_LIMIT_MAX;
     }
-    
+
     /*
       In the maintenance period, the VoteStores will be cleared.
       To avoid the race condition of VoteStores deleted but Witness vote counts not updated,
@@ -1502,8 +1498,8 @@ public class Wallet {
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
         .setKey("getAllowTvmSelfdestructRestriction")
         .setValue(dbManager.getDynamicPropertiesStore().getAllowTvmSelfdestructRestriction())
-        .build());                      
-    
+        .build());
+
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
         .setKey("getProposalExpireTime")
         .setValue(dbManager.getDynamicPropertiesStore().getProposalExpireTime())
@@ -4479,8 +4475,7 @@ public class Wallet {
     List<String> localWitnessAddresses = new ArrayList<>();
     for (String privateKey : localPrivateKeys) {
       localWitnessAddresses.add(Hex.toHexString(SignUtils
-          .fromPrivate(ByteArray.fromHexString(privateKey),
-              CommonParameter.getInstance().isECKeyCryptoEngine()).getAddress()));
+          .fromPrivate(ByteArray.fromHexString(privateKey)).getAddress()));
     }
 
     // get all witnesses
@@ -4510,8 +4505,7 @@ public class Wallet {
     List<String> localWitnessAddresses = new ArrayList<>();
     for (String privateKey : localPrivateKeys) {
       localWitnessAddresses.add(Hex.toHexString(SignUtils
-          .fromPrivate(ByteArray.fromHexString(privateKey),
-              CommonParameter.getInstance().isECKeyCryptoEngine()).getAddress()));
+          .fromPrivate(ByteArray.fromHexString(privateKey)).getAddress()));
     }
 
     // get active witnesses

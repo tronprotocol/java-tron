@@ -83,7 +83,7 @@ public class MerkleTree {
   }
 
   private Sha256Hash computeHash(Sha256Hash leftHash, Sha256Hash rightHash) {
-    return Sha256Hash.of(CommonParameter.getInstance().isECKeyCryptoEngine(),
+    return Sha256Hash.of(
         leftHash.getByteString().concat(rightHash.getByteString()).toByteArray());
   }
 

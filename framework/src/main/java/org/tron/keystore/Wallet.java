@@ -212,7 +212,7 @@ public class Wallet {
     byte[] encryptKey = Arrays.copyOfRange(derivedKey, 0, 16);
     byte[] privateKey = performCipherOperation(Cipher.DECRYPT_MODE, iv, encryptKey, cipherText);
 
-    return SignUtils.fromPrivate(privateKey, Args.getInstance().isECKeyCryptoEngine());
+    return SignUtils.fromPrivate(privateKey);
   }
 
   static void validate(WalletFile walletFile) throws CipherException {

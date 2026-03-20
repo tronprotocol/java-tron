@@ -421,10 +421,6 @@ public class CommonParameter {
   public FilterQuery eventFilter;
   @Getter
   @Setter
-  public String cryptoEngine = Constant.ECKey_ENGINE;
-
-  @Getter
-  @Setter
   public boolean rpcEnable = true;
   @Getter
   @Setter
@@ -650,10 +646,6 @@ public class CommonParameter {
       PARAMETER.storage.deleteAllStoragePaths();
     }
     PARAMETER = new CommonParameter();
-  }
-
-  public boolean isECKeyCryptoEngine() {
-    return cryptoEngine.equalsIgnoreCase(Constant.ECKey_ENGINE);
   }
 
   public boolean isJsonRpcFilterEnabled() {

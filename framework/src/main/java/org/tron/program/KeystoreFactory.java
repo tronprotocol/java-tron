@@ -59,8 +59,7 @@ public class KeystoreFactory {
   private void genKeystore() throws CipherException, IOException {
     String password = WalletUtils.inputPassword2Twice();
 
-    SignInterface eCkey = SignUtils.getGeneratedRandomSign(Utils.random,
-        CommonParameter.getInstance().isECKeyCryptoEngine());
+    SignInterface eCkey = SignUtils.getGeneratedRandomSign(Utils.random);
     File file = new File(FilePath);
     fileCheck(file);
     String fileName = WalletUtils.generateWalletFile(password, eCkey, file, true);
@@ -84,8 +83,7 @@ public class KeystoreFactory {
 
     String password = WalletUtils.inputPassword2Twice();
 
-    SignInterface eCkey = SignUtils.fromPrivate(ByteArray.fromHexString(privateKey),
-        CommonParameter.getInstance().isECKeyCryptoEngine());
+    SignInterface eCkey = SignUtils.fromPrivate(ByteArray.fromHexString(privateKey));
     File file = new File(FilePath);
     fileCheck(file);
     String fileName = WalletUtils.generateWalletFile(password, eCkey, file, true);

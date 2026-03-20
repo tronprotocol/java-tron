@@ -142,8 +142,7 @@ public class BlockResult {
         gasUsedInBlock += getEnergyUsageTotal(transactionInfoList, i, blockCapsule.getNum());
 
         byte[] txHash = Sha256Hash
-            .hash(CommonParameter.getInstance().isECKeyCryptoEngine(),
-                transactionsList.get(i).getRawData().toByteArray());
+            .hash(transactionsList.get(i).getRawData().toByteArray());
         txes.add(ByteArray.toJsonHex(txHash));
       }
     }

@@ -202,7 +202,7 @@ public class Util {
   public static byte[] generateContractAddress(Transaction trx, byte[] ownerAddress) {
     // get tx hash
     byte[] txRawDataHash = Sha256Hash
-        .of(CommonParameter.getInstance().isECKeyCryptoEngine(), trx.getRawData().toByteArray())
+        .of(trx.getRawData().toByteArray())
         .getBytes();
 
     // combine
@@ -261,8 +261,7 @@ public class Util {
     String rawDataHex = ByteArray.toHexString(transaction.getRawData().toByteArray());
     jsonTransaction.put("raw_data_hex", rawDataHex);
     String txID = ByteArray.toHexString(Sha256Hash
-        .hash(CommonParameter.getInstance().isECKeyCryptoEngine(),
-            transaction.getRawData().toByteArray()));
+        .hash(transaction.getRawData().toByteArray()));
     jsonTransaction.put("txID", txID);
     return jsonTransaction;
   }

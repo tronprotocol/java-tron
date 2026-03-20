@@ -197,8 +197,7 @@ public class MerkleContainerTest extends BaseTest {
         Transaction transaction2 = createTransaction(cm3, cm4);
         Block block = Block.newBuilder().addTransactions(0, transaction)
             .addTransactions(1, transaction2).build();
-        Sha256Hash blockKey = Sha256Hash.of(CommonParameter
-            .getInstance().isECKeyCryptoEngine(), ByteArray.fromLong(blockNum));
+        Sha256Hash blockKey = Sha256Hash.of(ByteArray.fromLong(blockNum));
         BlockId blockId = new BlockId(blockKey, blockNum);
         dbManager.getBlockStore().put(blockId.getBytes(), new BlockCapsule(block));
         dbManager.getBlockIndexStore().put(blockId);
@@ -237,8 +236,7 @@ public class MerkleContainerTest extends BaseTest {
         String cm2 = "2e0bfc1e123edcb6252251611650f3667371f781b60302385c414716c75e8abc";
         Transaction transaction = createTransaction(cm1, cm2);
         Block block = Block.newBuilder().addTransactions(0, transaction).build();
-        Sha256Hash blockKey = Sha256Hash.of(CommonParameter
-            .getInstance().isECKeyCryptoEngine(), ByteArray.fromLong(blockNum));
+        Sha256Hash blockKey = Sha256Hash.of(ByteArray.fromLong(blockNum));
         BlockId blockId = new BlockId(blockKey, blockNum);
         dbManager.getBlockStore().put(blockId.getBytes(), new BlockCapsule(block));
         dbManager.getBlockIndexStore().put(blockId);
@@ -267,8 +265,7 @@ public class MerkleContainerTest extends BaseTest {
         Transaction transaction2 = createTransaction(cm3, cm4);
         Block block = Block.newBuilder().addTransactions(0, transaction)
             .addTransactions(1, transaction2).build();
-        Sha256Hash blockKey = Sha256Hash.of(CommonParameter
-            .getInstance().isECKeyCryptoEngine(), ByteArray.fromLong(blockNum));
+        Sha256Hash blockKey = Sha256Hash.of(ByteArray.fromLong(blockNum));
         BlockId blockId = new BlockId(blockKey, blockNum);
         dbManager.getBlockStore().put(blockId.getBytes(), new BlockCapsule(block));
         dbManager.getBlockIndexStore().put(blockId);
@@ -308,8 +305,7 @@ public class MerkleContainerTest extends BaseTest {
         String cm2 = "26e8c4061f2ad984d19f2c0a4436b9800e529069c0b0d3186d4683e83bb7eb8c";
         Transaction transaction = createTransaction(cm1, cm2);
         Block block = Block.newBuilder().addTransactions(0, transaction).build();
-        Sha256Hash blockKey = Sha256Hash.of(CommonParameter
-            .getInstance().isECKeyCryptoEngine(), ByteArray.fromLong(blockNum));
+        Sha256Hash blockKey = Sha256Hash.of(ByteArray.fromLong(blockNum));
         BlockId blockId = new BlockId(blockKey, blockNum);
         dbManager.getBlockStore().put(blockId.getBytes(), new BlockCapsule(block));
         dbManager.getBlockIndexStore().put(blockId);

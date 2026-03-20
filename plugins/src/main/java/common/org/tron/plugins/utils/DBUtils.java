@@ -139,7 +139,6 @@ public class DBUtils {
   }
 
   public static Sha256Hash getTransactionId(Protocol.Transaction transaction) {
-    return Sha256Hash.of(true,
-        transaction.getRawData().toByteArray());
+    return Sha256Hash.of(transaction.getRawData().toByteArray());
   }
 }

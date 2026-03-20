@@ -49,7 +49,7 @@ public abstract class Message {
   }
 
   public Sha256Hash getMessageId() {
-    return Sha256Hash.of(CommonParameter.getInstance().isECKeyCryptoEngine(), getData());
+    return Sha256Hash.of(getData());
   }
 
   public abstract Node getFrom();

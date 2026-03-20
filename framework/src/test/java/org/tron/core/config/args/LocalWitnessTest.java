@@ -162,13 +162,13 @@ public class LocalWitnessTest {
     LocalWitnesses localWitnesses = new LocalWitnesses(PublicMethod.getRandomPrivateKey());
     LocalWitnesses localWitnesses1 =
         new LocalWitnesses(Lists.newArrayList(PublicMethod.getRandomPrivateKey()));
-    localWitnesses.initWitnessAccountAddress(new byte[0], true);
+    localWitnesses.initWitnessAccountAddress(new byte[0]);
     Assert.assertNotNull(localWitnesses1.getPublicKey());
 
     LocalWitnesses localWitnesses2 = new LocalWitnesses();
     Assert.assertNull(localWitnesses2.getPrivateKey());
     Assert.assertNull(localWitnesses2.getPublicKey());
-    localWitnesses2.initWitnessAccountAddress(null, true);
+    localWitnesses2.initWitnessAccountAddress(null);
     LocalWitnesses localWitnesses3 = new LocalWitnesses();
     Assert.assertNull(localWitnesses3.getWitnessAccountAddress());
   }

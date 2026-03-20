@@ -57,7 +57,7 @@ public class TransactionExpireTest {
     String randomPrivateKey = PublicMethod.getRandomPrivateKey();
     LocalWitnesses localWitnesses = new LocalWitnesses();
     localWitnesses.setPrivateKeys(Arrays.asList(randomPrivateKey));
-    localWitnesses.initWitnessAccountAddress(null, true);
+    localWitnesses.initWitnessAccountAddress(null);
     Args.setLocalWitnesses(localWitnesses);
   }
 

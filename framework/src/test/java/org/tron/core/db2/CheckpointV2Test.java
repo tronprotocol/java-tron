@@ -87,7 +87,7 @@ public class CheckpointV2Test {
     while (iterator.hasNext()) {
       Map.Entry<byte[], byte[]> entry = iterator.next();
       byte[] hashBytes = Bytes.concat(entry.getKey(), entry.getValue());
-      preDbHash = Sha256Hash.of(true, Bytes.concat(preDbHash.getBytes(), hashBytes));
+      preDbHash = Sha256Hash.of(Bytes.concat(preDbHash.getBytes(), hashBytes));
     }
 
     revokingDatabase.check();
@@ -98,7 +98,7 @@ public class CheckpointV2Test {
     while (iterator2.hasNext()) {
       Map.Entry<byte[], byte[]> entry = iterator2.next();
       byte[] hashBytes = Bytes.concat(entry.getKey(), entry.getValue());
-      afterDbHash = Sha256Hash.of(true, Bytes.concat(afterDbHash.getBytes(), hashBytes));
+      afterDbHash = Sha256Hash.of(Bytes.concat(afterDbHash.getBytes(), hashBytes));
     }
 
     Assert.assertEquals(0, preDbHash.compareTo(afterDbHash));

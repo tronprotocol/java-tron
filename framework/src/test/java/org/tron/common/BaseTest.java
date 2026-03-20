@@ -102,8 +102,7 @@ public abstract class BaseTest {
 
     ECKey ecKey = ECKey.fromPrivate(privateKey);
     assert ecKey != null;
-    ECKey.ECDSASignature signature = ecKey.sign(Sha256Hash.of(CommonParameter
-        .getInstance().isECKeyCryptoEngine(), raw.toByteArray()).getBytes());
+    ECKey.ECDSASignature signature = ecKey.sign(Sha256Hash.of(raw.toByteArray()).getBytes());
     ByteString sign = ByteString.copyFrom(signature.toByteArray());
 
     Protocol.BlockHeader blockHeader = block.getBlockHeader().toBuilder()

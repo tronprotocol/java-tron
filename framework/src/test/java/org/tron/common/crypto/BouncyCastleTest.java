@@ -7,11 +7,9 @@ import static org.tron.common.utils.client.utils.AbiUtil.generateOccupationConst
 import java.math.BigInteger;
 import java.security.SignatureException;
 import java.util.Arrays;
-import org.bouncycastle.crypto.digests.SM3Digest;
 import org.bouncycastle.util.encoders.Hex;
 import org.junit.Assert;
 import org.junit.Test;
-import org.tron.common.crypto.sm2.SM2;
 import org.tron.common.utils.Sha256Hash;
 
 /**
@@ -40,11 +38,8 @@ public class BouncyCastleTest {
   public void testSha256Hash() {
     String msg = "transaction raw data";
     String spongySha256 = "da36dc042630f1aa810171d1fc4db7771a9f12b585848b0fed6caf5c7bd06531";
-    String spongySm3 = "5521fbff5abf495e6db8fb4a83ed2bf27b97197757fc5a1002a7edc58b690900";
-    byte[] sha256Hash = Sha256Hash.hash(true, msg.getBytes());
+    byte[] sha256Hash = Sha256Hash.hash(msg.getBytes());
     assertEquals(spongySha256, Hex.toHexString(sha256Hash));
-    byte[] sm3Hash = Sha256Hash.hash(false, msg.getBytes());
-    assertEquals(spongySm3, Hex.toHexString(sm3Hash));
   }
 
   @Test
@@ -70,12 +65,12 @@ public class BouncyCastleTest {
 
   @Test
   public void testECKeySignature() throws SignatureException {
-    SignInterface sign = SignUtils.fromPrivate(Hex.decode(privString), true);
+    SignInterface sign = SignUtils.fromPrivate(Hex.decode(privString));
     String msg = "transaction raw data";
     String spongyAddress = "2e988a386a799f506693793c6a5af6b54dfaabfb";
-    byte[] hash = Sha256Hash.hash(true, msg.getBytes());
+    byte[] hash = Sha256Hash.hash(msg.getBytes());
     String sig = sign.signHash(hash);
-    byte[] address = SignUtils.signatureToAddress(hash, sig, true);
+    byte[] address = SignUtils.signatureToAddress(hash, sig);
     assertEquals(spongyAddress, Hex.toHexString(Arrays.copyOfRange(address, 1, 21)));
   }
 
@@ -85,52 +80,8 @@ public class BouncyCastleTest {
     String spongySig = "GwYii3BGoQq3sdyWiGVv7bGCR5hJy62g+IF+1jPOSqHt"
         + "IDfuKgowhiiK7ivcqk+T7qq/hlfIjaRe+t1drFDZ+Mo=";
     String spongyAddress = "cd2a3d9f938e13cd947ec05abc7fe734df8dd826";
-    byte[] hash = Sha256Hash.hash(true, msg.getBytes());
-    byte[] address = SignUtils.signatureToAddress(hash, spongySig, true);
-    assertEquals(spongyAddress, Hex.toHexString(Arrays.copyOfRange(address, 1, 21)));
-  }
-
-  @Test
-  public void testSM3Hash() {
-    String msg = "transaction raw data";
-    String spongyHash = "5521fbff5abf495e6db8fb4a83ed2bf27b97197757fc5a1002a7edc58b690900";
-    SM3Digest digest = new SM3Digest();
-    digest.update(msg.getBytes(), 0, msg.getBytes().length);
-    byte[] hash = new byte[digest.getDigestSize()];
-    digest.doFinal(hash, 0);
-    assertEquals(spongyHash, Hex.toHexString(hash));
-  }
-
-  @Test
-  public void testSM2Address() {
-    String spongyPublickey = "04dc3547dbbc4c90a9cde599848e26cb145e805b3d11daaf9daae0680d9c6824058ac"
-        + "35ddecb12f3a8bbc3104a2b91a2b7d04851d773d9b4ab8d5e0359243c8628";
-    String spongyAddress = "6cb22f88564bdd61eb4cdb36215add53bc702ff1";
-    SM2 key = SM2.fromPrivate(privateKey);
-    assertEquals(spongyPublickey, Hex.toHexString(key.getPubKey()));
-    byte[] address = key.getAddress();
-    assertEquals(spongyAddress, Hex.toHexString(Arrays.copyOfRange(address, 1, 21)));
-  }
-
-  @Test
-  public void testSM2Signature() throws SignatureException {
-    SignInterface sign = SignUtils.fromPrivate(Hex.decode(privString), false);
-    String msg = "transaction raw data";
-    String spongyAddress = "6cb22f88564bdd61eb4cdb36215add53bc702ff1";
-    byte[] hash = Sha256Hash.hash(false, msg.getBytes());
-    String sig = sign.signHash(hash);
-    byte[] address = SignUtils.signatureToAddress(hash, sig, false);
-    assertEquals(spongyAddress, Hex.toHexString(Arrays.copyOfRange(address, 1, 21)));
-  }
-
-  @Test
-  public void testSM2SpongySignature() throws SignatureException {
-    String msg = "transaction raw data";
-    String spongySig = "HOoyvBLOJ+dKReQdAc6W/ffRi/KmVntco0+xgzmFItEExq/fHF"
-        + "veCe0GoCJUBdyHyUFjwn+a18ibtGJcHxnvLj0=";
-    String spongyAddress = "7dc44d739a5226c0d3037bb7919f653eb2f938b9";
-    byte[] hash = Sha256Hash.hash(false, msg.getBytes());
-    byte[] address = SignUtils.signatureToAddress(hash, spongySig, false);
+    byte[] hash = Sha256Hash.hash(msg.getBytes());
+    byte[] address = SignUtils.signatureToAddress(hash, spongySig);
     assertEquals(spongyAddress, Hex.toHexString(Arrays.copyOfRange(address, 1, 21)));
   }
 
@@ -140,12 +91,7 @@ public class BouncyCastleTest {
     String base64Sign = "G1y76mVO6TRpFwp3qOiLVzHA8uFsrDiOL7hbC2uN9qTHHiLypaW4vnQkfkoUygjo5qBd"
         + "+NlYQ/mAPVWKu6K00co=";
     try {
-      SignUtils.signatureToAddress(Hex.decode(messageHash), base64Sign, Boolean.TRUE);
-    } catch (Exception e) {
-      Assert.assertTrue(e instanceof SignatureException);
-    }
-    try {
-      SignUtils.signatureToAddress(Hex.decode(messageHash), base64Sign, Boolean.FALSE);
+      SignUtils.signatureToAddress(Hex.decode(messageHash), base64Sign);
     } catch (Exception e) {
       Assert.assertTrue(e instanceof SignatureException);
     }

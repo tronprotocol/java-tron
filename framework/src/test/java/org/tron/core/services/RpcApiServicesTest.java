@@ -735,8 +735,7 @@ public class RpcApiServicesTest {
     Block nowBlock = blockingStubFull.getNowBlock(EmptyMessage.newBuilder().build());
     raw rawData = nowBlock.getBlockHeader().getRawData();
     BlockCapsule.BlockId blockId =
-        new BlockCapsule.BlockId(Sha256Hash.of(getInstance().isECKeyCryptoEngine(),
-            rawData.toByteArray()),
+        new BlockCapsule.BlockId(Sha256Hash.of(rawData.toByteArray()),
             rawData.getNumber());
     return BlockIdentifier.newBuilder()
         .setNumber(rawData.getNumber())

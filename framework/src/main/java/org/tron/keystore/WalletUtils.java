@@ -48,11 +48,9 @@ public class WalletUtils {
 
   public static String generateNewWalletFile(
       String password, File destinationDirectory, boolean useFullScrypt)
-      throws CipherException, IOException, InvalidAlgorithmParameterException,
-      NoSuchAlgorithmException, NoSuchProviderException {
+      throws CipherException, IOException {
 
-    SignInterface ecKeyPair = SignUtils.getGeneratedRandomSign(Utils.getRandom(),
-        Args.getInstance().isECKeyCryptoEngine());
+    SignInterface ecKeyPair = SignUtils.getGeneratedRandomSign(Utils.getRandom());
     return generateWalletFile(password, ecKeyPair, destinationDirectory, useFullScrypt);
   }
 

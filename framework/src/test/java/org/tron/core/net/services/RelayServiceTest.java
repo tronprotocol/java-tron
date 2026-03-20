@@ -178,14 +178,11 @@ public class RelayServiceTest extends BaseTest {
     Node node = new Node(NetUtil.getNodeId(), a1.getAddress().getHostAddress(),
         null, a1.getPort());
 
-    SignInterface cryptoEngine = SignUtils.fromPrivate(ByteArray.fromHexString(key),
-            Args.getInstance().isECKeyCryptoEngine());
+    SignInterface cryptoEngine = SignUtils.fromPrivate(ByteArray.fromHexString(key));
     HelloMessage helloMessage = new HelloMessage(node, System.currentTimeMillis(),
         ChainBaseManager.getChainBaseManager());
     ByteString sig = ByteString.copyFrom(cryptoEngine.Base64toBytes(cryptoEngine
-        .signHash(Sha256Hash.of(CommonParameter.getInstance()
-            .isECKeyCryptoEngine(), ByteArray.fromLong(helloMessage
-            .getTimestamp())).getBytes())));
+        .signHash(Sha256Hash.of(ByteArray.fromLong(helloMessage.getTimestamp())).getBytes())));
     helloMessage.setHelloMessage(helloMessage.getHelloMessage().toBuilder()
         .setAddress(address)
         .setSignature(sig)

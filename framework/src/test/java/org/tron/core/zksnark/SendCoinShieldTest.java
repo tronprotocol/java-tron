@@ -629,8 +629,7 @@ public class SendCoinShieldTest extends BaseTest {
   }
 
   private byte[] getHash() {
-    return Sha256Hash.of(CommonParameter
-        .getInstance().isECKeyCryptoEngine(), "this is a test".getBytes()).getBytes();
+    return Sha256Hash.of("this is a test".getBytes()).getBytes();
   }
 
   @Ignore

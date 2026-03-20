@@ -109,12 +109,10 @@ public class RelayService {
       fastForwardNodes.forEach(address -> {
         if (address.getAddress().equals(channel.getInetAddress())) {
           SignInterface cryptoEngine = SignUtils
-              .fromPrivate(ByteArray.fromHexString(Args.getLocalWitnesses().getPrivateKey()),
-                  Args.getInstance().isECKeyCryptoEngine());
+              .fromPrivate(ByteArray.fromHexString(Args.getLocalWitnesses().getPrivateKey()));
 
           ByteString sig = ByteString.copyFrom(cryptoEngine.Base64toBytes(cryptoEngine
-              .signHash(Sha256Hash.of(CommonParameter.getInstance()
-                  .isECKeyCryptoEngine(), ByteArray.fromLong(message
+              .signHash(Sha256Hash.of(ByteArray.fromLong(message
                   .getTimestamp())).getBytes())));
           message.setHelloMessage(message.getHelloMessage().toBuilder()
               .setAddress(witnessAddress).setSignature(sig).build());
@@ -152,12 +150,10 @@ public class RelayService {
 
     boolean flag;
     try {
-      Sha256Hash hash = Sha256Hash.of(CommonParameter
-          .getInstance().isECKeyCryptoEngine(), ByteArray.fromLong(msg.getTimestamp()));
+      Sha256Hash hash = Sha256Hash.of(ByteArray.fromLong(msg.getTimestamp()));
       String sig =
           TransactionCapsule.getBase64FromByteString(msg.getSignature());
-      byte[] sigAddress = SignUtils.signatureToAddress(hash.getBytes(), sig,
-          Args.getInstance().isECKeyCryptoEngine());
+      byte[] sigAddress = SignUtils.signatureToAddress(hash.getBytes(), sig);
       if (manager.getDynamicPropertiesStore().getAllowMultiSign() != 1) {
         flag = Arrays.equals(sigAddress, msg.getAddress().toByteArray());
       } else {

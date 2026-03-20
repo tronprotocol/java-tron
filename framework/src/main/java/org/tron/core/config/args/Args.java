@@ -143,9 +143,6 @@ public class Args extends CommonParameter {
     Wallet.setAddressPreFixByte(ADD_PRE_FIX_BYTE_MAINNET);
     Wallet.setAddressPreFixString(Constant.ADD_PRE_FIX_STRING_MAINNET);
 
-    PARAMETER.cryptoEngine = config.hasPath(ConfigKey.CRYPTO_ENGINE) ? config
-        .getString(ConfigKey.CRYPTO_ENGINE) : Constant.ECKey_ENGINE;
-
     if (config.hasPath(ConfigKey.VM_SUPPORT_CONSTANT)) {
       PARAMETER.supportConstant = config.getBoolean(ConfigKey.VM_SUPPORT_CONSTANT);
     }

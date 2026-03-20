@@ -14,9 +14,6 @@ final class ConfigKey {
   public static final String LOCAL_WITNESS_ACCOUNT_ADDRESS = "localWitnessAccountAddress";
   public static final String LOCAL_WITNESS_KEYSTORE = "localwitnesskeystore";
 
-  // crypto
-  public static final String CRYPTO_ENGINE = "crypto.engine";
-
   // vm
   public static final String VM_SUPPORT_CONSTANT = "vm.supportConstant";
   public static final String VM_MAX_ENERGY_LIMIT_FOR_CONSTANT = "vm.maxEnergyLimitForConstant";

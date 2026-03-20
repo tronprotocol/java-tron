@@ -92,10 +92,9 @@ public class PbftMsgHandlerTest {
         .setData(blockCapsule.getBlockId().getByteString());
     Protocol.PBFTMessage.Raw raw = rawBuilder.build();
     builder.setRawData(raw);
-    SignInterface sign = SignUtils.fromPrivate(Hex.decode(PublicMethod.getRandomPrivateKey()),
-        true);
+    SignInterface sign = SignUtils.fromPrivate(Hex.decode(PublicMethod.getRandomPrivateKey()));
     builder.setSignature(ByteString.copyFrom(sign.Base64toBytes(sign.signHash(
-        Sha256Hash.hash(true, raw.toByteArray())))));
+        Sha256Hash.hash(raw.toByteArray())))));
     Protocol.PBFTMessage message = builder.build();
     pbftMessage.setType(MessageTypes.PBFT_MSG.asByte());
     pbftMessage.setPbftMessage(message);

@@ -50,8 +50,7 @@ public class BlockGenerate {
         .build();
 
     ECKey ecKey = ECKey.fromPrivate(privateKey);
-    ECDSASignature signature = ecKey.sign(Sha256Hash.of(CommonParameter
-        .getInstance().isECKeyCryptoEngine(), raw.toByteArray()).getBytes());
+    ECDSASignature signature = ecKey.sign(Sha256Hash.of(raw.toByteArray()).getBytes());
     ByteString sign = ByteString.copyFrom(signature.toByteArray());
 
     BlockHeader blockHeader = block.getBlockHeader().toBuilder()

@@ -34,15 +34,13 @@ public class MerkleTreeTest {
       bytes[2] = (byte) ((i >> 8) & 0xFF);
       bytes[1] = (byte) ((i >> 16) & 0xFF);
       bytes[0] = (byte) ((i >> 24) & 0xFF);
-      hashList.add(Sha256Hash.of(CommonParameter
-          .getInstance().isECKeyCryptoEngine(), bytes));
+      hashList.add(Sha256Hash.of(bytes));
     }
     return hashList;
   }
 
   private static Sha256Hash computeHash(Sha256Hash leftHash, Sha256Hash rightHash) {
-    return Sha256Hash.of(CommonParameter
-            .getInstance().isECKeyCryptoEngine(),
+    return Sha256Hash.of(
         leftHash.getByteString().concat(rightHash.getByteString()).toByteArray());
   }
 
@@ -195,10 +193,10 @@ public class MerkleTreeTest {
     Sha256Hash root2 = Sha256Hash.wrap(
         ByteString.fromHex("4bfc60ea3de4f5d1476f839874df0aba38eec4e524d6fa63f5b19c4bf527eaf3"));
     List<Sha256Hash> list1 = IntStream.range(0, 10000).mapToObj(i ->
-            Sha256Hash.of(true, ("byte1-" + i).getBytes(StandardCharsets.UTF_8)))
+            Sha256Hash.of(("byte1-" + i).getBytes(StandardCharsets.UTF_8)))
         .collect(Collectors.toList());
     List<Sha256Hash> list2 = IntStream.range(0, 10000).mapToObj(i ->
-            Sha256Hash.of(true, ("byte2-" + i).getBytes(StandardCharsets.UTF_8)))
+            Sha256Hash.of(("byte2-" + i).getBytes(StandardCharsets.UTF_8)))
         .collect(Collectors.toList());
     Assert.assertEquals(root1, MerkleTree.getInstance().createTree(list1).getRoot().getHash());
     Assert.assertEquals(root2, MerkleTree.getInstance().createTree(list2).getRoot().getHash());

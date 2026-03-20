@@ -132,26 +132,14 @@ public class KhaosDatabaseTest extends BaseTest {
       khaosDatabase.push(block1OnforkB);
       // case: block num of param1 > block num of param2
       Pair result1 = khaosDatabase.getBranch(
-          Sha256Hash.of(
-              CommonParameter
-                  .getInstance().isECKeyCryptoEngine(),
-              block2OnforkA.getInstance().getBlockHeader().getRawData().toByteArray()),
-          Sha256Hash.of(
-              CommonParameter
-                  .getInstance().isECKeyCryptoEngine(),
-              block1OnforkB.getInstance().getBlockHeader().getRawData().toByteArray()));
+          Sha256Hash.of(block2OnforkA.getInstance().getBlockHeader().getRawData().toByteArray()),
+          Sha256Hash.of(block1OnforkB.getInstance().getBlockHeader().getRawData().toByteArray()));
       Assert.assertEquals(forkA, result1.getKey());
       Assert.assertEquals(forkB, result1.getValue());
       // case: block num of param2 > block num of param1
       Pair result2 = khaosDatabase.getBranch(
-          Sha256Hash.of(
-              CommonParameter
-                  .getInstance().isECKeyCryptoEngine(),
-              block1OnforkB.getInstance().getBlockHeader().getRawData().toByteArray()),
-          Sha256Hash.of(
-              CommonParameter
-                  .getInstance().isECKeyCryptoEngine(),
-              block2OnforkA.getInstance().getBlockHeader().getRawData().toByteArray()));
+          Sha256Hash.of(block1OnforkB.getInstance().getBlockHeader().getRawData().toByteArray()),
+          Sha256Hash.of(block2OnforkA.getInstance().getBlockHeader().getRawData().toByteArray()));
       Assert.assertEquals(forkB, result2.getKey());
       Assert.assertEquals(forkA, result2.getValue());
     } catch (UnLinkedBlockException | BadNumberBlockException | NonCommonBlockException e) {
