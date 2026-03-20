@@ -17,6 +17,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.BaseTest;
+import org.tron.common.TestConstants;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.prometheus.MetricLabels;
@@ -27,7 +28,6 @@ import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Utils;
 import org.tron.consensus.dpos.DposSlot;
 import org.tron.core.ChainBaseManager;
-import org.tron.core.Constant;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.WitnessCapsule;
@@ -55,7 +55,7 @@ public class PrometheusApiServiceTest extends BaseTest {
   private ChainBaseManager chainManager;
 
   static {
-    Args.setParam(new String[] {"-d", dbPath()}, Constant.TEST_CONF);
+    Args.setParam(new String[] {"-d", dbPath()}, TestConstants.TEST_CONF);
     Args.getInstance().setNodeListenPort(10000 + port.incrementAndGet());
     initParameter(Args.getInstance());
     Metrics.init();

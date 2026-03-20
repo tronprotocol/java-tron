@@ -294,7 +294,7 @@ public class AllowTvmCompatibleEvmTest extends VMTestBase {
     byte[] returnValue = result.getRuntime().getResult().getHReturn();
     Assert.assertNull(result.getRuntime().getRuntimeError());
     Assert.assertEquals(Hex.toHexString(returnValue),
-        "0000000000000000000000000000000000000000000000000000000028c12d1e");
+        "000000000000000000000000000000000000000000000000000000000d953577");
 
     VMConfig.initAllowTvmCompatibleEvm(0);
   }

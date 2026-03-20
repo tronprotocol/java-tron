@@ -18,6 +18,7 @@ import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.tron.common.TestConstants;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.parameter.CommonParameter;
@@ -28,7 +29,6 @@ import org.tron.consensus.ConsensusDelegate;
 import org.tron.consensus.dpos.DposService;
 import org.tron.consensus.dpos.DposSlot;
 import org.tron.core.ChainBaseManager;
-import org.tron.core.Constant;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.WitnessCapsule;
@@ -77,7 +77,7 @@ public abstract class ConditionallyStopTest  {
 
     initDbPath();
     logger.info("Full node running.");
-    Args.setParam(new String[] {"-d", dbPath}, Constant.TEST_CONF);
+    Args.setParam(new String[] {"-d", dbPath}, TestConstants.TEST_CONF);
     Args.getInstance().setNodeListenPort(10000 + port.incrementAndGet());
     Args.getInstance().genesisBlock.setTimestamp(Long.toString(time));
     initParameter(Args.getInstance());

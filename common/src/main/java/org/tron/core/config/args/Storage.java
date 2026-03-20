@@ -176,7 +176,6 @@ public class Storage {
 
   public static String getDbEngineFromConfig(final Config config) {
     if (Arch.isArm64()) {
-      // if is arm64 but config is leveldb, should throw exception?
       logger.warn("Arm64 architecture detected, using RocksDB as db engine, ignore config.");
       return ROCKS_DB_ENGINE;
     }

@@ -14,8 +14,8 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.tron.common.TestConstants;
 import org.tron.common.application.TronApplicationContext;
-import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.config.DefaultConfig;
@@ -46,7 +46,7 @@ public class SyncBlockChainMsgHandlerTest {
 
   @BeforeClass
   public static void before() {
-    Args.setParam(new String[] {"--output-directory", dbPath()}, Constant.TEST_CONF);
+    Args.setParam(new String[] {"--output-directory", dbPath()}, TestConstants.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
   }
 

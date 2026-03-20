@@ -8,7 +8,7 @@ import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import org.junit.Test;
 import org.mockito.Mockito;
-import org.tron.core.Constant;
+import org.tron.common.TestConstants;
 import org.tron.core.config.args.Args;
 import org.tron.core.net.TronNetDelegate;
 import org.tron.core.net.message.adv.InventoryMessage;
@@ -21,7 +21,7 @@ public class InventoryMsgHandlerTest {
   @Test
   public void testProcessMessage() throws Exception {
     InventoryMsgHandler handler = new InventoryMsgHandler();
-    Args.setParam(new String[] {}, Constant.TEST_CONF);
+    Args.setParam(new String[] {}, TestConstants.TEST_CONF);
     Args.logConfig();
 
     InventoryMessage msg = new InventoryMessage(new ArrayList<>(), InventoryType.TRX);

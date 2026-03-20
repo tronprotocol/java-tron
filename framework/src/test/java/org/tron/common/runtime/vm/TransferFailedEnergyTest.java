@@ -178,7 +178,7 @@ public class TransferFailedEnergyTest extends VMTestBase {
   }
   */
 
-  private static final String nonExistAddress = "27k66nycZATHzBasFT9782nTsYWqVtxdtAc";  // 21 char
+  private static final String nonExistAddress = "TWyoFfJBiKGkVQd28HTqxsc8kbMtQUmqgi";  // 21 char
   TestCase[] testCasesAfterAllowTvmConstantinop = {
       new TestCase("testTransferTrxSelf()", Collections.emptyList(), false,
           contractResult.TRANSFER_FAILED),

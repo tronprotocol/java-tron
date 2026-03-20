@@ -11,11 +11,11 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.springframework.context.ApplicationContext;
 import org.tron.common.BaseTest;
+import org.tron.common.TestConstants;
 import org.tron.common.entity.NodeInfo;
 import org.tron.common.utils.PublicMethod;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.common.utils.Sha256Hash;
-import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.net.P2pEventHandlerImpl;
@@ -42,7 +42,7 @@ public class NodeInfoServiceTest extends BaseTest {
   @BeforeClass
   public static void init() {
     Args.setParam(new String[] {"--output-directory", dbPath(), "--debug"},
-        Constant.TEST_CONF);
+        TestConstants.TEST_CONF);
   }
 
   @After

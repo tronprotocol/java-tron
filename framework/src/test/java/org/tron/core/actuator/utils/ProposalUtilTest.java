@@ -16,6 +16,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.function.ThrowingRunnable;
 import org.tron.common.BaseTest;
+import org.tron.common.TestConstants;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ForkController;
 import org.tron.core.Constant;
@@ -48,7 +49,7 @@ public class ProposalUtilTest extends BaseTest {
    */
   @BeforeClass
   public static void init() {
-    Args.setParam(new String[]{"--output-directory", dbPath()}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath()}, TestConstants.TEST_CONF);
   }
   
   @Test
@@ -303,7 +304,7 @@ public class ProposalUtilTest extends BaseTest {
     forkUtils.getManager().getDynamicPropertiesStore()
         .statsByVersion(ForkBlockVersionEnum.VERSION_4_0_1.getValue(), stats);
     ByteString address = ByteString
-        .copyFrom(ByteArray.fromHexString("a0ec6525979a351a54fa09fea64beb4cce33ffbb7a"));
+        .copyFrom(ByteArray.fromHexString("41ec6525979a351a54fa09fea64beb4cce33ffbb7a"));
     List<ByteString> w = new ArrayList<>();
     w.add(address);
     forkUtils.getManager().getWitnessScheduleStore().saveActiveWitnesses(w);

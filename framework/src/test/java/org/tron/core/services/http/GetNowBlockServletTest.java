@@ -14,7 +14,7 @@ import org.junit.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.tron.common.BaseTest;
-import org.tron.core.Constant;
+import org.tron.common.TestConstants;
 import org.tron.core.config.args.Args;
 
 public class GetNowBlockServletTest extends BaseTest {
@@ -26,7 +26,7 @@ public class GetNowBlockServletTest extends BaseTest {
     Args.setParam(
         new String[]{
             "--output-directory", dbPath(),
-        }, Constant.TEST_CONF
+        }, TestConstants.TEST_CONF
     );
   }
 
