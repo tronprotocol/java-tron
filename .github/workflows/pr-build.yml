@@ -4,16 +4,22 @@ on:
   pull_request:
     branches: [ 'master','develop', 'release_**' ]
     types: [ opened, synchronize, reopened ]
+  workflow_dispatch:
+    inputs:
+      job:
+        description: 'Job to run: all / macos / ubuntu / rockylinux / debian11'
+        required: false
+        default: 'all'
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
 
   build-macos:
     name: Build macos26 (JDK ${{ matrix.java }} / ${{ matrix.arch }})
-    #if: github.event.action != 'edited' && !failure() && !cancelled()
+    if: ${{ github.event_name == 'pull_request' || inputs.job == 'all' || inputs.job == 'macos' }}
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 60
     strategy:
@@ -50,7 +56,7 @@ jobs:
 
   build-ubuntu:
     name: Build ubuntu24 (JDK 17 / aarch64)
-    #if: github.event.action != 'edited' && !failure() && !cancelled()
+    if: ${{ github.event_name == 'pull_request' || inputs.job == 'all' || inputs.job == 'ubuntu' }}
     runs-on: ubuntu-24.04-arm
     timeout-minutes: 60
 
@@ -80,7 +86,7 @@ jobs:
 
   docker-build-rockylinux:
     name: Build rockylinux (JDK 8 / x86_64)
-    #if: github.event.action != 'edited' && !failure() && !cancelled()
+    if: ${{ github.event_name == 'pull_request' || inputs.job == 'all' || inputs.job == 'rockylinux' }}
     runs-on: ubuntu-latest
     timeout-minutes: 60
 
@@ -123,7 +129,7 @@ jobs:
 
   docker-build-debian11:
     name: Build debian11 (JDK 8 / x86_64)
-    #if: github.event.action != 'edited' && !failure() && !cancelled()
+    if: ${{ github.event_name == 'pull_request' || inputs.job == 'all' || inputs.job == 'debian11' }}
     runs-on: ubuntu-latest
     timeout-minutes: 60
 

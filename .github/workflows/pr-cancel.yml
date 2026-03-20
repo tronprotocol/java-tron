@@ -1,0 +1,51 @@
+name: Cancel PR Workflows on Close
+
+on:
+  pull_request:
+    types: [ closed ]
+
+permissions:
+  actions: write
+
+jobs:
+  cancel:
+    name: Cancel In-Progress Workflows
+    if: github.event.pull_request.merged == false
+    runs-on: ubuntu-latest
+    steps:
+      - name: Cancel PR Build and System Test
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const workflows = ['pr-build.yml', 'system-test.yml', 'codeql.yml', 'coverage-waiting.yml'];
+            const headSha = context.payload.pull_request.head.sha;
+            const prNumber = context.payload.pull_request.number;
+
+            for (const workflowId of workflows) {
+              for (const status of ['in_progress', 'queued']) {
+                const runs = await github.paginate(
+                  github.rest.actions.listWorkflowRuns,
+                  {
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    workflow_id: workflowId,
+                    status,
+                    event: 'pull_request',
+                    per_page: 100,
+                  },
+                  (response) => response.data.workflow_runs
+                );
+
+                for (const run of runs) {
+                  const isTargetPr = !run.pull_requests?.length || run.pull_requests.some((pr) => pr.number === prNumber);
+                  if (run.head_sha === headSha && isTargetPr) {
+                    await github.rest.actions.cancelWorkflowRun({
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      run_id: run.id,
+                    });
+                    console.log(`Cancelled ${workflowId} run #${run.id} (${status})`);
+                  }
+                }
+              }
+            }

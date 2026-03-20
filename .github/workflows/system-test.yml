@@ -8,7 +8,7 @@ on:
     types: [ opened, synchronize, reopened ]
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -85,7 +85,7 @@ jobs:
 
       - name: Upload FullNode log
         if: always()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: fullnode-log
           path: java-tron/fullnode.log

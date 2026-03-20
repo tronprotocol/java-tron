@@ -30,7 +30,7 @@ jobs:
           persist-credentials: false
 
       - name: Download coverage artifact
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v7
         with:
           name: jacoco-coverage
           path: coverage
@@ -48,17 +48,17 @@ jobs:
             const { data: pulls } = await github.rest.pulls.list({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              state: 'open',
-              head: `${headOwner}:${headBranch}`
+              state: 'all',
+              head: `${headOwner}:${headBranch}`,
             });
-            if (pulls.length > 0) {
-              const pr = pulls[0];
+            const pr = pulls.find((p) => p.head.sha === headSha);
+            if (pr) {
               core.setOutput('pr_number', pr.number);
               core.setOutput('pr_sha', headSha);
               core.setOutput('pr_branch', headBranch);
               core.setOutput('base_sha', pr.base.sha);
             } else {
-              core.setFailed(`No open pull request found for ${headOwner}:${headBranch}`);
+              core.setFailed(`No pull request found for commit ${headSha}`);
             }
 
       - name: Upload to Codecov

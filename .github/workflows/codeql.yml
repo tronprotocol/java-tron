@@ -36,9 +36,16 @@ jobs:
       uses: github/codeql-action/init@v4
       with:
         languages: ${{ matrix.language }}
+        build-mode: manual
 
-    - name: Autobuild
-      uses: github/codeql-action/autobuild@v4
+    - name: Set up JDK 8
+      uses: actions/setup-java@v5
+      with:
+        java-version: '8'
+        distribution: 'temurin'
+
+    - name: Build
+      run: ./gradlew build -x test --no-daemon
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v4

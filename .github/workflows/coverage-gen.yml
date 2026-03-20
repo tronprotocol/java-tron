@@ -44,7 +44,7 @@ jobs:
         run: ./gradlew jacocoTestReport  --no-daemon --no-build-cache
 
       - name: Upload JaCoCo artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: jacoco-coverage
           path: |
