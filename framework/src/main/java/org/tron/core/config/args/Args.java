@@ -671,7 +671,7 @@ public class Args extends CommonParameter {
       logger.warn("Configuring [node.fullNodeAllowShieldedTransaction] will be deprecated. "
           + "Please use [node.allowShieldedTransactionApi] instead.");
     } else {
-      PARAMETER.allowShieldedTransactionApi = true;
+      PARAMETER.allowShieldedTransactionApi = false;
     }
 
     PARAMETER.zenTokenId = config.hasPath(ConfigKey.NODE_ZEN_TOKENID)
