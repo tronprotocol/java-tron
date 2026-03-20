@@ -35,15 +35,15 @@ Please provide as much detail as possible to help us evaluate your feature reque
 
 ## Scope of Impact
 
-<!-- What parts of the system will be affected? -->
-
-- [ ] Core protocol
-- [ ] API/RPC
-- [ ] Database
-- [ ] Network layer
-- [ ] Smart contracts
-- [ ] Documentation
-- [ ] Other: <!-- specify -->
+<!-- What parts of the system will be affected?, choose among  
+- Core protocol
+- API/RPC
+- Database
+- Network layer
+- Smart contracts
+- Documentation
+- Others, please specify
+-->
 
 **Breaking Changes**
 <!-- Will this feature introduce any breaking changes? -->
@@ -58,27 +58,20 @@ Please provide as much detail as possible to help us evaluate your feature reque
 
 **Are you willing to implement this feature?**
 <!-- Let us know if you'd like to contribute the implementation -->
-- [ ] Yes, I can implement this feature
-- [ ] I can help with implementation
-- [ ] I need help with implementation
-- [ ] I'm just suggesting the idea
 
 **Estimated Complexity**
-<!-- Your assessment of implementation complexity -->
-- [ ] Low (minor changes)
-- [ ] Medium (moderate changes)
-- [ ] High (significant changes)
-- [ ] Unknown
+<!-- Your assessment of implementation complexity, choose among
+- Low (minor changes)
+- Medium (moderate changes)
+- High (significant changes)
+- Unknown
+-->
 
 ## Testing Strategy
 
 <!-- How should this feature be tested? -->
 
 **Test Scenarios**
-
-1.
-2.
-3.
 
 **Performance Considerations**
 <!-- Describe any performance implications -->
