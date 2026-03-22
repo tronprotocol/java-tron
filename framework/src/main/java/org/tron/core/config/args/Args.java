@@ -801,11 +801,8 @@ public class Args extends CommonParameter {
             .getInt(ConfigKey.COMMITTEE_ALLOW_OPTIMIZED_RETURN_VALUE_OF_CHAIN_ID) : 0;
 
     initBackupProperty(config);
-    if (Constant.ROCKSDB.equalsIgnoreCase(CommonParameter
-        .getInstance().getStorage().getDbEngine())) {
-      initRocksDbBackupProperty(config);
-      initRocksDbSettings(config);
-    }
+    initRocksDbBackupProperty(config);
+    initRocksDbSettings(config);
 
     PARAMETER.actuatorSet =
         config.hasPath(ConfigKey.ACTUATOR_WHITELIST)
