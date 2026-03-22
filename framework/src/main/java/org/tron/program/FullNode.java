@@ -24,7 +24,6 @@ public class FullNode {
     ExitManager.initExceptionHandler();
     checkJdkVersion();
     Args.setParam(args, "config.conf");
-    Args.validateConfig();
     CommonParameter parameter = Args.getInstance();
 
     LogService.load(parameter.getLogbackPath());

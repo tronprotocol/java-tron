@@ -78,11 +78,8 @@ public abstract class BaseMethodTest {
   @After
   public final void destroyContext() {
     beforeDestroy();
-    if (appT != null) {
-      appT.shutdown();
-    }
     if (context != null) {
-      context.close();
+      context.close(); // triggers appT.shutdown() via TronApplicationContext
     }
     Args.clearParam();
   }

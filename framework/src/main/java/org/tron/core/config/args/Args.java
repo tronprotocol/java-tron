@@ -130,15 +130,19 @@ public class Args extends CommonParameter {
     // 3. CLI overrides Config (highest priority)
     applyCLIParams(cmd, jc);
 
-    // 4. Init witness (depends on CLI witness flag)
+    // 4. Apply platform constraints (e.g. ARM64 forces RocksDB)
+    applyPlatformConstraints();
+
+    // 5. Init witness (depends on CLI witness flag)
     initLocalWitnesses(config, cmd);
   }
 
   /**
-   * Validate final configuration after all sources (defaults, config, CLI) are applied.
-   * ARM64 only supports RocksDB; db.engine config is ignored with a warning.
+   * Apply platform-specific constraints after all config sources are resolved.
+   * ARM64 does not support LevelDB (native JNI library unavailable),
+   * so db.engine is forced to RocksDB regardless of config or CLI settings.
    */
-  public static void validateConfig() {
+  private static void applyPlatformConstraints() {
     if (Arch.isArm64()
         && !Constant.ROCKSDB.equalsIgnoreCase(PARAMETER.storage.getDbEngine())) {
       logger.warn("ARM64 only supports RocksDB, ignoring db.engine='{}'",
