@@ -173,6 +173,7 @@ public class HttpApiOnPBFTService extends HttpService {
     port = Args.getInstance().getPBFTHttpPort();
     enable = isFullNode() && Args.getInstance().isPBFTHttpEnable();
     contextPath = "/walletpbft";
+    maxRequestSize = Args.getInstance().getHttpMaxMessageSize();
   }
 
   @Override

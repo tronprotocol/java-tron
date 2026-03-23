@@ -474,6 +474,20 @@ public class Args extends CommonParameter {
     PARAMETER.maxMessageSize = config.hasPath(ConfigKey.NODE_RPC_MAX_MESSAGE_SIZE)
         ? config.getInt(ConfigKey.NODE_RPC_MAX_MESSAGE_SIZE) : GrpcUtil.DEFAULT_MAX_MESSAGE_SIZE;
 
+    int defaultHttpMaxMessageSize = 4 * GrpcUtil.DEFAULT_MAX_MESSAGE_SIZE;
+    PARAMETER.httpMaxMessageSize = config.hasPath(ConfigKey.NODE_HTTP_MAX_MESSAGE_SIZE)
+        ? config.getInt(ConfigKey.NODE_HTTP_MAX_MESSAGE_SIZE) : defaultHttpMaxMessageSize;
+    if (PARAMETER.httpMaxMessageSize <= 0) {
+      throw new TronError("node.http.maxMessageSize must be positive, got: "
+          + PARAMETER.httpMaxMessageSize, PARAMETER_INIT);
+    }
+    PARAMETER.jsonRpcMaxMessageSize = config.hasPath(ConfigKey.NODE_JSONRPC_MAX_MESSAGE_SIZE)
+        ? config.getInt(ConfigKey.NODE_JSONRPC_MAX_MESSAGE_SIZE) : defaultHttpMaxMessageSize;
+    if (PARAMETER.jsonRpcMaxMessageSize <= 0) {
+      throw new TronError("node.jsonrpc.maxMessageSize must be positive, got: "
+          + PARAMETER.jsonRpcMaxMessageSize, PARAMETER_INIT);
+    }
+
     PARAMETER.maxHeaderListSize = config.hasPath(ConfigKey.NODE_RPC_MAX_HEADER_LIST_SIZE)
         ? config.getInt(ConfigKey.NODE_RPC_MAX_HEADER_LIST_SIZE)
         : GrpcUtil.DEFAULT_MAX_HEADER_LIST_SIZE;

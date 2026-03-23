@@ -19,6 +19,7 @@ public class JsonRpcServiceOnSolidity extends HttpService {
     port = Args.getInstance().getJsonRpcHttpSolidityPort();
     enable = isFullNode() && Args.getInstance().isJsonRpcHttpSolidityNodeEnable();
     contextPath = "/";
+    maxRequestSize = Args.getInstance().getJsonRpcMaxMessageSize();
   }
 
   @Override
