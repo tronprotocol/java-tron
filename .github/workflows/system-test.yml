@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [ 'develop', 'release_**' ]
     types: [ opened, synchronize, reopened ]
+    paths-ignore: [ '**/*.md', '.gitignore', '**/.gitignore', '.editorconfig',
+                    '.gitattributes', 'docs/**', 'CHANGELOG', '.github/ISSUE_TEMPLATE/**',
+                    '.github/PULL_REQUEST_TEMPLATE/**', '.github/CODEOWNERS' ]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
