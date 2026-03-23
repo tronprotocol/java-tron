@@ -136,6 +136,7 @@ final class ConfigKey {
   public static final String NODE_HTTP_SOLIDITY_ENABLE = "node.http.solidityEnable";
   public static final String NODE_HTTP_PBFT_ENABLE = "node.http.PBFTEnable";
   public static final String NODE_HTTP_PBFT_PORT = "node.http.PBFTPort";
+  public static final String NODE_HTTP_MAX_MESSAGE_SIZE = "node.http.maxMessageSize";
 
   // node - jsonrpc
   public static final String NODE_JSONRPC_HTTP_FULLNODE_ENABLE =
@@ -150,6 +151,7 @@ final class ConfigKey {
   public static final String NODE_JSONRPC_MAX_SUB_TOPICS = "node.jsonrpc.maxSubTopics";
   public static final String NODE_JSONRPC_MAX_BLOCK_FILTER_NUM =
       "node.jsonrpc.maxBlockFilterNum";
+  public static final String NODE_JSONRPC_MAX_MESSAGE_SIZE = "node.jsonrpc.maxMessageSize";
 
   // node - dns
   public static final String NODE_DNS_TREE_URLS = "node.dns.treeUrls";

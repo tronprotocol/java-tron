@@ -30,6 +30,8 @@ public abstract class HttpService extends AbstractService {
 
   protected String contextPath;
 
+  protected int maxRequestSize;
+
   @Override
   public void innerStart() throws Exception {
     if (this.apiServer != null) {
@@ -64,8 +66,7 @@ public abstract class HttpService extends AbstractService {
   protected ServletContextHandler initContextHandler() {
     ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
     context.setContextPath(this.contextPath);
-    int maxMessageSize = Args.getInstance().getMaxMessageSize();
-    SizeLimitHandler sizeLimitHandler = new SizeLimitHandler(maxMessageSize, -1);
+    SizeLimitHandler sizeLimitHandler = new SizeLimitHandler(this.maxRequestSize, -1);
     sizeLimitHandler.setHandler(context);
     this.apiServer.setHandler(sizeLimitHandler);
     return context;

@@ -216,6 +216,12 @@ public class CommonParameter {
   public int maxMessageSize;
   @Getter
   @Setter
+  public int httpMaxMessageSize;
+  @Getter
+  @Setter
+  public int jsonRpcMaxMessageSize;
+  @Getter
+  @Setter
   public int maxHeaderListSize;
   @Getter
   @Setter
