@@ -84,11 +84,13 @@ public class PrometheusApiServiceTest extends BaseTest {
     Assert.assertEquals(pushBlock.intValue(), blocks + 1);
 
     String minerBase58 = StringUtil.encode58Check(address);
+    // Query histogram bucket le="0.0" for empty blocks
     Double emptyBlock = CollectorRegistry.defaultRegistry.getSampleValue(
-        "tron:block_empty_total", new String[] {"miner"}, new String[] {minerBase58});
-
-    Assert.assertNotNull(emptyBlock);
-    Assert.assertEquals(emptyBlock.intValue(), 1);
+        "tron:block_transaction_count_bucket",
+        new String[] {"miner", "le"}, new String[] {minerBase58, "0.0"});
+    
+    Assert.assertNotNull("Empty block bucket should exist for miner: " + minerBase58, emptyBlock);
+    Assert.assertEquals("Should have 1 empty block", 1, emptyBlock.intValue());
 
     // Check SR_REMOVE for initial address (removed when addTestWitnessAndAccount() is called)
     Double srRemoveCount = CollectorRegistry.defaultRegistry.getSampleValue(
@@ -99,7 +101,8 @@ public class PrometheusApiServiceTest extends BaseTest {
     Assert.assertNotNull(srRemoveCount);
     Assert.assertEquals(1, srRemoveCount.intValue());
 
-    // Check SR_ADD and empty blocks for each new witness in witnessAndAccount (excluding initial address)
+    // Check SR_ADD and empty blocks for each new witness in witnessAndAccount
+    // (excluding initial address)
     ByteString addressByteString = ByteString.copyFrom(address);
     double totalNewWitnessEmptyBlocks = 0;
     for (ByteString witnessAddress : witnessAndAccount.keySet()) {
@@ -114,13 +117,17 @@ public class PrometheusApiServiceTest extends BaseTest {
           new String[] {"action", "witness"},
           new String[] {MetricLabels.Counter.SR_ADD, witnessBase58}
       );
-      Assert.assertNotNull("SR_ADD should be recorded for witness: " + witnessBase58, srAddCount);
-      Assert.assertEquals("Each new witness should have 1 SR_ADD record", 1, srAddCount.intValue());
+      Assert.assertNotNull("SR_ADD should be recorded for witness: " + witnessBase58,
+          srAddCount);
+      Assert.assertEquals("Each new witness should have 1 SR_ADD record", 1,
+          srAddCount.intValue());
       
-      // Collect empty blocks count
+      // Collect empty blocks count from histogram bucket
       Double witnessEmptyBlock = CollectorRegistry.defaultRegistry.getSampleValue(
-          "tron:block_empty_total", new String[] {"miner"}, new String[] {witnessBase58});
-      Assert.assertNotNull(witnessEmptyBlock);
+          "tron:block_transaction_count_bucket",
+          new String[] {"miner", "le"}, new String[] {witnessBase58, "0.0"});
+      Assert.assertNotNull("Empty block bucket should exist for witness: " + witnessBase58,
+          witnessEmptyBlock);
       totalNewWitnessEmptyBlocks += witnessEmptyBlock;
     }
     Assert.assertEquals(blocks, (int)totalNewWitnessEmptyBlocks);
@@ -176,14 +183,17 @@ public class PrometheusApiServiceTest extends BaseTest {
     Map<ByteString, String> witnessAndAccount = addTestWitnessAndAccount();
     witnessAndAccount.put(ByteString.copyFrom(address), key);
     
-    // Explicitly update WitnessScheduleStore to remove initial address, triggering SR_REMOVE metric
+    // Explicitly update WitnessScheduleStore to remove initial address,
+    // triggering SR_REMOVE metric
     List<ByteString> newActiveWitnesses = new ArrayList<>(witnessAndAccount.keySet());
     newActiveWitnesses.remove(ByteString.copyFrom(address));
     chainBaseManager.getWitnessScheduleStore().saveActiveWitnesses(newActiveWitnesses);
     
     // Update nextMaintenanceTime to trigger SR set change detection
-    long nextMaintenanceTime = chainBaseManager.getDynamicPropertiesStore().getNextMaintenanceTime();
-    chainBaseManager.getDynamicPropertiesStore().updateNextMaintenanceTime(nextMaintenanceTime + 3600_000L);
+    long nextMaintenanceTime = 
+        chainBaseManager.getDynamicPropertiesStore().getNextMaintenanceTime();
+    chainBaseManager.getDynamicPropertiesStore().updateNextMaintenanceTime(
+        nextMaintenanceTime + 3600_000L);
     
     for (int i = 0; i < blocks; i++) {
       generateBlock(witnessAndAccount);

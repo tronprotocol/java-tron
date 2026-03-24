@@ -14,7 +14,6 @@ class MetricsCounter {
     init(MetricKeys.Counter.TXS, "tron  txs  info .", "type", "detail");
     init(MetricKeys.Counter.MINER, "tron  miner info .", "miner", "type");
     init(MetricKeys.Counter.BLOCK_FORK, "tron  block fork info .", "type");
-    init(MetricKeys.Counter.BLOCK_EMPTY, "tron  empty block count .", "miner");
     init(MetricKeys.Counter.SR_SET_CHANGE, "tron sr set change .", "action", "witness");
     init(MetricKeys.Counter.P2P_ERROR, "tron p2p error  info .", "type");
     init(MetricKeys.Counter.P2P_DISCONNECT, "tron p2p disconnect .", "type");

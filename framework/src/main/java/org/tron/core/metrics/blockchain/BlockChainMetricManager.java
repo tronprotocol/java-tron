@@ -174,11 +174,11 @@ public class BlockChainMetricManager {
       MetricsUtil.meterMark(MetricsKey.BLOCKCHAIN_TPS, block.getTransactions().size());
       Metrics.counterInc(MetricKeys.Counter.TXS, block.getTransactions().size(),
           MetricLabels.Counter.TXS_SUCCESS, MetricLabels.Counter.TXS_SUCCESS);
-    } else {
-      // Empty block
-      Metrics.counterInc(MetricKeys.Counter.BLOCK_EMPTY, 1,
-          StringUtil.encode58Check(address));
     }
+    // Record transaction count distribution for all blocks (including empty blocks)
+    int txCount = block.getTransactions().size();
+    Metrics.histogramObserve(MetricKeys.Histogram.BLOCK_TRANSACTION_COUNT, txCount,
+        StringUtil.encode58Check(address));
 
     // SR set change detection
     long nextMaintenanceTime = dbManager.getDynamicPropertiesStore().getNextMaintenanceTime();
