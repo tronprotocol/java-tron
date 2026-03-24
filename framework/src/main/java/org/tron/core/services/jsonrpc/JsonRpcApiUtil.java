@@ -58,9 +58,9 @@ import org.tron.protos.contract.WitnessContract.VoteWitnessContract.Vote;
 public class JsonRpcApiUtil {
   /**
    * Maximum allowed length for block identifiers to prevent DDoS attacks.
-   * Supports block hashes (66 chars) + safety buffer.
+   * Supports block hashes (66 chars) + safety enough buffer.
    */
-  private static final int MAX_BLOCK_IDENTIFIER_LENGTH = 128;
+  private static final int MAX_BLOCK_IDENTIFIER_LENGTH = 512;
 
   public static byte[] convertToTronAddress(byte[] address) {
     byte[] newAddress = new byte[21];
