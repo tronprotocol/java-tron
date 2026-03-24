@@ -1,5 +1,6 @@
 package org.tron.core.jsonrpc;
 
+import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.MAX_BLOCK_IDENTIFIER_LENGTH;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getByJsonBlockId;
 import static org.tron.core.services.jsonrpc.TronJsonRpcImpl.LATEST_STR;
 import static org.tron.core.services.jsonrpc.TronJsonRpcImpl.TAG_PENDING_SUPPORT_ERROR;
@@ -1017,9 +1018,9 @@ public class JsonrpcServiceTest extends BaseTest {
     }
   }
 
-  private String generateLongHexString(int length) {
+  private String generateLongHexString() {
     StringBuilder longInput = new StringBuilder();
-    for (int i = 0; i < length; i++) {
+    for (int i = 0; i < MAX_BLOCK_IDENTIFIER_LENGTH + 1; i++) {
       longInput.append("a");
     }
     return longInput.toString();
@@ -1037,8 +1038,7 @@ public class JsonrpcServiceTest extends BaseTest {
     }
 
     try {
-      // Test Exceeds MAX_BLOCK_IDENTIFIER_LENGTH (128)
-      tronJsonRpc.getBlockReceipts(generateLongHexString(130));
+      tronJsonRpc.getBlockReceipts(generateLongHexString());
       Assert.fail("Should throw JsonRpcInvalidParamsException for too long blockNumOrTag");
     } catch (Exception e) {
       Assert.assertTrue("Should be JsonRpcInvalidParamsException",
@@ -1140,8 +1140,7 @@ public class JsonrpcServiceTest extends BaseTest {
     }
 
     try {
-      // Test Exceeds MAX_BLOCK_IDENTIFIER_LENGTH (128)
-      tronJsonRpc.ethGetBlockTransactionCountByNumber(generateLongHexString(130));
+      tronJsonRpc.ethGetBlockTransactionCountByNumber(generateLongHexString());
       Assert.fail("Should throw JsonRpcInvalidParamsException for too long input");
     } catch (Exception e) {
       Assert.assertTrue("Should be JsonRpcInvalidParamsException",
@@ -1170,8 +1169,7 @@ public class JsonrpcServiceTest extends BaseTest {
     }
 
     try {
-      // Test Exceeds MAX_BLOCK_IDENTIFIER_LENGTH (128)
-      tronJsonRpc.ethGetBlockByNumber(generateLongHexString(130), false);
+      tronJsonRpc.ethGetBlockByNumber(generateLongHexString(), false);
       Assert.fail("Should throw JsonRpcInvalidParamsException for too long input");
     } catch (Exception e) {
       Assert.assertTrue("Should be JsonRpcInvalidParamsException",
@@ -1200,8 +1198,7 @@ public class JsonrpcServiceTest extends BaseTest {
     }
 
     try {
-      // Test Exceeds MAX_BLOCK_IDENTIFIER_LENGTH (128)
-      tronJsonRpc.getTrxBalance(OWNER_ADDRESS, generateLongHexString(130));
+      tronJsonRpc.getTrxBalance(OWNER_ADDRESS, generateLongHexString());
       Assert.fail("Should throw JsonRpcInvalidParamsException for too long blockNumOrTag");
     } catch (Exception e) {
       Assert.assertTrue("Should be JsonRpcInvalidParamsException",
@@ -1230,8 +1227,7 @@ public class JsonrpcServiceTest extends BaseTest {
     }
 
     try {
-      // Test Exceeds MAX_BLOCK_IDENTIFIER_LENGTH (128)
-      tronJsonRpc.getTransactionByBlockNumberAndIndex(generateLongHexString(130), "0x0");
+      tronJsonRpc.getTransactionByBlockNumberAndIndex(generateLongHexString(), "0x0");
       Assert.fail("Should throw JsonRpcInvalidParamsException for too long blockNumOrTag");
     } catch (Exception e) {
       Assert.assertTrue("Should be JsonRpcInvalidParamsException",
