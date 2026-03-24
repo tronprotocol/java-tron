@@ -32,7 +32,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.tron.common.TestConstants;
-import org.tron.common.arch.Arch;
 import org.tron.common.args.GenesisBlock;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
@@ -59,7 +58,7 @@ public class ArgsTest {
   @Test
   public void get() {
     Args.setParam(new String[] {"-c", TestConstants.TEST_CONF, "--keystore-factory"},
-        "config.conf");
+        TestConstants.NET_CONF);
 
     CommonParameter parameter = Args.getInstance();
 
@@ -159,7 +158,7 @@ public class ArgsTest {
   @Test
   public void testOldRewardOpt() {
     thrown.expect(IllegalArgumentException.class);
-    Args.setParam(new String[] {"-c", "args-test.conf"}, "config.conf");
+    Args.setParam(new String[] {"-c", "args-test.conf"}, TestConstants.NET_CONF);
   }
 
   @Test
@@ -323,8 +322,8 @@ public class ArgsTest {
    * Verify that config file storage values are applied when no CLI override is present.
    *
    * <p>config-test.conf defines: db.directory = "database", db.engine = "LEVELDB".
-   * Without any CLI storage arguments, the Storage object should use these config values.
-   * On ARM64, the silent override in Storage.getDbEngineFromConfig() forces ROCKSDB.
+   * On ARM64 CI, Gradle injects -Dstorage.db.engine=ROCKSDB via system property,
+   * so the engine will be ROCKSDB instead of LEVELDB.
    */
   @Test
   public void testConfigStorageDefaults() {
@@ -333,11 +332,9 @@ public class ArgsTest {
     CommonParameter parameter = Args.getInstance();
 
     Assert.assertEquals("database", parameter.getStorage().getDbDirectory());
-    if (Arch.isArm64()) {
-      Assert.assertEquals("ROCKSDB", parameter.getStorage().getDbEngine());
-    } else {
-      Assert.assertEquals("LEVELDB", parameter.getStorage().getDbEngine());
-    }
+    String expectedEngine = System.getProperty("storage.db.engine") != null
+        ? System.getProperty("storage.db.engine") : "LEVELDB";
+    Assert.assertEquals(expectedEngine, parameter.getStorage().getDbEngine());
 
     Args.clearParam();
   }

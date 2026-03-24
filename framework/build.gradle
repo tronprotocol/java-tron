@@ -106,19 +106,38 @@ run {
     }
 }
 
-test {
-    retry {
+def configureTestTask = { Task t ->
+    t.retry {
         maxRetries = 5
         maxFailures = 20
     }
-    testLogging {
+    t.testLogging {
         exceptionFormat = 'full'
     }
+    if (isWindows()) {
+        t.exclude '**/ShieldedTransferActuatorTest.class'
+        t.exclude '**/BackupDbUtilTest.class'
+        t.exclude '**/ManagerTest.class'
+        t.exclude 'org/tron/core/zksnark/**'
+        t.exclude 'org/tron/common/runtime/vm/PrecompiledContractsVerifyProofTest.class'
+        t.exclude 'org/tron/core/ShieldedTRC20BuilderTest.class'
+        t.exclude 'org/tron/common/runtime/vm/WithdrawRewardTest.class'
+    }
+    t.maxHeapSize = "1024m"
+    t.doFirst {
+        t.forkEvery = 100
+        t.jvmArgs "-XX:MetaspaceSize=128m", "-XX:MaxMetaspaceSize=256m", "-XX:+UseG1GC"
+    }
+}
+
+test {
+    configureTestTask(it)
     jacoco {
         destinationFile = file("$buildDir/jacoco/jacocoTest.exec")
         classDumpDir = file("$buildDir/jacoco/classpathdumps")
     }
     if (rootProject.archInfo.isArm64) {
+        systemProperty 'storage.db.engine', 'ROCKSDB'
         exclude { element ->
             element.file.name.toLowerCase().contains('leveldb')
         }
@@ -129,21 +148,14 @@ test {
             excludeTestsMatching '*.*LevelDb*'
         }
     }
-    if (isWindows()) {
-        exclude '**/ShieldedTransferActuatorTest.class'
-        exclude '**/BackupDbUtilTest.class'
-        exclude '**/ManagerTest.class'
-        exclude 'org/tron/core/zksnark/**'
-        exclude 'org/tron/common/runtime/vm/PrecompiledContractsVerifyProofTest.class'
-        exclude 'org/tron/core/ShieldedTRC20BuilderTest.class'
-        exclude 'org/tron/common/runtime/vm/WithdrawRewardTest.class'
-    }
-    maxHeapSize = "1024m"
-    doFirst {
-        // Restart the JVM after every 100 tests to avoid memory leaks and ensure test isolation
-        forkEvery = 100
-        jvmArgs "-XX:MetaspaceSize=128m","-XX:MaxMetaspaceSize=256m", "-XX:+UseG1GC"
-    }
+}
+
+task testWithRocksDb(type: Test) {
+    description = 'Run tests with RocksDB engine'
+    group = 'verification'
+    configureTestTask(it)
+    systemProperty 'storage.db.engine', 'ROCKSDB'
+    exclude '**/LevelDbDataSourceImplTest.class'
 }
 
 jacocoTestReport {

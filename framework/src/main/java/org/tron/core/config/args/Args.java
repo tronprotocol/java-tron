@@ -130,8 +130,25 @@ public class Args extends CommonParameter {
     // 3. CLI overrides Config (highest priority)
     applyCLIParams(cmd, jc);
 
-    // 4. Init witness (depends on CLI witness flag)
+    // 4. Apply platform constraints (e.g. ARM64 forces RocksDB)
+    applyPlatformConstraints();
+
+    // 5. Init witness (depends on CLI witness flag)
     initLocalWitnesses(config, cmd);
+  }
+
+  /**
+   * Apply platform-specific constraints after all config sources are resolved.
+   * ARM64 does not support LevelDB (native JNI library unavailable),
+   * so db.engine is forced to RocksDB regardless of config or CLI settings.
+   */
+  private static void applyPlatformConstraints() {
+    if (Arch.isArm64()
+        && !Constant.ROCKSDB.equalsIgnoreCase(PARAMETER.storage.getDbEngine())) {
+      logger.warn("ARM64 only supports RocksDB, ignoring db.engine='{}'",
+          PARAMETER.storage.getDbEngine());
+      PARAMETER.storage.setDbEngine(Constant.ROCKSDB);
+    }
   }
 
   /**
@@ -784,11 +801,8 @@ public class Args extends CommonParameter {
             .getInt(ConfigKey.COMMITTEE_ALLOW_OPTIMIZED_RETURN_VALUE_OF_CHAIN_ID) : 0;
 
     initBackupProperty(config);
-    if (Constant.ROCKSDB.equalsIgnoreCase(CommonParameter
-        .getInstance().getStorage().getDbEngine())) {
-      initRocksDbBackupProperty(config);
-      initRocksDbSettings(config);
-    }
+    initRocksDbBackupProperty(config);
+    initRocksDbSettings(config);
 
     PARAMETER.actuatorSet =
         config.hasPath(ConfigKey.ACTUATOR_WHITELIST)

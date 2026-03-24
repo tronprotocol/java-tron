@@ -1,24 +1,13 @@
 package org.tron.common.runtime.vm;
 
-import java.io.IOException;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.tron.common.TestConstants;
-import org.tron.common.application.Application;
-import org.tron.common.application.ApplicationFactory;
-import org.tron.common.application.TronApplicationContext;
+import org.tron.common.BaseMethodTest;
 import org.tron.common.runtime.Runtime;
 import org.tron.common.runtime.TvmTestUtils;
 import org.tron.core.Wallet;
-import org.tron.core.config.DefaultConfig;
-import org.tron.core.config.args.Args;
-import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
@@ -28,31 +17,20 @@ import org.tron.core.vm.repository.RepositoryImpl;
 import org.tron.protos.Protocol.AccountType;
 
 @Slf4j
-public class InternalTransactionCallTest {
+public class InternalTransactionCallTest extends BaseMethodTest {
 
   private Runtime runtime;
-  private Manager dbManager;
-  private TronApplicationContext context;
   private RepositoryImpl repository;
-  @Rule
-  public TemporaryFolder temporaryFolder = new TemporaryFolder();
   private String OWNER_ADDRESS;
-  private Application AppT;
 
-  /**
-   * Init data.
-   */
-  @Before
-  public void init() throws IOException {
-    Args.clearParam();
-    Args.setParam(new String[]{"--output-directory",
-            temporaryFolder.newFolder().toString(), "--support-constant", "--debug"},
-        TestConstants.TEST_CONF);
+  @Override
+  protected String[] extraArgs() {
+    return new String[]{"--support-constant", "--debug"};
+  }
 
-    context = new TronApplicationContext(DefaultConfig.class);
-    AppT = ApplicationFactory.create(context);
+  @Override
+  protected void afterInit() {
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
-    dbManager = context.getBean(Manager.class);
     repository = RepositoryImpl.createRoot(StoreFactory.getInstance());
     repository.createAccount(Hex.decode(OWNER_ADDRESS), AccountType.Normal);
     repository.addBalance(Hex.decode(OWNER_ADDRESS), 100000000);
@@ -352,12 +330,4 @@ public class InternalTransactionCallTest {
   }
 
 
-  /**
-   * Release resources.
-   */
-  @After
-  public void destroy() {
-    context.destroy();
-    Args.clearParam();
-  }
 }

@@ -130,6 +130,9 @@ jobs:
       - name: Build
         run: ./gradlew clean build --no-daemon
 
+      - name: Test with RocksDB engine
+        run: ./gradlew :framework:testWithRocksDb --no-daemon
+
   docker-build-debian11:
     name: Build debian11 (JDK 8 / x86_64)
     if: ${{ github.event_name == 'pull_request' || inputs.job == 'all' || inputs.job == 'debian11' }}
@@ -171,3 +174,6 @@ jobs:
 
       - name: Build
         run: ./gradlew clean build --no-daemon
+
+      - name: Test with RocksDB engine
+        run: ./gradlew :framework:testWithRocksDb --no-daemon
