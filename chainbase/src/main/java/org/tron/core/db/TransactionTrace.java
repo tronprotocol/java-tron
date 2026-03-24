@@ -295,13 +295,14 @@ public class TransactionTrace {
     }
     long currentSize = accountCap.getWindowSize(ENERGY);
     long currentUsage = accountCap.getEnergyUsage();
-    // Drop the pre consumed frozen energy
+    // Drop the preconsumed frozen energy
     long newArea = currentUsage * currentSize
         - (mergedUsage * mergedSize - usage * size);
     // If area merging happened during suicide, use the current window size
     long newSize = mergedSize == currentSize ? size : currentSize;
-    // Calc new usage by fixed x-axes
-    long newUsage = max(0, newArea / newSize, dynamicPropertiesStore.disableJavaLangMath());
+    // A zero window size means no valid time window exists and thus zero usage
+    long newUsage = newSize == 0 ? 0 
+        : max(0, newArea / newSize, dynamicPropertiesStore.disableJavaLangMath());
     // Reset account usage and window size
     accountCap.setEnergyUsage(newUsage);
     accountCap.setNewWindowSize(ENERGY, newUsage == 0 ? 0L : newSize);
@@ -312,13 +313,14 @@ public class TransactionTrace {
     long currentSize = accountCap.getWindowSize(ENERGY);
     long currentSize2 = accountCap.getWindowSizeV2(ENERGY);
     long currentUsage = accountCap.getEnergyUsage();
-    // Drop the pre consumed frozen energy
+    // Drop the preconsumed frozen energy
     long newArea = currentUsage * currentSize - (mergedUsage * mergedSize - usage * size);
     // If area merging happened during suicide, use the current window size
     long newSize = mergedSize == currentSize ? size : currentSize;
     long newSize2 = mergedSize == currentSize ? size2 : currentSize2;
-    // Calc new usage by fixed x-axes
-    long newUsage = max(0, newArea / newSize, dynamicPropertiesStore.disableJavaLangMath());
+    // A zero window size means no valid time window exists and thus zero usage
+    long newUsage = newSize == 0 ? 0 
+        : max(0, newArea / newSize, dynamicPropertiesStore.disableJavaLangMath());
     // Reset account usage and window size
     accountCap.setEnergyUsage(newUsage);
     accountCap.setNewWindowSizeV2(ENERGY, newUsage == 0 ? 0L : newSize2);

@@ -123,6 +123,7 @@ abstract class ResourceProcessor {
     }
 
     long newUsage = getUsage(averageLastUsage, oldWindowSize, averageUsage, this.windowSize);
+    // remainUsage is the decayed lastUsage
     long remainUsage = getUsage(averageLastUsage, oldWindowSize);
     if (remainUsage == 0) {
       accountCapsule.setNewWindowSizeV2(resourceCode, this.windowSize * WINDOW_SIZE_PRECISION);
