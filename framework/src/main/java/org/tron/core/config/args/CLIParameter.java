@@ -47,7 +47,6 @@ public class CLIParameter {
   @Parameter(names = {"--password"}, description = "password")
   public String password;
 
-  @Deprecated
   @Parameter(names = {"--solidity"}, description = "running a solidity node for java tron")
   public boolean solidityNode;
 
@@ -62,7 +61,6 @@ public class CLIParameter {
   @Parameter(names = {"--es"}, description = "Start event subscribe server")
   public boolean eventSubscribe;
 
-  @Deprecated
   @Parameter(names = {"--p2p-disable"}, description = "Switch for p2p module initialization. "
       + "(default: false)", arity = 1)
   public boolean p2pDisable;
