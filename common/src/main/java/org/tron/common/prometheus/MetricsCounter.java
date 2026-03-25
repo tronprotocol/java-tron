@@ -18,9 +18,6 @@ class MetricsCounter {
     init(MetricKeys.Counter.P2P_DISCONNECT, "tron p2p disconnect .", "type");
     init(MetricKeys.Counter.INTERNAL_SERVICE_FAIL, "internal Service fail.",
         "class", "method");
-    init(MetricKeys.Counter.BLOCK_EMPTY,
-        "Total number of empty blocks (no transactions).",
-        "type");
     init(MetricKeys.Counter.SR_SET_CHANGE,
         "Total SR set changes during maintenance periods.",
         "witness", "change_type");

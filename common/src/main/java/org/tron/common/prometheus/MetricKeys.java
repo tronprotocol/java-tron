@@ -17,7 +17,6 @@ public class MetricKeys {
     public static final String P2P_ERROR = "tron:p2p_error";
     public static final String P2P_DISCONNECT = "tron:p2p_disconnect";
     public static final String INTERNAL_SERVICE_FAIL = "tron:internal_service_fail";
-    public static final String BLOCK_EMPTY   = "tron:block_empty_total";
     public static final String SR_SET_CHANGE = "tron:sr_set_change_total";
 
     private Counter() {
@@ -64,6 +63,7 @@ public class MetricKeys {
     public static final String MESSAGE_PROCESS_LATENCY = "tron:message_process_latency_seconds";
     public static final String BLOCK_FETCH_LATENCY = "tron:block_fetch_latency_seconds";
     public static final String BLOCK_RECEIVE_DELAY = "tron:block_receive_delay_seconds";
+    public static final String BLOCK_TRANSACTION_COUNT = "tron:block_transaction_count";
 
     private Histogram() {
       throw new IllegalStateException("Histogram");

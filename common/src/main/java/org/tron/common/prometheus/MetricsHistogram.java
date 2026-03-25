@@ -48,6 +48,10 @@ public class MetricsHistogram {
     init(MetricKeys.Histogram.BLOCK_FETCH_LATENCY, "fetch block latency.");
     init(MetricKeys.Histogram.BLOCK_RECEIVE_DELAY,
         "receive block delay time, receiveTime - blockTime.");
+    init(MetricKeys.Histogram.BLOCK_TRANSACTION_COUNT,
+        "Distribution of transaction counts per block.",
+        new double[]{0, 10, 50, 100, 200, 500, 1000, 2000, 5000, 10000},
+        "miner");
   }
 
   private MetricsHistogram() {
@@ -60,6 +64,17 @@ public class MetricsHistogram {
         .help(help)
         .labelNames(labels)
         .register());
+  }
+
+  private static void init(String name, String help, double[] buckets, String... labels) {
+    Histogram.Builder builder = Histogram.build()
+        .name(name)
+        .help(help)
+        .labelNames(labels);
+    if (buckets != null && buckets.length > 0) {
+      builder.buckets(buckets);
+    }
+    container.put(name, builder.register());
   }
 
   static Histogram.Timer startTimer(String key, String... labels) {

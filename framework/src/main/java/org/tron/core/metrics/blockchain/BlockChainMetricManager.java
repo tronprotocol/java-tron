@@ -175,11 +175,10 @@ public class BlockChainMetricManager {
           MetricLabels.Counter.TXS_SUCCESS, MetricLabels.Counter.TXS_SUCCESS);
     }
 
-    // Empty block detection
-    if (block.getTransactions().isEmpty()) {
-      Metrics.counterInc(MetricKeys.Counter.BLOCK_EMPTY, 1,
-          MetricLabels.Counter.BLOCK_EMPTY);
-    }
+    // Record transaction count distribution for all blocks (including empty blocks)
+    int txCount = block.getTransactions().size();
+    Metrics.histogramObserve(MetricKeys.Histogram.BLOCK_TRANSACTION_COUNT, txCount,
+        StringUtil.encode58Check(address));
 
     // SR set change detection
     List<ByteString> currentSrList =

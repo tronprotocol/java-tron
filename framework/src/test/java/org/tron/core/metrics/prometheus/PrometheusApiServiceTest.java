@@ -177,6 +177,7 @@ public class PrometheusApiServiceTest extends BaseTest {
   @Test
   public void testEmptyBlockMetric() throws Exception {
     ECKey ecKey = ECKey.fromPrivate(privateKey);
+    String minerBase58 = org.tron.common.utils.StringUtil.encode58Check(ecKey.getAddress());
     ByteString witnessAddress = ByteString.copyFrom(ecKey.getAddress());
 
     chainBaseManager.getWitnessScheduleStore().saveActiveWitnesses(new ArrayList<>());
@@ -192,19 +193,19 @@ public class PrometheusApiServiceTest extends BaseTest {
     block.sign(privateKey);
 
     Double beforeValue = CollectorRegistry.defaultRegistry.getSampleValue(
-        "tron:block_empty_total",
-        new String[]{"type"},
-        new String[]{"empty"});
+        "tron:block_transaction_count_bucket",
+        new String[]{"miner", "le"},
+        new String[]{minerBase58, "0.0"});
     double before = beforeValue == null ? 0.0 : beforeValue;
 
     blockChainMetricManager.applyBlock(block);
 
     Double afterValue = CollectorRegistry.defaultRegistry.getSampleValue(
-        "tron:block_empty_total",
-        new String[]{"type"},
-        new String[]{"empty"});
-    Assert.assertNotNull("tron:block_empty_total counter should exist", afterValue);
-    Assert.assertEquals("Counter should have incremented by 1",
+        "tron:block_transaction_count_bucket",
+        new String[]{"miner", "le"},
+        new String[]{minerBase58, "0.0"});
+    Assert.assertNotNull("Empty block bucket should exist for miner: " + minerBase58, afterValue);
+    Assert.assertEquals("Histogram bucket le=0.0 should have incremented by 1",
         before + 1.0, afterValue, 0.001);
   }
 
