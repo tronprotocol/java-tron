@@ -17,6 +17,8 @@ public class MetricKeys {
     public static final String P2P_ERROR = "tron:p2p_error";
     public static final String P2P_DISCONNECT = "tron:p2p_disconnect";
     public static final String INTERNAL_SERVICE_FAIL = "tron:internal_service_fail";
+    public static final String BLOCK_EMPTY   = "tron:block_empty_total";
+    public static final String SR_SET_CHANGE = "tron:sr_set_change_total";
 
     private Counter() {
       throw new IllegalStateException("Counter");

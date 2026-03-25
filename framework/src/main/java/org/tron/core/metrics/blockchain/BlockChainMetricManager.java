@@ -1,9 +1,13 @@
 package org.tron.core.metrics.blockchain;
 
 import com.codahale.metrics.Counter;
+import com.google.common.collect.Sets;
 import com.google.protobuf.ByteString;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.concurrent.ConcurrentHashMap;
@@ -42,6 +46,7 @@ public class BlockChainMetricManager {
   private long failProcessBlockNum = 0;
   @Setter
   private String failProcessBlockReason = "";
+  private Set<String> previousSrSet = new HashSet<>();
 
   public BlockChainInfo getBlockChainInfo() {
     BlockChainInfo blockChainInfo = new BlockChainInfo();
@@ -169,6 +174,31 @@ public class BlockChainMetricManager {
       Metrics.counterInc(MetricKeys.Counter.TXS, block.getTransactions().size(),
           MetricLabels.Counter.TXS_SUCCESS, MetricLabels.Counter.TXS_SUCCESS);
     }
+
+    // Empty block detection
+    if (block.getTransactions().isEmpty()) {
+      Metrics.counterInc(MetricKeys.Counter.BLOCK_EMPTY, 1,
+          MetricLabels.Counter.BLOCK_EMPTY);
+    }
+
+    // SR set change detection
+    List<ByteString> currentSrList =
+        chainBaseManager.getWitnessScheduleStore().getActiveWitnesses();
+    Set<String> currentSrSet = currentSrList.stream()
+        .map(bs -> Hex.toHexString(bs.toByteArray()))
+        .collect(Collectors.toSet());
+
+    if (!previousSrSet.isEmpty() && !currentSrSet.equals(previousSrSet)) {
+      for (String sr : Sets.difference(currentSrSet, previousSrSet)) {
+        Metrics.counterInc(MetricKeys.Counter.SR_SET_CHANGE, 1,
+            sr, MetricLabels.Counter.SR_ADDED);
+      }
+      for (String sr : Sets.difference(previousSrSet, currentSrSet)) {
+        Metrics.counterInc(MetricKeys.Counter.SR_SET_CHANGE, 1,
+            sr, MetricLabels.Counter.SR_REMOVED);
+      }
+    }
+    previousSrSet = currentSrSet;
   }
 
   private List<WitnessInfo> getSrList() {
