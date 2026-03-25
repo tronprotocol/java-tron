@@ -22,12 +22,14 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.prometheus.MetricLabels;
 import org.tron.common.prometheus.Metrics;
+import org.bouncycastle.util.encoders.Hex;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.PublicMethod;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Utils;
 import org.tron.consensus.dpos.DposSlot;
 import org.tron.core.ChainBaseManager;
+import org.tron.core.metrics.blockchain.BlockChainMetricManager;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.WitnessCapsule;
@@ -53,6 +55,8 @@ public class PrometheusApiServiceTest extends BaseTest {
   private ConsensusService consensusService;
   @Resource
   private ChainBaseManager chainManager;
+  @Resource
+  private BlockChainMetricManager blockChainMetricManager;
 
   static {
     Args.setParam(new String[] {"-d", dbPath()}, TestConstants.TEST_CONF);
@@ -168,6 +172,84 @@ public class PrometheusApiServiceTest extends BaseTest {
     blockCapsule.setMerkleRoot();
     blockCapsule.sign(ByteArray.fromHexString(witnessAddressMap.get(witnessAddress)));
     return blockCapsule;
+  }
+
+  @Test
+  public void testEmptyBlockMetric() throws Exception {
+    ECKey ecKey = ECKey.fromPrivate(privateKey);
+    ByteString witnessAddress = ByteString.copyFrom(ecKey.getAddress());
+
+    chainBaseManager.getWitnessScheduleStore().saveActiveWitnesses(new ArrayList<>());
+    chainBaseManager.addWitness(witnessAddress);
+
+    BlockCapsule block = new BlockCapsule(
+        chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber() + 1,
+        Sha256Hash.wrap(chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderHash().getByteString()),
+        System.currentTimeMillis(),
+        witnessAddress);
+    block.generatedByMyself = true;
+    block.setMerkleRoot();
+    block.sign(privateKey);
+
+    Double beforeValue = CollectorRegistry.defaultRegistry.getSampleValue(
+        "tron:block_empty_total",
+        new String[]{"type"},
+        new String[]{"empty"});
+    double before = beforeValue == null ? 0.0 : beforeValue;
+
+    blockChainMetricManager.applyBlock(block);
+
+    Double afterValue = CollectorRegistry.defaultRegistry.getSampleValue(
+        "tron:block_empty_total",
+        new String[]{"type"},
+        new String[]{"empty"});
+    Assert.assertNotNull("tron:block_empty_total counter should exist", afterValue);
+    Assert.assertEquals("Counter should have incremented by 1",
+        before + 1.0, afterValue, 0.001);
+  }
+
+  @Test
+  public void testSrSetChangeMetric() throws Exception {
+    ECKey ecKey = ECKey.fromPrivate(privateKey);
+    ByteString witnessAddress = ByteString.copyFrom(ecKey.getAddress());
+
+    chainBaseManager.getWitnessScheduleStore().saveActiveWitnesses(new ArrayList<>());
+    chainBaseManager.addWitness(witnessAddress);
+
+    BlockCapsule block1 = new BlockCapsule(
+        chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber() + 1,
+        Sha256Hash.wrap(chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderHash().getByteString()),
+        System.currentTimeMillis(),
+        witnessAddress);
+    block1.generatedByMyself = true;
+    block1.setMerkleRoot();
+    block1.sign(privateKey);
+    blockChainMetricManager.applyBlock(block1);
+
+    ECKey newWitnessKey = new ECKey(Utils.getRandom());
+    ByteString newWitnessBs = ByteString.copyFrom(newWitnessKey.getAddress());
+    chainBaseManager.addWitness(newWitnessBs);
+
+    BlockCapsule block2 = new BlockCapsule(
+        chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber() + 1,
+        Sha256Hash.wrap(chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderHash().getByteString()),
+        System.currentTimeMillis() + 3000,
+        witnessAddress);
+    block2.generatedByMyself = true;
+    block2.setMerkleRoot();
+    block2.sign(privateKey);
+    blockChainMetricManager.applyBlock(block2);
+
+    String newWitnessHex = Hex.toHexString(newWitnessBs.toByteArray());
+    Double addedValue = CollectorRegistry.defaultRegistry.getSampleValue(
+        "tron:sr_set_change_total",
+        new String[]{"witness", "change_type"},
+        new String[]{newWitnessHex, "added"});
+
+    Assert.assertNotNull(
+        "tron:sr_set_change_total{witness=...,change_type=added} should exist",
+        addedValue);
+    Assert.assertTrue("SR change counter should be >= 1", addedValue >= 1.0);
   }
 
 }
