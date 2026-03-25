@@ -57,6 +57,10 @@ jobs:
       - name: Build
         run: ./gradlew clean build --no-daemon
 
+      - name: Test with RocksDB engine
+        if: matrix.arch == 'x86_64'
+        run: ./gradlew :framework:testWithRocksDb --no-daemon
+
   build-ubuntu:
     name: Build ubuntu24 (JDK 17 / aarch64)
     if: ${{ github.event_name == 'pull_request' || inputs.job == 'all' || inputs.job == 'ubuntu' }}

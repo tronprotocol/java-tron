@@ -155,6 +155,14 @@ task testWithRocksDb(type: Test) {
     group = 'verification'
     configureTestTask(it)
     systemProperty 'storage.db.engine', 'ROCKSDB'
+    // Keep x86 RocksDB coverage focused on engine-sensitive tests instead of
+    // rerunning the entire framework suite with a different storage backend.
+    include 'org/tron/common/storage/**'
+    include 'org/tron/core/config/args/ArgsTest.class'
+    include 'org/tron/core/db/DBIteratorTest.class'
+    include 'org/tron/core/db/TronDatabaseTest.class'
+    include 'org/tron/core/db/backup/BackupDbUtilTest.class'
+    include 'org/tron/core/db2/ChainbaseTest.class'
     exclude '**/LevelDbDataSourceImplTest.class'
 }
 
