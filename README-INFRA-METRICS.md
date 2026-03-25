@@ -7,14 +7,30 @@
 
 ## What This PR Does
 
-Adds two new Prometheus counters to java-tron's metrics system, enabling node operators to monitor chain health events that are otherwise invisible at the metrics layer.
+Implements Prometheus metrics for empty block detection and SR set change monitoring, addressing critical operational blind spots in java-tron's monitoring infrastructure.
 
 ## New Metrics Reference
 
 | Metric Name | Type | Labels | Description |
 |-------------|------|--------|-------------|
-| `tron:block_empty_total` | Counter | `type="empty"` | Increments each time a block with zero transactions is applied to the chain |
-| `tron:sr_set_change_total` | Counter | `witness`, `change_type` | Increments when the Super Representative set changes during a maintenance period |
+| `tron:block_transaction_count` | Histogram | `miner` | Distribution of transaction counts per block |
+| `tron:sr_set_change_total` | Counter | `witness`, `change_type` | SR set changes (added/removed) |
+
+### Empty Blocks via Histogram
+
+Query empty blocks using the histogram's `le="0.0"` bucket:
+
+```promql
+# Empty blocks count by miner
+tron:block_transaction_count_bucket{le="0.0"}
+
+# Empty block ratio
+rate(tron:block_transaction_count_bucket{le="0.0"}[1h]) / rate(tron:block_transaction_count_count[1h])
+```
+
+### Histogram Buckets
+
+`[0, 10, 50, 100, 200, 500, 1000, 2000, 5000, 10000]`
 
 ### Label Values for `tron:sr_set_change_total`
 
@@ -22,7 +38,7 @@ Adds two new Prometheus counters to java-tron's metrics system, enabling node op
 |-------|-------|-------------|
 | `change_type` | `added` | A new SR entered the active set |
 | `change_type` | `removed` | An existing SR left the active set |
-| `witness` | hex address | The SR address affected |
+| `witness` | base58 address | The SR address affected |
 
 ## Setup Instructions
 
@@ -67,13 +83,29 @@ scrape_configs:
 ### Empty Block Rate (per minute)
 
 ```promql
-rate(tron:block_empty_total[1m])
+rate(tron:block_transaction_count_bucket{le="0.0"}[1m])
 ```
 
-### Total Empty Blocks
+### Empty Block Ratio (last hour)
 
 ```promql
-tron:block_empty_total
+rate(tron:block_transaction_count_bucket{le="0.0"}[1h]) / rate(tron:block_transaction_count_count[1h])
+```
+
+### Total Empty Blocks by Miner
+
+```promql
+tron:block_transaction_count_bucket{le="0.0"}
+```
+
+### Transaction Count Distribution
+
+```promql
+# Blocks with 0-10 transactions
+tron:block_transaction_count_bucket{le="10"} - tron:block_transaction_count_bucket{le="0"}
+
+# Average transactions per block
+rate(tron:block_transaction_count_sum[5m]) / rate(tron:block_transaction_count_count[5m])
 ```
 
 ### SR Set Changes Over Time
@@ -95,7 +127,7 @@ sum by (change_type) (tron:sr_set_change_total{change_type="removed"})
 ### Alert: High Empty Block Rate
 
 ```promql
-rate(tron:block_empty_total[5m]) > 10
+rate(tron:block_transaction_count_bucket{le="0.0"}[5m]) > 10
 ```
 
 ### Alert: SR Set Changed
@@ -108,11 +140,11 @@ increase(tron:sr_set_change_total[1h]) > 0
 
 | File | Change |
 |------|--------|
-| `common/src/main/java/org/tron/common/prometheus/MetricKeys.java` | Added `BLOCK_EMPTY` and `SR_SET_CHANGE` constants |
-| `common/src/main/java/org/tron/common/prometheus/MetricLabels.java` | Added `BLOCK_EMPTY`, `SR_ADDED`, `SR_REMOVED` label value constants |
-| `common/src/main/java/org/tron/common/prometheus/MetricsCounter.java` | Registered both counters with Prometheus |
-| `framework/src/main/java/org/tron/core/metrics/blockchain/BlockChainMetricManager.java` | Added empty block and SR set change detection in `applyBlock()` |
-| `framework/src/test/java/org/tron/core/metrics/prometheus/PrometheusApiServiceTest.java` | Added `testEmptyBlockMetric()` and `testSrSetChangeMetric()` tests |
+| `common/src/main/java/org/tron/common/prometheus/MetricKeys.java` | Removed `BLOCK_EMPTY`, added `BLOCK_TRANSACTION_COUNT` histogram constant |
+| `common/src/main/java/org/tron/common/prometheus/MetricsCounter.java` | Removed `BLOCK_EMPTY` counter registration |
+| `common/src/main/java/org/tron/common/prometheus/MetricsHistogram.java` | Added overloaded `init()` for custom buckets, registered `BLOCK_TRANSACTION_COUNT` |
+| `framework/src/main/java/org/tron/core/metrics/blockchain/BlockChainMetricManager.java` | Replaced counter with `histogramObserve()` for all blocks, kept SR counter |
+| `framework/src/test/java/org/tron/core/metrics/prometheus/PrometheusApiServiceTest.java` | Updated tests for histogram bucket queries |
 
 ## Build & Test Commands
 
@@ -140,20 +172,22 @@ increase(tron:sr_set_change_total[1h]) > 0
 
 ## Implementation Details
 
-### Empty Block Detection
+### Block Transaction Count Histogram
 
-In `BlockChainMetricManager.applyBlock()`, after the existing TPS counter logic:
+Records transaction count for **all blocks** (including empty blocks):
 
 ```java
-if (block.getTransactions().isEmpty()) {
-  Metrics.counterInc(MetricKeys.Counter.BLOCK_EMPTY, 1,
-      MetricLabels.Counter.BLOCK_EMPTY);
-}
+int txCount = block.getTransactions().size();
+Metrics.histogramObserve(MetricKeys.Histogram.BLOCK_TRANSACTION_COUNT, txCount,
+    StringUtil.encode58Check(address));
 ```
 
-### SR Set Change Detection
+Benefits over simple counter:
+- **Rich insights**: Tracks full distribution of tx counts
+- **Flexible queries**: Percentiles, trends, specific ranges
+- **Empty block detection**: Via `le="0.0"` bucket
 
-Compares the current active witness list against the previous set, emitting `added` and `removed` labels for each diff:
+### SR Set Change Detection
 
 ```java
 List<ByteString> currentSrList =
@@ -178,10 +212,25 @@ previousSrSet = currentSrSet;
 ### Code Style
 
 - Purely additive — zero protocol changes, zero API changes, zero backward compatibility issues
-- Uses existing `Metrics.counterInc()` pattern throughout
-- All constants defined in `MetricKeys.java` and `MetricLabels.java` (no hardcoded strings)
-- Java 8 compatible (no lambdas, no records)
+- Uses existing `Metrics.histogramObserve()` pattern for histogram
+- Uses existing `Metrics.counterInc()` pattern for counter
+- All constants defined in `MetricKeys.java` (no hardcoded strings)
+- Java 8 compatible
 - No new Gradle dependencies
+
+## Why Histogram for Empty Blocks?
+
+The histogram approach (as suggested by Sunny6889) provides richer insights:
+
+| Approach | Pros |
+|----------|------|
+| Counter | Simple, single-purpose |
+| **Histogram** | Tracks distribution, enables ratio queries, supports percentiles |
+
+Example queries enabled by histogram:
+- Empty block ratio over any time window
+- Transaction distribution patterns
+- Block capacity utilization
 
 ## Related Issues
 
