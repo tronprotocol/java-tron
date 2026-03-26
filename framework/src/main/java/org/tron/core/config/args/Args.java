@@ -7,6 +7,7 @@ import static org.tron.core.Constant.ADD_PRE_FIX_BYTE_MAINNET;
 import static org.tron.core.Constant.DEFAULT_PROPOSAL_EXPIRE_TIME;
 import static org.tron.core.Constant.DYNAMIC_ENERGY_INCREASE_FACTOR_RANGE;
 import static org.tron.core.Constant.DYNAMIC_ENERGY_MAX_FACTOR_RANGE;
+import static org.tron.core.Constant.ENERGY_LIMIT_IN_CONSTANT_TX;
 import static org.tron.core.Constant.MAX_PROPOSAL_EXPIRE_TIME;
 import static org.tron.core.Constant.MIN_PROPOSAL_EXPIRE_TIME;
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCE_TIMEOUT_PERCENT;
@@ -82,6 +83,40 @@ import org.tron.program.Version;
 @NoArgsConstructor
 @Component
 public class Args extends CommonParameter {
+
+  /**
+   * Maps deprecated CLI option names to their config-file equivalents.
+   * Options not in this map have no config equivalent and are being removed entirely.
+   */
+  private static final Map<String, String> DEPRECATED_CLI_TO_CONFIG;
+
+  static {
+    Map<String, String> m = new HashMap<>();
+    m.put("--storage-db-directory", "storage.db.directory");
+    m.put("--storage-db-engine", "storage.db.engine");
+    m.put("--storage-db-synchronous", "storage.db.sync");
+    m.put("--storage-index-directory", "storage.index.directory");
+    m.put("--storage-index-switch", "storage.index.switch");
+    m.put("--storage-transactionHistory-switch", "storage.transHistory.switch");
+    m.put("--contract-parse-enable", "event.subscribe.contractParse");
+    m.put("--support-constant", "vm.supportConstant");
+    m.put("--max-energy-limit-for-constant", "vm.maxEnergyLimitForConstant");
+    m.put("--lru-cache-size", "vm.lruCacheSize");
+    m.put("--min-time-ratio", "vm.minTimeRatio");
+    m.put("--max-time-ratio", "vm.maxTimeRatio");
+    m.put("--save-internaltx", "vm.saveInternalTx");
+    m.put("--save-featured-internaltx", "vm.saveFeaturedInternalTx");
+    m.put("--save-cancel-all-unfreeze-v2-details", "vm.saveCancelAllUnfreezeV2Details");
+    m.put("--long-running-time", "vm.longRunningTime");
+    m.put("--max-connect-number", "node.maxHttpConnectNumber");
+    m.put("--rpc-thread", "node.rpc.thread");
+    m.put("--solidity-thread", "node.solidity.threads");
+    m.put("--validate-sign-thread", "node.validateSignThreadNum");
+    m.put("--trust-node", "node.trustNode");
+    m.put("--history-balance-lookup", "storage.balance.history.lookup");
+    m.put("--es", "event.subscribe.enable");
+    DEPRECATED_CLI_TO_CONFIG = Collections.unmodifiableMap(m);
+  }
 
   @Getter
   private static String configFilePath = "";
@@ -169,7 +204,7 @@ public class Args extends CommonParameter {
 
     if (config.hasPath(ConfigKey.VM_MAX_ENERGY_LIMIT_FOR_CONSTANT)) {
       long configLimit = config.getLong(ConfigKey.VM_MAX_ENERGY_LIMIT_FOR_CONSTANT);
-      PARAMETER.maxEnergyLimitForConstant = max(3_000_000L, configLimit, true);
+      PARAMETER.maxEnergyLimitForConstant = max(ENERGY_LIMIT_IN_CONSTANT_TX, configLimit, true);
     }
 
     if (config.hasPath(ConfigKey.VM_LRU_CACHE_SIZE)) {
@@ -678,6 +713,9 @@ public class Args extends CommonParameter {
     PARAMETER.eventFilter =
         config.hasPath(ConfigKey.EVENT_SUBSCRIBE_FILTER) ? getEventFilter(config) : null;
 
+    PARAMETER.eventSubscribe = config.hasPath(ConfigKey.EVENT_SUBSCRIBE_ENABLE)
+        && config.getBoolean(ConfigKey.EVENT_SUBSCRIBE_ENABLE);
+
     if (config.hasPath(ConfigKey.ALLOW_SHIELDED_TRANSACTION_API)) {
       PARAMETER.allowShieldedTransactionApi =
           config.getBoolean(ConfigKey.ALLOW_SHIELDED_TRANSACTION_API);
@@ -1012,6 +1050,28 @@ public class Args extends CommonParameter {
         .map(ParameterDescription::getLongestName)
         .collect(Collectors.toSet());
 
+    jc.getParameters().stream()
+        .filter(ParameterDescription::isAssigned)
+        .filter(pd -> {
+          try {
+            return CLIParameter.class.getDeclaredField(pd.getParameterized().getName())
+                .isAnnotationPresent(Deprecated.class);
+          } catch (NoSuchFieldException e) {
+            return false;
+          }
+        })
+        .forEach(pd -> {
+          String cliOption = pd.getLongestName();
+          String configKey = DEPRECATED_CLI_TO_CONFIG.get(cliOption);
+          if (configKey != null) {
+            logger.warn("CLI option '{}' is deprecated and will be removed in a future release."
+                + " Please use config key '{}' instead.", cliOption, configKey);
+          } else {
+            logger.warn("CLI option '{}' is deprecated and will be removed in a future release.",
+                cliOption);
+          }
+        });
+
     if (assigned.contains("--output-directory")) {
       PARAMETER.outputDirectory = cmd.outputDirectory;
     }
@@ -1022,7 +1082,8 @@ public class Args extends CommonParameter {
       PARAMETER.supportConstant = cmd.supportConstant;
     }
     if (assigned.contains("--max-energy-limit-for-constant")) {
-      PARAMETER.maxEnergyLimitForConstant = cmd.maxEnergyLimitForConstant;
+      PARAMETER.maxEnergyLimitForConstant = max(ENERGY_LIMIT_IN_CONSTANT_TX,
+          cmd.maxEnergyLimitForConstant, true);
     }
     if (assigned.contains("--lru-cache-size")) {
       PARAMETER.lruCacheSize = cmd.lruCacheSize;
@@ -1105,7 +1166,12 @@ public class Args extends CommonParameter {
     if (assigned.contains("--log-config")) {
       PARAMETER.logbackPath = cmd.logbackPath;
     }
+    // seedNodes is a JCommander positional (main) parameter, which does not support
+    // isAssigned(). An empty-check is used instead — this is safe because the default
+    // is an empty list, so non-empty means the user explicitly passed values on CLI.
     if (!cmd.seedNodes.isEmpty()) {
+      logger.warn("Positional seed-node arguments are deprecated. "
+          + "Please use seed.node.ip.list in the config file instead.");
       List<InetSocketAddress> seeds = new ArrayList<>();
       for (String s : cmd.seedNodes) {
         seeds.add(NetUtil.parseInetSocketAddress(s));
@@ -1691,6 +1757,9 @@ public class Args extends CommonParameter {
         jCommander.getProgramName();
     helpStr.append(String.format("%nUsage: java -jar %s [options] [seedNode <seedNode> ...]%n",
         programName));
+    helpStr.append(String.format(
+        "%nNote: Positional seedNode arguments are deprecated."
+            + " Use seed.node.ip.list in the config file instead.%n"));
     helpStr.append(String.format("%nVERSION: %n%s-%s%n", Version.getVersion(),
         getCommitIdAbbrev()));
 
@@ -1712,9 +1781,21 @@ public class Args extends CommonParameter {
           logger.warn("Miss option:{}", option);
           continue;
         }
+        boolean isDeprecated;
+        try {
+          isDeprecated = CLIParameter.class.getDeclaredField(
+              parameterDescription.getParameterized().getName())
+              .isAnnotationPresent(Deprecated.class);
+        } catch (NoSuchFieldException e) {
+          isDeprecated = false;
+        }
+        String desc = upperFirst(parameterDescription.getDescription());
+        if (isDeprecated) {
+          desc += " (deprecated)";
+        }
         String tmpOptionDesc = String.format("%s\t\t\t%s%n",
             Strings.padEnd(parameterDescription.getNames(), optionMaxLength, ' '),
-            upperFirst(parameterDescription.getDescription()));
+            desc);
         helpStr.append(tmpOptionDesc);
       }
     }

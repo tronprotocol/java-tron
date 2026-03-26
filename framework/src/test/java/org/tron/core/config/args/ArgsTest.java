@@ -319,6 +319,28 @@ public class ArgsTest {
   }
 
   /**
+   * Verify that event.subscribe.enable = false from config is read correctly.
+   */
+  @Test
+  public void testEventSubscribeFromConfig() {
+    Args.setParam(new String[] {}, TestConstants.TEST_CONF);
+    Assert.assertFalse(Args.getInstance().isEventSubscribe());
+    Args.clearParam();
+  }
+
+  /**
+   * Verify that CLI --es overrides event.subscribe.enable from config.
+   * config-test.conf defines: event.subscribe.enable = false,
+   * passing --es explicitly sets eventSubscribe = true, overriding config.
+   */
+  @Test
+  public void testCliEsOverridesConfig() {
+    Args.setParam(new String[] {"--es"}, TestConstants.TEST_CONF);
+    Assert.assertTrue(Args.getInstance().isEventSubscribe());
+    Args.clearParam();
+  }
+
+  /**
    * Verify that config file storage values are applied when no CLI override is present.
    *
    * <p>config-test.conf defines: db.directory = "database", db.engine = "LEVELDB".
