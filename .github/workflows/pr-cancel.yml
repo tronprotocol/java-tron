@@ -17,7 +17,7 @@ jobs:
         uses: actions/github-script@v8
         with:
           script: |
-            const workflows = ['pr-build.yml', 'system-test.yml', 'codeql.yml', 'coverage-waiting.yml'];
+            const workflows = ['pr-build.yml', 'system-test.yml', 'codeql.yml'];
             const headSha = context.payload.pull_request.head.sha;
             const prNumber = context.payload.pull_request.number;
 
