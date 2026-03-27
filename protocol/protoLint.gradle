@@ -34,9 +34,9 @@ task protoLint {
     group = "verification"
     description = "Validate Protobuf Enums using buf generated JSON AST. Enforces 'UNKNOWN_' prefix for index 0 to ensure JSON serialization backward compatibility."
     
-    // Explicitly declare dependency to avoid Gradle implicit dependency warnings 
-    // because generateProto outputs to the parent 'src' directory.
-    dependsOn 'generateProto'
+    // Explicitly depend on extractIncludeProto to ensure external protos 
+    // are available in build/extracted-include-protos/main before buf runs.
+    dependsOn 'extractIncludeProto'
 
     // Incremental build support: Only run if proto files or the script itself changes
     inputs.dir('src/main/protos')
@@ -118,14 +118,14 @@ task protoLint {
 
             // A queue-based (BFS) approach to safely traverse all nested messages and enums
             // without using recursion, ensuring support for any nesting depth.
-            def queue = []
+            Queue queue = new ArrayDeque()
             
             // Initial seed: top-level enums and messages
-            protoFile.enumType?.each { queue << [def: it, parentName: ""] }
-            protoFile.messageType?.each { queue << [def: it, parentName: ""] }
+            protoFile.enumType?.each { queue.add([def: it, parentName: ""]) }
+            protoFile.messageType?.each { queue.add([def: it, parentName: ""]) }
 
             while (!queue.isEmpty()) {
-                def item = queue.remove(0)
+                def item = queue.poll()
                 def definition = item.def
                 def parentName = item.parentName
 
@@ -152,14 +152,13 @@ task protoLint {
 
         // 4. Report Results
         if (!errors.isEmpty()) {
-            println "\n🚨 [Protocol Design Violation] The following enums violate the java-tron API evolution standard (Issue #6515):"
+            println "\n❌ [Protocol Design Violation] The following enums violate the java-tron API evolution standard (Issue #6515):"
             errors.each { println "  - $it" }
-            println "\n💡 Recommendation: To ensure proto3 JSON serialization backward compatibility, newly defined enums MUST reserve index 0 for an 'UNKNOWN_XXX' field.\n"
             throw new GradleException("Proto Enum validation failed. See above for details.")
         } else {
             println "✅ Proto Enum validation passed!"
             // Update marker file for Gradle incremental build cache
-            markerFile.text = "Success: " + new Date().toString()
+            markerFile.text = "Success"
         }
     }
 }
