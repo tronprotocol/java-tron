@@ -971,7 +971,7 @@ public class ProposalUtil {
     ALLOW_TVM_BLOB(89), // 0, 1
     PROPOSAL_EXPIRE_TIME(92), // (0, 31536003000)
     ALLOW_TVM_SELFDESTRUCT_RESTRICTION(94), // 0, 1
-    ALLOW_TVM_OSAKA(95); // 0, 1
+    ALLOW_TVM_OSAKA(96); // 0, 1
 
     private long code;
 
