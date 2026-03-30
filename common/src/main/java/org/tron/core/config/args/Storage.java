@@ -29,7 +29,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.iq80.leveldb.CompressionType;
 import org.iq80.leveldb.Options;
-import org.tron.common.arch.Arch;
 import org.tron.common.cache.CacheStrategies;
 import org.tron.common.cache.CacheType;
 import org.tron.common.utils.DbOptionalsUtils;
@@ -90,7 +89,6 @@ public class Storage {
    * Default values of directory
    */
   private static final String DEFAULT_DB_ENGINE = "LEVELDB";
-  private static final String ROCKS_DB_ENGINE = "ROCKSDB";
   private static final boolean DEFAULT_DB_SYNC = false;
   private static final boolean DEFAULT_EVENT_SUBSCRIBE_CONTRACT_PARSE = true;
   private static final String DEFAULT_DB_DIRECTORY = "database";
@@ -175,10 +173,6 @@ public class Storage {
   private final Map<String, Sha256Hash> dbRoots = Maps.newConcurrentMap();
 
   public static String getDbEngineFromConfig(final Config config) {
-    if (Arch.isArm64()) {
-      logger.warn("Arm64 architecture detected, using RocksDB as db engine, ignore config.");
-      return ROCKS_DB_ENGINE;
-    }
     return config.hasPath(DB_ENGINE_CONFIG_KEY)
         ? config.getString(DB_ENGINE_CONFIG_KEY) : DEFAULT_DB_ENGINE;
   }

@@ -9,21 +9,14 @@ import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Map;
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 import org.mockito.Mockito;
 import org.springframework.context.ApplicationContext;
-import org.tron.common.TestConstants;
-import org.tron.common.application.TronApplicationContext;
+import org.tron.common.BaseMethodTest;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
-import org.tron.core.config.DefaultConfig;
-import org.tron.core.config.args.Args;
 import org.tron.core.net.P2pEventHandlerImpl;
 import org.tron.core.net.message.adv.BlockMessage;
 import org.tron.core.net.peer.PeerConnection;
@@ -33,43 +26,31 @@ import org.tron.core.net.service.sync.SyncService;
 import org.tron.p2p.connection.Channel;
 import org.tron.protos.Protocol;
 
-public class SyncServiceTest {
-  protected TronApplicationContext context;
+public class SyncServiceTest extends BaseMethodTest {
   private SyncService service;
   private PeerConnection peer;
   private P2pEventHandlerImpl p2pEventHandler;
   private ApplicationContext ctx;
-  @Rule
-  public TemporaryFolder temporaryFolder = new TemporaryFolder();
   private InetSocketAddress inetSocketAddress =
           new InetSocketAddress("127.0.0.2", 10001);
 
-  public SyncServiceTest() {
+  @Override
+  protected String[] extraArgs() {
+    return new String[]{"--debug"};
   }
 
-  /**
-   * init context.
-   */
-  @Before
-  public void init() throws Exception {
-    Args.setParam(new String[]{"--output-directory",
-            temporaryFolder.newFolder().toString(), "--debug"}, TestConstants.TEST_CONF);
-    context = new TronApplicationContext(DefaultConfig.class);
+  @Override
+  protected void afterInit() {
     service = context.getBean(SyncService.class);
     p2pEventHandler = context.getBean(P2pEventHandlerImpl.class);
     ctx = (ApplicationContext) ReflectUtils.getFieldObject(p2pEventHandler, "ctx");
   }
 
-  /**
-   * destroy.
-   */
-  @After
-  public void destroy() {
+  @Override
+  protected void beforeDestroy() {
     for (PeerConnection p : PeerManager.getPeers()) {
       PeerManager.remove(p.getChannel());
     }
-    Args.clearParam();
-    context.destroy();
   }
 
   @Test
