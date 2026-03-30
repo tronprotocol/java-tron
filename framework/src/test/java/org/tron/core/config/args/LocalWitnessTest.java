@@ -29,11 +29,11 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.tron.common.TestConstants;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.LocalWitnesses;
 import org.tron.common.utils.PublicMethod;
 import org.tron.common.utils.StringUtil;
-import org.tron.core.Constant;
 import org.tron.core.exception.TronError;
 import org.tron.core.exception.TronError.ErrCode;
 
@@ -187,7 +187,7 @@ public class LocalWitnessTest {
   public void testNullLocalWitnessConfig() throws IOException {
     Args.setParam(
         new String[]{"--output-directory", temporaryFolder.newFolder().toString(), "--debug"},
-        Constant.TEST_CONF);
+        TestConstants.TEST_CONF);
     LocalWitnesses witness = Args.getLocalWitnesses();
     Assert.assertNull(witness.getPrivateKey());
     Assert.assertNull(witness.getWitnessAccountAddress());

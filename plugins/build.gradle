@@ -58,6 +58,7 @@ check.dependsOn 'lint'
 checkstyle {
     toolVersion = "${versions.checkstyle}"
     configFile = file("../framework/config/checkstyle/checkStyleAll.xml")
+    maxWarnings = 0
 }
 
 checkstyleMain {

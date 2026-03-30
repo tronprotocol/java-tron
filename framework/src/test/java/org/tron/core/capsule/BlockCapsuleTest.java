@@ -12,11 +12,11 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.tron.common.TestConstants;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.LocalWitnesses;
 import org.tron.common.utils.PublicMethod;
 import org.tron.common.utils.Sha256Hash;
-import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.BadItemException;
@@ -41,7 +41,7 @@ public class BlockCapsuleTest {
   @BeforeClass
   public static void init() throws IOException {
     Args.setParam(new String[]{"-d", temporaryFolder.newFolder().toString()},
-        Constant.TEST_CONF);
+        TestConstants.TEST_CONF);
   }
 
   @AfterClass
@@ -78,15 +78,9 @@ public class BlockCapsuleTest {
         .addTransaction(new TransactionCapsule(transferContract2, ContractType.TransferContract));
     blockCapsule0.setMerkleRoot();
 
-    if (Constant.ADD_PRE_FIX_BYTE_TESTNET == Wallet.getAddressPreFixByte()) {
-      Assert.assertEquals(
-          "53421c1f1bcbbba67a4184cc3dbc1a59f90af7e2b0644dcfc8dc738fe30deffc",
-          blockCapsule0.getMerkleRoot().toString());
-    } else {
-      Assert.assertEquals(
-          "5bc862243292e6aa1d5e21a60bb6a673e4c2544709f6363d4a2f85ec29bcfe00",
-          blockCapsule0.getMerkleRoot().toString());
-    }
+    Assert.assertEquals(
+        "5bc862243292e6aa1d5e21a60bb6a673e4c2544709f6363d4a2f85ec29bcfe00",
+        blockCapsule0.getMerkleRoot().toString());
 
     logger.info("Transaction[O] Merkle Root : {}", blockCapsule0.getMerkleRoot().toString());
   }

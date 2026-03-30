@@ -16,12 +16,12 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.BaseTest;
+import org.tron.common.TestConstants;
 import org.tron.common.runtime.ProgramResult;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.StringUtil;
-import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.actuator.FreezeBalanceActuator;
 import org.tron.core.capsule.AccountCapsule;
@@ -106,7 +106,7 @@ public class PrecompiledContractsTest extends BaseTest {
   private static final long latestTimestamp = 1_000_000L;
 
   static {
-    Args.setParam(new String[]{"--output-directory", dbPath(), "--debug"}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath(), "--debug"}, TestConstants.TEST_CONF);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     WITNESS_ADDRESS = Wallet.getAddressPreFixString() + WITNESS_ADDRESS_BASE;
 
@@ -874,10 +874,10 @@ public class PrecompiledContractsTest extends BaseTest {
     Repository tempRepository = RepositoryImpl.createRoot(StoreFactory.getInstance());
     resourceV2Pcc.setRepository(tempRepository);
 
-    String targetStr = "27k66nycZATHzBasFT9782nTsYWqVtxdtAc";
+    String targetStr = "TWyoFfJBiKGkVQd28HTqxsc8kbMtQUmqgi";
     byte[] targetAddr = Commons.decode58Check(targetStr);
     byte[] target = new DataWord(targetAddr).getData();
-    String fromStr = "27jzp7nVEkH4Hf3H1PHPp4VDY7DxTy5eydL";
+    String fromStr = "TWtWaUAsJ933xs2n4RkXzaMoKJUrQmctBH";
     byte[] fromAddr = Commons.decode58Check(fromStr);
     byte[] from = new DataWord(fromAddr).getData();
     byte[] type = ByteUtil.longTo32Bytes(0);

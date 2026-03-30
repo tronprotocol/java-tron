@@ -1,57 +1,39 @@
 package org.tron.core.metrics;
 
-import java.io.IOException;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.ClassRule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.tron.common.application.Application;
-import org.tron.common.application.ApplicationFactory;
-import org.tron.common.application.TronApplicationContext;
+import org.tron.common.BaseMethodTest;
 import org.tron.common.parameter.CommonParameter;
-import org.tron.core.Constant;
-import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.services.RpcApiService;
 import org.tron.program.Version;
 import org.tron.protos.Protocol;
 
 @Slf4j
-public class MetricsApiServiceTest {
+public class MetricsApiServiceTest extends BaseMethodTest {
 
-  @ClassRule
-  public static TemporaryFolder temporaryFolder = new TemporaryFolder();
   private static String dbDirectory = "metrics-database";
   private static String indexDirectory = "metrics-index";
   private static int port = 10001;
-  private TronApplicationContext context;
   private MetricsApiService metricsApiService;
   private RpcApiService rpcApiService;
-  private Application appT;
 
+  @Override
+  protected String[] extraArgs() {
+    return new String[]{
+        "--storage-db-directory", dbDirectory,
+        "--storage-index-directory", indexDirectory,
+        "--debug"
+    };
+  }
 
-  @Before
-  public void init() throws IOException {
-    String dbPath = temporaryFolder.newFolder().toString();
-    Args.setParam(new String[]{"--output-directory", dbPath, "--debug"},
-        Constant.TEST_CONF);
-    Args.setParam(
-        new String[]{
-            "--output-directory", dbPath,
-            "--storage-db-directory", dbDirectory,
-            "--storage-index-directory", indexDirectory
-        },
-        Constant.TEST_CONF
-    );
+  @Override
+  protected void afterInit() {
     CommonParameter parameter = Args.getInstance();
     parameter.setNodeListenPort(port);
     parameter.getSeedNode().getAddressList().clear();
     parameter.setNodeExternalIp("127.0.0.1");
-    context = new TronApplicationContext(DefaultConfig.class);
-    appT = ApplicationFactory.create(context);
     metricsApiService = context.getBean(MetricsApiService.class);
     appT.startup();
   }
@@ -101,8 +83,4 @@ public class MetricsApiServiceTest {
         .assertEquals(m1.getNet().getValidConnectionCount(), m2.getNet().getValidConnectionCount());
   }
 
-  @After
-  public void destroy() {
-    context.destroy();
-  }
 }

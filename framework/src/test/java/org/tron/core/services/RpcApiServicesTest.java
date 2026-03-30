@@ -51,6 +51,7 @@ import org.tron.api.WalletGrpc;
 import org.tron.api.WalletGrpc.WalletBlockingStub;
 import org.tron.api.WalletSolidityGrpc;
 import org.tron.api.WalletSolidityGrpc.WalletSolidityBlockingStub;
+import org.tron.common.TestConstants;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
@@ -147,7 +148,8 @@ public class RpcApiServicesTest {
 
   @BeforeClass
   public static void init() throws IOException {
-    Args.setParam(new String[] {"-d", temporaryFolder.newFolder().toString()}, Constant.TEST_CONF);
+    Args.setParam(new String[] {"-d", temporaryFolder.newFolder().toString()},
+        TestConstants.TEST_CONF);
     Assert.assertEquals(5, getInstance().getRpcMaxRstStream());
     Assert.assertEquals(10, getInstance().getRpcSecondsPerWindow());
     String OWNER_ADDRESS = Wallet.getAddressPreFixString()

@@ -1,0 +1,183 @@
+name: PR Build
+
+on:
+  pull_request:
+    branches: [ 'master','develop', 'release_**' ]
+    types: [ opened, synchronize, reopened ]
+    paths-ignore: [ '**/*.md', '.gitignore', '**/.gitignore', '.editorconfig',
+                    '.gitattributes', 'docs/**', 'CHANGELOG', '.github/ISSUE_TEMPLATE/**',
+                    '.github/PULL_REQUEST_TEMPLATE/**', '.github/CODEOWNERS' ]
+  workflow_dispatch:
+    inputs:
+      job:
+        description: 'Job to run: all / macos / ubuntu / rockylinux / debian11'
+        required: false
+        default: 'all'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+
+  build-macos:
+    name: Build macos26 (JDK ${{ matrix.java }} / ${{ matrix.arch }})
+    if: ${{ github.event_name == 'pull_request' || inputs.job == 'all' || inputs.job == 'macos' }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - java: '8'
+            runner: macos-26-intel
+            arch: x86_64
+          - java: '17'
+            runner: macos-26
+            arch: aarch64
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up JDK ${{ matrix.java }}
+        uses: actions/setup-java@v5
+        with:
+          java-version: ${{ matrix.java }}
+          distribution: 'temurin'
+
+      - name: Cache Gradle packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: macos26-${{ matrix.arch }}-gradle-${{ hashFiles('**/*.gradle', '**/gradle-wrapper.properties') }}
+          restore-keys: macos26-${{ matrix.arch }}-gradle-
+
+      - name: Build
+        run: ./gradlew clean build --no-daemon
+
+      - name: Test with RocksDB engine
+        if: matrix.arch == 'x86_64'
+        run: ./gradlew :framework:testWithRocksDb --no-daemon
+
+  build-ubuntu:
+    name: Build ubuntu24 (JDK 17 / aarch64)
+    if: ${{ github.event_name == 'pull_request' || inputs.job == 'all' || inputs.job == 'ubuntu' }}
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 60
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Check Java version
+        run: java -version
+
+      - name: Cache Gradle packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ubuntu24-aarch64-gradle-${{ hashFiles('**/*.gradle', '**/gradle-wrapper.properties') }}
+          restore-keys: ubuntu24-aarch64-gradle-
+
+      - name: Build
+        run: ./gradlew clean build --no-daemon
+
+  docker-build-rockylinux:
+    name: Build rockylinux (JDK 8 / x86_64)
+    if: ${{ github.event_name == 'pull_request' || inputs.job == 'all' || inputs.job == 'rockylinux' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    container:
+      image: rockylinux:8
+
+    env:
+      GRADLE_USER_HOME: /github/home/.gradle
+      LANG: en_US.UTF-8
+      LC_ALL: en_US.UTF-8
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Install dependencies (Rocky 8 + JDK8)
+        run: |
+          set -euxo pipefail
+          dnf -y install java-1.8.0-openjdk-devel git wget unzip which jq bc curl glibc-langpack-en
+          dnf -y groupinstall "Development Tools"
+
+      - name: Check Java version
+        run: java -version
+
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            /github/home/.gradle/caches
+            /github/home/.gradle/wrapper
+          key: rockylinux-x86_64-gradle-${{ hashFiles('**/*.gradle', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            rockylinux-x86_64-gradle-
+
+      - name: Stop Gradle daemon
+        run: ./gradlew --stop || true
+
+      - name: Build
+        run: ./gradlew clean build --no-daemon
+
+      - name: Test with RocksDB engine
+        run: ./gradlew :framework:testWithRocksDb --no-daemon
+
+  docker-build-debian11:
+    name: Build debian11 (JDK 8 / x86_64)
+    if: ${{ github.event_name == 'pull_request' || inputs.job == 'all' || inputs.job == 'debian11' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    container:
+      image: eclipse-temurin:8-jdk # base image is Debian 11 (Bullseye)
+
+    defaults:
+      run:
+        shell: bash
+
+    env:
+      GRADLE_USER_HOME: /github/home/.gradle
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Install dependencies (Debian + build tools)
+        run: |
+          set -euxo pipefail
+          apt-get update
+          apt-get install -y git wget unzip build-essential curl jq
+
+      - name: Check Java version
+        run: java -version
+
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            /github/home/.gradle/caches
+            /github/home/.gradle/wrapper
+          key: debian11-x86_64-gradle-${{ hashFiles('**/*.gradle', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            debian11-x86_64-gradle-
+
+      - name: Build
+        run: ./gradlew clean build --no-daemon
+
+      - name: Test with RocksDB engine
+        run: ./gradlew :framework:testWithRocksDb --no-daemon

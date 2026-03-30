@@ -12,7 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
-import org.tron.core.Constant;
+import org.tron.common.TestConstants;
 import org.tron.core.config.Configuration;
 import org.tron.core.config.args.Args;
 import org.tron.p2p.discover.Node;
@@ -79,7 +79,7 @@ public class NodeTest {
 
   @Test
   public void testPublishConfig() {
-    Config config = Configuration.getByFileName(Constant.TEST_CONF, Constant.TEST_CONF);
+    Config config = Configuration.getByFileName(TestConstants.TEST_CONF);
 
     PublishConfig publishConfig = new PublishConfig();
     Assert.assertFalse(publishConfig.isDnsPublishEnable());

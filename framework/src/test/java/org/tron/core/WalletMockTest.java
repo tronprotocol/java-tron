@@ -87,7 +87,7 @@ public class WalletMockTest {
 
   @Before
   public void init() {
-    CommonParameter.PARAMETER.setMinEffectiveConnection(0);
+    CommonParameter.getInstance().setMinEffectiveConnection(0);
   }
 
   @After

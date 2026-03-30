@@ -20,6 +20,7 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.mockito.Mockito;
 import org.tron.api.GrpcAPI;
+import org.tron.common.TestConstants;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.logsfilter.EventPluginConfig;
 import org.tron.common.logsfilter.EventPluginLoader;
@@ -31,7 +32,6 @@ import org.tron.common.utils.PublicMethod;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.ChainBaseManager;
-import org.tron.core.Constant;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionRetCapsule;
@@ -84,7 +84,7 @@ public class BlockEventGetTest extends BlockGenerate {
 
   @BeforeClass
   public static void init() {
-    Args.setParam(new String[] {"--output-directory", dbPath()}, Constant.TEST_CONF);
+    Args.setParam(new String[] {"--output-directory", dbPath()}, TestConstants.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
   }
 

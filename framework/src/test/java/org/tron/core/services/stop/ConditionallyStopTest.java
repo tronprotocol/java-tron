@@ -2,7 +2,6 @@ package org.tron.core.services.stop;
 
 import com.google.common.collect.Maps;
 import com.google.protobuf.ByteString;
-import java.io.IOException;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -13,12 +12,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.ClassRule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.tron.common.application.TronApplicationContext;
+import org.tron.common.BaseMethodTest;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
@@ -28,31 +23,22 @@ import org.tron.consensus.ConsensusDelegate;
 import org.tron.consensus.dpos.DposService;
 import org.tron.consensus.dpos.DposSlot;
 import org.tron.core.ChainBaseManager;
-import org.tron.core.Constant;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.WitnessCapsule;
-import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.consensus.ConsensusService;
-import org.tron.core.db.Manager;
 import org.tron.core.net.TronNetDelegate;
 import org.tron.protos.Protocol;
 
 @Slf4j(topic = "test")
-public abstract class ConditionallyStopTest  {
-
-  @ClassRule
-  public static final TemporaryFolder temporaryFolder = new TemporaryFolder();
+public abstract class ConditionallyStopTest extends BaseMethodTest {
 
   static ChainBaseManager chainManager;
   private static DposSlot dposSlot;
   private final AtomicInteger port = new AtomicInteger(0);
-  protected String dbPath;
-  protected Manager dbManager;
   long currentHeader = -1;
   private TronNetDelegate tronNetDelegate;
-  private TronApplicationContext context;
 
   private DposService dposService;
   private ConsensusDelegate consensusDelegate;
@@ -65,25 +51,17 @@ public abstract class ConditionallyStopTest  {
 
   protected abstract void check() throws Exception;
 
-  protected void initDbPath() throws IOException {
-    dbPath = temporaryFolder.newFolder().toString();
-  }
-
   private Map<String, String> witnesses;
 
-
-  @Before
-  public void init() throws Exception {
-
-    initDbPath();
-    logger.info("Full node running.");
-    Args.setParam(new String[] {"-d", dbPath}, Constant.TEST_CONF);
+  @Override
+  protected void beforeContext() {
     Args.getInstance().setNodeListenPort(10000 + port.incrementAndGet());
     Args.getInstance().genesisBlock.setTimestamp(Long.toString(time));
     initParameter(Args.getInstance());
-    context = new TronApplicationContext(DefaultConfig.class);
+  }
 
-    dbManager = context.getBean(Manager.class);
+  @Override
+  protected void afterInit() {
     dposSlot = context.getBean(DposSlot.class);
     ConsensusService consensusService = context.getBean(ConsensusService.class);
     consensusService.start();
@@ -110,12 +88,6 @@ public abstract class ConditionallyStopTest  {
       consensusDelegate.saveWitness(witnessCapsule);
     });
     chainManager.getDynamicPropertiesStore().saveNextMaintenanceTime(time);
-  }
-
-  @After
-  public void destroy() {
-    Args.clearParam();
-    context.destroy();
   }
 
   private void generateBlock() throws Exception {

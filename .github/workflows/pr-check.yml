@@ -1,0 +1,131 @@
+name: PR Check
+
+on:
+  push:
+    branches: [ 'master', 'release_**' ]
+  pull_request:
+    branches: [ 'develop', 'release_**' ]
+    types: [ opened, edited, synchronize, reopened ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pr-lint:
+    name: PR Lint
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Validate PR title and description
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const title = context.payload.pull_request.title;
+            const body = context.payload.pull_request.body;
+            const errors = [];
+            const warnings = [];
+
+            const allowedTypes = ['feat','fix','refactor','docs','style','test','chore','ci','perf','build','revert'];
+            const knownScopes = [
+              'framework','chainbase','actuator','consensus','common','crypto','plugins','protocol',
+              'net','db','vm','tvm','api','jsonrpc','rpc','http','event','config',
+              'block','proposal','trie','log','metrics','test','docker','version',
+              'freezeV2','DynamicEnergy','stable-coin','reward','lite','toolkit'
+            ];
+
+            // 1. Title length check
+            if (!title || title.trim().length < 10) {
+              errors.push('PR title is too short (minimum 10 characters).');
+            }
+            if (title && title.length > 72) {
+              errors.push(`PR title is too long (${title.length}/72 characters).`);
+            }
+
+            // 2. Conventional format check
+            const conventionalRegex = /^(feat|fix|refactor|docs|style|test|chore|ci|perf|build|revert)(\([^)]+\))?:\s\S.*/;
+            if (title && !conventionalRegex.test(title)) {
+              errors.push(
+                'PR title must follow conventional format: `type(scope): description`\n' +
+                '  Allowed types: ' + allowedTypes.map(t => `\`${t}\``).join(', ') + '\n' +
+                '  Example: `feat(tvm): add blob opcodes`'
+              );
+            }
+
+            // 3. No trailing period
+            if (title && title.endsWith('.')) {
+              errors.push('PR title should not end with a period (.).');
+            }
+
+            // 4. Description part should not start with a capital letter
+            if (title) {
+              const descMatch = title.match(/^\w+(?:\([^)]+\))?:\s*(.+)/);
+              if (descMatch) {
+                const desc = descMatch[1];
+                if (/^[A-Z]/.test(desc)) {
+                  errors.push('Description should not start with a capital letter.');
+                }
+              }
+            }
+
+            // 5. Scope validation (warning only)
+            if (title) {
+              const scopeMatch = title.match(/^\w+\(([^)]+)\):/);
+              if (scopeMatch && !knownScopes.includes(scopeMatch[1])) {
+                warnings.push(`Unknown scope \`${scopeMatch[1]}\`. See CONTRIBUTING.md for known scopes.`);
+              }
+            }
+
+            // 6. PR description check
+            if (!body || body.trim().length < 20) {
+              errors.push('PR description is too short or empty (minimum 20 characters). Please describe what this PR does and why.');
+            }
+
+            // Output warnings
+            for (const w of warnings) {
+              core.warning(w);
+            }
+
+            // Output result
+            if (errors.length > 0) {
+              const docLink = 'See [CONTRIBUTING.md](https://github.com/' + context.repo.owner + '/' + context.repo.repo + '/blob/develop/CONTRIBUTING.md#pull-request-guidelines) for details.';
+              const message = '### PR Lint Failed\n\n' + errors.map(e => `- ${e}`).join('\n') + '\n\n' + docLink;
+              core.setFailed(message);
+            } else {
+              core.info('PR lint passed.');
+            }
+
+  checkstyle:
+    name: Checkstyle
+    runs-on: ubuntu-24.04-arm
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Cache Gradle packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle', '**/gradle-wrapper.properties') }}
+          restore-keys: ${{ runner.os }}-gradle-
+
+      - name: Run Checkstyle
+        run: ./gradlew :framework:checkstyleMain :framework:checkstyleTest :plugins:checkstyleMain
+
+      - name: Upload Checkstyle reports
+        if: failure()
+        uses: actions/upload-artifact@v6
+        with:
+          name: checkstyle-reports
+          path: |
+            framework/build/reports/checkstyle/
+            plugins/build/reports/checkstyle/

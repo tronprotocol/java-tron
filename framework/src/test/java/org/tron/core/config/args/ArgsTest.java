@@ -31,13 +31,13 @@ import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.tron.common.TestConstants;
 import org.tron.common.args.GenesisBlock;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.LocalWitnesses;
 import org.tron.common.utils.PublicMethod;
-import org.tron.core.Constant;
 import org.tron.core.config.Configuration;
 
 @Slf4j
@@ -57,8 +57,8 @@ public class ArgsTest {
 
   @Test
   public void get() {
-    Args.setParam(new String[] {"-c", Constant.TEST_CONF, "--keystore-factory"},
-        Constant.TESTNET_CONF);
+    Args.setParam(new String[] {"-c", TestConstants.TEST_CONF, "--keystore-factory"},
+        TestConstants.NET_CONF);
 
     CommonParameter parameter = Args.getInstance();
 
@@ -70,7 +70,8 @@ public class ArgsTest {
     Args.setLocalWitnesses(localWitnesses);
     address = ByteArray.toHexString(Args.getLocalWitnesses()
         .getWitnessAccountAddress());
-    Assert.assertEquals(Constant.ADD_PRE_FIX_STRING_TESTNET, DecodeUtil.addressPreFixString);
+    Assert.assertEquals("41", DecodeUtil.addressPreFixString);
+    Assert.assertEquals(TestConstants.TEST_CONF, Args.getConfigFilePath());
     Assert.assertEquals(0, parameter.getBackupPriority());
 
     Assert.assertEquals(3000, parameter.getKeepAliveInterval());
@@ -135,14 +136,15 @@ public class ArgsTest {
   @Test
   public void testIpFromLibP2p()
       throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
-    Args.setParam(new String[] {}, Constant.TEST_CONF);
+    Args.setParam(new String[] {}, TestConstants.TEST_CONF);
     CommonParameter parameter = Args.getInstance();
+    Assert.assertEquals(TestConstants.TEST_CONF, Args.getConfigFilePath());
 
     String configuredExternalIp = parameter.getNodeExternalIp();
     Assert.assertEquals("46.168.1.1", configuredExternalIp);
 
-    Config config = Configuration.getByFileName(null, Constant.TEST_CONF);
-    Config config3 = config.withoutPath(Constant.NODE_DISCOVERY_EXTERNAL_IP);
+    Config config = Configuration.getByFileName(TestConstants.TEST_CONF);
+    Config config3 = config.withoutPath(ConfigKey.NODE_DISCOVERY_EXTERNAL_IP);
 
     CommonParameter.getInstance().setNodeExternalIp(null);
 
@@ -156,7 +158,7 @@ public class ArgsTest {
   @Test
   public void testOldRewardOpt() {
     thrown.expect(IllegalArgumentException.class);
-    Args.setParam(new String[] {"-c", "args-test.conf"}, Constant.TESTNET_CONF);
+    Args.setParam(new String[] {"-c", "args-test.conf"}, TestConstants.NET_CONF);
   }
 
   @Test
@@ -166,7 +168,7 @@ public class ArgsTest {
     storage.put("storage.db.directory", "database");
     Config config = ConfigFactory.defaultOverrides().withFallback(ConfigFactory.parseMap(storage));
     // test default value
-    Args.setParam(config);
+    Args.applyConfigParams(config);
     Assert.assertTrue(Args.getInstance().isRpcEnable());
     Assert.assertTrue(Args.getInstance().isRpcSolidityEnable());
     Assert.assertTrue(Args.getInstance().isRpcPBFTEnable());
@@ -193,7 +195,7 @@ public class ArgsTest {
     storage.put("node.jsonrpc.maxSubTopics", "20");
     config = ConfigFactory.defaultOverrides().withFallback(ConfigFactory.parseMap(storage));
     // test value
-    Args.setParam(config);
+    Args.applyConfigParams(config);
     Assert.assertTrue(Args.getInstance().isRpcEnable());
     Assert.assertTrue(Args.getInstance().isRpcSolidityEnable());
     Assert.assertTrue(Args.getInstance().isRpcPBFTEnable());
@@ -220,7 +222,7 @@ public class ArgsTest {
     storage.put("node.jsonrpc.maxSubTopics", "1000");
     config = ConfigFactory.defaultOverrides().withFallback(ConfigFactory.parseMap(storage));
     // test value
-    Args.setParam(config);
+    Args.applyConfigParams(config);
     Assert.assertFalse(Args.getInstance().isRpcEnable());
     Assert.assertFalse(Args.getInstance().isRpcSolidityEnable());
     Assert.assertFalse(Args.getInstance().isRpcPBFTEnable());
@@ -247,7 +249,7 @@ public class ArgsTest {
     storage.put("node.jsonrpc.maxSubTopics", "40");
     config = ConfigFactory.defaultOverrides().withFallback(ConfigFactory.parseMap(storage));
     // test value
-    Args.setParam(config);
+    Args.applyConfigParams(config);
     Assert.assertFalse(Args.getInstance().isRpcEnable());
     Assert.assertFalse(Args.getInstance().isRpcSolidityEnable());
     Assert.assertTrue(Args.getInstance().isRpcPBFTEnable());
@@ -265,7 +267,7 @@ public class ArgsTest {
     storage.put("node.jsonrpc.maxSubTopics", "0");
     config = ConfigFactory.defaultOverrides().withFallback(ConfigFactory.parseMap(storage));
     // check value
-    Args.setParam(config);
+    Args.applyConfigParams(config);
     Assert.assertEquals(0, Args.getInstance().getJsonRpcMaxBlockRange());
     Assert.assertEquals(0, Args.getInstance().getJsonRpcMaxSubTopics());
 
@@ -274,9 +276,87 @@ public class ArgsTest {
     storage.put("node.jsonrpc.maxSubTopics", "-4");
     config = ConfigFactory.defaultOverrides().withFallback(ConfigFactory.parseMap(storage));
     // check value
-    Args.setParam(config);
+    Args.applyConfigParams(config);
     Assert.assertEquals(-2, Args.getInstance().getJsonRpcMaxBlockRange());
     Assert.assertEquals(-4, Args.getInstance().getJsonRpcMaxSubTopics());
+
+    Args.clearParam();
+  }
+
+  /**
+   * Verify that CLI storage parameters correctly override config file values.
+   *
+   * <p>config-test.conf defines: db.directory = "database", db.engine = "LEVELDB".
+   * When CLI passes different values (e.g. --storage-db-directory cli-db-dir),
+   * the Storage object should reflect the CLI values, not the config file values.
+   *
+   * <p>This ensures the three-layer override chain works:
+   * Storage defaults -> config file -> CLI arguments.
+   */
+  @Test
+  public void testCliOverridesStorageConfig() {
+    Args.setParam(new String[] {
+        "--storage-db-directory", "cli-db-dir",
+        "--storage-db-engine", "ROCKSDB",
+        "--storage-db-synchronous", "true",
+        "--storage-index-directory", "cli-index-dir",
+        "--storage-index-switch", "cli-index-switch",
+        "--storage-transactionHistory-switch", "off",
+        "--contract-parse-enable", "false"
+    }, TestConstants.TEST_CONF);
+
+    CommonParameter parameter = Args.getInstance();
+
+    Assert.assertEquals("cli-db-dir", parameter.getStorage().getDbDirectory());
+    Assert.assertEquals("ROCKSDB", parameter.getStorage().getDbEngine());
+    Assert.assertTrue(parameter.getStorage().isDbSync());
+    Assert.assertEquals("cli-index-dir", parameter.getStorage().getIndexDirectory());
+    Assert.assertEquals("cli-index-switch", parameter.getStorage().getIndexSwitch());
+    Assert.assertEquals("off", parameter.getStorage().getTransactionHistorySwitch());
+    Assert.assertFalse(parameter.getStorage().isContractParseSwitch());
+
+    Args.clearParam();
+  }
+
+  /**
+   * Verify that event.subscribe.enable = false from config is read correctly.
+   */
+  @Test
+  public void testEventSubscribeFromConfig() {
+    Args.setParam(new String[] {}, TestConstants.TEST_CONF);
+    Assert.assertFalse(Args.getInstance().isEventSubscribe());
+    Args.clearParam();
+  }
+
+  /**
+   * Verify that CLI --es overrides event.subscribe.enable from config.
+   * config-test.conf defines: event.subscribe.enable = false,
+   * passing --es explicitly sets eventSubscribe = true, overriding config.
+   */
+  @Test
+  public void testCliEsOverridesConfig() {
+    Args.setParam(new String[] {"--es"}, TestConstants.TEST_CONF);
+    Assert.assertTrue(Args.getInstance().isEventSubscribe());
+    Args.clearParam();
+  }
+
+  /**
+   * Verify that config file storage values are applied when no CLI override is present.
+   *
+   * <p>config-test.conf defines: db.directory = "database", db.engine = "LEVELDB".
+   * On ARM64 CI, Gradle injects -Dstorage.db.engine=ROCKSDB via system property,
+   * so the engine will be ROCKSDB instead of LEVELDB.
+   */
+  @Test
+  public void testConfigStorageDefaults() {
+    Args.setParam(new String[] {}, TestConstants.TEST_CONF);
+
+    CommonParameter parameter = Args.getInstance();
+
+    Assert.assertEquals("database", parameter.getStorage().getDbDirectory());
+    String expectedEngine = System.getProperty("storage.db.engine") != null
+        ? System.getProperty("storage.db.engine") : "LEVELDB";
+    Assert.assertEquals(expectedEngine, parameter.getStorage().getDbEngine());
 
     Args.clearParam();
   }

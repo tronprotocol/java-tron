@@ -23,6 +23,7 @@ import org.junit.Test;
 import org.mockito.Mockito;
 import org.springframework.context.ApplicationContext;
 import org.tron.common.BaseTest;
+import org.tron.common.TestConstants;
 import org.tron.common.crypto.SignInterface;
 import org.tron.common.crypto.SignUtils;
 import org.tron.common.parameter.CommonParameter;
@@ -30,7 +31,6 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.ChainBaseManager;
-import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.args.Args;
@@ -67,7 +67,7 @@ public class RelayServiceTest extends BaseTest {
   @BeforeClass
   public static void init() {
     Args.setParam(new String[]{"--output-directory", dbPath(), "--debug"},
-            Constant.TEST_CONF);
+            TestConstants.TEST_CONF);
   }
 
   @After
@@ -85,9 +85,9 @@ public class RelayServiceTest extends BaseTest {
 
   private void initWitness() {
     // key: 0154435f065a57fec6af1e12eaa2fa600030639448d7809f4c65bdcf8baed7e5
-    // Hex: A08A8D690BF36806C36A7DAE3AF796643C1AA9CC01
-    // Base58: 27bi7CD8d94AgXY3XFS9A9vx78Si5MqrECz
-    byte[] key = Hex.decode("A08A8D690BF36806C36A7DAE3AF796643C1AA9CC01");//exist already
+    // Hex: 418A8D690BF36806C36A7DAE3AF796643C1AA9CC01
+    // Base58: TNboetpFgv9SqMoHvaVt626NLXETnbdW1K
+    byte[] key = Hex.decode("418A8D690BF36806C36A7DAE3AF796643C1AA9CC01");//exist already
     WitnessCapsule witnessCapsule = chainBaseManager.getWitnessStore().get(key);
     System.out.println(witnessCapsule.getInstance());
     witnessCapsule.setVoteCount(1000);
@@ -104,23 +104,23 @@ public class RelayServiceTest extends BaseTest {
             "getNextWitnesses", ByteString.class, Integer.class);
     method.setAccessible(true);
     Set<ByteString> s1 = (Set<ByteString>) method.invoke(
-            service, getFromHexString("A08A8D690BF36806C36A7DAE3AF796643C1AA9CC01"), 3);
+            service, getFromHexString("418A8D690BF36806C36A7DAE3AF796643C1AA9CC01"), 3);
     Assert.assertEquals(3, s1.size());
-    assertContains(s1, "A0299F3DB80A24B20A254B89CE639D59132F157F13");
-    assertContains(s1, "A0807337F180B62A77576377C1D0C9C24DF5C0DD62");
-    assertContains(s1, "A05430A3F089154E9E182DDD6FE136A62321AF22A7");
+    assertContains(s1, "41299F3DB80A24B20A254B89CE639D59132F157F13");
+    assertContains(s1, "41807337F180B62A77576377C1D0C9C24DF5C0DD62");
+    assertContains(s1, "415430A3F089154E9E182DDD6FE136A62321AF22A7");
 
     Set<ByteString> s2 = (Set<ByteString>) method.invoke(
-            service, getFromHexString("A0FAB5FBF6AFB681E4E37E9D33BDDB7E923D6132E5"), 3);
+            service, getFromHexString("41FAB5FBF6AFB681E4E37E9D33BDDB7E923D6132E5"), 3);
     Assert.assertEquals(3, s2.size());
-    assertContains(s2, "A014EEBE4D30A6ACB505C8B00B218BDC4733433C68");
-    assertContains(s2, "A08A8D690BF36806C36A7DAE3AF796643C1AA9CC01");
-    assertContains(s2, "A0299F3DB80A24B20A254B89CE639D59132F157F13");
+    assertContains(s2, "4114EEBE4D30A6ACB505C8B00B218BDC4733433C68");
+    assertContains(s2, "418A8D690BF36806C36A7DAE3AF796643C1AA9CC01");
+    assertContains(s2, "41299F3DB80A24B20A254B89CE639D59132F157F13");
 
     Set<ByteString> s3 = (Set<ByteString>) method.invoke(
-            service, getFromHexString("A08A8D690BF36806C36A7DAE3AF796643C1AA9CC01"), 1);
+            service, getFromHexString("418A8D690BF36806C36A7DAE3AF796643C1AA9CC01"), 1);
     Assert.assertEquals(1, s3.size());
-    assertContains(s3, "A0299F3DB80A24B20A254B89CE639D59132F157F13");
+    assertContains(s3, "41299F3DB80A24B20A254B89CE639D59132F157F13");
   }
 
   private void testBroadcast() {
@@ -133,7 +133,7 @@ public class RelayServiceTest extends BaseTest {
       doNothing().when(c1).send((byte[]) any());
 
       peer.setChannel(c1);
-      peer.setAddress(getFromHexString("A0299F3DB80A24B20A254B89CE639D59132F157F13"));
+      peer.setAddress(getFromHexString("41299F3DB80A24B20A254B89CE639D59132F157F13"));
       peer.setNeedSyncFromPeer(false);
       peer.setNeedSyncFromUs(false);
 
@@ -149,7 +149,7 @@ public class RelayServiceTest extends BaseTest {
 
       BlockCapsule blockCapsule = new BlockCapsule(chainBaseManager.getHeadBlockNum() + 1,
               chainBaseManager.getHeadBlockId(),
-              0, getFromHexString("A08A8D690BF36806C36A7DAE3AF796643C1AA9CC01"));
+              0, getFromHexString("418A8D690BF36806C36A7DAE3AF796643C1AA9CC01"));
       BlockMessage msg = new BlockMessage(blockCapsule);
       service.broadcast(msg);
       Item item = new Item(blockCapsule.getBlockId(), Protocol.Inventory.InventoryType.BLOCK);
@@ -173,7 +173,7 @@ public class RelayServiceTest extends BaseTest {
 
   private void testCheckHelloMessage() {
     String key = "0154435f065a57fec6af1e12eaa2fa600030639448d7809f4c65bdcf8baed7e5";
-    ByteString address = getFromHexString("A08A8D690BF36806C36A7DAE3AF796643C1AA9CC01");
+    ByteString address = getFromHexString("418A8D690BF36806C36A7DAE3AF796643C1AA9CC01");
     InetSocketAddress a1 = new InetSocketAddress("127.0.0.1", 10001);
     Node node = new Node(NetUtil.getNodeId(), a1.getAddress().getHostAddress(),
         null, a1.getPort());

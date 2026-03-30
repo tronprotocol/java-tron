@@ -44,6 +44,7 @@ public class DbLiteTest {
    * init logic.
    */
   public void startApp() {
+    Args.getInstance().setRpcPort(PublicMethod.chooseRandomPort());
     context = new TronApplicationContext(DefaultConfig.class);
     appTest = ApplicationFactory.create(context);
     appTest.startup();

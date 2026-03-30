@@ -14,7 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.junit.Test;
 import org.tron.common.BaseTest;
-import org.tron.core.Constant;
+import org.tron.common.TestConstants;
 import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.api.EnergyPriceHistoryLoader;
@@ -36,7 +36,7 @@ public class EnergyPriceHistoryLoaderTest extends BaseTest {
   private static long price5 = 140L;
 
   static {
-    Args.setParam(new String[] {"--output-directory", dbPath()}, Constant.TEST_CONF);
+    Args.setParam(new String[] {"--output-directory", dbPath()}, TestConstants.TEST_CONF);
   }
 
   public void initDB() {

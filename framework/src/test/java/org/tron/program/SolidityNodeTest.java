@@ -11,9 +11,9 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.Timeout;
 import org.tron.common.BaseTest;
+import org.tron.common.TestConstants;
 import org.tron.common.client.DatabaseGrpcClient;
 import org.tron.common.utils.PublicMethod;
-import org.tron.core.Constant;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.TronError;
 import org.tron.core.services.RpcApiService;
@@ -35,7 +35,7 @@ public class SolidityNodeTest extends BaseTest {
   public Timeout timeout = new Timeout(30, TimeUnit.SECONDS);
 
   static {
-    Args.setParam(new String[] {"-d", dbPath(), "--solidity"}, Constant.TEST_CONF);
+    Args.setParam(new String[] {"-d", dbPath(), "--solidity"}, TestConstants.TEST_CONF);
     Args.getInstance().setRpcPort(rpcPort);
     Args.getInstance().setSolidityHttpPort(solidityHttpPort);
   }

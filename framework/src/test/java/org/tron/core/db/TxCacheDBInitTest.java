@@ -9,9 +9,9 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
+import org.tron.common.TestConstants;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.ByteArray;
-import org.tron.core.Constant;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
@@ -40,7 +40,7 @@ public class TxCacheDBInitTest {
   @BeforeClass
   public static void init() throws IOException {
     Args.setParam(new String[]{"--output-directory", temporaryFolder.newFolder().toString(),
-        "--p2p-disable", "true"}, Constant.TEST_CONF);
+        "--p2p-disable", "true"}, TestConstants.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
   }
 
