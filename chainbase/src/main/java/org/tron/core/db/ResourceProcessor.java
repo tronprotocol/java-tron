@@ -49,7 +49,10 @@ abstract class ResourceProcessor {
     long averageUsage = divideCeil(usage * precision, windowSize);
 
     if (lastTime != now) {
-      assert now > lastTime;
+      if (now < lastTime) {
+        throw new IllegalArgumentException(
+            "Time went backwards: now=" + now + ", lastTime=" + lastTime);
+      }
       if (lastTime + windowSize > now) {
         long delta = now - lastTime;
         double decay = (windowSize - delta) / (double) windowSize;

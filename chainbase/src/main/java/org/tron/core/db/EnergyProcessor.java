@@ -153,7 +153,10 @@ public class EnergyProcessor extends ResourceProcessor {
     if (dynamicPropertiesStore.allowNewReward() && totalEnergyWeight <= 0) {
       return 0;
     } else {
-      assert totalEnergyWeight > 0;
+      if (totalEnergyWeight <= 0) {
+        throw new IllegalStateException(
+            "totalEnergyWeight must be positive, got: " + totalEnergyWeight);
+      }
     }
     return (long) (energyWeight * ((double) totalEnergyLimit / totalEnergyWeight));
   }

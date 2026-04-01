@@ -75,7 +75,10 @@ public class MerklePath {
   }
 
   public byte[] encode() throws ZksnarkException {
-    assert (authenticationPath.size() == index.size());
+    if (authenticationPath.size() != index.size()) {
+      throw new ZksnarkException("authenticationPath and index size mismatch: "
+          + authenticationPath.size() + " != " + index.size());
+    }
     List<List<Byte>> pathByteList = Lists.newArrayList();
     long indexLong; // 64
     for (int i = 0; i < authenticationPath.size(); i++) {

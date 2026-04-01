@@ -900,7 +900,10 @@ public class RepositoryImpl implements Repository {
     long averageUsage = divideCeil(usage * precision, windowSize);
 
     if (lastTime != now) {
-      assert now > lastTime;
+      if (now < lastTime) {
+        throw new IllegalArgumentException(
+            "Time went backwards: now=" + now + ", lastTime=" + lastTime);
+      }
       if (lastTime + windowSize > now) {
         long delta = now - lastTime;
         double decay = (windowSize - delta) / (double) windowSize;
@@ -930,7 +933,10 @@ public class RepositoryImpl implements Repository {
     long totalEnergyLimit = getDynamicPropertiesStore().getTotalEnergyCurrentLimit();
     long totalEnergyWeight = getDynamicPropertiesStore().getTotalEnergyWeight();
 
-    assert totalEnergyWeight > 0;
+    if (totalEnergyWeight <= 0) {
+      throw new IllegalStateException(
+          "totalEnergyWeight must be positive, got: " + totalEnergyWeight);
+    }
 
     return (long) (energyWeight * ((double) totalEnergyLimit / totalEnergyWeight));
   }
