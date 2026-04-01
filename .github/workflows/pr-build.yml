@@ -4,9 +4,15 @@ on:
   pull_request:
     branches: [ 'master','develop', 'release_**' ]
     types: [ opened, synchronize, reopened ]
-    paths-ignore: [ '**/*.md', '.gitignore', '**/.gitignore', '.editorconfig',
-                    '.gitattributes', 'docs/**', 'CHANGELOG', '.github/ISSUE_TEMPLATE/**',
-                    '.github/PULL_REQUEST_TEMPLATE/**', '.github/CODEOWNERS' ]
+    paths:
+      - '**/*.java'
+      - '**/*.gradle'
+      - 'build.gradle'
+      - 'settings.gradle'
+      - 'gradle.properties'
+      - 'gradle/**'
+      - 'gradlew'
+      - 'gradlew.bat'
   workflow_dispatch:
     inputs:
       job:
@@ -234,6 +240,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           min-coverage-overall: 70
           min-coverage-changed-files: 70
+          skip-if-no-changes: true
           title: '## Code Coverage Report'
           update-comment: true
 
