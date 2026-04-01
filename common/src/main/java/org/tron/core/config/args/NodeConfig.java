@@ -304,6 +304,8 @@ public class NodeConfig {
     private int maxBlockFilterNum = 50000;
     private int maxBatchSize = 100;
     private int maxResponseSize = 25 * 1024 * 1024;
+    private int maxRequestTimeout = 30;
+    private int maxAddressSize = 1000;
   }
 
   @Getter

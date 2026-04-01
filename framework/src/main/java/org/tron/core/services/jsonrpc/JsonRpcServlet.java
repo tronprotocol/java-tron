@@ -2,6 +2,7 @@ package org.tron.core.services.jsonrpc;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.googlecode.jsonrpc4j.HttpStatusCodeProvider;
 import com.googlecode.jsonrpc4j.JsonRpcInterceptor;
 import com.googlecode.jsonrpc4j.JsonRpcServer;
@@ -11,6 +12,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -19,6 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.parameter.CommonParameter;
+import org.tron.core.exception.jsonrpc.JsonRpcResponseTooLargeException;
 import org.tron.core.services.filter.BufferedResponseWrapper;
 import org.tron.core.services.filter.CachedBodyRequestWrapper;
 import org.tron.core.services.http.RateLimiterServlet;
@@ -28,6 +36,21 @@ import org.tron.core.services.http.RateLimiterServlet;
 public class JsonRpcServlet extends RateLimiterServlet {
 
   private static final ObjectMapper MAPPER = new ObjectMapper();
+
+  private static final ExecutorService RPC_EXECUTOR = Executors.newCachedThreadPool(
+      new ThreadFactoryBuilder().setNameFormat("jsonrpc-timeout-%d").setDaemon(true).build());
+
+  enum JsonRpcError {
+    EXCEED_LIMIT(-32005),
+    RESPONSE_TOO_LARGE(-32003),
+    TIMEOUT(-32002);
+
+    final int code;
+
+    JsonRpcError(int code) {
+      this.code = code;
+    }
+  }
 
   private JsonRpcServer rpcServer = null;
 
@@ -80,26 +103,50 @@ public class JsonRpcServlet extends RateLimiterServlet {
     // Check batch request array length
     JsonNode rootNode = MAPPER.readTree(body);
     if (rootNode.isArray() && rootNode.size() > parameter.getJsonRpcMaxBatchSize()) {
-      writeJsonRpcError(resp,
+      writeJsonRpcError(resp, JsonRpcError.EXCEED_LIMIT,
           "Batch size " + rootNode.size() + " exceeds the limit of "
               + parameter.getJsonRpcMaxBatchSize(), null);
       return;
     }
 
-    // Buffer the response to check its size before committing
-    BufferedResponseWrapper bufferedResp = new BufferedResponseWrapper(resp);
-    rpcServer.handle(new CachedBodyRequestWrapper(req, body), bufferedResp);
+    // Buffer the response; limit is enforced eagerly during writes to bound memory usage
+    int maxResponseSize = parameter.getJsonRpcMaxResponseSize();
+    CachedBodyRequestWrapper cachedReq = new CachedBodyRequestWrapper(req, body);
+    BufferedResponseWrapper bufferedResp = new BufferedResponseWrapper(resp, maxResponseSize);
 
-    byte[] responseBytes = bufferedResp.toByteArray();
-    logger.info("responseBytes: {}", responseBytes.length);
-    if (responseBytes.length > parameter.getJsonRpcMaxResponseSize()) {
+    int timeoutSec = parameter.getJsonRpcMaxRequestTimeout();
+    Future<?> future = RPC_EXECUTOR.submit(() -> {
+      try {
+        rpcServer.handle(cachedReq, bufferedResp);
+      } catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    });
+
+    try {
+      future.get(timeoutSec, TimeUnit.SECONDS);
+    } catch (TimeoutException e) {
+      future.cancel(true);
       JsonNode idNode = (!rootNode.isArray()) ? rootNode.get("id") : null;
-      writeJsonRpcError(resp,
-          "Response byte size " + responseBytes.length + " exceeds the limit of "
-              + parameter.getJsonRpcMaxResponseSize(), idNode);
+      writeJsonRpcError(resp, JsonRpcError.TIMEOUT, "Request timeout after " + timeoutSec + "s",
+          idNode);
       return;
+    } catch (ExecutionException e) {
+      Throwable cause = e.getCause();
+      if (cause instanceof RuntimeException
+          && cause.getCause() instanceof JsonRpcResponseTooLargeException) {
+        JsonNode idNode = (!rootNode.isArray()) ? rootNode.get("id") : null;
+        writeJsonRpcError(resp, JsonRpcError.RESPONSE_TOO_LARGE, cause.getCause().getMessage(),
+            idNode);
+        return;
+      }
+      throw new IOException("RPC execution failed", cause);
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      throw new IOException("RPC interrupted", e);
     }
 
+    byte[] responseBytes = bufferedResp.toByteArray();
     resp.setContentLength(responseBytes.length);
     resp.getOutputStream().write(responseBytes);
     resp.getOutputStream().flush();
@@ -115,10 +162,10 @@ public class JsonRpcServlet extends RateLimiterServlet {
     return buffer.toByteArray();
   }
 
-  private void writeJsonRpcError(HttpServletResponse resp, String message, JsonNode id)
-      throws IOException {
+  private void writeJsonRpcError(HttpServletResponse resp, JsonRpcError error, String message,
+      JsonNode id) throws IOException {
     String idStr = (id != null && !id.isNull() && !id.isMissingNode()) ? id.toString() : "null";
-    String body = "{\"jsonrpc\":\"2.0\",\"error\":{\"code\":" + -32005
+    String body = "{\"jsonrpc\":\"2.0\",\"error\":{\"code\":" + error.code
         + ",\"message\":\"" + message + "\"},\"id\":" + idStr + "}";
     byte[] bytes = body.getBytes(StandardCharsets.UTF_8);
     resp.setContentType("application/json");
