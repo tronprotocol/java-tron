@@ -69,6 +69,7 @@ public class CommitteeConfig {
   private long consensusLogicOptimization = 0;
   private long allowTvmCancun = 0;
   private long allowTvmBlob = 0;
+  private long allowTvmOsaka = 0;
   private long unfreezeDelayDays = 0;
   private long allowReceiptsMerkleRoot = 0;
   private long allowAccountAssetOptimization = 0;
@@ -92,22 +93,25 @@ public class CommitteeConfig {
    * uppercase letters) which causes ConfigBeanFactory key mismatch. These two fields
    * are excluded from automatic binding and handled manually after.
    */
+  private static final String PBFT_EXPIRE_NUM_KEY = "pBFTExpireNum";
+  private static final String ALLOW_PBFT_KEY = "allowPBFT";
+
   public static CommitteeConfig fromConfig(Config config) {
     Config section = config.getConfig("committee");
 
     // ConfigBeanFactory derives key names from setter methods. For setPBFTExpireNum()
     // it expects "PBFTExpireNum" (capital P), but config.conf uses "pBFTExpireNum".
-    // Similarly, getAllowPBFT() maps to "allowPBFT" which may be missing in test configs.
-    // Add uppercase aliases so ConfigBeanFactory can find them.
+    // Add uppercase alias so ConfigBeanFactory can find it.
     Config aliased = section;
-    if (section.hasPath("pBFTExpireNum") && !section.hasPath("PBFTExpireNum")) {
-      aliased = aliased.withValue("PBFTExpireNum", section.getValue("pBFTExpireNum"));
+    if (section.hasPath(PBFT_EXPIRE_NUM_KEY) && !section.hasPath("PBFTExpireNum")) {
+      aliased = aliased.withValue("PBFTExpireNum", section.getValue(PBFT_EXPIRE_NUM_KEY));
     }
 
     CommitteeConfig cc = ConfigBeanFactory.create(aliased, CommitteeConfig.class);
     // Ensure the manually-named fields get the right values from the original keys
-    cc.allowPBFT = section.hasPath("allowPBFT") ? section.getLong("allowPBFT") : 0;
-    cc.pBFTExpireNum = section.hasPath("pBFTExpireNum") ? section.getLong("pBFTExpireNum") : 20;
+    cc.allowPBFT = section.hasPath(ALLOW_PBFT_KEY) ? section.getLong(ALLOW_PBFT_KEY) : 0;
+    cc.pBFTExpireNum = section.hasPath(PBFT_EXPIRE_NUM_KEY)
+        ? section.getLong(PBFT_EXPIRE_NUM_KEY) : 20;
 
     cc.postProcess();
     return cc;

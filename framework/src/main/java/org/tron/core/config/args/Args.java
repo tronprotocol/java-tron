@@ -523,6 +523,7 @@ public class Args extends CommonParameter {
     PARAMETER.consensusLogicOptimization = cc.getConsensusLogicOptimization();
     PARAMETER.allowTvmCancun = cc.getAllowTvmCancun();
     PARAMETER.allowTvmBlob = cc.getAllowTvmBlob();
+    PARAMETER.allowTvmOsaka = cc.getAllowTvmOsaka();
     PARAMETER.unfreezeDelayDays = cc.getUnfreezeDelayDays();
     // allowReceiptsMerkleRoot not in CommonParameter — skip for now
     PARAMETER.allowAccountAssetOptimization = cc.getAllowAccountAssetOptimization();
@@ -811,10 +812,6 @@ public class Args extends CommonParameter {
     eventConfig = EventConfig.fromConfig(config);
     applyEventConfig(eventConfig);
 
-    PARAMETER.allowTvmOsaka =
-        config.hasPath(ConfigKey.COMMITTEE_ALLOW_TVM_OSAKA) ? config
-            .getInt(ConfigKey.COMMITTEE_ALLOW_TVM_OSAKA) : 0;
-
     logConfig();
   }
 
@@ -1079,7 +1076,7 @@ public class Args extends CommonParameter {
 
       if (dns.getChangeThreshold() > 0) {
         publishConfig.setChangeThreshold(dns.getChangeThreshold());
-      } else if (dns.getChangeThreshold() != 0.0) {
+      } else if (Double.compare(dns.getChangeThreshold(), 0.0) != 0) {
         logger.error("Check node.dns.changeThreshold, should be bigger than 0, default 0.1");
       }
 

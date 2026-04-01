@@ -81,13 +81,15 @@ public class EventConfig {
 
     // "native" is a Java reserved word, "topics" has optional fields per item —
     // strip both before binding, read manually
-    Config bindable = section.withoutPath("native").withoutPath("topics")
+    String nativeKey = "native";
+    String topicsKey = "topics";
+    Config bindable = section.withoutPath(nativeKey).withoutPath(topicsKey)
         .withoutPath("topicDefaults");
     EventConfig ec = ConfigBeanFactory.create(bindable, EventConfig.class);
 
     // manually bind "native" sub-section
-    Config nativeSection = section.hasPath("native")
-        ? section.getConfig("native") : ConfigFactory.empty();
+    Config nativeSection = section.hasPath(nativeKey)
+        ? section.getConfig(nativeKey) : ConfigFactory.empty();
     ec.nativeQueue = new NativeConfig();
     if (nativeSection.hasPath("useNativeQueue")) {
       ec.nativeQueue.useNativeQueue = nativeSection.getBoolean("useNativeQueue");
@@ -100,9 +102,9 @@ public class EventConfig {
     }
 
     // manually bind topics — each item may have optional fields
-    if (section.hasPath("topics")) {
+    if (section.hasPath(topicsKey)) {
       ec.topics = new ArrayList<>();
-      for (com.typesafe.config.ConfigObject obj : section.getObjectList("topics")) {
+      for (com.typesafe.config.ConfigObject obj : section.getObjectList(topicsKey)) {
         Config tc = obj.toConfig();
         TopicConfig topic = new TopicConfig();
         if (tc.hasPath("triggerName")) {

@@ -43,9 +43,10 @@ public class MiscConfig {
     // trx
     mc.trxReferenceBlock = config.hasPath("trx.reference.block")
         ? config.getString("trx.reference.block") : "solid";
-    if (config.hasPath("trx.expiration.timeInMilliseconds")
-        && config.getLong("trx.expiration.timeInMilliseconds") > 0) {
-      mc.trxExpirationTimeInMilliseconds = config.getLong("trx.expiration.timeInMilliseconds");
+    String trxExpirationKey = "trx.expiration.timeInMilliseconds";
+    if (config.hasPath(trxExpirationKey)
+        && config.getLong(trxExpirationKey) > 0) {
+      mc.trxExpirationTimeInMilliseconds = config.getLong(trxExpirationKey);
     }
 
     // energy (note: config key has typo "enery" — preserved for backward compat)
