@@ -3,6 +3,7 @@ package org.tron.plugins;
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -201,18 +202,15 @@ public class DbConvert implements Callable<Integer> {
       return dbName;
     }
 
-    private void batchInsert(RocksDB rocks, List<byte[]> keys, List<byte[]> values)
+    private void batchInsert(RocksDB rocks, List<Map.Entry<byte[], byte[]>> entries)
         throws Exception {
       try (org.rocksdb.WriteBatch batch = new org.rocksdb.WriteBatch()) {
-        for (int i = 0; i < keys.size(); i++) {
-          byte[] k = keys.get(i);
-          byte[] v = values.get(i);
-          batch.put(k, v);
+        for (Map.Entry<byte[], byte[]> entry : entries) {
+          batch.put(entry.getKey(), entry.getValue());
         }
         write(rocks, batch);
       }
-      keys.clear();
-      values.clear();
+      entries.clear();
     }
 
     /**
@@ -254,8 +252,7 @@ public class DbConvert implements Callable<Integer> {
      * @return if ok
      */
     public void convertLevelToRocks() throws Exception {
-      List<byte[]> keys = new ArrayList<>(BATCH);
-      List<byte[]> values = new ArrayList<>(BATCH);
+      List<Map.Entry<byte[], byte[]>> entries = new ArrayList<>(BATCH);
       JniDBFactory.pushMemoryPool(1024 * 1024);
       try (
           DB level = DBUtils.newLevelDb(srcDbPath);
@@ -273,15 +270,14 @@ public class DbConvert implements Callable<Integer> {
           srcDbKeyCount++;
           srcDbKeySum = byteArrayToIntWithOne(srcDbKeySum, key);
           srcDbValueSum = byteArrayToIntWithOne(srcDbValueSum, value);
-          keys.add(key);
-          values.add(value);
-          if (keys.size() >= BATCH) {
-            batchInsert(rocks, keys, values);
+          entries.add(new AbstractMap.SimpleEntry<>(key, value));
+          if (entries.size() >= BATCH) {
+            batchInsert(rocks, entries);
           }
         }
         // clear
-        if (!keys.isEmpty()) {
-          batchInsert(rocks, keys, values);
+        if (!entries.isEmpty()) {
+          batchInsert(rocks, entries);
         }
       } finally {
         JniDBFactory.popMemoryPool();

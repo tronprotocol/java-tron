@@ -300,6 +300,11 @@ public class TransactionTrace {
         - (mergedUsage * mergedSize - usage * size);
     // If area merging happened during suicide, use the current window size
     long newSize = mergedSize == currentSize ? size : currentSize;
+    if (newSize == 0) {
+      accountCap.setEnergyUsage(0);
+      accountCap.setNewWindowSize(ENERGY, 0L);
+      return;
+    }
     // Calc new usage by fixed x-axes
     long newUsage = max(0, newArea / newSize, dynamicPropertiesStore.disableJavaLangMath());
     // Reset account usage and window size
@@ -317,6 +322,11 @@ public class TransactionTrace {
     // If area merging happened during suicide, use the current window size
     long newSize = mergedSize == currentSize ? size : currentSize;
     long newSize2 = mergedSize == currentSize ? size2 : currentSize2;
+    if (newSize == 0) {
+      accountCap.setEnergyUsage(0);
+      accountCap.setNewWindowSizeV2(ENERGY, 0L);
+      return;
+    }
     // Calc new usage by fixed x-axes
     long newUsage = max(0, newArea / newSize, dynamicPropertiesStore.disableJavaLangMath());
     // Reset account usage and window size

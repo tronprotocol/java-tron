@@ -18,6 +18,7 @@ package org.tron.core.db;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import java.lang.reflect.Method;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -45,6 +46,7 @@ import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.raw;
 import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
+import org.tron.protos.contract.Common.ResourceCode;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 
@@ -444,6 +446,78 @@ public class TransactionTraceTest extends BaseTest {
             accountCapsule.getBalance() + trace.getReceipt().getEnergyFee());
 
     dbManager.getDynamicPropertiesStore().saveUnfreezeDelayDays(0);
+    dbManager.getDynamicPropertiesStore().saveAllowCancelAllUnfreezeV2(0);
+  }
+
+  @Test
+  public void testResetAccountUsage_zeroNewSize() throws Exception {
+    // Ensure V1 path (not V2)
+    dbManager.getDynamicPropertiesStore().saveAllowCancelAllUnfreezeV2(0);
+
+    AccountCapsule account = new AccountCapsule(
+        ByteString.copyFromUtf8("testZeroSize"),
+        ByteString.copyFrom(ByteArray.fromInt(99)),
+        AccountType.Normal,
+        0L);
+    // currentSize = 100, currentUsage = 500
+    account.setNewWindowSize(ResourceCode.ENERGY, 100L);
+    account.setEnergyUsage(500L);
+
+    // Build a minimal TransactionTrace to access the private method
+    Transaction trxn = Transaction.newBuilder().setRawData(
+        raw.newBuilder().addContract(
+            Contract.newBuilder().setType(ContractType.TransferContract))).build();
+    TransactionCapsule trxCap = new TransactionCapsule(trxn);
+    TransactionTrace trace = new TransactionTrace(trxCap, StoreFactory.getInstance(),
+        new RuntimeImpl());
+
+    // Use reflection to call private resetAccountUsage
+    Method method = TransactionTrace.class.getDeclaredMethod("resetAccountUsage",
+        AccountCapsule.class, long.class, long.class, long.class, long.class, long.class);
+    method.setAccessible(true);
+
+    // mergedSize == currentSize (100) and size == 0 → newSize = 0
+    method.invoke(trace, account, /*usage=*/0L, /*size=*/0L,
+        /*mergedUsage=*/0L, /*mergedSize=*/100L, /*size2=*/0L);
+
+    // energyUsage should be reset to 0 by the newSize == 0 guard
+    Assert.assertEquals(0L, account.getEnergyUsage());
+    // windowSize internal value is 0, but getWindowSize() returns default 28800 when 0
+    Assert.assertEquals(0L,
+        account.getInstance().getAccountResource().getEnergyWindowSize());
+  }
+
+  @Test
+  public void testResetAccountUsageV2_zeroNewSize() throws Exception {
+    // Ensure V2 path
+    dbManager.getDynamicPropertiesStore().saveAllowCancelAllUnfreezeV2(1);
+
+    AccountCapsule account = new AccountCapsule(
+        ByteString.copyFromUtf8("testZeroSizeV2"),
+        ByteString.copyFrom(ByteArray.fromInt(98)),
+        AccountType.Normal,
+        0L);
+    account.setNewWindowSize(ResourceCode.ENERGY, 100L);
+    account.setEnergyUsage(500L);
+
+    Transaction trxn = Transaction.newBuilder().setRawData(
+        raw.newBuilder().addContract(
+            Contract.newBuilder().setType(ContractType.TransferContract))).build();
+    TransactionCapsule trxCap = new TransactionCapsule(trxn);
+    TransactionTrace trace = new TransactionTrace(trxCap, StoreFactory.getInstance(),
+        new RuntimeImpl());
+
+    Method method = TransactionTrace.class.getDeclaredMethod("resetAccountUsage",
+        AccountCapsule.class, long.class, long.class, long.class, long.class, long.class);
+    method.setAccessible(true);
+
+    // mergedSize == currentSize (100) and size == 0 → newSize = 0
+    method.invoke(trace, account, /*usage=*/0L, /*size=*/0L,
+        /*mergedUsage=*/0L, /*mergedSize=*/100L, /*size2=*/0L);
+
+    Assert.assertEquals(0L, account.getEnergyUsage());
+
+    // Restore
     dbManager.getDynamicPropertiesStore().saveAllowCancelAllUnfreezeV2(0);
   }
 }

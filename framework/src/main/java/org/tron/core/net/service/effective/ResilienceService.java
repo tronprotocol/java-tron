@@ -8,8 +8,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Random;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
@@ -114,7 +114,7 @@ public class ResilienceService {
           .collect(Collectors.toList());
     }
     if (!peers.isEmpty()) {
-      int index = new Random().nextInt(peers.size());
+      int index = ThreadLocalRandom.current().nextInt(peers.size());
       disconnectFromPeer(peers.get(index), ReasonCode.RANDOM_ELIMINATION,
           DisconnectCause.RANDOM_ELIMINATION);
     }
@@ -236,11 +236,9 @@ public class ResilienceService {
   static class WeightedRandom {
 
     private final Map<Object, Integer> weights;
-    private final Random random;
 
     public WeightedRandom(Map<Object, Integer> weights) {
       this.weights = weights;
-      this.random = new Random();
     }
 
     public Object next() {
@@ -248,7 +246,7 @@ public class ResilienceService {
       for (int weight : weights.values()) {
         totalWeight += weight;
       }
-      int randomNum = random.nextInt(totalWeight);
+      int randomNum = ThreadLocalRandom.current().nextInt(totalWeight);
       for (Object key : weights.keySet()) {
         randomNum -= weights.get(key);
         if (randomNum < 0) {
