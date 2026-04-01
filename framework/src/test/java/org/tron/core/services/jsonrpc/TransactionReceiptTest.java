@@ -32,6 +32,7 @@ public class TransactionReceiptTest extends BaseTest {
     Protocol.TransactionInfo transactionInfo = Protocol.TransactionInfo.newBuilder()
         .setId(ByteString.copyFrom("1".getBytes()))
         .setContractAddress(ByteString.copyFrom("address1".getBytes()))
+        .setBlockTimeStamp(1000000L)
         .setReceipt(Protocol.ResourceReceipt.newBuilder()
             .setEnergyUsageTotal(100L)
             .setResult(Protocol.Transaction.Result.contractResult.DEFAULT)
@@ -90,6 +91,7 @@ public class TransactionReceiptTest extends BaseTest {
     Assert.assertEquals(transactionReceipt.getLogs()[0].getBlockNumber(), "0x1");
     Assert.assertEquals(transactionReceipt.getLogs()[0].getTransactionHash(), "0x31");
     Assert.assertEquals(transactionReceipt.getLogs()[0].getTransactionIndex(), "0x0");
+    Assert.assertEquals(transactionReceipt.getLogs()[0].getBlockTimestamp(), "0x3e8");
 
     // assert default fields
     Assert.assertNull(transactionReceipt.getRoot());
