@@ -130,6 +130,8 @@ task protoLint {
                 def definition = item.def
                 def parentName = item.parentName
 
+                // In buf's JSON image, enums expose EnumDescriptorProto.value while
+                // message descriptors do not, so we use that field as the discriminator here.
                 if (definition.value != null) { 
                     // This is an Enum definition
                     def fullName = parentName ? "${parentName}.${definition.name}" : definition.name
