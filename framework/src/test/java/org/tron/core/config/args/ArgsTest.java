@@ -143,14 +143,12 @@ public class ArgsTest {
     String configuredExternalIp = parameter.getNodeExternalIp();
     Assert.assertEquals("46.168.1.1", configuredExternalIp);
 
-    Config config = Configuration.getByFileName(TestConstants.TEST_CONF);
-    Config config3 = config.withoutPath("node.discovery.external.ip");
-
     CommonParameter.getInstance().setNodeExternalIp(null);
 
-    Method method2 = Args.class.getDeclaredMethod("externalIp", Config.class);
+    NodeConfig nc = new NodeConfig();
+    Method method2 = Args.class.getDeclaredMethod("externalIp", NodeConfig.class);
     method2.setAccessible(true);
-    method2.invoke(Args.class, config3);
+    method2.invoke(Args.class, nc);
 
     Assert.assertNotEquals(configuredExternalIp, parameter.getNodeExternalIp());
   }

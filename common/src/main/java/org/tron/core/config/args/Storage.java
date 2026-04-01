@@ -18,7 +18,6 @@ package org.tron.core.config.args;
 import com.google.common.collect.Maps;
 import com.google.protobuf.ByteString;
 import com.typesafe.config.Config;
-import com.typesafe.config.ConfigObject;
 import java.io.File;
 import java.util.List;
 import java.util.Map;
@@ -47,7 +46,11 @@ import org.tron.common.utils.Sha256Hash;
 public class Storage {
 
   private static final String DEFAULT_INDEX_SWITCH = "on";
-  private Config storage;
+
+  // Optional per-tier LevelDB option overrides, read from StorageConfig bean
+  private StorageConfig.DbOptionOverride defaultDbOption;
+  private StorageConfig.DbOptionOverride defaultMDbOption;
+  private StorageConfig.DbOptionOverride defaultLDbOption;
 
   /**
    * Database storage directory: /path/to/{dbDirectory}
@@ -271,42 +274,6 @@ public class Storage {
     dbOptions.maxOpenFiles(pc.getMaxOpenFiles());
   }
 
-  // Keep old createProperty and setIfNeeded for setDefaultDbOptions which still
-  // uses ConfigObject for dynamic default/defaultM/defaultL overrides
-  private static void setIfNeeded(ConfigObject conf, Options dbOptions) {
-    if (conf.containsKey("createIfMissing")) {
-      dbOptions.createIfMissing(
-          Boolean.parseBoolean(conf.get("createIfMissing").unwrapped().toString()));
-    }
-    if (conf.containsKey("paranoidChecks")) {
-      dbOptions.paranoidChecks(
-          Boolean.parseBoolean(conf.get("paranoidChecks").unwrapped().toString()));
-    }
-    if (conf.containsKey("verifyChecksums")) {
-      dbOptions.verifyChecksums(
-          Boolean.parseBoolean(conf.get("verifyChecksums").unwrapped().toString()));
-    }
-    if (conf.containsKey("compressionType")) {
-      dbOptions.compressionType(CompressionType.getCompressionTypeByPersistentId(
-          Integer.parseInt(conf.get("compressionType").unwrapped().toString())));
-    }
-    if (conf.containsKey("blockSize")) {
-      dbOptions.blockSize(
-          Integer.parseInt(conf.get("blockSize").unwrapped().toString()));
-    }
-    if (conf.containsKey("writeBufferSize")) {
-      dbOptions.writeBufferSize(
-          Integer.parseInt(conf.get("writeBufferSize").unwrapped().toString()));
-    }
-    if (conf.containsKey("cacheSize")) {
-      dbOptions.cacheSize(
-          Long.parseLong(conf.get("cacheSize").unwrapped().toString()));
-    }
-    if (conf.containsKey("maxOpenFiles")) {
-      dbOptions.maxOpenFiles(
-          Integer.parseInt(conf.get("maxOpenFiles").unwrapped().toString()));
-    }
-  }
 
   /**
    * Set propertyMap of Storage object from Config via StorageConfig bean.
@@ -339,28 +306,59 @@ public class Storage {
   }
 
   /**
-   * Accepts raw storage Config sub-tree because default/defaultM/defaultL are
-   * optional nested objects with dynamic LevelDB Option fields that
-   * ConfigBeanFactory cannot bind to fixed bean fields.
+   * Initialize default LevelDB options and store optional per-tier overrides
+   * from StorageConfig bean (no raw Config needed).
    */
-  public void setDefaultDbOptions(final Config storageSection) {
+  public void setDefaultDbOptions(StorageConfig sc) {
     this.defaultDbOptions = DbOptionalsUtils.createDefaultDbOptions();
-    storage = storageSection;
+    this.defaultDbOption = sc.getDefaultDbOption();
+    this.defaultMDbOption = sc.getDefaultMDbOption();
+    this.defaultLDbOption = sc.getDefaultLDbOption();
   }
 
   public Options newDefaultDbOptions(String name) {
     Options options = DbOptionalsUtils.newDefaultDbOptions(name, this.defaultDbOptions);
 
-    if (storage.hasPath("default")) {
-      setIfNeeded(storage.getObject("default"), options);
+    if (defaultDbOption != null) {
+      applyDbOptionOverride(defaultDbOption, options);
     }
-    if (storage.hasPath("defaultM") && DbOptionalsUtils.DB_M.contains(name)) {
-      setIfNeeded(storage.getObject("defaultM"), options);
+    if (defaultMDbOption != null && DbOptionalsUtils.DB_M.contains(name)) {
+      applyDbOptionOverride(defaultMDbOption, options);
     }
-    if (storage.hasPath("defaultL") && DbOptionalsUtils.DB_L.contains(name)) {
-      setIfNeeded(storage.getObject("defaultL"), options);
+    if (defaultLDbOption != null && DbOptionalsUtils.DB_L.contains(name)) {
+      applyDbOptionOverride(defaultLDbOption, options);
     }
 
     return options;
+  }
+
+  // Apply only user-specified overrides (non-null fields) to LevelDB Options.
+  private static void applyDbOptionOverride(
+      StorageConfig.DbOptionOverride o, Options dbOptions) {
+    if (o.getCreateIfMissing() != null) {
+      dbOptions.createIfMissing(o.getCreateIfMissing());
+    }
+    if (o.getParanoidChecks() != null) {
+      dbOptions.paranoidChecks(o.getParanoidChecks());
+    }
+    if (o.getVerifyChecksums() != null) {
+      dbOptions.verifyChecksums(o.getVerifyChecksums());
+    }
+    if (o.getCompressionType() != null) {
+      dbOptions.compressionType(
+          CompressionType.getCompressionTypeByPersistentId(o.getCompressionType()));
+    }
+    if (o.getBlockSize() != null) {
+      dbOptions.blockSize(o.getBlockSize());
+    }
+    if (o.getWriteBufferSize() != null) {
+      dbOptions.writeBufferSize(o.getWriteBufferSize());
+    }
+    if (o.getCacheSize() != null) {
+      dbOptions.cacheSize(o.getCacheSize());
+    }
+    if (o.getMaxOpenFiles() != null) {
+      dbOptions.maxOpenFiles(o.getMaxOpenFiles());
+    }
   }
 }

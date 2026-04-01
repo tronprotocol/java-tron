@@ -2,6 +2,7 @@ package org.tron.core.config.args;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigBeanFactory;
+import com.typesafe.config.ConfigObject;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.Getter;
@@ -36,9 +37,8 @@ public class StorageConfig {
   @Setter(lombok.AccessLevel.NONE)
   private Object merkleRoot;
 
-  // LevelDB per-database option overrides (default, defaultM, defaultL)
-  // These are not bean-bound because they are optional nested objects with
-  // dynamic usage. Read manually in fromConfig().
+  // Raw storage config sub-tree, kept for setCacheStrategies/setDbRoots which
+  // have dynamic keys that ConfigBeanFactory cannot bind.
   @Getter(lombok.AccessLevel.NONE)
   @Setter(lombok.AccessLevel.NONE)
   private Config rawStorageConfig;
@@ -46,6 +46,22 @@ public class StorageConfig {
   public Config getRawStorageConfig() {
     return rawStorageConfig;
   }
+
+  // LevelDB per-database option overrides (default, defaultM, defaultL).
+  // Excluded from auto-binding: optional partial overrides that ConfigBeanFactory cannot handle.
+  @Getter(lombok.AccessLevel.NONE)
+  @Setter(lombok.AccessLevel.NONE)
+  private DbOptionOverride defaultDbOption;
+  @Getter(lombok.AccessLevel.NONE)
+  @Setter(lombok.AccessLevel.NONE)
+  private DbOptionOverride defaultMDbOption;
+  @Getter(lombok.AccessLevel.NONE)
+  @Setter(lombok.AccessLevel.NONE)
+  private DbOptionOverride defaultLDbOption;
+
+  public DbOptionOverride getDefaultDbOption() { return defaultDbOption; }
+  public DbOptionOverride getDefaultMDbOption() { return defaultMDbOption; }
+  public DbOptionOverride getDefaultLDbOption() { return defaultLDbOption; }
 
   @Getter
   @Setter
@@ -158,7 +174,7 @@ public class StorageConfig {
     private int compressionType = 1;
     private int blockSize = 4096;
     private int writeBufferSize = 10485760;
-    private int cacheSize = 10485760;
+    private long cacheSize = 10485760;
     private int maxOpenFiles = 100;
   }
 
@@ -168,8 +184,71 @@ public class StorageConfig {
     Config section = config.getConfig("storage");
 
     StorageConfig sc = ConfigBeanFactory.create(section, StorageConfig.class);
-    // Keep raw config for legacy LevelDB per-database option overrides (default, defaultM, defaultL)
     sc.rawStorageConfig = section;
+
+    // Read optional LevelDB option overrides (default, defaultM, defaultL).
+    sc.defaultDbOption = readDbOption(section, "default");
+    sc.defaultMDbOption = readDbOption(section, "defaultM");
+    sc.defaultLDbOption = readDbOption(section, "defaultL");
     return sc;
+  }
+
+  // Partial LevelDB option override for default/defaultM/defaultL.
+  // Uses boxed types so null means "not set by user, keep existing value".
+  @Getter
+  @Setter
+  public static class DbOptionOverride {
+    private Boolean createIfMissing;
+    private Boolean paranoidChecks;
+    private Boolean verifyChecksums;
+    private Integer compressionType;
+    private Integer blockSize;
+    private Integer writeBufferSize;
+    private Long cacheSize;
+    private Integer maxOpenFiles;
+  }
+
+  // Read optional LevelDB option override (default/defaultM/defaultL).
+  // Not bean-bound: users may only set a subset of keys (e.g. just maxOpenFiles),
+  // ConfigBeanFactory requires all fields present so partial overrides would fail.
+  private static DbOptionOverride readDbOption(Config section, String key) {
+    if (!section.hasPath(key)) {
+      return null;
+    }
+    ConfigObject conf = section.getObject(key);
+    DbOptionOverride o = new DbOptionOverride();
+    if (conf.containsKey("createIfMissing")) {
+      o.setCreateIfMissing(
+          Boolean.parseBoolean(conf.get("createIfMissing").unwrapped().toString()));
+    }
+    if (conf.containsKey("paranoidChecks")) {
+      o.setParanoidChecks(
+          Boolean.parseBoolean(conf.get("paranoidChecks").unwrapped().toString()));
+    }
+    if (conf.containsKey("verifyChecksums")) {
+      o.setVerifyChecksums(
+          Boolean.parseBoolean(conf.get("verifyChecksums").unwrapped().toString()));
+    }
+    if (conf.containsKey("compressionType")) {
+      o.setCompressionType(
+          Integer.parseInt(conf.get("compressionType").unwrapped().toString()));
+    }
+    if (conf.containsKey("blockSize")) {
+      o.setBlockSize(
+          Integer.parseInt(conf.get("blockSize").unwrapped().toString()));
+    }
+    if (conf.containsKey("writeBufferSize")) {
+      o.setWriteBufferSize(
+          Integer.parseInt(conf.get("writeBufferSize").unwrapped().toString()));
+    }
+    if (conf.containsKey("cacheSize")) {
+      o.setCacheSize(
+          Long.parseLong(conf.get("cacheSize").unwrapped().toString()));
+    }
+    if (conf.containsKey("maxOpenFiles")) {
+      o.setMaxOpenFiles(
+          Integer.parseInt(conf.get("maxOpenFiles").unwrapped().toString()));
+    }
+    return o;
   }
 }

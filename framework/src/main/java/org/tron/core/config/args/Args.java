@@ -274,7 +274,7 @@ public class Args extends CommonParameter {
     // Dynamic nested objects use StorageConfig's raw storage sub-tree
     // setDefaultDbOptions must be called before setPropertyMapFromBean because
     // createPropertyFromBean calls newDefaultDbOptions which needs defaultDbOptions initialized
-    PARAMETER.storage.setDefaultDbOptions(sc.getRawStorageConfig());
+    PARAMETER.storage.setDefaultDbOptions(sc);
     PARAMETER.storage.setPropertyMapFromBean(sc.getProperties());
     PARAMETER.storage.setCacheStrategies(sc.getRawStorageConfig());
     PARAMETER.storage.setDbRoots(sc.getRawStorageConfig());
@@ -1156,11 +1156,6 @@ public class Args extends CommonParameter {
 
   // createTriggerConfig removed — logic moved to applyEventConfig()
   // getEventFilter removed — logic moved to applyEventConfig()
-
-  // Kept for backward compatibility — test code calls via reflection with Config param
-  private static void externalIp(final com.typesafe.config.Config config) {
-    externalIp(NodeConfig.fromConfig(config));
-  }
 
   private static void externalIp(NodeConfig nodeConfig) {
     String externalIp = nodeConfig.getDiscoveryExternalIp();
