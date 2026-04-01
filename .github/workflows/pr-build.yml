@@ -29,9 +29,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - java: '8'
-            runner: macos-26-intel
-            arch: x86_64
           - java: '17'
             runner: macos-26
             arch: aarch64
@@ -58,7 +55,6 @@ jobs:
         run: ./gradlew clean build --no-daemon
 
       - name: Test with RocksDB engine
-        if: matrix.arch == 'x86_64'
         run: ./gradlew :framework:testWithRocksDb --no-daemon
 
   build-ubuntu:
