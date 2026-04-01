@@ -4,16 +4,9 @@ on:
   pull_request:
     branches: [ 'master','develop', 'release_**' ]
     types: [ opened, synchronize, reopened ]
-    paths:
-      - '**/*.java'
-      - '**/*.gradle'
-      - 'build.gradle'
-      - 'settings.gradle'
-      - 'gradle.properties'
-      - 'gradle/**'
-      - 'gradlew'
-      - 'gradlew.bat'
-      - '.github/workflows/pr-build.yml'
+    paths-ignore: [ '**/*.md', '.gitignore', '**/.gitignore', '.editorconfig',
+                    '.gitattributes', 'docs/**', 'CHANGELOG', '.github/ISSUE_TEMPLATE/**',
+                    '.github/PULL_REQUEST_TEMPLATE/**', '.github/CODEOWNERS' ]
   workflow_dispatch:
     inputs:
       job:
