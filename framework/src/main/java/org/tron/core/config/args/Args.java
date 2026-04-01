@@ -121,6 +121,29 @@ public class Args extends CommonParameter {
   @Getter
   private static String configFilePath = "";
 
+  // Singleton config beans — populated at startup, read-only after init.
+  // New code can read directly from these beans instead of CommonParameter.
+  @Getter
+  private static NodeConfig nodeConfig;
+  @Getter
+  private static VmConfig vmConfig;
+  @Getter
+  private static BlockConfig blockConfig;
+  @Getter
+  private static CommitteeConfig committeeConfig;
+  @Getter
+  private static StorageConfig storageConfig;
+  @Getter
+  private static GenesisConfig genesisConfig;
+  @Getter
+  private static MiscConfig miscConfig;
+  @Getter
+  private static RateLimiterConfig rateLimiterConfig;
+  @Getter
+  private static MetricsConfig metricsConfig;
+  @Getter
+  private static EventConfig eventConfig;
+
   @Getter
   @Setter
   private static LocalWitnesses localWitnesses = new LocalWitnesses();
@@ -543,36 +566,16 @@ public class Args extends CommonParameter {
     PARAMETER.rpcOnSolidityPort = rpc.getSolidityPort();
     PARAMETER.rpcOnPBFTPort = rpc.getPBFTPort();
     PARAMETER.rpcThreadNum = rpc.getThread();
-    if (PARAMETER.rpcThreadNum == 16) {
-      // default from bean — apply dynamic default: (CPUs + 1) / 2
-      PARAMETER.rpcThreadNum = (Runtime.getRuntime().availableProcessors() + 1) / 2;
-    }
     PARAMETER.maxConcurrentCallsPerConnection = rpc.getMaxConcurrentCallsPerConnection();
-    if (PARAMETER.maxConcurrentCallsPerConnection == 100) {
-      // bean default 100 — original code used Integer.MAX_VALUE as default
-      PARAMETER.maxConcurrentCallsPerConnection = Integer.MAX_VALUE;
-    }
     PARAMETER.flowControlWindow = rpc.getFlowControlWindow();
-    if (PARAMETER.flowControlWindow == 0) {
-      PARAMETER.flowControlWindow = NettyServerBuilder.DEFAULT_FLOW_CONTROL_WINDOW;
-    }
     PARAMETER.rpcMaxRstStream = rpc.getMaxRstStream();
     PARAMETER.rpcSecondsPerWindow = rpc.getSecondsPerWindow();
     PARAMETER.maxConnectionIdleInMillis = rpc.getMaxConnectionIdleInMillis();
     PARAMETER.maxConnectionAgeInMillis = rpc.getMaxConnectionAgeInMillis();
     PARAMETER.maxMessageSize = rpc.getMaxMessageSize();
-    if (PARAMETER.maxMessageSize == 0) {
-      PARAMETER.maxMessageSize = GrpcUtil.DEFAULT_MAX_MESSAGE_SIZE;
-    }
     PARAMETER.maxHeaderListSize = rpc.getMaxHeaderListSize();
-    if (PARAMETER.maxHeaderListSize == 0) {
-      PARAMETER.maxHeaderListSize = GrpcUtil.DEFAULT_MAX_HEADER_LIST_SIZE;
-    }
     PARAMETER.isRpcReflectionServiceEnable = rpc.isReflectionService();
     PARAMETER.minEffectiveConnection = rpc.getMinEffectiveConnection();
-    if (PARAMETER.minEffectiveConnection == 0) {
-      PARAMETER.minEffectiveConnection = 1;
-    }
     PARAMETER.trxCacheEnable = rpc.isTrxCacheEnable();
 
     // ---- HTTP sub-bean ----
@@ -606,9 +609,6 @@ public class Args extends CommonParameter {
     // ---- Dynamic config sub-bean ----
     PARAMETER.dynamicConfigEnable = nc.getDynamicConfig().isEnable();
     PARAMETER.dynamicConfigCheckInterval = nc.getDynamicConfig().getCheckInterval();
-    if (PARAMETER.dynamicConfigCheckInterval <= 0) {
-      PARAMETER.dynamicConfigCheckInterval = 600;
-    }
 
     // ---- Flat scalar fields ----
     PARAMETER.nodeEffectiveCheckEnable = nc.isEffectiveCheckEnable();
@@ -633,22 +633,8 @@ public class Args extends CommonParameter {
     PARAMETER.nodeEnableIpv6 = nc.isEnableIpv6();
 
     PARAMETER.syncFetchBatchNum = nc.getSyncFetchBatchNum();
-    if (PARAMETER.syncFetchBatchNum > 2000) {
-      PARAMETER.syncFetchBatchNum = 2000;
-    }
-    if (PARAMETER.syncFetchBatchNum < 100) {
-      PARAMETER.syncFetchBatchNum = 100;
-    }
-
     PARAMETER.solidityThreads = nc.getSolidityThreads();
-
     PARAMETER.blockProducedTimeOut = nc.getBlockProducedTimeOut();
-    if (PARAMETER.blockProducedTimeOut < 30) {
-      PARAMETER.blockProducedTimeOut = 30;
-    }
-    if (PARAMETER.blockProducedTimeOut > 100) {
-      PARAMETER.blockProducedTimeOut = 100;
-    }
 
     PARAMETER.maxHttpConnectNumber = nc.getMaxHttpConnectNumber();
     PARAMETER.netMaxTrxPerSecond = nc.getNetMaxTrxPerSecond();
@@ -656,7 +642,8 @@ public class Args extends CommonParameter {
     PARAMETER.udpNettyWorkThreadNum = nc.getUdpNettyWorkThreadNum();
 
     if (StringUtils.isEmpty(PARAMETER.trustNodeAddr)) {
-      PARAMETER.trustNodeAddr = nc.getTrustNode();
+      String trustNode = nc.getTrustNode();
+      PARAMETER.trustNodeAddr = StringUtils.isEmpty(trustNode) ? null : trustNode;
     }
 
     PARAMETER.validateSignThreadNum = nc.getValidateSignThreadNum();
@@ -666,9 +653,6 @@ public class Args extends CommonParameter {
     PARAMETER.nodeDetectEnable = nc.isNodeDetectEnable();
 
     PARAMETER.inactiveThreshold = nc.getInactiveThreshold();
-    if (PARAMETER.inactiveThreshold < 1) {
-      PARAMETER.inactiveThreshold = 1;
-    }
 
     PARAMETER.maxTransactionPendingSize = nc.getMaxTransactionPendingSize();
     PARAMETER.pendingTransactionTimeout = nc.getPendingTransactionTimeout();
@@ -676,21 +660,8 @@ public class Args extends CommonParameter {
     PARAMETER.validContractProtoThreadNum = nc.getValidContractProtoThreads();
 
     PARAMETER.maxFastForwardNum = nc.getMaxFastForwardNum();
-    if (PARAMETER.maxFastForwardNum > MAX_ACTIVE_WITNESS_NUM) {
-      PARAMETER.maxFastForwardNum = MAX_ACTIVE_WITNESS_NUM;
-    }
-    if (PARAMETER.maxFastForwardNum < 1) {
-      PARAMETER.maxFastForwardNum = 1;
-    }
-
     PARAMETER.shieldedTransInPendingMaxCounts = nc.getShieldedTransInPendingMaxCounts();
-
     PARAMETER.agreeNodeCount = nc.getAgreeNodeCount();
-    if (PARAMETER.agreeNodeCount == 0) {
-      PARAMETER.agreeNodeCount = MAX_ACTIVE_WITNESS_NUM * 2 / 3 + 1;
-    }
-    PARAMETER.agreeNodeCount = PARAMETER.agreeNodeCount > MAX_ACTIVE_WITNESS_NUM
-        ? MAX_ACTIVE_WITNESS_NUM : PARAMETER.agreeNodeCount;
 
     PARAMETER.setOpenHistoryQueryWhenLiteFN(nc.isOpenHistoryQueryWhenLiteFN());
     PARAMETER.nodeMetricsEnable = nc.isMetricsEnable();
@@ -780,48 +751,48 @@ public class Args extends CommonParameter {
     // crypto.engine handled by MiscConfig
 
     // VM config: bind from config.conf "vm" section
-    VmConfig vmConfig = VmConfig.fromConfig(config);
+    vmConfig = VmConfig.fromConfig(config);
     applyVmConfig(vmConfig);
 
     // Node config: bind from config.conf "node" section
-    NodeConfig nodeConfig = NodeConfig.fromConfig(config);
+    nodeConfig = NodeConfig.fromConfig(config);
     applyNodeConfig(nodeConfig);
 
     // vm.minTimeRatio, vm.maxTimeRatio, vm.longRunningTime already handled by VmConfig above
 
     // Storage config: bind from config.conf "storage" section
     PARAMETER.storage = new Storage();
-    StorageConfig storageConfig = StorageConfig.fromConfig(config);
+    storageConfig = StorageConfig.fromConfig(config);
     applyStorageConfig(storageConfig);
 
     // seed.node is a top-level config section (not under "node") — config structure
     // is arguably misplaced, but preserved for backward compatibility
 
     // Genesis config: bind from config.conf "genesis.block" section
-    GenesisConfig genesisConfig = GenesisConfig.fromConfig(config);
+    genesisConfig = GenesisConfig.fromConfig(config);
     applyGenesisConfig(genesisConfig, config);
 
     // Block config: bind from config.conf "block" section
-    BlockConfig blockConfig = BlockConfig.fromConfig(config);
+    blockConfig = BlockConfig.fromConfig(config);
     applyBlockConfig(blockConfig);
 
     // node discovery, legacy fallback, p2p, dns — all handled in applyNodeConfig
 
     // Misc config: storage, trx, energy — small domains, read via beans
-    MiscConfig miscConfig = MiscConfig.fromConfig(config);
+    miscConfig = MiscConfig.fromConfig(config);
     applyMiscConfig(miscConfig);
 
     // vm, committee already handled above
 
     // Committee config: bind from config.conf "committee" section
-    CommitteeConfig committeeConfig = CommitteeConfig.fromConfig(config);
+    committeeConfig = CommitteeConfig.fromConfig(config);
     applyCommitteeConfig(committeeConfig);
 
     // shielded transaction API, active/passive/fastForward — handled in applyNodeConfig
 
     // Rate limiter config: bind from config.conf "rate.limiter" section
-    RateLimiterConfig rlConfig = RateLimiterConfig.fromConfig(config);
-    applyRateLimiterConfig(rlConfig, config);
+    rateLimiterConfig = RateLimiterConfig.fromConfig(config);
+    applyRateLimiterConfig(rateLimiterConfig, config);
 
     // Node backup: from NodeConfig bean
     applyNodeBackupConfig(nodeConfig);
@@ -829,7 +800,7 @@ public class Args extends CommonParameter {
     // actuatorSet already set in applyMiscConfig
 
     // Metrics config: bind from config.conf "node.metrics" section
-    MetricsConfig metricsConfig = MetricsConfig.fromConfig(config);
+    metricsConfig = MetricsConfig.fromConfig(config);
     applyMetricsConfig(metricsConfig);
 
     // historyBalanceLookup already handled by MiscConfig above
@@ -837,7 +808,7 @@ public class Args extends CommonParameter {
     // node.shutdown — handled in applyNodeConfig
 
     // Event config: bind from config.conf "event.subscribe" section
-    EventConfig eventConfig = EventConfig.fromConfig(config);
+    eventConfig = EventConfig.fromConfig(config);
     applyEventConfig(eventConfig);
 
     PARAMETER.allowTvmOsaka =
@@ -1027,6 +998,16 @@ public class Args extends CommonParameter {
     CommonParameter.reset();
     configFilePath = "";
     localWitnesses = null;
+    nodeConfig = null;
+    vmConfig = null;
+    blockConfig = null;
+    committeeConfig = null;
+    storageConfig = null;
+    genesisConfig = null;
+    miscConfig = null;
+    rateLimiterConfig = null;
+    metricsConfig = null;
+    eventConfig = null;
   }
 
   // getProposalExpirationTime removed — logic moved to BlockConfig.fromConfig()

@@ -10,9 +10,17 @@ import org.junit.Test;
 
 public class VmConfigTest {
 
+  private static Config withRef(String hocon) {
+    return ConfigFactory.parseString(hocon).withFallback(ConfigFactory.defaultReference());
+  }
+
+  private static Config withRef() {
+    return ConfigFactory.defaultReference();
+  }
+
   @Test
   public void testDefaults() {
-    Config empty = ConfigFactory.empty();
+    Config empty = withRef();
     VmConfig vm = VmConfig.fromConfig(empty);
     assertFalse(vm.isSupportConstant());
     assertEquals(100_000_000L, vm.getMaxEnergyLimitForConstant());
@@ -30,7 +38,7 @@ public class VmConfigTest {
 
   @Test
   public void testFromConfig() {
-    Config config = ConfigFactory.parseString(
+    Config config = withRef(
         "vm { supportConstant = true, lruCacheSize = 1000, minTimeRatio = 0.5 }");
     VmConfig vm = VmConfig.fromConfig(config);
     assertTrue(vm.isSupportConstant());
@@ -40,23 +48,23 @@ public class VmConfigTest {
 
   @Test
   public void testMaxEnergyLimitClamped() {
-    Config config = ConfigFactory.parseString("vm { maxEnergyLimitForConstant = 100 }");
+    Config config = withRef("vm { maxEnergyLimitForConstant = 100 }");
     VmConfig vm = VmConfig.fromConfig(config);
     assertEquals(3_000_000L, vm.getMaxEnergyLimitForConstant());
   }
 
   @Test
   public void testEstimateEnergyMaxRetryClamped() {
-    Config tooHigh = ConfigFactory.parseString("vm { estimateEnergyMaxRetry = 50 }");
+    Config tooHigh = withRef("vm { estimateEnergyMaxRetry = 50 }");
     assertEquals(10, VmConfig.fromConfig(tooHigh).getEstimateEnergyMaxRetry());
 
-    Config tooLow = ConfigFactory.parseString("vm { estimateEnergyMaxRetry = -5 }");
+    Config tooLow = withRef("vm { estimateEnergyMaxRetry = -5 }");
     assertEquals(0, VmConfig.fromConfig(tooLow).getEstimateEnergyMaxRetry());
   }
 
   @Test
   public void testPartialConfig() {
-    Config config = ConfigFactory.parseString("vm { saveInternalTx = true }");
+    Config config = withRef("vm { saveInternalTx = true }");
     VmConfig vm = VmConfig.fromConfig(config);
     assertTrue(vm.isSaveInternalTx());
     assertFalse(vm.isSupportConstant()); // default

@@ -68,21 +68,7 @@ public class EventConfig {
     private List<String> contractTopic = new ArrayList<>();
   }
 
-  private static final Config DEFAULTS = ConfigFactory.parseString(
-      "enable = false\n"
-          + "version = 0\n"
-          + "startSyncBlockNum = 0\n"
-          + "path = \"\"\n"
-          + "server = \"\"\n"
-          + "dbconfig = \"\"\n"
-          + "contractParse = true\n"
-          + "native { useNativeQueue = true, bindport = 5555, sendqueuelength = 1000 }\n"
-          + "topics = []\n"
-          + "topicDefaults { triggerName = \"\", enable = false, topic = \"\","
-          + " solidified = false, ethCompatible = false, redundancy = false }\n"
-          + "filter { fromblock = \"\", toblock = \"\","
-          + " contractAddress = [\"\"], contractTopic = [\"\"] }\n"
-  );
+  // Defaults come from reference.conf (loaded globally via Configuration.java)
 
   /**
    * Create EventConfig from the "event.subscribe" section of the application config.
@@ -91,9 +77,7 @@ public class EventConfig {
    * "nativeQueue" but config key is "native". We handle this manually after binding.
    */
   public static EventConfig fromConfig(Config config) {
-    Config section = config.hasPath("event.subscribe")
-        ? config.getConfig("event.subscribe").withFallback(DEFAULTS)
-        : DEFAULTS;
+    Config section = config.getConfig("event.subscribe");
 
     // "native" is a Java reserved word, "topics" has optional fields per item —
     // strip both before binding, read manually

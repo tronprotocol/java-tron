@@ -10,9 +10,17 @@ import org.junit.Test;
 
 public class StorageConfigTest {
 
+  private static Config withRef(String hocon) {
+    return ConfigFactory.parseString(hocon).withFallback(ConfigFactory.defaultReference());
+  }
+
+  private static Config withRef() {
+    return ConfigFactory.defaultReference();
+  }
+
   @Test
   public void testDefaults() {
-    Config empty = ConfigFactory.empty();
+    Config empty = withRef();
     StorageConfig sc = StorageConfig.fromConfig(empty);
     assertEquals("LEVELDB", sc.getDb().getEngine());
     assertFalse(sc.getDb().isSync());
@@ -27,7 +35,7 @@ public class StorageConfigTest {
 
   @Test
   public void testFromConfig() {
-    Config config = ConfigFactory.parseString(
+    Config config = withRef(
         "storage { db { engine = ROCKSDB, sync = true, directory = mydb },"
             + " backup { enable = true, frequency = 5000 },"
             + " dbSettings { levelNumber = 5, maxOpenFiles = 3000 } }");
@@ -43,15 +51,31 @@ public class StorageConfigTest {
 
   @Test
   public void testCheckpointDefaults() {
-    Config empty = ConfigFactory.empty();
+    Config empty = withRef();
     StorageConfig sc = StorageConfig.fromConfig(empty);
     assertEquals(1, sc.getCheckpoint().getVersion());
     assertTrue(sc.getCheckpoint().isSync());
   }
 
   @Test
+  public void testDbSettingsDefaults() {
+    Config empty = withRef();
+    StorageConfig sc = StorageConfig.fromConfig(empty);
+    StorageConfig.DbSettingsConfig ds = sc.getDbSettings();
+    assertEquals(7, ds.getLevelNumber());
+    assertEquals(32, ds.getCompactThreads());
+    assertEquals(64, ds.getBlocksize());
+    assertEquals(256, ds.getMaxBytesForLevelBase());
+    assertEquals(10, ds.getMaxBytesForLevelMultiplier(), 0.01);
+    assertEquals(4, ds.getLevel0FileNumCompactionTrigger());
+    assertEquals(256, ds.getTargetFileSizeBase());
+    assertEquals(1, ds.getTargetFileSizeMultiplier());
+    assertEquals(5000, ds.getMaxOpenFiles());
+  }
+
+  @Test
   public void testBalanceHistoryLookup() {
-    Config config = ConfigFactory.parseString(
+    Config config = withRef(
         "storage { balance { history { lookup = true } } }");
     StorageConfig sc = StorageConfig.fromConfig(config);
     assertTrue(sc.getBalance().getHistory().isLookup());

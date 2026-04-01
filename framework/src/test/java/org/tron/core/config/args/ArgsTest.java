@@ -166,7 +166,9 @@ public class ArgsTest {
     Map<String,String> storage = new HashMap<>();
     // avoid the exception for the missing storage
     storage.put("storage.db.directory", "database");
-    Config config = ConfigFactory.defaultOverrides().withFallback(ConfigFactory.parseMap(storage));
+    Config config = ConfigFactory.defaultOverrides()
+        .withFallback(ConfigFactory.parseMap(storage))
+        .withFallback(ConfigFactory.defaultReference());
     // test default value
     Args.applyConfigParams(config);
     Assert.assertTrue(Args.getInstance().isRpcEnable());
@@ -193,7 +195,9 @@ public class ArgsTest {
     storage.put("node.jsonrpc.httpPBFTEnable", "true");
     storage.put("node.jsonrpc.maxBlockRange", "10");
     storage.put("node.jsonrpc.maxSubTopics", "20");
-    config = ConfigFactory.defaultOverrides().withFallback(ConfigFactory.parseMap(storage));
+    config = ConfigFactory.defaultOverrides()
+        .withFallback(ConfigFactory.parseMap(storage))
+        .withFallback(ConfigFactory.defaultReference());
     // test value
     Args.applyConfigParams(config);
     Assert.assertTrue(Args.getInstance().isRpcEnable());
@@ -220,7 +224,9 @@ public class ArgsTest {
     storage.put("node.jsonrpc.httpPBFTEnable", "false");
     storage.put("node.jsonrpc.maxBlockRange", "5000");
     storage.put("node.jsonrpc.maxSubTopics", "1000");
-    config = ConfigFactory.defaultOverrides().withFallback(ConfigFactory.parseMap(storage));
+    config = ConfigFactory.defaultOverrides()
+        .withFallback(ConfigFactory.parseMap(storage))
+        .withFallback(ConfigFactory.defaultReference());
     // test value
     Args.applyConfigParams(config);
     Assert.assertFalse(Args.getInstance().isRpcEnable());
@@ -247,7 +253,9 @@ public class ArgsTest {
     storage.put("node.jsonrpc.httpPBFTEnable", "true");
     storage.put("node.jsonrpc.maxBlockRange", "30");
     storage.put("node.jsonrpc.maxSubTopics", "40");
-    config = ConfigFactory.defaultOverrides().withFallback(ConfigFactory.parseMap(storage));
+    config = ConfigFactory.defaultOverrides()
+        .withFallback(ConfigFactory.parseMap(storage))
+        .withFallback(ConfigFactory.defaultReference());
     // test value
     Args.applyConfigParams(config);
     Assert.assertFalse(Args.getInstance().isRpcEnable());
@@ -265,7 +273,9 @@ public class ArgsTest {
     // test set invalid value
     storage.put("node.jsonrpc.maxBlockRange", "0");
     storage.put("node.jsonrpc.maxSubTopics", "0");
-    config = ConfigFactory.defaultOverrides().withFallback(ConfigFactory.parseMap(storage));
+    config = ConfigFactory.defaultOverrides()
+        .withFallback(ConfigFactory.parseMap(storage))
+        .withFallback(ConfigFactory.defaultReference());
     // check value
     Args.applyConfigParams(config);
     Assert.assertEquals(0, Args.getInstance().getJsonRpcMaxBlockRange());
@@ -274,7 +284,9 @@ public class ArgsTest {
     // test set invalid value
     storage.put("node.jsonrpc.maxBlockRange", "-2");
     storage.put("node.jsonrpc.maxSubTopics", "-4");
-    config = ConfigFactory.defaultOverrides().withFallback(ConfigFactory.parseMap(storage));
+    config = ConfigFactory.defaultOverrides()
+        .withFallback(ConfigFactory.parseMap(storage))
+        .withFallback(ConfigFactory.defaultReference());
     // check value
     Args.applyConfigParams(config);
     Assert.assertEquals(-2, Args.getInstance().getJsonRpcMaxBlockRange());

@@ -10,19 +10,28 @@ import org.junit.Test;
 
 public class EventConfigTest {
 
+  private static Config withRef(String hocon) {
+    return ConfigFactory.parseString(hocon).withFallback(ConfigFactory.defaultReference());
+  }
+
+  private static Config withRef() {
+    return ConfigFactory.defaultReference();
+  }
+
   @Test
   public void testDefaults() {
-    Config empty = ConfigFactory.empty();
+    Config empty = withRef();
     EventConfig ec = EventConfig.fromConfig(empty);
+    // reference.conf has event.subscribe with enable=false, topics with 7 entries
     assertFalse(ec.isEnable());
     assertEquals(0, ec.getVersion());
     assertEquals("", ec.getPath());
-    assertTrue(ec.getTopics().isEmpty());
+    assertFalse(ec.getTopics().isEmpty()); // reference.conf has default topic entries
   }
 
   @Test
   public void testNativeQueue() {
-    Config config = ConfigFactory.parseString(
+    Config config = withRef(
         "event.subscribe { enable = true,"
             + " native { useNativeQueue = true, bindport = 6666, sendqueuelength = 2000 } }");
     EventConfig ec = EventConfig.fromConfig(config);
@@ -34,7 +43,7 @@ public class EventConfigTest {
 
   @Test
   public void testTopicsWithOptionalFields() {
-    Config config = ConfigFactory.parseString(
+    Config config = withRef(
         "event.subscribe { enable = true, topics = ["
             + "{ triggerName = block, enable = true, topic = block },"
             + "{ triggerName = transaction, enable = false, topic = tx,"
@@ -59,7 +68,7 @@ public class EventConfigTest {
 
   @Test
   public void testFilter() {
-    Config config = ConfigFactory.parseString(
+    Config config = withRef(
         "event.subscribe { enable = true,"
             + " filter { fromblock = \"100\", toblock = \"200\","
             + " contractAddress = [\"addr1\", \"addr2\"],"

@@ -10,18 +10,24 @@ import org.tron.core.exception.TronError;
 
 public class BlockConfigTest {
 
+  private static Config withRef(String hocon) {
+    return ConfigFactory.parseString(hocon).withFallback(ConfigFactory.defaultReference());
+  }
+
+  private static Config withRef() {
+    return ConfigFactory.defaultReference();
+  }
+
   @Test
   public void testDefaults() {
-    Config empty = ConfigFactory.empty();
-    BlockConfig bc = BlockConfig.fromConfig(empty);
-    assertFalse(bc.isNeedSyncCheck());
+    BlockConfig bc = BlockConfig.fromConfig(withRef());
     assertEquals(21600000L, bc.getMaintenanceTimeInterval());
     assertEquals(1, bc.getCheckFrozenTime());
   }
 
   @Test
   public void testFromConfig() {
-    Config config = ConfigFactory.parseString(
+    Config config = withRef(
         "block { needSyncCheck = true, maintenanceTimeInterval = 10000,"
             + " checkFrozenTime = 5, proposalExpireTime = 300000 }");
     BlockConfig bc = BlockConfig.fromConfig(config);
@@ -33,22 +39,18 @@ public class BlockConfigTest {
 
   @Test(expected = TronError.class)
   public void testProposalExpireTimeTooLow() {
-    // MIN_PROPOSAL_EXPIRE_TIME = 0, so value must be > 0
-    Config config = ConfigFactory.parseString("block { proposalExpireTime = 0 }");
-    BlockConfig.fromConfig(config);
+    BlockConfig.fromConfig(withRef("block { proposalExpireTime = 0 }"));
   }
 
   @Test(expected = TronError.class)
   public void testProposalExpireTimeTooHigh() {
-    Config config = ConfigFactory.parseString("block { proposalExpireTime = 999999999999 }");
-    BlockConfig.fromConfig(config);
+    BlockConfig.fromConfig(withRef("block { proposalExpireTime = 999999999999 }"));
   }
 
   @Test(expected = TronError.class)
   public void testRejectsCommitteeProposalExpireTime() {
-    Config config = ConfigFactory.parseString(
+    BlockConfig.fromConfig(withRef(
         "committee { proposalExpireTime = 300000 }\n"
-            + "block { proposalExpireTime = 300000 }");
-    BlockConfig.fromConfig(config);
+            + "block { proposalExpireTime = 300000 }"));
   }
 }

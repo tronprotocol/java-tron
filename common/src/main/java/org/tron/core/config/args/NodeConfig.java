@@ -1,33 +1,20 @@
 package org.tron.core.config.args;
 
+import static org.tron.core.config.Parameter.ChainConstant.MAX_ACTIVE_WITNESS_NUM;
+
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigBeanFactory;
 import com.typesafe.config.ConfigFactory;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
-/**
- * Node configuration bean for the "node" section of config.conf.
- *
- * <p>This section is complex: it mixes flat scalars, dot-notation nested keys
- * (e.g. "listen.port"), sub-objects (http, rpc, jsonrpc, p2p, dynamicConfig, dns),
- * and list fields (active, passive, fastForward, disabledApi).
- *
- * <p>Strategy:
- * <ul>
- *   <li>ConfigBeanFactory handles simple scalar fields and clean sub-objects</li>
- *   <li>Dot-notation fields (listen.port, connection.timeout, fetchBlock.timeout,
- *       solidity.threads) are read manually — HOCON parses them as nested objects,
- *       not flat keys, so ConfigBeanFactory cannot bind them to flat fields</li>
- *   <li>PBFT-named fields in sub-beans have the same JavaBean naming issue as
- *       CommitteeConfig — handled manually after binding</li>
- *   <li>List fields are read manually since ConfigBeanFactory expects bean lists</li>
- * </ul>
- */
+// Node configuration bean for the "node" section of config.conf.
+// ConfigBeanFactory auto-binds all fields including sub-beans, dot-notation keys,
+// PBFT fields, and list fields. Only legacy key fallbacks and PascalCase shutdown
+// keys are read manually.
 @Slf4j
 @Getter
 @Setter
@@ -35,7 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 public class NodeConfig {
 
   // ---- Flat scalar fields (auto-bound by ConfigBeanFactory) ----
-  private String trustNode = "127.0.0.1:50051";
+  private String trustNode = "";
   private boolean walletExtensionApi = true;
   private int syncFetchBatchNum = 2000;
   private int validateSignThreadNum = Runtime.getRuntime().availableProcessors();
@@ -48,28 +35,18 @@ public class NodeConfig {
   private boolean openPrintLog = true;
   private boolean openTransactionSort = false;
   private int maxTps = 1000;
-  // "isOpenFullTcpDisconnect" in config.conf: JavaBean convention converts
-  // setOpenFullTcpDisconnect -> key "openFullTcpDisconnect", but config uses
-  // "isOpenFullTcpDisconnect". Excluded from auto-binding, read manually.
+  // Config key "isOpenFullTcpDisconnect" cannot auto-bind — read manually in fromConfig()
   @Getter(lombok.AccessLevel.NONE)
   @Setter(lombok.AccessLevel.NONE)
   private boolean isOpenFullTcpDisconnect = false;
 
   public boolean isOpenFullTcpDisconnect() { return isOpenFullTcpDisconnect; }
 
-  // node.discovery.* and node.channel.read.timeout — dot-notation, manually read
-  @Getter(lombok.AccessLevel.NONE)
-  @Setter(lombok.AccessLevel.NONE)
-  private boolean discoveryEnable = false;
-  @Getter(lombok.AccessLevel.NONE)
-  @Setter(lombok.AccessLevel.NONE)
-  private boolean discoveryPersist = false;
+  // node.discovery.* — HOCON merges into node { discovery { ... } }, auto-bound
+  private DiscoveryConfig discovery = new DiscoveryConfig();
 
-  @Getter(lombok.AccessLevel.NONE)
-  @Setter(lombok.AccessLevel.NONE)
-  private String discoveryExternalIp = "";
-
-  // node.shutdown.* — dot-notation, manually read
+  // node.shutdown.* uses PascalCase keys (BlockTime, BlockHeight, BlockCount)
+  // that don't match JavaBean naming. Excluded, read manually.
   @Getter(lombok.AccessLevel.NONE)
   @Setter(lombok.AccessLevel.NONE)
   private String shutdownBlockTime = "";
@@ -80,9 +57,9 @@ public class NodeConfig {
   @Setter(lombok.AccessLevel.NONE)
   private long shutdownBlockCount = -1;
 
-  public boolean isDiscoveryEnable() { return discoveryEnable; }
-  public boolean isDiscoveryPersist() { return discoveryPersist; }
-  public String getDiscoveryExternalIp() { return discoveryExternalIp; }
+  public boolean isDiscoveryEnable() { return discovery.isEnable(); }
+  public boolean isDiscoveryPersist() { return discovery.isPersist(); }
+  public String getDiscoveryExternalIp() { return discovery.getExternal().getIp(); }
   public String getShutdownBlockTime() { return shutdownBlockTime; }
   public long getShutdownBlockHeight() { return shutdownBlockHeight; }
   public long getShutdownBlockCount() { return shutdownBlockCount; }
@@ -96,11 +73,11 @@ public class NodeConfig {
   private int maxFastForwardNum = 4;
   private int tcpNettyWorkThreadNum = 0;
   private int udpNettyWorkThreadNum = 1;
-  private int validContractProtoThreads = 2;
+  private ValidContractProtoConfig validContractProto = new ValidContractProtoConfig();
   private int shieldedTransInPendingMaxCounts = 10;
   private long blockCacheTimeout = 60;
   private long receiveTcpMinDataLength = 2048;
-  private int channelReadTimeout = 60;
+  private ChannelConfig channel = new ChannelConfig();
   private int maxTransactionPendingSize = 2000;
   private long pendingTransactionTimeout = 60000;
   private int agreeNodeCount = 0;
@@ -114,28 +91,19 @@ public class NodeConfig {
   private double disconnectNumberFactor = 0.4;
   private int maxActiveNodesWithSameIp = 2;
 
-  // ---- Dot-notation fields (manually read — HOCON treats them as nested) ----
-  // Excluded from ConfigBeanFactory auto-binding because HOCON parses dot-notation
-  // keys (listen.port, connection.timeout, fetchBlock.timeout, solidity.threads) as
-  // nested objects, not flat keys. ConfigBeanFactory expects flat key "listenPort" but
-  // config has "listen { port }". Read manually in fromConfig().
-  @Getter(lombok.AccessLevel.NONE)
-  @Setter(lombok.AccessLevel.NONE)
-  private int listenPort = 18888;
-  @Getter(lombok.AccessLevel.NONE)
-  @Setter(lombok.AccessLevel.NONE)
-  private int connectionTimeout = 2;
-  @Getter(lombok.AccessLevel.NONE)
-  @Setter(lombok.AccessLevel.NONE)
-  private int fetchBlockTimeout = 200;
-  @Getter(lombok.AccessLevel.NONE)
-  @Setter(lombok.AccessLevel.NONE)
-  private int solidityThreads = Runtime.getRuntime().availableProcessors();
+  // ---- Sub-beans matching config's dot-notation nested structure ----
+  private ListenConfig listen = new ListenConfig();
+  private ConnectionConfig connection = new ConnectionConfig();
+  private FetchBlockConfig fetchBlock = new FetchBlockConfig();
+  private SolidityConfig solidity = new SolidityConfig();
 
-  public int getListenPort() { return listenPort; }
-  public int getConnectionTimeout() { return connectionTimeout; }
-  public int getFetchBlockTimeout() { return fetchBlockTimeout; }
-  public int getSolidityThreads() { return solidityThreads; }
+  // Convenience getters for backward compatibility with applyNodeConfig
+  public int getListenPort() { return listen.getPort(); }
+  public int getConnectionTimeout() { return connection.getTimeout(); }
+  public int getFetchBlockTimeout() { return fetchBlock.getTimeout(); }
+  public int getSolidityThreads() { return solidity.getThreads(); }
+  public int getChannelReadTimeout() { return channel.getRead().getTimeout(); }
+  public int getValidContractProtoThreads() { return validContractProto.getThreads(); }
 
   // ---- List fields (manually read) ----
   private List<String> active = new ArrayList<>();
@@ -155,6 +123,65 @@ public class NodeConfig {
   // ===========================================================================
   // Inner static classes for sub-beans
   // ===========================================================================
+
+  // ---- Sub-beans for dot-notation config keys ----
+  // HOCON merges dot-notation into nested objects, ConfigBeanFactory auto-binds
+
+  @Getter
+  @Setter
+  public static class DiscoveryConfig {
+    private boolean enable = true;
+    private boolean persist = true;
+    private ExternalConfig external = new ExternalConfig();
+
+    @Getter
+    @Setter
+    public static class ExternalConfig {
+      private String ip = "";
+    }
+  }
+
+  @Getter
+  @Setter
+  public static class ListenConfig {
+    private int port = 18888;
+  }
+
+  @Getter
+  @Setter
+  public static class ConnectionConfig {
+    private int timeout = 2;
+  }
+
+  @Getter
+  @Setter
+  public static class FetchBlockConfig {
+    private int timeout = 200;
+  }
+
+  @Getter
+  @Setter
+  public static class SolidityConfig {
+    private int threads = 8;
+  }
+
+  @Getter
+  @Setter
+  public static class ChannelConfig {
+    private ReadConfig read = new ReadConfig();
+
+    @Getter
+    @Setter
+    public static class ReadConfig {
+      private int timeout = 0;
+    }
+  }
+
+  @Getter
+  @Setter
+  public static class ValidContractProtoConfig {
+    private int threads = 2;
+  }
 
   @Getter
   @Setter
@@ -226,16 +253,16 @@ public class NodeConfig {
       this.pBFTPort = v;
     }
 
-    private int thread = 16;
-    private int maxConcurrentCallsPerConnection = 100;
-    private int flowControlWindow = 0;
+    private int thread = 0;
+    private int maxConcurrentCallsPerConnection = 2147483647;
+    private int flowControlWindow = 1048576;
     private long maxConnectionIdleInMillis = Long.MAX_VALUE;
     private long maxConnectionAgeInMillis = Long.MAX_VALUE;
-    private int maxMessageSize = 0;
-    private int maxHeaderListSize = 0;
+    private int maxMessageSize = 4194304;
+    private int maxHeaderListSize = 8192;
     private int maxRstStream = 0;
     private int secondsPerWindow = 0;
-    private int minEffectiveConnection = 0;
+    private int minEffectiveConnection = 1;
     private boolean reflectionService = false;
     private boolean trxCacheEnable = false;
   }
@@ -311,96 +338,7 @@ public class NodeConfig {
     private String awsHostZoneId = "";
   }
 
-  // ===========================================================================
-  // DEFAULTS
-  // ===========================================================================
-
-  private static final Config DEFAULTS;
-
-  static {
-    int cpus = Runtime.getRuntime().availableProcessors();
-    StringBuilder sb = new StringBuilder();
-    // flat scalars
-    sb.append("trustNode = \"127.0.0.1:50051\"\n");
-    sb.append("walletExtensionApi = true\n");
-    sb.append("syncFetchBatchNum = 2000\n");
-    sb.append("validateSignThreadNum = ").append(cpus).append("\n");
-    sb.append("maxConnections = 30\n");
-    sb.append("minConnections = 8\n");
-    sb.append("minActiveConnections = 3\n");
-    sb.append("maxConnectionsWithSameIp = 2\n");
-    sb.append("maxHttpConnectNumber = 50\n");
-    sb.append("minParticipationRate = 15\n");
-    sb.append("openPrintLog = true\n");
-    sb.append("openTransactionSort = false\n");
-    sb.append("maxTps = 1000\n");
-    // isOpenFullTcpDisconnect excluded from auto-binding — read manually in fromConfig()
-    sb.append("inactiveThreshold = 600\n");
-    sb.append("metricsEnable = false\n");
-    sb.append("blockProducedTimeOut = 75\n");
-    sb.append("netMaxTrxPerSecond = 700\n");
-    sb.append("nodeDetectEnable = false\n");
-    sb.append("enableIpv6 = false\n");
-    sb.append("effectiveCheckEnable = false\n");
-    sb.append("maxFastForwardNum = 4\n");
-    sb.append("tcpNettyWorkThreadNum = 0\n");
-    sb.append("udpNettyWorkThreadNum = 1\n");
-    sb.append("validContractProtoThreads = 2\n");
-    sb.append("shieldedTransInPendingMaxCounts = 10\n");
-    sb.append("blockCacheTimeout = 60\n");
-    sb.append("receiveTcpMinDataLength = 2048\n");
-    sb.append("channelReadTimeout = 60\n");
-    sb.append("maxTransactionPendingSize = 2000\n");
-    sb.append("pendingTransactionTimeout = 60000\n");
-    sb.append("agreeNodeCount = 0\n");
-    sb.append("openHistoryQueryWhenLiteFN = false\n");
-    sb.append("unsolidifiedBlockCheck = false\n");
-    sb.append("maxUnsolidifiedBlocks = 54\n");
-    sb.append("zenTokenId = \"000000\"\n");
-    sb.append("allowShieldedTransactionApi = true\n");
-    sb.append("activeConnectFactor = 0.1\n");
-    sb.append("connectFactor = 0.6\n");
-    sb.append("disconnectNumberFactor = 0.4\n");
-    sb.append("maxActiveNodesWithSameIp = 2\n");
-    // dot-notation fields (HOCON nests them automatically)
-    sb.append("listen { port = 18888 }\n");
-    sb.append("connection { timeout = 2 }\n");
-    sb.append("fetchBlock { timeout = 200 }\n");
-    sb.append("solidity { threads = ").append(cpus).append(" }\n");
-    // sub-objects
-    sb.append("p2p { version = 11111 }\n");
-    sb.append("http { fullNodeEnable = true, fullNodePort = 8090,");
-    sb.append(" solidityEnable = true, solidityPort = 8091,");
-    sb.append(" PBFTEnable = true, PBFTPort = 8092 }\n");
-    sb.append("rpc { enable = true, port = 50051,");
-    sb.append(" solidityEnable = true, solidityPort = 50061,");
-    sb.append(" PBFTEnable = true, PBFTPort = 50071,");
-    sb.append(" thread = 16, maxConcurrentCallsPerConnection = 100,");
-    sb.append(" flowControlWindow = 0, maxConnectionIdleInMillis = ");
-    sb.append(Long.MAX_VALUE).append(",");
-    sb.append(" maxConnectionAgeInMillis = ").append(Long.MAX_VALUE).append(",");
-    sb.append(" maxMessageSize = 0, maxHeaderListSize = 0,");
-    sb.append(" maxRstStream = 0, secondsPerWindow = 0,");
-    sb.append(" minEffectiveConnection = 0, reflectionService = false,");
-    sb.append(" trxCacheEnable = false }\n");
-    sb.append("jsonrpc { httpFullNodeEnable = false, httpFullNodePort = 8545,");
-    sb.append(" httpSolidityEnable = false, httpSolidityPort = 8555,");
-    sb.append(" httpPBFTEnable = false, httpPBFTPort = 8565,");
-    sb.append(" maxBlockRange = 5000, maxSubTopics = 1000, maxBlockFilterNum = 50000 }\n");
-    sb.append("dynamicConfig { enable = false, checkInterval = 600 }\n");
-    sb.append("backup { priority = 0, port = 10001, keepAliveInterval = 3000, members = [] }\n");
-    sb.append("dns { treeUrls = [], publish = false, dnsDomain = \"\",");
-    sb.append(" dnsPrivate = \"\", knownUrls = [], staticNodes = [],");
-    sb.append(" maxMergeSize = 0, changeThreshold = 0.0, serverType = \"\",");
-    sb.append(" accessKeyId = \"\", accessKeySecret = \"\",");
-    sb.append(" aliyunDnsEndpoint = \"\", awsRegion = \"\", awsHostZoneId = \"\" }\n");
-    // list fields
-    sb.append("active = []\n");
-    sb.append("passive = []\n");
-    sb.append("fastForward = []\n");
-    sb.append("disabledApi = []\n");
-    DEFAULTS = ConfigFactory.parseString(sb.toString());
-  }
+  // Defaults come from reference.conf (loaded globally via Configuration.java)
 
   // ===========================================================================
   // Factory method
@@ -420,25 +358,16 @@ public class NodeConfig {
    * since ConfigBeanFactory expects typed bean lists, not string lists.
    */
   public static NodeConfig fromConfig(Config config) {
-    Config section = config.hasPath("node")
-        ? config.getConfig("node").withFallback(DEFAULTS)
-        : DEFAULTS;
+    Config section = config.getConfig("node");
 
-    // --- Phase 1: Auto-bind flat scalars and sub-objects ---
-    // ConfigBeanFactory will bind all simple fields and nested sub-beans.
-    // It will skip dot-notation fields (they are nested objects, not scalar keys)
-    // and may mis-bind PBFT fields due to JavaBean naming.
+    // Auto-bind all fields and sub-beans
     NodeConfig nc = ConfigBeanFactory.create(section, NodeConfig.class);
 
-    // --- Phase 2: Dot-notation and naming-mismatch fields (manually read) ---
-    nc.listenPort = getInt(section, "listen.port", 18888);
-    nc.connectionTimeout = getInt(section, "connection.timeout", 2);
-    nc.fetchBlockTimeout = getInt(section, "fetchBlock.timeout", 200);
-    nc.solidityThreads = getInt(section, "solidity.threads",
-        Runtime.getRuntime().availableProcessors());
+    // isOpenFullTcpDisconnect: boolean "is" prefix breaks JavaBean pairing
     nc.isOpenFullTcpDisconnect = getBool(section, "isOpenFullTcpDisconnect", false);
 
-    // Legacy key fallback: node.maxActiveNodes (old) -> maxConnections (new)
+    // --- Legacy key fallbacks (backward compatibility) ---
+    // node.maxActiveNodes (old) -> maxConnections (new)
     if (section.hasPath("maxActiveNodes")) {
       nc.maxConnections = section.getInt("maxActiveNodes");
       if (section.hasPath("connectFactor")) {
@@ -459,16 +388,7 @@ public class NodeConfig {
     } else if (section.hasPath("fullNodeAllowShieldedTransaction")) {
       nc.allowShieldedTransactionApi = section.getBoolean("fullNodeAllowShieldedTransaction");
     }
-    nc.discoveryExternalIp = config.hasPath("node.discovery.external.ip")
-        ? config.getString("node.discovery.external.ip").trim() : "";
-
-    // node.discovery.* — dot-notation creates nested HOCON objects
-    Config discoverySection = config.hasPath("node.discovery")
-        ? config.getConfig("node.discovery") : ConfigFactory.empty();
-    nc.discoveryEnable = getBool(discoverySection, "enable", false);
-    nc.discoveryPersist = getBool(discoverySection, "persist", false);
-
-    // node.shutdown.* — dot-notation
+    // node.shutdown.* — PascalCase keys (BlockTime, BlockHeight), cannot auto-bind
     nc.shutdownBlockTime = config.hasPath("node.shutdown.BlockTime")
         ? config.getString("node.shutdown.BlockTime") : "";
     nc.shutdownBlockHeight = config.hasPath("node.shutdown.BlockHeight")
@@ -476,36 +396,62 @@ public class NodeConfig {
     nc.shutdownBlockCount = config.hasPath("node.shutdown.BlockCount")
         ? config.getLong("node.shutdown.BlockCount") : -1;
 
-    // node.channel.read.timeout — triple-dot-notation
-    nc.channelReadTimeout = config.hasPath("node.channel.read.timeout")
-        ? config.getInt("node.channel.read.timeout") : 0;
 
-    // --- Phase 3: PBFT fields in sub-beans (manually patch) ---
-    // http
-    Config httpSection = section.hasPath("http")
-        ? section.getConfig("http") : ConfigFactory.empty();
-    nc.http.pBFTEnable = getBool(httpSection, "PBFTEnable", true);
-    nc.http.pBFTPort = getInt(httpSection, "PBFTPort", 8092);
-
-    // rpc
-    Config rpcSection = section.hasPath("rpc")
-        ? section.getConfig("rpc") : ConfigFactory.empty();
-    nc.rpc.pBFTEnable = getBool(rpcSection, "PBFTEnable", true);
-    nc.rpc.pBFTPort = getInt(rpcSection, "PBFTPort", 50071);
-
-    // jsonrpc
-    Config jsonrpcSection = section.hasPath("jsonrpc")
-        ? section.getConfig("jsonrpc") : ConfigFactory.empty();
-    nc.jsonrpc.httpPBFTEnable = getBool(jsonrpcSection, "httpPBFTEnable", false);
-    nc.jsonrpc.httpPBFTPort = getInt(jsonrpcSection, "httpPBFTPort", 8565);
-
-    // --- Phase 4: List fields (manually read) ---
-    nc.active = getStringList(section, "active");
-    nc.passive = getStringList(section, "passive");
-    nc.fastForward = getStringList(section, "fastForward");
-    nc.disabledApi = getStringList(section, "disabledApi");
-
+    nc.postProcess();
     return nc;
+  }
+
+  /**
+   * Post-processing: clamping, dynamic defaults, and cross-field validation.
+   * Runs after ConfigBeanFactory binding and manual field reads.
+   */
+  private void postProcess() {
+    // rpcThreadNum: 0 = auto-detect
+    if (rpc.thread == 0) {
+      rpc.thread = (Runtime.getRuntime().availableProcessors() + 1) / 2;
+    }
+
+    // syncFetchBatchNum: clamp to [100, 2000]
+    if (syncFetchBatchNum > 2000) {
+      syncFetchBatchNum = 2000;
+    }
+    if (syncFetchBatchNum < 100) {
+      syncFetchBatchNum = 100;
+    }
+
+    // blockProducedTimeOut: clamp to [30, 100]
+    if (blockProducedTimeOut < 30) {
+      blockProducedTimeOut = 30;
+    }
+    if (blockProducedTimeOut > 100) {
+      blockProducedTimeOut = 100;
+    }
+
+    // inactiveThreshold: minimum 1
+    if (inactiveThreshold < 1) {
+      inactiveThreshold = 1;
+    }
+
+    // maxFastForwardNum: clamp to [1, MAX_ACTIVE_WITNESS_NUM]
+    if (maxFastForwardNum > MAX_ACTIVE_WITNESS_NUM) {
+      maxFastForwardNum = MAX_ACTIVE_WITNESS_NUM;
+    }
+    if (maxFastForwardNum < 1) {
+      maxFastForwardNum = 1;
+    }
+
+    // agreeNodeCount: 0 = auto (2/3 + 1 of witnesses), clamp to max
+    if (agreeNodeCount == 0) {
+      agreeNodeCount = MAX_ACTIVE_WITNESS_NUM * 2 / 3 + 1;
+    }
+    if (agreeNodeCount > MAX_ACTIVE_WITNESS_NUM) {
+      agreeNodeCount = MAX_ACTIVE_WITNESS_NUM;
+    }
+
+    // dynamicConfigCheckInterval: minimum 600
+    if (dynamicConfig.checkInterval <= 0) {
+      dynamicConfig.checkInterval = 600;
+    }
   }
 
   // ===========================================================================
@@ -528,10 +474,4 @@ public class NodeConfig {
     return config.hasPath(path) ? config.getString(path) : defaultValue;
   }
 
-  private static List<String> getStringList(Config config, String path) {
-    if (config.hasPath(path)) {
-      return config.getStringList(path);
-    }
-    return Collections.emptyList();
-  }
 }

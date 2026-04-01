@@ -8,10 +8,17 @@ import org.junit.Test;
 
 public class CommitteeConfigTest {
 
+  private static Config withRef(String hocon) {
+    return ConfigFactory.parseString(hocon).withFallback(ConfigFactory.defaultReference());
+  }
+
+  private static Config withRef() {
+    return ConfigFactory.defaultReference();
+  }
+
   @Test
   public void testDefaults() {
-    Config empty = ConfigFactory.empty();
-    CommitteeConfig cc = CommitteeConfig.fromConfig(empty);
+    CommitteeConfig cc = CommitteeConfig.fromConfig(withRef());
     assertEquals(0, cc.getAllowCreationOfContracts());
     assertEquals(0, cc.getAllowPBFT());
     assertEquals(20, cc.getPBFTExpireNum());
@@ -21,7 +28,7 @@ public class CommitteeConfigTest {
 
   @Test
   public void testFromConfig() {
-    Config config = ConfigFactory.parseString(
+    Config config = withRef(
         "committee { allowCreationOfContracts = 1, allowPBFT = 1, pBFTExpireNum = 30 }");
     CommitteeConfig cc = CommitteeConfig.fromConfig(config);
     assertEquals(1, cc.getAllowCreationOfContracts());
@@ -31,39 +38,34 @@ public class CommitteeConfigTest {
 
   @Test
   public void testUnfreezeDelayDaysClamped() {
-    Config tooHigh = ConfigFactory.parseString("committee { unfreezeDelayDays = 500 }");
-    assertEquals(365, CommitteeConfig.fromConfig(tooHigh).getUnfreezeDelayDays());
-
-    Config tooLow = ConfigFactory.parseString("committee { unfreezeDelayDays = -10 }");
-    assertEquals(0, CommitteeConfig.fromConfig(tooLow).getUnfreezeDelayDays());
+    assertEquals(365, CommitteeConfig.fromConfig(
+        withRef("committee { unfreezeDelayDays = 500 }")).getUnfreezeDelayDays());
+    assertEquals(0, CommitteeConfig.fromConfig(
+        withRef("committee { unfreezeDelayDays = -10 }")).getUnfreezeDelayDays());
   }
 
   @Test
   public void testDynamicEnergyClamped() {
-    Config config = ConfigFactory.parseString("committee { allowDynamicEnergy = 5 }");
-    assertEquals(1, CommitteeConfig.fromConfig(config).getAllowDynamicEnergy());
+    assertEquals(1, CommitteeConfig.fromConfig(
+        withRef("committee { allowDynamicEnergy = 5 }")).getAllowDynamicEnergy());
   }
 
   @Test
   public void testDynamicEnergyThresholdClamped() {
-    Config config = ConfigFactory.parseString(
-        "committee { dynamicEnergyThreshold = 999999999999999999 }");
-    assertEquals(100_000_000_000_000_000L,
-        CommitteeConfig.fromConfig(config).getDynamicEnergyThreshold());
+    assertEquals(100_000_000_000_000_000L, CommitteeConfig.fromConfig(
+        withRef("committee { dynamicEnergyThreshold = 999999999999999999 }"))
+        .getDynamicEnergyThreshold());
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testAllowOldRewardOptWithoutPrerequisites() {
-    Config config = ConfigFactory.parseString(
-        "committee { allowOldRewardOpt = 1 }");
-    CommitteeConfig.fromConfig(config);
+    CommitteeConfig.fromConfig(withRef("committee { allowOldRewardOpt = 1 }"));
   }
 
   @Test
   public void testAllowOldRewardOptWithPrerequisite() {
-    Config config = ConfigFactory.parseString(
-        "committee { allowOldRewardOpt = 1, allowTvmVote = 1 }");
-    CommitteeConfig cc = CommitteeConfig.fromConfig(config);
+    CommitteeConfig cc = CommitteeConfig.fromConfig(
+        withRef("committee { allowOldRewardOpt = 1, allowTvmVote = 1 }"));
     assertEquals(1, cc.getAllowOldRewardOpt());
   }
 }

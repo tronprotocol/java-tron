@@ -10,9 +10,17 @@ import org.junit.Test;
 
 public class LocalWitnessConfigTest {
 
+  private static Config withRef(String hocon) {
+    return ConfigFactory.parseString(hocon).withFallback(ConfigFactory.defaultReference());
+  }
+
+  private static Config withRef() {
+    return ConfigFactory.defaultReference();
+  }
+
   @Test
   public void testDefaults() {
-    Config empty = ConfigFactory.empty();
+    Config empty = withRef();
     LocalWitnessConfig lw = LocalWitnessConfig.fromConfig(empty);
     assertTrue(lw.getPrivateKeys().isEmpty());
     assertNull(lw.getAccountAddress());
@@ -21,7 +29,7 @@ public class LocalWitnessConfigTest {
 
   @Test
   public void testWithPrivateKeys() {
-    Config config = ConfigFactory.parseString(
+    Config config = withRef(
         "localwitness = [\"key1\", \"key2\"]\n"
             + "localWitnessAccountAddress = \"TAddr123\"");
     LocalWitnessConfig lw = LocalWitnessConfig.fromConfig(config);
@@ -32,7 +40,7 @@ public class LocalWitnessConfigTest {
 
   @Test
   public void testWithKeystores() {
-    Config config = ConfigFactory.parseString(
+    Config config = withRef(
         "localwitnesskeystore = [\"/path/to/keystore1\"]");
     LocalWitnessConfig lw = LocalWitnessConfig.fromConfig(config);
     assertEquals(1, lw.getKeystores().size());

@@ -10,9 +10,17 @@ import org.junit.Test;
 
 public class MetricsConfigTest {
 
+  private static Config withRef(String hocon) {
+    return ConfigFactory.parseString(hocon).withFallback(ConfigFactory.defaultReference());
+  }
+
+  private static Config withRef() {
+    return ConfigFactory.defaultReference();
+  }
+
   @Test
   public void testDefaults() {
-    Config empty = ConfigFactory.empty();
+    Config empty = withRef();
     MetricsConfig mc = MetricsConfig.fromConfig(empty);
     assertFalse(mc.isStorageEnable());
     assertFalse(mc.getPrometheus().isEnable());
@@ -22,7 +30,7 @@ public class MetricsConfigTest {
 
   @Test
   public void testFromConfig() {
-    Config config = ConfigFactory.parseString(
+    Config config = withRef(
         "node.metrics {"
             + " storageEnable = true,"
             + " prometheus { enable = true, port = 9999 },"

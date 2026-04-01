@@ -2,7 +2,6 @@ package org.tron.core.config.args;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigBeanFactory;
-import com.typesafe.config.ConfigFactory;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -29,28 +28,13 @@ public class VmConfig {
   private boolean saveFeaturedInternalTx = false;
   private boolean saveCancelAllUnfreezeV2Details = false;
 
-  private static final Config DEFAULTS = ConfigFactory.parseString(
-      "supportConstant = false\n"
-          + "maxEnergyLimitForConstant = 100000000\n"
-          + "lruCacheSize = 500\n"
-          + "minTimeRatio = 0.0\n"
-          + "maxTimeRatio = 5.0\n"
-          + "longRunningTime = 10\n"
-          + "estimateEnergy = false\n"
-          + "estimateEnergyMaxRetry = 3\n"
-          + "vmTrace = false\n"
-          + "saveInternalTx = false\n"
-          + "saveFeaturedInternalTx = false\n"
-          + "saveCancelAllUnfreezeV2Details = false\n"
-  );
-
   /**
    * Create VmConfig from the "vm" section of the application config.
+   * Defaults come from reference.conf (loaded globally via Configuration.java),
+   * so no per-bean DEFAULTS needed.
    */
   public static VmConfig fromConfig(Config config) {
-    Config vmSection = config.hasPath("vm")
-        ? config.getConfig("vm").withFallback(DEFAULTS)
-        : DEFAULTS;
+    Config vmSection = config.getConfig("vm");
     VmConfig vmConfig = ConfigBeanFactory.create(vmSection, VmConfig.class);
     vmConfig.postProcess();
     return vmConfig;

@@ -10,9 +10,17 @@ import org.junit.Test;
 
 public class NodeConfigTest {
 
+  private static Config withRef(String hocon) {
+    return ConfigFactory.parseString(hocon).withFallback(ConfigFactory.defaultReference());
+  }
+
+  private static Config withRef() {
+    return ConfigFactory.defaultReference();
+  }
+
   @Test
   public void testDefaults() {
-    Config empty = ConfigFactory.empty();
+    Config empty = withRef();
     NodeConfig nc = NodeConfig.fromConfig(empty);
     assertEquals(18888, nc.getListenPort());
     assertEquals(2, nc.getConnectionTimeout());
@@ -21,14 +29,15 @@ public class NodeConfigTest {
     assertEquals(8, nc.getMinConnections());
     assertEquals(4, nc.getMaxFastForwardNum());
     assertFalse(nc.isOpenFullTcpDisconnect());
-    assertFalse(nc.isDiscoveryEnable());
-    assertFalse(nc.isDiscoveryPersist());
+    // reference.conf has node.discovery.enable=true, persist=true
+    assertTrue(nc.isDiscoveryEnable());
+    assertTrue(nc.isDiscoveryPersist());
     assertEquals(0, nc.getChannelReadTimeout());
   }
 
   @Test
   public void testDotNotationFields() {
-    Config config = ConfigFactory.parseString(
+    Config config = withRef(
         "node { listen { port = 19999 }, connection { timeout = 5 },"
             + " fetchBlock { timeout = 300 }, solidity { threads = 4 } }");
     NodeConfig nc = NodeConfig.fromConfig(config);
@@ -40,7 +49,7 @@ public class NodeConfigTest {
 
   @Test
   public void testDiscoveryFields() {
-    Config config = ConfigFactory.parseString(
+    Config config = withRef(
         "node.discovery { enable = true, persist = true }");
     NodeConfig nc = NodeConfig.fromConfig(config);
     assertTrue(nc.isDiscoveryEnable());
@@ -49,7 +58,7 @@ public class NodeConfigTest {
 
   @Test
   public void testHttpSubBean() {
-    Config config = ConfigFactory.parseString(
+    Config config = withRef(
         "node { http { fullNodeEnable = false, fullNodePort = 9090,"
             + " PBFTEnable = false, PBFTPort = 9092 } }");
     NodeConfig nc = NodeConfig.fromConfig(config);
@@ -61,7 +70,7 @@ public class NodeConfigTest {
 
   @Test
   public void testRpcSubBean() {
-    Config config = ConfigFactory.parseString(
+    Config config = withRef(
         "node { rpc { enable = false, port = 60051,"
             + " PBFTEnable = false, PBFTPort = 60071 } }");
     NodeConfig nc = NodeConfig.fromConfig(config);
@@ -73,7 +82,7 @@ public class NodeConfigTest {
 
   @Test
   public void testBackupSubBean() {
-    Config config = ConfigFactory.parseString(
+    Config config = withRef(
         "node { backup { priority = 5, port = 20001, keepAliveInterval = 5000 } }");
     NodeConfig nc = NodeConfig.fromConfig(config);
     assertEquals(5, nc.getBackup().getPriority());
@@ -83,9 +92,53 @@ public class NodeConfigTest {
 
   @Test
   public void testIsOpenFullTcpDisconnect() {
-    Config config = ConfigFactory.parseString(
+    Config config = withRef(
         "node { isOpenFullTcpDisconnect = true }");
     NodeConfig nc = NodeConfig.fromConfig(config);
     assertTrue(nc.isOpenFullTcpDisconnect());
+  }
+
+  @Test
+  public void testRpcDefaultsFromReference() {
+    Config empty = withRef();
+    NodeConfig nc = NodeConfig.fromConfig(empty);
+    NodeConfig.RpcConfig rpc = nc.getRpc();
+
+    // reference.conf provides actual final defaults, no sentinel conversion needed
+    assertEquals(2147483647, rpc.getMaxConcurrentCallsPerConnection());
+    assertEquals(1048576, rpc.getFlowControlWindow());
+    assertEquals(9223372036854775807L, rpc.getMaxConnectionIdleInMillis());
+    assertEquals(9223372036854775807L, rpc.getMaxConnectionAgeInMillis());
+    assertEquals(4194304, rpc.getMaxMessageSize());
+    assertEquals(8192, rpc.getMaxHeaderListSize());
+    assertEquals(1, rpc.getMinEffectiveConnection());
+    // thread=0 in reference.conf triggers auto-detect in postProcess
+    assertTrue(rpc.getThread() > 0);
+  }
+
+  @Test
+  public void testRpcUserOverrideZeroNotConverted() {
+    // Users can explicitly set 0 to disable connection checks (e.g. system-test)
+    Config config = withRef(
+        "node { rpc { minEffectiveConnection = 0 } }");
+    NodeConfig nc = NodeConfig.fromConfig(config);
+    assertEquals(0, nc.getRpc().getMinEffectiveConnection());
+  }
+
+  @Test
+  public void testRpcUserOverrideExplicitValues() {
+    Config config = withRef(
+        "node { rpc { thread = 32,"
+            + " maxConcurrentCallsPerConnection = 50,"
+            + " flowControlWindow = 2097152,"
+            + " maxMessageSize = 8388608,"
+            + " maxHeaderListSize = 16384 } }");
+    NodeConfig nc = NodeConfig.fromConfig(config);
+    NodeConfig.RpcConfig rpc = nc.getRpc();
+    assertEquals(32, rpc.getThread());
+    assertEquals(50, rpc.getMaxConcurrentCallsPerConnection());
+    assertEquals(2097152, rpc.getFlowControlWindow());
+    assertEquals(8388608, rpc.getMaxMessageSize());
+    assertEquals(16384, rpc.getMaxHeaderListSize());
   }
 }

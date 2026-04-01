@@ -7,7 +7,6 @@ import static org.tron.core.exception.TronError.ErrCode.PARAMETER_INIT;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigBeanFactory;
-import com.typesafe.config.ConfigFactory;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -26,12 +25,7 @@ public class BlockConfig {
   private long proposalExpireTime = DEFAULT_PROPOSAL_EXPIRE_TIME;
   private int checkFrozenTime = 1;
 
-  private static final Config DEFAULTS = ConfigFactory.parseString(
-      "needSyncCheck = false\n"
-          + "maintenanceTimeInterval = 21600000\n"
-          + "proposalExpireTime = " + DEFAULT_PROPOSAL_EXPIRE_TIME + "\n"
-          + "checkFrozenTime = 1\n"
-  );
+  // Defaults come from reference.conf (loaded globally via Configuration.java)
 
   /**
    * Create BlockConfig from the "block" section of the application config.
@@ -44,9 +38,7 @@ public class BlockConfig {
           + "config.conf, please set the value in block.proposalExpireTime.", PARAMETER_INIT);
     }
 
-    Config blockSection = config.hasPath("block")
-        ? config.getConfig("block").withFallback(DEFAULTS)
-        : DEFAULTS;
+    Config blockSection = config.getConfig("block");
     BlockConfig blockConfig = ConfigBeanFactory.create(blockSection, BlockConfig.class);
     blockConfig.postProcess();
     return blockConfig;

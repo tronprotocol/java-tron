@@ -2,7 +2,6 @@ package org.tron.core.config.args;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigBeanFactory;
-import com.typesafe.config.ConfigFactory;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -36,20 +35,13 @@ public class MetricsConfig {
     private int metricsReportInterval = 10;
   }
 
-  private static final Config DEFAULTS = ConfigFactory.parseString(
-      "storageEnable = false\n"
-          + "prometheus { enable = false, port = 9527 }\n"
-          + "influxdb { ip = \"\", port = 8086, database = metrics,"
-          + " metricsReportInterval = 10 }\n"
-  );
+  // Defaults come from reference.conf (loaded globally via Configuration.java)
 
   /**
    * Create MetricsConfig from the "node.metrics" section of the application config.
    */
   public static MetricsConfig fromConfig(Config config) {
-    Config section = config.hasPath("node.metrics")
-        ? config.getConfig("node.metrics").withFallback(DEFAULTS)
-        : DEFAULTS;
+    Config section = config.getConfig("node.metrics");
     return ConfigBeanFactory.create(section, MetricsConfig.class);
   }
 }

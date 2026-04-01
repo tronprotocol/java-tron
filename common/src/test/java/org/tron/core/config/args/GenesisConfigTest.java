@@ -1,6 +1,7 @@
 package org.tron.core.config.args;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import com.typesafe.config.Config;
@@ -9,19 +10,27 @@ import org.junit.Test;
 
 public class GenesisConfigTest {
 
+  private static Config withRef(String hocon) {
+    return ConfigFactory.parseString(hocon).withFallback(ConfigFactory.defaultReference());
+  }
+
+  private static Config withRef() {
+    return ConfigFactory.defaultReference();
+  }
+
   @Test
   public void testDefaults() {
-    Config empty = ConfigFactory.empty();
+    Config empty = withRef();
     GenesisConfig gc = GenesisConfig.fromConfig(empty);
-    assertEquals("", gc.getTimestamp());
-    assertEquals("", gc.getParentHash());
-    assertTrue(gc.getAssets().isEmpty());
-    assertTrue(gc.getWitnesses().isEmpty());
+    // reference.conf has genesis.block with timestamp, parentHash, assets, witnesses
+    assertEquals("0", gc.getTimestamp());
+    assertFalse(gc.getAssets().isEmpty());  // reference.conf has seed accounts
+    assertFalse(gc.getWitnesses().isEmpty()); // reference.conf has seed witnesses
   }
 
   @Test
   public void testWithAssets() {
-    Config config = ConfigFactory.parseString(
+    Config config = withRef(
         "genesis.block { timestamp = \"12345\", parentHash = \"0x00\","
             + " assets = [{ accountName = Zion, accountType = AssetIssue,"
             + " address = \"TAddr1\", balance = \"99000\" }],"
@@ -40,7 +49,7 @@ public class GenesisConfigTest {
 
   @Test
   public void testEmptyLists() {
-    Config config = ConfigFactory.parseString(
+    Config config = withRef(
         "genesis.block { timestamp = \"0\", parentHash = \"0x00\","
             + " assets = [], witnesses = [] }");
     GenesisConfig gc = GenesisConfig.fromConfig(config);

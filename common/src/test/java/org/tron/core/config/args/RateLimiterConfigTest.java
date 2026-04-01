@@ -9,9 +9,17 @@ import org.junit.Test;
 
 public class RateLimiterConfigTest {
 
+  private static Config withRef(String hocon) {
+    return ConfigFactory.parseString(hocon).withFallback(ConfigFactory.defaultReference());
+  }
+
+  private static Config withRef() {
+    return ConfigFactory.defaultReference();
+  }
+
   @Test
   public void testDefaults() {
-    Config empty = ConfigFactory.empty();
+    Config empty = withRef();
     RateLimiterConfig rl = RateLimiterConfig.fromConfig(empty);
     assertEquals(50000, rl.getGlobal().getQps());
     assertEquals(10000, rl.getGlobal().getIp().getQps());
@@ -25,7 +33,7 @@ public class RateLimiterConfigTest {
 
   @Test
   public void testFromConfig() {
-    Config config = ConfigFactory.parseString(
+    Config config = withRef(
         "rate.limiter {"
             + " global { qps = 100, ip { qps = 50 }, api { qps = 10 } },"
             + " p2p { syncBlockChain = 5.0, disconnect = 2.0 },"

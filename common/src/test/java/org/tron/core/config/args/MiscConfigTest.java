@@ -11,23 +11,33 @@ import org.tron.core.Constant;
 
 public class MiscConfigTest {
 
+  private static Config withRef(String hocon) {
+    return ConfigFactory.parseString(hocon).withFallback(ConfigFactory.defaultReference());
+  }
+
+  private static Config withRef() {
+    return ConfigFactory.defaultReference();
+  }
+
   @Test
   public void testDefaults() {
-    Config empty = ConfigFactory.empty();
+    Config empty = withRef();
     MiscConfig mc = MiscConfig.fromConfig(empty);
     assertTrue(mc.isNeedToUpdateAsset());
     assertFalse(mc.isHistoryBalanceLookup());
     assertEquals("solid", mc.getTrxReferenceBlock());
     assertEquals(Constant.TRANSACTION_DEFAULT_EXPIRATION_TIME,
         mc.getTrxExpirationTimeInMilliseconds());
-    assertEquals(Constant.ECKey_ENGINE, mc.getCryptoEngine());
-    assertTrue(mc.getSeedNodeIpList().isEmpty());
+    // reference.conf has crypto.engine = "eckey" (lowercase)
+    assertEquals("eckey", mc.getCryptoEngine());
+    // reference.conf has seed.node.ip.list with actual IPs
+    assertFalse(mc.getSeedNodeIpList().isEmpty());
     assertTrue(mc.getActuatorWhitelist().isEmpty());
   }
 
   @Test
   public void testFromConfig() {
-    Config config = ConfigFactory.parseString(
+    Config config = withRef(
         "storage { needToUpdateAsset = false,"
             + " balance { history { lookup = true } } }\n"
             + "trx { reference { block = head } }\n"

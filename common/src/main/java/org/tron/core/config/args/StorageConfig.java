@@ -1,10 +1,7 @@
 package org.tron.core.config.args;
 
-import static org.tron.common.math.Maths.max;
-
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigBeanFactory;
-import com.typesafe.config.ConfigFactory;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.Getter;
@@ -98,12 +95,12 @@ public class StorageConfig {
   @Setter
   public static class DbSettingsConfig {
     private int levelNumber = 7;
-    private int compactThreads = Runtime.getRuntime().availableProcessors();
-    private int blocksize = 16;
+    private int compactThreads = 32;
+    private int blocksize = 64;
     private long maxBytesForLevelBase = 256;
     private double maxBytesForLevelMultiplier = 10;
-    private int level0FileNumCompactionTrigger = 2;
-    private long targetFileSizeBase = 64;
+    private int level0FileNumCompactionTrigger = 4;
+    private long targetFileSizeBase = 256;
     private int targetFileSizeMultiplier = 1;
     private int maxOpenFiles = 5000;
   }
@@ -165,35 +162,10 @@ public class StorageConfig {
     private int maxOpenFiles = 100;
   }
 
-  private static final Config DEFAULTS;
-
-  static {
-    int cpus = (int) max(Runtime.getRuntime().availableProcessors(), 1, true);
-    DEFAULTS = ConfigFactory.parseString(
-        "db { engine = LEVELDB, sync = false, directory = database }\n"
-            + "index { directory = index, switch = on }\n"
-            + "transHistory { switch = on }\n"
-            + "needToUpdateAsset = true\n"
-            + "dbSettings { levelNumber = 7, compactThreads = " + cpus
-            + ", blocksize = 16, maxBytesForLevelBase = 256,"
-            + " maxBytesForLevelMultiplier = 10, level0FileNumCompactionTrigger = 2,"
-            + " targetFileSizeBase = 64, targetFileSizeMultiplier = 1, maxOpenFiles = 5000 }\n"
-            + "backup { enable = false, propPath = \"prop.properties\","
-            + " bak1path = \"bak1/database/\", bak2path = \"bak2/database/\","
-            + " frequency = 10000 }\n"
-            + "balance { history { lookup = false } }\n"
-            + "checkpoint { version = 1, sync = true }\n"
-            + "snapshot { maxFlushCount = 1 }\n"
-            + "txCache { estimatedTransactions = 1000, initOptimization = false }\n"
-            + "properties = []\n"
-            + "merkleRoot = {}\n"
-    );
-  }
+  // Defaults come from reference.conf (loaded globally via Configuration.java)
 
   public static StorageConfig fromConfig(Config config) {
-    Config section = config.hasPath("storage")
-        ? config.getConfig("storage").withFallback(DEFAULTS)
-        : DEFAULTS;
+    Config section = config.getConfig("storage");
 
     StorageConfig sc = ConfigBeanFactory.create(section, StorageConfig.class);
     // Keep raw config for legacy LevelDB per-database option overrides (default, defaultM, defaultL)

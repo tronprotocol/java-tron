@@ -2,7 +2,6 @@ package org.tron.core.config.args;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigBeanFactory;
-import com.typesafe.config.ConfigFactory;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -84,57 +83,7 @@ public class CommitteeConfig {
 
   // proposalExpireTime is NOT a committee field — it's in block.* and handled by BlockConfig
 
-  private static final Config DEFAULTS;
-
-  static {
-    StringBuilder sb = new StringBuilder();
-    sb.append("allowCreationOfContracts = 0\n");
-    sb.append("allowMultiSign = 0\n");
-    sb.append("allowAdaptiveEnergy = 0\n");
-    sb.append("allowDelegateResource = 0\n");
-    sb.append("allowSameTokenName = 0\n");
-    sb.append("allowTvmTransferTrc10 = 0\n");
-    sb.append("allowTvmConstantinople = 0\n");
-    sb.append("allowTvmSolidity059 = 0\n");
-    sb.append("forbidTransferToContract = 0\n");
-    sb.append("allowShieldedTRC20Transaction = 0\n");
-    sb.append("allowMarketTransaction = 0\n");
-    sb.append("allowTransactionFeePool = 0\n");
-    sb.append("allowBlackHoleOptimization = 0\n");
-    sb.append("allowNewResourceModel = 0\n");
-    sb.append("allowTvmIstanbul = 0\n");
-    sb.append("allowProtoFilterNum = 0\n");
-    sb.append("allowAccountStateRoot = 0\n");
-    sb.append("changedDelegation = 0\n");
-    sb.append("allowPBFT = 0\n");
-    sb.append("pBFTExpireNum = 20\n");
-    sb.append("allowTvmFreeze = 0\n");
-    sb.append("allowTvmVote = 0\n");
-    sb.append("allowTvmLondon = 0\n");
-    sb.append("allowTvmCompatibleEvm = 0\n");
-    sb.append("allowHigherLimitForMaxCpuTimeOfOneTx = 0\n");
-    sb.append("allowNewRewardAlgorithm = 0\n");
-    sb.append("allowOptimizedReturnValueOfChainId = 0\n");
-    sb.append("allowTvmShangHai = 0\n");
-    sb.append("allowOldRewardOpt = 0\n");
-    sb.append("allowEnergyAdjustment = 0\n");
-    sb.append("allowStrictMath = 0\n");
-    sb.append("consensusLogicOptimization = 0\n");
-    sb.append("allowTvmCancun = 0\n");
-    sb.append("allowTvmBlob = 0\n");
-    sb.append("unfreezeDelayDays = 0\n");
-    sb.append("allowReceiptsMerkleRoot = 0\n");
-    sb.append("allowAccountAssetOptimization = 0\n");
-    sb.append("allowAssetOptimization = 0\n");
-    sb.append("allowNewReward = 0\n");
-    sb.append("memoFee = 0\n");
-    sb.append("allowDelegateOptimization = 0\n");
-    sb.append("allowDynamicEnergy = 0\n");
-    sb.append("dynamicEnergyThreshold = 0\n");
-    sb.append("dynamicEnergyIncreaseFactor = 0\n");
-    sb.append("dynamicEnergyMaxFactor = 0\n");
-    DEFAULTS = ConfigFactory.parseString(sb.toString());
-  }
+  // Defaults come from reference.conf (loaded globally via Configuration.java)
 
   /**
    * Create CommitteeConfig from the "committee" section of the application config.
@@ -144,9 +93,7 @@ public class CommitteeConfig {
    * are excluded from automatic binding and handled manually after.
    */
   public static CommitteeConfig fromConfig(Config config) {
-    Config section = config.hasPath("committee")
-        ? config.getConfig("committee").withFallback(DEFAULTS)
-        : DEFAULTS;
+    Config section = config.getConfig("committee");
 
     // ConfigBeanFactory derives key names from setter methods. For setPBFTExpireNum()
     // it expects "PBFTExpireNum" (capital P), but config.conf uses "pBFTExpireNum".

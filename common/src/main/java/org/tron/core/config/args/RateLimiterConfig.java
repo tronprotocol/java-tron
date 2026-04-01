@@ -2,7 +2,6 @@ package org.tron.core.config.args;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigBeanFactory;
-import com.typesafe.config.ConfigFactory;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.Getter;
@@ -67,17 +66,10 @@ public class RateLimiterConfig {
     private String paramString = "";
   }
 
-  private static final Config DEFAULTS = ConfigFactory.parseString(
-      "global { qps = 50000, ip { qps = 10000 }, api { qps = 1000 } }\n"
-          + "p2p { syncBlockChain = 3.0, fetchInvData = 3.0, disconnect = 1.0 }\n"
-          + "http = []\n"
-          + "rpc = []\n"
-  );
+  // Defaults come from reference.conf (loaded globally via Configuration.java)
 
   public static RateLimiterConfig fromConfig(Config config) {
-    Config section = config.hasPath("rate.limiter")
-        ? config.getConfig("rate.limiter").withFallback(DEFAULTS)
-        : DEFAULTS;
+    Config section = config.getConfig("rate.limiter");
     return ConfigBeanFactory.create(section, RateLimiterConfig.class);
   }
 }
