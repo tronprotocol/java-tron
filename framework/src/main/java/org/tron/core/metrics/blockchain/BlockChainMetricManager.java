@@ -47,7 +47,7 @@ public class BlockChainMetricManager {
   private String failProcessBlockReason = "";
   private final Set<String> lastActiveWitnesses = ConcurrentHashMap.newKeySet();
   // To control SR set change metric update logic, -1 means not initialized
-  private long lastNextMaintenanceTime = -1; 
+  private long lastNextMaintenanceTime = -1;
 
   public BlockChainInfo getBlockChainInfo() {
     BlockChainInfo blockChainInfo = new BlockChainInfo();
