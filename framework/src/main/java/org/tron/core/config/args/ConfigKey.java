@@ -153,6 +153,10 @@ final class ConfigKey {
   public static final String NODE_JSONRPC_MAX_BATCH_SIZE = "node.jsonrpc.maxBatchSize";
   public static final String NODE_JSONRPC_MAX_RESPONSE_SIZE =
       "node.jsonrpc.maxResponseSize";
+  public static final String NODE_JSONRPC_MAX_REQUEST_TIMEOUT =
+      "node.jsonrpc.maxRequestTimeout";
+  public static final String NODE_JSONRPC_MAX_ADDRESS_SIZE =
+      "node.jsonrpc.maxAddressSize";
 
   // node - dns
   public static final String NODE_DNS_TREE_URLS = "node.dns.treeUrls";

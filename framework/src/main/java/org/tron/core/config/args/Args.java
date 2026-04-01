@@ -223,6 +223,16 @@ public class Args extends CommonParameter {
           config.getInt(ConfigKey.NODE_JSONRPC_MAX_RESPONSE_SIZE);
     }
 
+    if (config.hasPath(ConfigKey.NODE_JSONRPC_MAX_REQUEST_TIMEOUT)) {
+      PARAMETER.jsonRpcMaxRequestTimeout =
+          config.getInt(ConfigKey.NODE_JSONRPC_MAX_REQUEST_TIMEOUT);
+    }
+
+    if (config.hasPath(ConfigKey.NODE_JSONRPC_MAX_ADDRESS_SIZE)) {
+      PARAMETER.jsonRpcMaxAddressSize =
+          config.getInt(ConfigKey.NODE_JSONRPC_MAX_ADDRESS_SIZE);
+    }
+
     if (config.hasPath(ConfigKey.VM_MIN_TIME_RATIO)) {
       PARAMETER.minTimeRatio = config.getDouble(ConfigKey.VM_MIN_TIME_RATIO);
     }
