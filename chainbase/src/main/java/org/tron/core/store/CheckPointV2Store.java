@@ -63,23 +63,18 @@ public class CheckPointV2Store extends TronDatabase<byte[]> {
   }
 
   /**
-   * close the database.
+   * Closes the database and releases all resources.
+   * This method ensures that subclass-specific resources are cleaned up
+   * before delegating to the parent class for complete resource cleanup.
    */
   @Override
   public void close() {
-    logger.debug("******** Begin to close {}. ********", getName());
     try {
       writeOptions.close();
     } catch (Exception e) {
       logger.warn("Failed to close writeOptions in {}.", getName(), e);
     }
-    try {
-      super.close();
-    } catch (Exception e) {
-      logger.warn("Failed to close parent resources in {}.", getName(), e);
-    } finally {
-      logger.debug("******** End to close {}. ********", getName());
-    }
+    super.close();
   }
 
 }
