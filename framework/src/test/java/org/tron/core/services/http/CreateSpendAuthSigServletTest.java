@@ -24,6 +24,7 @@ public class CreateSpendAuthSigServletTest extends BaseTest {
                 "--output-directory", dbPath(),
             }, TestConstants.TEST_CONF
     );
+    Args.getInstance().allowShieldedTransactionApi = true;
   }
 
   @Resource

@@ -40,6 +40,7 @@ public class MerkleContainerTest extends BaseTest {
 
   static {
     Args.setParam(new String[]{"-d", dbPath()}, TestConstants.TEST_CONF);
+    Args.getInstance().allowShieldedTransactionApi = true;
   }
 
   /*@Before

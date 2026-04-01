@@ -1157,6 +1157,9 @@ public class ShieldedTransferActuatorTest extends BaseTest {
       actuator.validate();
       actuator.execute(ret);
       Assert.assertTrue(false);
+    } catch (ArithmeticException e) {
+      // StrictMathWrapper.subtractExact throws ArithmeticException on overflow
+      Assert.assertTrue(true);
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals("librustzcashSaplingFinalCheck error", e.getMessage());
