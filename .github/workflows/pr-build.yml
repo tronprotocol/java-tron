@@ -181,3 +181,63 @@ jobs:
 
       - name: Test with RocksDB engine
         run: ./gradlew :framework:testWithRocksDb --no-daemon
+
+      - name: Generate module coverage reports
+        run: |
+          ./gradlew jacocoTestReport --no-daemon
+
+      - name: Upload coverage reports
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: jacoco-coverage-reports
+          path: |
+            **/build/reports/jacoco/test/jacocoTestReport.xml
+          if-no-files-found: error
+
+  coverage:
+    name: Coverage Check
+    needs: docker-build-debian11
+    if: ${{ github.event_name == 'pull_request' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      pull-requests: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Download coverage reports
+        uses: actions/download-artifact@v4
+        with:
+          name: jacoco-coverage-reports
+          path: coverage-input
+
+      - name: Collect coverage report paths
+        id: collect-xml
+        run: |
+          XMLS=$(find coverage-input -name "jacocoTestReport.xml" | sort | paste -sd, -)
+          if [ -z "$XMLS" ]; then
+            echo "No jacocoTestReport.xml files found."
+            exit 1
+          fi
+          echo "xmls=$XMLS" >> "$GITHUB_OUTPUT"
+
+      - name: Add coverage to PR
+        id: jacoco
+        uses: madrapps/jacoco-report@v1.7.2
+        with:
+          paths: ${{ steps.collect-xml.outputs.xmls }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          min-coverage-overall: 70
+          min-coverage-changed-files: 70
+          title: '## Code Coverage Report'
+          update-comment: true
+
+      - name: Coverage summary
+        run: |
+          echo "Overall Coverage: ${{ steps.jacoco.outputs.coverage-overall }}"
+          echo "Changed Files Coverage: ${{ steps.jacoco.outputs.coverage-changed-files }}"
