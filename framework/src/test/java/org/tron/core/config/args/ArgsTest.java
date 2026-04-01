@@ -144,7 +144,7 @@ public class ArgsTest {
     Assert.assertEquals("46.168.1.1", configuredExternalIp);
 
     Config config = Configuration.getByFileName(TestConstants.TEST_CONF);
-    Config config3 = config.withoutPath(ConfigKey.NODE_DISCOVERY_EXTERNAL_IP);
+    Config config3 = config.withoutPath("node.discovery.external.ip");
 
     CommonParameter.getInstance().setNodeExternalIp(null);
 

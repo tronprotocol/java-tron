@@ -68,8 +68,9 @@ public class DynamicArgs {
   }
 
   private void updateActiveNodes(Config config) {
+    NodeConfig nodeConfig = NodeConfig.fromConfig(config);
     List<InetSocketAddress> newActiveNodes =
-        Args.getInetSocketAddress(config, ConfigKey.NODE_ACTIVE, true);
+        Args.filterInetSocketAddress(nodeConfig.getActive(), true);
     parameter.setActiveNodes(newActiveNodes);
     List<InetSocketAddress> activeNodes = TronNetService.getP2pConfig().getActiveNodes();
     activeNodes.clear();
@@ -79,7 +80,11 @@ public class DynamicArgs {
   }
 
   private void updateTrustNodes(Config config) {
-    List<InetAddress> newPassiveNodes = Args.getInetAddress(config, ConfigKey.NODE_PASSIVE);
+    NodeConfig nodeConfig = NodeConfig.fromConfig(config);
+    List<InetAddress> newPassiveNodes = new java.util.ArrayList<>();
+    for (InetSocketAddress sa : Args.filterInetSocketAddress(nodeConfig.getPassive(), false)) {
+      newPassiveNodes.add(sa.getAddress());
+    }
     parameter.setPassiveNodes(newPassiveNodes);
     List<InetAddress> trustNodes = TronNetService.getP2pConfig().getTrustNodes();
     trustNodes.clear();
