@@ -30,7 +30,7 @@ import org.tron.core.config.args.Args;
 
 /**
  * Tests the {@link org.eclipse.jetty.server.handler.SizeLimitHandler} body-size
- * enforcement configured in {@link HttpService#initContextHandler()}.
+ * enforcement configured in {@link HttpService initContextHandler()}.
  *
  * <p>Covers:</p>
  * <ul>
@@ -191,7 +191,7 @@ public class SizeLimitHandlerTest {
   @Test
   public void testLimitIsBasedOnBytesNotCharacters() throws Exception {
     // Each CJK character is 3 UTF-8 bytes; 342 chars x 3 = 1026 bytes > 1024
-    String cjk = repeat('\u4e00', 342);
+    String cjk = repeat('一', 342);
     Assert.assertEquals(342, cjk.length());
     Assert.assertEquals(1026, cjk.getBytes("UTF-8").length);
     Assert.assertEquals(413, post(httpServerUri, new StringEntity(cjk, "UTF-8")));
