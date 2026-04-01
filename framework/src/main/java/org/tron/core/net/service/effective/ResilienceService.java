@@ -246,6 +246,10 @@ public class ResilienceService {
       for (int weight : weights.values()) {
         totalWeight += weight;
       }
+      if (totalWeight <= 0) {
+        throw new IllegalStateException(
+            "Total weight must be positive, got: " + totalWeight);
+      }
       int randomNum = ThreadLocalRandom.current().nextInt(totalWeight);
       for (Object key : weights.keySet()) {
         randomNum -= weights.get(key);

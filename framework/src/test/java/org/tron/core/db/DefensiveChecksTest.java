@@ -28,7 +28,7 @@ public class DefensiveChecksTest extends BaseTest {
   // -------------------------------------------------------------------------
 
   @Test
-  public void testEnergyProcessor_calculateGlobalEnergyLimit_zeroWeight_throwsWhenNewRewardDisabled() {
+  public void testEnergyProcessorZeroWeightThrowsWhenNewRewardDisabled() {
     // Arrange: new-reward feature off, energy weight = 0, account with enough frozen balance
     dbManager.getDynamicPropertiesStore().saveUnfreezeDelayDays(0L);
     dbManager.getDynamicPropertiesStore().saveAllowNewReward(0L);
@@ -50,7 +50,7 @@ public class DefensiveChecksTest extends BaseTest {
   }
 
   @Test
-  public void testEnergyProcessor_calculateGlobalEnergyLimit_zeroWeight_returnsZeroWhenNewRewardEnabled() {
+  public void testEnergyProcessorZeroWeightReturnsZeroWhenNewRewardEnabled() {
     // When allowNewReward is on, totalEnergyWeight == 0 should return 0 (not throw)
     dbManager.getDynamicPropertiesStore().saveUnfreezeDelayDays(0L);
     dbManager.getDynamicPropertiesStore().saveAllowNewReward(1L);

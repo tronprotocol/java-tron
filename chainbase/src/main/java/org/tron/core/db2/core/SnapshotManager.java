@@ -511,9 +511,9 @@ public class SnapshotManager implements RevokingDatabase {
       if (latestTimestamp - timestamp > ONE_MINUTE_MILLS*2) {
         continue;
       }
-      TronDatabase<byte[]> checkPointV2Store = getCheckpointDB(cp);
-      recover(checkPointV2Store);
-      checkPointV2Store.close();
+      try (TronDatabase<byte[]> checkPointV2Store = getCheckpointDB(cp)) {
+        recover(checkPointV2Store);
+      }
     }
     logger.info("checkpoint v2 recover success");
     unChecked = false;

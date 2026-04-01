@@ -4,11 +4,13 @@ import com.google.common.collect.Maps;
 import java.util.HashMap;
 import java.util.Map;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.storage.WriteOptionsWrapper;
 import org.tron.common.storage.rocksdb.RocksDbDataSourceImpl;
 import org.tron.core.db.common.iterator.DBIterator;
 
+@Slf4j(topic = "DB")
 public class RocksDB implements DB<byte[], byte[]>, Flusher {
 
   @Getter
@@ -66,8 +68,16 @@ public class RocksDB implements DB<byte[], byte[]>, Flusher {
 
   @Override
   public void close() {
-    writeOptions.close();
-    db.closeDB();
+    try {
+      writeOptions.close();
+    } catch (Exception e) {
+      logger.warn("Failed to close writeOptions.", e);
+    }
+    try {
+      db.closeDB();
+    } catch (Exception e) {
+      logger.warn("Failed to close db.", e);
+    }
   }
 
   @Override

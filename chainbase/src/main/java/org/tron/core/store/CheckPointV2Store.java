@@ -63,19 +63,19 @@ public class CheckPointV2Store extends TronDatabase<byte[]> {
   }
 
   /**
-   * close the database.
+   * Closes the database and releases all resources.
+   * Note: this class and the parent TronDatabase each declare their own
+   * writeOptions field (Java fields are not polymorphic). Both must be
+   * closed: this.writeOptions here, and the parent's via super.close().
    */
   @Override
   public void close() {
-    logger.debug("******** Begin to close {}. ********", getName());
     try {
       writeOptions.close();
-      dbSource.closeDB();
     } catch (Exception e) {
-      logger.warn("Failed to close {}.", getName(), e);
-    } finally {
-      logger.debug("******** End to close {}. ********", getName());
+      logger.warn("Failed to close writeOptions in {}.", getName(), e);
     }
+    super.close();
   }
 
 }

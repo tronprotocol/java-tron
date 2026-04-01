@@ -35,7 +35,7 @@ public class Chainbase implements IRevokingDB {
   //true:fullnode, false:soliditynode
   private ThreadLocal<Cursor> cursor = new ThreadLocal<>();
   private ThreadLocal<Long> offset = new ThreadLocal<>();
-  private Snapshot head;
+  private volatile Snapshot head;
 
   public Chainbase(Snapshot head) {
     this.head = head;
@@ -349,28 +349,32 @@ public class Chainbase implements IRevokingDB {
         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
   }
 
+  // Snapshot head once: prefixQueryRoot and prefixQuerySnapshot both need the same
+  // head reference. Other read methods (get, getUnchecked, has) only read head once
+  // via head(), so volatile alone is sufficient for them.
   public Map<WrappedByteArray, byte[]> prefixQuery(byte[] key) {
-    Map<WrappedByteArray, byte[]> result = prefixQueryRoot(key);
-    Map<WrappedByteArray, byte[]>  snapshot = prefixQuerySnapshot(key);
+    Snapshot localHead = head;
+    Map<WrappedByteArray, byte[]> result = prefixQueryRoot(localHead, key);
+    Map<WrappedByteArray, byte[]> snapshot = prefixQuerySnapshot(localHead, key);
     result.putAll(snapshot);
     result.entrySet().removeIf(e -> e.getValue() == null);
     return result;
   }
 
-  private Map<WrappedByteArray, byte[]> prefixQueryRoot(byte[] key) {
+  private Map<WrappedByteArray, byte[]> prefixQueryRoot(Snapshot localHead, byte[] key) {
     Map<WrappedByteArray, byte[]> result = new HashMap<>();
-    if (((SnapshotRoot) head.getRoot()).db.getClass() == LevelDB.class) {
-      result = ((LevelDB) ((SnapshotRoot) head.getRoot()).db).getDb().prefixQuery(key);
-    } else if (((SnapshotRoot) head.getRoot()).db.getClass() == RocksDB.class) {
-      result = ((RocksDB) ((SnapshotRoot) head.getRoot()).db).getDb().prefixQuery(key);
+    if (((SnapshotRoot) localHead.getRoot()).db.getClass() == LevelDB.class) {
+      result = ((LevelDB) ((SnapshotRoot) localHead.getRoot()).db).getDb().prefixQuery(key);
+    } else if (((SnapshotRoot) localHead.getRoot()).db.getClass() == RocksDB.class) {
+      result = ((RocksDB) ((SnapshotRoot) localHead.getRoot()).db).getDb().prefixQuery(key);
     }
     return result;
   }
 
-  private Map<WrappedByteArray, byte[]> prefixQuerySnapshot(byte[] key) {
+  private Map<WrappedByteArray, byte[]> prefixQuerySnapshot(Snapshot localHead, byte[] key) {
     Map<WrappedByteArray, byte[]> result = new HashMap<>();
-    Snapshot snapshot = head();
-    if (!snapshot.equals(head.getRoot())) {
+    Snapshot snapshot = localHead;
+    if (!snapshot.equals(localHead.getRoot())) {
       Map<WrappedByteArray, WrappedByteArray> all = new HashMap<>();
       ((SnapshotImpl) snapshot).collect(all, key);
       all.forEach((k, v) -> result.put(k, v.getBytes()));
