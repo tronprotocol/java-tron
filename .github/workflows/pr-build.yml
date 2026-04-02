@@ -303,31 +303,84 @@ jobs:
           title: '## PR Code Coverage Report'
           update-comment: false
 
-      - name: Coverage summary
-        run: |
-          echo "Base Overall Coverage: ${{ steps.jacoco-base.outputs.coverage-overall }}"
-          echo "PR Overall Coverage: ${{ steps.jacoco-pr.outputs.coverage-overall }}"
-          echo "PR Changed Files Coverage: ${{ steps.jacoco-pr.outputs.coverage-changed-files }}"
-
       - name: Enforce coverage gates
         run: |
+          set -euo pipefail
+
+          MIN_CHANGED=60
+          MAX_DROP=-0.02
+
           sanitize() {
             echo "$1" | tr -d ' %'
           }
+          is_number() {
+            [[ "$1" =~ ^-?[0-9]+([.][0-9]+)?$ ]]
+          }
+          compare_float() {
+            # Usage: compare_float "<expr>"
+            # Example: compare_float "1.2 >= -0.02"
+            awk "BEGIN { if ($1) print 1; else print 0 }"
+          }
 
+          # 1) Parse metrics from jacoco-report outputs
           BASE_OVERALL="$(sanitize "${{ steps.jacoco-base.outputs.coverage-overall }}")"
           PR_OVERALL="$(sanitize "${{ steps.jacoco-pr.outputs.coverage-overall }}")"
           PR_CHANGED="$(sanitize "${{ steps.jacoco-pr.outputs.coverage-changed-files }}")"
 
-          if [ -z "$BASE_OVERALL" ] || [ -z "$PR_OVERALL" ]; then
-            echo "Failed to parse overall coverage values."
+          if ! is_number "$BASE_OVERALL" || ! is_number "$PR_OVERALL"; then
+            echo "Failed to parse coverage values: base='${BASE_OVERALL}', pr='${PR_OVERALL}'."
             exit 1
           fi
 
+          # 2) Compare metrics against thresholds
           DELTA=$(awk -v pr="$PR_OVERALL" -v base="$BASE_OVERALL" 'BEGIN { printf "%.4f", pr - base }')
-          echo "Coverage delta (PR - base): ${DELTA}%"
+          DELTA_OK=$(compare_float "${DELTA} >= ${MAX_DROP}")
 
-          DELTA_OK=$(awk -v d="$DELTA" 'BEGIN { if (d >= -0.02) print 1; else print 0 }')
+          CHANGED_STATUS="SKIPPED (no changed coverage value)"
+          CHANGED_OK=1
+          if [ -n "$PR_CHANGED" ] && [ "$PR_CHANGED" != "NaN" ]; then
+            if ! is_number "$PR_CHANGED"; then
+              echo "Failed to parse changed-files coverage: changed='${PR_CHANGED}'."
+              exit 1
+            fi
+            CHANGED_OK=$(compare_float "${PR_CHANGED} > ${MIN_CHANGED}")
+            if [ "$CHANGED_OK" -eq 1 ]; then
+              CHANGED_STATUS="PASS (> ${MIN_CHANGED}%)"
+            else
+              CHANGED_STATUS="FAIL (<= ${MIN_CHANGED}%)"
+            fi
+          fi
+
+          # 3) Output base metrics (always visible in logs + step summary)
+          OVERALL_STATUS="PASS (>= ${MAX_DROP}%)"
+          if [ "$DELTA_OK" -ne 1 ]; then
+            OVERALL_STATUS="FAIL (< ${MAX_DROP}%)"
+          fi
+
+          METRICS_TEXT=$(cat <<EOF
+          Changed Files Coverage: ${PR_CHANGED}%
+          PR Overall Coverage: ${PR_OVERALL}%
+          Base Overall Coverage: ${BASE_OVERALL}%
+          Delta (PR - Base): ${DELTA}%
+          Changed Files Gate: ${CHANGED_STATUS}
+          Overall Delta Gate: ${OVERALL_STATUS}
+          EOF
+          )
+
+          echo "$METRICS_TEXT"
+
+          {
+            echo "### Coverage Gate Metrics"
+            echo ""
+            echo "- Changed Files Coverage: ${PR_CHANGED}%"
+            echo "- PR Overall Coverage: ${PR_OVERALL}%"
+            echo "- Base Overall Coverage: ${BASE_OVERALL}%"
+            echo "- Delta (PR - Base): ${DELTA}%"
+            echo "- Changed Files Gate: ${CHANGED_STATUS}"
+            echo "- Overall Delta Gate: ${OVERALL_STATUS}"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          # 4) Decide CI pass/fail
           if [ "$DELTA_OK" -ne 1 ]; then
             echo "Coverage gate failed: overall coverage dropped more than 0.02%."
             echo "base=${BASE_OVERALL}% pr=${PR_OVERALL}% delta=${DELTA}%"
@@ -339,7 +392,6 @@ jobs:
             exit 0
           fi
 
-          CHANGED_OK=$(awk -v c="$PR_CHANGED" 'BEGIN { if (c > 60) print 1; else print 0 }')
           if [ "$CHANGED_OK" -ne 1 ]; then
             echo "Coverage gate failed: changed files coverage must be > 60%."
             echo "changed=${PR_CHANGED}%"
