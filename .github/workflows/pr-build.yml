@@ -304,6 +304,10 @@ jobs:
           update-comment: false
 
       - name: Enforce coverage gates
+        env:
+          BASE_OVERALL_RAW: ${{ steps.jacoco-base.outputs.coverage-overall }}
+          PR_OVERALL_RAW: ${{ steps.jacoco-pr.outputs.coverage-overall }}
+          PR_CHANGED_RAW: ${{ steps.jacoco-pr.outputs.coverage-changed-files }}
         run: |
           set -euo pipefail
 
@@ -323,9 +327,9 @@ jobs:
           }
 
           # 1) Parse metrics from jacoco-report outputs
-          BASE_OVERALL="$(sanitize "${{ steps.jacoco-base.outputs.coverage-overall }}")"
-          PR_OVERALL="$(sanitize "${{ steps.jacoco-pr.outputs.coverage-overall }}")"
-          PR_CHANGED="$(sanitize "${{ steps.jacoco-pr.outputs.coverage-changed-files }}")"
+          BASE_OVERALL="$(sanitize "$BASE_OVERALL_RAW")"
+          PR_OVERALL="$(sanitize "$PR_OVERALL_RAW")"
+          PR_CHANGED="$(sanitize "$PR_CHANGED_RAW")"
 
           if ! is_number "$BASE_OVERALL" || ! is_number "$PR_OVERALL"; then
             echo "Failed to parse coverage values: base='${BASE_OVERALL}', pr='${PR_OVERALL}'."
