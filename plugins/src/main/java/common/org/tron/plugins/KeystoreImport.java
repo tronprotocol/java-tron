@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.Arrays;
 import java.util.concurrent.Callable;
 import org.apache.commons.lang3.StringUtils;
 import org.tron.common.crypto.SignInterface;
@@ -38,39 +39,53 @@ public class KeystoreImport implements Callable<Integer> {
       description = "Read password from file instead of interactive prompt")
   private File passwordFile;
 
+  @Option(names = {"--sm2"},
+      description = "Use SM2 algorithm instead of ECDSA")
+  private boolean sm2;
+
   @Override
   public Integer call() {
     try {
-      ensureDirectory(keystoreDir);
+      KeystoreCliUtils.ensureDirectory(keystoreDir);
 
       String privateKey = readPrivateKey();
       if (privateKey == null) {
         return 1;
       }
 
+      if (privateKey.startsWith("0x") || privateKey.startsWith("0X")) {
+        privateKey = privateKey.substring(2);
+      }
       if (!isValidPrivateKey(privateKey)) {
         System.err.println("Invalid private key: must be 64 hex characters.");
         return 1;
       }
 
-      String password = readPassword();
+      String password = KeystoreCliUtils.readPassword(passwordFile);
       if (password == null) {
         return 1;
       }
 
-      boolean ecKey = true;
-      SignInterface keyPair = SignUtils.fromPrivate(
-          ByteArray.fromHexString(privateKey), ecKey);
+      boolean ecKey = !sm2;
+      SignInterface keyPair;
+      try {
+        keyPair = SignUtils.fromPrivate(
+            ByteArray.fromHexString(privateKey), ecKey);
+      } catch (Exception e) {
+        System.err.println("Invalid private key: not a valid key"
+            + " for the selected algorithm.");
+        return 1;
+      }
       String fileName = WalletUtils.generateWalletFile(password, keyPair, keystoreDir, true);
-      Credentials credentials = WalletUtils.loadCredentials(password,
-          new File(keystoreDir, fileName), ecKey);
+      KeystoreCliUtils.setOwnerOnly(new File(keystoreDir, fileName));
 
+      String address = Credentials.create(keyPair).getAddress();
       if (json) {
-        System.out.printf("{\"address\":\"%s\",\"file\":\"%s\"}%n",
-            credentials.getAddress(), fileName);
+        KeystoreCliUtils.printJson(KeystoreCliUtils.jsonMap(
+            "address", address, "file", fileName));
       } else {
         System.out.println("Imported keystore: " + fileName);
-        System.out.println("Address: " + credentials.getAddress());
+        System.out.println("Address: " + address);
       }
       return 0;
     } catch (CipherException e) {
@@ -84,8 +99,16 @@ public class KeystoreImport implements Callable<Integer> {
 
   private String readPrivateKey() throws IOException {
     if (keyFile != null) {
-      return new String(Files.readAllBytes(keyFile.toPath()),
-          StandardCharsets.UTF_8).trim();
+      if (keyFile.length() > 1024) {
+        System.err.println("Key file too large (max 1KB).");
+        return null;
+      }
+      byte[] bytes = Files.readAllBytes(keyFile.toPath());
+      try {
+        return new String(bytes, StandardCharsets.UTF_8).trim();
+      } finally {
+        Arrays.fill(bytes, (byte) 0);
+      }
     }
 
     Console console = System.console();
@@ -96,56 +119,21 @@ public class KeystoreImport implements Callable<Integer> {
     }
 
     char[] key = console.readPassword("Enter private key (hex): ");
-    return new String(key);
+    if (key == null) {
+      System.err.println("Input cancelled.");
+      return null;
+    }
+    try {
+      return new String(key);
+    } finally {
+      Arrays.fill(key, '\0');
+    }
   }
 
-  private String readPassword() throws IOException {
-    if (passwordFile != null) {
-      String password = new String(Files.readAllBytes(passwordFile.toPath()),
-          StandardCharsets.UTF_8).trim();
-      if (!WalletUtils.passwordValid(password)) {
-        System.err.println("Invalid password: must be at least 6 characters.");
-        return null;
-      }
-      return password;
-    }
-
-    Console console = System.console();
-    if (console == null) {
-      System.err.println("No interactive terminal available. "
-          + "Use --password-file to provide password.");
-      return null;
-    }
-
-    char[] pwd1 = console.readPassword("Enter password: ");
-    char[] pwd2 = console.readPassword("Confirm password: ");
-    String password1 = new String(pwd1);
-    String password2 = new String(pwd2);
-
-    if (!password1.equals(password2)) {
-      System.err.println("Passwords do not match.");
-      return null;
-    }
-    if (!WalletUtils.passwordValid(password1)) {
-      System.err.println("Invalid password: must be at least 6 characters.");
-      return null;
-    }
-    return password1;
-  }
+  private static final java.util.regex.Pattern HEX_PATTERN =
+      java.util.regex.Pattern.compile("[0-9a-fA-F]{64}");
 
   private boolean isValidPrivateKey(String key) {
-    if (StringUtils.isEmpty(key) || key.length() != 64) {
-      return false;
-    }
-    return key.matches("[0-9a-fA-F]+");
-  }
-
-  private void ensureDirectory(File dir) throws IOException {
-    if (!dir.exists() && !dir.mkdirs()) {
-      throw new IOException("Cannot create directory: " + dir.getAbsolutePath());
-    }
-    if (dir.exists() && !dir.isDirectory()) {
-      throw new IOException("Path exists but is not a directory: " + dir.getAbsolutePath());
-    }
+    return !StringUtils.isEmpty(key) && HEX_PATTERN.matcher(key).matches();
   }
 }

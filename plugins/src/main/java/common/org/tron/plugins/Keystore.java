@@ -9,7 +9,9 @@ import picocli.CommandLine.Command;
     description = "Manage keystore files for witness account keys.",
     subcommands = {CommandLine.HelpCommand.class,
         KeystoreNew.class,
-        KeystoreImport.class
+        KeystoreImport.class,
+        KeystoreList.class,
+        KeystoreUpdate.class
     },
     commandListHeading = "%nCommands:%n%nThe most commonly used keystore commands are:%n"
 )

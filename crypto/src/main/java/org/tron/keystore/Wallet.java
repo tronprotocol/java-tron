@@ -204,7 +204,7 @@ public class Wallet {
 
     byte[] derivedMac = generateMac(derivedKey, cipherText);
 
-    if (!Arrays.equals(derivedMac, mac)) {
+    if (!java.security.MessageDigest.isEqual(derivedMac, mac)) {
       throw new CipherException("Invalid password provided");
     }
 

@@ -16,7 +16,8 @@ import org.tron.core.exception.CipherException;
 public class WalletPropertyTest {
 
   private static final SecureRandom RANDOM = new SecureRandom();
-  private static final String CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  private static final String CHARS =
+      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
   @Test
   public void encryptDecryptRoundtripLight() throws Exception {
@@ -33,10 +34,10 @@ public class WalletPropertyTest {
     }
   }
 
-  @Test
+  @Test(timeout = 120000)
   public void encryptDecryptRoundtripStandard() throws Exception {
-    // Fewer iterations for standard scrypt (slow)
-    for (int i = 0; i < 5; i++) {
+    // Fewer iterations for standard scrypt (slow, ~10s each)
+    for (int i = 0; i < 2; i++) {
       String password = randomPassword(6, 16);
       SignInterface keyPair = SignUtils.getGeneratedRandomSign(Utils.getRandom(), true);
       byte[] originalKey = keyPair.getPrivateKey();
