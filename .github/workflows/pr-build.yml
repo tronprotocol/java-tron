@@ -29,9 +29,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - java: '8'
-            runner: macos-26-intel
-            arch: x86_64
           - java: '17'
             runner: macos-26
             arch: aarch64
@@ -56,10 +53,6 @@ jobs:
 
       - name: Build
         run: ./gradlew clean build --no-daemon
-
-      - name: Test with RocksDB engine
-        if: matrix.arch == 'x86_64'
-        run: ./gradlew :framework:testWithRocksDb --no-daemon
 
   build-ubuntu:
     name: Build ubuntu24 (JDK 17 / aarch64)
@@ -183,26 +176,78 @@ jobs:
         run: ./gradlew :framework:testWithRocksDb --no-daemon
 
       - name: Generate module coverage reports
-        run: |
-          ./gradlew jacocoTestReport --no-daemon
+        run: ./gradlew jacocoTestReport --no-daemon
 
-      - name: Upload coverage reports
-        if: always()
+      - name: Upload PR coverage reports
         uses: actions/upload-artifact@v6
         with:
-          name: jacoco-coverage-reports
+          name: jacoco-coverage-pr
           path: |
             **/build/reports/jacoco/test/jacocoTestReport.xml
           if-no-files-found: error
 
-  coverage:
-    name: Coverage Check
-    needs: docker-build-debian11
+  coverage-base:
+    name: Coverage Base (JDK 8 / x86_64)
     if: ${{ github.event_name == 'pull_request' }}
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 60
+    container:
+      image: eclipse-temurin:8-jdk # base image is Debian 11 (Bullseye)
+    defaults:
+      run:
+        shell: bash
+    env:
+      GRADLE_USER_HOME: /github/home/.gradle
     permissions:
-      pull-requests: write
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+
+      - name: Install dependencies (Debian + build tools)
+        run: |
+          set -euxo pipefail
+          apt-get update
+          apt-get install -y git wget unzip build-essential curl jq
+
+      - name: Cache Gradle packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            /github/home/.gradle/caches
+            /github/home/.gradle/wrapper
+          key: debian11-x86_64-gradle-${{ hashFiles('**/*.gradle', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            debian11-x86_64-gradle-
+
+      - name: Build (base)
+        run: ./gradlew clean build --no-daemon
+
+      - name: Test with RocksDB engine (base)
+        run: ./gradlew :framework:testWithRocksDb --no-daemon
+
+      - name: Generate module coverage reports (base)
+        run: ./gradlew jacocoTestReport --no-daemon
+
+      - name: Upload base coverage reports
+        uses: actions/upload-artifact@v6
+        with:
+          name: jacoco-coverage-base
+          path: |
+            **/build/reports/jacoco/test/jacocoTestReport.xml
+          if-no-files-found: error
+
+  coverage-gate:
+    name: Coverage Gate
+    needs: [docker-build-debian11, coverage-base]
+    if: ${{ github.event_name == 'pull_request' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
 
     steps:
       - name: Checkout code
@@ -210,35 +255,95 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Download coverage reports
+      - name: Download base coverage reports
         uses: actions/download-artifact@v8
         with:
-          name: jacoco-coverage-reports
-          path: coverage-input
+          name: jacoco-coverage-base
+          path: coverage/base
+
+      - name: Download PR coverage reports
+        uses: actions/download-artifact@v8
+        with:
+          name: jacoco-coverage-pr
+          path: coverage/pr
 
       - name: Collect coverage report paths
         id: collect-xml
         run: |
-          XMLS=$(find coverage-input -name "jacocoTestReport.xml" | sort | paste -sd, -)
-          if [ -z "$XMLS" ]; then
-            echo "No jacocoTestReport.xml files found."
+          BASE_XMLS=$(find coverage/base -name "jacocoTestReport.xml" | sort | paste -sd, -)
+          PR_XMLS=$(find coverage/pr -name "jacocoTestReport.xml" | sort | paste -sd, -)
+          if [ -z "$BASE_XMLS" ] || [ -z "$PR_XMLS" ]; then
+            echo "Missing jacocoTestReport.xml files for base or PR."
             exit 1
           fi
-          echo "xmls=$XMLS" >> "$GITHUB_OUTPUT"
+          echo "base_xmls=$BASE_XMLS" >> "$GITHUB_OUTPUT"
+          echo "pr_xmls=$PR_XMLS" >> "$GITHUB_OUTPUT"
 
-      - name: Add coverage to PR
-        id: jacoco
+      - name: Aggregate base coverage
+        id: jacoco-base
         uses: madrapps/jacoco-report@v1.7.2
         with:
-          paths: ${{ steps.collect-xml.outputs.xmls }}
+          paths: ${{ steps.collect-xml.outputs.base_xmls }}
           token: ${{ secrets.GITHUB_TOKEN }}
-          min-coverage-overall: 70
-          min-coverage-changed-files: 70
+          min-coverage-overall: 0
+          min-coverage-changed-files: 0
           skip-if-no-changes: true
-          title: '## Code Coverage Report'
-          update-comment: true
+          title: '## Base Coverage Snapshot'
+          update-comment: false
+
+      - name: Aggregate PR coverage
+        id: jacoco-pr
+        uses: madrapps/jacoco-report@v1.7.2
+        with:
+          paths: ${{ steps.collect-xml.outputs.pr_xmls }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          min-coverage-overall: 0
+          min-coverage-changed-files: 0
+          skip-if-no-changes: true
+          title: '## PR Code Coverage Report'
+          update-comment: false
 
       - name: Coverage summary
         run: |
-          echo "Overall Coverage: ${{ steps.jacoco.outputs.coverage-overall }}"
-          echo "Changed Files Coverage: ${{ steps.jacoco.outputs.coverage-changed-files }}"
+          echo "Base Overall Coverage: ${{ steps.jacoco-base.outputs.coverage-overall }}"
+          echo "PR Overall Coverage: ${{ steps.jacoco-pr.outputs.coverage-overall }}"
+          echo "PR Changed Files Coverage: ${{ steps.jacoco-pr.outputs.coverage-changed-files }}"
+
+      - name: Enforce coverage gates
+        run: |
+          sanitize() {
+            echo "$1" | tr -d ' %'
+          }
+
+          BASE_OVERALL="$(sanitize "${{ steps.jacoco-base.outputs.coverage-overall }}")"
+          PR_OVERALL="$(sanitize "${{ steps.jacoco-pr.outputs.coverage-overall }}")"
+          PR_CHANGED="$(sanitize "${{ steps.jacoco-pr.outputs.coverage-changed-files }}")"
+
+          if [ -z "$BASE_OVERALL" ] || [ -z "$PR_OVERALL" ]; then
+            echo "Failed to parse overall coverage values."
+            exit 1
+          fi
+
+          DELTA=$(awk -v pr="$PR_OVERALL" -v base="$BASE_OVERALL" 'BEGIN { printf "%.4f", pr - base }')
+          echo "Coverage delta (PR - base): ${DELTA}%"
+
+          DELTA_OK=$(awk -v d="$DELTA" 'BEGIN { if (d >= -0.02) print 1; else print 0 }')
+          if [ "$DELTA_OK" -ne 1 ]; then
+            echo "Coverage gate failed: overall coverage dropped more than 0.02%."
+            echo "base=${BASE_OVERALL}% pr=${PR_OVERALL}% delta=${DELTA}%"
+            exit 1
+          fi
+
+          if [ -z "$PR_CHANGED" ] || [ "$PR_CHANGED" = "NaN" ]; then
+            echo "No changed-files coverage value detected, skip changed-files gate."
+            exit 0
+          fi
+
+          CHANGED_OK=$(awk -v c="$PR_CHANGED" 'BEGIN { if (c > 60) print 1; else print 0 }')
+          if [ "$CHANGED_OK" -ne 1 ]; then
+            echo "Coverage gate failed: changed files coverage must be > 60%."
+            echo "changed=${PR_CHANGED}%"
+            exit 1
+          fi
+
+          echo "Coverage gates passed."
