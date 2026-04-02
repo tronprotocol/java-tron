@@ -360,5 +360,31 @@ public class ArgsTest {
 
     Args.clearParam();
   }
+
+  /**
+   * Test that the default value of allowShieldedTransactionApi is false.
+   * This verifies the security enhancement is applied by default.
+   */
+  @Test
+  public void testDefaultAllowShieldedTransactionApiIsFalse() {
+    // After Args.setParam() without explicit allowShieldedTransactionApi,
+    // the default should be false
+    Args.setParam(new String[] {}, TestConstants.TEST_CONF);
+    boolean defaultValue = Args.getInstance().isAllowShieldedTransactionApi();
+    Assert.assertFalse("Default value of allowShieldedTransactionApi should be false",
+        defaultValue);
+  }
+
+  /**
+   * Test that setting allowShieldedTransactionApi to true works correctly.
+   */
+  @Test
+  public void testExplicitEnableShieldedTransactionApi() {
+    Args.setParam(new String[] {}, TestConstants.TEST_CONF);
+    // Enable the flag
+    Args.getInstance().setAllowShieldedTransactionApi(true);
+    Assert.assertTrue("Should be able to enable allowShieldedTransactionApi",
+        Args.getInstance().isAllowShieldedTransactionApi());
+  }
 }
 

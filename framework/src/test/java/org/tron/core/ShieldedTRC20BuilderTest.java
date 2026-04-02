@@ -76,6 +76,7 @@ public class ShieldedTRC20BuilderTest extends BaseTest {
   @BeforeClass
   public static void initZksnarkParams() {
     ZksnarkInitService.librustzcashInitZksnarkParams();
+    Args.getInstance().allowShieldedTransactionApi = true;
   }
 
   @Ignore
@@ -2461,6 +2462,4 @@ public class ShieldedTRC20BuilderTest extends BaseTest {
     byte[] zeroBytes = new byte[24];
     return ByteUtil.merge(zeroBytes, longBytes);
   }
-
-
 }
