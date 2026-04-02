@@ -40,6 +40,9 @@ import org.tron.protos.Protocol;
 
 @Slf4j(topic = "metric")
 public class PrometheusApiServiceTest extends BaseTest {
+
+  private static final String MINER_LABEL = "miner";
+
   static LocalDateTime localDateTime = LocalDateTime.now();
   @Resource
   private DposSlot dposSlot;
@@ -87,7 +90,7 @@ public class PrometheusApiServiceTest extends BaseTest {
     // Query histogram bucket le="0.0" for empty blocks
     Double emptyBlock = CollectorRegistry.defaultRegistry.getSampleValue(
         "tron:block_transaction_count_bucket",
-        new String[] {"miner", "le"}, new String[] {minerBase58, "0.0"});
+        new String[] {MINER_LABEL, "le"}, new String[] {minerBase58, "0.0"});
     
     Assert.assertNotNull("Empty block bucket should exist for miner: " + minerBase58, emptyBlock);
     Assert.assertEquals("Should have 1 empty block", 1, emptyBlock.intValue());
@@ -125,7 +128,7 @@ public class PrometheusApiServiceTest extends BaseTest {
       // Collect empty blocks count from histogram bucket
       Double witnessEmptyBlock = CollectorRegistry.defaultRegistry.getSampleValue(
           "tron:block_transaction_count_bucket",
-          new String[] {"miner", "le"}, new String[] {witnessBase58, "0.0"});
+          new String[] {MINER_LABEL, "le"}, new String[] {witnessBase58, "0.0"});
       Assert.assertNotNull("Empty block bucket should exist for witness: " + witnessBase58,
           witnessEmptyBlock);
       totalNewWitnessEmptyBlocks += witnessEmptyBlock;
