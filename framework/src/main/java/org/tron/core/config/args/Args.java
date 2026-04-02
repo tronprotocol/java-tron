@@ -526,7 +526,7 @@ public class Args extends CommonParameter {
     PARAMETER.maxMessageSize = config.hasPath(ConfigKey.NODE_RPC_MAX_MESSAGE_SIZE)
         ? config.getInt(ConfigKey.NODE_RPC_MAX_MESSAGE_SIZE) : GrpcUtil.DEFAULT_MAX_MESSAGE_SIZE;
 
-    int defaultHttpMaxMessageSize = 4 * GrpcUtil.DEFAULT_MAX_MESSAGE_SIZE;
+    int defaultHttpMaxMessageSize = GrpcUtil.DEFAULT_MAX_MESSAGE_SIZE;
     PARAMETER.httpMaxMessageSize = config.hasPath(ConfigKey.NODE_HTTP_MAX_MESSAGE_SIZE)
         ? config.getInt(ConfigKey.NODE_HTTP_MAX_MESSAGE_SIZE) : defaultHttpMaxMessageSize;
     if (PARAMETER.httpMaxMessageSize <= 0) {
