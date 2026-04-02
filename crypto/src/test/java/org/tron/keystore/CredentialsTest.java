@@ -77,5 +77,4 @@ public class CredentialsTest {
     Assert.assertNotEquals(credential, sameAddressDifferentEngineCredential);
     Assert.assertFalse(credential.equals(differentCredential));
   }
-
 }

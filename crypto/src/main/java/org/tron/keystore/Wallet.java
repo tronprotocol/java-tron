@@ -23,7 +23,6 @@ import org.tron.common.crypto.SignInterface;
 import org.tron.common.crypto.SignUtils;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.StringUtil;
-import org.tron.core.config.args.Args;
 import org.tron.core.exception.CipherException;
 
 /**
@@ -168,8 +167,8 @@ public class Wallet {
     return Hash.sha3(result);
   }
 
-  public static SignInterface decrypt(String password, WalletFile walletFile)
-      throws CipherException {
+  public static SignInterface decrypt(String password, WalletFile walletFile,
+      boolean ecKey) throws CipherException {
 
     validate(walletFile);
 
@@ -212,7 +211,7 @@ public class Wallet {
     byte[] encryptKey = Arrays.copyOfRange(derivedKey, 0, 16);
     byte[] privateKey = performCipherOperation(Cipher.DECRYPT_MODE, iv, encryptKey, cipherText);
 
-    return SignUtils.fromPrivate(privateKey, Args.getInstance().isECKeyCryptoEngine());
+    return SignUtils.fromPrivate(privateKey, ecKey);
   }
 
   static void validate(WalletFile walletFile) throws CipherException {

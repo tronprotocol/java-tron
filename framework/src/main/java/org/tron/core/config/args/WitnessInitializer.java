@@ -79,7 +79,8 @@ public class WitnessInitializer {
 
     List<String> privateKeys = new ArrayList<>();
     try {
-      Credentials credentials = WalletUtils.loadCredentials(pwd, new File(fileName));
+      Credentials credentials = WalletUtils.loadCredentials(pwd, new File(fileName),
+          Args.getInstance().isECKeyCryptoEngine());
       SignInterface sign = credentials.getSignInterface();
       String prikey = ByteArray.toHexString(sign.getPrivateKey());
       privateKeys.add(prikey);

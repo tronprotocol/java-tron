@@ -63,9 +63,11 @@ public class KeystoreFactory {
         CommonParameter.getInstance().isECKeyCryptoEngine());
     File file = new File(FilePath);
     fileCheck(file);
+    boolean ecKey = CommonParameter.getInstance().isECKeyCryptoEngine();
     String fileName = WalletUtils.generateWalletFile(password, eCkey, file, true);
     System.out.println("Gen a keystore its name " + fileName);
-    Credentials credentials = WalletUtils.loadCredentials(password, new File(file, fileName));
+    Credentials credentials = WalletUtils.loadCredentials(password, new File(file, fileName),
+        ecKey);
     System.out.println("Your address is " + credentials.getAddress());
   }
 
@@ -88,9 +90,11 @@ public class KeystoreFactory {
         CommonParameter.getInstance().isECKeyCryptoEngine());
     File file = new File(FilePath);
     fileCheck(file);
+    boolean ecKey = CommonParameter.getInstance().isECKeyCryptoEngine();
     String fileName = WalletUtils.generateWalletFile(password, eCkey, file, true);
     System.out.println("Gen a keystore its name " + fileName);
-    Credentials credentials = WalletUtils.loadCredentials(password, new File(file, fileName));
+    Credentials credentials = WalletUtils.loadCredentials(password, new File(file, fileName),
+        ecKey);
     System.out.println("Your address is " + credentials.getAddress());
   }
 

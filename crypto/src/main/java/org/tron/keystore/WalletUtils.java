@@ -17,7 +17,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.tron.common.crypto.SignInterface;
 import org.tron.common.crypto.SignUtils;
 import org.tron.common.utils.Utils;
-import org.tron.core.config.args.Args;
 import org.tron.core.exception.CipherException;
 
 /**
@@ -32,27 +31,28 @@ public class WalletUtils {
     objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
   }
 
-  public static String generateFullNewWalletFile(String password, File destinationDirectory)
+  public static String generateFullNewWalletFile(String password, File destinationDirectory,
+      boolean ecKey)
       throws NoSuchAlgorithmException, NoSuchProviderException,
       InvalidAlgorithmParameterException, CipherException, IOException {
 
-    return generateNewWalletFile(password, destinationDirectory, true);
+    return generateNewWalletFile(password, destinationDirectory, true, ecKey);
   }
 
-  public static String generateLightNewWalletFile(String password, File destinationDirectory)
+  public static String generateLightNewWalletFile(String password, File destinationDirectory,
+      boolean ecKey)
       throws NoSuchAlgorithmException, NoSuchProviderException,
       InvalidAlgorithmParameterException, CipherException, IOException {
 
-    return generateNewWalletFile(password, destinationDirectory, false);
+    return generateNewWalletFile(password, destinationDirectory, false, ecKey);
   }
 
   public static String generateNewWalletFile(
-      String password, File destinationDirectory, boolean useFullScrypt)
+      String password, File destinationDirectory, boolean useFullScrypt, boolean ecKey)
       throws CipherException, IOException, InvalidAlgorithmParameterException,
       NoSuchAlgorithmException, NoSuchProviderException {
 
-    SignInterface ecKeyPair = SignUtils.getGeneratedRandomSign(Utils.getRandom(),
-        Args.getInstance().isECKeyCryptoEngine());
+    SignInterface ecKeyPair = SignUtils.getGeneratedRandomSign(Utils.getRandom(), ecKey);
     return generateWalletFile(password, ecKeyPair, destinationDirectory, useFullScrypt);
   }
 
@@ -75,10 +75,10 @@ public class WalletUtils {
     return fileName;
   }
 
-  public static Credentials loadCredentials(String password, File source)
+  public static Credentials loadCredentials(String password, File source, boolean ecKey)
       throws IOException, CipherException {
     WalletFile walletFile = objectMapper.readValue(source, WalletFile.class);
-    return Credentials.create(Wallet.decrypt(password, walletFile));
+    return Credentials.create(Wallet.decrypt(password, walletFile, ecKey));
   }
 
   private static String getWalletFileName(WalletFile walletFile) {

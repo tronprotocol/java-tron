@@ -54,8 +54,8 @@ public class SupplementTest extends BaseTest {
     String p = dbPath + File.separator;
     dbBackupConfig.initArgs(true, p + "propPath", p + "bak1path/", p + "bak2path/", 1);
 
-    WalletUtils.generateFullNewWalletFile("123456", new File(dbPath));
-    WalletUtils.generateLightNewWalletFile("123456", new File(dbPath));
+    WalletUtils.generateFullNewWalletFile("123456", new File(dbPath), true);
+    WalletUtils.generateLightNewWalletFile("123456", new File(dbPath), true);
     WalletUtils.getDefaultKeyDirectory();
     WalletUtils.getTestnetKeyDirectory();
     WalletUtils.getMainnetKeyDirectory();
