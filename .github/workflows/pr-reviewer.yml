@@ -64,6 +64,18 @@ jobs:
             core.info(`PR title : ${title}`);
             core.info(`Raw scope: ${rawScope || '(none)'}`);
 
+            // ── Skip if reviewers already assigned ──────────────────
+            const pr = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.payload.pull_request.number,
+            });
+            const existing = pr.data.requested_reviewers || [];
+            if (existing.length > 0) {
+              core.info(`Reviewers already assigned (${existing.map(r => r.login).join(', ')}). Skipping.`);
+              return;
+            }
+
             // ── Determine reviewers ───────────────────────────────────
             // 1. Split by comma to support multi-scope: feat(vm,rpc): ...
             // 2. Normalize each scope token
