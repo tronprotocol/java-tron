@@ -76,10 +76,10 @@ public class KeystoreImport implements Callable<Integer> {
             + " for the selected algorithm.");
         return 1;
       }
+      String address = Credentials.create(keyPair).getAddress();
+      warnIfAddressExists(keystoreDir, address);
       String fileName = WalletUtils.generateWalletFile(password, keyPair, keystoreDir, true);
       KeystoreCliUtils.setOwnerOnly(new File(keystoreDir, fileName));
-
-      String address = Credentials.create(keyPair).getAddress();
       if (json) {
         KeystoreCliUtils.printJson(KeystoreCliUtils.jsonMap(
             "address", address, "file", fileName));
@@ -135,5 +135,30 @@ public class KeystoreImport implements Callable<Integer> {
 
   private boolean isValidPrivateKey(String key) {
     return !StringUtils.isEmpty(key) && HEX_PATTERN.matcher(key).matches();
+  }
+
+  private void warnIfAddressExists(File dir, String address) {
+    if (!dir.exists() || !dir.isDirectory()) {
+      return;
+    }
+    File[] files = dir.listFiles((d, name) -> name.endsWith(".json"));
+    if (files == null) {
+      return;
+    }
+    com.fasterxml.jackson.databind.ObjectMapper mapper =
+        KeystoreCliUtils.mapper();
+    for (File file : files) {
+      try {
+        org.tron.keystore.WalletFile wf =
+            mapper.readValue(file, org.tron.keystore.WalletFile.class);
+        if (address.equals(wf.getAddress())) {
+          System.err.println("WARNING: keystore for address "
+              + address + " already exists: " + file.getName());
+          return;
+        }
+      } catch (Exception e) {
+        // Skip invalid files
+      }
+    }
   }
 }

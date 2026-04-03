@@ -183,16 +183,26 @@ public class KeystoreUpdate implements Callable<Integer> {
     if (files == null) {
       return null;
     }
+    java.util.List<File> matches = new java.util.ArrayList<>();
     for (File file : files) {
       try {
         WalletFile wf = MAPPER.readValue(file, WalletFile.class);
         if (targetAddress.equals(wf.getAddress())) {
-          return file;
+          matches.add(file);
         }
       } catch (Exception e) {
         // Skip invalid files
       }
     }
-    return null;
+    if (matches.size() > 1) {
+      System.err.println("Multiple keystores found for address "
+          + targetAddress + ":");
+      for (File m : matches) {
+        System.err.println("  " + m.getName());
+      }
+      System.err.println("Please remove duplicates and retry.");
+      return null;
+    }
+    return matches.isEmpty() ? null : matches.get(0);
   }
 }
