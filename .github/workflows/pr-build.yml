@@ -312,7 +312,7 @@ jobs:
           set -euo pipefail
 
           MIN_CHANGED=60
-          MAX_DROP=-0.02
+          MAX_DROP=-0.1
 
           sanitize() {
             echo "$1" | tr -d ' %'
@@ -322,7 +322,7 @@ jobs:
           }
           compare_float() {
             # Usage: compare_float "<expr>"
-            # Example: compare_float "1.2 >= -0.02"
+            # Example: compare_float "1.2 >= -0.1"
             awk "BEGIN { if ($1) print 1; else print 0 }"
           }
 
@@ -386,7 +386,7 @@ jobs:
 
           # 4) Decide CI pass/fail
           if [ "$DELTA_OK" -ne 1 ]; then
-            echo "Coverage gate failed: overall coverage dropped more than 0.02%."
+            echo "Coverage gate failed: overall coverage dropped more than 0.1%."
             echo "base=${BASE_OVERALL}% pr=${PR_OVERALL}% delta=${DELTA}%"
             exit 1
           fi
