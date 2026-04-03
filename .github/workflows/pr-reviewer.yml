@@ -1,0 +1,88 @@
+name: Auto Assign Reviewers
+
+on:
+  pull_request:
+    branches: [ 'develop', 'release_**' ]
+    types: [ opened, edited, reopened ]
+
+jobs:
+  assign-reviewers:
+    name: Assign Reviewers by Scope
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Assign reviewers based on PR title scope
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const title = context.payload.pull_request.title;
+            const prAuthor = context.payload.pull_request.user.login;
+
+            // ── Scope → Reviewer mapping ──────────────────────────────
+            const scopeReviewers = {
+              'framework':  ['xxo1shine',    '317787106'],
+              'chainbase':  ['halibobo1205', 'lvs0075'],
+              'db':         ['halibobo1205', 'xxo1shine'],
+              'trie':       ['halibobo1205', '317787106'],
+              'actuator':   ['yanghang8612', 'lxcmyf'],
+              'consensus':  ['lvs0075',      'xxo1shine'],
+              'protocol':   ['lvs0075',      'waynercheung'],
+              'common':     ['xxo1shine',    'lxcmyf'],
+              'crypto':     ['Federico2014', '3for'],
+              'net':        ['317787106',    'xxo1shine'],
+              'vm':         ['yanghang8612', 'CodeNinjaEvan'],
+              'tvm':        ['yanghang8612', 'CodeNinjaEvan'],
+              'jsonrpc':    ['0xbigapple',   'bladehan1'],
+              'rpc':        ['317787106',    'Sunny6889'],
+              'http':       ['Sunny6889',    'bladehan1'],
+              'event':      ['xxo1shine',    '0xbigapple'],
+              'config':     ['317787106',    'halibobo1205'],
+              'backup':     ['xxo1shine',    '317787106'],
+              'lite':       ['bladehan1',    'halibobo1205'],
+              'toolkit':    ['halibobo1205', 'Sunny6889'],
+              'plugins':    ['halibobo1205', 'Sunny6889'],
+              'docker':     ['3for',         'kuny0707'],
+              'test':       ['bladehan1',    'lxcmyf'],
+              'metrics':    ['halibobo1205', 'Sunny6889'],
+              'ci':         ['bladehan1',    'halibobo1205'],
+            };
+            const defaultReviewers = ['halibobo1205', '317787106'];
+
+            // ── Extract scope from conventional commit title ──────────
+            // Format: type(scope): description
+            const scopeMatch = title.match(/^\w+\(([^)]+)\):/);
+            const scope = scopeMatch ? scopeMatch[1].toLowerCase() : null;
+
+            core.info(`PR title : ${title}`);
+            core.info(`Detected scope: ${scope || '(none — using default)'}`);
+
+            // ── Determine reviewers ───────────────────────────────────
+            let reviewers = scope && scopeReviewers[scope]
+              ? scopeReviewers[scope]
+              : defaultReviewers;
+
+            // Exclude the PR author from the reviewer list
+            reviewers = reviewers.filter(r => r.toLowerCase() !== prAuthor.toLowerCase());
+
+            if (reviewers.length === 0) {
+              core.info('No eligible reviewers after excluding PR author. Skipping.');
+              return;
+            }
+
+            core.info(`Assigning reviewers: ${reviewers.join(', ')}`);
+
+            // ── Request reviews ───────────────────────────────────────
+            try {
+              await github.rest.pulls.requestReviewers({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: context.payload.pull_request.number,
+                reviewers: reviewers,
+              });
+              core.info('Reviewers assigned successfully.');
+            } catch (error) {
+              // If a reviewer is not a collaborator the API returns 422;
+              // log the error but do not fail the workflow.
+              core.warning(`Failed to assign some reviewers: ${error.message}`);
+            }
