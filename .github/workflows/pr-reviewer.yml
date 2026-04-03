@@ -49,18 +49,59 @@ jobs:
             };
             const defaultReviewers = ['bladehan1', 'kuny0707'];
 
+            // ── Normalize helper ─────────────────────────────────────
+            // Strip spaces, hyphens, underscores and lower-case so that
+            // "VM", " json rpc ", "chain-base", "Json_Rpc" all normalize
+            // to their canonical key form ("vm", "jsonrpc", "chainbase").
+            const normalize = s => s.toLowerCase().replace(/[\s\-_]/g, '');
+
             // ── Extract scope from conventional commit title ──────────
             // Format: type(scope): description
+            // Also supports: type(scope1,scope2): description
             const scopeMatch = title.match(/^\w+\(([^)]+)\):/);
-            const scope = scopeMatch ? scopeMatch[1].toLowerCase() : null;
+            const rawScope = scopeMatch ? scopeMatch[1] : null;
 
             core.info(`PR title : ${title}`);
-            core.info(`Detected scope: ${scope || '(none — using default)'}`);
+            core.info(`Raw scope: ${rawScope || '(none)'}`);
 
             // ── Determine reviewers ───────────────────────────────────
-            let reviewers = scope && scopeReviewers[scope]
-              ? scopeReviewers[scope]
+            // 1. Split by comma to support multi-scope: feat(vm,rpc): ...
+            // 2. Normalize each scope token
+            // 3. Match against keys: exact match first, then contains match
+            //    (longest key wins to avoid "net" matching inside "jsonrpc")
+            let matched = new Set();
+            let matchedScopes = [];
+
+            if (rawScope) {
+              const tokens = rawScope.split(',').map(s => normalize(s.trim()));
+              // Pre-sort keys by length descending so longer keys match first
+              const sortedKeys = Object.keys(scopeReviewers)
+                .sort((a, b) => b.length - a.length);
+
+              for (const token of tokens) {
+                if (!token) continue;
+                // Exact match
+                if (scopeReviewers[token]) {
+                  matchedScopes.push(token);
+                  scopeReviewers[token].forEach(r => matched.add(r));
+                  continue;
+                }
+                // Contains match: token contains a key, or key contains token
+                // Prefer longest key that matches
+                const found = sortedKeys.find(k => token.includes(k) || k.includes(token));
+                if (found) {
+                  matchedScopes.push(`${token}→${found}`);
+                  scopeReviewers[found].forEach(r => matched.add(r));
+                }
+              }
+            }
+
+            let reviewers = matched.size > 0
+              ? [...matched]
               : defaultReviewers;
+
+            core.info(`Matched scopes: ${matchedScopes.length > 0 ? matchedScopes.join(', ') : '(none — using default)'}`);
+            core.info(`Candidate reviewers: ${reviewers.join(', ')}`);
 
             // Exclude the PR author from the reviewer list
             reviewers = reviewers.filter(r => r.toLowerCase() !== prAuthor.toLowerCase());
