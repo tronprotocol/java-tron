@@ -1037,6 +1037,10 @@ public class Args extends CommonParameter {
         config.hasPath(ConfigKey.COMMITTEE_ALLOW_TVM_BLOB) ? config
             .getInt(ConfigKey.COMMITTEE_ALLOW_TVM_BLOB) : 0;
 
+    PARAMETER.allowTvmOsaka =
+        config.hasPath(ConfigKey.COMMITTEE_ALLOW_TVM_OSAKA) ? config
+            .getInt(ConfigKey.COMMITTEE_ALLOW_TVM_OSAKA) : 0;
+
     logConfig();
   }
 
