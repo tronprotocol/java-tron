@@ -45,6 +45,7 @@ jobs:
               'docker':     ['3for',         'kuny0707'],
               'test':       ['bladehan1',    'lxcmyf'],
               'metrics':    ['halibobo1205', 'Sunny6889'],
+              'api':        ['0xbigapple',   'waynercheung', 'bladehan1'],
               'ci':         ['bladehan1',    'halibobo1205'],
             };
             const defaultReviewers = ['halibobo1205', '317787106'];
