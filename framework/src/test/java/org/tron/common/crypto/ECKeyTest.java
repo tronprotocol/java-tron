@@ -5,7 +5,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.tron.common.utils.client.utils.AbiUtil.generateOccupationConstantPrivateKey;
@@ -19,12 +19,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
 import org.junit.Test;
 import org.tron.common.crypto.ECKey.ECDSASignature;
+import org.tron.common.utils.ByteUtil;
 import org.tron.core.Wallet;
 
 /**
- * The reason the test case uses the private key plaintext is to ensure that,
- * after the ECkey tool or algorithm is upgraded,
- * the upgraded differences can be verified.
+ * The reason the test case uses the private key plaintext is to ensure that, after the ECkey tool
+ * or algorithm is upgraded, the upgraded differences can be verified.
  */
 @Slf4j
 public class ECKeyTest {
@@ -69,10 +69,36 @@ public class ECKeyTest {
     assertTrue(key.hasPrivKey());
     assertArrayEquals(pubKey, key.getPubKey());
 
-    key =  ECKey.fromPrivate((byte[]) null);
-    assertNull(key);
-    key = ECKey.fromPrivate(new byte[0]);
-    assertNull(key);
+    assertThrows(IllegalArgumentException.class, () -> ECKey.fromPrivate((byte[]) null));
+    assertThrows(IllegalArgumentException.class, () -> ECKey.fromPrivate(new byte[0]));
+  }
+
+  @Test
+  public void testFromPrivateKeyRejectsZeroValue() {
+    byte[] zeroPrivateKey = new byte[32];
+
+    IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+        () -> ECKey.fromPrivate(zeroPrivateKey));
+    assertEquals("Invalid private key.", exception.getMessage());
+  }
+
+  @Test
+  public void testFromPrivateKeyRejectsCurveOrder() {
+    byte[] curveOrder = ByteUtil.bigIntegerToBytes(ECKey.CURVE.getN(), 32);
+
+    IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+        () -> ECKey.fromPrivate(curveOrder));
+    assertEquals("Invalid private key.", exception.getMessage());
+  }
+
+  @Test
+  public void testInvalidPublicKeyEncoding() {
+    byte[] invalidPublicKey = new byte[33];
+    invalidPublicKey[0] = 0x02;
+
+    IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+        () -> new ECKey(invalidPublicKey, false));
+    assertEquals("Invalid public key.", exception.getMessage());
   }
 
   @Test(expected = IllegalArgumentException.class)
