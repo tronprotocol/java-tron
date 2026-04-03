@@ -47,7 +47,7 @@ jobs:
               'metrics':    ['halibobo1205', 'Sunny6889'],
               'ci':         ['bladehan1',    'halibobo1205'],
             };
-            const defaultReviewers = ['bladehan1', 'kuny0707'];
+            const defaultReviewers = ['halibobo1205', '317787106'];
 
             // ── Normalize helper ─────────────────────────────────────
             // Strip spaces, hyphens, underscores and lower-case so that
