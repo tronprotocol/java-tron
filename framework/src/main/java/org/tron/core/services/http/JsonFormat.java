@@ -29,7 +29,6 @@ package org.tron.core.services.http;
   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-import com.alibaba.fastjson.JSON;
 import com.google.common.collect.ImmutableSet;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Descriptors;
@@ -58,6 +57,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.StringUtil;
+import org.tron.json.JSON;
 import org.tron.protos.contract.BalanceContract;
 
 /**

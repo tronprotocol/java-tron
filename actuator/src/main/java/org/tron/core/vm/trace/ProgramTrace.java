@@ -90,12 +90,12 @@ public class ProgramTrace {
     this.ops.addAll(programTrace.ops);
   }
 
-  public String asJsonString(boolean formatted) {
-    return serializeFieldsOnly(this, formatted);
+  public String asJsonString() {
+    return serializeFieldsOnly(this);
   }
 
   @Override
   public String toString() {
-    return asJsonString(true);
+    return asJsonString();
   }
 }

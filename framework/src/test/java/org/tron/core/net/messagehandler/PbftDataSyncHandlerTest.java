@@ -1,6 +1,5 @@
 package org.tron.core.net.messagehandler;
 
-import com.alibaba.fastjson.JSON;
 import com.google.protobuf.ByteString;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -15,6 +14,7 @@ import org.tron.core.capsule.PbftSignCapsule;
 import org.tron.core.db.PbftSignDataStore;
 import org.tron.core.net.message.pbft.PbftCommitMessage;
 import org.tron.core.store.DynamicPropertiesStore;
+import org.tron.json.JSON;
 import org.tron.protos.Protocol;
 
 public class PbftDataSyncHandlerTest {

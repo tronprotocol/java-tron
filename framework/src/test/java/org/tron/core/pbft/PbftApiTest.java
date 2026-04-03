@@ -1,7 +1,5 @@
 package org.tron.core.pbft;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONObject;
 import com.google.protobuf.ByteString;
 import java.io.IOException;
 import java.util.Objects;
@@ -29,6 +27,8 @@ import org.tron.core.db.CommonDataBase;
 import org.tron.core.db2.ISession;
 import org.tron.core.services.interfaceOnPBFT.http.PBFT.HttpApiOnPBFTService;
 import org.tron.core.store.DynamicPropertiesStore;
+import org.tron.json.JSON;
+import org.tron.json.JSONObject;
 
 @Slf4j
 public class PbftApiTest extends BaseTest {

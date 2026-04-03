@@ -3,6 +3,7 @@ package org.tron.common.utils.client.utils;
 import static org.tron.common.math.Maths.abs;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -19,6 +20,7 @@ public class AbiUtil {
   private static Pattern paramTypeBytes = Pattern.compile("^bytes([0-9]*)$");
   private static Pattern paramTypeNumber = Pattern.compile("^(u?int)([0-9]*)$");
   private static Pattern paramTypeArray = Pattern.compile("^(.*)\\[([0-9]*)]$");
+  private static final ObjectMapper mapper = new ObjectMapper();
 
   public static String[] getTypes(String methodSign) {
     int start = methodSign.indexOf('(') + 1;
@@ -221,7 +223,6 @@ public class AbiUtil {
   }
 
   public static byte[] encodeInput(String methodSign, String input) {
-    ObjectMapper mapper = new ObjectMapper();
     input = "[" + input + "]";
     List items;
     try {
@@ -315,7 +316,6 @@ public class AbiUtil {
 
       List items;
       try {
-        ObjectMapper mapper = new ObjectMapper();
         items = mapper.readValue(arrayValues, List.class);
       } catch (IOException e) {
         e.printStackTrace();

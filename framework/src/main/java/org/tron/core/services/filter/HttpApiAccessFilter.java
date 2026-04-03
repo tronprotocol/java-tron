@@ -1,6 +1,5 @@
 package org.tron.core.services.filter;
 
-import com.alibaba.fastjson.JSONObject;
 import java.net.URI;
 import java.util.List;
 import java.util.Locale;
@@ -14,6 +13,7 @@ import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.tron.common.parameter.CommonParameter;
+import org.tron.json.JSONObject;
 
 @Component
 @Slf4j(topic = "httpApiAccessFilter")

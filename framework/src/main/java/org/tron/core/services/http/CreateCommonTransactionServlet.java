@@ -1,6 +1,5 @@
 package org.tron.core.services.http;
 
-import com.alibaba.fastjson.JSONObject;
 import com.google.protobuf.GeneratedMessageV3;
 import com.google.protobuf.Message;
 import java.lang.reflect.Constructor;
@@ -13,6 +12,7 @@ import org.springframework.stereotype.Component;
 import org.tron.core.Wallet;
 import org.tron.core.actuator.TransactionFactory;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.json.JSONObject;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 

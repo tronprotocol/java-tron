@@ -1,6 +1,5 @@
 package org.tron.core.services;
 
-import com.alibaba.fastjson.JSON;
 import com.google.protobuf.ByteString;
 import java.net.InetSocketAddress;
 import javax.annotation.Resource;
@@ -21,6 +20,7 @@ import org.tron.core.config.args.Args;
 import org.tron.core.net.P2pEventHandlerImpl;
 import org.tron.core.net.TronNetService;
 import org.tron.core.net.peer.PeerManager;
+import org.tron.json.JSON;
 import org.tron.p2p.P2pConfig;
 import org.tron.p2p.connection.Channel;
 import org.tron.program.Version;
