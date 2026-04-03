@@ -47,7 +47,7 @@ jobs:
               'metrics':    ['halibobo1205', 'Sunny6889'],
               'ci':         ['bladehan1',    'halibobo1205'],
             };
-            const defaultReviewers = ['halibobo1205', '317787106'];
+            const defaultReviewers = ['bladehan1', 'kuny0707'];
 
             // ── Extract scope from conventional commit title ──────────
             // Format: type(scope): description
