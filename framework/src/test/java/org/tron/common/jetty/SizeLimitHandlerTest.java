@@ -38,7 +38,7 @@ import org.tron.core.config.args.Args;
  *   <li>Bodies exceeding the limit are rejected ({@code 413}).</li>
  *   <li>The limit counts raw UTF-8 <em>bytes</em>, not Java {@code char}s.</li>
  *   <li>HTTP and JSON-RPC services use independent size limits.</li>
- *   <li>Default values are 4x {@code GrpcUtil.DEFAULT_MAX_MESSAGE_SIZE}.</li>
+ *   <li>Default values are {@code GrpcUtil.DEFAULT_MAX_MESSAGE_SIZE} (4 MB).</li>
  * </ul>
  */
 @Slf4j
