@@ -23,6 +23,13 @@ public class SignUtils {
     return SM2.fromPrivate(privKeyBytes);
   }
 
+  public static boolean isValidPrivateKey(byte[] privKeyBytes, boolean isECKeyCryptoEngine) {
+    if (isECKeyCryptoEngine) {
+      return ECKey.isValidPrivateKey(privKeyBytes);
+    }
+    return SM2.isValidPrivateKey(privKeyBytes);
+  }
+
   public static byte[] signatureToAddress(
       byte[] messageHash, String signatureBase64, boolean isECKeyCryptoEngine)
       throws SignatureException {

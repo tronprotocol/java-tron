@@ -110,7 +110,7 @@ public class WitnessInitializerTest {
       mockedByteArray.when(() -> ByteArray.toHexString(any()))
           .thenReturn(privateKey);
       mockedByteArray.when(() -> ByteArray.fromHexString(anyString()))
-          .thenReturn(keyBytes);
+          .thenAnswer(inv -> Hex.decode(privateKey));
 
       LocalWitnesses result = WitnessInitializer.initFromKeystore(
           keystores, "password", null);

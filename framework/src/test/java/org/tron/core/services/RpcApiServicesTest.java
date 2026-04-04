@@ -8,9 +8,9 @@ import static org.tron.protos.Protocol.Transaction.Contract.ContractType.Transfe
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
-import io.grpc.StatusRuntimeException;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import io.grpc.StatusRuntimeException;
 import java.io.IOException;
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
@@ -150,7 +150,7 @@ public class RpcApiServicesTest {
 
   @BeforeClass
   public static void init() throws IOException {
-    Args.setParam(new String[] {"-d", temporaryFolder.newFolder().toString()},
+    Args.setParam(new String[]{"-d", temporaryFolder.newFolder().toString()},
         TestConstants.TEST_CONF);
     getInstance().allowShieldedTransactionApi = true;
     Assert.assertEquals(5, getInstance().getRpcMaxRstStream());

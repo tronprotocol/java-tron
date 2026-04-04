@@ -15,6 +15,10 @@ public class Rsv {
 
 
   public static Rsv fromSignature(byte[] sign) {
+    if (sign == null || sign.length < 65) {
+      throw new IllegalArgumentException(
+          "Invalid signature length: " + (sign == null ? "null" : sign.length));
+    }
     byte[] r = Arrays.copyOfRange(sign, 0, 32);
     byte[] s = Arrays.copyOfRange(sign, 32, 64);
     byte v = sign[64];
