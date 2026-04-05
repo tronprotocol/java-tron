@@ -22,13 +22,13 @@ public class NeighborsMessage extends KadMessage {
 
   public NeighborsMessage(Node from, List<Node> neighbours, long sequence) {
     super(MessageType.KAD_NEIGHBORS, null);
-    Builder builder = Neighbours.newBuilder()
-        .setTimestamp(sequence);
+    Builder builder = Neighbours.newBuilder().setTimestamp(sequence);
 
-    neighbours.forEach(neighbour -> {
-      Endpoint endpoint = getEndpointFromNode(neighbour);
-      builder.addNeighbours(endpoint);
-    });
+    neighbours.forEach(
+        neighbour -> {
+          Endpoint endpoint = getEndpointFromNode(neighbour);
+          builder.addNeighbours(endpoint);
+        });
 
     Endpoint fromEndpoint = getEndpointFromNode(from);
 

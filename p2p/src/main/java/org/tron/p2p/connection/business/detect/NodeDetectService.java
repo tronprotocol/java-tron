@@ -32,11 +32,12 @@ public class NodeDetectService implements MessageProcess {
   private Map<InetSocketAddress, NodeStat> nodeStatMap = new ConcurrentHashMap<>();
 
   @Getter
-  private static final Cache<InetAddress, Long> badNodesCache = CacheBuilder
-      .newBuilder().maximumSize(5000).expireAfterWrite(1, TimeUnit.HOURS).build();
+  private static final Cache<InetAddress, Long> badNodesCache =
+      CacheBuilder.newBuilder().maximumSize(5000).expireAfterWrite(1, TimeUnit.HOURS).build();
 
-  private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(
-      BasicThreadFactory.builder().namingPattern("nodeDetectService").build());
+  private final ScheduledExecutorService executor =
+      Executors.newSingleThreadScheduledExecutor(
+          BasicThreadFactory.builder().namingPattern("nodeDetectService").build());
 
   private final long NODE_DETECT_THRESHOLD = 5 * 60 * 1000;
 
@@ -54,19 +55,22 @@ public class NodeDetectService implements MessageProcess {
 
   private final int MIN_NODES = 200;
 
-
   public void init(PeerClient peerClient) {
     if (!Parameter.p2pConfig.isNodeDetectEnable()) {
       return;
     }
     this.peerClient = peerClient;
-    executor.scheduleWithFixedDelay(() -> {
-      try {
-        work();
-      } catch (Exception t) {
-        logger.warn("Exception in node detect worker, {}", t.getMessage());
-      }
-    }, 1, 5, TimeUnit.SECONDS);
+    executor.scheduleWithFixedDelay(
+        () -> {
+          try {
+            work();
+          } catch (Exception t) {
+            logger.warn("Exception in node detect worker, {}", t.getMessage());
+          }
+        },
+        1,
+        5,
+        TimeUnit.SECONDS);
   }
 
   public void close() {
@@ -103,12 +107,13 @@ public class NodeDetectService implements MessageProcess {
 
   public void trimNodeMap() {
     long now = System.currentTimeMillis();
-    nodeStatMap.forEach((k, v) -> {
-      if (!v.finishDetect() && v.getLastDetectTime() < now - NODE_DETECT_TIMEOUT) {
-        nodeStatMap.remove(k);
-        badNodesCache.put(k.getAddress(), System.currentTimeMillis());
-      }
-    });
+    nodeStatMap.forEach(
+        (k, v) -> {
+          if (!v.finishDetect() && v.getLastDetectTime() < now - NODE_DETECT_TIMEOUT) {
+            nodeStatMap.remove(k);
+            badNodesCache.put(k.getAddress(), System.currentTimeMillis());
+          }
+        });
   }
 
   private void loadNodes() {
@@ -137,8 +142,8 @@ public class NodeDetectService implements MessageProcess {
       setLastDetectTime(stat);
       peerClient.connectAsync(stat.getNode(), true);
     } catch (Exception e) {
-      logger.warn("Detect node {} failed, {}",
-          stat.getNode().getPreferInetSocketAddress(), e.getMessage());
+      logger.warn(
+          "Detect node {} failed, {}", stat.getNode().getPreferInetSocketAddress(), e.getMessage());
       nodeStatMap.remove(stat.getSocketAddress());
     }
   }
@@ -160,8 +165,7 @@ public class NodeDetectService implements MessageProcess {
     }
 
     long cost = System.currentTimeMillis() - nodeStat.getLastDetectTime();
-    if (cost > NODE_DETECT_TIMEOUT
-        || statusMessage.getRemainConnections() == 0) {
+    if (cost > NODE_DETECT_TIMEOUT || statusMessage.getRemainConnections() == 0) {
       badNodesCache.put(socketAddress.getAddress(), cost);
       nodeStatMap.remove(socketAddress);
     }
@@ -211,11 +215,14 @@ public class NodeDetectService implements MessageProcess {
   public synchronized List<Node> getConnectableNodes() {
     List<NodeStat> stats = new ArrayList<>();
     List<Node> nodes = new ArrayList<>();
-    nodeStatMap.values().forEach(stat -> {
-      if (stat.getStatusMessage() != null) {
-        stats.add(stat);
-      }
-    });
+    nodeStatMap
+        .values()
+        .forEach(
+            stat -> {
+              if (stat.getStatusMessage() != null) {
+                stats.add(stat);
+              }
+            });
 
     if (stats.isEmpty()) {
       return nodes;
@@ -225,5 +232,4 @@ public class NodeDetectService implements MessageProcess {
     stats.forEach(stat -> nodes.add(stat.getNode()));
     return nodes;
   }
-
 }

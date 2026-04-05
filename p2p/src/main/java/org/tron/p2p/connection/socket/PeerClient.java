@@ -22,8 +22,9 @@ public class PeerClient {
   private EventLoopGroup workerGroup;
 
   public void init() {
-    workerGroup = new NioEventLoopGroup(0,
-        BasicThreadFactory.builder().namingPattern("peerClient-%d").build());
+    workerGroup =
+        new NioEventLoopGroup(
+            0, BasicThreadFactory.builder().namingPattern("peerClient-%d").build());
   }
 
   public void close() {
@@ -43,11 +44,13 @@ public class PeerClient {
   }
 
   public ChannelFuture connect(Node node, ChannelFutureListener future) {
-    ChannelFuture channelFuture = connectAsync(
-        node.getPreferInetSocketAddress().getAddress().getHostAddress(),
-        node.getPort(),
-        node.getId() == null ? Hex.toHexString(NetUtil.getNodeId()) : node.getHexId(), false,
-        false);
+    ChannelFuture channelFuture =
+        connectAsync(
+            node.getPreferInetSocketAddress().getAddress().getHostAddress(),
+            node.getPort(),
+            node.getId() == null ? Hex.toHexString(NetUtil.getNodeId()) : node.getHexId(),
+            false,
+            false);
     if (ChannelManager.isShutdown) {
       return null;
     }
@@ -59,33 +62,38 @@ public class PeerClient {
 
   public ChannelFuture connectAsync(Node node, boolean discoveryMode) {
     ChannelFuture channelFuture =
-        connectAsync(node.getPreferInetSocketAddress().getAddress().getHostAddress(),
+        connectAsync(
+            node.getPreferInetSocketAddress().getAddress().getHostAddress(),
             node.getPort(),
             node.getId() == null ? Hex.toHexString(NetUtil.getNodeId()) : node.getHexId(),
-            discoveryMode, true);
+            discoveryMode,
+            true);
     if (ChannelManager.isShutdown) {
       return null;
     }
     if (channelFuture != null) {
-      channelFuture.addListener((ChannelFutureListener) future -> {
-        if (!future.isSuccess()) {
-          logger.warn("Connect to peer {} fail, cause:{}", node.getPreferInetSocketAddress(),
-              future.cause().getMessage());
-          future.channel().close();
-          if (!discoveryMode) {
-            ChannelManager.triggerConnect(node.getPreferInetSocketAddress());
-          }
-        }
-      });
+      channelFuture.addListener(
+          (ChannelFutureListener) future -> {
+            if (!future.isSuccess()) {
+              logger.warn(
+                  "Connect to peer {} fail, cause:{}",
+                  node.getPreferInetSocketAddress(),
+                  future.cause().getMessage());
+              future.channel().close();
+              if (!discoveryMode) {
+                ChannelManager.triggerConnect(node.getPreferInetSocketAddress());
+              }
+            }
+          });
     }
     return channelFuture;
   }
 
-  private ChannelFuture connectAsync(String host, int port, String remoteId,
-      boolean discoveryMode, boolean trigger) {
+  private ChannelFuture connectAsync(
+      String host, int port, String remoteId, boolean discoveryMode, boolean trigger) {
 
-    P2pChannelInitializer p2pChannelInitializer = new P2pChannelInitializer(remoteId,
-        discoveryMode, trigger);
+    P2pChannelInitializer p2pChannelInitializer =
+        new P2pChannelInitializer(remoteId, discoveryMode, trigger);
 
     Bootstrap b = new Bootstrap();
     b.group(workerGroup);

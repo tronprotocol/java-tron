@@ -1,6 +1,5 @@
 package org.tron.p2p.dns.update;
 
-
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -56,28 +55,35 @@ public class AwsClient implements Publish {
   private static final String postfix = ".";
   private double changeThreshold;
 
-  public AwsClient(final String accessKey, final String accessKeySecret,
-      final String zoneId, final String region, double changeThreshold) throws DnsException {
+  public AwsClient(
+      final String accessKey,
+      final String accessKeySecret,
+      final String zoneId,
+      final String region,
+      double changeThreshold)
+      throws DnsException {
     if (StringUtils.isEmpty(accessKey) || StringUtils.isEmpty(accessKeySecret)) {
-      throw new DnsException(TypeEnum.DEPLOY_DOMAIN_FAILED,
-          "Need Route53 Access Key ID and secret to proceed");
+      throw new DnsException(
+          TypeEnum.DEPLOY_DOMAIN_FAILED, "Need Route53 Access Key ID and secret to proceed");
     }
-    StaticCredentialsProvider staticCredentialsProvider = StaticCredentialsProvider.create(
-        new AwsCredentials() {
-          @Override
-          public String accessKeyId() {
-            return accessKey;
-          }
+    StaticCredentialsProvider staticCredentialsProvider =
+        StaticCredentialsProvider.create(
+            new AwsCredentials() {
+              @Override
+              public String accessKeyId() {
+                return accessKey;
+              }
 
-          @Override
-          public String secretAccessKey() {
-            return accessKeySecret;
-          }
-        });
-    route53Client = Route53Client.builder()
-        .credentialsProvider(staticCredentialsProvider)
-        .region(Region.of(region))
-        .build();
+              @Override
+              public String secretAccessKey() {
+                return accessKeySecret;
+              }
+            });
+    route53Client =
+        Route53Client.builder()
+            .credentialsProvider(staticCredentialsProvider)
+            .region(Region.of(region))
+            .build();
     this.zoneId = zoneId;
     this.serverNodes = new HashSet<>();
     this.changeThreshold = changeThreshold;
@@ -128,12 +134,13 @@ public class AwsClient implements Publish {
     checkZone(domain);
 
     Map<String, RecordSet> existing = collectRecords(domain);
-    logger.info("Find {} TXT records, {} nodes for {}", existing.size(), serverNodes.size(), domain);
+    logger.info(
+        "Find {} TXT records, {} nodes for {}", existing.size(), serverNodes.size(), domain);
     String represent = LinkEntry.buildRepresent(tree.getBase32PublicKey(), domain);
     logger.info("Trying to publish {}", represent);
 
     tree.setSeq(this.lastSeq + 1);
-    tree.sign(); //seq changed, wo need to sign again
+    tree.sign(); // seq changed, wo need to sign again
     Map<String, String> records = tree.toTXT(domain);
 
     List<Change> changes = computeChanges(domain, records, existing);
@@ -156,8 +163,10 @@ public class AwsClient implements Publish {
       NumberFormat nf = NumberFormat.getNumberInstance();
       nf.setMaximumFractionDigits(4);
       double changePercent = (addNodeSize + deleteNodeSize) / (double) serverNodes.size();
-      logger.info("Sum of node add & delete percent {} is below changeThreshold {}, skip this changes",
-          nf.format(changePercent), changeThreshold);
+      logger.info(
+          "Sum of node add & delete percent {} is below changeThreshold {}, skip this changes",
+          nf.format(changePercent),
+          changeThreshold);
     }
     serverNodes.clear();
   }
@@ -188,10 +197,10 @@ public class AwsClient implements Publish {
     String rootContent = null;
     Set<DnsNode> collectServerNodes = new HashSet<>();
     while (true) {
-      logger.info("Loading existing TXT records from name:{} zoneId:{} page:{}", rootDomain, zoneId,
-          page);
-      ListResourceRecordSetsResponse response = route53Client.listResourceRecordSets(
-          request.build());
+      logger.info(
+          "Loading existing TXT records from name:{} zoneId:{} page:{}", rootDomain, zoneId, page);
+      ListResourceRecordSetsResponse response =
+          route53Client.listResourceRecordSets(request.build());
 
       List<ResourceRecordSet> recordSetList = response.resourceRecordSets();
       for (ResourceRecordSet resourceRecordSet : recordSetList) {
@@ -203,8 +212,7 @@ public class AwsClient implements Publish {
         for (ResourceRecord resourceRecord : resourceRecordSet.resourceRecords()) {
           values.add(resourceRecord.value());
         }
-        RecordSet recordSet = new RecordSet(values.toArray(new String[0]),
-            resourceRecordSet.ttl());
+        RecordSet recordSet = new RecordSet(values.toArray(new String[0]), resourceRecordSet.ttl());
         String name = StringUtils.stripEnd(resourceRecordSet.name(), postfix);
         existing.put(name, recordSet);
 
@@ -220,7 +228,7 @@ public class AwsClient implements Publish {
             List<DnsNode> dnsNodes = nodesEntry.getNodes();
             collectServerNodes.addAll(dnsNodes);
           } catch (DnsException e) {
-            //ignore
+            // ignore
             logger.error("Parse nodeEntry failed: {}", e.getMessage());
           }
         }
@@ -257,10 +265,11 @@ public class AwsClient implements Publish {
       return;
     }
 
-    List<List<Change>> batchChanges = splitChanges(changes, route53ChangeSizeLimit,
-        route53ChangeCountLimit);
+    List<List<Change>> batchChanges =
+        splitChanges(changes, route53ChangeSizeLimit, route53ChangeCountLimit);
 
-    ChangeResourceRecordSetsResponse[] responses = new ChangeResourceRecordSetsResponse[batchChanges.size()];
+    ChangeResourceRecordSetsResponse[] responses =
+        new ChangeResourceRecordSetsResponse[batchChanges.size()];
     for (int i = 0; i < batchChanges.size(); i++) {
       logger.info("Submit {}/{} changes to Route53", i + 1, batchChanges.size());
 
@@ -292,6 +301,7 @@ public class AwsClient implements Publish {
         try {
           Thread.sleep(15 * 1000);
         } catch (InterruptedException e) {
+          // expected
         }
       }
     }
@@ -301,8 +311,8 @@ public class AwsClient implements Publish {
   // computeChanges creates DNS changes for the given set of DNS discovery records.
   // records is the latest records to be put in Route53.
   // The 'existing' arg is the set of records that already exist on Route53.
-  public List<Change> computeChanges(String domain, Map<String, String> records,
-      Map<String, RecordSet> existing) {
+  public List<Change> computeChanges(
+      String domain, Map<String, String> records, Map<String, RecordSet> existing) {
 
     List<Change> changes = new ArrayList<>();
     for (Entry<String, String> entry : records.entrySet()) {
@@ -328,10 +338,10 @@ public class AwsClient implements Publish {
             try {
               RootEntry oldRoot = RootEntry.parseEntry(StringUtils.strip(preValue, symbol));
               RootEntry newRoot = RootEntry.parseEntry(StringUtils.strip(newValue, symbol));
-              logger.info("Updating root from [{}] to [{}]", oldRoot.getDnsRoot(),
-                  newRoot.getDnsRoot());
+              logger.info(
+                  "Updating root from [{}] to [{}]", oldRoot.getDnsRoot(), newRoot.getDnsRoot());
             } catch (DnsException e) {
-              //ignore
+              // ignore
             }
           }
           Change change = newTXTChange(ChangeAction.UPSERT, path, ttl, newValue);
@@ -348,8 +358,8 @@ public class AwsClient implements Publish {
   }
 
   // creates record changes which delete all records not contained in 'keep'
-  public List<Change> makeDeletionChanges(Map<String, String> keeps,
-      Map<String, RecordSet> existing) {
+  public List<Change> makeDeletionChanges(
+      Map<String, String> keeps, Map<String, RecordSet> existing) {
     List<Change> changes = new ArrayList<>();
     for (Entry<String, RecordSet> entry : existing.entrySet()) {
       String path = entry.getKey();
@@ -365,13 +375,14 @@ public class AwsClient implements Publish {
 
   // ensures DNS changes are in leaf-added -> root-changed -> leaf-deleted order.
   public static void sortChanges(List<Change> changes) {
-    changes.sort((o1, o2) -> {
-      if (getChangeOrder(o1) == getChangeOrder(o2)) {
-        return o1.resourceRecordSet().name().compareTo(o2.resourceRecordSet().name());
-      } else {
-        return getChangeOrder(o1) - getChangeOrder(o2);
-      }
-    });
+    changes.sort(
+        (o1, o2) -> {
+          if (getChangeOrder(o1) == getChangeOrder(o2)) {
+            return o1.resourceRecordSet().name().compareTo(o2.resourceRecordSet().name());
+          } else {
+            return getChangeOrder(o1) - getChangeOrder(o2);
+          }
+        });
   }
 
   private static int getChangeOrder(Change change) {
@@ -388,8 +399,8 @@ public class AwsClient implements Publish {
   }
 
   //  splits up DNS changes such that each change batch is smaller than the given RDATA limit.
-  private static List<List<Change>> splitChanges(List<Change> changes, int sizeLimit,
-      int countLimit) {
+  private static List<List<Change>> splitChanges(
+      List<Change> changes, int sizeLimit, int countLimit) {
     List<List<Change>> batchChanges = new ArrayList<>();
 
     List<Change> subChanges = new ArrayList<>();
@@ -399,8 +410,7 @@ public class AwsClient implements Publish {
       int changeCount = getChangeCount(change);
       int changeSize = getChangeSize(change) * changeCount;
 
-      if (batchCount + changeCount <= countLimit
-          && batchSize + changeSize <= sizeLimit) {
+      if (batchCount + changeCount <= countLimit && batchSize + changeSize <= sizeLimit) {
         subChanges.add(change);
         batchCount += changeCount;
         batchSize += changeSize;
@@ -435,11 +445,12 @@ public class AwsClient implements Publish {
   }
 
   public static boolean isSameChange(Change c1, Change c2) {
-    boolean isSame = c1.action().equals(c2.action())
-        && c1.resourceRecordSet().ttl().longValue() == c2.resourceRecordSet().ttl().longValue()
-        && c1.resourceRecordSet().name().equals(c2.resourceRecordSet().name())
-        && c1.resourceRecordSet().resourceRecords().size() == c2.resourceRecordSet()
-        .resourceRecords().size();
+    boolean isSame =
+        c1.action().equals(c2.action())
+            && c1.resourceRecordSet().ttl().longValue() == c2.resourceRecordSet().ttl().longValue()
+            && c1.resourceRecordSet().name().equals(c2.resourceRecordSet().name())
+            && c1.resourceRecordSet().resourceRecords().size()
+                == c2.resourceRecordSet().resourceRecords().size();
     if (!isSame) {
       return false;
     }
@@ -455,10 +466,8 @@ public class AwsClient implements Publish {
 
   // creates a change to a TXT record.
   public Change newTXTChange(ChangeAction action, String key, long ttl, String... values) {
-    ResourceRecordSet.Builder builder = ResourceRecordSet.builder()
-        .name(key)
-        .type(RRType.TXT)
-        .ttl(ttl);
+    ResourceRecordSet.Builder builder =
+        ResourceRecordSet.builder().name(key).type(RRType.TXT).ttl(ttl);
     List<ResourceRecord> resourceRecords = new ArrayList<>();
     for (String value : values) {
       ResourceRecord.Builder builder1 = ResourceRecord.builder();

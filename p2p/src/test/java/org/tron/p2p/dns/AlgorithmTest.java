@@ -1,6 +1,5 @@
 package org.tron.p2p.dns;
 
-
 import com.google.protobuf.ByteString;
 import java.math.BigInteger;
 import java.security.SignatureException;
@@ -12,7 +11,8 @@ import org.tron.p2p.utils.ByteArray;
 
 public class AlgorithmTest {
 
-  public static String privateKey = "b71c71a67e1177ad4e901695e1b4b9ee17ae16c6668d313eac2f96dbcda3f291";
+  public static String privateKey =
+      "b71c71a67e1177ad4e901695e1b4b9ee17ae16c6668d313eac2f96dbcda3f291";
 
   @Test
   public void testPublicKeyCompressAndUnCompress() {
@@ -42,7 +42,8 @@ public class AlgorithmTest {
 
   @Test
   public void testEncode32() {
-    String content = "tree://AM5FCQLWIZX2QFPNJAP7VUERCCRNGRHWZG3YYHIUV7BVDQ5FDPRT2@morenodes.example.org";
+    String content =
+        "tree://AM5FCQLWIZX2QFPNJAP7VUERCCRNGRHWZG3YYHIUV7BVDQ5FDPRT2@morenodes.example.org";
     String base32 = Algorithm.encode32(content.getBytes());
     Assert.assertArrayEquals(content.getBytes(), Algorithm.decode32(base32));
 
@@ -57,7 +58,8 @@ public class AlgorithmTest {
 
   @Test
   public void testEncode64() {
-    String base64Sig = "1eFfi7ggzTbtAldC1pfXPn5A3mZQwEdk0-ZwCKGhZbQn2E6zWodG7v06kFu8gjiCe6FvJo04BYvgKHtPJ5pX5wE";
+    String base64Sig =
+        "1eFfi7ggzTbtAldC1pfXPn5A3mZQwEdk0-ZwCKGhZbQn2E6zWodG7v06kFu8gjiCe6FvJo04BYvgKHtPJ5pX5wE";
     byte[] decoded;
     try {
       decoded = Algorithm.decode64(base64Sig);
@@ -66,7 +68,8 @@ public class AlgorithmTest {
       Assert.fail();
     }
 
-    String base64Content = "1eFfi7ggzTbtAldC1pfXPn5A3mZQwEdk0-ZwCKGhZbQn2E6zWodG7v06kFu8gjiCe6FvJo04BYvgKHtPJ5pX5wE=";
+    String base64Content =
+        "1eFfi7ggzTbtAldC1pfXPn5A3mZQwEdk0-ZwCKGhZbQn2E6zWodG7v06kFu8gjiCe6FvJo04BYvgKHtPJ5pX5wE=";
     decoded = Algorithm.decode64(base64Content);
     Assert.assertNotEquals(base64Content, Algorithm.encode64(decoded));
   }
@@ -78,7 +81,8 @@ public class AlgorithmTest {
     builder.setLRoot(ByteString.copyFrom("FDXN3SN67NA5DKA4J2GOK7BVQI".getBytes()));
     builder.setSeq(3447);
 
-    //String eth_msg = "enrtree-root:v1 e=VXJIDGQECCIIYNY3GZEJSFSG6U l=FDXN3SN67NA5DKA4J2GOK7BVQI seq=3447";
+    // String eth_msg = "enrtree-root:v1 e=VXJIDGQECCIIYNY3GZEJSFSG6U l=FDXN3SN67NA5DKA4J2GOK7BVQI
+    // seq=3447";
     String msg = builder.toString();
     byte[] sig = Algorithm.sigData(builder.toString(), privateKey);
     Assert.assertEquals(65, sig.length);

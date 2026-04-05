@@ -1,6 +1,5 @@
 package org.tron.p2p.dns.tree;
 
-
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.security.SignatureException;
@@ -23,9 +22,7 @@ public class Algorithm {
   private static final int truncateLength = 26;
   public static final String padding = "=";
 
-  /**
-   * return compress public key with hex
-   */
+  /** return compress public key with hex */
   public static String compressPubKey(BigInteger pubKey) {
     String pubKeyYPrefix = pubKey.testBit(0) ? "03" : "02";
     String pubKeyHex = pubKey.toString(16);
@@ -38,10 +35,7 @@ public class Algorithm {
     X9ECParameters CURVE_PARAMS = CustomNamedCurves.getByName("secp256k1");
     ECDomainParameters CURVE =
         new ECDomainParameters(
-            CURVE_PARAMS.getCurve(),
-            CURVE_PARAMS.getG(),
-            CURVE_PARAMS.getN(),
-            CURVE_PARAMS.getH());
+            CURVE_PARAMS.getCurve(), CURVE_PARAMS.getG(), CURVE_PARAMS.getN(), CURVE_PARAMS.getH());
     byte[] pubKey = ByteArray.fromHexString(hexPubKey);
     ECPoint ecPoint = CURVE.getCurve().decodePoint(pubKey);
     byte[] encoded = ecPoint.getEncoded(false);
@@ -55,9 +49,7 @@ public class Algorithm {
     return new ECKeyPair(privKey, pubKey);
   }
 
-  /**
-   * The produced signature is in the 65-byte [R || S || V] format where V is 0 or 1.
-   */
+  /** The produced signature is in the 65-byte [R || S || V] format where V is 0 or 1. */
   public static byte[] sigData(String msg, String privateKey) {
     ECKeyPair keyPair = generateKeyPair(privateKey);
     Sign.SignatureData signature = Sign.signMessage(msg.getBytes(), keyPair, true);
@@ -73,8 +65,9 @@ public class Algorithm {
     if (recId < 27) {
       recId += 27;
     }
-    Sign.SignatureData signature = new SignatureData((byte) recId, ByteArray.subArray(sig, 0, 32),
-        ByteArray.subArray(sig, 32, 64));
+    Sign.SignatureData signature =
+        new SignatureData(
+            (byte) recId, ByteArray.subArray(sig, 0, 32), ByteArray.subArray(sig, 32, 64));
     return Sign.signedMessageToKey(msg.getBytes(), signature);
   }
 
@@ -89,9 +82,11 @@ public class Algorithm {
     return pubKey.equals(pubKeyRecovered);
   }
 
-  //we only use fix width hash
+  // we only use fix width hash
   public static boolean isValidHash(String base32Hash) {
-    if (base32Hash == null || base32Hash.length() != truncateLength || base32Hash.contains("\r")
+    if (base32Hash == null
+        || base32Hash.length() != truncateLength
+        || base32Hash.contains("\r")
         || base32Hash.contains("\n")) {
       return false;
     }
@@ -108,8 +103,8 @@ public class Algorithm {
   }
 
   public static String encode64(byte[] content) {
-    String base64Content = new String(Base64.getUrlEncoder().encode(content),
-        StandardCharsets.UTF_8);
+    String base64Content =
+        new String(Base64.getUrlEncoder().encode(content), StandardCharsets.UTF_8);
     return StringUtils.stripEnd(base64Content, padding);
   }
 
@@ -127,17 +122,13 @@ public class Algorithm {
     return StringUtils.stripEnd(base32Content, padding);
   }
 
-  /**
-   * first get the hash of string, then get first 16 letter, last encode it with base32
-   */
+  /** first get the hash of string, then get first 16 letter, last encode it with base32 */
   public static String encode32AndTruncate(String content) {
     return encode32(ByteArray.subArray(Hash.sha3(content.getBytes()), 0, 16))
         .substring(0, truncateLength);
   }
 
-  /**
-   * if content's length is not multiple of 8, we padding it
-   */
+  /** if content's length is not multiple of 8, we padding it */
   public static byte[] decode32(String content) {
     int left = content.length() % 8;
     StringBuilder sb = new StringBuilder(content);

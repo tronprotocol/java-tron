@@ -1,6 +1,5 @@
 package org.tron.p2p.exception;
 
-
 public class DnsException extends Exception {
 
   private static final long serialVersionUID = 9096335228978001485L;
@@ -27,7 +26,7 @@ public class DnsException extends Exception {
 
   public enum TypeEnum {
     LOOK_UP_ROOT_FAILED(0, "look up root failed"),
-    //Resolver/sync errors
+    // Resolver/sync errors
     NO_ROOT_FOUND(1, "no valid root found"),
     NO_ENTRY_FOUND(2, "no valid tree entry found"),
     HASH_MISS_MATCH(3, "hash miss match"),

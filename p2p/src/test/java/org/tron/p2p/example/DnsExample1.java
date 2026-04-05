@@ -1,6 +1,5 @@
 package org.tron.p2p.example;
 
-
 import static java.lang.Thread.sleep;
 
 import java.net.InetSocketAddress;
@@ -27,7 +26,8 @@ public class DnsExample1 {
     p2pService.start(config);
 
     // after start about 300 seconds, you can find following log:
-    // Trying to publish tree://APFGGTFOBVE2ZNAB3CSMNNX6RRK3ODIRLP2AA5U4YFAA6MSYZUYTQ@nodes.example.org
+    // Trying to publish
+    // tree://APFGGTFOBVE2ZNAB3CSMNNX6RRK3ODIRLP2AA5U4YFAA6MSYZUYTQ@nodes.example.org
     // that is your tree url. you can publish your tree url on any somewhere such as github.
     // for others, this url is a known tree url
     while (true) {
@@ -88,12 +88,14 @@ public class DnsExample1 {
     publishConfig.setDnsDomain("nodes.example.org");
 
     // if you know other tree urls, you can attach it. it is optional
-    String[] urls = new String[] {
-        "tree://APFGGTFOBVE2ZNAB3CSMNNX6RRK3ODIRLP2AA5U4YFAA6MSYZUYTQ@nodes.example1.org",
-        "tree://APFGGTFOBVE2ZNAB3CSMNNX6RRK3ODIRLP2AA5U4YFAA6MSYZUYTQ@nodes.example2.org",};
+    String[] urls =
+        new String[] {
+          "tree://APFGGTFOBVE2ZNAB3CSMNNX6RRK3ODIRLP2AA5U4YFAA6MSYZUYTQ@nodes.example1.org",
+          "tree://APFGGTFOBVE2ZNAB3CSMNNX6RRK3ODIRLP2AA5U4YFAA6MSYZUYTQ@nodes.example2.org",
+        };
     publishConfig.setKnownTreeUrls(Arrays.asList(urls));
 
-    //add your api key of aws or aliyun
+    // add your api key of aws or aliyun
     publishConfig.setDnsType(DnsType.AwsRoute53);
     publishConfig.setAccessKeyId("your access key");
     publishConfig.setAccessKeySecret("your access key secret");
@@ -103,8 +105,8 @@ public class DnsExample1 {
     // enable dns publish
     publishConfig.setDnsPublishEnable(true);
 
-    // enable publish, so your nodes can be automatically published on domain periodically and others can download them
+    // enable publish, so your nodes can be automatically published on domain periodically and
+    // others can download them
     config.setPublishConfig(publishConfig);
   }
-
 }

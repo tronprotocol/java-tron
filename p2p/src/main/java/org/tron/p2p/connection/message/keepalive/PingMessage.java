@@ -16,8 +16,8 @@ public class PingMessage extends Message {
 
   public PingMessage() {
     super(MessageType.KEEP_ALIVE_PING, null);
-    this.keepAliveMessage = Connect.KeepAliveMessage.newBuilder()
-      .setTimestamp(System.currentTimeMillis()).build();
+    this.keepAliveMessage =
+        Connect.KeepAliveMessage.newBuilder().setTimestamp(System.currentTimeMillis()).build();
     this.data = this.keepAliveMessage.toByteArray();
   }
 
@@ -28,6 +28,6 @@ public class PingMessage extends Message {
   @Override
   public boolean valid() {
     return getTimeStamp() > 0
-      && getTimeStamp() <= System.currentTimeMillis() + Parameter.NETWORK_TIME_DIFF;
+        && getTimeStamp() <= System.currentTimeMillis() + Parameter.NETWORK_TIME_DIFF;
   }
 }

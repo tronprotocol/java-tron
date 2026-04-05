@@ -8,7 +8,6 @@ import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.NetworkInterface;
-import java.net.Socket;
 import java.net.SocketException;
 import java.net.URL;
 import java.net.URLConnection;
@@ -34,14 +33,38 @@ import org.tron.p2p.protos.Discover;
 public class NetUtil {
 
   public static final Pattern PATTERN_IPv4 =
-      Pattern.compile("^(1\\d{2}|2[0-4]\\d|25[0-5]|[1-9]\\d|[1-9])\\"
-          + ".(1\\d{2}|2[0-4]\\d|25[0-5]|[1-9]\\d|\\d)\\"
-          + ".(1\\d{2}|2[0-4]\\d|25[0-5]|[1-9]\\d|\\d)\\"
-          + ".(1\\d{2}|2[0-4]\\d|25[0-5]|[1-9]\\d|\\d)$");
+      Pattern.compile(
+          "^(1\\d{2}|2[0-4]\\d|25[0-5]|[1-9]\\d|[1-9])\\"
+              + ".(1\\d{2}|2[0-4]\\d|25[0-5]|[1-9]\\d|\\d)\\"
+              + ".(1\\d{2}|2[0-4]\\d|25[0-5]|[1-9]\\d|\\d)\\"
+              + ".(1\\d{2}|2[0-4]\\d|25[0-5]|[1-9]\\d|\\d)$");
 
-  //https://codeantenna.com/a/jvrULhCbdj
-  public static final Pattern PATTERN_IPv6 = Pattern.compile(
-      "^\\s*((([0-9A-Fa-f]{1,4}:){7}([0-9A-Fa-f]{1,4}|:))|(([0-9A-Fa-f]{1,4}:){6}(:[0-9A-Fa-f]{1,4}|((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){5}(((:[0-9A-Fa-f]{1,4}){1,2})|:((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){4}(((:[0-9A-Fa-f]{1,4}){1,3})|((:[0-9A-Fa-f]{1,4})?:((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){3}(((:[0-9A-Fa-f]{1,4}){1,4})|((:[0-9A-Fa-f]{1,4}){0,2}:((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){2}(((:[0-9A-Fa-f]{1,4}){1,5})|((:[0-9A-Fa-f]{1,4}){0,3}:((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){1}(((:[0-9A-Fa-f]{1,4}){1,6})|((:[0-9A-Fa-f]{1,4}){0,4}:((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3}))|:))|(:(((:[0-9A-Fa-f]{1,4}){1,7})|((:[0-9A-Fa-f]{1,4}){0,5}:((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3}))|:)))(%.+)?\\s*$");
+  // https://codeantenna.com/a/jvrULhCbdj
+  public static final Pattern PATTERN_IPv6 =
+      Pattern.compile(
+          "^\\s*((([0-9A-Fa-f]{1,4}:){7}([0-9A-Fa-f]{1,4}|:))"
+              + "|(([0-9A-Fa-f]{1,4}:){6}(:[0-9A-Fa-f]{1,4}"
+              + "|((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)"
+              + "(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3})|:))"
+              + "|(([0-9A-Fa-f]{1,4}:){5}(((:[0-9A-Fa-f]{1,4}){1,2})"
+              + "|:((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)"
+              + "(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3})|:))"
+              + "|(([0-9A-Fa-f]{1,4}:){4}(((:[0-9A-Fa-f]{1,4}){1,3})"
+              + "|((:[0-9A-Fa-f]{1,4})?:((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)"
+              + "(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3}))|:))"
+              + "|(([0-9A-Fa-f]{1,4}:){3}(((:[0-9A-Fa-f]{1,4}){1,4})"
+              + "|((:[0-9A-Fa-f]{1,4}){0,2}:((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)"
+              + "(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3}))|:))"
+              + "|(([0-9A-Fa-f]{1,4}:){2}(((:[0-9A-Fa-f]{1,4}){1,5})"
+              + "|((:[0-9A-Fa-f]{1,4}){0,3}:((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)"
+              + "(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3}))|:))"
+              + "|(([0-9A-Fa-f]{1,4}:){1}(((:[0-9A-Fa-f]{1,4}){1,6})"
+              + "|((:[0-9A-Fa-f]{1,4}){0,4}:((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)"
+              + "(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3}))|:))"
+              + "|(:(((:[0-9A-Fa-f]{1,4}){1,7})"
+              + "|((:[0-9A-Fa-f]{1,4}){0,5}:((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)"
+              + "(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3}))|:)))"
+              + "(%.+)?\\s*$");
 
   private static final String IPADDRESS_LOCALHOST = "127.0.0.1";
 
@@ -79,9 +102,11 @@ public class NetUtil {
   }
 
   public static Node getNode(Discover.Endpoint endpoint) {
-    return new Node(endpoint.getNodeId().toByteArray(),
+    return new Node(
+        endpoint.getNodeId().toByteArray(),
         ByteArray.toStr(endpoint.getAddress().toByteArray()),
-        ByteArray.toStr(endpoint.getAddressIpv6().toByteArray()), endpoint.getPort());
+        ByteArray.toStr(endpoint.getAddressIpv6().toByteArray()),
+        endpoint.getPort());
   }
 
   public static byte[] getNodeId() {
@@ -96,8 +121,8 @@ public class NetUtil {
     String ip = null;
     try {
       URLConnection urlConnection = new URL(url).openConnection();
-      urlConnection.setConnectTimeout(10_000); //ms
-      urlConnection.setReadTimeout(10_000); //ms
+      urlConnection.setConnectTimeout(10_000); // ms
+      urlConnection.setReadTimeout(10_000); // ms
       in = new BufferedReader(new InputStreamReader(urlConnection.getInputStream()));
       ip = in.readLine();
       if (ip == null || ip.trim().isEmpty()) {
@@ -112,15 +137,18 @@ public class NetUtil {
       }
       return ip;
     } catch (Exception e) {
-      logger.warn("Fail to get {} by {}, cause:{}",
-          Constant.ipV4Urls.contains(url) ? "ipv4" : "ipv6", url, e.getMessage());
+      logger.warn(
+          "Fail to get {} by {}, cause:{}",
+          Constant.ipV4Urls.contains(url) ? "ipv4" : "ipv6",
+          url,
+          e.getMessage());
       return null;
     } finally {
       if (in != null) {
         try {
           in.close();
         } catch (IOException e) {
-          //ignore
+          // ignore
         }
       }
     }
@@ -176,8 +204,10 @@ public class NetUtil {
   }
 
   private static boolean isReservedAddress(InetAddress inetAddress) {
-    return inetAddress.isAnyLocalAddress() || inetAddress.isLinkLocalAddress()
-        || inetAddress.isLoopbackAddress() || inetAddress.isMulticastAddress();
+    return inetAddress.isAnyLocalAddress()
+        || inetAddress.isLinkLocalAddress()
+        || inetAddress.isLoopbackAddress()
+        || inetAddress.isMulticastAddress();
   }
 
   public static String getExternalIpV4() {
@@ -205,22 +235,25 @@ public class NetUtil {
         host = host.substring(1, host.length() - 1);
       } else {
         if (host.contains(":")) {
-          throw new RuntimeException(String.format("Invalid inetSocketAddress: \"%s\", "
-              + "use ipv4:port or [ipv6]:port", para));
+          throw new RuntimeException(
+              String.format(
+                  "Invalid inetSocketAddress: \"%s\", " + "use ipv4:port or [ipv6]:port", para));
         }
       }
       int port = Integer.parseInt(para.substring(index + 1));
       return new InetSocketAddress(host, port);
     } else {
-      throw new RuntimeException(String.format("Invalid inetSocketAddress: \"%s\", "
-          + "use ipv4:port or [ipv6]:port", para));
+      throw new RuntimeException(
+          String.format(
+              "Invalid inetSocketAddress: \"%s\", " + "use ipv4:port or [ipv6]:port", para));
     }
   }
 
   private static String getIp(List<String> multiSrcUrls, boolean isAskIpv4) {
     int threadSize = multiSrcUrls.size();
-    ExecutorService executor = Executors.newFixedThreadPool(threadSize,
-        BasicThreadFactory.builder().namingPattern("getIp-%d").build());
+    ExecutorService executor =
+        Executors.newFixedThreadPool(
+            threadSize, BasicThreadFactory.builder().namingPattern("getIp-%d").build());
     CompletionService<String> completionService = new ExecutorCompletionService<>(executor);
 
     for (String url : multiSrcUrls) {
@@ -230,7 +263,7 @@ public class NetUtil {
     String ip = null;
     for (int i = 0; i < threadSize; i++) {
       try {
-        //block until any result return
+        // block until any result return
         Future<String> f = completionService.take();
         String result = f.get();
         if (StringUtils.isNotEmpty(result)) {
@@ -238,7 +271,7 @@ public class NetUtil {
           break;
         }
       } catch (Exception ignored) {
-        //ignore
+        // ignore
       }
     }
 

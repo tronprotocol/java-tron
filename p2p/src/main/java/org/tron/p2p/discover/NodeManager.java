@@ -43,5 +43,4 @@ public class NodeManager {
   public static List<Node> getAllNodes() {
     return discoverService.getAllNodes();
   }
-
 }

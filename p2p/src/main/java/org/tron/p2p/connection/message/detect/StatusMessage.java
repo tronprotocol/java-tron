@@ -20,12 +20,14 @@ public class StatusMessage extends Message {
   public StatusMessage() {
     super(MessageType.STATUS, null);
     Discover.Endpoint endpoint = Parameter.getHomeNode();
-    this.statusMessage = Connect.StatusMessage.newBuilder()
-      .setFrom(endpoint)
-      .setMaxConnections(Parameter.p2pConfig.getMaxConnections())
-      .setCurrentConnections(ChannelManager.getChannels().size())
-      .setNetworkId(Parameter.p2pConfig.getNetworkId())
-      .setTimestamp(System.currentTimeMillis()).build();
+    this.statusMessage =
+        Connect.StatusMessage.newBuilder()
+            .setFrom(endpoint)
+            .setMaxConnections(Parameter.p2pConfig.getMaxConnections())
+            .setCurrentConnections(ChannelManager.getChannels().size())
+            .setNetworkId(Parameter.p2pConfig.getNetworkId())
+            .setTimestamp(System.currentTimeMillis())
+            .build();
     this.data = statusMessage.toByteArray();
   }
 

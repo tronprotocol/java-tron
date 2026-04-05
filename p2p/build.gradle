@@ -1,7 +1,16 @@
 apply plugin: 'com.google.protobuf'
+apply plugin: 'checkstyle'
 
-// TODO: enable checkstyle after code style alignment
-// apply plugin: 'checkstyle'
+checkstyle {
+    toolVersion = '8.7'
+    configFile = file("${rootDir}/config/checkstyle/checkStyleAll.xml")
+    maxWarnings = 0
+}
+
+checkstyleMain {
+    source = 'src/main/java'
+    exclude '**/protos/**'
+}
 
 def protobufVersion = '3.25.8'
 def grpcVersion = '1.75.0'

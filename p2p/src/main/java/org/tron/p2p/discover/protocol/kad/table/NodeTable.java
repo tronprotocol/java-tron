@@ -8,7 +8,7 @@ import java.util.Map;
 import org.tron.p2p.discover.Node;
 
 public class NodeTable {
-  private final Node node;  // our node
+  private final Node node; // our node
   private transient NodeBucket[] buckets;
   private transient Map<String, NodeEntry> nodes;
 

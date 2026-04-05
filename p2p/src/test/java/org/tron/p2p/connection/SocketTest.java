@@ -29,7 +29,8 @@ public class SocketTest {
 
   private boolean sendMessage(io.netty.channel.Channel nettyChannel, Message message) {
     AtomicBoolean sendSuccess = new AtomicBoolean(false);
-    nettyChannel.writeAndFlush(Unpooled.wrappedBuffer(message.getSendData()))
+    nettyChannel
+        .writeAndFlush(Unpooled.wrappedBuffer(message.getSendData()))
         .addListener((ChannelFutureListener) future -> {
           if (future.isSuccess()) {
             sendSuccess.set(true);
@@ -45,28 +46,28 @@ public class SocketTest {
     return sendSuccess.get();
   }
 
-  //if we start handshake, we cannot connect with localhost, this test case will be invalid
+  // if we start handshake, we cannot connect with localhost, this test case will be invalid
   @Test
   public void testPeerServerAndPeerClient() throws InterruptedException {
-//    //wait some time until peer server thread starts at this port successfully
-//    Thread.sleep(500);
-//    Node serverNode = new Node(new InetSocketAddress(localIp, port));
-//
-//    //peer client try to connect peer server using random port
-//    io.netty.channel.Channel nettyChannel = ChannelManager.getPeerClient()
-//        .connectAsync(serverNode, false, false).channel();
-//
-//    while (true) {
-//      if (!nettyChannel.isActive()) {
-//        Thread.sleep(100);
-//      } else {
-//        System.out.println("send message test");
-//        PingMessage pingMessage = new PingMessage();
-//        boolean sendSuccess = sendMessage(nettyChannel, pingMessage);
-//        Assert.assertTrue(sendSuccess);
-//        break;
-//      }
-//    }
+    //    //wait some time until peer server thread starts at this port successfully
+    //    Thread.sleep(500);
+    //    Node serverNode = new Node(new InetSocketAddress(localIp, port));
+    //
+    //    //peer client try to connect peer server using random port
+    //    io.netty.channel.Channel nettyChannel = ChannelManager.getPeerClient()
+    //        .connectAsync(serverNode, false, false).channel();
+    //
+    //    while (true) {
+    //      if (!nettyChannel.isActive()) {
+    //        Thread.sleep(100);
+    //      } else {
+    //        System.out.println("send message test");
+    //        PingMessage pingMessage = new PingMessage();
+    //        boolean sendSuccess = sendMessage(nettyChannel, pingMessage);
+    //        Assert.assertTrue(sendSuccess);
+    //        break;
+    //      }
+    //    }
   }
 
   @After

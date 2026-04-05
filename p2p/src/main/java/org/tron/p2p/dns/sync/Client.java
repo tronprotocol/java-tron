@@ -1,6 +1,5 @@
 package org.tron.p2p.dns.sync;
 
-
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import java.net.UnknownHostException;
@@ -32,28 +31,24 @@ import org.xbill.DNS.TextParseException;
 @Slf4j(topic = "net")
 public class Client {
 
-  public static final int recheckInterval = 60 * 60; //seconds, should be smaller than rootTTL
+  public static final int recheckInterval = 60 * 60; // seconds, should be smaller than rootTTL
   public static final int cacheLimit = 2000;
   public static final int randomRetryTimes = 10;
   private Cache<String, Entry> cache;
-  @Getter
-  private final Map<String, Tree> trees = new ConcurrentHashMap<>();
+  @Getter private final Map<String, Tree> trees = new ConcurrentHashMap<>();
   private final Map<String, ClientTree> clientTrees = new HashMap<>();
 
-  private final ScheduledExecutorService syncer = Executors.newSingleThreadScheduledExecutor(
-      BasicThreadFactory.builder().namingPattern("dnsSyncer").build());
+  private final ScheduledExecutorService syncer =
+      Executors.newSingleThreadScheduledExecutor(
+          BasicThreadFactory.builder().namingPattern("dnsSyncer").build());
 
   public Client() {
-    this.cache = CacheBuilder.newBuilder()
-        .maximumSize(cacheLimit)
-        .recordStats()
-        .build();
+    this.cache = CacheBuilder.newBuilder().maximumSize(cacheLimit).recordStats().build();
   }
 
   public void init() {
     if (!Parameter.p2pConfig.getTreeUrls().isEmpty()) {
-      syncer.scheduleWithFixedDelay(this::startSync, 5, recheckInterval,
-          TimeUnit.SECONDS);
+      syncer.scheduleWithFixedDelay(this::startSync, 5, recheckInterval, TimeUnit.SECONDS);
     }
   }
 
@@ -97,28 +92,32 @@ public class Client {
     }
 
     tree.setRootEntry(clientTree.getRoot());
-    logger.info("SyncTree {} complete, LinkEntry size:{}, NodesEntry size:{}, node size:{}",
-        urlScheme, tree.getLinksEntry().size(), tree.getNodesEntry().size(),
+    logger.info(
+        "SyncTree {} complete, LinkEntry size:{}, NodesEntry size:{}, node size:{}",
+        urlScheme,
+        tree.getLinksEntry().size(),
+        tree.getNodesEntry().size(),
         tree.getDnsNodes().size());
   }
 
-  public RootEntry resolveRoot(LinkEntry linkEntry) throws TextParseException, DnsException,
-      SignatureException, UnknownHostException {
-    //do not put root in cache
+  public RootEntry resolveRoot(LinkEntry linkEntry)
+      throws TextParseException, DnsException, SignatureException, UnknownHostException {
+    // do not put root in cache
     TXTRecord txtRecord = LookUpTxt.lookUpTxt(linkEntry.getDomain());
     if (txtRecord == null) {
       throw new DnsException(TypeEnum.LOOK_UP_ROOT_FAILED, "domain: " + linkEntry.getDomain());
     }
     for (String txt : txtRecord.getStrings()) {
       if (txt.startsWith(Entry.rootPrefix)) {
-        return RootEntry.parseEntry(txt, linkEntry.getUnCompressHexPublicKey(),
-            linkEntry.getDomain());
+        return RootEntry.parseEntry(
+            txt, linkEntry.getUnCompressHexPublicKey(), linkEntry.getDomain());
       }
     }
     throw new DnsException(TypeEnum.NO_ROOT_FOUND, "domain: " + linkEntry.getDomain());
   }
 
-  // resolveEntry retrieves an entry from the cache or fetches it from the network if it isn't cached.
+  // resolveEntry retrieves an entry from the cache or fetches it from the network if it isn't
+  // cached.
   public Entry resolveEntry(String domain, String hash)
       throws DnsException, TextParseException, UnknownHostException {
     Entry entry = cache.getIfPresent(hash);
@@ -155,15 +154,16 @@ public class Client {
     }
 
     if (entry == null) {
-      throw new DnsException(TypeEnum.NO_ENTRY_FOUND,
-          String.format("hash:%s, domain:%s, txt:%s", hash, domain, txt));
+      throw new DnsException(
+          TypeEnum.NO_ENTRY_FOUND, String.format("hash:%s, domain:%s, txt:%s", hash, domain, txt));
     }
 
     String wantHash = Algorithm.encode32AndTruncate(entry.toString());
     if (!wantHash.equals(hash)) {
-      throw new DnsException(TypeEnum.HASH_MISS_MATCH,
-          String.format("hash mismatch, want: [%s], really: [%s], content: [%s]", wantHash, hash,
-              entry));
+      throw new DnsException(
+          TypeEnum.HASH_MISS_MATCH,
+          String.format(
+              "hash mismatch, want: [%s], really: [%s], content: [%s]", wantHash, hash, entry));
     }
     return entry;
   }

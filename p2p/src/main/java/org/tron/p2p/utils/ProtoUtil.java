@@ -2,7 +2,6 @@ package org.tron.p2p.utils;
 
 import com.google.protobuf.ByteString;
 import java.io.IOException;
-
 import org.tron.p2p.base.Parameter;
 import org.tron.p2p.exception.P2pException;
 import org.tron.p2p.protos.Connect;
@@ -21,8 +20,9 @@ public class ProtoUtil {
     }
 
     return Connect.CompressMessage.newBuilder()
-            .setData(ByteString.copyFrom(bytes))
-            .setType(type).build();
+        .setData(ByteString.copyFrom(bytes))
+        .setType(type)
+        .build();
   }
 
   public static byte[] uncompressMessage(Connect.CompressMessage message)
@@ -34,16 +34,15 @@ public class ProtoUtil {
 
     int length = Snappy.uncompressedLength(data);
     if (length >= Parameter.MAX_MESSAGE_LENGTH) {
-      throw new P2pException(P2pException.TypeEnum.BIG_MESSAGE,
-          "message is too big, len=" + length);
+      throw new P2pException(
+          P2pException.TypeEnum.BIG_MESSAGE, "message is too big, len=" + length);
     }
 
     byte[] d2 = Snappy.uncompress(data);
     if (d2.length >= Parameter.MAX_MESSAGE_LENGTH) {
-      throw new P2pException(P2pException.TypeEnum.BIG_MESSAGE,
-          "uncompressed is too big, len=" + length);
+      throw new P2pException(
+          P2pException.TypeEnum.BIG_MESSAGE, "uncompressed is too big, len=" + length);
     }
     return d2;
   }
-
 }

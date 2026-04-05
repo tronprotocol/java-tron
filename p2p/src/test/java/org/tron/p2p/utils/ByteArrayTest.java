@@ -4,7 +4,6 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.tron.p2p.dns.update.AwsClient;
 
-
 public class ByteArrayTest {
 
   @Test
@@ -14,13 +13,13 @@ public class ByteArrayTest {
   }
 
   @Test
-  public void testSubdomain(){
-    Assert.assertTrue(AwsClient.isSubdomain("cde.abc.com","abc.com"));
-    Assert.assertTrue(AwsClient.isSubdomain("cde.abc.com.","abc.com"));
-    Assert.assertTrue(AwsClient.isSubdomain("cde.abc.com","abc.com."));
-    Assert.assertTrue(AwsClient.isSubdomain("cde.abc.com.","abc.com."));
+  public void testSubdomain() {
+    Assert.assertTrue(AwsClient.isSubdomain("cde.abc.com", "abc.com"));
+    Assert.assertTrue(AwsClient.isSubdomain("cde.abc.com.", "abc.com"));
+    Assert.assertTrue(AwsClient.isSubdomain("cde.abc.com", "abc.com."));
+    Assert.assertTrue(AwsClient.isSubdomain("cde.abc.com.", "abc.com."));
 
-    Assert.assertFalse(AwsClient.isSubdomain("a-sub.abc.com","sub.abc.com"));
-    Assert.assertTrue(AwsClient.isSubdomain(".sub.abc.com","sub.abc.com"));
+    Assert.assertFalse(AwsClient.isSubdomain("a-sub.abc.com", "sub.abc.com"));
+    Assert.assertTrue(AwsClient.isSubdomain(".sub.abc.com", "sub.abc.com"));
   }
 }

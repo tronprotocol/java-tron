@@ -1,6 +1,5 @@
 package org.tron.p2p.connection.socket;
 
-
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelOption;
@@ -38,11 +37,13 @@ public class PeerServer {
   }
 
   public void start(int port) {
-    EventLoopGroup bossGroup = new NioEventLoopGroup(1,
-        BasicThreadFactory.builder().namingPattern("peerBoss").build());
-    //if threads = 0, it is number of core * 2
-    EventLoopGroup workerGroup = new NioEventLoopGroup(Parameter.TCP_NETTY_WORK_THREAD_NUM,
-        BasicThreadFactory.builder().namingPattern("peerWorker-%d").build());
+    EventLoopGroup bossGroup =
+        new NioEventLoopGroup(1, BasicThreadFactory.builder().namingPattern("peerBoss").build());
+    // if threads = 0, it is number of core * 2
+    EventLoopGroup workerGroup =
+        new NioEventLoopGroup(
+            Parameter.TCP_NETTY_WORK_THREAD_NUM,
+            BasicThreadFactory.builder().namingPattern("peerWorker-%d").build());
     P2pChannelInitializer p2pChannelInitializer = new P2pChannelInitializer("", false, true);
     try {
       ServerBootstrap b = new ServerBootstrap();
@@ -76,5 +77,4 @@ public class PeerServer {
       listening = false;
     }
   }
-
 }

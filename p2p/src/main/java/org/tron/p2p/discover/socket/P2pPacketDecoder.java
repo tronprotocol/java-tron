@@ -1,11 +1,11 @@
 package org.tron.p2p.discover.socket;
 
 import com.google.protobuf.InvalidProtocolBufferException;
-import java.util.List;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.socket.DatagramPacket;
 import io.netty.handler.codec.MessageToMessageDecoder;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.p2p.discover.message.Message;
 import org.tron.p2p.exception.P2pException;
@@ -32,20 +32,36 @@ public class P2pPacketDecoder extends MessageToMessageDecoder<DatagramPacket> {
       out.add(event);
     } catch (P2pException pe) {
       if (pe.getType().equals(P2pException.TypeEnum.BAD_MESSAGE)) {
-        logger.error("Message validation failed, type {}, len {}, address {}", encoded[0],
-            encoded.length, packet.sender());
+        logger.error(
+            "Message validation failed, type {}, len {}, address {}",
+            encoded[0],
+            encoded.length,
+            packet.sender());
       } else {
-        logger.info("Parse msg failed, type {}, len {}, address {}", encoded[0], encoded.length,
+        logger.info(
+            "Parse msg failed, type {}, len {}, address {}",
+            encoded[0],
+            encoded.length,
             packet.sender());
       }
     } catch (InvalidProtocolBufferException e) {
-      logger.warn("An exception occurred while parsing the message, type {}, len {}, address {}, "
-              + "data {}, cause: {}", encoded[0], encoded.length, packet.sender(),
-          ByteArray.toHexString(encoded), e.getMessage());
+      logger.warn(
+          "An exception occurred while parsing the message, type {}, len {}, address {}, "
+              + "data {}, cause: {}",
+          encoded[0],
+          encoded.length,
+          packet.sender(),
+          ByteArray.toHexString(encoded),
+          e.getMessage());
     } catch (Exception e) {
-      logger.error("An exception occurred while parsing the message, type {}, len {}, address {}, "
-              + "data {}", encoded[0], encoded.length, packet.sender(),
-          ByteArray.toHexString(encoded), e);
+      logger.error(
+          "An exception occurred while parsing the message, type {}, len {}, address {}, "
+              + "data {}",
+          encoded[0],
+          encoded.length,
+          packet.sender(),
+          ByteArray.toHexString(encoded),
+          e);
     }
   }
 }

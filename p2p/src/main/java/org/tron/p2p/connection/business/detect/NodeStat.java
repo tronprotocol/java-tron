@@ -1,10 +1,9 @@
 package org.tron.p2p.connection.business.detect;
 
+import java.net.InetSocketAddress;
 import lombok.Data;
 import org.tron.p2p.connection.message.detect.StatusMessage;
 import org.tron.p2p.discover.Node;
-
-import java.net.InetSocketAddress;
 
 @Data
 public class NodeStat {

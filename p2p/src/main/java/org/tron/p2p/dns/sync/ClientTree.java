@@ -1,6 +1,5 @@
 package org.tron.p2p.dns.sync;
 
-
 import java.net.UnknownHostException;
 import java.security.SignatureException;
 import java.util.HashSet;
@@ -24,9 +23,7 @@ public class ClientTree {
 
   // used for construct
   private final Client client;
-  @Getter
-  @Setter
-  private LinkEntry linkEntry;
+  @Getter @Setter private LinkEntry linkEntry;
   private final LinkCache linkCache;
 
   // used for check
@@ -34,13 +31,11 @@ public class ClientTree {
   private int lastSeq = -1;
 
   // used for sync
-  @Getter
-  @Setter
-  private RootEntry root;
+  @Getter @Setter private RootEntry root;
   private SubtreeSync enrSync;
   private SubtreeSync linkSync;
 
-  //all links in this tree
+  // all links in this tree
   private Set<String> curLinks;
   private String linkGCRoot;
 
@@ -61,8 +56,7 @@ public class ClientTree {
   }
 
   public boolean[] syncAll(Map<String, Entry> entries)
-      throws DnsException, UnknownHostException,
-      SignatureException, TextParseException {
+      throws DnsException, UnknownHostException, SignatureException, TextParseException {
     boolean[] isRootUpdate = updateRoot();
     linkSync.resolveAll(entries);
     enrSync.resolveAll(entries);
@@ -97,7 +91,8 @@ public class ClientTree {
     return rootUpdateDue() || !linkSync.done() || !enrSync.done() || enrSync.leaves == 0;
   }
 
-  // gcLinks removes outdated links from the global link cache. GC runs once when the link sync finishes.
+  // gcLinks removes outdated links from the global link cache. GC runs once when the link sync
+  // finishes.
   public void gcLinks() {
     if (!linkSync.done() || root.getLRoot().equals(linkGCRoot)) {
       return;
@@ -146,8 +141,8 @@ public class ClientTree {
       return new boolean[] {false, false};
     }
     if (rootEntry.getSeq() <= lastSeq) {
-      logger.info("The seq of url doesn't change, url:[{}], seq:{}", linkEntry.getRepresent(),
-          lastSeq);
+      logger.info(
+          "The seq of url doesn't change, url:[{}], seq:{}", linkEntry.getRepresent(), lastSeq);
       return new boolean[] {false, false};
     }
 
@@ -158,11 +153,13 @@ public class ClientTree {
     boolean updateERoot = false;
     if (linkSync == null || !rootEntry.getLRoot().equals(linkSync.root)) {
       linkSync = new SubtreeSync(client, linkEntry, rootEntry.getLRoot(), true);
-      curLinks = new HashSet<>();//clear all links
+      curLinks = new HashSet<>(); // clear all links
       updateLRoot = true;
     } else {
       // if lroot is not changed, wo do not to sync the link tree
-      logger.info("The lroot of url doesn't change, url:[{}], lroot:[{}]", linkEntry.getRepresent(),
+      logger.info(
+          "The lroot of url doesn't change, url:[{}], lroot:[{}]",
+          linkEntry.getRepresent(),
           linkSync.root);
     }
 
@@ -171,7 +168,9 @@ public class ClientTree {
       updateERoot = true;
     } else {
       // if eroot is not changed, wo do not to sync the enr tree
-      logger.info("The eroot of url doesn't change, url:[{}], eroot:[{}]", linkEntry.getRepresent(),
+      logger.info(
+          "The eroot of url doesn't change, url:[{}], eroot:[{}]",
+          linkEntry.getRepresent(),
           enrSync.root);
     }
     return new boolean[] {updateLRoot, updateERoot};

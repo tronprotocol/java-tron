@@ -1,6 +1,5 @@
 package org.tron.p2p.dns;
 
-
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.Assert;
@@ -17,8 +16,7 @@ public class SyncTest {
   public void testSync() {
     Parameter.p2pConfig = new P2pConfig();
     List<String> treeUrls = new ArrayList<>();
-    treeUrls.add(
-        "tree://AKMQMNAJJBL73LXWPXDI4I5ZWWIZ4AWO34DWQ636QOBBXNFXH3LQS@nile.trondisco.net");
+    treeUrls.add("tree://AKMQMNAJJBL73LXWPXDI4I5ZWWIZ4AWO34DWQ636QOBBXNFXH3LQS@nile.trondisco.net");
     Parameter.p2pConfig.setTreeUrls(treeUrls);
 
     Client syncClient = new Client();

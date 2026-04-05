@@ -4,7 +4,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 public enum MessageType {
-
   KEEP_ALIVE_PING((byte) 0xff),
 
   KEEP_ALIVE_PONG((byte) 0xfe),
@@ -34,6 +33,7 @@ public enum MessageType {
       map.put(value.type, value);
     }
   }
+
   public static MessageType fromByte(byte type) {
     MessageType typeEnum = map.get(type);
     return typeEnum == null ? UNKNOWN : typeEnum;

@@ -20,12 +20,13 @@ public class PingMessage extends KadMessage {
     super(MessageType.KAD_PING, null);
     Endpoint fromEndpoint = getEndpointFromNode(from);
     Endpoint toEndpoint = getEndpointFromNode(to);
-    this.pingMessage = Discover.PingMessage.newBuilder()
-      .setVersion(Parameter.p2pConfig.getNetworkId())
-      .setFrom(fromEndpoint)
-      .setTo(toEndpoint)
-      .setTimestamp(System.currentTimeMillis())
-      .build();
+    this.pingMessage =
+        Discover.PingMessage.newBuilder()
+            .setVersion(Parameter.p2pConfig.getNetworkId())
+            .setFrom(fromEndpoint)
+            .setTo(toEndpoint)
+            .setTimestamp(System.currentTimeMillis())
+            .build();
     this.data = this.pingMessage.toByteArray();
   }
 

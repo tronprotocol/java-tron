@@ -1,15 +1,14 @@
 package org.tron.p2p.discover.protocol.kad.table;
 
+import java.net.InetSocketAddress;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.tron.p2p.discover.Node;
 import org.tron.p2p.utils.NetUtil;
-
-import java.net.InetSocketAddress;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 public class NodeTableTest {
 
@@ -46,9 +45,7 @@ public class NodeTableTest {
     Assert.assertFalse(nodeList.isEmpty());
   }
 
-  /**
-   * init nodes for test.
-   */
+  /** init nodes for test. */
   @Before
   public void init() {
     ids = new ArrayList<>();
@@ -165,7 +162,7 @@ public class NodeTableTest {
 
   @Test
   public void getBuckIdTest() {
-    Node node = new Node(ids.get(0), ips[0], null, 18888, 18888);  //id: 11100...000
+    Node node = new Node(ids.get(0), ips[0], null, 18888, 18888); // id: 11100...000
     nodeTable.addNode(node);
     NodeEntry nodeEntry = new NodeEntry(homeNode.getId(), node);
     Assert.assertEquals(13, nodeTable.getBucketId(nodeEntry));
@@ -181,15 +178,15 @@ public class NodeTableTest {
     nodeTable.addNode(nearNode);
     nodeTable.addNode(farNode);
     for (int i = 0; i < KademliaOptions.BUCKET_SIZE - 1; i++) {
-      //To control totally 17 nodes, however closest's capacity is 16
+      // To control totally 17 nodes, however closest's capacity is 16
       nodeTable.addNode(new Node(ids.get(i), ips[i], null, 18888, 18888));
       TimeUnit.MILLISECONDS.sleep(10);
     }
     Assert.assertTrue(nodeTable.getBucketsCount() > 1);
-    //3 buckets, nearnode's distance is 252, far's is 255, others' are 253
+    // 3 buckets, nearnode's distance is 252, far's is 255, others' are 253
     List<Node> closest = nodeTable.getClosestNodes(homeNode.getId());
     Assert.assertTrue(closest.contains(nearNode));
-    //the farest node should be excluded
+    // the farest node should be excluded
   }
 
   @Test

@@ -16,8 +16,8 @@ public class PongMessage extends Message {
 
   public PongMessage() {
     super(MessageType.KEEP_ALIVE_PONG, null);
-    this.keepAliveMessage = Connect.KeepAliveMessage.newBuilder()
-      .setTimestamp(System.currentTimeMillis()).build();
+    this.keepAliveMessage =
+        Connect.KeepAliveMessage.newBuilder().setTimestamp(System.currentTimeMillis()).build();
     this.data = this.keepAliveMessage.toByteArray();
   }
 
@@ -28,6 +28,6 @@ public class PongMessage extends Message {
   @Override
   public boolean valid() {
     return getTimeStamp() > 0
-      && getTimeStamp() <= System.currentTimeMillis() + Parameter.NETWORK_TIME_DIFF;
+        && getTimeStamp() <= System.currentTimeMillis() + Parameter.NETWORK_TIME_DIFF;
   }
 }

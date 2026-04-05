@@ -26,13 +26,16 @@ public class DiscoverServer {
 
   public void init(EventHandler eventHandler) {
     this.eventHandler = eventHandler;
-    new Thread(() -> {
-      try {
-        start();
-      } catch (Exception e) {
-        logger.error("Discovery server start failed", e);
-      }
-    }, "DiscoverServer").start();
+    new Thread(
+        () -> {
+          try {
+            start();
+          } catch (Exception e) {
+            logger.error("Discovery server start failed", e);
+          }
+        },
+        "DiscoverServer")
+        .start();
   }
 
   public void close() {
@@ -48,26 +51,28 @@ public class DiscoverServer {
   }
 
   private void start() throws Exception {
-    NioEventLoopGroup group = new NioEventLoopGroup(Parameter.UDP_NETTY_WORK_THREAD_NUM,
-        new BasicThreadFactory.Builder().namingPattern("discoverServer").build());
+    NioEventLoopGroup group =
+        new NioEventLoopGroup(
+            Parameter.UDP_NETTY_WORK_THREAD_NUM,
+            new BasicThreadFactory.Builder().namingPattern("discoverServer").build());
     try {
       while (!shutdown) {
         Bootstrap b = new Bootstrap();
         b.group(group)
             .channel(NioDatagramChannel.class)
-            .handler(new ChannelInitializer<NioDatagramChannel>() {
-              @Override
-              public void initChannel(NioDatagramChannel ch)
-                  throws Exception {
-                ch.pipeline().addLast(TrafficStats.udp);
-                ch.pipeline().addLast(new ProtobufVarint32LengthFieldPrepender());
-                ch.pipeline().addLast(new ProtobufVarint32FrameDecoder());
-                ch.pipeline().addLast(new P2pPacketDecoder());
-                MessageHandler messageHandler = new MessageHandler(ch, eventHandler);
-                eventHandler.setMessageSender(messageHandler);
-                ch.pipeline().addLast(messageHandler);
-              }
-            });
+            .handler(
+                new ChannelInitializer<NioDatagramChannel>() {
+                  @Override
+                  public void initChannel(NioDatagramChannel ch) throws Exception {
+                    ch.pipeline().addLast(TrafficStats.udp);
+                    ch.pipeline().addLast(new ProtobufVarint32LengthFieldPrepender());
+                    ch.pipeline().addLast(new ProtobufVarint32FrameDecoder());
+                    ch.pipeline().addLast(new P2pPacketDecoder());
+                    MessageHandler messageHandler = new MessageHandler(ch, eventHandler);
+                    eventHandler.setMessageSender(messageHandler);
+                    ch.pipeline().addLast(messageHandler);
+                  }
+                });
 
         channel = b.bind(port).sync().channel();
 

@@ -5,7 +5,6 @@ import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.FixedRecvByteBufAllocator;
 import io.netty.channel.socket.nio.NioSocketChannel;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.p2p.connection.Channel;
 import org.tron.p2p.connection.ChannelManager;
@@ -15,9 +14,11 @@ public class P2pChannelInitializer extends ChannelInitializer<NioSocketChannel> 
 
   private final String remoteId;
 
-  private boolean peerDiscoveryMode = false; //only be true when channel is activated by detect service
+  private boolean peerDiscoveryMode =
+      false; // only be true when channel is activated by detect service
 
   private boolean trigger = true;
+
   public P2pChannelInitializer(String remoteId, boolean peerDiscoveryMode, boolean trigger) {
     this.remoteId = remoteId;
     this.peerDiscoveryMode = peerDiscoveryMode;
@@ -36,25 +37,28 @@ public class P2pChannelInitializer extends ChannelInitializer<NioSocketChannel> 
       ch.config().setOption(ChannelOption.SO_BACKLOG, 1024);
 
       // be aware of channel closing
-      ch.closeFuture().addListener((ChannelFutureListener) future -> {
-        channel.setDisconnect(true);
-        if (channel.isDiscoveryMode()) {
-          ChannelManager.getNodeDetectService().notifyDisconnect(channel);
-        } else {
-          try {
-            logger.info("Close channel:{}", channel.getInetSocketAddress());
-            ChannelManager.notifyDisconnect(channel);
-          } finally {
-            if (channel.getInetSocketAddress() != null && channel.isActive() && trigger) {
-              ChannelManager.triggerConnect(channel.getInetSocketAddress());
-            }
-          }
-        }
-      });
+      ch.closeFuture()
+          .addListener(
+              (ChannelFutureListener) future -> {
+                channel.setDisconnect(true);
+                if (channel.isDiscoveryMode()) {
+                  ChannelManager.getNodeDetectService().notifyDisconnect(channel);
+                } else {
+                  try {
+                    logger.info("Close channel:{}", channel.getInetSocketAddress());
+                    ChannelManager.notifyDisconnect(channel);
+                  } finally {
+                    if (channel.getInetSocketAddress() != null
+                        && channel.isActive()
+                        && trigger) {
+                      ChannelManager.triggerConnect(channel.getInetSocketAddress());
+                    }
+                  }
+                }
+              });
 
     } catch (Exception e) {
       logger.error("Unexpected initChannel error", e);
     }
   }
-
 }

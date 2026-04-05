@@ -20,11 +20,12 @@ public class FindNodeMessage extends KadMessage {
   public FindNodeMessage(Node from, byte[] targetId) {
     super(MessageType.KAD_FIND_NODE, null);
     Endpoint fromEndpoint = getEndpointFromNode(from);
-    this.findNeighbours = Discover.FindNeighbours.newBuilder()
-        .setFrom(fromEndpoint)
-        .setTargetId(ByteString.copyFrom(targetId))
-        .setTimestamp(System.currentTimeMillis())
-        .build();
+    this.findNeighbours =
+        Discover.FindNeighbours.newBuilder()
+            .setFrom(fromEndpoint)
+            .setTargetId(ByteString.copyFrom(targetId))
+            .setTimestamp(System.currentTimeMillis())
+            .build();
     this.data = this.findNeighbours.toByteArray();
   }
 
@@ -49,7 +50,6 @@ public class FindNodeMessage extends KadMessage {
 
   @Override
   public boolean valid() {
-    return NetUtil.validNode(getFrom())
-        && getTargetId().length == Constant.NODE_ID_LEN;
+    return NetUtil.validNode(getFrom()) && getTargetId().length == Constant.NODE_ID_LEN;
   }
 }

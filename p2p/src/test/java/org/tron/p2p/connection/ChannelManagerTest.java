@@ -1,5 +1,8 @@
 package org.tron.p2p.connection;
 
+import java.lang.reflect.Field;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.junit.Test;
@@ -7,30 +10,26 @@ import org.tron.p2p.P2pConfig;
 import org.tron.p2p.base.Parameter;
 import org.tron.p2p.connection.business.handshake.DisconnectCode;
 
-import java.lang.reflect.Field;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-
 @Slf4j(topic = "net")
 public class ChannelManagerTest {
 
   @Test
-  public synchronized void testGetConnectionNum() throws Exception{
+  public synchronized void testGetConnectionNum() throws Exception {
     Channel c1 = new Channel();
     InetSocketAddress a1 = new InetSocketAddress("100.1.1.1", 100);
-    Field field =  c1.getClass().getDeclaredField("inetAddress");
+    Field field = c1.getClass().getDeclaredField("inetAddress");
     field.setAccessible(true);
     field.set(c1, a1.getAddress());
 
     Channel c2 = new Channel();
     InetSocketAddress a2 = new InetSocketAddress("100.1.1.2", 100);
-    field =  c2.getClass().getDeclaredField("inetAddress");
+    field = c2.getClass().getDeclaredField("inetAddress");
     field.setAccessible(true);
     field.set(c2, a2.getAddress());
 
     Channel c3 = new Channel();
     InetSocketAddress a3 = new InetSocketAddress("100.1.1.2", 99);
-    field =  c3.getClass().getDeclaredField("inetAddress");
+    field = c3.getClass().getDeclaredField("inetAddress");
     field.setAccessible(true);
     field.set(c3, a3.getAddress());
 
@@ -55,12 +54,12 @@ public class ChannelManagerTest {
     Channel c1 = new Channel();
     InetSocketAddress a1 = new InetSocketAddress("100.1.1.1", 100);
 
-    Field field =  c1.getClass().getDeclaredField("inetSocketAddress");
+    Field field = c1.getClass().getDeclaredField("inetSocketAddress");
     field.setAccessible(true);
     field.set(c1, a1);
 
     InetAddress inetAddress = a1.getAddress();
-    field =  c1.getClass().getDeclaredField("inetAddress");
+    field = c1.getClass().getDeclaredField("inetAddress");
     field.setAccessible(true);
     field.set(c1, inetAddress);
 
@@ -84,10 +83,10 @@ public class ChannelManagerTest {
     Channel c1 = new Channel();
     InetSocketAddress a1 = new InetSocketAddress("100.1.1.2", 100);
 
-    Field field =  c1.getClass().getDeclaredField("inetSocketAddress");
+    Field field = c1.getClass().getDeclaredField("inetSocketAddress");
     field.setAccessible(true);
     field.set(c1, a1);
-    field =  c1.getClass().getDeclaredField("inetAddress");
+    field = c1.getClass().getDeclaredField("inetAddress");
     field.setAccessible(true);
     field.set(c1, a1.getAddress());
 
@@ -101,10 +100,10 @@ public class ChannelManagerTest {
     Channel c2 = new Channel();
     InetSocketAddress a2 = new InetSocketAddress("100.1.1.2", 99);
 
-    field =  c2.getClass().getDeclaredField("inetSocketAddress");
+    field = c2.getClass().getDeclaredField("inetSocketAddress");
     field.setAccessible(true);
     field.set(c2, a2);
-    field =  c2.getClass().getDeclaredField("inetAddress");
+    field = c2.getClass().getDeclaredField("inetAddress");
     field.setAccessible(true);
     field.set(c2, a2.getAddress());
 

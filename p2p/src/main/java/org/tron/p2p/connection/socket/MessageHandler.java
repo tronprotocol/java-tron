@@ -24,8 +24,7 @@ public class MessageHandler extends ByteToMessageDecoder {
   }
 
   @Override
-  public void handlerAdded(ChannelHandlerContext ctx) {
-  }
+  public void handlerAdded(ChannelHandlerContext ctx) {}
 
   @Override
   public void channelActive(ChannelHandlerContext ctx) {
@@ -76,7 +75,9 @@ public class MessageHandler extends ByteToMessageDecoder {
       }
       channel.processException(e);
     } catch (Throwable t) {
-      logger.error("Decode message from {} failed, message:{}", channel.getInetSocketAddress(),
+      logger.error(
+          "Decode message from {} failed, message:{}",
+          channel.getInetSocketAddress(),
           ByteArray.toHexString(data));
       throw t;
     }
@@ -86,5 +87,4 @@ public class MessageHandler extends ByteToMessageDecoder {
   public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
     channel.processException(cause);
   }
-
 }

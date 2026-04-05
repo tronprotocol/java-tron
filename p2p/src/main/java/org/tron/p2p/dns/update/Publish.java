@@ -1,6 +1,5 @@
 package org.tron.p2p.dns.update;
 
-
 import java.util.Map;
 import org.tron.p2p.dns.tree.Tree;
 

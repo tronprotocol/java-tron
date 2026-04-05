@@ -5,7 +5,6 @@ import org.tron.p2p.connection.message.MessageType;
 import org.tron.p2p.protos.Connect;
 import org.tron.p2p.protos.Connect.DisconnectReason;
 
-
 public class P2pDisconnectMessage extends Message {
 
   private Connect.P2pDisconnectMessage p2pDisconnectMessage;
@@ -17,8 +16,8 @@ public class P2pDisconnectMessage extends Message {
 
   public P2pDisconnectMessage(DisconnectReason disconnectReason) {
     super(MessageType.DISCONNECT, null);
-    this.p2pDisconnectMessage = Connect.P2pDisconnectMessage.newBuilder()
-        .setReason(disconnectReason).build();
+    this.p2pDisconnectMessage =
+        Connect.P2pDisconnectMessage.newBuilder().setReason(disconnectReason).build();
     this.data = p2pDisconnectMessage.toByteArray();
   }
 
@@ -33,7 +32,10 @@ public class P2pDisconnectMessage extends Message {
 
   @Override
   public String toString() {
-    return new StringBuilder().append(super.toString()).append("reason: ")
-        .append(getReason()).toString();
+    return new StringBuilder()
+        .append(super.toString())
+        .append("reason: ")
+        .append(getReason())
+        .toString();
   }
 }

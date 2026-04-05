@@ -1,6 +1,5 @@
 package org.tron.p2p.dns.tree;
 
-
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.math.BigInteger;
 import java.net.UnknownHostException;
@@ -27,14 +26,10 @@ public class Tree {
   public static final int HashAbbrevSize = 1 + 16 * 13 / 8; // Size of an encoded hash (plus comma)
   public static final int MaxChildren = 370 / HashAbbrevSize; // 13 children
 
-  @Getter
-  @Setter
-  private RootEntry rootEntry;
-  @Getter
-  private Map<String, Entry> entries;
+  @Getter @Setter private RootEntry rootEntry;
+  @Getter private Map<String, Entry> entries;
   private String privateKey;
-  @Getter
-  private String base32PublicKey;
+  @Getter private String base32PublicKey;
 
   public Tree() {
     init();
@@ -58,7 +53,7 @@ public class Tree {
       return new BranchEntry(children);
     }
 
-    //every batch size of leaf entry construct a branch
+    // every batch size of leaf entry construct a branch
     List<Entry> subtrees = new ArrayList<>();
     while (!leafs.isEmpty()) {
       int total = leafs.size();
@@ -108,17 +103,19 @@ public class Tree {
     if (StringUtils.isEmpty(privateKey)) {
       return;
     }
-    byte[] sig = Algorithm.sigData(rootEntry.toString(), privateKey); //message don't include prefix
+    byte[] sig =
+        Algorithm.sigData(rootEntry.toString(), privateKey); // message don't include prefix
     rootEntry.setSignature(sig);
 
     BigInteger publicKeyInt = Algorithm.generateKeyPair(privateKey).getPublicKey();
     String unCompressPublicKey = ByteArray.toHexString(publicKeyInt.toByteArray());
 
-    //verify ourselves
+    // verify ourselves
     boolean verified;
     try {
-      verified = Algorithm.verifySignature(unCompressPublicKey, rootEntry.toString(),
-          rootEntry.getSignature());
+      verified =
+          Algorithm.verifySignature(
+              unCompressPublicKey, rootEntry.toString(), rootEntry.getSignature());
     } catch (SignatureException e) {
       throw new DnsException(TypeEnum.INVALID_SIGNATURE, e);
     }
@@ -225,9 +222,7 @@ public class Tree {
     this.entries = entries;
   }
 
-  /**
-   * get nodes from entries dynamically. when sync first time, entries change as time
-   */
+  /** get nodes from entries dynamically. when sync first time, entries change as time */
   public List<DnsNode> getDnsNodes() {
     List<String> nodesEntryList = getNodesEntry();
     List<DnsNode> nodes = new ArrayList<>();

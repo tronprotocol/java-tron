@@ -16,28 +16,19 @@ public class Node implements Serializable, Cloneable {
 
   private static final long serialVersionUID = -4267600517925770636L;
 
-  @Setter
-  @Getter
-  private byte[] id;
+  @Setter @Getter private byte[] id;
 
-  @Getter
-  protected String hostV4;
+  @Getter protected String hostV4;
 
-  @Getter
-  protected String hostV6;
+  @Getter protected String hostV6;
 
-  @Setter
-  @Getter
-  protected int port;
+  @Setter @Getter protected int port;
 
-  @Setter
-  private int bindPort;
+  @Setter private int bindPort;
 
-  @Setter
-  private int p2pVersion;
+  @Setter private int p2pVersion;
 
-  @Getter
-  private long updateTime;
+  @Getter private long updateTime;
 
   public Node(InetSocketAddress address) {
     this.id = NetUtil.getNodeId();
@@ -86,7 +77,7 @@ public class Node implements Serializable, Cloneable {
     }
   }
 
-  //use standard ipv6 format
+  // use standard ipv6 format
   private void formatHostV6() {
     if (StringUtils.isNotEmpty(this.hostV6)) {
       this.hostV6 = new InetSocketAddress(hostV6, port).getAddress().getHostAddress();
@@ -100,8 +91,8 @@ public class Node implements Serializable, Cloneable {
   public InetSocketAddress getPreferInetSocketAddress() {
     if (StringUtils.isNotEmpty(hostV4) && StringUtils.isNotEmpty(Parameter.p2pConfig.getIp())) {
       return getInetSocketAddressV4();
-    } else if (StringUtils.isNotEmpty(hostV6) && StringUtils.isNotEmpty(
-        Parameter.p2pConfig.getIpv6())) {
+    } else if (StringUtils.isNotEmpty(hostV6)
+        && StringUtils.isNotEmpty(Parameter.p2pConfig.getIpv6())) {
       return getInetSocketAddressV6();
     } else {
       return null;
@@ -133,12 +124,30 @@ public class Node implements Serializable, Cloneable {
 
   @Override
   public String toString() {
-    return "Node{" + " hostV4='" + hostV4 + '\'' + ", hostV6='" + hostV6 + '\'' + ", port=" + port
-        + ", id=\'" + (id == null ? "null" : Hex.toHexString(id)) + "\'}";
+    return "Node{"
+        + " hostV4='"
+        + hostV4
+        + '\''
+        + ", hostV6='"
+        + hostV6
+        + '\''
+        + ", port="
+        + port
+        + ", id=\'"
+        + (id == null ? "null" : Hex.toHexString(id))
+        + "\'}";
   }
 
   public String format() {
-    return "Node{" + " hostV4='" + hostV4 + '\'' + ", hostV6='" + hostV6 + '\'' + ", port=" + port
+    return "Node{"
+        + " hostV4='"
+        + hostV4
+        + '\''
+        + ", hostV6='"
+        + hostV6
+        + '\''
+        + ", port="
+        + port
         + '}';
   }
 
@@ -181,6 +190,7 @@ public class Node implements Serializable, Cloneable {
     try {
       return super.clone();
     } catch (CloneNotSupportedException ignored) {
+      // expected
     }
     return null;
   }

@@ -1,5 +1,6 @@
 package org.tron.p2p.discover.protocol.kad;
 
+import java.net.InetSocketAddress;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -9,8 +10,6 @@ import org.tron.p2p.base.Parameter;
 import org.tron.p2p.discover.Node;
 import org.tron.p2p.discover.message.kad.PingMessage;
 import org.tron.p2p.discover.socket.UdpEvent;
-
-import java.net.InetSocketAddress;
 
 public class KadServiceTest {
 
@@ -39,13 +38,13 @@ public class KadServiceTest {
     Assert.assertNotNull(nodeHandler);
     Assert.assertEquals(1, kadService.getAllNodes().size());
 
-    UdpEvent event = new UdpEvent(new PingMessage(node2, kadService.getPublicHomeNode()),
-        new InetSocketAddress(node2.getHostV4(), node2.getPort()));
+    UdpEvent event =
+        new UdpEvent(
+            new PingMessage(node2, kadService.getPublicHomeNode()),
+            new InetSocketAddress(node2.getHostV4(), node2.getPort()));
     kadService.handleEvent(event);
     Assert.assertEquals(2, kadService.getAllNodes().size());
-
   }
-
 
   @AfterClass
   public static void destroy() {

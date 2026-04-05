@@ -20,33 +20,39 @@ import org.tron.p2p.protos.Connect.DisconnectReason;
 @Slf4j(topic = "net")
 public class KeepAliveService implements MessageProcess {
 
-  private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(
-      BasicThreadFactory.builder().namingPattern("keepAlive").build());
+  private final ScheduledExecutorService executor =
+      Executors.newSingleThreadScheduledExecutor(
+          BasicThreadFactory.builder().namingPattern("keepAlive").build());
 
   public void init() {
-    executor.scheduleWithFixedDelay(() -> {
-      try {
-        long now = System.currentTimeMillis();
-        ChannelManager.getChannels().values().stream()
-            .filter(p -> !p.isDisconnect())
-            .forEach(p -> {
-              if (p.waitForPong) {
-                if (now - p.pingSent > KEEP_ALIVE_TIMEOUT) {
-                  p.send(new P2pDisconnectMessage(DisconnectReason.PING_TIMEOUT));
-                  p.close();
-                }
-              } else {
-                if (now - p.getLastSendTime() > PING_TIMEOUT && p.isFinishHandshake()) {
-                  p.send(new PingMessage());
-                  p.waitForPong = true;
-                  p.pingSent = now;
-                }
-              }
-            });
-      } catch (Exception t) {
-        logger.error("Exception in keep alive task", t);
-      }
-    }, 2, 2, TimeUnit.SECONDS);
+    executor.scheduleWithFixedDelay(
+        () -> {
+          try {
+            long now = System.currentTimeMillis();
+            ChannelManager.getChannels().values().stream()
+                .filter(p -> !p.isDisconnect())
+                .forEach(
+                    p -> {
+                      if (p.waitForPong) {
+                        if (now - p.pingSent > KEEP_ALIVE_TIMEOUT) {
+                          p.send(new P2pDisconnectMessage(DisconnectReason.PING_TIMEOUT));
+                          p.close();
+                        }
+                      } else {
+                        if (now - p.getLastSendTime() > PING_TIMEOUT && p.isFinishHandshake()) {
+                          p.send(new PingMessage());
+                          p.waitForPong = true;
+                          p.pingSent = now;
+                        }
+                      }
+                    });
+          } catch (Exception t) {
+            logger.error("Exception in keep alive task", t);
+          }
+        },
+        2,
+        2,
+        TimeUnit.SECONDS);
   }
 
   public void close() {

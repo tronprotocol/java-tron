@@ -35,28 +35,23 @@ import org.tron.p2p.utils.NetUtil;
 @Slf4j(topic = "net")
 public class ChannelManager {
 
-  @Getter
-  private static NodeDetectService nodeDetectService;
+  @Getter private static NodeDetectService nodeDetectService;
 
   private static PeerServer peerServer;
 
-  @Getter
-  private static PeerClient peerClient;
+  @Getter private static PeerClient peerClient;
 
-  @Getter
-  private static ConnPoolService connPoolService;
+  @Getter private static ConnPoolService connPoolService;
 
   private static KeepAliveService keepAliveService;
 
-  @Getter
-  private static HandshakeService handshakeService;
+  @Getter private static HandshakeService handshakeService;
+
+  @Getter private static final Map<InetSocketAddress, Channel> channels = new ConcurrentHashMap<>();
 
   @Getter
-  private static final Map<InetSocketAddress, Channel> channels = new ConcurrentHashMap<>();
-
-  @Getter
-  private static final Cache<InetAddress, Long> bannedNodes = CacheBuilder
-      .newBuilder().maximumSize(2000).build(); //ban timestamp
+  private static final Cache<InetAddress, Long> bannedNodes =
+      CacheBuilder.newBuilder().maximumSize(2000).build(); // ban timestamp
 
   private static boolean isInit = false;
   public static volatile boolean isShutdown = false;
@@ -77,7 +72,9 @@ public class ChannelManager {
   }
 
   public static void connect(InetSocketAddress address) {
-    peerClient.connect(address.getAddress().getHostAddress(), address.getPort(),
+    peerClient.connect(
+        address.getAddress().getHostAddress(),
+        address.getPort(),
         ByteArray.toHexString(NetUtil.getNodeId()));
   }
 
@@ -167,15 +164,15 @@ public class ChannelManager {
       case MAX_CONNECTION_WITH_SAME_IP:
         disconnectReason = DisconnectReason.TOO_MANY_PEERS_WITH_SAME_IP;
         break;
-      default: {
+      default:
         disconnectReason = DisconnectReason.UNKNOWN;
-      }
     }
     return disconnectReason;
   }
 
   public static void logDisconnectReason(Channel channel, DisconnectReason reason) {
-    logger.info("Try to close channel: {}, reason: {}", channel.getInetSocketAddress(), reason.name());
+    logger.info(
+        "Try to close channel: {}, reason: {}", channel.getInetSocketAddress(), reason.name());
   }
 
   public static void banNode(InetAddress inetAddress, Long banTime) {
@@ -197,7 +194,6 @@ public class ChannelManager {
     peerClient.close();
     nodeDetectService.close();
   }
-
 
   public static void processMessage(Channel channel, byte[] data) throws P2pException {
     if (data == null || data.length == 0) {
@@ -271,11 +267,14 @@ public class ChannelManager {
     }
 
     List<Channel> list = new ArrayList<>();
-    channels.values().forEach(c -> {
-      if (nodeId.equals(c.getNodeId())) {
-        list.add(c);
-      }
-    });
+    channels
+        .values()
+        .forEach(
+            c -> {
+              if (nodeId.equals(c.getNodeId())) {
+                list.add(c);
+              }
+            });
     if (list.size() <= 1) {
       return;
     }

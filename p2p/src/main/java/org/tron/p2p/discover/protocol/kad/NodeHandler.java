@@ -164,16 +164,21 @@ public class NodeHandler {
     if (kadService.getPongTimer().isShutdown()) {
       return;
     }
-    kadService.getPongTimer().schedule(() -> {
-      try {
-        if (waitForPong) {
-          waitForPong = false;
-          handleTimedOut();
-        }
-      } catch (Exception e) {
-        logger.error("Unhandled exception in pong timer schedule", e);
-      }
-    }, KadService.getPingTimeout(), TimeUnit.MILLISECONDS);
+    kadService
+        .getPongTimer()
+        .schedule(
+            () -> {
+              try {
+                if (waitForPong) {
+                  waitForPong = false;
+                  handleTimedOut();
+                }
+              } catch (Exception e) {
+                logger.error("Unhandled exception in pong timer schedule", e);
+              }
+            },
+            KadService.getPingTimeout(),
+            TimeUnit.MILLISECONDS);
   }
 
   public void sendPong() {
@@ -198,8 +203,13 @@ public class NodeHandler {
 
   @Override
   public String toString() {
-    return "NodeHandler[state: " + state + ", node: " + node.getHostKey() + ":" + node.getPort()
-      + "]";
+    return "NodeHandler[state: "
+        + state
+        + ", node: "
+        + node.getHostKey()
+        + ":"
+        + node.getPort()
+        + "]";
   }
 
   public enum State {
@@ -211,8 +221,7 @@ public class NodeHandler {
      */
     DISCOVERED,
     /**
-     * The node didn't send the Pong message back withing acceptable timeout This is the final
-     * state
+     * The node didn't send the Pong message back withing acceptable timeout This is the final state
      */
     DEAD,
     /**

@@ -19,7 +19,6 @@ public class ProtoUtilTest {
 
     Assert.assertTrue(p1.getTimeStamp() == p2.getTimeStamp());
 
-
     Connect.CompressMessage m2 = ProtoUtil.compressMessage(new byte[1000]);
 
     byte[] d2 = ProtoUtil.uncompressMessage(m2);

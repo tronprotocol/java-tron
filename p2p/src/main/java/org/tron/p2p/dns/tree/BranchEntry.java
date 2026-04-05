@@ -1,6 +1,5 @@
 package org.tron.p2p.dns.tree;
 
-
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -9,8 +8,7 @@ import org.apache.commons.lang3.StringUtils;
 public class BranchEntry implements Entry {
 
   private static final String splitSymbol = ",";
-  @Getter
-  private String[] children;
+  @Getter private String[] children;
 
   public BranchEntry(String[] children) {
     this.children = children;

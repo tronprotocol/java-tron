@@ -3,7 +3,6 @@ package org.tron.p2p.utils;
 import java.util.ArrayList;
 import java.util.List;
 
-
 public class CollectionUtils {
 
   public static <T> List<T> truncate(List<T> items, int limit) {

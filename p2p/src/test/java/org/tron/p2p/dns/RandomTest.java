@@ -1,6 +1,5 @@
 package org.tron.p2p.dns;
 
-
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.Assert;
@@ -16,9 +15,8 @@ public class RandomTest {
   public void testRandomIterator() {
     Parameter.p2pConfig = new P2pConfig();
     List<String> treeUrls = new ArrayList<>();
-    treeUrls.add(
-        "tree://AKMQMNAJJBL73LXWPXDI4I5ZWWIZ4AWO34DWQ636QOBBXNFXH3LQS@nile.trondisco.net");
-    //treeUrls.add(
+    treeUrls.add("tree://AKMQMNAJJBL73LXWPXDI4I5ZWWIZ4AWO34DWQ636QOBBXNFXH3LQS@nile.trondisco.net");
+    // treeUrls.add(
     //    "tree://APFGGTFOBVE2ZNAB3CSMNNX6RRK3ODIRLP2AA5U4YFAA6MSYZUYTQ@shasta.nftderby1.net");
     Parameter.p2pConfig.setTreeUrls(treeUrls);
 

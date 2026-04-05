@@ -1,6 +1,5 @@
 package org.tron.p2p.example;
 
-
 import java.net.InetSocketAddress;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -27,7 +26,7 @@ public class DnsExample2 {
     // config p2p parameters
     P2pConfig config = new P2pConfig();
 
-    //if you use dns discovery, you can use following config
+    // if you use dns discovery, you can use following config
     initDnsSyncConfig(config);
 
     // register p2p event handler
@@ -84,12 +83,15 @@ public class DnsExample2 {
   }
 
   private void initDnsSyncConfig(P2pConfig config) {
-    // generally, discovery service is not needed if you only use dns nodes independently to establish tcp connections
+    // generally, discovery service is not needed if you only use dns nodes independently to
+    // establish tcp connections
     config.setDiscoverEnable(false);
 
     // config your known tree urls
-    String[] urls = new String[] {
-        "tree://APFGGTFOBVE2ZNAB3CSMNNX6RRK3ODIRLP2AA5U4YFAA6MSYZUYTQ@nodes.example.org"};
+    String[] urls =
+        new String[] {
+          "tree://APFGGTFOBVE2ZNAB3CSMNNX6RRK3ODIRLP2AA5U4YFAA6MSYZUYTQ@nodes.example.org"
+        };
     config.setTreeUrls(Arrays.asList(urls));
   }
 
@@ -123,11 +125,9 @@ public class DnsExample2 {
           // todo
       }
     }
-
   }
 
   private enum MessageTypes {
-
     FIRST((byte) 0x00),
 
     TEST((byte) 0x01),

@@ -13,7 +13,6 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.bouncycastle.util.encoders.Hex;
 
-
 /*
  * Copyright (c) [2016] [ <ether.camp> ]
  * This file is part of the ethereumJ library.
@@ -42,9 +41,7 @@ public class ByteArray {
     return data == null ? "" : Hex.toHexString(data);
   }
 
-  /**
-   * get bytes data from hex string data.
-   */
+  /** get bytes data from hex string data. */
   public static byte[] fromHexString(String data) {
     if (data == null) {
       return EMPTY_BYTE_ARRAY;
@@ -58,30 +55,22 @@ public class ByteArray {
     return Hex.decode(data);
   }
 
-  /**
-   * get long data from bytes data.
-   */
+  /** get long data from bytes data. */
   public static long toLong(byte[] b) {
     return ArrayUtils.isEmpty(b) ? 0 : new BigInteger(1, b).longValue();
   }
 
-  /**
-   * get int data from bytes data.
-   */
+  /** get int data from bytes data. */
   public static int toInt(byte[] b) {
     return ArrayUtils.isEmpty(b) ? 0 : new BigInteger(1, b).intValue();
   }
 
-  /**
-   * get bytes data from string data.
-   */
+  /** get bytes data from string data. */
   public static byte[] fromString(String s) {
     return StringUtils.isBlank(s) ? null : s.getBytes();
   }
 
-  /**
-   * get string data from bytes data.
-   */
+  /** get string data from bytes data. */
   public static String toStr(byte[] b) {
     return ArrayUtils.isEmpty(b) ? null : new String(b);
   }
@@ -94,9 +83,7 @@ public class ByteArray {
     return Ints.toByteArray(val);
   }
 
-  /**
-   * get bytes data from object data.
-   */
+  /** get bytes data from object data. */
   public static byte[] fromObject(Object obj) {
     byte[] bytes = null;
     try (ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
@@ -110,15 +97,10 @@ public class ByteArray {
     return bytes;
   }
 
-  /**
-   * Stringify byte[] x
-   * null for null
-   * null for empty []
-   */
+  /** Stringify byte[] x null for null null for empty [] */
   public static String toJsonHex(byte[] x) {
     return x == null || x.length == 0 ? "0x" : "0x" + Hex.toHexString(x);
   }
-
 
   public static String toJsonHex(Long x) {
     return x == null ? null : "0x" + Long.toHexString(x);
@@ -140,7 +122,6 @@ public class ByteArray {
     }
   }
 
-
   public static int jsonHexToInt(String x) throws Exception {
     if (!x.startsWith("0x")) {
       throw new Exception("Incorrect hex syntax");
@@ -156,7 +137,7 @@ public class ByteArray {
    * @param start the start index
    * @param end the end index
    * @return a subarray of <tt>input</tt>, ranging from <tt>start</tt> (inclusively) to <tt>end</tt>
-   * (exclusively)
+   *     (exclusively)
    */
   public static byte[] subArray(byte[] input, int start, int end) {
     byte[] result = new byte[end - start];

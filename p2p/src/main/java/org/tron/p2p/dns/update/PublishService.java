@@ -24,8 +24,9 @@ public class PublishService {
 
   private static final long publishDelay = 1 * 60 * 60;
 
-  private ScheduledExecutorService publisher = Executors.newSingleThreadScheduledExecutor(
-      BasicThreadFactory.builder().namingPattern("publishService").build());
+  private ScheduledExecutorService publisher =
+      Executors.newSingleThreadScheduledExecutor(
+          BasicThreadFactory.builder().namingPattern("publishService").build());
   private Publish publish;
 
   public void init() {
@@ -51,16 +52,20 @@ public class PublishService {
   private Publish getPublish(PublishConfig config) throws Exception {
     Publish publish;
     if (config.getDnsType() == DnsType.AliYun) {
-      publish = new AliClient(config.getAliDnsEndpoint(),
-          config.getAccessKeyId(),
-          config.getAccessKeySecret(),
-          config.getChangeThreshold());
+      publish =
+          new AliClient(
+              config.getAliDnsEndpoint(),
+              config.getAccessKeyId(),
+              config.getAccessKeySecret(),
+              config.getChangeThreshold());
     } else {
-      publish = new AwsClient(config.getAccessKeyId(),
-          config.getAccessKeySecret(),
-          config.getAwsHostZoneId(),
-          config.getAwsRegion(),
-          config.getChangeThreshold());
+      publish =
+          new AwsClient(
+              config.getAccessKeyId(),
+              config.getAccessKeySecret(),
+              config.getAwsHostZoneId(),
+              config.getAwsRegion(),
+              config.getChangeThreshold());
     }
     return publish;
   }
@@ -83,11 +88,19 @@ public class PublishService {
     if (config.getStaticNodes() != null && !config.getStaticNodes().isEmpty()) {
       for (InetSocketAddress staticAddress : config.getStaticNodes()) {
         if (staticAddress.getAddress() instanceof Inet4Address) {
-          nodes.add(new Node(null, staticAddress.getAddress().getHostAddress(), null,
-              staticAddress.getPort()));
+          nodes.add(
+              new Node(
+                  null,
+                  staticAddress.getAddress().getHostAddress(),
+                  null,
+                  staticAddress.getPort()));
         } else {
-          nodes.add(new Node(null, null, staticAddress.getAddress().getHostAddress(),
-              staticAddress.getPort()));
+          nodes.add(
+              new Node(
+                  null,
+                  null,
+                  staticAddress.getAddress().getHostAddress(),
+                  staticAddress.getPort()));
         }
       }
     } else {
@@ -96,8 +109,8 @@ public class PublishService {
     }
     List<DnsNode> dnsNodes = new ArrayList<>();
     for (Node node : nodes) {
-      DnsNode dnsNode = new DnsNode(node.getId(), node.getHostV4(), node.getHostV6(),
-          node.getPort());
+      DnsNode dnsNode =
+          new DnsNode(node.getId(), node.getHostV4(), node.getHostV6(), node.getPort());
       dnsNodes.add(dnsNode);
     }
     return Tree.merge(dnsNodes, config.getMaxMergeSize());
@@ -113,25 +126,25 @@ public class PublishService {
       return false;
     }
     if (config.getDnsType() == null) {
-      logger.error("The dns server type must be specified when enabling the dns publishing service");
+      logger.error(
+          "The dns server type must be specified when enabling the dns publishing service");
       return false;
     }
     if (StringUtils.isEmpty(config.getDnsDomain())) {
       logger.error("The dns domain must be specified when enabling the dns publishing service");
       return false;
     }
-    if (config.getDnsType() == DnsType.AliYun &&
-        (StringUtils.isEmpty(config.getAccessKeyId()) ||
-            StringUtils.isEmpty(config.getAccessKeySecret()) ||
-            StringUtils.isEmpty(config.getAliDnsEndpoint())
-        )) {
+    if (config.getDnsType() == DnsType.AliYun
+        && (StringUtils.isEmpty(config.getAccessKeyId())
+            || StringUtils.isEmpty(config.getAccessKeySecret())
+            || StringUtils.isEmpty(config.getAliDnsEndpoint()))) {
       logger.error("The configuration items related to the Aliyun dns server cannot be empty");
       return false;
     }
-    if (config.getDnsType() == DnsType.AwsRoute53 &&
-        (StringUtils.isEmpty(config.getAccessKeyId()) ||
-            StringUtils.isEmpty(config.getAccessKeySecret()) ||
-            config.getAwsRegion() == null)) {
+    if (config.getDnsType() == DnsType.AwsRoute53
+        && (StringUtils.isEmpty(config.getAccessKeyId())
+            || StringUtils.isEmpty(config.getAccessKeySecret())
+            || config.getAwsRegion() == null)) {
       logger.error("The configuration items related to the AwsRoute53 dns server cannot be empty");
       return false;
     }

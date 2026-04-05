@@ -1,11 +1,10 @@
 package org.tron.p2p.discover.protocol.kad.table;
 
+import java.net.InetSocketAddress;
 import org.junit.Assert;
 import org.junit.Test;
 import org.tron.p2p.discover.Node;
 import org.tron.p2p.utils.NetUtil;
-
-import java.net.InetSocketAddress;
 
 public class TimeComparatorTest {
   @Test
@@ -18,6 +17,5 @@ public class TimeComparatorTest {
     TimeComparator tc = new TimeComparator();
     int result = tc.compare(ne1, ne2);
     Assert.assertEquals(1, result);
-
   }
 }

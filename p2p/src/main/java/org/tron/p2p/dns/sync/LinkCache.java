@@ -12,15 +12,11 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
-
 @Slf4j(topic = "net")
 public class LinkCache {
 
-  @Getter
-  Map<String, Set<String>> backrefs;
-  @Getter
-  @Setter
-  private boolean changed; //if data in backrefs changes, we need to rebuild trees
+  @Getter Map<String, Set<String>> backrefs;
+  @Getter @Setter private boolean changed; // if data in backrefs changes, we need to rebuild trees
 
   public LinkCache() {
     backrefs = new HashMap<>();

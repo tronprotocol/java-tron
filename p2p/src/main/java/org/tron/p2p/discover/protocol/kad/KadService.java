@@ -31,9 +31,7 @@ public class KadService implements DiscoverService {
 
   private static final int MAX_NODES = 2000;
   private static final int NODES_TRIM_THRESHOLD = 3000;
-  @Getter
-  @Setter
-  private static long pingTimeout = 15_000;
+  @Getter @Setter private static long pingTimeout = 15_000;
 
   private final List<Node> bootNodes = new ArrayList<>();
 
@@ -56,10 +54,15 @@ public class KadService implements DiscoverService {
     for (InetSocketAddress address : Parameter.p2pConfig.getActiveNodes()) {
       bootNodes.add(new Node(address));
     }
-    this.pongTimer = Executors.newSingleThreadScheduledExecutor(
-        BasicThreadFactory.builder().namingPattern("pongTimer").build());
-    this.homeNode = new Node(Parameter.p2pConfig.getNodeID(), Parameter.p2pConfig.getIp(),
-        Parameter.p2pConfig.getIpv6(), Parameter.p2pConfig.getPort());
+    this.pongTimer =
+        Executors.newSingleThreadScheduledExecutor(
+            BasicThreadFactory.builder().namingPattern("pongTimer").build());
+    this.homeNode =
+        new Node(
+            Parameter.p2pConfig.getNodeID(),
+            Parameter.p2pConfig.getIp(),
+            Parameter.p2pConfig.getIpv6(),
+            Parameter.p2pConfig.getPort());
     this.table = new NodeTable(homeNode);
 
     if (Parameter.p2pConfig.isDiscoverEnable()) {
@@ -126,11 +129,21 @@ public class KadService implements DiscoverService {
 
     Node n;
     if (sender.getAddress() instanceof Inet4Address) {
-      n = new Node(m.getFrom().getId(), sender.getHostString(), m.getFrom().getHostV6(),
-          sender.getPort(), m.getFrom().getPort());
+      n =
+          new Node(
+              m.getFrom().getId(),
+              sender.getHostString(),
+              m.getFrom().getHostV6(),
+              sender.getPort(),
+              m.getFrom().getPort());
     } else {
-      n = new Node(m.getFrom().getId(), m.getFrom().getHostV4(), sender.getHostString(),
-          sender.getPort(), m.getFrom().getPort());
+      n =
+          new Node(
+              m.getFrom().getId(),
+              m.getFrom().getHostV4(),
+              sender.getHostString(),
+              sender.getPort(),
+              m.getFrom().getPort());
     }
 
     NodeHandler nodeHandler = getNodeHandler(n);
@@ -199,11 +212,14 @@ public class KadService implements DiscoverService {
 
   private void trimTable() {
     if (nodeHandlerMap.size() > NODES_TRIM_THRESHOLD) {
-      nodeHandlerMap.values().forEach(handler -> {
-        if (!handler.getNode().isConnectible(Parameter.p2pConfig.getNetworkId())) {
-          nodeHandlerMap.values().remove(handler);
-        }
-      });
+      nodeHandlerMap
+          .values()
+          .forEach(
+              handler -> {
+                if (!handler.getNode().isConnectible(Parameter.p2pConfig.getNetworkId())) {
+                  nodeHandlerMap.values().remove(handler);
+                }
+              });
     }
     if (nodeHandlerMap.size() > NODES_TRIM_THRESHOLD) {
       List<NodeHandler> sorted = new ArrayList<>(nodeHandlerMap.values());

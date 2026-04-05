@@ -1,6 +1,5 @@
 package org.tron.p2p.dns.tree;
 
-
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.security.SignatureException;
@@ -14,8 +13,7 @@ import org.tron.p2p.utils.ByteArray;
 @Slf4j(topic = "net")
 public class RootEntry implements Entry {
 
-  @Getter
-  private DnsRoot dnsRoot;
+  @Getter private DnsRoot dnsRoot;
 
   public RootEntry(DnsRoot dnsRoot) {
     this.dnsRoot = dnsRoot;
@@ -75,9 +73,11 @@ public class RootEntry implements Entry {
 
     byte[] signature = Algorithm.decode64(new String(dnsRoot1.getSignature().toByteArray()));
     if (signature.length != 65) {
-      throw new DnsException(TypeEnum.INVALID_SIGNATURE,
-          String.format("signature's length(%d) != 65, signature: %s", signature.length,
-              ByteArray.toHexString(signature)));
+      throw new DnsException(
+          TypeEnum.INVALID_SIGNATURE,
+          String.format(
+              "signature's length(%d) != 65, signature: %s",
+              signature.length, ByteArray.toHexString(signature)));
     }
 
     return new RootEntry(dnsRoot1);
@@ -87,16 +87,18 @@ public class RootEntry implements Entry {
       throws SignatureException, DnsException {
     logger.info("Domain:{}, public key:{}", domain, publicKey);
     RootEntry rootEntry = parseEntry(e);
-    boolean verify = Algorithm.verifySignature(publicKey, rootEntry.toString(),
-        rootEntry.getSignature());
+    boolean verify =
+        Algorithm.verifySignature(publicKey, rootEntry.toString(), rootEntry.getSignature());
     if (!verify) {
-      throw new DnsException(TypeEnum.INVALID_SIGNATURE,
-          String.format("verify signature failed! data:[%s], publicKey:%s, domain:%s", e, publicKey,
-              domain));
+      throw new DnsException(
+          TypeEnum.INVALID_SIGNATURE,
+          String.format(
+              "verify signature failed! data:[%s], publicKey:%s, domain:%s", e, publicKey, domain));
     }
-    if (!Algorithm.isValidHash(rootEntry.getERoot()) || !Algorithm.isValidHash(
-        rootEntry.getLRoot())) {
-      throw new DnsException(TypeEnum.INVALID_CHILD,
+    if (!Algorithm.isValidHash(rootEntry.getERoot())
+        || !Algorithm.isValidHash(rootEntry.getLRoot())) {
+      throw new DnsException(
+          TypeEnum.INVALID_CHILD,
           "eroot:" + rootEntry.getERoot() + " lroot:" + rootEntry.getLRoot());
     }
     logger.info("Get dnsRoot:[{}]", rootEntry.dnsRoot.toString());

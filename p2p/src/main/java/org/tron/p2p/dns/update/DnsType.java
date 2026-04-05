@@ -1,6 +1,5 @@
 package org.tron.p2p.dns.update;
 
-
 public enum DnsType {
   AliYun(0, "aliyun dns server"),
   AwsRoute53(1, "aws route53 server");

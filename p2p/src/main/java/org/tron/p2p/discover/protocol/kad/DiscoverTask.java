@@ -14,8 +14,9 @@ import org.tron.p2p.utils.NetUtil;
 @Slf4j(topic = "net")
 public class DiscoverTask {
 
-  private ScheduledExecutorService discoverer = Executors.newSingleThreadScheduledExecutor(
-      BasicThreadFactory.builder().namingPattern("discoverTask").build());
+  private ScheduledExecutorService discoverer =
+      Executors.newSingleThreadScheduledExecutor(
+          BasicThreadFactory.builder().namingPattern("discoverTask").build());
 
   private KadService kadService;
 
@@ -27,20 +28,24 @@ public class DiscoverTask {
   }
 
   public void init() {
-    discoverer.scheduleWithFixedDelay(() -> {
-      try {
-        loopNum++;
-        if (loopNum % KademliaOptions.MAX_LOOP_NUM == 0) {
-          loopNum = 0;
-          nodeId = kadService.getPublicHomeNode().getId();
-        } else {
-          nodeId = NetUtil.getNodeId();
-        }
-        discover(nodeId, 0, new ArrayList<>());
-      } catch (Exception e) {
-        logger.error("DiscoverTask fails to be executed", e);
-      }
-    }, 1, KademliaOptions.DISCOVER_CYCLE, TimeUnit.MILLISECONDS);
+    discoverer.scheduleWithFixedDelay(
+        () -> {
+          try {
+            loopNum++;
+            if (loopNum % KademliaOptions.MAX_LOOP_NUM == 0) {
+              loopNum = 0;
+              nodeId = kadService.getPublicHomeNode().getId();
+            } else {
+              nodeId = NetUtil.getNodeId();
+            }
+            discover(nodeId, 0, new ArrayList<>());
+          } catch (Exception e) {
+            logger.error("DiscoverTask fails to be executed", e);
+          }
+        },
+        1,
+        KademliaOptions.DISCOVER_CYCLE,
+        TimeUnit.MILLISECONDS);
     logger.debug("DiscoverTask started");
   }
 

@@ -1,7 +1,6 @@
 package org.tron.p2p.dns.sync;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -16,14 +15,12 @@ import org.tron.p2p.dns.DnsNode;
 import org.tron.p2p.dns.tree.LinkEntry;
 import org.tron.p2p.exception.DnsException;
 
-
 @Slf4j(topic = "net")
 public class RandomIterator implements Iterator<DnsNode> {
 
   private final Client client;
   private Map<String, ClientTree> clientTrees;
-  @Getter
-  private DnsNode cur;
+  @Getter private DnsNode cur;
   private final LinkCache linkCache;
   private final Random random;
 
@@ -34,7 +31,7 @@ public class RandomIterator implements Iterator<DnsNode> {
     random = new Random();
   }
 
-  //syncs random tree entries until it finds a node.
+  // syncs random tree entries until it finds a node.
   @Override
   public DnsNode next() {
     int i = 0;
@@ -45,14 +42,18 @@ public class RandomIterator implements Iterator<DnsNode> {
         logger.error("clientTree is null");
         return null;
       }
-      logger.info("Choose clientTree:{} from {} ClientTree", clientTree.getLinkEntry().getRepresent(),
+      logger.info(
+          "Choose clientTree:{} from {} ClientTree",
+          clientTree.getLinkEntry().getRepresent(),
           clientTrees.size());
       DnsNode dnsNode;
       try {
         dnsNode = clientTree.syncRandom();
       } catch (Exception e) {
-        logger.warn("Error in DNS random node sync, tree:{}, cause:[{}]",
-            clientTree.getLinkEntry().getDomain(), e.getMessage());
+        logger.warn(
+            "Error in DNS random node sync, tree:{}, cause:[{}]",
+            clientTree.getLinkEntry().getDomain(),
+            e.getMessage());
         continue;
       }
       if (dnsNode != null && dnsNode.getPreferInetSocketAddress() != null) {
@@ -73,7 +74,7 @@ public class RandomIterator implements Iterator<DnsNode> {
     linkCache.addLink("", linkEntry.getRepresent());
   }
 
-  //the first random
+  // the first random
   private ClientTree pickTree() {
     if (clientTrees == null) {
       logger.info("clientTrees is null");

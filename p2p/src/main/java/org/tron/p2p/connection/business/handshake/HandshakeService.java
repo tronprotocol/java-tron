@@ -54,8 +54,9 @@ public class HandshakeService implements MessageProcess {
       if (msg.getCode() != DisconnectCode.NORMAL.getValue()
           || (msg.getNetworkId() != networkId && msg.getVersion() != networkId)) {
         DisconnectCode disconnectCode = DisconnectCode.forNumber(msg.getCode());
-        //v0.1 have version, v0.2 both have version and networkId
-        logger.info("Handshake failed {}, code: {}, reason: {}, networkId: {}, version: {}",
+        // v0.1 have version, v0.2 both have version and networkId
+        logger.info(
+            "Handshake failed {}, code: {}, reason: {}, networkId: {}, version: {}",
             channel.getInetSocketAddress(),
             msg.getCode(),
             disconnectCode.name(),
@@ -68,8 +69,11 @@ public class HandshakeService implements MessageProcess {
     } else {
 
       if (msg.getNetworkId() != networkId) {
-        logger.info("Peer {} different network id, peer->{}, me->{}",
-            channel.getInetSocketAddress(), msg.getNetworkId(), networkId);
+        logger.info(
+            "Peer {} different network id, peer->{}, me->{}",
+            channel.getInetSocketAddress(),
+            msg.getNetworkId(),
+            networkId);
         sendHelloMsg(channel, DisconnectCode.DIFFERENT_VERSION, msg.getTimestamp());
         logDisconnectReason(channel, DisconnectReason.DIFFERENT_VERSION);
         channel.close();
@@ -86,5 +90,4 @@ public class HandshakeService implements MessageProcess {
     HelloMessage helloMessage = new HelloMessage(code, time);
     channel.send(helloMessage);
   }
-
 }

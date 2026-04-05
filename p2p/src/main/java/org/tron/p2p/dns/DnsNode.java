@@ -1,6 +1,5 @@
 package org.tron.p2p.dns;
 
-
 import static org.tron.p2p.discover.message.kad.KadMessage.getEndpointFromNode;
 
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -38,10 +37,11 @@ public class DnsNode extends Node implements Comparable<DnsNode> {
 
   public static String compress(List<DnsNode> nodes) {
     Builder builder = Discover.EndPoints.newBuilder();
-    nodes.forEach(node -> {
-      Endpoint endpoint = getEndpointFromNode(node);
-      builder.addNodes(endpoint);
-    });
+    nodes.forEach(
+        node -> {
+          Endpoint endpoint = getEndpointFromNode(node);
+          builder.addNodes(endpoint);
+        });
     return Algorithm.encode64(builder.build().toByteArray());
   }
 
@@ -52,10 +52,12 @@ public class DnsNode extends Node implements Comparable<DnsNode> {
 
     List<DnsNode> dnsNodes = new ArrayList<>();
     for (Endpoint endpoint : endPoints.getNodesList()) {
-      DnsNode dnsNode = new DnsNode(endpoint.getNodeId().toByteArray(),
-          new String(endpoint.getAddress().toByteArray()),
-          new String(endpoint.getAddressIpv6().toByteArray()),
-          endpoint.getPort());
+      DnsNode dnsNode =
+          new DnsNode(
+              endpoint.getNodeId().toByteArray(),
+              new String(endpoint.getAddress().toByteArray()),
+              new String(endpoint.getAddressIpv6().toByteArray()),
+              endpoint.getPort());
       dnsNodes.add(dnsNode);
     }
     return dnsNodes;

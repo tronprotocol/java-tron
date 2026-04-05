@@ -1,6 +1,5 @@
 package org.tron.p2p.dns.tree;
 
-
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.p2p.exception.DnsException;
@@ -10,12 +9,9 @@ import org.tron.p2p.utils.ByteArray;
 @Slf4j(topic = "net")
 public class LinkEntry implements Entry {
 
-  @Getter
-  private final String represent;
-  @Getter
-  private final String domain;
-  @Getter
-  private final String unCompressHexPublicKey;
+  @Getter private final String represent;
+  @Getter private final String domain;
+  @Getter private final String unCompressHexPublicKey;
 
   public LinkEntry(String represent, String domain, String unCompressHexPublicKey) {
     this.represent = represent;
@@ -25,7 +21,8 @@ public class LinkEntry implements Entry {
 
   public static LinkEntry parseEntry(String treeRepresent) throws DnsException {
     if (!treeRepresent.startsWith(linkPrefix)) {
-      throw new DnsException(TypeEnum.INVALID_SCHEME_URL,
+      throw new DnsException(
+          TypeEnum.INVALID_SCHEME_URL,
           "scheme url must starts with :[" + Entry.linkPrefix + "], but get " + treeRepresent);
     }
     String[] items = treeRepresent.substring(linkPrefix.length()).split("@");

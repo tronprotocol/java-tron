@@ -22,12 +22,14 @@ public class HelloMessage extends Message {
   public HelloMessage(DisconnectCode code, long time) {
     super(MessageType.HANDSHAKE_HELLO, null);
     Discover.Endpoint endpoint = Parameter.getHomeNode();
-    this.helloMessage = Connect.HelloMessage.newBuilder()
-      .setFrom(endpoint)
-      .setNetworkId(Parameter.p2pConfig.getNetworkId())
-      .setCode(code.getValue())
-      .setVersion(Parameter.version)
-      .setTimestamp(time).build();
+    this.helloMessage =
+        Connect.HelloMessage.newBuilder()
+            .setFrom(endpoint)
+            .setNetworkId(Parameter.p2pConfig.getNetworkId())
+            .setCode(code.getValue())
+            .setVersion(Parameter.version)
+            .setTimestamp(time)
+            .build();
     this.data = helloMessage.toByteArray();
   }
 
@@ -73,5 +75,4 @@ public class HelloMessage extends Message {
     }
     return sb.toString();
   }
-
 }

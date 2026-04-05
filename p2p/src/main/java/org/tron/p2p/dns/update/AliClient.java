@@ -1,11 +1,24 @@
 package org.tron.p2p.dns.update;
 
 import com.aliyun.alidns20150109.Client;
-import com.aliyun.alidns20150109.models.*;
+import com.aliyun.alidns20150109.models.AddDomainRecordRequest;
+import com.aliyun.alidns20150109.models.AddDomainRecordResponse;
+import com.aliyun.alidns20150109.models.DeleteDomainRecordRequest;
+import com.aliyun.alidns20150109.models.DeleteDomainRecordResponse;
+import com.aliyun.alidns20150109.models.DeleteSubDomainRecordsRequest;
+import com.aliyun.alidns20150109.models.DeleteSubDomainRecordsResponse;
+import com.aliyun.alidns20150109.models.DescribeDomainRecordsRequest;
+import com.aliyun.alidns20150109.models.DescribeDomainRecordsResponse;
+import com.aliyun.alidns20150109.models.DescribeDomainRecordsResponseBody;
 import com.aliyun.alidns20150109.models.DescribeDomainRecordsResponseBody.DescribeDomainRecordsResponseBodyDomainRecordsRecord;
+import com.aliyun.alidns20150109.models.UpdateDomainRecordRequest;
+import com.aliyun.alidns20150109.models.UpdateDomainRecordResponse;
 import com.aliyun.teaopenapi.models.Config;
 import java.text.NumberFormat;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -15,10 +28,6 @@ import org.tron.p2p.dns.tree.NodesEntry;
 import org.tron.p2p.dns.tree.RootEntry;
 import org.tron.p2p.dns.tree.Tree;
 import org.tron.p2p.exception.DnsException;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 @Slf4j(topic = "net")
 public class AliClient implements Publish {
@@ -34,8 +43,9 @@ public class AliClient implements Publish {
   private double changeThreshold;
   public static final String aliyunRoot = "@";
 
-  public AliClient(String endpoint, String accessKeyId, String accessKeySecret,
-      double changeThreshold) throws Exception {
+  public AliClient(
+      String endpoint, String accessKeyId, String accessKeySecret, double changeThreshold)
+      throws Exception {
     Config config = new Config();
     config.accessKeyId = accessKeyId;
     config.accessKeySecret = accessKeySecret;
@@ -46,20 +56,19 @@ public class AliClient implements Publish {
   }
 
   @Override
-  public void testConnect() throws Exception {
-  }
+  public void testConnect() throws Exception {}
 
   @Override
   public void deploy(String domainName, Tree t) throws DnsException {
     try {
-      Map<String, DescribeDomainRecordsResponseBodyDomainRecordsRecord> existing = collectRecords(
-          domainName);
-      logger.info("Find {} TXT records, {} nodes for {}", existing.size(), serverNodes.size(),
-          domainName);
+      Map<String, DescribeDomainRecordsResponseBodyDomainRecordsRecord> existing =
+          collectRecords(domainName);
+      logger.info(
+          "Find {} TXT records, {} nodes for {}", existing.size(), serverNodes.size(), domainName);
       String represent = LinkEntry.buildRepresent(t.getBase32PublicKey(), domainName);
       logger.info("Trying to publish {}", represent);
       t.setSeq(this.lastSeq + 1);
-      t.sign(); //seq changed, wo need to sign again
+      t.sign(); // seq changed, wo need to sign again
       Map<String, String> records = t.toTXT(null);
 
       Set<DnsNode> treeNodes = new HashSet<>(t.getDnsNodes());
@@ -82,7 +91,8 @@ public class AliClient implements Publish {
         double changePercent = (addNodeSize + deleteNodeSize) / (double) serverNodes.size();
         logger.info(
             "Sum of node add & delete percent {} is below changeThreshold {}, skip this changes",
-            nf.format(changePercent), changeThreshold);
+            nf.format(changePercent),
+            changeThreshold);
       }
       serverNodes.clear();
     } catch (Exception e) {
@@ -116,22 +126,22 @@ public class AliClient implements Publish {
         request.setPageNumber(currentPageNum);
         DescribeDomainRecordsResponse response = aliDnsClient.describeDomainRecords(request);
         if (response.statusCode == successCode) {
-          for (DescribeDomainRecordsResponseBodyDomainRecordsRecord r : response.getBody()
-              .getDomainRecords().getRecord()) {
+          for (DescribeDomainRecordsResponseBodyDomainRecordsRecord r :
+              response.getBody().getDomainRecords().getRecord()) {
             String name = StringUtils.stripEnd(r.getRR(), ".");
             records.put(name, r);
             if (aliyunRoot.equalsIgnoreCase(name)) {
               rootContent = r.value;
             }
-            if (StringUtils.isNotEmpty(r.value) && r.value.startsWith(
-                org.tron.p2p.dns.tree.Entry.nodesPrefix)) {
+            if (StringUtils.isNotEmpty(r.value)
+                && r.value.startsWith(org.tron.p2p.dns.tree.Entry.nodesPrefix)) {
               NodesEntry nodesEntry;
               try {
                 nodesEntry = NodesEntry.parseEntry(r.value);
                 List<DnsNode> dnsNodes = nodesEntry.getNodes();
                 collectServerNodes.addAll(dnsNodes);
               } catch (DnsException e) {
-                //ignore
+                // ignore
                 logger.error("Parse nodeEntry failed: {}", e.getMessage());
               }
             }
@@ -157,7 +167,8 @@ public class AliClient implements Publish {
     return records;
   }
 
-  private void submitChanges(String domainName,
+  private void submitChanges(
+      String domainName,
       Map<String, String> records,
       Map<String, DescribeDomainRecordsResponseBodyDomainRecordsRecord> existing)
       throws Exception {
@@ -174,10 +185,11 @@ public class AliClient implements Publish {
       if (!existing.containsKey(entry.getKey())) {
         result = addRecord(domainName, entry.getKey(), entry.getValue(), ttl);
         addCount++;
-      } else if (!entry.getValue().equals(existing.get(entry.getKey()).getValue()) ||
-          existing.get(entry.getKey()).getTTL() != ttl) {
-        result = updateRecord(existing.get(entry.getKey()).getRecordId(), entry.getKey(),
-            entry.getValue(), ttl);
+      } else if (!entry.getValue().equals(existing.get(entry.getKey()).getValue())
+          || existing.get(entry.getKey()).getTTL() != ttl) {
+        result =
+            updateRecord(
+                existing.get(entry.getKey()).getRecordId(), entry.getKey(), entry.getValue(), ttl);
         updateCount++;
       }
 
@@ -192,8 +204,11 @@ public class AliClient implements Publish {
         deleteCount++;
       }
     }
-    logger.info("Published successfully, add count:{}, update count:{}, delete count:{}",
-        addCount, updateCount, deleteCount);
+    logger.info(
+        "Published successfully, add count:{}, update count:{}, delete count:{}",
+        addCount,
+        updateCount,
+        deleteCount);
   }
 
   public boolean addRecord(String domainName, String RR, String value, long ttl) throws Exception {
@@ -324,8 +339,11 @@ public class AliClient implements Publish {
         }
       }
     } catch (Exception e) {
-      logger.warn("Failed to delete domain record, domain name: {}, RR: {}, error msg: {}",
-          domainName, RR, e.getMessage());
+      logger.warn(
+          "Failed to delete domain record, domain name: {}, RR: {}, error msg: {}",
+          domainName,
+          RR,
+          e.getMessage());
       return false;
     }
     return true;

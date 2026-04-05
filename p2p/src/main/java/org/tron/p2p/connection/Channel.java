@@ -37,43 +37,22 @@ public class Channel {
   public volatile boolean waitForPong = false;
   public volatile long pingSent = System.currentTimeMillis();
 
-  @Getter
-  private HelloMessage helloMessage;
-  @Getter
-  private Node node;
-  @Getter
-  private int version;
-  @Getter
-  private ChannelHandlerContext ctx;
-  @Getter
-  private InetSocketAddress inetSocketAddress;
-  @Getter
-  private InetAddress inetAddress;
-  @Getter
-  private volatile long disconnectTime;
-  @Getter
-  @Setter
-  private volatile boolean isDisconnect = false;
-  @Getter
-  @Setter
-  private long lastSendTime = System.currentTimeMillis();
-  @Getter
-  private final long startTime = System.currentTimeMillis();
-  @Getter
-  private boolean isActive = false;
-  @Getter
-  private boolean isTrustPeer;
-  @Getter
-  @Setter
-  private volatile boolean finishHandshake;
-  @Getter
-  @Setter
-  private String nodeId;
-  @Setter
-  @Getter
-  private boolean discoveryMode;
-  @Getter
-  private long avgLatency;
+  @Getter private HelloMessage helloMessage;
+  @Getter private Node node;
+  @Getter private int version;
+  @Getter private ChannelHandlerContext ctx;
+  @Getter private InetSocketAddress inetSocketAddress;
+  @Getter private InetAddress inetAddress;
+  @Getter private volatile long disconnectTime;
+  @Getter @Setter private volatile boolean isDisconnect = false;
+  @Getter @Setter private long lastSendTime = System.currentTimeMillis();
+  @Getter private final long startTime = System.currentTimeMillis();
+  @Getter private boolean isActive = false;
+  @Getter private boolean isTrustPeer;
+  @Getter @Setter private volatile boolean finishHandshake;
+  @Getter @Setter private String nodeId;
+  @Setter @Getter private boolean discoveryMode;
+  @Getter private long avgLatency;
   private long count;
 
   public void init(ChannelPipeline pipeline, String nodeId, boolean discoveryMode) {
@@ -102,8 +81,11 @@ public class Channel {
         || throwable instanceof CorruptedFrameException) {
       logger.warn("Close peer {}, reason: {}", address, throwable.getMessage());
     } else if (baseThrowable instanceof P2pException) {
-      logger.warn("Close peer {}, type: ({}), info: {}",
-          address, ((P2pException) baseThrowable).getType(), baseThrowable.getMessage());
+      logger.warn(
+          "Close peer {}, type: ({}), info: {}",
+          address,
+          ((P2pException) baseThrowable).getType(),
+          baseThrowable.getMessage());
     } else {
       logger.error("Close peer {}, exception caught", address, throwable);
     }
@@ -113,7 +95,7 @@ public class Channel {
   public void setHelloMessage(HelloMessage helloMessage) {
     this.helloMessage = helloMessage;
     this.node = helloMessage.getFrom();
-    this.nodeId = node.getHexId(); //update node id from handshake
+    this.nodeId = node.getHexId(); // update node id from handshake
     this.version = helloMessage.getVersion();
   }
 
@@ -148,8 +130,10 @@ public class Channel {
     try {
       byte type = data[0];
       if (isDisconnect) {
-        logger.warn("Send to {} failed as channel has closed, message-type:{} ",
-            ctx.channel().remoteAddress(), type);
+        logger.warn(
+            "Send to {} failed as channel has closed, message-type:{} ",
+            ctx.channel().remoteAddress(),
+            type);
         return;
       }
 
@@ -158,13 +142,16 @@ public class Channel {
       }
 
       ByteBuf byteBuf = Unpooled.wrappedBuffer(data);
-      ctx.writeAndFlush(byteBuf).addListener((ChannelFutureListener) future -> {
-        if (!future.isSuccess() && !isDisconnect) {
-          logger.warn("Send to {} failed, message-type:{}, cause:{}",
-              ctx.channel().remoteAddress(), ByteArray.byte2int(type),
-              future.cause().getMessage());
-        }
-      });
+      ctx.writeAndFlush(byteBuf)
+          .addListener((ChannelFutureListener) future -> {
+            if (!future.isSuccess() && !isDisconnect) {
+              logger.warn(
+                  "Send to {} failed, message-type:{}, cause:{}",
+                  ctx.channel().remoteAddress(),
+                  ByteArray.byte2int(type),
+                  future.cause().getMessage());
+            }
+          });
       setLastSendTime(System.currentTimeMillis());
     } catch (Exception e) {
       logger.warn("Send message to {} failed, {}", inetSocketAddress, e.getMessage());
@@ -197,8 +184,7 @@ public class Channel {
 
   @Override
   public String toString() {
-    return String.format("%s | %s", inetSocketAddress,
-        StringUtils.isEmpty(nodeId) ? "<null>" : nodeId);
+    return String.format(
+        "%s | %s", inetSocketAddress, StringUtils.isEmpty(nodeId) ? "<null>" : nodeId);
   }
-
 }

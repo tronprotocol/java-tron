@@ -152,11 +152,9 @@ public class ImportUsing {
           // todo
       }
     }
-
   }
 
   private enum MessageTypes {
-
     FIRST((byte) 0x00),
 
     TEST((byte) 0x01),
@@ -195,7 +193,5 @@ public class ImportUsing {
       this.type = MessageTypes.TEST;
       this.data = data;
     }
-
   }
-
 }

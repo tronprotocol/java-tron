@@ -1,6 +1,5 @@
 package org.tron.p2p.connection;
 
-
 import static org.tron.p2p.base.Parameter.NETWORK_TIME_DIFF;
 
 import org.junit.Assert;
@@ -76,8 +75,10 @@ public class MessageTest {
 
   @Test
   public void testInvalidTime() {
-    KeepAliveMessage keepAliveMessage = Connect.KeepAliveMessage.newBuilder()
-        .setTimestamp(System.currentTimeMillis() + NETWORK_TIME_DIFF * 2).build();
+    KeepAliveMessage keepAliveMessage =
+        Connect.KeepAliveMessage.newBuilder()
+            .setTimestamp(System.currentTimeMillis() + NETWORK_TIME_DIFF * 2)
+            .build();
     try {
       PingMessage message = new PingMessage(keepAliveMessage.toByteArray());
       Assert.assertFalse(message.valid());

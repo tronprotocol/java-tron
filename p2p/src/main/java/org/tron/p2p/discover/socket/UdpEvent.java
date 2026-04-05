@@ -5,8 +5,8 @@ import org.tron.p2p.discover.message.Message;
 
 public class UdpEvent {
   private Message message;
-  //when receive UdpEvent, this is sender address
-  //when send UdpEvent, this is target address
+  // when receive UdpEvent, this is sender address
+  // when send UdpEvent, this is target address
   private InetSocketAddress address;
 
   public UdpEvent(Message message, InetSocketAddress address) {
