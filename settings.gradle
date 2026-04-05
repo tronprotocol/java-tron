@@ -9,4 +9,5 @@ include 'example:actuator-example'
 include 'crypto'
 include 'plugins'
 include 'platform'
+include 'p2p'
 

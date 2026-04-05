@@ -1,0 +1,93 @@
+apply plugin: 'com.google.protobuf'
+
+def protobufVersion = '3.25.8'
+def grpcVersion = '1.75.0'
+
+sourceSets {
+    main {
+        proto {
+            srcDir 'src/main/protos'
+        }
+        java {
+            srcDir 'src/main/java'
+        }
+    }
+}
+
+dependencies {
+    // protobuf & grpc (implementation scope: not leaked to consumers)
+    implementation "com.google.protobuf:protobuf-java:${protobufVersion}"
+    implementation "com.google.protobuf:protobuf-java-util:${protobufVersion}"
+    implementation "io.grpc:grpc-netty:${grpcVersion}"
+    implementation "io.grpc:grpc-core:${grpcVersion}"
+
+    // p2p-specific dependencies
+    implementation 'org.xerial.snappy:snappy-java:1.1.10.5'
+    implementation 'org.bouncycastle:bcpkix-jdk18on:1.79'
+    implementation 'dnsjava:dnsjava:3.6.2'
+    implementation 'commons-cli:commons-cli:1.5.0'
+    implementation('software.amazon.awssdk:route53:2.18.41') {
+        exclude group: 'io.netty', module: 'netty-codec-http2'
+        exclude group: 'io.netty', module: 'netty-codec-http'
+        exclude group: 'io.netty', module: 'netty-common'
+        exclude group: 'io.netty', module: 'netty-buffer'
+        exclude group: 'io.netty', module: 'netty-transport'
+        exclude group: 'io.netty', module: 'netty-codec'
+        exclude group: 'io.netty', module: 'netty-handler'
+        exclude group: 'io.netty', module: 'netty-resolver'
+        exclude group: 'io.netty', module: 'netty-transport-classes-epoll'
+        exclude group: 'io.netty', module: 'netty-transport-native-unix-common'
+        exclude group: 'software.amazon.awssdk', module: 'netty-nio-client'
+    }
+    implementation('com.aliyun:alidns20150109:3.0.1') {
+        exclude group: 'org.bouncycastle', module: 'bcprov-jdk15on'
+        exclude group: 'org.bouncycastle', module: 'bcpkix-jdk15on'
+        exclude group: 'pull-parser', module: 'pull-parser'
+        exclude group: 'xpp3', module: 'xpp3'
+    }
+
+    // commons-lang3: libp2p uses BasicThreadFactory.builder() which requires 3.12+.
+    // Root build.gradle provides 3.4 globally but as 'implementation' (not on compile classpath).
+    // Declare 3.18.0 (matching original libp2p) to ensure API compatibility.
+    implementation 'org.apache.commons:commons-lang3:3.18.0'
+
+    // provided by root build.gradle for all subprojects:
+    // slf4j-api, logback, bcprov-jdk18on, lombok, junit, mockito
+}
+
+protobuf {
+    generatedFilesBaseDir = "$projectDir/src"
+    protoc {
+        artifact = "com.google.protobuf:protoc:${protobufVersion}"
+    }
+    plugins {
+        grpc {
+            artifact = "io.grpc:protoc-gen-grpc-java:${rootProject.archInfo.requires.ProtocGenVersion}"
+        }
+    }
+    generateProtoTasks {
+        all().each { task ->
+            task.builtins {
+                java { outputSubDir = "java" }
+            }
+        }
+        all()*.plugins {
+            grpc {
+                outputSubDir = "java"
+            }
+        }
+    }
+}
+
+clean.doFirst {
+    delete "src/main/java/org/tron/p2p/protos"
+}
+
+processResources.dependsOn(generateProto)
+
+jacocoTestReport {
+    reports {
+        xml.enabled = true
+        html.enabled = true
+    }
+}

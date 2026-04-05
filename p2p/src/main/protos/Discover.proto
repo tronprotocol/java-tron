@@ -1,0 +1,50 @@
+syntax = "proto3";
+
+option java_package = "org.tron.p2p.protos";
+option java_outer_classname = "Discover";
+
+message Endpoint {
+  bytes address = 1;
+  int32 port = 2;
+  bytes nodeId = 3;
+  bytes addressIpv6 = 4;
+}
+
+message PingMessage {
+  Endpoint from = 1;
+  Endpoint to = 2;
+  int32 version = 3;
+  int64 timestamp = 4;
+}
+
+message PongMessage {
+  Endpoint from = 1;
+  int32 echo = 2;
+  int64 timestamp = 3;
+}
+
+message FindNeighbours {
+  Endpoint from = 1;
+  bytes targetId = 2;
+  int64 timestamp = 3;
+}
+
+message Neighbours {
+  Endpoint from = 1;
+  repeated Endpoint neighbours = 2;
+  int64 timestamp = 3;
+}
+
+message EndPoints {
+  repeated Endpoint nodes = 1;
+}
+
+message DnsRoot {
+  message TreeRoot {
+    bytes eRoot = 1;
+    bytes lRoot = 2;
+    int32 seq = 3;
+  }
+  TreeRoot treeRoot = 1;
+  bytes signature = 2;
+}
