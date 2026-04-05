@@ -43,9 +43,16 @@ public class KeystoreImport implements Callable<Integer> {
       description = "Use SM2 algorithm instead of ECDSA")
   private boolean sm2;
 
+  @Option(names = {"--force"},
+      description = "Allow import even if address already exists")
+  private boolean force;
+
   @Override
   public Integer call() {
     try {
+      if (!KeystoreCliUtils.checkFileExists(keyFile, "Key file")) {
+        return 1;
+      }
       KeystoreCliUtils.ensureDirectory(keystoreDir);
 
       String privateKey = readPrivateKey();
@@ -77,15 +84,22 @@ public class KeystoreImport implements Callable<Integer> {
         return 1;
       }
       String address = Credentials.create(keyPair).getAddress();
-      warnIfAddressExists(keystoreDir, address);
+      String existingFile = findExistingKeystore(keystoreDir, address);
+      if (existingFile != null && !force) {
+        System.err.println("Keystore for address " + address
+            + " already exists: " + existingFile
+            + ". Use --force to import anyway.");
+        return 1;
+      }
       String fileName = WalletUtils.generateWalletFile(password, keyPair, keystoreDir, true);
       KeystoreCliUtils.setOwnerOnly(new File(keystoreDir, fileName));
       if (json) {
         KeystoreCliUtils.printJson(KeystoreCliUtils.jsonMap(
             "address", address, "file", fileName));
       } else {
-        System.out.println("Imported keystore: " + fileName);
-        System.out.println("Address: " + address);
+        System.out.println("Imported keystore successfully");
+        KeystoreCliUtils.printSecurityTips(address,
+            new File(keystoreDir, fileName).getPath());
       }
       return 0;
     } catch (CipherException e) {
@@ -137,13 +151,13 @@ public class KeystoreImport implements Callable<Integer> {
     return !StringUtils.isEmpty(key) && HEX_PATTERN.matcher(key).matches();
   }
 
-  private void warnIfAddressExists(File dir, String address) {
+  private String findExistingKeystore(File dir, String address) {
     if (!dir.exists() || !dir.isDirectory()) {
-      return;
+      return null;
     }
     File[] files = dir.listFiles((d, name) -> name.endsWith(".json"));
     if (files == null) {
-      return;
+      return null;
     }
     com.fasterxml.jackson.databind.ObjectMapper mapper =
         KeystoreCliUtils.mapper();
@@ -152,13 +166,12 @@ public class KeystoreImport implements Callable<Integer> {
         org.tron.keystore.WalletFile wf =
             mapper.readValue(file, org.tron.keystore.WalletFile.class);
         if (address.equals(wf.getAddress())) {
-          System.err.println("WARNING: keystore for address "
-              + address + " already exists: " + file.getName());
-          return;
+          return file.getName();
         }
       } catch (Exception e) {
         // Skip invalid files
       }
     }
+    return null;
   }
 }

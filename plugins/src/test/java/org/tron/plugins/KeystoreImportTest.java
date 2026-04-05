@@ -174,7 +174,7 @@ public class KeystoreImportTest {
   }
 
   @Test
-  public void testImportDuplicateAddress() throws Exception {
+  public void testImportDuplicateAddressBlocked() throws Exception {
     File dir = tempFolder.newFolder("keystore-dup");
     SignInterface keyPair = SignUtils.getGeneratedRandomSign(
         SecureRandom.getInstance("NativePRNG"), true);
@@ -185,22 +185,70 @@ public class KeystoreImportTest {
     File pwFile = tempFolder.newFile("pw-dup.txt");
     Files.write(pwFile.toPath(), "test123456".getBytes(StandardCharsets.UTF_8));
 
-    // Import same key twice
+    // First import succeeds
     CommandLine cmd1 = new CommandLine(new Toolkit());
     assertEquals(0, cmd1.execute("keystore", "import",
         "--keystore-dir", dir.getAbsolutePath(),
         "--key-file", keyFile.getAbsolutePath(),
         "--password-file", pwFile.getAbsolutePath()));
 
+    // Second import of same key is blocked
     CommandLine cmd2 = new CommandLine(new Toolkit());
-    assertEquals(0, cmd2.execute("keystore", "import",
+    assertEquals("Duplicate import should be blocked", 1,
+        cmd2.execute("keystore", "import",
+            "--keystore-dir", dir.getAbsolutePath(),
+            "--key-file", keyFile.getAbsolutePath(),
+            "--password-file", pwFile.getAbsolutePath()));
+
+    File[] files = dir.listFiles((d, name) -> name.endsWith(".json"));
+    assertNotNull(files);
+    assertEquals("Should still have only 1 keystore", 1, files.length);
+  }
+
+  @Test
+  public void testImportDuplicateAddressWithForce() throws Exception {
+    File dir = tempFolder.newFolder("keystore-force");
+    SignInterface keyPair = SignUtils.getGeneratedRandomSign(
+        SecureRandom.getInstance("NativePRNG"), true);
+    String privateKeyHex = ByteArray.toHexString(keyPair.getPrivateKey());
+
+    File keyFile = tempFolder.newFile("force.key");
+    Files.write(keyFile.toPath(), privateKeyHex.getBytes(StandardCharsets.UTF_8));
+    File pwFile = tempFolder.newFile("pw-force.txt");
+    Files.write(pwFile.toPath(), "test123456".getBytes(StandardCharsets.UTF_8));
+
+    // First import
+    CommandLine cmd1 = new CommandLine(new Toolkit());
+    assertEquals(0, cmd1.execute("keystore", "import",
         "--keystore-dir", dir.getAbsolutePath(),
         "--key-file", keyFile.getAbsolutePath(),
         "--password-file", pwFile.getAbsolutePath()));
 
-    // Should create two separate files (timestamped names differ)
+    // Second import with --force succeeds
+    CommandLine cmd2 = new CommandLine(new Toolkit());
+    assertEquals(0, cmd2.execute("keystore", "import",
+        "--keystore-dir", dir.getAbsolutePath(),
+        "--key-file", keyFile.getAbsolutePath(),
+        "--password-file", pwFile.getAbsolutePath(),
+        "--force"));
+
     File[] files = dir.listFiles((d, name) -> name.endsWith(".json"));
     assertNotNull(files);
-    assertEquals("Duplicate import should create 2 separate files", 2, files.length);
+    assertEquals("Force import should create 2 files", 2, files.length);
+  }
+
+  @Test
+  public void testImportKeyFileNotFound() throws Exception {
+    File dir = tempFolder.newFolder("keystore-nokey");
+    File pwFile = tempFolder.newFile("pw-nokey.txt");
+    Files.write(pwFile.toPath(), "test123456".getBytes(StandardCharsets.UTF_8));
+
+    CommandLine cmd = new CommandLine(new Toolkit());
+    int exitCode = cmd.execute("keystore", "import",
+        "--keystore-dir", dir.getAbsolutePath(),
+        "--key-file", "/tmp/nonexistent-key-file.txt",
+        "--password-file", pwFile.getAbsolutePath());
+
+    assertEquals("Should fail when key file not found", 1, exitCode);
   }
 }

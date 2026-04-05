@@ -30,6 +30,11 @@ final class KeystoreCliUtils {
 
   static String readPassword(File passwordFile) throws IOException {
     if (passwordFile != null) {
+      if (!passwordFile.exists()) {
+        System.err.println("Password file not found: " + passwordFile.getPath()
+            + ". Omit --password-file for interactive input.");
+        return null;
+      }
       if (passwordFile.length() > MAX_FILE_SIZE) {
         System.err.println("Password file too large (max 1KB).");
         return null;
@@ -131,6 +136,33 @@ final class KeystoreCliUtils {
       }
     }
     return s.substring(0, end);
+  }
+
+  static boolean checkFileExists(File file, String label) {
+    if (file != null && !file.exists()) {
+      System.err.println(label + " not found: " + file.getPath());
+      return false;
+    }
+    return true;
+  }
+
+  static void printSecurityTips(String address, String fileName) {
+    System.out.println();
+    System.out.println("Public address of the key:   " + address);
+    System.out.println("Path of the secret key file: " + fileName);
+    System.out.println();
+    System.out.println(
+        "- You can share your public address with anyone."
+            + " Others need it to interact with you.");
+    System.out.println(
+        "- You must NEVER share the secret key with anyone!"
+            + " The key controls access to your funds!");
+    System.out.println(
+        "- You must BACKUP your key file!"
+            + " Without the key, it's impossible to access account funds!");
+    System.out.println(
+        "- You must REMEMBER your password!"
+            + " Without the password, it's impossible to decrypt the key!");
   }
 
   static void setOwnerOnly(File file) {

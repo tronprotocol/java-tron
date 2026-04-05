@@ -181,6 +181,18 @@ public class KeystoreNewTest {
   }
 
   @Test
+  public void testNewKeystorePasswordFileNotFound() throws Exception {
+    File dir = tempFolder.newFolder("keystore-nopw");
+
+    CommandLine cmd = new CommandLine(new Toolkit());
+    int exitCode = cmd.execute("keystore", "new",
+        "--keystore-dir", dir.getAbsolutePath(),
+        "--password-file", "/tmp/nonexistent-pw.txt");
+
+    assertEquals("Should fail when password file not found", 1, exitCode);
+  }
+
+  @Test
   public void testNewKeystoreDirIsFile() throws Exception {
     File notADir = tempFolder.newFile("not-a-dir");
     File pwFile = tempFolder.newFile("pw-dir.txt");

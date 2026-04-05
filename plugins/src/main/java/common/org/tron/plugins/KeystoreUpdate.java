@@ -59,6 +59,11 @@ public class KeystoreUpdate implements Callable<Integer> {
       String newPassword;
 
       if (passwordFile != null) {
+        if (!passwordFile.exists()) {
+          System.err.println("Password file not found: " + passwordFile.getPath()
+              + ". Omit --password-file for interactive input.");
+          return 1;
+        }
         if (passwordFile.length() > 1024) {
           System.err.println("Password file too large (max 1KB).");
           return 1;

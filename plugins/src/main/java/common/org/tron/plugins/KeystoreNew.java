@@ -53,8 +53,9 @@ public class KeystoreNew implements Callable<Integer> {
         KeystoreCliUtils.printJson(KeystoreCliUtils.jsonMap(
             "address", address, "file", fileName));
       } else {
-        System.out.println("Generated keystore: " + fileName);
-        System.out.println("Address: " + address);
+        System.out.println("Your new key was generated");
+        KeystoreCliUtils.printSecurityTips(address,
+            new File(keystoreDir, fileName).getPath());
       }
       return 0;
     } catch (CipherException e) {
