@@ -132,21 +132,21 @@ public class ClientTree {
       int size = nodeList.size();
       return nodeList.get(random.nextInt(size));
     }
-    log.info("Get branch or link entry in syncNextRandomNode");
+    logger.info("Get branch or link entry in syncNextRandomNode");
     return null;
   }
 
   // updateRoot ensures that the given tree has an up-to-date root.
   private boolean[] updateRoot()
       throws TextParseException, DnsException, SignatureException, UnknownHostException {
-    log.info("UpdateRoot {}", linkEntry.getDomain());
+    logger.info("UpdateRoot {}", linkEntry.getDomain());
     lastValidateTime = System.currentTimeMillis();
     RootEntry rootEntry = client.resolveRoot(linkEntry);
     if (rootEntry == null) {
       return new boolean[] {false, false};
     }
     if (rootEntry.getSeq() <= lastSeq) {
-      log.info("The seq of url doesn't change, url:[{}], seq:{}", linkEntry.getRepresent(),
+      logger.info("The seq of url doesn't change, url:[{}], seq:{}", linkEntry.getRepresent(),
           lastSeq);
       return new boolean[] {false, false};
     }
@@ -162,7 +162,7 @@ public class ClientTree {
       updateLRoot = true;
     } else {
       // if lroot is not changed, wo do not to sync the link tree
-      log.info("The lroot of url doesn't change, url:[{}], lroot:[{}]", linkEntry.getRepresent(),
+      logger.info("The lroot of url doesn't change, url:[{}], lroot:[{}]", linkEntry.getRepresent(),
           linkSync.root);
     }
 
@@ -171,7 +171,7 @@ public class ClientTree {
       updateERoot = true;
     } else {
       // if eroot is not changed, wo do not to sync the enr tree
-      log.info("The eroot of url doesn't change, url:[{}], eroot:[{}]", linkEntry.getRepresent(),
+      logger.info("The eroot of url doesn't change, url:[{}], eroot:[{}]", linkEntry.getRepresent(),
           enrSync.root);
     }
     return new boolean[] {updateLRoot, updateERoot};
@@ -180,7 +180,7 @@ public class ClientTree {
   private boolean rootUpdateDue() {
     boolean scheduledCheck = System.currentTimeMillis() > nextScheduledRootCheck();
     if (scheduledCheck) {
-      log.info("Update root because of scheduledCheck, {}", linkEntry.getDomain());
+      logger.info("Update root because of scheduledCheck, {}", linkEntry.getDomain());
     }
     return root == null || scheduledCheck;
   }

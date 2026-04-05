@@ -44,7 +44,7 @@ public class KeepAliveService implements MessageProcess {
               }
             });
       } catch (Exception t) {
-        log.error("Exception in keep alive task", t);
+        logger.error("Exception in keep alive task", t);
       }
     }, 2, 2, TimeUnit.SECONDS);
   }

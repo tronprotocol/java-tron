@@ -64,7 +64,7 @@ public class NodeDetectService implements MessageProcess {
       try {
         work();
       } catch (Exception t) {
-        log.warn("Exception in node detect worker, {}", t.getMessage());
+        logger.warn("Exception in node detect worker, {}", t.getMessage());
       }
     }, 1, 5, TimeUnit.SECONDS);
   }
@@ -137,7 +137,7 @@ public class NodeDetectService implements MessageProcess {
       setLastDetectTime(stat);
       peerClient.connectAsync(stat.getNode(), true);
     } catch (Exception e) {
-      log.warn("Detect node {} failed, {}",
+      logger.warn("Detect node {} failed, {}",
           stat.getNode().getPreferInetSocketAddress(), e.getMessage());
       nodeStatMap.remove(stat.getSocketAddress());
     }

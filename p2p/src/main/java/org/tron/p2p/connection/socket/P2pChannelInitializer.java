@@ -42,7 +42,7 @@ public class P2pChannelInitializer extends ChannelInitializer<NioSocketChannel> 
           ChannelManager.getNodeDetectService().notifyDisconnect(channel);
         } else {
           try {
-            log.info("Close channel:{}", channel.getInetSocketAddress());
+            logger.info("Close channel:{}", channel.getInetSocketAddress());
             ChannelManager.notifyDisconnect(channel);
           } finally {
             if (channel.getInetSocketAddress() != null && channel.isActive() && trigger) {
@@ -53,7 +53,7 @@ public class P2pChannelInitializer extends ChannelInitializer<NioSocketChannel> 
       });
 
     } catch (Exception e) {
-      log.error("Unexpected initChannel error", e);
+      logger.error("Unexpected initChannel error", e);
     }
   }
 

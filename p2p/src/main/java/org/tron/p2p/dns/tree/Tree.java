@@ -237,7 +237,7 @@ public class Tree {
       try {
         subNodes = DnsNode.decompress(joinStr);
       } catch (InvalidProtocolBufferException | UnknownHostException e) {
-        log.error("", e);
+        logger.error("", e);
         continue;
       }
       nodes.addAll(subNodes);

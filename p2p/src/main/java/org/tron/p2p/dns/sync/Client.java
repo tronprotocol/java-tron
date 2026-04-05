@@ -66,7 +66,7 @@ public class Client {
       try {
         syncTree(urlScheme, clientTree, tree);
       } catch (Exception e) {
-        log.error("SyncTree failed, url:" + urlScheme, e);
+        logger.error("SyncTree failed, url:" + urlScheme, e);
         continue;
       }
     }
@@ -97,7 +97,7 @@ public class Client {
     }
 
     tree.setRootEntry(clientTree.getRoot());
-    log.info("SyncTree {} complete, LinkEntry size:{}, NodesEntry size:{}, node size:{}",
+    logger.info("SyncTree {} complete, LinkEntry size:{}, NodesEntry size:{}, node size:{}",
         urlScheme, tree.getLinksEntry().size(), tree.getNodesEntry().size(),
         tree.getDnsNodes().size());
   }
@@ -174,7 +174,7 @@ public class Client {
       try {
         randomIterator.addTree(urlScheme);
       } catch (DnsException e) {
-        log.error("AddTree failed " + urlScheme, e);
+        logger.error("AddTree failed " + urlScheme, e);
       }
     }
     return randomIterator;

@@ -29,7 +29,7 @@ public class P2pService {
     NodeManager.init();
     ChannelManager.init();
     DnsManager.init();
-    log.info("P2p service started");
+    logger.info("P2p service started");
 
     Runtime.getRuntime().addShutdownHook(new Thread(this::close));
   }
@@ -42,7 +42,7 @@ public class P2pService {
     DnsManager.close();
     NodeManager.close();
     ChannelManager.close();
-    log.info("P2p service closed");
+    logger.info("P2p service closed");
   }
 
   public void register(P2pEventHandler p2PEventHandler) throws P2pException {

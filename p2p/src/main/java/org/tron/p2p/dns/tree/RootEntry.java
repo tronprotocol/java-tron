@@ -85,7 +85,7 @@ public class RootEntry implements Entry {
 
   public static RootEntry parseEntry(String e, String publicKey, String domain)
       throws SignatureException, DnsException {
-    log.info("Domain:{}, public key:{}", domain, publicKey);
+    logger.info("Domain:{}, public key:{}", domain, publicKey);
     RootEntry rootEntry = parseEntry(e);
     boolean verify = Algorithm.verifySignature(publicKey, rootEntry.toString(),
         rootEntry.getSignature());
@@ -99,7 +99,7 @@ public class RootEntry implements Entry {
       throw new DnsException(TypeEnum.INVALID_CHILD,
           "eroot:" + rootEntry.getERoot() + " lroot:" + rootEntry.getLRoot());
     }
-    log.info("Get dnsRoot:[{}]", rootEntry.dnsRoot.toString());
+    logger.info("Get dnsRoot:[{}]", rootEntry.dnsRoot.toString());
     return rootEntry;
   }
 

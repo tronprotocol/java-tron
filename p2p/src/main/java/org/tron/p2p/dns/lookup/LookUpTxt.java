@@ -59,7 +59,7 @@ public class LookUpTxt {
   // as dns server has dns cache, we may get the name's latest TXTRecord ttl later after it changes
   public static TXTRecord lookUpTxt(String name) throws TextParseException, UnknownHostException {
     TXTRecord txt = null;
-    log.info("LookUp name: {}", name);
+    logger.info("LookUp name: {}", name);
     Lookup lookup = new Lookup(name, Type.TXT);
     int times = 0;
     Record[] records = null;
@@ -79,15 +79,15 @@ public class LookUpTxt {
       long end = System.currentTimeMillis();
       times += 1;
       if (records != null) {
-        log.debug("Succeed to use dns: {}, cur cost: {}ms, total cost: {}ms", publicDns,
+        logger.debug("Succeed to use dns: {}, cur cost: {}ms, total cost: {}ms", publicDns,
             end - thisTime, end - start);
         break;
       } else {
-        log.debug("Failed to use dns: {}, cur cost: {}ms", publicDns, end - thisTime);
+        logger.debug("Failed to use dns: {}, cur cost: {}ms", publicDns, end - thisTime);
       }
     }
     if (records == null) {
-      log.error("Failed to lookUp name:{}", name);
+      logger.error("Failed to lookUp name:{}", name);
       return null;
     }
     for (Record item : records) {

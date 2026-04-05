@@ -35,7 +35,7 @@ public class StartApp {
     P2pService p2pService = new P2pService();
     long t1 = System.currentTimeMillis();
     Parameter.p2pConfig = new P2pConfig();
-    log.debug("P2pConfig cost {} ms", System.currentTimeMillis() - t1);
+    logger.debug("P2pConfig cost {} ms", System.currentTimeMillis() - t1);
 
     CommandLine cli = null;
     try {
@@ -46,12 +46,12 @@ public class StartApp {
 
     if (cli.hasOption("s")) {
       Parameter.p2pConfig.setSeedNodes(app.parseInetSocketAddressList(cli.getOptionValue("s")));
-      log.info("Seed nodes {}", Parameter.p2pConfig.getSeedNodes());
+      logger.info("Seed nodes {}", Parameter.p2pConfig.getSeedNodes());
     }
 
     if (cli.hasOption("a")) {
       Parameter.p2pConfig.setActiveNodes(app.parseInetSocketAddressList(cli.getOptionValue("a")));
-      log.info("Active nodes {}", Parameter.p2pConfig.getActiveNodes());
+      logger.info("Active nodes {}", Parameter.p2pConfig.getActiveNodes());
     }
 
     if (cli.hasOption("t")) {
@@ -59,7 +59,7 @@ public class StartApp {
       List<InetAddress> trustNodes = new ArrayList<>();
       trustNodes.add(address.getAddress());
       Parameter.p2pConfig.setTrustNodes(trustNodes);
-      log.info("Trust nodes {}", Parameter.p2pConfig.getTrustNodes());
+      logger.info("Trust nodes {}", Parameter.p2pConfig.getTrustNodes());
     }
 
     if (cli.hasOption("M")) {
@@ -75,7 +75,7 @@ public class StartApp {
     }
 
     if (Parameter.p2pConfig.getMinConnections() > Parameter.p2pConfig.getMaxConnections()) {
-      log.error("Check maxConnections({}) >= minConnections({}) failed",
+      logger.error("Check maxConnections({}) >= minConnections({}) failed",
           Parameter.p2pConfig.getMaxConnections(), Parameter.p2pConfig.getMinConnections());
       System.exit(0);
     }
@@ -83,7 +83,7 @@ public class StartApp {
     if (cli.hasOption("d")) {
       int d = Integer.parseInt(cli.getOptionValue("d"));
       if (d != 0 && d != 1) {
-        log.error("Check discover failed, must be 0/1");
+        logger.error("Check discover failed, must be 0/1");
         System.exit(0);
       }
       Parameter.p2pConfig.setDiscoverEnable(d == 1);
@@ -97,7 +97,7 @@ public class StartApp {
       Parameter.p2pConfig.setNetworkId(Integer.parseInt(cli.getOptionValue("v")));
     }
     if (StringUtils.isNotEmpty(Parameter.p2pConfig.getIpv6())) {
-      log.info("Local ipv6: {}", Parameter.p2pConfig.getIpv6());
+      logger.info("Local ipv6: {}", Parameter.p2pConfig.getIpv6());
     }
 
     app.checkDnsOption(cli);
@@ -135,7 +135,7 @@ public class StartApp {
     try {
       cli = cliParser.parse(options, args);
     } catch (ParseException e) {
-      log.error("Parse cli failed", e);
+      logger.error("Parse cli failed", e);
       printHelpMessage(kadOptions, dnsReadOptions, dnsPublishOptions);
       throw e;
     }
@@ -175,18 +175,18 @@ public class StartApp {
       if (cli.hasOption(configDnsPrivate)) {
         String privateKey = cli.getOptionValue(configDnsPrivate);
         if (privateKey.length() != 64) {
-          log.error("Check {}, must be hex string of 64", configDnsPrivate);
+          logger.error("Check {}, must be hex string of 64", configDnsPrivate);
           System.exit(0);
         }
         try {
           ByteArray.fromHexString(privateKey);
         } catch (Exception ignore) {
-          log.error("Check {}, must be hex string of 64", configDnsPrivate);
+          logger.error("Check {}, must be hex string of 64", configDnsPrivate);
           System.exit(0);
         }
         publishConfig.setDnsPrivate(privateKey);
       } else {
-        log.error("Check {}, must not be null", configDnsPrivate);
+        logger.error("Check {}, must not be null", configDnsPrivate);
         System.exit(0);
       }
 
@@ -203,14 +203,14 @@ public class StartApp {
       if (cli.hasOption(configDomain)) {
         publishConfig.setDnsDomain(cli.getOptionValue(configDomain));
       } else {
-        log.error("Check {}, must not be null", configDomain);
+        logger.error("Check {}, must not be null", configDomain);
         System.exit(0);
       }
 
       if (cli.hasOption(configChangeThreshold)) {
         double changeThreshold = Double.parseDouble(cli.getOptionValue(configChangeThreshold));
         if (changeThreshold >= 1.0) {
-          log.error("Check {}, range between (0.0 ~ 1.0]",
+          logger.error("Check {}, range between (0.0 ~ 1.0]",
               configChangeThreshold);
         } else {
           publishConfig.setChangeThreshold(changeThreshold);
@@ -220,7 +220,7 @@ public class StartApp {
       if (cli.hasOption(configMaxMergeSize)) {
         int maxMergeSize = Integer.parseInt(cli.getOptionValue(configMaxMergeSize));
         if (maxMergeSize > 5) {
-          log.error("Check {}, range between [1 ~ 5]", configMaxMergeSize);
+          logger.error("Check {}, range between [1 ~ 5]", configMaxMergeSize);
         } else {
           publishConfig.setMaxMergeSize(maxMergeSize);
         }
@@ -229,7 +229,7 @@ public class StartApp {
       if (cli.hasOption(configServerType)) {
         String serverType = cli.getOptionValue(configServerType);
         if (!"aws".equalsIgnoreCase(serverType) && !"aliyun".equalsIgnoreCase(serverType)) {
-          log.error("Check {}, must be aws or aliyun", configServerType);
+          logger.error("Check {}, must be aws or aliyun", configServerType);
           System.exit(0);
         }
         if ("aws".equalsIgnoreCase(serverType)) {
@@ -238,19 +238,19 @@ public class StartApp {
           publishConfig.setDnsType(DnsType.AliYun);
         }
       } else {
-        log.error("Check {}, must not be null", configServerType);
+        logger.error("Check {}, must not be null", configServerType);
         System.exit(0);
       }
 
       if (!cli.hasOption(configAccessId)) {
-        log.error("Check {}, must not be null", configAccessId);
+        logger.error("Check {}, must not be null", configAccessId);
         System.exit(0);
       } else {
         publishConfig.setAccessKeyId(cli.getOptionValue(configAccessId));
       }
 
       if (!cli.hasOption(configAccessSecret)) {
-        log.error("Check {}, must not be null", configAccessSecret);
+        logger.error("Check {}, must not be null", configAccessSecret);
         System.exit(0);
       } else {
         publishConfig.setAccessKeySecret(cli.getOptionValue(configAccessSecret));
@@ -263,7 +263,7 @@ public class StartApp {
         }
 
         if (!cli.hasOption(configAwsRegion)) {
-          log.error("Check {}, must not be null", configAwsRegion);
+          logger.error("Check {}, must not be null", configAwsRegion);
           System.exit(0);
         } else {
           String region = cli.getOptionValue(configAwsRegion);
@@ -271,7 +271,7 @@ public class StartApp {
         }
       } else {
         if (!cli.hasOption(configAliEndPoint)) {
-          log.error("Check {}, must not be null", configAliEndPoint);
+          logger.error("Check {}, must not be null", configAliEndPoint);
           System.exit(0);
         } else {
           publishConfig.setAliDnsEndpoint(cli.getOptionValue(configAliEndPoint));

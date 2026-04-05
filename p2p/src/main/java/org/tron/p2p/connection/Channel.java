@@ -94,18 +94,18 @@ public class Channel {
       baseThrowable = Throwables.getRootCause(baseThrowable);
     } catch (IllegalArgumentException e) {
       baseThrowable = e.getCause();
-      log.warn("Loop in causal chain detected");
+      logger.warn("Loop in causal chain detected");
     }
     SocketAddress address = ctx.channel().remoteAddress();
     if (throwable instanceof ReadTimeoutException
         || throwable instanceof IOException
         || throwable instanceof CorruptedFrameException) {
-      log.warn("Close peer {}, reason: {}", address, throwable.getMessage());
+      logger.warn("Close peer {}, reason: {}", address, throwable.getMessage());
     } else if (baseThrowable instanceof P2pException) {
-      log.warn("Close peer {}, type: ({}), info: {}",
+      logger.warn("Close peer {}, type: ({}), info: {}",
           address, ((P2pException) baseThrowable).getType(), baseThrowable.getMessage());
     } else {
-      log.error("Close peer {}, exception caught", address, throwable);
+      logger.error("Close peer {}, exception caught", address, throwable);
     }
     close();
   }
@@ -137,9 +137,9 @@ public class Channel {
 
   public void send(Message message) {
     if (message.needToLog()) {
-      log.info("Send message to channel {}, {}", inetSocketAddress, message);
+      logger.info("Send message to channel {}, {}", inetSocketAddress, message);
     } else {
-      log.debug("Send message to channel {}, {}", inetSocketAddress, message);
+      logger.debug("Send message to channel {}, {}", inetSocketAddress, message);
     }
     send(message.getSendData());
   }
@@ -148,7 +148,7 @@ public class Channel {
     try {
       byte type = data[0];
       if (isDisconnect) {
-        log.warn("Send to {} failed as channel has closed, message-type:{} ",
+        logger.warn("Send to {} failed as channel has closed, message-type:{} ",
             ctx.channel().remoteAddress(), type);
         return;
       }
@@ -160,14 +160,14 @@ public class Channel {
       ByteBuf byteBuf = Unpooled.wrappedBuffer(data);
       ctx.writeAndFlush(byteBuf).addListener((ChannelFutureListener) future -> {
         if (!future.isSuccess() && !isDisconnect) {
-          log.warn("Send to {} failed, message-type:{}, cause:{}",
+          logger.warn("Send to {} failed, message-type:{}, cause:{}",
               ctx.channel().remoteAddress(), ByteArray.byte2int(type),
               future.cause().getMessage());
         }
       });
       setLastSendTime(System.currentTimeMillis());
     } catch (Exception e) {
-      log.warn("Send message to {} failed, {}", inetSocketAddress, e.getMessage());
+      logger.warn("Send message to {} failed, {}", inetSocketAddress, e.getMessage());
       ctx.channel().close();
     }
   }

@@ -36,7 +36,7 @@ public class PublishService {
         publish = getPublish(publishConfig);
         publish.testConnect();
       } catch (Exception e) {
-        log.error("Init PublishService failed", e);
+        logger.error("Init PublishService failed", e);
         return;
       }
 
@@ -71,10 +71,10 @@ public class PublishService {
       Tree tree = new Tree();
       List<String> nodes = getNodes(config);
       tree.makeTree(1, nodes, config.getKnownTreeUrls(), config.getDnsPrivate());
-      log.info("Try to publish node count:{}", tree.getDnsNodes().size());
+      logger.info("Try to publish node count:{}", tree.getDnsNodes().size());
       publish.deploy(config.getDnsDomain(), tree);
     } catch (Exception e) {
-      log.error("Failed to publish dns", e);
+      logger.error("Failed to publish dns", e);
     }
   }
 
@@ -105,19 +105,19 @@ public class PublishService {
 
   private boolean checkConfig(boolean supportV4, PublishConfig config) {
     if (!config.isDnsPublishEnable()) {
-      log.info("Dns publish service is disable");
+      logger.info("Dns publish service is disable");
       return false;
     }
     if (!supportV4) {
-      log.error("Must have IP v4 connection to publish dns service");
+      logger.error("Must have IP v4 connection to publish dns service");
       return false;
     }
     if (config.getDnsType() == null) {
-      log.error("The dns server type must be specified when enabling the dns publishing service");
+      logger.error("The dns server type must be specified when enabling the dns publishing service");
       return false;
     }
     if (StringUtils.isEmpty(config.getDnsDomain())) {
-      log.error("The dns domain must be specified when enabling the dns publishing service");
+      logger.error("The dns domain must be specified when enabling the dns publishing service");
       return false;
     }
     if (config.getDnsType() == DnsType.AliYun &&
@@ -125,14 +125,14 @@ public class PublishService {
             StringUtils.isEmpty(config.getAccessKeySecret()) ||
             StringUtils.isEmpty(config.getAliDnsEndpoint())
         )) {
-      log.error("The configuration items related to the Aliyun dns server cannot be empty");
+      logger.error("The configuration items related to the Aliyun dns server cannot be empty");
       return false;
     }
     if (config.getDnsType() == DnsType.AwsRoute53 &&
         (StringUtils.isEmpty(config.getAccessKeyId()) ||
             StringUtils.isEmpty(config.getAccessKeySecret()) ||
             config.getAwsRegion() == null)) {
-      log.error("The configuration items related to the AwsRoute53 dns server cannot be empty");
+      logger.error("The configuration items related to the AwsRoute53 dns server cannot be empty");
       return false;
     }
     return true;

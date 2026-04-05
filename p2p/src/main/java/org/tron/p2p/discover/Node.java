@@ -74,14 +74,14 @@ public class Node implements Serializable, Cloneable {
 
   public void updateHostV4(String hostV4) {
     if (StringUtils.isEmpty(this.hostV4) && StringUtils.isNotEmpty(hostV4)) {
-      log.info("update hostV4:{} with hostV6:{}", hostV4, this.hostV6);
+      logger.info("update hostV4:{} with hostV6:{}", hostV4, this.hostV6);
       this.hostV4 = hostV4;
     }
   }
 
   public void updateHostV6(String hostV6) {
     if (StringUtils.isEmpty(this.hostV6) && StringUtils.isNotEmpty(hostV6)) {
-      log.info("update hostV6:{} with hostV4:{}", hostV6, this.hostV4);
+      logger.info("update hostV6:{} with hostV4:{}", hostV6, this.hostV4);
       this.hostV6 = hostV6;
     }
   }

@@ -87,7 +87,7 @@ public class ChannelManager {
 
   public static void notifyDisconnect(Channel channel) {
     if (channel.getInetSocketAddress() == null) {
-      log.warn("Notify Disconnect peer has no address.");
+      logger.warn("Notify Disconnect peer has no address.");
       return;
     }
     channels.remove(channel.getInetSocketAddress());
@@ -114,18 +114,18 @@ public class ChannelManager {
       InetAddress inetAddress = channel.getInetAddress();
       if (bannedNodes.getIfPresent(inetAddress) != null
           && bannedNodes.getIfPresent(inetAddress) > System.currentTimeMillis()) {
-        log.info("Peer {} recently disconnected", channel);
+        logger.info("Peer {} recently disconnected", channel);
         return DisconnectCode.TIME_BANNED;
       }
 
       if (channels.size() >= Parameter.p2pConfig.getMaxConnections()) {
-        log.info("Too many peers, disconnected with {}", channel);
+        logger.info("Too many peers, disconnected with {}", channel);
         return DisconnectCode.TOO_MANY_PEERS;
       }
 
       int num = getConnectionNum(channel.getInetAddress());
       if (num >= Parameter.p2pConfig.getMaxConnectionsWithSameIp()) {
-        log.info("Max connection with same ip {}", channel);
+        logger.info("Max connection with same ip {}", channel);
         return DisconnectCode.MAX_CONNECTION_WITH_SAME_IP;
       }
     }
@@ -136,7 +136,7 @@ public class ChannelManager {
           if (c.getStartTime() > channel.getStartTime()) {
             c.close();
           } else {
-            log.info("Duplicate peer {}, exist peer {}", channel, c);
+            logger.info("Duplicate peer {}, exist peer {}", channel, c);
             return DisconnectCode.DUPLICATE_PEER;
           }
         }
@@ -145,7 +145,7 @@ public class ChannelManager {
 
     channels.put(channel.getInetSocketAddress(), channel);
 
-    log.info("Add peer {}, total channels: {}", channel.getInetSocketAddress(), channels.size());
+    logger.info("Add peer {}, total channels: {}", channel.getInetSocketAddress(), channels.size());
     return DisconnectCode.NORMAL;
   }
 
@@ -175,7 +175,7 @@ public class ChannelManager {
   }
 
   public static void logDisconnectReason(Channel channel, DisconnectReason reason) {
-    log.info("Try to close channel: {}, reason: {}", channel.getInetSocketAddress(), reason.name());
+    logger.info("Try to close channel: {}, reason: {}", channel.getInetSocketAddress(), reason.name());
   }
 
   public static void banNode(InetAddress inetAddress, Long banTime) {
@@ -211,9 +211,9 @@ public class ChannelManager {
     Message message = Message.parse(data);
 
     if (message.needToLog()) {
-      log.info("Receive message from channel: {}, {}", channel.getInetSocketAddress(), message);
+      logger.info("Receive message from channel: {}, {}", channel.getInetSocketAddress(), message);
     } else {
-      log.debug("Receive message from channel {}, {}", channel.getInetSocketAddress(), message);
+      logger.debug("Receive message from channel {}, {}", channel.getInetSocketAddress(), message);
     }
 
     switch (message.getType()) {
@@ -264,7 +264,7 @@ public class ChannelManager {
   public static synchronized void updateNodeId(Channel channel, String nodeId) {
     channel.setNodeId(nodeId);
     if (nodeId.equals(Hex.toHexString(Parameter.p2pConfig.getNodeID()))) {
-      log.warn("Channel {} is myself", channel.getInetSocketAddress());
+      logger.warn("Channel {} is myself", channel.getInetSocketAddress());
       channel.send(new P2pDisconnectMessage(DisconnectReason.DUPLICATE_PEER));
       channel.close();
       return;
@@ -282,11 +282,11 @@ public class ChannelManager {
     Channel c1 = list.get(0);
     Channel c2 = list.get(1);
     if (c1.getStartTime() > c2.getStartTime()) {
-      log.info("Close channel {}, other channel {} is earlier", c1, c2);
+      logger.info("Close channel {}, other channel {} is earlier", c1, c2);
       c1.send(new P2pDisconnectMessage(DisconnectReason.DUPLICATE_PEER));
       c1.close();
     } else {
-      log.info("Close channel {}, other channel {} is earlier", c2, c1);
+      logger.info("Close channel {}, other channel {} is earlier", c2, c1);
       c2.send(new P2pDisconnectMessage(DisconnectReason.DUPLICATE_PEER));
       c2.close();
     }

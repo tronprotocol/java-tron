@@ -54,10 +54,10 @@ public class AliClient implements Publish {
     try {
       Map<String, DescribeDomainRecordsResponseBodyDomainRecordsRecord> existing = collectRecords(
           domainName);
-      log.info("Find {} TXT records, {} nodes for {}", existing.size(), serverNodes.size(),
+      logger.info("Find {} TXT records, {} nodes for {}", existing.size(), serverNodes.size(),
           domainName);
       String represent = LinkEntry.buildRepresent(t.getBase32PublicKey(), domainName);
-      log.info("Trying to publish {}", represent);
+      logger.info("Trying to publish {}", represent);
       t.setSeq(this.lastSeq + 1);
       t.sign(); //seq changed, wo need to sign again
       Map<String, String> records = t.toTXT(null);
@@ -74,13 +74,13 @@ public class AliClient implements Publish {
       if (serverNodes.isEmpty()
           || (addNodeSize + deleteNodeSize) / (double) serverNodes.size() >= changeThreshold) {
         String comment = String.format("Tree update of %s at seq %d", domainName, t.getSeq());
-        log.info(comment);
+        logger.info(comment);
         submitChanges(domainName, records, existing);
       } else {
         NumberFormat nf = NumberFormat.getNumberInstance();
         nf.setMaximumFractionDigits(4);
         double changePercent = (addNodeSize + deleteNodeSize) / (double) serverNodes.size();
-        log.info(
+        logger.info(
             "Sum of node add & delete percent {} is below changeThreshold {}, skip this changes",
             nf.format(changePercent), changeThreshold);
       }
@@ -132,7 +132,7 @@ public class AliClient implements Publish {
                 collectServerNodes.addAll(dnsNodes);
               } catch (DnsException e) {
                 //ignore
-                log.error("Parse nodeEntry failed: {}", e.getMessage());
+                logger.error("Parse nodeEntry failed: {}", e.getMessage());
               }
             }
           }
@@ -145,7 +145,7 @@ public class AliClient implements Publish {
         }
       }
     } catch (Exception e) {
-      log.warn("Failed to collect domain records, error msg: {}", e.getMessage());
+      logger.warn("Failed to collect domain records, error msg: {}", e.getMessage());
       throw e;
     }
 
@@ -192,7 +192,7 @@ public class AliClient implements Publish {
         deleteCount++;
       }
     }
-    log.info("Published successfully, add count:{}, update count:{}, delete count:{}",
+    logger.info("Published successfully, add count:{}, update count:{}, delete count:{}",
         addCount, updateCount, deleteCount);
   }
 
@@ -276,7 +276,7 @@ public class AliClient implements Publish {
         }
       }
     } catch (Exception e) {
-      log.warn("Failed to get record id, error msg: {}", e.getMessage());
+      logger.warn("Failed to get record id, error msg: {}", e.getMessage());
     }
     return recId;
   }
@@ -306,7 +306,7 @@ public class AliClient implements Publish {
         recId = response.getBody().getRecordId();
       }
     } catch (Exception e) {
-      log.warn("Failed to update or add domain record, error mag: {}", e.getMessage());
+      logger.warn("Failed to update or add domain record, error mag: {}", e.getMessage());
     }
 
     return recId;
@@ -324,7 +324,7 @@ public class AliClient implements Publish {
         }
       }
     } catch (Exception e) {
-      log.warn("Failed to delete domain record, domain name: {}, RR: {}, error msg: {}",
+      logger.warn("Failed to delete domain record, domain name: {}, RR: {}, error msg: {}",
           domainName, RR, e.getMessage());
       return false;
     }

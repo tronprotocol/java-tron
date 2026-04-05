@@ -1,5 +1,8 @@
 apply plugin: 'com.google.protobuf'
 
+// TODO: enable checkstyle after code style alignment
+// apply plugin: 'checkstyle'
+
 def protobufVersion = '3.25.8'
 def grpcVersion = '1.75.0'
 

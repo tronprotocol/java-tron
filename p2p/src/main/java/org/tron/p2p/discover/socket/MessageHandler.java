@@ -30,7 +30,7 @@ public class MessageHandler extends SimpleChannelInboundHandler<UdpEvent>
 
   @Override
   public void channelRead0(ChannelHandlerContext ctx, UdpEvent udpEvent) {
-    log.debug("Rcv udp msg type {}, len {} from {} ",
+    logger.debug("Rcv udp msg type {}, len {} from {} ",
         udpEvent.getMessage().getType(),
         udpEvent.getMessage().getSendData().length,
         udpEvent.getAddress());
@@ -39,7 +39,7 @@ public class MessageHandler extends SimpleChannelInboundHandler<UdpEvent>
 
   @Override
   public void accept(UdpEvent udpEvent) {
-    log.debug("Send udp msg type {}, len {} to {} ",
+    logger.debug("Send udp msg type {}, len {} to {} ",
         udpEvent.getMessage().getType(),
         udpEvent.getMessage().getSendData().length,
         udpEvent.getAddress());
@@ -60,7 +60,7 @@ public class MessageHandler extends SimpleChannelInboundHandler<UdpEvent>
 
   @Override
   public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-    log.warn("Exception caught in udp message handler, {} {}",
+    logger.warn("Exception caught in udp message handler, {} {}",
         ctx.channel().remoteAddress(), cause.getMessage());
     ctx.close();
   }

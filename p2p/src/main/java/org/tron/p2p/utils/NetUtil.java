@@ -112,7 +112,7 @@ public class NetUtil {
       }
       return ip;
     } catch (Exception e) {
-      log.warn("Fail to get {} by {}, cause:{}",
+      logger.warn("Fail to get {} by {}, cause:{}",
           Constant.ipV4Urls.contains(url) ? "ipv4" : "ipv6", url, e.getMessage());
       return null;
     } finally {
@@ -131,7 +131,7 @@ public class NetUtil {
     try {
       networkInterfaces = NetworkInterface.getNetworkInterfaces();
     } catch (SocketException e) {
-      log.warn("GetOuterIPv6Address failed", e);
+      logger.warn("GetOuterIPv6Address failed", e);
       return null;
     }
     while (networkInterfaces.hasMoreElements()) {
@@ -157,7 +157,7 @@ public class NetUtil {
     try {
       networkInterfaces = NetworkInterface.getNetworkInterfaces();
     } catch (SocketException e) {
-      log.warn("GetAllLocalAddress failed", e);
+      logger.warn("GetAllLocalAddress failed", e);
       return localIpSet;
     }
     while (networkInterfaces.hasMoreElements()) {
@@ -183,7 +183,7 @@ public class NetUtil {
   public static String getExternalIpV4() {
     long t1 = System.currentTimeMillis();
     String ipV4 = getIp(Constant.ipV4Urls, true);
-    log.debug("GetExternalIpV4 cost {} ms", System.currentTimeMillis() - t1);
+    logger.debug("GetExternalIpV4 cost {} ms", System.currentTimeMillis() - t1);
     return ipV4;
   }
 
@@ -193,7 +193,7 @@ public class NetUtil {
     if (null == ipV6) {
       ipV6 = getOuterIPv6Address();
     }
-    log.debug("GetExternalIpV6 cost {} ms", System.currentTimeMillis() - t1);
+    logger.debug("GetExternalIpV6 cost {} ms", System.currentTimeMillis() - t1);
     return ipV6;
   }
 
@@ -251,7 +251,7 @@ public class NetUtil {
     try {
       networkInterfaces = NetworkInterface.getNetworkInterfaces();
     } catch (SocketException e) {
-      log.warn("Can't get lan IP. Fall back to {}", IPADDRESS_LOCALHOST, e);
+      logger.warn("Can't get lan IP. Fall back to {}", IPADDRESS_LOCALHOST, e);
       return IPADDRESS_LOCALHOST;
     }
     while (networkInterfaces.hasMoreElements()) {
@@ -274,7 +274,7 @@ public class NetUtil {
         }
       }
     }
-    log.warn("Can't get lan IP. Fall back to {}", IPADDRESS_LOCALHOST);
+    logger.warn("Can't get lan IP. Fall back to {}", IPADDRESS_LOCALHOST);
     return IPADDRESS_LOCALHOST;
   }
 }

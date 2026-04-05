@@ -19,7 +19,7 @@ public class BranchEntry implements Entry {
   public static BranchEntry parseEntry(String e) {
     String content = e.substring(branchPrefix.length());
     if (StringUtils.isEmpty(content)) {
-      log.info("children size is 0, e:[{}]", e);
+      logger.info("children size is 0, e:[{}]", e);
       return new BranchEntry(new String[0]);
     } else {
       return new BranchEntry(content.split(splitSymbol));

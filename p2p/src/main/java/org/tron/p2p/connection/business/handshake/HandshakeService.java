@@ -27,7 +27,7 @@ public class HandshakeService implements MessageProcess {
     HelloMessage msg = (HelloMessage) message;
 
     if (channel.isFinishHandshake()) {
-      log.warn("Close channel {}, handshake is finished", channel.getInetSocketAddress());
+      logger.warn("Close channel {}, handshake is finished", channel.getInetSocketAddress());
       channel.send(new P2pDisconnectMessage(DisconnectReason.DUP_HANDSHAKE));
       channel.close();
       return;
@@ -55,7 +55,7 @@ public class HandshakeService implements MessageProcess {
           || (msg.getNetworkId() != networkId && msg.getVersion() != networkId)) {
         DisconnectCode disconnectCode = DisconnectCode.forNumber(msg.getCode());
         //v0.1 have version, v0.2 both have version and networkId
-        log.info("Handshake failed {}, code: {}, reason: {}, networkId: {}, version: {}",
+        logger.info("Handshake failed {}, code: {}, reason: {}, networkId: {}, version: {}",
             channel.getInetSocketAddress(),
             msg.getCode(),
             disconnectCode.name(),
@@ -68,7 +68,7 @@ public class HandshakeService implements MessageProcess {
     } else {
 
       if (msg.getNetworkId() != networkId) {
-        log.info("Peer {} different network id, peer->{}, me->{}",
+        logger.info("Peer {} different network id, peer->{}, me->{}",
             channel.getInetSocketAddress(), msg.getNetworkId(), networkId);
         sendHelloMsg(channel, DisconnectCode.DIFFERENT_VERSION, msg.getTimestamp());
         logDisconnectReason(channel, DisconnectReason.DIFFERENT_VERSION);

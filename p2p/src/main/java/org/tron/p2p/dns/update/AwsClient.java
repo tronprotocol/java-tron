@@ -90,7 +90,7 @@ public class AwsClient implements Publish {
   }
 
   private String findZoneID(String domain) {
-    log.info("Finding Route53 Zone ID for {}", domain);
+    logger.info("Finding Route53 Zone ID for {}", domain);
     ListHostedZonesByNameRequest.Builder request = ListHostedZonesByNameRequest.builder();
     while (true) {
       ListHostedZonesByNameResponse response = route53Client.listHostedZonesByName(request.build());
@@ -128,9 +128,9 @@ public class AwsClient implements Publish {
     checkZone(domain);
 
     Map<String, RecordSet> existing = collectRecords(domain);
-    log.info("Find {} TXT records, {} nodes for {}", existing.size(), serverNodes.size(), domain);
+    logger.info("Find {} TXT records, {} nodes for {}", existing.size(), serverNodes.size(), domain);
     String represent = LinkEntry.buildRepresent(tree.getBase32PublicKey(), domain);
-    log.info("Trying to publish {}", represent);
+    logger.info("Trying to publish {}", represent);
 
     tree.setSeq(this.lastSeq + 1);
     tree.sign(); //seq changed, wo need to sign again
@@ -150,13 +150,13 @@ public class AwsClient implements Publish {
     if (serverNodes.isEmpty()
         || (addNodeSize + deleteNodeSize) / (double) serverNodes.size() >= changeThreshold) {
       String comment = String.format("Tree update of %s at seq %d", domain, tree.getSeq());
-      log.info(comment);
+      logger.info(comment);
       submitChanges(changes, comment);
     } else {
       NumberFormat nf = NumberFormat.getNumberInstance();
       nf.setMaximumFractionDigits(4);
       double changePercent = (addNodeSize + deleteNodeSize) / (double) serverNodes.size();
-      log.info("Sum of node add & delete percent {} is below changeThreshold {}, skip this changes",
+      logger.info("Sum of node add & delete percent {} is below changeThreshold {}, skip this changes",
           nf.format(changePercent), changeThreshold);
     }
     serverNodes.clear();
@@ -168,7 +168,7 @@ public class AwsClient implements Publish {
     checkZone(rootDomain);
 
     Map<String, RecordSet> existing = collectRecords(rootDomain);
-    log.info("Find {} TXT records for {}", existing.size(), rootDomain);
+    logger.info("Find {} TXT records for {}", existing.size(), rootDomain);
 
     List<Change> changes = makeDeletionChanges(new HashMap<>(), existing);
 
@@ -188,7 +188,7 @@ public class AwsClient implements Publish {
     String rootContent = null;
     Set<DnsNode> collectServerNodes = new HashSet<>();
     while (true) {
-      log.info("Loading existing TXT records from name:{} zoneId:{} page:{}", rootDomain, zoneId,
+      logger.info("Loading existing TXT records from name:{} zoneId:{} page:{}", rootDomain, zoneId,
           page);
       ListResourceRecordSetsResponse response = route53Client.listResourceRecordSets(
           request.build());
@@ -221,10 +221,10 @@ public class AwsClient implements Publish {
             collectServerNodes.addAll(dnsNodes);
           } catch (DnsException e) {
             //ignore
-            log.error("Parse nodeEntry failed: {}", e.getMessage());
+            logger.error("Parse nodeEntry failed: {}", e.getMessage());
           }
         }
-        log.info("Find name: {}", name);
+        logger.info("Find name: {}", name);
       }
 
       if (Boolean.FALSE.equals(response.isTruncated())) {
@@ -253,7 +253,7 @@ public class AwsClient implements Publish {
   // submits the given DNS changes to Route53.
   public void submitChanges(List<Change> changes, String comment) {
     if (changes.isEmpty()) {
-      log.info("No DNS changes needed");
+      logger.info("No DNS changes needed");
       return;
     }
 
@@ -262,7 +262,7 @@ public class AwsClient implements Publish {
 
     ChangeResourceRecordSetsResponse[] responses = new ChangeResourceRecordSetsResponse[batchChanges.size()];
     for (int i = 0; i < batchChanges.size(); i++) {
-      log.info("Submit {}/{} changes to Route53", i + 1, batchChanges.size());
+      logger.info("Submit {}/{} changes to Route53", i + 1, batchChanges.size());
 
       ChangeBatch.Builder builder = ChangeBatch.builder();
       builder.changes(batchChanges.get(i));
@@ -277,7 +277,7 @@ public class AwsClient implements Publish {
 
     // Wait for all change batches to propagate.
     for (ChangeResourceRecordSetsResponse response : responses) {
-      log.info("Waiting for change request {}", response.changeInfo().id());
+      logger.info("Waiting for change request {}", response.changeInfo().id());
 
       GetChangeRequest.Builder request = GetChangeRequest.builder();
       request.id(response.changeInfo().id());
@@ -295,7 +295,7 @@ public class AwsClient implements Publish {
         }
       }
     }
-    log.info("Submit {} changes complete", changes.size());
+    logger.info("Submit {} changes complete", changes.size());
   }
 
   // computeChanges creates DNS changes for the given set of DNS discovery records.
@@ -315,7 +315,7 @@ public class AwsClient implements Publish {
       long ttl = path.equalsIgnoreCase(domain) ? rootTTL : treeNodeTTL;
 
       if (!existing.containsKey(path)) {
-        log.info("Create {} = {}", path, value);
+        logger.info("Create {} = {}", path, value);
         Change change = newTXTChange(ChangeAction.CREATE, path, ttl, newValue);
         changes.add(change);
       } else {
@@ -323,12 +323,12 @@ public class AwsClient implements Publish {
         String preValue = StringUtils.join(recordSet.values, "");
 
         if (!preValue.equalsIgnoreCase(newValue) || recordSet.ttl != ttl) {
-          log.info("Updating {} from [{}] to [{}]", path, preValue, newValue);
+          logger.info("Updating {} from [{}] to [{}]", path, preValue, newValue);
           if (path.equalsIgnoreCase(domain)) {
             try {
               RootEntry oldRoot = RootEntry.parseEntry(StringUtils.strip(preValue, symbol));
               RootEntry newRoot = RootEntry.parseEntry(StringUtils.strip(newValue, symbol));
-              log.info("Updating root from [{}] to [{}]", oldRoot.getDnsRoot(),
+              logger.info("Updating root from [{}] to [{}]", oldRoot.getDnsRoot(),
                   newRoot.getDnsRoot());
             } catch (DnsException e) {
               //ignore
@@ -355,7 +355,7 @@ public class AwsClient implements Publish {
       String path = entry.getKey();
       RecordSet recordSet = entry.getValue();
       if (!keeps.containsKey(path)) {
-        log.info("Delete {} = {}", path, StringUtils.join(existing.get(path).values, ""));
+        logger.info("Delete {} = {}", path, StringUtils.join(existing.get(path).values, ""));
         Change change = newTXTChange(ChangeAction.DELETE, path, recordSet.ttl, recordSet.values);
         changes.add(change);
       }

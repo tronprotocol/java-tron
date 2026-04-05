@@ -77,7 +77,7 @@ public class ConnPoolService extends P2pEventHandler {
       try {
         connect(false);
       } catch (Exception t) {
-        log.error("Exception in poolLoopExecutor worker", t);
+        logger.error("Exception in poolLoopExecutor worker", t);
       }
     }, 200, 3600, TimeUnit.MILLISECONDS);
 
@@ -86,7 +86,7 @@ public class ConnPoolService extends P2pEventHandler {
         try {
           check();
         } catch (Exception t) {
-          log.error("Exception in disconnectExecutor worker", t);
+          logger.error("Exception in disconnectExecutor worker", t);
         }
       }, 30, 30, TimeUnit.SECONDS);
     }
@@ -189,12 +189,12 @@ public class ConnPoolService extends P2pEventHandler {
       connectNodes.addAll(newNodes);
     }
 
-    log.debug("Lack size:{}, connectNodes size:{}, is disconnect trigger: {}",
+    logger.debug("Lack size:{}, connectNodes size:{}, is disconnect trigger: {}",
         size, connectNodes.size(), isFilterActiveNodes);
     //establish tcp connection with chose nodes by peerClient
     {
       connectNodes.forEach(n -> {
-        log.info("Connect to peer {}", n.getPreferInetSocketAddress());
+        logger.info("Connect to peer {}", n.getPreferInetSocketAddress());
         peerClient.connectAsync(n, false);
         peerClientCache.put(n.getPreferInetSocketAddress().getAddress(),
             System.currentTimeMillis());
@@ -254,14 +254,14 @@ public class ConnPoolService extends P2pEventHandler {
     if (!peers.isEmpty()) {
       List<Channel> list = new ArrayList<>(peers);
       Channel peer = list.get(new Random().nextInt(peers.size()));
-      log.info("Disconnect with peer randomly: {}", peer);
+      logger.info("Disconnect with peer randomly: {}", peer);
       peer.send(new P2pDisconnectMessage(DisconnectReason.RANDOM_ELIMINATION));
       peer.close();
     }
   }
 
   private synchronized void logActivePeers() {
-    log.info("Peer stats: channels {}, activePeers {}, active {}, passive {}",
+    logger.info("Peer stats: channels {}, activePeers {}, active {}, passive {}",
         ChannelManager.getChannels().size(), activePeers.size(), activePeersCount.get(),
         passivePeersCount.get());
   }
@@ -272,7 +272,7 @@ public class ConnPoolService extends P2pEventHandler {
     }
     connectingPeersCount.decrementAndGet();
     if (poolLoopExecutor.getQueue().size() >= Parameter.CONN_MAX_QUEUE_SIZE) {
-      log.warn("ConnPool task' size is greater than or equal to {}", Parameter.CONN_MAX_QUEUE_SIZE);
+      logger.warn("ConnPool task' size is greater than or equal to {}", Parameter.CONN_MAX_QUEUE_SIZE);
       return;
     }
     try {
@@ -281,12 +281,12 @@ public class ConnPoolService extends P2pEventHandler {
           try {
             connect(true);
           } catch (Exception t) {
-            log.error("Exception in poolLoopExecutor worker", t);
+            logger.error("Exception in poolLoopExecutor worker", t);
           }
         });
       }
     } catch (Exception e) {
-      log.warn("Submit task failed, message:{}", e.getMessage());
+      logger.warn("Submit task failed, message:{}", e.getMessage());
     }
   }
 
@@ -333,7 +333,7 @@ public class ConnPoolService extends P2pEventHandler {
       poolLoopExecutor.shutdownNow();
       disconnectExecutor.shutdownNow();
     } catch (Exception e) {
-      log.warn("Problems shutting down executor", e);
+      logger.warn("Problems shutting down executor", e);
     }
   }
 }
