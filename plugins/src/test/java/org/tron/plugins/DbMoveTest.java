@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Paths;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
@@ -18,8 +17,6 @@ import picocli.CommandLine;
 @Slf4j
 public class DbMoveTest {
 
-  private static final String OUTPUT_DIRECTORY = "output-directory-toolkit";
-
   @Rule
   public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
@@ -31,30 +28,6 @@ public class DbMoveTest {
     DbTool.getDB(path, ACCOUNT, dbType).close();
     DbTool.getDB(path, DBUtils.MARKET_PAIR_PRICE_TO_ORDER, dbType).close();
     DbTool.getDB(path, TRANS, dbType).close();
-
-  }
-
-  @After
-  public void destroy() {
-    deleteDir(new File(OUTPUT_DIRECTORY));
-  }
-
-  /**
-   * delete directory.
-   */
-  private static boolean deleteDir(File dir) {
-    if (dir.isDirectory()) {
-      String[] children = dir.list();
-      assert children != null;
-      for (String child : children) {
-        boolean success = deleteDir(new File(dir, child));
-        if (!success) {
-          logger.warn("can't delete dir:" + dir);
-          return false;
-        }
-      }
-    }
-    return dir.delete();
   }
 
   private static String getConfig(String config) {

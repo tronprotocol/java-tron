@@ -90,7 +90,6 @@ public class DbLiteTest {
   public void testTools(String dbType, int checkpointVersion)
       throws InterruptedException, IOException {
     logger.info("dbType {}, checkpointVersion {}", dbType, checkpointVersion);
-    dbPath = String.format("%s_%s_%d", dbPath, dbType, System.currentTimeMillis());
     init(dbType);
     final String[] argsForSnapshot =
         new String[] {"-o", "split", "-t", "snapshot", "--fn-data-path",
@@ -166,7 +165,8 @@ public class DbLiteTest {
       try {
         Thread.sleep(sleepOnce);
       } catch (InterruptedException e) {
-        e.printStackTrace();
+        Thread.currentThread().interrupt();
+        return;
       }
       if ((runTime += sleepOnce) > during) {
         return;
