@@ -57,7 +57,7 @@ public class Tree {
     List<Entry> subtrees = new ArrayList<>();
     while (!leafs.isEmpty()) {
       int total = leafs.size();
-      int n = Math.min(MaxChildren, total);
+      int n = StrictMath.min(MaxChildren, total);
       Entry branch = build(leafs.subList(0, n));
 
       leafs = leafs.subList(n, total);

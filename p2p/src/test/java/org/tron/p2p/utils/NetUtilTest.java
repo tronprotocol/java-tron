@@ -1,12 +1,19 @@
 package org.tron.p2p.utils;
 
+import static org.mockito.Mockito.mockStatic;
+
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
-import java.net.Socket;
+import java.net.URL;
+import java.net.URLConnection;
+import java.nio.charset.StandardCharsets;
 import org.junit.Assert;
 import org.junit.Test;
-import org.tron.p2p.base.Constant;
+import org.mockito.MockedConstruction;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 import org.tron.p2p.discover.Node;
 import org.tron.p2p.protos.Discover;
 
@@ -49,71 +56,105 @@ public class NetUtilTest {
 
   @Test
   public void testGetNode() {
-    Discover.Endpoint endpoint = Discover.Endpoint.newBuilder().setPort(100).build();
+    Discover.Endpoint endpoint =
+        Discover.Endpoint.newBuilder().setPort(100).build();
     Node node = NetUtil.getNode(endpoint);
     Assert.assertEquals(100, node.getPort());
   }
 
   @Test
-  public void testExternalIp() {
-    String ip = NetUtil.getExternalIpV4();
-    Assert.assertFalse(ip.startsWith("10."));
-    Assert.assertFalse(ip.startsWith("192.168."));
-    Assert.assertFalse(ip.startsWith("172.16."));
-    Assert.assertFalse(ip.startsWith("172.17."));
-    Assert.assertFalse(ip.startsWith("172.18."));
-    Assert.assertFalse(ip.startsWith("172.19."));
-    Assert.assertFalse(ip.startsWith("172.20."));
-    Assert.assertFalse(ip.startsWith("172.21."));
-    Assert.assertFalse(ip.startsWith("172.22."));
-    Assert.assertFalse(ip.startsWith("172.23."));
-    Assert.assertFalse(ip.startsWith("172.24."));
-    Assert.assertFalse(ip.startsWith("172.25."));
-    Assert.assertFalse(ip.startsWith("172.26."));
-    Assert.assertFalse(ip.startsWith("172.27."));
-    Assert.assertFalse(ip.startsWith("172.28."));
-    Assert.assertFalse(ip.startsWith("172.29."));
-    Assert.assertFalse(ip.startsWith("172.30."));
-    Assert.assertFalse(ip.startsWith("172.31."));
+  public void testGetExternalIpWithMock() throws Exception {
+    String fakeIp = "203.0.113.42";
+    URLConnection mockConn = Mockito.mock(URLConnection.class);
+    Mockito.when(mockConn.getInputStream())
+        .thenReturn(new ByteArrayInputStream(
+            fakeIp.getBytes(StandardCharsets.UTF_8)));
+
+    try (MockedConstruction<URL> urlMock = Mockito.mockConstruction(URL.class,
+        (mock, context) -> Mockito.when(mock.openConnection())
+            .thenReturn(mockConn))) {
+
+      Method method = NetUtil.class.getDeclaredMethod(
+          "getExternalIp", String.class, boolean.class);
+      method.setAccessible(true);
+
+      String ip = (String) method.invoke(null,
+          "http://mock-service.test", true);
+      Assert.assertEquals(fakeIp, ip);
+    }
   }
 
   @Test
-  public void testGetIP() {
-    // notice: please check that you only have one externalIP
-    String ip1 = null;
-    String ip2 = null;
-    String ip3 = null;
-    try {
-      Method method = NetUtil.class.getDeclaredMethod("getExternalIp", String.class, boolean.class);
+  public void testGetExternalIpReturnsNullOnFailure() throws Exception {
+    URLConnection mockConn = Mockito.mock(URLConnection.class);
+    Mockito.when(mockConn.getInputStream())
+        .thenThrow(new IOException("Connection refused"));
+
+    try (MockedConstruction<URL> urlMock = Mockito.mockConstruction(URL.class,
+        (mock, context) -> Mockito.when(mock.openConnection())
+            .thenReturn(mockConn))) {
+
+      Method method = NetUtil.class.getDeclaredMethod(
+          "getExternalIp", String.class, boolean.class);
       method.setAccessible(true);
-      ip1 = (String) method.invoke(NetUtil.class, Constant.ipV4Urls.get(0), true);
-      ip2 = (String) method.invoke(NetUtil.class, Constant.ipV4Urls.get(1), true);
-      ip3 = (String) method.invoke(NetUtil.class, Constant.ipV4Urls.get(2), true);
-    } catch (Exception e) {
-      Assert.fail();
+
+      String ip = (String) method.invoke(null,
+          "http://unreachable.test", true);
+      Assert.assertNull(ip);
     }
-    String ip4 = NetUtil.getExternalIpV4();
-    Assert.assertEquals(ip1, ip4);
-    Assert.assertEquals(ip2, ip4);
-    Assert.assertEquals(ip3, ip4);
   }
 
-  private String getLanIP2() {
-    String lanIP;
-    try (Socket s = new Socket("www.baidu.com", 80)) {
-      lanIP = s.getLocalAddress().getHostAddress();
-    } catch (IOException e) {
-      lanIP = "127.0.0.1";
+  @Test
+  public void testGetExternalIpRejectsInvalidIp() throws Exception {
+    String invalidIp = "not-an-ip";
+    URLConnection mockConn = Mockito.mock(URLConnection.class);
+    Mockito.when(mockConn.getInputStream())
+        .thenReturn(new ByteArrayInputStream(
+            invalidIp.getBytes(StandardCharsets.UTF_8)));
+
+    try (MockedConstruction<URL> urlMock = Mockito.mockConstruction(URL.class,
+        (mock, context) -> Mockito.when(mock.openConnection())
+            .thenReturn(mockConn))) {
+
+      Method method = NetUtil.class.getDeclaredMethod(
+          "getExternalIp", String.class, boolean.class);
+      method.setAccessible(true);
+
+      String ip = (String) method.invoke(null,
+          "http://bad-service.test", true);
+      Assert.assertNull(ip);
     }
-    return lanIP;
+  }
+
+  @Test
+  public void testGetExternalIpRejectsEmptyResponse() throws Exception {
+    URLConnection mockConn = Mockito.mock(URLConnection.class);
+    Mockito.when(mockConn.getInputStream())
+        .thenReturn(new ByteArrayInputStream(
+            "".getBytes(StandardCharsets.UTF_8)));
+
+    try (MockedConstruction<URL> urlMock = Mockito.mockConstruction(URL.class,
+        (mock, context) -> Mockito.when(mock.openConnection())
+            .thenReturn(mockConn))) {
+
+      Method method = NetUtil.class.getDeclaredMethod(
+          "getExternalIp", String.class, boolean.class);
+      method.setAccessible(true);
+
+      String ip = (String) method.invoke(null,
+          "http://empty-service.test", true);
+      Assert.assertNull(ip);
+    }
   }
 
   @Test
   public void testGetLanIP() {
     String lanIpv4 = NetUtil.getLanIP();
     Assert.assertNotNull(lanIpv4);
-    String lanIpv4Old = getLanIP2();
-    Assert.assertEquals(lanIpv4, lanIpv4Old);
+    // verify it's a valid IPv4 format (not relying on external network)
+    Assert.assertTrue(
+        "LAN IP should be valid IPv4 or loopback",
+        NetUtil.validIpV4(lanIpv4) || "127.0.0.1".equals(lanIpv4));
   }
 
   @Test
@@ -121,41 +162,49 @@ public class NetUtilTest {
     String std = "fe80:0:0:0:204:61ff:fe9d:f156";
     int randomPort = 10001;
     String ip1 =
-        new InetSocketAddress("fe80:0000:0000:0000:0204:61ff:fe9d:f156", randomPort)
+        new InetSocketAddress(
+                "fe80:0000:0000:0000:0204:61ff:fe9d:f156", randomPort)
             .getAddress()
             .getHostAddress();
     Assert.assertEquals(ip1, std);
 
     String ip2 =
-        new InetSocketAddress("fe80::204:61ff:fe9d:f156", randomPort).getAddress().getHostAddress();
+        new InetSocketAddress("fe80::204:61ff:fe9d:f156", randomPort)
+            .getAddress()
+            .getHostAddress();
     Assert.assertEquals(ip2, std);
 
     String ip3 =
-        new InetSocketAddress("fe80:0000:0000:0000:0204:61ff:254.157.241.86", randomPort)
+        new InetSocketAddress(
+                "fe80:0000:0000:0000:0204:61ff:254.157.241.86", randomPort)
             .getAddress()
             .getHostAddress();
     Assert.assertEquals(ip3, std);
 
     String ip4 =
-        new InetSocketAddress("fe80:0:0:0:0204:61ff:254.157.241.86", randomPort)
+        new InetSocketAddress(
+                "fe80:0:0:0:0204:61ff:254.157.241.86", randomPort)
             .getAddress()
             .getHostAddress();
     Assert.assertEquals(ip4, std);
 
     String ip5 =
-        new InetSocketAddress("fe80::204:61ff:254.157.241.86", randomPort)
+        new InetSocketAddress(
+                "fe80::204:61ff:254.157.241.86", randomPort)
             .getAddress()
             .getHostAddress();
     Assert.assertEquals(ip5, std);
 
     String ip6 =
-        new InetSocketAddress("FE80::204:61ff:254.157.241.86", randomPort)
+        new InetSocketAddress(
+                "FE80::204:61ff:254.157.241.86", randomPort)
             .getAddress()
             .getHostAddress();
     Assert.assertEquals(ip6, std);
 
     String ip7 =
-        new InetSocketAddress("[fe80:0:0:0:204:61ff:fe9d:f156]", randomPort)
+        new InetSocketAddress(
+                "[fe80:0:0:0:204:61ff:fe9d:f156]", randomPort)
             .getAddress()
             .getHostAddress();
     Assert.assertEquals(ip7, std);
@@ -164,48 +213,56 @@ public class NetUtilTest {
   @Test
   public void testParseIpv6() {
     InetSocketAddress address1 =
-        NetUtil.parseInetSocketAddress("[2600:1f13:908:1b00:e1fd:5a84:251c:a32a]:18888");
+        NetUtil.parseInetSocketAddress(
+            "[2600:1f13:908:1b00:e1fd:5a84:251c:a32a]:18888");
     Assert.assertNotNull(address1);
     Assert.assertEquals(18888, address1.getPort());
     Assert.assertEquals(
-        "2600:1f13:908:1b00:e1fd:5a84:251c:a32a", address1.getAddress().getHostAddress());
+        "2600:1f13:908:1b00:e1fd:5a84:251c:a32a",
+        address1.getAddress().getHostAddress());
 
     try {
-      NetUtil.parseInetSocketAddress("[2600:1f13:908:1b00:e1fd:5a84:251c:a32a]:abcd");
+      NetUtil.parseInetSocketAddress(
+          "[2600:1f13:908:1b00:e1fd:5a84:251c:a32a]:abcd");
       Assert.fail();
     } catch (RuntimeException e) {
       Assert.assertTrue(true);
     }
 
     try {
-      NetUtil.parseInetSocketAddress("2600:1f13:908:1b00:e1fd:5a84:251c:a32a:18888");
+      NetUtil.parseInetSocketAddress(
+          "2600:1f13:908:1b00:e1fd:5a84:251c:a32a:18888");
       Assert.fail();
     } catch (RuntimeException e) {
       Assert.assertTrue(true);
     }
 
     try {
-      NetUtil.parseInetSocketAddress("[2600:1f13:908:1b00:e1fd:5a84:251c:a32a:18888");
+      NetUtil.parseInetSocketAddress(
+          "[2600:1f13:908:1b00:e1fd:5a84:251c:a32a:18888");
       Assert.fail();
     } catch (RuntimeException e) {
       Assert.assertTrue(true);
     }
 
     try {
-      NetUtil.parseInetSocketAddress("2600:1f13:908:1b00:e1fd:5a84:251c:a32a]:18888");
+      NetUtil.parseInetSocketAddress(
+          "2600:1f13:908:1b00:e1fd:5a84:251c:a32a]:18888");
       Assert.fail();
     } catch (RuntimeException e) {
       Assert.assertTrue(true);
     }
 
     try {
-      NetUtil.parseInetSocketAddress("2600:1f13:908:1b00:e1fd:5a84:251c:a32a");
+      NetUtil.parseInetSocketAddress(
+          "2600:1f13:908:1b00:e1fd:5a84:251c:a32a");
       Assert.fail();
     } catch (RuntimeException e) {
       Assert.assertTrue(true);
     }
 
-    InetSocketAddress address5 = NetUtil.parseInetSocketAddress("192.168.0.1:18888");
+    InetSocketAddress address5 =
+        NetUtil.parseInetSocketAddress("192.168.0.1:18888");
     Assert.assertNotNull(address5);
   }
 }

@@ -160,7 +160,7 @@ public class ConnPoolService extends P2pEventHandler {
     // calculate lackSize exclude config activeNodes
     int activeLackSize = p2pConfig.getMinActiveConnections() - connectingPeersCount.get();
     int size =
-        Math.max(
+        StrictMath.max(
             p2pConfig.getMinConnections() - connectingPeersCount.get() - passivePeersCount.get(),
             activeLackSize);
     if (p2pConfig.getMinConnections() <= activePeers.size() && activeLackSize <= 0) {

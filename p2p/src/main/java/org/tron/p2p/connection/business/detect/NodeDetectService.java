@@ -98,7 +98,7 @@ public class NodeDetectService implements MessageProcess {
       n = MAX_NODE_SLOW_DETECT;
     }
 
-    n = Math.min(n, nodeStats.size());
+    n = StrictMath.min(n, nodeStats.size());
 
     for (int i = 0; i < n; i++) {
       detect(nodeStats.get(i));

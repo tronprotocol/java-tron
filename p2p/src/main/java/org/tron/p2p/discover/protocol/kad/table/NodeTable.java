@@ -80,7 +80,7 @@ public class NodeTable {
 
   public int getBucketId(NodeEntry e) {
     int id = e.getDistance() - 1;
-    return Math.max(id, 0);
+    return StrictMath.max(id, 0);
   }
 
   public synchronized int getNodesCount() {
