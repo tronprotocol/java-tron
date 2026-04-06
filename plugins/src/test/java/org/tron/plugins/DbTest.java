@@ -18,10 +18,10 @@ import picocli.CommandLine;
 
 public class DbTest {
 
-  public String INPUT_DIRECTORY;
+  protected String INPUT_DIRECTORY;
   private static final String ACCOUNT = "account";
   private static final String MARKET = DBUtils.MARKET_PAIR_PRICE_TO_ORDER;
-  public CommandLine cli = new CommandLine(new Toolkit());
+  protected CommandLine cli = new CommandLine(new Toolkit());
 
   @Rule
   public final TemporaryFolder temporaryFolder = new TemporaryFolder();
