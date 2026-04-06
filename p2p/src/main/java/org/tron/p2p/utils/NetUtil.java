@@ -253,7 +253,7 @@ public class NetUtil {
     int threadSize = multiSrcUrls.size();
     ExecutorService executor =
         Executors.newFixedThreadPool(
-            threadSize, BasicThreadFactory.builder().namingPattern("getIp-%d").build());
+            threadSize, new BasicThreadFactory.Builder().namingPattern("getIp-%d").build());
     CompletionService<String> completionService = new ExecutorCompletionService<>(executor);
 
     for (String url : multiSrcUrls) {

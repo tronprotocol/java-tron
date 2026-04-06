@@ -54,10 +54,10 @@ public class ConnPoolService extends P2pEventHandler {
   @Getter private final AtomicInteger connectingPeersCount = new AtomicInteger(0);
   private final ScheduledThreadPoolExecutor poolLoopExecutor =
       new ScheduledThreadPoolExecutor(
-          1, BasicThreadFactory.builder().namingPattern("connPool").build());
+          1, new BasicThreadFactory.Builder().namingPattern("connPool").build());
   private final ScheduledExecutorService disconnectExecutor =
       Executors.newSingleThreadScheduledExecutor(
-          BasicThreadFactory.builder().namingPattern("randomDisconnect").build());
+          new BasicThreadFactory.Builder().namingPattern("randomDisconnect").build());
 
   public P2pConfig p2pConfig = Parameter.p2pConfig;
   private PeerClient peerClient;

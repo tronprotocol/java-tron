@@ -37,7 +37,7 @@ public class NodeDetectService implements MessageProcess {
 
   private final ScheduledExecutorService executor =
       Executors.newSingleThreadScheduledExecutor(
-          BasicThreadFactory.builder().namingPattern("nodeDetectService").build());
+          new BasicThreadFactory.Builder().namingPattern("nodeDetectService").build());
 
   private final long NODE_DETECT_THRESHOLD = 5 * 60 * 1000;
 

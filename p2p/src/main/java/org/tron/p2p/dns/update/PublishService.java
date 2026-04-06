@@ -26,7 +26,7 @@ public class PublishService {
 
   private ScheduledExecutorService publisher =
       Executors.newSingleThreadScheduledExecutor(
-          BasicThreadFactory.builder().namingPattern("publishService").build());
+          new BasicThreadFactory.Builder().namingPattern("publishService").build());
   private Publish publish;
 
   public void init() {

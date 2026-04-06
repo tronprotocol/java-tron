@@ -24,7 +24,7 @@ public class PeerClient {
   public void init() {
     workerGroup =
         new NioEventLoopGroup(
-            0, BasicThreadFactory.builder().namingPattern("peerClient-%d").build());
+            0, new BasicThreadFactory.Builder().namingPattern("peerClient-%d").build());
   }
 
   public void close() {

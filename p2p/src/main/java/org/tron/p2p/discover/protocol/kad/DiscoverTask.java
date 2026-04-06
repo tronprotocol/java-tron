@@ -16,7 +16,7 @@ public class DiscoverTask {
 
   private ScheduledExecutorService discoverer =
       Executors.newSingleThreadScheduledExecutor(
-          BasicThreadFactory.builder().namingPattern("discoverTask").build());
+          new BasicThreadFactory.Builder().namingPattern("discoverTask").build());
 
   private KadService kadService;
 

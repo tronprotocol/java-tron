@@ -22,7 +22,7 @@ public class KeepAliveService implements MessageProcess {
 
   private final ScheduledExecutorService executor =
       Executors.newSingleThreadScheduledExecutor(
-          BasicThreadFactory.builder().namingPattern("keepAlive").build());
+          new BasicThreadFactory.Builder().namingPattern("keepAlive").build());
 
   public void init() {
     executor.scheduleWithFixedDelay(

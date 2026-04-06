@@ -40,7 +40,7 @@ public class Client {
 
   private final ScheduledExecutorService syncer =
       Executors.newSingleThreadScheduledExecutor(
-          BasicThreadFactory.builder().namingPattern("dnsSyncer").build());
+          new BasicThreadFactory.Builder().namingPattern("dnsSyncer").build());
 
   public Client() {
     this.cache = CacheBuilder.newBuilder().maximumSize(cacheLimit).recordStats().build();

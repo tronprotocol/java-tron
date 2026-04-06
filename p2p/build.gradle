@@ -13,7 +13,6 @@ checkstyleMain {
 }
 
 def protobufVersion = '3.25.8'
-def grpcVersion = '1.75.0'
 
 sourceSets {
     main {
@@ -30,8 +29,9 @@ dependencies {
     // protobuf & grpc (implementation scope: not leaked to consumers)
     implementation "com.google.protobuf:protobuf-java:${protobufVersion}"
     implementation "com.google.protobuf:protobuf-java-util:${protobufVersion}"
-    implementation "io.grpc:grpc-netty:${grpcVersion}"
-    implementation "io.grpc:grpc-core:${grpcVersion}"
+    // grpc-netty provides Netty transitively, which p2p uses for TCP/UDP transport.
+    // grpc itself is not used (p2p protos define only messages, no services).
+    implementation "io.grpc:grpc-netty:1.75.0"
 
     // p2p-specific dependencies
     implementation 'org.xerial.snappy:snappy-java:1.1.10.5'
@@ -58,10 +58,9 @@ dependencies {
         exclude group: 'xpp3', module: 'xpp3'
     }
 
-    // commons-lang3: libp2p uses BasicThreadFactory.builder() which requires 3.12+.
-    // Root build.gradle provides 3.4 globally but as 'implementation' (not on compile classpath).
-    // Declare 3.18.0 (matching original libp2p) to ensure API compatibility.
-    implementation 'org.apache.commons:commons-lang3:3.18.0'
+    // commons-lang3: root provides 3.4 as 'implementation' (not on compile classpath).
+    // Re-declare here so p2p can compile. Uses 3.4-compatible API (new Builder() not builder()).
+    implementation 'org.apache.commons:commons-lang3:3.4'
 
     // provided by root build.gradle for all subprojects:
     // slf4j-api, logback, bcprov-jdk18on, lombok, junit, mockito
@@ -72,20 +71,10 @@ protobuf {
     protoc {
         artifact = "com.google.protobuf:protoc:${protobufVersion}"
     }
-    plugins {
-        grpc {
-            artifact = "io.grpc:protoc-gen-grpc-java:${rootProject.archInfo.requires.ProtocGenVersion}"
-        }
-    }
     generateProtoTasks {
         all().each { task ->
             task.builtins {
                 java { outputSubDir = "java" }
-            }
-        }
-        all()*.plugins {
-            grpc {
-                outputSubDir = "java"
             }
         }
     }
