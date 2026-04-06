@@ -4,6 +4,7 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.spy;
 
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
 
@@ -19,8 +20,12 @@ public class PeerStatusCheckMockTest {
     doThrow(new RuntimeException("test exception")).when(peerStatusCheck).statusCheck();
     peerStatusCheck.init();
 
-    // the initialDelay of scheduleWithFixedDelay is 5s
+    // the initialDelay of scheduleWithFixedDelay is 5s; wait for at least one execution
     Thread.sleep(5000L);
+
+    // Verify statusCheck() was invoked by the scheduler and the exception was handled gracefully
+    Mockito.verify(peerStatusCheck, Mockito.atLeastOnce()).statusCheck();
+    Assert.assertNotNull(peerStatusCheck);
   }
 
 }

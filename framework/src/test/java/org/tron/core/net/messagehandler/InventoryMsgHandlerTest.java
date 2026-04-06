@@ -49,6 +49,7 @@ public class InventoryMsgHandlerTest {
     field.set(handler, tronNetDelegate);
 
     handler.processMessage(peer, msg);
+    Mockito.verify(tronNetDelegate, Mockito.atLeastOnce()).isBlockUnsolidified();
   }
 
   private Channel getChannel(String host, int port) throws Exception {

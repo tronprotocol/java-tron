@@ -52,7 +52,8 @@ public class ConcurrentHashMapTest {
     try {
       Thread.sleep(200);
     } catch (InterruptedException e) {
-      e.printStackTrace();
+      Thread.currentThread().interrupt();
+      Assert.fail("Interrupted during test setup: " + e.getMessage());
     }
 
     Thread putThread = new Thread(new Runnable() {
@@ -69,7 +70,8 @@ public class ConcurrentHashMapTest {
           try {
             Thread.sleep(randomInt(50, 100));
           } catch (InterruptedException e) {
-            e.printStackTrace();
+            Thread.currentThread().interrupt();
+            logger.error("putThread interrupted", e);
           }
         }
       }
@@ -83,7 +85,8 @@ public class ConcurrentHashMapTest {
           try {
             Thread.sleep(randomInt(50, 100));
           } catch (InterruptedException e) {
-            e.printStackTrace();
+            Thread.currentThread().interrupt();
+            logger.error("getThread1 interrupted", e);
           }
 
           logger.info("Thread1 get time {}", t);
@@ -98,8 +101,7 @@ public class ConcurrentHashMapTest {
               }
 
             } catch (ItemNotFoundException e) {
-              e.printStackTrace();
-              // Assert.fail(e.getMessage());
+              Assert.fail("Filter ID should always exist: " + e.getMessage());
             }
           }
         }
@@ -113,7 +115,8 @@ public class ConcurrentHashMapTest {
           try {
             Thread.sleep(randomInt(50, 100));
           } catch (InterruptedException e) {
-            e.printStackTrace();
+            Thread.currentThread().interrupt();
+            logger.error("getThread2 interrupted", e);
           }
 
           logger.info("Thread2 get time {}", t);
@@ -132,7 +135,7 @@ public class ConcurrentHashMapTest {
               }
 
             } catch (ItemNotFoundException e) {
-              // Assert.fail(e.getMessage());
+              Assert.fail("Filter ID should always exist: " + e.getMessage());
             }
           }
         }
@@ -146,7 +149,8 @@ public class ConcurrentHashMapTest {
           try {
             Thread.sleep(randomInt(50, 100));
           } catch (InterruptedException e) {
-            e.printStackTrace();
+            Thread.currentThread().interrupt();
+            logger.error("getThread3 interrupted", e);
           }
 
           logger.info("Thread3 get time {}", t);
@@ -166,7 +170,7 @@ public class ConcurrentHashMapTest {
               }
 
             } catch (ItemNotFoundException e) {
-              // Assert.fail(e.getMessage());
+              Assert.fail("Filter ID should always exist: " + e.getMessage());
             }
           }
         }
@@ -184,7 +188,8 @@ public class ConcurrentHashMapTest {
       getThread2.join();
       getThread3.join();
     } catch (InterruptedException e) {
-      e.printStackTrace();
+      Thread.currentThread().interrupt();
+      Assert.fail("Main thread interrupted while waiting for worker threads: " + e.getMessage());
     }
 
     logger.info("-----------------------------------------------------------------------");

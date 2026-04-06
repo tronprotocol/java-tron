@@ -103,7 +103,7 @@ public class MerkleTreeTest {
     List<Sha256Hash> hashList = getHash(0);  //Empty list.
     try {
       MerkleTree.getInstance().createTree(hashList);
-      Assert.assertFalse(true);
+      Assert.fail("Expected IndexOutOfBoundsException for empty hash list");
     } catch (Exception e) {
       Assert.assertTrue(e instanceof IndexOutOfBoundsException);
     }
