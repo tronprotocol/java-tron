@@ -115,16 +115,18 @@ public class FetchInvDataMsgHandlerTest {
       Mockito.when(peer.getLastSyncBlockId())
         .thenReturn(new BlockCapsule.BlockId(Sha256Hash.ZERO_HASH, 1000L));
       fetchInvDataMsgHandler.processMessage(peer, msg);
+      Assert.fail("Expected exception was not thrown: maxBlockNum: 1000, blockNum: 10000");
     } catch (Exception e) {
-      Assert.assertEquals(e.getMessage(), "maxBlockNum: 1000, blockNum: 10000");
+      Assert.assertEquals("maxBlockNum: 1000, blockNum: 10000", e.getMessage());
     }
 
     try {
       Mockito.when(peer.getLastSyncBlockId())
         .thenReturn(new BlockCapsule.BlockId(Sha256Hash.ZERO_HASH, 20000L));
       fetchInvDataMsgHandler.processMessage(peer, msg);
+      Assert.fail("Expected exception was not thrown: minBlockNum: 16000, blockNum: 10000");
     } catch (Exception e) {
-      Assert.assertEquals(e.getMessage(), "minBlockNum: 16000, blockNum: 10000");
+      Assert.assertEquals("minBlockNum: 16000, blockNum: 10000", e.getMessage());
     }
   }
 
@@ -150,11 +152,13 @@ public class FetchInvDataMsgHandlerTest {
 
     try {
       fetchInvDataMsgHandler.processMessage(peer, msg);
+      Assert.fail("Expected exception was not thrown: fetch too many blocks, size:101");
     } catch (Exception e) {
       Assert.assertEquals("fetch too many blocks, size:101", e.getMessage());
     }
     try {
       fetchInvDataMsgHandler.processMessage(peer, msg);
+      Assert.fail("Expected rate limit exception was not thrown");
     } catch (Exception e) {
       Assert.assertTrue(e.getMessage().endsWith("rate limit"));
     }
