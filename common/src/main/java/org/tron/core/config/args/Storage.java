@@ -25,7 +25,6 @@ import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.iq80.leveldb.CompressionType;
 import org.iq80.leveldb.Options;
 import org.tron.common.cache.CacheStrategies;
@@ -123,78 +122,6 @@ public class Storage {
 
   // db root
   private final Map<String, Sha256Hash> dbRoots = Maps.newConcurrentMap();
-
-  /**
-   * All getXxxFromConfig methods now read from StorageConfig bean instead of
-   * manual string constants. Signatures preserved for backward compatibility.
-   */
-
-  public static String getDbEngineFromConfig(final Config config) {
-    return StorageConfig.fromConfig(config).getDb().getEngine();
-  }
-
-  public static Boolean getDbVersionSyncFromConfig(final Config config) {
-    return StorageConfig.fromConfig(config).getDb().isSync();
-  }
-
-  public static int getSnapshotMaxFlushCountFromConfig(final Config config) {
-    int maxFlushCountConfig = StorageConfig.fromConfig(config)
-        .getSnapshot().getMaxFlushCount();
-    if (maxFlushCountConfig <= 0) {
-      throw new IllegalArgumentException("MaxFlushCount value can not be negative or zero!");
-    }
-    if (maxFlushCountConfig > 500) {
-      throw new IllegalArgumentException("MaxFlushCount value must not exceed 500!");
-    }
-    return maxFlushCountConfig;
-  }
-
-  public static Boolean getContractParseSwitchFromConfig(final Config config) {
-    // contractParse is under event.subscribe, not storage — read from EventConfig
-    EventConfig ec = EventConfig.fromConfig(config);
-    return ec.isContractParse();
-  }
-
-  public static String getDbDirectoryFromConfig(final Config config) {
-    return StorageConfig.fromConfig(config).getDb().getDirectory();
-  }
-
-  public static String getIndexDirectoryFromConfig(final Config config) {
-    return StorageConfig.fromConfig(config).getIndex().getDirectory();
-  }
-
-  public static String getIndexSwitchFromConfig(final Config config) {
-    String val = StorageConfig.fromConfig(config).getIndex().getSwitch();
-    return StringUtils.isNotEmpty(val) ? val : DEFAULT_INDEX_SWITCH;
-  }
-
-  public static String getTransactionHistorySwitchFromConfig(final Config config) {
-    return StorageConfig.fromConfig(config).getTransHistory().getSwitch();
-  }
-
-  public static int getCheckpointVersionFromConfig(final Config config) {
-    return StorageConfig.fromConfig(config).getCheckpoint().getVersion();
-  }
-
-  public static boolean getCheckpointSyncFromConfig(final Config config) {
-    return StorageConfig.fromConfig(config).getCheckpoint().isSync();
-  }
-
-  public static int getEstimatedTransactionsFromConfig(final Config config) {
-    int estimatedTransactions = StorageConfig.fromConfig(config)
-        .getTxCache().getEstimatedTransactions();
-    if (estimatedTransactions > 10000) {
-      estimatedTransactions = 10000;
-    } else if (estimatedTransactions < 100) {
-      estimatedTransactions = 100;
-    }
-    return estimatedTransactions;
-  }
-
-  public static boolean getTxCacheInitOptimizationFromConfig(final Config config) {
-    return StorageConfig.fromConfig(config).getTxCache().isInitOptimization();
-  }
-
 
   /**
    * Accepts raw storage Config sub-tree because cache.strategies has dynamic keys
