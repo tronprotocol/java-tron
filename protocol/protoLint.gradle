@@ -11,6 +11,7 @@
  * Except for legacy enums in the 'legacyEnums' whitelist, all newly defined Enums MUST reserve index 0 for a field starting with 'UNKNOWN_'.
  * This ensures robust forward/backward compatibility during proto3 JSON serialization.
  */
+import groovy.json.JsonBuilder
 import groovy.json.JsonSlurper
 import org.gradle.internal.os.OperatingSystem
 
@@ -39,10 +40,18 @@ task protoLint {
     // 2. generateProto: fix Gradle implicit dependency warning due to output directory overlap.
     dependsOn 'extractIncludeProto', 'generateProto'
 
-    // Incremental build support: Only run if proto files or the script itself changes
+    // Wire the include proto directory from the extractIncludeProto task's actual output
+    def extractTask = tasks.named('extractIncludeProto').get()
+    def includeProtoDir = extractTask.destDir.get().asFile
+    def includeProtoDirRel = projectDir.toPath().relativize(includeProtoDir.toPath()).toString()
+
+    // Incremental build support: re-run when any file buf physically reads changes.
+    // Include protos are not lint targets, but buf reads them for import resolution,
+    // so they must be declared as inputs to keep the task cache hermetic.
     inputs.dir('src/main/protos')
+    inputs.dir(includeProtoDir)
     inputs.file('protoLint.gradle')
-    
+
     def markerFile = file("${buildDir}/tmp/protoLint.done")
     outputs.file(markerFile)
 
@@ -86,7 +95,7 @@ task protoLint {
         
         println "🔍 Generating Proto AST image using buf CLI..."
         
-        def bufConfig = '{"version":"v1beta1","build":{"roots":["src/main/protos","build/extracted-include-protos/main"]}}'
+        def bufConfig = new JsonBuilder([version: "v1beta1", build: [roots: ["src/main/protos", includeProtoDirRel]]]).toString()
         
         def execResult = exec {
             commandLine bufExe.absolutePath, 'build', '.', '--config', bufConfig, '-o', "${imageFile.absolutePath}#format=json"
