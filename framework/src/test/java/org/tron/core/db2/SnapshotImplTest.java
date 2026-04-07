@@ -172,9 +172,8 @@ public class SnapshotImplTest extends BaseMethodTest {
       constructor.setAccessible(true);
       return (SnapshotImpl) constructor.newInstance(snapshot);
     } catch (Exception e) {
-      e.printStackTrace();
+      throw new AssertionError(e);
     }
-    return null;
   }
 
 }

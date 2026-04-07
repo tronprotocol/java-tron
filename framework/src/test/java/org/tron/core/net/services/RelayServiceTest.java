@@ -89,7 +89,6 @@ public class RelayServiceTest extends BaseTest {
     // Base58: TNboetpFgv9SqMoHvaVt626NLXETnbdW1K
     byte[] key = Hex.decode("418A8D690BF36806C36A7DAE3AF796643C1AA9CC01");//exist already
     WitnessCapsule witnessCapsule = chainBaseManager.getWitnessStore().get(key);
-    System.out.println(witnessCapsule.getInstance());
     witnessCapsule.setVoteCount(1000);
     chainBaseManager.getWitnessStore().put(key, witnessCapsule);
     List<ByteString> list = new ArrayList<>();

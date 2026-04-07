@@ -14,7 +14,7 @@ public class PropUtilTest {
     try {
       file.createNewFile();
     } catch (IOException e) {
-      e.printStackTrace();
+      Assert.fail(e.getMessage());
     }
     PropUtil.writeProperty(filename, "key", "value");
     Assert.assertTrue("value".equals(PropUtil.readProperty(filename, "key")));
@@ -30,7 +30,7 @@ public class PropUtilTest {
     try {
       file.createNewFile();
     } catch (IOException e) {
-      e.printStackTrace();
+      Assert.fail(e.getMessage());
     }
     PropUtil.writeProperty(filename, "key", "value");
     Assert.assertTrue("value".equals(PropUtil.readProperty(filename, "key")));
