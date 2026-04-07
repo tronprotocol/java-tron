@@ -52,7 +52,7 @@ jobs:
           restore-keys: macos26-${{ matrix.arch }}-gradle-
 
       - name: Build
-        run: ./gradlew clean build --no-daemon
+        run: ./gradlew clean build --no-daemon --no-build-cache
 
   build-ubuntu:
     name: Build ubuntu24 (JDK 17 / aarch64)
@@ -82,7 +82,7 @@ jobs:
           restore-keys: ubuntu24-aarch64-gradle-
 
       - name: Build
-        run: ./gradlew clean build --no-daemon
+        run: ./gradlew clean build --no-daemon --no-build-cache
 
   docker-build-rockylinux:
     name: Build rockylinux (JDK 8 / x86_64)
@@ -125,10 +125,10 @@ jobs:
         run: ./gradlew --stop || true
 
       - name: Build
-        run: ./gradlew clean build --no-daemon
+        run: ./gradlew clean build --no-daemon --no-build-cache
 
       - name: Test with RocksDB engine
-        run: ./gradlew :framework:testWithRocksDb --no-daemon
+        run: ./gradlew :framework:testWithRocksDb --no-daemon --no-build-cache
 
   docker-build-debian11:
     name: Build debian11 (JDK 8 / x86_64)
@@ -170,10 +170,10 @@ jobs:
             debian11-x86_64-gradle-
 
       - name: Build
-        run: ./gradlew clean build --no-daemon
+        run: ./gradlew clean build --no-daemon --no-build-cache
 
       - name: Test with RocksDB engine
-        run: ./gradlew :framework:testWithRocksDb --no-daemon
+        run: ./gradlew :framework:testWithRocksDb --no-daemon --no-build-cache
 
       - name: Generate module coverage reports
         run: ./gradlew jacocoTestReport --no-daemon
@@ -224,10 +224,10 @@ jobs:
             debian11-x86_64-gradle-
 
       - name: Build (base)
-        run: ./gradlew clean build --no-daemon
+        run: ./gradlew clean build --no-daemon --no-build-cache
 
       - name: Test with RocksDB engine (base)
-        run: ./gradlew :framework:testWithRocksDb --no-daemon
+        run: ./gradlew :framework:testWithRocksDb --no-daemon --no-build-cache
 
       - name: Generate module coverage reports (base)
         run: ./gradlew jacocoTestReport --no-daemon
