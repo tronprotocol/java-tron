@@ -2,6 +2,9 @@ package org.tron.program;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
+import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.doThrow;
 
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Resource;
@@ -10,8 +13,10 @@ import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.Timeout;
+import org.mockito.InOrder;
 import org.tron.common.BaseTest;
 import org.tron.common.TestConstants;
+import org.tron.common.application.Application;
 import org.tron.common.client.DatabaseGrpcClient;
 import org.tron.common.utils.PublicMethod;
 import org.tron.core.config.args.Args;
@@ -88,5 +93,33 @@ public class SolidityNodeTest extends BaseTest {
     solidityNodeHttpApiService.start();
     solidityNodeHttpApiService.stop();
     Assert.assertTrue(true);
+  }
+
+  @Test
+  public void testAwaitShutdownAlwaysStopsNode() {
+    Application app = mock(Application.class);
+    SolidityNode node = mock(SolidityNode.class);
+
+    SolidityNode.awaitShutdown(app, node);
+
+    InOrder inOrder = inOrder(app, node);
+    inOrder.verify(app).blockUntilShutdown();
+    inOrder.verify(node).shutdown();
+  }
+
+  @Test
+  public void testAwaitShutdownStopsNodeWhenBlockedCallFails() {
+    Application app = mock(Application.class);
+    SolidityNode node = mock(SolidityNode.class);
+    RuntimeException expected = new RuntimeException("boom");
+    doThrow(expected).when(app).blockUntilShutdown();
+
+    RuntimeException thrown = assertThrows(RuntimeException.class,
+        () -> SolidityNode.awaitShutdown(app, node));
+    assertEquals(expected, thrown);
+
+    InOrder inOrder = inOrder(app, node);
+    inOrder.verify(app).blockUntilShutdown();
+    inOrder.verify(node).shutdown();
   }
 }
