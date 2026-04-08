@@ -57,8 +57,6 @@ import org.tron.protos.Protocol;
 @Scope("prototype")
 public class PeerConnection {
 
-  private static List<InetSocketAddress> relayNodes = Args.getInstance().getFastForwardNodes();
-
   @Getter
   private PeerStatistics peerStatistics = new PeerStatistics();
 
@@ -166,7 +164,9 @@ public class PeerConnection {
 
   public void setChannel(Channel channel) {
     this.channel = channel;
-    if (relayNodes.stream().anyMatch(n -> n.getAddress().equals(channel.getInetAddress()))) {
+    List<InetSocketAddress> relayNodes = Args.getInstance().getFastForwardNodes();
+    if (relayNodes != null
+        && relayNodes.stream().anyMatch(n -> n.getAddress().equals(channel.getInetAddress()))) {
       this.isRelayPeer = true;
     }
     this.nodeStatistics = TronStatsManager.getNodeStatistics(channel.getInetAddress());
