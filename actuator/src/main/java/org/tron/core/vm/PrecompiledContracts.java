@@ -622,6 +622,8 @@ public class PrecompiledContracts {
 
     private static final int ARGS_OFFSET = 32 * 3; // addresses length part
 
+    private static final int UPPER_BOUND = 1024;
+
     @Override
     public long getEnergyForData(byte[] data) {
 
@@ -659,6 +661,11 @@ public class PrecompiledContracts {
       int baseLen = parseLen(data, 0);
       int expLen = parseLen(data, 1);
       int modLen = parseLen(data, 2);
+
+      if (VMConfig.allowTvmOsaka()
+          && (baseLen > UPPER_BOUND || expLen > UPPER_BOUND || modLen > UPPER_BOUND)) {
+        return Pair.of(false, EMPTY_BYTE_ARRAY);
+      }
 
       BigInteger base = parseArg(data, ARGS_OFFSET, baseLen);
       BigInteger exp = parseArg(data, addSafely(ARGS_OFFSET, baseLen), expLen);

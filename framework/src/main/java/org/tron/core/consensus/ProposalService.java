@@ -392,6 +392,10 @@ public class ProposalService extends ProposalUtil {
           manager.getDynamicPropertiesStore().saveProposalExpireTime(entry.getValue());
           break;
         }
+        case ALLOW_TVM_OSAKA: {
+          manager.getDynamicPropertiesStore().saveAllowTvmOsaka(entry.getValue());
+          break;
+        }
         default:
           find = false;
           break;

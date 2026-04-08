@@ -1,0 +1,96 @@
+# CODEOWNERS — java-tron PR Review assignments
+#
+# Rule: when multiple rules match the same file, the last one takes precedence.
+# Recommendation: put more specific paths further down.
+
+# Default owner — applies to any file not matched by a more specific rule below.
+*                                   @zeusoo001 @317787106
+
+# ────────────────────────────────────────────────────────────────
+# 1. Top-level Gradle modules (corresponds to the "Level-1/Level-2 module" column)
+# ────────────────────────────────────────────────────────────────
+
+/framework/                         @xxo1shine @bladehan1
+/chainbase/                         @halibobo1205 @bladehan1
+/actuator/                          @Sunny6889 @lxcmyf
+/consensus/                         @kuny0707 @xxo1shine
+/protocol/                          @lvs0075 @waynercheung
+/common/                            @lvs0075 @lxcmyf
+/crypto/                            @Federico2014 @3for
+/plugins/                           @halibobo1205 @warku123
+/docker/                            @3for @kuny0707
+
+# ────────────────────────────────────────────────────────────────
+# 2. CI / Build configuration
+# ────────────────────────────────────────────────────────────────
+
+/.github/                           @317787106 @halibobo1205
+*.gradle                            @317787106 @halibobo1205
+/gradle/                            @317787106 @halibobo1205
+
+# ────────────────────────────────────────────────────────────────
+# 3. Sub-module paths (more specific than top-level; placed later to override rules above)
+# ────────────────────────────────────────────────────────────────
+
+# db — covers the db, db2, and storage packages inside chainbase
+/chainbase/src/main/java/org/tron/core/db/              @halibobo1205 @bladehan1
+/chainbase/src/main/java/org/tron/core/db2/             @halibobo1205 @bladehan1
+/chainbase/src/main/java/org/tron/common/storage/       @halibobo1205 @bladehan1
+
+# trie
+/framework/src/main/java/org/tron/core/trie/            @halibobo1205 @317787106
+
+# net
+/framework/src/main/java/org/tron/core/net/             @317787106 @xxo1shine
+
+# vm / tvm
+/actuator/src/main/java/org/tron/core/vm/               @yanghang8612 @CodeNinjaEvan
+
+# jsonrpc
+/framework/src/main/java/org/tron/core/services/jsonrpc/                    @0xbigapple @waynercheung
+/framework/src/main/java/org/tron/core/services/interfaceJsonRpcOnSolidity/ @0xbigapple @waynercheung
+
+# rpc (gRPC) — non-HTTP parts of interfaceOnPBFT / interfaceOnSolidity + RpcService
+/framework/src/main/java/org/tron/core/services/interfaceOnSolidity/        @317787106 @waynercheung
+/framework/src/main/java/org/tron/common/application/                       @317787106 @waynercheung
+
+# http (REST) — overrides the rpc rule above for the http sub-directories inside interfaceOnXxx
+/framework/src/main/java/org/tron/core/services/http/                       @Sunny6889 @waynercheung
+/framework/src/main/java/org/tron/core/services/interfaceOnSolidity/http/   @Sunny6889 @waynercheung
+
+# event
+/framework/src/main/java/org/tron/core/services/event/  @xxo1shine @0xbigapple
+/framework/src/main/java/org/tron/common/logsfilter/    @xxo1shine @0xbigapple
+
+# config
+/framework/src/main/java/org/tron/core/config/          @317787106 @kuny0707
+/chainbase/src/main/java/org/tron/core/config/          @317787106 @kuny0707
+
+# backup
+/framework/src/main/java/org/tron/common/backup/        @xxo1shine @317787106
+/framework/src/main/java/org/tron/core/db/backup/       @xxo1shine @317787106
+
+# metrics
+/framework/src/main/java/org/tron/core/metrics/         @halibobo1205 @Sunny6889
+
+# rewards — logic is spread across chainbase service/store
+/chainbase/src/main/java/org/tron/core/service/         @Sunny6889 @kuny0707
+/chainbase/src/main/java/org/tron/core/store/           @Sunny6889 @kuny0707
+
+# lite — DbLite in plugins module; lite-related filters in framework
+/plugins/src/main/java/common/org/tron/plugins/DbLite.java   @bladehan1 @halibobo1205
+/plugins/src/main/java/common/org/tron/plugins/DbCopy.java   @bladehan1 @halibobo1205
+/framework/src/main/java/org/tron/core/services/filter/      @bladehan1 @halibobo1205
+
+# ────────────────────────────────────────────────────────────────
+# 4. Test code — mirrors the module ownership above
+# ────────────────────────────────────────────────────────────────
+
+/framework/src/test/                @xxo1shine @bladehan1
+/chainbase/src/test/                @halibobo1205 @bladehan1
+/actuator/src/test/                 @Sunny6889 @lxcmyf
+/consensus/src/test/                @kuny0707 @xxo1shine
+/protocol/src/test/                 @lvs0075 @waynercheung
+/common/src/test/                   @lvs0075 @lxcmyf
+/crypto/src/test/                   @Federico2014 @3for
+/plugins/src/test/                  @halibobo1205 @warku123

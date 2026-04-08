@@ -30,7 +30,7 @@ static def isWindows() {
     return org.gradle.internal.os.OperatingSystem.current().isWindows()
 }
 
-task version(type: Exec) {
+tasks.register('version', Exec) {
     commandLine 'bash', '-c', '../ver.sh'
 }
 
@@ -78,7 +78,7 @@ checkstyleMain {
     source = 'src/main/java'
 }
 
-task lint(type: Checkstyle) {
+tasks.register('lint', Checkstyle) {
     // Cleaning the old log because of the creation of the new ones (not sure if totaly needed)
     delete fileTree(dir: "${project.rootDir}/app/build/reports")
     source 'src'
@@ -123,10 +123,10 @@ def configureTestTask = { Task t ->
         t.exclude 'org/tron/core/ShieldedTRC20BuilderTest.class'
         t.exclude 'org/tron/common/runtime/vm/WithdrawRewardTest.class'
     }
-    t.maxHeapSize = "1024m"
+    t.maxHeapSize = "512m"
+    t.maxParallelForks = Math.max(1, Math.min(4, Runtime.runtime.availableProcessors()))
     t.doFirst {
         t.forkEvery = 100
-        t.jvmArgs "-XX:MetaspaceSize=128m", "-XX:MaxMetaspaceSize=256m", "-XX:+UseG1GC"
     }
 }
 
@@ -150,7 +150,7 @@ test {
     }
 }
 
-task testWithRocksDb(type: Test) {
+tasks.register('testWithRocksDb', Test) {
     description = 'Run tests with RocksDB engine'
     group = 'verification'
     configureTestTask(it)
@@ -197,7 +197,9 @@ def binaryRelease(taskName, jarName, mainClass) {
         exclude "META-INF/*.SF"
         exclude "META-INF/*.DSA"
         exclude "META-INF/*.RSA"
-
+        // for service SPI loader for dnsjava
+        // see https://issues.apache.org/jira/browse/HADOOP-19288
+        exclude "META-INF/services/java.net.spi.InetAddressResolverProvider"
         manifest {
             attributes "Main-Class": "${mainClass}"
         }
