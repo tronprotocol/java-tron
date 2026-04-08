@@ -52,7 +52,7 @@ jobs:
           restore-keys: macos26-${{ matrix.arch }}-gradle-
 
       - name: Build
-        run: ./gradlew clean build --no-daemon --no-build-cache
+        run: ./gradlew clean build --no-daemon
 
   build-ubuntu:
     name: Build ubuntu24 (JDK 17 / aarch64)
@@ -82,7 +82,7 @@ jobs:
           restore-keys: ubuntu24-aarch64-gradle-
 
       - name: Build
-        run: ./gradlew clean build --no-daemon --no-build-cache
+        run: ./gradlew clean build --no-daemon
 
   docker-build-rockylinux:
     name: Build rockylinux (JDK 8 / x86_64)
@@ -125,10 +125,10 @@ jobs:
         run: ./gradlew --stop || true
 
       - name: Build
-        run: ./gradlew clean build --no-daemon --no-build-cache
+        run: ./gradlew clean build --no-daemon
 
       - name: Test with RocksDB engine
-        run: ./gradlew :framework:testWithRocksDb --no-daemon --no-build-cache
+        run: ./gradlew :framework:testWithRocksDb --no-daemon
 
   docker-build-debian11:
     name: Build debian11 (JDK 8 / x86_64)
@@ -219,9 +219,9 @@ jobs:
           path: |
             /github/home/.gradle/caches
             /github/home/.gradle/wrapper
-          key: debian11-x86_64-gradle-${{ hashFiles('**/*.gradle', '**/gradle-wrapper.properties') }}
+          key: coverage-base-x86_64-gradle-${{ hashFiles('**/*.gradle', '**/gradle-wrapper.properties') }}
           restore-keys: |
-            debian11-x86_64-gradle-
+            coverage-base-x86_64-gradle-
 
       - name: Build (base)
         run: ./gradlew clean build --no-daemon --no-build-cache
