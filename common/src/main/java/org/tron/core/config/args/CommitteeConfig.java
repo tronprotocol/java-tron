@@ -148,6 +148,15 @@ public class CommitteeConfig {
     if (dynamicEnergyMaxFactor < 0) { dynamicEnergyMaxFactor = 0; }
     if (dynamicEnergyMaxFactor > 100_000L) { dynamicEnergyMaxFactor = 100_000L; }
 
+    // clamp allowNewReward to 0-1 (must run BEFORE the cross-field check below,
+    // which depends on allowNewReward != 1)
+    if (allowNewReward < 0) { allowNewReward = 0; }
+    if (allowNewReward > 1) { allowNewReward = 1; }
+
+    // clamp memoFee to 0-1_000_000_000
+    if (memoFee < 0) { memoFee = 0; }
+    if (memoFee > 1_000_000_000L) { memoFee = 1_000_000_000L; }
+
     // cross-field: allowOldRewardOpt requires at least one reward/vote flag
     if (allowOldRewardOpt == 1 && allowNewRewardAlgorithm != 1
         && allowNewReward != 1 && allowTvmVote != 1) {

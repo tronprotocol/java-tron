@@ -70,4 +70,22 @@ public class VmConfigTest {
     assertFalse(vm.isSupportConstant()); // default
     assertEquals(500, vm.getLruCacheSize()); // default
   }
+
+  // ===========================================================================
+  // Boundary tests for postProcess() clamps
+  // Pin every clamp in VmConfig.postProcess() so future refactors cannot
+  // drop them undetected (regression seen in PR #6615 with CommitteeConfig).
+  // ===========================================================================
+
+  // ----- estimateEnergyMaxRetry: clamped to [0, 10] -----
+
+  @Test
+  public void testEstimateEnergyMaxRetryBoundaryValues() {
+    assertEquals(0, VmConfig.fromConfig(
+        withRef("vm { estimateEnergyMaxRetry = 0 }")).getEstimateEnergyMaxRetry());
+    assertEquals(10, VmConfig.fromConfig(
+        withRef("vm { estimateEnergyMaxRetry = 10 }")).getEstimateEnergyMaxRetry());
+    assertEquals(3, VmConfig.fromConfig(
+        withRef("vm { estimateEnergyMaxRetry = 3 }")).getEstimateEnergyMaxRetry());
+  }
 }

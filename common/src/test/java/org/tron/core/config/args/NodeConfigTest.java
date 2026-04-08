@@ -141,4 +141,88 @@ public class NodeConfigTest {
     assertEquals(8388608, rpc.getMaxMessageSize());
     assertEquals(16384, rpc.getMaxHeaderListSize());
   }
+
+  // ===========================================================================
+  // Boundary tests for postProcess() clamps
+  // Pin every clamp in NodeConfig.postProcess() so future refactors cannot
+  // drop them undetected (regression seen in PR #6615 with CommitteeConfig).
+  // ===========================================================================
+
+  // ----- blockProducedTimeOut: clamped to [30, 100] -----
+
+  @Test
+  public void testBlockProducedTimeOutClampedBelowMin() {
+    NodeConfig nc = NodeConfig.fromConfig(
+        withRef("node { blockProducedTimeOut = 10 }"));
+    assertEquals(30, nc.getBlockProducedTimeOut());
+  }
+
+  @Test
+  public void testBlockProducedTimeOutClampedAboveMax() {
+    NodeConfig nc = NodeConfig.fromConfig(
+        withRef("node { blockProducedTimeOut = 200 }"));
+    assertEquals(100, nc.getBlockProducedTimeOut());
+  }
+
+  @Test
+  public void testBlockProducedTimeOutBoundaryValues() {
+    assertEquals(30, NodeConfig.fromConfig(
+        withRef("node { blockProducedTimeOut = 30 }")).getBlockProducedTimeOut());
+    assertEquals(100, NodeConfig.fromConfig(
+        withRef("node { blockProducedTimeOut = 100 }")).getBlockProducedTimeOut());
+    assertEquals(75, NodeConfig.fromConfig(
+        withRef("node { blockProducedTimeOut = 75 }")).getBlockProducedTimeOut());
+  }
+
+  // ----- inactiveThreshold: minimum 1 -----
+
+  @Test
+  public void testInactiveThresholdClampedBelowMin() {
+    NodeConfig nc = NodeConfig.fromConfig(
+        withRef("node { inactiveThreshold = 0 }"));
+    assertEquals(1, nc.getInactiveThreshold());
+  }
+
+  @Test
+  public void testInactiveThresholdClampedNegative() {
+    NodeConfig nc = NodeConfig.fromConfig(
+        withRef("node { inactiveThreshold = -100 }"));
+    assertEquals(1, nc.getInactiveThreshold());
+  }
+
+  @Test
+  public void testInactiveThresholdInRangeUnchanged() {
+    assertEquals(1, NodeConfig.fromConfig(
+        withRef("node { inactiveThreshold = 1 }")).getInactiveThreshold());
+    assertEquals(600, NodeConfig.fromConfig(
+        withRef("node { inactiveThreshold = 600 }")).getInactiveThreshold());
+    assertEquals(1000, NodeConfig.fromConfig(
+        withRef("node { inactiveThreshold = 1000 }")).getInactiveThreshold());
+  }
+
+  // ----- maxFastForwardNum: clamped to [1, MAX_ACTIVE_WITNESS_NUM=27] -----
+
+  @Test
+  public void testMaxFastForwardNumClampedBelowMin() {
+    NodeConfig nc = NodeConfig.fromConfig(
+        withRef("node { maxFastForwardNum = 0 }"));
+    assertEquals(1, nc.getMaxFastForwardNum());
+  }
+
+  @Test
+  public void testMaxFastForwardNumClampedAboveMax() {
+    NodeConfig nc = NodeConfig.fromConfig(
+        withRef("node { maxFastForwardNum = 100 }"));
+    assertEquals(27, nc.getMaxFastForwardNum());
+  }
+
+  @Test
+  public void testMaxFastForwardNumBoundaryValues() {
+    assertEquals(1, NodeConfig.fromConfig(
+        withRef("node { maxFastForwardNum = 1 }")).getMaxFastForwardNum());
+    assertEquals(27, NodeConfig.fromConfig(
+        withRef("node { maxFastForwardNum = 27 }")).getMaxFastForwardNum());
+    assertEquals(4, NodeConfig.fromConfig(
+        withRef("node { maxFastForwardNum = 4 }")).getMaxFastForwardNum());
+  }
 }

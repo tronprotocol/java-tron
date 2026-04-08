@@ -370,5 +370,50 @@ public class ArgsTest {
 
     Args.clearParam();
   }
+
+  // ===========================================================================
+  // Boundary tests for clamps applied in Args.java bridge code (not in
+  // bean postProcess()).
+  //
+  // fetchBlockTimeout is read from NodeConfig but clamped in Args.applyNodeConfig
+  // to range [100, 1000]. Pin this clamp here so any future refactor that moves
+  // it (e.g. into NodeConfig.postProcess()) preserves the behavior.
+  // ===========================================================================
+
+  @Test
+  public void testFetchBlockTimeoutClampedBelowMin() {
+    Map<String, String> override = new HashMap<>();
+    override.put("storage.db.directory", "database");
+    override.put("node.fetchBlock.timeout", "50");
+    Config config = ConfigFactory.parseMap(override)
+        .withFallback(ConfigFactory.defaultReference());
+    Args.applyConfigParams(config);
+    Assert.assertEquals(100, Args.getInstance().getFetchBlockTimeout());
+    Args.clearParam();
+  }
+
+  @Test
+  public void testFetchBlockTimeoutClampedAboveMax() {
+    Map<String, String> override = new HashMap<>();
+    override.put("storage.db.directory", "database");
+    override.put("node.fetchBlock.timeout", "2000");
+    Config config = ConfigFactory.parseMap(override)
+        .withFallback(ConfigFactory.defaultReference());
+    Args.applyConfigParams(config);
+    Assert.assertEquals(1000, Args.getInstance().getFetchBlockTimeout());
+    Args.clearParam();
+  }
+
+  @Test
+  public void testFetchBlockTimeoutInRangeUnchanged() {
+    Map<String, String> override = new HashMap<>();
+    override.put("storage.db.directory", "database");
+    override.put("node.fetchBlock.timeout", "500");
+    Config config = ConfigFactory.parseMap(override)
+        .withFallback(ConfigFactory.defaultReference());
+    Args.applyConfigParams(config);
+    Assert.assertEquals(500, Args.getInstance().getFetchBlockTimeout());
+    Args.clearParam();
+  }
 }
 
