@@ -4,6 +4,8 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.google.protobuf.ByteString;
 
+import java.io.BufferedReader;
+import java.io.StringReader;
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.List;
@@ -13,6 +15,8 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
+
+import javax.servlet.http.HttpServletRequest;
 import org.tron.api.GrpcAPI;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
@@ -235,6 +239,58 @@ public class UtilMockTest  {
           Util.validateParameter(contract2);
         }
     );
+  }
+
+  @Test
+  public void testGetAddressWithInvalidJsonBody() throws Exception {
+    HttpServletRequest request = Mockito.mock(HttpServletRequest.class);
+    Mockito.when(request.getMethod()).thenReturn("POST");
+    Mockito.when(request.getContentType()).thenReturn("application/json");
+
+    // plain text, not JSON
+    BufferedReader reader = new BufferedReader(new StringReader("not a json"));
+    Mockito.when(request.getInputStream()).thenReturn(
+        new javax.servlet.ServletInputStream() {
+          private final java.io.InputStream in =
+              new java.io.ByteArrayInputStream("not a json".getBytes());
+
+          @Override public int read() throws java.io.IOException { return in.read(); }
+
+          @Override public boolean isFinished() { return false; }
+
+          @Override public boolean isReady() { return true; }
+
+          @Override public void setReadListener(javax.servlet.ReadListener l) { }
+        });
+
+    byte[] address = Util.getAddress(request);
+    Assert.assertNull(address);
+  }
+
+  @Test
+  public void testGetAddressWithJsonArrayBody() throws Exception {
+    HttpServletRequest request = Mockito.mock(HttpServletRequest.class);
+    Mockito.when(request.getMethod()).thenReturn("POST");
+    Mockito.when(request.getContentType()).thenReturn("application/json");
+
+    // JSON array instead of JSON object
+    String body = "[\"address1\",\"address2\"]";
+    Mockito.when(request.getInputStream()).thenReturn(
+        new javax.servlet.ServletInputStream() {
+          private final java.io.InputStream in =
+              new java.io.ByteArrayInputStream(body.getBytes());
+
+          @Override public int read() throws java.io.IOException { return in.read(); }
+
+          @Override public boolean isFinished() { return false; }
+
+          @Override public boolean isReady() { return true; }
+
+          @Override public void setReadListener(javax.servlet.ReadListener l) { }
+        });
+
+    byte[] address = Util.getAddress(request);
+    Assert.assertNull(address);
   }
 
   @Test

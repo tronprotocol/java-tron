@@ -418,7 +418,7 @@ public class RpcApiService extends RpcService {
           responseObserver.onNext(wallet.getAssetIssueByName(assetName));
         } catch (NonUniqueObjectException e) {
           responseObserver.onNext(null);
-          logger.error("Solidity NonUniqueObjectException: {}", e.getMessage());
+          logger.debug("Solidity NonUniqueObjectException: {}", e.getMessage());
         }
       } else {
         responseObserver.onNext(null);
