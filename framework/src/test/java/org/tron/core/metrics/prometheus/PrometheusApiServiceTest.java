@@ -41,7 +41,6 @@ import org.tron.protos.Protocol;
 @Slf4j(topic = "metric")
 public class PrometheusApiServiceTest extends BaseTest {
 
-  private static final String MINER_LABEL = "miner";
 
   static LocalDateTime localDateTime = LocalDateTime.now();
   @Resource
@@ -90,7 +89,7 @@ public class PrometheusApiServiceTest extends BaseTest {
     // Query histogram bucket le="0.0" for empty blocks
     Double emptyBlock = CollectorRegistry.defaultRegistry.getSampleValue(
         "tron:block_transaction_count_bucket",
-        new String[] {MINER_LABEL, "le"}, new String[] {minerBase58, "0.0"});
+        new String[] {MetricLabels.Histogram.MINER, "le"}, new String[] {minerBase58, "0.0"});
     
     Assert.assertNotNull("Empty block bucket should exist for miner: " + minerBase58, emptyBlock);
     Assert.assertEquals("Should have 1 empty block", 1, emptyBlock.intValue());
@@ -107,7 +106,7 @@ public class PrometheusApiServiceTest extends BaseTest {
     // Check SR_ADD and empty blocks for each new witness in witnessAndAccount
     // (excluding initial address)
     ByteString addressByteString = ByteString.copyFrom(address);
-    double totalNewWitnessEmptyBlocks = 0;
+    int totalNewWitnessEmptyBlocks = 0;
     for (ByteString witnessAddress : witnessAndAccount.keySet()) {
       if (witnessAddress.equals(addressByteString)) {
         continue; // Skip initial address
@@ -126,14 +125,13 @@ public class PrometheusApiServiceTest extends BaseTest {
           srAddCount.intValue());
       
       // Collect empty blocks count from histogram bucket
-      Double witnessEmptyBlock = CollectorRegistry.defaultRegistry.getSampleValue(
+      int witnessEmptyBlock = CollectorRegistry.defaultRegistry.getSampleValue(
           "tron:block_transaction_count_bucket",
-          new String[] {MINER_LABEL, "le"}, new String[] {witnessBase58, "0.0"});
-      Assert.assertNotNull("Empty block bucket should exist for witness: " + witnessBase58,
-          witnessEmptyBlock);
+          new String[] {MetricLabels.Histogram.MINER, "le"}, new String[] {witnessBase58, "0.0"})
+          .intValue();
       totalNewWitnessEmptyBlocks += witnessEmptyBlock;
     }
-    Assert.assertEquals(blocks, (int)totalNewWitnessEmptyBlocks);
+    Assert.assertEquals(blocks, totalNewWitnessEmptyBlocks);
 
     Double errorLogs = CollectorRegistry.defaultRegistry.getSampleValue(
         "tron:error_info_total", new String[] {"net"}, new String[] {MetricLabels.UNDEFINED});

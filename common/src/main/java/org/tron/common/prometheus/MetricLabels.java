@@ -68,6 +68,7 @@ public class MetricLabels {
 
   // Histogram
   public static class Histogram {
+    public static final String MINER = "miner";
     public static final String TRAFFIC_IN = "in";
     public static final String TRAFFIC_OUT = "out";
 

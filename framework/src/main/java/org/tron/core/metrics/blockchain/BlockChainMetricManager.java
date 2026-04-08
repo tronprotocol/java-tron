@@ -185,11 +185,11 @@ public class BlockChainMetricManager {
     if (lastNextMaintenanceTime == -1) {
       lastNextMaintenanceTime = nextMaintenanceTime;
       lastActiveWitnesses.addAll(chainBaseManager.getWitnessScheduleStore().getActiveWitnesses()
-          .stream().map(w -> Hex.toHexString(w.toByteArray())).collect(Collectors.toSet()));
+          .stream().map(w -> StringUtil.encode58Check(w.toByteArray())).collect(Collectors.toSet()));
     } else if (nextMaintenanceTime != lastNextMaintenanceTime) {
       Set<String> currentWitnesses = chainBaseManager.getWitnessScheduleStore().getActiveWitnesses()
           .stream()
-          .map(w -> Hex.toHexString(w.toByteArray()))
+          .map(w -> StringUtil.encode58Check(w.toByteArray()))
           .collect(Collectors.toSet());
       recordSrSetChange(currentWitnesses);
       lastNextMaintenanceTime = nextMaintenanceTime;
@@ -205,11 +205,11 @@ public class BlockChainMetricManager {
 
     for (String address : added) {
       Metrics.counterInc(MetricKeys.Counter.SR_SET_CHANGE, 1,
-          MetricLabels.Counter.SR_ADD, StringUtil.encode58Check(Hex.decode(address)));
+          MetricLabels.Counter.SR_ADD, address);
     }
     for (String address : removed) {
       Metrics.counterInc(MetricKeys.Counter.SR_SET_CHANGE, 1,
-          MetricLabels.Counter.SR_REMOVE, StringUtil.encode58Check(Hex.decode(address)));
+          MetricLabels.Counter.SR_REMOVE, address);
     }
     if (!added.isEmpty() || !removed.isEmpty()) {
       lastActiveWitnesses.clear();

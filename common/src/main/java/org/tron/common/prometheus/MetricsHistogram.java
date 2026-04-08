@@ -9,7 +9,6 @@ import lombok.extern.slf4j.Slf4j;
 public class MetricsHistogram {
 
   private static final Map<String, Histogram> container = new ConcurrentHashMap<>();
-  private static final String MINER_LABEL = "miner";
 
   static {
     init(MetricKeys.Histogram.INTERNAL_SERVICE_LATENCY, "Internal Service latency.",
@@ -21,7 +20,7 @@ public class MetricsHistogram {
     init(MetricKeys.Histogram.JSONRPC_SERVICE_LATENCY, "JsonRpc Service latency.",
         "method");
     init(MetricKeys.Histogram.MINER_LATENCY, "miner latency.",
-        MINER_LABEL);
+        MetricLabels.Histogram.MINER);
     init(MetricKeys.Histogram.PING_PONG_LATENCY, "node  ping pong  latency.");
     init(MetricKeys.Histogram.VERIFY_SIGN_LATENCY, "verify sign latency for trx , block.",
         "type");
@@ -37,7 +36,7 @@ public class MetricsHistogram {
     init(MetricKeys.Histogram.PROCESS_TRANSACTION_LATENCY, "process transaction latency.",
         "type", "contract");
     init(MetricKeys.Histogram.MINER_DELAY, "miner delay time, actualTime - planTime.",
-        MINER_LABEL);
+        MetricLabels.Histogram.MINER);
     init(MetricKeys.Histogram.UDP_BYTES, "udp_bytes traffic.",
         "type");
     init(MetricKeys.Histogram.TCP_BYTES, "tcp_bytes traffic.",
@@ -53,7 +52,7 @@ public class MetricsHistogram {
     init(MetricKeys.Histogram.BLOCK_TRANSACTION_COUNT,
         "Distribution of transaction counts per block.",
         new double[]{0, 10, 50, 100, 200, 500, 1000, 2000, 5000, 10000},
-        MINER_LABEL);
+        MetricLabels.Histogram.MINER);
   }
 
   private MetricsHistogram() {
