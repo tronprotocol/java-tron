@@ -161,10 +161,14 @@ public class PeerConnection {
   private volatile boolean needSyncFromUs = true;
   @Getter
   private P2pRateLimiter p2pRateLimiter = new P2pRateLimiter();
+  @Getter
+  private List<InetSocketAddress> relayNodes;
 
   public void setChannel(Channel channel) {
     this.channel = channel;
-    List<InetSocketAddress> relayNodes = Args.getInstance().getFastForwardNodes();
+    if (this.relayNodes == null) {
+      this.relayNodes = Args.getInstance().getFastForwardNodes();
+    }
     if (relayNodes != null
         && relayNodes.stream().anyMatch(n -> n.getAddress().equals(channel.getInetAddress()))) {
       this.isRelayPeer = true;
