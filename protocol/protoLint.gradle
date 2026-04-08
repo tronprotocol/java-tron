@@ -36,7 +36,8 @@ task protoLint {
     description = "Validate Protobuf Enums using buf generated JSON AST. Enforces 'UNKNOWN_' prefix for index 0 to ensure JSON serialization backward compatibility."
     
     // Explicitly depend on:
-    // 1. extractIncludeProto: ensure external protos are available in build/extracted-include-protos/main.
+    // 1. extractIncludeProto: ensure external protos are extracted before buf runs.
+    //    The include root is derived from that task's actual output below.
     // 2. generateProto: fix Gradle implicit dependency warning due to output directory overlap.
     dependsOn 'extractIncludeProto', 'generateProto'
 
