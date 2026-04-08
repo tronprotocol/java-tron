@@ -32,7 +32,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -326,8 +325,6 @@ public class Args extends CommonParameter {
     PARAMETER.trxReferenceBlock = mc.getTrxReferenceBlock();
     PARAMETER.trxExpirationTimeInMilliseconds = mc.getTrxExpirationTimeInMilliseconds();
     PARAMETER.blockNumForEnergyLimit = mc.getBlockNumForEnergyLimit();
-    PARAMETER.actuatorSet = mc.getActuatorWhitelist();
-
     // seed.node — top-level config section, not under "node"
     // Config structure is arguably misplaced but preserved for backward compatibility
     PARAMETER.seedNode = new SeedNode();
@@ -783,8 +780,6 @@ public class Args extends CommonParameter {
 
     // Node backup: from NodeConfig bean
     applyNodeBackupConfig(nodeConfig);
-
-    // actuatorSet already set in applyMiscConfig
 
     // Metrics config: bind from config.conf "node.metrics" section
     metricsConfig = MetricsConfig.fromConfig(config);
