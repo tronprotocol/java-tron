@@ -1,6 +1,7 @@
 package org.tron.program;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertThrows;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
@@ -116,7 +117,7 @@ public class SolidityNodeTest extends BaseTest {
 
     RuntimeException thrown = assertThrows(RuntimeException.class,
         () -> SolidityNode.awaitShutdown(app, node));
-    assertEquals(expected, thrown);
+    assertSame(expected, thrown);
 
     InOrder inOrder = inOrder(app, node);
     inOrder.verify(app).blockUntilShutdown();
