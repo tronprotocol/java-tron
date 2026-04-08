@@ -185,7 +185,8 @@ public class BlockChainMetricManager {
     if (lastNextMaintenanceTime == -1) {
       lastNextMaintenanceTime = nextMaintenanceTime;
       lastActiveWitnesses.addAll(chainBaseManager.getWitnessScheduleStore().getActiveWitnesses()
-          .stream().map(w -> StringUtil.encode58Check(w.toByteArray())).collect(Collectors.toSet()));
+          .stream().map(w -> StringUtil.encode58Check(w.toByteArray()))
+          .collect(Collectors.toSet()));
     } else if (nextMaintenanceTime != lastNextMaintenanceTime) {
       Set<String> currentWitnesses = chainBaseManager.getWitnessScheduleStore().getActiveWitnesses()
           .stream()
