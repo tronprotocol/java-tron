@@ -8,7 +8,6 @@ import static org.mockito.Mockito.mockConstruction;
 import static org.mockito.Mockito.when;
 
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.After;
@@ -28,7 +27,6 @@ public class TransactionRegisterTest {
 
   @Before
   public void init() {
-    Args.getInstance().setActuatorSet(new HashSet<>());
     TransactionRegister.resetForTesting();
   }
 

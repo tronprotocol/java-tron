@@ -325,7 +325,4 @@ final class ConfigKey {
 
   // energy
   public static final String ENERGY_LIMIT_BLOCK_NUM = "enery.limit.block.num";
-
-  // actuator
-  public static final String ACTUATOR_WHITELIST = "actuator.whitelist";
 }

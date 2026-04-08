@@ -32,7 +32,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -841,11 +840,6 @@ public class Args extends CommonParameter {
     initBackupProperty(config);
     initRocksDbBackupProperty(config);
     initRocksDbSettings(config);
-
-    PARAMETER.actuatorSet =
-        config.hasPath(ConfigKey.ACTUATOR_WHITELIST)
-            ? new HashSet<>(config.getStringList(ConfigKey.ACTUATOR_WHITELIST))
-            : Collections.emptySet();
 
     if (config.hasPath(ConfigKey.NODE_METRICS_ENABLE)) {
       PARAMETER.nodeMetricsEnable = config.getBoolean(ConfigKey.NODE_METRICS_ENABLE);

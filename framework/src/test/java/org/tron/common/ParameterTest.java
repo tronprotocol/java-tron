@@ -218,8 +218,6 @@ public class ParameterTest {
     assertEquals(1, parameter.getShieldedTransInPendingMaxCounts());
     parameter.setChangedDelegation(1);
     assertEquals(1, parameter.getChangedDelegation());
-    parameter.setActuatorSet(new HashSet<>());
-    assertTrue(CollectionUtils.isEmpty(parameter.getActuatorSet()));
     parameter.setRateLimiterInitialization(new RateLimiterInitialization());
     assertNotNull(parameter.getRateLimiterInitialization());
     parameter.setRateLimiterGlobalQps(1000);
