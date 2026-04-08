@@ -24,6 +24,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.tron.common.BaseTest;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.RuntimeImpl;
 import org.tron.common.runtime.TvmTestUtils;
 import org.tron.common.utils.Commons;
@@ -153,8 +154,10 @@ public class BandWidthRuntimeTest extends BaseTest {
 
   @Test
   public void testSuccessNoBandd() {
+    boolean originalDebug = CommonParameter.getInstance().isDebug();
     try {
       byte[] contractAddress = createContract();
+      CommonParameter.getInstance().setDebug(true);
       TriggerSmartContract triggerContract = TvmTestUtils.createTriggerContract(contractAddress,
           "setCoin(uint256)", "50", false,
           0, Commons.decodeFromBase58Check(TriggerOwnerTwoAddress));
@@ -185,6 +188,8 @@ public class BandWidthRuntimeTest extends BaseTest {
           balance);
     } catch (TronException e) {
       Assert.assertNotNull(e);
+    } finally {
+      CommonParameter.getInstance().setDebug(originalDebug);
     }
   }
 
