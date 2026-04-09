@@ -107,6 +107,33 @@ public class ByteArrayTest {
   }
 
   @Test
+  public void testHexToBigIntegerRejectsOversizedInput() {
+    // 0x + 64 hex = 66 chars, valid uint256
+    String maxValid = "0x" + new String(new char[64]).replace('\0', 'f');
+    assertEquals(66, maxValid.length());
+    ByteArray.hexToBigInteger(maxValid); // should not throw
+
+    // 0x + 65 hex = 67 chars, exceeds limit
+    String tooLong = "0x" + new String(new char[65]).replace('\0', 'a');
+    try {
+      ByteArray.hexToBigInteger(tooLong);
+      fail("expected IllegalArgumentException");
+    } catch (IllegalArgumentException e) {
+      assertTrue(e.getMessage().contains("exceeds max length"));
+    }
+  }
+
+  @Test
+  public void testHexToBigIntegerRejectsNull() {
+    try {
+      ByteArray.hexToBigInteger(null);
+      fail("expected IllegalArgumentException");
+    } catch (IllegalArgumentException e) {
+      assertTrue(e.getMessage().contains("null"));
+    }
+  }
+
+  @Test
   public void testFromHexWithPrefix() {
     String input = "0x1A3F";
     String expected = "1A3F";

@@ -143,7 +143,16 @@ public class ByteArray {
     return "0x" + x;
   }
 
+  /**
+   * Max length for hex input to hexToBigInteger: 0x + 64 hex digits (uint256).
+   */
+  private static final int MAX_HEX_BIG_INTEGER_LEN = 66;
+
   public static BigInteger hexToBigInteger(String input) {
+    if (input == null || input.length() > MAX_HEX_BIG_INTEGER_LEN) {
+      throw new IllegalArgumentException(
+          "hex input is null or exceeds max length: " + MAX_HEX_BIG_INTEGER_LEN);
+    }
     if (input.startsWith("0x")) {
       return new BigInteger(input.substring(2), 16);
     } else {
@@ -152,7 +161,7 @@ public class ByteArray {
   }
 
   public static long jsonHexToLong(String x) throws JsonRpcInvalidParamsException {
-    if (!x.startsWith("0x")) {
+    if (x == null || !x.startsWith("0x")) {
       throw new JsonRpcInvalidParamsException("Incorrect hex syntax");
     }
     x = x.substring(2);
@@ -160,7 +169,7 @@ public class ByteArray {
   }
 
   public static int jsonHexToInt(String x) throws Exception {
-    if (!x.startsWith("0x")) {
+    if (x == null || !x.startsWith("0x")) {
       throw new Exception("Incorrect hex syntax");
     }
     x = x.substring(2);
