@@ -36,7 +36,7 @@ message Transaction {
       AccountCreateContract = 0;
       TransferContract = 1;
       ........
-      SumContract = 52;  
+      SumContract = 60;  
     }
   ...
 }
@@ -77,6 +77,8 @@ After compilation, the corresponding .class under the java_out directory will be
 For now, the default Actuator supported by java-tron is located in `org.tron.core.actuator`. Creating `SumActuator` under this directory:
 
 ```java
+import static org.tron.core.config.Parameter.ChainConstant.TRANSFER_FEE;
+
 public class SumActuator extends AbstractActuator {
 
   public SumActuator() {
@@ -229,11 +231,7 @@ public class SumActuatorTest {
     Args.setParam(new String[]{"--output-directory",
             temporaryFolder.newFolder().toString()}, "config-localtest.conf");
     context = new TronApplicationContext(DefaultConfig.class);
-    RpcApiService rpcApiService = context.getBean(RpcApiService.class);
     appTest = ApplicationFactory.create(context);
-    appTest.addService(rpcApiService);
-    appTest.initServices(Args.getInstance());
-    appTest.startServices();
     appTest.startup();
     channelFull = ManagedChannelBuilder.forTarget(SERVICE_NODE)
             .usePlaintext()
@@ -250,7 +248,6 @@ public class SumActuatorTest {
       channelFull.shutdown();
       channelFull.awaitTermination(5, TimeUnit.SECONDS);
     }
-    appTest.shutdownServices();
     appTest.shutdown();
     context.destroy();
     Args.clearParam();

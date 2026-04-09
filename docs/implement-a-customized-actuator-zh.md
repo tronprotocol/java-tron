@@ -38,7 +38,7 @@ message Transaction {
       AccountCreateContract = 0;
       TransferContract = 1;
       ........
-      SumContract = 52;  
+      SumContract = 60;  
     }
   ...
 }
@@ -79,6 +79,8 @@ protoc -I=src/main/protos/api -I=src/main/protos/core -I=src/main/protos  --java
 目前 java-tron 默认支持的 Actuator 存放在该模块的 org.tron.core.actuator 目录下，同样在该目录下创建 `SumActuator` ：
 
 ```java
+import static org.tron.core.config.Parameter.ChainConstant.TRANSFER_FEE;
+
 public class SumActuator extends AbstractActuator {
 
   public SumActuator() {
@@ -231,11 +233,7 @@ public class SumActuatorTest {
     Args.setParam(new String[]{"--output-directory",
             temporaryFolder.newFolder().toString()}, "config-localtest.conf");
     context = new TronApplicationContext(DefaultConfig.class);
-    RpcApiService rpcApiService = context.getBean(RpcApiService.class);
     appTest = ApplicationFactory.create(context);
-    appTest.addService(rpcApiService);
-    appTest.initServices(Args.getInstance());
-    appTest.startServices();
     appTest.startup();
     channelFull = ManagedChannelBuilder.forTarget(SERVICE_NODE)
             .usePlaintext()
@@ -252,7 +250,6 @@ public class SumActuatorTest {
       channelFull.shutdown();
       channelFull.awaitTermination(5, TimeUnit.SECONDS);
     }
-    appTest.shutdownServices();
     appTest.shutdown();
     context.destroy();
     Args.clearParam();
