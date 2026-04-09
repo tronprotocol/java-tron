@@ -170,13 +170,13 @@ public class BlockChainMetricManager {
     }
 
     //TPS
-    if (block.getTransactions().size() > 0) {
-      MetricsUtil.meterMark(MetricsKey.BLOCKCHAIN_TPS, block.getTransactions().size());
-      Metrics.counterInc(MetricKeys.Counter.TXS, block.getTransactions().size(),
+    int txCount = block.getTransactions().size();
+    if (txCount > 0) {
+      MetricsUtil.meterMark(MetricsKey.BLOCKCHAIN_TPS, txCount);
+      Metrics.counterInc(MetricKeys.Counter.TXS, txCount,
           MetricLabels.Counter.TXS_SUCCESS, MetricLabels.Counter.TXS_SUCCESS);
     }
     // Record transaction count distribution for all blocks (including empty blocks)
-    int txCount = block.getTransactions().size();
     Metrics.histogramObserve(MetricKeys.Histogram.BLOCK_TRANSACTION_COUNT, txCount,
         StringUtil.encode58Check(address));
 
