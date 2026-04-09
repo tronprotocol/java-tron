@@ -14,7 +14,7 @@ java-tron 模块化的目的是为了帮助开发者方便地构建出特定应�
 
 ![modular-structure](https://github.com/tronprotocol/java-tron/blob/develop/docs/images/module.png)
 
-模块化后的 java-tron 目前分为6个模块：framework、protocol、common、chainbase、consensus、actuator，下面分别简单介绍一下各个模块的作用。
+模块化后的 java-tron 目前分为8个模块：framework、protocol、common、chainbase、consensus、actuator、crypto、plugins，下面分别简单介绍一下各个模块的作用。
 
 ### framework
 
@@ -65,4 +65,11 @@ actuator模块定义了 Actuator 接口，该接口有4个方法：
 4. calcFee: 定义交易手续费计算逻辑
 
 开发者可以根据自身业务实现 Actuator 接口，就能实现自定义交易类型的处理。
- 
+
+### crypto
+
+crypto 模块封装了项目中使用的密码学原语，包括椭圆曲线密钥操作、哈希函数及签名验证等。该模块仅依赖 `common`，不依赖其他业务模块，保持密码学逻辑的独立性与可审计性。
+
+### plugins
+
+plugins 模块提供独立的运维工具，打包为可单独执行的 JAR（如 `Toolkit.jar`、`ArchiveManifest.jar`）。这些工具支持数据库迁移、压缩、轻节点数据裁剪等维护任务，无需启动完整节点即可运行。

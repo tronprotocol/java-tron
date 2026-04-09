@@ -62,13 +62,11 @@ service Wallet {
 ```
 最后重新编译修改过 proto 文件，可自行编译也可直接通过编译 java-tron 项目来编译 proto 文件：
 
-*目前 java-tron 采用的是 protoc v3.4.0，自行编译时确保 protoc 版本一致。*
-
 ```shell
-# recommended
+# 推荐方式 —— 直接编译项目，proto 文件会自动重新编译
 ./gradlew build -x test
 
-# or build via protoc
+# 或者手动使用 protoc（版本需与 build.gradle 中声明的一致）
 protoc -I=src/main/protos -I=src/main/protos/core --java_out=src/main/java  Tron.proto
 protoc -I=src/main/protos/core/contract --java_out=src/main/java  math_contract.proto
 protoc -I=src/main/protos/api -I=src/main/protos/core -I=src/main/protos  --java_out=src/main/java api.proto
@@ -212,48 +210,52 @@ public class WalletApi extends WalletImplBase {
 ```java
 public class SumActuatorTest {
   private static final Logger logger = LoggerFactory.getLogger("Test");
-  private String serviceNode = "127.0.0.1:50051";
-  private String confFile = "config-localtest.conf";
-  private String dbPath = "output-directory";
-  private TronApplicationContext context;
-  private Application appTest;
-  private ManagedChannel channelFull = null;
-  private WalletGrpc.WalletBlockingStub blockingStubFull = null;
+  private static final String SERVICE_NODE = "127.0.0.1:50051";
+
+  @ClassRule
+  public static TemporaryFolder temporaryFolder = new TemporaryFolder();
+
+  @Rule
+  public Timeout timeout = new Timeout(30, TimeUnit.SECONDS);
+
+  private static TronApplicationContext context;
+  private static Application appTest;
+  private static ManagedChannel channelFull;
+  private static WalletGrpc.WalletBlockingStub blockingStubFull;
 
   /**
-   * init the application.
+   * 整个测试类只初始化一次应用上下文。
    */
-  @Before
-  public void init() {
-    CommonParameter argsTest = Args.getInstance();
-    Args.setParam(new String[]{"--output-directory", dbPath},
-            confFile);
+  @BeforeClass
+  public static void init() throws IOException {
+    Args.setParam(new String[]{"--output-directory",
+            temporaryFolder.newFolder().toString()}, "config-localtest.conf");
     context = new TronApplicationContext(DefaultConfig.class);
     RpcApiService rpcApiService = context.getBean(RpcApiService.class);
     appTest = ApplicationFactory.create(context);
     appTest.addService(rpcApiService);
-    appTest.initServices(argsTest);
+    appTest.initServices(Args.getInstance());
     appTest.startServices();
     appTest.startup();
-    channelFull = ManagedChannelBuilder.forTarget(serviceNode)
+    channelFull = ManagedChannelBuilder.forTarget(SERVICE_NODE)
             .usePlaintext()
             .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
   }
 
   /**
-   * destroy the context.
+   * 所有测试结束后统一销毁上下文。
    */
-  @After
-  public void destroy() throws InterruptedException {
+  @AfterClass
+  public static void destroy() throws InterruptedException {
     if (channelFull != null) {
-      channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
+      channelFull.shutdown();
+      channelFull.awaitTermination(5, TimeUnit.SECONDS);
     }
-    Args.clearParam();
     appTest.shutdownServices();
     appTest.shutdown();
     context.destroy();
-    FileUtil.deleteDir(new File(dbPath));
+    Args.clearParam();
   }
 
   @Test
