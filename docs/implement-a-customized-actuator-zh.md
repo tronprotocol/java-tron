@@ -44,7 +44,13 @@ message Transaction {
 }
 ```
 
-然后还需要注册一个方法来保证 gRPC 能够接收并识别该类型合约的请求，目前 gRPC 协议统一定义在 src/main/protos/api/api.proto，在 api.proto 中的 Wallet Service 新增 `InvokeSum` 接口：
+然后还需要注册一个方法来保证 gRPC 能够接收并识别该类型合约的请求，目前 gRPC 协议统一定义在 src/main/protos/api/api.proto。首先在 `api.proto` 顶部添加对新 proto 文件的 import：
+
+```protobuf
+import "core/contract/math_contract.proto";
+```
+
+然后在 Wallet service 中新增 `InvokeSum` 接口：
 
 ```protobuf
 service Wallet {
@@ -77,6 +83,8 @@ protoc -I=src/main/protos/api -I=src/main/protos/core -I=src/main/protos  --java
 ## 实现 SumActuator
 
 目前 java-tron 默认支持的 Actuator 存放在该模块的 org.tron.core.actuator 目录下，同样在该目录下创建 `SumActuator` ：
+
+> **注意**：Actuator 必须放在 `org.tron.core.actuator` 包下。节点启动时，`TransactionRegister.registerActuator()` 会通过反射扫描该包，自动发现所有 `AbstractActuator` 的子类，并各实例化一次（触发 `super()` 构造器，进而调用 `TransactionFactory.register()`）。因此无需手动编写注册代码。
 
 ```java
 import static org.tron.core.config.Parameter.ChainConstant.TRANSFER_FEE;

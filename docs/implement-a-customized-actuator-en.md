@@ -42,7 +42,13 @@ message Transaction {
 }
 ```
 
-Then register a function to ensure that gRPC can receive and identify the requests of this contract. Currently, gRPC protocols are all defined in `src/main/protos/api/api.proto`. To add an `InvokeSum` interface in Wallet Service:
+Then register a function to ensure that gRPC can receive and identify the requests of this contract. Currently, gRPC protocols are all defined in `src/main/protos/api/api.proto`. First add the import for the new proto file at the top of `api.proto`:
+
+```protobuf
+import "core/contract/math_contract.proto";
+```
+
+Then add an `InvokeSum` interface in the Wallet service:
 
 ```protobuf
 service Wallet {
@@ -75,6 +81,8 @@ After compilation, the corresponding .class under the java_out directory will be
 ## Implement SumActuator
 
 For now, the default Actuator supported by java-tron is located in `org.tron.core.actuator`. Creating `SumActuator` under this directory:
+
+> **Note**: The Actuator must be placed in the `org.tron.core.actuator` package. At node startup, `TransactionRegister.registerActuator()` uses reflection to scan that package and auto-discovers every `AbstractActuator` subclass. Each subclass is instantiated once (triggering the `super()` constructor which calls `TransactionFactory.register()`), so no manual registration code is needed.
 
 ```java
 import static org.tron.core.config.Parameter.ChainConstant.TRANSFER_FEE;
