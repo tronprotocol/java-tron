@@ -37,7 +37,11 @@ jobs:
                 );
 
                 for (const run of runs) {
-                  const isTargetPr = !run.pull_requests?.length || run.pull_requests.some((pr) => pr.number === prNumber);
+                  if (!run) {
+                    continue;
+                  }
+                  const prs = Array.isArray(run.pull_requests) ? run.pull_requests : [];
+                  const isTargetPr = prs.length === 0 || prs.some((pr) => pr.number === prNumber);
                   if (run.head_sha === headSha && isTargetPr) {
                     await github.rest.actions.cancelWorkflowRun({
                       owner: context.repo.owner,

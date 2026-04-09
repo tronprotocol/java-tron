@@ -29,9 +29,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - java: '8'
-            runner: macos-26-intel
-            arch: x86_64
           - java: '17'
             runner: macos-26
             arch: aarch64
@@ -56,10 +53,6 @@ jobs:
 
       - name: Build
         run: ./gradlew clean build --no-daemon
-
-      - name: Test with RocksDB engine
-        if: matrix.arch == 'x86_64'
-        run: ./gradlew :framework:testWithRocksDb --no-daemon
 
   build-ubuntu:
     name: Build ubuntu24 (JDK 17 / aarch64)
@@ -177,7 +170,236 @@ jobs:
             debian11-x86_64-gradle-
 
       - name: Build
-        run: ./gradlew clean build --no-daemon
+        run: ./gradlew clean build --no-daemon --no-build-cache
 
       - name: Test with RocksDB engine
-        run: ./gradlew :framework:testWithRocksDb --no-daemon
+        run: ./gradlew :framework:testWithRocksDb --no-daemon --no-build-cache
+
+      - name: Generate module coverage reports
+        run: ./gradlew jacocoTestReport --no-daemon
+
+      - name: Upload PR coverage reports
+        uses: actions/upload-artifact@v6
+        with:
+          name: jacoco-coverage-pr
+          path: |
+            **/build/reports/jacoco/test/jacocoTestReport.xml
+          if-no-files-found: error
+
+  coverage-base:
+    name: Coverage Base (JDK 8 / x86_64)
+    if: ${{ github.event_name == 'pull_request' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    container:
+      image: eclipse-temurin:8-jdk # base image is Debian 11 (Bullseye)
+    defaults:
+      run:
+        shell: bash
+    env:
+      GRADLE_USER_HOME: /github/home/.gradle
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+
+      - name: Install dependencies (Debian + build tools)
+        run: |
+          set -euxo pipefail
+          apt-get update
+          apt-get install -y git wget unzip build-essential curl jq
+
+      - name: Cache Gradle packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            /github/home/.gradle/caches
+            /github/home/.gradle/wrapper
+          key: coverage-base-x86_64-gradle-${{ hashFiles('**/*.gradle', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            coverage-base-x86_64-gradle-
+
+      - name: Build (base)
+        run: ./gradlew clean build --no-daemon --no-build-cache
+
+      - name: Test with RocksDB engine (base)
+        run: ./gradlew :framework:testWithRocksDb --no-daemon --no-build-cache
+
+      - name: Generate module coverage reports (base)
+        run: ./gradlew jacocoTestReport --no-daemon
+
+      - name: Upload base coverage reports
+        uses: actions/upload-artifact@v6
+        with:
+          name: jacoco-coverage-base
+          path: |
+            **/build/reports/jacoco/test/jacocoTestReport.xml
+          if-no-files-found: error
+
+  coverage-gate:
+    name: Coverage Gate
+    needs: [docker-build-debian11, coverage-base]
+    if: ${{ github.event_name == 'pull_request' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Download base coverage reports
+        uses: actions/download-artifact@v8
+        with:
+          name: jacoco-coverage-base
+          path: coverage/base
+
+      - name: Download PR coverage reports
+        uses: actions/download-artifact@v8
+        with:
+          name: jacoco-coverage-pr
+          path: coverage/pr
+
+      - name: Collect coverage report paths
+        id: collect-xml
+        run: |
+          BASE_XMLS=$(find coverage/base -name "jacocoTestReport.xml" | sort | paste -sd, -)
+          PR_XMLS=$(find coverage/pr -name "jacocoTestReport.xml" | sort | paste -sd, -)
+          if [ -z "$BASE_XMLS" ] || [ -z "$PR_XMLS" ]; then
+            echo "Missing jacocoTestReport.xml files for base or PR."
+            exit 1
+          fi
+          echo "base_xmls=$BASE_XMLS" >> "$GITHUB_OUTPUT"
+          echo "pr_xmls=$PR_XMLS" >> "$GITHUB_OUTPUT"
+
+      - name: Aggregate base coverage
+        id: jacoco-base
+        uses: madrapps/jacoco-report@v1.7.2
+        with:
+          paths: ${{ steps.collect-xml.outputs.base_xmls }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          min-coverage-overall: 0
+          min-coverage-changed-files: 0
+          skip-if-no-changes: true
+          title: '## Base Coverage Snapshot'
+          update-comment: false
+
+      - name: Aggregate PR coverage
+        id: jacoco-pr
+        uses: madrapps/jacoco-report@v1.7.2
+        with:
+          paths: ${{ steps.collect-xml.outputs.pr_xmls }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          min-coverage-overall: 0
+          min-coverage-changed-files: 0
+          skip-if-no-changes: true
+          title: '## PR Code Coverage Report'
+          update-comment: false
+
+      - name: Enforce coverage gates
+        env:
+          BASE_OVERALL_RAW: ${{ steps.jacoco-base.outputs.coverage-overall }}
+          PR_OVERALL_RAW: ${{ steps.jacoco-pr.outputs.coverage-overall }}
+          PR_CHANGED_RAW: ${{ steps.jacoco-pr.outputs.coverage-changed-files }}
+        run: |
+          set -euo pipefail
+
+          MIN_CHANGED=60
+          MAX_DROP=-0.1
+
+          sanitize() {
+            echo "$1" | tr -d ' %'
+          }
+          is_number() {
+            [[ "$1" =~ ^-?[0-9]+([.][0-9]+)?$ ]]
+          }
+          compare_float() {
+            # Usage: compare_float "<expr>"
+            # Example: compare_float "1.2 >= -0.1"
+            awk "BEGIN { if ($1) print 1; else print 0 }"
+          }
+
+          # 1) Parse metrics from jacoco-report outputs
+          BASE_OVERALL="$(sanitize "$BASE_OVERALL_RAW")"
+          PR_OVERALL="$(sanitize "$PR_OVERALL_RAW")"
+          PR_CHANGED="$(sanitize "$PR_CHANGED_RAW")"
+
+          if ! is_number "$BASE_OVERALL" || ! is_number "$PR_OVERALL"; then
+            echo "Failed to parse coverage values: base='${BASE_OVERALL}', pr='${PR_OVERALL}'."
+            exit 1
+          fi
+
+          # 2) Compare metrics against thresholds
+          DELTA=$(awk -v pr="$PR_OVERALL" -v base="$BASE_OVERALL" 'BEGIN { printf "%.4f", pr - base }')
+          DELTA_OK=$(compare_float "${DELTA} >= ${MAX_DROP}")
+
+          CHANGED_STATUS="SKIPPED (no changed coverage value)"
+          CHANGED_OK=1
+          if [ -n "$PR_CHANGED" ] && [ "$PR_CHANGED" != "NaN" ]; then
+            if ! is_number "$PR_CHANGED"; then
+              echo "Failed to parse changed-files coverage: changed='${PR_CHANGED}'."
+              exit 1
+            fi
+            CHANGED_OK=$(compare_float "${PR_CHANGED} > ${MIN_CHANGED}")
+            if [ "$CHANGED_OK" -eq 1 ]; then
+              CHANGED_STATUS="PASS (> ${MIN_CHANGED}%)"
+            else
+              CHANGED_STATUS="FAIL (<= ${MIN_CHANGED}%)"
+            fi
+          fi
+
+          # 3) Output base metrics (always visible in logs + step summary)
+          OVERALL_STATUS="PASS (>= ${MAX_DROP}%)"
+          if [ "$DELTA_OK" -ne 1 ]; then
+            OVERALL_STATUS="FAIL (< ${MAX_DROP}%)"
+          fi
+
+          METRICS_TEXT=$(cat <<EOF
+          Changed Files Coverage: ${PR_CHANGED}%
+          PR Overall Coverage: ${PR_OVERALL}%
+          Base Overall Coverage: ${BASE_OVERALL}%
+          Delta (PR - Base): ${DELTA}%
+          Changed Files Gate: ${CHANGED_STATUS}
+          Overall Delta Gate: ${OVERALL_STATUS}
+          EOF
+          )
+
+          echo "$METRICS_TEXT"
+
+          {
+            echo "### Coverage Gate Metrics"
+            echo ""
+            echo "- Changed Files Coverage: ${PR_CHANGED}%"
+            echo "- PR Overall Coverage: ${PR_OVERALL}%"
+            echo "- Base Overall Coverage: ${BASE_OVERALL}%"
+            echo "- Delta (PR - Base): ${DELTA}%"
+            echo "- Changed Files Gate: ${CHANGED_STATUS}"
+            echo "- Overall Delta Gate: ${OVERALL_STATUS}"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          # 4) Decide CI pass/fail
+          if [ "$DELTA_OK" -ne 1 ]; then
+            echo "Coverage gate failed: overall coverage dropped more than 0.1%."
+            echo "base=${BASE_OVERALL}% pr=${PR_OVERALL}% delta=${DELTA}%"
+            exit 1
+          fi
+
+          if [ -z "$PR_CHANGED" ] || [ "$PR_CHANGED" = "NaN" ]; then
+            echo "No changed-files coverage value detected, skip changed-files gate."
+            exit 0
+          fi
+
+          if [ "$CHANGED_OK" -ne 1 ]; then
+            echo "Coverage gate failed: changed files coverage must be > 60%."
+            echo "changed=${PR_CHANGED}%"
+            exit 1
+          fi
+
+          echo "Coverage gates passed."
