@@ -32,11 +32,6 @@ import static org.tron.core.config.Parameter.DatabaseConstants.MARKET_COUNT_LIMI
 import static org.tron.core.config.Parameter.DatabaseConstants.PROPOSAL_COUNT_LIMIT_MAX;
 import static org.tron.core.config.Parameter.DatabaseConstants.WITNESS_COUNT_LIMIT_MAX;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.parseEnergyFee;
-import static org.tron.core.services.jsonrpc.TronJsonRpcImpl.EARLIEST_STR;
-import static org.tron.core.services.jsonrpc.TronJsonRpcImpl.FINALIZED_STR;
-import static org.tron.core.services.jsonrpc.TronJsonRpcImpl.LATEST_STR;
-import static org.tron.core.services.jsonrpc.TronJsonRpcImpl.PENDING_STR;
-import static org.tron.core.services.jsonrpc.TronJsonRpcImpl.TAG_PENDING_SUPPORT_ERROR;
 import static org.tron.core.vm.utils.FreezeV2Util.getV2EnergyUsage;
 import static org.tron.core.vm.utils.FreezeV2Util.getV2NetUsage;
 import static org.tron.protos.contract.Common.ResourceCode;
@@ -193,7 +188,6 @@ import org.tron.core.exception.TransactionExpirationException;
 import org.tron.core.exception.VMIllegalException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.exception.ZksnarkException;
-import org.tron.core.exception.jsonrpc.JsonRpcInvalidParamsException;
 import org.tron.core.net.TronNetDelegate;
 import org.tron.core.net.TronNetService;
 import org.tron.core.net.message.adv.TransactionMessage;
@@ -711,6 +705,10 @@ public class Wallet {
     return chainBaseManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum();
   }
 
+  public long getHeadBlockNum() {
+    return chainBaseManager.getHeadBlockNum();
+  }
+
   public BlockCapsule getBlockCapsuleByNum(long blockNum) {
     try {
       return chainBaseManager.getBlockByNum(blockNum);
@@ -731,37 +729,6 @@ public class Wallet {
     }
 
     return count;
-  }
-
-  public Block getByJsonBlockId(String id) throws JsonRpcInvalidParamsException {
-    if (EARLIEST_STR.equalsIgnoreCase(id)) {
-      return getBlockByNum(0);
-    } else if (LATEST_STR.equalsIgnoreCase(id)) {
-      return getNowBlock();
-    } else if (FINALIZED_STR.equalsIgnoreCase(id)) {
-      return getSolidBlock();
-    } else if (PENDING_STR.equalsIgnoreCase(id)) {
-      throw new JsonRpcInvalidParamsException(TAG_PENDING_SUPPORT_ERROR);
-    } else {
-      long blockNumber;
-      try {
-        blockNumber = ByteArray.hexToBigInteger(id).longValue();
-      } catch (Exception e) {
-        throw new JsonRpcInvalidParamsException("invalid block number");
-      }
-
-      return getBlockByNum(blockNumber);
-    }
-  }
-
-  public List<Transaction> getTransactionsByJsonBlockId(String id)
-      throws JsonRpcInvalidParamsException {
-    if (PENDING_STR.equalsIgnoreCase(id)) {
-      throw new JsonRpcInvalidParamsException(TAG_PENDING_SUPPORT_ERROR);
-    } else {
-      Block block = getByJsonBlockId(id);
-      return block != null ? block.getTransactionsList() : null;
-    }
   }
 
   public WitnessList getWitnessList() {

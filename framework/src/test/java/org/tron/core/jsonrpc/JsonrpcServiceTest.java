@@ -1,7 +1,10 @@
 package org.tron.core.jsonrpc;
 
-import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getByJsonBlockId;
-import static org.tron.core.services.jsonrpc.TronJsonRpcImpl.TAG_PENDING_SUPPORT_ERROR;
+import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.TAG_PENDING_SUPPORT_ERROR;
+import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.TAG_SAFE_SUPPORT_ERROR;
+import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.isBlockTag;
+import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.parseBlockNumber;
+import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.parseBlockTag;
 
 import com.alibaba.fastjson.JSON;
 import com.google.gson.JsonArray;
@@ -429,53 +432,76 @@ public class JsonrpcServiceTest extends BaseTest {
   }
 
   @Test
-  public void testGetByJsonBlockId() {
-    long blkNum = 0;
+  public void testBlockTagParsing() {
+    // isBlockTag
+    Assert.assertTrue(isBlockTag("pending"));
+    Assert.assertTrue(isBlockTag("latest"));
+    Assert.assertTrue(isBlockTag("earliest"));
+    Assert.assertTrue(isBlockTag("finalized"));
+    Assert.assertTrue(isBlockTag("safe"));
+    Assert.assertFalse(isBlockTag(null));
+    Assert.assertFalse(isBlockTag("0xa"));
+    Assert.assertFalse(isBlockTag(""));
 
+    // parseBlockTag: pending throws
     try {
-      getByJsonBlockId("pending", wallet);
+      parseBlockTag("pending", wallet);
       Assert.fail("Expected to be thrown");
     } catch (Exception e) {
-      Assert.assertEquals("TAG pending not supported", e.getMessage());
+      Assert.assertEquals(TAG_PENDING_SUPPORT_ERROR, e.getMessage());
     }
 
+    // parseBlockTag: safe throws
     try {
-      blkNum = getByJsonBlockId(null, wallet);
+      parseBlockTag("safe", wallet);
+      Assert.fail("Expected to be thrown");
+    } catch (Exception e) {
+      Assert.assertEquals(TAG_SAFE_SUPPORT_ERROR, e.getMessage());
+    }
+
+    // parseBlockTag: latest -> headBlockNum
+    try {
+      long blkNum = parseBlockTag("latest", wallet);
+      Assert.assertEquals(LATEST_BLOCK_NUM, blkNum);
     } catch (Exception e) {
       Assert.fail();
     }
-    Assert.assertEquals(-1, blkNum);
 
+    // parseBlockTag: earliest -> 0
     try {
-      blkNum = getByJsonBlockId("latest", wallet);
+      long blkNum = parseBlockTag("earliest", wallet);
+      Assert.assertEquals(0L, blkNum);
     } catch (Exception e) {
       Assert.fail();
     }
-    Assert.assertEquals(-1, blkNum);
 
+    // parseBlockTag: finalized -> solidBlockNum
     try {
-      blkNum = getByJsonBlockId("finalized", wallet);
+      long blkNum = parseBlockTag("finalized", wallet);
+      Assert.assertEquals(LATEST_SOLIDIFIED_BLOCK_NUM, blkNum);
     } catch (Exception e) {
       Assert.fail();
     }
-    Assert.assertEquals(LATEST_SOLIDIFIED_BLOCK_NUM, blkNum);
 
+    // parseBlockNumber: hex -> number
     try {
-      blkNum = getByJsonBlockId("0xa", wallet);
+      long blkNum = parseBlockNumber("0xa", wallet);
+      Assert.assertEquals(10L, blkNum);
     } catch (Exception e) {
       Assert.fail();
     }
-    Assert.assertEquals(10L, blkNum);
 
+    // parseBlockNumber: bad hex -> throws
     try {
-      getByJsonBlockId("abc", wallet);
+      parseBlockNumber("abc", wallet);
       Assert.fail("Expected to be thrown");
     } catch (Exception e) {
       Assert.assertEquals("Incorrect hex syntax", e.getMessage());
     }
 
+    // parseBlockNumber: malformed hex -> throws
     try {
-      getByJsonBlockId("0xxabc", wallet);
+      parseBlockNumber("0xxabc", wallet);
       Assert.fail("Expected to be thrown");
     } catch (Exception e) {
       // https://bugs.openjdk.org/browse/JDK-8176425, from JDK 12, the exception message is changed
