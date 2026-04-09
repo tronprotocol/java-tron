@@ -532,7 +532,11 @@ public class JsonRpcApiUtil {
       // Use getNowBlock() to fetch the latest persisted block directly from blockStore,
       // avoiding a race with updateDynamicProperties that updates latestBlockHeaderNumber
       // before the block is written to blockStore/blockIndexStore.
-      return wallet.getNowBlock().getBlockHeader().getRawData().getNumber();
+      Block block = wallet.getNowBlock();
+      if (block == null) {
+        return 0;
+      }
+      return block.getBlockHeader().getRawData().getNumber();
     }
     if (EARLIEST_STR.equalsIgnoreCase(tag)) {
       return 0;

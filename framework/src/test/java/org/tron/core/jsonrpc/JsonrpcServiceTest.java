@@ -65,6 +65,8 @@ public class JsonrpcServiceTest extends BaseTest {
   private static final String OWNER_ADDRESS_ACCOUNT_NAME = "first";
   private static final long LATEST_BLOCK_NUM = 10_000L;
   private static final long LATEST_SOLIDIFIED_BLOCK_NUM = 4L;
+  private static final String TAG_NOT_SUPPORT_ERROR =
+      "TAG [earliest | pending | finalized | safe] not supported";
 
   private static TronJsonRpcImpl tronJsonRpc;
   @Resource
@@ -517,7 +519,7 @@ public class JsonrpcServiceTest extends BaseTest {
       tronJsonRpc.getTrxBalance("", "earliest");
       Assert.fail("Expected to be thrown");
     } catch (Exception e) {
-      Assert.assertEquals("TAG [earliest | pending | finalized] not supported",
+      Assert.assertEquals(TAG_NOT_SUPPORT_ERROR,
           e.getMessage());
     }
 
@@ -525,7 +527,7 @@ public class JsonrpcServiceTest extends BaseTest {
       tronJsonRpc.getTrxBalance("", "pending");
       Assert.fail("Expected to be thrown");
     } catch (Exception e) {
-      Assert.assertEquals("TAG [earliest | pending | finalized] not supported",
+      Assert.assertEquals(TAG_NOT_SUPPORT_ERROR,
           e.getMessage());
     }
 
@@ -533,7 +535,7 @@ public class JsonrpcServiceTest extends BaseTest {
       tronJsonRpc.getTrxBalance("", "finalized");
       Assert.fail("Expected to be thrown");
     } catch (Exception e) {
-      Assert.assertEquals("TAG [earliest | pending | finalized] not supported",
+      Assert.assertEquals(TAG_NOT_SUPPORT_ERROR,
           e.getMessage());
     }
 
@@ -552,7 +554,7 @@ public class JsonrpcServiceTest extends BaseTest {
       tronJsonRpc.getStorageAt("", "", "earliest");
       Assert.fail("Expected to be thrown");
     } catch (Exception e) {
-      Assert.assertEquals("TAG [earliest | pending | finalized] not supported",
+      Assert.assertEquals(TAG_NOT_SUPPORT_ERROR,
           e.getMessage());
     }
 
@@ -560,7 +562,7 @@ public class JsonrpcServiceTest extends BaseTest {
       tronJsonRpc.getStorageAt("", "", "pending");
       Assert.fail("Expected to be thrown");
     } catch (Exception e) {
-      Assert.assertEquals("TAG [earliest | pending | finalized] not supported",
+      Assert.assertEquals(TAG_NOT_SUPPORT_ERROR,
           e.getMessage());
     }
 
@@ -568,7 +570,7 @@ public class JsonrpcServiceTest extends BaseTest {
       tronJsonRpc.getStorageAt("", "", "finalized");
       Assert.fail("Expected to be thrown");
     } catch (Exception e) {
-      Assert.assertEquals("TAG [earliest | pending | finalized] not supported",
+      Assert.assertEquals(TAG_NOT_SUPPORT_ERROR,
           e.getMessage());
     }
   }
@@ -579,7 +581,7 @@ public class JsonrpcServiceTest extends BaseTest {
       tronJsonRpc.getABIOfSmartContract("", "earliest");
       Assert.fail("Expected to be thrown");
     } catch (Exception e) {
-      Assert.assertEquals("TAG [earliest | pending | finalized] not supported",
+      Assert.assertEquals(TAG_NOT_SUPPORT_ERROR,
           e.getMessage());
     }
 
@@ -587,7 +589,7 @@ public class JsonrpcServiceTest extends BaseTest {
       tronJsonRpc.getABIOfSmartContract("", "pending");
       Assert.fail("Expected to be thrown");
     } catch (Exception e) {
-      Assert.assertEquals("TAG [earliest | pending | finalized] not supported",
+      Assert.assertEquals(TAG_NOT_SUPPORT_ERROR,
           e.getMessage());
     }
 
@@ -595,7 +597,7 @@ public class JsonrpcServiceTest extends BaseTest {
       tronJsonRpc.getABIOfSmartContract("", "finalized");
       Assert.fail("Expected to be thrown");
     } catch (Exception e) {
-      Assert.assertEquals("TAG [earliest | pending | finalized] not supported",
+      Assert.assertEquals(TAG_NOT_SUPPORT_ERROR,
           e.getMessage());
     }
   }
@@ -606,7 +608,7 @@ public class JsonrpcServiceTest extends BaseTest {
       tronJsonRpc.getCall(null, "earliest");
       Assert.fail("Expected to be thrown");
     } catch (Exception e) {
-      Assert.assertEquals("TAG [earliest | pending | finalized] not supported",
+      Assert.assertEquals(TAG_NOT_SUPPORT_ERROR,
           e.getMessage());
     }
 
@@ -614,7 +616,7 @@ public class JsonrpcServiceTest extends BaseTest {
       tronJsonRpc.getCall(null, "pending");
       Assert.fail("Expected to be thrown");
     } catch (Exception e) {
-      Assert.assertEquals("TAG [earliest | pending | finalized] not supported",
+      Assert.assertEquals(TAG_NOT_SUPPORT_ERROR,
           e.getMessage());
     }
 
@@ -622,7 +624,7 @@ public class JsonrpcServiceTest extends BaseTest {
       tronJsonRpc.getCall(null, "finalized");
       Assert.fail("Expected to be thrown");
     } catch (Exception e) {
-      Assert.assertEquals("TAG [earliest | pending | finalized] not supported",
+      Assert.assertEquals(TAG_NOT_SUPPORT_ERROR,
           e.getMessage());
     }
   }

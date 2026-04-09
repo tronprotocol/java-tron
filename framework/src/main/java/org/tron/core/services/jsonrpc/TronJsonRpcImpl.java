@@ -159,7 +159,7 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
 
   private static final String JSON_ERROR = "invalid json request";
   private static final String TAG_NOT_SUPPORT_ERROR =
-      "TAG [earliest | pending | finalized] not supported";
+      "TAG [earliest | pending | finalized | safe] not supported";
   private static final String QUANTITY_NOT_SUPPORT_ERROR =
       "QUANTITY not supported, just support TAG as latest";
   private static final String NO_BLOCK_HEADER = "header not found";
@@ -305,20 +305,7 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
   @Override
   public String ethGetBlockTransactionCountByNumber(String blockNumOrTag)
       throws JsonRpcInvalidParamsException {
-    long blockNum;
-    if (JsonRpcApiUtil.isBlockTag(blockNumOrTag)) {
-      blockNum = JsonRpcApiUtil.parseBlockTag(blockNumOrTag, wallet);
-    } else {
-      try {
-        // hexToBigInteger: 0x -> hex, bare number -> decimal.
-        // Preserving original behavior. LogFilterWrapper uses
-        // strict jsonHexToLong (0x required) via parseBlockNumber.
-        blockNum = ByteArray.hexToBigInteger(blockNumOrTag).longValue();
-      } catch (Exception e) {
-        throw new JsonRpcInvalidParamsException(BLOCK_NUM_ERROR);
-      }
-    }
-    Block block = wallet.getBlockByNum(blockNum);
+    Block block = getBlockByNumOrTag(blockNumOrTag);
     if (block == null) {
       return null;
     }
@@ -337,17 +324,7 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
   @Override
   public BlockResult ethGetBlockByNumber(String blockNumOrTag, Boolean fullTransactionObjects)
       throws JsonRpcInvalidParamsException {
-    long blockNum;
-    if (JsonRpcApiUtil.isBlockTag(blockNumOrTag)) {
-      blockNum = JsonRpcApiUtil.parseBlockTag(blockNumOrTag, wallet);
-    } else {
-      try {
-        blockNum = ByteArray.hexToBigInteger(blockNumOrTag).longValue();
-      } catch (Exception e) {
-        throw new JsonRpcInvalidParamsException(BLOCK_NUM_ERROR);
-      }
-    }
-    final Block b = wallet.getBlockByNum(blockNum);
+    final Block b = getBlockByNumOrTag(blockNumOrTag);
     return (b == null ? null : getBlockResult(b, fullTransactionObjects));
   }
 
@@ -388,6 +365,24 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
   private Block getBlockByJsonHash(String blockHash) throws JsonRpcInvalidParamsException {
     byte[] bHash = hashToByteArray(blockHash);
     return wallet.getBlockById(ByteString.copyFrom(bHash));
+  }
+
+  private Block getBlockByNumOrTag(String blockNumOrTag) throws JsonRpcInvalidParamsException {
+    long blockNum;
+    if (JsonRpcApiUtil.isBlockTag(blockNumOrTag)) {
+      if (LATEST_STR.equalsIgnoreCase(blockNumOrTag)) {
+        // Read the head block directly from blockStore to avoid the window where
+        // getNowBlock() already sees the new head but getBlockByNum() still misses it.
+        return wallet.getNowBlock();
+      }
+      return wallet.getBlockByNum(JsonRpcApiUtil.parseBlockTag(blockNumOrTag, wallet));
+    }
+    try {
+      blockNum = ByteArray.hexToBigInteger(blockNumOrTag).longValueExact();
+    } catch (Exception e) {
+      throw new JsonRpcInvalidParamsException(BLOCK_NUM_ERROR);
+    }
+    return wallet.getBlockByNum(blockNum);
   }
 
   private BlockResult getBlockResult(Block block, boolean fullTx) {
@@ -806,17 +801,7 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
   @Override
   public TransactionResult getTransactionByBlockNumberAndIndex(String blockNumOrTag, String index)
       throws JsonRpcInvalidParamsException {
-    long blockNum;
-    if (JsonRpcApiUtil.isBlockTag(blockNumOrTag)) {
-      blockNum = JsonRpcApiUtil.parseBlockTag(blockNumOrTag, wallet);
-    } else {
-      try {
-        blockNum = ByteArray.hexToBigInteger(blockNumOrTag).longValue();
-      } catch (Exception e) {
-        throw new JsonRpcInvalidParamsException(BLOCK_NUM_ERROR);
-      }
-    }
-    Block block = wallet.getBlockByNum(blockNum);
+    Block block = getBlockByNumOrTag(blockNumOrTag);
     if (block == null) {
       return null;
     }
@@ -907,17 +892,7 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
     if (Pattern.matches(HASH_REGEX, blockNumOrHashOrTag)) {
       block = getBlockByJsonHash(blockNumOrHashOrTag);
     } else {
-      long blockNum;
-      if (JsonRpcApiUtil.isBlockTag(blockNumOrHashOrTag)) {
-        blockNum = JsonRpcApiUtil.parseBlockTag(blockNumOrHashOrTag, wallet);
-      } else {
-        try {
-          blockNum = ByteArray.hexToBigInteger(blockNumOrHashOrTag).longValue();
-        } catch (Exception e) {
-          throw new JsonRpcInvalidParamsException(BLOCK_NUM_ERROR);
-        }
-      }
-      block = wallet.getBlockByNum(blockNum);
+      block = getBlockByNumOrTag(blockNumOrHashOrTag);
     }
 
     // block receipts not available: block is genesis, not produced yet, or pruned in light node
