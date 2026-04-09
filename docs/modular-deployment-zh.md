@@ -44,8 +44,8 @@ java-tron-1.0.0/bin/FullNode -c config.conf -w
 java-tron 支持对 jvm 参数进行配置，配置文件为 bin 目录下的 java-tron.vmoptions 文件。
 ```
 # demo（兼容 JDK 8 / JDK 17）
--Xms256m
--Xmx4g
+-Xms2g
+-Xmx9g
 -XX:+PrintGCDetails
 -Xloggc:./gc.log
 -XX:+PrintGCDateStamps

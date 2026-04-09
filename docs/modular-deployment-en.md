@@ -46,8 +46,8 @@ java-tron-1.0.0/bin/FullNode -c config.conf -w
 JVM options can also be specified, located in `bin/java-tron.vmoptions`:
 ```
 # demo (compatible with JDK 8 / JDK 17)
--Xms256m
--Xmx4g
+-Xms2g
+-Xmx9g
 -XX:+PrintGCDetails
 -Xloggc:./gc.log
 -XX:+PrintGCDateStamps
