@@ -1,15 +1,17 @@
 name: Auto Assign Reviewers
 
 on:
-  pull_request:
+  pull_request_target:
     branches: [ 'develop', 'release_**' ]
     types: [ opened, edited, reopened ]
 
 jobs:
   assign-reviewers:
     name: Assign Reviewers by Scope
-    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
 
     steps:
       - name: Assign reviewers based on PR title scope
