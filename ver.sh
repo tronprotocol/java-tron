@@ -1,6 +1,5 @@
 #!/bin/bash
-set -x 
-currentBranch=`git rev-parse --abbrev-ref HEAD`
+currentBranch=$(git rev-parse --abbrev-ref HEAD)
 
 if [ "$currentBranch"x != "master"x ]
 then
@@ -24,7 +23,7 @@ then
 fi
 
 
-versionPath="src/main/java/org/tron/program/Version.java"
+versionPath="framework/src/main/java/org/tron/program/Version.java"
 sed -i -e "s/VERSION_NAME.*$/VERSION_NAME = \"$versionName\";/g;s/VERSION_CODE.*$/VERSION_CODE = \"$versionCode\";/g" $versionPath
 git add $versionPath
 git commit -m "update a new version. version name:$versionName,version code:$versionCode"
