@@ -1,8 +1,8 @@
 # 模块化后的 java-tron 部署方式
 
-模块化后，命令行下的程序启动方式将不再使用 `java -jar FullNode.jar` 的方式启动，而是使用脚本的方式启动，本文内容基于 develop 分支。
+模块化后，推荐使用 `bin/` 目录下生成的脚本启动 java-tron。原有的 `java -jar FullNode.jar` 方式仍完全支持，作为备选方式使用。
 
-*原有的启动方式依然保留，但即将废弃*。
+> **支持平台**：Linux 和 macOS。不支持 Windows。
 
 ## 下载
 
@@ -29,7 +29,7 @@ unzip -o java-tron-1.0.0.zip
 
 ## 启动
 
-不同的 os 对应不同脚本，windows 即为 bat 文件，以 linux 系统为例启动 java-tron：
+使用脚本启动 java-tron（Linux / macOS）：
 ```
 # 默认配置文件启动
 java-tron-1.0.0/bin/FullNode
