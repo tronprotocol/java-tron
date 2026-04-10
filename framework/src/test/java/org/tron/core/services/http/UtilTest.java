@@ -131,7 +131,7 @@ public class UtilTest extends BaseTest {
 
   @Test
   public void testCheckBodySizeUsesHttpLimit() throws Exception {
-    int originalHttpMax = Args.getInstance().getHttpMaxMessageSize();
+    long originalHttpMax = Args.getInstance().getHttpMaxMessageSize();
     int originalRpcMax = Args.getInstance().getMaxMessageSize();
     try {
       // set httpMaxMessageSize larger than maxMessageSize

@@ -82,7 +82,7 @@ public class SizeLimitHandlerTest {
 
   /** Minimal concrete {@link HttpService} wired with a given size limit. */
   static class TestHttpService extends HttpService {
-    TestHttpService(int port, int maxRequestSize) {
+    TestHttpService(int port, long maxRequestSize) {
       this.port = port;
       this.contextPath = "/";
       this.maxRequestSize = maxRequestSize;
@@ -96,7 +96,7 @@ public class SizeLimitHandlerTest {
 
   /** Minimal concrete {@link HttpService} simulating a JSON-RPC service. */
   static class TestJsonRpcService extends HttpService {
-    TestJsonRpcService(int port, int maxRequestSize) {
+    TestJsonRpcService(int port, long maxRequestSize) {
       this.port = port;
       this.contextPath = "/";
       this.maxRequestSize = maxRequestSize;

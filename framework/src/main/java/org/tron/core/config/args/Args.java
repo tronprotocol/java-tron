@@ -523,18 +523,26 @@ public class Args extends CommonParameter {
             ? config.getLong(ConfigKey.NODE_RPC_MAX_CONNECTION_AGE_IN_MILLIS)
             : Long.MAX_VALUE;
 
-    PARAMETER.maxMessageSize = config.hasPath(ConfigKey.NODE_RPC_MAX_MESSAGE_SIZE)
-        ? config.getInt(ConfigKey.NODE_RPC_MAX_MESSAGE_SIZE) : GrpcUtil.DEFAULT_MAX_MESSAGE_SIZE;
+    long rpcMaxMessageSize = config.hasPath(ConfigKey.NODE_RPC_MAX_MESSAGE_SIZE)
+        ? config.getMemorySize(ConfigKey.NODE_RPC_MAX_MESSAGE_SIZE).toBytes()
+        : GrpcUtil.DEFAULT_MAX_MESSAGE_SIZE;
+    if (rpcMaxMessageSize <= 0 || rpcMaxMessageSize > Integer.MAX_VALUE) {
+      throw new TronError("node.rpc.maxMessageSize must be positive and <= "
+          + Integer.MAX_VALUE + ", got: " + rpcMaxMessageSize, PARAMETER_INIT);
+    }
+    PARAMETER.maxMessageSize = (int) rpcMaxMessageSize;
 
-    int defaultHttpMaxMessageSize = GrpcUtil.DEFAULT_MAX_MESSAGE_SIZE;
+    long defaultHttpMaxMessageSize = GrpcUtil.DEFAULT_MAX_MESSAGE_SIZE;
     PARAMETER.httpMaxMessageSize = config.hasPath(ConfigKey.NODE_HTTP_MAX_MESSAGE_SIZE)
-        ? config.getInt(ConfigKey.NODE_HTTP_MAX_MESSAGE_SIZE) : defaultHttpMaxMessageSize;
+        ? config.getMemorySize(ConfigKey.NODE_HTTP_MAX_MESSAGE_SIZE).toBytes()
+        : defaultHttpMaxMessageSize;
     if (PARAMETER.httpMaxMessageSize <= 0) {
       throw new TronError("node.http.maxMessageSize must be positive, got: "
           + PARAMETER.httpMaxMessageSize, PARAMETER_INIT);
     }
     PARAMETER.jsonRpcMaxMessageSize = config.hasPath(ConfigKey.NODE_JSONRPC_MAX_MESSAGE_SIZE)
-        ? config.getInt(ConfigKey.NODE_JSONRPC_MAX_MESSAGE_SIZE) : defaultHttpMaxMessageSize;
+        ? config.getMemorySize(ConfigKey.NODE_JSONRPC_MAX_MESSAGE_SIZE).toBytes()
+        : defaultHttpMaxMessageSize;
     if (PARAMETER.jsonRpcMaxMessageSize <= 0) {
       throw new TronError("node.jsonrpc.maxMessageSize must be positive, got: "
           + PARAMETER.jsonRpcMaxMessageSize, PARAMETER_INIT);
