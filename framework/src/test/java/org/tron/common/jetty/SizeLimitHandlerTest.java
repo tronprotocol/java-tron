@@ -1,9 +1,10 @@
 package org.tron.common.jetty;
 
-import com.google.common.io.ByteStreams;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -11,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
@@ -56,14 +58,25 @@ public class SizeLimitHandlerTest {
   private static URI                 jsonRpcServerUri;
   private static CloseableHttpClient client;
 
-  /** Echoes the raw request-body bytes back so tests can inspect what arrived. */
-  public static class EchoServlet extends HttpServlet {
+  /**
+   * Simulates the real servlet pattern: reads body via getReader(), wraps in
+   * broad catch(Exception) — mirrors what RateLimiterServlet + actual servlets do.
+   */
+  public static class BroadCatchServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-      byte[] body = ByteStreams.toByteArray(req.getInputStream());
-      resp.setStatus(HttpServletResponse.SC_OK);
-      resp.setContentType("application/octet-stream");
-      resp.getOutputStream().write(body);
+      try {
+        String body = req.getReader().lines()
+            .collect(Collectors.joining(System.lineSeparator()));
+        resp.setStatus(HttpServletResponse.SC_OK);
+        resp.setContentType("application/json");
+        resp.getWriter().println("{\"size\":" + body.length() + "}");
+      } catch (Exception e) {
+        // Mimics RateLimiterServlet line 119-120: silently logs, does not rethrow
+        resp.setStatus(HttpServletResponse.SC_OK);
+        resp.setContentType("application/json");
+        resp.getWriter().println("{\"Error\":\"" + e.getClass().getSimpleName() + "\"}");
+      }
     }
   }
 
@@ -77,7 +90,7 @@ public class SizeLimitHandlerTest {
 
     @Override
     protected void addServlet(ServletContextHandler context) {
-      context.addServlet(new ServletHolder(new EchoServlet()), "/*");
+      context.addServlet(new ServletHolder(new BroadCatchServlet()), "/*");
     }
   }
 
@@ -91,7 +104,7 @@ public class SizeLimitHandlerTest {
 
     @Override
     protected void addServlet(ServletContextHandler context) {
-      context.addServlet(new ServletHolder(new EchoServlet()), "/jsonrpc");
+      context.addServlet(new ServletHolder(new BroadCatchServlet()), "/jsonrpc");
     }
   }
 
@@ -195,6 +208,72 @@ public class SizeLimitHandlerTest {
     Assert.assertEquals(342, cjk.length());
     Assert.assertEquals(1026, cjk.getBytes("UTF-8").length);
     Assert.assertEquals(413, post(httpServerUri, new StringEntity(cjk, "UTF-8")));
+  }
+
+  // -- Chunked (no Content-Length) transfer tests ------------------------------
+
+  /**
+   * Chunked request within the limit should succeed (EchoServlet).
+   * InputStreamEntity with size=-1 sends chunked Transfer-Encoding (no Content-Length).
+   */
+  @Test
+  public void testChunkedBodyWithinLimit() throws Exception {
+    byte[] data = repeat('a', HTTP_MAX_BODY_SIZE / 4).getBytes("UTF-8");
+    InputStreamEntity chunked = new InputStreamEntity(new ByteArrayInputStream(data), -1);
+    Assert.assertEquals(200, post(httpServerUri, chunked));
+  }
+
+  /**
+   * Chunked oversized body hitting a servlet with broad catch(Exception).
+   *
+   * <p>SizeLimitHandler's LimitInterceptor throws BadMessageException during
+   * streaming read, but the servlet's catch(Exception) absorbs it and returns
+   * 200 + error JSON instead of 413. This matches real TRON servlet behavior.
+   *
+   * <p>OOM protection still works: the body read is truncated at the limit.
+   */
+  @Test
+  public void testChunkedBodyExceedsLimit() throws Exception {
+    byte[] data = repeat('a', HTTP_MAX_BODY_SIZE * 2).getBytes("UTF-8");
+    InputStreamEntity chunked = new InputStreamEntity(new ByteArrayInputStream(data), -1);
+    HttpPost req = new HttpPost(httpServerUri);
+    req.setEntity(chunked);
+    HttpResponse resp = client.execute(req);
+    int status = resp.getStatusLine().getStatusCode();
+    String body = EntityUtils.toString(resp.getEntity());
+    logger.info("Chunked oversized: status={}, body={}", status, body);
+
+    // catch(Exception) absorbs BadMessageException → 200 + error JSON, not 413.
+    // Body read IS truncated — OOM protection still effective.
+    Assert.assertEquals(200, status);
+    Assert.assertTrue("Error should be surfaced in response body",
+        body.contains("Error"));
+  }
+
+  // -- Zero-limit behavior test -----------------------------------------------
+
+  /**
+   * When maxRequestSize is 0, SizeLimitHandler treats it as "reject all bodies > 0 bytes".
+   * Jetty's logic: {@code _requestLimit >= 0 && size > _requestLimit} — 0 >= 0 is true,
+   * so any non-empty body triggers 413. This is NOT "pass all" — it is a silent DoS
+   * against the node's own API.
+   */
+  @Test
+  public void testZeroLimitRejectsAllBodies() throws Exception {
+    int zeroPort = PublicMethod.chooseRandomPort();
+    TestHttpService zeroService = new TestHttpService(zeroPort, 0);
+    try {
+      zeroService.start().get(10, TimeUnit.SECONDS);
+      URI zeroUri = new URI(String.format("http://localhost:%d/", zeroPort));
+
+      // Empty body should pass (0 is NOT > 0)
+      Assert.assertEquals(200, post(zeroUri, new StringEntity("")));
+
+      // Any non-empty body should be rejected
+      Assert.assertEquals(413, post(zeroUri, new StringEntity("x")));
+    } finally {
+      zeroService.stop();
+    }
   }
 
   // -- helpers ----------------------------------------------------------------
