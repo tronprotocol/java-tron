@@ -179,14 +179,14 @@ public class TrieImpl implements Trie<byte[]> {
     } else {
       TrieKey currentNodeKey = n.kvNodeGetKey();
       TrieKey commonPrefix = k.getCommonPrefix(currentNodeKey);
-      if (commonPrefix.isEmpty()) {
+      if (commonPrefix.equals(k)) {
+        return n.kvNodeSetValueOrNode(nodeOrValue);
+      } else if (commonPrefix.isEmpty()) {
         Node newBranchNode = new Node();
         insert(newBranchNode, currentNodeKey, n.kvNodeGetValueOrNode());
         insert(newBranchNode, k, nodeOrValue);
         n.dispose();
         return newBranchNode;
-      } else if (commonPrefix.equals(k)) {
-        return n.kvNodeSetValueOrNode(nodeOrValue);
       } else if (commonPrefix.equals(currentNodeKey)) {
         insert(n.kvNodeGetChildNode(), k.shift(commonPrefix.getLength()), nodeOrValue);
         return n.invalidate();
@@ -873,6 +873,11 @@ public class TrieImpl implements Trie<byte[]> {
     public Node kvNodeSetValueOrNode(Object valueOrNode) {
       parse();
       assert getType() != NodeType.BranchNode;
+      if (valueOrNode instanceof byte[] && children[1] instanceof byte[]
+          && (children[1] == valueOrNode
+          || Arrays.equals((byte[]) children[1], (byte[]) valueOrNode))) {
+        return this;
+      }
       children[1] = valueOrNode;
       dirty = true;
       return this;
