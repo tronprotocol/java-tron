@@ -91,4 +91,9 @@ jacocoTestReport {
         xml.enabled = true
         html.enabled = true
     }
+    afterEvaluate {
+        classDirectories.from = classDirectories.files.collect {
+            fileTree(dir: it, exclude: '**/protos/**')
+        }
+    }
 }
