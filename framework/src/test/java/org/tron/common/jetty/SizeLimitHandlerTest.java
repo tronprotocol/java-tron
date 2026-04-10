@@ -1,5 +1,6 @@
 package org.tron.common.jetty;
 
+import com.alibaba.fastjson.JSONObject;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URI;
@@ -70,7 +71,8 @@ public class SizeLimitHandlerTest {
             .collect(Collectors.joining(System.lineSeparator()));
         resp.setStatus(HttpServletResponse.SC_OK);
         resp.setContentType("application/json");
-        resp.getWriter().println("{\"size\":" + body.length() + "}");
+        resp.getWriter().println("{\"size\":" + body.length()
+            + ",\"bytes\":" + body.getBytes().length + "}");
       } catch (Exception e) {
         // Mimics RateLimiterServlet line 119-120: silently logs, does not rethrow
         resp.setStatus(HttpServletResponse.SC_OK);
@@ -276,7 +278,75 @@ public class SizeLimitHandlerTest {
     }
   }
 
+  // -- checkBodySize vs SizeLimitHandler consistency tests --------------------
+
+  /**
+   * For pure ASCII JSON (the normal TRON API case), wire bytes and
+   * {@code body.getBytes().length} (what {@code Util.checkBodySize()} measures)
+   * must be identical — the two enforcement layers agree exactly.
+   */
+  @Test
+  public void testWireBytesMatchCheckBodySizeForAsciiJson() throws Exception {
+    String jsonBody = "{\"owner_address\":\"TN3zfjYUmMFK3ZsHSsrdJoNRtGkQmZLBLz\""
+        + ",\"amount\":1000000}";
+    int wireBytes = jsonBody.getBytes("UTF-8").length;
+
+    String respBody = postForBody(httpServerUri, new StringEntity(jsonBody, "UTF-8"));
+    JSONObject json = JSONObject.parseObject(respBody);
+    int servletBytes = json.getIntValue("bytes");
+
+    Assert.assertEquals("wire bytes should equal checkBodySize for ASCII JSON",
+        wireBytes, servletBytes);
+  }
+
+  /**
+   * For UTF-8 JSON with multi-byte characters (CJK), wire bytes and
+   * {@code body.getBytes().length} must still be identical — UTF-8 round-trips
+   * through {@code request.getReader()} → {@code String.getBytes()} losslessly.
+   */
+  @Test
+  public void testWireBytesMatchCheckBodySizeForUtf8Json() throws Exception {
+    String jsonBody = "{\"name\":\"测试地址\",\"amount\":100}";
+    int wireBytes = jsonBody.getBytes("UTF-8").length;
+
+    String respBody = postForBody(httpServerUri, new StringEntity(jsonBody, "UTF-8"));
+    JSONObject json = JSONObject.parseObject(respBody);
+    int servletBytes = json.getIntValue("bytes");
+
+    Assert.assertEquals("wire bytes should equal checkBodySize for UTF-8 JSON",
+        wireBytes, servletBytes);
+  }
+
+  /**
+   * When the body contains {@code \r\n} line endings, {@code lines().collect()}
+   * normalizes them to {@code \n} (on Linux) or the platform line separator.
+   * This makes {@code checkBodySize} measure <em>fewer</em> bytes than the wire —
+   * a safe direction: checkBodySize never rejects what SizeLimitHandler accepts.
+   */
+  @Test
+  public void testCheckBodySizeSafeDirectionWithNewlines() throws Exception {
+    String body = "{\"key1\":\"value1\",\r\n\"key2\":\"value2\",\r\n\"key3\":\"value3\"}";
+    int wireBytes = body.getBytes("UTF-8").length;
+
+    String respBody = postForBody(httpServerUri, new StringEntity(body, "UTF-8"));
+    JSONObject json = JSONObject.parseObject(respBody);
+    int servletBytes = json.getIntValue("bytes");
+
+    Assert.assertTrue("checkBodySize bytes <= wire bytes (safe direction)",
+        servletBytes <= wireBytes);
+    logger.info("Newline test: wire={}, servlet={}, diff={}",
+        wireBytes, servletBytes, wireBytes - servletBytes);
+  }
+
   // -- helpers ----------------------------------------------------------------
+
+  /** POSTs with the given entity and returns the response body as a string. */
+  private String postForBody(URI uri, HttpEntity entity) throws Exception {
+    HttpPost req = new HttpPost(uri);
+    req.setEntity(entity);
+    HttpResponse resp = client.execute(req);
+    return EntityUtils.toString(resp.getEntity());
+  }
 
   /** POSTs with the given entity and returns the HTTP status code. */
   private int post(URI uri, HttpEntity entity) throws Exception {
