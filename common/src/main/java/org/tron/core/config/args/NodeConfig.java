@@ -23,15 +23,15 @@ public class NodeConfig {
 
   // ---- Flat scalar fields (auto-bound by ConfigBeanFactory) ----
   private String trustNode = "";
-  private boolean walletExtensionApi = true;
+  private boolean walletExtensionApi = false;
   private int syncFetchBatchNum = 2000;
-  private int validateSignThreadNum = Runtime.getRuntime().availableProcessors();
+  private int validateSignThreadNum = 0; // 0 = auto (availableProcessors)
   private int maxConnections = 30;
   private int minConnections = 8;
   private int minActiveConnections = 3;
   private int maxConnectionsWithSameIp = 2;
   private int maxHttpConnectNumber = 50;
-  private int minParticipationRate = 15;
+  private int minParticipationRate = 0;
   private boolean openPrintLog = true;
   private boolean openTransactionSort = false;
   private int maxTps = 1000;
@@ -65,7 +65,7 @@ public class NodeConfig {
   public long getShutdownBlockCount() { return shutdownBlockCount; }
   private int inactiveThreshold = 600;
   private boolean metricsEnable = false;
-  private int blockProducedTimeOut = 75;
+  private int blockProducedTimeOut = 50;
   private int netMaxTrxPerSecond = 700;
   private boolean nodeDetectEnable = false;
   private boolean enableIpv6 = false;
@@ -130,8 +130,8 @@ public class NodeConfig {
   @Getter
   @Setter
   public static class DiscoveryConfig {
-    private boolean enable = true;
-    private boolean persist = true;
+    private boolean enable = false;
+    private boolean persist = false;
     private ExternalConfig external = new ExternalConfig();
 
     @Getter
@@ -156,13 +156,13 @@ public class NodeConfig {
   @Getter
   @Setter
   public static class FetchBlockConfig {
-    private int timeout = 200;
+    private int timeout = 500;
   }
 
   @Getter
   @Setter
   public static class SolidityConfig {
-    private int threads = 8;
+    private int threads = 0; // 0 = auto (availableProcessors)
   }
 
   @Getter
@@ -416,6 +416,16 @@ public class NodeConfig {
     // rpcThreadNum: 0 = auto-detect
     if (rpc.thread == 0) {
       rpc.thread = (Runtime.getRuntime().availableProcessors() + 1) / 2;
+    }
+
+    // validateSignThreadNum: 0 = auto-detect
+    if (validateSignThreadNum == 0) {
+      validateSignThreadNum = Runtime.getRuntime().availableProcessors();
+    }
+
+    // solidityThreads: 0 = auto-detect
+    if (solidity.threads == 0) {
+      solidity.threads = Runtime.getRuntime().availableProcessors();
     }
 
     // syncFetchBatchNum: clamp to [100, 2000]

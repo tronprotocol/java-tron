@@ -24,14 +24,14 @@ public class NodeConfigTest {
     NodeConfig nc = NodeConfig.fromConfig(empty);
     assertEquals(18888, nc.getListenPort());
     assertEquals(2, nc.getConnectionTimeout());
-    assertEquals(200, nc.getFetchBlockTimeout());
+    assertEquals(500, nc.getFetchBlockTimeout());
     assertEquals(30, nc.getMaxConnections());
     assertEquals(8, nc.getMinConnections());
     assertEquals(4, nc.getMaxFastForwardNum());
     assertFalse(nc.isOpenFullTcpDisconnect());
-    // reference.conf has node.discovery.enable=true, persist=true
-    assertTrue(nc.isDiscoveryEnable());
-    assertTrue(nc.isDiscoveryPersist());
+    // reference.conf matches code default: discovery disabled when not configured
+    assertFalse(nc.isDiscoveryEnable());
+    assertFalse(nc.isDiscoveryPersist());
     assertEquals(0, nc.getChannelReadTimeout());
   }
 
