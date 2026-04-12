@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.tron.core.config.Parameter.ChainConstant.FROZEN_PERIOD;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Random;
 
 import lombok.SneakyThrows;
@@ -538,7 +539,7 @@ public class OperationsTest extends BaseTest {
     testSingleOperation(program);
     Assert.assertEquals(20, program.getResult().getEnergyUsed());
     Assert.assertEquals("00000000000000000000000000000000000000000000000000000000000000CC",
-        Hex.toHexString(program.getStack().peek().getData()).toUpperCase());
+        Hex.toHexString(program.getStack().peek().getData()).toUpperCase(Locale.ROOT));
 
     // PC = 0x58
     op = new byte[]{0x60, 0x01, 0x60, 0x00, 0x58};
@@ -861,7 +862,7 @@ public class OperationsTest extends BaseTest {
     testSingleOperation(program);
     Assert.assertEquals(10065, program.getResult().getEnergyUsed());
     Assert.assertEquals("0000000000000000000000000000000000000000000000000000000000000033",
-        Hex.toHexString(program.getStack().peek().getData()).toUpperCase());
+        Hex.toHexString(program.getStack().peek().getData()).toUpperCase(Locale.ROOT));
 
     // EXTCODESIZE = 0x3b
     op = new byte[]{0x3b};
@@ -881,7 +882,7 @@ public class OperationsTest extends BaseTest {
     testSingleOperation(program);
     Assert.assertEquals(38, program.getResult().getEnergyUsed());
     Assert.assertEquals("6000600000000000000000000000000000000000000000000000000000000000",
-        Hex.toHexString(program.getMemory()).toUpperCase());
+        Hex.toHexString(program.getMemory()).toUpperCase(Locale.ROOT));
 
   }
 

@@ -22,6 +22,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.math.StrictMathWrapper;
@@ -166,7 +167,7 @@ public class AssetIssueActuator extends AbstractActuator {
     }
 
     if (dynamicStore.getAllowSameTokenName() != 0) {
-      String name = assetIssueContract.getName().toStringUtf8().toLowerCase();
+      String name = assetIssueContract.getName().toStringUtf8().toLowerCase(Locale.ROOT);
       if (("trx").equals(name)) {
         throw new ContractValidateException("assetName can't be trx");
       }

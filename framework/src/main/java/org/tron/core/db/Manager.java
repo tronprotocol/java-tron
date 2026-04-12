@@ -109,6 +109,7 @@ import org.tron.core.db.accountstate.callback.AccountStateCallBack;
 import org.tron.core.db.api.AssetUpdateHelper;
 import org.tron.core.db.api.BandwidthPriceHistoryLoader;
 import org.tron.core.db.api.EnergyPriceHistoryLoader;
+import org.tron.core.db.api.MigrateTurkishKeyHelper;
 import org.tron.core.db.api.MoveAbiHelper;
 import org.tron.core.db2.ISession;
 import org.tron.core.db2.core.Chainbase;
@@ -372,6 +373,10 @@ public class Manager {
     return getDynamicPropertiesStore().getSetBlackholeAccountPermission() == 0L;
   }
 
+  private boolean needToMigrateTurkishKeys() {
+    return getDynamicPropertiesStore().getTurkishKeyMigrationDone() == 0L;
+  }
+
   private void resetBlackholeAccountPermission() {
     AccountCapsule blackholeAccount = getAccountStore().getBlackhole();
 
@@ -540,6 +545,10 @@ public class Manager {
 
     if (needToSetBlackholePermission()) {
       resetBlackholeAccountPermission();
+    }
+
+    if (needToMigrateTurkishKeys()) {
+      new MigrateTurkishKeyHelper(chainBaseManager).doWork();
     }
 
     //for test only

@@ -246,6 +246,9 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] ALLOW_HARDEN_EXCHANGE_CALCULATION =
       "ALLOW_HARDEN_EXCHANGE_CALCULATION".getBytes();
 
+  private static final byte[] TURKISH_KEY_MIGRATION_DONE =
+      "TURKISH_KEY_MIGRATION_DONE".getBytes();
+
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
     super(dbName);
@@ -3027,6 +3030,18 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   public boolean allowHardenExchangeCalculation() {
     return getAllowHardenExchangeCalculation() == 1L;
+  }
+
+  public void saveTurkishKeyMigrationDone(long num) {
+    this.put(TURKISH_KEY_MIGRATION_DONE,
+        new BytesCapsule(ByteArray.fromLong(num)));
+  }
+
+  public long getTurkishKeyMigrationDone() {
+    return Optional.ofNullable(getUnchecked(TURKISH_KEY_MIGRATION_DONE))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElse(0L);
   }
 
   private static class DynamicResourceProperties {

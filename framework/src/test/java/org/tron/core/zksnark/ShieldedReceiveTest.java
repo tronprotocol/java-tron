@@ -12,6 +12,7 @@ import java.security.SignatureException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 import javax.annotation.Resource;
@@ -2531,7 +2532,7 @@ public class ShieldedReceiveTest extends BaseTest {
   public void decodePaymentAddressIgnoreCase() {
     String addressLower =
         "ztron1975m0wyg8f30cgf2l5fgndhzqzkzgkgnxge8cwx2wr7m3q7chsuwewh2e6u24yykum0hq8ue99u";
-    String addressUpper = addressLower.toUpperCase();
+    String addressUpper = addressLower.toUpperCase(Locale.ROOT);
 
     PaymentAddress paymentAddress1 = KeyIo.decodePaymentAddress(addressLower);
     PaymentAddress paymentAddress2 = KeyIo.decodePaymentAddress(addressUpper);

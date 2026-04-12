@@ -23,6 +23,7 @@ import java.nio.charset.Charset;
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import javax.servlet.http.HttpServletRequest;
@@ -569,10 +570,10 @@ public class Util {
   private static String checkGetParam(HttpServletRequest request, String key) throws Exception {
     String method = request.getMethod();
 
-    if (HttpMethod.GET.toString().toUpperCase().equalsIgnoreCase(method)) {
+    if (HttpMethod.GET.toString().toUpperCase(Locale.ROOT).equalsIgnoreCase(method)) {
       return request.getParameter(key);
     }
-    if (HttpMethod.POST.toString().toUpperCase().equals(method)) {
+    if (HttpMethod.POST.toString().toUpperCase(Locale.ROOT).equals(method)) {
       String contentType = request.getContentType();
       if (StringUtils.isBlank(contentType)) {
         return null;
