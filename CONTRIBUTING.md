@@ -147,7 +147,7 @@ We would like all developers to follow a standard development flow and coding st
 2. Review the code before submission.
 3. Run standardized tests.
 
-`Sonar`-scanner and `Travis CI` continuous integration scanner will be automatically triggered when a pull request has been submitted. When a PR passes all the checks, the **java-tron** maintainers will then review the PR and offer feedback and modifications when necessary.  Once adopted, the PR will be closed and merged into the `develop` branch.
+`Sonar`-scanner and CI checks (GitHub Actions) will be automatically triggered when a pull request has been submitted. When a PR passes all the checks, the **java-tron** maintainers will then review the PR and offer feedback and modifications when necessary.  Once adopted, the PR will be closed and merged into the `develop` branch.
 
 We are glad to receive your pull requests and will try our best to review them as soon as we can. Any pull request is welcome, even if it is for a typo.
 
@@ -161,7 +161,7 @@ Please make sure your submission meets the following code style:
 - The code must have passed the Sonar scanner test.
 - The code has to be pulled from the `develop` branch.
 - The commit message should start with a verb, whose initial should not be capitalized.
-- The commit message should be less than 50 characters in length.
+- The commit message title should be between 10 and 72 characters in length.
 
 
 
@@ -196,7 +196,7 @@ The message header is a single line that contains succinct description of the ch
 The `scope` can be anything specifying place of the commit change. For example: `framework`, `api`, `tvm`, `db`, `net`. For a full list of scopes, see [Type and Scope Reference](#type-and-scope-reference). You can use `*` if there isn't a more fitting scope.
 
 The subject contains a succinct description of the change:
-1. Limit the subject line, which briefly describes the purpose of the commit, to 50 characters.
+1. Limit the subject line, which briefly describes the purpose of the commit, to 72 characters (minimum 10).
 2. Start with a verb and use first-person present-tense (e.g., use "change" instead of "changed" or "changes").
 3. Do not capitalize the first letter.
 4. Do not end the subject line with a period.
