@@ -36,6 +36,7 @@ import org.tron.core.net.peer.PeerManager;
 import org.tron.core.net.service.effective.EffectiveCheckService;
 import org.tron.core.net.service.handshake.HandshakeService;
 import org.tron.core.net.service.keepalive.KeepAliveService;
+import org.tron.core.net.service.statistics.MessageStatistics;
 import org.tron.p2p.P2pEventHandler;
 import org.tron.p2p.connection.Channel;
 import org.tron.protos.Protocol;
@@ -91,6 +92,7 @@ public class P2pEventHandlerImpl extends P2pEventHandler {
   private byte MESSAGE_MAX_TYPE = 127;
 
   private int maxCountIn10s = Args.getInstance().getMaxTps() * 10;
+  private int maxBlockInvIn10s = Args.getInstance().getMaxBlockInvPerSecond() * 10;
 
   public P2pEventHandlerImpl() {
     Set<Byte> set = new HashSet<>();
@@ -149,19 +151,8 @@ public class P2pEventHandlerImpl extends P2pEventHandler {
       msg = TronMessageFactory.create(data);
       type = msg.getType();
 
-      if (INVENTORY.equals(type)) {
-        InventoryMessage message = (InventoryMessage) msg;
-        Protocol.Inventory.InventoryType inventoryType = message.getInventoryType();
-        int count = peer.getPeerStatistics().messageStatistics.tronInTrxInventoryElement
-                .getCount(10);
-        if (inventoryType.equals(Protocol.Inventory.InventoryType.TRX) && count > maxCountIn10s) {
-          logger.warn("Drop inventory from Peer {}, cur:{}, max:{}",
-                  peer.getInetAddress(), count, maxCountIn10s);
-          if (Args.getInstance().isOpenPrintLog()) {
-            logger.warn("[overload]Drop tx list is: {}", ((InventoryMessage) msg).getHashList());
-          }
-          return;
-        }
+      if (INVENTORY.equals(type) && !checkInvRateLimit(peer, (InventoryMessage) msg)) {
+        return;
       }
 
       peer.getPeerStatistics().messageStatistics.addTcpInMessage(msg);
@@ -222,6 +213,32 @@ public class P2pEventHandlerImpl extends P2pEventHandler {
         }
       }
     }
+  }
+
+  private boolean checkInvRateLimit(PeerConnection peer, InventoryMessage msg) {
+    InventoryType invType = msg.getInventoryType();
+    int currentSize = msg.getInventory().getIdsCount();
+    MessageStatistics stats = peer.getPeerStatistics().messageStatistics;
+
+    if (invType == InventoryType.TRX) {
+      int count = stats.tronInTrxInventoryElement.getCount(10);
+      if (count + currentSize > maxCountIn10s) {
+        logger.warn("Drop TRX inv from {}, window:{}, cur:{}, max:{}",
+            peer.getInetAddress(), count, currentSize, maxCountIn10s);
+        if (Args.getInstance().isOpenPrintLog()) {
+          logger.warn("[overload] Drop tx list: {}", msg.getHashList());
+        }
+        return false;
+      }
+    } else if (invType == InventoryType.BLOCK) {
+      int count = stats.tronInBlockInventoryElement.getCount(10);
+      if (count + currentSize > maxBlockInvIn10s) {
+        logger.warn("Drop BLOCK inv from {}, window:{}, cur:{}, max:{}",
+            peer.getInetAddress(), count, currentSize, maxBlockInvIn10s);
+        return false;
+      }
+    }
+    return true;
   }
 
   private void updateLastInteractiveTime(PeerConnection peer, TronMessage msg) {

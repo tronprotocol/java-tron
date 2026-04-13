@@ -615,6 +615,7 @@ public class Args extends CommonParameter {
     PARAMETER.minActiveConnections = nc.getMinActiveConnections();
     PARAMETER.maxConnectionsWithSameIp = nc.getMaxConnectionsWithSameIp();
     PARAMETER.maxTps = nc.getMaxTps();
+    PARAMETER.maxBlockInvPerSecond = nc.getMaxBlockInvPerSecond();
     PARAMETER.minParticipationRate = nc.getMinParticipationRate();
     PARAMETER.nodeListenPort = nc.getListenPort();
     PARAMETER.nodeEnableIpv6 = nc.isEnableIpv6();
