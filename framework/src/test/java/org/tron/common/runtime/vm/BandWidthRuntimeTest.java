@@ -157,6 +157,9 @@ public class BandWidthRuntimeTest extends BaseTest {
     boolean originalDebug = CommonParameter.getInstance().isDebug();
     try {
       byte[] contractAddress = createContract();
+      // Enable debug mode to bypass CPU time limit check in Program.checkCPUTimeLimit().
+      // Without this, the heavy contract execution (setCoin) may exceed the time threshold
+      // on slow machines and cause the test to fail non-deterministically.
       CommonParameter.getInstance().setDebug(true);
       TriggerSmartContract triggerContract = TvmTestUtils.createTriggerContract(contractAddress,
           "setCoin(uint256)", "50", false,
