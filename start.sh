@@ -355,6 +355,8 @@ startService() {
     exit
   fi
 
+  # G1GC is used here for JDK 8/17 compatibility. CMS flags (-XX:+UseConcMarkSweepGC etc.)
+  # were removed in JDK 14 and cause JVM startup failure on JDK 17 (required for ARM64).
   nohup $JAVACMD -Xms$JVM_MS -Xmx$JVM_MX -XX:+UseG1GC -XX:+PrintGCDetails -Xloggc:./gc.log \
     -XX:+PrintGCDateStamps -XX:ReservedCodeCacheSize=256m -XX:+UseCodeCacheFlushing \
     -XX:MetaspaceSize=256m -XX:MaxMetaspaceSize=512m \
