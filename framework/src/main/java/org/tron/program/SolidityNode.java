@@ -179,6 +179,7 @@ public class SolidityNode {
         sleep(exceptionSleepTime);
       }
     }
+    return null;
   }
 
   private long getLastSolidityBlockNum() {
@@ -195,6 +196,7 @@ public class SolidityNode {
         sleep(exceptionSleepTime);
       }
     }
+    return 0;
   }
 
   public void sleep(long time) {
