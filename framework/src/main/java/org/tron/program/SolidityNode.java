@@ -161,7 +161,7 @@ public class SolidityNode {
   }
 
   private Block getBlockByNum(long blockNum) {
-    while (true) {
+    while (flag) {
       try {
         long time = System.currentTimeMillis();
         Block block = databaseGrpcClient.getBlock(blockNum);
@@ -182,7 +182,7 @@ public class SolidityNode {
   }
 
   private long getLastSolidityBlockNum() {
-    while (true) {
+    while (flag) {
       try {
         long time = System.currentTimeMillis();
         long blockNum = databaseGrpcClient.getDynamicProperties().getLastSolidityBlockNum();
