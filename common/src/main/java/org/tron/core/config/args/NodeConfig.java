@@ -300,7 +300,7 @@ public class NodeConfig {
 
     private int maxBlockRange = 5000;
     private int maxSubTopics = 1000;
-    private int maxBlockFilterNum = 0;
+    private int maxBlockFilterNum = 50000;
   }
 
   @Getter

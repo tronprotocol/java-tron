@@ -51,10 +51,13 @@ public class CommitteeConfig {
   @Setter(lombok.AccessLevel.NONE)
   private long pBFTExpireNum = 20;
 
+  // Only getters are exposed. No public setters — ConfigBeanFactory scans public
+  // setters via reflection and would derive key "PBFTExpireNum" / "AllowPBFT"
+  // (JavaBean uppercase rule), which does not match config keys "pBFTExpireNum"
+  // / "allowPBFT" and would throw. Values are assigned to fields directly in
+  // fromConfig() below.
   public long getAllowPBFT() { return allowPBFT; }
-  public void setAllowPBFT(long v) { this.allowPBFT = v; }
   public long getPBFTExpireNum() { return pBFTExpireNum; }
-  public void setPBFTExpireNum(long v) { this.pBFTExpireNum = v; }
   private long allowTvmFreeze = 0;
   private long allowTvmVote = 0;
   private long allowTvmLondon = 0;
@@ -99,15 +102,7 @@ public class CommitteeConfig {
   public static CommitteeConfig fromConfig(Config config) {
     Config section = config.getConfig("committee");
 
-    // ConfigBeanFactory derives key names from setter methods. For setPBFTExpireNum()
-    // it expects "PBFTExpireNum" (capital P), but config.conf uses "pBFTExpireNum".
-    // Add uppercase alias so ConfigBeanFactory can find it.
-    Config aliased = section;
-    if (section.hasPath(PBFT_EXPIRE_NUM_KEY) && !section.hasPath("PBFTExpireNum")) {
-      aliased = aliased.withValue("PBFTExpireNum", section.getValue(PBFT_EXPIRE_NUM_KEY));
-    }
-
-    CommitteeConfig cc = ConfigBeanFactory.create(aliased, CommitteeConfig.class);
+    CommitteeConfig cc = ConfigBeanFactory.create(section, CommitteeConfig.class);
     // Ensure the manually-named fields get the right values from the original keys
     cc.allowPBFT = section.hasPath(ALLOW_PBFT_KEY) ? section.getLong(ALLOW_PBFT_KEY) : 0;
     cc.pBFTExpireNum = section.hasPath(PBFT_EXPIRE_NUM_KEY)

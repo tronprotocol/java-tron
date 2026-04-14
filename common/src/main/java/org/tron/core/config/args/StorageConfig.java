@@ -230,25 +230,51 @@ public class StorageConfig {
           Boolean.parseBoolean(conf.get("verifyChecksums").unwrapped().toString()));
     }
     if (conf.containsKey("compressionType")) {
-      o.setCompressionType(
-          Integer.parseInt(conf.get("compressionType").unwrapped().toString()));
+      String param = conf.get("compressionType").unwrapped().toString();
+      try {
+        o.setCompressionType(Integer.parseInt(param));
+      } catch (NumberFormatException e) {
+        throwIllegalArgumentException("compressionType", Integer.class, param);
+      }
     }
     if (conf.containsKey("blockSize")) {
-      o.setBlockSize(
-          Integer.parseInt(conf.get("blockSize").unwrapped().toString()));
+      String param = conf.get("blockSize").unwrapped().toString();
+      try {
+        o.setBlockSize(Integer.parseInt(param));
+      } catch (NumberFormatException e) {
+        throwIllegalArgumentException("blockSize", Integer.class, param);
+      }
     }
     if (conf.containsKey("writeBufferSize")) {
-      o.setWriteBufferSize(
-          Integer.parseInt(conf.get("writeBufferSize").unwrapped().toString()));
+      String param = conf.get("writeBufferSize").unwrapped().toString();
+      try {
+        o.setWriteBufferSize(Integer.parseInt(param));
+      } catch (NumberFormatException e) {
+        throwIllegalArgumentException("writeBufferSize", Integer.class, param);
+      }
     }
     if (conf.containsKey("cacheSize")) {
-      o.setCacheSize(
-          Long.parseLong(conf.get("cacheSize").unwrapped().toString()));
+      String param = conf.get("cacheSize").unwrapped().toString();
+      try {
+        o.setCacheSize(Long.parseLong(param));
+      } catch (NumberFormatException e) {
+        throwIllegalArgumentException("cacheSize", Long.class, param);
+      }
     }
     if (conf.containsKey("maxOpenFiles")) {
-      o.setMaxOpenFiles(
-          Integer.parseInt(conf.get("maxOpenFiles").unwrapped().toString()));
+      String param = conf.get("maxOpenFiles").unwrapped().toString();
+      try {
+        o.setMaxOpenFiles(Integer.parseInt(param));
+      } catch (NumberFormatException e) {
+        throwIllegalArgumentException("maxOpenFiles", Integer.class, param);
+      }
     }
     return o;
+  }
+
+  private static void throwIllegalArgumentException(String param, Class<?> type, String actual) {
+    throw new IllegalArgumentException(
+        String.format("[storage.properties] %s must be %s type, actual: %s.",
+            param, type.getSimpleName(), actual));
   }
 }
