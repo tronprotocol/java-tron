@@ -111,23 +111,17 @@ public class FetchInvDataMsgHandlerTest {
 
     FetchInvDataMsgHandler fetchInvDataMsgHandler = new FetchInvDataMsgHandler();
 
-    try {
-      Mockito.when(peer.getLastSyncBlockId())
+    Mockito.when(peer.getLastSyncBlockId())
         .thenReturn(new BlockCapsule.BlockId(Sha256Hash.ZERO_HASH, 1000L));
-      fetchInvDataMsgHandler.processMessage(peer, msg);
-      Assert.fail("Expected exception was not thrown: maxBlockNum: 1000, blockNum: 10000");
-    } catch (Exception e) {
-      Assert.assertEquals("maxBlockNum: 1000, blockNum: 10000", e.getMessage());
-    }
+    Exception e1 = Assert.assertThrows(Exception.class,
+        () -> fetchInvDataMsgHandler.processMessage(peer, msg));
+    Assert.assertEquals("maxBlockNum: 1000, blockNum: 10000", e1.getMessage());
 
-    try {
-      Mockito.when(peer.getLastSyncBlockId())
+    Mockito.when(peer.getLastSyncBlockId())
         .thenReturn(new BlockCapsule.BlockId(Sha256Hash.ZERO_HASH, 20000L));
-      fetchInvDataMsgHandler.processMessage(peer, msg);
-      Assert.fail("Expected exception was not thrown: minBlockNum: 16000, blockNum: 10000");
-    } catch (Exception e) {
-      Assert.assertEquals("minBlockNum: 16000, blockNum: 10000", e.getMessage());
-    }
+    Exception e2 = Assert.assertThrows(Exception.class,
+        () -> fetchInvDataMsgHandler.processMessage(peer, msg));
+    Assert.assertEquals("minBlockNum: 16000, blockNum: 10000", e2.getMessage());
   }
 
   @Test
