@@ -17,6 +17,7 @@ package org.tron.core.config.args;
 
 import com.google.common.collect.Lists;
 import com.typesafe.config.Config;
+import com.typesafe.config.ConfigException;
 import com.typesafe.config.ConfigFactory;
 import io.grpc.internal.GrpcUtil;
 import io.grpc.netty.NettyServerBuilder;
@@ -39,6 +40,7 @@ import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.LocalWitnesses;
 import org.tron.common.utils.PublicMethod;
 import org.tron.core.config.Configuration;
+import org.tron.core.exception.TronError;
 
 @Slf4j
 public class ArgsTest {
@@ -361,5 +363,165 @@ public class ArgsTest {
     Assert.assertEquals(expectedEngine, parameter.getStorage().getDbEngine());
 
     Args.clearParam();
+  }
+
+  @Test
+  public void testMaxMessageSizeHumanReadable() {
+    Map<String, String> configMap = new HashMap<>();
+    configMap.put("storage.db.directory", "database");
+
+    // --- KB tier: binary (k/K/Ki/KiB = 1024) vs SI (kB = 1000) ---
+    configMap.put("node.rpc.maxMessageSize", "512k");
+    configMap.put("node.http.maxMessageSize", "512K");
+    configMap.put("node.jsonrpc.maxMessageSize", "512kB");
+    Config config = ConfigFactory.defaultOverrides()
+        .withFallback(ConfigFactory.parseMap(configMap));
+    Args.applyConfigParams(config);
+    Assert.assertEquals(512 * 1024, Args.getInstance().getMaxMessageSize());
+    Assert.assertEquals(512 * 1024, Args.getInstance().getHttpMaxMessageSize());
+    Assert.assertEquals(512 * 1000, Args.getInstance().getJsonRpcMaxMessageSize());
+    Args.clearParam();
+
+    configMap.put("node.rpc.maxMessageSize", "256Ki");
+    configMap.put("node.http.maxMessageSize", "256KiB");
+    configMap.put("node.jsonrpc.maxMessageSize", "256kB");
+    config = ConfigFactory.defaultOverrides()
+        .withFallback(ConfigFactory.parseMap(configMap));
+    Args.applyConfigParams(config);
+    Assert.assertEquals(256 * 1024, Args.getInstance().getMaxMessageSize());
+    Assert.assertEquals(256 * 1024, Args.getInstance().getHttpMaxMessageSize());
+    Assert.assertEquals(256 * 1000, Args.getInstance().getJsonRpcMaxMessageSize());
+    Args.clearParam();
+
+    // --- MB tier: binary (m/M/Mi/MiB = 1024*1024) vs SI (MB = 1000*1000) ---
+    configMap.put("node.rpc.maxMessageSize", "4m");
+    configMap.put("node.http.maxMessageSize", "8M");
+    configMap.put("node.jsonrpc.maxMessageSize", "2MB");
+    config = ConfigFactory.defaultOverrides()
+        .withFallback(ConfigFactory.parseMap(configMap));
+    Args.applyConfigParams(config);
+    Assert.assertEquals(4 * 1024 * 1024, Args.getInstance().getMaxMessageSize());
+    Assert.assertEquals(8 * 1024 * 1024, Args.getInstance().getHttpMaxMessageSize());
+    Assert.assertEquals(2 * 1000 * 1000, Args.getInstance().getJsonRpcMaxMessageSize());
+    Args.clearParam();
+
+    configMap.put("node.rpc.maxMessageSize", "4Mi");
+    configMap.put("node.http.maxMessageSize", "4MiB");
+    configMap.put("node.jsonrpc.maxMessageSize", "4MB");
+    config = ConfigFactory.defaultOverrides()
+        .withFallback(ConfigFactory.parseMap(configMap));
+    Args.applyConfigParams(config);
+    Assert.assertEquals(4 * 1024 * 1024, Args.getInstance().getMaxMessageSize());
+    Assert.assertEquals(4 * 1024 * 1024, Args.getInstance().getHttpMaxMessageSize());
+    Assert.assertEquals(4 * 1000 * 1000, Args.getInstance().getJsonRpcMaxMessageSize());
+    Args.clearParam();
+
+    // --- GB tier: binary (g/G/Gi/GiB) vs SI (GB) ---
+    // rpc is int-bounded, only test http/jsonrpc for GB values
+    configMap.put("node.rpc.maxMessageSize", "4m");
+    configMap.put("node.http.maxMessageSize", "1g");
+    configMap.put("node.jsonrpc.maxMessageSize", "1GB");
+    config = ConfigFactory.defaultOverrides()
+        .withFallback(ConfigFactory.parseMap(configMap));
+    Args.applyConfigParams(config);
+    Assert.assertEquals(4 * 1024 * 1024, Args.getInstance().getMaxMessageSize());
+    Assert.assertEquals(1024L * 1024 * 1024, Args.getInstance().getHttpMaxMessageSize());
+    Assert.assertEquals(1000L * 1000 * 1000, Args.getInstance().getJsonRpcMaxMessageSize());
+    Args.clearParam();
+
+    configMap.put("node.rpc.maxMessageSize", "4m");
+    configMap.put("node.http.maxMessageSize", "2Gi");
+    configMap.put("node.jsonrpc.maxMessageSize", "2GiB");
+    config = ConfigFactory.defaultOverrides()
+        .withFallback(ConfigFactory.parseMap(configMap));
+    Args.applyConfigParams(config);
+    Assert.assertEquals(4 * 1024 * 1024, Args.getInstance().getMaxMessageSize());
+    Assert.assertEquals(2L * 1024 * 1024 * 1024, Args.getInstance().getHttpMaxMessageSize());
+    Assert.assertEquals(2L * 1024 * 1024 * 1024, Args.getInstance().getJsonRpcMaxMessageSize());
+    Args.clearParam();
+
+    // --- raw integer (backward compatible): treated as bytes ---
+    configMap.put("node.rpc.maxMessageSize", "4194304");
+    configMap.put("node.http.maxMessageSize", "4194304");
+    configMap.put("node.jsonrpc.maxMessageSize", "4194304");
+    config = ConfigFactory.defaultOverrides()
+        .withFallback(ConfigFactory.parseMap(configMap));
+    Args.applyConfigParams(config);
+    Assert.assertEquals(4 * 1024 * 1024, Args.getInstance().getMaxMessageSize());
+    Assert.assertEquals(4 * 1024 * 1024, Args.getInstance().getHttpMaxMessageSize());
+    Assert.assertEquals(4 * 1024 * 1024, Args.getInstance().getJsonRpcMaxMessageSize());
+    Args.clearParam();
+
+    // --- zero is allowed ---
+    configMap.put("node.rpc.maxMessageSize", "0");
+    configMap.put("node.http.maxMessageSize", "0");
+    configMap.put("node.jsonrpc.maxMessageSize", "0");
+    config = ConfigFactory.defaultOverrides()
+        .withFallback(ConfigFactory.parseMap(configMap));
+    Args.applyConfigParams(config);
+    Assert.assertEquals(0, Args.getInstance().getMaxMessageSize());
+    Assert.assertEquals(0, Args.getInstance().getHttpMaxMessageSize());
+    Assert.assertEquals(0, Args.getInstance().getJsonRpcMaxMessageSize());
+    Args.clearParam();
+  }
+
+  @Test
+  public void testRpcMaxMessageSizeExceedsIntMax() {
+    Map<String, String> configMap = new HashMap<>();
+    configMap.put("storage.db.directory", "database");
+    configMap.put("node.rpc.maxMessageSize", "3g");
+    Config config = ConfigFactory.defaultOverrides()
+        .withFallback(ConfigFactory.parseMap(configMap));
+    try {
+      Args.applyConfigParams(config);
+      Assert.fail("expected TronError for rpc maxMessageSize > Integer.MAX_VALUE");
+    } catch (TronError e) {
+      Assert.assertTrue(e.getMessage().contains("node.rpc.maxMessageSize must be non-negative"));
+    }
+  }
+
+  @Test
+  public void testMaxMessageSizeNegativeValue() {
+    Map<String, String> configMap = new HashMap<>();
+    configMap.put("storage.db.directory", "database");
+    configMap.put("node.rpc.maxMessageSize", "-4m");
+    Config config = ConfigFactory.defaultOverrides()
+        .withFallback(ConfigFactory.parseMap(configMap));
+    try {
+      Args.applyConfigParams(config);
+      Assert.fail("expected IllegalArgumentException for negative memory size");
+    } catch (IllegalArgumentException e) {
+      Assert.assertTrue(e.getMessage().contains("negative"));
+    }
+  }
+
+  @Test
+  public void testMaxMessageSizeInvalidUnit() {
+    Map<String, String> configMap = new HashMap<>();
+    configMap.put("storage.db.directory", "database");
+    configMap.put("node.rpc.maxMessageSize", "4x");
+    Config config = ConfigFactory.defaultOverrides()
+        .withFallback(ConfigFactory.parseMap(configMap));
+    try {
+      Args.applyConfigParams(config);
+      Assert.fail("expected ConfigException.BadValue for invalid unit");
+    } catch (ConfigException.BadValue e) {
+      Assert.assertTrue(e.getMessage().contains("Could not parse size-in-bytes unit"));
+    }
+  }
+
+  @Test
+  public void testMaxMessageSizeNonNumeric() {
+    Map<String, String> configMap = new HashMap<>();
+    configMap.put("storage.db.directory", "database");
+    configMap.put("node.http.maxMessageSize", "abc");
+    Config config = ConfigFactory.defaultOverrides()
+        .withFallback(ConfigFactory.parseMap(configMap));
+    try {
+      Args.applyConfigParams(config);
+      Assert.fail("expected ConfigException.BadValue for non-numeric value");
+    } catch (ConfigException.BadValue e) {
+      Assert.assertTrue(e.getMessage().contains("No number in size-in-bytes value"));
+    }
   }
 }
