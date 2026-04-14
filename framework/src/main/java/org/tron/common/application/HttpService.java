@@ -30,7 +30,7 @@ public abstract class HttpService extends AbstractService {
 
   protected String contextPath;
 
-  protected long maxRequestSize;
+  protected long maxRequestSize = 4 * 1024 * 1024; // 4MB
 
   @Override
   public void innerStart() throws Exception {
