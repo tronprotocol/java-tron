@@ -109,7 +109,7 @@ public class TransactionReceipt {
 
     // Set logs
     List<TransactionLog> logList = new ArrayList<>();
-    String blockTimestamp = ByteArray.toJsonHex(txInfo.getBlockTimeStamp() / 1000);
+    String blockTimestamp = ByteArray.toJsonHex(blockCapsule.getTimeStamp() / 1000);
     for (int logIndex = 0; logIndex < txInfo.getLogCount(); logIndex++) {
       TransactionInfo.Log log = txInfo.getLogList().get(logIndex);
       TransactionLog transactionLog = new TransactionLog();
