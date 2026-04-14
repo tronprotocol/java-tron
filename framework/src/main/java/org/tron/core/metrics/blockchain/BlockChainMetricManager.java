@@ -45,7 +45,8 @@ public class BlockChainMetricManager {
   private long failProcessBlockNum = 0;
   @Setter
   private String failProcessBlockReason = "";
-  private final Set<String> lastActiveWitnesses = ConcurrentHashMap.newKeySet();
+  // Only accessed from block processing thread (synchronized on blockLock)
+  private final Set<String> lastActiveWitnesses = new HashSet<>();
   // To control SR set change metric update logic, -1 means not initialized
   private long lastNextMaintenanceTime = -1;
 
@@ -192,7 +193,13 @@ public class BlockChainMetricManager {
           .stream()
           .map(w -> StringUtil.encode58Check(w.toByteArray()))
           .collect(Collectors.toSet());
-      recordSrSetChange(currentWitnesses);
+      if (nextMaintenanceTime < lastNextMaintenanceTime) {
+        // Fork rollback detected — reinitialize instead of diffing
+        lastActiveWitnesses.clear();
+        lastActiveWitnesses.addAll(currentWitnesses);
+      } else {
+        recordSrSetChange(currentWitnesses);
+      }
       lastNextMaintenanceTime = nextMaintenanceTime;
     }
   }
