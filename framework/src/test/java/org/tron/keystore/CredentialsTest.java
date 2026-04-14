@@ -33,14 +33,11 @@ public class CredentialsTest {
 
   @Test
   public void testCreateFromSM2() {
-    try {
-      Credentials.create(SM2.fromNodeId(ByteUtil.hexToBytes("fffffffffff"
-          + "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
-          + "fffffffffffffffffffffffffffffffffffffff")));
-      Assert.fail("Expected IllegalArgumentException");
-    } catch (Exception e) {
-      Assert.assertTrue(e instanceof IllegalArgumentException);
-    }
+    Exception e = Assert.assertThrows(Exception.class,
+        () -> Credentials.create(SM2.fromNodeId(ByteUtil.hexToBytes("fffffffffff"
+            + "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+            + "fffffffffffffffffffffffffffffffffffffff"))));
+    Assert.assertTrue(e instanceof IllegalArgumentException);
   }
 
   @Test

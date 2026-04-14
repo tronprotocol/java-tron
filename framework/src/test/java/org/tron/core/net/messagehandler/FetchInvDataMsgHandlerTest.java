@@ -144,17 +144,12 @@ public class FetchInvDataMsgHandlerTest {
     Mockito.when(peer.getP2pRateLimiter()).thenReturn(p2pRateLimiter);
     FetchInvDataMsgHandler fetchInvDataMsgHandler = new FetchInvDataMsgHandler();
 
-    try {
-      fetchInvDataMsgHandler.processMessage(peer, msg);
-      Assert.fail("Expected exception was not thrown: fetch too many blocks, size:101");
-    } catch (Exception e) {
-      Assert.assertEquals("fetch too many blocks, size:101", e.getMessage());
-    }
-    try {
-      fetchInvDataMsgHandler.processMessage(peer, msg);
-      Assert.fail("Expected rate limit exception was not thrown");
-    } catch (Exception e) {
-      Assert.assertTrue(e.getMessage().endsWith("rate limit"));
-    }
+    Exception e1 = Assert.assertThrows(Exception.class,
+        () -> fetchInvDataMsgHandler.processMessage(peer, msg));
+    Assert.assertEquals("fetch too many blocks, size:101", e1.getMessage());
+
+    Exception e2 = Assert.assertThrows(Exception.class,
+        () -> fetchInvDataMsgHandler.processMessage(peer, msg));
+    Assert.assertTrue(e2.getMessage().endsWith("rate limit"));
   }
 }

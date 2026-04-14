@@ -27,7 +27,7 @@ public class BackupServer implements AutoCloseable {
 
   private BackupManager backupManager;
 
-  private Channel channel;
+  private volatile Channel channel;
 
   private volatile boolean shutdown = false;
 
@@ -77,6 +77,10 @@ public class BackupServer implements AutoCloseable {
 
         logger.info("Backup server started, bind port {}", port);
 
+        // If close() was called while bind() was in progress, channel was not yet visible
+        if (shutdown) {
+          break;
+        }
         channel.closeFuture().sync();
         if (shutdown) {
           logger.info("Shutdown backup BackupServer");

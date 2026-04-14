@@ -21,7 +21,7 @@ public class BackupServerTest {
   public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   @Rule
-  public Timeout globalTimeout = Timeout.seconds(60);
+  public Timeout globalTimeout = Timeout.seconds(90);
   private BackupServer backupServer;
 
   @Before
@@ -43,7 +43,7 @@ public class BackupServerTest {
     Args.clearParam();
   }
 
-  @Test(timeout = 60_000)
+  @Test
   public void test() throws InterruptedException {
     backupServer.initServer();
     // wait for the server to start

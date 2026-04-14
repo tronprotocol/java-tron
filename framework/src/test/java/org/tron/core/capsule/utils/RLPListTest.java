@@ -69,12 +69,8 @@ public class RLPListTest {
     Assert.assertArrayEquals(kBytes, lBytes);
 
     char c = 'a';
-    try {
-      method.invoke(RLP.class, c);
-      Assert.fail();
-    } catch (Exception e) {
-      Assert.assertTrue(true);
-    }
+    Assert.assertThrows(Exception.class,
+        () -> method.invoke(RLP.class, c));
   }
 
   @Test
