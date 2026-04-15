@@ -360,5 +360,14 @@ public class ArgsTest {
 
     Args.clearParam();
   }
+
+  @Test
+  public void testAllowShieldedTransactionApiDefault() {
+    Args.setParam(new String[]{}, TestConstants.TEST_CONF);
+    Assert.assertFalse(Args.getInstance().isAllowShieldedTransactionApi());
+    Args.getInstance().setAllowShieldedTransactionApi(true);
+    Assert.assertTrue(Args.getInstance().isAllowShieldedTransactionApi());
+    Args.getInstance().setAllowShieldedTransactionApi(false);
+  }
 }
 

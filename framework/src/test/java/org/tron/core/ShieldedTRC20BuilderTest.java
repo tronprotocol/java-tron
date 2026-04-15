@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.bouncycastle.util.encoders.Hex;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
@@ -73,9 +74,18 @@ public class ShieldedTRC20BuilderTest extends BaseTest {
   VerifyTransferProof transferContract = new VerifyTransferProof();
   VerifyBurnProof burnContract = new VerifyBurnProof();
 
+  private static boolean origShieldedApi;
+
   @BeforeClass
   public static void initZksnarkParams() {
     ZksnarkInitService.librustzcashInitZksnarkParams();
+    origShieldedApi = Args.getInstance().allowShieldedTransactionApi;
+    Args.getInstance().allowShieldedTransactionApi = true;
+  }
+
+  @AfterClass
+  public static void restoreShieldedApi() {
+    Args.getInstance().allowShieldedTransactionApi = origShieldedApi;
   }
 
   @Ignore

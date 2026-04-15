@@ -335,7 +335,7 @@ public class CommonParameter {
 
   @Getter
   @Setter
-  public boolean allowShieldedTransactionApi; // clearParam: true
+  public boolean allowShieldedTransactionApi; // clearParam: false
   @Getter
   @Setter
   public long blockNumForEnergyLimit;
