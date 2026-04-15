@@ -8,6 +8,8 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.protobuf.ByteString;
 import io.prometheus.client.CollectorRegistry;
+import java.io.ByteArrayInputStream;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -15,6 +17,7 @@ import javax.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
@@ -25,6 +28,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.BaseTest;
 import org.tron.common.TestConstants;
+import org.tron.common.application.HttpService;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.prometheus.Metrics;
 import org.tron.common.utils.ByteArray;
@@ -1097,6 +1101,76 @@ public class JsonrpcServiceTest extends BaseTest {
       Assert.assertTrue("Java1.8".equals(javaVersion) || "Java17".equals(javaVersion));
     } catch (Exception e) {
       Assert.fail();
+    }
+  }
+
+  /**
+   * Verifies SizeLimitHandler integration with the real JsonRpcServlet + jsonrpc4j stack.
+   *
+   * Covers: normal request no regression, Content-Length oversized 413,
+   * and chunked oversized handled gracefully (body truncated, 200 + empty body
+   * because RateLimiterServlet absorbs the BadMessageException).
+   */
+  @Test
+  public void testJsonRpcSizeLimitIntegration() {
+    long testLimit = 1024;
+    try {
+      Field field = HttpService.class.getDeclaredField("maxRequestSize");
+      field.setAccessible(true);
+      long originalLimit = field.getLong(fullNodeJsonRpcHttpService);
+      field.setLong(fullNodeJsonRpcHttpService, testLimit);
+
+      fullNodeJsonRpcHttpService.start();
+      String url = "http://127.0.0.1:"
+          + CommonParameter.getInstance().getJsonRpcHttpFullNodePort() + "/jsonrpc";
+
+      try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
+        // Normal JSON-RPC request passes through SizeLimitHandler
+        JsonObject req = new JsonObject();
+        req.addProperty("jsonrpc", "2.0");
+        req.addProperty("method", "web3_clientVersion");
+        req.addProperty("id", 1);
+
+        HttpPost post = new HttpPost(url);
+        post.addHeader("Content-Type", "application/json");
+        post.setEntity(new StringEntity(req.toString()));
+        CloseableHttpResponse resp = httpClient.execute(post);
+        Assert.assertEquals(200, resp.getStatusLine().getStatusCode());
+        String body = EntityUtils.toString(resp.getEntity());
+        Assert.assertTrue("Normal JSON-RPC response should contain result",
+            body.contains("result"));
+        resp.close();
+
+        // Oversized request with Content-Length → 413 before JsonRpcServlet
+        HttpPost overPost = new HttpPost(url);
+        overPost.addHeader("Content-Type", "application/json");
+        overPost.setEntity(new StringEntity(
+            new String(new char[(int) testLimit + 1]).replace('\0', 'x')));
+        resp = httpClient.execute(overPost);
+        Assert.assertEquals(413, resp.getStatusLine().getStatusCode());
+        resp.close();
+
+        // Chunked oversized → BadMessageException thrown during body read,
+        // absorbed by RateLimiterServlet catch(Exception) → 200 with empty body.
+        // Body read IS truncated at the limit — OOM protection effective.
+        byte[] chunkedData = new String(new char[(int) testLimit * 2])
+            .replace('\0', 'x').getBytes("UTF-8");
+        HttpPost chunkedPost = new HttpPost(url);
+        chunkedPost.setEntity(new InputStreamEntity(
+            new ByteArrayInputStream(chunkedData), -1));
+        resp = httpClient.execute(chunkedPost);
+        Assert.assertEquals(200, resp.getStatusLine().getStatusCode());
+        body = EntityUtils.toString(resp.getEntity());
+        Assert.assertTrue("Chunked oversized should return empty body"
+            + " (RateLimiterServlet absorbs BadMessageException)", body.isEmpty());
+        resp.close();
+      } finally {
+        field.setLong(fullNodeJsonRpcHttpService, originalLimit);
+      }
+    } catch (Exception e) {
+      Assert.fail(e.getMessage());
+    } finally {
+      fullNodeJsonRpcHttpService.stop();
     }
   }
 }

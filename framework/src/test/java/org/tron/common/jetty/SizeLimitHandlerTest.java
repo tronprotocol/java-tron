@@ -32,31 +32,28 @@ import org.tron.common.utils.PublicMethod;
 import org.tron.core.config.args.Args;
 
 /**
- * Tests the {@link org.eclipse.jetty.server.handler.SizeLimitHandler} body-size
- * enforcement configured in {@link HttpService initContextHandler()}.
+ * Tests {@link org.eclipse.jetty.server.handler.SizeLimitHandler} body-size
+ * enforcement configured in {@link HttpService#initContextHandler()}.
  *
- * <p>Covers:</p>
- * <ul>
- *   <li>Bodies within the limit are accepted ({@code 200}).</li>
- *   <li>Bodies exceeding the limit are rejected ({@code 413}).</li>
- *   <li>The limit counts raw UTF-8 <em>bytes</em>, not Java {@code char}s.</li>
- *   <li>HTTP and JSON-RPC services use independent size limits.</li>
- *   <li>Default values are {@code GrpcUtil.DEFAULT_MAX_MESSAGE_SIZE} (4 MB).</li>
- * </ul>
+ * Covers: accept/reject by size, UTF-8 byte counting, independent limits
+ * across HttpService instances, chunked transfer, and zero-limit behavior.
+ *
+ * Real JsonRpcServlet integration is tested separately in
+ * {@code JsonrpcServiceTest#testJsonRpcSizeLimitIntegration}.
  */
 @Slf4j
 public class SizeLimitHandlerTest {
 
   private static final int HTTP_MAX_BODY_SIZE = 1024;
-  private static final int JSONRPC_MAX_BODY_SIZE = 512;
+  private static final int SECOND_SERVICE_MAX_BODY_SIZE = 512;
 
   @ClassRule
   public static final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
-  private static TestHttpService     httpService;
-  private static TestJsonRpcService  jsonRpcService;
-  private static URI                 httpServerUri;
-  private static URI                 jsonRpcServerUri;
+  private static TestHttpService    httpService;
+  private static SecondHttpService  secondService;
+  private static URI                httpServerUri;
+  private static URI                secondServerUri;
   private static CloseableHttpClient client;
 
   /**
@@ -96,9 +93,9 @@ public class SizeLimitHandlerTest {
     }
   }
 
-  /** Minimal concrete {@link HttpService} simulating a JSON-RPC service. */
-  static class TestJsonRpcService extends HttpService {
-    TestJsonRpcService(int port, long maxRequestSize) {
+  /** Second HttpService instance with a different size limit, for independence tests. */
+  static class SecondHttpService extends HttpService {
+    SecondHttpService(int port, long maxRequestSize) {
       this.port = port;
       this.contextPath = "/";
       this.maxRequestSize = maxRequestSize;
@@ -106,7 +103,7 @@ public class SizeLimitHandlerTest {
 
     @Override
     protected void addServlet(ServletContextHandler context) {
-      context.addServlet(new ServletHolder(new BroadCatchServlet()), "/jsonrpc");
+      context.addServlet(new ServletHolder(new BroadCatchServlet()), "/*");
     }
   }
 
@@ -115,17 +112,17 @@ public class SizeLimitHandlerTest {
     Args.setParam(new String[]{"-d", temporaryFolder.newFolder().toString()},
         TestConstants.TEST_CONF);
     Args.getInstance().setHttpMaxMessageSize(HTTP_MAX_BODY_SIZE);
-    Args.getInstance().setJsonRpcMaxMessageSize(JSONRPC_MAX_BODY_SIZE);
+    Args.getInstance().setJsonRpcMaxMessageSize(SECOND_SERVICE_MAX_BODY_SIZE);
 
     int httpPort = PublicMethod.chooseRandomPort();
     httpService = new TestHttpService(httpPort, HTTP_MAX_BODY_SIZE);
     httpService.start().get(10, TimeUnit.SECONDS);
     httpServerUri = new URI(String.format("http://localhost:%d/", httpPort));
 
-    int jsonRpcPort = PublicMethod.chooseRandomPort();
-    jsonRpcService = new TestJsonRpcService(jsonRpcPort, JSONRPC_MAX_BODY_SIZE);
-    jsonRpcService.start().get(10, TimeUnit.SECONDS);
-    jsonRpcServerUri = new URI(String.format("http://localhost:%d/jsonrpc", jsonRpcPort));
+    int secondPort = PublicMethod.chooseRandomPort();
+    secondService = new SecondHttpService(secondPort, SECOND_SERVICE_MAX_BODY_SIZE);
+    secondService.start().get(10, TimeUnit.SECONDS);
+    secondServerUri = new URI(String.format("http://localhost:%d/", secondPort));
 
     client = HttpClients.createDefault();
   }
@@ -142,15 +139,13 @@ public class SizeLimitHandlerTest {
           httpService.stop();
         }
       } finally {
-        if (jsonRpcService != null) {
-          jsonRpcService.stop();
+        if (secondService != null) {
+          secondService.stop();
         }
       }
       Args.clearParam();
     }
   }
-
-  // -- HTTP service body-size tests -------------------------------------------
 
   @Test
   public void testHttpBodyWithinLimit() throws Exception {
@@ -169,39 +164,15 @@ public class SizeLimitHandlerTest {
         post(httpServerUri, new StringEntity(repeat('b', HTTP_MAX_BODY_SIZE))));
   }
 
-  // -- JSON-RPC service body-size tests ---------------------------------------
-
   @Test
-  public void testJsonRpcBodyWithinLimit() throws Exception {
-    Assert.assertEquals(200,
-        post(jsonRpcServerUri, new StringEntity("{\"method\":\"eth_blockNumber\"}")));
-  }
-
-  @Test
-  public void testJsonRpcBodyExceedsLimit() throws Exception {
-    Assert.assertEquals(413,
-        post(jsonRpcServerUri, new StringEntity(repeat('x', JSONRPC_MAX_BODY_SIZE + 1))));
-  }
-
-  @Test
-  public void testJsonRpcBodyAtExactLimit() throws Exception {
-    Assert.assertEquals(200,
-        post(jsonRpcServerUri, new StringEntity(repeat('c', JSONRPC_MAX_BODY_SIZE))));
-  }
-
-  // -- Independent limit tests ------------------------------------------------
-
-  @Test
-  public void testHttpAndJsonRpcHaveIndependentLimits() throws Exception {
-    // A body that exceeds JSON-RPC limit but is within HTTP limit
-    String body = repeat('d', JSONRPC_MAX_BODY_SIZE + 100);
+  public void testTwoServicesHaveIndependentLimits() throws Exception {
+    // A body that exceeds secondService limit but is within httpService limit
+    String body = repeat('d', SECOND_SERVICE_MAX_BODY_SIZE + 100);
     Assert.assertTrue(body.length() < HTTP_MAX_BODY_SIZE);
 
     Assert.assertEquals(200, post(httpServerUri, new StringEntity(body)));
-    Assert.assertEquals(413, post(jsonRpcServerUri, new StringEntity(body)));
+    Assert.assertEquals(413, post(secondServerUri, new StringEntity(body)));
   }
-
-  // -- UTF-8 byte counting test -----------------------------------------------
 
   @Test
   public void testLimitIsBasedOnBytesNotCharacters() throws Exception {
@@ -212,10 +183,8 @@ public class SizeLimitHandlerTest {
     Assert.assertEquals(413, post(httpServerUri, new StringEntity(cjk, "UTF-8")));
   }
 
-  // -- Chunked (no Content-Length) transfer tests ------------------------------
-
   /**
-   * Chunked request within the limit should succeed (EchoServlet).
+   * Chunked request within the limit should succeed.
    * InputStreamEntity with size=-1 sends chunked Transfer-Encoding (no Content-Length).
    */
   @Test
@@ -228,11 +197,11 @@ public class SizeLimitHandlerTest {
   /**
    * Chunked oversized body hitting a servlet with broad catch(Exception).
    *
-   * <p>SizeLimitHandler's LimitInterceptor throws BadMessageException during
+   * SizeLimitHandler's LimitInterceptor throws BadMessageException during
    * streaming read, but the servlet's catch(Exception) absorbs it and returns
    * 200 + error JSON instead of 413. This matches real TRON servlet behavior.
    *
-   * <p>OOM protection still works: the body read is truncated at the limit.
+   * OOM protection still works: the body read is truncated at the limit.
    */
   @Test
   public void testChunkedBodyExceedsLimit() throws Exception {
@@ -251,8 +220,6 @@ public class SizeLimitHandlerTest {
     Assert.assertTrue("Error should be surfaced in response body",
         body.contains("Error"));
   }
-
-  // -- Zero-limit behavior test -----------------------------------------------
 
   /**
    * When maxRequestSize is 0, SizeLimitHandler treats it as "reject all bodies > 0 bytes".
@@ -277,8 +244,6 @@ public class SizeLimitHandlerTest {
       zeroService.stop();
     }
   }
-
-  // -- checkBodySize vs SizeLimitHandler consistency tests --------------------
 
   /**
    * For pure ASCII JSON (the normal TRON API case), wire bytes and
@@ -320,7 +285,7 @@ public class SizeLimitHandlerTest {
   /**
    * When the body contains {@code \r\n} line endings, {@code lines().collect()}
    * normalizes them to {@code \n} (on Linux) or the platform line separator.
-   * This makes {@code checkBodySize} measure <em>fewer</em> bytes than the wire —
+   * This makes {@code checkBodySize} measure fewer bytes than the wire —
    * a safe direction: checkBodySize never rejects what SizeLimitHandler accepts.
    */
   @Test
@@ -337,8 +302,6 @@ public class SizeLimitHandlerTest {
     logger.info("Newline test: wire={}, servlet={}, diff={}",
         wireBytes, servletBytes, wireBytes - servletBytes);
   }
-
-  // -- helpers ----------------------------------------------------------------
 
   /** POSTs with the given entity and returns the response body as a string. */
   private String postForBody(URI uri, HttpEntity entity) throws Exception {
