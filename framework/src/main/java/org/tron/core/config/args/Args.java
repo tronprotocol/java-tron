@@ -640,6 +640,7 @@ public class Args extends CommonParameter {
     PARAMETER.nodeDetectEnable = nc.isNodeDetectEnable();
 
     PARAMETER.inactiveThreshold = nc.getInactiveThreshold();
+    PARAMETER.maxHeadBlockTimeDeviation = nc.getMaxHeadBlockTimeDeviation();
 
     PARAMETER.maxTransactionPendingSize = nc.getMaxTransactionPendingSize();
     PARAMETER.pendingTransactionTimeout = nc.getPendingTransactionTimeout();

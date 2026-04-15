@@ -1,6 +1,8 @@
 package org.tron.core;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThrows;
@@ -40,6 +42,7 @@ import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.client.WalletClient;
+import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.ContractCapsule;
@@ -88,11 +91,22 @@ public class WalletMockTest {
   @Before
   public void init() {
     CommonParameter.getInstance().setMinEffectiveConnection(0);
+    CommonParameter.getInstance().setMaxHeadBlockTimeDeviation(Integer.MAX_VALUE);
   }
 
   @After
   public void  clearMocks() {
     Mockito.clearAllCaches();
+  }
+
+  private ChainBaseManager injectChainBaseManager(Wallet wallet, long headBlockTimestamp)
+      throws Exception {
+    ChainBaseManager chainBaseManagerMock = mock(ChainBaseManager.class);
+    when(chainBaseManagerMock.getHeadBlockTimeStamp()).thenReturn(headBlockTimestamp);
+    Field chainField = wallet.getClass().getDeclaredField("chainBaseManager");
+    chainField.setAccessible(true);
+    chainField.set(wallet, chainBaseManagerMock);
+    return chainBaseManagerMock;
   }
 
   @Test
@@ -183,6 +197,57 @@ public class WalletMockTest {
   }
 
   @Test
+  public void testBroadcastTransactionHeadBlockTooOld() throws Exception {
+    Wallet wallet = new Wallet();
+    Protocol.Transaction transaction = Protocol.Transaction.newBuilder().build();
+
+    TronNetDelegate tronNetDelegateMock = mock(TronNetDelegate.class);
+    when(tronNetDelegateMock.isBlockUnsolidified()).thenReturn(false);
+    Field tronNetField = wallet.getClass().getDeclaredField("tronNetDelegate");
+    tronNetField.setAccessible(true);
+    tronNetField.set(wallet, tronNetDelegateMock);
+
+    // 60s ago, threshold is 30s
+    injectChainBaseManager(wallet, System.currentTimeMillis() - 60_000L);
+
+    CommonParameter.getInstance().setMaxHeadBlockTimeDeviation(30);
+
+    GrpcAPI.Return ret = wallet.broadcastTransaction(transaction);
+
+    assertFalse(ret.getResult());
+    assertEquals(GrpcAPI.Return.response_code.HEAD_BLOCK_TOO_OLD, ret.getCode());
+  }
+
+  @Test
+  public void testBroadcastTransactionHeadBlockWithinThreshold() throws Exception {
+    Wallet wallet = new Wallet();
+    Protocol.Transaction transaction = Protocol.Transaction.newBuilder().build();
+
+    TronNetDelegate tronNetDelegateMock = mock(TronNetDelegate.class);
+    when(tronNetDelegateMock.isBlockUnsolidified()).thenReturn(false);
+    Field tronNetField = wallet.getClass().getDeclaredField("tronNetDelegate");
+    tronNetField.setAccessible(true);
+    tronNetField.set(wallet, tronNetDelegateMock);
+
+    // 10s ago, within 30s threshold
+    injectChainBaseManager(wallet, System.currentTimeMillis() - 10_000L);
+
+    Manager dbManagerMock = mock(Manager.class);
+    when(dbManagerMock.isTooManyPending()).thenReturn(true); // stop here, not HEAD_BLOCK_TOO_OLD
+    Field dbField = wallet.getClass().getDeclaredField("dbManager");
+    dbField.setAccessible(true);
+    dbField.set(wallet, dbManagerMock);
+
+    CommonParameter.getInstance().setMaxHeadBlockTimeDeviation(30);
+
+    GrpcAPI.Return ret = wallet.broadcastTransaction(transaction);
+
+    assertNotEquals(GrpcAPI.Return.response_code.HEAD_BLOCK_TOO_OLD, ret.getCode());
+    // Head block check passed — execution reached the next guard (SERVER_BUSY)
+    assertEquals(GrpcAPI.Return.response_code.SERVER_BUSY, ret.getCode());
+  }
+
+  @Test
   public void testBroadcastTransactionNoConnection() throws Exception {
     Wallet wallet = new Wallet();
     Protocol.Transaction transaction = Protocol.Transaction.newBuilder().build();
@@ -194,6 +259,8 @@ public class WalletMockTest {
     Field field = wallet.getClass().getDeclaredField("tronNetDelegate");
     field.setAccessible(true);
     field.set(wallet, tronNetDelegateMock);
+
+    injectChainBaseManager(wallet, System.currentTimeMillis());
 
     Field field2 = wallet.getClass().getDeclaredField("minEffectiveConnection");
     field2.setAccessible(true);
@@ -223,6 +290,8 @@ public class WalletMockTest {
     field.setAccessible(true);
     field.set(wallet, tronNetDelegateMock);
 
+    injectChainBaseManager(wallet, System.currentTimeMillis());
+
     Field field2 = wallet.getClass().getDeclaredField("minEffectiveConnection");
     field2.setAccessible(true);
     field2.set(wallet, 10);
@@ -247,6 +316,8 @@ public class WalletMockTest {
     Field field = wallet.getClass().getDeclaredField("tronNetDelegate");
     field.setAccessible(true);
     field.set(wallet, tronNetDelegateMock);
+
+    injectChainBaseManager(wallet, System.currentTimeMillis());
 
     Field field2 = wallet.getClass().getDeclaredField("dbManager");
     field2.setAccessible(true);
@@ -280,6 +351,8 @@ public class WalletMockTest {
     field.setAccessible(true);
     field.set(wallet, tronNetDelegateMock);
 
+    injectChainBaseManager(wallet, System.currentTimeMillis());
+
     Field field2 = wallet.getClass().getDeclaredField("dbManager");
     field2.setAccessible(true);
     field2.set(wallet, managerMock);
@@ -302,13 +375,9 @@ public class WalletMockTest {
 
     TronNetDelegate tronNetDelegateMock = mock(TronNetDelegate.class);
     Manager managerMock = mock(Manager.class);
-    ChainBaseManager chainBaseManagerMock = mock(ChainBaseManager.class);
-    DynamicPropertiesStore dynamicPropertiesStoreMock
-        = mock(DynamicPropertiesStore.class);
+    DynamicPropertiesStore dynamicPropertiesStoreMock = mock(DynamicPropertiesStore.class);
     when(tronNetDelegateMock.isBlockUnsolidified()).thenReturn(false);
     when(managerMock.isTooManyPending()).thenReturn(false);
-    when(chainBaseManagerMock.getDynamicPropertiesStore())
-        .thenReturn(dynamicPropertiesStoreMock);
     when(dynamicPropertiesStoreMock.supportVM()).thenReturn(false);
 
     Field field = wallet.getClass().getDeclaredField("tronNetDelegate");
@@ -319,9 +388,9 @@ public class WalletMockTest {
     field2.setAccessible(true);
     field2.set(wallet, managerMock);
 
-    Field field4 = wallet.getClass().getDeclaredField("chainBaseManager");
-    field4.setAccessible(true);
-    field4.set(wallet, chainBaseManagerMock);
+    ChainBaseManager chainBaseManagerMock = injectChainBaseManager(wallet,
+        System.currentTimeMillis());
+    when(chainBaseManagerMock.getDynamicPropertiesStore()).thenReturn(dynamicPropertiesStoreMock);
 
     Field field3 = wallet.getClass().getDeclaredField("trxCacheEnable");
     field3.setAccessible(true);
@@ -340,13 +409,9 @@ public class WalletMockTest {
 
     TronNetDelegate tronNetDelegateMock = mock(TronNetDelegate.class);
     Manager managerMock = mock(Manager.class);
-    ChainBaseManager chainBaseManagerMock = mock(ChainBaseManager.class);
-    DynamicPropertiesStore dynamicPropertiesStoreMock
-        = mock(DynamicPropertiesStore.class);
+    DynamicPropertiesStore dynamicPropertiesStoreMock = mock(DynamicPropertiesStore.class);
     when(tronNetDelegateMock.isBlockUnsolidified()).thenReturn(false);
     when(managerMock.isTooManyPending()).thenReturn(false);
-    when(chainBaseManagerMock.getDynamicPropertiesStore())
-        .thenReturn(dynamicPropertiesStoreMock);
     when(dynamicPropertiesStoreMock.supportVM()).thenReturn(false);
 
     Field field = wallet.getClass().getDeclaredField("tronNetDelegate");
@@ -357,9 +422,9 @@ public class WalletMockTest {
     field2.setAccessible(true);
     field2.set(wallet, managerMock);
 
-    Field field4 = wallet.getClass().getDeclaredField("chainBaseManager");
-    field4.setAccessible(true);
-    field4.set(wallet, chainBaseManagerMock);
+    ChainBaseManager chainBaseManagerMock = injectChainBaseManager(wallet,
+        System.currentTimeMillis());
+    when(chainBaseManagerMock.getDynamicPropertiesStore()).thenReturn(dynamicPropertiesStoreMock);
 
     Field field3 = wallet.getClass().getDeclaredField("trxCacheEnable");
     field3.setAccessible(true);
@@ -401,6 +466,7 @@ public class WalletMockTest {
 
     when(tronNetDelegateMock.isBlockUnsolidified()).thenReturn(false);
     when(managerMock.isTooManyPending()).thenReturn(false);
+    when(chainBaseManagerMock.getHeadBlockTimeStamp()).thenReturn(System.currentTimeMillis());
     when(chainBaseManagerMock.getDynamicPropertiesStore())
         .thenReturn(dynamicPropertiesStoreMock);
     when(dynamicPropertiesStoreMock.supportVM()).thenReturn(false);

@@ -147,6 +147,10 @@ public class CommonParameter {
   @Setter
   public long syncFetchBatchNum; // clearParam: 2000
 
+  @Getter
+  @Setter
+  public int maxHeadBlockTimeDeviation; // clearParam: 30
+
   // If you are running a solidity node for java tron,
   // this flag is set to true
   @Getter

@@ -519,6 +519,17 @@ public class Wallet {
           .build();
       }
 
+      long lag = System.currentTimeMillis() - chainBaseManager.getHeadBlockTimeStamp();
+      if (lag > (long) Args.getInstance().getMaxHeadBlockTimeDeviation() * 1000) {
+        logger.warn("Broadcast transaction {} failed, head block too old, lag: {}ms", txID, lag);
+        return builder.setResult(false)
+            .setCode(response_code.HEAD_BLOCK_TOO_OLD)
+            .setMessage(ByteString.copyFromUtf8(
+                "Head block too old, lag: " + lag + "ms, threshold: "
+                    + Args.getInstance().getMaxHeadBlockTimeDeviation() + "s"))
+            .build();
+      }
+
       if (minEffectiveConnection != 0) {
         if (tronNetDelegate.getActivePeer().isEmpty()) {
           logger.warn("Broadcast transaction {} has failed, no connection.", txID);

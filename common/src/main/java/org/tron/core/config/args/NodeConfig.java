@@ -1,5 +1,6 @@
 package org.tron.core.config.args;
 
+import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 import static org.tron.core.config.Parameter.ChainConstant.MAX_ACTIVE_WITNESS_NUM;
 
 import com.typesafe.config.Config;
@@ -64,6 +65,7 @@ public class NodeConfig {
   public long getShutdownBlockHeight() { return shutdownBlockHeight; }
   public long getShutdownBlockCount() { return shutdownBlockCount; }
   private int inactiveThreshold = 600;
+  private int maxHeadBlockTimeDeviation = 30;
   private boolean metricsEnable = false;
   private int blockProducedTimeOut = 50;
   private int netMaxTrxPerSecond = 700;
@@ -450,6 +452,14 @@ public class NodeConfig {
     // inactiveThreshold: minimum 1
     if (inactiveThreshold < 1) {
       inactiveThreshold = 1;
+    }
+
+    // maxHeadBlockTimeDeviation: minimum BLOCK_PRODUCED_INTERVAL/1000 seconds (one block interval)
+    int minDeviation = BLOCK_PRODUCED_INTERVAL / 1000;
+    if (maxHeadBlockTimeDeviation < minDeviation) {
+      logger.warn("maxHeadBlockTimeDeviation {} is below the minimum block interval {}s,"
+          + " clamped to {}s", maxHeadBlockTimeDeviation, minDeviation, minDeviation);
+      maxHeadBlockTimeDeviation = minDeviation;
     }
 
     // maxFastForwardNum: clamp to [1, MAX_ACTIVE_WITNESS_NUM]
