@@ -74,6 +74,7 @@ import org.tron.core.config.Parameter.NodeConstant;
 import org.tron.core.exception.TronError;
 import org.tron.core.store.AccountStore;
 import org.tron.p2p.P2pConfig;
+import org.tron.p2p.dns.lookup.LookUpTxt;
 import org.tron.p2p.dns.update.DnsType;
 import org.tron.p2p.dns.update.PublishConfig;
 import org.tron.p2p.utils.NetUtil;
@@ -275,6 +276,7 @@ public class Args extends CommonParameter {
     PARAMETER.backupPort = b.getPort();
     PARAMETER.keepAliveInterval = b.getKeepAliveInterval();
     PARAMETER.backupMembers = b.getMembers();
+    checkBackupMembers();
   }
 
   /**
@@ -1010,7 +1012,11 @@ public class Args extends CommonParameter {
       List<String> addressList, boolean filter) {
     List<InetSocketAddress> ret = new ArrayList<>();
     for (String configString : addressList) {
-      InetSocketAddress inetSocketAddress = NetUtil.parseInetSocketAddress(configString);
+      InetSocketAddress inetSocketAddress = resolveInetSocketAddress(configString);
+      if (inetSocketAddress == null) {
+        logger.warn("Failed to resolve address, skip: {}", configString);
+        continue;
+      }
       if (filter) {
         String ip = inetSocketAddress.getAddress().getHostAddress();
         int port = inetSocketAddress.getPort();
@@ -1028,6 +1034,30 @@ public class Args extends CommonParameter {
   }
 
   // getInetAddress removed — use filterInetSocketAddress
+
+  /**
+   * Parses an address string and, if the host part is a domain name rather than an IP literal,
+   * resolves it to an {@link InetAddress} via {@link LookUpTxt#lookUpIp}. Support IPv4 domain now
+   *
+   * @param configString address in {@code ip:port} or {@code [ipv6]:port} or
+   *                     {@code domain:port} format
+   * @return a fully resolved {@link InetSocketAddress}, or {@code null} if DNS resolution fails
+   */
+  private static InetSocketAddress resolveInetSocketAddress(String configString) {
+    InetSocketAddress parsed = NetUtil.parseInetSocketAddress(configString);
+    String host = parsed.getHostString();
+    int port = parsed.getPort();
+    if (NetUtil.validIpV4(host) || NetUtil.validIpV6(host)) {
+      return parsed;
+    }
+
+    // The host is a domain name, resolve it to an IP address, only support IPv4 now
+    InetAddress address = LookUpTxt.lookUpIp(host, true);
+    if (address == null) {
+      return null;
+    }
+    return new InetSocketAddress(address, port);
+  }
 
   // getEventPluginConfig removed — logic moved to applyEventConfig()
 
@@ -1157,6 +1187,23 @@ public class Args extends CommonParameter {
 
   // initRocksDbSettings, initRocksDbBackupProperty, initBackupProperty
   // removed — logic moved to applyStorageConfig() and applyNodeBackupConfig()
+
+  private static void checkBackupMembers() {
+    for (String member : PARAMETER.backupMembers) {
+      if (NetUtil.validIpV4(member) || NetUtil.validIpV6(member)) {
+        continue;
+      }
+      // Determine whether a domain name can be resolved to an IP address.
+      InetAddress address = LookUpTxt.lookUpIp(member, true);
+      if (address == null) {
+        address = LookUpTxt.lookUpIp(member, false);
+      }
+      if (address == null) {
+        throw new TronError("Failed to resolve backup member domain: " + member,
+            TronError.ErrCode.PARAMETER_INIT);
+      }
+    }
+  }
 
   public static void logConfig() {
     CommonParameter parameter = CommonParameter.getInstance();

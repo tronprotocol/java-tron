@@ -8,9 +8,13 @@ import static org.tron.common.backup.message.UdpMessageTypeEnum.BACKUP_KEEP_ALIV
 import io.netty.util.internal.ConcurrentSet;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.tron.common.backup.message.KeepAliveMessage;
@@ -20,45 +24,43 @@ import org.tron.common.backup.socket.MessageHandler;
 import org.tron.common.backup.socket.UdpEvent;
 import org.tron.common.es.ExecutorServiceManager;
 import org.tron.common.parameter.CommonParameter;
+import org.tron.p2p.dns.lookup.LookUpTxt;
+import org.tron.p2p.utils.NetUtil;
 
 @Slf4j(topic = "backup")
 @Component
 public class BackupManager implements EventHandler {
 
-  private CommonParameter parameter = CommonParameter.getInstance();
+  private final CommonParameter parameter = CommonParameter.getInstance();
 
-  private int priority = parameter.getBackupPriority();
+  private final int priority = parameter.getBackupPriority();
 
-  private int port = parameter.getBackupPort();
+  private final int port = parameter.getBackupPort();
 
-  private int keepAliveInterval = parameter.getKeepAliveInterval();
+  private final int keepAliveInterval = parameter.getKeepAliveInterval();
 
-  private int keepAliveTimeout = keepAliveInterval * 6;
+  private final int keepAliveTimeout = keepAliveInterval * 6;
 
   private String localIp = "";
 
-  private Set<String> members = new ConcurrentSet<>();
+  private final Set<String> members = new ConcurrentSet<>();
+
+  private final Map<String, String> domainIpCache = new ConcurrentHashMap<>();
 
   private final String esName = "backup-manager";
 
-  private ScheduledExecutorService executorService =
+  private final ScheduledExecutorService executorService =
       ExecutorServiceManager.newSingleThreadScheduledExecutor(esName);
 
+  @Setter
   private MessageHandler messageHandler;
 
+  @Getter
   private BackupStatusEnum status = MASTER;
 
   private volatile long lastKeepAliveTime;
 
   private volatile boolean isInit = false;
-
-  public void setMessageHandler(MessageHandler messageHandler) {
-    this.messageHandler = messageHandler;
-  }
-
-  public BackupStatusEnum getStatus() {
-    return status;
-  }
 
   public void setStatus(BackupStatusEnum status) {
     logger.info("Change backup status to {}", status);
@@ -78,10 +80,15 @@ public class BackupManager implements EventHandler {
       logger.warn("Failed to get local ip");
     }
 
-    for (String member : parameter.getBackupMembers()) {
-      if (!localIp.equals(member)) {
-        members.add(member);
+    for (String raw : parameter.getBackupMembers()) {
+      String ip = resolveToIp(raw);
+      if (ip == null || localIp.equals(ip)) {
+        continue;
       }
+      if (!NetUtil.validIpV4(raw) && !NetUtil.validIpV6(raw)) {
+        domainIpCache.put(raw, ip);
+      }
+      members.add(ip);
     }
 
     logger.info("Backup localIp:{}, members: size= {}, {}", localIp, members.size(), members);
@@ -111,6 +118,14 @@ public class BackupManager implements EventHandler {
         logger.error("Exception in send keep alive", t);
       }
     }, 1000, keepAliveInterval, TimeUnit.MILLISECONDS);
+
+    executorService.scheduleWithFixedDelay(() -> {
+      try {
+        refreshMemberIps();
+      } catch (Throwable t) {
+        logger.error("Exception in backup DNS refresh", t);
+      }
+    }, 60_000L, 60_000L, TimeUnit.MILLISECONDS);
   }
 
   @Override
@@ -162,4 +177,42 @@ public class BackupManager implements EventHandler {
     MASTER
   }
 
+  private String resolveToIp(String raw) {
+    if (NetUtil.validIpV4(raw) || NetUtil.validIpV6(raw)) {
+      return raw;
+    }
+    InetAddress address = LookUpTxt.lookUpIp(raw, true);
+    if (address == null) {
+      address = LookUpTxt.lookUpIp(raw, false);
+    }
+    if (address == null) {
+      logger.warn("Failed to resolve backup member domain: {}", raw);
+      return null;
+    }
+    return address.getHostAddress();
+  }
+
+  /**
+   * Re-resolves all tracked domain entries. If an IP has changed, the old IP is
+   * removed from {@link #members} and the new IP is added.
+   */
+  private void refreshMemberIps() {
+    for (Map.Entry<String, String> entry : domainIpCache.entrySet()) {
+      String domain = entry.getKey();
+      String oldIp = entry.getValue();
+      String newIp = resolveToIp(domain);
+      if (newIp == null) {
+        logger.warn("DNS refresh: failed to re-resolve backup member domain {}, keep it", domain);
+        continue;
+      }
+      if (!newIp.equals(oldIp)) {
+        logger.info("DNS refresh: backup member {} IP changed {} -> {}", domain, oldIp, newIp);
+        members.remove(oldIp);
+        if (!localIp.equals(newIp)) {
+          members.add(newIp);
+        }
+        domainIpCache.put(domain, newIp);
+      }
+    }
+  }
 }
