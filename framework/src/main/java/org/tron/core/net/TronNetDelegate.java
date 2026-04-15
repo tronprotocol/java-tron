@@ -384,4 +384,8 @@ public class TronNetDelegate {
     return headNum - solidNum >= maxUnsolidifiedBlocks;
   }
 
+  public int getCachedTransactionSize() {
+    return dbManager.getCachedTransactionSize();
+  }
+
 }

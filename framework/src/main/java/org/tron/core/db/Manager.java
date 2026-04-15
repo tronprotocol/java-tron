@@ -2085,9 +2085,13 @@ public class Manager {
     return chainBaseManager.getNullifierStore();
   }
 
+  public int getCachedTransactionSize() {
+    return pushTransactionQueue.size() + getPendingTransactions().size()
+        + getRePushTransactions().size();
+  }
+
   public boolean isTooManyPending() {
-    return getPendingTransactions().size() + getRePushTransactions().size()
-        > maxTransactionPendingSize;
+    return getCachedTransactionSize() > maxTransactionPendingSize;
   }
 
   private void preValidateTransactionSign(List<TransactionCapsule> txs)

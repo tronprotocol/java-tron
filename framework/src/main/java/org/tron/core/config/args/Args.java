@@ -625,6 +625,7 @@ public class Args extends CommonParameter {
 
     PARAMETER.maxTransactionPendingSize = nc.getMaxTransactionPendingSize();
     PARAMETER.pendingTransactionTimeout = nc.getPendingTransactionTimeout();
+    PARAMETER.maxTrxCacheSize = nc.getMaxTrxCacheSize();
 
     PARAMETER.validContractProtoThreadNum = nc.getValidContractProtoThreads();
 
