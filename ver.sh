@@ -1,4 +1,5 @@
 #!/bin/bash
+cd "$(dirname "$0")"
 currentBranch=$(git rev-parse --abbrev-ref HEAD)
 
 if [ "$currentBranch"x != "master"x ]
