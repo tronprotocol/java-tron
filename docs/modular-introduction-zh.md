@@ -14,7 +14,7 @@ java-tron 模块化的目的是为了帮助开发者方便地构建出特定应�
 
 ![modular-structure](https://github.com/tronprotocol/java-tron/blob/develop/docs/images/module.png)
 
-模块化后的 java-tron 目前分为8个模块：framework、protocol、common、chainbase、consensus、actuator、crypto、plugins，下面分别简单介绍一下各个模块的作用。
+模块化后的 java-tron 目前分为9个模块：framework、protocol、common、chainbase、consensus、actuator、crypto、plugins、platform，下面分别简单介绍一下各个模块的作用。
 
 ### framework
 
@@ -73,3 +73,7 @@ crypto 模块封装了项目中使用的密码学原语，包括椭圆曲线密�
 ### plugins
 
 plugins 模块提供独立的运维工具，打包为可单独执行的 JAR（如 `Toolkit.jar`、`ArchiveManifest.jar`）。这些工具支持数据库迁移、压缩、轻节点数据裁剪等维护任务，无需启动完整节点即可运行。
+
+### platform
+
+platform 模块提供原生数据库引擎 LevelDB 和 RocksDB 的 JNI 绑定，与架构强相关：ARM64（Apple Silicon 及 Linux aarch64）平台仅支持 RocksDB，LevelDB 被排除；x86_64 平台两者均可使用。
