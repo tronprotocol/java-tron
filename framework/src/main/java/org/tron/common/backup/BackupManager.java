@@ -48,9 +48,12 @@ public class BackupManager implements EventHandler {
   private final Map<String, String> domainIpCache = new ConcurrentHashMap<>();
 
   private final String esName = "backup-manager";
-
   private final ScheduledExecutorService executorService =
       ExecutorServiceManager.newSingleThreadScheduledExecutor(esName);
+
+  private final String dnsEsName = "backup-dns-refresh";
+  private final ScheduledExecutorService dnsExecutorService =
+      ExecutorServiceManager.newSingleThreadScheduledExecutor(dnsEsName);
 
   @Setter
   private MessageHandler messageHandler;
@@ -119,13 +122,15 @@ public class BackupManager implements EventHandler {
       }
     }, 1000, keepAliveInterval, TimeUnit.MILLISECONDS);
 
-    executorService.scheduleWithFixedDelay(() -> {
-      try {
-        refreshMemberIps();
-      } catch (Throwable t) {
-        logger.error("Exception in backup DNS refresh", t);
-      }
-    }, 60_000L, 60_000L, TimeUnit.MILLISECONDS);
+    if (!domainIpCache.isEmpty()) {
+      dnsExecutorService.scheduleWithFixedDelay(() -> {
+        try {
+          refreshMemberIps();
+        } catch (Throwable t) {
+          logger.error("Exception in backup DNS refresh", t);
+        }
+      }, 60_000L, 60_000L, TimeUnit.MILLISECONDS);
+    }
   }
 
   @Override
@@ -164,6 +169,7 @@ public class BackupManager implements EventHandler {
 
   public void stop() {
     ExecutorServiceManager.shutdownAndAwaitTermination(executorService, esName);
+    ExecutorServiceManager.shutdownAndAwaitTermination(dnsExecutorService, dnsEsName);
   }
 
   @Override
