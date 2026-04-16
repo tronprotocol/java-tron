@@ -83,13 +83,13 @@ public class BackupManager implements EventHandler {
       logger.warn("Failed to get local ip");
     }
 
-    for (String raw : parameter.getBackupMembers()) {
-      String ip = resolveToIp(raw);
+    for (String ipOrDomain : parameter.getBackupMembers()) {
+      String ip = resolveToIp(ipOrDomain);
       if (ip == null || localIp.equals(ip)) {
         continue;
       }
-      if (!NetUtil.validIpV4(raw) && !NetUtil.validIpV6(raw)) {
-        domainIpCache.put(raw, ip);
+      if (!NetUtil.validIpV4(ipOrDomain) && !NetUtil.validIpV6(ipOrDomain)) {
+        domainIpCache.put(ipOrDomain, ip);
       }
       members.add(ip);
     }
@@ -183,16 +183,20 @@ public class BackupManager implements EventHandler {
     MASTER
   }
 
-  private String resolveToIp(String raw) {
-    if (NetUtil.validIpV4(raw) || NetUtil.validIpV6(raw)) {
-      return raw;
+  /**
+   * Resolves a hostname or IP string to a numeric IP address string.
+   */
+  private String resolveToIp(String ipOrDomain) {
+    // Fast path: already a numeric address — no lookup needed.
+    if (NetUtil.validIpV4(ipOrDomain) || NetUtil.validIpV6(ipOrDomain)) {
+      return ipOrDomain;
     }
-    InetAddress address = LookUpTxt.lookUpIp(raw, true);
+    InetAddress address = LookUpTxt.lookUpIp(ipOrDomain, true);
     if (address == null) {
-      address = LookUpTxt.lookUpIp(raw, false);
+      address = LookUpTxt.lookUpIp(ipOrDomain, false);
     }
     if (address == null) {
-      logger.warn("Failed to resolve backup member domain: {}", raw);
+      logger.warn("Failed to resolve backup member domain: {}", ipOrDomain);
       return null;
     }
     return address.getHostAddress();

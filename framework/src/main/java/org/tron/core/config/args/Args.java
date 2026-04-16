@@ -37,11 +37,13 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -56,6 +58,7 @@ import org.tron.common.args.GenesisBlock;
 import org.tron.common.args.Witness;
 import org.tron.common.config.DbBackupConfig;
 import org.tron.common.cron.CronExpression;
+import org.tron.common.es.ExecutorServiceManager;
 import org.tron.common.logsfilter.EventPluginConfig;
 import org.tron.common.logsfilter.FilterQuery;
 import org.tron.common.logsfilter.TriggerConfig;
@@ -1011,10 +1014,57 @@ public class Args extends CommonParameter {
   public static List<InetSocketAddress> filterInetSocketAddress(
       List<String> addressList, boolean filter) {
     List<InetSocketAddress> ret = new ArrayList<>();
+    if (addressList.isEmpty()) {
+      return ret;
+    }
+
+    // Collect entries whose host part is a domain name (not an IP literal).
+    List<String> domainEntries = new ArrayList<>();
     for (String configString : addressList) {
-      InetSocketAddress inetSocketAddress = resolveInetSocketAddress(configString);
+      String host = NetUtil.parseInetSocketAddress(configString).getHostString();
+      if (!NetUtil.validIpV4(host) && !NetUtil.validIpV6(host)) {
+        domainEntries.add(configString);
+      }
+    }
+
+    // Resolve domain names: spin up a thread pool only when there are multiple domains
+    Map<String, InetSocketAddress> domainResolved = new HashMap<>();
+    if (domainEntries.size() > 1) {
+      String poolName = "args-dns-lookup";
+      ExecutorService dnsPool = ExecutorServiceManager
+          .newFixedThreadPool(poolName, domainEntries.size(), true);
+      List<Future<InetSocketAddress>> futures = new ArrayList<>(domainEntries.size());
+      for (String entry : domainEntries) {
+        futures.add(dnsPool.submit(() -> resolveInetSocketAddress(entry)));
+      }
+      for (int i = 0; i < domainEntries.size(); i++) {
+        String entry = domainEntries.get(i);
+        try {
+          domainResolved.put(entry, futures.get(i).get());
+        } catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
+          logger.warn("DNS lookup interrupted for: {}", entry);
+        } catch (ExecutionException e) {
+          logger.warn("Failed to resolve address, skip: {}", entry);
+        }
+      }
+      ExecutorServiceManager.shutdownAndAwaitTermination(dnsPool, poolName);
+    } else if (domainEntries.size() == 1) {
+      String entry = domainEntries.get(0);
+      domainResolved.put(entry, resolveInetSocketAddress(entry));
+    }
+
+    // Build the result list preserving the original config order.
+    for (String configString : addressList) {
+      InetSocketAddress inetSocketAddress;
+      InetSocketAddress parsed = NetUtil.parseInetSocketAddress(configString);
+      if (NetUtil.validIpV4(parsed.getHostString()) || NetUtil.validIpV6(parsed.getHostString())) {
+        inetSocketAddress = parsed;
+      } else {
+        inetSocketAddress = domainResolved.get(configString);
+      }
+
       if (inetSocketAddress == null) {
-        logger.warn("Failed to resolve address, skip: {}", configString);
         continue;
       }
       if (filter) {
@@ -1036,23 +1086,16 @@ public class Args extends CommonParameter {
   // getInetAddress removed — use filterInetSocketAddress
 
   /**
-   * Parses an address string and, if the host part is a domain name rather than an IP literal,
-   * resolves it to an {@link InetAddress} via {@link LookUpTxt#lookUpIp}. Support IPv4 domain now
-   *
-   * @param configString address in {@code ip:port} or {@code [ipv6]:port} or
-   *                     {@code domain:port} format
-   * @return a fully resolved {@link InetSocketAddress}, or {@code null} if DNS resolution fails
+   * Resolves a {@code domain:port} address string to an {@link InetSocketAddress} via DNS.
    */
   private static InetSocketAddress resolveInetSocketAddress(String configString) {
     InetSocketAddress parsed = NetUtil.parseInetSocketAddress(configString);
     String host = parsed.getHostString();
     int port = parsed.getPort();
-    if (NetUtil.validIpV4(host) || NetUtil.validIpV6(host)) {
-      return parsed;
-    }
-
-    // The host is a domain name, resolve it to an IP address, only support IPv4 now
     InetAddress address = LookUpTxt.lookUpIp(host, true);
+    if (address == null) {
+      address = LookUpTxt.lookUpIp(host, false);
+    }
     if (address == null) {
       return null;
     }
