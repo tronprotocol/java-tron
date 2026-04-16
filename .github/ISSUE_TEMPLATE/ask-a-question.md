@@ -1,7 +1,7 @@
 ---
 name: Ask a question
 about: Something is unclear or needs clarification
-title: '[QUESTION] '
+title: '[Question]'
 labels: 'type:docs'
 assignees: ''
 
@@ -46,6 +46,6 @@ These channels provide faster responses for general inquiries.
 - Operating System: <!-- e.g., Ubuntu 20.04 -->
 - Java version: <!-- e.g., java version "1.8.0_391" -->
 
-## Additional Information
+## Additional Information (Optional)
 
 <!-- Any other details that might be helpful -->

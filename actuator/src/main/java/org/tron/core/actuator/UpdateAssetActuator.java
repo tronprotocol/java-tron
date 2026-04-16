@@ -17,7 +17,6 @@ import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.utils.TransactionUtil;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
-import org.tron.protos.contract.AccountContract.AccountUpdateContract;
 import org.tron.protos.contract.AssetIssueContractOuterClass.UpdateAssetContract;
 
 @Slf4j(topic = "actuator")
@@ -171,7 +170,7 @@ public class UpdateAssetActuator extends AbstractActuator {
 
   @Override
   public ByteString getOwnerAddress() throws InvalidProtocolBufferException {
-    return any.unpack(AccountUpdateContract.class).getOwnerAddress();
+    return any.unpack(UpdateAssetContract.class).getOwnerAddress();
   }
 
   @Override

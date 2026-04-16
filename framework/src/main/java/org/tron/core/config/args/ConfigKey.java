@@ -254,6 +254,7 @@ final class ConfigKey {
   public static final String COMMITTEE_ALLOW_TVM_CANCUN = "committee.allowTvmCancun";
   public static final String COMMITTEE_ALLOW_TVM_BLOB = "committee.allowTvmBlob";
   public static final String COMMITTEE_PROPOSAL_EXPIRE_TIME = "committee.proposalExpireTime";
+  public static final String COMMITTEE_ALLOW_TVM_OSAKA = "committee.allowTvmOsaka";
   public static final String ALLOW_ACCOUNT_ASSET_OPTIMIZATION =
       "committee.allowAccountAssetOptimization";
   public static final String ALLOW_ASSET_OPTIMIZATION = "committee.allowAssetOptimization";
@@ -279,6 +280,7 @@ final class ConfigKey {
 
   // event
   public static final String EVENT_SUBSCRIBE = "event.subscribe";
+  public static final String EVENT_SUBSCRIBE_ENABLE = "event.subscribe.enable";
   public static final String EVENT_SUBSCRIBE_FILTER = "event.subscribe.filter";
   public static final String EVENT_SUBSCRIBE_VERSION = "event.subscribe.version";
   public static final String EVENT_SUBSCRIBE_START_SYNC_BLOCK_NUM =

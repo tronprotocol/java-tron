@@ -16,7 +16,6 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -27,15 +26,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 import org.tron.api.GrpcAPI;
+import org.tron.common.BaseMethodTest;
 import org.tron.common.TestConstants;
-import org.tron.common.application.TronApplicationContext;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.runtime.RuntimeImpl;
 import org.tron.common.utils.ByteArray;
@@ -59,7 +54,6 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionInfoCapsule;
 import org.tron.core.capsule.TransactionRetCapsule;
 import org.tron.core.capsule.WitnessCapsule;
-import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.Parameter;
 import org.tron.core.config.args.Args;
 import org.tron.core.consensus.ConsensusService;
@@ -108,32 +102,24 @@ import org.tron.protos.contract.ShieldContract;
 
 
 @Slf4j
-public class ManagerTest extends BlockGenerate {
+public class ManagerTest extends BaseMethodTest {
 
   private static final int SHIELDED_TRANS_IN_BLOCK_COUNTS = 1;
-  private static Manager dbManager;
   private static ChainBaseManager chainManager;
   private static ConsensusService consensusService;
   private static DposSlot dposSlot;
-  private static TronApplicationContext context;
   private static BlockCapsule blockCapsule2;
-  @Rule
-  public TemporaryFolder temporaryFolder = new TemporaryFolder();
   private static AtomicInteger port = new AtomicInteger(0);
+  private final BlockGenerate blockGenerate = new BlockGenerate();
   private static String accountAddress =
       Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
   private final String privateKey = PublicMethod.getRandomPrivateKey();
   private LocalWitnesses localWitnesses;
 
-  @Before
-  public void init() throws IOException {
-    Args.setParam(new String[]{"-d",
-        temporaryFolder.newFolder().toString()}, TestConstants.TEST_CONF);
+  @Override
+  protected void afterInit() {
     Args.getInstance().setNodeListenPort(10000 + port.incrementAndGet());
-    context = new TronApplicationContext(DefaultConfig.class);
-
-    dbManager = context.getBean(Manager.class);
-    setManager(dbManager);
+    BlockGenerate.setManager(dbManager);
     dposSlot = context.getBean(DposSlot.class);
     consensusService = context.getBean(ConsensusService.class);
     consensusService.start();
@@ -172,11 +158,6 @@ public class ManagerTest extends BlockGenerate {
     chainManager.getAccountStore().put(addressByte.toByteArray(), accountCapsule);
   }
 
-  @After
-  public void removeDb() {
-    Args.clearParam();
-    context.destroy();
-  }
 
   @Test
   public void updateRecentTransaction() throws Exception {
@@ -626,7 +607,8 @@ public class ManagerTest extends BlockGenerate {
     chainManager.addWitness(ByteString.copyFrom(address));
     List<WitnessCapsule> witnessStandby1 = chainManager.getWitnessStore().getWitnessStandby(
         chainManager.getDynamicPropertiesStore().allowWitnessSortOptimization());
-    Block block = getSignedBlock(witnessCapsule.getAddress(), 1533529947843L, privateKey);
+    Block block = blockGenerate.getSignedBlock(
+        witnessCapsule.getAddress(), 1533529947843L, privateKey);
     dbManager.pushBlock(new BlockCapsule(block));
 
     Map<ByteString, String> addressToProvateKeys = addTestWitnessAndAccount();
@@ -749,7 +731,8 @@ public class ManagerTest extends BlockGenerate {
     chainManager.addWitness(ByteString.copyFrom(address));
     chainManager.getWitnessStore().put(address, witnessCapsule);
 
-    Block block = getSignedBlock(witnessCapsule.getAddress(), 1533529947000L, privateKey);
+    Block block = blockGenerate.getSignedBlock(
+        witnessCapsule.getAddress(), 1533529947000L, privateKey);
 
     dbManager.pushBlock(new BlockCapsule(block));
 
@@ -922,7 +905,8 @@ public class ManagerTest extends BlockGenerate {
     chainManager.addWitness(ByteString.copyFrom(address));
     chainManager.getWitnessStore().put(address, witnessCapsule);
 
-    Block block = getSignedBlock(witnessCapsule.getAddress(), 1533529947843L, privateKey);
+    Block block = blockGenerate.getSignedBlock(
+        witnessCapsule.getAddress(), 1533529947843L, privateKey);
     dbManager.pushBlock(new BlockCapsule(block));
 
     Map<ByteString, String> addressToProvateKeys = addTestWitnessAndAccount();
@@ -1035,7 +1019,8 @@ public class ManagerTest extends BlockGenerate {
     chainManager.getWitnessScheduleStore().saveActiveWitnesses(new ArrayList<>());
     chainManager.addWitness(ByteString.copyFrom(address));
     chainManager.getWitnessStore().put(address, witnessCapsule);
-    Block block = getSignedBlock(witnessCapsule.getAddress(), 1533529947843L, privateKey);
+    Block block = blockGenerate.getSignedBlock(
+        witnessCapsule.getAddress(), 1533529947843L, privateKey);
     dbManager.pushBlock(new BlockCapsule(block));
 
     Map<ByteString, String> addressToProvateKeys = addTestWitnessAndAccount();

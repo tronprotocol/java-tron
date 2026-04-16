@@ -4,6 +4,7 @@ import static junit.framework.TestCase.fail;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
+import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Date;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
@@ -486,6 +487,16 @@ public class UpdateAssetActuatorTest extends BaseTest {
 
     actuatorTest.setNullDBManagerMsg("No account store or dynamic store!");
     actuatorTest.nullDBManger();
+  }
+
+  @Test
+  public void testGetOwnerAddress() throws InvalidProtocolBufferException {
+    UpdateAssetActuator actuator = new UpdateAssetActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ADDRESS, DESCRIPTION, URL, 500L, 8000L));
+
+    Assert.assertEquals(OWNER_ADDRESS,
+        ByteArray.toHexString(actuator.getOwnerAddress().toByteArray()));
   }
 
 }

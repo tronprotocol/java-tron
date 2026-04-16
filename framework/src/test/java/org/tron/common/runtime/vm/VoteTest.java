@@ -15,15 +15,10 @@ import java.util.function.Consumer;
 
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Ignore;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.tron.common.TestConstants;
-import org.tron.common.application.TronApplicationContext;
+import org.tron.common.BaseMethodTest;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.Runtime;
 import org.tron.common.runtime.RuntimeImpl;
@@ -38,10 +33,7 @@ import org.tron.consensus.dpos.MaintenanceManager;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionCapsule;
-import org.tron.core.config.DefaultConfig;
-import org.tron.core.config.args.Args;
 import org.tron.core.consensus.ConsensusService;
-import org.tron.core.db.Manager;
 import org.tron.core.db.TransactionTrace;
 import org.tron.core.service.MortgageService;
 import org.tron.core.store.StoreFactory;
@@ -52,7 +44,7 @@ import org.tron.core.vm.repository.RepositoryImpl;
 import org.tron.protos.Protocol;
 
 @Slf4j
-public class VoteTest {
+public class VoteTest extends BaseMethodTest {
 
   /**
    * contract TestVote {
@@ -265,23 +257,20 @@ public class VoteTest {
     return getConsumer("<", expected);
   }
 
-  @Rule
-  public TemporaryFolder temporaryFolder = new TemporaryFolder();
-  private static TronApplicationContext context;
-  private static Manager manager;
   private static MaintenanceManager maintenanceManager;
   private static ConsensusService consensusService;
   private static MortgageService mortgageService;
   private static byte[] owner;
   private static Repository rootRepository;
 
-  @Before
-  public void init() throws Exception {
-    Args.setParam(new String[]{"--output-directory",
-        temporaryFolder.newFolder().toString(), "--debug"}, TestConstants.TEST_CONF);
+  @Override
+  protected String[] extraArgs() {
+    return new String[]{"--debug"};
+  }
+
+  @Override
+  protected void afterInit() {
     CommonParameter.getInstance().setCheckFrozenTime(0);
-    context = new TronApplicationContext(DefaultConfig.class);
-    manager = context.getBean(Manager.class);
     maintenanceManager = context.getBean(MaintenanceManager.class);
     consensusService = context.getBean(ConsensusService.class);
     consensusService.start();
@@ -301,17 +290,15 @@ public class VoteTest {
     VMConfig.initAllowTvmIstanbul(1);
     VMConfig.initAllowTvmFreeze(1);
     VMConfig.initAllowTvmVote(1);
-    manager.getDynamicPropertiesStore().saveChangeDelegation(1);
-    manager.getDynamicPropertiesStore().saveAllowTvmVote(1);
-    manager.getDynamicPropertiesStore().saveNewRewardAlgorithmEffectiveCycle();
+    dbManager.getDynamicPropertiesStore().saveChangeDelegation(1);
+    dbManager.getDynamicPropertiesStore().saveAllowTvmVote(1);
+    dbManager.getDynamicPropertiesStore().saveNewRewardAlgorithmEffectiveCycle();
   }
 
-  @After
-  public void destroy() {
+  @Override
+  protected void beforeDestroy() {
     ConfigLoader.disable = false;
     VMConfig.initVmHardFork(false);
-    Args.clearParam();
-    context.destroy();
   }
 
   private byte[] deployContract(String contractName, String abi, String code) throws Exception {
@@ -331,7 +318,7 @@ public class VoteTest {
     trace.finalization();
     Runtime runtime = trace.getRuntime();
     Assert.assertEquals(SUCCESS, runtime.getResult().getResultCode());
-    Assert.assertEquals(value, manager.getAccountStore().get(contractAddr).getBalance());
+    Assert.assertEquals(value, dbManager.getAccountStore().get(contractAddr).getBalance());
 
     return contractAddr;
   }
@@ -394,7 +381,7 @@ public class VoteTest {
           isWitnessMethod, userAStr);
 
       // query witness received vote
-      oldReceivedVoteCount = manager.getWitnessStore().get(witnessA).getVoteCount();
+      oldReceivedVoteCount = dbManager.getWitnessStore().get(witnessA).getVoteCount();
       triggerContract(voteContract, SUCCESS, getEqualConsumer(oldReceivedVoteCount),
           queryReceivedVoteCountMethod, witnessAStr);
 
@@ -444,14 +431,14 @@ public class VoteTest {
       triggerContract(voteContract, SUCCESS, null, unfreezeMethod,
           StringUtil.encode58Check(voteContract), 0);
 
-      AccountCapsule contractCapsule = manager.getAccountStore().get(voteContract);
+      AccountCapsule contractCapsule = dbManager.getAccountStore().get(voteContract);
       Assert.assertEquals(2, contractCapsule.getVotesList().size());
 
       // unfreeze energy, clear vote
       triggerContract(voteContract, SUCCESS, null, unfreezeMethod,
           StringUtil.encode58Check(voteContract), 1);
 
-      contractCapsule = manager.getAccountStore().get(voteContract);
+      contractCapsule = dbManager.getAccountStore().get(voteContract);
       Assert.assertEquals(0, contractCapsule.getVotesList().size());
 
       checkRewardAndWithdraw(voteContract, false);
@@ -723,10 +710,10 @@ public class VoteTest {
       checkRewardAndWithdraw(voteContractB, false);
 
       // beginCycle == currentCycle + 1 (special case if has no vote while withdrawing)
-      Assert.assertEquals(manager.getDynamicPropertiesStore().getCurrentCycleNumber() + 1,
-          manager.getDelegationStore().getBeginCycle(voteContractA));
-      Assert.assertEquals(manager.getDynamicPropertiesStore().getCurrentCycleNumber() + 1,
-          manager.getDelegationStore().getBeginCycle(voteContractB));
+      Assert.assertEquals(dbManager.getDynamicPropertiesStore().getCurrentCycleNumber() + 1,
+          dbManager.getDelegationStore().getBeginCycle(voteContractA));
+      Assert.assertEquals(dbManager.getDynamicPropertiesStore().getCurrentCycleNumber() + 1,
+          dbManager.getDelegationStore().getBeginCycle(voteContractB));
 
       payRewardAndDoMaintenance(1);
     }
@@ -763,10 +750,10 @@ public class VoteTest {
       checkRewardAndWithdraw(voteContractB, false);
 
       // beginCycle == currentCycle + 1 (special case if has no vote while withdrawing)
-      Assert.assertEquals(manager.getDynamicPropertiesStore().getCurrentCycleNumber() + 1,
-          manager.getDelegationStore().getBeginCycle(voteContractA));
-      Assert.assertEquals(manager.getDynamicPropertiesStore().getCurrentCycleNumber() + 1,
-          manager.getDelegationStore().getBeginCycle(voteContractB));
+      Assert.assertEquals(dbManager.getDynamicPropertiesStore().getCurrentCycleNumber() + 1,
+          dbManager.getDelegationStore().getBeginCycle(voteContractA));
+      Assert.assertEquals(dbManager.getDynamicPropertiesStore().getCurrentCycleNumber() + 1,
+          dbManager.getDelegationStore().getBeginCycle(voteContractB));
 
       payRewardAndDoMaintenance(1);
     }
@@ -860,33 +847,33 @@ public class VoteTest {
 
   private void checkRewardAndWithdraw(byte[] contract, boolean isZero) throws Exception {
     long rewardBySystem = mortgageService.queryReward(contract);
-    long beginCycle = manager.getDelegationStore().getBeginCycle(contract);
-    long currentCycle = manager.getDynamicPropertiesStore().getCurrentCycleNumber();
+    long beginCycle = dbManager.getDelegationStore().getBeginCycle(contract);
+    long currentCycle = dbManager.getDynamicPropertiesStore().getCurrentCycleNumber();
     long passedCycle = max(0, currentCycle - beginCycle,
-        manager.getDynamicPropertiesStore().disableJavaLangMath());
+        dbManager.getDynamicPropertiesStore().disableJavaLangMath());
     Assert.assertTrue(isZero ? rewardBySystem == 0 : rewardBySystem > 0);
     triggerContract(contract, SUCCESS,
         getConsumer(">=", rewardBySystem)
             .andThen(getConsumer("<=", rewardBySystem + passedCycle)),
         queryRewardBalanceMethod);
 
-    long oldBalance = manager.getAccountStore().get(contract).getBalance();
+    long oldBalance = dbManager.getAccountStore().get(contract).getBalance();
     long rewardByContract = new DataWord(triggerContract(contract, SUCCESS,
         getConsumer(">=", rewardBySystem)
             .andThen(getConsumer("<=", rewardBySystem + passedCycle)),
         withdrawRewardMethod).getRuntime().getResult().getHReturn()).longValue();
-    long newBalance = manager.getAccountStore().get(contract).getBalance();
+    long newBalance = dbManager.getAccountStore().get(contract).getBalance();
     Assert.assertEquals(oldBalance + rewardByContract, newBalance);
   }
 
   private void payRewardAndDoMaintenance(int cycle) {
     while (cycle-- > 0) {
-      manager.getDelegationStore().addReward(
-          manager.getDynamicPropertiesStore().getCurrentCycleNumber(), witnessA, 1000_000_000);
-      manager.getDelegationStore().addReward(
-          manager.getDynamicPropertiesStore().getCurrentCycleNumber(), witnessB, 1000_000_000);
-      manager.getDelegationStore().addReward(
-          manager.getDynamicPropertiesStore().getCurrentCycleNumber(), witnessC, 1000_000_000);
+      dbManager.getDelegationStore().addReward(
+          dbManager.getDynamicPropertiesStore().getCurrentCycleNumber(), witnessA, 1000_000_000);
+      dbManager.getDelegationStore().addReward(
+          dbManager.getDynamicPropertiesStore().getCurrentCycleNumber(), witnessB, 1000_000_000);
+      dbManager.getDelegationStore().addReward(
+          dbManager.getDynamicPropertiesStore().getCurrentCycleNumber(), witnessC, 1000_000_000);
 
       maintenanceManager.doMaintenance();
     }

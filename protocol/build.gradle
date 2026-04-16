@@ -1,4 +1,5 @@
 apply plugin: 'com.google.protobuf'
+apply from: 'protoLint.gradle'
 
 def protobufVersion = '3.25.8'
 def grpcVersion = '1.75.0'

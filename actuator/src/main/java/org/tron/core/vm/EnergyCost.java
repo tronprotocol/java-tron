@@ -387,6 +387,27 @@ public class EnergyCost {
             ? amountArrayMemoryNeeded : witnessArrayMemoryNeeded), 0, Op.VOTEWITNESS);
   }
 
+  public static long getVoteWitnessCost3(Program program) {
+    Stack stack = program.getStack();
+    long oldMemSize = program.getMemSize();
+    BigInteger amountArrayLength = stack.get(stack.size() - 1).value();
+    BigInteger amountArrayOffset = stack.get(stack.size() - 2).value();
+    BigInteger witnessArrayLength = stack.get(stack.size() - 3).value();
+    BigInteger witnessArrayOffset = stack.get(stack.size() - 4).value();
+
+    BigInteger wordSize = BigInteger.valueOf(DataWord.WORD_SIZE);
+
+    BigInteger amountArraySize = amountArrayLength.multiply(wordSize).add(wordSize);
+    BigInteger amountArrayMemoryNeeded = memNeeded(amountArrayOffset, amountArraySize);
+
+    BigInteger witnessArraySize = witnessArrayLength.multiply(wordSize).add(wordSize);
+    BigInteger witnessArrayMemoryNeeded = memNeeded(witnessArrayOffset, witnessArraySize);
+
+    return VOTE_WITNESS + calcMemEnergy(oldMemSize,
+        (amountArrayMemoryNeeded.compareTo(witnessArrayMemoryNeeded) > 0
+            ? amountArrayMemoryNeeded : witnessArrayMemoryNeeded), 0, Op.VOTEWITNESS);
+  }
+
   public static long getWithdrawRewardCost(Program ignored) {
     return WITHDRAW_REWARD;
   }
@@ -548,6 +569,10 @@ public class EnergyCost {
 
   private static BigInteger memNeeded(DataWord offset, DataWord size) {
     return size.isZero() ? BigInteger.ZERO : offset.value().add(size.value());
+  }
+
+  private static BigInteger memNeeded(BigInteger offset, BigInteger size) {
+    return size.equals(BigInteger.ZERO) ? BigInteger.ZERO : offset.add(size);
   }
 
   private static boolean isDeadAccount(Program program, DataWord address) {

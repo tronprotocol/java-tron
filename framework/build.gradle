@@ -30,7 +30,7 @@ static def isWindows() {
     return org.gradle.internal.os.OperatingSystem.current().isWindows()
 }
 
-task version(type: Exec) {
+tasks.register('version', Exec) {
     commandLine 'bash', '-c', '../ver.sh'
 }
 
@@ -78,7 +78,7 @@ checkstyleMain {
     source = 'src/main/java'
 }
 
-task lint(type: Checkstyle) {
+tasks.register('lint', Checkstyle) {
     // Cleaning the old log because of the creation of the new ones (not sure if totaly needed)
     delete fileTree(dir: "${project.rootDir}/app/build/reports")
     source 'src'
@@ -106,19 +106,38 @@ run {
     }
 }
 
-test {
-    retry {
+def configureTestTask = { Task t ->
+    t.retry {
         maxRetries = 5
         maxFailures = 20
     }
-    testLogging {
+    t.testLogging {
         exceptionFormat = 'full'
     }
+    if (isWindows()) {
+        t.exclude '**/ShieldedTransferActuatorTest.class'
+        t.exclude '**/BackupDbUtilTest.class'
+        t.exclude '**/ManagerTest.class'
+        t.exclude 'org/tron/core/zksnark/**'
+        t.exclude 'org/tron/common/runtime/vm/PrecompiledContractsVerifyProofTest.class'
+        t.exclude 'org/tron/core/ShieldedTRC20BuilderTest.class'
+        t.exclude 'org/tron/common/runtime/vm/WithdrawRewardTest.class'
+    }
+    t.maxHeapSize = "512m"
+    t.maxParallelForks = Math.max(1, Math.min(4, Runtime.runtime.availableProcessors()))
+    t.doFirst {
+        t.forkEvery = 100
+    }
+}
+
+test {
+    configureTestTask(it)
     jacoco {
         destinationFile = file("$buildDir/jacoco/jacocoTest.exec")
         classDumpDir = file("$buildDir/jacoco/classpathdumps")
     }
     if (rootProject.archInfo.isArm64) {
+        systemProperty 'storage.db.engine', 'ROCKSDB'
         exclude { element ->
             element.file.name.toLowerCase().contains('leveldb')
         }
@@ -129,21 +148,22 @@ test {
             excludeTestsMatching '*.*LevelDb*'
         }
     }
-    if (isWindows()) {
-        exclude '**/ShieldedTransferActuatorTest.class'
-        exclude '**/BackupDbUtilTest.class'
-        exclude '**/ManagerTest.class'
-        exclude 'org/tron/core/zksnark/**'
-        exclude 'org/tron/common/runtime/vm/PrecompiledContractsVerifyProofTest.class'
-        exclude 'org/tron/core/ShieldedTRC20BuilderTest.class'
-        exclude 'org/tron/common/runtime/vm/WithdrawRewardTest.class'
-    }
-    maxHeapSize = "1024m"
-    doFirst {
-        // Restart the JVM after every 100 tests to avoid memory leaks and ensure test isolation
-        forkEvery = 100
-        jvmArgs "-XX:MetaspaceSize=128m","-XX:MaxMetaspaceSize=256m", "-XX:+UseG1GC"
-    }
+}
+
+tasks.register('testWithRocksDb', Test) {
+    description = 'Run tests with RocksDB engine'
+    group = 'verification'
+    configureTestTask(it)
+    systemProperty 'storage.db.engine', 'ROCKSDB'
+    // Keep x86 RocksDB coverage focused on engine-sensitive tests instead of
+    // rerunning the entire framework suite with a different storage backend.
+    include 'org/tron/common/storage/**'
+    include 'org/tron/core/config/args/ArgsTest.class'
+    include 'org/tron/core/db/DBIteratorTest.class'
+    include 'org/tron/core/db/TronDatabaseTest.class'
+    include 'org/tron/core/db/backup/BackupDbUtilTest.class'
+    include 'org/tron/core/db2/ChainbaseTest.class'
+    exclude '**/LevelDbDataSourceImplTest.class'
 }
 
 jacocoTestReport {
@@ -177,7 +197,9 @@ def binaryRelease(taskName, jarName, mainClass) {
         exclude "META-INF/*.SF"
         exclude "META-INF/*.DSA"
         exclude "META-INF/*.RSA"
-
+        // for service SPI loader for dnsjava
+        // see https://issues.apache.org/jira/browse/HADOOP-19288
+        exclude "META-INF/services/java.net.spi.InetAddressResolverProvider"
         manifest {
             attributes "Main-Class": "${mainClass}"
         }

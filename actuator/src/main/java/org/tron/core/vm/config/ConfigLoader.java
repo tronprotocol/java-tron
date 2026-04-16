@@ -45,6 +45,7 @@ public class ConfigLoader {
         VMConfig.initDisableJavaLangMath(ds.getConsensusLogicOptimization());
         VMConfig.initAllowTvmBlob(ds.getAllowTvmBlob());
         VMConfig.initAllowTvmSelfdestructRestriction(ds.getAllowTvmSelfdestructRestriction());
+        VMConfig.initAllowTvmOsaka(ds.getAllowTvmOsaka());
       }
     }
   }

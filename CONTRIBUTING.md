@@ -23,20 +23,20 @@ Here are some guidelines to get started quickly and easily:
 - [Conduct](#Conduct)
 
 
-### Reporting An Issue
+## Reporting An Issue
 
-If you're about to raise an issue because you think you've found a problem or bug with java-tron, please respect the following restrictions:
+If you have any question about java-tron, please search [existing issues](https://github.com/tronprotocol/java-tron/issues?q=is%3Aissue%20state%3Aclosed%20OR%20state%3Aopen) first to avoid duplicates. Your questions might already be under discussion or part of our roadmap. Checking first helps us streamline efforts and focus on new contributions.
 
-- Please search for existing issues. Help us keep duplicate issues to a minimum by checking to see if someone has already reported your problem or requested your idea.
+### Ask a question
+Feel free to ask any java-tron related question to solve your doubt. Please click **Ask a question** in GitHub Issues, using [Ask a question](.github/ISSUE_TEMPLATE/ask-a-question.md) template.
 
-- Use the Issue Report Template below.
-    ```
-    1.What did you do? 
+### Report a bug
 
-    2.What did you expect to see? 
+If you think you've found a bug with java-tron, please click **Report a bug** in GitHub Issues, using [Report a bug](.github/ISSUE_TEMPLATE/report-a-bug.md) template.
 
-    3.What did you see instead?
-    ```
+### Request a feature
+
+If you have any good feature suggestions for java-tron, please click **Request a feature** in GitHub Issues, using [Request a feature](.github/ISSUE_TEMPLATE/request-a-feature.md) template.
 
 
 ## Working on java-tron
@@ -69,43 +69,56 @@ java-tron only has `master`, `develop`, `release-*`, `feature-*`, and `hotfix-*`
 
 ### Submitting Code
 
-If you want to contribute codes to java-tron, please follow the following steps:
+If you want to contribute code to java-tron, please follow the following steps.
 
-* Fork code repository
-  Fork a new repository from tronprotocol/java-tron to your personal code repository
+* Fork the Repository
 
-* Edit the code in the fork repository
+  Visit [tronprotocol/java-tron](https://github.com/tronprotocol/java-tron/) and click **Fork** to create a fork repository under your GitHub account.
+
+* Setup Local Environment
+
+  Clone your fork repository to local and add the official repository as **upstream**.
     ```
     git clone https://github.com/yourname/java-tron.git
 
-    git remote add upstream https://github.com/tronprotocol/java-tron.git     ("upstream" refers to upstream projects repositories, namely tronprotocol's repositories, and can be named as you like it. We usually call it "upstream" for convenience) 
-    ```
-  Before developing new features, please synchronize your fork repository with the upstream repository.
-    ```
-    git fetch upstream 
-    git checkout develop 
-    git merge upstream/develop --no-ff (Add --no-ff to turn off the default fast merge mode)
+    cd java-tron
+
+    git remote add upstream https://github.com/tronprotocol/java-tron.git
     ```
 
-  Pull a new branch from the develop branch of your repository for local development. Please refer to [Branch Naming Conventions](#Branch-Naming-Conventions),
+* Synchronize and Develop
+
+  Before developing new features, please synchronize your local `develop` branch with the upstream repository and update to your fork repository.
+    ```
+    git fetch upstream
+    git checkout develop
+    # `--no-ff` means to turn off the default fast merge mode
+    git merge upstream/develop --no-ff
+    git push origin develop
+    ```
+
+  Create a new branch for development. Please refer to [Branch Naming Conventions](#Branch-Naming-Conventions).
     ```
     git checkout -b feature/branch_name develop
     ```
 
-  Write and commit the new code when it is completed. Please refer to [Commit Messages](#Commit-Messages)
+* Commit and Push
+
+  Write and commit the new code when it is completed. Please refer to [Commit Messages](#Commit-Messages).
      ```
      git add .
      git commit -m 'commit message'
      ```
-  Commit the new branch to your personal remote repository
+
+  Push the new branch to your fork repository
      ```
      git push origin feature/branch_name
      ```
 
-* Push code
+* Submit a pull request
 
-  Submit a pull request (PR) from your repository to `tronprotocol/java-tron`.
-  Please be sure to click on the link in the red box shown below. Select the base branch for tronprotocol and the compare branch for your personal fork repository.
+  Submit a pull request (PR) from your fork repository to `tronprotocol/java-tron`.
+  Please be sure to click on the link in the red box shown below. Select the base branch for `tronprotocol/java-tron` and the compare branch for your fork repository.
   ![image](https://raw.githubusercontent.com/tronprotocol/documentation-en/master/images/javatron_pr.png)
 
 
