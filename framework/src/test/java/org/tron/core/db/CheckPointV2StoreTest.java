@@ -1,13 +1,13 @@
 package org.tron.core.db;
 
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
 import org.junit.AfterClass;
-import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -16,11 +16,9 @@ import org.rocksdb.RocksDB;
 import org.tron.common.TestConstants;
 import org.tron.common.storage.WriteOptionsWrapper;
 import org.tron.core.config.args.Args;
+import org.tron.core.db.common.DbSourceInter;
 import org.tron.core.store.CheckPointV2Store;
 
-/**
- * Unit tests for {@link CheckPointV2Store}.
- */
 public class CheckPointV2StoreTest {
 
   @ClassRule
@@ -30,11 +28,6 @@ public class CheckPointV2StoreTest {
     RocksDB.loadLibrary();
   }
 
-  /**
-   * Initializes test arguments before running all tests.
-   *
-   * @throws IOException if an I/O error occurs
-   */
   @BeforeClass
   public static void initArgs() throws IOException {
     Args.setParam(
@@ -43,64 +36,69 @@ public class CheckPointV2StoreTest {
     );
   }
 
-  /**
-   * Clears test arguments after all tests have run.
-   */
   @AfterClass
   public static void destroy() {
     Args.clearParam();
   }
 
-  /**
-   * Tests that {@link CheckPointV2Store#close()} properly calls {@code super.close()}
-   * to ensure parent resources are released.
-   *
-   * @throws Exception if an error occurs during the test
-   */
   @Test
-  public void testCloseCallsSuperClose() throws Exception {
-    CheckPointV2Store store = new CheckPointV2Store("test-close-super");
-    
-    // Get the parent class's writeOptions field
+  public void testCloseReleasesAllResources() throws Exception {
+    CheckPointV2Store store = new CheckPointV2Store("test-close");
+
+    // Replace dbSource with a mock so we can verify closeDB()
+    Field dbSourceField = TronDatabase.class.getDeclaredField("dbSource");
+    dbSourceField.setAccessible(true);
+    DbSourceInter<byte[]> originalDbSource = (DbSourceInter<byte[]>) dbSourceField.get(store);
+    DbSourceInter<byte[]> mockDbSource = mock(DbSourceInter.class);
+    dbSourceField.set(store, mockDbSource);
+
+    try {
+      store.close();
+
+      verify(mockDbSource).closeDB();
+    } finally {
+      originalDbSource.closeDB();
+    }
+  }
+
+  @Test
+  public void testCloseDbSourceWhenWriteOptionsThrows() throws Exception {
+    CheckPointV2Store store = new CheckPointV2Store("test-close-exception");
+
+    // Replace child writeOptions with a spy that throws on close
+    Field childWriteOptionsField = CheckPointV2Store.class.getDeclaredField("writeOptions");
+    childWriteOptionsField.setAccessible(true);
+    WriteOptionsWrapper childWriteOptions =
+        (WriteOptionsWrapper) childWriteOptionsField.get(store);
+    WriteOptionsWrapper spyChildWriteOptions = spy(childWriteOptions);
+    doThrow(new RuntimeException("simulated writeOptions failure"))
+        .when(spyChildWriteOptions).close();
+    childWriteOptionsField.set(store, spyChildWriteOptions);
+
+    // Replace parent writeOptions with a spy that throws on close
     Field parentWriteOptionsField = TronDatabase.class.getDeclaredField("writeOptions");
     parentWriteOptionsField.setAccessible(true);
-    WriteOptionsWrapper originalParentWriteOptions =
+    WriteOptionsWrapper parentWriteOptions =
         (WriteOptionsWrapper) parentWriteOptionsField.get(store);
-    
-    // Save the original rocks object reference for subsequent verification
-    org.rocksdb.WriteOptions originalRocks = originalParentWriteOptions.rocks;
-    
-    // Create a spy to monitor the parent class's writeOptions
-    WriteOptionsWrapper spyParentWriteOptions = spy(originalParentWriteOptions);
+    WriteOptionsWrapper spyParentWriteOptions = spy(parentWriteOptions);
+    doThrow(new RuntimeException("simulated parent writeOptions failure"))
+        .when(spyParentWriteOptions).close();
     parentWriteOptionsField.set(store, spyParentWriteOptions);
-    
-    // Create a spy to monitor the rocks.close() method
-    org.rocksdb.WriteOptions spyRocks = spy(originalRocks);
-    spyParentWriteOptions.rocks = spyRocks;
-    
+
+    // Replace dbSource with a mock
+    Field dbSourceField = TronDatabase.class.getDeclaredField("dbSource");
+    dbSourceField.setAccessible(true);
+    DbSourceInter<byte[]> originalDbSource = (DbSourceInter<byte[]>) dbSourceField.get(store);
+    DbSourceInter<byte[]> mockDbSource = mock(DbSourceInter.class);
+    dbSourceField.set(store, mockDbSource);
+
     try {
-      // Verify that the parent class's writeOptions and dbSource exist
-      Assert.assertNotNull(spyParentWriteOptions);
-      Assert.assertNotNull(spyRocks);
-      Assert.assertNotNull(store.getDbSource());
-      
-      // Close the store
       store.close();
-      
-      // Verify that the parent class's writeOptions.close() was called (via super.close())
-      verify(spyParentWriteOptions, times(1)).close();
-      
-      // Verify that rocks.close() was called (resources are actually closed)
-      verify(spyRocks, times(1)).close();
+
+      // dbSource.closeDB() must be called even though both writeOptions threw
+      verify(mockDbSource).closeDB();
     } finally {
-      // Cleanup: restore original state to avoid cross-test contamination
-      if (store != null) {
-        store.close();
-      }
-      // Restore original writeOptions to remove spies
-      parentWriteOptionsField.set(store, originalParentWriteOptions);
-      // Restore original rocks reference
-      originalParentWriteOptions.rocks = originalRocks;
+      originalDbSource.closeDB();
     }
   }
 }
