@@ -220,6 +220,15 @@ final class KeystoreCliUtils {
             + " Without the password, it's impossible to decrypt the key!");
   }
 
+  /**
+   * Check if a WalletFile represents a valid V3 keystore.
+   */
+  static boolean isValidKeystoreFile(WalletFile wf) {
+    return wf.getAddress() != null
+        && wf.getCrypto() != null
+        && wf.getVersion() == 3;
+  }
+
   static void setOwnerOnly(File file, PrintWriter err) {
     try {
       Files.setPosixFilePermissions(file.toPath(), OWNER_ONLY);

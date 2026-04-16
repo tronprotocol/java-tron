@@ -58,7 +58,7 @@ public class KeystoreUpdate implements Callable<Integer> {
     try {
       File keystoreFile = findKeystoreByAddress(address, err);
       if (keystoreFile == null) {
-        err.println("No keystore found for address: " + address);
+        // findKeystoreByAddress already prints the specific error
         return 1;
       }
 
@@ -181,17 +181,20 @@ public class KeystoreUpdate implements Callable<Integer> {
 
   private File findKeystoreByAddress(String targetAddress, PrintWriter err) {
     if (!keystoreDir.exists() || !keystoreDir.isDirectory()) {
+      err.println("No keystore found for address: " + targetAddress);
       return null;
     }
     File[] files = keystoreDir.listFiles((dir, name) -> name.endsWith(".json"));
     if (files == null) {
+      err.println("No keystore found for address: " + targetAddress);
       return null;
     }
     java.util.List<File> matches = new java.util.ArrayList<>();
     for (File file : files) {
       try {
         WalletFile wf = MAPPER.readValue(file, WalletFile.class);
-        if (targetAddress.equals(wf.getAddress())) {
+        if (KeystoreCliUtils.isValidKeystoreFile(wf)
+            && targetAddress.equals(wf.getAddress())) {
           matches.add(file);
         }
       } catch (Exception e) {
@@ -207,6 +210,10 @@ public class KeystoreUpdate implements Callable<Integer> {
       err.println("Please remove duplicates and retry.");
       return null;
     }
-    return matches.isEmpty() ? null : matches.get(0);
+    if (matches.isEmpty()) {
+      err.println("No keystore found for address: " + targetAddress);
+      return null;
+    }
+    return matches.get(0);
   }
 }

@@ -61,9 +61,7 @@ public class KeystoreList implements Callable<Integer> {
     for (File file : files) {
       try {
         WalletFile walletFile = MAPPER.readValue(file, WalletFile.class);
-        if (walletFile.getAddress() == null
-            || walletFile.getCrypto() == null
-            || walletFile.getVersion() != 3) {
+        if (!KeystoreCliUtils.isValidKeystoreFile(walletFile)) {
           continue;
         }
         Map<String, String> entry = new LinkedHashMap<>();

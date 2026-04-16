@@ -172,7 +172,8 @@ public class KeystoreImport implements Callable<Integer> {
     for (File file : files) {
       try {
         WalletFile wf = mapper.readValue(file, WalletFile.class);
-        if (address.equals(wf.getAddress())) {
+        if (KeystoreCliUtils.isValidKeystoreFile(wf)
+            && address.equals(wf.getAddress())) {
           return file.getName();
         }
       } catch (Exception e) {
