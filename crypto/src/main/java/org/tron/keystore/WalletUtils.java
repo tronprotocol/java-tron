@@ -81,7 +81,7 @@ public class WalletUtils {
     return Credentials.create(Wallet.decrypt(password, walletFile, ecKey));
   }
 
-  private static String getWalletFileName(WalletFile walletFile) {
+  public static String getWalletFileName(WalletFile walletFile) {
     DateTimeFormatter format = DateTimeFormatter.ofPattern(
         "'UTC--'yyyy-MM-dd'T'HH-mm-ss.nVV'--'");
     ZonedDateTime now = ZonedDateTime.now(ZoneOffset.UTC);

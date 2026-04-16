@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
 import java.util.concurrent.Callable;
 import org.tron.common.crypto.SignInterface;
@@ -90,8 +89,8 @@ public class KeystoreUpdate implements Callable<Integer> {
                     + " on separate lines.");
             return 1;
           }
-          oldPassword = lines[0];
-          newPassword = lines[1];
+          oldPassword = KeystoreCliUtils.stripLineEndings(lines[0]);
+          newPassword = KeystoreCliUtils.stripLineEndings(lines[1]);
         } finally {
           Arrays.fill(bytes, (byte) 0);
         }
@@ -153,15 +152,7 @@ public class KeystoreUpdate implements Callable<Integer> {
       try {
         KeystoreCliUtils.setOwnerOnly(tempFile, err);
         MAPPER.writeValue(tempFile, newWalletFile);
-        try {
-          Files.move(tempFile.toPath(), keystoreFile.toPath(),
-              StandardCopyOption.REPLACE_EXISTING,
-              StandardCopyOption.ATOMIC_MOVE);
-        } catch (java.nio.file.AtomicMoveNotSupportedException e) {
-          // Fallback for NFS, FAT32, cross-partition
-          Files.move(tempFile.toPath(), keystoreFile.toPath(),
-              StandardCopyOption.REPLACE_EXISTING);
-        }
+        KeystoreCliUtils.atomicMove(tempFile, keystoreFile);
       } catch (Exception e) {
         if (!tempFile.delete()) {
           err.println("Warning: could not delete temp file: "
@@ -204,7 +195,7 @@ public class KeystoreUpdate implements Callable<Integer> {
           matches.add(file);
         }
       } catch (Exception e) {
-        // Skip invalid files
+        err.println("Warning: skipping unreadable file: " + file.getName());
       }
     }
     if (matches.size() > 1) {

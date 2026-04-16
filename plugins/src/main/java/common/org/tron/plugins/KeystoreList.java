@@ -71,7 +71,7 @@ public class KeystoreList implements Callable<Integer> {
         entry.put("file", file.getName());
         entries.add(entry);
       } catch (Exception e) {
-        // Skip files that aren't valid keystore JSON
+        err.println("Warning: skipping unreadable file: " + file.getName());
       }
     }
 

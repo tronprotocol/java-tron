@@ -14,7 +14,7 @@ import org.tron.common.crypto.SignUtils;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.exception.CipherException;
 import org.tron.keystore.Credentials;
-import org.tron.keystore.WalletUtils;
+import org.tron.keystore.WalletFile;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
@@ -92,15 +92,15 @@ public class KeystoreImport implements Callable<Integer> {
         return 1;
       }
       String address = Credentials.create(keyPair).getAddress();
-      String existingFile = findExistingKeystore(keystoreDir, address);
+      String existingFile = findExistingKeystore(keystoreDir, address, err);
       if (existingFile != null && !force) {
         err.println("Keystore for address " + address
             + " already exists: " + existingFile
             + ". Use --force to import anyway.");
         return 1;
       }
-      String fileName = WalletUtils.generateWalletFile(password, keyPair, keystoreDir, true);
-      KeystoreCliUtils.setOwnerOnly(new File(keystoreDir, fileName), err);
+      String fileName = KeystoreCliUtils.generateKeystoreFile(
+          password, keyPair, keystoreDir, true, err);
       if (json) {
         KeystoreCliUtils.printJson(out, err, KeystoreCliUtils.jsonMap(
             "address", address, "file", fileName));
@@ -159,7 +159,7 @@ public class KeystoreImport implements Callable<Integer> {
     return !StringUtils.isEmpty(key) && HEX_PATTERN.matcher(key).matches();
   }
 
-  private String findExistingKeystore(File dir, String address) {
+  private String findExistingKeystore(File dir, String address, PrintWriter err) {
     if (!dir.exists() || !dir.isDirectory()) {
       return null;
     }
@@ -171,13 +171,12 @@ public class KeystoreImport implements Callable<Integer> {
         KeystoreCliUtils.mapper();
     for (File file : files) {
       try {
-        org.tron.keystore.WalletFile wf =
-            mapper.readValue(file, org.tron.keystore.WalletFile.class);
+        WalletFile wf = mapper.readValue(file, WalletFile.class);
         if (address.equals(wf.getAddress())) {
           return file.getName();
         }
       } catch (Exception e) {
-        // Skip invalid files
+        err.println("Warning: skipping unreadable file: " + file.getName());
       }
     }
     return null;
