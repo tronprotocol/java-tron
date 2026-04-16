@@ -59,8 +59,12 @@ public abstract class RateLimiterServlet extends HttpServlet {
         .getRateLimiterInitialization().getHttpMap().get(getClass().getSimpleName());
     final String name = getClass().getSimpleName();
 
-    String cName = (item != null) ? item.getStrategy() : DEFAULT_ADAPTER_NAME;
-    String params = (item != null) ? item.getParams() : QpsStrategy.DEFAULT_QPS_PARAM;
+    String cName = (item == null || Strings.isNullOrEmpty(item.getStrategy()))
+        ? DEFAULT_ADAPTER_NAME
+        : item.getStrategy();
+    String params = (item == null || Strings.isNullOrEmpty(item.getParams()))
+        ? QpsStrategy.DEFAULT_QPS_PARAM
+        : item.getParams();
 
     try {
       Class<? extends IRateLimiter> c = ALLOWED_ADAPTERS.get(cName);

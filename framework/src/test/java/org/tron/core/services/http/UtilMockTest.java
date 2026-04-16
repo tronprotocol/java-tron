@@ -7,14 +7,13 @@ import com.google.protobuf.ByteString;
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.List;
+import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.lang3.StringUtils;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
-
-import javax.servlet.http.HttpServletRequest;
 import org.tron.api.GrpcAPI;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
@@ -263,13 +262,24 @@ public class UtilMockTest  {
           private final java.io.InputStream in =
               new java.io.ByteArrayInputStream("not a json".getBytes());
 
-          @Override public int read() throws java.io.IOException { return in.read(); }
+          @Override
+          public int read() throws java.io.IOException {
+            return in.read();
+          }
 
-          @Override public boolean isFinished() { return false; }
+          @Override
+          public boolean isFinished() {
+            return false;
+          }
 
-          @Override public boolean isReady() { return true; }
+          @Override
+          public boolean isReady() {
+            return true;
+          }
 
-          @Override public void setReadListener(javax.servlet.ReadListener l) { }
+          @Override
+          public void setReadListener(javax.servlet.ReadListener l) {
+          }
         });
 
     byte[] address = Util.getAddress(request);
@@ -289,13 +299,24 @@ public class UtilMockTest  {
           private final java.io.InputStream in =
               new java.io.ByteArrayInputStream(body.getBytes());
 
-          @Override public int read() throws java.io.IOException { return in.read(); }
+          @Override
+          public int read() throws java.io.IOException {
+            return in.read();
+          }
 
-          @Override public boolean isFinished() { return false; }
+          @Override
+          public boolean isFinished() {
+            return false;
+          }
 
-          @Override public boolean isReady() { return true; }
+          @Override
+          public boolean isReady() {
+            return true;
+          }
 
-          @Override public void setReadListener(javax.servlet.ReadListener l) { }
+          @Override
+          public void setReadListener(javax.servlet.ReadListener l) {
+          }
         });
 
     byte[] address = Util.getAddress(request);

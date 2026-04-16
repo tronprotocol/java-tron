@@ -145,6 +145,9 @@ public class ByteArray {
 
   /**
    * Max allowed length for input to hexToBigInteger.
+   * Covers both hex (0x + 64 = 66 for uint256) and decimal (78 for uint256)
+   * representations, with headroom. The exact value is not critical for
+   * performance — BigInteger parsing at this scale is negligible.
    */
   private static final int MAX_HEX_BIG_INTEGER_LEN = 100;
 
