@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.Console;
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -28,15 +29,15 @@ final class KeystoreCliUtils {
   private KeystoreCliUtils() {
   }
 
-  static String readPassword(File passwordFile) throws IOException {
+  static String readPassword(File passwordFile, PrintWriter err) throws IOException {
     if (passwordFile != null) {
       if (!passwordFile.exists()) {
-        System.err.println("Password file not found: " + passwordFile.getPath()
+        err.println("Password file not found: " + passwordFile.getPath()
             + ". Omit --password-file for interactive input.");
         return null;
       }
       if (passwordFile.length() > MAX_FILE_SIZE) {
-        System.err.println("Password file too large (max 1KB).");
+        err.println("Password file too large (max 1KB).");
         return null;
       }
       byte[] bytes = Files.readAllBytes(passwordFile.toPath());
@@ -44,7 +45,7 @@ final class KeystoreCliUtils {
         String password = stripLineEndings(
             new String(bytes, StandardCharsets.UTF_8));
         if (!WalletUtils.passwordValid(password)) {
-          System.err.println("Invalid password: must be at least 6 characters.");
+          err.println("Invalid password: must be at least 6 characters.");
           return null;
         }
         return password;
@@ -55,30 +56,30 @@ final class KeystoreCliUtils {
 
     Console console = System.console();
     if (console == null) {
-      System.err.println("No interactive terminal available. "
+      err.println("No interactive terminal available. "
           + "Use --password-file to provide password.");
       return null;
     }
 
     char[] pwd1 = console.readPassword("Enter password: ");
     if (pwd1 == null) {
-      System.err.println("Password input cancelled.");
+      err.println("Password input cancelled.");
       return null;
     }
     char[] pwd2 = console.readPassword("Confirm password: ");
     if (pwd2 == null) {
       Arrays.fill(pwd1, '\0');
-      System.err.println("Password input cancelled.");
+      err.println("Password input cancelled.");
       return null;
     }
     try {
       if (!Arrays.equals(pwd1, pwd2)) {
-        System.err.println("Passwords do not match.");
+        err.println("Passwords do not match.");
         return null;
       }
       String password = new String(pwd1);
       if (!WalletUtils.passwordValid(password)) {
-        System.err.println("Invalid password: must be at least 6 characters.");
+        err.println("Invalid password: must be at least 6 characters.");
         return null;
       }
       return password;
@@ -105,11 +106,11 @@ final class KeystoreCliUtils {
     return MAPPER;
   }
 
-  static void printJson(Map<String, String> fields) {
+  static void printJson(PrintWriter out, PrintWriter err, Map<String, String> fields) {
     try {
-      System.out.println(MAPPER.writeValueAsString(fields));
+      out.println(MAPPER.writeValueAsString(fields));
     } catch (Exception e) {
-      System.err.println("Error writing JSON output");
+      err.println("Error writing JSON output");
     }
   }
 
@@ -138,40 +139,39 @@ final class KeystoreCliUtils {
     return s.substring(0, end);
   }
 
-  static boolean checkFileExists(File file, String label) {
+  static boolean checkFileExists(File file, String label, PrintWriter err) {
     if (file != null && !file.exists()) {
-      System.err.println(label + " not found: " + file.getPath());
+      err.println(label + " not found: " + file.getPath());
       return false;
     }
     return true;
   }
 
-  static void printSecurityTips(String address, String fileName) {
-    System.out.println();
-    System.out.println("Public address of the key:   " + address);
-    System.out.println("Path of the secret key file: " + fileName);
-    System.out.println();
-    System.out.println(
+  static void printSecurityTips(PrintWriter out, String address, String fileName) {
+    out.println();
+    out.println("Public address of the key:   " + address);
+    out.println("Path of the secret key file: " + fileName);
+    out.println();
+    out.println(
         "- You can share your public address with anyone."
             + " Others need it to interact with you.");
-    System.out.println(
+    out.println(
         "- You must NEVER share the secret key with anyone!"
             + " The key controls access to your funds!");
-    System.out.println(
+    out.println(
         "- You must BACKUP your key file!"
             + " Without the key, it's impossible to access account funds!");
-    System.out.println(
+    out.println(
         "- You must REMEMBER your password!"
             + " Without the password, it's impossible to decrypt the key!");
   }
 
-  static void setOwnerOnly(File file) {
+  static void setOwnerOnly(File file, PrintWriter err) {
     try {
       Files.setPosixFilePermissions(file.toPath(), OWNER_ONLY);
-    } catch (UnsupportedOperationException e) {
-      // Windows — skip
-    } catch (IOException e) {
-      System.err.println("Warning: could not set file permissions on " + file.getName());
+    } catch (UnsupportedOperationException | IOException e) {
+      err.println("Warning: could not set file permissions on " + file.getName()
+          + ". Please manually restrict access (e.g. chmod 600).");
     }
   }
 }

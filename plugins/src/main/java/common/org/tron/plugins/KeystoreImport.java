@@ -3,6 +3,7 @@ package org.tron.plugins;
 import java.io.Console;
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.Arrays;
@@ -15,12 +16,17 @@ import org.tron.core.exception.CipherException;
 import org.tron.keystore.Credentials;
 import org.tron.keystore.WalletUtils;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
+import picocli.CommandLine.Spec;
 
 @Command(name = "import",
     mixinStandardHelpOptions = true,
     description = "Import a private key into a new keystore file.")
 public class KeystoreImport implements Callable<Integer> {
+
+  @Spec
+  private CommandSpec spec;
 
   @Option(names = {"--keystore-dir"},
       description = "Keystore directory (default: ./Wallet)",
@@ -49,13 +55,15 @@ public class KeystoreImport implements Callable<Integer> {
 
   @Override
   public Integer call() {
+    PrintWriter out = spec.commandLine().getOut();
+    PrintWriter err = spec.commandLine().getErr();
     try {
-      if (!KeystoreCliUtils.checkFileExists(keyFile, "Key file")) {
+      if (!KeystoreCliUtils.checkFileExists(keyFile, "Key file", err)) {
         return 1;
       }
       KeystoreCliUtils.ensureDirectory(keystoreDir);
 
-      String privateKey = readPrivateKey();
+      String privateKey = readPrivateKey(err);
       if (privateKey == null) {
         return 1;
       }
@@ -64,11 +72,11 @@ public class KeystoreImport implements Callable<Integer> {
         privateKey = privateKey.substring(2);
       }
       if (!isValidPrivateKey(privateKey)) {
-        System.err.println("Invalid private key: must be 64 hex characters.");
+        err.println("Invalid private key: must be 64 hex characters.");
         return 1;
       }
 
-      String password = KeystoreCliUtils.readPassword(passwordFile);
+      String password = KeystoreCliUtils.readPassword(passwordFile, err);
       if (password == null) {
         return 1;
       }
@@ -79,42 +87,42 @@ public class KeystoreImport implements Callable<Integer> {
         keyPair = SignUtils.fromPrivate(
             ByteArray.fromHexString(privateKey), ecKey);
       } catch (Exception e) {
-        System.err.println("Invalid private key: not a valid key"
+        err.println("Invalid private key: not a valid key"
             + " for the selected algorithm.");
         return 1;
       }
       String address = Credentials.create(keyPair).getAddress();
       String existingFile = findExistingKeystore(keystoreDir, address);
       if (existingFile != null && !force) {
-        System.err.println("Keystore for address " + address
+        err.println("Keystore for address " + address
             + " already exists: " + existingFile
             + ". Use --force to import anyway.");
         return 1;
       }
       String fileName = WalletUtils.generateWalletFile(password, keyPair, keystoreDir, true);
-      KeystoreCliUtils.setOwnerOnly(new File(keystoreDir, fileName));
+      KeystoreCliUtils.setOwnerOnly(new File(keystoreDir, fileName), err);
       if (json) {
-        KeystoreCliUtils.printJson(KeystoreCliUtils.jsonMap(
+        KeystoreCliUtils.printJson(out, err, KeystoreCliUtils.jsonMap(
             "address", address, "file", fileName));
       } else {
-        System.out.println("Imported keystore successfully");
-        KeystoreCliUtils.printSecurityTips(address,
+        out.println("Imported keystore successfully");
+        KeystoreCliUtils.printSecurityTips(out, address,
             new File(keystoreDir, fileName).getPath());
       }
       return 0;
     } catch (CipherException e) {
-      System.err.println("Encryption error: " + e.getMessage());
+      err.println("Encryption error: " + e.getMessage());
       return 1;
     } catch (Exception e) {
-      System.err.println("Error: " + e.getMessage());
+      err.println("Error: " + e.getMessage());
       return 1;
     }
   }
 
-  private String readPrivateKey() throws IOException {
+  private String readPrivateKey(PrintWriter err) throws IOException {
     if (keyFile != null) {
       if (keyFile.length() > 1024) {
-        System.err.println("Key file too large (max 1KB).");
+        err.println("Key file too large (max 1KB).");
         return null;
       }
       byte[] bytes = Files.readAllBytes(keyFile.toPath());
@@ -127,14 +135,14 @@ public class KeystoreImport implements Callable<Integer> {
 
     Console console = System.console();
     if (console == null) {
-      System.err.println("No interactive terminal available. "
+      err.println("No interactive terminal available. "
           + "Use --key-file to provide private key.");
       return null;
     }
 
     char[] key = console.readPassword("Enter private key (hex): ");
     if (key == null) {
-      System.err.println("Input cancelled.");
+      err.println("Input cancelled.");
       return null;
     }
     try {

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.Console;
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
@@ -15,8 +16,10 @@ import org.tron.keystore.Wallet;
 import org.tron.keystore.WalletFile;
 import org.tron.keystore.WalletUtils;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
+import picocli.CommandLine.Spec;
 
 @Command(name = "update",
     mixinStandardHelpOptions = true,
@@ -25,6 +28,9 @@ public class KeystoreUpdate implements Callable<Integer> {
 
   private static final ObjectMapper MAPPER = KeystoreCliUtils.mapper();
   private static final String INPUT_CANCELLED = "Password input cancelled.";
+
+  @Spec
+  private CommandSpec spec;
 
   @Parameters(index = "0", description = "Address of the keystore to update")
   private String address;
@@ -48,10 +54,12 @@ public class KeystoreUpdate implements Callable<Integer> {
 
   @Override
   public Integer call() {
+    PrintWriter out = spec.commandLine().getOut();
+    PrintWriter err = spec.commandLine().getErr();
     try {
-      File keystoreFile = findKeystoreByAddress(address);
+      File keystoreFile = findKeystoreByAddress(address, err);
       if (keystoreFile == null) {
-        System.err.println("No keystore found for address: " + address);
+        err.println("No keystore found for address: " + address);
         return 1;
       }
 
@@ -60,12 +68,12 @@ public class KeystoreUpdate implements Callable<Integer> {
 
       if (passwordFile != null) {
         if (!passwordFile.exists()) {
-          System.err.println("Password file not found: " + passwordFile.getPath()
+          err.println("Password file not found: " + passwordFile.getPath()
               + ". Omit --password-file for interactive input.");
           return 1;
         }
         if (passwordFile.length() > 1024) {
-          System.err.println("Password file too large (max 1KB).");
+          err.println("Password file too large (max 1KB).");
           return 1;
         }
         byte[] bytes = Files.readAllBytes(passwordFile.toPath());
@@ -77,7 +85,7 @@ public class KeystoreUpdate implements Callable<Integer> {
           }
           String[] lines = content.split("\\r?\\n");
           if (lines.length < 2) {
-            System.err.println(
+            err.println(
                 "Password file must contain old and new passwords"
                     + " on separate lines.");
             return 1;
@@ -90,26 +98,26 @@ public class KeystoreUpdate implements Callable<Integer> {
       } else {
         Console console = System.console();
         if (console == null) {
-          System.err.println("No interactive terminal available. "
+          err.println("No interactive terminal available. "
               + "Use --password-file to provide passwords.");
           return 1;
         }
         char[] oldPwd = console.readPassword("Enter current password: ");
         if (oldPwd == null) {
-          System.err.println(INPUT_CANCELLED);
+          err.println(INPUT_CANCELLED);
           return 1;
         }
         char[] newPwd = console.readPassword("Enter new password: ");
         if (newPwd == null) {
           Arrays.fill(oldPwd, '\0');
-          System.err.println(INPUT_CANCELLED);
+          err.println(INPUT_CANCELLED);
           return 1;
         }
         char[] confirmPwd = console.readPassword("Confirm new password: ");
         if (confirmPwd == null) {
           Arrays.fill(oldPwd, '\0');
           Arrays.fill(newPwd, '\0');
-          System.err.println(INPUT_CANCELLED);
+          err.println(INPUT_CANCELLED);
           return 1;
         }
         try {
@@ -117,7 +125,7 @@ public class KeystoreUpdate implements Callable<Integer> {
           newPassword = new String(newPwd);
           String confirmPassword = new String(confirmPwd);
           if (!newPassword.equals(confirmPassword)) {
-            System.err.println("New passwords do not match.");
+            err.println("New passwords do not match.");
             return 1;
           }
         } finally {
@@ -129,7 +137,7 @@ public class KeystoreUpdate implements Callable<Integer> {
 
       // Skip validation on old password: keystore may predate the minimum-length policy
       if (!WalletUtils.passwordValid(newPassword)) {
-        System.err.println("Invalid new password: must be at least 6 characters.");
+        err.println("Invalid new password: must be at least 6 characters.");
         return 1;
       }
 
@@ -143,7 +151,7 @@ public class KeystoreUpdate implements Callable<Integer> {
       File tempFile = File.createTempFile("keystore-", ".tmp",
           keystoreFile.getParentFile());
       try {
-        KeystoreCliUtils.setOwnerOnly(tempFile);
+        KeystoreCliUtils.setOwnerOnly(tempFile, err);
         MAPPER.writeValue(tempFile, newWalletFile);
         try {
           Files.move(tempFile.toPath(), keystoreFile.toPath(),
@@ -156,31 +164,31 @@ public class KeystoreUpdate implements Callable<Integer> {
         }
       } catch (Exception e) {
         if (!tempFile.delete()) {
-          System.err.println("Warning: could not delete temp file: "
+          err.println("Warning: could not delete temp file: "
               + tempFile.getName());
         }
         throw e;
       }
 
       if (json) {
-        KeystoreCliUtils.printJson(KeystoreCliUtils.jsonMap(
+        KeystoreCliUtils.printJson(out, err, KeystoreCliUtils.jsonMap(
             "address", walletFile.getAddress(),
             "file", keystoreFile.getName(),
             "status", "updated"));
       } else {
-        System.out.println("Password updated for: " + walletFile.getAddress());
+        out.println("Password updated for: " + walletFile.getAddress());
       }
       return 0;
     } catch (CipherException e) {
-      System.err.println("Decryption failed: " + e.getMessage());
+      err.println("Decryption failed: " + e.getMessage());
       return 1;
     } catch (Exception e) {
-      System.err.println("Error: " + e.getMessage());
+      err.println("Error: " + e.getMessage());
       return 1;
     }
   }
 
-  private File findKeystoreByAddress(String targetAddress) {
+  private File findKeystoreByAddress(String targetAddress, PrintWriter err) {
     if (!keystoreDir.exists() || !keystoreDir.isDirectory()) {
       return null;
     }
@@ -200,12 +208,12 @@ public class KeystoreUpdate implements Callable<Integer> {
       }
     }
     if (matches.size() > 1) {
-      System.err.println("Multiple keystores found for address "
+      err.println("Multiple keystores found for address "
           + targetAddress + ":");
       for (File m : matches) {
-        System.err.println("  " + m.getName());
+        err.println("  " + m.getName());
       }
-      System.err.println("Please remove duplicates and retry.");
+      err.println("Please remove duplicates and retry.");
       return null;
     }
     return matches.isEmpty() ? null : matches.get(0);

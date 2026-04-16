@@ -143,3 +143,72 @@ NOTE: large db may GC overhead limit exceeded.
 - `<src>`: Source path for database. Default: output-directory/database
 - `--db`: db name.
 - `-h | --help`: provide the help info
+
+## Keystore
+
+Keystore provides commands for managing account keystore files (Web3 Secret Storage format).
+
+> **Migrating from `--keystore-factory`**: The legacy `FullNode.jar --keystore-factory` interactive mode is deprecated. Use the Toolkit keystore commands below instead. The mapping is:
+> - `GenKeystore` → `keystore new`
+> - `ImportPrivateKey` → `keystore import`
+> - (new) `keystore list` — list all keystores in a directory
+> - (new) `keystore update` — change the password of a keystore
+
+### Subcommands
+
+#### keystore new
+
+Generate a new keystore file with a random keypair.
+
+```shell script
+# full command
+  java -jar Toolkit.jar keystore new [-h] [--keystore-dir=<dir>] [--password-file=<file>] [--sm2] [--json]
+# examples
+  java -jar Toolkit.jar keystore new                                  # interactive prompt
+  java -jar Toolkit.jar keystore new --keystore-dir /data/keystores   # custom directory
+  java -jar Toolkit.jar keystore new --password-file pass.txt --json  # non-interactive with JSON output
+```
+
+#### keystore import
+
+Import a private key into a new keystore file.
+
+```shell script
+# full command
+  java -jar Toolkit.jar keystore import [-h] [--keystore-dir=<dir>] [--password-file=<file>] [--private-key-file=<file>] [--sm2] [--json]
+# examples
+  java -jar Toolkit.jar keystore import                                        # interactive prompt
+  java -jar Toolkit.jar keystore import --private-key-file key.txt --json      # from file with JSON output
+```
+
+#### keystore list
+
+List all keystore files in a directory.
+
+```shell script
+# full command
+  java -jar Toolkit.jar keystore list [-h] [--keystore-dir=<dir>] [--json]
+# examples
+  java -jar Toolkit.jar keystore list                                  # list default ./Wallet directory
+  java -jar Toolkit.jar keystore list --keystore-dir /data/keystores   # custom directory
+```
+
+#### keystore update
+
+Change the password of a keystore file.
+
+```shell script
+# full command
+  java -jar Toolkit.jar keystore update [-h] <address> [--keystore-dir=<dir>] [--password-file=<file>] [--new-password-file=<file>] [--json]
+# examples
+  java -jar Toolkit.jar keystore update TXyz...abc                          # interactive prompt
+  java -jar Toolkit.jar keystore update TXyz...abc --keystore-dir /data/ks  # custom directory
+```
+
+### Common Options
+
+- `--keystore-dir`: Keystore directory, default: `./Wallet`.
+- `--password-file`: Read password from a file instead of interactive prompt.
+- `--sm2`: Use SM2 algorithm instead of ECDSA (for `new` and `import`).
+- `--json`: Output in JSON format for scripting.
+- `-h | --help`: Provide the help info.

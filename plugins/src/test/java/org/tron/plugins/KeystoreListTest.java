@@ -3,9 +3,9 @@ package org.tron.plugins;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.PrintStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.security.SecureRandom;
@@ -34,23 +34,21 @@ public class KeystoreListTest {
       WalletUtils.generateWalletFile(password, key, dir, false);
     }
 
-    PrintStream originalOut = System.out;
-    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-    System.setOut(new PrintStream(baos));
-    try {
-      CommandLine cmd = new CommandLine(new Toolkit());
-      int exitCode = cmd.execute("keystore", "list",
-          "--keystore-dir", dir.getAbsolutePath());
+    StringWriter out = new StringWriter();
+    StringWriter err = new StringWriter();
+    CommandLine cmd = new CommandLine(new Toolkit());
+    cmd.setOut(new PrintWriter(out));
+    cmd.setErr(new PrintWriter(err));
 
-      assertEquals(0, exitCode);
-      String output = baos.toString(StandardCharsets.UTF_8.name()).trim();
-      assertTrue("Output should not be empty", output.length() > 0);
-      // Should have 3 lines of output (one per keystore)
-      String[] lines = output.split("\\n");
-      assertEquals("Should list 3 keystores", 3, lines.length);
-    } finally {
-      System.setOut(originalOut);
-    }
+    int exitCode = cmd.execute("keystore", "list",
+        "--keystore-dir", dir.getAbsolutePath());
+
+    assertEquals(0, exitCode);
+    String output = out.toString().trim();
+    assertTrue("Output should not be empty", output.length() > 0);
+    // Should have 3 lines of output (one per keystore)
+    String[] lines = output.split("\\n");
+    assertEquals("Should list 3 keystores", 3, lines.length);
   }
 
   @Test
@@ -83,23 +81,21 @@ public class KeystoreListTest {
         SecureRandom.getInstance("NativePRNG"), true);
     WalletUtils.generateWalletFile(password, key, dir, false);
 
-    PrintStream originalOut = System.out;
-    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-    System.setOut(new PrintStream(baos));
-    try {
-      CommandLine cmd = new CommandLine(new Toolkit());
-      int exitCode = cmd.execute("keystore", "list",
-          "--keystore-dir", dir.getAbsolutePath(), "--json");
+    StringWriter out = new StringWriter();
+    StringWriter err = new StringWriter();
+    CommandLine cmd = new CommandLine(new Toolkit());
+    cmd.setOut(new PrintWriter(out));
+    cmd.setErr(new PrintWriter(err));
 
-      assertEquals(0, exitCode);
-      String output = baos.toString(StandardCharsets.UTF_8.name()).trim();
-      assertTrue("Should start with keystores JSON array",
-          output.startsWith("{\"keystores\":["));
-      assertTrue("Should end with JSON array close",
-          output.endsWith("]}"));
-    } finally {
-      System.setOut(originalOut);
-    }
+    int exitCode = cmd.execute("keystore", "list",
+        "--keystore-dir", dir.getAbsolutePath(), "--json");
+
+    assertEquals(0, exitCode);
+    String output = out.toString().trim();
+    assertTrue("Should start with keystores JSON array",
+        output.startsWith("{\"keystores\":["));
+    assertTrue("Should end with JSON array close",
+        output.endsWith("]}"));
   }
 
   @Test
@@ -118,22 +114,20 @@ public class KeystoreListTest {
     Files.write(new File(dir, "notes.txt").toPath(),
         "plain text".getBytes(StandardCharsets.UTF_8));
 
-    PrintStream originalOut = System.out;
-    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-    System.setOut(new PrintStream(baos));
-    try {
-      CommandLine cmd = new CommandLine(new Toolkit());
-      int exitCode = cmd.execute("keystore", "list",
-          "--keystore-dir", dir.getAbsolutePath());
+    StringWriter out = new StringWriter();
+    StringWriter err = new StringWriter();
+    CommandLine cmd = new CommandLine(new Toolkit());
+    cmd.setOut(new PrintWriter(out));
+    cmd.setErr(new PrintWriter(err));
 
-      assertEquals(0, exitCode);
-      String output = baos.toString(StandardCharsets.UTF_8.name()).trim();
-      assertTrue("Output should not be empty", output.length() > 0);
-      String[] lines = output.split("\\n");
-      // Should list only the valid keystore, not the readme.json or notes.txt
-      assertEquals("Should list only 1 valid keystore", 1, lines.length);
-    } finally {
-      System.setOut(originalOut);
-    }
+    int exitCode = cmd.execute("keystore", "list",
+        "--keystore-dir", dir.getAbsolutePath());
+
+    assertEquals(0, exitCode);
+    String output = out.toString().trim();
+    assertTrue("Output should not be empty", output.length() > 0);
+    String[] lines = output.split("\\n");
+    // Should list only the valid keystore, not the readme.json or notes.txt
+    assertEquals("Should list only 1 valid keystore", 1, lines.length);
   }
 }

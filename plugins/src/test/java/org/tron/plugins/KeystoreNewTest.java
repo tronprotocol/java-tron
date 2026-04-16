@@ -55,25 +55,23 @@ public class KeystoreNewTest {
     File pwFile = tempFolder.newFile("password-json.txt");
     Files.write(pwFile.toPath(), "test123456".getBytes(StandardCharsets.UTF_8));
 
-    java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
-    java.io.PrintStream originalOut = System.out;
-    System.setOut(new java.io.PrintStream(baos));
-    try {
-      CommandLine cmd = new CommandLine(new Toolkit());
-      int exitCode = cmd.execute("keystore", "new",
-          "--keystore-dir", dir.getAbsolutePath(),
-          "--password-file", pwFile.getAbsolutePath(),
-          "--json");
+    StringWriter out = new StringWriter();
+    StringWriter err = new StringWriter();
+    CommandLine cmd = new CommandLine(new Toolkit());
+    cmd.setOut(new PrintWriter(out));
+    cmd.setErr(new PrintWriter(err));
 
-      assertEquals(0, exitCode);
-      String output = baos.toString(StandardCharsets.UTF_8.name()).trim();
-      assertTrue("JSON output should contain address",
-          output.contains("\"address\""));
-      assertTrue("JSON output should contain file",
-          output.contains("\"file\""));
-    } finally {
-      System.setOut(originalOut);
-    }
+    int exitCode = cmd.execute("keystore", "new",
+        "--keystore-dir", dir.getAbsolutePath(),
+        "--password-file", pwFile.getAbsolutePath(),
+        "--json");
+
+    assertEquals(0, exitCode);
+    String output = out.toString().trim();
+    assertTrue("JSON output should contain address",
+        output.contains("\"address\""));
+    assertTrue("JSON output should contain file",
+        output.contains("\"file\""));
   }
 
   @Test
