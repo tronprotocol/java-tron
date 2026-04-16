@@ -26,6 +26,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -1417,6 +1418,56 @@ public class ManagerTest extends BaseMethodTest {
       Args.getSolidityContractLogTriggerMap().clear();
       Args.getSolidityContractEventTriggerMap().clear();
     }
+  }
+
+  @Test
+  public void testGetCachedTransactionSize() throws Exception {
+    BlockingQueue<TransactionCapsule> pushQ = new LinkedBlockingQueue<>();
+    pushQ.add(new TransactionCapsule(Protocol.Transaction.getDefaultInstance()));
+    Field pushField = Manager.class.getDeclaredField("pushTransactionQueue");
+    pushField.setAccessible(true);
+    pushField.set(dbManager, pushQ);
+
+    dbManager.getPendingTransactions().clear();
+    dbManager.getPendingTransactions().add(
+        new TransactionCapsule(Protocol.Transaction.getDefaultInstance()));
+    dbManager.getPendingTransactions().add(
+        new TransactionCapsule(Protocol.Transaction.getDefaultInstance()));
+
+    dbManager.getRePushTransactions().clear();
+
+    // 1 (push) + 2 (pending) + 0 (rePush) = 3
+    Assert.assertEquals(3, dbManager.getCachedTransactionSize());
+
+    // cleanup
+    pushQ.clear();
+    dbManager.getPendingTransactions().clear();
+  }
+
+  @Test
+  public void testIsTooManyPendingIncludesPushQueue() throws Exception {
+    int threshold = Args.getInstance().getMaxTransactionPendingSize();
+
+    BlockingQueue<TransactionCapsule> pushQ = new LinkedBlockingQueue<>();
+    Field pushField = Manager.class.getDeclaredField("pushTransactionQueue");
+    pushField.setAccessible(true);
+    pushField.set(dbManager, pushQ);
+
+    dbManager.getPendingTransactions().clear();
+    dbManager.getRePushTransactions().clear();
+
+    for (int i = 0; i < threshold; i++) {
+      dbManager.getPendingTransactions().add(
+          new TransactionCapsule(Protocol.Transaction.getDefaultInstance()));
+    }
+    Assert.assertFalse(dbManager.isTooManyPending());
+
+    pushQ.add(new TransactionCapsule(Protocol.Transaction.getDefaultInstance()));
+    Assert.assertTrue(dbManager.isTooManyPending());
+
+    // cleanup
+    dbManager.getPendingTransactions().clear();
+    pushQ.clear();
   }
 
   public void adjustBalance(AccountStore accountStore, byte[] accountAddress, long amount)

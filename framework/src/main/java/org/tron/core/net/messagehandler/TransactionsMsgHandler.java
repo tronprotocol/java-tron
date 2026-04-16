@@ -32,7 +32,6 @@ import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 @Component
 public class TransactionsMsgHandler implements TronMsgHandler {
 
-  private static int MAX_TRX_SIZE = 50_000;
   private static int MAX_SMART_CONTRACT_SUBMIT_SIZE = 100;
   @Autowired
   private TronNetDelegate tronNetDelegate;
@@ -41,7 +40,8 @@ public class TransactionsMsgHandler implements TronMsgHandler {
   @Autowired
   private ChainBaseManager chainBaseManager;
 
-  private BlockingQueue<TrxEvent> smartContractQueue = new LinkedBlockingQueue(MAX_TRX_SIZE);
+  private BlockingQueue<TrxEvent> smartContractQueue = new LinkedBlockingQueue(
+      Args.getInstance().getMaxTrxCacheSize());
 
   private BlockingQueue<Runnable> queue = new LinkedBlockingQueue();
 
@@ -71,7 +71,8 @@ public class TransactionsMsgHandler implements TronMsgHandler {
   }
 
   public boolean isBusy() {
-    return queue.size() + smartContractQueue.size() > MAX_TRX_SIZE;
+    return queue.size() + smartContractQueue.size()
+        + tronNetDelegate.getCachedTransactionSize() > Args.getInstance().getMaxTrxCacheSize();
   }
 
   @Override

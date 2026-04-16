@@ -48,8 +48,6 @@ public class TransactionsMsgHandlerTest extends BaseTest {
   public void testProcessMessage() {
     TransactionsMsgHandler transactionsMsgHandler = new TransactionsMsgHandler();
     try {
-      Assert.assertFalse(transactionsMsgHandler.isBusy());
-
       transactionsMsgHandler.init();
 
       PeerConnection peer = Mockito.mock(PeerConnection.class);
@@ -59,6 +57,8 @@ public class TransactionsMsgHandlerTest extends BaseTest {
       Field field = TransactionsMsgHandler.class.getDeclaredField("tronNetDelegate");
       field.setAccessible(true);
       field.set(transactionsMsgHandler, tronNetDelegate);
+
+      Assert.assertFalse(transactionsMsgHandler.isBusy());
 
       BalanceContract.TransferContract transferContract = BalanceContract.TransferContract
           .newBuilder()
@@ -288,6 +288,28 @@ public class TransactionsMsgHandlerTest extends BaseTest {
     } finally {
       handler.close();
     }
+  }
+
+  @Test
+  public void testIsBusyWithCachedTransactions() throws Exception {
+    TransactionsMsgHandler handler = new TransactionsMsgHandler();
+
+    int threshold = Args.getInstance().getMaxTrxCacheSize();
+    TronNetDelegate tronNetDelegateMock = Mockito.mock(TronNetDelegate.class);
+    Field field = TransactionsMsgHandler.class.getDeclaredField("tronNetDelegate");
+    field.setAccessible(true);
+    field.set(handler, tronNetDelegateMock);
+
+    // queue and smartContractQueue are empty, but cached size > threshold
+    Mockito.when(tronNetDelegateMock.getCachedTransactionSize()).thenReturn(threshold + 1);
+    Assert.assertTrue(handler.isBusy());
+
+    // boundary: cached size == threshold, isBusy() uses strict >, so not busy
+    Mockito.when(tronNetDelegateMock.getCachedTransactionSize()).thenReturn(threshold);
+    Assert.assertFalse(handler.isBusy());
+
+    Mockito.when(tronNetDelegateMock.getCachedTransactionSize()).thenReturn(0);
+    Assert.assertFalse(handler.isBusy());
   }
 
   class TrxEvent {
