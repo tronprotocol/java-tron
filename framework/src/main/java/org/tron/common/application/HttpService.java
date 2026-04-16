@@ -15,6 +15,7 @@
 
 package org.tron.common.application;
 
+import com.google.common.annotations.VisibleForTesting;
 import java.util.concurrent.CompletableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jetty.server.ConnectionLimit;
@@ -31,6 +32,16 @@ public abstract class HttpService extends AbstractService {
   protected String contextPath;
 
   protected long maxRequestSize = 4 * 1024 * 1024; // 4MB
+
+  @VisibleForTesting
+  public long getMaxRequestSize() {
+    return this.maxRequestSize;
+  }
+
+  @VisibleForTesting
+  public void setMaxRequestSize(long maxRequestSize) {
+    this.maxRequestSize = maxRequestSize;
+  }
 
   @Override
   public void innerStart() throws Exception {
