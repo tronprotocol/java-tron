@@ -4,6 +4,7 @@ import static org.tron.common.backup.BackupManager.BackupStatusEnum.INIT;
 import static org.tron.common.backup.BackupManager.BackupStatusEnum.MASTER;
 import static org.tron.common.backup.BackupManager.BackupStatusEnum.SLAVER;
 import static org.tron.common.backup.message.UdpMessageTypeEnum.BACKUP_KEEP_ALIVE;
+import static org.tron.core.config.args.InetUtil.resolveInetAddress;
 
 import io.netty.util.internal.ConcurrentSet;
 import java.net.InetAddress;
@@ -24,7 +25,6 @@ import org.tron.common.backup.socket.MessageHandler;
 import org.tron.common.backup.socket.UdpEvent;
 import org.tron.common.es.ExecutorServiceManager;
 import org.tron.common.parameter.CommonParameter;
-import org.tron.p2p.dns.lookup.LookUpTxt;
 import org.tron.p2p.utils.NetUtil;
 
 @Slf4j(topic = "backup")
@@ -84,8 +84,13 @@ public class BackupManager implements EventHandler {
     }
 
     for (String ipOrDomain : parameter.getBackupMembers()) {
-      String ip = resolveToIp(ipOrDomain);
-      if (ip == null || localIp.equals(ip)) {
+      InetAddress inetAddress = resolveInetAddress(ipOrDomain);
+      if (inetAddress == null) {
+        logger.warn("Failed to resolve backup member domain: {}", ipOrDomain);
+        continue;
+      }
+      String ip = inetAddress.getHostAddress();
+      if (localIp.equals(ip)) {
         continue;
       }
       if (!NetUtil.validIpV4(ipOrDomain) && !NetUtil.validIpV6(ipOrDomain)) {
@@ -184,25 +189,6 @@ public class BackupManager implements EventHandler {
   }
 
   /**
-   * Resolves a hostname or IP string to a numeric IP address string.
-   */
-  private String resolveToIp(String ipOrDomain) {
-    // Fast path: already a numeric address — no lookup needed.
-    if (NetUtil.validIpV4(ipOrDomain) || NetUtil.validIpV6(ipOrDomain)) {
-      return ipOrDomain;
-    }
-    InetAddress address = LookUpTxt.lookUpIp(ipOrDomain, true);
-    if (address == null) {
-      address = LookUpTxt.lookUpIp(ipOrDomain, false);
-    }
-    if (address == null) {
-      logger.warn("Failed to resolve backup member domain: {}", ipOrDomain);
-      return null;
-    }
-    return address.getHostAddress();
-  }
-
-  /**
    * Re-resolves all tracked domain entries. If an IP has changed, the old IP is
    * removed from {@link #members} and the new IP is added.
    */
@@ -210,11 +196,12 @@ public class BackupManager implements EventHandler {
     for (Map.Entry<String, String> entry : domainIpCache.entrySet()) {
       String domain = entry.getKey();
       String oldIp = entry.getValue();
-      String newIp = resolveToIp(domain);
-      if (newIp == null) {
+      InetAddress inetAddress = resolveInetAddress(domain);
+      if (inetAddress == null) {
         logger.warn("DNS refresh: failed to re-resolve backup member domain {}, keep it", domain);
         continue;
       }
+      String newIp = inetAddress.getHostAddress();
       if (!newIp.equals(oldIp)) {
         logger.info("DNS refresh: backup member {} IP changed {} -> {}", domain, oldIp, newIp);
         members.remove(oldIp);
