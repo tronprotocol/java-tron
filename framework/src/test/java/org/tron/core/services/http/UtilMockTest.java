@@ -83,6 +83,27 @@ public class UtilMockTest  {
   }
 
   @Test
+  public void testPrintBlockToJSONWithTransactions() {
+    BlockCapsule blockCapsule = new BlockCapsule(1, Sha256Hash.ZERO_HASH,
+        System.currentTimeMillis(), Sha256Hash.ZERO_HASH.getByteString());
+    TransactionCapsule txCap = getTransactionCapsuleExample();
+    blockCapsule.addTransaction(txCap);
+
+    JSONObject json = Util.printBlockToJSON(blockCapsule.getInstance(), true);
+    Assert.assertTrue(json.containsKey("blockID"));
+    Assert.assertTrue(json.containsKey("block_header"));
+    Assert.assertTrue(json.containsKey("transactions"));
+    Assert.assertFalse(json.getString("blockID").isEmpty());
+    Assert.assertNotNull(json.getJSONObject("block_header"));
+
+    JSONArray txArray = json.getJSONArray("transactions");
+    Assert.assertEquals(1, txArray.size());
+    JSONObject txJson = txArray.getJSONObject(0);
+    Assert.assertTrue(txJson.containsKey("txID"));
+    Assert.assertTrue(txJson.containsKey("raw_data"));
+  }
+
+  @Test
   public void testPrintTransactionList() {
     TransactionCapsule transactionCapsule = getTransactionCapsuleExample();
     GrpcAPI.TransactionList list = GrpcAPI.TransactionList.newBuilder()

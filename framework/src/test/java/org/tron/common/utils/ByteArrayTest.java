@@ -24,6 +24,7 @@ import static org.junit.Assert.fail;
 import static org.tron.common.utils.ByteArray.fromHex;
 import static org.tron.common.utils.ByteArray.jsonHexToInt;
 
+import java.math.BigInteger;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
 import org.junit.Test;
@@ -136,6 +137,13 @@ public class ByteArrayTest {
     } catch (IllegalArgumentException e) {
       assertTrue(e.getMessage().contains("null"));
     }
+  }
+
+  @Test
+  public void testHexToBigIntegerDecimalPath() {
+    assertEquals(BigInteger.valueOf(12345), ByteArray.hexToBigInteger("12345"));
+    assertEquals(BigInteger.ZERO, ByteArray.hexToBigInteger("0"));
+    assertEquals(BigInteger.ONE, ByteArray.hexToBigInteger("1"));
   }
 
   @Test
