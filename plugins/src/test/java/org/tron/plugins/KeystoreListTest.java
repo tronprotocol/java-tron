@@ -39,7 +39,6 @@ public class KeystoreListTest {
     CommandLine cmd = new CommandLine(new Toolkit());
     cmd.setOut(new PrintWriter(out));
     cmd.setErr(new PrintWriter(err));
-
     int exitCode = cmd.execute("keystore", "list",
         "--keystore-dir", dir.getAbsolutePath());
 
@@ -49,28 +48,75 @@ public class KeystoreListTest {
     // Should have 3 lines of output (one per keystore)
     String[] lines = output.split("\\n");
     assertEquals("Should list 3 keystores", 3, lines.length);
+    // Each line should contain a T-address and a .json filename
+    for (String line : lines) {
+      assertTrue("Each line should contain an address starting with T",
+          line.trim().startsWith("T"));
+      assertTrue("Each line should reference a .json file",
+          line.contains(".json"));
+    }
   }
 
   @Test
   public void testListEmptyDirectory() throws Exception {
     File dir = tempFolder.newFolder("empty");
 
+    StringWriter out = new StringWriter();
     CommandLine cmd = new CommandLine(new Toolkit());
+    cmd.setOut(new PrintWriter(out));
     int exitCode = cmd.execute("keystore", "list",
         "--keystore-dir", dir.getAbsolutePath());
 
     assertEquals(0, exitCode);
+    assertTrue("Should print no-keystores message",
+        out.toString().contains("No keystores found"));
   }
 
   @Test
   public void testListNonExistentDirectory() throws Exception {
     File dir = new File(tempFolder.getRoot(), "nonexistent");
 
+    StringWriter out = new StringWriter();
     CommandLine cmd = new CommandLine(new Toolkit());
+    cmd.setOut(new PrintWriter(out));
     int exitCode = cmd.execute("keystore", "list",
         "--keystore-dir", dir.getAbsolutePath());
 
     assertEquals(0, exitCode);
+    assertTrue("Should print no-keystores message",
+        out.toString().contains("No keystores found"));
+  }
+
+  @Test
+  public void testListEmptyDirectoryJsonOutput() throws Exception {
+    File dir = tempFolder.newFolder("empty-json");
+
+    StringWriter out = new StringWriter();
+    CommandLine cmd = new CommandLine(new Toolkit());
+    cmd.setOut(new PrintWriter(out));
+    int exitCode = cmd.execute("keystore", "list",
+        "--keystore-dir", dir.getAbsolutePath(), "--json");
+
+    assertEquals(0, exitCode);
+    String output = out.toString().trim();
+    assertTrue("Empty dir JSON should have empty keystores array",
+        output.contains("{\"keystores\":[]}"));
+  }
+
+  @Test
+  public void testListNonExistentDirectoryJsonOutput() throws Exception {
+    File dir = new File(tempFolder.getRoot(), "nonexistent-json");
+
+    StringWriter out = new StringWriter();
+    CommandLine cmd = new CommandLine(new Toolkit());
+    cmd.setOut(new PrintWriter(out));
+    int exitCode = cmd.execute("keystore", "list",
+        "--keystore-dir", dir.getAbsolutePath(), "--json");
+
+    assertEquals(0, exitCode);
+    String output = out.toString().trim();
+    assertTrue("Non-existent dir JSON should have empty keystores array",
+        output.contains("{\"keystores\":[]}"));
   }
 
   @Test
@@ -86,7 +132,6 @@ public class KeystoreListTest {
     CommandLine cmd = new CommandLine(new Toolkit());
     cmd.setOut(new PrintWriter(out));
     cmd.setErr(new PrintWriter(err));
-
     int exitCode = cmd.execute("keystore", "list",
         "--keystore-dir", dir.getAbsolutePath(), "--json");
 
@@ -119,7 +164,6 @@ public class KeystoreListTest {
     CommandLine cmd = new CommandLine(new Toolkit());
     cmd.setOut(new PrintWriter(out));
     cmd.setErr(new PrintWriter(err));
-
     int exitCode = cmd.execute("keystore", "list",
         "--keystore-dir", dir.getAbsolutePath());
 
@@ -129,5 +173,37 @@ public class KeystoreListTest {
     String[] lines = output.split("\\n");
     // Should list only the valid keystore, not the readme.json or notes.txt
     assertEquals("Should list only 1 valid keystore", 1, lines.length);
+  }
+
+  @Test
+  public void testListWarnsOnCorruptedJsonFiles() throws Exception {
+    File dir = tempFolder.newFolder("keystore-corrupt");
+    String password = "test123456";
+
+    // Create one valid keystore
+    SignInterface key = SignUtils.getGeneratedRandomSign(
+        SecureRandom.getInstance("NativePRNG"), true);
+    WalletUtils.generateWalletFile(password, key, dir, false);
+
+    // Create a corrupted JSON file
+    Files.write(new File(dir, "corrupted.json").toPath(),
+        "not valid json{{{".getBytes(StandardCharsets.UTF_8));
+
+    StringWriter out = new StringWriter();
+    StringWriter err = new StringWriter();
+    CommandLine cmd = new CommandLine(new Toolkit());
+    cmd.setOut(new PrintWriter(out));
+    cmd.setErr(new PrintWriter(err));
+    int exitCode = cmd.execute("keystore", "list",
+        "--keystore-dir", dir.getAbsolutePath());
+
+    assertEquals(0, exitCode);
+    String errOutput = err.toString();
+    assertTrue("Should warn about corrupted file",
+        errOutput.contains("Warning: skipping unreadable file: corrupted.json"));
+
+    // Valid keystore should still be listed
+    String output = out.toString().trim();
+    assertTrue("Should still list the valid keystore", output.length() > 0);
   }
 }

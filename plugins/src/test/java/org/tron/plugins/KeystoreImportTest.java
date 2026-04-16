@@ -193,12 +193,16 @@ public class KeystoreImportTest {
         "--password-file", pwFile.getAbsolutePath()));
 
     // Second import of same key is blocked
+    java.io.StringWriter err = new java.io.StringWriter();
     CommandLine cmd2 = new CommandLine(new Toolkit());
+    cmd2.setErr(new java.io.PrintWriter(err));
     assertEquals("Duplicate import should be blocked", 1,
         cmd2.execute("keystore", "import",
             "--keystore-dir", dir.getAbsolutePath(),
             "--key-file", keyFile.getAbsolutePath(),
             "--password-file", pwFile.getAbsolutePath()));
+    assertTrue("Error should mention already exists",
+        err.toString().contains("already exists"));
 
     File[] files = dir.listFiles((d, name) -> name.endsWith(".json"));
     assertNotNull(files);
@@ -250,5 +254,123 @@ public class KeystoreImportTest {
         "--password-file", pwFile.getAbsolutePath());
 
     assertEquals("Should fail when key file not found", 1, exitCode);
+  }
+
+  @Test
+  public void testImportWith0xPrefix() throws Exception {
+    File dir = tempFolder.newFolder("keystore-0x");
+    SignInterface keyPair = SignUtils.getGeneratedRandomSign(
+        SecureRandom.getInstance("NativePRNG"), true);
+    String privateKeyHex = ByteArray.toHexString(keyPair.getPrivateKey());
+    String expectedAddress = Credentials.create(keyPair).getAddress();
+
+    File keyFile = tempFolder.newFile("0x.key");
+    Files.write(keyFile.toPath(),
+        ("0x" + privateKeyHex).getBytes(StandardCharsets.UTF_8));
+    File pwFile = tempFolder.newFile("pw-0x.txt");
+    Files.write(pwFile.toPath(), "test123456".getBytes(StandardCharsets.UTF_8));
+
+    CommandLine cmd = new CommandLine(new Toolkit());
+    int exitCode = cmd.execute("keystore", "import",
+        "--keystore-dir", dir.getAbsolutePath(),
+        "--key-file", keyFile.getAbsolutePath(),
+        "--password-file", pwFile.getAbsolutePath());
+
+    assertEquals("Import with 0x prefix should succeed", 0, exitCode);
+    File[] files = dir.listFiles((d, name) -> name.endsWith(".json"));
+    assertNotNull(files);
+    assertEquals(1, files.length);
+    Credentials creds = WalletUtils.loadCredentials("test123456", files[0], true);
+    assertEquals("Address must match", expectedAddress, creds.getAddress());
+  }
+
+  @Test
+  public void testImportWith0XUppercasePrefix() throws Exception {
+    File dir = tempFolder.newFolder("keystore-0X");
+    SignInterface keyPair = SignUtils.getGeneratedRandomSign(
+        SecureRandom.getInstance("NativePRNG"), true);
+    String privateKeyHex = ByteArray.toHexString(keyPair.getPrivateKey());
+
+    File keyFile = tempFolder.newFile("0X.key");
+    Files.write(keyFile.toPath(),
+        ("0X" + privateKeyHex).getBytes(StandardCharsets.UTF_8));
+    File pwFile = tempFolder.newFile("pw-0X.txt");
+    Files.write(pwFile.toPath(), "test123456".getBytes(StandardCharsets.UTF_8));
+
+    CommandLine cmd = new CommandLine(new Toolkit());
+    int exitCode = cmd.execute("keystore", "import",
+        "--keystore-dir", dir.getAbsolutePath(),
+        "--key-file", keyFile.getAbsolutePath(),
+        "--password-file", pwFile.getAbsolutePath());
+
+    assertEquals("Import with 0X prefix should succeed", 0, exitCode);
+  }
+
+  @Test
+  public void testImportWarnsOnCorruptedFile() throws Exception {
+    File dir = tempFolder.newFolder("keystore-corrupt");
+    SignInterface keyPair = SignUtils.getGeneratedRandomSign(
+        SecureRandom.getInstance("NativePRNG"), true);
+    String privateKeyHex = ByteArray.toHexString(keyPair.getPrivateKey());
+
+    // Create a corrupted JSON in the keystore dir
+    Files.write(new File(dir, "corrupted.json").toPath(),
+        "not valid json{{{".getBytes(StandardCharsets.UTF_8));
+
+    File keyFile = tempFolder.newFile("warn.key");
+    Files.write(keyFile.toPath(), privateKeyHex.getBytes(StandardCharsets.UTF_8));
+    File pwFile = tempFolder.newFile("pw-warn.txt");
+    Files.write(pwFile.toPath(), "test123456".getBytes(StandardCharsets.UTF_8));
+
+    java.io.StringWriter out = new java.io.StringWriter();
+    java.io.StringWriter err = new java.io.StringWriter();
+    CommandLine cmd = new CommandLine(new Toolkit());
+    cmd.setOut(new java.io.PrintWriter(out));
+    cmd.setErr(new java.io.PrintWriter(err));
+    int exitCode = cmd.execute("keystore", "import",
+        "--keystore-dir", dir.getAbsolutePath(),
+        "--key-file", keyFile.getAbsolutePath(),
+        "--password-file", pwFile.getAbsolutePath());
+
+    assertEquals(0, exitCode);
+    String errOutput = err.toString();
+    assertTrue("Should warn about corrupted file",
+        errOutput.contains("Warning: skipping unreadable file: corrupted.json"));
+  }
+
+  @Test
+  public void testImportKeystoreFilePermissions() throws Exception {
+    String os = System.getProperty("os.name").toLowerCase();
+    org.junit.Assume.assumeTrue("POSIX permissions test, skip on Windows",
+        !os.contains("win"));
+
+    File dir = tempFolder.newFolder("keystore-perms");
+    SignInterface keyPair = SignUtils.getGeneratedRandomSign(
+        SecureRandom.getInstance("NativePRNG"), true);
+    String privateKeyHex = ByteArray.toHexString(keyPair.getPrivateKey());
+
+    File keyFile = tempFolder.newFile("perm.key");
+    Files.write(keyFile.toPath(), privateKeyHex.getBytes(StandardCharsets.UTF_8));
+    File pwFile = tempFolder.newFile("pw-perm.txt");
+    Files.write(pwFile.toPath(), "test123456".getBytes(StandardCharsets.UTF_8));
+
+    CommandLine cmd = new CommandLine(new Toolkit());
+    int exitCode = cmd.execute("keystore", "import",
+        "--keystore-dir", dir.getAbsolutePath(),
+        "--key-file", keyFile.getAbsolutePath(),
+        "--password-file", pwFile.getAbsolutePath());
+
+    assertEquals(0, exitCode);
+    File[] files = dir.listFiles((d, name) -> name.endsWith(".json"));
+    assertNotNull(files);
+    assertEquals(1, files.length);
+
+    java.util.Set<java.nio.file.attribute.PosixFilePermission> perms =
+        Files.getPosixFilePermissions(files[0].toPath());
+    assertEquals("Keystore file should have owner-only permissions (rw-------)",
+        java.util.EnumSet.of(
+            java.nio.file.attribute.PosixFilePermission.OWNER_READ,
+            java.nio.file.attribute.PosixFilePermission.OWNER_WRITE),
+        perms);
   }
 }

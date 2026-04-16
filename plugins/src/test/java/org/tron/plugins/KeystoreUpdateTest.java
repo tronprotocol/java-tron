@@ -2,8 +2,12 @@ package org.tron.plugins;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.security.SecureRandom;
@@ -13,6 +17,7 @@ import org.junit.rules.TemporaryFolder;
 import org.tron.common.crypto.SignInterface;
 import org.tron.common.crypto.SignUtils;
 import org.tron.keystore.Credentials;
+import org.tron.keystore.WalletFile;
 import org.tron.keystore.WalletUtils;
 import picocli.CommandLine;
 
@@ -20,6 +25,8 @@ public class KeystoreUpdateTest {
 
   @Rule
   public TemporaryFolder tempFolder = new TemporaryFolder();
+
+  private static final ObjectMapper MAPPER = new ObjectMapper();
 
   @Test
   public void testUpdatePassword() throws Exception {
@@ -32,12 +39,10 @@ public class KeystoreUpdateTest {
     byte[] originalKey = keyPair.getPrivateKey();
     String fileName = WalletUtils.generateWalletFile(oldPassword, keyPair, dir, true);
 
-    // Read address from the generated file
     Credentials creds = WalletUtils.loadCredentials(oldPassword,
         new File(dir, fileName), true);
     String address = creds.getAddress();
 
-    // Create password file with old + new passwords
     File pwFile = tempFolder.newFile("passwords.txt");
     Files.write(pwFile.toPath(),
         (oldPassword + "\n" + newPassword).getBytes(StandardCharsets.UTF_8));
@@ -49,11 +54,16 @@ public class KeystoreUpdateTest {
 
     assertEquals("Exit code should be 0", 0, exitCode);
 
-    // Verify: new password works
+    // Verify: new password works and key survives
     Credentials updated = WalletUtils.loadCredentials(newPassword,
         new File(dir, fileName), true);
     assertArrayEquals("Key must survive password change",
         originalKey, updated.getSignInterface().getPrivateKey());
+
+    // Verify: address field preserved in keystore JSON
+    WalletFile wf = MAPPER.readValue(new File(dir, fileName), WalletFile.class);
+    assertEquals("Address must be preserved in updated keystore",
+        address, wf.getAddress());
   }
 
   @Test
@@ -73,12 +83,16 @@ public class KeystoreUpdateTest {
     Files.write(pwFile.toPath(),
         ("wrongpass1\nnewpass456").getBytes(StandardCharsets.UTF_8));
 
+    StringWriter err = new StringWriter();
     CommandLine cmd = new CommandLine(new Toolkit());
+    cmd.setErr(new PrintWriter(err));
     int exitCode = cmd.execute("keystore", "update", address,
         "--keystore-dir", dir.getAbsolutePath(),
         "--password-file", pwFile.getAbsolutePath());
 
     assertEquals("Should fail with wrong password", 1, exitCode);
+    assertTrue("Error should mention decryption",
+        err.toString().contains("Decryption failed"));
 
     // Verify: original password still works (file unchanged)
     Credentials unchanged = WalletUtils.loadCredentials(password,
@@ -91,7 +105,6 @@ public class KeystoreUpdateTest {
     File dir = tempFolder.newFolder("keystore-noaddr");
     String password = "test123456";
 
-    // Create a keystore so the dir isn't empty
     SignInterface keyPair = SignUtils.getGeneratedRandomSign(
         SecureRandom.getInstance("NativePRNG"), true);
     WalletUtils.generateWalletFile(password, keyPair, dir, true);
@@ -100,12 +113,16 @@ public class KeystoreUpdateTest {
     Files.write(pwFile.toPath(),
         ("test123456\nnewpass789").getBytes(StandardCharsets.UTF_8));
 
+    StringWriter err = new StringWriter();
     CommandLine cmd = new CommandLine(new Toolkit());
+    cmd.setErr(new PrintWriter(err));
     int exitCode = cmd.execute("keystore", "update", "TNonExistentAddress123456789",
         "--keystore-dir", dir.getAbsolutePath(),
         "--password-file", pwFile.getAbsolutePath());
 
     assertEquals("Should fail for non-existent address", 1, exitCode);
+    assertTrue("Error should mention no keystore found",
+        err.toString().contains("No keystore found for address"));
   }
 
   @Test
@@ -124,12 +141,16 @@ public class KeystoreUpdateTest {
     Files.write(pwFile.toPath(),
         (password + "\nabc").getBytes(StandardCharsets.UTF_8));
 
+    StringWriter err = new StringWriter();
     CommandLine cmd = new CommandLine(new Toolkit());
+    cmd.setErr(new PrintWriter(err));
     int exitCode = cmd.execute("keystore", "update", creds.getAddress(),
         "--keystore-dir", dir.getAbsolutePath(),
         "--password-file", pwFile.getAbsolutePath());
 
     assertEquals("Should fail with short new password", 1, exitCode);
+    assertTrue("Error should mention password length",
+        err.toString().contains("at least 6 characters"));
   }
 
   @Test
@@ -145,7 +166,6 @@ public class KeystoreUpdateTest {
     Credentials creds = WalletUtils.loadCredentials(oldPassword,
         new File(dir, fileName), true);
 
-    // Password file with Windows line endings \r\n
     File pwFile = tempFolder.newFile("crlf.txt");
     Files.write(pwFile.toPath(),
         (oldPassword + "\r\n" + newPassword + "\r\n").getBytes(StandardCharsets.UTF_8));
@@ -160,6 +180,270 @@ public class KeystoreUpdateTest {
     Credentials updated = WalletUtils.loadCredentials(newPassword,
         new File(dir, fileName), true);
     assertArrayEquals("Key must survive update with CRLF passwords",
+        originalKey, updated.getSignInterface().getPrivateKey());
+  }
+
+  @Test
+  public void testUpdateJsonOutput() throws Exception {
+    File dir = tempFolder.newFolder("keystore-json");
+    String oldPassword = "oldpass123";
+    String newPassword = "newpass456";
+
+    SignInterface keyPair = SignUtils.getGeneratedRandomSign(
+        SecureRandom.getInstance("NativePRNG"), true);
+    String fileName = WalletUtils.generateWalletFile(oldPassword, keyPair, dir, true);
+    Credentials creds = WalletUtils.loadCredentials(oldPassword,
+        new File(dir, fileName), true);
+
+    File pwFile = tempFolder.newFile("pw-json.txt");
+    Files.write(pwFile.toPath(),
+        (oldPassword + "\n" + newPassword).getBytes(StandardCharsets.UTF_8));
+
+    StringWriter out = new StringWriter();
+    StringWriter err = new StringWriter();
+    CommandLine cmd = new CommandLine(new Toolkit());
+    cmd.setOut(new PrintWriter(out));
+    cmd.setErr(new PrintWriter(err));
+    int exitCode = cmd.execute("keystore", "update", creds.getAddress(),
+        "--keystore-dir", dir.getAbsolutePath(),
+        "--password-file", pwFile.getAbsolutePath(),
+        "--json");
+
+    assertEquals(0, exitCode);
+    String output = out.toString().trim();
+    assertTrue("JSON should contain address",
+        output.contains("\"address\""));
+    assertTrue("JSON should contain status updated",
+        output.contains("\"updated\""));
+    assertTrue("JSON should contain file",
+        output.contains("\"file\""));
+  }
+
+  @Test
+  public void testUpdateWarnsOnCorruptedFile() throws Exception {
+    File dir = tempFolder.newFolder("keystore-corrupt");
+    String password = "test123456";
+
+    SignInterface keyPair = SignUtils.getGeneratedRandomSign(
+        SecureRandom.getInstance("NativePRNG"), true);
+    String fileName = WalletUtils.generateWalletFile(password, keyPair, dir, true);
+    Credentials creds = WalletUtils.loadCredentials(password,
+        new File(dir, fileName), true);
+
+    Files.write(new File(dir, "corrupted.json").toPath(),
+        "not valid json{{{".getBytes(StandardCharsets.UTF_8));
+
+    File pwFile = tempFolder.newFile("pw-corrupt.txt");
+    Files.write(pwFile.toPath(),
+        (password + "\nnewpass789").getBytes(StandardCharsets.UTF_8));
+
+    StringWriter out = new StringWriter();
+    StringWriter err = new StringWriter();
+    CommandLine cmd = new CommandLine(new Toolkit());
+    cmd.setOut(new PrintWriter(out));
+    cmd.setErr(new PrintWriter(err));
+    int exitCode = cmd.execute("keystore", "update", creds.getAddress(),
+        "--keystore-dir", dir.getAbsolutePath(),
+        "--password-file", pwFile.getAbsolutePath());
+
+    assertEquals(0, exitCode);
+    assertTrue("Should warn about corrupted file",
+        err.toString().contains("Warning: skipping unreadable file: corrupted.json"));
+  }
+
+  @Test
+  public void testUpdatePasswordFileOnlyOneLine() throws Exception {
+    File dir = tempFolder.newFolder("keystore-1line");
+    String password = "test123456";
+
+    SignInterface keyPair = SignUtils.getGeneratedRandomSign(
+        SecureRandom.getInstance("NativePRNG"), true);
+    String fileName = WalletUtils.generateWalletFile(password, keyPair, dir, true);
+    Credentials creds = WalletUtils.loadCredentials(password,
+        new File(dir, fileName), true);
+
+    File pwFile = tempFolder.newFile("oneline.txt");
+    Files.write(pwFile.toPath(),
+        "onlyoldpassword".getBytes(StandardCharsets.UTF_8));
+
+    StringWriter err = new StringWriter();
+    CommandLine cmd = new CommandLine(new Toolkit());
+    cmd.setErr(new PrintWriter(err));
+    int exitCode = cmd.execute("keystore", "update", creds.getAddress(),
+        "--keystore-dir", dir.getAbsolutePath(),
+        "--password-file", pwFile.getAbsolutePath());
+
+    assertEquals("Should fail with single-line password file", 1, exitCode);
+    assertTrue("Error should mention separate lines",
+        err.toString().contains("separate lines"));
+  }
+
+  @Test
+  public void testUpdateNoTtyNoPasswordFile() throws Exception {
+    File dir = tempFolder.newFolder("keystore-notty");
+    String password = "test123456";
+
+    SignInterface keyPair = SignUtils.getGeneratedRandomSign(
+        SecureRandom.getInstance("NativePRNG"), true);
+    String fileName = WalletUtils.generateWalletFile(password, keyPair, dir, true);
+    Credentials creds = WalletUtils.loadCredentials(password,
+        new File(dir, fileName), true);
+
+    StringWriter err = new StringWriter();
+    CommandLine cmd = new CommandLine(new Toolkit());
+    cmd.setErr(new PrintWriter(err));
+    int exitCode = cmd.execute("keystore", "update", creds.getAddress(),
+        "--keystore-dir", dir.getAbsolutePath());
+
+    assertEquals("Should fail when no TTY and no --password-file", 1, exitCode);
+    assertTrue("Error should mention no terminal",
+        err.toString().contains("No interactive terminal"));
+  }
+
+  @Test
+  public void testUpdatePasswordFileNotFound() throws Exception {
+    File dir = tempFolder.newFolder("keystore-nopwf");
+    String password = "test123456";
+
+    SignInterface keyPair = SignUtils.getGeneratedRandomSign(
+        SecureRandom.getInstance("NativePRNG"), true);
+    String fileName = WalletUtils.generateWalletFile(password, keyPair, dir, true);
+    Credentials creds = WalletUtils.loadCredentials(password,
+        new File(dir, fileName), true);
+
+    StringWriter err = new StringWriter();
+    CommandLine cmd = new CommandLine(new Toolkit());
+    cmd.setErr(new PrintWriter(err));
+    int exitCode = cmd.execute("keystore", "update", creds.getAddress(),
+        "--keystore-dir", dir.getAbsolutePath(),
+        "--password-file", "/tmp/nonexistent-pw-update.txt");
+
+    assertEquals("Should fail when password file not found", 1, exitCode);
+    assertTrue("Error should mention file not found",
+        err.toString().contains("Password file not found"));
+  }
+
+  @Test
+  public void testUpdateSm2Keystore() throws Exception {
+    File dir = tempFolder.newFolder("keystore-sm2");
+    String oldPassword = "oldpass123";
+    String newPassword = "newpass456";
+
+    SignInterface keyPair = SignUtils.getGeneratedRandomSign(
+        SecureRandom.getInstance("NativePRNG"), false);
+    byte[] originalKey = keyPair.getPrivateKey();
+    String fileName = WalletUtils.generateWalletFile(oldPassword, keyPair, dir, true);
+    Credentials creds = WalletUtils.loadCredentials(oldPassword,
+        new File(dir, fileName), false);
+
+    File pwFile = tempFolder.newFile("pw-sm2.txt");
+    Files.write(pwFile.toPath(),
+        (oldPassword + "\n" + newPassword).getBytes(StandardCharsets.UTF_8));
+
+    CommandLine cmd = new CommandLine(new Toolkit());
+    int exitCode = cmd.execute("keystore", "update", creds.getAddress(),
+        "--keystore-dir", dir.getAbsolutePath(),
+        "--password-file", pwFile.getAbsolutePath(),
+        "--sm2");
+
+    assertEquals("SM2 keystore update should succeed", 0, exitCode);
+
+    Credentials updated = WalletUtils.loadCredentials(newPassword,
+        new File(dir, fileName), false);
+    assertArrayEquals("SM2 key must survive password change",
+        originalKey, updated.getSignInterface().getPrivateKey());
+  }
+
+  @Test
+  public void testUpdateMultipleKeystoresSameAddress() throws Exception {
+    File dir = tempFolder.newFolder("keystore-multi");
+    String password = "test123456";
+
+    SignInterface keyPair = SignUtils.getGeneratedRandomSign(
+        SecureRandom.getInstance("NativePRNG"), true);
+    String address = Credentials.create(keyPair).getAddress();
+
+    // Create two keystores for the same address via direct API
+    WalletUtils.generateWalletFile(password, keyPair, dir, true);
+    // Small delay to get different filename timestamps
+    Thread.sleep(50);
+    WalletUtils.generateWalletFile(password, keyPair, dir, true);
+
+    File pwFile = tempFolder.newFile("pw-multi.txt");
+    Files.write(pwFile.toPath(),
+        (password + "\nnewpass789").getBytes(StandardCharsets.UTF_8));
+
+    StringWriter err = new StringWriter();
+    CommandLine cmd = new CommandLine(new Toolkit());
+    cmd.setErr(new PrintWriter(err));
+    int exitCode = cmd.execute("keystore", "update", address,
+        "--keystore-dir", dir.getAbsolutePath(),
+        "--password-file", pwFile.getAbsolutePath());
+
+    assertEquals("Should fail with multiple keystores for same address", 1, exitCode);
+    assertTrue("Error should mention multiple keystores",
+        err.toString().contains("Multiple keystores found"));
+    assertTrue("Error should mention remove duplicates",
+        err.toString().contains("remove duplicates"));
+  }
+
+  @Test
+  public void testUpdatePasswordFileTooLarge() throws Exception {
+    File dir = tempFolder.newFolder("keystore-bigpw");
+    String password = "test123456";
+
+    SignInterface keyPair = SignUtils.getGeneratedRandomSign(
+        SecureRandom.getInstance("NativePRNG"), true);
+    String fileName = WalletUtils.generateWalletFile(password, keyPair, dir, true);
+    Credentials creds = WalletUtils.loadCredentials(password,
+        new File(dir, fileName), true);
+
+    // Create a password file > 1KB
+    File pwFile = tempFolder.newFile("bigpw.txt");
+    byte[] bigContent = new byte[1025];
+    java.util.Arrays.fill(bigContent, (byte) 'a');
+    Files.write(pwFile.toPath(), bigContent);
+
+    StringWriter err = new StringWriter();
+    CommandLine cmd = new CommandLine(new Toolkit());
+    cmd.setErr(new PrintWriter(err));
+    int exitCode = cmd.execute("keystore", "update", creds.getAddress(),
+        "--keystore-dir", dir.getAbsolutePath(),
+        "--password-file", pwFile.getAbsolutePath());
+
+    assertEquals("Should fail with large password file", 1, exitCode);
+    assertTrue("Error should mention file too large",
+        err.toString().contains("too large"));
+  }
+
+  @Test
+  public void testUpdatePasswordFileWithBom() throws Exception {
+    File dir = tempFolder.newFolder("keystore-bom");
+    String oldPassword = "oldpass123";
+    String newPassword = "newpass456";
+
+    SignInterface keyPair = SignUtils.getGeneratedRandomSign(
+        SecureRandom.getInstance("NativePRNG"), true);
+    byte[] originalKey = keyPair.getPrivateKey();
+    String fileName = WalletUtils.generateWalletFile(oldPassword, keyPair, dir, true);
+    Credentials creds = WalletUtils.loadCredentials(oldPassword,
+        new File(dir, fileName), true);
+
+    // Password file with UTF-8 BOM
+    File pwFile = tempFolder.newFile("bom.txt");
+    Files.write(pwFile.toPath(),
+        ("\uFEFF" + oldPassword + "\n" + newPassword).getBytes(StandardCharsets.UTF_8));
+
+    CommandLine cmd = new CommandLine(new Toolkit());
+    int exitCode = cmd.execute("keystore", "update", creds.getAddress(),
+        "--keystore-dir", dir.getAbsolutePath(),
+        "--password-file", pwFile.getAbsolutePath());
+
+    assertEquals("Update with BOM password file should succeed", 0, exitCode);
+
+    Credentials updated = WalletUtils.loadCredentials(newPassword,
+        new File(dir, fileName), true);
+    assertArrayEquals("Key must survive update with BOM password file",
         originalKey, updated.getSignInterface().getPrivateKey());
   }
 }

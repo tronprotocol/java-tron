@@ -60,7 +60,6 @@ public class KeystoreNewTest {
     CommandLine cmd = new CommandLine(new Toolkit());
     cmd.setOut(new PrintWriter(out));
     cmd.setErr(new PrintWriter(err));
-
     int exitCode = cmd.execute("keystore", "new",
         "--keystore-dir", dir.getAbsolutePath(),
         "--password-file", pwFile.getAbsolutePath(),
@@ -80,12 +79,16 @@ public class KeystoreNewTest {
     File pwFile = tempFolder.newFile("short.txt");
     Files.write(pwFile.toPath(), "abc".getBytes(StandardCharsets.UTF_8));
 
+    StringWriter err = new StringWriter();
     CommandLine cmd = new CommandLine(new Toolkit());
+    cmd.setErr(new PrintWriter(err));
     int exitCode = cmd.execute("keystore", "new",
         "--keystore-dir", dir.getAbsolutePath(),
         "--password-file", pwFile.getAbsolutePath());
 
     assertEquals("Should fail with short password", 1, exitCode);
+    assertTrue("Error should mention password length",
+        err.toString().contains("at least 6 characters"));
   }
 
   @Test
@@ -125,12 +128,16 @@ public class KeystoreNewTest {
     File pwFile = tempFolder.newFile("empty.txt");
     Files.write(pwFile.toPath(), "".getBytes(StandardCharsets.UTF_8));
 
+    StringWriter err = new StringWriter();
     CommandLine cmd = new CommandLine(new Toolkit());
+    cmd.setErr(new PrintWriter(err));
     int exitCode = cmd.execute("keystore", "new",
         "--keystore-dir", dir.getAbsolutePath(),
         "--password-file", pwFile.getAbsolutePath());
 
     assertEquals("Should fail with empty password", 1, exitCode);
+    assertTrue("Error should mention password length",
+        err.toString().contains("at least 6 characters"));
   }
 
   @Test
@@ -202,5 +209,72 @@ public class KeystoreNewTest {
         "--password-file", pwFile.getAbsolutePath());
 
     assertEquals("Should fail when dir is a file", 1, exitCode);
+  }
+
+  @Test
+  public void testNewKeystorePasswordFileTooLarge() throws Exception {
+    File dir = tempFolder.newFolder("keystore-bigpw");
+    File pwFile = tempFolder.newFile("bigpw.txt");
+    byte[] bigContent = new byte[1025];
+    java.util.Arrays.fill(bigContent, (byte) 'a');
+    Files.write(pwFile.toPath(), bigContent);
+
+    StringWriter err = new StringWriter();
+    CommandLine cmd = new CommandLine(new Toolkit());
+    cmd.setErr(new PrintWriter(err));
+    int exitCode = cmd.execute("keystore", "new",
+        "--keystore-dir", dir.getAbsolutePath(),
+        "--password-file", pwFile.getAbsolutePath());
+
+    assertEquals("Should fail with large password file", 1, exitCode);
+    assertTrue("Error should mention file too large",
+        err.toString().contains("too large"));
+  }
+
+  @Test
+  public void testNewKeystorePasswordFileWithBom() throws Exception {
+    File dir = tempFolder.newFolder("keystore-bom");
+    File pwFile = tempFolder.newFile("bom.txt");
+    Files.write(pwFile.toPath(),
+        ("\uFEFF" + "test123456").getBytes(StandardCharsets.UTF_8));
+
+    CommandLine cmd = new CommandLine(new Toolkit());
+    int exitCode = cmd.execute("keystore", "new",
+        "--keystore-dir", dir.getAbsolutePath(),
+        "--password-file", pwFile.getAbsolutePath());
+
+    assertEquals("Should succeed with BOM password file", 0, exitCode);
+    File[] files = dir.listFiles((d, name) -> name.endsWith(".json"));
+    assertNotNull(files);
+    assertEquals(1, files.length);
+  }
+
+  @Test
+  public void testNewKeystoreFilePermissions() throws Exception {
+    String os = System.getProperty("os.name").toLowerCase();
+    org.junit.Assume.assumeTrue("POSIX permissions test, skip on Windows",
+        !os.contains("win"));
+
+    File dir = tempFolder.newFolder("keystore-perms");
+    File pwFile = tempFolder.newFile("pw-perms.txt");
+    Files.write(pwFile.toPath(), "test123456".getBytes(StandardCharsets.UTF_8));
+
+    CommandLine cmd = new CommandLine(new Toolkit());
+    int exitCode = cmd.execute("keystore", "new",
+        "--keystore-dir", dir.getAbsolutePath(),
+        "--password-file", pwFile.getAbsolutePath());
+
+    assertEquals(0, exitCode);
+    File[] files = dir.listFiles((d, name) -> name.endsWith(".json"));
+    assertNotNull(files);
+    assertEquals(1, files.length);
+
+    java.util.Set<java.nio.file.attribute.PosixFilePermission> perms =
+        Files.getPosixFilePermissions(files[0].toPath());
+    assertEquals("Keystore file should have owner-only permissions (rw-------)",
+        java.util.EnumSet.of(
+            java.nio.file.attribute.PosixFilePermission.OWNER_READ,
+            java.nio.file.attribute.PosixFilePermission.OWNER_WRITE),
+        perms);
   }
 }
