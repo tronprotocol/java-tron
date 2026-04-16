@@ -177,30 +177,33 @@ public class BlockChainMetricManager {
       Metrics.counterInc(MetricKeys.Counter.TXS, txCount,
           MetricLabels.Counter.TXS_SUCCESS, MetricLabels.Counter.TXS_SUCCESS);
     }
-    // Record transaction count distribution for all blocks (including empty blocks)
-    Metrics.histogramObserve(MetricKeys.Histogram.BLOCK_TRANSACTION_COUNT, txCount,
-        StringUtil.encode58Check(address));
+    if (Metrics.enabled()) {
+      // Record transaction count distribution for all blocks (including empty blocks)
+      Metrics.histogramObserve(MetricKeys.Histogram.BLOCK_TRANSACTION_COUNT, txCount,
+          StringUtil.encode58Check(address));
 
-    // SR set change detection
-    long nextMaintenanceTime = dbManager.getDynamicPropertiesStore().getNextMaintenanceTime();
-    if (lastNextMaintenanceTime == -1) {
-      lastNextMaintenanceTime = nextMaintenanceTime;
-      lastActiveWitnesses.addAll(chainBaseManager.getWitnessScheduleStore().getActiveWitnesses()
-          .stream().map(w -> StringUtil.encode58Check(w.toByteArray()))
-          .collect(Collectors.toSet()));
-    } else if (nextMaintenanceTime != lastNextMaintenanceTime) {
-      Set<String> currentWitnesses = chainBaseManager.getWitnessScheduleStore().getActiveWitnesses()
-          .stream()
-          .map(w -> StringUtil.encode58Check(w.toByteArray()))
-          .collect(Collectors.toSet());
-      if (nextMaintenanceTime < lastNextMaintenanceTime) {
-        // Fork rollback detected — reinitialize instead of diffing
-        lastActiveWitnesses.clear();
-        lastActiveWitnesses.addAll(currentWitnesses);
-      } else {
-        recordSrSetChange(currentWitnesses);
+      // SR set change detection
+      long nextMaintenanceTime = dbManager.getDynamicPropertiesStore().getNextMaintenanceTime();
+      if (lastNextMaintenanceTime == -1) {
+        lastNextMaintenanceTime = nextMaintenanceTime;
+        lastActiveWitnesses.addAll(chainBaseManager.getWitnessScheduleStore().getActiveWitnesses()
+            .stream().map(w -> StringUtil.encode58Check(w.toByteArray()))
+            .collect(Collectors.toSet()));
+      } else if (nextMaintenanceTime != lastNextMaintenanceTime) {
+        Set<String> currentWitnesses =
+            chainBaseManager.getWitnessScheduleStore().getActiveWitnesses()
+                .stream()
+                .map(w -> StringUtil.encode58Check(w.toByteArray()))
+                .collect(Collectors.toSet());
+        if (nextMaintenanceTime < lastNextMaintenanceTime) {
+          // Fork rollback detected — reinitialize instead of diffing
+          lastActiveWitnesses.clear();
+          lastActiveWitnesses.addAll(currentWitnesses);
+        } else {
+          recordSrSetChange(currentWitnesses);
+        }
+        lastNextMaintenanceTime = nextMaintenanceTime;
       }
-      lastNextMaintenanceTime = nextMaintenanceTime;
     }
   }
 
