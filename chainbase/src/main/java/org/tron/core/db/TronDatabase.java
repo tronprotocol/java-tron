@@ -85,8 +85,9 @@ public abstract class TronDatabase<T> implements ITronChainBase<T> {
       dbSource.closeDB();
     } catch (Exception e) {
       logger.warn("Failed to close dbSource in {}.", getName(), e);
+    } finally {
+      logger.info("******** End to close {}. ********", getName());
     }
-    logger.info("******** End to close {}. ********", getName());
   }
 
   public abstract void put(byte[] key, T item);
