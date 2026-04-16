@@ -5,9 +5,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-import java.lang.reflect.Field;
 import java.util.Map;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.tron.core.services.ratelimiter.adapter.DefaultBaseQqsAdapter;
 import org.tron.core.services.ratelimiter.adapter.GlobalPreemptibleAdapter;
@@ -22,36 +20,24 @@ import org.tron.core.services.ratelimiter.adapter.QpsRateLimiterAdapter;
  */
 public class RateLimiterServletWhitelistTest {
 
-  private static final String GLOBAL_PREEMPTIBLE  = GlobalPreemptibleAdapter.class.getSimpleName();
-  private static final String QPS_RATE_LIMITER    = QpsRateLimiterAdapter.class.getSimpleName();
-  private static final String IP_QPS_RATE_LIMITER = IPQPSRateLimiterAdapter.class.getSimpleName();
-  private static final String DEFAULT_BASE_QPS    = DefaultBaseQqsAdapter.class.getSimpleName();
-
-  private static Map<String, Class<? extends IRateLimiter>> allowedAdapters;
-
-  @SuppressWarnings("unchecked")
-  @BeforeClass
-  public static void loadWhitelist() throws Exception {
-    Field f = RateLimiterServlet.class.getDeclaredField("ALLOWED_ADAPTERS");
-    f.setAccessible(true);
-    allowedAdapters = (Map<String, Class<? extends IRateLimiter>>) f.get(null);
-  }
+  private static final Map<String, Class<? extends IRateLimiter>> allowedAdapters =
+      RateLimiterServlet.ALLOWED_ADAPTERS;
 
   @Test
   public void testWhitelistContents() {
-    assertNotNull(allowedAdapters.get(GLOBAL_PREEMPTIBLE));
-    assertNotNull(allowedAdapters.get(QPS_RATE_LIMITER));
-    assertNotNull(allowedAdapters.get(IP_QPS_RATE_LIMITER));
-    assertNotNull(allowedAdapters.get(DEFAULT_BASE_QPS));
+    assertNotNull(allowedAdapters.get(GlobalPreemptibleAdapter.class.getSimpleName()));
+    assertNotNull(allowedAdapters.get(QpsRateLimiterAdapter.class.getSimpleName()));
+    assertNotNull(allowedAdapters.get(IPQPSRateLimiterAdapter.class.getSimpleName()));
+    assertNotNull(allowedAdapters.get(DefaultBaseQqsAdapter.class.getSimpleName()));
 
     assertTrue(GlobalPreemptibleAdapter.class
-        .isAssignableFrom(allowedAdapters.get(GLOBAL_PREEMPTIBLE)));
+        .isAssignableFrom(allowedAdapters.get(GlobalPreemptibleAdapter.class.getSimpleName())));
     assertTrue(QpsRateLimiterAdapter.class
-        .isAssignableFrom(allowedAdapters.get(QPS_RATE_LIMITER)));
+        .isAssignableFrom(allowedAdapters.get(QpsRateLimiterAdapter.class.getSimpleName())));
     assertTrue(IPQPSRateLimiterAdapter.class
-        .isAssignableFrom(allowedAdapters.get(IP_QPS_RATE_LIMITER)));
+        .isAssignableFrom(allowedAdapters.get(IPQPSRateLimiterAdapter.class.getSimpleName())));
     assertTrue(DefaultBaseQqsAdapter.class
-        .isAssignableFrom(allowedAdapters.get(DEFAULT_BASE_QPS)));
+        .isAssignableFrom(allowedAdapters.get(DefaultBaseQqsAdapter.class.getSimpleName())));
   }
 
   @Test

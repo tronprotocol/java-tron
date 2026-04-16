@@ -144,14 +144,17 @@ public class ByteArray {
   }
 
   /**
-   * Max length for hex input to hexToBigInteger: 0x + 64 hex digits (uint256).
+   * Max allowed length for input to hexToBigInteger.
    */
-  private static final int MAX_HEX_BIG_INTEGER_LEN = 66;
+  private static final int MAX_HEX_BIG_INTEGER_LEN = 100;
 
   public static BigInteger hexToBigInteger(String input) {
-    if (input == null || input.length() > MAX_HEX_BIG_INTEGER_LEN) {
+    if (input == null) {
+      throw new IllegalArgumentException("hex input is null");
+    }
+    if (input.length() > MAX_HEX_BIG_INTEGER_LEN) {
       throw new IllegalArgumentException(
-          "hex input is null or exceeds max length: " + MAX_HEX_BIG_INTEGER_LEN);
+          "hex input exceeds max length: " + MAX_HEX_BIG_INTEGER_LEN);
     }
     if (input.startsWith("0x")) {
       return new BigInteger(input.substring(2), 16);

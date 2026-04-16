@@ -34,7 +34,7 @@ import org.tron.core.services.ratelimiter.strategy.QpsStrategy;
 public abstract class RateLimiterServlet extends HttpServlet {
   private static final String KEY_PREFIX_HTTP = "http_";
 
-  private static final Map<String, Class<? extends IRateLimiter>> ALLOWED_ADAPTERS;
+  static final Map<String, Class<? extends IRateLimiter>> ALLOWED_ADAPTERS;
   private static final String DEFAULT_ADAPTER_NAME = DefaultBaseQqsAdapter.class.getSimpleName();
 
   static {

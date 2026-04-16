@@ -108,19 +108,24 @@ public class ByteArrayTest {
 
   @Test
   public void testHexToBigIntegerRejectsOversizedInput() {
-    // 0x + 64 hex = 66 chars, valid uint256
-    String maxValid = "0x" + new String(new char[64]).replace('\0', 'f');
-    assertEquals(66, maxValid.length());
+    // 0x + 98 hex = 100 chars, at the limit
+    String maxValid = "0x" + new String(new char[98]).replace('\0', 'f');
+    assertEquals(100, maxValid.length());
     ByteArray.hexToBigInteger(maxValid); // should not throw
 
-    // 0x + 65 hex = 67 chars, exceeds limit
-    String tooLong = "0x" + new String(new char[65]).replace('\0', 'a');
+    // 0x + 99 hex = 101 chars, exceeds limit
+    String tooLong = "0x" + new String(new char[99]).replace('\0', 'a');
     try {
       ByteArray.hexToBigInteger(tooLong);
       fail("expected IllegalArgumentException");
     } catch (IllegalArgumentException e) {
       assertTrue(e.getMessage().contains("exceeds max length"));
     }
+  }
+
+  @Test(expected = NumberFormatException.class)
+  public void testHexToBigIntegerRejectsEmptyString() {
+    ByteArray.hexToBigInteger("");
   }
 
   @Test

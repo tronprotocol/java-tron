@@ -4,8 +4,6 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.google.protobuf.ByteString;
 
-import java.io.BufferedReader;
-import java.io.StringReader;
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.List;
@@ -71,6 +69,18 @@ public class UtilMockTest  {
       Assert.assertFalse(blockJson.getString("blockID").isEmpty());
       Assert.assertNotNull(blockJson.getJSONObject("block_header"));
     }
+  }
+
+  @Test
+  public void testPrintBlockToJSONEmptyTransactions() {
+    BlockCapsule blockCapsule = new BlockCapsule(1, Sha256Hash.ZERO_HASH,
+        System.currentTimeMillis(), Sha256Hash.ZERO_HASH.getByteString());
+    JSONObject json = Util.printBlockToJSON(blockCapsule.getInstance(), true);
+    Assert.assertTrue(json.containsKey("blockID"));
+    Assert.assertTrue(json.containsKey("block_header"));
+    Assert.assertFalse(json.containsKey("transactions"));
+    Assert.assertFalse(json.getString("blockID").isEmpty());
+    Assert.assertNotNull(json.getJSONObject("block_header"));
   }
 
   @Test
@@ -248,7 +258,6 @@ public class UtilMockTest  {
     Mockito.when(request.getContentType()).thenReturn("application/json");
 
     // plain text, not JSON
-    BufferedReader reader = new BufferedReader(new StringReader("not a json"));
     Mockito.when(request.getInputStream()).thenReturn(
         new javax.servlet.ServletInputStream() {
           private final java.io.InputStream in =
