@@ -526,17 +526,17 @@ public class JsonRpcApiUtil {
         || SAFE_STR.equalsIgnoreCase(tag);
   }
 
+  /**
+   * Parse a block tag (latest, earliest, finalized) to block number.
+   *
+   * <p>Note: for "latest", the returned block number may not yet be available in
+   * blockStore or blockIndexStore due to write ordering. Callers that need the
+   * actual block must handle the not-found case.</p>
+   */
   public static long parseBlockTag(String tag, Wallet wallet)
       throws JsonRpcInvalidParamsException {
     if (LATEST_STR.equalsIgnoreCase(tag)) {
-      // Use getNowBlock() to fetch the latest persisted block directly from blockStore,
-      // avoiding a race with updateDynamicProperties that updates latestBlockHeaderNumber
-      // before the block is written to blockStore/blockIndexStore.
-      Block block = wallet.getNowBlock();
-      if (block == null) {
-        return 0;
-      }
-      return block.getBlockHeader().getRawData().getNumber();
+      return wallet.getHeadBlockNum();
     }
     if (EARLIEST_STR.equalsIgnoreCase(tag)) {
       return 0;

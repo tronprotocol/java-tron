@@ -371,8 +371,8 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
     long blockNum;
     if (JsonRpcApiUtil.isBlockTag(blockNumOrTag)) {
       if (LATEST_STR.equalsIgnoreCase(blockNumOrTag)) {
-        // Read the head block directly from blockStore to avoid the window where
-        // getNowBlock() already sees the new head but getBlockByNum() still misses it.
+        // Return the head block directly from blockStore, bypassing blockIndexStore
+        // which may not yet be written when latestBlockHeaderNumber is already updated.
         return wallet.getNowBlock();
       }
       return wallet.getBlockByNum(JsonRpcApiUtil.parseBlockTag(blockNumOrTag, wallet));
@@ -971,7 +971,7 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
 
         long blockNumber;
         try {
-          blockNumber = ByteArray.hexToBigInteger(blockNumOrTag).longValue();
+          blockNumber = ByteArray.hexToBigInteger(blockNumOrTag).longValueExact();
         } catch (Exception e) {
           throw new JsonRpcInvalidParamsException(BLOCK_NUM_ERROR);
         }
