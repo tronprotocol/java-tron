@@ -168,6 +168,8 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
   private static final String NO_BLOCK_HEADER_BY_HASH = "header for hash not found";
 
   private static final String ERROR_SELECTOR = "08c379a0"; // Function selector for Error(string)
+  private static final int FILTER_PARALLEL_THRESHOLD = 10000;
+  private static final ForkJoinPool LOGS_FILTER_POOL = new ForkJoinPool(2);
   /**
    * thread pool of query section bloom store
    */
@@ -230,49 +232,59 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
       eventFilterMap = getEventFilter2ResultFull();
     }
 
-    ForkJoinPool pool = new ForkJoinPool(2); //parallelStream default num(CPU) -1
-    pool.submit(() -> eventFilterMap.entrySet().parallelStream().forEach(entry -> {
-
-      LogFilterAndResult logFilterAndResult = entry.getValue();
-      if (logFilterAndResult.isExpire()) {
-        eventFilterMap.remove(entry.getKey());
-        return;
-      }
-
-      long blockNumber = logsFilterCapsule.getBlockNumber();
-      long fromBlock = logFilterAndResult.getLogFilterWrapper().getFromBlock();
-      long toBlock = logFilterAndResult.getLogFilterWrapper().getToBlock();
-      if (!(fromBlock <= blockNumber && blockNumber <= toBlock)) {
-        return;
-      }
-
-      if (logsFilterCapsule.getBloom() != null && !logFilterAndResult.getLogFilterWrapper()
-          .getLogFilter().matchBloom(logsFilterCapsule.getBloom())) {
-        return;
-      }
-
-      LogFilter logFilter = logFilterAndResult.getLogFilterWrapper().getLogFilter();
-      List<LogFilterElement> elements =
-          LogMatch.matchBlock(logFilter, blockNumber, logsFilterCapsule.getBlockHash(),
-              logsFilterCapsule.getTxInfoList(), logsFilterCapsule.isRemoved());
-
-      List<LogFilterElement> localResults = new ArrayList<>(elements.size());
-      for (LogFilterElement element : elements) {
-        LogFilterElement cachedElement;
-        try {
-          // compare with hashcode() first, then with equals(). If not exist, put it.
-          cachedElement = logElementCache.get(element, () -> element);
-        } catch (ExecutionException e) {
-          logger.error("Getting/loading LogFilterElement from cache fails", e); // never happen
-          cachedElement = element;
-        }
-        localResults.add(cachedElement);
-      }
-      logFilterAndResult.getResult().addAll(localResults);
-    })).join();
+    if (eventFilterMap.size() <= FILTER_PARALLEL_THRESHOLD) {
+      eventFilterMap.entrySet().forEach(
+          entry -> processLogFilterEntry(entry, eventFilterMap, logsFilterCapsule));
+    } else {
+      LOGS_FILTER_POOL.submit(() -> eventFilterMap.entrySet().parallelStream()
+          .forEach(entry -> processLogFilterEntry(entry, eventFilterMap, logsFilterCapsule))
+      ).join();
+    }
     long t2 = System.currentTimeMillis();
     logger.info("handleLogsFilter {} cost {}, filter size {}",
         logsFilterCapsule.isSolidified() ? "Solidity" : "Full", t2 - t1, eventFilterMap.size());
+  }
+
+  private static void processLogFilterEntry(
+      Map.Entry<String, LogFilterAndResult> entry,
+      Map<String, LogFilterAndResult> eventFilterMap,
+      LogsFilterCapsule logsFilterCapsule) {
+    LogFilterAndResult logFilterAndResult = entry.getValue();
+    if (logFilterAndResult.isExpire()) {
+      eventFilterMap.remove(entry.getKey());
+      return;
+    }
+
+    long blockNumber = logsFilterCapsule.getBlockNumber();
+    long fromBlock = logFilterAndResult.getLogFilterWrapper().getFromBlock();
+    long toBlock = logFilterAndResult.getLogFilterWrapper().getToBlock();
+    if (!(fromBlock <= blockNumber && blockNumber <= toBlock)) {
+      return;
+    }
+
+    if (logsFilterCapsule.getBloom() != null && !logFilterAndResult.getLogFilterWrapper()
+        .getLogFilter().matchBloom(logsFilterCapsule.getBloom())) {
+      return;
+    }
+
+    LogFilter logFilter = logFilterAndResult.getLogFilterWrapper().getLogFilter();
+    List<LogFilterElement> elements =
+        LogMatch.matchBlock(logFilter, blockNumber, logsFilterCapsule.getBlockHash(),
+            logsFilterCapsule.getTxInfoList(), logsFilterCapsule.isRemoved());
+
+    List<LogFilterElement> localResults = new ArrayList<>(elements.size());
+    for (LogFilterElement element : elements) {
+      LogFilterElement cachedElement;
+      try {
+        // compare with hashcode() first, then with equals(). If not exist, put it.
+        cachedElement = logElementCache.get(element, () -> element);
+      } catch (ExecutionException e) {
+        logger.error("Getting/loading LogFilterElement from cache fails", e); // never happen
+        cachedElement = element;
+      }
+      localResults.add(cachedElement);
+    }
+    logFilterAndResult.getResult().addAll(localResults);
   }
 
   @Override
@@ -1414,7 +1426,7 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
     } else {
       eventFilter2Result = eventFilter2ResultSolidity;
     }
-    if (eventFilter2Result.size() > maxLogFilterNum) {
+    if (eventFilter2Result.size() >= maxLogFilterNum) {
       throw new JsonRpcExceedLimitException(
           "exceed max log filters: " + maxLogFilterNum + ", try again later");
     }
