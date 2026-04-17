@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.P2pException;
 import org.tron.core.exception.P2pException.TypeEnum;
@@ -44,7 +45,10 @@ public class InventoryMsgHandler implements TronMsgHandler {
       peer.getAdvInvReceive().put(item, System.currentTimeMillis());
       advService.addInv(item);
       if (type.equals(InventoryType.BLOCK) && peer.getAdvInvSpread().getIfPresent(item) == null) {
-        peer.setLastInteractiveTime(System.currentTimeMillis());
+        long headNum = tronNetDelegate.getHeadBlockId().getNum();
+        if (new BlockId(id).getNum() > headNum) {
+          peer.setLastInteractiveTime(System.currentTimeMillis());
+        }
       }
     }
   }

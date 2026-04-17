@@ -88,6 +88,10 @@ public class PeerConnection {
   @Setter
   private volatile long lastInteractiveTime;
 
+  @Setter
+  @Getter
+  private volatile long blockRcvTime;
+
   @Getter
   @Setter
   private volatile TronState tronState = TronState.INIT;
