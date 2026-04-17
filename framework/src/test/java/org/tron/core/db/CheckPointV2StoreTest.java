@@ -69,6 +69,24 @@ public class CheckPointV2StoreTest {
   }
 
   @Test
+  public void testCloseWhenDbSourceThrows() throws Exception {
+    CheckPointV2Store store = new CheckPointV2Store("test-close-dbsource-throws");
+
+    Field dbSourceField = TronDatabase.class.getDeclaredField("dbSource");
+    dbSourceField.setAccessible(true);
+    DbSourceInter<byte[]> originalDbSource = (DbSourceInter<byte[]>) dbSourceField.get(store);
+    DbSourceInter<byte[]> mockDbSource = mock(DbSourceInter.class);
+    doThrow(new RuntimeException("simulated dbSource failure")).when(mockDbSource).closeDB();
+    dbSourceField.set(store, mockDbSource);
+
+    try {
+      store.close();
+    } finally {
+      originalDbSource.closeDB();
+    }
+  }
+
+  @Test
   public void testCloseDbSourceWhenWriteOptionsThrows() throws Exception {
     CheckPointV2Store store = new CheckPointV2Store("test-close-exception");
 
