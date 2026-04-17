@@ -23,6 +23,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.tron.common.utils.ByteArray.fromHex;
 import static org.tron.common.utils.ByteArray.jsonHexToInt;
+import static org.tron.common.utils.ByteArray.jsonHexToLong;
 
 import java.math.BigInteger;
 import lombok.extern.slf4j.Slf4j;
@@ -97,14 +98,19 @@ public class ByteArrayTest {
   }
 
   @Test
-  public void testJsonHexToInt_ValidHex() {
-    try {
-      int result = jsonHexToInt("0x1A");
-      assertEquals(26, result);
-    } catch (Exception e) {
-      fail("Exception should not have been thrown for valid hex string.");
-    }
+  public void testJsonHexToInt_ValidHex() throws Exception {
+    assertEquals(26, jsonHexToInt("0x1A"));
     assertThrows(Exception.class, () -> ByteArray.jsonHexToInt("1A"));
+  }
+
+  @Test(expected = NullPointerException.class)
+  public void testJsonHexToIntNullThrowsNpe() throws Exception {
+    jsonHexToInt(null);
+  }
+
+  @Test(expected = NullPointerException.class)
+  public void testJsonHexToLongNullThrowsNpe() throws Exception {
+    jsonHexToLong(null);
   }
 
   @Test

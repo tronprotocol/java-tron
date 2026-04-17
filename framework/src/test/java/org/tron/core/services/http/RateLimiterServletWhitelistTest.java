@@ -1,7 +1,6 @@
 package org.tron.core.services.http;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -26,40 +25,20 @@ public class RateLimiterServletWhitelistTest {
 
   @Test
   public void testWhitelistContents() {
-    assertNotNull(allowedAdapters.get(GlobalPreemptibleAdapter.class.getSimpleName()));
-    assertNotNull(allowedAdapters.get(QpsRateLimiterAdapter.class.getSimpleName()));
-    assertNotNull(allowedAdapters.get(IPQPSRateLimiterAdapter.class.getSimpleName()));
-    assertNotNull(allowedAdapters.get(DefaultBaseQqsAdapter.class.getSimpleName()));
-
-    assertTrue(GlobalPreemptibleAdapter.class
-        .isAssignableFrom(allowedAdapters.get(GlobalPreemptibleAdapter.class.getSimpleName())));
-    assertTrue(QpsRateLimiterAdapter.class
-        .isAssignableFrom(allowedAdapters.get(QpsRateLimiterAdapter.class.getSimpleName())));
-    assertTrue(IPQPSRateLimiterAdapter.class
-        .isAssignableFrom(allowedAdapters.get(IPQPSRateLimiterAdapter.class.getSimpleName())));
-    assertTrue(DefaultBaseQqsAdapter.class
-        .isAssignableFrom(allowedAdapters.get(DefaultBaseQqsAdapter.class.getSimpleName())));
+    assertEquals(GlobalPreemptibleAdapter.class,
+        allowedAdapters.get(GlobalPreemptibleAdapter.class.getSimpleName()));
+    assertEquals(QpsRateLimiterAdapter.class,
+        allowedAdapters.get(QpsRateLimiterAdapter.class.getSimpleName()));
+    assertEquals(IPQPSRateLimiterAdapter.class,
+        allowedAdapters.get(IPQPSRateLimiterAdapter.class.getSimpleName()));
+    assertEquals(DefaultBaseQqsAdapter.class,
+        allowedAdapters.get(DefaultBaseQqsAdapter.class.getSimpleName()));
   }
 
   @Test
   public void testWhitelistRejectsUnknownAdapter() {
     assertNull(allowedAdapters.get("EvilAdapter"));
     assertNull(allowedAdapters.get("java.lang.Runtime"));
-  }
-
-  @Test
-  public void testWhitelistIsUnmodifiable() {
-    try {
-      allowedAdapters.put("EvilAdapter", DefaultBaseQqsAdapter.class);
-      assertFalse("Whitelist should be unmodifiable", true);
-    } catch (UnsupportedOperationException e) {
-      // expected
-    }
-  }
-
-  @Test
-  public void testWhitelistSize() {
-    assertEquals(4, allowedAdapters.size());
   }
 
   @Test

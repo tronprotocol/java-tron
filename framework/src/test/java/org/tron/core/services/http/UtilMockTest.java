@@ -279,48 +279,20 @@ public class UtilMockTest  {
 
   @Test
   public void testGetAddressWithInvalidJsonBody() throws Exception {
-    HttpServletRequest request = Mockito.mock(HttpServletRequest.class);
-    Mockito.when(request.getMethod()).thenReturn("POST");
-    Mockito.when(request.getContentType()).thenReturn("application/json");
-
-    // plain text, not JSON
-    Mockito.when(request.getInputStream()).thenReturn(
-        new javax.servlet.ServletInputStream() {
-          private final java.io.InputStream in =
-              new java.io.ByteArrayInputStream("not a json".getBytes());
-
-          @Override
-          public int read() throws java.io.IOException {
-            return in.read();
-          }
-
-          @Override
-          public boolean isFinished() {
-            return false;
-          }
-
-          @Override
-          public boolean isReady() {
-            return true;
-          }
-
-          @Override
-          public void setReadListener(javax.servlet.ReadListener l) {
-          }
-        });
-
-    byte[] address = Util.getAddress(request);
-    Assert.assertNull(address);
+    HttpServletRequest request = mockPostJsonRequest("not a json");
+    Assert.assertNull(Util.getAddress(request));
   }
 
   @Test
   public void testGetAddressWithJsonArrayBody() throws Exception {
+    HttpServletRequest request = mockPostJsonRequest("[\"address1\",\"address2\"]");
+    Assert.assertNull(Util.getAddress(request));
+  }
+
+  private HttpServletRequest mockPostJsonRequest(String body) throws Exception {
     HttpServletRequest request = Mockito.mock(HttpServletRequest.class);
     Mockito.when(request.getMethod()).thenReturn("POST");
     Mockito.when(request.getContentType()).thenReturn("application/json");
-
-    // JSON array instead of JSON object
-    String body = "[\"address1\",\"address2\"]";
     Mockito.when(request.getInputStream()).thenReturn(
         new javax.servlet.ServletInputStream() {
           private final java.io.InputStream in =
@@ -345,9 +317,7 @@ public class UtilMockTest  {
           public void setReadListener(javax.servlet.ReadListener l) {
           }
         });
-
-    byte[] address = Util.getAddress(request);
-    Assert.assertNull(address);
+    return request;
   }
 
   @Test
