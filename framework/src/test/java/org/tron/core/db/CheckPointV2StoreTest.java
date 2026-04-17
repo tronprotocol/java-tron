@@ -42,6 +42,13 @@ public class CheckPointV2StoreTest {
   }
 
   @Test
+  public void testCloseWithRealResources() {
+    CheckPointV2Store store = new CheckPointV2Store("test-close-real");
+    // Exercises the real writeOptions.close() and dbSource.closeDB() code paths
+    store.close();
+  }
+
+  @Test
   public void testCloseReleasesAllResources() throws Exception {
     CheckPointV2Store store = new CheckPointV2Store("test-close");
 
