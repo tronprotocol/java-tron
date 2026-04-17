@@ -77,6 +77,14 @@ public abstract class TronDatabase<T> implements ITronChainBase<T> {
   public void close() {
     logger.info("******** Begin to close {}. ********", getName());
     try {
+      doClose();
+    } finally {
+      logger.info("******** End to close {}. ********", getName());
+    }
+  }
+
+  protected void doClose() {
+    try {
       writeOptions.close();
     } catch (Exception e) {
       logger.warn("Failed to close writeOptions in {}.", getName(), e);
@@ -85,8 +93,6 @@ public abstract class TronDatabase<T> implements ITronChainBase<T> {
       dbSource.closeDB();
     } catch (Exception e) {
       logger.warn("Failed to close dbSource in {}.", getName(), e);
-    } finally {
-      logger.info("******** End to close {}. ********", getName());
     }
   }
 

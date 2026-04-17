@@ -62,19 +62,19 @@ public class CheckPointV2Store extends TronDatabase<byte[]> {
     this.dbSource.updateByBatch(rows, writeOptions);
   }
 
-  /**
-   * Closes the database and releases all resources.
-   * This method ensures that subclass-specific resources are cleaned up
-   * before delegating to the parent class for complete resource cleanup.
-   */
   @Override
   public void close() {
+    logger.debug("******** Begin to close {}. ********", getName());
     try {
       writeOptions.close();
     } catch (Exception e) {
       logger.warn("Failed to close writeOptions in {}.", getName(), e);
     }
-    super.close();
+    try {
+      doClose();
+    } finally {
+      logger.debug("******** End to close {}. ********", getName());
+    }
   }
 
 }
