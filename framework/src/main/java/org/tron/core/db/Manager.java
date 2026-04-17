@@ -1155,7 +1155,8 @@ public class Manager {
             | ValidateScheduleException
             | VMIllegalException
             | ZksnarkException
-            | BadBlockException e) {
+            | BadBlockException
+            | EventBloomException e) {
           logger.warn(e.getMessage(), e);
           exception = e;
           throw e;
