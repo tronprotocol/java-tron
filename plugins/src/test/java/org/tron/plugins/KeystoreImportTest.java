@@ -373,4 +373,33 @@ public class KeystoreImportTest {
             java.nio.file.attribute.PosixFilePermission.OWNER_WRITE),
         perms);
   }
+
+  @Test
+  public void testImportDuplicateCheckSkipsInvalidVersion() throws Exception {
+    File dir = tempFolder.newFolder("keystore-badver");
+    SignInterface keyPair = SignUtils.getGeneratedRandomSign(
+        SecureRandom.getInstance("NativePRNG"), true);
+    String privateKeyHex = ByteArray.toHexString(keyPair.getPrivateKey());
+    String address = Credentials.create(keyPair).getAddress();
+
+    // Create a JSON with correct address but wrong version — should NOT count as duplicate
+    String fakeKeystore = "{\"address\":\"" + address
+        + "\",\"version\":2,\"crypto\":{\"cipher\":\"aes-128-ctr\"}}";
+    Files.write(new File(dir, "fake.json").toPath(),
+        fakeKeystore.getBytes(StandardCharsets.UTF_8));
+
+    File keyFile = tempFolder.newFile("ver.key");
+    Files.write(keyFile.toPath(), privateKeyHex.getBytes(StandardCharsets.UTF_8));
+    File pwFile = tempFolder.newFile("pw-ver.txt");
+    Files.write(pwFile.toPath(), "test123456".getBytes(StandardCharsets.UTF_8));
+
+    CommandLine cmd = new CommandLine(new Toolkit());
+    int exitCode = cmd.execute("keystore", "import",
+        "--keystore-dir", dir.getAbsolutePath(),
+        "--key-file", keyFile.getAbsolutePath(),
+        "--password-file", pwFile.getAbsolutePath());
+
+    assertEquals("Import should succeed — invalid-version file is not a real duplicate", 0,
+        exitCode);
+  }
 }

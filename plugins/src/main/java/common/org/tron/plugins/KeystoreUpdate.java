@@ -82,7 +82,7 @@ public class KeystoreUpdate implements Callable<Integer> {
           if (content.length() > 0 && content.charAt(0) == '\uFEFF') {
             content = content.substring(1);
           }
-          String[] lines = content.split("\\r?\\n");
+          String[] lines = content.split("\\r?\\n|\\r");
           if (lines.length < 2) {
             err.println(
                 "Password file must contain old and new passwords"

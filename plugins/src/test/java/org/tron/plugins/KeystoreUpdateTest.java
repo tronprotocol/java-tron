@@ -446,4 +446,106 @@ public class KeystoreUpdateTest {
     assertArrayEquals("Key must survive update with BOM password file",
         originalKey, updated.getSignInterface().getPrivateKey());
   }
+
+  @Test
+  public void testUpdateNonExistentKeystoreDir() throws Exception {
+    File dir = new File(tempFolder.getRoot(), "does-not-exist");
+
+    File pwFile = tempFolder.newFile("pw-nodir.txt");
+    Files.write(pwFile.toPath(),
+        ("oldpass123\nnewpass456").getBytes(StandardCharsets.UTF_8));
+
+    StringWriter err = new StringWriter();
+    CommandLine cmd = new CommandLine(new Toolkit());
+    cmd.setErr(new PrintWriter(err));
+    int exitCode = cmd.execute("keystore", "update", "TSomeAddress",
+        "--keystore-dir", dir.getAbsolutePath(),
+        "--password-file", pwFile.getAbsolutePath());
+
+    assertEquals(1, exitCode);
+    assertTrue("Error should mention no keystore found",
+        err.toString().contains("No keystore found for address"));
+  }
+
+  @Test
+  public void testUpdateKeystoreDirIsFile() throws Exception {
+    File notADir = tempFolder.newFile("not-a-dir");
+
+    File pwFile = tempFolder.newFile("pw-notdir.txt");
+    Files.write(pwFile.toPath(),
+        ("oldpass123\nnewpass456").getBytes(StandardCharsets.UTF_8));
+
+    StringWriter err = new StringWriter();
+    CommandLine cmd = new CommandLine(new Toolkit());
+    cmd.setErr(new PrintWriter(err));
+    int exitCode = cmd.execute("keystore", "update", "TSomeAddress",
+        "--keystore-dir", notADir.getAbsolutePath(),
+        "--password-file", pwFile.getAbsolutePath());
+
+    assertEquals(1, exitCode);
+    assertTrue("Error should mention no keystore found",
+        err.toString().contains("No keystore found for address"));
+  }
+
+  @Test
+  public void testUpdateWithOldMacLineEndings() throws Exception {
+    File dir = tempFolder.newFolder("keystore-cr");
+    String oldPassword = "oldpass123";
+    String newPassword = "newpass456";
+
+    SignInterface keyPair = SignUtils.getGeneratedRandomSign(
+        SecureRandom.getInstance("NativePRNG"), true);
+    byte[] originalKey = keyPair.getPrivateKey();
+    String fileName = WalletUtils.generateWalletFile(oldPassword, keyPair, dir, true);
+    Credentials creds = WalletUtils.loadCredentials(oldPassword,
+        new File(dir, fileName), true);
+
+    // Password file with old Mac line endings (\r only)
+    File pwFile = tempFolder.newFile("cr.txt");
+    Files.write(pwFile.toPath(),
+        (oldPassword + "\r" + newPassword + "\r").getBytes(StandardCharsets.UTF_8));
+
+    CommandLine cmd = new CommandLine(new Toolkit());
+    int exitCode = cmd.execute("keystore", "update", creds.getAddress(),
+        "--keystore-dir", dir.getAbsolutePath(),
+        "--password-file", pwFile.getAbsolutePath());
+
+    assertEquals("Update with old Mac CR line endings should succeed", 0, exitCode);
+
+    Credentials updated = WalletUtils.loadCredentials(newPassword,
+        new File(dir, fileName), true);
+    assertArrayEquals("Key must survive update with CR passwords",
+        originalKey, updated.getSignInterface().getPrivateKey());
+  }
+
+  @Test
+  public void testUpdateSkipsInvalidVersionKeystores() throws Exception {
+    File dir = tempFolder.newFolder("keystore-badver");
+    String password = "test123456";
+
+    SignInterface keyPair = SignUtils.getGeneratedRandomSign(
+        SecureRandom.getInstance("NativePRNG"), true);
+    String address = Credentials.create(keyPair).getAddress();
+
+    // Create a JSON file with correct address but wrong version
+    String fakeKeystore = "{\"address\":\"" + address
+        + "\",\"version\":2,\"crypto\":{\"cipher\":\"aes-128-ctr\"}}";
+    Files.write(new File(dir, "fake.json").toPath(),
+        fakeKeystore.getBytes(StandardCharsets.UTF_8));
+
+    File pwFile = tempFolder.newFile("pw-badver.txt");
+    Files.write(pwFile.toPath(),
+        (password + "\nnewpass789").getBytes(StandardCharsets.UTF_8));
+
+    StringWriter err = new StringWriter();
+    CommandLine cmd = new CommandLine(new Toolkit());
+    cmd.setErr(new PrintWriter(err));
+    int exitCode = cmd.execute("keystore", "update", address,
+        "--keystore-dir", dir.getAbsolutePath(),
+        "--password-file", pwFile.getAbsolutePath());
+
+    assertEquals("Should not find keystore with wrong version", 1, exitCode);
+    assertTrue("Error should mention no keystore found",
+        err.toString().contains("No keystore found"));
+  }
 }

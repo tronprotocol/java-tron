@@ -206,4 +206,38 @@ public class KeystoreListTest {
     String output = out.toString().trim();
     assertTrue("Should still list the valid keystore", output.length() > 0);
   }
+
+  @Test
+  public void testListSkipsInvalidVersionKeystores() throws Exception {
+    File dir = tempFolder.newFolder("keystore-version");
+    String password = "test123456";
+
+    // Create one valid keystore
+    SignInterface key = SignUtils.getGeneratedRandomSign(
+        SecureRandom.getInstance("NativePRNG"), true);
+    WalletUtils.generateWalletFile(password, key, dir, false);
+
+    // Create a JSON with address and crypto but wrong version
+    String fakeV2 = "{\"address\":\"TFakeAddress\",\"version\":2,"
+        + "\"crypto\":{\"cipher\":\"aes-128-ctr\"}}";
+    Files.write(new File(dir, "v2-keystore.json").toPath(),
+        fakeV2.getBytes(StandardCharsets.UTF_8));
+
+    // Create a JSON with address but null crypto
+    String noCrypto = "{\"address\":\"TFakeAddress2\",\"version\":3}";
+    Files.write(new File(dir, "no-crypto.json").toPath(),
+        noCrypto.getBytes(StandardCharsets.UTF_8));
+
+    StringWriter out = new StringWriter();
+    CommandLine cmd = new CommandLine(new Toolkit());
+    cmd.setOut(new PrintWriter(out));
+    int exitCode = cmd.execute("keystore", "list",
+        "--keystore-dir", dir.getAbsolutePath());
+
+    assertEquals(0, exitCode);
+    String output = out.toString().trim();
+    String[] lines = output.split("\\n");
+    assertEquals("Should list only the valid v3 keystore, not v2 or no-crypto",
+        1, lines.length);
+  }
 }
