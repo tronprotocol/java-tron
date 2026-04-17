@@ -1,5 +1,6 @@
 package org.tron.core.services.http;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -58,7 +59,24 @@ public class RateLimiterServletWhitelistTest {
 
   @Test
   public void testWhitelistSize() {
-    assertTrue("Whitelist should contain exactly 4 adapters",
-        allowedAdapters.size() == 4);
+    assertEquals(4, allowedAdapters.size());
+  }
+
+  @Test
+  public void testUnknownAdapterFallsBackToDefault() throws Exception {
+    IRateLimiter limiter = RateLimiterServlet.buildAdapter(
+        "UnknownAdapter", "qps=100", "TestServlet");
+    assertNotNull(limiter);
+    assertTrue(limiter instanceof DefaultBaseQqsAdapter);
+  }
+
+  @Test
+  public void testEmptyStrategyResolvesToDefaultAdapter() throws Exception {
+    // When strategy is empty in config, addRateContainer resolves to DEFAULT_ADAPTER_NAME.
+    // Verify buildAdapter creates a DefaultBaseQqsAdapter for that resolved name.
+    IRateLimiter limiter = RateLimiterServlet.buildAdapter(
+        RateLimiterServlet.DEFAULT_ADAPTER_NAME, "qps=100", "TestServlet");
+    assertNotNull(limiter);
+    assertTrue(limiter instanceof DefaultBaseQqsAdapter);
   }
 }

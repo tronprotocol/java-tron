@@ -548,7 +548,7 @@ public class Util {
           if (jsonObject != null) {
             return jsonObject.getString(key);
           }
-        } catch (com.alibaba.fastjson.JSONException e) {
+        } catch (JSONException e) {
           logger.debug("Invalid JSON input: {}", e.getMessage());
         }
         return null;

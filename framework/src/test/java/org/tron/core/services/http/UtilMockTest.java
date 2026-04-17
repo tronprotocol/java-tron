@@ -66,7 +66,9 @@ public class UtilMockTest  {
       Assert.assertTrue(blockJson.containsKey("blockID"));
       Assert.assertTrue(blockJson.containsKey("block_header"));
       Assert.assertFalse(blockJson.getString("blockID").isEmpty());
-      Assert.assertNotNull(blockJson.getJSONObject("block_header"));
+      JSONObject blockHeader = blockJson.getJSONObject("block_header");
+      Assert.assertNotNull(blockHeader);
+      Assert.assertTrue(blockHeader.containsKey("raw_data"));
     }
   }
 
@@ -79,7 +81,9 @@ public class UtilMockTest  {
     Assert.assertTrue(json.containsKey("block_header"));
     Assert.assertFalse(json.containsKey("transactions"));
     Assert.assertFalse(json.getString("blockID").isEmpty());
-    Assert.assertNotNull(json.getJSONObject("block_header"));
+    JSONObject blockHeader = json.getJSONObject("block_header");
+    Assert.assertNotNull(blockHeader);
+    Assert.assertTrue(blockHeader.containsKey("raw_data"));
   }
 
   @Test
@@ -94,7 +98,9 @@ public class UtilMockTest  {
     Assert.assertTrue(json.containsKey("block_header"));
     Assert.assertTrue(json.containsKey("transactions"));
     Assert.assertFalse(json.getString("blockID").isEmpty());
-    Assert.assertNotNull(json.getJSONObject("block_header"));
+    JSONObject blockHeader = json.getJSONObject("block_header");
+    Assert.assertNotNull(blockHeader);
+    Assert.assertTrue(blockHeader.containsKey("raw_data"));
 
     JSONArray txArray = json.getJSONArray("transactions");
     Assert.assertEquals(1, txArray.size());

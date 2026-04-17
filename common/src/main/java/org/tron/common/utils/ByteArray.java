@@ -167,7 +167,7 @@ public class ByteArray {
   }
 
   public static long jsonHexToLong(String x) throws JsonRpcInvalidParamsException {
-    if (x == null || !x.startsWith("0x")) {
+    if (!x.startsWith("0x")) {
       throw new JsonRpcInvalidParamsException("Incorrect hex syntax");
     }
     x = x.substring(2);
@@ -175,7 +175,7 @@ public class ByteArray {
   }
 
   public static int jsonHexToInt(String x) throws Exception {
-    if (x == null || !x.startsWith("0x")) {
+    if (!x.startsWith("0x")) {
       throw new Exception("Incorrect hex syntax");
     }
     x = x.substring(2);

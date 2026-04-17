@@ -35,7 +35,7 @@ public abstract class RateLimiterServlet extends HttpServlet {
   private static final String KEY_PREFIX_HTTP = "http_";
 
   static final Map<String, Class<? extends IRateLimiter>> ALLOWED_ADAPTERS;
-  private static final String DEFAULT_ADAPTER_NAME = DefaultBaseQqsAdapter.class.getSimpleName();
+  static final String DEFAULT_ADAPTER_NAME = DefaultBaseQqsAdapter.class.getSimpleName();
 
   static {
     Map<String, Class<? extends IRateLimiter>> m = new HashMap<>();
@@ -67,16 +67,26 @@ public abstract class RateLimiterServlet extends HttpServlet {
         : item.getParams();
 
     try {
-      Class<? extends IRateLimiter> c = ALLOWED_ADAPTERS.get(cName);
-      if (c == null) {
-        throw new IllegalArgumentException(
-            "Unknown rate limiter adapter (not in whitelist): " + cName);
-      }
-      IRateLimiter rateLimiter = c.getConstructor(String.class).newInstance(params);
-      container.add(KEY_PREFIX_HTTP, name, rateLimiter);
+      container.add(KEY_PREFIX_HTTP, name, buildAdapter(cName, params, name));
     } catch (Exception e) {
       this.throwTronError(cName, params, name, e);
     }
+  }
+
+  static IRateLimiter buildAdapter(String cName, String params, String name) throws Exception {
+    Class<? extends IRateLimiter> c = ALLOWED_ADAPTERS.get(cName);
+    if (c != null) {
+      try {
+        return c.getConstructor(String.class).newInstance(params);
+      } catch (Exception e) {
+        logger.warn("Failed to create rate limiter '{}' for servlet '{}', "
+            + "falling back to default. Cause: {}", cName, name, e.getMessage());
+      }
+    } else {
+      logger.warn("Unknown rate limiter adapter '{}' for servlet '{}', "
+          + "falling back to default.", cName, name);
+    }
+    return new DefaultBaseQqsAdapter(QpsStrategy.DEFAULT_QPS_PARAM);
   }
 
   private void throwTronError(String strategy, String params, String servlet,  Exception e) {

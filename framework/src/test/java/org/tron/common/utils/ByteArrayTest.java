@@ -125,7 +125,7 @@ public class ByteArrayTest {
   }
 
   @Test(expected = NumberFormatException.class)
-  public void testHexToBigIntegerRejectsEmptyString() {
+  public void testHexToBigIntegerEmptyStringThrowsNumberFormatException() {
     ByteArray.hexToBigInteger("");
   }
 
