@@ -466,7 +466,7 @@ public interface TronJsonRpc {
 
     public LogFilterElement(String blockHash, Long blockNum, String txId, Integer txIndex,
         String contractAddress, List<DataWord> topicList, String logData, int logIdx,
-        boolean removed, long blockTimestamp) {
+        boolean removed, long blockTimestampMs) {
       logIndex = ByteArray.toJsonHex(logIdx);
       this.blockNumber = blockNum == null ? null : ByteArray.toJsonHex(blockNum);
       this.blockHash = blockHash == null ? null : ByteArray.toJsonHex(blockHash);
@@ -479,7 +479,7 @@ public interface TronJsonRpc {
         topics[i] = ByteArray.toJsonHex(topicList.get(i).getData());
       }
       this.removed = removed;
-      this.blockTimestamp = ByteArray.toJsonHex(blockTimestamp / 1000);
+      this.blockTimestamp = ByteArray.toJsonHex(blockTimestampMs / 1000);
     }
 
     @Override
