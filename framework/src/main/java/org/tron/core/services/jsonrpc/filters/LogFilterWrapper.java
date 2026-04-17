@@ -56,19 +56,19 @@ public class LogFilterWrapper {
       // Long.MAX_VALUE is an internal sentinel meaning "open upper bound"; it is never
       // treated as a real block number by later query stages.
       // Note: "latest" tag handling differs by strategy:
-      // - Strategy 2: toBlock="latest" → Long.MAX_VALUE (track future blocks)
-      // - Strategy 3: fromBlock="latest" → currentMaxBlockNum snapshot (bounded start)
-      // - Strategy 4: fromBlock="latest" → currentMaxBlockNum; toBlock="latest" → Long.MAX_VALUE
+      // - Strategy 2: toBlock="latest" -> Long.MAX_VALUE (track future blocks)
+      // - Strategy 3: fromBlock="latest" -> currentMaxBlockNum snapshot (bounded start)
+      // - Strategy 4: fromBlock="latest" -> currentMaxBlockNum; toBlock="latest" -> Long.MAX_VALUE
 
       boolean fromEmpty = StringUtils.isEmpty(fr.getFromBlock());
       boolean toEmpty = StringUtils.isEmpty(fr.getToBlock());
 
       if (fromEmpty && toEmpty) {
-        // Strategy 1: Both parameters omitted. Start at current head and track new blocks.
+        // Strategy 1: Both parameters omitted. Start at the current head and track new blocks.
         fromBlockSrc = currentMaxBlockNum;
         toBlockSrc = Long.MAX_VALUE;
 
-      } else if (fromEmpty && !toEmpty) {
+      } else if (fromEmpty) {
         // Strategy 2: Only toBlock specified.
         // If toBlock is "latest": track future blocks (fromBlock = currentMaxBlockNum,
         // toBlock = MAX_VALUE). If concrete: bounded query with fromBlock = min(toBlock,
@@ -80,16 +80,16 @@ public class LogFilterWrapper {
         }
         fromBlockSrc = min(toBlockSrc, currentMaxBlockNum);
 
-      } else if (!fromEmpty && toEmpty) {
+      } else if (toEmpty) {
         // Strategy 3: Only fromBlock specified. Start at fromBlock and track new blocks.
-        // If fromBlock is "latest", use snapshot (currentMaxBlockNum) as the starting point.
+        // If fromBlock is "latest", use the snapshot (currentMaxBlockNum) as the starting point.
         fromBlockSrc = LATEST_STR.equalsIgnoreCase(fr.getFromBlock()) ? currentMaxBlockNum
             : JsonRpcApiUtil.parseBlockNumber(fr.getFromBlock(), wallet);
         toBlockSrc = Long.MAX_VALUE;
 
       } else {
         // Strategy 4: Both parameters specified.
-        // If fromBlock is "latest": use snapshot (currentMaxBlockNum) as fixed start point.
+        // If fromBlock is "latest": use the snapshot (currentMaxBlockNum) as a fixed start point.
         // If toBlock is "latest": use Long.MAX_VALUE to track future blocks.
         // Otherwise: parse both as concrete block numbers
         fromBlockSrc = LATEST_STR.equalsIgnoreCase(fr.getFromBlock()) ? currentMaxBlockNum

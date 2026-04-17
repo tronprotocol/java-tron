@@ -540,6 +540,14 @@ public class JsonrpcServiceTest extends BaseTest {
     }
 
     try {
+      tronJsonRpc.getTrxBalance("", "safe");
+      Assert.fail("Expected to be thrown");
+    } catch (Exception e) {
+      Assert.assertEquals(TAG_NOT_SUPPORT_ERROR,
+          e.getMessage());
+    }
+
+    try {
       balance = tronJsonRpc.getTrxBalance("0xabd4b9367799eaa3197fecb144eb71de1e049abc",
           "latest");
     } catch (Exception e) {
@@ -573,6 +581,14 @@ public class JsonrpcServiceTest extends BaseTest {
       Assert.assertEquals(TAG_NOT_SUPPORT_ERROR,
           e.getMessage());
     }
+
+    try {
+      tronJsonRpc.getStorageAt("", "", "safe");
+      Assert.fail("Expected to be thrown");
+    } catch (Exception e) {
+      Assert.assertEquals(TAG_NOT_SUPPORT_ERROR,
+          e.getMessage());
+    }
   }
 
   @Test
@@ -600,6 +616,14 @@ public class JsonrpcServiceTest extends BaseTest {
       Assert.assertEquals(TAG_NOT_SUPPORT_ERROR,
           e.getMessage());
     }
+
+    try {
+      tronJsonRpc.getABIOfSmartContract("", "safe");
+      Assert.fail("Expected to be thrown");
+    } catch (Exception e) {
+      Assert.assertEquals(TAG_NOT_SUPPORT_ERROR,
+          e.getMessage());
+    }
   }
 
   @Test
@@ -622,6 +646,14 @@ public class JsonrpcServiceTest extends BaseTest {
 
     try {
       tronJsonRpc.getCall(null, "finalized");
+      Assert.fail("Expected to be thrown");
+    } catch (Exception e) {
+      Assert.assertEquals(TAG_NOT_SUPPORT_ERROR,
+          e.getMessage());
+    }
+
+    try {
+      tronJsonRpc.getCall(null, "safe");
       Assert.fail("Expected to be thrown");
     } catch (Exception e) {
       Assert.assertEquals(TAG_NOT_SUPPORT_ERROR,
