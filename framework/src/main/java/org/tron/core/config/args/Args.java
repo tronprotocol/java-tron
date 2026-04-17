@@ -459,12 +459,6 @@ public class Args extends CommonParameter {
    * Note: node.metricsEnable is handled in applyNodeConfig (it's a node-level field).
    */
   private static void applyMetricsConfig(MetricsConfig mc) {
-    PARAMETER.metricsStorageEnable = mc.isStorageEnable();
-    PARAMETER.influxDbIp = mc.getInfluxdb().getIp().isEmpty()
-        ? Constant.LOCAL_HOST : mc.getInfluxdb().getIp();
-    PARAMETER.influxDbPort = mc.getInfluxdb().getPort();
-    PARAMETER.influxDbDatabase = mc.getInfluxdb().getDatabase();
-    PARAMETER.metricsReportInterval = mc.getInfluxdb().getMetricsReportInterval();
     PARAMETER.metricsPrometheusEnable = mc.getPrometheus().isEnable();
     PARAMETER.metricsPrometheusPort = mc.getPrometheus().getPort();
   }
