@@ -211,7 +211,22 @@ public class Wallet {
     byte[] encryptKey = Arrays.copyOfRange(derivedKey, 0, 16);
     byte[] privateKey = performCipherOperation(Cipher.DECRYPT_MODE, iv, encryptKey, cipherText);
 
-    return SignUtils.fromPrivate(privateKey, ecKey);
+    SignInterface keyPair = SignUtils.fromPrivate(privateKey, ecKey);
+
+    // Enforce address consistency: if the keystore declares an address, it MUST match
+    // the address derived from the decrypted private key. Prevents address spoofing
+    // where a crafted keystore displays one address but encrypts a different key.
+    String declared = walletFile.getAddress();
+    if (declared != null && !declared.isEmpty()) {
+      String derived = StringUtil.encode58Check(keyPair.getAddress());
+      if (!declared.equals(derived)) {
+        throw new CipherException(
+            "Keystore address mismatch: file declares " + declared
+                + " but private key derives " + derived);
+      }
+    }
+
+    return keyPair;
   }
 
   static void validate(WalletFile walletFile) throws CipherException {
