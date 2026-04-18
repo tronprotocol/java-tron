@@ -548,4 +548,78 @@ public class KeystoreUpdateTest {
     assertTrue("Error should mention no keystore found",
         err.toString().contains("No keystore found"));
   }
+
+  @Test
+  public void testUpdateRejectsTamperedAddressKeystore() throws Exception {
+    File dir = tempFolder.newFolder("keystore-tampered");
+    String password = "test123456";
+
+    // Create a real keystore, then tamper with the address field to simulate
+    // a spoofed keystore that claims a different address than its encrypted key.
+    SignInterface keyPair = SignUtils.getGeneratedRandomSign(
+        SecureRandom.getInstance("NativePRNG"), true);
+    String fileName = WalletUtils.generateWalletFile(password, keyPair, dir, true);
+    File keystoreFile = new File(dir, fileName);
+
+    String realAddress = Credentials.create(keyPair).getAddress();
+    String spoofedAddress = "TSpoofedAddressXXXXXXXXXXXXXXXXXXXX";
+
+    com.fasterxml.jackson.databind.ObjectMapper mapper =
+        new com.fasterxml.jackson.databind.ObjectMapper()
+            .configure(com.fasterxml.jackson.databind.DeserializationFeature
+                .FAIL_ON_UNKNOWN_PROPERTIES, false);
+    org.tron.keystore.WalletFile wf = mapper.readValue(keystoreFile,
+        org.tron.keystore.WalletFile.class);
+    wf.setAddress(spoofedAddress);
+    mapper.writeValue(keystoreFile, wf);
+
+    File pwFile = tempFolder.newFile("pw-tampered.txt");
+    Files.write(pwFile.toPath(),
+        (password + "\nnewpass789").getBytes(StandardCharsets.UTF_8));
+
+    StringWriter err = new StringWriter();
+    CommandLine cmd = new CommandLine(new Toolkit());
+    cmd.setErr(new PrintWriter(err));
+    int exitCode = cmd.execute("keystore", "update", spoofedAddress,
+        "--keystore-dir", dir.getAbsolutePath(),
+        "--password-file", pwFile.getAbsolutePath());
+
+    assertEquals("Should fail decryption on tampered address", 1, exitCode);
+    assertTrue("Error should mention address mismatch, got: " + err.toString(),
+        err.toString().contains("address mismatch"));
+  }
+
+  @Test
+  public void testUpdatePreservesCorrectDerivedAddress() throws Exception {
+    // After update, the keystore's address field should be the derived address,
+    // not carried over from the original JSON (defense-in-depth against any
+    // residual spoofed address that somehow passed decryption).
+    File dir = tempFolder.newFolder("keystore-derived");
+    String oldPassword = "oldpass123";
+    String newPassword = "newpass456";
+
+    SignInterface keyPair = SignUtils.getGeneratedRandomSign(
+        SecureRandom.getInstance("NativePRNG"), true);
+    String fileName = WalletUtils.generateWalletFile(oldPassword, keyPair, dir, true);
+    String originalAddress = Credentials.create(keyPair).getAddress();
+
+    File pwFile = tempFolder.newFile("pw-derived.txt");
+    Files.write(pwFile.toPath(),
+        (oldPassword + "\n" + newPassword).getBytes(StandardCharsets.UTF_8));
+
+    CommandLine cmd = new CommandLine(new Toolkit());
+    int exitCode = cmd.execute("keystore", "update", originalAddress,
+        "--keystore-dir", dir.getAbsolutePath(),
+        "--password-file", pwFile.getAbsolutePath());
+
+    assertEquals(0, exitCode);
+
+    // Verify updated file has the derived address
+    com.fasterxml.jackson.databind.ObjectMapper mapper =
+        new com.fasterxml.jackson.databind.ObjectMapper();
+    org.tron.keystore.WalletFile wf = mapper.readValue(new File(dir, fileName),
+        org.tron.keystore.WalletFile.class);
+    assertEquals("Updated keystore address must match derived address",
+        originalAddress, wf.getAddress());
+  }
 }

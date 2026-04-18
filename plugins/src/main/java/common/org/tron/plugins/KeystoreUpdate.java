@@ -144,8 +144,10 @@ public class KeystoreUpdate implements Callable<Integer> {
       WalletFile walletFile = MAPPER.readValue(keystoreFile, WalletFile.class);
       SignInterface keyPair = Wallet.decrypt(oldPassword, walletFile, ecKey);
 
+      // createStandard already sets the correctly-derived address. Do NOT override
+      // with walletFile.getAddress() — that would propagate a potentially spoofed
+      // address from the JSON.
       WalletFile newWalletFile = Wallet.createStandard(newPassword, keyPair);
-      newWalletFile.setAddress(walletFile.getAddress());
       // Write to temp file first, then atomic rename to prevent corruption
       File tempFile = File.createTempFile("keystore-", ".tmp",
           keystoreFile.getParentFile());
@@ -161,13 +163,18 @@ public class KeystoreUpdate implements Callable<Integer> {
         throw e;
       }
 
+      // Use the derived address from newWalletFile, not walletFile.getAddress().
+      // Defense-in-depth: Wallet.decrypt already rejects spoofed addresses, but
+      // relying on the derived value keeps this code correct even if that check
+      // is ever weakened.
+      String verifiedAddress = newWalletFile.getAddress();
       if (json) {
         KeystoreCliUtils.printJson(out, err, KeystoreCliUtils.jsonMap(
-            "address", walletFile.getAddress(),
+            "address", verifiedAddress,
             "file", keystoreFile.getName(),
             "status", "updated"));
       } else {
-        out.println("Password updated for: " + walletFile.getAddress());
+        out.println("Password updated for: " + verifiedAddress);
       }
       return 0;
     } catch (CipherException e) {
