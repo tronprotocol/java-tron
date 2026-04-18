@@ -193,6 +193,8 @@ List all keystore files in a directory.
   java -jar Toolkit.jar keystore list --keystore-dir /data/keystores   # custom directory
 ```
 
+> **Note**: `list` displays the `address` field as declared in each keystore JSON without decrypting the file. A tampered keystore can claim an address that does not correspond to its encrypted private key. The address is only cryptographically verified at decryption time (e.g. by `update` or by tools that load the credentials). Only trust keystores from sources you control.
+
 #### keystore update
 
 Change the password of a keystore file.
