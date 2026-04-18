@@ -622,4 +622,53 @@ public class KeystoreUpdateTest {
     assertEquals("Updated keystore address must match derived address",
         originalAddress, wf.getAddress());
   }
+
+  @Test
+  public void testUpdateNarrowsLoosePermissionsTo0600() throws Exception {
+    // Adversarial test: pre-loosen the keystore to 0644, then verify that
+    // update writes the file back with 0600. This exercises the temp-file
+    // + atomic-rename path rather than merely preserving existing perms.
+    String os = System.getProperty("os.name").toLowerCase();
+    org.junit.Assume.assumeTrue("POSIX permissions test, skip on Windows",
+        !os.contains("win"));
+
+    File dir = tempFolder.newFolder("keystore-perms");
+    String oldPassword = "oldpass123";
+    String newPassword = "newpass456";
+
+    SignInterface keyPair = SignUtils.getGeneratedRandomSign(
+        SecureRandom.getInstance("NativePRNG"), true);
+    String fileName = WalletUtils.generateWalletFile(oldPassword, keyPair, dir, true);
+    Credentials creds = WalletUtils.loadCredentials(oldPassword,
+        new File(dir, fileName), true);
+
+    // Deliberately loosen to 0644 before update
+    java.nio.file.Path keystorePath = new File(dir, fileName).toPath();
+    java.nio.file.Files.setPosixFilePermissions(keystorePath,
+        java.util.EnumSet.of(
+            java.nio.file.attribute.PosixFilePermission.OWNER_READ,
+            java.nio.file.attribute.PosixFilePermission.OWNER_WRITE,
+            java.nio.file.attribute.PosixFilePermission.GROUP_READ,
+            java.nio.file.attribute.PosixFilePermission.OTHERS_READ));
+
+    File pwFile = tempFolder.newFile("pw-perms.txt");
+    Files.write(pwFile.toPath(),
+        (oldPassword + "\n" + newPassword).getBytes(StandardCharsets.UTF_8));
+
+    CommandLine cmd = new CommandLine(new Toolkit());
+    int exitCode = cmd.execute("keystore", "update", creds.getAddress(),
+        "--keystore-dir", dir.getAbsolutePath(),
+        "--password-file", pwFile.getAbsolutePath());
+
+    assertEquals(0, exitCode);
+
+    // Verify the updated keystore file is now owner-only (0600), not 0644
+    java.util.Set<java.nio.file.attribute.PosixFilePermission> perms =
+        java.nio.file.Files.getPosixFilePermissions(keystorePath);
+    assertEquals("Updated keystore must be narrowed to owner-only (rw-------)",
+        java.util.EnumSet.of(
+            java.nio.file.attribute.PosixFilePermission.OWNER_READ,
+            java.nio.file.attribute.PosixFilePermission.OWNER_WRITE),
+        perms);
+  }
 }

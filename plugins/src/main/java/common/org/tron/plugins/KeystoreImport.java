@@ -15,6 +15,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.core.exception.CipherException;
 import org.tron.keystore.Credentials;
 import org.tron.keystore.WalletFile;
+import org.tron.keystore.WalletUtils;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
@@ -99,8 +100,8 @@ public class KeystoreImport implements Callable<Integer> {
             + ". Use --force to import anyway.");
         return 1;
       }
-      String fileName = KeystoreCliUtils.generateKeystoreFile(
-          password, keyPair, keystoreDir, true, err);
+      String fileName = WalletUtils.generateWalletFile(
+          password, keyPair, keystoreDir, true);
       if (json) {
         KeystoreCliUtils.printJson(out, err, KeystoreCliUtils.jsonMap(
             "address", address, "file", fileName));

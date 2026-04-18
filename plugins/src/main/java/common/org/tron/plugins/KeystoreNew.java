@@ -8,6 +8,7 @@ import org.tron.common.crypto.SignUtils;
 import org.tron.common.utils.Utils;
 import org.tron.core.exception.CipherException;
 import org.tron.keystore.Credentials;
+import org.tron.keystore.WalletUtils;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
@@ -52,8 +53,8 @@ public class KeystoreNew implements Callable<Integer> {
 
       boolean ecKey = !sm2;
       SignInterface keyPair = SignUtils.getGeneratedRandomSign(Utils.getRandom(), ecKey);
-      String fileName = KeystoreCliUtils.generateKeystoreFile(
-          password, keyPair, keystoreDir, true, err);
+      String fileName = WalletUtils.generateWalletFile(
+          password, keyPair, keystoreDir, true);
 
       String address = Credentials.create(keyPair).getAddress();
       if (json) {

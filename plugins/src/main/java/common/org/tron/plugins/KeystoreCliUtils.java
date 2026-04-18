@@ -8,16 +8,9 @@ import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
-import java.nio.file.attribute.PosixFilePermission;
 import java.util.Arrays;
-import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Set;
-import org.tron.common.crypto.SignInterface;
-import org.tron.core.exception.CipherException;
-import org.tron.keystore.Wallet;
 import org.tron.keystore.WalletFile;
 import org.tron.keystore.WalletUtils;
 
@@ -26,61 +19,9 @@ import org.tron.keystore.WalletUtils;
  */
 final class KeystoreCliUtils {
 
-  private static final Set<PosixFilePermission> OWNER_ONLY = EnumSet.of(
-      PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE);
-
   private static final long MAX_FILE_SIZE = 1024;
 
   private KeystoreCliUtils() {
-  }
-
-  /**
-   * Generate a keystore file using temp-file + atomic-rename to avoid
-   * a TOCTOU window where the file is world-readable before permissions are set.
-   *
-   * @return the final keystore file name (not the full path)
-   */
-  static String generateKeystoreFile(String password, SignInterface keyPair,
-      File destDir, boolean useFullScrypt, PrintWriter err)
-      throws CipherException, IOException {
-
-    WalletFile walletFile;
-    if (useFullScrypt) {
-      walletFile = Wallet.createStandard(password, keyPair);
-    } else {
-      walletFile = Wallet.createLight(password, keyPair);
-    }
-
-    String fileName = WalletUtils.getWalletFileName(walletFile);
-    File destination = new File(destDir, fileName);
-
-    File tempFile = File.createTempFile("keystore-", ".tmp", destDir);
-    try {
-      setOwnerOnly(tempFile, err);
-      MAPPER.writeValue(tempFile, walletFile);
-      atomicMove(tempFile, destination);
-    } catch (Exception e) {
-      if (!tempFile.delete()) {
-        err.println("Warning: could not delete temp file: " + tempFile.getName());
-      }
-      throw e;
-    }
-
-    return fileName;
-  }
-
-  /**
-   * Atomic move with fallback for filesystems that don't support it.
-   */
-  static void atomicMove(File source, File target) throws IOException {
-    try {
-      Files.move(source.toPath(), target.toPath(),
-          StandardCopyOption.REPLACE_EXISTING,
-          StandardCopyOption.ATOMIC_MOVE);
-    } catch (java.nio.file.AtomicMoveNotSupportedException e) {
-      Files.move(source.toPath(), target.toPath(),
-          StandardCopyOption.REPLACE_EXISTING);
-    }
   }
 
   static String readPassword(File passwordFile, PrintWriter err) throws IOException {
@@ -227,14 +168,5 @@ final class KeystoreCliUtils {
     return wf.getAddress() != null
         && wf.getCrypto() != null
         && wf.getVersion() == 3;
-  }
-
-  static void setOwnerOnly(File file, PrintWriter err) {
-    try {
-      Files.setPosixFilePermissions(file.toPath(), OWNER_ONLY);
-    } catch (UnsupportedOperationException | IOException e) {
-      err.println("Warning: could not set file permissions on " + file.getName()
-          + ". Please manually restrict access to this file.");
-    }
   }
 }

@@ -11,13 +11,10 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.security.SecureRandom;
 import java.util.Map;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import org.tron.common.crypto.SignInterface;
-import org.tron.common.crypto.SignUtils;
 import org.tron.keystore.WalletFile;
 
 public class KeystoreCliUtilsTest {
@@ -259,92 +256,4 @@ public class KeystoreCliUtilsTest {
     assertTrue(s.contains("REMEMBER"));
   }
 
-  @Test
-  public void testAtomicMove() throws Exception {
-    File src = tempFolder.newFile("src.txt");
-    Files.write(src.toPath(), "hello".getBytes(StandardCharsets.UTF_8));
-    File target = new File(tempFolder.getRoot(), "target.txt");
-
-    KeystoreCliUtils.atomicMove(src, target);
-    assertFalse(src.exists());
-    assertTrue(target.exists());
-    assertEquals("hello",
-        new String(Files.readAllBytes(target.toPath()), StandardCharsets.UTF_8));
-  }
-
-  @Test
-  public void testAtomicMoveReplacesExisting() throws Exception {
-    File src = tempFolder.newFile("src2.txt");
-    Files.write(src.toPath(), "new".getBytes(StandardCharsets.UTF_8));
-    File target = tempFolder.newFile("target2.txt");
-    Files.write(target.toPath(), "old".getBytes(StandardCharsets.UTF_8));
-
-    KeystoreCliUtils.atomicMove(src, target);
-    assertEquals("new",
-        new String(Files.readAllBytes(target.toPath()), StandardCharsets.UTF_8));
-  }
-
-  @Test
-  public void testGenerateKeystoreFileFullScrypt() throws Exception {
-    File dir = tempFolder.newFolder("gen-full");
-    SignInterface keyPair = SignUtils.getGeneratedRandomSign(
-        SecureRandom.getInstance("NativePRNG"), true);
-    StringWriter err = new StringWriter();
-
-    String fileName = KeystoreCliUtils.generateKeystoreFile(
-        "password123", keyPair, dir, true, new PrintWriter(err));
-
-    assertNotNull(fileName);
-    assertTrue(fileName.endsWith(".json"));
-    File file = new File(dir, fileName);
-    assertTrue(file.exists());
-  }
-
-  @Test
-  public void testGenerateKeystoreFileLightScrypt() throws Exception {
-    File dir = tempFolder.newFolder("gen-light");
-    SignInterface keyPair = SignUtils.getGeneratedRandomSign(
-        SecureRandom.getInstance("NativePRNG"), true);
-    StringWriter err = new StringWriter();
-
-    String fileName = KeystoreCliUtils.generateKeystoreFile(
-        "password123", keyPair, dir, false, new PrintWriter(err));
-
-    assertNotNull(fileName);
-    File file = new File(dir, fileName);
-    assertTrue(file.exists());
-  }
-
-  @Test
-  public void testGenerateKeystoreFileLeavesNoTempFile() throws Exception {
-    File dir = tempFolder.newFolder("gen-notemp");
-    SignInterface keyPair = SignUtils.getGeneratedRandomSign(
-        SecureRandom.getInstance("NativePRNG"), true);
-    StringWriter err = new StringWriter();
-
-    KeystoreCliUtils.generateKeystoreFile(
-        "password123", keyPair, dir, false, new PrintWriter(err));
-
-    File[] tempFiles = dir.listFiles((d, name) -> name.startsWith("keystore-")
-        && name.endsWith(".tmp"));
-    assertNotNull(tempFiles);
-    assertEquals("No temp files should remain after generation", 0, tempFiles.length);
-  }
-
-  @Test
-  public void testSetOwnerOnly() throws Exception {
-    String os = System.getProperty("os.name").toLowerCase();
-    org.junit.Assume.assumeTrue("POSIX permissions test", !os.contains("win"));
-
-    File f = tempFolder.newFile("perm-test.txt");
-    StringWriter err = new StringWriter();
-    KeystoreCliUtils.setOwnerOnly(f, new PrintWriter(err));
-
-    java.util.Set<java.nio.file.attribute.PosixFilePermission> perms =
-        Files.getPosixFilePermissions(f.toPath());
-    assertEquals(java.util.EnumSet.of(
-        java.nio.file.attribute.PosixFilePermission.OWNER_READ,
-        java.nio.file.attribute.PosixFilePermission.OWNER_WRITE),
-        perms);
-  }
 }

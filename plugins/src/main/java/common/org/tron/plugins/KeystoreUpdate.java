@@ -148,20 +148,8 @@ public class KeystoreUpdate implements Callable<Integer> {
       // with walletFile.getAddress() — that would propagate a potentially spoofed
       // address from the JSON.
       WalletFile newWalletFile = Wallet.createStandard(newPassword, keyPair);
-      // Write to temp file first, then atomic rename to prevent corruption
-      File tempFile = File.createTempFile("keystore-", ".tmp",
-          keystoreFile.getParentFile());
-      try {
-        KeystoreCliUtils.setOwnerOnly(tempFile, err);
-        MAPPER.writeValue(tempFile, newWalletFile);
-        KeystoreCliUtils.atomicMove(tempFile, keystoreFile);
-      } catch (Exception e) {
-        if (!tempFile.delete()) {
-          err.println("Warning: could not delete temp file: "
-              + tempFile.getName());
-        }
-        throw e;
-      }
+      // writeWalletFile does a secure temp-file + atomic rename internally.
+      WalletUtils.writeWalletFile(newWalletFile, keystoreFile);
 
       // Use the derived address from newWalletFile, not walletFile.getAddress().
       // Defense-in-depth: Wallet.decrypt already rejects spoofed addresses, but
