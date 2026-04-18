@@ -375,6 +375,68 @@ public class KeystoreImportTest {
   }
 
   @Test
+  public void testImportRefusesSymlinkKeyFile() throws Exception {
+    org.junit.Assume.assumeTrue("Symlinks only tested on POSIX",
+        !System.getProperty("os.name").toLowerCase().contains("win"));
+
+    File dir = tempFolder.newFolder("keystore-symlink");
+    // Create a real key file and a symlink pointing to it
+    File target = tempFolder.newFile("real.key");
+    SignInterface keyPair = SignUtils.getGeneratedRandomSign(
+        SecureRandom.getInstance("NativePRNG"), true);
+    Files.write(target.toPath(),
+        ByteArray.toHexString(keyPair.getPrivateKey()).getBytes(StandardCharsets.UTF_8));
+
+    File symlink = new File(tempFolder.getRoot(), "symlink.key");
+    Files.createSymbolicLink(symlink.toPath(), target.toPath());
+
+    File pwFile = tempFolder.newFile("pw-symlink.txt");
+    Files.write(pwFile.toPath(), "test123456".getBytes(StandardCharsets.UTF_8));
+
+    java.io.StringWriter err = new java.io.StringWriter();
+    CommandLine cmd = new CommandLine(new Toolkit());
+    cmd.setErr(new java.io.PrintWriter(err));
+    int exitCode = cmd.execute("keystore", "import",
+        "--keystore-dir", dir.getAbsolutePath(),
+        "--key-file", symlink.getAbsolutePath(),
+        "--password-file", pwFile.getAbsolutePath());
+
+    assertEquals("Must refuse symlinked key file", 1, exitCode);
+    assertTrue("Expected symlink-refusal error, got: " + err.toString(),
+        err.toString().contains("Refusing to follow symbolic link"));
+  }
+
+  @Test
+  public void testImportRefusesSymlinkPasswordFile() throws Exception {
+    org.junit.Assume.assumeTrue("Symlinks only tested on POSIX",
+        !System.getProperty("os.name").toLowerCase().contains("win"));
+
+    File dir = tempFolder.newFolder("keystore-pwsymlink");
+    SignInterface keyPair = SignUtils.getGeneratedRandomSign(
+        SecureRandom.getInstance("NativePRNG"), true);
+    File keyFile = tempFolder.newFile("sym-pw.key");
+    Files.write(keyFile.toPath(),
+        ByteArray.toHexString(keyPair.getPrivateKey()).getBytes(StandardCharsets.UTF_8));
+
+    File realPwFile = tempFolder.newFile("real-pw.txt");
+    Files.write(realPwFile.toPath(), "test123456".getBytes(StandardCharsets.UTF_8));
+    File pwSymlink = new File(tempFolder.getRoot(), "pw-symlink.txt");
+    Files.createSymbolicLink(pwSymlink.toPath(), realPwFile.toPath());
+
+    java.io.StringWriter err = new java.io.StringWriter();
+    CommandLine cmd = new CommandLine(new Toolkit());
+    cmd.setErr(new java.io.PrintWriter(err));
+    int exitCode = cmd.execute("keystore", "import",
+        "--keystore-dir", dir.getAbsolutePath(),
+        "--key-file", keyFile.getAbsolutePath(),
+        "--password-file", pwSymlink.getAbsolutePath());
+
+    assertEquals("Must refuse symlinked password file", 1, exitCode);
+    assertTrue("Expected symlink-refusal error, got: " + err.toString(),
+        err.toString().contains("Refusing to follow symbolic link"));
+  }
+
+  @Test
   public void testImportDuplicateCheckSkipsInvalidVersion() throws Exception {
     File dir = tempFolder.newFolder("keystore-badver");
     SignInterface keyPair = SignUtils.getGeneratedRandomSign(

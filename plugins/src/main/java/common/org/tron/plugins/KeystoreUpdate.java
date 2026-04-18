@@ -6,7 +6,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.concurrent.Callable;
 import org.tron.common.crypto.SignInterface;
@@ -66,16 +65,11 @@ public class KeystoreUpdate implements Callable<Integer> {
       String newPassword;
 
       if (passwordFile != null) {
-        if (!passwordFile.exists()) {
-          err.println("Password file not found: " + passwordFile.getPath()
-              + ". Omit --password-file for interactive input.");
+        byte[] bytes = KeystoreCliUtils.readRegularFile(
+            passwordFile, 1024, "Password file", err);
+        if (bytes == null) {
           return 1;
         }
-        if (passwordFile.length() > 1024) {
-          err.println("Password file too large (max 1KB).");
-          return 1;
-        }
-        byte[] bytes = Files.readAllBytes(passwordFile.toPath());
         try {
           String content = new String(bytes, StandardCharsets.UTF_8);
           // Strip UTF-8 BOM if present (Windows Notepad)

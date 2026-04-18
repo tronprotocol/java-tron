@@ -256,4 +256,84 @@ public class KeystoreCliUtilsTest {
     assertTrue(s.contains("REMEMBER"));
   }
 
+  @Test
+  public void testReadRegularFileSuccess() throws Exception {
+    File f = tempFolder.newFile("regular.txt");
+    Files.write(f.toPath(), "hello".getBytes(StandardCharsets.UTF_8));
+    StringWriter err = new StringWriter();
+
+    byte[] bytes = KeystoreCliUtils.readRegularFile(f, 1024, "File",
+        new PrintWriter(err));
+    assertNotNull(bytes);
+    assertEquals("hello", new String(bytes, StandardCharsets.UTF_8));
+  }
+
+  @Test
+  public void testReadRegularFileMissing() throws Exception {
+    File f = new File(tempFolder.getRoot(), "does-not-exist");
+    StringWriter err = new StringWriter();
+
+    byte[] bytes = KeystoreCliUtils.readRegularFile(f, 1024, "Password file",
+        new PrintWriter(err));
+    assertNull(bytes);
+    assertTrue("Expected 'not found' error, got: " + err.toString(),
+        err.toString().contains("Password file not found"));
+  }
+
+  @Test
+  public void testReadRegularFileTooLarge() throws Exception {
+    File f = tempFolder.newFile("big.txt");
+    byte[] big = new byte[2048];
+    java.util.Arrays.fill(big, (byte) 'a');
+    Files.write(f.toPath(), big);
+    StringWriter err = new StringWriter();
+
+    byte[] bytes = KeystoreCliUtils.readRegularFile(f, 1024, "Password file",
+        new PrintWriter(err));
+    assertNull(bytes);
+    assertTrue("Expected 'too large', got: " + err.toString(),
+        err.toString().contains("too large"));
+  }
+
+  @Test
+  public void testReadRegularFileRefusesSymlink() throws Exception {
+    org.junit.Assume.assumeTrue("Symlinks only tested on POSIX",
+        !System.getProperty("os.name").toLowerCase().contains("win"));
+
+    File target = tempFolder.newFile("real-target.txt");
+    Files.write(target.toPath(), "secret content".getBytes(StandardCharsets.UTF_8));
+    File link = new File(tempFolder.getRoot(), "symlink.txt");
+    Files.createSymbolicLink(link.toPath(), target.toPath());
+
+    StringWriter err = new StringWriter();
+    byte[] bytes = KeystoreCliUtils.readRegularFile(link, 1024, "File",
+        new PrintWriter(err));
+
+    assertNull("Must refuse to read through symlink", bytes);
+    assertTrue("Expected symlink-refusal message, got: " + err.toString(),
+        err.toString().contains("Refusing to follow symbolic link"));
+  }
+
+  @Test
+  public void testReadRegularFileRefusesDirectory() throws Exception {
+    File dir = tempFolder.newFolder("a-dir");
+    StringWriter err = new StringWriter();
+
+    byte[] bytes = KeystoreCliUtils.readRegularFile(dir, 1024, "File",
+        new PrintWriter(err));
+    assertNull(bytes);
+    assertTrue("Expected not-regular-file error, got: " + err.toString(),
+        err.toString().contains("Not a regular file"));
+  }
+
+  @Test
+  public void testReadRegularFileEmptyFile() throws Exception {
+    File f = tempFolder.newFile("empty.txt");
+    StringWriter err = new StringWriter();
+
+    byte[] bytes = KeystoreCliUtils.readRegularFile(f, 1024, "File",
+        new PrintWriter(err));
+    assertNotNull(bytes);
+    assertEquals(0, bytes.length);
+  }
 }

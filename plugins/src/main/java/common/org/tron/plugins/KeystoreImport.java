@@ -5,7 +5,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.concurrent.Callable;
 import org.apache.commons.lang3.StringUtils;
@@ -122,11 +121,10 @@ public class KeystoreImport implements Callable<Integer> {
 
   private String readPrivateKey(PrintWriter err) throws IOException {
     if (keyFile != null) {
-      if (keyFile.length() > 1024) {
-        err.println("Key file too large (max 1KB).");
+      byte[] bytes = KeystoreCliUtils.readRegularFile(keyFile, 1024, "Key file", err);
+      if (bytes == null) {
         return null;
       }
-      byte[] bytes = Files.readAllBytes(keyFile.toPath());
       try {
         return new String(bytes, StandardCharsets.UTF_8).trim();
       } finally {
