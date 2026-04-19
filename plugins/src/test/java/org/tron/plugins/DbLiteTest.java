@@ -15,7 +15,6 @@ import org.tron.api.WalletGrpc;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
-import org.tron.common.config.DbBackupConfig;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.PublicMethod;
@@ -78,8 +77,6 @@ public class DbLiteTest {
     Args.getInstance().setRpcPort(PublicMethod.chooseRandomPort());
     Args.getInstance().setRpcEnable(true);
     databaseDir = Args.getInstance().getStorage().getDbDirectory();
-    // init dbBackupConfig to avoid NPE
-    Args.getInstance().dbBackupConfig = DbBackupConfig.getInstance();
   }
 
   @After
