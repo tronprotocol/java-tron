@@ -467,9 +467,6 @@ public class CommonParameter {
   public int jsonRpcMaxResponseSize = 25 * 1024 * 1024;
   @Getter
   @Setter
-  public int jsonRpcMaxRequestTimeout = 30;
-  @Getter
-  @Setter
   public int jsonRpcMaxAddressSize = 1000;
 
   @Getter

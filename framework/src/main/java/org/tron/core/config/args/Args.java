@@ -587,7 +587,6 @@ public class Args extends CommonParameter {
     PARAMETER.jsonRpcMaxBlockFilterNum = jsonrpc.getMaxBlockFilterNum();
     PARAMETER.jsonRpcMaxBatchSize = jsonrpc.getMaxBatchSize();
     PARAMETER.jsonRpcMaxResponseSize = jsonrpc.getMaxResponseSize();
-    PARAMETER.jsonRpcMaxRequestTimeout = jsonrpc.getMaxRequestTimeout();
     PARAMETER.jsonRpcMaxAddressSize = jsonrpc.getMaxAddressSize();
 
     // ---- P2P sub-bean ----

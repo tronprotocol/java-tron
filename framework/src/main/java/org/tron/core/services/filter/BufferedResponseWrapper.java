@@ -1,6 +1,7 @@
 package org.tron.core.services.filter;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.WriteListener;
 import javax.servlet.http.HttpServletResponse;
@@ -14,11 +15,18 @@ import org.tron.core.exception.jsonrpc.JsonRpcResponseTooLargeException;
  * <p>If {@code maxBytes > 0}, writes that would push the buffer past {@code maxBytes} throw
  * {@link JsonRpcResponseTooLargeException} immediately, bounding memory usage to at most
  * {@code maxBytes} rather than the full response size.
+ *
+ * <p>Header-mutating methods ({@code setStatus}, {@code setContentType}) are buffered here and
+ * only forwarded to the real response via {@link #commitToResponse()}, preventing a timed-out
+ * handler thread from racing with the timeout error writer.
  */
 public class BufferedResponseWrapper extends HttpServletResponseWrapper {
 
+  private final HttpServletResponse actual;
   private final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
   private final int maxBytes;
+  private int status = HttpServletResponse.SC_OK;
+  private String contentType;
   private final ServletOutputStream outputStream = new ServletOutputStream() {
     @Override
     public void write(int b) {
@@ -48,6 +56,7 @@ public class BufferedResponseWrapper extends HttpServletResponseWrapper {
    */
   public BufferedResponseWrapper(HttpServletResponse response, int maxBytes) {
     super(response);
+    this.actual = response;
     this.maxBytes = maxBytes;
   }
 
@@ -56,6 +65,16 @@ public class BufferedResponseWrapper extends HttpServletResponseWrapper {
       throw new JsonRpcResponseTooLargeException(
           "Response byte size exceeds the limit of " + maxBytes);
     }
+  }
+
+  @Override
+  public void setStatus(int sc) {
+    this.status = sc;
+  }
+
+  @Override
+  public void setContentType(String type) {
+    this.contentType = type;
   }
 
   @Override
@@ -74,8 +93,14 @@ public class BufferedResponseWrapper extends HttpServletResponseWrapper {
   public void setContentLengthLong(long len) {
   }
 
-  public byte[] toByteArray() {
-    return buffer.toByteArray();
+  public void commitToResponse() throws IOException {
+    if (contentType != null) {
+      actual.setContentType(contentType);
+    }
+    actual.setStatus(status);
+    byte[] bytes = buffer.toByteArray();
+    actual.setContentLength(bytes.length);
+    actual.getOutputStream().write(bytes);
+    actual.getOutputStream().flush();
   }
-
 }
