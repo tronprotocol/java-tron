@@ -1,6 +1,7 @@
 package org.tron.core.services;
 
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThrows;
 import static org.tron.common.parameter.CommonParameter.getInstance;
 import static org.tron.common.utils.client.WalletClient.decodeFromBase58Check;
 import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferContract;
@@ -9,6 +10,8 @@ import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import io.grpc.Status;
+import io.grpc.StatusRuntimeException;
 import java.io.IOException;
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
@@ -550,6 +553,84 @@ public class RpcApiServicesTest {
     OvkDecryptTRC20Parameters message = OvkDecryptTRC20Parameters.newBuilder()
         .setStartBlockIndex(1)
         .setEndBlockIndex(10)
+        .build();
+    assertNotNull(blockingStubFull.scanShieldedTRC20NotesByOvk(message));
+    assertNotNull(blockingStubSolidity.scanShieldedTRC20NotesByOvk(message));
+    assertNotNull(blockingStubPBFT.scanShieldedTRC20NotesByOvk(message));
+  }
+
+  @Test
+  public void testScanShieldedTRC20NotesByIvkRejectsDeprecatedEvents() {
+    IvkDecryptTRC20Parameters message = IvkDecryptTRC20Parameters.newBuilder()
+        .setStartBlockIndex(1)
+        .setEndBlockIndex(10)
+        .addEvents("mint")
+        .build();
+
+    StatusRuntimeException fullException = assertThrows(StatusRuntimeException.class,
+        () -> blockingStubFull.scanShieldedTRC20NotesByIvk(message));
+    Assert.assertEquals(Status.Code.INVALID_ARGUMENT, fullException.getStatus().getCode());
+    Assert.assertTrue(fullException.getStatus().getDescription()
+        .contains("'events' field is deprecated and no longer supported"));
+
+    StatusRuntimeException solidityException = assertThrows(StatusRuntimeException.class,
+        () -> blockingStubSolidity.scanShieldedTRC20NotesByIvk(message));
+    Assert.assertEquals(Status.Code.INVALID_ARGUMENT, solidityException.getStatus().getCode());
+    Assert.assertTrue(solidityException.getStatus().getDescription()
+        .contains("'events' field is deprecated and no longer supported"));
+
+    StatusRuntimeException pbftException = assertThrows(StatusRuntimeException.class,
+        () -> blockingStubPBFT.scanShieldedTRC20NotesByIvk(message));
+    Assert.assertEquals(Status.Code.INVALID_ARGUMENT, pbftException.getStatus().getCode());
+    Assert.assertTrue(pbftException.getStatus().getDescription()
+        .contains("'events' field is deprecated and no longer supported"));
+  }
+
+  @Test
+  public void testScanShieldedTRC20NotesByOvkRejectsDeprecatedEvents() {
+    OvkDecryptTRC20Parameters message = OvkDecryptTRC20Parameters.newBuilder()
+        .setStartBlockIndex(1)
+        .setEndBlockIndex(10)
+        .addEvents("burn")
+        .build();
+
+    StatusRuntimeException fullException = assertThrows(StatusRuntimeException.class,
+        () -> blockingStubFull.scanShieldedTRC20NotesByOvk(message));
+    Assert.assertEquals(Status.Code.INVALID_ARGUMENT, fullException.getStatus().getCode());
+    Assert.assertTrue(fullException.getStatus().getDescription()
+        .contains("'events' field is deprecated and no longer supported"));
+
+    StatusRuntimeException solidityException = assertThrows(StatusRuntimeException.class,
+        () -> blockingStubSolidity.scanShieldedTRC20NotesByOvk(message));
+    Assert.assertEquals(Status.Code.INVALID_ARGUMENT, solidityException.getStatus().getCode());
+    Assert.assertTrue(solidityException.getStatus().getDescription()
+        .contains("'events' field is deprecated and no longer supported"));
+
+    StatusRuntimeException pbftException = assertThrows(StatusRuntimeException.class,
+        () -> blockingStubPBFT.scanShieldedTRC20NotesByOvk(message));
+    Assert.assertEquals(Status.Code.INVALID_ARGUMENT, pbftException.getStatus().getCode());
+    Assert.assertTrue(pbftException.getStatus().getDescription()
+        .contains("'events' field is deprecated and no longer supported"));
+  }
+
+  @Test
+  public void testScanShieldedTRC20NotesByIvkEmptyEventsPassesGuard() {
+    IvkDecryptTRC20Parameters message = IvkDecryptTRC20Parameters.newBuilder()
+        .setStartBlockIndex(1)
+        .setEndBlockIndex(10)
+        .addEvents("")
+        .build();
+    assertNotNull(blockingStubFull.scanShieldedTRC20NotesByIvk(message));
+    assertNotNull(blockingStubSolidity.scanShieldedTRC20NotesByIvk(message));
+    assertNotNull(blockingStubPBFT.scanShieldedTRC20NotesByIvk(message));
+  }
+
+  @Test
+  public void testScanShieldedTRC20NotesByOvkEmptyEventsPassesGuard() {
+    OvkDecryptTRC20Parameters message = OvkDecryptTRC20Parameters.newBuilder()
+        .setStartBlockIndex(1)
+        .setEndBlockIndex(10)
+        .addEvents("")
         .build();
     assertNotNull(blockingStubFull.scanShieldedTRC20NotesByOvk(message));
     assertNotNull(blockingStubSolidity.scanShieldedTRC20NotesByOvk(message));

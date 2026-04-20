@@ -12,6 +12,7 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.GeneratedMessageV3;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
+import com.google.protobuf.ProtocolStringList;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -64,6 +65,9 @@ import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
 @Slf4j(topic = "API")
 public class Util {
 
+  public static final String EVENTS_DEPRECATED_MSG =
+      "'events' field is deprecated and no longer supported";
+
   public static final String PERMISSION_ID = "Permission_id";
   public static final String VISIBLE = "visible";
   public static final String TRANSACTION = "transaction";
@@ -79,6 +83,24 @@ public class Util {
   public static final String FUNCTION_SELECTOR = "function_selector";
   public static final String FUNCTION_PARAMETER = "parameter";
   public static final String CALL_DATA = "data";
+
+  public static void rejectIfEventsPresent(ProtocolStringList events) {
+    if (events.stream().anyMatch(s -> !s.isEmpty())) {
+      logger.info(EVENTS_DEPRECATED_MSG);
+      throw new IllegalArgumentException(EVENTS_DEPRECATED_MSG);
+    }
+  }
+
+  public static void rejectIfEventsPresent(String[] eventsParams) {
+    if (eventsParams != null) {
+      for (String v : eventsParams) {
+        if (v != null && !v.isEmpty()) {
+          logger.info(EVENTS_DEPRECATED_MSG);
+          throw new IllegalArgumentException(EVENTS_DEPRECATED_MSG);
+        }
+      }
+    }
+  }
 
   public static String printTransactionFee(String transactionFee) {
     JSONObject jsonObject = new JSONObject();
