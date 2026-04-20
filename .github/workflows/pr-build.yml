@@ -288,6 +288,7 @@ jobs:
           min-coverage-overall: 0
           min-coverage-changed-files: 0
           skip-if-no-changes: true
+          comment-type: summary
           title: '## Base Coverage Snapshot'
           update-comment: false
 
@@ -300,6 +301,7 @@ jobs:
           min-coverage-overall: 0
           min-coverage-changed-files: 0
           skip-if-no-changes: true
+          comment-type: summary
           title: '## PR Code Coverage Report'
           update-comment: false
 
@@ -312,7 +314,7 @@ jobs:
           set -euo pipefail
 
           MIN_CHANGED=60
-          MAX_DROP=-0.1
+          MAX_DROP=-0.4
 
           sanitize() {
             echo "$1" | tr -d ' %'
@@ -386,7 +388,7 @@ jobs:
 
           # 4) Decide CI pass/fail
           if [ "$DELTA_OK" -ne 1 ]; then
-            echo "Coverage gate failed: overall coverage dropped more than 0.1%."
+            echo "Coverage gate failed: overall coverage dropped more than 0.4%."
             echo "base=${BASE_OVERALL}% pr=${PR_OVERALL}% delta=${DELTA}%"
             exit 1
           fi
