@@ -241,16 +241,6 @@ public class ParameterTest {
     assertEquals(500, parameter.getPendingTransactionTimeout());
     parameter.setNodeMetricsEnable(false);
     assertFalse(parameter.isNodeMetricsEnable());
-    parameter.setMetricsStorageEnable(false);
-    assertFalse(parameter.isMetricsStorageEnable());
-    parameter.setInfluxDbIp("127.0.0.1");
-    assertEquals("127.0.0.1", parameter.getInfluxDbIp());
-    parameter.setInfluxDbPort(90);
-    assertEquals(90, parameter.getInfluxDbPort());
-    parameter.setInfluxDbDatabase("InfluxDb");
-    assertEquals("InfluxDb", parameter.getInfluxDbDatabase());
-    parameter.setMetricsReportInterval(100);
-    assertEquals(100, parameter.getMetricsReportInterval());
     parameter.setMetricsPrometheusPort(3000);
     assertEquals(3000, parameter.getMetricsPrometheusPort());
     parameter.setAgreeNodeCount(10);
