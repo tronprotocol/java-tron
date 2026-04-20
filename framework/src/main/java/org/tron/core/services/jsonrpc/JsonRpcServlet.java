@@ -136,7 +136,7 @@ public class JsonRpcServlet extends RateLimiterServlet {
       root.putNull("id");
     }
     byte[] bytes = MAPPER.writeValueAsBytes(root);
-    resp.setContentType("application/json");
+    resp.setContentType("application/json; charset=utf-8");
     resp.setStatus(HttpServletResponse.SC_OK);
     resp.setContentLength(bytes.length);
     resp.getOutputStream().write(bytes);
