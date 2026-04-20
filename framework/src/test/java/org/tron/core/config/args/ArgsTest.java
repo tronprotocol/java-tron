@@ -472,12 +472,9 @@ public class ArgsTest {
     configMap.put("node.rpc.maxMessageSize", "3g");
     Config config = ConfigFactory.defaultOverrides()
         .withFallback(ConfigFactory.parseMap(configMap));
-    try {
-      Args.applyConfigParams(config);
-      Assert.fail("expected TronError for rpc maxMessageSize > Integer.MAX_VALUE");
-    } catch (TronError e) {
-      Assert.assertTrue(e.getMessage().contains("node.rpc.maxMessageSize must be non-negative"));
-    }
+    TronError e = Assert.assertThrows(TronError.class,
+        () -> Args.applyConfigParams(config));
+    Assert.assertTrue(e.getMessage().contains("node.rpc.maxMessageSize must be non-negative"));
   }
 
   @Test
@@ -487,12 +484,9 @@ public class ArgsTest {
     configMap.put("node.rpc.maxMessageSize", "-4m");
     Config config = ConfigFactory.defaultOverrides()
         .withFallback(ConfigFactory.parseMap(configMap));
-    try {
-      Args.applyConfigParams(config);
-      Assert.fail("expected IllegalArgumentException for negative memory size");
-    } catch (IllegalArgumentException e) {
-      Assert.assertTrue(e.getMessage().contains("negative"));
-    }
+    IllegalArgumentException e = Assert.assertThrows(IllegalArgumentException.class,
+        () -> Args.applyConfigParams(config));
+    Assert.assertTrue(e.getMessage().contains("negative"));
   }
 
   @Test
@@ -502,12 +496,9 @@ public class ArgsTest {
     configMap.put("node.rpc.maxMessageSize", "4x");
     Config config = ConfigFactory.defaultOverrides()
         .withFallback(ConfigFactory.parseMap(configMap));
-    try {
-      Args.applyConfigParams(config);
-      Assert.fail("expected ConfigException.BadValue for invalid unit");
-    } catch (ConfigException.BadValue e) {
-      Assert.assertTrue(e.getMessage().contains("Could not parse size-in-bytes unit"));
-    }
+    ConfigException.BadValue e = Assert.assertThrows(ConfigException.BadValue.class,
+        () -> Args.applyConfigParams(config));
+    Assert.assertTrue(e.getMessage().contains("Could not parse size-in-bytes unit"));
   }
 
   @Test
@@ -517,11 +508,8 @@ public class ArgsTest {
     configMap.put("node.http.maxMessageSize", "abc");
     Config config = ConfigFactory.defaultOverrides()
         .withFallback(ConfigFactory.parseMap(configMap));
-    try {
-      Args.applyConfigParams(config);
-      Assert.fail("expected ConfigException.BadValue for non-numeric value");
-    } catch (ConfigException.BadValue e) {
-      Assert.assertTrue(e.getMessage().contains("No number in size-in-bytes value"));
-    }
+    ConfigException.BadValue e = Assert.assertThrows(ConfigException.BadValue.class,
+        () -> Args.applyConfigParams(config));
+    Assert.assertTrue(e.getMessage().contains("No number in size-in-bytes value"));
   }
 }

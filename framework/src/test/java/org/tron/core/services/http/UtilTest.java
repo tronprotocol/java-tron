@@ -143,12 +143,9 @@ public class UtilTest extends BaseTest {
       Util.checkBodySize(withinHttpLimit);
 
       String exceedsHttpLimit = new String(new char[201]).replace('\0', 'b');
-      try {
-        Util.checkBodySize(exceedsHttpLimit);
-        Assert.fail("expected exception for body exceeding httpMaxMessageSize");
-      } catch (Exception e) {
-        Assert.assertTrue(e.getMessage().contains("200"));
-      }
+      Exception e = Assert.assertThrows(Exception.class,
+          () -> Util.checkBodySize(exceedsHttpLimit));
+      Assert.assertTrue(e.getMessage().contains("200"));
     } finally {
       Args.getInstance().setHttpMaxMessageSize(originalHttpMax);
       Args.getInstance().setMaxMessageSize(originalRpcMax);

@@ -58,7 +58,7 @@ public class SizeLimitHandlerTest {
 
   /**
    * Simulates the real servlet pattern: reads body via getReader(), wraps in
-   * broad catch(Exception) — mirrors what RateLimiterServlet + actual servlets do.
+   * broad catch(Exception) - mirrors what RateLimiterServlet + actual servlets do.
    */
   public static class BroadCatchServlet extends HttpServlet {
     @Override
@@ -214,8 +214,8 @@ public class SizeLimitHandlerTest {
     String body = EntityUtils.toString(resp.getEntity());
     logger.info("Chunked oversized: status={}, body={}", status, body);
 
-    // catch(Exception) absorbs BadMessageException → 200 + error JSON, not 413.
-    // Body read IS truncated — OOM protection still effective.
+    // catch(Exception) absorbs BadMessageException -> 200 + error JSON, not 413.
+    // Body read IS truncated - OOM protection still effective.
     Assert.assertEquals(200, status);
     Assert.assertTrue("Error should be surfaced in response body",
         body.contains("Error"));
@@ -223,8 +223,8 @@ public class SizeLimitHandlerTest {
 
   /**
    * When maxRequestSize is 0, SizeLimitHandler treats it as "reject all bodies > 0 bytes".
-   * Jetty's logic: {@code _requestLimit >= 0 && size > _requestLimit} — 0 >= 0 is true,
-   * so any non-empty body triggers 413. This is NOT "pass all" — it is a silent DoS
+   * Jetty's logic: {@code _requestLimit >= 0 && size > _requestLimit} - 0 >= 0 is true,
+   * so any non-empty body triggers 413. This is NOT "pass all" - it is a silent DoS
    * against the node's own API.
    */
   @Test
@@ -248,7 +248,7 @@ public class SizeLimitHandlerTest {
   /**
    * For pure ASCII JSON (the normal TRON API case), wire bytes and
    * {@code body.getBytes().length} (what {@code Util.checkBodySize()} measures)
-   * must be identical — the two enforcement layers agree exactly.
+   * must be identical - the two enforcement layers agree exactly.
    */
   @Test
   public void testWireBytesMatchCheckBodySizeForAsciiJson() throws Exception {
@@ -266,8 +266,8 @@ public class SizeLimitHandlerTest {
 
   /**
    * For UTF-8 JSON with multi-byte characters (CJK), wire bytes and
-   * {@code body.getBytes().length} must still be identical — UTF-8 round-trips
-   * through {@code request.getReader()} → {@code String.getBytes()} losslessly.
+   * {@code body.getBytes().length} must still be identical - UTF-8 round-trips
+   * through {@code request.getReader()} -> {@code String.getBytes()} losslessly.
    */
   @Test
   public void testWireBytesMatchCheckBodySizeForUtf8Json() throws Exception {
@@ -285,7 +285,7 @@ public class SizeLimitHandlerTest {
   /**
    * When the body contains {@code \r\n} line endings, {@code lines().collect()}
    * normalizes them to {@code \n} (on Linux) or the platform line separator.
-   * This makes {@code checkBodySize} measure fewer bytes than the wire —
+   * This makes {@code checkBodySize} measure fewer bytes than the wire -
    * a safe direction: checkBodySize never rejects what SizeLimitHandler accepts.
    */
   @Test

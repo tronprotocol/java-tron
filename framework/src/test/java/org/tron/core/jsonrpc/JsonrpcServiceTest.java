@@ -1114,8 +1114,8 @@ public class JsonrpcServiceTest extends BaseTest {
   @Test
   public void testJsonRpcSizeLimitIntegration() {
     long testLimit = 1024;
+    long originalLimit = fullNodeJsonRpcHttpService.getMaxRequestSize();
     try {
-      long originalLimit = fullNodeJsonRpcHttpService.getMaxRequestSize();
       fullNodeJsonRpcHttpService.setMaxRequestSize(testLimit);
 
       fullNodeJsonRpcHttpService.start();
@@ -1139,7 +1139,7 @@ public class JsonrpcServiceTest extends BaseTest {
             body.contains("result"));
         resp.close();
 
-        // Oversized request with Content-Length → 413 before JsonRpcServlet
+        // Oversized request with Content-Length -> 413 before JsonRpcServlet
         HttpPost overPost = new HttpPost(url);
         overPost.addHeader("Content-Type", "application/json");
         overPost.setEntity(new StringEntity(
@@ -1148,9 +1148,9 @@ public class JsonrpcServiceTest extends BaseTest {
         Assert.assertEquals(413, resp.getStatusLine().getStatusCode());
         resp.close();
 
-        // Chunked oversized → BadMessageException thrown during body read,
-        // absorbed by jsonrpc4j catch(Exception) → 200 with empty body.
-        // Body read IS truncated at the limit — OOM protection effective.
+        // Chunked oversized -> BadMessageException thrown during body read,
+        // absorbed by jsonrpc4j catch(Exception) -> 200 with empty body.
+        // Body read IS truncated at the limit - OOM protection effective.
         byte[] chunkedData = new String(new char[(int) testLimit * 2])
             .replace('\0', 'x').getBytes("UTF-8");
         HttpPost chunkedPost = new HttpPost(url);
@@ -1162,12 +1162,11 @@ public class JsonrpcServiceTest extends BaseTest {
         Assert.assertTrue("Chunked oversized should return empty body"
             + " (jsonrpc4j absorbs BadMessageException)", body.isEmpty());
         resp.close();
-      } finally {
-        fullNodeJsonRpcHttpService.setMaxRequestSize(originalLimit);
       }
     } catch (Exception e) {
       Assert.fail(e.getMessage());
     } finally {
+      fullNodeJsonRpcHttpService.setMaxRequestSize(originalLimit);
       fullNodeJsonRpcHttpService.stop();
     }
   }
