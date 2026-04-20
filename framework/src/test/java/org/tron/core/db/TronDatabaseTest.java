@@ -111,10 +111,24 @@ public class TronDatabaseTest extends TronDatabase<String> {
   @Test
   public void testDoCloseDbSourceCalledWhenWriteOptionsThrows() throws Exception {
     TronDatabase<String> db = new TronDatabase<String>("test-do-close") {
-      @Override public void put(byte[] key, String item) {}
-      @Override public void delete(byte[] key) {}
-      @Override public String get(byte[] key) { return null; }
-      @Override public boolean has(byte[] key) { return false; }
+
+      @Override
+      public void put(byte[] key, String item) {
+      }
+
+      @Override
+      public void delete(byte[] key) {
+      }
+
+      @Override
+      public String get(byte[] key) {
+        return null;
+      }
+
+      @Override
+      public boolean has(byte[] key) {
+        return false;
+      }
     };
 
     Field writeOptionsField = TronDatabase.class.getDeclaredField("writeOptions");
