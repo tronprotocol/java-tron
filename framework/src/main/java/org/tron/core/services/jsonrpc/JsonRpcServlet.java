@@ -86,7 +86,7 @@ public class JsonRpcServlet extends RateLimiterServlet {
   protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
     CommonParameter parameter = CommonParameter.getInstance();
 
-    byte[] body = readBody(req.getInputStream(), parameter.getJsonRpcMaxResponseSize());
+    byte[] body = readBody(req.getInputStream());
 
     JsonNode rootNode = MAPPER.readTree(body);
     if (rootNode.isArray() && rootNode.size() > parameter.getJsonRpcMaxBatchSize()) {
@@ -113,16 +113,11 @@ public class JsonRpcServlet extends RateLimiterServlet {
     bufferedResp.commitToResponse();
   }
 
-  private byte[] readBody(InputStream in, int maxBytes) throws IOException {
+  private byte[] readBody(InputStream in) throws IOException {
     ByteArrayOutputStream buffer = new ByteArrayOutputStream();
     byte[] tmp = new byte[4096];
-    int total = 0;
     int n;
     while ((n = in.read(tmp)) != -1) {
-      total += n;
-      if (maxBytes > 0 && total > maxBytes) {
-        throw new IOException("Request body exceeds maximum size of " + maxBytes + " bytes");
-      }
       buffer.write(tmp, 0, n);
     }
     return buffer.toByteArray();
