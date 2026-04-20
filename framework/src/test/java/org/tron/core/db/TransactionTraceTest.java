@@ -18,6 +18,7 @@ package org.tron.core.db;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import java.lang.reflect.Method;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -298,6 +299,95 @@ public class TransactionTraceTest extends BaseTest {
     Assert.assertEquals(totalBalance,
         accountCapsule.getBalance() + trace.getReceipt().getEnergyFee());
 
+  }
+
+  /**
+   * Regression test for the {@code newSize == 0} guard in {@code resetAccountUsage}.
+   *
+   * <p>When {@code mergedSize == currentSize} and {@code size == 0}, {@code newSize} becomes 0.
+   * Without the guard this would cause an {@link ArithmeticException} (divide by zero).
+   * The expected outcome is {@code energyUsage = 0} with no exception thrown.
+   */
+  @Test
+  public void testResetAccountUsageZeroWindowSize() throws Exception {
+    TriggerSmartContract contract = TriggerSmartContract.newBuilder()
+        .setContractAddress(contractAddress)
+        .setOwnerAddress(ownerAddress)
+        .build();
+    Transaction transaction = Transaction.newBuilder()
+        .setRawData(raw.newBuilder()
+            .addContract(Contract.newBuilder()
+                .setParameter(Any.pack(contract))
+                .setType(ContractType.TriggerSmartContract))
+            .build())
+        .build();
+    TransactionTrace trace = new TransactionTrace(
+        new TransactionCapsule(transaction), StoreFactory.getInstance(), new RuntimeImpl());
+
+    AccountCapsule accountCap = new AccountCapsule(Account.newBuilder()
+        .setAddress(ownerAddress)
+        .setAccountResource(AccountResource.newBuilder()
+            .setEnergyUsage(1000L)
+            .build())
+        .build());
+
+    // A fresh account has EnergyWindowSize=0, so getWindowSize(ENERGY) returns the default
+    // WINDOW_SIZE_MS / BLOCK_PRODUCED_INTERVAL = 28800.
+    // Passing mergedSize == currentSize and size == 0 triggers newSize = 0.
+    final long currentSize = 28800L;
+
+    dbManager.getDynamicPropertiesStore().saveAllowCancelAllUnfreezeV2(0);
+    Method method = TransactionTrace.class.getDeclaredMethod(
+        "resetAccountUsage",
+        AccountCapsule.class, long.class, long.class, long.class, long.class, long.class);
+    method.setAccessible(true);
+    method.invoke(trace, accountCap, 500L, 0L, 500L, currentSize, 0L);
+
+    // newSize == 0 → guard returns 0 instead of dividing → energyUsage reset to 0
+    Assert.assertEquals(0L, accountCap.getEnergyUsage());
+  }
+
+  /**
+   * Same regression as above but exercises the {@code resetAccountUsageV2} code path,
+   * which is activated when {@code supportAllowCancelAllUnfreezeV2} is enabled.
+   */
+  @Test
+  public void testResetAccountUsageV2ZeroWindowSize() throws Exception {
+    TriggerSmartContract contract = TriggerSmartContract.newBuilder()
+        .setContractAddress(contractAddress)
+        .setOwnerAddress(ownerAddress)
+        .build();
+    Transaction transaction = Transaction.newBuilder()
+        .setRawData(raw.newBuilder()
+            .addContract(Contract.newBuilder()
+                .setParameter(Any.pack(contract))
+                .setType(ContractType.TriggerSmartContract))
+            .build())
+        .build();
+    TransactionTrace trace = new TransactionTrace(
+        new TransactionCapsule(transaction), StoreFactory.getInstance(), new RuntimeImpl());
+
+    AccountCapsule accountCap = new AccountCapsule(Account.newBuilder()
+        .setAddress(ownerAddress)
+        .setAccountResource(AccountResource.newBuilder()
+            .setEnergyUsage(1000L)
+            .build())
+        .build());
+
+    final long currentSize = 28800L;
+
+    dbManager.getDynamicPropertiesStore().saveAllowCancelAllUnfreezeV2(1);
+    try {
+      Method method = TransactionTrace.class.getDeclaredMethod(
+          "resetAccountUsage",
+          AccountCapsule.class, long.class, long.class, long.class, long.class, long.class);
+      method.setAccessible(true);
+      method.invoke(trace, accountCap, 500L, 0L, 500L, currentSize, 0L);
+
+      Assert.assertEquals(0L, accountCap.getEnergyUsage());
+    } finally {
+      dbManager.getDynamicPropertiesStore().saveAllowCancelAllUnfreezeV2(0);
+    }
   }
 
   private byte[] deployInit(Transaction transaction)
