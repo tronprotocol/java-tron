@@ -8,6 +8,7 @@ import static org.mockito.Mockito.verify;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -39,6 +40,37 @@ public class CheckPointV2StoreTest {
   @AfterClass
   public static void destroy() {
     Args.clearParam();
+  }
+
+  @Test
+  public void testStubMethods() throws Exception {
+    CheckPointV2Store store = new CheckPointV2Store("test-stubs");
+    try {
+      byte[] key = "key".getBytes();
+
+      store.put(key, new byte[]{});
+      Assert.assertNull(store.get(key));
+      Assert.assertFalse(store.has(key));
+      store.forEach(item -> {
+      });
+      Assert.assertNull(store.spliterator());
+
+      Field dbSourceField = TronDatabase.class.getDeclaredField("dbSource");
+      dbSourceField.setAccessible(true);
+      DbSourceInter<byte[]> originalDbSource =
+          (DbSourceInter<byte[]>) dbSourceField.get(store);
+      DbSourceInter<byte[]> mockDbSource = mock(DbSourceInter.class);
+      dbSourceField.set(store, mockDbSource);
+      store.delete(key);
+      dbSourceField.set(store, originalDbSource);
+
+      java.lang.reflect.Method initMethod =
+          CheckPointV2Store.class.getDeclaredMethod("init");
+      initMethod.setAccessible(true);
+      initMethod.invoke(store);
+    } finally {
+      store.close();
+    }
   }
 
   @Test
