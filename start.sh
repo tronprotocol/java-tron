@@ -135,7 +135,7 @@ backupGCLog() {
       local oldGcLogFiles=(`ls -1 $gcLogDir |head -n $oldFileSize`)
     fi
 
-    for fileName in ${oldGcLogFiles[@]}; do
+    for fileName in "${oldGcLogFiles[@]}"; do
       rm -rf $gcLogDir$fileName
     done
   fi
@@ -224,7 +224,7 @@ quickStart() {
 cloneCode() {
   if type git >/dev/null 2>&1; then
     git_clone=$(git clone -b $GITHUB_BRANCH $GITHUB_REPOSITORY)
-    if [[ git_clone == 0 ]]; then
+    if [[ $? == 0 ]]; then
       echo 'info: git clone java-tron success'
     fi
   else
@@ -255,18 +255,22 @@ checkPid() {
     JAR_NAME=$(echo $JAR_NAME |awk -F '/' '{print $NF}')
   fi
   pid=$(ps -ef | grep -v start | grep $JAR_NAME | grep -v grep | awk '{print $2}')
-  return $pid
 }
 
 stopService() {
+  checkPid
+  if [ ! "$pid" ]; then
+    echo "info: java-tron is not running"
+    return
+  fi
   count=1
   while [ $count -le $MAX_STOP_TIME ]; do
     checkPid
-    if [ $pid ]; then
+    if [ "$pid" ]; then
       kill -15 $pid
       sleep 1
     else
-      echo "info: java-tron stop"
+      echo "info: java-tron stopped"
       return
     fi
     count=$(($count + 1))
@@ -317,15 +321,15 @@ getTotalMemory() {
     echo $total
     return
   elif [[  $os == 'Darwin' ]]; then
-    total=$(sysctl -a | grep mem |grep hw.memsize |awk -F ' ' '{print $2}')
-    echo `expr $total / 1024`
+    total=$(sysctl -n hw.memsize)
+    echo $(( total / 1024 ))
   fi
 }
 
 setJVMMemory() {
   os=`uname`
   if [[ $os == 'Linux' ]] || [[ $os == 'linux' ]] ; then
-    if [[ $SPECIFY_MEMORY >0 ]]; then
+    if [[ $SPECIFY_MEMORY -gt 0 ]]; then
       max_direct=$(echo "$SPECIFY_MEMORY/1024*0.1" | bc | awk -F. '{print $1"g"}')
       if [[ "$max_direct" != "g" ]]; then
         MAX_DIRECT_MEMORY=$max_direct
@@ -387,7 +391,7 @@ rebuildManifest() {
     echo 'info: download the rebuild manifest plugin from the github'
     local latest=$(getLatestReleaseVersion)
     download $RELEASE_URL/download/GreatVoyage-v"$latest"/$ARCHIVE_JAR $ARCHIVE_JAR
-    if [[ $download == 0 ]]; then
+    if [[ $? == 0 ]]; then
       echo 'info: download success, rebuild manifest'
       $JAVACMD -jar $ARCHIVE_JAR $REBUILD_DIR -m $REBUILD_MANIFEST_SIZE -b $REBUILD_BATCH_SIZE
     fi
@@ -408,7 +412,7 @@ specifyConfig(){
   elif [[ "$netType" = 'private' ]]; then
     configName=$FULL_NODE_CONFIG_PRIVATE_NET
   else
-    echo "warn: no support config $nodeType"
+    echo "warn: no support config $netType"
     exit
   fi
 
@@ -418,7 +422,7 @@ specifyConfig(){
 
   if [[ -d $FULL_NODE_CONFIG_DIR/$configName ]]; then
     DEFAULT_FULL_NODE_CONFIG=$FULL_NODE_CONFIG_DIR/$configName
-    break
+    return
   fi
 
   if [[ ! -f $FULL_NODE_CONFIG_DIR/$configName ]]; then
@@ -544,12 +548,14 @@ while [ -n "$1" ]; do
   --run)
     if [[ $ALL_OPT_LENGTH -eq 1 ]]; then
       restart
+      exit
     fi
     RUN=true
     shift 1
     ;;
   --stop)
     stopService
+    exit
     ;;
   FullNode)
     RUN=true

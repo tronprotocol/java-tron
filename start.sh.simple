@@ -37,6 +37,7 @@ VM_XMX="9G"
 
 FULL_NODE_JAR="FullNode.jar"
 FULL_START_OPT=()
+GC_OPTS=()
 PID=""
 MAX_STOP_TIME=60
 JAVACMD=""
@@ -79,6 +80,22 @@ findJava() {
     which java >/dev/null 2>&1 || die "JAVA_HOME not set and no 'java' in PATH"
   fi
   "$JAVACMD" -version > /dev/null 2>&1 || die "Java command not working"
+
+  # Detect JVM major version to choose compatible GC flags
+  local ver
+  ver=$("$JAVACMD" -version 2>&1 | awk -F '"' '/version/ {print $2}')
+  local major
+  major=$(echo "$ver" | cut -d'.' -f1)
+  [ "$major" = "1" ] && major=$(echo "$ver" | cut -d'.' -f2)  # JDK 8 reports "1.8.x"
+  if [ "$major" -eq 8 ] 2>/dev/null; then
+    # CMS is optimal for JDK 8 (removed in JDK 14)
+    GC_OPTS=(-XX:+UseConcMarkSweepGC -XX:+CMSParallelRemarkEnabled
+      -XX:+PrintGCDetails "-Xloggc:./gc.log" -XX:+PrintGCDateStamps)
+  else
+    # ZGC (stable since JDK 15) + unified GC logging (JDK 9+), for JDK 17
+    GC_OPTS=(-XX:+UseZGC
+      "-Xlog:gc,gc+heap:file=gc.log:time,tags,level:filecount=10,filesize=100M")
+  fi
 }
 
 checkPid() {
@@ -130,8 +147,7 @@ startService() {
 
   nohup "$JAVACMD" \
     -Xmx"$VM_XMX" \
-    -XX:+UseZGC \
-    -Xlog:gc,gc+heap:file=gc.log:time,tags,level:filecount=10,filesize=100M \
+    "${GC_OPTS[@]}" \
     -XX:ReservedCodeCacheSize=256m \
     -XX:+UseCodeCacheFlushing \
     -XX:MetaspaceSize=256m \
