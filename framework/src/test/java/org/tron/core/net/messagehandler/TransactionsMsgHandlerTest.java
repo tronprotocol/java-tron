@@ -86,7 +86,6 @@ public class TransactionsMsgHandlerTest extends BaseTest {
       transactionsMsgHandler.processMessage(peer, new TransactionsMessage(transactionList));
       Assert.assertNull(advInvRequest.get(item));
       //Thread.sleep(10);
-      transactionsMsgHandler.close();
       BlockingQueue<TrxEvent> smartContractQueue =
           new LinkedBlockingQueue(2);
       smartContractQueue.offer(new TrxEvent(null, null));

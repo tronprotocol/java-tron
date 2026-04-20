@@ -77,7 +77,7 @@ public class TransactionsMsgHandler implements TronMsgHandler {
   @Override
   public void processMessage(PeerConnection peer, TronMessage msg) throws P2pException {
     if (isClosed) {
-      logger.warn("TransactionsMsgHandler is closed, drop message");
+      logger.info("TransactionsMsgHandler is closed, drop message");
       return;
     }
     TransactionsMessage transactionsMessage = (TransactionsMessage) msg;
@@ -91,7 +91,7 @@ public class TransactionsMsgHandler implements TronMsgHandler {
     int dropSmartContractCount = 0;
     for (Transaction trx : transactionsMessage.getTransactions().getTransactionsList()) {
       if (isClosed) {
-        logger.warn("TransactionsMsgHandler is closed during processing, stop submit");
+        logger.info("TransactionsMsgHandler is closed during processing, stop submit");
         break;
       }
       int type = trx.getRawData().getContract(0).getType().getNumber();
