@@ -2,7 +2,7 @@ package org.tron.common.log;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertThrows;
 
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.jul.LevelChangePropagator;
@@ -21,6 +21,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.slf4j.LoggerFactory;
+import org.tron.core.exception.TronError;
 
 /**
  * Verifies that {@link LogService#load(String)} keeps the Logback<->JUL level
@@ -70,17 +71,28 @@ public class LogServiceTest {
   }
 
   @Test
-  public void propagatorIsEnsuredEvenWhenPathIsMissing() {
+  public void propagatorIsEnsuredWhenNoLogConfigIsSupplied() {
     LoggerContext lc = (LoggerContext) LoggerFactory.getILoggerFactory();
     // Drop whatever the default logback-test.xml registered so we can observe the
     // fall-through path (no --log-config) installing the propagator on its own.
     removeLevelChangePropagators(lc);
     assertEquals(0, countLevelChangePropagators(lc));
 
-    LogService.load("definitely-not-a-real-path.xml");
+    // Empty path == no --log-config passed; must keep classpath default AND
+    // still install the propagator so JUL sync works.
+    LogService.load("");
 
-    assertEquals("ensureLevelChangePropagator should run when path is invalid",
+    assertEquals("ensureLevelChangePropagator should run on the default context",
         1, countLevelChangePropagators(lc));
+  }
+
+  @Test
+  public void nonEmptyInvalidPathFailsFast() {
+    // A non-empty --log-config that cannot be read must surface loudly instead
+    // of silently falling back to the classpath default.
+    TronError thrown = assertThrows(TronError.class,
+        () -> LogService.load("definitely-not-a-real-path.xml"));
+    assertEquals(TronError.ErrCode.LOG_LOAD, thrown.getErrCode());
   }
 
   private Path writeLogbackXml(String level,
