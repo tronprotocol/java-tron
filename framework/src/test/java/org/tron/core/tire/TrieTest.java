@@ -41,6 +41,7 @@ public class TrieTest {
   private static String doge = "doge";
   private static String test = "test";
   private static String dude = "dude";
+  private static final long SHUFFLE_SEED = 0xC0FFEEL;
 
   @Test
   public void test() {
@@ -64,8 +65,6 @@ public class TrieTest {
     boolean result = trie
         .verifyProof(trieCopy.getRootHash(), new byte[]{1, 1}, (LinkedHashMap<byte[], Node>) map);
     Assert.assertTrue(result);
-    System.out.println(trieCopy.prove(RLP.encodeInt(5)));
-    System.out.println(trieCopy.prove(RLP.encodeInt(6)));
     assertTrue(RLP.encodeInt(5), trieCopy);
     assertTrue(RLP.encodeInt(5), RLP.encodeInt(6), trieCopy);
     assertTrue(RLP.encodeInt(6), trieCopy);
@@ -122,16 +121,16 @@ public class TrieTest {
 
   /*
    * Verifies that TrieImpl root hash is insertion-order-independent even when
-   * a key is inserted twice with the same value (idempotent put).
+   * the same key is put more than once (idempotent put).
    *
-   * Covers both known-failing sequences (regression) and a random shuffle.
-   * Previously flaky due to two bugs in TrieImpl.insert():
-   * 1. commonPrefix.isEmpty() was checked before commonPrefix.equals(k), causing
-   *    KVNode("",v) to be incorrectly replaced with BranchNode{terminal:v} on
-   *    duplicate put of a fully-split key — corrupting the root hash.
-   * 2. kvNodeSetValueOrNode() unconditionally marked the node dirty even when
-   *    the value was unchanged, causing unnecessary hash recomputation.
-   * Both are now fixed.
+   * Covers both known-failing sequences (regression) and a seeded random
+   * shuffle. Previously flaky due to a correctness bug in TrieImpl.insert():
+   * commonPrefix.isEmpty() was checked before commonPrefix.equals(k), causing
+   * KVNode("", v_old) to be incorrectly replaced with BranchNode{terminal:v_new}
+   * on a duplicate put of a fully-split key — this is the actual root-hash
+   * corruption. A separate, non-correctness optimization in
+   * kvNodeSetValueOrNode() additionally short-circuits same-value writes to
+   * avoid unnecessary dirty marking / hash recomputation.
    */
   @Test
   public void testOrder() {
@@ -145,7 +144,12 @@ public class TrieTest {
     trie.put(RLP.encodeInt(10), String.valueOf(10).getBytes());
     value.add(10);
     byte[] rootHash1 = trie.getRootHash();
-    Collections.shuffle(value, new Random(0xC0FFEEL));
+    TrieImpl baseline = new TrieImpl();
+    for (int i = 1; i < n; i++) {
+      baseline.put(RLP.encodeInt(i), String.valueOf(i).getBytes());
+    }
+    Assert.assertArrayEquals(baseline.getRootHash(), rootHash1);
+    Collections.shuffle(value, new Random(SHUFFLE_SEED));
     assertTrieRootHash(rootHash1, value);
     String[] sequences = {
         "95,10,66,10,67,2,98,31,85,89,81,96,19,68,44,49,43,40,62,87,4,38,17,18,8,"
@@ -206,7 +210,7 @@ public class TrieTest {
     return result;
   }
 
-  private void assertTrieRootHash(byte[] rootHash1, List<Integer> value) {
+  private static void assertTrieRootHash(byte[] rootHash1, List<Integer> value) {
     TrieImpl trie2 = new TrieImpl();
     for (int i : value) {
       trie2.put(RLP.encodeInt(i), String.valueOf(i).getBytes());
@@ -249,7 +253,7 @@ public class TrieTest {
       trie.put(RLP.encodeInt(i), String.valueOf(i).getBytes());
     }
     byte[] rootHash1 = trie.getRootHash();
-    Collections.shuffle(value, new java.util.Random(42));
+    Collections.shuffle(value, new Random(42));
     TrieImpl trie2 = new TrieImpl();
     for (int i : value) {
       trie2.put(RLP.encodeInt(i), String.valueOf(i).getBytes());
