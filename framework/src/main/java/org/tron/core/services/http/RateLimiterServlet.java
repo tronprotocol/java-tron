@@ -55,42 +55,44 @@ public abstract class RateLimiterServlet extends HttpServlet {
 
   @PostConstruct
   private void addRateContainer() {
-    RateLimiterInitialization.HttpRateLimiterItem item = Args.getInstance()
-        .getRateLimiterInitialization().getHttpMap().get(getClass().getSimpleName());
     final String name = getClass().getSimpleName();
+    RateLimiterInitialization.HttpRateLimiterItem item = Args.getInstance()
+        .getRateLimiterInitialization().getHttpMap().get(name);
 
-    String cName = (item == null || Strings.isNullOrEmpty(item.getStrategy()))
-        ? DEFAULT_ADAPTER_NAME
-        : item.getStrategy();
-    String params = (item == null || Strings.isNullOrEmpty(item.getParams()))
-        ? QpsStrategy.DEFAULT_QPS_PARAM
-        : item.getParams();
+    String cName;
+    String params;
+    if (item == null) {
+      cName = DEFAULT_ADAPTER_NAME;
+      params = QpsStrategy.DEFAULT_QPS_PARAM;
+    } else {
+      cName = item.getStrategy();
+      params = item.getParams();
+    }
 
     try {
       container.add(KEY_PREFIX_HTTP, name, buildAdapter(cName, params, name));
     } catch (Exception e) {
-      this.throwTronError(cName, params, name, e);
+      throw throwTronError(cName, params, name, e);
     }
   }
 
-  static IRateLimiter buildAdapter(String cName, String params, String name) throws Exception {
+  static IRateLimiter buildAdapter(String cName, String params, String name) {
     Class<? extends IRateLimiter> c = ALLOWED_ADAPTERS.get(cName);
-    if (c != null) {
-      try {
-        return c.getConstructor(String.class).newInstance(params);
-      } catch (Exception e) {
-        logger.warn("Failed to create rate limiter '{}' for servlet '{}', "
-            + "falling back to default. Cause: {}", cName, name, e.getMessage());
-      }
-    } else {
-      logger.warn("Unknown rate limiter adapter '{}' for servlet '{}', "
-          + "falling back to default.", cName, name);
+    if (c == null) {
+      throw throwTronError(cName, params, name,
+          new IllegalArgumentException("unknown rate limiter adapter; allowed="
+              + ALLOWED_ADAPTERS.keySet()));
     }
-    return new DefaultBaseQqsAdapter(QpsStrategy.DEFAULT_QPS_PARAM);
+    try {
+      return c.getConstructor(String.class).newInstance(params);
+    } catch (Exception e) {
+      throw throwTronError(cName, params, name, e);
+    }
   }
 
-  private void throwTronError(String strategy, String params, String servlet,  Exception e) {
-    throw new TronError("failure to add the rate limiter strategy. servlet = " + servlet
+  private static TronError throwTronError(String strategy, String params, String servlet,
+      Exception e) {
+    return new TronError("failure to add the rate limiter strategy. servlet = " + servlet
         + ", strategy name = " + strategy + ", params = \"" + params + "\".",
             e, TronError.ErrCode.RATE_LIMITER_INIT);
   }
