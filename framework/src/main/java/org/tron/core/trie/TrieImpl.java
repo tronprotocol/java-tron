@@ -179,6 +179,10 @@ public class TrieImpl implements Trie<byte[]> {
     } else {
       TrieKey currentNodeKey = n.kvNodeGetKey();
       TrieKey commonPrefix = k.getCommonPrefix(currentNodeKey);
+      // NOTE: equals(k) MUST precede isEmpty(). They overlap only when both k and
+      // currentNodeKey are empty (duplicate put on a fully-split KV leaf); in that
+      // case the correct behavior is an in-place value update, not conversion to
+      // a BranchNode. Swapping the order corrupts the trie structure. See #6608.
       if (commonPrefix.equals(k)) {
         return n.kvNodeSetValueOrNode(nodeOrValue);
       } else if (commonPrefix.isEmpty()) {
