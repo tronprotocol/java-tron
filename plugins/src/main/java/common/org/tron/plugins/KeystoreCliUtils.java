@@ -100,7 +100,7 @@ final class KeystoreCliUtils {
         return null;
       }
       try {
-        String password = stripLineEndings(
+        String password = WalletUtils.stripPasswordLine(
             new String(bytes, StandardCharsets.UTF_8));
         if (!WalletUtils.passwordValid(password)) {
           err.println("Invalid password: must be at least 6 characters.");
@@ -178,23 +178,6 @@ final class KeystoreCliUtils {
       map.put(keyValues[i], keyValues[i + 1]);
     }
     return map;
-  }
-
-  static String stripLineEndings(String s) {
-    // Strip UTF-8 BOM if present (Windows Notepad adds this)
-    if (s.length() > 0 && s.charAt(0) == '\uFEFF') {
-      s = s.substring(1);
-    }
-    int end = s.length();
-    while (end > 0) {
-      char c = s.charAt(end - 1);
-      if (c == '\n' || c == '\r') {
-        end--;
-      } else {
-        break;
-      }
-    }
-    return s.substring(0, end);
   }
 
   static boolean checkFileExists(File file, String label, PrintWriter err) {

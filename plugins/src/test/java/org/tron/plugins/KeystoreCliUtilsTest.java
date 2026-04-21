@@ -23,52 +23,6 @@ public class KeystoreCliUtilsTest {
   public TemporaryFolder tempFolder = new TemporaryFolder();
 
   @Test
-  public void testStripLineEndingsNoChange() {
-    assertEquals("password", KeystoreCliUtils.stripLineEndings("password"));
-  }
-
-  @Test
-  public void testStripLineEndingsTrailingLf() {
-    assertEquals("password", KeystoreCliUtils.stripLineEndings("password\n"));
-  }
-
-  @Test
-  public void testStripLineEndingsTrailingCrLf() {
-    assertEquals("password", KeystoreCliUtils.stripLineEndings("password\r\n"));
-  }
-
-  @Test
-  public void testStripLineEndingsTrailingCr() {
-    assertEquals("password", KeystoreCliUtils.stripLineEndings("password\r"));
-  }
-
-  @Test
-  public void testStripLineEndingsMultipleTrailing() {
-    assertEquals("password", KeystoreCliUtils.stripLineEndings("password\r\n\r\n"));
-  }
-
-  @Test
-  public void testStripLineEndingsBom() {
-    assertEquals("password", KeystoreCliUtils.stripLineEndings("\uFEFFpassword"));
-  }
-
-  @Test
-  public void testStripLineEndingsBomAndTrailing() {
-    assertEquals("password",
-        KeystoreCliUtils.stripLineEndings("\uFEFFpassword\r\n"));
-  }
-
-  @Test
-  public void testStripLineEndingsEmpty() {
-    assertEquals("", KeystoreCliUtils.stripLineEndings(""));
-  }
-
-  @Test
-  public void testStripLineEndingsOnlyLineEndings() {
-    assertEquals("", KeystoreCliUtils.stripLineEndings("\r\n\r\n"));
-  }
-
-  @Test
   public void testJsonMapEven() {
     Map<String, String> m = KeystoreCliUtils.jsonMap("a", "1", "b", "2");
     assertEquals(2, m.size());

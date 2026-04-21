@@ -186,6 +186,35 @@ public class WalletUtils {
     return String.format("%s%skeystore", getDefaultKeyDirectory(), File.separator);
   }
 
+  /**
+   * Strip trailing line terminators ({@code \n}/{@code \r}) and a leading
+   * UTF-8 BOM ({@code \uFEFF}) from a line of input. Unlike
+   * {@link String#trim()} this preserves internal whitespace, so passwords
+   * containing spaces (e.g. passphrases) survive intact.
+   *
+   * <p>Intended as the canonical helper for normalizing raw user-provided
+   * password/line input across both CLI console and file-driven paths.
+   * Returns {@code null} if the input is {@code null}.
+   */
+  public static String stripPasswordLine(String s) {
+    if (s == null) {
+      return null;
+    }
+    if (s.length() > 0 && s.charAt(0) == '\uFEFF') {
+      s = s.substring(1);
+    }
+    int end = s.length();
+    while (end > 0) {
+      char c = s.charAt(end - 1);
+      if (c == '\n' || c == '\r') {
+        end--;
+      } else {
+        break;
+      }
+    }
+    return s.substring(0, end);
+  }
+
   public static boolean passwordValid(String password) {
     if (StringUtils.isEmpty(password)) {
       return false;
@@ -197,20 +226,49 @@ public class WalletUtils {
     return true;
   }
 
+  /**
+   * Lazily-initialized Scanner shared across successive
+   * {@link #inputPassword()} calls on the non-TTY path so that
+   * {@link #inputPassword2Twice()} can read two lines in sequence
+   * without losing data. Each call to {@code new Scanner(System.in)}
+   * internally buffers bytes from the underlying {@link BufferedReader};
+   * constructing a second Scanner after the first has been discarded
+   * drops any buffered bytes the first pulled from stdin, causing
+   * {@code NoSuchElementException}.
+   */
+  private static Scanner sharedStdinScanner;
+
+  /**
+   * Visible for testing: reset the cached Scanner so subsequent calls
+   * see a freshly rebound {@link System#in}.
+   */
+  static synchronized void resetSharedStdinScanner() {
+    sharedStdinScanner = null;
+  }
+
+  private static synchronized Scanner getSharedStdinScanner() {
+    if (sharedStdinScanner == null) {
+      sharedStdinScanner = new Scanner(System.in);
+    }
+    return sharedStdinScanner;
+  }
+
   public static String inputPassword() {
-    Scanner in = null;
     String password;
     Console cons = System.console();
-    if (cons == null) {
-      in = new Scanner(System.in);
-    }
+    Scanner in = cons == null ? getSharedStdinScanner() : null;
     while (true) {
       if (cons != null) {
         char[] pwd = cons.readPassword("password: ");
         password = String.valueOf(pwd);
       } else {
-        String input = in.nextLine().trim();
-        password = input.split("\\s+")[0];
+        // Preserve the full password including embedded whitespace.
+        // The previous implementation applied trim() + split("\\s+")[0]
+        // which silently truncated passwords like "correct horse battery
+        // staple" to "correct" when piped via stdin (e.g. echo ... | java).
+        // stripPasswordLine only removes the UTF-8 BOM and trailing line
+        // terminators — internal whitespace is part of the password.
+        password = stripPasswordLine(in.nextLine());
       }
       if (passwordValid(password)) {
         return password;
