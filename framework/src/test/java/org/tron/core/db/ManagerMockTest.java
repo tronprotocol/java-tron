@@ -20,10 +20,14 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.MockedConstruction;
 import org.mockito.MockedStatic;
@@ -32,8 +36,12 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
 import org.tron.common.cron.CronExpression;
+import org.tron.common.logsfilter.EventPluginLoader;
+import org.tron.common.logsfilter.trigger.ContractLogTrigger;
+import org.tron.common.logsfilter.trigger.ContractTrigger;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.ProgramResult;
+import org.tron.common.runtime.vm.LogInfo;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.BlockCapsule;
@@ -436,6 +444,113 @@ public class ManagerMockTest {
     Method privateMethod = Manager.class.getDeclaredMethod("reOrgLogsFilter");
     privateMethod.setAccessible(true);
     privateMethod.invoke(dbManager);
+  }
+
+  @Test
+  public void testPostContractTriggerProcessesSync() throws Exception {
+    Manager dbManager = spy(new Manager());
+    Field eventLoadedField = Manager.class.getDeclaredField("eventPluginLoaded");
+    eventLoadedField.setAccessible(true);
+    eventLoadedField.set(dbManager, true);
+
+    ChainBaseManager cbm = mock(ChainBaseManager.class);
+    DynamicPropertiesStore dps = mock(DynamicPropertiesStore.class);
+    when(dps.getLatestSolidifiedBlockNum()).thenReturn(0L);
+    when(cbm.getDynamicPropertiesStore()).thenReturn(dps);
+    Field cbmField = Manager.class.getDeclaredField("chainBaseManager");
+    cbmField.setAccessible(true);
+    cbmField.set(dbManager, cbm);
+
+    EventPluginLoader mockLoader = mock(EventPluginLoader.class);
+    when(mockLoader.isContractLogTriggerEnable()).thenReturn(false);
+    when(mockLoader.isContractEventTriggerEnable()).thenReturn(false);
+    when(mockLoader.isSolidityLogTriggerEnable()).thenReturn(true);
+    when(mockLoader.isSolidityEventTriggerEnable()).thenReturn(false);
+
+    Field instanceField = EventPluginLoader.class.getDeclaredField("instance");
+    instanceField.setAccessible(true);
+    EventPluginLoader original = (EventPluginLoader) instanceField.get(null);
+    instanceField.set(null, mockLoader);
+
+    Args.getSolidityContractLogTriggerMap().clear();
+
+    try {
+      ContractLogTrigger trigger = new ContractLogTrigger();
+      trigger.setBlockNumber(200L);
+      trigger.setTransactionId("tx-id");
+      trigger.setContractAddress("0x01");
+      trigger.setLogInfo(new LogInfo(new byte[0], new ArrayList<>(), new byte[0]));
+
+      TransactionTrace traceMock = mock(TransactionTrace.class);
+      ProgramResult resultMock = mock(ProgramResult.class);
+      when(traceMock.getRuntimeResult()).thenReturn(resultMock);
+      List<ContractTrigger> triggers = new ArrayList<>();
+      triggers.add(trigger);
+      when(resultMock.getTriggerList()).thenReturn(triggers);
+
+      Method method = Manager.class.getDeclaredMethod("postContractTrigger",
+          TransactionTrace.class, boolean.class, String.class);
+      method.setAccessible(true);
+      method.invoke(dbManager, traceMock, false, "blockhash");
+
+      Assert.assertNotNull(
+          "synchronous processTrigger should populate solidity log map",
+          Args.getSolidityContractLogTriggerMap().get(200L));
+    } finally {
+      instanceField.set(null, original);
+      eventLoadedField.set(dbManager, false);
+      Args.getSolidityContractLogTriggerMap().clear();
+    }
+  }
+
+  @Test
+  public void testPostContractTriggerSwallowsThrowable() throws Exception {
+    Manager dbManager = spy(new Manager());
+    Field eventLoadedField = Manager.class.getDeclaredField("eventPluginLoaded");
+    eventLoadedField.setAccessible(true);
+    eventLoadedField.set(dbManager, true);
+
+    ChainBaseManager cbm = mock(ChainBaseManager.class);
+    DynamicPropertiesStore dps = mock(DynamicPropertiesStore.class);
+    when(dps.getLatestSolidifiedBlockNum()).thenReturn(0L);
+    when(cbm.getDynamicPropertiesStore()).thenReturn(dps);
+    Field cbmField = Manager.class.getDeclaredField("chainBaseManager");
+    cbmField.setAccessible(true);
+    cbmField.set(dbManager, cbm);
+
+    EventPluginLoader mockLoader = mock(EventPluginLoader.class);
+    when(mockLoader.isContractLogTriggerEnable()).thenReturn(false);
+    when(mockLoader.isContractEventTriggerEnable()).thenReturn(false);
+    when(mockLoader.isSolidityLogTriggerEnable()).thenReturn(true);
+    when(mockLoader.isSolidityEventTriggerEnable()).thenReturn(false);
+
+    Field instanceField = EventPluginLoader.class.getDeclaredField("instance");
+    instanceField.setAccessible(true);
+    EventPluginLoader original = (EventPluginLoader) instanceField.get(null);
+    instanceField.set(null, mockLoader);
+
+    try {
+      // null logInfo → processTrigger throws NPE on logInfo.getTopics()
+      ContractLogTrigger trigger = new ContractLogTrigger();
+      trigger.setBlockNumber(300L);
+      trigger.setTransactionId("tx-id");
+      trigger.setContractAddress("0x01");
+
+      TransactionTrace traceMock = mock(TransactionTrace.class);
+      ProgramResult resultMock = mock(ProgramResult.class);
+      when(traceMock.getRuntimeResult()).thenReturn(resultMock);
+      when(resultMock.getTriggerList())
+          .thenReturn(Collections.singletonList((ContractTrigger) trigger));
+
+      Method method = Manager.class.getDeclaredMethod("postContractTrigger",
+          TransactionTrace.class, boolean.class, String.class);
+      method.setAccessible(true);
+      // catch (Throwable) absorbs the NPE — invocation must complete normally
+      method.invoke(dbManager, traceMock, false, "blockhash");
+    } finally {
+      instanceField.set(null, original);
+      eventLoadedField.set(dbManager, false);
+    }
   }
 
 }
