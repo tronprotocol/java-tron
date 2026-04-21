@@ -2,6 +2,7 @@ package org.tron.plugins;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -670,5 +671,69 @@ public class KeystoreUpdateTest {
             java.nio.file.attribute.PosixFilePermission.OWNER_READ,
             java.nio.file.attribute.PosixFilePermission.OWNER_WRITE),
         perms);
+  }
+
+  @Test
+  public void testUpdateLegacyTipFiresWhenPasswordHasWhitespace() throws Exception {
+    // The legacy-truncation tip should fire when the entered old password
+    // contains whitespace and decryption fails — the scenario that actually
+    // matches the legacy bug.
+    File dir = tempFolder.newFolder("keystore-tip-ws");
+    String realPassword = "realpass123";
+
+    SignInterface keyPair = SignUtils.getGeneratedRandomSign(
+        SecureRandom.getInstance("NativePRNG"), true);
+    String fileName = WalletUtils.generateWalletFile(realPassword, keyPair, dir, true);
+    Credentials creds = WalletUtils.loadCredentials(realPassword,
+        new File(dir, fileName), true);
+
+    // Password with internal whitespace that is NOT the real password
+    File pwFile = tempFolder.newFile("pw-ws.txt");
+    Files.write(pwFile.toPath(),
+        ("correct horse battery staple\nnewpass789").getBytes(StandardCharsets.UTF_8));
+
+    StringWriter err = new StringWriter();
+    CommandLine cmd = new CommandLine(new Toolkit());
+    cmd.setErr(new PrintWriter(err));
+    int exitCode = cmd.execute("keystore", "update", creds.getAddress(),
+        "--keystore-dir", dir.getAbsolutePath(),
+        "--password-file", pwFile.getAbsolutePath());
+
+    assertEquals(1, exitCode);
+    assertTrue("Legacy-truncation tip should fire for whitespace password, got: "
+            + err.toString(),
+        err.toString().contains("first whitespace-separated word"));
+  }
+
+  @Test
+  public void testUpdateLegacyTipSuppressedWhenPasswordHasNoWhitespace() throws Exception {
+    // For the common "wrong password" case (no whitespace), the legacy tip
+    // would be noise — it should be suppressed.
+    File dir = tempFolder.newFolder("keystore-tip-nows");
+    String realPassword = "realpass123";
+
+    SignInterface keyPair = SignUtils.getGeneratedRandomSign(
+        SecureRandom.getInstance("NativePRNG"), true);
+    String fileName = WalletUtils.generateWalletFile(realPassword, keyPair, dir, true);
+    Credentials creds = WalletUtils.loadCredentials(realPassword,
+        new File(dir, fileName), true);
+
+    // Wrong password with no whitespace
+    File pwFile = tempFolder.newFile("pw-nows.txt");
+    Files.write(pwFile.toPath(),
+        ("wrongpassword\nnewpass789").getBytes(StandardCharsets.UTF_8));
+
+    StringWriter err = new StringWriter();
+    CommandLine cmd = new CommandLine(new Toolkit());
+    cmd.setErr(new PrintWriter(err));
+    int exitCode = cmd.execute("keystore", "update", creds.getAddress(),
+        "--keystore-dir", dir.getAbsolutePath(),
+        "--password-file", pwFile.getAbsolutePath());
+
+    assertEquals(1, exitCode);
+    assertTrue("Decryption failure must still be reported",
+        err.toString().contains("Decryption failed"));
+    assertFalse("Legacy-truncation tip should NOT fire for whitespace-free password",
+        err.toString().contains("first whitespace-separated word"));
   }
 }

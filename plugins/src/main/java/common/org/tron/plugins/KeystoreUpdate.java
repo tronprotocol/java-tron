@@ -54,6 +54,10 @@ public class KeystoreUpdate implements Callable<Integer> {
   public Integer call() {
     PrintWriter out = spec.commandLine().getOut();
     PrintWriter err = spec.commandLine().getErr();
+    // Hoisted out of the try so the legacy-truncation hint in the catch
+    // block can inspect whether the user-supplied password contained
+    // whitespace (which is the only case truncation can explain).
+    String oldPassword = null;
     try {
       File keystoreFile = findKeystoreByAddress(address, err);
       if (keystoreFile == null) {
@@ -61,7 +65,6 @@ public class KeystoreUpdate implements Callable<Integer> {
         return 1;
       }
 
-      String oldPassword;
       String newPassword;
 
       if (passwordFile != null) {
@@ -83,8 +86,8 @@ public class KeystoreUpdate implements Callable<Integer> {
                     + " on separate lines.");
             return 1;
           }
-          oldPassword = KeystoreCliUtils.stripLineEndings(lines[0]);
-          newPassword = KeystoreCliUtils.stripLineEndings(lines[1]);
+          oldPassword = WalletUtils.stripPasswordLine(lines[0]);
+          newPassword = WalletUtils.stripPasswordLine(lines[1]);
         } finally {
           Arrays.fill(bytes, (byte) 0);
         }
@@ -161,6 +164,22 @@ public class KeystoreUpdate implements Callable<Integer> {
       return 0;
     } catch (CipherException e) {
       err.println("Decryption failed: " + e.getMessage());
+      // Legacy-truncation hint: keystores created via
+      // `FullNode.jar --keystore-factory` in non-TTY mode (e.g.
+      // `echo PASS | java ...`) were encrypted with only the first
+      // whitespace-separated word of the password due to a bug in the
+      // legacy input path. The hint only fires if the provided password
+      // actually contains whitespace — otherwise truncation cannot be the
+      // cause of the decryption failure and the hint would be noise for
+      // the far more common "wrong password" case.
+      if (oldPassword != null && oldPassword.matches(".*\\s.*")) {
+        err.println("Tip: if this keystore was created with "
+            + "`FullNode.jar --keystore-factory` in non-TTY mode, the legacy "
+            + "code truncated the password at the first whitespace. "
+            + "Try re-running with only the first whitespace-separated word "
+            + "of your passphrase as the current password; you can then "
+            + "choose the full phrase as the new password.");
+      }
       return 1;
     } catch (Exception e) {
       err.println("Error: " + e.getMessage());
