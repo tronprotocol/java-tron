@@ -8,6 +8,7 @@ import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.tron.common.math.StrictMathWrapper;
 
 /**
  * Storage configuration bean.
@@ -123,7 +124,7 @@ public class StorageConfig {
     // Expand 0 → auto-detected processor count. Mirrors develop Args.java:1609-1611.
     void postProcess() {
       if (compactThreads == 0) {
-        compactThreads = Math.max(Runtime.getRuntime().availableProcessors(), 1);
+        compactThreads = StrictMathWrapper.max(Runtime.getRuntime().availableProcessors(), 1);
       }
     }
   }

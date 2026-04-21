@@ -7,6 +7,7 @@ import static org.junit.Assert.assertTrue;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.junit.Test;
+import org.tron.common.math.StrictMathWrapper;
 
 public class StorageConfigTest {
 
@@ -67,7 +68,7 @@ public class StorageConfigTest {
     StorageConfig.DbSettingsConfig ds = sc.getDbSettings();
     assertEquals(7, ds.getLevelNumber());
     // compactThreads default is 0 in reference.conf, auto-expanded by postProcess()
-    assertEquals(Math.max(Runtime.getRuntime().availableProcessors(), 1),
+    assertEquals(StrictMathWrapper.max(Runtime.getRuntime().availableProcessors(), 1),
         ds.getCompactThreads());
     assertEquals(16, ds.getBlocksize());
     assertEquals(256, ds.getMaxBytesForLevelBase());
@@ -83,7 +84,7 @@ public class StorageConfigTest {
     // compactThreads = 0 must be auto-expanded to availableProcessors (min 1)
     Config config = withRef("storage { dbSettings { compactThreads = 0 } }");
     StorageConfig sc = StorageConfig.fromConfig(config);
-    assertEquals(Math.max(Runtime.getRuntime().availableProcessors(), 1),
+    assertEquals(StrictMathWrapper.max(Runtime.getRuntime().availableProcessors(), 1),
         sc.getDbSettings().getCompactThreads());
   }
 
