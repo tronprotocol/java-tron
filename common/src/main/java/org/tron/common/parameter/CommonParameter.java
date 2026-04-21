@@ -25,8 +25,11 @@ import org.tron.p2p.dns.update.PublishConfig;
 public class CommonParameter {
 
   // Install the JUL->SLF4J bridge early so that JUL log records emitted during
-  // static init of netty/grpc classes (or from unit tests that don't invoke
+  // static init of grpc classes (or from unit tests that don't invoke
   // LogService.load()) still reach Logback.
+  // removeHandlersForRootLogger() strips JUL's default ConsoleHandler so the
+  // same record is not emitted twice (once by JUL's own console output and
+  // once via the bridge to Logback).
   static {
     SLF4JBridgeHandler.removeHandlersForRootLogger();
     if (!SLF4JBridgeHandler.isInstalled()) {

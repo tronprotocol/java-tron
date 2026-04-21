@@ -4,7 +4,8 @@
 
   <!-- Propagate logback level changes back to JUL, eliminating the 60x overhead
        for disabled log statements when using the jul-to-slf4j bridge.
-       resetJUL=true clears any pre-existing JUL handlers to avoid double output. -->
+       resetJUL=true clears any explicit JUL logger levels so that the levels
+       declared below are the effective ones. -->
   <contextListener class="ch.qos.logback.classic.jul.LevelChangePropagator">
     <resetJUL>true</resetJUL>
   </contextListener>
