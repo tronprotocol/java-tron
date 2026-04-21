@@ -143,22 +143,7 @@ public class ByteArray {
     return "0x" + x;
   }
 
-  /**
-   * Max allowed length for input to hexToBigInteger.
-   * Covers both hex (0x + 64 = 66 for uint256) and decimal (78 for uint256)
-   * representations, with headroom. The exact value is not critical for
-   * performance — BigInteger parsing at this scale is negligible.
-   */
-  private static final int MAX_HEX_BIG_INTEGER_LEN = 100;
-
   public static BigInteger hexToBigInteger(String input) {
-    if (input == null) {
-      throw new IllegalArgumentException("hex input is null");
-    }
-    if (input.length() > MAX_HEX_BIG_INTEGER_LEN) {
-      throw new IllegalArgumentException(
-          "hex input exceeds max length: " + MAX_HEX_BIG_INTEGER_LEN);
-    }
     if (input.startsWith("0x")) {
       return new BigInteger(input.substring(2), 16);
     } else {

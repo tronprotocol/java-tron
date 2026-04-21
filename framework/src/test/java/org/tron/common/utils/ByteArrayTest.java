@@ -20,7 +20,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 import static org.tron.common.utils.ByteArray.fromHex;
 import static org.tron.common.utils.ByteArray.jsonHexToInt;
 import static org.tron.common.utils.ByteArray.jsonHexToLong;
@@ -43,8 +42,8 @@ public class ByteArrayTest {
   public void long2Bytes() {
     long a = 0x123456;
     byte[] bb = ByteArray.fromLong(a);
-    System.out.println(bb[6]);
-    System.out.println(bb[7]);
+    assertEquals(0x34, bb[6]);
+    assertEquals(0x56, bb[7]);
   }
 
   @Test
@@ -113,36 +112,9 @@ public class ByteArrayTest {
     jsonHexToLong(null);
   }
 
-  @Test
-  public void testHexToBigIntegerRejectsOversizedInput() {
-    // 0x + 98 hex = 100 chars, at the limit
-    String maxValid = "0x" + new String(new char[98]).replace('\0', 'f');
-    assertEquals(100, maxValid.length());
-    ByteArray.hexToBigInteger(maxValid); // should not throw
-
-    // 0x + 99 hex = 101 chars, exceeds limit
-    String tooLong = "0x" + new String(new char[99]).replace('\0', 'a');
-    try {
-      ByteArray.hexToBigInteger(tooLong);
-      fail("expected IllegalArgumentException");
-    } catch (IllegalArgumentException e) {
-      assertTrue(e.getMessage().contains("exceeds max length"));
-    }
-  }
-
   @Test(expected = NumberFormatException.class)
   public void testHexToBigIntegerEmptyStringThrowsNumberFormatException() {
     ByteArray.hexToBigInteger("");
-  }
-
-  @Test
-  public void testHexToBigIntegerRejectsNull() {
-    try {
-      ByteArray.hexToBigInteger(null);
-      fail("expected IllegalArgumentException");
-    } catch (IllegalArgumentException e) {
-      assertTrue(e.getMessage().contains("null"));
-    }
   }
 
   @Test

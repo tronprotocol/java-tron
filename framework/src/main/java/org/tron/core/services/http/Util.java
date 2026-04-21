@@ -543,13 +543,9 @@ public class Util {
           return null;
         }
 
-        try {
-          JSONObject jsonObject = JSON.parseObject(value);
-          if (jsonObject != null) {
-            return jsonObject.getString(key);
-          }
-        } catch (JSONException e) {
-          logger.debug("Invalid JSON input: {}", e.getMessage());
+        JSONObject jsonObject = JSON.parseObject(value);
+        if (jsonObject != null) {
+          return jsonObject.getString(key);
         }
         return null;
       }

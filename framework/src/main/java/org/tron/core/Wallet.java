@@ -31,6 +31,7 @@ import static org.tron.core.config.Parameter.DatabaseConstants.EXCHANGE_COUNT_LI
 import static org.tron.core.config.Parameter.DatabaseConstants.MARKET_COUNT_LIMIT_MAX;
 import static org.tron.core.config.Parameter.DatabaseConstants.PROPOSAL_COUNT_LIMIT_MAX;
 import static org.tron.core.config.Parameter.DatabaseConstants.WITNESS_COUNT_LIMIT_MAX;
+import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.parseBlockNumber;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.parseEnergyFee;
 import static org.tron.core.services.jsonrpc.TronJsonRpcImpl.EARLIEST_STR;
 import static org.tron.core.services.jsonrpc.TronJsonRpcImpl.FINALIZED_STR;
@@ -247,7 +248,6 @@ import org.tron.protos.contract.BalanceContract;
 import org.tron.protos.contract.BalanceContract.BlockBalanceTrace;
 import org.tron.protos.contract.BalanceContract.TransferContract;
 import org.tron.protos.contract.Common;
-import org.tron.protos.contract.ShieldContract.IncrementalMerkleTree;
 import org.tron.protos.contract.ShieldContract.IncrementalMerkleVoucherInfo;
 import org.tron.protos.contract.ShieldContract.OutputPoint;
 import org.tron.protos.contract.ShieldContract.OutputPointInfo;
@@ -743,13 +743,7 @@ public class Wallet {
     } else if (PENDING_STR.equalsIgnoreCase(id)) {
       throw new JsonRpcInvalidParamsException(TAG_PENDING_SUPPORT_ERROR);
     } else {
-      long blockNumber;
-      try {
-        blockNumber = ByteArray.hexToBigInteger(id).longValue();
-      } catch (Exception e) {
-        throw new JsonRpcInvalidParamsException("invalid block number");
-      }
-
+      long blockNumber = parseBlockNumber(id).longValue();
       return getBlockByNum(blockNumber);
     }
   }

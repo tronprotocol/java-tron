@@ -10,6 +10,7 @@ import com.google.common.base.Throwables;
 import com.google.common.primitives.Longs;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
+import java.math.BigInteger;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.List;
@@ -513,6 +514,32 @@ public class JsonRpcApiUtil {
     }
 
     return -1;
+  }
+
+  /**
+   * Max allowed length for a JSON-RPC block number hex/decimal input.
+   * API-level DoS guard: rejects pathological inputs before BigInteger parsing,
+   * whose cost grows quadratically with length. Covers hex (0x + 64 chars for
+   * uint256) and decimal (78 chars for uint256) representations with headroom.
+   */
+  private static final int MAX_BLOCK_NUM_HEX_LEN = 100;
+
+  private static final String BLOCK_NUM_ERROR = "invalid block number";
+
+  /**
+   * Parse a JSON-RPC block number (hex "0x..." or decimal) into a BigInteger,
+   * enforcing the {@link #MAX_BLOCK_NUM_HEX_LEN} length limit.
+   */
+  public static BigInteger parseBlockNumber(String blockNumOrTag)
+      throws JsonRpcInvalidParamsException {
+    if (blockNumOrTag == null || blockNumOrTag.length() > MAX_BLOCK_NUM_HEX_LEN) {
+      throw new JsonRpcInvalidParamsException(BLOCK_NUM_ERROR);
+    }
+    try {
+      return ByteArray.hexToBigInteger(blockNumOrTag);
+    } catch (Exception e) {
+      throw new JsonRpcInvalidParamsException(BLOCK_NUM_ERROR);
+    }
   }
 
   public static long getByJsonBlockId(String blockNumOrTag, Wallet wallet)
