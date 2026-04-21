@@ -111,14 +111,21 @@ public class StorageConfig {
   @Setter
   public static class DbSettingsConfig {
     private int levelNumber = 7;
-    private int compactThreads = 32;
-    private int blocksize = 64;
+    private int compactThreads = 0; // 0 = auto: max(availableProcessors, 1)
+    private int blocksize = 16;
     private long maxBytesForLevelBase = 256;
     private double maxBytesForLevelMultiplier = 10;
-    private int level0FileNumCompactionTrigger = 4;
-    private long targetFileSizeBase = 256;
+    private int level0FileNumCompactionTrigger = 2;
+    private long targetFileSizeBase = 64;
     private int targetFileSizeMultiplier = 1;
     private int maxOpenFiles = 5000;
+
+    // Expand 0 → auto-detected processor count. Mirrors develop Args.java:1609-1611.
+    void postProcess() {
+      if (compactThreads == 0) {
+        compactThreads = Math.max(Runtime.getRuntime().availableProcessors(), 1);
+      }
+    }
   }
 
   @Getter
@@ -190,6 +197,8 @@ public class StorageConfig {
     sc.defaultDbOption = readDbOption(section, "default");
     sc.defaultMDbOption = readDbOption(section, "defaultM");
     sc.defaultLDbOption = readDbOption(section, "defaultL");
+
+    sc.dbSettings.postProcess();
     return sc;
   }
 

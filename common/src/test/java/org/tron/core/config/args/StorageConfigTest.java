@@ -59,18 +59,40 @@ public class StorageConfigTest {
 
   @Test
   public void testDbSettingsDefaults() {
+    // These defaults must match develop's Args.initRocksDbSettings() fallbacks so that
+    // nodes with minimal configs retain the same RocksDB tuning. See
+    // docs/plans/2026-04-21-001-fix-reference-conf-default-drift.md.
     Config empty = withRef();
     StorageConfig sc = StorageConfig.fromConfig(empty);
     StorageConfig.DbSettingsConfig ds = sc.getDbSettings();
     assertEquals(7, ds.getLevelNumber());
-    assertEquals(32, ds.getCompactThreads());
-    assertEquals(64, ds.getBlocksize());
+    // compactThreads default is 0 in reference.conf, auto-expanded by postProcess()
+    assertEquals(Math.max(Runtime.getRuntime().availableProcessors(), 1),
+        ds.getCompactThreads());
+    assertEquals(16, ds.getBlocksize());
     assertEquals(256, ds.getMaxBytesForLevelBase());
     assertEquals(10, ds.getMaxBytesForLevelMultiplier(), 0.01);
-    assertEquals(4, ds.getLevel0FileNumCompactionTrigger());
-    assertEquals(256, ds.getTargetFileSizeBase());
+    assertEquals(2, ds.getLevel0FileNumCompactionTrigger());
+    assertEquals(64, ds.getTargetFileSizeBase());
     assertEquals(1, ds.getTargetFileSizeMultiplier());
     assertEquals(5000, ds.getMaxOpenFiles());
+  }
+
+  @Test
+  public void testCompactThreadsAutoExpand() {
+    // compactThreads = 0 must be auto-expanded to availableProcessors (min 1)
+    Config config = withRef("storage { dbSettings { compactThreads = 0 } }");
+    StorageConfig sc = StorageConfig.fromConfig(config);
+    assertEquals(Math.max(Runtime.getRuntime().availableProcessors(), 1),
+        sc.getDbSettings().getCompactThreads());
+  }
+
+  @Test
+  public void testCompactThreadsExplicitPreserved() {
+    // Non-zero compactThreads must be passed through untouched
+    Config config = withRef("storage { dbSettings { compactThreads = 7 } }");
+    StorageConfig sc = StorageConfig.fromConfig(config);
+    assertEquals(7, sc.getDbSettings().getCompactThreads());
   }
 
   @Test

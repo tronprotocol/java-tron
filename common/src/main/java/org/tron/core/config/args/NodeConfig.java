@@ -89,7 +89,9 @@ public class NodeConfig {
   private double activeConnectFactor = 0.1;
   private double connectFactor = 0.6;
   private double disconnectNumberFactor = 0.4;
-  private int maxActiveNodesWithSameIp = 2;
+  // Legacy alias `maxActiveNodesWithSameIp` has no bean field: we only peek at it via
+  // section.hasPath() below. Keeping it field-less means reference.conf doesn't have to
+  // ship a default that would otherwise mask the modern `maxConnectionsWithSameIp` key.
 
   // ---- Sub-beans matching config's dot-notation nested structure ----
   private ListenConfig listen = new ListenConfig();
@@ -180,7 +182,7 @@ public class NodeConfig {
   @Getter
   @Setter
   public static class ValidContractProtoConfig {
-    private int threads = 2;
+    private int threads = 0; // 0 = auto (availableProcessors)
   }
 
   @Getter
@@ -426,6 +428,11 @@ public class NodeConfig {
     // solidityThreads: 0 = auto-detect
     if (solidity.threads == 0) {
       solidity.threads = Runtime.getRuntime().availableProcessors();
+    }
+
+    // validContractProto.threads: 0 = auto-detect (matches develop Args.java:743-746)
+    if (validContractProto.threads == 0) {
+      validContractProto.threads = Runtime.getRuntime().availableProcessors();
     }
 
     // syncFetchBatchNum: clamp to [100, 2000]

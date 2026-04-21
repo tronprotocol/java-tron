@@ -225,4 +225,61 @@ public class NodeConfigTest {
     assertEquals(4, NodeConfig.fromConfig(
         withRef("node { maxFastForwardNum = 4 }")).getMaxFastForwardNum());
   }
+
+  // ----- validContractProto.threads: 0 = auto (availableProcessors) -----
+
+  @Test
+  public void testValidContractProtoThreadsDefaultAutoExpands() {
+    // Default in reference.conf is 0; postProcess must expand to availableProcessors.
+    // Matches develop Args.java:743-746 runtime fallback.
+    NodeConfig nc = NodeConfig.fromConfig(withRef());
+    assertEquals(Runtime.getRuntime().availableProcessors(),
+        nc.getValidContractProtoThreads());
+  }
+
+  @Test
+  public void testValidContractProtoThreadsExplicitPreserved() {
+    NodeConfig nc = NodeConfig.fromConfig(
+        withRef("node { validContractProto { threads = 3 } }"));
+    assertEquals(3, nc.getValidContractProtoThreads());
+  }
+
+  // ----- trustNode: empty reference.conf default means trustNode stays unset -----
+
+  @Test
+  public void testTrustNodeNotDefaultedByReferenceConf() {
+    // reference.conf intentionally omits `node.trustNode` so that empty configs
+    // preserve develop's behavior (trustNodeAddr stays null in the Args bridge).
+    NodeConfig nc = NodeConfig.fromConfig(withRef());
+    assertTrue(nc.getTrustNode() == null || nc.getTrustNode().isEmpty());
+  }
+
+  // ----- maxConnectionsWithSameIp alias: reference.conf must not poison merge -----
+
+  @Test
+  public void testMaxConnectionsWithSameIpNotOverriddenByReferenceConfAlias() {
+    // reference.conf must NOT ship `maxActiveNodesWithSameIp`, otherwise the alias-
+    // fallback branch would silently clobber the user's modern key. Regression guard
+    // for review #2 (317787106, 2026-04-16).
+    NodeConfig nc = NodeConfig.fromConfig(
+        withRef("node { maxConnectionsWithSameIp = 10 }"));
+    assertEquals(10, nc.getMaxConnectionsWithSameIp());
+  }
+
+  @Test
+  public void testMaxActiveNodesWithSameIpLegacyAliasStillWorks() {
+    // Back-compat: users who still write the legacy key in their config.conf
+    // must get their value routed to maxConnectionsWithSameIp.
+    NodeConfig nc = NodeConfig.fromConfig(
+        withRef("node { maxActiveNodesWithSameIp = 5 }"));
+    assertEquals(5, nc.getMaxConnectionsWithSameIp());
+  }
+
+  @Test
+  public void testLegacyAliasTakesPriorityOverModernKey() {
+    // Matches develop Args.java:392-399: if the legacy key is present, it wins.
+    NodeConfig nc = NodeConfig.fromConfig(
+        withRef("node { maxActiveNodesWithSameIp = 5, maxConnectionsWithSameIp = 10 }"));
+    assertEquals(5, nc.getMaxConnectionsWithSameIp());
+  }
 }
