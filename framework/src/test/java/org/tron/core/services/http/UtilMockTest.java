@@ -109,6 +109,63 @@ public class UtilMockTest  {
   }
 
   @Test
+  public void testPrintBlockToJSONVisibleFalse() {
+    BlockCapsule blockCapsule = new BlockCapsule(1, Sha256Hash.ZERO_HASH,
+        System.currentTimeMillis(), Sha256Hash.ZERO_HASH.getByteString());
+    TransactionCapsule txCap = getTransactionCapsuleExample();
+    blockCapsule.addTransaction(txCap);
+
+    JSONObject json = Util.printBlockToJSON(blockCapsule.getInstance(), false);
+    Assert.assertTrue(json.containsKey("blockID"));
+    Assert.assertTrue(json.containsKey("block_header"));
+    Assert.assertTrue(json.containsKey("transactions"));
+    JSONObject blockHeader = json.getJSONObject("block_header");
+    Assert.assertNotNull(blockHeader);
+    Assert.assertTrue(blockHeader.containsKey("raw_data"));
+
+    JSONArray txArray = json.getJSONArray("transactions");
+    Assert.assertEquals(1, txArray.size());
+    JSONObject txJson = txArray.getJSONObject(0);
+    Assert.assertTrue(txJson.containsKey("txID"));
+    Assert.assertTrue(txJson.containsKey("raw_data"));
+  }
+
+  @Test
+  public void testPrintBlockToJSONVisibleFlagAffectsAddressEncoding() {
+    // Pins the optimized printBlockToJSON against the prior behavior: the
+    // visible flag must still thread through to JsonFormat so address-bearing
+    // fields switch encoding while byte-identity fields stay stable.
+    ByteString witnessAddress = ByteString.copyFrom(
+        ByteArray.fromHexString("41548794500882809695a8a687866e76d4271a1abc"));
+    BlockCapsule blockCapsule = new BlockCapsule(1, Sha256Hash.ZERO_HASH,
+        System.currentTimeMillis(), witnessAddress);
+
+    JSONObject visible = Util.printBlockToJSON(blockCapsule.getInstance(), true);
+    JSONObject hidden = Util.printBlockToJSON(blockCapsule.getInstance(), false);
+
+    // blockID is derived from raw bytes; identical under either flag.
+    Assert.assertEquals(visible.getString("blockID"), hidden.getString("blockID"));
+
+    // Overall block_header must differ because witness_address is re-encoded.
+    String headerVisible = visible.getJSONObject("block_header").toJSONString();
+    String headerHidden = hidden.getJSONObject("block_header").toJSONString();
+    Assert.assertNotEquals(headerVisible, headerHidden);
+
+    // visible=true renders a mainnet address as Base58 starting with 'T'.
+    String witnessVisible = visible.getJSONObject("block_header")
+        .getJSONObject("raw_data").getString("witness_address");
+    Assert.assertNotNull(witnessVisible);
+    Assert.assertTrue("visible=true witness_address should be Base58 ('T...'), got: "
+        + witnessVisible, witnessVisible.startsWith("T"));
+
+    // visible=false keeps witness_address in raw (non-Base58) form.
+    String witnessHidden = hidden.getJSONObject("block_header")
+        .getJSONObject("raw_data").getString("witness_address");
+    Assert.assertNotNull(witnessHidden);
+    Assert.assertNotEquals(witnessVisible, witnessHidden);
+  }
+
+  @Test
   public void testPrintTransactionList() {
     TransactionCapsule transactionCapsule = getTransactionCapsuleExample();
     GrpcAPI.TransactionList list = GrpcAPI.TransactionList.newBuilder()
