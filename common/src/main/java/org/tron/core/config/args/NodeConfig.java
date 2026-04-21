@@ -25,6 +25,7 @@ public class NodeConfig {
   private String trustNode = "";
   private boolean walletExtensionApi = false;
   private int syncFetchBatchNum = 2000;
+  private int maxPendingBlockSize = 500;
   private int validateSignThreadNum = 0; // 0 = auto (availableProcessors)
   private int maxConnections = 30;
   private int minConnections = 8;
@@ -437,6 +438,14 @@ public class NodeConfig {
     }
     if (syncFetchBatchNum < 100) {
       syncFetchBatchNum = 100;
+    }
+
+    // maxPendingBlockSize: clamp to [50, 2000]
+    if (maxPendingBlockSize > 2000) {
+      maxPendingBlockSize = 2000;
+    }
+    if (maxPendingBlockSize < 50) {
+      maxPendingBlockSize = 50;
     }
 
     // blockProducedTimeOut: clamp to [30, 100]
