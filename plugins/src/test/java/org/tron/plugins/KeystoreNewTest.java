@@ -277,4 +277,31 @@ public class KeystoreNewTest {
             java.nio.file.attribute.PosixFilePermission.OWNER_WRITE),
         perms);
   }
+
+  @Test
+  public void testNewKeystoreRejectsMultiLinePasswordFile() throws Exception {
+    // Regression: a user might accidentally point --password-file at a
+    // `keystore update` two-line file (old\nnew). Without the guard the
+    // literal "old\nnew" becomes the password and neither line alone can
+    // unlock it later. new/import must reject multi-line files.
+    File dir = tempFolder.newFolder("keystore-multi");
+    File pwFile = tempFolder.newFile("multi-line.txt");
+    Files.write(pwFile.toPath(),
+        "oldpass123\nnewpass456".getBytes(StandardCharsets.UTF_8));
+
+    StringWriter err = new StringWriter();
+    CommandLine cmd = new CommandLine(new Toolkit());
+    cmd.setErr(new PrintWriter(err));
+    int exitCode = cmd.execute("keystore", "new",
+        "--keystore-dir", dir.getAbsolutePath(),
+        "--password-file", pwFile.getAbsolutePath());
+
+    assertEquals("Should reject multi-line password file", 1, exitCode);
+    assertTrue("Error must explain the multi-line rejection, got: " + err.toString(),
+        err.toString().contains("multiple lines"));
+    // No keystore created
+    File[] files = dir.listFiles((d, name) -> name.endsWith(".json"));
+    assertTrue("No keystore should have been created",
+        files == null || files.length == 0);
+  }
 }

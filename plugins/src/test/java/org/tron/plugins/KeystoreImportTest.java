@@ -501,4 +501,36 @@ public class KeystoreImportTest {
             + err.toString(),
         err.toString().contains("Warning: skipping symbolic link: evil.json"));
   }
+
+  @Test
+  public void testImportRejectsMultiLinePasswordFile() throws Exception {
+    // Regression: a user might accidentally point --password-file at a
+    // `keystore update` two-line file; without the guard that literal
+    // "old\nnew" becomes the password.
+    File dir = tempFolder.newFolder("keystore-multi-pw");
+    SignInterface keyPair = SignUtils.getGeneratedRandomSign(
+        SecureRandom.getInstance("NativePRNG"), true);
+    String privateKeyHex = ByteArray.toHexString(keyPair.getPrivateKey());
+
+    File keyFile = tempFolder.newFile("multi.key");
+    Files.write(keyFile.toPath(), privateKeyHex.getBytes(StandardCharsets.UTF_8));
+    File pwFile = tempFolder.newFile("multi-pw.txt");
+    Files.write(pwFile.toPath(),
+        "oldpass123\nnewpass456".getBytes(StandardCharsets.UTF_8));
+
+    java.io.StringWriter err = new java.io.StringWriter();
+    CommandLine cmd = new CommandLine(new Toolkit());
+    cmd.setErr(new java.io.PrintWriter(err));
+    int exitCode = cmd.execute("keystore", "import",
+        "--keystore-dir", dir.getAbsolutePath(),
+        "--key-file", keyFile.getAbsolutePath(),
+        "--password-file", pwFile.getAbsolutePath());
+
+    assertEquals("Should reject multi-line password file", 1, exitCode);
+    assertTrue("Error must explain the multi-line rejection, got: " + err.toString(),
+        err.toString().contains("multiple lines"));
+    File[] files = dir.listFiles((d, name) -> name.endsWith(".json"));
+    assertTrue("No keystore should have been created",
+        files == null || files.length == 0);
+  }
 }

@@ -102,6 +102,19 @@ final class KeystoreCliUtils {
       try {
         String password = WalletUtils.stripPasswordLine(
             new String(bytes, StandardCharsets.UTF_8));
+        // Reject multi-line password files. stripPasswordLine only trims
+        // trailing terminators; any remaining \n/\r means the file had
+        // interior line breaks. A common mistake is passing a two-line
+        // `keystore update` password file to `keystore new` / `import` —
+        // without this guard the literal "old\nnew" would silently become
+        // the password, and neither visible line alone would unlock the
+        // keystore later.
+        if (password.indexOf('\n') >= 0 || password.indexOf('\r') >= 0) {
+          err.println("Password file contains multiple lines; provide a "
+              + "single-line password (the `keystore update` two-line "
+              + "format is not accepted here).");
+          return null;
+        }
         if (!WalletUtils.passwordValid(password)) {
           err.println("Invalid password: must be at least 6 characters.");
           return null;
