@@ -3,8 +3,10 @@ package org.tron.core.services.http;
 import com.google.common.base.Strings;
 import io.prometheus.client.Histogram;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import javax.annotation.PostConstruct;
 import javax.servlet.ServletException;
@@ -38,13 +40,13 @@ public abstract class RateLimiterServlet extends HttpServlet {
   static final String DEFAULT_ADAPTER_NAME = DefaultBaseQqsAdapter.class.getSimpleName();
 
   static {
-    Map<String, Class<? extends IRateLimiter>> m = new HashMap<>();
-    for (Class<? extends IRateLimiter> c : new Class[]{
+    List<Class<? extends IRateLimiter>> adapters = Arrays.asList(
         GlobalPreemptibleAdapter.class,
         QpsRateLimiterAdapter.class,
         IPQPSRateLimiterAdapter.class,
-        DefaultBaseQqsAdapter.class
-    }) {
+        DefaultBaseQqsAdapter.class);
+    Map<String, Class<? extends IRateLimiter>> m = new HashMap<>();
+    for (Class<? extends IRateLimiter> c : adapters) {
       m.put(c.getSimpleName(), c);
     }
     ALLOWED_ADAPTERS = Collections.unmodifiableMap(m);
