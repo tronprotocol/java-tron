@@ -21,7 +21,11 @@ public class TronLogShutdownHook extends ShutdownHookBase {
    * shutdownNow + 60 s await). 180 s is therefore not a hard upper bound, but
    * a pragmatic headroom that assumes the many pools in the node shut down
    * largely in parallel; in pathological cases trailing shutdown logs may
-   * still be truncated.
+   * still be truncated. In practice 180 s of shutdown output is also enough
+   * to diagnose most stalls — if a pool is still alive past that window the
+   * earlier logs already carry the stack/trace context needed to locate the
+   * offender, so truncating the tail is an acceptable trade-off against
+   * holding JVM exit open indefinitely.
    */
   private static final long MAX_WAIT_MS = 3 * 60 * 1000;
 
