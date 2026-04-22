@@ -362,14 +362,9 @@ public class NodeConfig {
   public static NodeConfig fromConfig(Config config) {
     Config section = config.getConfig("node");
 
-    // Replace null values with empty strings before bean binding.
-    // Some external configs (e.g. system-test) set "discovery.external.ip = null"
-    // which ConfigBeanFactory cannot bind to a String field.
-    // Note: hasPath() returns false for null values, use hasPathOrNull() instead.
-    section = replaceNullWithEmpty(section, "discovery.external.ip");
-    section = replaceNullWithEmpty(section, "trustNode");
-
-    // Auto-bind all fields and sub-beans
+    // Auto-bind all fields and sub-beans. ConfigBeanFactory fails fast with a
+    // descriptive path on any `= null` value — external configs that use the
+    // HOCON null keyword should fix their config rather than rely on silent coercion.
     NodeConfig nc = ConfigBeanFactory.create(section, NodeConfig.class);
 
     // isOpenFullTcpDisconnect: boolean "is" prefix breaks JavaBean pairing
@@ -498,16 +493,6 @@ public class NodeConfig {
 
   private static String getString(Config config, String path, String defaultValue) {
     return config.hasPath(path) ? config.getString(path) : defaultValue;
-  }
-
-  // Replace a null config value with empty string so ConfigBeanFactory can bind it.
-  // hasPath() returns false for null values; hasPathOrNull() returns true.
-  private static Config replaceNullWithEmpty(Config config, String path) {
-    if (config.hasPathOrNull(path) && config.getIsNull(path)) {
-      return config.withValue(path,
-          com.typesafe.config.ConfigValueFactory.fromAnyRef(""));
-    }
-    return config;
   }
 
 }
