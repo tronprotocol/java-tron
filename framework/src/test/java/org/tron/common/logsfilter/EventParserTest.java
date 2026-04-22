@@ -5,6 +5,7 @@ import static org.tron.core.Constant.ADD_PRE_FIX_BYTE_MAINNET;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import org.bouncycastle.crypto.OutputLengthException;
 import org.bouncycastle.util.Arrays;
 import org.junit.Assert;
 import org.junit.Test;
@@ -113,5 +114,88 @@ public class EventParserTest {
         "string", 0);
     Assert.assertEquals(msg, "not enough input value");
 
+  }
+
+  @Test
+  public void testSubBytesRejectsOversizedLength() {
+    // Length must fit in the available source bytes. Reject instead of
+    // truncating so oversized ABI lengths are not silently coerced.
+    byte[] src = new byte[]{1, 2, 3};
+    try {
+      ContractEventParser.subBytes(src, 0, Integer.MAX_VALUE);
+      Assert.fail("Expected OutputLengthException");
+    } catch (OutputLengthException e) {
+      Assert.assertTrue(e.getMessage().contains("data start:0"));
+      Assert.assertTrue(e.getMessage().contains("length:2147483647"));
+      Assert.assertTrue(e.getMessage().contains("src.length:3"));
+    }
+  }
+
+  @Test
+  public void testSubBytesAcceptsExactLength() {
+    byte[] src = new byte[]{1, 2, 3, 4};
+    byte[] result = ContractEventParser.subBytes(src, 1, 3);
+    Assert.assertArrayEquals(new byte[]{2, 3, 4}, result);
+  }
+
+  @Test
+  public void testSubBytesRejectsNegativeOffset() {
+    // ABI offsets are unsigned, but BigInteger(byte[]) interprets 0xFF..FF as
+    // -1. The guard should reject that value before System.arraycopy runs.
+    byte[] src = new byte[]{1, 2, 3, 4};
+    try {
+      ContractEventParser.subBytes(src, -1, 3);
+      Assert.fail("Expected OutputLengthException");
+    } catch (OutputLengthException e) {
+      Assert.assertTrue(e.getMessage().contains("data start:-1"));
+      Assert.assertTrue(e.getMessage().contains("length:3"));
+      Assert.assertTrue(e.getMessage().contains("src.length:4"));
+    }
+  }
+
+  @Test
+  public void testSubBytesRejectsEmptySource() {
+    try {
+      ContractEventParser.subBytes(new byte[0], 0, 0);
+      Assert.fail("Expected OutputLengthException");
+    } catch (OutputLengthException e) {
+      Assert.assertTrue(e.getMessage().contains("source data is empty"));
+    }
+  }
+
+  @Test(expected = UnsupportedOperationException.class)
+  public void testParseDataBytesRejectsNegativeOffset() {
+    // End-to-end check: an offset field of 0xFF..FF decodes to -1 and should
+    // be rejected through the existing UnsupportedOperationException path.
+    String dataHex = "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+        + "0000000000000000000000000000000000000000000000000000000000000003"
+        + "414243";
+    byte[] data = ByteArray.fromHexString(dataHex);
+
+    ContractEventParser.parseDataBytes(data, "string", 0);
+  }
+
+  @Test(expected = UnsupportedOperationException.class)
+  public void testParseDataBytesRejectsMalformedLength() {
+    // ABI-encoded "string" whose declared length exceeds the available payload
+    // should be rejected via the existing UnsupportedOperationException path.
+    String dataHex = "0000000000000000000000000000000000000000000000000000000000000020"
+        + "000000000000000000000000000000000000000000000000000000007fffffff"
+        + "414243";
+    byte[] data = ByteArray.fromHexString(dataHex);
+
+    ContractEventParser.parseDataBytes(data, "string", 0);
+  }
+
+  @Test(expected = UnsupportedOperationException.class)
+  public void testParseDataBytesRejectsNegativeLength() {
+    // ABI length is an unsigned word. If 0xFF..FF is decoded as -1, reject it
+    // instead of treating it as an empty string/bytes payload.
+    String dataHex = "0000000000000000000000000000000000000000000000000000000000000020"
+        + "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+        + "414243";
+    byte[] data = ByteArray.fromHexString(dataHex);
+
+    ContractEventParser.parseDataBytes(data, "string", 0);
   }
 }
