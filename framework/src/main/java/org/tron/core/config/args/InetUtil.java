@@ -19,8 +19,8 @@ import org.tron.p2p.utils.NetUtil;
 public class InetUtil {
 
   /**
-   * Converts a list of {@code host:port} config strings into resolved {@link InetSocketAddress}
-   * objects, preserving the original order.
+   * Converts a list of {@code ipOrDomain:port} config strings into resolved {@link
+   * InetSocketAddress} objects, preserving the original order.
    *
    * <p>IP literals (IPv4 and IPv6) are used as-is. Domain names are resolved via DNS: when there
    * are multiple domains they are resolved in parallel using a dedicated thread pool; a single
@@ -31,7 +31,7 @@ public class InetUtil {
    * <li>example.com:18888,
    * <li>hostname:18888
    *
-   * @param items list of address strings in {@code host:port} format (may mix IPs and domains)
+   * @param items list of address strings in {@code ipOrDomain:port} format (may mix IP and domains)
    * @return resolved addresses in the same order as {@code items}, omit unresolvable entries
    */
   public static List<InetSocketAddress> getInetSocketAddressList(List<String> items) {
