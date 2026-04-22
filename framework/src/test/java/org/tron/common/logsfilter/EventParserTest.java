@@ -103,6 +103,81 @@ public class EventParserTest {
   }
 
   @Test
+  public void testParseDataBytesIntegerTypes() {
+    // uint256 = 255
+    byte[] uintData = ByteArray.fromHexString(
+        "00000000000000000000000000000000000000000000000000000000000000ff");
+    Assert.assertEquals("255", ContractEventParser.parseDataBytes(uintData, "uint256", 0));
+
+    // int256 = -1 (two's complement 0xFF..FF is signed negative one)
+    byte[] negIntData = ByteArray.fromHexString(
+        "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+    Assert.assertEquals("-1", ContractEventParser.parseDataBytes(negIntData, "int256", 0));
+
+    // trcToken is classified as INT_NUMBER
+    byte[] tokenData = ByteArray.fromHexString(
+        "0000000000000000000000000000000000000000000000000000000000000064");
+    Assert.assertEquals("100", ContractEventParser.parseDataBytes(tokenData, "trcToken", 0));
+  }
+
+  @Test
+  public void testParseDataBytesBool() {
+    byte[] trueData = ByteArray.fromHexString(
+        "0000000000000000000000000000000000000000000000000000000000000001");
+    Assert.assertEquals("true", ContractEventParser.parseDataBytes(trueData, "bool", 0));
+
+    byte[] falseData = ByteArray.fromHexString(
+        "0000000000000000000000000000000000000000000000000000000000000000");
+    Assert.assertEquals("false", ContractEventParser.parseDataBytes(falseData, "bool", 0));
+  }
+
+  @Test
+  public void testParseDataBytesFixedBytes() {
+    String hex = "1234567890abcdef0000000000000000000000000000000000000000000000ff";
+    byte[] data = ByteArray.fromHexString(hex);
+    Assert.assertEquals(hex, ContractEventParser.parseDataBytes(data, "bytes32", 0));
+  }
+
+  @Test
+  public void testParseDataBytesAddress() {
+    Wallet.setAddressPreFixByte(ADD_PRE_FIX_BYTE_MAINNET);
+    // last 20 bytes = ca35...733c => Base58Check = TUQPrDEJkV4ttkrL7cVv1p3mikWYfM7LWt
+    byte[] data = ByteArray.fromHexString(
+        "000000000000000000000000ca35b7d915458ef540ade6068dfe2f44e8fa733c");
+    Assert.assertEquals("TUQPrDEJkV4ttkrL7cVv1p3mikWYfM7LWt",
+        ContractEventParser.parseDataBytes(data, "address", 0));
+  }
+
+  @Test
+  public void testParseDataBytesDynamicBytes() {
+    // offset 0x20 | length 3 | 0x010203 padded to 32 bytes
+    byte[] data = ByteArray.fromHexString(
+        "0000000000000000000000000000000000000000000000000000000000000020"
+            + "0000000000000000000000000000000000000000000000000000000000000003"
+            + "0102030000000000000000000000000000000000000000000000000000000000");
+    Assert.assertEquals("010203", ContractEventParser.parseDataBytes(data, "bytes", 0));
+  }
+
+  @Test
+  public void testParseDataBytesEmptyString() {
+    // offset 0x20 | length 0
+    byte[] data = ByteArray.fromHexString(
+        "0000000000000000000000000000000000000000000000000000000000000020"
+            + "0000000000000000000000000000000000000000000000000000000000000000");
+    Assert.assertEquals("", ContractEventParser.parseDataBytes(data, "string", 0));
+  }
+
+  @Test
+  public void testParseDataBytesNonEmptyString() {
+    // "hello world" is 11 ASCII bytes (68656c6c6f20776f726c64), padded to 32 bytes.
+    byte[] data = ByteArray.fromHexString(
+        "0000000000000000000000000000000000000000000000000000000000000020"
+            + "000000000000000000000000000000000000000000000000000000000000000b"
+            + "68656c6c6f20776f726c64000000000000000000000000000000000000000000");
+    Assert.assertEquals("hello world", ContractEventParser.parseDataBytes(data, "string", 0));
+  }
+
+  @Test
   public void testParseRevert() {
     String dataHex = "08c379a0"
         + "0000000000000000000000000000000000000000000000000000000000000020"
