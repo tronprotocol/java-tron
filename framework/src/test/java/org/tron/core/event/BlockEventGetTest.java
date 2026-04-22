@@ -90,6 +90,7 @@ public class BlockEventGetTest extends BlockGenerate {
 
   @Before
   public void before() throws IOException {
+    EventPluginLoader.getInstance().setFilterQuery(null);
     Args.getInstance().setNodeListenPort(10000 + port.incrementAndGet());
 
     dbManager = context.getBean(Manager.class);
