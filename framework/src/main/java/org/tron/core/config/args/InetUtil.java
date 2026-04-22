@@ -18,6 +18,22 @@ import org.tron.p2p.utils.NetUtil;
 @Slf4j(topic = "app")
 public class InetUtil {
 
+  /**
+   * Converts a list of {@code host:port} config strings into resolved {@link InetSocketAddress}
+   * objects, preserving the original order.
+   *
+   * <p>IP literals (IPv4 and IPv6) are used as-is. Domain names are resolved via DNS: when there
+   * are multiple domains they are resolved in parallel using a dedicated thread pool; a single
+   * domain is resolved inline. Entries that fail DNS resolution are silently dropped. Item is
+   * ipOrDomain:port, maybe like this:
+   * <li>192.168.100.0:18888,
+   * <li>[fe80::48ff:fe00:1122]:18888,
+   * <li>example.com:18888,
+   * <li>hostname:18888
+   *
+   * @param items list of address strings in {@code host:port} format (may mix IPs and domains)
+   * @return resolved addresses in the same order as {@code items}, omit unresolvable entries
+   */
   public static List<InetSocketAddress> getInetSocketAddressList(List<String> items) {
     List<InetSocketAddress> ret = new ArrayList<>();
     if (items.isEmpty()) {
@@ -77,7 +93,13 @@ public class InetUtil {
   }
 
   /**
-   * Resolves a {@code domain:port} address string to an {@link InetSocketAddress} via DNS.
+   * Resolves a {@code ipOrDomain:port} config string to an {@link InetSocketAddress} via DNS.
+   *
+   * <p>The host is looked up first over IPv4, then over IPv6 as a fallback. Returns {@code null}
+   * if DNS resolution fails for both address families.
+   *
+   * @param configString address string in {@code ipOrDomain:port} format
+   * @return resolved {@link InetSocketAddress}, or {@code null} if the host cannot be resolved
    */
   private static InetSocketAddress resolveInetSocketAddress(String configString) {
     InetSocketAddress parsed = NetUtil.parseInetSocketAddress(configString);
@@ -95,7 +117,11 @@ public class InetUtil {
   }
 
   /**
-   * Resolves a hostname or IP string to a numeric IP address string.
+   * Resolves {@code ipOrDomain} to an {@link InetAddress}.
+   *
+   * <p>IP literals are converted directly without a DNS lookup. Domain names are first resolved
+   * over IPv4, then retried over IPv6 if the first attempt fails. Returns {@code null} if the
+   * address cannot be resolved.
    */
   public static InetAddress resolveInetAddress(String ipOrDomain) {
     // Fast path: already a numeric address — no lookup needed.
