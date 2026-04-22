@@ -20,7 +20,9 @@ import static org.fusesource.leveldbjni.JniDBFactory.factory;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Sets;
 import com.google.common.primitives.Bytes;
+import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -29,9 +31,14 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
@@ -45,6 +52,7 @@ import org.iq80.leveldb.Options;
 import org.iq80.leveldb.ReadOptions;
 import org.iq80.leveldb.WriteBatch;
 import org.iq80.leveldb.WriteOptions;
+import org.tron.common.es.ExecutorServiceManager;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.storage.WriteOptionsWrapper;
 import org.tron.common.storage.metric.DbStat;
@@ -60,6 +68,13 @@ import org.tron.core.exception.TronError;
 @NoArgsConstructor
 public class LevelDbDataSourceImpl extends DbStat implements DbSourceInter<byte[]>,
     Iterable<Entry<byte[], byte[]>>, Instance<LevelDbDataSourceImpl>  {
+
+  /** First watchdog WARN fires this many seconds after factory.open() begins. */
+  private static final long OPEN_WATCHDOG_INITIAL_DELAY_SEC = 60;
+  /** Subsequent watchdog WARN lines are emitted on this interval. */
+  private static final long OPEN_WATCHDOG_PERIOD_SEC = 30;
+  /** Value of {@code Filename.currentFileName()}. */
+  private static final String LEVELDB_CURRENT_FILE = "CURRENT";
 
   private String dataBaseName;
   private DB database;
@@ -121,6 +136,15 @@ public class LevelDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
     if (!Files.isSymbolicLink(dbPath.getParent())) {
       Files.createDirectories(dbPath.getParent());
     }
+    final long openStartNs = System.nanoTime();
+    final AtomicReference<String> manifestInfo = new AtomicReference<>();
+    ScheduledExecutorService watchdog = ExecutorServiceManager
+        .newSingleThreadScheduledExecutor("db-open-watchdog-" + dataBaseName, true);
+    ScheduledFuture<?> watchdogTask = watchdog.scheduleAtFixedRate(
+        () -> logSlowOpen(dbPath, openStartNs, manifestInfo),
+        OPEN_WATCHDOG_INITIAL_DELAY_SEC,
+        OPEN_WATCHDOG_PERIOD_SEC,
+        TimeUnit.SECONDS);
     try {
       DbSourceInter.checkOrInitEngine(getEngine(), dbPath.toString(),
           TronError.ErrCode.LEVELDB_INIT);
@@ -139,7 +163,55 @@ public class LevelDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
         logger.error("Open Database {} failed", dataBaseName, e);
       }
       throw new TronError(e, TronError.ErrCode.LEVELDB_INIT);
+    } finally {
+      watchdogTask.cancel(false);
+      watchdog.shutdownNow();
     }
+  }
+
+  /**
+   * Emits a WARN when factory.open() is still blocked — usually because the
+   * MANIFEST has grown large enough to make replay expensive.
+   */
+  void logSlowOpen(Path dbPath, long startNs, AtomicReference<String> manifestInfoCache) {
+    try {
+      long elapsedSec = TimeUnit.NANOSECONDS.toSeconds(System.nanoTime() - startNs);
+      String manifestInfo = manifestInfoCache.get();
+      if (manifestInfo == null) {
+        manifestInfo = resolveManifestInfo(dbPath.toFile());
+        manifestInfoCache.compareAndSet(null, manifestInfo);
+      }
+      logger.warn("DB {} open still in progress after {}s. path={}, {}. "
+              + "This startup will complete; to speed up future restarts, run "
+              + "`java -jar Toolkit.jar db archive -d {}` before the next startup "
+              + "to rebuild the MANIFEST (the tool requires an exclusive DB lock, "
+              + "so it cannot run while the node is up).",
+          dataBaseName, elapsedSec, dbPath, manifestInfo, parentPath);
+    } catch (Exception e) {
+      // Purely observational - never let the watchdog disrupt startup.
+      logger.debug("db-open-watchdog failure for {}: {}", dataBaseName, e.getMessage());
+    }
+  }
+
+  private static String resolveManifestInfo(File dbDir) {
+    File currentFile = new File(dbDir, LEVELDB_CURRENT_FILE);
+    String name = "none";
+    long size = 0;
+    if (currentFile.isFile()) {
+      try {
+        name = new String(Files.readAllBytes(currentFile.toPath()),
+            StandardCharsets.UTF_8).trim();
+        File manifest = new File(dbDir, name);
+        if (manifest.isFile()) {
+          size = manifest.length();
+        }
+      } catch (IOException ignored) {
+        // Best-effort — keep defaults. A new DB won't hit the 60s threshold
+        // anyway, so reporting 0.00 MB here is the expected shape.
+      }
+    }
+    return String.format(Locale.ROOT, "MANIFEST=%s (%.2f MB)", name,
+        size / 1024.0 / 1024.0);
   }
 
   public Path getDbPath() {
