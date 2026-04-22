@@ -31,17 +31,19 @@ public class InetUtil {
    * <li>example.com:18888,
    * <li>hostname:18888
    *
-   * @param items list of address strings in {@code ipOrDomain:port} format (may mix IP and domains)
+   * @param ipOrDomainWithPortList list of address strings in {@code ipOrDomain:port} format
+   * (may mix IPs and domains)
    * @return resolved addresses in the same order as {@code items}, omit unresolvable entries
    */
-  public static List<InetSocketAddress> getInetSocketAddressList(List<String> items) {
+  public static List<InetSocketAddress> resolveInetSocketAddressList(
+      List<String> ipOrDomainWithPortList) {
     List<InetSocketAddress> ret = new ArrayList<>();
-    if (items.isEmpty()) {
+    if (ipOrDomainWithPortList.isEmpty()) {
       return ret;
     }
     // Collect entries whose host part is a domain name (not an IP literal).
     List<String> domainEntries = new ArrayList<>();
-    for (String item : items) {
+    for (String item : ipOrDomainWithPortList) {
       String host = NetUtil.parseInetSocketAddress(item).getHostString();
       if (!NetUtil.validIpV4(host) && !NetUtil.validIpV6(host)) {
         domainEntries.add(item);
@@ -52,8 +54,9 @@ public class InetUtil {
     Map<String, InetSocketAddress> domainResolved = new HashMap<>();
     if (domainEntries.size() > 1) {
       String poolName = "args-dns-lookup";
+      int poolSize = StrictMath.min(domainEntries.size(), 10);
       ExecutorService dnsPool = ExecutorServiceManager
-          .newFixedThreadPool(poolName, domainEntries.size(), true);
+          .newFixedThreadPool(poolName, poolSize, true);
       List<Future<InetSocketAddress>> futures = new ArrayList<>(domainEntries.size());
       for (String entry : domainEntries) {
         futures.add(dnsPool.submit(() -> resolveInetSocketAddress(entry)));
@@ -76,13 +79,13 @@ public class InetUtil {
     }
 
     // Build the result list preserving the original config order.
-    for (String configString : items) {
+    for (String item : ipOrDomainWithPortList) {
       InetSocketAddress inetSocketAddress;
-      InetSocketAddress parsed = NetUtil.parseInetSocketAddress(configString);
+      InetSocketAddress parsed = NetUtil.parseInetSocketAddress(item);
       if (NetUtil.validIpV4(parsed.getHostString()) || NetUtil.validIpV6(parsed.getHostString())) {
         inetSocketAddress = parsed;
       } else {
-        inetSocketAddress = domainResolved.get(configString);
+        inetSocketAddress = domainResolved.get(item);
       }
       if (inetSocketAddress == null) {
         continue;
@@ -98,11 +101,11 @@ public class InetUtil {
    * <p>The host is looked up first over IPv4, then over IPv6 as a fallback. Returns {@code null}
    * if DNS resolution fails for both address families.
    *
-   * @param configString address string in {@code ipOrDomain:port} format
+   * @param ipOrDomainWithPort address string in {@code ipOrDomain:port} format
    * @return resolved {@link InetSocketAddress}, or {@code null} if the host cannot be resolved
    */
-  private static InetSocketAddress resolveInetSocketAddress(String configString) {
-    InetSocketAddress parsed = NetUtil.parseInetSocketAddress(configString);
+  private static InetSocketAddress resolveInetSocketAddress(String ipOrDomainWithPort) {
+    InetSocketAddress parsed = NetUtil.parseInetSocketAddress(ipOrDomainWithPort);
     String host = parsed.getHostString();
     int port = parsed.getPort();
     InetAddress address = LookUpTxt.lookUpIp(host, true);

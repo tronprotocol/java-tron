@@ -1010,7 +1010,7 @@ public class Args extends CommonParameter {
   public static List<InetSocketAddress> filterInetSocketAddress(
       List<String> addressList, boolean filter) {
     List<InetSocketAddress> ret = new ArrayList<>();
-    for (InetSocketAddress inetSocketAddress : InetUtil.getInetSocketAddressList(addressList)) {
+    for (InetSocketAddress inetSocketAddress : InetUtil.resolveInetSocketAddressList(addressList)) {
       if (filter) {
         String ip = inetSocketAddress.getAddress().getHostAddress();
         int port = inetSocketAddress.getPort();
