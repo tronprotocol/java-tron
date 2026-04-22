@@ -13,13 +13,27 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
+import org.tron.p2p.P2pConfig;
+import org.tron.p2p.base.Parameter;
 import org.tron.p2p.dns.sync.Client;
 import org.tron.p2p.dns.sync.RandomIterator;
 import org.tron.p2p.dns.tree.Tree;
 import org.tron.p2p.dns.update.PublishService;
 
 public class DnsManagerTest {
+
+  @Before
+  public void initP2pConfig() {
+    // Node.getPreferInetSocketAddress() reads Parameter.p2pConfig.getIp()/getIpv6().
+    // Set a fixed non-empty IPv4 so the tests don't rely on external IP discovery
+    // and don't NPE when another test leaves Parameter.p2pConfig as null.
+    P2pConfig cfg = new P2pConfig();
+    cfg.setIp("127.0.0.1");
+    cfg.setIpv6(null);
+    Parameter.p2pConfig = cfg;
+  }
 
   private void setStaticField(String fieldName, Object value) throws Exception {
     Field field = DnsManager.class.getDeclaredField(fieldName);

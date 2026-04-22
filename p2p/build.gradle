@@ -1,6 +1,14 @@
 apply plugin: 'com.google.protobuf'
 apply plugin: 'checkstyle'
 
+// Unit tests for this module live in framework/src/test/java/ — following the
+// project-wide convention where module unit tests are consolidated under the
+// framework module.
+//
+// Reference code for using p2p as a library lives in src/example/java/. It's
+// compiled in a separate sourceSet (so API changes surface here too) but NOT
+// packaged into the main jar and NOT executed as tests.
+
 checkstyle {
     toolVersion = '8.7'
     configFile = file("${rootDir}/config/checkstyle/checkStyleAll.xml")
@@ -11,6 +19,15 @@ checkstyleMain {
     source = 'src/main/java'
     exclude '**/protos/**'
 }
+
+// Exclude example code from checkstyle — it's reference-only and follows
+// upstream libp2p's style, not java-tron's strict rules.
+tasks.matching { it.name == 'checkstyleExample' }.configureEach { it.enabled = false }
+
+// Match the root-level encoding setting (which targets compileJava +
+// compileTestJava only) for the custom example sourceSet.
+tasks.matching { it.name == 'compileExampleJava' }
+    .configureEach { it.options.encoding = 'UTF-8' }
 
 def protobufVersion = '3.25.8'
 
@@ -23,6 +40,23 @@ sourceSets {
             srcDir 'src/main/java'
         }
     }
+    example {
+        java {
+            srcDir 'src/example/java'
+        }
+        resources {
+            srcDir 'src/example/resources'
+        }
+        // example code compiles against main's output + implementation deps,
+        // so API changes in main surface as example compile errors.
+        compileClasspath += sourceSets.main.output
+        runtimeClasspath += sourceSets.main.output
+    }
+}
+
+configurations {
+    exampleImplementation.extendsFrom implementation
+    exampleRuntimeOnly.extendsFrom runtimeOnly
 }
 
 dependencies {
@@ -64,6 +98,11 @@ dependencies {
 
     // provided by root build.gradle for all subprojects:
     // slf4j-api, logback, bcprov-jdk18on, lombok, junit, mockito
+
+    // Lombok for the example sourceSet (root build.gradle only wires it for
+    // main + test).
+    exampleCompileOnly 'org.projectlombok:lombok:1.18.34'
+    exampleAnnotationProcessor 'org.projectlombok:lombok:1.18.34'
 }
 
 protobuf {
@@ -86,14 +125,6 @@ clean.doFirst {
 
 processResources.dependsOn(generateProto)
 
-jacocoTestReport {
-    reports {
-        xml.enabled = true
-        html.enabled = true
-    }
-    afterEvaluate {
-        classDirectories.from = classDirectories.files.collect {
-            fileTree(dir: it, exclude: '**/protos/**')
-        }
-    }
-}
+// No jacocoTestReport block: this module has no local tests. Coverage for
+// p2p code is captured by the tests in framework/src/test/ and reported via
+// :framework:jacocoTestReport.

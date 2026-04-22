@@ -63,6 +63,26 @@ dependencies {
     api project(":protocol")
     api project(":actuator")
     api project(":consensus")
+
+    // DNS-publish tests (moved here from :p2p per project convention).
+    // These SDKs are `implementation` scope in :p2p so not transitively visible;
+    // redeclared as testImplementation to keep the production runtime classpath
+    // unchanged.
+    //
+    // Excludes:
+    // - netty-nio-client: conflicts with grpc-netty transitively.
+    // - bcprov-jdk15on / bcpkix-jdk15on: conflict with bcprov-jdk18on.
+    // - pull-parser / xpp3: old XML parsers not registered in
+    //   gradle/verification-metadata.xml; aliyun SDK works without them.
+    testImplementation('software.amazon.awssdk:route53:2.18.41') {
+        exclude group: 'software.amazon.awssdk', module: 'netty-nio-client'
+    }
+    testImplementation('com.aliyun:alidns20150109:3.0.1') {
+        exclude group: 'org.bouncycastle', module: 'bcprov-jdk15on'
+        exclude group: 'org.bouncycastle', module: 'bcpkix-jdk15on'
+        exclude group: 'pull-parser', module: 'pull-parser'
+        exclude group: 'xpp3', module: 'xpp3'
+    }
 }
 
 check.dependsOn 'lint'
