@@ -736,4 +736,41 @@ public class KeystoreUpdateTest {
     assertFalse("Legacy-truncation tip should NOT fire for whitespace-free password",
         err.toString().contains("first whitespace-separated word"));
   }
+
+  @Test
+  public void testUpdateScanSkipsSymlinkedEntry() throws Exception {
+    org.junit.Assume.assumeTrue("Symlinks only tested on POSIX",
+        !System.getProperty("os.name").toLowerCase().contains("win"));
+
+    File dir = tempFolder.newFolder("keystore-update-symlink");
+    String oldPassword = "oldpass123";
+    String newPassword = "newpass456";
+
+    SignInterface keyPair = SignUtils.getGeneratedRandomSign(
+        SecureRandom.getInstance("NativePRNG"), true);
+    String fileName = WalletUtils.generateWalletFile(oldPassword, keyPair, dir, true);
+    Credentials creds = WalletUtils.loadCredentials(oldPassword,
+        new File(dir, fileName), true);
+
+    File target = tempFolder.newFile("outside.json");
+    Files.write(target.toPath(),
+        "{\"not\":\"a keystore\"}".getBytes(StandardCharsets.UTF_8));
+    File symlink = new File(dir, "evil.json");
+    Files.createSymbolicLink(symlink.toPath(), target.toPath());
+
+    File pwFile = tempFolder.newFile("pw-update-sym.txt");
+    Files.write(pwFile.toPath(),
+        (oldPassword + "\n" + newPassword).getBytes(StandardCharsets.UTF_8));
+
+    StringWriter err = new StringWriter();
+    CommandLine cmd = new CommandLine(new Toolkit());
+    cmd.setErr(new PrintWriter(err));
+    int exitCode = cmd.execute("keystore", "update", creds.getAddress(),
+        "--keystore-dir", dir.getAbsolutePath(),
+        "--password-file", pwFile.getAbsolutePath());
+
+    assertEquals("Update should succeed; symlinked entry must not break scan", 0, exitCode);
+    assertTrue("Scan must warn about the symlinked entry, got: " + err.toString(),
+        err.toString().contains("Warning: skipping symbolic link: evil.json"));
+  }
 }

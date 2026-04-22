@@ -240,4 +240,43 @@ public class KeystoreListTest {
     assertEquals("Should list only the valid v3 keystore, not v2 or no-crypto",
         1, lines.length);
   }
+
+  @Test
+  public void testListSkipsSymlinkedKeystoreFile() throws Exception {
+    org.junit.Assume.assumeTrue("Symlinks only tested on POSIX",
+        !System.getProperty("os.name").toLowerCase().contains("win"));
+
+    File dir = tempFolder.newFolder("keystore-symlink-scan");
+    String password = "test123456";
+
+    SignInterface key = SignUtils.getGeneratedRandomSign(
+        SecureRandom.getInstance("NativePRNG"), true);
+    WalletUtils.generateWalletFile(password, key, dir, false);
+
+    // A JSON file elsewhere (simulates "target we should not be tricked
+    // into reading") — placed outside the keystore dir.
+    File target = tempFolder.newFile("outside.json");
+    Files.write(target.toPath(),
+        "{\"secret\":\"should not appear in list output\"}"
+            .getBytes(StandardCharsets.UTF_8));
+
+    // Plant a .json symlink in the keystore dir
+    File symlink = new File(dir, "evil.json");
+    Files.createSymbolicLink(symlink.toPath(), target.toPath());
+
+    StringWriter out = new StringWriter();
+    StringWriter err = new StringWriter();
+    CommandLine cmd = new CommandLine(new Toolkit());
+    cmd.setOut(new PrintWriter(out));
+    cmd.setErr(new PrintWriter(err));
+    int exitCode = cmd.execute("keystore", "list",
+        "--keystore-dir", dir.getAbsolutePath());
+
+    assertEquals(0, exitCode);
+    assertTrue("Should warn about symbolic link, got err: " + err.toString(),
+        err.toString().contains("Warning: skipping symbolic link: evil.json"));
+    String output = out.toString().trim();
+    String[] lines = output.split("\\n");
+    assertEquals("Should list only the real keystore", 1, lines.length);
+  }
 }

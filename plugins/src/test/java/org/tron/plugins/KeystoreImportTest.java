@@ -464,4 +464,41 @@ public class KeystoreImportTest {
     assertEquals("Import should succeed — invalid-version file is not a real duplicate", 0,
         exitCode);
   }
+
+  @Test
+  public void testImportDuplicateScanSkipsSymlinkedEntry() throws Exception {
+    org.junit.Assume.assumeTrue("Symlinks only tested on POSIX",
+        !System.getProperty("os.name").toLowerCase().contains("win"));
+
+    File dir = tempFolder.newFolder("keystore-dup-symlink");
+
+    SignInterface keyPair = SignUtils.getGeneratedRandomSign(
+        SecureRandom.getInstance("NativePRNG"), true);
+    String privateKeyHex = ByteArray.toHexString(keyPair.getPrivateKey());
+
+    File target = tempFolder.newFile("outside.json");
+    Files.write(target.toPath(),
+        "{\"not\":\"a keystore\"}".getBytes(StandardCharsets.UTF_8));
+    File symlink = new File(dir, "evil.json");
+    Files.createSymbolicLink(symlink.toPath(), target.toPath());
+
+    File keyFile = tempFolder.newFile("dup-sym.key");
+    Files.write(keyFile.toPath(),
+        privateKeyHex.getBytes(StandardCharsets.UTF_8));
+    File pwFile = tempFolder.newFile("pw-dup-sym.txt");
+    Files.write(pwFile.toPath(), "test123456".getBytes(StandardCharsets.UTF_8));
+
+    java.io.StringWriter err = new java.io.StringWriter();
+    CommandLine cmd = new CommandLine(new Toolkit());
+    cmd.setErr(new java.io.PrintWriter(err));
+    int exitCode = cmd.execute("keystore", "import",
+        "--keystore-dir", dir.getAbsolutePath(),
+        "--key-file", keyFile.getAbsolutePath(),
+        "--password-file", pwFile.getAbsolutePath());
+
+    assertEquals("Import should succeed with symlink present", 0, exitCode);
+    assertTrue("Duplicate scan must warn about the symlinked entry, got: "
+            + err.toString(),
+        err.toString().contains("Warning: skipping symbolic link: evil.json"));
+  }
 }

@@ -59,6 +59,9 @@ public class KeystoreList implements Callable<Integer> {
 
     List<Map<String, String>> entries = new ArrayList<>();
     for (File file : files) {
+      if (!KeystoreCliUtils.isSafeRegularFile(file, err)) {
+        continue;
+      }
       try {
         WalletFile walletFile = MAPPER.readValue(file, WalletFile.class);
         if (!KeystoreCliUtils.isValidKeystoreFile(walletFile)) {

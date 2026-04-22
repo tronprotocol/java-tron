@@ -188,6 +188,35 @@ final class KeystoreCliUtils {
     return true;
   }
 
+  /**
+   * Returns true iff {@code file} exists, is not a symbolic link, and is a
+   * regular file (not a directory, FIFO, or device). Used to filter keystore
+   * directory scans before {@code MAPPER.readValue(file, ...)} so a hostile
+   * or group-writable keystore directory cannot redirect reads to arbitrary
+   * files (e.g. {@code /etc/shadow}) or block on non-regular files
+   * (e.g. a FIFO) via planted entries.
+   *
+   * <p>Writes a warning to {@code err} when the entry is skipped.
+   */
+  static boolean isSafeRegularFile(File file, PrintWriter err) {
+    try {
+      BasicFileAttributes attrs = Files.readAttributes(file.toPath(),
+          BasicFileAttributes.class, LinkOption.NOFOLLOW_LINKS);
+      if (attrs.isSymbolicLink()) {
+        err.println("Warning: skipping symbolic link: " + file.getName());
+        return false;
+      }
+      if (!attrs.isRegularFile()) {
+        err.println("Warning: skipping non-regular file: " + file.getName());
+        return false;
+      }
+      return true;
+    } catch (IOException e) {
+      err.println("Warning: skipping unreadable file: " + file.getName());
+      return false;
+    }
+  }
+
   static void printSecurityTips(PrintWriter out, String address, String fileName) {
     out.println();
     out.println("Public address of the key:   " + address);

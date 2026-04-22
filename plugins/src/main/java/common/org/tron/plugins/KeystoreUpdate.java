@@ -199,6 +199,9 @@ public class KeystoreUpdate implements Callable<Integer> {
     }
     java.util.List<File> matches = new java.util.ArrayList<>();
     for (File file : files) {
+      if (!KeystoreCliUtils.isSafeRegularFile(file, err)) {
+        continue;
+      }
       try {
         WalletFile wf = MAPPER.readValue(file, WalletFile.class);
         if (KeystoreCliUtils.isValidKeystoreFile(wf)
