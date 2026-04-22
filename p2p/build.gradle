@@ -41,12 +41,10 @@ sourceSets {
         }
     }
     example {
-        java {
-            srcDir 'src/example/java'
-        }
-        resources {
-            srcDir 'src/example/resources'
-        }
+        // srcDirs for java and resources default to src/example/{java,resources};
+        // no explicit srcDir calls needed. Explicit calls would add duplicates
+        // and break :p2p:processExampleResources.
+        //
         // example code compiles against main's output + implementation deps,
         // so API changes in main surface as example compile errors.
         compileClasspath += sourceSets.main.output
