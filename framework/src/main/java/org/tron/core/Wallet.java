@@ -743,7 +743,7 @@ public class Wallet {
     } else if (PENDING_STR.equalsIgnoreCase(id)) {
       throw new JsonRpcInvalidParamsException(TAG_PENDING_SUPPORT_ERROR);
     } else {
-      long blockNumber = parseBlockNumber(id).longValue();
+      long blockNumber = parseBlockNumber(id);
       return getBlockByNum(blockNumber);
     }
   }

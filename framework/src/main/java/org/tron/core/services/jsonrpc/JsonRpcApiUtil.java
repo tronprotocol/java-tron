@@ -527,17 +527,28 @@ public class JsonRpcApiUtil {
   private static final String BLOCK_NUM_ERROR = "invalid block number";
 
   /**
-   * Parse a JSON-RPC block number (hex "0x..." or decimal) into a BigInteger,
-   * enforcing the {@link #MAX_BLOCK_NUM_HEX_LEN} length limit.
+   * Parse a JSON-RPC block number (hex "0x..." or decimal) into a long,
+   * enforcing the {@link #MAX_BLOCK_NUM_HEX_LEN} length limit, rejecting
+   * negative values, and rejecting values that overflow a signed 64-bit
+   * block number.
    */
-  public static BigInteger parseBlockNumber(String blockNumOrTag)
+  public static long parseBlockNumber(String blockNumOrTag)
       throws JsonRpcInvalidParamsException {
     if (blockNumOrTag == null || blockNumOrTag.length() > MAX_BLOCK_NUM_HEX_LEN) {
       throw new JsonRpcInvalidParamsException(BLOCK_NUM_ERROR);
     }
+    BigInteger value;
     try {
-      return ByteArray.hexToBigInteger(blockNumOrTag);
+      value = ByteArray.hexToBigInteger(blockNumOrTag);
     } catch (Exception e) {
+      throw new JsonRpcInvalidParamsException(BLOCK_NUM_ERROR);
+    }
+    if (value.signum() < 0) {
+      throw new JsonRpcInvalidParamsException(BLOCK_NUM_ERROR);
+    }
+    try {
+      return value.longValueExact();
+    } catch (ArithmeticException e) {
       throw new JsonRpcInvalidParamsException(BLOCK_NUM_ERROR);
     }
   }

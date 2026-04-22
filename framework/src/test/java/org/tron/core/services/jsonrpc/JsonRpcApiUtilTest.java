@@ -3,7 +3,6 @@ package org.tron.core.services.jsonrpc;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
 
-import java.math.BigInteger;
 import org.junit.Test;
 import org.tron.core.exception.jsonrpc.JsonRpcInvalidParamsException;
 
@@ -11,21 +10,41 @@ public class JsonRpcApiUtilTest {
 
   @Test
   public void parseBlockNumberAcceptsHex() throws JsonRpcInvalidParamsException {
-    assertEquals(BigInteger.valueOf(0x1a), JsonRpcApiUtil.parseBlockNumber("0x1a"));
-    assertEquals(BigInteger.ZERO, JsonRpcApiUtil.parseBlockNumber("0x0"));
+    assertEquals(0x1aL, JsonRpcApiUtil.parseBlockNumber("0x1a"));
+    assertEquals(0L, JsonRpcApiUtil.parseBlockNumber("0x0"));
   }
 
   @Test
   public void parseBlockNumberAcceptsDecimal() throws JsonRpcInvalidParamsException {
-    assertEquals(BigInteger.valueOf(12345), JsonRpcApiUtil.parseBlockNumber("12345"));
+    assertEquals(12345L, JsonRpcApiUtil.parseBlockNumber("12345"));
   }
 
   @Test
-  public void parseBlockNumberAcceptsMaxLength() throws JsonRpcInvalidParamsException {
-    // 0x + 98 hex chars = 100 chars total, at the limit
-    String maxValid = "0x" + new String(new char[98]).replace('\0', 'f');
-    assertEquals(100, maxValid.length());
-    JsonRpcApiUtil.parseBlockNumber(maxValid);
+  public void parseBlockNumberAcceptsMaxLongValue() throws JsonRpcInvalidParamsException {
+    assertEquals(Long.MAX_VALUE,
+        JsonRpcApiUtil.parseBlockNumber("0x7fffffffffffffff"));
+  }
+
+  @Test
+  public void parseBlockNumberRejectsNegative() {
+    JsonRpcInvalidParamsException e1 = assertThrows(JsonRpcInvalidParamsException.class,
+        () -> JsonRpcApiUtil.parseBlockNumber("-1"));
+    assertEquals("invalid block number", e1.getMessage());
+    JsonRpcInvalidParamsException e2 = assertThrows(JsonRpcInvalidParamsException.class,
+        () -> JsonRpcApiUtil.parseBlockNumber("0x-1"));
+    assertEquals("invalid block number", e2.getMessage());
+  }
+
+  @Test
+  public void parseBlockNumberRejectsOverflow() {
+    // 2^64 - 1: fits uint64 but overflows signed long
+    JsonRpcInvalidParamsException e1 = assertThrows(JsonRpcInvalidParamsException.class,
+        () -> JsonRpcApiUtil.parseBlockNumber("0xffffffffffffffff"));
+    assertEquals("invalid block number", e1.getMessage());
+    // 2^63: just past Long.MAX_VALUE
+    JsonRpcInvalidParamsException e2 = assertThrows(JsonRpcInvalidParamsException.class,
+        () -> JsonRpcApiUtil.parseBlockNumber("0x8000000000000000"));
+    assertEquals("invalid block number", e2.getMessage());
   }
 
   @Test
