@@ -162,6 +162,16 @@ public class StorageConfig {
   @Setter
   public static class SnapshotConfig {
     private int maxFlushCount = 1;
+
+    // Reject out-of-range values. Mirrors develop Storage.getSnapshotMaxFlushCountFromConfig.
+    void postProcess() {
+      if (maxFlushCount <= 0) {
+        throw new IllegalArgumentException("MaxFlushCount value can not be negative or zero!");
+      }
+      if (maxFlushCount > 500) {
+        throw new IllegalArgumentException("MaxFlushCount value must not exceed 500!");
+      }
+    }
   }
 
   @Getter
@@ -169,6 +179,15 @@ public class StorageConfig {
   public static class TxCacheConfig {
     private int estimatedTransactions = 1000;
     private boolean initOptimization = false;
+
+    // Clamp to [100, 10000]. Mirrors develop Storage.getEstimatedTransactionsFromConfig.
+    void postProcess() {
+      if (estimatedTransactions > 10000) {
+        estimatedTransactions = 10000;
+      } else if (estimatedTransactions < 100) {
+        estimatedTransactions = 100;
+      }
+    }
   }
 
   @Getter
@@ -200,6 +219,8 @@ public class StorageConfig {
     sc.defaultLDbOption = readDbOption(section, "defaultL");
 
     sc.dbSettings.postProcess();
+    sc.snapshot.postProcess();
+    sc.txCache.postProcess();
     return sc;
   }
 

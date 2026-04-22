@@ -103,4 +103,40 @@ public class StorageConfigTest {
     StorageConfig sc = StorageConfig.fromConfig(config);
     assertTrue(sc.getBalance().getHistory().isLookup());
   }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testSnapshotMaxFlushCountZeroRejected() {
+    StorageConfig.fromConfig(withRef("storage.snapshot.maxFlushCount = 0"));
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testSnapshotMaxFlushCountNegativeRejected() {
+    StorageConfig.fromConfig(withRef("storage.snapshot.maxFlushCount = -1"));
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testSnapshotMaxFlushCountOver500Rejected() {
+    StorageConfig.fromConfig(withRef("storage.snapshot.maxFlushCount = 501"));
+  }
+
+  @Test
+  public void testTxCacheEstimatedClampedBelowMin() {
+    StorageConfig sc = StorageConfig.fromConfig(
+        withRef("storage.txCache.estimatedTransactions = 50"));
+    assertEquals(100, sc.getTxCache().getEstimatedTransactions());
+  }
+
+  @Test
+  public void testTxCacheEstimatedClampedAboveMax() {
+    StorageConfig sc = StorageConfig.fromConfig(
+        withRef("storage.txCache.estimatedTransactions = 99999"));
+    assertEquals(10000, sc.getTxCache().getEstimatedTransactions());
+  }
+
+  @Test
+  public void testTxCacheEstimatedWithinRangePreserved() {
+    StorageConfig sc = StorageConfig.fromConfig(
+        withRef("storage.txCache.estimatedTransactions = 5000"));
+    assertEquals(5000, sc.getTxCache().getEstimatedTransactions());
+  }
 }

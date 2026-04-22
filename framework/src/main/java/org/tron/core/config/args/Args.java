@@ -235,25 +235,11 @@ public class Args extends CommonParameter {
     PARAMETER.storage.setCheckpointVersion(sc.getCheckpoint().getVersion());
     PARAMETER.storage.setCheckpointSync(sc.getCheckpoint().isSync());
 
-    // estimatedTransactions with range clamping [100, 10000]
-    int estimated = sc.getTxCache().getEstimatedTransactions();
-    if (estimated > 10000) {
-      estimated = 10000;
-    } else if (estimated < 100) {
-      estimated = 100;
-    }
-    PARAMETER.storage.setEstimatedBlockTransactions(estimated);
+    // estimatedTransactions / maxFlushCount clamping & validation run inside
+    // TxCacheConfig.postProcess / SnapshotConfig.postProcess during bean load.
+    PARAMETER.storage.setEstimatedBlockTransactions(sc.getTxCache().getEstimatedTransactions());
     PARAMETER.storage.setTxCacheInitOptimization(sc.getTxCache().isInitOptimization());
-
-    // snapshotMaxFlushCount with range validation
-    int maxFlush = sc.getSnapshot().getMaxFlushCount();
-    if (maxFlush <= 0) {
-      throw new IllegalArgumentException("MaxFlushCount value can not be negative or zero!");
-    }
-    if (maxFlush > 500) {
-      throw new IllegalArgumentException("MaxFlushCount value must not exceed 500!");
-    }
-    PARAMETER.storage.setMaxFlushCount(maxFlush);
+    PARAMETER.storage.setMaxFlushCount(sc.getSnapshot().getMaxFlushCount());
 
     // backup
     StorageConfig.BackupConfig backup = sc.getBackup();
