@@ -25,7 +25,6 @@ public class LogFilterWrapper {
   @Getter
   private final long toBlock;
 
-
   public LogFilterWrapper(FilterRequest fr, long currentMaxBlockNum, Wallet wallet,
       boolean checkBlockRange) throws JsonRpcInvalidParamsException {
 

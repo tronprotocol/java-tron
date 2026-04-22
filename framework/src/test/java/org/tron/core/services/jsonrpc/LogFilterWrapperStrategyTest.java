@@ -16,10 +16,10 @@ import org.tron.core.services.jsonrpc.filters.LogFilterWrapper;
  * Verify LogFilterWrapper strategies match develop branch behavior.
  *
  * Four filter strategies based on parameter emptiness (develop branch semantics):
- * - Strategy 1: Both fromBlock and toBlock are empty → (currentMaxBlockNum, Long.MAX_VALUE)
- * - Strategy 2: fromBlock empty, toBlock non-empty → based on toBlock value
- * - Strategy 3: fromBlock non-empty, toBlock empty → (fromBlock, Long.MAX_VALUE)
- * - Strategy 4: Both non-empty → parse both, handle "latest" using snapshot
+ * - Strategy 1: Both fromBlock and toBlock are empty -> (currentMaxBlockNum, Long.MAX_VALUE)
+ * - Strategy 2: fromBlock empty, toBlock non-empty -> based on toBlock value
+ * - Strategy 3: fromBlock non-empty, toBlock empty -> (fromBlock, Long.MAX_VALUE)
+ * - Strategy 4: Both non-empty -> parse both, handle "latest" using snapshot
  */
 public class LogFilterWrapperStrategyTest {
 
@@ -123,7 +123,7 @@ public class LogFilterWrapperStrategyTest {
   @Test
   public void testStrategy4_BothLatest() throws Exception {
     // Both "latest" are non-empty, so Strategy 4.
-    // fromBlock "latest" → currentMaxBlockNum (snapshot). toBlock "latest" → Long.MAX_VALUE.
+    // fromBlock "latest" -> currentMaxBlockNum (snapshot). toBlock "latest" -> Long.MAX_VALUE.
     LogFilterWrapper filter = createFilter("latest", "latest");
     assertEquals(CURRENT_MAX_BLOCK, filter.getFromBlock());
     assertEquals(Long.MAX_VALUE, filter.getToBlock());
@@ -161,7 +161,7 @@ public class LogFilterWrapperStrategyTest {
   public void testStrategy4_LatestGreaterThanSmallBlock_Throws() throws Exception {
     // fromBlock = "latest" (currentMaxBlockNum = 81628775) > toBlock (0x100 = 256) should throw
     try {
-      LogFilterWrapper filter = createFilter("latest", "0x100");
+      createFilter("latest", "0x100");
       Assert.fail("Expected exception");
     } catch (JsonRpcInvalidParamsException e) {
       assertEquals("please verify: fromBlock <= toBlock", e.getMessage());
