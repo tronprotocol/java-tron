@@ -391,11 +391,13 @@ public class NodeConfig {
       nc.maxConnectionsWithSameIp = section.getInt("maxActiveNodesWithSameIp");
     }
 
-    // Legacy key fallback: node.fullNodeAllowShieldedTransaction -> allowShieldedTransactionApi
-    if (section.hasPath("allowShieldedTransactionApi")) {
-      nc.allowShieldedTransactionApi = section.getBoolean("allowShieldedTransactionApi");
-    } else if (section.hasPath("fullNodeAllowShieldedTransaction")) {
+    // Legacy key fallback: node.fullNodeAllowShieldedTransaction -> allowShieldedTransactionApi.
+    // reference.conf does not ship the legacy key, so hasPath here reliably means the user
+    // set it in their config. When present, it overrides the modern key.
+    if (section.hasPath("fullNodeAllowShieldedTransaction")) {
       nc.allowShieldedTransactionApi = section.getBoolean("fullNodeAllowShieldedTransaction");
+      logger.warn("Configuring [node.fullNodeAllowShieldedTransaction] will be deprecated. "
+          + "Please use [node.allowShieldedTransactionApi] instead.");
     }
     // node.shutdown.* — PascalCase keys (BlockTime, BlockHeight), cannot auto-bind
     nc.shutdownBlockTime = config.hasPath("node.shutdown.BlockTime")

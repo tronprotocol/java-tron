@@ -282,4 +282,38 @@ public class NodeConfigTest {
         withRef("node { maxActiveNodesWithSameIp = 5, maxConnectionsWithSameIp = 10 }"));
     assertEquals(5, nc.getMaxConnectionsWithSameIp());
   }
+
+  @Test
+  public void testShieldedApiDefaultsToTrueWhenNeitherKeySet() {
+    NodeConfig nc = NodeConfig.fromConfig(withRef());
+    assertTrue(nc.isAllowShieldedTransactionApi());
+  }
+
+  @Test
+  public void testShieldedApiModernKeyRespected() {
+    NodeConfig nc = NodeConfig.fromConfig(
+        withRef("node.allowShieldedTransactionApi = false"));
+    assertFalse(nc.isAllowShieldedTransactionApi());
+  }
+
+  @Test
+  public void testShieldedApiLegacyKeyRespected() {
+    // Regression guard: reference.conf ships `allowShieldedTransactionApi = true`, which
+    // used to make the legacy-key fallback dead code. A user who only set the legacy key
+    // must still have their value honored.
+    NodeConfig nc = NodeConfig.fromConfig(
+        withRef("node.fullNodeAllowShieldedTransaction = false"));
+    assertFalse(nc.isAllowShieldedTransactionApi());
+  }
+
+  @Test
+  public void testShieldedApiLegacyKeyTakesPriorityOverModern() {
+    // Consistent with maxActiveNodesWithSameIp: legacy key presence wins over modern.
+    NodeConfig nc = NodeConfig.fromConfig(
+        withRef("node {\n"
+            + "  allowShieldedTransactionApi = false\n"
+            + "  fullNodeAllowShieldedTransaction = true\n"
+            + "}"));
+    assertTrue(nc.isAllowShieldedTransactionApi());
+  }
 }
