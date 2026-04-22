@@ -112,6 +112,9 @@ public class BlockEventGetTest extends BlockGenerate {
     // Reset global static flag that other tests may leave as true, which would prevent
     // ConfigLoader.load() from updating VMConfig during VMActuator.execute().
     ConfigLoader.disable = false;
+    // Reset filterQuery so FilterQueryTest's leftover state does not suppress processTrigger
+    // coverage when tests share the same Gradle forkEvery JVM batch.
+    EventPluginLoader.getInstance().setFilterQuery(null);
 
     DynamicPropertiesStore dps = dbManager.getDynamicPropertiesStore();
     dps.saveAllowTvmTransferTrc10(1);

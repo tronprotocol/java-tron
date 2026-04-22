@@ -9,7 +9,6 @@ import static org.mockito.Mockito.spy;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.tron.common.utils.ReflectUtils;
@@ -40,7 +39,6 @@ public class PeerStatusCheckMockTest {
     scheduledTask.run();
 
     Mockito.verify(peerStatusCheck).statusCheck();
-    Assert.assertNotNull(peerStatusCheck);
   }
 
 }
