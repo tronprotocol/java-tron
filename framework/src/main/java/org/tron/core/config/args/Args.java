@@ -536,15 +536,19 @@ public class Args extends CommonParameter {
     PARAMETER.httpMaxMessageSize = config.hasPath(ConfigKey.NODE_HTTP_MAX_MESSAGE_SIZE)
         ? config.getMemorySize(ConfigKey.NODE_HTTP_MAX_MESSAGE_SIZE).toBytes()
         : defaultMaxMessageSize;
-    if (PARAMETER.httpMaxMessageSize < 0) {
-      throw new TronError("node.http.maxMessageSize must be non-negative, got: "
+    if (PARAMETER.httpMaxMessageSize < 0
+        || PARAMETER.httpMaxMessageSize > Integer.MAX_VALUE) {
+      throw new TronError("node.http.maxMessageSize must be non-negative and <= "
+          + Integer.MAX_VALUE + ", got: "
           + PARAMETER.httpMaxMessageSize, PARAMETER_INIT);
     }
     PARAMETER.jsonRpcMaxMessageSize = config.hasPath(ConfigKey.NODE_JSONRPC_MAX_MESSAGE_SIZE)
         ? config.getMemorySize(ConfigKey.NODE_JSONRPC_MAX_MESSAGE_SIZE).toBytes()
         : defaultMaxMessageSize;
-    if (PARAMETER.jsonRpcMaxMessageSize < 0) {
-      throw new TronError("node.jsonrpc.maxMessageSize must be non-negative, got: "
+    if (PARAMETER.jsonRpcMaxMessageSize < 0
+        || PARAMETER.jsonRpcMaxMessageSize > Integer.MAX_VALUE) {
+      throw new TronError("node.jsonrpc.maxMessageSize must be non-negative and <= "
+          + Integer.MAX_VALUE + ", got: "
           + PARAMETER.jsonRpcMaxMessageSize, PARAMETER_INIT);
     }
 

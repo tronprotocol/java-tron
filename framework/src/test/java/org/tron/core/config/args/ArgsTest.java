@@ -417,7 +417,7 @@ public class ArgsTest {
     Args.clearParam();
 
     // --- GB tier: binary (g/G/Gi/GiB) vs SI (GB) ---
-    // rpc is int-bounded, only test http/jsonrpc for GB values
+    // All three paths are int-bounded; values up to Integer.MAX_VALUE are accepted.
     configMap.put("node.rpc.maxMessageSize", "4m");
     configMap.put("node.http.maxMessageSize", "1g");
     configMap.put("node.jsonrpc.maxMessageSize", "1GB");
@@ -427,17 +427,6 @@ public class ArgsTest {
     Assert.assertEquals(4 * 1024 * 1024, Args.getInstance().getMaxMessageSize());
     Assert.assertEquals(1024L * 1024 * 1024, Args.getInstance().getHttpMaxMessageSize());
     Assert.assertEquals(1000L * 1000 * 1000, Args.getInstance().getJsonRpcMaxMessageSize());
-    Args.clearParam();
-
-    configMap.put("node.rpc.maxMessageSize", "4m");
-    configMap.put("node.http.maxMessageSize", "2Gi");
-    configMap.put("node.jsonrpc.maxMessageSize", "2GiB");
-    config = ConfigFactory.defaultOverrides()
-        .withFallback(ConfigFactory.parseMap(configMap));
-    Args.applyConfigParams(config);
-    Assert.assertEquals(4 * 1024 * 1024, Args.getInstance().getMaxMessageSize());
-    Assert.assertEquals(2L * 1024 * 1024 * 1024, Args.getInstance().getHttpMaxMessageSize());
-    Assert.assertEquals(2L * 1024 * 1024 * 1024, Args.getInstance().getJsonRpcMaxMessageSize());
     Args.clearParam();
 
     // --- raw integer (backward compatible): treated as bytes ---
@@ -475,6 +464,31 @@ public class ArgsTest {
     TronError e = Assert.assertThrows(TronError.class,
         () -> Args.applyConfigParams(config));
     Assert.assertTrue(e.getMessage().contains("node.rpc.maxMessageSize must be non-negative"));
+  }
+
+  @Test
+  public void testHttpMaxMessageSizeExceedsIntMax() {
+    Map<String, String> configMap = new HashMap<>();
+    configMap.put("storage.db.directory", "database");
+    configMap.put("node.http.maxMessageSize", "2Gi");
+    Config config = ConfigFactory.defaultOverrides()
+        .withFallback(ConfigFactory.parseMap(configMap));
+    TronError e = Assert.assertThrows(TronError.class,
+        () -> Args.applyConfigParams(config));
+    Assert.assertTrue(e.getMessage().contains("node.http.maxMessageSize must be non-negative"));
+  }
+
+  @Test
+  public void testJsonRpcMaxMessageSizeExceedsIntMax() {
+    Map<String, String> configMap = new HashMap<>();
+    configMap.put("storage.db.directory", "database");
+    configMap.put("node.jsonrpc.maxMessageSize", "2Gi");
+    Config config = ConfigFactory.defaultOverrides()
+        .withFallback(ConfigFactory.parseMap(configMap));
+    TronError e = Assert.assertThrows(TronError.class,
+        () -> Args.applyConfigParams(config));
+    Assert.assertTrue(
+        e.getMessage().contains("node.jsonrpc.maxMessageSize must be non-negative"));
   }
 
   @Test
