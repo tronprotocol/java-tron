@@ -509,8 +509,8 @@ public class ManagerTest extends BaseMethodTest {
     } catch (BadBlockException e) {
       Assert.assertTrue(e instanceof BadBlockException);
       Assert.assertTrue(e.getType().equals(CALC_MERKLE_ROOT_FAILED));
-      Assert.assertEquals("The merkle hash is not validated for "
-              + blockCapsule2.getNum(), e.getMessage());
+      Assert.assertTrue(e.getMessage().startsWith(
+          "merkle root mismatch for block " + blockCapsule2.getNum() + ":"));
     } catch (Exception e) {
       Assert.assertFalse(e instanceof Exception);
     }
@@ -1418,6 +1418,35 @@ public class ManagerTest extends BaseMethodTest {
       Args.getSolidityContractLogTriggerMap().clear();
       Args.getSolidityContractEventTriggerMap().clear();
     }
+  }
+
+  @Test
+  public void testRePushResetsVerifiedOnOwnerAddressSetHit() throws Exception {
+    TransferContract transferContract = TransferContract.newBuilder()
+        .setAmount(1L)
+        .setOwnerAddress(ByteString.copyFrom(
+            ByteArray.fromHexString(Wallet.getAddressPreFixString()
+                + "548794500882809695A8A687866E76D4271A1ABC")))
+        .setToAddress(ByteString.copyFrom(
+            ByteArray.fromHexString(Wallet.getAddressPreFixString()
+                + "A389132D6639FBDA4FBC8B659264E6B7C90DB086")))
+        .build();
+    TransactionCapsule tx = new TransactionCapsule(transferContract, ContractType.TransferContract);
+    tx.setVerified(true); // simulate mempool-cached state
+
+    String ownerAddress = ByteArray.toHexString(tx.getOwnerAddress());
+
+    // Inject ownerAddress into ownerAddressSet via reflection
+    Set<String> ownerAddressSet =
+        (Set<String>) ReflectUtils.getFieldObject(dbManager, "ownerAddressSet");
+    ownerAddressSet.add(ownerAddress);
+
+    // rePush should reset isVerified to false before pushTransaction
+    dbManager.rePush(tx);
+
+    // After rePush, isVerified must be false
+    Boolean verified = (Boolean) ReflectUtils.getFieldObject(tx, "isVerified");
+    Assert.assertFalse(verified);
   }
 
   @Test
