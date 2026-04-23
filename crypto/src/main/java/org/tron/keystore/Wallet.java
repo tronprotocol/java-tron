@@ -229,20 +229,52 @@ public class Wallet {
     return keyPair;
   }
 
-  static void validate(WalletFile walletFile) throws CipherException {
-    WalletFile.Crypto crypto = walletFile.getCrypto();
-
+  /**
+   * Returns a description of the first schema violation found in
+   * {@code walletFile}, or {@code null} if the file matches the supported
+   * V3 keystore shape (current version, known cipher, known KDF).
+   *
+   * <p>Shared by {@link #validate(WalletFile)} (which throws the message)
+   * and {@link #isValidKeystoreFile(WalletFile)} (which returns boolean
+   * for discovery-style filtering).
+   */
+  private static String validationError(WalletFile walletFile) {
     if (walletFile.getVersion() != CURRENT_VERSION) {
-      throw new CipherException("Wallet version is not supported");
+      return "Wallet version is not supported";
     }
+    WalletFile.Crypto crypto = walletFile.getCrypto();
+    if (crypto == null) {
+      return "Missing crypto section";
+    }
+    String cipher = crypto.getCipher();
+    if (cipher == null || !cipher.equals(CIPHER)) {
+      return "Wallet cipher is not supported";
+    }
+    String kdf = crypto.getKdf();
+    if (kdf == null || (!kdf.equals(AES_128_CTR) && !kdf.equals(SCRYPT))) {
+      return "KDF type is not supported";
+    }
+    return null;
+  }
 
-    if (!crypto.getCipher().equals(CIPHER)) {
-      throw new CipherException("Wallet cipher is not supported");
+  static void validate(WalletFile walletFile) throws CipherException {
+    String error = validationError(walletFile);
+    if (error != null) {
+      throw new CipherException(error);
     }
+  }
 
-    if (!crypto.getKdf().equals(AES_128_CTR) && !crypto.getKdf().equals(SCRYPT)) {
-      throw new CipherException("KDF type is not supported");
-    }
+  /**
+   * Returns {@code true} iff {@code walletFile} has the shape of a
+   * decryptable V3 keystore: non-null address, supported version, non-null
+   * crypto section with a supported cipher and KDF. Intended for
+   * discovery-style filtering (e.g. listing or duplicate detection) where
+   * we want to skip JSON stubs that would later fail {@link #validate}.
+   */
+  public static boolean isValidKeystoreFile(WalletFile walletFile) {
+    return walletFile != null
+        && walletFile.getAddress() != null
+        && validationError(walletFile) == null;
   }
 
   public static byte[] generateRandomBytes(int size) {

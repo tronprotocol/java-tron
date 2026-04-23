@@ -46,12 +46,19 @@ public class KeystoreCliUtilsTest {
     assertTrue(m.isEmpty());
   }
 
+  private static WalletFile.Crypto supportedCrypto() {
+    WalletFile.Crypto crypto = new WalletFile.Crypto();
+    crypto.setCipher("aes-128-ctr");
+    crypto.setKdf("scrypt");
+    return crypto;
+  }
+
   @Test
   public void testIsValidKeystoreFileValid() {
     WalletFile wf = new WalletFile();
     wf.setAddress("TAddr");
     wf.setVersion(3);
-    wf.setCrypto(new WalletFile.Crypto());
+    wf.setCrypto(supportedCrypto());
     assertTrue(KeystoreCliUtils.isValidKeystoreFile(wf));
   }
 
@@ -59,7 +66,7 @@ public class KeystoreCliUtilsTest {
   public void testIsValidKeystoreFileNullAddress() {
     WalletFile wf = new WalletFile();
     wf.setVersion(3);
-    wf.setCrypto(new WalletFile.Crypto());
+    wf.setCrypto(supportedCrypto());
     assertFalse(KeystoreCliUtils.isValidKeystoreFile(wf));
   }
 
@@ -76,8 +83,56 @@ public class KeystoreCliUtilsTest {
     WalletFile wf = new WalletFile();
     wf.setAddress("TAddr");
     wf.setVersion(2);
+    wf.setCrypto(supportedCrypto());
+    assertFalse(KeystoreCliUtils.isValidKeystoreFile(wf));
+  }
+
+  @Test
+  public void testIsValidKeystoreFileRejectsEmptyCryptoStub() {
+    // {"address":"T...","version":3,"crypto":{}} — passes the old checks
+    // but Wallet.validate would later reject it. Discovery should skip it.
+    WalletFile wf = new WalletFile();
+    wf.setAddress("TAddr");
+    wf.setVersion(3);
     wf.setCrypto(new WalletFile.Crypto());
     assertFalse(KeystoreCliUtils.isValidKeystoreFile(wf));
+  }
+
+  @Test
+  public void testIsValidKeystoreFileRejectsUnsupportedCipher() {
+    WalletFile wf = new WalletFile();
+    wf.setAddress("TAddr");
+    wf.setVersion(3);
+    WalletFile.Crypto crypto = new WalletFile.Crypto();
+    crypto.setCipher("des");
+    crypto.setKdf("scrypt");
+    wf.setCrypto(crypto);
+    assertFalse(KeystoreCliUtils.isValidKeystoreFile(wf));
+  }
+
+  @Test
+  public void testIsValidKeystoreFileRejectsUnsupportedKdf() {
+    WalletFile wf = new WalletFile();
+    wf.setAddress("TAddr");
+    wf.setVersion(3);
+    WalletFile.Crypto crypto = new WalletFile.Crypto();
+    crypto.setCipher("aes-128-ctr");
+    crypto.setKdf("bcrypt");
+    wf.setCrypto(crypto);
+    assertFalse(KeystoreCliUtils.isValidKeystoreFile(wf));
+  }
+
+  @Test
+  public void testIsValidKeystoreFileAcceptsPbkdf2Kdf() {
+    // pbkdf2 is the other supported KDF (used by some Ethereum keystores).
+    WalletFile wf = new WalletFile();
+    wf.setAddress("TAddr");
+    wf.setVersion(3);
+    WalletFile.Crypto crypto = new WalletFile.Crypto();
+    crypto.setCipher("aes-128-ctr");
+    crypto.setKdf("pbkdf2");
+    wf.setCrypto(crypto);
+    assertTrue(KeystoreCliUtils.isValidKeystoreFile(wf));
   }
 
   @Test
