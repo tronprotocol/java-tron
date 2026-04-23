@@ -47,7 +47,12 @@ import org.tron.core.exception.CipherException;
  */
 public class Wallet {
 
-  protected static final String AES_128_CTR = "pbkdf2";
+  // KDF identifiers used in the Web3 Secret Storage "kdf" field.
+  // The old name "AES_128_CTR" was misleading — the value is the PBKDF2 KDF
+  // identifier, not the cipher (CIPHER below). The inner class name
+  // `WalletFile.Aes128CtrKdfParams` is kept for wire-format/Jackson-subtype
+  // backward compatibility even though it also reflects the same history.
+  protected static final String PBKDF2 = "pbkdf2";
   protected static final String SCRYPT = "scrypt";
   private static final int N_LIGHT = 1 << 12;
   private static final int P_LIGHT = 6;
@@ -251,7 +256,7 @@ public class Wallet {
       return "Wallet cipher is not supported";
     }
     String kdf = crypto.getKdf();
-    if (kdf == null || (!kdf.equals(AES_128_CTR) && !kdf.equals(SCRYPT))) {
+    if (kdf == null || (!kdf.equals(PBKDF2) && !kdf.equals(SCRYPT))) {
       return "KDF type is not supported";
     }
     return null;

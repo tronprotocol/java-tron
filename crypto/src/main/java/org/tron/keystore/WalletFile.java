@@ -165,7 +165,7 @@ public class WalletFile {
         include = JsonTypeInfo.As.EXTERNAL_PROPERTY,
         property = "kdf")
     @JsonSubTypes({
-        @JsonSubTypes.Type(value = Aes128CtrKdfParams.class, name = Wallet.AES_128_CTR),
+        @JsonSubTypes.Type(value = Aes128CtrKdfParams.class, name = Wallet.PBKDF2),
         @JsonSubTypes.Type(value = ScryptKdfParams.class, name = Wallet.SCRYPT)
     })
     // To support my Ether Wallet keys uncomment this annotation & comment out the above
