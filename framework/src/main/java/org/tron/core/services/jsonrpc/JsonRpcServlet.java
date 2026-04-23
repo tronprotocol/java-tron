@@ -31,6 +31,7 @@ public class JsonRpcServlet extends RateLimiterServlet {
   private static final ObjectMapper MAPPER = new ObjectMapper();
 
   enum JsonRpcError {
+    PARSE_ERROR(-32700),
     EXCEED_LIMIT(-32005),
     RESPONSE_TOO_LARGE(-32003);
 
@@ -86,9 +87,15 @@ public class JsonRpcServlet extends RateLimiterServlet {
   protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
     CommonParameter parameter = CommonParameter.getInstance();
 
-    byte[] body = readBody(req.getInputStream());
-
-    JsonNode rootNode = MAPPER.readTree(body);
+    byte[] body;
+    JsonNode rootNode;
+    try {
+      body = readBody(req.getInputStream());
+      rootNode = MAPPER.readTree(body);
+    } catch (IOException e) {
+      writeJsonRpcError(resp, JsonRpcError.PARSE_ERROR, "Parse json error", null);
+      return;
+    }
     if (rootNode.isArray() && rootNode.size() > parameter.getJsonRpcMaxBatchSize()) {
       writeJsonRpcError(resp, JsonRpcError.EXCEED_LIMIT,
           "Batch size " + rootNode.size() + " exceeds the limit of "
