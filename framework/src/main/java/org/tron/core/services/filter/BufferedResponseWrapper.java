@@ -2,6 +2,7 @@ package org.tron.core.services.filter;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.PrintWriter;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.WriteListener;
 import javax.servlet.http.HttpServletResponse;
@@ -80,6 +81,11 @@ public class BufferedResponseWrapper extends HttpServletResponseWrapper {
   @Override
   public ServletOutputStream getOutputStream() {
     return outputStream;
+  }
+
+  @Override
+  public PrintWriter getWriter() {
+    return new PrintWriter(outputStream, true);
   }
 
   /**

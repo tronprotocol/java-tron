@@ -93,7 +93,7 @@ public class JsonRpcServlet extends RateLimiterServlet {
       body = readBody(req.getInputStream());
       rootNode = MAPPER.readTree(body);
     } catch (IOException e) {
-      writeJsonRpcError(resp, JsonRpcError.PARSE_ERROR, "Parse json error", null);
+      writeJsonRpcError(resp, JsonRpcError.PARSE_ERROR, "Parse error", null);
       return;
     }
     if (rootNode.isArray() && rootNode.size() > parameter.getJsonRpcMaxBatchSize()) {
