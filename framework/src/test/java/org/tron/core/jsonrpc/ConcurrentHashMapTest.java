@@ -61,7 +61,7 @@ public class ConcurrentHashMapTest {
       Assert.fail("Interrupted during test setup: " + e.getMessage());
     }
 
-    ExecutorService executor = ExecutorServiceManager.newFixedThreadPool(EXECUTOR_NAME, 4);
+    ExecutorService executor = ExecutorServiceManager.newFixedThreadPool(EXECUTOR_NAME, 4, true);
 
     try {
       Future<?> putTask = executor.submit(() -> {

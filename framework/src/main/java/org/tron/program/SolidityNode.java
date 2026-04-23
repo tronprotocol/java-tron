@@ -2,6 +2,7 @@ package org.tron.program;
 
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 
+import com.google.common.annotations.VisibleForTesting;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
@@ -81,6 +82,7 @@ public class SolidityNode {
     awaitShutdown(appT, node);
   }
 
+  @VisibleForTesting
   static void awaitShutdown(Application appT, SolidityNode node) {
     try {
       appT.blockUntilShutdown();
