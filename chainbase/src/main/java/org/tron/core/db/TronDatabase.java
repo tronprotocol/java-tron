@@ -83,6 +83,11 @@ public abstract class TronDatabase<T> implements ITronChainBase<T> {
     }
   }
 
+  /**
+   * Releases writeOptions and dbSource (best-effort, exceptions logged at WARN).
+   * Subclasses with extra resources should override {@link #close()} and call
+   * {@code doClose()} directly — not {@code super.close()} — to avoid duplicated logs.
+   */
   protected void doClose() {
     try {
       writeOptions.close();
