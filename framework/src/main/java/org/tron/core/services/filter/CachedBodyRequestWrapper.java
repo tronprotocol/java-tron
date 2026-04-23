@@ -1,6 +1,10 @@
 package org.tron.core.services.filter;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import javax.servlet.ReadListener;
 import javax.servlet.ServletInputStream;
 import javax.servlet.http.HttpServletRequest;
@@ -46,5 +50,12 @@ public class CachedBodyRequestWrapper extends HttpServletRequestWrapper {
       public void setReadListener(ReadListener readListener) {
       }
     };
+  }
+
+  @Override
+  public BufferedReader getReader() {
+    String encoding = getCharacterEncoding();
+    Charset charset = encoding != null ? Charset.forName(encoding) : StandardCharsets.UTF_8;
+    return new BufferedReader(new InputStreamReader(new ByteArrayInputStream(body), charset));
   }
 }

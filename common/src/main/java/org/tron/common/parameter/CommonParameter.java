@@ -461,7 +461,7 @@ public class CommonParameter {
   public int jsonRpcMaxBlockFilterNum = 50000;
   @Getter
   @Setter
-  public int jsonRpcMaxBatchSize = 10;
+  public int jsonRpcMaxBatchSize = 100;
   @Getter
   @Setter
   public int jsonRpcMaxResponseSize = 25 * 1024 * 1024;
