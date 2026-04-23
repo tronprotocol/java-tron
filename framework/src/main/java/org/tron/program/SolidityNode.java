@@ -108,6 +108,9 @@ public class SolidityNode {
 
   public void shutdown() {
     flag = false;
+    // Signal both pools before awaiting either so they drain concurrently
+    getBlockEs.shutdown();
+    processBlockEs.shutdown();
     ExecutorServiceManager.shutdownAndAwaitTermination(getBlockEs, "solid-get-block");
     ExecutorServiceManager.shutdownAndAwaitTermination(processBlockEs, "solid-process-block");
   }

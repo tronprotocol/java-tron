@@ -1,7 +1,6 @@
 package org.tron.common.logsfilter;
 
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
@@ -18,18 +17,12 @@ public class NativeMessageQueueTest {
   public String topic = "testTopic";
 
   private ExecutorService subscriberExecutor;
+  private final String zmqSubscriber = "zmq-subscriber";
 
   @After
   public void tearDown() {
-    if (subscriberExecutor != null) {
-      subscriberExecutor.shutdownNow();
-      try {
-        subscriberExecutor.awaitTermination(2, TimeUnit.SECONDS);
-      } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
-      }
-      subscriberExecutor = null;
-    }
+    ExecutorServiceManager.shutdownAndAwaitTermination(subscriberExecutor, zmqSubscriber);
+    subscriberExecutor = null;
   }
 
   @Test
@@ -73,7 +66,7 @@ public class NativeMessageQueueTest {
   }
 
   public void startSubscribeThread() {
-    subscriberExecutor = ExecutorServiceManager.newSingleThreadExecutor("zmq-subscriber");
+    subscriberExecutor = ExecutorServiceManager.newSingleThreadExecutor(zmqSubscriber);
     subscriberExecutor.execute(() -> {
       try (ZContext context = new ZContext()) {
         ZMQ.Socket subscriber = context.createSocket(SocketType.SUB);
