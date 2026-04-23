@@ -26,7 +26,6 @@ public class MessageTest {
       disconnectMessage = new DisconnectMessage(MessageTypes.P2P_DISCONNECT.asByte(),
           disconnectMessageTest.toByteArray());
     } catch (Exception e) {
-      System.out.println(e.getMessage());
       Assert.assertTrue(e instanceof P2pException);
     }
   }
@@ -39,7 +38,6 @@ public class MessageTest {
           disconnectMessageTest.toByteArray());
     }
     long endTime = System.currentTimeMillis();
-    System.out.println("spend time : " + (endTime - startTime));
   }
 
   @Test

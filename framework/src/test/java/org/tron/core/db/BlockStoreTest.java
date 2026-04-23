@@ -46,7 +46,7 @@ public class BlockStoreTest extends BaseTest {
       Assert.assertNotNull(blockCapsule1);
       Assert.assertEquals(number, blockCapsule1.getNum());
     } catch (ItemNotFoundException | BadItemException e) {
-      e.printStackTrace();
+      Assert.fail(e.getMessage());
     }
   }
 
@@ -63,7 +63,7 @@ public class BlockStoreTest extends BaseTest {
 
       Assert.assertEquals(number, blockCapsule1.getNum());
     } catch (ItemNotFoundException | BadItemException e) {
-      e.printStackTrace();
+      Assert.fail(e.getMessage());
     }
   }
 
@@ -83,7 +83,7 @@ public class BlockStoreTest extends BaseTest {
       BlockCapsule blockCapsule2 = blockStore.getUnchecked(blockId);
       Assert.assertNull(blockCapsule2);
     } catch (ItemNotFoundException | BadItemException e) {
-      e.printStackTrace();
+      Assert.fail(e.getMessage());
     }
   }
 

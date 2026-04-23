@@ -24,9 +24,7 @@ public class CredentialsTest {
   @Test
   public void testCreate() {
     SignInterface signInterface = mockSignInterface(ADDRESS_1);
-
     Credentials credentials = Credentials.create(signInterface);
-
     Assert.assertEquals("Credentials address create failed!",
         StringUtil.encode58Check(ADDRESS_1), credentials.getAddress());
     Assert.assertSame("Credentials cryptoEngine create failed", signInterface,

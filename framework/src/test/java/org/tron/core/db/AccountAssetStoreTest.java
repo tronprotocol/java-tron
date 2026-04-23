@@ -87,7 +87,7 @@ public class AccountAssetStoreTest extends BaseTest {
     try {
       ownerCapsule.addAssetV2(ByteArray.fromString(String.valueOf(id)), TOTAL_SUPPLY);
     } catch (Exception e) {
-      e.printStackTrace();
+      Assert.fail(e.getMessage());
     }
     accountStore.put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
     return id;
