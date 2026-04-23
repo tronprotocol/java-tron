@@ -13,6 +13,7 @@ import com.google.protobuf.ByteString;
 import io.prometheus.client.CollectorRegistry;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import javax.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
@@ -48,6 +49,7 @@ import org.tron.core.services.interfaceJsonRpcOnPBFT.JsonRpcServiceOnPBFT;
 import org.tron.core.services.interfaceJsonRpcOnSolidity.JsonRpcServiceOnSolidity;
 import org.tron.core.services.jsonrpc.FullNodeJsonRpcHttpService;
 import org.tron.core.services.jsonrpc.TronJsonRpc.FilterRequest;
+import org.tron.core.services.jsonrpc.TronJsonRpc.LogFilterElement;
 import org.tron.core.services.jsonrpc.TronJsonRpcImpl;
 import org.tron.core.services.jsonrpc.filters.LogFilterWrapper;
 import org.tron.core.services.jsonrpc.types.BlockResult;
@@ -287,6 +289,21 @@ public class JsonrpcServiceTest extends BaseTest {
     }
     Assert.assertEquals(ByteArray.toJsonHex(blockCapsule1.getTransactions().size()), result);
 
+    // safe tag is not supported (new tag added in this refactor)
+    try {
+      tronJsonRpc.ethGetBlockTransactionCountByNumber("safe");
+      Assert.fail("Expected to be thrown");
+    } catch (Exception e) {
+      Assert.assertEquals(TAG_SAFE_SUPPORT_ERROR, e.getMessage());
+    }
+
+    // hex that overflows long -> longValueExact rejects (previously silently truncated)
+    try {
+      tronJsonRpc.ethGetBlockTransactionCountByNumber("0x10000000000000000");
+      Assert.fail("Expected to be thrown");
+    } catch (Exception e) {
+      Assert.assertEquals("invalid block number", e.getMessage());
+    }
   }
 
   @Test
@@ -360,6 +377,22 @@ public class JsonrpcServiceTest extends BaseTest {
     // invalid
     try {
       tronJsonRpc.ethGetBlockByNumber("0x", false);
+      Assert.fail("Expected to be thrown");
+    } catch (Exception e) {
+      Assert.assertEquals("invalid block number", e.getMessage());
+    }
+
+    // safe
+    try {
+      tronJsonRpc.ethGetBlockByNumber("safe", false);
+      Assert.fail("Expected to be thrown");
+    } catch (Exception e) {
+      Assert.assertEquals(TAG_SAFE_SUPPORT_ERROR, e.getMessage());
+    }
+
+    // hex overflows long -> longValueExact rejects
+    try {
+      tronJsonRpc.ethGetBlockByNumber("0x10000000000000000", false);
       Assert.fail("Expected to be thrown");
     } catch (Exception e) {
       Assert.assertEquals("invalid block number", e.getMessage());
@@ -589,6 +622,32 @@ public class JsonrpcServiceTest extends BaseTest {
       Assert.assertEquals(TAG_NOT_SUPPORT_ERROR,
           e.getMessage());
     }
+
+    // hex block number -> QUANTITY_NOT_SUPPORT_ERROR
+    try {
+      tronJsonRpc.getStorageAt("", "", "0x1");
+      Assert.fail("Expected to be thrown");
+    } catch (Exception e) {
+      Assert.assertEquals(
+          "QUANTITY not supported, just support TAG as latest", e.getMessage());
+    }
+
+    // malformed hex -> BLOCK_NUM_ERROR
+    try {
+      tronJsonRpc.getStorageAt("", "", "abc");
+      Assert.fail("Expected to be thrown");
+    } catch (Exception e) {
+      Assert.assertEquals("invalid block number", e.getMessage());
+    }
+
+    // latest happy path: address is an account, not a contract, so returns 32 zero bytes
+    try {
+      String value = tronJsonRpc.getStorageAt(
+          "0xabd4b9367799eaa3197fecb144eb71de1e049abc", "0x0", "latest");
+      Assert.assertEquals(ByteArray.toJsonHex(new byte[32]), value);
+    } catch (Exception e) {
+      Assert.fail();
+    }
   }
 
   @Test
@@ -624,6 +683,32 @@ public class JsonrpcServiceTest extends BaseTest {
       Assert.assertEquals(TAG_NOT_SUPPORT_ERROR,
           e.getMessage());
     }
+
+    // hex block number -> QUANTITY_NOT_SUPPORT_ERROR
+    try {
+      tronJsonRpc.getABIOfSmartContract("", "0x1");
+      Assert.fail("Expected to be thrown");
+    } catch (Exception e) {
+      Assert.assertEquals(
+          "QUANTITY not supported, just support TAG as latest", e.getMessage());
+    }
+
+    // malformed hex -> BLOCK_NUM_ERROR
+    try {
+      tronJsonRpc.getABIOfSmartContract("", "abc");
+      Assert.fail("Expected to be thrown");
+    } catch (Exception e) {
+      Assert.assertEquals("invalid block number", e.getMessage());
+    }
+
+    // latest happy path: address is an account, not a contract, so returns "0x"
+    try {
+      String code = tronJsonRpc.getABIOfSmartContract(
+          "0xabd4b9367799eaa3197fecb144eb71de1e049abc", "latest");
+      Assert.assertEquals("0x", code);
+    } catch (Exception e) {
+      Assert.fail();
+    }
   }
 
   @Test
@@ -658,6 +743,158 @@ public class JsonrpcServiceTest extends BaseTest {
     } catch (Exception e) {
       Assert.assertEquals(TAG_NOT_SUPPORT_ERROR,
           e.getMessage());
+    }
+  }
+
+  @Test
+  public void testGetTransactionByBlockNumberAndIndex() {
+    // valid hex block number: blockCapsule1 has 2 txs; index 0 is transactionCapsule1.
+    // Assert the returned tx actually resolves to transactionCapsule1's hash,
+    // block number, and index rather than just non-null.
+    try {
+      TransactionResult result = tronJsonRpc.getTransactionByBlockNumberAndIndex(
+          ByteArray.toJsonHex(blockCapsule1.getNum()), "0x0");
+      Assert.assertNotNull(result);
+      Assert.assertEquals(
+          ByteArray.toJsonHex(transactionCapsule1.getTransactionId().getBytes()),
+          result.getHash());
+      Assert.assertEquals(ByteArray.toJsonHex(blockCapsule1.getNum()), result.getBlockNumber());
+      Assert.assertEquals(ByteArray.toJsonHex(0L), result.getTransactionIndex());
+    } catch (Exception e) {
+      Assert.fail();
+    }
+
+    // index out of range in an existing block returns null
+    try {
+      TransactionResult result = tronJsonRpc.getTransactionByBlockNumberAndIndex(
+          ByteArray.toJsonHex(blockCapsule1.getNum()), "0x5");
+      Assert.assertNull(result);
+    } catch (Exception e) {
+      Assert.fail();
+    }
+
+    // latest -> blockCapsule1 (head)
+    try {
+      TransactionResult result = tronJsonRpc.getTransactionByBlockNumberAndIndex("latest", "0x0");
+      Assert.assertNotNull(result);
+      Assert.assertEquals(ByteArray.toJsonHex(blockCapsule1.getNum()), result.getBlockNumber());
+    } catch (Exception e) {
+      Assert.fail();
+    }
+
+    // finalized -> blockCapsule2 (solid), has 1 tx
+    try {
+      TransactionResult result =
+          tronJsonRpc.getTransactionByBlockNumberAndIndex("finalized", "0x0");
+      Assert.assertNotNull(result);
+    } catch (Exception e) {
+      Assert.fail();
+    }
+
+    // non-existent block number returns null (not an error)
+    try {
+      TransactionResult result = tronJsonRpc.getTransactionByBlockNumberAndIndex("0x1", "0x0");
+      Assert.assertNull(result);
+    } catch (Exception e) {
+      Assert.fail();
+    }
+
+    // pending tag rejected
+    try {
+      tronJsonRpc.getTransactionByBlockNumberAndIndex("pending", "0x0");
+      Assert.fail("Expected to be thrown");
+    } catch (Exception e) {
+      Assert.assertEquals(TAG_PENDING_SUPPORT_ERROR, e.getMessage());
+    }
+
+    // safe tag rejected (new tag)
+    try {
+      tronJsonRpc.getTransactionByBlockNumberAndIndex("safe", "0x0");
+      Assert.fail("Expected to be thrown");
+    } catch (Exception e) {
+      Assert.assertEquals(TAG_SAFE_SUPPORT_ERROR, e.getMessage());
+    }
+
+    // malformed hex rejected
+    try {
+      tronJsonRpc.getTransactionByBlockNumberAndIndex("qqq", "0x0");
+      Assert.fail("Expected to be thrown");
+    } catch (Exception e) {
+      Assert.assertEquals("invalid block number", e.getMessage());
+    }
+
+    // hex overflows long -> longValueExact rejects
+    try {
+      tronJsonRpc.getTransactionByBlockNumberAndIndex("0x10000000000000000", "0x0");
+      Assert.fail("Expected to be thrown");
+    } catch (Exception e) {
+      Assert.assertEquals("invalid block number", e.getMessage());
+    }
+  }
+
+  /**
+   * Tests the object-form second argument of eth_call:
+   * {"blockNumber": "0x..."} or {"blockHash": "0x..."}.
+   * Only the block-selector parsing is exercised here; the call()
+   * execution path is covered by other tests.
+   */
+  @Test
+  public void testGetCallWithBlockObject() {
+    // neither HashMap nor String -> invalid json request
+    try {
+      tronJsonRpc.getCall(null, new Object());
+      Assert.fail("Expected to be thrown");
+    } catch (Exception e) {
+      Assert.assertEquals("invalid json request", e.getMessage());
+    }
+
+    // HashMap without blockNumber/blockHash keys -> invalid json request
+    try {
+      tronJsonRpc.getCall(null, new HashMap<String, String>());
+      Assert.fail("Expected to be thrown");
+    } catch (Exception e) {
+      Assert.assertEquals("invalid json request", e.getMessage());
+    }
+
+    // blockNumber with malformed hex -> invalid block number
+    try {
+      HashMap<String, String> params = new HashMap<>();
+      params.put("blockNumber", "xxx");
+      tronJsonRpc.getCall(null, params);
+      Assert.fail("Expected to be thrown");
+    } catch (Exception e) {
+      Assert.assertEquals("invalid block number", e.getMessage());
+    }
+
+    // blockNumber overflows long -> invalid block number (longValueExact)
+    try {
+      HashMap<String, String> params = new HashMap<>();
+      params.put("blockNumber", "0x10000000000000000");
+      tronJsonRpc.getCall(null, params);
+      Assert.fail("Expected to be thrown");
+    } catch (Exception e) {
+      Assert.assertEquals("invalid block number", e.getMessage());
+    }
+
+    // blockNumber points to a non-existent block -> header not found
+    try {
+      HashMap<String, String> params = new HashMap<>();
+      params.put("blockNumber", "0x1");
+      tronJsonRpc.getCall(null, params);
+      Assert.fail("Expected to be thrown");
+    } catch (Exception e) {
+      Assert.assertEquals("header not found", e.getMessage());
+    }
+
+    // blockHash of an unknown block -> header for hash not found
+    try {
+      HashMap<String, String> params = new HashMap<>();
+      params.put("blockHash",
+          "0x1111111111111111111111111111111111111111111111111111111111111111");
+      tronJsonRpc.getCall(null, params);
+      Assert.fail("Expected to be thrown");
+    } catch (Exception e) {
+      Assert.assertEquals("header for hash not found", e.getMessage());
     }
   }
 
@@ -1074,6 +1311,115 @@ public class JsonrpcServiceTest extends BaseTest {
     }
   }
 
+  /**
+   * Tag handling at the RPC boundary for eth_newFilter / eth_getLogs / eth_getFilterLogs.
+   * - safe/pending are rejected inside LogFilterWrapper (parseBlockNumber -> parseBlockTag)
+   * - finalized is intercepted by newFilter's upfront guard, but allowed by getLogs
+   * - getFilterLogs round-trips a filter created with concrete block numbers
+   */
+  @Test
+  public void testLogFilterTagHandling() {
+    // eth_newFilter: safe in fromBlock -> TAG_SAFE_SUPPORT_ERROR
+    try {
+      tronJsonRpc.newFilter(new FilterRequest("safe", null, null, null, null));
+      Assert.fail("Expected to be thrown");
+    } catch (Exception e) {
+      Assert.assertEquals(TAG_SAFE_SUPPORT_ERROR, e.getMessage());
+    }
+
+    // eth_newFilter: safe in toBlock
+    try {
+      tronJsonRpc.newFilter(new FilterRequest("0x1", "safe", null, null, null));
+      Assert.fail("Expected to be thrown");
+    } catch (Exception e) {
+      Assert.assertEquals(TAG_SAFE_SUPPORT_ERROR, e.getMessage());
+    }
+
+    // eth_newFilter: pending in fromBlock
+    try {
+      tronJsonRpc.newFilter(new FilterRequest("pending", null, null, null, null));
+      Assert.fail("Expected to be thrown");
+    } catch (Exception e) {
+      Assert.assertEquals(TAG_PENDING_SUPPORT_ERROR, e.getMessage());
+    }
+
+    // eth_newFilter: pending in toBlock
+    try {
+      tronJsonRpc.newFilter(new FilterRequest("0x1", "pending", null, null, null));
+      Assert.fail("Expected to be thrown");
+    } catch (Exception e) {
+      Assert.assertEquals(TAG_PENDING_SUPPORT_ERROR, e.getMessage());
+    }
+
+    // eth_getLogs: safe in fromBlock
+    try {
+      tronJsonRpc.getLogs(new FilterRequest("safe", null, null, null, null));
+      Assert.fail("Expected to be thrown");
+    } catch (Exception e) {
+      Assert.assertEquals(TAG_SAFE_SUPPORT_ERROR, e.getMessage());
+    }
+
+    // eth_getLogs: safe in toBlock
+    try {
+      tronJsonRpc.getLogs(new FilterRequest(null, "safe", null, null, null));
+      Assert.fail("Expected to be thrown");
+    } catch (Exception e) {
+      Assert.assertEquals(TAG_SAFE_SUPPORT_ERROR, e.getMessage());
+    }
+
+    // eth_getLogs: pending in fromBlock
+    try {
+      tronJsonRpc.getLogs(new FilterRequest("pending", null, null, null, null));
+      Assert.fail("Expected to be thrown");
+    } catch (Exception e) {
+      Assert.assertEquals(TAG_PENDING_SUPPORT_ERROR, e.getMessage());
+    }
+
+    // eth_getLogs: pending in toBlock
+    try {
+      tronJsonRpc.getLogs(new FilterRequest(null, "pending", null, null, null));
+      Assert.fail("Expected to be thrown");
+    } catch (Exception e) {
+      Assert.assertEquals(TAG_PENDING_SUPPORT_ERROR, e.getMessage());
+    }
+
+    // eth_getLogs: finalized is accepted (resolves to solidBlockNum via parseBlockTag).
+    // With fromBlock empty, Strategy 2 resolves the range to [solid, solid]. blockCapsule2
+    // (solid=4) has no logs in test fixtures, so result must be empty.
+    try {
+      LogFilterElement[] result =
+          tronJsonRpc.getLogs(new FilterRequest(null, "finalized", null, null, null));
+      Assert.assertNotNull(result);
+      Assert.assertEquals(0, result.length);
+    } catch (Exception e) {
+      Assert.fail(e.getMessage());
+    }
+
+    // End-to-end happy path for eth_getLogs and eth_getFilterLogs.
+    // Query range [head, head] = [blockCapsule1, blockCapsule1]. No address/topic filter,
+    // so LogBlockQuery marks all blocks in the range as candidates. LogMatch then iterates
+    // blockCapsule1's 2 txs * 2 logs each = 4 LogFilterElements.
+    String headHex = ByteArray.toJsonHex(blockCapsule1.getNum());
+    int expectedLogs = blockCapsule1.getTransactions().size() * 2;
+
+    try {
+      LogFilterElement[] directResult =
+          tronJsonRpc.getLogs(new FilterRequest(headHex, headHex, null, null, null));
+      Assert.assertEquals(expectedLogs, directResult.length);
+    } catch (Exception e) {
+      Assert.fail(e.getMessage());
+    }
+
+    try {
+      String filterIdHex = tronJsonRpc.newFilter(
+          new FilterRequest(headHex, headHex, null, null, null));
+      LogFilterElement[] filterResult = tronJsonRpc.getFilterLogs(filterIdHex);
+      Assert.assertEquals(expectedLogs, filterResult.length);
+    } catch (Exception e) {
+      Assert.fail(e.getMessage());
+    }
+  }
+
   @Test
   public void testGetBlockReceipts() {
 
@@ -1147,6 +1493,19 @@ public class JsonrpcServiceTest extends BaseTest {
       throw new RuntimeException(e);
     }
 
+    try {
+      tronJsonRpc.getBlockReceipts("safe");
+      Assert.fail();
+    } catch (Exception e) {
+      Assert.assertEquals(TAG_SAFE_SUPPORT_ERROR, e.getMessage());
+    }
+
+    try {
+      tronJsonRpc.getBlockReceipts("0x10000000000000000");
+      Assert.fail();
+    } catch (Exception e) {
+      Assert.assertEquals("invalid block number", e.getMessage());
+    }
   }
 
   @Test
