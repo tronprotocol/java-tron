@@ -161,16 +161,9 @@ public class PeerConnection {
   private volatile boolean needSyncFromUs = true;
   @Getter
   private P2pRateLimiter p2pRateLimiter = new P2pRateLimiter();
-  // Lazily initialised in setChannel() because Args may not be fully wired at class-load time.
-  // volatile ensures the write is visible to readers without requiring setChannel() to be called
-  // under a lock held by the caller.
-  private volatile List<InetSocketAddress> relayNodes;
-
   public void setChannel(Channel channel) {
     this.channel = channel;
-    if (this.relayNodes == null) {
-      this.relayNodes = Args.getInstance().getFastForwardNodes();
-    }
+    List<InetSocketAddress> relayNodes = Args.getInstance().getFastForwardNodes();
     if (relayNodes != null
         && relayNodes.stream().anyMatch(n -> n.getAddress().equals(channel.getInetAddress()))) {
       this.isRelayPeer = true;
