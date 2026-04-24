@@ -76,11 +76,8 @@ public abstract class TronDatabase<T> implements ITronChainBase<T> {
   @Override
   public void close() {
     logger.info("******** Begin to close {}. ********", getName());
-    try {
-      doClose();
-    } finally {
-      logger.info("******** End to close {}. ********", getName());
-    }
+    doClose();
+    logger.info("******** End to close {}. ********", getName());
   }
 
   /**
