@@ -161,6 +161,7 @@ public class PeerConnection {
   private volatile boolean needSyncFromUs = true;
   @Getter
   private P2pRateLimiter p2pRateLimiter = new P2pRateLimiter();
+
   public void setChannel(Channel channel) {
     this.channel = channel;
     List<InetSocketAddress> relayNodes = Args.getInstance().getFastForwardNodes();
