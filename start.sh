@@ -77,7 +77,7 @@ if [ -z "$JAVA_HOME" ]; then
     # readlink(1) is not available as standard on Solaris 10.
     readLink=`which readlink`
     if [ ! `expr "$readLink" : '\([^ ]*\)'` = "no" ]; then
-      if [[ "$(uname)" == "Darwin" ]]; then
+      if $darwin ; then
         javaHome="`dirname \"$javaExecutable\"`"
         javaExecutable="`cd \"$javaHome\" && pwd -P`/javac"
       else
@@ -135,7 +135,7 @@ backupGCLog() {
       local oldGcLogFiles=(`ls -1 $gcLogDir |head -n $oldFileSize`)
     fi
 
-    for fileName in "${oldGcLogFiles[@]}"; do
+    for fileName in ${oldGcLogFiles[@]}; do
       rm -rf $gcLogDir$fileName
     done
   fi
@@ -151,7 +151,7 @@ getLatestReleaseVersion() {
 }
 
 checkVersion() {
- github_release_version=$(getLatestReleaseVersion)
+ github_release_version=$(`echo getLatestReleaseVersion`)
  if [[ -n $github_release_version ]]; then
   echo "info: github latest version: $github_release_version"
   echo $github_release_version
@@ -162,7 +162,7 @@ checkVersion() {
 }
 
 upgrade() {
-  latest_version=$(getLatestReleaseVersion)
+  latest_version=$(`echo getLatestReleaseVersion`)
   echo "info: latest version: $latest_version"
   if [[ -n $latest_version ]]; then
     old_jar="$PWD/$JAR_NAME"
@@ -204,7 +204,7 @@ mkdirFullNode() {
 }
 
 quickStart() {
-  full_node_version=$(getLatestReleaseVersion)
+  full_node_version=$(`echo getLatestReleaseVersion`)
   if [[ -n $full_node_version ]]; then
     mkdirFullNode
     echo "info: check latest version: $full_node_version"
@@ -224,7 +224,7 @@ quickStart() {
 cloneCode() {
   if type git >/dev/null 2>&1; then
     git_clone=$(git clone -b $GITHUB_BRANCH $GITHUB_REPOSITORY)
-    if [[ $? == 0 ]]; then
+    if [[ git_clone == 0 ]]; then
       echo 'info: git clone java-tron success'
     fi
   else
@@ -255,22 +255,18 @@ checkPid() {
     JAR_NAME=$(echo $JAR_NAME |awk -F '/' '{print $NF}')
   fi
   pid=$(ps -ef | grep -v start | grep $JAR_NAME | grep -v grep | awk '{print $2}')
+  return $pid
 }
 
 stopService() {
-  checkPid
-  if [ ! "$pid" ]; then
-    echo "info: java-tron is not running"
-    return
-  fi
   count=1
   while [ $count -le $MAX_STOP_TIME ]; do
     checkPid
-    if [ "$pid" ]; then
+    if [ $pid ]; then
       kill -15 $pid
       sleep 1
     else
-      echo "info: java-tron stopped"
+      echo "info: java-tron stop"
       return
     fi
     count=$(($count + 1))
@@ -284,7 +280,7 @@ stopService() {
 
 checkAllowMemory() {
   os=`uname`
-  totalMemory=$(getTotalMemory)
+  totalMemory=$(`echo getTotalMemory`)
   total=`expr $totalMemory / 1024`
   if [[ $os == 'Darwin' ]]; then
     return
@@ -321,15 +317,15 @@ getTotalMemory() {
     echo $total
     return
   elif [[  $os == 'Darwin' ]]; then
-    total=$(sysctl -n hw.memsize)
-    echo $(( total / 1024 ))
+    total=$(sysctl -a | grep mem |grep hw.memsize |awk -F ' ' '{print $2}')
+    echo `expr $total / 1024`
   fi
 }
 
 setJVMMemory() {
   os=`uname`
   if [[ $os == 'Linux' ]] || [[ $os == 'linux' ]] ; then
-    if [[ $SPECIFY_MEMORY -gt 0 ]]; then
+    if [[ $SPECIFY_MEMORY >0 ]]; then
       max_direct=$(echo "$SPECIFY_MEMORY/1024*0.1" | bc | awk -F. '{print $1"g"}')
       if [[ "$max_direct" != "g" ]]; then
         MAX_DIRECT_MEMORY=$max_direct
@@ -337,7 +333,7 @@ setJVMMemory() {
       JVM_MX=$(echo "$SPECIFY_MEMORY/1024*0.6" | bc | awk -F. '{print $1"g"}')
       JVM_MS=$JVM_MX
     else
-      total=$(getTotalMemory)
+      total=$(`echo getTotalMemory`)
       MAX_DIRECT_MEMORY=$(echo "$total/1024/1024*0.1" | bc | awk -F. '{print $1"g"}')
       JVM_MX=$(echo "$total/1024/1024*0.6" | bc | awk -F. '{print $1"g"}')
       JVM_MS=$JVM_MX
@@ -359,10 +355,8 @@ startService() {
     exit
   fi
 
-  # G1GC is used here for JDK 8/17 compatibility. CMS flags (-XX:+UseConcMarkSweepGC etc.)
-  # were removed in JDK 14 and cause JVM startup failure on JDK 17 (required for ARM64).
-  nohup $JAVACMD -Xms$JVM_MS -Xmx$JVM_MX -XX:+UseG1GC -XX:+PrintGCDetails -Xloggc:./gc.log \
-    -XX:+PrintGCDateStamps -XX:ReservedCodeCacheSize=256m -XX:+UseCodeCacheFlushing \
+  nohup $JAVACMD -Xms$JVM_MS -Xmx$JVM_MX -XX:+UseConcMarkSweepGC -XX:+PrintGCDetails -Xloggc:./gc.log \
+    -XX:+PrintGCDateStamps -XX:+CMSParallelRemarkEnabled -XX:ReservedCodeCacheSize=256m -XX:+UseCodeCacheFlushing \
     -XX:MetaspaceSize=256m -XX:MaxMetaspaceSize=512m \
     -XX:MaxDirectMemorySize=$MAX_DIRECT_MEMORY -XX:+HeapDumpOnOutOfMemoryError \
     -XX:NewRatio=2 -jar \
@@ -389,9 +383,9 @@ rebuildManifest() {
     $JAVACMD -jar $ARCHIVE_JAR -d $REBUILD_DIR -m $REBUILD_MANIFEST_SIZE -b $REBUILD_BATCH_SIZE
   else
     echo 'info: download the rebuild manifest plugin from the github'
-    local latest=$(getLatestReleaseVersion)
+    local latest=$(`echo getLatestReleaseVersion`)
     download $RELEASE_URL/download/GreatVoyage-v"$latest"/$ARCHIVE_JAR $ARCHIVE_JAR
-    if [[ $? == 0 ]]; then
+    if [[ $download == 0 ]]; then
       echo 'info: download success, rebuild manifest'
       $JAVACMD -jar $ARCHIVE_JAR $REBUILD_DIR -m $REBUILD_MANIFEST_SIZE -b $REBUILD_BATCH_SIZE
     fi
@@ -412,7 +406,7 @@ specifyConfig(){
   elif [[ "$netType" = 'private' ]]; then
     configName=$FULL_NODE_CONFIG_PRIVATE_NET
   else
-    echo "warn: no support config $netType"
+    echo "warn: no support config $nodeType"
     exit
   fi
 
@@ -422,7 +416,7 @@ specifyConfig(){
 
   if [[ -d $FULL_NODE_CONFIG_DIR/$configName ]]; then
     DEFAULT_FULL_NODE_CONFIG=$FULL_NODE_CONFIG_DIR/$configName
-    return
+    break
   fi
 
   if [[ ! -f $FULL_NODE_CONFIG_DIR/$configName ]]; then
@@ -434,7 +428,7 @@ specifyConfig(){
 
 checkSign() {
   echo 'info: verify signature'
-  local latest_version=$(getLatestReleaseVersion)
+  local latest_version=$(`echo getLatestReleaseVersion`)
   download $RELEASE_URL/download/$latest_version/sha256sum.txt sha256sum.txt
   fullNodeSha256=$(cat sha256sum.txt|grep 'FullNode'| awk -F ' ' '{print $1}')
 
@@ -548,14 +542,12 @@ while [ -n "$1" ]; do
   --run)
     if [[ $ALL_OPT_LENGTH -eq 1 ]]; then
       restart
-      exit
     fi
     RUN=true
     shift 1
     ;;
   --stop)
     stopService
-    exit
     ;;
   FullNode)
     RUN=true
@@ -611,7 +603,7 @@ if [[ $UPGRADE == true ]]; then
 fi
 
 if [[ $DOWNLOAD == true ]]; then
-  latest=$(getLatestReleaseVersion)
+  latest=$(`echo getLatestReleaseVersion`)
   if [[ -n $latest ]]; then
     download $RELEASE_URL/download/$latest/$JAR_NAME $latest
     exit
@@ -620,7 +612,11 @@ if [[ $DOWNLOAD == true ]]; then
   fi
 fi
 
-if [[ $ALL_OPT_LENGTH -eq 0 || $RUN == true ]]; then
+if [[ $ALL_OPT_LENGTH -eq 0 || $ALL_OPT_LENGTH -gt 0 ]]; then
+  restart
+fi
+
+if [[ $RUN == true ]]; then
   restart
 fi
 
