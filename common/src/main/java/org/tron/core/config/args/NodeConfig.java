@@ -88,7 +88,6 @@ public class NodeConfig {
   private boolean allowShieldedTransactionApi = true;
   private double activeConnectFactor = 0.1;
   private double connectFactor = 0.6;
-  private double disconnectNumberFactor = 0.4;
   // Legacy alias `maxActiveNodesWithSameIp` has no bean field: we only peek at it via
   // section.hasPath() below. Keeping it field-less means reference.conf doesn't have to
   // ship a default that would otherwise mask the modern `maxConnectionsWithSameIp` key.

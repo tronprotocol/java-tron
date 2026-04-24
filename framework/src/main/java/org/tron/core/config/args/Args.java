@@ -342,7 +342,7 @@ public class Args extends CommonParameter {
    * HTTP/RPC rate limiter lists still use getRateLimiterFromConfig() for
    * conversion to RateLimiterInitialization business objects.
    */
-  private static void applyRateLimiterConfig(RateLimiterConfig rl, Config config) {
+  private static void applyRateLimiterConfig(RateLimiterConfig rl) {
     PARAMETER.rateLimiterGlobalQps = rl.getGlobal().getQps();
     PARAMETER.rateLimiterGlobalIpQps = rl.getGlobal().getIp().getQps();
     PARAMETER.rateLimiterGlobalApiQps = rl.getGlobal().getApi().getQps();
@@ -779,7 +779,7 @@ public class Args extends CommonParameter {
 
     // Rate limiter config: bind from config.conf "rate.limiter" section
     rateLimiterConfig = RateLimiterConfig.fromConfig(config);
-    applyRateLimiterConfig(rateLimiterConfig, config);
+    applyRateLimiterConfig(rateLimiterConfig);
 
     // Node backup: from NodeConfig bean
     applyNodeBackupConfig(nodeConfig);
@@ -1143,7 +1143,7 @@ public class Args extends CommonParameter {
   private static void externalIp(NodeConfig nodeConfig) {
     String externalIp = nodeConfig.getDiscoveryExternalIp();
     if (StringUtils.isEmpty(externalIp)) {
-      if (PARAMETER.nodeExternalIp == null) {
+      if (StringUtils.isEmpty(PARAMETER.nodeExternalIp)) {
         logger.info("External IP wasn't set, using ipv4 from libp2p");
         PARAMETER.nodeExternalIp = PARAMETER.p2pConfig.getIp();
         if (StringUtils.isEmpty(PARAMETER.nodeExternalIp)) {
