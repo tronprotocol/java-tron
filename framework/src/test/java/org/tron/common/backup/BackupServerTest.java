@@ -20,8 +20,8 @@ public class BackupServerTest {
   @Rule
   public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
-  // 90s = up to 60s for ExecutorServiceManager.shutdownAndAwaitTermination inside
-  // BackupServer.close() (called by @After tearDown) + 30s headroom for test body and startup.
+  // 90s: close() calls channel.close().await(10s) then ESM.shutdownAndAwaitTermination (up to 60s),
+  // plus 20s headroom for server startup and test body.
   @Rule
   public Timeout globalTimeout = Timeout.seconds(90);
   private BackupServer backupServer;
