@@ -39,10 +39,6 @@ public class MigrateTurkishKeyHelper {
   /**
    * Scan AccountIdIndexStore for keys containing Turkish dotless-ı (U+0131),
    * replace them with ROOT-equivalent keys (ı → i), and delete the old keys.
-   *
-   * <p>Uses raw {@link IRevokingDB} access to bypass the fallback lookup
-   * logic in {@link AccountIdIndexStore#has(byte[])} — we need exact-match
-   * checks to determine whether the ROOT key already exists in the DB.
    */
   public void doWork() {
     long start = System.currentTimeMillis();
@@ -51,7 +47,6 @@ public class MigrateTurkishKeyHelper {
     final IRevokingDB revokingDB = chainBaseManager.getAccountIdIndexStore()
         .getRevokingDB();
     long totalKeys = 0;
-    List<byte[]> keysToDelete = new ArrayList<>();
     List<Map.Entry<byte[], byte[]>> entriesToMigrate = new ArrayList<>();
 
     // Phase 1: scan for keys containing 'ı' (U+0131)
@@ -63,25 +58,20 @@ public class MigrateTurkishKeyHelper {
       }
     }
 
-    // Phase 2: migrate each Turkish key to its ROOT equivalent
+    // Phase 2: for each Turkish key, write the ROOT-equivalent (if absent)
+    // and delete the legacy key.
     for (Map.Entry<byte[], byte[]> entry : entriesToMigrate) {
       String keyStr = new String(entry.getKey(), StandardCharsets.UTF_8);
       byte[] rootKey = keyStr.replace(DOTLESS_I, 'i')
           .getBytes(StandardCharsets.UTF_8);
       // Only write if ROOT key doesn't already exist
-      byte[] existing = revokingDB.getUnchecked(rootKey);
-      if (ArrayUtils.isEmpty(existing)) {
+      if (ArrayUtils.isEmpty(revokingDB.getUnchecked(rootKey))) {
         revokingDB.put(rootKey, entry.getValue());
       }
-      keysToDelete.add(entry.getKey());
+      revokingDB.delete(entry.getKey());
     }
 
-    // Phase 3: delete old Turkish keys
-    for (byte[] key : keysToDelete) {
-      revokingDB.delete(key);
-    }
-
-    // Phase 4: mark migration as done
+    // Phase 3: mark migration as done
     chainBaseManager.getDynamicPropertiesStore().saveTurkishKeyMigrationDone(1);
 
     logger.info(

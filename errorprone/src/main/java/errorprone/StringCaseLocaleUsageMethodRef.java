@@ -36,13 +36,11 @@ public class StringCaseLocaleUsageMethodRef extends BugChecker
       return Description.NO_MATCH;
     }
     // Verify the qualifier type is java.lang.String
-    Type qualifierType = ((com.sun.tools.javac.tree.JCTree) tree.getQualifierExpression())
-        .type;
+    Type qualifierType = ASTHelpers.getType(tree.getQualifierExpression());
     if (qualifierType == null) {
       return Description.NO_MATCH;
     }
-    if (!state.getTypes().isSameType(
-        qualifierType, state.getSymtab().stringType)) {
+    if (!ASTHelpers.isSameType(qualifierType, state.getSymtab().stringType, state)) {
       return Description.NO_MATCH;
     }
     // Only flag the no-arg overload; the Locale-taking overload is safe
