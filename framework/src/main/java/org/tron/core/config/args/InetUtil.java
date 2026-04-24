@@ -18,45 +18,50 @@ import org.tron.p2p.utils.NetUtil;
 @Slf4j(topic = "app")
 public class InetUtil {
 
+  private static final String DNS_POOL_NAME = "args-dns-lookup";
+  private static final int DNS_POOL_MAX_SIZE = 10;
+
   /**
    * Converts a list of {@code ipOrDomain:port} config strings into resolved {@link
    * InetSocketAddress} objects, preserving the original order.
    *
    * <p>IP literals (IPv4 and IPv6) are used as-is. Domain names are resolved via DNS: when there
-   * are multiple domains they are resolved in parallel using a dedicated thread pool; a single
-   * domain is resolved inline. Entries that fail DNS resolution are silently dropped. Item is
-   * ipOrDomain:port, maybe like this:
-   * <li>192.168.100.0:18888,
-   * <li>[fe80::48ff:fe00:1122]:18888,
-   * <li>example.com:18888,
-   * <li>hostname:18888
+   * are multiple domains, they are resolved in parallel using a dedicated thread pool; a single
+   * domain is resolved inline. Entries that fail DNS resolution are silently dropped.
    *
-   * @param ipOrDomainWithPortList list of address strings in {@code ipOrDomain:port} format
-   * (may mix IPs and domains)
-   * @return resolved addresses in the same order as {@code items}, omit unresolvable entries
+   * <p>Supported formats:
+   * <ul>
+   *   <li>{@code 192.168.100.0:18888}
+   *   <li>{@code [fe80::48ff:fe00:1122]:18888}
+   *   <li>{@code example.com:18888}
+   *   <li>{@code hostname:18888}
+   * </ul>
+   *
+   * @param ipOrDomainWithPortList list of address strings in {@code ipOrDomain:port} format,
+   *     may mix IP literals and domain names
+   * @return resolved addresses in the same order as the input, omitting unresolvable entries
    */
   public static List<InetSocketAddress> resolveInetSocketAddressList(
       List<String> ipOrDomainWithPortList) {
-    List<InetSocketAddress> ret = new ArrayList<>();
+    List<InetSocketAddress> result = new ArrayList<>();
     if (ipOrDomainWithPortList.isEmpty()) {
-      return ret;
+      return result;
     }
+
     // Collect entries whose host part is a domain name (not an IP literal).
     List<String> domainEntries = new ArrayList<>();
     for (String item : ipOrDomainWithPortList) {
-      String host = NetUtil.parseInetSocketAddress(item).getHostString();
-      if (!NetUtil.validIpV4(host) && !NetUtil.validIpV6(host)) {
+      if (!isIpLiteral(NetUtil.parseInetSocketAddress(item).getHostString())) {
         domainEntries.add(item);
       }
     }
 
-    // Resolve domain names: spin up a thread pool only when there are multiple domains
-    Map<String, InetSocketAddress> domainResolved = new HashMap<>();
+    // Resolve domain names: spin up a thread pool only when there are multiple domains.
+    Map<String, InetSocketAddress> resolvedDomains = new HashMap<>();
     if (domainEntries.size() > 1) {
-      String poolName = "args-dns-lookup";
-      int poolSize = StrictMath.min(domainEntries.size(), 10);
+      int poolSize = StrictMath.min(domainEntries.size(), DNS_POOL_MAX_SIZE);
       ExecutorService dnsPool = ExecutorServiceManager
-          .newFixedThreadPool(poolName, poolSize, true);
+          .newFixedThreadPool(DNS_POOL_NAME, poolSize, true);
       List<Future<InetSocketAddress>> futures = new ArrayList<>(domainEntries.size());
       for (String entry : domainEntries) {
         futures.add(dnsPool.submit(() -> resolveInetSocketAddress(entry)));
@@ -64,7 +69,7 @@ public class InetUtil {
       for (int i = 0; i < domainEntries.size(); i++) {
         String entry = domainEntries.get(i);
         try {
-          domainResolved.put(entry, futures.get(i).get());
+          resolvedDomains.put(entry, futures.get(i).get());
         } catch (InterruptedException e) {
           Thread.currentThread().interrupt();
           logger.warn("DNS lookup interrupted for: {}", entry);
@@ -72,27 +77,23 @@ public class InetUtil {
           logger.warn("Failed to resolve address, skip: {}", entry);
         }
       }
-      ExecutorServiceManager.shutdownAndAwaitTermination(dnsPool, poolName);
+      ExecutorServiceManager.shutdownAndAwaitTermination(dnsPool, DNS_POOL_NAME);
     } else if (domainEntries.size() == 1) {
       String entry = domainEntries.get(0);
-      domainResolved.put(entry, resolveInetSocketAddress(entry));
+      resolvedDomains.put(entry, resolveInetSocketAddress(entry));
     }
 
     // Build the result list preserving the original config order.
     for (String item : ipOrDomainWithPortList) {
-      InetSocketAddress inetSocketAddress;
       InetSocketAddress parsed = NetUtil.parseInetSocketAddress(item);
-      if (NetUtil.validIpV4(parsed.getHostString()) || NetUtil.validIpV6(parsed.getHostString())) {
-        inetSocketAddress = parsed;
-      } else {
-        inetSocketAddress = domainResolved.get(item);
+      InetSocketAddress resolved = isIpLiteral(parsed.getHostString())
+          ? parsed
+          : resolvedDomains.get(item);
+      if (resolved != null) {
+        result.add(resolved);
       }
-      if (inetSocketAddress == null) {
-        continue;
-      }
-      ret.add(inetSocketAddress);
     }
-    return ret;
+    return result;
   }
 
   /**
@@ -123,12 +124,14 @@ public class InetUtil {
    * Resolves {@code ipOrDomain} to an {@link InetAddress}.
    *
    * <p>IP literals are converted directly without a DNS lookup. Domain names are first resolved
-   * over IPv4, then retried over IPv6 if the first attempt fails. Returns {@code null} if the
-   * address cannot be resolved.
+   * over IPv4, then retried over IPv6 if the first attempt fails.
+   *
+   * @param ipOrDomain IPv4/IPv6 literal or a domain name to resolve
+   * @return the resolved {@link InetAddress}, or {@code null} if resolution fails
    */
   public static InetAddress resolveInetAddress(String ipOrDomain) {
     // Fast path: already a numeric address — no lookup needed.
-    if (NetUtil.validIpV4(ipOrDomain) || NetUtil.validIpV6(ipOrDomain)) {
+    if (isIpLiteral(ipOrDomain)) {
       try {
         return InetAddress.getByName(ipOrDomain);
       } catch (UnknownHostException e) {
@@ -140,5 +143,9 @@ public class InetUtil {
       address = LookUpTxt.lookUpIp(ipOrDomain, false);
     }
     return address;
+  }
+
+  private static boolean isIpLiteral(String host) {
+    return NetUtil.validIpV4(host) || NetUtil.validIpV6(host);
   }
 }
