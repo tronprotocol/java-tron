@@ -296,11 +296,6 @@ jobs:
           git fetch --no-tags origin "+refs/heads/${BASE_REF}:refs/remotes/origin/${BASE_REF}"
 
           PR_XMLS=$(find coverage/pr -name "jacocoTestReport.xml" | sort)
-          if [ -z "$PR_XMLS" ]; then
-            echo "No PR jacoco XML reports found, skipping diff-cover."
-            exit 0
-          fi
-
           SRC_ROOTS=$(find . -type d -path '*/src/main/java' \
             -not -path './coverage/*' -not -path './.git/*' | sort)
 
@@ -314,12 +309,18 @@ jobs:
           DIFF_RC=$?
           set -e
 
-          CHANGED_LINE_COVERAGE=$(jq -r '.total_percent_covered // empty' diff-cover.json)
-          if [ -z "$CHANGED_LINE_COVERAGE" ]; then
-            echo "Unable to parse changed-line coverage from diff-cover.json."
-            exit 1
+          TOTAL_NUM_LINES=$(jq -r '.total_num_lines // 0' diff-cover.json)
+          if [ "${TOTAL_NUM_LINES}" = "0" ]; then
+            echo "No changed Java source lines; skipping changed-line gate."
+            echo "changed_line_coverage=NA" >> "$GITHUB_OUTPUT"
+          else
+            CHANGED_LINE_COVERAGE=$(jq -r '.total_percent_covered // empty' diff-cover.json)
+            if [ -z "$CHANGED_LINE_COVERAGE" ]; then
+              echo "Unable to parse changed-line coverage from diff-cover.json."
+              exit 1
+            fi
+            echo "changed_line_coverage=${CHANGED_LINE_COVERAGE}" >> "$GITHUB_OUTPUT"
           fi
-          echo "changed_line_coverage=${CHANGED_LINE_COVERAGE}" >> "$GITHUB_OUTPUT"
 
           {
             echo "### Changed-line Coverage (diff-cover)"
@@ -396,16 +397,19 @@ jobs:
           DELTA=$(awk -v pr="$PR_OVERALL" -v base="$BASE_OVERALL" 'BEGIN { printf "%.4f", pr - base }')
           DELTA_OK=$(compare_float "${DELTA} >= ${MAX_DROP}")
 
-          if [ -z "$CHANGED_LINE" ] || [ "$CHANGED_LINE" = "NaN" ] || ! is_number "$CHANGED_LINE"; then
+          if [ "$CHANGED_LINE" = "NA" ]; then
+            CHANGED_LINE_OK=1
+            CHANGED_LINE_STATUS="SKIPPED (no changed Java source lines)"
+          elif [ -z "$CHANGED_LINE" ] || [ "$CHANGED_LINE" = "NaN" ] || ! is_number "$CHANGED_LINE"; then
             echo "Failed to parse changed-line coverage: changed-line='${CHANGED_LINE}'."
             exit 1
-          fi
-
-          CHANGED_LINE_OK=$(compare_float "${CHANGED_LINE} > ${MIN_CHANGED}")
-          if [ "$CHANGED_LINE_OK" -eq 1 ]; then
-            CHANGED_LINE_STATUS="PASS (> ${MIN_CHANGED}%)"
           else
-            CHANGED_LINE_STATUS="FAIL (<= ${MIN_CHANGED}%)"
+            CHANGED_LINE_OK=$(compare_float "${CHANGED_LINE} > ${MIN_CHANGED}")
+            if [ "$CHANGED_LINE_OK" -eq 1 ]; then
+              CHANGED_LINE_STATUS="PASS (> ${MIN_CHANGED}%)"
+            else
+              CHANGED_LINE_STATUS="FAIL (<= ${MIN_CHANGED}%)"
+            fi
           fi
 
           # 3) Output base metrics (always visible in logs + step summary)
@@ -414,8 +418,14 @@ jobs:
             OVERALL_STATUS="FAIL (< ${MAX_DROP}%)"
           fi
 
+          if [ "$CHANGED_LINE" = "NA" ]; then
+            CHANGED_LINE_DISPLAY="NA"
+          else
+            CHANGED_LINE_DISPLAY="${CHANGED_LINE}%"
+          fi
+
           METRICS_TEXT=$(cat <<EOF
-          Changed-line Coverage: ${CHANGED_LINE}%
+          Changed-line Coverage: ${CHANGED_LINE_DISPLAY}
           PR Overall Coverage: ${PR_OVERALL}%
           Base Overall Coverage: ${BASE_OVERALL}%
           Delta (PR - Base): ${DELTA}%
@@ -429,7 +439,7 @@ jobs:
           {
             echo "### Coverage Gate Metrics"
             echo ""
-            echo "- Changed-line Coverage: ${CHANGED_LINE}%"
+            echo "- Changed-line Coverage: ${CHANGED_LINE_DISPLAY}"
             echo "- PR Overall Coverage: ${PR_OVERALL}%"
             echo "- Base Overall Coverage: ${BASE_OVERALL}%"
             echo "- Delta (PR - Base): ${DELTA}%"
