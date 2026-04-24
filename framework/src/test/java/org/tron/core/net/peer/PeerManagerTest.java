@@ -21,7 +21,6 @@ import org.tron.core.config.args.Args;
 import org.tron.p2p.connection.Channel;
 
 public class PeerManagerTest {
-  List<InetSocketAddress> relayNodes = new ArrayList<>();
 
   @BeforeClass
   public static void initArgs() {
@@ -54,7 +53,7 @@ public class PeerManagerTest {
     Channel c1 = new Channel();
     ReflectUtils.setFieldValue(c1, "inetSocketAddress", inetSocketAddress1);
     ReflectUtils.setFieldValue(c1, "inetAddress", inetSocketAddress1.getAddress());
-    ReflectUtils.setFieldValue(p1, "relayNodes", relayNodes);
+
     p1.setChannel(c1);
 
     ApplicationContext ctx = mock(ApplicationContext.class);
@@ -79,7 +78,7 @@ public class PeerManagerTest {
     Channel c1 = new Channel();
     ReflectUtils.setFieldValue(c1, "inetSocketAddress", inetSocketAddress1);
     ReflectUtils.setFieldValue(c1, "inetAddress", inetSocketAddress1.getAddress());
-    ReflectUtils.setFieldValue(p1, "relayNodes", relayNodes);
+
     p1.setChannel(c1);
 
     ApplicationContext ctx = mock(ApplicationContext.class);
@@ -105,7 +104,7 @@ public class PeerManagerTest {
     Channel c1 = new Channel();
     ReflectUtils.setFieldValue(c1, "inetSocketAddress", inetSocketAddress1);
     ReflectUtils.setFieldValue(c1, "inetAddress", inetSocketAddress1.getAddress());
-    ReflectUtils.setFieldValue(p1, "relayNodes", relayNodes);
+
     p1.setChannel(c1);
 
     ApplicationContext ctx = mock(ApplicationContext.class);
@@ -128,7 +127,7 @@ public class PeerManagerTest {
     Channel c1 = new Channel();
     ReflectUtils.setFieldValue(c1, "inetSocketAddress", inetSocketAddress1);
     ReflectUtils.setFieldValue(c1, "inetAddress", inetSocketAddress1.getAddress());
-    ReflectUtils.setFieldValue(p1, "relayNodes", relayNodes);
+
     p1.setChannel(c1);
 
     ApplicationContext ctx = mock(ApplicationContext.class);
@@ -146,7 +145,7 @@ public class PeerManagerTest {
     Channel c2 = new Channel();
     ReflectUtils.setFieldValue(c2, "inetSocketAddress", inetSocketAddress2);
     ReflectUtils.setFieldValue(c2, "inetAddress", inetSocketAddress2.getAddress());
-    ReflectUtils.setFieldValue(p2, "relayNodes", relayNodes);
+
     p2.setChannel(c2);
 
     ApplicationContext ctx2 = mock(ApplicationContext.class);
