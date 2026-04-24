@@ -298,6 +298,10 @@ jobs:
           PR_XMLS=$(find coverage/pr -name "jacocoTestReport.xml" | sort)
           SRC_ROOTS=$(find . -type d -path '*/src/main/java' \
             -not -path './coverage/*' -not -path './.git/*' | sort)
+          if [ -z "$SRC_ROOTS" ]; then
+            echo "No src/main/java directories found; cannot run diff-cover." >&2
+            exit 1
+          fi
 
           set +e
           diff-cover $PR_XMLS \
@@ -308,6 +312,11 @@ jobs:
             --markdown-report=diff-cover.md
           DIFF_RC=$?
           set -e
+
+          if [ ! -f diff-cover.json ]; then
+            echo "diff-cover did not produce JSON report (exit=${DIFF_RC})." >&2
+            exit 1
+          fi
 
           TOTAL_NUM_LINES=$(jq -r '.total_num_lines // 0' diff-cover.json)
           if [ "${TOTAL_NUM_LINES}" = "0" ]; then
@@ -331,8 +340,6 @@ jobs:
               echo "_diff-cover produced no report._"
             fi
           } >> "$GITHUB_STEP_SUMMARY"
-
-          echo "diff-cover exit code: ${DIFF_RC}"
 
       - name: Aggregate base coverage
         id: jacoco-base
@@ -431,6 +438,7 @@ jobs:
           Delta (PR - Base): ${DELTA}%
           Changed-line Gate: ${CHANGED_LINE_STATUS}
           Overall Delta Gate: ${OVERALL_STATUS}
+          Note: Changed-line uses LINE coverage (diff-cover); Overall/Delta use INSTRUCTION coverage (jacoco-report). The two counters are not directly comparable.
           EOF
           )
 
@@ -445,6 +453,8 @@ jobs:
             echo "- Delta (PR - Base): ${DELTA}%"
             echo "- Changed-line Gate: ${CHANGED_LINE_STATUS}"
             echo "- Overall Delta Gate: ${OVERALL_STATUS}"
+            echo ""
+            echo "_Note: Changed-line uses LINE coverage (diff-cover); Overall/Delta use INSTRUCTION coverage (jacoco-report). The two counters are not directly comparable._"
           } >> "$GITHUB_STEP_SUMMARY"
 
           # 4) Decide CI pass/fail
