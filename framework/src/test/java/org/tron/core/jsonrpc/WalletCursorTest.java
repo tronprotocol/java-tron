@@ -87,6 +87,7 @@ public class WalletCursorTest extends BaseTest {
     TronJsonRpcImpl tronJsonRpc = new TronJsonRpcImpl(nodeInfoService, wallet, dbManager);
     try {
       tronJsonRpc.buildTransaction(buildArguments);
+      tronJsonRpc.close();
     } catch (Exception e) {
       Assert.assertEquals("the method buildTransaction does not exist/is not available in "
           + "SOLIDITY", e.getMessage());
@@ -136,6 +137,7 @@ public class WalletCursorTest extends BaseTest {
 
     try {
       tronJsonRpc.buildTransaction(buildArguments);
+      tronJsonRpc.close();
     } catch (Exception e) {
       Assert.fail();
     }

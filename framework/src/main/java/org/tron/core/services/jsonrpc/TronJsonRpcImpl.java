@@ -169,7 +169,7 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
 
   private static final String ERROR_SELECTOR = "08c379a0"; // Function selector for Error(string)
   private static final int FILTER_PARALLEL_THRESHOLD = 10000;
-  private static final ForkJoinPool LOGS_FILTER_POOL = new ForkJoinPool();
+  private static final ForkJoinPool LOGS_FILTER_POOL = new ForkJoinPool(2);
   /**
    * thread pool of query section bloom store
    */
@@ -1581,7 +1581,7 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
 
   @Override
   public void close() throws IOException {
-    ExecutorServiceManager.shutdownAndAwaitTermination(LOGS_FILTER_POOL, "");
+    ExecutorServiceManager.shutdownAndAwaitTermination(LOGS_FILTER_POOL, "logs-filter-pool");
     logElementCache.invalidateAll();
     blockHashCache.invalidateAll();
     ExecutorServiceManager.shutdownAndAwaitTermination(sectionExecutor, esName);
