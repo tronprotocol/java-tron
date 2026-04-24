@@ -12,9 +12,6 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -24,8 +21,6 @@ import java.util.Scanner;
 import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
 import org.tron.common.crypto.SignInterface;
-import org.tron.common.crypto.SignUtils;
-import org.tron.common.utils.Utils;
 import org.tron.core.exception.CipherException;
 
 /**
@@ -42,31 +37,6 @@ public class WalletUtils {
   static {
     objectMapper.configure(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, true);
     objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-  }
-
-  public static String generateFullNewWalletFile(String password, File destinationDirectory,
-      boolean ecKey)
-      throws NoSuchAlgorithmException, NoSuchProviderException,
-      InvalidAlgorithmParameterException, CipherException, IOException {
-
-    return generateNewWalletFile(password, destinationDirectory, true, ecKey);
-  }
-
-  public static String generateLightNewWalletFile(String password, File destinationDirectory,
-      boolean ecKey)
-      throws NoSuchAlgorithmException, NoSuchProviderException,
-      InvalidAlgorithmParameterException, CipherException, IOException {
-
-    return generateNewWalletFile(password, destinationDirectory, false, ecKey);
-  }
-
-  public static String generateNewWalletFile(
-      String password, File destinationDirectory, boolean useFullScrypt, boolean ecKey)
-      throws CipherException, IOException, InvalidAlgorithmParameterException,
-      NoSuchAlgorithmException, NoSuchProviderException {
-
-    SignInterface ecKeyPair = SignUtils.getGeneratedRandomSign(Utils.getRandom(), ecKey);
-    return generateWalletFile(password, ecKeyPair, destinationDirectory, useFullScrypt);
   }
 
   public static String generateWalletFile(
@@ -157,33 +127,6 @@ public class WalletUtils {
     ZonedDateTime now = ZonedDateTime.now(ZoneOffset.UTC);
 
     return now.format(format) + walletFile.getAddress() + ".json";
-  }
-
-  public static String getDefaultKeyDirectory() {
-    return getDefaultKeyDirectory(System.getProperty("os.name"));
-  }
-
-  static String getDefaultKeyDirectory(String osName1) {
-    String osName = osName1.toLowerCase();
-
-    if (osName.startsWith("mac")) {
-      return String.format(
-          "%s%sLibrary%sEthereum", System.getProperty("user.home"), File.separator,
-          File.separator);
-    } else if (osName.startsWith("win")) {
-      return String.format("%s%sEthereum", System.getenv("APPDATA"), File.separator);
-    } else {
-      return String.format("%s%s.ethereum", System.getProperty("user.home"), File.separator);
-    }
-  }
-
-  public static String getTestnetKeyDirectory() {
-    return String.format(
-        "%s%stestnet%skeystore", getDefaultKeyDirectory(), File.separator, File.separator);
-  }
-
-  public static String getMainnetKeyDirectory() {
-    return String.format("%s%skeystore", getDefaultKeyDirectory(), File.separator);
   }
 
   /**
