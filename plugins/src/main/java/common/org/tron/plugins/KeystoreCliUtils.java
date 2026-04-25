@@ -29,6 +29,14 @@ final class KeystoreCliUtils {
 
   private static final long MAX_FILE_SIZE = 1024;
 
+  /**
+   * Cap on the size of a single keystore JSON read during directory scans.
+   * Standard V3 keystores are ~500–700 bytes; 8 KiB leaves headroom for
+   * unusual scrypt parameter combinations while bounding the memory cost
+   * of scanning a hostile directory of planted oversized files.
+   */
+  static final long MAX_KEYSTORE_SIZE = 8 * 1024;
+
   private KeystoreCliUtils() {
   }
 
@@ -202,31 +210,65 @@ final class KeystoreCliUtils {
   }
 
   /**
-   * Returns true iff {@code file} exists, is not a symbolic link, and is a
-   * regular file (not a directory, FIFO, or device). Used to filter keystore
-   * directory scans before {@code MAPPER.readValue(file, ...)} so a hostile
-   * or group-writable keystore directory cannot redirect reads to arbitrary
-   * files (e.g. {@code /etc/shadow}) or block on non-regular files
-   * (e.g. a FIFO) via planted entries.
+   * Read the bytes of a keystore-directory entry, refusing to follow
+   * symbolic links and rejecting non-regular files. Returns {@code null}
+   * (with a warning to {@code err}) when the entry should be skipped.
    *
-   * <p>Writes a warning to {@code err} when the entry is skipped.
+   * <p>Unlike {@code Files.readAttributes(...) + MAPPER.readValue(file, ...)},
+   * this opens the channel with {@link LinkOption#NOFOLLOW_LINKS} so the
+   * {@code O_NOFOLLOW} flag is enforced atomically by the kernel at
+   * {@code open(2)} — closing the TOCTOU window between an lstat-style
+   * check and a follow-symlink {@code FileInputStream} open. The caller
+   * then deserializes the bytes via {@code ObjectMapper.readValue(byte[],
+   * Class)}.
+   *
+   * <p>Files larger than {@link #MAX_KEYSTORE_SIZE} are skipped to bound
+   * memory cost when scanning a hostile or oversized directory.
    */
-  static boolean isSafeRegularFile(File file, PrintWriter err) {
+  static byte[] readKeystoreFile(File file, PrintWriter err) {
+    Path path = file.toPath();
+    BasicFileAttributes attrs;
     try {
-      BasicFileAttributes attrs = Files.readAttributes(file.toPath(),
-          BasicFileAttributes.class, LinkOption.NOFOLLOW_LINKS);
-      if (attrs.isSymbolicLink()) {
-        err.println("Warning: skipping symbolic link: " + file.getName());
-        return false;
-      }
-      if (!attrs.isRegularFile()) {
-        err.println("Warning: skipping non-regular file: " + file.getName());
-        return false;
-      }
-      return true;
+      attrs = Files.readAttributes(path, BasicFileAttributes.class,
+          LinkOption.NOFOLLOW_LINKS);
     } catch (IOException e) {
       err.println("Warning: skipping unreadable file: " + file.getName());
-      return false;
+      return null;
+    }
+    if (attrs.isSymbolicLink()) {
+      err.println("Warning: skipping symbolic link: " + file.getName());
+      return null;
+    }
+    if (!attrs.isRegularFile()) {
+      err.println("Warning: skipping non-regular file: " + file.getName());
+      return null;
+    }
+    if (attrs.size() > MAX_KEYSTORE_SIZE) {
+      err.println("Warning: skipping oversized file (>" + MAX_KEYSTORE_SIZE
+          + " bytes): " + file.getName());
+      return null;
+    }
+
+    int size = (int) attrs.size();
+    java.util.Set<OpenOption> openOptions = new HashSet<>();
+    openOptions.add(StandardOpenOption.READ);
+    openOptions.add(LinkOption.NOFOLLOW_LINKS);
+    try (SeekableByteChannel ch = Files.newByteChannel(path, openOptions)) {
+      ByteBuffer buf = ByteBuffer.allocate(size);
+      while (buf.hasRemaining()) {
+        if (ch.read(buf) < 0) {
+          break;
+        }
+      }
+      if (buf.position() < size) {
+        byte[] actual = new byte[buf.position()];
+        System.arraycopy(buf.array(), 0, actual, 0, buf.position());
+        return actual;
+      }
+      return buf.array();
+    } catch (IOException e) {
+      err.println("Warning: skipping unreadable file: " + file.getName());
+      return null;
     }
   }
 

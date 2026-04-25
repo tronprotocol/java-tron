@@ -59,11 +59,12 @@ public class KeystoreList implements Callable<Integer> {
 
     List<Map<String, String>> entries = new ArrayList<>();
     for (File file : files) {
-      if (!KeystoreCliUtils.isSafeRegularFile(file, err)) {
+      byte[] bytes = KeystoreCliUtils.readKeystoreFile(file, err);
+      if (bytes == null) {
         continue;
       }
       try {
-        WalletFile walletFile = MAPPER.readValue(file, WalletFile.class);
+        WalletFile walletFile = MAPPER.readValue(bytes, WalletFile.class);
         if (!KeystoreCliUtils.isValidKeystoreFile(walletFile)) {
           continue;
         }

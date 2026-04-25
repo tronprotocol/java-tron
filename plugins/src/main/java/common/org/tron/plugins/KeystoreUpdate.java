@@ -138,7 +138,15 @@ public class KeystoreUpdate implements Callable<Integer> {
       }
 
       boolean ecKey = !sm2;
-      WalletFile walletFile = MAPPER.readValue(keystoreFile, WalletFile.class);
+      // Re-read via NOFOLLOW byte channel to close the TOCTOU window between
+      // findKeystoreByAddress and this read — an attacker with directory
+      // write access could otherwise swap the file for a symlink in between.
+      byte[] keystoreBytes = KeystoreCliUtils.readKeystoreFile(keystoreFile, err);
+      if (keystoreBytes == null) {
+        // readKeystoreFile already printed the specific reason
+        return 1;
+      }
+      WalletFile walletFile = MAPPER.readValue(keystoreBytes, WalletFile.class);
       SignInterface keyPair = Wallet.decrypt(oldPassword, walletFile, ecKey);
 
       // createStandard already sets the correctly-derived address. Do NOT override
@@ -199,11 +207,12 @@ public class KeystoreUpdate implements Callable<Integer> {
     }
     java.util.List<File> matches = new java.util.ArrayList<>();
     for (File file : files) {
-      if (!KeystoreCliUtils.isSafeRegularFile(file, err)) {
+      byte[] bytes = KeystoreCliUtils.readKeystoreFile(file, err);
+      if (bytes == null) {
         continue;
       }
       try {
-        WalletFile wf = MAPPER.readValue(file, WalletFile.class);
+        WalletFile wf = MAPPER.readValue(bytes, WalletFile.class);
         if (KeystoreCliUtils.isValidKeystoreFile(wf)
             && targetAddress.equals(wf.getAddress())) {
           matches.add(file);

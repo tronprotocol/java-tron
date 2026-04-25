@@ -169,11 +169,12 @@ public class KeystoreImport implements Callable<Integer> {
     com.fasterxml.jackson.databind.ObjectMapper mapper =
         KeystoreCliUtils.mapper();
     for (File file : files) {
-      if (!KeystoreCliUtils.isSafeRegularFile(file, err)) {
+      byte[] bytes = KeystoreCliUtils.readKeystoreFile(file, err);
+      if (bytes == null) {
         continue;
       }
       try {
-        WalletFile wf = mapper.readValue(file, WalletFile.class);
+        WalletFile wf = mapper.readValue(bytes, WalletFile.class);
         if (KeystoreCliUtils.isValidKeystoreFile(wf)
             && address.equals(wf.getAddress())) {
           return file.getName();
