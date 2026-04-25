@@ -275,8 +275,54 @@ public class KeystoreUpdateTest {
         "--password-file", pwFile.getAbsolutePath());
 
     assertEquals("Should fail with single-line password file", 1, exitCode);
-    assertTrue("Error should mention separate lines",
-        err.toString().contains("separate lines"));
+    assertTrue("Error should mention exactly two lines",
+        err.toString().contains("exactly two lines"));
+  }
+
+  @Test
+  public void testUpdatePasswordFileThreeLines() throws Exception {
+    // Regression: a three-line password file (e.g. someone confusingly added a
+    // confirm line, or pointed at the wrong file) must be rejected, not have
+    // the third line silently discarded. The original keystore must remain
+    // decryptable with the old password.
+    File dir = tempFolder.newFolder("keystore-3line");
+    String oldPassword = "oldpass123";
+
+    SignInterface keyPair = SignUtils.getGeneratedRandomSign(
+        SecureRandom.getInstance("NativePRNG"), true);
+    byte[] originalKey = keyPair.getPrivateKey();
+    String fileName = WalletUtils.generateWalletFile(oldPassword, keyPair, dir, true);
+    Credentials creds = WalletUtils.loadCredentials(oldPassword,
+        new File(dir, fileName), true);
+
+    // Snapshot the keystore bytes so we can verify the file is untouched.
+    byte[] beforeBytes = Files.readAllBytes(new File(dir, fileName).toPath());
+
+    File pwFile = tempFolder.newFile("threeline.txt");
+    Files.write(pwFile.toPath(),
+        (oldPassword + "\nnewpass456\nnewpass456").getBytes(StandardCharsets.UTF_8));
+
+    StringWriter err = new StringWriter();
+    CommandLine cmd = new CommandLine(new Toolkit());
+    cmd.setErr(new PrintWriter(err));
+    int exitCode = cmd.execute("keystore", "update", creds.getAddress(),
+        "--keystore-dir", dir.getAbsolutePath(),
+        "--password-file", pwFile.getAbsolutePath());
+
+    assertEquals("Should fail with three-line password file", 1, exitCode);
+    assertTrue("Error should mention exactly two lines, got: " + err.toString(),
+        err.toString().contains("exactly two lines"));
+
+    // Verify: keystore file is byte-for-byte unchanged
+    byte[] afterBytes = Files.readAllBytes(new File(dir, fileName).toPath());
+    assertArrayEquals("Keystore file must not be modified on rejection",
+        beforeBytes, afterBytes);
+
+    // Verify: original password still decrypts the keystore
+    Credentials unchanged = WalletUtils.loadCredentials(oldPassword,
+        new File(dir, fileName), true);
+    assertArrayEquals("Original key must still be recoverable with old password",
+        originalKey, unchanged.getSignInterface().getPrivateKey());
   }
 
   @Test

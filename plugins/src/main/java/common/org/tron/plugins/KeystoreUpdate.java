@@ -79,11 +79,17 @@ public class KeystoreUpdate implements Callable<Integer> {
           if (content.length() > 0 && content.charAt(0) == '\uFEFF') {
             content = content.substring(1);
           }
+          // String.split with the default zero-limit form already drops
+          // trailing empty strings, so "old\nnew" and "old\nnew\n" both
+          // yield length 2; require strict equality so a stray third line
+          // (e.g. someone confusingly providing a confirm line, or the
+          // wrong file altogether) is reported rather than silently
+          // discarded.
           String[] lines = content.split("\\r?\\n|\\r");
-          if (lines.length < 2) {
-            err.println(
-                "Password file must contain old and new passwords"
-                    + " on separate lines.");
+          if (lines.length != 2) {
+            err.println("Password file must contain exactly two lines: "
+                + "current password on the first line and new password "
+                + "on the second line (no confirmation line).");
             return 1;
           }
           oldPassword = WalletUtils.stripPasswordLine(lines[0]);
