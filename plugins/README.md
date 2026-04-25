@@ -175,10 +175,10 @@ Import a private key into a new keystore file.
 
 ```shell script
 # full command
-  java -jar Toolkit.jar keystore import [-h] [--keystore-dir=<dir>] [--password-file=<file>] [--private-key-file=<file>] [--sm2] [--json]
+  java -jar Toolkit.jar keystore import [-h] [--keystore-dir=<dir>] [--password-file=<file>] [--key-file=<file>] [--sm2] [--force] [--json]
 # examples
-  java -jar Toolkit.jar keystore import                                        # interactive prompt
-  java -jar Toolkit.jar keystore import --private-key-file key.txt --json      # from file with JSON output
+  java -jar Toolkit.jar keystore import                                # interactive prompt
+  java -jar Toolkit.jar keystore import --key-file key.txt --json      # from file with JSON output
 ```
 
 #### keystore list
@@ -201,16 +201,20 @@ Change the password of a keystore file.
 
 ```shell script
 # full command
-  java -jar Toolkit.jar keystore update [-h] <address> [--keystore-dir=<dir>] [--password-file=<file>] [--new-password-file=<file>] [--json]
+  java -jar Toolkit.jar keystore update [-h] <address> [--keystore-dir=<dir>] [--password-file=<file>] [--sm2] [--json]
 # examples
   java -jar Toolkit.jar keystore update TXyz...abc                          # interactive prompt
   java -jar Toolkit.jar keystore update TXyz...abc --keystore-dir /data/ks  # custom directory
 ```
 
+When using `--password-file` with `update`, the file must contain exactly two lines: the **current** password on the first line and the **new** password on the second line. Both leading/trailing whitespace within a line is preserved (passphrases with spaces are supported).
+
 ### Common Options
 
 - `--keystore-dir`: Keystore directory, default: `./Wallet`.
-- `--password-file`: Read password from a file instead of interactive prompt.
+- `--password-file`: Read password from a file instead of interactive prompt. For `keystore update`, the file must contain exactly two lines (current password, then new password).
+- `--key-file`: Read the private key (hex, with or without `0x` prefix) from a file instead of the interactive prompt (`keystore import` only).
+- `--force`: For `keystore import`, allow importing a private key whose address already has a keystore in the directory (creates an additional file).
 - `--sm2`: Use SM2 algorithm instead of ECDSA (for `new` and `import`).
 - `--json`: Output in JSON format for scripting.
 - `-h | --help`: Provide the help info.
