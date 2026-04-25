@@ -8,8 +8,10 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.time.ZoneOffset;
@@ -19,6 +21,7 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Scanner;
 import java.util.Set;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.tron.common.crypto.SignInterface;
 import org.tron.core.exception.CipherException;
@@ -26,6 +29,7 @@ import org.tron.core.exception.CipherException;
 /**
  * Utility functions for working with Wallet files.
  */
+@Slf4j(topic = "keystore")
 public class WalletUtils {
 
   private static final ObjectMapper objectMapper = new ObjectMapper();
@@ -117,8 +121,34 @@ public class WalletUtils {
 
   public static Credentials loadCredentials(String password, File source, boolean ecKey)
       throws IOException, CipherException {
+    warnIfSymbolicLink(source);
     WalletFile walletFile = objectMapper.readValue(source, WalletFile.class);
     return Credentials.create(Wallet.decrypt(password, walletFile, ecKey));
+  }
+
+  /**
+   * Emit a warning if {@code source} is a symbolic link. The keystore is still
+   * read (following the symlink), preserving compatibility with legitimate
+   * deployments that use symlinks to organize keystore files (e.g.
+   * {@code /opt/tron/keystore/witness.json} -> {@code /mnt/encrypted/...},
+   * container volume-mount paths). The warning gives operators a chance to
+   * notice if a path they did not expect to be a symlink has become one — for
+   * example if an attacker with config-injection ability has redirected the
+   * SR startup keystore. This mirrors how Ethereum consensus clients (e.g.
+   * Lighthouse) handle a configured {@code voting_keystore_path}.
+   */
+  private static void warnIfSymbolicLink(File source) {
+    try {
+      BasicFileAttributes attrs = Files.readAttributes(source.toPath(),
+          BasicFileAttributes.class, LinkOption.NOFOLLOW_LINKS);
+      if (attrs.isSymbolicLink()) {
+        logger.warn("Keystore file is a symbolic link: {} — proceeding, "
+            + "but verify the symlink target points where you expect.",
+            source.getPath());
+      }
+    } catch (IOException ignored) {
+      // If we can't stat, let the subsequent readValue surface the real error.
+    }
   }
 
   public static String getWalletFileName(WalletFile walletFile) {

@@ -166,4 +166,39 @@ public class WalletUtilsWriteTest {
     assertNotNull(tempFiles);
     assertEquals("Temp file must be cleaned up on failure", 0, tempFiles.length);
   }
+
+  // ---------- loadCredentials symlink behavior ----------
+
+  @Test
+  public void testLoadCredentialsFollowsSymlinkButWarns() throws Exception {
+    Assume.assumeTrue("Symlinks only tested on POSIX",
+        !System.getProperty("os.name").toLowerCase().contains("win"));
+
+    File realDir = tempFolder.newFolder("load-symlink-target");
+    SignInterface keyPair = SignUtils.getGeneratedRandomSign(Utils.getRandom(), true);
+    String realName = WalletUtils.generateWalletFile("password123", keyPair, realDir, false);
+    File realKeystore = new File(realDir, realName);
+
+    File linkDir = tempFolder.newFolder("load-symlink-link");
+    File symlink = new File(linkDir, "witness.json");
+    Files.createSymbolicLink(symlink.toPath(), realKeystore.toPath());
+
+    // Should NOT throw — Lighthouse-style: follow the symlink, log a warning
+    // for the operator. Hard-rejecting would silently break legitimate SR
+    // deployments that organize keystores via symlinks.
+    Credentials creds =
+        WalletUtils.loadCredentials("password123", symlink, true);
+    assertNotNull(creds.getAddress());
+  }
+
+  @Test
+  public void testLoadCredentialsAcceptsRegularFile() throws Exception {
+    File dir = tempFolder.newFolder("load-ok");
+    SignInterface keyPair = SignUtils.getGeneratedRandomSign(Utils.getRandom(), true);
+    String fileName = WalletUtils.generateWalletFile("password123", keyPair, dir, false);
+
+    Credentials creds =
+        WalletUtils.loadCredentials("password123", new File(dir, fileName), true);
+    assertNotNull(creds.getAddress());
+  }
 }
