@@ -7,15 +7,15 @@ import javax.servlet.ServletOutputStream;
 import javax.servlet.WriteListener;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpServletResponseWrapper;
-import org.tron.core.exception.jsonrpc.JsonRpcResponseTooLargeException;
+import lombok.Getter;
 
 /**
  * Buffers the response body without writing to the underlying response,
- * so the caller can inspect the size before committing.
+ * so the caller can replay it after the handler returns.
  *
- * <p>If {@code maxBytes > 0}, writes that would push the buffer past {@code maxBytes} throw
- * {@link JsonRpcResponseTooLargeException} immediately, bounding memory usage to at most
- * {@code maxBytes} rather than the full response size.
+ * <p>If {@code maxBytes > 0} and the response would exceed that limit, the
+ * {@link #isOverflow()} flag is set instead of throwing. The caller should check this flag after
+ * the handler returns and write its own error response when true.
  *
  * <p>Header-mutating methods ({@code setStatus}, {@code setContentType}) are buffered here and
  * only forwarded to the real response via {@link #commitToResponse()}, preventing a timed-out
@@ -28,16 +28,31 @@ public class BufferedResponseWrapper extends HttpServletResponseWrapper {
   private final int maxBytes;
   private int status = HttpServletResponse.SC_OK;
   private String contentType;
+  @Getter
+  private boolean overflow = false;
+
   private final ServletOutputStream outputStream = new ServletOutputStream() {
     @Override
     public void write(int b) {
-      checkLimit(1);
+      if (overflow) {
+        return;
+      }
+      if (maxBytes > 0 && buffer.size() >= maxBytes) {
+        markOverflow();
+        return;
+      }
       buffer.write(b);
     }
 
     @Override
     public void write(byte[] b, int off, int len) {
-      checkLimit(len);
+      if (overflow) {
+        return;
+      }
+      if (maxBytes > 0 && buffer.size() + len > maxBytes) {
+        markOverflow();
+        return;
+      }
       buffer.write(b, off, len);
     }
 
@@ -61,10 +76,26 @@ public class BufferedResponseWrapper extends HttpServletResponseWrapper {
     this.maxBytes = maxBytes;
   }
 
-  private void checkLimit(int incoming) {
-    if (maxBytes > 0 && buffer.size() + incoming > maxBytes) {
-      throw new JsonRpcResponseTooLargeException(
-          "Response byte size exceeds the limit of " + maxBytes);
+  private void markOverflow() {
+    overflow = true;
+    buffer.reset();
+  }
+
+  /**
+   * Early-detection path: if the framework reports the full content length before writing any
+   * bytes, we can flag overflow without buffering anything.
+   */
+  @Override
+  public void setContentLength(int len) {
+    if (maxBytes > 0 && len > maxBytes) {
+      markOverflow();
+    }
+  }
+
+  @Override
+  public void setContentLengthLong(long len) {
+    if (maxBytes > 0 && len > maxBytes) {
+      markOverflow();
     }
   }
 
@@ -88,25 +119,13 @@ public class BufferedResponseWrapper extends HttpServletResponseWrapper {
     return new PrintWriter(outputStream, true);
   }
 
-  /**
-   * Suppress forwarding Content-Length to the real response; caller sets it after size check.
-   */
-  @Override
-  public void setContentLength(int len) {
-  }
-
-  @Override
-  public void setContentLengthLong(long len) {
-  }
-
   public void commitToResponse() throws IOException {
     if (contentType != null) {
       actual.setContentType(contentType);
     }
     actual.setStatus(status);
-    byte[] bytes = buffer.toByteArray();
-    actual.setContentLength(bytes.length);
-    actual.getOutputStream().write(bytes);
+    actual.setContentLength(buffer.size());
+    buffer.writeTo(actual.getOutputStream());
     actual.getOutputStream().flush();
   }
 }

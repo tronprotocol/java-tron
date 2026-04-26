@@ -19,7 +19,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.parameter.CommonParameter;
-import org.tron.core.exception.jsonrpc.JsonRpcResponseTooLargeException;
 import org.tron.core.services.filter.BufferedResponseWrapper;
 import org.tron.core.services.filter.CachedBodyRequestWrapper;
 import org.tron.core.services.http.RateLimiterServlet;
@@ -109,14 +108,17 @@ public class JsonRpcServlet extends RateLimiterServlet {
 
     try {
       rpcServer.handle(cachedReq, bufferedResp);
-    } catch (JsonRpcResponseTooLargeException e) {
-      JsonNode idNode = (!rootNode.isArray()) ? rootNode.get("id") : null;
-      writeJsonRpcError(resp, JsonRpcError.RESPONSE_TOO_LARGE, e.getMessage(), idNode);
-      return;
     } catch (Exception e) {
       throw new IOException("RPC execution failed", e);
     }
 
+    if (bufferedResp.isOverflow()) {
+      JsonNode idNode = !rootNode.isArray() ? rootNode.get("id") : null;
+      writeJsonRpcError(resp, JsonRpcError.RESPONSE_TOO_LARGE,
+          "Response exceeds the limit of " + parameter.getJsonRpcMaxResponseSize() + " bytes",
+          idNode);
+      return;
+    }
     bufferedResp.commitToResponse();
   }
 
