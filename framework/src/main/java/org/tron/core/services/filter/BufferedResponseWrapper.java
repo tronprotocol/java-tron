@@ -66,6 +66,8 @@ public class BufferedResponseWrapper extends HttpServletResponseWrapper {
     }
   };
 
+  private final PrintWriter writer = new PrintWriter(outputStream, true);
+
   /**
    * @param response the wrapped response
    * @param maxBytes max allowed response bytes; {@code 0} means no limit
@@ -116,7 +118,7 @@ public class BufferedResponseWrapper extends HttpServletResponseWrapper {
 
   @Override
   public PrintWriter getWriter() {
-    return new PrintWriter(outputStream, true);
+    return writer;
   }
 
   public void commitToResponse() throws IOException {
