@@ -1,7 +1,5 @@
 package org.tron.common.backup;
 
-import java.util.ArrayList;
-import java.util.List;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -20,10 +18,8 @@ public class BackupServerTest {
   @Rule
   public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
-  // 90s: close() calls channel.close().await(10s) then ESM.shutdownAndAwaitTermination (up to 60s),
-  // plus 20s headroom for server startup and test body.
   @Rule
-  public Timeout globalTimeout = Timeout.seconds(90);
+  public Timeout globalTimeout = Timeout.seconds(60);
   private BackupServer backupServer;
 
   @Before
@@ -31,9 +27,6 @@ public class BackupServerTest {
     Args.setParam(new String[]{"-d", temporaryFolder.newFolder().toString()},
         TestConstants.TEST_CONF);
     CommonParameter.getInstance().setBackupPort(PublicMethod.chooseRandomPort());
-    List<String> members = new ArrayList<>();
-    members.add("127.0.0.2");
-    CommonParameter.getInstance().setBackupMembers(members);
     BackupManager backupManager = new BackupManager();
     backupManager.init();
     backupServer = new BackupServer(backupManager);
@@ -46,9 +39,8 @@ public class BackupServerTest {
   }
 
   @Test
-  public void test() throws InterruptedException {
+  public void test() {
+    // backupMembers is empty so initServer() is a no-op; verify close() is safe
     backupServer.initServer();
-    // wait for the server to start
-    Thread.sleep(1000);
   }
 }

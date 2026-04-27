@@ -12,6 +12,7 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.Mockito;
+import org.tron.common.TestConstants;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.Pair;
@@ -32,6 +33,7 @@ public class PeerConnectionTest {
 
   @BeforeClass
   public static void initArgs() {
+    Args.setParam(new String[]{}, TestConstants.TEST_CONF);
     CommonParameter.getInstance().setRateLimiterSyncBlockChain(10);
     CommonParameter.getInstance().setRateLimiterFetchInvData(10);
     CommonParameter.getInstance().setRateLimiterDisconnect(10);
@@ -195,7 +197,7 @@ public class PeerConnectionTest {
     ReflectUtils.setFieldValue(c1, "inetAddress", inetSocketAddress.getAddress());
 
     List<InetSocketAddress> relayNodes = new ArrayList<>();
-    CommonParameter.getInstance().fastForwardNodes = relayNodes;
+    ReflectUtils.setFieldValue(peerConnection, "relayNodes", relayNodes);
 
     peerConnection.setChannel(c1);
     Assert.assertTrue(!peerConnection.isRelayPeer());
@@ -204,7 +206,7 @@ public class PeerConnectionTest {
     peerConnection.setChannel(c1);
     Assert.assertTrue(peerConnection.isRelayPeer());
 
-    CommonParameter.getInstance().fastForwardNodes = new ArrayList<>();
+    ReflectUtils.setFieldValue(peerConnection, "relayNodes", new ArrayList<>());
   }
 
   @Test

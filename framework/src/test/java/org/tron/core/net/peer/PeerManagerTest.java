@@ -15,6 +15,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.springframework.context.ApplicationContext;
+import org.tron.common.TestConstants;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.core.config.args.Args;
@@ -24,6 +25,7 @@ public class PeerManagerTest {
 
   @BeforeClass
   public static void initArgs() {
+    Args.setParam(new String[]{}, TestConstants.TEST_CONF);
     CommonParameter.getInstance().setRateLimiterSyncBlockChain(10);
     CommonParameter.getInstance().setRateLimiterFetchInvData(10);
     CommonParameter.getInstance().setRateLimiterDisconnect(10);
