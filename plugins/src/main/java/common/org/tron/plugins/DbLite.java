@@ -20,6 +20,7 @@ import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 import java.util.stream.LongStream;
+import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
 import me.tongfei.progressbar.ProgressBar;
 import org.rocksdb.RocksDBException;
@@ -57,6 +58,8 @@ public class DbLite implements Callable<Integer> {
   private static final String TRANSACTION_HISTORY_DB_NAME = "transactionHistoryStore";
   private static final String PROPERTIES_DB_NAME = "properties";
   private static final String TRANS_CACHE_DB_NAME = "trans-cache";
+  private static final String BALANCE_TRACE_DB_NAME = "balance-trace";
+  private static final String ACCOUNT_TRACE_DB_NAME = "account-trace";
 
   private static final List<String> archiveDbs = Arrays.asList(
       BLOCK_DB_NAME,
@@ -64,6 +67,10 @@ public class DbLite implements Callable<Integer> {
       TRANS_DB_NAME,
       TRANSACTION_RET_DB_NAME,
       TRANSACTION_HISTORY_DB_NAME);
+
+  private static final List<String> traceDbs = Arrays.asList(
+      BALANCE_TRACE_DB_NAME,
+      ACCOUNT_TRACE_DB_NAME);
 
   enum Operate { split, merge }
 
@@ -105,8 +112,25 @@ public class DbLite implements Callable<Integer> {
   private String datasetPath;
 
   @CommandLine.Option(
-      names = {"--help", "-h"},
+      names = {"--exclude-historical-balance"},
+      defaultValue = "false",
+      description = "only used with `operate=split -t snapshot`: when true, balance-trace "
+          + "and account-trace are excluded from the lite snapshot. "
+          + "Default: ${DEFAULT-VALUE} (legacy behavior; trace stores stay in the snapshot). "
+          + "This flag only has a functional impact when the source full node ran with "
+          + "`historyBalanceLookup=true` (off by default; most operators are unaffected). "
+          + "WARNING: when historyBalanceLookup was enabled, this loss is permanent: a lite "
+          + "node booted from such a snapshot cannot answer historical balance lookups "
+          + "(getBlockBalance / getAccountBalance), and running merge afterwards will NOT "
+          + "restore the feature. If you need to keep historyBalanceLookup working on the "
+          + "resulting lite node, do NOT enable this flag. `split -t history` and `merge` "
+          + "ignore this flag.",
       order = 5)
+  private boolean excludeHistoricalBalance;
+
+  @CommandLine.Option(
+      names = {"--help", "-h"},
+      order = 6)
   private boolean help;
 
 
@@ -119,6 +143,7 @@ public class DbLite implements Callable<Integer> {
     try {
       switch (this.operate) {
         case split:
+          warnIfExcludingHistoricalBalance();
           if (Type.snapshot == this.type) {
             generateSnapshot(fnDataPath, datasetPath);
           } else if (Type.history == type) {
@@ -253,12 +278,50 @@ public class DbLite implements Callable<Integer> {
     spec.commandLine().getOut().format("Merge history finished, take %d s.", during).println();
   }
 
+  /**
+   * Compute the directories to exclude from the lite snapshot.
+   * <p>
+   * Default ({@code --exclude-historical-balance=false}): the legacy archive set
+   * (5 dbs); {@link #BALANCE_TRACE_DB_NAME} / {@link #ACCOUNT_TRACE_DB_NAME}
+   * stay with the snapshot as state-style stores.
+   * <p>
+   * Opt-in ({@code --exclude-historical-balance=true}): the trace stores are
+   * additionally excluded, producing a smaller lite snapshot at the cost of
+   * dropping historical balance lookup support on the resulting lite node.
+   * Only {@code split -t snapshot} consults this. {@code split -t history}
+   * and {@code merge} always use the legacy archive set.
+   */
+  private List<String> snapshotExclusion() {
+    if (!excludeHistoricalBalance) {
+      return archiveDbs;
+    }
+    return Stream.concat(archiveDbs.stream(), traceDbs.stream())
+        .collect(Collectors.toList());
+  }
+
+  private void warnIfExcludingHistoricalBalance() {
+    if (!excludeHistoricalBalance) {
+      return;
+    }
+    String msg = "WARNING: --exclude-historical-balance is enabled. balance-trace / account-trace "
+        + "will be excluded from the lite snapshot. This only matters when the source full "
+        + "node ran with historyBalanceLookup=true (off by default; most operators are "
+        + "unaffected). When that switch was enabled, this loss is permanent: lite nodes "
+        + "booted from this snapshot cannot answer historical balance lookups "
+        + "(getBlockBalance / getAccountBalance), and running merge afterwards will NOT "
+        + "restore the feature. If you need to keep historyBalanceLookup working on the "
+        + "resulting lite node, do NOT use this flag.";
+    logger.warn(msg);
+    spec.commandLine().getErr().println(msg);
+  }
+
   private List<String> getSnapshotDbs(String sourceDir) {
     List<String> snapshotDbs = Lists.newArrayList();
     File basePath = new File(sourceDir);
+    List<String> excluded = snapshotExclusion();
     Arrays.stream(Objects.requireNonNull(basePath.listFiles()))
             .filter(File::isDirectory)
-            .filter(dir -> !archiveDbs.contains(dir.getName()))
+            .filter(dir -> !excluded.contains(dir.getName()))
             .forEach(dir -> snapshotDbs.add(dir.getName()));
     return snapshotDbs;
   }

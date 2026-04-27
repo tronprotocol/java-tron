@@ -1,11 +1,14 @@
 package org.tron.plugins;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.tron.common.utils.PublicMethod.getRandomPrivateKey;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
@@ -89,10 +92,19 @@ public class DbLiteTest {
 
   public void testTools(String dbType, int checkpointVersion)
       throws InterruptedException, IOException {
-    logger.info("dbType {}, checkpointVersion {}", dbType, checkpointVersion);
+    testTools(dbType, checkpointVersion, false);
+  }
+
+  public void testTools(String dbType, int checkpointVersion, boolean excludeHistoricalBalance)
+      throws InterruptedException, IOException {
+    logger.info("dbType {}, checkpointVersion {}, excludeHistoricalBalance {}",
+        dbType, checkpointVersion, excludeHistoricalBalance);
     init(dbType);
-    final String[] argsForSnapshot =
-        new String[] {"-o", "split", "-t", "snapshot", "--fn-data-path",
+    final String[] argsForSnapshot = excludeHistoricalBalance
+        ? new String[] {"-o", "split", "-t", "snapshot", "--fn-data-path",
+            dbPath + File.separator + databaseDir, "--dataset-path",
+            dbPath, "--exclude-historical-balance"}
+        : new String[] {"-o", "split", "-t", "snapshot", "--fn-data-path",
             dbPath + File.separator + databaseDir, "--dataset-path",
             dbPath};
     final String[] argsForHistory =
@@ -114,6 +126,16 @@ public class DbLiteTest {
     FileUtil.deleteDir(Paths.get(dbPath, databaseDir, "trans-cache").toFile());
     // generate snapshot
     cli.execute(argsForSnapshot);
+    Path snapshotDir = Paths.get(dbPath, "snapshot");
+    if (excludeHistoricalBalance) {
+      // when --exclude-historical-balance=true, the lite snapshot must not ship
+      // balance-trace / account-trace
+      assertFalse(snapshotDir.resolve("balance-trace").toFile().exists());
+      assertFalse(snapshotDir.resolve("account-trace").toFile().exists());
+    } else {
+      assertTrue(snapshotDir.resolve("balance-trace").toFile().exists());
+      assertTrue(snapshotDir.resolve("account-trace").toFile().exists());
+    }
     // start fullNode
     startApp();
     // produce transactions
