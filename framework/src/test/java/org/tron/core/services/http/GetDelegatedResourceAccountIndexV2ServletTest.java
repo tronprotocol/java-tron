@@ -44,7 +44,7 @@ public class GetDelegatedResourceAccountIndexV2ServletTest extends BaseHttpTest 
 
   @Test
   public void testGet() throws Exception {
-    MockHttpServletRequest request = 
+    MockHttpServletRequest request =
         getRequest("visible", "true", "value", "TBxSocpujP6UGKV5ydXNVTDQz7fAgdmoaB");
 
     MockHttpServletResponse response = newResponse();
