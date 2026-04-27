@@ -12,7 +12,12 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 /**
  * Drop-in replacement for {@code com.alibaba.fastjson.JSON}.
+ *
+ * @deprecated Compatibility shim from the fastjson removal. New code should use
+ *     Jackson directly ({@link com.fasterxml.jackson.databind.ObjectMapper},
+ *     {@link com.fasterxml.jackson.databind.JsonNode}) instead of this helper.
  */
+@Deprecated
 public final class JSON {
 
   public static final ObjectMapper MAPPER = JsonMapper.builder()

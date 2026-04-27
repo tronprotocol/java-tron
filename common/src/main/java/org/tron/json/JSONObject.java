@@ -20,7 +20,12 @@ import java.util.Set;
  * {@link #containsKey(String)} / {@link #size()} after a null put. To emit an
  * explicit {@code "key":null}, pass a Jackson {@code NullNode} via
  * {@link #put(String, Object)}.
+ *
+ * @deprecated Compatibility shim from the fastjson removal. New code should use
+ *     Jackson directly ({@link com.fasterxml.jackson.databind.node.ObjectNode})
+ *     instead of this helper.
  */
+@Deprecated
 public class JSONObject {
 
   private final ObjectNode node;

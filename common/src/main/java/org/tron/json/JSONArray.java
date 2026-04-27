@@ -11,7 +11,12 @@ import java.util.List;
 
 /**
  * Drop-in replacement for {@code com.alibaba.fastjson.JSONArray}.
+ *
+ * @deprecated Compatibility shim from the fastjson removal. New code should use
+ *     Jackson directly ({@link com.fasterxml.jackson.databind.node.ArrayNode})
+ *     instead of this helper.
  */
+@Deprecated
 public class JSONArray implements Iterable<Object> {
 
   private final ArrayNode node;
