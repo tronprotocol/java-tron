@@ -18,7 +18,7 @@ import java.util.regex.Pattern;
  *   <li>{@code null}/{@code "null"}/{@code "NULL"}/empty → {@code null}</li>
  * </ul>
  */
-public final class TypeUtils {
+final class TypeUtils {
 
   private static final Pattern NUMBER_WITH_TRAILING_ZEROS_PATTERN =
       Pattern.compile("\\.0*$");
@@ -26,14 +26,7 @@ public final class TypeUtils {
   private TypeUtils() {
   }
 
-  public static String castToString(Object value) {
-    if (value == null) {
-      return null;
-    }
-    return value.toString();
-  }
-
-  public static Boolean castToBoolean(Object value) {
+  static Boolean castToBoolean(Object value) {
     if (value == null) {
       return null;
     }
@@ -76,7 +69,7 @@ public final class TypeUtils {
     throw new JSONException("can not cast to boolean, value : " + value);
   }
 
-  public static Integer castToInt(Object value) {
+  static Integer castToInt(Object value) {
     if (value == null) {
       return null;
     }
@@ -114,7 +107,7 @@ public final class TypeUtils {
     throw new JSONException("can not cast to int, value : " + value);
   }
 
-  public static Long castToLong(Object value) {
+  static Long castToLong(Object value) {
     if (value == null) {
       return null;
     }
@@ -154,7 +147,7 @@ public final class TypeUtils {
     throw new JSONException("can not cast to long, value : " + value);
   }
 
-  public static BigDecimal castToBigDecimal(Object value) {
+  static BigDecimal castToBigDecimal(Object value) {
     if (value == null) {
       return null;
     }
@@ -190,103 +183,9 @@ public final class TypeUtils {
     return new BigDecimal(strVal);
   }
 
-  public static BigInteger castToBigInteger(Object value) {
-    if (value == null) {
-      return null;
-    }
-
-    if (value instanceof Float) {
-      Float floatValue = (Float) value;
-      if (Float.isNaN(floatValue) || Float.isInfinite(floatValue)) {
-        return null;
-      }
-      return BigInteger.valueOf(floatValue.longValue());
-    } else if (value instanceof Double) {
-      Double doubleValue = (Double) value;
-      if (Double.isNaN(doubleValue) || Double.isInfinite(doubleValue)) {
-        return null;
-      }
-      return BigInteger.valueOf(doubleValue.longValue());
-    } else if (value instanceof BigInteger) {
-      return (BigInteger) value;
-    } else if (value instanceof BigDecimal) {
-      BigDecimal decimal = (BigDecimal) value;
-      int scale = decimal.scale();
-      if (scale > -1000 && scale < 1000) {
-        return decimal.toBigInteger();
-      }
-    }
-
-    String strVal = value.toString();
-
-    if (strVal.isEmpty() || "null".equalsIgnoreCase(strVal)) {
-      return null;
-    }
-
-    if (strVal.length() > 65535) {
-      throw new JSONException("decimal overflow");
-    }
-
-    return new BigInteger(strVal);
-  }
-
-  public static Float castToFloat(Object value) {
-    if (value == null) {
-      return null;
-    }
-    if (value instanceof Number) {
-      return ((Number) value).floatValue();
-    }
-    if (value instanceof String) {
-      String strVal = (String) value;
-      if (strVal.isEmpty()
-          || "null".equals(strVal)
-          || "NULL".equals(strVal)) {
-        return null;
-      }
-      if (strVal.indexOf(',') != -1) {
-        strVal = strVal.replaceAll(",", "");
-      }
-      return Float.parseFloat(strVal);
-    }
-
-    if (value instanceof Boolean) {
-      return (Boolean) value ? 1F : 0F;
-    }
-
-    throw new JSONException("can not cast to float, value : " + value);
-  }
-
-  public static Double castToDouble(Object value) {
-    if (value == null) {
-      return null;
-    }
-    if (value instanceof Number) {
-      return ((Number) value).doubleValue();
-    }
-    if (value instanceof String) {
-      String strVal = (String) value;
-      if (strVal.isEmpty()
-          || "null".equals(strVal)
-          || "NULL".equals(strVal)) {
-        return null;
-      }
-      if (strVal.indexOf(',') != -1) {
-        strVal = strVal.replaceAll(",", "");
-      }
-      return Double.parseDouble(strVal);
-    }
-
-    if (value instanceof Boolean) {
-      return (Boolean) value ? 1D : 0D;
-    }
-
-    throw new JSONException("can not cast to double, value : " + value);
-  }
-
   // -- BigDecimal helper methods (ported from Fastjson) --
 
-  public static int intValue(BigDecimal decimal) {
+  static int intValue(BigDecimal decimal) {
     if (decimal == null) {
       return 0;
     }
@@ -297,7 +196,7 @@ public final class TypeUtils {
     return decimal.intValueExact();
   }
 
-  public static long longValue(BigDecimal decimal) {
+  static long longValue(BigDecimal decimal) {
     if (decimal == null) {
       return 0;
     }
