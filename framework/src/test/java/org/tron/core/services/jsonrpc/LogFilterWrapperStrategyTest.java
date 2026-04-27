@@ -38,8 +38,6 @@ public class LogFilterWrapperStrategyTest {
     return new LogFilterWrapper(request, CURRENT_MAX_BLOCK, mockWallet, false);
   }
 
-  // ============ Strategy 1: Both empty ============
-
   @Test
   public void testStrategy1_BothNull() throws Exception {
     LogFilterWrapper filter = createFilter(null, null);
@@ -55,8 +53,6 @@ public class LogFilterWrapperStrategyTest {
     assertEquals(CURRENT_MAX_BLOCK, filter.getFromBlock());
     assertEquals(Long.MAX_VALUE, filter.getToBlock());
   }
-
-  // ============ Strategy 2: fromBlock empty, toBlock non-empty ============
 
   @Test
   public void testStrategy2_FromEmptyToHex() throws Exception {
@@ -83,8 +79,6 @@ public class LogFilterWrapperStrategyTest {
     assertEquals(512L, filter.getToBlock());
   }
 
-  // ============ Strategy 3: fromBlock non-empty, toBlock empty ============
-
   @Test
   public void testStrategy3_FromHexToEmpty() throws Exception {
     // fromBlock = 0x1 = 1
@@ -109,8 +103,6 @@ public class LogFilterWrapperStrategyTest {
     assertEquals(5L, filter.getFromBlock());
     assertEquals(Long.MAX_VALUE, filter.getToBlock());
   }
-
-  // ============ Strategy 4: Both non-empty ============
 
   @Test
   public void testStrategy4_BothHex() throws Exception {
