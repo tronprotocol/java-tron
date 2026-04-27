@@ -3,13 +3,10 @@ package org.tron.core.metrics.blockchain;
 import com.codahale.metrics.Counter;
 import com.google.protobuf.ByteString;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.SortedMap;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.Setter;
 import org.bouncycastle.util.encoders.Hex;
@@ -45,10 +42,6 @@ public class BlockChainMetricManager {
   private long failProcessBlockNum = 0;
   @Setter
   private String failProcessBlockReason = "";
-  // Only accessed from block processing thread (synchronized on blockLock)
-  private final Set<String> lastActiveWitnesses = new HashSet<>();
-  // To control SR set change metric update logic, -1 means not initialized
-  private long lastNextMaintenanceTime = -1;
 
   public BlockChainInfo getBlockChainInfo() {
     BlockChainInfo blockChainInfo = new BlockChainInfo();
@@ -181,50 +174,6 @@ public class BlockChainMetricManager {
       // Record transaction count distribution for all blocks (including empty blocks)
       Metrics.histogramObserve(MetricKeys.Histogram.BLOCK_TRANSACTION_COUNT, txCount,
           StringUtil.encode58Check(address));
-
-      // SR set change detection
-      long nextMaintenanceTime = dbManager.getDynamicPropertiesStore().getNextMaintenanceTime();
-      if (lastNextMaintenanceTime == -1) {
-        lastNextMaintenanceTime = nextMaintenanceTime;
-        lastActiveWitnesses.addAll(chainBaseManager.getWitnessScheduleStore().getActiveWitnesses()
-            .stream().map(w -> StringUtil.encode58Check(w.toByteArray()))
-            .collect(Collectors.toSet()));
-      } else if (nextMaintenanceTime != lastNextMaintenanceTime) {
-        Set<String> currentWitnesses =
-            chainBaseManager.getWitnessScheduleStore().getActiveWitnesses()
-                .stream()
-                .map(w -> StringUtil.encode58Check(w.toByteArray()))
-                .collect(Collectors.toSet());
-        if (nextMaintenanceTime < lastNextMaintenanceTime) {
-          // Fork rollback detected — reinitialize instead of diffing
-          lastActiveWitnesses.clear();
-          lastActiveWitnesses.addAll(currentWitnesses);
-        } else {
-          recordSrSetChange(currentWitnesses);
-        }
-        lastNextMaintenanceTime = nextMaintenanceTime;
-      }
-    }
-  }
-
-  private void recordSrSetChange(Set<String> currentWitnesses) {
-    Set<String> added = new HashSet<>(currentWitnesses);
-    added.removeAll(lastActiveWitnesses);
-
-    Set<String> removed = new HashSet<>(lastActiveWitnesses);
-    removed.removeAll(currentWitnesses);
-
-    for (String address : added) {
-      Metrics.counterInc(MetricKeys.Counter.SR_SET_CHANGE, 1,
-          MetricLabels.Counter.SR_ADD, address);
-    }
-    for (String address : removed) {
-      Metrics.counterInc(MetricKeys.Counter.SR_SET_CHANGE, 1,
-          MetricLabels.Counter.SR_REMOVE, address);
-    }
-    if (!added.isEmpty() || !removed.isEmpty()) {
-      lastActiveWitnesses.clear();
-      lastActiveWitnesses.addAll(currentWitnesses);
     }
   }
 
