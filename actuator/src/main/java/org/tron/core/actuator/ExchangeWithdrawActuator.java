@@ -7,6 +7,7 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.math.RoundingMode;
 import java.util.Arrays;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
@@ -25,13 +26,12 @@ import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.ExchangeStore;
 import org.tron.core.store.ExchangeV2Store;
-import org.tron.core.utils.TransactionUtil;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.contract.ExchangeContract.ExchangeWithdrawContract;
 
 @Slf4j(topic = "actuator")
-public class ExchangeWithdrawActuator extends AbstractActuator {
+public class ExchangeWithdrawActuator extends AbstractExchangeActuator {
 
   public ExchangeWithdrawActuator() {
     super(ContractType.ExchangeWithdrawContract, ExchangeWithdrawContract.class);
@@ -57,8 +57,8 @@ public class ExchangeWithdrawActuator extends AbstractActuator {
           .get(exchangeWithdrawContract.getOwnerAddress().toByteArray());
 
       ExchangeCapsule exchangeCapsule = Commons
-          .getExchangeStoreFinal(dynamicStore, exchangeStore, exchangeV2Store).
-              get(ByteArray.fromLong(exchangeWithdrawContract.getExchangeId()));
+          .getExchangeStoreFinal(dynamicStore, exchangeStore, exchangeV2Store)
+          .get(ByteArray.fromLong(exchangeWithdrawContract.getExchangeId()));
 
       byte[] firstTokenID = exchangeCapsule.getFirstTokenId();
       byte[] secondTokenID = exchangeCapsule.getSecondTokenId();
@@ -78,26 +78,26 @@ public class ExchangeWithdrawActuator extends AbstractActuator {
         anotherTokenID = secondTokenID;
         anotherTokenQuant = bigSecondTokenBalance.multiply(bigTokenQuant)
             .divide(bigFirstTokenBalance).longValueExact();
-        exchangeCapsule.setBalance(firstTokenBalance - tokenQuant,
-            secondTokenBalance - anotherTokenQuant);
+        exchangeCapsule.setBalance(subtractExact(firstTokenBalance, tokenQuant),
+            subtractExact(secondTokenBalance, anotherTokenQuant));
       } else {
         anotherTokenID = firstTokenID;
         anotherTokenQuant = bigFirstTokenBalance.multiply(bigTokenQuant)
             .divide(bigSecondTokenBalance).longValueExact();
-        exchangeCapsule.setBalance(firstTokenBalance - anotherTokenQuant,
-            secondTokenBalance - tokenQuant);
+        exchangeCapsule.setBalance(subtractExact(firstTokenBalance, anotherTokenQuant),
+            subtractExact(secondTokenBalance, tokenQuant));
       }
 
-      long newBalance = accountCapsule.getBalance() - calcFee();
+      long newBalance = subtractExact(accountCapsule.getBalance(), calcFee());
 
       if (Arrays.equals(tokenID, TRX_SYMBOL_BYTES)) {
-        accountCapsule.setBalance(newBalance + tokenQuant);
+        accountCapsule.setBalance(addExact(newBalance, tokenQuant));
       } else {
         accountCapsule.addAssetAmountV2(tokenID, tokenQuant, dynamicStore, assetIssueStore);
       }
 
       if (Arrays.equals(anotherTokenID, TRX_SYMBOL_BYTES)) {
-        accountCapsule.setBalance(newBalance + anotherTokenQuant);
+        accountCapsule.setBalance(addExact(newBalance, anotherTokenQuant));
       } else {
         accountCapsule
             .addAssetAmountV2(anotherTokenID, anotherTokenQuant, dynamicStore, assetIssueStore);
@@ -162,8 +162,8 @@ public class ExchangeWithdrawActuator extends AbstractActuator {
 
     ExchangeCapsule exchangeCapsule;
     try {
-      exchangeCapsule = Commons.getExchangeStoreFinal(dynamicStore, exchangeStore, exchangeV2Store).
-          get(ByteArray.fromLong(contract.getExchangeId()));
+      exchangeCapsule = Commons.getExchangeStoreFinal(dynamicStore, exchangeStore, exchangeV2Store)
+          .get(ByteArray.fromLong(contract.getExchangeId()));
     } catch (ItemNotFoundException ex) {
       throw new ContractValidateException("Exchange[" + contract.getExchangeId() + ActuatorConstant
           .NOT_EXIST_STR);
@@ -183,9 +183,9 @@ public class ExchangeWithdrawActuator extends AbstractActuator {
 
     long anotherTokenQuant;
 
-    if (dynamicStore.getAllowSameTokenName() == 1 &&
-        !Arrays.equals(tokenID, TRX_SYMBOL_BYTES) &&
-        !isNumber(tokenID)) {
+    if (dynamicStore.getAllowSameTokenName() == 1
+        && !Arrays.equals(tokenID, TRX_SYMBOL_BYTES)
+        && !isNumber(tokenID)) {
       throw new ContractValidateException("token id is not a valid number");
     }
 
@@ -205,6 +205,7 @@ public class ExchangeWithdrawActuator extends AbstractActuator {
     BigDecimal bigFirstTokenBalance = new BigDecimal(String.valueOf(firstTokenBalance));
     BigDecimal bigSecondTokenBalance = new BigDecimal(String.valueOf(secondTokenBalance));
     BigDecimal bigTokenQuant = new BigDecimal(String.valueOf(tokenQuant));
+    final boolean allowHarden = allowHarden();
     if (Arrays.equals(tokenID, firstTokenID)) {
       anotherTokenQuant = bigSecondTokenBalance.multiply(bigTokenQuant)
           .divideToIntegralValue(bigFirstTokenBalance).longValueExact();
@@ -215,12 +216,21 @@ public class ExchangeWithdrawActuator extends AbstractActuator {
       if (anotherTokenQuant <= 0) {
         throw new ContractValidateException("withdraw another token quant must greater than zero");
       }
-
-      double remainder = bigSecondTokenBalance.multiply(bigTokenQuant)
-          .divide(bigFirstTokenBalance, 4, BigDecimal.ROUND_HALF_UP).doubleValue()
-          - anotherTokenQuant;
-      if (remainder / anotherTokenQuant > 0.0001) {
-        throw new ContractValidateException("Not precise enough");
+      if (allowHarden) {
+        BigDecimal remainder = bigSecondTokenBalance.multiply(bigTokenQuant)
+            .divide(bigFirstTokenBalance, 4, RoundingMode.HALF_UP)
+            .subtract(BigDecimal.valueOf(anotherTokenQuant));
+        if (remainder.compareTo(
+            BigDecimal.valueOf(anotherTokenQuant).multiply(new BigDecimal("0.0001"))) > 0) {
+          throw new ContractValidateException("Not precise enough");
+        }
+      } else {
+        double remainder = bigSecondTokenBalance.multiply(bigTokenQuant)
+            .divide(bigFirstTokenBalance, 4, BigDecimal.ROUND_HALF_UP).doubleValue()
+            - anotherTokenQuant;
+        if (remainder / anotherTokenQuant > 0.0001) {
+          throw new ContractValidateException("Not precise enough");
+        }
       }
 
     } else {
@@ -234,11 +244,21 @@ public class ExchangeWithdrawActuator extends AbstractActuator {
         throw new ContractValidateException("withdraw another token quant must greater than zero");
       }
 
-      double remainder = bigFirstTokenBalance.multiply(bigTokenQuant)
-          .divide(bigSecondTokenBalance, 4, BigDecimal.ROUND_HALF_UP).doubleValue()
-          - anotherTokenQuant;
-      if (remainder / anotherTokenQuant > 0.0001) {
-        throw new ContractValidateException("Not precise enough");
+      if (allowHarden) {
+        BigDecimal remainder = bigFirstTokenBalance.multiply(bigTokenQuant)
+            .divide(bigSecondTokenBalance, 4, RoundingMode.HALF_UP)
+            .subtract(BigDecimal.valueOf(anotherTokenQuant));
+        if (remainder.compareTo(
+            BigDecimal.valueOf(anotherTokenQuant).multiply(new BigDecimal("0.0001"))) > 0) {
+          throw new ContractValidateException("Not precise enough");
+        }
+      } else {
+        double remainder = bigFirstTokenBalance.multiply(bigTokenQuant)
+            .divide(bigSecondTokenBalance, 4, BigDecimal.ROUND_HALF_UP).doubleValue()
+            - anotherTokenQuant;
+        if (remainder / anotherTokenQuant > 0.0001) {
+          throw new ContractValidateException("Not precise enough");
+        }
       }
     }
 

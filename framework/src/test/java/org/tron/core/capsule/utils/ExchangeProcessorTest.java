@@ -1,12 +1,16 @@
 package org.tron.core.capsule.utils;
 
+import static org.junit.Assert.assertThrows;
+
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.tron.common.BaseTest;
 import org.tron.common.TestConstants;
+import org.tron.core.capsule.ExchangeCapsule;
 import org.tron.core.capsule.ExchangeProcessor;
+import org.tron.core.capsule.SafeExchangeProcessor;
 import org.tron.core.config.args.Args;
 
 @Slf4j
@@ -136,6 +140,51 @@ public class ExchangeProcessorTest extends BaseTest {
   }
 
   @Test
+  public void testHardenedExchange() {
+    ExchangeCapsule.Processor hardenedProcessor = SafeExchangeProcessor.INSTANCE;
+
+    long sellBalance = 100_000_000_000000L;
+    long buyBalance = 128L * 1024 * 1024 * 1024;
+    long sellQuant = 2_000_000_000_000L;
+    long supply = 1_000_000_000_000_000_000L;
+    long result = hardenedProcessor.exchange(sellBalance, buyBalance, sellQuant);
+    Assert.assertTrue("Hardened result must be positive", result > 0);
+
+    // Compare with strict math (non-hardened) — results should be identical or very close
+    ExchangeProcessor strictProcessor = new ExchangeProcessor(supply, true);
+    long strictResult = strictProcessor.exchange(sellBalance, buyBalance, sellQuant);
+    Assert.assertEquals("Hardened and strict results should match", strictResult, result);
+  }
+
+  @Test
+  public void testHardenedOverflowDetection() {
+    assertThrows(ArithmeticException.class, () ->
+        SafeExchangeProcessor.INSTANCE.exchange(Long.MAX_VALUE, 1_000_000L, 1L));
+  }
+
+  @Test
+  public void testHardenedSmallQuant() {
+
+    long sellBalance = 1_000_000_000_000_000L;
+    long buyBalance = 1_000_000_000_000_000L;
+    long sellQuant = 1L;
+
+    long result = SafeExchangeProcessor.INSTANCE.exchange(sellBalance, buyBalance, sellQuant);
+    Assert.assertTrue("Result must be non-negative for small quant", result >= 0);
+  }
+
+  @Test
+  public void testHardenedLargeQuant() {
+    long sellBalance = 1_000_000_000_000L;
+    long buyBalance = 1_000_000_000_000L;
+    long sellQuant = 1_000_000_000_000L; // 100% of sell balance
+
+    long result = SafeExchangeProcessor.INSTANCE.exchange(sellBalance, buyBalance, sellQuant);
+    Assert.assertTrue("Result must be positive for large quant", result > 0);
+    Assert.assertTrue("Result must be less than buy balance", result < buyBalance);
+  }
+
+  @Test
   public void testStrictMath() {
     long supply = 1_000_000_000_000_000_000L;
     long[][] testData = {
@@ -194,7 +243,9 @@ public class ExchangeProcessorTest extends BaseTest {
       long anotherTokenQuant = processor.exchange(data[0], data[1], data[2]);
       processor = new ExchangeProcessor(supply, true);
       long result = processor.exchange(data[0], data[1], data[2]);
+      long safeResult = SafeExchangeProcessor.INSTANCE.exchange(data[0], data[1], data[2]);
       Assert.assertNotEquals(anotherTokenQuant, result);
+      Assert.assertEquals(safeResult, result);
     }
   }
 }

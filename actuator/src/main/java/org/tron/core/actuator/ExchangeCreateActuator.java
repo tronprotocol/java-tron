@@ -27,7 +27,7 @@ import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.contract.ExchangeContract.ExchangeCreateContract;
 
 @Slf4j(topic = "actuator")
-public class ExchangeCreateActuator extends AbstractActuator {
+public class ExchangeCreateActuator extends AbstractExchangeActuator {
 
   public ExchangeCreateActuator() {
     super(ContractType.ExchangeCreateContract, ExchangeCreateContract.class);
@@ -57,25 +57,25 @@ public class ExchangeCreateActuator extends AbstractActuator {
       long firstTokenBalance = exchangeCreateContract.getFirstTokenBalance();
       long secondTokenBalance = exchangeCreateContract.getSecondTokenBalance();
 
-      long newBalance = accountCapsule.getBalance() - fee;
+      long newBalance = subtractExact(accountCapsule.getBalance(), fee);
 
       accountCapsule.setBalance(newBalance);
 
       if (Arrays.equals(firstTokenID, TRX_SYMBOL_BYTES)) {
-        accountCapsule.setBalance(newBalance - firstTokenBalance);
+        accountCapsule.setBalance(subtractExact(newBalance, firstTokenBalance));
       } else {
         accountCapsule
             .reduceAssetAmountV2(firstTokenID, firstTokenBalance, dynamicStore, assetIssueStore);
       }
 
       if (Arrays.equals(secondTokenID, TRX_SYMBOL_BYTES)) {
-        accountCapsule.setBalance(newBalance - secondTokenBalance);
+        accountCapsule.setBalance(subtractExact(newBalance, secondTokenBalance));
       } else {
         accountCapsule
             .reduceAssetAmountV2(secondTokenID, secondTokenBalance, dynamicStore, assetIssueStore);
       }
 
-      long id = dynamicStore.getLatestExchangeNum() + 1;
+      long id = addExact(dynamicStore.getLatestExchangeNum(), 1);
       long now = dynamicStore.getLatestBlockHeaderTimestamp();
       if (dynamicStore.getAllowSameTokenName() == 0) {
         //save to old asset store
@@ -199,7 +199,7 @@ public class ExchangeCreateActuator extends AbstractActuator {
     }
 
     if (Arrays.equals(firstTokenID, TRX_SYMBOL_BYTES)) {
-      if (accountCapsule.getBalance() < (firstTokenBalance + calcFee())) {
+      if (accountCapsule.getBalance() < addExact(firstTokenBalance, calcFee())) {
         throw new ContractValidateException("balance is not enough");
       }
     } else {
@@ -209,7 +209,7 @@ public class ExchangeCreateActuator extends AbstractActuator {
     }
 
     if (Arrays.equals(secondTokenID, TRX_SYMBOL_BYTES)) {
-      if (accountCapsule.getBalance() < (secondTokenBalance + calcFee())) {
+      if (accountCapsule.getBalance() < addExact(secondTokenBalance, calcFee())) {
         throw new ContractValidateException("balance is not enough");
       }
     } else {

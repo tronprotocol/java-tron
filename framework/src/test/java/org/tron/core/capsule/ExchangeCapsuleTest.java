@@ -9,6 +9,7 @@ import org.tron.common.BaseTest;
 import org.tron.common.TestConstants;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.config.args.Args;
+import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ItemNotFoundException;
 
 @Slf4j
@@ -39,7 +40,7 @@ public class ExchangeCapsuleTest extends BaseTest {
   }
 
   @Test
-  public void testExchange() {
+  public void testExchange() throws ContractValidateException {
     long sellBalance = 100000000L;
     long buyBalance = 100000000L;
 
@@ -61,7 +62,7 @@ public class ExchangeCapsuleTest extends BaseTest {
       Assert.assertEquals(buyBalance, exchangeCapsule.getSecondTokenBalance());
 
       sellQuant = 9_000_000L;
-      long result2 = exchangeCapsule.transaction(sellID, sellQuant, useStrictMath);
+      long result2 = exchangeCapsule.transaction(sellID, sellQuant, true, true);
       Assert.assertEquals(9090909L, result + result2);
       sellBalance += sellQuant;
       Assert.assertEquals(sellBalance, exchangeCapsule.getFirstTokenBalance());

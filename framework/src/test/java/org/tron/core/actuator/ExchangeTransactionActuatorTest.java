@@ -1537,7 +1537,7 @@ public class ExchangeTransactionActuatorTest extends BaseTest {
       ExchangeCapsule exchangeCapsule = dbManager.getExchangeStore()
           .get(ByteArray.fromLong(exchangeId));
       expected = exchangeCapsule.transaction(tokenId.getBytes(), quant, useStrictMath);
-    } catch (ItemNotFoundException e) {
+    } catch (ItemNotFoundException | ContractValidateException e) {
       fail();
     }
 
@@ -1593,7 +1593,7 @@ public class ExchangeTransactionActuatorTest extends BaseTest {
       ExchangeCapsule exchangeCapsuleV2 = dbManager.getExchangeV2Store()
           .get(ByteArray.fromLong(exchangeId));
       expected = exchangeCapsuleV2.transaction(tokenId.getBytes(), quant, useStrictMath);
-    } catch (ItemNotFoundException e) {
+    } catch (ItemNotFoundException | ContractValidateException e) {
       fail();
     }
 
