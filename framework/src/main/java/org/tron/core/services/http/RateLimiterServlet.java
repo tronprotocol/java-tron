@@ -74,25 +74,25 @@ public abstract class RateLimiterServlet extends HttpServlet {
     try {
       container.add(KEY_PREFIX_HTTP, name, buildAdapter(cName, params, name));
     } catch (Exception e) {
-      throw throwTronError(cName, params, name, e);
+      throw rateLimiterInitError(cName, params, name, e);
     }
   }
 
   static IRateLimiter buildAdapter(String cName, String params, String name) {
     Class<? extends IRateLimiter> c = ALLOWED_ADAPTERS.get(cName);
     if (c == null) {
-      throw throwTronError(cName, params, name,
+      throw rateLimiterInitError(cName, params, name,
           new IllegalArgumentException("unknown rate limiter adapter; allowed="
               + ALLOWED_ADAPTERS.keySet()));
     }
     try {
       return c.getConstructor(String.class).newInstance(params);
     } catch (Exception e) {
-      throw throwTronError(cName, params, name, e);
+      throw rateLimiterInitError(cName, params, name, e);
     }
   }
 
-  private static TronError throwTronError(String strategy, String params, String servlet,
+  private static TronError rateLimiterInitError(String strategy, String params, String servlet,
       Exception e) {
     return new TronError("failure to add the rate limiter strategy. servlet = " + servlet
         + ", strategy name = " + strategy + ", params = \"" + params + "\".",
