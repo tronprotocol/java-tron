@@ -523,34 +523,13 @@ public class Args extends CommonParameter {
             ? config.getLong(ConfigKey.NODE_RPC_MAX_CONNECTION_AGE_IN_MILLIS)
             : Long.MAX_VALUE;
 
-    long rpcMaxMessageSize = config.hasPath(ConfigKey.NODE_RPC_MAX_MESSAGE_SIZE)
-        ? config.getMemorySize(ConfigKey.NODE_RPC_MAX_MESSAGE_SIZE).toBytes()
-        : GrpcUtil.DEFAULT_MAX_MESSAGE_SIZE;
-    if (rpcMaxMessageSize < 0 || rpcMaxMessageSize > Integer.MAX_VALUE) {
-      throw new TronError("node.rpc.maxMessageSize must be non-negative and <= "
-          + Integer.MAX_VALUE + ", got: " + rpcMaxMessageSize, PARAMETER_INIT);
-    }
-    PARAMETER.maxMessageSize = (int) rpcMaxMessageSize;
-
     long defaultMaxMessageSize = GrpcUtil.DEFAULT_MAX_MESSAGE_SIZE;
-    PARAMETER.httpMaxMessageSize = config.hasPath(ConfigKey.NODE_HTTP_MAX_MESSAGE_SIZE)
-        ? config.getMemorySize(ConfigKey.NODE_HTTP_MAX_MESSAGE_SIZE).toBytes()
-        : defaultMaxMessageSize;
-    if (PARAMETER.httpMaxMessageSize < 0
-        || PARAMETER.httpMaxMessageSize > Integer.MAX_VALUE) {
-      throw new TronError("node.http.maxMessageSize must be non-negative and <= "
-          + Integer.MAX_VALUE + ", got: "
-          + PARAMETER.httpMaxMessageSize, PARAMETER_INIT);
-    }
-    PARAMETER.jsonRpcMaxMessageSize = config.hasPath(ConfigKey.NODE_JSONRPC_MAX_MESSAGE_SIZE)
-        ? config.getMemorySize(ConfigKey.NODE_JSONRPC_MAX_MESSAGE_SIZE).toBytes()
-        : defaultMaxMessageSize;
-    if (PARAMETER.jsonRpcMaxMessageSize < 0
-        || PARAMETER.jsonRpcMaxMessageSize > Integer.MAX_VALUE) {
-      throw new TronError("node.jsonrpc.maxMessageSize must be non-negative and <= "
-          + Integer.MAX_VALUE + ", got: "
-          + PARAMETER.jsonRpcMaxMessageSize, PARAMETER_INIT);
-    }
+    PARAMETER.maxMessageSize = (int) parseMaxMessageSize(
+        config, ConfigKey.NODE_RPC_MAX_MESSAGE_SIZE, defaultMaxMessageSize);
+    PARAMETER.httpMaxMessageSize = parseMaxMessageSize(
+        config, ConfigKey.NODE_HTTP_MAX_MESSAGE_SIZE, defaultMaxMessageSize);
+    PARAMETER.jsonRpcMaxMessageSize = parseMaxMessageSize(
+        config, ConfigKey.NODE_JSONRPC_MAX_MESSAGE_SIZE, defaultMaxMessageSize);
 
     PARAMETER.maxHeaderListSize = config.hasPath(ConfigKey.NODE_RPC_MAX_HEADER_LIST_SIZE)
         ? config.getInt(ConfigKey.NODE_RPC_MAX_HEADER_LIST_SIZE)
@@ -1256,6 +1235,17 @@ public class Args extends CommonParameter {
     CommonParameter.reset();
     configFilePath = "";
     localWitnesses = null;
+  }
+
+  private static long parseMaxMessageSize(Config config, String key, long defaultBytes) {
+    long value = config.hasPath(key)
+        ? config.getMemorySize(key).toBytes()
+        : defaultBytes;
+    if (value < 0 || value > Integer.MAX_VALUE) {
+      throw new TronError(key + " must be non-negative and <= "
+          + Integer.MAX_VALUE + ", got: " + value, PARAMETER_INIT);
+    }
+    return value;
   }
 
   private static long getProposalExpirationTime(final Config config) {
