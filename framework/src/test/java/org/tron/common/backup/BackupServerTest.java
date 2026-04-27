@@ -1,5 +1,7 @@
 package org.tron.common.backup;
 
+import java.util.ArrayList;
+import java.util.List;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -27,6 +29,9 @@ public class BackupServerTest {
     Args.setParam(new String[]{"-d", temporaryFolder.newFolder().toString()},
         TestConstants.TEST_CONF);
     CommonParameter.getInstance().setBackupPort(PublicMethod.chooseRandomPort());
+    List<String> members = new ArrayList<>();
+    members.add("127.0.0.2");
+    CommonParameter.getInstance().setBackupMembers(members);
     BackupManager backupManager = new BackupManager();
     backupManager.init();
     backupServer = new BackupServer(backupManager);
@@ -38,9 +43,10 @@ public class BackupServerTest {
     Args.clearParam();
   }
 
-  @Test
-  public void test() {
-    // backupMembers is empty so initServer() is a no-op; verify close() is safe
+  @Test(timeout = 60_000)
+  public void test() throws InterruptedException {
     backupServer.initServer();
+    // wait for the server to start so channel is assigned before close() is called
+    Thread.sleep(1000);
   }
 }
