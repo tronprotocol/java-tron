@@ -14,8 +14,9 @@ public class LogService {
   public static void load(String path) {
     LoggerContext lc = (LoggerContext) LoggerFactory.getILoggerFactory();
     try {
-      // we must fail fast rather than silently fall back and mislead them into
-      // thinking their custom config is active.
+      // Fail fast rather than silently falling back to the classpath default —
+      // that legacy behavior misled operators into thinking their custom
+      // --log-config was active.
       if (path != null && !path.isEmpty()) {
         File file = new File(path);
         if (!file.exists() || !file.isFile() || !file.canRead()) {

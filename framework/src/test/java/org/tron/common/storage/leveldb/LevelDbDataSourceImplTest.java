@@ -148,12 +148,12 @@ public class LevelDbDataSourceImplTest {
       final File dbDir = temporaryFolder.newFolder();
       final Path dbPath = dbDir.toPath();
       final String manifest = "MANIFEST-000042";
-      final String WATCHDOG_DB_NAME = "slow-open-db";
+      final String watchdogDbName = "slow-open-db";
       Files.write(dbPath.resolve(manifest), new byte[1024 * 1024]);
       Files.write(dbPath.resolve("CURRENT"), (manifest + "\n").getBytes(StandardCharsets.UTF_8));
 
       LevelDbDataSourceImpl ds = new LevelDbDataSourceImpl();
-      ReflectUtils.setFieldValue(ds, "dataBaseName", WATCHDOG_DB_NAME);
+      ReflectUtils.setFieldValue(ds, "dataBaseName", watchdogDbName);
       ReflectUtils.setFieldValue(ds, "parentPath", dbDir.getParent());
       long startNs = System.nanoTime() - TimeUnit.SECONDS.toNanos(61);
       AtomicReference<String> cache = new AtomicReference<>();
@@ -173,7 +173,7 @@ public class LevelDbDataSourceImplTest {
       assertTrue("WARN should include the Toolkit remediation hint: " + rendered,
           rendered.contains("Toolkit.jar db archive -d"));
       assertTrue("WARN should echo the db name: " + rendered,
-          rendered.contains(WATCHDOG_DB_NAME));
+          rendered.contains(watchdogDbName));
       assertNotNull("cache should hold the resolved MANIFEST info", cache.get());
     } finally {
       dbAppender.stop();
