@@ -27,7 +27,6 @@ import org.tron.core.config.TronLogShutdownHook;
 import org.tron.core.config.args.Args;
 import org.tron.core.services.http.HttpSelfFormatFieldName;
 import org.tron.core.store.StorageRowStore;
-import org.tron.keystore.WalletUtils;
 
 public class SupplementTest extends BaseTest {
 
@@ -53,12 +52,6 @@ public class SupplementTest extends BaseTest {
     DbBackupConfig dbBackupConfig = new DbBackupConfig();
     String p = dbPath + File.separator;
     dbBackupConfig.initArgs(true, p + "propPath", p + "bak1path/", p + "bak2path/", 1);
-
-    WalletUtils.generateFullNewWalletFile("123456", new File(dbPath));
-    WalletUtils.generateLightNewWalletFile("123456", new File(dbPath));
-    WalletUtils.getDefaultKeyDirectory();
-    WalletUtils.getTestnetKeyDirectory();
-    WalletUtils.getMainnetKeyDirectory();
 
     Value value = new Value(new byte[]{1});
     value.asBytes();
