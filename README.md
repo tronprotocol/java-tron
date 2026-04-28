@@ -8,7 +8,6 @@
 
 <p align="center">
   <a href="https://discord.gg/hqKvyAM"><img src="https://img.shields.io/badge/chat-on%20discord-7289da.svg"></a>
-  <a href="https://codecov.io/gh/tronprotocol/java-tron"><img src="https://codecov.io/gh/tronprotocol/java-tron/branch/develop/graph/badge.svg" /></a>
   <a href="https://github.com/tronprotocol/java-tron/issues"><img src="https://img.shields.io/github/issues/tronprotocol/java-tron.svg"></a>
   <a href="https://github.com/tronprotocol/java-tron/pulls"><img src="https://img.shields.io/github/issues-pr/tronprotocol/java-tron.svg"></a>
   <a href="https://github.com/tronprotocol/java-tron/graphs/contributors"><img src="https://img.shields.io/github/contributors/tronprotocol/java-tron.svg"></a>

@@ -43,7 +43,6 @@ import org.tron.core.store.MarketPairToPriceStore;
 import org.tron.protos.Protocol.MarketOrder.State;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
-import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 import org.tron.protos.contract.MarketContract.MarketCancelOrderContract;
 
 @Slf4j(topic = "actuator")
@@ -221,7 +220,7 @@ public class MarketCancelOrderActuator extends AbstractActuator {
 
   @Override
   public ByteString getOwnerAddress() throws InvalidProtocolBufferException {
-    return any.unpack(AssetIssueContract.class).getOwnerAddress();
+    return any.unpack(MarketCancelOrderContract.class).getOwnerAddress();
   }
 
   @Override

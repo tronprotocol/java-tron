@@ -36,13 +36,19 @@ message Transaction {
       AccountCreateContract = 0;
       TransferContract = 1;
       ........
-      SumContract = 52;  
+      SumContract = 60;  
     }
   ...
 }
 ```
 
-Then register a function to ensure that gRPC can receive and identify the requests of this contract. Currently, gRPC protocols are all defined in `src/main/protos/api/api.proto`. To add an `InvokeSum` interface in Wallet Service:
+Then register a function to ensure that gRPC can receive and identify the requests of this contract. Currently, gRPC protocols are all defined in `src/main/protos/api/api.proto`. First add the import for the new proto file at the top of `api.proto`:
+
+```protobuf
+import "core/contract/math_contract.proto";
+```
+
+Then add an `InvokeSum` interface in the Wallet service:
 
 ```protobuf
 service Wallet {
@@ -60,13 +66,11 @@ service Wallet {
 ```
 At last, recompile the modified proto files. Compiling the java-tron project directly will compile the proto files as well, `protoc` command is also supported.
 
-*Currently, java-tron uses protoc v3.4.0. Please keep the same version when compiling by `protoc` command.*
-
 ```shell
-# recommended
+# recommended — also recompiles proto files automatically
 ./gradlew build -x test
 
-# or build via protoc
+# or build via protoc (ensure the protoc version matches the one declared in build.gradle)
 protoc -I=src/main/protos -I=src/main/protos/core --java_out=src/main/java  Tron.proto
 protoc -I=src/main/protos/core/contract --java_out=src/main/java  math_contract.proto
 protoc -I=src/main/protos/api -I=src/main/protos/core -I=src/main/protos  --java_out=src/main/java api.proto
@@ -78,7 +82,11 @@ After compilation, the corresponding .class under the java_out directory will be
 
 For now, the default Actuator supported by java-tron is located in `org.tron.core.actuator`. Creating `SumActuator` under this directory:
 
+> **Note**: The Actuator must be placed in the `org.tron.core.actuator` package. At node startup, `TransactionRegister.registerActuator()` uses reflection to scan that package and auto-discovers every `AbstractActuator` subclass. Each subclass is instantiated once (triggering the `super()` constructor which calls `TransactionFactory.register()`), so no manual registration code is needed.
+
 ```java
+import static org.tron.core.config.Parameter.ChainConstant.TRANSFER_FEE;
+
 public class SumActuator extends AbstractActuator {
 
   public SumActuator() {
@@ -210,48 +218,47 @@ At last, run a test class to validate whether the above steps are correct:
 ```java
 public class SumActuatorTest {
   private static final Logger logger = LoggerFactory.getLogger("Test");
-  private String serviceNode = "127.0.0.1:50051";
-  private String confFile = "config-localtest.conf";
-  private String dbPath = "output-directory";
-  private TronApplicationContext context;
-  private Application appTest;
-  private ManagedChannel channelFull = null;
-  private WalletGrpc.WalletBlockingStub blockingStubFull = null;
+  private static final String SERVICE_NODE = "127.0.0.1:50051";
+
+  @ClassRule
+  public static TemporaryFolder temporaryFolder = new TemporaryFolder();
+
+  @Rule
+  public Timeout timeout = new Timeout(30, TimeUnit.SECONDS);
+
+  private static TronApplicationContext context;
+  private static Application appTest;
+  private static ManagedChannel channelFull;
+  private static WalletGrpc.WalletBlockingStub blockingStubFull;
 
   /**
-   * init the application.
+   * init the application once for all tests in this class.
    */
-  @Before
-  public void init() {
-    CommonParameter argsTest = Args.getInstance();
-    Args.setParam(new String[]{"--output-directory", dbPath},
-            confFile);
+  @BeforeClass
+  public static void init() throws IOException {
+    Args.setParam(new String[]{"--output-directory",
+            temporaryFolder.newFolder().toString()}, "config-localtest.conf");
     context = new TronApplicationContext(DefaultConfig.class);
-    RpcApiService rpcApiService = context.getBean(RpcApiService.class);
     appTest = ApplicationFactory.create(context);
-    appTest.addService(rpcApiService);
-    appTest.initServices(argsTest);
-    appTest.startServices();
     appTest.startup();
-    channelFull = ManagedChannelBuilder.forTarget(serviceNode)
+    channelFull = ManagedChannelBuilder.forTarget(SERVICE_NODE)
             .usePlaintext()
             .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
   }
 
   /**
-   * destroy the context.
+   * destroy the context after all tests finish.
    */
-  @After
-  public void destroy() throws InterruptedException {
+  @AfterClass
+  public static void destroy() throws InterruptedException {
     if (channelFull != null) {
-      channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
+      channelFull.shutdown();
+      channelFull.awaitTermination(5, TimeUnit.SECONDS);
     }
-    Args.clearParam();
-    appTest.shutdownServices();
     appTest.shutdown();
     context.destroy();
-    FileUtil.deleteDir(new File(dbPath));
+    Args.clearParam();
   }
 
   @Test

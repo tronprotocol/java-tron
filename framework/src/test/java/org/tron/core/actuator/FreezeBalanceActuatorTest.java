@@ -22,7 +22,6 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.DelegatedResourceAccountIndexCapsule;
 import org.tron.core.capsule.DelegatedResourceCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
-import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
@@ -620,35 +619,6 @@ public class FreezeBalanceActuatorTest extends BaseTest {
       Assert.fail();
     }
   }
-
-  //@Test
-  public void moreThanFrozenNumber() {
-    long frozenBalance = 1_000_000_000L;
-    long duration = 3;
-    FreezeBalanceActuator actuator = new FreezeBalanceActuator();
-    actuator.setChainBaseManager(dbManager.getChainBaseManager())
-        .setAny(getContractForBandwidth(OWNER_ADDRESS, frozenBalance, duration));
-
-    TransactionResultCapsule ret = new TransactionResultCapsule();
-    try {
-      actuator.validate();
-      actuator.execute(ret);
-    } catch (ContractValidateException | ContractExeException e) {
-      Assert.fail();
-    }
-    try {
-      actuator.validate();
-      actuator.execute(ret);
-      fail("cannot run here.");
-    } catch (ContractValidateException e) {
-      long maxFrozenNumber = ChainConstant.MAX_FROZEN_NUMBER;
-      Assert.assertEquals("max frozen number is: " + maxFrozenNumber, e.getMessage());
-
-    } catch (ContractExeException e) {
-      Assert.fail();
-    }
-  }
-
 
   @Test
   public void commonErrorCheck() {

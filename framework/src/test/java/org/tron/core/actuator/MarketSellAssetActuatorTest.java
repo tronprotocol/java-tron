@@ -4,6 +4,7 @@ import static org.junit.Assert.fail;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
+import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
@@ -1869,6 +1870,16 @@ public class MarketSellAssetActuatorTest extends BaseTest {
     } catch (Exception e) {
       Assert.assertTrue(false);
     }
+  }
+
+  @Test
+  public void testGetOwnerAddress() throws InvalidProtocolBufferException {
+    MarketSellAssetActuator actuator = new MarketSellAssetActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ADDRESS_FIRST, "sellToken", 100L, "buyToken", 200L));
+
+    Assert.assertEquals(OWNER_ADDRESS_FIRST,
+        ByteArray.toHexString(actuator.getOwnerAddress().toByteArray()));
   }
 
 }

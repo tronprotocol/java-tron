@@ -272,12 +272,8 @@ public class ManagerTest extends BaseMethodTest {
       }
     }
 
-    try {
-      chainManager.getBlockIdByNum(-1);
-      Assert.fail();
-    } catch (ItemNotFoundException e) {
-      Assert.assertTrue(true);
-    }
+    Assert.assertThrows(ItemNotFoundException.class,
+        () -> chainManager.getBlockIdByNum(-1));
     try {
       dbManager.getBlockChainHashesOnFork(blockCapsule2.getBlockId());
     } catch (Exception e) {
@@ -1185,14 +1181,8 @@ public class ManagerTest extends BaseMethodTest {
     TransactionCapsule trx = new TransactionCapsule(tc, ContractType.TransferContract);
     long latestBlockTime = dbManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp();
     trx.setExpiration(latestBlockTime - 100);
-    try {
-      dbManager.validateCommon(trx);
-      Assert.fail();
-    } catch (TransactionExpirationException e) {
-      Assert.assertTrue(true);
-    } catch (TooBigTransactionException e) {
-      Assert.fail();
-    }
+    Assert.assertThrows(TransactionExpirationException.class,
+        () -> dbManager.validateCommon(trx));
   }
 
   @Test

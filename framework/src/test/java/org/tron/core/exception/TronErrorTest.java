@@ -139,8 +139,9 @@ public class TronErrorTest {
     Map<String, String> params = new HashMap<>();
     params.put("node.shutdown.BlockTime", "0");
     params.put("storage.db.directory", "database");
-    Config config = ConfigFactory.defaultOverrides().withFallback(
-        ConfigFactory.parseMap(params));
+    Config config = ConfigFactory.defaultOverrides()
+        .withFallback(ConfigFactory.parseMap(params))
+        .withFallback(ConfigFactory.defaultReference());
     TronError thrown = assertThrows(TronError.class, () -> Args.applyConfigParams(config));
     assertEquals(TronError.ErrCode.AUTO_STOP_PARAMS, thrown.getErrCode());
   }

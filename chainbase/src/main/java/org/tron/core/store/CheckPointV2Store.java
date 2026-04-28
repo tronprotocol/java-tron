@@ -62,20 +62,16 @@ public class CheckPointV2Store extends TronDatabase<byte[]> {
     this.dbSource.updateByBatch(rows, writeOptions);
   }
 
-  /**
-   * close the database.
-   */
   @Override
   public void close() {
     logger.debug("******** Begin to close {}. ********", getName());
     try {
       writeOptions.close();
-      dbSource.closeDB();
     } catch (Exception e) {
-      logger.warn("Failed to close {}.", getName(), e);
-    } finally {
-      logger.debug("******** End to close {}. ********", getName());
+      logger.warn("Failed to close writeOptions in {}.", getName(), e);
     }
+    doClose();
+    logger.debug("******** End to close {}. ********", getName());
   }
 
 }

@@ -1,3 +1,7 @@
+# DEPRECATED: Codecov integration is no longer active.
+# Coverage is now handled by JaCoCo + madrapps/jacoco-report in pr-build.yml.
+# This file is retained for reference only and can be safely deleted.
+
 # Post a Codecov comment on pull requests. If don't need comment, use comment: false, else use following
 comment: false
 #comment:

@@ -1,0 +1,144 @@
+name: Auto Assign Reviewers
+
+on:
+  pull_request_target:
+    branches: [ 'develop', 'release_**' ]
+    types: [ opened, edited, reopened ]
+
+jobs:
+  assign-reviewers:
+    name: Assign Reviewers by Scope
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: Assign reviewers based on PR title scope
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const title = context.payload.pull_request.title;
+            const prAuthor = context.payload.pull_request.user.login;
+
+            // ── Scope → Reviewer mapping ──────────────────────────────
+            const scopeReviewers = {
+              'framework':  ['xxo1shine',    '317787106'],
+              'chainbase':  ['halibobo1205', 'lvs0075'],
+              'db':         ['halibobo1205', 'xxo1shine'],
+              'trie':       ['halibobo1205', '317787106'],
+              'actuator':   ['yanghang8612', 'lxcmyf'],
+              'consensus':  ['lvs0075',      'xxo1shine'],
+              'protocol':   ['lvs0075',      'waynercheung'],
+              'common':     ['xxo1shine',    'lxcmyf'],
+              'crypto':     ['Federico2014', '3for'],
+              'net':        ['317787106',    'xxo1shine'],
+              'vm':         ['yanghang8612', 'CodeNinjaEvan'],
+              'tvm':        ['yanghang8612', 'CodeNinjaEvan'],
+              'jsonrpc':    ['0xbigapple',   'bladehan1'],
+              'rpc':        ['317787106',    'Sunny6889'],
+              'http':       ['Sunny6889',    'bladehan1'],
+              'event':      ['xxo1shine',    '0xbigapple'],
+              'config':     ['317787106',    'halibobo1205'],
+              'backup':     ['xxo1shine',    '317787106'],
+              'lite':       ['bladehan1',    'halibobo1205'],
+              'toolkit':    ['halibobo1205', 'Sunny6889'],
+              'plugins':    ['halibobo1205', 'Sunny6889'],
+              'docker':     ['3for',         'kuny0707'],
+              'test':       ['bladehan1',    'lxcmyf'],
+              'metrics':    ['halibobo1205', 'Sunny6889'],
+              'api':        ['0xbigapple',   'waynercheung', 'bladehan1'],
+              'ci':         ['bladehan1',    'halibobo1205'],
+            };
+            const defaultReviewers = ['halibobo1205', '317787106'];
+
+            // ── Normalize helper ─────────────────────────────────────
+            // Strip spaces, hyphens, underscores and lower-case so that
+            // "VM", " json rpc ", "chain-base", "Json_Rpc" all normalize
+            // to their canonical key form ("vm", "jsonrpc", "chainbase").
+            const normalize = s => s.toLowerCase().replace(/[\s\-_]/g, '');
+
+            // ── Extract scope from conventional commit title ──────────
+            // Format: type(scope): description
+            // Also supports: type(scope1,scope2): description
+            const scopeMatch = title.match(/^\w+\(([^)]+)\):/);
+            const rawScope = scopeMatch ? scopeMatch[1] : null;
+
+            core.info(`PR title : ${title}`);
+            core.info(`Raw scope: ${rawScope || '(none)'}`);
+
+            // ── Skip if reviewers already assigned ──────────────────
+            const pr = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.payload.pull_request.number,
+            });
+            const existing = pr.data.requested_reviewers || [];
+            if (existing.length > 0) {
+              core.info(`Reviewers already assigned (${existing.map(r => r.login).join(', ')}). Skipping.`);
+              return;
+            }
+
+            // ── Determine reviewers ───────────────────────────────────
+            // 1. Split by comma to support multi-scope: feat(vm,rpc): ...
+            // 2. Normalize each scope token
+            // 3. Match against keys: exact match first, then contains match
+            //    (longest key wins to avoid "net" matching inside "jsonrpc")
+            let matched = new Set();
+            let matchedScopes = [];
+
+            if (rawScope) {
+              const tokens = rawScope.split(',').map(s => normalize(s.trim()));
+              // Pre-sort keys by length descending so longer keys match first
+              const sortedKeys = Object.keys(scopeReviewers)
+                .sort((a, b) => b.length - a.length);
+
+              for (const token of tokens) {
+                if (!token) continue;
+                // Exact match
+                if (scopeReviewers[token]) {
+                  matchedScopes.push(token);
+                  scopeReviewers[token].forEach(r => matched.add(r));
+                  continue;
+                }
+                // Contains match: token contains a key, or key contains token
+                // Prefer longest key that matches
+                const found = sortedKeys.find(k => token.includes(k) || k.includes(token));
+                if (found) {
+                  matchedScopes.push(`${token}→${found}`);
+                  scopeReviewers[found].forEach(r => matched.add(r));
+                }
+              }
+            }
+
+            let reviewers = matched.size > 0
+              ? [...matched]
+              : defaultReviewers;
+
+            core.info(`Matched scopes: ${matchedScopes.length > 0 ? matchedScopes.join(', ') : '(none — using default)'}`);
+            core.info(`Candidate reviewers: ${reviewers.join(', ')}`);
+
+            // Exclude the PR author from the reviewer list
+            reviewers = reviewers.filter(r => r.toLowerCase() !== prAuthor.toLowerCase());
+
+            if (reviewers.length === 0) {
+              core.info('No eligible reviewers after excluding PR author. Skipping.');
+              return;
+            }
+
+            core.info(`Assigning reviewers: ${reviewers.join(', ')}`);
+
+            // ── Request reviews ───────────────────────────────────────
+            try {
+              await github.rest.pulls.requestReviewers({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: context.payload.pull_request.number,
+                reviewers: reviewers,
+              });
+              core.info('Reviewers assigned successfully.');
+            } catch (error) {
+              // If a reviewer is not a collaborator the API returns 422;
+              // log the error but do not fail the workflow.
+              core.warning(`Failed to assign some reviewers: ${error.message}`);
+            }

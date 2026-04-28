@@ -51,9 +51,8 @@ import org.tron.api.WalletGrpc;
 import org.tron.api.WalletGrpc.WalletBlockingStub;
 import org.tron.api.WalletSolidityGrpc;
 import org.tron.api.WalletSolidityGrpc.WalletSolidityBlockingStub;
+import org.tron.common.ClassLevelAppContextFixture;
 import org.tron.common.TestConstants;
-import org.tron.common.application.Application;
-import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.es.ExecutorServiceManager;
 import org.tron.common.utils.ByteArray;
@@ -65,7 +64,6 @@ import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
-import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.protos.Protocol;
@@ -118,8 +116,9 @@ import org.tron.protos.contract.WitnessContract.WitnessUpdateContract;
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class RpcApiServicesTest {
 
-  private static Application appTest;
   private static TronApplicationContext context;
+  private static final ClassLevelAppContextFixture APP_FIXTURE =
+      new ClassLevelAppContextFixture();
   private static ManagedChannel channelFull = null;
   private static ManagedChannel channelPBFT = null;
   private static ManagedChannel channelSolidity = null;
@@ -188,7 +187,7 @@ public class RpcApiServicesTest {
         .executor(executorService)
         .intercept(new TimeoutInterceptor(5000))
         .build();
-    context = new TronApplicationContext(DefaultConfig.class);
+    context = APP_FIXTURE.createContext();
     databaseBlockingStubFull = DatabaseGrpc.newBlockingStub(channelFull);
     databaseBlockingStubSolidity = DatabaseGrpc.newBlockingStub(channelSolidity);
     databaseBlockingStubPBFT = DatabaseGrpc.newBlockingStub(channelPBFT);
@@ -204,15 +203,12 @@ public class RpcApiServicesTest {
     manager.getAccountStore().put(ownerCapsule.createDbKey(), ownerCapsule);
     manager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
     manager.getDynamicPropertiesStore().saveAllowShieldedTRC20Transaction(1);
-    appTest = ApplicationFactory.create(context);
-    appTest.startup();
+    APP_FIXTURE.startApp();
   }
 
   @AfterClass
   public static void destroy() {
-    shutdownChannel(channelFull);
-    shutdownChannel(channelPBFT);
-    shutdownChannel(channelSolidity);
+    ClassLevelAppContextFixture.shutdownChannels(channelFull, channelPBFT, channelSolidity);
 
     if (executorService != null) {
       ExecutorServiceManager.shutdownAndAwaitTermination(
@@ -220,23 +216,8 @@ public class RpcApiServicesTest {
       executorService = null;
     }
 
-    context.close();
+    APP_FIXTURE.close();
     Args.clearParam();
-  }
-
-  private static void shutdownChannel(ManagedChannel channel) {
-    if (channel == null) {
-      return;
-    }
-    try {
-      channel.shutdown();
-      if (!channel.awaitTermination(5, TimeUnit.SECONDS)) {
-        channel.shutdownNow();
-      }
-    } catch (InterruptedException e) {
-      channel.shutdownNow();
-      Thread.currentThread().interrupt();
-    }
   }
 
   @Test

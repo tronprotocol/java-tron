@@ -38,7 +38,7 @@ public class SnapshotImplTest extends BaseMethodTest {
    * from: get key1 or key2, traverse 0 times
    */
   @Test
-  public void testMergeRoot() {
+  public void testMergeRoot() throws Exception {
     // linklist is: from -> root
     SnapshotRoot root = new SnapshotRoot(tronDatabase.getDb());
     //root.setOptimized(true);
@@ -68,7 +68,7 @@ public class SnapshotImplTest extends BaseMethodTest {
    *
    */
   @Test
-  public void testMergeAhead() {
+  public void testMergeAhead() throws Exception {
 
     // linklist is: from2 -> from -> root
     SnapshotRoot root = new SnapshotRoot(tronDatabase.getDb());
@@ -136,7 +136,7 @@ public class SnapshotImplTest extends BaseMethodTest {
    * from2: key1=>value1, key2=>value2, key3=>value32, key4=>value4
    */
   @Test
-  public void testMergeOverride() {
+  public void testMergeOverride() throws Exception {
     // linklist is: from2 -> from -> root
     SnapshotRoot root = new SnapshotRoot(tronDatabase.getDb());
     SnapshotImpl from = getSnapshotImplIns(root);
@@ -165,16 +165,11 @@ public class SnapshotImplTest extends BaseMethodTest {
    * The constructor of SnapshotImpl is not public
    * so reflection is used to construct the object here.
    */
-  private SnapshotImpl getSnapshotImplIns(Snapshot snapshot) {
+  private SnapshotImpl getSnapshotImplIns(Snapshot snapshot) throws Exception {
     Class clazz = SnapshotImpl.class;
-    try {
-      Constructor constructor = clazz.getDeclaredConstructor(Snapshot.class);
-      constructor.setAccessible(true);
-      return (SnapshotImpl) constructor.newInstance(snapshot);
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
-    return null;
+    Constructor constructor = clazz.getDeclaredConstructor(Snapshot.class);
+    constructor.setAccessible(true);
+    return (SnapshotImpl) constructor.newInstance(snapshot);
   }
 
 }

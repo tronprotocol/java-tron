@@ -262,17 +262,13 @@ public class JsonrpcServiceTest extends BaseTest {
       Assert.assertNull(result);
     }
 
-    try {
-      result = tronJsonRpc.ethGetBlockTransactionCountByNumber("pending");
-    } catch (Exception e) {
-      Assert.assertEquals("TAG pending not supported", e.getMessage());
-    }
+    Exception pendingEx = Assert.assertThrows(Exception.class,
+        () -> tronJsonRpc.ethGetBlockTransactionCountByNumber("pending"));
+    Assert.assertEquals(TAG_PENDING_SUPPORT_ERROR, pendingEx.getMessage());
 
-    try {
-      result = tronJsonRpc.ethGetBlockTransactionCountByNumber("qqqqq");
-    } catch (Exception e) {
-      Assert.assertEquals("invalid block number", e.getMessage());
-    }
+    Exception malformedEx = Assert.assertThrows(Exception.class,
+        () -> tronJsonRpc.ethGetBlockTransactionCountByNumber("qqqqq"));
+    Assert.assertEquals("invalid block number", malformedEx.getMessage());
 
     try {
       result = tronJsonRpc.ethGetBlockTransactionCountByNumber("latest");
@@ -290,20 +286,14 @@ public class JsonrpcServiceTest extends BaseTest {
     Assert.assertEquals(ByteArray.toJsonHex(blockCapsule1.getTransactions().size()), result);
 
     // safe tag is not supported (new tag added in this refactor)
-    try {
-      tronJsonRpc.ethGetBlockTransactionCountByNumber("safe");
-      Assert.fail("Expected to be thrown");
-    } catch (Exception e) {
-      Assert.assertEquals(TAG_SAFE_SUPPORT_ERROR, e.getMessage());
-    }
+    Exception safeEx = Assert.assertThrows(Exception.class,
+        () -> tronJsonRpc.ethGetBlockTransactionCountByNumber("safe"));
+    Assert.assertEquals(TAG_SAFE_SUPPORT_ERROR, safeEx.getMessage());
 
     // hex that overflows long -> longValueExact rejects (previously silently truncated)
-    try {
-      tronJsonRpc.ethGetBlockTransactionCountByNumber("0x10000000000000000");
-      Assert.fail("Expected to be thrown");
-    } catch (Exception e) {
-      Assert.assertEquals("invalid block number", e.getMessage());
-    }
+    Exception overflowEx = Assert.assertThrows(Exception.class,
+        () -> tronJsonRpc.ethGetBlockTransactionCountByNumber("0x10000000000000000"));
+    Assert.assertEquals("invalid block number", overflowEx.getMessage());
   }
 
   @Test
@@ -367,36 +357,24 @@ public class JsonrpcServiceTest extends BaseTest {
     Assert.assertEquals(ByteArray.toJsonHex(blockCapsule2.getNum()), blockResult.getNumber());
 
     // pending
-    try {
-      tronJsonRpc.ethGetBlockByNumber("pending", false);
-      Assert.fail("Expected to be thrown");
-    } catch (Exception e) {
-      Assert.assertEquals("TAG pending not supported", e.getMessage());
-    }
+    Exception e1 = Assert.assertThrows(Exception.class,
+        () -> tronJsonRpc.ethGetBlockByNumber("pending", false));
+    Assert.assertEquals("TAG pending not supported", e1.getMessage());
 
     // invalid
-    try {
-      tronJsonRpc.ethGetBlockByNumber("0x", false);
-      Assert.fail("Expected to be thrown");
-    } catch (Exception e) {
-      Assert.assertEquals("invalid block number", e.getMessage());
-    }
+    Exception e2 = Assert.assertThrows(Exception.class,
+        () -> tronJsonRpc.ethGetBlockByNumber("0x", false));
+    Assert.assertEquals("invalid block number", e2.getMessage());
 
     // safe
-    try {
-      tronJsonRpc.ethGetBlockByNumber("safe", false);
-      Assert.fail("Expected to be thrown");
-    } catch (Exception e) {
-      Assert.assertEquals(TAG_SAFE_SUPPORT_ERROR, e.getMessage());
-    }
+    Exception e3 = Assert.assertThrows(Exception.class,
+        () -> tronJsonRpc.ethGetBlockByNumber("safe", false));
+    Assert.assertEquals(TAG_SAFE_SUPPORT_ERROR, e3.getMessage());
 
     // hex overflows long -> longValueExact rejects
-    try {
-      tronJsonRpc.ethGetBlockByNumber("0x10000000000000000", false);
-      Assert.fail("Expected to be thrown");
-    } catch (Exception e) {
-      Assert.assertEquals("invalid block number", e.getMessage());
-    }
+    Exception e4 = Assert.assertThrows(Exception.class,
+        () -> tronJsonRpc.ethGetBlockByNumber("0x10000000000000000", false));
+    Assert.assertEquals("invalid block number", e4.getMessage());
   }
 
   @Test
@@ -479,20 +457,14 @@ public class JsonrpcServiceTest extends BaseTest {
     Assert.assertFalse(isBlockTag(""));
 
     // parseBlockTag: pending throws
-    try {
-      parseBlockTag("pending", wallet);
-      Assert.fail("Expected to be thrown");
-    } catch (Exception e) {
-      Assert.assertEquals(TAG_PENDING_SUPPORT_ERROR, e.getMessage());
-    }
+    Exception pendingEx = Assert.assertThrows(Exception.class,
+        () -> parseBlockTag("pending", wallet));
+    Assert.assertEquals(TAG_PENDING_SUPPORT_ERROR, pendingEx.getMessage());
 
     // parseBlockTag: safe throws
-    try {
-      parseBlockTag("safe", wallet);
-      Assert.fail("Expected to be thrown");
-    } catch (Exception e) {
-      Assert.assertEquals(TAG_SAFE_SUPPORT_ERROR, e.getMessage());
-    }
+    Exception safeEx = Assert.assertThrows(Exception.class,
+        () -> parseBlockTag("safe", wallet));
+    Assert.assertEquals(TAG_SAFE_SUPPORT_ERROR, safeEx.getMessage());
 
     // parseBlockTag: latest -> headBlockNum
     try {
@@ -527,58 +499,36 @@ public class JsonrpcServiceTest extends BaseTest {
     }
 
     // parseBlockNumber: bad hex -> throws
-    try {
-      parseBlockNumber("abc", wallet);
-      Assert.fail("Expected to be thrown");
-    } catch (Exception e) {
-      Assert.assertEquals("Incorrect hex syntax", e.getMessage());
-    }
+    Exception abcEx = Assert.assertThrows(Exception.class,
+        () -> parseBlockNumber("abc", wallet));
+    Assert.assertEquals("Incorrect hex syntax", abcEx.getMessage());
 
     // parseBlockNumber: malformed hex -> throws
-    try {
-      parseBlockNumber("0xxabc", wallet);
-      Assert.fail("Expected to be thrown");
-    } catch (Exception e) {
-      // https://bugs.openjdk.org/browse/JDK-8176425, from JDK 12, the exception message is changed
-      Assert.assertTrue(e.getMessage().startsWith("For input string: \"xabc\""));
-    }
+    Exception hexEx = Assert.assertThrows(Exception.class,
+        () -> parseBlockNumber("0xxabc", wallet));
+    // https://bugs.openjdk.org/browse/JDK-8176425, from JDK 12, the exception message is changed
+    Assert.assertTrue(hexEx.getMessage().startsWith("For input string: \"xabc\""));
   }
 
   @Test
   public void testGetTrxBalance() {
     String balance = "";
 
-    try {
-      tronJsonRpc.getTrxBalance("", "earliest");
-      Assert.fail("Expected to be thrown");
-    } catch (Exception e) {
-      Assert.assertEquals(TAG_NOT_SUPPORT_ERROR,
-          e.getMessage());
-    }
+    Exception e1 = Assert.assertThrows(Exception.class,
+        () -> tronJsonRpc.getTrxBalance("", "earliest"));
+    Assert.assertEquals(TAG_NOT_SUPPORT_ERROR, e1.getMessage());
 
-    try {
-      tronJsonRpc.getTrxBalance("", "pending");
-      Assert.fail("Expected to be thrown");
-    } catch (Exception e) {
-      Assert.assertEquals(TAG_NOT_SUPPORT_ERROR,
-          e.getMessage());
-    }
+    Exception e2 = Assert.assertThrows(Exception.class,
+        () -> tronJsonRpc.getTrxBalance("", "pending"));
+    Assert.assertEquals(TAG_NOT_SUPPORT_ERROR, e2.getMessage());
 
-    try {
-      tronJsonRpc.getTrxBalance("", "finalized");
-      Assert.fail("Expected to be thrown");
-    } catch (Exception e) {
-      Assert.assertEquals(TAG_NOT_SUPPORT_ERROR,
-          e.getMessage());
-    }
+    Exception e3 = Assert.assertThrows(Exception.class,
+        () -> tronJsonRpc.getTrxBalance("", "finalized"));
+    Assert.assertEquals(TAG_NOT_SUPPORT_ERROR, e3.getMessage());
 
-    try {
-      tronJsonRpc.getTrxBalance("", "safe");
-      Assert.fail("Expected to be thrown");
-    } catch (Exception e) {
-      Assert.assertEquals(TAG_NOT_SUPPORT_ERROR,
-          e.getMessage());
-    }
+    Exception e4 = Assert.assertThrows(Exception.class,
+        () -> tronJsonRpc.getTrxBalance("", "safe"));
+    Assert.assertEquals(TAG_NOT_SUPPORT_ERROR, e4.getMessage());
 
     try {
       balance = tronJsonRpc.getTrxBalance("0xabd4b9367799eaa3197fecb144eb71de1e049abc",
@@ -591,54 +541,32 @@ public class JsonrpcServiceTest extends BaseTest {
 
   @Test
   public void testGetStorageAt() {
-    try {
-      tronJsonRpc.getStorageAt("", "", "earliest");
-      Assert.fail("Expected to be thrown");
-    } catch (Exception e) {
-      Assert.assertEquals(TAG_NOT_SUPPORT_ERROR,
-          e.getMessage());
-    }
+    Exception e1 = Assert.assertThrows(Exception.class,
+        () -> tronJsonRpc.getStorageAt("", "", "earliest"));
+    Assert.assertEquals(TAG_NOT_SUPPORT_ERROR, e1.getMessage());
 
-    try {
-      tronJsonRpc.getStorageAt("", "", "pending");
-      Assert.fail("Expected to be thrown");
-    } catch (Exception e) {
-      Assert.assertEquals(TAG_NOT_SUPPORT_ERROR,
-          e.getMessage());
-    }
+    Exception e2 = Assert.assertThrows(Exception.class,
+        () -> tronJsonRpc.getStorageAt("", "", "pending"));
+    Assert.assertEquals(TAG_NOT_SUPPORT_ERROR, e2.getMessage());
 
-    try {
-      tronJsonRpc.getStorageAt("", "", "finalized");
-      Assert.fail("Expected to be thrown");
-    } catch (Exception e) {
-      Assert.assertEquals(TAG_NOT_SUPPORT_ERROR,
-          e.getMessage());
-    }
+    Exception e3 = Assert.assertThrows(Exception.class,
+        () -> tronJsonRpc.getStorageAt("", "", "finalized"));
+    Assert.assertEquals(TAG_NOT_SUPPORT_ERROR, e3.getMessage());
 
-    try {
-      tronJsonRpc.getStorageAt("", "", "safe");
-      Assert.fail("Expected to be thrown");
-    } catch (Exception e) {
-      Assert.assertEquals(TAG_NOT_SUPPORT_ERROR,
-          e.getMessage());
-    }
+    Exception e4 = Assert.assertThrows(Exception.class,
+        () -> tronJsonRpc.getStorageAt("", "", "safe"));
+    Assert.assertEquals(TAG_NOT_SUPPORT_ERROR, e4.getMessage());
 
     // hex block number -> QUANTITY_NOT_SUPPORT_ERROR
-    try {
-      tronJsonRpc.getStorageAt("", "", "0x1");
-      Assert.fail("Expected to be thrown");
-    } catch (Exception e) {
-      Assert.assertEquals(
-          "QUANTITY not supported, just support TAG as latest", e.getMessage());
-    }
+    Exception e5 = Assert.assertThrows(Exception.class,
+        () -> tronJsonRpc.getStorageAt("", "", "0x1"));
+    Assert.assertEquals(
+        "QUANTITY not supported, just support TAG as latest", e5.getMessage());
 
     // malformed hex -> BLOCK_NUM_ERROR
-    try {
-      tronJsonRpc.getStorageAt("", "", "abc");
-      Assert.fail("Expected to be thrown");
-    } catch (Exception e) {
-      Assert.assertEquals("invalid block number", e.getMessage());
-    }
+    Exception e6 = Assert.assertThrows(Exception.class,
+        () -> tronJsonRpc.getStorageAt("", "", "abc"));
+    Assert.assertEquals("invalid block number", e6.getMessage());
 
     // latest happy path: address is an account, not a contract, so returns 32 zero bytes
     try {
@@ -652,54 +580,32 @@ public class JsonrpcServiceTest extends BaseTest {
 
   @Test
   public void testGetABIOfSmartContract() {
-    try {
-      tronJsonRpc.getABIOfSmartContract("", "earliest");
-      Assert.fail("Expected to be thrown");
-    } catch (Exception e) {
-      Assert.assertEquals(TAG_NOT_SUPPORT_ERROR,
-          e.getMessage());
-    }
+    Exception e1 = Assert.assertThrows(Exception.class,
+        () -> tronJsonRpc.getABIOfSmartContract("", "earliest"));
+    Assert.assertEquals(TAG_NOT_SUPPORT_ERROR, e1.getMessage());
 
-    try {
-      tronJsonRpc.getABIOfSmartContract("", "pending");
-      Assert.fail("Expected to be thrown");
-    } catch (Exception e) {
-      Assert.assertEquals(TAG_NOT_SUPPORT_ERROR,
-          e.getMessage());
-    }
+    Exception e2 = Assert.assertThrows(Exception.class,
+        () -> tronJsonRpc.getABIOfSmartContract("", "pending"));
+    Assert.assertEquals(TAG_NOT_SUPPORT_ERROR, e2.getMessage());
 
-    try {
-      tronJsonRpc.getABIOfSmartContract("", "finalized");
-      Assert.fail("Expected to be thrown");
-    } catch (Exception e) {
-      Assert.assertEquals(TAG_NOT_SUPPORT_ERROR,
-          e.getMessage());
-    }
+    Exception e3 = Assert.assertThrows(Exception.class,
+        () -> tronJsonRpc.getABIOfSmartContract("", "finalized"));
+    Assert.assertEquals(TAG_NOT_SUPPORT_ERROR, e3.getMessage());
 
-    try {
-      tronJsonRpc.getABIOfSmartContract("", "safe");
-      Assert.fail("Expected to be thrown");
-    } catch (Exception e) {
-      Assert.assertEquals(TAG_NOT_SUPPORT_ERROR,
-          e.getMessage());
-    }
+    Exception e4 = Assert.assertThrows(Exception.class,
+        () -> tronJsonRpc.getABIOfSmartContract("", "safe"));
+    Assert.assertEquals(TAG_NOT_SUPPORT_ERROR, e4.getMessage());
 
     // hex block number -> QUANTITY_NOT_SUPPORT_ERROR
-    try {
-      tronJsonRpc.getABIOfSmartContract("", "0x1");
-      Assert.fail("Expected to be thrown");
-    } catch (Exception e) {
-      Assert.assertEquals(
-          "QUANTITY not supported, just support TAG as latest", e.getMessage());
-    }
+    Exception e5 = Assert.assertThrows(Exception.class,
+        () -> tronJsonRpc.getABIOfSmartContract("", "0x1"));
+    Assert.assertEquals(
+        "QUANTITY not supported, just support TAG as latest", e5.getMessage());
 
     // malformed hex -> BLOCK_NUM_ERROR
-    try {
-      tronJsonRpc.getABIOfSmartContract("", "abc");
-      Assert.fail("Expected to be thrown");
-    } catch (Exception e) {
-      Assert.assertEquals("invalid block number", e.getMessage());
-    }
+    Exception e6 = Assert.assertThrows(Exception.class,
+        () -> tronJsonRpc.getABIOfSmartContract("", "abc"));
+    Assert.assertEquals("invalid block number", e6.getMessage());
 
     // latest happy path: address is an account, not a contract, so returns "0x"
     try {
@@ -713,37 +619,21 @@ public class JsonrpcServiceTest extends BaseTest {
 
   @Test
   public void testGetCall() {
-    try {
-      tronJsonRpc.getCall(null, "earliest");
-      Assert.fail("Expected to be thrown");
-    } catch (Exception e) {
-      Assert.assertEquals(TAG_NOT_SUPPORT_ERROR,
-          e.getMessage());
-    }
+    Exception e1 = Assert.assertThrows(Exception.class,
+        () -> tronJsonRpc.getCall(null, "earliest"));
+    Assert.assertEquals(TAG_NOT_SUPPORT_ERROR, e1.getMessage());
 
-    try {
-      tronJsonRpc.getCall(null, "pending");
-      Assert.fail("Expected to be thrown");
-    } catch (Exception e) {
-      Assert.assertEquals(TAG_NOT_SUPPORT_ERROR,
-          e.getMessage());
-    }
+    Exception e2 = Assert.assertThrows(Exception.class,
+        () -> tronJsonRpc.getCall(null, "pending"));
+    Assert.assertEquals(TAG_NOT_SUPPORT_ERROR, e2.getMessage());
 
-    try {
-      tronJsonRpc.getCall(null, "finalized");
-      Assert.fail("Expected to be thrown");
-    } catch (Exception e) {
-      Assert.assertEquals(TAG_NOT_SUPPORT_ERROR,
-          e.getMessage());
-    }
+    Exception e3 = Assert.assertThrows(Exception.class,
+        () -> tronJsonRpc.getCall(null, "finalized"));
+    Assert.assertEquals(TAG_NOT_SUPPORT_ERROR, e3.getMessage());
 
-    try {
-      tronJsonRpc.getCall(null, "safe");
-      Assert.fail("Expected to be thrown");
-    } catch (Exception e) {
-      Assert.assertEquals(TAG_NOT_SUPPORT_ERROR,
-          e.getMessage());
-    }
+    Exception e4 = Assert.assertThrows(Exception.class,
+        () -> tronJsonRpc.getCall(null, "safe"));
+    Assert.assertEquals(TAG_NOT_SUPPORT_ERROR, e4.getMessage());
   }
 
   @Test
@@ -800,36 +690,24 @@ public class JsonrpcServiceTest extends BaseTest {
     }
 
     // pending tag rejected
-    try {
-      tronJsonRpc.getTransactionByBlockNumberAndIndex("pending", "0x0");
-      Assert.fail("Expected to be thrown");
-    } catch (Exception e) {
-      Assert.assertEquals(TAG_PENDING_SUPPORT_ERROR, e.getMessage());
-    }
+    Exception pendingEx = Assert.assertThrows(Exception.class,
+        () -> tronJsonRpc.getTransactionByBlockNumberAndIndex("pending", "0x0"));
+    Assert.assertEquals(TAG_PENDING_SUPPORT_ERROR, pendingEx.getMessage());
 
     // safe tag rejected (new tag)
-    try {
-      tronJsonRpc.getTransactionByBlockNumberAndIndex("safe", "0x0");
-      Assert.fail("Expected to be thrown");
-    } catch (Exception e) {
-      Assert.assertEquals(TAG_SAFE_SUPPORT_ERROR, e.getMessage());
-    }
+    Exception safeEx = Assert.assertThrows(Exception.class,
+        () -> tronJsonRpc.getTransactionByBlockNumberAndIndex("safe", "0x0"));
+    Assert.assertEquals(TAG_SAFE_SUPPORT_ERROR, safeEx.getMessage());
 
     // malformed hex rejected
-    try {
-      tronJsonRpc.getTransactionByBlockNumberAndIndex("qqq", "0x0");
-      Assert.fail("Expected to be thrown");
-    } catch (Exception e) {
-      Assert.assertEquals("invalid block number", e.getMessage());
-    }
+    Exception qqqEx = Assert.assertThrows(Exception.class,
+        () -> tronJsonRpc.getTransactionByBlockNumberAndIndex("qqq", "0x0"));
+    Assert.assertEquals("invalid block number", qqqEx.getMessage());
 
     // hex overflows long -> longValueExact rejects
-    try {
-      tronJsonRpc.getTransactionByBlockNumberAndIndex("0x10000000000000000", "0x0");
-      Assert.fail("Expected to be thrown");
-    } catch (Exception e) {
-      Assert.assertEquals("invalid block number", e.getMessage());
-    }
+    Exception overflowEx = Assert.assertThrows(Exception.class,
+        () -> tronJsonRpc.getTransactionByBlockNumberAndIndex("0x10000000000000000", "0x0"));
+    Assert.assertEquals("invalid block number", overflowEx.getMessage());
   }
 
   /**
@@ -841,61 +719,43 @@ public class JsonrpcServiceTest extends BaseTest {
   @Test
   public void testGetCallWithBlockObject() {
     // neither HashMap nor String -> invalid json request
-    try {
-      tronJsonRpc.getCall(null, new Object());
-      Assert.fail("Expected to be thrown");
-    } catch (Exception e) {
-      Assert.assertEquals("invalid json request", e.getMessage());
-    }
+    Exception nonMapEx = Assert.assertThrows(Exception.class,
+        () -> tronJsonRpc.getCall(null, new Object()));
+    Assert.assertEquals("invalid json request", nonMapEx.getMessage());
 
     // HashMap without blockNumber/blockHash keys -> invalid json request
-    try {
-      tronJsonRpc.getCall(null, new HashMap<String, String>());
-      Assert.fail("Expected to be thrown");
-    } catch (Exception e) {
-      Assert.assertEquals("invalid json request", e.getMessage());
-    }
+    Exception emptyMapEx = Assert.assertThrows(Exception.class,
+        () -> tronJsonRpc.getCall(null, new HashMap<String, String>()));
+    Assert.assertEquals("invalid json request", emptyMapEx.getMessage());
 
     // blockNumber with malformed hex -> invalid block number
-    try {
-      HashMap<String, String> params = new HashMap<>();
-      params.put("blockNumber", "xxx");
-      tronJsonRpc.getCall(null, params);
-      Assert.fail("Expected to be thrown");
-    } catch (Exception e) {
-      Assert.assertEquals("invalid block number", e.getMessage());
-    }
+    HashMap<String, String> badHexParams = new HashMap<>();
+    badHexParams.put("blockNumber", "xxx");
+    Exception badHexEx = Assert.assertThrows(Exception.class,
+        () -> tronJsonRpc.getCall(null, badHexParams));
+    Assert.assertEquals("invalid block number", badHexEx.getMessage());
 
     // blockNumber overflows long -> invalid block number (longValueExact)
-    try {
-      HashMap<String, String> params = new HashMap<>();
-      params.put("blockNumber", "0x10000000000000000");
-      tronJsonRpc.getCall(null, params);
-      Assert.fail("Expected to be thrown");
-    } catch (Exception e) {
-      Assert.assertEquals("invalid block number", e.getMessage());
-    }
+    HashMap<String, String> overflowParams = new HashMap<>();
+    overflowParams.put("blockNumber", "0x10000000000000000");
+    Exception overflowEx = Assert.assertThrows(Exception.class,
+        () -> tronJsonRpc.getCall(null, overflowParams));
+    Assert.assertEquals("invalid block number", overflowEx.getMessage());
 
     // blockNumber points to a non-existent block -> header not found
-    try {
-      HashMap<String, String> params = new HashMap<>();
-      params.put("blockNumber", "0x1");
-      tronJsonRpc.getCall(null, params);
-      Assert.fail("Expected to be thrown");
-    } catch (Exception e) {
-      Assert.assertEquals("header not found", e.getMessage());
-    }
+    HashMap<String, String> missingNumParams = new HashMap<>();
+    missingNumParams.put("blockNumber", "0x1");
+    Exception missingNumEx = Assert.assertThrows(Exception.class,
+        () -> tronJsonRpc.getCall(null, missingNumParams));
+    Assert.assertEquals("header not found", missingNumEx.getMessage());
 
     // blockHash of an unknown block -> header for hash not found
-    try {
-      HashMap<String, String> params = new HashMap<>();
-      params.put("blockHash",
-          "0x1111111111111111111111111111111111111111111111111111111111111111");
-      tronJsonRpc.getCall(null, params);
-      Assert.fail("Expected to be thrown");
-    } catch (Exception e) {
-      Assert.assertEquals("header for hash not found", e.getMessage());
-    }
+    HashMap<String, String> missingHashParams = new HashMap<>();
+    missingHashParams.put("blockHash",
+        "0x1111111111111111111111111111111111111111111111111111111111111111");
+    Exception missingHashEx = Assert.assertThrows(Exception.class,
+        () -> tronJsonRpc.getCall(null, missingHashParams));
+    Assert.assertEquals("header for hash not found", missingHashEx.getMessage());
   }
 
   /**
@@ -963,13 +823,11 @@ public class JsonrpcServiceTest extends BaseTest {
     } catch (JsonRpcInvalidParamsException e) {
       Assert.fail();
     }
-    try {
-      new LogFilterWrapper(new FilterRequest("0x78", "0x14",
-          null, null, null), 100, null, false);
-      Assert.fail("Expected to be thrown");
-    } catch (JsonRpcInvalidParamsException e) {
-      Assert.assertEquals("please verify: fromBlock <= toBlock", e.getMessage());
-    }
+    JsonRpcInvalidParamsException fromToEx =
+        Assert.assertThrows(JsonRpcInvalidParamsException.class,
+            () -> new LogFilterWrapper(new FilterRequest("0x78", "0x14",
+                null, null, null), 100, null, false));
+    Assert.assertEquals("please verify: fromBlock <= toBlock", fromToEx.getMessage());
 
     //fromBlock or toBlock is not hex num
     try {
@@ -988,13 +846,11 @@ public class JsonrpcServiceTest extends BaseTest {
     } catch (JsonRpcInvalidParamsException e) {
       Assert.fail();
     }
-    try {
-      new LogFilterWrapper(new FilterRequest("pending", null, null, null, null),
-          100, null, false);
-      Assert.fail("Expected to be thrown");
-    } catch (JsonRpcInvalidParamsException e) {
-      Assert.assertEquals("TAG pending not supported", e.getMessage());
-    }
+    JsonRpcInvalidParamsException pendingFilterEx = Assert.assertThrows(
+        JsonRpcInvalidParamsException.class,
+        () -> new LogFilterWrapper(new FilterRequest("pending", null, null, null, null),
+            100, null, false));
+    Assert.assertEquals("TAG pending not supported", pendingFilterEx.getMessage());
     try {
       LogFilterWrapper logFilterWrapper = new LogFilterWrapper(new FilterRequest("finalized", null,
           null, null, null), 100, wallet, false);
@@ -1003,13 +859,11 @@ public class JsonrpcServiceTest extends BaseTest {
     } catch (JsonRpcInvalidParamsException e) {
       Assert.fail();
     }
-    try {
-      new LogFilterWrapper(new FilterRequest("test", null, null, null, null),
-          100, null, false);
-      Assert.fail("Expected to be thrown");
-    } catch (JsonRpcInvalidParamsException e) {
-      Assert.assertEquals("Incorrect hex syntax", e.getMessage());
-    }
+    JsonRpcInvalidParamsException testSyntaxEx = Assert.assertThrows(
+        JsonRpcInvalidParamsException.class,
+        () -> new LogFilterWrapper(new FilterRequest("test", null, null, null, null),
+            100, null, false));
+    Assert.assertEquals("Incorrect hex syntax", testSyntaxEx.getMessage());
 
     // to = 8000
     try {
@@ -1019,15 +873,13 @@ public class JsonrpcServiceTest extends BaseTest {
       Assert.fail();
     }
 
-    try {
-      new LogFilterWrapper(new FilterRequest("0x0", "0x1f40", null,
-          null, null), LATEST_BLOCK_NUM, null, true);
-      Assert.fail("Expected to be thrown");
-    } catch (JsonRpcInvalidParamsException e) {
-      Assert.assertEquals(
-          "exceed max block range: " + Args.getInstance().jsonRpcMaxBlockRange,
-          e.getMessage());
-    }
+    JsonRpcInvalidParamsException rangeEx1 = Assert.assertThrows(
+        JsonRpcInvalidParamsException.class,
+        () -> new LogFilterWrapper(new FilterRequest("0x0", "0x1f40", null,
+            null, null), LATEST_BLOCK_NUM, null, true));
+    Assert.assertEquals(
+        "exceed max block range: " + Args.getInstance().jsonRpcMaxBlockRange,
+        rangeEx1.getMessage());
 
     try {
       new LogFilterWrapper(new FilterRequest("0x0", "latest", null,
@@ -1036,15 +888,13 @@ public class JsonrpcServiceTest extends BaseTest {
       Assert.fail();
     }
 
-    try {
-      new LogFilterWrapper(new FilterRequest("0x0", "latest", null,
-          null, null), LATEST_BLOCK_NUM, null, true);
-      Assert.fail("Expected to be thrown");
-    } catch (JsonRpcInvalidParamsException e) {
-      Assert.assertEquals(
-          "exceed max block range: " + Args.getInstance().jsonRpcMaxBlockRange,
-          e.getMessage());
-    }
+    JsonRpcInvalidParamsException rangeEx2 = Assert.assertThrows(
+        JsonRpcInvalidParamsException.class,
+        () -> new LogFilterWrapper(new FilterRequest("0x0", "latest", null,
+            null, null), LATEST_BLOCK_NUM, null, true));
+    Assert.assertEquals(
+        "exceed max block range: " + Args.getInstance().jsonRpcMaxBlockRange,
+        rangeEx2.getMessage());
 
     // from = 100, current = 5_000, to = Long.MAX_VALUE
     try {
@@ -1061,15 +911,13 @@ public class JsonrpcServiceTest extends BaseTest {
     }
 
     // from = 100
-    try {
-      new LogFilterWrapper(new FilterRequest("0x64", "latest", null,
-          null, null), LATEST_BLOCK_NUM, null, true);
-      Assert.fail("Expected to be thrown");
-    } catch (JsonRpcInvalidParamsException e) {
-      Assert.assertEquals(
-          "exceed max block range: " + Args.getInstance().jsonRpcMaxBlockRange,
-          e.getMessage());
-    }
+    JsonRpcInvalidParamsException rangeEx3 = Assert.assertThrows(
+        JsonRpcInvalidParamsException.class,
+        () -> new LogFilterWrapper(new FilterRequest("0x64", "latest", null,
+            null, null), LATEST_BLOCK_NUM, null, true));
+    Assert.assertEquals(
+        "exceed max block range: " + Args.getInstance().jsonRpcMaxBlockRange,
+        rangeEx3.getMessage());
     try {
       new LogFilterWrapper(new FilterRequest("0x64", "latest", null,
           null, null), LATEST_BLOCK_NUM, null, false);
@@ -1163,15 +1011,13 @@ public class JsonrpcServiceTest extends BaseTest {
     }
     topics.add(subTopics);
 
-    try {
-      new LogFilterWrapper(new FilterRequest("0xbb8", "0x1f40",
-          null, topics.toArray(), null), LATEST_BLOCK_NUM, null, false);
-      Assert.fail("Expected to be thrown");
-    } catch (JsonRpcInvalidParamsException e) {
-      Assert.assertEquals(
-          "exceed max topics: " + Args.getInstance().getJsonRpcMaxSubTopics(),
-          e.getMessage());
-    }
+    JsonRpcInvalidParamsException topicsEx = Assert.assertThrows(
+        JsonRpcInvalidParamsException.class,
+        () -> new LogFilterWrapper(new FilterRequest("0xbb8", "0x1f40",
+            null, topics.toArray(), null), LATEST_BLOCK_NUM, null, false));
+    Assert.assertEquals(
+        "exceed max topics: " + Args.getInstance().getJsonRpcMaxSubTopics(),
+        topicsEx.getMessage());
 
     try {
       tronJsonRpc.getLogs(new FilterRequest("0xbb8", "0x1f40",
@@ -1275,40 +1121,25 @@ public class JsonrpcServiceTest extends BaseTest {
       Assert.fail();
     }
 
-    try {
-      tronJsonRpc.newFilter(new FilterRequest("finalized", null, null, null, null));
-      Assert.fail("Expected to be thrown");
-    } catch (Exception e) {
-      Assert.assertEquals("invalid block range params", e.getMessage());
-    }
+    Exception e1 = Assert.assertThrows(Exception.class,
+        () -> tronJsonRpc.newFilter(new FilterRequest("finalized", null, null, null, null)));
+    Assert.assertEquals("invalid block range params", e1.getMessage());
 
-    try {
-      tronJsonRpc.newFilter(new FilterRequest(null, "finalized", null, null, null));
-      Assert.fail("Expected to be thrown");
-    } catch (Exception e) {
-      Assert.assertEquals("invalid block range params", e.getMessage());
-    }
+    Exception e2 = Assert.assertThrows(Exception.class,
+        () -> tronJsonRpc.newFilter(new FilterRequest(null, "finalized", null, null, null)));
+    Assert.assertEquals("invalid block range params", e2.getMessage());
 
-    try {
-      tronJsonRpc.newFilter(new FilterRequest("finalized", "latest", null, null, null));
-      Assert.fail("Expected to be thrown");
-    } catch (Exception e) {
-      Assert.assertEquals("invalid block range params", e.getMessage());
-    }
+    Exception e3 = Assert.assertThrows(Exception.class,
+        () -> tronJsonRpc.newFilter(new FilterRequest("finalized", "latest", null, null, null)));
+    Assert.assertEquals("invalid block range params", e3.getMessage());
 
-    try {
-      tronJsonRpc.newFilter(new FilterRequest("0x1", "finalized", null, null, null));
-      Assert.fail("Expected to be thrown");
-    } catch (Exception e) {
-      Assert.assertEquals("invalid block range params", e.getMessage());
-    }
+    Exception e4 = Assert.assertThrows(Exception.class,
+        () -> tronJsonRpc.newFilter(new FilterRequest("0x1", "finalized", null, null, null)));
+    Assert.assertEquals("invalid block range params", e4.getMessage());
 
-    try {
-      tronJsonRpc.newFilter(new FilterRequest("finalized", "finalized", null, null, null));
-      Assert.fail("Expected to be thrown");
-    } catch (Exception e) {
-      Assert.assertEquals("invalid block range params", e.getMessage());
-    }
+    Exception e5 = Assert.assertThrows(Exception.class,
+        () -> tronJsonRpc.newFilter(new FilterRequest("finalized", "finalized", null, null, null)));
+    Assert.assertEquals("invalid block range params", e5.getMessage());
   }
 
   /**
@@ -1320,68 +1151,44 @@ public class JsonrpcServiceTest extends BaseTest {
   @Test
   public void testLogFilterTagHandling() {
     // eth_newFilter: safe in fromBlock -> TAG_SAFE_SUPPORT_ERROR
-    try {
-      tronJsonRpc.newFilter(new FilterRequest("safe", null, null, null, null));
-      Assert.fail("Expected to be thrown");
-    } catch (Exception e) {
-      Assert.assertEquals(TAG_SAFE_SUPPORT_ERROR, e.getMessage());
-    }
+    Exception newFilterSafeFromEx = Assert.assertThrows(Exception.class,
+        () -> tronJsonRpc.newFilter(new FilterRequest("safe", null, null, null, null)));
+    Assert.assertEquals(TAG_SAFE_SUPPORT_ERROR, newFilterSafeFromEx.getMessage());
 
     // eth_newFilter: safe in toBlock
-    try {
-      tronJsonRpc.newFilter(new FilterRequest("0x1", "safe", null, null, null));
-      Assert.fail("Expected to be thrown");
-    } catch (Exception e) {
-      Assert.assertEquals(TAG_SAFE_SUPPORT_ERROR, e.getMessage());
-    }
+    Exception newFilterSafeToEx = Assert.assertThrows(Exception.class,
+        () -> tronJsonRpc.newFilter(new FilterRequest("0x1", "safe", null, null, null)));
+    Assert.assertEquals(TAG_SAFE_SUPPORT_ERROR, newFilterSafeToEx.getMessage());
 
     // eth_newFilter: pending in fromBlock
-    try {
-      tronJsonRpc.newFilter(new FilterRequest("pending", null, null, null, null));
-      Assert.fail("Expected to be thrown");
-    } catch (Exception e) {
-      Assert.assertEquals(TAG_PENDING_SUPPORT_ERROR, e.getMessage());
-    }
+    Exception newFilterPendingFromEx = Assert.assertThrows(Exception.class,
+        () -> tronJsonRpc.newFilter(new FilterRequest("pending", null, null, null, null)));
+    Assert.assertEquals(TAG_PENDING_SUPPORT_ERROR, newFilterPendingFromEx.getMessage());
 
     // eth_newFilter: pending in toBlock
-    try {
-      tronJsonRpc.newFilter(new FilterRequest("0x1", "pending", null, null, null));
-      Assert.fail("Expected to be thrown");
-    } catch (Exception e) {
-      Assert.assertEquals(TAG_PENDING_SUPPORT_ERROR, e.getMessage());
-    }
+    Exception newFilterPendingToEx = Assert.assertThrows(Exception.class,
+        () -> tronJsonRpc.newFilter(new FilterRequest("0x1", "pending", null, null, null)));
+    Assert.assertEquals(TAG_PENDING_SUPPORT_ERROR, newFilterPendingToEx.getMessage());
 
     // eth_getLogs: safe in fromBlock
-    try {
-      tronJsonRpc.getLogs(new FilterRequest("safe", null, null, null, null));
-      Assert.fail("Expected to be thrown");
-    } catch (Exception e) {
-      Assert.assertEquals(TAG_SAFE_SUPPORT_ERROR, e.getMessage());
-    }
+    Exception getLogsSafeFromEx = Assert.assertThrows(Exception.class,
+        () -> tronJsonRpc.getLogs(new FilterRequest("safe", null, null, null, null)));
+    Assert.assertEquals(TAG_SAFE_SUPPORT_ERROR, getLogsSafeFromEx.getMessage());
 
     // eth_getLogs: safe in toBlock
-    try {
-      tronJsonRpc.getLogs(new FilterRequest(null, "safe", null, null, null));
-      Assert.fail("Expected to be thrown");
-    } catch (Exception e) {
-      Assert.assertEquals(TAG_SAFE_SUPPORT_ERROR, e.getMessage());
-    }
+    Exception getLogsSafeToEx = Assert.assertThrows(Exception.class,
+        () -> tronJsonRpc.getLogs(new FilterRequest(null, "safe", null, null, null)));
+    Assert.assertEquals(TAG_SAFE_SUPPORT_ERROR, getLogsSafeToEx.getMessage());
 
     // eth_getLogs: pending in fromBlock
-    try {
-      tronJsonRpc.getLogs(new FilterRequest("pending", null, null, null, null));
-      Assert.fail("Expected to be thrown");
-    } catch (Exception e) {
-      Assert.assertEquals(TAG_PENDING_SUPPORT_ERROR, e.getMessage());
-    }
+    Exception getLogsPendingFromEx = Assert.assertThrows(Exception.class,
+        () -> tronJsonRpc.getLogs(new FilterRequest("pending", null, null, null, null)));
+    Assert.assertEquals(TAG_PENDING_SUPPORT_ERROR, getLogsPendingFromEx.getMessage());
 
     // eth_getLogs: pending in toBlock
-    try {
-      tronJsonRpc.getLogs(new FilterRequest(null, "pending", null, null, null));
-      Assert.fail("Expected to be thrown");
-    } catch (Exception e) {
-      Assert.assertEquals(TAG_PENDING_SUPPORT_ERROR, e.getMessage());
-    }
+    Exception getLogsPendingToEx = Assert.assertThrows(Exception.class,
+        () -> tronJsonRpc.getLogs(new FilterRequest(null, "pending", null, null, null)));
+    Assert.assertEquals(TAG_PENDING_SUPPORT_ERROR, getLogsPendingToEx.getMessage());
 
     // eth_getLogs: finalized is accepted (resolves to solidBlockNum via parseBlockTag).
     // With fromBlock empty, Strategy 2 resolves the range to [solid, solid]. blockCapsule2
@@ -1458,19 +1265,13 @@ public class JsonrpcServiceTest extends BaseTest {
       throw new RuntimeException(e);
     }
 
-    try {
-      tronJsonRpc.getBlockReceipts("pending");
-      Assert.fail();
-    } catch (Exception e) {
-      Assert.assertEquals(TAG_PENDING_SUPPORT_ERROR, e.getMessage());
-    }
+    Exception pendingReceiptsEx = Assert.assertThrows(Exception.class,
+        () -> tronJsonRpc.getBlockReceipts("pending"));
+    Assert.assertEquals(TAG_PENDING_SUPPORT_ERROR, pendingReceiptsEx.getMessage());
 
-    try {
-      tronJsonRpc.getBlockReceipts("test");
-      Assert.fail();
-    } catch (Exception e) {
-      Assert.assertEquals("invalid block number", e.getMessage());
-    }
+    Exception testReceiptsEx = Assert.assertThrows(Exception.class,
+        () -> tronJsonRpc.getBlockReceipts("test"));
+    Assert.assertEquals("invalid block number", testReceiptsEx.getMessage());
 
     try {
       List<TransactionReceipt> transactionReceiptList = tronJsonRpc.getBlockReceipts("0x2");
@@ -1493,19 +1294,13 @@ public class JsonrpcServiceTest extends BaseTest {
       throw new RuntimeException(e);
     }
 
-    try {
-      tronJsonRpc.getBlockReceipts("safe");
-      Assert.fail();
-    } catch (Exception e) {
-      Assert.assertEquals(TAG_SAFE_SUPPORT_ERROR, e.getMessage());
-    }
+    Exception safeReceiptsEx = Assert.assertThrows(Exception.class,
+        () -> tronJsonRpc.getBlockReceipts("safe"));
+    Assert.assertEquals(TAG_SAFE_SUPPORT_ERROR, safeReceiptsEx.getMessage());
 
-    try {
-      tronJsonRpc.getBlockReceipts("0x10000000000000000");
-      Assert.fail();
-    } catch (Exception e) {
-      Assert.assertEquals("invalid block number", e.getMessage());
-    }
+    Exception overflowReceiptsEx = Assert.assertThrows(Exception.class,
+        () -> tronJsonRpc.getBlockReceipts("0x10000000000000000"));
+    Assert.assertEquals("invalid block number", overflowReceiptsEx.getMessage());
   }
 
   @Test

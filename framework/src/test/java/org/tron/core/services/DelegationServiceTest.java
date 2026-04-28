@@ -78,7 +78,6 @@ public class DelegationServiceTest extends BaseTest {
     mortgageService.withdrawReward(sr1);
     accountCapsule = dbManager.getAccountStore().get(sr1);
     allowance = accountCapsule.getAllowance() - allowance;
-    System.out.println("withdrawReward:" + allowance);
     Assert.assertEquals(reward, allowance);
   }
 

@@ -28,30 +28,18 @@ public class NodeTest {
   public void testIpV4() {
     InetSocketAddress address1 = NetUtil.parseInetSocketAddress("192.168.0.1:18888");
     Assert.assertNotNull(address1);
-    try {
-      NetUtil.parseInetSocketAddress("192.168.0.1");
-      Assert.fail();
-    } catch (RuntimeException e) {
-      Assert.assertTrue(true);
-    }
+    Assert.assertThrows(RuntimeException.class,
+        () -> NetUtil.parseInetSocketAddress("192.168.0.1"));
   }
 
   @Test
   public void testIpV6() {
-    try {
-      NetUtil.parseInetSocketAddress("fe80::216:3eff:fe0e:23bb:18888");
-      Assert.fail();
-    } catch (RuntimeException e) {
-      Assert.assertTrue(true);
-    }
+    Assert.assertThrows(RuntimeException.class,
+        () -> NetUtil.parseInetSocketAddress("fe80::216:3eff:fe0e:23bb:18888"));
     InetSocketAddress address2 = NetUtil.parseInetSocketAddress("[fe80::216:3eff:fe0e:23bb]:18888");
     Assert.assertNotNull(address2);
-    try {
-      NetUtil.parseInetSocketAddress("fe80::216:3eff:fe0e:23bb");
-      Assert.fail();
-    } catch (RuntimeException e) {
-      Assert.assertTrue(true);
-    }
+    Assert.assertThrows(RuntimeException.class,
+        () -> NetUtil.parseInetSocketAddress("fe80::216:3eff:fe0e:23bb"));
   }
 
   @Test
