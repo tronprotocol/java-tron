@@ -12,7 +12,9 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import org.junit.Assert;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.Timeout;
 import org.tron.common.BaseMethodTest;
 import org.tron.common.error.TronDBException;
 import org.tron.common.es.ExecutorServiceManager;
@@ -32,6 +34,11 @@ import org.tron.core.store.WitnessStore;
 import org.tron.protos.Protocol;
 
 public class ComputeRewardTest extends BaseMethodTest {
+
+  // setUp() contains a 6-second sleep waiting for async reward calculation;
+  // 60 s total budget covers setup + test body with headroom for slow CI.
+  @Rule
+  public Timeout timeout = Timeout.seconds(60);
 
   private static final byte[] OWNER_ADDRESS = ByteArray.fromHexString(
       "4105b9e8af8ee371cad87317f442d155b39fbd1bf0");

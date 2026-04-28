@@ -111,21 +111,17 @@ public class FetchInvDataMsgHandlerTest {
 
     FetchInvDataMsgHandler fetchInvDataMsgHandler = new FetchInvDataMsgHandler();
 
-    try {
-      Mockito.when(peer.getLastSyncBlockId())
+    Mockito.when(peer.getLastSyncBlockId())
         .thenReturn(new BlockCapsule.BlockId(Sha256Hash.ZERO_HASH, 1000L));
-      fetchInvDataMsgHandler.processMessage(peer, msg);
-    } catch (Exception e) {
-      Assert.assertEquals(e.getMessage(), "maxBlockNum: 1000, blockNum: 10000");
-    }
+    Exception e1 = Assert.assertThrows(Exception.class,
+        () -> fetchInvDataMsgHandler.processMessage(peer, msg));
+    Assert.assertEquals("maxBlockNum: 1000, blockNum: 10000", e1.getMessage());
 
-    try {
-      Mockito.when(peer.getLastSyncBlockId())
+    Mockito.when(peer.getLastSyncBlockId())
         .thenReturn(new BlockCapsule.BlockId(Sha256Hash.ZERO_HASH, 20000L));
-      fetchInvDataMsgHandler.processMessage(peer, msg);
-    } catch (Exception e) {
-      Assert.assertEquals(e.getMessage(), "minBlockNum: 16000, blockNum: 10000");
-    }
+    Exception e2 = Assert.assertThrows(Exception.class,
+        () -> fetchInvDataMsgHandler.processMessage(peer, msg));
+    Assert.assertEquals("minBlockNum: 16000, blockNum: 10000", e2.getMessage());
   }
 
   @Test
@@ -148,15 +144,12 @@ public class FetchInvDataMsgHandlerTest {
     Mockito.when(peer.getP2pRateLimiter()).thenReturn(p2pRateLimiter);
     FetchInvDataMsgHandler fetchInvDataMsgHandler = new FetchInvDataMsgHandler();
 
-    try {
-      fetchInvDataMsgHandler.processMessage(peer, msg);
-    } catch (Exception e) {
-      Assert.assertEquals("fetch too many blocks, size:101", e.getMessage());
-    }
-    try {
-      fetchInvDataMsgHandler.processMessage(peer, msg);
-    } catch (Exception e) {
-      Assert.assertTrue(e.getMessage().endsWith("rate limit"));
-    }
+    Exception e1 = Assert.assertThrows(Exception.class,
+        () -> fetchInvDataMsgHandler.processMessage(peer, msg));
+    Assert.assertEquals("fetch too many blocks, size:101", e1.getMessage());
+
+    Exception e2 = Assert.assertThrows(Exception.class,
+        () -> fetchInvDataMsgHandler.processMessage(peer, msg));
+    Assert.assertTrue(e2.getMessage().endsWith("rate limit"));
   }
 }

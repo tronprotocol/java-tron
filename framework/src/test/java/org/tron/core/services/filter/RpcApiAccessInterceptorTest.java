@@ -31,14 +31,12 @@ import org.tron.api.GrpcAPI.NumberMessage;
 import org.tron.api.GrpcAPI.TransactionIdList;
 import org.tron.api.WalletGrpc;
 import org.tron.api.WalletSolidityGrpc;
+import org.tron.common.ClassLevelAppContextFixture;
 import org.tron.common.TestConstants;
-import org.tron.common.application.Application;
-import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.PublicMethod;
 import org.tron.common.utils.TimeoutInterceptor;
 import org.tron.core.Constant;
-import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.services.RpcApiService;
 import org.tron.protos.Protocol.Transaction;
@@ -47,6 +45,8 @@ import org.tron.protos.Protocol.Transaction;
 public class RpcApiAccessInterceptorTest {
 
   private static TronApplicationContext context;
+  private static final ClassLevelAppContextFixture APP_FIXTURE =
+      new ClassLevelAppContextFixture();
   private static ManagedChannel channelFull = null;
   private static ManagedChannel channelPBFT = null;
   private static ManagedChannel channelSolidity = null;
@@ -93,14 +93,13 @@ public class RpcApiAccessInterceptorTest {
         .intercept(new TimeoutInterceptor(5000))
         .build();
 
-    context = new TronApplicationContext(DefaultConfig.class);
+    context = APP_FIXTURE.createContext();
 
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
     blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
     blockingStubPBFT = WalletSolidityGrpc.newBlockingStub(channelPBFT);
 
-    Application appTest = ApplicationFactory.create(context);
-    appTest.startup();
+    APP_FIXTURE.startApp();
   }
 
   /**
@@ -108,16 +107,8 @@ public class RpcApiAccessInterceptorTest {
    */
   @AfterClass
   public static void destroy() {
-    if (channelFull != null) {
-      channelFull.shutdownNow();
-    }
-    if (channelPBFT != null) {
-      channelPBFT.shutdownNow();
-    }
-    if (channelSolidity != null) {
-      channelSolidity.shutdownNow();
-    }
-    context.close();
+    ClassLevelAppContextFixture.shutdownChannels(channelFull, channelPBFT, channelSolidity);
+    APP_FIXTURE.close();
     Args.clearParam();
   }
 
@@ -307,4 +298,3 @@ public class RpcApiAccessInterceptorTest {
   }
 
 }
-

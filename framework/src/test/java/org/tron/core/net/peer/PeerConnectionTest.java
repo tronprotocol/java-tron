@@ -12,6 +12,7 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.Mockito;
+import org.tron.common.TestConstants;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.Pair;
@@ -32,6 +33,7 @@ public class PeerConnectionTest {
 
   @BeforeClass
   public static void initArgs() {
+    Args.setParam(new String[]{}, TestConstants.TEST_CONF);
     CommonParameter.getInstance().setRateLimiterSyncBlockChain(10);
     CommonParameter.getInstance().setRateLimiterFetchInvData(10);
     CommonParameter.getInstance().setRateLimiterDisconnect(10);
@@ -203,6 +205,8 @@ public class PeerConnectionTest {
     relayNodes.add(inetSocketAddress);
     peerConnection.setChannel(c1);
     Assert.assertTrue(peerConnection.isRelayPeer());
+
+    ReflectUtils.setFieldValue(peerConnection, "relayNodes", new ArrayList<>());
   }
 
   @Test
@@ -234,15 +238,12 @@ public class PeerConnectionTest {
 
   @Test
   public void testEquals() {
-    List<InetSocketAddress> relayNodes = new ArrayList<>();
-
     PeerConnection p1 = new PeerConnection();
     InetSocketAddress inetSocketAddress1 =
         new InetSocketAddress("127.0.0.2", 10001);
     Channel c1 = new Channel();
     ReflectUtils.setFieldValue(c1, "inetSocketAddress", inetSocketAddress1);
     ReflectUtils.setFieldValue(c1, "inetAddress", inetSocketAddress1.getAddress());
-    ReflectUtils.setFieldValue(p1, "relayNodes", relayNodes);
     p1.setChannel(c1);
 
     PeerConnection p2 = new PeerConnection();
@@ -251,7 +252,6 @@ public class PeerConnectionTest {
     Channel c2 = new Channel();
     ReflectUtils.setFieldValue(c2, "inetSocketAddress", inetSocketAddress2);
     ReflectUtils.setFieldValue(c2, "inetAddress", inetSocketAddress2.getAddress());
-    ReflectUtils.setFieldValue(p2, "relayNodes", relayNodes);
     p2.setChannel(c2);
 
     PeerConnection p3 = new PeerConnection();
@@ -260,7 +260,6 @@ public class PeerConnectionTest {
     Channel c3 = new Channel();
     ReflectUtils.setFieldValue(c3, "inetSocketAddress", inetSocketAddress3);
     ReflectUtils.setFieldValue(c3, "inetAddress", inetSocketAddress3.getAddress());
-    ReflectUtils.setFieldValue(p3, "relayNodes", relayNodes);
     p3.setChannel(c3);
 
     Assert.assertTrue(p1.equals(p1));
@@ -270,15 +269,12 @@ public class PeerConnectionTest {
 
   @Test
   public void testHashCode() {
-    List<InetSocketAddress> relayNodes = new ArrayList<>();
-
     PeerConnection p1 = new PeerConnection();
     InetSocketAddress inetSocketAddress1 =
         new InetSocketAddress("127.0.0.2", 10001);
     Channel c1 = new Channel();
     ReflectUtils.setFieldValue(c1, "inetSocketAddress", inetSocketAddress1);
     ReflectUtils.setFieldValue(c1, "inetAddress", inetSocketAddress1.getAddress());
-    ReflectUtils.setFieldValue(p1, "relayNodes", relayNodes);
     p1.setChannel(c1);
 
     PeerConnection p2 = new PeerConnection();
@@ -287,7 +283,6 @@ public class PeerConnectionTest {
     Channel c2 = new Channel();
     ReflectUtils.setFieldValue(c2, "inetSocketAddress", inetSocketAddress2);
     ReflectUtils.setFieldValue(c2, "inetAddress", inetSocketAddress2.getAddress());
-    ReflectUtils.setFieldValue(p2, "relayNodes", relayNodes);
     p2.setChannel(c2);
 
     PeerConnection p3 = new PeerConnection();
@@ -296,7 +291,6 @@ public class PeerConnectionTest {
     Channel c3 = new Channel();
     ReflectUtils.setFieldValue(c3, "inetSocketAddress", inetSocketAddress3);
     ReflectUtils.setFieldValue(c3, "inetAddress", inetSocketAddress3.getAddress());
-    ReflectUtils.setFieldValue(p3, "relayNodes", relayNodes);
     p3.setChannel(c3);
 
     Assert.assertTrue(p1.hashCode() != p2.hashCode());

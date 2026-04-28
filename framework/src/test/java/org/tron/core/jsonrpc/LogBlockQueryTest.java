@@ -3,7 +3,6 @@ package org.tron.core.jsonrpc;
 import java.lang.reflect.Method;
 import java.util.BitSet;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import javax.annotation.Resource;
 import org.junit.After;
 import org.junit.Assert;
@@ -11,6 +10,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.BaseTest;
 import org.tron.common.TestConstants;
+import org.tron.common.es.ExecutorServiceManager;
 import org.tron.core.config.args.Args;
 import org.tron.core.services.jsonrpc.TronJsonRpc.FilterRequest;
 import org.tron.core.services.jsonrpc.filters.LogBlockQuery;
@@ -21,6 +21,7 @@ public class LogBlockQueryTest extends BaseTest {
 
   @Resource
   SectionBloomStore sectionBloomStore;
+  private static final String EXECUTOR_NAME = "log-block-query-test";
   private ExecutorService sectionExecutor;
   private Method partialMatchMethod;
   private static final long CURRENT_MAX_BLOCK_NUM = 50000L;
@@ -31,10 +32,10 @@ public class LogBlockQueryTest extends BaseTest {
 
   @Before
   public void setup() throws Exception {
-    sectionExecutor = Executors.newFixedThreadPool(5);
-    
+    sectionExecutor = ExecutorServiceManager.newFixedThreadPool(EXECUTOR_NAME, 5);
+
     // Get private method through reflection
-    partialMatchMethod = LogBlockQuery.class.getDeclaredMethod("partialMatch", 
+    partialMatchMethod = LogBlockQuery.class.getDeclaredMethod("partialMatch",
         int[][].class, int.class);
     partialMatchMethod.setAccessible(true);
 
@@ -52,9 +53,7 @@ public class LogBlockQueryTest extends BaseTest {
 
   @After
   public void tearDown() {
-    if (sectionExecutor != null && !sectionExecutor.isShutdown()) {
-      sectionExecutor.shutdown();
-    }
+    ExecutorServiceManager.shutdownAndAwaitTermination(sectionExecutor, EXECUTOR_NAME);
   }
 
   @Test
@@ -63,8 +62,8 @@ public class LogBlockQueryTest extends BaseTest {
     LogFilterWrapper logFilterWrapper = new LogFilterWrapper(
         new FilterRequest("0x0", "0x1", null, null, null),
         CURRENT_MAX_BLOCK_NUM, null, false);
-    
-    LogBlockQuery logBlockQuery = new LogBlockQuery(logFilterWrapper, sectionBloomStore, 
+
+    LogBlockQuery logBlockQuery = new LogBlockQuery(logFilterWrapper, sectionBloomStore,
         CURRENT_MAX_BLOCK_NUM, sectionExecutor);
 
     int section = 0;
@@ -105,4 +104,4 @@ public class LogBlockQueryTest extends BaseTest {
     Assert.assertNotNull(result);
     Assert.assertTrue(result.isEmpty());
   }
-} 
+}

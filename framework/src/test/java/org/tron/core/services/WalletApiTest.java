@@ -14,13 +14,11 @@ import org.junit.rules.TemporaryFolder;
 import org.junit.rules.Timeout;
 import org.tron.api.GrpcAPI.EmptyMessage;
 import org.tron.api.WalletGrpc;
+import org.tron.common.ClassLevelAppContextFixture;
 import org.tron.common.TestConstants;
-import org.tron.common.application.Application;
-import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.PublicMethod;
 import org.tron.common.utils.TimeoutInterceptor;
-import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 
 
@@ -34,7 +32,8 @@ public class WalletApiTest {
   public Timeout timeout = new Timeout(30, TimeUnit.SECONDS);
 
   private static TronApplicationContext context;
-  private static Application appT;
+  private static final ClassLevelAppContextFixture APP_FIXTURE =
+      new ClassLevelAppContextFixture();
 
 
   @BeforeClass
@@ -43,9 +42,7 @@ public class WalletApiTest {
         "--p2p-disable", "true"}, TestConstants.TEST_CONF);
     Args.getInstance().setRpcPort(PublicMethod.chooseRandomPort());
     Args.getInstance().setRpcEnable(true);
-    context = new TronApplicationContext(DefaultConfig.class);
-    appT = ApplicationFactory.create(context);
-    appT.startup();
+    context = APP_FIXTURE.createAndStart();
   }
 
   @Test
@@ -61,22 +58,13 @@ public class WalletApiTest {
       Assert.assertTrue(walletStub.listNodes(EmptyMessage.getDefaultInstance())
           .getNodesList().isEmpty());
     } finally {
-      // Properly shutdown the gRPC channel to prevent resource leaks
-      channel.shutdown();
-      try {
-        if (!channel.awaitTermination(5, java.util.concurrent.TimeUnit.SECONDS)) {
-          channel.shutdownNow();
-        }
-      } catch (InterruptedException e) {
-        channel.shutdownNow();
-        Thread.currentThread().interrupt();
-      }
+      ClassLevelAppContextFixture.shutdownChannel(channel);
     }
   }
 
   @AfterClass
   public static void destroy() {
-    context.destroy();
+    APP_FIXTURE.close();
     Args.clearParam();
   }
 

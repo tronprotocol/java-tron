@@ -9,15 +9,20 @@ import static org.mockito.Mockito.when;
 
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.MockedConstruction;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.reflections.Reflections;
+import org.tron.common.es.ExecutorServiceManager;
 import org.tron.core.actuator.AbstractActuator;
 import org.tron.core.actuator.TransferActuator;
 import org.tron.core.config.args.Args;
@@ -49,25 +54,32 @@ public class TransactionRegisterTest {
   @Test
   public void testConcurrentAccessThreadSafe() throws InterruptedException {
     final int threadCount = 5;
-    Thread[] threads = new Thread[threadCount];
     final AtomicBoolean testPassed = new AtomicBoolean(true);
+    ExecutorService executor = ExecutorServiceManager
+        .newFixedThreadPool("transaction-register-test", threadCount);
+    Future<?>[] futures = new Future<?>[threadCount];
 
-    for (int i = 0; i < threadCount; i++) {
-      threads[i] = new Thread(() -> {
+    try {
+      for (int i = 0; i < threadCount; i++) {
+        futures[i] = executor.submit(() -> {
+          try {
+            TransactionRegister.registerActuator();
+          } catch (Throwable e) {
+            testPassed.set(false);
+            throw e;
+          }
+        });
+      }
+
+      for (Future<?> future : futures) {
         try {
-          TransactionRegister.registerActuator();
-        } catch (Throwable e) {
-          testPassed.set(false);
+          future.get();
+        } catch (ExecutionException e) {
+          Assert.fail("Concurrent registration should not throw: " + e.getCause());
         }
-      });
-    }
-
-    for (Thread thread : threads) {
-      thread.start();
-    }
-
-    for (Thread thread : threads) {
-      thread.join();
+      }
+    } finally {
+      ExecutorServiceManager.shutdownAndAwaitTermination(executor, "transaction-register-test");
     }
 
     assertTrue("All threads should complete without exceptions", testPassed.get());

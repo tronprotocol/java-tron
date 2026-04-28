@@ -46,7 +46,7 @@ public class BackupServerTest {
   @Test(timeout = 60_000)
   public void test() throws InterruptedException {
     backupServer.initServer();
-    // wait for the server to start
+    // wait for the server to start so channel is assigned before close() is called
     Thread.sleep(1000);
   }
 }

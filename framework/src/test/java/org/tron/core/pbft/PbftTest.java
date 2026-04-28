@@ -30,7 +30,7 @@ public class PbftTest {
     PbftMessage pbftSrMessage = PbftMessage
         .prePrepareSRLMsg(blockCapsule, srList, 1, miner);
     PbftMessage.fullNodePrePrepareSRLMsg(blockCapsule, srList, 1);
-    System.out.println(pbftSrMessage);
+    org.junit.Assert.assertNotNull(pbftSrMessage);
   }
 
 }

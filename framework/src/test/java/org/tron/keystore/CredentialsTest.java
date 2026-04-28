@@ -24,9 +24,7 @@ public class CredentialsTest {
   @Test
   public void testCreate() {
     SignInterface signInterface = mockSignInterface(ADDRESS_1);
-
     Credentials credentials = Credentials.create(signInterface);
-
     Assert.assertEquals("Credentials address create failed!",
         StringUtil.encode58Check(ADDRESS_1), credentials.getAddress());
     Assert.assertSame("Credentials cryptoEngine create failed", signInterface,
@@ -35,14 +33,11 @@ public class CredentialsTest {
 
   @Test
   public void testCreateFromSM2() {
-    try {
-      Credentials.create(SM2.fromNodeId(ByteUtil.hexToBytes("fffffffffff"
-          + "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
-          + "fffffffffffffffffffffffffffffffffffffff")));
-      Assert.fail("Expected IllegalArgumentException");
-    } catch (Exception e) {
-      Assert.assertTrue(e instanceof IllegalArgumentException);
-    }
+    Exception e = Assert.assertThrows(Exception.class,
+        () -> Credentials.create(SM2.fromNodeId(ByteUtil.hexToBytes("fffffffffff"
+            + "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+            + "fffffffffffffffffffffffffffffffffffffff"))));
+    Assert.assertTrue(e instanceof IllegalArgumentException);
   }
 
   @Test
