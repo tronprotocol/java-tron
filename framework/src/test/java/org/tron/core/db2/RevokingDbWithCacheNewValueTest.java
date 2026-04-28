@@ -1,58 +1,33 @@
 package org.tron.core.db2;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.tron.common.TestConstants;
-import org.tron.common.application.Application;
-import org.tron.common.application.ApplicationFactory;
-import org.tron.common.application.TronApplicationContext;
+import org.tron.common.BaseMethodTest;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.SessionOptional;
 import org.tron.core.capsule.utils.MarketUtils;
-import org.tron.core.config.DefaultConfig;
-import org.tron.core.config.args.Args;
 import org.tron.core.db.TronStoreWithRevoking;
 import org.tron.core.db2.SnapshotRootTest.ProtoCapsuleTest;
 import org.tron.core.db2.core.SnapshotManager;
 import org.tron.core.exception.RevokingStoreIllegalStateException;
 
 @Slf4j
-public class RevokingDbWithCacheNewValueTest {
+public class RevokingDbWithCacheNewValueTest extends BaseMethodTest {
 
   private SnapshotManager revokingDatabase;
-  private TronApplicationContext context;
-  private Application appT;
   private TestRevokingTronStore tronDatabase;
-  @Rule
-  public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
-  private String databasePath = "";
-
-  @Before
-  public void init() throws IOException {
-    databasePath = temporaryFolder.newFolder().toString();
-    Args.setParam(new String[]{"-d", databasePath},
-        TestConstants.TEST_CONF);
-    context = new TronApplicationContext(DefaultConfig.class);
-    appT = ApplicationFactory.create(context);
-  }
-
-  @After
-  public void removeDb() {
-    Args.clearParam();
-    context.destroy();
-    tronDatabase.close();
+  @Override
+  protected void beforeDestroy() {
+    if (tronDatabase != null) {
+      tronDatabase.close();
+    }
   }
 
   @Test

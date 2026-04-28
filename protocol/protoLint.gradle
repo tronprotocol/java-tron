@@ -1,0 +1,179 @@
+/**
+ * This is a Gradle script for proto linting.
+ *
+ * Implementation:
+ * 1. Integrates the 'buf' CLI tool to compile .proto files and generate a JSON AST (Abstract Syntax Tree) image.
+ * 2. Uses Groovy's JsonSlurper to parse the AST image.
+ * 3. Traverses all Enum definitions and validates them against preset rules.
+ *
+ * Current Validation:
+ * Enforces the java-tron API evolution standard (see https://github.com/tronprotocol/java-tron/issues/6515).
+ * Except for legacy enums in the 'legacyEnums' whitelist, all newly defined Enums MUST reserve index 0 for a field starting with 'UNKNOWN_'.
+ * This ensures robust forward/backward compatibility during proto3 JSON serialization.
+ */
+import groovy.json.JsonBuilder
+import groovy.json.JsonSlurper
+import org.gradle.internal.os.OperatingSystem
+
+// Define the required buf CLI version
+def bufVersion = "1.61.0"
+def currentOs = OperatingSystem.current()
+def platform = currentOs.isMacOsX() ? "osx" : (currentOs.isWindows() ? "windows" : "linux")
+def machine = rootProject.archInfo.isArm64 ? "aarch_64" : "x86_64"
+
+// Create a custom configuration for the buf CLI tool to keep it isolated from the classpath
+configurations {
+    bufTool
+}
+
+// Depend on the buf executable published on Maven Central
+dependencies {
+    bufTool "build.buf:buf:${bufVersion}:${platform}-${machine}@exe"
+}
+
+task protoLint {
+    group = "verification"
+    description = "Validate Protobuf Enums using buf generated JSON AST. Enforces 'UNKNOWN_' prefix for index 0 to ensure JSON serialization backward compatibility."
+    
+    // Explicitly depend on:
+    // 1. extractIncludeProto: ensure external protos are extracted before buf runs.
+    //    The include root is derived from that task's actual output below.
+    // 2. generateProto: fix Gradle implicit dependency warning due to output directory overlap.
+    dependsOn 'extractIncludeProto', 'generateProto'
+
+    // Wire the include proto directory from the extractIncludeProto task's actual output
+    def extractTask = tasks.named('extractIncludeProto').get()
+    def includeProtoDir = extractTask.destDir.get().asFile
+    def includeProtoDirRel = projectDir.toPath().relativize(includeProtoDir.toPath()).toString()
+
+    // Incremental build support: re-run when any file buf physically reads changes.
+    // Include protos are not lint targets, but buf reads them for import resolution,
+    // so they must be declared as inputs to keep the task cache hermetic.
+    inputs.dir('src/main/protos')
+    inputs.dir(includeProtoDir)
+    inputs.file('protoLint.gradle')
+
+    def markerFile = file("${buildDir}/tmp/protoLint.done")
+    outputs.file(markerFile)
+
+    doLast {
+        def bufExe = configurations.bufTool.singleFile
+        if (!bufExe.exists() || !bufExe.canExecute()) {
+            bufExe.setExecutable(true)
+        }
+
+        // 1. Legacy Whitelist
+        // Contains enums that existed before the 'UNKNOWN_' standard was enforced.
+        // Format: "filename.proto:EnumName" or "filename.proto:MessageName.EnumName"
+        def legacyEnums = [
+            "core/contract/common.proto:ResourceCode",
+            "core/contract/smart_contract.proto:SmartContract.ABI.Entry.EntryType",
+            "core/contract/smart_contract.proto:SmartContract.ABI.Entry.StateMutabilityType",
+            "core/Tron.proto:AccountType",
+            "core/Tron.proto:ReasonCode",
+            "core/Tron.proto:Proposal.State",
+            "core/Tron.proto:MarketOrder.State",
+            "core/Tron.proto:Permission.PermissionType",
+            "core/Tron.proto:Transaction.Contract.ContractType",
+            "core/Tron.proto:Transaction.Result.code",
+            "core/Tron.proto:Transaction.Result.contractResult",
+            "core/Tron.proto:TransactionInfo.code",
+            "core/Tron.proto:BlockInventory.Type",
+            "core/Tron.proto:Inventory.InventoryType",
+            "core/Tron.proto:Items.ItemType",
+            "core/Tron.proto:PBFTMessage.MsgType",
+            "core/Tron.proto:PBFTMessage.DataType",
+            "api/api.proto:Return.response_code",
+            "api/api.proto:TransactionSignWeight.Result.response_code",
+            "api/api.proto:TransactionApprovedList.Result.response_code",
+            "api/zksnark.proto:ZksnarkResponse.Code"
+        ].collect { it.toString() } as Set
+
+        // 2. Build JSON AST Image using buf CLI
+        def imageDir = file("${buildDir}/tmp/buf")
+        def imageFile = file("${imageDir}/proto-ast.json")
+        imageDir.mkdirs()
+        
+        println "🔍 Generating Proto AST image using buf CLI..."
+        
+        def bufConfig = new JsonBuilder([version: "v1beta1", build: [roots: ["src/main/protos", includeProtoDirRel]]]).toString()
+        
+        def execResult = exec {
+            commandLine bufExe.absolutePath, 'build', '.', '--config', bufConfig, '-o', "${imageFile.absolutePath}#format=json"
+            ignoreExitValue = true
+        }
+
+        if (execResult.exitValue != 0) {
+            throw new GradleException("Failed to generate AST image. Ensure your .proto files are valid. Buf exited with code ${execResult.exitValue}")
+        }
+
+        if (!imageFile.exists()) {
+            throw new GradleException("Failed to locate generated buf image at ${imageFile.absolutePath}")
+        }
+
+        // 3. Parse AST and Validate Enums
+        def descriptorSet
+        try {
+            descriptorSet = new JsonSlurper().parse(imageFile)
+        } catch (Exception e) {
+            throw new GradleException("Failed to parse buf generated JSON AST: ${e.message}", e)
+        }
+
+        def errors = []
+
+        descriptorSet.file?.each { protoFile ->
+            // Skip Google's and gRPC's internal protos as they are outside our control
+            if (protoFile.name?.startsWith("google/") || protoFile.name?.startsWith("grpc/")) {
+                return
+            }
+
+            // A queue-based (BFS) approach to safely traverse all nested messages and enums
+            // without using recursion, ensuring support for any nesting depth.
+            Queue queue = new ArrayDeque()
+            
+            // Initial seed: top-level enums and messages
+            protoFile.enumType?.each { queue.add([def: it, parentName: ""]) }
+            protoFile.messageType?.each { queue.add([def: it, parentName: ""]) }
+
+            while (!queue.isEmpty()) {
+                def item = queue.poll()
+                def definition = item.def
+                def parentName = item.parentName
+
+                // In buf's JSON image, enums expose EnumDescriptorProto.value while
+                // message descriptors do not, so we use that field as the discriminator here.
+                if (definition.value != null) { 
+                    // This is an Enum definition
+                    def fullName = parentName ? "${parentName}.${definition.name}" : definition.name
+                    def identifier = "${protoFile.name}:${fullName}".toString()
+                    
+                    if (!legacyEnums.contains(identifier)) {
+                        def zeroValue = definition.value?.find { it.number == 0 }
+                        if (zeroValue && !zeroValue.name?.startsWith("UNKNOWN_")) {
+                            errors << "[${protoFile.name}] Enum \"${fullName}\" has index 0: \"${zeroValue.name}\". It MUST start with \"UNKNOWN_\"."
+                        }
+                    }
+                } else {
+                    // This is a Message definition, look for nested enums and nested messages
+                    def currentMsgName = parentName ? "${parentName}.${definition.name}" : definition.name
+                    
+                    definition.enumType?.each { queue << [def: it, parentName: currentMsgName] }
+                    definition.nestedType?.each { queue << [def: it, parentName: currentMsgName] }
+                }
+            }
+        }
+
+        // 4. Report Results
+        if (!errors.isEmpty()) {
+            println "\n❌ [Protocol Design Violation] The following enums violate the java-tron API evolution standard (Issue #6515):"
+            errors.each { println "  - $it" }
+            throw new GradleException("Proto Enum validation failed. See above for details.")
+        } else {
+            println "✅ Proto Enum validation passed!"
+            // Update marker file for Gradle incremental build cache
+            markerFile.text = "Success"
+        }
+    }
+}
+
+check.dependsOn protoLint

@@ -17,6 +17,7 @@ import org.junit.rules.TemporaryFolder;
 import org.rocksdb.ReadOptions;
 import org.rocksdb.RocksDB;
 import org.rocksdb.RocksDBException;
+import org.tron.common.TestConstants;
 import org.tron.core.db.common.iterator.RockStoreIterator;
 import org.tron.core.db.common.iterator.StoreIterator;
 
@@ -31,6 +32,7 @@ public class DBIteratorTest {
 
   @Test
   public void testLevelDb() throws IOException {
+    TestConstants.assumeLevelDbAvailable();
     File file = temporaryFolder.newFolder();
     try (DB db = factory.open(file, new Options().createIfMissing(true))) {
       db.put("1".getBytes(StandardCharsets.UTF_8), "1".getBytes(StandardCharsets.UTF_8));

@@ -633,6 +633,10 @@ public class CommonParameter {
   @Setter
   public long allowTvmBlob;
 
+  @Getter
+  @Setter
+  public long allowTvmOsaka;
+
   private static double calcMaxTimeRatio() {
     return 5.0;
   }

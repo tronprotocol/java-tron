@@ -2,6 +2,7 @@ package org.tron.core.actuator;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
+import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
@@ -758,5 +759,15 @@ public class MarketCancelOrderActuatorTest extends BaseTest {
         .getUnchecked(pairPriceKey);
     Assert.assertNull(orderIdListCapsule);
 
+  }
+
+  @Test
+  public void testGetOwnerAddress() throws InvalidProtocolBufferException {
+    MarketCancelOrderActuator actuator = new MarketCancelOrderActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ADDRESS_FIRST, ByteString.copyFromUtf8("orderId")));
+
+    Assert.assertEquals(OWNER_ADDRESS_FIRST,
+        ByteArray.toHexString(actuator.getOwnerAddress().toByteArray()));
   }
 }

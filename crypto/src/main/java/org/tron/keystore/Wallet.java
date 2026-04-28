@@ -23,7 +23,6 @@ import org.tron.common.crypto.SignInterface;
 import org.tron.common.crypto.SignUtils;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.StringUtil;
-import org.tron.core.config.args.Args;
 import org.tron.core.exception.CipherException;
 
 /**
@@ -48,7 +47,12 @@ import org.tron.core.exception.CipherException;
  */
 public class Wallet {
 
-  protected static final String AES_128_CTR = "pbkdf2";
+  // KDF identifiers used in the Web3 Secret Storage "kdf" field.
+  // The old name "AES_128_CTR" was misleading — the value is the PBKDF2 KDF
+  // identifier, not the cipher (CIPHER below). The inner class name
+  // `WalletFile.Aes128CtrKdfParams` is kept for wire-format/Jackson-subtype
+  // backward compatibility even though it also reflects the same history.
+  protected static final String PBKDF2 = "pbkdf2";
   protected static final String SCRYPT = "scrypt";
   private static final int N_LIGHT = 1 << 12;
   private static final int P_LIGHT = 6;
@@ -168,8 +172,8 @@ public class Wallet {
     return Hash.sha3(result);
   }
 
-  public static SignInterface decrypt(String password, WalletFile walletFile)
-      throws CipherException {
+  public static SignInterface decrypt(String password, WalletFile walletFile,
+      boolean ecKey) throws CipherException {
 
     validate(walletFile);
 
@@ -205,30 +209,77 @@ public class Wallet {
 
     byte[] derivedMac = generateMac(derivedKey, cipherText);
 
-    if (!Arrays.equals(derivedMac, mac)) {
+    if (!java.security.MessageDigest.isEqual(derivedMac, mac)) {
       throw new CipherException("Invalid password provided");
     }
 
     byte[] encryptKey = Arrays.copyOfRange(derivedKey, 0, 16);
     byte[] privateKey = performCipherOperation(Cipher.DECRYPT_MODE, iv, encryptKey, cipherText);
 
-    return SignUtils.fromPrivate(privateKey, Args.getInstance().isECKeyCryptoEngine());
+    SignInterface keyPair = SignUtils.fromPrivate(privateKey, ecKey);
+
+    // Enforce address consistency: if the keystore declares an address, it MUST match
+    // the address derived from the decrypted private key. Prevents address spoofing
+    // where a crafted keystore displays one address but encrypts a different key.
+    String declared = walletFile.getAddress();
+    if (declared != null && !declared.isEmpty()) {
+      String derived = StringUtil.encode58Check(keyPair.getAddress());
+      if (!declared.equals(derived)) {
+        throw new CipherException(
+            "Keystore address mismatch: file declares " + declared
+                + " but private key derives " + derived);
+      }
+    }
+
+    return keyPair;
+  }
+
+  /**
+   * Returns a description of the first schema violation found in
+   * {@code walletFile}, or {@code null} if the file matches the supported
+   * V3 keystore shape (current version, known cipher, known KDF).
+   *
+   * <p>Shared by {@link #validate(WalletFile)} (which throws the message)
+   * and {@link #isValidKeystoreFile(WalletFile)} (which returns boolean
+   * for discovery-style filtering).
+   */
+  private static String validationError(WalletFile walletFile) {
+    if (walletFile.getVersion() != CURRENT_VERSION) {
+      return "Wallet version is not supported";
+    }
+    WalletFile.Crypto crypto = walletFile.getCrypto();
+    if (crypto == null) {
+      return "Missing crypto section";
+    }
+    String cipher = crypto.getCipher();
+    if (cipher == null || !cipher.equals(CIPHER)) {
+      return "Wallet cipher is not supported";
+    }
+    String kdf = crypto.getKdf();
+    if (kdf == null || (!kdf.equals(PBKDF2) && !kdf.equals(SCRYPT))) {
+      return "KDF type is not supported";
+    }
+    return null;
   }
 
   static void validate(WalletFile walletFile) throws CipherException {
-    WalletFile.Crypto crypto = walletFile.getCrypto();
-
-    if (walletFile.getVersion() != CURRENT_VERSION) {
-      throw new CipherException("Wallet version is not supported");
+    String error = validationError(walletFile);
+    if (error != null) {
+      throw new CipherException(error);
     }
+  }
 
-    if (!crypto.getCipher().equals(CIPHER)) {
-      throw new CipherException("Wallet cipher is not supported");
-    }
-
-    if (!crypto.getKdf().equals(AES_128_CTR) && !crypto.getKdf().equals(SCRYPT)) {
-      throw new CipherException("KDF type is not supported");
-    }
+  /**
+   * Returns {@code true} iff {@code walletFile} has the shape of a
+   * decryptable V3 keystore: non-null address, supported version, non-null
+   * crypto section with a supported cipher and KDF. Intended for
+   * discovery-style filtering (e.g. listing or duplicate detection) where
+   * we want to skip JSON stubs that would later fail {@link #validate}.
+   */
+  public static boolean isValidKeystoreFile(WalletFile walletFile) {
+    return walletFile != null
+        && walletFile.getAddress() != null
+        && validationError(walletFile) == null;
   }
 
   public static byte[] generateRandomBytes(int size) {

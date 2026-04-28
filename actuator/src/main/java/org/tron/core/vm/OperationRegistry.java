@@ -83,6 +83,10 @@ public class OperationRegistry {
       adjustSelfdestruct(table);
     }
 
+    if (VMConfig.allowTvmOsaka()) {
+      adjustVoteWitnessCost(table);
+    }
+
     return table;
   }
 
@@ -705,5 +709,13 @@ public class OperationRegistry {
         Op.SUICIDE, 1, 0,
         EnergyCost::getSuicideCost3,
         OperationActions::suicideAction2));
+  }
+
+  public static void adjustVoteWitnessCost(JumpTable table) {
+    table.set(new Operation(
+        Op.VOTEWITNESS, 4, 1,
+        EnergyCost::getVoteWitnessCost3,
+        OperationActions::voteWitnessAction,
+        VMConfig::allowTvmVote));
   }
 }

@@ -671,7 +671,7 @@ service Wallet {
 
   };
 
-  // for shiededTransaction
+  // for shieldedTransaction
   rpc CreateShieldedTransaction (PrivateParameters) returns (TransactionExtention) {
   };
 
@@ -747,7 +747,7 @@ service Wallet {
 
   rpc GetTriggerInputForShieldedTRC20Contract (ShieldedTRC20TriggerContractParameters) returns (BytesMessage) {
   };
-  // end for shiededTransaction
+  // end for shieldedTransaction
 
   rpc CreateCommonTransaction (Transaction) returns (TransactionExtention) {
   };
