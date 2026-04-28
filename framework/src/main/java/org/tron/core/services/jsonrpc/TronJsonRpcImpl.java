@@ -1426,7 +1426,7 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
     } else {
       eventFilter2Result = eventFilter2ResultSolidity;
     }
-    if (maxLogFilterNum >0 && eventFilter2Result.size() >= maxLogFilterNum) {
+    if (maxLogFilterNum > 0 && eventFilter2Result.size() >= maxLogFilterNum) {
       throw new JsonRpcExceedLimitException(
           "exceed max log filters: " + maxLogFilterNum + ", try again later");
     }
