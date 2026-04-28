@@ -645,7 +645,7 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
         estimateEnergy(ownerAddress,
             contractAddress,
             args.parseValue(),
-            ByteArray.fromHexString(args.getData()),
+            ByteArray.fromHexString(args.resolveData()),
             trxExtBuilder,
             retBuilder,
             estimateBuilder);
@@ -653,7 +653,7 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
         callTriggerConstantContract(ownerAddress,
             contractAddress,
             args.parseValue(),
-            ByteArray.fromHexString(args.getData()),
+            ByteArray.fromHexString(args.resolveData()),
             trxExtBuilder,
             retBuilder);
       }
@@ -1007,7 +1007,7 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
     byte[] contractAddressData = addressCompatibleToByteArray(transactionCall.getTo());
 
     return call(addressData, contractAddressData, transactionCall.parseValue(),
-        ByteArray.fromHexString(transactionCall.getData()));
+        ByteArray.fromHexString(transactionCall.resolveData()));
   }
 
   @Override
@@ -1114,7 +1114,8 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
       smartBuilder.setOriginAddress(ByteString.copyFrom(ownerAddress));
 
       // bytecode + parameter
-      smartBuilder.setBytecode(ByteString.copyFrom(ByteArray.fromHexString(args.getData())));
+      smartBuilder.setBytecode(
+          ByteString.copyFrom(ByteArray.fromHexString(args.resolveData())));
 
       if (StringUtils.isNotEmpty(args.getName())) {
         smartBuilder.setName(args.getName());
@@ -1159,8 +1160,9 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
       build.setOwnerAddress(ByteString.copyFrom(ownerAddress))
           .setContractAddress(ByteString.copyFrom(contractAddress));
 
-      if (StringUtils.isNotEmpty(args.getData())) {
-        build.setData(ByteString.copyFrom(ByteArray.fromHexString(args.getData())));
+      String callData = args.resolveData();
+      if (StringUtils.isNotEmpty(callData)) {
+        build.setData(ByteString.copyFrom(ByteArray.fromHexString(callData)));
       } else {
         build.setData(ByteString.copyFrom(new byte[0]));
       }
