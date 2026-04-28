@@ -1073,12 +1073,6 @@ public class Manager {
           .put(ByteArray.fromLong(block.getNum()), block.getResult());
     }
 
-    if (Metrics.enabled()) {
-      Metrics.histogramObserve(MetricKeys.Histogram.BLOCK_TRANSACTION_COUNT,
-          block.getTransactions().size(),
-          StringUtil.encode58Check(block.getWitnessAddress().toByteArray()));
-    }
-
     updateFork(block);
     if (System.currentTimeMillis() - block.getTimeStamp() >= 60_000) {
       revokingStore.setMaxFlushCount(maxFlushCount);
@@ -1276,6 +1270,11 @@ public class Manager {
       synchronized (this) {
         Metrics.histogramObserve(blockedTimer.get());
         blockedTimer.remove();
+        if (Metrics.enabled()) {
+          Metrics.histogramObserve(MetricKeys.Histogram.BLOCK_TRANSACTION_COUNT,
+              block.getTransactions().size(),
+              StringUtil.encode58Check(block.getWitnessAddress().toByteArray()));
+        }
         long headerNumber = getDynamicPropertiesStore().getLatestBlockHeaderNumber();
         if (block.getNum() <= headerNumber && khaosDb.containBlockInMiniStore(block.getBlockId())) {
           logger.info("Block {} is already exist.", block.getBlockId().getString());
