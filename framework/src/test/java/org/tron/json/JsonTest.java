@@ -1,11 +1,17 @@
 package org.tron.json;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.util.Arrays;
+import java.util.List;
 import org.junit.Test;
 
 /**
@@ -102,6 +108,260 @@ public class JsonTest {
     assertThrows(JSONException.class, () -> JSON.parseObject("[1,,3]"));
     // NOTE: Fastjson 1.x treats unquoted NULL as null, but jackson throws an error
     assertThrows(JSONException.class, () -> JSON.parseObject("{a:NULL}"));
+    // valid JSON but wrong shape — exercises the single-arg JSONException constructor
+    assertThrows(JSONException.class, () -> JSON.parseObject("[1,2,3]"));
   }
 
+  @Test
+  public void testParseToClass() {
+    assertNotNull(JSON.parse("{\"a\":1}"));
+    assertEquals(1, JSON.parse("{\"a\":1}").get("a").intValue());
+    assertNull(JSON.parse(null));
+    assertNull(JSON.parse("null"));
+
+    // parseObject(text, Class) — JSONObject / JSONArray short-circuits
+    assertEquals(1, JSON.parseObject("{\"a\":1}", JSONObject.class).getIntValue("a"));
+    assertEquals(3, JSON.parseObject("[1,2,3]", JSONArray.class).size());
+
+    // parseObject(text, Class) — arbitrary POJO via Jackson
+    Pojo p = JSON.parseObject("{\"name\":\"x\"}", Pojo.class);
+    assertEquals("x", p.name);
+    assertNull(JSON.parseObject(null, Pojo.class));
+
+    // JSONObject.parseObject delegate
+    assertEquals(1, JSONObject.parseObject("{\"a\":1}").getIntValue("a"));
+
+    // JSONArray.parseArray null inputs
+    assertNull(JSONArray.parseArray(null));
+    assertNull(JSONArray.parseArray("null"));
+  }
+
+  @Test
+  public void testToJSONString() {
+    assertEquals("null", JSON.toJSONString(null));
+    assertEquals("{\"a\":1}", JSON.toJSONString(new JSONObject().put("a", 1)));
+    assertEquals("[1,2]", JSON.toJSONString(JSON.parseArray("[1,2]")));
+    assertEquals("\"hi\"", JSON.toJSONString("hi"));
+
+    // pretty variant differs from compact for containers (exercises the pretty branch)
+    JSONObject obj = new JSONObject().put("a", 1);
+    assertNotEquals(JSON.toJSONString(obj, false), JSON.toJSONString(obj, true));
+    JSONArray arr = JSON.parseArray("[1,2]");
+    assertNotEquals(JSON.toJSONString(arr, false), JSON.toJSONString(arr, true));
+    // pretty for primitive types is just the JSON literal
+    assertEquals("\"hi\"", JSON.toJSONString("hi", true));
+  }
+
+  @Test
+  public void testJsonObjectGetters() {
+    JSONObject o = JSON.parseObject(
+        "{'b':true,'i':42,'l':9000000000,'s':'hi','nested':{'k':'v'},'arr':[1,2]}");
+    assertNotNull(o);
+
+    assertEquals(Boolean.TRUE, o.getBoolean("b"));
+    assertEquals(Integer.valueOf(42), o.getInteger("i"));
+    assertEquals(42L, o.getLongValue("i"));
+    assertEquals(Long.valueOf(9_000_000_000L), o.getLong("l"));
+    assertEquals("hi", o.getString("s"));
+    assertEquals("v", o.getJSONObject("nested").getString("k"));
+    assertEquals(2, o.getJSONArray("arr").size());
+
+    // getString on container serializes to JSON
+    assertTrue(o.getString("nested").contains("\"k\""));
+    assertTrue(o.getString("arr").contains("1"));
+
+    // missing keys → null / 0 for primitive accessors
+    assertNull(o.getString("missing"));
+    assertNull(o.getJSONObject("missing"));
+    assertNull(o.getJSONArray("missing"));
+    assertNull(o.getBoolean("missing"));
+    assertNull(o.getInteger("missing"));
+    assertNull(o.getLong("missing"));
+    assertNull(o.getBigDecimal("missing"));
+    assertEquals(0, o.getIntValue("missing"));
+    assertEquals(0L, o.getLongValue("missing"));
+
+    // getObject(key, Class) — JSONObject/JSONArray short-circuits + POJO via Jackson
+    assertEquals("v", o.getObject("nested", JSONObject.class).getString("k"));
+    assertEquals(2, o.getObject("arr", JSONArray.class).size());
+    assertNull(o.getObject("missing", Pojo.class));
+
+    Pojo nested = JSON.parseObject("{\"obj\":{\"name\":\"x\"}}").getObject("obj", Pojo.class);
+    assertEquals("x", nested.name);
+
+    // Fastjson compat: getJSONObject / getJSONArray auto-parse stringified JSON
+    JSONObject autoParse = JSON.parseObject(
+        "{'jsonStr':'{\"k\":\"v\"}','arrStr':'[1,2,3]'}");
+    assertEquals("v", autoParse.getJSONObject("jsonStr").getString("k"));
+    assertEquals(3, autoParse.getJSONArray("arrStr").size());
+  }
+
+  @Test
+  public void testJsonObjectPutAndEquality() {
+    JSONObject o = new JSONObject();
+    o.put("s", "str");
+    o.put("b", Boolean.TRUE);
+    o.put("i", Integer.valueOf(1));
+    o.put("l", Long.valueOf(2L));
+    o.put("nested", new JSONObject().put("k", "v"));
+    o.put("arr", new JSONArray().add(new JSONObject().put("x", 1)));
+    o.put("o_json", (Object) new JSONObject().put("k2", "v2"));
+    o.put("o_str", (Object) "fallthrough");
+    o.put("list", Arrays.asList("raw", null, new JSONObject().put("a", 1),
+        new JSONArray()));
+
+    assertEquals(9, o.size());
+    assertEquals(9, o.keySet().size());
+    assertTrue(o.containsKey("s"));
+
+    // null put removes the key for every typed overload
+    o.put("s", (String) null);
+    o.put("b", (Boolean) null);
+    o.put("i", (Integer) null);
+    o.put("l", (Long) null);
+    o.put("nested", (JSONObject) null);
+    o.put("arr", (JSONArray) null);
+    o.put("o_json", (Object) null);
+    o.put("list", (List<?>) null);
+    assertFalse(o.containsKey("s"));
+    assertEquals(1, o.size()); // only "o_str" remains
+
+    // remove returns the converted value
+    o.put("k", 7);
+    assertEquals(7, o.remove("k"));
+    assertNull(o.remove("nonexistent"));
+
+    // unwrap, toString, toJSONString
+    assertNotNull(o.unwrap());
+    assertEquals(o.toString(), o.toJSONString());
+
+    // equals / hashCode round-trip
+    JSONObject copy = JSON.parseObject(o.toString());
+    assertEquals(o, copy);
+    assertEquals(o.hashCode(), copy.hashCode());
+    assertNotEquals(o, "not a json");
+    assertNotEquals(o, null);
+    assertEquals(o, o);
+  }
+
+  @Test
+  public void testJsonArrayOps() {
+    JSONArray arr = new JSONArray();
+    arr.add(new JSONObject().put("k", "v"));
+    arr.add(null); // becomes a JSON null node
+
+    assertEquals(2, arr.size());
+    assertEquals("v", arr.getJSONObject(0).getString("k"));
+    assertNull(arr.getJSONObject(1));
+    assertTrue(arr.getString(0).contains("\"k\""));
+    assertNull(arr.getString(1));
+
+    // iterator covers JSONObject + null branches
+    int count = 0;
+    for (Object e : arr) {
+      if (count == 0) {
+        assertTrue(e instanceof JSONObject);
+      } else {
+        assertNull(e);
+      }
+      count++;
+    }
+    assertEquals(2, count);
+
+    // toString / toJSONString equivalence + unwrap
+    assertEquals(arr.toString(), arr.toJSONString());
+    assertNotNull(arr.unwrap());
+    assertEquals(2, arr.unwrap().size());
+
+    // equals / hashCode round-trip
+    JSONArray copy = JSON.parseArray(arr.toString());
+    assertEquals(arr, copy);
+    assertEquals(arr.hashCode(), copy.hashCode());
+    assertNotEquals("not array", arr);
+    assertEquals(arr, arr);
+
+    // Fastjson compat: getJSONObject auto-parses stringified JSON elements
+    JSONArray stringified = JSON.parseArray("[\"{\\\"k\\\":\\\"v\\\"}\"]");
+    assertEquals("v", stringified.getJSONObject(0).getString("k"));
+  }
+
+  @Test
+  public void testTypeUtilsCoercion() {
+    // null inputs across all coercers
+    assertNull(TypeUtils.castToBoolean(null));
+    assertNull(TypeUtils.castToInt(null));
+    assertNull(TypeUtils.castToLong(null));
+    assertNull(TypeUtils.castToBigDecimal(null));
+
+    // direct passthrough (Boolean / Number / BigDecimal / BigInteger)
+    assertEquals(Boolean.TRUE, TypeUtils.castToBoolean(Boolean.TRUE));
+    assertEquals(Boolean.TRUE, TypeUtils.castToBoolean(Integer.valueOf(1)));
+    assertEquals(Boolean.FALSE, TypeUtils.castToBoolean(Integer.valueOf(0)));
+    assertEquals(Boolean.TRUE, TypeUtils.castToBoolean(new BigDecimal("1")));
+    assertEquals(Integer.valueOf(7), TypeUtils.castToInt(Integer.valueOf(7)));
+    assertEquals(Integer.valueOf(7), TypeUtils.castToInt(new BigDecimal("7")));
+    assertEquals(Integer.valueOf(7), TypeUtils.castToInt(Long.valueOf(7L))); // Number branch
+    assertEquals(Long.valueOf(7L), TypeUtils.castToLong(Long.valueOf(7L)));
+    assertEquals(Long.valueOf(7L), TypeUtils.castToLong(new BigDecimal("7")));
+    assertEquals(Long.valueOf(7L), TypeUtils.castToLong(Integer.valueOf(7))); // Number branch
+
+    // string-null literals → null
+    assertNull(TypeUtils.castToBoolean(""));
+    assertNull(TypeUtils.castToBoolean("null"));
+    assertNull(TypeUtils.castToBoolean("NULL"));
+    assertNull(TypeUtils.castToInt(""));
+    assertNull(TypeUtils.castToInt("null"));
+    assertNull(TypeUtils.castToInt("NULL"));
+    assertNull(TypeUtils.castToLong(""));
+    assertNull(TypeUtils.castToLong("null"));
+    assertNull(TypeUtils.castToLong("NULL"));
+    assertNull(TypeUtils.castToBigDecimal(""));
+    assertNull(TypeUtils.castToBigDecimal("null"));
+
+    // boolean string parsing — covers all token branches
+    assertEquals(Boolean.TRUE, TypeUtils.castToBoolean("true"));
+    assertEquals(Boolean.TRUE, TypeUtils.castToBoolean("TRUE"));
+    assertEquals(Boolean.TRUE, TypeUtils.castToBoolean("1"));
+    assertEquals(Boolean.FALSE, TypeUtils.castToBoolean("false"));
+    assertEquals(Boolean.FALSE, TypeUtils.castToBoolean("FALSE"));
+    assertEquals(Boolean.FALSE, TypeUtils.castToBoolean("0"));
+    assertEquals(Boolean.TRUE, TypeUtils.castToBoolean("Y"));
+    assertEquals(Boolean.TRUE, TypeUtils.castToBoolean("T"));
+    assertEquals(Boolean.FALSE, TypeUtils.castToBoolean("F"));
+    assertEquals(Boolean.FALSE, TypeUtils.castToBoolean("N"));
+
+    // numeric string — comma stripping + trailing-zero stripping (Fastjson compat)
+    assertEquals(Integer.valueOf(1000), TypeUtils.castToInt("1,000"));
+    assertEquals(Integer.valueOf(1), TypeUtils.castToInt("1.0"));
+    assertEquals(Long.valueOf(2_000L), TypeUtils.castToLong("2,000"));
+    assertEquals(Long.valueOf(9_000_000_000L), TypeUtils.castToLong("9000000000"));
+
+    // Boolean → numeric
+    assertEquals(Integer.valueOf(1), TypeUtils.castToInt(Boolean.TRUE));
+    assertEquals(Integer.valueOf(0), TypeUtils.castToInt(Boolean.FALSE));
+    assertEquals(Long.valueOf(1L), TypeUtils.castToLong(Boolean.TRUE));
+    assertEquals(Long.valueOf(0L), TypeUtils.castToLong(Boolean.FALSE));
+
+    // BigDecimal: NaN / Infinity → null; BigInteger conversion; string with comma
+    assertEquals(new BigDecimal("3.14"),
+        TypeUtils.castToBigDecimal(new BigDecimal("3.14")));
+    assertEquals(new BigDecimal(BigInteger.TEN),
+        TypeUtils.castToBigDecimal(BigInteger.TEN));
+    assertNull(TypeUtils.castToBigDecimal(Float.NaN));
+    assertNull(TypeUtils.castToBigDecimal(Float.POSITIVE_INFINITY));
+    assertNull(TypeUtils.castToBigDecimal(Double.NaN));
+    assertNull(TypeUtils.castToBigDecimal(Double.NEGATIVE_INFINITY));
+    assertEquals(new BigDecimal("1000.5"), TypeUtils.castToBigDecimal("1,000.5"));
+    assertEquals(new BigDecimal("123"), TypeUtils.castToBigDecimal(Integer.valueOf(123)));
+
+    // intValue / longValue helpers — null + normal scale
+    assertEquals(0, TypeUtils.intValue(null));
+    assertEquals(0L, TypeUtils.longValue(null));
+    assertEquals(7, TypeUtils.intValue(new BigDecimal("7")));
+    assertEquals(7L, TypeUtils.longValue(new BigDecimal("7")));
+  }
+
+  public static class Pojo {
+    public String name;
+  }
 }
