@@ -1,9 +1,16 @@
 package org.tron.common.backup;
 
+import static org.mockito.Mockito.mockStatic;
+
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
 import org.junit.After;
@@ -12,6 +19,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.mockito.MockedStatic;
 import org.tron.common.TestConstants;
 import org.tron.common.backup.BackupManager.BackupStatusEnum;
 import org.tron.common.backup.message.KeepAliveMessage;
@@ -20,6 +28,7 @@ import org.tron.common.backup.socket.UdpEvent;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.PublicMethod;
 import org.tron.core.config.args.Args;
+import org.tron.p2p.dns.lookup.LookUpTxt;
 
 public class BackupManagerTest {
 
@@ -139,5 +148,119 @@ public class BackupManagerTest {
     executorService2.shutdown();
 
     Assert.assertEquals(BackupManager.BackupStatusEnum.INIT, manager.getStatus());
+  }
+
+  // ===== domain-handling tests for init() =====
+
+  @Test(timeout = 5000)
+  public void testInitResolvesDomainsToMembers() throws Exception {
+    CommonParameter.getInstance().setBackupMembers(
+        Collections.singletonList("node.example.com"));
+    InetAddress resolved = InetAddress.getByName("1.2.3.4");
+    try (MockedStatic<LookUpTxt> mock = mockStatic(LookUpTxt.class)) {
+      mock.when(() -> LookUpTxt.lookUpIp("node.example.com", true)).thenReturn(resolved);
+      manager.init();
+    }
+    Set<String> members = getField(manager, "members");
+    Map<String, String> cache = getField(manager, "domainIpCache");
+    Assert.assertTrue(members.contains("1.2.3.4"));
+    Assert.assertEquals("1.2.3.4", cache.get("node.example.com"));
+    manager.stop();
+  }
+
+  @Test(timeout = 5000)
+  public void testInitSkipsUnresolvableDomain() throws Exception {
+    CommonParameter.getInstance().setBackupMembers(
+        Collections.singletonList("bad.invalid.domain"));
+    try (MockedStatic<LookUpTxt> mock = mockStatic(LookUpTxt.class)) {
+      mock.when(() -> LookUpTxt.lookUpIp("bad.invalid.domain", true)).thenReturn(null);
+      mock.when(() -> LookUpTxt.lookUpIp("bad.invalid.domain", false)).thenReturn(null);
+      manager.init();
+    }
+    Set<String> members = getField(manager, "members");
+    Map<String, String> cache = getField(manager, "domainIpCache");
+    Assert.assertTrue("unresolvable domain should be silently dropped", members.isEmpty());
+    Assert.assertTrue(cache.isEmpty());
+    manager.stop();
+  }
+
+  @Test(timeout = 5000)
+  public void testInitSkipsDomainResolvingToLocalIp() throws Exception {
+    String localIp = InetAddress.getLocalHost().getHostAddress();
+    CommonParameter.getInstance().setBackupMembers(
+        Collections.singletonList("self.local.host"));
+    InetAddress selfAddr = InetAddress.getByName(localIp);
+    try (MockedStatic<LookUpTxt> mock = mockStatic(LookUpTxt.class)) {
+      mock.when(() -> LookUpTxt.lookUpIp("self.local.host", true)).thenReturn(selfAddr);
+      manager.init();
+    }
+    Set<String> members = getField(manager, "members");
+    Assert.assertFalse("domain resolving to local IP should not be in members",
+        members.contains(localIp));
+    manager.stop();
+  }
+
+  // ===== refreshMemberIps() tests =====
+
+  @Test(timeout = 5000)
+  public void testRefreshMemberIpsIpChanged() throws Exception {
+    Set<String> members = getField(manager, "members");
+    Map<String, String> cache = getField(manager, "domainIpCache");
+    members.add("1.1.1.1");
+    cache.put("peer.tron.network", "1.1.1.1");
+
+    InetAddress newAddr = InetAddress.getByName("2.2.2.2");
+    try (MockedStatic<LookUpTxt> mock = mockStatic(LookUpTxt.class)) {
+      mock.when(() -> LookUpTxt.lookUpIp("peer.tron.network", true)).thenReturn(newAddr);
+      invokeRefreshMemberIps(manager);
+    }
+    Assert.assertFalse(members.contains("1.1.1.1"));
+    Assert.assertTrue(members.contains("2.2.2.2"));
+    Assert.assertEquals("2.2.2.2", cache.get("peer.tron.network"));
+  }
+
+  @Test(timeout = 5000)
+  public void testRefreshMemberIpsIpUnchanged() throws Exception {
+    Set<String> members = getField(manager, "members");
+    Map<String, String> cache = getField(manager, "domainIpCache");
+    members.add("1.1.1.1");
+    cache.put("peer.tron.network", "1.1.1.1");
+
+    InetAddress sameAddr = InetAddress.getByName("1.1.1.1");
+    try (MockedStatic<LookUpTxt> mock = mockStatic(LookUpTxt.class)) {
+      mock.when(() -> LookUpTxt.lookUpIp("peer.tron.network", true)).thenReturn(sameAddr);
+      invokeRefreshMemberIps(manager);
+    }
+    Assert.assertTrue(members.contains("1.1.1.1"));
+    Assert.assertEquals("1.1.1.1", cache.get("peer.tron.network"));
+  }
+
+  @Test(timeout = 5000)
+  public void testRefreshMemberIpsDnsFailure() throws Exception {
+    Set<String> members = getField(manager, "members");
+    Map<String, String> cache = getField(manager, "domainIpCache");
+    members.add("1.1.1.1");
+    cache.put("peer.tron.network", "1.1.1.1");
+
+    try (MockedStatic<LookUpTxt> mock = mockStatic(LookUpTxt.class)) {
+      mock.when(() -> LookUpTxt.lookUpIp("peer.tron.network", true)).thenReturn(null);
+      mock.when(() -> LookUpTxt.lookUpIp("peer.tron.network", false)).thenReturn(null);
+      invokeRefreshMemberIps(manager);
+    }
+    Assert.assertTrue("old IP should be kept on DNS failure", members.contains("1.1.1.1"));
+    Assert.assertEquals("1.1.1.1", cache.get("peer.tron.network"));
+  }
+
+  @SuppressWarnings("unchecked")
+  private <T> T getField(Object obj, String name) throws Exception {
+    Field f = obj.getClass().getDeclaredField(name);
+    f.setAccessible(true);
+    return (T) f.get(obj);
+  }
+
+  private void invokeRefreshMemberIps(BackupManager mgr) throws Exception {
+    Method m = mgr.getClass().getDeclaredMethod("refreshMemberIps");
+    m.setAccessible(true);
+    m.invoke(mgr);
   }
 }
