@@ -11,6 +11,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.Locale;
 import java.util.Map;
 import org.junit.Rule;
 import org.junit.Test;
@@ -307,7 +308,7 @@ public class KeystoreCliUtilsTest {
   @Test
   public void testReadRegularFileRefusesSymlink() throws Exception {
     org.junit.Assume.assumeTrue("Symlinks only tested on POSIX",
-        !System.getProperty("os.name").toLowerCase().contains("win"));
+        !System.getProperty("os.name").toLowerCase(Locale.ROOT).contains("win"));
 
     File target = tempFolder.newFile("real-target.txt");
     Files.write(target.toPath(), "secret content".getBytes(StandardCharsets.UTF_8));
