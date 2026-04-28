@@ -38,6 +38,15 @@ public class TronJsonRpcRevertReasonTest {
   }
 
   @Test
+  public void testTryDecodeRevertReasonWithEmptyString() {
+    // require(cond, "") yields a empty string
+    byte[] resData = ByteArray.fromHexString("08c379a0"
+        + "0000000000000000000000000000000000000000000000000000000000000020"
+        + "0000000000000000000000000000000000000000000000000000000000000000");
+    Assert.assertEquals("", TronJsonRpcImpl.tryDecodeRevertReason(resData));
+  }
+
+  @Test
   public void testTryDecodeRevertReasonWithOversizedPayload() {
     // selector(4) + payload(4097) one byte over the 4096 limit: must be rejected before parse.
     byte[] resData = new byte[4101];

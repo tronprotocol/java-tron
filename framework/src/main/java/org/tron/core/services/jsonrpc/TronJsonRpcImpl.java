@@ -473,7 +473,7 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
 
   /**
    * Decodes an Error(string) revert reason when possible.
-   * Returns ": reason" on success, otherwise "".
+   * Returns ": reason" for a non-empty reason, otherwise "".
    */
   static String tryDecodeRevertReason(byte[] resData) {
     if (resData == null || resData.length <= REVERT_REASON_SELECTOR_LENGTH) {
@@ -494,7 +494,7 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
           org.bouncycastle.util.Arrays.copyOfRange(resData, REVERT_REASON_SELECTOR_LENGTH,
               resData.length),
           "string", 0);
-      return ": " + reason;
+      return reason.isEmpty() ? "" : ": " + reason;
     } catch (Exception e) {
       logger.debug("parse revert reason failed", e);
       return "";
