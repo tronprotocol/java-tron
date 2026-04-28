@@ -170,11 +170,6 @@ public class BlockChainMetricManager {
       Metrics.counterInc(MetricKeys.Counter.TXS, txCount,
           MetricLabels.Counter.TXS_SUCCESS, MetricLabels.Counter.TXS_SUCCESS);
     }
-    if (Metrics.enabled()) {
-      // Record transaction count distribution for all blocks (including empty blocks)
-      Metrics.histogramObserve(MetricKeys.Histogram.BLOCK_TRANSACTION_COUNT, txCount,
-          StringUtil.encode58Check(address));
-    }
   }
 
   private List<WitnessInfo> getSrList() {

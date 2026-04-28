@@ -143,7 +143,7 @@ public class MaintenanceManager {
           consensusDelegate.saveWitness(witnessCapsule);
         });
 
-        SRMetrics.record(currentWits, newWits);
+        SRMetrics.recordSrSetChange(currentWits, newWits);
       }
 
       logger.info("Update witness success. \nbefore: {} \nafter: {}",

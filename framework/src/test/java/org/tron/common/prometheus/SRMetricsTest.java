@@ -141,7 +141,7 @@ public class SRMetricsTest extends BaseTest {
    * SR_REMOVE is verified by directly calling record() instead of going through doMaintenance(),
    * because driving a removal through the real flow is impractical here:
    *
-   * <p>Inside doMaintenance(), the block before SRMetrics.record() iterates currentWits
+   * <p>Inside doMaintenance(), the block before SRMetrics.recordSrSetChange() iterates currentWits
    * and calls setIsJobs(false) on each WitnessCapsule fetched from WitnessStore. If currentWits
    * contains any address that is not present in WitnessStore, getWitness() returns null and the
    * code NPEs — so SR_REMOVE cannot be triggered by simply pointing the active set at an
@@ -158,7 +158,7 @@ public class SRMetricsTest extends BaseTest {
     ByteString stableWit = uniqueAddress();
     ByteString removedWit = uniqueAddress();
 
-    SRMetrics.record(
+    SRMetrics.recordSrSetChange(
         Arrays.asList(stableWit, removedWit),
         Collections.singletonList(stableWit));
 

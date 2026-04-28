@@ -10,7 +10,7 @@ public class SRMetrics {
     throw new IllegalStateException("SRMetrics");
   }
 
-  public static void record(List<ByteString> currentWits, List<ByteString> newWits) {
+  public static void recordSrSetChange(List<ByteString> currentWits, List<ByteString> newWits) {
     if (!Metrics.enabled()) {
       return;
     }

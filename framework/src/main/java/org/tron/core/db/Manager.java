@@ -1073,6 +1073,12 @@ public class Manager {
           .put(ByteArray.fromLong(block.getNum()), block.getResult());
     }
 
+    if (Metrics.enabled()) {
+      Metrics.histogramObserve(MetricKeys.Histogram.BLOCK_TRANSACTION_COUNT,
+          block.getTransactions().size(),
+          StringUtil.encode58Check(block.getWitnessAddress().toByteArray()));
+    }
+
     updateFork(block);
     if (System.currentTimeMillis() - block.getTimeStamp() >= 60_000) {
       revokingStore.setMaxFlushCount(maxFlushCount);
