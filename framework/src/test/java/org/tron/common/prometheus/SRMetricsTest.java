@@ -24,7 +24,7 @@ import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Vote;
 
 @Slf4j(topic = "metric")
-public class SrSetChangeMetricTest extends BaseTest {
+public class SRMetricsTest extends BaseTest {
 
   private static final AtomicInteger PORT = new AtomicInteger(0);
   private static final AtomicInteger UNIQUE = new AtomicInteger(0);
@@ -141,7 +141,7 @@ public class SrSetChangeMetricTest extends BaseTest {
    * SR_REMOVE is verified by directly calling record() instead of going through doMaintenance(),
    * because driving a removal through the real flow is impractical here:
    *
-   * <p>Inside doMaintenance(), the block before SrSetChangeMetric.record() iterates currentWits
+   * <p>Inside doMaintenance(), the block before SRMetrics.record() iterates currentWits
    * and calls setIsJobs(false) on each WitnessCapsule fetched from WitnessStore. If currentWits
    * contains any address that is not present in WitnessStore, getWitness() returns null and the
    * code NPEs — so SR_REMOVE cannot be triggered by simply pointing the active set at an
@@ -158,7 +158,7 @@ public class SrSetChangeMetricTest extends BaseTest {
     ByteString stableWit = uniqueAddress();
     ByteString removedWit = uniqueAddress();
 
-    SrSetChangeMetric.record(
+    SRMetrics.record(
         Arrays.asList(stableWit, removedWit),
         Collections.singletonList(stableWit));
 

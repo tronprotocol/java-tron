@@ -4,10 +4,10 @@ import com.google.protobuf.ByteString;
 import java.util.List;
 import org.tron.common.utils.StringUtil;
 
-public class SrSetChangeMetric {
+public class SRMetrics {
 
-  private SrSetChangeMetric() {
-    throw new IllegalStateException("SrSetChangeMetric");
+  private SRMetrics() {
+    throw new IllegalStateException("SRMetrics");
   }
 
   public static void record(List<ByteString> currentWits, List<ByteString> newWits) {
