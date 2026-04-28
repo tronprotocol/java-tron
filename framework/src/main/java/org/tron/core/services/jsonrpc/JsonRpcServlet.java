@@ -95,10 +95,10 @@ public class JsonRpcServlet extends RateLimiterServlet {
       writeJsonRpcError(resp, JsonRpcError.PARSE_ERROR, "Parse error", null);
       return;
     }
-    if (rootNode.isArray() && rootNode.size() > parameter.getJsonRpcMaxBatchSize()) {
+    int batchSize = parameter.getJsonRpcMaxBatchSize();
+    if (rootNode.isArray() && batchSize > 0 && rootNode.size() > batchSize) {
       writeJsonRpcError(resp, JsonRpcError.EXCEED_LIMIT,
-          "Batch size " + rootNode.size() + " exceeds the limit of "
-              + parameter.getJsonRpcMaxBatchSize(), null);
+          "Batch size " + rootNode.size() + " exceeds the limit of " + batchSize, null);
       return;
     }
 
