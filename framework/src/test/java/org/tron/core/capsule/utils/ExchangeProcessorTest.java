@@ -185,6 +185,37 @@ public class ExchangeProcessorTest extends BaseTest {
   }
 
   @Test
+  public void testSafeProcessorDivByZeroThrows() {
+    // newBalance = balance + quant = -1 + 1 = 0 -> BigDecimal divide by zero
+    assertThrows(ArithmeticException.class,
+        () -> SafeExchangeProcessor.INSTANCE.exchange(-1L, 100L, 1L));
+  }
+
+  @Test
+  public void testSafeProcessorAddExactOverflowThrows() {
+    // balance + quant = MAX + 1 -> addExact overflow
+    assertThrows(ArithmeticException.class,
+        () -> SafeExchangeProcessor.INSTANCE.exchange(Long.MAX_VALUE, 1L, 1L));
+  }
+
+  @Test
+  public void testSafeProcessorNoOvershootForTypicalInputs() {
+    // Verify across realistic inputs that hardened result never exceeds buy reserve.
+    long[][] data = {
+        {100_000_000L, 100_000_000L, 1_000_000L},
+        {1_000_000_000L, 1_000_000_000L, 100_000L},
+        {1L, 10_140_000_000_000L, 2_897_000_000_000L},
+        {903L, 737L, 50L},
+    };
+    for (long[] row : data) {
+      long result = SafeExchangeProcessor.INSTANCE.exchange(row[0], row[1], row[2]);
+      Assert.assertTrue("Result must be non-negative", result >= 0);
+      Assert.assertTrue("Result must not exceed buy reserve, got " + result + " > " + row[1],
+          result <= row[1]);
+    }
+  }
+
+  @Test
   public void testStrictMath() {
     long supply = 1_000_000_000_000_000_000L;
     long[][] testData = {

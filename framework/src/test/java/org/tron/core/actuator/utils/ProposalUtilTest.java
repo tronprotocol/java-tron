@@ -345,6 +345,8 @@ public class ProposalUtilTest extends BaseTest {
 
     testAllowHardenResourceCalculationProposal();
 
+    testAllowHardenExchangeCalculationProposal();
+
     forkUtils.getManager().getDynamicPropertiesStore()
         .statsByVersion(ForkBlockVersionEnum.ENERGY_LIMIT.getValue(), stats);
     forkUtils.reset();
@@ -611,6 +613,39 @@ public class ProposalUtilTest extends BaseTest {
     Assert.assertEquals(
         "[ALLOW_HARDEN_RESOURCE_CALCULATION] has been valid, no need to propose again",
         e3.getMessage());
+  }
+
+  private void testAllowHardenExchangeCalculationProposal() {
+    long code = ProposalType.ALLOW_HARDEN_EXCHANGE_CALCULATION.getCode();
+    ThrowingRunnable proposeOne = () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+        code, 1);
+    ThrowingRunnable proposeTwo = () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+        code, 2);
+
+    // 1) before fork 4.8.2 -> rejected
+    ContractValidateException thrown = assertThrows(ContractValidateException.class, proposeOne);
+    assertEquals("Bad chain parameter id [ALLOW_HARDEN_EXCHANGE_CALCULATION]",
+        thrown.getMessage());
+
+    activateFork(ForkBlockVersionEnum.VERSION_4_8_2);
+
+    // 2) value != 1 -> rejected
+    thrown = assertThrows(ContractValidateException.class, proposeTwo);
+    assertEquals("This value[ALLOW_HARDEN_EXCHANGE_CALCULATION] is only allowed to be 1",
+        thrown.getMessage());
+
+    // 3) value=1 first time -> ok
+    try {
+      proposeOne.run();
+    } catch (Throwable e) {
+      Assert.fail("Should pass when value=1 and not yet activated: " + e.getMessage());
+    }
+
+    // 4) already activated -> reject re-proposal
+    dynamicPropertiesStore.saveAllowHardenExchangeCalculation(1);
+    thrown = assertThrows(ContractValidateException.class, proposeOne);
+    assertEquals("[ALLOW_HARDEN_EXCHANGE_CALCULATION] has been valid, no need to propose again",
+        thrown.getMessage());
   }
 
   private void testAllowMarketTransaction() {
