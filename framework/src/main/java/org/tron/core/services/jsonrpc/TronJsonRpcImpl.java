@@ -1426,7 +1426,7 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
     } else {
       eventFilter2Result = eventFilter2ResultSolidity;
     }
-    if (eventFilter2Result.size() >= maxLogFilterNum) {
+    if (maxLogFilterNum >0 && eventFilter2Result.size() >= maxLogFilterNum) {
       throw new JsonRpcExceedLimitException(
           "exceed max log filters: " + maxLogFilterNum + ", try again later");
     }
@@ -1448,7 +1448,7 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
     } else {
       blockFilter2Result = blockFilter2ResultSolidity;
     }
-    if (blockFilter2Result.size() >= maxBlockFilterNum) {
+    if (maxBlockFilterNum > 0 && blockFilter2Result.size() >= maxBlockFilterNum) {
       throw new JsonRpcExceedLimitException(
           "exceed max block filters: " + maxBlockFilterNum + ", try again later");
     }
