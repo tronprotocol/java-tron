@@ -6,6 +6,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
@@ -106,7 +107,7 @@ public class WitnessInitializerTest {
       byte[] keyBytes = Hex.decode(privateKey);
       when(signInterface.getPrivateKey()).thenReturn(keyBytes);
       mockedWallet.when(() -> WalletUtils.loadCredentials(
-          anyString(), any(File.class))).thenReturn(credentials);
+          anyString(), any(File.class), anyBoolean())).thenReturn(credentials);
       mockedByteArray.when(() -> ByteArray.toHexString(any()))
           .thenReturn(privateKey);
       mockedByteArray.when(() -> ByteArray.fromHexString(anyString()))

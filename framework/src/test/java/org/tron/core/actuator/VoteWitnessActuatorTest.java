@@ -569,12 +569,8 @@ public class VoteWitnessActuatorTest extends BaseTest {
     actuator.setChainBaseManager(dbManager.getChainBaseManager())
         .setAny(getContract(OWNER_ADDRESS, WITNESS_ADDRESS, 100L));
     TransactionResultCapsule ret = new TransactionResultCapsule();
-    try {
-      actuator.validate();
-      Assert.fail();
-    } catch (ContractValidateException e) {
-      Assert.assertTrue(e instanceof ContractValidateException);
-    }
+    Assert.assertThrows(ContractValidateException.class,
+        () -> actuator.validate());
     dbManager.getDynamicPropertiesStore().saveAllowNewResourceModel(0L);
   }
 
@@ -658,12 +654,8 @@ public class VoteWitnessActuatorTest extends BaseTest {
     actuator.setChainBaseManager(dbManager.getChainBaseManager())
         .setAny(getContract(OWNER_ADDRESS, WITNESS_ADDRESS, 4000000L));
     TransactionResultCapsule ret = new TransactionResultCapsule();
-    try {
-      actuator.validate();
-      Assert.fail();
-    } catch (ContractValidateException e) {
-      Assert.assertTrue(e instanceof ContractValidateException);
-    }
+    Assert.assertThrows(ContractValidateException.class,
+        () -> actuator.validate());
     dbManager.getDynamicPropertiesStore().saveAllowNewResourceModel(0L);
   }
 

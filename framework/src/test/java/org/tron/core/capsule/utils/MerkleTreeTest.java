@@ -101,12 +101,9 @@ public class MerkleTreeTest {
    */
   public void test0HashNum() {
     List<Sha256Hash> hashList = getHash(0);  //Empty list.
-    try {
-      MerkleTree.getInstance().createTree(hashList);
-      Assert.assertFalse(true);
-    } catch (Exception e) {
-      Assert.assertTrue(e instanceof IndexOutOfBoundsException);
-    }
+    Exception e = Assert.assertThrows(Exception.class,
+        () -> MerkleTree.getInstance().createTree(hashList));
+    Assert.assertTrue(e instanceof IndexOutOfBoundsException);
   }
 
   @Test

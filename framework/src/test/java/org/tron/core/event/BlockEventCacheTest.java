@@ -20,21 +20,15 @@ public class BlockEventCacheTest {
     be1.setBlockId(b1);
     be1.setParentId(b1);
     be1.setSolidId(b1);
-    try {
-      BlockEventCache.add(be1);
-      Assert.fail();
-    } catch (Exception e) {
-      Assert.assertTrue(e instanceof EventException);
-    }
+    Exception e1 = Assert.assertThrows(Exception.class,
+        () -> BlockEventCache.add(be1));
+    Assert.assertTrue(e1 instanceof EventException);
 
     BlockEventCache.init(new BlockCapsule.BlockId(getBlockId(), 100));
 
-    try {
-      BlockEventCache.add(be1);
-      Assert.fail();
-    } catch (Exception e) {
-      Assert.assertTrue(e instanceof EventException);
-    }
+    Exception e2 = Assert.assertThrows(Exception.class,
+        () -> BlockEventCache.add(be1));
+    Assert.assertTrue(e2 instanceof EventException);
 
     BlockEventCache.init(b1);
 

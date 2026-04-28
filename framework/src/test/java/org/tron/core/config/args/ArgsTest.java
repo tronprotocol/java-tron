@@ -147,14 +147,12 @@ public class ArgsTest {
     String configuredExternalIp = parameter.getNodeExternalIp();
     Assert.assertEquals("46.168.1.1", configuredExternalIp);
 
-    Config config = Configuration.getByFileName(TestConstants.TEST_CONF);
-    Config config3 = config.withoutPath(ConfigKey.NODE_DISCOVERY_EXTERNAL_IP);
-
     CommonParameter.getInstance().setNodeExternalIp(null);
 
-    Method method2 = Args.class.getDeclaredMethod("externalIp", Config.class);
+    NodeConfig nc = new NodeConfig();
+    Method method2 = Args.class.getDeclaredMethod("externalIp", NodeConfig.class);
     method2.setAccessible(true);
-    method2.invoke(Args.class, config3);
+    method2.invoke(Args.class, nc);
 
     Assert.assertNotEquals(configuredExternalIp, parameter.getNodeExternalIp());
   }
@@ -170,7 +168,9 @@ public class ArgsTest {
     Map<String,String> storage = new HashMap<>();
     // avoid the exception for the missing storage
     storage.put("storage.db.directory", "database");
-    Config config = ConfigFactory.defaultOverrides().withFallback(ConfigFactory.parseMap(storage));
+    Config config = ConfigFactory.defaultOverrides()
+        .withFallback(ConfigFactory.parseMap(storage))
+        .withFallback(ConfigFactory.defaultReference());
     // test default value
     Args.applyConfigParams(config);
     Assert.assertTrue(Args.getInstance().isRpcEnable());
@@ -197,7 +197,9 @@ public class ArgsTest {
     storage.put("node.jsonrpc.httpPBFTEnable", "true");
     storage.put("node.jsonrpc.maxBlockRange", "10");
     storage.put("node.jsonrpc.maxSubTopics", "20");
-    config = ConfigFactory.defaultOverrides().withFallback(ConfigFactory.parseMap(storage));
+    config = ConfigFactory.defaultOverrides()
+        .withFallback(ConfigFactory.parseMap(storage))
+        .withFallback(ConfigFactory.defaultReference());
     // test value
     Args.applyConfigParams(config);
     Assert.assertTrue(Args.getInstance().isRpcEnable());
@@ -224,7 +226,9 @@ public class ArgsTest {
     storage.put("node.jsonrpc.httpPBFTEnable", "false");
     storage.put("node.jsonrpc.maxBlockRange", "5000");
     storage.put("node.jsonrpc.maxSubTopics", "1000");
-    config = ConfigFactory.defaultOverrides().withFallback(ConfigFactory.parseMap(storage));
+    config = ConfigFactory.defaultOverrides()
+        .withFallback(ConfigFactory.parseMap(storage))
+        .withFallback(ConfigFactory.defaultReference());
     // test value
     Args.applyConfigParams(config);
     Assert.assertFalse(Args.getInstance().isRpcEnable());
@@ -251,7 +255,9 @@ public class ArgsTest {
     storage.put("node.jsonrpc.httpPBFTEnable", "true");
     storage.put("node.jsonrpc.maxBlockRange", "30");
     storage.put("node.jsonrpc.maxSubTopics", "40");
-    config = ConfigFactory.defaultOverrides().withFallback(ConfigFactory.parseMap(storage));
+    config = ConfigFactory.defaultOverrides()
+        .withFallback(ConfigFactory.parseMap(storage))
+        .withFallback(ConfigFactory.defaultReference());
     // test value
     Args.applyConfigParams(config);
     Assert.assertFalse(Args.getInstance().isRpcEnable());
@@ -269,7 +275,9 @@ public class ArgsTest {
     // test set invalid value
     storage.put("node.jsonrpc.maxBlockRange", "0");
     storage.put("node.jsonrpc.maxSubTopics", "0");
-    config = ConfigFactory.defaultOverrides().withFallback(ConfigFactory.parseMap(storage));
+    config = ConfigFactory.defaultOverrides()
+        .withFallback(ConfigFactory.parseMap(storage))
+        .withFallback(ConfigFactory.defaultReference());
     // check value
     Args.applyConfigParams(config);
     Assert.assertEquals(0, Args.getInstance().getJsonRpcMaxBlockRange());
@@ -278,7 +286,9 @@ public class ArgsTest {
     // test set invalid value
     storage.put("node.jsonrpc.maxBlockRange", "-2");
     storage.put("node.jsonrpc.maxSubTopics", "-4");
-    config = ConfigFactory.defaultOverrides().withFallback(ConfigFactory.parseMap(storage));
+    config = ConfigFactory.defaultOverrides()
+        .withFallback(ConfigFactory.parseMap(storage))
+        .withFallback(ConfigFactory.defaultReference());
     // check value
     Args.applyConfigParams(config);
     Assert.assertEquals(-2, Args.getInstance().getJsonRpcMaxBlockRange());
@@ -365,6 +375,51 @@ public class ArgsTest {
     Args.clearParam();
   }
 
+  // ===========================================================================
+  // Boundary tests for clamps applied in Args.java bridge code (not in
+  // bean postProcess()).
+  //
+  // fetchBlockTimeout is read from NodeConfig but clamped in Args.applyNodeConfig
+  // to range [100, 1000]. Pin this clamp here so any future refactor that moves
+  // it (e.g. into NodeConfig.postProcess()) preserves the behavior.
+  // ===========================================================================
+
+  @Test
+  public void testFetchBlockTimeoutClampedBelowMin() {
+    Map<String, String> override = new HashMap<>();
+    override.put("storage.db.directory", "database");
+    override.put("node.fetchBlock.timeout", "50");
+    Config config = ConfigFactory.parseMap(override)
+        .withFallback(ConfigFactory.defaultReference());
+    Args.applyConfigParams(config);
+    Assert.assertEquals(100, Args.getInstance().getFetchBlockTimeout());
+    Args.clearParam();
+  }
+
+  @Test
+  public void testFetchBlockTimeoutClampedAboveMax() {
+    Map<String, String> override = new HashMap<>();
+    override.put("storage.db.directory", "database");
+    override.put("node.fetchBlock.timeout", "2000");
+    Config config = ConfigFactory.parseMap(override)
+        .withFallback(ConfigFactory.defaultReference());
+    Args.applyConfigParams(config);
+    Assert.assertEquals(1000, Args.getInstance().getFetchBlockTimeout());
+    Args.clearParam();
+  }
+
+  @Test
+  public void testFetchBlockTimeoutInRangeUnchanged() {
+    Map<String, String> override = new HashMap<>();
+    override.put("storage.db.directory", "database");
+    override.put("node.fetchBlock.timeout", "500");
+    Config config = ConfigFactory.parseMap(override)
+        .withFallback(ConfigFactory.defaultReference());
+    Args.applyConfigParams(config);
+    Assert.assertEquals(500, Args.getInstance().getFetchBlockTimeout());
+    Args.clearParam();
+  }
+
   @Test
   public void testMaxMessageSizeHumanReadable() {
     Map<String, String> configMap = new HashMap<>();
@@ -375,7 +430,8 @@ public class ArgsTest {
     configMap.put("node.http.maxMessageSize", "512K");
     configMap.put("node.jsonrpc.maxMessageSize", "512kB");
     Config config = ConfigFactory.defaultOverrides()
-        .withFallback(ConfigFactory.parseMap(configMap));
+        .withFallback(ConfigFactory.parseMap(configMap))
+        .withFallback(ConfigFactory.defaultReference());
     Args.applyConfigParams(config);
     Assert.assertEquals(512 * 1024, Args.getInstance().getMaxMessageSize());
     Assert.assertEquals(512 * 1024, Args.getInstance().getHttpMaxMessageSize());
@@ -386,7 +442,8 @@ public class ArgsTest {
     configMap.put("node.http.maxMessageSize", "256KiB");
     configMap.put("node.jsonrpc.maxMessageSize", "256kB");
     config = ConfigFactory.defaultOverrides()
-        .withFallback(ConfigFactory.parseMap(configMap));
+        .withFallback(ConfigFactory.parseMap(configMap))
+        .withFallback(ConfigFactory.defaultReference());
     Args.applyConfigParams(config);
     Assert.assertEquals(256 * 1024, Args.getInstance().getMaxMessageSize());
     Assert.assertEquals(256 * 1024, Args.getInstance().getHttpMaxMessageSize());
@@ -398,7 +455,8 @@ public class ArgsTest {
     configMap.put("node.http.maxMessageSize", "8M");
     configMap.put("node.jsonrpc.maxMessageSize", "2MB");
     config = ConfigFactory.defaultOverrides()
-        .withFallback(ConfigFactory.parseMap(configMap));
+        .withFallback(ConfigFactory.parseMap(configMap))
+        .withFallback(ConfigFactory.defaultReference());
     Args.applyConfigParams(config);
     Assert.assertEquals(4 * 1024 * 1024, Args.getInstance().getMaxMessageSize());
     Assert.assertEquals(8 * 1024 * 1024, Args.getInstance().getHttpMaxMessageSize());
@@ -409,7 +467,8 @@ public class ArgsTest {
     configMap.put("node.http.maxMessageSize", "4MiB");
     configMap.put("node.jsonrpc.maxMessageSize", "4MB");
     config = ConfigFactory.defaultOverrides()
-        .withFallback(ConfigFactory.parseMap(configMap));
+        .withFallback(ConfigFactory.parseMap(configMap))
+        .withFallback(ConfigFactory.defaultReference());
     Args.applyConfigParams(config);
     Assert.assertEquals(4 * 1024 * 1024, Args.getInstance().getMaxMessageSize());
     Assert.assertEquals(4 * 1024 * 1024, Args.getInstance().getHttpMaxMessageSize());
@@ -422,7 +481,8 @@ public class ArgsTest {
     configMap.put("node.http.maxMessageSize", "1g");
     configMap.put("node.jsonrpc.maxMessageSize", "1GB");
     config = ConfigFactory.defaultOverrides()
-        .withFallback(ConfigFactory.parseMap(configMap));
+        .withFallback(ConfigFactory.parseMap(configMap))
+        .withFallback(ConfigFactory.defaultReference());
     Args.applyConfigParams(config);
     Assert.assertEquals(4 * 1024 * 1024, Args.getInstance().getMaxMessageSize());
     Assert.assertEquals(1024L * 1024 * 1024, Args.getInstance().getHttpMaxMessageSize());
@@ -434,7 +494,8 @@ public class ArgsTest {
     configMap.put("node.http.maxMessageSize", "4194304");
     configMap.put("node.jsonrpc.maxMessageSize", "4194304");
     config = ConfigFactory.defaultOverrides()
-        .withFallback(ConfigFactory.parseMap(configMap));
+        .withFallback(ConfigFactory.parseMap(configMap))
+        .withFallback(ConfigFactory.defaultReference());
     Args.applyConfigParams(config);
     Assert.assertEquals(4 * 1024 * 1024, Args.getInstance().getMaxMessageSize());
     Assert.assertEquals(4 * 1024 * 1024, Args.getInstance().getHttpMaxMessageSize());
@@ -446,7 +507,8 @@ public class ArgsTest {
     configMap.put("node.http.maxMessageSize", "0");
     configMap.put("node.jsonrpc.maxMessageSize", "0");
     config = ConfigFactory.defaultOverrides()
-        .withFallback(ConfigFactory.parseMap(configMap));
+        .withFallback(ConfigFactory.parseMap(configMap))
+        .withFallback(ConfigFactory.defaultReference());
     Args.applyConfigParams(config);
     Assert.assertEquals(0, Args.getInstance().getMaxMessageSize());
     Assert.assertEquals(0, Args.getInstance().getHttpMaxMessageSize());
@@ -460,7 +522,8 @@ public class ArgsTest {
     configMap.put("storage.db.directory", "database");
     configMap.put("node.rpc.maxMessageSize", "3g");
     Config config = ConfigFactory.defaultOverrides()
-        .withFallback(ConfigFactory.parseMap(configMap));
+        .withFallback(ConfigFactory.parseMap(configMap))
+        .withFallback(ConfigFactory.defaultReference());
     TronError e = Assert.assertThrows(TronError.class,
         () -> Args.applyConfigParams(config));
     Assert.assertTrue(e.getMessage().contains("node.rpc.maxMessageSize must be non-negative"));
@@ -472,7 +535,8 @@ public class ArgsTest {
     configMap.put("storage.db.directory", "database");
     configMap.put("node.http.maxMessageSize", "2Gi");
     Config config = ConfigFactory.defaultOverrides()
-        .withFallback(ConfigFactory.parseMap(configMap));
+        .withFallback(ConfigFactory.parseMap(configMap))
+        .withFallback(ConfigFactory.defaultReference());
     TronError e = Assert.assertThrows(TronError.class,
         () -> Args.applyConfigParams(config));
     Assert.assertTrue(e.getMessage().contains("node.http.maxMessageSize must be non-negative"));
@@ -484,7 +548,8 @@ public class ArgsTest {
     configMap.put("storage.db.directory", "database");
     configMap.put("node.jsonrpc.maxMessageSize", "2Gi");
     Config config = ConfigFactory.defaultOverrides()
-        .withFallback(ConfigFactory.parseMap(configMap));
+        .withFallback(ConfigFactory.parseMap(configMap))
+        .withFallback(ConfigFactory.defaultReference());
     TronError e = Assert.assertThrows(TronError.class,
         () -> Args.applyConfigParams(config));
     Assert.assertTrue(
@@ -497,7 +562,8 @@ public class ArgsTest {
     configMap.put("storage.db.directory", "database");
     configMap.put("node.rpc.maxMessageSize", "-4m");
     Config config = ConfigFactory.defaultOverrides()
-        .withFallback(ConfigFactory.parseMap(configMap));
+        .withFallback(ConfigFactory.parseMap(configMap))
+        .withFallback(ConfigFactory.defaultReference());
     IllegalArgumentException e = Assert.assertThrows(IllegalArgumentException.class,
         () -> Args.applyConfigParams(config));
     Assert.assertTrue(e.getMessage().contains("negative"));
@@ -509,7 +575,8 @@ public class ArgsTest {
     configMap.put("storage.db.directory", "database");
     configMap.put("node.rpc.maxMessageSize", "4x");
     Config config = ConfigFactory.defaultOverrides()
-        .withFallback(ConfigFactory.parseMap(configMap));
+        .withFallback(ConfigFactory.parseMap(configMap))
+        .withFallback(ConfigFactory.defaultReference());
     ConfigException.BadValue e = Assert.assertThrows(ConfigException.BadValue.class,
         () -> Args.applyConfigParams(config));
     Assert.assertTrue(e.getMessage().contains("Could not parse size-in-bytes unit"));
@@ -521,7 +588,8 @@ public class ArgsTest {
     configMap.put("storage.db.directory", "database");
     configMap.put("node.http.maxMessageSize", "abc");
     Config config = ConfigFactory.defaultOverrides()
-        .withFallback(ConfigFactory.parseMap(configMap));
+        .withFallback(ConfigFactory.parseMap(configMap))
+        .withFallback(ConfigFactory.defaultReference());
     ConfigException.BadValue e = Assert.assertThrows(ConfigException.BadValue.class,
         () -> Args.applyConfigParams(config));
     Assert.assertTrue(e.getMessage().contains("No number in size-in-bytes value"));

@@ -268,33 +268,6 @@ public class FreezeBalanceV2ActuatorTest extends BaseTest {
     }
   }
 
-  //@Test
-  public void moreThanFrozenNumber() {
-    long frozenBalance = 1_000_000_000L;
-    FreezeBalanceActuator actuator = new FreezeBalanceActuator();
-    actuator.setChainBaseManager(dbManager.getChainBaseManager())
-        .setAny(getContractV2ForBandwidth(OWNER_ADDRESS, frozenBalance));
-
-    TransactionResultCapsule ret = new TransactionResultCapsule();
-    try {
-      actuator.validate();
-      actuator.execute(ret);
-    } catch (ContractValidateException | ContractExeException e) {
-      Assert.fail();
-    }
-    try {
-      actuator.validate();
-      actuator.execute(ret);
-      fail("cannot run here.");
-    } catch (ContractValidateException e) {
-      long maxFrozenNumber = ChainConstant.MAX_FROZEN_NUMBER;
-      Assert.assertEquals("max frozen number is: " + maxFrozenNumber, e.getMessage());
-    } catch (ContractExeException e) {
-      Assert.fail();
-    }
-  }
-
-
   @Test
   public void commonErrorCheck() {
     FreezeBalanceV2Actuator actuator = new FreezeBalanceV2Actuator();

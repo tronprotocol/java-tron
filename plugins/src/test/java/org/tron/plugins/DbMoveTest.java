@@ -31,7 +31,6 @@ public class DbMoveTest {
     DbTool.getDB(path, ACCOUNT, dbType).close();
     DbTool.getDB(path, DBUtils.MARKET_PAIR_PRICE_TO_ORDER, dbType).close();
     DbTool.getDB(path, TRANS, dbType).close();
-
   }
 
   @After

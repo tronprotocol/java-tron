@@ -18,7 +18,6 @@ package org.tron.core.config.args;
 import com.google.common.collect.Maps;
 import com.google.protobuf.ByteString;
 import com.typesafe.config.Config;
-import com.typesafe.config.ConfigObject;
 import java.io.File;
 import java.util.List;
 import java.util.Map;
@@ -26,7 +25,6 @@ import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.iq80.leveldb.CompressionType;
 import org.iq80.leveldb.Options;
 import org.tron.common.cache.CacheStrategies;
@@ -46,59 +44,12 @@ import org.tron.common.utils.Sha256Hash;
 @Slf4j(topic = "db")
 public class Storage {
 
-  /**
-   * Keys (names) of database config
-   */
-  private static final String DB_DIRECTORY_CONFIG_KEY = "storage.db.directory";
-  private static final String DB_ENGINE_CONFIG_KEY = "storage.db.engine";
-  private static final String DB_SYNC_CONFIG_KEY = "storage.db.sync";
-  private static final String INDEX_DIRECTORY_CONFIG_KEY = "storage.index.directory";
-  private static final String INDEX_SWITCH_CONFIG_KEY = "storage.index.switch";
-  private static final String TRANSACTIONHISTORY_SWITCH_CONFIG_KEY = "storage.transHistory.switch";
-  private static final String ESTIMATED_TRANSACTIONS_CONFIG_KEY =
-      "storage.txCache.estimatedTransactions";
-  private static final String SNAPSHOT_MAX_FLUSH_COUNT_CONFIG_KEY = "storage.snapshot.maxFlushCount";
-  private static final String PROPERTIES_CONFIG_KEY = "storage.properties";
-  private static final String PROPERTIES_CONFIG_DB_KEY = "storage";
-  private static final String PROPERTIES_CONFIG_DEFAULT_KEY = "default";
-  private static final String PROPERTIES_CONFIG_DEFAULT_M_KEY = "defaultM";
-  private static final String PROPERTIES_CONFIG_DEFAULT_L_KEY = "defaultL";
-  private static final String DEFAULT_TRANSACTIONHISTORY_SWITCH = "on";
-
-  private static final String NAME_CONFIG_KEY = "name";
-  private static final String PATH_CONFIG_KEY = "path";
-  private static final String CREATE_IF_MISSING_CONFIG_KEY = "createIfMissing";
-  private static final String PARANOID_CHECKS_CONFIG_KEY = "paranoidChecks";
-  private static final String VERITY_CHECK_SUMS_CONFIG_KEY = "verifyChecksums";
-  private static final String COMPRESSION_TYPE_CONFIG_KEY = "compressionType";
-  private static final String BLOCK_SIZE_CONFIG_KEY = "blockSize";
-  private static final String WRITE_BUFFER_SIZE_CONFIG_KEY = "writeBufferSize";
-  private static final String CACHE_SIZE_CONFIG_KEY = "cacheSize";
-  private static final String MAX_OPEN_FILES_CONFIG_KEY = "maxOpenFiles";
-  private static final String EVENT_SUBSCRIBE_CONTRACT_PARSE = "event.subscribe.contractParse";
-
-  private static final String CHECKPOINT_VERSION_KEY = "storage.checkpoint.version";
-  private static final String CHECKPOINT_SYNC_KEY = "storage.checkpoint.sync";
-
-  private static final String CACHE_STRATEGIES = "storage.cache.strategies";
-  public static final String TX_CACHE_INIT_OPTIMIZATION = "storage.txCache.initOptimization";
-
-  private static final String MERKLE_ROOT = "storage.merkleRoot";
-
-  /**
-   * Default values of directory
-   */
-  private static final String DEFAULT_DB_ENGINE = "LEVELDB";
-  private static final boolean DEFAULT_DB_SYNC = false;
-  private static final boolean DEFAULT_EVENT_SUBSCRIBE_CONTRACT_PARSE = true;
-  private static final String DEFAULT_DB_DIRECTORY = "database";
-  private static final String DEFAULT_INDEX_DIRECTORY = "index";
   private static final String DEFAULT_INDEX_SWITCH = "on";
-  private static final int DEFAULT_CHECKPOINT_VERSION = 1;
-  private static final boolean DEFAULT_CHECKPOINT_SYNC = true;
-  private static final int DEFAULT_ESTIMATED_TRANSACTIONS = 1000;
-  private static final int DEFAULT_SNAPSHOT_MAX_FLUSH_COUNT = 1;
-  private Config storage;
+
+  // Optional per-tier LevelDB option overrides, read from StorageConfig bean
+  private StorageConfig.DbOptionOverride defaultDbOption;
+  private StorageConfig.DbOptionOverride defaultMDbOption;
+  private StorageConfig.DbOptionOverride defaultLDbOption;
 
   /**
    * Database storage directory: /path/to/{dbDirectory}
@@ -172,92 +123,13 @@ public class Storage {
   // db root
   private final Map<String, Sha256Hash> dbRoots = Maps.newConcurrentMap();
 
-  public static String getDbEngineFromConfig(final Config config) {
-    return config.hasPath(DB_ENGINE_CONFIG_KEY)
-        ? config.getString(DB_ENGINE_CONFIG_KEY) : DEFAULT_DB_ENGINE;
-  }
-
-  public static Boolean getDbVersionSyncFromConfig(final Config config) {
-    return config.hasPath(DB_SYNC_CONFIG_KEY)
-        ? config.getBoolean(DB_SYNC_CONFIG_KEY) : DEFAULT_DB_SYNC;
-  }
-
-  public static int getSnapshotMaxFlushCountFromConfig(final Config config) {
-    if (!config.hasPath(SNAPSHOT_MAX_FLUSH_COUNT_CONFIG_KEY)) {
-      return DEFAULT_SNAPSHOT_MAX_FLUSH_COUNT;
-    }
-    int maxFlushCountConfig = config.getInt(SNAPSHOT_MAX_FLUSH_COUNT_CONFIG_KEY);
-    if (maxFlushCountConfig <= 0) {
-      throw new IllegalArgumentException("MaxFlushCount value can not be negative or zero!");
-    }
-    if (maxFlushCountConfig > 500) {
-      throw new IllegalArgumentException("MaxFlushCount value must not exceed 500!");
-    }
-    return maxFlushCountConfig;
-  }
-
-  public static Boolean getContractParseSwitchFromConfig(final Config config) {
-    return config.hasPath(EVENT_SUBSCRIBE_CONTRACT_PARSE)
-        ? config.getBoolean(EVENT_SUBSCRIBE_CONTRACT_PARSE)
-        : DEFAULT_EVENT_SUBSCRIBE_CONTRACT_PARSE;
-  }
-
-  public static String getDbDirectoryFromConfig(final Config config) {
-    return config.hasPath(DB_DIRECTORY_CONFIG_KEY)
-        ? config.getString(DB_DIRECTORY_CONFIG_KEY) : DEFAULT_DB_DIRECTORY;
-  }
-
-  public static String getIndexDirectoryFromConfig(final Config config) {
-    return config.hasPath(INDEX_DIRECTORY_CONFIG_KEY)
-        ? config.getString(INDEX_DIRECTORY_CONFIG_KEY) : DEFAULT_INDEX_DIRECTORY;
-  }
-
-  public static String getIndexSwitchFromConfig(final Config config) {
-    return config.hasPath(INDEX_SWITCH_CONFIG_KEY)
-        && StringUtils.isNotEmpty(config.getString(INDEX_SWITCH_CONFIG_KEY))
-        ? config.getString(INDEX_SWITCH_CONFIG_KEY) : DEFAULT_INDEX_SWITCH;
-  }
-
-  public static String getTransactionHistorySwitchFromConfig(final Config config) {
-    return config.hasPath(TRANSACTIONHISTORY_SWITCH_CONFIG_KEY)
-        ? config.getString(TRANSACTIONHISTORY_SWITCH_CONFIG_KEY)
-        : DEFAULT_TRANSACTIONHISTORY_SWITCH;
-  }
-
-  public static int getCheckpointVersionFromConfig(final Config config) {
-    return config.hasPath(CHECKPOINT_VERSION_KEY)
-        ? config.getInt(CHECKPOINT_VERSION_KEY)
-        : DEFAULT_CHECKPOINT_VERSION;
-  }
-
-  public static boolean getCheckpointSyncFromConfig(final Config config) {
-    return config.hasPath(CHECKPOINT_SYNC_KEY)
-        ? config.getBoolean(CHECKPOINT_SYNC_KEY)
-        : DEFAULT_CHECKPOINT_SYNC;
-  }
-
-  public static int getEstimatedTransactionsFromConfig(final Config config) {
-    if (!config.hasPath(ESTIMATED_TRANSACTIONS_CONFIG_KEY)) {
-      return DEFAULT_ESTIMATED_TRANSACTIONS;
-    }
-    int estimatedTransactions = config.getInt(ESTIMATED_TRANSACTIONS_CONFIG_KEY);
-    if (estimatedTransactions > 10000) {
-      estimatedTransactions = 10000;
-    } else if (estimatedTransactions < 100) {
-      estimatedTransactions = 100;
-    }
-    return estimatedTransactions;
-  }
-
-  public static boolean getTxCacheInitOptimizationFromConfig(final Config config) {
-    return config.hasPath(TX_CACHE_INIT_OPTIMIZATION)
-        && config.getBoolean(TX_CACHE_INIT_OPTIMIZATION);
-  }
-
-
-  public  void setCacheStrategies(Config config) {
-    if (config.hasPath(CACHE_STRATEGIES)) {
-      config.getConfig(CACHE_STRATEGIES).resolve().entrySet().forEach(c ->
+  /**
+   * Accepts raw storage Config sub-tree because cache.strategies has dynamic keys
+   * (CacheType enum names) that ConfigBeanFactory cannot bind to fixed bean fields.
+   */
+  public void setCacheStrategies(Config storageSection) {
+    if (storageSection.hasPath("cache.strategies")) {
+      storageSection.getConfig("cache.strategies").resolve().entrySet().forEach(c ->
           this.cacheStrategies.put(CacheType.valueOf(c.getKey()),
               c.getValue().unwrapped().toString()));
     }
@@ -271,138 +143,75 @@ public class Storage {
     return this.dbRoots.getOrDefault(dbName, defaultV);
   }
 
-  public void setDbRoots(Config config) {
-    if (config.hasPath(MERKLE_ROOT)) {
-      config.getConfig(MERKLE_ROOT).resolve().entrySet().forEach(c ->
-          this.dbRoots.put(c.getKey(),  Sha256Hash.wrap(
+  /**
+   * Accepts raw storage Config sub-tree because merkleRoot has dynamic keys
+   * (database names) that ConfigBeanFactory cannot bind to fixed bean fields.
+   */
+  public void setDbRoots(Config storageSection) {
+    if (storageSection.hasPath("merkleRoot")) {
+      storageSection.getConfig("merkleRoot").resolve().entrySet().forEach(c ->
+          this.dbRoots.put(c.getKey(), Sha256Hash.wrap(
               ByteString.fromHex(c.getValue().unwrapped().toString()))));
     }
   }
 
-  private  Property createProperty(final ConfigObject conf) {
-
+  /**
+   * Create Property from StorageConfig.PropertyConfig bean.
+   */
+  private Property createPropertyFromBean(StorageConfig.PropertyConfig pc) {
     Property property = new Property();
 
-    // Database name must be set
-    if (!conf.containsKey(NAME_CONFIG_KEY)) {
+    if (pc.getName().isEmpty()) {
       throw new IllegalArgumentException("[storage.properties] database name must be set.");
     }
-    property.setName(conf.get(NAME_CONFIG_KEY).unwrapped().toString());
+    property.setName(pc.getName());
 
-    // Check writable permission of path
-    if (conf.containsKey(PATH_CONFIG_KEY)) {
-      String path = conf.get(PATH_CONFIG_KEY).unwrapped().toString();
-
+    if (!pc.getPath().isEmpty()) {
+      String path = pc.getPath();
       File file = new File(path);
       if (!file.exists() && !file.mkdirs()) {
         throw new IllegalArgumentException(
             String.format("[storage.properties] can not create storage path: %s", path));
       }
-
       if (!file.canWrite()) {
         throw new IllegalArgumentException(
             String.format("[storage.properties] permission denied to write to: %s ", path));
       }
-
       property.setPath(path);
     }
 
-    // Check, get and set fields of Options
     Options dbOptions = newDefaultDbOptions(property.getName());
-
-    setIfNeeded(conf, dbOptions);
-
+    applyPropertyOptions(pc, dbOptions);
     property.setDbOptions(dbOptions);
     return property;
   }
 
-  private static void setIfNeeded(ConfigObject conf, Options dbOptions) {
-    if (conf.containsKey(CREATE_IF_MISSING_CONFIG_KEY)) {
-      dbOptions.createIfMissing(
-          Boolean.parseBoolean(
-              conf.get(CREATE_IF_MISSING_CONFIG_KEY).unwrapped().toString()
-          )
-      );
-    }
-
-    if (conf.containsKey(PARANOID_CHECKS_CONFIG_KEY)) {
-      dbOptions.paranoidChecks(
-          Boolean.parseBoolean(
-              conf.get(PARANOID_CHECKS_CONFIG_KEY).unwrapped().toString()
-          )
-      );
-    }
-
-    if (conf.containsKey(VERITY_CHECK_SUMS_CONFIG_KEY)) {
-      dbOptions.verifyChecksums(
-          Boolean.parseBoolean(
-              conf.get(VERITY_CHECK_SUMS_CONFIG_KEY).unwrapped().toString()
-          )
-      );
-    }
-
-    if (conf.containsKey(COMPRESSION_TYPE_CONFIG_KEY)) {
-      String param = conf.get(COMPRESSION_TYPE_CONFIG_KEY).unwrapped().toString();
-      try {
-        dbOptions.compressionType(
-            CompressionType.getCompressionTypeByPersistentId(Integer.parseInt(param)));
-      } catch (NumberFormatException e) {
-        throwIllegalArgumentException(COMPRESSION_TYPE_CONFIG_KEY, Integer.class, param);
-      }
-    }
-
-    if (conf.containsKey(BLOCK_SIZE_CONFIG_KEY)) {
-      String param = conf.get(BLOCK_SIZE_CONFIG_KEY).unwrapped().toString();
-      try {
-        dbOptions.blockSize(Integer.parseInt(param));
-      } catch (NumberFormatException e) {
-        throwIllegalArgumentException(BLOCK_SIZE_CONFIG_KEY, Integer.class, param);
-      }
-    }
-
-    if (conf.containsKey(WRITE_BUFFER_SIZE_CONFIG_KEY)) {
-      String param = conf.get(WRITE_BUFFER_SIZE_CONFIG_KEY).unwrapped().toString();
-      try {
-        dbOptions.writeBufferSize(Integer.parseInt(param));
-      } catch (NumberFormatException e) {
-        throwIllegalArgumentException(WRITE_BUFFER_SIZE_CONFIG_KEY, Integer.class, param);
-      }
-    }
-
-    if (conf.containsKey(CACHE_SIZE_CONFIG_KEY)) {
-      String param = conf.get(CACHE_SIZE_CONFIG_KEY).unwrapped().toString();
-      try {
-        dbOptions.cacheSize(Long.parseLong(param));
-      } catch (NumberFormatException e) {
-        throwIllegalArgumentException(CACHE_SIZE_CONFIG_KEY, Long.class, param);
-      }
-    }
-
-    if (conf.containsKey(MAX_OPEN_FILES_CONFIG_KEY)) {
-      String param = conf.get(MAX_OPEN_FILES_CONFIG_KEY).unwrapped().toString();
-      try {
-        dbOptions.maxOpenFiles(Integer.parseInt(param));
-      } catch (NumberFormatException e) {
-        throwIllegalArgumentException(MAX_OPEN_FILES_CONFIG_KEY, Integer.class, param);
-      }
-    }
+  /**
+   * Apply LevelDB options from PropertyConfig bean values.
+   */
+  private static void applyPropertyOptions(StorageConfig.PropertyConfig pc, Options dbOptions) {
+    dbOptions.createIfMissing(pc.isCreateIfMissing());
+    dbOptions.paranoidChecks(pc.isParanoidChecks());
+    dbOptions.verifyChecksums(pc.isVerifyChecksums());
+    dbOptions.compressionType(
+        CompressionType.getCompressionTypeByPersistentId(pc.getCompressionType()));
+    dbOptions.blockSize(pc.getBlockSize());
+    dbOptions.writeBufferSize(pc.getWriteBufferSize());
+    dbOptions.cacheSize(pc.getCacheSize());
+    dbOptions.maxOpenFiles(pc.getMaxOpenFiles());
   }
 
-  private static void throwIllegalArgumentException(String param, Class type, String actual) {
-    throw new IllegalArgumentException(
-        String.format("[storage.properties] %s must be %s type, actual: %s.",
-            param, type.getSimpleName(), actual));
-  }
 
   /**
-   * Set propertyMap of Storage object from Config
-   *
-   * @param config Config object from "config.conf" file
+   * Set propertyMap of Storage object from Config via StorageConfig bean.
    */
-  public void setPropertyMapFromConfig(final Config config) {
-    if (config.hasPath(PROPERTIES_CONFIG_KEY)) {
-      propertyMap = config.getObjectList(PROPERTIES_CONFIG_KEY).stream()
-          .map(this::createProperty)
+  /**
+   * Set propertyMap from StorageConfig bean list. No Config parameter needed.
+   */
+  public void setPropertyMapFromBean(List<StorageConfig.PropertyConfig> props) {
+    if (props != null && !props.isEmpty()) {
+      propertyMap = props.stream()
+          .map(this::createPropertyFromBean)
           .collect(Collectors.toMap(Property::getName, p -> p));
     }
   }
@@ -423,30 +232,60 @@ public class Storage {
     }
   }
 
-  public void setDefaultDbOptions(final Config config) {
+  /**
+   * Initialize default LevelDB options and store optional per-tier overrides
+   * from StorageConfig bean (no raw Config needed).
+   */
+  public void setDefaultDbOptions(StorageConfig sc) {
     this.defaultDbOptions = DbOptionalsUtils.createDefaultDbOptions();
-    storage = config.getConfig(PROPERTIES_CONFIG_DB_KEY);
+    this.defaultDbOption = sc.getDefaultDbOption();
+    this.defaultMDbOption = sc.getDefaultMDbOption();
+    this.defaultLDbOption = sc.getDefaultLDbOption();
   }
 
-  public Options newDefaultDbOptions(String name ) {
-    // first fetch origin default
-    Options options =  DbOptionalsUtils.newDefaultDbOptions(name, this.defaultDbOptions);
+  public Options newDefaultDbOptions(String name) {
+    Options options = DbOptionalsUtils.newDefaultDbOptions(name, this.defaultDbOptions);
 
-    // then fetch from config for default
-    if (storage.hasPath(PROPERTIES_CONFIG_DEFAULT_KEY)) {
-      setIfNeeded(storage.getObject(PROPERTIES_CONFIG_DEFAULT_KEY), options);
+    if (defaultDbOption != null) {
+      applyDbOptionOverride(defaultDbOption, options);
     }
-
-    // check if has middle config
-    if (storage.hasPath(PROPERTIES_CONFIG_DEFAULT_M_KEY) && DbOptionalsUtils.DB_M.contains(name)) {
-      setIfNeeded(storage.getObject(PROPERTIES_CONFIG_DEFAULT_M_KEY), options);
-
+    if (defaultMDbOption != null && DbOptionalsUtils.DB_M.contains(name)) {
+      applyDbOptionOverride(defaultMDbOption, options);
     }
-    // check if has large config
-    if (storage.hasPath(PROPERTIES_CONFIG_DEFAULT_L_KEY) && DbOptionalsUtils.DB_L.contains(name)) {
-      setIfNeeded(storage.getObject(PROPERTIES_CONFIG_DEFAULT_L_KEY), options);
+    if (defaultLDbOption != null && DbOptionalsUtils.DB_L.contains(name)) {
+      applyDbOptionOverride(defaultLDbOption, options);
     }
 
     return options;
+  }
+
+  // Apply only user-specified overrides (non-null fields) to LevelDB Options.
+  private static void applyDbOptionOverride(
+      StorageConfig.DbOptionOverride o, Options dbOptions) {
+    if (o.getCreateIfMissing() != null) {
+      dbOptions.createIfMissing(o.getCreateIfMissing());
+    }
+    if (o.getParanoidChecks() != null) {
+      dbOptions.paranoidChecks(o.getParanoidChecks());
+    }
+    if (o.getVerifyChecksums() != null) {
+      dbOptions.verifyChecksums(o.getVerifyChecksums());
+    }
+    if (o.getCompressionType() != null) {
+      dbOptions.compressionType(
+          CompressionType.getCompressionTypeByPersistentId(o.getCompressionType()));
+    }
+    if (o.getBlockSize() != null) {
+      dbOptions.blockSize(o.getBlockSize());
+    }
+    if (o.getWriteBufferSize() != null) {
+      dbOptions.writeBufferSize(o.getWriteBufferSize());
+    }
+    if (o.getCacheSize() != null) {
+      dbOptions.cacheSize(o.getCacheSize());
+    }
+    if (o.getMaxOpenFiles() != null) {
+      dbOptions.maxOpenFiles(o.getMaxOpenFiles());
+    }
   }
 }

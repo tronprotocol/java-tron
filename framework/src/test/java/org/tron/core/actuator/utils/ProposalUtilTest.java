@@ -62,15 +62,12 @@ public class ProposalUtilTest extends BaseTest {
     Assert.assertNull(ProposalType.getEnumOrNull(-2));
     Assert.assertEquals(ProposalType.ALLOW_TVM_SOLIDITY_059, ProposalType.getEnumOrNull(32));
 
-    long code = -1;
-    try {
-      ProposalType.getEnum(code);
-      Assert.fail();
-    } catch (ContractValidateException e) {
-      Assert.assertEquals("Does not support code : " + code, e.getMessage());
-    }
+    long finalCode = -1;
+    ContractValidateException e = Assert.assertThrows(ContractValidateException.class,
+        () -> ProposalType.getEnum(finalCode));
+    Assert.assertEquals("Does not support code : " + finalCode, e.getMessage());
 
-    code = 32;
+    long code = 32;
     Assert.assertEquals(ProposalType.ALLOW_TVM_SOLIDITY_059, ProposalType.getEnum(code));
 
   }
@@ -79,217 +76,145 @@ public class ProposalUtilTest extends BaseTest {
   public void validateCheck() {
     long invalidValue = -1;
 
-    try {
-      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
-          ProposalType.ACCOUNT_UPGRADE_COST.getCode(), invalidValue);
-      Assert.fail();
-    } catch (ContractValidateException e) {
-      Assert.assertEquals(LONG_VALUE_ERROR, e.getMessage());
-    }
+    ContractValidateException e1 = Assert.assertThrows(ContractValidateException.class,
+        () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+            ProposalType.ACCOUNT_UPGRADE_COST.getCode(), invalidValue));
+    Assert.assertEquals(LONG_VALUE_ERROR, e1.getMessage());
 
-    try {
-      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
-          ProposalType.ACCOUNT_UPGRADE_COST.getCode(), LONG_VALUE + 1);
-      Assert.fail();
-    } catch (ContractValidateException e) {
-      Assert.assertEquals(LONG_VALUE_ERROR, e.getMessage());
-    }
+    ContractValidateException e2 = Assert.assertThrows(ContractValidateException.class,
+        () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+            ProposalType.ACCOUNT_UPGRADE_COST.getCode(), LONG_VALUE + 1));
+    Assert.assertEquals(LONG_VALUE_ERROR, e2.getMessage());
 
-    try {
-      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
-          ProposalType.CREATE_ACCOUNT_FEE.getCode(), invalidValue);
-      Assert.fail();
-    } catch (ContractValidateException e) {
-      Assert.assertEquals(LONG_VALUE_ERROR, e.getMessage());
-    }
+    ContractValidateException e3 = Assert.assertThrows(ContractValidateException.class,
+        () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+            ProposalType.CREATE_ACCOUNT_FEE.getCode(), invalidValue));
+    Assert.assertEquals(LONG_VALUE_ERROR, e3.getMessage());
 
-    try {
-      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
-          ProposalType.CREATE_ACCOUNT_FEE.getCode(), LONG_VALUE + 1);
-      Assert.fail();
-    } catch (ContractValidateException e) {
-      Assert.assertEquals(LONG_VALUE_ERROR, e.getMessage());
-    }
+    ContractValidateException e4 = Assert.assertThrows(ContractValidateException.class,
+        () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+            ProposalType.CREATE_ACCOUNT_FEE.getCode(), LONG_VALUE + 1));
+    Assert.assertEquals(LONG_VALUE_ERROR, e4.getMessage());
 
-    try {
-      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
-          ProposalType.ASSET_ISSUE_FEE.getCode(), invalidValue);
-      Assert.fail();
-    } catch (ContractValidateException e) {
-      Assert.assertEquals(LONG_VALUE_ERROR, e.getMessage());
-    }
+    ContractValidateException e5 = Assert.assertThrows(ContractValidateException.class,
+        () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+            ProposalType.ASSET_ISSUE_FEE.getCode(), invalidValue));
+    Assert.assertEquals(LONG_VALUE_ERROR, e5.getMessage());
 
-    try {
-      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
-          ProposalType.ASSET_ISSUE_FEE.getCode(), LONG_VALUE + 1);
-      Assert.fail();
-    } catch (ContractValidateException e) {
-      Assert.assertEquals(LONG_VALUE_ERROR, e.getMessage());
-    }
+    ContractValidateException e6 = Assert.assertThrows(ContractValidateException.class,
+        () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+            ProposalType.ASSET_ISSUE_FEE.getCode(), LONG_VALUE + 1));
+    Assert.assertEquals(LONG_VALUE_ERROR, e6.getMessage());
 
-    try {
-      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
-          ProposalType.WITNESS_PAY_PER_BLOCK.getCode(), invalidValue);
-      Assert.fail();
-    } catch (ContractValidateException e) {
-      Assert.assertEquals(LONG_VALUE_ERROR, e.getMessage());
-    }
+    ContractValidateException e7 = Assert.assertThrows(ContractValidateException.class,
+        () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+            ProposalType.WITNESS_PAY_PER_BLOCK.getCode(), invalidValue));
+    Assert.assertEquals(LONG_VALUE_ERROR, e7.getMessage());
 
-    try {
-      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
-          ProposalType.WITNESS_PAY_PER_BLOCK.getCode(), LONG_VALUE + 1);
-      Assert.fail();
-    } catch (ContractValidateException e) {
-      Assert.assertEquals(LONG_VALUE_ERROR, e.getMessage());
-    }
+    ContractValidateException e8 = Assert.assertThrows(ContractValidateException.class,
+        () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+            ProposalType.WITNESS_PAY_PER_BLOCK.getCode(), LONG_VALUE + 1));
+    Assert.assertEquals(LONG_VALUE_ERROR, e8.getMessage());
 
-    try {
-      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
-          ProposalType.WITNESS_STANDBY_ALLOWANCE.getCode(), invalidValue);
-      Assert.fail();
-    } catch (ContractValidateException e) {
-      Assert.assertEquals(LONG_VALUE_ERROR, e.getMessage());
-    }
+    ContractValidateException e9 = Assert.assertThrows(ContractValidateException.class,
+        () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+            ProposalType.WITNESS_STANDBY_ALLOWANCE.getCode(), invalidValue));
+    Assert.assertEquals(LONG_VALUE_ERROR, e9.getMessage());
 
-    try {
-      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
-          ProposalType.WITNESS_STANDBY_ALLOWANCE.getCode(), LONG_VALUE + 1);
-      Assert.fail();
-    } catch (ContractValidateException e) {
-      Assert.assertEquals(LONG_VALUE_ERROR, e.getMessage());
-    }
+    ContractValidateException e10 = Assert.assertThrows(ContractValidateException.class,
+        () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+            ProposalType.WITNESS_STANDBY_ALLOWANCE.getCode(), LONG_VALUE + 1));
+    Assert.assertEquals(LONG_VALUE_ERROR, e10.getMessage());
 
-    try {
-      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
-          ProposalType.CREATE_NEW_ACCOUNT_FEE_IN_SYSTEM_CONTRACT.getCode(), invalidValue);
-      Assert.fail();
-    } catch (ContractValidateException e) {
-      Assert.assertEquals(LONG_VALUE_ERROR, e.getMessage());
-    }
+    ContractValidateException e11 = Assert.assertThrows(ContractValidateException.class,
+        () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+            ProposalType.CREATE_NEW_ACCOUNT_FEE_IN_SYSTEM_CONTRACT.getCode(), invalidValue));
+    Assert.assertEquals(LONG_VALUE_ERROR, e11.getMessage());
 
-    try {
-      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
-          ProposalType.CREATE_NEW_ACCOUNT_FEE_IN_SYSTEM_CONTRACT.getCode(), LONG_VALUE + 1);
-      Assert.fail();
-    } catch (ContractValidateException e) {
-      Assert.assertEquals(LONG_VALUE_ERROR, e.getMessage());
-    }
+    ContractValidateException e12 = Assert.assertThrows(ContractValidateException.class,
+        () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+            ProposalType.CREATE_NEW_ACCOUNT_FEE_IN_SYSTEM_CONTRACT.getCode(), LONG_VALUE + 1));
+    Assert.assertEquals(LONG_VALUE_ERROR, e12.getMessage());
 
-    try {
-      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
-          ProposalType.CREATE_NEW_ACCOUNT_BANDWIDTH_RATE.getCode(), invalidValue);
-      Assert.fail();
-    } catch (ContractValidateException e) {
-      Assert.assertEquals(LONG_VALUE_ERROR, e.getMessage());
-    }
+    ContractValidateException e13 = Assert.assertThrows(ContractValidateException.class,
+        () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+            ProposalType.CREATE_NEW_ACCOUNT_BANDWIDTH_RATE.getCode(), invalidValue));
+    Assert.assertEquals(LONG_VALUE_ERROR, e13.getMessage());
 
-    try {
-      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
-          ProposalType.CREATE_NEW_ACCOUNT_BANDWIDTH_RATE.getCode(), LONG_VALUE + 1);
-      Assert.fail();
-    } catch (ContractValidateException e) {
-      Assert.assertEquals(LONG_VALUE_ERROR, e.getMessage());
-    }
+    ContractValidateException e14 = Assert.assertThrows(ContractValidateException.class,
+        () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+            ProposalType.CREATE_NEW_ACCOUNT_BANDWIDTH_RATE.getCode(), LONG_VALUE + 1));
+    Assert.assertEquals(LONG_VALUE_ERROR, e14.getMessage());
 
-    try {
-      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
-          ProposalType.MAINTENANCE_TIME_INTERVAL.getCode(), 3 * 27 * 1000 - 1);
-      Assert.fail();
-    } catch (ContractValidateException e) {
-      Assert.assertEquals(
-          "Bad chain parameter value, valid range is [3 * 27 * 1000,24 * 3600 * 1000]",
-          e.getMessage());
-    }
+    ContractValidateException e15 = Assert.assertThrows(ContractValidateException.class,
+        () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+            ProposalType.MAINTENANCE_TIME_INTERVAL.getCode(), 3 * 27 * 1000 - 1));
+    Assert.assertEquals(
+        "Bad chain parameter value, valid range is [3 * 27 * 1000,24 * 3600 * 1000]",
+        e15.getMessage());
 
-    try {
-      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
-          ProposalType.MAINTENANCE_TIME_INTERVAL.getCode(), 24 * 3600 * 1000 + 1);
-      Assert.fail();
-    } catch (ContractValidateException e) {
-      Assert.assertEquals(
-          "Bad chain parameter value, valid range is [3 * 27 * 1000,24 * 3600 * 1000]",
-          e.getMessage());
-    }
+    ContractValidateException e16 = Assert.assertThrows(ContractValidateException.class,
+        () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+            ProposalType.MAINTENANCE_TIME_INTERVAL.getCode(), 24 * 3600 * 1000 + 1));
+    Assert.assertEquals(
+        "Bad chain parameter value, valid range is [3 * 27 * 1000,24 * 3600 * 1000]",
+        e16.getMessage());
 
-    try {
-      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
-          ProposalType.ALLOW_CREATION_OF_CONTRACTS.getCode(), 2);
-      Assert.fail();
-    } catch (ContractValidateException e) {
-      Assert.assertEquals(
-          "This value[ALLOW_CREATION_OF_CONTRACTS] is only allowed to be 1",
-          e.getMessage());
-    }
+    ContractValidateException e17 = Assert.assertThrows(ContractValidateException.class,
+        () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+            ProposalType.ALLOW_CREATION_OF_CONTRACTS.getCode(), 2));
+    Assert.assertEquals(
+        "This value[ALLOW_CREATION_OF_CONTRACTS] is only allowed to be 1",
+        e17.getMessage());
 
     dynamicPropertiesStore = dbManager.getDynamicPropertiesStore();
     dynamicPropertiesStore.saveRemoveThePowerOfTheGr(1);
-    try {
-      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
-          ProposalType.REMOVE_THE_POWER_OF_THE_GR.getCode(), 2);
-      Assert.fail();
-    } catch (ContractValidateException e) {
-      Assert.assertEquals(
-          "This value[REMOVE_THE_POWER_OF_THE_GR] is only allowed to be 1",
-          e.getMessage());
-    }
+    ContractValidateException e18 = Assert.assertThrows(ContractValidateException.class,
+        () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+            ProposalType.REMOVE_THE_POWER_OF_THE_GR.getCode(), 2));
+    Assert.assertEquals(
+        "This value[REMOVE_THE_POWER_OF_THE_GR] is only allowed to be 1",
+        e18.getMessage());
 
     dynamicPropertiesStore.saveRemoveThePowerOfTheGr(-1);
-    try {
-      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
-          ProposalType.REMOVE_THE_POWER_OF_THE_GR.getCode(), 1);
-      Assert.fail();
-    } catch (ContractValidateException e) {
-      Assert.assertEquals(
-          "This proposal has been executed before and is only allowed to be executed once",
-          e.getMessage());
-    }
+    ContractValidateException e19 = Assert.assertThrows(ContractValidateException.class,
+        () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+            ProposalType.REMOVE_THE_POWER_OF_THE_GR.getCode(), 1));
+    Assert.assertEquals(
+        "This proposal has been executed before and is only allowed to be executed once",
+        e19.getMessage());
 
-    try {
-      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
-          ProposalType.MAX_CPU_TIME_OF_ONE_TX.getCode(), 9);
-      Assert.fail();
-    } catch (ContractValidateException e) {
-      Assert.assertEquals(
-          "Bad chain parameter value, valid range is [10,100]", e.getMessage());
-    }
+    ContractValidateException e20 = Assert.assertThrows(ContractValidateException.class,
+        () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+            ProposalType.MAX_CPU_TIME_OF_ONE_TX.getCode(), 9));
+    Assert.assertEquals(
+        "Bad chain parameter value, valid range is [10,100]", e20.getMessage());
 
-    try {
-      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
-          ProposalType.MAX_CPU_TIME_OF_ONE_TX.getCode(), 101);
-      Assert.fail();
-    } catch (ContractValidateException e) {
-      Assert.assertEquals(
-          "Bad chain parameter value, valid range is [10,100]", e.getMessage());
-    }
+    ContractValidateException e21 = Assert.assertThrows(ContractValidateException.class,
+        () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+            ProposalType.MAX_CPU_TIME_OF_ONE_TX.getCode(), 101));
+    Assert.assertEquals(
+        "Bad chain parameter value, valid range is [10,100]", e21.getMessage());
 
-    try {
-      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
-          ProposalType.ALLOW_DELEGATE_RESOURCE.getCode(), 2);
-      Assert.fail();
-    } catch (ContractValidateException e) {
-      Assert.assertEquals(
-          "This value[ALLOW_DELEGATE_RESOURCE] is only allowed to be 1", e.getMessage());
-    }
+    ContractValidateException e22 = Assert.assertThrows(ContractValidateException.class,
+        () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+            ProposalType.ALLOW_DELEGATE_RESOURCE.getCode(), 2));
+    Assert.assertEquals(
+        "This value[ALLOW_DELEGATE_RESOURCE] is only allowed to be 1", e22.getMessage());
 
     dynamicPropertiesStore.saveAllowSameTokenName(1);
-    try {
-      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
-          ProposalType.ALLOW_TVM_TRANSFER_TRC10.getCode(), 2);
-      Assert.fail();
-    } catch (ContractValidateException e) {
-      Assert.assertEquals(
-          "This value[ALLOW_TVM_TRANSFER_TRC10] is only allowed to be 1", e.getMessage());
-    }
+    ContractValidateException e23 = Assert.assertThrows(ContractValidateException.class,
+        () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+            ProposalType.ALLOW_TVM_TRANSFER_TRC10.getCode(), 2));
+    Assert.assertEquals(
+        "This value[ALLOW_TVM_TRANSFER_TRC10] is only allowed to be 1", e23.getMessage());
 
     dynamicPropertiesStore.saveAllowSameTokenName(0);
-    try {
-      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
-          ProposalType.ALLOW_TVM_TRANSFER_TRC10.getCode(), 1);
-      Assert.fail();
-    } catch (ContractValidateException e) {
-      Assert.assertEquals("[ALLOW_SAME_TOKEN_NAME] proposal must be approved "
-          + "before [ALLOW_TVM_TRANSFER_TRC10] can be proposed", e.getMessage());
-    }
+    ContractValidateException e24 = Assert.assertThrows(ContractValidateException.class,
+        () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+            ProposalType.ALLOW_TVM_TRANSFER_TRC10.getCode(), 1));
+    Assert.assertEquals("[ALLOW_SAME_TOKEN_NAME] proposal must be approved "
+        + "before [ALLOW_TVM_TRANSFER_TRC10] can be proposed", e24.getMessage());
 
     forkUtils.init(dbManager.getChainBaseManager());
     long maintenanceTimeInterval = forkUtils.getManager().getDynamicPropertiesStore()
@@ -308,15 +233,12 @@ public class ProposalUtilTest extends BaseTest {
     List<ByteString> w = new ArrayList<>();
     w.add(address);
     forkUtils.getManager().getWitnessScheduleStore().saveActiveWitnesses(w);
-    try {
-      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
-          ProposalType.ALLOW_SHIELDED_TRC20_TRANSACTION
-              .getCode(), 2);
-      Assert.fail();
-    } catch (ContractValidateException e) {
-      Assert.assertEquals("This value[ALLOW_SHIELDED_TRC20_TRANSACTION] is only allowed"
-          + " to be 1 or 0", e.getMessage());
-    }
+    ContractValidateException e25 = Assert.assertThrows(ContractValidateException.class,
+        () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+            ProposalType.ALLOW_SHIELDED_TRC20_TRANSACTION
+                .getCode(), 2));
+    Assert.assertEquals("This value[ALLOW_SHIELDED_TRC20_TRANSACTION] is only allowed"
+        + " to be 1 or 0", e25.getMessage());
 
     hardForkTime =
         ((ForkBlockVersionEnum.VERSION_4_3.getHardForkTime() - 1) / maintenanceTimeInterval + 1)
@@ -325,33 +247,24 @@ public class ProposalUtilTest extends BaseTest {
         .saveLatestBlockHeaderTimestamp(hardForkTime + 1);
     forkUtils.getManager().getDynamicPropertiesStore()
         .statsByVersion(ForkBlockVersionEnum.VERSION_4_3.getValue(), stats);
-    try {
-      ProposalUtil.validator(dynamicPropertiesStore, forkUtils, ProposalType.FREE_NET_LIMIT
-          .getCode(), -1);
-      Assert.fail();
-    } catch (ContractValidateException e) {
-      Assert.assertEquals("Bad chain parameter value, valid range is [0,100_000]",
-          e.getMessage());
-    }
+    ContractValidateException e26 = Assert.assertThrows(ContractValidateException.class,
+        () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils, ProposalType.FREE_NET_LIMIT
+            .getCode(), -1));
+    Assert.assertEquals("Bad chain parameter value, valid range is [0,100_000]",
+        e26.getMessage());
 
-    try {
-      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
-          ProposalType.TOTAL_NET_LIMIT.getCode(), -1);
-      Assert.fail();
-    } catch (ContractValidateException e) {
-      Assert.assertEquals("Bad chain parameter value, valid range is [0, 1_000_000_000_000L]",
-          e.getMessage());
-    }
+    ContractValidateException e27 = Assert.assertThrows(ContractValidateException.class,
+        () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+            ProposalType.TOTAL_NET_LIMIT.getCode(), -1));
+    Assert.assertEquals("Bad chain parameter value, valid range is [0, 1_000_000_000_000L]",
+        e27.getMessage());
 
-    try {
-      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
-          ProposalType.ALLOW_OLD_REWARD_OPT.getCode(), 2);
-      Assert.fail();
-    } catch (ContractValidateException e) {
-      Assert.assertEquals(
-          "Bad chain parameter id [ALLOW_OLD_REWARD_OPT]",
-          e.getMessage());
-    }
+    ContractValidateException e28 = Assert.assertThrows(ContractValidateException.class,
+        () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+            ProposalType.ALLOW_OLD_REWARD_OPT.getCode(), 2));
+    Assert.assertEquals(
+        "Bad chain parameter id [ALLOW_OLD_REWARD_OPT]",
+        e28.getMessage());
     hardForkTime =
         ((ForkBlockVersionEnum.VERSION_4_7_4.getHardForkTime() - 1) / maintenanceTimeInterval + 1)
             * maintenanceTimeInterval;
@@ -359,47 +272,35 @@ public class ProposalUtilTest extends BaseTest {
         .saveLatestBlockHeaderTimestamp(hardForkTime + 1);
     forkUtils.getManager().getDynamicPropertiesStore()
         .statsByVersion(ForkBlockVersionEnum.VERSION_4_7_4.getValue(), stats);
-    try {
-      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
-          ProposalType.ALLOW_OLD_REWARD_OPT.getCode(), 2);
-      Assert.fail();
-    } catch (ContractValidateException e) {
-      Assert.assertEquals(
-          "This value[ALLOW_OLD_REWARD_OPT] is only allowed to be 1",
-          e.getMessage());
-    }
-    try {
-      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
-          ProposalType.ALLOW_OLD_REWARD_OPT.getCode(), 1);
-      Assert.fail();
-    } catch (ContractValidateException e) {
-      Assert.assertEquals(
-          "[ALLOW_NEW_REWARD] or [ALLOW_TVM_VOTE] proposal must be approved "
-              + "before [ALLOW_OLD_REWARD_OPT] can be proposed",
-          e.getMessage());
-    }
+    ContractValidateException e29 = Assert.assertThrows(ContractValidateException.class,
+        () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+            ProposalType.ALLOW_OLD_REWARD_OPT.getCode(), 2));
+    Assert.assertEquals(
+        "This value[ALLOW_OLD_REWARD_OPT] is only allowed to be 1",
+        e29.getMessage());
+    ContractValidateException e30 = Assert.assertThrows(ContractValidateException.class,
+        () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+            ProposalType.ALLOW_OLD_REWARD_OPT.getCode(), 1));
+    Assert.assertEquals(
+        "[ALLOW_NEW_REWARD] or [ALLOW_TVM_VOTE] proposal must be approved "
+            + "before [ALLOW_OLD_REWARD_OPT] can be proposed",
+        e30.getMessage());
     dynamicPropertiesStore.put("NEW_REWARD_ALGORITHM_EFFECTIVE_CYCLE".getBytes(),
         new BytesCapsule(ByteArray.fromLong(4000)));
     dynamicPropertiesStore.saveAllowOldRewardOpt(1);
-    try {
-      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
-          ProposalType.ALLOW_OLD_REWARD_OPT.getCode(), 1);
-      Assert.fail();
-    } catch (ContractValidateException e) {
-      Assert.assertEquals(
-          "[ALLOW_OLD_REWARD_OPT] has been valid, no need to propose again",
-          e.getMessage());
-    }
+    ContractValidateException e31 = Assert.assertThrows(ContractValidateException.class,
+        () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+            ProposalType.ALLOW_OLD_REWARD_OPT.getCode(), 1));
+    Assert.assertEquals(
+        "[ALLOW_OLD_REWARD_OPT] has been valid, no need to propose again",
+        e31.getMessage());
 
-    try {
-      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
-          ProposalType.ALLOW_STRICT_MATH.getCode(), 2);
-      Assert.fail();
-    } catch (ContractValidateException e) {
-      Assert.assertEquals(
-          "Bad chain parameter id [ALLOW_STRICT_MATH]",
-          e.getMessage());
-    }
+    ContractValidateException e32 = Assert.assertThrows(ContractValidateException.class,
+        () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+            ProposalType.ALLOW_STRICT_MATH.getCode(), 2));
+    Assert.assertEquals(
+        "Bad chain parameter id [ALLOW_STRICT_MATH]",
+        e32.getMessage());
     hardForkTime =
         ((ForkBlockVersionEnum.VERSION_4_7_7.getHardForkTime() - 1) / maintenanceTimeInterval + 1)
             * maintenanceTimeInterval;
@@ -407,15 +308,12 @@ public class ProposalUtilTest extends BaseTest {
         .saveLatestBlockHeaderTimestamp(hardForkTime + 1);
     forkUtils.getManager().getDynamicPropertiesStore()
         .statsByVersion(ForkBlockVersionEnum.VERSION_4_7_7.getValue(), stats);
-    try {
-      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
-          ProposalType.ALLOW_STRICT_MATH.getCode(), 2);
-      Assert.fail();
-    } catch (ContractValidateException e) {
-      Assert.assertEquals(
-          "This value[ALLOW_STRICT_MATH] is only allowed to be 1",
-          e.getMessage());
-    }
+    ContractValidateException e33 = Assert.assertThrows(ContractValidateException.class,
+        () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+            ProposalType.ALLOW_STRICT_MATH.getCode(), 2));
+    Assert.assertEquals(
+        "This value[ALLOW_STRICT_MATH] is only allowed to be 1",
+        e33.getMessage());
     try {
       ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
           ProposalType.ALLOW_STRICT_MATH.getCode(), 1);
@@ -426,15 +324,12 @@ public class ProposalUtilTest extends BaseTest {
         ProposalType.ALLOW_STRICT_MATH.getCode(), 1).build();
     ProposalCapsule proposalCapsule = new ProposalCapsule(proposal);
     ProposalService.process(dbManager, proposalCapsule);
-    try {
-      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
-          ProposalType.ALLOW_STRICT_MATH.getCode(), 1);
-      Assert.fail();
-    } catch (ContractValidateException e) {
-      Assert.assertEquals(
-          "[ALLOW_STRICT_MATH] has been valid, no need to propose again",
-          e.getMessage());
-    }
+    ContractValidateException e34 = Assert.assertThrows(ContractValidateException.class,
+        () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+            ProposalType.ALLOW_STRICT_MATH.getCode(), 1));
+    Assert.assertEquals(
+        "[ALLOW_STRICT_MATH] has been valid, no need to propose again",
+        e34.getMessage());
 
     testEnergyAdjustmentProposal();
 
@@ -455,15 +350,12 @@ public class ProposalUtilTest extends BaseTest {
 
   private void testEnergyAdjustmentProposal() {
     // Should fail because cannot pass the fork controller check
-    try {
-      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
-          ProposalType.ALLOW_ENERGY_ADJUSTMENT.getCode(), 1);
-      Assert.fail();
-    } catch (ContractValidateException e) {
-      Assert.assertEquals(
-          "Bad chain parameter id [ALLOW_ENERGY_ADJUSTMENT]",
-          e.getMessage());
-    }
+    ContractValidateException e1 = Assert.assertThrows(ContractValidateException.class,
+        () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+            ProposalType.ALLOW_ENERGY_ADJUSTMENT.getCode(), 1));
+    Assert.assertEquals(
+        "Bad chain parameter id [ALLOW_ENERGY_ADJUSTMENT]",
+        e1.getMessage());
 
     long maintenanceTimeInterval = forkUtils.getManager().getDynamicPropertiesStore()
         .getMaintenanceTimeInterval();
@@ -480,15 +372,12 @@ public class ProposalUtilTest extends BaseTest {
         .statsByVersion(ForkBlockVersionEnum.VERSION_4_7_5.getValue(), stats);
 
     // Should fail because the proposal value is invalid
-    try {
-      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
-          ProposalType.ALLOW_ENERGY_ADJUSTMENT.getCode(), 2);
-      Assert.fail();
-    } catch (ContractValidateException e) {
-      Assert.assertEquals(
-          "This value[ALLOW_ENERGY_ADJUSTMENT] is only allowed to be 1",
-          e.getMessage());
-    }
+    ContractValidateException e2 = Assert.assertThrows(ContractValidateException.class,
+        () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+            ProposalType.ALLOW_ENERGY_ADJUSTMENT.getCode(), 2));
+    Assert.assertEquals(
+        "This value[ALLOW_ENERGY_ADJUSTMENT] is only allowed to be 1",
+        e2.getMessage());
 
     // Should succeed
     try {
@@ -504,27 +393,21 @@ public class ProposalUtilTest extends BaseTest {
     proposalCapsule.setParameters(parameter);
     ProposalService.process(dbManager, proposalCapsule);
 
-    try {
-      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
-          ProposalType.ALLOW_ENERGY_ADJUSTMENT.getCode(), 1);
-      Assert.fail();
-    } catch (ContractValidateException e) {
-      Assert.assertEquals(
-          "[ALLOW_ENERGY_ADJUSTMENT] has been valid, no need to propose again",
-          e.getMessage());
-    }
+    ContractValidateException e3 = Assert.assertThrows(ContractValidateException.class,
+        () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+            ProposalType.ALLOW_ENERGY_ADJUSTMENT.getCode(), 1));
+    Assert.assertEquals(
+        "[ALLOW_ENERGY_ADJUSTMENT] has been valid, no need to propose again",
+        e3.getMessage());
   }
 
   private void testConsensusLogicOptimizationProposal() {
-    try {
-      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
-          ProposalType.CONSENSUS_LOGIC_OPTIMIZATION.getCode(), 1);
-      Assert.fail();
-    } catch (ContractValidateException e) {
-      Assert.assertEquals(
-          "Bad chain parameter id [CONSENSUS_LOGIC_OPTIMIZATION]",
-          e.getMessage());
-    }
+    ContractValidateException e1 = Assert.assertThrows(ContractValidateException.class,
+        () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+            ProposalType.CONSENSUS_LOGIC_OPTIMIZATION.getCode(), 1));
+    Assert.assertEquals(
+        "Bad chain parameter id [CONSENSUS_LOGIC_OPTIMIZATION]",
+        e1.getMessage());
 
     long maintenanceTimeInterval = forkUtils.getManager().getDynamicPropertiesStore()
         .getMaintenanceTimeInterval();
@@ -541,26 +424,20 @@ public class ProposalUtilTest extends BaseTest {
       .statsByVersion(ForkBlockVersionEnum.VERSION_4_8_0.getValue(), stats);
 
     // Should fail because the proposal value is invalid
-    try {
-      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
-          ProposalType.CONSENSUS_LOGIC_OPTIMIZATION.getCode(), 2);
-      Assert.fail();
-    } catch (ContractValidateException e) {
-      Assert.assertEquals(
-          "This value[CONSENSUS_LOGIC_OPTIMIZATION] is only allowed to be 1",
-          e.getMessage());
-    }
+    ContractValidateException e2 = Assert.assertThrows(ContractValidateException.class,
+        () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+            ProposalType.CONSENSUS_LOGIC_OPTIMIZATION.getCode(), 2));
+    Assert.assertEquals(
+        "This value[CONSENSUS_LOGIC_OPTIMIZATION] is only allowed to be 1",
+        e2.getMessage());
 
     dynamicPropertiesStore.saveConsensusLogicOptimization(1);
-    try {
-      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
-          ProposalType.CONSENSUS_LOGIC_OPTIMIZATION.getCode(), 1);
-      Assert.fail();
-    } catch (ContractValidateException e) {
-      Assert.assertEquals(
-          "[CONSENSUS_LOGIC_OPTIMIZATION] has been valid, no need to propose again",
-          e.getMessage());
-    }
+    ContractValidateException e3 = Assert.assertThrows(ContractValidateException.class,
+        () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+            ProposalType.CONSENSUS_LOGIC_OPTIMIZATION.getCode(), 1));
+    Assert.assertEquals(
+        "[CONSENSUS_LOGIC_OPTIMIZATION] has been valid, no need to propose again",
+        e3.getMessage());
 
   }
 
@@ -568,15 +445,12 @@ public class ProposalUtilTest extends BaseTest {
     byte[] stats = new byte[27];
     forkUtils.getManager().getDynamicPropertiesStore()
         .statsByVersion(ForkBlockVersionEnum.VERSION_4_8_0.getValue(), stats);
-    try {
-      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
-          ProposalType.ALLOW_TVM_CANCUN.getCode(), 1);
-      Assert.fail();
-    } catch (ContractValidateException e) {
-      Assert.assertEquals(
-          "Bad chain parameter id [ALLOW_TVM_CANCUN]",
-          e.getMessage());
-    }
+    ContractValidateException e1 = Assert.assertThrows(ContractValidateException.class,
+        () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+            ProposalType.ALLOW_TVM_CANCUN.getCode(), 1));
+    Assert.assertEquals(
+        "Bad chain parameter id [ALLOW_TVM_CANCUN]",
+        e1.getMessage());
 
     long maintenanceTimeInterval = forkUtils.getManager().getDynamicPropertiesStore()
         .getMaintenanceTimeInterval();
@@ -593,26 +467,20 @@ public class ProposalUtilTest extends BaseTest {
         .statsByVersion(ForkBlockVersionEnum.VERSION_4_8_0.getValue(), stats);
 
     // Should fail because the proposal value is invalid
-    try {
-      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
-          ProposalType.ALLOW_TVM_CANCUN.getCode(), 2);
-      Assert.fail();
-    } catch (ContractValidateException e) {
-      Assert.assertEquals(
-          "This value[ALLOW_TVM_CANCUN] is only allowed to be 1",
-          e.getMessage());
-    }
+    ContractValidateException e2 = Assert.assertThrows(ContractValidateException.class,
+        () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+            ProposalType.ALLOW_TVM_CANCUN.getCode(), 2));
+    Assert.assertEquals(
+        "This value[ALLOW_TVM_CANCUN] is only allowed to be 1",
+        e2.getMessage());
 
     dynamicPropertiesStore.saveAllowTvmCancun(1);
-    try {
-      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
-          ProposalType.ALLOW_TVM_CANCUN.getCode(), 1);
-      Assert.fail();
-    } catch (ContractValidateException e) {
-      Assert.assertEquals(
-          "[ALLOW_TVM_CANCUN] has been valid, no need to propose again",
-          e.getMessage());
-    }
+    ContractValidateException e3 = Assert.assertThrows(ContractValidateException.class,
+        () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+            ProposalType.ALLOW_TVM_CANCUN.getCode(), 1));
+    Assert.assertEquals(
+        "[ALLOW_TVM_CANCUN] has been valid, no need to propose again",
+        e3.getMessage());
 
   }
 
@@ -620,15 +488,12 @@ public class ProposalUtilTest extends BaseTest {
     byte[] stats = new byte[27];
     forkUtils.getManager().getDynamicPropertiesStore()
         .statsByVersion(ForkBlockVersionEnum.VERSION_4_8_0.getValue(), stats);
-    try {
-      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
-          ProposalType.ALLOW_TVM_BLOB.getCode(), 1);
-      Assert.fail();
-    } catch (ContractValidateException e) {
-      Assert.assertEquals(
-          "Bad chain parameter id [ALLOW_TVM_BLOB]",
-          e.getMessage());
-    }
+    ContractValidateException e1 = Assert.assertThrows(ContractValidateException.class,
+        () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+            ProposalType.ALLOW_TVM_BLOB.getCode(), 1));
+    Assert.assertEquals(
+        "Bad chain parameter id [ALLOW_TVM_BLOB]",
+        e1.getMessage());
 
     long maintenanceTimeInterval = forkUtils.getManager().getDynamicPropertiesStore()
         .getMaintenanceTimeInterval();
@@ -645,26 +510,20 @@ public class ProposalUtilTest extends BaseTest {
         .statsByVersion(ForkBlockVersionEnum.VERSION_4_8_0.getValue(), stats);
 
     // Should fail because the proposal value is invalid
-    try {
-      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
-          ProposalType.ALLOW_TVM_BLOB.getCode(), 2);
-      Assert.fail();
-    } catch (ContractValidateException e) {
-      Assert.assertEquals(
-          "This value[ALLOW_TVM_BLOB] is only allowed to be 1",
-          e.getMessage());
-    }
+    ContractValidateException e2 = Assert.assertThrows(ContractValidateException.class,
+        () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+            ProposalType.ALLOW_TVM_BLOB.getCode(), 2));
+    Assert.assertEquals(
+        "This value[ALLOW_TVM_BLOB] is only allowed to be 1",
+        e2.getMessage());
 
     dynamicPropertiesStore.saveAllowTvmBlob(1);
-    try {
-      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
-          ProposalType.ALLOW_TVM_BLOB.getCode(), 1);
-      Assert.fail();
-    } catch (ContractValidateException e) {
-      Assert.assertEquals(
-          "[ALLOW_TVM_BLOB] has been valid, no need to propose again",
-          e.getMessage());
-    }
+    ContractValidateException e3 = Assert.assertThrows(ContractValidateException.class,
+        () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+            ProposalType.ALLOW_TVM_BLOB.getCode(), 1));
+    Assert.assertEquals(
+        "[ALLOW_TVM_BLOB] has been valid, no need to propose again",
+        e3.getMessage());
 
   }
 
@@ -672,15 +531,12 @@ public class ProposalUtilTest extends BaseTest {
     byte[] stats = new byte[27];
     forkUtils.getManager().getDynamicPropertiesStore()
         .statsByVersion(ForkBlockVersionEnum.VERSION_4_8_1.getValue(), stats);
-    try {
-      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
-          ProposalType.ALLOW_TVM_SELFDESTRUCT_RESTRICTION.getCode(), 1);
-      Assert.fail();
-    } catch (ContractValidateException e) {
-      Assert.assertEquals(
-          "Bad chain parameter id [ALLOW_TVM_SELFDESTRUCT_RESTRICTION]",
-          e.getMessage());
-    }
+    ContractValidateException e1 = Assert.assertThrows(ContractValidateException.class,
+        () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+            ProposalType.ALLOW_TVM_SELFDESTRUCT_RESTRICTION.getCode(), 1));
+    Assert.assertEquals(
+        "Bad chain parameter id [ALLOW_TVM_SELFDESTRUCT_RESTRICTION]",
+        e1.getMessage());
 
     long maintenanceTimeInterval = forkUtils.getManager().getDynamicPropertiesStore()
         .getMaintenanceTimeInterval();
@@ -697,26 +553,20 @@ public class ProposalUtilTest extends BaseTest {
         .statsByVersion(ForkBlockVersionEnum.VERSION_4_8_1.getValue(), stats);
 
     // Should fail because the proposal value is invalid
-    try {
-      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
-          ProposalType.ALLOW_TVM_SELFDESTRUCT_RESTRICTION.getCode(), 2);
-      Assert.fail();
-    } catch (ContractValidateException e) {
-      Assert.assertEquals(
-          "This value[ALLOW_TVM_SELFDESTRUCT_RESTRICTION] is only allowed to be 1",
-          e.getMessage());
-    }
+    ContractValidateException e2 = Assert.assertThrows(ContractValidateException.class,
+        () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+            ProposalType.ALLOW_TVM_SELFDESTRUCT_RESTRICTION.getCode(), 2));
+    Assert.assertEquals(
+        "This value[ALLOW_TVM_SELFDESTRUCT_RESTRICTION] is only allowed to be 1",
+        e2.getMessage());
 
     dynamicPropertiesStore.saveAllowTvmSelfdestructRestriction(1);
-    try {
-      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
-          ProposalType.ALLOW_TVM_SELFDESTRUCT_RESTRICTION.getCode(), 1);
-      Assert.fail();
-    } catch (ContractValidateException e) {
-      Assert.assertEquals(
-          "[ALLOW_TVM_SELFDESTRUCT_RESTRICTION] has been valid, no need to propose again",
-          e.getMessage());
-    }
+    ContractValidateException e3 = Assert.assertThrows(ContractValidateException.class,
+        () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+            ProposalType.ALLOW_TVM_SELFDESTRUCT_RESTRICTION.getCode(), 1));
+    Assert.assertEquals(
+        "[ALLOW_TVM_SELFDESTRUCT_RESTRICTION] has been valid, no need to propose again",
+        e3.getMessage());
   }
 
   private void testAllowMarketTransaction() {

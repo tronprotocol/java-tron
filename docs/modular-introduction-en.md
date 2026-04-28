@@ -16,7 +16,7 @@ The aim of java-tron modularization is to enable developers to easily build a de
 
 ![modular-structure](https://github.com/tronprotocol/java-tron/blob/develop/docs/images/module.png)
 
-A modularized java-tron consists of six modules: framework, protocol, common, chainbase, consensus and actuator. The function of each module is elaborated below.
+A modularized java-tron consists of nine modules: framework, protocol, common, chainbase, consensus, actuator, crypto, plugins and platform. The function of each module is elaborated below.
 
 ### framework
 
@@ -67,4 +67,15 @@ Actuator module defines the `Actuator` interface, which includes 4 different met
 4. calcFee: define the logic of calculating transaction fees
 
 Depending on their businesses, developers may set up Actuator accordingly and customize the processing of different types of transactions.
- 
+
+### crypto
+
+Crypto module encapsulates cryptographic primitives used across the project, including elliptic curve key operations, hash functions and signature verification. It depends only on `common` and has no dependency on other business modules, keeping cryptographic logic isolated and auditable.
+
+### plugins
+
+Plugins module provides standalone operational tools packaged as independent executable JARs, such as `Toolkit.jar` and `ArchiveManifest.jar`. These tools support database maintenance tasks like migration, compaction and lite-node data pruning, and can be run without starting a full node.
+
+### platform
+
+Platform module provides the JNI bindings for the native database engines — LevelDB and RocksDB. It is architecture-aware: LevelDB is excluded on ARM64 (Apple Silicon and Linux aarch64) where only RocksDB is supported, while both are available on x86_64.

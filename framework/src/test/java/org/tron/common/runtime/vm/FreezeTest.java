@@ -289,17 +289,9 @@ public class FreezeTest extends BaseMethodTest {
 
     TVMTestResult result = freezeForOther(userA, contractAddr, userA, frozenBalance, 1);
 
-    System.out.println(result.getReceipt().getEnergyUsageTotal());
-    System.out.println(accountStore.get(userA));
-    System.out.println(accountStore.get(owner));
-
     clearDelegatedExpireTime(contractAddr, userA);
 
     result = unfreezeForOther(userA, contractAddr, userA, 1);
-
-    System.out.println(result.getReceipt().getEnergyUsageTotal());
-    System.out.println(accountStore.get(userA));
-    System.out.println(accountStore.get(owner));
   }
 
   @Test

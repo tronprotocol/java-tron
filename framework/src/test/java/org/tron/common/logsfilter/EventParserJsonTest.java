@@ -65,7 +65,6 @@ public class EventParserJsonTest {
 
     for (int i = 0; i < entryArr.size(); i++) {
       JSONObject e = entryArr.getJSONObject(i);
-      System.out.println(e.getString("name"));
       if (e.getString("name") != null) {
         if (e.getString("name").equalsIgnoreCase("eventBytesL")) {
           entry = e;

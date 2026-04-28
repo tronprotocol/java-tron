@@ -77,12 +77,9 @@ public class AccountStoreTest extends BaseTest {
     field.set(AccountStore.class, new HashMap<>());
     Config config = mock(Config.class);
     Mockito.when(config.getObjectList("genesis.block.assets")).thenReturn(new ArrayList<>());
-    try {
-      AccountStore.setAccount(config);
-      Assert.fail();
-    } catch (Throwable e) {
-      Assert.assertTrue(e instanceof TronError);
-    }
+    Throwable e = Assert.assertThrows(Throwable.class,
+        () -> AccountStore.setAccount(config));
+    Assert.assertTrue(e instanceof TronError);
   }
 
   @Test
