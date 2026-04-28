@@ -188,12 +188,9 @@ public class MarketCancelOrderActuatorTest extends BaseTest {
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
         OWNER_ADDRESS_INVALID, orderId));
 
-    try {
-      actuator.validate();
-      Assert.fail("Invalid address");
-    } catch (ContractValidateException e) {
-      Assert.assertEquals("Invalid address", e.getMessage());
-    }
+    ContractValidateException e = Assert.assertThrows(ContractValidateException.class,
+        () -> actuator.validate());
+    Assert.assertEquals("Invalid address", e.getMessage());
   }
 
   /**
@@ -208,12 +205,9 @@ public class MarketCancelOrderActuatorTest extends BaseTest {
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
         OWNER_ADDRESS_NOT_EXIST, orderId));
 
-    try {
-      actuator.validate();
-      Assert.fail("Account does not exist!");
-    } catch (ContractValidateException e) {
-      Assert.assertEquals("Account does not exist!", e.getMessage());
-    }
+    ContractValidateException e = Assert.assertThrows(ContractValidateException.class,
+        () -> actuator.validate());
+    Assert.assertEquals("Account does not exist!", e.getMessage());
   }
 
   /**
@@ -227,12 +221,9 @@ public class MarketCancelOrderActuatorTest extends BaseTest {
     MarketCancelOrderActuator actuator = new MarketCancelOrderActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
         OWNER_ADDRESS_FIRST, orderId));
-    try {
-      actuator.validate();
-      Assert.fail("orderId not exists");
-    } catch (ContractValidateException e) {
-      Assert.assertEquals("orderId not exists", e.getMessage());
-    }
+    ContractValidateException e = Assert.assertThrows(ContractValidateException.class,
+        () -> actuator.validate());
+    Assert.assertEquals("orderId not exists", e.getMessage());
   }
 
   /**
@@ -261,12 +252,9 @@ public class MarketCancelOrderActuatorTest extends BaseTest {
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
         OWNER_ADDRESS_FIRST, orderId));
 
-    try {
-      actuator.validate();
-      Assert.fail("Order is not active!");
-    } catch (ContractValidateException e) {
-      Assert.assertEquals("Order is not active!", e.getMessage());
-    }
+    ContractValidateException e = Assert.assertThrows(ContractValidateException.class,
+        () -> actuator.validate());
+    Assert.assertEquals("Order is not active!", e.getMessage());
   }
 
 

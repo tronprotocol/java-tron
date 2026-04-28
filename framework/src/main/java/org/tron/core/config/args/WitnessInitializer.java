@@ -79,12 +79,27 @@ public class WitnessInitializer {
 
     List<String> privateKeys = new ArrayList<>();
     try {
-      Credentials credentials = WalletUtils.loadCredentials(pwd, new File(fileName));
+      Credentials credentials = WalletUtils.loadCredentials(pwd, new File(fileName),
+          Args.getInstance().isECKeyCryptoEngine());
       SignInterface sign = credentials.getSignInterface();
       String prikey = ByteArray.toHexString(sign.getPrivateKey());
       privateKeys.add(prikey);
     } catch (IOException | CipherException e) {
       logger.error("Witness node start failed!");
+      // Legacy-truncation hint: if this keystore was created with
+      // `FullNode.jar --keystore-factory` in non-TTY mode (e.g.
+      // `echo PASS | java ...`), the legacy code encrypted with only
+      // the first whitespace-separated word of the password. Emit the
+      // tip only when the entered password has internal whitespace —
+      // otherwise truncation cannot be the cause.
+      if (e instanceof CipherException && pwd != null && pwd.matches(".*\\s.*")) {
+        logger.error(
+            "Tip: keystores created via `FullNode.jar --keystore-factory` in "
+                + "non-TTY mode were encrypted with only the first "
+                + "whitespace-separated word of the password. Try restarting "
+                + "with only that first word as `-p`, then reset the password "
+                + "via `java -jar Toolkit.jar keystore update`.");
+      }
       throw new TronError(e, TronError.ErrCode.WITNESS_KEYSTORE_LOAD);
     }
 

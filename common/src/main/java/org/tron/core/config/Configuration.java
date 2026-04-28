@@ -48,7 +48,8 @@ public class Configuration {
 
   private static void resolveConfigFile(String fileName, File confFile) {
     if (confFile.exists()) {
-      config = ConfigFactory.parseFile(confFile);
+      config = ConfigFactory.parseFile(confFile)
+          .withFallback(ConfigFactory.defaultReference());
     } else if (Thread.currentThread().getContextClassLoader().getResourceAsStream(fileName)
         != null) {
       config = ConfigFactory.load(fileName);

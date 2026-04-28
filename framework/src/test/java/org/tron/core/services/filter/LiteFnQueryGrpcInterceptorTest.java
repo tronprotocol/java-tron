@@ -18,21 +18,21 @@ import org.junit.rules.Timeout;
 import org.tron.api.GrpcAPI;
 import org.tron.api.WalletGrpc;
 import org.tron.api.WalletSolidityGrpc;
+import org.tron.common.ClassLevelAppContextFixture;
 import org.tron.common.TestConstants;
-import org.tron.common.application.Application;
-import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.PublicMethod;
 import org.tron.common.utils.TimeoutInterceptor;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
-import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 
 @Slf4j
 public class LiteFnQueryGrpcInterceptorTest {
 
   private static TronApplicationContext context;
+  private static final ClassLevelAppContextFixture APP_FIXTURE =
+      new ClassLevelAppContextFixture();
   private static ManagedChannel channelFull = null;
   private static ManagedChannel channelSolidity = null;
   private static ManagedChannel channelpBFT = null;
@@ -84,30 +84,21 @@ public class LiteFnQueryGrpcInterceptorTest {
         .usePlaintext()
         .intercept(new TimeoutInterceptor(5000))
         .build();
-    context = new TronApplicationContext(DefaultConfig.class);
+    context = APP_FIXTURE.createContext();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
     blockingStubSolidity = WalletSolidityGrpc.newBlockingStub(channelSolidity);
     blockingStubpBFT = WalletSolidityGrpc.newBlockingStub(channelpBFT);
     chainBaseManager = context.getBean(ChainBaseManager.class);
-    Application appTest = ApplicationFactory.create(context);
-    appTest.startup();
+    APP_FIXTURE.startApp();
   }
 
   /**
    * destroy the context.
    */
   @AfterClass
-  public static void destroy() throws InterruptedException {
-    if (channelFull != null) {
-      channelFull.shutdownNow();
-    }
-    if (channelSolidity != null) {
-      channelSolidity.shutdownNow();
-    }
-    if (channelpBFT != null) {
-      channelpBFT.shutdownNow();
-    }
-    context.close();
+  public static void destroy() {
+    ClassLevelAppContextFixture.shutdownChannels(channelFull, channelSolidity, channelpBFT);
+    APP_FIXTURE.close();
     Args.clearParam();
   }
 

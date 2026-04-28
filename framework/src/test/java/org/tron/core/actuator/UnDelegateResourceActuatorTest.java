@@ -464,29 +464,25 @@ public class UnDelegateResourceActuatorTest extends BaseTest {
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(
             getDelegatedContractForBandwidth(OWNER_ADDRESS, delegateBalance));
 
-    try {
-      ownerCapsule = dbManager.getAccountStore().get(owner);
-      Assert.assertEquals(delegateBalance,
-              receiverCapsule.getAcquiredDelegatedFrozenV2BalanceForBandwidth());
-      Assert.assertEquals(delegateBalance, ownerCapsule.getDelegatedFrozenV2BalanceForBandwidth());
-      Assert.assertEquals(0, ownerCapsule.getFrozenV2BalanceForBandwidth());
-      Assert.assertEquals(delegateBalance, ownerCapsule.getTronPower());
-      Assert.assertEquals(1_000_000_000, ownerCapsule.getNetUsage());
-      Assert.assertEquals(1_000_000_000, receiverCapsule.getNetUsage());
-      DelegatedResourceCapsule delegatedResourceCapsule = dbManager.getDelegatedResourceStore()
-              .get(DelegatedResourceCapsule.createDbKeyV2(owner, receiver, false));
-      DelegatedResourceCapsule lockedResourceCapsule = dbManager.getDelegatedResourceStore()
-              .get(DelegatedResourceCapsule.createDbKeyV2(owner, receiver, true));
-      Assert.assertNull(delegatedResourceCapsule);
-      Assert.assertNotNull(lockedResourceCapsule);
+    ownerCapsule = dbManager.getAccountStore().get(owner);
+    Assert.assertEquals(delegateBalance,
+            receiverCapsule.getAcquiredDelegatedFrozenV2BalanceForBandwidth());
+    Assert.assertEquals(delegateBalance, ownerCapsule.getDelegatedFrozenV2BalanceForBandwidth());
+    Assert.assertEquals(0, ownerCapsule.getFrozenV2BalanceForBandwidth());
+    Assert.assertEquals(delegateBalance, ownerCapsule.getTronPower());
+    Assert.assertEquals(1_000_000_000, ownerCapsule.getNetUsage());
+    Assert.assertEquals(1_000_000_000, receiverCapsule.getNetUsage());
+    DelegatedResourceCapsule delegatedResourceCapsule = dbManager.getDelegatedResourceStore()
+            .get(DelegatedResourceCapsule.createDbKeyV2(owner, receiver, false));
+    DelegatedResourceCapsule lockedResourceCapsule = dbManager.getDelegatedResourceStore()
+            .get(DelegatedResourceCapsule.createDbKeyV2(owner, receiver, true));
+    Assert.assertNull(delegatedResourceCapsule);
+    Assert.assertNotNull(lockedResourceCapsule);
 
-      actuator.validate();
-      Assert.fail();
-    } catch (Exception e) {
-      Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("insufficient delegatedFrozenBalance(BANDWIDTH), "
-              + "request=1000000000, unlock_balance=0", e.getMessage());
-    }
+    ContractValidateException e = Assert.assertThrows(ContractValidateException.class,
+        () -> actuator.validate());
+    Assert.assertEquals("insufficient delegatedFrozenBalance(BANDWIDTH), "
+            + "request=1000000000, unlock_balance=0", e.getMessage());
   }
 
   @Test
@@ -976,22 +972,16 @@ public class UnDelegateResourceActuatorTest extends BaseTest {
     actuator.setChainBaseManager(dbManager.getChainBaseManager())
         .setAny(getDelegatedContractForBandwidth(OWNER_ADDRESS, delegateBalance));
 
-    try {
-      actuator.validate();
-      Assert.fail("cannot run here.");
-    } catch (ContractValidateException e) {
-      Assert.assertEquals("delegated Resource does not exist", e.getMessage());
-    }
+    ContractValidateException e1 = Assert.assertThrows(ContractValidateException.class,
+        () -> actuator.validate());
+    Assert.assertEquals("delegated Resource does not exist", e1.getMessage());
 
     actuator.setChainBaseManager(dbManager.getChainBaseManager())
             .setAny(getDelegatedContractForCpu(delegateBalance));
 
-    try {
-      actuator.validate();
-      Assert.fail("cannot run here.");
-    } catch (ContractValidateException e) {
-      Assert.assertEquals("delegated Resource does not exist", e.getMessage());
-    }
+    ContractValidateException e2 =
+        Assert.assertThrows(ContractValidateException.class, () -> actuator.validate());
+    Assert.assertEquals("delegated Resource does not exist", e2.getMessage());
   }
 
   @Test

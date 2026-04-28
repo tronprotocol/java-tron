@@ -34,6 +34,12 @@ dependencies {
     implementation fileTree(dir: 'libs', include: '*.jar')
     testImplementation project(":framework")
     testImplementation project(":framework").sourceSets.test.output
+    implementation(project(":crypto")) {
+        exclude group: 'io.github.tronprotocol', module: 'libp2p'
+        exclude group: 'io.prometheus'
+        exclude group: 'org.aspectj'
+        exclude group: 'org.apache.httpcomponents'
+    }
     implementation group: 'info.picocli', name: 'picocli', version: '4.6.3'
     implementation group: 'com.typesafe', name: 'config', version: '1.3.2'
     implementation group: 'me.tongfei', name: 'progressbar', version: '0.9.3'

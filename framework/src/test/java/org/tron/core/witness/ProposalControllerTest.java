@@ -17,6 +17,7 @@ import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.consensus.ConsensusService;
 import org.tron.core.consensus.ProposalController;
+import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.protos.Protocol.Proposal;
 import org.tron.protos.Protocol.Proposal.State;
@@ -29,7 +30,7 @@ public class ProposalControllerTest extends BaseTest {
   private static boolean init;
 
   static {
-    Args.setParam(new String[]{"-d", dbPath()}, TestConstants.TEST_CONF);
+    Args.setParam(new String[] {"-d", dbPath()}, TestConstants.TEST_CONF);
   }
 
   @Before
@@ -66,7 +67,7 @@ public class ProposalControllerTest extends BaseTest {
   }
 
   @Test
-  public void testProcessProposal() {
+  public void testProcessProposal() throws ItemNotFoundException {
     ProposalCapsule proposalCapsule = new ProposalCapsule(
         Proposal.newBuilder().build());
     proposalCapsule.setState(State.PENDING);
@@ -77,11 +78,7 @@ public class ProposalControllerTest extends BaseTest {
 
     proposalController.processProposal(proposalCapsule);
 
-    try {
-      proposalCapsule = dbManager.getProposalStore().get(key);
-    } catch (Exception ex) {
-      System.out.println(ex.getMessage());
-    }
+    proposalCapsule = dbManager.getProposalStore().get(key);
     Assert.assertEquals(State.DISAPPROVED, proposalCapsule.getState());
 
     proposalCapsule.setState(State.PENDING);
@@ -92,11 +89,7 @@ public class ProposalControllerTest extends BaseTest {
 
     proposalController.processProposal(proposalCapsule);
 
-    try {
-      proposalCapsule = dbManager.getProposalStore().get(key);
-    } catch (Exception ex) {
-      System.out.println(ex.getMessage());
-    }
+    proposalCapsule = dbManager.getProposalStore().get(key);
     Assert.assertEquals(State.DISAPPROVED, proposalCapsule.getState());
 
     List<ByteString> activeWitnesses = Lists.newArrayList();
@@ -114,17 +107,13 @@ public class ProposalControllerTest extends BaseTest {
     dbManager.getProposalStore().put(key, proposalCapsule);
     proposalController.processProposal(proposalCapsule);
 
-    try {
-      proposalCapsule = dbManager.getProposalStore().get(key);
-    } catch (Exception ex) {
-      System.out.println(ex.getMessage());
-    }
+    proposalCapsule = dbManager.getProposalStore().get(key);
     Assert.assertEquals(State.APPROVED, proposalCapsule.getState());
   }
 
 
   @Test
-  public void testProcessProposals() {
+  public void testProcessProposals() throws ItemNotFoundException {
     ProposalCapsule proposalCapsule1 = new ProposalCapsule(
         Proposal.newBuilder().build());
     proposalCapsule1.setState(State.APPROVED);
@@ -163,11 +152,7 @@ public class ProposalControllerTest extends BaseTest {
 
     proposalController.processProposals();
 
-    try {
-      proposalCapsule3 = dbManager.getProposalStore().get(proposalCapsule3.createDbKey());
-    } catch (Exception ex) {
-      System.out.println(ex.getMessage());
-    }
+    proposalCapsule3 = dbManager.getProposalStore().get(proposalCapsule3.createDbKey());
     Assert.assertEquals(State.DISAPPROVED, proposalCapsule3.getState());
 
   }
@@ -181,26 +166,26 @@ public class ProposalControllerTest extends BaseTest {
 
     List<ByteString> activeWitnesses = Lists.newArrayList();
     for (int i = 0; i < 27; i++) {
-      activeWitnesses.add(ByteString.copyFrom(new byte[]{(byte) i}));
+      activeWitnesses.add(ByteString.copyFrom(new byte[] {(byte) i}));
     }
     for (int i = 0; i < 18; i++) {
-      proposalCapsule.addApproval(ByteString.copyFrom(new byte[]{(byte) i}));
+      proposalCapsule.addApproval(ByteString.copyFrom(new byte[] {(byte) i}));
     }
 
     Assert.assertTrue(proposalCapsule.hasMostApprovals(activeWitnesses));
 
     proposalCapsule.clearApproval();
     for (int i = 1; i < 18; i++) {
-      proposalCapsule.addApproval(ByteString.copyFrom(new byte[]{(byte) i}));
+      proposalCapsule.addApproval(ByteString.copyFrom(new byte[] {(byte) i}));
     }
 
     activeWitnesses.clear();
     for (int i = 0; i < 5; i++) {
-      activeWitnesses.add(ByteString.copyFrom(new byte[]{(byte) i}));
+      activeWitnesses.add(ByteString.copyFrom(new byte[] {(byte) i}));
     }
     proposalCapsule.clearApproval();
     for (int i = 0; i < 3; i++) {
-      proposalCapsule.addApproval(ByteString.copyFrom(new byte[]{(byte) i}));
+      proposalCapsule.addApproval(ByteString.copyFrom(new byte[] {(byte) i}));
     }
     Assert.assertTrue(proposalCapsule.hasMostApprovals(activeWitnesses));
   }

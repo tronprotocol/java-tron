@@ -860,15 +860,12 @@ public class WalletTest extends BaseTest {
 
   @Test
   public void testGetPaginatedNowWitnessList_Error() {
-    try {
-      // To avoid throw MaintenanceClearingException
-      dbManager.getChainBaseManager().getDynamicPropertiesStore().saveStateFlag(1);
-      wallet.getPaginatedNowWitnessList(0, 10);
-      Assert.fail("Should throw error when in maintenance period");
-    } catch (Exception e) {
-      Assert.assertTrue("Should throw MaintenanceClearingException",
-          e instanceof MaintenanceUnavailableException);
-    }
+    // To avoid throw MaintenanceClearingException
+    dbManager.getChainBaseManager().getDynamicPropertiesStore().saveStateFlag(1);
+    Exception maintenanceEx = Assert.assertThrows(Exception.class,
+        () -> wallet.getPaginatedNowWitnessList(0, 10));
+    Assert.assertTrue("Should throw MaintenanceClearingException",
+        maintenanceEx instanceof MaintenanceUnavailableException);
 
     try {
       Args.getInstance().setSolidityNode(true);
@@ -1376,13 +1373,9 @@ public class WalletTest extends BaseTest {
 
     Args.getInstance().setEstimateEnergy(true);
 
-    try {
-      wallet.estimateEnergy(
-          contract, trxCap, trxExtBuilder, retBuilder, estimateBuilder);
-      Assert.fail("EstimateEnergy should throw exception!");
-    } catch (Program.OutOfTimeException ignored) {
-      Assert.assertTrue(true);
-    }
+    Assert.assertThrows(Program.OutOfTimeException.class,
+        () -> wallet.estimateEnergy(
+            contract, trxCap, trxExtBuilder, retBuilder, estimateBuilder));
   }
 
   @Test

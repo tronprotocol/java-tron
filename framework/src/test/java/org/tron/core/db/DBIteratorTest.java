@@ -86,43 +86,36 @@ public class DBIteratorTest {
          RocksDB db = RocksDB.open(options, file.toString())) {
       db.put("1".getBytes(StandardCharsets.UTF_8), "1".getBytes(StandardCharsets.UTF_8));
       db.put("2".getBytes(StandardCharsets.UTF_8), "2".getBytes(StandardCharsets.UTF_8));
-      RockStoreIterator iterator = new RockStoreIterator(db.newIterator(), new ReadOptions());
-      iterator.seekToFirst();
-      Assert.assertArrayEquals("1".getBytes(StandardCharsets.UTF_8), iterator.getKey());
-      Assert.assertArrayEquals("1".getBytes(StandardCharsets.UTF_8), iterator.next().getValue());
-      Assert.assertTrue(iterator.hasNext());
+      try (RockStoreIterator iterator =
+               new RockStoreIterator(db.newIterator(), new ReadOptions())) {
+        iterator.seekToFirst();
+        Assert.assertArrayEquals("1".getBytes(StandardCharsets.UTF_8), iterator.getKey());
+        Assert.assertArrayEquals("1".getBytes(StandardCharsets.UTF_8), iterator.next().getValue());
+        Assert.assertTrue(iterator.hasNext());
 
-      Assert.assertArrayEquals("2".getBytes(StandardCharsets.UTF_8), iterator.getValue());
-      Assert.assertArrayEquals("2".getBytes(StandardCharsets.UTF_8), iterator.next().getKey());
-      Assert.assertFalse(iterator.hasNext());
+        Assert.assertArrayEquals("2".getBytes(StandardCharsets.UTF_8), iterator.getValue());
+        Assert.assertArrayEquals("2".getBytes(StandardCharsets.UTF_8), iterator.next().getKey());
+        Assert.assertFalse(iterator.hasNext());
 
-      try {
-        iterator.seekToLast();
-      } catch (Exception e) {
-        Assert.assertTrue(e instanceof  IllegalStateException);
+        Assert.assertThrows(IllegalStateException.class, iterator::seekToLast);
       }
 
-      iterator = new RockStoreIterator(db.newIterator(),  new ReadOptions());
-      iterator.seekToLast();
-      Assert.assertArrayEquals("2".getBytes(StandardCharsets.UTF_8), iterator.getKey());
-      Assert.assertArrayEquals("2".getBytes(StandardCharsets.UTF_8), iterator.getValue());
-      iterator.seekToFirst();
-      while (iterator.hasNext()) {
+      try (
+          RockStoreIterator iterator =
+              new RockStoreIterator(db.newIterator(), new ReadOptions())) {
+        iterator.seekToLast();
+        Assert.assertArrayEquals("2".getBytes(StandardCharsets.UTF_8), iterator.getKey());
+        Assert.assertArrayEquals("2".getBytes(StandardCharsets.UTF_8), iterator.getValue());
+        iterator.seekToFirst();
+        while (iterator.hasNext()) {
+          iterator.next();
+        }
+        Assert.assertFalse(iterator.hasNext());
+        Assert.assertThrows(IllegalStateException.class, iterator::getKey);
+        Assert.assertThrows(IllegalStateException.class, iterator::getValue);
+        thrown.expect(NoSuchElementException.class);
         iterator.next();
       }
-      Assert.assertFalse(iterator.hasNext());
-      try {
-        iterator.getKey();
-      } catch (Exception e) {
-        Assert.assertTrue(e instanceof  IllegalStateException);
-      }
-      try {
-        iterator.getValue();
-      } catch (Exception e) {
-        Assert.assertTrue(e instanceof  IllegalStateException);
-      }
-      thrown.expect(NoSuchElementException.class);
-      iterator.next();
     }
   }
 

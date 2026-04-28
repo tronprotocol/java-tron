@@ -84,11 +84,7 @@ public class AccountAssetStoreTest extends BaseTest {
     AssetIssueCapsule assetIssueCapsule = new AssetIssueCapsule(assetIssueContract);
     chainBaseManager.getAssetIssueV2Store()
             .put(assetIssueCapsule.createDbV2Key(), assetIssueCapsule);
-    try {
-      ownerCapsule.addAssetV2(ByteArray.fromString(String.valueOf(id)), TOTAL_SUPPLY);
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
+    ownerCapsule.addAssetV2(ByteArray.fromString(String.valueOf(id)), TOTAL_SUPPLY);
     accountStore.put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
     return id;
   }

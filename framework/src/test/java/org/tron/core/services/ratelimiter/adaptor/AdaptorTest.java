@@ -3,9 +3,12 @@ package org.tron.core.services.ratelimiter.adaptor;
 import com.google.common.cache.Cache;
 import com.google.common.util.concurrent.RateLimiter;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 import org.junit.Assert;
 import org.junit.Test;
+import org.tron.common.es.ExecutorServiceManager;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.core.services.ratelimiter.adapter.GlobalPreemptibleAdapter;
 import org.tron.core.services.ratelimiter.adapter.IPQPSRateLimiterAdapter;
@@ -134,15 +137,16 @@ public class AdaptorTest {
 
     long t0 = System.currentTimeMillis();
     CountDownLatch latch = new CountDownLatch(20);
-    for (int i = 0; i < 20; i++) {
-      Thread thread = new Thread(new AdaptorThread(latch, strategy));
-      thread.start();
-    }
-
+    ExecutorService pool = ExecutorServiceManager.newFixedThreadPool("adaptor-test", 20);
     try {
+      for (int i = 0; i < 20; i++) {
+        pool.execute(new AdaptorThread(latch, strategy));
+      }
       latch.await();
     } catch (InterruptedException e) {
-      System.out.println(e.getMessage());
+      Thread.currentThread().interrupt();
+    } finally {
+      ExecutorServiceManager.shutdownAndAwaitTermination(pool, "adaptor-test");
     }
     long t1 = System.currentTimeMillis();
     Assert.assertTrue(t1 - t0 > 4000);

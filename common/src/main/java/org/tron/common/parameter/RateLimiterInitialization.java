@@ -74,6 +74,12 @@ public class RateLimiterInitialization {
       strategy = asset.get("strategy").unwrapped().toString();
       params = asset.get("paramString").unwrapped().toString();
     }
+
+    public HttpRateLimiterItem(String component, String strategy, String params) {
+      this.component = component;
+      this.strategy = strategy;
+      this.params = params;
+    }
   }
 
 
@@ -92,6 +98,12 @@ public class RateLimiterInitialization {
       component = asset.get("component").unwrapped().toString();
       strategy = asset.get("strategy").unwrapped().toString();
       params = asset.get("paramString").unwrapped().toString();
+    }
+
+    public RpcRateLimiterItem(String component, String strategy, String params) {
+      this.component = component;
+      this.strategy = strategy;
+      this.params = params;
     }
   }
 }

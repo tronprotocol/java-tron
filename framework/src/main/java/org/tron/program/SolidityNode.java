@@ -2,7 +2,10 @@ package org.tron.program;
 
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 
+import com.google.common.annotations.VisibleForTesting;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
@@ -11,6 +14,7 @@ import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.client.DatabaseGrpcClient;
+import org.tron.common.es.ExecutorServiceManager;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.prometheus.Metrics;
 import org.tron.core.ChainBaseManager;
@@ -38,6 +42,9 @@ public class SolidityNode {
   private int exceptionSleepTime = 1000;
 
   private volatile boolean flag = true;
+
+  private ExecutorService getBlockEs;
+  private ExecutorService processBlockEs;
 
   public SolidityNode(Manager dbManager) {
     this.dbManager = dbManager;
@@ -72,13 +79,26 @@ public class SolidityNode {
     appT.startup();
     SolidityNode node = new SolidityNode(appT.getDbManager());
     node.run();
-    appT.blockUntilShutdown();
+    awaitShutdown(appT, node);
+  }
+
+  @VisibleForTesting
+  static void awaitShutdown(Application appT, SolidityNode node) {
+    try {
+      appT.blockUntilShutdown();
+    } finally {
+      // SolidityNode is created manually rather than managed by Spring/Application,
+      // so its executors must be shut down explicitly on exit.
+      node.shutdown();
+    }
   }
 
   private void run() {
     try {
-      new Thread(this::getBlock).start();
-      new Thread(this::processBlock).start();
+      getBlockEs = ExecutorServiceManager.newSingleThreadExecutor("solid-get-block");
+      processBlockEs = ExecutorServiceManager.newSingleThreadExecutor("solid-process-block");
+      getBlockEs.execute(this::getBlock);
+      processBlockEs.execute(this::processBlock);
       logger.info("Success to start solid node, ID: {}, remoteBlockNum: {}.", ID.get(),
           remoteBlockNum);
     } catch (Exception e) {
@@ -86,6 +106,15 @@ public class SolidityNode {
           CommonParameter.getInstance().getTrustNodeAddr());
       throw new TronError(e, TronError.ErrCode.SOLID_NODE_INIT);
     }
+  }
+
+  public void shutdown() {
+    flag = false;
+    // Signal both pools before awaiting either so they drain concurrently
+    getBlockEs.shutdown();
+    processBlockEs.shutdown();
+    ExecutorServiceManager.shutdownAndAwaitTermination(getBlockEs, "solid-get-block");
+    ExecutorServiceManager.shutdownAndAwaitTermination(processBlockEs, "solid-process-block");
   }
 
   private void getBlock() {
@@ -137,7 +166,7 @@ public class SolidityNode {
   }
 
   private Block getBlockByNum(long blockNum) {
-    while (true) {
+    while (flag) {
       try {
         long time = System.currentTimeMillis();
         Block block = databaseGrpcClient.getBlock(blockNum);
@@ -155,10 +184,11 @@ public class SolidityNode {
         sleep(exceptionSleepTime);
       }
     }
+    return null;
   }
 
   private long getLastSolidityBlockNum() {
-    while (true) {
+    while (flag) {
       try {
         long time = System.currentTimeMillis();
         long blockNum = databaseGrpcClient.getDynamicProperties().getLastSolidityBlockNum();
@@ -171,6 +201,7 @@ public class SolidityNode {
         sleep(exceptionSleepTime);
       }
     }
+    return 0;
   }
 
   public void sleep(long time) {

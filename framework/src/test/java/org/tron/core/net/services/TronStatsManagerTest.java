@@ -7,8 +7,10 @@ import java.net.InetSocketAddress;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.tron.core.net.TronNetService;
 import org.tron.core.net.service.statistics.NodeStatistics;
 import org.tron.core.net.service.statistics.TronStatsManager;
+import org.tron.p2p.stats.P2pStats;
 import org.tron.protos.Protocol;
 
 public class TronStatsManagerTest {
@@ -50,14 +52,20 @@ public class TronStatsManagerTest {
     Assert.assertEquals(field3.get(manager), 1L);
     Assert.assertEquals(field4.get(manager), 1L);
 
+    P2pStats statsSnapshot = TronNetService.getP2pService().getP2pStats();
+    long expectedTcpIn = statsSnapshot.getTcpInSize();
+    long expectedTcpOut = statsSnapshot.getTcpOutSize();
+    long expectedUdpIn = statsSnapshot.getUdpInSize();
+    long expectedUdpOut = statsSnapshot.getUdpOutSize();
+
     Method method = manager.getClass().getDeclaredMethod("work");
     method.setAccessible(true);
     method.invoke(manager);
 
-    Assert.assertEquals(field1.get(manager), 0L);
-    Assert.assertEquals(field2.get(manager), 0L);
-    Assert.assertEquals(field3.get(manager), 0L);
-    Assert.assertEquals(field4.get(manager), 0L);
+    Assert.assertEquals(expectedTcpIn, (long) field1.get(manager));
+    Assert.assertEquals(expectedTcpOut, (long) field2.get(manager));
+    Assert.assertEquals(expectedUdpIn, (long) field3.get(manager));
+    Assert.assertEquals(expectedUdpOut, (long) field4.get(manager));
   }
 
 }

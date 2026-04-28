@@ -17,6 +17,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
 import org.tron.common.logsfilter.capsule.ContractEventTriggerCapsule;
@@ -27,6 +28,11 @@ import org.tron.protos.contract.SmartContractOuterClass.SmartContract.ABI.Entry;
 
 @Slf4j
 public class FilterQueryTest {
+
+  @After
+  public void tearDown() {
+    EventPluginLoader.getInstance().setFilterQuery(null);
+  }
 
   @Test
   public synchronized void testParseFilterQueryBlockNumber() {
