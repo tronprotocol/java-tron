@@ -1,5 +1,6 @@
 package org.tron.core.jsonrpc;
 
+import static org.junit.Assert.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -8,7 +9,6 @@ import com.google.protobuf.ByteString;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
-import org.mockito.Mockito;
 import org.tron.api.GrpcAPI.EstimateEnergyMessage;
 import org.tron.api.GrpcAPI.Return;
 import org.tron.api.GrpcAPI.TransactionExtention;
@@ -49,7 +49,6 @@ public class JsonRpcCallAndEstimateGasTest {
       mockRpc = null;
     }
     CommonParameter.getInstance().setEstimateEnergy(originalEstimateEnergy);
-    Mockito.clearAllCaches();
   }
 
   @Test
@@ -58,12 +57,9 @@ public class JsonRpcCallAndEstimateGasTest {
 
     mockRpc = newRpcWithMockedFailedCall(revertData, EstimatePath.CONSTANT_CALL);
 
-    try {
-      mockRpc.getCall(newCallArgs(), "latest");
-      Assert.fail("expected JsonRpcInternalException");
-    } catch (JsonRpcInternalException e) {
-      Assert.assertEquals(REVERT_MSG + ": not enough input value", e.getMessage());
-    }
+    JsonRpcInternalException e = assertThrows(JsonRpcInternalException.class,
+        () -> mockRpc.getCall(newCallArgs(), "latest"));
+    Assert.assertEquals(REVERT_MSG + ": not enough input value", e.getMessage());
   }
 
   @Test
@@ -73,24 +69,18 @@ public class JsonRpcCallAndEstimateGasTest {
 
     mockRpc = newRpcWithMockedFailedCall(panicData, EstimatePath.CONSTANT_CALL);
 
-    try {
-      mockRpc.getCall(newCallArgs(), "latest");
-      Assert.fail("expected JsonRpcInternalException");
-    } catch (JsonRpcInternalException e) {
-      Assert.assertEquals(REVERT_MSG, e.getMessage());
-    }
+    JsonRpcInternalException e = assertThrows(JsonRpcInternalException.class,
+        () -> mockRpc.getCall(newCallArgs(), "latest"));
+    Assert.assertEquals(REVERT_MSG, e.getMessage());
   }
 
   @Test
   public void testGetCallSkipsRevertReasonForShortData() throws Exception {
     mockRpc = newRpcWithMockedFailedCall(new byte[] {1, 2, 3}, EstimatePath.CONSTANT_CALL);
 
-    try {
-      mockRpc.getCall(newCallArgs(), "latest");
-      Assert.fail("expected JsonRpcInternalException");
-    } catch (JsonRpcInternalException e) {
-      Assert.assertEquals(REVERT_MSG, e.getMessage());
-    }
+    JsonRpcInternalException e = assertThrows(JsonRpcInternalException.class,
+        () -> mockRpc.getCall(newCallArgs(), "latest"));
+    Assert.assertEquals(REVERT_MSG, e.getMessage());
   }
 
   @Test
@@ -100,12 +90,9 @@ public class JsonRpcCallAndEstimateGasTest {
     mockRpc = newRpcWithMockedFailedCall(revertData, EstimatePath.CONSTANT_CALL);
     CommonParameter.getInstance().setEstimateEnergy(false);
 
-    try {
-      mockRpc.estimateGas(newCallArgs());
-      Assert.fail("expected JsonRpcInternalException");
-    } catch (JsonRpcInternalException e) {
-      Assert.assertEquals(REVERT_MSG + ": not enough input value", e.getMessage());
-    }
+    JsonRpcInternalException e = assertThrows(JsonRpcInternalException.class,
+        () -> mockRpc.estimateGas(newCallArgs()));
+    Assert.assertEquals(REVERT_MSG + ": not enough input value", e.getMessage());
   }
 
   @Test
@@ -113,12 +100,9 @@ public class JsonRpcCallAndEstimateGasTest {
     mockRpc = newRpcWithMockedFailedCall(new byte[0], EstimatePath.CONSTANT_CALL);
     CommonParameter.getInstance().setEstimateEnergy(false);
 
-    try {
-      mockRpc.estimateGas(newCallArgs());
-      Assert.fail("expected JsonRpcInternalException");
-    } catch (JsonRpcInternalException e) {
-      Assert.assertEquals(REVERT_MSG, e.getMessage());
-    }
+    JsonRpcInternalException e = assertThrows(JsonRpcInternalException.class,
+        () -> mockRpc.estimateGas(newCallArgs()));
+    Assert.assertEquals(REVERT_MSG, e.getMessage());
   }
 
   @Test
@@ -128,12 +112,9 @@ public class JsonRpcCallAndEstimateGasTest {
     mockRpc = newRpcWithMockedFailedCall(revertData, EstimatePath.ESTIMATE_ENERGY);
     CommonParameter.getInstance().setEstimateEnergy(true);
 
-    try {
-      mockRpc.estimateGas(newCallArgs());
-      Assert.fail("expected JsonRpcInternalException");
-    } catch (JsonRpcInternalException e) {
-      Assert.assertEquals(REVERT_MSG + ": not enough input value", e.getMessage());
-    }
+    JsonRpcInternalException e = assertThrows(JsonRpcInternalException.class,
+        () -> mockRpc.estimateGas(newCallArgs()));
+    Assert.assertEquals(REVERT_MSG + ": not enough input value", e.getMessage());
   }
 
   @Test
@@ -141,12 +122,9 @@ public class JsonRpcCallAndEstimateGasTest {
     mockRpc = newRpcWithMockedFailedCall(new byte[] {1, 2, 3}, EstimatePath.ESTIMATE_ENERGY);
     CommonParameter.getInstance().setEstimateEnergy(true);
 
-    try {
-      mockRpc.estimateGas(newCallArgs());
-      Assert.fail("expected JsonRpcInternalException");
-    } catch (JsonRpcInternalException e) {
-      Assert.assertEquals(REVERT_MSG, e.getMessage());
-    }
+    JsonRpcInternalException e = assertThrows(JsonRpcInternalException.class,
+        () -> mockRpc.estimateGas(newCallArgs()));
+    Assert.assertEquals(REVERT_MSG, e.getMessage());
   }
 
   @Test

@@ -495,7 +495,7 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
               resData.length),
           "string", 0);
       return reason.isEmpty() ? "" : ": " + reason;
-    } catch (Exception e) {
+    } catch (RuntimeException e) {
       logger.debug("parse revert reason failed", e);
       return "";
     }

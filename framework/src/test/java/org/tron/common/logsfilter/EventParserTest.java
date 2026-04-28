@@ -178,6 +178,16 @@ public class EventParserTest {
   }
 
   @Test
+  public void testParseDataBytesMultiByteUtf8String() {
+    // "中文" UTF-8 = e4b8ad e69687 (6 bytes), padded to 32 bytes.
+    byte[] data = ByteArray.fromHexString(
+        "0000000000000000000000000000000000000000000000000000000000000020"
+            + "0000000000000000000000000000000000000000000000000000000000000006"
+            + "e4b8ade696870000000000000000000000000000000000000000000000000000");
+    Assert.assertEquals("中文", ContractEventParser.parseDataBytes(data, "string", 0));
+  }
+
+  @Test
   public void testParseRevert() {
     String dataHex = "08c379a0"
         + "0000000000000000000000000000000000000000000000000000000000000020"
