@@ -68,7 +68,6 @@ public class EventParserTest {
 
     ABI.Entry entry = null;
     for (ABI.Entry e : abi.getEntrysList()) {
-      System.out.println(e.getName());
       if (e.getName().equalsIgnoreCase("eventBytesL")) {
         entry = e;
         break;

@@ -279,6 +279,68 @@ jobs:
           echo "base_xmls=$BASE_XMLS" >> "$GITHUB_OUTPUT"
           echo "pr_xmls=$PR_XMLS" >> "$GITHUB_OUTPUT"
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Changed-line coverage (diff-cover)
+        id: diff-cover
+        env:
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+        run: |
+          set -euo pipefail
+          pip install --quiet 'diff-cover==9.2.0'
+
+          # Ensure the base branch ref is available locally for diff-cover.
+          git fetch --no-tags origin "+refs/heads/${BASE_REF}:refs/remotes/origin/${BASE_REF}"
+
+          PR_XMLS=$(find coverage/pr -name "jacocoTestReport.xml" | sort)
+          SRC_ROOTS=$(find . -type d -path '*/src/main/java' \
+            -not -path './coverage/*' -not -path './.git/*' | sort)
+          if [ -z "$SRC_ROOTS" ]; then
+            echo "No src/main/java directories found; cannot run diff-cover." >&2
+            exit 1
+          fi
+
+          set +e
+          diff-cover $PR_XMLS \
+            --compare-branch="origin/${BASE_REF}" \
+            --src-roots $SRC_ROOTS \
+            --fail-under=0 \
+            --json-report=diff-cover.json \
+            --markdown-report=diff-cover.md
+          DIFF_RC=$?
+          set -e
+
+          if [ ! -f diff-cover.json ]; then
+            echo "diff-cover did not produce JSON report (exit=${DIFF_RC})." >&2
+            exit 1
+          fi
+
+          TOTAL_NUM_LINES=$(jq -r '.total_num_lines // 0' diff-cover.json)
+          if [ "${TOTAL_NUM_LINES}" = "0" ]; then
+            echo "No changed Java source lines; skipping changed-line gate."
+            echo "changed_line_coverage=NA" >> "$GITHUB_OUTPUT"
+          else
+            CHANGED_LINE_COVERAGE=$(jq -r '.total_percent_covered // empty' diff-cover.json)
+            if [ -z "$CHANGED_LINE_COVERAGE" ]; then
+              echo "Unable to parse changed-line coverage from diff-cover.json."
+              exit 1
+            fi
+            echo "changed_line_coverage=${CHANGED_LINE_COVERAGE}" >> "$GITHUB_OUTPUT"
+          fi
+
+          {
+            echo "### Changed-line Coverage (diff-cover)"
+            echo ""
+            if [ -f diff-cover.md ] && [ -s diff-cover.md ]; then
+              cat diff-cover.md
+            else
+              echo "_diff-cover produced no report._"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - name: Aggregate base coverage
         id: jacoco-base
         uses: madrapps/jacoco-report@v1.7.2
@@ -288,6 +350,7 @@ jobs:
           min-coverage-overall: 0
           min-coverage-changed-files: 0
           skip-if-no-changes: true
+          comment-type: summary
           title: '## Base Coverage Snapshot'
           update-comment: false
 
@@ -300,6 +363,7 @@ jobs:
           min-coverage-overall: 0
           min-coverage-changed-files: 0
           skip-if-no-changes: true
+          comment-type: summary
           title: '## PR Code Coverage Report'
           update-comment: false
 
@@ -307,7 +371,7 @@ jobs:
         env:
           BASE_OVERALL_RAW: ${{ steps.jacoco-base.outputs.coverage-overall }}
           PR_OVERALL_RAW: ${{ steps.jacoco-pr.outputs.coverage-overall }}
-          PR_CHANGED_RAW: ${{ steps.jacoco-pr.outputs.coverage-changed-files }}
+          CHANGED_LINE_RAW: ${{ steps.diff-cover.outputs.changed_line_coverage }}
         run: |
           set -euo pipefail
 
@@ -329,7 +393,7 @@ jobs:
           # 1) Parse metrics from jacoco-report outputs
           BASE_OVERALL="$(sanitize "$BASE_OVERALL_RAW")"
           PR_OVERALL="$(sanitize "$PR_OVERALL_RAW")"
-          PR_CHANGED="$(sanitize "$PR_CHANGED_RAW")"
+          CHANGED_LINE="$(sanitize "$CHANGED_LINE_RAW")"
 
           if ! is_number "$BASE_OVERALL" || ! is_number "$PR_OVERALL"; then
             echo "Failed to parse coverage values: base='${BASE_OVERALL}', pr='${PR_OVERALL}'."
@@ -340,18 +404,18 @@ jobs:
           DELTA=$(awk -v pr="$PR_OVERALL" -v base="$BASE_OVERALL" 'BEGIN { printf "%.4f", pr - base }')
           DELTA_OK=$(compare_float "${DELTA} >= ${MAX_DROP}")
 
-          CHANGED_STATUS="SKIPPED (no changed coverage value)"
-          CHANGED_OK=1
-          if [ -n "$PR_CHANGED" ] && [ "$PR_CHANGED" != "NaN" ]; then
-            if ! is_number "$PR_CHANGED"; then
-              echo "Failed to parse changed-files coverage: changed='${PR_CHANGED}'."
-              exit 1
-            fi
-            CHANGED_OK=$(compare_float "${PR_CHANGED} > ${MIN_CHANGED}")
-            if [ "$CHANGED_OK" -eq 1 ]; then
-              CHANGED_STATUS="PASS (> ${MIN_CHANGED}%)"
+          if [ "$CHANGED_LINE" = "NA" ]; then
+            CHANGED_LINE_OK=1
+            CHANGED_LINE_STATUS="SKIPPED (no changed Java source lines)"
+          elif [ -z "$CHANGED_LINE" ] || [ "$CHANGED_LINE" = "NaN" ] || ! is_number "$CHANGED_LINE"; then
+            echo "Failed to parse changed-line coverage: changed-line='${CHANGED_LINE}'."
+            exit 1
+          else
+            CHANGED_LINE_OK=$(compare_float "${CHANGED_LINE} > ${MIN_CHANGED}")
+            if [ "$CHANGED_LINE_OK" -eq 1 ]; then
+              CHANGED_LINE_STATUS="PASS (> ${MIN_CHANGED}%)"
             else
-              CHANGED_STATUS="FAIL (<= ${MIN_CHANGED}%)"
+              CHANGED_LINE_STATUS="FAIL (<= ${MIN_CHANGED}%)"
             fi
           fi
 
@@ -361,13 +425,20 @@ jobs:
             OVERALL_STATUS="FAIL (< ${MAX_DROP}%)"
           fi
 
+          if [ "$CHANGED_LINE" = "NA" ]; then
+            CHANGED_LINE_DISPLAY="NA"
+          else
+            CHANGED_LINE_DISPLAY="${CHANGED_LINE}%"
+          fi
+
           METRICS_TEXT=$(cat <<EOF
-          Changed Files Coverage: ${PR_CHANGED}%
+          Changed-line Coverage: ${CHANGED_LINE_DISPLAY}
           PR Overall Coverage: ${PR_OVERALL}%
           Base Overall Coverage: ${BASE_OVERALL}%
           Delta (PR - Base): ${DELTA}%
-          Changed Files Gate: ${CHANGED_STATUS}
+          Changed-line Gate: ${CHANGED_LINE_STATUS}
           Overall Delta Gate: ${OVERALL_STATUS}
+          Note: Changed-line uses LINE coverage (diff-cover); Overall/Delta use INSTRUCTION coverage (jacoco-report). The two counters are not directly comparable.
           EOF
           )
 
@@ -376,12 +447,14 @@ jobs:
           {
             echo "### Coverage Gate Metrics"
             echo ""
-            echo "- Changed Files Coverage: ${PR_CHANGED}%"
+            echo "- Changed-line Coverage: ${CHANGED_LINE_DISPLAY}"
             echo "- PR Overall Coverage: ${PR_OVERALL}%"
             echo "- Base Overall Coverage: ${BASE_OVERALL}%"
             echo "- Delta (PR - Base): ${DELTA}%"
-            echo "- Changed Files Gate: ${CHANGED_STATUS}"
+            echo "- Changed-line Gate: ${CHANGED_LINE_STATUS}"
             echo "- Overall Delta Gate: ${OVERALL_STATUS}"
+            echo ""
+            echo "_Note: Changed-line uses LINE coverage (diff-cover); Overall/Delta use INSTRUCTION coverage (jacoco-report). The two counters are not directly comparable._"
           } >> "$GITHUB_STEP_SUMMARY"
 
           # 4) Decide CI pass/fail
@@ -391,14 +464,9 @@ jobs:
             exit 1
           fi
 
-          if [ -z "$PR_CHANGED" ] || [ "$PR_CHANGED" = "NaN" ]; then
-            echo "No changed-files coverage value detected, skip changed-files gate."
-            exit 0
-          fi
-
-          if [ "$CHANGED_OK" -ne 1 ]; then
-            echo "Coverage gate failed: changed files coverage must be > 60%."
-            echo "changed=${PR_CHANGED}%"
+          if [ "$CHANGED_LINE_OK" -ne 1 ]; then
+            echo "Coverage gate failed: changed-line coverage must be > 60%."
+            echo "changed-line=${CHANGED_LINE}%"
             exit 1
           fi
 

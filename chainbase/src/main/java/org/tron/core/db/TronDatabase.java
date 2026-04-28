@@ -76,13 +76,25 @@ public abstract class TronDatabase<T> implements ITronChainBase<T> {
   @Override
   public void close() {
     logger.info("******** Begin to close {}. ********", getName());
+    doClose();
+    logger.info("******** End to close {}. ********", getName());
+  }
+
+  /**
+   * Releases writeOptions and dbSource (best-effort, exceptions logged at WARN).
+   * Subclasses with extra resources should override {@link #close()} and call
+   * {@code doClose()} directly — not {@code super.close()} — to avoid duplicated logs.
+   */
+  protected void doClose() {
     try {
       writeOptions.close();
+    } catch (Exception e) {
+      logger.warn("Failed to close writeOptions in {}.", getName(), e);
+    }
+    try {
       dbSource.closeDB();
     } catch (Exception e) {
-      logger.warn("Failed to close {}.", getName(), e);
-    } finally {
-      logger.info("******** End to close {}. ********", getName());
+      logger.warn("Failed to close dbSource in {}.", getName(), e);
     }
   }
 

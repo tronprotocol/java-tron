@@ -1166,12 +1166,9 @@ public class UnfreezeBalanceActuatorTest extends BaseTest {
     actuator.setChainBaseManager(dbManager.getChainBaseManager())
         .setAny(getContractForTronPower(OWNER_ADDRESS));
 
-    try {
-      actuator.validate();
-      Assert.fail();
-    } catch (ContractValidateException e) {
-      Assert.assertEquals("It's not time to unfreeze(TronPower).", e.getMessage());
-    }
+    ContractValidateException e = Assert.assertThrows(ContractValidateException.class,
+        () -> actuator.validate());
+    Assert.assertEquals("It's not time to unfreeze(TronPower).", e.getMessage());
   }
 
 }

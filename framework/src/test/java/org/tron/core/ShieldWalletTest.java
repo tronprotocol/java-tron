@@ -369,14 +369,12 @@ public class ShieldWalletTest extends BaseTest {
       Assert.fail();
     }
 
-    try {
-      wallet1.createShieldedContractParameters(builder.build());
-      Assert.fail();
-    } catch (Exception e) {
-      Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("PaymentAddress in ReceiveNote should not be empty",
-          e.getMessage());
-    }
+    PrivateShieldedTRC20Parameters.Builder finalBuilder = builder;
+    Exception e1 = Assert.assertThrows(Exception.class,
+        () -> wallet1.createShieldedContractParameters(finalBuilder.build()));
+    Assert.assertTrue(e1 instanceof ContractValidateException);
+    Assert.assertEquals("PaymentAddress in ReceiveNote should not be empty",
+        e1.getMessage());
 
     String parameter2 = new String(ByteArray.fromHexString(
         "7b0a202020202261736b223a2263323531336539653330383439343933326264383265306365353336"
@@ -402,14 +400,12 @@ public class ShieldWalletTest extends BaseTest {
       Assert.fail();
     }
 
-    try {
-      wallet1.createShieldedContractParameters(builder.build());
-      Assert.fail();
-    } catch (Exception e) {
-      Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("PaymentAddress in SpendNote should not be empty",
-          e.getMessage());
-    }
+    PrivateShieldedTRC20Parameters.Builder finalBuilder1 = builder;
+    Exception e2 = Assert.assertThrows(Exception.class,
+        () -> wallet1.createShieldedContractParameters(finalBuilder1.build()));
+    Assert.assertTrue(e2 instanceof ContractValidateException);
+    Assert.assertEquals("PaymentAddress in SpendNote should not be empty",
+        e2.getMessage());
   }
 
   @Test
