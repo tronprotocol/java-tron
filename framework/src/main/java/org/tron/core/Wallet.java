@@ -263,7 +263,9 @@ import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 @Component
 public class Wallet {
 
-  private static final String SHIELDED_ID_NOT_ALLOWED = "ShieldedTransactionApi is not allowed";
+  private static final String SHIELDED_ID_NOT_ALLOWED =
+      "Shielded transaction API is disabled; "
+          + "set node.allowShieldedTransactionApi=true to enable.";
   private static final String PAYMENT_ADDRESS_FORMAT_WRONG = "paymentAddress format is wrong";
   private static final String SHIELDED_TRANSACTION_SCAN_RANGE =
       "request requires start_block_index >= 0 && end_block_index > "
@@ -2369,8 +2371,8 @@ public class Wallet {
     } catch (ArithmeticException e) {
       throw new ZksnarkException("shielded amount overflow", e);
     } catch (ZksnarkException e) {
-      logger.error("createShieldedTransaction except, error is " + e.toString());
-      throw new ZksnarkException(e.toString());
+      logger.error("createShieldedTransaction except, error is {}", e.toString());
+      throw e;
     }
   }
 
@@ -2473,8 +2475,8 @@ public class Wallet {
     } catch (ArithmeticException e) {
       throw new ZksnarkException("shielded amount overflow", e);
     } catch (ZksnarkException e) {
-      logger.error("createShieldedTransaction exception, error is " + e.toString());
-      throw new ZksnarkException(e.toString());
+      logger.error("createShieldedTransaction exception, error is {}", e.toString());
+      throw e;
     }
   }
 
@@ -3658,7 +3660,7 @@ public class Wallet {
                 scaledToAmount, shieldedReceives.get(0).getNote().getValue(),
             dbManager.getDynamicPropertiesStore().disableJavaLangMath()));
       } catch (ArithmeticException e) {
-        throw new ZksnarkException("Unbalanced burn!");
+        throw new ZksnarkException("Unbalanced burn!", e);
       }
     }
 
@@ -3794,7 +3796,7 @@ public class Wallet {
             scaledToAmount, shieldedReceives.get(0).getNote().getValue(),
             chainBaseManager.getDynamicPropertiesStore().disableJavaLangMath());
       } catch (ArithmeticException e) {
-        throw new ZksnarkException("Unbalanced burn!");
+        throw new ZksnarkException("Unbalanced burn!", e);
       }
     }
 

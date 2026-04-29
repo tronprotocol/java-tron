@@ -284,7 +284,7 @@ public class NodeConfigTest {
   }
 
   @Test
-  public void testShieldedApiDefaultsToTrueWhenNeitherKeySet() {
+  public void testShieldedApiDefaultsToFalseWhenNeitherKeySet() {
     NodeConfig nc = NodeConfig.fromConfig(withRef());
     assertFalse(nc.isAllowShieldedTransactionApi());
   }
@@ -292,18 +292,18 @@ public class NodeConfigTest {
   @Test
   public void testShieldedApiModernKeyRespected() {
     NodeConfig nc = NodeConfig.fromConfig(
-        withRef("node.allowShieldedTransactionApi = false"));
-    assertFalse(nc.isAllowShieldedTransactionApi());
+        withRef("node.allowShieldedTransactionApi = true"));
+    assertTrue(nc.isAllowShieldedTransactionApi());
   }
 
   @Test
   public void testShieldedApiLegacyKeyRespected() {
-    // Regression guard: reference.conf ships `allowShieldedTransactionApi = true`, which
+    // Regression guard: reference.conf ships `allowShieldedTransactionApi = false`, which
     // used to make the legacy-key fallback dead code. A user who only set the legacy key
     // must still have their value honored.
     NodeConfig nc = NodeConfig.fromConfig(
-        withRef("node.fullNodeAllowShieldedTransaction = false"));
-    assertFalse(nc.isAllowShieldedTransactionApi());
+        withRef("node.fullNodeAllowShieldedTransaction = true"));
+    assertTrue(nc.isAllowShieldedTransactionApi());
   }
 
   @Test
