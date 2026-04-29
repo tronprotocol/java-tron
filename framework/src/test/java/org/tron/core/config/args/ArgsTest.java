@@ -39,7 +39,6 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.LocalWitnesses;
 import org.tron.common.utils.PublicMethod;
-import org.tron.core.config.Configuration;
 import org.tron.core.exception.TronError;
 
 @Slf4j
@@ -405,6 +404,35 @@ public class ArgsTest {
         .withFallback(ConfigFactory.defaultReference());
     Args.applyConfigParams(config);
     Assert.assertEquals(1000, Args.getInstance().getFetchBlockTimeout());
+    Args.clearParam();
+  }
+
+
+  @Test
+  public void testHttpJsonParseConstraints() {
+    Map<String, String> override = new HashMap<>();
+    override.put("storage.db.directory", "database");
+    Config config = ConfigFactory.parseMap(override)
+        .withFallback(ConfigFactory.defaultReference());
+    Args.applyConfigParams(config);
+
+    Assert.assertEquals(100, Args.getInstance().getMaxNestingDepth());
+    Assert.assertEquals(100_000, Args.getInstance().getMaxTokenCount());
+    Args.clearParam();
+  }
+
+  @Test
+  public void testHttpJsonParseConstraintsApplied() {
+    Map<String, String> override = new HashMap<>();
+    override.put("storage.db.directory", "database");
+    override.put("node.http.maxNestingDepth", "42");
+    override.put("node.http.maxTokenCount", "12345");
+    Config config = ConfigFactory.parseMap(override)
+        .withFallback(ConfigFactory.defaultReference());
+    Args.applyConfigParams(config);
+
+    Assert.assertEquals(42, Args.getInstance().getMaxNestingDepth());
+    Assert.assertEquals(12345, Args.getInstance().getMaxTokenCount());
     Args.clearParam();
   }
 

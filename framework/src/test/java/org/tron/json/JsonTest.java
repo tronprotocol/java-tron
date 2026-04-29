@@ -8,6 +8,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
+import com.fasterxml.jackson.core.StreamReadConstraints;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Arrays;
@@ -359,6 +360,37 @@ public class JsonTest {
     assertEquals(0L, TypeUtils.longValue(null));
     assertEquals(7, TypeUtils.intValue(new BigDecimal("7")));
     assertEquals(7L, TypeUtils.longValue(new BigDecimal("7")));
+  }
+
+  @Test
+  public void testJsonMapperHasConfiguredConstraints() {
+    StreamReadConstraints sr = JSON.MAPPER.getFactory().streamReadConstraints();
+    assertEquals(100, sr.getMaxNestingDepth());
+    assertEquals(100_000L, sr.getMaxTokenCount());
+  }
+
+  @Test
+  public void testParseObjectRejectsOverDepth() {
+    StringBuilder open = new StringBuilder();
+    StringBuilder close = new StringBuilder();
+    for (int i = 0; i < 120; i++) {
+      open.append("{\"a\":");
+      close.append("}");
+    }
+    String deep = open + "1" + close;
+    JSONException e = assertThrows(JSONException.class, () -> JSON.parseObject(deep));
+    assertTrue(e.getMessage().toLowerCase().contains("depth"));
+  }
+
+  @Test
+  public void testParseArrayRejectsOverTokenCount() {
+    StringBuilder sb = new StringBuilder("[0");
+    for (int i = 1; i < 100_500; i++) {
+      sb.append(",0");
+    }
+    sb.append(']');
+    JSONException e = assertThrows(JSONException.class, () -> JSON.parseArray(sb.toString()));
+    assertTrue(e.getMessage().toLowerCase().contains("token"));
   }
 
   public static class Pojo {

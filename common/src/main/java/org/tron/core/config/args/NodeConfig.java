@@ -202,6 +202,8 @@ public class NodeConfig {
     private boolean solidityEnable = true;
     private int solidityPort = 8091;
     private long maxMessageSize = 4194304;
+    private int maxNestingDepth = 100;
+    private int maxTokenCount = 100_000;
     // PBFT fields — handled manually (same naming issue as CommitteeConfig)
     // Default must match CommonParameter.pBFTHttpEnable = true
     @Getter(lombok.AccessLevel.NONE)
