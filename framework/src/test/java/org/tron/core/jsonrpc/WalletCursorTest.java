@@ -1,6 +1,9 @@
 package org.tron.core.jsonrpc;
 
 import com.google.protobuf.ByteString;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import javax.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
@@ -13,9 +16,12 @@ import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.db2.core.Chainbase.Cursor;
+import org.tron.core.exception.jsonrpc.JsonRpcExceedLimitException;
 import org.tron.core.services.NodeInfoService;
+import org.tron.core.services.jsonrpc.TronJsonRpc.FilterRequest;
 import org.tron.core.services.jsonrpc.TronJsonRpcImpl;
 import org.tron.core.services.jsonrpc.TronJsonRpcImpl.RequestSource;
+import org.tron.core.services.jsonrpc.filters.LogFilterAndResult;
 import org.tron.core.services.jsonrpc.types.BuildArguments;
 import org.tron.protos.Protocol;
 
@@ -140,6 +146,41 @@ public class WalletCursorTest extends BaseTest {
       tronJsonRpc.close();
     } catch (Exception e) {
       Assert.fail();
+    }
+  }
+
+  /**
+   * When the active filter count reaches the configured cap (node.jsonrpc.maxLogFilterNum),
+   * eth_newFilter must throw JsonRpcExceedLimitException instead of growing without bound.
+   */
+  @Test
+  public void testNewFilter_exceedsCapThrowsException() throws Exception {
+    int cap = Args.getInstance().getJsonRpcMaxLogFilterNum();
+    FilterRequest fr = new FilterRequest();
+    Map<String, LogFilterAndResult> map = TronJsonRpcImpl.getEventFilter2ResultFull();
+    List<String> addedKeys = new ArrayList<>();
+
+    try {
+      for (int i = 0; i < cap; i++) {
+        String key = "walletcursor-cap-test-" + i;
+        map.put(key, new LogFilterAndResult(fr, 0L, null));
+        addedKeys.add(key);
+      }
+      Assert.assertEquals(cap, addedKeys.size());
+
+      TronJsonRpcImpl tronJsonRpc = new TronJsonRpcImpl(nodeInfoService, wallet, dbManager);
+      try {
+        tronJsonRpc.newFilter(fr);
+        Assert.fail("Expected JsonRpcExceedLimitException when filter count reaches cap");
+      } catch (JsonRpcExceedLimitException e) {
+        Assert.assertTrue(e.getMessage().contains(String.valueOf(cap)));
+      } finally {
+        tronJsonRpc.close();
+      }
+    } finally {
+      for (String key : addedKeys) {
+        map.remove(key);
+      }
     }
   }
 
