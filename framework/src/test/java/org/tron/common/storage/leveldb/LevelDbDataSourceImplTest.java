@@ -29,12 +29,9 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -147,17 +144,13 @@ public class LevelDbDataSourceImplTest {
     try {
       final File dbDir = temporaryFolder.newFolder();
       final Path dbPath = dbDir.toPath();
-      final String manifest = "MANIFEST-000042";
       final String watchdogDbName = "slow-open-db";
-      Files.write(dbPath.resolve(manifest), new byte[1024 * 1024]);
-      Files.write(dbPath.resolve("CURRENT"), (manifest + "\n").getBytes(StandardCharsets.UTF_8));
 
       LevelDbDataSourceImpl ds = new LevelDbDataSourceImpl();
       ReflectUtils.setFieldValue(ds, "dataBaseName", watchdogDbName);
       ReflectUtils.setFieldValue(ds, "parentPath", dbDir.getParent());
       long startNs = System.nanoTime() - TimeUnit.SECONDS.toNanos(61);
-      AtomicReference<String> cache = new AtomicReference<>();
-      ds.logSlowOpen(dbPath, startNs, cache);
+      ds.logSlowOpen(dbPath, startNs);
 
       List<ILoggingEvent> warns = dbAppender.list.stream()
           .filter(e -> e.getLevel() == Level.WARN)
@@ -166,15 +159,10 @@ public class LevelDbDataSourceImplTest {
       ILoggingEvent warn = warns.get(0);
       assertNotNull("expected one WARN from the watchdog helper", warn);
       String rendered = warn.getFormattedMessage();
-      assertTrue("WARN should mention the MANIFEST filename: " + rendered,
-          rendered.contains(manifest));
-      assertTrue("WARN should include MANIFEST size in MB: " + rendered,
-          rendered.contains("(1.00 MB)"));
       assertTrue("WARN should include the Toolkit remediation hint: " + rendered,
           rendered.contains("Toolkit.jar db archive -d"));
       assertTrue("WARN should echo the db name: " + rendered,
           rendered.contains(watchdogDbName));
-      assertNotNull("cache should hold the resolved MANIFEST info", cache.get());
     } finally {
       dbAppender.stop();
       dbLogger.detachAppender(dbAppender);
