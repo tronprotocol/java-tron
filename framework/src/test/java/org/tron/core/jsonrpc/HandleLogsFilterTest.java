@@ -2,7 +2,6 @@ package org.tron.core.jsonrpc;
 
 import static org.tron.core.services.jsonrpc.TronJsonRpcImpl.handleLogsFilter;
 
-import com.google.protobuf.ByteString;
 import java.lang.reflect.Field;
 import java.util.Collections;
 import java.util.List;
@@ -47,13 +46,6 @@ public class HandleLogsFilterTest {
     LogInfo logInfo = new LogInfo(address,
         Collections.singletonList(new DataWord(new byte[32])), new byte[0]);
     return TransactionInfo.newBuilder().addLog(LogInfo.buildLog(logInfo)).build();
-  }
-
-  private TransactionInfo buildTxInfoWithLogAddress(String hexAddress) {
-    byte[] addr = new byte[20];
-    byte[] src = ByteString.copyFromUtf8(hexAddress).toByteArray();
-    System.arraycopy(src, 0, addr, 0, Math.min(src.length, 20));
-    return buildTxInfoWithLog(addr);
   }
 
   /** Events dispatched to a matching filter in the serial (<=10000 entries) path. */
