@@ -1,5 +1,6 @@
 package org.tron.core.vm.repository;
 
+import com.google.protobuf.ByteString;
 import java.lang.reflect.Method;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
@@ -8,9 +9,13 @@ import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.BaseTest;
 import org.tron.common.TestConstants;
+import org.tron.common.utils.ByteArray;
+import org.tron.core.Wallet;
+import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.store.StoreFactory;
 import org.tron.core.vm.config.VMConfig;
+import org.tron.protos.Protocol.AccountType;
 
 @Slf4j
 public class RepositoryImplHardenTest extends BaseTest {
@@ -217,5 +222,59 @@ public class RepositoryImplHardenTest extends BaseTest {
 
     Assert.assertThrows(ArithmeticException.class,
         () -> invokeUsageToBalance(usage, totalWeight, totalLimit));
+  }
+
+  @Test
+  public void testCalculateGlobalEnergyLimitHardenedParityWithNonIntegerRatio() {
+    long totalEnergyLimit = 50_000_000_000L;
+    long totalEnergyWeight = 1_234_567L;
+    long frozeBalance = 10_000_000_000L;
+
+    dbManager.getDynamicPropertiesStore().saveTotalEnergyCurrentLimit(totalEnergyLimit);
+    dbManager.getDynamicPropertiesStore().saveTotalEnergyWeight(totalEnergyWeight);
+
+    AccountCapsule account = new AccountCapsule(
+        ByteString.copyFromUtf8("owner"),
+        ByteString.copyFrom(ByteArray.fromHexString(
+            Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc")),
+        AccountType.Normal, 0L);
+    account.setFrozenForEnergy(frozeBalance, 0L);
+
+    VMConfig.initAllowHardenResourceCalculation(0);
+    long resultOld = repository.calculateGlobalEnergyLimit(account);
+
+    VMConfig.initAllowHardenResourceCalculation(1);
+    long resultNew = repository.calculateGlobalEnergyLimit(account);
+
+    long expected = java.math.BigInteger.valueOf(10000L)
+        .multiply(java.math.BigInteger.valueOf(totalEnergyLimit))
+        .divide(java.math.BigInteger.valueOf(totalEnergyWeight))
+        .longValueExact();
+    Assert.assertEquals(expected, resultNew);
+    Assert.assertEquals(resultOld, resultNew);
+
+    long buggy = 10000L * (totalEnergyLimit / totalEnergyWeight);
+    Assert.assertNotEquals(buggy, resultNew);
+  }
+
+  @Test
+  public void testCalculateGlobalEnergyLimitHardenedOverflowDetected() {
+    long totalEnergyLimit = Long.MAX_VALUE / 2;
+    long totalEnergyWeight = 1L;
+    long frozeBalance = Long.MAX_VALUE / 4;
+
+    dbManager.getDynamicPropertiesStore().saveTotalEnergyCurrentLimit(totalEnergyLimit);
+    dbManager.getDynamicPropertiesStore().saveTotalEnergyWeight(totalEnergyWeight);
+
+    AccountCapsule account = new AccountCapsule(
+        ByteString.copyFromUtf8("owner"),
+        ByteString.copyFrom(ByteArray.fromHexString(
+            Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc")),
+        AccountType.Normal, 0L);
+    account.setFrozenForEnergy(frozeBalance, 0L);
+
+    VMConfig.initAllowHardenResourceCalculation(1);
+    Assert.assertThrows(ArithmeticException.class,
+        () -> repository.calculateGlobalEnergyLimit(account));
   }
 }

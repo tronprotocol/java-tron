@@ -977,8 +977,8 @@ public class RepositoryImpl implements Repository {
 
     if (hardenResourceCalculation()) {
       return BigInteger.valueOf(energyWeight)
-          .multiply(BigInteger.valueOf(totalEnergyLimit)
-          .divide(BigInteger.valueOf(totalEnergyWeight)))
+          .multiply(BigInteger.valueOf(totalEnergyLimit))
+          .divide(BigInteger.valueOf(totalEnergyWeight))
           .longValueExact();
     }
     return (long) (energyWeight * ((double) totalEnergyLimit / totalEnergyWeight));
