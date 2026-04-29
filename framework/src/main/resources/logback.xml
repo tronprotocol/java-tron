@@ -61,6 +61,22 @@
     </filter>
   </appender>
 
+  <appender name="GRPC" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>./logs/grpc/grpc.log</file>
+    <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+      <fileNamePattern>./logs/grpc/grpc-%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+      <maxFileSize>500MB</maxFileSize>
+      <maxHistory>7</maxHistory>
+      <totalSizeCap>50GB</totalSizeCap>
+    </rollingPolicy>
+    <encoder>
+      <pattern>%d{HH:mm:ss.SSS} %-5level [%t] [%c{1}]\(%F:%L\) %m%n</pattern>
+    </encoder>
+    <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+      <level>TRACE</level>
+    </filter>
+  </appender>
+
   <appender class="ch.qos.logback.classic.AsyncAppender" name="ASYNC">
     <!-- Don't discard INFO, DEBUG, TRACE events in case of queue is 80% full -->
     <discardingThreshold>0</discardingThreshold>
@@ -102,6 +118,9 @@
   </logger>
   <logger level="INFO" name="tool" additivity="false">
     <appender-ref ref="CONSOLE"/>
+  </logger>
+  <logger level="INFO" name="io.grpc" additivity="false">
+    <appender-ref ref="GRPC"/>
   </logger>
 
 </configuration>
