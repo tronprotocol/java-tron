@@ -415,5 +415,53 @@ public class ArgsTest {
     Assert.assertEquals(500, Args.getInstance().getFetchBlockTimeout());
     Args.clearParam();
   }
+
+  // ===========================================================================
+  // event.subscribe gating: PARAMETER.eventPluginConfig and PARAMETER.eventFilter
+  // are only consumed by Manager.startEventSubscribing(), which is gated by
+  // isEventSubscribe() (= ec.isEnable()). When subscribe is disabled, these
+  // objects must not be built — building them would be dead state.
+  // ===========================================================================
+
+  @Test
+  public void testEventConfigDisabledSkipsEpcAndFilter() {
+    Map<String, String> override = new HashMap<>();
+    override.put("storage.db.directory", "database");
+    override.put("event.subscribe.enable", "false");
+    Config config = ConfigFactory.parseMap(override)
+        .withFallback(ConfigFactory.defaultReference());
+    Args.applyConfigParams(config);
+    Assert.assertNull(Args.getInstance().getEventPluginConfig());
+    Assert.assertNull(Args.getInstance().getEventFilter());
+    Args.clearParam();
+  }
+
+  @Test
+  public void testEventConfigEnabledBuildsEpcAndFilter() {
+    Map<String, String> override = new HashMap<>();
+    override.put("storage.db.directory", "database");
+    override.put("event.subscribe.enable", "true");
+    Config config = ConfigFactory.parseMap(override)
+        .withFallback(ConfigFactory.defaultReference());
+    Args.applyConfigParams(config);
+    Assert.assertNotNull(Args.getInstance().getEventPluginConfig());
+    Assert.assertNotNull(Args.getInstance().getEventFilter());
+    Args.clearParam();
+  }
+
+  @Test
+  public void testEventConfigEnabledWithInvalidFromBlockLeavesFilterNull() {
+    Map<String, String> override = new HashMap<>();
+    override.put("storage.db.directory", "database");
+    override.put("event.subscribe.enable", "true");
+    override.put("event.subscribe.filter.fromblock", "not-a-number");
+    Config config = ConfigFactory.parseMap(override)
+        .withFallback(ConfigFactory.defaultReference());
+    Args.applyConfigParams(config);
+    // epc still built; filter rejected
+    Assert.assertNotNull(Args.getInstance().getEventPluginConfig());
+    Assert.assertNull(Args.getInstance().getEventFilter());
+    Args.clearParam();
+  }
 }
 
