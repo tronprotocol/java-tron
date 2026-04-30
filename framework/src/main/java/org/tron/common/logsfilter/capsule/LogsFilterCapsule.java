@@ -35,11 +35,6 @@ public class LogsFilterCapsule extends FilterTriggerCapsule {
   private final TronJsonRpcImpl jsonRpc;
 
   public LogsFilterCapsule(long blockNumber, String blockHash, Bloom bloom,
-      List<TransactionInfo> txInfoList, boolean solidified, boolean removed) {
-    this(blockNumber, blockHash, bloom, txInfoList, solidified, removed, null);
-  }
-
-  public LogsFilterCapsule(long blockNumber, String blockHash, Bloom bloom,
       List<TransactionInfo> txInfoList, boolean solidified, boolean removed,
       TronJsonRpcImpl jsonRpc) {
     this.blockNumber = blockNumber;
@@ -53,8 +48,6 @@ public class LogsFilterCapsule extends FilterTriggerCapsule {
 
   @Override
   public void processFilterTrigger() {
-    if (jsonRpc != null) {
-      jsonRpc.handleLogsFilter(this);
-    }
+    jsonRpc.handleLogsFilter(this);
   }
 }
