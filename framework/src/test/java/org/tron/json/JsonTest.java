@@ -40,14 +40,26 @@ public class JsonTest {
 
   @Test
   public void testNonNumericNumbers() {
-    JSONObject json = JSON.parseObject("{a:NaN, b:Infinity, c:-Infinity}");
+    JSONObject json = JSON.parseObject("{\"a\":NaN}");
     assertNotNull(json);
-    double val = ((Number) json.get("a")).doubleValue();
-    assertTrue(Double.isNaN(val)); // Fastjson is null, but jackson parses as NaN
-    val = ((Number) json.get("b")).doubleValue();
-    assertTrue(Double.isInfinite(val) && val > 0); // Fastjson will throw an error
-    val = ((Number) json.get("c")).doubleValue();
-    assertTrue(Double.isInfinite(val) && val < 0); // Fastjson will throw an error
+    assertTrue(json.containsKey("a"));
+    assertNull(json.get("a"));
+    assertNull(json.getLong("a"));
+    assertEquals(0, json.getIntValue("a"));
+
+    JSONArray arr = JSON.parseArray("[1, NaN, 2]");
+    assertEquals(3, arr.size());
+    assertNull(arr.get(1));
+    JSONObject nested = JSON.parseObject("{outer:{inner:NaN}}");
+    assertNull(nested.getJSONObject("outer").get("inner"));
+
+    JSONException eb = assertThrows(JSONException.class,
+        () -> JSON.parseObject("{b:Infinity}"));
+    assertEquals("syntax error, Infinity", eb.getMessage());
+    JSONException ec = assertThrows(JSONException.class,
+        () -> JSON.parseObject("{c:-Infinity}"));
+    assertEquals("syntax error, -Infinity", ec.getMessage());
+    assertThrows(JSONException.class, () -> JSON.parseArray("[Infinity]"));
   }
 
   @Test
@@ -107,10 +119,35 @@ public class JsonTest {
     assertThrows(JSONException.class, () -> JSON.parseObject("{a:TRUE}"));
     assertThrows(JSONException.class, () -> JSON.parseObject("{a:FALSE}"));
     assertThrows(JSONException.class, () -> JSON.parseObject("[1,,3]"));
-    // NOTE: Fastjson 1.x treats unquoted NULL as null, but jackson throws an error
-    assertThrows(JSONException.class, () -> JSON.parseObject("{a:NULL}"));
     // valid JSON but wrong shape — exercises the single-arg JSONException constructor
     assertThrows(JSONException.class, () -> JSON.parseObject("[1,2,3]"));
+  }
+
+  @Test
+  public void testUppercaseNull() {
+    // Fastjson 1.x parity: bare NULL token is treated as null.
+    JSONObject obj = JSON.parseObject("{\"a\":NULL,\"b\":1}");
+    assertNotNull(obj);
+    assertTrue(obj.containsKey("a"));
+    assertNull(obj.get("a"));
+    assertEquals(1, obj.getIntValue("b"));
+
+    // Mixed in array, alongside lowercase null.
+    JSONArray arr = JSON.parseArray("[NULL, null]");
+    assertEquals(2, arr.size());
+    assertNull(arr.get(0));
+    assertNull(arr.get(1));
+
+    // String value containing the substring "NULL" must be preserved verbatim.
+    JSONObject q = JSON.parseObject("{\"k\":\"NULL\"}");
+    assertEquals("NULL", q.getString("k"));
+
+    // Unquoted identifier containing NULL as a prefix must NOT be touched.
+    JSONObject id = JSON.parseObject("{NULL_KEY:1}");
+    assertEquals(1, id.getIntValue("NULL_KEY"));
+
+    // Top-level standalone NULL — already handled by isNullLiteral.
+    assertNull(JSON.parseObject("NULL"));
   }
 
   @Test

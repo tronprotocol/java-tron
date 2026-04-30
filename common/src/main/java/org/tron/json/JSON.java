@@ -10,7 +10,11 @@ import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.json.JsonMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.NullNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import java.util.ArrayList;
+import java.util.List;
 import org.tron.common.parameter.CommonParameter;
 
 /**
@@ -39,7 +43,7 @@ public final class JSON {
       .enable(JsonReadFeature.ALLOW_SINGLE_QUOTES)
       // Fastjson tolerates trailing commas (e.g. {"a":1,}) by default
       .enable(JsonReadFeature.ALLOW_TRAILING_COMMA)
-      // Fastjson accepts NaN/Infinity as valid tokens
+      // Fastjson accepts NaN as valid tokens, Infinity is invalid
       .enable(JsonReadFeature.ALLOW_NON_NUMERIC_NUMBERS)
       // Fastjson accepts leading plus sign for numbers (e.g. +123)
       .enable(JsonReadFeature.ALLOW_LEADING_PLUS_SIGN_FOR_NUMBERS)
@@ -51,7 +55,7 @@ public final class JSON {
       .enable(JsonReadFeature.ALLOW_LEADING_ZEROS_FOR_NUMBERS)
       // Fastjson accepts unescaped control chars in strings (e.g. raw tab/newline)
       .enable(JsonReadFeature.ALLOW_UNESCAPED_CONTROL_CHARS)
-      // Fastjson accepts backslash-escaping any character (e.g. \q → q)
+      // Fastjson accepts backslash-escaping any character (e.g. \q -> q)
       .enable(JsonReadFeature.ALLOW_BACKSLASH_ESCAPING_ANY_CHARACTER)
       // Fastjson accepts Java-style comments (// and /* */)
       .enable(JsonReadFeature.ALLOW_JAVA_COMMENTS)
@@ -68,7 +72,7 @@ public final class JSON {
       // Fastjson uses WriteDateUseDateFormat (string) not timestamps by default
       .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
       // Fastjson smart-match: field names are matched ignoring case/underscores by default
-      // (DisableFieldSmartMatch is OFF by default → smart match ON)
+      // (DisableFieldSmartMatch is OFF by default -> smart match ON)
       .configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true)
       .build();
 
@@ -80,6 +84,113 @@ public final class JSON {
   }
 
   private JSON() {
+  }
+
+  /**
+   * Fastjson 1.x parity: replace bare {@code NULL} tokens with {@code null}
+   * in-place so Jackson's strict lowercase-only literal parser accepts them.
+   * Skips contents of single- or double-quoted strings (with backslash-escape
+   * support) and uses an identifier-aware boundary so unquoted field names
+   * like {@code NULL_KEY} are left intact.
+   */
+  static String coerceUppercaseNull(String text) {
+    StringBuilder out = new StringBuilder(text.length());
+    int i = 0;
+    int n = text.length();
+    while (i < n) {
+      char c = text.charAt(i);
+      if (c == '"' || c == '\'') {
+        char quote = c;
+        out.append(c);
+        i++;
+        while (i < n) {
+          char ch = text.charAt(i);
+          out.append(ch);
+          i++;
+          if (ch == '\\' && i < n) {
+            out.append(text.charAt(i));
+            i++;
+          } else if (ch == quote) {
+            break;
+          }
+        }
+        continue;
+      }
+      if (c == 'N' && i + 4 <= n
+          && text.charAt(i + 1) == 'U'
+          && text.charAt(i + 2) == 'L'
+          && text.charAt(i + 3) == 'L'
+          && (i == 0 || !isIdentChar(text.charAt(i - 1)))
+          && (i + 4 == n || !isIdentChar(text.charAt(i + 4)))) {
+        out.append("null");
+        i += 4;
+        continue;
+      }
+      out.append(c);
+      i++;
+    }
+    return out.toString();
+  }
+
+  private static boolean isIdentChar(char c) {
+    return Character.isLetterOrDigit(c) || c == '_' || c == '$';
+  }
+
+  /**
+   * Fast pre-check for Fastjson 1.x non-numeric coercion. Because
+   * {@code USE_BIG_DECIMAL_FOR_FLOATS} is on, the only way a {@code Double}
+   * {@code NaN} / {@code Infinity} can land in the tree is via the literal
+   * tokens {@code NaN} / {@code Infinity} in the source text — large numeric
+   * literals go to BigDecimal/BigInteger without overflow. So a substring
+   * absence proves the tree has no offending nodes, and the O(n) walk in
+   * {@link #coerceNonNumeric} can be skipped on the common case.
+   */
+  static boolean mayContainNonNumeric(String text) {
+    return text != null && (text.contains("Infinity") || text.contains("NaN"));
+  }
+
+  /**
+   * Fastjson 1.x non-numeric-number parity: silently coerce {@code NaN} to JSON
+   * {@code null}, reject {@code Infinity} / {@code -Infinity} with a
+   * {@link JSONException} ({@code "syntax error, Infinity"} /
+   * {@code "syntax error, -Infinity"}). Walks containers in-place.
+   */
+  static JsonNode coerceNonNumeric(JsonNode node) {
+    if (node == null || node.isNull()) {
+      return node;
+    }
+    if (node.isFloatingPointNumber()) {
+      double v = node.doubleValue();
+      if (Double.isInfinite(v)) {
+        throw new JSONException("syntax error, " + (v > 0 ? "Infinity" : "-Infinity"));
+      }
+      if (Double.isNaN(v)) {
+        return NullNode.getInstance();
+      }
+      return node;
+    }
+    if (node.isObject()) {
+      ObjectNode obj = (ObjectNode) node;
+      List<String> keys = new ArrayList<>();
+      obj.fieldNames().forEachRemaining(keys::add);
+      for (String k : keys) {
+        JsonNode child = obj.get(k);
+        JsonNode replacement = coerceNonNumeric(child);
+        if (replacement != child) {
+          obj.set(k, replacement);
+        }
+      }
+    } else if (node.isArray()) {
+      ArrayNode arr = (ArrayNode) node;
+      for (int i = 0; i < arr.size(); i++) {
+        JsonNode child = arr.get(i);
+        JsonNode replacement = coerceNonNumeric(child);
+        if (replacement != child) {
+          arr.set(i, replacement);
+        }
+      }
+    }
+    return node;
   }
 
   /**
@@ -99,8 +210,12 @@ public final class JSON {
     if (isNullLiteral(text)) {
       return null;
     }
+    String input = text.indexOf("NULL") >= 0 ? coerceUppercaseNull(text) : text;
     try {
-      JsonNode node = MAPPER.readTree(text);
+      JsonNode node = MAPPER.readTree(input);
+      if (mayContainNonNumeric(input)) {
+        node = coerceNonNumeric(node);
+      }
       if (node == null || node.isNull()) {
         return null;
       }
@@ -136,12 +251,18 @@ public final class JSON {
     if (isNullLiteral(text)) {
       return null;
     }
+    String input = text.indexOf("NULL") >= 0 ? coerceUppercaseNull(text) : text;
     try {
-      JsonNode node = MAPPER.readTree(text);
+      JsonNode node = MAPPER.readTree(input);
+      if (mayContainNonNumeric(input)) {
+        node = coerceNonNumeric(node);
+      }
       if (node == null || node.isNull()) {
         return null;
       }
       return node;
+    } catch (JSONException e) {
+      throw e;
     } catch (Exception e) {
       throw new JSONException(e.getMessage(), e);
     }
