@@ -169,8 +169,8 @@ public class HandleLogsFilterTest {
     LogFilterAndResult filterAndResult = new LogFilterAndResult(fr, 100L, null);
     jsonRpc.getEventFilter2ResultFull().put(FILTER_ID_1, filterAndResult);
 
-    LogsFilterCapsule capsule =
-        new LogsFilterCapsule(150L, "0xabcdef", null, Collections.emptyList(), false, false, jsonRpc);
+    LogsFilterCapsule capsule = new LogsFilterCapsule(150L, "0xabcdef", null,
+        Collections.emptyList(), false, false, jsonRpc);
 
     jsonRpc.handleLogsFilter(capsule);
 
