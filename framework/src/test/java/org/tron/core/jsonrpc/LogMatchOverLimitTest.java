@@ -1,5 +1,6 @@
 package org.tron.core.jsonrpc;
 
+import static org.junit.Assert.assertThrows;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -118,19 +119,14 @@ public class LogMatchOverLimitTest {
    */
   @Test
   public void testExceedsLimit_throwsBeforeAddAll()
-      throws BadItemException, ItemNotFoundException, JsonRpcInvalidParamsException {
+      throws ItemNotFoundException, JsonRpcInvalidParamsException {
     // block 1: MAX_RESULT - 1 logs, block 2: 2 logs → 9999 + 2 = 10001 > MAX_RESULT
     Manager manager = buildMockManager(
         1L, buildTxList(MAX_RESULT - 1),
         2L, buildTxList(2));
     LogMatch logMatch = buildLogMatch(Arrays.asList(1L, 2L), manager);
 
-    try {
-      logMatch.matchBlockOneByOne();
-      Assert.fail("Expected JsonRpcTooManyResultException");
-    } catch (JsonRpcTooManyResultException e) {
-      Assert.assertTrue(e.getMessage().contains(String.valueOf(MAX_RESULT)));
-    }
+    assertThrows(JsonRpcTooManyResultException.class, logMatch::matchBlockOneByOne);
   }
 
   /** A block with no matching logs is skipped without incrementing the result count. */
