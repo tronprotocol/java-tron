@@ -617,6 +617,8 @@ public class ProposalUtilTest extends BaseTest {
 
   private void testAllowHardenExchangeCalculationProposal() {
     long code = ProposalType.ALLOW_HARDEN_EXCHANGE_CALCULATION.getCode();
+    ThrowingRunnable proposeZero = () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+        code, 0);
     ThrowingRunnable proposeOne = () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
         code, 1);
     ThrowingRunnable proposeTwo = () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
@@ -629,23 +631,35 @@ public class ProposalUtilTest extends BaseTest {
 
     activateFork(ForkBlockVersionEnum.VERSION_4_8_2);
 
-    // 2) value != 1 -> rejected
+    // 2) value not in {0, 1} -> rejected
     thrown = assertThrows(ContractValidateException.class, proposeTwo);
-    assertEquals("This value[ALLOW_HARDEN_EXCHANGE_CALCULATION] is only allowed to be 1",
+    assertEquals("This value[ALLOW_HARDEN_EXCHANGE_CALCULATION] is only allowed to be 0 or 1",
         thrown.getMessage());
 
-    // 3) value=1 first time -> ok
+    // 3) current value is 0 (default), proposing 0 again -> rejected
+    thrown = assertThrows(ContractValidateException.class, proposeZero);
+    assertEquals("[ALLOW_HARDEN_EXCHANGE_CALCULATION] has been set to 0, no need to propose again",
+        thrown.getMessage());
+
+    // 4) value=1 to enable -> ok
     try {
       proposeOne.run();
     } catch (Throwable e) {
-      Assert.fail("Should pass when value=1 and not yet activated: " + e.getMessage());
+      Assert.fail("Should pass when toggling 0 -> 1: " + e.getMessage());
     }
 
-    // 4) already activated -> reject re-proposal
+    // 5) after activation, proposing 1 again -> rejected
     dynamicPropertiesStore.saveAllowHardenExchangeCalculation(1);
     thrown = assertThrows(ContractValidateException.class, proposeOne);
-    assertEquals("[ALLOW_HARDEN_EXCHANGE_CALCULATION] has been valid, no need to propose again",
+    assertEquals("[ALLOW_HARDEN_EXCHANGE_CALCULATION] has been set to 1, no need to propose again",
         thrown.getMessage());
+
+    // 6) value=0 to disable -> ok (toggle back off)
+    try {
+      proposeZero.run();
+    } catch (Throwable e) {
+      Assert.fail("Should pass when toggling 1 -> 0: " + e.getMessage());
+    }
   }
 
   private void testAllowMarketTransaction() {

@@ -907,13 +907,14 @@ public class ProposalUtil {
           throw new ContractValidateException(
               "Bad chain parameter id [ALLOW_HARDEN_EXCHANGE_CALCULATION]");
         }
-        if (dynamicPropertiesStore.getAllowHardenExchangeCalculation() == 1) {
+        if (value != 0 && value != 1) {
           throw new ContractValidateException(
-              "[ALLOW_HARDEN_EXCHANGE_CALCULATION] has been valid, no need to propose again");
+              "This value[ALLOW_HARDEN_EXCHANGE_CALCULATION] is only allowed to be 0 or 1");
         }
-        if (value != 1) {
+        if (dynamicPropertiesStore.getAllowHardenExchangeCalculation() == value) {
           throw new ContractValidateException(
-              "This value[ALLOW_HARDEN_EXCHANGE_CALCULATION] is only allowed to be 1");
+              "[ALLOW_HARDEN_EXCHANGE_CALCULATION] has been set to " + value
+                  + ", no need to propose again");
         }
         break;
       }
