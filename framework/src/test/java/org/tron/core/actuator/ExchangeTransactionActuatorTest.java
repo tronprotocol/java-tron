@@ -1893,8 +1893,8 @@ public class ExchangeTransactionActuatorTest extends BaseTest {
         OWNER_ADDRESS_SECOND, exchangeId, tokenId, quant, 1));
 
     try {
-      // addExact throws ArithmeticException, which escapes execute() (not in its catch list).
-      Assert.assertThrows(ArithmeticException.class,
+      // addExact throws ArithmeticException, which is wrapped into ContractExeException.
+      Assert.assertThrows(ContractExeException.class,
           () -> actuator.execute(new TransactionResultCapsule()));
     } finally {
       dbManager.getExchangeStore().delete(ByteArray.fromLong(1L));

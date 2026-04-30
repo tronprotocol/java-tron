@@ -1889,7 +1889,7 @@ public class ExchangeInjectActuatorTest extends BaseTest {
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
         OWNER_ADDRESS_FIRST, exchangeId, firstTokenId, 1000000000L));
     try {
-      Assert.assertThrows(ArithmeticException.class,
+      Assert.assertThrows(ContractExeException.class,
           () -> actuator.execute(new TransactionResultCapsule()));
     } finally {
       dbManager.getExchangeV2Store().delete(ByteArray.fromLong(1L));

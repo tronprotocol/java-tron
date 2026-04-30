@@ -104,7 +104,8 @@ public class ExchangeInjectActuator extends AbstractExchangeActuator {
 
       ret.setExchangeInjectAnotherAmount(anotherTokenQuant);
       ret.setStatus(fee, code.SUCESS);
-    } catch (ItemNotFoundException | InvalidProtocolBufferException e) {
+    } catch (ItemNotFoundException | InvalidProtocolBufferException
+        | ArithmeticException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
       throw new ContractExeException(e.getMessage());
@@ -114,6 +115,14 @@ public class ExchangeInjectActuator extends AbstractExchangeActuator {
 
   @Override
   public boolean validate() throws ContractValidateException {
+    try {
+      return doValidate();
+    } catch (ArithmeticException e) {
+      throw new ContractValidateException(e.getMessage());
+    }
+  }
+
+  private boolean doValidate() throws ContractValidateException {
     if (this.any == null) {
       throw new ContractValidateException(ActuatorConstant.CONTRACT_NOT_EXIST);
     }
