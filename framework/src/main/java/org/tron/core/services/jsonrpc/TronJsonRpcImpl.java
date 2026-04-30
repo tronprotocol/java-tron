@@ -169,7 +169,12 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
 
   private static final String ERROR_SELECTOR = "08c379a0"; // Function selector for Error(string)
   private final int filterParallelThreshold = 10000;
-  private final ForkJoinPool logsFilterPool = new ForkJoinPool(2);
+  /**
+   * Using the default maxLogFilterNum of 20,000, a 3-thread pool can keep up with log event
+   * processing for each block within the 3-second BLOCK_PRODUCED_INTERVAL. Increasing the thread
+   * pool size too much may affect the performance of the main block processing thread.
+   */
+  private final ForkJoinPool logsFilterPool = new ForkJoinPool(3);
   /**
    * thread pool of query section bloom store
    */
