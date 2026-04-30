@@ -28,7 +28,7 @@ import org.tron.protos.Protocol.TransactionInfo;
 import org.tron.protos.Protocol.TransactionInfo.Log;
 
 /**
- * Verifies the over-limit check in {@link LogMatch#matchBlockOneByOne()} introduced in PR #71.
+ * Verifies the over-limit check in {@link LogMatch#matchBlockOneByOne()}
  * The fix ensures the exception is thrown BEFORE {@code addAll}, so the result list never
  * silently exceeds {@link LogBlockQuery#MAX_RESULT}.
  */
@@ -115,7 +115,6 @@ public class LogMatchOverLimitTest {
   /**
    * Verifies the fix: when the second block would push the total over MAX_RESULT,
    * {@link JsonRpcTooManyResultException} is thrown BEFORE {@code addAll}.
-   * The result list must contain only the logs from block 1 (not the partial block-2 logs).
    */
   @Test
   public void testExceedsLimit_throwsBeforeAddAll()

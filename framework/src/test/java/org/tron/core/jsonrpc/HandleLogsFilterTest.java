@@ -1,7 +1,5 @@
 package org.tron.core.jsonrpc;
 
-import static org.tron.core.services.jsonrpc.TronJsonRpcImpl.handleLogsFilter;
-
 import java.lang.reflect.Field;
 import java.util.Collections;
 import java.util.List;
@@ -25,21 +23,16 @@ public class HandleLogsFilterTest {
   private static final String FILTER_ID_1 = "handle-logs-test-001";
   private static final String FILTER_ID_2 = "handle-logs-test-002";
 
+  private TronJsonRpcImpl jsonRpc;
+
   @Before
   public void setUp() {
-    cleanMaps();
+    jsonRpc = new TronJsonRpcImpl(null, null, null);
   }
 
   @After
-  public void tearDown() {
-    cleanMaps();
-  }
-
-  private void cleanMaps() {
-    TronJsonRpcImpl.getEventFilter2ResultFull().remove(FILTER_ID_1);
-    TronJsonRpcImpl.getEventFilter2ResultFull().remove(FILTER_ID_2);
-    TronJsonRpcImpl.getEventFilter2ResultSolidity().remove(FILTER_ID_1);
-    TronJsonRpcImpl.getEventFilter2ResultSolidity().remove(FILTER_ID_2);
+  public void tearDown() throws Exception {
+    jsonRpc.close();
   }
 
   private TransactionInfo buildTxInfoWithLog(byte[] address) {
@@ -53,14 +46,14 @@ public class HandleLogsFilterTest {
   public void testMatchingFilter_receivesLogElements() throws JsonRpcInvalidParamsException {
     FilterRequest fr = new FilterRequest();
     LogFilterAndResult filterAndResult = new LogFilterAndResult(fr, 100L, null);
-    TronJsonRpcImpl.getEventFilter2ResultFull().put(FILTER_ID_1, filterAndResult);
+    jsonRpc.getEventFilter2ResultFull().put(FILTER_ID_1, filterAndResult);
 
     List<TransactionInfo> txInfoList =
         Collections.singletonList(buildTxInfoWithLog(new byte[20]));
     LogsFilterCapsule capsule =
         new LogsFilterCapsule(150L, "0xabcdef", null, txInfoList, false, false);
 
-    handleLogsFilter(capsule);
+    jsonRpc.handleLogsFilter(capsule);
 
     Assert.assertEquals(1, filterAndResult.getResult().size());
   }
@@ -71,14 +64,14 @@ public class HandleLogsFilterTest {
     FilterRequest fr = new FilterRequest();
     // currentMaxBlockNum=100 → fromBlock=100, toBlock=MAX_VALUE
     LogFilterAndResult filterAndResult = new LogFilterAndResult(fr, 100L, null);
-    TronJsonRpcImpl.getEventFilter2ResultFull().put(FILTER_ID_1, filterAndResult);
+    jsonRpc.getEventFilter2ResultFull().put(FILTER_ID_1, filterAndResult);
 
     List<TransactionInfo> txInfoList =
         Collections.singletonList(buildTxInfoWithLog(new byte[20]));
     LogsFilterCapsule capsule =
         new LogsFilterCapsule(50L, "0xabcdef", null, txInfoList, false, false);
 
-    handleLogsFilter(capsule);
+    jsonRpc.handleLogsFilter(capsule);
 
     Assert.assertTrue(filterAndResult.getResult().isEmpty());
   }
@@ -93,7 +86,7 @@ public class HandleLogsFilterTest {
     expireField.setAccessible(true);
     expireField.setLong(filterAndResult, 0L);
 
-    Map<String, LogFilterAndResult> map = TronJsonRpcImpl.getEventFilter2ResultFull();
+    Map<String, LogFilterAndResult> map = jsonRpc.getEventFilter2ResultFull();
     map.put(FILTER_ID_1, filterAndResult);
     Assert.assertTrue(map.containsKey(FILTER_ID_1));
 
@@ -102,7 +95,7 @@ public class HandleLogsFilterTest {
     LogsFilterCapsule capsule =
         new LogsFilterCapsule(150L, "0xabcdef", null, txInfoList, false, false);
 
-    handleLogsFilter(capsule);
+    jsonRpc.handleLogsFilter(capsule);
 
     Assert.assertFalse("expired filter should be removed", map.containsKey(FILTER_ID_1));
   }
@@ -112,17 +105,17 @@ public class HandleLogsFilterTest {
   public void testSolidifiedCapsule_routedToSolidityMap() throws JsonRpcInvalidParamsException {
     FilterRequest fr = new FilterRequest();
     LogFilterAndResult solidityFilter = new LogFilterAndResult(fr, 100L, null);
-    TronJsonRpcImpl.getEventFilter2ResultSolidity().put(FILTER_ID_1, solidityFilter);
+    jsonRpc.getEventFilter2ResultSolidity().put(FILTER_ID_1, solidityFilter);
 
     LogFilterAndResult fullFilter = new LogFilterAndResult(fr, 100L, null);
-    TronJsonRpcImpl.getEventFilter2ResultFull().put(FILTER_ID_2, fullFilter);
+    jsonRpc.getEventFilter2ResultFull().put(FILTER_ID_2, fullFilter);
 
     List<TransactionInfo> txInfoList =
         Collections.singletonList(buildTxInfoWithLog(new byte[20]));
     LogsFilterCapsule capsule =
         new LogsFilterCapsule(150L, "0xabcdef", null, txInfoList, true, false);
 
-    handleLogsFilter(capsule);
+    jsonRpc.handleLogsFilter(capsule);
 
     Assert.assertEquals(1, solidityFilter.getResult().size());
     Assert.assertTrue("full-node filter must not be touched", fullFilter.getResult().isEmpty());
@@ -133,17 +126,17 @@ public class HandleLogsFilterTest {
   public void testNonSolidifiedCapsule_routedToFullMap() throws JsonRpcInvalidParamsException {
     FilterRequest fr = new FilterRequest();
     LogFilterAndResult solidityFilter = new LogFilterAndResult(fr, 100L, null);
-    TronJsonRpcImpl.getEventFilter2ResultSolidity().put(FILTER_ID_1, solidityFilter);
+    jsonRpc.getEventFilter2ResultSolidity().put(FILTER_ID_1, solidityFilter);
 
     LogFilterAndResult fullFilter = new LogFilterAndResult(fr, 100L, null);
-    TronJsonRpcImpl.getEventFilter2ResultFull().put(FILTER_ID_2, fullFilter);
+    jsonRpc.getEventFilter2ResultFull().put(FILTER_ID_2, fullFilter);
 
     List<TransactionInfo> txInfoList =
         Collections.singletonList(buildTxInfoWithLog(new byte[20]));
     LogsFilterCapsule capsule =
         new LogsFilterCapsule(150L, "0xabcdef", null, txInfoList, false, false);
 
-    handleLogsFilter(capsule);
+    jsonRpc.handleLogsFilter(capsule);
 
     Assert.assertEquals(1, fullFilter.getResult().size());
     Assert.assertTrue("solidity filter must not be touched", solidityFilter.getResult().isEmpty());
@@ -155,15 +148,15 @@ public class HandleLogsFilterTest {
     FilterRequest fr = new FilterRequest();
     LogFilterAndResult filter1 = new LogFilterAndResult(fr, 100L, null);
     LogFilterAndResult filter2 = new LogFilterAndResult(fr, 100L, null);
-    TronJsonRpcImpl.getEventFilter2ResultFull().put(FILTER_ID_1, filter1);
-    TronJsonRpcImpl.getEventFilter2ResultFull().put(FILTER_ID_2, filter2);
+    jsonRpc.getEventFilter2ResultFull().put(FILTER_ID_1, filter1);
+    jsonRpc.getEventFilter2ResultFull().put(FILTER_ID_2, filter2);
 
     List<TransactionInfo> txInfoList =
         Collections.singletonList(buildTxInfoWithLog(new byte[20]));
     LogsFilterCapsule capsule =
         new LogsFilterCapsule(150L, "0xabcdef", null, txInfoList, false, false);
 
-    handleLogsFilter(capsule);
+    jsonRpc.handleLogsFilter(capsule);
 
     Assert.assertEquals(1, filter1.getResult().size());
     Assert.assertEquals(1, filter2.getResult().size());
@@ -174,13 +167,119 @@ public class HandleLogsFilterTest {
   public void testEmptyTxInfoList_noResult() throws JsonRpcInvalidParamsException {
     FilterRequest fr = new FilterRequest();
     LogFilterAndResult filterAndResult = new LogFilterAndResult(fr, 100L, null);
-    TronJsonRpcImpl.getEventFilter2ResultFull().put(FILTER_ID_1, filterAndResult);
+    jsonRpc.getEventFilter2ResultFull().put(FILTER_ID_1, filterAndResult);
 
     LogsFilterCapsule capsule =
         new LogsFilterCapsule(150L, "0xabcdef", null, Collections.emptyList(), false, false);
 
-    handleLogsFilter(capsule);
+    jsonRpc.handleLogsFilter(capsule);
 
     Assert.assertTrue(filterAndResult.getResult().isEmpty());
+  }
+
+  // -------------------------------------------------------------------------
+  // Parallel path tests (filterParallelThreshold lowered to 2 via reflection)
+  // -------------------------------------------------------------------------
+
+  private void setParallelThreshold(int value) throws Exception {
+    Field f = TronJsonRpcImpl.class.getDeclaredField("filterParallelThreshold");
+    f.setAccessible(true);
+    f.setInt(jsonRpc, value);
+  }
+
+  /**
+   * Parallel path: every matching filter receives exactly one event — no events dropped or
+   * double-counted under concurrent dispatch.
+   */
+  @Test(timeout = 10000)
+  public void testParallelPath_allMatchingFilters_receiveEvents() throws Exception {
+    setParallelThreshold(2);
+    int count = 5;
+    FilterRequest fr = new FilterRequest();
+    List<TransactionInfo> txInfoList =
+        Collections.singletonList(buildTxInfoWithLog(new byte[20]));
+    Map<String, LogFilterAndResult> map = jsonRpc.getEventFilter2ResultFull();
+    String prefix = "parallel-match-";
+    for (int i = 0; i < count; i++) {
+      map.put(prefix + i, new LogFilterAndResult(fr, 0L, null));
+    }
+
+    LogsFilterCapsule capsule =
+        new LogsFilterCapsule(150L, "0xabcdef", null, txInfoList, false, false);
+    jsonRpc.handleLogsFilter(capsule);
+
+    for (int i = 0; i < count; i++) {
+      Assert.assertEquals("filter " + i + " must receive exactly one event",
+          1, map.get(prefix + i).getResult().size());
+    }
+  }
+
+  /**
+   * Parallel path: expired filters are evicted and all valid filters still receive their events.
+   */
+  @Test(timeout = 10000)
+  public void testParallelPath_expiredFiltersRemoved() throws Exception {
+    setParallelThreshold(2);
+    int expiredCount = 2;
+    int validCount = 3;
+    FilterRequest fr = new FilterRequest();
+    Field expireField = FilterResult.class.getDeclaredField("expireTimeStamp");
+    expireField.setAccessible(true);
+    Map<String, LogFilterAndResult> map = jsonRpc.getEventFilter2ResultFull();
+    String prefix = "parallel-expire-";
+    for (int i = 0; i < expiredCount + validCount; i++) {
+      LogFilterAndResult filter = new LogFilterAndResult(fr, 0L, null);
+      if (i < expiredCount) {
+        expireField.setLong(filter, 0L);
+      }
+      map.put(prefix + i, filter);
+    }
+
+    List<TransactionInfo> txInfoList =
+        Collections.singletonList(buildTxInfoWithLog(new byte[20]));
+    LogsFilterCapsule capsule =
+        new LogsFilterCapsule(150L, "0xabcdef", null, txInfoList, false, false);
+    jsonRpc.handleLogsFilter(capsule);
+
+    for (int i = 0; i < expiredCount; i++) {
+      Assert.assertFalse("expired filter " + i + " should be removed",
+          map.containsKey(prefix + i));
+    }
+    for (int i = expiredCount; i < expiredCount + validCount; i++) {
+      Assert.assertEquals("valid filter " + i + " must receive one event",
+          1, map.get(prefix + i).getResult().size());
+    }
+  }
+
+  /**
+   * Parallel path: a solidified capsule dispatches only to the solidity map; the full-node map
+   * is untouched even though it holds entries.
+   */
+  @Test(timeout = 10000)
+  public void testParallelPath_solidifiedCapsule_routedToSolidityMap() throws Exception {
+    setParallelThreshold(2);
+    int count = 5;
+    FilterRequest fr = new FilterRequest();
+    List<TransactionInfo> txInfoList =
+        Collections.singletonList(buildTxInfoWithLog(new byte[20]));
+    Map<String, LogFilterAndResult> solidityMap = jsonRpc.getEventFilter2ResultSolidity();
+    Map<String, LogFilterAndResult> fullMap = jsonRpc.getEventFilter2ResultFull();
+    String solidityPrefix = "parallel-solid-";
+    for (int i = 0; i < count; i++) {
+      solidityMap.put(solidityPrefix + i, new LogFilterAndResult(fr, 0L, null));
+    }
+    LogFilterAndResult fullFilter = new LogFilterAndResult(fr, 0L, null);
+    fullMap.put("parallel-solid-full-0", fullFilter);
+
+    LogsFilterCapsule capsule =
+        new LogsFilterCapsule(150L, "0xabcdef", null, txInfoList, true, false);
+    jsonRpc.handleLogsFilter(capsule);
+
+    for (int i = 0; i < count; i++) {
+      Assert.assertEquals("solidity filter " + i + " must receive one event",
+          1, solidityMap.get(solidityPrefix + i).getResult().size());
+    }
+    Assert.assertTrue("full-map filter must not receive events",
+        fullFilter.getResult().isEmpty());
   }
 }

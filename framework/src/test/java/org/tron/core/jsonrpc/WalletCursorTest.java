@@ -157,7 +157,8 @@ public class WalletCursorTest extends BaseTest {
   public void testNewFilter_exceedsCapThrowsException() throws Exception {
     int cap = Args.getInstance().getJsonRpcMaxLogFilterNum();
     FilterRequest fr = new FilterRequest();
-    Map<String, LogFilterAndResult> map = TronJsonRpcImpl.getEventFilter2ResultFull();
+    TronJsonRpcImpl tronJsonRpc = new TronJsonRpcImpl(nodeInfoService, wallet, dbManager);
+    Map<String, LogFilterAndResult> map = tronJsonRpc.getEventFilter2ResultFull();
     List<String> addedKeys = new ArrayList<>();
 
     try {
@@ -168,19 +169,14 @@ public class WalletCursorTest extends BaseTest {
       }
       Assert.assertEquals(cap, addedKeys.size());
 
-      TronJsonRpcImpl tronJsonRpc = new TronJsonRpcImpl(nodeInfoService, wallet, dbManager);
       try {
         tronJsonRpc.newFilter(fr);
         Assert.fail("Expected JsonRpcExceedLimitException when filter count reaches cap");
       } catch (JsonRpcExceedLimitException e) {
         Assert.assertTrue(e.getMessage().contains(String.valueOf(cap)));
-      } finally {
-        tronJsonRpc.close();
       }
     } finally {
-      for (String key : addedKeys) {
-        map.remove(key);
-      }
+      tronJsonRpc.close();
     }
   }
 

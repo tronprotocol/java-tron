@@ -118,14 +118,14 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
 
   private static final String FILTER_NOT_FOUND = "filter not found";
   public static final int EXPIRE_SECONDS = 5 * 60;
-  private static final int maxBlockFilterNum = Args.getInstance().getJsonRpcMaxBlockFilterNum();
-  private static final int maxLogFilterNum = Args.getInstance().getJsonRpcMaxLogFilterNum();
-  private static final Cache<LogFilterElement, LogFilterElement> logElementCache =
+  private final int maxBlockFilterNum = Args.getInstance().getJsonRpcMaxBlockFilterNum();
+  private final int maxLogFilterNum = Args.getInstance().getJsonRpcMaxLogFilterNum();
+  private final Cache<LogFilterElement, LogFilterElement> logElementCache =
       CacheBuilder.newBuilder()
           .maximumSize(300_000L) // 300s * tps(1000) * 1 log/tx ≈ 300_000
           .expireAfterWrite(EXPIRE_SECONDS, TimeUnit.SECONDS)
           .recordStats().build(); //LRU cache
-  private static final Cache<String, String> blockHashCache =
+  private final Cache<String, String> blockHashCache =
       CacheBuilder.newBuilder()
           .maximumSize(60_000L) // 300s * 200 block/s when syncing
           .expireAfterWrite(EXPIRE_SECONDS, TimeUnit.SECONDS)
@@ -134,25 +134,25 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
    * for log filter in Full Json-RPC
    */
   @Getter
-  private static final Map<String, LogFilterAndResult> eventFilter2ResultFull =
+  private final Map<String, LogFilterAndResult> eventFilter2ResultFull =
       new ConcurrentHashMap<>();
   /**
    * for block in Full Json-RPC
    */
   @Getter
-  private static final Map<String, BlockFilterAndResult> blockFilter2ResultFull =
+  private final Map<String, BlockFilterAndResult> blockFilter2ResultFull =
       new ConcurrentHashMap<>();
   /**
    * for log filter in solidity Json-RPC
    */
   @Getter
-  private static final Map<String, LogFilterAndResult> eventFilter2ResultSolidity =
+  private final Map<String, LogFilterAndResult> eventFilter2ResultSolidity =
       new ConcurrentHashMap<>();
   /**
    * for block in solidity Json-RPC
    */
   @Getter
-  private static final Map<String, BlockFilterAndResult> blockFilter2ResultSolidity =
+  private final Map<String, BlockFilterAndResult> blockFilter2ResultSolidity =
       new ConcurrentHashMap<>();
 
   public static final String HASH_REGEX = "(0x)?[a-zA-Z0-9]{64}$";
@@ -168,8 +168,8 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
   private static final String NO_BLOCK_HEADER_BY_HASH = "header for hash not found";
 
   private static final String ERROR_SELECTOR = "08c379a0"; // Function selector for Error(string)
-  private static final int FILTER_PARALLEL_THRESHOLD = 10000;
-  private static final ForkJoinPool LOGS_FILTER_POOL = new ForkJoinPool(2);
+  private final int filterParallelThreshold = 10000;
+  private final ForkJoinPool logsFilterPool = new ForkJoinPool(2);
   /**
    * thread pool of query section bloom store
    */
@@ -188,7 +188,7 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
     this.sectionExecutor = ExecutorServiceManager.newFixedThreadPool(esName, 5);
   }
 
-  public static void handleBLockFilter(BlockFilterCapsule blockFilterCapsule) {
+  public void handleBLockFilter(BlockFilterCapsule blockFilterCapsule) {
     Iterator<Entry<String, BlockFilterAndResult>> it;
 
     if (blockFilterCapsule.isSolidified()) {
@@ -222,7 +222,7 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
   /**
    * append LogsFilterCapsule's LogFilterElement list to each filter if matched
    */
-  public static void handleLogsFilter(LogsFilterCapsule logsFilterCapsule) {
+  public void handleLogsFilter(LogsFilterCapsule logsFilterCapsule) {
     long t1 = System.currentTimeMillis();
     Map<String, LogFilterAndResult> eventFilterMap;
 
@@ -232,11 +232,11 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
       eventFilterMap = getEventFilter2ResultFull();
     }
 
-    if (eventFilterMap.size() <= FILTER_PARALLEL_THRESHOLD) {
+    if (eventFilterMap.size() <= filterParallelThreshold) {
       eventFilterMap.entrySet().forEach(
           entry -> processLogFilterEntry(entry, eventFilterMap, logsFilterCapsule));
     } else {
-      LOGS_FILTER_POOL.submit(() -> eventFilterMap.entrySet().parallelStream()
+      logsFilterPool.submit(() -> eventFilterMap.entrySet().parallelStream()
           .forEach(entry -> processLogFilterEntry(entry, eventFilterMap, logsFilterCapsule))
       ).join();
     }
@@ -245,7 +245,7 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
         logsFilterCapsule.isSolidified() ? "Solidity" : "Full", t2 - t1, eventFilterMap.size());
   }
 
-  private static void processLogFilterEntry(
+  private void processLogFilterEntry(
       Map.Entry<String, LogFilterAndResult> entry,
       Map<String, LogFilterAndResult> eventFilterMap,
       LogsFilterCapsule logsFilterCapsule) {
@@ -1581,7 +1581,7 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
 
   @Override
   public void close() throws IOException {
-    ExecutorServiceManager.shutdownAndAwaitTermination(LOGS_FILTER_POOL, "logs-filter-pool");
+    ExecutorServiceManager.shutdownAndAwaitTermination(logsFilterPool, "logs-filter-pool");
     logElementCache.invalidateAll();
     blockHashCache.invalidateAll();
     ExecutorServiceManager.shutdownAndAwaitTermination(sectionExecutor, esName);
