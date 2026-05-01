@@ -40,6 +40,9 @@ public class GetTransactionCountByBlockNumServlet extends RateLimiterServlet {
 
   private void fillResponse(long num, HttpServletResponse response) throws IOException {
     long count = wallet.getTransactionCountByBlockNum(num);
-    response.getWriter().println("{\"count\": " + count + "}");
+    String out = JsonFormat.isInt64AsString()
+        ? "{\"count\": \"" + count + "\"}"
+        : "{\"count\": " + count + "}";
+    response.getWriter().println(out);
   }
 }
