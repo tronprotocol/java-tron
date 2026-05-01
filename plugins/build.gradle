@@ -39,20 +39,22 @@ dependencies {
         exclude group: 'io.prometheus'
         exclude group: 'org.aspectj'
         exclude group: 'org.apache.httpcomponents'
-        // :crypto -> :common -> :platform transitively pulls leveldbjni-all
-        // 1.8, which conflicts with the io.github.tronprotocol fork
-        // leveldbjni-all 1.18.2 declared below on x86. Both jars carry
-        // org/iq80/leveldb/Options.class; the duplicate-entry write order in
-        // the fat jar can leave the 1.8 copy, which lacks
+        // x86 declares io.github.tronprotocol:leveldbjni-all:1.18.2 below.
+        // :crypto -> :common -> :platform also transitively pulls
+        // org.fusesource.leveldbjni:leveldbjni-all:1.8; both jars carry
+        // org/iq80/leveldb/Options.class and the duplicate-entry write order
+        // in the fat jar can leave the 1.8 copy, which lacks
         // Options.maxBatchSize(int) and breaks `db archive` at runtime.
+        // Drop the 1.8 transitive on x86 only; ARM64 has a single copy via
+        // its direct :platform declaration and no conflict.
         //
-        // The direct :platform dependency below also excludes
-        // zksnark-java-sdk and commons-io, but those are *not* mirrored here:
-        // the plugins test runtime (DbLiteTest -> Spring -> ZksnarkInitService)
-        // actually loads classes from both, so :crypto must keep transitively
-        // providing them. The :platform-side excludes are deduplication, not
-        // a "kept out of plugins" intent.
-        exclude group: 'org.fusesource.leveldbjni', module: 'leveldbjni-all'
+        // zksnark-java-sdk and commons-io are deliberately NOT mirrored from
+        // the :platform-direct excludes below: the plugins test runtime
+        // (DbLiteTest -> Spring -> ZksnarkInitService) loads classes from
+        // both at runtime, so :crypto must keep transitively providing them.
+        if (!rootProject.archInfo.isArm64) {
+            exclude group: 'org.fusesource.leveldbjni', module: 'leveldbjni-all'
+        }
     }
     implementation group: 'info.picocli', name: 'picocli', version: '4.6.3'
     implementation group: 'com.typesafe', name: 'config', version: '1.3.2'
