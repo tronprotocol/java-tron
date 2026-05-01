@@ -28,6 +28,16 @@ import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 @ToString
 public class BuildArguments {
 
+  /**
+   * Conflict error message wording. Mirrors go-ethereum's
+   * {@code setDefaults} verbatim — external EVM tooling may
+   * pattern-match this string. Do not change the wording without
+   * coordinating with downstream consumers.
+   */
+  private static final String CONFLICT_ERR_MSG =
+      "both \"data\" and \"input\" are set and not equal. "
+          + "Please use \"input\" to pass transaction call data";
+
   @Getter
   @Setter
   private String from;
@@ -183,9 +193,7 @@ public class BuildArguments {
    */
   private void validateCallDataConflict() throws JsonRpcInvalidParamsException {
     if (input != null && data != null && !calldataEquals(input, data)) {
-      throw new JsonRpcInvalidParamsException(
-          "both \"data\" and \"input\" are set and not equal. "
-              + "Please use \"input\" to pass transaction call data");
+      throw new JsonRpcInvalidParamsException(CONFLICT_ERR_MSG);
     }
   }
 
