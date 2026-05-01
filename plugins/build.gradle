@@ -39,6 +39,12 @@ dependencies {
         exclude group: 'io.prometheus'
         exclude group: 'org.aspectj'
         exclude group: 'org.apache.httpcomponents'
+        // :crypto -> :common -> :platform transitively pulls leveldbjni-all 1.8,
+        // which conflicts with the io.github.tronprotocol leveldbjni-all 1.18.2
+        // declared below on x86. Both jars contain org/iq80/leveldb/Options.class;
+        // in the fat jar the duplicate-entry write order can leave the 1.8 copy,
+        // which lacks Options.maxBatchSize(int) and breaks `db archive` at runtime.
+        exclude group: 'org.fusesource.leveldbjni', module: 'leveldbjni-all'
     }
     implementation group: 'info.picocli', name: 'picocli', version: '4.6.3'
     implementation group: 'com.typesafe', name: 'config', version: '1.3.2'
