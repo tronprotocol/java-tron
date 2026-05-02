@@ -39,19 +39,13 @@ dependencies {
         exclude group: 'io.prometheus'
         exclude group: 'org.aspectj'
         exclude group: 'org.apache.httpcomponents'
-        // x86 declares io.github.tronprotocol:leveldbjni-all:1.18.2 below.
+        // x86 declares io.github.tronprotocol:leveldbjni-all:1.18.2 below;
         // :crypto -> :common -> :platform also transitively pulls
-        // org.fusesource.leveldbjni:leveldbjni-all:1.8; both jars carry
-        // org/iq80/leveldb/Options.class and the duplicate-entry write order
-        // in the fat jar can leave the 1.8 copy, which lacks
-        // Options.maxBatchSize(int) and breaks `db archive` at runtime.
-        // Drop the 1.8 transitive on x86 only; ARM64 has a single copy via
-        // its direct :platform declaration and no conflict.
-        //
-        // zksnark-java-sdk and commons-io are deliberately NOT mirrored from
-        // the :platform-direct excludes below: the plugins test runtime
-        // (DbLiteTest -> Spring -> ZksnarkInitService) loads classes from
-        // both at runtime, so :crypto must keep transitively providing them.
+        // org.fusesource.leveldbjni:leveldbjni-all:1.8. Both jars carry
+        // org/iq80/leveldb/Options.class and the fat jar's last-write-wins
+        // merge can leave the 1.8 copy, which lacks Options.maxBatchSize(int)
+        // and breaks `db archive` at runtime. Drop the 1.8 transitive on x86
+        // only; ARM64 has a single copy via :platform direct and no conflict.
         if (!rootProject.archInfo.isArm64) {
             exclude group: 'org.fusesource.leveldbjni', module: 'leveldbjni-all'
         }
@@ -65,9 +59,12 @@ dependencies {
         implementation project(":platform")
     } else {
         implementation project(":platform"), {
+            // Only leveldbjni-all is excluded; the io.github.tronprotocol
+            // 1.18.2 fork below is the version we want on x86. zksnark-java-sdk
+            // and commons-io are intentionally kept (the plugins test runtime
+            // needs both via :crypto -> :common -> :platform and the duplicate
+            // resolution dedups to one copy).
             exclude(group: 'org.fusesource.leveldbjni', module: 'leveldbjni-all')
-            exclude(group: 'io.github.tronprotocol', module: 'zksnark-java-sdk')
-            exclude(group: 'commons-io', module: 'commons-io')
         }
         implementation 'io.github.tronprotocol:leveldbjni-all:1.18.2'
         implementation 'io.github.tronprotocol:leveldb:1.18.2'
