@@ -5,6 +5,7 @@ import static org.tron.core.config.Parameter.ChainConstant.MAX_ACTIVE_WITNESS_NU
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigBeanFactory;
 import com.typesafe.config.ConfigFactory;
+import org.tron.core.config.BeanDefaults;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.Getter;
@@ -89,8 +90,8 @@ public class NodeConfig {
   private double activeConnectFactor = 0.1;
   private double connectFactor = 0.6;
   // Legacy alias `maxActiveNodesWithSameIp` has no bean field: we only peek at it via
-  // section.hasPath() below. Keeping it field-less means reference.conf doesn't have to
-  // ship a default that would otherwise mask the modern `maxConnectionsWithSameIp` key.
+  // section.hasPath() below. Keeping it field-less means BeanDefaults does not emit a
+  // default that would mask the modern `maxConnectionsWithSameIp` key.
 
   // ---- Sub-beans matching config's dot-notation nested structure ----
   private ListenConfig listen = new ListenConfig();
@@ -339,8 +340,6 @@ public class NodeConfig {
     private String awsHostZoneId = "";
   }
 
-  // Defaults come from reference.conf (loaded globally via Configuration.java)
-
   // ===========================================================================
   // Factory method
   // ===========================================================================
@@ -359,8 +358,10 @@ public class NodeConfig {
    * since ConfigBeanFactory expects typed bean lists, not string lists.
    */
   public static NodeConfig fromConfig(Config config) {
-    Config section = config.getConfig("node");
-
+    Config defaults = BeanDefaults.toConfig(new NodeConfig());
+    Config section = config.hasPath("node")
+        ? config.getConfig("node").withFallback(defaults)
+        : defaults;
     // Auto-bind all fields and sub-beans. ConfigBeanFactory fails fast with a
     // descriptive path on any `= null` value — external configs that use the
     // HOCON null keyword should fix their config rather than rely on silent coercion.
@@ -386,7 +387,7 @@ public class NodeConfig {
     }
 
     // Legacy key fallback: node.fullNodeAllowShieldedTransaction -> allowShieldedTransactionApi.
-    // reference.conf does not ship the legacy key, so hasPath here reliably means the user
+    // BeanDefaults does not emit this legacy key, so hasPath here reliably means the user
     // set it in their config. When present, it overrides the modern key.
     if (section.hasPath("fullNodeAllowShieldedTransaction")) {
       nc.allowShieldedTransactionApi = section.getBoolean("fullNodeAllowShieldedTransaction");

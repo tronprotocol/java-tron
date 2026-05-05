@@ -2,6 +2,7 @@ package org.tron.core.config.args;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigBeanFactory;
+import org.tron.core.config.BeanDefaults;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.Getter;
@@ -66,10 +67,11 @@ public class RateLimiterConfig {
     private String paramString = "";
   }
 
-  // Defaults come from reference.conf (loaded globally via Configuration.java)
-
   public static RateLimiterConfig fromConfig(Config config) {
-    Config section = config.getConfig("rate.limiter");
+    Config defaults = BeanDefaults.toConfig(new RateLimiterConfig());
+    Config section = config.hasPath("rate.limiter")
+        ? config.getConfig("rate.limiter").withFallback(defaults)
+        : defaults;
     return ConfigBeanFactory.create(section, RateLimiterConfig.class);
   }
 }

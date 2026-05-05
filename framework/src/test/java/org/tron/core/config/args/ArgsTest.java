@@ -166,7 +166,7 @@ public class ArgsTest {
     storage.put("storage.db.directory", "database");
     Config config = ConfigFactory.defaultOverrides()
         .withFallback(ConfigFactory.parseMap(storage))
-        .withFallback(ConfigFactory.defaultReference());
+        .withFallback(ConfigFactory.empty());
     // test default value
     Args.applyConfigParams(config);
     Assert.assertTrue(Args.getInstance().isRpcEnable());
@@ -195,7 +195,7 @@ public class ArgsTest {
     storage.put("node.jsonrpc.maxSubTopics", "20");
     config = ConfigFactory.defaultOverrides()
         .withFallback(ConfigFactory.parseMap(storage))
-        .withFallback(ConfigFactory.defaultReference());
+        .withFallback(ConfigFactory.empty());
     // test value
     Args.applyConfigParams(config);
     Assert.assertTrue(Args.getInstance().isRpcEnable());
@@ -224,7 +224,7 @@ public class ArgsTest {
     storage.put("node.jsonrpc.maxSubTopics", "1000");
     config = ConfigFactory.defaultOverrides()
         .withFallback(ConfigFactory.parseMap(storage))
-        .withFallback(ConfigFactory.defaultReference());
+        .withFallback(ConfigFactory.empty());
     // test value
     Args.applyConfigParams(config);
     Assert.assertFalse(Args.getInstance().isRpcEnable());
@@ -253,7 +253,7 @@ public class ArgsTest {
     storage.put("node.jsonrpc.maxSubTopics", "40");
     config = ConfigFactory.defaultOverrides()
         .withFallback(ConfigFactory.parseMap(storage))
-        .withFallback(ConfigFactory.defaultReference());
+        .withFallback(ConfigFactory.empty());
     // test value
     Args.applyConfigParams(config);
     Assert.assertFalse(Args.getInstance().isRpcEnable());
@@ -273,7 +273,7 @@ public class ArgsTest {
     storage.put("node.jsonrpc.maxSubTopics", "0");
     config = ConfigFactory.defaultOverrides()
         .withFallback(ConfigFactory.parseMap(storage))
-        .withFallback(ConfigFactory.defaultReference());
+        .withFallback(ConfigFactory.empty());
     // check value
     Args.applyConfigParams(config);
     Assert.assertEquals(0, Args.getInstance().getJsonRpcMaxBlockRange());
@@ -284,7 +284,7 @@ public class ArgsTest {
     storage.put("node.jsonrpc.maxSubTopics", "-4");
     config = ConfigFactory.defaultOverrides()
         .withFallback(ConfigFactory.parseMap(storage))
-        .withFallback(ConfigFactory.defaultReference());
+        .withFallback(ConfigFactory.empty());
     // check value
     Args.applyConfigParams(config);
     Assert.assertEquals(-2, Args.getInstance().getJsonRpcMaxBlockRange());
@@ -386,7 +386,7 @@ public class ArgsTest {
     override.put("storage.db.directory", "database");
     override.put("node.fetchBlock.timeout", "50");
     Config config = ConfigFactory.parseMap(override)
-        .withFallback(ConfigFactory.defaultReference());
+        .withFallback(ConfigFactory.empty());
     Args.applyConfigParams(config);
     Assert.assertEquals(100, Args.getInstance().getFetchBlockTimeout());
     Args.clearParam();
@@ -398,7 +398,7 @@ public class ArgsTest {
     override.put("storage.db.directory", "database");
     override.put("node.fetchBlock.timeout", "2000");
     Config config = ConfigFactory.parseMap(override)
-        .withFallback(ConfigFactory.defaultReference());
+        .withFallback(ConfigFactory.empty());
     Args.applyConfigParams(config);
     Assert.assertEquals(1000, Args.getInstance().getFetchBlockTimeout());
     Args.clearParam();
@@ -410,7 +410,7 @@ public class ArgsTest {
     override.put("storage.db.directory", "database");
     override.put("node.fetchBlock.timeout", "500");
     Config config = ConfigFactory.parseMap(override)
-        .withFallback(ConfigFactory.defaultReference());
+        .withFallback(ConfigFactory.empty());
     Args.applyConfigParams(config);
     Assert.assertEquals(500, Args.getInstance().getFetchBlockTimeout());
     Args.clearParam();

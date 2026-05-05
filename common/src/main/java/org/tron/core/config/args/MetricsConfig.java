@@ -2,6 +2,7 @@ package org.tron.core.config.args;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigBeanFactory;
+import org.tron.core.config.BeanDefaults;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -35,13 +36,11 @@ public class MetricsConfig {
     private int metricsReportInterval = 10;
   }
 
-  // Defaults come from reference.conf (loaded globally via Configuration.java)
-
-  /**
-   * Create MetricsConfig from the "node.metrics" section of the application config.
-   */
   public static MetricsConfig fromConfig(Config config) {
-    Config section = config.getConfig("node.metrics");
+    Config defaults = BeanDefaults.toConfig(new MetricsConfig());
+    Config section = config.hasPath("node.metrics")
+        ? config.getConfig("node.metrics").withFallback(defaults)
+        : defaults;
     return ConfigBeanFactory.create(section, MetricsConfig.class);
   }
 }

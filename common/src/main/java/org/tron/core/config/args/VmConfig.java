@@ -2,6 +2,7 @@ package org.tron.core.config.args;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigBeanFactory;
+import org.tron.core.config.BeanDefaults;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -28,13 +29,11 @@ public class VmConfig {
   private boolean saveFeaturedInternalTx = false;
   private boolean saveCancelAllUnfreezeV2Details = false;
 
-  /**
-   * Create VmConfig from the "vm" section of the application config.
-   * Defaults come from reference.conf (loaded globally via Configuration.java),
-   * so no per-bean DEFAULTS needed.
-   */
   public static VmConfig fromConfig(Config config) {
-    Config vmSection = config.getConfig("vm");
+    Config defaults = BeanDefaults.toConfig(new VmConfig());
+    Config vmSection = config.hasPath("vm")
+        ? config.getConfig("vm").withFallback(defaults)
+        : defaults;
     VmConfig vmConfig = ConfigBeanFactory.create(vmSection, VmConfig.class);
     vmConfig.postProcess();
     return vmConfig;

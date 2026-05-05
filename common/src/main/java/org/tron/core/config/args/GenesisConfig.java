@@ -2,6 +2,7 @@ package org.tron.core.config.args;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigBeanFactory;
+import org.tron.core.config.BeanDefaults;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.Getter;
@@ -41,10 +42,11 @@ public class GenesisConfig {
     private long voteCount = 0;
   }
 
-  // Defaults come from reference.conf (loaded globally via Configuration.java)
-
   public static GenesisConfig fromConfig(Config config) {
-    Config section = config.getConfig("genesis.block");
+    Config defaults = BeanDefaults.toConfig(new GenesisConfig());
+    Config section = config.hasPath("genesis.block")
+        ? config.getConfig("genesis.block").withFallback(defaults)
+        : defaults;
     return ConfigBeanFactory.create(section, GenesisConfig.class);
   }
 }

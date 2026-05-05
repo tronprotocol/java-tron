@@ -3,6 +3,7 @@ package org.tron.core.config.args;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigBeanFactory;
 import com.typesafe.config.ConfigFactory;
+import org.tron.core.config.BeanDefaults;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.Getter;
@@ -68,8 +69,6 @@ public class EventConfig {
     private List<String> contractTopic = new ArrayList<>();
   }
 
-  // Defaults come from reference.conf (loaded globally via Configuration.java)
-
   /**
    * Create EventConfig from the "event.subscribe" section of the application config.
    *
@@ -77,14 +76,20 @@ public class EventConfig {
    * "nativeQueue" but config key is "native". We handle this manually after binding.
    */
   public static EventConfig fromConfig(Config config) {
-    Config section = config.getConfig("event.subscribe");
+    // BeanDefaults covers enable/version/startSyncBlockNum/path/server/dbconfig/
+    // contractParse/filter. nativeQueue and topics are excluded (no public setter).
+    Config defaults = BeanDefaults.toConfig(new EventConfig());
+    Config section = config.hasPath("event.subscribe")
+        ? config.getConfig("event.subscribe")
+        : ConfigFactory.empty();
 
     // "native" is a Java reserved word, "topics" has optional fields per item —
     // strip both before binding, read manually
     String nativeKey = "native";
     String topicsKey = "topics";
     Config bindable = section.withoutPath(nativeKey).withoutPath(topicsKey)
-        .withoutPath("topicDefaults");
+        .withoutPath("topicDefaults")
+        .withFallback(defaults);
     EventConfig ec = ConfigBeanFactory.create(bindable, EventConfig.class);
 
     // manually bind "native" sub-section

@@ -2,6 +2,7 @@ package org.tron.core.config.args;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigBeanFactory;
+import org.tron.core.config.BeanDefaults;
 import com.typesafe.config.ConfigObject;
 import java.util.ArrayList;
 import java.util.List;
@@ -205,11 +206,14 @@ public class StorageConfig {
     private int maxOpenFiles = 100;
   }
 
-  // Defaults come from reference.conf (loaded globally via Configuration.java)
-
   public static StorageConfig fromConfig(Config config) {
-    Config section = config.getConfig("storage");
-
+    Config defaults = BeanDefaults.toConfig(new StorageConfig());
+    // User's storage section takes priority; defaults fill in any omitted scalar keys.
+    // readDbOption() uses hasPath() on the merged section, so user-set optional keys
+    // (default, defaultM, defaultL) are still detected correctly.
+    Config section = config.hasPath("storage")
+        ? config.getConfig("storage").withFallback(defaults)
+        : defaults;
     StorageConfig sc = ConfigBeanFactory.create(section, StorageConfig.class);
     sc.rawStorageConfig = section;
 

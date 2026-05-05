@@ -48,10 +48,11 @@ public class Configuration {
 
   private static void resolveConfigFile(String fileName, File confFile) {
     if (confFile.exists()) {
-      config = ConfigFactory.parseFile(confFile)
-          .withFallback(ConfigFactory.defaultReference());
+      config = ConfigFactory.parseFile(confFile);
     } else if (Thread.currentThread().getContextClassLoader().getResourceAsStream(fileName)
         != null) {
+      // ConfigFactory.load merges system properties (higher priority than the file),
+      // which tests rely on to override storage.db.engine via -D flags.
       config = ConfigFactory.load(fileName);
     } else {
       throw new IllegalArgumentException(

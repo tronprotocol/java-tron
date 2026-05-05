@@ -2,6 +2,7 @@ package org.tron.core.config.args;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigBeanFactory;
+import org.tron.core.config.BeanDefaults;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -87,8 +88,6 @@ public class CommitteeConfig {
 
   // proposalExpireTime is NOT a committee field — it's in block.* and handled by BlockConfig
 
-  // Defaults come from reference.conf (loaded globally via Configuration.java)
-
   /**
    * Create CommitteeConfig from the "committee" section of the application config.
    *
@@ -100,8 +99,10 @@ public class CommitteeConfig {
   private static final String ALLOW_PBFT_KEY = "allowPBFT";
 
   public static CommitteeConfig fromConfig(Config config) {
-    Config section = config.getConfig("committee");
-
+    Config defaults = BeanDefaults.toConfig(new CommitteeConfig());
+    Config section = config.hasPath("committee")
+        ? config.getConfig("committee").withFallback(defaults)
+        : defaults;
     CommitteeConfig cc = ConfigBeanFactory.create(section, CommitteeConfig.class);
     // Ensure the manually-named fields get the right values from the original keys
     cc.allowPBFT = section.hasPath(ALLOW_PBFT_KEY) ? section.getLong(ALLOW_PBFT_KEY) : 0;

@@ -7,6 +7,7 @@ import static org.tron.core.exception.TronError.ErrCode.PARAMETER_INIT;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigBeanFactory;
+import org.tron.core.config.BeanDefaults;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -25,8 +26,6 @@ public class BlockConfig {
   private long proposalExpireTime = DEFAULT_PROPOSAL_EXPIRE_TIME;
   private int checkFrozenTime = 1;
 
-  // Defaults come from reference.conf (loaded globally via Configuration.java)
-
   /**
    * Create BlockConfig from the "block" section of the application config.
    * Also checks that committee.proposalExpireTime is not used (must use block.proposalExpireTime).
@@ -38,7 +37,10 @@ public class BlockConfig {
           + "config.conf, please set the value in block.proposalExpireTime.", PARAMETER_INIT);
     }
 
-    Config blockSection = config.getConfig("block");
+    Config defaults = BeanDefaults.toConfig(new BlockConfig());
+    Config blockSection = config.hasPath("block")
+        ? config.getConfig("block").withFallback(defaults)
+        : defaults;
     BlockConfig blockConfig = ConfigBeanFactory.create(blockSection, BlockConfig.class);
     blockConfig.postProcess();
     return blockConfig;
