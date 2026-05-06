@@ -490,6 +490,8 @@ public class TvmTestUtils {
         return SmartContract.ABI.Entry.EntryType.Event;
       case "fallback":
         return SmartContract.ABI.Entry.EntryType.Fallback;
+      case "receive":
+        return SmartContract.ABI.Entry.EntryType.Receive;
       case "error":
         return SmartContract.ABI.Entry.EntryType.Error;
       default:
@@ -544,7 +546,8 @@ public class TvmTestUtils {
         logger.error("No type!");
         return null;
       }
-      if (!type.equalsIgnoreCase("fallback") && null == inputs) {
+      if (!type.equalsIgnoreCase("fallback") && !type.equalsIgnoreCase("receive")
+          && null == inputs) {
         logger.error("No inputs!");
         return null;
       }

@@ -118,7 +118,10 @@ public final class AbiValidator {
     if (raw == null || raw.isEmpty()) {
       return "type must not be empty";
     }
-    String t = raw.trim();
+    if (!raw.equals(raw.trim())) {
+      return "type must not contain leading/trailing whitespace";
+    }
+    String t = raw;
 
     while (true) {
       Matcher m = ARRAY_SUFFIX.matcher(t);

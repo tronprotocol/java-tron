@@ -108,6 +108,18 @@ public class AbiValidatorTest {
   }
 
   @Test
+  public void whitespacePaddedTypeIsRejected() {
+    expect(ABI.newBuilder().addEntrys(
+        function("foo", param("x", " uint256 "))).build(), "leading/trailing whitespace");
+    expect(ABI.newBuilder().addEntrys(
+        function("foo", param("x", " uint256"))).build(), "leading/trailing whitespace");
+    expect(ABI.newBuilder().addEntrys(
+        function("foo", param("x", "uint256 "))).build(), "leading/trailing whitespace");
+    expect(ABI.newBuilder().addEntrys(
+        function("foo", param("x", " address[]"))).build(), "leading/trailing whitespace");
+  }
+
+  @Test
   public void duplicateConstructorIsRejected() {
     ABI abi = ABI.newBuilder()
         .addEntrys(constructor())

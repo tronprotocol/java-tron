@@ -131,7 +131,8 @@ public class PublicMethod {
         logger.error("No type!");
         return null;
       }
-      if (!type.equalsIgnoreCase("fallback") && null == inputs) {
+      if (!type.equalsIgnoreCase("fallback") && !type.equalsIgnoreCase("receive")
+          && null == inputs) {
         logger.error("No inputs!");
         return null;
       }
@@ -218,6 +219,8 @@ public class PublicMethod {
         return SmartContractOuterClass.SmartContract.ABI.Entry.EntryType.Event;
       case "fallback":
         return SmartContractOuterClass.SmartContract.ABI.Entry.EntryType.Fallback;
+      case "receive":
+        return SmartContractOuterClass.SmartContract.ABI.Entry.EntryType.Receive;
       case "error":
         return SmartContractOuterClass.SmartContract.ABI.Entry.EntryType.Error;
       default:
