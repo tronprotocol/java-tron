@@ -505,13 +505,12 @@ public class JsonrpcServiceTest extends BaseTest {
     // parseBlockNumber: bad hex -> throws
     Exception abcEx = Assert.assertThrows(Exception.class,
         () -> parseBlockNumber("abc", wallet));
-    Assert.assertEquals("Incorrect hex syntax", abcEx.getMessage());
+    Assert.assertEquals("invalid block number", abcEx.getMessage());
 
     // parseBlockNumber: malformed hex -> throws
     Exception hexEx = Assert.assertThrows(Exception.class,
         () -> parseBlockNumber("0xxabc", wallet));
-    // https://bugs.openjdk.org/browse/JDK-8176425, from JDK 12, the exception message is changed
-    Assert.assertTrue(hexEx.getMessage().startsWith("For input string: \"xabc\""));
+    Assert.assertEquals("invalid block number", hexEx.getMessage());
   }
 
   @Test
@@ -867,7 +866,7 @@ public class JsonrpcServiceTest extends BaseTest {
         JsonRpcInvalidParamsException.class,
         () -> new LogFilterWrapper(new FilterRequest("test", null, null, null, null),
             100, null, false));
-    Assert.assertEquals("Incorrect hex syntax", testSyntaxEx.getMessage());
+    Assert.assertEquals("invalid block number", testSyntaxEx.getMessage());
 
     // to = 8000
     try {
