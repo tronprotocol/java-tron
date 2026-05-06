@@ -24,6 +24,7 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.VMIllegalException;
 import org.tron.core.store.StoreFactory;
+import org.tron.core.utils.AbiValidator;
 import org.tron.core.vm.repository.Repository;
 import org.tron.core.vm.repository.RepositoryImpl;
 
@@ -489,6 +490,8 @@ public class TvmTestUtils {
         return SmartContract.ABI.Entry.EntryType.Event;
       case "fallback":
         return SmartContract.ABI.Entry.EntryType.Fallback;
+      case "error":
+        return SmartContract.ABI.Entry.EntryType.Error;
       default:
         return SmartContract.ABI.Entry.EntryType.UNRECOGNIZED;
     }
@@ -603,7 +606,13 @@ public class TvmTestUtils {
       abiBuilder.addEntrys(entryBuilder.build());
     }
 
-    return abiBuilder.build();
+    SmartContract.ABI abi = abiBuilder.build();
+    try {
+      AbiValidator.validate(abi);
+    } catch (ContractValidateException e) {
+      throw new IllegalArgumentException(e.getMessage(), e);
+    }
+    return abi;
   }
 
 

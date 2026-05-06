@@ -209,6 +209,7 @@ import org.tron.core.store.MarketPairToPriceStore;
 import org.tron.core.store.StoreFactory;
 import org.tron.core.store.VotesStore;
 import org.tron.core.store.WitnessStore;
+import org.tron.core.utils.AbiValidator;
 import org.tron.core.utils.TransactionUtil;
 import org.tron.core.vm.program.Program;
 import org.tron.core.zen.ShieldedTRC20ParametersBuilder;
@@ -498,6 +499,7 @@ public class Wallet {
       if (percent < 0 || percent > 100) {
         throw new ContractValidateException("percent must be >= 0 and <= 100");
       }
+      AbiValidator.validate(contract.getNewContract().getAbi());
     }
     setTransaction(trx);
     return trx;

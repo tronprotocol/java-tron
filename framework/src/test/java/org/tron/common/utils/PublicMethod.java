@@ -21,6 +21,8 @@ import org.tron.common.crypto.sm2.SM2;
 import org.tron.common.crypto.sm2.SM2Signer;
 import org.tron.common.utils.client.utils.TransactionUtils;
 import org.tron.core.Wallet;
+import org.tron.core.exception.ContractValidateException;
+import org.tron.core.utils.AbiValidator;
 import org.tron.protos.Protocol;
 import org.tron.protos.contract.BalanceContract;
 import org.tron.protos.contract.SmartContractOuterClass;
@@ -195,7 +197,13 @@ public class PublicMethod {
       abiBuilder.addEntrys(entryBuilder.build());
     }
 
-    return abiBuilder.build();
+    SmartContractOuterClass.SmartContract.ABI abi = abiBuilder.build();
+    try {
+      AbiValidator.validate(abi);
+    } catch (ContractValidateException e) {
+      throw new IllegalArgumentException(e.getMessage(), e);
+    }
+    return abi;
   }
 
   /** constructor. */
