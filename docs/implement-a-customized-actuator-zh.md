@@ -21,7 +21,6 @@ Actuator 模块抽象出4个方法并定义在 `Actuator` 接口中：
 syntax = "proto3";
 package protocol;
 option java_package = "org.tron.protos.contract"; //Specify the name of the package that generated the Java file
-option go_package = "github.com/tronprotocol/grpc-gateway/core";
 message SumContract {
     int64 param1 = 1;
     int64 param2 = 2;
@@ -55,13 +54,6 @@ import "core/contract/math_contract.proto";
 ```protobuf
 service Wallet {
   rpc InvokeSum (SumContract) returns (Transaction) {
-    option (google.api.http) = {
-      post: "/wallet/invokesum"
-      body: "*"
-      additional_bindings {
-        get: "/wallet/invokesum"
-      }
-    };
   };
   ...
 };
