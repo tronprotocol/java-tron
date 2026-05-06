@@ -18,8 +18,7 @@ import lombok.Getter;
  * the handler returns and write its own error response when true.
  *
  * <p>Header-mutating methods ({@code setStatus}, {@code setContentType}) are buffered here and
- * only forwarded to the real response via {@link #commitToResponse()}, preventing a timed-out
- * handler thread from racing with the timeout error writer.
+ * only forwarded to the real response via {@link #commitToResponse()}.
  */
 public class BufferedResponseWrapper extends HttpServletResponseWrapper {
 
@@ -28,8 +27,9 @@ public class BufferedResponseWrapper extends HttpServletResponseWrapper {
   private final int maxBytes;
   private int status = HttpServletResponse.SC_OK;
   private String contentType;
+  private boolean committed = false;
   @Getter
-  private boolean overflow = false;
+  private volatile boolean overflow = false;
 
   private final ServletOutputStream outputStream = new ServletOutputStream() {
     @Override
@@ -122,6 +122,10 @@ public class BufferedResponseWrapper extends HttpServletResponseWrapper {
   }
 
   public void commitToResponse() throws IOException {
+    if (committed) {
+      throw new IllegalStateException("commitToResponse() already called");
+    }
+    committed = true;
     if (contentType != null) {
       actual.setContentType(contentType);
     }

@@ -1,7 +1,9 @@
 package org.tron.core.services.jsonrpc;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.googlecode.jsonrpc4j.HttpStatusCodeProvider;
 import com.googlecode.jsonrpc4j.JsonRpcInterceptor;
@@ -29,12 +31,13 @@ public class JsonRpcServlet extends RateLimiterServlet {
 
   private static final ObjectMapper MAPPER = new ObjectMapper();
 
-  enum JsonRpcError {
+  private enum JsonRpcError {
     PARSE_ERROR(-32700),
+    INTERNAL_ERROR(-32603),
     EXCEED_LIMIT(-32005),
     RESPONSE_TOO_LARGE(-32003);
 
-    final int code;
+    private final int code;
 
     JsonRpcError(int code) {
       this.code = code;
@@ -86,19 +89,25 @@ public class JsonRpcServlet extends RateLimiterServlet {
   protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
     CommonParameter parameter = CommonParameter.getInstance();
 
-    byte[] body;
+    // Transport IOException from readBody propagates as HTTP 500 (genuine IO failure).
+    byte[] body = readBody(req.getInputStream());
     JsonNode rootNode;
     try {
-      body = readBody(req.getInputStream());
       rootNode = MAPPER.readTree(body);
-    } catch (IOException e) {
-      writeJsonRpcError(resp, JsonRpcError.PARSE_ERROR, "Parse error", null);
+      if (rootNode == null || rootNode.isMissingNode()) {
+        writeJsonRpcError(resp, JsonRpcError.PARSE_ERROR, "Parse error", null, false);
+        return;
+      }
+    } catch (JsonProcessingException e) {
+      writeJsonRpcError(resp, JsonRpcError.PARSE_ERROR, "Parse error", null, false);
       return;
     }
+
+    boolean isBatch = rootNode.isArray();
     int batchSize = parameter.getJsonRpcMaxBatchSize();
-    if (rootNode.isArray() && batchSize > 0 && rootNode.size() > batchSize) {
+    if (isBatch && batchSize > 0 && rootNode.size() > batchSize) {
       writeJsonRpcError(resp, JsonRpcError.EXCEED_LIMIT,
-          "Batch size " + rootNode.size() + " exceeds the limit of " + batchSize, null);
+          "Batch size " + rootNode.size() + " exceeds the limit of " + batchSize, null, true);
       return;
     }
 
@@ -108,15 +117,18 @@ public class JsonRpcServlet extends RateLimiterServlet {
 
     try {
       rpcServer.handle(cachedReq, bufferedResp);
-    } catch (Exception e) {
-      throw new IOException("RPC execution failed", e);
+    } catch (RuntimeException e) {
+      logger.error("RPC execution failed", e);
+      JsonNode idNode = isBatch ? null : rootNode.get("id");
+      writeJsonRpcError(resp, JsonRpcError.INTERNAL_ERROR, "Internal error", idNode, isBatch);
+      return;
     }
 
     if (bufferedResp.isOverflow()) {
-      JsonNode idNode = !rootNode.isArray() ? rootNode.get("id") : null;
+      JsonNode idNode = isBatch ? null : rootNode.get("id");
       writeJsonRpcError(resp, JsonRpcError.RESPONSE_TOO_LARGE,
           "Response exceeds the limit of " + parameter.getJsonRpcMaxResponseSize() + " bytes",
-          idNode);
+          idNode, isBatch);
       return;
     }
     bufferedResp.commitToResponse();
@@ -133,18 +145,25 @@ public class JsonRpcServlet extends RateLimiterServlet {
   }
 
   private void writeJsonRpcError(HttpServletResponse resp, JsonRpcError error, String message,
-      JsonNode id) throws IOException {
-    ObjectNode root = MAPPER.createObjectNode();
-    root.put("jsonrpc", "2.0");
-    ObjectNode errNode = root.putObject("error");
+      JsonNode id, boolean isBatch) throws IOException {
+    ObjectNode errorObj = MAPPER.createObjectNode();
+    errorObj.put("jsonrpc", "2.0");
+    ObjectNode errNode = errorObj.putObject("error");
     errNode.put("code", error.code);
     errNode.put("message", message);
     if (id != null && !id.isNull() && !id.isMissingNode()) {
-      root.set("id", id);
+      errorObj.set("id", id);
     } else {
-      root.putNull("id");
+      errorObj.putNull("id");
     }
-    byte[] bytes = MAPPER.writeValueAsBytes(root);
+    byte[] bytes;
+    if (isBatch) {
+      ArrayNode arr = MAPPER.createArrayNode();
+      arr.add(errorObj);
+      bytes = MAPPER.writeValueAsBytes(arr);
+    } else {
+      bytes = MAPPER.writeValueAsBytes(errorObj);
+    }
     resp.setContentType("application/json; charset=utf-8");
     resp.setStatus(HttpServletResponse.SC_OK);
     resp.setContentLength(bytes.length);
