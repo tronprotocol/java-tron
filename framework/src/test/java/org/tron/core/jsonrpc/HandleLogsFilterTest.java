@@ -27,7 +27,7 @@ public class HandleLogsFilterTest {
 
   @Before
   public void setUp() {
-    jsonRpc = new TronJsonRpcImpl(null, null, null);
+    jsonRpc = new TronJsonRpcImpl(null, null);
   }
 
   @After
@@ -51,7 +51,7 @@ public class HandleLogsFilterTest {
     List<TransactionInfo> txInfoList =
         Collections.singletonList(buildTxInfoWithLog(new byte[20]));
     LogsFilterCapsule capsule =
-        new LogsFilterCapsule(150L, "0xabcdef", null, txInfoList, false, false, jsonRpc);
+        new LogsFilterCapsule(150L, "0xabcdef", null, txInfoList, false, false);
 
     jsonRpc.handleLogsFilter(capsule);
 
@@ -69,7 +69,7 @@ public class HandleLogsFilterTest {
     List<TransactionInfo> txInfoList =
         Collections.singletonList(buildTxInfoWithLog(new byte[20]));
     LogsFilterCapsule capsule =
-        new LogsFilterCapsule(50L, "0xabcdef", null, txInfoList, false, false, jsonRpc);
+        new LogsFilterCapsule(50L, "0xabcdef", null, txInfoList, false, false);
 
     jsonRpc.handleLogsFilter(capsule);
 
@@ -93,7 +93,7 @@ public class HandleLogsFilterTest {
     List<TransactionInfo> txInfoList =
         Collections.singletonList(buildTxInfoWithLog(new byte[20]));
     LogsFilterCapsule capsule =
-        new LogsFilterCapsule(150L, "0xabcdef", null, txInfoList, false, false, jsonRpc);
+        new LogsFilterCapsule(150L, "0xabcdef", null, txInfoList, false, false);
 
     jsonRpc.handleLogsFilter(capsule);
 
@@ -113,7 +113,7 @@ public class HandleLogsFilterTest {
     List<TransactionInfo> txInfoList =
         Collections.singletonList(buildTxInfoWithLog(new byte[20]));
     LogsFilterCapsule capsule =
-        new LogsFilterCapsule(150L, "0xabcdef", null, txInfoList, true, false, jsonRpc);
+        new LogsFilterCapsule(150L, "0xabcdef", null, txInfoList, true, false);
 
     jsonRpc.handleLogsFilter(capsule);
 
@@ -134,7 +134,7 @@ public class HandleLogsFilterTest {
     List<TransactionInfo> txInfoList =
         Collections.singletonList(buildTxInfoWithLog(new byte[20]));
     LogsFilterCapsule capsule =
-        new LogsFilterCapsule(150L, "0xabcdef", null, txInfoList, false, false, jsonRpc);
+        new LogsFilterCapsule(150L, "0xabcdef", null, txInfoList, false, false);
 
     jsonRpc.handleLogsFilter(capsule);
 
@@ -154,7 +154,7 @@ public class HandleLogsFilterTest {
     List<TransactionInfo> txInfoList =
         Collections.singletonList(buildTxInfoWithLog(new byte[20]));
     LogsFilterCapsule capsule =
-        new LogsFilterCapsule(150L, "0xabcdef", null, txInfoList, false, false, jsonRpc);
+        new LogsFilterCapsule(150L, "0xabcdef", null, txInfoList, false, false);
 
     jsonRpc.handleLogsFilter(capsule);
 
@@ -170,7 +170,7 @@ public class HandleLogsFilterTest {
     jsonRpc.getEventFilter2ResultFull().put(FILTER_ID_1, filterAndResult);
 
     LogsFilterCapsule capsule = new LogsFilterCapsule(150L, "0xabcdef", null,
-        Collections.emptyList(), false, false, jsonRpc);
+        Collections.emptyList(), false, false);
 
     jsonRpc.handleLogsFilter(capsule);
 
@@ -205,7 +205,7 @@ public class HandleLogsFilterTest {
     }
 
     LogsFilterCapsule capsule =
-        new LogsFilterCapsule(150L, "0xabcdef", null, txInfoList, false, false, jsonRpc);
+        new LogsFilterCapsule(150L, "0xabcdef", null, txInfoList, false, false);
     jsonRpc.handleLogsFilter(capsule);
 
     for (int i = 0; i < count; i++) {
@@ -238,7 +238,7 @@ public class HandleLogsFilterTest {
     List<TransactionInfo> txInfoList =
         Collections.singletonList(buildTxInfoWithLog(new byte[20]));
     LogsFilterCapsule capsule =
-        new LogsFilterCapsule(150L, "0xabcdef", null, txInfoList, false, false, jsonRpc);
+        new LogsFilterCapsule(150L, "0xabcdef", null, txInfoList, false, false);
     jsonRpc.handleLogsFilter(capsule);
 
     for (int i = 0; i < expiredCount; i++) {
@@ -272,7 +272,7 @@ public class HandleLogsFilterTest {
     fullMap.put("parallel-solid-full-0", fullFilter);
 
     LogsFilterCapsule capsule =
-        new LogsFilterCapsule(150L, "0xabcdef", null, txInfoList, true, false, jsonRpc);
+        new LogsFilterCapsule(150L, "0xabcdef", null, txInfoList, true, false);
     jsonRpc.handleLogsFilter(capsule);
 
     for (int i = 0; i < count; i++) {

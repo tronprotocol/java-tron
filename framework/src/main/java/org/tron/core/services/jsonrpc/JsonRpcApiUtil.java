@@ -60,7 +60,7 @@ public class JsonRpcApiUtil {
   public static final String TAG_SAFE_SUPPORT_ERROR = "TAG safe not supported";
   public static final String BLOCK_NUM_ERROR = "invalid block number";
 
-  static SecureRandom random = new SecureRandom();
+  private static final SecureRandom random = new SecureRandom();
 
   public static byte[] convertToTronAddress(byte[] address) {
     byte[] newAddress = new byte[21];

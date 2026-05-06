@@ -34,6 +34,7 @@ import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.bouncycastle.util.encoders.Hex;
@@ -120,12 +121,12 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
   public static final int EXPIRE_SECONDS = 5 * 60;
   private final int maxBlockFilterNum = Args.getInstance().getJsonRpcMaxBlockFilterNum();
   private final int maxLogFilterNum = Args.getInstance().getJsonRpcMaxLogFilterNum();
-  private final Cache<LogFilterElement, LogFilterElement> logElementCache =
+  private static final Cache<LogFilterElement, LogFilterElement> logElementCache =
       CacheBuilder.newBuilder()
           .maximumSize(300_000L) // 300s * tps(1000) * 1 log/tx ≈ 300_000
           .expireAfterWrite(EXPIRE_SECONDS, TimeUnit.SECONDS)
           .recordStats().build(); //LRU cache
-  private final Cache<String, String> blockHashCache =
+  private static final Cache<String, String> blockHashCache =
       CacheBuilder.newBuilder()
           .maximumSize(60_000L) // 300s * 200 block/s when syncing
           .expireAfterWrite(EXPIRE_SECONDS, TimeUnit.SECONDS)
@@ -174,22 +175,23 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
    * processing for each block within the 3-second BLOCK_PRODUCED_INTERVAL. Increasing the thread
    * pool size too much may affect the performance of the main block processing thread.
    */
-  private final ForkJoinPool logsFilterPool = new ForkJoinPool(3);
+  private final ForkJoinPool logsFilterPool =
+      ExecutorServiceManager.newForkJoinPool("logs-filter-pool", 3);
   /**
    * thread pool of query section bloom store
    */
   private final ExecutorService sectionExecutor;
   private final NodeInfoService nodeInfoService;
   private final Wallet wallet;
-  private final Manager manager;
+  @Setter
+  @Autowired
+  private Manager manager;
   private final String esName = "query-section";
 
   @Autowired
-  public TronJsonRpcImpl(@Autowired NodeInfoService nodeInfoService, @Autowired Wallet wallet,
-                         @Autowired Manager manager) {
+  public TronJsonRpcImpl(@Autowired NodeInfoService nodeInfoService, @Autowired Wallet wallet) {
     this.nodeInfoService = nodeInfoService;
     this.wallet = wallet;
-    this.manager = manager;
     this.sectionExecutor = ExecutorServiceManager.newFixedThreadPool(esName, 5);
   }
 

@@ -5,7 +5,6 @@ import lombok.Setter;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.core.capsule.BlockCapsule;
-import org.tron.core.services.jsonrpc.TronJsonRpcImpl;
 
 @Slf4j(topic = "API")
 @ToString
@@ -18,22 +17,13 @@ public class BlockFilterCapsule extends FilterTriggerCapsule {
   @Setter
   private boolean solidified;
 
-  private final TronJsonRpcImpl jsonRpc;
-
-  public BlockFilterCapsule(BlockCapsule block, boolean solidified, TronJsonRpcImpl jsonRpc) {
-    this(block.getBlockId().toString(), solidified, jsonRpc);
+  public BlockFilterCapsule(BlockCapsule block, boolean solidified) {
+    this(block.getBlockId().toString(), solidified);
   }
 
-  public BlockFilterCapsule(String blockHash, boolean solidified, TronJsonRpcImpl jsonRpc) {
+  public BlockFilterCapsule(String blockHash, boolean solidified) {
     this.blockHash = blockHash;
     this.solidified = solidified;
-    this.jsonRpc = jsonRpc;
-  }
-
-  @Override
-  public void processFilterTrigger() {
-    jsonRpc.handleBLockFilter(this);
   }
 
 }
-

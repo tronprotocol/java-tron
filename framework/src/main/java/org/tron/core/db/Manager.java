@@ -48,7 +48,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.bouncycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.TransactionInfoList;
@@ -278,7 +277,6 @@ public class Manager {
   @Autowired
   private RewardViCalService rewardViCalService;
 
-  @Lazy
   @Autowired
   private TronJsonRpcImpl tronJsonRpcImpl;
 
@@ -338,8 +336,10 @@ public class Manager {
         while (isRunFilterProcessThread) {
           try {
             FilterTriggerCapsule filterCapsule = filterCapsuleQueue.poll(1, TimeUnit.SECONDS);
-            if (filterCapsule != null) {
-              filterCapsule.processFilterTrigger();
+            if (filterCapsule instanceof LogsFilterCapsule) {
+              tronJsonRpcImpl.handleLogsFilter((LogsFilterCapsule) filterCapsule);
+            } else if (filterCapsule instanceof BlockFilterCapsule) {
+              tronJsonRpcImpl.handleBLockFilter((BlockFilterCapsule) filterCapsule);
             }
           } catch (InterruptedException e) {
             logger.error("FilterProcessLoop get InterruptedException, error is {}.",
@@ -2271,7 +2271,7 @@ public class Manager {
 
   private void postBlockFilter(final BlockCapsule blockCapsule, boolean solidified) {
     BlockFilterCapsule blockFilterCapsule =
-        new BlockFilterCapsule(blockCapsule, solidified, tronJsonRpcImpl);
+        new BlockFilterCapsule(blockCapsule, solidified);
     if (!filterCapsuleQueue.offer(blockFilterCapsule)) {
       logger.info("Too many filters, block filter lost: {}.", blockCapsule.getBlockId());
     }
@@ -2285,7 +2285,7 @@ public class Manager {
               = getTransactionInfoByBlockNum(blockNumber).getTransactionInfoList();
       LogsFilterCapsule logsFilterCapsule = new LogsFilterCapsule(blockNumber,
           blockCapsule.getBlockId().toString(), blockCapsule.getBloom(), transactionInfoList,
-          solidified, removed, tronJsonRpcImpl);
+          solidified, removed);
 
       if (!filterCapsuleQueue.offer(logsFilterCapsule)) {
         logger.info("Too many filters, logs filter lost: {}.", blockNumber);

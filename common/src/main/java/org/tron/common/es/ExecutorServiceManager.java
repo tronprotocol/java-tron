@@ -4,11 +4,14 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.ForkJoinWorkerThread;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.exit.ExitManager;
 
@@ -33,6 +36,17 @@ public class ExecutorServiceManager {
                                                                           boolean isDaemon) {
     return Executors.newSingleThreadScheduledExecutor(
         new ThreadFactoryBuilder().setNameFormat(name).setDaemon(isDaemon).build());
+  }
+
+  public static ForkJoinPool newForkJoinPool(String name, int parallelism) {
+    AtomicInteger counter = new AtomicInteger(0);
+    ForkJoinPool.ForkJoinWorkerThreadFactory factory = pool -> {
+      ForkJoinWorkerThread thread =
+          ForkJoinPool.defaultForkJoinWorkerThreadFactory.newThread(pool);
+      thread.setName(name + "-" + counter.getAndIncrement());
+      return thread;
+    };
+    return new ForkJoinPool(parallelism, factory, null, false);
   }
 
   public static ExecutorService newFixedThreadPool(String name, int fixThreads) {
