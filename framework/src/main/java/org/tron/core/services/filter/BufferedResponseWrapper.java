@@ -102,8 +102,39 @@ public class BufferedResponseWrapper extends HttpServletResponseWrapper {
   }
 
   @Override
+  public int getStatus() {
+    return this.status;
+  }
+
+  @Override
   public void setStatus(int sc) {
     this.status = sc;
+  }
+
+  @Override
+  public void setHeader(String name, String value) {
+    if ("content-length".equalsIgnoreCase(name)) {
+      try {
+        setContentLengthLong(Long.parseLong(value));
+      } catch (NumberFormatException ignored) {
+        // malformed value, skip overflow check
+      }
+    } else {
+      super.setHeader(name, value);
+    }
+  }
+
+  @Override
+  public void addHeader(String name, String value) {
+    if ("content-length".equalsIgnoreCase(name)) {
+      try {
+        setContentLengthLong(Long.parseLong(value));
+      } catch (NumberFormatException ignored) {
+        // malformed value, skip overflow check
+      }
+    } else {
+      super.addHeader(name, value);
+    }
   }
 
   @Override

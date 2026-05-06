@@ -15,7 +15,10 @@ import javax.servlet.http.HttpServletRequestWrapper;
  */
 public class CachedBodyRequestWrapper extends HttpServletRequestWrapper {
 
+  private enum BodyAccessor { NONE, STREAM, READER }
+
   private final byte[] body;
+  private BodyAccessor accessor = BodyAccessor.NONE;
 
   public CachedBodyRequestWrapper(HttpServletRequest request, byte[] body) {
     super(request);
@@ -24,6 +27,10 @@ public class CachedBodyRequestWrapper extends HttpServletRequestWrapper {
 
   @Override
   public ServletInputStream getInputStream() {
+    if (accessor == BodyAccessor.READER) {
+      throw new IllegalStateException("getReader() has already been called on this request");
+    }
+    accessor = BodyAccessor.STREAM;
     final ByteArrayInputStream bais = new ByteArrayInputStream(body);
     return new ServletInputStream() {
       @Override
@@ -54,6 +61,10 @@ public class CachedBodyRequestWrapper extends HttpServletRequestWrapper {
 
   @Override
   public BufferedReader getReader() {
+    if (accessor == BodyAccessor.STREAM) {
+      throw new IllegalStateException("getInputStream() has already been called on this request");
+    }
+    accessor = BodyAccessor.READER;
     String encoding = getCharacterEncoding();
     Charset charset = encoding != null ? Charset.forName(encoding) : StandardCharsets.UTF_8;
     return new BufferedReader(new InputStreamReader(new ByteArrayInputStream(body), charset));
