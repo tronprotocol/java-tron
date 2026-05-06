@@ -82,4 +82,4 @@ Auto-emitted by the Prometheus client library via `DefaultExports.initialize()` 
 
 - [Official metrics documentation](https://tronprotocol.github.io/documentation-en/using_javatron/metrics/) — descriptions, configuration, and example queries.
 - [tron-docker `metric_monitor/README.md`](https://github.com/tronprotocol/tron-docker/blob/main/metric_monitor/README.md) — operator-oriented overview with deployment guidance.
-- [java-tron-server (Grafana dashboard 16567)](https://grafana.com/grafana/dashboards/16567-java-tron-server/) — reference dashboard template.
+- [java-tron-server Grafana dashboard](https://github.com/tronprotocol/tron-docker/blob/main/metric_monitor/grafana_dashboard/java-tron-server.json) — maintained reference dashboard JSON.
