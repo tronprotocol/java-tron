@@ -41,7 +41,9 @@ public class HandleLogsFilterTest {
     return TransactionInfo.newBuilder().addLog(LogInfo.buildLog(logInfo)).build();
   }
 
-  /** Events dispatched to a matching filter in the serial (<=10000 entries) path. */
+  /**
+   * Events dispatched to a matching filter in the serial (<=10000 entries) path.
+   */
   @Test
   public void testMatchingFilter_receivesLogElements() throws JsonRpcInvalidParamsException {
     FilterRequest fr = new FilterRequest();
@@ -58,7 +60,9 @@ public class HandleLogsFilterTest {
     Assert.assertEquals(1, filterAndResult.getResult().size());
   }
 
-  /** Filter with fromBlock=100 does not receive a capsule whose blockNumber is 50. */
+  /**
+   * Filter with fromBlock=100 does not receive a capsule whose blockNumber is 50.
+   */
   @Test
   public void testBlockNumberBelowRange_noResult() throws JsonRpcInvalidParamsException {
     FilterRequest fr = new FilterRequest();
@@ -76,7 +80,9 @@ public class HandleLogsFilterTest {
     Assert.assertTrue(filterAndResult.getResult().isEmpty());
   }
 
-  /** An expired filter is removed from the map during handleLogsFilter. */
+  /**
+   * An expired filter is removed from the map during handleLogsFilter.
+   */
   @Test
   public void testExpiredFilter_removedFromMap() throws Exception {
     FilterRequest fr = new FilterRequest();
@@ -100,7 +106,9 @@ public class HandleLogsFilterTest {
     Assert.assertFalse("expired filter should be removed", map.containsKey(FILTER_ID_1));
   }
 
-  /** A solidified capsule is routed only to the solidity map; the full-node map is untouched. */
+  /**
+   * A solidified capsule is routed only to the solidity map; the full-node map is untouched.
+   */
   @Test
   public void testSolidifiedCapsule_routedToSolidityMap() throws JsonRpcInvalidParamsException {
     FilterRequest fr = new FilterRequest();
@@ -121,7 +129,9 @@ public class HandleLogsFilterTest {
     Assert.assertTrue("full-node filter must not be touched", fullFilter.getResult().isEmpty());
   }
 
-  /** A non-solidified capsule is routed only to the full-node map. */
+  /**
+   * A non-solidified capsule is routed only to the full-node map.
+   */
   @Test
   public void testNonSolidifiedCapsule_routedToFullMap() throws JsonRpcInvalidParamsException {
     FilterRequest fr = new FilterRequest();
@@ -142,7 +152,9 @@ public class HandleLogsFilterTest {
     Assert.assertTrue("solidity filter must not be touched", solidityFilter.getResult().isEmpty());
   }
 
-  /** Both filters in the map receive events when both match. */
+  /**
+   * Both filters in the map receive events when both match.
+   */
   @Test
   public void testMultipleMatchingFilters_bothReceiveEvents() throws JsonRpcInvalidParamsException {
     FilterRequest fr = new FilterRequest();
@@ -162,7 +174,9 @@ public class HandleLogsFilterTest {
     Assert.assertEquals(1, filter2.getResult().size());
   }
 
-  /** An empty txInfoList produces no results. */
+  /**
+   * An empty txInfoList produces no results.
+   */
   @Test
   public void testEmptyTxInfoList_noResult() throws JsonRpcInvalidParamsException {
     FilterRequest fr = new FilterRequest();
@@ -177,14 +191,8 @@ public class HandleLogsFilterTest {
     Assert.assertTrue(filterAndResult.getResult().isEmpty());
   }
 
-  // -------------------------------------------------------------------------
-  // Parallel path tests (filterParallelThreshold lowered to 2 via reflection)
-  // -------------------------------------------------------------------------
-
-  private void setParallelThreshold(int value) throws Exception {
-    Field f = TronJsonRpcImpl.class.getDeclaredField("filterParallelThreshold");
-    f.setAccessible(true);
-    f.setInt(jsonRpc, value);
+  private void setParallelThreshold(int value) {
+    jsonRpc.setFilterParallelThreshold(value);
   }
 
   /**

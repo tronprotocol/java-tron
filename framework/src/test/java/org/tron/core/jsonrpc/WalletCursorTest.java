@@ -159,7 +159,8 @@ public class WalletCursorTest extends BaseTest {
    */
   @Test
   public void testNewFilter_exceedsCapThrowsException() throws Exception {
-    int cap = Args.getInstance().getJsonRpcMaxLogFilterNum();
+    int cap = 5;
+    Args.getInstance().setJsonRpcMaxLogFilterNum(cap);
     FilterRequest fr = new FilterRequest();
     TronJsonRpcImpl tronJsonRpc = new TronJsonRpcImpl(nodeInfoService, wallet);
     tronJsonRpc.setManager(dbManager);

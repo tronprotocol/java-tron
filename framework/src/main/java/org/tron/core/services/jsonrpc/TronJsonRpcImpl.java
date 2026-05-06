@@ -169,7 +169,8 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
   private static final String NO_BLOCK_HEADER_BY_HASH = "header for hash not found";
 
   private static final String ERROR_SELECTOR = "08c379a0"; // Function selector for Error(string)
-  private final int filterParallelThreshold = 10000;
+  @Setter
+  private int filterParallelThreshold = 10000;
   /**
    * Using the default maxLogFilterNum of 20,000, a 3-thread pool can keep up with log event
    * processing for each block within the 3-second BLOCK_PRODUCED_INTERVAL. Increasing the thread
