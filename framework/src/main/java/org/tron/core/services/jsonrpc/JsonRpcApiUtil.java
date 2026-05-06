@@ -1,11 +1,5 @@
 package org.tron.core.services.jsonrpc;
 
-import static org.tron.core.services.jsonrpc.TronJsonRpcImpl.EARLIEST_STR;
-import static org.tron.core.services.jsonrpc.TronJsonRpcImpl.FINALIZED_STR;
-import static org.tron.core.services.jsonrpc.TronJsonRpcImpl.LATEST_STR;
-import static org.tron.core.services.jsonrpc.TronJsonRpcImpl.PENDING_STR;
-import static org.tron.core.services.jsonrpc.TronJsonRpcImpl.TAG_PENDING_SUPPORT_ERROR;
-
 import com.google.common.base.Throwables;
 import com.google.common.primitives.Longs;
 import com.google.protobuf.Any;
@@ -57,6 +51,15 @@ import org.tron.protos.contract.WitnessContract.VoteWitnessContract.Vote;
 
 @Slf4j(topic = "API")
 public class JsonRpcApiUtil {
+
+  public static final String EARLIEST_STR = "earliest";
+  public static final String PENDING_STR = "pending";
+  public static final String LATEST_STR = "latest";
+  public static final String FINALIZED_STR = "finalized";
+  public static final String SAFE_STR = "safe";
+  public static final String TAG_PENDING_SUPPORT_ERROR = "TAG pending not supported";
+  public static final String TAG_SAFE_SUPPORT_ERROR = "TAG safe not supported";
+  public static final String BLOCK_NUM_ERROR = "invalid block number";
 
   public static byte[] convertToTronAddress(byte[] address) {
     byte[] newAddress = new byte[21];
@@ -524,22 +527,20 @@ public class JsonRpcApiUtil {
    */
   private static final int MAX_BLOCK_NUM_HEX_LEN = 100;
 
-  private static final String BLOCK_NUM_ERROR = "invalid block number";
-
   /**
    * Parse a JSON-RPC block number (hex "0x..." or decimal) into a long,
    * enforcing the {@link #MAX_BLOCK_NUM_HEX_LEN} length limit, rejecting
    * negative values, and rejecting values that overflow a signed 64-bit
    * block number.
    */
-  public static long parseBlockNumber(String blockNumOrTag)
+  public static long parseBlockNumber(String blockNum)
       throws JsonRpcInvalidParamsException {
-    if (blockNumOrTag == null || blockNumOrTag.length() > MAX_BLOCK_NUM_HEX_LEN) {
+    if (blockNum == null || blockNum.length() > MAX_BLOCK_NUM_HEX_LEN) {
       throw new JsonRpcInvalidParamsException(BLOCK_NUM_ERROR);
     }
     BigInteger value;
     try {
-      value = ByteArray.hexToBigInteger(blockNumOrTag);
+      value = ByteArray.hexToBigInteger(blockNum);
     } catch (Exception e) {
       throw new JsonRpcInvalidParamsException(BLOCK_NUM_ERROR);
     }
@@ -553,20 +554,54 @@ public class JsonRpcApiUtil {
     }
   }
 
-  public static long getByJsonBlockId(String blockNumOrTag, Wallet wallet)
+  /**
+   * Parse a block tag or hex block number. Tags resolve via parseBlockTag;
+   * numeric inputs go through ByteArray.jsonHexToLong (strict 0x prefix).
+   * Pathologically long inputs are rejected up front to avoid worst-case
+   * parsing cost (DoS guard mirroring single-arg parseBlockNumber).
+   */
+  public static long parseBlockNumber(String blockNumOrTag, Wallet wallet)
       throws JsonRpcInvalidParamsException {
-    if (PENDING_STR.equalsIgnoreCase(blockNumOrTag)) {
+    if (isBlockTag(blockNumOrTag)) {
+      return parseBlockTag(blockNumOrTag, wallet);
+    }
+
+    return parseBlockNumber(blockNumOrTag);
+  }
+
+  public static boolean isBlockTag(String tag) {
+    return LATEST_STR.equalsIgnoreCase(tag)
+        || EARLIEST_STR.equalsIgnoreCase(tag)
+        || FINALIZED_STR.equalsIgnoreCase(tag)
+        || PENDING_STR.equalsIgnoreCase(tag)
+        || SAFE_STR.equalsIgnoreCase(tag);
+  }
+
+  /**
+   * Parse a block tag (latest, earliest, finalized) to block number.
+   *
+   * <p>Note: for "latest", the returned block number may not yet be available in
+   * blockStore or blockIndexStore due to write ordering. Callers that need the
+   * actual block must handle the not-found case.</p>
+   */
+  public static long parseBlockTag(String tag, Wallet wallet)
+      throws JsonRpcInvalidParamsException {
+    if (LATEST_STR.equalsIgnoreCase(tag)) {
+      return wallet.getHeadBlockNum();
+    }
+    if (EARLIEST_STR.equalsIgnoreCase(tag)) {
+      return 0;
+    }
+    if (FINALIZED_STR.equalsIgnoreCase(tag)) {
+      return wallet.getSolidBlockNum();
+    }
+    if (PENDING_STR.equalsIgnoreCase(tag)) {
       throw new JsonRpcInvalidParamsException(TAG_PENDING_SUPPORT_ERROR);
     }
-    if (StringUtils.isEmpty(blockNumOrTag) || LATEST_STR.equalsIgnoreCase(blockNumOrTag)) {
-      return -1;
-    } else if (EARLIEST_STR.equalsIgnoreCase(blockNumOrTag)) {
-      return 0;
-    } else if (FINALIZED_STR.equalsIgnoreCase(blockNumOrTag)) {
-      return wallet.getSolidBlockNum();
-    } else {
-      return ByteArray.jsonHexToLong(blockNumOrTag);
+    if (SAFE_STR.equalsIgnoreCase(tag)) {
+      throw new JsonRpcInvalidParamsException(TAG_SAFE_SUPPORT_ERROR);
     }
+    throw new JsonRpcInvalidParamsException(BLOCK_NUM_ERROR);
   }
 
   public static String generateFilterId() {
