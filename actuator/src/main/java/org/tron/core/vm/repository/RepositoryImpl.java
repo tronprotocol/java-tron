@@ -966,10 +966,10 @@ public class RepositoryImpl implements Repository {
 
   public long calculateGlobalEnergyLimit(AccountCapsule accountCapsule) {
     long frozeBalance = accountCapsule.getAllFrozenBalanceForEnergy();
-    if (frozeBalance < precision) {
+    if (frozeBalance < TRX_PRECISION) {
       return 0;
     }
-    long energyWeight = frozeBalance / precision;
+    long energyWeight = frozeBalance / TRX_PRECISION;
     long totalEnergyLimit = getDynamicPropertiesStore().getTotalEnergyCurrentLimit();
     long totalEnergyWeight = getDynamicPropertiesStore().getTotalEnergyWeight();
 
