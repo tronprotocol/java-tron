@@ -61,7 +61,7 @@
     </filter>
   </appender>
 
-  <appender name="GRPC" class="ch.qos.logback.core.rolling.RollingFileAppender">
+  <appender name="GRPC_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
     <file>./logs/grpc/grpc.log</file>
     <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
       <fileNamePattern>./logs/grpc/grpc-%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
@@ -70,11 +70,19 @@
       <totalSizeCap>50GB</totalSizeCap>
     </rollingPolicy>
     <encoder>
-      <pattern>%d{HH:mm:ss.SSS} %-5level [%t] [%c{1}]\(%F:%L\) %m%n</pattern>
+      <pattern>%d{HH:mm:ss.SSS} %-5level [%t] [%c{1}] %m%n</pattern>
     </encoder>
     <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
       <level>TRACE</level>
     </filter>
+  </appender>
+
+  <appender class="ch.qos.logback.classic.AsyncAppender" name="GRPC">
+    <queueSize>1024</queueSize>
+    <discardingThreshold>0</discardingThreshold>
+    <neverBlock>true</neverBlock>
+    <maxFlushTime>5000</maxFlushTime>
+    <appender-ref ref="GRPC_FILE"/>
   </appender>
 
   <appender class="ch.qos.logback.classic.AsyncAppender" name="ASYNC">
@@ -124,4 +132,3 @@
   </logger>
 
 </configuration>
-
