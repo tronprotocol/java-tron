@@ -120,11 +120,12 @@ public class DbLite implements Callable<Integer> {
           + "This flag only has a functional impact when the source full node ran with "
           + "`historyBalanceLookup=true` (off by default; most operators are unaffected). "
           + "WARNING: when historyBalanceLookup was enabled, this loss is permanent: a lite "
-          + "node booted from such a snapshot cannot answer historical balance lookups "
-          + "(getBlockBalance / getAccountBalance), and running merge afterwards will NOT "
-          + "restore the feature. If you need to keep historyBalanceLookup working on the "
-          + "resulting lite node, do NOT enable this flag. `split -t history` and `merge` "
-          + "ignore this flag.",
+          + "node booted from such a snapshot cannot safely serve historical balance lookups "
+          + "(getBlockBalance may fail, and getAccountBalance may return balance=0 when "
+          + "account-trace data is missing). Running merge afterwards will NOT restore the "
+          + "feature. If you need to keep historyBalanceLookup working on the resulting "
+          + "lite node, do NOT enable this flag. `split -t history` and `merge` ignore "
+          + "this flag.",
       order = 5)
   private boolean excludeHistoricalBalance;
 
@@ -143,8 +144,8 @@ public class DbLite implements Callable<Integer> {
     try {
       switch (this.operate) {
         case split:
-          warnIfExcludingHistoricalBalance();
           if (Type.snapshot == this.type) {
+            warnIfExcludingHistoricalBalance();
             generateSnapshot(fnDataPath, datasetPath);
           } else if (Type.history == type) {
             generateHistory(fnDataPath, datasetPath);
@@ -307,12 +308,14 @@ public class DbLite implements Callable<Integer> {
         + "will be excluded from the lite snapshot. This only matters when the source full "
         + "node ran with historyBalanceLookup=true (off by default; most operators are "
         + "unaffected). When that switch was enabled, this loss is permanent: lite nodes "
-        + "booted from this snapshot cannot answer historical balance lookups "
-        + "(getBlockBalance / getAccountBalance), and running merge afterwards will NOT "
-        + "restore the feature. If you need to keep historyBalanceLookup working on the "
-        + "resulting lite node, do NOT use this flag.";
+        + "booted from this snapshot cannot safely serve historical balance lookups "
+        + "(getBlockBalance may fail, and getAccountBalance may return balance=0 when "
+        + "account-trace data is missing). Running merge afterwards will NOT restore the "
+        + "feature. If you need to keep historyBalanceLookup working on the resulting "
+        + "lite node, do NOT use this flag.";
     logger.warn(msg);
-    spec.commandLine().getErr().println(msg);
+    spec.commandLine().getErr().println(spec.commandLine().getColorScheme()
+        .errorText(msg));
   }
 
   private List<String> getSnapshotDbs(String sourceDir) {
@@ -784,6 +787,5 @@ public class DbLite implements Callable<Integer> {
     }
   }
 }
-
 
 

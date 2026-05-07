@@ -71,7 +71,7 @@ public class DbLiteTest {
     context.close();
   }
 
-  public void init(String dbType) throws IOException {
+  public void init(String dbType, boolean historyBalanceLookup) throws IOException {
     dbPath = folder.newFolder().toString();
     Args.setParam(new String[] {
         "-d", dbPath, "-w", "--p2p-disable", "true", "--storage-db-engine", dbType},
@@ -80,6 +80,7 @@ public class DbLiteTest {
     Args.getInstance().setAllowAccountStateRoot(1);
     Args.getInstance().setRpcPort(PublicMethod.chooseRandomPort());
     Args.getInstance().setRpcEnable(true);
+    Args.getInstance().setHistoryBalanceLookup(historyBalanceLookup);
     databaseDir = Args.getInstance().getStorage().getDbDirectory();
     // init dbBackupConfig to avoid NPE
     Args.getInstance().dbBackupConfig = DbBackupConfig.getInstance();
@@ -99,7 +100,8 @@ public class DbLiteTest {
       throws InterruptedException, IOException {
     logger.info("dbType {}, checkpointVersion {}, excludeHistoricalBalance {}",
         dbType, checkpointVersion, excludeHistoricalBalance);
-    init(dbType);
+    boolean historyBalanceLookup = excludeHistoricalBalance;
+    init(dbType, historyBalanceLookup);
     final String[] argsForSnapshot = excludeHistoricalBalance
         ? new String[] {"-o", "split", "-t", "snapshot", "--fn-data-path",
             dbPath + File.separator + databaseDir, "--dataset-path",
