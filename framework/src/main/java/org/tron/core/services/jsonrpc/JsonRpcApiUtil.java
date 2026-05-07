@@ -442,6 +442,50 @@ public class JsonRpcApiUtil {
     return StringUtils.isEmpty(quantity) || quantity.equals("0x0");
   }
 
+  /**
+   * Validation mode for {@link #requireValidHex}.
+   */
+  public enum HexMode {
+    /**
+     * Execution-apis BYTES schema: requires {@code 0x} prefix and
+     * even total length; {@code ""} is accepted as empty bytes per
+     * geth's {@code hexutil.Bytes.UnmarshalText}.
+     */
+    STRICT,
+    /**
+     * {@link ByteArray#fromHexString}'s lenient parsing: accepts bare
+     * hex and odd-length input. Kept for backward compatibility.
+     */
+    LENIENT
+  }
+
+  /**
+   * Throws if {@code value} is not parseable hex under the given
+   * {@code mode}. {@code null} is treated as absent and returns
+   * silently. {@code fieldName} is used only in error messages.
+   */
+  public static void requireValidHex(String fieldName, String value, HexMode mode)
+      throws JsonRpcInvalidParamsException {
+    if (value == null) {
+      return;
+    }
+    if (mode == HexMode.STRICT) {
+      if (value.isEmpty()) {
+        return;
+      }
+      if (!value.startsWith("0x") || value.length() % 2 != 0) {
+        throw new JsonRpcInvalidParamsException(
+            "invalid hex string for \"" + fieldName + "\"");
+      }
+    }
+    try {
+      ByteArray.fromHexString(value);
+    } catch (Exception e) {
+      throw new JsonRpcInvalidParamsException(
+          "invalid hex string for \"" + fieldName + "\"");
+    }
+  }
+
   public static long parseQuantityValue(String value) throws JsonRpcInvalidParamsException {
     long callValue = 0L;
 

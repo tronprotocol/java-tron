@@ -396,6 +396,11 @@ public class ProposalService extends ProposalUtil {
           manager.getDynamicPropertiesStore().saveAllowTvmOsaka(entry.getValue());
           break;
         }
+        case ALLOW_HARDEN_RESOURCE_CALCULATION: {
+          manager.getDynamicPropertiesStore()
+              .saveAllowHardenResourceCalculation(entry.getValue());
+          break;
+        }
         default:
           find = false;
           break;

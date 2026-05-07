@@ -1481,6 +1481,11 @@ public class Wallet {
         .setValue(dbManager.getDynamicPropertiesStore().getAllowTvmOsaka())
         .build());
 
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAllowHardenResourceCalculation")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowHardenResourceCalculation())
+        .build());
+
     return builder.build();
   }
 

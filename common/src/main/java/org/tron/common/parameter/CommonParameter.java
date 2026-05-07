@@ -119,6 +119,9 @@ public class CommonParameter {
   public int maxTps; // clearParam: 1000
   @Getter
   @Setter
+  public int maxBlockInvPerSecond = 10; // default: 10 block inv hashes/s per peer
+  @Getter
+  @Setter
   public int minParticipationRate;
   @Getter
   public P2pConfig p2pConfig;
