@@ -27,6 +27,7 @@ import org.tron.protos.Protocol;
 
 @Slf4j
 public class WalletCursorTest extends BaseTest {
+
   private static final String OWNER_ADDRESS;
   private static final String OWNER_ADDRESS_ACCOUNT_NAME = "first";
   @Resource
@@ -36,7 +37,7 @@ public class WalletCursorTest extends BaseTest {
   private static boolean init;
 
   static {
-    Args.setParam(new String[]{"--output-directory", dbPath()}, TestConstants.TEST_CONF);
+    Args.setParam(new String[] {"--output-directory", dbPath()}, TestConstants.TEST_CONF);
 
     OWNER_ADDRESS =
         Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
@@ -160,6 +161,7 @@ public class WalletCursorTest extends BaseTest {
   @Test
   public void testNewFilter_exceedsCapThrowsException() throws Exception {
     int cap = 5;
+    int saved = Args.getInstance().getJsonRpcMaxLogFilterNum();
     Args.getInstance().setJsonRpcMaxLogFilterNum(cap);
     FilterRequest fr = new FilterRequest();
     TronJsonRpcImpl tronJsonRpc = new TronJsonRpcImpl(nodeInfoService, wallet);
@@ -183,6 +185,7 @@ public class WalletCursorTest extends BaseTest {
       }
     } finally {
       tronJsonRpc.close();
+      Args.getInstance().setJsonRpcMaxLogFilterNum(saved);
     }
   }
 

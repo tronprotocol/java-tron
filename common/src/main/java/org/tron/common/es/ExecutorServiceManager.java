@@ -39,11 +39,16 @@ public class ExecutorServiceManager {
   }
 
   public static ForkJoinPool newForkJoinPool(String name, int parallelism) {
+    return newForkJoinPool(name, parallelism, false);
+  }
+
+  public static ForkJoinPool newForkJoinPool(String name, int parallelism, boolean isDaemon) {
     AtomicInteger counter = new AtomicInteger(0);
     ForkJoinPool.ForkJoinWorkerThreadFactory factory = pool -> {
       ForkJoinWorkerThread thread =
           ForkJoinPool.defaultForkJoinWorkerThreadFactory.newThread(pool);
       thread.setName(name + "-" + counter.getAndIncrement());
+      thread.setDaemon(isDaemon);
       return thread;
     };
     return new ForkJoinPool(parallelism, factory, null, false);

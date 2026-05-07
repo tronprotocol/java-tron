@@ -14,6 +14,7 @@ import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getTxID;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.triggerCallContract;
 
 import com.alibaba.fastjson.JSON;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.protobuf.ByteString;
@@ -34,7 +35,6 @@ import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 import lombok.Getter;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.bouncycastle.util.encoders.Hex;
@@ -169,7 +169,6 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
   private static final String NO_BLOCK_HEADER_BY_HASH = "header for hash not found";
 
   private static final String ERROR_SELECTOR = "08c379a0"; // Function selector for Error(string)
-  @Setter
   private int filterParallelThreshold = 10000;
   /**
    * Using the default maxLogFilterNum of 20,000, a 3-thread pool can keep up with log event
@@ -184,7 +183,6 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
   private final ExecutorService sectionExecutor;
   private final NodeInfoService nodeInfoService;
   private final Wallet wallet;
-  @Setter
   @Autowired
   private Manager manager;
   private final String esName = "query-section";
@@ -194,6 +192,16 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
     this.nodeInfoService = nodeInfoService;
     this.wallet = wallet;
     this.sectionExecutor = ExecutorServiceManager.newFixedThreadPool(esName, 5);
+  }
+
+  @VisibleForTesting
+  public void setManager(Manager manager) {
+    this.manager = manager;
+  }
+
+  @VisibleForTesting
+  public void setFilterParallelThreshold(int filterParallelThreshold) {
+    this.filterParallelThreshold = filterParallelThreshold;
   }
 
   public void handleBLockFilter(BlockFilterCapsule blockFilterCapsule) {
@@ -1434,6 +1442,7 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
     } else {
       eventFilter2Result = eventFilter2ResultSolidity;
     }
+    // Due to concurrent access, the threshold may occasionally be exceeded.
     if (maxLogFilterNum > 0 && eventFilter2Result.size() >= maxLogFilterNum) {
       throw new JsonRpcExceedLimitException(
           "exceed max log filters: " + maxLogFilterNum + ", try again later");

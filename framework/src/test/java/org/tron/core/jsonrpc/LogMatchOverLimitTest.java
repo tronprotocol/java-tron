@@ -118,7 +118,7 @@ public class LogMatchOverLimitTest {
    * {@link JsonRpcTooManyResultException} is thrown BEFORE {@code addAll}.
    */
   @Test
-  public void testExceedsLimit_throwsBeforeAddAll()
+  public void testExceedsLimit_throws()
       throws ItemNotFoundException, JsonRpcInvalidParamsException {
     // block 1: MAX_RESULT - 1 logs, block 2: 2 logs → 9999 + 2 = 10001 > MAX_RESULT
     Manager manager = buildMockManager(
