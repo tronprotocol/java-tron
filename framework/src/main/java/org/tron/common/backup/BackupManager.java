@@ -52,8 +52,7 @@ public class BackupManager implements EventHandler {
       ExecutorServiceManager.newSingleThreadScheduledExecutor(esName);
 
   private final String dnsEsName = "backup-dns-refresh";
-  private final ScheduledExecutorService dnsExecutorService =
-      ExecutorServiceManager.newSingleThreadScheduledExecutor(dnsEsName);
+  private ScheduledExecutorService dnsExecutorService;
 
   @Setter
   private MessageHandler messageHandler;
@@ -128,6 +127,7 @@ public class BackupManager implements EventHandler {
     }, 1000, keepAliveInterval, TimeUnit.MILLISECONDS);
 
     if (!domainIpCache.isEmpty()) {
+      dnsExecutorService = ExecutorServiceManager.newSingleThreadScheduledExecutor(dnsEsName);
       dnsExecutorService.scheduleWithFixedDelay(() -> {
         try {
           refreshMemberIps();
@@ -174,7 +174,9 @@ public class BackupManager implements EventHandler {
 
   public void stop() {
     ExecutorServiceManager.shutdownAndAwaitTermination(executorService, esName);
-    ExecutorServiceManager.shutdownAndAwaitTermination(dnsExecutorService, dnsEsName);
+    if (dnsExecutorService != null) {
+      ExecutorServiceManager.shutdownAndAwaitTermination(dnsExecutorService, dnsEsName);
+    }
   }
 
   @Override

@@ -15,8 +15,6 @@
 
 package org.tron.core.config.args;
 
-import static org.mockito.Mockito.mockStatic;
-
 import com.google.common.collect.Lists;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
@@ -28,13 +26,14 @@ import java.net.InetAddress;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.BiFunction;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-import org.mockito.MockedStatic;
 import org.tron.common.TestConstants;
 import org.tron.common.args.GenesisBlock;
 import org.tron.common.parameter.CommonParameter;
@@ -44,7 +43,6 @@ import org.tron.common.utils.LocalWitnesses;
 import org.tron.common.utils.PublicMethod;
 import org.tron.core.config.Configuration;
 import org.tron.core.exception.TronError;
-import org.tron.p2p.dns.lookup.LookUpTxt;
 
 @Slf4j
 public class ArgsTest {
@@ -52,12 +50,19 @@ public class ArgsTest {
   private final String privateKey = PublicMethod.getRandomPrivateKey();
   private String address;
   private LocalWitnesses localWitnesses;
+  private BiFunction<String, Boolean, InetAddress> savedLookup;
 
   @Rule
   public ExpectedException thrown = ExpectedException.none();
 
+  @Before
+  public void saveLookup() {
+    savedLookup = InetUtil.dnsLookup;
+  }
+
   @After
   public void destroy() {
+    InetUtil.dnsLookup = savedLookup;
     Args.clearParam();
   }
 
@@ -440,17 +445,14 @@ public class ArgsTest {
         Arrays.asList("bad.invalid.domain"));
     Method method = Args.class.getDeclaredMethod("checkBackupMembers");
     method.setAccessible(true);
-    try (MockedStatic<LookUpTxt> mock = mockStatic(LookUpTxt.class)) {
-      mock.when(() -> LookUpTxt.lookUpIp("bad.invalid.domain", true)).thenReturn(null);
-      mock.when(() -> LookUpTxt.lookUpIp("bad.invalid.domain", false)).thenReturn(null);
-      try {
-        method.invoke(null);
-        Assert.fail("Expected InvocationTargetException wrapping TronError");
-      } catch (InvocationTargetException ex) {
-        Assert.assertTrue(ex.getCause() instanceof TronError);
-        Assert.assertEquals(TronError.ErrCode.PARAMETER_INIT,
-            ((TronError) ex.getCause()).getErrCode());
-      }
+    InetUtil.dnsLookup = (host, ipv4) -> null;
+    try {
+      method.invoke(null);
+      Assert.fail("Expected InvocationTargetException wrapping TronError");
+    } catch (InvocationTargetException ex) {
+      Assert.assertTrue(ex.getCause() instanceof TronError);
+      Assert.assertEquals(TronError.ErrCode.PARAMETER_INIT,
+          ((TronError) ex.getCause()).getErrCode());
     }
   }
 
@@ -462,10 +464,9 @@ public class ArgsTest {
     Method method = Args.class.getDeclaredMethod("checkBackupMembers");
     method.setAccessible(true);
     InetAddress mockAddr = InetAddress.getByName("5.5.5.5");
-    try (MockedStatic<LookUpTxt> mock = mockStatic(LookUpTxt.class)) {
-      mock.when(() -> LookUpTxt.lookUpIp("peer.tron.network", true)).thenReturn(mockAddr);
-      method.invoke(null);
-    }
+    InetUtil.dnsLookup = (host, ipv4) ->
+        ("peer.tron.network".equals(host) && ipv4) ? mockAddr : null;
+    method.invoke(null);
   }
 }
 

@@ -5,11 +5,15 @@ import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.function.BiFunction;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.es.ExecutorServiceManager;
 import org.tron.p2p.dns.lookup.LookUpTxt;
@@ -20,6 +24,13 @@ public class InetUtil {
 
   private static final String DNS_POOL_NAME = "args-dns-lookup";
   private static final int DNS_POOL_MAX_SIZE = 10;
+  // Per-lookup wall-clock budget. After this, the entry is treated as unresolvable.
+  private static final long DNS_LOOKUP_TIMEOUT_SECONDS = 10;
+
+  // Overridable in tests so worker threads (parallel path) can use a non-network lookup.
+  // Reset to LookUpTxt::lookUpIp after each test that overrides it.
+  public static volatile BiFunction<String, Boolean, InetAddress> dnsLookup =
+      LookUpTxt::lookUpIp;
 
   /**
    * Converts a list of {@code ipOrDomain:port} config strings into resolved {@link
@@ -48,10 +59,13 @@ public class InetUtil {
       return result;
     }
 
-    // Collect entries whose host part is a domain name (not an IP literal).
+    // Single pass: parse every entry once; collect domain entries for DNS resolution.
+    LinkedHashMap<String, InetSocketAddress> parsedMap = new LinkedHashMap<>();
     List<String> domainEntries = new ArrayList<>();
     for (String item : ipOrDomainWithPortList) {
-      if (!isIpLiteral(NetUtil.parseInetSocketAddress(item).getHostString())) {
+      InetSocketAddress parsed = NetUtil.parseInetSocketAddress(item);
+      parsedMap.put(item, parsed);
+      if (!isIpLiteral(parsed.getHostString())) {
         domainEntries.add(item);
       }
     }
@@ -69,12 +83,17 @@ public class InetUtil {
       for (int i = 0; i < domainEntries.size(); i++) {
         String entry = domainEntries.get(i);
         try {
-          resolvedDomains.put(entry, futures.get(i).get());
+          resolvedDomains.put(entry,
+              futures.get(i).get(DNS_LOOKUP_TIMEOUT_SECONDS, TimeUnit.SECONDS));
         } catch (InterruptedException e) {
           Thread.currentThread().interrupt();
           logger.warn("DNS lookup interrupted for: {}", entry);
+          break;
         } catch (ExecutionException e) {
           logger.warn("Failed to resolve address, skip: {}", entry);
+        } catch (TimeoutException e) {
+          logger.warn("DNS lookup timed out after {}s, skip: {}", DNS_LOOKUP_TIMEOUT_SECONDS,
+              entry);
         }
       }
       ExecutorServiceManager.shutdownAndAwaitTermination(dnsPool, DNS_POOL_NAME);
@@ -84,8 +103,9 @@ public class InetUtil {
     }
 
     // Build the result list preserving the original config order.
-    for (String item : ipOrDomainWithPortList) {
-      InetSocketAddress parsed = NetUtil.parseInetSocketAddress(item);
+    for (Map.Entry<String, InetSocketAddress> entry : parsedMap.entrySet()) {
+      String item = entry.getKey();
+      InetSocketAddress parsed = entry.getValue();
       InetSocketAddress resolved = isIpLiteral(parsed.getHostString())
           ? parsed
           : resolvedDomains.get(item);
@@ -109,9 +129,9 @@ public class InetUtil {
     InetSocketAddress parsed = NetUtil.parseInetSocketAddress(ipOrDomainWithPort);
     String host = parsed.getHostString();
     int port = parsed.getPort();
-    InetAddress address = LookUpTxt.lookUpIp(host, true);
+    InetAddress address = dnsLookup.apply(host, true);
     if (address == null) {
-      address = LookUpTxt.lookUpIp(host, false);
+      address = dnsLookup.apply(host, false);
     }
     if (address == null) {
       return null;
@@ -138,9 +158,9 @@ public class InetUtil {
         return null;
       }
     }
-    InetAddress address = LookUpTxt.lookUpIp(ipOrDomain, true);
+    InetAddress address = dnsLookup.apply(ipOrDomain, true);
     if (address == null) {
-      address = LookUpTxt.lookUpIp(ipOrDomain, false);
+      address = dnsLookup.apply(ipOrDomain, false);
     }
     return address;
   }

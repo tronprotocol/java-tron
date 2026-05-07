@@ -1,7 +1,5 @@
 package org.tron.common.backup;
 
-import static org.mockito.Mockito.mockStatic;
-
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.InetAddress;
@@ -13,13 +11,13 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.function.BiFunction;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import org.mockito.MockedStatic;
 import org.tron.common.TestConstants;
 import org.tron.common.backup.BackupManager.BackupStatusEnum;
 import org.tron.common.backup.message.KeepAliveMessage;
@@ -28,7 +26,7 @@ import org.tron.common.backup.socket.UdpEvent;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.PublicMethod;
 import org.tron.core.config.args.Args;
-import org.tron.p2p.dns.lookup.LookUpTxt;
+import org.tron.core.config.args.InetUtil;
 
 public class BackupManagerTest {
 
@@ -36,6 +34,7 @@ public class BackupManagerTest {
   public TemporaryFolder temporaryFolder = new TemporaryFolder();
   private BackupManager manager;
   private BackupServer backupServer;
+  private BiFunction<String, Boolean, InetAddress> savedLookup;
 
   @Before
   public void setUp() throws Exception {
@@ -44,10 +43,12 @@ public class BackupManagerTest {
     CommonParameter.getInstance().setBackupPort(PublicMethod.chooseRandomPort());
     manager = new BackupManager();
     backupServer = new BackupServer(manager);
+    savedLookup = InetUtil.dnsLookup;
   }
 
   @After
   public void tearDown() {
+    InetUtil.dnsLookup = savedLookup;
     Args.clearParam();
   }
 
@@ -157,10 +158,9 @@ public class BackupManagerTest {
     CommonParameter.getInstance().setBackupMembers(
         Collections.singletonList("node.example.com"));
     InetAddress resolved = InetAddress.getByName("1.2.3.4");
-    try (MockedStatic<LookUpTxt> mock = mockStatic(LookUpTxt.class)) {
-      mock.when(() -> LookUpTxt.lookUpIp("node.example.com", true)).thenReturn(resolved);
-      manager.init();
-    }
+    InetUtil.dnsLookup = (host, ipv4) ->
+        ("node.example.com".equals(host) && ipv4) ? resolved : null;
+    manager.init();
     Set<String> members = getField(manager, "members");
     Map<String, String> cache = getField(manager, "domainIpCache");
     Assert.assertTrue(members.contains("1.2.3.4"));
@@ -172,11 +172,8 @@ public class BackupManagerTest {
   public void testInitSkipsUnresolvableDomain() throws Exception {
     CommonParameter.getInstance().setBackupMembers(
         Collections.singletonList("bad.invalid.domain"));
-    try (MockedStatic<LookUpTxt> mock = mockStatic(LookUpTxt.class)) {
-      mock.when(() -> LookUpTxt.lookUpIp("bad.invalid.domain", true)).thenReturn(null);
-      mock.when(() -> LookUpTxt.lookUpIp("bad.invalid.domain", false)).thenReturn(null);
-      manager.init();
-    }
+    InetUtil.dnsLookup = (host, ipv4) -> null;
+    manager.init();
     Set<String> members = getField(manager, "members");
     Map<String, String> cache = getField(manager, "domainIpCache");
     Assert.assertTrue("unresolvable domain should be silently dropped", members.isEmpty());
@@ -190,10 +187,9 @@ public class BackupManagerTest {
     CommonParameter.getInstance().setBackupMembers(
         Collections.singletonList("self.local.host"));
     InetAddress selfAddr = InetAddress.getByName(localIp);
-    try (MockedStatic<LookUpTxt> mock = mockStatic(LookUpTxt.class)) {
-      mock.when(() -> LookUpTxt.lookUpIp("self.local.host", true)).thenReturn(selfAddr);
-      manager.init();
-    }
+    InetUtil.dnsLookup = (host, ipv4) ->
+        ("self.local.host".equals(host) && ipv4) ? selfAddr : null;
+    manager.init();
     Set<String> members = getField(manager, "members");
     Assert.assertFalse("domain resolving to local IP should not be in members",
         members.contains(localIp));
@@ -210,10 +206,9 @@ public class BackupManagerTest {
     cache.put("peer.tron.network", "1.1.1.1");
 
     InetAddress newAddr = InetAddress.getByName("2.2.2.2");
-    try (MockedStatic<LookUpTxt> mock = mockStatic(LookUpTxt.class)) {
-      mock.when(() -> LookUpTxt.lookUpIp("peer.tron.network", true)).thenReturn(newAddr);
-      invokeRefreshMemberIps(manager);
-    }
+    InetUtil.dnsLookup = (host, ipv4) ->
+        ("peer.tron.network".equals(host) && ipv4) ? newAddr : null;
+    invokeRefreshMemberIps(manager);
     Assert.assertFalse(members.contains("1.1.1.1"));
     Assert.assertTrue(members.contains("2.2.2.2"));
     Assert.assertEquals("2.2.2.2", cache.get("peer.tron.network"));
@@ -227,10 +222,9 @@ public class BackupManagerTest {
     cache.put("peer.tron.network", "1.1.1.1");
 
     InetAddress sameAddr = InetAddress.getByName("1.1.1.1");
-    try (MockedStatic<LookUpTxt> mock = mockStatic(LookUpTxt.class)) {
-      mock.when(() -> LookUpTxt.lookUpIp("peer.tron.network", true)).thenReturn(sameAddr);
-      invokeRefreshMemberIps(manager);
-    }
+    InetUtil.dnsLookup = (host, ipv4) ->
+        ("peer.tron.network".equals(host) && ipv4) ? sameAddr : null;
+    invokeRefreshMemberIps(manager);
     Assert.assertTrue(members.contains("1.1.1.1"));
     Assert.assertEquals("1.1.1.1", cache.get("peer.tron.network"));
   }
@@ -242,11 +236,8 @@ public class BackupManagerTest {
     members.add("1.1.1.1");
     cache.put("peer.tron.network", "1.1.1.1");
 
-    try (MockedStatic<LookUpTxt> mock = mockStatic(LookUpTxt.class)) {
-      mock.when(() -> LookUpTxt.lookUpIp("peer.tron.network", true)).thenReturn(null);
-      mock.when(() -> LookUpTxt.lookUpIp("peer.tron.network", false)).thenReturn(null);
-      invokeRefreshMemberIps(manager);
-    }
+    InetUtil.dnsLookup = (host, ipv4) -> null;
+    invokeRefreshMemberIps(manager);
     Assert.assertTrue("old IP should be kept on DNS failure", members.contains("1.1.1.1"));
     Assert.assertEquals("1.1.1.1", cache.get("peer.tron.network"));
   }
