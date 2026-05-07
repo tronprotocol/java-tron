@@ -29,7 +29,8 @@ public class CachedBodyRequestWrapperTest {
   public void getInputStream_returnsBodyContent() throws IOException {
     CachedBodyRequestWrapper w = new CachedBodyRequestWrapper(new MockHttpServletRequest(), BODY);
     byte[] read = readFully(w.getInputStream());
-    assertEquals(new String(BODY, StandardCharsets.UTF_8), new String(read, StandardCharsets.UTF_8));
+    assertEquals(new String(BODY, StandardCharsets.UTF_8),
+        new String(read, StandardCharsets.UTF_8));
   }
 
   @Test

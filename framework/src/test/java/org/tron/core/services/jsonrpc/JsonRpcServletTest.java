@@ -137,7 +137,8 @@ public class JsonRpcServletTest {
 
   @Test
   public void batchRpcServerThrows_internalErrorIsArray() throws Exception {
-    doThrow(new RuntimeException("boom")).when(mockRpcServer).handle((HttpServletRequest) any(), any());
+    doThrow(new RuntimeException("boom")).when(mockRpcServer)
+        .handle((HttpServletRequest) any(), any());
     MockHttpServletResponse resp = doPost("[{\"method\":\"eth_blockNumber\"}]");
     assertEquals(200, resp.getStatus());
     JsonNode body = MAPPER.readTree(resp.getContentAsString());
@@ -208,6 +209,7 @@ public class JsonRpcServletTest {
   }
 
   private static class TestableServlet extends JsonRpcServlet {
+
     void callDoPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
       doPost(req, resp);
     }
