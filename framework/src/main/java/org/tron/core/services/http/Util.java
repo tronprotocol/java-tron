@@ -66,7 +66,7 @@ public class Util {
 
   public static final String PERMISSION_ID = "Permission_id";
   public static final String VISIBLE = "visible";
-  public static final String INT64_AS_STRING = "int64_as_string";
+  public static final String INT64_AS_STRING_PARAM = "int64_as_string";
   public static final String TRANSACTION = "transaction";
   public static final String TRANSACTION_EXTENSION = "transactionExtension";
   public static final String VALUE = "value";
@@ -355,10 +355,11 @@ public class Util {
    * downstream servlets.
    */
   public static boolean getInt64AsString(final HttpServletRequest request) {
-    if (StringUtil.isNotBlank(request.getParameter(INT64_AS_STRING))) {
-      return Boolean.parseBoolean(request.getParameter(INT64_AS_STRING));
+    boolean int64AsString = false;
+    if (StringUtil.isNotBlank(request.getParameter(INT64_AS_STRING_PARAM))) {
+      int64AsString = Boolean.valueOf(request.getParameter(INT64_AS_STRING_PARAM));
     }
-    return false;
+    return int64AsString;
   }
 
   public static boolean getVisiblePost(final String input) {
