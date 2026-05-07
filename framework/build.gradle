@@ -139,7 +139,7 @@ test {
     if (rootProject.archInfo.isArm64) {
         systemProperty 'storage.db.engine', 'ROCKSDB'
         exclude { element ->
-            element.file.name.toLowerCase().contains('leveldb')
+            element.file.name.toLowerCase(Locale.ROOT).contains('leveldb')
         }
         filter {
             excludeTestsMatching '*.*leveldb*'

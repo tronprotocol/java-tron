@@ -13,7 +13,7 @@ allprojects {
         errorproneVersion = "2.42.0"
     }
 }
-def arch = System.getProperty("os.arch").toLowerCase()
+def arch = System.getProperty("os.arch").toLowerCase(Locale.ROOT)
 def javaVersion = JavaVersion.current()
 def isArm64 = Architectures.AARCH64.isAlias(arch)
 def archSource = isArm64 ? "arm" : "x86"
