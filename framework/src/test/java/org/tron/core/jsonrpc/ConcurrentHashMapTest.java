@@ -97,7 +97,7 @@ public class ConcurrentHashMapTest {
 
           for (int k = 0; k < 5; k++) {
             try {
-              Object[] blockHashList = TronJsonRpcImpl.getFilterResult(String.valueOf(k), conMap,
+              Object[] blockHashList = jsonRpc.getFilterResult(String.valueOf(k), conMap,
                   jsonRpc.getEventFilter2ResultFull());
 
               for (Object str : blockHashList) {
@@ -125,7 +125,7 @@ public class ConcurrentHashMapTest {
 
           for (int k = 0; k < 5; k++) {
             try {
-              Object[] blockHashList = TronJsonRpcImpl.getFilterResult(String.valueOf(k), conMap,
+              Object[] blockHashList = jsonRpc.getFilterResult(String.valueOf(k), conMap,
                   jsonRpc.getEventFilter2ResultFull());
 
               // if (blockHashList.length == 0) {
@@ -157,7 +157,7 @@ public class ConcurrentHashMapTest {
 
           for (int k = 0; k < 5; k++) {
             try {
-              Object[] blockHashList = TronJsonRpcImpl.getFilterResult(String.valueOf(k), conMap,
+              Object[] blockHashList = jsonRpc.getFilterResult(String.valueOf(k), conMap,
                   jsonRpc.getEventFilter2ResultFull());
 
               for (Object str : blockHashList) {

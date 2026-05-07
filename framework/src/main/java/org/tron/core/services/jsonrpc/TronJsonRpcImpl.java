@@ -1565,7 +1565,7 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
     return logMatch.matchBlockOneByOne();
   }
 
-  public static Object[] getFilterResult(String filterId, Map<String, BlockFilterAndResult>
+  public Object[] getFilterResult(String filterId, Map<String, BlockFilterAndResult>
       blockFilter2Result, Map<String, LogFilterAndResult> eventFilter2Result)
       throws ItemNotFoundException {
     Object[] result;
