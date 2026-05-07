@@ -1,11 +1,5 @@
 package org.tron.core.services.jsonrpc;
 
-import static org.tron.core.services.jsonrpc.TronJsonRpcImpl.EARLIEST_STR;
-import static org.tron.core.services.jsonrpc.TronJsonRpcImpl.FINALIZED_STR;
-import static org.tron.core.services.jsonrpc.TronJsonRpcImpl.LATEST_STR;
-import static org.tron.core.services.jsonrpc.TronJsonRpcImpl.PENDING_STR;
-import static org.tron.core.services.jsonrpc.TronJsonRpcImpl.TAG_PENDING_SUPPORT_ERROR;
-
 import com.google.common.base.Throwables;
 import com.google.common.primitives.Longs;
 import com.google.protobuf.Any;
@@ -56,6 +50,15 @@ import org.tron.protos.contract.WitnessContract.VoteWitnessContract.Vote;
 
 @Slf4j(topic = "API")
 public class JsonRpcApiUtil {
+
+  public static final String EARLIEST_STR = "earliest";
+  public static final String PENDING_STR = "pending";
+  public static final String LATEST_STR = "latest";
+  public static final String FINALIZED_STR = "finalized";
+  public static final String SAFE_STR = "safe";
+  public static final String TAG_PENDING_SUPPORT_ERROR = "TAG pending not supported";
+  public static final String TAG_SAFE_SUPPORT_ERROR = "TAG safe not supported";
+  public static final String BLOCK_NUM_ERROR = "invalid block number";
 
   public static byte[] convertToTronAddress(byte[] address) {
     byte[] newAddress = new byte[21];
@@ -515,20 +518,52 @@ public class JsonRpcApiUtil {
     return -1;
   }
 
-  public static long getByJsonBlockId(String blockNumOrTag, Wallet wallet)
+  public static boolean isBlockTag(String tag) {
+    return LATEST_STR.equalsIgnoreCase(tag)
+        || EARLIEST_STR.equalsIgnoreCase(tag)
+        || FINALIZED_STR.equalsIgnoreCase(tag)
+        || PENDING_STR.equalsIgnoreCase(tag)
+        || SAFE_STR.equalsIgnoreCase(tag);
+  }
+
+  /**
+   * Parse a block tag (latest, earliest, finalized) to block number.
+   *
+   * <p>Note: for "latest", the returned block number may not yet be available in
+   * blockStore or blockIndexStore due to write ordering. Callers that need the
+   * actual block must handle the not-found case.</p>
+   */
+  public static long parseBlockTag(String tag, Wallet wallet)
       throws JsonRpcInvalidParamsException {
-    if (PENDING_STR.equalsIgnoreCase(blockNumOrTag)) {
+    if (LATEST_STR.equalsIgnoreCase(tag)) {
+      return wallet.getHeadBlockNum();
+    }
+    if (EARLIEST_STR.equalsIgnoreCase(tag)) {
+      return 0;
+    }
+    if (FINALIZED_STR.equalsIgnoreCase(tag)) {
+      return wallet.getSolidBlockNum();
+    }
+    if (PENDING_STR.equalsIgnoreCase(tag)) {
       throw new JsonRpcInvalidParamsException(TAG_PENDING_SUPPORT_ERROR);
     }
-    if (StringUtils.isEmpty(blockNumOrTag) || LATEST_STR.equalsIgnoreCase(blockNumOrTag)) {
-      return -1;
-    } else if (EARLIEST_STR.equalsIgnoreCase(blockNumOrTag)) {
-      return 0;
-    } else if (FINALIZED_STR.equalsIgnoreCase(blockNumOrTag)) {
-      return wallet.getSolidBlockNum();
-    } else {
-      return ByteArray.jsonHexToLong(blockNumOrTag);
+    if (SAFE_STR.equalsIgnoreCase(tag)) {
+      throw new JsonRpcInvalidParamsException(TAG_SAFE_SUPPORT_ERROR);
     }
+    throw new JsonRpcInvalidParamsException(BLOCK_NUM_ERROR);
+  }
+
+  /**
+   * Parse a block tag or hex number. Uses strict jsonHexToLong (requires 0x prefix) for hex.
+   * Callers needing flexible hex parsing (0x -> hex, bare number -> decimal) should use
+   * isBlockTag/parseBlockTag and handle hex separately with hexToBigInteger.
+   */
+  public static long parseBlockNumber(String blockNumOrTag, Wallet wallet)
+      throws JsonRpcInvalidParamsException {
+    if (isBlockTag(blockNumOrTag)) {
+      return parseBlockTag(blockNumOrTag, wallet);
+    }
+    return ByteArray.jsonHexToLong(blockNumOrTag);
   }
 
   public static String generateFilterId() {
