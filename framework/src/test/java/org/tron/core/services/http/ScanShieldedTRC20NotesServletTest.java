@@ -80,6 +80,7 @@ public class ScanShieldedTRC20NotesServletTest extends BaseTest {
     MockHttpServletResponse response = new MockHttpServletResponse();
     scanShieldedTRC20NotesByIvkServlet.doPost(request, response);
     Assert.assertNotEquals(HttpServletResponse.SC_BAD_REQUEST, response.getStatus());
+    Assert.assertFalse(response.getContentAsString().contains(EVENTS_DEPRECATED_MSG));
   }
 
   @Test
@@ -90,6 +91,7 @@ public class ScanShieldedTRC20NotesServletTest extends BaseTest {
     MockHttpServletResponse response = new MockHttpServletResponse();
     scanShieldedTRC20NotesByOvkServlet.doPost(request, response);
     Assert.assertNotEquals(HttpServletResponse.SC_BAD_REQUEST, response.getStatus());
+    Assert.assertFalse(response.getContentAsString().contains(EVENTS_DEPRECATED_MSG));
   }
 
   @Test
@@ -100,6 +102,7 @@ public class ScanShieldedTRC20NotesServletTest extends BaseTest {
     MockHttpServletResponse response = new MockHttpServletResponse();
     scanShieldedTRC20NotesByIvkServlet.doPost(request, response);
     Assert.assertNotEquals(HttpServletResponse.SC_BAD_REQUEST, response.getStatus());
+    Assert.assertFalse(response.getContentAsString().contains(EVENTS_DEPRECATED_MSG));
   }
 
   @Test
@@ -110,6 +113,7 @@ public class ScanShieldedTRC20NotesServletTest extends BaseTest {
     MockHttpServletResponse response = new MockHttpServletResponse();
     scanShieldedTRC20NotesByOvkServlet.doPost(request, response);
     Assert.assertNotEquals(HttpServletResponse.SC_BAD_REQUEST, response.getStatus());
+    Assert.assertFalse(response.getContentAsString().contains(EVENTS_DEPRECATED_MSG));
   }
 
 }

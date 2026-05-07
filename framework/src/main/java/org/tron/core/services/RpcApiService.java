@@ -295,7 +295,7 @@ public class RpcApiService extends RpcService {
 
   private static boolean rejectIfEventsPresent(
       StreamObserver<?> responseObserver, ProtocolStringList events) {
-    if (events.stream().anyMatch(s -> !s.isEmpty())) {
+    if (Util.hasMeaningfulEvents(events)) {
       logger.info(Util.EVENTS_DEPRECATED_MSG);
       responseObserver.onError(Status.INVALID_ARGUMENT
           .withDescription(Util.EVENTS_DEPRECATED_MSG)

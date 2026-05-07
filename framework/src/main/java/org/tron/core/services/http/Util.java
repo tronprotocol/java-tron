@@ -84,8 +84,12 @@ public class Util {
   public static final String FUNCTION_PARAMETER = "parameter";
   public static final String CALL_DATA = "data";
 
+  public static boolean hasMeaningfulEvents(ProtocolStringList events) {
+    return events.stream().anyMatch(s -> !s.isEmpty());
+  }
+
   public static void rejectIfEventsPresent(ProtocolStringList events) {
-    if (events.stream().anyMatch(s -> !s.isEmpty())) {
+    if (hasMeaningfulEvents(events)) {
       logger.info(EVENTS_DEPRECATED_MSG);
       throw new IllegalArgumentException(EVENTS_DEPRECATED_MSG);
     }

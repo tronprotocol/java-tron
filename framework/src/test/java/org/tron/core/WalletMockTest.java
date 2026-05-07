@@ -33,7 +33,9 @@ import org.mockito.MockedConstruction;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.tron.api.GrpcAPI;
+import org.tron.common.crypto.Hash;
 import org.tron.common.parameter.CommonParameter;
+import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.client.WalletClient;
@@ -1088,9 +1090,8 @@ public class WalletMockTest {
           Protocol.TransactionInfo.Log.class,
           byte[].class);
       privateMethod.setAccessible(true);
-      privateMethod.invoke(wallet,
-          log,
-          contractAddress);
+      Object result = privateMethod.invoke(wallet, log, contractAddress);
+      assertEquals(0, ((Integer) result).intValue());
     } catch (Exception e) {
       assertTrue(false);
     }
@@ -1116,11 +1117,44 @@ public class WalletMockTest {
           Protocol.TransactionInfo.Log.class,
           byte[].class);
       privateMethod.setAccessible(true);
-      privateMethod.invoke(wallet,
-          log,
-          contractAddress);
+      Object result = privateMethod.invoke(wallet, log, contractAddress);
+      assertEquals(0, ((Integer) result).intValue());
     } catch (Exception e) {
       assertTrue(false);
+    }
+  }
+
+  @Test
+  public void testGetShieldedTRC20LogTypeReturnsCorrectInt() throws Exception {
+    Wallet wallet = new Wallet();
+    final String SHIELDED_CONTRACT_ADDRESS_STR = "TGAmX5AqVUoXCf8MoHxbuhQPmhGfWTnEgA";
+    byte[] contractAddress = WalletClient.decodeFromBase58Check(SHIELDED_CONTRACT_ADDRESS_STR);
+    byte[] addressWithoutPrefix = new byte[20];
+    System.arraycopy(contractAddress, 1, addressWithoutPrefix, 0, 20);
+
+    Method privateMethod = Wallet.class.getDeclaredMethod(
+        "getShieldedTRC20LogType",
+        Protocol.TransactionInfo.Log.class,
+        byte[].class);
+    privateMethod.setAccessible(true);
+
+    String[] eventSignatures = {
+        "MintNewLeaf(uint256,bytes32,bytes32,bytes32,bytes32[21])",
+        "TransferNewLeaf(uint256,bytes32,bytes32,bytes32,bytes32[21])",
+        "BurnNewLeaf(uint256,bytes32,bytes32,bytes32,bytes32[21])",
+        "TokenBurn(address,uint256,bytes32[3])"
+    };
+    int[] expectedTypes = {1, 2, 3, 4};
+
+    for (int i = 0; i < eventSignatures.length; i++) {
+      byte[] topicHash = Hash.sha3(ByteArray.fromString(eventSignatures[i]));
+      Protocol.TransactionInfo.Log log = Protocol.TransactionInfo.Log.newBuilder()
+          .setAddress(ByteString.copyFrom(addressWithoutPrefix))
+          .addTopics(ByteString.copyFrom(topicHash))
+          .build();
+      Object result = privateMethod.invoke(wallet, log, contractAddress);
+      assertEquals("event " + eventSignatures[i] + " should map to log type "
+          + expectedTypes[i], expectedTypes[i], ((Integer) result).intValue());
     }
   }
 

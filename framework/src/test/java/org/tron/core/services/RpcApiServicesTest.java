@@ -620,9 +620,13 @@ public class RpcApiServicesTest {
         .setEndBlockIndex(10)
         .addEvents("")
         .build();
-    assertNotNull(blockingStubFull.scanShieldedTRC20NotesByIvk(message));
-    assertNotNull(blockingStubSolidity.scanShieldedTRC20NotesByIvk(message));
-    assertNotNull(blockingStubPBFT.scanShieldedTRC20NotesByIvk(message));
+    try {
+      blockingStubFull.scanShieldedTRC20NotesByIvk(message);
+      blockingStubSolidity.scanShieldedTRC20NotesByIvk(message);
+      blockingStubPBFT.scanShieldedTRC20NotesByIvk(message);
+    } catch (StatusRuntimeException e) {
+      Assert.fail("empty events should pass the guard, got: " + e.getStatus());
+    }
   }
 
   @Test
@@ -632,9 +636,13 @@ public class RpcApiServicesTest {
         .setEndBlockIndex(10)
         .addEvents("")
         .build();
-    assertNotNull(blockingStubFull.scanShieldedTRC20NotesByOvk(message));
-    assertNotNull(blockingStubSolidity.scanShieldedTRC20NotesByOvk(message));
-    assertNotNull(blockingStubPBFT.scanShieldedTRC20NotesByOvk(message));
+    try {
+      blockingStubFull.scanShieldedTRC20NotesByOvk(message);
+      blockingStubSolidity.scanShieldedTRC20NotesByOvk(message);
+      blockingStubPBFT.scanShieldedTRC20NotesByOvk(message);
+    } catch (StatusRuntimeException e) {
+      Assert.fail("empty events should pass the guard, got: " + e.getStatus());
+    }
   }
 
   //  @Test
