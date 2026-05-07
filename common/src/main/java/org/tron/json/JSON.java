@@ -6,7 +6,6 @@ import com.fasterxml.jackson.core.StreamReadConstraints;
 import com.fasterxml.jackson.core.json.JsonReadFeature;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.json.JsonMapper;
@@ -41,22 +40,27 @@ public final class JSON {
       .enable(JsonReadFeature.ALLOW_UNQUOTED_FIELD_NAMES)
       // Fastjson Feature.AllowSingleQuotes (default ON)
       .enable(JsonReadFeature.ALLOW_SINGLE_QUOTES)
-      // Fastjson tolerates trailing commas (e.g. {"a":1,}) by default
+      // Partial compatibility with Fastjson Feature.AllowArbitraryCommas:
+      // this only covers a single trailing comma like {"a":1,} or [1,2,].
+      // Fastjson also accepts repeated/arbitrary commas like {"a":1,,,,} and
+      // [1,,2], which Jackson does not support with this feature.
       .enable(JsonReadFeature.ALLOW_TRAILING_COMMA)
-      // Fastjson accepts NaN as valid tokens, Infinity is invalid
+      // Fastjson accepts NaN as null but rejects Infinity by default.
+      // Jackson enables both with this feature, so every parse path must normalize
+      // NaN and reject +/-Infinity after reading.
       .enable(JsonReadFeature.ALLOW_NON_NUMERIC_NUMBERS)
-      // Fastjson accepts leading plus sign for numbers (e.g. +123)
+      // Fastjson accepts a leading plus sign for numbers (for example +123, +0.5)
       .enable(JsonReadFeature.ALLOW_LEADING_PLUS_SIGN_FOR_NUMBERS)
-      // Fastjson accepts leading decimal point for numbers (e.g. .5)
+      // Partial compatibility for Fastjson's asymmetric decimal behavior:
+      // Fastjson accepts +.5 but rejects .5 by default. Jackson cannot model only
+      // the signed form, so enabling this also accepts .5.
       .enable(JsonReadFeature.ALLOW_LEADING_DECIMAL_POINT_FOR_NUMBERS)
-      // Fastjson accepts trailing decimal point for numbers (e.g. 5.)
+      // Fastjson accepts a trailing decimal point for numbers (for example 5.)
       .enable(JsonReadFeature.ALLOW_TRAILING_DECIMAL_POINT_FOR_NUMBERS)
-      // Fastjson accepts leading zeros for numbers (e.g. 007)
+      // Fastjson accepts leading zeros for numbers (for example 007)
       .enable(JsonReadFeature.ALLOW_LEADING_ZEROS_FOR_NUMBERS)
-      // Fastjson accepts unescaped control chars in strings (e.g. raw tab/newline)
+      // Fastjson accepts unescaped control chars in strings (for example raw tab/newline)
       .enable(JsonReadFeature.ALLOW_UNESCAPED_CONTROL_CHARS)
-      // Fastjson accepts backslash-escaping any character (e.g. \q -> q)
-      .enable(JsonReadFeature.ALLOW_BACKSLASH_ESCAPING_ANY_CHARACTER)
       // Fastjson accepts Java-style comments (// and /* */)
       .enable(JsonReadFeature.ALLOW_JAVA_COMMENTS)
       // Fastjson Feature.UseBigDecimal (default ON)
@@ -69,11 +73,6 @@ public final class JSON {
       // Fastjson omits null-valued fields by default (WriteMapNullValue is OFF by default)
       // https://github.com/alibaba/fastjson/wiki/WriteNull_cn
       .serializationInclusion(JsonInclude.Include.NON_NULL)
-      // Fastjson uses WriteDateUseDateFormat (string) not timestamps by default
-      .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
-      // Fastjson smart-match: field names are matched ignoring case/underscores by default
-      // (DisableFieldSmartMatch is OFF by default -> smart match ON)
-      .configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true)
       .build();
 
   private static JsonFactory buildFactory() {
@@ -225,23 +224,6 @@ public final class JSON {
       return new JSONObject((ObjectNode) node);
     } catch (JSONException e) {
       throw e;
-    } catch (Exception e) {
-      throw new JSONException(e.getMessage(), e);
-    }
-  }
-
-  public static <T> T parseObject(String text, Class<T> clazz) {
-    if (isNullLiteral(text)) {
-      return null;
-    }
-    if (clazz == JSONObject.class) {
-      return clazz.cast(parseObject(text));
-    }
-    if (clazz == JSONArray.class) {
-      return clazz.cast(parseArray(text));
-    }
-    try {
-      return MAPPER.readValue(text, clazz);
     } catch (Exception e) {
       throw new JSONException(e.getMessage(), e);
     }

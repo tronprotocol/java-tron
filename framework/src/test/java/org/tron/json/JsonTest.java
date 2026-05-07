@@ -12,6 +12,7 @@ import com.fasterxml.jackson.core.StreamReadConstraints;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 import org.junit.Test;
 
@@ -36,6 +37,8 @@ public class JsonTest {
     assertEquals(3, array.size());
     assertEquals(2, array.get(1));
     assertEquals(1, ((JSONObject) array.get(2)).getIntValue("a"));
+    assertThrows(JSONException.class, () -> JSON.parseObject("{c:'NULL',,,,,,}"));
+    assertThrows(JSONException.class, () -> JSON.parseObject("[1,,2]"));
   }
 
   @Test
@@ -68,7 +71,7 @@ public class JsonTest {
     assertNotNull(o);
     assertEquals(1, o.getIntValue("a"));
     assertEquals(-2, o.getIntValue("b"));
-    assertEquals("0.3", o.getBigDecimal("c").toPlainString()); // Fastjson will throw an error
+    assertEquals("0.3", o.getBigDecimal("c").toPlainString());
     assertEquals("-0.4", o.getBigDecimal("d").toPlainString());
     assertEquals("0.5", o.getBigDecimal("e").toPlainString());
     assertEquals(6, o.getIntValue("f"));
@@ -87,9 +90,7 @@ public class JsonTest {
 
   @Test
   public void testBackslashEscapeAnyChar() {
-    JSONObject obj = JSON.parseObject("{\"a\":\"\\q\"}"); // Fastjson will throw an error
-    assertNotNull(obj);
-    assertEquals("q", obj.getString("a"));
+    assertThrows(JSONException.class, () -> JSON.parseObject("{\"a\":\"\\q\"}"));
   }
 
   @Test
@@ -151,20 +152,11 @@ public class JsonTest {
   }
 
   @Test
-  public void testParseToClass() {
+  public void testParseHelpers() {
     assertNotNull(JSON.parse("{\"a\":1}"));
     assertEquals(1, JSON.parse("{\"a\":1}").get("a").intValue());
     assertNull(JSON.parse(null));
     assertNull(JSON.parse("null"));
-
-    // parseObject(text, Class) — JSONObject / JSONArray short-circuits
-    assertEquals(1, JSON.parseObject("{\"a\":1}", JSONObject.class).getIntValue("a"));
-    assertEquals(3, JSON.parseObject("[1,2,3]", JSONArray.class).size());
-
-    // parseObject(text, Class) — arbitrary POJO via Jackson
-    Pojo p = JSON.parseObject("{\"name\":\"x\"}", Pojo.class);
-    assertEquals("x", p.name);
-    assertNull(JSON.parseObject(null, Pojo.class));
 
     // JSONObject.parseObject delegate
     assertEquals(1, JSONObject.parseObject("{\"a\":1}").getIntValue("a"));
@@ -180,6 +172,7 @@ public class JsonTest {
     assertEquals("{\"a\":1}", JSON.toJSONString(new JSONObject().put("a", 1)));
     assertEquals("[1,2]", JSON.toJSONString(JSON.parseArray("[1,2]")));
     assertEquals("\"hi\"", JSON.toJSONString("hi"));
+    assertEquals("0", JSON.toJSONString(new Date(0)));
 
     // pretty variant differs from compact for containers (exercises the pretty branch)
     JSONObject obj = new JSONObject().put("a", 1);
