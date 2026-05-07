@@ -519,6 +519,41 @@ public class JsonRpcApiUtil {
     return -1;
   }
 
+  public static boolean isBlockTag(String tag) {
+    return LATEST_STR.equalsIgnoreCase(tag)
+        || EARLIEST_STR.equalsIgnoreCase(tag)
+        || FINALIZED_STR.equalsIgnoreCase(tag)
+        || PENDING_STR.equalsIgnoreCase(tag)
+        || SAFE_STR.equalsIgnoreCase(tag);
+  }
+
+  /**
+   * Parse a block tag (latest, earliest, finalized) to block number.
+   *
+   * <p>Note: for "latest", the returned block number may not yet be available in
+   * blockStore or blockIndexStore due to write ordering. Callers that need the
+   * actual block must handle the not-found case.</p>
+   */
+  public static long parseBlockTag(String tag, Wallet wallet)
+      throws JsonRpcInvalidParamsException {
+    if (LATEST_STR.equalsIgnoreCase(tag)) {
+      return wallet.getHeadBlockNum();
+    }
+    if (EARLIEST_STR.equalsIgnoreCase(tag)) {
+      return 0;
+    }
+    if (FINALIZED_STR.equalsIgnoreCase(tag)) {
+      return wallet.getSolidBlockNum();
+    }
+    if (PENDING_STR.equalsIgnoreCase(tag)) {
+      throw new JsonRpcInvalidParamsException(TAG_PENDING_SUPPORT_ERROR);
+    }
+    if (SAFE_STR.equalsIgnoreCase(tag)) {
+      throw new JsonRpcInvalidParamsException(TAG_SAFE_SUPPORT_ERROR);
+    }
+    throw new JsonRpcInvalidParamsException(BLOCK_NUM_ERROR);
+  }
+
   /**
    * Max allowed length for a JSON-RPC block number hex/decimal input.
    * API-level DoS guard: rejects pathological inputs before BigInteger parsing,
@@ -555,53 +590,16 @@ public class JsonRpcApiUtil {
   }
 
   /**
-   * Parse a block tag or hex block number. Tags resolve via parseBlockTag;
-   * numeric inputs go through ByteArray.jsonHexToLong (strict 0x prefix).
-   * Pathologically long inputs are rejected up front to avoid worst-case
-   * parsing cost (DoS guard mirroring single-arg parseBlockNumber).
+   * Parse a block tag or hex number. Uses strict jsonHexToLong (requires 0x prefix) for hex.
+   * Callers needing flexible hex parsing (0x -> hex, bare number -> decimal) should use
+   * isBlockTag/parseBlockTag and handle hex separately with hexToBigInteger.
    */
   public static long parseBlockNumber(String blockNumOrTag, Wallet wallet)
       throws JsonRpcInvalidParamsException {
     if (isBlockTag(blockNumOrTag)) {
       return parseBlockTag(blockNumOrTag, wallet);
     }
-
-    return parseBlockNumber(blockNumOrTag);
-  }
-
-  public static boolean isBlockTag(String tag) {
-    return LATEST_STR.equalsIgnoreCase(tag)
-        || EARLIEST_STR.equalsIgnoreCase(tag)
-        || FINALIZED_STR.equalsIgnoreCase(tag)
-        || PENDING_STR.equalsIgnoreCase(tag)
-        || SAFE_STR.equalsIgnoreCase(tag);
-  }
-
-  /**
-   * Parse a block tag (latest, earliest, finalized) to block number.
-   *
-   * <p>Note: for "latest", the returned block number may not yet be available in
-   * blockStore or blockIndexStore due to write ordering. Callers that need the
-   * actual block must handle the not-found case.</p>
-   */
-  public static long parseBlockTag(String tag, Wallet wallet)
-      throws JsonRpcInvalidParamsException {
-    if (LATEST_STR.equalsIgnoreCase(tag)) {
-      return wallet.getHeadBlockNum();
-    }
-    if (EARLIEST_STR.equalsIgnoreCase(tag)) {
-      return 0;
-    }
-    if (FINALIZED_STR.equalsIgnoreCase(tag)) {
-      return wallet.getSolidBlockNum();
-    }
-    if (PENDING_STR.equalsIgnoreCase(tag)) {
-      throw new JsonRpcInvalidParamsException(TAG_PENDING_SUPPORT_ERROR);
-    }
-    if (SAFE_STR.equalsIgnoreCase(tag)) {
-      throw new JsonRpcInvalidParamsException(TAG_SAFE_SUPPORT_ERROR);
-    }
-    throw new JsonRpcInvalidParamsException(BLOCK_NUM_ERROR);
+    return ByteArray.jsonHexToLong(blockNumOrTag);
   }
 
   public static String generateFilterId() {
