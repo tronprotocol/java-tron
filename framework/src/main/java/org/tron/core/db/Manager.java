@@ -48,6 +48,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.bouncycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.TransactionInfoList;
@@ -277,6 +278,7 @@ public class Manager {
   @Autowired
   private RewardViCalService rewardViCalService;
 
+  @Lazy
   @Autowired
   private TronJsonRpcImpl tronJsonRpcImpl;
 
