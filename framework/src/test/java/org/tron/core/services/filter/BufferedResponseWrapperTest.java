@@ -3,6 +3,7 @@ package org.tron.core.services.filter;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
@@ -161,5 +162,103 @@ public class BufferedResponseWrapperTest {
     assertEquals(200, mockResp.getStatus());
     w.commitToResponse();
     assertEquals(201, mockResp.getStatus());
+  }
+
+  // --- getStatus() ---
+
+  @Test
+  public void getStatus_returnsBufferedValue() {
+    BufferedResponseWrapper w = new BufferedResponseWrapper(mockResp, 0);
+    w.setStatus(404);
+    assertEquals(404, w.getStatus());
+    // actual response must still be untouched
+    assertEquals(200, mockResp.getStatus());
+  }
+
+  @Test
+  public void getStatus_defaultIs200() {
+    BufferedResponseWrapper w = new BufferedResponseWrapper(mockResp, 0);
+    assertEquals(200, w.getStatus());
+  }
+
+  // --- setHeader / addHeader for Content-Length ---
+
+  @Test
+  public void setHeader_contentLength_exceedsLimit_overflow() {
+    BufferedResponseWrapper w = new BufferedResponseWrapper(mockResp, 100);
+    w.setHeader("Content-Length", "101");
+    assertTrue(w.isOverflow());
+    // Content-Length must NOT have been forwarded to the actual response
+    assertNull(mockResp.getHeader("Content-Length"));
+  }
+
+  @Test
+  public void setHeader_contentLength_withinLimit_noOverflow() {
+    BufferedResponseWrapper w = new BufferedResponseWrapper(mockResp, 100);
+    w.setHeader("Content-Length", "100");
+    assertFalse(w.isOverflow());
+  }
+
+  @Test
+  public void setHeader_contentLength_caseInsensitive_overflow() {
+    BufferedResponseWrapper w = new BufferedResponseWrapper(mockResp, 50);
+    w.setHeader("content-length", "51");
+    assertTrue(w.isOverflow());
+  }
+
+  @Test
+  public void setHeader_contentLength_malformed_ignored() {
+    BufferedResponseWrapper w = new BufferedResponseWrapper(mockResp, 100);
+    w.setHeader("Content-Length", "not-a-number");
+    assertFalse(w.isOverflow());
+  }
+
+  @Test
+  public void setHeader_nonContentLength_passesThroughToActual() {
+    BufferedResponseWrapper w = new BufferedResponseWrapper(mockResp, 0);
+    w.setHeader("X-Custom-Header", "hello");
+    assertEquals("hello", mockResp.getHeader("X-Custom-Header"));
+  }
+
+  @Test
+  public void addHeader_contentLength_exceedsLimit_overflow() {
+    BufferedResponseWrapper w = new BufferedResponseWrapper(mockResp, 100);
+    w.addHeader("Content-Length", "200");
+    assertTrue(w.isOverflow());
+    assertNull(mockResp.getHeader("Content-Length"));
+  }
+
+  @Test
+  public void addHeader_contentLength_malformed_ignored() {
+    BufferedResponseWrapper w = new BufferedResponseWrapper(mockResp, 100);
+    w.addHeader("Content-Length", "bad");
+    assertFalse(w.isOverflow());
+  }
+
+  @Test
+  public void addHeader_nonContentLength_passesThroughToActual() {
+    BufferedResponseWrapper w = new BufferedResponseWrapper(mockResp, 0);
+    w.addHeader("X-Trace-Id", "abc123");
+    assertEquals("abc123", mockResp.getHeader("X-Trace-Id"));
+  }
+
+  // --- commitToResponse idempotency ---
+
+  @Test(expected = IllegalStateException.class)
+  public void commitToResponse_secondCall_throwsIllegalState() throws IOException {
+    BufferedResponseWrapper w = new BufferedResponseWrapper(mockResp, 0);
+    w.commitToResponse();
+    w.commitToResponse();
+  }
+
+  // --- getWriter path ---
+
+  @Test
+  public void writeViaWriter_commitToResponse_flushesBody() throws IOException {
+    BufferedResponseWrapper w = new BufferedResponseWrapper(mockResp, 0);
+    w.getWriter().print("hello");
+    w.getWriter().flush();
+    w.commitToResponse();
+    assertEquals("hello", mockResp.getContentAsString());
   }
 }
