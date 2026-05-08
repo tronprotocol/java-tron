@@ -27,6 +27,12 @@ public class JsonTest {
   }
 
   @Test
+  public void testDupFieldNames() {
+    assertEquals(2, JSON.parseObject("{a:1, a:2 }").getIntValue("a"));
+    assertEquals(1, JSON.parseObject("{a:2, a:1 }").getIntValue("a"));
+  }
+
+  @Test
   public void testSingleQuotes() {
     assertEquals(1,  JSON.parseObject("{'a':'1'}").getIntValue("a"));
   }
