@@ -5,6 +5,7 @@ import static org.tron.common.math.Maths.max;
 import static org.tron.core.Constant.ADD_PRE_FIX_BYTE_MAINNET;
 import static org.tron.core.Constant.ENERGY_LIMIT_IN_CONSTANT_TX;
 import static org.tron.core.config.args.InetUtil.resolveInetAddress;
+import static org.tron.core.config.args.InetUtil.resolveInetSocketAddressList;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.ParameterDescription;
@@ -315,10 +316,7 @@ public class Args extends CommonParameter {
     // seed.node — top-level config section, not under "node"
     // Config structure is arguably misplaced but preserved for backward compatibility
     PARAMETER.seedNode = new SeedNode();
-    PARAMETER.seedNode.setAddressList(
-        mc.getSeedNodeIpList().stream()
-            .map(s -> org.tron.p2p.utils.NetUtil.parseInetSocketAddress(s))
-            .collect(Collectors.toList()));
+    PARAMETER.seedNode.setAddressList(resolveInetSocketAddressList(mc.getSeedNodeIpList()));
   }
 
   /**
@@ -916,10 +914,7 @@ public class Args extends CommonParameter {
     if (!cmd.seedNodes.isEmpty()) {
       logger.warn("Positional seed-node arguments are deprecated. "
           + "Please use seed.node.ip.list in the config file instead.");
-      List<InetSocketAddress> seeds = new ArrayList<>();
-      for (String s : cmd.seedNodes) {
-        seeds.add(NetUtil.parseInetSocketAddress(s));
-      }
+      List<InetSocketAddress> seeds = resolveInetSocketAddressList(cmd.seedNodes);
       PARAMETER.seedNode.setAddressList(seeds);
     }
   }
@@ -992,7 +987,7 @@ public class Args extends CommonParameter {
   public static List<InetSocketAddress> filterInetSocketAddress(
       List<String> addressList, boolean filter) {
     List<InetSocketAddress> ret = new ArrayList<>();
-    for (InetSocketAddress inetSocketAddress : InetUtil.resolveInetSocketAddressList(addressList)) {
+    for (InetSocketAddress inetSocketAddress : resolveInetSocketAddressList(addressList)) {
       if (filter) {
         String ip = inetSocketAddress.getAddress().getHostAddress();
         int port = inetSocketAddress.getPort();

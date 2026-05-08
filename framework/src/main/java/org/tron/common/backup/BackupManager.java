@@ -207,9 +207,7 @@ public class BackupManager implements EventHandler {
       if (!newIp.equals(oldIp)) {
         logger.info("DNS refresh: backup member {} IP changed {} -> {}", domain, oldIp, newIp);
         members.remove(oldIp);
-        if (!localIp.equals(newIp)) {
-          members.add(newIp);
-        }
+        members.add(newIp);
         domainIpCache.put(domain, newIp);
       }
     }

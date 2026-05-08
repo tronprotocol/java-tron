@@ -8,9 +8,9 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.BiFunction;
@@ -49,7 +49,7 @@ public class InetUtil {
    * </ul>
    *
    * @param ipOrDomainWithPortList list of address strings in {@code ipOrDomain:port} format,
-   *     may mix IP literals and domain names
+   * may mix IP literals and domain names
    * @return resolved addresses in the same order as the input, omitting unresolvable entries
    */
   public static List<InetSocketAddress> resolveInetSocketAddressList(
@@ -71,36 +71,7 @@ public class InetUtil {
     }
 
     // Resolve domain names: spin up a thread pool only when there are multiple domains.
-    Map<String, InetSocketAddress> resolvedDomains = new HashMap<>();
-    if (domainEntries.size() > 1) {
-      int poolSize = StrictMath.min(domainEntries.size(), DNS_POOL_MAX_SIZE);
-      ExecutorService dnsPool = ExecutorServiceManager
-          .newFixedThreadPool(DNS_POOL_NAME, poolSize, true);
-      List<Future<InetSocketAddress>> futures = new ArrayList<>(domainEntries.size());
-      for (String entry : domainEntries) {
-        futures.add(dnsPool.submit(() -> resolveInetSocketAddress(entry)));
-      }
-      for (int i = 0; i < domainEntries.size(); i++) {
-        String entry = domainEntries.get(i);
-        try {
-          resolvedDomains.put(entry,
-              futures.get(i).get(DNS_LOOKUP_TIMEOUT_SECONDS, TimeUnit.SECONDS));
-        } catch (InterruptedException e) {
-          Thread.currentThread().interrupt();
-          logger.warn("DNS lookup interrupted for: {}", entry);
-          break;
-        } catch (ExecutionException e) {
-          logger.warn("Failed to resolve address, skip: {}", entry);
-        } catch (TimeoutException e) {
-          logger.warn("DNS lookup timed out after {}s, skip: {}", DNS_LOOKUP_TIMEOUT_SECONDS,
-              entry);
-        }
-      }
-      ExecutorServiceManager.shutdownAndAwaitTermination(dnsPool, DNS_POOL_NAME);
-    } else if (domainEntries.size() == 1) {
-      String entry = domainEntries.get(0);
-      resolvedDomains.put(entry, resolveInetSocketAddress(entry));
-    }
+    Map<String, InetSocketAddress> resolvedDomains = resolveDomainsInParallel(domainEntries);
 
     // Build the result list preserving the original config order.
     for (Map.Entry<String, InetSocketAddress> entry : parsedMap.entrySet()) {
@@ -114,6 +85,58 @@ public class InetUtil {
       }
     }
     return result;
+  }
+
+  private static Map<String, InetSocketAddress> resolveDomainsInParallel(
+      List<String> domainEntries) {
+    Map<String, InetSocketAddress> resolved = new HashMap<>();
+    if (domainEntries.isEmpty()) {
+      return resolved;
+    }
+
+    int poolSize = StrictMath.min(domainEntries.size(), DNS_POOL_MAX_SIZE);
+    ExecutorService dnsPool = ExecutorServiceManager
+        .newFixedThreadPool(DNS_POOL_NAME, poolSize, true);
+
+    try {
+      LinkedHashMap<String, CompletableFuture<InetSocketAddress>> futures =
+          new LinkedHashMap<>();
+      for (String entry : domainEntries) {
+        futures.put(entry, CompletableFuture.supplyAsync(
+            () -> resolveInetSocketAddress(entry), dnsPool));
+      }
+
+      // Single global deadline for all lookups combined.
+      try {
+        CompletableFuture
+            .allOf(futures.values().toArray(new CompletableFuture[0]))
+            .get(DNS_LOOKUP_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+      } catch (TimeoutException e) {
+        logger.warn("DNS lookup budget {}s exceeded, dropping unresolved entries",
+            DNS_LOOKUP_TIMEOUT_SECONDS);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+      } catch (ExecutionException ignored) {
+        // per-entry exceptions handled below
+      }
+
+      // Collect whatever finished; drop pending/failed entries.
+      for (Map.Entry<String, CompletableFuture<InetSocketAddress>> e : futures.entrySet()) {
+        CompletableFuture<InetSocketAddress> f = e.getValue();
+        if (f.isDone() && !f.isCompletedExceptionally()) {
+          InetSocketAddress addr = f.getNow(null);
+          if (addr != null) {
+            resolved.put(e.getKey(), addr);
+          }
+        } else {
+          logger.warn("DNS unresolved or timed out, skip: {}", e.getKey());
+        }
+      }
+    } finally {
+      ExecutorServiceManager.shutdownAndAwaitTermination(dnsPool, DNS_POOL_NAME);
+    }
+    logger.debug("DNS look up, src: {}, dst: {}", domainEntries.size(), resolved.size());
+    return resolved;
   }
 
   /**
