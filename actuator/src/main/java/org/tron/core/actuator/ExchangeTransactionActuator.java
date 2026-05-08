@@ -24,13 +24,12 @@ import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.ExchangeStore;
 import org.tron.core.store.ExchangeV2Store;
-import org.tron.core.utils.TransactionUtil;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.contract.ExchangeContract.ExchangeTransactionContract;
 
 @Slf4j(topic = "actuator")
-public class ExchangeTransactionActuator extends AbstractActuator {
+public class ExchangeTransactionActuator extends AbstractExchangeActuator {
 
   public ExchangeTransactionActuator() {
     super(ContractType.ExchangeTransactionContract, ExchangeTransactionContract.class);
@@ -56,8 +55,8 @@ public class ExchangeTransactionActuator extends AbstractActuator {
           .get(exchangeTransactionContract.getOwnerAddress().toByteArray());
 
       ExchangeCapsule exchangeCapsule = Commons
-          .getExchangeStoreFinal(dynamicStore, exchangeStore, exchangeV2Store).
-              get(ByteArray.fromLong(exchangeTransactionContract.getExchangeId()));
+          .getExchangeStoreFinal(dynamicStore, exchangeStore, exchangeV2Store)
+          .get(ByteArray.fromLong(exchangeTransactionContract.getExchangeId()));
 
       byte[] firstTokenID = exchangeCapsule.getFirstTokenId();
       byte[] secondTokenID = exchangeCapsule.getSecondTokenId();
@@ -67,7 +66,7 @@ public class ExchangeTransactionActuator extends AbstractActuator {
 
       byte[] anotherTokenID;
       long anotherTokenQuant = exchangeCapsule.transaction(tokenID, tokenQuant,
-          dynamicStore.allowStrictMath());
+          dynamicStore.allowStrictMath(), allowHarden());
 
       if (Arrays.equals(tokenID, firstTokenID)) {
         anotherTokenID = secondTokenID;
@@ -75,17 +74,17 @@ public class ExchangeTransactionActuator extends AbstractActuator {
         anotherTokenID = firstTokenID;
       }
 
-      long newBalance = accountCapsule.getBalance() - calcFee();
+      long newBalance = subtractExact(accountCapsule.getBalance(), calcFee());
       accountCapsule.setBalance(newBalance);
 
       if (Arrays.equals(tokenID, TRX_SYMBOL_BYTES)) {
-        accountCapsule.setBalance(newBalance - tokenQuant);
+        accountCapsule.setBalance(subtractExact(newBalance, tokenQuant));
       } else {
         accountCapsule.reduceAssetAmountV2(tokenID, tokenQuant, dynamicStore, assetIssueStore);
       }
 
       if (Arrays.equals(anotherTokenID, TRX_SYMBOL_BYTES)) {
-        accountCapsule.setBalance(newBalance + anotherTokenQuant);
+        accountCapsule.setBalance(addExact(newBalance, anotherTokenQuant));
       } else {
         accountCapsule
             .addAssetAmountV2(anotherTokenID, anotherTokenQuant, dynamicStore, assetIssueStore);
@@ -98,7 +97,8 @@ public class ExchangeTransactionActuator extends AbstractActuator {
 
       ret.setExchangeReceivedAmount(anotherTokenQuant);
       ret.setStatus(fee, code.SUCESS);
-    } catch (ItemNotFoundException | InvalidProtocolBufferException e) {
+    } catch (ItemNotFoundException | InvalidProtocolBufferException
+        | ContractValidateException | ArithmeticException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
       throw new ContractExeException(e.getMessage());
@@ -109,6 +109,14 @@ public class ExchangeTransactionActuator extends AbstractActuator {
 
   @Override
   public boolean validate() throws ContractValidateException {
+    try {
+      return doValidate();
+    } catch (ArithmeticException e) {
+      throw new ContractValidateException(e.getMessage());
+    }
+  }
+
+  private boolean doValidate() throws ContractValidateException {
     if (this.any == null) {
       throw new ContractValidateException(ActuatorConstant.CONTRACT_NOT_EXIST);
     }
@@ -150,8 +158,8 @@ public class ExchangeTransactionActuator extends AbstractActuator {
 
     ExchangeCapsule exchangeCapsule;
     try {
-      exchangeCapsule = Commons.getExchangeStoreFinal(dynamicStore, exchangeStore, exchangeV2Store).
-          get(ByteArray.fromLong(contract.getExchangeId()));
+      exchangeCapsule = Commons.getExchangeStoreFinal(dynamicStore, exchangeStore, exchangeV2Store)
+          .get(ByteArray.fromLong(contract.getExchangeId()));
     } catch (ItemNotFoundException ex) {
       throw new ContractValidateException("Exchange[" + contract.getExchangeId()
           + ActuatorConstant.NOT_EXIST_STR);
@@ -166,9 +174,9 @@ public class ExchangeTransactionActuator extends AbstractActuator {
     long tokenQuant = contract.getQuant();
     long tokenExpected = contract.getExpected();
 
-    if (dynamicStore.getAllowSameTokenName() == 1 &&
-        !Arrays.equals(tokenID, TRX_SYMBOL_BYTES) &&
-        !isNumber(tokenID)) {
+    if (dynamicStore.getAllowSameTokenName() == 1
+        && !Arrays.equals(tokenID, TRX_SYMBOL_BYTES)
+        && !isNumber(tokenID)) {
       throw new ContractValidateException("token id is not a valid number");
     }
     if (!Arrays.equals(tokenID, firstTokenID) && !Arrays.equals(tokenID, secondTokenID)) {
@@ -191,13 +199,13 @@ public class ExchangeTransactionActuator extends AbstractActuator {
     long balanceLimit = dynamicStore.getExchangeBalanceLimit();
     long tokenBalance = (Arrays.equals(tokenID, firstTokenID) ? firstTokenBalance
         : secondTokenBalance);
-    tokenBalance += tokenQuant;
+    tokenBalance = addExact(tokenBalance, tokenQuant);
     if (tokenBalance > balanceLimit) {
       throw new ContractValidateException("token balance must less than " + balanceLimit);
     }
 
     if (Arrays.equals(tokenID, TRX_SYMBOL_BYTES)) {
-      if (accountCapsule.getBalance() < (tokenQuant + calcFee())) {
+      if (accountCapsule.getBalance() < addExact(tokenQuant, calcFee())) {
         throw new ContractValidateException("balance is not enough");
       }
     } else {
@@ -207,7 +215,7 @@ public class ExchangeTransactionActuator extends AbstractActuator {
     }
 
     long anotherTokenQuant = exchangeCapsule.transaction(tokenID, tokenQuant,
-        dynamicStore.allowStrictMath());
+        dynamicStore.allowStrictMath(), allowHarden());
     if (anotherTokenQuant < tokenExpected) {
       throw new ContractValidateException("token required must greater than expected");
     }

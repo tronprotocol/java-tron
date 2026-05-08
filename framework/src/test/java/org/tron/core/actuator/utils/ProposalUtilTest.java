@@ -345,6 +345,8 @@ public class ProposalUtilTest extends BaseTest {
 
     testAllowHardenResourceCalculationProposal();
 
+    testAllowHardenExchangeCalculationProposal();
+
     forkUtils.getManager().getDynamicPropertiesStore()
         .statsByVersion(ForkBlockVersionEnum.ENERGY_LIMIT.getValue(), stats);
     forkUtils.reset();
@@ -611,6 +613,68 @@ public class ProposalUtilTest extends BaseTest {
     Assert.assertEquals(
         "[ALLOW_HARDEN_RESOURCE_CALCULATION] has been valid, no need to propose again",
         e3.getMessage());
+  }
+
+  private void testAllowHardenExchangeCalculationProposal() {
+    long code = ProposalType.ALLOW_HARDEN_EXCHANGE_CALCULATION.getCode();
+    ThrowingRunnable proposeZero = () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+        code, 0);
+    ThrowingRunnable proposeOne = () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+        code, 1);
+    ThrowingRunnable proposeTwo = () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+        code, 2);
+
+    byte[] stats = new byte[27];
+    forkUtils.getManager().getDynamicPropertiesStore()
+        .statsByVersion(ForkBlockVersionEnum.VERSION_4_8_1.getValue(), stats);
+    long maintenanceTimeInterval = forkUtils.getManager().getDynamicPropertiesStore()
+        .getMaintenanceTimeInterval();
+    long hardForkTime =
+        ((ForkBlockVersionEnum.VERSION_4_8_2.getHardForkTime() - 1) / maintenanceTimeInterval + 1)
+            * maintenanceTimeInterval;
+    forkUtils.getManager().getDynamicPropertiesStore()
+        .saveLatestBlockHeaderTimestamp(hardForkTime - 1);
+
+    // 1) before fork 4.8.2 -> rejected
+    ContractValidateException thrown = assertThrows(ContractValidateException.class, proposeOne);
+    assertEquals("Bad chain parameter id [ALLOW_HARDEN_EXCHANGE_CALCULATION]",
+        thrown.getMessage());
+
+    forkUtils.getManager().getDynamicPropertiesStore()
+        .saveLatestBlockHeaderTimestamp(hardForkTime + 1);
+    Arrays.fill(stats, (byte) 1);
+    forkUtils.getManager().getDynamicPropertiesStore()
+        .statsByVersion(ForkBlockVersionEnum.VERSION_4_8_2.getValue(), stats);
+
+    // 2) value not in {0, 1} -> rejected
+    thrown = assertThrows(ContractValidateException.class, proposeTwo);
+    assertEquals("This value[ALLOW_HARDEN_EXCHANGE_CALCULATION] is only allowed to be 0 or 1",
+        thrown.getMessage());
+
+    // 3) current value is 0 (default), proposing 0 again -> rejected
+    thrown = assertThrows(ContractValidateException.class, proposeZero);
+    assertEquals("[ALLOW_HARDEN_EXCHANGE_CALCULATION] has been set to 0, no need to propose again",
+        thrown.getMessage());
+
+    // 4) value=1 to enable -> ok
+    try {
+      proposeOne.run();
+    } catch (Throwable e) {
+      Assert.fail("Should pass when toggling 0 -> 1: " + e.getMessage());
+    }
+
+    // 5) after activation, proposing 1 again -> rejected
+    dynamicPropertiesStore.saveAllowHardenExchangeCalculation(1);
+    thrown = assertThrows(ContractValidateException.class, proposeOne);
+    assertEquals("[ALLOW_HARDEN_EXCHANGE_CALCULATION] has been set to 1, no need to propose again",
+        thrown.getMessage());
+
+    // 6) value=0 to disable -> ok (toggle back off)
+    try {
+      proposeZero.run();
+    } catch (Throwable e) {
+      Assert.fail("Should pass when toggling 1 -> 0: " + e.getMessage());
+    }
   }
 
   private void testAllowMarketTransaction() {

@@ -1485,6 +1485,11 @@ public class Wallet {
         .setValue(dbManager.getDynamicPropertiesStore().getAllowHardenResourceCalculation())
         .build());
 
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAllowHardenExchangeCalculation")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowHardenExchangeCalculation())
+        .build());
+
     return builder.build();
   }
 

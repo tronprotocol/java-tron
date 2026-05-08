@@ -98,6 +98,7 @@ import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.contract.AccountContract;
 import org.tron.protos.contract.AssetIssueContractOuterClass;
 import org.tron.protos.contract.BalanceContract.TransferContract;
+import org.tron.protos.contract.ExchangeContract.ExchangeTransactionContract;
 import org.tron.protos.contract.ShieldContract;
 
 
@@ -1281,6 +1282,52 @@ public class ManagerTest extends BaseMethodTest {
 
     Assert.assertEquals(2, transactionInfoList.getTransactionInfoCount());
     Assert.assertEquals(2, transactionInfoList.getTransactionInfoList().size());
+  }
+
+  @Test
+  public void isExchangeTransactionBypassedWhenHardenedEnabled() throws Exception {
+    Transaction exchange = Transaction.newBuilder().setRawData(
+        Transaction.raw.newBuilder().addContract(
+            Transaction.Contract.newBuilder()
+                .setType(ContractType.ExchangeTransactionContract)
+                .setParameter(Any.pack(ExchangeTransactionContract.newBuilder()
+                    .setExchangeId(1L).setQuant(1L).setExpected(1L).build()))
+                .build())).build();
+
+    java.lang.reflect.Method m = Manager.class.getDeclaredMethod(
+        "isExchangeTransaction", Transaction.class);
+    m.setAccessible(true);
+
+    // Default: hardened disabled (==0) -> contract is treated as exchange
+    chainManager.getDynamicPropertiesStore().saveAllowHardenExchangeCalculation(0);
+    Assert.assertTrue("Exchange tx must be detected when hardened disabled",
+        (boolean) m.invoke(dbManager, exchange));
+
+    // Hardened enabled -> bypass returns false
+    chainManager.getDynamicPropertiesStore().saveAllowHardenExchangeCalculation(1);
+    Assert.assertFalse("Exchange tx must be bypassed when hardened enabled",
+        (boolean) m.invoke(dbManager, exchange));
+
+    // Reset
+    chainManager.getDynamicPropertiesStore().saveAllowHardenExchangeCalculation(0);
+  }
+
+  @Test
+  public void isExchangeTransactionNonExchangeContractReturnsFalse() throws Exception {
+    Transaction transfer = Transaction.newBuilder().setRawData(
+        Transaction.raw.newBuilder().addContract(
+            Transaction.Contract.newBuilder()
+                .setType(ContractType.TransferContract)
+                .setParameter(Any.pack(TransferContract.newBuilder().build()))
+                .build())).build();
+
+    java.lang.reflect.Method m = Manager.class.getDeclaredMethod(
+        "isExchangeTransaction", Transaction.class);
+    m.setAccessible(true);
+
+    chainManager.getDynamicPropertiesStore().saveAllowHardenExchangeCalculation(0);
+    Assert.assertFalse("Non-exchange contract must return false",
+        (boolean) m.invoke(dbManager, transfer));
   }
 
   @Test
