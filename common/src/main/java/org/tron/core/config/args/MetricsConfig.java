@@ -39,7 +39,7 @@ public class MetricsConfig {
   public static MetricsConfig fromConfig(Config config) {
     Config defaults = BeanDefaults.toConfig(new MetricsConfig());
     Config section = config.hasPath("node.metrics")
-        ? config.getConfig("node.metrics").withFallback(defaults)
+        ? BeanDefaults.stripNullLeaves(config.getConfig("node.metrics")).withFallback(defaults)
         : defaults;
     return ConfigBeanFactory.create(section, MetricsConfig.class);
   }

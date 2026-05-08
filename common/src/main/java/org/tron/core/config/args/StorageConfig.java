@@ -33,37 +33,19 @@ public class StorageConfig {
   private TxCacheConfig txCache = new TxCacheConfig();
   private List<PropertyConfig> properties = new ArrayList<>();
 
-  // merkleRoot is a nested object (e.g. { reward-vi = "hash..." }) not a string.
-  // Excluded from auto-binding, handled by Storage class directly.
-  @Getter(lombok.AccessLevel.NONE)
-  @Setter(lombok.AccessLevel.NONE)
-  private Object merkleRoot;
-
   // Raw storage config sub-tree, kept for setCacheStrategies/setDbRoots which
   // have dynamic keys that ConfigBeanFactory cannot bind.
-  @Getter(lombok.AccessLevel.NONE)
   @Setter(lombok.AccessLevel.NONE)
   private Config rawStorageConfig;
 
-  public Config getRawStorageConfig() {
-    return rawStorageConfig;
-  }
-
   // LevelDB per-database option overrides (default, defaultM, defaultL).
   // Excluded from auto-binding: optional partial overrides that ConfigBeanFactory cannot handle.
-  @Getter(lombok.AccessLevel.NONE)
   @Setter(lombok.AccessLevel.NONE)
   private DbOptionOverride defaultDbOption;
-  @Getter(lombok.AccessLevel.NONE)
   @Setter(lombok.AccessLevel.NONE)
   private DbOptionOverride defaultMDbOption;
-  @Getter(lombok.AccessLevel.NONE)
   @Setter(lombok.AccessLevel.NONE)
   private DbOptionOverride defaultLDbOption;
-
-  public DbOptionOverride getDefaultDbOption() { return defaultDbOption; }
-  public DbOptionOverride getDefaultMDbOption() { return defaultMDbOption; }
-  public DbOptionOverride getDefaultLDbOption() { return defaultLDbOption; }
 
   @Getter
   @Setter
@@ -212,7 +194,7 @@ public class StorageConfig {
     // readDbOption() uses hasPath() on the merged section, so user-set optional keys
     // (default, defaultM, defaultL) are still detected correctly.
     Config section = config.hasPath("storage")
-        ? config.getConfig("storage").withFallback(defaults)
+        ? BeanDefaults.stripNullLeaves(config.getConfig("storage")).withFallback(defaults)
         : defaults;
     StorageConfig sc = ConfigBeanFactory.create(section, StorageConfig.class);
     sc.rawStorageConfig = section;

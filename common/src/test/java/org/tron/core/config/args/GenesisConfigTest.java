@@ -22,10 +22,10 @@ public class GenesisConfigTest {
   public void testDefaults() {
     Config empty = withRef();
     GenesisConfig gc = GenesisConfig.fromConfig(empty);
-    // reference.conf has genesis.block with timestamp, parentHash, assets, witnesses
-    assertEquals("0", gc.getTimestamp());
-    assertFalse(gc.getAssets().isEmpty());  // reference.conf has seed accounts
-    assertFalse(gc.getWitnesses().isEmpty()); // reference.conf has seed witnesses
+    // BeanDefaults: timestamp/parentHash default to "", assets/witnesses to empty lists
+    assertEquals("", gc.getTimestamp());
+    assertTrue(gc.getAssets().isEmpty());
+    assertTrue(gc.getWitnesses().isEmpty());
   }
 
   @Test

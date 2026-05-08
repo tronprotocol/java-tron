@@ -2,6 +2,9 @@ package org.tron.core.config;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import com.typesafe.config.ConfigObject;
+import com.typesafe.config.ConfigValue;
+import com.typesafe.config.ConfigValueType;
 import java.beans.BeanInfo;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
@@ -41,6 +44,45 @@ public final class BeanDefaults {
    */
   public static Config toConfig(Object bean) {
     return ConfigFactory.parseMap(toMap(bean));
+  }
+
+  /**
+   * Returns a copy of {@code config} with all null-valued leaf paths removed.
+   * Call this on a user-supplied config section before {@link Config#withFallback}
+   * so that HOCON {@code null} entries in legacy configs do not shadow bean defaults.
+   *
+   * <p>Uses {@link ConfigObject#entrySet()} (not {@link Config#entrySet()}) because
+   * the latter silently excludes null values, making them impossible to detect.
+   */
+  public static Config stripNullLeaves(Config config) {
+    return stripNullObject(config.root()).toConfig();
+  }
+
+  /**
+   * Returns a copy of {@code config} where the value at {@code fromKey} is moved to
+   * {@code toKey}, leaving the original key absent. If {@code fromKey} is absent, the
+   * config is returned unchanged. Use this in {@code fromConfig()} to bridge config keys
+   * that violate JavaBean naming (e.g. {@code pBFTExpireNum} → {@code PBFTExpireNum}) so
+   * that {@code ConfigBeanFactory} finds the value under the key it derives from the setter.
+   */
+  public static Config remapKey(Config config, String fromKey, String toKey) {
+    if (!config.hasPath(fromKey)) {
+      return config;
+    }
+    return config.withValue(toKey, config.getValue(fromKey)).withoutPath(fromKey);
+  }
+
+  private static ConfigObject stripNullObject(ConfigObject obj) {
+    ConfigObject result = obj;
+    for (Map.Entry<String, ConfigValue> entry : obj.entrySet()) {
+      ConfigValue v = entry.getValue();
+      if (v.valueType() == ConfigValueType.NULL) {
+        result = result.withoutKey(entry.getKey());
+      } else if (v.valueType() == ConfigValueType.OBJECT) {
+        result = result.withValue(entry.getKey(), stripNullObject((ConfigObject) v));
+      }
+    }
+    return result;
   }
 
   private static Map<String, Object> toMap(Object bean) {

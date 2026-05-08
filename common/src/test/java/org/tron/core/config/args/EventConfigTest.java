@@ -22,11 +22,11 @@ public class EventConfigTest {
   public void testDefaults() {
     Config empty = withRef();
     EventConfig ec = EventConfig.fromConfig(empty);
-    // reference.conf has event.subscribe with enable=false, topics with 7 entries
+    // BeanDefaults provides scalar defaults; topics list is empty by default (user must configure)
     assertFalse(ec.isEnable());
     assertEquals(0, ec.getVersion());
     assertEquals("", ec.getPath());
-    assertFalse(ec.getTopics().isEmpty()); // reference.conf has default topic entries
+    assertTrue(ec.getTopics().isEmpty());
   }
 
   @Test

@@ -70,7 +70,7 @@ public class RateLimiterConfig {
   public static RateLimiterConfig fromConfig(Config config) {
     Config defaults = BeanDefaults.toConfig(new RateLimiterConfig());
     Config section = config.hasPath("rate.limiter")
-        ? config.getConfig("rate.limiter").withFallback(defaults)
+        ? BeanDefaults.stripNullLeaves(config.getConfig("rate.limiter")).withFallback(defaults)
         : defaults;
     return ConfigBeanFactory.create(section, RateLimiterConfig.class);
   }

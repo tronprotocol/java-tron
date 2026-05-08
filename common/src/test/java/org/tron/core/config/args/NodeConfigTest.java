@@ -105,10 +105,10 @@ public class NodeConfigTest {
     NodeConfig.RpcConfig rpc = nc.getRpc();
 
     // reference.conf provides actual final defaults, no sentinel conversion needed
-    assertEquals(2147483647, rpc.getMaxConcurrentCallsPerConnection());
+    assertEquals(Integer.MAX_VALUE, rpc.getMaxConcurrentCallsPerConnection());
     assertEquals(1048576, rpc.getFlowControlWindow());
-    assertEquals(9223372036854775807L, rpc.getMaxConnectionIdleInMillis());
-    assertEquals(9223372036854775807L, rpc.getMaxConnectionAgeInMillis());
+    assertEquals(Long.MAX_VALUE, rpc.getMaxConnectionIdleInMillis());
+    assertEquals(Long.MAX_VALUE, rpc.getMaxConnectionAgeInMillis());
     assertEquals(4194304, rpc.getMaxMessageSize());
     assertEquals(8192, rpc.getMaxHeaderListSize());
     assertEquals(1, rpc.getMinEffectiveConnection());

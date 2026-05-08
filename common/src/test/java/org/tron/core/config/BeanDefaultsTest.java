@@ -213,4 +213,24 @@ public class BeanDefaultsTest {
     CommitteeConfig cc = ConfigBeanFactory.create(defaults, CommitteeConfig.class);
     Assert.assertEquals(0L, cc.getAllowCreationOfContracts());
   }
+
+  @Test
+  public void stripNullLeaves_removesNullPaths() {
+    Config cfg = ConfigFactory.parseString("a = null\nb = 1\nc.d = null\nc.e = 2");
+    Config stripped = BeanDefaults.stripNullLeaves(cfg);
+    Assert.assertFalse(stripped.hasPath("a"));
+    Assert.assertTrue(stripped.hasPath("b"));
+    Assert.assertFalse(stripped.hasPath("c.d"));
+    Assert.assertTrue(stripped.hasPath("c.e"));
+  }
+
+  @Test
+  public void nodeConfig_fromConfig_toleratesNullExternalIp() {
+    // Legacy configs used "node.discovery.external.ip = null" — must not throw.
+    Config cfg = ConfigFactory.parseString(
+        "node { discovery { external { ip = null } } }");
+    NodeConfig nc = NodeConfig.fromConfig(cfg);
+    Assert.assertNotNull(nc);
+    Assert.assertEquals("", nc.getDiscoveryExternalIp());
+  }
 }

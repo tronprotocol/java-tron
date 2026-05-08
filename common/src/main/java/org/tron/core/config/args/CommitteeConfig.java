@@ -2,6 +2,7 @@ package org.tron.core.config.args;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigBeanFactory;
+import com.typesafe.config.ConfigFactory;
 import org.tron.core.config.BeanDefaults;
 import lombok.Getter;
 import lombok.Setter;
@@ -36,29 +37,8 @@ public class CommitteeConfig {
   private long allowProtoFilterNum = 0;
   private long allowAccountStateRoot = 0;
   private long changedDelegation = 0;
-  // NON-STANDARD NAMING: "allowPBFT" and "pBFTExpireNum" in config.conf contain
-  // consecutive uppercase letters ("PBFT"), which violates JavaBean naming convention.
-  // ConfigBeanFactory derives config keys from setter names using JavaBean rules:
-  //   setPBFTExpireNum -> property "PBFTExpireNum" (capital P, per JavaBean spec)
-  //   but config.conf uses "pBFTExpireNum" (lowercase p) -> mismatch -> binding fails.
-  //
-  // These two fields are excluded from auto-binding and handled manually in fromConfig().
-  // TODO: Rename config keys to standard camelCase (allowPbft, pbftExpireNum) when
-  //       PBFT feature is enabled and a breaking config change is acceptable.
-  @Getter(lombok.AccessLevel.NONE)
-  @Setter(lombok.AccessLevel.NONE)
   private long allowPBFT = 0;
-  @Getter(lombok.AccessLevel.NONE)
-  @Setter(lombok.AccessLevel.NONE)
   private long pBFTExpireNum = 20;
-
-  // Only getters are exposed. No public setters — ConfigBeanFactory scans public
-  // setters via reflection and would derive key "PBFTExpireNum" / "AllowPBFT"
-  // (JavaBean uppercase rule), which does not match config keys "pBFTExpireNum"
-  // / "allowPBFT" and would throw. Values are assigned to fields directly in
-  // fromConfig() below.
-  public long getAllowPBFT() { return allowPBFT; }
-  public long getPBFTExpireNum() { return pBFTExpireNum; }
   private long allowTvmFreeze = 0;
   private long allowTvmVote = 0;
   private long allowTvmLondon = 0;
@@ -88,27 +68,17 @@ public class CommitteeConfig {
 
   // proposalExpireTime is NOT a committee field — it's in block.* and handled by BlockConfig
 
-  /**
-   * Create CommitteeConfig from the "committee" section of the application config.
-   *
-   * Note: allowPBFT and pBFTExpireNum have non-standard JavaBean naming (consecutive
-   * uppercase letters) which causes ConfigBeanFactory key mismatch. These two fields
-   * are excluded from automatic binding and handled manually after.
-   */
-  private static final String PBFT_EXPIRE_NUM_KEY = "pBFTExpireNum";
-  private static final String ALLOW_PBFT_KEY = "allowPBFT";
-
   public static CommitteeConfig fromConfig(Config config) {
     Config defaults = BeanDefaults.toConfig(new CommitteeConfig());
-    Config section = config.hasPath("committee")
-        ? config.getConfig("committee").withFallback(defaults)
-        : defaults;
+    Config userSection = config.hasPath("committee")
+        ? BeanDefaults.stripNullLeaves(config.getConfig("committee"))
+        : ConfigFactory.empty();
+    // pBFTExpireNum: config key uses lowercase-p prefix, but setPBFTExpireNum causes
+    // Introspector to derive "PBFTExpireNum" (consecutive uppercase prevents decapitalization).
+    // Remap so ConfigBeanFactory finds it under the expected key.
+    userSection = BeanDefaults.remapKey(userSection, "pBFTExpireNum", "PBFTExpireNum");
+    Config section = userSection.withFallback(defaults);
     CommitteeConfig cc = ConfigBeanFactory.create(section, CommitteeConfig.class);
-    // Ensure the manually-named fields get the right values from the original keys
-    cc.allowPBFT = section.hasPath(ALLOW_PBFT_KEY) ? section.getLong(ALLOW_PBFT_KEY) : 0;
-    cc.pBFTExpireNum = section.hasPath(PBFT_EXPIRE_NUM_KEY)
-        ? section.getLong(PBFT_EXPIRE_NUM_KEY) : 20;
-
     cc.postProcess();
     return cc;
   }

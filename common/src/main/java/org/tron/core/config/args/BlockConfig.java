@@ -7,10 +7,10 @@ import static org.tron.core.exception.TronError.ErrCode.PARAMETER_INIT;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigBeanFactory;
-import org.tron.core.config.BeanDefaults;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.tron.core.config.BeanDefaults;
 import org.tron.core.exception.TronError;
 
 /**
@@ -22,7 +22,7 @@ import org.tron.core.exception.TronError;
 public class BlockConfig {
 
   private boolean needSyncCheck = false;
-  private long maintenanceTimeInterval = 21600000L;
+  private long maintenanceTimeInterval = 6 * 3600 * 1000L; // 6 hours
   private long proposalExpireTime = DEFAULT_PROPOSAL_EXPIRE_TIME;
   private int checkFrozenTime = 1;
 
@@ -39,7 +39,7 @@ public class BlockConfig {
 
     Config defaults = BeanDefaults.toConfig(new BlockConfig());
     Config blockSection = config.hasPath("block")
-        ? config.getConfig("block").withFallback(defaults)
+        ? BeanDefaults.stripNullLeaves(config.getConfig("block")).withFallback(defaults)
         : defaults;
     BlockConfig blockConfig = ConfigBeanFactory.create(blockSection, BlockConfig.class);
     blockConfig.postProcess();

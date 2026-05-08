@@ -5,12 +5,12 @@ import static org.tron.core.config.Parameter.ChainConstant.MAX_ACTIVE_WITNESS_NU
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigBeanFactory;
 import com.typesafe.config.ConfigFactory;
-import org.tron.core.config.BeanDefaults;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.tron.core.config.BeanDefaults;
 
 // Node configuration bean for the "node" section of config.conf.
 // ConfigBeanFactory auto-binds all fields including sub-beans, dot-notation keys,
@@ -42,7 +42,9 @@ public class NodeConfig {
   @Setter(lombok.AccessLevel.NONE)
   private boolean isOpenFullTcpDisconnect = false;
 
-  public boolean isOpenFullTcpDisconnect() { return isOpenFullTcpDisconnect; }
+  public boolean isOpenFullTcpDisconnect() {
+    return isOpenFullTcpDisconnect;
+  }
 
   // node.discovery.* — HOCON merges into node { discovery { ... } }, auto-bound
   private DiscoveryConfig discovery = new DiscoveryConfig();
@@ -59,12 +61,30 @@ public class NodeConfig {
   @Setter(lombok.AccessLevel.NONE)
   private long shutdownBlockCount = -1;
 
-  public boolean isDiscoveryEnable() { return discovery.isEnable(); }
-  public boolean isDiscoveryPersist() { return discovery.isPersist(); }
-  public String getDiscoveryExternalIp() { return discovery.getExternal().getIp(); }
-  public String getShutdownBlockTime() { return shutdownBlockTime; }
-  public long getShutdownBlockHeight() { return shutdownBlockHeight; }
-  public long getShutdownBlockCount() { return shutdownBlockCount; }
+  public boolean isDiscoveryEnable() {
+    return discovery.isEnable();
+  }
+
+  public boolean isDiscoveryPersist() {
+    return discovery.isPersist();
+  }
+
+  public String getDiscoveryExternalIp() {
+    return discovery.getExternal().getIp();
+  }
+
+  public String getShutdownBlockTime() {
+    return shutdownBlockTime;
+  }
+
+  public long getShutdownBlockHeight() {
+    return shutdownBlockHeight;
+  }
+
+  public long getShutdownBlockCount() {
+    return shutdownBlockCount;
+  }
+
   private int inactiveThreshold = 600;
   private boolean metricsEnable = false;
   private int blockProducedTimeOut = 50;
@@ -101,12 +121,29 @@ public class NodeConfig {
   private SolidityConfig solidity = new SolidityConfig();
 
   // Convenience getters for backward compatibility with applyNodeConfig
-  public int getListenPort() { return listen.getPort(); }
-  public int getConnectionTimeout() { return connection.getTimeout(); }
-  public int getFetchBlockTimeout() { return fetchBlock.getTimeout(); }
-  public int getSolidityThreads() { return solidity.getThreads(); }
-  public int getChannelReadTimeout() { return channel.getRead().getTimeout(); }
-  public int getValidContractProtoThreads() { return validContractProto.getThreads(); }
+  public int getListenPort() {
+    return listen.getPort();
+  }
+
+  public int getConnectionTimeout() {
+    return connection.getTimeout();
+  }
+
+  public int getFetchBlockTimeout() {
+    return fetchBlock.getTimeout();
+  }
+
+  public int getSolidityThreads() {
+    return solidity.getThreads();
+  }
+
+  public int getChannelReadTimeout() {
+    return channel.getRead().getTimeout();
+  }
+
+  public int getValidContractProtoThreads() {
+    return validContractProto.getThreads();
+  }
 
   // ---- List fields (manually read) ----
   private List<String> active = new ArrayList<>();
@@ -199,69 +236,30 @@ public class NodeConfig {
     private int fullNodePort = 8090;
     private boolean solidityEnable = true;
     private int solidityPort = 8091;
-    // PBFT fields — handled manually (same naming issue as CommitteeConfig)
-    // Default must match CommonParameter.pBFTHttpEnable = true
-    @Getter(lombok.AccessLevel.NONE)
-    @Setter(lombok.AccessLevel.NONE)
+    // pBFTEnable/pBFTPort: fromConfig() remaps "pBFTEnable"→"PBFTEnable" so
+    // ConfigBeanFactory finds these under the JavaBean-derived key name.
     private boolean pBFTEnable = true;
-    @Getter(lombok.AccessLevel.NONE)
-    @Setter(lombok.AccessLevel.NONE)
     private int pBFTPort = 8092;
-
-    public boolean isPBFTEnable() {
-      return pBFTEnable;
-    }
-
-    public void setPBFTEnable(boolean v) {
-      this.pBFTEnable = v;
-    }
-
-    public int getPBFTPort() {
-      return pBFTPort;
-    }
-
-    public void setPBFTPort(int v) {
-      this.pBFTPort = v;
-    }
   }
 
   @Getter
   @Setter
   public static class RpcConfig {
+
     private boolean enable = true;
     private int port = 50051;
     private boolean solidityEnable = true;
     private int solidityPort = 50061;
-    // PBFT fields — handled manually
-    @Getter(lombok.AccessLevel.NONE)
-    @Setter(lombok.AccessLevel.NONE)
+    // pBFTEnable/pBFTPort: remapped in NodeConfig.fromConfig() (same reason as HttpConfig).
     private boolean pBFTEnable = true;
-    @Getter(lombok.AccessLevel.NONE)
-    @Setter(lombok.AccessLevel.NONE)
     private int pBFTPort = 50071;
 
-    public boolean isPBFTEnable() {
-      return pBFTEnable;
-    }
-
-    public void setPBFTEnable(boolean v) {
-      this.pBFTEnable = v;
-    }
-
-    public int getPBFTPort() {
-      return pBFTPort;
-    }
-
-    public void setPBFTPort(int v) {
-      this.pBFTPort = v;
-    }
-
     private int thread = 0;
-    private int maxConcurrentCallsPerConnection = 2147483647;
-    private int flowControlWindow = 1048576;
+    private int maxConcurrentCallsPerConnection = Integer.MAX_VALUE;
+    private int flowControlWindow = 1024 * 1024;
     private long maxConnectionIdleInMillis = Long.MAX_VALUE;
     private long maxConnectionAgeInMillis = Long.MAX_VALUE;
-    private int maxMessageSize = 4194304;
+    private int maxMessageSize = 4 * 1024 * 1024;
     private int maxHeaderListSize = 8192;
     private int maxRstStream = 0;
     private int secondsPerWindow = 0;
@@ -273,33 +271,15 @@ public class NodeConfig {
   @Getter
   @Setter
   public static class JsonRpcConfig {
+
     private boolean httpFullNodeEnable = false;
     private int httpFullNodePort = 8545;
     private boolean httpSolidityEnable = false;
     private int httpSolidityPort = 8555;
-    // PBFT fields — handled manually
-    @Getter(lombok.AccessLevel.NONE)
-    @Setter(lombok.AccessLevel.NONE)
+    // httpPBFTEnable/httpPBFTPort: setHttpPBFTEnable → property "httpPBFTEnable" — matches
+    // config key directly, no remapping needed.
     private boolean httpPBFTEnable = false;
-    @Getter(lombok.AccessLevel.NONE)
-    @Setter(lombok.AccessLevel.NONE)
     private int httpPBFTPort = 8565;
-
-    public boolean isHttpPBFTEnable() {
-      return httpPBFTEnable;
-    }
-
-    public void setHttpPBFTEnable(boolean v) {
-      this.httpPBFTEnable = v;
-    }
-
-    public int getHttpPBFTPort() {
-      return httpPBFTPort;
-    }
-
-    public void setHttpPBFTPort(int v) {
-      this.httpPBFTPort = v;
-    }
 
     private int maxBlockRange = 5000;
     private int maxSubTopics = 1000;
@@ -352,20 +332,27 @@ public class NodeConfig {
    * solidity.threads) become nested HOCON objects and cannot be auto-bound to flat
    * Java fields. They are read manually after ConfigBeanFactory binding.
    *
-   * <p>PBFT-named fields in http, rpc, and jsonrpc sub-beans have the same JavaBean
-   * naming issue as CommitteeConfig and are patched manually.
+   * <p>pBFT-prefixed fields in http and rpc sub-beans are remapped before binding
+   * (pBFTEnable → PBFTEnable) because consecutive uppercase letters prevent
+   * Introspector from decapitalizing the JavaBean property name.
+   * jsonrpc.httpPBFT* binds directly (httpPBFTEnable → property "httpPBFTEnable" ✓).
    *
-   * <p>List fields (active, passive, fastForward, disabledApi) are read manually
-   * since ConfigBeanFactory expects typed bean lists, not string lists.
+   * <p>List fields (active, passive, fastForward, disabledApi) auto-bind via
+   * ConfigBeanFactory's List&lt;String&gt; support.
    */
   public static NodeConfig fromConfig(Config config) {
     Config defaults = BeanDefaults.toConfig(new NodeConfig());
-    Config section = config.hasPath("node")
-        ? config.getConfig("node").withFallback(defaults)
-        : defaults;
-    // Auto-bind all fields and sub-beans. ConfigBeanFactory fails fast with a
-    // descriptive path on any `= null` value — external configs that use the
-    // HOCON null keyword should fix their config rather than rely on silent coercion.
+    Config userSection = config.hasPath("node")
+        ? BeanDefaults.stripNullLeaves(config.getConfig("node"))
+        : ConfigFactory.empty();
+    // pBFTEnable/pBFTPort: config uses lowercase-p prefix; JavaBean derives "PBFTEnable"
+    // (consecutive uppercase prevents Introspector from decapitalizing). Remap so
+    // ConfigBeanFactory binds the user value instead of silently using the default.
+    userSection = BeanDefaults.remapKey(userSection, "http.pBFTEnable", "http.PBFTEnable");
+    userSection = BeanDefaults.remapKey(userSection, "http.pBFTPort",   "http.PBFTPort");
+    userSection = BeanDefaults.remapKey(userSection, "rpc.pBFTEnable",  "rpc.PBFTEnable");
+    userSection = BeanDefaults.remapKey(userSection, "rpc.pBFTPort",    "rpc.PBFTPort");
+    Config section = userSection.withFallback(defaults);
     NodeConfig nc = ConfigBeanFactory.create(section, NodeConfig.class);
 
     // isOpenFullTcpDisconnect: boolean "is" prefix breaks JavaBean pairing
@@ -390,7 +377,8 @@ public class NodeConfig {
     // Legacy key fallback: node.fullNodeAllowShieldedTransaction -> allowShieldedTransactionApi.
     // BeanDefaults does not emit this legacy key, so hasPath here reliably means the user
     // set it in their config. When present, it overrides the modern key.
-    if (section.hasPath("fullNodeAllowShieldedTransaction")) {
+    if (!section.hasPath("allowShieldedTransactionApi") &&
+        section.hasPath("fullNodeAllowShieldedTransaction")) {
       nc.allowShieldedTransactionApi = section.getBoolean("fullNodeAllowShieldedTransaction");
       logger.warn("Configuring [node.fullNodeAllowShieldedTransaction] will be deprecated. "
           + "Please use [node.allowShieldedTransactionApi] instead.");
@@ -402,7 +390,6 @@ public class NodeConfig {
         ? config.getLong("node.shutdown.BlockHeight") : -1;
     nc.shutdownBlockCount = config.hasPath("node.shutdown.BlockCount")
         ? config.getLong("node.shutdown.BlockCount") : -1;
-
 
     nc.postProcess();
     return nc;

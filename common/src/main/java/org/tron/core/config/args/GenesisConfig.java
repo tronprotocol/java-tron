@@ -45,7 +45,7 @@ public class GenesisConfig {
   public static GenesisConfig fromConfig(Config config) {
     Config defaults = BeanDefaults.toConfig(new GenesisConfig());
     Config section = config.hasPath("genesis.block")
-        ? config.getConfig("genesis.block").withFallback(defaults)
+        ? BeanDefaults.stripNullLeaves(config.getConfig("genesis.block")).withFallback(defaults)
         : defaults;
     return ConfigBeanFactory.create(section, GenesisConfig.class);
   }

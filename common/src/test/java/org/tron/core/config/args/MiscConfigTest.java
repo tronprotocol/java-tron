@@ -28,10 +28,9 @@ public class MiscConfigTest {
     assertEquals("solid", mc.getTrxReferenceBlock());
     assertEquals(Constant.TRANSACTION_DEFAULT_EXPIRATION_TIME,
         mc.getTrxExpirationTimeInMilliseconds());
-    // reference.conf has crypto.engine = "eckey" (lowercase)
-    assertEquals("eckey", mc.getCryptoEngine());
-    // reference.conf has seed.node.ip.list with actual IPs
-    assertFalse(mc.getSeedNodeIpList().isEmpty());
+    // BeanDefaults: cryptoEngine defaults to Constant.ECKey_ENGINE; seedNodeIpList defaults to empty
+    assertEquals(Constant.ECKey_ENGINE, mc.getCryptoEngine());
+    assertTrue(mc.getSeedNodeIpList().isEmpty());
     assertTrue(mc.getActuatorWhitelist().isEmpty());
   }
 

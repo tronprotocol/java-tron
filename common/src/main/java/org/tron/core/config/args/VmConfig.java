@@ -32,7 +32,7 @@ public class VmConfig {
   public static VmConfig fromConfig(Config config) {
     Config defaults = BeanDefaults.toConfig(new VmConfig());
     Config vmSection = config.hasPath("vm")
-        ? config.getConfig("vm").withFallback(defaults)
+        ? BeanDefaults.stripNullLeaves(config.getConfig("vm")).withFallback(defaults)
         : defaults;
     VmConfig vmConfig = ConfigBeanFactory.create(vmSection, VmConfig.class);
     vmConfig.postProcess();
