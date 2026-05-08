@@ -42,8 +42,8 @@ dependencies {
     implementation group: 'io.dropwizard.metrics', name: 'metrics-core', version: '3.1.2'
     implementation group: 'com.github.davidb', name: 'metrics-influxdb', version: '0.8.2'
     // http
-    implementation 'org.eclipse.jetty:jetty-server:9.4.57.v20241219'
-    implementation 'org.eclipse.jetty:jetty-servlet:9.4.57.v20241219'
+    implementation 'org.eclipse.jetty:jetty-server:9.4.58.v20250814'
+    implementation 'org.eclipse.jetty:jetty-servlet:9.4.58.v20250814'
     implementation 'com.alibaba:fastjson:1.2.83'
     // end http
 
@@ -53,7 +53,7 @@ dependencies {
     // https://mvnrepository.com/artifact/javax.portlet/portlet-api
     compileOnly group: 'javax.portlet', name: 'portlet-api', version: '3.0.1'
 
-    implementation (group: 'org.pf4j', name: 'pf4j', version: '3.10.0') {
+    implementation (group: 'org.pf4j', name: 'pf4j', version: '3.14.1') {
         exclude group: "org.slf4j", module: "slf4j-api"
     }
 

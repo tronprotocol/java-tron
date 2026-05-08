@@ -66,7 +66,8 @@ public class LogMatch {
               topicList,
               ByteArray.toHexString(log.getData().toByteArray()),
               logIndexInBlock,
-              removed
+              removed,
+              transactionInfo.getBlockTimeStamp()
           );
           matchedLog.add(logFilterElement);
         }

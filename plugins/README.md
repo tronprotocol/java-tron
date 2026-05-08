@@ -75,16 +75,20 @@ DB lite provides lite database, parameters are compatible with previous `LiteFul
 - `-fn | --fn-data-path`: The database path to be split or merged.
 - `-ds | --dataset-path`: When operation is `split`,`dataset-path` is the path that store the `snapshot` or `history`, when
   operation is `split`, `dataset-path` is the `history` data path.
+- `--exclude-historical-balance`: Only used with `operate=split -t snapshot`, default: false. When set to true, `balance-trace` and `account-trace` are excluded from the lite snapshot. The flag has functional impact only when the source full node ran with `historyBalanceLookup=true` (off by default; most operators are unaffected). **WARNING:** for nodes that had `historyBalanceLookup=true`, this loss is permanent — a lite node booted from such a snapshot cannot safely serve historical balance lookups (`getBlockBalance` may fail, and `getAccountBalance` may return `balance=0` when `account-trace` data is missing), and running `merge` afterwards will NOT restore the feature. If you need historical balance lookup on the resulting lite node, do **not** enable this flag. `split -t history` and `merge` ignore this flag.
 - `-h | --help`: Provide the help info.
 
 ### Examples:
 
 ```shell script
 # full command
-  java -jar Toolkit.jar db lite [-h] -ds=<datasetPath> -fn=<fnDataPath> [-o=<operate>] [-t=<type>]
+  java -jar Toolkit.jar db lite [-h] -ds=<datasetPath> -fn=<fnDataPath> [-o=<operate>] [-t=<type>] [--exclude-historical-balance]
 # examples
   #split and get a snapshot dataset
   java -jar Toolkit.jar db lite -o split -t snapshot --fn-data-path output-directory/database --dataset-path /tmp
+  #split and get a snapshot dataset without balance-trace / account-trace (smaller snapshot;
+  #historical balance lookup cannot be safely served on the resulting lite node)
+  java -jar Toolkit.jar db lite -o split -t snapshot --fn-data-path output-directory/database --dataset-path /tmp --exclude-historical-balance
   #split and get a history dataset
   java -jar Toolkit.jar db lite -o split -t history --fn-data-path output-directory/database --dataset-path /tmp
   #merge history dataset and snapshot dataset

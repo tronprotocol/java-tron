@@ -32,11 +32,6 @@ import static org.tron.core.config.Parameter.DatabaseConstants.MARKET_COUNT_LIMI
 import static org.tron.core.config.Parameter.DatabaseConstants.PROPOSAL_COUNT_LIMIT_MAX;
 import static org.tron.core.config.Parameter.DatabaseConstants.WITNESS_COUNT_LIMIT_MAX;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.parseEnergyFee;
-import static org.tron.core.services.jsonrpc.TronJsonRpcImpl.EARLIEST_STR;
-import static org.tron.core.services.jsonrpc.TronJsonRpcImpl.FINALIZED_STR;
-import static org.tron.core.services.jsonrpc.TronJsonRpcImpl.LATEST_STR;
-import static org.tron.core.services.jsonrpc.TronJsonRpcImpl.PENDING_STR;
-import static org.tron.core.services.jsonrpc.TronJsonRpcImpl.TAG_PENDING_SUPPORT_ERROR;
 import static org.tron.core.vm.utils.FreezeV2Util.getV2EnergyUsage;
 import static org.tron.core.vm.utils.FreezeV2Util.getV2NetUsage;
 import static org.tron.protos.contract.Common.ResourceCode;
@@ -193,7 +188,6 @@ import org.tron.core.exception.TransactionExpirationException;
 import org.tron.core.exception.VMIllegalException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.exception.ZksnarkException;
-import org.tron.core.exception.jsonrpc.JsonRpcInvalidParamsException;
 import org.tron.core.net.TronNetDelegate;
 import org.tron.core.net.TronNetService;
 import org.tron.core.net.message.adv.TransactionMessage;
@@ -247,7 +241,6 @@ import org.tron.protos.contract.BalanceContract;
 import org.tron.protos.contract.BalanceContract.BlockBalanceTrace;
 import org.tron.protos.contract.BalanceContract.TransferContract;
 import org.tron.protos.contract.Common;
-import org.tron.protos.contract.ShieldContract.IncrementalMerkleTree;
 import org.tron.protos.contract.ShieldContract.IncrementalMerkleVoucherInfo;
 import org.tron.protos.contract.ShieldContract.OutputPoint;
 import org.tron.protos.contract.ShieldContract.OutputPointInfo;
@@ -575,41 +568,41 @@ public class Wallet {
         return builder.setResult(true).setCode(response_code.SUCCESS).build();
       }
     } catch (ValidateSignatureException e) {
-      logger.warn(BROADCAST_TRANS_FAILED, txID, e.getMessage());
+      logger.info(BROADCAST_TRANS_FAILED, txID, e.getMessage());
       return builder.setResult(false).setCode(response_code.SIGERROR)
           .setMessage(ByteString.copyFromUtf8("Validate signature error: " + e.getMessage()))
           .build();
     } catch (ContractValidateException e) {
-      logger.warn(BROADCAST_TRANS_FAILED, txID, e.getMessage());
+      logger.info(BROADCAST_TRANS_FAILED, txID, e.getMessage());
       return builder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
           .setMessage(ByteString.copyFromUtf8(CONTRACT_VALIDATE_ERROR + e.getMessage()))
           .build();
     } catch (ContractExeException e) {
-      logger.warn(BROADCAST_TRANS_FAILED, txID, e.getMessage());
+      logger.info(BROADCAST_TRANS_FAILED, txID, e.getMessage());
       return builder.setResult(false).setCode(response_code.CONTRACT_EXE_ERROR)
           .setMessage(ByteString.copyFromUtf8("Contract execute error : " + e.getMessage()))
           .build();
     } catch (AccountResourceInsufficientException e) {
-      logger.warn(BROADCAST_TRANS_FAILED, txID, e.getMessage());
+      logger.info(BROADCAST_TRANS_FAILED, txID, e.getMessage());
       return builder.setResult(false).setCode(response_code.BANDWITH_ERROR)
           .setMessage(ByteString.copyFromUtf8("Account resource insufficient error."))
           .build();
     } catch (DupTransactionException e) {
-      logger.warn(BROADCAST_TRANS_FAILED, txID, e.getMessage());
+      logger.info(BROADCAST_TRANS_FAILED, txID, e.getMessage());
       return builder.setResult(false).setCode(response_code.DUP_TRANSACTION_ERROR)
           .setMessage(ByteString.copyFromUtf8("Dup transaction."))
           .build();
     } catch (TaposException e) {
-      logger.warn(BROADCAST_TRANS_FAILED, txID, e.getMessage());
+      logger.info(BROADCAST_TRANS_FAILED, txID, e.getMessage());
       return builder.setResult(false).setCode(response_code.TAPOS_ERROR)
           .setMessage(ByteString.copyFromUtf8("Tapos check error."))
           .build();
     } catch (TooBigTransactionException e) {
-      logger.warn(BROADCAST_TRANS_FAILED, txID, e.getMessage());
+      logger.info(BROADCAST_TRANS_FAILED, txID, e.getMessage());
       return builder.setResult(false).setCode(response_code.TOO_BIG_TRANSACTION_ERROR)
           .setMessage(ByteString.copyFromUtf8(e.getMessage())).build();
     } catch (TransactionExpirationException e) {
-      logger.warn(BROADCAST_TRANS_FAILED, txID, e.getMessage());
+      logger.info(BROADCAST_TRANS_FAILED, txID, e.getMessage());
       return builder.setResult(false).setCode(response_code.TRANSACTION_EXPIRATION_ERROR)
           .setMessage(ByteString.copyFromUtf8("Transaction expired"))
           .build();
@@ -711,6 +704,10 @@ public class Wallet {
     return chainBaseManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum();
   }
 
+  public long getHeadBlockNum() {
+    return chainBaseManager.getHeadBlockNum();
+  }
+
   public BlockCapsule getBlockCapsuleByNum(long blockNum) {
     try {
       return chainBaseManager.getBlockByNum(blockNum);
@@ -731,37 +728,6 @@ public class Wallet {
     }
 
     return count;
-  }
-
-  public Block getByJsonBlockId(String id) throws JsonRpcInvalidParamsException {
-    if (EARLIEST_STR.equalsIgnoreCase(id)) {
-      return getBlockByNum(0);
-    } else if (LATEST_STR.equalsIgnoreCase(id)) {
-      return getNowBlock();
-    } else if (FINALIZED_STR.equalsIgnoreCase(id)) {
-      return getSolidBlock();
-    } else if (PENDING_STR.equalsIgnoreCase(id)) {
-      throw new JsonRpcInvalidParamsException(TAG_PENDING_SUPPORT_ERROR);
-    } else {
-      long blockNumber;
-      try {
-        blockNumber = ByteArray.hexToBigInteger(id).longValue();
-      } catch (Exception e) {
-        throw new JsonRpcInvalidParamsException("invalid block number");
-      }
-
-      return getBlockByNum(blockNumber);
-    }
-  }
-
-  public List<Transaction> getTransactionsByJsonBlockId(String id)
-      throws JsonRpcInvalidParamsException {
-    if (PENDING_STR.equalsIgnoreCase(id)) {
-      throw new JsonRpcInvalidParamsException(TAG_PENDING_SUPPORT_ERROR);
-    } else {
-      Block block = getByJsonBlockId(id);
-      return block != null ? block.getTransactionsList() : null;
-    }
   }
 
   public WitnessList getWitnessList() {
@@ -1514,6 +1480,11 @@ public class Wallet {
         .setValue(dbManager.getDynamicPropertiesStore().getAllowTvmOsaka())
         .build());
 
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAllowHardenResourceCalculation")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowHardenResourceCalculation())
+        .build());
+
     return builder.build();
   }
 
@@ -2207,23 +2178,6 @@ public class Wallet {
     return result.build();
   }
 
-  public IncrementalMerkleTree getMerkleTreeOfBlock(long blockNum) throws ZksnarkException {
-    checkAllowShieldedTransactionApi();
-    if (blockNum < 0) {
-      return null;
-    }
-
-    try {
-      if (chainBaseManager.getMerkleTreeIndexStore().has(ByteArray.fromLong(blockNum))) {
-        return IncrementalMerkleTree
-            .parseFrom(chainBaseManager.getMerkleTreeIndexStore().get(blockNum));
-      }
-    } catch (Exception ex) {
-      logger.error("GetMerkleTreeOfBlock failed, blockNum:{}", blockNum, ex);
-    }
-
-    return null;
-  }
 
   public long getShieldedTransactionFee() {
     return chainBaseManager.getDynamicPropertiesStore().getShieldedTransactionFee();
@@ -2958,13 +2912,6 @@ public class Wallet {
     return builder.build();
   }
 
-  public Transaction deployContract(TransactionCapsule trxCap) {
-
-    // do nothing, so can add some useful function later
-    // trxCap contract para cacheUnpackValue has value
-
-    return trxCap.getInstance();
-  }
 
   public Transaction triggerContract(TriggerSmartContract
       triggerSmartContract,

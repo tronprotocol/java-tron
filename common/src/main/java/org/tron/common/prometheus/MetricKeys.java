@@ -14,6 +14,10 @@ public class MetricKeys {
     public static final String TXS = "tron:txs";
     public static final String MINER = "tron:miner";
     public static final String BLOCK_FORK = "tron:block_fork";
+    // witness label: bounded cardinality -- SR candidate pool is finite, rotation is
+    // infrequent (at most once per maintenance interval); kept for at-a-glance SR
+    // identification in dashboards rather than requiring log cross-referencing.
+    public static final String SR_SET_CHANGE = "tron:sr_set_change";
     public static final String P2P_ERROR = "tron:p2p_error";
     public static final String P2P_DISCONNECT = "tron:p2p_disconnect";
     public static final String INTERNAL_SERVICE_FAIL = "tron:internal_service_fail";
@@ -62,6 +66,7 @@ public class MetricKeys {
     public static final String MESSAGE_PROCESS_LATENCY = "tron:message_process_latency_seconds";
     public static final String BLOCK_FETCH_LATENCY = "tron:block_fetch_latency_seconds";
     public static final String BLOCK_RECEIVE_DELAY = "tron:block_receive_delay_seconds";
+    public static final String BLOCK_TRANSACTION_COUNT = "tron:block_transaction_count";
 
     private Histogram() {
       throw new IllegalStateException("Histogram");

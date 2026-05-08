@@ -35,6 +35,7 @@ public class NodeConfig {
   private boolean openPrintLog = true;
   private boolean openTransactionSort = false;
   private int maxTps = 1000;
+  private int maxBlockInvPerSecond = 10;
   // Config key "isOpenFullTcpDisconnect" cannot auto-bind — read manually in fromConfig()
   @Getter(lombok.AccessLevel.NONE)
   @Setter(lombok.AccessLevel.NONE)
@@ -450,6 +451,11 @@ public class NodeConfig {
     // inactiveThreshold: minimum 1
     if (inactiveThreshold < 1) {
       inactiveThreshold = 1;
+    }
+
+    // maxBlockInvPerSecond: minimum 1
+    if (maxBlockInvPerSecond < 1) {
+      maxBlockInvPerSecond = 1;
     }
 
     // maxFastForwardNum: clamp to [1, MAX_ACTIVE_WITNESS_NUM]
