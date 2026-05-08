@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -25,6 +26,7 @@ import org.tron.common.prometheus.Metrics;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.PublicMethod;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.Utils;
 import org.tron.consensus.dpos.DposSlot;
 import org.tron.core.ChainBaseManager;
@@ -38,6 +40,8 @@ import org.tron.protos.Protocol;
 
 @Slf4j(topic = "metric")
 public class PrometheusApiServiceTest extends BaseTest {
+
+
   static LocalDateTime localDateTime = LocalDateTime.now();
   @Resource
   private DposSlot dposSlot;
@@ -65,7 +69,7 @@ public class PrometheusApiServiceTest extends BaseTest {
     parameter.setMetricsPrometheusEnable(true);
   }
 
-  protected void check() throws Exception {
+  protected void check(byte[] address, Map<ByteString, String> witnessAndAccount) throws Exception {
     Double memoryBytes = CollectorRegistry.defaultRegistry.getSampleValue(
         "system_total_physical_memory_bytes");
     Assert.assertNotNull(memoryBytes);
@@ -80,6 +84,32 @@ public class PrometheusApiServiceTest extends BaseTest {
         new String[] {"sync"}, new String[] {"false"});
     Assert.assertNotNull(pushBlock);
     Assert.assertEquals(pushBlock.intValue(), blocks + 1);
+
+    String minerBase58 = StringUtil.encode58Check(address);
+    // Query histogram bucket le="0.0" for empty blocks
+    Double emptyBlock = CollectorRegistry.defaultRegistry.getSampleValue(
+        "tron:block_transaction_count_bucket",
+        new String[] {MetricLabels.Histogram.MINER, "le"}, new String[] {minerBase58, "0.0"});
+
+    Assert.assertNotNull("Empty block bucket should exist for miner: " + minerBase58, emptyBlock);
+    Assert.assertEquals("Should have 1 empty block", 1, emptyBlock.intValue());
+
+    // Collect empty blocks for each new witness in witnessAndAccount (excluding initial address)
+    ByteString addressByteString = ByteString.copyFrom(address);
+    int totalNewWitnessEmptyBlocks = 0;
+    for (ByteString witnessAddress : witnessAndAccount.keySet()) {
+      if (witnessAddress.equals(addressByteString)) {
+        continue;
+      }
+      String witnessBase58 = StringUtil.encode58Check(witnessAddress.toByteArray());
+      int witnessEmptyBlock = CollectorRegistry.defaultRegistry.getSampleValue(
+          "tron:block_transaction_count_bucket",
+          new String[] {MetricLabels.Histogram.MINER, "le"}, new String[] {witnessBase58, "0.0"})
+          .intValue();
+      totalNewWitnessEmptyBlocks += witnessEmptyBlock;
+    }
+    Assert.assertEquals(blocks, totalNewWitnessEmptyBlocks);
+
     Double errorLogs = CollectorRegistry.defaultRegistry.getSampleValue(
         "tron:error_info_total", new String[] {"net"}, new String[] {MetricLabels.UNDEFINED});
     Assert.assertNull(errorLogs);
@@ -130,10 +160,16 @@ public class PrometheusApiServiceTest extends BaseTest {
 
     Map<ByteString, String> witnessAndAccount = addTestWitnessAndAccount();
     witnessAndAccount.put(ByteString.copyFrom(address), key);
+
+    // Schedule the new witnesses (excluding initial address) so dposSlot rotates blocks among them
+    List<ByteString> newActiveWitnesses = new ArrayList<>(witnessAndAccount.keySet());
+    newActiveWitnesses.remove(ByteString.copyFrom(address));
+    chainBaseManager.getWitnessScheduleStore().saveActiveWitnesses(newActiveWitnesses);
+
     for (int i = 0; i < blocks; i++) {
       generateBlock(witnessAndAccount);
     }
-    check();
+    check(address, witnessAndAccount);
   }
 
   private Map<ByteString, String> addTestWitnessAndAccount() {

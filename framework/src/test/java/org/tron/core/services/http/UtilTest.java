@@ -130,6 +130,29 @@ public class UtilTest extends BaseTest {
   }
 
   @Test
+  public void testCheckBodySizeUsesHttpLimit() throws Exception {
+    long originalHttpMax = Args.getInstance().getHttpMaxMessageSize();
+    int originalRpcMax = Args.getInstance().getMaxMessageSize();
+    try {
+      // set httpMaxMessageSize larger than maxMessageSize
+      Args.getInstance().setHttpMaxMessageSize(200);
+      Args.getInstance().setMaxMessageSize(100);
+
+      String withinHttpLimit = new String(new char[150]).replace('\0', 'a');
+      // should pass: 150 < httpMaxMessageSize(200), even though > maxMessageSize(100)
+      Util.checkBodySize(withinHttpLimit);
+
+      String exceedsHttpLimit = new String(new char[201]).replace('\0', 'b');
+      Exception e = Assert.assertThrows(Exception.class,
+          () -> Util.checkBodySize(exceedsHttpLimit));
+      Assert.assertTrue(e.getMessage().contains("200"));
+    } finally {
+      Args.getInstance().setHttpMaxMessageSize(originalHttpMax);
+      Args.getInstance().setMaxMessageSize(originalRpcMax);
+    }
+  }
+
+  @Test
   public void testPackTransaction() {
     String strTransaction = "{\n"
         + "    \"visible\": false,\n"

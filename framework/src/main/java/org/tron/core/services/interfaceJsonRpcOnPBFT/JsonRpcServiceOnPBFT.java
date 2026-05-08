@@ -19,6 +19,7 @@ public class JsonRpcServiceOnPBFT extends HttpService {
     port = Args.getInstance().getJsonRpcHttpPBFTPort();
     enable = isFullNode() && Args.getInstance().isJsonRpcHttpPBFTNodeEnable();
     contextPath = "/";
+    maxRequestSize = Args.getInstance().getJsonRpcMaxMessageSize();
   }
 
   @Override

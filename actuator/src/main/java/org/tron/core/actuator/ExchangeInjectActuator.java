@@ -24,13 +24,12 @@ import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.ExchangeStore;
 import org.tron.core.store.ExchangeV2Store;
-import org.tron.core.utils.TransactionUtil;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.contract.ExchangeContract.ExchangeInjectContract;
 
 @Slf4j(topic = "actuator")
-public class ExchangeInjectActuator extends AbstractActuator {
+public class ExchangeInjectActuator extends AbstractExchangeActuator {
 
   public ExchangeInjectActuator() {
     super(ContractType.ExchangeInjectContract, ExchangeInjectContract.class);
@@ -56,8 +55,8 @@ public class ExchangeInjectActuator extends AbstractActuator {
           .get(exchangeInjectContract.getOwnerAddress().toByteArray());
 
       ExchangeCapsule exchangeCapsule;
-      exchangeCapsule = Commons.getExchangeStoreFinal(dynamicStore, exchangeStore, exchangeV2Store).
-          get(ByteArray.fromLong(exchangeInjectContract.getExchangeId()));
+      exchangeCapsule = Commons.getExchangeStoreFinal(dynamicStore, exchangeStore, exchangeV2Store)
+          .get(ByteArray.fromLong(exchangeInjectContract.getExchangeId()));
       byte[] firstTokenID = exchangeCapsule.getFirstTokenId();
       byte[] secondTokenID = exchangeCapsule.getSecondTokenId();
       long firstTokenBalance = exchangeCapsule.getFirstTokenBalance();
@@ -73,27 +72,27 @@ public class ExchangeInjectActuator extends AbstractActuator {
         anotherTokenID = secondTokenID;
         anotherTokenQuant = floorDiv(multiplyExact(
             secondTokenBalance, tokenQuant), firstTokenBalance);
-        exchangeCapsule.setBalance(firstTokenBalance + tokenQuant,
-            secondTokenBalance + anotherTokenQuant);
+        exchangeCapsule.setBalance(addExact(firstTokenBalance, tokenQuant),
+            addExact(secondTokenBalance, anotherTokenQuant));
       } else {
         anotherTokenID = firstTokenID;
         anotherTokenQuant = floorDiv(multiplyExact(
             firstTokenBalance, tokenQuant), secondTokenBalance);
-        exchangeCapsule.setBalance(firstTokenBalance + anotherTokenQuant,
-            secondTokenBalance + tokenQuant);
+        exchangeCapsule.setBalance(addExact(firstTokenBalance, anotherTokenQuant),
+            addExact(secondTokenBalance, tokenQuant));
       }
 
-      long newBalance = accountCapsule.getBalance() - calcFee();
+      long newBalance = subtractExact(accountCapsule.getBalance(), calcFee());
       accountCapsule.setBalance(newBalance);
 
       if (Arrays.equals(tokenID, TRX_SYMBOL_BYTES)) {
-        accountCapsule.setBalance(newBalance - tokenQuant);
+        accountCapsule.setBalance(subtractExact(newBalance, tokenQuant));
       } else {
         accountCapsule.reduceAssetAmountV2(tokenID, tokenQuant, dynamicStore, assetIssueStore);
       }
 
       if (Arrays.equals(anotherTokenID, TRX_SYMBOL_BYTES)) {
-        accountCapsule.setBalance(newBalance - anotherTokenQuant);
+        accountCapsule.setBalance(subtractExact(newBalance, anotherTokenQuant));
       } else {
         accountCapsule
             .reduceAssetAmountV2(anotherTokenID, anotherTokenQuant, dynamicStore, assetIssueStore);
@@ -105,7 +104,8 @@ public class ExchangeInjectActuator extends AbstractActuator {
 
       ret.setExchangeInjectAnotherAmount(anotherTokenQuant);
       ret.setStatus(fee, code.SUCESS);
-    } catch (ItemNotFoundException | InvalidProtocolBufferException e) {
+    } catch (ItemNotFoundException | InvalidProtocolBufferException
+        | ArithmeticException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(fee, code.FAILED);
       throw new ContractExeException(e.getMessage());
@@ -115,6 +115,14 @@ public class ExchangeInjectActuator extends AbstractActuator {
 
   @Override
   public boolean validate() throws ContractValidateException {
+    try {
+      return doValidate();
+    } catch (ArithmeticException e) {
+      throw new ContractValidateException(e.getMessage());
+    }
+  }
+
+  private boolean doValidate() throws ContractValidateException {
     if (this.any == null) {
       throw new ContractValidateException(ActuatorConstant.CONTRACT_NOT_EXIST);
     }
@@ -156,8 +164,8 @@ public class ExchangeInjectActuator extends AbstractActuator {
 
     ExchangeCapsule exchangeCapsule;
     try {
-      exchangeCapsule = Commons.getExchangeStoreFinal(dynamicStore, exchangeStore, exchangeV2Store).
-          get(ByteArray.fromLong(contract.getExchangeId()));
+      exchangeCapsule = Commons.getExchangeStoreFinal(dynamicStore, exchangeStore, exchangeV2Store)
+          .get(ByteArray.fromLong(contract.getExchangeId()));
 
     } catch (ItemNotFoundException ex) {
       throw new ContractValidateException("Exchange[" + contract.getExchangeId() + ActuatorConstant
@@ -179,9 +187,9 @@ public class ExchangeInjectActuator extends AbstractActuator {
     byte[] anotherTokenID;
     long anotherTokenQuant;
 
-    if (dynamicStore.getAllowSameTokenName() == 1 &&
-        !Arrays.equals(tokenID, TRX_SYMBOL_BYTES) &&
-        !isNumber(tokenID)) {
+    if (dynamicStore.getAllowSameTokenName() == 1
+        && !Arrays.equals(tokenID, TRX_SYMBOL_BYTES)
+        && !isNumber(tokenID)) {
       throw new ContractValidateException("token id is not a valid number");
     }
 
@@ -208,14 +216,14 @@ public class ExchangeInjectActuator extends AbstractActuator {
       anotherTokenID = secondTokenID;
       anotherTokenQuant = bigSecondTokenBalance.multiply(bigTokenQuant)
           .divide(bigFirstTokenBalance).longValueExact();
-      newTokenBalance = firstTokenBalance + tokenQuant;
-      newAnotherTokenBalance = secondTokenBalance + anotherTokenQuant;
+      newTokenBalance = addExact(firstTokenBalance, tokenQuant);
+      newAnotherTokenBalance = addExact(secondTokenBalance, anotherTokenQuant);
     } else {
       anotherTokenID = firstTokenID;
       anotherTokenQuant = bigFirstTokenBalance.multiply(bigTokenQuant)
           .divide(bigSecondTokenBalance).longValueExact();
-      newTokenBalance = secondTokenBalance + tokenQuant;
-      newAnotherTokenBalance = firstTokenBalance + anotherTokenQuant;
+      newTokenBalance = addExact(secondTokenBalance, tokenQuant);
+      newAnotherTokenBalance = addExact(firstTokenBalance, anotherTokenQuant);
     }
 
     if (anotherTokenQuant <= 0) {
@@ -228,7 +236,7 @@ public class ExchangeInjectActuator extends AbstractActuator {
     }
 
     if (Arrays.equals(tokenID, TRX_SYMBOL_BYTES)) {
-      if (accountCapsule.getBalance() < (tokenQuant + calcFee())) {
+      if (accountCapsule.getBalance() < addExact(tokenQuant, calcFee())) {
         throw new ContractValidateException("balance is not enough");
       }
     } else {
@@ -238,7 +246,7 @@ public class ExchangeInjectActuator extends AbstractActuator {
     }
 
     if (Arrays.equals(anotherTokenID, TRX_SYMBOL_BYTES)) {
-      if (accountCapsule.getBalance() < (anotherTokenQuant + calcFee())) {
+      if (accountCapsule.getBalance() < addExact(anotherTokenQuant, calcFee())) {
         throw new ContractValidateException("balance is not enough");
       }
     } else {

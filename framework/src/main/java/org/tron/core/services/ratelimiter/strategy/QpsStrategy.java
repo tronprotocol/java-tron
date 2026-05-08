@@ -26,8 +26,7 @@ public class QpsStrategy extends Strategy {
     return map;
   }
 
-  public boolean acquire() {
-    rateLimiter.acquire();
-    return true;
+  public boolean tryAcquire() {
+    return rateLimiter.tryAcquire();
   }
 }

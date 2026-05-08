@@ -13,6 +13,7 @@ import java.math.BigInteger;
 import java.security.KeyPairGenerator;
 import java.security.SignatureException;
 import java.util.Arrays;
+import java.util.Locale;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.crypto.digests.SM3Digest;
 import org.bouncycastle.util.encoders.Hex;
@@ -123,7 +124,7 @@ public class SM2KeyTest {
     String message = "message digest";
     byte[] hash = signer.generateSM3Hash(message.getBytes());
     assertEquals("2A723761EAE35429DF643648FD69FB7787E7FC32F321BFAF7E294390F529BAF4",
-        Hex.toHexString(hash).toUpperCase());
+        Hex.toHexString(hash).toUpperCase(Locale.ROOT));
   }
 
 

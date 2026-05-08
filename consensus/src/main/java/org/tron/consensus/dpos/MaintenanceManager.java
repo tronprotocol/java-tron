@@ -16,6 +16,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.bouncycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.common.prometheus.SRMetrics;
 import org.tron.consensus.ConsensusDelegate;
 import org.tron.consensus.pbft.PbftManager;
 import org.tron.core.capsule.AccountCapsule;
@@ -141,6 +142,8 @@ public class MaintenanceManager {
           witnessCapsule.setIsJobs(true);
           consensusDelegate.saveWitness(witnessCapsule);
         });
+
+        SRMetrics.recordSrSetChange(currentWits, newWits);
       }
 
       logger.info("Update witness success. \nbefore: {} \nafter: {}",

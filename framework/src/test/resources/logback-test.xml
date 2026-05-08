@@ -1,5 +1,9 @@
 <configuration>
 
+  <contextListener class="ch.qos.logback.classic.jul.LevelChangePropagator">
+    <resetJUL>true</resetJUL>
+  </contextListener>
+
   <!-- FILE appender is disabled -->
 
   <appender class="ch.qos.logback.core.ConsoleAppender" name="STDOUT">
@@ -31,12 +35,13 @@
     </encoder>
   </appender>
 
-  <root level="DEBUG">
+  <root level="INFO">
     <appender-ref ref="STDOUT"/>
     <appender-ref ref="FILE"/>
   </root>
 
   <logger level="DEBUG" name="Test"/>
   <logger level="DEBUG" name="Manager"/>
+  <logger level="WARN" name="ROCKSDB"/>  <!--RocksDB start log is very verbose, so we set it to WARN level-->
 
 </configuration>

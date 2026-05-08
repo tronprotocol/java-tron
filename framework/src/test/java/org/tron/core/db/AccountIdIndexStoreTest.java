@@ -1,6 +1,8 @@
 package org.tron.core.db;
 
 import com.google.protobuf.ByteString;
+import java.nio.charset.StandardCharsets;
+import java.util.Locale;
 import java.util.Random;
 import javax.annotation.Resource;
 import org.junit.Assert;
@@ -11,7 +13,9 @@ import org.tron.common.BaseTest;
 import org.tron.common.TestConstants;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.config.args.Args;
+import org.tron.core.db.api.MigrateTurkishKeyHelper;
 import org.tron.core.store.AccountIdIndexStore;
 import org.tron.protos.Protocol.AccountType;
 
@@ -26,6 +30,7 @@ public class AccountIdIndexStoreTest extends BaseTest {
   private static final byte[] ACCOUNT_NAME_THREE = randomBytes(6);
   private static final byte[] ACCOUNT_NAME_FOUR = randomBytes(6);
   private static final byte[] ACCOUNT_NAME_FIVE = randomBytes(6);
+  private static final Locale TURKISH = Locale.forLanguageTag("tr");
   @Resource
   private AccountIdIndexStore accountIdIndexStore;
   private static AccountCapsule accountCapsule1;
@@ -101,6 +106,7 @@ public class AccountIdIndexStoreTest extends BaseTest {
   }
 
   @Test
+  @SuppressWarnings("StringCaseLocaleUsage")
   public void testCaseInsensitive() {
     byte[] ACCOUNT_NAME = "aABbCcDd_ssd1234".getBytes();
     byte[] ACCOUNT_ADDRESS = randomBytes(16);
@@ -127,5 +133,60 @@ public class AccountIdIndexStoreTest extends BaseTest {
 
     Assert.assertNotNull("getLowerCase fail", accountIdIndexStore.get(upperCase));
 
+  }
+
+  @Test
+  @SuppressWarnings("StringCaseLocaleUsage")
+  public void testKeysMigration() {
+    String[]accountIds = {"", "12345678", "543838383", "BitTorrent",
+        "Converse", "HelloWorld", "InfStonesSSRWallet", "ISSRWallet", "JustDoIt",
+        "JustinSun", "JustinSunTron", "RtytIturtet", "TronBetFestival", "vena_family"
+    };
+
+    byte[][] addresses = new byte[accountIds.length][];
+    byte[][] turkishKeys = new byte[accountIds.length][];
+
+    for (int i = 0; i < accountIds.length; i++) {
+      addresses[i] = randomBytes(21);
+      String turkishLower = accountIds[i].toLowerCase(TURKISH);
+      turkishKeys[i] = turkishLower.getBytes(StandardCharsets.UTF_8);
+      accountIdIndexStore.put(turkishKeys[i], new BytesCapsule(addresses[i]));
+    }
+
+    for (int i = 0; i < accountIds.length; i++) {
+      String rootLower = accountIds[i].toLowerCase(Locale.ROOT);
+      String turkishLower = accountIds[i].toLowerCase(TURKISH);
+      boolean shouldMiss = !rootLower.equals(turkishLower);
+      if (shouldMiss) {
+        Assert.assertNull(
+            "pre-migrate: ROOT query should miss for " + accountIds[i],
+            accountIdIndexStore.get(ByteString.copyFrom(
+                accountIds[i].getBytes(StandardCharsets.UTF_8))));
+      } else {
+        Assert.assertArrayEquals(
+            "pre-migrate: ROOT query should hit for " + accountIds[i],
+            addresses[i],
+            accountIdIndexStore.get(ByteString.copyFrom(
+                accountIds[i].getBytes(StandardCharsets.UTF_8))));
+      }
+    }
+
+    new MigrateTurkishKeyHelper(chainBaseManager).doWork();
+
+    for (int i = 0; i < accountIds.length; i++) {
+      Assert.assertArrayEquals(
+          "post-migrate: get(" + accountIds[i] + ")",
+          addresses[i],
+          accountIdIndexStore.get(ByteString.copyFrom(
+              accountIds[i].getBytes(StandardCharsets.UTF_8))));
+      String lower = accountIds[i].toLowerCase(Locale.ROOT);
+      Assert.assertTrue(
+          "post-migrate: has(" + lower + ")",
+          accountIdIndexStore.has(lower.getBytes(StandardCharsets.UTF_8)));
+      String upper = accountIds[i].toUpperCase(Locale.ROOT);
+      Assert.assertTrue(
+          "post-migrate: has(" + upper + ")",
+          accountIdIndexStore.has(upper.getBytes(StandardCharsets.UTF_8)));
+    }
   }
 }

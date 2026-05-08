@@ -2,7 +2,8 @@ apply plugin: 'com.google.protobuf'
 apply from: 'protoLint.gradle'
 
 def protobufVersion = '3.25.8'
-def grpcVersion = '1.75.0'
+// keep same version as protoc-gen-grpc-java for arm64 or macOS, see rootProject.archInfo.requires.ProtocGenVersion
+def grpcVersion = '1.81.0'
 
 dependencies {
     api group: 'com.google.protobuf', name: 'protobuf-java', version: protobufVersion
