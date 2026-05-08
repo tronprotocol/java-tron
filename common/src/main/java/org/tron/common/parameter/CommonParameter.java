@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Set;
 import lombok.Getter;
 import lombok.Setter;
+import org.slf4j.bridge.SLF4JBridgeHandler;
 import org.tron.common.args.GenesisBlock;
 import org.tron.common.config.DbBackupConfig;
 import org.tron.common.cron.CronExpression;
@@ -22,6 +23,19 @@ import org.tron.p2p.P2pConfig;
 import org.tron.p2p.dns.update.PublishConfig;
 
 public class CommonParameter {
+
+  // Install the JUL->SLF4J bridge early so that JUL log records emitted during
+  // static init of grpc classes (or from unit tests that don't invoke
+  // LogService.load()) still reach Logback.
+  // removeHandlersForRootLogger() strips JUL's default ConsoleHandler so the
+  // same record is not emitted twice (once by JUL's own console output and
+  // once via the bridge to Logback).
+  static {
+    SLF4JBridgeHandler.removeHandlersForRootLogger();
+    if (!SLF4JBridgeHandler.isInstalled()) {
+      SLF4JBridgeHandler.install();
+    }
+  }
 
   protected static CommonParameter PARAMETER = new CommonParameter();
 
@@ -119,6 +133,9 @@ public class CommonParameter {
   public int maxTps; // clearParam: 1000
   @Getter
   @Setter
+  public int maxBlockInvPerSecond = 10; // default: 10 block inv hashes/s per peer
+  @Getter
+  @Setter
   public int minParticipationRate;
   @Getter
   public P2pConfig p2pConfig;
@@ -211,9 +228,17 @@ public class CommonParameter {
   @Getter
   @Setter
   public long maxConnectionAgeInMillis;
+  // Refers to RPC (gRPC) max message size; see httpMaxMessageSize / jsonRpcMaxMessageSize
+  // below for the HTTP / JSON-RPC counterparts.
   @Getter
   @Setter
   public int maxMessageSize;
+  @Getter
+  @Setter
+  public long httpMaxMessageSize;
+  @Getter
+  @Setter
+  public long jsonRpcMaxMessageSize;
   @Getter
   @Setter
   public int maxHeaderListSize;
@@ -335,7 +360,7 @@ public class CommonParameter {
 
   @Getter
   @Setter
-  public boolean allowShieldedTransactionApi; // clearParam: true
+  public boolean allowShieldedTransactionApi; // clearParam: false
   @Getter
   @Setter
   public long blockNumForEnergyLimit;

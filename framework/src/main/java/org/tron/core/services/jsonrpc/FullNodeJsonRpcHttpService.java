@@ -24,6 +24,7 @@ public class FullNodeJsonRpcHttpService extends HttpService {
     port = Args.getInstance().getJsonRpcHttpFullNodePort();
     enable = isFullNode() && Args.getInstance().isJsonRpcHttpFullNodeEnable();
     contextPath = "/";
+    maxRequestSize = Args.getInstance().getJsonRpcMaxMessageSize();
   }
 
   @Override

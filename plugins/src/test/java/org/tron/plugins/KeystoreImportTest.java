@@ -9,6 +9,7 @@ import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.security.SecureRandom;
+import java.util.Locale;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -340,7 +341,7 @@ public class KeystoreImportTest {
 
   @Test
   public void testImportKeystoreFilePermissions() throws Exception {
-    String os = System.getProperty("os.name").toLowerCase();
+    String os = System.getProperty("os.name").toLowerCase(Locale.ROOT);
     org.junit.Assume.assumeTrue("POSIX permissions test, skip on Windows",
         !os.contains("win"));
 
@@ -377,7 +378,7 @@ public class KeystoreImportTest {
   @Test
   public void testImportRefusesSymlinkKeyFile() throws Exception {
     org.junit.Assume.assumeTrue("Symlinks only tested on POSIX",
-        !System.getProperty("os.name").toLowerCase().contains("win"));
+        !System.getProperty("os.name").toLowerCase(Locale.ROOT).contains("win"));
 
     File dir = tempFolder.newFolder("keystore-symlink");
     // Create a real key file and a symlink pointing to it
@@ -409,7 +410,7 @@ public class KeystoreImportTest {
   @Test
   public void testImportRefusesSymlinkPasswordFile() throws Exception {
     org.junit.Assume.assumeTrue("Symlinks only tested on POSIX",
-        !System.getProperty("os.name").toLowerCase().contains("win"));
+        !System.getProperty("os.name").toLowerCase(Locale.ROOT).contains("win"));
 
     File dir = tempFolder.newFolder("keystore-pwsymlink");
     SignInterface keyPair = SignUtils.getGeneratedRandomSign(
@@ -468,7 +469,7 @@ public class KeystoreImportTest {
   @Test
   public void testImportDuplicateScanSkipsSymlinkedEntry() throws Exception {
     org.junit.Assume.assumeTrue("Symlinks only tested on POSIX",
-        !System.getProperty("os.name").toLowerCase().contains("win"));
+        !System.getProperty("os.name").toLowerCase(Locale.ROOT).contains("win"));
 
     File dir = tempFolder.newFolder("keystore-dup-symlink");
 

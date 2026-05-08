@@ -4,7 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.tron.common.math.Maths;
 
 @Slf4j(topic = "capsule")
-public class ExchangeProcessor {
+public class ExchangeProcessor implements ExchangeCapsule.Processor {
 
   private long supply;
   private final boolean useStrictMath;
@@ -38,6 +38,7 @@ public class ExchangeProcessor {
     return (long) exchangeBalance;
   }
 
+  @Override
   public long exchange(long sellTokenBalance, long buyTokenBalance, long sellTokenQuant) {
     long relay = exchangeToSupply(sellTokenBalance, sellTokenQuant);
     return exchangeFromSupply(buyTokenBalance, relay);

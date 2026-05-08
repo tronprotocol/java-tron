@@ -35,6 +35,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -573,6 +574,7 @@ public class Args extends CommonParameter {
     PARAMETER.fullNodeHttpPort = http.getFullNodePort();
     PARAMETER.solidityHttpPort = http.getSolidityPort();
     PARAMETER.pBFTHttpPort = http.getPBFTPort();
+    PARAMETER.httpMaxMessageSize = http.getMaxMessageSize();
 
     // ---- JSON-RPC sub-bean ----
     NodeConfig.JsonRpcConfig jsonrpc = nc.getJsonrpc();
@@ -585,6 +587,7 @@ public class Args extends CommonParameter {
     PARAMETER.jsonRpcMaxBlockRange = jsonrpc.getMaxBlockRange();
     PARAMETER.jsonRpcMaxSubTopics = jsonrpc.getMaxSubTopics();
     PARAMETER.jsonRpcMaxBlockFilterNum = jsonrpc.getMaxBlockFilterNum();
+    PARAMETER.jsonRpcMaxMessageSize = jsonrpc.getMaxMessageSize();
 
     // ---- P2P sub-bean ----
     PARAMETER.nodeP2pVersion = nc.getP2p().getVersion();
@@ -615,6 +618,7 @@ public class Args extends CommonParameter {
     PARAMETER.minActiveConnections = nc.getMinActiveConnections();
     PARAMETER.maxConnectionsWithSameIp = nc.getMaxConnectionsWithSameIp();
     PARAMETER.maxTps = nc.getMaxTps();
+    PARAMETER.maxBlockInvPerSecond = nc.getMaxBlockInvPerSecond();
     PARAMETER.minParticipationRate = nc.getMinParticipationRate();
     PARAMETER.nodeListenPort = nc.getListenPort();
     PARAMETER.nodeEnableIpv6 = nc.isEnableIpv6();
@@ -664,7 +668,7 @@ public class Args extends CommonParameter {
     // disabledApi list — lowercase normalization
     PARAMETER.disabledApiList = nc.getDisabledApi().isEmpty()
         ? Collections.emptyList()
-        : nc.getDisabledApi().stream().map(String::toLowerCase)
+        : nc.getDisabledApi().stream().map(s -> s.toLowerCase(Locale.ROOT))
             .collect(Collectors.toList());
 
     // ---- Fields previously scattered in applyConfigParams ----
@@ -1266,7 +1270,7 @@ public class Args extends CommonParameter {
     Map<String, String[]> groupOptionListMap = Args.getOptionGroup();
     for (Map.Entry<String, String[]> entry : groupOptionListMap.entrySet()) {
       String group = entry.getKey();
-      helpStr.append(String.format("%n%s OPTIONS:%n", group.toUpperCase()));
+      helpStr.append(String.format("%n%s OPTIONS:%n", group.toUpperCase(Locale.ROOT)));
       int optionMaxLength = Arrays.stream(entry.getValue()).mapToInt(p -> {
         ParameterDescription tmpParameterDescription = stringParameterDescriptionMap.get(p);
         if (tmpParameterDescription == null) {
@@ -1306,7 +1310,7 @@ public class Args extends CommonParameter {
     if (name.length() <= 1) {
       return name;
     }
-    name = name.substring(0, 1).toUpperCase() + name.substring(1);
+    name = name.substring(0, 1).toUpperCase(Locale.ROOT) + name.substring(1);
     return name;
   }
 

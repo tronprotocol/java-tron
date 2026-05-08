@@ -19,10 +19,20 @@
 package org.tron.common.storage.leveldb;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
@@ -32,11 +42,13 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.rules.TemporaryFolder;
 import org.rocksdb.RocksDB;
+import org.slf4j.LoggerFactory;
 import org.tron.common.TestConstants;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.storage.rocksdb.RocksDbDataSourceImpl;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.PropUtil;
+import org.tron.common.utils.ReflectUtils;
 import org.tron.common.utils.StorageUtils;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.TronError;
@@ -121,5 +133,60 @@ public class LevelDbDataSourceImplTest {
     dataSource.closeDB();
     FileUtil.saveData(dataSource.getDbPath().toString() + "/CURRENT",
         "...", Boolean.FALSE);
+  }
+
+  @Test
+  public void slowOpen() throws IOException {
+    Logger dbLogger = (Logger) LoggerFactory.getLogger("DB");
+    ListAppender<ILoggingEvent> dbAppender = new ListAppender<>();
+    dbAppender.start();
+    dbLogger.addAppender(dbAppender);
+    try {
+      final File dbDir = temporaryFolder.newFolder();
+      final Path dbPath = dbDir.toPath();
+      final String watchdogDbName = "slow-open-db";
+
+      LevelDbDataSourceImpl ds = new LevelDbDataSourceImpl();
+      ReflectUtils.setFieldValue(ds, "dataBaseName", watchdogDbName);
+      ReflectUtils.setFieldValue(ds, "parentPath", dbDir.getParent());
+      long startNs = System.nanoTime() - TimeUnit.SECONDS.toNanos(61);
+      ds.logSlowOpen(dbPath, startNs);
+
+      List<ILoggingEvent> warns = dbAppender.list.stream()
+          .filter(e -> e.getLevel() == Level.WARN)
+          .collect(Collectors.toList());
+      assertEquals("expected exactly one WARN event", 1, warns.size());
+      ILoggingEvent warn = warns.get(0);
+      assertNotNull("expected one WARN from the watchdog helper", warn);
+      String rendered = warn.getFormattedMessage();
+      assertTrue("WARN should include the Toolkit remediation hint: " + rendered,
+          rendered.contains("Toolkit.jar db archive -d"));
+      assertTrue("WARN should echo the db name: " + rendered,
+          rendered.contains(watchdogDbName));
+    } finally {
+      dbAppender.stop();
+      dbLogger.detachAppender(dbAppender);
+    }
+  }
+
+  @Test
+  public void fastOpen() {
+    Logger dbLogger = (Logger) LoggerFactory.getLogger("DB");
+    ListAppender<ILoggingEvent> dbAppender = new ListAppender<>();
+    dbAppender.start();
+    dbLogger.addAppender(dbAppender);
+    try {
+      String dir = Args.getInstance().getOutputDirectory()
+          + Args.getInstance().getStorage().getDbDirectory();
+      LevelDbDataSourceImpl ds = new LevelDbDataSourceImpl(dir, "test_fast_open");
+      ds.closeDB();
+      long warnCount = dbAppender.list.stream()
+          .filter(e -> e.getLevel() == Level.WARN)
+          .count();
+      assertEquals("no WARN should fire for a fast open", 0, warnCount);
+    } finally {
+      dbAppender.stop();
+      dbLogger.detachAppender(dbAppender);
+    }
   }
 }

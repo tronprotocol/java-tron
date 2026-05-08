@@ -240,6 +240,15 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   private static final byte[] ALLOW_TVM_OSAKA = "ALLOW_TVM_OSAKA".getBytes();
 
+  private static final byte[] ALLOW_HARDEN_RESOURCE_CALCULATION =
+      "ALLOW_HARDEN_RESOURCE_CALCULATION".getBytes();
+
+  private static final byte[] ALLOW_HARDEN_EXCHANGE_CALCULATION =
+      "ALLOW_HARDEN_EXCHANGE_CALCULATION".getBytes();
+
+  private static final byte[] TURKISH_KEY_MIGRATION_DONE =
+      "TURKISH_KEY_MIGRATION_DONE".getBytes();
+
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
     super(dbName);
@@ -2991,6 +3000,48 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   public void saveAllowTvmOsaka(long value) {
     this.put(ALLOW_TVM_OSAKA, new BytesCapsule(ByteArray.fromLong(value)));
+  }
+
+  public long getAllowHardenResourceCalculation() {
+    return Optional.ofNullable(getUnchecked(ALLOW_HARDEN_RESOURCE_CALCULATION))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElse(0L);
+  }
+
+  public void saveAllowHardenResourceCalculation(long value) {
+    this.put(ALLOW_HARDEN_RESOURCE_CALCULATION, new BytesCapsule(ByteArray.fromLong(value)));
+  }
+
+  public boolean allowHardenResourceCalculation() {
+    return getAllowHardenResourceCalculation() == 1L;
+  }
+
+  public long getAllowHardenExchangeCalculation() {
+    return Optional.ofNullable(getUnchecked(ALLOW_HARDEN_EXCHANGE_CALCULATION))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElse(0L);
+  }
+
+  public void saveAllowHardenExchangeCalculation(long value) {
+    this.put(ALLOW_HARDEN_EXCHANGE_CALCULATION, new BytesCapsule(ByteArray.fromLong(value)));
+  }
+
+  public boolean allowHardenExchangeCalculation() {
+    return getAllowHardenExchangeCalculation() == 1L;
+  }
+
+  public void saveTurkishKeyMigrationDone(long num) {
+    this.put(TURKISH_KEY_MIGRATION_DONE,
+        new BytesCapsule(ByteArray.fromLong(num)));
+  }
+
+  public long getTurkishKeyMigrationDone() {
+    return Optional.ofNullable(getUnchecked(TURKISH_KEY_MIGRATION_DONE))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElse(0L);
   }
 
   private static class DynamicResourceProperties {

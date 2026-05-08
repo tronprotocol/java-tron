@@ -7,8 +7,10 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mockConstruction;
 import static org.mockito.Mockito.when;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -24,6 +26,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import org.reflections.Reflections;
 import org.tron.common.es.ExecutorServiceManager;
 import org.tron.core.actuator.AbstractActuator;
+import org.tron.core.actuator.AbstractExchangeActuator;
 import org.tron.core.actuator.TransferActuator;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.TronError;
@@ -129,6 +132,28 @@ public class TransactionRegisterTest {
       TransactionRegister.registerActuator();
       assertTrue("Should remain registered after call " + (i + 2),
           TransactionRegister.isRegistered());
+    }
+  }
+
+  @Test
+  public void testSkipsAbstractClasses() {
+    // Reflections may return abstract base classes; the registrar must skip them.
+    AtomicInteger transferConstructorCount = new AtomicInteger();
+    LinkedHashSet<Class<? extends AbstractActuator>> mixedTypes = new LinkedHashSet<>(
+        Arrays.asList(AbstractExchangeActuator.class, TransferActuator.class));
+
+    try (MockedConstruction<Reflections> ignored = mockConstruction(Reflections.class,
+        (mock, context) -> when(mock.getSubTypesOf(AbstractActuator.class))
+            .thenReturn(mixedTypes));
+        MockedConstruction<TransferActuator> ignored1 = mockConstruction(TransferActuator.class,
+            (mock, context) -> transferConstructorCount.incrementAndGet())) {
+
+      TransactionRegister.registerActuator();
+      assertTrue("Registration should complete without TronError",
+          TransactionRegister.isRegistered());
+      assertEquals("Concrete actuator must be instantiated exactly once",
+          1, transferConstructorCount.get());
+      // AbstractExchangeActuator is abstract so newInstance() would throw if not filtered.
     }
   }
 

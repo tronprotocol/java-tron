@@ -7,6 +7,7 @@ import io.grpc.ServerCallHandler;
 import io.grpc.ServerInterceptor;
 import io.grpc.Status;
 import java.util.List;
+import java.util.Locale;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.tron.common.parameter.CommonParameter;
@@ -43,7 +44,7 @@ public class RpcApiAccessInterceptor implements ServerInterceptor {
     try {
       List<String> disabledApiList = CommonParameter.getInstance().getDisabledApiList();
       if (!disabledApiList.isEmpty()) {
-        disabled = disabledApiList.contains(endpoint.split("/")[1].toLowerCase());
+        disabled = disabledApiList.contains(endpoint.split("/")[1].toLowerCase(Locale.ROOT));
       }
     } catch (Exception e) {
       logger.error("check isDisabled except, endpoint={}, error is {}", endpoint, e.getMessage());

@@ -8,7 +8,9 @@ import com.alibaba.fastjson.JSONObject;
 import java.io.UnsupportedEncodingException;
 import javax.annotation.Resource;
 import org.apache.http.client.methods.HttpPost;
+import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
@@ -18,12 +20,25 @@ import org.tron.core.config.args.Args;
 
 public class CreateSpendAuthSigServletTest extends BaseTest {
 
+  private static boolean origShieldedApi;
+
   static {
     Args.setParam(
             new String[]{
                 "--output-directory", dbPath(),
             }, TestConstants.TEST_CONF
     );
+  }
+
+  @BeforeClass
+  public static void enableShieldedApi() {
+    origShieldedApi = Args.getInstance().allowShieldedTransactionApi;
+    Args.getInstance().allowShieldedTransactionApi = true;
+  }
+
+  @AfterClass
+  public static void restoreShieldedApi() {
+    Args.getInstance().allowShieldedTransactionApi = origShieldedApi;
   }
 
   @Resource

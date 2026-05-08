@@ -24,6 +24,7 @@ import static org.junit.Assert.fail;
 import java.text.ParseException;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Locale;
 import org.junit.Test;
 
 public class CronExpressionTest {
@@ -164,8 +165,8 @@ public class CronExpressionTest {
   @Test
   public void testQuartz() throws Exception {
     CronExpression cronExpression = new CronExpression("19 15 10 4 Apr ? ");
-    assertEquals("19 15 10 4 Apr ? ".toUpperCase(), cronExpression.getCronExpression());
-    assertEquals("19 15 10 4 Apr ? ".toUpperCase(), cronExpression.toString());
+    assertEquals("19 15 10 4 Apr ? ".toUpperCase(Locale.ROOT), cronExpression.getCronExpression());
+    assertEquals("19 15 10 4 Apr ? ".toUpperCase(Locale.ROOT), cronExpression.toString());
 
     // if broken, this will throw an exception
     cronExpression.getNextValidTimeAfter(new Date());

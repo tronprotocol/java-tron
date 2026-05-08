@@ -20,6 +20,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Iterator;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
@@ -102,10 +103,10 @@ public class TxCacheDB implements DB<byte[], byte[]>, Flusher {
     this.recentTransactionStore = recentTransactionStore;
     this.dynamicPropertiesStore = dynamicPropertiesStore;
     String dbEngine = CommonParameter.getInstance().getStorage().getDbEngine();
-    if ("LEVELDB".equals(dbEngine.toUpperCase())) {
+    if ("LEVELDB".equals(dbEngine.toUpperCase(Locale.ROOT))) {
       this.persistentStore = new LevelDB(
           new LevelDbDataSourceImpl(StorageUtils.getOutputDirectoryByDbName(name), name));
-    } else if ("ROCKSDB".equals(dbEngine.toUpperCase())) {
+    } else if ("ROCKSDB".equals(dbEngine.toUpperCase(Locale.ROOT))) {
       String parentPath = Paths
           .get(StorageUtils.getOutputDirectoryByDbName(name), CommonParameter
               .getInstance().getStorage().getDbDirectory()).toString();

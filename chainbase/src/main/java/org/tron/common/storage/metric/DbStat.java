@@ -17,7 +17,7 @@ public abstract class DbStat {
         double size = Double.parseDouble(tmp[2]) * 1048576.0;
         Metrics.gaugeSet(MetricKeys.Gauge.DB_SST_LEVEL, files, getEngine(), getName(), level);
         Metrics.gaugeSet(MetricKeys.Gauge.DB_SIZE_BYTES, size, getEngine(), getName(), level);
-        logger.info("DB {}, level:{},files:{},size:{} M",
+        logger.debug("DB {}, level:{},files:{},size:{} M",
             getName(), level, files, size / 1048576.0);
       });
     } catch (Exception e) {

@@ -1,8 +1,7 @@
 package org.tron.common.logsfilter;
 
-import static org.tron.common.math.Maths.min;
-
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
 import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
@@ -38,9 +37,14 @@ public class ContractEventParser {
         byte[] lengthBytes = subBytes(data, start, DATAWORD_UNIT_SIZE);
         // this length is byte count. no need X 32
         int length = intValueExact(lengthBytes);
+        if (length < 0) {
+          throw new OutputLengthException("data length:" + length);
+        }
         byte[] realBytes =
             length > 0 ? subBytes(data, start + DATAWORD_UNIT_SIZE, length) : new byte[0];
-        return type == Type.STRING ? new String(realBytes) : Hex.toHexString(realBytes);
+        return type == Type.STRING
+            ? new String(realBytes, StandardCharsets.UTF_8)
+            : Hex.toHexString(realBytes);
       }
     } catch (OutputLengthException | ArithmeticException e) {
       logger.debug("parseDataBytes ", e);
@@ -74,11 +78,15 @@ public class ContractEventParser {
   }
 
   protected static byte[] subBytes(byte[] src, int start, int length) {
-    if (ArrayUtils.isEmpty(src) || start >= src.length || length < 0) {
-      throw new OutputLengthException("data start:" + start + ", length:" + length);
+    if (ArrayUtils.isEmpty(src)) {
+      throw new OutputLengthException("source data is empty");
+    }
+    if (start < 0 || start >= src.length || length < 0 || length > src.length - start) {
+      throw new OutputLengthException(
+          "data start:" + start + ", length:" + length + ", src.length:" + src.length);
     }
     byte[] dst = new byte[length];
-    System.arraycopy(src, start, dst, 0, min(length, src.length - start, true));
+    System.arraycopy(src, start, dst, 0, length);
     return dst;
   }
 

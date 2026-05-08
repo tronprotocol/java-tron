@@ -10,6 +10,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
+import org.tron.common.math.StrictMathWrapper;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.zksnark.IncrementalMerkleVoucherContainer;
 import org.tron.common.zksnark.JLibrustzcash;
@@ -66,8 +67,8 @@ public class ZenTransactionBuilder {
   }
 
   public void addSpend(SpendDescriptionInfo spendDescriptionInfo) {
+    valueBalance = StrictMathWrapper.addExact(valueBalance, spendDescriptionInfo.note.getValue());
     spends.add(spendDescriptionInfo);
-    valueBalance += spendDescriptionInfo.note.getValue();
   }
 
   public void addSpend(
@@ -75,8 +76,8 @@ public class ZenTransactionBuilder {
       Note note,
       byte[] anchor,
       IncrementalMerkleVoucherContainer voucher) throws ZksnarkException {
+    valueBalance = StrictMathWrapper.addExact(valueBalance, note.getValue());
     spends.add(new SpendDescriptionInfo(expsk, note, anchor, voucher));
-    valueBalance += note.getValue();
   }
 
   public void addSpend(
@@ -85,8 +86,8 @@ public class ZenTransactionBuilder {
       byte[] alpha,
       byte[] anchor,
       IncrementalMerkleVoucherContainer voucher) {
+    valueBalance = StrictMathWrapper.addExact(valueBalance, note.getValue());
     spends.add(new SpendDescriptionInfo(expsk, note, alpha, anchor, voucher));
-    valueBalance += note.getValue();
   }
 
   public void addSpend(
@@ -97,23 +98,23 @@ public class ZenTransactionBuilder {
       byte[] alpha,
       byte[] anchor,
       IncrementalMerkleVoucherContainer voucher) {
+    valueBalance = StrictMathWrapper.addExact(valueBalance, note.getValue());
     spends.add(new SpendDescriptionInfo(ak, nsk, ovk, note, alpha, anchor, voucher));
-    valueBalance += note.getValue();
   }
 
   public void addOutput(byte[] ovk, PaymentAddress to, long value, byte[] memo)
       throws ZksnarkException {
     Note note = new Note(to, value);
     note.setMemo(memo);
+    valueBalance = StrictMathWrapper.subtractExact(valueBalance, value);
     receives.add(new ReceiveDescriptionInfo(ovk, note));
-    valueBalance -= value;
   }
 
   public void addOutput(byte[] ovk, DiversifierT d, byte[] pkD, long value, byte[] r, byte[] memo) {
     Note note = new Note(d, pkD, value, r);
     note.setMemo(memo);
+    valueBalance = StrictMathWrapper.subtractExact(valueBalance, value);
     receives.add(new ReceiveDescriptionInfo(ovk, note));
-    valueBalance -= value;
   }
 
   public void setTransparentInput(byte[] address, long value) {

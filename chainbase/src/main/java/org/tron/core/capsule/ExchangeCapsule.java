@@ -2,11 +2,14 @@ package org.tron.core.capsule;
 
 import static org.tron.core.config.Parameter.ChainSymbol.TRX_SYMBOL_BYTES;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
+import org.tron.common.math.StrictMathWrapper;
 import org.tron.common.utils.ByteArray;
+import org.tron.core.exception.ContractValidateException;
 import org.tron.core.store.AssetIssueStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.protos.Protocol.Exchange;
@@ -112,31 +115,55 @@ public class ExchangeCapsule implements ProtoCapsule<Exchange> {
     return calculateDbKey(getID());
   }
 
-  public long transaction(byte[] sellTokenID, long sellTokenQuant, boolean useStrictMath) {
+  @VisibleForTesting
+  public long transaction(byte[] sellTokenID, long sellTokenQuant, boolean useStrictMath)
+      throws ContractValidateException {
+    return transaction(sellTokenID, sellTokenQuant, useStrictMath, false);
+  }
+
+  public long transaction(byte[] sellTokenID, long sellTokenQuant, boolean useStrictMath,
+      boolean hardenedCalc) throws ContractValidateException {
     long supply = 1_000_000_000_000_000_000L;
-    ExchangeProcessor processor = new ExchangeProcessor(supply, useStrictMath);
+    Processor processor = hardenedCalc
+        ? SafeExchangeProcessor.INSTANCE : new ExchangeProcessor(supply, useStrictMath);
 
     long buyTokenQuant = 0;
     long firstTokenBalance = this.exchange.getFirstTokenBalance();
     long secondTokenBalance = this.exchange.getSecondTokenBalance();
+    long newFirstTokenBalance;
+    long newSecondTokenBalance;
 
     if (this.exchange.getFirstTokenId().equals(ByteString.copyFrom(sellTokenID))) {
       buyTokenQuant = processor.exchange(firstTokenBalance,
           secondTokenBalance,
           sellTokenQuant);
-      this.exchange = this.exchange.toBuilder()
-          .setFirstTokenBalance(firstTokenBalance + sellTokenQuant)
-          .setSecondTokenBalance(secondTokenBalance - buyTokenQuant)
-          .build();
+      newFirstTokenBalance = hardenedCalc
+          ? StrictMathWrapper.addExact(firstTokenBalance, sellTokenQuant)
+          : firstTokenBalance + sellTokenQuant;
+      newSecondTokenBalance = hardenedCalc
+          ? StrictMathWrapper.subtractExact(secondTokenBalance, buyTokenQuant)
+          : secondTokenBalance - buyTokenQuant;
+
     } else {
       buyTokenQuant = processor.exchange(secondTokenBalance,
           firstTokenBalance,
           sellTokenQuant);
-      this.exchange = this.exchange.toBuilder()
-          .setFirstTokenBalance(firstTokenBalance - buyTokenQuant)
-          .setSecondTokenBalance(secondTokenBalance + sellTokenQuant)
-          .build();
+      newFirstTokenBalance = hardenedCalc
+          ? StrictMathWrapper.subtractExact(firstTokenBalance, buyTokenQuant)
+          : firstTokenBalance - buyTokenQuant;
+      newSecondTokenBalance = hardenedCalc
+          ? StrictMathWrapper.addExact(secondTokenBalance, sellTokenQuant)
+          : secondTokenBalance + sellTokenQuant;
+
     }
+
+    if (hardenedCalc && (newFirstTokenBalance < 0 || newSecondTokenBalance < 0)) {
+      throw new ContractValidateException("Exchange balance must be >=0 after transaction");
+    }
+    this.exchange = this.exchange.toBuilder()
+        .setFirstTokenBalance(newFirstTokenBalance)
+        .setSecondTokenBalance(newSecondTokenBalance)
+        .build();
 
     return buyTokenQuant;
   }
@@ -170,6 +197,11 @@ public class ExchangeCapsule implements ProtoCapsule<Exchange> {
   @Override
   public Exchange getInstance() {
     return this.exchange;
+  }
+
+  public interface Processor {
+
+    long exchange(long sellTokenBalance, long buyTokenBalance, long sellTokenQuant);
   }
 
 }
