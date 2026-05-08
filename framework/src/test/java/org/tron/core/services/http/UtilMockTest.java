@@ -16,6 +16,7 @@ import org.tron.api.GrpcAPI;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.json.JSONArray;
 import org.tron.json.JSONObject;
 import org.tron.p2p.utils.ByteArray;
 import org.tron.protos.Protocol;

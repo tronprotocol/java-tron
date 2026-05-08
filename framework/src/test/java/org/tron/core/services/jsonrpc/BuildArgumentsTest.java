@@ -244,17 +244,6 @@ public class BuildArgumentsTest extends BaseTest {
         json.contains("resolveData"));
   }
 
-  /** Same guarantee for FastJSON, which also discovers bean getters. */
-  @Test
-  public void fastjsonSerialize_doesNotExposeResolveDataOrThrowOnConflict() {
-    BuildArguments args = new BuildArguments();
-    args.setInput("0xdeadbeef");
-    args.setData("0xcafebabe");
-    String json = com.alibaba.fastjson.JSON.toJSONString(args);
-    Assert.assertFalse("should not leak resolveData: " + json,
-        json.contains("resolveData"));
-  }
-
   /** Validates the loser field too, not only the precedence winner. */
   @Test
   public void resolveData_inputValidDataMalformed_throwsInvalidParams() {
