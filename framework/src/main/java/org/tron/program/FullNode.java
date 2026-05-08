@@ -39,7 +39,6 @@ public class FullNode {
         throw new TronError(new IllegalArgumentException("Trust node is not set."),
             TronError.ErrCode.SOLID_NODE_INIT);
       }
-      parameter.setP2pDisable(true);
     } else {
       logger.info("Full node running.");
       if (Args.getInstance().isDebug()) {
