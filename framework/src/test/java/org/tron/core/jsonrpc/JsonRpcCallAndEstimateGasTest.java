@@ -211,7 +211,9 @@ public class JsonRpcCallAndEstimateGasTest {
           });
     }
 
-    return new TronJsonRpcImpl(mockNodeInfo, mockWallet, mockManager);
+    TronJsonRpcImpl rpc = new TronJsonRpcImpl(mockNodeInfo, mockWallet);
+    rpc.setManager(mockManager);
+    return rpc;
   }
 
   private static TronJsonRpcImpl newRpcWithMockedSuccessfulCall(byte[]... constantResults)
@@ -237,7 +239,9 @@ public class JsonRpcCallAndEstimateGasTest {
               .build();
         });
 
-    return new TronJsonRpcImpl(mockNodeInfo, mockWallet, mockManager);
+    TronJsonRpcImpl rpc = new TronJsonRpcImpl(mockNodeInfo, mockWallet);
+    rpc.setManager(mockManager);
+    return rpc;
   }
 
   private static TronJsonRpcImpl newRpcWithMockedEstimateGasSuccessfulCall(long energyValue,
@@ -272,6 +276,8 @@ public class JsonRpcCallAndEstimateGasTest {
           });
     }
 
-    return new TronJsonRpcImpl(mockNodeInfo, mockWallet, mockManager);
+    TronJsonRpcImpl rpc = new TronJsonRpcImpl(mockNodeInfo, mockWallet);
+    rpc.setManager(mockManager);
+    return rpc;
   }
 }
