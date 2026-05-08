@@ -33,35 +33,19 @@ public class JsonTest {
 
   @Test
   public void testTrailingComma() {
-    JSONArray array = JSON.parseArray("[1,2,{\"a\":1,},]");
-    assertEquals(3, array.size());
-    assertEquals(2, array.get(1));
-    assertEquals(1, ((JSONObject) array.get(2)).getIntValue("a"));
+    assertThrows(JSONException.class, () -> JSON.parseObject("{\"a\":1,}"));
+    assertThrows(JSONException.class, () -> JSON.parseArray("[1,2,]"));
     assertThrows(JSONException.class, () -> JSON.parseObject("{c:'NULL',,,,,,}"));
     assertThrows(JSONException.class, () -> JSON.parseObject("[1,,2]"));
   }
 
   @Test
   public void testNonNumericNumbers() {
-    JSONObject json = JSON.parseObject("{\"a\":NaN}");
-    assertNotNull(json);
-    assertTrue(json.containsKey("a"));
-    assertNull(json.get("a"));
-    assertNull(json.getLong("a"));
-    assertEquals(0, json.getIntValue("a"));
-
-    JSONArray arr = JSON.parseArray("[1, NaN, 2]");
-    assertEquals(3, arr.size());
-    assertNull(arr.get(1));
-    JSONObject nested = JSON.parseObject("{outer:{inner:NaN}}");
-    assertNull(nested.getJSONObject("outer").get("inner"));
-
-    JSONException eb = assertThrows(JSONException.class,
-        () -> JSON.parseObject("{b:Infinity}"));
-    assertEquals("syntax error, Infinity", eb.getMessage());
-    JSONException ec = assertThrows(JSONException.class,
-        () -> JSON.parseObject("{c:-Infinity}"));
-    assertEquals("syntax error, -Infinity", ec.getMessage());
+    assertThrows(JSONException.class, () -> JSON.parseObject("{\"a\":NaN}"));
+    assertThrows(JSONException.class, () -> JSON.parseArray("[1, NaN, 2]"));
+    assertThrows(JSONException.class, () -> JSON.parseObject("{outer:{inner:NaN}}"));
+    assertThrows(JSONException.class, () -> JSON.parseObject("{b:Infinity}"));
+    assertThrows(JSONException.class, () -> JSON.parseObject("{c:-Infinity}"));
     assertThrows(JSONException.class, () -> JSON.parseArray("[Infinity]"));
   }
 
@@ -111,7 +95,7 @@ public class JsonTest {
     assertNull(JSON.parseObject("   "));
     assertNull(JSON.parseObject("\n\t"));
     assertNull(JSON.parseObject("null"));
-    assertNull(JSON.parseObject("NULL"));
+    assertThrows(JSONException.class, () -> JSON.parseObject("NULL"));
   }
 
   @Test
@@ -125,30 +109,13 @@ public class JsonTest {
   }
 
   @Test
-  public void testUppercaseNull() {
-    // Fastjson 1.x parity: bare NULL token is treated as null.
-    JSONObject obj = JSON.parseObject("{\"a\":NULL,\"b\":1}");
-    assertNotNull(obj);
-    assertTrue(obj.containsKey("a"));
-    assertNull(obj.get("a"));
-    assertEquals(1, obj.getIntValue("b"));
-
-    // Mixed in array, alongside lowercase null.
-    JSONArray arr = JSON.parseArray("[NULL, null]");
-    assertEquals(2, arr.size());
-    assertNull(arr.get(0));
-    assertNull(arr.get(1));
-
+  public void testUppercaseNullRejected() {
+    assertThrows(JSONException.class, () -> JSON.parseObject("{\"a\":NULL,\"b\":1}"));
+    assertThrows(JSONException.class, () -> JSON.parseArray("[NULL, null]"));
+    assertThrows(JSONException.class, () -> JSON.parse("NULL"));
     // String value containing the substring "NULL" must be preserved verbatim.
     JSONObject q = JSON.parseObject("{\"k\":\"NULL\"}");
     assertEquals("NULL", q.getString("k"));
-
-    // Unquoted identifier containing NULL as a prefix must NOT be touched.
-    JSONObject id = JSON.parseObject("{NULL_KEY:1}");
-    assertEquals(1, id.getIntValue("NULL_KEY"));
-
-    // Top-level standalone NULL — already handled by isNullLiteral.
-    assertNull(JSON.parseObject("NULL"));
   }
 
   @Test

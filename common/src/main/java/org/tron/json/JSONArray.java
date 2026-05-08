@@ -33,12 +33,8 @@ public class JSONArray implements Iterable<Object> {
     if (JSON.isNullLiteral(text)) {
       return null;
     }
-    String input = text.indexOf("NULL") >= 0 ? JSON.coerceUppercaseNull(text) : text;
     try {
-      JsonNode node = JSON.MAPPER.readTree(input);
-      if (JSON.mayContainNonNumeric(input)) {
-        node = JSON.coerceNonNumeric(node);
-      }
+      JsonNode node = JSON.MAPPER.readTree(text);
       if (node == null || node.isNull()) {
         return null;
       }
