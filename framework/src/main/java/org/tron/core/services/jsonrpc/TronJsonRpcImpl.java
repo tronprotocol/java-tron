@@ -491,7 +491,7 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
 
     try {
       String reason = ContractEventParser.parseDataBytes(
-          org.bouncycastle.util.Arrays.copyOfRange(resData, REVERT_REASON_SELECTOR_LENGTH,
+          Arrays.copyOfRange(resData, REVERT_REASON_SELECTOR_LENGTH,
               resData.length),
           "string", 0);
       return reason.isEmpty() ? "" : ": " + reason;
