@@ -91,20 +91,20 @@ public class TransactionCapsuleTest extends BaseTest {
       long startNs = System.nanoTime() - TimeUnit.MILLISECONDS.toNanos(51);
       cap.logSlowSigVerify(startNs);
 
-      List<ILoggingEvent> infos = appender.list.stream()
-          .filter(e -> e.getLevel() == Level.INFO)
+      List<ILoggingEvent> warns = appender.list.stream()
+          .filter(e -> e.getLevel() == Level.WARN)
           .collect(Collectors.toList());
-      Assert.assertEquals("expected one INFO for a slow verify", 1, infos.size());
-      String rendered = infos.get(0).getFormattedMessage();
-      Assert.assertTrue("INFO should mention slow verify: " + rendered,
+      Assert.assertEquals("expected one WARN for a slow verify", 1, warns.size());
+      String rendered = warns.get(0).getFormattedMessage();
+      Assert.assertTrue("WARN should mention slow verify: " + rendered,
           rendered.contains("slow verify"));
-      Assert.assertTrue("INFO should echo the txId: " + rendered,
+      Assert.assertTrue("WARN should echo the txId: " + rendered,
           rendered.contains(cap.getTransactionId().toString()));
-      Assert.assertTrue("INFO should include sigCount: " + rendered,
+      Assert.assertTrue("WARN should include sigCount: " + rendered,
           rendered.contains("sigCount="));
-      Assert.assertTrue("INFO should include cost in ms: " + rendered,
+      Assert.assertTrue("WARN should include cost in ms: " + rendered,
           rendered.contains("cost="));
-      Assert.assertTrue("INFO should render ms suffix: " + rendered,
+      Assert.assertTrue("WARN should render ms suffix: " + rendered,
           rendered.contains(" ms"));
     } finally {
       appender.stop();
@@ -124,10 +124,10 @@ public class TransactionCapsuleTest extends BaseTest {
     try {
       TransactionCapsule cap = new TransactionCapsule(Transaction.newBuilder().build());
       cap.logSlowSigVerify(System.nanoTime());
-      long infoCount = appender.list.stream()
-          .filter(e -> e.getLevel() == Level.INFO)
+      long warnCount = appender.list.stream()
+          .filter(e -> e.getLevel() == Level.WARN)
           .count();
-      Assert.assertEquals("no INFO should fire below the threshold", 0, infoCount);
+      Assert.assertEquals("no WARN should fire below the threshold", 0, warnCount);
     } finally {
       appender.stop();
       capsuleLogger.detachAppender(appender);

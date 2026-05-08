@@ -669,14 +669,14 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   }
 
   /**
-   * INFO-logs when a single signature verification exceeds
+   * WARN-logs when a single signature verification exceeds
    * {@link #SLOW_SIG_VERIFY_MS}. Package-private so it can be exercised from
    * tests without forcing a real slow crypto path.
    */
   void logSlowSigVerify(long startNs) {
     long costMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNs);
     if (costMs > SLOW_SIG_VERIFY_MS) {
-      logger.info("slow verify: txId={}, sigCount={}, cost={} ms",
+      logger.warn("slow verify: txId={}, sigCount={}, cost={} ms",
           getTransactionId(), this.transaction.getSignatureCount(), costMs);
     }
   }
