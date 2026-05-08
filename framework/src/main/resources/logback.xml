@@ -118,6 +118,29 @@
   <logger level="INFO" name="DB"/>
   <logger level="INFO" name="capsule"/>
   <logger level="INFO" name="VM"/>
+  <logger level="INFO" name="AccountState"/>
+  <logger level="INFO" name="Commons"/>
+  <logger level="INFO" name="Exit"/>
+  <logger level="INFO" name="Parser"/>
+  <logger level="INFO" name="Repository"/>
+  <logger level="INFO" name="TransactionRegister"/>
+  <logger level="INFO" name="VMConfigLoader"/>
+  <logger level="INFO" name="VMProcessor"/>
+  <logger level="INFO" name="common-executor"/>
+  <logger level="INFO" name="consensus"/>
+  <logger level="INFO" name="db"/>
+  <logger level="INFO" name="event"/>
+  <logger level="INFO" name="httpApiAccessFilter"/>
+  <logger level="INFO" name="httpInterceptor"/>
+  <logger level="INFO" name="metrics"/>
+  <logger level="INFO" name="mortgage"/>
+  <logger level="INFO" name="pbft"/>
+  <logger level="INFO" name="pbft-data-sync"/>
+  <logger level="INFO" name="rewardViCalService"/>
+  <logger level="INFO" name="rpc"/>
+  <logger level="INFO" name="service"/>
+  <logger level="INFO" name="shieldTransaction"/>
+  <logger level="INFO" name="vm"/>
   <logger level="INFO" name="LEVELDB" additivity="false">
     <appender-ref ref="DB"/>
   </logger>
