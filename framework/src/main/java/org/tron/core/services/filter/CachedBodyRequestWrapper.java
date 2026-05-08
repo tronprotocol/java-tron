@@ -33,7 +33,7 @@ import javax.servlet.http.HttpServletRequestWrapper;
  */
 public class CachedBodyRequestWrapper extends HttpServletRequestWrapper {
 
-  private enum BodyAccessor {NONE, STREAM, READER}
+  private enum BodyAccessor { NONE, STREAM, READER }
 
   private final byte[] body;
   private BodyAccessor accessor = BodyAccessor.NONE;
