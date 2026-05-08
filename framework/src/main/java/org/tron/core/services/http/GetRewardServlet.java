@@ -24,7 +24,10 @@ public class GetRewardServlet extends RateLimiterServlet {
       if (address != null) {
         value = manager.getMortgageService().queryReward(address);
       }
-      response.getWriter().println("{\"reward\": " + value + "}");
+      String out = JsonFormat.isInt64AsString()
+          ? "{\"reward\": \"" + value + "\"}"
+          : "{\"reward\": " + value + "}";
+      response.getWriter().println(out);
     } catch (DecoderException | IllegalArgumentException e) {
       try {
         response.getWriter()

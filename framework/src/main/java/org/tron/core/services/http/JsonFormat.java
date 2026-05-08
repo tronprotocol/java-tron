@@ -91,6 +91,41 @@ public class JsonFormat {
   );
 
   /**
+   * Thread-local flag controlling whether int64/uint64 fields are serialized as JSON strings.
+   * Set via {@link #setInt64AsString(boolean)} early in request handling and cleared via
+   * {@link #clearInt64AsString()} in a finally block. Centralized in
+   * {@code RateLimiterServlet.service} for GET requests. Does not support nested scopes.
+   */
+  private static final ThreadLocal<Boolean> INT64_AS_STRING =
+      ThreadLocal.withInitial(() -> false);
+
+  /**
+   * Set whether int64/uint64 protobuf fields are serialized as quoted JSON strings to avoid
+   * precision loss in clients whose native number type cannot safely represent integers above
+   * 2^53 - 1 (e.g. JavaScript). Must be paired with {@link #clearInt64AsString()} in a
+   * finally block.
+   */
+  public static void setInt64AsString(boolean enabled) {
+    INT64_AS_STRING.set(enabled);
+  }
+
+  /**
+   * Clear the int64-as-string thread-local. Always call from a finally block to avoid
+   * polluting subsequent requests on the same (reused) thread.
+   */
+  public static void clearInt64AsString() {
+    INT64_AS_STRING.remove();
+  }
+
+  /**
+   * Whether the current thread is in int64-as-string mode. Used by servlets that build
+   * JSON literals manually (i.e. do not go through {@link #printToString}).
+   */
+  public static boolean isInt64AsString() {
+    return INT64_AS_STRING.get();
+  }
+
+  /**
    * Outputs a textual representation of the Protocol Message supplied into the parameter output.
    * (This representation is the new version of the classic "ProtocolPrinter" output from the
    * original Protocol Buffer system)
@@ -340,16 +375,25 @@ public class JsonFormat {
       throws IOException {
     switch (field.getType()) {
       case INT32:
-      case INT64:
       case SINT32:
-      case SINT64:
       case SFIXED32:
-      case SFIXED64:
       case FLOAT:
       case DOUBLE:
       case BOOL:
         // Good old toString() does what we want for these types.
         generator.print(value.toString());
+        break;
+
+      case INT64:
+      case SINT64:
+      case SFIXED64:
+        if (INT64_AS_STRING.get()) {
+          generator.print("\"");
+          generator.print(value.toString());
+          generator.print("\"");
+        } else {
+          generator.print(value.toString());
+        }
         break;
 
       case UINT32:
@@ -359,7 +403,13 @@ public class JsonFormat {
 
       case UINT64:
       case FIXED64:
-        generator.print(unsignedToString((Long) value));
+        if (INT64_AS_STRING.get()) {
+          generator.print("\"");
+          generator.print(unsignedToString((Long) value));
+          generator.print("\"");
+        } else {
+          generator.print(unsignedToString((Long) value));
+        }
         break;
 
       case STRING:
