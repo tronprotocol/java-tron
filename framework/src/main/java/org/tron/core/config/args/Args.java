@@ -553,6 +553,8 @@ public class Args extends CommonParameter {
     PARAMETER.solidityHttpPort = http.getSolidityPort();
     PARAMETER.pBFTHttpPort = http.getPBFTPort();
     PARAMETER.httpMaxMessageSize = http.getMaxMessageSize();
+    PARAMETER.maxNestingDepth = http.getMaxNestingDepth();
+    PARAMETER.maxTokenCount = http.getMaxTokenCount();
 
     // ---- JSON-RPC sub-bean ----
     NodeConfig.JsonRpcConfig jsonrpc = nc.getJsonrpc();
@@ -602,6 +604,7 @@ public class Args extends CommonParameter {
     PARAMETER.nodeEnableIpv6 = nc.isEnableIpv6();
 
     PARAMETER.syncFetchBatchNum = nc.getSyncFetchBatchNum();
+    PARAMETER.maxPendingBlockSize = nc.getMaxPendingBlockSize();
     PARAMETER.solidityThreads = nc.getSolidityThreads();
     PARAMETER.blockProducedTimeOut = nc.getBlockProducedTimeOut();
 

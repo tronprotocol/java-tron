@@ -1,10 +1,7 @@
 package org.tron.core.services.http;
 
-import com.alibaba.fastjson.JSONObject;
-
 import java.io.UnsupportedEncodingException;
 import javax.annotation.Resource;
-
 import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
@@ -12,6 +9,7 @@ import org.springframework.mock.web.MockHttpServletResponse;
 import org.tron.common.BaseTest;
 import org.tron.common.TestConstants;
 import org.tron.core.config.args.Args;
+import org.tron.json.JSONObject;
 
 public class GetBrokerageServletTest extends BaseTest {
 

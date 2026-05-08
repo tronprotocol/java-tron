@@ -162,6 +162,9 @@ public class CommonParameter {
   @Getter
   @Setter
   public long syncFetchBatchNum; // clearParam: 2000
+  @Getter
+  @Setter
+  public int maxPendingBlockSize;
 
   // If you are running a solidity node for java tron,
   // this flag is set to true
@@ -508,6 +511,12 @@ public class CommonParameter {
   @Getter
   @Setter
   public int pBFTHttpPort;
+  @Getter
+  @Setter
+  public int maxNestingDepth = 100;
+  @Getter
+  @Setter
+  public int maxTokenCount = 100_000;
   @Getter
   @Setter
   public long pBFTExpireNum; // clearParam: 20

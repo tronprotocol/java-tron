@@ -4,12 +4,9 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.fail;
 import static org.tron.common.utils.client.utils.HttpMethed.createRequest;
 
-import com.alibaba.fastjson.JSONObject;
 import com.google.protobuf.ByteString;
-
 import java.io.UnsupportedEncodingException;
 import javax.annotation.Resource;
-
 import org.apache.http.client.methods.HttpPost;
 import org.junit.Assert;
 import org.junit.Before;
@@ -21,6 +18,7 @@ import org.tron.common.TestConstants;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.config.args.Args;
+import org.tron.json.JSONObject;
 import org.tron.protos.Protocol;
 
 public class CreateAssetIssueServletTest extends BaseTest {

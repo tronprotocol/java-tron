@@ -6,7 +6,6 @@ import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.isBlockTag;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.parseBlockNumber;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.parseBlockTag;
 
-import com.alibaba.fastjson.JSON;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.protobuf.ByteString;
@@ -59,6 +58,9 @@ import org.tron.core.services.jsonrpc.filters.LogFilterWrapper;
 import org.tron.core.services.jsonrpc.types.BlockResult;
 import org.tron.core.services.jsonrpc.types.TransactionReceipt;
 import org.tron.core.services.jsonrpc.types.TransactionResult;
+import org.tron.json.JSON;
+import org.tron.json.JSONArray;
+import org.tron.json.JSONObject;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.contract.BalanceContract.TransferContract;
@@ -1337,6 +1339,53 @@ public class JsonrpcServiceTest extends BaseTest {
     Exception overflowReceiptsEx = Assert.assertThrows(Exception.class,
         () -> tronJsonRpc.getBlockReceipts("0x10000000000000000"));
     Assert.assertEquals("invalid block number", overflowReceiptsEx.getMessage());
+  }
+
+  @Test
+  public void testBuildTransactionTransfer() {
+    // End-to-end smoke test for the buildTransaction JSON-RPC path:
+    // posts through fullNodeJsonRpcHttpService and asserts the response's
+    // `transaction` field is a structurally valid JSON object with the
+    // expected protobuf-derived fields (type, amount). Coverage was
+    // missing before; not specific to the fastjson→jackson migration.
+    fullNodeJsonRpcHttpService.start();
+    try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
+      JsonObject buildArgs = new JsonObject();
+      buildArgs.addProperty("from", "0xabd4b9367799eaa3197fecb144eb71de1e049abc");
+      buildArgs.addProperty("to", "0x548794500882809695a8a687866e76d4271a1abc");
+      buildArgs.addProperty("value", "0x1f4");
+      JsonArray params = new JsonArray();
+      params.add(buildArgs);
+      JsonObject requestBody = new JsonObject();
+      requestBody.addProperty("jsonrpc", "2.0");
+      requestBody.addProperty("method", "buildTransaction");
+      requestBody.add("params", params);
+      requestBody.addProperty("id", 1);
+
+      HttpPost httpPost = new HttpPost("http://127.0.0.1:"
+          + CommonParameter.getInstance().getJsonRpcHttpFullNodePort() + "/jsonrpc");
+      httpPost.addHeader("Content-Type", "application/json");
+      httpPost.setEntity(new StringEntity(requestBody.toString()));
+      try (CloseableHttpResponse response = httpClient.execute(httpPost)) {
+        String resp = EntityUtils.toString(response.getEntity());
+        JSONObject tx = JSON.parseObject(resp).getJSONObject("result")
+            .getJSONObject("transaction");
+        Assert.assertNotNull("transaction must be a JSON object", tx);
+        Assert.assertNotNull(tx.getString("txID"));
+        Assert.assertNotNull(tx.getString("raw_data_hex"));
+
+        JSONArray contracts = tx.getJSONObject("raw_data").getJSONArray("contract");
+        Assert.assertEquals(1, contracts.size());
+        JSONObject contract = contracts.getJSONObject(0);
+        Assert.assertEquals("TransferContract", contract.getString("type"));
+        Assert.assertEquals(500L, contract.getJSONObject("parameter")
+            .getJSONObject("value").getLongValue("amount"));
+      }
+    } catch (Exception e) {
+      Assert.fail(e.getMessage());
+    } finally {
+      fullNodeJsonRpcHttpService.stop();
+    }
   }
 
   @Test

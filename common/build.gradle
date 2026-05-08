@@ -8,7 +8,7 @@ sourceCompatibility = 1.8
 
 
 dependencies {
-    api group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.18.3' // https://github.com/FasterXML/jackson-databind/issues/3627
+    api group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.18.6' // https://github.com/FasterXML/jackson-databind/issues/3627
     api "com.cedarsoftware:java-util:3.2.0"
     api group: 'org.apache.httpcomponents', name: 'httpasyncclient', version: '4.1.1'
     api group: 'commons-codec', name: 'commons-codec', version: '1.11'
