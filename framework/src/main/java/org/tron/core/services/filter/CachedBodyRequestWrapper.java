@@ -13,11 +13,27 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletRequestWrapper;
 
 /**
- * Wraps a request and replays a pre-read body from a byte array.
+ * Wraps a request to replay a pre-read body from a byte array,
+ * allowing the body to be read more than once.
+ *
+ * <p><b>Scope:</b> designed for synchronous, raw-body POST endpoints
+ * (e.g. JSON-RPC). It is NOT compatible with:
+ * <ul>
+ *   <li>{@code application/x-www-form-urlencoded} — cached body cannot back
+ *       {@code getParameter*}.</li>
+ *   <li>multipart — {@code getPart()/getParts()} read from the original
+ *       (already-consumed) stream.</li>
+ *   <li>async non-blocking I/O — see {@code setReadListener}.</li>
+ *   <li>request dispatch / forward chains.</li>
+ * </ul>
+ *
+ * <p>Multiple calls to {@code getInputStream()} (or {@code getReader()})
+ * are allowed and each returns a fresh stream over the same cached body —
+ * a deliberate extension of the standard servlet contract.
  */
 public class CachedBodyRequestWrapper extends HttpServletRequestWrapper {
 
-  private enum BodyAccessor { NONE, STREAM, READER }
+  private enum BodyAccessor {NONE, STREAM, READER}
 
   private final byte[] body;
   private BodyAccessor accessor = BodyAccessor.NONE;
@@ -57,6 +73,8 @@ public class CachedBodyRequestWrapper extends HttpServletRequestWrapper {
 
       @Override
       public void setReadListener(ReadListener readListener) {
+        throw new UnsupportedOperationException(
+            "async I/O is not supported on cached body");
       }
     };
   }
