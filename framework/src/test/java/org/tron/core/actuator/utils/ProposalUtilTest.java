@@ -343,6 +343,8 @@ public class ProposalUtilTest extends BaseTest {
 
     testAllowTvmSelfdestructRestrictionProposal();
 
+    testAllowHardenResourceCalculationProposal();
+
     forkUtils.getManager().getDynamicPropertiesStore()
         .statsByVersion(ForkBlockVersionEnum.ENERGY_LIMIT.getValue(), stats);
     forkUtils.reset();
@@ -566,6 +568,48 @@ public class ProposalUtilTest extends BaseTest {
             ProposalType.ALLOW_TVM_SELFDESTRUCT_RESTRICTION.getCode(), 1));
     Assert.assertEquals(
         "[ALLOW_TVM_SELFDESTRUCT_RESTRICTION] has been valid, no need to propose again",
+        e3.getMessage());
+  }
+
+  private void testAllowHardenResourceCalculationProposal() {
+    byte[] stats = new byte[27];
+    forkUtils.getManager().getDynamicPropertiesStore()
+        .statsByVersion(ForkBlockVersionEnum.VERSION_4_8_1.getValue(), stats);
+    ContractValidateException e1 = Assert.assertThrows(ContractValidateException.class,
+        () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+            ProposalType.ALLOW_HARDEN_RESOURCE_CALCULATION.getCode(), 1));
+    Assert.assertEquals(
+        "Bad chain parameter id [ALLOW_HARDEN_RESOURCE_CALCULATION]",
+        e1.getMessage());
+
+    long maintenanceTimeInterval = forkUtils.getManager().getDynamicPropertiesStore()
+        .getMaintenanceTimeInterval();
+
+    long hardForkTime =
+        ((ForkBlockVersionEnum.VERSION_4_8_2.getHardForkTime() - 1) / maintenanceTimeInterval + 1)
+            * maintenanceTimeInterval;
+    forkUtils.getManager().getDynamicPropertiesStore()
+        .saveLatestBlockHeaderTimestamp(hardForkTime + 1);
+
+    stats = new byte[27];
+    Arrays.fill(stats, (byte) 1);
+    forkUtils.getManager().getDynamicPropertiesStore()
+        .statsByVersion(ForkBlockVersionEnum.VERSION_4_8_2.getValue(), stats);
+
+    // Should fail because the proposal value is invalid
+    ContractValidateException e2 = Assert.assertThrows(ContractValidateException.class,
+        () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+            ProposalType.ALLOW_HARDEN_RESOURCE_CALCULATION.getCode(), 2));
+    Assert.assertEquals(
+        "This value[ALLOW_HARDEN_RESOURCE_CALCULATION] is only allowed to be 1",
+        e2.getMessage());
+
+    dynamicPropertiesStore.saveAllowHardenResourceCalculation(1);
+    ContractValidateException e3 = Assert.assertThrows(ContractValidateException.class,
+        () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+            ProposalType.ALLOW_HARDEN_RESOURCE_CALCULATION.getCode(), 1));
+    Assert.assertEquals(
+        "[ALLOW_HARDEN_RESOURCE_CALCULATION] has been valid, no need to propose again",
         e3.getMessage());
   }
 

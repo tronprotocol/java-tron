@@ -886,6 +886,22 @@ public class ProposalUtil {
         }
         break;
       }
+      case ALLOW_HARDEN_RESOURCE_CALCULATION: {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_8_2)) {
+          throw new ContractValidateException(
+              "Bad chain parameter id [ALLOW_HARDEN_RESOURCE_CALCULATION]");
+        }
+        if (dynamicPropertiesStore.getAllowHardenResourceCalculation() == 1) {
+          throw new ContractValidateException(
+              "[ALLOW_HARDEN_RESOURCE_CALCULATION] has been valid, "
+                  + "no need to propose again");
+        }
+        if (value != 1) {
+          throw new ContractValidateException(
+              "This value[ALLOW_HARDEN_RESOURCE_CALCULATION] is only allowed to be 1");
+        }
+        break;
+      }
       default:
         break;
     }
@@ -971,7 +987,8 @@ public class ProposalUtil {
     ALLOW_TVM_BLOB(89), // 0, 1
     PROPOSAL_EXPIRE_TIME(92), // (0, 31536003000)
     ALLOW_TVM_SELFDESTRUCT_RESTRICTION(94), // 0, 1
-    ALLOW_TVM_OSAKA(96); // 0, 1
+    ALLOW_TVM_OSAKA(96), // 0, 1
+    ALLOW_HARDEN_RESOURCE_CALCULATION(97); // 0, 1
 
     private long code;
 

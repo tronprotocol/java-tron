@@ -3,7 +3,11 @@ package org.tron.core.services.http;
 import com.google.common.base.Strings;
 import io.prometheus.client.Histogram;
 import java.io.IOException;
-import java.lang.reflect.Constructor;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import javax.annotation.PostConstruct;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -31,56 +35,66 @@ import org.tron.core.services.ratelimiter.strategy.QpsStrategy;
 @Slf4j
 public abstract class RateLimiterServlet extends HttpServlet {
   private static final String KEY_PREFIX_HTTP = "http_";
-  private static final String ADAPTER_PREFIX = "org.tron.core.services.ratelimiter.adapter.";
+
+  static final Map<String, Class<? extends IRateLimiter>> ALLOWED_ADAPTERS;
+  static final String DEFAULT_ADAPTER_NAME = DefaultBaseQqsAdapter.class.getSimpleName();
+
+  static {
+    List<Class<? extends IRateLimiter>> adapters = Arrays.asList(
+        GlobalPreemptibleAdapter.class,
+        QpsRateLimiterAdapter.class,
+        IPQPSRateLimiterAdapter.class,
+        DefaultBaseQqsAdapter.class);
+    Map<String, Class<? extends IRateLimiter>> m = new HashMap<>();
+    for (Class<? extends IRateLimiter> c : adapters) {
+      m.put(c.getSimpleName(), c);
+    }
+    ALLOWED_ADAPTERS = Collections.unmodifiableMap(m);
+  }
 
   @Autowired
   private RateLimiterContainer container;
 
   @PostConstruct
   private void addRateContainer() {
-    RateLimiterInitialization.HttpRateLimiterItem item = Args.getInstance()
-        .getRateLimiterInitialization().getHttpMap().get(getClass().getSimpleName());
-    boolean success = false;
     final String name = getClass().getSimpleName();
-    if (item != null) {
-      String cName = "";
-      String params = "";
-      Object obj;
-      try {
-        cName = item.getStrategy();
-        params = item.getParams();
-        // add the specific rate limiter strategy of servlet.
-        Class<?> c = Class.forName(ADAPTER_PREFIX + cName);
-        Constructor constructor;
-        if (c == GlobalPreemptibleAdapter.class || c == QpsRateLimiterAdapter.class
-            || c == IPQPSRateLimiterAdapter.class) {
-          constructor = c.getConstructor(String.class);
-          obj = constructor.newInstance(params);
-          container.add(KEY_PREFIX_HTTP, name, (IRateLimiter) obj);
-        } else {
-          constructor = c.getConstructor();
-          obj = constructor.newInstance(QpsStrategy.DEFAULT_QPS_PARAM);
-          container.add(KEY_PREFIX_HTTP, name, (IRateLimiter) obj);
-        }
-        success = true;
-      } catch (Exception e) {
-        this.throwTronError(cName, params, name, e);
-      }
+    RateLimiterInitialization.HttpRateLimiterItem item = Args.getInstance()
+        .getRateLimiterInitialization().getHttpMap().get(name);
+
+    String cName;
+    String params;
+    if (item == null) {
+      cName = DEFAULT_ADAPTER_NAME;
+      params = QpsStrategy.DEFAULT_QPS_PARAM;
+    } else {
+      cName = item.getStrategy();
+      params = item.getParams();
     }
-    if (!success) {
-      // if the specific rate limiter strategy of servlet is not defined or fail to add,
-      // then add a default Strategy.
-      try {
-        IRateLimiter rateLimiter = new DefaultBaseQqsAdapter(QpsStrategy.DEFAULT_QPS_PARAM);
-        container.add(KEY_PREFIX_HTTP, name, rateLimiter);
-      } catch (Exception e) {
-        this.throwTronError("DefaultBaseQqsAdapter", QpsStrategy.DEFAULT_QPS_PARAM, name, e);
-      }
+
+    try {
+      container.add(KEY_PREFIX_HTTP, name, buildAdapter(cName, params, name));
+    } catch (Exception e) {
+      throw rateLimiterInitError(cName, params, name, e);
     }
   }
 
-  private void throwTronError(String strategy, String params, String servlet,  Exception e) {
-    throw new TronError("failure to add the rate limiter strategy. servlet = " + servlet
+  static IRateLimiter buildAdapter(String cName, String params, String name) {
+    Class<? extends IRateLimiter> c = ALLOWED_ADAPTERS.get(cName);
+    if (c == null) {
+      throw rateLimiterInitError(cName, params, name,
+          new IllegalArgumentException("unknown rate limiter adapter; allowed="
+              + ALLOWED_ADAPTERS.keySet()));
+    }
+    try {
+      return c.getConstructor(String.class).newInstance(params);
+    } catch (Exception e) {
+      throw rateLimiterInitError(cName, params, name, e);
+    }
+  }
+
+  private static TronError rateLimiterInitError(String strategy, String params, String servlet,
+      Exception e) {
+    return new TronError("failure to add the rate limiter strategy. servlet = " + servlet
         + ", strategy name = " + strategy + ", params = \"" + params + "\".",
             e, TronError.ErrCode.RATE_LIMITER_INIT);
   }
@@ -102,6 +116,12 @@ public abstract class RateLimiterServlet extends HttpServlet {
     String contextPath = req.getContextPath();
     String url = Strings.isNullOrEmpty(req.getServletPath())
         ? MetricLabels.UNDEFINED : contextPath + req.getServletPath();
+    // int64_as_string is honored only on GET requests (URL query). POST is intentionally
+    // unsupported because reading the body here would consume request.getReader() and
+    // break downstream servlets that read it themselves.
+    if ("GET".equalsIgnoreCase(req.getMethod())) {
+      JsonFormat.setInt64AsString(Util.getInt64AsString(req));
+    }
     try {
       resp.setContentType("application/json; charset=utf-8");
 
@@ -119,6 +139,10 @@ public abstract class RateLimiterServlet extends HttpServlet {
     } catch (Exception unexpected) {
       logger.error("Http Api {}, Method:{}. Error：", url, req.getMethod(), unexpected);
     } finally {
+      // CRITICAL: this clear pairs with the setInt64AsString call above. Removing it
+      // will leak int64_as_string state across requests on reused Tomcat threads,
+      // producing intermittent quoted/unquoted output that is very hard to debug.
+      JsonFormat.clearInt64AsString();
       if (rateLimiter instanceof IPreemptibleRateLimiter && acquireResource) {
         ((IPreemptibleRateLimiter) rateLimiter).release();
       }

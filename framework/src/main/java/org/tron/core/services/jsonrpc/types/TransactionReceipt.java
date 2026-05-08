@@ -35,6 +35,7 @@ public class TransactionReceipt {
     private String data;
     private String[] topics;
     private boolean removed = false;
+    private String blockTimestamp;
 
     public TransactionLog() {}
   }
@@ -108,6 +109,7 @@ public class TransactionReceipt {
 
     // Set logs
     List<TransactionLog> logList = new ArrayList<>();
+    String blockTimestamp = ByteArray.toJsonHex(blockCapsule.getTimeStamp() / 1000);
     for (int logIndex = 0; logIndex < txInfo.getLogCount(); logIndex++) {
       TransactionInfo.Log log = txInfo.getLogList().get(logIndex);
       TransactionLog transactionLog = new TransactionLog();
@@ -116,6 +118,7 @@ public class TransactionReceipt {
       transactionLog.setTransactionIndex(this.transactionIndex);
       transactionLog.setBlockHash(this.blockHash);
       transactionLog.setBlockNumber(this.blockNumber);
+      transactionLog.setBlockTimestamp(blockTimestamp);
 
       byte[] addressByte = convertToTronAddress(log.getAddress().toByteArray());
       transactionLog.setAddress(ByteArray.toJsonHexAddress(addressByte));

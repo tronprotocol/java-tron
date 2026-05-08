@@ -461,10 +461,12 @@ public interface TronJsonRpc {
     private final String[] topics;
     @Getter
     private final boolean removed;
+    @Getter
+    private final String blockTimestamp;
 
     public LogFilterElement(String blockHash, Long blockNum, String txId, Integer txIndex,
         String contractAddress, List<DataWord> topicList, String logData, int logIdx,
-        boolean removed) {
+        boolean removed, long blockTimestampMs) {
       logIndex = ByteArray.toJsonHex(logIdx);
       this.blockNumber = blockNum == null ? null : ByteArray.toJsonHex(blockNum);
       this.blockHash = blockHash == null ? null : ByteArray.toJsonHex(blockHash);
@@ -477,6 +479,7 @@ public interface TronJsonRpc {
         topics[i] = ByteArray.toJsonHex(topicList.get(i).getData());
       }
       this.removed = removed;
+      this.blockTimestamp = ByteArray.toJsonHex(blockTimestampMs / 1000);
     }
 
     @Override
@@ -500,12 +503,16 @@ public interface TronJsonRpc {
       if (!Objects.equals(logIndex, item.logIndex)) {
         return false;
       }
-      return removed == item.removed;
+      if (removed != item.removed) {
+        return false;
+      }
+      return Objects.equals(blockTimestamp, item.blockTimestamp);
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(blockHash, transactionHash, transactionIndex, logIndex, removed);
+      return Objects.hash(blockHash, transactionHash, transactionIndex,
+          logIndex, removed, blockTimestamp);
     }
 
   }
