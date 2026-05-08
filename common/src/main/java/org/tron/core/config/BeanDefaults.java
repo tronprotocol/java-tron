@@ -87,30 +87,40 @@ public final class BeanDefaults {
 
   private static Map<String, Object> toMap(Object bean) {
     Map<String, Object> map = new LinkedHashMap<>();
+    BeanInfo info;
     try {
-      BeanInfo info = Introspector.getBeanInfo(bean.getClass());
-      for (PropertyDescriptor pd : info.getPropertyDescriptors()) {
-        Method getter = pd.getReadMethod();
-        Method setter = pd.getWriteMethod();
-        // Skip read-only properties (no setter) — matches ConfigBeanFactory's contract
-        if (getter == null || setter == null) {
-          continue;
-        }
-        // Use the property name exactly as Introspector produced it.
-        // ConfigBeanFactory does configProps.get(beanProp.getName()) — the lookup key
-        // is the property name verbatim, not decapitalized.  For ordinary camelCase
-        // setters (setMaxConnections → "MaxConnections" → decapitalize → "maxConnections")
-        // Introspector already returns the lowercase form.  For setters that start with
-        // two consecutive uppercase letters (setPBFTEnable → "PBFTEnable") the JavaBean
-        // spec forbids decapitalization, so pd.getName() == "PBFTEnable" — matching the
-        // capital-P key that config.conf uses for those fields.
+      info = Introspector.getBeanInfo(bean.getClass());
+    } catch (java.beans.IntrospectionException e) {
+      // Programming error: bean class does not conform to JavaBean spec.
+      // Propagate immediately so the misconfigured class is identified at startup,
+      // rather than returning a silent empty map that produces a confusing
+      // ConfigException.Missing pointing at the user config.
+      throw new IllegalStateException("Cannot introspect bean: " + bean.getClass().getName(), e);
+    }
+    for (PropertyDescriptor pd : info.getPropertyDescriptors()) {
+      Method getter = pd.getReadMethod();
+      Method setter = pd.getWriteMethod();
+      // Skip read-only properties (no setter) — matches ConfigBeanFactory's contract
+      if (getter == null || setter == null) {
+        continue;
+      }
+      // Use the property name exactly as Introspector produced it.
+      // ConfigBeanFactory does configProps.get(beanProp.getName()) — the lookup key
+      // is the property name verbatim, not decapitalized.  For ordinary camelCase
+      // setters (setMaxConnections → "MaxConnections" → decapitalize → "maxConnections")
+      // Introspector already returns the lowercase form.  For setters that start with
+      // two consecutive uppercase letters (setPBFTEnable → "PBFTEnable") the JavaBean
+      // spec forbids decapitalization, so pd.getName() == "PBFTEnable" — matching the
+      // capital-P key that config.conf uses for those fields.
+      try {
         String key = pd.getName();
         Object value = getter.invoke(bean);
         map.put(key, toValue(value));
+      } catch (Exception ignored) {
+        // Best-effort: skip individual unresolvable property so that the rest of
+        // the defaults are still emitted. getter.invoke() is the only realistic
+        // throw site (InvocationTargetException / IllegalAccessException).
       }
-    } catch (Exception ignored) {
-      // Best-effort: any unresolvable field is simply omitted.
-      // ConfigBeanFactory will throw with a clear path if a required key is missing.
     }
     return map;
   }
