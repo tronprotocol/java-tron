@@ -247,11 +247,8 @@ public class TronNetDelegate {
   }
 
   public void processBlock(BlockCapsule block, boolean isSync) throws P2pException {
-    // Use <= rather than == because pushBlock may commit multiple blocks in a single
-    // batch write, causing the DB header number to jump past the target block number
-    // and never equal it exactly.
     if (!hitDown && dbManager.getLatestSolidityNumShutDown() > 0
-        && dbManager.getLatestSolidityNumShutDown() <= dbManager.getDynamicPropertiesStore()
+        && dbManager.getLatestSolidityNumShutDown() == dbManager.getDynamicPropertiesStore()
         .getLatestBlockHeaderNumberFromDB()) {
 
       logger.info("Begin shutdown, currentBlockNum:{}, DbBlockNum:{}, solidifiedBlockNum:{}",
