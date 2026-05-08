@@ -3,7 +3,9 @@ package org.tron.core.db;
 import static org.junit.Assert.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.when;
 import static org.tron.common.utils.Commons.adjustAssetBalanceV2;
 import static org.tron.common.utils.Commons.adjustTotalShieldedPoolValue;
 import static org.tron.common.utils.Commons.getExchangeStoreFinal;
@@ -16,12 +18,15 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -32,6 +37,8 @@ import org.tron.api.GrpcAPI;
 import org.tron.common.BaseMethodTest;
 import org.tron.common.TestConstants;
 import org.tron.common.crypto.ECKey;
+import org.tron.common.logsfilter.EventPluginLoader;
+import org.tron.common.logsfilter.trigger.ContractLogTrigger;
 import org.tron.common.runtime.RuntimeImpl;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Commons;
@@ -1337,6 +1344,79 @@ public class ManagerTest extends BaseMethodTest {
     TronError thrown = Assert.assertThrows(TronError.class, () ->
         manager.blockTrigger(new BlockCapsule(Block.newBuilder().build()), 1, 1));
     Assert.assertEquals(TronError.ErrCode.EVENT_SUBSCRIBE_ERROR, thrown.getErrCode());
+  }
+
+  @Test
+  public void testReOrgContractTriggerClearsMap() throws Exception {
+    ReflectUtils.setFieldValue(dbManager, "eventPluginLoaded", true);
+    EventPluginLoader mockLoader = mock(EventPluginLoader.class);
+    // Disable contract triggers so reOrgContractTrigger skips the old-block fetch
+    // branch and proceeds to clearSolidityContractTriggerCache(getHeadBlockNum()).
+    when(mockLoader.isContractEventTriggerEnable()).thenReturn(false);
+    when(mockLoader.isContractLogTriggerEnable()).thenReturn(false);
+    when(mockLoader.isSolidityLogTriggerEnable()).thenReturn(true);
+    when(mockLoader.isSolidityEventTriggerEnable()).thenReturn(false);
+    Field instanceField = EventPluginLoader.class.getDeclaredField("instance");
+    instanceField.setAccessible(true);
+    EventPluginLoader originalLoader = (EventPluginLoader) instanceField.get(null);
+    instanceField.set(null, mockLoader);
+
+    long headBlockNum = dbManager.getHeadBlockNum();
+    Args.getSolidityContractLogTriggerMap()
+        .computeIfAbsent(headBlockNum, k -> new LinkedBlockingQueue<>())
+        .offer(new ContractLogTrigger());
+    Args.getSolidityContractEventTriggerMap()
+        .computeIfAbsent(headBlockNum, k -> new LinkedBlockingQueue<>())
+        .offer(new org.tron.common.logsfilter.trigger.ContractEventTrigger());
+
+    try {
+      Method method = Manager.class.getDeclaredMethod("reOrgContractTrigger");
+      method.setAccessible(true);
+      method.invoke(dbManager);
+
+      Assert.assertNull(Args.getSolidityContractLogTriggerMap().get(headBlockNum));
+      Assert.assertNull(Args.getSolidityContractEventTriggerMap().get(headBlockNum));
+    } finally {
+      instanceField.set(null, originalLoader);
+      ReflectUtils.setFieldValue(dbManager, "eventPluginLoaded", false);
+      Args.getSolidityContractLogTriggerMap().clear();
+      Args.getSolidityContractEventTriggerMap().clear();
+    }
+  }
+
+  @Test
+  public void testClearSolidityContractTriggerCache() throws Exception {
+    long blockNum = 999L;
+    ReflectUtils.setFieldValue(dbManager, "eventPluginLoaded", true);
+    EventPluginLoader mockLoader = mock(EventPluginLoader.class);
+    when(mockLoader.isSolidityLogTriggerEnable()).thenReturn(true);
+    when(mockLoader.isSolidityEventTriggerEnable()).thenReturn(true);
+    Field instanceField = EventPluginLoader.class.getDeclaredField("instance");
+    instanceField.setAccessible(true);
+    EventPluginLoader originalLoader = (EventPluginLoader) instanceField.get(null);
+    instanceField.set(null, mockLoader);
+
+    Args.getSolidityContractLogTriggerMap()
+        .computeIfAbsent(blockNum, k -> new LinkedBlockingQueue<>())
+        .offer(new ContractLogTrigger());
+    Args.getSolidityContractEventTriggerMap()
+        .computeIfAbsent(blockNum, k -> new LinkedBlockingQueue<>());
+    Assert.assertFalse(Args.getSolidityContractLogTriggerMap().isEmpty());
+
+    try {
+      Method method = Manager.class.getDeclaredMethod("clearSolidityContractTriggerCache",
+          long.class);
+      method.setAccessible(true);
+      method.invoke(dbManager, blockNum);
+
+      Assert.assertNull(Args.getSolidityContractLogTriggerMap().get(blockNum));
+      Assert.assertNull(Args.getSolidityContractEventTriggerMap().get(blockNum));
+    } finally {
+      instanceField.set(null, originalLoader);
+      ReflectUtils.setFieldValue(dbManager, "eventPluginLoaded", false);
+      Args.getSolidityContractLogTriggerMap().clear();
+      Args.getSolidityContractEventTriggerMap().clear();
+    }
   }
 
   public void adjustBalance(AccountStore accountStore, byte[] accountAddress, long amount)

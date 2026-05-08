@@ -13,6 +13,7 @@ public class OperationRegistry {
     TRON_V1_2,
     TRON_V1_3,
     TRON_V1_4,
+    TRON_V1_5,
     // add more
     // TRON_V2,
     // ETH
@@ -26,6 +27,7 @@ public class OperationRegistry {
     tableMap.put(Version.TRON_V1_2, newTronV12OperationSet());
     tableMap.put(Version.TRON_V1_3, newTronV13OperationSet());
     tableMap.put(Version.TRON_V1_4, newTronV14OperationSet());
+    tableMap.put(Version.TRON_V1_5, newTronV15OperationSet());
   }
 
   public static JumpTable newTronV10OperationSet() {
@@ -63,12 +65,18 @@ public class OperationRegistry {
     return table;
   }
 
+  public static JumpTable newTronV15OperationSet() {
+    JumpTable table = newTronV14OperationSet();
+    appendOsakaOperations(table);
+    return table;
+  }
+
   // Just for warming up class to avoid out_of_time
   public static void init() {}
 
   public static JumpTable getTable() {
     // always get the table which has the newest version
-    JumpTable table = tableMap.get(Version.TRON_V1_4);
+    JumpTable table = tableMap.get(Version.TRON_V1_5);
 
     // next make the corresponding changes, exclude activating opcode
     if (VMConfig.allowHigherLimitForMaxCpuTimeOfOneTx()) {
@@ -702,6 +710,16 @@ public class OperationRegistry {
         EnergyCost::getBaseTierCost,
         OperationActions::blobBaseFeeAction,
         tvmBlobProposal));
+  }
+
+  public static void appendOsakaOperations(JumpTable table) {
+    BooleanSupplier proposal = VMConfig::allowTvmOsaka;
+
+    table.set(new Operation(
+        Op.CLZ, 1, 1,
+        EnergyCost::getLowTierCost,
+        OperationActions::clzAction,
+        proposal));
   }
 
   public static void adjustSelfdestruct(JumpTable table) {

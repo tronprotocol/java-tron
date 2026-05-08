@@ -4,6 +4,6 @@ import org.tron.core.services.ratelimiter.RuntimeData;
 
 public interface IRateLimiter {
 
-  boolean acquire(RuntimeData data);
+  boolean tryAcquire(RuntimeData data);
 
 }

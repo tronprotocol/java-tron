@@ -6,10 +6,9 @@ import "core/contract/common.proto";
 
 package protocol;
 
-
 option java_package = "org.tron.protos"; //Specify the name of the package that generated the Java file
 option java_outer_classname = "Protocol"; //Specify the class name of the generated Java file
-option go_package = "github.com/tronprotocol/grpc-gateway/core";
+option go_package = "github.com/tronprotocol/protocol/core";
 
 enum AccountType {
   Normal = 0;

@@ -1,19 +1,15 @@
 package org.tron.core.config.args;
 
 import com.typesafe.config.Config;
-import com.typesafe.config.ConfigFactory;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.core.Constant;
 
 /**
  * Miscellaneous small config domains that don't warrant their own bean class.
- * Covers: storage (partial), trx, energy, crypto, seed, actuator.
+ * Covers: storage (partial), trx, energy, crypto, seed.
  *
  * <p>These use manual reads because they span multiple unrelated config.conf
  * top-level sections and some have non-standard key naming (e.g. "enery" typo).
@@ -29,7 +25,6 @@ public class MiscConfig {
   private long blockNumForEnergyLimit = 4727890L;
   private String cryptoEngine = Constant.ECKey_ENGINE;
   private List<String> seedNodeIpList = new ArrayList<>();
-  private Set<String> actuatorWhitelist = Collections.emptySet();
 
   public static MiscConfig fromConfig(Config config) {
     MiscConfig mc = new MiscConfig();
@@ -60,10 +55,6 @@ public class MiscConfig {
     // seed node
     mc.seedNodeIpList = config.hasPath("seed.node.ip.list")
         ? config.getStringList("seed.node.ip.list") : new ArrayList<>();
-
-    // actuator
-    mc.actuatorWhitelist = config.hasPath("actuator.whitelist")
-        ? new HashSet<>(config.getStringList("actuator.whitelist")) : Collections.emptySet();
 
     return mc;
   }

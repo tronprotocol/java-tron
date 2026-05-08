@@ -3,6 +3,7 @@ package org.tron.core.db;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.nio.file.Paths;
 import java.util.Iterator;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import javax.annotation.PostConstruct;
@@ -37,10 +38,10 @@ public abstract class TronDatabase<T> implements ITronChainBase<T> {
     this.dbName = dbName;
 
     if ("LEVELDB".equals(CommonParameter.getInstance().getStorage()
-        .getDbEngine().toUpperCase())) {
+        .getDbEngine().toUpperCase(Locale.ROOT))) {
       dbSource = new LevelDbDataSourceImpl(StorageUtils.getOutputDirectoryByDbName(dbName), dbName);
     } else if ("ROCKSDB".equals(CommonParameter.getInstance()
-        .getStorage().getDbEngine().toUpperCase())) {
+        .getStorage().getDbEngine().toUpperCase(Locale.ROOT))) {
       String parentName = Paths.get(StorageUtils.getOutputDirectoryByDbName(dbName),
           CommonParameter.getInstance().getStorage().getDbDirectory()).toString();
       dbSource = new RocksDbDataSourceImpl(parentName, dbName);

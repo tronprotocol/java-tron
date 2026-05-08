@@ -40,11 +40,9 @@ dependencies {
     // end local libraries
     implementation group: 'com.beust', name: 'jcommander', version: '1.78'
     implementation group: 'io.dropwizard.metrics', name: 'metrics-core', version: '3.1.2'
-    implementation group: 'com.github.davidb', name: 'metrics-influxdb', version: '0.8.2'
     // http
     implementation 'org.eclipse.jetty:jetty-server:9.4.58.v20250814'
     implementation 'org.eclipse.jetty:jetty-servlet:9.4.58.v20250814'
-    implementation 'com.alibaba:fastjson:1.2.83'
     // end http
 
     // https://mvnrepository.com/artifact/com.github.briandilley.jsonrpc4j/jsonrpc4j
@@ -126,6 +124,8 @@ def configureTestTask = { Task t ->
     }
     t.maxHeapSize = "512m"
     t.maxParallelForks = Math.max(1, Math.min(4, Runtime.runtime.availableProcessors()))
+    t.systemProperty 'runPrecompileBenchmark',
+            System.getProperty('runPrecompileBenchmark', 'false')
     t.doFirst {
         t.forkEvery = 100
     }
@@ -140,7 +140,7 @@ test {
     if (rootProject.archInfo.isArm64) {
         systemProperty 'storage.db.engine', 'ROCKSDB'
         exclude { element ->
-            element.file.name.toLowerCase().contains('leveldb')
+            element.file.name.toLowerCase(Locale.ROOT).contains('leveldb')
         }
         filter {
             excludeTestsMatching '*.*leveldb*'

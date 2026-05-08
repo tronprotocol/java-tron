@@ -7,7 +7,6 @@ import static org.apache.http.entity.ContentType.APPLICATION_FORM_URLENCODED;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import com.alibaba.fastjson.JSONObject;
 import java.io.UnsupportedEncodingException;
 import javax.annotation.Resource;
 import org.junit.Test;
@@ -16,6 +15,7 @@ import org.springframework.mock.web.MockHttpServletResponse;
 import org.tron.common.BaseTest;
 import org.tron.common.TestConstants;
 import org.tron.core.config.args.Args;
+import org.tron.json.JSONObject;
 
 public class GetNowBlockServletTest extends BaseTest {
 

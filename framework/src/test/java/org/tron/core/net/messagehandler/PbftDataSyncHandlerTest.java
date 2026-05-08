@@ -1,6 +1,6 @@
 package org.tron.core.net.messagehandler;
 
-import com.alibaba.fastjson.JSON;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.protobuf.ByteString;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -52,7 +52,7 @@ public class PbftDataSyncHandlerTest {
     pbftDataSyncHandler.processPBFTCommitData(blockCapsule);
     Field field1 = PbftDataSyncHandler.class.getDeclaredField("pbftCommitMessageCache");
     field1.setAccessible(true);
-    Map map = JSON.parseObject(JSON.toJSONString(field1.get(pbftDataSyncHandler)), Map.class);
+    Map map = new ObjectMapper().convertValue(field1.get(pbftDataSyncHandler), Map.class);
     Assert.assertFalse(map.containsKey(0));
   }
 }

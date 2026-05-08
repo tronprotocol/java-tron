@@ -15,10 +15,12 @@
 
 package org.tron.common.application;
 
+import com.google.common.annotations.VisibleForTesting;
 import java.util.concurrent.CompletableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jetty.server.ConnectionLimit;
 import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.handler.SizeLimitHandler;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.tron.core.config.args.Args;
 
@@ -28,6 +30,18 @@ public abstract class HttpService extends AbstractService {
   protected Server apiServer;
 
   protected String contextPath;
+
+  protected long maxRequestSize = 4 * 1024 * 1024; // 4MB
+
+  @VisibleForTesting
+  public long getMaxRequestSize() {
+    return this.maxRequestSize;
+  }
+
+  @VisibleForTesting
+  public void setMaxRequestSize(long maxRequestSize) {
+    this.maxRequestSize = maxRequestSize;
+  }
 
   @Override
   public void innerStart() throws Exception {
@@ -63,7 +77,9 @@ public abstract class HttpService extends AbstractService {
   protected ServletContextHandler initContextHandler() {
     ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
     context.setContextPath(this.contextPath);
-    this.apiServer.setHandler(context);
+    SizeLimitHandler sizeLimitHandler = new SizeLimitHandler(this.maxRequestSize, -1);
+    sizeLimitHandler.setHandler(context);
+    this.apiServer.setHandler(sizeLimitHandler);
     return context;
   }
 

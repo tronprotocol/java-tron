@@ -2,8 +2,6 @@ package org.tron.core.services.ratelimiter.adaptor;
 
 import com.google.common.cache.Cache;
 import com.google.common.util.concurrent.RateLimiter;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import org.junit.Assert;
@@ -43,32 +41,24 @@ public class AdaptorTest {
 
   @Test
   public void testIPQPSRateLimiterAdapter() {
-    String paramString = "qps=5";
+    String paramString = "qps=1";
     IPQPSRateLimiterAdapter adapter = new IPQPSRateLimiterAdapter(paramString);
 
     IPQpsStrategy strategy = (IPQpsStrategy) ReflectUtils.getFieldObject(adapter,
         "strategy");
-    Assert.assertEquals(5.0d, Double
+    Assert.assertEquals(1.0d, Double
         .parseDouble(ReflectUtils.getFieldValue(strategy.getMapParams().get("qps"),
             "value").toString()), 0.0);
 
-    long t0 = System.currentTimeMillis();
-    for (int i = 0; i < 20; i++) {
-      strategy.acquire("1.2.3.4");
-    }
-    long t1 = System.currentTimeMillis();
-    Assert.assertTrue(t1 - t0 > 3500);
+    boolean flag = strategy.tryAcquire("1.2.3.4");
+    Assert.assertTrue(flag);
 
-    t0 = System.currentTimeMillis();
-    for (int i = 0; i < 20; i++) {
-      if (i % 2 == 0) {
-        strategy.acquire("1.2.3.4");
-      } else {
-        strategy.acquire("4.3.2.1");
-      }
-    }
-    t1 = System.currentTimeMillis();
-    Assert.assertTrue(t1 - t0 > 1500);
+    flag = strategy.tryAcquire("1.2.3.4");
+    Assert.assertFalse(flag);
+
+    flag = strategy.tryAcquire("1.2.3.5");
+    Assert.assertTrue(flag);
+
     Cache<String, RateLimiter> ipLimiter = (Cache<String, RateLimiter>) ReflectUtils
         .getFieldObject(strategy, "ipLimiter");
     Assert.assertEquals(2, ipLimiter.size());
@@ -83,14 +73,14 @@ public class AdaptorTest {
     Assert.assertEquals(1, Integer.parseInt(
         ReflectUtils.getFieldValue(strategy1.getMapParams().get("permit"),
             "value").toString()));
-    boolean first = strategy1.acquire();
+    boolean first = strategy1.tryAcquire();
     Assert.assertTrue(first);
 
-    boolean second = strategy1.acquire();
+    boolean second = strategy1.tryAcquire();
     Assert.assertFalse(second);
 
     strategy1.release();
-    boolean secondAfterOneRelease = strategy1.acquire();
+    boolean secondAfterOneRelease = strategy1.tryAcquire();
     Assert.assertTrue(secondAfterOneRelease);
 
     String paramString2 = "permit=3";
@@ -101,18 +91,18 @@ public class AdaptorTest {
         ReflectUtils.getFieldValue(strategy2.getMapParams().get("permit"),
             "value").toString()));
 
-    first = strategy2.acquire();
+    first = strategy2.tryAcquire();
     Assert.assertTrue(first);
-    second = strategy2.acquire();
+    second = strategy2.tryAcquire();
     Assert.assertTrue(second);
-    boolean third = strategy2.acquire();
+    boolean third = strategy2.tryAcquire();
     Assert.assertTrue(third);
 
-    boolean four = strategy2.acquire();
+    boolean four = strategy2.tryAcquire();
     Assert.assertFalse(four);
 
     strategy2.release();
-    boolean fourAfterOneRelease = strategy2.acquire();
+    boolean fourAfterOneRelease = strategy2.tryAcquire();
     Assert.assertTrue(fourAfterOneRelease);
 
     Semaphore sp = (Semaphore) ReflectUtils.getFieldObject(strategy2, "sp");
@@ -121,35 +111,32 @@ public class AdaptorTest {
     strategy2.release();
     strategy2.release();
     Assert.assertEquals(3, sp.availablePermits());
-
   }
 
   @Test
-  public void testQpsRateLimiterAdapter() {
-    String paramString = "qps=5";
+  public void testQpsRateLimiterAdapter() throws Exception {
+    String paramString = "qps=1";
     QpsRateLimiterAdapter adapter = new QpsRateLimiterAdapter(paramString);
 
     QpsStrategy strategy = (QpsStrategy) ReflectUtils.getFieldObject(adapter, "strategy");
-    Assert.assertEquals(5, Double
+    Assert.assertEquals(1, Double
         .parseDouble(ReflectUtils.getFieldValue(strategy.getMapParams().get("qps"),
             "value").toString()), 0.0);
-    strategy.acquire();
 
-    long t0 = System.currentTimeMillis();
-    CountDownLatch latch = new CountDownLatch(20);
-    ExecutorService pool = ExecutorServiceManager.newFixedThreadPool("adaptor-test", 20);
-    try {
-      for (int i = 0; i < 20; i++) {
-        pool.execute(new AdaptorThread(latch, strategy));
-      }
-      latch.await();
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-    } finally {
-      ExecutorServiceManager.shutdownAndAwaitTermination(pool, "adaptor-test");
-    }
-    long t1 = System.currentTimeMillis();
-    Assert.assertTrue(t1 - t0 > 4000);
+    Thread.sleep(1000);
+
+    boolean flag = strategy.tryAcquire();
+    Assert.assertTrue(flag);
+
+    // Guava SmoothBursty "pre-bills" the next slot when stored permits are
+    // consumed without cost: nextFreeTicketMicros stays at the resync time,
+    // so the immediately following call still passes (waitLength = 0) while
+    // advancing the ticket to 1 s in the future.
+    flag = strategy.tryAcquire();
+    Assert.assertTrue(flag);
+
+    flag = strategy.tryAcquire();
+    Assert.assertFalse(flag);
   }
 }
 

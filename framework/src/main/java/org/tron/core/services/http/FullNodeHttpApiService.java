@@ -297,6 +297,7 @@ public class FullNodeHttpApiService extends HttpService {
     port = Args.getInstance().getFullNodeHttpPort();
     enable = isFullNode() && Args.getInstance().isFullNodeHttpEnable();
     contextPath = "/";
+    maxRequestSize = Args.getInstance().getHttpMaxMessageSize();
   }
 
   @Override
