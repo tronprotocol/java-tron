@@ -143,7 +143,13 @@ def binaryRelease(taskName, jarName, mainClass) {
         from(sourceSets.main.output) {
             include "/**"
         }
-        dependsOn (project(':protocol').jar, project(':platform').jar) // explicit_dependency
+        // Fat jar zips up runtimeClasspath, which includes the jar outputs of
+        // every project dependency. Declare them all explicitly so Gradle does
+        // not warn about implicit_dependency and disable execution optimizations
+        // (and so partial / parallel builds cannot run binaryRelease before the
+        // dependency jars exist).
+        dependsOn (project(':protocol').jar, project(':platform').jar,
+                project(':crypto').jar, project(':common').jar) // explicit_dependency
         from {
             configurations.runtimeClasspath.collect { // https://docs.gradle.org/current/userguide/upgrading_version_6.html#changes_6.3
                 it.isDirectory() ? it : zipTree(it)
