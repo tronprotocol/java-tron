@@ -12,8 +12,8 @@ public class IPQPSRateLimiterAdapter implements IRateLimiter {
   }
 
   @Override
-  public boolean acquire(RuntimeData data) {
-    return strategy.acquire(data.getRemoteAddr());
+  public boolean tryAcquire(RuntimeData data) {
+    return strategy.tryAcquire(data.getRemoteAddr());
   }
 
 }

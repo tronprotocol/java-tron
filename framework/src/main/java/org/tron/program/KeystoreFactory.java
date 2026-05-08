@@ -2,6 +2,7 @@ package org.tron.program;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Locale;
 import java.util.Scanner;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -127,7 +128,7 @@ public class KeystoreFactory {
         if ("".equals(cmd)) {
           continue;
         }
-        String cmdLowerCase = cmd.toLowerCase();
+        String cmdLowerCase = cmd.toLowerCase(Locale.ROOT);
 
         switch (cmdLowerCase) {
           case "help": {

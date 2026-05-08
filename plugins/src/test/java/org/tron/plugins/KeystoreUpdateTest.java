@@ -12,6 +12,7 @@ import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.security.SecureRandom;
+import java.util.Locale;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -675,7 +676,7 @@ public class KeystoreUpdateTest {
     // Adversarial test: pre-loosen the keystore to 0644, then verify that
     // update writes the file back with 0600. This exercises the temp-file
     // + atomic-rename path rather than merely preserving existing perms.
-    String os = System.getProperty("os.name").toLowerCase();
+    String os = System.getProperty("os.name").toLowerCase(Locale.ROOT);
     org.junit.Assume.assumeTrue("POSIX permissions test, skip on Windows",
         !os.contains("win"));
 
@@ -786,7 +787,7 @@ public class KeystoreUpdateTest {
   @Test
   public void testUpdateScanSkipsSymlinkedEntry() throws Exception {
     org.junit.Assume.assumeTrue("Symlinks only tested on POSIX",
-        !System.getProperty("os.name").toLowerCase().contains("win"));
+        !System.getProperty("os.name").toLowerCase(Locale.ROOT).contains("win"));
 
     File dir = tempFolder.newFolder("keystore-update-symlink");
     String oldPassword = "oldpass123";

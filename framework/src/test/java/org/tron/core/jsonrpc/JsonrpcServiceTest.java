@@ -6,11 +6,12 @@ import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.isBlockTag;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.parseBlockNumber;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.parseBlockTag;
 
-import com.alibaba.fastjson.JSON;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.protobuf.ByteString;
 import io.prometheus.client.CollectorRegistry;
+import java.io.ByteArrayInputStream;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -19,6 +20,7 @@ import javax.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
@@ -29,6 +31,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.BaseTest;
 import org.tron.common.TestConstants;
+import org.tron.common.application.HttpService;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.prometheus.Metrics;
 import org.tron.common.utils.ByteArray;
@@ -55,6 +58,9 @@ import org.tron.core.services.jsonrpc.filters.LogFilterWrapper;
 import org.tron.core.services.jsonrpc.types.BlockResult;
 import org.tron.core.services.jsonrpc.types.TransactionReceipt;
 import org.tron.core.services.jsonrpc.types.TransactionResult;
+import org.tron.json.JSON;
+import org.tron.json.JSONArray;
+import org.tron.json.JSONObject;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.contract.BalanceContract.TransferContract;
@@ -1337,6 +1343,53 @@ public class JsonrpcServiceTest extends BaseTest {
   }
 
   @Test
+  public void testBuildTransactionTransfer() {
+    // End-to-end smoke test for the buildTransaction JSON-RPC path:
+    // posts through fullNodeJsonRpcHttpService and asserts the response's
+    // `transaction` field is a structurally valid JSON object with the
+    // expected protobuf-derived fields (type, amount). Coverage was
+    // missing before; not specific to the fastjson→jackson migration.
+    fullNodeJsonRpcHttpService.start();
+    try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
+      JsonObject buildArgs = new JsonObject();
+      buildArgs.addProperty("from", "0xabd4b9367799eaa3197fecb144eb71de1e049abc");
+      buildArgs.addProperty("to", "0x548794500882809695a8a687866e76d4271a1abc");
+      buildArgs.addProperty("value", "0x1f4");
+      JsonArray params = new JsonArray();
+      params.add(buildArgs);
+      JsonObject requestBody = new JsonObject();
+      requestBody.addProperty("jsonrpc", "2.0");
+      requestBody.addProperty("method", "buildTransaction");
+      requestBody.add("params", params);
+      requestBody.addProperty("id", 1);
+
+      HttpPost httpPost = new HttpPost("http://127.0.0.1:"
+          + CommonParameter.getInstance().getJsonRpcHttpFullNodePort() + "/jsonrpc");
+      httpPost.addHeader("Content-Type", "application/json");
+      httpPost.setEntity(new StringEntity(requestBody.toString()));
+      try (CloseableHttpResponse response = httpClient.execute(httpPost)) {
+        String resp = EntityUtils.toString(response.getEntity());
+        JSONObject tx = JSON.parseObject(resp).getJSONObject("result")
+            .getJSONObject("transaction");
+        Assert.assertNotNull("transaction must be a JSON object", tx);
+        Assert.assertNotNull(tx.getString("txID"));
+        Assert.assertNotNull(tx.getString("raw_data_hex"));
+
+        JSONArray contracts = tx.getJSONObject("raw_data").getJSONArray("contract");
+        Assert.assertEquals(1, contracts.size());
+        JSONObject contract = contracts.getJSONObject(0);
+        Assert.assertEquals("TransferContract", contract.getString("type"));
+        Assert.assertEquals(500L, contract.getJSONObject("parameter")
+            .getJSONObject("value").getLongValue("amount"));
+      }
+    } catch (Exception e) {
+      Assert.fail(e.getMessage());
+    } finally {
+      fullNodeJsonRpcHttpService.stop();
+    }
+  }
+
+  @Test
   public void testWeb3ClientVersion() {
     try {
       String[] versions = tronJsonRpc.web3ClientVersion().split("/");
@@ -1344,6 +1397,73 @@ public class JsonrpcServiceTest extends BaseTest {
       Assert.assertTrue("Java1.8".equals(javaVersion) || "Java17".equals(javaVersion));
     } catch (Exception e) {
       Assert.fail();
+    }
+  }
+
+  /**
+   * Verifies SizeLimitHandler integration with the real JsonRpcServlet + jsonrpc4j stack.
+   *
+   * Covers: normal request no regression, Content-Length oversized 413,
+   * and chunked oversized handled gracefully (body truncated, 200 + empty body
+   * because jsonrpc4j absorbs the BadMessageException).
+   */
+  @Test
+  public void testJsonRpcSizeLimitIntegration() {
+    long testLimit = 1024;
+    long originalLimit = fullNodeJsonRpcHttpService.getMaxRequestSize();
+    try {
+      fullNodeJsonRpcHttpService.setMaxRequestSize(testLimit);
+
+      fullNodeJsonRpcHttpService.start();
+      String url = "http://127.0.0.1:"
+          + CommonParameter.getInstance().getJsonRpcHttpFullNodePort() + "/jsonrpc";
+
+      try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
+        // Normal JSON-RPC request passes through SizeLimitHandler
+        JsonObject req = new JsonObject();
+        req.addProperty("jsonrpc", "2.0");
+        req.addProperty("method", "web3_clientVersion");
+        req.addProperty("id", 1);
+
+        HttpPost post = new HttpPost(url);
+        post.addHeader("Content-Type", "application/json");
+        post.setEntity(new StringEntity(req.toString()));
+        CloseableHttpResponse resp = httpClient.execute(post);
+        Assert.assertEquals(200, resp.getStatusLine().getStatusCode());
+        String body = EntityUtils.toString(resp.getEntity());
+        Assert.assertTrue("Normal JSON-RPC response should contain result",
+            body.contains("result"));
+        resp.close();
+
+        // Oversized request with Content-Length -> 413 before JsonRpcServlet
+        HttpPost overPost = new HttpPost(url);
+        overPost.addHeader("Content-Type", "application/json");
+        overPost.setEntity(new StringEntity(
+            new String(new char[(int) testLimit + 1]).replace('\0', 'x')));
+        resp = httpClient.execute(overPost);
+        Assert.assertEquals(413, resp.getStatusLine().getStatusCode());
+        resp.close();
+
+        // Chunked oversized -> BadMessageException thrown during body read,
+        // absorbed by jsonrpc4j catch(Exception) -> 200 with empty body.
+        // Body read IS truncated at the limit - OOM protection effective.
+        byte[] chunkedData = new String(new char[(int) testLimit * 2])
+            .replace('\0', 'x').getBytes("UTF-8");
+        HttpPost chunkedPost = new HttpPost(url);
+        chunkedPost.setEntity(new InputStreamEntity(
+            new ByteArrayInputStream(chunkedData), -1));
+        resp = httpClient.execute(chunkedPost);
+        Assert.assertEquals(200, resp.getStatusLine().getStatusCode());
+        body = EntityUtils.toString(resp.getEntity());
+        Assert.assertTrue("Chunked oversized should return empty body"
+            + " (jsonrpc4j absorbs BadMessageException)", body.isEmpty());
+        resp.close();
+      }
+    } catch (Exception e) {
+      Assert.fail(e.getMessage());
+    } finally {
+      fullNodeJsonRpcHttpService.setMaxRequestSize(originalLimit);
+      fullNodeJsonRpcHttpService.stop();
     }
   }
 }

@@ -5,9 +5,9 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import lombok.Getter;
 import lombok.Setter;
+import org.slf4j.bridge.SLF4JBridgeHandler;
 import org.tron.common.args.GenesisBlock;
 import org.tron.common.config.DbBackupConfig;
 import org.tron.common.cron.CronExpression;
@@ -22,6 +22,19 @@ import org.tron.p2p.P2pConfig;
 import org.tron.p2p.dns.update.PublishConfig;
 
 public class CommonParameter {
+
+  // Install the JUL->SLF4J bridge early so that JUL log records emitted during
+  // static init of grpc classes (or from unit tests that don't invoke
+  // LogService.load()) still reach Logback.
+  // removeHandlersForRootLogger() strips JUL's default ConsoleHandler so the
+  // same record is not emitted twice (once by JUL's own console output and
+  // once via the bridge to Logback).
+  static {
+    SLF4JBridgeHandler.removeHandlersForRootLogger();
+    if (!SLF4JBridgeHandler.isInstalled()) {
+      SLF4JBridgeHandler.install();
+    }
+  }
 
   protected static CommonParameter PARAMETER = new CommonParameter();
 
@@ -119,6 +132,9 @@ public class CommonParameter {
   public int maxTps; // clearParam: 1000
   @Getter
   @Setter
+  public int maxBlockInvPerSecond = 10; // default: 10 block inv hashes/s per peer
+  @Getter
+  @Setter
   public int minParticipationRate;
   @Getter
   public P2pConfig p2pConfig;
@@ -146,6 +162,9 @@ public class CommonParameter {
   @Getter
   @Setter
   public long syncFetchBatchNum; // clearParam: 2000
+  @Getter
+  @Setter
+  public int maxPendingBlockSize;
 
   // If you are running a solidity node for java tron,
   // this flag is set to true
@@ -211,9 +230,17 @@ public class CommonParameter {
   @Getter
   @Setter
   public long maxConnectionAgeInMillis;
+  // Refers to RPC (gRPC) max message size; see httpMaxMessageSize / jsonRpcMaxMessageSize
+  // below for the HTTP / JSON-RPC counterparts.
   @Getter
   @Setter
   public int maxMessageSize;
+  @Getter
+  @Setter
+  public long httpMaxMessageSize;
+  @Getter
+  @Setter
+  public long jsonRpcMaxMessageSize;
   @Getter
   @Setter
   public int maxHeaderListSize;
@@ -335,7 +362,7 @@ public class CommonParameter {
 
   @Getter
   @Setter
-  public boolean allowShieldedTransactionApi; // clearParam: true
+  public boolean allowShieldedTransactionApi; // clearParam: false
   @Getter
   @Setter
   public long blockNumForEnergyLimit;
@@ -365,9 +392,6 @@ public class CommonParameter {
   @Getter
   @Setter
   public long changedDelegation;
-  @Getter
-  @Setter
-  public Set<String> actuatorSet;
   @Getter
   @Setter
   public RateLimiterInitialization rateLimiterInitialization;
@@ -474,21 +498,6 @@ public class CommonParameter {
   public boolean nodeMetricsEnable = false;
   @Getter
   @Setter
-  public boolean metricsStorageEnable = false;
-  @Getter
-  @Setter
-  public String influxDbIp;
-  @Getter
-  @Setter
-  public int influxDbPort;
-  @Getter
-  @Setter
-  public String influxDbDatabase;
-  @Getter
-  @Setter
-  public int metricsReportInterval = 10;
-  @Getter
-  @Setter
   public boolean metricsPrometheusEnable = false;
   @Getter
   @Setter
@@ -505,6 +514,12 @@ public class CommonParameter {
   @Getter
   @Setter
   public int pBFTHttpPort;
+  @Getter
+  @Setter
+  public int maxNestingDepth = 100;
+  @Getter
+  @Setter
+  public int maxTokenCount = 100_000;
   @Getter
   @Setter
   public long pBFTExpireNum; // clearParam: 20
@@ -635,10 +650,6 @@ public class CommonParameter {
   @Getter
   @Setter
   public long allowTvmBlob;
-
-  @Getter
-  @Setter
-  public long allowTvmOsaka;
 
   private static double calcMaxTimeRatio() {
     return 5.0;

@@ -32,7 +32,6 @@ public class MiscConfigTest {
     assertEquals("eckey", mc.getCryptoEngine());
     // reference.conf has seed.node.ip.list with actual IPs
     assertFalse(mc.getSeedNodeIpList().isEmpty());
-    assertTrue(mc.getActuatorWhitelist().isEmpty());
   }
 
   @Test
@@ -42,15 +41,12 @@ public class MiscConfigTest {
             + " balance { history { lookup = true } } }\n"
             + "trx { reference { block = head } }\n"
             + "crypto { engine = sm2 }\n"
-            + "seed.node { ip.list = [\"1.2.3.4:18888\"] }\n"
-            + "actuator { whitelist = [\"CreateSmartContract\"] }");
+            + "seed.node { ip.list = [\"1.2.3.4:18888\"] }");
     MiscConfig mc = MiscConfig.fromConfig(config);
     assertFalse(mc.isNeedToUpdateAsset());
     assertTrue(mc.isHistoryBalanceLookup());
     assertEquals("head", mc.getTrxReferenceBlock());
     assertEquals("sm2", mc.getCryptoEngine());
     assertEquals(1, mc.getSeedNodeIpList().size());
-    assertEquals(1, mc.getActuatorWhitelist().size());
-    assertTrue(mc.getActuatorWhitelist().contains("CreateSmartContract"));
   }
 }

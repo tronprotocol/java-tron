@@ -40,6 +40,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
+import org.bouncycastle.asn1.sec.SECNamedCurves;
+import org.bouncycastle.asn1.x9.X9ECParameters;
+import org.bouncycastle.crypto.params.ECDomainParameters;
+import org.bouncycastle.crypto.params.ECPublicKeyParameters;
+import org.bouncycastle.crypto.signers.ECDSASigner;
+import org.bouncycastle.math.ec.ECPoint;
 import org.tron.common.crypto.Blake2bfMessageDigest;
 import org.tron.common.crypto.Hash;
 import org.tron.common.crypto.Rsv;
@@ -52,6 +58,7 @@ import org.tron.common.crypto.zksnark.BN128G2;
 import org.tron.common.crypto.zksnark.Fp;
 import org.tron.common.crypto.zksnark.PairingCheck;
 import org.tron.common.es.ExecutorServiceManager;
+import org.tron.common.math.StrictMathWrapper;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.ProgramResult;
 import org.tron.common.runtime.vm.DataWord;
@@ -106,6 +113,7 @@ public class PrecompiledContracts {
 
   private static final EthRipemd160 ethRipemd160 = new EthRipemd160();
   private static final Blake2F blake2F = new Blake2F();
+  private static final P256Verify p256Verify = new P256Verify();
 
   // FreezeV2 PrecompileContracts
   private static final GetChainParameter getChainParameter = new GetChainParameter();
@@ -199,6 +207,8 @@ public class PrecompiledContracts {
       "0000000000000000000000000000000000000000000000000000000000020003");
   private static final DataWord blake2FAddr = new DataWord(
       "0000000000000000000000000000000000000000000000000000000000020009");
+  private static final DataWord p256VerifyAddr = new DataWord(
+      "0000000000000000000000000000000000000000000000000000000000000100");
 
   public static PrecompiledContract getOptimizedContractForConstant(PrecompiledContract contract) {
     try {
@@ -280,6 +290,9 @@ public class PrecompiledContracts {
     }
     if (VMConfig.allowTvmCompatibleEvm() && address.equals(blake2FAddr)) {
       return blake2F;
+    }
+    if (VMConfig.allowTvmOsaka() && address.equals(p256VerifyAddr)) {
+      return p256Verify;
     }
 
     if (VMConfig.allowTvmFreezeV2()) {
@@ -624,6 +637,11 @@ public class PrecompiledContracts {
 
     private static final int UPPER_BOUND = 1024;
 
+    private static final long MIN_ENERGY_TIP7883 = 500L;
+
+    private static final BigInteger MIN_ENERGY_TIP7883_BI =
+        BigInteger.valueOf(MIN_ENERGY_TIP7883);
+
     @Override
     public long getEnergyForData(byte[] data) {
 
@@ -638,6 +656,10 @@ public class PrecompiledContracts {
 
       byte[] expHighBytes = parseBytes(data, addSafely(ARGS_OFFSET, baseLen), min(expLen, 32,
           VMConfig.disableJavaLangMath()));
+
+      if (VMConfig.allowTvmOsaka()) {
+        return getEnergyTIP7883(baseLen, modLen, expHighBytes, expLen);
+      }
 
       long multComplexity = getMultComplexity(max(baseLen, modLen, VMConfig.disableJavaLangMath()));
       long adjExpLen = getAdjustedExponentLength(expHighBytes, expLen);
@@ -720,6 +742,66 @@ public class PrecompiledContracts {
       } else {
         return 8 * (expLen - 32) + highestBit;
       }
+    }
+
+    /**
+     * TIP-7883: ModExp gas cost increase.
+     * New pricing formula with higher minimum cost and no divisor.
+     */
+    private long getEnergyTIP7883(int baseLen, int modLen,
+                                  byte[] expHighBytes, int expLen) {
+      long multComplexity = getMultComplexityTIP7883(baseLen, modLen);
+      long iterCount = getIterationCountTIP7883(expHighBytes, expLen);
+
+      // use big numbers to stay safe in case of overflow
+      BigInteger energy = BigInteger.valueOf(multComplexity)
+          .multiply(BigInteger.valueOf(iterCount));
+
+      if (isLessThan(energy, MIN_ENERGY_TIP7883_BI)) {
+        return MIN_ENERGY_TIP7883;
+      }
+
+      return isLessThan(energy, BigInteger.valueOf(Long.MAX_VALUE)) ? energy.longValueExact()
+          : Long.MAX_VALUE;
+    }
+
+    /**
+     * TIP-7883: New multiplication complexity formula.
+     * Minimal complexity of 16; doubled complexity for base/modulus > 32 bytes.
+     */
+    private long getMultComplexityTIP7883(int baseLen, int modLen) {
+      long maxLength = StrictMathWrapper.max(baseLen, modLen);
+      if (maxLength <= 32) {
+        return 16;
+      }
+      // ceil(maxLength / 8)
+      long words = StrictMathWrapper.floorDiv(StrictMathWrapper.addExact(maxLength, 7L), 8L);
+      return StrictMathWrapper.multiplyExact(2L, StrictMathWrapper.multiplyExact(words, words));
+    }
+
+    /**
+     * TIP-7883: New iteration count formula.
+     * Multiplier for exponents > 32 bytes increased from 8 to 16.
+     */
+    private long getIterationCountTIP7883(byte[] expHighBytes, long expLen) {
+      int leadingZeros = numberOfLeadingZeros(expHighBytes);
+      long highestBit = StrictMathWrapper.subtractExact(
+          StrictMathWrapper.multiplyExact(8L, expHighBytes.length), leadingZeros);
+
+      if (highestBit > 0) {
+        highestBit = StrictMathWrapper.subtractExact(highestBit, 1L);
+      }
+
+      long iterCount;
+      if (expLen <= 32) {
+        iterCount = highestBit;
+      } else {
+        iterCount = StrictMathWrapper.addExact(
+            StrictMathWrapper.multiplyExact(16L, StrictMathWrapper.subtractExact(expLen, 32L)),
+            highestBit);
+      }
+
+      return StrictMathWrapper.max(iterCount, 1L);
     }
 
     private int parseLen(byte[] data, int idx) {
@@ -2218,6 +2300,61 @@ public class PrecompiledContracts {
       }
 
       return Pair.of(true, longTo32Bytes(acquiredResource));
+    }
+  }
+
+  public static class P256Verify extends PrecompiledContract {
+
+    private static final X9ECParameters CURVE = SECNamedCurves.getByName("secp256r1");
+    private static final ECDomainParameters DOMAIN = new ECDomainParameters(
+        CURVE.getCurve(), CURVE.getG(), CURVE.getN(), CURVE.getH());
+    private static final BigInteger N = CURVE.getN();
+    private static final BigInteger P = CURVE.getCurve().getField().getCharacteristic();
+    private static final int INPUT_LEN = 160;
+    private static final long ENERGY = 6900L;
+
+    @Override
+    public long getEnergyForData(byte[] data) {
+      return ENERGY;
+    }
+
+    @Override
+    public Pair<Boolean, byte[]> execute(byte[] data) {
+      if (data == null || data.length != INPUT_LEN) {
+        return Pair.of(true, EMPTY_BYTE_ARRAY);
+      }
+      try {
+        byte[] hash = copyOfRange(data, 0, 32);
+        BigInteger r = bytesToBigInteger(copyOfRange(data, 32, 64));
+        BigInteger s = bytesToBigInteger(copyOfRange(data, 64, 96));
+        BigInteger qx = bytesToBigInteger(copyOfRange(data, 96, 128));
+        BigInteger qy = bytesToBigInteger(copyOfRange(data, 128, 160));
+
+        if (r.signum() <= 0 || r.compareTo(N) >= 0
+            || s.signum() <= 0 || s.compareTo(N) >= 0) {
+          return Pair.of(true, EMPTY_BYTE_ARRAY);
+        }
+        if (qx.signum() < 0 || qx.compareTo(P) >= 0
+            || qy.signum() < 0 || qy.compareTo(P) >= 0) {
+          return Pair.of(true, EMPTY_BYTE_ARRAY);
+        }
+        if (qx.signum() == 0 && qy.signum() == 0) {
+          return Pair.of(true, EMPTY_BYTE_ARRAY);
+        }
+
+        ECPoint point = CURVE.getCurve().createPoint(qx, qy);
+        DOMAIN.validatePublicPoint(point);
+
+        ECDSASigner verifier = new ECDSASigner();
+        verifier.init(false, new ECPublicKeyParameters(point, DOMAIN));
+        boolean ok = verifier.verifySignature(hash, r, s);
+        return Pair.of(true, ok ? dataOne() : EMPTY_BYTE_ARRAY);
+      } catch (Exception e) {
+        // Off-curve point: createPoint / validatePublicPoint throw IllegalArgumentException.
+        // Crafted signature: BouncyCastle has a known NPE bug inside verifySignature.
+        // EIP-7951 mandates the precompile never reverts; map any failure to (true, empty).
+        return Pair.of(true, EMPTY_BYTE_ARRAY);
+      }
     }
   }
 

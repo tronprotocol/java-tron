@@ -9,6 +9,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.Locale;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -251,7 +252,7 @@ public class KeystoreNewTest {
 
   @Test
   public void testNewKeystoreFilePermissions() throws Exception {
-    String os = System.getProperty("os.name").toLowerCase();
+    String os = System.getProperty("os.name").toLowerCase(Locale.ROOT);
     org.junit.Assume.assumeTrue("POSIX permissions test, skip on Windows",
         !os.contains("win"));
 

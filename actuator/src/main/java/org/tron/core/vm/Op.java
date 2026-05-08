@@ -64,6 +64,8 @@ public class Op {
   public static final int SHR = 0x1c;
   // (0x1d) Arithmetic shift right
   public static final int SAR = 0x1d;
+  // (0x1e) Count leading zeros
+  public static final int CLZ = 0x1e;
 
   /*  Cryptographic Operations    */
   // (0x20) Compute SHA3-256 hash

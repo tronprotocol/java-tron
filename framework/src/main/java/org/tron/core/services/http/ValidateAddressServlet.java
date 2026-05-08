@@ -1,7 +1,5 @@
 package org.tron.core.services.http;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONObject;
 import java.io.IOException;
 import java.util.Base64;
 import java.util.stream.Collectors;
@@ -12,6 +10,8 @@ import org.springframework.stereotype.Component;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.DecodeUtil;
+import org.tron.json.JSON;
+import org.tron.json.JSONObject;
 
 
 @Component

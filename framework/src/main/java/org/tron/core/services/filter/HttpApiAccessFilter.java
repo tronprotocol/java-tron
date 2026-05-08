@@ -1,8 +1,8 @@
 package org.tron.core.services.filter;
 
-import com.alibaba.fastjson.JSONObject;
 import java.net.URI;
 import java.util.List;
+import java.util.Locale;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
@@ -13,6 +13,7 @@ import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.tron.common.parameter.CommonParameter;
+import org.tron.json.JSONObject;
 
 @Component
 @Slf4j(topic = "httpApiAccessFilter")
@@ -63,7 +64,7 @@ public class HttpApiAccessFilter implements Filter {
       endpoint = URI.create(endpoint).normalize().toString();
       List<String> disabledApiList = CommonParameter.getInstance().getDisabledApiList();
       if (!disabledApiList.isEmpty()) {
-        disabled = disabledApiList.contains(endpoint.split("/")[2].toLowerCase());
+        disabled = disabledApiList.contains(endpoint.split("/")[2].toLowerCase(Locale.ROOT));
       }
     } catch (Exception e) {
       logger.warn("check isDisabled except, endpoint={}, {}", endpoint, e.getMessage());

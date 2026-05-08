@@ -2,6 +2,7 @@ package org.tron.core.actuator;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.GeneratedMessageV3;
+import lombok.Getter;
 import org.tron.common.math.Maths;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.ForkController;
@@ -16,9 +17,13 @@ import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
 public abstract class AbstractActuator implements Actuator {
 
+  @Getter
   protected Any any;
+  @Getter
   protected ChainBaseManager chainBaseManager;
+  @Getter
   protected Contract contract;
+  @Getter
   protected TransactionCapsule tx;
   protected ForkController forkController;
 
@@ -26,17 +31,9 @@ public abstract class AbstractActuator implements Actuator {
     TransactionFactory.register(type, getClass(), clazz);
   }
 
-  public Any getAny() {
-    return any;
-  }
-
   public AbstractActuator setAny(Any any) {
     this.any = any;
     return this;
-  }
-
-  public ChainBaseManager getChainBaseManager() {
-    return chainBaseManager;
   }
 
   public AbstractActuator setChainBaseManager(ChainBaseManager chainBaseManager) {
@@ -44,18 +41,10 @@ public abstract class AbstractActuator implements Actuator {
     return this;
   }
 
-  public Contract getContract() {
-    return contract;
-  }
-
   public AbstractActuator setContract(Contract contract) {
     this.contract = contract;
     this.any = contract.getParameter();
     return this;
-  }
-
-  public TransactionCapsule getTx() {
-    return tx;
   }
 
   public AbstractActuator setTx(TransactionCapsule tx) {

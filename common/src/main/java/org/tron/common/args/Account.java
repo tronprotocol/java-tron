@@ -17,6 +17,7 @@ package org.tron.common.args;
 
 import com.google.protobuf.ByteString;
 import java.io.Serializable;
+import java.util.Locale;
 import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
 import org.tron.common.utils.ByteArray;
@@ -120,7 +121,7 @@ public class Account implements Serializable {
       return false;
     }
 
-    switch (accountType.toUpperCase()) {
+    switch (accountType.toUpperCase(Locale.ROOT)) {
       case ACCOUNT_TYPE_NORMAL:
       case ACCOUNT_TYPE_ASSETISSUE:
       case ACCOUNT_TYPE_CONTRACT:
@@ -138,7 +139,7 @@ public class Account implements Serializable {
       throw new IllegalArgumentException("Account type error: Not a Normal/AssetIssue/Contract");
     }
 
-    switch (accountType.toUpperCase()) {
+    switch (accountType.toUpperCase(Locale.ROOT)) {
       case ACCOUNT_TYPE_NORMAL:
         return AccountType.Normal;
       case ACCOUNT_TYPE_ASSETISSUE:

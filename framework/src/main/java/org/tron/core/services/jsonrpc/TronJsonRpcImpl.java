@@ -11,9 +11,9 @@ import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.generateFilterId;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getEnergyUsageTotal;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getTransactionIndex;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getTxID;
+import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.parseBlockNumber;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.triggerCallContract;
 
-import com.alibaba.fastjson.JSON;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
@@ -90,6 +90,7 @@ import org.tron.core.services.jsonrpc.types.TransactionReceipt.TransactionContex
 import org.tron.core.services.jsonrpc.types.TransactionResult;
 import org.tron.core.store.StorageRowStore;
 import org.tron.core.vm.program.Storage;
+import org.tron.json.JSON;
 import org.tron.program.Version;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
@@ -169,6 +170,8 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
   private static final String NO_BLOCK_HEADER_BY_HASH = "header for hash not found";
 
   private static final String ERROR_SELECTOR = "08c379a0"; // Function selector for Error(string)
+  private static final int REVERT_REASON_SELECTOR_LENGTH = 4;
+  private static final int MAX_REVERT_REASON_PAYLOAD_BYTES = 4096;
   private int filterParallelThreshold = 10000;
   /**
    * Using the default maxLogFilterNum of 20,000, a 3-thread pool can keep up with log event
@@ -389,11 +392,7 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
     if (JsonRpcApiUtil.isBlockTag(blockNumOrTag)) {
       throw new JsonRpcInvalidParamsException(TAG_NOT_SUPPORT_ERROR);
     }
-    try {
-      ByteArray.hexToBigInteger(blockNumOrTag);
-    } catch (Exception e) {
-      throw new JsonRpcInvalidParamsException(BLOCK_NUM_ERROR);
-    }
+    parseBlockNumber(blockNumOrTag);
     throw new JsonRpcInvalidParamsException(QUANTITY_NOT_SUPPORT_ERROR);
   }
 
@@ -403,7 +402,6 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
   }
 
   private Block getBlockByNumOrTag(String blockNumOrTag) throws JsonRpcInvalidParamsException {
-    long blockNum;
     if (JsonRpcApiUtil.isBlockTag(blockNumOrTag)) {
       if (LATEST_STR.equalsIgnoreCase(blockNumOrTag)) {
         // Return the head block directly from blockStore, bypassing blockIndexStore
@@ -412,12 +410,7 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
       }
       return wallet.getBlockByNum(JsonRpcApiUtil.parseBlockTag(blockNumOrTag, wallet));
     }
-    try {
-      blockNum = ByteArray.hexToBigInteger(blockNumOrTag).longValueExact();
-    } catch (Exception e) {
-      throw new JsonRpcInvalidParamsException(BLOCK_NUM_ERROR);
-    }
-    return wallet.getBlockByNum(blockNum);
+    return wallet.getBlockByNum(parseBlockNumber(blockNumOrTag));
   }
 
   private BlockResult getBlockResult(Block block, boolean fullTx) {
@@ -528,6 +521,36 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
   }
 
   /**
+   * Decodes an Error(string) revert reason when possible.
+   * Returns ": reason" for a non-empty reason, otherwise "".
+   */
+  static String tryDecodeRevertReason(byte[] resData) {
+    if (resData == null || resData.length <= REVERT_REASON_SELECTOR_LENGTH) {
+      return "";
+    }
+    if (!Hex.toHexString(resData, 0, REVERT_REASON_SELECTOR_LENGTH).equals(ERROR_SELECTOR)) {
+      return "";
+    }
+
+    int revertPayloadLength = resData.length - REVERT_REASON_SELECTOR_LENGTH;
+    if (revertPayloadLength > MAX_REVERT_REASON_PAYLOAD_BYTES) {
+      logger.debug("skip parsing oversized revert reason payload: {} bytes", revertPayloadLength);
+      return "";
+    }
+
+    try {
+      String reason = ContractEventParser.parseDataBytes(
+          Arrays.copyOfRange(resData, REVERT_REASON_SELECTOR_LENGTH,
+              resData.length),
+          "string", 0);
+      return reason.isEmpty() ? "" : ": " + reason;
+    } catch (RuntimeException e) {
+      logger.debug("parse revert reason failed", e);
+      return "";
+    }
+  }
+
+  /**
    * @param data Hash of the method signature and encoded parameters. for example:
    * getMethodSign(methodName(uint256,uint256)) || data1 || data2
    */
@@ -570,14 +593,8 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
       }
       result = ByteArray.toJsonHex(listBytes);
     } else {
-      String errMsg = retBuilder.getMessage().toStringUtf8();
       byte[] resData = trxExtBuilder.getConstantResult(0).toByteArray();
-      if (resData.length > 4 && Hex.toHexString(resData).startsWith(ERROR_SELECTOR)) {
-        String msg = ContractEventParser
-            .parseDataBytes(org.bouncycastle.util.Arrays.copyOfRange(resData, 4, resData.length),
-                "string", 0);
-        errMsg += ": " + msg;
-      }
+      String errMsg = retBuilder.getMessage().toStringUtf8() + tryDecodeRevertReason(resData);
 
       if (resData.length > 0) {
         throw new JsonRpcInternalException(errMsg, ByteArray.toJsonHex(resData));
@@ -680,7 +697,7 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
         estimateEnergy(ownerAddress,
             contractAddress,
             args.parseValue(),
-            ByteArray.fromHexString(args.getData()),
+            ByteArray.fromHexString(args.resolveData()),
             trxExtBuilder,
             retBuilder,
             estimateBuilder);
@@ -688,7 +705,7 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
         callTriggerConstantContract(ownerAddress,
             contractAddress,
             args.parseValue(),
-            ByteArray.fromHexString(args.getData()),
+            ByteArray.fromHexString(args.resolveData()),
             trxExtBuilder,
             retBuilder);
       }
@@ -710,15 +727,8 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
     }
 
     if (trxExtBuilder.getTransaction().getRet(0).getRet().equals(code.FAILED)) {
-      String errMsg = retBuilder.getMessage().toStringUtf8();
-
       byte[] data = trxExtBuilder.getConstantResult(0).toByteArray();
-      if (data.length > 4 && Hex.toHexString(data).startsWith(ERROR_SELECTOR)) {
-        String msg = ContractEventParser
-            .parseDataBytes(org.bouncycastle.util.Arrays.copyOfRange(data, 4, data.length),
-                "string", 0);
-        errMsg += ": " + msg;
-      }
+      String errMsg = retBuilder.getMessage().toStringUtf8() + tryDecodeRevertReason(data);
 
       if (data.length > 0) {
         throw new JsonRpcInternalException(errMsg, ByteArray.toJsonHex(data));
@@ -1004,12 +1014,7 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
           throw new JsonRpcInvalidParamsException(JSON_ERROR);
         }
 
-        long blockNumber;
-        try {
-          blockNumber = ByteArray.hexToBigInteger(blockNumOrTag).longValueExact();
-        } catch (Exception e) {
-          throw new JsonRpcInvalidParamsException(BLOCK_NUM_ERROR);
-        }
+        long blockNumber = parseBlockNumber(blockNumOrTag);
 
         if (wallet.getBlockByNum(blockNumber) == null) {
           throw new JsonRpcInternalException(NO_BLOCK_HEADER);
@@ -1042,7 +1047,7 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
     byte[] contractAddressData = addressCompatibleToByteArray(transactionCall.getTo());
 
     return call(addressData, contractAddressData, transactionCall.parseValue(),
-        ByteArray.fromHexString(transactionCall.getData()));
+        ByteArray.fromHexString(transactionCall.resolveData()));
   }
 
   @Override
@@ -1149,7 +1154,8 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
       smartBuilder.setOriginAddress(ByteString.copyFrom(ownerAddress));
 
       // bytecode + parameter
-      smartBuilder.setBytecode(ByteString.copyFrom(ByteArray.fromHexString(args.getData())));
+      smartBuilder.setBytecode(
+          ByteString.copyFrom(ByteArray.fromHexString(args.resolveData())));
 
       if (StringUtils.isNotEmpty(args.getName())) {
         smartBuilder.setName(args.getName());
@@ -1194,8 +1200,9 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
       build.setOwnerAddress(ByteString.copyFrom(ownerAddress))
           .setContractAddress(ByteString.copyFrom(contractAddress));
 
-      if (StringUtils.isNotEmpty(args.getData())) {
-        build.setData(ByteString.copyFrom(ByteArray.fromHexString(args.getData())));
+      String callData = args.resolveData();
+      if (StringUtils.isNotEmpty(callData)) {
+        build.setData(ByteString.copyFrom(ByteArray.fromHexString(callData)));
       } else {
         build.setData(ByteString.copyFrom(new byte[0]));
       }

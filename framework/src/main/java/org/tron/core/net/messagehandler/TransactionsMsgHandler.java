@@ -3,6 +3,7 @@ package org.tron.core.net.messagehandler;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import lombok.Getter;
@@ -44,6 +45,7 @@ public class TransactionsMsgHandler implements TronMsgHandler {
 
   private BlockingQueue<Runnable> queue = new LinkedBlockingQueue();
 
+  private volatile boolean isClosed = false;
   private int threadNum = Args.getInstance().getValidateSignThreadNum();
   private final String trxEsName = "trx-msg-handler";
   private ExecutorService trxHandlePool = ExecutorServiceManager.newThreadPoolExecutor(
@@ -58,8 +60,14 @@ public class TransactionsMsgHandler implements TronMsgHandler {
   }
 
   public void close() {
-    ExecutorServiceManager.shutdownAndAwaitTermination(trxHandlePool, trxEsName);
+    isClosed = true;
+    // Stop the scheduler first so no new tasks are drained from smartContractQueue.
     ExecutorServiceManager.shutdownAndAwaitTermination(smartContractExecutor, smartEsName);
+    // Then shutdown the worker pool to finish already-submitted tasks.
+    ExecutorServiceManager.shutdownAndAwaitTermination(trxHandlePool, trxEsName);
+    // Discard any remaining items and release references.
+    smartContractQueue.clear();
+    queue.clear();
   }
 
   public boolean isBusy() {
@@ -68,6 +76,10 @@ public class TransactionsMsgHandler implements TronMsgHandler {
 
   @Override
   public void processMessage(PeerConnection peer, TronMessage msg) throws P2pException {
+    if (isClosed) {
+      logger.info("TransactionsMsgHandler is closed, drop message");
+      return;
+    }
     TransactionsMessage transactionsMessage = (TransactionsMessage) msg;
     check(peer, transactionsMessage);
     for (Transaction trx : transactionsMessage.getTransactions().getTransactionsList()) {
@@ -78,6 +90,10 @@ public class TransactionsMsgHandler implements TronMsgHandler {
     int trxHandlePoolQueueSize = 0;
     int dropSmartContractCount = 0;
     for (Transaction trx : transactionsMessage.getTransactions().getTransactionsList()) {
+      if (isClosed) {
+        logger.info("TransactionsMsgHandler is closed during processing, stop submit");
+        break;
+      }
       int type = trx.getRawData().getContract(0).getType().getNumber();
       if (type == ContractType.TriggerSmartContract_VALUE
           || type == ContractType.CreateSmartContract_VALUE) {
@@ -87,8 +103,13 @@ public class TransactionsMsgHandler implements TronMsgHandler {
           dropSmartContractCount++;
         }
       } else {
-        ExecutorServiceManager.submit(
-            trxHandlePool, () -> handleTransaction(peer, new TransactionMessage(trx)));
+        try {
+          ExecutorServiceManager.submit(
+              trxHandlePool, () -> handleTransaction(peer, new TransactionMessage(trx)));
+        } catch (RejectedExecutionException e) {
+          logger.warn("Submit task to {} failed", trxEsName);
+          break;
+        }
       }
     }
 

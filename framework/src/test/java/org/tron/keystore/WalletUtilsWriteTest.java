@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.EnumSet;
+import java.util.Locale;
 import java.util.Set;
 import org.junit.Assume;
 import org.junit.Rule;
@@ -41,7 +42,7 @@ public class WalletUtilsWriteTest {
   @Test
   public void testGenerateWalletFileCreatesOwnerOnlyFile() throws Exception {
     Assume.assumeTrue("POSIX permissions test",
-        !System.getProperty("os.name").toLowerCase().contains("win"));
+        !System.getProperty("os.name").toLowerCase(Locale.ROOT).contains("win"));
 
     File dir = tempFolder.newFolder("gen-perms");
     SignInterface keyPair = SignUtils.getGeneratedRandomSign(Utils.getRandom(), true);
@@ -84,7 +85,7 @@ public class WalletUtilsWriteTest {
   @Test
   public void testWriteWalletFileOwnerOnly() throws Exception {
     Assume.assumeTrue("POSIX permissions test",
-        !System.getProperty("os.name").toLowerCase().contains("win"));
+        !System.getProperty("os.name").toLowerCase(Locale.ROOT).contains("win"));
 
     File dir = tempFolder.newFolder("write-perms");
     WalletFile wf = lightWalletFile("password123");
@@ -172,7 +173,7 @@ public class WalletUtilsWriteTest {
   @Test
   public void testLoadCredentialsFollowsSymlinkButWarns() throws Exception {
     Assume.assumeTrue("Symlinks only tested on POSIX",
-        !System.getProperty("os.name").toLowerCase().contains("win"));
+        !System.getProperty("os.name").toLowerCase(Locale.ROOT).contains("win"));
 
     File realDir = tempFolder.newFolder("load-symlink-target");
     SignInterface keyPair = SignUtils.getGeneratedRandomSign(Utils.getRandom(), true);

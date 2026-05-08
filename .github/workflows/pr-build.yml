@@ -54,6 +54,15 @@ jobs:
       - name: Build
         run: ./gradlew clean build --no-daemon
 
+      - name: Toolkit jar smoke test
+        run: |
+          set -e
+          JAR=plugins/build/libs/Toolkit.jar
+          java -jar "$JAR" help
+          java -jar "$JAR" db --help
+          java -jar "$JAR" db archive -h
+          java -jar "$JAR" keystore --help
+
   build-ubuntu:
     name: Build ubuntu24 (JDK 17 / aarch64)
     if: ${{ github.event_name == 'pull_request' || inputs.job == 'all' || inputs.job == 'ubuntu' }}
@@ -83,6 +92,15 @@ jobs:
 
       - name: Build
         run: ./gradlew clean build --no-daemon
+
+      - name: Toolkit jar smoke test
+        run: |
+          set -e
+          JAR=plugins/build/libs/Toolkit.jar
+          java -jar "$JAR" help
+          java -jar "$JAR" db --help
+          java -jar "$JAR" db archive -h
+          java -jar "$JAR" keystore --help
 
   docker-build-rockylinux:
     name: Build rockylinux (JDK 8 / x86_64)
@@ -126,6 +144,15 @@ jobs:
 
       - name: Build
         run: ./gradlew clean build --no-daemon
+
+      - name: Toolkit jar smoke test
+        run: |
+          set -e
+          JAR=plugins/build/libs/Toolkit.jar
+          java -jar "$JAR" help
+          java -jar "$JAR" db --help
+          java -jar "$JAR" db archive -h
+          java -jar "$JAR" keystore --help
 
       - name: Test with RocksDB engine
         run: ./gradlew :framework:testWithRocksDb --no-daemon
@@ -171,6 +198,15 @@ jobs:
 
       - name: Build
         run: ./gradlew clean build --no-daemon --no-build-cache
+
+      - name: Toolkit jar smoke test
+        run: |
+          set -e
+          JAR=plugins/build/libs/Toolkit.jar
+          java -jar "$JAR" help
+          java -jar "$JAR" db --help
+          java -jar "$JAR" db archive -h
+          java -jar "$JAR" keystore --help
 
       - name: Test with RocksDB engine
         run: ./gradlew :framework:testWithRocksDb --no-daemon --no-build-cache
