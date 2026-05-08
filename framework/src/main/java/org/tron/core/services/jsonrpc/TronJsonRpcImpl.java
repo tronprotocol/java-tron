@@ -167,6 +167,8 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
   private static final String NO_BLOCK_HEADER_BY_HASH = "header for hash not found";
 
   private static final String ERROR_SELECTOR = "08c379a0"; // Function selector for Error(string)
+  private static final int REVERT_REASON_SELECTOR_LENGTH = 4;
+  private static final int MAX_REVERT_REASON_PAYLOAD_BYTES = 4096;
   /**
    * thread pool of query section bloom store
    */
@@ -484,6 +486,36 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
   }
 
   /**
+   * Decodes an Error(string) revert reason when possible.
+   * Returns ": reason" for a non-empty reason, otherwise "".
+   */
+  static String tryDecodeRevertReason(byte[] resData) {
+    if (resData == null || resData.length <= REVERT_REASON_SELECTOR_LENGTH) {
+      return "";
+    }
+    if (!Hex.toHexString(resData, 0, REVERT_REASON_SELECTOR_LENGTH).equals(ERROR_SELECTOR)) {
+      return "";
+    }
+
+    int revertPayloadLength = resData.length - REVERT_REASON_SELECTOR_LENGTH;
+    if (revertPayloadLength > MAX_REVERT_REASON_PAYLOAD_BYTES) {
+      logger.debug("skip parsing oversized revert reason payload: {} bytes", revertPayloadLength);
+      return "";
+    }
+
+    try {
+      String reason = ContractEventParser.parseDataBytes(
+          Arrays.copyOfRange(resData, REVERT_REASON_SELECTOR_LENGTH,
+              resData.length),
+          "string", 0);
+      return reason.isEmpty() ? "" : ": " + reason;
+    } catch (RuntimeException e) {
+      logger.debug("parse revert reason failed", e);
+      return "";
+    }
+  }
+
+  /**
    * @param data Hash of the method signature and encoded parameters. for example:
    * getMethodSign(methodName(uint256,uint256)) || data1 || data2
    */
@@ -526,14 +558,8 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
       }
       result = ByteArray.toJsonHex(listBytes);
     } else {
-      String errMsg = retBuilder.getMessage().toStringUtf8();
       byte[] resData = trxExtBuilder.getConstantResult(0).toByteArray();
-      if (resData.length > 4 && Hex.toHexString(resData).startsWith(ERROR_SELECTOR)) {
-        String msg = ContractEventParser
-            .parseDataBytes(org.bouncycastle.util.Arrays.copyOfRange(resData, 4, resData.length),
-                "string", 0);
-        errMsg += ": " + msg;
-      }
+      String errMsg = retBuilder.getMessage().toStringUtf8() + tryDecodeRevertReason(resData);
 
       if (resData.length > 0) {
         throw new JsonRpcInternalException(errMsg, ByteArray.toJsonHex(resData));
@@ -666,15 +692,8 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
     }
 
     if (trxExtBuilder.getTransaction().getRet(0).getRet().equals(code.FAILED)) {
-      String errMsg = retBuilder.getMessage().toStringUtf8();
-
       byte[] data = trxExtBuilder.getConstantResult(0).toByteArray();
-      if (data.length > 4 && Hex.toHexString(data).startsWith(ERROR_SELECTOR)) {
-        String msg = ContractEventParser
-            .parseDataBytes(org.bouncycastle.util.Arrays.copyOfRange(data, 4, data.length),
-                "string", 0);
-        errMsg += ": " + msg;
-      }
+      String errMsg = retBuilder.getMessage().toStringUtf8() + tryDecodeRevertReason(data);
 
       if (data.length > 0) {
         throw new JsonRpcInternalException(errMsg, ByteArray.toJsonHex(data));

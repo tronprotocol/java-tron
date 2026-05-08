@@ -86,7 +86,7 @@ public class NodeConfig {
   private boolean unsolidifiedBlockCheck = false;
   private int maxUnsolidifiedBlocks = 54;
   private String zenTokenId = "000000";
-  private boolean allowShieldedTransactionApi = true;
+  private boolean allowShieldedTransactionApi = false;
   private double activeConnectFactor = 0.1;
   private double connectFactor = 0.6;
   // Legacy alias `maxActiveNodesWithSameIp` has no bean field: we only peek at it via

@@ -116,6 +116,12 @@ public abstract class RateLimiterServlet extends HttpServlet {
     String contextPath = req.getContextPath();
     String url = Strings.isNullOrEmpty(req.getServletPath())
         ? MetricLabels.UNDEFINED : contextPath + req.getServletPath();
+    // int64_as_string is honored only on GET requests (URL query). POST is intentionally
+    // unsupported because reading the body here would consume request.getReader() and
+    // break downstream servlets that read it themselves.
+    if ("GET".equalsIgnoreCase(req.getMethod())) {
+      JsonFormat.setInt64AsString(Util.getInt64AsString(req));
+    }
     try {
       resp.setContentType("application/json; charset=utf-8");
 
@@ -133,6 +139,10 @@ public abstract class RateLimiterServlet extends HttpServlet {
     } catch (Exception unexpected) {
       logger.error("Http Api {}, Method:{}. Error：", url, req.getMethod(), unexpected);
     } finally {
+      // CRITICAL: this clear pairs with the setInt64AsString call above. Removing it
+      // will leak int64_as_string state across requests on reused Tomcat threads,
+      // producing intermittent quoted/unquoted output that is very hard to debug.
+      JsonFormat.clearInt64AsString();
       if (rateLimiter instanceof IPreemptibleRateLimiter && acquireResource) {
         ((IPreemptibleRateLimiter) rateLimiter).release();
       }

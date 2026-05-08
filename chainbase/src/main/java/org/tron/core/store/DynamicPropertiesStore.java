@@ -243,6 +243,9 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] ALLOW_HARDEN_RESOURCE_CALCULATION =
       "ALLOW_HARDEN_RESOURCE_CALCULATION".getBytes();
 
+  private static final byte[] ALLOW_HARDEN_EXCHANGE_CALCULATION =
+      "ALLOW_HARDEN_EXCHANGE_CALCULATION".getBytes();
+
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
     super(dbName);
@@ -3009,6 +3012,21 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   public boolean allowHardenResourceCalculation() {
     return getAllowHardenResourceCalculation() == 1L;
+  }
+
+  public long getAllowHardenExchangeCalculation() {
+    return Optional.ofNullable(getUnchecked(ALLOW_HARDEN_EXCHANGE_CALCULATION))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElse(0L);
+  }
+
+  public void saveAllowHardenExchangeCalculation(long value) {
+    this.put(ALLOW_HARDEN_EXCHANGE_CALCULATION, new BytesCapsule(ByteArray.fromLong(value)));
+  }
+
+  public boolean allowHardenExchangeCalculation() {
+    return getAllowHardenExchangeCalculation() == 1L;
   }
 
   private static class DynamicResourceProperties {

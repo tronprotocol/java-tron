@@ -401,6 +401,11 @@ public class ProposalService extends ProposalUtil {
               .saveAllowHardenResourceCalculation(entry.getValue());
           break;
         }
+        case ALLOW_HARDEN_EXCHANGE_CALCULATION: {
+          manager.getDynamicPropertiesStore()
+              .saveAllowHardenExchangeCalculation(entry.getValue());
+          break;
+        }
         default:
           find = false;
           break;

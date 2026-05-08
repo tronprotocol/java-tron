@@ -1790,6 +1790,9 @@ public class Manager {
   }
 
   private boolean isExchangeTransaction(Transaction transaction) {
+    if (getDynamicPropertiesStore().allowHardenExchangeCalculation()) {
+      return false;
+    }
     Contract contract = transaction.getRawData().getContract(0);
     switch (contract.getType()) {
       case ExchangeTransactionContract: {

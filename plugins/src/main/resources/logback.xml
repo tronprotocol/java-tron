@@ -50,8 +50,10 @@
   </root>
   <logger level="INFO" name="archive"/>
   <logger level="INFO" name="convert"/>
+  <logger level="INFO" name="copy"/>
+  <logger level="INFO" name="db-root"/>
   <logger level="INFO" name="lite"/>
   <logger level="INFO" name="move"/>
+  <logger level="INFO" name="tool"/>
 
 </configuration>
-

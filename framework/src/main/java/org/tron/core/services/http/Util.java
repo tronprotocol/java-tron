@@ -12,6 +12,7 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.GeneratedMessageV3;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
+import com.google.protobuf.ProtocolStringList;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -64,8 +65,12 @@ import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
 @Slf4j(topic = "API")
 public class Util {
 
+  public static final String EVENTS_DEPRECATED_MSG =
+      "'events' field is deprecated and no longer supported";
+
   public static final String PERMISSION_ID = "Permission_id";
   public static final String VISIBLE = "visible";
+  public static final String INT64_AS_STRING_PARAM = "int64_as_string";
   public static final String TRANSACTION = "transaction";
   public static final String TRANSACTION_EXTENSION = "transactionExtension";
   public static final String VALUE = "value";
@@ -79,6 +84,28 @@ public class Util {
   public static final String FUNCTION_SELECTOR = "function_selector";
   public static final String FUNCTION_PARAMETER = "parameter";
   public static final String CALL_DATA = "data";
+
+  public static boolean hasMeaningfulEvents(ProtocolStringList events) {
+    return events.stream().anyMatch(s -> !s.isEmpty());
+  }
+
+  public static void rejectIfEventsPresent(ProtocolStringList events) {
+    if (hasMeaningfulEvents(events)) {
+      logger.info(EVENTS_DEPRECATED_MSG);
+      throw new IllegalArgumentException(EVENTS_DEPRECATED_MSG);
+    }
+  }
+
+  public static void rejectIfEventsPresent(String[] eventsParams) {
+    if (eventsParams != null) {
+      for (String v : eventsParams) {
+        if (v != null && !v.isEmpty()) {
+          logger.info(EVENTS_DEPRECATED_MSG);
+          throw new IllegalArgumentException(EVENTS_DEPRECATED_MSG);
+        }
+      }
+    }
+  }
 
   public static String printTransactionFee(String transactionFee) {
     JSONObject jsonObject = new JSONObject();
@@ -346,6 +373,21 @@ public class Util {
 
   public static boolean existVisible(final HttpServletRequest request) {
     return Objects.nonNull(request.getParameter(VISIBLE));
+  }
+
+  /**
+   * Read int64_as_string from URL query parameter. Mirrors
+   * {@link #getVisible(HttpServletRequest)}. The flag is honored only on GET requests
+   * (read by {@link RateLimiterServlet#service}); POST requests do not support it
+   * because that would require caching the request body to allow re-reading by
+   * downstream servlets.
+   */
+  public static boolean getInt64AsString(final HttpServletRequest request) {
+    boolean int64AsString = false;
+    if (StringUtil.isNotBlank(request.getParameter(INT64_AS_STRING_PARAM))) {
+      int64AsString = Boolean.valueOf(request.getParameter(INT64_AS_STRING_PARAM));
+    }
+    return int64AsString;
   }
 
   public static boolean getVisiblePost(final String input) {
