@@ -33,6 +33,7 @@ public class JsonRpcServlet extends RateLimiterServlet {
 
   private enum JsonRpcError {
     PARSE_ERROR(-32700),
+    INVALID_REQUEST(-32600),
     INTERNAL_ERROR(-32603),
     EXCEED_LIMIT(-32005),
     RESPONSE_TOO_LARGE(-32003);
@@ -104,6 +105,10 @@ public class JsonRpcServlet extends RateLimiterServlet {
     }
 
     boolean isBatch = rootNode.isArray();
+    if (isBatch && rootNode.isEmpty()) {
+      writeJsonRpcError(resp, JsonRpcError.INVALID_REQUEST, "Invalid Request", null, false);
+      return;
+    }
     int batchSize = parameter.getJsonRpcMaxBatchSize();
     if (isBatch && batchSize > 0 && rootNode.size() > batchSize) {
       writeJsonRpcError(resp, JsonRpcError.EXCEED_LIMIT,

@@ -4,7 +4,9 @@ import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
+import java.nio.charset.IllegalCharsetNameException;
 import java.nio.charset.StandardCharsets;
+import java.nio.charset.UnsupportedCharsetException;
 import javax.servlet.ReadListener;
 import javax.servlet.ServletInputStream;
 import javax.servlet.http.HttpServletRequest;
@@ -66,7 +68,12 @@ public class CachedBodyRequestWrapper extends HttpServletRequestWrapper {
     }
     accessor = BodyAccessor.READER;
     String encoding = getCharacterEncoding();
-    Charset charset = encoding != null ? Charset.forName(encoding) : StandardCharsets.UTF_8;
+    Charset charset;
+    try {
+      charset = encoding != null ? Charset.forName(encoding) : StandardCharsets.UTF_8;
+    } catch (IllegalCharsetNameException | UnsupportedCharsetException ex) {
+      charset = StandardCharsets.UTF_8;
+    }
     return new BufferedReader(new InputStreamReader(new ByteArrayInputStream(body), charset));
   }
 }

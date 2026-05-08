@@ -100,6 +100,17 @@ public class JsonRpcServletTest {
   }
 
   @Test
+  public void emptyBatch_returnsInvalidRequest() throws Exception {
+    MockHttpServletResponse resp = doPost("[]");
+    assertEquals(200, resp.getStatus());
+    JsonNode body = MAPPER.readTree(resp.getContentAsString());
+    assertFalse("empty-batch error response must be a single object, not an array", body.isArray());
+    assertEquals(-32600, body.get("error").get("code").asInt());
+    assertEquals("2.0", body.get("jsonrpc").asText());
+    assertTrue(body.get("id").isNull());
+  }
+
+  @Test
   public void batchLimitDisabled_largeBatchAllowed() throws Exception {
     CommonParameter.getInstance().jsonRpcMaxBatchSize = 0;
     byte[] rpcResp = "[]".getBytes(StandardCharsets.UTF_8);

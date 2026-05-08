@@ -2,7 +2,9 @@ package org.tron.core.services.filter;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.WriteListener;
 import javax.servlet.http.HttpServletResponse;
@@ -66,7 +68,8 @@ public class BufferedResponseWrapper extends HttpServletResponseWrapper {
     }
   };
 
-  private final PrintWriter writer = new PrintWriter(outputStream, true);
+  private final PrintWriter writer =
+      new PrintWriter(new OutputStreamWriter(outputStream, StandardCharsets.UTF_8), true);
 
   /**
    * @param response the wrapped response
