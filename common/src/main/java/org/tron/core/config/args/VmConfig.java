@@ -2,6 +2,7 @@ package org.tron.core.config.args;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigBeanFactory;
+import com.typesafe.config.ConfigFactory;
 import org.tron.core.config.BeanDefaults;
 import lombok.Getter;
 import lombok.Setter;
@@ -31,10 +32,11 @@ public class VmConfig {
 
   public static VmConfig fromConfig(Config config) {
     Config defaults = BeanDefaults.toConfig(new VmConfig());
-    Config vmSection = config.hasPath("vm")
-        ? BeanDefaults.stripNullLeaves(config.getConfig("vm")).withFallback(defaults)
-        : defaults;
-    VmConfig vmConfig = ConfigBeanFactory.create(vmSection, VmConfig.class);
+    Config userSection = config.hasPath("vm")
+        ? BeanDefaults.stripNullLeaves(config.getConfig("vm"))
+        : ConfigFactory.empty();
+    Config section = userSection.withFallback(defaults);
+    VmConfig vmConfig = ConfigBeanFactory.create(section, VmConfig.class);
     vmConfig.postProcess();
     return vmConfig;
   }

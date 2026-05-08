@@ -2,6 +2,7 @@ package org.tron.core.config.args;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigBeanFactory;
+import com.typesafe.config.ConfigFactory;
 import org.tron.core.config.BeanDefaults;
 import java.util.ArrayList;
 import java.util.List;
@@ -44,9 +45,10 @@ public class GenesisConfig {
 
   public static GenesisConfig fromConfig(Config config) {
     Config defaults = BeanDefaults.toConfig(new GenesisConfig());
-    Config section = config.hasPath("genesis.block")
-        ? BeanDefaults.stripNullLeaves(config.getConfig("genesis.block")).withFallback(defaults)
-        : defaults;
+    Config userSection = config.hasPath("genesis.block")
+        ? BeanDefaults.stripNullLeaves(config.getConfig("genesis.block"))
+        : ConfigFactory.empty();
+    Config section = userSection.withFallback(defaults);
     return ConfigBeanFactory.create(section, GenesisConfig.class);
   }
 }

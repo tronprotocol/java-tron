@@ -374,11 +374,11 @@ public class NodeConfig {
       nc.maxConnectionsWithSameIp = section.getInt("maxActiveNodesWithSameIp");
     }
 
-    // Legacy key fallback: node.fullNodeAllowShieldedTransaction -> allowShieldedTransactionApi.
+    // Legacy key fallback: node.allowShieldedTransactionApi -> fullNodeAllowShieldedTransaction.
     // BeanDefaults does not emit this legacy key, so hasPath here reliably means the user
     // set it in their config. When present, it overrides the modern key.
-    if (!section.hasPath("allowShieldedTransactionApi") &&
-        section.hasPath("fullNodeAllowShieldedTransaction")) {
+    if (!userSection.hasPath("allowShieldedTransactionApi") &&
+        userSection.hasPath("fullNodeAllowShieldedTransaction")) {
       nc.allowShieldedTransactionApi = section.getBoolean("fullNodeAllowShieldedTransaction");
       logger.warn("Configuring [node.fullNodeAllowShieldedTransaction] will be deprecated. "
           + "Please use [node.allowShieldedTransactionApi] instead.");

@@ -7,6 +7,7 @@ import static org.tron.core.exception.TronError.ErrCode.PARAMETER_INIT;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigBeanFactory;
+import com.typesafe.config.ConfigFactory;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -38,10 +39,11 @@ public class BlockConfig {
     }
 
     Config defaults = BeanDefaults.toConfig(new BlockConfig());
-    Config blockSection = config.hasPath("block")
-        ? BeanDefaults.stripNullLeaves(config.getConfig("block")).withFallback(defaults)
-        : defaults;
-    BlockConfig blockConfig = ConfigBeanFactory.create(blockSection, BlockConfig.class);
+    Config userSection = config.hasPath("block")
+        ? BeanDefaults.stripNullLeaves(config.getConfig("block"))
+        : ConfigFactory.empty();
+    Config section = userSection.withFallback(defaults);
+    BlockConfig blockConfig = ConfigBeanFactory.create(section, BlockConfig.class);
     blockConfig.postProcess();
     return blockConfig;
   }

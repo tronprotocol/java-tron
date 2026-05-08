@@ -2,8 +2,9 @@ package org.tron.core.config.args;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigBeanFactory;
-import org.tron.core.config.BeanDefaults;
+import com.typesafe.config.ConfigFactory;
 import com.typesafe.config.ConfigObject;
+import org.tron.core.config.BeanDefaults;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.Getter;
@@ -190,12 +191,14 @@ public class StorageConfig {
 
   public static StorageConfig fromConfig(Config config) {
     Config defaults = BeanDefaults.toConfig(new StorageConfig());
+    Config userSection = config.hasPath("storage")
+        ? BeanDefaults.stripNullLeaves(config.getConfig("storage"))
+        : ConfigFactory.empty();
     // User's storage section takes priority; defaults fill in any omitted scalar keys.
     // readDbOption() uses hasPath() on the merged section, so user-set optional keys
-    // (default, defaultM, defaultL) are still detected correctly.
-    Config section = config.hasPath("storage")
-        ? BeanDefaults.stripNullLeaves(config.getConfig("storage")).withFallback(defaults)
-        : defaults;
+    // (default, defaultM, defaultL) are still detected correctly because they are
+    // absent from BeanDefaults and only present when the user explicitly set them.
+    Config section = userSection.withFallback(defaults);
     StorageConfig sc = ConfigBeanFactory.create(section, StorageConfig.class);
     sc.rawStorageConfig = section;
 

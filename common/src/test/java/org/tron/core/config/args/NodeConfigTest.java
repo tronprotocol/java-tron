@@ -307,13 +307,13 @@ public class NodeConfigTest {
   }
 
   @Test
-  public void testShieldedApiLegacyKeyTakesPriorityOverModern() {
-    // Consistent with maxActiveNodesWithSameIp: legacy key presence wins over modern.
+  public void testShieldedApiModernKeyTakesPriorityOverLegacy() {
+    // When both keys are present, allowShieldedTransactionApi (modern) wins.
     NodeConfig nc = NodeConfig.fromConfig(
         withRef("node {\n"
             + "  allowShieldedTransactionApi = false\n"
             + "  fullNodeAllowShieldedTransaction = true\n"
             + "}"));
-    assertTrue(nc.isAllowShieldedTransactionApi());
+    assertFalse(nc.isAllowShieldedTransactionApi());
   }
 }

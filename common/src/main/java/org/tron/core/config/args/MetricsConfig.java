@@ -2,6 +2,7 @@ package org.tron.core.config.args;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigBeanFactory;
+import com.typesafe.config.ConfigFactory;
 import org.tron.core.config.BeanDefaults;
 import lombok.Getter;
 import lombok.Setter;
@@ -38,9 +39,10 @@ public class MetricsConfig {
 
   public static MetricsConfig fromConfig(Config config) {
     Config defaults = BeanDefaults.toConfig(new MetricsConfig());
-    Config section = config.hasPath("node.metrics")
-        ? BeanDefaults.stripNullLeaves(config.getConfig("node.metrics")).withFallback(defaults)
-        : defaults;
+    Config userSection = config.hasPath("node.metrics")
+        ? BeanDefaults.stripNullLeaves(config.getConfig("node.metrics"))
+        : ConfigFactory.empty();
+    Config section = userSection.withFallback(defaults);
     return ConfigBeanFactory.create(section, MetricsConfig.class);
   }
 }
