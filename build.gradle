@@ -35,7 +35,7 @@ ext.archInfo = [
                 // https://github.com/grpc/grpc-java/issues/7690
                 // https://github.com/grpc/grpc-java/pull/12319, Add support for macOS aarch64 with universal binary
                 // https://github.com/grpc/grpc-java/pull/11371 , 1.64.x is not supported CentOS 7.
-                ProtocGenVersion: isArm64 && isMac ? '1.76.0' : '1.60.0'
+                ProtocGenVersion: isArm64 || isMac ? '1.81.0' : '1.60.0'
         ],
         VMOptions: isArm64 ? "${rootDir}/gradle/jdk17/java-tron.vmoptions" : "${rootDir}/gradle/java-tron.vmoptions"
 ]
@@ -81,8 +81,9 @@ subprojects {
     }
 
     dependencies {
-        implementation group: 'org.slf4j', name: 'slf4j-api', version: '1.7.25'
-        implementation group: 'org.slf4j', name: 'jcl-over-slf4j', version: '1.7.25'
+        implementation group: 'org.slf4j', name: 'slf4j-api', version: '1.7.36'
+        implementation group: 'org.slf4j', name: 'jcl-over-slf4j', version: '1.7.36'
+        implementation group: 'org.slf4j', name: 'jul-to-slf4j', version: '1.7.36'
         implementation group: 'ch.qos.logback', name: 'logback-classic', version: '1.2.13'
         implementation "com.google.code.findbugs:jsr305:3.0.0"
         implementation group: 'org.springframework', name: 'spring-context', version: "${springVersion}"
@@ -90,7 +91,7 @@ subprojects {
         implementation group: 'org.apache.commons', name: 'commons-math', version: '2.2'
         implementation "org.apache.commons:commons-collections4:4.1"
         implementation group: 'joda-time', name: 'joda-time', version: '2.3'
-        implementation group: 'org.bouncycastle', name: 'bcprov-jdk18on', version: '1.79'
+        implementation group: 'org.bouncycastle', name: 'bcprov-jdk18on', version: '1.84'
 
         compileOnly 'org.projectlombok:lombok:1.18.34'
         annotationProcessor 'org.projectlombok:lombok:1.18.34'

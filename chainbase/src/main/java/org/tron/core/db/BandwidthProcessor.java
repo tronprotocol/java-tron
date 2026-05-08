@@ -437,7 +437,6 @@ public class BandwidthProcessor extends ResourceProcessor {
     if (frozeBalance < TRX_PRECISION) {
       return 0;
     }
-    long netWeight = frozeBalance / TRX_PRECISION;
     long totalNetLimit = chainBaseManager.getDynamicPropertiesStore().getTotalNetLimit();
     long totalNetWeight = chainBaseManager.getDynamicPropertiesStore().getTotalNetWeight();
     if (dynamicPropertiesStore.allowNewReward() && totalNetWeight <= 0) {
@@ -446,16 +445,23 @@ public class BandwidthProcessor extends ResourceProcessor {
     if (totalNetWeight == 0) {
       return 0;
     }
+    if (hardenCalculation()) {
+      return calculateGlobalLimitV1(frozeBalance, totalNetLimit, totalNetWeight);
+    }
+    long netWeight = frozeBalance / TRX_PRECISION;
     return (long) (netWeight * ((double) totalNetLimit / totalNetWeight));
   }
 
   public long calculateGlobalNetLimitV2(long frozeBalance) {
-    double netWeight = (double) frozeBalance / TRX_PRECISION;
     long totalNetLimit = dynamicPropertiesStore.getTotalNetLimit();
     long totalNetWeight = dynamicPropertiesStore.getTotalNetWeight();
     if (totalNetWeight == 0) {
       return 0;
     }
+    if (hardenCalculation()) {
+      return calculateGlobalLimitV2(frozeBalance, totalNetLimit, totalNetWeight);
+    }
+    double netWeight = (double) frozeBalance / TRX_PRECISION;
     return (long) (netWeight * ((double) totalNetLimit / totalNetWeight));
   }
 

@@ -4,8 +4,10 @@ import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.addressCompatibleToB
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.paramQuantityIsNull;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.paramStringIsNull;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.parseQuantityValue;
+import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.requireValidHex;
 
 import com.google.protobuf.ByteString;
+import java.util.Arrays;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -13,9 +15,11 @@ import lombok.Setter;
 import lombok.ToString;
 import org.apache.commons.lang3.StringUtils;
 import org.tron.api.GrpcAPI.BytesMessage;
+import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
 import org.tron.core.exception.jsonrpc.JsonRpcInvalidParamsException;
 import org.tron.core.exception.jsonrpc.JsonRpcInvalidRequestException;
+import org.tron.core.services.jsonrpc.JsonRpcApiUtil.HexMode;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 
@@ -23,6 +27,16 @@ import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 @AllArgsConstructor
 @ToString
 public class BuildArguments {
+
+  /**
+   * Conflict error message wording. Mirrors go-ethereum's
+   * {@code setDefaults} verbatim — external EVM tooling may
+   * pattern-match this string. Do not change the wording without
+   * coordinating with downstream consumers.
+   */
+  private static final String CONFLICT_ERR_MSG =
+      "both \"data\" and \"input\" are set and not equal. "
+          + "Please use \"input\" to pass transaction call data";
 
   @Getter
   @Setter
@@ -42,6 +56,9 @@ public class BuildArguments {
   @Getter
   @Setter
   private String data;
+  @Getter
+  @Setter
+  private String input;
   @Getter
   @Setter
   private String nonce = ""; //not used
@@ -83,16 +100,50 @@ public class BuildArguments {
     gasPrice = args.getGasPrice();
     value = args.getValue();
     data = args.getData();
+    input = args.getInput();
+  }
+
+  /**
+   * Returns {@code input} if non-null, else {@code data}. Pure
+   * precedence resolution, mirroring go-ethereum's
+   * {@code TransactionArgs.data()}.
+   *
+   * <p>Both fields are first validated by
+   * {@link org.tron.core.services.jsonrpc.JsonRpcApiUtil#requireValidHex}
+   * — strict for {@code input}, lenient for {@code data} (see that
+   * method for the rules).
+   *
+   * <p>Conflict between {@code input} and {@code data} is not checked
+   * here. Build-path callers must route through
+   * {@link #getContractType(Wallet)} for the geth-equivalent
+   * {@code setDefaults} enforcement.
+   *
+   * <p>Java callers using positional constructors should pass
+   * {@code null} (not {@code ""}) for unset {@code input}.
+   *
+   * <p>Verb-prefix name (not {@code getXxx}) keeps Jackson and
+   * FastJSON's JavaBean introspection from invoking it during
+   * serialisation; two regression tests per DTO pin this invariant.
+   */
+  public String resolveData() throws JsonRpcInvalidParamsException {
+    requireValidHex("input", input, HexMode.STRICT);
+    requireValidHex("data", data, HexMode.LENIENT);
+    return input != null ? input : data;
   }
 
   public ContractType getContractType(Wallet wallet) throws JsonRpcInvalidRequestException,
       JsonRpcInvalidParamsException {
+    // Fail fast on bad hex / conflict before the state lookup;
+    // calldataEquals relies on resolveData() having validated hex first.
+    String resolvedData = resolveData();
+    validateCallDataConflict();
+
     ContractType contractType;
 
     // to is null
     if (paramStringIsNull(to)) {
       // data is null
-      if (paramStringIsNull(data)) {
+      if (paramStringIsNull(resolvedData)) {
         throw new JsonRpcInvalidRequestException("invalid json request");
       }
 
@@ -134,6 +185,24 @@ public class BuildArguments {
 
   private boolean availableTransferAsset() {
     return tokenId > 0 && tokenValue > 0 && paramQuantityIsNull(value);
+  }
+
+  /**
+   * Throws when both fields decode to non-equal bytes. Wording matches
+   * geth's setDefaults so existing tooling can detect the error string.
+   */
+  private void validateCallDataConflict() throws JsonRpcInvalidParamsException {
+    if (input != null && data != null && !calldataEquals(input, data)) {
+      throw new JsonRpcInvalidParamsException(CONFLICT_ERR_MSG);
+    }
+  }
+
+  /**
+   * Byte-level equality, so {@code "0xDEAD"} equals {@code "0xdead"}. Both
+   * args must have passed {@code requireValidHex} first.
+   */
+  private static boolean calldataEquals(String a, String b) {
+    return Arrays.equals(ByteArray.fromHexString(a), ByteArray.fromHexString(b));
   }
 
 }

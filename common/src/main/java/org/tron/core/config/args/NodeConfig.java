@@ -38,6 +38,7 @@ public class NodeConfig {
   private boolean openPrintLog = true;
   private boolean openTransactionSort = false;
   private int maxTps = 1000;
+  private int maxBlockInvPerSecond = 10;
   // Config key "isOpenFullTcpDisconnect" cannot auto-bind — read manually in fromConfig()
   @Getter(lombok.AccessLevel.NONE)
   @Setter(lombok.AccessLevel.NONE)
@@ -88,7 +89,7 @@ public class NodeConfig {
   private boolean unsolidifiedBlockCheck = false;
   private int maxUnsolidifiedBlocks = 54;
   private String zenTokenId = "000000";
-  private boolean allowShieldedTransactionApi = true;
+  private boolean allowShieldedTransactionApi = false;
   private double activeConnectFactor = 0.1;
   private double connectFactor = 0.6;
   // Legacy alias `maxActiveNodesWithSameIp` has no bean field: we only peek at it via
@@ -459,6 +460,11 @@ public class NodeConfig {
     // inactiveThreshold: minimum 1
     if (inactiveThreshold < 1) {
       inactiveThreshold = 1;
+    }
+
+    // maxBlockInvPerSecond: minimum 1
+    if (maxBlockInvPerSecond < 1) {
+      maxBlockInvPerSecond = 1;
     }
 
     // maxFastForwardNum: clamp to [1, MAX_ACTIVE_WITNESS_NUM]

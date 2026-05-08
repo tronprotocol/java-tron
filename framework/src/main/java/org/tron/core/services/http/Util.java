@@ -66,6 +66,7 @@ public class Util {
 
   public static final String PERMISSION_ID = "Permission_id";
   public static final String VISIBLE = "visible";
+  public static final String INT64_AS_STRING_PARAM = "int64_as_string";
   public static final String TRANSACTION = "transaction";
   public static final String TRANSACTION_EXTENSION = "transactionExtension";
   public static final String VALUE = "value";
@@ -95,7 +96,7 @@ public class Util {
 
   public static String printBlockList(BlockList list, boolean selfType) {
     List<Block> blocks = list.getBlockList();
-    JSONObject jsonObject = JSONObject.parseObject(JsonFormat.printToString(list, selfType));
+    JSONObject jsonObject = new JSONObject();
     JSONArray jsonArray = new JSONArray();
     blocks.stream().forEach(block -> jsonArray.add(printBlockToJSON(block, selfType)));
     jsonObject.put("block", jsonArray);
@@ -110,8 +111,10 @@ public class Util {
   public static JSONObject printBlockToJSON(Block block, boolean selfType) {
     BlockCapsule blockCapsule = new BlockCapsule(block);
     String blockID = ByteArray.toHexString(blockCapsule.getBlockId().getBytes());
-    JSONObject jsonObject = JSONObject.parseObject(JsonFormat.printToString(block, selfType));
+    JSONObject jsonObject = new JSONObject();
     jsonObject.put("blockID", blockID);
+    jsonObject.put("block_header",
+        JSONObject.parseObject(JsonFormat.printToString(block.getBlockHeader(), selfType)));
     if (!blockCapsule.getTransactions().isEmpty()) {
       jsonObject.put("transactions",
           printTransactionListToJSON(blockCapsule.getTransactions(), selfType));
@@ -346,6 +349,21 @@ public class Util {
 
   public static boolean existVisible(final HttpServletRequest request) {
     return Objects.nonNull(request.getParameter(VISIBLE));
+  }
+
+  /**
+   * Read int64_as_string from URL query parameter. Mirrors
+   * {@link #getVisible(HttpServletRequest)}. The flag is honored only on GET requests
+   * (read by {@link RateLimiterServlet#service}); POST requests do not support it
+   * because that would require caching the request body to allow re-reading by
+   * downstream servlets.
+   */
+  public static boolean getInt64AsString(final HttpServletRequest request) {
+    boolean int64AsString = false;
+    if (StringUtil.isNotBlank(request.getParameter(INT64_AS_STRING_PARAM))) {
+      int64AsString = Boolean.valueOf(request.getParameter(INT64_AS_STRING_PARAM));
+    }
+    return int64AsString;
   }
 
   public static boolean getVisiblePost(final String input) {

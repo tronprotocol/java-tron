@@ -149,6 +149,7 @@ public class RpcApiServicesTest {
   public static void init() throws IOException {
     Args.setParam(new String[] {"-d", temporaryFolder.newFolder().toString()},
         TestConstants.TEST_CONF);
+    getInstance().allowShieldedTransactionApi = true;
     Assert.assertEquals(5, getInstance().getRpcMaxRstStream());
     Assert.assertEquals(10, getInstance().getRpcSecondsPerWindow());
     String OWNER_ADDRESS = Wallet.getAddressPreFixString()

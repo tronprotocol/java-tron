@@ -93,7 +93,14 @@ public class TronErrorTest {
     LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
 
     try {
-      LogService.load("non-existent.xml");
+      // Empty path means no --log-config supplied: keep the classpath default.
+      LogService.load("");
+      // Non-empty path pointing at a missing file must fail fast so operators
+      // don't silently run with the classpath default.
+      TronError missing = assertThrows(TronError.class,
+          () -> LogService.load("non-existent.xml"));
+      assertEquals(TronError.ErrCode.LOG_LOAD, missing.getErrCode());
+      // Non-empty path pointing at an unparseable file must also surface.
       Path path = temporaryFolder.newFile("logback.xml").toPath();
       TronError thrown = assertThrows(TronError.class, () -> LogService.load(path.toString()));
       assertEquals(TronError.ErrCode.LOG_LOAD, thrown.getErrCode());

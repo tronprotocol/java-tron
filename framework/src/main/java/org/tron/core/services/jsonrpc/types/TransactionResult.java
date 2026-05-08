@@ -98,7 +98,7 @@ public class TransactionResult {
     TransactionCapsule capsule = new TransactionCapsule(tx);
     byte[] txId = capsule.getTransactionId().getBytes();
     hash = ByteArray.toJsonHex(txId);
-    nonce = ByteArray.toJsonHex(new byte[8]); // no value
+    nonce = "0x0"; // no value, QUANTITY type per Ethereum JSON-RPC spec
     blockHash = ByteArray.toJsonHex(blockCapsule.getBlockId().getBytes());
     blockNumber = ByteArray.toJsonHex(blockCapsule.getNum());
     transactionIndex = ByteArray.toJsonHex(index);
@@ -133,7 +133,7 @@ public class TransactionResult {
     TransactionCapsule capsule = new TransactionCapsule(tx);
     byte[] txId = capsule.getTransactionId().getBytes();
     hash = ByteArray.toJsonHex(txId);
-    nonce = ByteArray.toJsonHex(new byte[8]); // no value
+    nonce = "0x0"; // no value, QUANTITY type per Ethereum JSON-RPC spec
     blockHash = "0x";
     blockNumber = "0x";
     transactionIndex = "0x";
