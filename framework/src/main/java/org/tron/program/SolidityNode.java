@@ -9,7 +9,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
-import org.checkerframework.checker.nullness.qual.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Condition;
@@ -66,7 +65,7 @@ public class SolidityNode implements ApplicationListener<ContextClosedEvent> {
   }
 
   @Override
-  public void onApplicationEvent(@NonNull ContextClosedEvent event) {
+  public void onApplicationEvent(ContextClosedEvent event) {
     flag = false; // invoke earlier than @PreDestroy
   }
 
@@ -217,8 +216,7 @@ public class SolidityNode implements ApplicationListener<ContextClosedEvent> {
   static class SolidityCondition implements Condition {
 
     @Override
-    public boolean matches(@NonNull ConditionContext context,
-        @NonNull AnnotatedTypeMetadata metadata) {
+    public boolean matches(ConditionContext context, AnnotatedTypeMetadata metadata) {
       return Args.getInstance().isSolidityNode();
     }
   }
