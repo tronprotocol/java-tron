@@ -1,6 +1,5 @@
 package org.tron.common.jetty;
 
-import com.alibaba.fastjson.JSONObject;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URI;
@@ -30,6 +29,7 @@ import org.tron.common.TestConstants;
 import org.tron.common.application.HttpService;
 import org.tron.common.utils.PublicMethod;
 import org.tron.core.config.args.Args;
+import org.tron.json.JSONObject;
 
 /**
  * Tests {@link org.eclipse.jetty.server.handler.SizeLimitHandler} body-size
