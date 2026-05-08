@@ -9,9 +9,9 @@ This file tracks Prometheus metric additions, changes, and removals in java-tron
 
 #### Core
 
-- `tron:block_transaction_count` (Histogram, label `miner`) — per-block transaction count, sampled at the entry of `Manager#pushBlock` before any early return so duplicate, stale, and fork-switched pushes are observed alongside applied blocks. Primary use cases: empty-block detection per super representative, and per-SR TPS / throughput percentile interpolation. Default buckets `[0, 20, 50, 80, 100, 120, 140, 160, 180, 200, 230, 260, 300, 500, 2000]` are densified around 0–300 so percentile interpolation in the typical TPS range is more accurate. ([#6624](https://github.com/tronprotocol/java-tron/pull/6624))
+- `tron:block_transaction_count` (Histogram, label `miner`) — per-block transaction count, sampled at the entry of `Manager#pushBlock` before any early return so duplicate, stale, and fork-switched pushes are observed alongside applied blocks. Primary use cases: empty-block detection per super representative, and per-SR TPS / throughput percentile interpolation. Default buckets `[0, 20, 50, 80, 100, 120, 140, 160, 180, 200, 230, 260, 300, 500, 2000, 5000, 10000]` are densified around 0–300 for percentile interpolation in the typical TPS range; 5000 and 10000 are retained as safety-net buckets to preserve resolution for outlier events such as stress tests or repush storms. ([#6624](https://github.com/tronprotocol/java-tron/pull/6624))
 
-  > **Operational note:** The upper bound is 2000; blocks with more transactions land in `+Inf` with no further bucket resolution. Monitor the overflow ratio — e.g. `(rate(tron_block_transaction_count_bucket{le="+Inf"}[5m]) - rate(tron_block_transaction_count_bucket{le="2000"}[5m])) / rate(tron_block_transaction_count_count[5m]) > 0.01` — as a signal to re-tune the upper bound.
+  > **Operational note:** The effective upper bound is 10000; blocks exceeding that land in `+Inf`. Monitor the overflow ratio — e.g. `(rate(tron_block_transaction_count_bucket{le="+Inf"}[5m]) - rate(tron_block_transaction_count_bucket{le="10000"}[5m])) / rate(tron_block_transaction_count_count[5m]) > 0.01` — as a signal to re-tune the upper bound.
 
 #### Consensus
 
