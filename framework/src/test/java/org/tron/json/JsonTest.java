@@ -14,6 +14,7 @@ import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import org.junit.Test;
 
 /**
@@ -382,7 +383,7 @@ public class JsonTest {
     }
     String deep = open + "1" + close;
     JSONException e = assertThrows(JSONException.class, () -> JSON.parseObject(deep));
-    assertTrue(e.getMessage().toLowerCase().contains("depth"));
+    assertTrue(e.getMessage().toLowerCase(Locale.ROOT).contains("depth"));
   }
 
   @Test
@@ -393,7 +394,7 @@ public class JsonTest {
     }
     sb.append(']');
     JSONException e = assertThrows(JSONException.class, () -> JSON.parseArray(sb.toString()));
-    assertTrue(e.getMessage().toLowerCase().contains("token"));
+    assertTrue(e.getMessage().toLowerCase(Locale.ROOT).contains("token"));
   }
 
   public static class Pojo {
