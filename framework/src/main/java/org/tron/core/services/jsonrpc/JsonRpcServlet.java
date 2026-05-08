@@ -9,6 +9,7 @@ import com.googlecode.jsonrpc4j.HttpStatusCodeProvider;
 import com.googlecode.jsonrpc4j.JsonRpcInterceptor;
 import com.googlecode.jsonrpc4j.JsonRpcServer;
 import com.googlecode.jsonrpc4j.ProxyUtil;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -116,27 +117,92 @@ public class JsonRpcServlet extends RateLimiterServlet {
       return;
     }
 
+    int maxResponseSize = parameter.getJsonRpcMaxResponseSize();
+    if (isBatch) {
+      handleBatch(resp, rootNode, maxResponseSize);
+    } else {
+      handleSingle(req, resp, rootNode, body, maxResponseSize);
+    }
+  }
+
+  private void handleSingle(HttpServletRequest req, HttpServletResponse resp,
+      JsonNode rootNode, byte[] body, int maxResponseSize) throws IOException {
     CachedBodyRequestWrapper cachedReq = new CachedBodyRequestWrapper(req, body);
     BufferedResponseWrapper bufferedResp = new BufferedResponseWrapper(
-        resp, parameter.getJsonRpcMaxResponseSize());
+        resp, maxResponseSize);
 
     try {
       rpcServer.handle(cachedReq, bufferedResp);
     } catch (RuntimeException e) {
       logger.error("RPC execution failed", e);
-      JsonNode idNode = isBatch ? null : rootNode.get("id");
-      writeJsonRpcError(resp, JsonRpcError.INTERNAL_ERROR, "Internal error", idNode, isBatch);
+      writeJsonRpcError(resp, JsonRpcError.INTERNAL_ERROR, "Internal error",
+          rootNode.get("id"), false);
       return;
     }
 
     if (bufferedResp.isOverflow()) {
-      JsonNode idNode = isBatch ? null : rootNode.get("id");
       writeJsonRpcError(resp, JsonRpcError.RESPONSE_TOO_LARGE,
-          "Response exceeds the limit of " + parameter.getJsonRpcMaxResponseSize() + " bytes",
-          idNode, isBatch);
+          "Response exceeds the limit of " + maxResponseSize + " bytes",
+          rootNode.get("id"), false);
       return;
     }
     bufferedResp.commitToResponse();
+  }
+
+  private void handleBatch(HttpServletResponse resp, JsonNode rootNode, int maxResponseSize)
+      throws IOException {
+
+    ArrayNode batchResult = MAPPER.createArrayNode();
+    int accumulatedSize = 2; // "[]"
+
+    for (int i = 0; i < rootNode.size(); i++) {
+      byte[] subBody;
+      try {
+        subBody = MAPPER.writeValueAsBytes(rootNode.get(i));
+      } catch (JsonProcessingException e) {
+        writeJsonRpcError(resp, JsonRpcError.INTERNAL_ERROR, "Internal error", null, true);
+        return;
+      }
+
+      ByteArrayOutputStream subOutput = new ByteArrayOutputStream();
+      try {
+        rpcServer.handleRequest(new ByteArrayInputStream(subBody), subOutput);
+      } catch (RuntimeException e) {
+        logger.error("RPC execution failed for batch sub-request {}", i, e);
+        writeJsonRpcError(resp, JsonRpcError.INTERNAL_ERROR, "Internal error", null, true);
+        return;
+      }
+
+      byte[] responseBytes = subOutput.toByteArray();
+      if (responseBytes.length == 0) {
+        continue; // notification — no response
+      }
+
+      // comma separator between array elements
+      int addition = responseBytes.length + (!batchResult.isEmpty() ? 1 : 0);
+      if (maxResponseSize > 0 && accumulatedSize + addition > maxResponseSize) {
+        writeJsonRpcError(resp, JsonRpcError.RESPONSE_TOO_LARGE,
+            "Response exceeds the limit of " + maxResponseSize + " bytes", null, true);
+        return;
+      }
+      accumulatedSize += addition;
+
+      JsonNode responseNode;
+      try {
+        responseNode = MAPPER.readTree(responseBytes);
+      } catch (IOException e) {
+        writeJsonRpcError(resp, JsonRpcError.INTERNAL_ERROR, "Internal error", null, true);
+        return;
+      }
+      batchResult.add(responseNode);
+    }
+
+    byte[] finalBytes = MAPPER.writeValueAsBytes(batchResult);
+    resp.setContentType("application/json; charset=utf-8");
+    resp.setStatus(HttpServletResponse.SC_OK);
+    resp.setContentLength(finalBytes.length);
+    resp.getOutputStream().write(finalBytes);
+    resp.getOutputStream().flush();
   }
 
   private byte[] readBody(InputStream in) throws IOException {

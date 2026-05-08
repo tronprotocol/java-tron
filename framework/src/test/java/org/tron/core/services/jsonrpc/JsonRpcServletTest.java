@@ -13,6 +13,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.googlecode.jsonrpc4j.JsonRpcServer;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
 import javax.servlet.http.HttpServletRequest;
@@ -87,16 +89,20 @@ public class JsonRpcServletTest {
   @Test
   public void batchWithinLimit_proceedsToRpcServer() throws Exception {
     CommonParameter.getInstance().jsonRpcMaxBatchSize = 5;
-    byte[] rpcResp = "[{\"result\":\"ok\"}]".getBytes(StandardCharsets.UTF_8);
+    byte[] singleResp = "{\"jsonrpc\":\"2.0\",\"result\":\"ok\",\"id\":1}"
+        .getBytes(StandardCharsets.UTF_8);
     doAnswer(inv -> {
-      HttpServletResponse r = inv.getArgument(1);
-      r.getOutputStream().write(rpcResp);
-      return null;
-    }).when(mockRpcServer).handle(any(HttpServletRequest.class), any(HttpServletResponse.class));
+      OutputStream out = inv.getArgument(1);
+      out.write(singleResp);
+      return 0;
+    }).when(mockRpcServer).handleRequest(any(InputStream.class), any(OutputStream.class));
 
     MockHttpServletResponse resp = doPost("[{\"id\":1},{\"id\":2}]");
     assertEquals(200, resp.getStatus());
-    assertArrayEquals(rpcResp, resp.getContentAsByteArray());
+    JsonNode body = MAPPER.readTree(resp.getContentAsByteArray());
+    assertTrue("batch response must be a JSON array", body.isArray());
+    assertEquals("each sub-request must produce a response", 2, body.size());
+    assertEquals("ok", body.get(0).get("result").asText());
   }
 
   @Test
@@ -113,12 +119,9 @@ public class JsonRpcServletTest {
   @Test
   public void batchLimitDisabled_largeBatchAllowed() throws Exception {
     CommonParameter.getInstance().jsonRpcMaxBatchSize = 0;
-    byte[] rpcResp = "[]".getBytes(StandardCharsets.UTF_8);
-    doAnswer(inv -> {
-      HttpServletResponse r = inv.getArgument(1);
-      r.getOutputStream().write(rpcResp);
-      return null;
-    }).when(mockRpcServer).handle(any(HttpServletRequest.class), any(HttpServletResponse.class));
+    // write nothing — simulates notifications (no response expected)
+    doAnswer(inv -> 0).when(mockRpcServer)
+        .handleRequest(any(InputStream.class), any(OutputStream.class));
 
     StringBuilder sb = new StringBuilder("[");
     for (int i = 0; i < 500; i++) {
@@ -130,7 +133,9 @@ public class JsonRpcServletTest {
     sb.append("]");
     MockHttpServletResponse resp = doPost(sb.toString());
     assertEquals(200, resp.getStatus());
-    assertArrayEquals(rpcResp, resp.getContentAsByteArray());
+    JsonNode body = MAPPER.readTree(resp.getContentAsByteArray());
+    assertTrue("response must be a JSON array", body.isArray());
+    assertEquals("all notifications produce no response entries", 0, body.size());
   }
 
   // --- rpcServer.handle exceptions ---
@@ -149,7 +154,7 @@ public class JsonRpcServletTest {
   @Test
   public void batchRpcServerThrows_internalErrorIsArray() throws Exception {
     doThrow(new RuntimeException("boom")).when(mockRpcServer)
-        .handle((HttpServletRequest) any(), any());
+        .handleRequest(any(InputStream.class), any(OutputStream.class));
     MockHttpServletResponse resp = doPost("[{\"method\":\"eth_blockNumber\"}]");
     assertEquals(200, resp.getStatus());
     JsonNode body = MAPPER.readTree(resp.getContentAsString());
@@ -181,16 +186,40 @@ public class JsonRpcServletTest {
     int limit = 50;
     CommonParameter.getInstance().jsonRpcMaxResponseSize = limit;
     doAnswer(inv -> {
-      HttpServletResponse r = inv.getArgument(1);
-      r.getOutputStream().write(new byte[limit + 1]);
-      return null;
-    }).when(mockRpcServer).handle(any(HttpServletRequest.class), any(HttpServletResponse.class));
+      OutputStream out = inv.getArgument(1);
+      out.write(new byte[limit + 1]);
+      return 0;
+    }).when(mockRpcServer).handleRequest(any(InputStream.class), any(OutputStream.class));
 
     MockHttpServletResponse resp = doPost("[{\"method\":\"eth_getLogs\"}]");
     assertEquals(200, resp.getStatus());
     JsonNode body = MAPPER.readTree(resp.getContentAsString());
     assertTrue("batch response-too-large must be an array", body.isArray());
     assertEquals(-32003, body.get(0).get("error").get("code").asInt());
+  }
+
+  @Test
+  public void batchShortCircuitsOnOverflow() throws Exception {
+    int limit = 50;
+    CommonParameter.getInstance().jsonRpcMaxResponseSize = limit;
+    int[] callCount = {0};
+    doAnswer(inv -> {
+      OutputStream out = inv.getArgument(1);
+      callCount[0]++;
+      if (callCount[0] == 1) {
+        out.write("{\"result\":\"ok\"}".getBytes(StandardCharsets.UTF_8));
+      } else {
+        out.write(new byte[limit]); // triggers overflow when added to accumulated size
+      }
+      return 0;
+    }).when(mockRpcServer).handleRequest(any(InputStream.class), any(OutputStream.class));
+
+    MockHttpServletResponse resp = doPost("[{\"id\":1},{\"id\":2},{\"id\":3}]");
+    assertEquals(200, resp.getStatus());
+    JsonNode body = MAPPER.readTree(resp.getContentAsString());
+    assertTrue("overflow response must be an array", body.isArray());
+    assertEquals(-32003, body.get(0).get("error").get("code").asInt());
+    assertEquals("third sub-request must not be executed after overflow", 2, callCount[0]);
   }
 
   // --- normal path ---
