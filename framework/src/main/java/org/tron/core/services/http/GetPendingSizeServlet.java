@@ -19,7 +19,10 @@ public class GetPendingSizeServlet extends RateLimiterServlet {
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
       long value = manager.getPendingSize();
-      response.getWriter().println("{\"pendingSize\": " + value + "}");
+      String out = JsonFormat.isInt64AsString()
+          ? "{\"pendingSize\": \"" + value + "\"}"
+          : "{\"pendingSize\": " + value + "}";
+      response.getWriter().println(out);
     } catch (Exception e) {
       logger.error("", e);
       try {

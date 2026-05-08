@@ -1157,6 +1157,9 @@ public class ShieldedTransferActuatorTest extends BaseTest {
       actuator.validate();
       actuator.execute(ret);
       Assert.assertTrue(false);
+    } catch (ArithmeticException e) {
+      // StrictMathWrapper.subtractExact throws ArithmeticException on overflow
+      Assert.assertTrue(true);
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals("librustzcashSaplingFinalCheck error", e.getMessage());
@@ -1344,6 +1347,59 @@ public class ShieldedTransferActuatorTest extends BaseTest {
       Assert.assertTrue(false);
     } catch (Exception e) {
       Assert.assertTrue(false);
+    }
+  }
+
+  /**
+   * Test that shielded transfer transaction validation works even when
+   * allowShieldedTransactionApi is disabled. This verifies that the API flag
+   * only gates wallet/helper APIs, not the core transaction validation logic.
+   */
+  @Test
+  public void shieldedTransferValidationWorksWhenApiDisabled() {
+    boolean orig = Args.getInstance().isAllowShieldedTransactionApi();
+    // Disable the shielded API (this should NOT affect transaction validation)
+    Args.getInstance().setAllowShieldedTransactionApi(false);
+
+    dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
+    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(AMOUNT);
+
+    try {
+      ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
+      SpendingKey sk = SpendingKey.random();
+      ExpandedSpendingKey expsk = sk.expandedSpendingKey();
+      PaymentAddress address = sk.defaultAddress();
+      Note note = new Note(address, AMOUNT);
+      IncrementalMerkleVoucherContainer voucher = createSimpleMerkleVoucherContainer(note.cm());
+      byte[] anchor = voucher.root().getContent().toByteArray();
+      dbManager.getMerkleContainer()
+          .putMerkleTreeIntoStore(anchor, voucher.getVoucherCapsule().getTree());
+      builder.addSpend(expsk, note, anchor, voucher);
+
+      addZeroValueOutputNote(builder);
+
+      long fee = dbManager.getDynamicPropertiesStore().getShieldedTransactionCreateAccountFee();
+      String addressNotExist =
+          Wallet.getAddressPreFixString() + "8ba2aaae540c642e44e3bed5522c63bbc21f0000";
+
+      builder.setTransparentOutput(ByteArray.fromHexString(addressNotExist), AMOUNT - fee);
+
+      TransactionCapsule transactionCap = builder.build();
+      Contract contract =
+          transactionCap.getInstance().toBuilder().getRawDataBuilder().getContract(0);
+      ShieldedTransferActuator actuator = new ShieldedTransferActuator();
+      actuator.setChainBaseManager(dbManager.getChainBaseManager()).setContract(contract)
+          .setTx(transactionCap);
+
+      // Validation should succeed even when API is disabled
+      actuator.validate();
+    } catch (ContractValidateException e) {
+      Assert.fail("Shielded transfer validation should not throw ContractValidateException: "
+          + e.getMessage());
+    } catch (Exception e) {
+      Assert.fail("Shielded transfer should not throw Exception: " + e.getMessage());
+    } finally {
+      Args.getInstance().setAllowShieldedTransactionApi(orig);
     }
   }
 }

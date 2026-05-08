@@ -4,6 +4,7 @@ import com.google.common.base.Throwables;
 import com.google.common.primitives.Longs;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
+import java.math.BigInteger;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.List;
@@ -595,6 +596,41 @@ public class JsonRpcApiUtil {
       throw new JsonRpcInvalidParamsException(TAG_SAFE_SUPPORT_ERROR);
     }
     throw new JsonRpcInvalidParamsException(BLOCK_NUM_ERROR);
+  }
+
+  /**
+   * Max allowed length for a JSON-RPC block number hex/decimal input.
+   * API-level DoS guard: rejects pathological inputs before BigInteger parsing,
+   * whose cost grows quadratically with length. Covers hex (0x + 64 chars for
+   * uint256) and decimal (78 chars for uint256) representations with headroom.
+   */
+  private static final int MAX_BLOCK_NUM_HEX_LEN = 100;
+
+  /**
+   * Parse a JSON-RPC block number (hex "0x..." or decimal) into a long,
+   * enforcing the {@link #MAX_BLOCK_NUM_HEX_LEN} length limit, rejecting
+   * negative values, and rejecting values that overflow a signed 64-bit
+   * block number.
+   */
+  public static long parseBlockNumber(String blockNum)
+      throws JsonRpcInvalidParamsException {
+    if (blockNum == null || blockNum.length() > MAX_BLOCK_NUM_HEX_LEN) {
+      throw new JsonRpcInvalidParamsException(BLOCK_NUM_ERROR);
+    }
+    BigInteger value;
+    try {
+      value = ByteArray.hexToBigInteger(blockNum);
+    } catch (Exception e) {
+      throw new JsonRpcInvalidParamsException(BLOCK_NUM_ERROR);
+    }
+    if (value.signum() < 0) {
+      throw new JsonRpcInvalidParamsException(BLOCK_NUM_ERROR);
+    }
+    try {
+      return value.longValueExact();
+    } catch (ArithmeticException e) {
+      throw new JsonRpcInvalidParamsException(BLOCK_NUM_ERROR);
+    }
   }
 
   /**

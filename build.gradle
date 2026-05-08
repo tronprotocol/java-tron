@@ -81,8 +81,9 @@ subprojects {
     }
 
     dependencies {
-        implementation group: 'org.slf4j', name: 'slf4j-api', version: '1.7.25'
-        implementation group: 'org.slf4j', name: 'jcl-over-slf4j', version: '1.7.25'
+        implementation group: 'org.slf4j', name: 'slf4j-api', version: '1.7.36'
+        implementation group: 'org.slf4j', name: 'jcl-over-slf4j', version: '1.7.36'
+        implementation group: 'org.slf4j', name: 'jul-to-slf4j', version: '1.7.36'
         implementation group: 'ch.qos.logback', name: 'logback-classic', version: '1.2.13'
         implementation "com.google.code.findbugs:jsr305:3.0.0"
         implementation group: 'org.springframework', name: 'spring-context', version: "${springVersion}"
