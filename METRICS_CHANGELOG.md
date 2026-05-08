@@ -11,6 +11,8 @@ This file tracks Prometheus metric additions, changes, and removals in java-tron
 
 - `tron:block_transaction_count` (Histogram, label `miner`) — per-block transaction count, sampled at the entry of `Manager#pushBlock` before any early return so duplicate, stale, and fork-switched pushes are observed alongside applied blocks. Primary use cases: empty-block detection per super representative, and per-SR TPS / throughput percentile interpolation. Default buckets `[0, 20, 50, 80, 100, 120, 140, 160, 180, 200, 230, 260, 300, 500, 2000]` are densified around 0–300 so percentile interpolation in the typical TPS range is more accurate. ([#6624](https://github.com/tronprotocol/java-tron/pull/6624))
 
+  > **Operational note:** The upper bound is 2000; blocks with more transactions land in `+Inf` with no further bucket resolution. Monitor the overflow ratio — e.g. `(rate(tron_block_transaction_count_bucket{le="+Inf"}[5m]) - rate(tron_block_transaction_count_bucket{le="2000"}[5m])) / rate(tron_block_transaction_count_count[5m]) > 0.01` — as a signal to re-tune the upper bound.
+
 #### Consensus
 
 - `tron:sr_set_change` (Counter, labels `action`, `witness`) — incremented once per witness whenever the active SR set rotates at a maintenance boundary. `action` is one of `add` / `remove`. Cardinality grows with the number of distinct witnesses that have ever entered or left the active set, not with the active set size at any given moment. ([#6624](https://github.com/tronprotocol/java-tron/pull/6624))
@@ -62,15 +64,22 @@ Snapshot of metrics emitted prior to this changelog. Per-version provenance is n
 
 #### DB
 
-- `tron:db_size_bytes` (Gauge, labels `type`, `db`, `level`) — LevelDB storage size.
-- `tron:db_sst_level` (Gauge, labels `type`, `db`, `level`) — LevelDB SST files per compaction level.
-- `tron:guava_cache_hit_rate`, `tron:guava_cache_request`, `tron:guava_cache_eviction_count` — Guava cache stats, registered via `GuavaCacheExports` for caches that opt in.
+- `tron:db_size_bytes` (Gauge, labels `type`, `db`, `level`) — storage size in bytes per engine, database, and level; `type` is the storage engine (`LEVELDB` or `ROCKSDB`) depending on node configuration.
+- `tron:db_sst_level` (Gauge, labels `type`, `db`, `level`) — SST files per compaction level per engine and database; `type` is the storage engine (`LEVELDB` or `ROCKSDB`) depending on node configuration.
+- `tron:guava_cache_hit_rate` (Gauge, label `type`) — hit rate of a Guava cache; `type` is the cache name.
+- `tron:guava_cache_request` (Gauge, label `type`) — total request count of a Guava cache; `type` is the cache name.
+- `tron:guava_cache_eviction_count` (Gauge, label `type`) — eviction count of a Guava cache; `type` is the cache name.
+- (Registered via `GuavaCacheExports` for caches that opt in to `CacheManager`.)
+
+#### Logging
+
+- `tron:error_info` (Counter, labels `topic`, `type`) — incremented on every ERROR-level log line by `InstrumentedAppender`.
 
 #### System
 
 Emitted by `OperatingSystemExports` (no labels):
 
-- `system_available_cpus`, `system_cpu_load`, `system_load_average`, `system_total_physical_memory_bytes`, `system_free_physical_memory_bytes`, `system_total_swap_spaces_bytes`, `system_free_swap_spaces_bytes`.
+- `system_available_cpus`, `process_cpu_load`, `system_cpu_load`, `system_load_average`, `system_total_physical_memory_bytes`, `system_free_physical_memory_bytes`, `system_total_swap_spaces_bytes`, `system_free_swap_spaces_bytes`.
 
 #### JVM / process
 
