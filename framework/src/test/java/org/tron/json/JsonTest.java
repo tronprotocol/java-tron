@@ -39,8 +39,8 @@ public class JsonTest {
 
   @Test
   public void testTrailingComma() {
-    assertThrows(JSONException.class, () -> JSON.parseObject("{\"a\":1,}"));
-    assertThrows(JSONException.class, () -> JSON.parseArray("[1,2,]"));
+    assertEquals(1, JSON.parseObject("{\"a\":1,}").getIntValue("a"));
+    assertEquals(2, JSON.parseArray("[1,2,]").size());
     assertThrows(JSONException.class, () -> JSON.parseObject("{c:'NULL',,,,,,}"));
     assertThrows(JSONException.class, () -> JSON.parseObject("[1,,2]"));
   }

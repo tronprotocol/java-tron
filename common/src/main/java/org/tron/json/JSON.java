@@ -36,6 +36,10 @@ public final class JSON {
       .enable(JsonReadFeature.ALLOW_UNQUOTED_FIELD_NAMES)
       // Fastjson Feature.AllowSingleQuotes (default ON)
       .enable(JsonReadFeature.ALLOW_SINGLE_QUOTES)
+      // Partial compatibility with Fastjson Feature.AllowArbitraryCommas:
+      // this only covers a single trailing comma like {"a":1,} or [1,2,].
+      // Repeated/arbitrary commas like {"a":1,,,,} and [1,,2] remain rejected.
+      .enable(JsonReadFeature.ALLOW_TRAILING_COMMA)
       // Fastjson accepts a leading plus sign for numbers (for example +123, +0.5)
       .enable(JsonReadFeature.ALLOW_LEADING_PLUS_SIGN_FOR_NUMBERS)
       // Partial compatibility for Fastjson's asymmetric decimal behavior:
