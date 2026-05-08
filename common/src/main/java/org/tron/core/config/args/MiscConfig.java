@@ -1,9 +1,7 @@
 package org.tron.core.config.args;
 
 import com.typesafe.config.Config;
-import com.typesafe.config.ConfigFactory;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
