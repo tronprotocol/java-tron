@@ -153,7 +153,7 @@ public class SolidityNode implements ApplicationListener<ContextClosedEvent> {
   }
 
   private Block getBlockByNum(long blockNum) {
-    while (flag) {
+    while (flag && !tronNetDelegate.isHitDown()) {
       try {
         long time = System.currentTimeMillis();
         Block block = databaseGrpcClient.getBlock(blockNum);
@@ -176,7 +176,7 @@ public class SolidityNode implements ApplicationListener<ContextClosedEvent> {
   }
 
   private long getLastSolidityBlockNum() {
-    while (flag) {
+    while (flag && !tronNetDelegate.isHitDown()) {
       try {
         long time = System.currentTimeMillis();
         long blockNum = databaseGrpcClient.getDynamicProperties().getLastSolidityBlockNum();
