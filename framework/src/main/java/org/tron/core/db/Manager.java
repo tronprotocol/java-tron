@@ -1307,12 +1307,7 @@ public class Manager {
         try (PendingManager pm = new PendingManager(this)) {
 
           if (!block.generatedByMyself) {
-            if (!block.calcMerkleRoot().equals(block.getMerkleRoot())) {
-              logger.warn("Num: {}, the merkle root doesn't match, expect is {} , actual is {}.",
-                  block.getNum(), block.getMerkleRoot(), block.calcMerkleRoot());
-              throw new BadBlockException(CALC_MERKLE_ROOT_FAILED,
-                      String.format("The merkle hash is not validated for %d", block.getNum()));
-            }
+            block.validateMerkleRoot();
             consensus.receiveBlock(block);
           }
 
@@ -2085,9 +2080,13 @@ public class Manager {
     return chainBaseManager.getNullifierStore();
   }
 
+  public int getCachedTransactionSize() {
+    return pushTransactionQueue.size() + getPendingTransactions().size()
+        + getRePushTransactions().size();
+  }
+
   public boolean isTooManyPending() {
-    return getPendingTransactions().size() + getRePushTransactions().size()
-        > maxTransactionPendingSize;
+    return getCachedTransactionSize() > maxTransactionPendingSize;
   }
 
   private void preValidateTransactionSign(List<TransactionCapsule> txs)
@@ -2124,6 +2123,13 @@ public class Manager {
   public void rePush(TransactionCapsule tx) {
     if (containsTransaction(tx)) {
       return;
+    }
+
+    String ownerAddress = ByteArray.toHexString(tx.getOwnerAddress());
+    synchronized (this) {
+      if (ownerAddressSet.contains(ownerAddress)) {
+        tx.setVerified(false);
+      }
     }
 
     try {

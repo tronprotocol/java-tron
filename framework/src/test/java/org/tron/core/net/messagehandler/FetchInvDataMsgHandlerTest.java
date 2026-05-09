@@ -15,6 +15,7 @@ import org.tron.common.utils.ReflectUtils;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.Parameter;
+import org.tron.core.exception.P2pException;
 import org.tron.core.net.P2pRateLimiter;
 import org.tron.core.net.TronNetDelegate;
 import org.tron.core.net.message.adv.BlockMessage;
@@ -125,11 +126,41 @@ public class FetchInvDataMsgHandlerTest {
   }
 
   @Test
+  public void testDuplicateHashRejected() throws Exception {
+    FetchInvDataMsgHandler handler = new FetchInvDataMsgHandler();
+    PeerConnection peer = Mockito.mock(PeerConnection.class);
+    AdvService advService = Mockito.mock(AdvService.class);
+    TronNetDelegate tronNetDelegate = Mockito.mock(TronNetDelegate.class);
+
+    ReflectUtils.setFieldValue(handler, "advService", advService);
+    ReflectUtils.setFieldValue(handler, "tronNetDelegate", tronNetDelegate);
+
+    Sha256Hash hash = Sha256Hash.ZERO_HASH;
+    List<Sha256Hash> hashList = new LinkedList<>();
+    hashList.add(hash);
+    hashList.add(hash); // duplicate
+
+    FetchInvDataMessage msg = new FetchInvDataMessage(hashList,
+        Protocol.Inventory.InventoryType.TRX);
+
+    Cache<Item, Long> advInvSpread = CacheBuilder.newBuilder()
+        .maximumSize(20000).expireAfterWrite(1, TimeUnit.HOURS).build();
+    advInvSpread.put(new Item(hash, Protocol.Inventory.InventoryType.TRX), 1L);
+    Mockito.when(peer.getAdvInvSpread()).thenReturn(advInvSpread);
+
+    try {
+      handler.processMessage(peer, msg);
+      Assert.fail("Expected P2pException for duplicate hash");
+    } catch (P2pException e) {
+      Assert.assertEquals(P2pException.TypeEnum.BAD_MESSAGE, e.getType());
+    }
+  }
+
+  @Test
   public void testRateLimiter() {
-    BlockCapsule.BlockId blockId = new BlockCapsule.BlockId(Sha256Hash.ZERO_HASH, 10000L);
     List<Sha256Hash> blockIds = new LinkedList<>();
     for (int i = 0; i <= 100; i++) {
-      blockIds.add(blockId);
+      blockIds.add(new BlockCapsule.BlockId(Sha256Hash.ZERO_HASH, (long) i));
     }
     FetchInvDataMessage msg =
         new FetchInvDataMessage(blockIds, Protocol.Inventory.InventoryType.BLOCK);

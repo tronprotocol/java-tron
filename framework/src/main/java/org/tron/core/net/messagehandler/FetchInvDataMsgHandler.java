@@ -3,6 +3,7 @@ package org.tron.core.net.messagehandler;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Lists;
+import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
@@ -153,6 +154,12 @@ public class FetchInvDataMsgHandler implements TronMsgHandler {
 
   private void check(PeerConnection peer, FetchInvDataMessage fetchInvDataMsg,
                      boolean isAdv) throws P2pException {
+    List<Sha256Hash> hashList = fetchInvDataMsg.getHashList();
+    if (hashList.size() != new HashSet<>(hashList).size()) {
+      throw new P2pException(TypeEnum.BAD_MESSAGE,
+          "FetchInvData contains duplicate hashes, size: " + hashList.size());
+    }
+
     MessageTypes type = fetchInvDataMsg.getInvMessageType();
 
     if (type == MessageTypes.TRX) {

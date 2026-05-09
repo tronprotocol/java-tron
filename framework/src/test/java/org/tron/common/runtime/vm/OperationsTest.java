@@ -788,6 +788,49 @@ public class OperationsTest extends BaseTest {
     VMConfig.initAllowTvmSelfdestructRestriction(0);
   }
 
+  // TIP-854 outer-frame containment: a CALL to validateMultiSign or
+  // batchValidateSign with malformed calldata must (a) push 0 onto the outer
+  // stack, (b) leave the outer frame free of any propagated exception, and
+  // (c) allow the outer frame to continue executing afterwards.
+  @Test
+  public void testTip854OuterFrameContainment() throws ContractValidateException {
+    byte prePrefixByte = DecodeUtil.addressPreFixByte;
+    DecodeUtil.addressPreFixByte = Constant.ADD_PRE_FIX_BYTE_MAINNET;
+    VMConfig.initAllowTvmOsaka(1);
+    try {
+      for (PrecompiledContracts.PrecompiledContract contract :
+          new PrecompiledContracts.PrecompiledContract[]{
+              new PrecompiledContracts.ValidateMultiSign(),
+              new PrecompiledContracts.BatchValidateSign()}) {
+        invoke = new ProgramInvokeMockImpl();
+        InternalTransaction interTrx = new InternalTransaction(
+            Protocol.Transaction.getDefaultInstance(),
+            InternalTransaction.TrxType.TRX_UNKNOWN_TYPE);
+        program = new Program(new byte[0], new byte[0], invoke, interTrx);
+        // inDataSize=0 ⇒ data=[] ⇒ fewer than H=5 head words ⇒ guard rejects.
+        MessageCall messageCall = new MessageCall(
+            Op.CALL, new DataWord(10000),
+            DataWord.ZERO(), DataWord.ZERO(),
+            DataWord.ZERO(), DataWord.ZERO(),
+            DataWord.ZERO(), DataWord.ZERO(),
+            DataWord.ZERO(), false);
+        program.callToPrecompiledAddress(messageCall, contract);
+
+        Assert.assertNull(contract.getClass().getSimpleName()
+                + ": outer frame must not inherit an exception",
+            program.getResult().getException());
+        Assert.assertEquals(contract.getClass().getSimpleName() + ": inner CALL pushes 0",
+            DataWord.ZERO(), program.getStack().pop());
+        // Outer frame continues: another stack op works without throwing.
+        program.stackPush(new DataWord(1));
+        Assert.assertEquals(new DataWord(1), program.getStack().pop());
+      }
+    } finally {
+      VMConfig.initAllowTvmOsaka(0);
+      DecodeUtil.addressPreFixByte = prePrefixByte;
+    }
+  }
+
   @Test
   public void testOtherOperations() throws ContractValidateException {
     invoke = new ProgramInvokeMockImpl();

@@ -398,9 +398,9 @@ public class VMActuator implements Actuator2 {
       byte[] ops = newSmartContract.getBytecode().toByteArray();
       rootInternalTx = new InternalTransaction(trx, trxType);
 
-      long maxCpuTimeOfOneTx = rootRepository.getDynamicPropertiesStore()
-          .getMaxCpuTimeOfOneTx() * VMConstant.ONE_THOUSAND;
-      long thisTxCPULimitInUs = (long) (maxCpuTimeOfOneTx * getCpuLimitInUsRatio());
+      long thisTxCPULimitInUs = calculateCpuLimitInUs(isConstantCall,
+          rootRepository.getDynamicPropertiesStore().getMaxCpuTimeOfOneTx(),
+          getCpuLimitInUsRatio(), CommonParameter.getInstance().getConstantCallTimeoutMs());
       long vmStartInUs = System.nanoTime() / VMConstant.ONE_THOUSAND;
       long vmShouldEndInUs = vmStartInUs + thisTxCPULimitInUs;
       ProgramInvoke programInvoke = ProgramInvokeFactory
@@ -512,10 +512,9 @@ public class VMActuator implements Actuator2 {
         energyLimit = getTotalEnergyLimit(creator, caller, contract, feeLimit, callValue);
       }
 
-      long maxCpuTimeOfOneTx = rootRepository.getDynamicPropertiesStore()
-          .getMaxCpuTimeOfOneTx() * VMConstant.ONE_THOUSAND;
-      long thisTxCPULimitInUs =
-          (long) (maxCpuTimeOfOneTx * getCpuLimitInUsRatio());
+      long thisTxCPULimitInUs = calculateCpuLimitInUs(isConstantCall,
+          rootRepository.getDynamicPropertiesStore().getMaxCpuTimeOfOneTx(),
+          getCpuLimitInUsRatio(), CommonParameter.getInstance().getConstantCallTimeoutMs());
       long vmStartInUs = System.nanoTime() / VMConstant.ONE_THOUSAND;
       long vmShouldEndInUs = vmStartInUs + thisTxCPULimitInUs;
       ProgramInvoke programInvoke = ProgramInvokeFactory
@@ -690,6 +689,14 @@ public class VMActuator implements Actuator2 {
     }
 
     return cpuLimitRatio;
+  }
+
+  static long calculateCpuLimitInUs(boolean isConstantCall, long maxCpuTimeOfOneTxMs,
+      double cpuLimitInUsRatio, long constantCallTimeoutMs) {
+    if (isConstantCall && constantCallTimeoutMs > 0L) {
+      return constantCallTimeoutMs * VMConstant.ONE_THOUSAND;
+    }
+    return (long) (maxCpuTimeOfOneTxMs * VMConstant.ONE_THOUSAND * cpuLimitInUsRatio);
   }
 
   public long getTotalEnergyLimitWithFixRatio(AccountCapsule creator, AccountCapsule caller,

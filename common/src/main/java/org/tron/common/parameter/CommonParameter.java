@@ -9,7 +9,6 @@ import lombok.Getter;
 import lombok.Setter;
 import org.slf4j.bridge.SLF4JBridgeHandler;
 import org.tron.common.args.GenesisBlock;
-import org.tron.common.config.DbBackupConfig;
 import org.tron.common.cron.CronExpression;
 import org.tron.common.logsfilter.EventPluginConfig;
 import org.tron.common.logsfilter.FilterQuery;
@@ -71,6 +70,18 @@ public class CommonParameter {
   @Getter
   @Setter
   public double maxTimeRatio = calcMaxTimeRatio();
+  /**
+   * Max TVM execution time (ms) for constant calls — covers
+   * triggerconstantcontract, triggersmartcontract dispatched to view/pure
+   * functions, estimateenergy, eth_call, eth_estimateGas, and any other
+   * RPC routed through Wallet#callConstantContract. 0 = use the same
+   * deadline as block processing (current behaviour). When operators set
+   * this in config the value must be positive and fit VM deadline conversion;
+   * validated at config-load in VmConfig.
+   */
+  @Getter
+  @Setter
+  public long constantCallTimeoutMs = 0L;
   @Getter
   @Setter
   public boolean saveInternalTx;
@@ -413,8 +424,6 @@ public class CommonParameter {
   @Setter
   public double rateLimiterDisconnect; // clearParam: 1.0
   @Getter
-  public DbBackupConfig dbBackupConfig;
-  @Getter
   public RocksDbSettings rocksDBCustomSettings;
   @Getter
   public GenesisBlock genesisBlock;
@@ -499,6 +508,9 @@ public class CommonParameter {
   @Getter
   @Setter
   public long pendingTransactionTimeout;
+  @Getter
+  @Setter
+  public int maxTrxCacheSize;
   @Getter
   @Setter
   public boolean nodeMetricsEnable = false;

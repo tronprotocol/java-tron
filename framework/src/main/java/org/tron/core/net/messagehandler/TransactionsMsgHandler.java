@@ -1,5 +1,8 @@
 package org.tron.core.net.messagehandler;
 
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -11,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.es.ExecutorServiceManager;
+import org.tron.common.utils.Sha256Hash;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.P2pException;
@@ -32,7 +36,6 @@ import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 @Component
 public class TransactionsMsgHandler implements TronMsgHandler {
 
-  private static int MAX_TRX_SIZE = 50_000;
   private static int MAX_SMART_CONTRACT_SUBMIT_SIZE = 100;
   @Autowired
   private TronNetDelegate tronNetDelegate;
@@ -41,7 +44,8 @@ public class TransactionsMsgHandler implements TronMsgHandler {
   @Autowired
   private ChainBaseManager chainBaseManager;
 
-  private BlockingQueue<TrxEvent> smartContractQueue = new LinkedBlockingQueue(MAX_TRX_SIZE);
+  private BlockingQueue<TrxEvent> smartContractQueue = new LinkedBlockingQueue(
+      Args.getInstance().getMaxTrxCacheSize());
 
   private BlockingQueue<Runnable> queue = new LinkedBlockingQueue();
 
@@ -71,7 +75,8 @@ public class TransactionsMsgHandler implements TronMsgHandler {
   }
 
   public boolean isBusy() {
-    return queue.size() + smartContractQueue.size() > MAX_TRX_SIZE;
+    return queue.size() + smartContractQueue.size()
+        + tronNetDelegate.getCachedTransactionSize() > Args.getInstance().getMaxTrxCacheSize();
   }
 
   @Override
@@ -120,8 +125,15 @@ public class TransactionsMsgHandler implements TronMsgHandler {
   }
 
   private void check(PeerConnection peer, TransactionsMessage msg) throws P2pException {
-    for (Transaction trx : msg.getTransactions().getTransactionsList()) {
-      Item item = new Item(new TransactionMessage(trx).getMessageId(), InventoryType.TRX);
+    List<Transaction> list = msg.getTransactions().getTransactionsList();
+    Set<Sha256Hash> seen = new HashSet<>(list.size() * 2);
+    for (Transaction trx : list) {
+      Sha256Hash id = new TransactionMessage(trx).getMessageId();
+      if (!seen.add(id)) {
+        throw new P2pException(TypeEnum.BAD_MESSAGE,
+            "TransactionsMessage contains duplicate transaction: " + id);
+      }
+      Item item = new Item(id, InventoryType.TRX);
       if (!peer.getAdvInvRequest().containsKey(item)) {
         throw new P2pException(TypeEnum.BAD_MESSAGE,
             "trx: " + msg.getMessageId() + " without request.");
