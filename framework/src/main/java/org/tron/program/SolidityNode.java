@@ -72,11 +72,11 @@ public class SolidityNode implements ApplicationListener<ContextClosedEvent> {
   @PreDestroy
   private void shutdown() {
     flag = false;
-    ExecutorServiceManager.shutdownNow(getBlockExecutor, getBlockName);
-    ExecutorServiceManager.shutdownNow(processBlockExecutor, processBlockName);
     if (databaseGrpcClient != null) {
       databaseGrpcClient.shutdown();
     }
+    ExecutorServiceManager.shutdownAndAwaitTermination(getBlockExecutor, getBlockName);
+    ExecutorServiceManager.shutdownAndAwaitTermination(processBlockExecutor, processBlockName);
   }
 
   public void run() {
