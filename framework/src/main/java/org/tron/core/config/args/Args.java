@@ -510,7 +510,7 @@ public class Args extends CommonParameter {
    * which are applied here after copying the bean value.
    *
    * @param nc the NodeConfig bean populated from config.conf "node" section
-   *               node.discovery / node.channel.read.timeout (dot-notation paths
+   *               node.discovery /  (dot-notation paths
    *               not part of the NodeConfig bean)
    */
   @SuppressWarnings("checkstyle:MethodLength")
@@ -578,7 +578,6 @@ public class Args extends CommonParameter {
 
     // ---- Flat scalar fields ----
     PARAMETER.nodeEffectiveCheckEnable = nc.isEffectiveCheckEnable();
-    PARAMETER.nodeConnectionTimeout = nc.getConnectionTimeout() * 1000;
 
     // fetchBlock.timeout — range check [100, 1000], default 500
     int fetchTimeout = nc.getFetchBlockTimeout();
@@ -606,8 +605,6 @@ public class Args extends CommonParameter {
 
     PARAMETER.maxHttpConnectNumber = nc.getMaxHttpConnectNumber();
     PARAMETER.netMaxTrxPerSecond = nc.getNetMaxTrxPerSecond();
-    PARAMETER.tcpNettyWorkThreadNum = nc.getTcpNettyWorkThreadNum();
-    PARAMETER.udpNettyWorkThreadNum = nc.getUdpNettyWorkThreadNum();
 
     if (StringUtils.isEmpty(PARAMETER.trustNodeAddr)) {
       String trustNode = nc.getTrustNode();
@@ -654,7 +651,6 @@ public class Args extends CommonParameter {
     // discovery (dot-notation, read in NodeConfig.fromConfig)
     PARAMETER.nodeDiscoveryEnable = nc.isDiscoveryEnable();
     PARAMETER.nodeDiscoveryPersist = nc.isDiscoveryPersist();
-    PARAMETER.nodeChannelReadTimeout = nc.getChannelReadTimeout();
 
     // Legacy maxActiveNodes fallback handled in NodeConfig.fromConfig()
 

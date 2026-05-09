@@ -119,13 +119,7 @@ public class CommonParameter {
   public boolean nodeEffectiveCheckEnable;
   @Getter
   @Setter
-  public int nodeConnectionTimeout = 2000; // from clearParam(), consistent with mainnet.conf
-  @Getter
-  @Setter
   public int fetchBlockTimeout;
-  @Getter
-  @Setter
-  public int nodeChannelReadTimeout;
   @Getter
   @Setter
   public int maxConnections = 30; // from clearParam(), consistent with mainnet.conf
@@ -297,13 +291,6 @@ public class CommonParameter {
   @Setter
   public long forbidTransferToContract;
 
-  // -- Netty --
-  @Getter
-  @Setter
-  public int tcpNettyWorkThreadNum;
-  @Getter
-  @Setter
-  public int udpNettyWorkThreadNum;
   @Getter
   @Setter
   public String trustNodeAddr; // clearParam: ""

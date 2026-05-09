@@ -76,12 +76,8 @@ public class ParameterTest {
     assertFalse(parameter.isNodeDiscoveryPersist());
     parameter.setNodeEffectiveCheckEnable(false);
     assertFalse(parameter.isNodeEffectiveCheckEnable());
-    parameter.setNodeConnectionTimeout(500);
-    assertEquals(500, parameter.getNodeConnectionTimeout());
     parameter.setFetchBlockTimeout(500);
     assertEquals(500, parameter.getFetchBlockTimeout());
-    parameter.setNodeChannelReadTimeout(500);
-    assertEquals(500, parameter.getNodeChannelReadTimeout());
     parameter.setMaxConnections(500);
     assertEquals(500, parameter.getMaxConnections());
     parameter.setMinConnections(500);
@@ -170,10 +166,6 @@ public class ParameterTest {
     assertEquals(1, parameter.getAllowTvmSolidity059());
     parameter.setForbidTransferToContract(1);
     assertEquals(1, parameter.getForbidTransferToContract());
-    parameter.setTcpNettyWorkThreadNum(5);
-    assertEquals(5, parameter.getTcpNettyWorkThreadNum());
-    parameter.setUdpNettyWorkThreadNum(5);
-    assertEquals(5, parameter.getUdpNettyWorkThreadNum());
     parameter.setTrustNodeAddr("address");
     assertEquals("address", parameter.getTrustNodeAddr());
     parameter.setWalletExtensionApi(false);
