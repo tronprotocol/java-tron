@@ -270,6 +270,8 @@ public class Wallet {
       "BurnNewLeaf(uint256,bytes32,bytes32,bytes32,bytes32[21])"));
   private static final byte[] SHIELDED_TRC20_LOG_TOPICS_BURN_TOKEN = Hash.sha3(ByteArray
       .fromString("TokenBurn(address,uint256,bytes32[3])"));
+  private static final byte[] SHIELDED_TRC20_LOG_TOPICS_NOTE_SPENT = Hash.sha3(ByteArray
+      .fromString("NoteSpent(bytes32)"));
   private static final String BROADCAST_TRANS_FAILED = "Broadcast transaction {} failed, {}.";
 
   @Getter
@@ -3672,9 +3674,7 @@ public class Wallet {
         builder.setTransparentToAddress(transparentToAddressTvm);
         builder.setTransparentToAmount(toAmount);
 
-        Optional<byte[]> cipher = NoteEncryption.Encryption
-            .encryptBurnMessageByOvk(ovk, toAmount, transparentToAddress);
-        cipher.ifPresent(builder::setBurnCiphertext);
+        builder.setOvk(ovk);
 
         ExpandedSpendingKey expsk = new ExpandedSpendingKey(ask, nsk, ovk);
         GrpcAPI.SpendNoteTRC20 spendNote = shieldedSpends.get(0);
@@ -3799,9 +3799,7 @@ public class Wallet {
         System.arraycopy(transparentToAddress, 1, transparentToAddressTvm, 0, 20);
         builder.setTransparentToAddress(transparentToAddressTvm);
         builder.setTransparentToAmount(toAmount);
-        Optional<byte[]> cipher = NoteEncryption.Encryption
-            .encryptBurnMessageByOvk(ovk, toAmount, transparentToAddress);
-        cipher.ifPresent(builder::setBurnCiphertext);
+        builder.setOvk(ovk);
         GrpcAPI.SpendNoteTRC20 spendNote = shieldedSpends.get(0);
         buildShieldedTRC20InputWithAK(builder, spendNote, ak, nsk);
         if (receiveSize == 1) {
@@ -3838,6 +3836,8 @@ public class Wallet {
         return 3;
       } else if (Arrays.equals(topicsBytes, SHIELDED_TRC20_LOG_TOPICS_BURN_TOKEN)) {
         return 4;
+      } else if (Arrays.equals(topicsBytes, SHIELDED_TRC20_LOG_TOPICS_NOTE_SPENT)) {
+        return 5;
       }
     }
     return 0;
@@ -4001,7 +4001,8 @@ public class Wallet {
 
   private Optional<DecryptNotesTRC20.NoteTx> getNoteTxFromLogListByOvk(
       DecryptNotesTRC20.NoteTx.Builder builder,
-      TransactionInfo.Log log, byte[] ovk, int logType) throws ZksnarkException {
+      TransactionInfo.Log log, byte[] ovk, int logType, byte[] pendingNf)
+      throws ZksnarkException {
     byte[] logData = log.getData().toByteArray();
     if (!ArrayUtils.isEmpty(logData)) {
       if (logType > 0 && logType < 4) {
@@ -4040,18 +4041,32 @@ public class Wallet {
           }
         }
       } else if (logType == 4) {
-        //Data = toAddress(32) + value(32) + ciphertext(80) + padding(16)
+        // Data = toAddress(32) + value(32) + cipher(80) + nonce(12) + reserved/version(4)
+        if (logData.length < 64 + NoteEncryption.Encryption.BURN_CIPHER_RECORD_SIZE) {
+          return Optional.empty();
+        }
         byte[] logToAddress = ByteArray.subArray(logData, 12, 32);
         byte[] logAmountArray = ByteArray.subArray(logData, 32, 64);
         byte[] cipher = ByteArray.subArray(logData, 64, 144);
+        byte[] nonceFromLog = ByteArray.subArray(logData, 144,
+            144 + NoteEncryption.Encryption.BURN_NONCE_LEN);
+        byte[] reservedFromLog = ByteArray.subArray(logData,
+            144 + NoteEncryption.Encryption.BURN_NONCE_LEN,
+            144 + NoteEncryption.Encryption.BURN_NONCE_LEN
+                + NoteEncryption.Encryption.BURN_RESERVED_LEN);
         BigInteger logAmount = ByteUtil.bytesToBigInteger(logAmountArray);
         byte[] plaintext;
         byte[] amountArray = new byte[32];
         byte[] decryptedAddress = new byte[20];
+
         Optional<byte[]> decryptedText = NoteEncryption.Encryption
-            .decryptBurnMessageByOvk(ovk, cipher);
+            .decryptBurnMessageByOvk(ovk, cipher, nonceFromLog, reservedFromLog, pendingNf);
+
         if (decryptedText.isPresent()) {
           plaintext = decryptedText.get();
+          if (plaintext[32] != Wallet.getAddressPreFixByte()) {
+            return Optional.empty();
+          }
           System.arraycopy(plaintext, 0, amountArray, 0, 32);
           System.arraycopy(plaintext, 33, decryptedAddress, 0, 20);
           BigInteger decryptedAmount = ByteUtil.bytesToBigInteger(amountArray);
@@ -4091,15 +4106,24 @@ public class Wallet {
           if (!Objects.isNull(logList)) {
             Optional<DecryptNotesTRC20.NoteTx> noteTx;
             int index = 0;
+            byte[] pendingNf = null;
             for (TransactionInfo.Log log : logList) {
               int logType = getShieldedTRC20LogType(log, shieldedTRC20ContractAddress);
-              if (logType > 0) {
+              if (logType == 5) {
+                byte[] logData = log.getData().toByteArray();
+                if (logData.length >= 32) {
+                  pendingNf = ByteArray.subArray(logData, 0, 32);
+                }
+              } else if (logType > 0) {
                 noteBuilder = DecryptNotesTRC20.NoteTx.newBuilder();
                 noteBuilder.setTxid(ByteString.copyFrom(txid));
                 noteBuilder.setIndex(index);
                 index += 1;
-                noteTx = getNoteTxFromLogListByOvk(noteBuilder, log, ovk, logType);
+                noteTx = getNoteTxFromLogListByOvk(noteBuilder, log, ovk, logType, pendingNf);
                 noteTx.ifPresent(builder::addNoteTxs);
+                if (logType == 4) {
+                  pendingNf = null;
+                }
               }
             }
           }
@@ -4283,8 +4307,13 @@ public class Wallet {
         parameterType);
     if (parametersBuilder.getShieldedTRC20ParametersType() == ShieldedTRC20ParametersType.BURN) {
       byte[] burnCiper = ByteArray.fromHexString(shieldedTRC20Parameters.getTriggerContractInput());
-      if (!ArrayUtils.isEmpty(burnCiper) && burnCiper.length == 80) {
+      if (!ArrayUtils.isEmpty(burnCiper)
+          && burnCiper.length == NoteEncryption.Encryption.BURN_CIPHER_RECORD_SIZE) {
         parametersBuilder.setBurnCiphertext(burnCiper);
+      } else if (!ArrayUtils.isEmpty(burnCiper) && burnCiper.length == 80) {
+        throw new ZksnarkException(
+            "legacy 80-byte burn cipher is deprecated and rejected; expected "
+                + NoteEncryption.Encryption.BURN_CIPHER_RECORD_SIZE + "-byte burn record");
       } else {
         throw new ZksnarkException(
             "invalid shielded TRC-20 contract parameters for burn trigger input");
