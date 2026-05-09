@@ -233,6 +233,19 @@ public class TronNetDelegate {
     }
   }
 
+  public void pushVerifiedBlock(BlockCapsule block) throws P2pException {
+    block.generatedByMyself = true;
+    long start = System.currentTimeMillis();
+    processBlock(block, true);
+    if (!hitDown) {
+      logger.info("Push block cost: {} ms, blockNum: {}, blockHash: {}, trx count: {}.",
+          System.currentTimeMillis() - start,
+          block.getNum(),
+          block.getBlockId(),
+          block.getTransactions().size());
+    }
+  }
+
   public void processBlock(BlockCapsule block, boolean isSync) throws P2pException {
     if (!hitDown && dbManager.getLatestSolidityNumShutDown() > 0
         && dbManager.getLatestSolidityNumShutDown() == dbManager.getDynamicPropertiesStore()

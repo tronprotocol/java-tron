@@ -314,6 +314,7 @@ public class NodeConfig {
     private int maxBatchSize = 100;
     private int maxResponseSize = 25 * 1024 * 1024;
     private int maxAddressSize = 1000;
+    private int maxLogFilterNum = 20000;
     private long maxMessageSize = 4194304;
   }
 

@@ -2,6 +2,7 @@ package org.tron.program;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
+import org.springframework.util.ObjectUtils;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
@@ -28,19 +29,23 @@ public class FullNode {
 
     LogService.load(parameter.getLogbackPath());
 
-    if (parameter.isSolidityNode()) {
-      SolidityNode.start();
-      return;
-    }
     if (parameter.isKeystoreFactory()) {
       KeystoreFactory.start();
       return;
     }
-    logger.info("Full node running.");
-    if (Args.getInstance().isDebug()) {
-      logger.info("in debug mode, it won't check energy time");
+    if (parameter.isSolidityNode()) {
+      logger.info("Solidity node is running.");
+      if (ObjectUtils.isEmpty(parameter.getTrustNodeAddr())) {
+        throw new TronError(new IllegalArgumentException("Trust node is not set."),
+            TronError.ErrCode.SOLID_NODE_INIT);
+      }
     } else {
-      logger.info("not in debug mode, it will check energy time");
+      logger.info("Full node running.");
+      if (Args.getInstance().isDebug()) {
+        logger.info("in debug mode, it won't check energy time");
+      } else {
+        logger.info("not in debug mode, it will check energy time");
+      }
     }
 
     // init metrics first
@@ -55,6 +60,10 @@ public class FullNode {
     Application appT = ApplicationFactory.create(context);
     context.registerShutdownHook();
     appT.startup();
+    if (parameter.isSolidityNode()) {
+      SolidityNode node = context.getBean(SolidityNode.class);
+      node.run();
+    }
     appT.blockUntilShutdown();
   }
 

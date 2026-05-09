@@ -16,8 +16,10 @@ import org.tron.core.Wallet;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.args.Args;
+import org.tron.core.db.Manager;
 import org.tron.core.exception.P2pException;
 import org.tron.core.exception.P2pException.TypeEnum;
+import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.contract.BalanceContract.TransferContract;
 
@@ -56,6 +58,86 @@ public class TronNetDelegateTest {
     field.set(tronNetDelegate, false);
 
     Assert.assertTrue(!tronNetDelegate.isBlockUnsolidified());
+  }
+
+  // ── pushVerifiedBlock tests ───────────────────────────────────────────────────
+
+  /**
+   * When hitDown is already true, processBlock returns immediately without
+   * calling pushBlock and pushVerifiedBlock must not throw.
+   */
+  @Test
+  public void testPushVerifiedBlockSkipsWhenHitDown() throws Exception {
+    Args.setParam(new String[] {}, TestConstants.TEST_CONF);
+    TronNetDelegate tronNetDelegate = new TronNetDelegate();
+    setField(tronNetDelegate, "hitDown", true);
+
+    BlockCapsule block = new BlockCapsule(1, Sha256Hash.ZERO_HASH, 0L, ByteString.EMPTY);
+    tronNetDelegate.pushVerifiedBlock(block);
+
+    Assert.assertTrue(block.generatedByMyself);
+    Assert.assertTrue(tronNetDelegate.isHitDown());
+  }
+
+  /**
+   * When the conditional-shutdown threshold is reached, processBlock must set
+   * hitDown=true and return without calling pushBlock.
+   */
+  @Test
+  public void testPushVerifiedBlockTriggersShutdown() throws Exception {
+    Args.setParam(new String[] {}, TestConstants.TEST_CONF);
+    TronNetDelegate tronNetDelegate = new TronNetDelegate();
+    tronNetDelegate.init();
+    tronNetDelegate.setExit(false); // prevent System.exit(0) in hit-thread
+
+    Manager dbManager = Mockito.mock(Manager.class);
+    Mockito.when(dbManager.getLatestSolidityNumShutDown()).thenReturn(50L);
+    DynamicPropertiesStore store = Mockito.mock(DynamicPropertiesStore.class);
+    Mockito.when(store.getLatestBlockHeaderNumberFromDB()).thenReturn(50L);
+    Mockito.when(dbManager.getDynamicPropertiesStore()).thenReturn(store);
+    setField(tronNetDelegate, "dbManager", dbManager);
+
+    BlockCapsule block = new BlockCapsule(1, Sha256Hash.ZERO_HASH, 0L, ByteString.EMPTY);
+    try {
+      tronNetDelegate.pushVerifiedBlock(block);
+    } finally {
+      tronNetDelegate.close();
+    }
+
+    Assert.assertTrue(tronNetDelegate.isHitDown());
+    Mockito.verify(dbManager, Mockito.never()).pushBlock(Mockito.any());
+  }
+
+  /**
+   * On the normal (non-shutdown) path pushBlock must be called exactly once.
+   */
+  @Test
+  public void testPushVerifiedBlockPushesBlock() throws Exception {
+    Args.setParam(new String[] {}, TestConstants.TEST_CONF);
+    TronNetDelegate tronNetDelegate = new TronNetDelegate();
+
+    Manager dbManager = Mockito.mock(Manager.class);
+    Mockito.when(dbManager.getLatestSolidityNumShutDown()).thenReturn(0L);
+    Mockito.when(dbManager.getBlockedTimer()).thenReturn(new ThreadLocal<>());
+
+    ChainBaseManager chainBaseManager = Mockito.mock(ChainBaseManager.class);
+    Mockito.when(chainBaseManager.getHeadBlockId())
+        .thenReturn(new BlockCapsule.BlockId(Sha256Hash.ZERO_HASH, 0L));
+
+    setField(tronNetDelegate, "dbManager", dbManager);
+    setField(tronNetDelegate, "chainBaseManager", chainBaseManager);
+
+    BlockCapsule block = new BlockCapsule(1, Sha256Hash.ZERO_HASH, 0L, ByteString.EMPTY);
+    tronNetDelegate.pushVerifiedBlock(block);
+
+    Assert.assertTrue(block.generatedByMyself);
+    Mockito.verify(dbManager, Mockito.times(1)).pushBlock(Mockito.any());
+  }
+
+  private static void setField(Object obj, String name, Object value) throws Exception {
+    Field f = obj.getClass().getDeclaredField(name);
+    f.setAccessible(true);
+    f.set(obj, value);
   }
 
   @Test

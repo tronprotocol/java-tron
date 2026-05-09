@@ -48,6 +48,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.bouncycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.TransactionInfoList;
@@ -142,6 +143,7 @@ import org.tron.core.metrics.MetricsUtil;
 import org.tron.core.service.MortgageService;
 import org.tron.core.service.RewardViCalService;
 import org.tron.core.services.event.exception.EventException;
+import org.tron.core.services.jsonrpc.TronJsonRpcImpl;
 import org.tron.core.store.AccountAssetStore;
 import org.tron.core.store.AccountIdIndexStore;
 import org.tron.core.store.AccountIndexStore;
@@ -277,6 +279,10 @@ public class Manager {
   @Autowired
   private RewardViCalService rewardViCalService;
 
+  @Lazy
+  @Autowired
+  private TronJsonRpcImpl tronJsonRpcImpl;
+
   /**
    * Cycle thread to rePush Transactions
    */
@@ -333,8 +339,10 @@ public class Manager {
         while (isRunFilterProcessThread) {
           try {
             FilterTriggerCapsule filterCapsule = filterCapsuleQueue.poll(1, TimeUnit.SECONDS);
-            if (filterCapsule != null) {
-              filterCapsule.processFilterTrigger();
+            if (filterCapsule instanceof LogsFilterCapsule) {
+              tronJsonRpcImpl.handleLogsFilter((LogsFilterCapsule) filterCapsule);
+            } else if (filterCapsule instanceof BlockFilterCapsule) {
+              tronJsonRpcImpl.handleBLockFilter((BlockFilterCapsule) filterCapsule);
             }
           } catch (InterruptedException e) {
             logger.error("FilterProcessLoop get InterruptedException, error is {}.",
@@ -1040,23 +1048,6 @@ public class Manager {
     } catch (ItemNotFoundException | BadItemException e) {
       logger.warn(e.getMessage(), e);
     }
-  }
-
-  public void pushVerifiedBlock(BlockCapsule block) throws ContractValidateException,
-      ContractExeException, ValidateSignatureException, AccountResourceInsufficientException,
-      TransactionExpirationException, TooBigTransactionException, DupTransactionException,
-      TaposException, ValidateScheduleException, ReceiptCheckErrException,
-      VMIllegalException, TooBigTransactionResultException, UnLinkedBlockException,
-      NonCommonBlockException, BadNumberBlockException, BadBlockException, ZksnarkException,
-      EventBloomException {
-    block.generatedByMyself = true;
-    long start = System.currentTimeMillis();
-    pushBlock(block);
-    logger.info("Push block cost: {} ms, blockNum: {}, blockHash: {}, trx count: {}.",
-        System.currentTimeMillis() - start,
-        block.getNum(),
-        block.getBlockId(),
-        block.getTransactions().size());
   }
 
   private void applyBlock(BlockCapsule block) throws ContractValidateException,
@@ -2285,7 +2276,8 @@ public class Manager {
   }
 
   private void postBlockFilter(final BlockCapsule blockCapsule, boolean solidified) {
-    BlockFilterCapsule blockFilterCapsule = new BlockFilterCapsule(blockCapsule, solidified);
+    BlockFilterCapsule blockFilterCapsule =
+        new BlockFilterCapsule(blockCapsule, solidified);
     if (!filterCapsuleQueue.offer(blockFilterCapsule)) {
       logger.info("Too many filters, block filter lost: {}.", blockCapsule.getBlockId());
     }

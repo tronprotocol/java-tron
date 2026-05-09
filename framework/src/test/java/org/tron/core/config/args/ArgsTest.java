@@ -23,11 +23,11 @@ import io.grpc.internal.GrpcUtil;
 import io.grpc.netty.NettyServerBuilder;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.net.InetAddress;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
@@ -45,16 +45,8 @@ import org.tron.core.exception.TronError;
 public class ArgsTest {
 
   private final String privateKey = PublicMethod.getRandomPrivateKey();
-  private String address;
-  private LocalWitnesses localWitnesses;
-
   @Rule
   public ExpectedException thrown = ExpectedException.none();
-
-  @After
-  public void destroy() {
-    Args.clearParam();
-  }
 
   @Test
   public void get() {
@@ -65,11 +57,11 @@ public class ArgsTest {
 
     Args.logConfig();
 
-    localWitnesses = new LocalWitnesses();
+    LocalWitnesses localWitnesses = new LocalWitnesses();
     localWitnesses.setPrivateKeys(Arrays.asList(privateKey));
     localWitnesses.initWitnessAccountAddress(null, true);
     Args.setLocalWitnesses(localWitnesses);
-    address = ByteArray.toHexString(Args.getLocalWitnesses()
+    String address = ByteArray.toHexString(Args.getLocalWitnesses()
         .getWitnessAccountAddress());
     Assert.assertEquals("41", DecodeUtil.addressPreFixString);
     Assert.assertEquals(TestConstants.TEST_CONF, Args.getConfigFilePath());
@@ -495,7 +487,7 @@ public class ArgsTest {
     Assert.assertNull(Args.getInstance().getEventFilter());
     Args.clearParam();
   }
-  
+
   @Test
   public void testAllowShieldedTransactionApiDefault() {
     Args.setParam(new String[]{}, TestConstants.TEST_CONF);
@@ -678,5 +670,47 @@ public class ArgsTest {
     ConfigException.BadValue e = Assert.assertThrows(ConfigException.BadValue.class,
         () -> Args.applyConfigParams(config));
     Assert.assertTrue(e.getMessage().contains("No number in size-in-bytes value"));
+  }
+
+  // ===== checkBackupMembers() tests =====
+
+  @Test
+  public void testCheckBackupMembersWithIpPasses() throws Exception {
+    Args.setParam(new String[]{}, TestConstants.TEST_CONF);
+    CommonParameter.getInstance().setBackupMembers(Arrays.asList("1.2.3.4", "10.0.0.1"));
+    Method method = Args.class.getDeclaredMethod("checkBackupMembers");
+    method.setAccessible(true);
+    method.invoke(null);
+  }
+
+  @Test(timeout = 5000)
+  public void testCheckBackupMembersUnresolvableDomainThrows() throws Exception {
+    Args.setParam(new String[]{}, TestConstants.TEST_CONF);
+    CommonParameter.getInstance().setBackupMembers(
+        Arrays.asList("bad.invalid.domain"));
+    Method method = Args.class.getDeclaredMethod("checkBackupMembers");
+    method.setAccessible(true);
+    InetUtil.dnsLookup = (host, ipv4) -> null;
+    try {
+      method.invoke(null);
+      Assert.fail("Expected InvocationTargetException wrapping TronError");
+    } catch (InvocationTargetException ex) {
+      Assert.assertTrue(ex.getCause() instanceof TronError);
+      Assert.assertEquals(TronError.ErrCode.PARAMETER_INIT,
+          ((TronError) ex.getCause()).getErrCode());
+    }
+  }
+
+  @Test(timeout = 5000)
+  public void testCheckBackupMembersResolvableDomainPasses() throws Exception {
+    Args.setParam(new String[]{}, TestConstants.TEST_CONF);
+    CommonParameter.getInstance().setBackupMembers(
+        Arrays.asList("peer.tron.network"));
+    Method method = Args.class.getDeclaredMethod("checkBackupMembers");
+    method.setAccessible(true);
+    InetAddress mockAddr = InetAddress.getByName("5.5.5.5");
+    InetUtil.dnsLookup = (host, ipv4) ->
+        ("peer.tron.network".equals(host) && ipv4) ? mockAddr : null;
+    method.invoke(null);
   }
 }

@@ -61,6 +61,8 @@ public class JsonRpcApiUtil {
   public static final String TAG_SAFE_SUPPORT_ERROR = "TAG safe not supported";
   public static final String BLOCK_NUM_ERROR = "invalid block number";
 
+  private static final SecureRandom random = new SecureRandom();
+
   public static byte[] convertToTronAddress(byte[] address) {
     byte[] newAddress = new byte[21];
     byte[] temp = new byte[] {Wallet.getAddressPreFixByte()};
@@ -647,7 +649,6 @@ public class JsonRpcApiUtil {
   }
 
   public static String generateFilterId() {
-    SecureRandom random = new SecureRandom();
     byte[] uid = new byte[16]; // 128 bits are converted to 16 bytes
     random.nextBytes(uid);
     return ByteArray.toHexString(uid);

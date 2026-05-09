@@ -319,12 +319,6 @@ public class ManagerTest extends BaseMethodTest {
     } catch (Exception e) {
       Assert.assertTrue(e instanceof TaposException);
     }
-    try {
-      dbManager.pushVerifiedBlock(chainManager.getHead());
-      dbManager.getBlockChainHashesOnFork(chainManager.getHeadBlockId());
-    } catch (Exception e) {
-      Assert.assertTrue(e instanceof TaposException);
-    }
   }
 
   @Test

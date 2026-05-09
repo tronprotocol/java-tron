@@ -1,7 +1,5 @@
 package org.tron.common.logsfilter.capsule;
 
-import static org.tron.core.services.jsonrpc.TronJsonRpcImpl.handleLogsFilter;
-
 import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
@@ -43,8 +41,4 @@ public class LogsFilterCapsule extends FilterTriggerCapsule {
     this.removed = removed;
   }
 
-  @Override
-  public void processFilterTrigger() {
-    handleLogsFilter(this);
-  }
 }
