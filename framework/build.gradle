@@ -56,6 +56,7 @@ dependencies {
     }
 
     testImplementation group: 'org.springframework', name: 'spring-test', version: "${springVersion}"
+    testImplementation group: 'javax.portlet', name: 'portlet-api', version: '3.0.1'
     implementation group: 'org.zeromq', name: 'jeromq', version: '0.5.3'
     api project(":chainbase")
     api project(":protocol")

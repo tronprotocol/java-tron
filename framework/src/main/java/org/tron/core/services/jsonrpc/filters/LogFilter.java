@@ -50,6 +50,10 @@ public class LogFilter {
       withContractAddress(addressToByteArray((String) fr.getAddress()));
 
     } else if (fr.getAddress() instanceof ArrayList) {
+      int maxAddressSize = Args.getInstance().getJsonRpcMaxAddressSize();
+      if (maxAddressSize > 0 && ((ArrayList<?>) fr.getAddress()).size() > maxAddressSize) {
+        throw new JsonRpcInvalidParamsException("exceed max addresses: " + maxAddressSize);
+      }
       List<byte[]> addr = new ArrayList<>();
       int i = 0;
       for (Object s : (ArrayList) fr.getAddress()) {

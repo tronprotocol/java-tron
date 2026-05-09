@@ -8,12 +8,14 @@ import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.parseEnergyFee;
 
 import java.util.ArrayList;
 import java.util.BitSet;
+import java.util.Collections;
 import java.util.List;
 import org.bouncycastle.util.encoders.Hex;
 import org.junit.Assert;
 import org.junit.Test;
 import org.tron.common.bloom.Bloom;
 import org.tron.common.crypto.Hash;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
@@ -239,6 +241,58 @@ public class JsonRpcTest {
               null));
     } catch (JsonRpcInvalidParamsException e) {
       Assert.assertTrue(e.getMessage().contains("invalid address"));
+    }
+  }
+
+  @Test
+  public void testLogFilterAddressSizeLimit() {
+    // Two valid 20-byte addresses (40 hex chars with 0x prefix)
+    String addr1 = "0xaa6612f03443517ced2bdcf27958c22353ceeab9";
+    String addr2 = "0xbb7723a04554628ced3cdf38069b433464ffbc0a";
+    String addr3 = "0xcc8834b15665739def4de049f17a544575aabcd1";
+
+    int savedLimit = CommonParameter.getInstance().jsonRpcMaxAddressSize;
+    try {
+      CommonParameter.getInstance().jsonRpcMaxAddressSize = 2;
+
+      // Exactly at limit — must not throw
+      ArrayList<String> atLimit = new ArrayList<>();
+      atLimit.add(addr1);
+      atLimit.add(addr2);
+      FilterRequest frAtLimit = new FilterRequest();
+      frAtLimit.setAddress(atLimit);
+      try {
+        new LogFilter(frAtLimit);
+      } catch (JsonRpcInvalidParamsException e) {
+        Assert.fail("address list at limit should not throw: " + e.getMessage());
+      }
+
+      // One over limit — must throw with expected message
+      ArrayList<String> overLimit = new ArrayList<>();
+      overLimit.add(addr1);
+      overLimit.add(addr2);
+      overLimit.add(addr3);
+      FilterRequest frOverLimit = new FilterRequest();
+      frOverLimit.setAddress(overLimit);
+      try {
+        new LogFilter(frOverLimit);
+        Assert.fail("address list over limit should have thrown JsonRpcInvalidParamsException");
+      } catch (JsonRpcInvalidParamsException e) {
+        Assert.assertTrue(e.getMessage().contains("exceed max addresses:"));
+      }
+
+      // Limit = 0 means disabled — large list must pass
+      CommonParameter.getInstance().jsonRpcMaxAddressSize = 0;
+      ArrayList<String> largeList = new ArrayList<>(Collections.nCopies(500, addr1));
+      FilterRequest frDisabled = new FilterRequest();
+      frDisabled.setAddress(largeList);
+      try {
+        new LogFilter(frDisabled);
+      } catch (JsonRpcInvalidParamsException e) {
+        Assert.fail("limit=0 should disable the check: " + e.getMessage());
+      }
+    } finally {
+      CommonParameter.getInstance().jsonRpcMaxAddressSize = savedLimit;
     }
   }
 

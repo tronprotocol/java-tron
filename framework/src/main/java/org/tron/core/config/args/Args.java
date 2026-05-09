@@ -558,6 +558,9 @@ public class Args extends CommonParameter {
     PARAMETER.jsonRpcMaxBlockRange = jsonrpc.getMaxBlockRange();
     PARAMETER.jsonRpcMaxSubTopics = jsonrpc.getMaxSubTopics();
     PARAMETER.jsonRpcMaxBlockFilterNum = jsonrpc.getMaxBlockFilterNum();
+    PARAMETER.jsonRpcMaxBatchSize = jsonrpc.getMaxBatchSize();
+    PARAMETER.jsonRpcMaxResponseSize = jsonrpc.getMaxResponseSize();
+    PARAMETER.jsonRpcMaxAddressSize = jsonrpc.getMaxAddressSize();
     PARAMETER.jsonRpcMaxLogFilterNum = jsonrpc.getMaxLogFilterNum();
     PARAMETER.jsonRpcMaxMessageSize = jsonrpc.getMaxMessageSize();
 
