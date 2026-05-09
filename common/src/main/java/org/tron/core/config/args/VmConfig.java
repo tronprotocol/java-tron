@@ -4,18 +4,23 @@ import com.typesafe.config.Config;
 import com.typesafe.config.ConfigBeanFactory;
 import com.typesafe.config.ConfigFactory;
 import org.tron.core.config.BeanDefaults;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 /**
  * VM configuration bean. Field names match config.conf keys under the "vm" section.
- * Bound automatically via ConfigBeanFactory — no manual key constants needed.
+ * Most fields are bound automatically via ConfigBeanFactory; opt-in fields that
+ * must stay absent from reference.conf are bound manually after hasPath checks.
  */
 @Slf4j
 @Getter
 @Setter
 public class VmConfig {
+
+  private static final String CONSTANT_CALL_TIMEOUT_MS_KEY = "constantCallTimeoutMs";
+  static final long MAX_CONSTANT_CALL_TIMEOUT_MS = Long.MAX_VALUE / 1_000L;
 
   private boolean supportConstant = false;
   private long maxEnergyLimitForConstant = 100_000_000L;
@@ -29,6 +34,11 @@ public class VmConfig {
   private boolean saveInternalTx = false;
   private boolean saveFeaturedInternalTx = false;
   private boolean saveCancelAllUnfreezeV2Details = false;
+  // Excluded from ConfigBeanFactory binding (no setter): the property is
+  // intentionally absent from reference.conf so {@code Config#hasPath} alone
+  // signals operator opt-in. Bound manually in {@link #fromConfig}.
+  @Setter(AccessLevel.NONE)
+  private long constantCallTimeoutMs = 0L;
 
   public static VmConfig fromConfig(Config config) {
     Config defaults = BeanDefaults.toConfig(new VmConfig());
@@ -37,11 +47,11 @@ public class VmConfig {
         : ConfigFactory.empty();
     Config section = userSection.withFallback(defaults);
     VmConfig vmConfig = ConfigBeanFactory.create(section, VmConfig.class);
-    vmConfig.postProcess();
+    vmConfig.postProcess(userSection);
     return vmConfig;
   }
 
-  private void postProcess() {
+  private void postProcess(Config vmSection) {
     // clamp maxEnergyLimitForConstant
     if (maxEnergyLimitForConstant < 3_000_000L) {
       maxEnergyLimitForConstant = 3_000_000L;
@@ -60,6 +70,24 @@ public class VmConfig {
         && (!saveInternalTx || !saveFeaturedInternalTx)) {
       logger.warn("Configuring [vm.saveCancelAllUnfreezeV2Details] won't work as "
           + "vm.saveInternalTx or vm.saveFeaturedInternalTx is off.");
+    }
+
+    // constantCallTimeoutMs is excluded from ConfigBeanFactory binding (no
+    // setter) and intentionally absent from reference.conf, so hasPath alone
+    // tells us whether the operator opted in. Only positive values that can be
+    // safely converted to microseconds are valid.
+    if (vmSection.hasPath(CONSTANT_CALL_TIMEOUT_MS_KEY)) {
+      long value = vmSection.getLong(CONSTANT_CALL_TIMEOUT_MS_KEY);
+      if (value <= 0L) {
+        throw new IllegalArgumentException(
+            "vm.constantCallTimeoutMs must be > 0 when configured, got " + value);
+      }
+      if (value > MAX_CONSTANT_CALL_TIMEOUT_MS) {
+        throw new IllegalArgumentException(
+            "vm.constantCallTimeoutMs must be <= " + MAX_CONSTANT_CALL_TIMEOUT_MS
+                + " to fit VM deadline conversion, got " + value);
+      }
+      constantCallTimeoutMs = value;
     }
   }
 }

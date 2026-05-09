@@ -48,6 +48,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.bouncycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.TransactionInfoList;
@@ -109,6 +110,7 @@ import org.tron.core.db.accountstate.callback.AccountStateCallBack;
 import org.tron.core.db.api.AssetUpdateHelper;
 import org.tron.core.db.api.BandwidthPriceHistoryLoader;
 import org.tron.core.db.api.EnergyPriceHistoryLoader;
+import org.tron.core.db.api.MigrateTurkishKeyHelper;
 import org.tron.core.db.api.MoveAbiHelper;
 import org.tron.core.db2.ISession;
 import org.tron.core.db2.core.Chainbase;
@@ -141,6 +143,7 @@ import org.tron.core.metrics.MetricsUtil;
 import org.tron.core.service.MortgageService;
 import org.tron.core.service.RewardViCalService;
 import org.tron.core.services.event.exception.EventException;
+import org.tron.core.services.jsonrpc.TronJsonRpcImpl;
 import org.tron.core.store.AccountAssetStore;
 import org.tron.core.store.AccountIdIndexStore;
 import org.tron.core.store.AccountIndexStore;
@@ -276,6 +279,10 @@ public class Manager {
   @Autowired
   private RewardViCalService rewardViCalService;
 
+  @Lazy
+  @Autowired
+  private TronJsonRpcImpl tronJsonRpcImpl;
+
   /**
    * Cycle thread to rePush Transactions
    */
@@ -332,8 +339,10 @@ public class Manager {
         while (isRunFilterProcessThread) {
           try {
             FilterTriggerCapsule filterCapsule = filterCapsuleQueue.poll(1, TimeUnit.SECONDS);
-            if (filterCapsule != null) {
-              filterCapsule.processFilterTrigger();
+            if (filterCapsule instanceof LogsFilterCapsule) {
+              tronJsonRpcImpl.handleLogsFilter((LogsFilterCapsule) filterCapsule);
+            } else if (filterCapsule instanceof BlockFilterCapsule) {
+              tronJsonRpcImpl.handleBLockFilter((BlockFilterCapsule) filterCapsule);
             }
           } catch (InterruptedException e) {
             logger.error("FilterProcessLoop get InterruptedException, error is {}.",
@@ -370,6 +379,10 @@ public class Manager {
 
   public boolean needToSetBlackholePermission() {
     return getDynamicPropertiesStore().getSetBlackholeAccountPermission() == 0L;
+  }
+
+  private boolean needToMigrateTurkishKeys() {
+    return getDynamicPropertiesStore().getTurkishKeyMigrationDone() == 0L;
   }
 
   private void resetBlackholeAccountPermission() {
@@ -540,6 +553,10 @@ public class Manager {
 
     if (needToSetBlackholePermission()) {
       resetBlackholeAccountPermission();
+    }
+
+    if (needToMigrateTurkishKeys()) {
+      new MigrateTurkishKeyHelper(chainBaseManager).doWork();
     }
 
     //for test only
@@ -1033,23 +1050,6 @@ public class Manager {
     }
   }
 
-  public void pushVerifiedBlock(BlockCapsule block) throws ContractValidateException,
-      ContractExeException, ValidateSignatureException, AccountResourceInsufficientException,
-      TransactionExpirationException, TooBigTransactionException, DupTransactionException,
-      TaposException, ValidateScheduleException, ReceiptCheckErrException,
-      VMIllegalException, TooBigTransactionResultException, UnLinkedBlockException,
-      NonCommonBlockException, BadNumberBlockException, BadBlockException, ZksnarkException,
-      EventBloomException {
-    block.generatedByMyself = true;
-    long start = System.currentTimeMillis();
-    pushBlock(block);
-    logger.info("Push block cost: {} ms, blockNum: {}, blockHash: {}, trx count: {}.",
-        System.currentTimeMillis() - start,
-        block.getNum(),
-        block.getBlockId(),
-        block.getTransactions().size());
-  }
-
   private void applyBlock(BlockCapsule block) throws ContractValidateException,
       ContractExeException, ValidateSignatureException, AccountResourceInsufficientException,
       TransactionExpirationException, TooBigTransactionException, DupTransactionException,
@@ -1298,12 +1298,7 @@ public class Manager {
         try (PendingManager pm = new PendingManager(this)) {
 
           if (!block.generatedByMyself) {
-            if (!block.calcMerkleRoot().equals(block.getMerkleRoot())) {
-              logger.warn("Num: {}, the merkle root doesn't match, expect is {} , actual is {}.",
-                  block.getNum(), block.getMerkleRoot(), block.calcMerkleRoot());
-              throw new BadBlockException(CALC_MERKLE_ROOT_FAILED,
-                      String.format("The merkle hash is not validated for %d", block.getNum()));
-            }
+            block.validateMerkleRoot();
             consensus.receiveBlock(block);
           }
 
@@ -1382,6 +1377,7 @@ public class Manager {
             } catch (Throwable throwable) {
               logger.error(throwable.getMessage(), throwable);
               khaosDb.removeBlk(block.getBlockId());
+              clearSolidityContractTriggerCache(block.getNum());
               throw throwable;
             }
             long newSolidNum = getDynamicPropertiesStore().getLatestSolidifiedBlockNum();
@@ -1629,6 +1625,7 @@ public class Manager {
     session.reset();
     session.setValue(revokingStore.buildSession());
 
+    HistoryBlockHashUtil.write(this, blockCapsule);
     accountStateCallBack.preExecute(blockCapsule);
 
     if (getDynamicPropertiesStore().getAllowMultiSign() == 1) {
@@ -1790,6 +1787,9 @@ public class Manager {
   }
 
   private boolean isExchangeTransaction(Transaction transaction) {
+    if (getDynamicPropertiesStore().allowHardenExchangeCalculation()) {
+      return false;
+    }
     Contract contract = transaction.getRawData().getContract(0);
     switch (contract.getType()) {
       case ExchangeTransactionContract: {
@@ -1855,6 +1855,7 @@ public class Manager {
 
     TransactionRetCapsule transactionRetCapsule =
         new TransactionRetCapsule(block);
+    HistoryBlockHashUtil.write(this, block);
     try {
       merkleContainer.resetCurrentMerkleTree();
       accountStateCallBack.preExecute(block);
@@ -2070,9 +2071,13 @@ public class Manager {
     return chainBaseManager.getNullifierStore();
   }
 
+  public int getCachedTransactionSize() {
+    return pushTransactionQueue.size() + getPendingTransactions().size()
+        + getRePushTransactions().size();
+  }
+
   public boolean isTooManyPending() {
-    return getPendingTransactions().size() + getRePushTransactions().size()
-        > maxTransactionPendingSize;
+    return getCachedTransactionSize() > maxTransactionPendingSize;
   }
 
   private void preValidateTransactionSign(List<TransactionCapsule> txs)
@@ -2109,6 +2114,13 @@ public class Manager {
   public void rePush(TransactionCapsule tx) {
     if (containsTransaction(tx)) {
       return;
+    }
+
+    String ownerAddress = ByteArray.toHexString(tx.getOwnerAddress());
+    synchronized (this) {
+      if (ownerAddressSet.contains(ownerAddress)) {
+        tx.setVerified(false);
+      }
     }
 
     try {
@@ -2264,7 +2276,8 @@ public class Manager {
   }
 
   private void postBlockFilter(final BlockCapsule blockCapsule, boolean solidified) {
-    BlockFilterCapsule blockFilterCapsule = new BlockFilterCapsule(blockCapsule, solidified);
+    BlockFilterCapsule blockFilterCapsule =
+        new BlockFilterCapsule(blockCapsule, solidified);
     if (!filterCapsuleQueue.offer(blockFilterCapsule)) {
       logger.info("Too many filters, block filter lost: {}.", blockCapsule.getBlockId());
     }
@@ -2383,6 +2396,16 @@ public class Manager {
             getDynamicPropertiesStore().getLatestBlockHeaderHash());
       }
     }
+    clearSolidityContractTriggerCache(getHeadBlockNum());
+  }
+
+  private void clearSolidityContractTriggerCache(long blockNum) {
+    if (eventPluginLoaded
+        && (EventPluginLoader.getInstance().isSolidityEventTriggerEnable()
+        || EventPluginLoader.getInstance().isSolidityLogTriggerEnable())) {
+      Args.getSolidityContractLogTriggerMap().remove(blockNum);
+      Args.getSolidityContractEventTriggerMap().remove(blockNum);
+    }
   }
 
   private void postContractTrigger(final TransactionTrace trace, boolean remove, String blockHash) {
@@ -2402,9 +2425,14 @@ public class Manager {
             .getLatestSolidifiedBlockNum());
         contractTriggerCapsule.setBlockHash(blockHash);
 
-        if (!triggerCapsuleQueue.offer(contractTriggerCapsule)) {
-          logger.info("Too many triggers, contract log trigger lost: {}.",
-              trigger.getTransactionId());
+        // Process synchronously to avoid race condition between async queue and
+        // reOrgContractTrigger cache clearing. Performance is not impacted because
+        // processTrigger() only enqueues events into the plugin's internal queue
+        // without blocking on actual I/O.
+        try {
+          contractTriggerCapsule.processTrigger();
+        } catch (Throwable throwable) {
+          logger.warn("Post contract trigger failed.", throwable);
         }
       }
     }

@@ -1,0 +1,13 @@
+if (!JavaVersion.current().isJava11Compatible()) {
+    // ErrorProne core requires JDK 11+; skip this module on JDK 8
+    tasks.withType(JavaCompile).configureEach { enabled = false }
+    tasks.withType(Jar).configureEach { enabled = false }
+} else {
+    dependencies {
+        compileOnly "com.google.errorprone:error_prone_annotations:${errorproneVersion}"
+        compileOnly "com.google.errorprone:error_prone_check_api:${errorproneVersion}"
+        compileOnly "com.google.errorprone:error_prone_core:${errorproneVersion}"
+        compileOnly "com.google.auto.service:auto-service:1.1.1"
+        annotationProcessor "com.google.auto.service:auto-service:1.1.1"
+    }
+}

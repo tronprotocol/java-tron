@@ -5,12 +5,10 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import lombok.Getter;
 import lombok.Setter;
 import org.slf4j.bridge.SLF4JBridgeHandler;
 import org.tron.common.args.GenesisBlock;
-import org.tron.common.config.DbBackupConfig;
 import org.tron.common.cron.CronExpression;
 import org.tron.common.logsfilter.EventPluginConfig;
 import org.tron.common.logsfilter.FilterQuery;
@@ -71,6 +69,18 @@ public class CommonParameter {
   @Getter
   @Setter
   public double maxTimeRatio = calcMaxTimeRatio();
+  /**
+   * Max TVM execution time (ms) for constant calls — covers
+   * triggerconstantcontract, triggersmartcontract dispatched to view/pure
+   * functions, estimateenergy, eth_call, eth_estimateGas, and any other
+   * RPC routed through Wallet#callConstantContract. 0 = use the same
+   * deadline as block processing (current behaviour). When operators set
+   * this in config the value must be positive and fit VM deadline conversion;
+   * validated at config-load in VmConfig.
+   */
+  @Getter
+  @Setter
+  public long constantCallTimeoutMs = 0L;
   @Getter
   @Setter
   public boolean saveInternalTx;
@@ -162,6 +172,9 @@ public class CommonParameter {
   @Getter
   @Setter
   public long syncFetchBatchNum; // clearParam: 2000
+  @Getter
+  @Setter
+  public int maxPendingBlockSize;
 
   // If you are running a solidity node for java tron,
   // this flag is set to true
@@ -227,9 +240,17 @@ public class CommonParameter {
   @Getter
   @Setter
   public long maxConnectionAgeInMillis;
+  // Refers to RPC (gRPC) max message size; see httpMaxMessageSize / jsonRpcMaxMessageSize
+  // below for the HTTP / JSON-RPC counterparts.
   @Getter
   @Setter
   public int maxMessageSize;
+  @Getter
+  @Setter
+  public long httpMaxMessageSize;
+  @Getter
+  @Setter
+  public long jsonRpcMaxMessageSize;
   @Getter
   @Setter
   public int maxHeaderListSize;
@@ -383,9 +404,6 @@ public class CommonParameter {
   public long changedDelegation;
   @Getter
   @Setter
-  public Set<String> actuatorSet;
-  @Getter
-  @Setter
   public RateLimiterInitialization rateLimiterInitialization;
   @Getter
   @Setter
@@ -404,8 +422,6 @@ public class CommonParameter {
   @Getter
   @Setter
   public double rateLimiterDisconnect; // clearParam: 1.0
-  @Getter
-  public DbBackupConfig dbBackupConfig;
   @Getter
   public RocksDbSettings rocksDBCustomSettings;
   @Getter
@@ -473,6 +489,9 @@ public class CommonParameter {
   @Getter
   @Setter
   public int jsonRpcMaxBlockFilterNum = 50000;
+  @Getter
+  @Setter
+  public int jsonRpcMaxLogFilterNum = 20000;
 
   @Getter
   @Setter
@@ -482,22 +501,10 @@ public class CommonParameter {
   public long pendingTransactionTimeout;
   @Getter
   @Setter
+  public int maxTrxCacheSize;
+  @Getter
+  @Setter
   public boolean nodeMetricsEnable = false;
-  @Getter
-  @Setter
-  public boolean metricsStorageEnable = false;
-  @Getter
-  @Setter
-  public String influxDbIp;
-  @Getter
-  @Setter
-  public int influxDbPort;
-  @Getter
-  @Setter
-  public String influxDbDatabase;
-  @Getter
-  @Setter
-  public int metricsReportInterval = 10;
   @Getter
   @Setter
   public boolean metricsPrometheusEnable = false;
@@ -516,6 +523,12 @@ public class CommonParameter {
   @Getter
   @Setter
   public int pBFTHttpPort;
+  @Getter
+  @Setter
+  public int maxNestingDepth = 100;
+  @Getter
+  @Setter
+  public int maxTokenCount = 100_000;
   @Getter
   @Setter
   public long pBFTExpireNum; // clearParam: 20
@@ -646,10 +659,6 @@ public class CommonParameter {
   @Getter
   @Setter
   public long allowTvmBlob;
-
-  @Getter
-  @Setter
-  public long allowTvmOsaka;
 
   private static double calcMaxTimeRatio() {
     return 5.0;

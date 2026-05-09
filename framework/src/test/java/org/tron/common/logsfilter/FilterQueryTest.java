@@ -21,7 +21,6 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
 import org.tron.common.logsfilter.capsule.ContractEventTriggerCapsule;
-import org.tron.common.logsfilter.capsule.FilterTriggerCapsule;
 import org.tron.common.logsfilter.capsule.TriggerCapsule;
 import org.tron.common.runtime.LogEventWrapper;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract.ABI.Entry;
@@ -101,13 +100,6 @@ public class FilterQueryTest {
       Assert.assertTrue(matchFilter(capsule.getContractEventTrigger()));
       capsule.processTrigger();
       assertNotNull(filterQuery.toString());
-    }
-
-    FilterTriggerCapsule filterTriggerCapsule = new FilterTriggerCapsule();
-    try {
-      filterTriggerCapsule.processFilterTrigger();
-    } catch (Exception e) {
-      logger.info(e.getMessage());
     }
 
     TriggerCapsule triggerCapsule = new TriggerCapsule();

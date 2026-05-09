@@ -2,15 +2,9 @@ package org.tron.core.services.http;
 
 import static org.tron.common.utils.Commons.decodeFromBase58Check;
 
-import com.alibaba.fastjson.JSONObject;
-
-import java.io.File;
 import java.io.UnsupportedEncodingException;
 import javax.annotation.Resource;
-
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -18,11 +12,11 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.tron.common.BaseTest;
 import org.tron.common.TestConstants;
-import org.tron.common.utils.FileUtil;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.service.MortgageService;
 import org.tron.core.store.DelegationStore;
+import org.tron.json.JSONObject;
 
 @Slf4j
 public class GetRewardServletTest extends BaseTest {

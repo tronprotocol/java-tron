@@ -231,16 +231,4 @@ public class CallArgumentsTest extends BaseTest {
     Assert.assertFalse("should not leak resolveData: " + json,
         json.contains("resolveData"));
   }
-
-  /** Same guarantee for FastJSON, which also discovers bean getters. */
-  @Test
-  public void fastjsonSerialize_doesNotExposeResolveDataOrThrowOnConflict() {
-    CallArguments args = new CallArguments();
-    args.setInput("0xdeadbeef");
-    args.setData("0xcafebabe");
-    String json = com.alibaba.fastjson.JSON.toJSONString(args);
-    Assert.assertFalse("should not leak resolveData: " + json,
-        json.contains("resolveData"));
-  }
-
 }

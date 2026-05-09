@@ -104,49 +104,58 @@ public class RateLimiterInterceptor implements ServerInterceptor {
     IRateLimiter rateLimiter = container
         .get(KEY_PREFIX_RPC, call.getMethodDescriptor().getFullMethodName());
 
+    Listener<ReqT> listener = new ServerCall.Listener<ReqT>() {};
+
     RuntimeData runtimeData = new RuntimeData(call);
-    GlobalRateLimiter.acquire(runtimeData);
+    // Check per-endpoint first to avoid consuming global IP/QPS quota for requests
+    // that would be rejected by the per-endpoint limiter anyway.
+    boolean perEndpointAcquired = rateLimiter == null || rateLimiter.tryAcquire(runtimeData);
+    boolean acquireResource = perEndpointAcquired && GlobalRateLimiter.tryAcquire(runtimeData);
 
-    boolean acquireResource = true;
-
-    if (rateLimiter != null) {
-      acquireResource = rateLimiter.acquire(runtimeData);
+    if (!acquireResource) {
+      // Release the per-endpoint permit when global rejected, to avoid semaphore leak.
+      if (rateLimiter instanceof IPreemptibleRateLimiter && perEndpointAcquired) {
+        ((IPreemptibleRateLimiter) rateLimiter).release();
+      }
+      call.close(Status.fromCode(Code.RESOURCE_EXHAUSTED), new Metadata());
+      return listener;
     }
 
-    Listener<ReqT> listener = new ServerCall.Listener<ReqT>() {
-    };
-
     try {
-      if (acquireResource) {
-        call.setMessageCompression(true);
-        ServerCall.Listener<ReqT> delegate = next.startCall(call, headers);
+      call.setMessageCompression(true);
+      ServerCall.Listener<ReqT> delegate = next.startCall(call, headers);
 
-        listener = new SimpleForwardingServerCallListener<ReqT>(delegate) {
-          @Override
-          public void onComplete() {
-            // must release the permit to avoid the leak of permit.
-            if (rateLimiter instanceof IPreemptibleRateLimiter) {
-              ((IPreemptibleRateLimiter) rateLimiter).release();
-            }
+      listener = new SimpleForwardingServerCallListener<ReqT>(delegate) {
+        @Override
+        public void onComplete() {
+          // must release the permit to avoid the leak of permit.
+          if (rateLimiter instanceof IPreemptibleRateLimiter) {
+            ((IPreemptibleRateLimiter) rateLimiter).release();
           }
+        }
 
-          @Override
-          public void onCancel() {
-            // must release the permit to avoid the leak of permit.
-            if (rateLimiter instanceof IPreemptibleRateLimiter) {
-              ((IPreemptibleRateLimiter) rateLimiter).release();
-            }
+        @Override
+        public void onCancel() {
+          // must release the permit to avoid the leak of permit.
+          if (rateLimiter instanceof IPreemptibleRateLimiter) {
+            ((IPreemptibleRateLimiter) rateLimiter).release();
           }
-        };
-      } else {
-        call.close(Status.fromCode(Code.RESOURCE_EXHAUSTED), new Metadata());
-      }
+        }
+      };
     } catch (Exception e) {
+      // next.startCall() failed — release the permit that was already acquired.
+      if (rateLimiter instanceof IPreemptibleRateLimiter) {
+        ((IPreemptibleRateLimiter) rateLimiter).release();
+      }
       String grpcFailMeterName = MetricsKey.NET_API_DETAIL_FAIL_QPS
           + call.getMethodDescriptor().getFullMethodName();
       MetricsUtil.meterMark(MetricsKey.NET_API_FAIL_QPS);
       MetricsUtil.meterMark(grpcFailMeterName);
       logger.error("Rpc Api Error: {}", e.getMessage());
+      // Close the call so the client gets an immediate INTERNAL status instead of
+      // hanging until the transport-level deadline fires.
+      call.close(Status.fromCode(Code.INTERNAL).withDescription("rpc handler init failed"),
+          new Metadata());
     }
 
     return listener;

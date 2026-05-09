@@ -1,5 +1,6 @@
 package org.tron.common.arch;
 
+import java.util.Locale;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j(topic = "arch")
@@ -21,11 +22,11 @@ public final class Arch {
   }
 
   public static String getOsName() {
-    return System.getProperty("os.name").toLowerCase().trim();
+    return System.getProperty("os.name").toLowerCase(Locale.ROOT).trim();
 
   }
   public static String getOsArch() {
-    return System.getProperty("os.arch").toLowerCase().trim();
+    return System.getProperty("os.arch").toLowerCase(Locale.ROOT).trim();
   }
 
   public static int getBitModel() {
@@ -45,15 +46,15 @@ public final class Arch {
   }
 
   public static String javaVersion() {
-    return System.getProperty("java.version").toLowerCase().trim();
+    return System.getProperty("java.version").toLowerCase(Locale.ROOT).trim();
   }
 
   public static String javaSpecificationVersion() {
-    return System.getProperty("java.specification.version").toLowerCase().trim();
+    return System.getProperty("java.specification.version").toLowerCase(Locale.ROOT).trim();
   }
 
   public static String javaVendor() {
-    return System.getProperty("java.vendor").toLowerCase().trim();
+    return System.getProperty("java.vendor").toLowerCase(Locale.ROOT).trim();
   }
 
   public static boolean isArm64() {

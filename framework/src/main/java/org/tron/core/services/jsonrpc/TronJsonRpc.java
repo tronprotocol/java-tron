@@ -1,6 +1,5 @@
 package org.tron.core.services.jsonrpc;
 
-import com.alibaba.fastjson.JSONObject;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.googlecode.jsonrpc4j.JsonRpcError;
 import com.googlecode.jsonrpc4j.JsonRpcErrors;
@@ -30,6 +29,7 @@ import org.tron.core.services.jsonrpc.types.BuildArguments;
 import org.tron.core.services.jsonrpc.types.CallArguments;
 import org.tron.core.services.jsonrpc.types.TransactionReceipt;
 import org.tron.core.services.jsonrpc.types.TransactionResult;
+import org.tron.json.JSONObject;
 
 /**
  * Error code refers to https://www.quicknode.com/docs/ethereum/error-references
@@ -291,9 +291,10 @@ public interface TronJsonRpc {
   @JsonRpcErrors({
       @JsonRpcError(exception = JsonRpcMethodNotFoundException.class, code = -32601, data = "{}"),
       @JsonRpcError(exception = JsonRpcInvalidParamsException.class, code = -32602, data = "{}"),
+      @JsonRpcError(exception = JsonRpcExceedLimitException.class, code = -32005, data = "{}"),
   })
   String newFilter(FilterRequest fr) throws JsonRpcInvalidParamsException,
-      JsonRpcMethodNotFoundException;
+      JsonRpcMethodNotFoundException, JsonRpcExceedLimitException;
 
   @JsonRpcMethod("eth_newBlockFilter")
   @JsonRpcErrors({

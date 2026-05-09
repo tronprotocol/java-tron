@@ -3,17 +3,12 @@ package org.tron.core.services.http;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.tron.common.utils.Commons.decodeFromBase58Check;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONException;
-import com.alibaba.fastjson.JSONObject;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.GeneratedMessageV3;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
 import com.google.protobuf.ProtocolStringList;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -23,6 +18,7 @@ import java.nio.charset.Charset;
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import javax.servlet.http.HttpServletRequest;
@@ -53,6 +49,10 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.TransactionTrace;
 import org.tron.core.services.http.JsonFormat.ParseException;
+import org.tron.json.JSON;
+import org.tron.json.JSONArray;
+import org.tron.json.JSONException;
+import org.tron.json.JSONObject;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
@@ -356,10 +356,12 @@ public class Util {
     }
   }
 
+  @Deprecated
   public static void checkBodySize(String body) throws Exception {
     CommonParameter parameter = Args.getInstance();
-    if (body.getBytes().length > parameter.getMaxMessageSize()) {
-      throw new Exception("body size is too big, the limit is " + parameter.getMaxMessageSize());
+    if (body.getBytes().length > parameter.getHttpMaxMessageSize()) {
+      throw new Exception("body size is too big, the limit is "
+          + parameter.getHttpMaxMessageSize());
     }
   }
 
@@ -569,10 +571,10 @@ public class Util {
   private static String checkGetParam(HttpServletRequest request, String key) throws Exception {
     String method = request.getMethod();
 
-    if (HttpMethod.GET.toString().toUpperCase().equalsIgnoreCase(method)) {
+    if (HttpMethod.GET.toString().toUpperCase(Locale.ROOT).equalsIgnoreCase(method)) {
       return request.getParameter(key);
     }
-    if (HttpMethod.POST.toString().toUpperCase().equals(method)) {
+    if (HttpMethod.POST.toString().toUpperCase(Locale.ROOT).equals(method)) {
       String contentType = request.getContentType();
       if (StringUtils.isBlank(contentType)) {
         return null;

@@ -10,16 +10,14 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * Metrics configuration bean. Field names match config.conf keys under "node.metrics".
- * Contains nested sub-beans for prometheus and influxdb sections.
+ * Contains nested sub-bean for the prometheus section.
  */
 @Slf4j
 @Getter
 @Setter
 public class MetricsConfig {
 
-  private boolean storageEnable = false;
   private PrometheusConfig prometheus = new PrometheusConfig();
-  private InfluxDbConfig influxdb = new InfluxDbConfig();
 
   @Getter
   @Setter

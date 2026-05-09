@@ -4,6 +4,7 @@ import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.config.Parameter.ForkBlockVersionEnum;
+import org.tron.core.db.HistoryBlockHashUtil;
 import org.tron.core.db.Manager;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.utils.ProposalUtil;
@@ -396,9 +397,19 @@ public class ProposalService extends ProposalUtil {
           manager.getDynamicPropertiesStore().saveAllowTvmOsaka(entry.getValue());
           break;
         }
+        case ALLOW_TVM_PRAGUE: {
+          manager.getDynamicPropertiesStore().saveAllowTvmPrague(entry.getValue());
+          HistoryBlockHashUtil.deploy(manager);
+          break;
+        }
         case ALLOW_HARDEN_RESOURCE_CALCULATION: {
           manager.getDynamicPropertiesStore()
               .saveAllowHardenResourceCalculation(entry.getValue());
+          break;
+        }
+        case ALLOW_HARDEN_EXCHANGE_CALCULATION: {
+          manager.getDynamicPropertiesStore()
+              .saveAllowHardenExchangeCalculation(entry.getValue());
           break;
         }
         default:

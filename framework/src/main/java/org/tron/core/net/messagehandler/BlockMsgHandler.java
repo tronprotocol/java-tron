@@ -150,6 +150,7 @@ public class BlockMsgHandler implements TronMsgHandler {
 
     try {
       tronNetDelegate.processBlock(block, false);
+      peer.setBlockRcvTime(System.currentTimeMillis());
       witnessProductBlockService.validWitnessProductTwoBlock(block);
 
       Item item = new Item(blockId, InventoryType.BLOCK);

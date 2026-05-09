@@ -12,7 +12,7 @@ public class DefaultBaseQqsAdapter implements IRateLimiter {
   }
 
   @Override
-  public boolean acquire(RuntimeData data) {
-    return strategy.acquire();
+  public boolean tryAcquire(RuntimeData data) {
+    return strategy.tryAcquire();
   }
 }

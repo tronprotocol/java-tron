@@ -1,13 +1,19 @@
 import org.gradle.nativeplatform.platform.internal.Architectures
 import org.gradle.internal.os.OperatingSystem
+
+plugins {
+    id 'net.ltgt.errorprone' version '5.0.0' apply false
+}
+
 allprojects {
     version = "1.0.0"
     apply plugin: "java-library"
     ext {
         springVersion = "5.3.39"
+        errorproneVersion = "2.42.0"
     }
 }
-def arch = System.getProperty("os.arch").toLowerCase()
+def arch = System.getProperty("os.arch").toLowerCase(Locale.ROOT)
 def javaVersion = JavaVersion.current()
 def isArm64 = Architectures.AARCH64.isAlias(arch)
 def archSource = isArm64 ? "arm" : "x86"
@@ -107,6 +113,26 @@ subprojects {
         testImplementation group: 'junit', name: 'junit', version: '4.13.2'
         testImplementation "org.mockito:mockito-core:4.11.0"
         testImplementation "org.mockito:mockito-inline:4.11.0"
+    }
+    if (project.name != 'protocol' && project.name != 'errorprone'
+            && javaVersion.isJava11Compatible()) {
+        apply plugin: 'net.ltgt.errorprone'
+        dependencies {
+            errorprone "com.google.errorprone:error_prone_core:${errorproneVersion}"
+            errorprone rootProject.project(':errorprone')
+        }
+        tasks.withType(JavaCompile).configureEach {
+            options.errorprone {
+                enabled = true
+                disableWarningsInGeneratedCode = true
+                disableAllChecks = true
+                excludedPaths = '.*/generated/.*'
+                errorproneArgs.addAll([
+                        '-Xep:StringCaseLocaleUsage:ERROR',
+                        '-Xep:StringCaseLocaleUsageMethodRef:ERROR',
+                ])
+            }
+        }
     }
 
     task sourcesJar(type: Jar, dependsOn: classes) {

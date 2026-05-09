@@ -1,7 +1,9 @@
 package org.tron.core.utils;
 
+import java.lang.reflect.Modifier;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.reflections.Reflections;
 import org.tron.core.actuator.AbstractActuator;
@@ -27,7 +29,9 @@ public class TransactionRegister {
       logger.debug("Register actuator start.");
       Reflections reflections = new Reflections(PACKAGE_NAME);
       Set<Class<? extends AbstractActuator>> subTypes = reflections
-          .getSubTypesOf(AbstractActuator.class);
+          .getSubTypesOf(AbstractActuator.class).stream()
+          .filter(c -> !Modifier.isAbstract(c.getModifiers()))
+          .collect(Collectors.toSet());
 
       for (Class<? extends AbstractActuator>  clazz : subTypes) {
         try {

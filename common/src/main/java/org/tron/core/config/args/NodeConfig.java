@@ -1,16 +1,19 @@
 package org.tron.core.config.args;
 
 import static org.tron.core.config.Parameter.ChainConstant.MAX_ACTIVE_WITNESS_NUM;
+import static org.tron.core.exception.TronError.ErrCode.PARAMETER_INIT;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigBeanFactory;
 import com.typesafe.config.ConfigFactory;
+import com.typesafe.config.ConfigValueFactory;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.core.config.BeanDefaults;
+import org.tron.core.exception.TronError;
 
 // Node configuration bean for the "node" section of config.conf.
 // ConfigBeanFactory auto-binds all fields including sub-beans, dot-notation keys,
@@ -26,6 +29,7 @@ public class NodeConfig {
   private String trustNode = "";
   private boolean walletExtensionApi = false;
   private int syncFetchBatchNum = 2000;
+  private int maxPendingBlockSize = 500;
   private int validateSignThreadNum = 0; // 0 = auto (availableProcessors)
   private int maxConnections = 30;
   private int minConnections = 8;
@@ -102,6 +106,7 @@ public class NodeConfig {
   private ChannelConfig channel = new ChannelConfig();
   private int maxTransactionPendingSize = 2000;
   private long pendingTransactionTimeout = 60000;
+  private int maxTrxCacheSize = 50_000;
   private int agreeNodeCount = 0;
   private boolean openHistoryQueryWhenLiteFN = false;
   private boolean unsolidifiedBlockCheck = false;
@@ -236,6 +241,9 @@ public class NodeConfig {
     private int fullNodePort = 8090;
     private boolean solidityEnable = true;
     private int solidityPort = 8091;
+    private long maxMessageSize = 4194304;
+    private int maxNestingDepth = 100;
+    private int maxTokenCount = 100_000;
     // pBFTEnable/pBFTPort: fromConfig() remaps "pBFTEnable"→"PBFTEnable" so
     // ConfigBeanFactory finds these under the JavaBean-derived key name.
     private boolean pBFTEnable = true;
@@ -284,6 +292,8 @@ public class NodeConfig {
     private int maxBlockRange = 5000;
     private int maxSubTopics = 1000;
     private int maxBlockFilterNum = 50000;
+    private int maxLogFilterNum = 20000;
+    private long maxMessageSize = 4194304;
   }
 
   @Getter
@@ -353,6 +363,7 @@ public class NodeConfig {
     userSection = BeanDefaults.remapKey(userSection, "rpc.pBFTEnable",  "rpc.PBFTEnable");
     userSection = BeanDefaults.remapKey(userSection, "rpc.pBFTPort",    "rpc.PBFTPort");
     Config section = userSection.withFallback(defaults);
+
     NodeConfig nc = ConfigBeanFactory.create(section, NodeConfig.class);
 
     // isOpenFullTcpDisconnect: boolean "is" prefix breaks JavaBean pairing
@@ -428,6 +439,14 @@ public class NodeConfig {
       syncFetchBatchNum = 100;
     }
 
+    // maxPendingBlockSize: clamp to [50, 2000]
+    if (maxPendingBlockSize > 2000) {
+      maxPendingBlockSize = 2000;
+    }
+    if (maxPendingBlockSize < 50) {
+      maxPendingBlockSize = 50;
+    }
+
     // blockProducedTimeOut: clamp to [30, 100]
     if (blockProducedTimeOut < 30) {
       blockProducedTimeOut = 30;
@@ -466,6 +485,11 @@ public class NodeConfig {
     if (dynamicConfig.checkInterval <= 0) {
       dynamicConfig.checkInterval = 600;
     }
+
+    // maxTrxCacheSize: minimum 2000
+    if (maxTrxCacheSize < 2000) {
+      maxTrxCacheSize = 2000;
+    }
   }
 
   // ===========================================================================
@@ -486,6 +510,36 @@ public class NodeConfig {
 
   private static String getString(Config config, String path, String defaultValue) {
     return config.hasPath(path) ? config.getString(path) : defaultValue;
+  }
+
+  // Pre-normalize size paths so ConfigBeanFactory's primitive int/long binding succeeds
+  // for human-readable values like "4m" / "128MB". For each maxMessageSize key, parse
+  // via getMemorySize, validate non-negative and <= Integer.MAX_VALUE, and write the
+  // numeric byte value back into the Config tree. Validation errors propagate before
+  // bean creation so the failure points at the user-facing config path.
+  private static Config normalizeMaxMessageSizes(Config config) {
+    String[] paths = {
+        "node.rpc.maxMessageSize",
+        "node.http.maxMessageSize",
+        "node.jsonrpc.maxMessageSize"
+    };
+    Config result = config;
+    for (String path : paths) {
+      if (config.hasPath(path)) {
+        long bytes = parseMaxMessageSize(config, path);
+        result = result.withValue(path, ConfigValueFactory.fromAnyRef(bytes));
+      }
+    }
+    return result;
+  }
+
+  private static long parseMaxMessageSize(Config config, String key) {
+    long value = config.getMemorySize(key).toBytes();
+    if (value < 0 || value > Integer.MAX_VALUE) {
+      throw new TronError(key + " must be non-negative and <= "
+          + Integer.MAX_VALUE + ", got: " + value, PARAMETER_INIT);
+    }
+    return value;
   }
 
 }

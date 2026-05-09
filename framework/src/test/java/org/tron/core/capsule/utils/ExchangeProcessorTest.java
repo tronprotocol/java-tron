@@ -1,12 +1,16 @@
 package org.tron.core.capsule.utils;
 
+import static org.junit.Assert.assertThrows;
+
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.tron.common.BaseTest;
 import org.tron.common.TestConstants;
+import org.tron.core.capsule.ExchangeCapsule;
 import org.tron.core.capsule.ExchangeProcessor;
+import org.tron.core.capsule.SafeExchangeProcessor;
 import org.tron.core.config.args.Args;
 
 @Slf4j
@@ -136,6 +140,82 @@ public class ExchangeProcessorTest extends BaseTest {
   }
 
   @Test
+  public void testHardenedExchange() {
+    ExchangeCapsule.Processor hardenedProcessor = SafeExchangeProcessor.INSTANCE;
+
+    long sellBalance = 100_000_000_000000L;
+    long buyBalance = 128L * 1024 * 1024 * 1024;
+    long sellQuant = 2_000_000_000_000L;
+    long supply = 1_000_000_000_000_000_000L;
+    long result = hardenedProcessor.exchange(sellBalance, buyBalance, sellQuant);
+    Assert.assertTrue("Hardened result must be positive", result > 0);
+
+    // Compare with strict math (non-hardened) — results should be identical or very close
+    ExchangeProcessor strictProcessor = new ExchangeProcessor(supply, true);
+    long strictResult = strictProcessor.exchange(sellBalance, buyBalance, sellQuant);
+    Assert.assertEquals("Hardened and strict results should match", strictResult, result);
+  }
+
+  @Test
+  public void testHardenedOverflowDetection() {
+    assertThrows(ArithmeticException.class, () ->
+        SafeExchangeProcessor.INSTANCE.exchange(Long.MAX_VALUE, 1_000_000L, 1L));
+  }
+
+  @Test
+  public void testHardenedSmallQuant() {
+
+    long sellBalance = 1_000_000_000_000_000L;
+    long buyBalance = 1_000_000_000_000_000L;
+    long sellQuant = 1L;
+
+    long result = SafeExchangeProcessor.INSTANCE.exchange(sellBalance, buyBalance, sellQuant);
+    Assert.assertTrue("Result must be non-negative for small quant", result >= 0);
+  }
+
+  @Test
+  public void testHardenedLargeQuant() {
+    long sellBalance = 1_000_000_000_000L;
+    long buyBalance = 1_000_000_000_000L;
+    long sellQuant = 1_000_000_000_000L; // 100% of sell balance
+
+    long result = SafeExchangeProcessor.INSTANCE.exchange(sellBalance, buyBalance, sellQuant);
+    Assert.assertTrue("Result must be positive for large quant", result > 0);
+    Assert.assertTrue("Result must be less than buy balance", result < buyBalance);
+  }
+
+  @Test
+  public void testSafeProcessorDivByZeroThrows() {
+    // newBalance = balance + quant = -1 + 1 = 0 -> BigDecimal divide by zero
+    assertThrows(ArithmeticException.class,
+        () -> SafeExchangeProcessor.INSTANCE.exchange(-1L, 100L, 1L));
+  }
+
+  @Test
+  public void testSafeProcessorAddExactOverflowThrows() {
+    // balance + quant = MAX + 1 -> addExact overflow
+    assertThrows(ArithmeticException.class,
+        () -> SafeExchangeProcessor.INSTANCE.exchange(Long.MAX_VALUE, 1L, 1L));
+  }
+
+  @Test
+  public void testSafeProcessorNoOvershootForTypicalInputs() {
+    // Verify across realistic inputs that hardened result never exceeds buy reserve.
+    long[][] data = {
+        {100_000_000L, 100_000_000L, 1_000_000L},
+        {1_000_000_000L, 1_000_000_000L, 100_000L},
+        {1L, 10_140_000_000_000L, 2_897_000_000_000L},
+        {903L, 737L, 50L},
+    };
+    for (long[] row : data) {
+      long result = SafeExchangeProcessor.INSTANCE.exchange(row[0], row[1], row[2]);
+      Assert.assertTrue("Result must be non-negative", result >= 0);
+      Assert.assertTrue("Result must not exceed buy reserve, got " + result + " > " + row[1],
+          result <= row[1]);
+    }
+  }
+
+  @Test
   public void testStrictMath() {
     long supply = 1_000_000_000_000_000_000L;
     long[][] testData = {
@@ -194,7 +274,9 @@ public class ExchangeProcessorTest extends BaseTest {
       long anotherTokenQuant = processor.exchange(data[0], data[1], data[2]);
       processor = new ExchangeProcessor(supply, true);
       long result = processor.exchange(data[0], data[1], data[2]);
+      long safeResult = SafeExchangeProcessor.INSTANCE.exchange(data[0], data[1], data[2]);
       Assert.assertNotEquals(anotherTokenQuant, result);
+      Assert.assertEquals(safeResult, result);
     }
   }
 }

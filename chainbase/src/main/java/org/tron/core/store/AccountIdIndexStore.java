@@ -1,6 +1,7 @@
 package org.tron.core.store;
 
 import com.google.protobuf.ByteString;
+import java.util.Locale;
 import java.util.Objects;
 import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,7 +22,8 @@ public class AccountIdIndexStore extends TronStoreWithRevoking<BytesCapsule> {
 
   private static byte[] getLowerCaseAccountId(byte[] bsAccountId) {
     return ByteString
-        .copyFromUtf8(ByteString.copyFrom(bsAccountId).toStringUtf8().toLowerCase()).toByteArray();
+        .copyFromUtf8(ByteString.copyFrom(bsAccountId).toStringUtf8().toLowerCase(Locale.ROOT))
+        .toByteArray();
   }
 
   public void put(AccountCapsule accountCapsule) {
