@@ -220,7 +220,7 @@ public class JsonRpcServlet extends RateLimiterServlet {
     }
 
     byte[] finalBytes = MAPPER.writeValueAsBytes(batchResult);
-    resp.setContentType("application/json; charset=utf-8");
+    resp.setContentType("application/json-rpc; charset=utf-8");
     resp.setStatus(HttpServletResponse.SC_OK);
     resp.setContentLength(finalBytes.length);
     resp.getOutputStream().write(finalBytes);
@@ -262,7 +262,7 @@ public class JsonRpcServlet extends RateLimiterServlet {
     } else {
       bytes = MAPPER.writeValueAsBytes(errorObj);
     }
-    resp.setContentType("application/json; charset=utf-8");
+    resp.setContentType("application/json-rpc; charset=utf-8");
     resp.setStatus(HttpServletResponse.SC_OK);
     resp.setContentLength(bytes.length);
     resp.getOutputStream().write(bytes);
