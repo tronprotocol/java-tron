@@ -2,42 +2,27 @@ package org.tron.core.config.args;
 
 import static java.lang.System.exit;
 import static org.tron.common.math.Maths.max;
-import static org.tron.common.math.Maths.min;
 import static org.tron.core.Constant.ADD_PRE_FIX_BYTE_MAINNET;
-import static org.tron.core.Constant.DEFAULT_PROPOSAL_EXPIRE_TIME;
-import static org.tron.core.Constant.DYNAMIC_ENERGY_INCREASE_FACTOR_RANGE;
-import static org.tron.core.Constant.DYNAMIC_ENERGY_MAX_FACTOR_RANGE;
 import static org.tron.core.Constant.ENERGY_LIMIT_IN_CONSTANT_TX;
-import static org.tron.core.Constant.MAX_PROPOSAL_EXPIRE_TIME;
-import static org.tron.core.Constant.MIN_PROPOSAL_EXPIRE_TIME;
-import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCE_TIMEOUT_PERCENT;
-import static org.tron.core.config.Parameter.ChainConstant.MAX_ACTIVE_WITNESS_NUM;
-import static org.tron.core.exception.TronError.ErrCode.PARAMETER_INIT;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.ParameterDescription;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.typesafe.config.Config;
-import com.typesafe.config.ConfigObject;
-import io.grpc.internal.GrpcUtil;
-import io.grpc.netty.NettyServerBuilder;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
@@ -68,8 +53,6 @@ import org.tron.common.utils.LocalWitnesses;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.config.Configuration;
-import org.tron.core.config.Parameter.NetConstants;
-import org.tron.core.config.Parameter.NodeConstant;
 import org.tron.core.exception.TronError;
 import org.tron.core.store.AccountStore;
 import org.tron.p2p.P2pConfig;
@@ -211,6 +194,7 @@ public class Args extends CommonParameter {
     PARAMETER.saveInternalTx = vm.isSaveInternalTx();
     PARAMETER.saveFeaturedInternalTx = vm.isSaveFeaturedInternalTx();
     PARAMETER.saveCancelAllUnfreezeV2Details = vm.isSaveCancelAllUnfreezeV2Details();
+    PARAMETER.constantCallTimeoutMs = vm.getConstantCallTimeoutMs();
   }
 
   // Old applyStorageConfig removed — merged into applyStorageConfig()
@@ -319,8 +303,6 @@ public class Args extends CommonParameter {
     PARAMETER.trxReferenceBlock = mc.getTrxReferenceBlock();
     PARAMETER.trxExpirationTimeInMilliseconds = mc.getTrxExpirationTimeInMilliseconds();
     PARAMETER.blockNumForEnergyLimit = mc.getBlockNumForEnergyLimit();
-    PARAMETER.actuatorSet = mc.getActuatorWhitelist();
-
     // seed.node — top-level config section, not under "node"
     // Config structure is arguably misplaced but preserved for backward compatibility
     PARAMETER.seedNode = new SeedNode();
@@ -369,82 +351,84 @@ public class Args extends CommonParameter {
     // contractParse belongs to event.subscribe but Storage object holds it
     PARAMETER.storage.setContractParseSwitch(ec.isContractParse());
 
-    // Build EventPluginConfig from EventConfig bean
-    // If event.subscribe was configured, bean will have non-default values
-    if (ec.isEnable() || ec.getVersion() != 0 || !ec.getTopics().isEmpty()
-        || StringUtils.isNotEmpty(ec.getPath()) || StringUtils.isNotEmpty(ec.getServer())) {
-      EventPluginConfig epc = new EventPluginConfig();
-      epc.setVersion(ec.getVersion());
-      epc.setStartSyncBlockNum(ec.getStartSyncBlockNum());
-
-      // native queue
-      EventConfig.NativeConfig nq = ec.getNativeQueue();
-      epc.setUseNativeQueue(nq.isUseNativeQueue());
-      epc.setBindPort(nq.getBindport());
-      epc.setSendQueueLength(nq.getSendqueuelength());
-
-      if (!nq.isUseNativeQueue()) {
-        if (StringUtils.isNotEmpty(ec.getPath())) {
-          epc.setPluginPath(ec.getPath().trim());
-        }
-        if (StringUtils.isNotEmpty(ec.getServer())) {
-          epc.setServerAddress(ec.getServer().trim());
-        }
-        if (StringUtils.isNotEmpty(ec.getDbconfig())) {
-          epc.setDbConfig(ec.getDbconfig().trim());
-        }
-      }
-
-      // topics
-      List<TriggerConfig> triggerConfigs = new ArrayList<>();
-      for (EventConfig.TopicConfig tc : ec.getTopics()) {
-        TriggerConfig trig = new TriggerConfig();
-        trig.setTriggerName(tc.getTriggerName());
-        trig.setEnabled(tc.isEnable());
-        trig.setTopic(tc.getTopic());
-        trig.setSolidified(tc.isSolidified());
-        trig.setEthCompatible(tc.isEthCompatible());
-        trig.setRedundancy(tc.isRedundancy());
-        triggerConfigs.add(trig);
-      }
-      epc.setTriggerConfigList(triggerConfigs);
-
-      PARAMETER.eventPluginConfig = epc;
+    // PARAMETER.eventPluginConfig and PARAMETER.eventFilter are only consumed by
+    // Manager.startEventSubscribing(), which itself is gated by isEventSubscribe()
+    // (= ec.isEnable()) at Manager.java:564. When subscribe is disabled, building
+    // these objects has no observable effect — skip both early so PARAMETER stays
+    // consistent with the runtime intent.
+    if (!ec.isEnable()) {
+      return;
     }
+
+    // Build EventPluginConfig from EventConfig bean
+    EventPluginConfig epc = new EventPluginConfig();
+    epc.setVersion(ec.getVersion());
+    epc.setStartSyncBlockNum(ec.getStartSyncBlockNum());
+
+    // native queue
+    EventConfig.NativeConfig nq = ec.getNativeQueue();
+    epc.setUseNativeQueue(nq.isUseNativeQueue());
+    epc.setBindPort(nq.getBindport());
+    epc.setSendQueueLength(nq.getSendqueuelength());
+
+    if (!nq.isUseNativeQueue()) {
+      if (StringUtils.isNotEmpty(ec.getPath())) {
+        epc.setPluginPath(ec.getPath().trim());
+      }
+      if (StringUtils.isNotEmpty(ec.getServer())) {
+        epc.setServerAddress(ec.getServer().trim());
+      }
+      if (StringUtils.isNotEmpty(ec.getDbconfig())) {
+        epc.setDbConfig(ec.getDbconfig().trim());
+      }
+    }
+
+    // topics
+    List<TriggerConfig> triggerConfigs = new ArrayList<>();
+    for (EventConfig.TopicConfig tc : ec.getTopics()) {
+      TriggerConfig trig = new TriggerConfig();
+      trig.setTriggerName(tc.getTriggerName());
+      trig.setEnabled(tc.isEnable());
+      trig.setTopic(tc.getTopic());
+      trig.setSolidified(tc.isSolidified());
+      trig.setEthCompatible(tc.isEthCompatible());
+      trig.setRedundancy(tc.isRedundancy());
+      triggerConfigs.add(trig);
+    }
+    epc.setTriggerConfigList(triggerConfigs);
+
+    PARAMETER.eventPluginConfig = epc;
 
     // Build FilterQuery from EventConfig.FilterConfig bean
     EventConfig.FilterConfig fc = ec.getFilter();
-    if (StringUtils.isNotEmpty(fc.getFromblock()) || StringUtils.isNotEmpty(fc.getToblock())
-        || !fc.getContractAddress().isEmpty()) {
-      FilterQuery filter = new FilterQuery();
+    FilterQuery filter = new FilterQuery();
 
-      try {
-        filter.setFromBlock(FilterQuery.parseFromBlockNumber(fc.getFromblock().trim()));
-      } catch (Exception e) {
-        logger.error("invalid filter: fromBlockNumber: {}", fc.getFromblock(), e);
-        PARAMETER.eventFilter = null;
-        return;
-      }
-
-      try {
-        filter.setToBlock(FilterQuery.parseToBlockNumber(fc.getToblock().trim()));
-      } catch (Exception e) {
-        logger.error("invalid filter: toBlockNumber: {}", fc.getToblock(), e);
-        PARAMETER.eventFilter = null;
-        return;
-      }
-
-      filter.setContractAddressList(
-          fc.getContractAddress().stream()
-              .filter(StringUtils::isNotEmpty)
-              .collect(Collectors.toList()));
-      filter.setContractTopicList(
-          fc.getContractTopic().stream()
-              .filter(StringUtils::isNotEmpty)
-              .collect(Collectors.toList()));
-
-      PARAMETER.eventFilter = filter;
+    try {
+      filter.setFromBlock(FilterQuery.parseFromBlockNumber(fc.getFromblock().trim()));
+    } catch (Exception e) {
+      logger.error("invalid filter: fromBlockNumber: {}", fc.getFromblock(), e);
+      PARAMETER.eventFilter = null;
+      return;
     }
+
+    try {
+      filter.setToBlock(FilterQuery.parseToBlockNumber(fc.getToblock().trim()));
+    } catch (Exception e) {
+      logger.error("invalid filter: toBlockNumber: {}", fc.getToblock(), e);
+      PARAMETER.eventFilter = null;
+      return;
+    }
+
+    filter.setContractAddressList(
+        fc.getContractAddress().stream()
+            .filter(StringUtils::isNotEmpty)
+            .collect(Collectors.toList()));
+    filter.setContractTopicList(
+        fc.getContractTopic().stream()
+            .filter(StringUtils::isNotEmpty)
+            .collect(Collectors.toList()));
+
+    PARAMETER.eventFilter = filter;
   }
 
   /**
@@ -452,12 +436,6 @@ public class Args extends CommonParameter {
    * Note: node.metricsEnable is handled in applyNodeConfig (it's a node-level field).
    */
   private static void applyMetricsConfig(MetricsConfig mc) {
-    PARAMETER.metricsStorageEnable = mc.isStorageEnable();
-    PARAMETER.influxDbIp = mc.getInfluxdb().getIp().isEmpty()
-        ? Constant.LOCAL_HOST : mc.getInfluxdb().getIp();
-    PARAMETER.influxDbPort = mc.getInfluxdb().getPort();
-    PARAMETER.influxDbDatabase = mc.getInfluxdb().getDatabase();
-    PARAMETER.metricsReportInterval = mc.getInfluxdb().getMetricsReportInterval();
     PARAMETER.metricsPrometheusEnable = mc.getPrometheus().isEnable();
     PARAMETER.metricsPrometheusPort = mc.getPrometheus().getPort();
   }
@@ -502,7 +480,6 @@ public class Args extends CommonParameter {
     PARAMETER.consensusLogicOptimization = cc.getConsensusLogicOptimization();
     PARAMETER.allowTvmCancun = cc.getAllowTvmCancun();
     PARAMETER.allowTvmBlob = cc.getAllowTvmBlob();
-    PARAMETER.allowTvmOsaka = cc.getAllowTvmOsaka();
     PARAMETER.unfreezeDelayDays = cc.getUnfreezeDelayDays();
     // allowReceiptsMerkleRoot not in CommonParameter — skip for now
     PARAMETER.allowAccountAssetOptimization = cc.getAllowAccountAssetOptimization();
@@ -566,6 +543,9 @@ public class Args extends CommonParameter {
     PARAMETER.fullNodeHttpPort = http.getFullNodePort();
     PARAMETER.solidityHttpPort = http.getSolidityPort();
     PARAMETER.pBFTHttpPort = http.getPBFTPort();
+    PARAMETER.httpMaxMessageSize = http.getMaxMessageSize();
+    PARAMETER.maxNestingDepth = http.getMaxNestingDepth();
+    PARAMETER.maxTokenCount = http.getMaxTokenCount();
 
     // ---- JSON-RPC sub-bean ----
     NodeConfig.JsonRpcConfig jsonrpc = nc.getJsonrpc();
@@ -578,6 +558,7 @@ public class Args extends CommonParameter {
     PARAMETER.jsonRpcMaxBlockRange = jsonrpc.getMaxBlockRange();
     PARAMETER.jsonRpcMaxSubTopics = jsonrpc.getMaxSubTopics();
     PARAMETER.jsonRpcMaxBlockFilterNum = jsonrpc.getMaxBlockFilterNum();
+    PARAMETER.jsonRpcMaxMessageSize = jsonrpc.getMaxMessageSize();
 
     // ---- P2P sub-bean ----
     PARAMETER.nodeP2pVersion = nc.getP2p().getVersion();
@@ -608,11 +589,13 @@ public class Args extends CommonParameter {
     PARAMETER.minActiveConnections = nc.getMinActiveConnections();
     PARAMETER.maxConnectionsWithSameIp = nc.getMaxConnectionsWithSameIp();
     PARAMETER.maxTps = nc.getMaxTps();
+    PARAMETER.maxBlockInvPerSecond = nc.getMaxBlockInvPerSecond();
     PARAMETER.minParticipationRate = nc.getMinParticipationRate();
     PARAMETER.nodeListenPort = nc.getListenPort();
     PARAMETER.nodeEnableIpv6 = nc.isEnableIpv6();
 
     PARAMETER.syncFetchBatchNum = nc.getSyncFetchBatchNum();
+    PARAMETER.maxPendingBlockSize = nc.getMaxPendingBlockSize();
     PARAMETER.solidityThreads = nc.getSolidityThreads();
     PARAMETER.blockProducedTimeOut = nc.getBlockProducedTimeOut();
 
@@ -636,6 +619,7 @@ public class Args extends CommonParameter {
 
     PARAMETER.maxTransactionPendingSize = nc.getMaxTransactionPendingSize();
     PARAMETER.pendingTransactionTimeout = nc.getPendingTransactionTimeout();
+    PARAMETER.maxTrxCacheSize = nc.getMaxTrxCacheSize();
 
     PARAMETER.validContractProtoThreadNum = nc.getValidContractProtoThreads();
 
@@ -657,7 +641,7 @@ public class Args extends CommonParameter {
     // disabledApi list — lowercase normalization
     PARAMETER.disabledApiList = nc.getDisabledApi().isEmpty()
         ? Collections.emptyList()
-        : nc.getDisabledApi().stream().map(String::toLowerCase)
+        : nc.getDisabledApi().stream().map(s -> s.toLowerCase(Locale.ROOT))
             .collect(Collectors.toList());
 
     // ---- Fields previously scattered in applyConfigParams ----
@@ -776,8 +760,6 @@ public class Args extends CommonParameter {
 
     // Node backup: from NodeConfig bean
     applyNodeBackupConfig(nodeConfig);
-
-    // actuatorSet already set in applyMiscConfig
 
     // Metrics config: bind from config.conf "node.metrics" section
     metricsConfig = MetricsConfig.fromConfig(config);
@@ -1259,7 +1241,7 @@ public class Args extends CommonParameter {
     Map<String, String[]> groupOptionListMap = Args.getOptionGroup();
     for (Map.Entry<String, String[]> entry : groupOptionListMap.entrySet()) {
       String group = entry.getKey();
-      helpStr.append(String.format("%n%s OPTIONS:%n", group.toUpperCase()));
+      helpStr.append(String.format("%n%s OPTIONS:%n", group.toUpperCase(Locale.ROOT)));
       int optionMaxLength = Arrays.stream(entry.getValue()).mapToInt(p -> {
         ParameterDescription tmpParameterDescription = stringParameterDescriptionMap.get(p);
         if (tmpParameterDescription == null) {
@@ -1299,7 +1281,7 @@ public class Args extends CommonParameter {
     if (name.length() <= 1) {
       return name;
     }
-    name = name.substring(0, 1).toUpperCase() + name.substring(1);
+    name = name.substring(0, 1).toUpperCase(Locale.ROOT) + name.substring(1);
     return name;
   }
 

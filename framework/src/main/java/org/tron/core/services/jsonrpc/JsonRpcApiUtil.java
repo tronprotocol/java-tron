@@ -1,15 +1,10 @@
 package org.tron.core.services.jsonrpc;
 
-import static org.tron.core.services.jsonrpc.TronJsonRpcImpl.EARLIEST_STR;
-import static org.tron.core.services.jsonrpc.TronJsonRpcImpl.FINALIZED_STR;
-import static org.tron.core.services.jsonrpc.TronJsonRpcImpl.LATEST_STR;
-import static org.tron.core.services.jsonrpc.TronJsonRpcImpl.PENDING_STR;
-import static org.tron.core.services.jsonrpc.TronJsonRpcImpl.TAG_PENDING_SUPPORT_ERROR;
-
 import com.google.common.base.Throwables;
 import com.google.common.primitives.Longs;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
+import java.math.BigInteger;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.List;
@@ -56,6 +51,15 @@ import org.tron.protos.contract.WitnessContract.VoteWitnessContract.Vote;
 
 @Slf4j(topic = "API")
 public class JsonRpcApiUtil {
+
+  public static final String EARLIEST_STR = "earliest";
+  public static final String PENDING_STR = "pending";
+  public static final String LATEST_STR = "latest";
+  public static final String FINALIZED_STR = "finalized";
+  public static final String SAFE_STR = "safe";
+  public static final String TAG_PENDING_SUPPORT_ERROR = "TAG pending not supported";
+  public static final String TAG_SAFE_SUPPORT_ERROR = "TAG safe not supported";
+  public static final String BLOCK_NUM_ERROR = "invalid block number";
 
   public static byte[] convertToTronAddress(byte[] address) {
     byte[] newAddress = new byte[21];
@@ -439,6 +443,50 @@ public class JsonRpcApiUtil {
     return StringUtils.isEmpty(quantity) || quantity.equals("0x0");
   }
 
+  /**
+   * Validation mode for {@link #requireValidHex}.
+   */
+  public enum HexMode {
+    /**
+     * Execution-apis BYTES schema: requires {@code 0x} prefix and
+     * even total length; {@code ""} is accepted as empty bytes per
+     * geth's {@code hexutil.Bytes.UnmarshalText}.
+     */
+    STRICT,
+    /**
+     * {@link ByteArray#fromHexString}'s lenient parsing: accepts bare
+     * hex and odd-length input. Kept for backward compatibility.
+     */
+    LENIENT
+  }
+
+  /**
+   * Throws if {@code value} is not parseable hex under the given
+   * {@code mode}. {@code null} is treated as absent and returns
+   * silently. {@code fieldName} is used only in error messages.
+   */
+  public static void requireValidHex(String fieldName, String value, HexMode mode)
+      throws JsonRpcInvalidParamsException {
+    if (value == null) {
+      return;
+    }
+    if (mode == HexMode.STRICT) {
+      if (value.isEmpty()) {
+        return;
+      }
+      if (!value.startsWith("0x") || value.length() % 2 != 0) {
+        throw new JsonRpcInvalidParamsException(
+            "invalid hex string for \"" + fieldName + "\"");
+      }
+    }
+    try {
+      ByteArray.fromHexString(value);
+    } catch (Exception e) {
+      throw new JsonRpcInvalidParamsException(
+          "invalid hex string for \"" + fieldName + "\"");
+    }
+  }
+
   public static long parseQuantityValue(String value) throws JsonRpcInvalidParamsException {
     long callValue = 0L;
 
@@ -515,20 +563,87 @@ public class JsonRpcApiUtil {
     return -1;
   }
 
-  public static long getByJsonBlockId(String blockNumOrTag, Wallet wallet)
+  public static boolean isBlockTag(String tag) {
+    return LATEST_STR.equalsIgnoreCase(tag)
+        || EARLIEST_STR.equalsIgnoreCase(tag)
+        || FINALIZED_STR.equalsIgnoreCase(tag)
+        || PENDING_STR.equalsIgnoreCase(tag)
+        || SAFE_STR.equalsIgnoreCase(tag);
+  }
+
+  /**
+   * Parse a block tag (latest, earliest, finalized) to block number.
+   *
+   * <p>Note: for "latest", the returned block number may not yet be available in
+   * blockStore or blockIndexStore due to write ordering. Callers that need the
+   * actual block must handle the not-found case.</p>
+   */
+  public static long parseBlockTag(String tag, Wallet wallet)
       throws JsonRpcInvalidParamsException {
-    if (PENDING_STR.equalsIgnoreCase(blockNumOrTag)) {
+    if (LATEST_STR.equalsIgnoreCase(tag)) {
+      return wallet.getHeadBlockNum();
+    }
+    if (EARLIEST_STR.equalsIgnoreCase(tag)) {
+      return 0;
+    }
+    if (FINALIZED_STR.equalsIgnoreCase(tag)) {
+      return wallet.getSolidBlockNum();
+    }
+    if (PENDING_STR.equalsIgnoreCase(tag)) {
       throw new JsonRpcInvalidParamsException(TAG_PENDING_SUPPORT_ERROR);
     }
-    if (StringUtils.isEmpty(blockNumOrTag) || LATEST_STR.equalsIgnoreCase(blockNumOrTag)) {
-      return -1;
-    } else if (EARLIEST_STR.equalsIgnoreCase(blockNumOrTag)) {
-      return 0;
-    } else if (FINALIZED_STR.equalsIgnoreCase(blockNumOrTag)) {
-      return wallet.getSolidBlockNum();
-    } else {
-      return ByteArray.jsonHexToLong(blockNumOrTag);
+    if (SAFE_STR.equalsIgnoreCase(tag)) {
+      throw new JsonRpcInvalidParamsException(TAG_SAFE_SUPPORT_ERROR);
     }
+    throw new JsonRpcInvalidParamsException(BLOCK_NUM_ERROR);
+  }
+
+  /**
+   * Max allowed length for a JSON-RPC block number hex/decimal input.
+   * API-level DoS guard: rejects pathological inputs before BigInteger parsing,
+   * whose cost grows quadratically with length. Covers hex (0x + 64 chars for
+   * uint256) and decimal (78 chars for uint256) representations with headroom.
+   */
+  private static final int MAX_BLOCK_NUM_HEX_LEN = 100;
+
+  /**
+   * Parse a JSON-RPC block number (hex "0x..." or decimal) into a long,
+   * enforcing the {@link #MAX_BLOCK_NUM_HEX_LEN} length limit, rejecting
+   * negative values, and rejecting values that overflow a signed 64-bit
+   * block number.
+   */
+  public static long parseBlockNumber(String blockNum)
+      throws JsonRpcInvalidParamsException {
+    if (blockNum == null || blockNum.length() > MAX_BLOCK_NUM_HEX_LEN) {
+      throw new JsonRpcInvalidParamsException(BLOCK_NUM_ERROR);
+    }
+    BigInteger value;
+    try {
+      value = ByteArray.hexToBigInteger(blockNum);
+    } catch (Exception e) {
+      throw new JsonRpcInvalidParamsException(BLOCK_NUM_ERROR);
+    }
+    if (value.signum() < 0) {
+      throw new JsonRpcInvalidParamsException(BLOCK_NUM_ERROR);
+    }
+    try {
+      return value.longValueExact();
+    } catch (ArithmeticException e) {
+      throw new JsonRpcInvalidParamsException(BLOCK_NUM_ERROR);
+    }
+  }
+
+  /**
+   * Parse a block tag or hex number. Uses strict jsonHexToLong (requires 0x prefix) for hex.
+   * Callers needing flexible hex parsing (0x -> hex, bare number -> decimal) should use
+   * isBlockTag/parseBlockTag and handle hex separately with hexToBigInteger.
+   */
+  public static long parseBlockNumber(String blockNumOrTag, Wallet wallet)
+      throws JsonRpcInvalidParamsException {
+    if (isBlockTag(blockNumOrTag)) {
+      return parseBlockTag(blockNumOrTag, wallet);
+    }
+    return ByteArray.jsonHexToLong(blockNumOrTag);
   }
 
   public static String generateFilterId() {

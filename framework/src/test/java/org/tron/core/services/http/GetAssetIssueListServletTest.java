@@ -3,7 +3,6 @@ package org.tron.core.services.http;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.fail;
 
-import com.alibaba.fastjson.JSONObject;
 import java.io.UnsupportedEncodingException;
 import javax.annotation.Resource;
 import org.junit.Test;
@@ -12,6 +11,7 @@ import org.springframework.mock.web.MockHttpServletResponse;
 import org.tron.common.BaseTest;
 import org.tron.common.TestConstants;
 import org.tron.core.config.args.Args;
+import org.tron.json.JSONObject;
 
 public class GetAssetIssueListServletTest extends BaseTest {
 

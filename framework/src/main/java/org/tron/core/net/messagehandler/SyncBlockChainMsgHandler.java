@@ -71,6 +71,12 @@ public class SyncBlockChainMsgHandler implements TronMsgHandler {
       throw new P2pException(TypeEnum.BAD_MESSAGE, "SyncBlockChain blockIds is empty");
     }
 
+    if (blockIds.size() > NetConstants.MAX_SYNC_CHAIN_IDS) {
+      throw new P2pException(TypeEnum.BAD_MESSAGE,
+          "SyncBlockChain blockIds size " + blockIds.size()
+              + " exceeds limit " + NetConstants.MAX_SYNC_CHAIN_IDS);
+    }
+
     BlockId firstId = blockIds.get(0);
     if (!tronNetDelegate.containBlockInMainChain(firstId)) {
       logger.warn("Sync message from peer {} without the first block: {}",

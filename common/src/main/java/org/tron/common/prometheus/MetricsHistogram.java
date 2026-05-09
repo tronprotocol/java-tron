@@ -20,7 +20,7 @@ public class MetricsHistogram {
     init(MetricKeys.Histogram.JSONRPC_SERVICE_LATENCY, "JsonRpc Service latency.",
         "method");
     init(MetricKeys.Histogram.MINER_LATENCY, "miner latency.",
-        "miner");
+        MetricLabels.Histogram.MINER);
     init(MetricKeys.Histogram.PING_PONG_LATENCY, "node  ping pong  latency.");
     init(MetricKeys.Histogram.VERIFY_SIGN_LATENCY, "verify sign latency for trx , block.",
         "type");
@@ -36,7 +36,7 @@ public class MetricsHistogram {
     init(MetricKeys.Histogram.PROCESS_TRANSACTION_LATENCY, "process transaction latency.",
         "type", "contract");
     init(MetricKeys.Histogram.MINER_DELAY, "miner delay time, actualTime - planTime.",
-        "miner");
+        MetricLabels.Histogram.MINER);
     init(MetricKeys.Histogram.UDP_BYTES, "udp_bytes traffic.",
         "type");
     init(MetricKeys.Histogram.TCP_BYTES, "tcp_bytes traffic.",
@@ -48,6 +48,11 @@ public class MetricsHistogram {
     init(MetricKeys.Histogram.BLOCK_FETCH_LATENCY, "fetch block latency.");
     init(MetricKeys.Histogram.BLOCK_RECEIVE_DELAY,
         "receive block delay time, receiveTime - blockTime.");
+
+    init(MetricKeys.Histogram.BLOCK_TRANSACTION_COUNT,
+        "Distribution of transaction counts per block.",
+        new double[]{0, 20, 50, 80, 100, 120, 140, 160, 180, 200, 230, 260, 300, 500, 2000, 5000, 10000},
+        MetricLabels.Histogram.MINER);
   }
 
   private MetricsHistogram() {
@@ -60,6 +65,17 @@ public class MetricsHistogram {
         .help(help)
         .labelNames(labels)
         .register());
+  }
+
+  private static void init(String name, String help, double[] buckets, String... labels) {
+    Histogram.Builder builder = Histogram.build()
+        .name(name)
+        .help(help)
+        .labelNames(labels);
+    if (buckets != null && buckets.length > 0) {
+      builder.buckets(buckets);
+    }
+    container.put(name, builder.register());
   }
 
   static Histogram.Timer startTimer(String key, String... labels) {

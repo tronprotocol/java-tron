@@ -9,4 +9,8 @@ public class ZksnarkException extends TronException {
   public ZksnarkException(String message) {
     super(message);
   }
+
+  public ZksnarkException(String message, Throwable cause) {
+    super(message, cause);
+  }
 }

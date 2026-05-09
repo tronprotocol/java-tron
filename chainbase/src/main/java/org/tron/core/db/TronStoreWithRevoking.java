@@ -9,6 +9,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Paths;
 import java.util.Iterator;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -38,7 +39,7 @@ import org.tron.core.exception.ItemNotFoundException;
 @Slf4j(topic = "DB")
 public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements ITronChainBase<T> {
 
-  @Getter // only for unit test
+  @Getter
   protected IRevokingDB revokingDB;
   private TypeToken<T> token = new TypeToken<T>(getClass()) {
   };
@@ -54,10 +55,10 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
 
   protected TronStoreWithRevoking(String dbName) {
     String dbEngine = CommonParameter.getInstance().getStorage().getDbEngine();
-    if ("LEVELDB".equals(dbEngine.toUpperCase())) {
+    if ("LEVELDB".equals(dbEngine.toUpperCase(Locale.ROOT))) {
       this.db =  new LevelDB(
           new LevelDbDataSourceImpl(StorageUtils.getOutputDirectoryByDbName(dbName), dbName));
-    } else if ("ROCKSDB".equals(dbEngine.toUpperCase())) {
+    } else if ("ROCKSDB".equals(dbEngine.toUpperCase(Locale.ROOT))) {
       String parentPath = Paths
           .get(StorageUtils.getOutputDirectoryByDbName(dbName), CommonParameter
               .getInstance().getStorage().getDbDirectory()).toString();

@@ -14,6 +14,7 @@ import org.bouncycastle.util.encoders.Hex;
 import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.BytesMessage;
 import org.tron.api.GrpcAPI.ShieldedTRC20Parameters;
+import org.tron.common.math.StrictMathWrapper;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Sha256Hash;
@@ -547,8 +548,8 @@ public class ShieldedTRC20ParametersBuilder {
       byte[] anchor,
       byte[] path,
       long position) throws ZksnarkException {
+    valueBalance = StrictMathWrapper.addExact(valueBalance, note.getValue());
     spends.add(new SpendDescriptionInfo(expsk, note, anchor, path, position));
-    valueBalance += note.getValue();
   }
 
   public void addSpend(
@@ -558,8 +559,8 @@ public class ShieldedTRC20ParametersBuilder {
       byte[] anchor,
       byte[] path,
       long position) {
+    valueBalance = StrictMathWrapper.addExact(valueBalance, note.getValue());
     spends.add(new SpendDescriptionInfo(expsk, note, alpha, anchor, path, position));
-    valueBalance += note.getValue();
   }
 
   public void addSpend(
@@ -570,23 +571,23 @@ public class ShieldedTRC20ParametersBuilder {
       byte[] anchor,
       byte[] path,
       long position) {
+    valueBalance = StrictMathWrapper.addExact(valueBalance, note.getValue());
     spends.add(new SpendDescriptionInfo(ak, nsk, note, alpha, anchor, path, position));
-    valueBalance += note.getValue();
   }
 
   public void addOutput(byte[] ovk, PaymentAddress to, long value, byte[] memo)
       throws ZksnarkException {
     Note note = new Note(to, value);
     note.setMemo(memo);
+    valueBalance = StrictMathWrapper.subtractExact(valueBalance, value);
     receives.add(new ReceiveDescriptionInfo(ovk, note));
-    valueBalance -= value;
   }
 
   public void addOutput(byte[] ovk, DiversifierT d, byte[] pkD, long value, byte[] r, byte[] memo) {
     Note note = new Note(d, pkD, value, r);
     note.setMemo(memo);
+    valueBalance = StrictMathWrapper.subtractExact(valueBalance, value);
     receives.add(new ReceiveDescriptionInfo(ovk, note));
-    valueBalance -= value;
   }
 
   public static class SpendDescriptionInfo {

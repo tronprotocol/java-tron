@@ -72,7 +72,6 @@ public class CommitteeConfig {
   private long consensusLogicOptimization = 0;
   private long allowTvmCancun = 0;
   private long allowTvmBlob = 0;
-  private long allowTvmOsaka = 0;
   private long unfreezeDelayDays = 0;
   private long allowReceiptsMerkleRoot = 0;
   private long allowAccountAssetOptimization = 0;

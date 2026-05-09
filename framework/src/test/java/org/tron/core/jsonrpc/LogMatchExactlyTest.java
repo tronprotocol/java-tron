@@ -37,6 +37,7 @@ public class LogMatchExactlyTest {
     LogInfo logInfo = new LogInfo(address, topics, data);
     logList.add(LogInfo.buildLog(logInfo));
     builder.addAllLog(logList);
+    builder.setBlockTimeStamp(1000000L);
 
     return builder.build();
   }
@@ -230,6 +231,8 @@ public class LogMatchExactlyTest {
       LogFilterElement logFilterElement1 = elementList.get(0);
       LogFilterElement logFilterElement2 = elementList2.get(0);
 
+      Assert.assertEquals("0x3e8", logFilterElement1.getBlockTimestamp());
+      Assert.assertEquals("0x3e8", logFilterElement2.getBlockTimestamp());
       Assert.assertEquals(logFilterElement1.hashCode(), logFilterElement2.hashCode());
       Assert.assertEquals(logFilterElement1, logFilterElement2);
 

@@ -1,6 +1,5 @@
 package org.tron.core.config;
 
-import com.alibaba.fastjson.parser.ParserConfig;
 import lombok.extern.slf4j.Slf4j;
 import org.rocksdb.RocksDB;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,7 +23,6 @@ public class DefaultConfig {
 
   static {
     RocksDB.loadLibrary();
-    ParserConfig.getGlobalInstance().setSafeMode(true);
   }
 
   @Autowired

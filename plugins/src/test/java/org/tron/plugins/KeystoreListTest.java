@@ -9,6 +9,7 @@ import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.security.SecureRandom;
+import java.util.Locale;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -244,7 +245,7 @@ public class KeystoreListTest {
   @Test
   public void testListSkipsSymlinkedKeystoreFile() throws Exception {
     org.junit.Assume.assumeTrue("Symlinks only tested on POSIX",
-        !System.getProperty("os.name").toLowerCase().contains("win"));
+        !System.getProperty("os.name").toLowerCase(Locale.ROOT).contains("win"));
 
     File dir = tempFolder.newFolder("keystore-symlink-scan");
     String password = "test123456";

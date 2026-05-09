@@ -102,6 +102,7 @@ public class Parameter {
     public static final int MSG_CACHE_DURATION_IN_BLOCKS = 5;
     public static final int MAX_BLOCK_FETCH_PER_PEER = 100;
     public static final int MAX_TRX_FETCH_PER_PEER = 1000;
+    public static final int MAX_SYNC_CHAIN_IDS = 30;
   }
 
   public class DatabaseConstants {
