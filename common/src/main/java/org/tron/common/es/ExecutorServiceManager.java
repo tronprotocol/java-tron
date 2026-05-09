@@ -84,6 +84,15 @@ public class ExecutorServiceManager {
     logger.info("Pool {} shutdown done", name);
   }
 
+  public static void shutdownNow(ExecutorService pool, String name) {
+    if (pool == null) {
+      return;
+    }
+    logger.info("Pool {} shutdown...", name);
+    pool.shutdownNow();
+    logger.info("Pool {} shutdown done", name);
+  }
+
   public static Future<?> submit(ExecutorService es, Runnable task) {
     return es.submit(() -> {
       try {
