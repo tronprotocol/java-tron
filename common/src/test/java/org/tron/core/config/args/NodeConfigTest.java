@@ -301,6 +301,18 @@ public class NodeConfigTest {
     NodeConfig nc = NodeConfig.fromConfig(
         withRef("node.fullNodeAllowShieldedTransaction = true"));
     assertTrue(nc.isAllowShieldedTransactionApi());
+    nc = NodeConfig.fromConfig(
+        withRef("node.fullNodeAllowShieldedTransaction = false"));
+    assertFalse(nc.isAllowShieldedTransactionApi());
+    nc = NodeConfig.fromConfig(
+        withRef("node.allowShieldedTransactionApi = true"));
+    assertTrue(nc.isAllowShieldedTransactionApi());
+    nc = NodeConfig.fromConfig(
+        withRef("node.allowShieldedTransactionApi = false"));
+    assertFalse(nc.isAllowShieldedTransactionApi());
+    nc = NodeConfig.fromConfig(
+        withRef(""));
+    assertFalse(nc.isAllowShieldedTransactionApi());
   }
 
   @Test
@@ -308,9 +320,27 @@ public class NodeConfigTest {
     // Consistent with maxActiveNodesWithSameIp: legacy key presence wins over modern.
     NodeConfig nc = NodeConfig.fromConfig(
         withRef("node {\n"
-            + "  allowShieldedTransactionApi = false\n"
+            + "  allowShieldedTransactionApi = true\n"
             + "  fullNodeAllowShieldedTransaction = true\n"
             + "}"));
     assertTrue(nc.isAllowShieldedTransactionApi());
+    nc = NodeConfig.fromConfig(
+        withRef("node {\n"
+            + "  allowShieldedTransactionApi = true\n"
+            + "  fullNodeAllowShieldedTransaction = false\n"
+            + "}"));
+    assertTrue(nc.isAllowShieldedTransactionApi());
+    nc = NodeConfig.fromConfig(
+        withRef("node {\n"
+            + "  allowShieldedTransactionApi = false\n"
+            + "  fullNodeAllowShieldedTransaction = true\n"
+            + "}"));
+    assertFalse(nc.isAllowShieldedTransactionApi());
+    nc = NodeConfig.fromConfig(
+        withRef("node {\n"
+            + "  allowShieldedTransactionApi = false\n"
+            + "  fullNodeAllowShieldedTransaction = false\n"
+            + "}"));
+    assertFalse(nc.isAllowShieldedTransactionApi());
   }
 }
