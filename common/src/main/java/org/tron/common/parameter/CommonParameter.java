@@ -71,6 +71,18 @@ public class CommonParameter {
   @Getter
   @Setter
   public double maxTimeRatio = calcMaxTimeRatio();
+  /**
+   * Max TVM execution time (ms) for constant calls — covers
+   * triggerconstantcontract, triggersmartcontract dispatched to view/pure
+   * functions, estimateenergy, eth_call, eth_estimateGas, and any other
+   * RPC routed through Wallet#callConstantContract. 0 = use the same
+   * deadline as block processing (current behaviour). When operators set
+   * this in config the value must be positive and fit VM deadline conversion;
+   * validated at config-load in VmConfig.
+   */
+  @Getter
+  @Setter
+  public long constantCallTimeoutMs = 0L;
   @Getter
   @Setter
   public boolean saveInternalTx;

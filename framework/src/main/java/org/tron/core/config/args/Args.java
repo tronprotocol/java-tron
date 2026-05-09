@@ -195,6 +195,7 @@ public class Args extends CommonParameter {
     PARAMETER.saveInternalTx = vm.isSaveInternalTx();
     PARAMETER.saveFeaturedInternalTx = vm.isSaveFeaturedInternalTx();
     PARAMETER.saveCancelAllUnfreezeV2Details = vm.isSaveCancelAllUnfreezeV2Details();
+    PARAMETER.constantCallTimeoutMs = vm.getConstantCallTimeoutMs();
   }
 
   // Old applyStorageConfig removed — merged into applyStorageConfig()

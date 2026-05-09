@@ -3,6 +3,8 @@ package org.tron.core.vm;
 import static java.util.Arrays.copyOfRange;
 import static org.tron.common.math.Maths.max;
 import static org.tron.common.math.Maths.min;
+import static org.tron.common.math.StrictMathWrapper.multiplyExact;
+import static org.tron.common.math.StrictMathWrapper.subtractExact;
 import static org.tron.common.runtime.vm.DataWord.WORD_SIZE;
 import static org.tron.common.utils.BIUtil.addSafely;
 import static org.tron.common.utils.BIUtil.isLessThan;
@@ -425,6 +427,14 @@ public class PrecompiledContracts {
 
   private static byte[] extractBytes(byte[] data, int offset, int len) {
     return Arrays.copyOfRange(data, offset, offset + len);
+  }
+
+  private static boolean isValidAbiEncoding(byte[] data, int headerWords, int itemWords) {
+    if (data == null || data.length % WORD_SIZE != 0) {
+      return false;
+    }
+    long tail = subtractExact(data.length, multiplyExact(headerWords, WORD_SIZE));
+    return tail > 0 && tail % multiplyExact(itemWords, WORD_SIZE) == 0;
   }
 
   public abstract static class PrecompiledContract {
@@ -1020,6 +1030,8 @@ public class PrecompiledContracts {
 
     private static final int ENGERYPERSIGN = 1500;
     private static final int MAX_SIZE = 5;
+    private static final int ABI_HEADER_WORDS = 5;
+    private static final int ABI_ITEM_WORDS = 5;
 
 
     @Override
@@ -1031,6 +1043,10 @@ public class PrecompiledContracts {
 
     @Override
     public Pair<Boolean, byte[]> execute(byte[] rawData) {
+      if (VMConfig.allowTvmOsaka()
+          && !isValidAbiEncoding(rawData, ABI_HEADER_WORDS, ABI_ITEM_WORDS)) {
+        return Pair.of(false, EMPTY_BYTE_ARRAY);
+      }
       DataWord[] words = DataWord.parseArray(rawData);
       byte[] address = words[0].toTronAddress();
       int permissionId = words[1].intValueSafe();
@@ -1103,6 +1119,8 @@ public class PrecompiledContracts {
     private static final String workersName = "validate-sign-contract";
     private static final int ENGERYPERSIGN = 1500;
     private static final int MAX_SIZE = 16;
+    private static final int ABI_HEADER_WORDS = 5;
+    private static final int ABI_ITEM_WORDS = 6;
 
     static {
       workers = ExecutorServiceManager.newFixedThreadPool(workersName,
@@ -1130,6 +1148,10 @@ public class PrecompiledContracts {
 
     private Pair<Boolean, byte[]> doExecute(byte[] data)
         throws InterruptedException, ExecutionException {
+      if (VMConfig.allowTvmOsaka()
+          && !isValidAbiEncoding(data, ABI_HEADER_WORDS, ABI_ITEM_WORDS)) {
+        return Pair.of(false, EMPTY_BYTE_ARRAY);
+      }
       DataWord[] words = DataWord.parseArray(data);
       byte[] hash = words[0].getData();
 
