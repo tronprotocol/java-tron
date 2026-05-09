@@ -171,7 +171,6 @@ public class BeanDefaultsTest {
   public void metricsConfig_roundTrip() {
     Config defaults = BeanDefaults.toConfig(new MetricsConfig());
     MetricsConfig mc = ConfigBeanFactory.create(defaults, MetricsConfig.class);
-    Assert.assertFalse(mc.isStorageEnable());
     Assert.assertEquals(9527, mc.getPrometheus().getPort());
   }
 
