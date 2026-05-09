@@ -337,6 +337,7 @@ public class SyncService {
     try {
       tronNetDelegate.validSignature(block);
       tronNetDelegate.processBlock(block, true);
+      peerConnection.setBlockRcvTime(System.currentTimeMillis());
       pbftDataSyncHandler.processPBFTCommitData(block);
     } catch (P2pException p2pException) {
       logger.error("Process sync block {} failed, type: {}",
