@@ -69,14 +69,24 @@ public class SolidityNode implements ApplicationListener<ContextClosedEvent> {
     flag = false; // invoke earlier than @PreDestroy
   }
 
-  @PreDestroy
-  private void shutdown() {
+  public void close() {
     flag = false;
     if (databaseGrpcClient != null) {
       databaseGrpcClient.shutdown();
     }
+    // Interrupt get-block immediately: it may be stuck in blockQueue.put() (full queue,
+    // process-block stopped) or in a gRPC blocking stub call.
+    // Do NOT interrupt process-block: let it finish its current pushVerifiedBlock naturally
+    // (flag=false causes the while-loop to exit within 1-2 s) so the DB flush can complete
+    // cleanly before ApplicationImpl.shutdown() tears down the underlying executor.
+    getBlockExecutor.shutdownNow();
     ExecutorServiceManager.shutdownAndAwaitTermination(getBlockExecutor, getBlockName);
     ExecutorServiceManager.shutdownAndAwaitTermination(processBlockExecutor, processBlockName);
+  }
+
+  @PreDestroy
+  private void shutdown() {
+    close();
   }
 
   public void run() {
