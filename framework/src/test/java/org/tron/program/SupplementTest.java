@@ -16,7 +16,6 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.tron.common.BaseTest;
 import org.tron.common.TestConstants;
-import org.tron.common.config.DbBackupConfig;
 import org.tron.common.entity.PeerInfo;
 import org.tron.common.utils.CompactEncoder;
 import org.tron.common.utils.JsonUtil;
@@ -49,9 +48,6 @@ public class SupplementTest extends BaseTest {
     StorageRowCapsule storageRowCapsule = storageRowStore.get(new byte[]{});
     assertNotNull(storageRowCapsule);
 
-    DbBackupConfig dbBackupConfig = new DbBackupConfig();
-    String p = dbPath + File.separator;
-    dbBackupConfig.initArgs(true, p + "propPath", p + "bak1path/", p + "bak2path/", 1);
 
     Value value = new Value(new byte[]{1});
     value.asBytes();

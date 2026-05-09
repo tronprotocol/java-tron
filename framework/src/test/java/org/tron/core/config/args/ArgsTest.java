@@ -23,11 +23,11 @@ import io.grpc.internal.GrpcUtil;
 import io.grpc.netty.NettyServerBuilder;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.net.InetAddress;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
@@ -39,23 +39,14 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.LocalWitnesses;
 import org.tron.common.utils.PublicMethod;
-import org.tron.core.config.Configuration;
 import org.tron.core.exception.TronError;
 
 @Slf4j
 public class ArgsTest {
 
   private final String privateKey = PublicMethod.getRandomPrivateKey();
-  private String address;
-  private LocalWitnesses localWitnesses;
-
   @Rule
   public ExpectedException thrown = ExpectedException.none();
-
-  @After
-  public void destroy() {
-    Args.clearParam();
-  }
 
   @Test
   public void get() {
@@ -66,11 +57,11 @@ public class ArgsTest {
 
     Args.logConfig();
 
-    localWitnesses = new LocalWitnesses();
+    LocalWitnesses localWitnesses = new LocalWitnesses();
     localWitnesses.setPrivateKeys(Arrays.asList(privateKey));
     localWitnesses.initWitnessAccountAddress(null, true);
     Args.setLocalWitnesses(localWitnesses);
-    address = ByteArray.toHexString(Args.getLocalWitnesses()
+    String address = ByteArray.toHexString(Args.getLocalWitnesses()
         .getWitnessAccountAddress());
     Assert.assertEquals("41", DecodeUtil.addressPreFixString);
     Assert.assertEquals(TestConstants.TEST_CONF, Args.getConfigFilePath());
@@ -408,6 +399,35 @@ public class ArgsTest {
     Args.clearParam();
   }
 
+
+  @Test
+  public void testHttpJsonParseConstraints() {
+    Map<String, String> override = new HashMap<>();
+    override.put("storage.db.directory", "database");
+    Config config = ConfigFactory.parseMap(override)
+        .withFallback(ConfigFactory.defaultReference());
+    Args.applyConfigParams(config);
+
+    Assert.assertEquals(100, Args.getInstance().getMaxNestingDepth());
+    Assert.assertEquals(100_000, Args.getInstance().getMaxTokenCount());
+    Args.clearParam();
+  }
+
+  @Test
+  public void testHttpJsonParseConstraintsApplied() {
+    Map<String, String> override = new HashMap<>();
+    override.put("storage.db.directory", "database");
+    override.put("node.http.maxNestingDepth", "42");
+    override.put("node.http.maxTokenCount", "12345");
+    Config config = ConfigFactory.parseMap(override)
+        .withFallback(ConfigFactory.defaultReference());
+    Args.applyConfigParams(config);
+
+    Assert.assertEquals(42, Args.getInstance().getMaxNestingDepth());
+    Assert.assertEquals(12345, Args.getInstance().getMaxTokenCount());
+    Args.clearParam();
+  }
+
   @Test
   public void testFetchBlockTimeoutInRangeUnchanged() {
     Map<String, String> override = new HashMap<>();
@@ -417,6 +437,54 @@ public class ArgsTest {
         .withFallback(ConfigFactory.defaultReference());
     Args.applyConfigParams(config);
     Assert.assertEquals(500, Args.getInstance().getFetchBlockTimeout());
+    Args.clearParam();
+  }
+
+  // ===========================================================================
+  // event.subscribe gating: PARAMETER.eventPluginConfig and PARAMETER.eventFilter
+  // are only consumed by Manager.startEventSubscribing(), which is gated by
+  // isEventSubscribe() (= ec.isEnable()). When subscribe is disabled, these
+  // objects must not be built — building them would be dead state.
+  // ===========================================================================
+
+  @Test
+  public void testEventConfigDisabledSkipsEpcAndFilter() {
+    Map<String, String> override = new HashMap<>();
+    override.put("storage.db.directory", "database");
+    override.put("event.subscribe.enable", "false");
+    Config config = ConfigFactory.parseMap(override)
+        .withFallback(ConfigFactory.defaultReference());
+    Args.applyConfigParams(config);
+    Assert.assertNull(Args.getInstance().getEventPluginConfig());
+    Assert.assertNull(Args.getInstance().getEventFilter());
+    Args.clearParam();
+  }
+
+  @Test
+  public void testEventConfigEnabledBuildsEpcAndFilter() {
+    Map<String, String> override = new HashMap<>();
+    override.put("storage.db.directory", "database");
+    override.put("event.subscribe.enable", "true");
+    Config config = ConfigFactory.parseMap(override)
+        .withFallback(ConfigFactory.defaultReference());
+    Args.applyConfigParams(config);
+    Assert.assertNotNull(Args.getInstance().getEventPluginConfig());
+    Assert.assertNotNull(Args.getInstance().getEventFilter());
+    Args.clearParam();
+  }
+
+  @Test
+  public void testEventConfigEnabledWithInvalidFromBlockLeavesFilterNull() {
+    Map<String, String> override = new HashMap<>();
+    override.put("storage.db.directory", "database");
+    override.put("event.subscribe.enable", "true");
+    override.put("event.subscribe.filter.fromblock", "not-a-number");
+    Config config = ConfigFactory.parseMap(override)
+        .withFallback(ConfigFactory.defaultReference());
+    Args.applyConfigParams(config);
+    // epc still built; filter rejected
+    Assert.assertNotNull(Args.getInstance().getEventPluginConfig());
+    Assert.assertNull(Args.getInstance().getEventFilter());
     Args.clearParam();
   }
 
@@ -602,5 +670,47 @@ public class ArgsTest {
     ConfigException.BadValue e = Assert.assertThrows(ConfigException.BadValue.class,
         () -> Args.applyConfigParams(config));
     Assert.assertTrue(e.getMessage().contains("No number in size-in-bytes value"));
+  }
+
+  // ===== checkBackupMembers() tests =====
+
+  @Test
+  public void testCheckBackupMembersWithIpPasses() throws Exception {
+    Args.setParam(new String[]{}, TestConstants.TEST_CONF);
+    CommonParameter.getInstance().setBackupMembers(Arrays.asList("1.2.3.4", "10.0.0.1"));
+    Method method = Args.class.getDeclaredMethod("checkBackupMembers");
+    method.setAccessible(true);
+    method.invoke(null);
+  }
+
+  @Test(timeout = 5000)
+  public void testCheckBackupMembersUnresolvableDomainThrows() throws Exception {
+    Args.setParam(new String[]{}, TestConstants.TEST_CONF);
+    CommonParameter.getInstance().setBackupMembers(
+        Arrays.asList("bad.invalid.domain"));
+    Method method = Args.class.getDeclaredMethod("checkBackupMembers");
+    method.setAccessible(true);
+    InetUtil.dnsLookup = (host, ipv4) -> null;
+    try {
+      method.invoke(null);
+      Assert.fail("Expected InvocationTargetException wrapping TronError");
+    } catch (InvocationTargetException ex) {
+      Assert.assertTrue(ex.getCause() instanceof TronError);
+      Assert.assertEquals(TronError.ErrCode.PARAMETER_INIT,
+          ((TronError) ex.getCause()).getErrCode());
+    }
+  }
+
+  @Test(timeout = 5000)
+  public void testCheckBackupMembersResolvableDomainPasses() throws Exception {
+    Args.setParam(new String[]{}, TestConstants.TEST_CONF);
+    CommonParameter.getInstance().setBackupMembers(
+        Arrays.asList("peer.tron.network"));
+    Method method = Args.class.getDeclaredMethod("checkBackupMembers");
+    method.setAccessible(true);
+    InetAddress mockAddr = InetAddress.getByName("5.5.5.5");
+    InetUtil.dnsLookup = (host, ipv4) ->
+        ("peer.tron.network".equals(host) && ipv4) ? mockAddr : null;
+    method.invoke(null);
   }
 }

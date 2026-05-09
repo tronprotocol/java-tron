@@ -28,6 +28,7 @@ public class NodeConfig {
   private String trustNode = "";
   private boolean walletExtensionApi = false;
   private int syncFetchBatchNum = 2000;
+  private int maxPendingBlockSize = 500;
   private int validateSignThreadNum = 0; // 0 = auto (availableProcessors)
   private int maxConnections = 30;
   private int minConnections = 8;
@@ -84,6 +85,7 @@ public class NodeConfig {
   private ChannelConfig channel = new ChannelConfig();
   private int maxTransactionPendingSize = 2000;
   private long pendingTransactionTimeout = 60000;
+  private int maxTrxCacheSize = 50_000;
   private int agreeNodeCount = 0;
   private boolean openHistoryQueryWhenLiteFN = false;
   private boolean unsolidifiedBlockCheck = false;
@@ -202,6 +204,8 @@ public class NodeConfig {
     private boolean solidityEnable = true;
     private int solidityPort = 8091;
     private long maxMessageSize = 4194304;
+    private int maxNestingDepth = 100;
+    private int maxTokenCount = 100_000;
     // PBFT fields — handled manually (same naming issue as CommitteeConfig)
     // Default must match CommonParameter.pBFTHttpEnable = true
     @Getter(lombok.AccessLevel.NONE)
@@ -449,6 +453,14 @@ public class NodeConfig {
       syncFetchBatchNum = 100;
     }
 
+    // maxPendingBlockSize: clamp to [50, 2000]
+    if (maxPendingBlockSize > 2000) {
+      maxPendingBlockSize = 2000;
+    }
+    if (maxPendingBlockSize < 50) {
+      maxPendingBlockSize = 50;
+    }
+
     // blockProducedTimeOut: clamp to [30, 100]
     if (blockProducedTimeOut < 30) {
       blockProducedTimeOut = 30;
@@ -486,6 +498,11 @@ public class NodeConfig {
     // dynamicConfigCheckInterval: minimum 600
     if (dynamicConfig.checkInterval <= 0) {
       dynamicConfig.checkInterval = 600;
+    }
+
+    // maxTrxCacheSize: minimum 2000
+    if (maxTrxCacheSize < 2000) {
+      maxTrxCacheSize = 2000;
     }
   }
 

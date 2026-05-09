@@ -1481,6 +1481,11 @@ public class Wallet {
         .build());
 
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAllowTvmPrague")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowTvmPrague())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
         .setKey("getAllowHardenResourceCalculation")
         .setValue(dbManager.getDynamicPropertiesStore().getAllowHardenResourceCalculation())
         .build());

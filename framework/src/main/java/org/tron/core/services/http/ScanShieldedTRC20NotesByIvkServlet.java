@@ -1,7 +1,5 @@
 package org.tron.core.services.http;
 
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -11,6 +9,8 @@ import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.IvkDecryptTRC20Parameters;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
+import org.tron.json.JSONArray;
+import org.tron.json.JSONObject;
 
 @Component
 @Slf4j(topic = "API")

@@ -7,6 +7,7 @@ import io.netty.channel.ChannelHandlerContext;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import javax.annotation.Resource;
 import org.junit.After;
@@ -95,6 +96,57 @@ public class ResilienceServiceTest extends BaseTest {
         .count();
     Assert.assertEquals(ResilienceService.minBroadcastPeerSize - 1, size1);
     Assert.assertEquals(maxConnection - 1, PeerManager.getPeers().size());
+  }
+
+  @Test
+  public void testDisconnectRandomPreservesRecentBlockRcvTimePeer() {
+    int maxConnection = 30;
+    Assert.assertEquals(0, PeerManager.getPeers().size());
+
+    ApplicationContext ctx = (ApplicationContext) ReflectUtils.getFieldObject(p2pEventHandler,
+        "ctx");
+
+    // Create maxConnection + 1 peers (triggers disconnectRandom)
+    for (int i = 0; i < maxConnection + 1; i++) {
+      InetSocketAddress inetSocketAddress = new InetSocketAddress("202.0.0." + i, 10001);
+      Channel c1 = spy(Channel.class);
+      ReflectUtils.setFieldValue(c1, "inetSocketAddress", inetSocketAddress);
+      ReflectUtils.setFieldValue(c1, "inetAddress", inetSocketAddress.getAddress());
+      ReflectUtils.setFieldValue(c1, "ctx", spy(ChannelHandlerContext.class));
+      Mockito.doNothing().when(c1).send((byte[]) any());
+      PeerManager.add(ctx, c1);
+    }
+
+    // Set first minBroadcastPeerSize peers as broadcast-state
+    List<PeerConnection> peers = PeerManager.getPeers();
+    for (PeerConnection peer : peers.subList(0, ResilienceService.minBroadcastPeerSize)) {
+      peer.setNeedSyncFromPeer(false);
+      peer.setNeedSyncFromUs(false);
+      peer.setLastInteractiveTime(System.currentTimeMillis() - 1000);
+    }
+    for (PeerConnection peer : peers.subList(ResilienceService.minBroadcastPeerSize,
+        maxConnection + 1)) {
+      peer.setNeedSyncFromPeer(false);
+      peer.setNeedSyncFromUs(true);
+    }
+
+    // Give the LAST broadcast peer a very recent blockRcvTime — it must NOT be disconnected
+    PeerConnection bestPeer = peers.stream()
+        .filter(p -> !p.isNeedSyncFromUs() && !p.isNeedSyncFromPeer())
+        .reduce((a, b) -> b)  // last broadcast peer
+        .orElseThrow(() -> new AssertionError("no broadcast peer"));
+    bestPeer.setBlockRcvTime(System.currentTimeMillis());
+
+    InetSocketAddress bestPeerAddress = bestPeer.getChannel().getInetSocketAddress();
+
+    // With minBroadcastPeerSize=3 broadcast peers, getRandomDisconnectionPeers returns
+    // the 1 peer with oldest blockRcvTime (0). bestPeer has most recent time → exempt.
+    ReflectUtils.invokeMethod(service, "disconnectRandom");
+
+    boolean bestPeerStillConnected = PeerManager.getPeers().stream()
+        .anyMatch(p -> p.getChannel().getInetSocketAddress().equals(bestPeerAddress));
+    Assert.assertTrue("Peer with most recent blockRcvTime should not be disconnected",
+        bestPeerStillConnected);
   }
 
   @Test

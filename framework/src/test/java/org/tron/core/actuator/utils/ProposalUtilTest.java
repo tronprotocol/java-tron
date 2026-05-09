@@ -343,6 +343,8 @@ public class ProposalUtilTest extends BaseTest {
 
     testAllowTvmSelfdestructRestrictionProposal();
 
+    testAllowTvmPragueProposal();
+
     testAllowHardenResourceCalculationProposal();
 
     testAllowHardenExchangeCalculationProposal();
@@ -577,6 +579,8 @@ public class ProposalUtilTest extends BaseTest {
     byte[] stats = new byte[27];
     forkUtils.getManager().getDynamicPropertiesStore()
         .statsByVersion(ForkBlockVersionEnum.VERSION_4_8_1.getValue(), stats);
+    forkUtils.getManager().getDynamicPropertiesStore()
+        .statsByVersion(ForkBlockVersionEnum.VERSION_4_8_2.getValue(), stats);
     ContractValidateException e1 = Assert.assertThrows(ContractValidateException.class,
         () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
             ProposalType.ALLOW_HARDEN_RESOURCE_CALCULATION.getCode(), 1));
@@ -613,6 +617,69 @@ public class ProposalUtilTest extends BaseTest {
     Assert.assertEquals(
         "[ALLOW_HARDEN_RESOURCE_CALCULATION] has been valid, no need to propose again",
         e3.getMessage());
+  }
+
+  private void testAllowTvmPragueProposal() {
+    byte[] stats = new byte[27];
+    forkUtils.getManager().getDynamicPropertiesStore()
+        .statsByVersion(ForkBlockVersionEnum.VERSION_4_8_2.getValue(), stats);
+    try {
+      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+          ProposalType.ALLOW_TVM_PRAGUE.getCode(), 1);
+      Assert.fail();
+    } catch (ContractValidateException e) {
+      Assert.assertEquals(
+          "Bad chain parameter id [ALLOW_TVM_PRAGUE]",
+          e.getMessage());
+    }
+
+    long maintenanceTimeInterval = forkUtils.getManager().getDynamicPropertiesStore()
+        .getMaintenanceTimeInterval();
+    long hardForkTime =
+        ((ForkBlockVersionEnum.VERSION_4_8_2.getHardForkTime() - 1) / maintenanceTimeInterval + 1)
+            * maintenanceTimeInterval;
+    forkUtils.getManager().getDynamicPropertiesStore()
+        .saveLatestBlockHeaderTimestamp(hardForkTime + 1);
+
+    stats = new byte[27];
+    Arrays.fill(stats, (byte) 1);
+    forkUtils.getManager().getDynamicPropertiesStore()
+        .statsByVersion(ForkBlockVersionEnum.VERSION_4_8_2.getValue(), stats);
+
+    // Fork passed but Shanghai not yet enacted: prague validator must refuse,
+    // since the deployed bytecode uses PUSH0 (gated on ALLOW_TVM_SHANGHAI).
+    try {
+      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+          ProposalType.ALLOW_TVM_PRAGUE.getCode(), 1);
+      Assert.fail();
+    } catch (ContractValidateException e) {
+      Assert.assertEquals(
+          "[ALLOW_TVM_PRAGUE] requires [ALLOW_TVM_SHANGHAI] to be enacted first",
+          e.getMessage());
+    }
+
+    dynamicPropertiesStore.saveAllowTvmShangHai(1);
+
+    try {
+      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+          ProposalType.ALLOW_TVM_PRAGUE.getCode(), 2);
+      Assert.fail();
+    } catch (ContractValidateException e) {
+      Assert.assertEquals(
+          "This value[ALLOW_TVM_PRAGUE] is only allowed to be 1",
+          e.getMessage());
+    }
+
+    dynamicPropertiesStore.saveAllowTvmPrague(1);
+    try {
+      ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+          ProposalType.ALLOW_TVM_PRAGUE.getCode(), 1);
+      Assert.fail();
+    } catch (ContractValidateException e) {
+      Assert.assertEquals(
+          "[ALLOW_TVM_PRAGUE] has been valid, no need to propose again",
+          e.getMessage());
+    }
   }
 
   private void testAllowHardenExchangeCalculationProposal() {

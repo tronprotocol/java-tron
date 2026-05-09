@@ -1290,12 +1290,7 @@ public class Manager {
         try (PendingManager pm = new PendingManager(this)) {
 
           if (!block.generatedByMyself) {
-            if (!block.calcMerkleRoot().equals(block.getMerkleRoot())) {
-              logger.warn("Num: {}, the merkle root doesn't match, expect is {} , actual is {}.",
-                  block.getNum(), block.getMerkleRoot(), block.calcMerkleRoot());
-              throw new BadBlockException(CALC_MERKLE_ROOT_FAILED,
-                      String.format("The merkle hash is not validated for %d", block.getNum()));
-            }
+            block.validateMerkleRoot();
             consensus.receiveBlock(block);
           }
 
@@ -1374,6 +1369,7 @@ public class Manager {
             } catch (Throwable throwable) {
               logger.error(throwable.getMessage(), throwable);
               khaosDb.removeBlk(block.getBlockId());
+              clearSolidityContractTriggerCache(block.getNum());
               throw throwable;
             }
             long newSolidNum = getDynamicPropertiesStore().getLatestSolidifiedBlockNum();
@@ -1621,6 +1617,7 @@ public class Manager {
     session.reset();
     session.setValue(revokingStore.buildSession());
 
+    HistoryBlockHashUtil.write(this, blockCapsule);
     accountStateCallBack.preExecute(blockCapsule);
 
     if (getDynamicPropertiesStore().getAllowMultiSign() == 1) {
@@ -1850,6 +1847,7 @@ public class Manager {
 
     TransactionRetCapsule transactionRetCapsule =
         new TransactionRetCapsule(block);
+    HistoryBlockHashUtil.write(this, block);
     try {
       merkleContainer.resetCurrentMerkleTree();
       accountStateCallBack.preExecute(block);
@@ -2065,9 +2063,13 @@ public class Manager {
     return chainBaseManager.getNullifierStore();
   }
 
+  public int getCachedTransactionSize() {
+    return pushTransactionQueue.size() + getPendingTransactions().size()
+        + getRePushTransactions().size();
+  }
+
   public boolean isTooManyPending() {
-    return getPendingTransactions().size() + getRePushTransactions().size()
-        > maxTransactionPendingSize;
+    return getCachedTransactionSize() > maxTransactionPendingSize;
   }
 
   private void preValidateTransactionSign(List<TransactionCapsule> txs)
@@ -2104,6 +2106,13 @@ public class Manager {
   public void rePush(TransactionCapsule tx) {
     if (containsTransaction(tx)) {
       return;
+    }
+
+    String ownerAddress = ByteArray.toHexString(tx.getOwnerAddress());
+    synchronized (this) {
+      if (ownerAddressSet.contains(ownerAddress)) {
+        tx.setVerified(false);
+      }
     }
 
     try {
@@ -2378,6 +2387,16 @@ public class Manager {
             getDynamicPropertiesStore().getLatestBlockHeaderHash());
       }
     }
+    clearSolidityContractTriggerCache(getHeadBlockNum());
+  }
+
+  private void clearSolidityContractTriggerCache(long blockNum) {
+    if (eventPluginLoaded
+        && (EventPluginLoader.getInstance().isSolidityEventTriggerEnable()
+        || EventPluginLoader.getInstance().isSolidityLogTriggerEnable())) {
+      Args.getSolidityContractLogTriggerMap().remove(blockNum);
+      Args.getSolidityContractEventTriggerMap().remove(blockNum);
+    }
   }
 
   private void postContractTrigger(final TransactionTrace trace, boolean remove, String blockHash) {
@@ -2397,9 +2416,14 @@ public class Manager {
             .getLatestSolidifiedBlockNum());
         contractTriggerCapsule.setBlockHash(blockHash);
 
-        if (!triggerCapsuleQueue.offer(contractTriggerCapsule)) {
-          logger.info("Too many triggers, contract log trigger lost: {}.",
-              trigger.getTransactionId());
+        // Process synchronously to avoid race condition between async queue and
+        // reOrgContractTrigger cache clearing. Performance is not impacted because
+        // processTrigger() only enqueues events into the plugin's internal queue
+        // without blocking on actual I/O.
+        try {
+          contractTriggerCapsule.processTrigger();
+        } catch (Throwable throwable) {
+          logger.warn("Post contract trigger failed.", throwable);
         }
       }
     }

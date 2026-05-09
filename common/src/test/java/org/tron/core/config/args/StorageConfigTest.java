@@ -28,8 +28,6 @@ public class StorageConfigTest {
     assertEquals("database", sc.getDb().getDirectory());
     assertEquals("index", sc.getIndex().getDirectory());
     assertTrue(sc.isNeedToUpdateAsset());
-    assertFalse(sc.getBackup().isEnable());
-    assertEquals(10000, sc.getBackup().getFrequency());
     assertEquals(7, sc.getDbSettings().getLevelNumber());
     assertEquals(5000, sc.getDbSettings().getMaxOpenFiles());
   }
@@ -44,8 +42,6 @@ public class StorageConfigTest {
     assertEquals("ROCKSDB", sc.getDb().getEngine());
     assertTrue(sc.getDb().isSync());
     assertEquals("mydb", sc.getDb().getDirectory());
-    assertTrue(sc.getBackup().isEnable());
-    assertEquals(5000, sc.getBackup().getFrequency());
     assertEquals(5, sc.getDbSettings().getLevelNumber());
     assertEquals(3000, sc.getDbSettings().getMaxOpenFiles());
   }

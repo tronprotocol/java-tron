@@ -8,7 +8,6 @@ import org.tron.core.ChainBaseManager;
 import org.tron.core.config.args.Args;
 import org.tron.core.consensus.ConsensusService;
 import org.tron.core.db.Manager;
-import org.tron.core.metrics.MetricsUtil;
 import org.tron.core.net.TronNetService;
 import org.tron.core.services.event.EventService;
 
@@ -46,7 +45,6 @@ public class ApplicationImpl implements Application {
     if ((!Args.getInstance().isSolidityNode()) && (!Args.getInstance().isP2pDisable())) {
       tronNetService.start();
     }
-    MetricsUtil.init();
   }
 
   @Override

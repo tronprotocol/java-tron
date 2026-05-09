@@ -78,6 +78,7 @@ public class OperationsTest extends BaseTest {
     VMConfig.initAllowTvmIstanbul(0);
     VMConfig.initAllowTvmLondon(0);
     VMConfig.initAllowTvmCompatibleEvm(0);
+    VMConfig.initAllowTvmOsaka(0);
   }
 
   @Test
@@ -787,6 +788,49 @@ public class OperationsTest extends BaseTest {
     VMConfig.initAllowTvmSelfdestructRestriction(0);
   }
 
+  // TIP-854 outer-frame containment: a CALL to validateMultiSign or
+  // batchValidateSign with malformed calldata must (a) push 0 onto the outer
+  // stack, (b) leave the outer frame free of any propagated exception, and
+  // (c) allow the outer frame to continue executing afterwards.
+  @Test
+  public void testTip854OuterFrameContainment() throws ContractValidateException {
+    byte prePrefixByte = DecodeUtil.addressPreFixByte;
+    DecodeUtil.addressPreFixByte = Constant.ADD_PRE_FIX_BYTE_MAINNET;
+    VMConfig.initAllowTvmOsaka(1);
+    try {
+      for (PrecompiledContracts.PrecompiledContract contract :
+          new PrecompiledContracts.PrecompiledContract[]{
+              new PrecompiledContracts.ValidateMultiSign(),
+              new PrecompiledContracts.BatchValidateSign()}) {
+        invoke = new ProgramInvokeMockImpl();
+        InternalTransaction interTrx = new InternalTransaction(
+            Protocol.Transaction.getDefaultInstance(),
+            InternalTransaction.TrxType.TRX_UNKNOWN_TYPE);
+        program = new Program(new byte[0], new byte[0], invoke, interTrx);
+        // inDataSize=0 ⇒ data=[] ⇒ fewer than H=5 head words ⇒ guard rejects.
+        MessageCall messageCall = new MessageCall(
+            Op.CALL, new DataWord(10000),
+            DataWord.ZERO(), DataWord.ZERO(),
+            DataWord.ZERO(), DataWord.ZERO(),
+            DataWord.ZERO(), DataWord.ZERO(),
+            DataWord.ZERO(), false);
+        program.callToPrecompiledAddress(messageCall, contract);
+
+        Assert.assertNull(contract.getClass().getSimpleName()
+                + ": outer frame must not inherit an exception",
+            program.getResult().getException());
+        Assert.assertEquals(contract.getClass().getSimpleName() + ": inner CALL pushes 0",
+            DataWord.ZERO(), program.getStack().pop());
+        // Outer frame continues: another stack op works without throwing.
+        program.stackPush(new DataWord(1));
+        Assert.assertEquals(new DataWord(1), program.getStack().pop());
+      }
+    } finally {
+      VMConfig.initAllowTvmOsaka(0);
+      DecodeUtil.addressPreFixByte = prePrefixByte;
+    }
+  }
+
   @Test
   public void testOtherOperations() throws ContractValidateException {
     invoke = new ProgramInvokeMockImpl();
@@ -903,6 +947,128 @@ public class OperationsTest extends BaseTest {
     Assert.assertEquals(DataWord.ZERO(), program.getStack().pop());
 
     VMConfig.initAllowTvmShangHai(0);
+  }
+
+  @Test
+  public void testCLZ() throws ContractValidateException {
+    VMConfig.initAllowTvmOsaka(1);
+
+    try {
+      invoke = new ProgramInvokeMockImpl();
+      Protocol.Transaction trx = Protocol.Transaction.getDefaultInstance();
+      InternalTransaction interTrx =
+          new InternalTransaction(trx, InternalTransaction.TrxType.TRX_UNKNOWN_TYPE);
+
+      // CLZ(0) = 256
+      byte[] op = buildCLZBytecode(new byte[32]);
+      program = new Program(op, op, invoke, interTrx);
+      testOperations(program);
+      Assert.assertEquals(new DataWord(256), program.getStack().pop());
+
+      // CLZ(0x80...00) = 0 (highest bit set)
+      byte[] val = new byte[32];
+      val[0] = (byte) 0x80;
+      op = buildCLZBytecode(val);
+      program = new Program(op, op, invoke, interTrx);
+      testOperations(program);
+      Assert.assertEquals(new DataWord(0), program.getStack().pop());
+
+      // CLZ(0xFF...FF) = 0
+      val = new byte[32];
+      for (int i = 0; i < 32; i++) {
+        val[i] = (byte) 0xFF;
+      }
+      op = buildCLZBytecode(val);
+      program = new Program(op, op, invoke, interTrx);
+      testOperations(program);
+      Assert.assertEquals(new DataWord(0), program.getStack().pop());
+
+      // CLZ(0x40...00) = 1
+      val = new byte[32];
+      val[0] = (byte) 0x40;
+      op = buildCLZBytecode(val);
+      program = new Program(op, op, invoke, interTrx);
+      testOperations(program);
+      Assert.assertEquals(new DataWord(1), program.getStack().pop());
+
+      // CLZ(0x7F...FF) = 1
+      val = new byte[32];
+      for (int i = 0; i < 32; i++) {
+        val[i] = (byte) 0xFF;
+      }
+      val[0] = (byte) 0x7F;
+      op = buildCLZBytecode(val);
+      program = new Program(op, op, invoke, interTrx);
+      testOperations(program);
+      Assert.assertEquals(new DataWord(1), program.getStack().pop());
+
+      // CLZ(1) = 255
+      val = new byte[32];
+      val[31] = 0x01;
+      op = buildCLZBytecode(val);
+      program = new Program(op, op, invoke, interTrx);
+      testOperations(program);
+      Assert.assertEquals(new DataWord(255), program.getStack().pop());
+
+      // Vectors with CLZ in [128, 254] — exercise the (byte) cast path in
+      // DataWord.of(byte) where the unsigned int would otherwise become a
+      // negative byte. Read-back goes through new BigInteger(1, data), so the
+      // bit pattern must round-trip as unsigned.
+      // CLZ = 128 (boundary): byte[16] high bit set
+      val = new byte[32];
+      val[16] = (byte) 0x80;
+      op = buildCLZBytecode(val);
+      program = new Program(op, op, invoke, interTrx);
+      testOperations(program);
+      Assert.assertEquals(new DataWord(128), program.getStack().pop());
+
+      // CLZ = 192 (mid-range): byte[24] high bit set
+      val = new byte[32];
+      val[24] = (byte) 0x80;
+      op = buildCLZBytecode(val);
+      program = new Program(op, op, invoke, interTrx);
+      testOperations(program);
+      Assert.assertEquals(new DataWord(192), program.getStack().pop());
+
+      // CLZ = 247 (near-upper): 30 zero bytes, then 0x01
+      val = new byte[32];
+      val[30] = 0x01;
+      op = buildCLZBytecode(val);
+      program = new Program(op, op, invoke, interTrx);
+      testOperations(program);
+      Assert.assertEquals(new DataWord(247), program.getStack().pop());
+
+      // Verify energy cost = LOW_TIER(5) + PUSH32 cost(3) = 8
+      Assert.assertEquals(8, program.getResult().getEnergyUsed());
+    } finally {
+      VMConfig.initAllowTvmOsaka(0);
+    }
+  }
+
+  @Test
+  public void testCLZRejectedWhenOsakaDisabled() throws ContractValidateException {
+    VMConfig.initAllowTvmOsaka(0);
+
+    invoke = new ProgramInvokeMockImpl();
+    Protocol.Transaction trx = Protocol.Transaction.getDefaultInstance();
+    InternalTransaction interTrx =
+        new InternalTransaction(trx, InternalTransaction.TrxType.TRX_UNKNOWN_TYPE);
+
+    byte[] op = buildCLZBytecode(new byte[32]);
+    program = new Program(op, op, invoke, interTrx);
+    testOperations(program);
+
+    Assert.assertTrue(program.getResult().getException()
+        instanceof Program.IllegalOperationException);
+  }
+
+  // Build bytecode: PUSH32 <value> CLZ
+  private byte[] buildCLZBytecode(byte[] value) {
+    byte[] op = new byte[34];
+    op[0] = 0x7f; // PUSH32
+    System.arraycopy(value, 0, op, 1, 32);
+    op[33] = Op.CLZ;
+    return op;
   }
 
   @Test

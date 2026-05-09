@@ -2,6 +2,7 @@ package org.tron.core.vm;
 
 import static org.tron.common.crypto.Hash.sha3;
 import static org.tron.common.utils.ByteUtil.EMPTY_BYTE_ARRAY;
+import static org.tron.common.utils.ByteUtil.numberOfLeadingZeros;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -284,6 +285,17 @@ public class OperationActions {
 
     final DataWord result = word2.shiftRightSigned(word1);
     program.stackPush(result);
+    program.step();
+  }
+
+  public static void clzAction(Program program) {
+    DataWord word = program.stackPop();
+    int clz = numberOfLeadingZeros(word.getData());
+    if (clz == 256) {
+      program.stackPush(new DataWord(256));
+    } else {
+      program.stackPush(DataWord.of((byte) clz));
+    }
     program.step();
   }
 

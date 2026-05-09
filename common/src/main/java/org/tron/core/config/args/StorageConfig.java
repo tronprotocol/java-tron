@@ -25,7 +25,6 @@ public class StorageConfig {
   private TransHistoryConfig transHistory = new TransHistoryConfig();
   private boolean needToUpdateAsset = true;
   private DbSettingsConfig dbSettings = new DbSettingsConfig();
-  private BackupConfig backup = new BackupConfig();
   private BalanceConfig balance = new BalanceConfig();
   private CheckpointConfig checkpoint = new CheckpointConfig();
   private SnapshotConfig snapshot = new SnapshotConfig();
@@ -127,16 +126,6 @@ public class StorageConfig {
         compactThreads = StrictMathWrapper.max(Runtime.getRuntime().availableProcessors(), 1);
       }
     }
-  }
-
-  @Getter
-  @Setter
-  public static class BackupConfig {
-    private boolean enable = false;
-    private String propPath = "prop.properties";
-    private String bak1path = "bak1/database/";
-    private String bak2path = "bak2/database/";
-    private int frequency = 10000;
   }
 
   @Getter

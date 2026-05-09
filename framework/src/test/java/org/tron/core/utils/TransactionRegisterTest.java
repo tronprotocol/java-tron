@@ -9,7 +9,6 @@ import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -36,7 +35,6 @@ public class TransactionRegisterTest {
 
   @Before
   public void init() {
-    Args.getInstance().setActuatorSet(new HashSet<>());
     TransactionRegister.resetForTesting();
   }
 

@@ -3,8 +3,10 @@ package org.tron.core.net.service.effective;
 import static org.tron.common.math.Maths.ceil;
 import static org.tron.common.math.Maths.max;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -44,7 +46,7 @@ public class ResilienceService {
 
   @Autowired
   private ChainBaseManager chainBaseManager;
-
+ 
   public void init() {
     if (Args.getInstance().isOpenFullTcpDisconnect) {
       executor.scheduleWithFixedDelay(() -> {
@@ -86,6 +88,7 @@ public class ResilienceService {
         .collect(Collectors.toList());
 
     if (peers.size() >= minBroadcastPeerSize) {
+      peers = getRandomDisconnectionPeers(peers);
       long now = System.currentTimeMillis();
       Map<Object, Integer> weights = new HashMap<>();
       peers.forEach(peer -> {
@@ -120,6 +123,14 @@ public class ResilienceService {
     }
   }
 
+
+  private List<PeerConnection> getRandomDisconnectionPeers(List<PeerConnection> peers) {
+    Map<PeerConnection, Long> snapshot = new IdentityHashMap<>(peers.size());
+    peers.forEach(p -> snapshot.put(p, p.getBlockRcvTime()));
+    List<PeerConnection> sorted = new ArrayList<>(peers);
+    sorted.sort(Comparator.comparingLong(snapshot::get));
+    return sorted.subList(0, sorted.size() / 2);
+  }
 
   private void disconnectLan() {
     if (!isLanNode()) {
