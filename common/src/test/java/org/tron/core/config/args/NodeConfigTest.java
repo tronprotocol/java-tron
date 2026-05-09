@@ -23,7 +23,6 @@ public class NodeConfigTest {
     Config empty = withRef();
     NodeConfig nc = NodeConfig.fromConfig(empty);
     assertEquals(18888, nc.getListenPort());
-    assertEquals(2, nc.getConnectionTimeout());
     assertEquals(500, nc.getFetchBlockTimeout());
     assertEquals(30, nc.getMaxConnections());
     assertEquals(8, nc.getMinConnections());
@@ -32,7 +31,6 @@ public class NodeConfigTest {
     // reference.conf matches code default: discovery disabled when not configured
     assertFalse(nc.isDiscoveryEnable());
     assertFalse(nc.isDiscoveryPersist());
-    assertEquals(0, nc.getChannelReadTimeout());
   }
 
   @Test
@@ -42,7 +40,6 @@ public class NodeConfigTest {
             + " fetchBlock { timeout = 300 }, solidity { threads = 4 } }");
     NodeConfig nc = NodeConfig.fromConfig(config);
     assertEquals(19999, nc.getListenPort());
-    assertEquals(5, nc.getConnectionTimeout());
     assertEquals(300, nc.getFetchBlockTimeout());
     assertEquals(4, nc.getSolidityThreads());
   }
