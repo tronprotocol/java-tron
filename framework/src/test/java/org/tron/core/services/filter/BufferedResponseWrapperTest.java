@@ -261,4 +261,27 @@ public class BufferedResponseWrapperTest {
     w.commitToResponse();
     assertEquals("hello", mockResp.getContentAsString());
   }
+
+  @Test
+  public void writeViaWriter_noExplicitFlush_commitToResponse_flushesBody() throws IOException {
+    // Regression: PrintWriter(autoFlush=true) does NOT flush on plain print(); bytes can sit
+    // in the OutputStreamWriter encoder until commitToResponse() flushes the writer internally.
+    BufferedResponseWrapper w = new BufferedResponseWrapper(mockResp, 0);
+    w.getWriter().print("hello");
+    w.commitToResponse();
+    assertEquals("hello", mockResp.getContentAsString());
+    assertEquals(5, mockResp.getContentLength());
+  }
+
+  @Test
+  public void writeViaWriter_noExplicitFlush_flushTripsOverflow() throws IOException {
+    // Regression: bytes buffered in the encoder may push the total past maxBytes when
+    // commitToResponse() flushes — overflow must be detected and nothing written to actual.
+    BufferedResponseWrapper w = new BufferedResponseWrapper(mockResp, 3);
+    w.getWriter().print("hello"); // 5 bytes, not yet in ByteArrayOutputStream
+    assertFalse("overflow must not trigger before flush", w.isOverflow());
+    w.commitToResponse();
+    assertTrue("flush inside commitToResponse must trip overflow", w.isOverflow());
+    assertEquals(0, mockResp.getContentAsByteArray().length);
+  }
 }

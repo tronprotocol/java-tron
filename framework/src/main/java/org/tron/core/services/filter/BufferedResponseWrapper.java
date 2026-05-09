@@ -160,6 +160,13 @@ public class BufferedResponseWrapper extends HttpServletResponseWrapper {
       throw new IllegalStateException("commitToResponse() already called");
     }
     committed = true;
+    // Flush the PrintWriter's OutputStreamWriter encoder into our ByteArrayOutputStream.
+    // PrintWriter(autoFlush=true) only auto-flushes on println/printf/format, not print/write,
+    // so bytes can remain buffered in the encoder until an explicit flush.
+    writer.flush();
+    if (overflow) {
+      return;
+    }
     if (contentType != null) {
       actual.setContentType(contentType);
     }

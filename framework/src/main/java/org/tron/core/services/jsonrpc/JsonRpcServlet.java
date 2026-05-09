@@ -140,13 +140,12 @@ public class JsonRpcServlet extends RateLimiterServlet {
       return;
     }
 
+    bufferedResp.commitToResponse();
     if (bufferedResp.isOverflow()) {
       writeJsonRpcError(resp, JsonRpcError.RESPONSE_TOO_LARGE,
           "Response exceeds the limit of " + maxResponseSize + " bytes",
           rootNode.get("id"), false);
-      return;
     }
-    bufferedResp.commitToResponse();
   }
 
   private void handleBatch(HttpServletResponse resp, JsonNode rootNode, int maxResponseSize)
