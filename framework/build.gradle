@@ -114,7 +114,6 @@ def configureTestTask = { Task t ->
     }
     if (isWindows()) {
         t.exclude '**/ShieldedTransferActuatorTest.class'
-        t.exclude '**/BackupDbUtilTest.class'
         t.exclude '**/ManagerTest.class'
         t.exclude 'org/tron/core/zksnark/**'
         t.exclude 'org/tron/common/runtime/vm/PrecompiledContractsVerifyProofTest.class'
@@ -161,7 +160,6 @@ tasks.register('testWithRocksDb', Test) {
     include 'org/tron/core/config/args/ArgsTest.class'
     include 'org/tron/core/db/DBIteratorTest.class'
     include 'org/tron/core/db/TronDatabaseTest.class'
-    include 'org/tron/core/db/backup/BackupDbUtilTest.class'
     include 'org/tron/core/db2/ChainbaseTest.class'
     exclude '**/LevelDbDataSourceImplTest.class'
 }

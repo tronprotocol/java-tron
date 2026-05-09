@@ -85,6 +85,7 @@ public class NodeConfig {
   private ChannelConfig channel = new ChannelConfig();
   private int maxTransactionPendingSize = 2000;
   private long pendingTransactionTimeout = 60000;
+  private int maxTrxCacheSize = 50_000;
   private int agreeNodeCount = 0;
   private boolean openHistoryQueryWhenLiteFN = false;
   private boolean unsolidifiedBlockCheck = false;
@@ -497,6 +498,11 @@ public class NodeConfig {
     // dynamicConfigCheckInterval: minimum 600
     if (dynamicConfig.checkInterval <= 0) {
       dynamicConfig.checkInterval = 600;
+    }
+
+    // maxTrxCacheSize: minimum 2000
+    if (maxTrxCacheSize < 2000) {
+      maxTrxCacheSize = 2000;
     }
   }
 

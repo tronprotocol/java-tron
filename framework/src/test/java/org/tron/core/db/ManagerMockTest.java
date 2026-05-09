@@ -380,7 +380,18 @@ public class ManagerMockTest {
   @Test
   public void testRePush1() {
     Manager dbManager = spy(new Manager());
-    Protocol.Transaction transaction = Protocol.Transaction.newBuilder().build();
+    BalanceContract.TransferContract transferContract =
+        BalanceContract.TransferContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFromUtf8("aaa"))
+            .setToAddress(ByteString.copyFromUtf8("bbb"))
+            .setAmount(1)
+            .build();
+    Protocol.Transaction transaction = Protocol.Transaction.newBuilder()
+        .setRawData(Protocol.Transaction.raw.newBuilder()
+            .addContract(Protocol.Transaction.Contract.newBuilder()
+                .setParameter(Any.pack(transferContract))
+                .setType(Protocol.Transaction.Contract.ContractType.TransferContract)))
+        .build();
     TransactionCapsule trx = new TransactionCapsule(transaction);
     TransactionStore transactionStoreMock = mock(TransactionStore.class);
 

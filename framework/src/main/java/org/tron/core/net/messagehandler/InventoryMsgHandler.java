@@ -1,10 +1,14 @@
 package org.tron.core.net.messagehandler;
 
+import java.util.HashSet;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.config.args.Args;
+import org.tron.core.exception.P2pException;
+import org.tron.core.exception.P2pException.TypeEnum;
 import org.tron.core.net.TronNetDelegate;
 import org.tron.core.net.message.TronMessage;
 import org.tron.core.net.message.adv.InventoryMessage;
@@ -27,7 +31,7 @@ public class InventoryMsgHandler implements TronMsgHandler {
   private TransactionsMsgHandler transactionsMsgHandler;
 
   @Override
-  public void processMessage(PeerConnection peer, TronMessage msg) {
+  public void processMessage(PeerConnection peer, TronMessage msg) throws P2pException {
     InventoryMessage inventoryMessage = (InventoryMessage) msg;
     InventoryType type = inventoryMessage.getInventoryType();
 
@@ -45,10 +49,17 @@ public class InventoryMsgHandler implements TronMsgHandler {
     }
   }
 
-  private boolean check(PeerConnection peer, InventoryMessage inventoryMessage) {
+  private boolean check(PeerConnection peer, InventoryMessage inventoryMessage)
+      throws P2pException {
+
+    List<Sha256Hash> hashList = inventoryMessage.getHashList();
+    if (hashList.size() != new HashSet<>(hashList).size()) {
+      throw new P2pException(TypeEnum.BAD_MESSAGE,
+          "Inventory contains duplicate hashes, size: " + hashList.size());
+    }
 
     InventoryType type = inventoryMessage.getInventoryType();
-    int size = inventoryMessage.getHashList().size();
+    int size = hashList.size();
 
     if (peer.isNeedSyncFromPeer() || peer.isNeedSyncFromUs()) {
       logger.warn("Drop inv: {} size: {} from Peer {}, syncFromUs: {}, syncFromPeer: {}",

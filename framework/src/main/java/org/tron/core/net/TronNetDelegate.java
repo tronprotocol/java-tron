@@ -347,6 +347,11 @@ public class TronNetDelegate {
       throw new P2pException(TypeEnum.BAD_BLOCK,
               "time:" + time + ",block time:" + block.getTimeStamp());
     }
+    try {
+      block.validateMerkleRoot();
+    } catch (BadBlockException e) {
+      throw new P2pException(TypeEnum.BLOCK_MERKLE_ERROR, e.getMessage());
+    }
     validSignature(block);
     return witnessScheduleStore.getActiveWitnesses().contains(block.getWitnessAddress());
   }
@@ -382,6 +387,10 @@ public class TronNetDelegate {
     long headNum = chainBaseManager.getHeadBlockNum();
     long solidNum = chainBaseManager.getSolidBlockId().getNum();
     return headNum - solidNum >= maxUnsolidifiedBlocks;
+  }
+
+  public int getCachedTransactionSize() {
+    return dbManager.getCachedTransactionSize();
   }
 
 }

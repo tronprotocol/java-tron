@@ -2,7 +2,7 @@ package org.tron.common.storage.rocksdb;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
-import static org.tron.common.TestConstants.DBBACKUP_CONF;
+import static org.tron.common.TestConstants.TEST_CONF;
 import static org.tron.common.TestConstants.assumeLevelDbAvailable;
 
 import java.io.File;
@@ -49,7 +49,8 @@ public class RocksDbDataSourceImplTest {
   @BeforeClass
   public static void initDb() throws IOException {
     Args.setParam(new String[]{"--output-directory",
-        temporaryFolder.newFolder().toString()}, DBBACKUP_CONF);
+        temporaryFolder.newFolder().toString()}, TEST_CONF);
+    CommonParameter.getInstance().storage.setDbEngine("ROCKSDB");
   }
 
   @Test

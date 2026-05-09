@@ -42,7 +42,6 @@ import org.tron.common.arch.Arch;
 import org.tron.common.args.Account;
 import org.tron.common.args.GenesisBlock;
 import org.tron.common.args.Witness;
-import org.tron.common.config.DbBackupConfig;
 import org.tron.common.cron.CronExpression;
 import org.tron.common.logsfilter.EventPluginConfig;
 import org.tron.common.logsfilter.FilterQuery;
@@ -198,6 +197,7 @@ public class Args extends CommonParameter {
     PARAMETER.saveInternalTx = vm.isSaveInternalTx();
     PARAMETER.saveFeaturedInternalTx = vm.isSaveFeaturedInternalTx();
     PARAMETER.saveCancelAllUnfreezeV2Details = vm.isSaveCancelAllUnfreezeV2Details();
+    PARAMETER.constantCallTimeoutMs = vm.getConstantCallTimeoutMs();
   }
 
   // Old applyStorageConfig removed — merged into applyStorageConfig()
@@ -226,12 +226,6 @@ public class Args extends CommonParameter {
     PARAMETER.storage.setEstimatedBlockTransactions(sc.getTxCache().getEstimatedTransactions());
     PARAMETER.storage.setTxCacheInitOptimization(sc.getTxCache().isInitOptimization());
     PARAMETER.storage.setMaxFlushCount(sc.getSnapshot().getMaxFlushCount());
-
-    // backup
-    StorageConfig.BackupConfig backup = sc.getBackup();
-    PARAMETER.dbBackupConfig = DbBackupConfig.getInstance()
-        .initArgs(backup.isEnable(), backup.getPropPath(),
-            backup.getBak1path(), backup.getBak2path(), backup.getFrequency());
 
     // RocksDB settings
     StorageConfig.DbSettingsConfig dbs = sc.getDbSettings();
@@ -626,6 +620,7 @@ public class Args extends CommonParameter {
 
     PARAMETER.maxTransactionPendingSize = nc.getMaxTransactionPendingSize();
     PARAMETER.pendingTransactionTimeout = nc.getPendingTransactionTimeout();
+    PARAMETER.maxTrxCacheSize = nc.getMaxTrxCacheSize();
 
     PARAMETER.validContractProtoThreadNum = nc.getValidContractProtoThreads();
 
