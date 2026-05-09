@@ -154,11 +154,24 @@ public class JsonRpcServlet extends RateLimiterServlet {
 
     ArrayNode batchResult = MAPPER.createArrayNode();
     int accumulatedSize = 2; // "[]"
+    boolean overflow = false;
 
     for (int i = 0; i < rootNode.size(); i++) {
+      JsonNode subRequest = rootNode.get(i);
+
+      if (overflow) {
+        // Notifications (no "id") do not get a response even on overflow.
+        if (subRequest.has("id")) {
+          batchResult.add(buildErrorNode(JsonRpcError.RESPONSE_TOO_LARGE,
+              "Response exceeds the limit of " + maxResponseSize + " bytes",
+              subRequest.get("id")));
+        }
+        continue;
+      }
+
       byte[] subBody;
       try {
-        subBody = MAPPER.writeValueAsBytes(rootNode.get(i));
+        subBody = MAPPER.writeValueAsBytes(subRequest);
       } catch (JsonProcessingException e) {
         writeJsonRpcError(resp, JsonRpcError.INTERNAL_ERROR, "Internal error", null, true);
         return;
@@ -178,12 +191,14 @@ public class JsonRpcServlet extends RateLimiterServlet {
         continue; // notification — no response
       }
 
-      // comma separator between array elements
+      // comma(,) separator between array elements
       int addition = responseBytes.length + (!batchResult.isEmpty() ? 1 : 0);
       if (maxResponseSize > 0 && accumulatedSize + addition > maxResponseSize) {
-        writeJsonRpcError(resp, JsonRpcError.RESPONSE_TOO_LARGE,
-            "Response exceeds the limit of " + maxResponseSize + " bytes", null, true);
-        return;
+        overflow = true;
+        batchResult.add(buildErrorNode(JsonRpcError.RESPONSE_TOO_LARGE,
+            "Response exceeds the limit of " + maxResponseSize + " bytes",
+            subRequest.get("id")));
+        continue;
       }
       accumulatedSize += addition;
 
@@ -195,6 +210,13 @@ public class JsonRpcServlet extends RateLimiterServlet {
         return;
       }
       batchResult.add(responseNode);
+    }
+
+    // JSON-RPC 2.0 §6: MUST NOT return an empty Array when there are no response objects.
+    if (batchResult.isEmpty()) {
+      resp.setStatus(HttpServletResponse.SC_OK);
+      resp.setContentLength(0);
+      return;
     }
 
     byte[] finalBytes = MAPPER.writeValueAsBytes(batchResult);
@@ -215,8 +237,7 @@ public class JsonRpcServlet extends RateLimiterServlet {
     return buffer.toByteArray();
   }
 
-  private void writeJsonRpcError(HttpServletResponse resp, JsonRpcError error, String message,
-      JsonNode id, boolean isBatch) throws IOException {
+  private ObjectNode buildErrorNode(JsonRpcError error, String message, JsonNode id) {
     ObjectNode errorObj = MAPPER.createObjectNode();
     errorObj.put("jsonrpc", "2.0");
     ObjectNode errNode = errorObj.putObject("error");
@@ -227,6 +248,12 @@ public class JsonRpcServlet extends RateLimiterServlet {
     } else {
       errorObj.putNull("id");
     }
+    return errorObj;
+  }
+
+  private void writeJsonRpcError(HttpServletResponse resp, JsonRpcError error, String message,
+      JsonNode id, boolean isBatch) throws IOException {
+    ObjectNode errorObj = buildErrorNode(error, message, id);
     byte[] bytes;
     if (isBatch) {
       ArrayNode arr = MAPPER.createArrayNode();

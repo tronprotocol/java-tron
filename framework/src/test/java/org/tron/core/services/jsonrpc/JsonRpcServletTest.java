@@ -133,9 +133,9 @@ public class JsonRpcServletTest {
     sb.append("]");
     MockHttpServletResponse resp = doPost(sb.toString());
     assertEquals(200, resp.getStatus());
-    JsonNode body = MAPPER.readTree(resp.getContentAsByteArray());
-    assertTrue("response must be a JSON array", body.isArray());
-    assertEquals("all notifications produce no response entries", 0, body.size());
+    assertEquals("all-notification batch must return empty body per JSON-RPC 2.0 §6",
+        0, resp.getContentLength());
+    assertEquals("", resp.getContentAsString());
   }
 
   // --- rpcServer.handle exceptions ---
@@ -218,7 +218,14 @@ public class JsonRpcServletTest {
     assertEquals(200, resp.getStatus());
     JsonNode body = MAPPER.readTree(resp.getContentAsString());
     assertTrue("overflow response must be an array", body.isArray());
-    assertEquals(-32003, body.get(0).get("error").get("code").asInt());
+    // Geth-compatible: previous successes are preserved; overflow item and remaining
+    // unexecuted items each get a -32003 error with their original id.
+    assertEquals(3, body.size());
+    assertEquals("ok", body.get(0).get("result").asText());
+    assertEquals(-32003, body.get(1).get("error").get("code").asInt());
+    assertEquals(2, body.get(1).get("id").asInt());
+    assertEquals(-32003, body.get(2).get("error").get("code").asInt());
+    assertEquals(3, body.get(2).get("id").asInt());
     assertEquals("third sub-request must not be executed after overflow", 2, callCount[0]);
   }
 
