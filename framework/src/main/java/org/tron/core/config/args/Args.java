@@ -167,16 +167,19 @@ public class Args extends CommonParameter {
         ? cmd.shellConfFileName : confFileName;
     Config config = Configuration.getByFileName(configFilePath);
 
-    // 2. Config overrides defaults
+    // 2. Config overrides defaults (event config bean is read here but not yet applied)
     applyConfigParams(config);
 
-    // 3. CLI overrides Config (highest priority)
+    // 3. CLI overrides Config (highest priority, including --es → eventSubscribe)
     applyCLIParams(cmd, jc);
 
-    // 4. Apply platform constraints (e.g. ARM64 forces RocksDB)
+    // 4. Apply event config after CLI
+    applyEventConfig(eventConfig);
+
+    // 5. Apply platform constraints (e.g. ARM64 forces RocksDB)
     applyPlatformConstraints();
 
-    // 5. Init witness (depends on CLI witness flag)
+    // 6. Init witness (depends on CLI witness flag)
     initLocalWitnesses(config, cmd);
   }
 
@@ -217,7 +220,7 @@ public class Args extends CommonParameter {
     PARAMETER.storage.setIndexSwitch(
         org.apache.commons.lang3.StringUtils.isNotEmpty(indexSwitch) ? indexSwitch : "on");
     PARAMETER.storage.setTransactionHistorySwitch(sc.getTransHistory().getSwitch());
-    // contractParse is set in applyEventConfig — it belongs to event.subscribe domain
+    // contractParse is set in applyConfigParams alongside event config, not here
     PARAMETER.storage.setCheckpointVersion(sc.getCheckpoint().getVersion());
     PARAMETER.storage.setCheckpointSync(sc.getCheckpoint().isSync());
 
@@ -344,20 +347,20 @@ public class Args extends CommonParameter {
   }
 
   /**
+   * Package-private entry point only for tests
+   */
+  static void applyEventConfig() {
+    applyEventConfig(eventConfig);
+  }
+
+  /**
    * Bridge EventConfig bean values to CommonParameter fields.
    * Converts EventConfig (raw bean) into EventPluginConfig and FilterQuery (business objects).
    */
   private static void applyEventConfig(EventConfig ec) {
-    PARAMETER.eventSubscribe = ec.isEnable();
-    // contractParse belongs to event.subscribe but Storage object holds it
-    PARAMETER.storage.setContractParseSwitch(ec.isContractParse());
-
-    // PARAMETER.eventPluginConfig and PARAMETER.eventFilter are only consumed by
-    // Manager.startEventSubscribing(), which itself is gated by isEventSubscribe()
-    // (= ec.isEnable()) at Manager.java:564. When subscribe is disabled, building
-    // these objects has no observable effect — skip both early so PARAMETER stays
-    // consistent with the runtime intent.
-    if (!ec.isEnable()) {
+    // cmd parameter has higher priority
+    PARAMETER.eventSubscribe = PARAMETER.eventSubscribe || ec.isEnable();
+    if (!PARAMETER.eventSubscribe) {
       return;
     }
 
@@ -770,9 +773,12 @@ public class Args extends CommonParameter {
 
     // node.shutdown — handled in applyNodeConfig
 
-    // Event config: bind from config.conf "event.subscribe" section
+    // Event config: read bean here; applyEventConfig() is called once in setParam()
+    // after applyCLIParams() so that --es is already reflected in eventSubscribe.
     eventConfig = EventConfig.fromConfig(config);
-    applyEventConfig(eventConfig);
+    // contractParse is event-domain but must be set from config before CLI can
+    // override it with --contract-parse-enable (which runs in applyCLIParams).
+    PARAMETER.storage.setContractParseSwitch(eventConfig.isContractParse());
 
     logConfig();
   }

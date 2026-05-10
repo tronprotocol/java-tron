@@ -345,6 +345,21 @@ public class ArgsTest {
   }
 
   /**
+   * Regression: when --es is the sole source of event.subscribe.enable=true
+   * (config has it disabled), eventPluginConfig must be built.
+   * Previously applyEventConfig() ran before applyCLIParams() and returned
+   * early (both flags false), leaving eventPluginConfig=null; Manager then
+   * called EventPluginLoader.start(null) and threw "Failed to load eventPlugin."
+   */
+  @Test
+  public void testCliEsBuildsEventPluginConfig() {
+    Args.setParam(new String[] {"--es"}, TestConstants.TEST_CONF);
+    Assert.assertTrue(Args.getInstance().isEventSubscribe());
+    Assert.assertNotNull(Args.getInstance().getEventPluginConfig());
+    Args.clearParam();
+  }
+
+  /**
    * Verify that config file storage values are applied when no CLI override is present.
    *
    * <p>config-test.conf defines: db.directory = "database", db.engine = "LEVELDB".
@@ -454,6 +469,7 @@ public class ArgsTest {
     Config config = ConfigFactory.parseMap(override)
         .withFallback(ConfigFactory.defaultReference());
     Args.applyConfigParams(config);
+    Args.applyEventConfig();
     Assert.assertNull(Args.getInstance().getEventPluginConfig());
     Assert.assertNull(Args.getInstance().getEventFilter());
     Args.clearParam();
@@ -467,6 +483,7 @@ public class ArgsTest {
     Config config = ConfigFactory.parseMap(override)
         .withFallback(ConfigFactory.defaultReference());
     Args.applyConfigParams(config);
+    Args.applyEventConfig();
     Assert.assertNotNull(Args.getInstance().getEventPluginConfig());
     Assert.assertNotNull(Args.getInstance().getEventFilter());
     Args.clearParam();
@@ -481,6 +498,7 @@ public class ArgsTest {
     Config config = ConfigFactory.parseMap(override)
         .withFallback(ConfigFactory.defaultReference());
     Args.applyConfigParams(config);
+    Args.applyEventConfig();
     // epc still built; filter rejected
     Assert.assertNotNull(Args.getInstance().getEventPluginConfig());
     Assert.assertNull(Args.getInstance().getEventFilter());
