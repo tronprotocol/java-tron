@@ -295,9 +295,6 @@ public class NodeConfigTest {
 
   @Test
   public void testShieldedApiLegacyKeyRespected() {
-    // Regression guard: reference.conf ships `allowShieldedTransactionApi = false`, which
-    // used to make the legacy-key fallback dead code. A user who only set the legacy key
-    // must still have their value honored.
     NodeConfig nc = NodeConfig.fromConfig(
         withRef("node.fullNodeAllowShieldedTransaction = true"));
     assertTrue(nc.isAllowShieldedTransactionApi());
@@ -317,7 +314,8 @@ public class NodeConfigTest {
 
   @Test
   public void testShieldedApiModernKeyTakesPriorityOverLegacy() {
-    // Consistent with maxActiveNodesWithSameIp: legacy key presence wins over modern.
+    // When both keys are set, the modern key wins; the legacy key is only used as fallback
+    // when modern is absent.
     NodeConfig nc = NodeConfig.fromConfig(
         withRef("node {\n"
             + "  allowShieldedTransactionApi = true\n"
