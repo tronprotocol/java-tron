@@ -335,12 +335,31 @@ public class ArgsTest {
   /**
    * Verify that CLI --es overrides event.subscribe.enable from config.
    * config-test.conf defines: event.subscribe.enable = false,
-   * passing --es explicitly sets eventSubscribe = true, overriding config.
+   * passing --es explicitly sets eventSubscribe = true and still builds
+   * EventPluginConfig for backward compatibility with old startup commands.
    */
   @Test
   public void testCliEsOverridesConfig() {
     Args.setParam(new String[] {"--es"}, TestConstants.TEST_CONF);
     Assert.assertTrue(Args.getInstance().isEventSubscribe());
+    Assert.assertNotNull(Args.getInstance().getEventPluginConfig());
+    Assert.assertNotNull(Args.getInstance().getEventFilter());
+    Args.clearParam();
+  }
+
+  /**
+   * Regression: --contract-parse-enable=false must survive the post-CLI
+   * derivative build that --es triggers. The bean default for contractParse
+   * is true, so a naive re-apply of the EventConfig bean would clobber the
+   * CLI override back to true.
+   */
+  @Test
+  public void testCliContractParseDisableSurvivesEsDerivativeBuild() {
+    Args.setParam(
+        new String[] {"--es", "--contract-parse-enable", "false"},
+        TestConstants.TEST_CONF);
+    Assert.assertTrue(Args.getInstance().isEventSubscribe());
+    Assert.assertFalse(Args.getInstance().getStorage().isContractParseSwitch());
     Args.clearParam();
   }
 
@@ -454,6 +473,7 @@ public class ArgsTest {
     Config config = ConfigFactory.parseMap(override)
         .withFallback(ConfigFactory.defaultReference());
     Args.applyConfigParams(config);
+    Args.buildEventDerivatives(Args.getEventConfig());
     Assert.assertNull(Args.getInstance().getEventPluginConfig());
     Assert.assertNull(Args.getInstance().getEventFilter());
     Args.clearParam();
@@ -467,6 +487,7 @@ public class ArgsTest {
     Config config = ConfigFactory.parseMap(override)
         .withFallback(ConfigFactory.defaultReference());
     Args.applyConfigParams(config);
+    Args.buildEventDerivatives(Args.getEventConfig());
     Assert.assertNotNull(Args.getInstance().getEventPluginConfig());
     Assert.assertNotNull(Args.getInstance().getEventFilter());
     Args.clearParam();
@@ -481,6 +502,7 @@ public class ArgsTest {
     Config config = ConfigFactory.parseMap(override)
         .withFallback(ConfigFactory.defaultReference());
     Args.applyConfigParams(config);
+    Args.buildEventDerivatives(Args.getEventConfig());
     // epc still built; filter rejected
     Assert.assertNotNull(Args.getInstance().getEventPluginConfig());
     Assert.assertNull(Args.getInstance().getEventFilter());

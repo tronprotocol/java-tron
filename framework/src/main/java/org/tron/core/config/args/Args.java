@@ -178,6 +178,14 @@ public class Args extends CommonParameter {
 
     // 5. Init witness (depends on CLI witness flag)
     initLocalWitnesses(config, cmd);
+
+    // 6. Build event-subscribe derivatives (EventPluginConfig + FilterQuery)
+    // after CLI/platform overrides have settled the final eventSubscribe flag.
+    // Doing it here — instead of inside applyConfigParams — lets deprecated
+    // --es still produce a valid EventPluginConfig when the config file has
+    // event.subscribe.enable = false.
+    buildEventDerivatives(eventConfig);
+    logConfig();
   }
 
   /**
@@ -217,7 +225,7 @@ public class Args extends CommonParameter {
     PARAMETER.storage.setIndexSwitch(
         org.apache.commons.lang3.StringUtils.isNotEmpty(indexSwitch) ? indexSwitch : "on");
     PARAMETER.storage.setTransactionHistorySwitch(sc.getTransHistory().getSwitch());
-    // contractParse is set in applyEventConfig — it belongs to event.subscribe domain
+    // contractParse is set in applyConfigParams from event.subscribe.contractParse
     PARAMETER.storage.setCheckpointVersion(sc.getCheckpoint().getVersion());
     PARAMETER.storage.setCheckpointSync(sc.getCheckpoint().isSync());
 
@@ -344,20 +352,24 @@ public class Args extends CommonParameter {
   }
 
   /**
-   * Bridge EventConfig bean values to CommonParameter fields.
-   * Converts EventConfig (raw bean) into EventPluginConfig and FilterQuery (business objects).
+   * Build event-subscribe derivative objects (EventPluginConfig + FilterQuery)
+   * from the raw EventConfig bean. Gated by the final PARAMETER.eventSubscribe
+   * value, which has already absorbed any CLI/platform overrides by the time
+   * this is called.
+   *
+   * <p>Atomic values (PARAMETER.eventSubscribe, contractParseSwitch) are bound
+   * earlier in applyConfigParams; they are not re-applied here so that any
+   * CLI overrides such as --contract-parse-enable survive.</p>
    */
-  private static void applyEventConfig(EventConfig ec) {
-    PARAMETER.eventSubscribe = ec.isEnable();
-    // contractParse belongs to event.subscribe but Storage object holds it
-    PARAMETER.storage.setContractParseSwitch(ec.isContractParse());
-
+  @VisibleForTesting
+  static void buildEventDerivatives(EventConfig ec) {
     // PARAMETER.eventPluginConfig and PARAMETER.eventFilter are only consumed by
-    // Manager.startEventSubscribing(), which itself is gated by isEventSubscribe()
-    // (= ec.isEnable()) at Manager.java:564. When subscribe is disabled, building
-    // these objects has no observable effect — skip both early so PARAMETER stays
-    // consistent with the runtime intent.
-    if (!ec.isEnable()) {
+    // Manager.startEventSubscribing(), which itself is gated by isEventSubscribe().
+    // When subscribe is disabled, these objects have no observable effect — null
+    // them out so PARAMETER stays consistent with runtime intent.
+    if (!PARAMETER.isEventSubscribe()) {
+      PARAMETER.eventPluginConfig = null;
+      PARAMETER.eventFilter = null;
       return;
     }
 
@@ -706,6 +718,13 @@ public class Args extends CommonParameter {
 
   /**
    * Apply parameters from config file.
+   *
+   * <p>Binds atomic values only. Event-subscribe derivative objects
+   * (EventPluginConfig + FilterQuery) are NOT built here — {@link #setParam}
+   * builds them via {@link #buildEventDerivatives} after CLI overrides have
+   * settled. Tests that call this method directly and need EPC/FilterQuery
+   * populated must call {@code buildEventDerivatives(getEventConfig())}
+   * themselves.</p>
    */
   public static void applyConfigParams(
       final Config config) {
@@ -770,11 +789,13 @@ public class Args extends CommonParameter {
 
     // node.shutdown — handled in applyNodeConfig
 
-    // Event config: bind from config.conf "event.subscribe" section
+    // Event config: bind atomic values from config.conf "event.subscribe".
+    // Derivative business objects (EventPluginConfig + FilterQuery) are built
+    // later in setParam, after CLI overrides have run.
     eventConfig = EventConfig.fromConfig(config);
-    applyEventConfig(eventConfig);
-
-    logConfig();
+    PARAMETER.eventSubscribe = eventConfig.isEnable();
+    // contractParse belongs to event.subscribe but Storage object holds it.
+    PARAMETER.storage.setContractParseSwitch(eventConfig.isContractParse());
   }
 
   /**
@@ -1001,7 +1022,7 @@ public class Args extends CommonParameter {
 
   // getInetAddress removed — use filterInetSocketAddress
 
-  // getEventPluginConfig removed — logic moved to applyEventConfig()
+  // getEventPluginConfig removed — logic moved to buildEventDerivatives()
 
 
   public static PublishConfig loadDnsPublishConfig(NodeConfig nodeConfig) {
@@ -1109,8 +1130,8 @@ public class Args extends CommonParameter {
     throw new IllegalArgumentException(String.format("Check %s, must not be null or empty", arg));
   }
 
-  // createTriggerConfig removed — logic moved to applyEventConfig()
-  // getEventFilter removed — logic moved to applyEventConfig()
+  // createTriggerConfig removed — logic moved to buildEventDerivatives()
+  // getEventFilter removed — logic moved to buildEventDerivatives()
 
   private static void externalIp(NodeConfig nodeConfig) {
     String externalIp = nodeConfig.getDiscoveryExternalIp();
@@ -1333,4 +1354,3 @@ public class Args extends CommonParameter {
     return optionGroupMap;
   }
 }
-
