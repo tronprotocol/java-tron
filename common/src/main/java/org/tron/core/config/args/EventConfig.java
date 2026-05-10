@@ -43,7 +43,7 @@ public class EventConfig {
   @Getter
   @Setter
   public static class NativeConfig {
-    private boolean useNativeQueue = true;
+    private boolean useNativeQueue = false;
     private int bindport = 5555;
     private int sendqueuelength = 1000;
   }
