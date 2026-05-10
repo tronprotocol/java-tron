@@ -316,7 +316,7 @@ public class NodeConfigTest {
   }
 
   @Test
-  public void testShieldedApiLegacyKeyTakesPriorityOverModern() {
+  public void testShieldedApiModernKeyTakesPriorityOverLegacy() {
     // Consistent with maxActiveNodesWithSameIp: legacy key presence wins over modern.
     NodeConfig nc = NodeConfig.fromConfig(
         withRef("node {\n"
@@ -343,4 +343,41 @@ public class NodeConfigTest {
             + "}"));
     assertFalse(nc.isAllowShieldedTransactionApi());
   }
+
+  // ----- discovery.external.ip: null / "null" sentinel handling -----
+
+  @Test
+  public void testExternalIpAbsentDefaultsToEmpty() {
+    NodeConfig nc = NodeConfig.fromConfig(withRef());
+    assertEquals("", nc.getDiscoveryExternalIp());
+  }
+
+  @Test
+  public void testExternalIpHoconNullTreatedAsEmpty() {
+    // HOCON `null` makes hasPath() return false; getString falls back to "".
+    NodeConfig nc = NodeConfig.fromConfig(
+        withRef("node.discovery.external.ip = null"));
+    assertEquals("", nc.getDiscoveryExternalIp());
+  }
+
+  @Test
+  public void testExternalIpStringNullSentinelConvertedToEmpty() {
+    // String literal "null" (case-insensitive) is an explicit sentinel that must map to "".
+    NodeConfig nc = NodeConfig.fromConfig(
+        withRef("node.discovery.external.ip = \"null\""));
+    assertEquals("", nc.getDiscoveryExternalIp());
+
+    nc = NodeConfig.fromConfig(
+        withRef("node.discovery.external.ip = \"NULL\""));
+    assertEquals("", nc.getDiscoveryExternalIp());
+  }
+
+  @Test
+  public void testExternalIpValidValuePreserved() {
+    NodeConfig nc = NodeConfig.fromConfig(
+        withRef("node.discovery.external.ip = \"1.2.3.4\""));
+    assertEquals("1.2.3.4", nc.getDiscoveryExternalIp());
+  }
+
+
 }
