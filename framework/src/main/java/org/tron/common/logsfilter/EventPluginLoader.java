@@ -3,6 +3,7 @@ package org.tron.common.logsfilter;
 import com.beust.jcommander.internal.Sets;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Strings;
 import java.io.File;
 import java.util.HashSet;
 import java.util.List;
@@ -14,8 +15,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
 import org.pf4j.CompoundPluginDescriptorFinder;
 import org.pf4j.DefaultPluginManager;
+import org.pf4j.DefaultVersionManager;
 import org.pf4j.ManifestPluginDescriptorFinder;
 import org.pf4j.PluginManager;
+import org.pf4j.VersionManager;
 import org.springframework.util.StringUtils;
 import org.tron.common.logsfilter.nativequeue.NativeMessageQueue;
 import org.tron.common.logsfilter.trigger.BlockLogTrigger;
@@ -28,6 +31,16 @@ import org.tron.common.logsfilter.trigger.Trigger;
 
 @Slf4j
 public class EventPluginLoader {
+
+  /**
+   * Minimum event-plugin Plugin-Version compatible with this node. Bumped to 3.0.0 to
+   * reject pre-fastjson-removal builds whose worker threads would fail with
+   * NoClassDefFoundError on com.alibaba.fastjson at runtime. The previous event-plugin
+   * release is 2.2.0, so 3.0.0 is the first version that ships the Jackson replacement.
+   */
+  static final String MIN_PLUGIN_VERSION = "3.0.0";
+
+  private static final VersionManager VERSION_MANAGER = new DefaultVersionManager();
 
   private static EventPluginLoader instance;
 
@@ -457,6 +470,10 @@ public class EventPluginLoader {
       return false;
     }
 
+    if (!isPluginVersionSupported(pluginManager, pluginId)) {
+      return false;
+    }
+
     pluginManager.startPlugins();
 
     eventListeners = pluginManager.getExtensions(IPluginEventListener.class);
@@ -469,6 +486,21 @@ public class EventPluginLoader {
     logger.info("'{}' loaded", path);
 
     return true;
+  }
+
+  static boolean isPluginVersionSupported(PluginManager pm, String pluginId) {
+    String pluginVersion = pm.getPlugin(pluginId).getDescriptor().getVersion();
+    if (Strings.isNullOrEmpty(pluginVersion)) {
+      return false;
+    }
+    boolean isSupported = VERSION_MANAGER.compareVersions(pluginVersion, MIN_PLUGIN_VERSION) >= 0;
+
+    if (!isSupported) {
+      logger.error(
+          "event-plugin '{}' version {} is older than required {}, please upgrade event-plugin",
+          pluginId, pluginVersion, MIN_PLUGIN_VERSION);
+    }
+    return isSupported;
   }
 
   public void stopPlugin() {
