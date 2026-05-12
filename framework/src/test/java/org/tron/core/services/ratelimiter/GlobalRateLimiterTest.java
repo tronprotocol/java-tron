@@ -1,5 +1,10 @@
 package org.tron.core.services.ratelimiter;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.util.concurrent.RateLimiter;
@@ -9,6 +14,9 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.InOrder;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 import org.tron.common.TestConstants;
 import org.tron.core.config.args.Args;
 
@@ -133,6 +141,104 @@ public class GlobalRateLimiterTest {
 
     Assert.assertTrue(GlobalRateLimiter.tryAcquire(runtimeDataFor("2.2.2.2")));
     Assert.assertFalse(GlobalRateLimiter.tryAcquire(runtimeDataFor("2.2.2.2")));
+  }
+
+  /**
+   * acquire() must drain the IP limiter before the global limiter, mirroring
+   * tryAcquire(). A reversed order would let one chatty IP consume global
+   * quota even when its own per-IP budget is exhausted.
+   */
+  @Test
+  public void testAcquireOrdersIpBeforeGlobal() throws Exception {
+    RateLimiter globalMock = Mockito.mock(RateLimiter.class);
+    RateLimiter ipMock = Mockito.mock(RateLimiter.class);
+    injectRateLimiter(globalMock);
+    Cache<String, RateLimiter> seeded = CacheBuilder.newBuilder()
+        .maximumSize(10).expireAfterWrite(1, TimeUnit.HOURS).build();
+    seeded.put("10.0.0.1", ipMock);
+    injectCache(seeded);
+
+    Assert.assertTrue(GlobalRateLimiter.acquire(runtimeDataFor("10.0.0.1")));
+
+    InOrder inOrder = Mockito.inOrder(ipMock, globalMock);
+    inOrder.verify(ipMock).acquire();
+    inOrder.verify(globalMock).acquire();
+  }
+
+  /**
+   * If the IP limiter cannot be created (cache loader throws), acquire()
+   * returns false without consuming a global token — same fail-closed
+   * behaviour as tryAcquire().
+   */
+  @Test
+  public void testAcquireDoesNotConsumeGlobalWhenIpLoaderFails() throws Exception {
+    RateLimiter globalMock = Mockito.mock(RateLimiter.class);
+    injectRateLimiter(globalMock);
+    // RateLimiter.create(-1.0) throws IllegalArgumentException, so the
+    // cache loader fails and loadIpLimiter() returns null.
+    injectIpQps(-1.0);
+    injectCache(CacheBuilder.newBuilder()
+        .maximumSize(10).expireAfterWrite(1, TimeUnit.HOURS).build());
+
+    Assert.assertFalse(GlobalRateLimiter.acquire(runtimeDataFor("10.0.0.1")));
+
+    Mockito.verify(globalMock, never()).acquire();
+  }
+
+  /**
+   * acquirePermit dispatches based on rate.limiter.apiNonBlocking:
+   * switch on → only tryAcquire runs; switch off → only acquire runs.
+   * These tests pin that contract on the static dispatcher; the matching
+   * default-method contract for IRateLimiter is covered in AdaptorTest.
+   */
+  @Test
+  public void testAcquirePermitDispatchesToTryAcquireWhenNonBlocking() throws Exception {
+    Args.getInstance().setRateLimiterApiNonBlocking(true);
+    RuntimeData rd = runtimeDataFor("10.0.0.1");
+
+    try (MockedStatic<GlobalRateLimiter> mock = mockStatic(GlobalRateLimiter.class)) {
+      mock.when(() -> GlobalRateLimiter.acquirePermit(any())).thenCallRealMethod();
+      mock.when(() -> GlobalRateLimiter.tryAcquire(any())).thenReturn(true);
+
+      Assert.assertTrue(GlobalRateLimiter.acquirePermit(rd));
+
+      mock.verify(() -> GlobalRateLimiter.tryAcquire(any()), times(1));
+      mock.verify(() -> GlobalRateLimiter.acquire(any()), never());
+    }
+  }
+
+  @Test
+  public void testAcquirePermitDispatchesToAcquireWhenBlocking() throws Exception {
+    Args.getInstance().setRateLimiterApiNonBlocking(false);
+    RuntimeData rd = runtimeDataFor("10.0.0.1");
+
+    try (MockedStatic<GlobalRateLimiter> mock = mockStatic(GlobalRateLimiter.class)) {
+      mock.when(() -> GlobalRateLimiter.acquirePermit(any())).thenCallRealMethod();
+      mock.when(() -> GlobalRateLimiter.acquire(any())).thenReturn(true);
+
+      Assert.assertTrue(GlobalRateLimiter.acquirePermit(rd));
+
+      mock.verify(() -> GlobalRateLimiter.acquire(any()), times(1));
+      mock.verify(() -> GlobalRateLimiter.tryAcquire(any()), never());
+    }
+  }
+
+  private static void injectRateLimiter(RateLimiter rl) throws Exception {
+    Field f = GlobalRateLimiter.class.getDeclaredField("rateLimiter");
+    f.setAccessible(true);
+    f.set(null, rl);
+  }
+
+  private static void injectCache(Cache<String, RateLimiter> cache) throws Exception {
+    Field f = GlobalRateLimiter.class.getDeclaredField("cache");
+    f.setAccessible(true);
+    f.set(null, cache);
+  }
+
+  private static void injectIpQps(double qps) throws Exception {
+    Field f = GlobalRateLimiter.class.getDeclaredField("IP_QPS");
+    f.setAccessible(true);
+    f.set(null, qps);
   }
 
   @AfterClass

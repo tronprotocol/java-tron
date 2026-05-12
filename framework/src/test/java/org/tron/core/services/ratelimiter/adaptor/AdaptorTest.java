@@ -4,18 +4,79 @@ import com.google.common.cache.Cache;
 import com.google.common.util.concurrent.RateLimiter;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
+import org.tron.common.TestConstants;
 import org.tron.common.es.ExecutorServiceManager;
 import org.tron.common.utils.ReflectUtils;
+import org.tron.core.config.args.Args;
+import org.tron.core.services.ratelimiter.RuntimeData;
 import org.tron.core.services.ratelimiter.adapter.GlobalPreemptibleAdapter;
 import org.tron.core.services.ratelimiter.adapter.IPQPSRateLimiterAdapter;
+import org.tron.core.services.ratelimiter.adapter.IRateLimiter;
 import org.tron.core.services.ratelimiter.adapter.QpsRateLimiterAdapter;
 import org.tron.core.services.ratelimiter.strategy.GlobalPreemptibleStrategy;
 import org.tron.core.services.ratelimiter.strategy.IPQpsStrategy;
 import org.tron.core.services.ratelimiter.strategy.QpsStrategy;
 
 public class AdaptorTest {
+
+  @Before
+  public void setUp() {
+    Args.setParam(new String[0], TestConstants.TEST_CONF);
+  }
+
+  @AfterClass
+  public static void tearDown() {
+    Args.clearParam();
+  }
+
+  /**
+   * IRateLimiter.acquirePermit is a default method that dispatches based on
+   * rate.limiter.apiNonBlocking. The two cases below pin that contract: with
+   * the switch on, only tryAcquire is invoked; with the switch off, only
+   * acquire is invoked. Breaking either direction is a behavioural regression.
+   */
+  @Test
+  public void testAcquirePermitDispatchesToTryAcquireWhenNonBlocking() {
+    Args.getInstance().setRateLimiterApiNonBlocking(true);
+    CountingRateLimiter limiter = new CountingRateLimiter();
+
+    Assert.assertTrue(limiter.acquirePermit(null));
+
+    Assert.assertEquals(1, limiter.tryAcquireCount);
+    Assert.assertEquals(0, limiter.acquireCount);
+  }
+
+  @Test
+  public void testAcquirePermitDispatchesToAcquireWhenBlocking() {
+    Args.getInstance().setRateLimiterApiNonBlocking(false);
+    CountingRateLimiter limiter = new CountingRateLimiter();
+
+    Assert.assertTrue(limiter.acquirePermit(null));
+
+    Assert.assertEquals(0, limiter.tryAcquireCount);
+    Assert.assertEquals(1, limiter.acquireCount);
+  }
+
+  private static final class CountingRateLimiter implements IRateLimiter {
+    int tryAcquireCount;
+    int acquireCount;
+
+    @Override
+    public boolean tryAcquire(RuntimeData data) {
+      tryAcquireCount++;
+      return true;
+    }
+
+    @Override
+    public boolean acquire(RuntimeData data) {
+      acquireCount++;
+      return true;
+    }
+  }
 
   @Test
   public void testStrategy() {

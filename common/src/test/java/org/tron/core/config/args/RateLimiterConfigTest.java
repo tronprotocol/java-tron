@@ -1,6 +1,7 @@
 package org.tron.core.config.args;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import com.typesafe.config.Config;
@@ -29,6 +30,7 @@ public class RateLimiterConfigTest {
     assertEquals(1.0, rl.getP2p().getDisconnect(), 0.001);
     assertTrue(rl.getHttp().isEmpty());
     assertTrue(rl.getRpc().isEmpty());
+    assertFalse(rl.isApiNonBlocking());
   }
 
   @Test
@@ -40,7 +42,8 @@ public class RateLimiterConfigTest {
             + " http = [{ component = TestServlet, strategy = QpsRateLimiterAdapter,"
             + "   paramString = \"qps=10\" }],"
             + " rpc = [{ component = TestRpc, strategy = GlobalPreemptibleAdapter,"
-            + "   paramString = \"permit=1\" }]"
+            + "   paramString = \"permit=1\" }],"
+            + " apiNonBlocking = true"
             + "}");
     RateLimiterConfig rl = RateLimiterConfig.fromConfig(config);
     assertEquals(100, rl.getGlobal().getQps());
@@ -50,5 +53,6 @@ public class RateLimiterConfigTest {
     assertEquals("TestServlet", rl.getHttp().get(0).getComponent());
     assertEquals(1, rl.getRpc().size());
     assertEquals("TestRpc", rl.getRpc().get(0).getComponent());
+    assertTrue(rl.isApiNonBlocking());
   }
 }

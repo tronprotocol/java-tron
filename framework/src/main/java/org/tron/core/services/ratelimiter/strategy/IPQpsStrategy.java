@@ -22,17 +22,29 @@ public class IPQpsStrategy extends Strategy {
   }
 
   public boolean tryAcquire(String ip) {
-    RateLimiter limiter;
+    RateLimiter limiter = loadLimiter(ip);
+    return limiter != null && limiter.tryAcquire();
+  }
+
+  public boolean acquire(String ip) {
+    RateLimiter limiter = loadLimiter(ip);
+    if (limiter == null) {
+      return false;
+    }
+    limiter.acquire();
+    return true;
+  }
+
+  private RateLimiter loadLimiter(String ip) {
     try {
       // cache.get is atomic: only one loader executes per key under concurrent requests,
       // preventing multiple RateLimiter instances from being created for the same IP.
-      limiter = ipLimiter.get(ip, this::newRateLimiter);
+      return ipLimiter.get(ip, this::newRateLimiter);
     } catch (Exception e) {
       logger.warn("Failed to load IP rate limiter for {}, denying request: {}",
           ip, e.getMessage());
-      return false;
+      return null;
     }
-    return limiter.tryAcquire();
   }
 
   private RateLimiter newRateLimiter() {

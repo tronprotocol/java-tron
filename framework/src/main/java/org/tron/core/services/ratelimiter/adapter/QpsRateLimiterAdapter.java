@@ -16,4 +16,9 @@ public class QpsRateLimiterAdapter implements IRateLimiter {
     return strategy.tryAcquire();
   }
 
+  @Override
+  public boolean acquire(RuntimeData data) {
+    return strategy.acquire();
+  }
+
 }

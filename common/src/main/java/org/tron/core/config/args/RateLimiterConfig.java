@@ -21,6 +21,7 @@ public class RateLimiterConfig {
   private P2pRateLimitConfig p2p = new P2pRateLimitConfig();
   private List<HttpRateLimitItem> http = new ArrayList<>();
   private List<RpcRateLimitItem> rpc = new ArrayList<>();
+  private boolean apiNonBlocking = false;
 
   @Getter
   @Setter

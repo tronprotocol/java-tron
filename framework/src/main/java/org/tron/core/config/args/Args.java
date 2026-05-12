@@ -328,6 +328,7 @@ public class Args extends CommonParameter {
     PARAMETER.rateLimiterSyncBlockChain = rl.getP2p().getSyncBlockChain();
     PARAMETER.rateLimiterFetchInvData = rl.getP2p().getFetchInvData();
     PARAMETER.rateLimiterDisconnect = rl.getP2p().getDisconnect();
+    PARAMETER.rateLimiterApiNonBlocking = rl.isApiNonBlocking();
 
     // HTTP/RPC rate limiter items: convert bean lists to business objects
     RateLimiterInitialization initialization = new RateLimiterInitialization();
