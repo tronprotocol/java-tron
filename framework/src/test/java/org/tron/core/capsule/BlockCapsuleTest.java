@@ -1,5 +1,8 @@
 package org.tron.core.capsule;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import com.google.protobuf.ByteString;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -21,6 +24,10 @@ import org.tron.core.Wallet;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.BadBlockException;
 import org.tron.core.exception.BadItemException;
+import org.tron.core.exception.ValidateSignatureException;
+import org.tron.core.store.AccountStore;
+import org.tron.core.store.DynamicPropertiesStore;
+import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.contract.BalanceContract.TransferContract;
 
@@ -194,6 +201,88 @@ public class BlockCapsuleTest {
       threadList.get(i).join();
     }
     Assert.assertTrue(true);
+  }
+
+  // ---- witness signature size enforcement tests ----
+
+  private BlockCapsule signedBlock() {
+    String key = PublicMethod.getRandomPrivateKey();
+    LocalWitnesses lw = new LocalWitnesses();
+    lw.setPrivateKeys(Arrays.asList(key));
+    lw.initWitnessAccountAddress(null, true);
+    Args.setLocalWitnesses(lw);
+
+    BlockCapsule block = new BlockCapsule(2,
+        Sha256Hash.wrap(ByteString.copyFrom(ByteArray.fromHexString(
+            "9938a342238077182498b464ac0292229938a342238077182498b464ac029222"))),
+        9999L,
+        ByteString.copyFrom(lw.getWitnessAccountAddress()));
+    block.sign(ByteArray.fromHexString(key));
+    return block;
+  }
+
+  private BlockCapsule withPaddedWitnessSig(BlockCapsule src) {
+    byte[] original = src.getInstance().getBlockHeader()
+        .getWitnessSignature().toByteArray();
+    // append one extra zero byte
+    byte[] padded = Arrays.copyOf(original, original.length + 1);
+    Block modified = src.getInstance().toBuilder()
+        .setBlockHeader(src.getInstance().getBlockHeader().toBuilder()
+            .setWitnessSignature(ByteString.copyFrom(padded)))
+        .build();
+    return new BlockCapsule(modified);
+  }
+
+  @Test
+  public void witnessSignaturePaddedOsakaRejected() throws Exception {
+    BlockCapsule paddedBlock = withPaddedWitnessSig(signedBlock());
+    Assert.assertEquals(66,
+        paddedBlock.getInstance().getBlockHeader().getWitnessSignature().size());
+
+    DynamicPropertiesStore dps = mock(DynamicPropertiesStore.class);
+    when(dps.getAllowTvmOsaka()).thenReturn(1L);
+    AccountStore accountStore = mock(AccountStore.class);
+
+    try {
+      paddedBlock.validateSignature(dps, accountStore);
+      Assert.fail("Expected ValidateSignatureException for padded witness sig post-Osaka");
+    } catch (ValidateSignatureException e) {
+      Assert.assertTrue("Error must mention the sig size",
+          e.getMessage().contains("66"));
+    }
+  }
+
+  @Test
+  public void witnessSignaturePaddedPreOsaka() throws Exception {
+    BlockCapsule paddedBlock = withPaddedWitnessSig(signedBlock());
+
+    DynamicPropertiesStore dps = mock(DynamicPropertiesStore.class);
+    when(dps.getAllowTvmOsaka()).thenReturn(0L);
+    when(dps.getAllowMultiSign()).thenReturn(0L);
+    AccountStore accountStore = mock(AccountStore.class);
+
+    try {
+      paddedBlock.validateSignature(dps, accountStore);
+      // valid result is fine
+    } catch (ValidateSignatureException e) {
+      Assert.assertFalse("Size check must not fire before Osaka",
+          e.getMessage().contains("Witness signature size"));
+    }
+  }
+
+  @Test(expected = ValidateSignatureException.class)
+  public void witnessSignatureShortRejected() throws Exception {
+    Block modified = blockCapsule0.getInstance().toBuilder()
+        .setBlockHeader(blockCapsule0.getInstance().getBlockHeader().toBuilder()
+            .setWitnessSignature(ByteString.copyFrom(new byte[64])))
+        .build();
+    BlockCapsule shortBlock = new BlockCapsule(modified);
+
+    DynamicPropertiesStore dps = mock(DynamicPropertiesStore.class);
+    when(dps.getAllowTvmOsaka()).thenReturn(0L);
+    AccountStore accountStore = mock(AccountStore.class);
+
+    shortBlock.validateSignature(dps, accountStore);
   }
 
 }

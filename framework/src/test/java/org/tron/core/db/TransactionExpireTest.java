@@ -184,4 +184,77 @@ public class TransactionExpireTest extends BaseMethodTest {
     Assert.assertEquals(TransactionApprovedList.Result.response_code.COMPUTE_ADDRESS_ERROR,
         transactionApprovedList.getResult().getCode());
   }
+
+  @Test
+  public void testApprovedListPaddedSigOsakaRejected() {
+    initLocalWitness();
+    byte[] address = Args.getLocalWitnesses().getWitnessAccountAddress();
+    ByteString addressByte = ByteString.copyFrom(address);
+
+    AccountCapsule accountCapsule =
+        new AccountCapsule(Protocol.Account.newBuilder().setAddress(addressByte).build());
+    accountCapsule.setBalance(1000_000_000L);
+    dbManager.getChainBaseManager().getAccountStore()
+        .put(accountCapsule.createDbKey(), accountCapsule);
+
+    TransferContract transferContract = TransferContract.newBuilder()
+        .setAmount(1L)
+        .setOwnerAddress(addressByte)
+        .setToAddress(ByteString.copyFrom(ByteArray.fromHexString(
+            Wallet.getAddressPreFixString() + "A389132D6639FBDA4FBC8B659264E6B7C90DB086")))
+        .build();
+    TransactionCapsule capsule =
+        new TransactionCapsule(transferContract, ContractType.TransferContract);
+    capsule.sign(ByteArray.fromHexString(Args.getLocalWitnesses().getPrivateKey()));
+
+    // Replace the valid 65-byte sig with a 66-byte padded one
+    byte[] sig65 = capsule.getInstance().getSignature(0).toByteArray();
+    byte[] sig66 = Arrays.copyOf(sig65, 66); // extra zero byte appended
+    Transaction tx = capsule.getInstance().toBuilder()
+        .clearSignature().addSignature(ByteString.copyFrom(sig66)).build();
+
+    dbManager.getDynamicPropertiesStore().saveAllowTvmOsaka(1);
+    try {
+      TransactionApprovedList result = wallet.getTransactionApprovedList(tx);
+      Assert.assertEquals("Padded sig must be rejected post-Osaka",
+          TransactionApprovedList.Result.response_code.SIGNATURE_FORMAT_ERROR,
+          result.getResult().getCode());
+      Assert.assertTrue(result.getResult().getMessage().contains("66"));
+    } finally {
+      dbManager.getDynamicPropertiesStore().saveAllowTvmOsaka(0);
+    }
+  }
+
+  @Test
+  public void testApprovedListPaddedSigPreOsaka() {
+    initLocalWitness();
+    byte[] address = Args.getLocalWitnesses().getWitnessAccountAddress();
+    ByteString addressByte = ByteString.copyFrom(address);
+    AccountCapsule accountCapsule =
+        new AccountCapsule(Protocol.Account.newBuilder().setAddress(addressByte).build());
+    accountCapsule.setBalance(1000_000_000L);
+    dbManager.getChainBaseManager().getAccountStore()
+        .put(accountCapsule.createDbKey(), accountCapsule);
+
+    TransferContract transferContract = TransferContract.newBuilder()
+        .setAmount(1L)
+        .setOwnerAddress(addressByte)
+        .setToAddress(ByteString.copyFrom(ByteArray.fromHexString(
+            Wallet.getAddressPreFixString() + "A389132D6639FBDA4FBC8B659264E6B7C90DB086")))
+        .build();
+    TransactionCapsule capsule =
+        new TransactionCapsule(transferContract, ContractType.TransferContract);
+    capsule.sign(ByteArray.fromHexString(Args.getLocalWitnesses().getPrivateKey()));
+
+    byte[] sig65 = capsule.getInstance().getSignature(0).toByteArray();
+    byte[] sig66 = Arrays.copyOf(sig65, 66);
+    Transaction tx = capsule.getInstance().toBuilder()
+        .clearSignature().addSignature(ByteString.copyFrom(sig66)).build();
+
+    dbManager.getDynamicPropertiesStore().saveAllowTvmOsaka(0);
+    TransactionApprovedList result = wallet.getTransactionApprovedList(tx);
+    Assert.assertNotEquals("Padded sig must not be rejected by size check before Osaka",
+        TransactionApprovedList.Result.response_code.SIGNATURE_FORMAT_ERROR,
+        result.getResult().getCode());
+  }
 }

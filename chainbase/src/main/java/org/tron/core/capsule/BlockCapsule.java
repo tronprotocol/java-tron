@@ -185,9 +185,14 @@ public class BlockCapsule implements ProtoCapsule<Block> {
   public boolean validateSignature(DynamicPropertiesStore dynamicPropertiesStore,
       AccountStore accountStore) throws ValidateSignatureException {
     try {
+      ByteString witnessSig = block.getBlockHeader().getWitnessSignature();
+      if (witnessSig.size() < 65 || (dynamicPropertiesStore.getAllowTvmOsaka() == 1
+          && witnessSig.size() != 65)) {
+        throw new ValidateSignatureException(
+            "Witness signature size is " + witnessSig.size());
+      }
       byte[] sigAddress = SignUtils.signatureToAddress(getRawHash().getBytes(),
-          TransactionCapsule.getBase64FromByteString(
-              block.getBlockHeader().getWitnessSignature()),
+          TransactionCapsule.getBase64FromByteString(witnessSig),
           CommonParameter.getInstance().isECKeyCryptoEngine());
       byte[] witnessAccountAddress = block.getBlockHeader().getRawData().getWitnessAddress()
           .toByteArray();

@@ -644,7 +644,8 @@ public class Wallet {
           byte[] hash = Sha256Hash.hash(CommonParameter
               .getInstance().isECKeyCryptoEngine(), trx.getRawData().toByteArray());
           for (ByteString sig : trx.getSignatureList()) {
-            if (sig.size() < 65) {
+            if (sig.size() < 65 || (chainBaseManager.getDynamicPropertiesStore()
+                .getAllowTvmOsaka() == 1 && sig.size() != 65)) {
               throw new SignatureFormatException(
                   "Signature size is " + sig.size());
             }

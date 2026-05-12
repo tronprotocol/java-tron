@@ -9,6 +9,7 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import com.google.protobuf.ByteString;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -23,7 +24,11 @@ import org.tron.common.TestConstants;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.Wallet;
 import org.tron.core.config.args.Args;
+import org.tron.core.exception.SignatureFormatException;
 import org.tron.protos.Protocol.AccountType;
+import org.tron.protos.Protocol.Key;
+import org.tron.protos.Protocol.Permission;
+import org.tron.protos.Protocol.Permission.PermissionType;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result;
@@ -132,6 +137,82 @@ public class TransactionCapsuleTest extends BaseTest {
       appender.stop();
       capsuleLogger.detachAppender(appender);
       capsuleLogger.setLevel(originalLevel);
+    }
+  }
+
+  // ---- checkWeight signature-size enforcement tests ----
+
+  private static final byte[] DUMMY_HASH = new byte[32];
+
+  private static Permission singleKeyPermission() {
+    return Permission.newBuilder()
+        .setType(PermissionType.Owner)
+        .setThreshold(1)
+        .addKeys(Key.newBuilder()
+            .setAddress(ByteString.copyFrom(new byte[21]))
+            .setWeight(1))
+        .build();
+  }
+
+  @Test(expected = SignatureFormatException.class)
+  public void checkWeightShortSigRejected() throws Exception {
+    List<ByteString> sigs = Collections.singletonList(ByteString.copyFrom(new byte[64]));
+    TransactionCapsule.checkWeight(singleKeyPermission(), sigs, DUMMY_HASH, null, null);
+  }
+
+  @Test(expected = SignatureFormatException.class)
+  public void checkWeightPaddedSigOsakaRejected() throws Exception {
+    dbManager.getDynamicPropertiesStore().saveAllowTvmOsaka(1);
+    try {
+      List<ByteString> sigs = Collections.singletonList(ByteString.copyFrom(new byte[66]));
+      TransactionCapsule.checkWeight(singleKeyPermission(), sigs, DUMMY_HASH, null,
+          dbManager.getDynamicPropertiesStore());
+    } finally {
+      dbManager.getDynamicPropertiesStore().saveAllowTvmOsaka(0);
+    }
+  }
+
+  @Test
+  public void checkWeightPaddedSigPreOsaka() {
+    dbManager.getDynamicPropertiesStore().saveAllowTvmOsaka(0);
+    List<ByteString> sigs = Collections.singletonList(ByteString.copyFrom(new byte[66]));
+    try {
+      TransactionCapsule.checkWeight(singleKeyPermission(), sigs, DUMMY_HASH, null,
+          dbManager.getDynamicPropertiesStore());
+    } catch (SignatureFormatException e) {
+      Assert.fail("Padded sig must not be rejected by size check before Osaka: " + e.getMessage());
+    } catch (Exception e) {
+      // SignatureException / PermissionException after the size check — expected
+    }
+  }
+
+  @Test
+  public void checkWeightPaddedSigNullDs() {
+    List<ByteString> sigs = Collections.singletonList(ByteString.copyFrom(new byte[66]));
+    try {
+      TransactionCapsule.checkWeight(singleKeyPermission(), sigs, DUMMY_HASH, null, null);
+    } catch (SignatureFormatException e) {
+      Assert.fail("Padded sig must not be rejected when DS is null: " + e.getMessage());
+    } catch (Exception e) {
+      // other exceptions after the size check — expected
+    }
+  }
+
+  @Test
+  public void checkWeightNormalSigOsaka() {
+    dbManager.getDynamicPropertiesStore().saveAllowTvmOsaka(1);
+    try {
+      byte[] validSizeSig = new byte[65];
+      validSizeSig[64] = 27; // v = 27 (valid range)
+      List<ByteString> sigs = Collections.singletonList(ByteString.copyFrom(validSizeSig));
+      TransactionCapsule.checkWeight(singleKeyPermission(), sigs, DUMMY_HASH, null,
+          dbManager.getDynamicPropertiesStore());
+    } catch (SignatureFormatException e) {
+      Assert.fail("65-byte sig must not be rejected by size check post-Osaka: " + e.getMessage());
+    } catch (Exception e) {
+      // crypto / permission error after size check — expected
+    } finally {
+      dbManager.getDynamicPropertiesStore().saveAllowTvmOsaka(0);
     }
   }
 }

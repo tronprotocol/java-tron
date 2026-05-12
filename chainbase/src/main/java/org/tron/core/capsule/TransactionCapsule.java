@@ -230,7 +230,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
    *  @see ForkController#init(org.tron.core.ChainBaseManager)
    */
   public static long checkWeight(Permission permission, List<ByteString> sigs, byte[] hash,
-      List<ByteString> approveList)
+      List<ByteString> approveList, DynamicPropertiesStore dynamicPropertiesStore)
       throws SignatureException, PermissionException, SignatureFormatException {
     long currentWeight = 0;
     if (sigs.size() > permission.getKeysCount()) {
@@ -240,7 +240,8 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     }
     HashMap addMap = new HashMap();
     for (ByteString sig : sigs) {
-      if (sig.size() < 65) {
+      if (sig.size() < 65 || (dynamicPropertiesStore != null
+          && dynamicPropertiesStore.getAllowTvmOsaka() == 1 && sig.size() != 65)) {
         throw new SignatureFormatException(
             "Signature size is " + sig.size());
       }
@@ -487,7 +488,8 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
       throw new PermissionException("permission isn't exit");
     }
     checkPermission(permissionId, permission, contract);
-    long weight = checkWeight(permission, transaction.getSignatureList(), hash, null);
+    long weight = checkWeight(permission, transaction.getSignatureList(), hash, null,
+        dynamicPropertiesStore);
     if (weight >= permission.getThreshold()) {
       return true;
     }
@@ -604,7 +606,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     if (this.transaction.getSignatureCount() > 0) {
       checkWeight(permission, this.transaction.getSignatureList(),
           this.getTransactionId().getBytes(),
-          approveList);
+          approveList, null);
       if (approveList.contains(ByteString.copyFrom(address))) {
         throw new PermissionException(encode58Check(address) + " had signed!");
       }
@@ -620,8 +622,9 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
         .signHash(getTransactionId().getBytes())));
     this.transaction = this.transaction.toBuilder().addSignature(sig).build();
   }
-  
-  private static void checkPermission(int permissionId, Permission permission, Transaction.Contract contract) throws PermissionException {
+
+  private static void checkPermission(int permissionId, Permission permission,
+      Transaction.Contract contract) throws PermissionException {
     if (permissionId != 0) {
       if (permission.getType() != PermissionType.Active) {
         throw new PermissionException("Permission type is error");
@@ -703,7 +706,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
         }
       }
       isVerified = true;
-    }  
+    }
     return true;
   }
 

@@ -225,7 +225,7 @@ public class TransactionUtil {
           List<ByteString> approveList = new ArrayList<>();
           long currentWeight = TransactionCapsule.checkWeight(permission, trx.getSignatureList(),
               Sha256Hash.hash(CommonParameter.getInstance()
-                  .isECKeyCryptoEngine(), trx.getRawData().toByteArray()), approveList);
+                  .isECKeyCryptoEngine(), trx.getRawData().toByteArray()), approveList, null);
           tswBuilder.addAllApprovedList(approveList);
           tswBuilder.setCurrentWeight(currentWeight);
         }
