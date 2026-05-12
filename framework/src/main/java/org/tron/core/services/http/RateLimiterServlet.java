@@ -107,9 +107,10 @@ public abstract class RateLimiterServlet extends HttpServlet {
     IRateLimiter rateLimiter = container.get(KEY_PREFIX_HTTP, getClass().getSimpleName());
 
     // Check per-endpoint first to avoid consuming global IP/QPS quota for requests
-    // that would be rejected by the per-endpoint limiter anyway.
-    boolean perEndpointAcquired = rateLimiter == null || rateLimiter.tryAcquire(runtimeData);
-    boolean acquireResource = perEndpointAcquired && GlobalRateLimiter.tryAcquire(runtimeData);
+    // that would be rejected by the per-endpoint limiter anyway. acquirePermit()
+    // chooses blocking or non-blocking semantics based on rate.limiter.apiNonBlocking.
+    boolean perEndpointAcquired = rateLimiter == null || rateLimiter.acquirePermit(runtimeData);
+    boolean acquireResource = perEndpointAcquired && GlobalRateLimiter.acquirePermit(runtimeData);
 
     String contextPath = req.getContextPath();
     String url = Strings.isNullOrEmpty(req.getServletPath())

@@ -411,6 +411,9 @@ public class CommonParameter {
   @Setter
   public double rateLimiterDisconnect; // clearParam: 1.0
   @Getter
+  @Setter
+  public boolean rateLimiterApiNonBlocking = false;
+  @Getter
   public RocksDbSettings rocksDBCustomSettings;
   @Getter
   public GenesisBlock genesisBlock;

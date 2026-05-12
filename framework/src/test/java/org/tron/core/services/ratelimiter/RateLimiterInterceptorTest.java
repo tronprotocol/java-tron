@@ -95,13 +95,13 @@ public class RateLimiterInterceptorTest {
   @Test
   public void testPerEndpointRejectedDoesNotConsumeGlobalQuota() {
     IPreemptibleRateLimiter perEndpoint = Mockito.mock(IPreemptibleRateLimiter.class);
-    when(perEndpoint.tryAcquire(any(RuntimeData.class))).thenReturn(false);
+    when(perEndpoint.acquirePermit(any(RuntimeData.class))).thenReturn(false);
     container.add(KEY_RPC, METHOD_NAME, perEndpoint);
 
     try (MockedStatic<GlobalRateLimiter> globalMock = mockStatic(GlobalRateLimiter.class)) {
       interceptor.interceptCall(call, headers, next);
 
-      globalMock.verify(() -> GlobalRateLimiter.tryAcquire(any()), never());
+      globalMock.verify(() -> GlobalRateLimiter.acquirePermit(any()), never());
       verify(perEndpoint, never()).release();
     }
   }
@@ -112,13 +112,13 @@ public class RateLimiterInterceptorTest {
   @Test
   public void testNonPreemptiblePerEndpointRejectedDoesNotConsumeGlobal() {
     IRateLimiter perEndpoint = Mockito.mock(IRateLimiter.class);
-    when(perEndpoint.tryAcquire(any(RuntimeData.class))).thenReturn(false);
+    when(perEndpoint.acquirePermit(any(RuntimeData.class))).thenReturn(false);
     container.add(KEY_RPC, METHOD_NAME, perEndpoint);
 
     try (MockedStatic<GlobalRateLimiter> globalMock = mockStatic(GlobalRateLimiter.class)) {
       interceptor.interceptCall(call, headers, next);
 
-      globalMock.verify(() -> GlobalRateLimiter.tryAcquire(any()), never());
+      globalMock.verify(() -> GlobalRateLimiter.acquirePermit(any()), never());
     }
   }
 
@@ -129,11 +129,11 @@ public class RateLimiterInterceptorTest {
   @Test
   public void testGlobalRejectedReleasesPreemptiblePermit() {
     IPreemptibleRateLimiter perEndpoint = Mockito.mock(IPreemptibleRateLimiter.class);
-    when(perEndpoint.tryAcquire(any(RuntimeData.class))).thenReturn(true);
+    when(perEndpoint.acquirePermit(any(RuntimeData.class))).thenReturn(true);
     container.add(KEY_RPC, METHOD_NAME, perEndpoint);
 
     try (MockedStatic<GlobalRateLimiter> globalMock = mockStatic(GlobalRateLimiter.class)) {
-      globalMock.when(() -> GlobalRateLimiter.tryAcquire(any())).thenReturn(false);
+      globalMock.when(() -> GlobalRateLimiter.acquirePermit(any())).thenReturn(false);
 
       interceptor.interceptCall(call, headers, next);
 
@@ -153,12 +153,12 @@ public class RateLimiterInterceptorTest {
   @Test
   public void testStartCallExceptionReleasesPermitAndClosesCall() throws Exception {
     IPreemptibleRateLimiter perEndpoint = Mockito.mock(IPreemptibleRateLimiter.class);
-    when(perEndpoint.tryAcquire(any(RuntimeData.class))).thenReturn(true);
+    when(perEndpoint.acquirePermit(any(RuntimeData.class))).thenReturn(true);
     container.add(KEY_RPC, METHOD_NAME, perEndpoint);
     when(next.startCall(any(), any())).thenThrow(new RuntimeException("handler crash"));
 
     try (MockedStatic<GlobalRateLimiter> globalMock = mockStatic(GlobalRateLimiter.class)) {
-      globalMock.when(() -> GlobalRateLimiter.tryAcquire(any())).thenReturn(true);
+      globalMock.when(() -> GlobalRateLimiter.acquirePermit(any())).thenReturn(true);
 
       interceptor.interceptCall(call, headers, next);
 
@@ -176,14 +176,14 @@ public class RateLimiterInterceptorTest {
   @Test
   public void testListenerReleasesPermitOnComplete() throws Exception {
     IPreemptibleRateLimiter perEndpoint = Mockito.mock(IPreemptibleRateLimiter.class);
-    when(perEndpoint.tryAcquire(any(RuntimeData.class))).thenReturn(true);
+    when(perEndpoint.acquirePermit(any(RuntimeData.class))).thenReturn(true);
     container.add(KEY_RPC, METHOD_NAME, perEndpoint);
 
     ServerCall.Listener<Object> delegate = Mockito.mock(ServerCall.Listener.class);
     when(next.startCall(any(), any())).thenReturn(delegate);
 
     try (MockedStatic<GlobalRateLimiter> globalMock = mockStatic(GlobalRateLimiter.class)) {
-      globalMock.when(() -> GlobalRateLimiter.tryAcquire(any())).thenReturn(true);
+      globalMock.when(() -> GlobalRateLimiter.acquirePermit(any())).thenReturn(true);
 
       ServerCall.Listener<Object> listener = interceptor.interceptCall(call, headers, next);
       listener.onComplete();
@@ -199,14 +199,14 @@ public class RateLimiterInterceptorTest {
   @Test
   public void testListenerReleasesPermitOnCancel() throws Exception {
     IPreemptibleRateLimiter perEndpoint = Mockito.mock(IPreemptibleRateLimiter.class);
-    when(perEndpoint.tryAcquire(any(RuntimeData.class))).thenReturn(true);
+    when(perEndpoint.acquirePermit(any(RuntimeData.class))).thenReturn(true);
     container.add(KEY_RPC, METHOD_NAME, perEndpoint);
 
     ServerCall.Listener<Object> delegate = Mockito.mock(ServerCall.Listener.class);
     when(next.startCall(any(), any())).thenReturn(delegate);
 
     try (MockedStatic<GlobalRateLimiter> globalMock = mockStatic(GlobalRateLimiter.class)) {
-      globalMock.when(() -> GlobalRateLimiter.tryAcquire(any())).thenReturn(true);
+      globalMock.when(() -> GlobalRateLimiter.acquirePermit(any())).thenReturn(true);
 
       ServerCall.Listener<Object> listener = interceptor.interceptCall(call, headers, next);
       listener.onCancel();
@@ -225,11 +225,11 @@ public class RateLimiterInterceptorTest {
     when(next.startCall(any(), any())).thenReturn(delegate);
 
     try (MockedStatic<GlobalRateLimiter> globalMock = mockStatic(GlobalRateLimiter.class)) {
-      globalMock.when(() -> GlobalRateLimiter.tryAcquire(any())).thenReturn(true);
+      globalMock.when(() -> GlobalRateLimiter.acquirePermit(any())).thenReturn(true);
 
       interceptor.interceptCall(call, headers, next);
 
-      globalMock.verify(() -> GlobalRateLimiter.tryAcquire(any()), times(1));
+      globalMock.verify(() -> GlobalRateLimiter.acquirePermit(any()), times(1));
     }
   }
 }
