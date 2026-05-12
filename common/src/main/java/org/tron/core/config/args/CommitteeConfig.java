@@ -2,6 +2,7 @@ package org.tron.core.config.args;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigBeanFactory;
+import com.typesafe.config.ConfigValue;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -35,29 +36,10 @@ public class CommitteeConfig {
   private long allowProtoFilterNum = 0;
   private long allowAccountStateRoot = 0;
   private long changedDelegation = 0;
-  // NON-STANDARD NAMING: "allowPBFT" and "pBFTExpireNum" in config.conf contain
-  // consecutive uppercase letters ("PBFT"), which violates JavaBean naming convention.
-  // ConfigBeanFactory derives config keys from setter names using JavaBean rules:
-  //   setPBFTExpireNum -> property "PBFTExpireNum" (capital P, per JavaBean spec)
-  //   but config.conf uses "pBFTExpireNum" (lowercase p) -> mismatch -> binding fails.
-  //
-  // These two fields are excluded from auto-binding and handled manually in fromConfig().
-  // TODO: Rename config keys to standard camelCase (allowPbft, pbftExpireNum) when
-  //       PBFT feature is enabled and a breaking config change is acceptable.
-  @Getter(lombok.AccessLevel.NONE)
-  @Setter(lombok.AccessLevel.NONE)
-  private long allowPBFT = 0;
-  @Getter(lombok.AccessLevel.NONE)
-  @Setter(lombok.AccessLevel.NONE)
-  private long pBFTExpireNum = 20;
-
-  // Only getters are exposed. No public setters — ConfigBeanFactory scans public
-  // setters via reflection and would derive key "PBFTExpireNum" / "AllowPBFT"
-  // (JavaBean uppercase rule), which does not match config keys "pBFTExpireNum"
-  // / "allowPBFT" and would throw. Values are assigned to fields directly in
-  // fromConfig() below.
-  public long getAllowPBFT() { return allowPBFT; }
-  public long getPBFTExpireNum() { return pBFTExpireNum; }
+  // "allowPBFT" / "pBFTExpireNum" in config.conf use non-standard casing; they are
+  // remapped to standard camelCase by normalizeNonStandardKeys() before binding.
+  private long allowPbft = 0;
+  private long pbftExpireNum = 20;
   private long allowTvmFreeze = 0;
   private long allowTvmVote = 0;
   private long allowTvmLondon = 0;
@@ -85,30 +67,28 @@ public class CommitteeConfig {
   private long dynamicEnergyMaxFactor = 0;
 
   // proposalExpireTime is NOT a committee field — it's in block.* and handled by BlockConfig
-
   // Defaults come from reference.conf (loaded globally via Configuration.java)
-
-  /**
-   * Create CommitteeConfig from the "committee" section of the application config.
-   *
-   * Note: allowPBFT and pBFTExpireNum have non-standard JavaBean naming (consecutive
-   * uppercase letters) which causes ConfigBeanFactory key mismatch. These two fields
-   * are excluded from automatic binding and handled manually after.
-   */
-  private static final String PBFT_EXPIRE_NUM_KEY = "pBFTExpireNum";
-  private static final String ALLOW_PBFT_KEY = "allowPBFT";
-
   public static CommitteeConfig fromConfig(Config config) {
-    Config section = config.getConfig("committee");
-
+    Config section = normalizeNonStandardKeys(config.getConfig("committee"));
     CommitteeConfig cc = ConfigBeanFactory.create(section, CommitteeConfig.class);
-    // Ensure the manually-named fields get the right values from the original keys
-    cc.allowPBFT = section.hasPath(ALLOW_PBFT_KEY) ? section.getLong(ALLOW_PBFT_KEY) : 0;
-    cc.pBFTExpireNum = section.hasPath(PBFT_EXPIRE_NUM_KEY)
-        ? section.getLong(PBFT_EXPIRE_NUM_KEY) : 20;
-
     cc.postProcess();
     return cc;
+  }
+
+  // "allowPBFT" and "pBFTExpireNum" use non-standard casing that JavaBean Introspector
+  // cannot derive correctly (setPBFTExpireNum -> property "PBFTExpireNum", not "pBFTExpireNum").
+  // Remap them to standard camelCase keys so ConfigBeanFactory binds them normally.
+  // Config is immutable; withValue() returns a new object.
+  private static Config normalizeNonStandardKeys(Config section) {
+    if (section.hasPath("allowPBFT")) {
+      ConfigValue v = section.getValue("allowPBFT");
+      section = section.withValue("allowPbft", v);
+    }
+    if (section.hasPath("pBFTExpireNum")) {
+      ConfigValue v = section.getValue("pBFTExpireNum");
+      section = section.withValue("pbftExpireNum", v);
+    }
+    return section;
   }
 
   private void postProcess() {

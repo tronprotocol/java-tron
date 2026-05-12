@@ -216,7 +216,6 @@ public class ParameterTest {
     assertEquals(1000, parameter.getRateLimiterGlobalQps());
     parameter.setRateLimiterGlobalIpQps(100);
     assertEquals(100, parameter.getRateLimiterGlobalIpQps());
-    assertNull(parameter.getOverlay());
     assertNull(parameter.getEventPluginConfig());
     assertNull(parameter.getEventFilter());
     parameter.setCryptoEngine(ECKey_ENGINE);

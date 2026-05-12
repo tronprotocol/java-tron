@@ -201,10 +201,6 @@ public class Storage {
     dbOptions.maxOpenFiles(pc.getMaxOpenFiles());
   }
 
-
-  /**
-   * Set propertyMap of Storage object from Config via StorageConfig bean.
-   */
   /**
    * Set propertyMap from StorageConfig bean list. No Config parameter needed.
    */

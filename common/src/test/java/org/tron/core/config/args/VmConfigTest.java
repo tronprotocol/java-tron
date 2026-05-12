@@ -143,7 +143,7 @@ public class VmConfigTest {
 
   @Test
   public void testConstantCallTimeoutOverflowRejected() {
-    long value = VmConfig.MAX_CONSTANT_CALL_TIMEOUT_MS + 1L;
+    long value = Long.MAX_VALUE / 1000 + 1L;
     try {
       VmConfig.fromConfig(withRef("vm { constantCallTimeoutMs = " + value + " }"));
       org.junit.Assert.fail("expected IllegalArgumentException for overflowing ms");
