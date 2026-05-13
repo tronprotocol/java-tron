@@ -610,10 +610,7 @@ public class Args extends CommonParameter {
     PARAMETER.maxHttpConnectNumber = nc.getMaxHttpConnectNumber();
     PARAMETER.netMaxTrxPerSecond = nc.getNetMaxTrxPerSecond();
 
-    if (StringUtils.isEmpty(PARAMETER.trustNodeAddr)) {
-      String trustNode = nc.getTrustNode();
-      PARAMETER.trustNodeAddr = StringUtils.isEmpty(trustNode) ? null : trustNode;
-    }
+    PARAMETER.trustNodeAddr = nc.getTrustNode();
 
     PARAMETER.validateSignThreadNum = nc.getValidateSignThreadNum();
     PARAMETER.walletExtensionApi = nc.isWalletExtensionApi();
