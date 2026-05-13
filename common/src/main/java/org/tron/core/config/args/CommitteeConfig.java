@@ -82,11 +82,11 @@ public class CommitteeConfig {
   private static Config normalizeNonStandardKeys(Config section) {
     if (section.hasPath("allowPBFT")) {
       ConfigValue v = section.getValue("allowPBFT");
-      section = section.withValue("allowPbft", v);
+      section = section.withValue("allowPbft", v); // rename allowPBFT -> allowPbft
     }
     if (section.hasPath("pBFTExpireNum")) {
       ConfigValue v = section.getValue("pBFTExpireNum");
-      section = section.withValue("pbftExpireNum", v);
+      section = section.withValue("pbftExpireNum", v); // rename pBFTExpireNum -> pbftExpireNum
     }
     return section;
   }
@@ -101,35 +101,61 @@ public class CommitteeConfig {
     }
 
     // clamp allowDelegateOptimization to 0-1
-    if (allowDelegateOptimization < 0) { allowDelegateOptimization = 0; }
-    if (allowDelegateOptimization > 1) { allowDelegateOptimization = 1; }
+    if (allowDelegateOptimization < 0) {
+      allowDelegateOptimization = 0;
+    }
+    if (allowDelegateOptimization > 1) {
+      allowDelegateOptimization = 1;
+    }
 
     // clamp allowDynamicEnergy to 0-1
-    if (allowDynamicEnergy < 0) { allowDynamicEnergy = 0; }
-    if (allowDynamicEnergy > 1) { allowDynamicEnergy = 1; }
+    if (allowDynamicEnergy < 0) {
+      allowDynamicEnergy = 0;
+    }
+    if (allowDynamicEnergy > 1) {
+      allowDynamicEnergy = 1;
+    }
 
     // clamp dynamicEnergyThreshold to 0-100_000_000_000_000_000
-    if (dynamicEnergyThreshold < 0) { dynamicEnergyThreshold = 0; }
+    if (dynamicEnergyThreshold < 0) {
+      dynamicEnergyThreshold = 0;
+    }
     if (dynamicEnergyThreshold > 100_000_000_000_000_000L) {
       dynamicEnergyThreshold = 100_000_000_000_000_000L;
     }
 
     // clamp dynamicEnergyIncreaseFactor to 0-10_000
-    if (dynamicEnergyIncreaseFactor < 0) { dynamicEnergyIncreaseFactor = 0; }
-    if (dynamicEnergyIncreaseFactor > 10_000L) { dynamicEnergyIncreaseFactor = 10_000L; }
+    if (dynamicEnergyIncreaseFactor < 0) {
+      dynamicEnergyIncreaseFactor = 0;
+    }
+    if (dynamicEnergyIncreaseFactor > 10_000L) {
+      dynamicEnergyIncreaseFactor = 10_000L;
+    }
 
     // clamp dynamicEnergyMaxFactor to 0-100_000
-    if (dynamicEnergyMaxFactor < 0) { dynamicEnergyMaxFactor = 0; }
-    if (dynamicEnergyMaxFactor > 100_000L) { dynamicEnergyMaxFactor = 100_000L; }
+    if (dynamicEnergyMaxFactor < 0) {
+      dynamicEnergyMaxFactor = 0;
+    }
+    if (dynamicEnergyMaxFactor > 100_000L) {
+      dynamicEnergyMaxFactor = 100_000L;
+    }
 
     // clamp allowNewReward to 0-1 (must run BEFORE the cross-field check below,
     // which depends on allowNewReward != 1)
-    if (allowNewReward < 0) { allowNewReward = 0; }
-    if (allowNewReward > 1) { allowNewReward = 1; }
+    if (allowNewReward < 0) {
+      allowNewReward = 0;
+    }
+    if (allowNewReward > 1) {
+      allowNewReward = 1;
+    }
 
     // clamp memoFee to 0-1_000_000_000
-    if (memoFee < 0) { memoFee = 0; }
-    if (memoFee > 1_000_000_000L) { memoFee = 1_000_000_000L; }
+    if (memoFee < 0) {
+      memoFee = 0;
+    }
+    if (memoFee > 1_000_000_000L) {
+      memoFee = 1_000_000_000L;
+    }
 
     // cross-field: allowOldRewardOpt requires at least one reward/vote flag
     if (allowOldRewardOpt == 1 && allowNewRewardAlgorithm != 1

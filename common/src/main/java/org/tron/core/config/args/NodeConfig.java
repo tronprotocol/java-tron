@@ -43,9 +43,6 @@ public class NodeConfig {
 
   // node.discovery.* — HOCON merges into node { discovery { ... } }, auto-bound
   private DiscoveryConfig discovery = new DiscoveryConfig();
-  @Getter(lombok.AccessLevel.NONE)
-  @Setter(lombok.AccessLevel.NONE)
-  private String externalIP = "";
 
   // node.shutdown.* uses PascalCase nested keys (shutdown.BlockTime, etc.).
   // These are optional (not in reference.conf), so @Setter(NONE) prevents ConfigBeanFactory
@@ -66,7 +63,7 @@ public class NodeConfig {
   }
 
   public String getDiscoveryExternalIp() {
-    return externalIP;
+    return discovery.getExternal().getIp();
   }
 
   private int inactiveThreshold = 600;
@@ -148,6 +145,14 @@ public class NodeConfig {
 
     private boolean enable = false;
     private boolean persist = false;
+    private ExternalConfig external = new ExternalConfig();
+
+    @Getter
+    @Setter
+    public static class ExternalConfig {
+
+      private String ip = "";
+    }
   }
 
   @Getter
@@ -314,11 +319,6 @@ public class NodeConfig {
       nc.maxConnectionsWithSameIp = section.getInt("maxActiveNodesWithSameIp");
     }
 
-    nc.externalIP = getString(section, "discovery.external.ip", "");
-    if ("null".equalsIgnoreCase(nc.externalIP)) {
-      nc.externalIP = "";
-    }
-
     // Legacy key fallback: node.fullNodeAllowShieldedTransaction -> allowShieldedTransactionApi.
     if (section.hasPath("allowShieldedTransactionApi")) {
       nc.allowShieldedTransactionApi =
@@ -449,12 +449,18 @@ public class NodeConfig {
 
   /**
    * "isOpenFullTcpDisconnect" config key has an "is" prefix that the JavaBean Introspector
-   * strips from boolean getter names, so the derived property is "openFullTcpDisconnect"
+   * strips from boolean getter names, so the derived property is "openFullTcpDisconnect".
+   * "discovery.external.ip" may be HOCON null or the string "null"; both normalize to "".
    */
   private static Config normalizeNonStandardKeys(Config section) {
     if (section.hasPath("isOpenFullTcpDisconnect")) {
       section = section.withValue("openFullTcpDisconnect",
           section.getValue("isOpenFullTcpDisconnect"));
+    }
+    String externalIpPath = "discovery.external.ip";
+    if (section.getIsNull(externalIpPath)
+        || "null".equalsIgnoreCase(section.getString(externalIpPath))) {
+      section = section.withValue(externalIpPath, ConfigValueFactory.fromAnyRef(""));
     }
     return section;
   }
