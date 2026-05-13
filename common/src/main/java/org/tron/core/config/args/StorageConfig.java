@@ -39,7 +39,6 @@ public class StorageConfig {
 
   // Raw storage config sub-tree, kept for setCacheStrategies/setDbRoots which
   // have dynamic keys that ConfigBeanFactory cannot bind.
-  // @Setter(NONE): not a config key, assigned directly in fromConfig().
   @Setter(lombok.AccessLevel.NONE)
   private Config rawStorageConfig;
 
