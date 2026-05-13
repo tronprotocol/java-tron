@@ -333,7 +333,8 @@ public class ShieldedReceiveTest extends BaseTest {
 
     //Add public address sign
     transactionCap = TransactionUtils.addTransactionSign(transactionCap.getInstance(),
-            ADDRESS_ONE_PRIVATE_KEY, chainBaseManager.getAccountStore());
+            ADDRESS_ONE_PRIVATE_KEY, chainBaseManager.getAccountStore(),
+        chainBaseManager.getDynamicPropertiesStore());
     try {
       dbManager.pushTransaction(transactionCap);
     } catch (Exception e) {

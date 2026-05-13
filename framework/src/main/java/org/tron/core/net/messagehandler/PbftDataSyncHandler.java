@@ -173,6 +173,11 @@ public class PbftDataSyncHandler implements TronMsgHandler, Closeable {
     @Override
     public Boolean call() throws Exception {
       try {
+        if (sign.size() < 65
+            || (chainBaseManager.getDynamicPropertiesStore().getAllowTvmOsaka() == 1
+            && sign.size() != 65)) {
+          throw new SignatureException("PBFT signature size is " + sign.size());
+        }
         byte[] srAddress = ECKey.signatureToAddress(dataHash,
             TransactionCapsule.getBase64FromByteString(sign));
         if (!srSet.contains(ByteString.copyFrom(srAddress))) {

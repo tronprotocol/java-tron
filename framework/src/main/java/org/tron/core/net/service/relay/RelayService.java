@@ -152,10 +152,15 @@ public class RelayService {
 
     boolean flag;
     try {
+      ByteString signature = msg.getSignature();
+      if (signature.size() < 65 || (chainBaseManager.getDynamicPropertiesStore()
+          .getAllowTvmOsaka() == 1 && signature.size() != 65)) {
+        return false;
+      }
       Sha256Hash hash = Sha256Hash.of(CommonParameter
           .getInstance().isECKeyCryptoEngine(), ByteArray.fromLong(msg.getTimestamp()));
       String sig =
-          TransactionCapsule.getBase64FromByteString(msg.getSignature());
+          TransactionCapsule.getBase64FromByteString(signature);
       byte[] sigAddress = SignUtils.signatureToAddress(hash.getBytes(), sig,
           Args.getInstance().isECKeyCryptoEngine());
       if (manager.getDynamicPropertiesStore().getAllowMultiSign() != 1) {

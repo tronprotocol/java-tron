@@ -1,5 +1,6 @@
 package org.tron.consensus.pbft.message;
 
+import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.io.IOException;
 import java.security.SignatureException;
@@ -12,6 +13,7 @@ import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.exception.P2pException;
+import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.protos.Protocol.PBFTMessage;
 import org.tron.protos.Protocol.PBFTMessage.DataType;
 import org.tron.protos.Protocol.SRL;
@@ -94,10 +96,16 @@ public abstract class PbftBaseMessage extends Message {
 
   public abstract String getNo();
 
-  public void analyzeSignature() throws SignatureException {
+  public void analyzeSignature(DynamicPropertiesStore dynamicPropertiesStore)
+      throws SignatureException {
+    ByteString signature = getPbftMessage().getSignature();
+    if (signature.size() < 65 || (dynamicPropertiesStore.getAllowTvmOsaka() == 1
+        && signature.size() != 65)) {
+      throw new SignatureException("PBFT signature size is " + signature.size());
+    }
     byte[] hash = Sha256Hash.hash(true, getPbftMessage().getRawData().toByteArray());
     publicKey = ECKey.signatureToAddress(hash, TransactionCapsule
-        .getBase64FromByteString(getPbftMessage().getSignature()));
+        .getBase64FromByteString(signature));
   }
 
   @Override

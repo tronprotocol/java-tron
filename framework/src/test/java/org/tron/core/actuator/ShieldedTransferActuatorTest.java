@@ -207,7 +207,8 @@ public class ShieldedTransferActuatorTest extends BaseTest {
 
       //Add public address sign
       transactionCap = TransactionUtils.addTransactionSign(transactionCap.getInstance(),
-              ADDRESS_ONE_PRIVATE_KEY, dbManager.getAccountStore());
+              ADDRESS_ONE_PRIVATE_KEY, dbManager.getAccountStore(),
+          dbManager.getDynamicPropertiesStore());
 
       Assert.assertTrue(dbManager.pushTransaction(transactionCap));
     } catch (Exception e) {
@@ -235,7 +236,8 @@ public class ShieldedTransferActuatorTest extends BaseTest {
 
       //Add public address sign
       transactionCap = TransactionUtils.addTransactionSign(transactionCap.getInstance(),
-              ADDRESS_ONE_PRIVATE_KEY, dbManager.getAccountStore());
+              ADDRESS_ONE_PRIVATE_KEY, dbManager.getAccountStore(),
+          dbManager.getDynamicPropertiesStore());
 
       Assert.assertTrue(dbManager.pushTransaction(transactionCap));
     } catch (Exception e) {
@@ -255,7 +257,7 @@ public class ShieldedTransferActuatorTest extends BaseTest {
 
       //Add public address sign
       TransactionUtils.addTransactionSign(transactionCap.getInstance(), ADDRESS_TWO_PRIVATE_KEY,
-              dbManager.getAccountStore());
+              dbManager.getAccountStore(), dbManager.getDynamicPropertiesStore());
       Assert.assertTrue(false);
     } catch (PermissionException e) {
       Assert.assertTrue(e instanceof PermissionException);
@@ -395,7 +397,8 @@ public class ShieldedTransferActuatorTest extends BaseTest {
       TransactionCapsule transactionCap = getPublicToShieldedTransaction();
       //Add public address sign
       transactionCap = TransactionUtils.addTransactionSign(transactionCap.getInstance(),
-              ADDRESS_ONE_PRIVATE_KEY, dbManager.getAccountStore());
+              ADDRESS_ONE_PRIVATE_KEY, dbManager.getAccountStore(),
+          dbManager.getDynamicPropertiesStore());
 
       AccountCapsule accountCapsule =
           dbManager.getAccountStore().get(ByteArray.fromHexString(PUBLIC_ADDRESS_ONE));
@@ -983,7 +986,8 @@ public class ShieldedTransferActuatorTest extends BaseTest {
 
       //Add public address sign
       transactionCapOne = TransactionUtils.addTransactionSign(transactionCapOne.getInstance(),
-              ADDRESS_ONE_PRIVATE_KEY, dbManager.getAccountStore());
+              ADDRESS_ONE_PRIVATE_KEY, dbManager.getAccountStore(),
+          dbManager.getDynamicPropertiesStore());
 
       Assert.assertTrue(dbManager.pushTransaction(transactionCapOne));
       AccountCapsule accountCapsuleOne =
@@ -1403,4 +1407,3 @@ public class ShieldedTransferActuatorTest extends BaseTest {
     }
   }
 }
-

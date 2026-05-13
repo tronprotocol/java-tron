@@ -157,7 +157,8 @@ public class TransactionCapsuleTest extends BaseTest {
   @Test(expected = SignatureFormatException.class)
   public void checkWeightShortSigRejected() throws Exception {
     List<ByteString> sigs = Collections.singletonList(ByteString.copyFrom(new byte[64]));
-    TransactionCapsule.checkWeight(singleKeyPermission(), sigs, DUMMY_HASH, null, null);
+    TransactionCapsule.checkWeight(singleKeyPermission(), sigs, DUMMY_HASH, null,
+        dbManager.getDynamicPropertiesStore());
   }
 
   @Test(expected = SignatureFormatException.class)
@@ -186,16 +187,10 @@ public class TransactionCapsuleTest extends BaseTest {
     }
   }
 
-  @Test
-  public void checkWeightPaddedSigNullDs() {
-    List<ByteString> sigs = Collections.singletonList(ByteString.copyFrom(new byte[66]));
-    try {
-      TransactionCapsule.checkWeight(singleKeyPermission(), sigs, DUMMY_HASH, null, null);
-    } catch (SignatureFormatException e) {
-      Assert.fail("Padded sig must not be rejected when DS is null: " + e.getMessage());
-    } catch (Exception e) {
-      // other exceptions after the size check — expected
-    }
+  @Test(expected = NullPointerException.class)
+  public void checkWeightNullDynamicPropertiesStoreRejected() throws Exception {
+    List<ByteString> sigs = Collections.singletonList(ByteString.copyFrom(new byte[65]));
+    TransactionCapsule.checkWeight(singleKeyPermission(), sigs, DUMMY_HASH, null, null);
   }
 
   @Test

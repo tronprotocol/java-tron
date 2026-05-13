@@ -33,6 +33,7 @@ import java.security.SignatureException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -232,6 +233,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   public static long checkWeight(Permission permission, List<ByteString> sigs, byte[] hash,
       List<ByteString> approveList, DynamicPropertiesStore dynamicPropertiesStore)
       throws SignatureException, PermissionException, SignatureFormatException {
+    Objects.requireNonNull(dynamicPropertiesStore, "dynamicPropertiesStore");
     long currentWeight = 0;
     if (sigs.size() > permission.getKeysCount()) {
       throw new PermissionException(
@@ -240,10 +242,9 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     }
     HashMap addMap = new HashMap();
     for (ByteString sig : sigs) {
-      if (sig.size() < 65 || (dynamicPropertiesStore != null
-          && dynamicPropertiesStore.getAllowTvmOsaka() == 1 && sig.size() != 65)) {
-        throw new SignatureFormatException(
-            "Signature size is " + sig.size());
+      if (sig.size() < 65 || (dynamicPropertiesStore.getAllowTvmOsaka() == 1
+          && sig.size() != 65)) {
+        throw new SignatureFormatException("Signature size is " + sig.size());
       }
       String base64 = TransactionCapsule.getBase64FromByteString(sig);
       byte[] address = SignUtils
@@ -585,7 +586,8 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     this.transaction = this.transaction.toBuilder().addSignature(sig).build();
   }
 
-  public void addSign(byte[] privateKey, AccountStore accountStore)
+  public void addSign(byte[] privateKey, AccountStore accountStore,
+      DynamicPropertiesStore dynamicPropertiesStore)
       throws PermissionException, SignatureException, SignatureFormatException {
     Transaction.Contract contract = this.transaction.getRawData().getContract(0);
     int permissionId = contract.getPermissionId();
@@ -606,7 +608,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     if (this.transaction.getSignatureCount() > 0) {
       checkWeight(permission, this.transaction.getSignatureList(),
           this.getTransactionId().getBytes(),
-          approveList, null);
+          approveList, dynamicPropertiesStore);
       if (approveList.contains(ByteString.copyFrom(address))) {
         throw new PermissionException(encode58Check(address) + " had signed!");
       }

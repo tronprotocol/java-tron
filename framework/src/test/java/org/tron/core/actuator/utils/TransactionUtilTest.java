@@ -17,11 +17,14 @@ import com.google.protobuf.ByteString;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import javax.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.tron.api.GrpcAPI.TransactionSignWeight;
+import org.tron.api.GrpcAPI.TransactionSignWeight.Result.response_code;
 import org.tron.common.BaseTest;
 import org.tron.common.TestConstants;
 import org.tron.common.utils.ByteArray;
@@ -38,11 +41,15 @@ import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.contract.BalanceContract.DelegateResourceContract;
+import org.tron.protos.contract.BalanceContract.TransferContract;
 
 @Slf4j(topic = "capsule")
 public class TransactionUtilTest extends BaseTest {
 
   private static String OWNER_ADDRESS;
+
+  @Resource
+  private TransactionUtil transactionUtil;
 
   /**
    * Init .
@@ -451,5 +458,31 @@ public class TransactionUtilTest extends BaseTest {
       threadList.get(i).join();
     }
     Assert.assertTrue(true);
+  }
+
+  @Test
+  public void getTransactionSignWeightPaddedSigOsakaRejected() {
+    byte[] owner = ByteArray.fromHexString(OWNER_ADDRESS);
+    TransferContract transferContract = TransferContract.newBuilder()
+        .setAmount(1L)
+        .setOwnerAddress(ByteString.copyFrom(owner))
+        .setToAddress(ByteString.copyFrom(new byte[21]))
+        .build();
+    byte[] paddedSig = new byte[66];
+    paddedSig[64] = 27;
+    Transaction transaction = new TransactionCapsule(
+        transferContract, ContractType.TransferContract)
+        .getInstance().toBuilder()
+        .addSignature(ByteString.copyFrom(paddedSig))
+        .build();
+
+    dbManager.getDynamicPropertiesStore().saveAllowTvmOsaka(1);
+    try {
+      TransactionSignWeight signWeight = transactionUtil.getTransactionSignWeight(transaction);
+      Assert.assertEquals(response_code.SIGNATURE_FORMAT_ERROR,
+          signWeight.getResult().getCode());
+    } finally {
+      dbManager.getDynamicPropertiesStore().saveAllowTvmOsaka(0);
+    }
   }
 }

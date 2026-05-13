@@ -11,6 +11,7 @@ import org.tron.consensus.base.Param;
 import org.tron.consensus.pbft.PbftManager;
 import org.tron.consensus.pbft.message.PbftBaseMessage;
 import org.tron.consensus.pbft.message.PbftMessage;
+import org.tron.core.ChainBaseManager;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.P2pException;
 import org.tron.core.net.TronNetDelegate;
@@ -32,6 +33,9 @@ public class PbftMsgHandler {
   @Autowired
   private TronNetDelegate tronNetDelegate;
 
+  @Autowired
+  private ChainBaseManager chainBaseManager;
+
   public void processMessage(PeerConnection peer, PbftMessage msg) throws Exception {
     if (!tronNetDelegate.allowPBFT()) {
       return;
@@ -50,7 +54,7 @@ public class PbftMsgHandler {
         && currentEpoch - msg.getEpoch() > expireEpoch) {
       return;
     }
-    msg.analyzeSignature();
+    msg.analyzeSignature(chainBaseManager.getDynamicPropertiesStore());
     String key = buildKey(msg);
     Lock lock = striped.get(key);
     try {

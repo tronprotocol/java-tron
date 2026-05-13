@@ -10,6 +10,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
@@ -223,6 +224,66 @@ public class RelayServiceTest extends BaseTest {
     } catch (Exception e) {
       logger.info("", e);
       assert false;
+    }
+  }
+
+  @Test
+  public void testCheckHelloMessagePaddedSigOsakaRejected() {
+    initWitness();
+    String key = "0154435f065a57fec6af1e12eaa2fa600030639448d7809f4c65bdcf8baed7e5";
+    ByteString address = getFromHexString("418A8D690BF36806C36A7DAE3AF796643C1AA9CC01");
+    InetSocketAddress a1 = new InetSocketAddress("127.0.0.1", 10001);
+    Node node = new Node(NetUtil.getNodeId(), a1.getAddress().getHostAddress(),
+        null, a1.getPort());
+
+    SignInterface cryptoEngine = SignUtils.fromPrivate(ByteArray.fromHexString(key),
+        Args.getInstance().isECKeyCryptoEngine());
+    HelloMessage helloMessage = new HelloMessage(node, System.currentTimeMillis(),
+        ChainBaseManager.getChainBaseManager());
+    byte[] sig = cryptoEngine.Base64toBytes(cryptoEngine.signHash(Sha256Hash.of(CommonParameter
+        .getInstance().isECKeyCryptoEngine(), ByteArray.fromLong(helloMessage
+        .getTimestamp())).getBytes()));
+    byte[] paddedSig = Arrays.copyOf(sig, 66);
+    helloMessage.setHelloMessage(helloMessage.getHelloMessage().toBuilder()
+        .setAddress(address)
+        .setSignature(ByteString.copyFrom(paddedSig))
+        .build());
+
+    Channel c1 = mock(Channel.class);
+    Mockito.when(c1.getInetSocketAddress()).thenReturn(a1);
+    Mockito.when(c1.getInetAddress()).thenReturn(a1.getAddress());
+    Channel c2 = mock(Channel.class);
+    Mockito.when(c2.getInetSocketAddress()).thenReturn(a1);
+    Mockito.when(c2.getInetAddress()).thenReturn(a1.getAddress());
+
+    Args.getInstance().fastForward = true;
+    ApplicationContext ctx = (ApplicationContext) ReflectUtils.getFieldObject(p2pEventHandler,
+        "ctx");
+    PeerConnection peer1 = PeerManager.add(ctx, c1);
+    assert peer1 != null;
+    peer1.setAddress(address);
+    PeerConnection peer2 = PeerManager.add(ctx, c2);
+    assert peer2 != null;
+    peer2.setAddress(address);
+
+    ReflectUtils.setFieldValue(tronNetService, "p2pConfig", new P2pConfig());
+
+    try {
+      Field field = service.getClass().getDeclaredField("witnessScheduleStore");
+      field.setAccessible(true);
+      field.set(service, chainBaseManager.getWitnessScheduleStore());
+
+      Field field2 = service.getClass().getDeclaredField("manager");
+      field2.setAccessible(true);
+      field2.set(service, dbManager);
+
+      chainBaseManager.getDynamicPropertiesStore().saveAllowTvmOsaka(1);
+      Assert.assertFalse(service.checkHelloMessage(helloMessage, c1));
+    } catch (Exception e) {
+      logger.info("", e);
+      assert false;
+    } finally {
+      chainBaseManager.getDynamicPropertiesStore().saveAllowTvmOsaka(0);
     }
   }
 

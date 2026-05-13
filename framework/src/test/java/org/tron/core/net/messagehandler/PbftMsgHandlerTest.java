@@ -5,6 +5,8 @@ import static org.mockito.Mockito.mock;
 import com.google.protobuf.ByteString;
 import java.io.File;
 import java.net.InetSocketAddress;
+import java.security.SignatureException;
+import java.util.Arrays;
 import org.bouncycastle.util.encoders.Hex;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -119,5 +121,53 @@ public class PbftMsgHandlerTest {
     }
 
     Assert.assertEquals(1, PeerManager.getPeers().size());
+  }
+
+  @Test
+  public void testPbftPaddedSigOsakaRejected() throws Exception {
+    InetSocketAddress a1 = new InetSocketAddress("127.0.0.1", 10001);
+    Channel c1 = mock(Channel.class);
+    Mockito.when(c1.getInetSocketAddress()).thenReturn(a1);
+    Mockito.when(c1.getInetAddress()).thenReturn(a1.getAddress());
+    PeerManager.add(context, c1);
+
+    peer = PeerManager.getPeers().get(0);
+    BlockCapsule blockCapsule = new BlockCapsule(1, Sha256Hash.ZERO_HASH,
+        System.currentTimeMillis(), ByteString.EMPTY);
+    Protocol.PBFTMessage.Raw raw = Protocol.PBFTMessage.Raw.newBuilder()
+        .setViewN(blockCapsule.getNum())
+        .setEpoch(0)
+        .setDataType(Protocol.PBFTMessage.DataType.BLOCK)
+        .setMsgType(Protocol.PBFTMessage.MsgType.PREPREPARE)
+        .setData(blockCapsule.getBlockId().getByteString())
+        .build();
+    SignInterface sign = SignUtils.fromPrivate(Hex.decode(PublicMethod.getRandomPrivateKey()),
+        true);
+    byte[] sig = sign.Base64toBytes(sign.signHash(Sha256Hash.hash(true, raw.toByteArray())));
+    byte[] paddedSig = Arrays.copyOf(sig, 66);
+    Protocol.PBFTMessage message = Protocol.PBFTMessage.newBuilder()
+        .setRawData(raw)
+        .setSignature(ByteString.copyFrom(paddedSig))
+        .build();
+
+    PbftMessage pbftMessage = new PbftMessage();
+    pbftMessage.setType(MessageTypes.PBFT_MSG.asByte());
+    pbftMessage.setPbftMessage(message);
+    pbftMessage.setData(message.toByteArray());
+    pbftMessage.setSwitch(blockCapsule.isSwitch());
+    Param.getInstance().setPbftInterface(context.getBean(PbftBaseImpl.class));
+    peer.setNeedSyncFromPeer(false);
+
+    DynamicPropertiesStore dynamicPropertiesStore = context.getBean(DynamicPropertiesStore.class);
+    dynamicPropertiesStore.saveAllowPBFT(1);
+    dynamicPropertiesStore.saveAllowTvmOsaka(1);
+    try {
+      context.getBean(PbftMsgHandler.class).processMessage(peer, pbftMessage);
+      Assert.fail("Padded PBFT signature must be rejected post-Osaka");
+    } catch (SignatureException e) {
+      Assert.assertTrue(e.getMessage().contains("PBFT signature size is 66"));
+    } finally {
+      dynamicPropertiesStore.saveAllowTvmOsaka(0);
+    }
   }
 }
