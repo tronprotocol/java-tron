@@ -84,8 +84,9 @@ public class EventConfig {
 
     String nativeKey = "native";
     String topicsKey = "topics";
-    Config bindable = section.withoutPath(nativeKey).withoutPath(topicsKey)
-        .withoutPath("topicDefaults");
+    // remove two keys to construct EventConfig because they cannot be bind automatically,
+    // we can bind them manually later
+    Config bindable = section.withoutPath(nativeKey).withoutPath(topicsKey);
     EventConfig ec = ConfigBeanFactory.create(bindable, EventConfig.class);
 
     // "native" sub-section: bind via ConfigBeanFactory when present, use defaults otherwise
