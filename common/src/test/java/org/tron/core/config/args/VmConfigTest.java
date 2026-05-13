@@ -90,8 +90,8 @@ public class VmConfigTest {
   }
 
   // ===========================================================================
-  // Constant-call timeout (issue #6681). The validation rule: any positive
-  // value that fits VM deadline conversion is accepted, but zero/negative is
+  // Constant-call timeout (issue #6681). The validation rule: any zero or positive
+  // value that fits VM deadline conversion is accepted, but negative is
   // rejected ONLY when the operator explicitly set the property in their
   // config. Absence keeps the in-Java default (0L = "share the
   // block-processing deadline").
@@ -107,6 +107,8 @@ public class VmConfigTest {
 
   @Test
   public void testConstantCallTimeoutAcceptsAnyPositiveValue() {
+    assertEquals(0L, VmConfig.fromConfig(
+        withRef("vm { constantCallTimeoutMs = 0 }")).getConstantCallTimeoutMs());
     assertEquals(1L, VmConfig.fromConfig(
         withRef("vm { constantCallTimeoutMs = 1 }")).getConstantCallTimeoutMs());
     assertEquals(50L, VmConfig.fromConfig(
@@ -115,19 +117,6 @@ public class VmConfigTest {
         withRef("vm { constantCallTimeoutMs = 500 }")).getConstantCallTimeoutMs());
     assertEquals(5_000L, VmConfig.fromConfig(
         withRef("vm { constantCallTimeoutMs = 5000 }")).getConstantCallTimeoutMs());
-  }
-
-  @Test
-  public void testConstantCallTimeoutZeroRejectedWhenExplicitlyConfigured() {
-    // Operator wrote `= 0` in config -> treated as a misconfiguration even
-    // though it equals the in-Java default. Forces an explicit positive value.
-    try {
-      VmConfig.fromConfig(withRef("vm { constantCallTimeoutMs = 0 }"));
-      org.junit.Assert.fail("expected IllegalArgumentException for explicit 0");
-    } catch (IllegalArgumentException ex) {
-      org.junit.Assert.assertTrue(ex.getMessage(),
-          ex.getMessage().contains("constantCallTimeoutMs"));
-    }
   }
 
   @Test
