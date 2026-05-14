@@ -1,6 +1,8 @@
 package org.tron.core.services.jsonrpc;
 
+import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.StreamReadConstraints;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -30,7 +32,19 @@ import org.tron.core.services.http.RateLimiterServlet;
 @Slf4j(topic = "API")
 public class JsonRpcServlet extends RateLimiterServlet {
 
-  private static final ObjectMapper MAPPER = new ObjectMapper();
+  // Snapshot of node.http.maxNestingDepth / maxTokenCount at class-load time (after Args.setParam).
+  private static final ObjectMapper MAPPER = buildMapper();
+
+  private static ObjectMapper buildMapper() {
+    CommonParameter p = CommonParameter.getInstance();
+    JsonFactory factory = JsonFactory.builder()
+        .streamReadConstraints(StreamReadConstraints.builder()
+            .maxNestingDepth(p.getMaxNestingDepth())
+            .maxTokenCount(p.getMaxTokenCount())
+            .build())
+        .build();
+    return new ObjectMapper(factory);
+  }
 
   private enum JsonRpcError {
     PARSE_ERROR(-32700),
@@ -105,6 +119,11 @@ public class JsonRpcServlet extends RateLimiterServlet {
       return;
     }
 
+    if (!rootNode.isObject() && !rootNode.isArray()) {
+      writeJsonRpcError(resp, JsonRpcError.INVALID_REQUEST, "Invalid Request", null, false);
+      return;
+    }
+
     boolean isBatch = rootNode.isArray();
     if (isBatch && rootNode.isEmpty()) {
       writeJsonRpcError(resp, JsonRpcError.INVALID_REQUEST, "Invalid Request", null, false);
@@ -157,6 +176,11 @@ public class JsonRpcServlet extends RateLimiterServlet {
 
     for (int i = 0; i < rootNode.size(); i++) {
       JsonNode subRequest = rootNode.get(i);
+
+      if (!subRequest.isObject()) {
+        batchResult.add(buildErrorNode(JsonRpcError.INVALID_REQUEST, "Invalid Request", null));
+        continue;
+      }
 
       if (overflow) {
         // Notifications (no "id") do not get a response even on overflow.
@@ -219,7 +243,7 @@ public class JsonRpcServlet extends RateLimiterServlet {
     }
 
     byte[] finalBytes = MAPPER.writeValueAsBytes(batchResult);
-    resp.setContentType("application/json-rpc; charset=utf-8");
+    resp.setContentType("application/json-rpc");
     resp.setStatus(HttpServletResponse.SC_OK);
     resp.setContentLength(finalBytes.length);
     resp.getOutputStream().write(finalBytes);
@@ -261,7 +285,7 @@ public class JsonRpcServlet extends RateLimiterServlet {
     } else {
       bytes = MAPPER.writeValueAsBytes(errorObj);
     }
-    resp.setContentType("application/json-rpc; charset=utf-8");
+    resp.setContentType("application/json-rpc");
     resp.setStatus(HttpServletResponse.SC_OK);
     resp.setContentLength(bytes.length);
     resp.getOutputStream().write(bytes);
