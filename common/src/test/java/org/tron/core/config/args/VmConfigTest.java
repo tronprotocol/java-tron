@@ -2,10 +2,12 @@ package org.tron.core.config.args;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import org.junit.Assert;
 import org.junit.Test;
 
 public class VmConfigTest {
@@ -99,7 +101,7 @@ public class VmConfigTest {
 
   @Test
   public void testConstantCallTimeoutDefaultWhenAbsent() {
-    // No path in the config, no entry in reference.conf -> default 0L kept,
+    // reference.conf default is 0; absence of a user override keeps that default;
     // no validation triggered.
     VmConfig vm = VmConfig.fromConfig(withRef());
     assertEquals(0L, vm.getConstantCallTimeoutMs());
@@ -121,24 +123,18 @@ public class VmConfigTest {
 
   @Test
   public void testConstantCallTimeoutNegativeRejected() {
-    try {
+    IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class, () -> {
       VmConfig.fromConfig(withRef("vm { constantCallTimeoutMs = -1 }"));
-      org.junit.Assert.fail("expected IllegalArgumentException for negative ms");
-    } catch (IllegalArgumentException ex) {
-      org.junit.Assert.assertTrue(ex.getMessage(),
-          ex.getMessage().contains("constantCallTimeoutMs"));
-    }
+    });
+    Assert.assertTrue(thrown.getMessage().contains("constantCallTimeoutMs"));
   }
 
   @Test
   public void testConstantCallTimeoutOverflowRejected() {
     long value = Long.MAX_VALUE / 1000 + 1L;
-    try {
+    IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class, () -> {
       VmConfig.fromConfig(withRef("vm { constantCallTimeoutMs = " + value + " }"));
-      org.junit.Assert.fail("expected IllegalArgumentException for overflowing ms");
-    } catch (IllegalArgumentException ex) {
-      org.junit.Assert.assertTrue(ex.getMessage(),
-          ex.getMessage().contains("deadline conversion"));
-    }
+    });
+    Assert.assertTrue(thrown.getMessage().contains("deadline conversion"));
   }
 }
