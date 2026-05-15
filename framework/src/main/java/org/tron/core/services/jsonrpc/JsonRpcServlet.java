@@ -177,18 +177,28 @@ public class JsonRpcServlet extends RateLimiterServlet {
     for (int i = 0; i < rootNode.size(); i++) {
       JsonNode subRequest = rootNode.get(i);
 
-      if (!subRequest.isObject()) {
-        batchResult.add(buildErrorNode(JsonRpcError.INVALID_REQUEST, "Invalid Request", null));
-        continue;
-      }
-
       if (overflow) {
-        // Notifications (no "id") do not get a response even on overflow.
-        if (subRequest.has("id")) {
+        if (!subRequest.isObject()) {
+          batchResult.add(buildErrorNode(JsonRpcError.INVALID_REQUEST, "Invalid Request", null));
+        } else if (subRequest.has("id")) {
+          // Notifications (no "id") do not get a response even on overflow.
           batchResult.add(buildErrorNode(JsonRpcError.RESPONSE_TOO_LARGE,
               "Response exceeds the limit of " + maxResponseSize + " bytes",
               subRequest.get("id")));
         }
+        continue;
+      }
+
+      if (!subRequest.isObject()) {
+        ObjectNode errNode = buildErrorNode(JsonRpcError.INVALID_REQUEST, "Invalid Request", null);
+        byte[] errBytes = MAPPER.writeValueAsBytes(errNode);
+        int addition = errBytes.length + (!batchResult.isEmpty() ? 1 : 0);
+        if (maxResponseSize > 0 && accumulatedSize + addition > maxResponseSize) {
+          overflow = true;
+        } else {
+          accumulatedSize += addition;
+        }
+        batchResult.add(errNode);
         continue;
       }
 
