@@ -243,7 +243,7 @@ public class RelayServiceTest extends BaseTest {
     byte[] sig = cryptoEngine.Base64toBytes(cryptoEngine.signHash(Sha256Hash.of(CommonParameter
         .getInstance().isECKeyCryptoEngine(), ByteArray.fromLong(helloMessage
         .getTimestamp())).getBytes()));
-    byte[] paddedSig = Arrays.copyOf(sig, 66);
+    byte[] paddedSig = Arrays.copyOf(sig, 69);
     helloMessage.setHelloMessage(helloMessage.getHelloMessage().toBuilder()
         .setAddress(address)
         .setSignature(ByteString.copyFrom(paddedSig))

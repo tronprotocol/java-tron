@@ -24,6 +24,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.net.TronNetDelegate;
@@ -153,8 +154,9 @@ public class RelayService {
     boolean flag;
     try {
       ByteString signature = msg.getSignature();
-      if (signature.size() < 65 || (chainBaseManager.getDynamicPropertiesStore()
-          .getAllowTvmOsaka() == 1 && signature.size() != 65)) {
+      if (signature.size() < ChainConstant.MIN_SIGNATURE_SIZE
+          || (chainBaseManager.getDynamicPropertiesStore().getAllowTvmOsaka() == 1
+          && signature.size() > ChainConstant.MAX_SIGNATURE_SIZE)) {
         return false;
       }
       Sha256Hash hash = Sha256Hash.of(CommonParameter

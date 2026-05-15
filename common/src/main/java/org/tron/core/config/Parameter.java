@@ -69,6 +69,8 @@ public class Parameter {
     public static final int MAX_VOTE_NUMBER = 30;
     public static final int SOLIDIFIED_THRESHOLD = 70; // 70%
     public static final int PRIVATE_KEY_LENGTH = 64;
+    public static final int MIN_SIGNATURE_SIZE = 65;
+    public static final int MAX_SIGNATURE_SIZE = 68;
     public static final int BLOCK_SIZE = 2_000_000;
     public static final long CLOCK_MAX_DELAY = 3600000; // 3600 * 1000 ms
     public static final int BLOCK_PRODUCE_TIMEOUT_PERCENT = 50; // 50%

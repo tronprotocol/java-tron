@@ -165,7 +165,7 @@ public class TransactionCapsuleTest extends BaseTest {
   public void checkWeightPaddedSigOsakaRejected() throws Exception {
     dbManager.getDynamicPropertiesStore().saveAllowTvmOsaka(1);
     try {
-      List<ByteString> sigs = Collections.singletonList(ByteString.copyFrom(new byte[66]));
+      List<ByteString> sigs = Collections.singletonList(ByteString.copyFrom(new byte[69]));
       TransactionCapsule.checkWeight(singleKeyPermission(), sigs, DUMMY_HASH, null,
           dbManager.getDynamicPropertiesStore());
     } finally {
@@ -176,7 +176,7 @@ public class TransactionCapsuleTest extends BaseTest {
   @Test
   public void checkWeightPaddedSigPreOsaka() {
     dbManager.getDynamicPropertiesStore().saveAllowTvmOsaka(0);
-    List<ByteString> sigs = Collections.singletonList(ByteString.copyFrom(new byte[66]));
+    List<ByteString> sigs = Collections.singletonList(ByteString.copyFrom(new byte[69]));
     try {
       TransactionCapsule.checkWeight(singleKeyPermission(), sigs, DUMMY_HASH, null,
           dbManager.getDynamicPropertiesStore());

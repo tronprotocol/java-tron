@@ -207,19 +207,19 @@ public class TransactionExpireTest extends BaseMethodTest {
         new TransactionCapsule(transferContract, ContractType.TransferContract);
     capsule.sign(ByteArray.fromHexString(Args.getLocalWitnesses().getPrivateKey()));
 
-    // Replace the valid 65-byte sig with a 66-byte padded one
+    // Replace the valid 65-byte sig with a 69-byte over-padded one (exceeds MAX_SIGNATURE_SIZE=68)
     byte[] sig65 = capsule.getInstance().getSignature(0).toByteArray();
-    byte[] sig66 = Arrays.copyOf(sig65, 66); // extra zero byte appended
+    byte[] sig69 = Arrays.copyOf(sig65, 69);
     Transaction tx = capsule.getInstance().toBuilder()
-        .clearSignature().addSignature(ByteString.copyFrom(sig66)).build();
+        .clearSignature().addSignature(ByteString.copyFrom(sig69)).build();
 
     dbManager.getDynamicPropertiesStore().saveAllowTvmOsaka(1);
     try {
       TransactionApprovedList result = wallet.getTransactionApprovedList(tx);
-      Assert.assertEquals("Padded sig must be rejected post-Osaka",
+      Assert.assertEquals("Over-padded sig must be rejected post-Osaka",
           TransactionApprovedList.Result.response_code.SIGNATURE_FORMAT_ERROR,
           result.getResult().getCode());
-      Assert.assertTrue(result.getResult().getMessage().contains("66"));
+      Assert.assertTrue(result.getResult().getMessage().contains("69"));
     } finally {
       dbManager.getDynamicPropertiesStore().saveAllowTvmOsaka(0);
     }

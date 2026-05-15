@@ -160,6 +160,7 @@ import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.VotesCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.capsule.utils.MarketUtils;
+import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.BandwidthProcessor;
 import org.tron.core.db.BlockIndexStore;
@@ -644,8 +645,9 @@ public class Wallet {
           byte[] hash = Sha256Hash.hash(CommonParameter
               .getInstance().isECKeyCryptoEngine(), trx.getRawData().toByteArray());
           for (ByteString sig : trx.getSignatureList()) {
-            if (sig.size() < 65 || (chainBaseManager.getDynamicPropertiesStore()
-                .getAllowTvmOsaka() == 1 && sig.size() != 65)) {
+            if (sig.size() < ChainConstant.MIN_SIGNATURE_SIZE
+                || (chainBaseManager.getDynamicPropertiesStore().getAllowTvmOsaka() == 1
+                && sig.size() > ChainConstant.MAX_SIGNATURE_SIZE)) {
               throw new SignatureFormatException(
                   "Signature size is " + sig.size());
             }

@@ -144,7 +144,7 @@ public class PbftMsgHandlerTest {
     SignInterface sign = SignUtils.fromPrivate(Hex.decode(PublicMethod.getRandomPrivateKey()),
         true);
     byte[] sig = sign.Base64toBytes(sign.signHash(Sha256Hash.hash(true, raw.toByteArray())));
-    byte[] paddedSig = Arrays.copyOf(sig, 66);
+    byte[] paddedSig = Arrays.copyOf(sig, 69);
     Protocol.PBFTMessage message = Protocol.PBFTMessage.newBuilder()
         .setRawData(raw)
         .setSignature(ByteString.copyFrom(paddedSig))
@@ -165,7 +165,7 @@ public class PbftMsgHandlerTest {
       context.getBean(PbftMsgHandler.class).processMessage(peer, pbftMessage);
       Assert.fail("Padded PBFT signature must be rejected post-Osaka");
     } catch (SignatureException e) {
-      Assert.assertTrue(e.getMessage().contains("PBFT signature size is 66"));
+      Assert.assertTrue(e.getMessage().contains("PBFT signature size is 69"));
     } finally {
       dynamicPropertiesStore.saveAllowTvmOsaka(0);
     }

@@ -26,6 +26,7 @@ import org.tron.consensus.base.Param;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.db.PbftSignDataStore;
 import org.tron.core.exception.P2pException;
 import org.tron.core.net.message.TronMessage;
@@ -173,9 +174,9 @@ public class PbftDataSyncHandler implements TronMsgHandler, Closeable {
     @Override
     public Boolean call() throws Exception {
       try {
-        if (sign.size() < 65
+        if (sign.size() < ChainConstant.MIN_SIGNATURE_SIZE
             || (chainBaseManager.getDynamicPropertiesStore().getAllowTvmOsaka() == 1
-            && sign.size() != 65)) {
+            && sign.size() > ChainConstant.MAX_SIGNATURE_SIZE)) {
           throw new SignatureException("PBFT signature size is " + sign.size());
         }
         byte[] srAddress = ECKey.signatureToAddress(dataHash,

@@ -85,7 +85,7 @@ public class PbftDataSyncHandlerTest {
         .build();
 
     boolean valid = (boolean) method.invoke(pbftDataSyncHandler, raw,
-        Collections.singletonList(ByteString.copyFrom(new byte[66])),
+        Collections.singletonList(ByteString.copyFrom(new byte[69])),
         Collections.singletonList(ByteString.copyFrom(new byte[21])));
     Assert.assertFalse(valid);
   }

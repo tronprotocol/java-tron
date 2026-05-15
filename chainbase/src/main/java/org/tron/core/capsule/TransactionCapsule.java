@@ -55,6 +55,7 @@ import org.tron.common.utils.ReflectUtils;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.actuator.TransactionFactory;
 import org.tron.core.config.Parameter;
+import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.db.TransactionContext;
 import org.tron.core.db.TransactionTrace;
 import org.tron.core.exception.BadItemException;
@@ -242,8 +243,9 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     }
     HashMap addMap = new HashMap();
     for (ByteString sig : sigs) {
-      if (sig.size() < 65 || (dynamicPropertiesStore.getAllowTvmOsaka() == 1
-          && sig.size() != 65)) {
+      if (sig.size() < ChainConstant.MIN_SIGNATURE_SIZE
+          || (dynamicPropertiesStore.getAllowTvmOsaka() == 1
+          && sig.size() > ChainConstant.MAX_SIGNATURE_SIZE)) {
         throw new SignatureFormatException("Signature size is " + sig.size());
       }
       String base64 = TransactionCapsule.getBase64FromByteString(sig);

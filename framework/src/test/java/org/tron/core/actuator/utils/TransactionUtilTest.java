@@ -468,7 +468,7 @@ public class TransactionUtilTest extends BaseTest {
         .setOwnerAddress(ByteString.copyFrom(owner))
         .setToAddress(ByteString.copyFrom(new byte[21]))
         .build();
-    byte[] paddedSig = new byte[66];
+    byte[] paddedSig = new byte[69];
     paddedSig[64] = 27;
     Transaction transaction = new TransactionCapsule(
         transferContract, ContractType.TransferContract)
