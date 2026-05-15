@@ -111,11 +111,11 @@ public class JsonRpcServlet extends RateLimiterServlet {
     try {
       rootNode = MAPPER.readTree(body);
       if (rootNode == null || rootNode.isMissingNode()) {
-        writeJsonRpcError(resp, JsonRpcError.PARSE_ERROR, "Parse error", null, false);
+        writeJsonRpcError(resp, JsonRpcError.PARSE_ERROR, "JSON parse error", null, false);
         return;
       }
     } catch (JsonProcessingException e) {
-      writeJsonRpcError(resp, JsonRpcError.PARSE_ERROR, "Parse error", null, false);
+      writeJsonRpcError(resp, JsonRpcError.PARSE_ERROR, "JSON parse error", null, false);
       return;
     }
 

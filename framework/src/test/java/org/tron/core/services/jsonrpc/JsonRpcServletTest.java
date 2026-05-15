@@ -285,21 +285,24 @@ public class JsonRpcServletTest {
   public void primitiveRootBoolean_returnsInvalidRequest() throws Exception {
     MockHttpServletResponse resp = doPost("true");
     assertEquals(200, resp.getStatus());
-    assertEquals(-32600, MAPPER.readTree(resp.getContentAsString()).get("error").get("code").asInt());
+    assertEquals(-32600,
+        MAPPER.readTree(resp.getContentAsString()).get("error").get("code").asInt());
   }
 
   @Test
   public void primitiveRootNumber_returnsInvalidRequest() throws Exception {
     MockHttpServletResponse resp = doPost("123");
     assertEquals(200, resp.getStatus());
-    assertEquals(-32600, MAPPER.readTree(resp.getContentAsString()).get("error").get("code").asInt());
+    assertEquals(-32600,
+        MAPPER.readTree(resp.getContentAsString()).get("error").get("code").asInt());
   }
 
   @Test
   public void primitiveRootString_returnsInvalidRequest() throws Exception {
     MockHttpServletResponse resp = doPost("\"hello\"");
     assertEquals(200, resp.getStatus());
-    assertEquals(-32600, MAPPER.readTree(resp.getContentAsString()).get("error").get("code").asInt());
+    assertEquals(-32600,
+        MAPPER.readTree(resp.getContentAsString()).get("error").get("code").asInt());
   }
 
   // --- Non-object element inside a batch → Invalid Request per element ---
@@ -362,7 +365,8 @@ public class JsonRpcServletTest {
 
     MockHttpServletResponse resp = doPost(sb.toString());
     assertEquals(200, resp.getStatus());
-    assertEquals(-32700, MAPPER.readTree(resp.getContentAsString()).get("error").get("code").asInt());
+    assertEquals(-32700,
+        MAPPER.readTree(resp.getContentAsString()).get("error").get("code").asInt());
   }
 
   @Test
@@ -379,7 +383,8 @@ public class JsonRpcServletTest {
 
     MockHttpServletResponse resp = doPost(sb.toString());
     assertEquals(200, resp.getStatus());
-    assertEquals(-32700, MAPPER.readTree(resp.getContentAsString()).get("error").get("code").asInt());
+    assertEquals(-32700,
+        MAPPER.readTree(resp.getContentAsString()).get("error").get("code").asInt());
   }
 
   // --- helpers ---
