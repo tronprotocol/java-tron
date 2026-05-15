@@ -7,12 +7,12 @@ import java.security.SignatureException;
 import java.util.stream.Collectors;
 import org.bouncycastle.util.encoders.Hex;
 import org.tron.common.crypto.ECKey;
+import org.tron.common.crypto.SignUtils;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.TransactionCapsule;
-import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.exception.P2pException;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.protos.Protocol.PBFTMessage;
@@ -100,9 +100,8 @@ public abstract class PbftBaseMessage extends Message {
   public void analyzeSignature(DynamicPropertiesStore dynamicPropertiesStore)
       throws SignatureException {
     ByteString signature = getPbftMessage().getSignature();
-    if (signature.size() < ChainConstant.MIN_SIGNATURE_SIZE
-        || (dynamicPropertiesStore.getAllowTvmOsaka() == 1
-        && signature.size() > ChainConstant.MAX_SIGNATURE_SIZE)) {
+    if (!SignUtils.isValidLength(signature.size(),
+        dynamicPropertiesStore.isAllowTvmOsaka())) {
       throw new SignatureException("PBFT signature size is " + signature.size());
     }
     byte[] hash = Sha256Hash.hash(true, getPbftMessage().getRawData().toByteArray());

@@ -186,9 +186,8 @@ public class BlockCapsule implements ProtoCapsule<Block> {
       AccountStore accountStore) throws ValidateSignatureException {
     try {
       ByteString witnessSig = block.getBlockHeader().getWitnessSignature();
-      if (witnessSig.size() < ChainConstant.MIN_SIGNATURE_SIZE
-          || (dynamicPropertiesStore.getAllowTvmOsaka() == 1
-          && witnessSig.size() > ChainConstant.MAX_SIGNATURE_SIZE)) {
+      if (!SignUtils.isValidLength(witnessSig.size(),
+          dynamicPropertiesStore.isAllowTvmOsaka())) {
         throw new ValidateSignatureException(
             "Witness signature size is " + witnessSig.size());
       }

@@ -70,6 +70,9 @@ public class Parameter {
     public static final int SOLIDIFIED_THRESHOLD = 70; // 70%
     public static final int PRIVATE_KEY_LENGTH = 64;
     public static final int MIN_SIGNATURE_SIZE = 65;
+    // Canonical ECDSA signature is 65 bytes (r||s||v). 68 = 65 + up to 3 trailing
+    // padding bytes; this window accommodates historical non-canonical encodings
+    // observed on chain. Long-term goal is to tighten this back to a strict 65.
     public static final int MAX_SIGNATURE_SIZE = 68;
     public static final int BLOCK_SIZE = 2_000_000;
     public static final long CLOCK_MAX_DELAY = 3600000; // 3600 * 1000 ms

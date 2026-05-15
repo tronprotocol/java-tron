@@ -461,7 +461,36 @@ public class TransactionUtilTest extends BaseTest {
   }
 
   @Test
-  public void getTransactionSignWeightPaddedSigOsakaRejected() {
+  public void getTransactionSignWeightShortSigRejected() {
+    // Lower bound is enforced on the read-only path; upper bound is not
+    // (so a tx committed pre-Osaka with a padded sig stays introspectable).
+    byte[] owner = ByteArray.fromHexString(OWNER_ADDRESS);
+    TransferContract transferContract = TransferContract.newBuilder()
+        .setAmount(1L)
+        .setOwnerAddress(ByteString.copyFrom(owner))
+        .setToAddress(ByteString.copyFrom(new byte[21]))
+        .build();
+    Transaction transaction = new TransactionCapsule(
+        transferContract, ContractType.TransferContract)
+        .getInstance().toBuilder()
+        .addSignature(ByteString.copyFrom(new byte[64]))
+        .build();
+
+    dbManager.getDynamicPropertiesStore().saveAllowTvmOsaka(1);
+    try {
+      TransactionSignWeight signWeight = transactionUtil.getTransactionSignWeight(transaction);
+      Assert.assertEquals(response_code.SIGNATURE_FORMAT_ERROR,
+          signWeight.getResult().getCode());
+    } finally {
+      dbManager.getDynamicPropertiesStore().saveAllowTvmOsaka(0);
+    }
+  }
+
+  @Test
+  public void getTransactionSignWeightPaddedSigPostOsakaAccepted() {
+    // Read-only path must not reject a 69-byte signature post-Osaka — the
+    // upper bound is meant to gate new submissions, not block introspection
+    // of historical transactions.
     byte[] owner = ByteArray.fromHexString(OWNER_ADDRESS);
     TransferContract transferContract = TransferContract.newBuilder()
         .setAmount(1L)
@@ -479,7 +508,7 @@ public class TransactionUtilTest extends BaseTest {
     dbManager.getDynamicPropertiesStore().saveAllowTvmOsaka(1);
     try {
       TransactionSignWeight signWeight = transactionUtil.getTransactionSignWeight(transaction);
-      Assert.assertEquals(response_code.SIGNATURE_FORMAT_ERROR,
+      Assert.assertNotEquals(response_code.SIGNATURE_FORMAT_ERROR,
           signWeight.getResult().getCode());
     } finally {
       dbManager.getDynamicPropertiesStore().saveAllowTvmOsaka(0);

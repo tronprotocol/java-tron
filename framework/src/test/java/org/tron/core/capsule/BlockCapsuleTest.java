@@ -221,11 +221,10 @@ public class BlockCapsuleTest {
     return block;
   }
 
-  private BlockCapsule withPaddedWitnessSig(BlockCapsule src) {
+  private BlockCapsule withPaddedWitnessSig(BlockCapsule src, int extraBytes) {
     byte[] original = src.getInstance().getBlockHeader()
         .getWitnessSignature().toByteArray();
-    // append one extra zero byte
-    byte[] padded = Arrays.copyOf(original, original.length + 1);
+    byte[] padded = Arrays.copyOf(original, original.length + extraBytes);
     Block modified = src.getInstance().toBuilder()
         .setBlockHeader(src.getInstance().getBlockHeader().toBuilder()
             .setWitnessSignature(ByteString.copyFrom(padded)))
@@ -235,12 +234,13 @@ public class BlockCapsuleTest {
 
   @Test
   public void witnessSignaturePaddedOsakaRejected() throws Exception {
-    BlockCapsule paddedBlock = withPaddedWitnessSig(signedBlock());
-    Assert.assertEquals(66,
+    // Pad past MAX_SIGNATURE_SIZE (68) so the post-Osaka upper-bound check fires.
+    BlockCapsule paddedBlock = withPaddedWitnessSig(signedBlock(), 4);
+    Assert.assertEquals(69,
         paddedBlock.getInstance().getBlockHeader().getWitnessSignature().size());
 
     DynamicPropertiesStore dps = mock(DynamicPropertiesStore.class);
-    when(dps.getAllowTvmOsaka()).thenReturn(1L);
+    when(dps.isAllowTvmOsaka()).thenReturn(true);
     AccountStore accountStore = mock(AccountStore.class);
 
     try {
@@ -248,16 +248,16 @@ public class BlockCapsuleTest {
       Assert.fail("Expected ValidateSignatureException for padded witness sig post-Osaka");
     } catch (ValidateSignatureException e) {
       Assert.assertTrue("Error must mention the sig size",
-          e.getMessage().contains("66"));
+          e.getMessage().contains("69"));
     }
   }
 
   @Test
   public void witnessSignaturePaddedPreOsaka() throws Exception {
-    BlockCapsule paddedBlock = withPaddedWitnessSig(signedBlock());
+    BlockCapsule paddedBlock = withPaddedWitnessSig(signedBlock(), 4);
 
     DynamicPropertiesStore dps = mock(DynamicPropertiesStore.class);
-    when(dps.getAllowTvmOsaka()).thenReturn(0L);
+    when(dps.isAllowTvmOsaka()).thenReturn(false);
     when(dps.getAllowMultiSign()).thenReturn(0L);
     AccountStore accountStore = mock(AccountStore.class);
 

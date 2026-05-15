@@ -19,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.tron.common.crypto.ECKey;
+import org.tron.common.crypto.SignUtils;
 import org.tron.common.es.ExecutorServiceManager;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
@@ -26,7 +27,6 @@ import org.tron.consensus.base.Param;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
-import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.db.PbftSignDataStore;
 import org.tron.core.exception.P2pException;
 import org.tron.core.net.message.TronMessage;
@@ -123,31 +123,28 @@ public class PbftDataSyncHandler implements TronMsgHandler, Closeable {
   private boolean validPbftSign(Raw raw, List<ByteString> srSignList,
       List<ByteString> currentSrList) {
     //valid sr list
+    if (srSignList.size() < Param.getInstance().getAgreeNodeCount()) {
+      return false;
+    }
     if (srSignList.size() != 0) {
-      Set<ByteString> srSignSet = new ConcurrentSet();
-      srSignSet.addAll(srSignList);
-      if (srSignSet.size() < Param.getInstance().getAgreeNodeCount()) {
-        logger.error("sr sign count {} < sr count * 2/3 + 1 == {}", srSignSet.size(),
-            Param.getInstance().getAgreeNodeCount());
-        return false;
-      }
       byte[] dataHash = Sha256Hash.hash(true, raw.toByteArray());
       Set<ByteString> srSet = Sets.newHashSet(currentSrList);
+      Set<ByteString> validSrAddressSet = new ConcurrentSet();
       List<Future<Boolean>> futureList = new ArrayList<>();
       for (ByteString sign : srSignList) {
         futureList.add(executorService.submit(
-            new ValidPbftSignTask(raw.getViewN(), srSignSet, dataHash, srSet, sign)));
+            new ValidPbftSignTask(raw.getViewN(), validSrAddressSet, dataHash, srSet, sign)));
       }
       for (Future<Boolean> future : futureList) {
         try {
-          if (!future.get()) {
-            return false;
-          }
+          future.get();
         } catch (Exception e) {
           logger.error("", e);
         }
       }
-      if (srSignSet.size() != 0) {
+      if (validSrAddressSet.size() < Param.getInstance().getAgreeNodeCount()) {
+        logger.error("sr sign count {} < sr count * 2/3 + 1 == {}", validSrAddressSet.size(),
+            Param.getInstance().getAgreeNodeCount());
         return false;
       }
     }
@@ -157,15 +154,15 @@ public class PbftDataSyncHandler implements TronMsgHandler, Closeable {
   private class ValidPbftSignTask implements Callable<Boolean> {
 
     private long viewN;
-    private Set<ByteString> srSignSet;
+    private Set<ByteString> validSrAddressSet;
     private byte[] dataHash;
     private Set<ByteString> srSet;
     private ByteString sign;
 
-    ValidPbftSignTask(long viewN, Set<ByteString> srSignSet,
+    ValidPbftSignTask(long viewN, Set<ByteString> validSrAddressSet,
         byte[] dataHash, Set<ByteString> srSet, ByteString sign) {
       this.viewN = viewN;
-      this.srSignSet = srSignSet;
+      this.validSrAddressSet = validSrAddressSet;
       this.dataHash = dataHash;
       this.srSet = srSet;
       this.sign = sign;
@@ -174,10 +171,10 @@ public class PbftDataSyncHandler implements TronMsgHandler, Closeable {
     @Override
     public Boolean call() throws Exception {
       try {
-        if (sign.size() < ChainConstant.MIN_SIGNATURE_SIZE
-            || (chainBaseManager.getDynamicPropertiesStore().getAllowTvmOsaka() == 1
-            && sign.size() > ChainConstant.MAX_SIGNATURE_SIZE)) {
-          throw new SignatureException("PBFT signature size is " + sign.size());
+        if (!SignUtils.isValidLength(sign.size(),
+            chainBaseManager.getDynamicPropertiesStore().isAllowTvmOsaka())) {
+          logger.error("viewN {} pbft signature size {} is invalid", viewN, sign.size());
+          return false;
         }
         byte[] srAddress = ECKey.signatureToAddress(dataHash,
             TransactionCapsule.getBase64FromByteString(sign));
@@ -186,7 +183,7 @@ public class PbftDataSyncHandler implements TronMsgHandler, Closeable {
               ByteArray.toHexString(srAddress));
           return false;
         }
-        srSignSet.remove(sign);
+        validSrAddressSet.add(ByteString.copyFrom(srAddress));
       } catch (SignatureException e) {
         logger.error("viewN {} valid sr list sign fail!", viewN, e);
         return false;

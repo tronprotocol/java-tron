@@ -186,7 +186,10 @@ public class TransactionExpireTest extends BaseMethodTest {
   }
 
   @Test
-  public void testApprovedListPaddedSigOsakaRejected() {
+  public void testApprovedListPaddedSigPostOsakaAccepted() {
+    // Read-only introspection must not reject a 69-byte sig post-Osaka — the
+    // upper bound is meant to gate new submissions, not block lookups of
+    // historical transactions committed before the size cap existed.
     initLocalWitness();
     byte[] address = Args.getLocalWitnesses().getWitnessAccountAddress();
     ByteString addressByte = ByteString.copyFrom(address);
@@ -207,7 +210,6 @@ public class TransactionExpireTest extends BaseMethodTest {
         new TransactionCapsule(transferContract, ContractType.TransferContract);
     capsule.sign(ByteArray.fromHexString(Args.getLocalWitnesses().getPrivateKey()));
 
-    // Replace the valid 65-byte sig with a 69-byte over-padded one (exceeds MAX_SIGNATURE_SIZE=68)
     byte[] sig65 = capsule.getInstance().getSignature(0).toByteArray();
     byte[] sig69 = Arrays.copyOf(sig65, 69);
     Transaction tx = capsule.getInstance().toBuilder()
@@ -216,13 +218,41 @@ public class TransactionExpireTest extends BaseMethodTest {
     dbManager.getDynamicPropertiesStore().saveAllowTvmOsaka(1);
     try {
       TransactionApprovedList result = wallet.getTransactionApprovedList(tx);
-      Assert.assertEquals("Over-padded sig must be rejected post-Osaka",
+      Assert.assertNotEquals("Padded sig must not be size-rejected on read-only path post-Osaka",
           TransactionApprovedList.Result.response_code.SIGNATURE_FORMAT_ERROR,
           result.getResult().getCode());
-      Assert.assertTrue(result.getResult().getMessage().contains("69"));
     } finally {
       dbManager.getDynamicPropertiesStore().saveAllowTvmOsaka(0);
     }
+  }
+
+  @Test
+  public void testApprovedListShortSigRejected() {
+    // Lower bound is still enforced on the read-only path.
+    initLocalWitness();
+    byte[] address = Args.getLocalWitnesses().getWitnessAccountAddress();
+    ByteString addressByte = ByteString.copyFrom(address);
+    AccountCapsule accountCapsule =
+        new AccountCapsule(Protocol.Account.newBuilder().setAddress(addressByte).build());
+    accountCapsule.setBalance(1000_000_000L);
+    dbManager.getChainBaseManager().getAccountStore()
+        .put(accountCapsule.createDbKey(), accountCapsule);
+
+    TransferContract transferContract = TransferContract.newBuilder()
+        .setAmount(1L)
+        .setOwnerAddress(addressByte)
+        .setToAddress(ByteString.copyFrom(ByteArray.fromHexString(
+            Wallet.getAddressPreFixString() + "A389132D6639FBDA4FBC8B659264E6B7C90DB086")))
+        .build();
+    Transaction tx = new TransactionCapsule(transferContract, ContractType.TransferContract)
+        .getInstance().toBuilder()
+        .addSignature(ByteString.copyFrom(new byte[64]))
+        .build();
+
+    TransactionApprovedList result = wallet.getTransactionApprovedList(tx);
+    Assert.assertEquals("Sig below MIN_SIGNATURE_SIZE must be rejected",
+        TransactionApprovedList.Result.response_code.SIGNATURE_FORMAT_ERROR,
+        result.getResult().getCode());
   }
 
   @Test

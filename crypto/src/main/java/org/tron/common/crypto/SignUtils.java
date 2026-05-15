@@ -5,8 +5,14 @@ import java.security.SignatureException;
 import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.crypto.sm2.SM2;
 import org.tron.common.crypto.sm2.SM2.SM2Signature;
+import org.tron.core.config.Parameter.ChainConstant;
 
 public class SignUtils {
+
+  public static boolean isValidLength(int size, boolean osakaAllowed) {
+    return size >= ChainConstant.MIN_SIGNATURE_SIZE
+        && (!osakaAllowed || size <= ChainConstant.MAX_SIGNATURE_SIZE);
+  }
 
   public static SignInterface getGeneratedRandomSign(
       SecureRandom secureRandom, boolean isECKeyCryptoEngine) {

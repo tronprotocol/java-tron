@@ -235,6 +235,16 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
       List<ByteString> approveList, DynamicPropertiesStore dynamicPropertiesStore)
       throws SignatureException, PermissionException, SignatureFormatException {
     Objects.requireNonNull(dynamicPropertiesStore, "dynamicPropertiesStore");
+    return checkWeight(permission, sigs, hash, approveList,
+        dynamicPropertiesStore.isAllowTvmOsaka());
+  }
+
+  // Read-only callers (e.g. getTransactionSignWeight) should pass osakaAllowed=false
+  // so historical transactions with sigs above MAX_SIGNATURE_SIZE are still
+  // introspectable; the upper bound is meant to gate new submissions post-Osaka.
+  public static long checkWeight(Permission permission, List<ByteString> sigs, byte[] hash,
+      List<ByteString> approveList, boolean osakaAllowed)
+      throws SignatureException, PermissionException, SignatureFormatException {
     long currentWeight = 0;
     if (sigs.size() > permission.getKeysCount()) {
       throw new PermissionException(
@@ -243,9 +253,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     }
     HashMap addMap = new HashMap();
     for (ByteString sig : sigs) {
-      if (sig.size() < ChainConstant.MIN_SIGNATURE_SIZE
-          || (dynamicPropertiesStore.getAllowTvmOsaka() == 1
-          && sig.size() > ChainConstant.MAX_SIGNATURE_SIZE)) {
+      if (!SignUtils.isValidLength(sig.size(), osakaAllowed)) {
         throw new SignatureFormatException("Signature size is " + sig.size());
       }
       String base64 = TransactionCapsule.getBase64FromByteString(sig);
