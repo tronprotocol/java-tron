@@ -247,6 +247,7 @@ public class JsonRpcServlet extends RateLimiterServlet {
 
     // JSON-RPC 2.0 §6: MUST NOT return an empty Array when there are no response objects.
     if (batchResult.isEmpty()) {
+      resp.setContentType("application/json-rpc");
       resp.setStatus(HttpServletResponse.SC_OK);
       resp.setContentLength(0);
       return;

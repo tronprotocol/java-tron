@@ -267,6 +267,18 @@ public class JsonRpcServletTest {
     assertEquals("application/json-rpc", resp.getContentType());
   }
 
+  @Test
+  public void allNotificationBatch_contentTypeIsApplicationJsonRpc() throws Exception {
+    // notification: rpcServer returns 0 bytes → empty batchResult → early return path
+    doAnswer(inv -> 0).when(mockRpcServer)
+        .handleRequest(any(InputStream.class), any(OutputStream.class));
+
+    MockHttpServletResponse resp = doPost("[{\"method\":\"eth_blockNumber\"}]");
+    assertEquals(200, resp.getStatus());
+    assertEquals(0, resp.getContentLength());
+    assertEquals("application/json-rpc", resp.getContentType());
+  }
+
   // --- Primitive root node → Invalid Request (-32600), id must be JSON null ---
 
   @Test
