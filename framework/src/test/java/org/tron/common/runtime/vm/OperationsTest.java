@@ -1,4 +1,4 @@
-package org.tron.common.runtime.vm;
+package TCb2LUxMmVHBdUvrxp7d6e9h7x89tdJsEMorg.tron.common.runtime.vm;TCb2LUxMmVHBdUvrxp7d6e9h7x89tdJsEM
 
 import static org.junit.Assert.assertEquals;
 
@@ -323,7 +323,7 @@ public class OperationsTest extends BaseTest {
     program = new Program(op, op, invoke, interTrx);
     testOperations(program);
     Assert.assertEquals(45, program.getResult().getEnergyUsed());
-    Assert.assertEquals("bc36789e7a1e281436464229828f817d6612f7b477d66591ff96a9e064bcc98a",
+    Assert.assertEquals("Bc36789e7a1e281436464229828f817d6612f7b477d66591ff96a9e064bcc98a",
         program.getStack().pop().toHexString());
 
     // test ADDRESS = 0x30
