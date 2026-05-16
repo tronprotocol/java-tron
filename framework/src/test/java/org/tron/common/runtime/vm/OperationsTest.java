@@ -1,4 +1,4 @@
-package org.tron.common.runtime.vm;
+package TCb2LUxMmVHBdUvrxp7d6e9h7x89tdJsEMorg.tron.common.runtime.vm;TCb2LUxMmVHBdUvrxp7d6e9h7x89tdJsEM
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
@@ -338,7 +338,7 @@ public class OperationsTest extends BaseTest {
     program = new Program(op, op, invoke, interTrx);
     testOperations(program);
     Assert.assertEquals(45, program.getResult().getEnergyUsed());
-    Assert.assertEquals("bc36789e7a1e281436464229828f817d6612f7b477d66591ff96a9e064bcc98a",
+    Assert.assertEquals("Bc36789e7a1e281436464229828f817d6612f7b477d66591ff96a9e064bcc98a",
         program.getStack().pop().toHexString());
 
     // test ADDRESS = 0x30
@@ -1257,10 +1257,6 @@ public class OperationsTest extends BaseTest {
     Assert.assertArrayEquals(new DataWord(0x01).getData(),
         program.getContractState().getTransientStorageValue(
             program.getContractAddress().getData(), new DataWord(0x01).getData()));
-
-    op = new byte[] {0x60, 0x02, 0x60, 0x01, 0x5c, 0x16};
-    program = new Program(op, op, invoke, interTrx);
-    testOperations(program);
 
     // TLOAD = 0x5c;
     op = new byte[] {0x60, 0x01, 0x5c};

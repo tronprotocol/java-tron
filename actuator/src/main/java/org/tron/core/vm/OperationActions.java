@@ -661,7 +661,7 @@ public class OperationActions {
 
     byte[] data =
         program.getContractState().getTransientStorageValue(address.getData(), key.getData());
-    DataWord value = data != null ? new DataWord(data).clone() : DataWord.ZERO();
+    DataWord value = data != null ? new DataWord(data) : DataWord.ZERO();
 
     program.stackPush(value);
     program.step();
