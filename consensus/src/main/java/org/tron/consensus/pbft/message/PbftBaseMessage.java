@@ -101,7 +101,7 @@ public abstract class PbftBaseMessage extends Message {
       throws SignatureException {
     ByteString signature = getPbftMessage().getSignature();
     if (!SignUtils.isValidLength(signature.size(),
-        dynamicPropertiesStore.isAllowTvmOsaka())) {
+        dynamicPropertiesStore.signatureMaxSizeChecked())) {
       throw new SignatureException("PBFT signature size is " + signature.size());
     }
     byte[] hash = Sha256Hash.hash(true, getPbftMessage().getRawData().toByteArray());

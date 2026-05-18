@@ -162,10 +162,11 @@ public class PbftMsgHandlerTest {
     dynamicPropertiesStore.saveAllowPBFT(1);
     dynamicPropertiesStore.saveAllowTvmOsaka(1);
     try {
-      context.getBean(PbftMsgHandler.class).processMessage(peer, pbftMessage);
-      Assert.fail("Padded PBFT signature must be rejected post-Osaka");
-    } catch (SignatureException e) {
-      Assert.assertTrue(e.getMessage().contains("PBFT signature size is 69"));
+      SignatureException e = Assert.assertThrows(
+          SignatureException.class,
+          () -> context.getBean(PbftMsgHandler.class).processMessage(peer, pbftMessage));
+      Assert.assertTrue("Padded PBFT signature must be rejected post-Osaka",
+          e.getMessage().contains("PBFT signature size is 69"));
     } finally {
       dynamicPropertiesStore.saveAllowTvmOsaka(0);
     }

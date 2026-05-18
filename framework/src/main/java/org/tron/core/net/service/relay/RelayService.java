@@ -154,7 +154,9 @@ public class RelayService {
     try {
       ByteString signature = msg.getSignature();
       if (!SignUtils.isValidLength(signature.size(),
-          chainBaseManager.getDynamicPropertiesStore().isAllowTvmOsaka())) {
+          chainBaseManager.getDynamicPropertiesStore().signatureMaxSizeChecked())) {
+        logger.warn("HelloMessage from {}, signature size {} is invalid.",
+            channel.getInetAddress(), signature.size());
         return false;
       }
       Sha256Hash hash = Sha256Hash.of(CommonParameter

@@ -9,9 +9,9 @@ import org.tron.core.config.Parameter.ChainConstant;
 
 public class SignUtils {
 
-  public static boolean isValidLength(int size, boolean osakaAllowed) {
+  public static boolean isValidLength(int size, boolean checkMaxSignatureSize) {
     return size >= ChainConstant.MIN_SIGNATURE_SIZE
-        && (!osakaAllowed || size <= ChainConstant.MAX_SIGNATURE_SIZE);
+        && (!checkMaxSignatureSize || size <= ChainConstant.MAX_SIGNATURE_SIZE);
   }
 
   public static SignInterface getGeneratedRandomSign(

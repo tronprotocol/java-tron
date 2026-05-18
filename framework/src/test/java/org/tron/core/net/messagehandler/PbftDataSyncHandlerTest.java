@@ -71,7 +71,7 @@ public class PbftDataSyncHandlerTest {
     DynamicPropertiesStore dynamicPropertiesStore = Mockito.mock(DynamicPropertiesStore.class);
     ChainBaseManager chainBaseManager = Mockito.mock(ChainBaseManager.class);
     Mockito.when(chainBaseManager.getDynamicPropertiesStore()).thenReturn(dynamicPropertiesStore);
-    Mockito.when(dynamicPropertiesStore.isAllowTvmOsaka()).thenReturn(true);
+    Mockito.when(dynamicPropertiesStore.signatureMaxSizeChecked()).thenReturn(true);
 
     Field field = PbftDataSyncHandler.class.getDeclaredField("chainBaseManager");
     field.setAccessible(true);
@@ -102,7 +102,7 @@ public class PbftDataSyncHandlerTest {
     DynamicPropertiesStore dynamicPropertiesStore = Mockito.mock(DynamicPropertiesStore.class);
     ChainBaseManager chainBaseManager = Mockito.mock(ChainBaseManager.class);
     Mockito.when(chainBaseManager.getDynamicPropertiesStore()).thenReturn(dynamicPropertiesStore);
-    Mockito.when(dynamicPropertiesStore.isAllowTvmOsaka()).thenReturn(true);
+    Mockito.when(dynamicPropertiesStore.signatureMaxSizeChecked()).thenReturn(true);
 
     Field field = PbftDataSyncHandler.class.getDeclaredField("chainBaseManager");
     field.setAccessible(true);
@@ -144,7 +144,7 @@ public class PbftDataSyncHandlerTest {
     DynamicPropertiesStore dynamicPropertiesStore = Mockito.mock(DynamicPropertiesStore.class);
     ChainBaseManager chainBaseManager = Mockito.mock(ChainBaseManager.class);
     Mockito.when(chainBaseManager.getDynamicPropertiesStore()).thenReturn(dynamicPropertiesStore);
-    Mockito.when(dynamicPropertiesStore.isAllowTvmOsaka()).thenReturn(true);
+    Mockito.when(dynamicPropertiesStore.signatureMaxSizeChecked()).thenReturn(true);
 
     Field field = PbftDataSyncHandler.class.getDeclaredField("chainBaseManager");
     field.setAccessible(true);

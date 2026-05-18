@@ -187,7 +187,7 @@ public class BlockCapsule implements ProtoCapsule<Block> {
     try {
       ByteString witnessSig = block.getBlockHeader().getWitnessSignature();
       if (!SignUtils.isValidLength(witnessSig.size(),
-          dynamicPropertiesStore.isAllowTvmOsaka())) {
+          dynamicPropertiesStore.signatureMaxSizeChecked())) {
         throw new ValidateSignatureException(
             "Witness signature size is " + witnessSig.size());
       }

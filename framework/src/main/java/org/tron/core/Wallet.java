@@ -645,10 +645,8 @@ public class Wallet {
           byte[] hash = Sha256Hash.hash(CommonParameter
               .getInstance().isECKeyCryptoEngine(), trx.getRawData().toByteArray());
           for (ByteString sig : trx.getSignatureList()) {
-            // Read-only introspection: only enforce the lower bound so a tx
-            // committed pre-Osaka with a sig above MAX_SIGNATURE_SIZE is still
-            // resolvable; the upper bound only gates new submissions post-Osaka.
-            if (sig.size() < ChainConstant.MIN_SIGNATURE_SIZE) {
+            // Read-only path: skip the upper bound so historical txs stay resolvable.
+            if (!SignUtils.isValidLength(sig.size(), false)) {
               throw new SignatureFormatException(
                   "Signature size is " + sig.size());
             }

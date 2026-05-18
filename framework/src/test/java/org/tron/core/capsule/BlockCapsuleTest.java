@@ -240,16 +240,14 @@ public class BlockCapsuleTest {
         paddedBlock.getInstance().getBlockHeader().getWitnessSignature().size());
 
     DynamicPropertiesStore dps = mock(DynamicPropertiesStore.class);
-    when(dps.isAllowTvmOsaka()).thenReturn(true);
+    when(dps.signatureMaxSizeChecked()).thenReturn(true);
     AccountStore accountStore = mock(AccountStore.class);
 
-    try {
-      paddedBlock.validateSignature(dps, accountStore);
-      Assert.fail("Expected ValidateSignatureException for padded witness sig post-Osaka");
-    } catch (ValidateSignatureException e) {
-      Assert.assertTrue("Error must mention the sig size",
-          e.getMessage().contains("69"));
-    }
+    ValidateSignatureException e = Assert.assertThrows(
+        ValidateSignatureException.class,
+        () -> paddedBlock.validateSignature(dps, accountStore));
+    Assert.assertTrue("Error must mention the sig size",
+        e.getMessage().contains("69"));
   }
 
   @Test
@@ -257,7 +255,7 @@ public class BlockCapsuleTest {
     BlockCapsule paddedBlock = withPaddedWitnessSig(signedBlock(), 4);
 
     DynamicPropertiesStore dps = mock(DynamicPropertiesStore.class);
-    when(dps.isAllowTvmOsaka()).thenReturn(false);
+    when(dps.signatureMaxSizeChecked()).thenReturn(false);
     when(dps.getAllowMultiSign()).thenReturn(0L);
     AccountStore accountStore = mock(AccountStore.class);
 

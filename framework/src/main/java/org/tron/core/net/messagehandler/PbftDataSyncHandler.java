@@ -172,7 +172,7 @@ public class PbftDataSyncHandler implements TronMsgHandler, Closeable {
     public Boolean call() throws Exception {
       try {
         if (!SignUtils.isValidLength(sign.size(),
-            chainBaseManager.getDynamicPropertiesStore().isAllowTvmOsaka())) {
+            chainBaseManager.getDynamicPropertiesStore().signatureMaxSizeChecked())) {
           logger.error("viewN {} pbft signature size {} is invalid", viewN, sign.size());
           return false;
         }

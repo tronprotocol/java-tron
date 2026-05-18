@@ -33,7 +33,6 @@ import java.security.SignatureException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -232,18 +231,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
    *  @see ForkController#init(org.tron.core.ChainBaseManager)
    */
   public static long checkWeight(Permission permission, List<ByteString> sigs, byte[] hash,
-      List<ByteString> approveList, DynamicPropertiesStore dynamicPropertiesStore)
-      throws SignatureException, PermissionException, SignatureFormatException {
-    Objects.requireNonNull(dynamicPropertiesStore, "dynamicPropertiesStore");
-    return checkWeight(permission, sigs, hash, approveList,
-        dynamicPropertiesStore.isAllowTvmOsaka());
-  }
-
-  // Read-only callers (e.g. getTransactionSignWeight) should pass osakaAllowed=false
-  // so historical transactions with sigs above MAX_SIGNATURE_SIZE are still
-  // introspectable; the upper bound is meant to gate new submissions post-Osaka.
-  public static long checkWeight(Permission permission, List<ByteString> sigs, byte[] hash,
-      List<ByteString> approveList, boolean osakaAllowed)
+      List<ByteString> approveList, boolean checkMaxSignatureSize)
       throws SignatureException, PermissionException, SignatureFormatException {
     long currentWeight = 0;
     if (sigs.size() > permission.getKeysCount()) {
@@ -253,7 +241,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     }
     HashMap addMap = new HashMap();
     for (ByteString sig : sigs) {
-      if (!SignUtils.isValidLength(sig.size(), osakaAllowed)) {
+      if (!SignUtils.isValidLength(sig.size(), checkMaxSignatureSize)) {
         throw new SignatureFormatException("Signature size is " + sig.size());
       }
       String base64 = TransactionCapsule.getBase64FromByteString(sig);
@@ -500,7 +488,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     }
     checkPermission(permissionId, permission, contract);
     long weight = checkWeight(permission, transaction.getSignatureList(), hash, null,
-        dynamicPropertiesStore);
+        dynamicPropertiesStore.signatureMaxSizeChecked());
     if (weight >= permission.getThreshold()) {
       return true;
     }
@@ -618,7 +606,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     if (this.transaction.getSignatureCount() > 0) {
       checkWeight(permission, this.transaction.getSignatureList(),
           this.getTransactionId().getBytes(),
-          approveList, dynamicPropertiesStore);
+          approveList, dynamicPropertiesStore.signatureMaxSizeChecked());
       if (approveList.contains(ByteString.copyFrom(address))) {
         throw new PermissionException(encode58Check(address) + " had signed!");
       }
