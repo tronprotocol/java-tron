@@ -178,6 +178,22 @@ public class BurnCipherTest {
   }
 
   @Test
+  public void testDecryptWithWrongNfLengthFailsForV2() throws ZksnarkException {
+    BigInteger amount = BigInteger.valueOf(500000);
+    byte[] record = Encryption.encryptBurnMessageByOvk(OVK, amount, ADDR_21, NF).get();
+    byte[] cipher = extractCipher(record);
+    byte[] nonce = extractNonce(record);
+    byte[] reserved = extractReserved(record);
+
+    Assert.assertFalse(Encryption.decryptBurnMessageByOvk(
+        OVK, cipher, nonce, reserved, new byte[31]).isPresent());
+    Assert.assertFalse(Encryption.decryptBurnMessageByOvk(
+        OVK, cipher, nonce, reserved, new byte[33]).isPresent());
+    Assert.assertFalse(Encryption.decryptBurnMessageByOvk(
+        OVK, cipher, nonce, reserved, new byte[0]).isPresent());
+  }
+
+  @Test
   public void testDecryptWithTamperedNonceFails() throws ZksnarkException {
     BigInteger amount = BigInteger.valueOf(500000);
     byte[] record = Encryption.encryptBurnMessageByOvk(OVK, amount, ADDR_21, NF).get();

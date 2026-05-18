@@ -240,9 +240,13 @@ public class NoteEncDecryTest extends BaseTest {
   }
 
   @Test
-  public void testGetTriggerInputBurn96ByteCipher() throws Exception {
-    byte[] burnCipher = new byte[Encryption.BURN_CIPHER_RECORD_SIZE];
-    GrpcAPI.ShieldedTRC20Parameters trc20Params = buildBurnTrc20Params(burnCipher);
+  public void testGetTriggerInputBurnV2Accepted() throws Exception {
+    byte[] nf = new byte[32];
+    for (int i = 0; i < nf.length; i++) {
+      nf[i] = (byte) (i + 1);
+    }
+    byte[] burnRecord = buildV2BurnRecord(nf);
+    GrpcAPI.ShieldedTRC20Parameters trc20Params = buildBurnTrc20Params(burnRecord, nf);
     GrpcAPI.ShieldedTRC20TriggerContractParameters req = buildBurnTriggerRequest(
         trc20Params, BigInteger.ONE);
     GrpcAPI.BytesMessage out = wallet.getTriggerInputForShieldedTRC20Contract(req);
@@ -250,9 +254,61 @@ public class NoteEncDecryTest extends BaseTest {
   }
 
   @Test
+  public void testGetTriggerInputBurnLegacy96ByteRecordRejected() throws Exception {
+    byte[] allZeroRecord = new byte[Encryption.BURN_CIPHER_RECORD_SIZE];
+    byte[] nf = new byte[32];
+    GrpcAPI.ShieldedTRC20Parameters trc20Params = buildBurnTrc20Params(allZeroRecord, nf);
+    GrpcAPI.ShieldedTRC20TriggerContractParameters req = buildBurnTriggerRequest(
+        trc20Params, BigInteger.ONE);
+    try {
+      wallet.getTriggerInputForShieldedTRC20Contract(req);
+      Assert.fail("expected ZksnarkException for legacy 96-byte burn record");
+    } catch (ZksnarkException e) {
+      Assert.assertTrue(e.getMessage(), e.getMessage().contains("v2"));
+    }
+  }
+
+  @Test
+  public void testGetTriggerInputBurnUnknownReservedRejected() throws Exception {
+    byte[] nf = new byte[32];
+    nf[0] = 0x5A;
+    byte[] record = buildV2BurnRecord(nf);
+    // mutate reserved to an unknown marker (0x00000002).
+    record[Encryption.BURN_RESERVED_OFFSET + Encryption.BURN_RESERVED_LEN - 1] = 2;
+    GrpcAPI.ShieldedTRC20Parameters trc20Params = buildBurnTrc20Params(record, nf);
+    GrpcAPI.ShieldedTRC20TriggerContractParameters req = buildBurnTriggerRequest(
+        trc20Params, BigInteger.ONE);
+    try {
+      wallet.getTriggerInputForShieldedTRC20Contract(req);
+      Assert.fail("expected ZksnarkException for unknown reserved marker");
+    } catch (ZksnarkException e) {
+      Assert.assertTrue(e.getMessage(), e.getMessage().contains("v2"));
+    }
+  }
+
+  @Test
+  public void testGetTriggerInputBurnNonceMismatchRejected() throws Exception {
+    byte[] nf = new byte[32];
+    nf[0] = 0x11;
+    byte[] record = buildV2BurnRecord(nf);
+    // flip one nonce byte so it no longer matches deriveNonceFromNf(nf).
+    record[Encryption.BURN_NONCE_OFFSET] ^= (byte) 0xFF;
+    GrpcAPI.ShieldedTRC20Parameters trc20Params = buildBurnTrc20Params(record, nf);
+    GrpcAPI.ShieldedTRC20TriggerContractParameters req = buildBurnTriggerRequest(
+        trc20Params, BigInteger.ONE);
+    try {
+      wallet.getTriggerInputForShieldedTRC20Contract(req);
+      Assert.fail("expected ZksnarkException for mismatched nf-bound nonce");
+    } catch (ZksnarkException e) {
+      Assert.assertTrue(e.getMessage(), e.getMessage().contains("nonce"));
+    }
+  }
+
+  @Test
   public void testGetTriggerInputBurn80ByteCipherRejected() throws Exception {
     byte[] legacyCipher = new byte[Encryption.BURN_CIPHER_LEN];
-    GrpcAPI.ShieldedTRC20Parameters trc20Params = buildBurnTrc20Params(legacyCipher);
+    byte[] nf = new byte[32];
+    GrpcAPI.ShieldedTRC20Parameters trc20Params = buildBurnTrc20Params(legacyCipher, nf);
     GrpcAPI.ShieldedTRC20TriggerContractParameters req = buildBurnTriggerRequest(
         trc20Params, BigInteger.ONE);
     try {
@@ -261,6 +317,18 @@ public class NoteEncDecryTest extends BaseTest {
     } catch (ZksnarkException e) {
       Assert.assertTrue(e.getMessage().contains("deprecated"));
     }
+  }
+
+  private static byte[] buildV2BurnRecord(byte[] nf) {
+    byte[] record = new byte[Encryption.BURN_CIPHER_RECORD_SIZE];
+    // cipher(0..80) left as zeros — getTriggerInputForShieldedTRC20Contract only
+    // checks reserved marker and nf-bound nonce, not cipher decryptability.
+    byte[] nonce = Encryption.deriveNonceFromNf(nf);
+    System.arraycopy(nonce, 0, record, Encryption.BURN_NONCE_OFFSET, Encryption.BURN_NONCE_LEN);
+    byte[] marker = Encryption.getBurnRecordV2Marker();
+    System.arraycopy(marker, 0, record, Encryption.BURN_RESERVED_OFFSET,
+        Encryption.BURN_RESERVED_LEN);
+    return record;
   }
 
   @Test
@@ -418,11 +486,14 @@ public class NoteEncDecryTest extends BaseTest {
         .setData(ByteString.copyFrom(logData)).build();
   }
 
-  private GrpcAPI.ShieldedTRC20Parameters buildBurnTrc20Params(byte[] cipher) {
+  private GrpcAPI.ShieldedTRC20Parameters buildBurnTrc20Params(byte[] cipher, byte[] nf) {
+    ShieldContract.SpendDescription spend = ShieldContract.SpendDescription.newBuilder()
+        .setNullifier(ByteString.copyFrom(nf))
+        .build();
     return GrpcAPI.ShieldedTRC20Parameters.newBuilder()
         .setParameterType("burn")
         .setTriggerContractInput(ByteArray.toHexString(cipher))
-        .addSpendDescription(ShieldContract.SpendDescription.getDefaultInstance())
+        .addSpendDescription(spend)
         .build();
   }
 

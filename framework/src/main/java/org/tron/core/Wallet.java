@@ -3909,7 +3909,9 @@ public class Wallet {
             int index = 0;
             for (TransactionInfo.Log log : logList) {
               int logType = getShieldedTRC20LogType(log, shieldedTRC20ContractAddress);
-              if (logType > 0) {
+              // Only note-producing log types (1..3) advance the note index;
+              // TokenBurn (4) and NoteSpent (5) do not emit a leaf.
+              if (logType > 0 && logType < 4) {
                 noteBuilder = DecryptNotesTRC20.NoteTx.newBuilder();
                 noteBuilder.setTxid(ByteString.copyFrom(txId));
                 noteBuilder.setIndex(index);
@@ -4307,17 +4309,45 @@ public class Wallet {
         parameterType);
     if (parametersBuilder.getShieldedTRC20ParametersType() == ShieldedTRC20ParametersType.BURN) {
       byte[] burnCiper = ByteArray.fromHexString(shieldedTRC20Parameters.getTriggerContractInput());
-      if (!ArrayUtils.isEmpty(burnCiper)
-          && burnCiper.length == NoteEncryption.Encryption.BURN_CIPHER_RECORD_SIZE) {
-        parametersBuilder.setBurnCiphertext(burnCiper);
-      } else if (!ArrayUtils.isEmpty(burnCiper) && burnCiper.length == 80) {
-        throw new ZksnarkException(
-            "legacy 80-byte burn cipher is deprecated and rejected; expected "
-                + NoteEncryption.Encryption.BURN_CIPHER_RECORD_SIZE + "-byte burn record");
-      } else {
+      if (ArrayUtils.isEmpty(burnCiper)
+          || burnCiper.length != NoteEncryption.Encryption.BURN_CIPHER_RECORD_SIZE) {
+        if (!ArrayUtils.isEmpty(burnCiper) && burnCiper.length == 80) {
+          throw new ZksnarkException(
+              "legacy 80-byte burn cipher is deprecated and rejected; expected "
+                  + NoteEncryption.Encryption.BURN_CIPHER_RECORD_SIZE + "-byte burn record");
+        }
         throw new ZksnarkException(
             "invalid shielded TRC-20 contract parameters for burn trigger input");
       }
+      // v2-only: length alone would accept a legacy all-zero suffix and bypass
+      // the nf-bound nonce. Require reserved==v2 marker and nonce==derive(nf).
+      byte[] reserved = Arrays.copyOfRange(burnCiper,
+          NoteEncryption.Encryption.BURN_RESERVED_OFFSET,
+          NoteEncryption.Encryption.BURN_RESERVED_OFFSET
+              + NoteEncryption.Encryption.BURN_RESERVED_LEN);
+      if (!Arrays.equals(reserved, NoteEncryption.Encryption.getBurnRecordV2Marker())) {
+        throw new ZksnarkException(
+            "burn trigger input must be v2 (reserved=0x00000001); legacy/unknown markers rejected");
+      }
+      if (shieldedTRC20Parameters.getSpendDescriptionList().size() != 1) {
+        throw new ZksnarkException(
+            "burn trigger input requires exactly one spendDescription for nf-bound nonce");
+      }
+      byte[] nf = shieldedTRC20Parameters.getSpendDescription(0).getNullifier().toByteArray();
+      if (nf.length != 32) {
+        throw new ZksnarkException(
+            "burn trigger input requires 32-byte spendDescription.nullifier");
+      }
+      byte[] nonceFromInput = Arrays.copyOfRange(burnCiper,
+          NoteEncryption.Encryption.BURN_NONCE_OFFSET,
+          NoteEncryption.Encryption.BURN_NONCE_OFFSET
+              + NoteEncryption.Encryption.BURN_NONCE_LEN);
+      byte[] expectedNonce = NoteEncryption.Encryption.deriveNonceFromNf(nf);
+      if (!Arrays.equals(nonceFromInput, expectedNonce)) {
+        throw new ZksnarkException(
+            "burn trigger input nonce does not match nf-bound nonce");
+      }
+      parametersBuilder.setBurnCiphertext(burnCiper);
     }
     String input = parametersBuilder
         .getTriggerContractInput(shieldedTRC20Parameters, spendAuthoritySignature, value, false,

@@ -124,6 +124,10 @@ public class NoteEncryption {
     private static final byte[] BURN_NONCE_DOMAIN =
         "Ztron_BurnNonce".getBytes(StandardCharsets.UTF_8);
 
+    public static byte[] getBurnRecordV2Marker() {
+      return BURN_RECORD_V2_MARKER.clone();
+    }
+
     /**
      * generate ock by ovk, cv, cm, epk
      */
@@ -298,7 +302,7 @@ public class NoteEncryption {
      * The nullifier is prefixed with a fixed domain tag before hashing so the
      * derivation cannot collide with any other SHA3-of-nf usage in the codebase.
      */
-    private static byte[] deriveNonceFromNf(byte[] nf) {
+    public static byte[] deriveNonceFromNf(byte[] nf) {
       byte[] tagged = new byte[BURN_NONCE_DOMAIN.length + nf.length];
       System.arraycopy(BURN_NONCE_DOMAIN, 0, tagged, 0, BURN_NONCE_DOMAIN.length);
       System.arraycopy(nf, 0, tagged, BURN_NONCE_DOMAIN.length, nf.length);
@@ -333,7 +337,7 @@ public class NoteEncryption {
         }
         effectiveNonce = nonceFromLog;
       } else if (Arrays.equals(reservedFromLog, BURN_RECORD_V2_MARKER)) {
-        if (nf == null) {
+        if (nf == null || nf.length != 32) {
           return Optional.empty();
         }
         byte[] derived = deriveNonceFromNf(nf);
