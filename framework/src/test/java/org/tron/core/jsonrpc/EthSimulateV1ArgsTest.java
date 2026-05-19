@@ -12,6 +12,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import org.junit.After;
 import org.junit.Test;
@@ -64,7 +66,7 @@ public class EthSimulateV1ArgsTest {
   public void rejectsMultipleBlocks() throws Exception {
     rpc = newRpc();
     SimulateV1Args args = new SimulateV1Args();
-    args.setBlockStateCalls(List.of(emptyBlock(), emptyBlock()));
+    args.setBlockStateCalls(Arrays.asList(emptyBlock(), emptyBlock()));
     JsonRpcInvalidParamsException e = assertThrows(JsonRpcInvalidParamsException.class,
         () -> rpc.ethSimulateV1(args, "latest"));
     assertTrue(e.getMessage().contains("single-block"));
@@ -137,7 +139,7 @@ public class EthSimulateV1ArgsTest {
     c.setData("0x");
     c.setTokenId("not-a-number");
     SimulateBlock block = new SimulateBlock();
-    block.setCalls(List.of(c));
+    block.setCalls(Collections.singletonList(c));
     SimulateV1Args args = wrap(block);
     JsonRpcInvalidParamsException e = assertThrows(JsonRpcInvalidParamsException.class,
         () -> rpc.ethSimulateV1(args, "latest"));
@@ -163,7 +165,7 @@ public class EthSimulateV1ArgsTest {
     SimulateCallResult c1 = new SimulateCallResult();
     c1.setStatus("0x0");
     c1.setReturnData("0x");
-    result.setCalls(List.of(c0, c1));
+    result.setCalls(Arrays.asList(c0, c1));
     result.setTransactions(new Object[] {"0xhash0", "0xhash1"});
 
     ObjectMapper mapper = new ObjectMapper();
@@ -190,7 +192,7 @@ public class EthSimulateV1ArgsTest {
 
   private static SimulateV1Args wrap(SimulateBlock block) {
     SimulateV1Args args = new SimulateV1Args();
-    args.setBlockStateCalls(List.of(block));
+    args.setBlockStateCalls(Collections.singletonList(block));
     return args;
   }
 

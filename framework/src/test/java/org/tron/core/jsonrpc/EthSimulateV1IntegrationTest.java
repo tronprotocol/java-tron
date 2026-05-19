@@ -8,6 +8,7 @@ import com.google.protobuf.ByteString;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import javax.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
@@ -422,7 +423,7 @@ public class EthSimulateV1IntegrationTest extends BaseTest {
     SimulateBlock block = new SimulateBlock();
     block.setCalls(new ArrayList<>(Arrays.asList(calls)));
     SimulateV1Args args = new SimulateV1Args();
-    args.setBlockStateCalls(new ArrayList<>(List.of(block)));
+    args.setBlockStateCalls(new ArrayList<>(Collections.singletonList(block)));
     args.setTraceTransfers(traceTransfers);
     args.setValidation(validation);
     args.setReturnFullTransactions(returnFullTransactions);
@@ -506,7 +507,9 @@ public class EthSimulateV1IntegrationTest extends BaseTest {
 
   /** Pad a 20-byte EVM address (hex without 0x) to a 32-byte topic hex string with 0x prefix. */
   private static String padAddressTopic(String evmHex20) {
-    return "0x" + "0".repeat(24) + evmHex20.toLowerCase(java.util.Locale.ROOT);
+    char[] zeros = new char[24];
+    java.util.Arrays.fill(zeros, '0');
+    return "0x" + new String(zeros) + evmHex20.toLowerCase(java.util.Locale.ROOT);
   }
 
   /** uint256 hex of a non-negative long, 0x-prefixed and left-padded to 32 bytes. */
