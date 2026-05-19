@@ -66,18 +66,97 @@ public class AllowTvmOsakaTest extends VMTestBase {
    * Build ModExp input data for energy calculation testing.
    */
   private static byte[] buildModExpData(int baseLen, int expLen, int modLen, byte[] expValue) {
+    return buildModExpData(baseLen, expLen, modLen, new byte[]{}, expValue, new byte[]{});
+  }
+
+  private static byte[] buildModExpData(int baseLen, int expLen, int modLen, byte[] baseValue,
+      byte[] expValue, byte[] modValue) {
     byte[] base = new byte[baseLen];
+    if (baseValue.length > 0 && baseLen > 0) {
+      System.arraycopy(baseValue, 0, base, 0,
+          StrictMathWrapper.min(baseValue.length, baseLen));
+    }
     byte[] exp = new byte[expLen];
     if (expValue.length > 0 && expLen > 0) {
       System.arraycopy(expValue, 0, exp, 0, StrictMathWrapper.min(expValue.length, expLen));
     }
     byte[] mod = new byte[modLen];
+    if (modValue.length > 0 && modLen > 0) {
+      System.arraycopy(modValue, 0, mod, 0,
+          StrictMathWrapper.min(modValue.length, modLen));
+    }
     return ByteUtil.merge(toLenBytes(baseLen), toLenBytes(expLen), toLenBytes(modLen),
         base, exp, mod);
   }
 
   private static long getEnergy(int baseLen, int expLen, int modLen, byte[] expValue) {
     return modExp.getEnergyForData(buildModExpData(baseLen, expLen, modLen, expValue));
+  }
+
+  @Test
+  public void testModExpZeroModulusOutputLengthGatedByOsaka() {
+    ConfigLoader.disable = true;
+
+    byte[] modLenZero = buildModExpData(1, 1, 0, new byte[]{0x02}, new byte[]{0x03},
+        new byte[]{});
+    byte[] modLenOne = buildModExpData(1, 1, 1, new byte[]{0x02}, new byte[]{0x03},
+        new byte[]{0x00});
+    byte[] modLen32 = buildModExpData(1, 1, 32, new byte[]{0x02}, new byte[]{0x03},
+        new byte[]{});
+
+    try {
+      VMConfig.initAllowTvmOsaka(0);
+      Pair<Boolean, byte[]> result = modExp.execute(modLenZero);
+      Assert.assertTrue(result.getLeft());
+      Assert.assertEquals(0, result.getRight().length);
+
+      result = modExp.execute(modLenOne);
+      Assert.assertTrue(result.getLeft());
+      Assert.assertEquals(0, result.getRight().length);
+
+      result = modExp.execute(modLen32);
+      Assert.assertTrue(result.getLeft());
+      Assert.assertEquals(0, result.getRight().length);
+
+      VMConfig.initAllowTvmOsaka(1);
+      result = modExp.execute(modLenZero);
+      Assert.assertTrue(result.getLeft());
+      Assert.assertEquals(0, result.getRight().length);
+
+      result = modExp.execute(modLenOne);
+      Assert.assertTrue(result.getLeft());
+      Assert.assertArrayEquals(new byte[1], result.getRight());
+
+      result = modExp.execute(modLen32);
+      Assert.assertTrue(result.getLeft());
+      Assert.assertArrayEquals(new byte[32], result.getRight());
+    } finally {
+      VMConfig.initAllowTvmOsaka(0);
+      ConfigLoader.disable = false;
+    }
+  }
+
+  @Test
+  public void testModExpZeroModulusEnergyMatchesNonZeroModulus() {
+    ConfigLoader.disable = true;
+
+    byte[] zeroModulus = buildModExpData(1, 1, 32, new byte[]{0x02}, new byte[]{0x03},
+        new byte[]{});
+    byte[] nonZeroModulus = buildModExpData(1, 1, 32, new byte[]{0x02}, new byte[]{0x03},
+        new byte[]{0x05});
+
+    try {
+      VMConfig.initAllowTvmOsaka(0);
+      Assert.assertEquals(modExp.getEnergyForData(nonZeroModulus),
+          modExp.getEnergyForData(zeroModulus));
+
+      VMConfig.initAllowTvmOsaka(1);
+      Assert.assertEquals(modExp.getEnergyForData(nonZeroModulus),
+          modExp.getEnergyForData(zeroModulus));
+    } finally {
+      VMConfig.initAllowTvmOsaka(0);
+      ConfigLoader.disable = false;
+    }
   }
 
   @Test
