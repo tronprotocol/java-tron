@@ -129,7 +129,8 @@ public class PbftMessageHandle {
       PbftMessage paMessage = message.buildPrePareMessage(miner);
       forwardMessage(paMessage);
       try {
-        paMessage.analyzeSignature(chainBaseManager.getDynamicPropertiesStore());
+        paMessage.analyzeSignature(
+            chainBaseManager.getDynamicPropertiesStore().signatureMaxSizeChecked());
       } catch (SignatureException e) {
         logger.error("", e);
       }
@@ -175,7 +176,8 @@ public class PbftMessageHandle {
           doneMsg.put(message.getNo(), cmMessage);
           forwardMessage(cmMessage);
           try {
-            cmMessage.analyzeSignature(chainBaseManager.getDynamicPropertiesStore());
+            cmMessage.analyzeSignature(
+                chainBaseManager.getDynamicPropertiesStore().signatureMaxSizeChecked());
           } catch (SignatureException e) {
             logger.error("", e);
           }

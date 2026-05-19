@@ -223,9 +223,8 @@ public class TransactionUtil {
         tswBuilder.setPermission(permission);
         if (trx.getSignatureCount() > 0) {
           List<ByteString> approveList = new ArrayList<>();
-          // Read-only introspection: pass osakaAllowed=false so a historical tx
-          // committed pre-Osaka with a sig above MAX_SIGNATURE_SIZE is still
-          // resolvable; the upper bound only gates new submissions post-Osaka.
+          // Read-only introspection: pass checkMaxSignatureSize=false so a historical tx
+          // committed with a sig above MAX_SIGNATURE_SIZE is still resolvable
           long currentWeight = TransactionCapsule.checkWeight(permission, trx.getSignatureList(),
               Sha256Hash.hash(CommonParameter.getInstance()
                   .isECKeyCryptoEngine(), trx.getRawData().toByteArray()), approveList,

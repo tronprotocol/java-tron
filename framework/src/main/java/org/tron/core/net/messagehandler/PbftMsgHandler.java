@@ -54,7 +54,7 @@ public class PbftMsgHandler {
         && currentEpoch - msg.getEpoch() > expireEpoch) {
       return;
     }
-    msg.analyzeSignature(chainBaseManager.getDynamicPropertiesStore());
+    msg.analyzeSignature(chainBaseManager.getDynamicPropertiesStore().signatureMaxSizeChecked());
     String key = buildKey(msg);
     Lock lock = striped.get(key);
     try {

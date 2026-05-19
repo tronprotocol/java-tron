@@ -123,28 +123,31 @@ public class PbftDataSyncHandler implements TronMsgHandler, Closeable {
   private boolean validPbftSign(Raw raw, List<ByteString> srSignList,
       List<ByteString> currentSrList) {
     //valid sr list
-    if (srSignList.size() < Param.getInstance().getAgreeNodeCount()) {
-      return false;
-    }
     if (srSignList.size() != 0) {
+      Set<ByteString> srSignSet = new ConcurrentSet();
+      srSignSet.addAll(srSignList);
+      if (srSignSet.size() < Param.getInstance().getAgreeNodeCount()) {
+        logger.error("sr sign count {} < sr count * 2/3 + 1 == {}", srSignSet.size(),
+            Param.getInstance().getAgreeNodeCount());
+        return false;
+      }
       byte[] dataHash = Sha256Hash.hash(true, raw.toByteArray());
       Set<ByteString> srSet = Sets.newHashSet(currentSrList);
-      Set<ByteString> validSrAddressSet = new ConcurrentSet();
       List<Future<Boolean>> futureList = new ArrayList<>();
       for (ByteString sign : srSignList) {
         futureList.add(executorService.submit(
-            new ValidPbftSignTask(raw.getViewN(), validSrAddressSet, dataHash, srSet, sign)));
+            new ValidPbftSignTask(raw.getViewN(), srSignSet, dataHash, srSet, sign)));
       }
       for (Future<Boolean> future : futureList) {
         try {
-          future.get();
+          if (!future.get()) {
+            return false;
+          }
         } catch (Exception e) {
           logger.error("", e);
         }
       }
-      if (validSrAddressSet.size() < Param.getInstance().getAgreeNodeCount()) {
-        logger.error("sr sign count {} < sr count * 2/3 + 1 == {}", validSrAddressSet.size(),
-            Param.getInstance().getAgreeNodeCount());
+      if (srSignSet.size() != 0) {
         return false;
       }
     }
@@ -154,15 +157,15 @@ public class PbftDataSyncHandler implements TronMsgHandler, Closeable {
   private class ValidPbftSignTask implements Callable<Boolean> {
 
     private long viewN;
-    private Set<ByteString> validSrAddressSet;
+    private Set<ByteString> srSignSet;
     private byte[] dataHash;
     private Set<ByteString> srSet;
     private ByteString sign;
 
-    ValidPbftSignTask(long viewN, Set<ByteString> validSrAddressSet,
+    ValidPbftSignTask(long viewN, Set<ByteString> srSignSet,
         byte[] dataHash, Set<ByteString> srSet, ByteString sign) {
       this.viewN = viewN;
-      this.validSrAddressSet = validSrAddressSet;
+      this.srSignSet = srSignSet;
       this.dataHash = dataHash;
       this.srSet = srSet;
       this.sign = sign;
@@ -183,7 +186,7 @@ public class PbftDataSyncHandler implements TronMsgHandler, Closeable {
               ByteArray.toHexString(srAddress));
           return false;
         }
-        validSrAddressSet.add(ByteString.copyFrom(srAddress));
+        srSignSet.remove(sign);
       } catch (SignatureException e) {
         logger.error("viewN {} valid sr list sign fail!", viewN, e);
         return false;
