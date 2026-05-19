@@ -131,22 +131,6 @@ public class EthSimulateV1ArgsTest {
   }
 
   @Test
-  public void rejectsNonNumericTokenId() throws Exception {
-    rpc = newRpc();
-    CallArguments c = new CallArguments();
-    c.setFrom("0x0000000000000000000000000000000000000000");
-    c.setTo("0x0000000000000000000000000000000000000001");
-    c.setData("0x");
-    c.setTokenId("not-a-number");
-    SimulateBlock block = new SimulateBlock();
-    block.setCalls(Collections.singletonList(c));
-    SimulateV1Args args = wrap(block);
-    JsonRpcInvalidParamsException e = assertThrows(JsonRpcInvalidParamsException.class,
-        () -> rpc.ethSimulateV1(args, "latest"));
-    assertTrue(e.getMessage().contains("tokenId"));
-  }
-
-  @Test
   public void rejectsEarliestTag() throws Exception {
     rpc = newRpc();
     SimulateV1Args args = wrap(emptyBlock());

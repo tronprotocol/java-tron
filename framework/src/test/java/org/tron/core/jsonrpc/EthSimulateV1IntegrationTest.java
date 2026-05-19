@@ -21,7 +21,6 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
-import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.config.args.Args;
@@ -40,7 +39,6 @@ import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.repository.Repository;
 import org.tron.core.vm.repository.RepositoryImpl;
 import org.tron.protos.Protocol;
-import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 import org.tron.protos.contract.SmartContractOuterClass;
 
 @Slf4j
@@ -61,20 +59,9 @@ public class EthSimulateV1IntegrationTest extends BaseTest {
   private static final String SEL_GET = "6d4ce63c";
   private static final String SEL_SET_REVERT = "2e8f88e6";
 
-  // ERC-7528 native pseudo-address (TRX + TRC-10 synthetic logs share it).
-  private static final String ERC7528_NATIVE_LOWER =
-      "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee";
-  // keccak256("Transfer(address,address,uint256)").
-  private static final String TRANSFER_TOPIC_LOWER =
-      "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
-  // TRC-10 testing token (>=1_000_001 required by VMConstant.MIN_TOKEN_ID).
-  private static final String TRC10_TOKEN_ID = "1000001";
-
   private static final String OWNER_ADDRESS;
   private static final String STORAGE_TRON_ADDR_HEX;
   private static final String STORAGE_EVM_ADDR_HEX_PREFIXED;
-  private static final String SINK_TRON_ADDR_HEX;
-  private static final String SINK_EVM_ADDR_HEX_PREFIXED;
   private static final long OWNER_BALANCE = 10_000_000_000L;
 
   static {
@@ -87,13 +74,6 @@ public class EthSimulateV1IntegrationTest extends BaseTest {
     STORAGE_TRON_ADDR_HEX = Wallet.getAddressPreFixString()
         + "00000000000000000000000000000000000c0de1";
     STORAGE_EVM_ADDR_HEX_PREFIXED = "0x00000000000000000000000000000000000c0de1";
-    // "Accept-anything" sink: runtime bytecode is `00` (STOP). No Solidity
-    // non-payable guard, so it accepts both TRX value and TRC-10 transfers
-    // without reverting. Used by the mixed TRX+TRC-10 test where the regular
-    // Solidity-compiled SimpleStorage would reject msg.value > 0.
-    SINK_TRON_ADDR_HEX = Wallet.getAddressPreFixString()
-        + "00000000000000000000000000000000000c0de2";
-    SINK_EVM_ADDR_HEX_PREFIXED = "0x00000000000000000000000000000000000c0de2";
   }
 
   @Resource
@@ -111,7 +91,6 @@ public class EthSimulateV1IntegrationTest extends BaseTest {
     // chain's dynamic-properties store from reloading these flags back to 0
     // — same pattern as AllowTvmCompatibleEvmTest.beforeClass().
     ConfigLoader.disable = true;
-    VMConfig.initAllowTvmTransferTrc10(1);
     VMConfig.initAllowTvmConstantinople(1);
     VMConfig.initAllowTvmSolidity059(1);
     VMConfig.initAllowTvmIstanbul(1);
@@ -151,17 +130,6 @@ public class EthSimulateV1IntegrationTest extends BaseTest {
             .build()));
     rootRepository.saveCode(storageAddr,
         ByteArray.fromHexString(simpleStorageRuntimeBytecode()));
-
-    // Sink contract — `00` (STOP) so it accepts arbitrary calldata, TRX value,
-    // and TRC-10 transfers without reverting.
-    byte[] sinkAddr = ByteArray.fromHexString(SINK_TRON_ADDR_HEX);
-    rootRepository.createAccount(sinkAddr, Protocol.AccountType.Contract);
-    rootRepository.createContract(sinkAddr, new ContractCapsule(
-        SmartContractOuterClass.SmartContract.newBuilder()
-            .setContractAddress(ByteString.copyFrom(sinkAddr))
-            .build()));
-    rootRepository.saveCode(sinkAddr, new byte[] {0x00});
-
     rootRepository.commit();
 
     tronJsonRpc = new TronJsonRpcImpl(nodeInfoService, wallet);
@@ -278,91 +246,6 @@ public class EthSimulateV1IntegrationTest extends BaseTest {
   }
 
   /**
-   * Top-level TRC-10 transfer (depth 0): owner sends 50 units of token
-   * 1000001 to the pre-deployed SimpleStorage contract, invoking get()
-   * (a view function that returns the slot value — picked because it
-   * doesn't revert on incoming TRC-10).
-   *
-   * <p>Expect exactly one synthetic log on the call result:
-   * address = ERC-7528 native pseudo-address (lowercased), topic[0] =
-   * keccak256("TRC10Transfer(address,address,uint256,uint256)"),
-   * topic[1] = padded sender (EVM 20-byte form), topic[2] = padded
-   * recipient, topic[3] = padded uint256(tokenId), data = padded
-   * uint256(amount).
-   */
-  @Test
-  public void traceTrc10TopLevelCall() throws Exception {
-    seedTrc10(500L);
-
-    CallArguments c = new CallArguments();
-    c.setFrom(OWNER_ADDRESS_HEX_PREFIXED());
-    c.setTo(STORAGE_EVM_ADDR_HEX_PREFIXED);
-    c.setData("0x" + SEL_GET);
-    c.setTokenId(TRC10_TOKEN_ID);
-    c.setTokenValue("0x32"); // 50
-    SimulateV1Args args = newArgs(true, false, false, c);
-
-    SimulateCallResult call =
-        tronJsonRpc.ethSimulateV1(args, "latest").get(0).getCalls().get(0);
-
-    assertEquals("0x1", call.getStatus());
-    assertEquals("expected exactly one synthetic TRC10Transfer log",
-        1, call.getLogs().size());
-
-    TronJsonRpc.LogFilterElement log = call.getLogs().get(0);
-    assertEquals(ERC7528_NATIVE_LOWER, log.getAddress());
-    String[] topics = log.getTopics();
-    assertEquals(4, topics.length);
-    assertEquals(trc10TransferTopic(), topics[0]);
-    assertEquals(padAddressTopic(OWNER_ADDRESS.substring(2)), topics[1]);
-    assertEquals(padAddressTopic(STORAGE_EVM_ADDR_HEX_PREFIXED.substring(2)), topics[2]);
-    assertEquals(padUint256Hex(1_000_001L), topics[3]);
-    assertEquals(padUint256Hex(50L), log.getData());
-
-    // No commit to disk: owner's TRC-10 balance is unchanged.
-    AccountCapsule reread = dbManager.getAccountStore().get(ownerBytes);
-    assertEquals(Long.valueOf(500L), reread.getAssetMapV2().get(TRC10_TOKEN_ID));
-  }
-
-  /**
-   * Mixed top-level transfer: a single call with both {@code value > 0}
-   * (TRX) and {@code tokenValue > 0} (TRC-10). Both synthetic logs must
-   * appear in the same call result with consecutive {@code logIndex} —
-   * TRX first, then TRC-10 — matching VMActuator's depth-0 emission order
-   * at lines 559-569 (TRX block before TRC-10 block).
-   */
-  @Test
-  public void traceTrc10MixedWithTrx() throws Exception {
-    seedTrc10(500L);
-
-    CallArguments c = new CallArguments();
-    c.setFrom(OWNER_ADDRESS_HEX_PREFIXED());
-    // Sink accepts arbitrary calldata + value; SimpleStorage would revert
-    // because Solidity inlines a non-payable check on every external method.
-    c.setTo(SINK_EVM_ADDR_HEX_PREFIXED);
-    c.setData("0x");
-    c.setValue("0x64"); // 100 sun TRX
-    c.setTokenId(TRC10_TOKEN_ID);
-    c.setTokenValue("0x32"); // 50 TRC-10
-    SimulateV1Args args = newArgs(true, false, false, c);
-
-    SimulateCallResult call =
-        tronJsonRpc.ethSimulateV1(args, "latest").get(0).getCalls().get(0);
-
-    assertEquals("0x1", call.getStatus());
-    assertEquals("expected two synthetic transfer logs (TRX + TRC-10)",
-        2, call.getLogs().size());
-
-    TronJsonRpc.LogFilterElement trxLog = call.getLogs().get(0);
-    TronJsonRpc.LogFilterElement trc10Log = call.getLogs().get(1);
-    assertEquals(TRANSFER_TOPIC_LOWER, trxLog.getTopics()[0]);
-    assertEquals(trc10TransferTopic(), trc10Log.getTopics()[0]);
-    assertEquals(padUint256Hex(100L), trxLog.getData());
-    assertEquals(padUint256Hex(50L), trc10Log.getData());
-    assertEquals(padUint256Hex(1_000_001L), trc10Log.getTopics()[3]);
-  }
-
-  /**
    * Drops TRC-10 transfer entries from a reverted sub-call frame — same
    * isolation discipline the TRX transfer hooks rely on. Direct buffer
    * exercise: enterFrame → onTokenTransfer → revertFrame must clear it.
@@ -471,49 +354,4 @@ public class EthSimulateV1IntegrationTest extends BaseTest {
     return new BigInteger(hex.startsWith("0x") ? hex.substring(2) : hex, 16);
   }
 
-  /**
-   * Register an AssetIssue for {@link #TRC10_TOKEN_ID} in the V2 store
-   * (V2 keys by tokenId, matching {@code AllowSameTokenName == 1}) and
-   * seed the owner's account with the requested balance. VMUtils
-   * validateForSmartContract requires both the AssetIssue and a non-zero
-   * owner balance to allow the transfer.
-   */
-  private void seedTrc10(long ownerAmount) {
-    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1L);
-    AssetIssueContract asset = AssetIssueContract.newBuilder()
-        .setOwnerAddress(ByteString.copyFrom(ownerBytes))
-        .setName(ByteString.copyFromUtf8("TRC10"))
-        .setId(TRC10_TOKEN_ID)
-        .setTotalSupply(1_000_000_000L)
-        .setTrxNum(1)
-        .setNum(1)
-        .build();
-    AssetIssueCapsule cap = new AssetIssueCapsule(asset);
-    dbManager.getAssetIssueV2Store().put(cap.createDbV2Key(), cap);
-
-    AccountCapsule owner = dbManager.getAccountStore().get(ownerBytes);
-    owner.setInstance(owner.getInstance().toBuilder()
-        .putAssetV2(TRC10_TOKEN_ID, ownerAmount)
-        .build());
-    dbManager.getAccountStore().put(ownerBytes, owner);
-  }
-
-  /** Lower-case hex of keccak256("TRC10Transfer(address,address,uint256,uint256)"). */
-  private static String trc10TransferTopic() {
-    return "0x" + ByteArray.toHexString(org.tron.common.crypto.Hash.sha3(
-        "TRC10Transfer(address,address,uint256,uint256)"
-            .getBytes(java.nio.charset.StandardCharsets.UTF_8)));
-  }
-
-  /** Pad a 20-byte EVM address (hex without 0x) to a 32-byte topic hex string with 0x prefix. */
-  private static String padAddressTopic(String evmHex20) {
-    char[] zeros = new char[24];
-    java.util.Arrays.fill(zeros, '0');
-    return "0x" + new String(zeros) + evmHex20.toLowerCase(java.util.Locale.ROOT);
-  }
-
-  /** uint256 hex of a non-negative long, 0x-prefixed and left-padded to 32 bytes. */
-  private static String padUint256Hex(long v) {
-    return "0x" + padUint256(v);
-  }
 }

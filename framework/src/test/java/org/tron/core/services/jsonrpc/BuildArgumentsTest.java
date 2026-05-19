@@ -41,7 +41,7 @@ public class BuildArgumentsTest extends BaseTest {
     CallArguments callArguments = new CallArguments(
         "0x0000000000000000000000000000000000000000",
         "0x0000000000000000000000000000000000000001", "0x10", "0.01", "0x100",
-        "", "", "0", null, null);
+        "", "", "0");
     BuildArguments args = new BuildArguments(callArguments);
     Assert.assertEquals("0x0000000000000000000000000000000000000000", args.getFrom());
     Assert.assertEquals("0x0000000000000000000000000000000000000001", args.getTo());

@@ -1148,16 +1148,6 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
     String resolvedData = call.resolveData();
     byte[] data = resolvedData == null ? new byte[0] : ByteArray.fromHexString(resolvedData);
     long value = call.parseValue();
-    String tokenIdStr = call.getTokenId();
-    long tokenValue = call.parseTokenValue();
-    long tokenId = 0L;
-    if (tokenIdStr != null && !tokenIdStr.isEmpty()) {
-      try {
-        tokenId = Long.parseLong(tokenIdStr);
-      } catch (NumberFormatException e) {
-        throw new JsonRpcInvalidParamsException("invalid tokenId: " + tokenIdStr);
-      }
-    }
 
     if (call.getTo() == null || call.getTo().isEmpty()) {
       SmartContract.Builder contract = SmartContract.newBuilder()
@@ -1169,17 +1159,12 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
       CreateSmartContract.Builder deployBuilder = CreateSmartContract.newBuilder();
       deployBuilder.setOwnerAddress(ByteString.copyFrom(owner));
       deployBuilder.setNewContract(contract.build());
-      if (tokenIdStr != null && !tokenIdStr.isEmpty()) {
-        deployBuilder.setCallTokenValue(tokenValue);
-        deployBuilder.setTokenId(tokenId);
-      }
       return wallet.createTransactionCapsule(deployBuilder.build(),
           ContractType.CreateSmartContract);
     }
 
     byte[] to = addressCompatibleToByteArray(call.getTo());
-    TriggerSmartContract trigger = triggerCallContract(owner, to, value, data, tokenValue,
-        (tokenIdStr == null || tokenIdStr.isEmpty()) ? null : tokenIdStr);
+    TriggerSmartContract trigger = triggerCallContract(owner, to, value, data, 0L, null);
     return wallet.createTransactionCapsule(trigger, ContractType.TriggerSmartContract);
   }
 
