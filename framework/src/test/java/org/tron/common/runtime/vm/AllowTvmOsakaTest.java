@@ -81,6 +81,46 @@ public class AllowTvmOsakaTest extends VMTestBase {
   }
 
   @Test
+  public void testModExpZeroModulusOutputLengthGatedByOsaka() {
+    ConfigLoader.disable = true;
+
+    byte[] modLenZero = buildModExpData(1, 1, 0, new byte[]{0x03});
+    byte[] modLenOne = buildModExpData(1, 1, 1, new byte[]{0x03});
+    byte[] modLen32 = buildModExpData(1, 1, 32, new byte[]{0x03});
+
+    try {
+      VMConfig.initAllowTvmOsaka(0);
+      Pair<Boolean, byte[]> result = modExp.execute(modLenZero);
+      Assert.assertTrue(result.getLeft());
+      Assert.assertEquals(0, result.getRight().length);
+
+      result = modExp.execute(modLenOne);
+      Assert.assertTrue(result.getLeft());
+      Assert.assertEquals(0, result.getRight().length);
+
+      result = modExp.execute(modLen32);
+      Assert.assertTrue(result.getLeft());
+      Assert.assertEquals(0, result.getRight().length);
+
+      VMConfig.initAllowTvmOsaka(1);
+      result = modExp.execute(modLenZero);
+      Assert.assertTrue(result.getLeft());
+      Assert.assertEquals(0, result.getRight().length);
+
+      result = modExp.execute(modLenOne);
+      Assert.assertTrue(result.getLeft());
+      Assert.assertArrayEquals(new byte[1], result.getRight());
+
+      result = modExp.execute(modLen32);
+      Assert.assertTrue(result.getLeft());
+      Assert.assertArrayEquals(new byte[32], result.getRight());
+    } finally {
+      VMConfig.initAllowTvmOsaka(0);
+      ConfigLoader.disable = false;
+    }
+  }
+
+  @Test
   public void testEIP7883ModExpPricing() {
     ConfigLoader.disable = true;
     VMConfig.initAllowTvmOsaka(1);
