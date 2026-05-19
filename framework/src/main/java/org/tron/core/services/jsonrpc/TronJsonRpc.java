@@ -27,6 +27,8 @@ import org.tron.core.exception.jsonrpc.JsonRpcTooManyResultException;
 import org.tron.core.services.jsonrpc.types.BlockResult;
 import org.tron.core.services.jsonrpc.types.BuildArguments;
 import org.tron.core.services.jsonrpc.types.CallArguments;
+import org.tron.core.services.jsonrpc.types.SimulateBlockResult;
+import org.tron.core.services.jsonrpc.types.SimulateV1Args;
 import org.tron.core.services.jsonrpc.types.TransactionReceipt;
 import org.tron.core.services.jsonrpc.types.TransactionResult;
 import org.tron.json.JSONObject;
@@ -166,6 +168,16 @@ public interface TronJsonRpc {
       @JsonRpcError(exception = JsonRpcInternalException.class, code = -32000, data = "{}"),
   })
   String getCall(CallArguments transactionCall, Object blockNumOrTag)
+      throws JsonRpcInvalidParamsException, JsonRpcInvalidRequestException,
+      JsonRpcInternalException;
+
+  @JsonRpcMethod("eth_simulateV1")
+  @JsonRpcErrors({
+      @JsonRpcError(exception = JsonRpcInvalidRequestException.class, code = -32600, data = "{}"),
+      @JsonRpcError(exception = JsonRpcInvalidParamsException.class, code = -32602, data = "{}"),
+      @JsonRpcError(exception = JsonRpcInternalException.class, code = -32000, data = "{}"),
+  })
+  List<SimulateBlockResult> ethSimulateV1(SimulateV1Args args, Object blockNumOrTag)
       throws JsonRpcInvalidParamsException, JsonRpcInvalidRequestException,
       JsonRpcInternalException;
 

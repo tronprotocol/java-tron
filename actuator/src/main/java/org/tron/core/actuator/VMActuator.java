@@ -54,6 +54,7 @@ import org.tron.core.vm.program.Program.TransferException;
 import org.tron.core.vm.program.ProgramPrecompile;
 import org.tron.core.vm.program.invoke.ProgramInvoke;
 import org.tron.core.vm.program.invoke.ProgramInvokeFactory;
+import org.tron.core.vm.program.listener.SimulationTracer;
 import org.tron.core.vm.repository.Repository;
 import org.tron.core.vm.repository.RepositoryImpl;
 import org.tron.core.vm.utils.MUtil;
@@ -94,6 +95,12 @@ public class VMActuator implements Actuator2 {
 
   @Setter
   private boolean enableEventListener;
+
+  @Setter
+  private Repository injectedRootRepository;
+
+  @Setter
+  private SimulationTracer simulationTracer;
 
   private LogInfoTriggerParser logInfoTriggerParser;
 
@@ -138,7 +145,9 @@ public class VMActuator implements Actuator2 {
     //Route Type
     ContractType contractType = this.trx.getRawData().getContract(0).getType();
     //Prepare Repository
-    rootRepository = RepositoryImpl.createRoot(context.getStoreFactory());
+    rootRepository = injectedRootRepository != null
+        ? injectedRootRepository
+        : RepositoryImpl.createRoot(context.getStoreFactory());
 
     enableEventListener = context.isEventPluginLoaded();
 
@@ -414,6 +423,7 @@ public class VMActuator implements Actuator2 {
       if (VMConfig.allowTvmCompatibleEvm()) {
         this.program.setContractVersion(1);
       }
+      this.program.setSimulationTracer(simulationTracer);
       byte[] txId = TransactionUtil.getTransactionId(trx).getBytes();
       this.program.setRootTransactionId(txId);
       if (enableEventListener && isCheckTransaction()) {
@@ -437,10 +447,18 @@ public class VMActuator implements Actuator2 {
     // transfer from callerAddress to contractAddress according to callValue
     if (callValue > 0) {
       MUtil.transfer(rootRepository, callerAddress, contractAddress, callValue);
+      if (simulationTracer != null) {
+        simulationTracer.onTransfer(stripTronPrefix(callerAddress),
+            stripTronPrefix(contractAddress), callValue);
+      }
     }
     if (VMConfig.allowTvmTransferTrc10() && tokenValue > 0) {
       MUtil.transferToken(rootRepository, callerAddress, contractAddress, String.valueOf(tokenId),
           tokenValue);
+      if (simulationTracer != null) {
+        simulationTracer.onTokenTransfer(stripTronPrefix(callerAddress),
+            stripTronPrefix(contractAddress), tokenId, tokenValue);
+      }
     }
 
   }
@@ -529,6 +547,7 @@ public class VMActuator implements Actuator2 {
       if (VMConfig.allowTvmCompatibleEvm()) {
         this.program.setContractVersion(deployedContract.getContractVersion());
       }
+      this.program.setSimulationTracer(simulationTracer);
       byte[] txId = TransactionUtil.getTransactionId(trx).getBytes();
       this.program.setRootTransactionId(txId);
 
@@ -543,12 +562,29 @@ public class VMActuator implements Actuator2 {
 
     if (callValue > 0) {
       MUtil.transfer(rootRepository, callerAddress, contractAddress, callValue);
+      if (simulationTracer != null) {
+        simulationTracer.onTransfer(stripTronPrefix(callerAddress),
+            stripTronPrefix(contractAddress), callValue);
+      }
     }
     if (VMConfig.allowTvmTransferTrc10() && tokenValue > 0) {
       MUtil.transferToken(rootRepository, callerAddress, contractAddress, String.valueOf(tokenId),
           tokenValue);
+      if (simulationTracer != null) {
+        simulationTracer.onTokenTransfer(stripTronPrefix(callerAddress),
+            stripTronPrefix(contractAddress), tokenId, tokenValue);
+      }
     }
 
+  }
+
+  private static byte[] stripTronPrefix(byte[] tronAddress) {
+    if (tronAddress == null || tronAddress.length != 21) {
+      return tronAddress;
+    }
+    byte[] evm = new byte[20];
+    System.arraycopy(tronAddress, 1, evm, 0, 20);
+    return evm;
   }
 
   public long getAccountEnergyLimitWithFixRatio(AccountCapsule account, long feeLimit,

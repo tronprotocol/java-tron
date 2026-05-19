@@ -49,6 +49,22 @@ public class CallArguments {
   @Getter
   @Setter
   private String nonce; // not used
+  /**
+   * Tron-specific extension for {@code eth_simulateV1}: decimal-string TRC-10
+   * asset id (matches {@link org.tron.core.services.jsonrpc.JsonRpcApiUtil
+   * #triggerCallContract}'s 6th arg). Null/empty means "no TRC-10 transfer".
+   */
+  @Getter
+  @Setter
+  private String tokenId;
+  /**
+   * Tron-specific extension for {@code eth_simulateV1}: hex-quantity TRC-10
+   * amount (e.g. {@code "0x64"} = 100). Null/empty means 0. Ignored when
+   * {@code tokenId} is null/empty.
+   */
+  @Getter
+  @Setter
+  private String tokenValue;
 
   /**
    * Returns {@code input} if non-null, else {@code data}. Pure
@@ -107,5 +123,13 @@ public class CallArguments {
 
   public long parseValue() throws JsonRpcInvalidParamsException {
     return parseQuantityValue(value);
+  }
+
+  /** Parsed TRC-10 token amount; 0 when {@code tokenValue} is null/empty. */
+  public long parseTokenValue() throws JsonRpcInvalidParamsException {
+    if (tokenValue == null || tokenValue.isEmpty()) {
+      return 0L;
+    }
+    return parseQuantityValue(tokenValue);
   }
 }

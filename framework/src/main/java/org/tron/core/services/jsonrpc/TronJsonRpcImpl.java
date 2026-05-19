@@ -12,6 +12,7 @@ import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getEnergyUsageTotal;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getTransactionIndex;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getTxID;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.parseBlockNumber;
+import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.parseQuantityValue;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.triggerCallContract;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -55,6 +56,7 @@ import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
+import org.tron.common.utils.DecodeUtil;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
@@ -85,9 +87,14 @@ import org.tron.core.services.jsonrpc.filters.LogMatch;
 import org.tron.core.services.jsonrpc.types.BlockResult;
 import org.tron.core.services.jsonrpc.types.BuildArguments;
 import org.tron.core.services.jsonrpc.types.CallArguments;
+import org.tron.core.services.jsonrpc.types.SimulateBlock;
+import org.tron.core.services.jsonrpc.types.SimulateBlockResult;
+import org.tron.core.services.jsonrpc.types.SimulateCallResult;
+import org.tron.core.services.jsonrpc.types.SimulateV1Args;
 import org.tron.core.services.jsonrpc.types.TransactionReceipt;
 import org.tron.core.services.jsonrpc.types.TransactionReceipt.TransactionContext;
 import org.tron.core.services.jsonrpc.types.TransactionResult;
+import org.tron.core.vm.program.listener.BufferingSimulationTracer;
 import org.tron.core.store.StorageRowStore;
 import org.tron.core.vm.program.Storage;
 import org.tron.json.JSON;
@@ -1048,6 +1055,312 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
 
     return call(addressData, contractAddressData, transactionCall.parseValue(),
         ByteArray.fromHexString(transactionCall.resolveData()));
+  }
+
+  private static final int MAX_SIMULATE_CALLS_PER_BLOCK = 32;
+  private static final String SIMULATE_BLOCK_HASH_PREFIX = "sim:";
+  private static final long BLOCK_INTERVAL_MS = 3000L;
+  private static final String TRANSFER_TOPIC_HEX =
+      "ddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
+  /**
+   * keccak256("TRC10Transfer(address,address,uint256,uint256)") — synthetic
+   * topic[0] for TRC-10 transfer logs, distinguishing them from ERC-20
+   * Transfer (same synthetic-log address, different signature).
+   */
+  private static final String TRC10_TRANSFER_TOPIC_HEX =
+      ByteArray.toHexString(Hash.sha3(
+          "TRC10Transfer(address,address,uint256,uint256)"
+              .getBytes(java.nio.charset.StandardCharsets.UTF_8)));
+  private static final String ERC7528_NATIVE_ADDRESS =
+      "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee";
+
+  @Override
+  public List<SimulateBlockResult> ethSimulateV1(SimulateV1Args args, Object blockParamObj)
+      throws JsonRpcInvalidParamsException, JsonRpcInvalidRequestException,
+      JsonRpcInternalException {
+
+    if (args == null || args.getBlockStateCalls() == null) {
+      throw new JsonRpcInvalidParamsException("blockStateCalls is required");
+    }
+    if (args.getBlockStateCalls().size() != 1) {
+      throw new JsonRpcInvalidParamsException("only single-block simulation supported");
+    }
+
+    String blockNumOrTag;
+    if (blockParamObj == null) {
+      blockNumOrTag = LATEST_STR;
+    } else if (blockParamObj instanceof String) {
+      blockNumOrTag = (String) blockParamObj;
+    } else {
+      throw new JsonRpcInvalidParamsException("invalid block tag");
+    }
+    if (!LATEST_STR.equalsIgnoreCase(blockNumOrTag)
+        && !"pending".equalsIgnoreCase(blockNumOrTag)) {
+      throw new JsonRpcInvalidParamsException("only latest/pending block tag supported");
+    }
+
+    SimulateBlock block = args.getBlockStateCalls().get(0);
+    if (block == null || block.getCalls() == null) {
+      throw new JsonRpcInvalidParamsException("calls is required");
+    }
+    if (block.getBlockOverrides() != null) {
+      throw new JsonRpcInvalidParamsException("blockOverrides not supported");
+    }
+    if (block.getStateOverrides() != null) {
+      throw new JsonRpcInvalidParamsException("stateOverrides not supported");
+    }
+    if (!block.getUnknown().isEmpty()) {
+      throw new JsonRpcInvalidParamsException("unknown fields in blockStateCalls[0]: "
+          + block.getUnknown().keySet());
+    }
+    if (block.getCalls().size() > MAX_SIMULATE_CALLS_PER_BLOCK) {
+      throw new JsonRpcInvalidParamsException("too many calls; max "
+          + MAX_SIMULATE_CALLS_PER_BLOCK);
+    }
+
+    Wallet.SimulateOutcome outcome;
+    try {
+      List<TransactionCapsule> trxCaps = new ArrayList<>(block.getCalls().size());
+      for (CallArguments call : block.getCalls()) {
+        trxCaps.add(buildSimulateTransactionCapsule(call));
+      }
+      outcome = wallet.simulateConstantContracts(trxCaps, args.isTraceTransfers(),
+          args.isValidation());
+    } catch (ContractValidateException | VMIllegalException e) {
+      String msg = e.getMessage() != null ? e.getMessage() : CONTRACT_VALIDATE_ERROR;
+      throw new JsonRpcInvalidRequestException(msg);
+    } catch (JsonRpcInvalidParamsException | JsonRpcInvalidRequestException e) {
+      throw e;
+    } catch (Exception e) {
+      String msg = e.getMessage() != null ? e.getMessage().replaceAll("[\"]", "'") : JSON_ERROR;
+      throw new JsonRpcInternalException(msg);
+    }
+
+    return List.of(buildSimulateBlockResult(outcome, block.getCalls(),
+        args.isTraceTransfers(), args.isReturnFullTransactions()));
+  }
+
+  private TransactionCapsule buildSimulateTransactionCapsule(CallArguments call)
+      throws JsonRpcInvalidRequestException, JsonRpcInvalidParamsException,
+      ContractValidateException {
+    byte[] owner = addressCompatibleToByteArray(call.getFrom());
+    String resolvedData = call.resolveData();
+    byte[] data = resolvedData == null ? new byte[0] : ByteArray.fromHexString(resolvedData);
+    long value = call.parseValue();
+    String tokenIdStr = call.getTokenId();
+    long tokenValue = call.parseTokenValue();
+    long tokenId = 0L;
+    if (tokenIdStr != null && !tokenIdStr.isEmpty()) {
+      try {
+        tokenId = Long.parseLong(tokenIdStr);
+      } catch (NumberFormatException e) {
+        throw new JsonRpcInvalidParamsException("invalid tokenId: " + tokenIdStr);
+      }
+    }
+
+    if (call.getTo() == null || call.getTo().isEmpty()) {
+      SmartContract.Builder contract = SmartContract.newBuilder()
+          .setOriginAddress(ByteString.copyFrom(owner))
+          .setBytecode(ByteString.copyFrom(data))
+          .setCallValue(value)
+          .setConsumeUserResourcePercent(100)
+          .setOriginEnergyLimit(1);
+      CreateSmartContract.Builder deployBuilder = CreateSmartContract.newBuilder();
+      deployBuilder.setOwnerAddress(ByteString.copyFrom(owner));
+      deployBuilder.setNewContract(contract.build());
+      if (tokenIdStr != null && !tokenIdStr.isEmpty()) {
+        deployBuilder.setCallTokenValue(tokenValue);
+        deployBuilder.setTokenId(tokenId);
+      }
+      return wallet.createTransactionCapsule(deployBuilder.build(),
+          ContractType.CreateSmartContract);
+    }
+
+    byte[] to = addressCompatibleToByteArray(call.getTo());
+    TriggerSmartContract trigger = triggerCallContract(owner, to, value, data, tokenValue,
+        (tokenIdStr == null || tokenIdStr.isEmpty()) ? null : tokenIdStr);
+    return wallet.createTransactionCapsule(trigger, ContractType.TriggerSmartContract);
+  }
+
+  private SimulateBlockResult buildSimulateBlockResult(Wallet.SimulateOutcome outcome,
+      List<CallArguments> calls, boolean traceTransfers, boolean returnFullTransactions)
+      throws JsonRpcInvalidParamsException {
+    BlockCapsule head = outcome.getHeadBlockCapsule();
+    SimulateBlockResult br = new SimulateBlockResult();
+    long headNum = head.getNum();
+    byte[] headHash = head.getBlockId().getBytes();
+    byte[] simBlockHash = Hash.sha3(
+        (SIMULATE_BLOCK_HASH_PREFIX + ByteArray.toHexString(headHash) + ":1").getBytes());
+    String simBlockHashRaw = ByteArray.toHexString(simBlockHash);
+    String simBlockHashHex = ByteArray.toJsonHex(simBlockHash);
+
+    br.setNumber(ByteArray.toJsonHex(headNum + 1));
+    br.setHash(simBlockHashHex);
+    br.setParentHash(ByteArray.toJsonHex(headHash));
+    br.setNonce(ByteArray.toJsonHex(new byte[8]));
+    br.setSha3Uncles(ByteArray.toJsonHex(new byte[32]));
+    br.setLogsBloom(ByteArray.toJsonHex(new byte[256]));
+    br.setTransactionsRoot(ByteArray.toJsonHex(new byte[32]));
+    br.setStateRoot(ByteArray.toJsonHex(new byte[32]));
+    br.setReceiptsRoot(ByteArray.toJsonHex(new byte[32]));
+    br.setMiner(ByteArray.toJsonHex(new byte[20]));
+    br.setDifficulty("0x0");
+    br.setTotalDifficulty("0x0");
+    br.setExtraData("0x");
+    br.setSize("0x0");
+    br.setGasLimit(ByteArray.toJsonHex(CommonParameter.getInstance().maxEnergyLimitForConstant));
+    br.setTimestamp(ByteArray.toJsonHex((head.getTimeStamp() + BLOCK_INTERVAL_MS) / 1000));
+    br.setBaseFeePerGas("0x0");
+    br.setUncles(new String[0]);
+
+    long totalGasUsed = 0L;
+    int logIndex = 0;
+    List<SimulateCallResult> callResults = new ArrayList<>(outcome.getCalls().size());
+    Object[] transactions = new Object[outcome.getCalls().size()];
+    for (int i = 0; i < outcome.getCalls().size(); i++) {
+      Wallet.SimulateCallOutcome callOutcome = outcome.getCalls().get(i);
+      org.tron.common.runtime.ProgramResult pr = callOutcome.getResult();
+      CallArguments call = calls.get(i);
+
+      byte[] txHashBytes = Hash.sha3(
+          (SIMULATE_BLOCK_HASH_PREFIX + ByteArray.toHexString(headHash) + ":" + i).getBytes());
+      String txHashRaw = ByteArray.toHexString(txHashBytes);
+      String txHashHex = ByteArray.toJsonHex(txHashBytes);
+
+      SimulateCallResult scr = new SimulateCallResult();
+      scr.setReturnData(ByteArray.toJsonHex(pr.getHReturn()));
+      scr.setGasUsed(ByteArray.toJsonHex(pr.getEnergyUsed()));
+      scr.setTransactionHash(txHashHex);
+      scr.setTransactionIndex(ByteArray.toJsonHex(i));
+      totalGasUsed += pr.getEnergyUsed();
+
+      boolean reverted = pr.isRevert();
+      boolean failed = pr.getException() != null || reverted;
+      scr.setStatus(failed ? "0x0" : "0x1");
+
+      List<TronJsonRpc.LogFilterElement> logs = new ArrayList<>();
+      if (!failed) {
+        byte[] contractAddr = pr.getContractAddress();
+        if (contractAddr != null && contractAddr.length > 0) {
+          scr.setContractAddress(ByteArray.toJsonHexAddress(contractAddr));
+        }
+        for (BufferingSimulationTracer.Entry entry : callOutcome.getTracerEntries()) {
+          TronJsonRpc.LogFilterElement el = entryToLogFilterElement(entry, simBlockHashRaw,
+              headNum + 1, txHashRaw, i, logIndex++, traceTransfers);
+          if (el != null) {
+            logs.add(el);
+          }
+        }
+      }
+      scr.setLogs(logs);
+
+      if (failed) {
+        byte[] revertData = pr.getHReturn();
+        if (revertData != null && revertData.length > 0) {
+          scr.setErrorData(ByteArray.toJsonHex(revertData));
+        }
+        if (reverted) {
+          scr.setErrorMessage("REVERT opcode executed" + tryDecodeRevertReason(revertData));
+        } else if (pr.getException() != null) {
+          scr.setErrorMessage(pr.getException().getMessage());
+        }
+      }
+
+      callResults.add(scr);
+      transactions[i] = returnFullTransactions
+          ? buildFullTransaction(call, txHashHex, simBlockHashHex, headNum + 1, i)
+          : txHashHex;
+    }
+    br.setGasUsed(ByteArray.toJsonHex(totalGasUsed));
+    br.setCalls(callResults);
+    br.setTransactions(transactions);
+    return br;
+  }
+
+  private TransactionResult buildFullTransaction(CallArguments call, String txHashHex,
+      String blockHashHex, long blockNumber, int txIndex)
+      throws JsonRpcInvalidParamsException {
+    String fromHex = call.getFrom() == null ? null
+        : ByteArray.toJsonHexAddress(addressCompatibleToByteArray(call.getFrom()));
+    String toHex = call.getTo() == null || call.getTo().isEmpty() ? null
+        : ByteArray.toJsonHexAddress(addressCompatibleToByteArray(call.getTo()));
+    long gas = call.getGas() == null || call.getGas().isEmpty()
+        ? 0L : parseQuantityValue(call.getGas());
+    long value = call.parseValue();
+    String data = call.resolveData();
+    String inputHex = data == null ? "0x" : (data.startsWith("0x") ? data : "0x" + data);
+    return new TransactionResult(txHashHex, blockHashHex, blockNumber, txIndex,
+        fromHex, toHex, gas, value, inputHex);
+  }
+
+  private TronJsonRpc.LogFilterElement entryToLogFilterElement(
+      BufferingSimulationTracer.Entry entry, String blockHashRaw, long blockNum,
+      String txHashRaw, int callIndex, int logIdx, boolean traceTransfers) {
+
+    String addressRaw;
+    List<DataWord> topics;
+    String dataHex;
+
+    if (entry.getKind() == BufferingSimulationTracer.EntryKind.TRANSFER) {
+      if (!traceTransfers) {
+        return null;
+      }
+      addressRaw = ERC7528_NATIVE_ADDRESS;
+      topics = new ArrayList<>(3);
+      topics.add(new DataWord(ByteArray.fromHexString(TRANSFER_TOPIC_HEX)));
+      topics.add(new DataWord(leftPad32(entry.getFromEvm())));
+      topics.add(new DataWord(leftPad32(entry.getToEvm())));
+      dataHex = ByteArray.toHexString(leftPad32(longToBytes(entry.getAmount())));
+    } else if (entry.getKind() == BufferingSimulationTracer.EntryKind.TOKEN_TRANSFER) {
+      if (!traceTransfers) {
+        return null;
+      }
+      addressRaw = ERC7528_NATIVE_ADDRESS;
+      topics = new ArrayList<>(4);
+      topics.add(new DataWord(ByteArray.fromHexString(TRC10_TRANSFER_TOPIC_HEX)));
+      topics.add(new DataWord(leftPad32(entry.getFromEvm())));
+      topics.add(new DataWord(leftPad32(entry.getToEvm())));
+      topics.add(new DataWord(leftPad32(longToBytes(entry.getTokenId()))));
+      dataHex = ByteArray.toHexString(leftPad32(longToBytes(entry.getAmount())));
+    } else {
+      org.tron.common.runtime.vm.LogInfo li = entry.getLogInfo();
+      byte[] addr = li.getAddress();
+      if (addr != null && addr.length > 0 && addr[0] == DecodeUtil.addressPreFixByte) {
+        byte[] stripped = new byte[addr.length - 1];
+        System.arraycopy(addr, 1, stripped, 0, stripped.length);
+        addressRaw = ByteArray.toHexString(stripped);
+      } else {
+        addressRaw = addr == null ? "" : ByteArray.toHexString(addr);
+      }
+      topics = new ArrayList<>(li.getTopics());
+      dataHex = li.getData() == null ? "" : ByteArray.toHexString(li.getData());
+    }
+
+    return new TronJsonRpc.LogFilterElement(
+        blockHashRaw, blockNum, txHashRaw, callIndex,
+        addressRaw, topics, dataHex, logIdx, false,
+        System.currentTimeMillis());
+  }
+
+  private static byte[] leftPad32(byte[] src) {
+    if (src == null) {
+      return new byte[32];
+    }
+    if (src.length >= 32) {
+      return src;
+    }
+    byte[] out = new byte[32];
+    System.arraycopy(src, 0, out, 32 - src.length, src.length);
+    return out;
+  }
+
+  private static byte[] longToBytes(long v) {
+    byte[] out = new byte[8];
+    for (int i = 7; i >= 0; i--) {
+      out[i] = (byte) (v & 0xff);
+      v >>>= 8;
+    }
+    return out;
   }
 
   @Override

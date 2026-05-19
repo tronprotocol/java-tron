@@ -199,6 +199,10 @@ import org.tron.core.store.MarketOrderStore;
 import org.tron.core.store.MarketPairPriceToOrderStore;
 import org.tron.core.store.MarketPairToPriceStore;
 import org.tron.core.store.StoreFactory;
+import org.tron.core.vm.program.listener.BufferingSimulationTracer;
+import org.tron.core.vm.program.listener.SimulationTracer;
+import org.tron.core.vm.repository.Repository;
+import org.tron.core.vm.repository.RepositoryImpl;
 import org.tron.core.store.VotesStore;
 import org.tron.core.store.WitnessStore;
 import org.tron.core.utils.TransactionUtil;
@@ -3115,22 +3119,8 @@ public class Wallet {
       throw new ContractValidateException("this node does not support constant");
     }
 
-    Block headBlock;
-    List<BlockCapsule> blockCapsuleList = chainBaseManager.getBlockStore()
-        .getBlockByLatestNum(1);
-    if (CollectionUtils.isEmpty(blockCapsuleList)) {
-      throw new HeaderNotFound("latest block not found");
-    } else {
-      headBlock = blockCapsuleList.get(0).getInstance();
-    }
-
-    BlockCapsule headBlockCapsule = new BlockCapsule(headBlock);
-    TransactionContext context = new TransactionContext(headBlockCapsule, trxCap,
-        StoreFactory.getInstance(), true, false);
-    VMActuator vmActuator = new VMActuator(true);
-
-    vmActuator.validate(context);
-    vmActuator.execute(context);
+    BlockCapsule headBlockCapsule = loadHeadBlockCapsule();
+    TransactionContext context = executeOneConstantInternal(trxCap, headBlockCapsule, null, null);
 
     ProgramResult result = context.getProgramResult();
     if (!isEstimating && result.getException() != null
@@ -3162,6 +3152,157 @@ public class Wallet {
     }
     trxCap.setResult(ret);
     return trxCap.getInstance();
+  }
+
+  private BlockCapsule loadHeadBlockCapsule() throws HeaderNotFound {
+    List<BlockCapsule> blockCapsuleList = chainBaseManager.getBlockStore()
+        .getBlockByLatestNum(1);
+    if (CollectionUtils.isEmpty(blockCapsuleList)) {
+      throw new HeaderNotFound("latest block not found");
+    }
+    return new BlockCapsule(blockCapsuleList.get(0).getInstance());
+  }
+
+  private TransactionContext executeOneConstantInternal(TransactionCapsule trxCap,
+      BlockCapsule headBlockCapsule, Repository injectedRoot, SimulationTracer tracer)
+      throws ContractValidateException, ContractExeException, VMIllegalException {
+    TransactionContext context = new TransactionContext(headBlockCapsule, trxCap,
+        StoreFactory.getInstance(), true, false);
+    VMActuator vmActuator = new VMActuator(true);
+    if (injectedRoot != null) {
+      vmActuator.setInjectedRootRepository(injectedRoot);
+    }
+    if (tracer != null) {
+      vmActuator.setSimulationTracer(tracer);
+    }
+    vmActuator.validate(context);
+    vmActuator.execute(context);
+    return context;
+  }
+
+  public static final class SimulateCallOutcome {
+
+    private final ProgramResult result;
+    private final List<BufferingSimulationTracer.Entry> tracerEntries;
+
+    SimulateCallOutcome(ProgramResult result, List<BufferingSimulationTracer.Entry> tracerEntries) {
+      this.result = result;
+      this.tracerEntries = tracerEntries;
+    }
+
+    public ProgramResult getResult() {
+      return result;
+    }
+
+    public List<BufferingSimulationTracer.Entry> getTracerEntries() {
+      return tracerEntries;
+    }
+  }
+
+  public static final class SimulateOutcome {
+
+    private final BlockCapsule headBlockCapsule;
+    private final List<SimulateCallOutcome> calls;
+
+    SimulateOutcome(BlockCapsule headBlockCapsule, List<SimulateCallOutcome> calls) {
+      this.headBlockCapsule = headBlockCapsule;
+      this.calls = calls;
+    }
+
+    public BlockCapsule getHeadBlockCapsule() {
+      return headBlockCapsule;
+    }
+
+    public List<SimulateCallOutcome> getCalls() {
+      return calls;
+    }
+  }
+
+  public SimulateOutcome simulateConstantContracts(List<TransactionCapsule> trxCaps,
+      boolean traceTransfers, boolean validation)
+      throws ContractValidateException, ContractExeException, HeaderNotFound, VMIllegalException {
+
+    if (!Args.getInstance().isSupportConstant()) {
+      throw new ContractValidateException("this node does not support constant");
+    }
+
+    BlockCapsule headBlockCapsule = loadHeadBlockCapsule();
+    Repository sharedRoot = RepositoryImpl.createRoot(StoreFactory.getInstance());
+    BufferingSimulationTracer tracer = traceTransfers ? new BufferingSimulationTracer() : null;
+
+    List<SimulateCallOutcome> outcomes = new ArrayList<>(trxCaps.size());
+    for (int i = 0; i < trxCaps.size(); i++) {
+      TransactionCapsule trxCap = trxCaps.get(i);
+      Repository perCallChild = sharedRoot.newRepositoryChild();
+
+      if (validation) {
+        String preCheckError = validateSenderForSimulate(trxCap, perCallChild);
+        if (preCheckError != null) {
+          ProgramResult synthetic = new ProgramResult();
+          synthetic.setException(new RuntimeException(preCheckError));
+          outcomes.add(new SimulateCallOutcome(synthetic, java.util.Collections.emptyList()));
+          continue;
+        }
+      }
+
+      if (tracer != null) {
+        tracer.beginCall();
+      }
+      TransactionContext ctx;
+      try {
+        ctx = executeOneConstantInternal(trxCap, headBlockCapsule, perCallChild, tracer);
+      } catch (RuntimeException e) {
+        logger.warn("Simulate call {} failed for reason: {}", i, e.getMessage());
+        throw e;
+      }
+      ProgramResult result = ctx.getProgramResult();
+
+      List<BufferingSimulationTracer.Entry> entries;
+      if (result.getException() != null || result.isRevert()) {
+        result.getLogInfoList().clear();
+        entries = java.util.Collections.emptyList();
+        if (tracer != null) {
+          tracer.dropCall();
+        }
+      } else {
+        perCallChild.commit();
+        entries = tracer != null ? tracer.snapshotCall() : java.util.Collections.emptyList();
+      }
+      outcomes.add(new SimulateCallOutcome(result, entries));
+    }
+    return new SimulateOutcome(headBlockCapsule, outcomes);
+  }
+
+  private static String validateSenderForSimulate(TransactionCapsule trxCap, Repository perCallChild) {
+    if (trxCap.getInstance().getRawData().getContractCount() == 0) {
+      return null;
+    }
+    Contract contract = trxCap.getInstance().getRawData().getContract(0);
+    byte[] sender;
+    long callValue;
+    try {
+      if (contract.getType() == ContractType.TriggerSmartContract) {
+        TriggerSmartContract trigger = contract.getParameter().unpack(TriggerSmartContract.class);
+        sender = trigger.getOwnerAddress().toByteArray();
+        callValue = trigger.getCallValue();
+      } else if (contract.getType() == ContractType.CreateSmartContract) {
+        CreateSmartContract create = contract.getParameter().unpack(CreateSmartContract.class);
+        sender = create.getOwnerAddress().toByteArray();
+        callValue = create.getNewContract().getCallValue();
+      } else {
+        return null;
+      }
+    } catch (InvalidProtocolBufferException e) {
+      return "could not parse contract: " + e.getMessage();
+    }
+    AccountCapsule account = perCallChild.getAccount(sender);
+    if (account == null) {
+      return "sender account does not exist";
+    }
+    if (account.getBalance() < callValue) {
+      return "insufficient balance for value: have=" + account.getBalance() + ", want=" + callValue;
+    }
+    return null;
   }
 
   public SmartContract getContract(GrpcAPI.BytesMessage bytesMessage) {

@@ -754,6 +754,9 @@ public class OperationActions {
         new LogInfo(address.getLast20Bytes(), topics, data);
 
     program.getResult().addLogInfo(logInfo);
+    if (program.getSimulationTracer() != null) {
+      program.getSimulationTracer().onLog(logInfo);
+    }
     program.step();
   }
 
