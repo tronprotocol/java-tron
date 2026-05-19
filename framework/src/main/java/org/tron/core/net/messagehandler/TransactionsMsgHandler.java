@@ -1,5 +1,8 @@
 package org.tron.core.net.messagehandler;
 
+import static org.tron.core.Constant.PER_SIGN_LENGTH;
+
+import com.google.protobuf.ByteString;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -141,6 +144,12 @@ public class TransactionsMsgHandler implements TronMsgHandler {
       if (trx.getRawData().getContractCount() < 1) {
         throw new P2pException(TypeEnum.BAD_TRX,
             "tx " + item.getHash() + " contract size should be greater than 0");
+      }
+      for (ByteString sig : trx.getSignatureList()) {
+        if (sig.size() != PER_SIGN_LENGTH) {
+          throw new P2pException(TypeEnum.BAD_TRX,
+              "tx " + item.getHash() + " signature size is " + sig.size());
+        }
       }
     }
   }

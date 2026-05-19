@@ -24,6 +24,7 @@ import static org.tron.common.math.Maths.max;
 import static org.tron.common.utils.Commons.getAssetIssueStoreFinal;
 import static org.tron.common.utils.Commons.getExchangeStoreFinal;
 import static org.tron.common.utils.WalletUtil.isConstant;
+import static org.tron.core.Constant.PER_SIGN_LENGTH;
 import static org.tron.core.capsule.utils.TransactionUtil.buildInternalTransaction;
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
@@ -505,6 +506,16 @@ public class Wallet {
     trx.setTime(System.currentTimeMillis());
     Sha256Hash txID = trx.getTransactionId();
     try {
+      for (ByteString sig : signedTransaction.getSignatureList()) {
+        if (sig.size() != PER_SIGN_LENGTH) {
+          String info = "Signature size is " + sig.size();
+          logger.warn("Broadcast transaction {} has failed, {}.", txID, info);
+          return builder.setResult(false).setCode(response_code.SIGERROR)
+              .setMessage(ByteString.copyFromUtf8("Validate signature error: " + info))
+              .build();
+        }
+      }
+
       if (tronNetDelegate.isBlockUnsolidified()) {
         logger.warn("Broadcast transaction {} has failed, block unsolidified.", txID);
         return builder.setResult(false).setCode(response_code.BLOCK_UNSOLIDIFIED)
