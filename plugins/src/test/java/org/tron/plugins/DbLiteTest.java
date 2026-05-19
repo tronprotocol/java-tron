@@ -74,7 +74,7 @@ public class DbLiteTest {
     dbPath = folder.newFolder().toString();
     Args.setParam(new String[] {
         "-d", dbPath, "-w", "--p2p-disable", "true", "--storage-db-engine", dbType},
-        "config-localtest.conf");
+        "config-shield.conf");
     // allow account root
     Args.getInstance().setAllowAccountStateRoot(1);
     Args.getInstance().setRpcPort(PublicMethod.chooseRandomPort());

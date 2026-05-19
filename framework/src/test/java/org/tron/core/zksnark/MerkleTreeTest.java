@@ -10,6 +10,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.BaseTest;
+import org.tron.common.TestConstants;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.zksnark.IncrementalMerkleTreeContainer;
@@ -38,7 +39,7 @@ public class MerkleTreeTest extends BaseTest {
             "--storage-index-directory", indexDirectory,
             "--debug"
         },
-        "config-test-mainnet.conf"
+        TestConstants.TEST_CONF
     );
   }
 

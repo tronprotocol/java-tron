@@ -177,7 +177,7 @@ public class LocalWitnessTest {
   public void testLocalWitnessConfig() throws IOException {
     Args.setParam(
         new String[]{"--output-directory", temporaryFolder.newFolder().toString(), "-w", "--debug"},
-        "config-localtest.conf");
+        "config-shield.conf");
     LocalWitnesses witness = Args.getLocalWitnesses();
     Assert.assertNotNull(witness.getPrivateKey());
     Assert.assertNotNull(witness.getWitnessAccountAddress());

@@ -21,7 +21,7 @@ public class ApiUtilTest {
 
   @BeforeClass
   public static void init() {
-    Args.setParam(new String[]{}, "config-localtest.conf");
+    Args.setParam(new String[]{}, "config-shield.conf");
   }
 
   @AfterClass

@@ -50,8 +50,7 @@ public class ArgsTest {
 
   @Test
   public void get() {
-    Args.setParam(new String[] {"-c", TestConstants.TEST_CONF, "--keystore-factory"},
-        TestConstants.NET_CONF);
+    Args.setParam(new String[] {"-c", TestConstants.TEST_CONF, "--keystore-factory"}, "");
 
     CommonParameter parameter = Args.getInstance();
 
@@ -145,12 +144,6 @@ public class ArgsTest {
     method2.invoke(Args.class, nc);
 
     Assert.assertNotEquals(configuredExternalIp, parameter.getNodeExternalIp());
-  }
-
-  @Test
-  public void testOldRewardOpt() {
-    thrown.expect(IllegalArgumentException.class);
-    Args.setParam(new String[] {"-c", "args-test.conf"}, TestConstants.NET_CONF);
   }
 
   @Test

@@ -16,21 +16,124 @@
 package org.tron.core.config.args;
 
 import java.io.File;
+import java.lang.reflect.Field;
+import java.util.Arrays;
 import org.iq80.leveldb.CompressionType;
 import org.iq80.leveldb.Options;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Test;
+import org.tron.common.TestConstants;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.StorageUtils;
 
 public class StorageTest {
 
-  private static Storage storage;
+  private static final Storage storage;
 
   static {
-    Args.setParam(new String[]{}, "config-test-storagetest.conf");
+    Args.setParam(new String[]{}, TestConstants.TEST_CONF);
     storage = Args.getInstance().getStorage();
+    setupStorage();
+  }
+
+  /**
+   * set it as following:
+   *
+   * properties = [
+   *     {
+   *       name = "account",
+   *       path = "storage_directory_test",
+   *       createIfMissing = true,
+   *       paranoidChecks = true,
+   *       verifyChecksums = true,
+   *       compressionType = 1,        // compressed with snappy
+   *       blockSize = 4096,           // 4  KB =         4 * 1024 B
+   *       writeBufferSize = 10485760, // 10 MB = 10 * 1024 * 1024 B
+   *       cacheSize = 10485760,       // 10 MB = 10 * 1024 * 1024 B
+   *       maxOpenFiles = 100
+   *     },
+   *     {
+   *       name = "account-index",
+   *       path = "storage_directory_test",
+   *       createIfMissing = true,
+   *       paranoidChecks = true,
+   *       verifyChecksums = true,
+   *       compressionType = 1,        // compressed with snappy
+   *       blockSize = 4096,           // 4  KB =         4 * 1024 B
+   *       writeBufferSize = 10485760, // 10 MB = 10 * 1024 * 1024 B
+   *       cacheSize = 10485760,       // 10 MB = 10 * 1024 * 1024 B
+   *       maxOpenFiles = 100
+   *     },
+   *     { # only for unit test
+   *       name = "test_name",
+   *       path = "test_path",
+   *       createIfMissing = false,
+   *       paranoidChecks = false,
+   *       verifyChecksums = false,
+   *       compressionType = 1,
+   *       blockSize = 2,
+   *       writeBufferSize = 3,
+   *       cacheSize = 4,
+   *       maxOpenFiles = 5
+   *     },
+   *   ]
+   */
+  private static void setupStorage() {
+    StorageConfig sc = new StorageConfig();
+    try {
+      setPrivateField(sc, "defaultDbOption", makeOverride(50));
+      setPrivateField(sc, "defaultMDbOption", makeOverride(500));
+      setPrivateField(sc, "defaultLDbOption", makeOverride(1000));
+    } catch (ReflectiveOperationException e) {
+      throw new RuntimeException(e);
+    }
+    storage.setDefaultDbOptions(sc);
+
+    StorageConfig.PropertyConfig account = new StorageConfig.PropertyConfig();
+    account.setName("account");
+    account.setPath("storage_directory_test");
+    account.setCompressionType(1);
+    account.setBlockSize(4096);
+    account.setWriteBufferSize(10485760);
+    account.setCacheSize(10485760);
+    account.setMaxOpenFiles(100);
+
+    StorageConfig.PropertyConfig accountIndex = new StorageConfig.PropertyConfig();
+    accountIndex.setName("account-index");
+    accountIndex.setPath("storage_directory_test");
+    accountIndex.setCompressionType(1);
+    accountIndex.setBlockSize(4096);
+    accountIndex.setWriteBufferSize(10485760);
+    accountIndex.setCacheSize(10485760);
+    accountIndex.setMaxOpenFiles(100);
+
+    StorageConfig.PropertyConfig testName = new StorageConfig.PropertyConfig();
+    testName.setName("test_name");
+    testName.setPath("test_path");
+    testName.setCreateIfMissing(false);
+    testName.setParanoidChecks(false);
+    testName.setVerifyChecksums(false);
+    testName.setCompressionType(1);
+    testName.setBlockSize(2);
+    testName.setWriteBufferSize(3);
+    testName.setCacheSize(4);
+    testName.setMaxOpenFiles(5);
+
+    storage.setPropertyMapFromBean(Arrays.asList(account, accountIndex, testName));
+  }
+
+  private static StorageConfig.DbOptionOverride makeOverride(int maxOpenFiles) {
+    StorageConfig.DbOptionOverride o = new StorageConfig.DbOptionOverride();
+    o.setMaxOpenFiles(maxOpenFiles);
+    return o;
+  }
+
+  private static void setPrivateField(Object obj, String name, Object value)
+      throws ReflectiveOperationException {
+    Field f = StorageConfig.class.getDeclaredField(name);
+    f.setAccessible(true);
+    f.set(obj, value);
   }
 
   @AfterClass
