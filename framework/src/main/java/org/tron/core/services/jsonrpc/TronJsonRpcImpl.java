@@ -24,6 +24,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -94,9 +95,9 @@ import org.tron.core.services.jsonrpc.types.SimulateV1Args;
 import org.tron.core.services.jsonrpc.types.TransactionReceipt;
 import org.tron.core.services.jsonrpc.types.TransactionReceipt.TransactionContext;
 import org.tron.core.services.jsonrpc.types.TransactionResult;
-import org.tron.core.vm.program.listener.BufferingSimulationTracer;
 import org.tron.core.store.StorageRowStore;
 import org.tron.core.vm.program.Storage;
+import org.tron.core.vm.program.listener.BufferingSimulationTracer;
 import org.tron.json.JSON;
 import org.tron.program.Version;
 import org.tron.protos.Protocol.Account;
@@ -1136,7 +1137,7 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
       throw new JsonRpcInternalException(msg);
     }
 
-    return List.of(buildSimulateBlockResult(outcome, block.getCalls(),
+    return Collections.singletonList(buildSimulateBlockResult(outcome, block.getCalls(),
         args.isTraceTransfers(), args.isReturnFullTransactions()));
   }
 

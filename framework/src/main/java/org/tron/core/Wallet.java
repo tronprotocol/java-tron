@@ -199,14 +199,14 @@ import org.tron.core.store.MarketOrderStore;
 import org.tron.core.store.MarketPairPriceToOrderStore;
 import org.tron.core.store.MarketPairToPriceStore;
 import org.tron.core.store.StoreFactory;
-import org.tron.core.vm.program.listener.BufferingSimulationTracer;
-import org.tron.core.vm.program.listener.SimulationTracer;
-import org.tron.core.vm.repository.Repository;
-import org.tron.core.vm.repository.RepositoryImpl;
 import org.tron.core.store.VotesStore;
 import org.tron.core.store.WitnessStore;
 import org.tron.core.utils.TransactionUtil;
 import org.tron.core.vm.program.Program;
+import org.tron.core.vm.program.listener.BufferingSimulationTracer;
+import org.tron.core.vm.program.listener.SimulationTracer;
+import org.tron.core.vm.repository.Repository;
+import org.tron.core.vm.repository.RepositoryImpl;
 import org.tron.core.zen.ShieldedTRC20ParametersBuilder;
 import org.tron.core.zen.ShieldedTRC20ParametersBuilder.ShieldedTRC20ParametersType;
 import org.tron.core.zen.ZenTransactionBuilder;
@@ -3273,7 +3273,8 @@ public class Wallet {
     return new SimulateOutcome(headBlockCapsule, outcomes);
   }
 
-  private static String validateSenderForSimulate(TransactionCapsule trxCap, Repository perCallChild) {
+  private static String validateSenderForSimulate(TransactionCapsule trxCap,
+      Repository perCallChild) {
     if (trxCap.getInstance().getRawData().getContractCount() == 0) {
       return null;
     }
