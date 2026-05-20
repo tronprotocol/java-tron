@@ -1,0 +1,195 @@
+# HOCON Configuration Conventions for Developers
+
+This document covers the rules and patterns that developers must follow when adding or modifying configuration parameters in java-tron. Violations cause silent misreads, startup failures, or hard-to-diagnose defaults being applied instead of user-supplied values.
+
+## How Config Keys Bind to Java Fields
+
+java-tron uses [Typesafe Config](https://github.com/lightbend/config)'s `ConfigBeanFactory` to map a HOCON section to a Java bean automatically. The mapping algorithm is:
+
+1. For each field `fooBar` in the bean, `ConfigBeanFactory` looks for a HOCON key named `fooBar`.
+2. The bean class must expose a public setter (`setFooBar`) — in practice this is provided by Lombok `@Setter`.
+3. If the key is absent from the config, the field keeps its Java default value (the one assigned in the field declaration).
+4. If the key is present but the type does not match, binding fails with a `ConfigException` at startup.
+
+The binding entry point for each top-level section looks like:
+
+```java
+// "node" section → NodeConfig bean
+Config section = config.getConfig("node");
+NodeConfig nc = ConfigBeanFactory.create(section, NodeConfig.class);
+```
+
+## Key Naming: Use camelCase
+
+**All keys in `reference.conf` and `config.conf` must use standard camelCase.**
+
+`ConfigBeanFactory` derives the expected key name from the Java setter via the JavaBean Introspector: `setFooBar` → property name `fooBar` → expected HOCON key `fooBar`. If the key in the config file uses a different casing, the binding silently skips it and the field keeps its Java default.
+
+```hocon
+# Correct
+node {
+  maxConnections = 30
+  syncFetchBatchNum = 2000
+}
+
+# Wrong — ConfigBeanFactory cannot find these
+node {
+  MaxConnections = 30        # PascalCase → ignored
+  sync_fetch_batch_num = 2000 # snake_case → ignored
+  max-connections = 30       # kebab-case → ignored
+}
+```
+
+### The PBFT Exception
+
+Two legacy keys under `committee` (`allowPBFT`, `pBFTExpireNum`) and the HTTP/RPC fields (`PBFTEnable`, `PBFTPort`) were introduced with non-standard casing before this rule was established. They are retained as-is in the config files for backward compatibility. **Do not model new keys after them.**
+
+For `allowPBFT` and `pBFTExpireNum`, `CommitteeConfig.normalizeNonStandardKeys()` renames them to proper camelCase (`allowPbft`, `pbftExpireNum`) before handing the section to `ConfigBeanFactory`. If you ever need to accept a non-standard key from users while binding to a standard field, follow this same pattern.
+
+### The `is` Prefix Exception
+
+A HOCON key named `isOpenFullTcpDisconnect` produces the setter `setIsOpenFullTcpDisconnect`, but the JavaBean Introspector derives the property name as `openFullTcpDisconnect` (stripping `is`), so `ConfigBeanFactory` looks for key `openFullTcpDisconnect`. `NodeConfig.normalizeNonStandardKeys()` renames the key at read time for backward compatibility. **Do not add new keys with an `is` prefix.**
+
+## Nesting Depth
+
+Keep nesting to **at most 3 levels** from the top-level section. Deeper nesting creates long key paths that are hard to override in `config.conf` and require more boilerplate inner bean classes.
+
+```
+level 1:  node { ... }
+level 2:  node { rpc { ... } }
+level 3:  node { rpc { flowControl { ... } } }   ← maximum
+level 4+: node { rpc { flowControl { window { ... } } } }   ← avoid
+```
+
+Each level of nesting requires a corresponding inner static bean class. If you find yourself going 4 levels deep, consider flattening by moving the leaf keys up one level or using a longer camelCase key at level 2.
+
+## Adding a New Parameter: Checklist
+
+When adding a configuration parameter, all four steps are required in the same commit.
+
+### Step 1 — Add the key to `reference.conf` with its default value
+
+`reference.conf` (in `common/src/main/resources/`) must contain every key the code reads. This is the single source of truth for defaults. Add a brief inline comment explaining the key's purpose and valid range.
+
+```hocon
+node {
+  # Maximum number of transaction verifier threads. 0 = auto (availableProcessors).
+  myNewOption = 0
+}
+```
+
+### Step 2 — Add the field to the corresponding bean class
+
+Add a field whose name **exactly matches** the HOCON key, with the same default value as `reference.conf`. If the field is in a sub-bean, ensure the sub-bean is mapped correctly.
+
+```java
+// NodeConfig.java
+private int myNewOption = 0;   // 0 = auto
+```
+
+Lombok `@Getter` and `@Setter` on the class provide the accessor methods that `ConfigBeanFactory` needs. Do not write them by hand.
+
+### Step 3 — Add clamping / validation in `postProcess()` if needed
+
+Every bean's `postProcess()` (called from `fromConfig()` after binding) is where out-of-range values are clamped and cross-field invariants are enforced. Do not add defensive checks scattered through the rest of the codebase.
+
+```java
+// in NodeConfig.postProcess()
+if (myNewOption == 0) {
+    myNewOption = Runtime.getRuntime().availableProcessors();
+}
+if (myNewOption > 64) {
+    myNewOption = 64;
+}
+```
+
+### Step 4 — Add the key to `config.conf` only if the default is intentionally different
+
+`config.conf` (in `framework/src/main/resources/`) is the sample user config shipped with the distribution. Only add your new key there if the value users should start with differs from the `reference.conf` default, or if the key needs a visible comment for users.
+
+## Field Types and HOCON Value Types
+
+| Java field type | HOCON value | Notes |
+|-------------------|-------------|-------|
+| `boolean` | `true` / `false` | |
+| `int` / `long` | numeric | Use `getMemorySize` path if human-readable sizes should be supported (see below) |
+| `double` | numeric | |
+| `String` | `"value"` | Null HOCON values must be normalized to `""` before binding (see `normalizeNonStandardKeys`) |
+| `List<String>` | `["a", "b"]` | Must be read manually; `ConfigBeanFactory` does not handle `List<String>` |
+| Inner bean | `{ key = val }` | The Java field type must be the inner static class |
+
+### Human-Readable Size Values (`4m`, `128MB`)
+
+For byte-size parameters, users can write `4m` or `128MB` in HOCON. `ConfigBeanFactory` cannot parse these into `int`/`long` directly. Pre-normalize them before calling `ConfigBeanFactory`:
+
+```java
+// normalize before binding
+long bytes = config.getMemorySize("node.rpc.maxMessageSize").toBytes();
+if (bytes < 0 || bytes > Integer.MAX_VALUE) {
+    throw new TronError("node.rpc.maxMessageSize must be non-negative and <= "
+        + Integer.MAX_VALUE + ", got: " + bytes, PARAMETER_INIT);
+}
+config = config.withValue("node.rpc.maxMessageSize", ConfigValueFactory.fromAnyRef(bytes));
+```
+
+This pattern is already centralized in `NodeConfig.normalizeMaxMessageSizes()`. Add new size keys to the paths array there rather than duplicating the logic.
+
+### List Fields
+
+`ConfigBeanFactory` handles `List<BeanType>` but not `List<String>`. Read string-list fields manually after `ConfigBeanFactory.create()`:
+
+```java
+NodeConfig nc = ConfigBeanFactory.create(section, NodeConfig.class);
+nc.active = section.getStringList("active");
+```
+
+## Backward Compatibility and Legacy Keys
+
+When renaming a key, keep reading the old key as a fallback for at least one major release:
+
+```java
+// fromConfig() — after ConfigBeanFactory binding
+if (section.hasPath("oldKeyName")) {
+    nc.newFieldName = section.getInt("oldKeyName");
+    logger.warn("Config key [section.oldKeyName] is deprecated; use [section.newKeyName].");
+}
+```
+
+Never remove the old key from this fallback read without a deprecation period and a release note.
+
+## Optional Keys (Not in `reference.conf`)
+
+Most keys should be in `reference.conf`. Use optional keys (absent from `reference.conf`, only read if present) sparingly — only for parameters where the presence/absence itself carries meaning. Read them with `hasPath()` guards and annotate the Java field with `@Setter(lombok.AccessLevel.NONE)` to prevent `ConfigBeanFactory` from requiring the key:
+
+```java
+@Setter(lombok.AccessLevel.NONE)
+private String shutdownBlockTime = "";   // "" = not set
+
+// in fromConfig(), after ConfigBeanFactory.create():
+nc.shutdownBlockTime = section.hasPath("shutdown.BlockTime")
+    ? section.getString("shutdown.BlockTime") : "";
+```
+
+## Key Naming Conventions Summary
+
+| Rule | Good | Bad |
+|------|------|-----|
+| Standard camelCase | `maxConnections` | `MaxConnections`, `max_connections`, `max-connections` |
+| No `is` prefix | `openFullTcpDisconnect` | `isOpenFullTcpDisconnect` |
+| No all-caps acronym prefix | `pbftExpireNum`, `pBFTPort`* | `PBFTExpireNum` |
+| Nesting ≤ 3 levels | `node.rpc.maxMessageSize` | `node.rpc.limits.size.max` |
+| Java field name matches HOCON key exactly | field `maxConnections` ↔ key `maxConnections` | field `maxConns` ↔ key `maxConnections` |
+
+\* `PBFTEnable` / `PBFTPort` are legacy exceptions; do not model new keys after them.
+
+## Where to Find Existing Patterns
+
+| Pattern | Reference location |
+|---------|-------------------|
+| Standard flat scalar binding | `VmConfig.java`, `BlockConfig.java` |
+| Sub-bean nesting | `NodeConfig.HttpConfig`, `NodeConfig.RpcConfig` |
+| Legacy key fallback | `NodeConfig.fromConfig()` (`maxActiveNodes`, `maxActiveNodesWithSameIp`) |
+| Non-standard key normalization | `CommitteeConfig.normalizeNonStandardKeys()`, `NodeConfig.normalizeNonStandardKeys()` |
+| Human-readable size normalization | `NodeConfig.normalizeMaxMessageSizes()` |
+| Optional PascalCase keys | `NodeConfig.fromConfig()` (`shutdown.BlockTime/Height/Count`) |
+| `postProcess()` clamping | `NodeConfig.postProcess()`, `CommitteeConfig.postProcess()` |
