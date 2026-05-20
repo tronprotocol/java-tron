@@ -309,20 +309,28 @@ public class NodeConfig {
     // --- Legacy key fallbacks (backward compatibility) ---
     // node.maxActiveNodes (old) -> maxConnections (new)
     if (section.hasPath("maxActiveNodes")) {
+      logger.warn("Configuring [node.maxActiveNodes] is deprecated and will be removed in a future "
+          + "release. Please use [node.maxConnections] instead.");
       nc.maxConnections = section.getInt("maxActiveNodes");
       if (section.hasPath("connectFactor")) {
+        logger.warn("Configuring [node.connectFactor] is deprecated and will be removed in a future "
+            + "release.");
         nc.minConnections = (int) (nc.maxConnections * section.getDouble("connectFactor"));
       }
       if (section.hasPath("activeConnectFactor")) {
+        logger.warn("Configuring [node.activeConnectFactor] is deprecated and will be removed in a "
+            + "future release.");
         nc.minActiveConnections = (int) (nc.maxConnections
             * section.getDouble("activeConnectFactor"));
       }
     }
     if (section.hasPath("maxActiveNodesWithSameIp")) {
+      logger.warn("Configuring [node.maxActiveNodesWithSameIp] is deprecated and will be removed "
+          + "in a future release. Please use [node.maxConnectionsWithSameIp] instead.");
       nc.maxConnectionsWithSameIp = section.getInt("maxActiveNodesWithSameIp");
     }
 
-    // Legacy key fallback: node.fullNodeAllowShieldedTransaction -> allowShieldedTransactionApi.
+    // Legacy key fallback: node.allowShieldedTransactionApi wins fullNodeAllowShieldedTransaction
     if (section.hasPath("allowShieldedTransactionApi")) {
       nc.allowShieldedTransactionApi =
           section.getBoolean("allowShieldedTransactionApi");
