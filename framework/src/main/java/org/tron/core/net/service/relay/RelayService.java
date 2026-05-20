@@ -1,7 +1,5 @@
 package org.tron.core.net.service.relay;
 
-import static org.tron.core.Constant.PER_SIGN_LENGTH;
-
 import com.google.protobuf.ByteString;
 import java.net.InetSocketAddress;
 import java.util.Arrays;
@@ -152,7 +150,7 @@ public class RelayService {
       return false;
     }
 
-    if (msg.getSignature().size() != PER_SIGN_LENGTH) {
+    if (!SignUtils.isValidLength(msg.getSignature().size())) {
       logger.warn("HelloMessage from {}, signature size is {}.",
           channel.getInetAddress(), msg.getSignature().size());
       return false;

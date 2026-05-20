@@ -24,7 +24,6 @@ import static org.tron.common.math.Maths.max;
 import static org.tron.common.utils.Commons.getAssetIssueStoreFinal;
 import static org.tron.common.utils.Commons.getExchangeStoreFinal;
 import static org.tron.common.utils.WalletUtil.isConstant;
-import static org.tron.core.Constant.PER_SIGN_LENGTH;
 import static org.tron.core.capsule.utils.TransactionUtil.buildInternalTransaction;
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
@@ -507,7 +506,7 @@ public class Wallet {
     Sha256Hash txID = trx.getTransactionId();
     try {
       for (ByteString sig : signedTransaction.getSignatureList()) {
-        if (sig.size() != PER_SIGN_LENGTH) {
+        if (!SignUtils.isValidLength(sig.size())) {
           String info = "Signature size is " + sig.size();
           logger.warn("Broadcast transaction {} has failed, {}.", txID, info);
           return builder.setResult(false).setCode(response_code.SIGERROR)

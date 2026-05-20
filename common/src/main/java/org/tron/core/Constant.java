@@ -19,7 +19,8 @@ public class Constant {
   public static final long MAXIMUM_TIME_UNTIL_EXPIRATION = 24 * 60 * 60 * 1_000L; //one day
   public static final long TRANSACTION_DEFAULT_EXPIRATION_TIME = 60 * 1_000L; //60 seconds
   public static final long TRANSACTION_FEE_POOL_PERIOD = 1; //1 blocks
-  public static final long PER_SIGN_LENGTH = 65L;
+  public static final int PER_SIGN_LENGTH = 65;
+  public static final int MAX_PER_SIGN_LENGTH = 68;
   public static final long MAX_CONTRACT_RESULT_SIZE = 2L;
 
   // Smart contract / Energy

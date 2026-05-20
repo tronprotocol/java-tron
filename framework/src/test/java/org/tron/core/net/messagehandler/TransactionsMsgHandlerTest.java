@@ -368,7 +368,7 @@ public class TransactionsMsgHandlerTest extends BaseTest {
           () -> handler.processMessage(peer, new TransactionsMessage(shortList)));
       Assert.assertEquals(TypeEnum.BAD_TRX, shortEx.getType());
 
-      // signature longer than 65 bytes → BAD_TRX
+      // signature longer than 68 bytes → BAD_TRX
       Protocol.Transaction longSigTrx = Protocol.Transaction.newBuilder()
           .setRawData(Protocol.Transaction.raw.newBuilder()
               .setRefBlockNum(1)
@@ -376,7 +376,7 @@ public class TransactionsMsgHandlerTest extends BaseTest {
                   .setType(Protocol.Transaction.Contract.ContractType.TransferContract)
                   .setParameter(Any.pack(transferContract)).build())
               .build())
-          .addSignature(ByteString.copyFrom(new byte[66]))
+          .addSignature(ByteString.copyFrom(new byte[69]))
           .build();
 
       List<Protocol.Transaction> longList = new ArrayList<>();
@@ -401,6 +401,22 @@ public class TransactionsMsgHandlerTest extends BaseTest {
       validList.add(validSigTrx);
       stubAdvInvRequest(peer, new TransactionsMessage(validList));
       handler.processMessage(peer, new TransactionsMessage(validList));
+
+      // 68 bytes (upper bound) also passes the length check
+      Protocol.Transaction paddedSigTrx = Protocol.Transaction.newBuilder()
+          .setRawData(Protocol.Transaction.raw.newBuilder()
+              .setRefBlockNum(3)
+              .addContract(Protocol.Transaction.Contract.newBuilder()
+                  .setType(Protocol.Transaction.Contract.ContractType.TransferContract)
+                  .setParameter(Any.pack(transferContract)).build())
+              .build())
+          .addSignature(ByteString.copyFrom(new byte[68]))
+          .build();
+
+      List<Protocol.Transaction> paddedList = new ArrayList<>();
+      paddedList.add(paddedSigTrx);
+      stubAdvInvRequest(peer, new TransactionsMessage(paddedList));
+      handler.processMessage(peer, new TransactionsMessage(paddedList));
     } finally {
       handler.close();
     }

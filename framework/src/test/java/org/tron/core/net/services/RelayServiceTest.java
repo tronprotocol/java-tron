@@ -233,7 +233,7 @@ public class RelayServiceTest extends BaseTest {
           ChainBaseManager.getChainBaseManager());
       longSigMsg.setHelloMessage(longSigMsg.getHelloMessage().toBuilder()
           .setAddress(address)
-          .setSignature(ByteString.copyFrom(new byte[66]))
+          .setSignature(ByteString.copyFrom(new byte[69]))
           .build());
       Assert.assertFalse(service.checkHelloMessage(longSigMsg, c1));
 

@@ -179,9 +179,9 @@ public class WalletMockTest {
     GrpcAPI.Return ret = wallet.broadcastTransaction(shortSig);
     assertEquals(GrpcAPI.Return.response_code.SIGERROR, ret.getCode());
 
-    // signature longer than 65 bytes → SIGERROR
+    // signature longer than 68 bytes → SIGERROR
     Protocol.Transaction longSig = Protocol.Transaction.newBuilder()
-        .addSignature(ByteString.copyFrom(new byte[66]))
+        .addSignature(ByteString.copyFrom(new byte[69]))
         .build();
     ret = wallet.broadcastTransaction(longSig);
     assertEquals(GrpcAPI.Return.response_code.SIGERROR, ret.getCode());
@@ -202,6 +202,13 @@ public class WalletMockTest {
         .addSignature(ByteString.copyFrom(new byte[65]))
         .build();
     ret = wallet.broadcastTransaction(validSig);
+    assertEquals(GrpcAPI.Return.response_code.BLOCK_UNSOLIDIFIED, ret.getCode());
+
+    // 68-byte signature (upper bound) also passes the length check
+    Protocol.Transaction paddedSig = Protocol.Transaction.newBuilder()
+        .addSignature(ByteString.copyFrom(new byte[68]))
+        .build();
+    ret = wallet.broadcastTransaction(paddedSig);
     assertEquals(GrpcAPI.Return.response_code.BLOCK_UNSOLIDIFIED, ret.getCode());
   }
 
