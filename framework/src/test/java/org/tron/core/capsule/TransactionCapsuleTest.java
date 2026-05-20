@@ -157,51 +157,38 @@ public class TransactionCapsuleTest extends BaseTest {
   @Test(expected = SignatureFormatException.class)
   public void checkWeightShortSigRejected() throws Exception {
     List<ByteString> sigs = Collections.singletonList(ByteString.copyFrom(new byte[64]));
-    TransactionCapsule.checkWeight(singleKeyPermission(), sigs, DUMMY_HASH, null,
-        dbManager.getDynamicPropertiesStore().signatureMaxSizeChecked());
+    TransactionCapsule.checkWeight(singleKeyPermission(), sigs, DUMMY_HASH, null, false);
   }
 
   @Test(expected = SignatureFormatException.class)
-  public void checkWeightPaddedSigOsakaRejected() throws Exception {
-    dbManager.getDynamicPropertiesStore().saveAllowTvmOsaka(1);
-    try {
-      List<ByteString> sigs = Collections.singletonList(ByteString.copyFrom(new byte[69]));
-      TransactionCapsule.checkWeight(singleKeyPermission(), sigs, DUMMY_HASH, null,
-          dbManager.getDynamicPropertiesStore().signatureMaxSizeChecked());
-    } finally {
-      dbManager.getDynamicPropertiesStore().saveAllowTvmOsaka(0);
-    }
+  public void checkWeightPaddedSigSizeChecked() throws Exception {
+    List<ByteString> sigs = Collections.singletonList(ByteString.copyFrom(new byte[69]));
+    TransactionCapsule.checkWeight(singleKeyPermission(), sigs, DUMMY_HASH, null, true);
   }
 
   @Test
-  public void checkWeightPaddedSigPreOsaka() {
-    dbManager.getDynamicPropertiesStore().saveAllowTvmOsaka(0);
+  public void checkWeightPaddedSigNoSizeCheck() {
     List<ByteString> sigs = Collections.singletonList(ByteString.copyFrom(new byte[69]));
     try {
-      TransactionCapsule.checkWeight(singleKeyPermission(), sigs, DUMMY_HASH, null,
-          dbManager.getDynamicPropertiesStore().signatureMaxSizeChecked());
+      TransactionCapsule.checkWeight(singleKeyPermission(), sigs, DUMMY_HASH, null, false);
     } catch (SignatureFormatException e) {
-      Assert.fail("Padded sig must not be rejected by size check before Osaka: " + e.getMessage());
+      Assert.fail("Padded sig must not be rejected by size check: " + e.getMessage());
     } catch (Exception e) {
       // SignatureException / PermissionException after the size check — expected
     }
   }
 
   @Test
-  public void checkWeightNormalSigOsaka() {
-    dbManager.getDynamicPropertiesStore().saveAllowTvmOsaka(1);
+  public void checkWeightNormalSigSizeChecked() {
+    byte[] validSizeSig = new byte[65];
+    validSizeSig[64] = 27; // v = 27 (valid range)
+    List<ByteString> sigs = Collections.singletonList(ByteString.copyFrom(validSizeSig));
     try {
-      byte[] validSizeSig = new byte[65];
-      validSizeSig[64] = 27; // v = 27 (valid range)
-      List<ByteString> sigs = Collections.singletonList(ByteString.copyFrom(validSizeSig));
-      TransactionCapsule.checkWeight(singleKeyPermission(), sigs, DUMMY_HASH, null,
-          dbManager.getDynamicPropertiesStore().signatureMaxSizeChecked());
+      TransactionCapsule.checkWeight(singleKeyPermission(), sigs, DUMMY_HASH, null, true);
     } catch (SignatureFormatException e) {
-      Assert.fail("65-byte sig must not be rejected by size check post-Osaka: " + e.getMessage());
+      Assert.fail("65-byte sig must not be rejected by size check: " + e.getMessage());
     } catch (Exception e) {
       // crypto / permission error after size check — expected
-    } finally {
-      dbManager.getDynamicPropertiesStore().saveAllowTvmOsaka(0);
     }
   }
 }

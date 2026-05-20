@@ -3011,10 +3011,6 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     this.put(ALLOW_TVM_OSAKA, new BytesCapsule(ByteArray.fromLong(value)));
   }
 
-  public boolean signatureMaxSizeChecked() {
-    return getAllowTvmOsaka() == 1L;
-  }
-
   public long getAllowTvmPrague() {
     return Optional.ofNullable(getUnchecked(ALLOW_TVM_PRAGUE))
         .map(BytesCapsule::getData)

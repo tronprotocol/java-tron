@@ -9,7 +9,9 @@ import java.util.Collections;
 import java.util.Map;
 import org.junit.Assert;
 import org.junit.Test;
+import org.mockito.MockedStatic;
 import org.mockito.Mockito;
+import org.tron.common.utils.ForkController;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.consensus.base.Param;
 import org.tron.core.ChainBaseManager;
@@ -60,16 +62,8 @@ public class PbftDataSyncHandlerTest {
   }
 
   @Test
-  public void testValidPbftSignPaddedSigOsakaRejected() throws Exception {
+  public void testValidPbftSignPaddedSizeChecked() throws Exception {
     PbftDataSyncHandler pbftDataSyncHandler = new PbftDataSyncHandler();
-    DynamicPropertiesStore dynamicPropertiesStore = Mockito.mock(DynamicPropertiesStore.class);
-    ChainBaseManager chainBaseManager = Mockito.mock(ChainBaseManager.class);
-    Mockito.when(chainBaseManager.getDynamicPropertiesStore()).thenReturn(dynamicPropertiesStore);
-    Mockito.when(dynamicPropertiesStore.signatureMaxSizeChecked()).thenReturn(true);
-
-    Field field = PbftDataSyncHandler.class.getDeclaredField("chainBaseManager");
-    field.setAccessible(true);
-    field.set(pbftDataSyncHandler, chainBaseManager);
 
     Param.getInstance().setAgreeNodeCount(1);
     Method method = PbftDataSyncHandler.class.getDeclaredMethod("validPbftSign",
@@ -84,9 +78,12 @@ public class PbftDataSyncHandlerTest {
         .setData(ByteString.copyFromUtf8("block"))
         .build();
 
-    boolean valid = (boolean) method.invoke(pbftDataSyncHandler, raw,
-        Collections.singletonList(ByteString.copyFrom(new byte[69])),
-        Collections.singletonList(ByteString.copyFrom(new byte[21])));
-    Assert.assertFalse(valid);
+    try (MockedStatic<ForkController> mocked = Mockito.mockStatic(ForkController.class)) {
+      mocked.when(ForkController::signatureMaxSizeChecked).thenReturn(true);
+      boolean valid = (boolean) method.invoke(pbftDataSyncHandler, raw,
+          Collections.singletonList(ByteString.copyFrom(new byte[69])),
+          Collections.singletonList(ByteString.copyFrom(new byte[21])));
+      Assert.assertFalse(valid);
+    }
   }
 }

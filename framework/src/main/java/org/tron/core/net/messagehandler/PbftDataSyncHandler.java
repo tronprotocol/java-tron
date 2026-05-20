@@ -22,6 +22,7 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.SignUtils;
 import org.tron.common.es.ExecutorServiceManager;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.ForkController;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.consensus.base.Param;
 import org.tron.core.ChainBaseManager;
@@ -174,8 +175,7 @@ public class PbftDataSyncHandler implements TronMsgHandler, Closeable {
     @Override
     public Boolean call() throws Exception {
       try {
-        if (!SignUtils.isValidLength(sign.size(),
-            chainBaseManager.getDynamicPropertiesStore().signatureMaxSizeChecked())) {
+        if (!SignUtils.isValidLength(sign.size(), ForkController.signatureMaxSizeChecked())) {
           logger.error("viewN {} pbft signature size {} is invalid", viewN, sign.size());
           return false;
         }

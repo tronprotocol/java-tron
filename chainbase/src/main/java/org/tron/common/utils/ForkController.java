@@ -216,6 +216,10 @@ public class ForkController {
     return ForkControllerEnum.INSTANCE.getInstance();
   }
 
+  public static boolean signatureMaxSizeChecked() {
+    return instance().pass(ForkBlockVersionEnum.VERSION_4_8_2);
+  }
+
   private enum ForkControllerEnum {
     INSTANCE;
 

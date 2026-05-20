@@ -32,7 +32,6 @@ import org.tron.core.exception.PermissionException;
 import org.tron.core.exception.SignatureFormatException;
 import org.tron.core.services.http.JsonFormat;
 import org.tron.core.store.AccountStore;
-import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.contract.AccountContract.AccountCreateContract;
@@ -194,12 +193,11 @@ public class TransactionUtils {
   }
 
   public static TransactionCapsule addTransactionSign(Transaction transaction, String priKey,
-                                               AccountStore accountStore,
-                                               DynamicPropertiesStore dynamicPropertiesStore)
+                                               AccountStore accountStore)
           throws PermissionException, SignatureException, SignatureFormatException {
     byte[] privateKey = ByteArray.fromHexString(priKey);
     TransactionCapsule trx = new TransactionCapsule(transaction);
-    trx.addSign(privateKey, accountStore, dynamicPropertiesStore);
+    trx.addSign(privateKey, accountStore);
     return trx;
   }
 

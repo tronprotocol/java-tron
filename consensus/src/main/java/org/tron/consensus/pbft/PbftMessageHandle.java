@@ -28,9 +28,9 @@ import org.springframework.stereotype.Component;
 import org.tron.consensus.base.Param;
 import org.tron.consensus.base.Param.Miner;
 import org.tron.consensus.dpos.MaintenanceManager;
+import org.tron.common.utils.ForkController;
 import org.tron.consensus.pbft.message.PbftBaseMessage;
 import org.tron.consensus.pbft.message.PbftMessage;
-import org.tron.core.ChainBaseManager;
 import org.tron.protos.Protocol.PBFTMessage.DataType;
 
 @Slf4j(topic = "pbft")
@@ -72,8 +72,6 @@ public class PbftMessageHandle {
   private PbftMessageAction pbftMessageAction;
   @Setter
   private MaintenanceManager maintenanceManager;
-  @Autowired
-  private ChainBaseManager chainBaseManager;
 
   @PostConstruct
   public void init() {
@@ -129,8 +127,7 @@ public class PbftMessageHandle {
       PbftMessage paMessage = message.buildPrePareMessage(miner);
       forwardMessage(paMessage);
       try {
-        paMessage.analyzeSignature(
-            chainBaseManager.getDynamicPropertiesStore().signatureMaxSizeChecked());
+        paMessage.analyzeSignature(ForkController.signatureMaxSizeChecked());
       } catch (SignatureException e) {
         logger.error("", e);
       }
@@ -176,8 +173,7 @@ public class PbftMessageHandle {
           doneMsg.put(message.getNo(), cmMessage);
           forwardMessage(cmMessage);
           try {
-            cmMessage.analyzeSignature(
-                chainBaseManager.getDynamicPropertiesStore().signatureMaxSizeChecked());
+            cmMessage.analyzeSignature(ForkController.signatureMaxSizeChecked());
           } catch (SignatureException e) {
             logger.error("", e);
           }

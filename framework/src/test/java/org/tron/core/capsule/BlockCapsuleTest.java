@@ -1,6 +1,7 @@
 package org.tron.core.capsule;
 
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 
 import com.google.protobuf.ByteString;
@@ -15,8 +16,10 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.mockito.MockedStatic;
 import org.tron.common.TestConstants;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.ForkController;
 import org.tron.common.utils.LocalWitnesses;
 import org.tron.common.utils.PublicMethod;
 import org.tron.common.utils.Sha256Hash;
@@ -233,43 +236,49 @@ public class BlockCapsuleTest {
   }
 
   @Test
-  public void witnessSignaturePaddedOsakaRejected() throws Exception {
-    // Pad past MAX_SIGNATURE_SIZE (68) so the post-Osaka upper-bound check fires.
+  public void testValidatePaddedSigSizeChecked() throws Exception {
+    // Pad past MAX_SIGNATURE_SIZE (68) so the upper-bound check fires.
     BlockCapsule paddedBlock = withPaddedWitnessSig(signedBlock(), 4);
     Assert.assertEquals(69,
         paddedBlock.getInstance().getBlockHeader().getWitnessSignature().size());
 
     DynamicPropertiesStore dps = mock(DynamicPropertiesStore.class);
-    when(dps.signatureMaxSizeChecked()).thenReturn(true);
     AccountStore accountStore = mock(AccountStore.class);
 
-    ValidateSignatureException e = Assert.assertThrows(
-        ValidateSignatureException.class,
-        () -> paddedBlock.validateSignature(dps, accountStore));
-    Assert.assertTrue("Error must mention the sig size",
-        e.getMessage().contains("69"));
+    try (MockedStatic<ForkController> mocked = mockStatic(ForkController.class)) {
+      mocked.when(ForkController::signatureMaxSizeChecked).thenReturn(true);
+
+      ValidateSignatureException e = Assert.assertThrows(
+          ValidateSignatureException.class,
+          () -> paddedBlock.validateSignature(dps, accountStore));
+      Assert.assertTrue("Error must mention the sig size",
+          e.getMessage().contains("69"));
+    }
   }
 
   @Test
-  public void witnessSignaturePaddedPreOsaka() throws Exception {
+  public void testValidatePaddedSigNoSizeCheck() throws Exception {
     BlockCapsule paddedBlock = withPaddedWitnessSig(signedBlock(), 4);
 
     DynamicPropertiesStore dps = mock(DynamicPropertiesStore.class);
-    when(dps.signatureMaxSizeChecked()).thenReturn(false);
     when(dps.getAllowMultiSign()).thenReturn(0L);
     AccountStore accountStore = mock(AccountStore.class);
 
-    try {
-      paddedBlock.validateSignature(dps, accountStore);
-      // valid result is fine
-    } catch (ValidateSignatureException e) {
-      Assert.assertFalse("Size check must not fire before Osaka",
-          e.getMessage().contains("Witness signature size"));
+    try (MockedStatic<ForkController> mocked = mockStatic(ForkController.class)) {
+      mocked.when(ForkController::signatureMaxSizeChecked).thenReturn(false);
+
+      try {
+        paddedBlock.validateSignature(dps, accountStore);
+        // valid result is fine
+      } catch (ValidateSignatureException e) {
+        Assert.assertFalse("Size check must not fire when not enabled",
+            e.getMessage().contains("Witness signature size"));
+      }
     }
   }
 
   @Test(expected = ValidateSignatureException.class)
-  public void witnessSignatureShortRejected() throws Exception {
+  public void testValidateShortSigRejected() throws Exception {
     Block modified = blockCapsule0.getInstance().toBuilder()
         .setBlockHeader(blockCapsule0.getInstance().getBlockHeader().toBuilder()
             .setWitnessSignature(ByteString.copyFrom(new byte[64])))
@@ -277,10 +286,12 @@ public class BlockCapsuleTest {
     BlockCapsule shortBlock = new BlockCapsule(modified);
 
     DynamicPropertiesStore dps = mock(DynamicPropertiesStore.class);
-    when(dps.getAllowTvmOsaka()).thenReturn(0L);
     AccountStore accountStore = mock(AccountStore.class);
 
-    shortBlock.validateSignature(dps, accountStore);
+    try (MockedStatic<ForkController> mocked = mockStatic(ForkController.class)) {
+      mocked.when(ForkController::signatureMaxSizeChecked).thenReturn(false);
+      shortBlock.validateSignature(dps, accountStore);
+    }
   }
 
 }

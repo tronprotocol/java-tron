@@ -35,6 +35,7 @@ import org.tron.common.crypto.SignInterface;
 import org.tron.common.crypto.SignUtils;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.ForkController;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Time;
 import org.tron.core.capsule.utils.MerkleTree;
@@ -187,7 +188,7 @@ public class BlockCapsule implements ProtoCapsule<Block> {
     try {
       ByteString witnessSig = block.getBlockHeader().getWitnessSignature();
       if (!SignUtils.isValidLength(witnessSig.size(),
-          dynamicPropertiesStore.signatureMaxSizeChecked())) {
+          ForkController.signatureMaxSizeChecked())) {
         throw new ValidateSignatureException(
             "Witness signature size is " + witnessSig.size());
       }

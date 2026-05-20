@@ -78,6 +78,26 @@ public class ForkControllerTest extends BaseMethodTest {
   }
 
   @Test
+  public void testSignatureMaxSizeChecked() {
+    Parameter.ForkBlockVersionEnum forkVersion = Parameter.ForkBlockVersionEnum.VERSION_4_8_2;
+    dynamicPropertiesStore.saveLatestBlockHeaderTimestamp(forkVersion.getHardForkTime());
+
+    byte[] stats = new byte[5];
+    dynamicPropertiesStore.statsByVersion(forkVersion.getValue(), stats);
+    Assert.assertFalse(ForkController.signatureMaxSizeChecked());
+
+    stats[0] = 1;
+    stats[1] = 1;
+    stats[2] = 1;
+    dynamicPropertiesStore.statsByVersion(forkVersion.getValue(), stats);
+    Assert.assertFalse(ForkController.signatureMaxSizeChecked());
+
+    stats[3] = 1;
+    dynamicPropertiesStore.statsByVersion(forkVersion.getValue(), stats);
+    Assert.assertTrue(ForkController.signatureMaxSizeChecked());
+  }
+
+  @Test
   public void testReset() {
     List<ByteString> list = new ArrayList<>();
     list.add(ByteString.copyFrom(getBytes(0)));

@@ -54,7 +54,6 @@ import org.tron.common.utils.ReflectUtils;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.actuator.TransactionFactory;
 import org.tron.core.config.Parameter;
-import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.db.TransactionContext;
 import org.tron.core.db.TransactionTrace;
 import org.tron.core.exception.BadItemException;
@@ -488,7 +487,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     }
     checkPermission(permissionId, permission, contract);
     long weight = checkWeight(permission, transaction.getSignatureList(), hash, null,
-        dynamicPropertiesStore.signatureMaxSizeChecked());
+        ForkController.signatureMaxSizeChecked());
     if (weight >= permission.getThreshold()) {
       return true;
     }
@@ -584,8 +583,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     this.transaction = this.transaction.toBuilder().addSignature(sig).build();
   }
 
-  public void addSign(byte[] privateKey, AccountStore accountStore,
-      DynamicPropertiesStore dynamicPropertiesStore)
+  public void addSign(byte[] privateKey, AccountStore accountStore)
       throws PermissionException, SignatureException, SignatureFormatException {
     Transaction.Contract contract = this.transaction.getRawData().getContract(0);
     int permissionId = contract.getPermissionId();
@@ -606,7 +604,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     if (this.transaction.getSignatureCount() > 0) {
       checkWeight(permission, this.transaction.getSignatureList(),
           this.getTransactionId().getBytes(),
-          approveList, dynamicPropertiesStore.signatureMaxSizeChecked());
+          approveList, true);
       if (approveList.contains(ByteString.copyFrom(address))) {
         throw new PermissionException(encode58Check(address) + " had signed!");
       }

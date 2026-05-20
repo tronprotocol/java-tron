@@ -13,12 +13,14 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.tron.common.TestConstants;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.crypto.SignInterface;
 import org.tron.common.crypto.SignUtils;
 import org.tron.common.utils.FileUtil;
+import org.tron.common.utils.ForkController;
 import org.tron.common.utils.PublicMethod;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.common.utils.Sha256Hash;
@@ -124,7 +126,7 @@ public class PbftMsgHandlerTest {
   }
 
   @Test
-  public void testPbftPaddedSigOsakaRejected() throws Exception {
+  public void testPbftPaddedSigSizeChecked() throws Exception {
     InetSocketAddress a1 = new InetSocketAddress("127.0.0.1", 10001);
     Channel c1 = mock(Channel.class);
     Mockito.when(c1.getInetSocketAddress()).thenReturn(a1);
@@ -160,15 +162,13 @@ public class PbftMsgHandlerTest {
 
     DynamicPropertiesStore dynamicPropertiesStore = context.getBean(DynamicPropertiesStore.class);
     dynamicPropertiesStore.saveAllowPBFT(1);
-    dynamicPropertiesStore.saveAllowTvmOsaka(1);
-    try {
+    try (MockedStatic<ForkController> mocked = Mockito.mockStatic(ForkController.class)) {
+      mocked.when(ForkController::signatureMaxSizeChecked).thenReturn(true);
       SignatureException e = Assert.assertThrows(
           SignatureException.class,
           () -> context.getBean(PbftMsgHandler.class).processMessage(peer, pbftMessage));
-      Assert.assertTrue("Padded PBFT signature must be rejected post-Osaka",
+      Assert.assertTrue("Padded PBFT signature must be rejected when size checked",
           e.getMessage().contains("PBFT signature size is 69"));
-    } finally {
-      dynamicPropertiesStore.saveAllowTvmOsaka(0);
     }
   }
 }
