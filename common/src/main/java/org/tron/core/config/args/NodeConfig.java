@@ -269,6 +269,9 @@ public class NodeConfig {
     private long checkInterval = 600;
   }
 
+  /**
+   * All default parameters come from PublishConfig
+   */
   @Getter
   @Setter
   public static class DnsConfig {
@@ -279,8 +282,8 @@ public class NodeConfig {
     private String dnsPrivate = "";
     private List<String> knownUrls = new ArrayList<>();
     private List<String> staticNodes = new ArrayList<>();
-    private int maxMergeSize = 0;
-    private double changeThreshold = 0.0;
+    private int maxMergeSize = 5;
+    private double changeThreshold = 0.1;
     private String serverType = "";
     private String accessKeyId = "";
     private String accessKeySecret = "";
