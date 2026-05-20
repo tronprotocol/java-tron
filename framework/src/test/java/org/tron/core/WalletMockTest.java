@@ -165,6 +165,54 @@ public class WalletMockTest {
 
 
   @Test
+  public void testBroadcastTxInvalidSigLength() throws Exception {
+    Wallet wallet = new Wallet();
+    TronNetDelegate tronNetDelegateMock = mock(TronNetDelegate.class);
+    Field field = wallet.getClass().getDeclaredField("tronNetDelegate");
+    field.setAccessible(true);
+    field.set(wallet, tronNetDelegateMock);
+
+    // signature below MIN_SIGNATURE_SIZE (65) -> SIGERROR
+    Protocol.Transaction shortSig = Protocol.Transaction.newBuilder()
+        .addSignature(ByteString.copyFrom(new byte[64]))
+        .build();
+    GrpcAPI.Return ret = wallet.broadcastTransaction(shortSig);
+    assertEquals(GrpcAPI.Return.response_code.SIGERROR, ret.getCode());
+
+    // signature above MAX_SIGNATURE_SIZE (68) -> SIGERROR
+    Protocol.Transaction longSig = Protocol.Transaction.newBuilder()
+        .addSignature(ByteString.copyFrom(new byte[69]))
+        .build();
+    ret = wallet.broadcastTransaction(longSig);
+    assertEquals(GrpcAPI.Return.response_code.SIGERROR, ret.getCode());
+
+    // empty signature -> SIGERROR
+    Protocol.Transaction emptySig = Protocol.Transaction.newBuilder()
+        .addSignature(ByteString.EMPTY)
+        .build();
+    ret = wallet.broadcastTransaction(emptySig);
+    assertEquals(GrpcAPI.Return.response_code.SIGERROR, ret.getCode());
+
+    // tronNetDelegate must not be consulted because the request is rejected up front
+    Mockito.verify(tronNetDelegateMock, Mockito.never()).isBlockUnsolidified();
+
+    // 65-byte signature passes the length check and proceeds to downstream logic
+    when(tronNetDelegateMock.isBlockUnsolidified()).thenReturn(true);
+    Protocol.Transaction minSig = Protocol.Transaction.newBuilder()
+        .addSignature(ByteString.copyFrom(new byte[65]))
+        .build();
+    ret = wallet.broadcastTransaction(minSig);
+    assertEquals(GrpcAPI.Return.response_code.BLOCK_UNSOLIDIFIED, ret.getCode());
+
+    // 68-byte signature (MAX) also passes the length check
+    Protocol.Transaction maxSig = Protocol.Transaction.newBuilder()
+        .addSignature(ByteString.copyFrom(new byte[68]))
+        .build();
+    ret = wallet.broadcastTransaction(maxSig);
+    assertEquals(GrpcAPI.Return.response_code.BLOCK_UNSOLIDIFIED, ret.getCode());
+  }
+
+  @Test
   public void testBroadcastTransactionBlockUnsolidified() throws Exception {
     Wallet wallet = new Wallet();
     Protocol.Transaction transaction = Protocol.Transaction.newBuilder().build();

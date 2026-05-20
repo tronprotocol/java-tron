@@ -228,7 +228,7 @@ public class RelayServiceTest extends BaseTest {
   }
 
   @Test
-  public void testCheckHelloMessagePaddedSigOsakaRejected() {
+  public void testCheckHelloMessageOversizedSigRejected() {
     initWitness();
     String key = "0154435f065a57fec6af1e12eaa2fa600030639448d7809f4c65bdcf8baed7e5";
     ByteString address = getFromHexString("418A8D690BF36806C36A7DAE3AF796643C1AA9CC01");
@@ -277,13 +277,10 @@ public class RelayServiceTest extends BaseTest {
       field2.setAccessible(true);
       field2.set(service, dbManager);
 
-      chainBaseManager.getDynamicPropertiesStore().saveAllowTvmOsaka(1);
       Assert.assertFalse(service.checkHelloMessage(helloMessage, c1));
     } catch (Exception e) {
       logger.info("", e);
       assert false;
-    } finally {
-      chainBaseManager.getDynamicPropertiesStore().saveAllowTvmOsaka(0);
     }
   }
 

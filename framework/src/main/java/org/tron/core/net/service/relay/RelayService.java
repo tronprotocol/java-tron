@@ -153,8 +153,7 @@ public class RelayService {
     boolean flag;
     try {
       ByteString signature = msg.getSignature();
-      if (!SignUtils.isValidLength(signature.size(),
-          chainBaseManager.getDynamicPropertiesStore().signatureMaxSizeChecked())) {
+      if (!SignUtils.isValidLength(signature.size(), true)) {
         logger.warn("HelloMessage from {}, signature size {} is invalid.",
             channel.getInetAddress(), signature.size());
         return false;
