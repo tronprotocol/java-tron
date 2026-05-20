@@ -342,8 +342,8 @@ public class SyncService {
     } catch (P2pException p2pException) {
       logger.error("Process sync block {} failed, type: {}",
               blockId.getString(), p2pException.getType());
-      attackFlag = p2pException.getType().equals(TypeEnum.BLOCK_SIGN_ERROR)
-              || p2pException.getType().equals(TypeEnum.BLOCK_MERKLE_ERROR);
+      attackFlag = p2pException.getType().equals(TypeEnum.BLOCK_SIGN_INVALID)
+              || p2pException.getType().equals(TypeEnum.BLOCK_MERKLE_INVALID);
       flag = false;
     } catch (Exception e) {
       logger.error("Process sync block {} failed", blockId.getString(), e);

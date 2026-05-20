@@ -272,7 +272,8 @@ public class P2pEventHandlerImpl extends P2pEventHandler {
           code = Protocol.ReasonCode.BAD_TX;
           break;
         case BAD_BLOCK:
-        case BLOCK_SIGN_ERROR:
+        case BLOCK_SIGN_INVALID:
+        case BLOCK_MERKLE_INVALID:
           code = Protocol.ReasonCode.BAD_BLOCK;
           break;
         case NO_SUCH_MESSAGE:
