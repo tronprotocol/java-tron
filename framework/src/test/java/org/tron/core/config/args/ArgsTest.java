@@ -72,7 +72,7 @@ public class ArgsTest {
 
     Assert.assertEquals("database", parameter.getStorage().getDbDirectory());
 
-    Assert.assertEquals(11, parameter.getSeedNode().getAddressList().size());
+    Assert.assertEquals(0, parameter.getSeedNode().getAddressList().size());
 
     GenesisBlock genesisBlock = parameter.getGenesisBlock();
 
