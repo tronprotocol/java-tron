@@ -389,6 +389,14 @@ public class NodeConfig {
       syncFetchBatchNum = 100;
     }
 
+    // fetchBlock.timeout : clamp to [100, 1000]
+    if (fetchBlock.timeout > 1000) {
+      fetchBlock.timeout = 1000;
+    }
+    if (fetchBlock.timeout < 100) {
+      fetchBlock.timeout = 100;
+    }
+
     // maxPendingBlockSize: clamp to [50, 2000]
     if (maxPendingBlockSize > 2000) {
       maxPendingBlockSize = 2000;

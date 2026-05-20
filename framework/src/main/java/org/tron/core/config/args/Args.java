@@ -583,14 +583,7 @@ public class Args extends CommonParameter {
     // ---- Flat scalar fields ----
     PARAMETER.nodeEffectiveCheckEnable = nc.isEffectiveCheckEnable();
 
-    // fetchBlock.timeout — range check [100, 1000], default 500
-    int fetchTimeout = nc.getFetchBlockTimeout();
-    if (fetchTimeout > 1000) {
-      fetchTimeout = 1000;
-    } else if (fetchTimeout < 100) {
-      fetchTimeout = 100;
-    }
-    PARAMETER.fetchBlockTimeout = fetchTimeout;
+    PARAMETER.fetchBlockTimeout = nc.getFetchBlockTimeout();
 
     PARAMETER.maxConnections = nc.getMaxConnections();
     PARAMETER.minConnections = nc.getMinConnections();
@@ -630,7 +623,7 @@ public class Args extends CommonParameter {
     PARAMETER.shieldedTransInPendingMaxCounts = nc.getShieldedTransInPendingMaxCounts();
     PARAMETER.agreeNodeCount = nc.getAgreeNodeCount();
 
-    PARAMETER.setOpenHistoryQueryWhenLiteFN(nc.isOpenHistoryQueryWhenLiteFN());
+    PARAMETER.openHistoryQueryWhenLiteFN = nc.isOpenHistoryQueryWhenLiteFN();
     PARAMETER.nodeMetricsEnable = nc.isMetricsEnable();
     PARAMETER.openPrintLog = nc.isOpenPrintLog();
     PARAMETER.openTransactionSort = nc.isOpenTransactionSort();
