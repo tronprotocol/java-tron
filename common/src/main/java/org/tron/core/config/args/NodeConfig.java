@@ -217,10 +217,10 @@ public class NodeConfig {
     private int pBFTPort = 50071;
 
     private int thread = 0;
-    private int maxConcurrentCallsPerConnection = 2147483647;
+    private int maxConcurrentCallsPerConnection = 0;
     private int flowControlWindow = 1048576;
-    private long maxConnectionIdleInMillis = Long.MAX_VALUE;
-    private long maxConnectionAgeInMillis = Long.MAX_VALUE;
+    private long maxConnectionIdleInMillis = 0;
+    private long maxConnectionAgeInMillis = 0;
     private int maxMessageSize = 4194304;
     private int maxHeaderListSize = 8192;
     private int maxRstStream = 0;
@@ -354,6 +354,16 @@ public class NodeConfig {
     // rpcThreadNum: 0 = auto-detect
     if (rpc.thread == 0) {
       rpc.thread = (Runtime.getRuntime().availableProcessors() + 1) / 2;
+    }
+
+    if (rpc.maxConcurrentCallsPerConnection == 0) {
+      rpc.maxConcurrentCallsPerConnection = Integer.MAX_VALUE;
+    }
+    if (rpc.maxConnectionIdleInMillis == 0) {
+      rpc.maxConnectionIdleInMillis = Long.MAX_VALUE;
+    }
+    if (rpc.maxConnectionAgeInMillis == 0) {
+      rpc.maxConnectionAgeInMillis = Long.MAX_VALUE;
     }
 
     // validateSignThreadNum: 0 = auto-detect
