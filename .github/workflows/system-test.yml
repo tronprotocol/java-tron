@@ -1,17 +1,23 @@
 name: System Test
 
+# Auto-triggers disabled: superseded by Integration Test (Single Node / Full)
+# and Integration Test (Multinode / Full). Kept reachable via manual dispatch
+# in case a regression suspects need a stest run against tronprotocol/system-test.
+# To re-enable for routine PR runs, restore the push + pull_request blocks below.
 on:
-  push:
-    branches: [ 'master', 'release_**' ]
-  pull_request:
-    branches: [ 'develop', 'release_**' ]
-    types: [ opened, synchronize, reopened ]
-    paths-ignore: [ '**/*.md', '.gitignore', '**/.gitignore', '.editorconfig',
-                    '.gitattributes', 'docs/**', 'CHANGELOG', '.github/ISSUE_TEMPLATE/**',
-                    '.github/PULL_REQUEST_TEMPLATE/**', '.github/CODEOWNERS' ]
+  workflow_dispatch:
+  # push:
+  #   branches: [ 'master', 'release_**' ]
+  # pull_request:
+  #   branches: [ 'develop', 'release_**' ]
+  #   types: [ opened, synchronize, reopened ]
+  #   paths-ignore: [ '**/*.md', '.gitignore', '**/.gitignore', '.editorconfig',
+  #                   '.gitattributes', 'docs/**', 'CHANGELOG', '.github/ISSUE_TEMPLATE/**',
+  #                   '.github/PULL_REQUEST_TEMPLATE/**', '.github/CODEOWNERS' ]
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  # Only workflow_dispatch is enabled, so no PR context to key on — group by ref only.
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
