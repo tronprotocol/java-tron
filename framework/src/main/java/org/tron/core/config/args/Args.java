@@ -607,7 +607,6 @@ public class Args extends CommonParameter {
 
     PARAMETER.validateSignThreadNum = nc.getValidateSignThreadNum();
     PARAMETER.walletExtensionApi = nc.isWalletExtensionApi();
-    PARAMETER.receiveTcpMinDataLength = nc.getReceiveTcpMinDataLength();
     PARAMETER.isOpenFullTcpDisconnect = nc.isOpenFullTcpDisconnect();
     PARAMETER.nodeDetectEnable = nc.isNodeDetectEnable();
 

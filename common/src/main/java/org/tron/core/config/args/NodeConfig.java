@@ -77,7 +77,6 @@ public class NodeConfig {
   private ValidContractProtoConfig validContractProto = new ValidContractProtoConfig();
   private int shieldedTransInPendingMaxCounts = 10;
   private long blockCacheTimeout = 60;
-  private long receiveTcpMinDataLength = 2048;
   private int maxTransactionPendingSize = 2000;
   private long pendingTransactionTimeout = 60000;
   private int maxTrxCacheSize = 50_000;

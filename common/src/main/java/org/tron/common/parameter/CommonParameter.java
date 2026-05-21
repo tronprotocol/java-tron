@@ -316,9 +316,6 @@ public class CommonParameter {
   public List<String> backupMembers;
   @Getter
   @Setter
-  public long receiveTcpMinDataLength; // clearParam: 2048
-  @Getter
-  @Setter
   public boolean isOpenFullTcpDisconnect;
   @Getter
   @Setter
