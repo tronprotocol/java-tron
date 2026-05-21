@@ -245,8 +245,6 @@ public class NodeConfigTest {
 
   @Test
   public void testTrustNodeNotDefaultedByReferenceConf() {
-    // reference.conf intentionally omits `node.trustNode` so that empty configs
-    // preserve develop's behavior (trustNodeAddr stays null in the Args bridge).
     NodeConfig nc = NodeConfig.fromConfig(withRef());
     assertTrue(nc.getTrustNode() == null || nc.getTrustNode().isEmpty());
   }

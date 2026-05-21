@@ -14,7 +14,6 @@ import org.tron.common.logsfilter.EventPluginConfig;
 import org.tron.common.logsfilter.FilterQuery;
 import org.tron.common.setting.RocksDbSettings;
 import org.tron.core.Constant;
-import org.tron.core.config.args.Overlay;
 import org.tron.core.config.args.SeedNode;
 import org.tron.core.config.args.Storage;
 import org.tron.p2p.P2pConfig;
@@ -434,8 +433,6 @@ public class CommonParameter {
   public int maxFastForwardNum; // clearParam: 4
   @Getter
   public Storage storage;
-  @Getter
-  public Overlay overlay;
   @Getter
   public SeedNode seedNode;
   @Getter

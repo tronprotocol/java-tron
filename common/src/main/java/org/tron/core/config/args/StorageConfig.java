@@ -39,29 +39,18 @@ public class StorageConfig {
 
   // Raw storage config sub-tree, kept for setCacheStrategies/setDbRoots which
   // have dynamic keys that ConfigBeanFactory cannot bind.
-  @Getter(lombok.AccessLevel.NONE)
   @Setter(lombok.AccessLevel.NONE)
   private Config rawStorageConfig;
 
-  public Config getRawStorageConfig() {
-    return rawStorageConfig;
-  }
-
   // LevelDB per-database option overrides (default, defaultM, defaultL).
-  // Excluded from auto-binding: optional partial overrides that ConfigBeanFactory cannot handle.
-  @Getter(lombok.AccessLevel.NONE)
+  // @Setter(NONE): optional keys commented out in reference.conf; ConfigBeanFactory
+  // would throw if it required them. Values are assigned in fromConfig().
   @Setter(lombok.AccessLevel.NONE)
   private DbOptionOverride defaultDbOption;
-  @Getter(lombok.AccessLevel.NONE)
   @Setter(lombok.AccessLevel.NONE)
   private DbOptionOverride defaultMDbOption;
-  @Getter(lombok.AccessLevel.NONE)
   @Setter(lombok.AccessLevel.NONE)
   private DbOptionOverride defaultLDbOption;
-
-  public DbOptionOverride getDefaultDbOption() { return defaultDbOption; }
-  public DbOptionOverride getDefaultMDbOption() { return defaultMDbOption; }
-  public DbOptionOverride getDefaultLDbOption() { return defaultLDbOption; }
 
   @Getter
   @Setter

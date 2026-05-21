@@ -2,10 +2,12 @@ package org.tron.core.config.args;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import org.junit.Assert;
 import org.junit.Test;
 
 public class VmConfigTest {
@@ -90,8 +92,8 @@ public class VmConfigTest {
   }
 
   // ===========================================================================
-  // Constant-call timeout (issue #6681). The validation rule: any positive
-  // value that fits VM deadline conversion is accepted, but zero/negative is
+  // Constant-call timeout (issue #6681). The validation rule: any zero or positive
+  // value that fits VM deadline conversion is accepted, but negative is
   // rejected ONLY when the operator explicitly set the property in their
   // config. Absence keeps the in-Java default (0L = "share the
   // block-processing deadline").
@@ -99,7 +101,7 @@ public class VmConfigTest {
 
   @Test
   public void testConstantCallTimeoutDefaultWhenAbsent() {
-    // No path in the config, no entry in reference.conf -> default 0L kept,
+    // reference.conf default is 0; absence of a user override keeps that default;
     // no validation triggered.
     VmConfig vm = VmConfig.fromConfig(withRef());
     assertEquals(0L, vm.getConstantCallTimeoutMs());
@@ -107,6 +109,8 @@ public class VmConfigTest {
 
   @Test
   public void testConstantCallTimeoutAcceptsAnyPositiveValue() {
+    assertEquals(0L, VmConfig.fromConfig(
+        withRef("vm { constantCallTimeoutMs = 0 }")).getConstantCallTimeoutMs());
     assertEquals(1L, VmConfig.fromConfig(
         withRef("vm { constantCallTimeoutMs = 1 }")).getConstantCallTimeoutMs());
     assertEquals(50L, VmConfig.fromConfig(
@@ -118,38 +122,19 @@ public class VmConfigTest {
   }
 
   @Test
-  public void testConstantCallTimeoutZeroRejectedWhenExplicitlyConfigured() {
-    // Operator wrote `= 0` in config -> treated as a misconfiguration even
-    // though it equals the in-Java default. Forces an explicit positive value.
-    try {
-      VmConfig.fromConfig(withRef("vm { constantCallTimeoutMs = 0 }"));
-      org.junit.Assert.fail("expected IllegalArgumentException for explicit 0");
-    } catch (IllegalArgumentException ex) {
-      org.junit.Assert.assertTrue(ex.getMessage(),
-          ex.getMessage().contains("constantCallTimeoutMs"));
-    }
-  }
-
-  @Test
   public void testConstantCallTimeoutNegativeRejected() {
-    try {
+    IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class, () -> {
       VmConfig.fromConfig(withRef("vm { constantCallTimeoutMs = -1 }"));
-      org.junit.Assert.fail("expected IllegalArgumentException for negative ms");
-    } catch (IllegalArgumentException ex) {
-      org.junit.Assert.assertTrue(ex.getMessage(),
-          ex.getMessage().contains("constantCallTimeoutMs"));
-    }
+    });
+    Assert.assertTrue(thrown.getMessage().contains("constantCallTimeoutMs"));
   }
 
   @Test
   public void testConstantCallTimeoutOverflowRejected() {
-    long value = VmConfig.MAX_CONSTANT_CALL_TIMEOUT_MS + 1L;
-    try {
+    long value = Long.MAX_VALUE / 1000 + 1L;
+    IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class, () -> {
       VmConfig.fromConfig(withRef("vm { constantCallTimeoutMs = " + value + " }"));
-      org.junit.Assert.fail("expected IllegalArgumentException for overflowing ms");
-    } catch (IllegalArgumentException ex) {
-      org.junit.Assert.assertTrue(ex.getMessage(),
-          ex.getMessage().contains("deadline conversion"));
-    }
+    });
+    Assert.assertTrue(thrown.getMessage().contains("deadline conversion"));
   }
 }

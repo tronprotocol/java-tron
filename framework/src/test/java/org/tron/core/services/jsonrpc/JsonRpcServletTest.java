@@ -245,6 +245,160 @@ public class JsonRpcServletTest {
     assertArrayEquals(rpcResp, resp.getContentAsByteArray());
   }
 
+  // --- Content-Type header: must be application/json-rpc (no charset suffix) ---
+
+  @Test
+  public void errorResponse_contentTypeIsApplicationJsonRpc() throws Exception {
+    MockHttpServletResponse resp = doPost("not valid json");
+    assertEquals("application/json-rpc", resp.getContentType());
+  }
+
+  @Test
+  public void batchResponse_contentTypeIsApplicationJsonRpc() throws Exception {
+    byte[] singleResp = "{\"jsonrpc\":\"2.0\",\"result\":\"ok\",\"id\":1}"
+        .getBytes(StandardCharsets.UTF_8);
+    doAnswer(inv -> {
+      OutputStream out = inv.getArgument(1);
+      out.write(singleResp);
+      return 0;
+    }).when(mockRpcServer).handleRequest(any(InputStream.class), any(OutputStream.class));
+
+    MockHttpServletResponse resp = doPost("[{\"id\":1}]");
+    assertEquals("application/json-rpc", resp.getContentType());
+  }
+
+  @Test
+  public void allNotificationBatch_contentTypeIsApplicationJsonRpc() throws Exception {
+    // notification: rpcServer returns 0 bytes → empty batchResult → early return path
+    doAnswer(inv -> 0).when(mockRpcServer)
+        .handleRequest(any(InputStream.class), any(OutputStream.class));
+
+    MockHttpServletResponse resp = doPost("[{\"method\":\"eth_blockNumber\"}]");
+    assertEquals(200, resp.getStatus());
+    assertEquals(0, resp.getContentLength());
+    assertEquals("application/json-rpc", resp.getContentType());
+  }
+
+  // --- Primitive root node → Invalid Request (-32600), id must be JSON null ---
+
+  @Test
+  public void primitiveRootNull_returnsInvalidRequestWithJsonNullId() throws Exception {
+    MockHttpServletResponse resp = doPost("null");
+    assertEquals(200, resp.getStatus());
+    JsonNode body = MAPPER.readTree(resp.getContentAsString());
+    assertFalse(body.isArray());
+    assertEquals("2.0", body.get("jsonrpc").asText());
+    assertEquals(-32600, body.get("error").get("code").asInt());
+    assertTrue("id must be JSON null, not the string \"null\"", body.get("id").isNull());
+    assertFalse("id must not be a string", body.get("id").isTextual());
+  }
+
+  @Test
+  public void primitiveRootBoolean_returnsInvalidRequest() throws Exception {
+    MockHttpServletResponse resp = doPost("true");
+    assertEquals(200, resp.getStatus());
+    assertEquals(-32600,
+        MAPPER.readTree(resp.getContentAsString()).get("error").get("code").asInt());
+  }
+
+  @Test
+  public void primitiveRootNumber_returnsInvalidRequest() throws Exception {
+    MockHttpServletResponse resp = doPost("123");
+    assertEquals(200, resp.getStatus());
+    assertEquals(-32600,
+        MAPPER.readTree(resp.getContentAsString()).get("error").get("code").asInt());
+  }
+
+  @Test
+  public void primitiveRootString_returnsInvalidRequest() throws Exception {
+    MockHttpServletResponse resp = doPost("\"hello\"");
+    assertEquals(200, resp.getStatus());
+    assertEquals(-32600,
+        MAPPER.readTree(resp.getContentAsString()).get("error").get("code").asInt());
+  }
+
+  // --- Non-object element inside a batch → Invalid Request per element ---
+
+  @Test
+  public void batchWithNestedArray_returnsInvalidRequestArray() throws Exception {
+    MockHttpServletResponse resp = doPost("[[]]");
+    assertEquals(200, resp.getStatus());
+    JsonNode body = MAPPER.readTree(resp.getContentAsString());
+    assertTrue("response must be a JSON array", body.isArray());
+    assertEquals(1, body.size());
+    assertEquals(-32600, body.get(0).get("error").get("code").asInt());
+    assertTrue("id in batch error must be JSON null", body.get(0).get("id").isNull());
+  }
+
+  @Test
+  public void batchWithMixedObjectAndArray_objectProcessedArrayRejected() throws Exception {
+    byte[] singleResp = "{\"jsonrpc\":\"2.0\",\"result\":\"ok\",\"id\":1}"
+        .getBytes(StandardCharsets.UTF_8);
+    doAnswer(inv -> {
+      OutputStream out = inv.getArgument(1);
+      out.write(singleResp);
+      return 0;
+    }).when(mockRpcServer).handleRequest(any(InputStream.class), any(OutputStream.class));
+
+    MockHttpServletResponse resp = doPost("[{\"id\":1}, []]");
+    assertEquals(200, resp.getStatus());
+    JsonNode body = MAPPER.readTree(resp.getContentAsString());
+    assertTrue("response must be a JSON array", body.isArray());
+    assertEquals(2, body.size());
+    assertEquals("ok", body.get(0).get("result").asText());
+    assertEquals(-32600, body.get(1).get("error").get("code").asInt());
+  }
+
+  @Test
+  public void batchWithNumericAndStringElements_allGetInvalidRequest() throws Exception {
+    MockHttpServletResponse resp = doPost("[42, \"foo\", true]");
+    assertEquals(200, resp.getStatus());
+    JsonNode body = MAPPER.readTree(resp.getContentAsString());
+    assertTrue("response must be a JSON array", body.isArray());
+    assertEquals(3, body.size());
+    for (int i = 0; i < 3; i++) {
+      assertEquals(-32600, body.get(i).get("error").get("code").asInt());
+    }
+  }
+
+  // --- StreamReadConstraints: maxNestingDepth and maxTokenCount must be enforced ---
+
+  @Test
+  public void excessivelyNestedRequest_returnsParseError() throws Exception {
+    int limit = CommonParameter.getInstance().getMaxNestingDepth();
+    StringBuilder sb = new StringBuilder();
+    for (int i = 0; i <= limit; i++) {
+      sb.append('[');
+    }
+    sb.append('0');
+    for (int i = 0; i <= limit; i++) {
+      sb.append(']');
+    }
+
+    MockHttpServletResponse resp = doPost(sb.toString());
+    assertEquals(200, resp.getStatus());
+    assertEquals(-32700,
+        MAPPER.readTree(resp.getContentAsString()).get("error").get("code").asInt());
+  }
+
+  @Test
+  public void tooManyTokens_returnsParseError() throws Exception {
+    int limit = CommonParameter.getInstance().getMaxTokenCount();
+    StringBuilder sb = new StringBuilder("[");
+    for (int i = 0; i < limit; i++) {
+      if (i > 0) {
+        sb.append(',');
+      }
+      sb.append('0');
+    }
+    sb.append(']');
+
+    MockHttpServletResponse resp = doPost(sb.toString());
+    assertEquals(200, resp.getStatus());
+    assertEquals(-32700,
+        MAPPER.readTree(resp.getContentAsString()).get("error").get("code").asInt());
+  }
+
   // --- helpers ---
 
   private MockHttpServletResponse doPost(String body) throws Exception {

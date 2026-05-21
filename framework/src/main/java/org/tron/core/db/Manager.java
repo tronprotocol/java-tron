@@ -1140,6 +1140,11 @@ public class Manager {
         Exception exception = null;
         // todo  process the exception carefully later
         try (ISession tmpSession = revokingStore.buildSession()) {
+          if (!item.getBlk().validateSignature(
+              getDynamicPropertiesStore(), getAccountStore())) {
+            throw new ValidateSignatureException(
+                "switch fork: block " + item.getBlk().getNum() + " signature invalid");
+          }
           applyBlock(item.getBlk().setSwitch(true));
           tmpSession.commit();
         } catch (AccountResourceInsufficientException

@@ -467,8 +467,8 @@ public class Args extends CommonParameter {
     PARAMETER.allowProtoFilterNum = cc.getAllowProtoFilterNum();
     PARAMETER.allowAccountStateRoot = cc.getAllowAccountStateRoot();
     PARAMETER.changedDelegation = cc.getChangedDelegation();
-    PARAMETER.allowPBFT = cc.getAllowPBFT();
-    PARAMETER.pBFTExpireNum = cc.getPBFTExpireNum();
+    PARAMETER.allowPBFT = cc.getAllowPbft();
+    PARAMETER.pBFTExpireNum = cc.getPbftExpireNum();
     PARAMETER.allowTvmFreeze = cc.getAllowTvmFreeze();
     PARAMETER.allowTvmVote = cc.getAllowTvmVote();
     PARAMETER.allowTvmLondon = cc.getAllowTvmLondon();
@@ -610,10 +610,7 @@ public class Args extends CommonParameter {
     PARAMETER.maxHttpConnectNumber = nc.getMaxHttpConnectNumber();
     PARAMETER.netMaxTrxPerSecond = nc.getNetMaxTrxPerSecond();
 
-    if (StringUtils.isEmpty(PARAMETER.trustNodeAddr)) {
-      String trustNode = nc.getTrustNode();
-      PARAMETER.trustNodeAddr = StringUtils.isEmpty(trustNode) ? null : trustNode;
-    }
+    PARAMETER.trustNodeAddr = nc.getTrustNode();
 
     PARAMETER.validateSignThreadNum = nc.getValidateSignThreadNum();
     PARAMETER.walletExtensionApi = nc.isWalletExtensionApi();

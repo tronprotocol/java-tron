@@ -25,19 +25,15 @@ public class EventConfig {
   private String server = "";
   private String dbconfig = "";
   private boolean contractParse = true;
-  @Getter(lombok.AccessLevel.NONE)
+  // "native" is a Java reserved word; config key cannot match field name directly.
+  // @Setter(NONE) prevents ConfigBeanFactory from requiring a "nativeQueue" key.
   @Setter(lombok.AccessLevel.NONE)
   private NativeConfig nativeQueue = new NativeConfig();
 
-  public NativeConfig getNativeQueue() { return nativeQueue; }
-  // Topics list has optional fields (ethCompatible, redundancy, solidified) that
-  // not all items have. ConfigBeanFactory requires all bean fields to exist in config.
-  // Excluded from auto-binding, read manually in fromConfig().
-  @Getter(lombok.AccessLevel.NONE)
+  // Topics list items have optional fields; excluded from auto-binding.
+  // @Setter(NONE) prevents ConfigBeanFactory from requiring a "topics" key.
   @Setter(lombok.AccessLevel.NONE)
   private List<TopicConfig> topics = new ArrayList<>();
-
-  public List<TopicConfig> getTopics() { return topics; }
   private FilterConfig filter = new FilterConfig();
 
   @Getter
@@ -70,62 +66,40 @@ public class EventConfig {
 
   // Defaults come from reference.conf (loaded globally via Configuration.java)
 
+  // TopicConfig fields are optional per item; this fallback ensures all keys exist
+  // for ConfigBeanFactory binding. Values must match TopicConfig field defaults.
+  private static final Config TOPIC_DEFAULTS = ConfigFactory.parseString(
+      "triggerName=\"\", enable=false, topic=\"\", "
+          + "solidified=false, ethCompatible=false, redundancy=false");
+
   /**
    * Create EventConfig from the "event.subscribe" section of the application config.
    *
-   * <p>Note: HOCON key "native" is a Java reserved word, so the bean field is named
-   * "nativeQueue" but config key is "native". We handle this manually after binding.
+   * <p>"native" is a Java reserved word, so the field is named "nativeQueue" and the
+   * sub-section is read directly after binding. "topics" items may omit optional fields;
+   * TOPIC_DEFAULTS provides fallback values so ConfigBeanFactory can bind each item.
    */
   public static EventConfig fromConfig(Config config) {
     Config section = config.getConfig("event.subscribe");
 
-    // "native" is a Java reserved word, "topics" has optional fields per item —
-    // strip both before binding, read manually
     String nativeKey = "native";
     String topicsKey = "topics";
-    Config bindable = section.withoutPath(nativeKey).withoutPath(topicsKey)
-        .withoutPath("topicDefaults");
+    // remove two keys to construct EventConfig because they cannot be bind automatically,
+    // we can bind them manually later
+    Config bindable = section.withoutPath(nativeKey).withoutPath(topicsKey);
     EventConfig ec = ConfigBeanFactory.create(bindable, EventConfig.class);
 
-    // manually bind "native" sub-section
-    Config nativeSection = section.hasPath(nativeKey)
-        ? section.getConfig(nativeKey) : ConfigFactory.empty();
-    ec.nativeQueue = new NativeConfig();
-    if (nativeSection.hasPath("useNativeQueue")) {
-      ec.nativeQueue.useNativeQueue = nativeSection.getBoolean("useNativeQueue");
-    }
-    if (nativeSection.hasPath("bindport")) {
-      ec.nativeQueue.bindport = nativeSection.getInt("bindport");
-    }
-    if (nativeSection.hasPath("sendqueuelength")) {
-      ec.nativeQueue.sendqueuelength = nativeSection.getInt("sendqueuelength");
-    }
+    // "native" sub-section: bind via ConfigBeanFactory when present, use defaults otherwise
+    ec.nativeQueue = section.hasPath(nativeKey)
+        ? ConfigBeanFactory.create(section.getConfig(nativeKey), NativeConfig.class)
+        : new NativeConfig();
 
-    // manually bind topics — each item may have optional fields
+    // topics: withFallback fills optional fields so ConfigBeanFactory can bind each item
     if (section.hasPath(topicsKey)) {
       ec.topics = new ArrayList<>();
       for (com.typesafe.config.ConfigObject obj : section.getObjectList(topicsKey)) {
-        Config tc = obj.toConfig();
-        TopicConfig topic = new TopicConfig();
-        if (tc.hasPath("triggerName")) {
-          topic.triggerName = tc.getString("triggerName");
-        }
-        if (tc.hasPath("enable")) {
-          topic.enable = tc.getBoolean("enable");
-        }
-        if (tc.hasPath("topic")) {
-          topic.topic = tc.getString("topic");
-        }
-        if (tc.hasPath("solidified")) {
-          topic.solidified = tc.getBoolean("solidified");
-        }
-        if (tc.hasPath("ethCompatible")) {
-          topic.ethCompatible = tc.getBoolean("ethCompatible");
-        }
-        if (tc.hasPath("redundancy")) {
-          topic.redundancy = tc.getBoolean("redundancy");
-        }
-        ec.topics.add(topic);
+        ec.topics.add(ConfigBeanFactory.create(
+            obj.toConfig().withFallback(TOPIC_DEFAULTS), TopicConfig.class));
       }
     }
 

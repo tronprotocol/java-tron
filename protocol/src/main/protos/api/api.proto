@@ -2,7 +2,6 @@ syntax = "proto3";
 package protocol;
 
 import "core/Tron.proto";
-import "google/api/annotations.proto";
 
 import "core/contract/asset_issue_contract.proto";
 import "core/contract/account_contract.proto";
