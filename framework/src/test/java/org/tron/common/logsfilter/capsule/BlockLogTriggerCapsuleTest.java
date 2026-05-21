@@ -32,4 +32,10 @@ public class BlockLogTriggerCapsuleTest {
     Assert.assertEquals(100,
         blockLogTriggerCapsule.getBlockLogTrigger().getLatestSolidifiedBlockNumber());
   }
+
+  @Test
+  public void testParentHashPopulated() {
+    Assert.assertEquals(Sha256Hash.ZERO_HASH.toString(),
+        blockLogTriggerCapsule.getBlockLogTrigger().getParentHash());
+  }
 }

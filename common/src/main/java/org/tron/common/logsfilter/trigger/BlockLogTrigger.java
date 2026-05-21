@@ -27,7 +27,6 @@ public class BlockLogTrigger extends Trigger {
   @Setter
   private List<String> transactionList = new ArrayList<>();
 
-
   @Getter
   @Setter
   private String parentHash;
@@ -54,6 +53,5 @@ public class BlockLogTrigger extends Trigger {
         .append(", parentHash: ")
         .append(parentHash)
         .toString();
-
   }
 }
