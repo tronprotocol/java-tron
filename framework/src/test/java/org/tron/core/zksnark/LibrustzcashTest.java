@@ -69,7 +69,6 @@ import org.tron.protos.contract.ShieldContract.PedersenHash;
 @Slf4j
 public class LibrustzcashTest extends BaseTest {
   private static final String dbDirectory = "db_Librustzcash_test";
-  private static final String indexDirectory = "index_Librustzcash_test";
   @Resource
   private Wallet wallet;
 
@@ -79,7 +78,6 @@ public class LibrustzcashTest extends BaseTest {
         new String[]{
             "--output-directory", dbPath(),
             "--storage-db-directory", dbDirectory,
-            "--storage-index-directory", indexDirectory,
             "--debug"
         },
         "config-test-mainnet.conf"

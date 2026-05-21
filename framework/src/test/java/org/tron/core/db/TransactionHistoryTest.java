@@ -17,7 +17,6 @@ public class TransactionHistoryTest extends BaseTest {
 
   private static final byte[] transactionId = TransactionStoreTest.randomBytes(32);
   private static String dbDirectory = "db_TransactionHistoryStore_test";
-  private static String indexDirectory = "index_TransactionHistoryStore_test";
   @Resource
   private TransactionHistoryStore transactionHistoryStore;
 
@@ -27,8 +26,7 @@ public class TransactionHistoryTest extends BaseTest {
     Args.setParam(
         new String[]{
             "--output-directory", dbPath(),
-            "--storage-db-directory", dbDirectory,
-            "--storage-index-directory", indexDirectory
+            "--storage-db-directory", dbDirectory
         },
         TestConstants.TEST_CONF
     );

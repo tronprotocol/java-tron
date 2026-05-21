@@ -86,15 +86,6 @@ public class CLIParameter {
   public String storageDbSynchronous;
 
   @Deprecated
-  @Parameter(names = {"--storage-index-directory"}, description = "Storage index directory")
-  public String storageIndexDirectory;
-
-  @Deprecated
-  @Parameter(names = {"--storage-index-switch"},
-      description = "Storage index switch.(on or off)")
-  public String storageIndexSwitch;
-
-  @Deprecated
   @Parameter(names = {"--storage-transactionHistory-switch"},
       description = "Storage transaction history switch.(on or off)")
   public String storageTransactionHistorySwitch;

@@ -41,7 +41,6 @@ public class TransactionStoreTest extends BaseTest {
   private static final String WITNESS_ADDRESS =
       Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
   private static String dbDirectory = "db_TransactionStore_test";
-  private static String indexDirectory = "index_TransactionStore_test";
   @Resource
   private TransactionStore transactionStore;
 

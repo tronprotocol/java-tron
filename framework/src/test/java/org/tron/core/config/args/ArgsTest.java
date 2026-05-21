@@ -303,8 +303,6 @@ public class ArgsTest {
         "--storage-db-directory", "cli-db-dir",
         "--storage-db-engine", "ROCKSDB",
         "--storage-db-synchronous", "true",
-        "--storage-index-directory", "cli-index-dir",
-        "--storage-index-switch", "cli-index-switch",
         "--storage-transactionHistory-switch", "off",
         "--contract-parse-enable", "false"
     }, TestConstants.TEST_CONF);
@@ -314,8 +312,6 @@ public class ArgsTest {
     Assert.assertEquals("cli-db-dir", parameter.getStorage().getDbDirectory());
     Assert.assertEquals("ROCKSDB", parameter.getStorage().getDbEngine());
     Assert.assertTrue(parameter.getStorage().isDbSync());
-    Assert.assertEquals("cli-index-dir", parameter.getStorage().getIndexDirectory());
-    Assert.assertEquals("cli-index-switch", parameter.getStorage().getIndexSwitch());
     Assert.assertEquals("off", parameter.getStorage().getTransactionHistorySwitch());
     Assert.assertFalse(parameter.getStorage().isContractParseSwitch());
 

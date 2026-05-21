@@ -42,7 +42,6 @@ public class StorageTest {
   @Test
   public void getDirectory() {
     Assert.assertEquals("database", storage.getDbDirectory());
-    Assert.assertEquals("index", storage.getIndexDirectory());
   }
 
   @Test
