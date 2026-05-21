@@ -85,12 +85,7 @@ public class ConsensusDelegate {
   }
 
   public List<ByteString> getActiveWitnesses() {
-    // DEMO BREAK — REVERT BEFORE MERGE. Truncate active witnesses to just the
-    // first one. Single-node setups (1 witness) are unaffected; multinode
-    // (3 witnesses) loses witness rotation, exposing the multinode workflow's
-    // unique value over single-node.
-    List<ByteString> all = witnessScheduleStore.getActiveWitnesses();
-    return all.isEmpty() ? all : all.subList(0, 1);
+    return witnessScheduleStore.getActiveWitnesses();
   }
 
   public AccountCapsule getAccount(byte[] address) {
