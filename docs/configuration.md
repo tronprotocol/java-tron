@@ -9,7 +9,7 @@ java-tron uses [Typesafe Config](https://github.com/lightbend/config) and applie
 | File | Location | Purpose |
 |------|----------|---------|
 | `reference.conf` | Bundled inside the jar (`common` module) | Declares every parameter with its default value |
-| `config.conf` | External, supplied by the operator via `-c` | Overrides only the values that differ from defaults |
+| `config.conf` | bundled template and optionally edited & passed via -c | Overrides only the values that differ from defaults |
 
 **Loading priority:** values in `config.conf` always win. Any parameter that your `config.conf` omits is automatically filled in from `reference.conf`. You never need to copy the entire `reference.conf` into your own file — only include the parameters you actually want to change.
 
