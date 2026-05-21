@@ -1156,9 +1156,11 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
   public long getMaintenanceTimeInterval() {
-    // DEMO BREAK — REVERT BEFORE MERGE. Hardcodes a wrong value to prove
-    // the new Integration Test workflow catches protocol-level regressions.
-    return 6000L;
+    return Optional.ofNullable(getUnchecked(MAINTENANCE_TIME_INTERVAL))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found MAINTENANCE_TIME_INTERVAL"));
   }
 
   public void saveAccountUpgradeCost(long accountUpgradeCost) {
