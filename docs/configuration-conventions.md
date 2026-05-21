@@ -2,6 +2,35 @@
 
 This document covers the rules and patterns that developers must follow when adding or modifying configuration parameters in java-tron. Violations cause silent misreads, startup failures, or hard-to-diagnose defaults being applied instead of user-supplied values.
 
+## Configuration Parameter vs. Constant: Which One to Use?
+
+Before writing any code, decide whether the value belongs in a config file or in source code as a constant. Getting this wrong creates dead configuration surface (parameters that exist but are never tuned) or inflexibility (values that should be adjustable but aren't).
+
+### Use a configuration parameter when
+
+- **Different deployments legitimately need different values.** Port numbers, peer lists, storage paths, block-production timeouts, and rate limits vary by environment (mainnet / testnet / private chain) or by hardware capacity.
+- **Operators may need to tune the value without rebuilding.** Examples: thread pool sizes, connection limits, QPS caps.
+- **The value is an on/off feature flag with production-safe semantics.** The flag must be safe to flip while the rest of the system is unchanged (e.g. `node.rpc.reflectionService`, `vm.estimateEnergy`).
+- **The default differs across deployment scenarios.** If the mainnet default and the private-chain default are different, it belongs in config so each can override.
+
+### Use a constant when
+
+- **No operator would ever need to change it.** Protocol-level numbers (address prefix bytes, transaction size ceilings, energy unit ratios) are part of the chain specification — changing them causes a fork.
+- **The value is a technical limit determined by the implementation, not the deployment.** Jackson `StreamReadConstraints` (`MAX_NESTING_DEPTH`, `MAX_TOKEN_COUNT`) guard against malformed input; no legitimate request comes close to the limit and no operator tunes it.
+- **The "configurability" is an illusion.** If the value is captured in a `static final` field at class-load time (before config is applied), a config key is misleading — it appears tunable but changes are silently ignored. Convert to a constant and document why.
+- **The value is derived from other constants or from the Java runtime.** Use `Runtime.getRuntime().availableProcessors()` or arithmetic on existing constants; don't push the formula into a config file.
+- **No code path reads the value after assignment.** A parameter that exists in `reference.conf` and propagates through `NodeConfig → Args → CommonParameter` but is never consumed by business logic is dead weight. Delete it entirely (see `receiveTcpMinDataLength` as a past example).
+
+### The warning signs of a misplaced parameter
+
+| Symptom | Likely problem |
+|---------|---------------|
+| Parameter exists in `reference.conf` but `grep` finds no call site beyond the binding chain | Dead parameter — delete it |
+| Value is read from a `static final` field initialized before `Args.setParam()` | Config change is silently ignored — convert to constant |
+| Operator sets the value and nothing changes | Same as above, or value is clamped away in `postProcess()` |
+| Parameter controls something that would cause a network fork if mismatched across nodes | Must be a constant, not configurable |
+| Parameter has been at its default value in every known deployment for over a year | Candidate for removal or promotion to constant |
+
 ## How Config Keys Bind to Java Fields
 
 java-tron uses [Typesafe Config](https://github.com/lightbend/config)'s `ConfigBeanFactory` to map a HOCON section to a Java bean automatically. The mapping algorithm is:
