@@ -183,7 +183,7 @@ contract isTestCtr {
 
     // Trigger contract method: isTest(address)
     String methodByAddr = "isTest(address)";
-    String nonexistentAccount = "27k66nycZATHzBasFT9782nTsYWqVtxdtAc";
+    String nonexistentAccount = "TWyoFfJBiKGkVQd28HTqxsc8kbMtQUmqgi";
     String hexInput = AbiUtil.parseMethod(methodByAddr, Arrays.asList(nonexistentAccount));
     TVMTestResult result = TvmTestUtils
         .triggerContractAndReturnTvmTestResult(Hex.decode(OWNER_ADDRESS),

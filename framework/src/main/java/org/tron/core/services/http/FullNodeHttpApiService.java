@@ -86,6 +86,8 @@ public class FullNodeHttpApiService extends HttpService {
   @Autowired
   private ListWitnessesServlet listWitnessesServlet;
   @Autowired
+  private GetPaginatedNowWitnessListServlet getPaginatedNowWitnessListServlet;
+  @Autowired
   private GetAssetIssueListServlet getAssetIssueListServlet;
   @Autowired
   private GetPaginatedAssetIssueListServlet getPaginatedAssetIssueListServlet;
@@ -295,6 +297,7 @@ public class FullNodeHttpApiService extends HttpService {
     port = Args.getInstance().getFullNodeHttpPort();
     enable = isFullNode() && Args.getInstance().isFullNodeHttpEnable();
     contextPath = "/";
+    maxRequestSize = Args.getInstance().getHttpMaxMessageSize();
   }
 
   @Override
@@ -342,7 +345,11 @@ public class FullNodeHttpApiService extends HttpService {
     context.addServlet(
         new ServletHolder(getTransactionCountByBlockNumServlet),
         "/wallet/gettransactioncountbyblocknum");
+    // Get the list of witnesses info with contains vote counts for last epoch/maintenance
     context.addServlet(new ServletHolder(listWitnessesServlet), "/wallet/listwitnesses");
+    // Get the paged list of witnesses info with realtime vote counts
+    context.addServlet(new ServletHolder(getPaginatedNowWitnessListServlet),
+        "/wallet/getpaginatednowwitnesslist");
     context.addServlet(new ServletHolder(getAssetIssueListServlet), "/wallet/getassetissuelist");
     context.addServlet(
         new ServletHolder(getPaginatedAssetIssueListServlet),

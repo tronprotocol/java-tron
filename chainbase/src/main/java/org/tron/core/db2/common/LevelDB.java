@@ -13,7 +13,7 @@ public class LevelDB implements DB<byte[], byte[]>, Flusher {
 
   @Getter
   private LevelDbDataSourceImpl db;
-  private WriteOptionsWrapper writeOptions = WriteOptionsWrapper.getInstance()
+  private final WriteOptionsWrapper writeOptions = WriteOptionsWrapper.getInstance()
       .sync(CommonParameter.getInstance().getStorage().isDbSync());
 
   public LevelDB(LevelDbDataSourceImpl db) {
@@ -65,6 +65,7 @@ public class LevelDB implements DB<byte[], byte[]>, Flusher {
 
   @Override
   public void close() {
+    this.writeOptions.close();
     db.closeDB();
   }
 

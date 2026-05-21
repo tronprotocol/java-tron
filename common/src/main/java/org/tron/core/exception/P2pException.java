@@ -52,6 +52,7 @@ public class P2pException extends Exception {
     PROTOBUF_ERROR(14, "protobuf inconsistent"),
     BLOCK_SIGN_ERROR(15, "block sign error"),
     BLOCK_MERKLE_ERROR(16, "block merkle error"),
+    RATE_LIMIT_EXCEEDED(17, "rate limit exceeded"),
 
     DEFAULT(100, "default exception");
 

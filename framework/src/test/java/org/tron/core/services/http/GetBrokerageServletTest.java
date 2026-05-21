@@ -1,17 +1,15 @@
 package org.tron.core.services.http;
 
-import com.alibaba.fastjson.JSONObject;
-
 import java.io.UnsupportedEncodingException;
 import javax.annotation.Resource;
-
 import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.tron.common.BaseTest;
-import org.tron.core.Constant;
+import org.tron.common.TestConstants;
 import org.tron.core.config.args.Args;
+import org.tron.json.JSONObject;
 
 public class GetBrokerageServletTest extends BaseTest {
 
@@ -22,7 +20,7 @@ public class GetBrokerageServletTest extends BaseTest {
     Args.setParam(
             new String[]{
                 "--output-directory", dbPath(),
-            }, Constant.TEST_CONF
+            }, TestConstants.TEST_CONF
     );
   }
 
@@ -37,7 +35,7 @@ public class GetBrokerageServletTest extends BaseTest {
   @Test
   public void getBrokerageValueByJsonTest() {
     int expect = 20;
-    String jsonParam = "{\"address\": \"27VZHn9PFZwNh7o2EporxmLkpe157iWZVkh\"}";
+    String jsonParam = "{\"address\": \"TGSzEq4t7oMTRcn1VxDghRu5r5bWAE5D1W\"}";
     MockHttpServletRequest request = createRequest("application/json");
     request.setContent(jsonParam.getBytes());
     MockHttpServletResponse response = new MockHttpServletResponse();
@@ -56,7 +54,7 @@ public class GetBrokerageServletTest extends BaseTest {
   @Test
   public void getBrokerageByJsonUTF8Test() {
     int expect = 20;
-    String jsonParam = "{\"address\": \"27VZHn9PFZwNh7o2EporxmLkpe157iWZVkh\"}";
+    String jsonParam = "{\"address\": \"TGSzEq4t7oMTRcn1VxDghRu5r5bWAE5D1W\"}";
     MockHttpServletRequest request = createRequest("application/json; charset=utf-8");
     request.setContent(jsonParam.getBytes());
     MockHttpServletResponse response = new MockHttpServletResponse();
@@ -75,7 +73,7 @@ public class GetBrokerageServletTest extends BaseTest {
   public void getBrokerageValueTest() {
     int expect = 20;
     MockHttpServletRequest request = createRequest("application/x-www-form-urlencoded");
-    request.addParameter("address", "27VZHn9PFZwNh7o2EporxmLkpe157iWZVkh");
+    request.addParameter("address", "TGSzEq4t7oMTRcn1VxDghRu5r5bWAE5D1W");
     MockHttpServletResponse response = new MockHttpServletResponse();
     getBrokerageServlet.doPost(request, response);
     try {

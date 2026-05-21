@@ -12,13 +12,14 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.tron.common.TestConstants;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.LocalWitnesses;
 import org.tron.common.utils.PublicMethod;
 import org.tron.common.utils.Sha256Hash;
-import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.config.args.Args;
+import org.tron.core.exception.BadBlockException;
 import org.tron.core.exception.BadItemException;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.contract.BalanceContract.TransferContract;
@@ -41,7 +42,7 @@ public class BlockCapsuleTest {
   @BeforeClass
   public static void init() throws IOException {
     Args.setParam(new String[]{"-d", temporaryFolder.newFolder().toString()},
-        Constant.TEST_CONF);
+        TestConstants.TEST_CONF);
   }
 
   @AfterClass
@@ -78,17 +79,48 @@ public class BlockCapsuleTest {
         .addTransaction(new TransactionCapsule(transferContract2, ContractType.TransferContract));
     blockCapsule0.setMerkleRoot();
 
-    if (Constant.ADD_PRE_FIX_BYTE_TESTNET == Wallet.getAddressPreFixByte()) {
-      Assert.assertEquals(
-          "53421c1f1bcbbba67a4184cc3dbc1a59f90af7e2b0644dcfc8dc738fe30deffc",
-          blockCapsule0.getMerkleRoot().toString());
-    } else {
-      Assert.assertEquals(
-          "5bc862243292e6aa1d5e21a60bb6a673e4c2544709f6363d4a2f85ec29bcfe00",
-          blockCapsule0.getMerkleRoot().toString());
-    }
+    Assert.assertEquals(
+        "5bc862243292e6aa1d5e21a60bb6a673e4c2544709f6363d4a2f85ec29bcfe00",
+        blockCapsule0.getMerkleRoot().toString());
 
     logger.info("Transaction[O] Merkle Root : {}", blockCapsule0.getMerkleRoot().toString());
+  }
+
+  @Test
+  public void testValidateMerkleRoot() throws Exception {
+    // build a fresh local block so shared blockCapsule0 is not mutated
+    String parentHash = "9938a342238077182498b464ac0292229938a342238077182498b464ac029222";
+    BlockCapsule local = new BlockCapsule(1,
+        Sha256Hash.wrap(ByteString.copyFrom(ByteArray.fromHexString(parentHash))),
+        1234,
+        ByteString.copyFrom("1234567".getBytes()));
+
+    // valid block: setMerkleRoot then validate — should not throw
+    local.setMerkleRoot();
+    local.validateMerkleRoot(); // no exception
+
+    // flag is set — second call must be a no-op (no recomputation)
+    local.validateMerkleRoot(); // still no exception
+
+    // tamper with a transaction to break merkle
+    TransferContract transferContract = TransferContract.newBuilder()
+        .setAmount(999L)
+        .setOwnerAddress(ByteString.copyFrom("0x0000000000000000000".getBytes()))
+        .setToAddress(ByteString.copyFrom(ByteArray.fromHexString(
+            Wallet.getAddressPreFixString() + "A389132D6639FBDA4FBC8B659264E6B7C90DB086")))
+        .build();
+    local.addTransaction(
+        new TransactionCapsule(transferContract, ContractType.TransferContract));
+    // merkle root was set before adding the tx, so it is now stale/invalid
+
+    BlockCapsule tampered = new BlockCapsule(local.getInstance());
+    // tampered has no merkleValidated flag set
+    try {
+      tampered.validateMerkleRoot();
+      Assert.fail("Expected BadBlockException for merkle mismatch");
+    } catch (BadBlockException e) {
+      Assert.assertTrue(e.getMessage().contains("merkle"));
+    }
   }
 
   /* @Test
@@ -134,7 +166,7 @@ public class BlockCapsuleTest {
 
     localWitnesses = new LocalWitnesses();
     localWitnesses.setPrivateKeys(Arrays.asList(privateKey));
-    localWitnesses.initWitnessAccountAddress(true);
+    localWitnesses.initWitnessAccountAddress(null, true);
     Args.setLocalWitnesses(localWitnesses);
 
     Assert.assertFalse(blockCapsule0.hasWitnessSignature());

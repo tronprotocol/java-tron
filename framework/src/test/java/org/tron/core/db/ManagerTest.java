@@ -3,7 +3,9 @@ package org.tron.core.db;
 import static org.junit.Assert.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.when;
 import static org.tron.common.utils.Commons.adjustAssetBalanceV2;
 import static org.tron.common.utils.Commons.adjustTotalShieldedPoolValue;
 import static org.tron.common.utils.Commons.getExchangeStoreFinal;
@@ -16,25 +18,28 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
-import java.io.IOException;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.tron.common.application.TronApplicationContext;
+import org.tron.api.GrpcAPI;
+import org.tron.common.BaseMethodTest;
+import org.tron.common.TestConstants;
 import org.tron.common.crypto.ECKey;
+import org.tron.common.logsfilter.EventPluginLoader;
+import org.tron.common.logsfilter.trigger.ContractLogTrigger;
 import org.tron.common.runtime.RuntimeImpl;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Commons;
@@ -52,9 +57,11 @@ import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.capsule.TransactionInfoCapsule;
+import org.tron.core.capsule.TransactionRetCapsule;
 import org.tron.core.capsule.WitnessCapsule;
-import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.Parameter;
 import org.tron.core.config.args.Args;
 import org.tron.core.consensus.ConsensusService;
@@ -99,36 +106,29 @@ import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.contract.AccountContract;
 import org.tron.protos.contract.AssetIssueContractOuterClass;
 import org.tron.protos.contract.BalanceContract.TransferContract;
+import org.tron.protos.contract.ExchangeContract.ExchangeTransactionContract;
 import org.tron.protos.contract.ShieldContract;
 
 
 @Slf4j
-public class ManagerTest extends BlockGenerate {
+public class ManagerTest extends BaseMethodTest {
 
   private static final int SHIELDED_TRANS_IN_BLOCK_COUNTS = 1;
-  private static Manager dbManager;
   private static ChainBaseManager chainManager;
   private static ConsensusService consensusService;
   private static DposSlot dposSlot;
-  private static TronApplicationContext context;
   private static BlockCapsule blockCapsule2;
-  @Rule
-  public TemporaryFolder temporaryFolder = new TemporaryFolder();
   private static AtomicInteger port = new AtomicInteger(0);
+  private final BlockGenerate blockGenerate = new BlockGenerate();
   private static String accountAddress =
       Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
   private final String privateKey = PublicMethod.getRandomPrivateKey();
   private LocalWitnesses localWitnesses;
 
-  @Before
-  public void init() throws IOException {
-    Args.setParam(new String[]{"-d",
-        temporaryFolder.newFolder().toString()}, Constant.TEST_CONF);
+  @Override
+  protected void afterInit() {
     Args.getInstance().setNodeListenPort(10000 + port.incrementAndGet());
-    context = new TronApplicationContext(DefaultConfig.class);
-
-    dbManager = context.getBean(Manager.class);
-    setManager(dbManager);
+    BlockGenerate.setManager(dbManager);
     dposSlot = context.getBean(DposSlot.class);
     consensusService = context.getBean(ConsensusService.class);
     consensusService.start();
@@ -136,7 +136,7 @@ public class ManagerTest extends BlockGenerate {
 
     localWitnesses = new LocalWitnesses();
     localWitnesses.setPrivateKeys(Arrays.asList(privateKey));
-    localWitnesses.initWitnessAccountAddress(true);
+    localWitnesses.initWitnessAccountAddress(null, true);
     Args.setLocalWitnesses(localWitnesses);
 
     blockCapsule2 =
@@ -167,11 +167,6 @@ public class ManagerTest extends BlockGenerate {
     chainManager.getAccountStore().put(addressByte.toByteArray(), accountCapsule);
   }
 
-  @After
-  public void removeDb() {
-    Args.clearParam();
-    context.destroy();
-  }
 
   @Test
   public void updateRecentTransaction() throws Exception {
@@ -286,12 +281,8 @@ public class ManagerTest extends BlockGenerate {
       }
     }
 
-    try {
-      chainManager.getBlockIdByNum(-1);
-      Assert.fail();
-    } catch (ItemNotFoundException e) {
-      Assert.assertTrue(true);
-    }
+    Assert.assertThrows(ItemNotFoundException.class,
+        () -> chainManager.getBlockIdByNum(-1));
     try {
       dbManager.getBlockChainHashesOnFork(blockCapsule2.getBlockId());
     } catch (Exception e) {
@@ -316,7 +307,7 @@ public class ManagerTest extends BlockGenerate {
       dbManager.pushTransaction(trans0);
       dbManager.pushTransaction(trans);
     } catch (Exception e) {
-      Assert.assertTrue(e instanceof TaposException);
+      Assert.assertTrue(e instanceof ContractValidateException);
     }
     dbManager.rePush(trans0);
     ReflectUtils.invokeMethod(dbManager,"filterOwnerAddress",
@@ -325,12 +316,6 @@ public class ManagerTest extends BlockGenerate {
 
     try {
       dbManager.validateTapos(trans);
-    } catch (Exception e) {
-      Assert.assertTrue(e instanceof TaposException);
-    }
-    try {
-      dbManager.pushVerifiedBlock(chainManager.getHead());
-      dbManager.getBlockChainHashesOnFork(chainManager.getHeadBlockId());
     } catch (Exception e) {
       Assert.assertTrue(e instanceof TaposException);
     }
@@ -518,8 +503,8 @@ public class ManagerTest extends BlockGenerate {
     } catch (BadBlockException e) {
       Assert.assertTrue(e instanceof BadBlockException);
       Assert.assertTrue(e.getType().equals(CALC_MERKLE_ROOT_FAILED));
-      Assert.assertEquals("The merkle hash is not validated for "
-              + blockCapsule2.getNum(), e.getMessage());
+      Assert.assertTrue(e.getMessage().startsWith(
+          "merkle root mismatch for block " + blockCapsule2.getNum() + ":"));
     } catch (Exception e) {
       Assert.assertFalse(e instanceof Exception);
     }
@@ -621,7 +606,8 @@ public class ManagerTest extends BlockGenerate {
     chainManager.addWitness(ByteString.copyFrom(address));
     List<WitnessCapsule> witnessStandby1 = chainManager.getWitnessStore().getWitnessStandby(
         chainManager.getDynamicPropertiesStore().allowWitnessSortOptimization());
-    Block block = getSignedBlock(witnessCapsule.getAddress(), 1533529947843L, privateKey);
+    Block block = blockGenerate.getSignedBlock(
+        witnessCapsule.getAddress(), 1533529947843L, privateKey);
     dbManager.pushBlock(new BlockCapsule(block));
 
     Map<ByteString, String> addressToProvateKeys = addTestWitnessAndAccount();
@@ -723,7 +709,7 @@ public class ManagerTest extends BlockGenerate {
       BadBlockException, TaposException, BadNumberBlockException, NonCommonBlockException,
       ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException,
       ZksnarkException, EventBloomException {
-    Args.setParam(new String[]{}, Constant.TEST_CONF);
+    Args.setParam(new String[]{}, TestConstants.TEST_CONF);
     long size = chainManager.getBlockStore().size();
     //  System.out.print("block store size:" + size + "\n");
     String key = PublicMethod.getRandomPrivateKey();
@@ -744,7 +730,8 @@ public class ManagerTest extends BlockGenerate {
     chainManager.addWitness(ByteString.copyFrom(address));
     chainManager.getWitnessStore().put(address, witnessCapsule);
 
-    Block block = getSignedBlock(witnessCapsule.getAddress(), 1533529947000L, privateKey);
+    Block block = blockGenerate.getSignedBlock(
+        witnessCapsule.getAddress(), 1533529947000L, privateKey);
 
     dbManager.pushBlock(new BlockCapsule(block));
 
@@ -858,6 +845,35 @@ public class ManagerTest extends BlockGenerate {
     dbManager.getPendingTransactions().add(t3);
     txs = dbManager.getVerifyTxs(capsule);
     Assert.assertEquals(txs.size(), 2);
+
+    dbManager.getPendingTransactions().clear();
+    capsule = new BlockCapsule(0, ByteString.EMPTY, 0, list);
+    dbManager.getPendingTransactions().add(t1);
+    dbManager.getPendingTransactions().add(t2);
+    txs = dbManager.getVerifyTxs(capsule);
+    Assert.assertEquals(txs.size(), 0);
+
+    dbManager.getPendingTransactions().clear();
+    Transaction t1Bak = t1.getInstance().toBuilder()
+        .addSignature(ByteString.copyFrom("a".getBytes())).build();
+    dbManager.getPendingTransactions().add(new TransactionCapsule(t1Bak));
+    txs = dbManager.getVerifyTxs(capsule);
+    Assert.assertEquals(t1.getTransactionId(), new TransactionCapsule(t1Bak).getTransactionId());
+    Assert.assertEquals(txs.size(), 2);
+
+    dbManager.getPendingTransactions().clear();
+    list.clear();
+    list.add(t1Bak);
+    capsule = new BlockCapsule(0, ByteString.EMPTY, 0, list);
+
+    Transaction t2Bak = t1.getInstance().toBuilder()
+        .addSignature(ByteString.copyFrom("a".getBytes()))
+        .addSignature(ByteString.copyFrom("b".getBytes())).build();
+    Assert.assertEquals(new TransactionCapsule(t1Bak).getTransactionId(),
+        new TransactionCapsule(t2Bak).getTransactionId());
+    dbManager.getPendingTransactions().add(new TransactionCapsule(t2Bak));
+    txs = dbManager.getVerifyTxs(capsule);
+    Assert.assertEquals(txs.size(), 1);
   }
 
   @Test
@@ -870,7 +886,7 @@ public class ManagerTest extends BlockGenerate {
       TaposException, BadNumberBlockException, NonCommonBlockException,
       ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException,
       ZksnarkException, EventBloomException {
-    Args.setParam(new String[]{}, Constant.TEST_CONF);
+    Args.setParam(new String[]{}, TestConstants.TEST_CONF);
     long size = chainManager.getBlockStore().size();
     System.out.print("block store size:" + size + "\n");
     String key = PublicMethod.getRandomPrivateKey();
@@ -888,7 +904,8 @@ public class ManagerTest extends BlockGenerate {
     chainManager.addWitness(ByteString.copyFrom(address));
     chainManager.getWitnessStore().put(address, witnessCapsule);
 
-    Block block = getSignedBlock(witnessCapsule.getAddress(), 1533529947843L, privateKey);
+    Block block = blockGenerate.getSignedBlock(
+        witnessCapsule.getAddress(), 1533529947843L, privateKey);
     dbManager.pushBlock(new BlockCapsule(block));
 
     Map<ByteString, String> addressToProvateKeys = addTestWitnessAndAccount();
@@ -982,7 +999,7 @@ public class ManagerTest extends BlockGenerate {
       BadBlockException, TaposException, BadNumberBlockException, NonCommonBlockException,
       ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException,
       ZksnarkException, EventBloomException {
-    Args.setParam(new String[]{}, Constant.TEST_CONF);
+    Args.setParam(new String[]{}, TestConstants.TEST_CONF);
     long size = chainManager.getBlockStore().size();
     System.out.print("block store size:" + size + "\n");
     String key = PublicMethod.getRandomPrivateKey();;
@@ -1001,7 +1018,8 @@ public class ManagerTest extends BlockGenerate {
     chainManager.getWitnessScheduleStore().saveActiveWitnesses(new ArrayList<>());
     chainManager.addWitness(ByteString.copyFrom(address));
     chainManager.getWitnessStore().put(address, witnessCapsule);
-    Block block = getSignedBlock(witnessCapsule.getAddress(), 1533529947843L, privateKey);
+    Block block = blockGenerate.getSignedBlock(
+        witnessCapsule.getAddress(), 1533529947843L, privateKey);
     dbManager.pushBlock(new BlockCapsule(block));
 
     Map<ByteString, String> addressToProvateKeys = addTestWitnessAndAccount();
@@ -1166,14 +1184,8 @@ public class ManagerTest extends BlockGenerate {
     TransactionCapsule trx = new TransactionCapsule(tc, ContractType.TransferContract);
     long latestBlockTime = dbManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp();
     trx.setExpiration(latestBlockTime - 100);
-    try {
-      dbManager.validateCommon(trx);
-      Assert.fail();
-    } catch (TransactionExpirationException e) {
-      Assert.assertTrue(true);
-    } catch (TooBigTransactionException e) {
-      Assert.fail();
-    }
+    Assert.assertThrows(TransactionExpirationException.class,
+        () -> dbManager.validateCommon(trx));
   }
 
   @Test
@@ -1234,12 +1246,251 @@ public class ManagerTest extends BlockGenerate {
   }
 
   @Test
+  public void testGetTransactionInfoByBlockNum() throws Exception {
+
+    Transaction transaction = Protocol.Transaction.newBuilder()
+            .addSignature(ByteString.copyFrom(new byte[1])).build();
+    TransactionCapsule transactionCapsule = new TransactionCapsule(transaction);
+
+    Protocol.BlockHeader.raw raw = Protocol.BlockHeader.raw.newBuilder().setNumber(1000L).build();
+    Protocol.BlockHeader header = Protocol.BlockHeader.newBuilder().setRawData(raw).build();
+    Block block = Block.newBuilder().setBlockHeader(header).addTransactions(transaction).build();
+
+    Protocol.TransactionInfo info = Protocol.TransactionInfo.newBuilder()
+            .setBlockNumber(1000L).build();
+
+    BlockCapsule blockCapsule = new BlockCapsule(block);
+    byte[] blockId = new BlockCapsule(block).getBlockId().getBytes();
+    dbManager.getBlockIndexStore().put(ByteArray.fromLong(1000L), new BytesCapsule(blockId));
+    dbManager.getBlockStore().put(blockId, blockCapsule);
+    dbManager.getTransactionHistoryStore().put(transactionCapsule.getTransactionId().getBytes(),
+            new TransactionInfoCapsule(info));
+
+    GrpcAPI.TransactionInfoList transactionInfoList = dbManager.getTransactionInfoByBlockNum(1000L);
+
+    Assert.assertEquals(1, transactionInfoList.getTransactionInfoCount());
+    Assert.assertEquals(1, transactionInfoList.getTransactionInfoList().size());
+
+    Protocol.TransactionRet ret = Protocol.TransactionRet.newBuilder()
+            .addTransactioninfo(info)
+            .addTransactioninfo(info).build();
+
+    TransactionRetCapsule transactionRetCapsule = new TransactionRetCapsule(ret.toByteArray());
+
+    dbManager.getTransactionRetStore()
+            .put(ByteArray.fromLong(1000L), transactionRetCapsule);
+
+    transactionInfoList = dbManager.getTransactionInfoByBlockNum(1000L);
+
+    Assert.assertEquals(2, transactionInfoList.getTransactionInfoCount());
+    Assert.assertEquals(2, transactionInfoList.getTransactionInfoList().size());
+  }
+
+  @Test
+  public void isExchangeTransactionBypassedWhenHardenedEnabled() throws Exception {
+    Transaction exchange = Transaction.newBuilder().setRawData(
+        Transaction.raw.newBuilder().addContract(
+            Transaction.Contract.newBuilder()
+                .setType(ContractType.ExchangeTransactionContract)
+                .setParameter(Any.pack(ExchangeTransactionContract.newBuilder()
+                    .setExchangeId(1L).setQuant(1L).setExpected(1L).build()))
+                .build())).build();
+
+    java.lang.reflect.Method m = Manager.class.getDeclaredMethod(
+        "isExchangeTransaction", Transaction.class);
+    m.setAccessible(true);
+
+    // Default: hardened disabled (==0) -> contract is treated as exchange
+    chainManager.getDynamicPropertiesStore().saveAllowHardenExchangeCalculation(0);
+    Assert.assertTrue("Exchange tx must be detected when hardened disabled",
+        (boolean) m.invoke(dbManager, exchange));
+
+    // Hardened enabled -> bypass returns false
+    chainManager.getDynamicPropertiesStore().saveAllowHardenExchangeCalculation(1);
+    Assert.assertFalse("Exchange tx must be bypassed when hardened enabled",
+        (boolean) m.invoke(dbManager, exchange));
+
+    // Reset
+    chainManager.getDynamicPropertiesStore().saveAllowHardenExchangeCalculation(0);
+  }
+
+  @Test
+  public void isExchangeTransactionNonExchangeContractReturnsFalse() throws Exception {
+    Transaction transfer = Transaction.newBuilder().setRawData(
+        Transaction.raw.newBuilder().addContract(
+            Transaction.Contract.newBuilder()
+                .setType(ContractType.TransferContract)
+                .setParameter(Any.pack(TransferContract.newBuilder().build()))
+                .build())).build();
+
+    java.lang.reflect.Method m = Manager.class.getDeclaredMethod(
+        "isExchangeTransaction", Transaction.class);
+    m.setAccessible(true);
+
+    chainManager.getDynamicPropertiesStore().saveAllowHardenExchangeCalculation(0);
+    Assert.assertFalse("Non-exchange contract must return false",
+        (boolean) m.invoke(dbManager, transfer));
+  }
+
+  @Test
   public void blockTrigger() {
     Manager manager = spy(new Manager());
     doThrow(new RuntimeException("postBlockTrigger mock")).when(manager).postBlockTrigger(any());
     TronError thrown = Assert.assertThrows(TronError.class, () ->
         manager.blockTrigger(new BlockCapsule(Block.newBuilder().build()), 1, 1));
     Assert.assertEquals(TronError.ErrCode.EVENT_SUBSCRIBE_ERROR, thrown.getErrCode());
+  }
+
+  @Test
+  public void testReOrgContractTriggerClearsMap() throws Exception {
+    ReflectUtils.setFieldValue(dbManager, "eventPluginLoaded", true);
+    EventPluginLoader mockLoader = mock(EventPluginLoader.class);
+    // Disable contract triggers so reOrgContractTrigger skips the old-block fetch
+    // branch and proceeds to clearSolidityContractTriggerCache(getHeadBlockNum()).
+    when(mockLoader.isContractEventTriggerEnable()).thenReturn(false);
+    when(mockLoader.isContractLogTriggerEnable()).thenReturn(false);
+    when(mockLoader.isSolidityLogTriggerEnable()).thenReturn(true);
+    when(mockLoader.isSolidityEventTriggerEnable()).thenReturn(false);
+    Field instanceField = EventPluginLoader.class.getDeclaredField("instance");
+    instanceField.setAccessible(true);
+    EventPluginLoader originalLoader = (EventPluginLoader) instanceField.get(null);
+    instanceField.set(null, mockLoader);
+
+    long headBlockNum = dbManager.getHeadBlockNum();
+    Args.getSolidityContractLogTriggerMap()
+        .computeIfAbsent(headBlockNum, k -> new LinkedBlockingQueue<>())
+        .offer(new ContractLogTrigger());
+    Args.getSolidityContractEventTriggerMap()
+        .computeIfAbsent(headBlockNum, k -> new LinkedBlockingQueue<>())
+        .offer(new org.tron.common.logsfilter.trigger.ContractEventTrigger());
+
+    try {
+      Method method = Manager.class.getDeclaredMethod("reOrgContractTrigger");
+      method.setAccessible(true);
+      method.invoke(dbManager);
+
+      Assert.assertNull(Args.getSolidityContractLogTriggerMap().get(headBlockNum));
+      Assert.assertNull(Args.getSolidityContractEventTriggerMap().get(headBlockNum));
+    } finally {
+      instanceField.set(null, originalLoader);
+      ReflectUtils.setFieldValue(dbManager, "eventPluginLoaded", false);
+      Args.getSolidityContractLogTriggerMap().clear();
+      Args.getSolidityContractEventTriggerMap().clear();
+    }
+  }
+
+  @Test
+  public void testClearSolidityContractTriggerCache() throws Exception {
+    long blockNum = 999L;
+    ReflectUtils.setFieldValue(dbManager, "eventPluginLoaded", true);
+    EventPluginLoader mockLoader = mock(EventPluginLoader.class);
+    when(mockLoader.isSolidityLogTriggerEnable()).thenReturn(true);
+    when(mockLoader.isSolidityEventTriggerEnable()).thenReturn(true);
+    Field instanceField = EventPluginLoader.class.getDeclaredField("instance");
+    instanceField.setAccessible(true);
+    EventPluginLoader originalLoader = (EventPluginLoader) instanceField.get(null);
+    instanceField.set(null, mockLoader);
+
+    Args.getSolidityContractLogTriggerMap()
+        .computeIfAbsent(blockNum, k -> new LinkedBlockingQueue<>())
+        .offer(new ContractLogTrigger());
+    Args.getSolidityContractEventTriggerMap()
+        .computeIfAbsent(blockNum, k -> new LinkedBlockingQueue<>());
+    Assert.assertFalse(Args.getSolidityContractLogTriggerMap().isEmpty());
+
+    try {
+      Method method = Manager.class.getDeclaredMethod("clearSolidityContractTriggerCache",
+          long.class);
+      method.setAccessible(true);
+      method.invoke(dbManager, blockNum);
+
+      Assert.assertNull(Args.getSolidityContractLogTriggerMap().get(blockNum));
+      Assert.assertNull(Args.getSolidityContractEventTriggerMap().get(blockNum));
+    } finally {
+      instanceField.set(null, originalLoader);
+      ReflectUtils.setFieldValue(dbManager, "eventPluginLoaded", false);
+      Args.getSolidityContractLogTriggerMap().clear();
+      Args.getSolidityContractEventTriggerMap().clear();
+    }
+  }
+
+  @Test
+  public void testRePushResetsVerifiedOnOwnerAddressSetHit() throws Exception {
+    TransferContract transferContract = TransferContract.newBuilder()
+        .setAmount(1L)
+        .setOwnerAddress(ByteString.copyFrom(
+            ByteArray.fromHexString(Wallet.getAddressPreFixString()
+                + "548794500882809695A8A687866E76D4271A1ABC")))
+        .setToAddress(ByteString.copyFrom(
+            ByteArray.fromHexString(Wallet.getAddressPreFixString()
+                + "A389132D6639FBDA4FBC8B659264E6B7C90DB086")))
+        .build();
+    TransactionCapsule tx = new TransactionCapsule(transferContract, ContractType.TransferContract);
+    tx.setVerified(true); // simulate mempool-cached state
+
+    String ownerAddress = ByteArray.toHexString(tx.getOwnerAddress());
+
+    // Inject ownerAddress into ownerAddressSet via reflection
+    Set<String> ownerAddressSet =
+        (Set<String>) ReflectUtils.getFieldObject(dbManager, "ownerAddressSet");
+    ownerAddressSet.add(ownerAddress);
+
+    // rePush should reset isVerified to false before pushTransaction
+    dbManager.rePush(tx);
+
+    // After rePush, isVerified must be false
+    Boolean verified = (Boolean) ReflectUtils.getFieldObject(tx, "isVerified");
+    Assert.assertFalse(verified);
+  }
+
+  @Test
+  public void testGetCachedTransactionSize() throws Exception {
+    BlockingQueue<TransactionCapsule> pushQ = new LinkedBlockingQueue<>();
+    pushQ.add(new TransactionCapsule(Protocol.Transaction.getDefaultInstance()));
+    Field pushField = Manager.class.getDeclaredField("pushTransactionQueue");
+    pushField.setAccessible(true);
+    pushField.set(dbManager, pushQ);
+
+    dbManager.getPendingTransactions().clear();
+    dbManager.getPendingTransactions().add(
+        new TransactionCapsule(Protocol.Transaction.getDefaultInstance()));
+    dbManager.getPendingTransactions().add(
+        new TransactionCapsule(Protocol.Transaction.getDefaultInstance()));
+
+    dbManager.getRePushTransactions().clear();
+
+    // 1 (push) + 2 (pending) + 0 (rePush) = 3
+    Assert.assertEquals(3, dbManager.getCachedTransactionSize());
+
+    // cleanup
+    pushQ.clear();
+    dbManager.getPendingTransactions().clear();
+  }
+
+  @Test
+  public void testIsTooManyPendingIncludesPushQueue() throws Exception {
+    int threshold = Args.getInstance().getMaxTransactionPendingSize();
+
+    BlockingQueue<TransactionCapsule> pushQ = new LinkedBlockingQueue<>();
+    Field pushField = Manager.class.getDeclaredField("pushTransactionQueue");
+    pushField.setAccessible(true);
+    pushField.set(dbManager, pushQ);
+
+    dbManager.getPendingTransactions().clear();
+    dbManager.getRePushTransactions().clear();
+
+    for (int i = 0; i < threshold; i++) {
+      dbManager.getPendingTransactions().add(
+          new TransactionCapsule(Protocol.Transaction.getDefaultInstance()));
+    }
+    Assert.assertFalse(dbManager.isTooManyPending());
+
+    pushQ.add(new TransactionCapsule(Protocol.Transaction.getDefaultInstance()));
+    Assert.assertTrue(dbManager.isTooManyPending());
+
+    // cleanup
+    dbManager.getPendingTransactions().clear();
+    pushQ.clear();
   }
 
   public void adjustBalance(AccountStore accountStore, byte[] accountAddress, long amount)

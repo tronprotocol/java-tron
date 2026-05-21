@@ -4,22 +4,28 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
 import static org.tron.core.zen.ZksnarkInitService.librustzcashInitZksnarkParams;
 
+import com.google.protobuf.ByteString;
 import java.math.BigInteger;
 import javax.annotation.Resource;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
+import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.PrivateParameters;
 import org.tron.api.GrpcAPI.PrivateParametersWithoutAsk;
 import org.tron.api.GrpcAPI.PrivateShieldedTRC20Parameters;
 import org.tron.api.GrpcAPI.PrivateShieldedTRC20ParametersWithoutAsk;
+import org.tron.api.GrpcAPI.ReceiveNote;
 import org.tron.api.GrpcAPI.ShieldedAddressInfo;
 import org.tron.api.GrpcAPI.ShieldedTRC20Parameters;
 import org.tron.common.BaseTest;
+import org.tron.common.TestConstants;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.ZksnarkException;
 import org.tron.core.services.http.JsonFormat;
 import org.tron.core.services.http.JsonFormat.ParseException;
 
@@ -29,13 +35,14 @@ public class ShieldWalletTest extends BaseTest {
   @Resource
   private Wallet wallet;
 
-  static {
-    Args.setParam(new String[] {"-d", dbPath()}, Constant.TEST_CONF);
+  @BeforeClass
+  public static void init() {
+    Args.setParam(new String[]{"-d", dbPath()}, TestConstants.TEST_CONF);
+    librustzcashInitZksnarkParams();
   }
 
   @Test
   public void testCreateShieldedTransaction1() {
-    librustzcashInitZksnarkParams();
     String transactionStr1 = new String(ByteArray.fromHexString(
         "0x7b0a20202020227472616e73706172656e745f66726f6d5f61646472657373223a202234433930413"
             + "73241433344414546324536383932343545463430303839443634314345414337373433323433414233"
@@ -68,7 +75,6 @@ public class ShieldWalletTest extends BaseTest {
 
   @Test
   public void testCreateShieldedTransaction2() {
-    librustzcashInitZksnarkParams();
     String transactionStr2 = new String(ByteArray.fromHexString(
         "7b0a202020202261736b223a20223938666430333136376632333437623534643737323338343137663"
             + "6373038643537323939643938376362613838353564653037626532346236316464653064222c0a2020"
@@ -176,7 +182,6 @@ public class ShieldWalletTest extends BaseTest {
 
   @Test
   public void testCreateShieldedTransactionWithoutSpendAuthSig() {
-    librustzcashInitZksnarkParams();
     String transactionStr3 = new String(ByteArray.fromHexString(
         "7b0a2020202022616b223a2022373161643638633466353035373464356164333735343863626538363"
             + "63031663732393662393161306362303535353733313462373830383437323730326465222c0a202020"
@@ -286,7 +291,6 @@ public class ShieldWalletTest extends BaseTest {
 
   @Test
   public void testGetNewShieldedAddress() {
-    librustzcashInitZksnarkParams();
     try {
       ShieldedAddressInfo shieldedAddressInfo = wallet.getNewShieldedAddress();
       Assert.assertNotNull(shieldedAddressInfo);
@@ -297,8 +301,7 @@ public class ShieldWalletTest extends BaseTest {
 
   @Test
   public void testCreateShieldedContractParameters() throws ContractExeException {
-    librustzcashInitZksnarkParams();
-    Args.getInstance().setFullNodeAllowShieldedTransactionArgs(true);
+    Args.getInstance().setAllowShieldedTransactionApi(true);
     Wallet wallet1 = spy(new Wallet());
 
     doReturn(BigInteger.valueOf(1).toByteArray())
@@ -340,8 +343,7 @@ public class ShieldWalletTest extends BaseTest {
 
   @Test
   public void testCreateShieldedContractParameters2() throws ContractExeException {
-    librustzcashInitZksnarkParams();
-    Args.getInstance().setFullNodeAllowShieldedTransactionArgs(true);
+    Args.getInstance().setAllowShieldedTransactionApi(true);
     Wallet wallet1 = spy(new Wallet());
 
     doReturn(BigInteger.valueOf(1).toByteArray())
@@ -371,14 +373,12 @@ public class ShieldWalletTest extends BaseTest {
       Assert.fail();
     }
 
-    try {
-      wallet1.createShieldedContractParameters(builder.build());
-      Assert.fail();
-    } catch (Exception e) {
-      Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("PaymentAddress in ReceiveNote should not be empty",
-          e.getMessage());
-    }
+    PrivateShieldedTRC20Parameters.Builder finalBuilder = builder;
+    Exception e1 = Assert.assertThrows(Exception.class,
+        () -> wallet1.createShieldedContractParameters(finalBuilder.build()));
+    Assert.assertTrue(e1 instanceof ContractValidateException);
+    Assert.assertEquals("PaymentAddress in ReceiveNote should not be empty",
+        e1.getMessage());
 
     String parameter2 = new String(ByteArray.fromHexString(
         "7b0a202020202261736b223a2263323531336539653330383439343933326264383265306365353336"
@@ -404,20 +404,17 @@ public class ShieldWalletTest extends BaseTest {
       Assert.fail();
     }
 
-    try {
-      wallet1.createShieldedContractParameters(builder.build());
-      Assert.fail();
-    } catch (Exception e) {
-      Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("PaymentAddress in SpendNote should not be empty",
-          e.getMessage());
-    }
+    PrivateShieldedTRC20Parameters.Builder finalBuilder1 = builder;
+    Exception e2 = Assert.assertThrows(Exception.class,
+        () -> wallet1.createShieldedContractParameters(finalBuilder1.build()));
+    Assert.assertTrue(e2 instanceof ContractValidateException);
+    Assert.assertEquals("PaymentAddress in SpendNote should not be empty",
+        e2.getMessage());
   }
 
   @Test
   public void testCreateShieldedContractParametersWithoutAsk() throws ContractExeException {
-    librustzcashInitZksnarkParams();
-    Args.getInstance().setFullNodeAllowShieldedTransactionArgs(true);
+    Args.getInstance().setAllowShieldedTransactionApi(true);
 
     Wallet wallet1 = spy(new Wallet());
     doReturn(BigInteger.valueOf(1).toByteArray())
@@ -456,5 +453,227 @@ public class ShieldWalletTest extends BaseTest {
     } catch (Exception e) {
       Assert.fail();
     }
+  }
+
+  private static final byte[] SHIELDED_CONTRACT_ADDRESS =
+      ByteArray.fromHexString("4144007979359ECAC395BBD3CEF8060D3DF2DC3F01");
+  private static final String VALID_PAYMENT_ADDR =
+      "ztron1y99u6ejqenupvfkp5g6q6yqkp0a44c48cta0dd5gejtqa4v27hqa2cghfvdxnmneh6qqq03fa75";
+
+  private Wallet newSpyWallet() throws ContractExeException {
+    Args.getInstance().setAllowShieldedTransactionApi(true);
+    Wallet wallet1 = spy(new Wallet());
+    doReturn(BigInteger.valueOf(1).toByteArray())
+        .when(wallet1).getShieldedContractScalingFactor(SHIELDED_CONTRACT_ADDRESS);
+    return wallet1;
+  }
+
+  private GrpcAPI.SpendNoteTRC20 spendNoteOfValue(long value) {
+    GrpcAPI.Note note = GrpcAPI.Note.newBuilder()
+        .setValue(value)
+        .setPaymentAddress(VALID_PAYMENT_ADDR)
+        .setRcm(ByteString.copyFrom(new byte[32]))
+        .setMemo(ByteString.copyFrom(new byte[512]))
+        .build();
+    return GrpcAPI.SpendNoteTRC20.newBuilder()
+        .setNote(note)
+        .setAlpha(ByteString.copyFrom(new byte[32]))
+        .setRoot(ByteString.copyFrom(new byte[32]))
+        .setPath(ByteString.copyFrom(new byte[1024]))
+        .setPos(0)
+        .build();
+  }
+
+  private ReceiveNote receiveNoteOfValue(long value) {
+    GrpcAPI.Note note = GrpcAPI.Note.newBuilder()
+        .setValue(value)
+        .setPaymentAddress(VALID_PAYMENT_ADDR)
+        .setRcm(ByteString.copyFrom(new byte[32]))
+        .setMemo(ByteString.copyFrom(new byte[512]))
+        .build();
+    return ReceiveNote.newBuilder().setNote(note).build();
+  }
+
+  @Test
+  public void testCreateShieldedContractParameters_invalidParams()
+      throws ContractExeException {
+    Wallet wallet1 = newSpyWallet();
+    PrivateShieldedTRC20Parameters request = PrivateShieldedTRC20Parameters.newBuilder()
+        .setShieldedTRC20ContractAddress(ByteString.copyFrom(SHIELDED_CONTRACT_ADDRESS))
+        .build();
+    Exception e = Assert.assertThrows(Exception.class,
+        () -> wallet1.createShieldedContractParameters(request));
+    Assert.assertTrue(e instanceof ContractValidateException);
+    Assert.assertEquals("invalid shielded TRC-20 parameters", e.getMessage());
+  }
+
+  @Test
+  public void testCreateShieldedContractParameters_TRANSFER_missingKeys()
+      throws ContractExeException {
+    Wallet wallet1 = newSpyWallet();
+    PrivateShieldedTRC20Parameters request = PrivateShieldedTRC20Parameters.newBuilder()
+        .setShieldedTRC20ContractAddress(ByteString.copyFrom(SHIELDED_CONTRACT_ADDRESS))
+        .addShieldedSpends(spendNoteOfValue(100))
+        .addShieldedReceives(receiveNoteOfValue(100))
+        .build();
+    Exception e = Assert.assertThrows(Exception.class,
+        () -> wallet1.createShieldedContractParameters(request));
+    Assert.assertTrue(e instanceof ContractValidateException);
+    Assert.assertEquals("No shielded TRC-20 ask, nsk or ovk", e.getMessage());
+  }
+
+  @Test
+  public void testCreateShieldedContractParameters_BURN_missingKeys()
+      throws ContractExeException {
+    Wallet wallet1 = newSpyWallet();
+    PrivateShieldedTRC20Parameters request = PrivateShieldedTRC20Parameters.newBuilder()
+        .setShieldedTRC20ContractAddress(ByteString.copyFrom(SHIELDED_CONTRACT_ADDRESS))
+        .addShieldedSpends(spendNoteOfValue(100))
+        .setToAmount("100")
+        .build();
+    Exception e = Assert.assertThrows(Exception.class,
+        () -> wallet1.createShieldedContractParameters(request));
+    Assert.assertTrue(e instanceof ContractValidateException);
+    Assert.assertEquals("No shielded TRC-20 ask, nsk or ovk", e.getMessage());
+  }
+
+  @Test
+  public void testCreateShieldedContractParameters_BURN_missingTransparentTo()
+      throws ContractExeException {
+    Wallet wallet1 = newSpyWallet();
+    PrivateShieldedTRC20Parameters request = PrivateShieldedTRC20Parameters.newBuilder()
+        .setShieldedTRC20ContractAddress(ByteString.copyFrom(SHIELDED_CONTRACT_ADDRESS))
+        .addShieldedSpends(spendNoteOfValue(100))
+        .setToAmount("100")
+        .setAsk(ByteString.copyFrom(new byte[32]))
+        .setNsk(ByteString.copyFrom(new byte[32]))
+        .setOvk(ByteString.copyFrom(new byte[32]))
+        .build();
+    Exception e = Assert.assertThrows(Exception.class,
+        () -> wallet1.createShieldedContractParameters(request));
+    Assert.assertTrue(e instanceof ContractValidateException);
+    Assert.assertEquals("No valid transparent TRC-20 output address", e.getMessage());
+  }
+
+  @Test
+  public void testCreateShieldedContractParameters_TRANSFER_arithmeticOverflow()
+      throws ContractExeException {
+    Wallet wallet1 = newSpyWallet();
+    PrivateShieldedTRC20Parameters request = PrivateShieldedTRC20Parameters.newBuilder()
+        .setShieldedTRC20ContractAddress(ByteString.copyFrom(SHIELDED_CONTRACT_ADDRESS))
+        .addShieldedSpends(spendNoteOfValue(Long.MAX_VALUE))
+        .addShieldedSpends(spendNoteOfValue(Long.MAX_VALUE))
+        .addShieldedReceives(receiveNoteOfValue(0))
+        .setAsk(ByteString.copyFrom(new byte[32]))
+        .setNsk(ByteString.copyFrom(new byte[32]))
+        .setOvk(ByteString.copyFrom(new byte[32]))
+        .build();
+    Exception e = Assert.assertThrows(Exception.class,
+        () -> wallet1.createShieldedContractParameters(request));
+    Assert.assertTrue(e instanceof ZksnarkException);
+    Assert.assertEquals("shielded amount overflow", e.getMessage());
+  }
+
+  @Test
+  public void testCreateShieldedContractParametersWithoutAsk_invalidParams()
+      throws ContractExeException {
+    Wallet wallet1 = newSpyWallet();
+    PrivateShieldedTRC20ParametersWithoutAsk request =
+        PrivateShieldedTRC20ParametersWithoutAsk.newBuilder()
+            .setShieldedTRC20ContractAddress(ByteString.copyFrom(SHIELDED_CONTRACT_ADDRESS))
+            .build();
+    Exception e = Assert.assertThrows(Exception.class,
+        () -> wallet1.createShieldedContractParametersWithoutAsk(request));
+    Assert.assertTrue(e instanceof ContractValidateException);
+    Assert.assertEquals("invalid shielded TRC-20 parameters", e.getMessage());
+  }
+
+  @Test
+  public void testCreateShieldedContractParametersWithoutAsk_TRANSFER_missingKeys()
+      throws ContractExeException {
+    Wallet wallet1 = newSpyWallet();
+    PrivateShieldedTRC20ParametersWithoutAsk request =
+        PrivateShieldedTRC20ParametersWithoutAsk.newBuilder()
+            .setShieldedTRC20ContractAddress(ByteString.copyFrom(SHIELDED_CONTRACT_ADDRESS))
+            .addShieldedSpends(spendNoteOfValue(100))
+            .addShieldedReceives(receiveNoteOfValue(100))
+            .build();
+    Exception e = Assert.assertThrows(Exception.class,
+        () -> wallet1.createShieldedContractParametersWithoutAsk(request));
+    Assert.assertTrue(e instanceof ContractValidateException);
+    Assert.assertEquals("No shielded TRC-20 ak, nsk or ovk", e.getMessage());
+  }
+
+  @Test
+  public void testCreateShieldedContractParametersWithoutAsk_BURN_missingKeys()
+      throws ContractExeException {
+    Wallet wallet1 = newSpyWallet();
+    PrivateShieldedTRC20ParametersWithoutAsk request =
+        PrivateShieldedTRC20ParametersWithoutAsk.newBuilder()
+            .setShieldedTRC20ContractAddress(ByteString.copyFrom(SHIELDED_CONTRACT_ADDRESS))
+            .addShieldedSpends(spendNoteOfValue(100))
+            .setToAmount("100")
+            .build();
+    Exception e = Assert.assertThrows(Exception.class,
+        () -> wallet1.createShieldedContractParametersWithoutAsk(request));
+    Assert.assertTrue(e instanceof ContractValidateException);
+    Assert.assertEquals("No shielded TRC-20 ak, nsk or ovk", e.getMessage());
+  }
+
+  @Test
+  public void testCreateShieldedContractParametersWithoutAsk_BURN_missingTransparentTo()
+      throws ContractExeException {
+    Wallet wallet1 = newSpyWallet();
+    PrivateShieldedTRC20ParametersWithoutAsk request =
+        PrivateShieldedTRC20ParametersWithoutAsk.newBuilder()
+            .setShieldedTRC20ContractAddress(ByteString.copyFrom(SHIELDED_CONTRACT_ADDRESS))
+            .addShieldedSpends(spendNoteOfValue(100))
+            .setToAmount("100")
+            .setAk(ByteString.copyFrom(new byte[32]))
+            .setNsk(ByteString.copyFrom(new byte[32]))
+            .setOvk(ByteString.copyFrom(new byte[32]))
+            .build();
+    Exception e = Assert.assertThrows(Exception.class,
+        () -> wallet1.createShieldedContractParametersWithoutAsk(request));
+    Assert.assertTrue(e instanceof ContractValidateException);
+    Assert.assertEquals("No transparent TRC-20 output address", e.getMessage());
+  }
+
+  @Test
+  public void testCreateShieldedContractParametersWithoutAsk_MINT_emptyOvk()
+      throws ContractExeException {
+    Wallet wallet1 = newSpyWallet();
+    PrivateShieldedTRC20ParametersWithoutAsk request =
+        PrivateShieldedTRC20ParametersWithoutAsk.newBuilder()
+            .setShieldedTRC20ContractAddress(ByteString.copyFrom(SHIELDED_CONTRACT_ADDRESS))
+            .setFromAmount("100")
+            .addShieldedReceives(receiveNoteOfValue(100))
+            .build();
+    try {
+      ShieldedTRC20Parameters params = wallet1.createShieldedContractParametersWithoutAsk(request);
+      Assert.assertNotNull(params);
+    } catch (Exception e) {
+      Assert.fail("MINT with empty ovk should auto-generate one: " + e);
+    }
+  }
+
+  @Test
+  public void testCreateShieldedContractParametersWithoutAsk_TRANSFER_arithmeticOverflow()
+      throws ContractExeException {
+    Wallet wallet1 = newSpyWallet();
+    PrivateShieldedTRC20ParametersWithoutAsk request =
+        PrivateShieldedTRC20ParametersWithoutAsk.newBuilder()
+            .setShieldedTRC20ContractAddress(ByteString.copyFrom(SHIELDED_CONTRACT_ADDRESS))
+            .addShieldedSpends(spendNoteOfValue(Long.MAX_VALUE))
+            .addShieldedSpends(spendNoteOfValue(Long.MAX_VALUE))
+            .addShieldedReceives(receiveNoteOfValue(0))
+            .setAk(ByteString.copyFrom(new byte[32]))
+            .setNsk(ByteString.copyFrom(new byte[32]))
+            .setOvk(ByteString.copyFrom(new byte[32]))
+            .build();
+    Exception e = Assert.assertThrows(Exception.class,
+        () -> wallet1.createShieldedContractParametersWithoutAsk(request));
+    Assert.assertTrue(e instanceof ZksnarkException);
+    Assert.assertEquals("shielded amount overflow", e.getMessage());
   }
 }

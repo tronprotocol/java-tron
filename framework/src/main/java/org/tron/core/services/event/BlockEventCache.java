@@ -66,7 +66,14 @@ public class BlockEventCache {
     }
 
     if (blockEvent.getSolidId().getNum() > solidId.getNum()) {
-      solidId = blockEvent.getSolidId();
+      BlockCapsule.BlockId headBlockId = head.getBlockId();
+      if (blockEvent.getSolidId().getNum() <= headBlockId.getNum()) {
+        solidId = blockEvent.getSolidId();
+      } else if (blockEvent.getBlockId().equals(headBlockId)) {
+        // Fork chains needs to be considered to ensure that the head is on the main chain.
+        logger.info("Set solidId to head {}", headBlockId.getString());
+        solidId = headBlockId;
+      }
     }
   }
 

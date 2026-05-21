@@ -151,8 +151,8 @@ public class IsSRCandidateTest extends VMTestBase {
 
     // Trigger contract method: isSRCandidateTest(address)
     String methodByAddr = "isSRCandidateTest(address)";
-    String nonexistentAccount = "27k66nycZATHzBasFT9782nTsYWqVtxdtAc";
-    byte[] nonexistentAddr = Hex.decode("A0E6773BBF60F97D22AA3BF73D2FE235E816A1964F");
+    String nonexistentAccount = "TWyoFfJBiKGkVQd28HTqxsc8kbMtQUmqgi";
+    byte[] nonexistentAddr = Hex.decode("41E6773BBF60F97D22AA3BF73D2FE235E816A1964F");
     String hexInput =
         AbiUtil.parseMethod(methodByAddr, Collections.singletonList(nonexistentAccount));
 
@@ -209,8 +209,8 @@ public class IsSRCandidateTest extends VMTestBase {
     repository.commit();
 
     // trigger deployed contract
-    String witnessAccount = "27Ssb1WE8FArwJVRRb8Dwy3ssVGuLY8L3S1";
-    byte[] witnessAddr = Hex.decode("a0299f3db80a24b20a254b89ce639d59132f157f13");
+    String witnessAccount = "TDmHUBuko2qhcKBCGGafu928hMRj1tX2RW";
+    byte[] witnessAddr = Hex.decode("41299f3db80a24b20a254b89ce639d59132f157f13");
     hexInput = AbiUtil.parseMethod(methodByAddr, Collections.singletonList(witnessAccount));
     trx =
         TvmTestUtils.generateTriggerSmartContractAndGetTransaction(

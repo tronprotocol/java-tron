@@ -1,30 +1,23 @@
 package org.tron.core.db;
 
 import com.google.protobuf.ByteString;
-import java.io.IOException;
 import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.ClassRule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.Return.response_code;
 import org.tron.api.GrpcAPI.TransactionApprovedList;
-import org.tron.common.application.TronApplicationContext;
+import org.tron.common.BaseMethodTest;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.LocalWitnesses;
 import org.tron.common.utils.PublicMethod;
 import org.tron.common.utils.Sha256Hash;
-import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
-import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Transaction;
@@ -32,39 +25,28 @@ import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.contract.BalanceContract.TransferContract;
 
 @Slf4j
-public class TransactionExpireTest {
+public class TransactionExpireTest extends BaseMethodTest {
 
-  @ClassRule
-  public static final TemporaryFolder temporaryFolder = new TemporaryFolder();
-  private TronApplicationContext context;
   private Wallet wallet;
-  private Manager dbManager;
   private BlockCapsule blockCapsule;
 
-  @Before
-  public void init() throws IOException {
-    Args.setParam(new String[] {"--output-directory",
-        temporaryFolder.newFolder().toString()}, Constant.TEST_CONF);
-    CommonParameter.PARAMETER.setMinEffectiveConnection(0);
+  @Override
+  protected void beforeContext() {
+    CommonParameter.getInstance().setMinEffectiveConnection(0);
     CommonParameter.getInstance().setP2pDisable(true);
+  }
 
-    context = new TronApplicationContext(DefaultConfig.class);
+  @Override
+  protected void afterInit() {
     wallet = context.getBean(Wallet.class);
-    dbManager = context.getBean(Manager.class);
   }
 
   private void initLocalWitness() {
     String randomPrivateKey = PublicMethod.getRandomPrivateKey();
     LocalWitnesses localWitnesses = new LocalWitnesses();
     localWitnesses.setPrivateKeys(Arrays.asList(randomPrivateKey));
-    localWitnesses.initWitnessAccountAddress(true);
+    localWitnesses.initWitnessAccountAddress(null, true);
     Args.setLocalWitnesses(localWitnesses);
-  }
-
-  @After
-  public void removeDb() {
-    Args.clearParam();
-    context.destroy();
   }
 
   @Test
@@ -85,7 +67,7 @@ public class TransactionExpireTest {
     TransferContract transferContract = TransferContract.newBuilder()
         .setAmount(1L)
         .setOwnerAddress(ByteString.copyFrom(Args.getLocalWitnesses()
-            .getWitnessAccountAddress(CommonParameter.getInstance().isECKeyCryptoEngine())))
+        .getWitnessAccountAddress()))
         .setToAddress(ByteString.copyFrom(ByteArray.fromHexString(
             (Wallet.getAddressPreFixString() + "A389132D6639FBDA4FBC8B659264E6B7C90DB086"))))
         .build();
@@ -116,8 +98,7 @@ public class TransactionExpireTest {
         .saveLatestBlockHeaderTimestamp(blockCapsule.getTimeStamp());
     dbManager.updateRecentBlock(blockCapsule);
     initLocalWitness();
-    byte[] address = Args.getLocalWitnesses()
-        .getWitnessAccountAddress(CommonParameter.getInstance().isECKeyCryptoEngine());
+    byte[] address = Args.getLocalWitnesses().getWitnessAccountAddress();
     ByteString addressByte = ByteString.copyFrom(address);
     AccountCapsule accountCapsule =
         new AccountCapsule(Protocol.Account.newBuilder().setAddress(addressByte).build());
@@ -157,8 +138,7 @@ public class TransactionExpireTest {
     dbManager.updateRecentBlock(blockCapsule);
     initLocalWitness();
 
-    byte[] address = Args.getLocalWitnesses()
-        .getWitnessAccountAddress(CommonParameter.getInstance().isECKeyCryptoEngine());
+    byte[] address = Args.getLocalWitnesses().getWitnessAccountAddress();
     TransferContract transferContract = TransferContract.newBuilder()
         .setAmount(1L)
         .setOwnerAddress(ByteString.copyFrom(address))
@@ -191,9 +171,15 @@ public class TransactionExpireTest {
     Assert.assertEquals(TransactionApprovedList.Result.response_code.SIGNATURE_FORMAT_ERROR,
         transactionApprovedList.getResult().getCode());
 
-    randomSig = org.tron.keystore.Wallet.generateRandomBytes(65);
+    // 65-byte signature layout: [r(32) | s(32) | v(1)].
+    // Rsv.fromSignature auto-corrects v < 27 by adding 27, and valid range is [27,34].
+    // Set v (byte[64]) to 35 so it stays out of valid range after correction,
+    // guaranteeing SignatureException("Header byte out of range").
+    byte[] invalidSig = new byte[65];
+    Arrays.fill(invalidSig, (byte) 1);
+    invalidSig[64] = 35;
     transaction = transactionCapsule.getInstance().toBuilder().clearSignature()
-        .addSignature(ByteString.copyFrom(randomSig)).build();
+        .addSignature(ByteString.copyFrom(invalidSig)).build();
     transactionApprovedList = wallet.getTransactionApprovedList(transaction);
     Assert.assertEquals(TransactionApprovedList.Result.response_code.COMPUTE_ADDRESS_ERROR,
         transactionApprovedList.getResult().getCode());

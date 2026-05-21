@@ -246,6 +246,6 @@ class Fp6 implements Field<Fp6> {
 
   @Override
   public int hashCode() {
-    return new Integer(a.hashCode() + b.hashCode() + c.hashCode()).hashCode();
+    return a.hashCode() + b.hashCode() + c.hashCode();
   }
 }

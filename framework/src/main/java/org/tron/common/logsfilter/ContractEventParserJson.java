@@ -1,7 +1,5 @@
 package org.tron.common.logsfilter;
 
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -9,6 +7,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.bouncycastle.util.encoders.Hex;
 import org.pf4j.util.StringUtils;
+import org.tron.json.JSONArray;
+import org.tron.json.JSONObject;
 
 @Slf4j(topic = "Parser")
 public class ContractEventParserJson extends ContractEventParser {

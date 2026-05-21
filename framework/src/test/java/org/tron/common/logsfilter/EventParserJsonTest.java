@@ -2,8 +2,6 @@ package org.tron.common.logsfilter;
 
 import static org.tron.core.Constant.ADD_PRE_FIX_BYTE_MAINNET;
 
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -12,6 +10,8 @@ import org.junit.Test;
 import org.tron.common.crypto.Hash;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
+import org.tron.json.JSONArray;
+import org.tron.json.JSONObject;
 
 public class EventParserJsonTest {
 
@@ -60,12 +60,11 @@ public class EventParserJsonTest {
     topicList.add(ByteArray
         .fromHexString("0xb7685f178b1c93df3422f7bfcb61ae2c6f66d0947bb9eb293259c231b986b81b"));
 
-    JSONArray entryArr = JSONObject.parseArray(abiStr);
+    JSONArray entryArr = JSONArray.parseArray(abiStr);
     JSONObject entry = new JSONObject();
 
     for (int i = 0; i < entryArr.size(); i++) {
       JSONObject e = entryArr.getJSONObject(i);
-      System.out.println(e.getString("name"));
       if (e.getString("name") != null) {
         if (e.getString("name").equalsIgnoreCase("eventBytesL")) {
           entry = e;

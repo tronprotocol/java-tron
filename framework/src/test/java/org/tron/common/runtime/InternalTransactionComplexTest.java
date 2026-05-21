@@ -6,8 +6,8 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.BaseTest;
+import org.tron.common.TestConstants;
 import org.tron.common.runtime.vm.DataWord;
-import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.ContractExeException;
@@ -28,7 +28,7 @@ public class InternalTransactionComplexTest extends BaseTest {
 
   static {
     Args.setParam(new String[]{"--output-directory", dbPath(), "--debug", "--support-constant"},
-        Constant.TEST_CONF);
+        TestConstants.TEST_CONF);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
   }
 

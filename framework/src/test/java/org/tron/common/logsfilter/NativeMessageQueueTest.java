@@ -1,7 +1,10 @@
 package org.tron.common.logsfilter;
 
+import java.util.concurrent.ExecutorService;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
+import org.tron.common.es.ExecutorServiceManager;
 import org.tron.common.logsfilter.nativequeue.NativeMessageQueue;
 import org.zeromq.SocketType;
 import org.zeromq.ZContext;
@@ -12,6 +15,15 @@ public class NativeMessageQueueTest {
   public int bindPort = 5555;
   public String dataToSend = "################";
   public String topic = "testTopic";
+
+  private ExecutorService subscriberExecutor;
+  private final String zmqSubscriber = "zmq-subscriber";
+
+  @After
+  public void tearDown() {
+    ExecutorServiceManager.shutdownAndAwaitTermination(subscriberExecutor, zmqSubscriber);
+    subscriberExecutor = null;
+  }
 
   @Test
   public void invalidBindPort() {
@@ -39,7 +51,7 @@ public class NativeMessageQueueTest {
     try {
       Thread.sleep(1000);
     } catch (InterruptedException e) {
-      e.printStackTrace();
+      Thread.currentThread().interrupt();
     }
 
     NativeMessageQueue.getInstance().publishTrigger(dataToSend, topic);
@@ -47,28 +59,29 @@ public class NativeMessageQueueTest {
     try {
       Thread.sleep(1000);
     } catch (InterruptedException e) {
-      e.printStackTrace();
+      Thread.currentThread().interrupt();
     }
 
     NativeMessageQueue.getInstance().stop();
   }
 
   public void startSubscribeThread() {
-    Thread thread = new Thread(() -> {
-      ZContext context = new ZContext();
-      ZMQ.Socket subscriber = context.createSocket(SocketType.SUB);
+    subscriberExecutor = ExecutorServiceManager.newSingleThreadExecutor(zmqSubscriber);
+    subscriberExecutor.execute(() -> {
+      try (ZContext context = new ZContext()) {
+        ZMQ.Socket subscriber = context.createSocket(SocketType.SUB);
 
-      Assert.assertEquals(true, subscriber.connect(String.format("tcp://localhost:%d", bindPort)));
-      Assert.assertEquals(true, subscriber.subscribe(topic));
+        Assert.assertTrue(subscriber.connect(String.format("tcp://localhost:%d", bindPort)));
+        Assert.assertTrue(subscriber.subscribe(topic));
 
-      while (!Thread.currentThread().isInterrupted()) {
-        byte[] message = subscriber.recv();
-        String triggerMsg = new String(message);
+        while (!Thread.currentThread().isInterrupted()) {
+          byte[] message = subscriber.recv();
+          String triggerMsg = new String(message);
 
-        Assert.assertEquals(true, triggerMsg.contains(dataToSend) || triggerMsg.contains(topic));
-
+          Assert.assertTrue(triggerMsg.contains(dataToSend) || triggerMsg.contains(topic));
+        }
+        // ZMQ.Socket will be automatically closed when ZContext is closed
       }
     });
-    thread.start();
   }
 }

@@ -12,6 +12,7 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.db.TronStoreWithRevoking;
 import org.tron.core.db.accountstate.AccountStateCallBackUtils;
+import org.tron.core.exception.TronError;
 import org.tron.protos.contract.BalanceContract.TransactionBalanceTrace;
 import org.tron.protos.contract.BalanceContract.TransactionBalanceTrace.Operation;
 
@@ -22,6 +23,8 @@ import java.util.OptionalLong;
 
 @Component
 public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
+
+  private static String ACCOUNT_BLACKHOLE = "Blackhole";
 
   private static Map<String, byte[]> assertsAddress = new HashMap<>(); // key = name , value = address
 
@@ -49,6 +52,9 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
       String accountName = obj.get("accountName").unwrapped().toString();
       byte[] address = Commons.decodeFromBase58Check(obj.get("address").unwrapped().toString());
       assertsAddress.put(accountName, address);
+    }
+    if (assertsAddress.get(ACCOUNT_BLACKHOLE) == null) {
+      throw new TronError("Account[Blackhole] is not configured.", TronError.ErrCode.GENESIS_BLOCK_INIT);
     }
   }
 
@@ -109,12 +115,12 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
    * Min TRX account.
    */
   public AccountCapsule getBlackhole() {
-    return getUnchecked(assertsAddress.get("Blackhole"));
+    return getUnchecked(assertsAddress.get(ACCOUNT_BLACKHOLE));
   }
 
 
   public byte[] getBlackholeAddress() {
-    return assertsAddress.get("Blackhole");
+    return assertsAddress.get(ACCOUNT_BLACKHOLE);
   }
 
   /**

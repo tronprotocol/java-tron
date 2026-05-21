@@ -4,12 +4,13 @@ import static org.tron.core.services.jsonrpc.filters.LogMatch.matchBlock;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import org.junit.Assert;
 import org.junit.Test;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.LogInfo;
 import org.tron.common.utils.ByteArray;
-import org.tron.core.exception.JsonRpcInvalidParamsException;
+import org.tron.core.exception.jsonrpc.JsonRpcInvalidParamsException;
 import org.tron.core.services.jsonrpc.TronJsonRpc.FilterRequest;
 import org.tron.core.services.jsonrpc.TronJsonRpc.LogFilterElement;
 import org.tron.core.services.jsonrpc.filters.LogFilter;
@@ -36,6 +37,7 @@ public class LogMatchExactlyTest {
     LogInfo logInfo = new LogInfo(address, topics, data);
     logList.add(LogInfo.buildLog(logInfo));
     builder.addAllLog(logList);
+    builder.setBlockTimeStamp(1000000L);
 
     return builder.build();
   }
@@ -220,6 +222,20 @@ public class LogMatchExactlyTest {
       List<LogFilterElement> elementList =
           matchBlock(logFilter, 100, null, transactionInfoList, false);
       Assert.assertEquals(1, elementList.size());
+
+      //test LogFilterElement
+      List<LogFilterElement> elementList2 =
+          matchBlock(logFilter, 100, null, transactionInfoList, false);
+      Assert.assertEquals(1, elementList2.size());
+
+      LogFilterElement logFilterElement1 = elementList.get(0);
+      LogFilterElement logFilterElement2 = elementList2.get(0);
+
+      Assert.assertEquals("0x3e8", logFilterElement1.getBlockTimestamp());
+      Assert.assertEquals("0x3e8", logFilterElement2.getBlockTimestamp());
+      Assert.assertEquals(logFilterElement1.hashCode(), logFilterElement2.hashCode());
+      Assert.assertEquals(logFilterElement1, logFilterElement2);
+
     } catch (JsonRpcInvalidParamsException e) {
       Assert.fail();
     }

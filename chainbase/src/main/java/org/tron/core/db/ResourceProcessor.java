@@ -3,8 +3,11 @@ package org.tron.core.db;
 import static org.tron.common.math.Maths.min;
 import static org.tron.common.math.Maths.round;
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
+import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 import static org.tron.core.config.Parameter.ChainConstant.WINDOW_SIZE_PRECISION;
 
+import java.math.BigInteger;
+import org.tron.common.math.StrictMathWrapper;
 import org.tron.common.utils.Commons;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionCapsule;
@@ -45,8 +48,19 @@ abstract class ResourceProcessor {
   }
 
   protected long increase(long lastUsage, long usage, long lastTime, long now, long windowSize) {
-    long averageLastUsage = divideCeil(lastUsage * precision, windowSize);
-    long averageUsage = divideCeil(usage * precision, windowSize);
+    long averageLastUsage;
+    long averageUsage;
+    if (hardenCalculation()) {
+      BigInteger biPrecision = BigInteger.valueOf(precision);
+      BigInteger biWindowSize = BigInteger.valueOf(windowSize);
+      averageLastUsage = divideCeilExact(
+          BigInteger.valueOf(lastUsage).multiply(biPrecision), biWindowSize);
+      averageUsage = divideCeilExact(
+          BigInteger.valueOf(usage).multiply(biPrecision), biWindowSize);
+    } else {
+      averageLastUsage = divideCeil(lastUsage * precision, windowSize);
+      averageUsage = divideCeil(usage * precision, windowSize);
+    }
 
     if (lastTime != now) {
       assert now > lastTime;
@@ -75,8 +89,20 @@ abstract class ResourceProcessor {
       return increaseV2(accountCapsule, resourceCode, lastUsage, usage, lastTime, now);
     }
     long oldWindowSize = accountCapsule.getWindowSize(resourceCode);
-    long averageLastUsage = divideCeil(lastUsage * this.precision, oldWindowSize);
-    long averageUsage = divideCeil(usage * this.precision, this.windowSize);
+    long averageLastUsage;
+    long averageUsage;
+    if (hardenCalculation()) {
+      BigInteger biPrecision = BigInteger.valueOf(this.precision);
+      averageLastUsage = divideCeilExact(
+          BigInteger.valueOf(lastUsage).multiply(biPrecision),
+          BigInteger.valueOf(oldWindowSize));
+      averageUsage = divideCeilExact(
+          BigInteger.valueOf(usage).multiply(biPrecision),
+          BigInteger.valueOf(this.windowSize));
+    } else {
+      averageLastUsage = divideCeil(lastUsage * this.precision, oldWindowSize);
+      averageUsage = divideCeil(usage * this.precision, this.windowSize);
+    }
 
     if (lastTime != now) {
       if (lastTime + oldWindowSize > now) {
@@ -108,8 +134,20 @@ abstract class ResourceProcessor {
       long lastUsage, long usage, long lastTime, long now) {
     long oldWindowSizeV2 = accountCapsule.getWindowSizeV2(resourceCode);
     long oldWindowSize = accountCapsule.getWindowSize(resourceCode);
-    long averageLastUsage = divideCeil(lastUsage * this.precision, oldWindowSize);
-    long averageUsage = divideCeil(usage * this.precision, this.windowSize);
+    long averageLastUsage;
+    long averageUsage;
+    if (hardenCalculation()) {
+      BigInteger biPrecision = BigInteger.valueOf(this.precision);
+      averageLastUsage = divideCeilExact(
+          BigInteger.valueOf(lastUsage).multiply(biPrecision),
+          BigInteger.valueOf(oldWindowSize));
+      averageUsage = divideCeilExact(
+          BigInteger.valueOf(usage).multiply(biPrecision),
+          BigInteger.valueOf(this.windowSize));
+    } else {
+      averageLastUsage = divideCeil(lastUsage * this.precision, oldWindowSize);
+      averageUsage = divideCeil(usage * this.precision, this.windowSize);
+    }
 
     if (lastTime != now) {
       if (lastTime + oldWindowSize > now) {
@@ -130,8 +168,19 @@ abstract class ResourceProcessor {
     }
 
     long remainWindowSize = oldWindowSizeV2 - (now - lastTime) * WINDOW_SIZE_PRECISION;
-    long newWindowSize = divideCeil(
-        remainUsage * remainWindowSize + usage * this.windowSize * WINDOW_SIZE_PRECISION, newUsage);
+    long newWindowSize;
+    if (hardenCalculation()) {
+      BigInteger biNewWindowSize = BigInteger.valueOf(remainUsage)
+          .multiply(BigInteger.valueOf(remainWindowSize))
+          .add(BigInteger.valueOf(usage)
+              .multiply(BigInteger.valueOf(this.windowSize))
+              .multiply(BigInteger.valueOf(WINDOW_SIZE_PRECISION)));
+      newWindowSize = divideCeilExact(biNewWindowSize, BigInteger.valueOf(newUsage));
+    } else {
+      newWindowSize = divideCeil(
+          remainUsage * remainWindowSize + usage * this.windowSize * WINDOW_SIZE_PRECISION,
+          newUsage);
+    }
     newWindowSize = min(newWindowSize, this.windowSize * WINDOW_SIZE_PRECISION,
         this.disableJavaLangMath());
     accountCapsule.setNewWindowSizeV2(resourceCode, newWindowSize);
@@ -191,10 +240,18 @@ abstract class ResourceProcessor {
     remainReceiverWindowSizeV2 = remainReceiverWindowSizeV2 < 0 ? 0 : remainReceiverWindowSizeV2;
 
     // calculate new windowSize
-    long newOwnerWindowSize =
-        divideCeil(
-            ownerUsage * remainOwnerWindowSizeV2 + transferUsage * remainReceiverWindowSizeV2,
-            newOwnerUsage);
+    long newOwnerWindowSize;
+    if (hardenCalculation()) {
+      BigInteger bi = BigInteger.valueOf(ownerUsage)
+          .multiply(BigInteger.valueOf(remainOwnerWindowSizeV2))
+          .add(BigInteger.valueOf(transferUsage)
+              .multiply(BigInteger.valueOf(remainReceiverWindowSizeV2)));
+      newOwnerWindowSize = divideCeilExact(bi, BigInteger.valueOf(newOwnerUsage));
+    } else {
+      newOwnerWindowSize = divideCeil(
+          ownerUsage * remainOwnerWindowSizeV2 + transferUsage * remainReceiverWindowSizeV2,
+          newOwnerUsage);
+    }
     newOwnerWindowSize = min(newOwnerWindowSize, this.windowSize * WINDOW_SIZE_PRECISION,
         this.disableJavaLangMath());
     owner.setNewWindowSizeV2(resourceCode, newOwnerWindowSize);
@@ -204,6 +261,11 @@ abstract class ResourceProcessor {
 
   private long getNewWindowSize(long lastUsage, long lastWindowSize, long usage,
       long windowSize, long newUsage) {
+    if (hardenCalculation()) {
+      BigInteger bi = BigInteger.valueOf(lastUsage).multiply(BigInteger.valueOf(lastWindowSize))
+          .add(BigInteger.valueOf(usage).multiply(BigInteger.valueOf(windowSize)));
+      return bi.divide(BigInteger.valueOf(newUsage)).longValueExact();
+    }
     return (lastUsage * lastWindowSize + usage * windowSize) / newUsage;
   }
 
@@ -211,11 +273,29 @@ abstract class ResourceProcessor {
     return (numerator / denominator) + ((numerator % denominator) > 0 ? 1 : 0);
   }
 
+  private long divideCeilExact(BigInteger numerator, BigInteger denominator) {
+    BigInteger[] divRem = numerator.divideAndRemainder(denominator);
+    long result = divRem[0].longValueExact();
+    if (divRem[1].signum() > 0) {
+      result = StrictMathWrapper.addExact(result, 1);
+    }
+    return result;
+  }
+
   private long getUsage(long usage, long windowSize) {
+    if (hardenCalculation()) {
+      return BigInteger.valueOf(usage).multiply(BigInteger.valueOf(windowSize))
+          .divide(BigInteger.valueOf(precision)).longValueExact();
+    }
     return usage * windowSize / precision;
   }
 
   private long getUsage(long oldUsage, long oldWindowSize, long newUsage, long newWindowSize) {
+    if (hardenCalculation()) {
+      BigInteger bi = BigInteger.valueOf(oldUsage).multiply(BigInteger.valueOf(oldWindowSize))
+          .add(BigInteger.valueOf(newUsage).multiply(BigInteger.valueOf(newWindowSize)));
+      return bi.divide(BigInteger.valueOf(precision)).longValueExact();
+    }
     return (oldUsage * oldWindowSize + newUsage * newWindowSize) / precision;
   }
 
@@ -261,5 +341,39 @@ abstract class ResourceProcessor {
 
   protected boolean disableJavaLangMath() {
     return dynamicPropertiesStore.disableJavaLangMath();
+  }
+
+  protected boolean hardenCalculation() {
+    return dynamicPropertiesStore.allowHardenResourceCalculation();
+  }
+
+  protected long calculateGlobalLimitV1(long frozeBalance,
+      long totalLimit, long totalWeight) {
+    long weight = frozeBalance / TRX_PRECISION;
+    return BigInteger.valueOf(weight)
+        .multiply(BigInteger.valueOf(totalLimit))
+        .divide(BigInteger.valueOf(totalWeight))
+        .longValueExact();
+  }
+
+  /**
+   * Hardened replacement of legacy V2 formula
+   * {@code (long)(((double) frozeBalance / TRX_PRECISION)
+   *               * ((double) totalLimit / totalWeight))}.
+   *
+   * <p>Preserves V2 semantics: equivalent to
+   * {@code (frozeBalance * totalLimit) / (TRX_PRECISION * totalWeight)} with
+   * a single integer truncation at the end. Critically, fractional weight
+   * (i.e. {@code frozeBalance < TRX_PRECISION}) is preserved through the
+   * multiplication and only truncated at the final divide, so small balances
+   * yield the same proportional result as the double-arithmetic path.
+   */
+  protected long calculateGlobalLimitV2(long frozeBalance,
+      long totalLimit, long totalWeight) {
+    return BigInteger.valueOf(frozeBalance)
+        .multiply(BigInteger.valueOf(totalLimit))
+        .divide(BigInteger.valueOf(TRX_PRECISION)
+            .multiply(BigInteger.valueOf(totalWeight)))
+        .longValueExact();
   }
 }

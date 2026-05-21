@@ -13,8 +13,10 @@ public class TronApplicationContext extends AnnotationConfigApplicationContext {
     super(beanFactory);
   }
 
+  //only used for testcase
   public TronApplicationContext(Class<?>... annotatedClasses) {
     super(annotatedClasses);
+    this.registerShutdownHook();
   }
 
   public TronApplicationContext(String... basePackages) {

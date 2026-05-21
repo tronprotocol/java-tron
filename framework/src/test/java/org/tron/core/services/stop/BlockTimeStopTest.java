@@ -1,8 +1,10 @@
 package org.tron.core.services.stop;
 
 import java.text.ParseException;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
+import java.util.TimeZone;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.tron.common.cron.CronExpression;
@@ -12,14 +14,14 @@ import org.tron.common.parameter.CommonParameter;
 public class BlockTimeStopTest extends ConditionallyStopTest {
   private static final DateTimeFormatter pattern = DateTimeFormatter
       .ofPattern("ss mm HH dd MM ? yyyy");
-  private static final String time = localDateTime.plusSeconds(12 * 3).format(pattern);
 
   private static CronExpression cronExpression;
 
 
   static {
     try {
-      cronExpression = new CronExpression(time);
+      cronExpression = new CronExpression(localDateTime.plusSeconds(12 * 3).format(pattern));
+      cronExpression.setTimeZone(TimeZone.getTimeZone(ZoneOffset.UTC));
     } catch (ParseException e) {
       logger.error("{}", e.getMessage());
     }

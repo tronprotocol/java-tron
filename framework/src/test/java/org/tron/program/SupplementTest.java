@@ -15,19 +15,17 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.tron.common.BaseTest;
-import org.tron.common.config.DbBackupConfig;
+import org.tron.common.TestConstants;
 import org.tron.common.entity.PeerInfo;
 import org.tron.common.utils.CompactEncoder;
 import org.tron.common.utils.JsonUtil;
 import org.tron.common.utils.Value;
-import org.tron.core.Constant;
 import org.tron.core.capsule.StorageRowCapsule;
 import org.tron.core.capsule.utils.RLP;
 import org.tron.core.config.TronLogShutdownHook;
 import org.tron.core.config.args.Args;
 import org.tron.core.services.http.HttpSelfFormatFieldName;
 import org.tron.core.store.StorageRowStore;
-import org.tron.keystore.WalletUtils;
 
 public class SupplementTest extends BaseTest {
 
@@ -42,7 +40,7 @@ public class SupplementTest extends BaseTest {
   @BeforeClass
   public static void init() throws IOException {
     dbPath = dbPath();
-    Args.setParam(new String[]{"--output-directory", dbPath, "--debug"}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath, "--debug"}, TestConstants.TEST_CONF);
   }
 
   @Test
@@ -50,15 +48,6 @@ public class SupplementTest extends BaseTest {
     StorageRowCapsule storageRowCapsule = storageRowStore.get(new byte[]{});
     assertNotNull(storageRowCapsule);
 
-    DbBackupConfig dbBackupConfig = new DbBackupConfig();
-    String p = dbPath + File.separator;
-    dbBackupConfig.initArgs(true, p + "propPath", p + "bak1path/", p + "bak2path/", 1);
-
-    WalletUtils.generateFullNewWalletFile("123456", new File(dbPath));
-    WalletUtils.generateLightNewWalletFile("123456", new File(dbPath));
-    WalletUtils.getDefaultKeyDirectory();
-    WalletUtils.getTestnetKeyDirectory();
-    WalletUtils.getMainnetKeyDirectory();
 
     Value value = new Value(new byte[]{1});
     value.asBytes();

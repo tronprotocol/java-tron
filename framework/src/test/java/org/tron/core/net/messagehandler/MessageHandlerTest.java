@@ -3,26 +3,23 @@ package org.tron.core.net.messagehandler;
 import static org.mockito.Mockito.mock;
 
 import com.google.protobuf.ByteString;
-import java.lang.reflect.Field;
 import java.net.InetSocketAddress;
-import java.util.ArrayList;
-import java.util.Collections;
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.mockito.Mockito;
 import org.springframework.context.ApplicationContext;
+import org.tron.common.ClassLevelAppContextFixture;
+import org.tron.common.TestConstants;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.consensus.pbft.message.PbftMessage;
-import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule;
-import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.net.P2pEventHandlerImpl;
 import org.tron.core.net.TronNetService;
@@ -36,6 +33,8 @@ import org.tron.p2p.connection.Channel;
 public class MessageHandlerTest {
 
   private static TronApplicationContext context;
+  private static final ClassLevelAppContextFixture APP_FIXTURE =
+      new ClassLevelAppContextFixture();
   private PeerConnection peer;
   private static P2pEventHandlerImpl p2pEventHandler;
   private static ApplicationContext ctx;
@@ -47,8 +46,8 @@ public class MessageHandlerTest {
   @BeforeClass
   public static void init() throws Exception {
     Args.setParam(new String[] {"--output-directory",
-        temporaryFolder.newFolder().toString(), "--debug"}, Constant.TEST_CONF);
-    context = new TronApplicationContext(DefaultConfig.class);
+        temporaryFolder.newFolder().toString(), "--debug"}, TestConstants.TEST_CONF);
+    context = APP_FIXTURE.createContext();
     p2pEventHandler = context.getBean(P2pEventHandlerImpl.class);
     ctx = (ApplicationContext) ReflectUtils.getFieldObject(p2pEventHandler, "ctx");
 
@@ -60,17 +59,13 @@ public class MessageHandlerTest {
   @AfterClass
   public static void destroy() {
     Args.clearParam();
-    context.destroy();
+    APP_FIXTURE.close();
   }
 
-  @Before
+  @After
   public void clearPeers() {
-    try {
-      Field field = PeerManager.class.getDeclaredField("peers");
-      field.setAccessible(true);
-      field.set(PeerManager.class, Collections.synchronizedList(new ArrayList<>()));
-    } catch (NoSuchFieldException | IllegalAccessException e) {
-      //ignore
+    for (PeerConnection p : PeerManager.getPeers()) {
+      PeerManager.remove(p.getChannel());
     }
   }
 

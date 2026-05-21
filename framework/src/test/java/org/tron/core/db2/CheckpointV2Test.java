@@ -4,58 +4,43 @@ import com.google.common.collect.Maps;
 import com.google.common.primitives.Bytes;
 import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
-import java.io.File;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
-import org.tron.common.application.Application;
-import org.tron.common.application.ApplicationFactory;
-import org.tron.common.application.TronApplicationContext;
-import org.tron.common.utils.FileUtil;
+import org.tron.common.BaseMethodTest;
 import org.tron.common.utils.Sha256Hash;
-import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule;
-import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db2.RevokingDbWithCacheNewValueTest.TestRevokingTronStore;
 import org.tron.core.db2.core.Chainbase;
 import org.tron.core.db2.core.SnapshotManager;
 
 @Slf4j
-public class CheckpointV2Test {
+public class CheckpointV2Test extends BaseMethodTest {
 
   private SnapshotManager revokingDatabase;
-  private TronApplicationContext context;
-  private Application appT;
   private TestRevokingTronStore tronDatabase;
 
-  @Before
-  public void init() {
-    Args.setParam(new String[]{"-d", "output_SnapshotManager_test"},
-        Constant.TEST_CONF);
+  @Override
+  protected void beforeContext() {
     Args.getInstance().getStorage().setCheckpointVersion(2);
     Args.getInstance().getStorage().setCheckpointSync(true);
-    context = new TronApplicationContext(DefaultConfig.class);
-    appT = ApplicationFactory.create(context);
+  }
+
+  @Override
+  protected void afterInit() {
     revokingDatabase = context.getBean(SnapshotManager.class);
     revokingDatabase.enable();
     tronDatabase = new TestRevokingTronStore("testSnapshotManager-test");
     revokingDatabase.add(tronDatabase.getRevokingDB());
   }
 
-  @After
-  public void removeDb() {
-    Args.clearParam();
-    context.destroy();
-    tronDatabase.close();
-    FileUtil.deleteDir(new File("output_SnapshotManager_test"));
-    revokingDatabase.getCheckTmpStore().close();
+  @Override
+  protected void beforeDestroy() {
     tronDatabase.close();
   }
 

@@ -1,25 +1,32 @@
 package org.tron.common.backup;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.function.BiFunction;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.tron.common.TestConstants;
 import org.tron.common.backup.BackupManager.BackupStatusEnum;
 import org.tron.common.backup.message.KeepAliveMessage;
 import org.tron.common.backup.socket.BackupServer;
 import org.tron.common.backup.socket.UdpEvent;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.PublicMethod;
-import org.tron.core.Constant;
 import org.tron.core.config.args.Args;
+import org.tron.core.config.args.InetUtil;
 
 public class BackupManagerTest {
 
@@ -27,17 +34,21 @@ public class BackupManagerTest {
   public TemporaryFolder temporaryFolder = new TemporaryFolder();
   private BackupManager manager;
   private BackupServer backupServer;
+  private BiFunction<String, Boolean, InetAddress> savedLookup;
 
   @Before
   public void setUp() throws Exception {
-    Args.setParam(new String[] {"-d", temporaryFolder.newFolder().toString()}, Constant.TEST_CONF);
+    Args.setParam(new String[] {"-d", temporaryFolder.newFolder().toString()},
+        TestConstants.TEST_CONF);
     CommonParameter.getInstance().setBackupPort(PublicMethod.chooseRandomPort());
     manager = new BackupManager();
     backupServer = new BackupServer(manager);
+    savedLookup = InetUtil.dnsLookup;
   }
 
   @After
   public void tearDown() {
+    InetUtil.dnsLookup = savedLookup;
     Args.clearParam();
   }
 
@@ -138,5 +149,109 @@ public class BackupManagerTest {
     executorService2.shutdown();
 
     Assert.assertEquals(BackupManager.BackupStatusEnum.INIT, manager.getStatus());
+  }
+
+  // ===== domain-handling tests for init() =====
+
+  @Test(timeout = 5000)
+  public void testInitResolvesDomainsToMembers() throws Exception {
+    CommonParameter.getInstance().setBackupMembers(
+        Collections.singletonList("node.example.com"));
+    InetAddress resolved = InetAddress.getByName("1.2.3.4");
+    InetUtil.dnsLookup = (host, ipv4) ->
+        ("node.example.com".equals(host) && ipv4) ? resolved : null;
+    manager.init();
+    Set<String> members = getField(manager, "members");
+    Map<String, String> cache = getField(manager, "domainIpCache");
+    Assert.assertTrue(members.contains("1.2.3.4"));
+    Assert.assertEquals("1.2.3.4", cache.get("node.example.com"));
+    manager.stop();
+  }
+
+  @Test(timeout = 5000)
+  public void testInitSkipsUnresolvableDomain() throws Exception {
+    CommonParameter.getInstance().setBackupMembers(
+        Collections.singletonList("bad.invalid.domain"));
+    InetUtil.dnsLookup = (host, ipv4) -> null;
+    manager.init();
+    Set<String> members = getField(manager, "members");
+    Map<String, String> cache = getField(manager, "domainIpCache");
+    Assert.assertTrue("unresolvable domain should be silently dropped", members.isEmpty());
+    Assert.assertTrue(cache.isEmpty());
+    manager.stop();
+  }
+
+  @Test(timeout = 5000)
+  public void testInitSkipsDomainResolvingToLocalIp() throws Exception {
+    String localIp = InetAddress.getLocalHost().getHostAddress();
+    CommonParameter.getInstance().setBackupMembers(
+        Collections.singletonList("self.local.host"));
+    InetAddress selfAddr = InetAddress.getByName(localIp);
+    InetUtil.dnsLookup = (host, ipv4) ->
+        ("self.local.host".equals(host) && ipv4) ? selfAddr : null;
+    manager.init();
+    Set<String> members = getField(manager, "members");
+    Assert.assertFalse("domain resolving to local IP should not be in members",
+        members.contains(localIp));
+    manager.stop();
+  }
+
+  // ===== refreshMemberIps() tests =====
+
+  @Test(timeout = 5000)
+  public void testRefreshMemberIpsIpChanged() throws Exception {
+    Set<String> members = getField(manager, "members");
+    Map<String, String> cache = getField(manager, "domainIpCache");
+    members.add("1.1.1.1");
+    cache.put("peer.tron.network", "1.1.1.1");
+
+    InetAddress newAddr = InetAddress.getByName("2.2.2.2");
+    InetUtil.dnsLookup = (host, ipv4) ->
+        ("peer.tron.network".equals(host) && ipv4) ? newAddr : null;
+    invokeRefreshMemberIps(manager);
+    Assert.assertFalse(members.contains("1.1.1.1"));
+    Assert.assertTrue(members.contains("2.2.2.2"));
+    Assert.assertEquals("2.2.2.2", cache.get("peer.tron.network"));
+  }
+
+  @Test(timeout = 5000)
+  public void testRefreshMemberIpsIpUnchanged() throws Exception {
+    Set<String> members = getField(manager, "members");
+    Map<String, String> cache = getField(manager, "domainIpCache");
+    members.add("1.1.1.1");
+    cache.put("peer.tron.network", "1.1.1.1");
+
+    InetAddress sameAddr = InetAddress.getByName("1.1.1.1");
+    InetUtil.dnsLookup = (host, ipv4) ->
+        ("peer.tron.network".equals(host) && ipv4) ? sameAddr : null;
+    invokeRefreshMemberIps(manager);
+    Assert.assertTrue(members.contains("1.1.1.1"));
+    Assert.assertEquals("1.1.1.1", cache.get("peer.tron.network"));
+  }
+
+  @Test(timeout = 5000)
+  public void testRefreshMemberIpsDnsFailure() throws Exception {
+    Set<String> members = getField(manager, "members");
+    Map<String, String> cache = getField(manager, "domainIpCache");
+    members.add("1.1.1.1");
+    cache.put("peer.tron.network", "1.1.1.1");
+
+    InetUtil.dnsLookup = (host, ipv4) -> null;
+    invokeRefreshMemberIps(manager);
+    Assert.assertTrue("old IP should be kept on DNS failure", members.contains("1.1.1.1"));
+    Assert.assertEquals("1.1.1.1", cache.get("peer.tron.network"));
+  }
+
+  @SuppressWarnings("unchecked")
+  private <T> T getField(Object obj, String name) throws Exception {
+    Field f = obj.getClass().getDeclaredField(name);
+    f.setAccessible(true);
+    return (T) f.get(obj);
+  }
+
+  private void invokeRefreshMemberIps(BackupManager mgr) throws Exception {
+    Method m = mgr.getClass().getDeclaredMethod("refreshMemberIps");
+    m.setAccessible(true);
+    m.invoke(mgr);
   }
 }

@@ -1,3 +1,9 @@
+pluginManagement {
+    repositories {
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
 rootProject.name = 'java-tron'
 include 'framework'
 include 'chainbase'
@@ -8,4 +14,6 @@ include 'common'
 include 'example:actuator-example'
 include 'crypto'
 include 'plugins'
+include 'platform'
+include 'errorprone'
 

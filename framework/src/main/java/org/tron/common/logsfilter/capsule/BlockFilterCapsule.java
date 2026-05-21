@@ -1,7 +1,5 @@
 package org.tron.common.logsfilter.capsule;
 
-import static org.tron.core.services.jsonrpc.TronJsonRpcImpl.handleBLockFilter;
-
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -20,8 +18,7 @@ public class BlockFilterCapsule extends FilterTriggerCapsule {
   private boolean solidified;
 
   public BlockFilterCapsule(BlockCapsule block, boolean solidified) {
-    blockHash = block.getBlockId().toString();
-    this.solidified = solidified;
+    this(block.getBlockId().toString(), solidified);
   }
 
   public BlockFilterCapsule(String blockHash, boolean solidified) {
@@ -29,10 +26,4 @@ public class BlockFilterCapsule extends FilterTriggerCapsule {
     this.solidified = solidified;
   }
 
-  @Override
-  public void processFilterTrigger() {
-    handleBLockFilter(this);
-  }
-
 }
-

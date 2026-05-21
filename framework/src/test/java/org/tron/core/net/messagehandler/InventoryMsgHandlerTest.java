@@ -6,10 +6,14 @@ import java.lang.reflect.Field;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
+import java.util.Arrays;
+import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
-import org.tron.core.Constant;
+import org.tron.common.TestConstants;
+import org.tron.common.utils.Sha256Hash;
 import org.tron.core.config.args.Args;
+import org.tron.core.exception.P2pException;
 import org.tron.core.net.TronNetDelegate;
 import org.tron.core.net.message.adv.InventoryMessage;
 import org.tron.core.net.peer.PeerConnection;
@@ -21,7 +25,7 @@ public class InventoryMsgHandlerTest {
   @Test
   public void testProcessMessage() throws Exception {
     InventoryMsgHandler handler = new InventoryMsgHandler();
-    Args.setParam(new String[] {}, Constant.TEST_CONF);
+    Args.setParam(new String[] {}, TestConstants.TEST_CONF);
     Args.logConfig();
 
     InventoryMessage msg = new InventoryMessage(new ArrayList<>(), InventoryType.TRX);
@@ -49,6 +53,25 @@ public class InventoryMsgHandlerTest {
     field.set(handler, tronNetDelegate);
 
     handler.processMessage(peer, msg);
+    Mockito.verify(tronNetDelegate, Mockito.atLeastOnce()).isBlockUnsolidified();
+  }
+
+  @Test
+  public void testDuplicateHashesRejected() throws Exception {
+    InventoryMsgHandler handler = new InventoryMsgHandler();
+    Args.setParam(new String[] {}, TestConstants.TEST_CONF);
+
+    Sha256Hash hash = Sha256Hash.wrap(new byte[32]);
+    InventoryMessage msg = new InventoryMessage(Arrays.asList(hash, hash), InventoryType.TRX);
+    PeerConnection peer = new PeerConnection();
+    peer.setChannel(getChannel("1.0.0.4", 1000));
+
+    try {
+      handler.processMessage(peer, msg);
+      Assert.fail("Expected P2pException for duplicate hashes");
+    } catch (P2pException e) {
+      Assert.assertEquals(P2pException.TypeEnum.BAD_MESSAGE, e.getType());
+    }
   }
 
   private Channel getChannel(String host, int port) throws Exception {

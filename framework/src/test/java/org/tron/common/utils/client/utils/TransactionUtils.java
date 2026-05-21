@@ -14,6 +14,7 @@ package org.tron.common.utils.client.utils;
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+import static org.tron.core.capsule.TransactionCapsule.getBase64FromByteString;
 
 import com.google.protobuf.ByteString;
 import java.security.SignatureException;
@@ -116,20 +117,6 @@ public class TransactionUtils {
     }
   }
 
-  /**
-   * constructor.
-   */
-
-  public static String getBase64FromByteString(ByteString sign) {
-    byte[] r = sign.substring(0, 32).toByteArray();
-    byte[] s = sign.substring(32, 64).toByteArray();
-    byte v = sign.byteAt(64);
-    if (v < 27) {
-      v += 27; //revId -> v
-    }
-    ECDSASignature signature = ECDSASignature.fromComponents(r, s, v);
-    return signature.toBase64();
-  }
 
   /*
    * 1. check hash

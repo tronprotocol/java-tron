@@ -1,5 +1,6 @@
 package org.tron.common.storage.rocksdb;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Sets;
 import com.google.common.primitives.Bytes;
 import java.io.File;
@@ -20,27 +21,20 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.rocksdb.BlockBasedTableConfig;
-import org.rocksdb.BloomFilter;
 import org.rocksdb.Checkpoint;
-import org.rocksdb.DirectComparator;
-import org.rocksdb.InfoLogLevel;
-import org.rocksdb.Logger;
 import org.rocksdb.Options;
 import org.rocksdb.ReadOptions;
 import org.rocksdb.RocksDB;
 import org.rocksdb.RocksDBException;
 import org.rocksdb.RocksIterator;
-import org.rocksdb.Statistics;
 import org.rocksdb.Status;
 import org.rocksdb.WriteBatch;
 import org.rocksdb.WriteOptions;
-import org.slf4j.LoggerFactory;
+import org.tron.common.error.TronDBException;
 import org.tron.common.setting.RocksDbSettings;
 import org.tron.common.storage.WriteOptionsWrapper;
 import org.tron.common.storage.metric.DbStat;
 import org.tron.common.utils.FileUtil;
-import org.tron.common.utils.PropUtil;
 import org.tron.core.db.common.DbSourceInter;
 import org.tron.core.db.common.iterator.RockStoreIterator;
 import org.tron.core.db2.common.Instance;
@@ -53,36 +47,17 @@ import org.tron.core.exception.TronError;
 public class RocksDbDataSourceImpl extends DbStat implements DbSourceInter<byte[]>,
     Iterable<Map.Entry<byte[], byte[]>>, Instance<RocksDbDataSourceImpl> {
 
-  ReadOptions readOpts;
   private String dataBaseName;
   private RocksDB database;
   private volatile boolean alive;
   private String parentPath;
   private ReadWriteLock resetDbLock = new ReentrantReadWriteLock();
-  private static final String KEY_ENGINE = "ENGINE";
-  private static final String ROCKSDB = "ROCKSDB";
-  private DirectComparator comparator;
-  private static final org.slf4j.Logger rocksDbLogger = LoggerFactory.getLogger(ROCKSDB);
-
-  public RocksDbDataSourceImpl(String parentPath, String name, RocksDbSettings settings,
-      DirectComparator comparator) {
-    this.dataBaseName = name;
-    this.parentPath = parentPath;
-    this.comparator = comparator;
-    RocksDbSettings.setRocksDbSettings(settings);
-    initDB();
-  }
-
-  public RocksDbDataSourceImpl(String parentPath, String name, RocksDbSettings settings) {
-    this.dataBaseName = name;
-    this.parentPath = parentPath;
-    RocksDbSettings.setRocksDbSettings(settings);
-    initDB();
-  }
+  private Options options;
 
   public RocksDbDataSourceImpl(String parentPath, String name) {
-    this.parentPath = parentPath;
     this.dataBaseName = name;
+    this.parentPath = parentPath;
+    initDB();
   }
 
   public Path getDbPath() {
@@ -103,6 +78,9 @@ public class RocksDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
     try {
       if (!isAlive()) {
         return;
+      }
+      if (this.options != null) {
+        this.options.close();
       }
       database.close();
       alive = false;
@@ -125,40 +103,68 @@ public class RocksDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
     }
   }
 
-  private boolean quitIfNotAlive() {
+  private void throwIfNotAlive() {
     if (!isAlive()) {
-      logger.warn("DB {} is not alive.", dataBaseName);
+      throw new TronDBException("DB " + this.getDBName() + " is closed.");
     }
-    return !isAlive();
   }
 
+  /** copy from {@link org.fusesource.leveldbjni.internal#checkArgNotNull} */
+  private static void checkArgNotNull(Object value, String name) {
+    if (value == null) {
+      throw new IllegalArgumentException("The " + name + " argument cannot be null");
+    }
+  }
+
+  @Deprecated
+  @VisibleForTesting
   @Override
   public Set<byte[]> allKeys() throws RuntimeException {
     resetDbLock.readLock().lock();
-    try {
-      if (quitIfNotAlive()) {
-        return null;
-      }
+    try (final ReadOptions readOptions = getReadOptions();
+         final RocksIterator iter = getRocksIterator(readOptions)) {
       Set<byte[]> result = Sets.newHashSet();
-      try (final RocksIterator iter = getRocksIterator()) {
-        for (iter.seekToFirst(); iter.isValid(); iter.next()) {
-          result.add(iter.key());
-        }
-        return result;
+      for (iter.seekToFirst(); iter.isValid(); iter.next()) {
+        result.add(iter.key());
       }
+      return result;
     } finally {
       resetDbLock.readLock().unlock();
     }
   }
 
+  @Deprecated
+  @VisibleForTesting
   @Override
   public Set<byte[]> allValues() throws RuntimeException {
-    return null;
+    resetDbLock.readLock().lock();
+    try (final ReadOptions readOptions = getReadOptions();
+         final RocksIterator iter = getRocksIterator(readOptions)) {
+      Set<byte[]> result = Sets.newHashSet();
+      for (iter.seekToFirst(); iter.isValid(); iter.next()) {
+        result.add(iter.value());
+      }
+      return result;
+    } finally {
+      resetDbLock.readLock().unlock();
+    }
   }
 
+  @Deprecated
+  @VisibleForTesting
   @Override
   public long getTotal() throws RuntimeException {
-    return 0;
+    resetDbLock.readLock().lock();
+    try (final ReadOptions readOptions = getReadOptions();
+         final RocksIterator iter = getRocksIterator(readOptions)) {
+      long total = 0;
+      for (iter.seekToFirst(); iter.isValid(); iter.next()) {
+        total++;
+      }
+      return total;
+    } finally {
+      resetDbLock.readLock().unlock();
+    }
   }
 
   @Override
@@ -168,39 +174,10 @@ public class RocksDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
 
   @Override
   public void setDBName(String name) {
+    this.dataBaseName = name;
   }
 
-  public boolean checkOrInitEngine() {
-    String dir = getDbPath().toString();
-    String enginePath = dir + File.separator + "engine.properties";
-
-    if (FileUtil.createDirIfNotExists(dir)) {
-      if (!FileUtil.createFileIfNotExists(enginePath)) {
-        return false;
-      }
-    } else {
-      return false;
-    }
-
-    // for the first init engine
-    String engine = PropUtil.readProperty(enginePath, KEY_ENGINE);
-    if (engine.isEmpty() && !PropUtil.writeProperty(enginePath, KEY_ENGINE, ROCKSDB)) {
-      return false;
-    }
-    engine = PropUtil.readProperty(enginePath, KEY_ENGINE);
-
-    return ROCKSDB.equals(engine);
-  }
-
-  public void initDB() {
-    if (!checkOrInitEngine()) {
-      throw new RuntimeException(
-          String.format("failed to check database: %s, engine do not match", dataBaseName));
-    }
-    initDB(RocksDbSettings.getSettings());
-  }
-
-  public void initDB(RocksDbSettings settings) {
+  private void initDB() {
     resetDbLock.writeLock().lock();
     try {
       if (isAlive()) {
@@ -210,80 +187,40 @@ public class RocksDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
         throw new IllegalArgumentException("No name set to the dbStore");
       }
 
-      try (Options options = new Options()) {
+      try {
+        logger.debug("Opening database {}.", dataBaseName);
+        final Path dbPath = getDbPath();
 
-        // most of these options are suggested by https://github.com/facebook/rocksdb/wiki/Set-Up-Options
-
-        // general options
-        if (settings.isEnableStatistics()) {
-          options.setStatistics(new Statistics());
-          options.setStatsDumpPeriodSec(60);
+        if (!Files.isSymbolicLink(dbPath.getParent())) {
+          Files.createDirectories(dbPath.getParent());
         }
-        options.setCreateIfMissing(true);
-        options.setIncreaseParallelism(1);
-        options.setLevelCompactionDynamicLevelBytes(true);
-        options.setMaxOpenFiles(settings.getMaxOpenFiles());
-
-        // general options supported user config
-        options.setNumLevels(settings.getLevelNumber());
-        options.setMaxBytesForLevelMultiplier(settings.getMaxBytesForLevelMultiplier());
-        options.setMaxBytesForLevelBase(settings.getMaxBytesForLevelBase());
-        options.setMaxBackgroundCompactions(settings.getCompactThreads());
-        options.setLevel0FileNumCompactionTrigger(settings.getLevel0FileNumCompactionTrigger());
-        options.setTargetFileSizeMultiplier(settings.getTargetFileSizeMultiplier());
-        options.setTargetFileSizeBase(settings.getTargetFileSizeBase());
-        if (comparator != null) {
-          options.setComparator(comparator);
-        }
-        options.setLogger(new Logger(options) {
-          @Override
-          protected void log(InfoLogLevel infoLogLevel, String logMsg) {
-            rocksDbLogger.info("{} {}", dataBaseName, logMsg);
-          }
-        });
-
-        // table options
-        final BlockBasedTableConfig tableCfg;
-        options.setTableFormatConfig(tableCfg = new BlockBasedTableConfig());
-        tableCfg.setBlockSize(settings.getBlockSize());
-        tableCfg.setBlockCache(RocksDbSettings.getCache());
-        tableCfg.setCacheIndexAndFilterBlocks(true);
-        tableCfg.setPinL0FilterAndIndexBlocksInCache(true);
-        tableCfg.setFilter(new BloomFilter(10, false));
-
-        // read options
-        readOpts = new ReadOptions();
-        readOpts = readOpts.setPrefixSameAsStart(true)
-            .setVerifyChecksums(false);
 
         try {
-          logger.debug("Opening database {}.", dataBaseName);
-          final Path dbPath = getDbPath();
-
-          if (!Files.isSymbolicLink(dbPath.getParent())) {
-            Files.createDirectories(dbPath.getParent());
+          DbSourceInter.checkOrInitEngine(getEngine(), dbPath.toString(),
+              TronError.ErrCode.ROCKSDB_INIT);
+          this.options = RocksDbSettings.getOptionsByDbName(dataBaseName);
+          database = RocksDB.open(this.options, dbPath.toString());
+        } catch (RocksDBException e) {
+          if (Objects.equals(e.getStatus().getCode(), Status.Code.Corruption)) {
+            logger.error("Database {} corrupted, please delete database directory({}) "
+                + "and restart.", dataBaseName, parentPath, e);
+          } else {
+            logger.error("Open Database {} failed", dataBaseName, e);
           }
 
-          try {
-            database = RocksDB.open(options, dbPath.toString());
-          } catch (RocksDBException e) {
-            if (Objects.equals(e.getStatus().getCode(), Status.Code.Corruption)) {
-              logger.error("Database {} corrupted, please delete database directory({}) " +
-                      "and restart.", dataBaseName, parentPath, e);
-            } else {
-              logger.error("Open Database {} failed", dataBaseName, e);
-            }
-            throw new TronError(e, TronError.ErrCode.ROCKSDB_INIT);
+          if (this.options != null) {
+            this.options.close();
           }
-
-          alive = true;
-        } catch (IOException ioe) {
-          throw new RuntimeException(
-          String.format("failed to init database: %s", dataBaseName), ioe);
+          throw new TronError(e, TronError.ErrCode.ROCKSDB_INIT);
         }
 
-        logger.debug("Init DB {} done.", dataBaseName);
+        alive = true;
+      } catch (IOException ioe) {
+        throw new RuntimeException(
+            String.format("failed to init database: %s", dataBaseName), ioe);
       }
+
+      logger.debug("Init DB {} done.", dataBaseName);
     } finally {
       resetDbLock.writeLock().unlock();
     }
@@ -293,9 +230,9 @@ public class RocksDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
   public void putData(byte[] key, byte[] value) {
     resetDbLock.readLock().lock();
     try {
-      if (quitIfNotAlive()) {
-        return;
-      }
+      throwIfNotAlive();
+      checkArgNotNull(key, "key");
+      checkArgNotNull(value, "value");
       database.put(key, value);
     } catch (RocksDBException e) {
       throw new RuntimeException(dataBaseName, e);
@@ -308,9 +245,8 @@ public class RocksDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
   public byte[] getData(byte[] key) {
     resetDbLock.readLock().lock();
     try {
-      if (quitIfNotAlive()) {
-        return null;
-      }
+      throwIfNotAlive();
+      checkArgNotNull(key, "key");
       return database.get(key);
     } catch (RocksDBException e) {
       throw new RuntimeException(dataBaseName, e);
@@ -323,9 +259,8 @@ public class RocksDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
   public void deleteData(byte[] key) {
     resetDbLock.readLock().lock();
     try {
-      if (quitIfNotAlive()) {
-        return;
-      }
+      throwIfNotAlive();
+      checkArgNotNull(key, "key");
       database.delete(key);
     } catch (RocksDBException e) {
       throw new RuntimeException(dataBaseName, e);
@@ -339,74 +274,65 @@ public class RocksDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
     return false;
   }
 
+  /**
+   * Returns an iterator over the database.
+   *
+   * <p><b>CRITICAL:</b> The returned iterator holds native resources and <b>MUST</b> be closed
+   * after use to prevent memory leaks. It is strongly recommended to use a try-with-resources
+   * statement.
+   *
+   * <p>Example of correct usage:
+   * <pre>{@code
+   * try (DBIterator iterator = db.iterator()) {
+   *   while (iterator.hasNext()) {
+   *     // ... process entry
+   *   }
+   * }
+   * }</pre>
+   *
+   * @return a new database iterator that must be closed.
+   */
   @Override
   public org.tron.core.db.common.iterator.DBIterator iterator() {
-    return new RockStoreIterator(getRocksIterator());
-  }
-
-  private void updateByBatchInner(Map<byte[], byte[]> rows) throws Exception {
-    if (quitIfNotAlive()) {
-      return;
-    }
-    try (WriteBatch batch = new WriteBatch()) {
-      for (Map.Entry<byte[], byte[]> entry : rows.entrySet()) {
-        if (entry.getValue() == null) {
-          batch.delete(entry.getKey());
-        } else {
-          batch.put(entry.getKey(), entry.getValue());
-        }
-      }
-      database.write(new WriteOptions(), batch);
-    }
+    ReadOptions readOptions = getReadOptions();
+    return new RockStoreIterator(getRocksIterator(readOptions), readOptions);
   }
 
   private void updateByBatchInner(Map<byte[], byte[]> rows, WriteOptions options)
       throws Exception {
-    if (quitIfNotAlive()) {
-      return;
-    }
     try (WriteBatch batch = new WriteBatch()) {
       for (Map.Entry<byte[], byte[]> entry : rows.entrySet()) {
+        checkArgNotNull(entry.getKey(), "key");
         if (entry.getValue() == null) {
           batch.delete(entry.getKey());
         } else {
           batch.put(entry.getKey(), entry.getValue());
         }
       }
+      throwIfNotAlive();
       database.write(options, batch);
     }
   }
 
   @Override
   public void updateByBatch(Map<byte[], byte[]> rows, WriteOptionsWrapper optionsWrapper) {
-    resetDbLock.readLock().lock();
-    try {
-      if (quitIfNotAlive()) {
-        return;
-      }
-      updateByBatchInner(rows, optionsWrapper.rocks);
-    } catch (Exception e) {
-      try {
-        updateByBatchInner(rows);
-      } catch (Exception e1) {
-        throw new RuntimeException(dataBaseName, e1);
-      }
-    } finally {
-      resetDbLock.readLock().unlock();
-    }
+    this.updateByBatch(rows, optionsWrapper.rocks);
   }
 
   @Override
   public void updateByBatch(Map<byte[], byte[]> rows) {
+    try (WriteOptions writeOptions = new WriteOptions()) {
+      this.updateByBatch(rows, writeOptions);
+    }
+  }
+
+  private void updateByBatch(Map<byte[], byte[]> rows, WriteOptions options) {
     resetDbLock.readLock().lock();
     try {
-      if (quitIfNotAlive()) {
-        return;
-      }
-      updateByBatchInner(rows);
+      updateByBatchInner(rows, options);
     } catch (Exception e) {
       try {
-        updateByBatchInner(rows);
+        updateByBatchInner(rows, options);
       } catch (Exception e1) {
         throw new RuntimeException(dataBaseName, e1);
       }
@@ -416,45 +342,36 @@ public class RocksDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
   }
 
   public List<byte[]> getKeysNext(byte[] key, long limit) {
+    if (limit <= 0) {
+      return new ArrayList<>();
+    }
     resetDbLock.readLock().lock();
-    try {
-      if (quitIfNotAlive()) {
-        return new ArrayList<>();
+    try (final ReadOptions readOptions = getReadOptions();
+         final RocksIterator iter = getRocksIterator(readOptions)) {
+      List<byte[]> result = new ArrayList<>();
+      long i = 0;
+      for (iter.seek(key); iter.isValid() && i < limit; iter.next(), i++) {
+        result.add(iter.key());
       }
-      if (limit <= 0) {
-        return new ArrayList<>();
-      }
-
-      try (RocksIterator iter = getRocksIterator()) {
-        List<byte[]> result = new ArrayList<>();
-        long i = 0;
-        for (iter.seek(key); iter.isValid() && i < limit; iter.next(), i++) {
-          result.add(iter.key());
-        }
-        return result;
-      }
+      return result;
     } finally {
       resetDbLock.readLock().unlock();
     }
   }
 
   public Map<byte[], byte[]> getNext(byte[] key, long limit) {
+    if (limit <= 0) {
+      return Collections.emptyMap();
+    }
     resetDbLock.readLock().lock();
-    try {
-      if (quitIfNotAlive()) {
-        return null;
+    try (final ReadOptions readOptions = getReadOptions();
+         final RocksIterator iter = getRocksIterator(readOptions)) {
+      Map<byte[], byte[]> result = new HashMap<>();
+      long i = 0;
+      for (iter.seek(key); iter.isValid() && i < limit; iter.next(), i++) {
+        result.put(iter.key(), iter.value());
       }
-      if (limit <= 0) {
-        return Collections.emptyMap();
-      }
-      try (RocksIterator iter = getRocksIterator()) {
-        Map<byte[], byte[]> result = new HashMap<>();
-        long i = 0;
-        for (iter.seek(key); iter.isValid() && i < limit; iter.next(), i++) {
-          result.put(iter.key(), iter.value());
-        }
-        return result;
-      }
+      return result;
     } finally {
       resetDbLock.readLock().unlock();
     }
@@ -463,80 +380,109 @@ public class RocksDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
   @Override
   public Map<WrappedByteArray, byte[]> prefixQuery(byte[] key) {
     resetDbLock.readLock().lock();
-    try {
-      if (quitIfNotAlive()) {
-        return null;
-      }
-      try (RocksIterator iterator = getRocksIterator()) {
-        Map<WrappedByteArray, byte[]> result = new HashMap<>();
-        for (iterator.seek(key); iterator.isValid(); iterator.next()) {
-          if (Bytes.indexOf(iterator.key(), key) == 0) {
-            result.put(WrappedByteArray.of(iterator.key()), iterator.value());
-          } else {
-            return result;
-          }
+    try (final ReadOptions readOptions = getReadOptions();
+         final RocksIterator iterator = getRocksIterator(readOptions)) {
+      Map<WrappedByteArray, byte[]> result = new HashMap<>();
+      for (iterator.seek(key); iterator.isValid(); iterator.next()) {
+        if (Bytes.indexOf(iterator.key(), key) == 0) {
+          result.put(WrappedByteArray.of(iterator.key()), iterator.value());
+        } else {
+          return result;
         }
-        return result;
       }
+      return result;
     } finally {
       resetDbLock.readLock().unlock();
     }
   }
 
   public Set<byte[]> getlatestValues(long limit) {
+    if (limit <= 0) {
+      return Sets.newHashSet();
+    }
     resetDbLock.readLock().lock();
-    try {
-      if (quitIfNotAlive()) {
-        return null;
+    try (final ReadOptions readOptions = getReadOptions();
+         final RocksIterator iter = getRocksIterator(readOptions)) {
+      Set<byte[]> result = Sets.newHashSet();
+      long i = 0;
+      for (iter.seekToLast(); iter.isValid() && i < limit; iter.prev(), i++) {
+        result.add(iter.value());
       }
-      if (limit <= 0) {
-        return Sets.newHashSet();
-      }
-      try (RocksIterator iter = getRocksIterator()) {
-        Set<byte[]> result = Sets.newHashSet();
-        long i = 0;
-        for (iter.seekToLast(); iter.isValid() && i < limit; iter.prev(), i++) {
-          result.add(iter.value());
-        }
-        return result;
-      }
+      return result;
     } finally {
       resetDbLock.readLock().unlock();
     }
   }
 
-
   public Set<byte[]> getValuesNext(byte[] key, long limit) {
+    if (limit <= 0) {
+      return Sets.newHashSet();
+    }
     resetDbLock.readLock().lock();
-    try {
-      if (quitIfNotAlive()) {
-        return null;
+    try (final ReadOptions readOptions = getReadOptions();
+         final RocksIterator iter = getRocksIterator(readOptions)) {
+      Set<byte[]> result = Sets.newHashSet();
+      long i = 0;
+      for (iter.seek(key); iter.isValid() && i < limit; iter.next(), i++) {
+        result.add(iter.value());
       }
-      if (limit <= 0) {
-        return Sets.newHashSet();
-      }
-      try (RocksIterator iter = getRocksIterator()) {
-        Set<byte[]> result = Sets.newHashSet();
-        long i = 0;
-        for (iter.seek(key); iter.isValid() && i < limit; iter.next(), i++) {
-          result.add(iter.value());
-        }
-        return result;
-      }
+      return result;
     } finally {
       resetDbLock.readLock().unlock();
     }
   }
 
   public void backup(String dir) throws RocksDBException {
-    Checkpoint cp = Checkpoint.create(database);
-    cp.createCheckpoint(dir + this.getDBName());
+    throwIfNotAlive();
+    try (Checkpoint cp = Checkpoint.create(database)) {
+      cp.createCheckpoint(dir + this.getDBName());
+    }
   }
 
-  private RocksIterator getRocksIterator() {
-    try ( ReadOptions readOptions = new ReadOptions().setFillCache(false)) {
-      return  database.newIterator(readOptions);
-    }
+  /**
+   * Returns an iterator over the database.
+   *
+   * <p><b>CRITICAL:</b> The returned iterator holds native resources and <b>MUST</b> be closed
+   * after use to prevent memory leaks. It is strongly recommended to use a try-with-resources
+   * statement.
+   *
+   * <p>Example of correct usage:
+   * <pre>{@code
+   * try ( ReadOptions readOptions = new ReadOptions().setFillCache(false);
+   *      RocksIterator iterator = getRocksIterator(readOptions)) {
+   *      iterator.seekToFirst();
+   *  // do something
+   * }
+   * }</pre>
+   *
+   * @return a new database iterator that must be closed.
+   */
+  private RocksIterator getRocksIterator(ReadOptions readOptions) {
+    throwIfNotAlive();
+    return database.newIterator(readOptions);
+  }
+
+  /**
+   * Returns an ReadOptions.
+   *
+   * <p><b>CRITICAL:</b> The returned ReadOptions holds native resources and <b>MUST</b> be closed
+   * after use to prevent memory leaks. It is strongly recommended to use a try-with-resources
+   * statement.
+   *
+   * <p>Example of correct usage:
+   * <pre>{@code
+   * try (ReadOptions readOptions = getReadOptions();
+   *      RocksIterator iterator = getRocksIterator(readOptions)) {
+   *      iterator.seekToFirst();
+   *  // do something
+   * }
+   * }</pre>
+   *
+   * @return a new database iterator that must be closed.
+   */
+  private ReadOptions getReadOptions() {
+    throwIfNotAlive();
+    return new ReadOptions().setFillCache(false);
   }
 
   public boolean deleteDbBakPath(String dir) {
@@ -545,7 +491,7 @@ public class RocksDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
 
   @Override
   public RocksDbDataSourceImpl newInstance() {
-    return new RocksDbDataSourceImpl(parentPath, dataBaseName, RocksDbSettings.getSettings());
+    return new RocksDbDataSourceImpl(parentPath, dataBaseName);
   }
 
 

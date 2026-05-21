@@ -6,7 +6,9 @@ import com.google.common.util.concurrent.RateLimiter;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class IPQpsStrategy extends Strategy {
 
   public static final String STRATEGY_PARAM_IPQPS = "qps";
@@ -19,14 +21,18 @@ public class IPQpsStrategy extends Strategy {
     super(paramString);
   }
 
-  public boolean acquire(String ip) {
-    RateLimiter limiter = ipLimiter.getIfPresent(ip);
-    if (limiter == null) {
-      limiter = newRateLimiter();
-      ipLimiter.put(ip, limiter);
+  public boolean tryAcquire(String ip) {
+    RateLimiter limiter;
+    try {
+      // cache.get is atomic: only one loader executes per key under concurrent requests,
+      // preventing multiple RateLimiter instances from being created for the same IP.
+      limiter = ipLimiter.get(ip, this::newRateLimiter);
+    } catch (Exception e) {
+      logger.warn("Failed to load IP rate limiter for {}, denying request: {}",
+          ip, e.getMessage());
+      return false;
     }
-    limiter.acquire();
-    return true;
+    return limiter.tryAcquire();
   }
 
   private RateLimiter newRateLimiter() {

@@ -9,10 +9,8 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.rocksdb.RocksDBException;
-import org.tron.plugins.utils.DBUtils;
 import org.tron.plugins.utils.db.DBInterface;
 import org.tron.plugins.utils.db.DbTool;
-import org.tron.plugins.utils.db.LevelDBImpl;
 import picocli.CommandLine;
 
 @Slf4j
@@ -27,8 +25,18 @@ public class DbRootTest {
   private static final String EMPTY_DB  = "empty";
   private static final String ERROR_DB  = "error";
 
+
   @Test
-  public void testRoot() throws IOException, RocksDBException {
+  public void testRootForLevelDB() throws RocksDBException, IOException {
+    testRoot(DbTool.DbType.LevelDB);
+  }
+
+  @Test
+  public void testRootForRocksDB() throws RocksDBException, IOException {
+    testRoot(DbTool.DbType.RocksDB);
+  }
+
+  public void testRoot(DbTool.DbType dbType) throws IOException, RocksDBException {
 
     File file = folder.newFolder();
 
@@ -36,8 +44,8 @@ public class DbRootTest {
     Assert.assertTrue(database.mkdirs());
 
 
-    try (DBInterface normal = DbTool.getDB(database.toString(), NORMAL_DB, DbTool.DbType.LevelDB);
-         DBInterface empty = DbTool.getDB(database.toString(), EMPTY_DB, DbTool.DbType.RocksDB)) {
+    try (DBInterface normal = DbTool.getDB(database.toString(), NORMAL_DB, dbType);
+         DBInterface empty = DbTool.getDB(database.toString(), EMPTY_DB, dbType)) {
       for (int i = 0; i < 10; i++) {
         normal.put(("" + i).getBytes(), (NORMAL_DB + "-" + i).getBytes());
       }
@@ -53,8 +61,7 @@ public class DbRootTest {
         "--db", EMPTY_DB};
     Assert.assertEquals(0, cli.execute(args));
 
-    try (DBInterface errorDb = new LevelDBImpl(
-        DBUtils.newLevelDb(Paths.get(database.toString(), ERROR_DB)), ERROR_DB)) {
+    try (DBInterface errorDb =  DbTool.getDB(database.toString(), ERROR_DB, dbType)) {
       for (int i = 0; i < 10; i++) {
         errorDb.put(("" + i).getBytes(), (ERROR_DB + "-" + i).getBytes());
       }

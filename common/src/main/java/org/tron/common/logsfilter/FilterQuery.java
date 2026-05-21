@@ -31,12 +31,7 @@ public class FilterQuery {
     if (StringUtils.isEmpty(blockNum) || FilterQuery.EARLIEST.equalsIgnoreCase(blockNum)) {
       number = FilterQuery.EARLIEST_BLOCK_NUM;
     } else {
-      try {
-        number = Long.parseLong(blockNum);
-      } catch (Exception e) {
-        logger.error("invalid filter: fromBlockNumber: {}", blockNum);
-        throw e;
-      }
+      number = Long.parseLong(blockNum);
     }
     return number;
   }
@@ -46,12 +41,7 @@ public class FilterQuery {
     if (StringUtils.isEmpty(blockNum) || FilterQuery.LATEST.equalsIgnoreCase(blockNum)) {
       number = FilterQuery.LATEST_BLOCK_NUM;
     } else {
-      try {
-        number = Long.parseLong(blockNum);
-      } catch (Exception e) {
-        logger.error("invalid filter: toBlockNumber: {}", blockNum);
-        throw e;
-      }
+      number = Long.parseLong(blockNum);
     }
     return number;
   }

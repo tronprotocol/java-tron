@@ -1,0 +1,17 @@
+description = "platform – a distributed consensus arithmetic for blockchain."
+
+sourceSets {
+    main {
+        java.srcDirs = rootProject.archInfo.sourceSets.main.java.srcDirs
+    }
+    test {
+        java.srcDirs = rootProject.archInfo.sourceSets.test.java.srcDirs
+    }
+}
+
+dependencies {
+    api group: 'org.fusesource.leveldbjni', name: 'leveldbjni-all', version: '1.8'
+    api group: 'org.rocksdb', name: 'rocksdbjni', version: "${rootProject.archInfo.requires.RocksdbVersion}"
+    api group: 'commons-io', name: 'commons-io', version: '2.18.0'
+    api 'io.github.tronprotocol:zksnark-java-sdk:1.0.0' exclude(group: 'commons-io', module: 'commons-io')
+}

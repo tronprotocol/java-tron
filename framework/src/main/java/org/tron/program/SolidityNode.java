@@ -2,100 +2,100 @@ package org.tron.program;
 
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.BooleanUtils;
-import org.springframework.beans.factory.support.DefaultListableBeanFactory;
-import org.springframework.util.ObjectUtils;
-import org.tron.common.application.Application;
-import org.tron.common.application.ApplicationFactory;
-import org.tron.common.application.TronApplicationContext;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationListener;
+import org.springframework.context.annotation.Condition;
+import org.springframework.context.annotation.ConditionContext;
+import org.springframework.context.annotation.Conditional;
+import org.springframework.context.event.ContextClosedEvent;
+import org.springframework.core.type.AnnotatedTypeMetadata;
+import org.springframework.stereotype.Component;
 import org.tron.common.client.DatabaseGrpcClient;
-import org.tron.common.exit.ExitManager;
+import org.tron.common.es.ExecutorServiceManager;
 import org.tron.common.parameter.CommonParameter;
-import org.tron.common.prometheus.Metrics;
 import org.tron.core.ChainBaseManager;
-import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule;
-import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
-import org.tron.core.db.Manager;
 import org.tron.core.exception.TronError;
+import org.tron.core.net.TronNetDelegate;
 import org.tron.protos.Protocol.Block;
 
 @Slf4j(topic = "app")
-public class SolidityNode {
+@Conditional(SolidityNode.SolidityCondition.class)
+@Component
+public class SolidityNode implements ApplicationListener<ContextClosedEvent> {
 
-  private Manager dbManager;
-
+  @Autowired
   private ChainBaseManager chainBaseManager;
+
+  @Autowired
+  private TronNetDelegate tronNetDelegate;
 
   private DatabaseGrpcClient databaseGrpcClient;
 
-  private AtomicLong ID = new AtomicLong();
+  private final AtomicLong ID = new AtomicLong();
 
-  private AtomicLong remoteBlockNum = new AtomicLong();
+  private final AtomicLong remoteBlockNum = new AtomicLong();
 
-  private LinkedBlockingDeque<Block> blockQueue = new LinkedBlockingDeque<>(100);
+  private final LinkedBlockingDeque<Block> blockQueue = new LinkedBlockingDeque<>(100);
 
-  private int exceptionSleepTime = 1000;
+  private final int exceptionSleepTime = 1000;
 
   private volatile boolean flag = true;
 
-  public SolidityNode(Manager dbManager) {
-    this.dbManager = dbManager;
-    this.chainBaseManager = dbManager.getChainBaseManager();
+  private final String getBlockName = "get-block";
+  private final String processBlockName = "process-block";
+
+  private ExecutorService getBlockExecutor;
+  private ExecutorService processBlockExecutor;
+
+  @PostConstruct
+  private void init() {
     resolveCompatibilityIssueIfUsingFullNodeDatabase();
     ID.set(chainBaseManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum());
-    databaseGrpcClient = new DatabaseGrpcClient(CommonParameter.getInstance().getTrustNodeAddr());
-    remoteBlockNum.set(getLastSolidityBlockNum());
+    getBlockExecutor = ExecutorServiceManager.newSingleThreadExecutor(getBlockName);
+    processBlockExecutor = ExecutorServiceManager.newSingleThreadExecutor(processBlockName);
   }
 
-  /**
-   * Start the SolidityNode.
-   */
-  public static void main(String[] args) {
-    ExitManager.initExceptionHandler();
-    logger.info("Solidity node is running.");
-    Args.setParam(args, Constant.TESTNET_CONF);
-    CommonParameter parameter = CommonParameter.getInstance();
-
-    logger.info("index switch is {}",
-        BooleanUtils.toStringOnOff(BooleanUtils
-            .toBoolean(parameter.getStorage().getIndexSwitch())));
-
-    if (ObjectUtils.isEmpty(parameter.getTrustNodeAddr())) {
-      logger.error("Trust node is not set.");
-      return;
-    }
-    parameter.setSolidityNode(true);
-
-    if (parameter.isHelp()) {
-      logger.info("Here is the help message.");
-      return;
-    }
-    // init metrics first
-    Metrics.init();
-
-    DefaultListableBeanFactory beanFactory = new DefaultListableBeanFactory();
-    beanFactory.setAllowCircularReferences(false);
-    TronApplicationContext context =
-        new TronApplicationContext(beanFactory);
-    context.register(DefaultConfig.class);
-    context.refresh();
-    Application appT = ApplicationFactory.create(context);
-    context.registerShutdownHook();
-    appT.startup();
-    SolidityNode node = new SolidityNode(appT.getDbManager());
-    node.start();
-    appT.blockUntilShutdown();
+  @Override
+  public void onApplicationEvent(ContextClosedEvent event) {
+    flag = false; // invoke earlier than @PreDestroy
   }
 
-  private void start() {
+  public void close() {
+    flag = false;
+    if (databaseGrpcClient != null) {
+      databaseGrpcClient.shutdown();
+    }
+    // Interrupt get-block immediately: it may be stuck in blockQueue.put() (full queue,
+    // process-block stopped) or in a gRPC blocking stub call.
+    // Do NOT interrupt process-block: let it finish its current pushVerifiedBlock naturally
+    // (flag=false causes the while-loop to exit within 1-2 s) so the DB flush can complete
+    // cleanly before ApplicationImpl.shutdown() tears down the underlying executor.
+    getBlockExecutor.shutdownNow();
+    ExecutorServiceManager.shutdownAndAwaitTermination(getBlockExecutor, getBlockName);
+    ExecutorServiceManager.shutdownAndAwaitTermination(processBlockExecutor, processBlockName);
+  }
+
+  @PreDestroy
+  private void shutdown() {
+    close();
+  }
+
+  public void run() {
     try {
-      new Thread(this::getBlock).start();
-      new Thread(this::processBlock).start();
+      databaseGrpcClient = new DatabaseGrpcClient(CommonParameter.getInstance().getTrustNodeAddr());
+      remoteBlockNum.set(getLastSolidityBlockNum());
+
+      getBlockExecutor.submit(this::getBlock);
+      processBlockExecutor.submit(this::processSolidityBlock);
       logger.info("Success to start solid node, ID: {}, remoteBlockNum: {}.", ID.get(),
           remoteBlockNum);
     } catch (Exception e) {
@@ -107,7 +107,7 @@ public class SolidityNode {
 
   private void getBlock() {
     long blockNum = ID.incrementAndGet();
-    while (flag) {
+    while (flag && !tronNetDelegate.isHitDown()) {
       try {
         if (blockNum > remoteBlockNum.get()) {
           sleep(BLOCK_PRODUCED_INTERVAL);
@@ -124,11 +124,18 @@ public class SolidityNode {
     }
   }
 
-  private void processBlock() {
-    while (flag) {
+  private void processSolidityBlock() {
+    while (flag && !tronNetDelegate.isHitDown()) {
       try {
-        Block block = blockQueue.take();
+        Block block = blockQueue.poll(exceptionSleepTime, TimeUnit.MILLISECONDS);
+        if (block == null) {
+          continue;
+        }
         loopProcessBlock(block);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        logger.info("processSolidityBlock interrupted.");
+        return;
       } catch (Exception e) {
         logger.error(e.getMessage());
         sleep(exceptionSleepTime);
@@ -140,10 +147,12 @@ public class SolidityNode {
     while (flag) {
       long blockNum = block.getBlockHeader().getRawData().getNumber();
       try {
-        dbManager.pushVerifiedBlock(new BlockCapsule(block));
-        chainBaseManager.getDynamicPropertiesStore().saveLatestSolidifiedBlockNum(blockNum);
-        logger
-            .info("Success to process block: {}, blockQueueSize: {}.", blockNum, blockQueue.size());
+        tronNetDelegate.pushVerifiedBlock(new BlockCapsule(block));
+        if (!tronNetDelegate.isHitDown()) {
+          chainBaseManager.getDynamicPropertiesStore().saveLatestSolidifiedBlockNum(blockNum);
+          logger.info("Success to process block: {}, blockQueueSize: {}.",
+              blockNum, blockQueue.size());
+        }
         return;
       } catch (Exception e) {
         logger.error("Failed to process block {}.", new BlockCapsule(block), e);
@@ -154,7 +163,7 @@ public class SolidityNode {
   }
 
   private Block getBlockByNum(long blockNum) {
-    while (true) {
+    while (flag && !tronNetDelegate.isHitDown()) {
       try {
         long time = System.currentTimeMillis();
         Block block = databaseGrpcClient.getBlock(blockNum);
@@ -172,10 +181,12 @@ public class SolidityNode {
         sleep(exceptionSleepTime);
       }
     }
+    //throw RuntimeException instead of return null to avoid NullPointException
+    throw new RuntimeException("SolidityNode is closing.");
   }
 
   private long getLastSolidityBlockNum() {
-    while (true) {
+    while (flag && !tronNetDelegate.isHitDown()) {
       try {
         long time = System.currentTimeMillis();
         long blockNum = databaseGrpcClient.getDynamicProperties().getLastSolidityBlockNum();
@@ -188,6 +199,7 @@ public class SolidityNode {
         sleep(exceptionSleepTime);
       }
     }
+    return 0;
   }
 
   public void sleep(long time) {
@@ -208,6 +220,14 @@ public class SolidityNode {
       logger.info("use fullNode database, headBlockNum:{}, solidityBlockNum:{}, diff:{}",
           headBlockNum, lastSolidityBlockNum, headBlockNum - lastSolidityBlockNum);
       chainBaseManager.getDynamicPropertiesStore().saveLatestSolidifiedBlockNum(headBlockNum);
+    }
+  }
+
+  static class SolidityCondition implements Condition {
+
+    @Override
+    public boolean matches(ConditionContext context, AnnotatedTypeMetadata metadata) {
+      return Args.getInstance().isSolidityNode();
     }
   }
 }

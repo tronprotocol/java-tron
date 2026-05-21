@@ -35,12 +35,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.tron.common.crypto.ECKey.ECDSASignature;
+import org.tron.common.crypto.Rsv;
 import org.tron.common.crypto.SignInterface;
 import org.tron.common.crypto.SignUtils;
 import org.tron.common.es.ExecutorServiceManager;
@@ -93,6 +95,8 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
       .newFixedThreadPool(esName, CommonParameter.getInstance()
           .getValidContractProtoThreadNum());
   private static final String OWNER_ADDRESS = "ownerAddress_";
+  // 2-6 ms in general, so we set 50 ms as the threshold for slow signature verification.
+  private static final long SLOW_SIG_VERIFY_MS = 50;
 
   private Transaction transaction;
   @Setter
@@ -456,14 +460,8 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   }
 
   public static String getBase64FromByteString(ByteString sign) {
-    byte[] r = sign.substring(0, 32).toByteArray();
-    byte[] s = sign.substring(32, 64).toByteArray();
-    byte v = sign.byteAt(64);
-    if (v < 27) {
-      v += 27; //revId -> v
-    }
-    ECDSASignature signature = ECDSASignature.fromComponents(r, s, v);
-    return signature.toBase64();
+    Rsv rsv = Rsv.fromSignature(sign.toByteArray());
+    return ECDSASignature.fromComponents(rsv.getR(), rsv.getS(), rsv.getV()).toBase64();
   }
 
   public static boolean validateSignature(Transaction transaction,
@@ -653,6 +651,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
 
       byte[] hash = getTransactionId().getBytes();
 
+      long startNs = System.nanoTime();
       try {
         if (!validateSignature(this.transaction, hash, accountStore, dynamicPropertiesStore)) {
           isVerified = false;
@@ -661,10 +660,25 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
       } catch (SignatureException | PermissionException | SignatureFormatException e) {
         isVerified = false;
         throw new ValidateSignatureException(e.getMessage());
+      } finally {
+        logSlowSigVerify(startNs);
       }
       isVerified = true;
     }
     return true;
+  }
+
+  /**
+   * WARN-logs when a single signature verification exceeds
+   * {@link #SLOW_SIG_VERIFY_MS}. Package-private so it can be exercised from
+   * tests without forcing a real slow crypto path.
+   */
+  void logSlowSigVerify(long startNs) {
+    long costMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNs);
+    if (costMs > SLOW_SIG_VERIFY_MS) {
+      logger.warn("slow verify: txId={}, sigCount={}, cost={} ms",
+          getTransactionId(), this.transaction.getSignatureCount(), costMs);
+    }
   }
 
   /**

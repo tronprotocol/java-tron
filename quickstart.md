@@ -45,7 +45,7 @@ docker pull tronprotocol/java-tron
 
 You can run the command below to start the java-tron:
 ```
-docker run -it -d -p 8090:8090 -p 8091:8091 -p 18888:18888 -p 50051:50051 --restart always tronprotocol/java-tron 
+docker run -it -d -p 8090:8090 -p 18888:18888 -p 50051:50051 --restart always tronprotocol/java-tron 
 ```
 
 The `-p` flag defines the ports that the container needs to be mapped on the host machine. By default the container will start and join in the mainnet
@@ -65,8 +65,9 @@ Note: The directory `/Users/tron/docker/conf` must contain the file `config-loca
 
 ## Quickstart for using docker-tron-quickstart
 
-The image exposes a Full Node, Solidity Node, and Event Server. Through TRON Quickstart, users can deploy DApps, smart contracts, and interact with the TronWeb library.
-Check more information at [Quickstart:](https://github.com/TRON-US/docker-tron-quickstart)
+The image exposes a Full Node and Event Server. Through TRON Quickstart, users can deploy DApps, smart contracts, and interact with the TronWeb library.
+
+> Note: `docker-tron-quickstart` is a community-maintained tool. Check its repository for the latest status: [Quickstart](https://github.com/TRON-US/docker-tron-quickstart)
 
 ### Node.JS Console
   Node.JS is used to interact with the Full and Solidity Nodes via Tron-Web.  
@@ -84,7 +85,7 @@ docker pull trontools/quickstart
 
 ## Setup TRON Quickstart   
 ### TRON Quickstart Run
-Run the "docker run" command to launch TRON Quickstart. TRON Quickstart exposes port 9090 for Full Node, Solidity Node, and Event Server.
+Run the "docker run" command to launch TRON Quickstart. TRON Quickstart exposes port 9090 for Full Node and Event Server.
 ```shell
 docker run -it \
   -p 9090:9090 \

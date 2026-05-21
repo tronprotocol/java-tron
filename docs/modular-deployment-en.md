@@ -1,8 +1,8 @@
 # How to deploy java-tron after modularization
 
-After modularization, java-tron is launched via shell script instead of typing command: `java -jar FullNode.jar`.
+After modularization, the recommended way to launch java-tron is via the shell script generated in `bin/`. The classic `java -jar FullNode.jar` command is still fully supported as an alternative.
 
-*`java -jar FullNode.jar` still works, but will be deprecated in future*.
+> **Supported platforms**: Linux and macOS. Windows is not supported.
 
 ## Download
 
@@ -29,7 +29,7 @@ After unzip, two directories will be generated in java-tron: `bin` and `lib`, sh
 
 ## Startup
 
-Use the corresponding script to start java-tron according to the OS type, use `*.bat` on Windows, Linux demo is as below:
+Use the shell script to start java-tron (Linux / macOS):
 ```
 # default
 java-tron-1.0.0/bin/FullNode
@@ -45,12 +45,11 @@ java-tron-1.0.0/bin/FullNode -c config.conf -w
 
 JVM options can also be specified, located in `bin/java-tron.vmoptions`:
 ```
-# demo
--XX:+UseConcMarkSweepGC
+# demo (compatible with JDK 8 / JDK 17)
+-Xms2g
+-Xmx9g
 -XX:+PrintGCDetails
 -Xloggc:./gc.log
 -XX:+PrintGCDateStamps
--XX:+CMSParallelRemarkEnabled
 -XX:ReservedCodeCacheSize=256m
--XX:+CMSScavengeBeforeRemark
 ```

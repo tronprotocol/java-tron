@@ -3,13 +3,12 @@ package org.tron.core.db;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.nio.file.Paths;
 import java.util.Iterator;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import javax.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.iq80.leveldb.WriteOptions;
-import org.rocksdb.DirectComparator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.storage.WriteOptionsWrapper;
@@ -29,7 +28,7 @@ public abstract class TronDatabase<T> implements ITronChainBase<T> {
   protected DbSourceInter<byte[]> dbSource;
   @Getter
   private String dbName;
-  private WriteOptionsWrapper writeOptions = WriteOptionsWrapper.getInstance()
+  private final WriteOptionsWrapper writeOptions = WriteOptionsWrapper.getInstance()
           .sync(CommonParameter.getInstance().getStorage().isDbSync());
 
   @Autowired
@@ -39,23 +38,14 @@ public abstract class TronDatabase<T> implements ITronChainBase<T> {
     this.dbName = dbName;
 
     if ("LEVELDB".equals(CommonParameter.getInstance().getStorage()
-        .getDbEngine().toUpperCase())) {
-      dbSource =
-          new LevelDbDataSourceImpl(StorageUtils.getOutputDirectoryByDbName(dbName),
-              dbName,
-              getOptionsByDbNameForLevelDB(dbName),
-              new WriteOptions().sync(CommonParameter.getInstance()
-                  .getStorage().isDbSync()));
+        .getDbEngine().toUpperCase(Locale.ROOT))) {
+      dbSource = new LevelDbDataSourceImpl(StorageUtils.getOutputDirectoryByDbName(dbName), dbName);
     } else if ("ROCKSDB".equals(CommonParameter.getInstance()
-        .getStorage().getDbEngine().toUpperCase())) {
+        .getStorage().getDbEngine().toUpperCase(Locale.ROOT))) {
       String parentName = Paths.get(StorageUtils.getOutputDirectoryByDbName(dbName),
           CommonParameter.getInstance().getStorage().getDbDirectory()).toString();
-      dbSource =
-          new RocksDbDataSourceImpl(parentName, dbName, CommonParameter.getInstance()
-              .getRocksDBCustomSettings(), getDirectComparator());
+      dbSource = new RocksDbDataSourceImpl(parentName, dbName);
     }
-
-    dbSource.initDB();
   }
 
   @PostConstruct
@@ -64,14 +54,6 @@ public abstract class TronDatabase<T> implements ITronChainBase<T> {
   }
 
   protected TronDatabase() {
-  }
-
-  protected org.iq80.leveldb.Options getOptionsByDbNameForLevelDB(String dbName) {
-    return StorageUtils.getOptionsByDbName(dbName);
-  }
-
-  protected DirectComparator getDirectComparator() {
-    return null;
   }
 
   public DbSourceInter<byte[]> getDbSource() {
@@ -95,12 +77,25 @@ public abstract class TronDatabase<T> implements ITronChainBase<T> {
   @Override
   public void close() {
     logger.info("******** Begin to close {}. ********", getName());
+    doClose();
+    logger.info("******** End to close {}. ********", getName());
+  }
+
+  /**
+   * Releases writeOptions and dbSource (best-effort, exceptions logged at WARN).
+   * Subclasses with extra resources should override {@link #close()} and call
+   * {@code doClose()} directly — not {@code super.close()} — to avoid duplicated logs.
+   */
+  protected void doClose() {
+    try {
+      writeOptions.close();
+    } catch (Exception e) {
+      logger.warn("Failed to close writeOptions in {}.", getName(), e);
+    }
     try {
       dbSource.closeDB();
     } catch (Exception e) {
-      logger.warn("Failed to close {}.", getName(), e);
-    } finally {
-      logger.info("******** End to close {}. ********", getName());
+      logger.warn("Failed to close dbSource in {}.", getName(), e);
     }
   }
 

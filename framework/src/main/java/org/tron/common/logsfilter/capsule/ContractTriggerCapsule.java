@@ -135,11 +135,11 @@ public class ContractTriggerCapsule extends TriggerCapsule {
           EventPluginLoader.getInstance().postContractEventTrigger((ContractEventTrigger) event);
         }
 
-        if (EventPluginLoader.getInstance().isSolidityEventTriggerEnable()) {
+        if (EventPluginLoader.getInstance().isSolidityEventTriggerEnable()
+            && !contractTrigger.isRemoved()) {
           boolean result = Args.getSolidityContractEventTriggerMap().computeIfAbsent(event
               .getBlockNumber(), listBlk -> new LinkedBlockingQueue())
                   .offer((ContractEventTrigger) event);
-
           if (!result) {
             logger.info("too many triggers, solidity event trigger lost: {}",
                 event.getUniqueId());
@@ -159,11 +159,11 @@ public class ContractTriggerCapsule extends TriggerCapsule {
             EventPluginLoader.getInstance().postContractLogTrigger(logTrigger);
           }
 
-          if (EventPluginLoader.getInstance().isSolidityLogTriggerRedundancy()) {
+          if (EventPluginLoader.getInstance().isSolidityLogTriggerRedundancy()
+              && !contractTrigger.isRemoved()) {
             boolean result = Args.getSolidityContractLogTriggerMap().computeIfAbsent(event
                 .getBlockNumber(), listBlk -> new LinkedBlockingQueue())
                 .offer(logTrigger);
-
             if (!result) {
               logger.info("too many triggers, solidity log trigger lost: {}",
                   logTrigger.getUniqueId());
@@ -175,11 +175,11 @@ public class ContractTriggerCapsule extends TriggerCapsule {
           EventPluginLoader.getInstance().postContractLogTrigger((ContractLogTrigger) event);
         }
 
-        if (EventPluginLoader.getInstance().isSolidityLogTriggerEnable()) {
+        if (EventPluginLoader.getInstance().isSolidityLogTriggerEnable()
+            && !contractTrigger.isRemoved()) {
           boolean result = Args.getSolidityContractLogTriggerMap().computeIfAbsent(event
               .getBlockNumber(), listBlk -> new LinkedBlockingQueue())
                   .offer((ContractLogTrigger) event);
-
           if (!result) {
             logger.info("too many triggers, solidity log trigger lost: {}",
                 event.getUniqueId());

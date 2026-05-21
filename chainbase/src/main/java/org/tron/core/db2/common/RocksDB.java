@@ -14,7 +14,7 @@ public class RocksDB implements DB<byte[], byte[]>, Flusher {
   @Getter
   private RocksDbDataSourceImpl db;
 
-  private WriteOptionsWrapper optionsWrapper = WriteOptionsWrapper.getInstance()
+  private final WriteOptionsWrapper writeOptions = WriteOptionsWrapper.getInstance()
       .sync(CommonParameter.getInstance().getStorage().isDbSync());
 
   public RocksDB(RocksDbDataSourceImpl db) {
@@ -61,11 +61,12 @@ public class RocksDB implements DB<byte[], byte[]>, Flusher {
     Map<byte[], byte[]> rows = batch.entrySet().stream()
         .map(e -> Maps.immutableEntry(e.getKey().getBytes(), e.getValue().getBytes()))
         .collect(HashMap::new, (m, k) -> m.put(k.getKey(), k.getValue()), HashMap::putAll);
-    db.updateByBatch(rows, optionsWrapper);
+    db.updateByBatch(rows, writeOptions);
   }
 
   @Override
   public void close() {
+    writeOptions.close();
     db.closeDB();
   }
 

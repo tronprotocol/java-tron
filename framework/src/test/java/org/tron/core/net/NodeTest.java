@@ -12,7 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
-import org.tron.core.Constant;
+import org.tron.common.TestConstants;
 import org.tron.core.config.Configuration;
 import org.tron.core.config.args.Args;
 import org.tron.p2p.discover.Node;
@@ -28,30 +28,18 @@ public class NodeTest {
   public void testIpV4() {
     InetSocketAddress address1 = NetUtil.parseInetSocketAddress("192.168.0.1:18888");
     Assert.assertNotNull(address1);
-    try {
-      NetUtil.parseInetSocketAddress("192.168.0.1");
-      Assert.fail();
-    } catch (RuntimeException e) {
-      Assert.assertTrue(true);
-    }
+    Assert.assertThrows(RuntimeException.class,
+        () -> NetUtil.parseInetSocketAddress("192.168.0.1"));
   }
 
   @Test
   public void testIpV6() {
-    try {
-      NetUtil.parseInetSocketAddress("fe80::216:3eff:fe0e:23bb:18888");
-      Assert.fail();
-    } catch (RuntimeException e) {
-      Assert.assertTrue(true);
-    }
+    Assert.assertThrows(RuntimeException.class,
+        () -> NetUtil.parseInetSocketAddress("fe80::216:3eff:fe0e:23bb:18888"));
     InetSocketAddress address2 = NetUtil.parseInetSocketAddress("[fe80::216:3eff:fe0e:23bb]:18888");
     Assert.assertNotNull(address2);
-    try {
-      NetUtil.parseInetSocketAddress("fe80::216:3eff:fe0e:23bb");
-      Assert.fail();
-    } catch (RuntimeException e) {
-      Assert.assertTrue(true);
-    }
+    Assert.assertThrows(RuntimeException.class,
+        () -> NetUtil.parseInetSocketAddress("fe80::216:3eff:fe0e:23bb"));
   }
 
   @Test
@@ -79,7 +67,7 @@ public class NodeTest {
 
   @Test
   public void testPublishConfig() {
-    Config config = Configuration.getByFileName(Constant.TEST_CONF, Constant.TEST_CONF);
+    Config config = Configuration.getByFileName(TestConstants.TEST_CONF);
 
     PublishConfig publishConfig = new PublishConfig();
     Assert.assertFalse(publishConfig.isDnsPublishEnable());

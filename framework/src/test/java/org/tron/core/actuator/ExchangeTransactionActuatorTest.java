@@ -1,10 +1,13 @@
 package org.tron.core.actuator;
 
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.fail;
 import static org.tron.core.config.Parameter.ChainSymbol.TRX_SYMBOL_BYTES;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Map;
 import junit.framework.TestCase;
@@ -13,18 +16,30 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.BaseTest;
+import org.tron.common.TestConstants;
+import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
-import org.tron.core.Constant;
+import org.tron.common.utils.ForkController;
+import org.tron.common.utils.PublicMethod;
+import org.tron.consensus.base.Param;
+import org.tron.consensus.base.Param.Miner;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
+import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.ExchangeCapsule;
+import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
+import org.tron.core.capsule.WitnessCapsule;
+import org.tron.core.config.Parameter;
+import org.tron.core.config.Parameter.ForkBlockVersionEnum;
 import org.tron.core.config.args.Args;
+import org.tron.core.db.Manager;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.protos.Protocol.AccountType;
+import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.contract.AssetIssueContractOuterClass;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
@@ -42,7 +57,7 @@ public class ExchangeTransactionActuatorTest extends BaseTest {
   private static final String OWNER_ADDRESS_NOACCOUNT;
 
   static {
-    Args.setParam(new String[]{"--output-directory", dbPath()}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath()}, TestConstants.TEST_CONF);
     OWNER_ADDRESS_FIRST =
         Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     OWNER_ADDRESS_SECOND =
@@ -1522,7 +1537,7 @@ public class ExchangeTransactionActuatorTest extends BaseTest {
       ExchangeCapsule exchangeCapsule = dbManager.getExchangeStore()
           .get(ByteArray.fromLong(exchangeId));
       expected = exchangeCapsule.transaction(tokenId.getBytes(), quant, useStrictMath);
-    } catch (ItemNotFoundException e) {
+    } catch (ItemNotFoundException | ContractValidateException e) {
       fail();
     }
 
@@ -1578,7 +1593,7 @@ public class ExchangeTransactionActuatorTest extends BaseTest {
       ExchangeCapsule exchangeCapsuleV2 = dbManager.getExchangeV2Store()
           .get(ByteArray.fromLong(exchangeId));
       expected = exchangeCapsuleV2.transaction(tokenId.getBytes(), quant, useStrictMath);
-    } catch (ItemNotFoundException e) {
+    } catch (ItemNotFoundException | ContractValidateException e) {
       fail();
     }
 
@@ -1674,7 +1689,7 @@ public class ExchangeTransactionActuatorTest extends BaseTest {
   public void invalidContractType() {
     ExchangeTransactionActuator actuator = new ExchangeTransactionActuator();
     // create AssetIssueContract, not a valid ClearABI contract , which will throw e expectipon
-    Any invalidContractTypes = Any.pack(AssetIssueContractOuterClass.AssetIssueContract.newBuilder()
+    Any invalidContractTypes = Any.pack(AssetIssueContract.newBuilder()
         .build());
     actuator.setChainBaseManager(dbManager.getChainBaseManager())
         .setAny(invalidContractTypes);
@@ -1725,4 +1740,168 @@ public class ExchangeTransactionActuatorTest extends BaseTest {
     }
   }
 
+  /**
+   * isExchangeTransaction
+   */
+  @Test
+  public void isExchangeTransactionPush() {
+    try {
+      TransactionCapsule transactionCap = new TransactionCapsule(
+          ExchangeTransactionContract.newBuilder()
+              .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS_SECOND)))
+              .setExchangeId(1)
+              .setTokenId(ByteString.copyFrom("_".getBytes()))
+              .setQuant(1)
+              .setExpected(1)
+              .build(), ContractType.ExchangeTransactionContract);
+      dbManager.pushTransaction(transactionCap);
+
+    } catch (Exception e) {
+      Assert.assertTrue(true);
+    }
+  }
+
+  @Test
+  public void isExchangeTransactionGenerate() {
+    try {
+
+      String key = PublicMethod.getRandomPrivateKey();
+      byte[] privateKey = ByteArray.fromHexString(key);
+      final ECKey ecKey = ECKey.fromPrivate(privateKey);
+      byte[] address = ecKey.getAddress();
+      WitnessCapsule witnessCapsule = new WitnessCapsule(ByteString.copyFrom(address));
+
+      String OWNER_ADDRESS_SECOND =
+          Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
+      TransactionCapsule transactionCap = new TransactionCapsule(
+          ExchangeTransactionContract.newBuilder()
+              .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS_SECOND)))
+              .setExchangeId(1)
+              .setTokenId(ByteString.copyFrom("_".getBytes()))
+              .setQuant(1)
+              .setExpected(1)
+              .build(), ContractType.ExchangeTransactionContract);
+      dbManager.getPendingTransactions().add(transactionCap);
+      Param param = Param.getInstance();
+      Miner miner = param.new Miner(privateKey, witnessCapsule.getAddress(),
+          witnessCapsule.getAddress());
+      BlockCapsule blockCapsule = dbManager
+          .generateBlock(miner, 1533529947843L, System.currentTimeMillis() + 1000);
+    } catch (Exception e) {
+      Assert.assertTrue(false);
+    }
+  }
+
+  @Test
+  public void rejectExchangeTransaction() {
+    try {
+      long maintenanceTimeInterval = dbManager.getDynamicPropertiesStore()
+          .getMaintenanceTimeInterval();
+      long hardForkTime =
+          ((ForkBlockVersionEnum.VERSION_4_0_1.getHardForkTime() - 1) / maintenanceTimeInterval + 1)
+              * maintenanceTimeInterval;
+      dbManager.getDynamicPropertiesStore()
+          .saveLatestBlockHeaderTimestamp(hardForkTime + 1);
+      byte[] stats = new byte[27];
+      Arrays.fill(stats, (byte) 1);
+      dbManager.getDynamicPropertiesStore()
+          .statsByVersion(ForkBlockVersionEnum.VERSION_4_8_0_1.getValue(), stats);
+      boolean flag = ForkController.instance().pass(ForkBlockVersionEnum.VERSION_4_8_0_1);
+      Assert.assertTrue(flag);
+      String OWNER_ADDRESS_SECOND =
+          Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
+      TransactionCapsule transactionCap = new TransactionCapsule(
+          ExchangeTransactionContract.newBuilder()
+              .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS_SECOND)))
+              .setExchangeId(1)
+              .setTokenId(ByteString.copyFrom("_".getBytes()))
+              .setQuant(1)
+              .setExpected(1)
+              .build(), ContractType.ExchangeTransactionContract);
+      Method rejectExchangeTransaction = Manager.class.getDeclaredMethod(
+          "rejectExchangeTransaction", org.tron.protos.Protocol.Transaction.class);
+      rejectExchangeTransaction.setAccessible(true);
+      Exception ex = assertThrows(InvocationTargetException.class, () -> {
+        rejectExchangeTransaction.invoke(dbManager, transactionCap.getInstance());
+      });
+    } catch (Exception e) {
+      fail();
+    }
+  }
+
+  /**
+   * Hardened mode: ExchangeTransaction succeeds and routes through SafeExchangeProcessor.
+   */
+  @Test
+  public void hardenedSuccessExchangeTransaction() {
+    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
+    dbManager.getDynamicPropertiesStore().saveAllowHardenExchangeCalculation(1);
+    InitExchangeSameTokenNameActive();
+    long exchangeId = 1;
+    String tokenId = "_";
+    long quant = 100_000_000L;
+
+    byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_SECOND);
+    AccountCapsule before = dbManager.getAccountStore().get(ownerAddress);
+    long initialBalance = before.getBalance();
+
+    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_SECOND, exchangeId, tokenId, quant, 1));
+
+    TransactionResultCapsule ret = new TransactionResultCapsule();
+    try {
+      actuator.validate();
+      actuator.execute(ret);
+      Assert.assertEquals(code.SUCESS, ret.getInstance().getRet());
+      AccountCapsule after = dbManager.getAccountStore().get(ownerAddress);
+      Assert.assertEquals(initialBalance - quant, after.getBalance());
+      Assert.assertTrue("Hardened tx must produce positive received amount",
+          ret.getExchangeReceivedAmount() > 0);
+    } catch (Exception e) {
+      Assert.fail("Hardened transaction must succeed: " + e.getMessage());
+    } finally {
+      dbManager.getExchangeStore().delete(ByteArray.fromLong(1L));
+      dbManager.getExchangeStore().delete(ByteArray.fromLong(2L));
+      dbManager.getExchangeV2Store().delete(ByteArray.fromLong(1L));
+      dbManager.getExchangeV2Store().delete(ByteArray.fromLong(2L));
+      dbManager.getDynamicPropertiesStore().saveAllowHardenExchangeCalculation(0);
+    }
+  }
+
+  /**
+   * Hardened mode: corrupt pool with near-MAX balance triggers ArithmeticException
+   * from addExact. Demonstrates the overflow-detection guard fires and is not
+   * silently swallowed.
+   */
+  @Test
+  public void hardenedExecuteOverflowThrowsArithmeticException() throws Exception {
+    dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
+    dbManager.getDynamicPropertiesStore().saveAllowHardenExchangeCalculation(1);
+    InitExchangeSameTokenNameActive();
+
+    long exchangeId = 1;
+    // Corrupt pool to near-MAX TRX so addExact overflows when buying.
+    ExchangeCapsule pool = dbManager.getExchangeV2Store().get(ByteArray.fromLong(exchangeId));
+    pool.setBalance(Long.MAX_VALUE - 5L, 10_000_000L);
+    dbManager.getExchangeV2Store().put(pool.createDbKey(), pool);
+
+    String tokenId = "_";
+    long quant = 100L;
+    ExchangeTransactionActuator actuator = new ExchangeTransactionActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
+        OWNER_ADDRESS_SECOND, exchangeId, tokenId, quant, 1));
+
+    try {
+      // addExact throws ArithmeticException, which is wrapped into ContractExeException.
+      Assert.assertThrows(ContractExeException.class,
+          () -> actuator.execute(new TransactionResultCapsule()));
+    } finally {
+      dbManager.getExchangeStore().delete(ByteArray.fromLong(1L));
+      dbManager.getExchangeStore().delete(ByteArray.fromLong(2L));
+      dbManager.getExchangeV2Store().delete(ByteArray.fromLong(1L));
+      dbManager.getExchangeV2Store().delete(ByteArray.fromLong(2L));
+      dbManager.getDynamicPropertiesStore().saveAllowHardenExchangeCalculation(0);
+    }
+  }
 }

@@ -55,6 +55,7 @@ import org.tron.common.crypto.jce.ECKeyFactory;
 import org.tron.common.crypto.jce.ECKeyPairGenerator;
 import org.tron.common.crypto.jce.TronCastleProvider;
 import org.tron.common.utils.BIUtil;
+import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 
 @Slf4j(topic = "crypto")
@@ -285,7 +286,7 @@ public class ECKey implements Serializable, SignInterface {
    * @return -
    */
   public static ECKey fromPrivate(byte[] privKeyBytes) {
-    if (Objects.isNull(privKeyBytes)) {
+    if (ByteArray.isEmpty(privKeyBytes)) {
       return null;
     }
     return fromPrivate(new BigInteger(1, privKeyBytes));

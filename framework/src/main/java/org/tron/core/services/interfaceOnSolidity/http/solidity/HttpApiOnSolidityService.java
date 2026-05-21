@@ -3,8 +3,6 @@ package org.tron.core.services.interfaceOnSolidity.http.solidity;
 import java.util.EnumSet;
 import javax.servlet.DispatcherType;
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.jetty.server.ConnectionLimit;
-import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
@@ -46,6 +44,7 @@ import org.tron.core.services.interfaceOnSolidity.http.GetMerkleTreeVoucherInfoO
 import org.tron.core.services.interfaceOnSolidity.http.GetNodeInfoOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetNowBlockOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetPaginatedAssetIssueListOnSolidityServlet;
+import org.tron.core.services.interfaceOnSolidity.http.GetPaginatedNowWitnessListOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetRewardOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetTransactionCountByBlockNumOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetTransactionInfoByBlockNumOnSolidityServlet;
@@ -60,7 +59,6 @@ import org.tron.core.services.interfaceOnSolidity.http.ScanShieldedTRC20NotesByI
 import org.tron.core.services.interfaceOnSolidity.http.ScanShieldedTRC20NotesByOvkOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.TriggerConstantContractOnSolidityServlet;
 
-
 @Slf4j(topic = "API")
 public class HttpApiOnSolidityService extends HttpService {
 
@@ -73,6 +71,8 @@ public class HttpApiOnSolidityService extends HttpService {
   private GetTransactionInfoByIdOnSolidityServlet getTransactionInfoByIdOnSolidityServlet;
   @Autowired
   private ListWitnessesOnSolidityServlet listWitnessesOnSolidityServlet;
+  @Autowired
+  private GetPaginatedNowWitnessListOnSolidityServlet getPaginatedNowWitnessListOnSolidityServlet;
   @Autowired
   private GetAssetIssueListOnSolidityServlet getAssetIssueListOnSolidityServlet;
   @Autowired
@@ -181,6 +181,7 @@ public class HttpApiOnSolidityService extends HttpService {
     port = Args.getInstance().getSolidityHttpPort();
     enable = isFullNode() && Args.getInstance().isSolidityNodeHttpEnable();
     contextPath = "/";
+    maxRequestSize = Args.getInstance().getHttpMaxMessageSize();
   }
 
   @Override
@@ -189,6 +190,8 @@ public class HttpApiOnSolidityService extends HttpService {
     context.addServlet(new ServletHolder(accountOnSolidityServlet), "/walletsolidity/getaccount");
     context.addServlet(new ServletHolder(listWitnessesOnSolidityServlet),
         "/walletsolidity/listwitnesses");
+    context.addServlet(new ServletHolder(getPaginatedNowWitnessListOnSolidityServlet),
+            "/walletsolidity/getpaginatednowwitnesslist");
     context.addServlet(new ServletHolder(getAssetIssueListOnSolidityServlet),
         "/walletsolidity/getassetissuelist");
     context.addServlet(new ServletHolder(getPaginatedAssetIssueListOnSolidityServlet),

@@ -110,7 +110,8 @@ public class LiteFnQueryHttpFilter implements Filter {
   @Override
   public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse,
                        FilterChain filterChain) throws IOException, ServletException {
-    String requestPath = ((HttpServletRequest) servletRequest).getRequestURI();
+    String contextPath = ((HttpServletRequest) servletRequest).getContextPath();
+    String requestPath = contextPath + ((HttpServletRequest) servletRequest).getServletPath();
     if (chainBaseManager.isLiteNode()
             && !CommonParameter.getInstance().openHistoryQueryWhenLiteFN
             && filterPaths.contains(requestPath)) {

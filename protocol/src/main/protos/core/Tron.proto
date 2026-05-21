@@ -6,10 +6,9 @@ import "core/contract/common.proto";
 
 package protocol;
 
-
 option java_package = "org.tron.protos"; //Specify the name of the package that generated the Java file
 option java_outer_classname = "Protocol"; //Specify the class name of the generated Java file
-option go_package = "github.com/tronprotocol/grpc-gateway/core";
+option go_package = "github.com/tronprotocol/protocol/core";
 
 enum AccountType {
   Normal = 0;
@@ -132,7 +131,7 @@ message ChainParameters {
 message Account {
   /* frozen balance */
   message Frozen {
-    int64 frozen_balance = 1; // the frozen trx balance
+    int64 frozen_balance = 1; // the frozen trx or asset balance
     int64 expire_time = 2; // the expire time
   }
   // account nick name
@@ -601,7 +600,7 @@ enum ReasonCode {
   CONNECT_FAIL = 0x21;
   TOO_MANY_PEERS_WITH_SAME_IP = 0x22;
   LIGHT_NODE_SYNC_FAIL = 0x23;
-  BELOW_THAN_ME = 0X24;
+  BELOW_THAN_ME = 0x24;
   NOT_WITNESS = 0x25;
   NO_SUCH_MESSAGE = 0x26;
   UNKNOWN = 0xFF;

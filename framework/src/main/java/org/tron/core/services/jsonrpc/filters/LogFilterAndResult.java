@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 import lombok.Getter;
 import org.tron.core.Wallet;
-import org.tron.core.exception.JsonRpcInvalidParamsException;
+import org.tron.core.exception.jsonrpc.JsonRpcInvalidParamsException;
 import org.tron.core.services.jsonrpc.TronJsonRpc.FilterRequest;
 import org.tron.core.services.jsonrpc.TronJsonRpc.LogFilterElement;
 

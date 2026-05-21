@@ -29,6 +29,8 @@ public class HistoryEventService {
   @Autowired
   private Manager manager;
 
+  private volatile boolean isClosed = false;
+
   private volatile Thread thread;
 
   public void init() {
@@ -44,8 +46,15 @@ public class HistoryEventService {
   }
 
   public void close() {
+    isClosed = true;
     if (thread != null) {
-      thread.interrupt();
+      try {
+        thread.interrupt();
+        thread.join(1000);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        logger.warn("Wait close timeout, {}", e.getMessage());
+      }
     }
     logger.info("History event service close.");
   }
@@ -54,7 +63,10 @@ public class HistoryEventService {
     try {
       long tmp = instance.getStartSyncBlockNum();
       long endNum = manager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum();
-      while (tmp <= endNum) {
+      while (tmp < endNum) {
+        if (thread.isInterrupted() || isClosed) {
+          throw new InterruptedException();
+        }
         if (instance.isUseNativeQueue()) {
           Thread.sleep(20);
         } else if (instance.isBusy()) {
@@ -67,7 +79,8 @@ public class HistoryEventService {
         tmp++;
         endNum = manager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum();
       }
-      initEventService(manager.getChainBaseManager().getBlockIdByNum(endNum));
+      long startNum = endNum == 0 ? 0 : endNum - 1;
+      initEventService(manager.getChainBaseManager().getBlockIdByNum(startNum));
     } catch (InterruptedException e1) {
       logger.warn("History event service interrupted.");
       Thread.currentThread().interrupt();

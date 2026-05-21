@@ -22,7 +22,7 @@ public class SaplingNoteTest {
 
   @BeforeClass
   public static void init() {
-    Args.setFullNodeAllowShieldedTransaction(true);
+    Args.getInstance().setAllowShieldedTransactionApi(true);
     // Args.getInstance().setAllowShieldedTransaction(1);
     ZksnarkInitService.librustzcashInitZksnarkParams();
   }

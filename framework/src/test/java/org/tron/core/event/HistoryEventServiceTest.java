@@ -23,7 +23,7 @@ public class HistoryEventServiceTest {
 
   HistoryEventService historyEventService = new HistoryEventService();
 
-  @Test
+  @Test(timeout = 60_000)
   public void test() throws Exception {
     EventPluginLoader instance = mock(EventPluginLoader.class);
     Mockito.when(instance.isUseNativeQueue()).thenReturn(true);
@@ -43,6 +43,7 @@ public class HistoryEventServiceTest {
     RealtimeEventService realtimeEventService = new RealtimeEventService();
     BlockEventLoad blockEventLoad = new BlockEventLoad();
     ReflectUtils.setFieldValue(blockEventLoad, "instance", instance);
+    ReflectUtils.setFieldValue(blockEventLoad, "manager", manager);
 
     ReflectUtils.setFieldValue(historyEventService, "solidEventService", solidEventService);
     ReflectUtils.setFieldValue(historyEventService, "realtimeEventService", realtimeEventService);

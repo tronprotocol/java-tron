@@ -14,7 +14,7 @@ import org.tron.common.bloom.Bloom;
 import org.tron.common.crypto.Hash;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.core.config.args.Args;
-import org.tron.core.exception.JsonRpcInvalidParamsException;
+import org.tron.core.exception.jsonrpc.JsonRpcInvalidParamsException;
 import org.tron.core.services.jsonrpc.TronJsonRpc.FilterRequest;
 import org.tron.protos.Protocol.TransactionInfo.Log;
 
@@ -50,6 +50,10 @@ public class LogFilter {
       withContractAddress(addressToByteArray((String) fr.getAddress()));
 
     } else if (fr.getAddress() instanceof ArrayList) {
+      int maxAddressSize = Args.getInstance().getJsonRpcMaxAddressSize();
+      if (maxAddressSize > 0 && ((ArrayList<?>) fr.getAddress()).size() > maxAddressSize) {
+        throw new JsonRpcInvalidParamsException("exceed max addresses: " + maxAddressSize);
+      }
       List<byte[]> addr = new ArrayList<>();
       int i = 0;
       for (Object s : (ArrayList) fr.getAddress()) {

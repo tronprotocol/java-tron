@@ -1,28 +1,47 @@
 ---
 name: Request a feature
 about: Suggest an idea for this project
-title: ''
+title: '[Feature]'
 labels: 'type:feature'
 assignees: ''
 
 ---
-# Background
 
-# Rationale
+# Summary
+<!-- Provide a concise description of the problem and the proposed solution.-->
 
-Why should this feature exist?
+# Problem
+### Motivation
+<!-- Describe the context or motivation if necessary. -->
 
-What are the use-cases?
+### Current State
+<!-- Describe the current behavior of the system. -->
 
-# Specification
+### Limitations or Risks
+<!-- Explain the limitations, risks, or inefficiencies. -->
 
-# Test Specification
+# Proposed Solution
 
-# Scope Of Impact
+### Proposed Design
+<!-- Describe the proposed solution at a high level. Implementation details are optional but encouraged if relevant.-->
 
+### Key Changes
+<!-- List the main areas affected by this proposal, such as Module(s), Configuration and API. -->
 
-# Implementation
+# Impact
+<!-- Assess the expected impact of this change, such as Security, Stability, Performance, Developer Experience   -->
 
-Do you have ideas regarding the implementation of this feature?
+# Compatibility
+<!--
+*   Breaking Change: Yes / No
+*   Default Behavior Change:
+*   Migration Required:
+Provide details if any of the above is applicable.
+-->
 
-Are you willing to implement this feature?
+# References (Optional)
+<!-- TIPs, papers, related issues, prior art -->
+
+# Additional Notes
+- Do you have ideas regarding implementation? Yes / No
+- Are you willing to implement this feature? Yes / No

@@ -4,6 +4,8 @@ import static org.tron.core.Constant.CREATE_ACCOUNT_TRANSACTION_MAX_BYTE_SIZE;
 import static org.tron.core.Constant.CREATE_ACCOUNT_TRANSACTION_MIN_BYTE_SIZE;
 import static org.tron.core.Constant.DYNAMIC_ENERGY_INCREASE_FACTOR_RANGE;
 import static org.tron.core.Constant.DYNAMIC_ENERGY_MAX_FACTOR_RANGE;
+import static org.tron.core.Constant.MAX_PROPOSAL_EXPIRE_TIME;
+import static org.tron.core.Constant.MIN_PROPOSAL_EXPIRE_TIME;
 import static org.tron.core.config.Parameter.ChainConstant.ONE_YEAR_BLOCK_NUMBERS;
 
 import org.tron.common.utils.ForkController;
@@ -354,7 +356,8 @@ public class ProposalUtil {
         break;
       }
       case ALLOW_MARKET_TRANSACTION: {
-        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_1)) {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_1)
+            || forkController.pass(ForkBlockVersionEnum.VERSION_4_8_1)) {
           throw new ContractValidateException(
               "Bad chain parameter id [ALLOW_MARKET_TRANSACTION]");
         }
@@ -839,6 +842,105 @@ public class ProposalUtil {
         }
         break;
       }
+      case ALLOW_TVM_SELFDESTRUCT_RESTRICTION: {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_8_1)) {
+          throw new ContractValidateException(
+              "Bad chain parameter id [ALLOW_TVM_SELFDESTRUCT_RESTRICTION]");
+        }
+        if (dynamicPropertiesStore.allowTvmSelfdestructRestriction()) {
+          throw new ContractValidateException(
+              "[ALLOW_TVM_SELFDESTRUCT_RESTRICTION] has been valid, no need to propose again");
+        }
+        if (value != 1) {
+          throw new ContractValidateException(
+              "This value[ALLOW_TVM_SELFDESTRUCT_RESTRICTION] is only allowed to be 1");
+        }
+        break;
+      }
+      case PROPOSAL_EXPIRE_TIME: {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_8_1)) {
+          throw new ContractValidateException(
+              "Bad chain parameter id [PROPOSAL_EXPIRE_TIME]");
+        }
+        if (value <= MIN_PROPOSAL_EXPIRE_TIME
+            || value >= MAX_PROPOSAL_EXPIRE_TIME) {
+          throw new ContractValidateException(
+              "This value[PROPOSAL_EXPIRE_TIME] is only allowed to be greater than "
+                  + MIN_PROPOSAL_EXPIRE_TIME + " and less than "
+                  + MAX_PROPOSAL_EXPIRE_TIME + "!");
+        }
+        break;
+      }
+      case ALLOW_TVM_OSAKA: {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_8_2)) {
+          throw new ContractValidateException(
+              "Bad chain parameter id [ALLOW_TVM_OSAKA]");
+        }
+        if (dynamicPropertiesStore.getAllowTvmOsaka() == 1) {
+          throw new ContractValidateException(
+              "[ALLOW_TVM_OSAKA] has been valid, no need to propose again");
+        }
+        if (value != 1) {
+          throw new ContractValidateException(
+              "This value[ALLOW_TVM_OSAKA] is only allowed to be 1");
+        }
+        break;
+      }
+      case ALLOW_TVM_PRAGUE: {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_8_2)) {
+          throw new ContractValidateException(
+              "Bad chain parameter id [ALLOW_TVM_PRAGUE]");
+        }
+        // The deployed BlockHashHistory bytecode contains PUSH0 (0x5f), which
+        // is itself gated on ALLOW_TVM_SHANGHAI at execution time. Refuse the
+        // proposal until Shanghai is enacted so an out-of-order activation
+        // can't leave a contract whose every STATICCALL hits InvalidOpcode.
+        if (dynamicPropertiesStore.getAllowTvmShangHai() != 1) {
+          throw new ContractValidateException(
+              "[ALLOW_TVM_PRAGUE] requires [ALLOW_TVM_SHANGHAI] to be enacted first");
+        }
+        if (dynamicPropertiesStore.getAllowTvmPrague() == 1) {
+          throw new ContractValidateException(
+              "[ALLOW_TVM_PRAGUE] has been valid, no need to propose again");
+        }
+        if (value != 1) {
+          throw new ContractValidateException(
+              "This value[ALLOW_TVM_PRAGUE] is only allowed to be 1");
+        }
+        break;
+      }
+      case ALLOW_HARDEN_RESOURCE_CALCULATION: {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_8_2)) {
+          throw new ContractValidateException(
+              "Bad chain parameter id [ALLOW_HARDEN_RESOURCE_CALCULATION]");
+        }
+        if (dynamicPropertiesStore.getAllowHardenResourceCalculation() == 1) {
+          throw new ContractValidateException(
+              "[ALLOW_HARDEN_RESOURCE_CALCULATION] has been valid, "
+                  + "no need to propose again");
+        }
+        if (value != 1) {
+          throw new ContractValidateException(
+              "This value[ALLOW_HARDEN_RESOURCE_CALCULATION] is only allowed to be 1");
+        }
+        break;
+      }
+      case ALLOW_HARDEN_EXCHANGE_CALCULATION: {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_8_2)) {
+          throw new ContractValidateException(
+              "Bad chain parameter id [ALLOW_HARDEN_EXCHANGE_CALCULATION]");
+        }
+        if (value != 0 && value != 1) {
+          throw new ContractValidateException(
+              "This value[ALLOW_HARDEN_EXCHANGE_CALCULATION] is only allowed to be 0 or 1");
+        }
+        if (dynamicPropertiesStore.getAllowHardenExchangeCalculation() == value) {
+          throw new ContractValidateException(
+              "[ALLOW_HARDEN_EXCHANGE_CALCULATION] has been set to " + value
+                  + ", no need to propose again");
+        }
+        break;
+      }
       default:
         break;
     }
@@ -921,8 +1023,13 @@ public class ProposalUtil {
     ALLOW_TVM_CANCUN(83), // 0, 1
     ALLOW_STRICT_MATH(87), // 0, 1
     CONSENSUS_LOGIC_OPTIMIZATION(88), // 0, 1
-    ALLOW_TVM_BLOB(89); // 0, 1
-
+    ALLOW_TVM_BLOB(89), // 0, 1
+    PROPOSAL_EXPIRE_TIME(92), // (0, 31536003000)
+    ALLOW_TVM_SELFDESTRUCT_RESTRICTION(94), // 0, 1
+    ALLOW_TVM_PRAGUE(95), // 0, 1
+    ALLOW_TVM_OSAKA(96), // 0, 1
+    ALLOW_HARDEN_RESOURCE_CALCULATION(97), // 0, 1
+    ALLOW_HARDEN_EXCHANGE_CALCULATION(98); // 0, 1
     private long code;
 
     ProposalType(long code) {

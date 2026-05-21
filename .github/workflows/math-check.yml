@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Check for java.lang.Math usage
         id: check-math
@@ -55,14 +55,14 @@ jobs:
 
       - name: Upload findings
         if: steps.check-math.outputs.math_found == 'true'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: math-usage-report
           path: math_usage.txt
 
       - name: Create comment
         if: github.event_name == 'pull_request' && steps.check-math.outputs.math_found == 'true'
-        uses: actions/github-script@v6
+        uses: actions/github-script@v8
         with:
           script: |
             const fs = require('fs');

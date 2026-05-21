@@ -5,6 +5,7 @@ import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.DecodeUtil;
+import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.BlockCapsule;
@@ -156,17 +157,17 @@ public class HelloMessage extends TronMessage {
 
   public boolean valid() {
     byte[] genesisBlockByte = this.helloMessage.getGenesisBlockId().getHash().toByteArray();
-    if (genesisBlockByte.length == 0) {
+    if (genesisBlockByte.length != Sha256Hash.LENGTH) {
       return false;
     }
 
     byte[] solidBlockId = this.helloMessage.getSolidBlockId().getHash().toByteArray();
-    if (solidBlockId.length == 0) {
+    if (solidBlockId.length != Sha256Hash.LENGTH) {
       return false;
     }
 
     byte[] headBlockId = this.helloMessage.getHeadBlockId().getHash().toByteArray();
-    if (headBlockId.length == 0) {
+    if (headBlockId.length != Sha256Hash.LENGTH) {
       return false;
     }
 

@@ -19,9 +19,9 @@ import org.tron.common.utils.client.utils.DataWord;
 import org.tron.core.Wallet;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.core.exception.JsonRpcInvalidParamsException;
 import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.VMIllegalException;
+import org.tron.core.exception.jsonrpc.JsonRpcInvalidParamsException;
 import org.tron.core.services.NodeInfoService;
 import org.tron.core.services.jsonrpc.TronJsonRpcImpl;
 import org.tron.core.vm.config.ConfigLoader;
@@ -209,7 +209,8 @@ public class Create2Test extends VMTestBase {
     NodeInfoService nodeInfoService;
     nodeInfoService = context.getBean(NodeInfoService.class);
     Wallet wallet = context.getBean(Wallet.class);
-    tronJsonRpc = new TronJsonRpcImpl(nodeInfoService, wallet, manager);
+    tronJsonRpc = new TronJsonRpcImpl(nodeInfoService, wallet);
+    tronJsonRpc.setManager(manager);
     try {
       String res =
           tronJsonRpc.getStorageAt(ByteArray.toHexString(actualContract), "0", "latest");

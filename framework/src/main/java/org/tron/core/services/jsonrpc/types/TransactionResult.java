@@ -5,9 +5,9 @@ import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getTransactionAmount
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.google.protobuf.ByteString;
-import java.util.Arrays;
 import lombok.Getter;
 import lombok.ToString;
+import org.tron.common.crypto.Rsv;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.BlockCapsule;
@@ -65,16 +65,10 @@ public class TransactionResult {
     }
 
     ByteString signature = tx.getSignature(0); // r[32] + s[32] + v[1]
-    byte[] signData = signature.toByteArray();
-    byte[] rByte = Arrays.copyOfRange(signData, 0, 32);
-    byte[] sByte = Arrays.copyOfRange(signData, 32, 64);
-    byte vByte = signData[64];
-    if (vByte < 27) {
-      vByte += 27;
-    }
-    v = ByteArray.toJsonHex(vByte);
-    r = ByteArray.toJsonHex(rByte);
-    s = ByteArray.toJsonHex(sByte);
+    Rsv rsv = Rsv.fromSignature(signature.toByteArray());
+    r = ByteArray.toJsonHex(rsv.getR());
+    s = ByteArray.toJsonHex(rsv.getS());
+    v = ByteArray.toJsonHex(rsv.getV());
   }
 
   private String parseInput(Transaction tx) {
@@ -104,7 +98,7 @@ public class TransactionResult {
     TransactionCapsule capsule = new TransactionCapsule(tx);
     byte[] txId = capsule.getTransactionId().getBytes();
     hash = ByteArray.toJsonHex(txId);
-    nonce = ByteArray.toJsonHex(new byte[8]); // no value
+    nonce = "0x0"; // no value, QUANTITY type per Ethereum JSON-RPC spec
     blockHash = ByteArray.toJsonHex(blockCapsule.getBlockId().getBytes());
     blockNumber = ByteArray.toJsonHex(blockCapsule.getNum());
     transactionIndex = ByteArray.toJsonHex(index);
@@ -139,7 +133,7 @@ public class TransactionResult {
     TransactionCapsule capsule = new TransactionCapsule(tx);
     byte[] txId = capsule.getTransactionId().getBytes();
     hash = ByteArray.toJsonHex(txId);
-    nonce = ByteArray.toJsonHex(new byte[8]); // no value
+    nonce = "0x0"; // no value, QUANTITY type per Ethereum JSON-RPC spec
     blockHash = "0x";
     blockNumber = "0x";
     transactionIndex = "0x";

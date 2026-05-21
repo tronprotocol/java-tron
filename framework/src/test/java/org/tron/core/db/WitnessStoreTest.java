@@ -9,7 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.junit.Test;
 import org.tron.common.BaseTest;
-import org.tron.core.Constant;
+import org.tron.common.TestConstants;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.store.WitnessStore;
@@ -18,7 +18,7 @@ import org.tron.core.store.WitnessStore;
 public class WitnessStoreTest extends BaseTest {
 
   static {
-    Args.setParam(new String[]{"-d", dbPath()}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"-d", dbPath()}, TestConstants.TEST_CONF);
   }
 
   @Resource
@@ -62,12 +62,12 @@ public class WitnessStoreTest extends BaseTest {
     List<ByteString> witnessAddress = allWitnesses.stream().map(WitnessCapsule::getAddress)
         .collect(Collectors.toList());
     this.witnessStore.sortWitness(witnessAddress, false);
-    this.witnessStore.sortWitnesses(allWitnesses, false);
+    WitnessStore.sortWitnesses(allWitnesses, false);
     Assert.assertEquals(witnessAddress, allWitnesses.stream().map(WitnessCapsule::getAddress)
         .collect(Collectors.toList()));
     List<ByteString> pre = new ArrayList<>(witnessAddress);
     this.witnessStore.sortWitness(witnessAddress, true);
-    this.witnessStore.sortWitnesses(allWitnesses, true);
+    WitnessStore.sortWitnesses(allWitnesses, true);
     Assert.assertEquals(witnessAddress, allWitnesses.stream().map(WitnessCapsule::getAddress)
         .collect(Collectors.toList()));
     Assert.assertNotEquals(pre, witnessAddress);

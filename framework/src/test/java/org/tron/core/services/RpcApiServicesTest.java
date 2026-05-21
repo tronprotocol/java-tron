@@ -1,6 +1,7 @@
 package org.tron.core.services;
 
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThrows;
 import static org.tron.common.parameter.CommonParameter.getInstance;
 import static org.tron.common.utils.client.WalletClient.decodeFromBase58Check;
 import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferContract;
@@ -9,14 +10,21 @@ import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import io.grpc.Status;
+import io.grpc.StatusRuntimeException;
 import java.io.IOException;
 import java.util.Objects;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.FixMethodOrder;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.junit.rules.Timeout;
 import org.junit.runners.MethodSorters;
 import org.tron.api.DatabaseGrpc;
 import org.tron.api.DatabaseGrpc.DatabaseBlockingStub;
@@ -46,22 +54,21 @@ import org.tron.api.WalletGrpc;
 import org.tron.api.WalletGrpc.WalletBlockingStub;
 import org.tron.api.WalletSolidityGrpc;
 import org.tron.api.WalletSolidityGrpc.WalletSolidityBlockingStub;
-import org.tron.common.application.Application;
-import org.tron.common.application.ApplicationFactory;
+import org.tron.common.ClassLevelAppContextFixture;
+import org.tron.common.TestConstants;
 import org.tron.common.application.TronApplicationContext;
+import org.tron.common.es.ExecutorServiceManager;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.PublicMethod;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.TimeoutInterceptor;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
-import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
-import org.tron.core.services.interfaceOnPBFT.RpcApiServiceOnPBFT;
-import org.tron.core.services.interfaceOnSolidity.RpcApiServiceOnSolidity;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
@@ -111,7 +118,13 @@ import org.tron.protos.contract.WitnessContract.WitnessUpdateContract;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class RpcApiServicesTest {
+
   private static TronApplicationContext context;
+  private static final ClassLevelAppContextFixture APP_FIXTURE =
+      new ClassLevelAppContextFixture();
+  private static ManagedChannel channelFull = null;
+  private static ManagedChannel channelPBFT = null;
+  private static ManagedChannel channelSolidity = null;
   private static DatabaseBlockingStub databaseBlockingStubFull = null;
   private static DatabaseBlockingStub databaseBlockingStubSolidity = null;
   private static DatabaseBlockingStub databaseBlockingStubPBFT = null;
@@ -120,6 +133,8 @@ public class RpcApiServicesTest {
   private static WalletSolidityBlockingStub blockingStubPBFT = null;
   @ClassRule
   public static TemporaryFolder temporaryFolder = new TemporaryFolder();
+  @Rule
+  public Timeout timeout = new Timeout(30, TimeUnit.SECONDS);
   private static ByteString ownerAddress;
   private static ByteString sk;
   private static ByteString ask;
@@ -130,9 +145,16 @@ public class RpcApiServicesTest {
   private static ByteString ivk;
   private static ByteString d;
 
+  private static ExecutorService executorService;
+  private static final String executorName = "rpc-test-executor";
+
   @BeforeClass
   public static void init() throws IOException {
-    Args.setParam(new String[]{"-d", temporaryFolder.newFolder().toString()}, Constant.TEST_CONF);
+    Args.setParam(new String[] {"-d", temporaryFolder.newFolder().toString()},
+        TestConstants.TEST_CONF);
+    getInstance().allowShieldedTransactionApi = true;
+    Assert.assertEquals(5, getInstance().getRpcMaxRstStream());
+    Assert.assertEquals(10, getInstance().getRpcSecondsPerWindow());
     String OWNER_ADDRESS = Wallet.getAddressPreFixString()
         + "548794500882809695a8a687866e76d4271a1abc";
     getInstance().setRpcEnable(true);
@@ -144,23 +166,32 @@ public class RpcApiServicesTest {
     getInstance().setMetricsPrometheusPort(PublicMethod.chooseRandomPort());
     getInstance().setMetricsPrometheusEnable(true);
     getInstance().setP2pDisable(true);
-    String fullNode = String.format("%s:%d", getInstance().getNodeLanIp(),
+    String fullNode = String.format("%s:%d", Constant.LOCAL_HOST,
         getInstance().getRpcPort());
-    String solidityNode = String.format("%s:%d", getInstance().getNodeLanIp(),
+    String solidityNode = String.format("%s:%d", Constant.LOCAL_HOST,
         getInstance().getRpcOnSolidityPort());
-    String pBFTNode = String.format("%s:%d", getInstance().getNodeLanIp(),
+    String pBFTNode = String.format("%s:%d", Constant.LOCAL_HOST,
         getInstance().getRpcOnPBFTPort());
 
-    ManagedChannel channelFull = ManagedChannelBuilder.forTarget(fullNode)
+    executorService = ExecutorServiceManager.newFixedThreadPool(
+        executorName, 3);
+
+    channelFull = ManagedChannelBuilder.forTarget(fullNode)
         .usePlaintext()
+        .executor(executorService)
+        .intercept(new TimeoutInterceptor(5000))
         .build();
-    ManagedChannel channelPBFT = ManagedChannelBuilder.forTarget(pBFTNode)
+    channelPBFT = ManagedChannelBuilder.forTarget(pBFTNode)
         .usePlaintext()
+        .executor(executorService)
+        .intercept(new TimeoutInterceptor(5000))
         .build();
-    ManagedChannel channelSolidity = ManagedChannelBuilder.forTarget(solidityNode)
+    channelSolidity = ManagedChannelBuilder.forTarget(solidityNode)
         .usePlaintext()
+        .executor(executorService)
+        .intercept(new TimeoutInterceptor(5000))
         .build();
-    context = new TronApplicationContext(DefaultConfig.class);
+    context = APP_FIXTURE.createContext();
     databaseBlockingStubFull = DatabaseGrpc.newBlockingStub(channelFull);
     databaseBlockingStubSolidity = DatabaseGrpc.newBlockingStub(channelSolidity);
     databaseBlockingStubPBFT = DatabaseGrpc.newBlockingStub(channelPBFT);
@@ -176,13 +207,20 @@ public class RpcApiServicesTest {
     manager.getAccountStore().put(ownerCapsule.createDbKey(), ownerCapsule);
     manager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
     manager.getDynamicPropertiesStore().saveAllowShieldedTRC20Transaction(1);
-    Application appTest = ApplicationFactory.create(context);
-    appTest.startup();
+    APP_FIXTURE.startApp();
   }
 
   @AfterClass
   public static void destroy() {
-    context.close();
+    ClassLevelAppContextFixture.shutdownChannels(channelFull, channelPBFT, channelSolidity);
+
+    if (executorService != null) {
+      ExecutorServiceManager.shutdownAndAwaitTermination(
+          executorService, executorName);
+      executorService = null;
+    }
+
+    APP_FIXTURE.close();
     Args.clearParam();
   }
 
@@ -231,6 +269,14 @@ public class RpcApiServicesTest {
     assertNotNull(blockingStubFull.listWitnesses(message));
     assertNotNull(blockingStubSolidity.listWitnesses(message));
     assertNotNull(blockingStubPBFT.listWitnesses(message));
+  }
+
+  @Test
+  public void testGetPaginatedNowWitnessList() {
+    PaginatedMessage paginatedMessage = PaginatedMessage.newBuilder()
+        .setOffset(0).setLimit(5).build();
+    assertNotNull(blockingStubFull.getPaginatedNowWitnessList(paginatedMessage));
+    assertNotNull(blockingStubSolidity.getPaginatedNowWitnessList(paginatedMessage));
   }
 
   @Test
@@ -493,6 +539,92 @@ public class RpcApiServicesTest {
     assertNotNull(blockingStubFull.scanShieldedTRC20NotesByOvk(message));
     assertNotNull(blockingStubSolidity.scanShieldedTRC20NotesByOvk(message));
     assertNotNull(blockingStubPBFT.scanShieldedTRC20NotesByOvk(message));
+  }
+
+  @Test
+  public void testScanShieldedTRC20NotesByIvkRejectsDeprecatedEvents() {
+    IvkDecryptTRC20Parameters message = IvkDecryptTRC20Parameters.newBuilder()
+        .setStartBlockIndex(1)
+        .setEndBlockIndex(10)
+        .addEvents("mint")
+        .build();
+
+    StatusRuntimeException fullException = assertThrows(StatusRuntimeException.class,
+        () -> blockingStubFull.scanShieldedTRC20NotesByIvk(message));
+    Assert.assertEquals(Status.Code.INVALID_ARGUMENT, fullException.getStatus().getCode());
+    Assert.assertTrue(fullException.getStatus().getDescription()
+        .contains("'events' field is deprecated and no longer supported"));
+
+    StatusRuntimeException solidityException = assertThrows(StatusRuntimeException.class,
+        () -> blockingStubSolidity.scanShieldedTRC20NotesByIvk(message));
+    Assert.assertEquals(Status.Code.INVALID_ARGUMENT, solidityException.getStatus().getCode());
+    Assert.assertTrue(solidityException.getStatus().getDescription()
+        .contains("'events' field is deprecated and no longer supported"));
+
+    StatusRuntimeException pbftException = assertThrows(StatusRuntimeException.class,
+        () -> blockingStubPBFT.scanShieldedTRC20NotesByIvk(message));
+    Assert.assertEquals(Status.Code.INVALID_ARGUMENT, pbftException.getStatus().getCode());
+    Assert.assertTrue(pbftException.getStatus().getDescription()
+        .contains("'events' field is deprecated and no longer supported"));
+  }
+
+  @Test
+  public void testScanShieldedTRC20NotesByOvkRejectsDeprecatedEvents() {
+    OvkDecryptTRC20Parameters message = OvkDecryptTRC20Parameters.newBuilder()
+        .setStartBlockIndex(1)
+        .setEndBlockIndex(10)
+        .addEvents("burn")
+        .build();
+
+    StatusRuntimeException fullException = assertThrows(StatusRuntimeException.class,
+        () -> blockingStubFull.scanShieldedTRC20NotesByOvk(message));
+    Assert.assertEquals(Status.Code.INVALID_ARGUMENT, fullException.getStatus().getCode());
+    Assert.assertTrue(fullException.getStatus().getDescription()
+        .contains("'events' field is deprecated and no longer supported"));
+
+    StatusRuntimeException solidityException = assertThrows(StatusRuntimeException.class,
+        () -> blockingStubSolidity.scanShieldedTRC20NotesByOvk(message));
+    Assert.assertEquals(Status.Code.INVALID_ARGUMENT, solidityException.getStatus().getCode());
+    Assert.assertTrue(solidityException.getStatus().getDescription()
+        .contains("'events' field is deprecated and no longer supported"));
+
+    StatusRuntimeException pbftException = assertThrows(StatusRuntimeException.class,
+        () -> blockingStubPBFT.scanShieldedTRC20NotesByOvk(message));
+    Assert.assertEquals(Status.Code.INVALID_ARGUMENT, pbftException.getStatus().getCode());
+    Assert.assertTrue(pbftException.getStatus().getDescription()
+        .contains("'events' field is deprecated and no longer supported"));
+  }
+
+  @Test
+  public void testScanShieldedTRC20NotesByIvkEmptyEventsPassesGuard() {
+    IvkDecryptTRC20Parameters message = IvkDecryptTRC20Parameters.newBuilder()
+        .setStartBlockIndex(1)
+        .setEndBlockIndex(10)
+        .addEvents("")
+        .build();
+    try {
+      blockingStubFull.scanShieldedTRC20NotesByIvk(message);
+      blockingStubSolidity.scanShieldedTRC20NotesByIvk(message);
+      blockingStubPBFT.scanShieldedTRC20NotesByIvk(message);
+    } catch (StatusRuntimeException e) {
+      Assert.fail("empty events should pass the guard, got: " + e.getStatus());
+    }
+  }
+
+  @Test
+  public void testScanShieldedTRC20NotesByOvkEmptyEventsPassesGuard() {
+    OvkDecryptTRC20Parameters message = OvkDecryptTRC20Parameters.newBuilder()
+        .setStartBlockIndex(1)
+        .setEndBlockIndex(10)
+        .addEvents("")
+        .build();
+    try {
+      blockingStubFull.scanShieldedTRC20NotesByOvk(message);
+      blockingStubSolidity.scanShieldedTRC20NotesByOvk(message);
+      blockingStubPBFT.scanShieldedTRC20NotesByOvk(message);
+    } catch (StatusRuntimeException e) {
+      Assert.fail("empty events should pass the guard, got: " + e.getStatus());
+    }
   }
 
   //  @Test

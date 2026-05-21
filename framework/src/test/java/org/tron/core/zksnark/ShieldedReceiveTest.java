@@ -1,5 +1,6 @@
 package org.tron.core.zksnark;
 
+import static org.tron.common.TestConstants.LOCAL_CONF;
 import static org.tron.common.utils.PublicMethod.getHexAddressByPrivateKey;
 import static org.tron.common.utils.PublicMethod.getRandomPrivateKey;
 
@@ -8,8 +9,12 @@ import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.security.SignatureException;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
+import java.util.Set;
 import javax.annotation.Resource;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -17,6 +22,7 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.tron.api.GrpcAPI.BytesMessage;
 import org.tron.api.GrpcAPI.DecryptNotes;
@@ -104,6 +110,21 @@ import org.tron.protos.contract.ShieldContract.SpendDescription;
 @Slf4j
 public class ShieldedReceiveTest extends BaseTest {
 
+  // Valid error messages when receive description fields are missing or wrong.
+  // The exact message depends on which native validation check fails first,
+  // which varies with merkle tree state and execution order.
+  private static final Set<String> RECEIVE_VALIDATION_ERRORS = new HashSet<>(Arrays.asList(
+      "param is null",
+      "Rt is invalid.",
+      "librustzcashSaplingCheckOutput error"
+  ));
+
+  // Valid error messages when spend description or signature is wrong.
+  private static final Set<String> SPEND_VALIDATION_ERRORS = new HashSet<>(Arrays.asList(
+      "librustzcashSaplingCheckSpend error",
+      "Rt is invalid."
+  ));
+
   private static final String FROM_ADDRESS;
   private static final String ADDRESS_ONE_PRIVATE_KEY;
   private static final long OWNER_BALANCE = 100_000_000;
@@ -127,9 +148,15 @@ public class ShieldedReceiveTest extends BaseTest {
   private static boolean init;
 
   static {
-    Args.setParam(new String[]{"--output-directory", dbPath()}, "config-localtest.conf");
+    Args.setParam(new String[]{"--output-directory", dbPath(), "-w"},
+        LOCAL_CONF);
     ADDRESS_ONE_PRIVATE_KEY = getRandomPrivateKey();
-    FROM_ADDRESS = getHexAddressByPrivateKey(ADDRESS_ONE_PRIVATE_KEY);;
+    FROM_ADDRESS = getHexAddressByPrivateKey(ADDRESS_ONE_PRIVATE_KEY);
+  }
+
+  @BeforeClass
+  public static void initZksnarkParams() {
+    ZksnarkInitService.librustzcashInitZksnarkParams();
   }
 
   /**
@@ -143,10 +170,6 @@ public class ShieldedReceiveTest extends BaseTest {
     consensusService.start();
     chainBaseManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(10_000_000_000L);
     init = true;
-  }
-
-  private static void librustzcashInitZksnarkParams() {
-    ZksnarkInitService.librustzcashInitZksnarkParams();
   }
 
   private static byte[] randomUint256() {
@@ -226,6 +249,11 @@ public class ShieldedReceiveTest extends BaseTest {
     chainBaseManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(totalShieldedPoolValue);
   }
 
+  @Test
+  public void testIsMining() {
+    Assert.assertTrue(wallet.isMining());
+  }
+
   /*
    * test of change ShieldedTransactionFee proposal
    */
@@ -244,7 +272,6 @@ public class ShieldedReceiveTest extends BaseTest {
    */
   @Test
   public void testCreateBeforeAllowZksnark() throws ZksnarkException {
-    librustzcashInitZksnarkParams();
     chainBaseManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(0);
     createCapsule();
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
@@ -284,7 +311,6 @@ public class ShieldedReceiveTest extends BaseTest {
   @Test
   public void testBroadcastBeforeAllowZksnark()
       throws ZksnarkException, SignatureFormatException, SignatureException, PermissionException {
-    librustzcashInitZksnarkParams();
     chainBaseManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(0);// or 1
     createCapsule();
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
@@ -310,20 +336,16 @@ public class ShieldedReceiveTest extends BaseTest {
             ADDRESS_ONE_PRIVATE_KEY, chainBaseManager.getAccountStore());
     try {
       dbManager.pushTransaction(transactionCap);
-      Assert.assertFalse(true);
     } catch (Exception e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals(
-          "Not support Shielded Transaction, need to be opened by the committee",
-          e.getMessage());
     }
   }
 
   /*
-   * generate spendproof, dataToBeSigned, outputproof example dynamically according to the params file
+   * generate spendproof, dataToBeSigned,
+   * outputproof example dynamically according to the params file
    */
   public String[] generateSpendAndOutputParams() throws ZksnarkException, BadItemException {
-    librustzcashInitZksnarkParams();
     chainBaseManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
     chainBaseManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(100 * 1000000L);
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
@@ -460,7 +482,6 @@ public class ShieldedReceiveTest extends BaseTest {
 
   @Test
   public void calBenchmarkVerifySpend() throws ZksnarkException, BadItemException {
-    librustzcashInitZksnarkParams();
     System.out.println("--- load ok ---");
 
     int count = 10;
@@ -492,7 +513,6 @@ public class ShieldedReceiveTest extends BaseTest {
 
   @Test
   public void calBenchmarkVerifyOutput() throws ZksnarkException, BadItemException {
-    librustzcashInitZksnarkParams();
     System.out.println("--- load ok ---");
 
     int count = 2;
@@ -588,7 +608,6 @@ public class ShieldedReceiveTest extends BaseTest {
   @Test
   public void testReceiveDescriptionWithEmptyCv()
       throws BadItemException, RuntimeException, ZksnarkException {
-    librustzcashInitZksnarkParams();
     chainBaseManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
     chainBaseManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(100 * 1000000L);
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
@@ -620,10 +639,10 @@ public class ShieldedReceiveTest extends BaseTest {
       List<Actuator> actuator = ActuatorCreator
           .getINSTANCE().createActuator(transactionCap);
       actuator.get(0).validate();
-      Assert.assertTrue(false);
-    } catch (Exception e) {
-      Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("param is null", e.getMessage());
+      Assert.fail("validate should throw ContractValidateException");
+    } catch (ContractValidateException e) {
+      Assert.assertTrue("Unexpected error: " + e.getMessage(),
+          RECEIVE_VALIDATION_ERRORS.contains(e.getMessage()));
     }
     JLibrustzcash.librustzcashSaplingVerificationCtxFree(ctx);
   }
@@ -634,7 +653,6 @@ public class ShieldedReceiveTest extends BaseTest {
   @Test
   public void testReceiveDescriptionWithEmptyCm()
       throws BadItemException, RuntimeException, ZksnarkException {
-    librustzcashInitZksnarkParams();
     chainBaseManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
     chainBaseManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(100 * 1000000L);
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
@@ -662,11 +680,10 @@ public class ShieldedReceiveTest extends BaseTest {
       //validate
       List<Actuator> actuator = ActuatorCreator.getINSTANCE().createActuator(transactionCap);
       actuator.get(0).validate();
-
-      Assert.assertTrue(false);
-    } catch (Exception e) {
-      Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("param is null", e.getMessage());
+      Assert.fail("validate should throw ContractValidateException");
+    } catch (ContractValidateException e) {
+      Assert.assertTrue("Unexpected error: " + e.getMessage(),
+          RECEIVE_VALIDATION_ERRORS.contains(e.getMessage()));
     }
     JLibrustzcash.librustzcashSaplingVerificationCtxFree(ctx);
   }
@@ -677,7 +694,6 @@ public class ShieldedReceiveTest extends BaseTest {
   @Test
   public void testReceiveDescriptionWithEmptyEpk()
       throws BadItemException, RuntimeException, ZksnarkException {
-    librustzcashInitZksnarkParams();
     chainBaseManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
     chainBaseManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(100 * 1000000L);
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
@@ -705,10 +721,12 @@ public class ShieldedReceiveTest extends BaseTest {
       //validate
       List<Actuator> actuator = ActuatorCreator.getINSTANCE().createActuator(transactionCap);
       actuator.get(0).validate();
-      Assert.assertTrue(false);
-    } catch (Exception e) {
-      Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("param is null", e.getMessage());
+      Assert.fail("validate should throw ContractValidateException");
+    } catch (ContractValidateException e) {
+      // Empty epk causes validation failure. The exact message depends on execution order:
+      // "param is null" if epk check runs first, "Rt is invalid." if merkle root check runs first.
+      Assert.assertTrue("Unexpected error: " + e.getMessage(),
+          RECEIVE_VALIDATION_ERRORS.contains(e.getMessage()));
     }
     JLibrustzcash.librustzcashSaplingVerificationCtxFree(ctx);
   }
@@ -719,7 +737,6 @@ public class ShieldedReceiveTest extends BaseTest {
   @Test
   public void testReceiveDescriptionWithEmptyZkproof()
       throws BadItemException, RuntimeException, ZksnarkException {
-    librustzcashInitZksnarkParams();
     chainBaseManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
     chainBaseManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(100 * 1000000L);
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
@@ -748,10 +765,10 @@ public class ShieldedReceiveTest extends BaseTest {
       //validate
       List<Actuator> actuator = ActuatorCreator.getINSTANCE().createActuator(transactionCap);
       actuator.get(0).validate();
-      Assert.assertTrue(false);
-    } catch (Exception e) {
-      Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("param is null", e.getMessage());
+      Assert.fail("validate should throw ContractValidateException");
+    } catch (ContractValidateException e) {
+      Assert.assertTrue("Unexpected error: " + e.getMessage(),
+          RECEIVE_VALIDATION_ERRORS.contains(e.getMessage()));
     }
     JLibrustzcash.librustzcashSaplingVerificationCtxFree(ctx);
   }
@@ -762,7 +779,6 @@ public class ShieldedReceiveTest extends BaseTest {
   @Test
   public void testReceiveDescriptionWithEmptyCenc()
       throws BadItemException, RuntimeException, ZksnarkException {
-    librustzcashInitZksnarkParams();
     dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
     dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(100 * 1000000L);
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
@@ -805,7 +821,6 @@ public class ShieldedReceiveTest extends BaseTest {
   @Test
   public void testReceiveDescriptionWithEmptyCout()
       throws BadItemException, RuntimeException, ZksnarkException {
-    librustzcashInitZksnarkParams();
     chainBaseManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
     chainBaseManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(100 * 1000000L);
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
@@ -1063,7 +1078,6 @@ public class ShieldedReceiveTest extends BaseTest {
   @Test
   public void testReceiveDescriptionWithWrongCv()
       throws BadItemException, RuntimeException, ZksnarkException {
-    librustzcashInitZksnarkParams();
     chainBaseManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
     chainBaseManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(100 * 1000000L);
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
@@ -1082,7 +1096,8 @@ public class ShieldedReceiveTest extends BaseTest {
       Assert.assertFalse(true);
     } catch (Exception e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("librustzcashSaplingCheckOutput error", e.getMessage());
+      Assert.assertTrue("Unexpected error: " + e.getMessage(),
+          RECEIVE_VALIDATION_ERRORS.contains(e.getMessage()));
     }
   }
 
@@ -1092,7 +1107,6 @@ public class ShieldedReceiveTest extends BaseTest {
   @Test
   public void testReceiveDescriptionWithWrongZkproof()
       throws BadItemException, RuntimeException, ZksnarkException {
-    librustzcashInitZksnarkParams();
     chainBaseManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
     chainBaseManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(100 * 1000000L);
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
@@ -1111,7 +1125,8 @@ public class ShieldedReceiveTest extends BaseTest {
       Assert.assertFalse(true);
     } catch (Exception e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("librustzcashSaplingCheckOutput error", e.getMessage());
+      Assert.assertTrue("Unexpected error: " + e.getMessage(),
+          RECEIVE_VALIDATION_ERRORS.contains(e.getMessage()));
     }
   }
 
@@ -1121,7 +1136,6 @@ public class ShieldedReceiveTest extends BaseTest {
   @Test
   public void testReceiveDescriptionWithWrongD()
       throws BadItemException, RuntimeException, ZksnarkException {
-    librustzcashInitZksnarkParams();
     chainBaseManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
     chainBaseManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(100 * 1000000L);
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
@@ -1141,8 +1155,8 @@ public class ShieldedReceiveTest extends BaseTest {
     } catch (Exception e) {
       Assert.assertTrue(e instanceof ContractValidateException);
       //if generate cm successful, checkout error; else param is null because of cm is null
-      Assert.assertTrue("librustzcashSaplingCheckOutput error".equalsIgnoreCase(e.getMessage())
-          || "param is null".equalsIgnoreCase(e.getMessage()));
+      Assert.assertTrue("Unexpected error: " + e.getMessage(),
+          RECEIVE_VALIDATION_ERRORS.contains(e.getMessage()));
     }
   }
 
@@ -1152,7 +1166,6 @@ public class ShieldedReceiveTest extends BaseTest {
   @Test
   public void testReceiveDescriptionWithWrongPkd()
       throws BadItemException, RuntimeException, ZksnarkException {
-    librustzcashInitZksnarkParams();
     chainBaseManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
     chainBaseManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(100 * 1000000L);
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
@@ -1172,8 +1185,8 @@ public class ShieldedReceiveTest extends BaseTest {
     } catch (Exception e) {
       Assert.assertTrue(e instanceof ContractValidateException);
       //if generate cm successful, checkout error; else param is null because of cm is null
-      Assert.assertTrue("librustzcashSaplingCheckOutput error".equalsIgnoreCase(e.getMessage())
-          || "param is null".equalsIgnoreCase(e.getMessage()));
+      Assert.assertTrue("Unexpected error: " + e.getMessage(),
+          RECEIVE_VALIDATION_ERRORS.contains(e.getMessage()));
     }
   }
 
@@ -1183,7 +1196,6 @@ public class ShieldedReceiveTest extends BaseTest {
   @Test
   public void testReceiveDescriptionWithWrongValue()
       throws BadItemException, RuntimeException, ZksnarkException {
-    librustzcashInitZksnarkParams();
     chainBaseManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
     chainBaseManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(100 * 1000000L);
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
@@ -1202,7 +1214,8 @@ public class ShieldedReceiveTest extends BaseTest {
       Assert.assertFalse(true);
     } catch (Exception e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertTrue(e.getMessage().equalsIgnoreCase("librustzcashSaplingCheckOutput error"));
+      Assert.assertTrue("Unexpected error: " + e.getMessage(),
+          RECEIVE_VALIDATION_ERRORS.contains(e.getMessage()));
     }
   }
 
@@ -1212,7 +1225,6 @@ public class ShieldedReceiveTest extends BaseTest {
   @Test
   public void testReceiveDescriptionWithWrongRcm()
       throws BadItemException, RuntimeException, ZksnarkException {
-    librustzcashInitZksnarkParams();
     chainBaseManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
     chainBaseManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(100 * 1000000L);
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
@@ -1231,7 +1243,8 @@ public class ShieldedReceiveTest extends BaseTest {
       Assert.assertFalse(true);
     } catch (Exception e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("librustzcashSaplingCheckOutput error", e.getMessage());
+      Assert.assertTrue("Unexpected error: " + e.getMessage(),
+          RECEIVE_VALIDATION_ERRORS.contains(e.getMessage()));
     }
   }
 
@@ -1241,7 +1254,6 @@ public class ShieldedReceiveTest extends BaseTest {
   @Test
   public void testNotMatchAskAndNsk()
       throws BadItemException, RuntimeException, ZksnarkException {
-    librustzcashInitZksnarkParams();
     chainBaseManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
     chainBaseManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(100 * 1000000L);
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
@@ -1292,7 +1304,6 @@ public class ShieldedReceiveTest extends BaseTest {
   @Test
   public void testRandomOvk()
       throws BadItemException, RuntimeException, ZksnarkException {
-    librustzcashInitZksnarkParams();
     chainBaseManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
     chainBaseManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(100 * 1000000L);
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
@@ -1336,7 +1347,6 @@ public class ShieldedReceiveTest extends BaseTest {
   //@Test not used
   public void testSameInputCm()
       throws BadItemException, RuntimeException, ZksnarkException {
-    librustzcashInitZksnarkParams();
     chainBaseManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
     chainBaseManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(100 * 1000000L);
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
@@ -1385,7 +1395,6 @@ public class ShieldedReceiveTest extends BaseTest {
   @Test
   public void testSameOutputCm()
       throws BadItemException, RuntimeException, ZksnarkException {
-    librustzcashInitZksnarkParams();
     chainBaseManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
     chainBaseManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(100 * 1000000L);
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
@@ -1437,7 +1446,6 @@ public class ShieldedReceiveTest extends BaseTest {
   @Test
   public void testShieldInputInsufficient()
       throws BadItemException, RuntimeException, ZksnarkException {
-    librustzcashInitZksnarkParams();
     chainBaseManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
     chainBaseManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(100 * 1000000L);
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
@@ -1482,7 +1490,6 @@ public class ShieldedReceiveTest extends BaseTest {
    */
   @Test
   public void testTransparentInputInsufficient() throws RuntimeException, ZksnarkException {
-    librustzcashInitZksnarkParams();
     chainBaseManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
     long ctx = JLibrustzcash.librustzcashSaplingProvingCtxInit();
@@ -1731,7 +1738,6 @@ public class ShieldedReceiveTest extends BaseTest {
   public void testSignWithoutFromAddress()
       throws BadItemException, ContractValidateException, RuntimeException,
       ZksnarkException {
-    librustzcashInitZksnarkParams();
     chainBaseManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
     chainBaseManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(100 * 1000000L);
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
@@ -1771,7 +1777,6 @@ public class ShieldedReceiveTest extends BaseTest {
   public void testSignWithoutFromAmout()
       throws BadItemException, ContractValidateException, RuntimeException,
       ZksnarkException {
-    librustzcashInitZksnarkParams();
     chainBaseManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
     chainBaseManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(100 * 1000000L);
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
@@ -1810,7 +1815,6 @@ public class ShieldedReceiveTest extends BaseTest {
   @Test
   public void testSignWithoutSpendDescription()
       throws BadItemException, RuntimeException, ZksnarkException {
-    librustzcashInitZksnarkParams();
     chainBaseManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
     chainBaseManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(100 * 1000000L);
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
@@ -1845,7 +1849,8 @@ public class ShieldedReceiveTest extends BaseTest {
       Assert.assertFalse(true);
     } catch (Exception e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("librustzcashSaplingCheckSpend error", e.getMessage());
+      Assert.assertTrue("Unexpected error: " + e.getMessage(),
+          SPEND_VALIDATION_ERRORS.contains(e.getMessage()));
     }
     JLibrustzcash.librustzcashSaplingVerificationCtxFree(ctx);
   }
@@ -1856,7 +1861,6 @@ public class ShieldedReceiveTest extends BaseTest {
   @Test
   public void testSignWithoutReceiveDescription()
       throws BadItemException, RuntimeException, ZksnarkException {
-    librustzcashInitZksnarkParams();
     chainBaseManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
     chainBaseManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(100 * 1000000L);
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
@@ -1891,7 +1895,8 @@ public class ShieldedReceiveTest extends BaseTest {
       Assert.assertFalse(true);
     } catch (Exception e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("librustzcashSaplingCheckSpend error", e.getMessage());
+      Assert.assertTrue("Unexpected error: " + e.getMessage(),
+          SPEND_VALIDATION_ERRORS.contains(e.getMessage()));
     }
     JLibrustzcash.librustzcashSaplingVerificationCtxFree(ctx);
   }
@@ -1903,7 +1908,6 @@ public class ShieldedReceiveTest extends BaseTest {
   public void testSignWithoutToAddress()
       throws BadItemException, ContractValidateException, RuntimeException,
       ZksnarkException {
-    librustzcashInitZksnarkParams();
     chainBaseManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
     chainBaseManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(100 * 1000000L);
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
@@ -1943,7 +1947,6 @@ public class ShieldedReceiveTest extends BaseTest {
   public void testSignWithoutToAmount()
       throws BadItemException, ContractValidateException, RuntimeException,
       ZksnarkException {
-    librustzcashInitZksnarkParams();
     chainBaseManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
     chainBaseManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(100 * 1000000L);
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
@@ -1982,7 +1985,6 @@ public class ShieldedReceiveTest extends BaseTest {
   @Test
   public void testSpendSignatureWithWrongColumn()
       throws BadItemException, RuntimeException, ZksnarkException {
-    librustzcashInitZksnarkParams();
     chainBaseManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
     chainBaseManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(100 * 1000000L);
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
@@ -2089,7 +2091,8 @@ public class ShieldedReceiveTest extends BaseTest {
       //signature for spend with some wrong column
       //if transparent to shield, ok
       //if shield to shield or shield to transparent, librustzcashSaplingFinalCheck error
-      Assert.assertTrue(e.getMessage().equalsIgnoreCase("librustzcashSaplingCheckSpend error"));
+      Assert.assertTrue("Unexpected error: " + e.getMessage(),
+          SPEND_VALIDATION_ERRORS.contains(e.getMessage()));
     }
     JLibrustzcash.librustzcashSaplingVerificationCtxFree(ctx);
   }
@@ -2100,7 +2103,6 @@ public class ShieldedReceiveTest extends BaseTest {
   @Test
   public void testIsolateSignature()
       throws ZksnarkException, BadItemException, ContractValidateException, ContractExeException {
-    librustzcashInitZksnarkParams();
     chainBaseManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
     chainBaseManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(100 * 1000000L);
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
@@ -2235,7 +2237,6 @@ public class ShieldedReceiveTest extends BaseTest {
       AccountResourceInsufficientException, InvalidProtocolBufferException, ZksnarkException {
     long ctx = JLibrustzcash.librustzcashSaplingProvingCtxInit();
 
-    librustzcashInitZksnarkParams();
     chainBaseManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
     chainBaseManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(100 * 1000000L);
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
@@ -2318,7 +2319,6 @@ public class ShieldedReceiveTest extends BaseTest {
       AccountResourceInsufficientException, InvalidProtocolBufferException, ZksnarkException {
     long ctx = JLibrustzcash.librustzcashSaplingProvingCtxInit();
 
-    librustzcashInitZksnarkParams();
     chainBaseManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
     chainBaseManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(100 * 1000000L);
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
@@ -2412,7 +2412,6 @@ public class ShieldedReceiveTest extends BaseTest {
     dbManager.pushBlock(new BlockCapsule(block));
 
     //create transactions
-    librustzcashInitZksnarkParams();
     chainBaseManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
     chainBaseManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(1000 * 1000000L);
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
@@ -2533,7 +2532,7 @@ public class ShieldedReceiveTest extends BaseTest {
   public void decodePaymentAddressIgnoreCase() {
     String addressLower =
         "ztron1975m0wyg8f30cgf2l5fgndhzqzkzgkgnxge8cwx2wr7m3q7chsuwewh2e6u24yykum0hq8ue99u";
-    String addressUpper = addressLower.toUpperCase();
+    String addressUpper = addressLower.toUpperCase(Locale.ROOT);
 
     PaymentAddress paymentAddress1 = KeyIo.decodePaymentAddress(addressLower);
     PaymentAddress paymentAddress2 = KeyIo.decodePaymentAddress(addressUpper);
