@@ -34,7 +34,7 @@ java -jar FullNode.jar -c /path/to/config.conf
 java-tron-1.0.0/bin/FullNode -c /path/to/config.conf -w
 ```
 
-If `-c` is omitted, the node uses only the defaults from `reference.conf`. For anything beyond a quick local test, always provide an explicit config file.
+If `-c` is omitted, the node loads the `config.conf` bundled inside the jar (the same file shipped with the distribution) merged with `reference.conf` as fallback. The bundled file already enables discovery/persist for mainnet operation. For production, copy it out, edit, and pass the edited copy via `-c` to make your configuration visible to operators.
 
 ## Minimal config.conf
 
@@ -242,7 +242,9 @@ Not all parameters support hot-reload. Parameters that affect node identity, gen
 
 ## Viewing Effective Configuration
 
-At startup, the node logs the resolved configuration (merged result of `config.conf` + `reference.conf`) when `node.openPrintLog = true` (the default). Look for lines prefixed with the section name in the startup output to confirm your overrides took effect.
+At startup, the node unconditionally logs a summary of key parameters under `Net config`, `Backup config`, `Code version`, `DB config`, and `shutDown config` headers (see `Args.logConfig()`` for the exact fields). For parameters not in this summary, you must inspect runtime behavior or consult `reference.conf` directly — the full merged configuration is never dumped.
+
+Note: `node.openPrintLog` is a separate flag that controls runtime verbosity of P2P/inventory/pending-tx logs, not startup config logging.
 
 ## Full Reference
 

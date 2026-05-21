@@ -1,7 +1,6 @@
 package org.tron.core.config.args;
 
 import static org.tron.core.config.Parameter.ChainConstant.MAX_ACTIVE_WITNESS_NUM;
-import static org.tron.core.exception.TronError.ErrCode.PARAMETER_INIT;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigBeanFactory;
@@ -11,7 +10,6 @@ import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.tron.core.exception.TronError;
 
 // Node configuration bean for the "node" section of config.conf.
 // ConfigBeanFactory auto-binds all fields including sub-beans, dot-notation keys,
@@ -298,8 +296,7 @@ public class NodeConfig {
    * since ConfigBeanFactory expects typed bean lists, not string lists.
    */
   public static NodeConfig fromConfig(Config config) {
-    Config section = normalizeNonStandardKeys(
-        normalizeMaxMessageSizes(config).getConfig("node"));
+    Config section = normalizeNonStandardKeys(config.getConfig("node"));
 
     // Auto-bind all fields and sub-beans. ConfigBeanFactory fails fast with a
     // descriptive path on any `= null` value
@@ -493,38 +490,6 @@ public class NodeConfig {
       section = section.withValue(externalIpPath, ConfigValueFactory.fromAnyRef(""));
     }
     return section;
-  }
-
-  /**
-   * Pre-normalize size paths so ConfigBeanFactory's primitive int/long binding succeeds
-   * for human-readable values like "4m" / "128MB". For each maxMessageSize key, parse
-   * via getMemorySize, validate non-negative and <= Integer.MAX_VALUE, and write the
-   * numeric byte value back into the Config tree. Validation errors propagate before
-   * bean creation so the failure points at the user-facing config path.
-   */
-  private static Config normalizeMaxMessageSizes(Config config) {
-    String[] paths = {
-        "node.rpc.maxMessageSize",
-        "node.http.maxMessageSize",
-        "node.jsonrpc.maxMessageSize"
-    };
-    Config result = config;
-    for (String path : paths) {
-      if (config.hasPath(path)) {
-        long bytes = parseMaxMessageSize(config, path);
-        result = result.withValue(path, ConfigValueFactory.fromAnyRef(bytes));
-      }
-    }
-    return result;
-  }
-
-  private static long parseMaxMessageSize(Config config, String key) {
-    long value = config.getMemorySize(key).toBytes();
-    if (value < 0 || value > Integer.MAX_VALUE) {
-      throw new TronError(key + " must be non-negative and <= "
-          + Integer.MAX_VALUE + ", got: " + value, PARAMETER_INIT);
-    }
-    return value;
   }
 
 }
