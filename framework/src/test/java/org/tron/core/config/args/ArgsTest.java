@@ -50,7 +50,7 @@ public class ArgsTest {
 
   @Test
   public void get() {
-    Args.setParam(new String[] {"-c", TestConstants.TEST_CONF, "--keystore-factory"}, "");
+    Args.setParam(new String[] {"--keystore-factory"}, TestConstants.TEST_CONF);
 
     CommonParameter parameter = Args.getInstance();
 

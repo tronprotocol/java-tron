@@ -15,9 +15,9 @@
 
 package org.tron.core.config.args;
 
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
 import java.io.File;
-import java.lang.reflect.Field;
-import java.util.Arrays;
 import org.iq80.leveldb.CompressionType;
 import org.iq80.leveldb.Options;
 import org.junit.AfterClass;
@@ -37,103 +37,29 @@ public class StorageTest {
     setupStorage();
   }
 
-  /**
-   * set it as following:
-   *
-   * properties = [
-   *     {
-   *       name = "account",
-   *       path = "storage_directory_test",
-   *       createIfMissing = true,
-   *       paranoidChecks = true,
-   *       verifyChecksums = true,
-   *       compressionType = 1,        // compressed with snappy
-   *       blockSize = 4096,           // 4  KB =         4 * 1024 B
-   *       writeBufferSize = 10485760, // 10 MB = 10 * 1024 * 1024 B
-   *       cacheSize = 10485760,       // 10 MB = 10 * 1024 * 1024 B
-   *       maxOpenFiles = 100
-   *     },
-   *     {
-   *       name = "account-index",
-   *       path = "storage_directory_test",
-   *       createIfMissing = true,
-   *       paranoidChecks = true,
-   *       verifyChecksums = true,
-   *       compressionType = 1,        // compressed with snappy
-   *       blockSize = 4096,           // 4  KB =         4 * 1024 B
-   *       writeBufferSize = 10485760, // 10 MB = 10 * 1024 * 1024 B
-   *       cacheSize = 10485760,       // 10 MB = 10 * 1024 * 1024 B
-   *       maxOpenFiles = 100
-   *     },
-   *     { # only for unit test
-   *       name = "test_name",
-   *       path = "test_path",
-   *       createIfMissing = false,
-   *       paranoidChecks = false,
-   *       verifyChecksums = false,
-   *       compressionType = 1,
-   *       blockSize = 2,
-   *       writeBufferSize = 3,
-   *       cacheSize = 4,
-   *       maxOpenFiles = 5
-   *     },
-   *   ]
-   */
   private static void setupStorage() {
-    StorageConfig sc = new StorageConfig();
-    try {
-      setPrivateField(sc, "defaultDbOption", makeOverride(50));
-      setPrivateField(sc, "defaultMDbOption", makeOverride(500));
-      setPrivateField(sc, "defaultLDbOption", makeOverride(1000));
-    } catch (ReflectiveOperationException e) {
-      throw new RuntimeException(e);
-    }
+    Config cfg = ConfigFactory.parseString(
+        "storage.default.maxOpenFiles = 50\n"
+        + "storage.defaultM.maxOpenFiles = 500\n"
+        + "storage.defaultL.maxOpenFiles = 1000\n"
+        + "storage.properties = [\n"
+        + "  { name = account, path = storage_directory_test,\n"
+        + "    createIfMissing = true, paranoidChecks = true, verifyChecksums = true,\n"
+        + "    compressionType = 1, blockSize = 4096,\n"
+        + "    writeBufferSize = 10485760, cacheSize = 10485760, maxOpenFiles = 100 },\n"
+        + "  { name = \"account-index\", path = storage_directory_test,\n"
+        + "    createIfMissing = true, paranoidChecks = true, verifyChecksums = true,\n"
+        + "    compressionType = 1, blockSize = 4096,\n"
+        + "    writeBufferSize = 10485760, cacheSize = 10485760, maxOpenFiles = 100 },\n"
+        + "  { name = test_name, path = test_path,\n"
+        + "    createIfMissing = false, paranoidChecks = false, verifyChecksums = false,\n"
+        + "    compressionType = 1, blockSize = 2,\n"
+        + "    writeBufferSize = 3, cacheSize = 4, maxOpenFiles = 5 }\n"
+        + "]"
+    ).withFallback(ConfigFactory.load(TestConstants.TEST_CONF));
+    StorageConfig sc = StorageConfig.fromConfig(cfg);
     storage.setDefaultDbOptions(sc);
-
-    StorageConfig.PropertyConfig account = new StorageConfig.PropertyConfig();
-    account.setName("account");
-    account.setPath("storage_directory_test");
-    account.setCompressionType(1);
-    account.setBlockSize(4096);
-    account.setWriteBufferSize(10485760);
-    account.setCacheSize(10485760);
-    account.setMaxOpenFiles(100);
-
-    StorageConfig.PropertyConfig accountIndex = new StorageConfig.PropertyConfig();
-    accountIndex.setName("account-index");
-    accountIndex.setPath("storage_directory_test");
-    accountIndex.setCompressionType(1);
-    accountIndex.setBlockSize(4096);
-    accountIndex.setWriteBufferSize(10485760);
-    accountIndex.setCacheSize(10485760);
-    accountIndex.setMaxOpenFiles(100);
-
-    StorageConfig.PropertyConfig testName = new StorageConfig.PropertyConfig();
-    testName.setName("test_name");
-    testName.setPath("test_path");
-    testName.setCreateIfMissing(false);
-    testName.setParanoidChecks(false);
-    testName.setVerifyChecksums(false);
-    testName.setCompressionType(1);
-    testName.setBlockSize(2);
-    testName.setWriteBufferSize(3);
-    testName.setCacheSize(4);
-    testName.setMaxOpenFiles(5);
-
-    storage.setPropertyMapFromBean(Arrays.asList(account, accountIndex, testName));
-  }
-
-  private static StorageConfig.DbOptionOverride makeOverride(int maxOpenFiles) {
-    StorageConfig.DbOptionOverride o = new StorageConfig.DbOptionOverride();
-    o.setMaxOpenFiles(maxOpenFiles);
-    return o;
-  }
-
-  private static void setPrivateField(Object obj, String name, Object value)
-      throws ReflectiveOperationException {
-    Field f = StorageConfig.class.getDeclaredField(name);
-    f.setAccessible(true);
-    f.set(obj, value);
+    storage.setPropertyMapFromBean(sc.getProperties());
   }
 
   @AfterClass
