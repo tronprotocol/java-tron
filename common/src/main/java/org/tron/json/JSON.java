@@ -10,7 +10,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.tron.common.parameter.CommonParameter;
+import org.tron.core.Constant;
 
 /**
  * Drop-in replacement for {@code com.alibaba.fastjson.JSON}.
@@ -22,15 +22,6 @@ import org.tron.common.parameter.CommonParameter;
 @Deprecated
 public final class JSON {
 
-  // Initialization-order invariant: this class must NOT be loaded before
-  // Args.setParam() completes. The factory's StreamReadConstraints are a
-  // one-shot snapshot of CommonParameter at class-init time. If JSON is
-  // touched too early — e.g. a stray reference in startup code or in a static
-  // initializer that runs before Args — the snapshot captures CommonParameter's
-  // hardcoded defaults (100 / 100_000) and any user override of
-  // node.http.maxNestingDepth / maxTokenCount is silently ignored.
-  // Current production startup (FullNode.main) calls Args.setParam first and
-  // no path in that call chain references this class, so the invariant holds.
   static final ObjectMapper MAPPER = JsonMapper.builder(buildFactory())
       // Fastjson Feature.AllowUnQuotedFieldNames (default ON)
       .enable(JsonReadFeature.ALLOW_UNQUOTED_FIELD_NAMES)
@@ -67,9 +58,9 @@ public final class JSON {
       .build();
 
   private static JsonFactory buildFactory() {
-    CommonParameter p = CommonParameter.getInstance();
     return JsonFactory.builder().streamReadConstraints(StreamReadConstraints.builder()
-            .maxNestingDepth(p.getMaxNestingDepth()).maxTokenCount(p.getMaxTokenCount())
+            .maxNestingDepth(Constant.MAX_NESTING_DEPTH)
+            .maxTokenCount(Constant.MAX_TOKEN_COUNT)
             .build()).build();
   }
 

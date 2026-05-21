@@ -16,6 +16,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import org.junit.Test;
+import org.tron.core.Constant;
 
 /**
  * Tests for Jackson {@code JsonReadFeature} compatibility with Fastjson 1.x.
@@ -369,8 +370,8 @@ public class JsonTest {
   @Test
   public void testJsonMapperHasConfiguredConstraints() {
     StreamReadConstraints sr = JSON.MAPPER.getFactory().streamReadConstraints();
-    assertEquals(100, sr.getMaxNestingDepth());
-    assertEquals(100_000L, sr.getMaxTokenCount());
+    assertEquals(Constant.MAX_NESTING_DEPTH, sr.getMaxNestingDepth());
+    assertEquals((long) Constant.MAX_TOKEN_COUNT, sr.getMaxTokenCount());
   }
 
   @Test

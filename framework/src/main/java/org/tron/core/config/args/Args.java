@@ -549,8 +549,6 @@ public class Args extends CommonParameter {
     PARAMETER.solidityHttpPort = http.getSolidityPort();
     PARAMETER.pBFTHttpPort = http.getPBFTPort();
     PARAMETER.httpMaxMessageSize = http.getMaxMessageSize();
-    PARAMETER.maxNestingDepth = http.getMaxNestingDepth();
-    PARAMETER.maxTokenCount = http.getMaxTokenCount();
 
     // ---- JSON-RPC sub-bean ----
     NodeConfig.JsonRpcConfig jsonrpc = nc.getJsonrpc();
