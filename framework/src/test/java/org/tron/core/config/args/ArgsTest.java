@@ -380,12 +380,9 @@ public class ArgsTest {
   }
 
   // ===========================================================================
-  // Boundary tests for clamps applied in Args.java bridge code (not in
-  // bean postProcess()).
+  // Boundary tests for node.fetchBlock.timeout clamping.
   //
-  // fetchBlockTimeout is read from NodeConfig but clamped in Args.applyNodeConfig
-  // to range [100, 1000]. Pin this clamp here so any future refactor that moves
-  // it (e.g. into NodeConfig.postProcess()) preserves the behavior.
+  // The clamp to [100, 1000] is applied in NodeConfig.postProcess().
   // ===========================================================================
 
   @Test

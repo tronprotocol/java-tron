@@ -141,27 +141,11 @@ if (myNewOption > 64) {
 | Java field type | HOCON value | Notes |
 |-------------------|-------------|-------|
 | `boolean` | `true` / `false` | |
-| `int` / `long` | numeric | Use `getMemorySize` path if human-readable sizes should be supported (see below) |
+| `int` / `long` | numeric | Must be a plain integer; human-readable sizes (`4m`, `128MB`) are not supported |
 | `double` | numeric | |
 | `String` | `"value"` | Null HOCON values must be normalized to `""` before binding (see `normalizeNonStandardKeys`) |
 | `List<String>` | `["a", "b"]` | Must be read manually; `ConfigBeanFactory` does not handle `List<String>` |
 | Inner bean | `{ key = val }` | The Java field type must be the inner static class |
-
-### Human-Readable Size Values (`4m`, `128MB`)
-
-For byte-size parameters, users can write `4m` or `128MB` in HOCON. `ConfigBeanFactory` cannot parse these into `int`/`long` directly. Pre-normalize them before calling `ConfigBeanFactory`:
-
-```java
-// normalize before binding
-long bytes = config.getMemorySize("node.rpc.maxMessageSize").toBytes();
-if (bytes < 0 || bytes > Integer.MAX_VALUE) {
-    throw new TronError("node.rpc.maxMessageSize must be non-negative and <= "
-        + Integer.MAX_VALUE + ", got: " + bytes, PARAMETER_INIT);
-}
-config = config.withValue("node.rpc.maxMessageSize", ConfigValueFactory.fromAnyRef(bytes));
-```
-
-This pattern is already centralized in `NodeConfig.normalizeMaxMessageSizes()`. Add new size keys to the paths array there rather than duplicating the logic.
 
 ### List Fields
 
@@ -219,6 +203,5 @@ nc.shutdownBlockTime = section.hasPath("shutdown.BlockTime")
 | Sub-bean nesting | `NodeConfig.HttpConfig`, `NodeConfig.RpcConfig` |
 | Legacy key fallback | `NodeConfig.fromConfig()` (`maxActiveNodes`, `maxActiveNodesWithSameIp`) |
 | Non-standard key normalization | `CommitteeConfig.normalizeNonStandardKeys()`, `NodeConfig.normalizeNonStandardKeys()` |
-| Human-readable size normalization | `NodeConfig.normalizeMaxMessageSizes()` |
 | Optional PascalCase keys | `NodeConfig.fromConfig()` (`shutdown.BlockTime/Height/Count`) |
 | `postProcess()` clamping | `NodeConfig.postProcess()`, `CommitteeConfig.postProcess()` |

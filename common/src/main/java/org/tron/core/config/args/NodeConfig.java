@@ -15,6 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 // ConfigBeanFactory auto-binds all fields including sub-beans, dot-notation keys,
 // PBFT fields, and list fields. Only legacy key fallbacks and PascalCase shutdown
 // keys are read manually.
+// Always construct via {@link #fromConfig} — direct construction skips postProcess() clamping.
 @Slf4j
 @Getter
 @Setter
