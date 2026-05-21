@@ -1235,7 +1235,7 @@ public class Manager {
 
     List<TransactionCapsule> txs = new ArrayList<>();
     Map<String, TransactionCapsule> txMap = new HashMap<>();
-    Set<String> multiAddresses = new HashSet<>();
+    Set<String> multiAddresses = new HashSet<>(ownerAddressSet);
 
     pendingTransactions.forEach(capsule -> {
       String txId = Hex.toHexString(capsule.getTransactionId().getBytes());
