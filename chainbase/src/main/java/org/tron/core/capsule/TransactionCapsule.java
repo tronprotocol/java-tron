@@ -28,6 +28,7 @@ import com.google.protobuf.CodedOutputStream;
 import com.google.protobuf.GeneratedMessageV3;
 import com.google.protobuf.Internal;
 import com.google.protobuf.InvalidProtocolBufferException;
+import com.google.protobuf.UnknownFieldSet;
 import java.io.IOException;
 import java.security.SignatureException;
 import java.util.ArrayList;
@@ -492,6 +493,14 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
       return true;
     }
     return false;
+  }
+
+  public void sanitize() {
+    if (!this.transaction.getUnknownFields().asMap().isEmpty()) {
+      this.transaction = transaction.toBuilder()
+          .setUnknownFields(UnknownFieldSet.getDefaultInstance())
+          .build();
+    }
   }
 
   public void resetResult() {

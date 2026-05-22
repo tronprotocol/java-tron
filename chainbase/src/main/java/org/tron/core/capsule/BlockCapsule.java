@@ -21,6 +21,7 @@ import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.CodedInputStream;
 import com.google.protobuf.InvalidProtocolBufferException;
+import com.google.protobuf.UnknownFieldSet;
 import java.security.SignatureException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -326,6 +327,25 @@ public class BlockCapsule implements ProtoCapsule<Block> {
 
   public boolean hasWitnessSignature() {
     return !getInstance().getBlockHeader().getWitnessSignature().isEmpty();
+  }
+
+  public void sanitize() {
+    boolean blockHasUnknown = !this.block.getUnknownFields().asMap().isEmpty();
+    boolean headerHasUnknown = !this.block.getBlockHeader().getUnknownFields().asMap().isEmpty();
+    if (!blockHasUnknown && !headerHasUnknown) {
+      return;
+    }
+    UnknownFieldSet empty = UnknownFieldSet.getDefaultInstance();
+    Block.Builder builder = this.block.toBuilder();
+    if (blockHasUnknown) {
+      builder.setUnknownFields(empty);
+    }
+    if (headerHasUnknown) {
+      builder.setBlockHeader(this.block.getBlockHeader().toBuilder()
+          .setUnknownFields(empty)
+          .build());
+    }
+    this.block = builder.build();
   }
 
   @Override

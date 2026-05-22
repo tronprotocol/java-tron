@@ -28,6 +28,11 @@ public class BlockMessage extends TronMessage {
     this.block = block;
   }
 
+  public void sanitize() {
+    this.block.sanitize();
+    this.data = this.block.getData();
+  }
+
   public BlockId getBlockId() {
     return getBlockCapsule().getBlockId();
   }

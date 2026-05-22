@@ -556,9 +556,9 @@ public class Wallet {
       if (trx.getInstance().getRawData().getContractCount() == 0) {
         throw new ContractValidateException(ActuatorConstant.CONTRACT_NOT_EXIST);
       }
-      TransactionMessage message = new TransactionMessage(trx.getInstance().toByteArray());
       trx.checkExpiration(chainBaseManager.getNextBlockSlotTime());
       dbManager.pushTransaction(trx);
+      TransactionMessage message = new TransactionMessage(trx.getInstance().toByteArray());
       int num = tronNetService.fastBroadcastTransaction(message);
       if (num == 0 && minEffectiveConnection != 0) {
         return builder.setResult(false).setCode(response_code.NOT_ENOUGH_EFFECTIVE_CONNECTION)

@@ -1534,6 +1534,9 @@ public class Manager {
           String.format(" %s transaction signature validate failed", txId));
     }
 
+    if (!trxCap.isInBlock()) {
+      trxCap.sanitize();
+    }
     TransactionTrace trace = new TransactionTrace(trxCap, StoreFactory.getInstance(),
         new RuntimeImpl());
     trxCap.setTrxTrace(trace);
