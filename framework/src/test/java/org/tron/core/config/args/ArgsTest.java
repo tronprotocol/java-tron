@@ -540,6 +540,46 @@ public class ArgsTest {
     Args.clearParam();
   }
 
+  @Test
+  public void testMaxMessageSizeNegativeValueRejected() {
+    // Negative maxMessageSize must be rejected at startup which threw TronError(PARAMETER_INIT)
+    // for negative values).
+    for (String key : new String[]{
+        "node.rpc.maxMessageSize", "node.http.maxMessageSize", "node.jsonrpc.maxMessageSize"}) {
+      Map<String, String> configMap = new HashMap<>();
+      configMap.put("storage.db.directory", "database");
+      configMap.put(key, "-1");
+      Config config = ConfigFactory.defaultOverrides()
+          .withFallback(ConfigFactory.parseMap(configMap))
+          .withFallback(ConfigFactory.defaultReference());
+      try {
+        Args.applyConfigParams(config);
+        Assert.fail("Expected TronError for negative " + key);
+      } catch (TronError e) {
+        Assert.assertEquals(TronError.ErrCode.PARAMETER_INIT, e.getErrCode());
+      }
+      Args.clearParam();
+    }
+  }
+
+  @Test
+  public void testRpcMaxMessageSizeExceedsIntMax() {
+    // HOCON's Config.getInt() throws when a numeric value exceeds int range.
+    // This documents the failure mode for node.rpc.maxMessageSize (int field).
+    Map<String, Object> configMap = new HashMap<>();
+    configMap.put("storage.db.directory", "database");
+    configMap.put("node.rpc.maxMessageSize", (long) Integer.MAX_VALUE + 1);
+    Config config = ConfigFactory.defaultOverrides()
+        .withFallback(ConfigFactory.parseMap(configMap))
+        .withFallback(ConfigFactory.defaultReference());
+    try {
+      Args.applyConfigParams(config);
+      Assert.fail("Expected RuntimeException for maxMessageSize > Integer.MAX_VALUE");
+    } catch (RuntimeException e) {
+      // ConfigBeanFactory/HOCON throws when binding a long out of int range
+    }
+  }
+
   // ===== checkBackupMembers() tests =====
 
   @Test

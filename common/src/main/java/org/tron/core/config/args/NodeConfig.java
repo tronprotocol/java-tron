@@ -1,6 +1,7 @@
 package org.tron.core.config.args;
 
 import static org.tron.core.config.Parameter.ChainConstant.MAX_ACTIVE_WITNESS_NUM;
+import static org.tron.core.exception.TronError.ErrCode.PARAMETER_INIT;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigBeanFactory;
@@ -10,6 +11,7 @@ import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.tron.core.exception.TronError;
 
 // Node configuration bean for the "node" section of config.conf.
 // ConfigBeanFactory auto-binds all fields including sub-beans, dot-notation keys,
@@ -449,6 +451,20 @@ public class NodeConfig {
     // maxTrxCacheSize: minimum 2000
     if (maxTrxCacheSize < 2000) {
       maxTrxCacheSize = 2000;
+    }
+
+    // maxMessageSize: reject negative values
+    if (rpc.maxMessageSize < 0) {
+      throw new TronError("node.rpc.maxMessageSize must be non-negative, got: "
+          + rpc.maxMessageSize, PARAMETER_INIT);
+    }
+    if (http.maxMessageSize < 0) {
+      throw new TronError("node.http.maxMessageSize must be non-negative, got: "
+          + http.maxMessageSize, PARAMETER_INIT);
+    }
+    if (jsonrpc.maxMessageSize < 0) {
+      throw new TronError("node.jsonrpc.maxMessageSize must be non-negative, got: "
+          + jsonrpc.maxMessageSize, PARAMETER_INIT);
     }
   }
 
