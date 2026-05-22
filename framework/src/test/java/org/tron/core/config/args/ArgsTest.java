@@ -409,8 +409,6 @@ public class ArgsTest {
     Args.clearParam();
   }
 
-
-
   @Test
   public void testFetchBlockTimeoutInRangeUnchanged() {
     Map<String, String> override = new HashMap<>();
