@@ -352,8 +352,8 @@ public class HistoryBlockHashIntegrationTest extends BaseTest {
 
     assertTrue(chainBaseManager.getAccountStore().has(addr));
     AccountCapsule account = chainBaseManager.getAccountStore().get(addr);
-    assertEquals(HistoryBlockHashUtil.HISTORY_STORAGE_NAME,
-        account.getAccountName().toStringUtf8());
+    assertEquals("accountName must remain unset to mirror CREATE2-created accounts",
+        ByteString.EMPTY, account.getAccountName());
     assertEquals(Protocol.AccountType.Contract, account.getType());
     assertTrue("install marker must flip after a successful deploy",
         chainBaseManager.getDynamicPropertiesStore().isBlockHashHistoryInstalled());
