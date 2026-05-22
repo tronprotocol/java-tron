@@ -81,16 +81,17 @@ A HOCON key named `isOpenFullTcpDisconnect` produces the setter `setIsOpenFullTc
 
 ## Nesting Depth
 
-Keep nesting to **at most 3 levels** from the top-level section. Deeper nesting creates long key paths that are hard to override in `config.conf` and require more boilerplate inner bean classes.
+The CI gate enforces a hard ceiling of **5 levels** (the historical maximum in `reference.conf`). New parameters must stay within **3 levels** from the top-level section. The gap between 3 and 5 is reserved for legacy paths that already exist — it is not a license to add new deep keys.
 
 ```
 level 1:  node { ... }
 level 2:  node { rpc { ... } }
-level 3:  node { rpc { flowControl { ... } } }   ← maximum
-level 4+: node { rpc { flowControl { window { ... } } } }   ← avoid
+level 3:  node { rpc { flowControl { ... } } }   ← limit for new keys
+level 4+: node { rpc { flowControl { window { ... } } } }   ← legacy only; do not add new keys here
+level 6+: rejected by CI gate unconditionally
 ```
 
-Each level of nesting requires a corresponding inner static bean class. If you find yourself going 4 levels deep, consider flattening by moving the leaf keys up one level or using a longer camelCase key at level 2.
+Each level of nesting requires a corresponding inner static bean class. If you find yourself going beyond 3 levels deep, consider flattening by moving the leaf keys up one level or using a longer camelCase key at level 2.
 
 ## Adding a New Parameter: Checklist
 
@@ -190,7 +191,7 @@ nc.shutdownBlockTime = section.hasPath("shutdown.BlockTime")
 | Standard camelCase | `maxConnections` | `MaxConnections`, `max_connections`, `max-connections` |
 | No `is` prefix | `openFullTcpDisconnect` | `isOpenFullTcpDisconnect` |
 | No all-caps acronym prefix | `pbftExpireNum`, `pBFTPort`* | `PBFTExpireNum` |
-| Nesting ≤ 3 levels | `node.rpc.maxMessageSize` | `node.rpc.limits.size.max` |
+| New keys: nesting ≤ 3 levels | `node.rpc.maxMessageSize` | `node.rpc.limits.size.max` |
 | Java field name matches HOCON key exactly | field `maxConnections` ↔ key `maxConnections` | field `maxConns` ↔ key `maxConnections` |
 
 \* `PBFTEnable` / `PBFTPort` are legacy exceptions; do not model new keys after them.

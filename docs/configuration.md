@@ -9,7 +9,7 @@ java-tron uses [Typesafe Config](https://github.com/lightbend/config) and applie
 | File | Location | Purpose |
 |------|----------|---------|
 | `reference.conf` | Bundled inside the jar (`common` module) | Declares every parameter with its default value |
-| `config.conf` | bundled template and optionally edited & passed via -c | Overrides only the values that differ from defaults |
+| `config.conf` | Bundled template, optionally edited & passed via -c | Overrides only the values that differ from defaults |
 
 **Loading priority:** values in `config.conf` always win. Any parameter that your `config.conf` omits is automatically filled in from `reference.conf`. You never need to copy the entire `reference.conf` into your own file — only include the parameters you actually want to change.
 
@@ -242,7 +242,7 @@ Not all parameters support hot-reload. Parameters that affect node identity, gen
 
 ## Viewing Effective Configuration
 
-At startup, the node unconditionally logs a summary of key parameters under `Net config`, `Backup config`, `Code version`, `DB config`, and `shutDown config` headers (see `Args.logConfig()`` for the exact fields). For parameters not in this summary, you must inspect runtime behavior or consult `reference.conf` directly — the full merged configuration is never dumped.
+At startup, the node unconditionally logs a summary of key parameters under `Net config`, `Backup config`, `Code version`, `DB config`, and `shutDown config` headers (see `Args.logConfig()` for the exact fields). For parameters not in this summary, you must inspect runtime behavior or consult `reference.conf` directly — the full merged configuration is never dumped.
 
 Note: `node.openPrintLog` is a separate flag that controls runtime verbosity of P2P/inventory/pending-tx logs, not startup config logging.
 

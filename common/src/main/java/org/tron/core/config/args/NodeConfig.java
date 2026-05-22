@@ -267,9 +267,6 @@ public class NodeConfig {
     private long checkInterval = 600;
   }
 
-  /**
-   * All default parameters come from PublishConfig
-   */
   @Getter
   @Setter
   public static class DnsConfig {
