@@ -215,7 +215,10 @@ public class BlockCapsuleTest {
     when(dps.getAllowMultiSign()).thenReturn(0L);
     AccountStore accountStore = mock(AccountStore.class);
 
-    Assert.assertFalse(block.validateSignature(dps, accountStore));
+    try (MockedStatic<ForkController> mocked = mockStatic(ForkController.class)) {
+      mocked.when(ForkController::signatureMaxSizeChecked).thenReturn(true);
+      Assert.assertFalse(block.validateSignature(dps, accountStore));
+    }
   }
 
   /**
@@ -239,7 +242,10 @@ public class BlockCapsuleTest {
     when(dps.getAllowMultiSign()).thenReturn(0L);
     AccountStore accountStore = mock(AccountStore.class);
 
-    Assert.assertTrue(block.validateSignature(dps, accountStore));
+    try (MockedStatic<ForkController> mocked = mockStatic(ForkController.class)) {
+      mocked.when(ForkController::signatureMaxSizeChecked).thenReturn(true);
+      Assert.assertTrue(block.validateSignature(dps, accountStore));
+    }
   }
 
   /**
@@ -277,7 +283,10 @@ public class BlockCapsuleTest {
     when(dps.getAllowMultiSign()).thenReturn(0L);
     AccountStore accountStore = mock(AccountStore.class);
 
-    block.validateSignature(dps, accountStore);
+    try (MockedStatic<ForkController> mocked = mockStatic(ForkController.class)) {
+      mocked.when(ForkController::signatureMaxSizeChecked).thenReturn(true);
+      block.validateSignature(dps, accountStore);
+    }
   }
 
   @Test
