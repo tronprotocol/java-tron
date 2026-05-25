@@ -2,21 +2,23 @@
 
 This guide explains the two-layer configuration system used by java-tron and walks through the most common customizations a node operator needs.
 
-## How the Two Config Files Work Together
+## How Configuration Files Work Together
 
-java-tron uses [Typesafe Config](https://github.com/lightbend/config) and applies two layers of configuration at startup:
+java-tron uses [Typesafe Config](https://github.com/lightbend/config) and applies configuration in priority order at startup:
 
 | File | Location | Purpose |
 |------|----------|---------|
 | `reference.conf` | Bundled inside the jar (`common` module) | Declares every parameter with its default value |
-| `config.conf` | Bundled template, optionally edited & passed via -c | Overrides only the values that differ from defaults |
+| Bundled `config.conf` | Bundled inside the jar (`framework` module) | Shipped template; active only when `-c` is omitted |
+| Your config file (e.g. `node.conf`) | Operator-supplied, passed via `-c` | Overrides values that differ from defaults; replaces the bundled `config.conf` entirely |
 
-**Loading priority:** values in `config.conf` always win. Any parameter that your `config.conf` omits is automatically filled in from `reference.conf`. You never need to copy the entire `reference.conf` into your own file — only include the parameters you actually want to change.
+**Loading priority:** values in your config file always win. Any parameter your file omits is automatically filled in from `reference.conf`. You never need to copy the entire `reference.conf` into your own file — only include the parameters you actually want to change.
 
 ```
 startup resolution order (highest wins):
-  1. config.conf  (your file, passed with -c)
-  2. reference.conf  (bundled in jar, fallback for everything)
+  1. your config file    (passed with -c; replaces bundled config.conf)
+  2. bundled config.conf (only when -c is omitted)
+  3. reference.conf      (always loaded; fallback for every key)
 ```
 
 `reference.conf` is the authoritative source of truth for every parameter name and its default. When in doubt, consult that file to see what a parameter does and what value the node will use if you leave it out.
@@ -25,20 +27,20 @@ startup resolution order (highest wins):
 
 ```bash
 # Using the distribution script
-java-tron-1.0.0/bin/FullNode -c /path/to/config.conf
+java-tron-1.0.0/bin/FullNode -c /path/to/node.conf
 
 # Using the jar directly
-java -jar FullNode.jar -c /path/to/config.conf
+java -jar FullNode.jar -c /path/to/node.conf
 
 # SR (Super Representative) mode
-java-tron-1.0.0/bin/FullNode -c /path/to/config.conf -w
+java-tron-1.0.0/bin/FullNode -c /path/to/node.conf -w
 ```
 
 If `-c` is omitted, the node loads the `config.conf` bundled inside the jar (the same file shipped with the distribution) merged with `reference.conf` as fallback. The bundled file already enables discovery/persist for mainnet operation. For production, copy it out, edit, and pass the edited copy via `-c` to make your configuration visible to operators.
 
-## Minimal config.conf
+## Minimal Config File
 
-A `config.conf` only needs to contain what you want to change. The following is sufficient for a mainnet full node:
+Your config file only needs to contain what you want to change. The following is sufficient for a mainnet full node:
 
 ```hocon
 node.discovery = {
@@ -212,7 +214,7 @@ rate.limiter = {
 
 ### Dynamic Config Reload (`node.dynamicConfig`)
 
-When enabled, the node re-reads `config.conf` periodically without restarting:
+When enabled, the node re-reads your config file periodically without restarting:
 
 ```hocon
 node.dynamicConfig = {
@@ -235,7 +237,7 @@ Not all parameters support hot-reload. Parameters that affect node identity, gen
 
 ## Applying a Config Change
 
-1. Edit your `config.conf` — only add or change the keys you need.
+1. Edit your config file — only add or change the keys you need.
 2. If `node.dynamicConfig.enable = true`, wait up to `checkInterval` seconds; the node picks up the change automatically.
 3. Otherwise, restart the node: `kill <pid>` then relaunch with the same `-c` flag.
 4. Check startup logs for a `[config]` line confirming the file was loaded and watch for any `ERROR` lines about unknown or invalid keys.

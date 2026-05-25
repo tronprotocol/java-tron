@@ -81,7 +81,7 @@ A HOCON key named `isOpenFullTcpDisconnect` produces the setter `setIsOpenFullTc
 
 ## Nesting Depth
 
-The CI gate enforces a hard ceiling of **5 levels** (the historical maximum in `reference.conf`). New parameters must stay within **3 levels** from the top-level section. The gap between 3 and 5 is reserved for legacy paths that already exist — it is not a license to add new deep keys.
+The CI gate enforces a hard ceiling of **5 levels** (the historical maximum in `reference.conf`). New parameters should stay within **3 levels** from the top-level section. The gap between 3 and 5 is reserved for legacy paths that already exist — it is not a license to add new deep keys.
 
 ```
 level 1:  node { ... }
@@ -92,6 +92,22 @@ level 6+: rejected by CI gate unconditionally
 ```
 
 Each level of nesting requires a corresponding inner static bean class. If you find yourself going beyond 3 levels deep, consider flattening by moving the leaf keys up one level or using a longer camelCase key at level 2.
+
+## Configuration Loading Order
+
+java-tron loads configuration in two layers at startup:
+
+```
+Priority (highest wins):
+  1. User config file  — passed via -c; replaces the bundled config.conf entirely
+  2. reference.conf    — always loaded from inside the jar; provides defaults for every key
+```
+
+When a user passes `-c /path/to/node.conf`, the bundled `config.conf` is **not loaded at all** — it is completely replaced by the user's file. `reference.conf` is the only built-in file that is guaranteed to be read in every deployment.
+
+When `-c` is omitted (development or quick-start), the bundled `config.conf` fills the same role a user file would: it overrides `reference.conf` defaults for the keys it declares.
+
+The practical consequence for developers: **the default value you put in `reference.conf` is the value every production node uses.** The bundled `config.conf` only matters for users who start the node without `-c`.
 
 ## Adding a New Parameter: Checklist
 
@@ -136,6 +152,8 @@ if (myNewOption > 64) {
 ### Step 4 — Add the key to `config.conf` only if the default is intentionally different
 
 `config.conf` (in `framework/src/main/resources/`) is the sample user config shipped with the distribution. Only add your new key there if the value users should start with differs from the `reference.conf` default, or if the key needs a visible comment for users.
+
+Remember: in any real deployment the user passes `-c` and the bundled `config.conf` is bypassed entirely (see [Configuration Loading Order](#configuration-loading-order)). `reference.conf` is where your default actually takes effect — make sure it is safe and correct before touching `config.conf`.
 
 ## Field Types and HOCON Value Types
 
