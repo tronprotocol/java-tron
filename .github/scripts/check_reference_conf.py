@@ -13,6 +13,11 @@ Rules enforced:
      is 5 levels deep (rate=1, limiter=2, http=3, []=4, component=5).
   3. ALLOWLIST entries are exempt from the format rule (legacy keys that ship
      in user configs; renaming would break compatibility).
+  4. Service-binding port values must be unique. A leaf is a "service port"
+     when its last segment is `port` or ends in `Port` (camelCase) AND its
+     path contains no `[]` (list-element ports belong to per-element records,
+     not to the local process). Two distinct paths binding the same int value
+     would conflict at startup; reserved sentinels (0, -1) are exempt.
 
 Parsing strategy: delegated to pyhocon (https://github.com/chimpler/pyhocon),
 the reference Python HOCON implementation. This avoids hand-rolled scanner
@@ -80,6 +85,11 @@ ALLOWLIST = {
     "node.shutdown.BlockCount",
 }
 
+# Sentinel port values exempt from the uniqueness check. 0 = disabled (the
+# service does not bind); -1 = auto/unset placeholder. Any number of leaves
+# may share these values.
+PORT_SENTINELS = {0, -1}
+
 
 def walk(node, path, depth):
     """Yield (full_path, depth, is_leaf) for every reachable user-defined key.
@@ -115,6 +125,57 @@ def walk(node, path, depth):
                         continue
                     seen.add(sub_path)
                     yield sub_path, sub_depth, sub_leaf
+
+
+def _is_port_segment(seg):
+    """Last-segment test for a service-binding port leaf.
+
+    Matches `port` (exact) and any camelCase form ending in `Port`
+    (e.g. `fullNodePort`, `solidityPort`, `PBFTPort`). Deliberately rejects
+    lowercase `port` as a suffix inside a longer word (`transport`,
+    `support`) — those are not port keys.
+    """
+    return seg == "port" or seg.endswith("Port")
+
+
+def find_port_collisions(tree, keys):
+    """Group service-binding port leaves by integer value; return collisions.
+
+    A leaf qualifies when (a) its last segment matches `_is_port_segment`,
+    and (b) its full path contains no `[]` step. Rule (b) excludes
+    list-element ports — e.g. `genesis.block.witnesses[].port` is the
+    advertised port of each genesis witness record, not a port the local
+    process binds, so two witnesses sharing a value is expected.
+
+    Returns sorted list of (value, sorted_paths) for any value bound by more
+    than one path. Sentinel values in PORT_SENTINELS are excluded. Values
+    that are not coercible to int (substitutions like `${PORT}` resolved to
+    strings) are skipped silently — the format/depth gates do not look at
+    values either, and a non-numeric port is a different class of error.
+    """
+    by_value = {}
+    for full_path, _depth, is_leaf in keys:
+        if not is_leaf:
+            continue
+        if "[]" in full_path:
+            continue
+        seg = full_path.split(".")[-1]
+        if not _is_port_segment(seg):
+            continue
+        try:
+            raw = tree.get(full_path)
+        except Exception:
+            continue
+        try:
+            value = int(raw)
+        except (TypeError, ValueError):
+            continue
+        if value in PORT_SENTINELS:
+            continue
+        by_value.setdefault(value, []).append(full_path)
+    return sorted(
+        (v, sorted(paths)) for v, paths in by_value.items() if len(paths) > 1
+    )
 
 
 def main(argv):
@@ -187,7 +248,9 @@ def main(argv):
     format_violations.sort()
     depth_violations.sort()
 
-    if format_violations or depth_violations:
+    port_collisions = find_port_collisions(tree, keys)
+
+    if format_violations or depth_violations or port_collisions:
         lines_out = []
         if format_violations:
             lines_out.append(
@@ -207,6 +270,17 @@ def main(argv):
                 lines_out.append(
                     f"  depth: {full_path}   (depth={depth}, max={MAX_DEPTH})"
                 )
+        if port_collisions:
+            if lines_out:
+                lines_out.append("")
+            lines_out.append(
+                f"Port collisions ({len(port_collisions)}) — distinct service "
+                f"ports must bind distinct values (sentinels {sorted(PORT_SENTINELS)} exempt):"
+            )
+            for value, paths in port_collisions:
+                lines_out.append(
+                    f"  port:   value {value} bound by: {', '.join(paths)}"
+                )
         print("\n".join(lines_out))
         print()
 
@@ -219,20 +293,25 @@ def main(argv):
             entries.append(f"format: {full_path} (segment '{seg}')")
         for full_path, depth in depth_violations:
             entries.append(f"depth: {full_path} (depth={depth}, max={MAX_DEPTH})")
+        for value, paths in port_collisions:
+            entries.append(f"port: value {value} bound by {', '.join(paths)}")
         body = (
             f"reference.conf has {len(format_violations)} format + "
-            f"{len(depth_violations)} depth violation(s):%0A"
-            + "%0A".join(entries)
+            f"{len(depth_violations)} depth + {len(port_collisions)} port "
+            f"violation(s):%0A" + "%0A".join(entries)
         )
         print(f"::error file={path},title=reference.conf::{body}")
         print(
             f"FAIL: {len(format_violations)} format + {len(depth_violations)} depth "
-            f"violation(s) in {path}",
+            f"+ {len(port_collisions)} port violation(s) in {path}",
             file=sys.stderr,
         )
         return 1
 
-    print(f"OK: {path} — {len(keys)} keys, all lowerCamelCase, depth <= {MAX_DEPTH}")
+    print(
+        f"OK: {path} — {len(keys)} keys, all lowerCamelCase, depth <= {MAX_DEPTH}, "
+        f"service ports unique"
+    )
     return 0
 
 
