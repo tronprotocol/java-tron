@@ -495,12 +495,14 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     return false;
   }
 
-  public void sanitize() {
-    if (!this.transaction.getUnknownFields().asMap().isEmpty()) {
-      this.transaction = transaction.toBuilder()
-          .setUnknownFields(UnknownFieldSet.getDefaultInstance())
-          .build();
+  public boolean sanitize() {
+    if (this.transaction.getUnknownFields().asMap().isEmpty()) {
+      return false;
     }
+    this.transaction = this.transaction.toBuilder()
+        .setUnknownFields(UnknownFieldSet.getDefaultInstance())
+        .build();
+    return true;
   }
 
   public void resetResult() {

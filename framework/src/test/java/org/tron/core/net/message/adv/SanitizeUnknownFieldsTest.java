@@ -2,7 +2,9 @@ package org.tron.core.net.message.adv;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
 import com.google.protobuf.ByteString;
@@ -67,7 +69,7 @@ public class SanitizeUnknownFieldsTest {
     BlockCapsule capsule = new BlockCapsule(padded);
     long originalSize = capsule.getData().length;
 
-    capsule.sanitize();
+    assertTrue("sanitize() should report it mutated the capsule", capsule.sanitize());
 
     assertTrue("Block-level unknown fields should be stripped",
         capsule.getInstance().getUnknownFields().asMap().isEmpty());
@@ -85,7 +87,7 @@ public class SanitizeUnknownFieldsTest {
     BlockCapsule capsule = new BlockCapsule(padded);
     long originalSize = capsule.getData().length;
 
-    capsule.sanitize();
+    assertTrue("sanitize() should report it mutated the capsule", capsule.sanitize());
 
     assertTrue("BlockHeader outer unknown fields should be stripped",
         capsule.getInstance().getBlockHeader().getUnknownFields().asMap().isEmpty());
@@ -109,11 +111,14 @@ public class SanitizeUnknownFieldsTest {
   public void blockCapsuleSanitizeIsNoOpOnCleanBlock() {
     Block clean = sampleBlock();
     BlockCapsule capsule = new BlockCapsule(clean);
-    byte[] before = capsule.getData();
+    Block beforeInstance = capsule.getInstance();
+    byte[] beforeData = capsule.getData();
 
-    capsule.sanitize();
+    assertFalse("sanitize() should report no-op on a clean block", capsule.sanitize());
 
-    assertArrayEquals("Clean block should pass through unchanged", before, capsule.getData());
+    assertSame("Underlying Block reference should not be rebuilt",
+        beforeInstance, capsule.getInstance());
+    assertArrayEquals("Clean block should pass through unchanged", beforeData, capsule.getData());
   }
 
   // ---- TransactionCapsule.sanitize ----
@@ -124,7 +129,7 @@ public class SanitizeUnknownFieldsTest {
     TransactionCapsule capsule = new TransactionCapsule(padded);
     long originalSize = capsule.getData().length;
 
-    capsule.sanitize();
+    assertTrue("sanitize() should report it mutated the capsule", capsule.sanitize());
 
     assertTrue("Transaction-level unknown fields should be stripped",
         capsule.getInstance().getUnknownFields().asMap().isEmpty());
@@ -149,11 +154,14 @@ public class SanitizeUnknownFieldsTest {
   public void transactionCapsuleSanitizeIsNoOpOnCleanTransaction() {
     Transaction clean = sampleTransaction();
     TransactionCapsule capsule = new TransactionCapsule(clean);
-    byte[] before = capsule.getData();
+    Transaction beforeInstance = capsule.getInstance();
+    byte[] beforeData = capsule.getData();
 
-    capsule.sanitize();
+    assertFalse("sanitize() should report no-op on a clean transaction", capsule.sanitize());
 
-    assertArrayEquals(before, capsule.getData());
+    assertSame("Underlying Transaction reference should not be rebuilt",
+        beforeInstance, capsule.getInstance());
+    assertArrayEquals(beforeData, capsule.getData());
   }
 
   // ---- BlockMessage.sanitize ----
@@ -176,5 +184,17 @@ public class SanitizeUnknownFieldsTest {
         msg.getBlockCapsule().getData(), msg.getData());
     assertNotEquals("msg.data should no longer match the padded wire bytes",
         paddedBytes.length, msg.getData().length);
+  }
+
+  @Test
+  public void blockMessageSanitizeSkipsDataRewriteOnCleanBlock() throws Exception {
+    byte[] cleanBytes = sampleBlock().toByteArray();
+    BlockMessage msg = new BlockMessage(cleanBytes);
+    byte[] before = msg.getData();
+
+    msg.sanitize();
+
+    assertSame("msg.data should not be rewritten on the no-op path",
+        before, msg.getData());
   }
 }

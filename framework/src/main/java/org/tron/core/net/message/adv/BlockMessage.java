@@ -29,8 +29,9 @@ public class BlockMessage extends TronMessage {
   }
 
   public void sanitize() {
-    this.block.sanitize();
-    this.data = this.block.getData();
+    if (this.block.sanitize()) {
+      this.data = this.block.getData();
+    }
   }
 
   public BlockId getBlockId() {

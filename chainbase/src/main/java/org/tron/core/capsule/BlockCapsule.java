@@ -329,11 +329,11 @@ public class BlockCapsule implements ProtoCapsule<Block> {
     return !getInstance().getBlockHeader().getWitnessSignature().isEmpty();
   }
 
-  public void sanitize() {
+  public boolean sanitize() {
     boolean blockHasUnknown = !this.block.getUnknownFields().asMap().isEmpty();
     boolean headerHasUnknown = !this.block.getBlockHeader().getUnknownFields().asMap().isEmpty();
     if (!blockHasUnknown && !headerHasUnknown) {
-      return;
+      return false;
     }
     UnknownFieldSet empty = UnknownFieldSet.getDefaultInstance();
     Block.Builder builder = this.block.toBuilder();
@@ -346,6 +346,7 @@ public class BlockCapsule implements ProtoCapsule<Block> {
           .build());
     }
     this.block = builder.build();
+    return true;
   }
 
   @Override
