@@ -75,7 +75,7 @@ public class SolidityNodeTest extends BaseTest {
     f.set(solidityNode, value);
   }
 
-  // ── existing tests ────────────────────────────────────────────────────────────
+  // ── gRPC / HTTP service integration ──────────────────────────────────────────
 
   @Test
   public void testSolidityGrpcCall() {
@@ -115,7 +115,7 @@ public class SolidityNodeTest extends BaseTest {
     Assert.assertTrue(true);
   }
 
-  // ── new tests ─────────────────────────────────────────────────────────────────
+  // ── lifecycle ─────────────────────────────────────────────────────────────────
 
   /**
    * @PostConstruct init() must create both executor services before run() is called.
@@ -146,45 +146,6 @@ public class SolidityNodeTest extends BaseTest {
   }
 
   /**
-   * getBlockByNum() must throw RuntimeException (not return null) when
-   * flag=false, to prevent NullPointerException in blockQueue.put().
-   */
-  @Test(timeout = 1000)
-  public void testGetBlockByNumThrowsWhenClosed() throws Exception {
-    setFlag(false);
-    try {
-      Method m = SolidityNode.class.getDeclaredMethod("getBlockByNum", long.class);
-      m.setAccessible(true);
-      try {
-        m.invoke(solidityNode, 1L);
-        Assert.fail("Expected RuntimeException");
-      } catch (InvocationTargetException e) {
-        assertTrue(e.getCause() instanceof RuntimeException);
-        assertEquals("SolidityNode is closing.", e.getCause().getMessage());
-      }
-    } finally {
-      setFlag(true);
-    }
-  }
-
-  /**
-   * getLastSolidityBlockNum() must return 0 (not throw) when flag=false so
-   * getBlock()'s while(flag) loop exits quietly without a misleading error log.
-   */
-  @Test(timeout = 1000)
-  public void testGetLastSolidityBlockNumReturnsZeroWhenClosed() throws Exception {
-    setFlag(false);
-    try {
-      Method m = SolidityNode.class.getDeclaredMethod("getLastSolidityBlockNum");
-      m.setAccessible(true);
-      long result = (long) m.invoke(solidityNode);
-      assertEquals(0L, result);
-    } finally {
-      setFlag(true);
-    }
-  }
-
-  /**
    * SolidityCondition must match when --solidity is passed so the bean is
    * registered in the Spring context.
    */
@@ -195,125 +156,6 @@ public class SolidityNodeTest extends BaseTest {
     assertTrue(condition.matches(
         mock(ConditionContext.class),
         mock(AnnotatedTypeMetadata.class)));
-  }
-
-  // ── additional coverage tests ─────────────────────────────────────────────────
-
-  /**
-   * sleep() must return normally without throwing.
-   */
-  @Test(timeout = 1000)
-  public void testSleepReturnsNormally() {
-    solidityNode.sleep(1);
-  }
-
-  /**
-   * sleep() must swallow InterruptedException so callers are not surprised;
-   * the thread continues after waking.
-   */
-  @Test(timeout = 5000)
-  public void testSleepHandlesInterrupt() throws InterruptedException {
-    Thread t = new Thread(() -> solidityNode.sleep(10_000));
-    t.start();
-    Thread.sleep(50);
-    t.interrupt();
-    t.join(2000);
-    assertFalse("sleep() should have returned after interrupt", t.isAlive());
-  }
-
-  /**
-   * getBlockByNum() must return the block when the gRPC client returns a block
-   * whose number matches the requested number.
-   */
-  @Test(timeout = 2000)
-  public void testGetBlockByNumReturnsMatchingBlock() throws Exception {
-    Block expected = blockWithNum(7L);
-    DatabaseGrpcClient mockClient = mock(DatabaseGrpcClient.class);
-    Mockito.when(mockClient.getBlock(7L)).thenReturn(expected);
-
-    Field clientField = getField("databaseGrpcClient");
-    Object orig = clientField.get(solidityNode);
-    clientField.set(solidityNode, mockClient);
-    try {
-      Method m = SolidityNode.class.getDeclaredMethod("getBlockByNum", long.class);
-      m.setAccessible(true);
-      Block result = (Block) m.invoke(solidityNode, 7L);
-      assertEquals(7L, result.getBlockHeader().getRawData().getNumber());
-    } finally {
-      clientField.set(solidityNode, orig);
-    }
-  }
-
-  /**
-   * getLastSolidityBlockNum() must return the value obtained from the gRPC
-   * client when the call succeeds.
-   */
-  @Test(timeout = 2000)
-  public void testGetLastSolidityBlockNumReturnsFetchedValue() throws Exception {
-    DynamicProperties props = DynamicProperties.newBuilder()
-        .setLastSolidityBlockNum(99L).build();
-    DatabaseGrpcClient mockClient = mock(DatabaseGrpcClient.class);
-    Mockito.when(mockClient.getDynamicProperties()).thenReturn(props);
-
-    Field clientField = getField("databaseGrpcClient");
-    Object orig = clientField.get(solidityNode);
-    clientField.set(solidityNode, mockClient);
-    try {
-      Method m = SolidityNode.class.getDeclaredMethod("getLastSolidityBlockNum");
-      m.setAccessible(true);
-      long result = (long) m.invoke(solidityNode);
-      assertEquals(99L, result);
-    } finally {
-      clientField.set(solidityNode, orig);
-    }
-  }
-
-  /**
-   * loopProcessBlock() must persist the solidified block num when pushVerifiedBlock
-   * succeeds and hitDown is false.
-   */
-  @Test(timeout = 5000)
-  public void testLoopProcessBlockSavesBlockNumWhenNotHitDown() throws Exception {
-    TronNetDelegate mockDelegate = mock(TronNetDelegate.class);
-    Mockito.when(mockDelegate.isHitDown()).thenReturn(false);
-
-    long origSolidified = chainBaseManager.getDynamicPropertiesStore()
-        .getLatestSolidifiedBlockNum();
-    Field delegateField = getField("tronNetDelegate");
-    Object origDelegate = delegateField.get(solidityNode);
-    delegateField.set(solidityNode, mockDelegate);
-    try {
-      invokeLoopProcessBlock(blockWithNum(55L));
-      assertEquals(55L, chainBaseManager.getDynamicPropertiesStore()
-          .getLatestSolidifiedBlockNum());
-    } finally {
-      chainBaseManager.getDynamicPropertiesStore()
-          .saveLatestSolidifiedBlockNum(origSolidified);
-      delegateField.set(solidityNode, origDelegate);
-    }
-  }
-
-  /**
-   * loopProcessBlock() must NOT persist the solidified block num when hitDown
-   * is true, because the block was never pushed to BlockStore.
-   */
-  @Test(timeout = 2000)
-  public void testLoopProcessBlockSkipsSaveWhenHitDown() throws Exception {
-    TronNetDelegate mockDelegate = mock(TronNetDelegate.class);
-    Mockito.when(mockDelegate.isHitDown()).thenReturn(true);
-
-    long origSolidified = chainBaseManager.getDynamicPropertiesStore()
-        .getLatestSolidifiedBlockNum();
-    Field delegateField = getField("tronNetDelegate");
-    Object origDelegate = delegateField.get(solidityNode);
-    delegateField.set(solidityNode, mockDelegate);
-    try {
-      invokeLoopProcessBlock(blockWithNum(56L));
-      assertEquals(origSolidified, chainBaseManager.getDynamicPropertiesStore()
-          .getLatestSolidifiedBlockNum());
-    } finally {
-      delegateField.set(solidityNode, origDelegate);
-    }
   }
 
   /**
@@ -341,8 +183,6 @@ public class SolidityNodeTest extends BaseTest {
     }
     Mockito.verify(mockStore).saveLatestSolidifiedBlockNum(10L);
   }
-
-  // ── shutdown / databaseGrpcClient lifecycle ──────────────────────────────────
 
   /**
    * When databaseGrpcClient is non-null at shutdown time, its shutdown() must
@@ -373,7 +213,245 @@ public class SolidityNodeTest extends BaseTest {
     Mockito.verify(mockClient).shutdown();
   }
 
-  // ── getBlock() ───────────────────────────────────────────────────────────────
+  // ── sleep() ───────────────────────────────────────────────────────────────────
+
+  /**
+   * sleep() must:
+   * - return normally without throwing on a plain call,
+   * - exit early when the thread is interrupted,
+   * - restore the interrupt flag so callers can observe it immediately.
+   */
+  @Test(timeout = 5000)
+  public void testSleep() throws InterruptedException {
+    // Normal: returns without throwing.
+    solidityNode.sleep(1);
+
+    // Interrupt: exits early + restores flag.
+    boolean[] flagAfterSleep = {false};
+    Thread t = new Thread(() -> {
+      solidityNode.sleep(10_000);
+      flagAfterSleep[0] = Thread.currentThread().isInterrupted();
+    });
+    t.start();
+    Thread.sleep(50);
+    t.interrupt();
+    t.join(2000);
+    assertFalse("sleep() must return after interrupt", t.isAlive());
+    assertTrue("sleep() must restore the interrupt flag", flagAfterSleep[0]);
+  }
+
+  // ── getBlockByNum() ───────────────────────────────────────────────────────────
+
+  /**
+   * getBlockByNum() normal-path and transient-error recovery:
+   * - happy path: returns the block when the gRPC response number matches,
+   * - null response: warns and retries on the next iteration,
+   * - RPC exception: logs, sleeps, and succeeds on the second attempt.
+   */
+  @Test(timeout = 6000)
+  public void testGetBlockByNum() throws Exception {
+    Method m = SolidityNode.class.getDeclaredMethod("getBlockByNum", long.class);
+    m.setAccessible(true);
+    Field clientField = getField("databaseGrpcClient");
+    Object orig = clientField.get(solidityNode);
+    try {
+      DatabaseGrpcClient mockClient = mock(DatabaseGrpcClient.class);
+      clientField.set(solidityNode, mockClient);
+
+      // Happy path: matching block returned directly.
+      Mockito.when(mockClient.getBlock(7L)).thenReturn(blockWithNum(7L));
+      Block result = (Block) m.invoke(solidityNode, 7L);
+      assertEquals(7L, result.getBlockHeader().getRawData().getNumber());
+
+      // Null response: warn + retry, succeed on second call.
+      Mockito.when(mockClient.getBlock(5L))
+          .thenReturn(null)
+          .thenReturn(blockWithNum(5L));
+      result = (Block) m.invoke(solidityNode, 5L);
+      assertEquals(5L, result.getBlockHeader().getRawData().getNumber());
+      Mockito.verify(mockClient, Mockito.times(2)).getBlock(5L);
+
+      // RPC exception: log + retry, succeed on second call.
+      Mockito.when(mockClient.getBlock(8L))
+          .thenThrow(new RuntimeException("rpc error"))
+          .thenReturn(blockWithNum(8L));
+      result = (Block) m.invoke(solidityNode, 8L);
+      assertEquals(8L, result.getBlockHeader().getRawData().getNumber());
+    } finally {
+      clientField.set(solidityNode, orig);
+    }
+  }
+
+  /**
+   * getBlockByNum() shutdown paths: must throw RuntimeException (not return
+   * null) in two cases so callers can detect closure cleanly:
+   * - flag=false before the loop starts (immediate exit),
+   * - wrong block number returned and flag races to false during the retry sleep.
+   */
+  @Test(timeout = 5000)
+  public void testGetBlockByNumWhenClosed() throws Exception {
+    Method m = SolidityNode.class.getDeclaredMethod("getBlockByNum", long.class);
+    m.setAccessible(true);
+
+    // flag=false: while condition exits immediately.
+    setFlag(false);
+    try {
+      try {
+        m.invoke(solidityNode, 1L);
+        Assert.fail("Expected RuntimeException");
+      } catch (InvocationTargetException e) {
+        assertTrue(e.getCause() instanceof RuntimeException);
+        assertEquals("SolidityNode is closing.", e.getCause().getMessage());
+      }
+    } finally {
+      setFlag(true);
+    }
+
+    // Wrong block number returned: flag goes false → loop exits → throws.
+    DatabaseGrpcClient mockClient = mock(DatabaseGrpcClient.class);
+    Mockito.when(mockClient.getBlock(9L)).thenAnswer(inv -> {
+      setFlag(false);
+      return blockWithNum(999L);
+    });
+    Field clientField = getField("databaseGrpcClient");
+    Object orig = clientField.get(solidityNode);
+    clientField.set(solidityNode, mockClient);
+    try {
+      try {
+        m.invoke(solidityNode, 9L);
+        Assert.fail("Expected RuntimeException");
+      } catch (InvocationTargetException e) {
+        assertTrue(e.getCause() instanceof RuntimeException);
+      }
+    } finally {
+      setFlag(true);
+      clientField.set(solidityNode, orig);
+    }
+  }
+
+  // ── getLastSolidityBlockNum() ─────────────────────────────────────────────────
+
+  /**
+   * getLastSolidityBlockNum() normal-path and retry:
+   * - happy path: returns the value from getDynamicProperties(),
+   * - RPC exception: logs, sleeps, and returns the value on the second attempt.
+   */
+  @Test(timeout = 4000)
+  public void testGetLastSolidityBlockNum() throws Exception {
+    Method m = SolidityNode.class.getDeclaredMethod("getLastSolidityBlockNum");
+    m.setAccessible(true);
+    Field clientField = getField("databaseGrpcClient");
+    Object orig = clientField.get(solidityNode);
+    try {
+      DatabaseGrpcClient mockClient = mock(DatabaseGrpcClient.class);
+      clientField.set(solidityNode, mockClient);
+
+      // Happy path.
+      Mockito.when(mockClient.getDynamicProperties())
+          .thenReturn(DynamicProperties.newBuilder().setLastSolidityBlockNum(99L).build());
+      assertEquals(99L, (long) m.invoke(solidityNode));
+
+      // RPC exception: retry, return value on second attempt.
+      Mockito.when(mockClient.getDynamicProperties())
+          .thenThrow(new RuntimeException("rpc error"))
+          .thenReturn(DynamicProperties.newBuilder().setLastSolidityBlockNum(50L).build());
+      assertEquals(50L, (long) m.invoke(solidityNode));
+    } finally {
+      clientField.set(solidityNode, orig);
+    }
+  }
+
+  /**
+   * getLastSolidityBlockNum() shutdown paths: must return 0 without looping in
+   * two cases:
+   * - flag=false before the loop starts (while condition fails),
+   * - exception thrown after flag races to false during the gRPC call.
+   */
+  @Test(timeout = 3000)
+  public void testGetLastSolidityBlockNumWhenClosed() throws Exception {
+    Method m = SolidityNode.class.getDeclaredMethod("getLastSolidityBlockNum");
+    m.setAccessible(true);
+
+    // flag=false: while condition exits immediately, returns 0.
+    setFlag(false);
+    try {
+      assertEquals(0L, (long) m.invoke(solidityNode));
+    } finally {
+      setFlag(true);
+    }
+
+    // Exception while flag races to false: !flag guard returns 0 with INFO.
+    DatabaseGrpcClient mockClient = mock(DatabaseGrpcClient.class);
+    Mockito.when(mockClient.getDynamicProperties()).thenAnswer(inv -> {
+      setFlag(false);
+      throw new RuntimeException("channel closed during shutdown");
+    });
+    Field clientField = getField("databaseGrpcClient");
+    Object orig = clientField.get(solidityNode);
+    clientField.set(solidityNode, mockClient);
+    try {
+      assertEquals(0L, (long) m.invoke(solidityNode));
+    } finally {
+      setFlag(true);
+      clientField.set(solidityNode, orig);
+    }
+  }
+
+  // ── loopProcessBlock() ────────────────────────────────────────────────────────
+
+  /**
+   * loopProcessBlock() behaviour across three scenarios:
+   * - hitDown=false: solidified block num is persisted after a successful push,
+   * - hitDown=true: solidified block num is NOT updated (block not in store),
+   * - push throws on first attempt: retries after sleep and succeeds on second.
+   */
+  @Test(timeout = 6000)
+  public void testLoopProcessBlock() throws Exception {
+    long origSolidified = chainBaseManager.getDynamicPropertiesStore()
+        .getLatestSolidifiedBlockNum();
+    Field delegateField = getField("tronNetDelegate");
+    Field clientField   = getField("databaseGrpcClient");
+    Object origDelegate = delegateField.get(solidityNode);
+    Object origClient   = clientField.get(solidityNode);
+    try {
+      // hitDown=false: solidified block num must be saved.
+      TronNetDelegate notHitDown = mock(TronNetDelegate.class);
+      Mockito.when(notHitDown.isHitDown()).thenReturn(false);
+      delegateField.set(solidityNode, notHitDown);
+      invokeLoopProcessBlock(blockWithNum(55L));
+      assertEquals(55L, chainBaseManager.getDynamicPropertiesStore()
+          .getLatestSolidifiedBlockNum());
+
+      // hitDown=true: solidified block num must NOT change.
+      TronNetDelegate hitDown = mock(TronNetDelegate.class);
+      Mockito.when(hitDown.isHitDown()).thenReturn(true);
+      delegateField.set(solidityNode, hitDown);
+      invokeLoopProcessBlock(blockWithNum(56L));
+      assertEquals(55L, chainBaseManager.getDynamicPropertiesStore()
+          .getLatestSolidifiedBlockNum()); // unchanged
+
+      // Exception on first push: sleep, re-fetch, succeed on second push.
+      TronNetDelegate retryDelegate = mock(TronNetDelegate.class);
+      Mockito.when(retryDelegate.isHitDown()).thenReturn(false);
+      Mockito.doThrow(new RuntimeException("push failed"))
+          .doNothing()
+          .when(retryDelegate).pushVerifiedBlock(Mockito.any());
+      DatabaseGrpcClient mockClient = mock(DatabaseGrpcClient.class);
+      Mockito.when(mockClient.getBlock(33L)).thenReturn(blockWithNum(33L));
+      delegateField.set(solidityNode, retryDelegate);
+      clientField.set(solidityNode, mockClient);
+      invokeLoopProcessBlock(blockWithNum(33L));
+      assertEquals(33L, chainBaseManager.getDynamicPropertiesStore()
+          .getLatestSolidifiedBlockNum());
+    } finally {
+      chainBaseManager.getDynamicPropertiesStore()
+          .saveLatestSolidifiedBlockNum(origSolidified);
+      delegateField.set(solidityNode, origDelegate);
+      clientField.set(solidityNode, origClient);
+    }
+  }
+
+  // ── getBlock() ────────────────────────────────────────────────────────────────
 
   /**
    * getBlock() must fetch a block via gRPC, place it in blockQueue, then exit
@@ -382,24 +460,24 @@ public class SolidityNodeTest extends BaseTest {
   @Test(timeout = 5000)
   @SuppressWarnings("unchecked")
   public void testGetBlockProcessesOneBlock() throws Exception {
-    long origID = atomicLong("ID").get();
+    long origID     = atomicLong("ID").get();
     long origRemote = atomicLong("remoteBlockNum").get();
 
     atomicLong("ID").set(0L);
-    atomicLong("remoteBlockNum").set(2L); // blockNum=1 <= 2, no sleep needed
+    atomicLong("remoteBlockNum").set(2L);
 
     DatabaseGrpcClient mockClient = mock(DatabaseGrpcClient.class);
     Mockito.when(mockClient.getBlock(1L)).thenAnswer(inv -> {
-      setFlag(false); // stop the loop after this iteration
+      setFlag(false);
       return blockWithNum(1L);
     });
 
     TronNetDelegate mockDelegate = mock(TronNetDelegate.class);
     Mockito.when(mockDelegate.isHitDown()).thenReturn(false);
 
-    Field clientField = getField("databaseGrpcClient");
+    Field clientField   = getField("databaseGrpcClient");
     Field delegateField = getField("tronNetDelegate");
-    Object origClient = clientField.get(solidityNode);
+    Object origClient   = clientField.get(solidityNode);
     Object origDelegate = delegateField.get(solidityNode);
     clientField.set(solidityNode, mockClient);
     delegateField.set(solidityNode, mockDelegate);
@@ -412,7 +490,9 @@ public class SolidityNodeTest extends BaseTest {
       m.invoke(solidityNode);
 
       assertEquals(1, queue.size());
-      assertEquals(1L, queue.peek().getBlockHeader().getRawData().getNumber());
+      Block peeked = queue.peek();
+      Assert.assertNotNull("blockQueue must contain the fetched block", peeked);
+      assertEquals(1L, peeked.getBlockHeader().getRawData().getNumber());
     } finally {
       setFlag(true);
       queue.clear();
@@ -423,7 +503,85 @@ public class SolidityNodeTest extends BaseTest {
     }
   }
 
-  // ── processSolidityBlock() ───────────────────────────────────────────────────
+  /**
+   * getBlock() shutdown paths:
+   * - interrupted in blockQueue.put() by shutdownNow(): must exit cleanly with
+   *   INFO (root cause of the original "reason: null" ERROR bug),
+   * - exception thrown while flag is already false: must exit cleanly with INFO
+   *   instead of logging ERROR and retrying.
+   */
+  @Test(timeout = 8000)
+  @SuppressWarnings("unchecked")
+  public void testGetBlockShutdownPaths() throws Exception {
+    long origID     = atomicLong("ID").get();
+    long origRemote = atomicLong("remoteBlockNum").get();
+    Field clientField   = getField("databaseGrpcClient");
+    Field delegateField = getField("tronNetDelegate");
+    Object origClient   = clientField.get(solidityNode);
+    Object origDelegate = delegateField.get(solidityNode);
+
+    LinkedBlockingDeque<Block> queue =
+        (LinkedBlockingDeque<Block>) getField("blockQueue").get(solidityNode);
+    try {
+      // ── Part 1: interrupt during blockQueue.put() ──────────────────────────
+      // Fill the queue to capacity so the next put() call blocks.
+      for (int i = 0; i < 100; i++) {
+        queue.offer(blockWithNum(i));
+      }
+      assertEquals(100, queue.size());
+
+      atomicLong("ID").set(0L);
+      atomicLong("remoteBlockNum").set(10L);
+
+      DatabaseGrpcClient putClient = mock(DatabaseGrpcClient.class);
+      Mockito.when(putClient.getBlock(1L)).thenReturn(blockWithNum(1L));
+      TronNetDelegate mockDelegate = mock(TronNetDelegate.class);
+      Mockito.when(mockDelegate.isHitDown()).thenReturn(false);
+      clientField.set(solidityNode, putClient);
+      delegateField.set(solidityNode, mockDelegate);
+
+      Method getBlockM = SolidityNode.class.getDeclaredMethod("getBlock");
+      getBlockM.setAccessible(true);
+      Thread t = new Thread(() -> {
+        try {
+          getBlockM.invoke(solidityNode);
+        } catch (Exception e) {
+          Thread.currentThread().interrupt();
+        }
+      });
+      t.start();
+      Thread.sleep(200); // let the thread block inside blockQueue.put()
+      t.interrupt();     // simulate ExecutorService.shutdownNow()
+      t.join(4000);
+      assertFalse("getBlock must exit cleanly when interrupted during put()", t.isAlive());
+      queue.clear();
+      setFlag(true);
+
+      // ── Part 2: exception while flag is false ──────────────────────────────
+      atomicLong("ID").set(0L);
+      atomicLong("remoteBlockNum").set(10L);
+
+      DatabaseGrpcClient closingClient = mock(DatabaseGrpcClient.class);
+      Mockito.when(closingClient.getBlock(1L)).thenAnswer(inv -> {
+        setFlag(false); // shutdown races with this gRPC call
+        throw new RuntimeException("channel closed during shutdown");
+      });
+      clientField.set(solidityNode, closingClient);
+      delegateField.set(solidityNode, mockDelegate);
+
+      // Must return without throwing and without infinite retry.
+      getBlockM.invoke(solidityNode);
+    } finally {
+      setFlag(true);
+      queue.clear();
+      atomicLong("ID").set(origID);
+      atomicLong("remoteBlockNum").set(origRemote);
+      clientField.set(solidityNode, origClient);
+      delegateField.set(solidityNode, origDelegate);
+    }
+  }
+
+  // ── processSolidityBlock() ────────────────────────────────────────────────────
 
   /**
    * processSolidityBlock() must drain a block from the queue, process it, and
@@ -495,129 +653,6 @@ public class SolidityNodeTest extends BaseTest {
     } finally {
       setFlag(true);
       delegateField.set(solidityNode, origDelegate);
-    }
-  }
-
-  // ── loopProcessBlock() retry path ────────────────────────────────────────────
-
-  /**
-   * When pushVerifiedBlock throws, loopProcessBlock() must retry after sleeping,
-   * re-fetching the block via getBlockByNum, and ultimately succeed.
-   */
-  @Test(timeout = 5000)
-  public void testLoopProcessBlockRetriesOnException() throws Exception {
-    TronNetDelegate mockDelegate = mock(TronNetDelegate.class);
-    Mockito.when(mockDelegate.isHitDown()).thenReturn(false);
-    Mockito.doThrow(new RuntimeException("push failed"))
-        .doNothing()
-        .when(mockDelegate).pushVerifiedBlock(Mockito.any());
-
-    DatabaseGrpcClient mockClient = mock(DatabaseGrpcClient.class);
-    Mockito.when(mockClient.getBlock(33L)).thenReturn(blockWithNum(33L));
-
-    long origSolidified = chainBaseManager.getDynamicPropertiesStore()
-        .getLatestSolidifiedBlockNum();
-    Field delegateField = getField("tronNetDelegate");
-    Field clientField = getField("databaseGrpcClient");
-    Object origDelegate = delegateField.get(solidityNode);
-    Object origClient = clientField.get(solidityNode);
-    delegateField.set(solidityNode, mockDelegate);
-    clientField.set(solidityNode, mockClient);
-    try {
-      invokeLoopProcessBlock(blockWithNum(33L));
-      assertEquals(33L, chainBaseManager.getDynamicPropertiesStore()
-          .getLatestSolidifiedBlockNum());
-    } catch (RuntimeException e) {
-      Assert.assertTrue(e.getMessage().contains("push failed"));
-    } finally {
-      chainBaseManager.getDynamicPropertiesStore()
-          .saveLatestSolidifiedBlockNum(origSolidified);
-      delegateField.set(solidityNode, origDelegate);
-      clientField.set(solidityNode, origClient);
-    }
-  }
-
-  // ── getBlockByNum() retry paths ──────────────────────────────────────────────
-
-  /**
-   * When the returned block number does not match, getBlockByNum() must warn
-   * and retry; it must throw RuntimeException when flag becomes false.
-   */
-  @Test(timeout = 5000)
-  public void testGetBlockByNumWarnOnWrongNum() throws Exception {
-    DatabaseGrpcClient mockClient = mock(DatabaseGrpcClient.class);
-    Mockito.when(mockClient.getBlock(9L)).thenAnswer(inv -> {
-      setFlag(false); // cause the retry loop to exit
-      return blockWithNum(999L); // deliberately wrong number
-    });
-
-    Field clientField = getField("databaseGrpcClient");
-    Object orig = clientField.get(solidityNode);
-    clientField.set(solidityNode, mockClient);
-    try {
-      Method m = SolidityNode.class.getDeclaredMethod("getBlockByNum", long.class);
-      m.setAccessible(true);
-      try {
-        m.invoke(solidityNode, 9L);
-        Assert.fail("Expected RuntimeException");
-      } catch (InvocationTargetException e) {
-        assertTrue(e.getCause() instanceof RuntimeException);
-      }
-    } finally {
-      setFlag(true);
-      clientField.set(solidityNode, orig);
-    }
-  }
-
-  /**
-   * When the gRPC call throws, getBlockByNum() must log, sleep, and retry;
-   * on the second attempt it must return the correct block.
-   */
-  @Test(timeout = 5000)
-  public void testGetBlockByNumRetriesOnException() throws Exception {
-    DatabaseGrpcClient mockClient = mock(DatabaseGrpcClient.class);
-    Mockito.when(mockClient.getBlock(8L))
-        .thenThrow(new RuntimeException("rpc error"))
-        .thenReturn(blockWithNum(8L));
-
-    Field clientField = getField("databaseGrpcClient");
-    Object orig = clientField.get(solidityNode);
-    clientField.set(solidityNode, mockClient);
-    try {
-      Method m = SolidityNode.class.getDeclaredMethod("getBlockByNum", long.class);
-      m.setAccessible(true);
-      Block result = (Block) m.invoke(solidityNode, 8L);
-      assertEquals(8L, result.getBlockHeader().getRawData().getNumber());
-    } finally {
-      clientField.set(solidityNode, orig);
-    }
-  }
-
-  // ── getLastSolidityBlockNum() retry path ─────────────────────────────────────
-
-  /**
-   * When getDynamicProperties() throws, getLastSolidityBlockNum() must log,
-   * sleep, and retry; on the second attempt it must return the fetched value.
-   */
-  @Test(timeout = 5000)
-  public void testGetLastSolidityBlockNumRetriesOnException() throws Exception {
-    DynamicProperties props = DynamicProperties.newBuilder()
-        .setLastSolidityBlockNum(50L).build();
-    DatabaseGrpcClient mockClient = mock(DatabaseGrpcClient.class);
-    Mockito.when(mockClient.getDynamicProperties())
-        .thenThrow(new RuntimeException("rpc error"))
-        .thenReturn(props);
-
-    Field clientField = getField("databaseGrpcClient");
-    Object orig = clientField.get(solidityNode);
-    clientField.set(solidityNode, mockClient);
-    try {
-      Method m = SolidityNode.class.getDeclaredMethod("getLastSolidityBlockNum");
-      m.setAccessible(true);
-      long result = (long) m.invoke(solidityNode);
-      assertEquals(50L, result);
-    } finally {
-      clientField.set(solidityNode, orig);
     }
   }
 
