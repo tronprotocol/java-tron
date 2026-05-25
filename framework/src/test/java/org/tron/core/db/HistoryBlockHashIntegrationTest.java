@@ -256,14 +256,18 @@ public class HistoryBlockHashIntegrationTest extends BaseTest {
    * SR / validator parity: the producer's {@code generateBlock} simulation
    * loop and the validator's {@code processBlock} apply loop must see the
    * same storage state when transactions hit {@code HISTORY_STORAGE_ADDRESS}.
-   * That requires {@link HistoryBlockHashUtil#write} to run before the tx
-   * loop on both paths. {@code processBlock} writes at line 1858; this test
-   * pins the matching write inside {@code generateBlock}.
+   * Both paths run {@link HistoryBlockHashUtil#write} before their tx loop:
+   * {@code processBlock} after its {@code validBlock} guard, and
+   * {@code generateBlock} after the witness-permission guard, so a failed
+   * permission check never writes the parent hash.
    *
-   * <p>Spy {@code accountStateCallBack.preExecute} — called between the
-   * write and the tx loop on both paths — and snapshot the slot from inside
-   * the revoking session. Pre-fix the slot is empty (write never ran);
-   * post-fix it holds the parent block hash.
+   * <p>In {@code generateBlock} {@code preExecute} runs ahead of the write
+   * (it precedes the guard), so this spies
+   * {@code accountStateCallBack.executeGenerateFinish} — the last callback
+   * before {@code session.reset()} — and snapshots the slot from inside the
+   * revoking session. With no pending transactions the tx loop is a no-op, so
+   * reaching this callback means the write already ran: if it were dropped the
+   * slot would be empty; instead it holds the parent block hash.
    */
   @Test
   public void generateBlockWritesParentHashBeforeTxLoop() throws Exception {
@@ -286,7 +290,7 @@ public class HistoryBlockHashIntegrationTest extends BaseTest {
           chainBaseManager.getStorageRowStore());
       captured.set(st.getValue(new DataWord(expectedSlot)));
       return inv.callRealMethod();
-    }).when(spy).preExecute(Mockito.any(BlockCapsule.class));
+    }).when(spy).executeGenerateFinish();
     cbField.set(dbManager, spy);
 
     try {
@@ -303,10 +307,11 @@ public class HistoryBlockHashIntegrationTest extends BaseTest {
     }
 
     assertNotNull(
-        "preExecute fired with an empty slot — write() must run before preExecute",
+        "executeGenerateFinish fired with an empty slot — "
+            + "write() must run during block generation",
         captured.get());
     assertArrayEquals(
-        "slot must hold the parent block hash before the tx loop runs",
+        "slot must hold the parent block hash by the time generation finishes",
         expectedParentHash, captured.get().getData());
   }
 
