@@ -32,6 +32,10 @@ public class BurnCipherTest {
     return addr;
   }
 
+  private static byte[] amount32(BigInteger amount) {
+    return ByteUtil.bigIntegerToBytes(amount, 32);
+  }
+
   private static byte[] extractCipher(byte[] record) {
     return Arrays.copyOf(record, Encryption.BURN_CIPHER_LEN);
   }
@@ -110,6 +114,25 @@ public class BurnCipherTest {
     Assert.assertFalse(Arrays.equals(record1, record2));
   }
 
+  @Test
+  public void testDifferentAmountProducesDifferentNonce() throws ZksnarkException {
+    byte[] record1 = Encryption.encryptBurnMessageByOvk(
+        OVK, BigInteger.valueOf(1000000), ADDR_21, NF).get();
+    byte[] record2 = Encryption.encryptBurnMessageByOvk(
+        OVK, BigInteger.valueOf(2000000), ADDR_21, NF).get();
+    Assert.assertFalse(Arrays.equals(extractNonce(record1), extractNonce(record2)));
+  }
+
+  @Test
+  public void testDifferentAddrProducesDifferentNonce() throws ZksnarkException {
+    byte[] addr2 = ADDR_21.clone();
+    addr2[5] ^= (byte) 0xFF;
+    BigInteger amount = BigInteger.valueOf(1000000);
+    byte[] record1 = Encryption.encryptBurnMessageByOvk(OVK, amount, ADDR_21, NF).get();
+    byte[] record2 = Encryption.encryptBurnMessageByOvk(OVK, amount, addr2, NF).get();
+    Assert.assertFalse(Arrays.equals(extractNonce(record1), extractNonce(record2)));
+  }
+
   // ---------- encrypt input validation ----------
 
   @Test(expected = ZksnarkException.class)
@@ -138,7 +161,7 @@ public class BurnCipherTest {
     byte[] nonce = extractNonce(record);
 
     Optional<byte[]> plainOpt = Encryption.decryptBurnMessageByOvk(
-        OVK, cipher, nonce, extractReserved(record), NF);
+        OVK, cipher, nonce, extractReserved(record), NF, amount32(amount), ADDR_21);
     Assert.assertTrue(plainOpt.isPresent());
     byte[] plaintext = plainOpt.get();
 
@@ -161,7 +184,34 @@ public class BurnCipherTest {
     byte[] wrongNf = new byte[32];
     wrongNf[0] = (byte) 0xFF;
     Optional<byte[]> result = Encryption.decryptBurnMessageByOvk(
-        OVK, cipher, nonce, extractReserved(record), wrongNf);
+        OVK, cipher, nonce, extractReserved(record), wrongNf, amount32(amount), ADDR_21);
+    Assert.assertFalse(result.isPresent());
+  }
+
+  @Test
+  public void testDecryptWithWrongAmountFails() throws ZksnarkException {
+    BigInteger amount = BigInteger.valueOf(500000);
+    byte[] record = Encryption.encryptBurnMessageByOvk(OVK, amount, ADDR_21, NF).get();
+    byte[] cipher = extractCipher(record);
+    byte[] nonce = extractNonce(record);
+
+    Optional<byte[]> result = Encryption.decryptBurnMessageByOvk(
+        OVK, cipher, nonce, extractReserved(record), NF,
+        amount32(BigInteger.valueOf(500001)), ADDR_21);
+    Assert.assertFalse(result.isPresent());
+  }
+
+  @Test
+  public void testDecryptWithWrongAddrFails() throws ZksnarkException {
+    BigInteger amount = BigInteger.valueOf(500000);
+    byte[] record = Encryption.encryptBurnMessageByOvk(OVK, amount, ADDR_21, NF).get();
+    byte[] cipher = extractCipher(record);
+    byte[] nonce = extractNonce(record);
+    byte[] wrongAddr = ADDR_21.clone();
+    wrongAddr[10] ^= (byte) 0xFF;
+
+    Optional<byte[]> result = Encryption.decryptBurnMessageByOvk(
+        OVK, cipher, nonce, extractReserved(record), NF, amount32(amount), wrongAddr);
     Assert.assertFalse(result.isPresent());
   }
 
@@ -173,7 +223,7 @@ public class BurnCipherTest {
     byte[] nonce = extractNonce(record);
 
     Optional<byte[]> result = Encryption.decryptBurnMessageByOvk(
-        OVK, cipher, nonce, extractReserved(record), null);
+        OVK, cipher, nonce, extractReserved(record), null, amount32(amount), ADDR_21);
     Assert.assertFalse(result.isPresent());
   }
 
@@ -184,13 +234,14 @@ public class BurnCipherTest {
     byte[] cipher = extractCipher(record);
     byte[] nonce = extractNonce(record);
     byte[] reserved = extractReserved(record);
+    byte[] amt = amount32(amount);
 
     Assert.assertFalse(Encryption.decryptBurnMessageByOvk(
-        OVK, cipher, nonce, reserved, new byte[31]).isPresent());
+        OVK, cipher, nonce, reserved, new byte[31], amt, ADDR_21).isPresent());
     Assert.assertFalse(Encryption.decryptBurnMessageByOvk(
-        OVK, cipher, nonce, reserved, new byte[33]).isPresent());
+        OVK, cipher, nonce, reserved, new byte[33], amt, ADDR_21).isPresent());
     Assert.assertFalse(Encryption.decryptBurnMessageByOvk(
-        OVK, cipher, nonce, reserved, new byte[0]).isPresent());
+        OVK, cipher, nonce, reserved, new byte[0], amt, ADDR_21).isPresent());
   }
 
   @Test
@@ -202,7 +253,7 @@ public class BurnCipherTest {
     byte[] tamperedNonce = new byte[Encryption.BURN_NONCE_LEN];
     tamperedNonce[0] = (byte) 0xDE;
     Optional<byte[]> result = Encryption.decryptBurnMessageByOvk(
-        OVK, cipher, tamperedNonce, extractReserved(record), NF);
+        OVK, cipher, tamperedNonce, extractReserved(record), NF, amount32(amount), ADDR_21);
     Assert.assertFalse(result.isPresent());
   }
 
@@ -214,7 +265,7 @@ public class BurnCipherTest {
     byte[] nonce = extractNonce(record);
     byte[] badReserved = new byte[]{0, 0, 0, 2};
     Optional<byte[]> result = Encryption.decryptBurnMessageByOvk(
-        OVK, cipher, nonce, badReserved, NF);
+        OVK, cipher, nonce, badReserved, NF, amount32(amount), ADDR_21);
     Assert.assertFalse(result.isPresent());
   }
 
@@ -222,27 +273,28 @@ public class BurnCipherTest {
 
   @Test(expected = ZksnarkException.class)
   public void testDecryptRejectsNullOvk() throws ZksnarkException {
-    Encryption.decryptBurnMessageByOvk(null, new byte[80], new byte[12], new byte[4], NF);
+    Encryption.decryptBurnMessageByOvk(null, new byte[80], new byte[12], new byte[4], NF,
+        new byte[32], ADDR_21);
   }
 
   @Test
   public void testDecryptRejectsBadCipherLength() throws ZksnarkException {
     Optional<byte[]> result = Encryption.decryptBurnMessageByOvk(
-        OVK, new byte[64], new byte[12], new byte[4], NF);
+        OVK, new byte[64], new byte[12], new byte[4], NF, new byte[32], ADDR_21);
     Assert.assertFalse(result.isPresent());
   }
 
   @Test
   public void testDecryptRejectsNullNonce() throws ZksnarkException {
     Optional<byte[]> result = Encryption.decryptBurnMessageByOvk(
-        OVK, new byte[80], null, new byte[4], NF);
+        OVK, new byte[80], null, new byte[4], NF, new byte[32], ADDR_21);
     Assert.assertFalse(result.isPresent());
   }
 
   @Test
   public void testDecryptRejectsNullReserved() throws ZksnarkException {
     Optional<byte[]> result = Encryption.decryptBurnMessageByOvk(
-        OVK, new byte[80], new byte[12], null, NF);
+        OVK, new byte[80], new byte[12], null, NF, new byte[32], ADDR_21);
     Assert.assertFalse(result.isPresent());
   }
 }

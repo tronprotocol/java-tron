@@ -262,7 +262,7 @@ public class NoteEncryption {
     }
 
     /**
-     * encrypt burn message with nf-derived nonce, returns a 96B record:
+     * encrypt burn message with nonce bound to (nf, amount, addr21), returns a 96B record:
      * cipher(80) + nonce(12) + reserved/version(4).
      */
     public static Optional<byte[]> encryptBurnMessageByOvk(byte[] ovk, BigInteger toAmount,
@@ -279,7 +279,7 @@ public class NoteEncryption {
       }
       byte[] plaintext = new byte[64];
       byte[] amountArray = ByteUtil.bigIntegerToBytes(toAmount, 32);
-      byte[] nonce = deriveNonceFromNf(nf);
+      byte[] nonce = deriveBurnNonce(nf, amountArray, transparentToAddress);
       byte[] cipher = new byte[BURN_CIPHER_LEN];
       System.arraycopy(amountArray, 0, plaintext, 0, 32);
       System.arraycopy(transparentToAddress, 0, plaintext, 32, 21);
@@ -298,14 +298,32 @@ public class NoteEncryption {
     }
 
     /**
-     * Derive a 12-byte ChaCha20-Poly1305 nonce from the spend nullifier.
-     * The nullifier is prefixed with a fixed domain tag before hashing so the
-     * derivation cannot collide with any other SHA3-of-nf usage in the codebase.
+     * Derive a 12-byte ChaCha20-Poly1305 nonce from (nf, amount, addr21).
+     * Binding the plaintext fields ensures that repeated encryption with the same nf
+     * but different amount/addr produces distinct nonces, preserving AEAD nonce
+     * uniqueness even when the same input note is used to generate multiple burn
+     * trigger inputs off-chain.
      */
-    public static byte[] deriveNonceFromNf(byte[] nf) {
-      byte[] tagged = new byte[BURN_NONCE_DOMAIN.length + nf.length];
-      System.arraycopy(BURN_NONCE_DOMAIN, 0, tagged, 0, BURN_NONCE_DOMAIN.length);
-      System.arraycopy(nf, 0, tagged, BURN_NONCE_DOMAIN.length, nf.length);
+    public static byte[] deriveBurnNonce(byte[] nf, byte[] amount32, byte[] addr21) {
+      if (nf == null || nf.length != 32) {
+        throw new IllegalArgumentException("invalid nullifier length");
+      }
+      if (amount32 == null || amount32.length != 32) {
+        throw new IllegalArgumentException("invalid amount length");
+      }
+      if (addr21 == null || addr21.length != 21) {
+        throw new IllegalArgumentException("invalid addr21 length");
+      }
+      byte[] tagged = new byte[BURN_NONCE_DOMAIN.length + nf.length + amount32.length
+          + addr21.length];
+      int off = 0;
+      System.arraycopy(BURN_NONCE_DOMAIN, 0, tagged, off, BURN_NONCE_DOMAIN.length);
+      off += BURN_NONCE_DOMAIN.length;
+      System.arraycopy(nf, 0, tagged, off, nf.length);
+      off += nf.length;
+      System.arraycopy(amount32, 0, tagged, off, amount32.length);
+      off += amount32.length;
+      System.arraycopy(addr21, 0, tagged, off, addr21.length);
       byte[] hash = Hash.sha3(tagged);
       byte[] nonce = new byte[BURN_NONCE_LEN];
       System.arraycopy(hash, 0, nonce, 0, BURN_NONCE_LEN);
@@ -316,11 +334,13 @@ public class NoteEncryption {
      * decrypt burn message. The trailing 4-byte reserved field is treated as an explicit
      * record-version marker:
      * - reserved = 0x00000000 and nonce = 0x000000000000000000000000 -> legacy v1 path.
-     * - reserved = 0x00000001 -> v2 path, requiring nf-bound nonce verification.
+     * - reserved = 0x00000001 -> v2 path; nonce must equal
+     *   deriveBurnNonce(nf, amount32, addr21) using the public log fields.
      * - any other reserved value -> reject.
      */
     public static Optional<byte[]> decryptBurnMessageByOvk(byte[] ovk, byte[] ciphertext,
-        byte[] nonceFromLog, byte[] reservedFromLog, byte[] nf) throws ZksnarkException {
+        byte[] nonceFromLog, byte[] reservedFromLog, byte[] nf, byte[] amount32, byte[] addr21)
+        throws ZksnarkException {
       if (ovk == null || ovk.length != NOTEENCRYPTION_CIPHER_KEYSIZE) {
         throw new ZksnarkException("invalid ovk length");
       }
@@ -337,10 +357,12 @@ public class NoteEncryption {
         }
         effectiveNonce = nonceFromLog;
       } else if (Arrays.equals(reservedFromLog, BURN_RECORD_V2_MARKER)) {
-        if (nf == null || nf.length != 32) {
+        if (nf == null || nf.length != 32
+            || amount32 == null || amount32.length != 32
+            || addr21 == null || addr21.length != 21) {
           return Optional.empty();
         }
-        byte[] derived = deriveNonceFromNf(nf);
+        byte[] derived = deriveBurnNonce(nf, amount32, addr21);
         if (!Arrays.equals(nonceFromLog, derived)) {
           return Optional.empty();
         }

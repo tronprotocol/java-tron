@@ -63,8 +63,16 @@ public class ShieldedTRC20ParametersBuilder {
   private BigInteger transparentToAmount;
   @Setter
   private byte[] ovk;
-  @Setter
   private byte[] burnCiphertext = new byte[Encryption.BURN_CIPHER_RECORD_SIZE];
+
+  public void setBurnCiphertext(byte[] burnCiphertext) {
+    if (burnCiphertext == null
+        || burnCiphertext.length != Encryption.BURN_CIPHER_RECORD_SIZE) {
+      throw new IllegalArgumentException(
+          "burnCiphertext must be " + Encryption.BURN_CIPHER_RECORD_SIZE + " bytes");
+    }
+    this.burnCiphertext = burnCiphertext.clone();
+  }
 
   public ShieldedTRC20ParametersBuilder() {
 

@@ -224,19 +224,19 @@ public class NoteEncDecryTest extends BaseTest {
     Assert.assertEquals(0, rc);
 
     Optional<byte[]> p1 = Encryption.decryptBurnMessageByOvk(
-        ovk, v1Cipher, new byte[12], new byte[4], null);
+        ovk, v1Cipher, new byte[12], new byte[4], null, null, null);
     Assert.assertTrue(p1.isPresent());
     Assert.assertArrayEquals(plaintext, p1.get());
 
     byte[] wrongNonce = new byte[12];
     wrongNonce[0] = 1;
     Assert.assertFalse(Encryption.decryptBurnMessageByOvk(
-        ovk, v1Cipher, wrongNonce, new byte[4], null).isPresent());
+        ovk, v1Cipher, wrongNonce, new byte[4], null, null, null).isPresent());
 
     Assert.assertFalse(Encryption.decryptBurnMessageByOvk(
-        ovk, v1Cipher, new byte[11], new byte[4], null).isPresent());
+        ovk, v1Cipher, new byte[11], new byte[4], null, null, null).isPresent());
     Assert.assertFalse(Encryption.decryptBurnMessageByOvk(
-        ovk, v1Cipher, null, new byte[4], null).isPresent());
+        ovk, v1Cipher, null, new byte[4], null, null, null).isPresent());
   }
 
   @Test
@@ -291,7 +291,7 @@ public class NoteEncDecryTest extends BaseTest {
     byte[] nf = new byte[32];
     nf[0] = 0x11;
     byte[] record = buildV2BurnRecord(nf);
-    // flip one nonce byte so it no longer matches deriveNonceFromNf(nf).
+    // flip one nonce byte so it no longer matches deriveBurnNonce(nf, amount, addr).
     record[Encryption.BURN_NONCE_OFFSET] ^= (byte) 0xFF;
     GrpcAPI.ShieldedTRC20Parameters trc20Params = buildBurnTrc20Params(record, nf);
     GrpcAPI.ShieldedTRC20TriggerContractParameters req = buildBurnTriggerRequest(
@@ -322,8 +322,11 @@ public class NoteEncDecryTest extends BaseTest {
   private static byte[] buildV2BurnRecord(byte[] nf) {
     byte[] record = new byte[Encryption.BURN_CIPHER_RECORD_SIZE];
     // cipher(0..80) left as zeros — getTriggerInputForShieldedTRC20Contract only
-    // checks reserved marker and nf-bound nonce, not cipher decryptability.
-    byte[] nonce = Encryption.deriveNonceFromNf(nf);
+    // checks reserved marker and nonce binding to (nf, amount, addr), not cipher decryptability.
+    byte[] amount32 = ByteUtil.bigIntegerToBytes(BigInteger.ONE, 32);
+    byte[] addr21 = new byte[21];
+    addr21[0] = Wallet.getAddressPreFixByte();
+    byte[] nonce = Encryption.deriveBurnNonce(nf, amount32, addr21);
     System.arraycopy(nonce, 0, record, Encryption.BURN_NONCE_OFFSET, Encryption.BURN_NONCE_LEN);
     byte[] marker = Encryption.getBurnRecordV2Marker();
     System.arraycopy(marker, 0, record, Encryption.BURN_RESERVED_OFFSET,
@@ -463,7 +466,7 @@ public class NoteEncDecryTest extends BaseTest {
     Assert.assertEquals(amount1.toString(10), tx1.getToAmount());
     Assert.assertEquals(amount2.toString(10), tx2.getToAmount());
 
-    // mis-paired cursor: nonce-from-log mismatches sha3(domain||nf), strict mode rejects
+    // mis-paired cursor: nonce-from-log mismatches sha3(domain||nf||amount||addr), strict rejects
     Optional<?> bad1 = (Optional<?>) m.invoke(
         w, GrpcAPI.DecryptNotesTRC20.NoteTx.newBuilder(), log1, ovk, 4, nf2);
     Optional<?> bad2 = (Optional<?>) m.invoke(

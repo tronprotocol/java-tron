@@ -4061,8 +4061,12 @@ public class Wallet {
         byte[] amountArray = new byte[32];
         byte[] decryptedAddress = new byte[20];
 
+        byte[] addr21FromLog = new byte[21];
+        addr21FromLog[0] = Wallet.getAddressPreFixByte();
+        System.arraycopy(logToAddress, 0, addr21FromLog, 1, 20);
         Optional<byte[]> decryptedText = NoteEncryption.Encryption
-            .decryptBurnMessageByOvk(ovk, cipher, nonceFromLog, reservedFromLog, pendingNf);
+            .decryptBurnMessageByOvk(ovk, cipher, nonceFromLog, reservedFromLog, pendingNf,
+                logAmountArray, addr21FromLog);
 
         if (decryptedText.isPresent()) {
           plaintext = decryptedText.get();
@@ -4342,10 +4346,14 @@ public class Wallet {
           NoteEncryption.Encryption.BURN_NONCE_OFFSET,
           NoteEncryption.Encryption.BURN_NONCE_OFFSET
               + NoteEncryption.Encryption.BURN_NONCE_LEN);
-      byte[] expectedNonce = NoteEncryption.Encryption.deriveNonceFromNf(nf);
+      byte[] amount32 = ByteUtil.bigIntegerToBytes(value, 32);
+      byte[] addr21 = new byte[21];
+      addr21[0] = Wallet.getAddressPreFixByte();
+      System.arraycopy(transparentToAddressTvm, 0, addr21, 1, 20);
+      byte[] expectedNonce = NoteEncryption.Encryption.deriveBurnNonce(nf, amount32, addr21);
       if (!Arrays.equals(nonceFromInput, expectedNonce)) {
         throw new ZksnarkException(
-            "burn trigger input nonce does not match nf-bound nonce");
+            "burn trigger input nonce does not match nonce bound to (nf, amount, addr)");
       }
       parametersBuilder.setBurnCiphertext(burnCiper);
     }
