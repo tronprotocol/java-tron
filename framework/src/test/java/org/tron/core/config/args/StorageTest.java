@@ -15,22 +15,51 @@
 
 package org.tron.core.config.args;
 
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
 import java.io.File;
 import org.iq80.leveldb.CompressionType;
 import org.iq80.leveldb.Options;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Test;
+import org.tron.common.TestConstants;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.StorageUtils;
 
 public class StorageTest {
 
-  private static Storage storage;
+  private static final Storage storage;
 
   static {
-    Args.setParam(new String[]{}, "config-test-storagetest.conf");
+    Args.setParam(new String[]{}, TestConstants.TEST_CONF);
     storage = Args.getInstance().getStorage();
+    setupStorage();
+  }
+
+  private static void setupStorage() {
+    Config cfg = ConfigFactory.parseString(
+        "storage.default.maxOpenFiles = 50\n"
+        + "storage.defaultM.maxOpenFiles = 500\n"
+        + "storage.defaultL.maxOpenFiles = 1000\n"
+        + "storage.properties = [\n"
+        + "  { name = account, path = storage_directory_test,\n"
+        + "    createIfMissing = true, paranoidChecks = true, verifyChecksums = true,\n"
+        + "    compressionType = 1, blockSize = 4096,\n"
+        + "    writeBufferSize = 10485760, cacheSize = 10485760, maxOpenFiles = 100 },\n"
+        + "  { name = \"account-index\", path = storage_directory_test,\n"
+        + "    createIfMissing = true, paranoidChecks = true, verifyChecksums = true,\n"
+        + "    compressionType = 1, blockSize = 4096,\n"
+        + "    writeBufferSize = 10485760, cacheSize = 10485760, maxOpenFiles = 100 },\n"
+        + "  { name = test_name, path = test_path,\n"
+        + "    createIfMissing = false, paranoidChecks = false, verifyChecksums = false,\n"
+        + "    compressionType = 1, blockSize = 2,\n"
+        + "    writeBufferSize = 3, cacheSize = 4, maxOpenFiles = 5 }\n"
+        + "]"
+    ).withFallback(ConfigFactory.load(TestConstants.TEST_CONF));
+    StorageConfig sc = StorageConfig.fromConfig(cfg);
+    storage.setDefaultDbOptions(sc);
+    storage.setPropertyMapFromBean(sc.getProperties());
   }
 
   @AfterClass

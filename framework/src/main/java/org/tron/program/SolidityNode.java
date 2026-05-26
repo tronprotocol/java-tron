@@ -117,7 +117,15 @@ public class SolidityNode implements ApplicationListener<ContextClosedEvent> {
         Block block = getBlockByNum(blockNum);
         blockQueue.put(block);
         blockNum = ID.incrementAndGet();
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        logger.info("getBlock interrupted, exiting.");
+        return;
       } catch (Exception e) {
+        if (!flag) {
+          logger.info("getBlock stopped during shutdown, last block: {}.", blockNum);
+          return;
+        }
         logger.error("Failed to get block {}, reason: {}.", blockNum, e.getMessage());
         sleep(exceptionSleepTime);
       }
@@ -194,6 +202,10 @@ public class SolidityNode implements ApplicationListener<ContextClosedEvent> {
             blockNum, remoteBlockNum, System.currentTimeMillis() - time);
         return blockNum;
       } catch (Exception e) {
+        if (!flag) {
+          logger.info("getLastSolidityBlockNum stopped during shutdown.");
+          return 0;
+        }
         logger.error("Failed to get last solid blockNum: {}, reason: {}.", remoteBlockNum.get(),
             e.getMessage());
         sleep(exceptionSleepTime);
@@ -205,8 +217,8 @@ public class SolidityNode implements ApplicationListener<ContextClosedEvent> {
   public void sleep(long time) {
     try {
       Thread.sleep(time);
-    } catch (Exception e1) {
-      logger.error(e1.getMessage());
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
     }
   }
 

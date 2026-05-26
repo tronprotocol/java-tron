@@ -177,10 +177,11 @@ public class LocalWitnessTest {
   public void testLocalWitnessConfig() throws IOException {
     Args.setParam(
         new String[]{"--output-directory", temporaryFolder.newFolder().toString(), "-w", "--debug"},
-        "config-localtest.conf");
+        TestConstants.SHIELD_CONF);
     LocalWitnesses witness = Args.getLocalWitnesses();
     Assert.assertNotNull(witness.getPrivateKey());
     Assert.assertNotNull(witness.getWitnessAccountAddress());
+    Args.clearParam();
   }
 
   @Test
@@ -191,5 +192,6 @@ public class LocalWitnessTest {
     LocalWitnesses witness = Args.getLocalWitnesses();
     Assert.assertNull(witness.getPrivateKey());
     Assert.assertNull(witness.getWitnessAccountAddress());
+    Args.clearParam();
   }
 }

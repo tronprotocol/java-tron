@@ -29,6 +29,7 @@ import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.tron.common.BaseTest;
+import org.tron.common.TestConstants;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.zksnark.IncrementalMerkleTreeContainer;
@@ -80,7 +81,7 @@ public class LibrustzcashTest extends BaseTest {
             "--storage-db-directory", dbDirectory,
             "--debug"
         },
-        "config-test-mainnet.conf"
+        TestConstants.TEST_CONF
     );
     Args.getInstance().setAllowShieldedTransactionApi(true);
     ZksnarkInitService.librustzcashInitZksnarkParams();

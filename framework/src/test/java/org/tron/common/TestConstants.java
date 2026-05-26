@@ -23,11 +23,7 @@ import org.tron.common.arch.Arch;
 public class TestConstants {
 
   public static final String TEST_CONF = "config-test.conf";
-  public static final String NET_CONF = "config.conf";
-  public static final String MAINNET_CONF = "config-test-mainnet.conf";
-  public static final String LOCAL_CONF = "config-localtest.conf";
-  public static final String STORAGE_CONF = "config-test-storagetest.conf";
-  public static final String INDEX_CONF = "config-test-index.conf";
+  public static final String SHIELD_CONF = "config-shield.conf";
 
   /**
    * Skips the current test on ARM64 where LevelDB JNI is unavailable.

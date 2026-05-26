@@ -49,8 +49,7 @@ public class ArgsTest {
 
   @Test
   public void get() {
-    Args.setParam(new String[] {"-c", TestConstants.TEST_CONF, "--keystore-factory"},
-        TestConstants.NET_CONF);
+    Args.setParam(new String[] {"--keystore-factory"}, TestConstants.TEST_CONF);
 
     CommonParameter parameter = Args.getInstance();
 
@@ -72,7 +71,7 @@ public class ArgsTest {
 
     Assert.assertEquals("database", parameter.getStorage().getDbDirectory());
 
-    Assert.assertEquals(11, parameter.getSeedNode().getAddressList().size());
+    Assert.assertEquals(0, parameter.getSeedNode().getAddressList().size());
 
     GenesisBlock genesisBlock = parameter.getGenesisBlock();
 
@@ -144,12 +143,6 @@ public class ArgsTest {
     method2.invoke(Args.class, nc);
 
     Assert.assertNotEquals(configuredExternalIp, parameter.getNodeExternalIp());
-  }
-
-  @Test
-  public void testOldRewardOpt() {
-    thrown.expect(IllegalArgumentException.class);
-    Args.setParam(new String[] {"-c", "args-test.conf"}, TestConstants.NET_CONF);
   }
 
   @Test

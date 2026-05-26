@@ -24,6 +24,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.tron.common.BaseTest;
+import org.tron.common.TestConstants;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.RuntimeImpl;
 import org.tron.common.runtime.TvmTestUtils;
@@ -69,7 +70,7 @@ public class BandWidthRuntimeTest extends BaseTest {
             "--output-directory", dbPath(),
             "--storage-db-directory", dbDirectory,
         },
-        "config-test-mainnet.conf"
+        TestConstants.TEST_CONF
     );
   }
 

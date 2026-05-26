@@ -8,6 +8,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.BaseTest;
+import org.tron.common.TestConstants;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AssetIssueCapsule;
@@ -39,7 +40,7 @@ public class NoteEncDecryTest extends BaseTest {
   private Wallet wallet;
 
   static {
-    Args.setParam(new String[]{"--output-directory", dbPath()}, "config-localtest.conf");
+    Args.setParam(new String[]{"--output-directory", dbPath()}, TestConstants.SHIELD_CONF);
     FROM_ADDRESS = Wallet.getAddressPreFixString() + "a7d8a35b260395c14aa456297662092ba3b76fc0";
   }
 

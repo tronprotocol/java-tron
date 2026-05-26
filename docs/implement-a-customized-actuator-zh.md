@@ -231,7 +231,7 @@ public class SumActuatorTest {
   @BeforeClass
   public static void init() throws IOException {
     Args.setParam(new String[]{"--output-directory",
-            temporaryFolder.newFolder().toString()}, "config-localtest.conf");
+            temporaryFolder.newFolder().toString()}, "config-test.conf");
     context = new TronApplicationContext(DefaultConfig.class);
     appTest = ApplicationFactory.create(context);
     appTest.startup();
@@ -257,7 +257,7 @@ public class SumActuatorTest {
 
   @Test
   public void sumActuatorTest() {
-    // this key is defined in config-localtest.conf as accountName=Sun
+    // this key is defined in config-test.conf as accountName=Sun
     String key = "<your_private_key>";
     byte[] address = PublicMethed.getFinalAddress(key);
     ECKey ecKey = null;

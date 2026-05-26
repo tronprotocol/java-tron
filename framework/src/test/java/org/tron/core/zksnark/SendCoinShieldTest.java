@@ -21,6 +21,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.tron.api.GrpcAPI;
 import org.tron.common.BaseTest;
+import org.tron.common.TestConstants;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
@@ -111,7 +112,7 @@ public class SendCoinShieldTest extends BaseTest {
   private static boolean init;
 
   static {
-    Args.setParam(new String[]{"--output-directory", dbPath()}, "config-test-mainnet.conf");
+    Args.setParam(new String[]{"--output-directory", dbPath()}, TestConstants.TEST_CONF);
     Args.getInstance().setZenTokenId(String.valueOf(tokenId));
     PUBLIC_ADDRESS_ONE =
         Wallet.getAddressPreFixString() + "a7d8a35b260395c14aa456297662092ba3b76fc0";
