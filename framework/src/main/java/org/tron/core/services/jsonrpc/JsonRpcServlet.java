@@ -24,6 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.parameter.CommonParameter;
+import org.tron.core.Constant;
 import org.tron.core.services.filter.BufferedResponseWrapper;
 import org.tron.core.services.filter.CachedBodyRequestWrapper;
 import org.tron.core.services.http.RateLimiterServlet;
@@ -32,15 +33,13 @@ import org.tron.core.services.http.RateLimiterServlet;
 @Slf4j(topic = "API")
 public class JsonRpcServlet extends RateLimiterServlet {
 
-  // Snapshot of node.http.maxNestingDepth / maxTokenCount at class-load time (after Args.setParam).
   private static final ObjectMapper MAPPER = buildMapper();
 
   private static ObjectMapper buildMapper() {
-    CommonParameter p = CommonParameter.getInstance();
     JsonFactory factory = JsonFactory.builder()
         .streamReadConstraints(StreamReadConstraints.builder()
-            .maxNestingDepth(p.getMaxNestingDepth())
-            .maxTokenCount(p.getMaxTokenCount())
+            .maxNestingDepth(Constant.MAX_NESTING_DEPTH)
+            .maxTokenCount(Constant.MAX_TOKEN_COUNT)
             .build())
         .build();
     return new ObjectMapper(factory);

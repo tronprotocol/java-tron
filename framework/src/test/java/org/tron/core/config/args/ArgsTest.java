@@ -302,8 +302,6 @@ public class ArgsTest {
         "--storage-db-directory", "cli-db-dir",
         "--storage-db-engine", "ROCKSDB",
         "--storage-db-synchronous", "true",
-        "--storage-index-directory", "cli-index-dir",
-        "--storage-index-switch", "cli-index-switch",
         "--storage-transactionHistory-switch", "off",
         "--contract-parse-enable", "false"
     }, TestConstants.TEST_CONF);
@@ -313,8 +311,6 @@ public class ArgsTest {
     Assert.assertEquals("cli-db-dir", parameter.getStorage().getDbDirectory());
     Assert.assertEquals("ROCKSDB", parameter.getStorage().getDbEngine());
     Assert.assertTrue(parameter.getStorage().isDbSync());
-    Assert.assertEquals("cli-index-dir", parameter.getStorage().getIndexDirectory());
-    Assert.assertEquals("cli-index-switch", parameter.getStorage().getIndexSwitch());
     Assert.assertEquals("off", parameter.getStorage().getTransactionHistorySwitch());
     Assert.assertFalse(parameter.getStorage().isContractParseSwitch());
 
@@ -406,35 +402,6 @@ public class ArgsTest {
         .withFallback(ConfigFactory.defaultReference());
     Args.applyConfigParams(config);
     Assert.assertEquals(1000, Args.getInstance().getFetchBlockTimeout());
-    Args.clearParam();
-  }
-
-
-  @Test
-  public void testHttpJsonParseConstraints() {
-    Map<String, String> override = new HashMap<>();
-    override.put("storage.db.directory", "database");
-    Config config = ConfigFactory.parseMap(override)
-        .withFallback(ConfigFactory.defaultReference());
-    Args.applyConfigParams(config);
-
-    Assert.assertEquals(100, Args.getInstance().getMaxNestingDepth());
-    Assert.assertEquals(100_000, Args.getInstance().getMaxTokenCount());
-    Args.clearParam();
-  }
-
-  @Test
-  public void testHttpJsonParseConstraintsApplied() {
-    Map<String, String> override = new HashMap<>();
-    override.put("storage.db.directory", "database");
-    override.put("node.http.maxNestingDepth", "42");
-    override.put("node.http.maxTokenCount", "12345");
-    Config config = ConfigFactory.parseMap(override)
-        .withFallback(ConfigFactory.defaultReference());
-    Args.applyConfigParams(config);
-
-    Assert.assertEquals(42, Args.getInstance().getMaxNestingDepth());
-    Assert.assertEquals(12345, Args.getInstance().getMaxTokenCount());
     Args.clearParam();
   }
 

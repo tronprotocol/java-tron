@@ -27,7 +27,6 @@ public class MerkleTreeTest extends BaseTest {
 
   public static final long totalBalance = 1000_0000_000_000L;
   private static final String dbDirectory = "db_ShieldedTransaction_test";
-  private static final String indexDirectory = "index_ShieldedTransaction_test";
   private static boolean init;
 
   static {
@@ -35,7 +34,6 @@ public class MerkleTreeTest extends BaseTest {
         new String[]{
             "--output-directory", dbPath(),
             "--storage-db-directory", dbDirectory,
-            "--storage-index-directory", indexDirectory,
             "--debug"
         },
         "config-test-mainnet.conf"

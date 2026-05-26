@@ -169,7 +169,7 @@ public class TronNetDelegateTest {
       tronNetDelegate.validBlock(tampered);
       Assert.fail("Expected P2pException for tampered merkle root");
     } catch (P2pException e) {
-      Assert.assertEquals(TypeEnum.BLOCK_MERKLE_ERROR, e.getType());
+      Assert.assertEquals(TypeEnum.BLOCK_MERKLE_INVALID, e.getType());
     }
   }
 }

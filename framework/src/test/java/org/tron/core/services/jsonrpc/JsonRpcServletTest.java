@@ -25,6 +25,7 @@ import org.junit.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.tron.common.parameter.CommonParameter;
+import org.tron.core.Constant;
 
 public class JsonRpcServletTest {
 
@@ -365,7 +366,7 @@ public class JsonRpcServletTest {
 
   @Test
   public void excessivelyNestedRequest_returnsParseError() throws Exception {
-    int limit = CommonParameter.getInstance().getMaxNestingDepth();
+    int limit = Constant.MAX_NESTING_DEPTH;
     StringBuilder sb = new StringBuilder();
     for (int i = 0; i <= limit; i++) {
       sb.append('[');
@@ -383,7 +384,7 @@ public class JsonRpcServletTest {
 
   @Test
   public void tooManyTokens_returnsParseError() throws Exception {
-    int limit = CommonParameter.getInstance().getMaxTokenCount();
+    int limit = Constant.MAX_TOKEN_COUNT;
     StringBuilder sb = new StringBuilder("[");
     for (int i = 0; i < limit; i++) {
       if (i > 0) {

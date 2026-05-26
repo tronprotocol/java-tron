@@ -23,6 +23,7 @@ import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -874,6 +875,47 @@ public class ManagerTest extends BaseMethodTest {
     dbManager.getPendingTransactions().add(new TransactionCapsule(t2Bak));
     txs = dbManager.getVerifyTxs(capsule);
     Assert.assertEquals(txs.size(), 1);
+  }
+
+  @Test
+  public void getVerifyTxsSkipsBlockWhenPermissionTxAlreadyConsumed() throws Exception {
+    // Scenario: a permission-change tx (A) for owner X has been processed and consumed,
+    // so it is no longer in pendingTransactions but ownerAddressSet still contains X.
+    // A later transfer tx (B) from X with the old signature enters pending with
+    // isVerified=true. A malicious SR produces a block containing only B (no A).
+    // getVerifyTxs must place B into the re-verify list rather than calling
+    // setVerified(true) just because B matches the pending entry.
+    TransferContract bContract = TransferContract.newBuilder()
+        .setOwnerAddress(ByteString.copyFrom("f1".getBytes()))
+        .setAmount(7).build();
+    TransactionCapsule bTx = new TransactionCapsule(bContract, ContractType.TransferContract);
+    String hexOwner = ByteArray.toHexString("f1".getBytes());
+
+    dbManager.getPendingTransactions().clear();
+    dbManager.getPendingTransactions().add(bTx);
+
+    Field field = Manager.class.getDeclaredField("ownerAddressSet");
+    field.setAccessible(true);
+    @SuppressWarnings("unchecked")
+    Set<String> ownerAddressSet = (Set<String>) field.get(dbManager);
+    Set<String> backup = new HashSet<>(ownerAddressSet);
+    ownerAddressSet.clear();
+    ownerAddressSet.add(hexOwner);
+
+    try {
+      List<Transaction> blockTxs = new ArrayList<>();
+      blockTxs.add(bTx.getInstance());
+      BlockCapsule capsule = new BlockCapsule(0, ByteString.EMPTY, 0, blockTxs);
+
+      List<TransactionCapsule> txs = dbManager.getVerifyTxs(capsule);
+
+      Assert.assertEquals(1, txs.size());
+      Assert.assertEquals(bTx.getTransactionId(), txs.get(0).getTransactionId());
+    } finally {
+      ownerAddressSet.clear();
+      ownerAddressSet.addAll(backup);
+      dbManager.getPendingTransactions().clear();
+    }
   }
 
   @Test

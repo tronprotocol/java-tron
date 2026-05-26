@@ -1140,6 +1140,11 @@ public class Manager {
         Exception exception = null;
         // todo  process the exception carefully later
         try (ISession tmpSession = revokingStore.buildSession()) {
+          if (!item.getBlk().validateSignature(
+              getDynamicPropertiesStore(), getAccountStore())) {
+            throw new ValidateSignatureException(
+                "switch fork: block " + item.getBlk().getNum() + " signature invalid");
+          }
           applyBlock(item.getBlk().setSwitch(true));
           tmpSession.commit();
         } catch (AccountResourceInsufficientException
@@ -1230,7 +1235,7 @@ public class Manager {
 
     List<TransactionCapsule> txs = new ArrayList<>();
     Map<String, TransactionCapsule> txMap = new HashMap<>();
-    Set<String> multiAddresses = new HashSet<>();
+    Set<String> multiAddresses = new HashSet<>(ownerAddressSet);
 
     pendingTransactions.forEach(capsule -> {
       String txId = Hex.toHexString(capsule.getTransactionId().getBytes());
@@ -1529,6 +1534,9 @@ public class Manager {
           String.format(" %s transaction signature validate failed", txId));
     }
 
+    if (!trxCap.isInBlock()) {
+      trxCap.sanitize();
+    }
     TransactionTrace trace = new TransactionTrace(trxCap, StoreFactory.getInstance(),
         new RuntimeImpl());
     trxCap.setTrxTrace(trace);
@@ -1625,7 +1633,6 @@ public class Manager {
     session.reset();
     session.setValue(revokingStore.buildSession());
 
-    HistoryBlockHashUtil.write(this, blockCapsule);
     accountStateCallBack.preExecute(blockCapsule);
 
     if (getDynamicPropertiesStore().getAllowMultiSign() == 1) {
@@ -1637,6 +1644,8 @@ public class Manager {
         return null;
       }
     }
+
+    HistoryBlockHashUtil.write(this, blockCapsule);
 
     Set<String> accountSet = new HashSet<>();
     AtomicInteger shieldedTransCounts = new AtomicInteger(0);

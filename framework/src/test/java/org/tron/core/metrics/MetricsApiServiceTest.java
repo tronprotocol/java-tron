@@ -14,7 +14,6 @@ import org.tron.protos.Protocol;
 public class MetricsApiServiceTest extends BaseMethodTest {
 
   private static String dbDirectory = "metrics-database";
-  private static String indexDirectory = "metrics-index";
   private static int port = 10001;
   private MetricsApiService metricsApiService;
   private RpcApiService rpcApiService;
@@ -23,7 +22,6 @@ public class MetricsApiServiceTest extends BaseMethodTest {
   protected String[] extraArgs() {
     return new String[]{
         "--storage-db-directory", dbDirectory,
-        "--storage-index-directory", indexDirectory,
         "--debug"
     };
   }

@@ -33,7 +33,6 @@ public class AccountStoreTest extends BaseTest {
 
   private static final byte[] data = TransactionStoreTest.randomBytes(32);
   private static String dbDirectory = "db_AccountStore_test";
-  private static String indexDirectory = "index_AccountStore_test";
   @Resource
   private AccountStore accountStore;
   @Resource
@@ -48,8 +47,7 @@ public class AccountStoreTest extends BaseTest {
     Args.setParam(
         new String[]{
             "--output-directory", dbPath(),
-            "--storage-db-directory", dbDirectory,
-            "--storage-index-directory", indexDirectory
+            "--storage-db-directory", dbDirectory
         },
         TestConstants.TEST_CONF
     );

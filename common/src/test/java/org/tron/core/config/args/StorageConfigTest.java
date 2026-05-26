@@ -26,7 +26,6 @@ public class StorageConfigTest {
     assertEquals("LEVELDB", sc.getDb().getEngine());
     assertFalse(sc.getDb().isSync());
     assertEquals("database", sc.getDb().getDirectory());
-    assertEquals("index", sc.getIndex().getDirectory());
     assertTrue(sc.isNeedToUpdateAsset());
     assertEquals(7, sc.getDbSettings().getLevelNumber());
     assertEquals(5000, sc.getDbSettings().getMaxOpenFiles());
