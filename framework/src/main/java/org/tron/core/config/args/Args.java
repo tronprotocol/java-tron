@@ -80,8 +80,6 @@ public class Args extends CommonParameter {
     m.put("--storage-db-directory", "storage.db.directory");
     m.put("--storage-db-engine", "storage.db.engine");
     m.put("--storage-db-synchronous", "storage.db.sync");
-    m.put("--storage-index-directory", "storage.index.directory");
-    m.put("--storage-index-switch", "storage.index.switch");
     m.put("--storage-transactionHistory-switch", "storage.transHistory.switch");
     m.put("--contract-parse-enable", "event.subscribe.contractParse");
     m.put("--support-constant", "vm.supportConstant");
@@ -215,10 +213,6 @@ public class Args extends CommonParameter {
     PARAMETER.storage.setDbEngine(sc.getDb().getEngine());
     PARAMETER.storage.setDbSync(sc.getDb().isSync());
     PARAMETER.storage.setDbDirectory(sc.getDb().getDirectory());
-    PARAMETER.storage.setIndexDirectory(sc.getIndex().getDirectory());
-    String indexSwitch = sc.getIndex().getSwitch();
-    PARAMETER.storage.setIndexSwitch(
-        org.apache.commons.lang3.StringUtils.isNotEmpty(indexSwitch) ? indexSwitch : "on");
     PARAMETER.storage.setTransactionHistorySwitch(sc.getTransHistory().getSwitch());
     // contractParse is set in applyConfigParams alongside event config, not here
     PARAMETER.storage.setCheckpointVersion(sc.getCheckpoint().getVersion());
@@ -549,8 +543,6 @@ public class Args extends CommonParameter {
     PARAMETER.solidityHttpPort = http.getSolidityPort();
     PARAMETER.pBFTHttpPort = http.getPBFTPort();
     PARAMETER.httpMaxMessageSize = http.getMaxMessageSize();
-    PARAMETER.maxNestingDepth = http.getMaxNestingDepth();
-    PARAMETER.maxTokenCount = http.getMaxTokenCount();
 
     // ---- JSON-RPC sub-bean ----
     NodeConfig.JsonRpcConfig jsonrpc = nc.getJsonrpc();
@@ -864,12 +856,6 @@ public class Args extends CommonParameter {
     }
     if (assigned.contains("--contract-parse-enable")) {
       PARAMETER.storage.setContractParseSwitch(Boolean.valueOf(cmd.contractParseEnable));
-    }
-    if (assigned.contains("--storage-index-directory")) {
-      PARAMETER.storage.setIndexDirectory(cmd.storageIndexDirectory);
-    }
-    if (assigned.contains("--storage-index-switch")) {
-      PARAMETER.storage.setIndexSwitch(cmd.storageIndexSwitch);
     }
     if (assigned.contains("--storage-transactionHistory-switch")) {
       PARAMETER.storage.setTransactionHistorySwitch(cmd.storageTransactionHistorySwitch);

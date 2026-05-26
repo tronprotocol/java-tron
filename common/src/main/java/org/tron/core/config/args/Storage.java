@@ -70,17 +70,6 @@ public class Storage {
   @Setter
   private int maxFlushCount;
 
-  /**
-   * Index storage directory: /path/to/{indexDirectory}
-   */
-  @Getter
-  @Setter
-  private String indexDirectory;
-
-  @Getter
-  @Setter
-  private String indexSwitch;
-
   @Getter
   @Setter
   private boolean contractParseSwitch;

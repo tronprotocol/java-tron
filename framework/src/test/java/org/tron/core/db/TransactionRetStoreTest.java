@@ -21,7 +21,6 @@ public class TransactionRetStoreTest extends BaseTest {
   private static final byte[] transactionId = TransactionStoreTest.randomBytes(32);
   private static final byte[] blockNum = ByteArray.fromLong(1);
   private static String dbDirectory = "db_TransactionRetStore_test";
-  private static String indexDirectory = "index_TransactionRetStore_test";
   @Resource
   private TransactionRetStore transactionRetStore;
   private static Transaction transaction;
@@ -33,8 +32,7 @@ public class TransactionRetStoreTest extends BaseTest {
 
   static {
     Args.setParam(new String[]{"--output-directory", dbPath(),
-        "--storage-db-directory", dbDirectory,
-        "--storage-index-directory", indexDirectory}, TestConstants.TEST_CONF);
+        "--storage-db-directory", dbDirectory}, TestConstants.TEST_CONF);
   }
 
   @BeforeClass

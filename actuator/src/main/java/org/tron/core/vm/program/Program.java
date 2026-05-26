@@ -1616,6 +1616,10 @@ public class Program {
   }
 
   public void createContract2(DataWord value, DataWord memStart, DataWord memSize, DataWord salt) {
+    if (VMConfig.allowTvmOsaka()) {
+      returnDataBuffer = null; // reset return buffer right before the call
+    }
+
     byte[] senderAddress;
     if (VMConfig.allowTvmCompatibleEvm() && getCallDeep() == MAX_DEPTH) {
       stackPushZero();

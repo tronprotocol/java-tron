@@ -64,7 +64,6 @@ public class BandWidthRuntimeWithCheckTest extends BaseTest {
 
   public static final long totalBalance = 1000_0000_000_000L;
   private static final String dbDirectory = "db_BandWidthRuntimeWithCheckTest_test";
-  private static final String indexDirectory = "index_BandWidthRuntimeWithCheckTest_test";
   private static final String OwnerAddress = "TCWHANtDDdkZCTo2T2peyEq3Eg9c2XB7ut";
   private static final String TriggerOwnerAddress = "TCSgeWapPJhCqgWRxXCKb6jJ5AgNWSGjPA";
   private static final String TriggerOwnerTwoAddress = "TPMBUANrTwwQAPwShn7ZZjTJz1f3F8jknj";
@@ -76,7 +75,6 @@ public class BandWidthRuntimeWithCheckTest extends BaseTest {
         new String[]{
             "--output-directory", dbPath(),
             "--storage-db-directory", dbDirectory,
-            "--storage-index-directory", indexDirectory,
         },
         TestConstants.TEST_CONF
     );

@@ -312,7 +312,7 @@ public class TronNetDelegate {
         logger.error("Process block failed, {}, reason: {}", blockId.getString(), e.getMessage());
         if (e instanceof BadBlockException
                 && ((BadBlockException) e).getType().equals(CALC_MERKLE_ROOT_FAILED)) {
-          throw new P2pException(TypeEnum.BLOCK_MERKLE_ERROR, e);
+          throw new P2pException(TypeEnum.BLOCK_MERKLE_INVALID, e);
         } else {
           throw new P2pException(TypeEnum.BAD_BLOCK, e);
         }
@@ -347,10 +347,10 @@ public class TronNetDelegate {
       flag = block.validateSignature(dbManager.getDynamicPropertiesStore(),
               dbManager.getAccountStore());
     } catch (Exception e) {
-      throw new P2pException(TypeEnum.BLOCK_SIGN_ERROR, e);
+      throw new P2pException(TypeEnum.BLOCK_SIGN_INVALID, e);
     }
     if (!flag) {
-      throw new P2pException(TypeEnum.BLOCK_SIGN_ERROR, "valid signature failed.");
+      throw new P2pException(TypeEnum.BLOCK_SIGN_INVALID, "valid signature failed.");
     }
   }
 
@@ -363,7 +363,7 @@ public class TronNetDelegate {
     try {
       block.validateMerkleRoot();
     } catch (BadBlockException e) {
-      throw new P2pException(TypeEnum.BLOCK_MERKLE_ERROR, e.getMessage());
+      throw new P2pException(TypeEnum.BLOCK_MERKLE_INVALID, e.getMessage());
     }
     validSignature(block);
     return witnessScheduleStore.getActiveWitnesses().contains(block.getWitnessAddress());
