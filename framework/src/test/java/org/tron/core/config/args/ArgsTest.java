@@ -38,6 +38,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.LocalWitnesses;
 import org.tron.common.utils.PublicMethod;
+import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.TronError;
 
 @Slf4j
@@ -512,12 +513,8 @@ public class ArgsTest {
       Config config = ConfigFactory.defaultOverrides()
           .withFallback(ConfigFactory.parseMap(configMap))
           .withFallback(ConfigFactory.defaultReference());
-      try {
-        Args.applyConfigParams(config);
-        Assert.fail("Expected TronError for negative " + key);
-      } catch (TronError e) {
-        Assert.assertEquals(TronError.ErrCode.PARAMETER_INIT, e.getErrCode());
-      }
+      TronError e = Assert.assertThrows(TronError.class, () -> Args.applyConfigParams(config));
+      Assert.assertEquals(TronError.ErrCode.PARAMETER_INIT, e.getErrCode());
       Args.clearParam();
     }
   }
