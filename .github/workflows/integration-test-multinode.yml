@@ -1,6 +1,8 @@
 name: Integration Test Multinode (Full)
 
 on:
+  push:
+    branches: [ 'master', 'release_**' ]
   pull_request:
     branches: [ 'develop', 'release_**' ]
     types: [ opened, synchronize, reopened ]
