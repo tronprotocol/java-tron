@@ -164,10 +164,7 @@ public class StorageConfig {
 
     private String name = "";
     private String path = "";
-    private boolean createIfMissing = true;
-    private boolean paranoidChecks = true;
-    private boolean verifyChecksums = true;
-    private int compressionType = 1;
+    // following are only used for LevelDB
     private int blockSize = 4096;
     private int writeBufferSize = 10485760;
     private long cacheSize = 10485760;
@@ -200,10 +197,6 @@ public class StorageConfig {
   @Setter
   public static class DbOptionOverride {
 
-    private Boolean createIfMissing;
-    private Boolean paranoidChecks;
-    private Boolean verifyChecksums;
-    private Integer compressionType;
     private Integer blockSize;
     private Integer writeBufferSize;
     private Long cacheSize;
@@ -214,26 +207,6 @@ public class StorageConfig {
   // DbOptionOverride uses boxed types so null means "not specified by user".
   private static DbOptionOverride readLevelDbOptions(ConfigObject conf) {
     DbOptionOverride o = new DbOptionOverride();
-    if (conf.containsKey("createIfMissing")) {
-      o.setCreateIfMissing(
-          Boolean.parseBoolean(conf.get("createIfMissing").unwrapped().toString()));
-    }
-    if (conf.containsKey("paranoidChecks")) {
-      o.setParanoidChecks(
-          Boolean.parseBoolean(conf.get("paranoidChecks").unwrapped().toString()));
-    }
-    if (conf.containsKey("verifyChecksums")) {
-      o.setVerifyChecksums(
-          Boolean.parseBoolean(conf.get("verifyChecksums").unwrapped().toString()));
-    }
-    if (conf.containsKey("compressionType")) {
-      String param = conf.get("compressionType").unwrapped().toString();
-      try {
-        o.setCompressionType(Integer.parseInt(param));
-      } catch (NumberFormatException e) {
-        throwIllegalArgumentException("compressionType", Integer.class, param);
-      }
-    }
     if (conf.containsKey("blockSize")) {
       String param = conf.get("blockSize").unwrapped().toString();
       try {
@@ -297,18 +270,6 @@ public class StorageConfig {
         p.setPath(obj.get("path").unwrapped().toString());
       }
       DbOptionOverride opts = readLevelDbOptions(obj);
-      if (opts.getCreateIfMissing() != null) {
-        p.setCreateIfMissing(opts.getCreateIfMissing());
-      }
-      if (opts.getParanoidChecks() != null) {
-        p.setParanoidChecks(opts.getParanoidChecks());
-      }
-      if (opts.getVerifyChecksums() != null) {
-        p.setVerifyChecksums(opts.getVerifyChecksums());
-      }
-      if (opts.getCompressionType() != null) {
-        p.setCompressionType(opts.getCompressionType());
-      }
       if (opts.getBlockSize() != null) {
         p.setBlockSize(opts.getBlockSize());
       }

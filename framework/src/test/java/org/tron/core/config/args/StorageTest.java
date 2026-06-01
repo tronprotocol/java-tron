@@ -44,17 +44,13 @@ public class StorageTest {
         + "storage.defaultL.maxOpenFiles = 1000\n"
         + "storage.properties = [\n"
         + "  { name = account, path = storage_directory_test,\n"
-        + "    createIfMissing = true, paranoidChecks = true, verifyChecksums = true,\n"
-        + "    compressionType = 1, blockSize = 4096,\n"
-        + "    writeBufferSize = 10485760, cacheSize = 10485760, maxOpenFiles = 100 },\n"
+        + "    blockSize = 4096, writeBufferSize = 10485760, cacheSize = 10485760,\n"
+        + "    maxOpenFiles = 100 },\n"
         + "  { name = \"account-index\", path = storage_directory_test,\n"
-        + "    createIfMissing = true, paranoidChecks = true, verifyChecksums = true,\n"
-        + "    compressionType = 1, blockSize = 4096,\n"
-        + "    writeBufferSize = 10485760, cacheSize = 10485760, maxOpenFiles = 100 },\n"
+        + "    blockSize = 4096, writeBufferSize = 10485760, cacheSize = 10485760,\n"
+        + "    maxOpenFiles = 100 },\n"
         + "  { name = test_name, path = test_path,\n"
-        + "    createIfMissing = false, paranoidChecks = false, verifyChecksums = false,\n"
-        + "    compressionType = 1, blockSize = 2,\n"
-        + "    writeBufferSize = 3, cacheSize = 4, maxOpenFiles = 5 }\n"
+        + "    blockSize = 2, writeBufferSize = 3, cacheSize = 4, maxOpenFiles = 5 }\n"
         + "]"
     ).withFallback(ConfigFactory.load(TestConstants.TEST_CONF));
     StorageConfig sc = StorageConfig.fromConfig(cfg);
@@ -83,30 +79,18 @@ public class StorageTest {
   @Test
   public void getOptions() {
     Options options = StorageUtils.getOptionsByDbName("account");
-    Assert.assertTrue(options.createIfMissing());
-    Assert.assertTrue(options.paranoidChecks());
-    Assert.assertTrue(options.verifyChecksums());
-    Assert.assertEquals(CompressionType.SNAPPY, options.compressionType());
     Assert.assertEquals(4096, options.blockSize());
     Assert.assertEquals(10485760, options.writeBufferSize());
     Assert.assertEquals(10485760L, options.cacheSize());
     Assert.assertEquals(100, options.maxOpenFiles());
 
     options = StorageUtils.getOptionsByDbName("test_name");
-    Assert.assertFalse(options.createIfMissing());
-    Assert.assertFalse(options.paranoidChecks());
-    Assert.assertFalse(options.verifyChecksums());
-    Assert.assertEquals(CompressionType.SNAPPY, options.compressionType());
     Assert.assertEquals(2, options.blockSize());
     Assert.assertEquals(3, options.writeBufferSize());
     Assert.assertEquals(4L, options.cacheSize());
     Assert.assertEquals(5, options.maxOpenFiles());
 
     options = StorageUtils.getOptionsByDbName("some_name_not_exists");
-    Assert.assertTrue(options.createIfMissing());
-    Assert.assertTrue(options.paranoidChecks());
-    Assert.assertTrue(options.verifyChecksums());
-    Assert.assertEquals(CompressionType.SNAPPY, options.compressionType());
     Assert.assertEquals(4 * 1024, options.blockSize());
     Assert.assertEquals(16 * 1024 * 1024, options.writeBufferSize());
     Assert.assertEquals(32 * 1024 * 1024L, options.cacheSize());

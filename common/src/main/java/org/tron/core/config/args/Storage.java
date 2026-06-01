@@ -25,7 +25,6 @@ import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.iq80.leveldb.CompressionType;
 import org.iq80.leveldb.Options;
 import org.tron.common.cache.CacheStrategies;
 import org.tron.common.cache.CacheType;
@@ -179,11 +178,6 @@ public class Storage {
    * Apply LevelDB options from PropertyConfig bean values.
    */
   private static void applyPropertyOptions(StorageConfig.PropertyConfig pc, Options dbOptions) {
-    dbOptions.createIfMissing(pc.isCreateIfMissing());
-    dbOptions.paranoidChecks(pc.isParanoidChecks());
-    dbOptions.verifyChecksums(pc.isVerifyChecksums());
-    dbOptions.compressionType(
-        CompressionType.getCompressionTypeByPersistentId(pc.getCompressionType()));
     dbOptions.blockSize(pc.getBlockSize());
     dbOptions.writeBufferSize(pc.getWriteBufferSize());
     dbOptions.cacheSize(pc.getCacheSize());
@@ -247,19 +241,6 @@ public class Storage {
   // Apply only user-specified overrides (non-null fields) to LevelDB Options.
   private static void applyDbOptionOverride(
       StorageConfig.DbOptionOverride o, Options dbOptions) {
-    if (o.getCreateIfMissing() != null) {
-      dbOptions.createIfMissing(o.getCreateIfMissing());
-    }
-    if (o.getParanoidChecks() != null) {
-      dbOptions.paranoidChecks(o.getParanoidChecks());
-    }
-    if (o.getVerifyChecksums() != null) {
-      dbOptions.verifyChecksums(o.getVerifyChecksums());
-    }
-    if (o.getCompressionType() != null) {
-      dbOptions.compressionType(
-          CompressionType.getCompressionTypeByPersistentId(o.getCompressionType()));
-    }
     if (o.getBlockSize() != null) {
       dbOptions.blockSize(o.getBlockSize());
     }
