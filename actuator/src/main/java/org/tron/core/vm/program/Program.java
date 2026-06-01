@@ -147,6 +147,17 @@ public class Program {
   @Getter
   @Setter
   private long callPenaltyEnergy;
+  /**
+   * Observer wired in by simulate-only callers (eth_simulateV1, triggerConstantContract with
+   * trace) to capture transfer / token-transfer / LOG events alongside the normal VM run.
+   *
+   * <p><b>Consensus invariant:</b> this field MUST be {@code null} on every consensus execution
+   * path. The tracer mutates no chain state, but a non-null reference means {@code transfer-} and
+   * {@code transferAllToken-WithTrace} take the trace branch and skip the byte-identical
+   * {@link MUtil#transferAllToken} fast path — divergence here would surface as a sync-from-genesis
+   * mismatch. Only {@code Wallet#simulateConstantContracts} and {@code Wallet#triggerConstantContract}
+   * should set this; gated on {@link org.tron.core.config.args.Args#isSupportConstant()}.
+   */
   @Getter
   @Setter
   private SimulationTracer simulationTracer;
@@ -530,6 +541,10 @@ public class Program {
    * "log after real state change succeeds" invariant the other hooks follow.
    */
   private void transferAllTokenWithTrace(byte[] owner, byte[] dest) {
+    // Consensus invariant: when simulationTracer == null, this method must be byte-identical to
+    // MUtil.transferAllToken — no logging, no Args reads, no extra getAccount call, nothing that
+    // could perturb the post-state hash. Anything new belongs in the simulationTracer != null
+    // branch only. Hoisting a statement above this guard breaks sync-from-genesis.
     if (simulationTracer == null) {
       MUtil.transferAllToken(getContractState(), owner, dest);
       return;

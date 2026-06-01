@@ -1069,8 +1069,15 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
    * keccak256("TRC10Transfer(address,address,uint256,uint256)") — synthetic
    * topic[0] for TRC-10 transfer logs, distinguishing them from ERC-20
    * Transfer (same synthetic-log address, different signature).
+   *
+   * <p><b>Tron private extension; stable client contract.</b> This is not part of any
+   * cross-chain Ethereum standard. Wallets and indexers will hard-code this hex value to
+   * recognise simulated TRC-10 transfers, so the signature string must not be edited once
+   * shipped. {@code TronJsonRpcImplTest#trc10TransferTopicHex_isStable} pins the canonical
+   * signature with its own copy of the literal; editing the literal here without updating the
+   * test fails CI.
    */
-  private static final String TRC10_TRANSFER_TOPIC_HEX =
+  static final String TRC10_TRANSFER_TOPIC_HEX =
       ByteArray.toHexString(Hash.sha3(
           "TRC10Transfer(address,address,uint256,uint256)"
               .getBytes(java.nio.charset.StandardCharsets.UTF_8)));

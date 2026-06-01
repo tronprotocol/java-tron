@@ -38,6 +38,7 @@ import org.tron.core.vm.config.ConfigLoader;
 import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.repository.Repository;
 import org.tron.core.vm.repository.RepositoryImpl;
+import org.tron.core.vm.utils.MUtil;
 import org.tron.protos.Protocol;
 import org.tron.protos.contract.SmartContractOuterClass;
 
@@ -243,6 +244,109 @@ public class EthSimulateV1IntegrationTest extends BaseTest {
     assertNotNull(addr);
     assertTrue("contractAddress must be 0x-prefixed 20-byte hex, got: " + addr,
         addr.startsWith("0x") && addr.length() == 42);
+  }
+
+  /**
+   * Observable contract: CALLCODE (and DELEGATECALL) MUST NOT produce a synthetic ERC-7528
+   * Transfer log under {@code traceTransfers=true}. {@code Program.callToAddress} guards the
+   * {@code simulationTracer.onTransfer} hook with {@code opcode != DELEGATECALL && opcode !=
+   * CALLCODE}. In practice the guard is belt-and-suspenders because the same code path is
+   * already gated on {@code senderAddress != contextAddress}, and Program.java:1087 sets
+   * {@code contextAddress = senderAddress} for both opcodes — meaning the transfer block is
+   * never entered. Either layer dropping silently would emit a self-transfer log; this test
+   * pins the observable behaviour regardless of which layer enforces it.
+   *
+   * <p>Setup: pre-install a contract whose runtime executes CALLCODE-to-self with value=5,
+   * fund it with 100, trigger from owner with value=0 (so no deploy/trigger transfer log
+   * contaminates the assertion). The only log that could appear from this call is the
+   * CALLCODE's self-transfer — and the production code must omit it.
+   */
+  @Test
+  public void delegatecallCallcodeSkipSyntheticTransferLog() throws Exception {
+    // Runtime: PUSH1 0 ×4 (retLen, retOff, argsLen, argsOff); PUSH1 5 (value); ADDRESS;
+    //   PUSH3 0x0F4240 (gas); CALLCODE; POP; STOP. 18 bytes.
+    String callcodeRuntime = "6000600060006000600530620F4240F25000";
+    String callcodeAddrTronHex = Wallet.getAddressPreFixString()
+        + "00000000000000000000000000000000000c0de2";
+    byte[] callcodeAddr = ByteArray.fromHexString(callcodeAddrTronHex);
+
+    Repository repo = RepositoryImpl.createRoot(StoreFactory.getInstance());
+    repo.createAccount(callcodeAddr, Protocol.AccountType.Contract);
+    repo.createContract(callcodeAddr, new ContractCapsule(
+        SmartContractOuterClass.SmartContract.newBuilder()
+            .setContractAddress(ByteString.copyFrom(callcodeAddr))
+            .build()));
+    repo.saveCode(callcodeAddr, ByteArray.fromHexString(callcodeRuntime));
+    repo.addBalance(callcodeAddr, 100L);
+    repo.commit();
+
+    CallArguments trigger = new CallArguments();
+    trigger.setFrom(OWNER_ADDRESS_HEX_PREFIXED());
+    trigger.setTo("0x00000000000000000000000000000000000c0de2");
+    trigger.setValue("0x0");
+    trigger.setData("0x");
+
+    SimulateV1Args args = newArgs(true, false, false, trigger);
+    SimulateCallResult call = tronJsonRpc.ethSimulateV1(args, "latest").get(0).getCalls().get(0);
+
+    assertEquals("trigger of CALLCODE-self contract must succeed", "0x1", call.getStatus());
+    List<TronJsonRpc.LogFilterElement> logs = call.getLogs();
+    if (logs != null) {
+      for (TronJsonRpc.LogFilterElement log : logs) {
+        assertTrue(
+            "CALLCODE must NOT produce a synthetic ERC-7528 Transfer log, found one at: "
+                + log.getAddress(),
+            !"0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee".equalsIgnoreCase(log.getAddress()));
+      }
+    }
+  }
+
+  /**
+   * Locks down the consensus-path (tracer=null) byte outcome of {@code transferAllTokenWithTrace}.
+   * Program.java:543's early-return delegates to {@link MUtil#transferAllToken}; any future
+   * hoisting of a side-effect line above that guard would break sync-from-genesis. This test
+   * runs a multi-TRC-10 SELFDESTRUCT scenario through {@code MUtil.transferAllToken} directly
+   * and asserts the post-state proto bytes match an independently-computed expected state:
+   * dest receives every TRC-10 the owner held, owner's asset map is zeroed.
+   *
+   * <p>If anyone refactors {@code MUtil.transferAllToken} or the early-return path drifts to
+   * a different code path, this test catches the divergence.
+   */
+  @Test
+  public void transferAllToken_multiTrc10_byteEquivalence() {
+    byte[] ownerAddr = ByteArray.fromHexString(
+        Wallet.getAddressPreFixString() + "11111111111111111111111111111111aabbccdd");
+    byte[] destAddr = ByteArray.fromHexString(
+        Wallet.getAddressPreFixString() + "22222222222222222222222222222222ddccbbaa");
+
+    AccountCapsule ownerStart = new AccountCapsule(ByteString.copyFromUtf8("owner-srcSD"),
+        ByteString.copyFrom(ownerAddr), Protocol.AccountType.Normal, 0L);
+    ownerStart.addAssetV2(ByteArray.fromString("1000001"), 100L);
+    ownerStart.addAssetV2(ByteArray.fromString("1000002"), 50L);
+    ownerStart.addAssetV2(ByteArray.fromString("1000003"), 200L);
+
+    AccountCapsule destStart = new AccountCapsule(ByteString.copyFromUtf8("dest-srcSD"),
+        ByteString.copyFrom(destAddr), Protocol.AccountType.Normal, 0L);
+    destStart.addAssetV2(ByteArray.fromString("1000002"), 7L);
+
+    Repository repo = RepositoryImpl.createRoot(StoreFactory.getInstance());
+    repo.putAccountValue(ownerAddr, ownerStart);
+    repo.putAccountValue(destAddr, destStart);
+
+    MUtil.transferAllToken(repo, ownerAddr, destAddr);
+
+    // owner's asset map must be zeroed
+    java.util.Map<String, Long> ownerAfter = repo.getAccount(ownerAddr).getAssetMapV2();
+    assertEquals("owner 1000001 zeroed", Long.valueOf(0L), ownerAfter.get("1000001"));
+    assertEquals("owner 1000002 zeroed", Long.valueOf(0L), ownerAfter.get("1000002"));
+    assertEquals("owner 1000003 zeroed", Long.valueOf(0L), ownerAfter.get("1000003"));
+
+    // dest receives owner's full balance for each asset, summed with its pre-state.
+    java.util.Map<String, Long> destAfter = repo.getAccount(destAddr).getAssetMapV2();
+    assertEquals("dest gains all of 1000001", Long.valueOf(100L), destAfter.get("1000001"));
+    assertEquals("dest 1000002 sums pre-state (7) + transferred (50)",
+        Long.valueOf(57L), destAfter.get("1000002"));
+    assertEquals("dest gains all of 1000003", Long.valueOf(200L), destAfter.get("1000003"));
   }
 
   /**
