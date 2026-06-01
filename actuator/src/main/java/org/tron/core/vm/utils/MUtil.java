@@ -64,4 +64,18 @@ public class MUtil {
       throw new OutOfTimeException("CPU timeout for 0x0a executing");
     }
   }
+
+  /**
+   * Strip the leading {@code 0x41} network byte from a 21-byte Tron address, returning the
+   * 20-byte EVM-equivalent. Any other length (including null) is returned unchanged so the
+   * helper is safe for non-address payloads.
+   */
+  public static byte[] stripTronPrefix(byte[] tronAddress) {
+    if (tronAddress == null || tronAddress.length != 21) {
+      return tronAddress;
+    }
+    byte[] evm = new byte[20];
+    System.arraycopy(tronAddress, 1, evm, 0, 20);
+    return evm;
+  }
 }

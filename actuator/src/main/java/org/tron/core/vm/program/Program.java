@@ -488,7 +488,7 @@ public class Program {
       try {
         MUtil.transfer(getContractState(), owner, obtainer, balance);
         if (simulationTracer != null && balance > 0) {
-          simulationTracer.onTransfer(stripTronPrefix(owner), stripTronPrefix(obtainer), balance);
+          simulationTracer.onTransfer(MUtil.stripTronPrefix(owner), MUtil.stripTronPrefix(obtainer), balance);
         }
         if (VMConfig.allowTvmTransferTrc10()) {
           transferAllTokenWithTrace(owner, obtainer);
@@ -522,15 +522,6 @@ public class Program {
     getResult().addDeleteAccount(this.getContractAddress());
   }
 
-  private static byte[] stripTronPrefix(byte[] tronAddress) {
-    if (tronAddress == null || tronAddress.length != 21) {
-      return tronAddress;
-    }
-    byte[] evm = new byte[20];
-    System.arraycopy(tronAddress, 1, evm, 0, 20);
-    return evm;
-  }
-
   /**
    * Snapshot the owner's TRC-10 asset map, perform the sweep, then emit one
    * {@code onTokenTransfer} per non-zero entry — used for SELFDESTRUCT.
@@ -546,8 +537,8 @@ public class Program {
     java.util.Map<String, Long> snapshot =
         new java.util.HashMap<>(getContractState().getAccount(owner).getAssetMapV2());
     MUtil.transferAllToken(getContractState(), owner, dest);
-    byte[] fromEvm = stripTronPrefix(owner);
-    byte[] toEvm = stripTronPrefix(dest);
+    byte[] fromEvm = MUtil.stripTronPrefix(owner);
+    byte[] toEvm = MUtil.stripTronPrefix(dest);
     for (java.util.Map.Entry<String, Long> e : snapshot.entrySet()) {
       if (e.getValue() != null && e.getValue() > 0) {
         simulationTracer.onTokenTransfer(fromEvm, toEvm,
@@ -597,7 +588,7 @@ public class Program {
     try {
       MUtil.transfer(getContractState(), owner, obtainer, balance);
       if (simulationTracer != null && balance > 0) {
-        simulationTracer.onTransfer(stripTronPrefix(owner), stripTronPrefix(obtainer), balance);
+        simulationTracer.onTransfer(MUtil.stripTronPrefix(owner), MUtil.stripTronPrefix(obtainer), balance);
       }
       if (VMConfig.allowTvmTransferTrc10()) {
         transferAllTokenWithTrace(owner, obtainer);
@@ -932,8 +923,8 @@ public class Program {
       deposit.addBalance(senderAddress, -endowment);
       newBalance = deposit.addBalance(newAddress, endowment);
       if (simulationTracer != null) {
-        simulationTracer.onTransfer(stripTronPrefix(senderAddress),
-            stripTronPrefix(newAddress), endowment);
+        simulationTracer.onTransfer(MUtil.stripTronPrefix(senderAddress),
+            MUtil.stripTronPrefix(newAddress), endowment);
       }
     }
 
@@ -1168,8 +1159,8 @@ public class Program {
         if (simulationTracer != null
             && msg.getOpCode() != Op.DELEGATECALL
             && msg.getOpCode() != Op.CALLCODE) {
-          simulationTracer.onTransfer(stripTronPrefix(senderAddress),
-              stripTronPrefix(contextAddress), endowment);
+          simulationTracer.onTransfer(MUtil.stripTronPrefix(senderAddress),
+              MUtil.stripTronPrefix(contextAddress), endowment);
         }
       } else {
         try {
@@ -1187,8 +1178,8 @@ public class Program {
         if (simulationTracer != null
             && msg.getOpCode() != Op.DELEGATECALL
             && msg.getOpCode() != Op.CALLCODE) {
-          simulationTracer.onTokenTransfer(stripTronPrefix(senderAddress),
-              stripTronPrefix(contextAddress),
+          simulationTracer.onTokenTransfer(MUtil.stripTronPrefix(senderAddress),
+              MUtil.stripTronPrefix(contextAddress),
               Long.parseLong(new String(tokenId)), endowment);
         }
       }
@@ -1802,8 +1793,8 @@ public class Program {
           if (simulationTracer != null
               && msg.getOpCode() != Op.DELEGATECALL
               && msg.getOpCode() != Op.CALLCODE) {
-            simulationTracer.onTransfer(stripTronPrefix(senderAddress),
-                stripTronPrefix(contextAddress),
+            simulationTracer.onTransfer(MUtil.stripTronPrefix(senderAddress),
+                MUtil.stripTronPrefix(contextAddress),
                 msg.getEndowment().value().longValueExact());
           }
         } catch (ContractValidateException e) {
@@ -1821,8 +1812,8 @@ public class Program {
         if (simulationTracer != null
             && msg.getOpCode() != Op.DELEGATECALL
             && msg.getOpCode() != Op.CALLCODE) {
-          simulationTracer.onTokenTransfer(stripTronPrefix(senderAddress),
-              stripTronPrefix(contextAddress),
+          simulationTracer.onTokenTransfer(MUtil.stripTronPrefix(senderAddress),
+              MUtil.stripTronPrefix(contextAddress),
               Long.parseLong(new String(tokenId)), endowment);
         }
       }

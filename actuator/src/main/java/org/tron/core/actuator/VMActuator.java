@@ -448,16 +448,16 @@ public class VMActuator implements Actuator2 {
     if (callValue > 0) {
       MUtil.transfer(rootRepository, callerAddress, contractAddress, callValue);
       if (simulationTracer != null) {
-        simulationTracer.onTransfer(stripTronPrefix(callerAddress),
-            stripTronPrefix(contractAddress), callValue);
+        simulationTracer.onTransfer(MUtil.stripTronPrefix(callerAddress),
+            MUtil.stripTronPrefix(contractAddress), callValue);
       }
     }
     if (VMConfig.allowTvmTransferTrc10() && tokenValue > 0) {
       MUtil.transferToken(rootRepository, callerAddress, contractAddress, String.valueOf(tokenId),
           tokenValue);
       if (simulationTracer != null) {
-        simulationTracer.onTokenTransfer(stripTronPrefix(callerAddress),
-            stripTronPrefix(contractAddress), tokenId, tokenValue);
+        simulationTracer.onTokenTransfer(MUtil.stripTronPrefix(callerAddress),
+            MUtil.stripTronPrefix(contractAddress), tokenId, tokenValue);
       }
     }
 
@@ -563,29 +563,21 @@ public class VMActuator implements Actuator2 {
     if (callValue > 0) {
       MUtil.transfer(rootRepository, callerAddress, contractAddress, callValue);
       if (simulationTracer != null) {
-        simulationTracer.onTransfer(stripTronPrefix(callerAddress),
-            stripTronPrefix(contractAddress), callValue);
+        simulationTracer.onTransfer(MUtil.stripTronPrefix(callerAddress),
+            MUtil.stripTronPrefix(contractAddress), callValue);
       }
     }
     if (VMConfig.allowTvmTransferTrc10() && tokenValue > 0) {
       MUtil.transferToken(rootRepository, callerAddress, contractAddress, String.valueOf(tokenId),
           tokenValue);
       if (simulationTracer != null) {
-        simulationTracer.onTokenTransfer(stripTronPrefix(callerAddress),
-            stripTronPrefix(contractAddress), tokenId, tokenValue);
+        simulationTracer.onTokenTransfer(MUtil.stripTronPrefix(callerAddress),
+            MUtil.stripTronPrefix(contractAddress), tokenId, tokenValue);
       }
     }
 
   }
 
-  private static byte[] stripTronPrefix(byte[] tronAddress) {
-    if (tronAddress == null || tronAddress.length != 21) {
-      return tronAddress;
-    }
-    byte[] evm = new byte[20];
-    System.arraycopy(tronAddress, 1, evm, 0, 20);
-    return evm;
-  }
 
   public long getAccountEnergyLimitWithFixRatio(AccountCapsule account, long feeLimit,
       long callValue) {
