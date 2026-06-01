@@ -1278,9 +1278,9 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
       addressRaw = ERC7528_NATIVE_ADDRESS;
       topics = new ArrayList<>(3);
       topics.add(new DataWord(ByteArray.fromHexString(TRANSFER_TOPIC_HEX)));
-      topics.add(new DataWord(leftPad32(entry.getFromEvm())));
-      topics.add(new DataWord(leftPad32(entry.getToEvm())));
-      dataHex = ByteArray.toHexString(leftPad32(longToBytes(entry.getAmount())));
+      topics.add(new DataWord(entry.getFromEvm()));
+      topics.add(new DataWord(entry.getToEvm()));
+      dataHex = ByteArray.toHexString(new DataWord(entry.getAmount()).getData());
     } else if (entry.getKind() == BufferingSimulationTracer.EntryKind.TOKEN_TRANSFER) {
       if (!traceTransfers) {
         return null;
@@ -1288,10 +1288,10 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
       addressRaw = ERC7528_NATIVE_ADDRESS;
       topics = new ArrayList<>(4);
       topics.add(new DataWord(ByteArray.fromHexString(TRC10_TRANSFER_TOPIC_HEX)));
-      topics.add(new DataWord(leftPad32(entry.getFromEvm())));
-      topics.add(new DataWord(leftPad32(entry.getToEvm())));
-      topics.add(new DataWord(leftPad32(longToBytes(entry.getTokenId()))));
-      dataHex = ByteArray.toHexString(leftPad32(longToBytes(entry.getAmount())));
+      topics.add(new DataWord(entry.getFromEvm()));
+      topics.add(new DataWord(entry.getToEvm()));
+      topics.add(new DataWord(entry.getTokenId()));
+      dataHex = ByteArray.toHexString(new DataWord(entry.getAmount()).getData());
     } else {
       org.tron.common.runtime.vm.LogInfo li = entry.getLogInfo();
       byte[] addr = li.getAddress();
@@ -1310,27 +1310,6 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
         blockHashRaw, blockNum, txHashRaw, callIndex,
         addressRaw, topics, dataHex, logIdx, false,
         System.currentTimeMillis());
-  }
-
-  private static byte[] leftPad32(byte[] src) {
-    if (src == null) {
-      return new byte[32];
-    }
-    if (src.length >= 32) {
-      return src;
-    }
-    byte[] out = new byte[32];
-    System.arraycopy(src, 0, out, 32 - src.length, src.length);
-    return out;
-  }
-
-  private static byte[] longToBytes(long v) {
-    byte[] out = new byte[8];
-    for (int i = 7; i >= 0; i--) {
-      out[i] = (byte) (v & 0xff);
-      v >>>= 8;
-    }
-    return out;
   }
 
   @Override
