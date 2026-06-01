@@ -111,7 +111,9 @@ public class TronNetDelegate {
   @PostConstruct
   public void init() {
     hitThread =  new Thread(() -> {
-      LockSupport.park();
+      while (!hitDown && !Thread.currentThread().isInterrupted()) {
+        LockSupport.park();
+      }
       // to Guarantee Some other thread invokes unpark with the current thread as the target
       if (hitDown && exit) {
         System.exit(0);

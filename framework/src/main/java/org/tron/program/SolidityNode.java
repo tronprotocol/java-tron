@@ -185,6 +185,10 @@ public class SolidityNode implements ApplicationListener<ContextClosedEvent> {
           sleep(exceptionSleepTime);
         }
       } catch (Exception e) {
+        if (!flag || tronNetDelegate.isHitDown()) {
+          logger.info("getBlockByNum stopped during shutdown, block: {}.", blockNum);
+          break;
+        }
         logger.error("Failed to get block: {}, reason: {}.", blockNum, e.getMessage());
         sleep(exceptionSleepTime);
       }
