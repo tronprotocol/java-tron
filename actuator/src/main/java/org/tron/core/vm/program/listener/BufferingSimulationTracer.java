@@ -9,6 +9,15 @@ import org.tron.common.runtime.vm.LogInfo;
 
 public class BufferingSimulationTracer implements SimulationTracer {
 
+  /**
+   * Defensive cap on buffered entries per simulate call. A well-behaved call produces O(100)
+   * entries (transfers + LOGs); typical batches stay well under 10 KB / call. The cap guards
+   * against pathological or adversarial contracts that emit thousands of LOG opcodes within
+   * a single energy budget. Exceeding it aborts the call with a clear {@link RuntimeException},
+   * which the simulate driver surfaces as a per-call failure outcome.
+   */
+  public static final int MAX_ENTRIES_PER_CALL = 100_000;
+
   public enum EntryKind { EXPLICIT, TRANSFER, TOKEN_TRANSFER }
 
   public static final class Entry {
@@ -48,6 +57,7 @@ public class BufferingSimulationTracer implements SimulationTracer {
 
   private final Deque<List<Entry>> stack = new ArrayDeque<>();
   private long seq;
+  private int callEntryCount;
 
   public BufferingSimulationTracer() {
     beginCall();
@@ -57,12 +67,14 @@ public class BufferingSimulationTracer implements SimulationTracer {
   public void beginCall() {
     stack.clear();
     stack.push(new ArrayList<>());
+    callEntryCount = 0;
   }
 
   /** Drop all buffered entries for the current call (used on top-level revert). */
   public void dropCall() {
     stack.clear();
     stack.push(new ArrayList<>());
+    callEntryCount = 0;
   }
 
   /** Returns the root frame's entries in {@code seq} order. */
@@ -102,6 +114,7 @@ public class BufferingSimulationTracer implements SimulationTracer {
     if (stack.isEmpty()) {
       return;
     }
+    checkEntryBudget();
     stack.peek().add(new Entry(seq++, EntryKind.TRANSFER, null, fromEvm, toEvm, 0L, amount));
   }
 
@@ -110,6 +123,7 @@ public class BufferingSimulationTracer implements SimulationTracer {
     if (stack.isEmpty()) {
       return;
     }
+    checkEntryBudget();
     stack.peek().add(new Entry(seq++, EntryKind.TOKEN_TRANSFER, null,
         fromEvm, toEvm, tokenId, amount));
   }
@@ -119,6 +133,16 @@ public class BufferingSimulationTracer implements SimulationTracer {
     if (stack.isEmpty()) {
       return;
     }
+    checkEntryBudget();
     stack.peek().add(new Entry(seq++, EntryKind.EXPLICIT, logInfo, null, null, 0L, 0L));
+  }
+
+  private void checkEntryBudget() {
+    if (callEntryCount >= MAX_ENTRIES_PER_CALL) {
+      throw new RuntimeException(
+          "simulation tracer entry budget exceeded: more than " + MAX_ENTRIES_PER_CALL
+              + " logs/transfers in a single call");
+    }
+    callEntryCount++;
   }
 }
