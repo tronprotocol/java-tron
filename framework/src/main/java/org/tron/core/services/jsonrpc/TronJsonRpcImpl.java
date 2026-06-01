@@ -1169,7 +1169,8 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
     long headNum = head.getNum();
     byte[] headHash = head.getBlockId().getBytes();
     byte[] simBlockHash = Hash.sha3(
-        (SIMULATE_BLOCK_HASH_PREFIX + ByteArray.toHexString(headHash) + ":1").getBytes());
+        (SIMULATE_BLOCK_HASH_PREFIX + ByteArray.toHexString(headHash) + ":1")
+            .getBytes(java.nio.charset.StandardCharsets.UTF_8));
     String simBlockHashRaw = ByteArray.toHexString(simBlockHash);
     String simBlockHashHex = ByteArray.toJsonHex(simBlockHash);
 
@@ -1193,7 +1194,8 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
       CallArguments call = calls.get(i);
 
       byte[] txHashBytes = Hash.sha3(
-          (SIMULATE_BLOCK_HASH_PREFIX + ByteArray.toHexString(headHash) + ":" + i).getBytes());
+          (SIMULATE_BLOCK_HASH_PREFIX + ByteArray.toHexString(headHash) + ":" + i)
+              .getBytes(java.nio.charset.StandardCharsets.UTF_8));
       String txHashRaw = ByteArray.toHexString(txHashBytes);
       String txHashHex = ByteArray.toJsonHex(txHashBytes);
 
