@@ -28,6 +28,8 @@ public class StorageConfig {
   private CheckpointConfig checkpoint = new CheckpointConfig();
   private SnapshotConfig snapshot = new SnapshotConfig();
   private TxCacheConfig txCache = new TxCacheConfig();
+  // ConfigBeanFactory requires all bean fields present per item, so we parse manually.
+  @Setter(lombok.AccessLevel.NONE)
   private List<PropertyConfig> properties = new ArrayList<>();
 
   // merkleRoot is a nested object (e.g. { reward-vi = "hash..." }) not a string.
@@ -54,6 +56,7 @@ public class StorageConfig {
   @Getter
   @Setter
   public static class DbConfig {
+
     private String engine = "LEVELDB";
     private boolean sync = false;
     private String directory = "database";
@@ -62,6 +65,7 @@ public class StorageConfig {
   @Getter
   @Setter
   public static class TransHistoryConfig {
+
     // "switch" is a reserved Java keyword; ConfigBeanFactory calls setSwitch() which works fine
     @Getter(lombok.AccessLevel.NONE)
     @Setter(lombok.AccessLevel.NONE)
@@ -79,6 +83,7 @@ public class StorageConfig {
   @Getter
   @Setter
   public static class DbSettingsConfig {
+
     private int levelNumber = 7;
     private int compactThreads = 0; // 0 = auto: max(availableProcessors, 1)
     private int blocksize = 16;
@@ -100,11 +105,13 @@ public class StorageConfig {
   @Getter
   @Setter
   public static class BalanceConfig {
+
     private HistoryConfig history = new HistoryConfig();
 
     @Getter
     @Setter
     public static class HistoryConfig {
+
       private boolean lookup = false;
     }
   }
@@ -112,6 +119,7 @@ public class StorageConfig {
   @Getter
   @Setter
   public static class CheckpointConfig {
+
     private int version = 1;
     private boolean sync = true;
   }
@@ -119,6 +127,7 @@ public class StorageConfig {
   @Getter
   @Setter
   public static class SnapshotConfig {
+
     private int maxFlushCount = 1;
 
     // Reject out-of-range values. Mirrors develop Storage.getSnapshotMaxFlushCountFromConfig.
@@ -135,6 +144,7 @@ public class StorageConfig {
   @Getter
   @Setter
   public static class TxCacheConfig {
+
     private int estimatedTransactions = 1000;
     private boolean initOptimization = false;
 
@@ -151,6 +161,7 @@ public class StorageConfig {
   @Getter
   @Setter
   public static class PropertyConfig {
+
     private String name = "";
     private String path = "";
     private boolean createIfMissing = true;
@@ -170,6 +181,7 @@ public class StorageConfig {
 
     StorageConfig sc = ConfigBeanFactory.create(section, StorageConfig.class);
     sc.rawStorageConfig = section;
+    sc.properties = readProperties(section);
 
     // Read optional LevelDB option overrides (default, defaultM, defaultL).
     sc.defaultDbOption = readDbOption(section, "default");
@@ -187,6 +199,7 @@ public class StorageConfig {
   @Getter
   @Setter
   public static class DbOptionOverride {
+
     private Boolean createIfMissing;
     private Boolean paranoidChecks;
     private Boolean verifyChecksums;
@@ -197,14 +210,9 @@ public class StorageConfig {
     private Integer maxOpenFiles;
   }
 
-  // Read optional LevelDB option override (default/defaultM/defaultL).
-  // Not bean-bound: users may only set a subset of keys (e.g. just maxOpenFiles),
-  // ConfigBeanFactory requires all fields present so partial overrides would fail.
-  private static DbOptionOverride readDbOption(Config section, String key) {
-    if (!section.hasPath(key)) {
-      return null;
-    }
-    ConfigObject conf = section.getObject(key);
+  // Shared LevelDB option parser used by both readDbOption and readProperties.
+  // DbOptionOverride uses boxed types so null means "not specified by user".
+  private static DbOptionOverride readLevelDbOptions(ConfigObject conf) {
     DbOptionOverride o = new DbOptionOverride();
     if (conf.containsKey("createIfMissing")) {
       o.setCreateIfMissing(
@@ -259,6 +267,63 @@ public class StorageConfig {
       }
     }
     return o;
+  }
+
+  // Read optional LevelDB option override for default/defaultM/defaultL keys.
+  private static DbOptionOverride readDbOption(Config section, String key) {
+    if (!section.hasPath(key)) {
+      return null;
+    }
+    return readLevelDbOptions(section.getObject(key));
+  }
+
+  // Parse storage.properties list manually: ConfigBeanFactory requires every bean field to be
+  // present in each list item, but name+path-only entries (all LevelDB opts commented out) are
+  // valid — missing fields fall back to PropertyConfig Java defaults.
+  private static List<PropertyConfig> readProperties(Config section) {
+    if (!section.hasPath("properties")) {
+      return new ArrayList<>();
+    }
+    List<? extends ConfigObject> items = section.getObjectList("properties");
+    List<PropertyConfig> result = new ArrayList<>(items.size());
+    for (ConfigObject obj : items) {
+      if (!obj.containsKey("name")) {
+        throw new IllegalArgumentException(
+            "[storage.properties] 'name' is required in each properties entry.");
+      }
+      PropertyConfig p = new PropertyConfig();
+      p.setName(obj.get("name").unwrapped().toString());
+      if (obj.containsKey("path")) {
+        p.setPath(obj.get("path").unwrapped().toString());
+      }
+      DbOptionOverride opts = readLevelDbOptions(obj);
+      if (opts.getCreateIfMissing() != null) {
+        p.setCreateIfMissing(opts.getCreateIfMissing());
+      }
+      if (opts.getParanoidChecks() != null) {
+        p.setParanoidChecks(opts.getParanoidChecks());
+      }
+      if (opts.getVerifyChecksums() != null) {
+        p.setVerifyChecksums(opts.getVerifyChecksums());
+      }
+      if (opts.getCompressionType() != null) {
+        p.setCompressionType(opts.getCompressionType());
+      }
+      if (opts.getBlockSize() != null) {
+        p.setBlockSize(opts.getBlockSize());
+      }
+      if (opts.getWriteBufferSize() != null) {
+        p.setWriteBufferSize(opts.getWriteBufferSize());
+      }
+      if (opts.getCacheSize() != null) {
+        p.setCacheSize(opts.getCacheSize());
+      }
+      if (opts.getMaxOpenFiles() != null) {
+        p.setMaxOpenFiles(opts.getMaxOpenFiles());
+      }
+      result.add(p);
+    }
+    return result;
   }
 
   private static void throwIllegalArgumentException(String param, Class<?> type, String actual) {
