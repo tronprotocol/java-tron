@@ -3253,7 +3253,13 @@ public class Wallet {
         ctx = executeOneConstantInternal(trxCap, headBlockCapsule, perCallChild, tracer);
       } catch (RuntimeException e) {
         logger.warn("Simulate call {} failed for reason: {}", i, e.getMessage());
-        throw e;
+        if (tracer != null) {
+          tracer.dropCall();
+        }
+        ProgramResult synthetic = new ProgramResult();
+        synthetic.setException(e);
+        outcomes.add(new SimulateCallOutcome(synthetic, java.util.Collections.emptyList()));
+        continue;
       }
       ProgramResult result = ctx.getProgramResult();
 
