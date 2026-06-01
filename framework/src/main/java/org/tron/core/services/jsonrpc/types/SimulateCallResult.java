@@ -48,11 +48,6 @@ public class SimulateCallResult {
   @JsonInclude(JsonInclude.Include.NON_NULL)
   @Getter
   @Setter
-  private String errorCode;
-
-  @JsonInclude(JsonInclude.Include.NON_NULL)
-  @Getter
-  @Setter
   private String errorMessage;
 
   @JsonInclude(JsonInclude.Include.NON_NULL)
