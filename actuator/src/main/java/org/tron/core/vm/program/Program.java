@@ -1621,7 +1621,8 @@ public class Program {
     }
 
     byte[] senderAddress;
-    if (VMConfig.allowTvmCompatibleEvm() && getCallDeep() == MAX_DEPTH) {
+    if ((VMConfig.allowTvmCompatibleEvm() || VMConfig.allowTvmOsaka())
+        && getCallDeep() == MAX_DEPTH) {
       stackPushZero();
       return;
     }
