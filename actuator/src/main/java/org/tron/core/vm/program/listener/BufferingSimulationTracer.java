@@ -60,7 +60,6 @@ public class BufferingSimulationTracer implements SimulationTracer {
   private int callEntryCount;
 
   public BufferingSimulationTracer() {
-    beginCall();
   }
 
   /** Reset per-call state. Drops any leftover frames and starts a fresh root. */
@@ -72,9 +71,7 @@ public class BufferingSimulationTracer implements SimulationTracer {
 
   /** Drop all buffered entries for the current call (used on top-level revert). */
   public void dropCall() {
-    stack.clear();
-    stack.push(new ArrayList<>());
-    callEntryCount = 0;
+    beginCall();
   }
 
   /** Returns the root frame's entries in {@code seq} order. */
