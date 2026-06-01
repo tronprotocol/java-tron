@@ -119,6 +119,12 @@ jobs:
           python3 .github/scripts/check_reference_conf.py \
             common/src/main/resources/reference.conf
 
+      - name: Validate reference.conf comment coverage
+        shell: bash
+        run: |
+          python3 .github/scripts/check_reference_comments.py \
+            common/src/main/resources/reference.conf
+
       - name: Set up JDK 17
         uses: actions/setup-java@v5
         with:
