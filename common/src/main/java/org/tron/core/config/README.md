@@ -28,10 +28,7 @@ storage {
     {
       name = "account",
       path = "/path/to/accout",   // relative or absolute path
-      createIfMissing = true,
-      paranoidChecks = true,
-      verifyChecksums = true,
-      compressionType = 1,        // 0 - no compression,  1 - compressed with snappy
+      # following are only used for LevelDB
       blockSize = 4096,           // 4  KB =         4 * 1024 B
       writeBufferSize = 10485760, // 10 MB = 10 * 1024 * 1024 B
       cacheSize = 10485760,       // 10 MB = 10 * 1024 * 1024 B
