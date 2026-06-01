@@ -90,7 +90,9 @@ import org.tron.core.services.jsonrpc.types.BuildArguments;
 import org.tron.core.services.jsonrpc.types.CallArguments;
 import org.tron.core.services.jsonrpc.types.SimulateBlock;
 import org.tron.core.services.jsonrpc.types.SimulateBlockResult;
+import org.tron.core.services.jsonrpc.types.SimulateCallOutcome;
 import org.tron.core.services.jsonrpc.types.SimulateCallResult;
+import org.tron.core.services.jsonrpc.types.SimulateOutcome;
 import org.tron.core.services.jsonrpc.types.SimulateV1Args;
 import org.tron.core.services.jsonrpc.types.TransactionReceipt;
 import org.tron.core.services.jsonrpc.types.TransactionReceipt.TransactionContext;
@@ -1119,7 +1121,7 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
           + MAX_SIMULATE_CALLS_PER_BLOCK);
     }
 
-    Wallet.SimulateOutcome outcome;
+    SimulateOutcome outcome;
     try {
       List<TransactionCapsule> trxCaps = new ArrayList<>(block.getCalls().size());
       for (CallArguments call : block.getCalls()) {
@@ -1168,7 +1170,7 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
     return wallet.createTransactionCapsule(trigger, ContractType.TriggerSmartContract);
   }
 
-  private SimulateBlockResult buildSimulateBlockResult(Wallet.SimulateOutcome outcome,
+  private SimulateBlockResult buildSimulateBlockResult(SimulateOutcome outcome,
       List<CallArguments> calls, boolean traceTransfers, boolean returnFullTransactions)
       throws JsonRpcInvalidParamsException {
     BlockCapsule head = outcome.getHeadBlockCapsule();
@@ -1204,7 +1206,7 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
     List<SimulateCallResult> callResults = new ArrayList<>(outcome.getCalls().size());
     Object[] transactions = new Object[outcome.getCalls().size()];
     for (int i = 0; i < outcome.getCalls().size(); i++) {
-      Wallet.SimulateCallOutcome callOutcome = outcome.getCalls().get(i);
+      SimulateCallOutcome callOutcome = outcome.getCalls().get(i);
       org.tron.common.runtime.ProgramResult pr = callOutcome.getResult();
       CallArguments call = calls.get(i);
 

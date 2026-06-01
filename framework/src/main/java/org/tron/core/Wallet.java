@@ -189,6 +189,8 @@ import org.tron.core.exception.ZksnarkException;
 import org.tron.core.net.TronNetDelegate;
 import org.tron.core.net.TronNetService;
 import org.tron.core.net.message.adv.TransactionMessage;
+import org.tron.core.services.jsonrpc.types.SimulateCallOutcome;
+import org.tron.core.services.jsonrpc.types.SimulateOutcome;
 import org.tron.core.store.AccountIdIndexStore;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.AccountTraceStore;
@@ -3178,44 +3180,6 @@ public class Wallet {
     vmActuator.validate(context);
     vmActuator.execute(context);
     return context;
-  }
-
-  public static final class SimulateCallOutcome {
-
-    private final ProgramResult result;
-    private final List<BufferingSimulationTracer.Entry> tracerEntries;
-
-    SimulateCallOutcome(ProgramResult result, List<BufferingSimulationTracer.Entry> tracerEntries) {
-      this.result = result;
-      this.tracerEntries = tracerEntries;
-    }
-
-    public ProgramResult getResult() {
-      return result;
-    }
-
-    public List<BufferingSimulationTracer.Entry> getTracerEntries() {
-      return tracerEntries;
-    }
-  }
-
-  public static final class SimulateOutcome {
-
-    private final BlockCapsule headBlockCapsule;
-    private final List<SimulateCallOutcome> calls;
-
-    SimulateOutcome(BlockCapsule headBlockCapsule, List<SimulateCallOutcome> calls) {
-      this.headBlockCapsule = headBlockCapsule;
-      this.calls = calls;
-    }
-
-    public BlockCapsule getHeadBlockCapsule() {
-      return headBlockCapsule;
-    }
-
-    public List<SimulateCallOutcome> getCalls() {
-      return calls;
-    }
   }
 
   public SimulateOutcome simulateConstantContracts(List<TransactionCapsule> trxCaps,
