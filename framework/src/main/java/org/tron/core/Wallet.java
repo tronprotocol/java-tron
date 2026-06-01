@@ -3088,16 +3088,10 @@ public class Wallet {
       throws ContractValidateException, ContractExeException, HeaderNotFound, VMIllegalException {
 
     if (triggerSmartContract.getContractAddress().isEmpty()) { // deploy contract
-      CreateSmartContract.Builder deployBuilder = CreateSmartContract.newBuilder();
-      deployBuilder.setOwnerAddress(triggerSmartContract.getOwnerAddress());
-      deployBuilder.setNewContract(SmartContract.newBuilder()
-          .setOriginAddress(triggerSmartContract.getOwnerAddress())
-          .setBytecode(triggerSmartContract.getData())
-          .setCallValue(triggerSmartContract.getCallValue())
-          .setConsumeUserResourcePercent(100)
-          .setOriginEnergyLimit(1)
-          .build()
-      );
+      CreateSmartContract.Builder deployBuilder = buildEvmCreateSmartContract(
+          triggerSmartContract.getOwnerAddress().toByteArray(),
+          triggerSmartContract.getData().toByteArray(),
+          triggerSmartContract.getCallValue());
       deployBuilder.setCallTokenValue(triggerSmartContract.getCallTokenValue());
       deployBuilder.setTokenId(triggerSmartContract.getTokenId());
       long feeLimit = trxCap.getFeeLimit();
@@ -3241,6 +3235,26 @@ public class Wallet {
       outcomes.add(new SimulateCallOutcome(result, entries));
     }
     return new SimulateOutcome(headBlockCapsule, outcomes);
+  }
+
+  /**
+   * Build a CREATE-contract proto with Tron's EVM CREATE convention applied:
+   * {@code consumeUserResourcePercent=100} and {@code originEnergyLimit=1} — the same values
+   * the VM enforces for EVM-originated deploys (see {@code Program#createContractImpl}).
+   * Returns the builder so callers can attach call-token fields if needed.
+   */
+  public static CreateSmartContract.Builder buildEvmCreateSmartContract(byte[] ownerAddress,
+      byte[] code, long callValue) {
+    SmartContract newContract = SmartContract.newBuilder()
+        .setOriginAddress(ByteString.copyFrom(ownerAddress))
+        .setBytecode(ByteString.copyFrom(code))
+        .setCallValue(callValue)
+        .setConsumeUserResourcePercent(100)
+        .setOriginEnergyLimit(1)
+        .build();
+    return CreateSmartContract.newBuilder()
+        .setOwnerAddress(ByteString.copyFrom(ownerAddress))
+        .setNewContract(newContract);
   }
 
   private static String validateSenderForSimulate(TransactionCapsule trxCap,

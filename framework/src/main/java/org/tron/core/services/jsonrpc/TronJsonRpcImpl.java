@@ -1152,17 +1152,8 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
     long value = call.parseValue();
 
     if (call.getTo() == null || call.getTo().isEmpty()) {
-      SmartContract.Builder contract = SmartContract.newBuilder()
-          .setOriginAddress(ByteString.copyFrom(owner))
-          .setBytecode(ByteString.copyFrom(data))
-          .setCallValue(value)
-          .setConsumeUserResourcePercent(100)
-          .setOriginEnergyLimit(1);
-      CreateSmartContract.Builder deployBuilder = CreateSmartContract.newBuilder();
-      deployBuilder.setOwnerAddress(ByteString.copyFrom(owner));
-      deployBuilder.setNewContract(contract.build());
-      return wallet.createTransactionCapsule(deployBuilder.build(),
-          ContractType.CreateSmartContract);
+      CreateSmartContract create = Wallet.buildEvmCreateSmartContract(owner, data, value).build();
+      return wallet.createTransactionCapsule(create, ContractType.CreateSmartContract);
     }
 
     byte[] to = addressCompatibleToByteArray(call.getTo());
