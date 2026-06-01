@@ -1176,21 +1176,12 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
     br.setNumber(ByteArray.toJsonHex(headNum + 1));
     br.setHash(simBlockHashHex);
     br.setParentHash(ByteArray.toJsonHex(headHash));
-    br.setNonce(ByteArray.toJsonHex(new byte[8]));
-    br.setSha3Uncles(ByteArray.toJsonHex(new byte[32]));
-    br.setLogsBloom(ByteArray.toJsonHex(new byte[256]));
     br.setTransactionsRoot(ByteArray.toJsonHex(new byte[32]));
     br.setStateRoot(ByteArray.toJsonHex(new byte[32]));
-    br.setReceiptsRoot(ByteArray.toJsonHex(new byte[32]));
     br.setMiner(ByteArray.toJsonHex(new byte[20]));
-    br.setDifficulty("0x0");
-    br.setTotalDifficulty("0x0");
-    br.setExtraData("0x");
     br.setSize("0x0");
     br.setGasLimit(ByteArray.toJsonHex(CommonParameter.getInstance().maxEnergyLimitForConstant));
     br.setTimestamp(ByteArray.toJsonHex((head.getTimeStamp() + BLOCK_INTERVAL_MS) / 1000));
-    br.setBaseFeePerGas("0x0");
-    br.setUncles(new String[0]);
 
     long totalGasUsed = 0L;
     int logIndex = 0;

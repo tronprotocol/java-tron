@@ -30,13 +30,13 @@ public class BlockResult {
   private String parentHash;
   @Getter
   @Setter
-  private String nonce;
+  private String nonce = ByteArray.toJsonHex(new byte[8]);
   @Getter
   @Setter
-  private String sha3Uncles;
+  private String sha3Uncles = ByteArray.toJsonHex(new byte[32]);
   @Getter
   @Setter
-  private String logsBloom;
+  private String logsBloom = ByteArray.toJsonHex(new byte[256]);
   @Getter
   @Setter
   private String transactionsRoot;
@@ -45,19 +45,19 @@ public class BlockResult {
   private String stateRoot;
   @Getter
   @Setter
-  private String receiptsRoot;
+  private String receiptsRoot = ByteArray.toJsonHex(new byte[32]);
   @Getter
   @Setter
   private String miner;
   @Getter
   @Setter
-  private String difficulty;
+  private String difficulty = "0x0";
   @Getter
   @Setter
-  private String totalDifficulty;
+  private String totalDifficulty = "0x0";
   @Getter
   @Setter
-  private String extraData;
+  private String extraData = "0x";
   @Getter
   @Setter
   private String size;
@@ -75,7 +75,7 @@ public class BlockResult {
   private Object[] transactions; //TransactionResult or byte32
   @Getter
   @Setter
-  private String[] uncles;
+  private String[] uncles = new String[0];
 
   @Getter
   @Setter
@@ -95,14 +95,10 @@ public class BlockResult {
     hash = ByteArray.toJsonHex(blockCapsule.getBlockId().getBytes());
     parentHash =
         ByteArray.toJsonHex(block.getBlockHeader().getRawData().getParentHash().toByteArray());
-    nonce = ByteArray.toJsonHex(new byte[8]); // no value
-    sha3Uncles = ByteArray.toJsonHex(new byte[32]); // no value
-    logsBloom = ByteArray.toJsonHex(new byte[256]); // no value
     transactionsRoot = ByteArray
         .toJsonHex(block.getBlockHeader().getRawData().getTxTrieRoot().toByteArray());
     stateRoot = ByteArray
         .toJsonHex(block.getBlockHeader().getRawData().getAccountStateRoot().toByteArray());
-    receiptsRoot = ByteArray.toJsonHex(new byte[32]); // no value
 
     if (blockCapsule.getNum() == 0) {
       miner = ByteArray.toJsonHex(new byte[20]);
@@ -110,9 +106,6 @@ public class BlockResult {
       miner = ByteArray.toJsonHexAddress(blockCapsule.getWitnessAddress().toByteArray());
     }
 
-    difficulty = "0x0"; // no value
-    totalDifficulty = "0x0"; // no value
-    extraData = "0x"; // no value
     size = ByteArray.toJsonHex(block.getSerializedSize());
     timestamp = ByteArray.toJsonHex(blockCapsule.getTimeStamp() / 1000);
 
@@ -151,6 +144,5 @@ public class BlockResult {
 
     gasLimit = ByteArray.toJsonHex(gasLimitInBlock);
     gasUsed = ByteArray.toJsonHex(gasUsedInBlock);
-    uncles = new String[0];
   }
 }
