@@ -40,7 +40,7 @@ storage {
 
 ```
 
-As shown in the example above, the `accout` database will be stored in the path of `/path/to/accout/database` while the index be stored in `/path/to/accout/index`. And, the example also shows our default value of LevelDB options(Start from `createIfMissing` and end at `maxOpenFiles`). Please refer to the docs of [LevelDB](https://github.com/google/leveldb/blob/master/doc/index.md#performance) to figure out the details of these options.
+As shown in the example above, the `accout` database will be stored in the path of `/path/to/accout/database` while the index be stored in `/path/to/accout/index`. And, the example also shows our default value of LevelDB options(Start from `blockSize` and end at `maxOpenFiles`). Please refer to the docs of [LevelDB](https://github.com/google/leveldb/blob/master/doc/index.md#performance) to figure out the details of these options.
 
 ## gRPC
 

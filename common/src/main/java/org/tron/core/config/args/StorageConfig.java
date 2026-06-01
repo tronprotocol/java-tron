@@ -261,8 +261,7 @@ public class StorageConfig {
     List<PropertyConfig> result = new ArrayList<>(items.size());
     for (ConfigObject obj : items) {
       if (!obj.containsKey("name")) {
-        throw new IllegalArgumentException(
-            "[storage.properties] 'name' is required in each properties entry.");
+        throw new IllegalArgumentException("[storage.properties] database name must be set.");
       }
       PropertyConfig p = new PropertyConfig();
       p.setName(obj.get("name").unwrapped().toString());
