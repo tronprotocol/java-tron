@@ -28,6 +28,8 @@ public class StorageConfig {
   private CheckpointConfig checkpoint = new CheckpointConfig();
   private SnapshotConfig snapshot = new SnapshotConfig();
   private TxCacheConfig txCache = new TxCacheConfig();
+  // ConfigBeanFactory requires all bean fields present per item, so we parse manually.
+  @Setter(lombok.AccessLevel.NONE)
   private List<PropertyConfig> properties = new ArrayList<>();
 
   // merkleRoot is a nested object (e.g. { reward-vi = "hash..." }) not a string.
@@ -54,6 +56,7 @@ public class StorageConfig {
   @Getter
   @Setter
   public static class DbConfig {
+
     private String engine = "LEVELDB";
     private boolean sync = false;
     private String directory = "database";
@@ -62,6 +65,7 @@ public class StorageConfig {
   @Getter
   @Setter
   public static class TransHistoryConfig {
+
     // "switch" is a reserved Java keyword; ConfigBeanFactory calls setSwitch() which works fine
     @Getter(lombok.AccessLevel.NONE)
     @Setter(lombok.AccessLevel.NONE)
@@ -79,6 +83,7 @@ public class StorageConfig {
   @Getter
   @Setter
   public static class DbSettingsConfig {
+
     private int levelNumber = 7;
     private int compactThreads = 0; // 0 = auto: max(availableProcessors, 1)
     private int blocksize = 16;
@@ -100,11 +105,13 @@ public class StorageConfig {
   @Getter
   @Setter
   public static class BalanceConfig {
+
     private HistoryConfig history = new HistoryConfig();
 
     @Getter
     @Setter
     public static class HistoryConfig {
+
       private boolean lookup = false;
     }
   }
@@ -112,6 +119,7 @@ public class StorageConfig {
   @Getter
   @Setter
   public static class CheckpointConfig {
+
     private int version = 1;
     private boolean sync = true;
   }
@@ -119,6 +127,7 @@ public class StorageConfig {
   @Getter
   @Setter
   public static class SnapshotConfig {
+
     private int maxFlushCount = 1;
 
     // Reject out-of-range values. Mirrors develop Storage.getSnapshotMaxFlushCountFromConfig.
@@ -135,6 +144,7 @@ public class StorageConfig {
   @Getter
   @Setter
   public static class TxCacheConfig {
+
     private int estimatedTransactions = 1000;
     private boolean initOptimization = false;
 
@@ -148,19 +158,14 @@ public class StorageConfig {
     }
   }
 
+  // A named database entry: name/path plus the optional LevelDB option overrides
+  // inherited from DbOptionOverride (boxed types, null = "inherit per-tier defaults").
   @Getter
   @Setter
-  public static class PropertyConfig {
+  public static class PropertyConfig extends DbOptionOverride {
+
     private String name = "";
     private String path = "";
-    private boolean createIfMissing = true;
-    private boolean paranoidChecks = true;
-    private boolean verifyChecksums = true;
-    private int compressionType = 1;
-    private int blockSize = 4096;
-    private int writeBufferSize = 10485760;
-    private long cacheSize = 10485760;
-    private int maxOpenFiles = 100;
   }
 
   // Defaults come from reference.conf (loaded globally via Configuration.java)
@@ -170,6 +175,7 @@ public class StorageConfig {
 
     StorageConfig sc = ConfigBeanFactory.create(section, StorageConfig.class);
     sc.rawStorageConfig = section;
+    sc.properties = readProperties(section);
 
     // Read optional LevelDB option overrides (default, defaultM, defaultL).
     sc.defaultDbOption = readDbOption(section, "default");
@@ -187,45 +193,17 @@ public class StorageConfig {
   @Getter
   @Setter
   public static class DbOptionOverride {
-    private Boolean createIfMissing;
-    private Boolean paranoidChecks;
-    private Boolean verifyChecksums;
-    private Integer compressionType;
+
     private Integer blockSize;
     private Integer writeBufferSize;
     private Long cacheSize;
     private Integer maxOpenFiles;
   }
 
-  // Read optional LevelDB option override (default/defaultM/defaultL).
-  // Not bean-bound: users may only set a subset of keys (e.g. just maxOpenFiles),
-  // ConfigBeanFactory requires all fields present so partial overrides would fail.
-  private static DbOptionOverride readDbOption(Config section, String key) {
-    if (!section.hasPath(key)) {
-      return null;
-    }
-    ConfigObject conf = section.getObject(key);
-    DbOptionOverride o = new DbOptionOverride();
-    if (conf.containsKey("createIfMissing")) {
-      o.setCreateIfMissing(
-          Boolean.parseBoolean(conf.get("createIfMissing").unwrapped().toString()));
-    }
-    if (conf.containsKey("paranoidChecks")) {
-      o.setParanoidChecks(
-          Boolean.parseBoolean(conf.get("paranoidChecks").unwrapped().toString()));
-    }
-    if (conf.containsKey("verifyChecksums")) {
-      o.setVerifyChecksums(
-          Boolean.parseBoolean(conf.get("verifyChecksums").unwrapped().toString()));
-    }
-    if (conf.containsKey("compressionType")) {
-      String param = conf.get("compressionType").unwrapped().toString();
-      try {
-        o.setCompressionType(Integer.parseInt(param));
-      } catch (NumberFormatException e) {
-        throwIllegalArgumentException("compressionType", Integer.class, param);
-      }
-    }
+  // Shared LevelDB option parser used by both readDbOption and readProperties.
+  // Fills the given target (boxed fields, null means "not specified by user") so the
+  // same parser can populate a plain DbOptionOverride or a PropertyConfig (which extends it).
+  private static void readLevelDbOptions(ConfigObject conf, DbOptionOverride o) {
     if (conf.containsKey("blockSize")) {
       String param = conf.get("blockSize").unwrapped().toString();
       try {
@@ -258,7 +236,41 @@ public class StorageConfig {
         throwIllegalArgumentException("maxOpenFiles", Integer.class, param);
       }
     }
+  }
+
+  // Read optional LevelDB option override for default/defaultM/defaultL keys.
+  private static DbOptionOverride readDbOption(Config section, String key) {
+    if (!section.hasPath(key)) {
+      return null;
+    }
+    DbOptionOverride o = new DbOptionOverride();
+    readLevelDbOptions(section.getObject(key), o);
     return o;
+  }
+
+  // Parse storage.properties list manually: ConfigBeanFactory requires every bean field to be
+  // present in each list item, but name+path-only entries (all LevelDB opts commented out) are
+  // valid — missing fields fall back to PropertyConfig Java defaults.
+  private static List<PropertyConfig> readProperties(Config section) {
+    if (!section.hasPath("properties")) {
+      return new ArrayList<>();
+    }
+    List<? extends ConfigObject> items = section.getObjectList("properties");
+    List<PropertyConfig> result = new ArrayList<>(items.size());
+    for (ConfigObject obj : items) {
+      PropertyConfig p = new PropertyConfig();
+      if (obj.containsKey("name")) {
+        p.setName(obj.get("name").unwrapped().toString());
+      }
+      if (obj.containsKey("path")) {
+        p.setPath(obj.get("path").unwrapped().toString());
+      }
+      // Boxed nullable fields: unset options stay null so they inherit the per-tier
+      // defaults applied by newDefaultDbOptions instead of resetting them.
+      readLevelDbOptions(obj, p);
+      result.add(p);
+    }
+    return result;
   }
 
   private static void throwIllegalArgumentException(String param, Class<?> type, String actual) {

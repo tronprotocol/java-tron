@@ -28,10 +28,7 @@ storage {
     {
       name = "account",
       path = "/path/to/accout",   // relative or absolute path
-      createIfMissing = true,
-      paranoidChecks = true,
-      verifyChecksums = true,
-      compressionType = 1,        // 0 - no compression,  1 - compressed with snappy
+      # following are only used for LevelDB
       blockSize = 4096,           // 4  KB =         4 * 1024 B
       writeBufferSize = 10485760, // 10 MB = 10 * 1024 * 1024 B
       cacheSize = 10485760,       // 10 MB = 10 * 1024 * 1024 B
@@ -43,7 +40,7 @@ storage {
 
 ```
 
-As shown in the example above, the `accout` database will be stored in the path of `/path/to/accout/database` while the index be stored in `/path/to/accout/index`. And, the example also shows our default value of LevelDB options(Start from `createIfMissing` and end at `maxOpenFiles`). Please refer to the docs of [LevelDB](https://github.com/google/leveldb/blob/master/doc/index.md#performance) to figure out the details of these options.
+As shown in the example above, the `accout` database will be stored in the path of `/path/to/accout/database` while the index be stored in `/path/to/accout/index`. And, the example also shows our default value of LevelDB options(Start from `blockSize` and end at `maxOpenFiles`). Please refer to the docs of [LevelDB](https://github.com/google/leveldb/blob/master/doc/index.md#performance) to figure out the details of these options.
 
 ## gRPC
 
