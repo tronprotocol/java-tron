@@ -122,7 +122,7 @@ public class SolidityNode implements ApplicationListener<ContextClosedEvent> {
         logger.info("getBlock interrupted, exiting.");
         return;
       } catch (Exception e) {
-        if (!flag) {
+        if (!flag || tronNetDelegate.isHitDown()) {
           logger.info("getBlock stopped during shutdown, last block: {}.", blockNum);
           return;
         }
