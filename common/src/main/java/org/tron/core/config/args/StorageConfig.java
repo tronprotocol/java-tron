@@ -158,17 +158,14 @@ public class StorageConfig {
     }
   }
 
+  // A named database entry: name/path plus the optional LevelDB option overrides
+  // inherited from DbOptionOverride (boxed types, null = "inherit per-tier defaults").
   @Getter
   @Setter
-  public static class PropertyConfig {
+  public static class PropertyConfig extends DbOptionOverride {
 
     private String name = "";
     private String path = "";
-    // following are only used for LevelDB
-    private int blockSize = 4096;
-    private int writeBufferSize = 10485760;
-    private long cacheSize = 10485760;
-    private int maxOpenFiles = 100;
   }
 
   // Defaults come from reference.conf (loaded globally via Configuration.java)
@@ -204,9 +201,9 @@ public class StorageConfig {
   }
 
   // Shared LevelDB option parser used by both readDbOption and readProperties.
-  // DbOptionOverride uses boxed types so null means "not specified by user".
-  private static DbOptionOverride readLevelDbOptions(ConfigObject conf) {
-    DbOptionOverride o = new DbOptionOverride();
+  // Fills the given target (boxed fields, null means "not specified by user") so the
+  // same parser can populate a plain DbOptionOverride or a PropertyConfig (which extends it).
+  private static void readLevelDbOptions(ConfigObject conf, DbOptionOverride o) {
     if (conf.containsKey("blockSize")) {
       String param = conf.get("blockSize").unwrapped().toString();
       try {
@@ -239,7 +236,6 @@ public class StorageConfig {
         throwIllegalArgumentException("maxOpenFiles", Integer.class, param);
       }
     }
-    return o;
   }
 
   // Read optional LevelDB option override for default/defaultM/defaultL keys.
@@ -247,7 +243,9 @@ public class StorageConfig {
     if (!section.hasPath(key)) {
       return null;
     }
-    return readLevelDbOptions(section.getObject(key));
+    DbOptionOverride o = new DbOptionOverride();
+    readLevelDbOptions(section.getObject(key), o);
+    return o;
   }
 
   // Parse storage.properties list manually: ConfigBeanFactory requires every bean field to be
@@ -260,27 +258,16 @@ public class StorageConfig {
     List<? extends ConfigObject> items = section.getObjectList("properties");
     List<PropertyConfig> result = new ArrayList<>(items.size());
     for (ConfigObject obj : items) {
-      if (!obj.containsKey("name")) {
-        throw new IllegalArgumentException("[storage.properties] database name must be set.");
-      }
       PropertyConfig p = new PropertyConfig();
-      p.setName(obj.get("name").unwrapped().toString());
+      if (obj.containsKey("name")) {
+        p.setName(obj.get("name").unwrapped().toString());
+      }
       if (obj.containsKey("path")) {
         p.setPath(obj.get("path").unwrapped().toString());
       }
-      DbOptionOverride opts = readLevelDbOptions(obj);
-      if (opts.getBlockSize() != null) {
-        p.setBlockSize(opts.getBlockSize());
-      }
-      if (opts.getWriteBufferSize() != null) {
-        p.setWriteBufferSize(opts.getWriteBufferSize());
-      }
-      if (opts.getCacheSize() != null) {
-        p.setCacheSize(opts.getCacheSize());
-      }
-      if (opts.getMaxOpenFiles() != null) {
-        p.setMaxOpenFiles(opts.getMaxOpenFiles());
-      }
+      // Boxed nullable fields: unset options stay null so they inherit the per-tier
+      // defaults applied by newDefaultDbOptions instead of resetting them.
+      readLevelDbOptions(obj, p);
       result.add(p);
     }
     return result;

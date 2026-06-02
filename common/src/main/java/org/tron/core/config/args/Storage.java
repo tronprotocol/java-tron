@@ -169,19 +169,11 @@ public class Storage {
     }
 
     Options dbOptions = newDefaultDbOptions(property.getName());
-    applyPropertyOptions(pc, dbOptions);
+    // PropertyConfig is-a DbOptionOverride: apply only user-specified (non-null) overrides
+    // so unset fields keep the per-tier defaults already applied by newDefaultDbOptions.
+    applyDbOptionOverride(pc, dbOptions);
     property.setDbOptions(dbOptions);
     return property;
-  }
-
-  /**
-   * Apply LevelDB options from PropertyConfig bean values.
-   */
-  private static void applyPropertyOptions(StorageConfig.PropertyConfig pc, Options dbOptions) {
-    dbOptions.blockSize(pc.getBlockSize());
-    dbOptions.writeBufferSize(pc.getWriteBufferSize());
-    dbOptions.cacheSize(pc.getCacheSize());
-    dbOptions.maxOpenFiles(pc.getMaxOpenFiles());
   }
 
   /**

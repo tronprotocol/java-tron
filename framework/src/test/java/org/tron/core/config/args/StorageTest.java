@@ -49,7 +49,10 @@ public class StorageTest {
         + "    blockSize = 4096, writeBufferSize = 10485760, cacheSize = 10485760,\n"
         + "    maxOpenFiles = 100 },\n"
         + "  { name = test_name, path = test_path,\n"
-        + "    blockSize = 2, writeBufferSize = 3, cacheSize = 4, maxOpenFiles = 5 }\n"
+        + "    blockSize = 2, writeBufferSize = 3, cacheSize = 4, maxOpenFiles = 5 },\n"
+        // name/path-only entries: LevelDB options omitted, must inherit per-tier defaults
+        + "  { name = delegation, path = test_path },\n"
+        + "  { name = code, path = test_path }\n"
         + "]"
     ).withFallback(ConfigFactory.load(TestConstants.TEST_CONF));
     StorageConfig sc = StorageConfig.fromConfig(cfg);
@@ -106,6 +109,26 @@ public class StorageTest {
     options = StorageUtils.getOptionsByDbName("trans");
     Assert.assertEquals(16 * 1024 * 1024, options.writeBufferSize());
     Assert.assertEquals(50, options.maxOpenFiles());
+  }
+
+  /**
+   * A properties entry that only sets name/path (all LevelDB options omitted) must inherit
+   * the per-tier defaults from newDefaultDbOptions instead of resetting them to the
+   * PropertyConfig defaults. Both "delegation" (DB_L) and "code" (DB_M) are listed with
+   * name/path only, so they must keep their tier writeBufferSize/maxOpenFiles.
+   */
+  @Test
+  public void nameAndPathOnlyInheritsTierDefaults() {
+    Options ldb = StorageUtils.getOptionsByDbName("delegation");
+    Assert.assertEquals(64 * 1024 * 1024, ldb.writeBufferSize());
+    Assert.assertEquals(1000, ldb.maxOpenFiles());
+    // unset cacheSize/blockSize inherit the base defaults, not PropertyConfig's old 10 MB
+    Assert.assertEquals(32 * 1024 * 1024L, ldb.cacheSize());
+    Assert.assertEquals(4 * 1024, ldb.blockSize());
+
+    Options mdb = StorageUtils.getOptionsByDbName("code");
+    Assert.assertEquals(64 * 1024 * 1024, mdb.writeBufferSize());
+    Assert.assertEquals(500, mdb.maxOpenFiles());
   }
 
 }
