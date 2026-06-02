@@ -1,0 +1,498 @@
+name: PR Build
+
+on:
+  pull_request:
+    branches: [ 'master','develop', 'release_**' ]
+    types: [ opened, synchronize, reopened ]
+    paths-ignore: [ '**/*.md', '.gitignore', '**/.gitignore', '.editorconfig',
+                    '.gitattributes', 'docs/**', 'CHANGELOG', '.github/ISSUE_TEMPLATE/**',
+                    '.github/PULL_REQUEST_TEMPLATE/**', '.github/CODEOWNERS' ]
+  workflow_dispatch:
+    inputs:
+      job:
+        description: 'Job to run: all / macos / ubuntu / rockylinux / debian11'
+        required: false
+        default: 'all'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+
+  build-macos:
+    name: Build macos26 (JDK ${{ matrix.java }} / ${{ matrix.arch }})
+    if: ${{ github.event_name == 'pull_request' || inputs.job == 'all' || inputs.job == 'macos' }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - java: '17'
+            runner: macos-26
+            arch: aarch64
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up JDK ${{ matrix.java }}
+        uses: actions/setup-java@v5
+        with:
+          java-version: ${{ matrix.java }}
+          distribution: 'temurin'
+
+      - name: Cache Gradle packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: macos26-${{ matrix.arch }}-gradle-${{ hashFiles('**/*.gradle', '**/gradle-wrapper.properties') }}
+          restore-keys: macos26-${{ matrix.arch }}-gradle-
+
+      - name: Build
+        run: ./gradlew clean build --no-daemon
+
+      - name: Toolkit jar smoke test
+        run: |
+          set -e
+          JAR=plugins/build/libs/Toolkit.jar
+          java -jar "$JAR" help
+          java -jar "$JAR" db --help
+          java -jar "$JAR" db archive -h
+
+  build-ubuntu:
+    name: Build ubuntu24 (JDK 17 / aarch64)
+    if: ${{ github.event_name == 'pull_request' || inputs.job == 'all' || inputs.job == 'ubuntu' }}
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 60
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Check Java version
+        run: java -version
+
+      - name: Cache Gradle packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ubuntu24-aarch64-gradle-${{ hashFiles('**/*.gradle', '**/gradle-wrapper.properties') }}
+          restore-keys: ubuntu24-aarch64-gradle-
+
+      - name: Build
+        run: ./gradlew clean build --no-daemon
+
+      - name: Toolkit jar smoke test
+        run: |
+          set -e
+          JAR=plugins/build/libs/Toolkit.jar
+          java -jar "$JAR" help
+          java -jar "$JAR" db --help
+          java -jar "$JAR" db archive -h
+
+  docker-build-rockylinux:
+    name: Build rockylinux (JDK 8 / x86_64)
+    if: ${{ github.event_name == 'pull_request' || inputs.job == 'all' || inputs.job == 'rockylinux' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    container:
+      image: rockylinux:8
+
+    env:
+      GRADLE_USER_HOME: /github/home/.gradle
+      LANG: en_US.UTF-8
+      LC_ALL: en_US.UTF-8
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Install dependencies (Rocky 8 + JDK8)
+        run: |
+          set -euxo pipefail
+          dnf -y install java-1.8.0-openjdk-devel git wget unzip which jq bc curl glibc-langpack-en
+          dnf -y groupinstall "Development Tools"
+
+      - name: Check Java version
+        run: java -version
+
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            /github/home/.gradle/caches
+            /github/home/.gradle/wrapper
+          key: rockylinux-x86_64-gradle-${{ hashFiles('**/*.gradle', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            rockylinux-x86_64-gradle-
+
+      - name: Stop Gradle daemon
+        run: ./gradlew --stop || true
+
+      - name: Build
+        run: ./gradlew clean build --no-daemon
+
+      - name: Toolkit jar smoke test
+        run: |
+          set -e
+          JAR=plugins/build/libs/Toolkit.jar
+          java -jar "$JAR" help
+          java -jar "$JAR" db --help
+          java -jar "$JAR" db archive -h
+
+
+  docker-build-debian11:
+    name: Build debian11 (JDK 8 / x86_64)
+    if: ${{ github.event_name == 'pull_request' || inputs.job == 'all' || inputs.job == 'debian11' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    container:
+      image: eclipse-temurin:8-jdk # base image is Debian 11 (Bullseye)
+
+    defaults:
+      run:
+        shell: bash
+
+    env:
+      GRADLE_USER_HOME: /github/home/.gradle
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Install dependencies (Debian + build tools)
+        run: |
+          set -euxo pipefail
+          apt-get update
+          apt-get install -y git wget unzip build-essential curl jq
+
+      - name: Check Java version
+        run: java -version
+
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            /github/home/.gradle/caches
+            /github/home/.gradle/wrapper
+          key: debian11-x86_64-gradle-${{ hashFiles('**/*.gradle', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            debian11-x86_64-gradle-
+
+      - name: Build
+        run: ./gradlew clean build --no-daemon --no-build-cache
+
+      - name: Toolkit jar smoke test
+        run: |
+          set -e
+          JAR=plugins/build/libs/Toolkit.jar
+          java -jar "$JAR" help
+          java -jar "$JAR" db --help
+          java -jar "$JAR" db archive -h
+
+
+      - name: Generate module coverage reports
+        run: ./gradlew jacocoTestReport --no-daemon
+
+      - name: Upload PR coverage reports
+        uses: actions/upload-artifact@v6
+        with:
+          name: jacoco-coverage-pr
+          path: |
+            **/build/reports/jacoco/test/jacocoTestReport.xml
+          if-no-files-found: error
+
+  coverage-base:
+    name: Coverage Base (JDK 8 / x86_64)
+    if: ${{ github.event_name == 'pull_request' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    container:
+      image: eclipse-temurin:8-jdk # base image is Debian 11 (Bullseye)
+    defaults:
+      run:
+        shell: bash
+    env:
+      GRADLE_USER_HOME: /github/home/.gradle
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+
+      - name: Install dependencies (Debian + build tools)
+        run: |
+          set -euxo pipefail
+          apt-get update
+          apt-get install -y git wget unzip build-essential curl jq
+
+      - name: Cache Gradle packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            /github/home/.gradle/caches
+            /github/home/.gradle/wrapper
+          key: coverage-base-x86_64-gradle-${{ hashFiles('**/*.gradle', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            coverage-base-x86_64-gradle-
+
+      - name: Build (base)
+        run: ./gradlew clean build --no-daemon --no-build-cache
+
+      - name: Generate module coverage reports (base)
+        run: ./gradlew jacocoTestReport --no-daemon
+
+      - name: Upload base coverage reports
+        uses: actions/upload-artifact@v6
+        with:
+          name: jacoco-coverage-base
+          path: |
+            **/build/reports/jacoco/test/jacocoTestReport.xml
+          if-no-files-found: error
+
+  coverage-gate:
+    name: Coverage Gate
+    needs: [docker-build-debian11, coverage-base]
+    if: ${{ github.event_name == 'pull_request' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Download base coverage reports
+        uses: actions/download-artifact@v8
+        with:
+          name: jacoco-coverage-base
+          path: coverage/base
+
+      - name: Download PR coverage reports
+        uses: actions/download-artifact@v8
+        with:
+          name: jacoco-coverage-pr
+          path: coverage/pr
+
+      - name: Collect coverage report paths
+        id: collect-xml
+        run: |
+          BASE_XMLS=$(find coverage/base -name "jacocoTestReport.xml" | sort | paste -sd, -)
+          PR_XMLS=$(find coverage/pr -name "jacocoTestReport.xml" | sort | paste -sd, -)
+          if [ -z "$BASE_XMLS" ] || [ -z "$PR_XMLS" ]; then
+            echo "Missing jacocoTestReport.xml files for base or PR."
+            exit 1
+          fi
+          echo "base_xmls=$BASE_XMLS" >> "$GITHUB_OUTPUT"
+          echo "pr_xmls=$PR_XMLS" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Changed-line coverage (diff-cover)
+        id: diff-cover
+        env:
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+        run: |
+          set -euo pipefail
+          pip install --quiet 'diff-cover==9.2.0'
+
+          # Ensure the base branch ref is available locally for diff-cover.
+          git fetch --no-tags origin "+refs/heads/${BASE_REF}:refs/remotes/origin/${BASE_REF}"
+
+          PR_XMLS=$(find coverage/pr -name "jacocoTestReport.xml" | sort)
+          SRC_ROOTS=$(find . -type d -path '*/src/main/java' \
+            -not -path './coverage/*' -not -path './.git/*' | sort)
+          if [ -z "$SRC_ROOTS" ]; then
+            echo "No src/main/java directories found; cannot run diff-cover." >&2
+            exit 1
+          fi
+
+          set +e
+          diff-cover $PR_XMLS \
+            --compare-branch="origin/${BASE_REF}" \
+            --src-roots $SRC_ROOTS \
+            --fail-under=0 \
+            --json-report=diff-cover.json \
+            --markdown-report=diff-cover.md
+          DIFF_RC=$?
+          set -e
+
+          if [ ! -f diff-cover.json ]; then
+            echo "diff-cover did not produce JSON report (exit=${DIFF_RC})." >&2
+            exit 1
+          fi
+
+          TOTAL_NUM_LINES=$(jq -r '.total_num_lines // 0' diff-cover.json)
+          if [ "${TOTAL_NUM_LINES}" = "0" ]; then
+            echo "No changed Java source lines; skipping changed-line gate."
+            echo "changed_line_coverage=NA" >> "$GITHUB_OUTPUT"
+          else
+            CHANGED_LINE_COVERAGE=$(jq -r '.total_percent_covered // empty' diff-cover.json)
+            if [ -z "$CHANGED_LINE_COVERAGE" ]; then
+              echo "Unable to parse changed-line coverage from diff-cover.json."
+              exit 1
+            fi
+            echo "changed_line_coverage=${CHANGED_LINE_COVERAGE}" >> "$GITHUB_OUTPUT"
+          fi
+
+          {
+            echo "### Changed-line Coverage (diff-cover)"
+            echo ""
+            if [ -f diff-cover.md ] && [ -s diff-cover.md ]; then
+              cat diff-cover.md
+            else
+              echo "_diff-cover produced no report._"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Aggregate base coverage
+        id: jacoco-base
+        uses: madrapps/jacoco-report@v1.7.2
+        with:
+          paths: ${{ steps.collect-xml.outputs.base_xmls }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          min-coverage-overall: 0
+          min-coverage-changed-files: 0
+          skip-if-no-changes: true
+          comment-type: summary
+          title: '## Base Coverage Snapshot'
+          update-comment: false
+
+      - name: Aggregate PR coverage
+        id: jacoco-pr
+        uses: madrapps/jacoco-report@v1.7.2
+        with:
+          paths: ${{ steps.collect-xml.outputs.pr_xmls }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+          min-coverage-overall: 0
+          min-coverage-changed-files: 0
+          skip-if-no-changes: true
+          comment-type: summary
+          title: '## PR Code Coverage Report'
+          update-comment: false
+
+      - name: Enforce coverage gates
+        env:
+          BASE_OVERALL_RAW: ${{ steps.jacoco-base.outputs.coverage-overall }}
+          PR_OVERALL_RAW: ${{ steps.jacoco-pr.outputs.coverage-overall }}
+          CHANGED_LINE_RAW: ${{ steps.diff-cover.outputs.changed_line_coverage }}
+        run: |
+          set -euo pipefail
+
+          MIN_CHANGED=60
+          MAX_DROP=-0.1
+
+          sanitize() {
+            echo "$1" | tr -d ' %'
+          }
+          is_number() {
+            [[ "$1" =~ ^-?[0-9]+([.][0-9]+)?$ ]]
+          }
+          compare_float() {
+            # Usage: compare_float "<expr>"
+            # Example: compare_float "1.2 >= -0.1"
+            awk "BEGIN { if ($1) print 1; else print 0 }"
+          }
+
+          # 1) Parse metrics from jacoco-report outputs
+          BASE_OVERALL="$(sanitize "$BASE_OVERALL_RAW")"
+          PR_OVERALL="$(sanitize "$PR_OVERALL_RAW")"
+          CHANGED_LINE="$(sanitize "$CHANGED_LINE_RAW")"
+
+          if ! is_number "$BASE_OVERALL" || ! is_number "$PR_OVERALL"; then
+            echo "Failed to parse coverage values: base='${BASE_OVERALL}', pr='${PR_OVERALL}'."
+            exit 1
+          fi
+
+          # 2) Compare metrics against thresholds
+          DELTA=$(awk -v pr="$PR_OVERALL" -v base="$BASE_OVERALL" 'BEGIN { printf "%.4f", pr - base }')
+          DELTA_OK=$(compare_float "${DELTA} >= ${MAX_DROP}")
+
+          if [ "$CHANGED_LINE" = "NA" ]; then
+            CHANGED_LINE_OK=1
+            CHANGED_LINE_STATUS="SKIPPED (no changed Java source lines)"
+          elif [ -z "$CHANGED_LINE" ] || [ "$CHANGED_LINE" = "NaN" ] || ! is_number "$CHANGED_LINE"; then
+            echo "Failed to parse changed-line coverage: changed-line='${CHANGED_LINE}'."
+            exit 1
+          else
+            CHANGED_LINE_OK=$(compare_float "${CHANGED_LINE} > ${MIN_CHANGED}")
+            if [ "$CHANGED_LINE_OK" -eq 1 ]; then
+              CHANGED_LINE_STATUS="PASS (> ${MIN_CHANGED}%)"
+            else
+              CHANGED_LINE_STATUS="FAIL (<= ${MIN_CHANGED}%)"
+            fi
+          fi
+
+          # 3) Output base metrics (always visible in logs + step summary)
+          OVERALL_STATUS="PASS (>= ${MAX_DROP}%)"
+          if [ "$DELTA_OK" -ne 1 ]; then
+            OVERALL_STATUS="FAIL (< ${MAX_DROP}%)"
+          fi
+
+          if [ "$CHANGED_LINE" = "NA" ]; then
+            CHANGED_LINE_DISPLAY="NA"
+          else
+            CHANGED_LINE_DISPLAY="${CHANGED_LINE}%"
+          fi
+
+          METRICS_TEXT=$(cat <<EOF
+          Changed-line Coverage: ${CHANGED_LINE_DISPLAY}
+          PR Overall Coverage: ${PR_OVERALL}%
+          Base Overall Coverage: ${BASE_OVERALL}%
+          Delta (PR - Base): ${DELTA}%
+          Changed-line Gate: ${CHANGED_LINE_STATUS}
+          Overall Delta Gate: ${OVERALL_STATUS}
+          Note: Changed-line uses LINE coverage (diff-cover); Overall/Delta use INSTRUCTION coverage (jacoco-report). The two counters are not directly comparable.
+          EOF
+          )
+
+          echo "$METRICS_TEXT"
+
+          {
+            echo "### Coverage Gate Metrics"
+            echo ""
+            echo "- Changed-line Coverage: ${CHANGED_LINE_DISPLAY}"
+            echo "- PR Overall Coverage: ${PR_OVERALL}%"
+            echo "- Base Overall Coverage: ${BASE_OVERALL}%"
+            echo "- Delta (PR - Base): ${DELTA}%"
+            echo "- Changed-line Gate: ${CHANGED_LINE_STATUS}"
+            echo "- Overall Delta Gate: ${OVERALL_STATUS}"
+            echo ""
+            echo "_Note: Changed-line uses LINE coverage (diff-cover); Overall/Delta use INSTRUCTION coverage (jacoco-report). The two counters are not directly comparable._"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          # 4) Decide CI pass/fail
+          if [ "$DELTA_OK" -ne 1 ]; then
+            echo "Coverage gate failed: overall coverage dropped more than 0.1%."
+            echo "base=${BASE_OVERALL}% pr=${PR_OVERALL}% delta=${DELTA}%"
+            exit 1
+          fi
+
+          if [ "$CHANGED_LINE_OK" -ne 1 ]; then
+            echo "Coverage gate failed: changed-line coverage must be > 60%."
+            echo "changed-line=${CHANGED_LINE}%"
+            exit 1
+          fi
+
+          echo "Coverage gates passed."
