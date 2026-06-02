@@ -2,12 +2,15 @@ package org.tron.core.config.args;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import java.util.List;
 import org.junit.Test;
 import org.tron.common.math.StrictMathWrapper;
+import org.tron.core.config.args.StorageConfig.PropertyConfig;
 
 public class StorageConfigTest {
 
@@ -133,5 +136,94 @@ public class StorageConfigTest {
     StorageConfig sc = StorageConfig.fromConfig(
         withRef("storage.txCache.estimatedTransactions = 5000"));
     assertEquals(5000, sc.getTxCache().getEstimatedTransactions());
+  }
+
+  // ---- readProperties() ----
+
+  private static List<PropertyConfig> props(String storageProperties) {
+    return StorageConfig.fromConfig(withRef(storageProperties)).getProperties();
+  }
+
+  @Test
+  public void testPropertiesDefaultEmpty() {
+    // reference.conf sets storage.properties = []
+    assertTrue(StorageConfig.fromConfig(withRef()).getProperties().isEmpty());
+    assertTrue(props("storage.properties = []").isEmpty());
+  }
+
+  @Test
+  public void testPropertiesNameAndPathOnly() {
+    // All LevelDB options omitted: name/path set, the four boxed fields stay null so
+    // they inherit the per-tier defaults applied later by newDefaultDbOptions.
+    List<PropertyConfig> list = props(
+        "storage.properties = [ { name = account, path = some_path } ]");
+    assertEquals(1, list.size());
+    PropertyConfig p = list.get(0);
+    assertEquals("account", p.getName());
+    assertEquals("some_path", p.getPath());
+    assertNull(p.getBlockSize());
+    assertNull(p.getWriteBufferSize());
+    assertNull(p.getCacheSize());
+    assertNull(p.getMaxOpenFiles());
+  }
+
+  @Test
+  public void testPropertiesNameOnlyKeepsEmptyPath() {
+    PropertyConfig p = props("storage.properties = [ { name = account } ]").get(0);
+    assertEquals("account", p.getName());
+    assertEquals("", p.getPath());
+  }
+
+  @Test
+  public void testPropertiesFullOverrideParsed() {
+    PropertyConfig p = props(
+        "storage.properties = [ { name = foo, path = bar,"
+        + " blockSize = 2, writeBufferSize = 3, cacheSize = 4, maxOpenFiles = 5 } ]").get(0);
+    assertEquals(Integer.valueOf(2), p.getBlockSize());
+    assertEquals(Integer.valueOf(3), p.getWriteBufferSize());
+    assertEquals(Long.valueOf(4L), p.getCacheSize());
+    assertEquals(Integer.valueOf(5), p.getMaxOpenFiles());
+  }
+
+  @Test
+  public void testPropertiesPartialOverrideLeavesOthersNull() {
+    // Only blockSize is set; the other three stay null (inherit defaults).
+    PropertyConfig p = props(
+        "storage.properties = [ { name = foo, path = bar, blockSize = 8192 } ]").get(0);
+    assertEquals(Integer.valueOf(8192), p.getBlockSize());
+    assertNull(p.getWriteBufferSize());
+    assertNull(p.getCacheSize());
+    assertNull(p.getMaxOpenFiles());
+  }
+
+  @Test
+  public void testPropertiesMultipleEntriesInOrder() {
+    List<PropertyConfig> list = props(
+        "storage.properties = ["
+        + " { name = first, path = p1 },"
+        + " { name = second, path = p2, maxOpenFiles = 7 } ]");
+    assertEquals(2, list.size());
+    assertEquals("first", list.get(0).getName());
+    assertNull(list.get(0).getMaxOpenFiles());
+    assertEquals("second", list.get(1).getName());
+    assertEquals(Integer.valueOf(7), list.get(1).getMaxOpenFiles());
+  }
+
+  @Test
+  public void testPropertiesMissingNameKeepsEmpty() {
+    // readProperties does not require name (validation is deferred to Storage); name stays "".
+    PropertyConfig p = props("storage.properties = [ { path = bar } ]").get(0);
+    assertEquals("", p.getName());
+    assertEquals("bar", p.getPath());
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testPropertiesInvalidIntegerRejected() {
+    props("storage.properties = [ { name = foo, blockSize = not_a_number } ]");
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testPropertiesInvalidLongRejected() {
+    props("storage.properties = [ { name = foo, cacheSize = not_a_number } ]");
   }
 }
