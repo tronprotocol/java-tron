@@ -2,8 +2,8 @@ package org.tron.program;
 
 public class Version {
 
-  public static final String VERSION_NAME = "GreatVoyage-v4.8.0.1-1-g44a4bc8263";
-  public static final String VERSION_CODE = "18636";
+  public static final String VERSION_NAME = "GreatVoyage-v4.8.1-6-g52d7d9d23e";
+  public static final String VERSION_CODE = "18643";
   private static final String VERSION = "4.8.1.1";
 
   public static String getVersion() {
