@@ -342,6 +342,10 @@ public class Args extends CommonParameter {
     try {
       InputStream in = Thread.currentThread()
           .getContextClassLoader().getResourceAsStream("git.properties");
+      if (in == null) {
+        logger.warn("git.properties not found on classpath");
+        return "";
+      }
       properties.load(in);
     } catch (IOException e) {
       logger.warn("Load resource failed,git.properties {}", e.getMessage());
