@@ -157,4 +157,22 @@ public class TransactionResult {
 
     parseSignature(tx);
   }
+
+  public TransactionResult(String hash, String blockHash, long blockNumber, int txIndex,
+      String from, String to, long gas, long value, String input) {
+    this.hash = hash;
+    this.nonce = "0x0";
+    this.blockHash = blockHash;
+    this.blockNumber = ByteArray.toJsonHex(blockNumber);
+    this.transactionIndex = ByteArray.toJsonHex(txIndex);
+    this.from = from;
+    this.to = to;
+    this.gas = ByteArray.toJsonHex(gas);
+    this.gasPrice = "0x0";
+    this.value = ByteArray.toJsonHex(value);
+    this.input = input == null ? "0x" : input;
+    this.v = ByteArray.toJsonHex(new byte[1]);
+    this.r = ByteArray.toJsonHex(new byte[32]);
+    this.s = ByteArray.toJsonHex(new byte[32]);
+  }
 }

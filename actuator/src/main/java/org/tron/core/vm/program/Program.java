@@ -91,6 +91,7 @@ import org.tron.core.vm.program.invoke.ProgramInvokeFactory;
 import org.tron.core.vm.program.listener.CompositeProgramListener;
 import org.tron.core.vm.program.listener.ProgramListenerAware;
 import org.tron.core.vm.program.listener.ProgramStorageChangeListener;
+import org.tron.core.vm.program.listener.SimulationTracer;
 import org.tron.core.vm.repository.Key;
 import org.tron.core.vm.repository.Repository;
 import org.tron.core.vm.trace.ProgramTrace;
@@ -146,6 +147,20 @@ public class Program {
   @Getter
   @Setter
   private long callPenaltyEnergy;
+  /**
+   * Observer wired in by simulate-only callers (eth_simulateV1, triggerConstantContract with
+   * trace) to capture transfer / token-transfer / LOG events alongside the normal VM run.
+   *
+   * <p><b>Consensus invariant:</b> this field MUST be {@code null} on every consensus execution
+   * path. The tracer mutates no chain state, but a non-null reference means {@code transfer-} and
+   * {@code transferAllToken-WithTrace} take the trace branch and skip the byte-identical
+   * {@link MUtil#transferAllToken} fast path — divergence here would surface as a sync-from-genesis
+   * mismatch. Only {@code Wallet#simulateConstantContracts} and {@code Wallet#triggerConstantContract}
+   * should set this; gated on {@link org.tron.core.config.args.Args#isSupportConstant()}.
+   */
+  @Getter
+  @Setter
+  private SimulationTracer simulationTracer;
 
   public Program(byte[] ops, byte[] codeAddress, ProgramInvoke programInvoke,
                  InternalTransaction internalTransaction) {
@@ -477,14 +492,17 @@ public class Program {
       byte[] blackHoleAddress = getContractState().getBlackHoleAddress();
       if (VMConfig.allowTvmTransferTrc10()) {
         getContractState().addBalance(blackHoleAddress, balance);
-        MUtil.transferAllToken(getContractState(), owner, blackHoleAddress);
+        transferAllTokenWithTrace(owner, blackHoleAddress);
       }
     } else {
       createAccountIfNotExist(getContractState(), obtainer);
       try {
         MUtil.transfer(getContractState(), owner, obtainer, balance);
+        if (simulationTracer != null && balance > 0) {
+          simulationTracer.onTransfer(MUtil.stripTronPrefix(owner), MUtil.stripTronPrefix(obtainer), balance);
+        }
         if (VMConfig.allowTvmTransferTrc10()) {
-          MUtil.transferAllToken(getContractState(), owner, obtainer);
+          transferAllTokenWithTrace(owner, obtainer);
         }
       } catch (ContractValidateException e) {
         if (VMConfig.allowTvmConstantinople()) {
@@ -513,6 +531,35 @@ public class Program {
       }
     }
     getResult().addDeleteAccount(this.getContractAddress());
+  }
+
+  /**
+   * Snapshot the owner's TRC-10 asset map, perform the sweep, then emit one
+   * {@code onTokenTransfer} per non-zero entry — used for SELFDESTRUCT.
+   * {@link MUtil#transferAllToken} mutates {@code owner.assetMapV2} in place,
+   * so the snapshot has to happen first; emitting after the sweep keeps the
+   * "log after real state change succeeds" invariant the other hooks follow.
+   */
+  private void transferAllTokenWithTrace(byte[] owner, byte[] dest) {
+    // Consensus invariant: when simulationTracer == null, this method must be byte-identical to
+    // MUtil.transferAllToken — no logging, no Args reads, no extra getAccount call, nothing that
+    // could perturb the post-state hash. Anything new belongs in the simulationTracer != null
+    // branch only. Hoisting a statement above this guard breaks sync-from-genesis.
+    if (simulationTracer == null) {
+      MUtil.transferAllToken(getContractState(), owner, dest);
+      return;
+    }
+    java.util.Map<String, Long> snapshot =
+        new java.util.HashMap<>(getContractState().getAccount(owner).getAssetMapV2());
+    MUtil.transferAllToken(getContractState(), owner, dest);
+    byte[] fromEvm = MUtil.stripTronPrefix(owner);
+    byte[] toEvm = MUtil.stripTronPrefix(dest);
+    for (java.util.Map.Entry<String, Long> e : snapshot.entrySet()) {
+      if (e.getValue() != null && e.getValue() > 0) {
+        simulationTracer.onTokenTransfer(fromEvm, toEvm,
+            Long.parseLong(e.getKey()), e.getValue());
+      }
+    }
   }
 
   public void suicide2(DataWord obtainerAddress) {
@@ -555,8 +602,11 @@ public class Program {
     createAccountIfNotExist(getContractState(), obtainer);
     try {
       MUtil.transfer(getContractState(), owner, obtainer, balance);
+      if (simulationTracer != null && balance > 0) {
+        simulationTracer.onTransfer(MUtil.stripTronPrefix(owner), MUtil.stripTronPrefix(obtainer), balance);
+      }
       if (VMConfig.allowTvmTransferTrc10()) {
-        MUtil.transferAllToken(getContractState(), owner, obtainer);
+        transferAllTokenWithTrace(owner, obtainer);
       }
     } catch (ContractValidateException e) {
       if (VMConfig.allowTvmConstantinople()) {
@@ -872,6 +922,10 @@ public class Program {
       deposit.addBalance(newAddress, oldBalance);
     }
 
+    if (simulationTracer != null) {
+      simulationTracer.enterFrame();
+    }
+
     // [4] TRANSFER THE BALANCE
     long newBalance = 0L;
     if (!byTestingSuite() && endowment > 0) {
@@ -883,6 +937,10 @@ public class Program {
       }
       deposit.addBalance(senderAddress, -endowment);
       newBalance = deposit.addBalance(newAddress, endowment);
+      if (simulationTracer != null) {
+        simulationTracer.onTransfer(MUtil.stripTronPrefix(senderAddress),
+            MUtil.stripTronPrefix(newAddress), endowment);
+      }
     }
 
     // actual energy subtract
@@ -914,6 +972,7 @@ public class Program {
       if (VMConfig.allowTvmCompatibleEvm()) {
         program.setContractVersion(getContractVersion());
       }
+      program.setSimulationTracer(this.simulationTracer);
       VM.play(program, OperationRegistry.getTable());
       createResult = program.getResult();
       getTrace().merge(program.getTrace());
@@ -959,6 +1018,10 @@ public class Program {
 
       stackPushZero();
 
+      if (simulationTracer != null) {
+        simulationTracer.revertFrame();
+      }
+
       if (createResult.getException() != null) {
         return;
       } else {
@@ -971,6 +1034,10 @@ public class Program {
 
       // IN SUCCESS PUSH THE ADDRESS INTO THE STACK
       stackPush(new DataWord(newAddress));
+
+      if (simulationTracer != null) {
+        simulationTracer.exitFrame();
+      }
     }
 
     // 5. REFUND THE REMAIN Energy
@@ -1004,6 +1071,10 @@ public class Program {
       stackPushZero();
       refundEnergy(msg.getEnergy().longValue(), " call deep limit reach");
       return;
+    }
+
+    if (simulationTracer != null) {
+      simulationTracer.enterFrame();
     }
 
     byte[] data = memoryChunk(msg.getInDataOffs().intValue(), msg.getInDataSize().intValue());
@@ -1052,6 +1123,9 @@ public class Program {
       if (senderBalance < endowment) {
         stackPushZero();
         refundEnergy(msg.getEnergy().longValue(), REFUND_ENERGY_FROM_MESSAGE_CALL);
+        if (simulationTracer != null) {
+          simulationTracer.revertFrame();
+        }
         return;
       }
     } else {
@@ -1061,6 +1135,9 @@ public class Program {
       if (senderBalance < endowment) {
         stackPushZero();
         refundEnergy(msg.getEnergy().longValue(), REFUND_ENERGY_FROM_MESSAGE_CALL);
+        if (simulationTracer != null) {
+          simulationTracer.revertFrame();
+        }
         return;
       }
     }
@@ -1094,6 +1171,12 @@ public class Program {
         }
         deposit.addBalance(senderAddress, -endowment);
         contextBalance = deposit.addBalance(contextAddress, endowment);
+        if (simulationTracer != null
+            && msg.getOpCode() != Op.DELEGATECALL
+            && msg.getOpCode() != Op.CALLCODE) {
+          simulationTracer.onTransfer(MUtil.stripTronPrefix(senderAddress),
+              MUtil.stripTronPrefix(contextAddress), endowment);
+        }
       } else {
         try {
           VMUtils.validateForSmartContract(deposit, senderAddress, contextAddress,
@@ -1107,6 +1190,13 @@ public class Program {
         }
         deposit.addTokenBalance(senderAddress, tokenId, -endowment);
         deposit.addTokenBalance(contextAddress, tokenId, endowment);
+        if (simulationTracer != null
+            && msg.getOpCode() != Op.DELEGATECALL
+            && msg.getOpCode() != Op.CALLCODE) {
+          simulationTracer.onTokenTransfer(MUtil.stripTronPrefix(senderAddress),
+              MUtil.stripTronPrefix(contextAddress),
+              Long.parseLong(new String(tokenId)), endowment);
+        }
       }
     }
 
@@ -1146,6 +1236,7 @@ public class Program {
         program.setContractVersion(invoke.getDeposit()
             .getContract(codeAddress).getContractVersion());
       }
+      program.setSimulationTracer(this.simulationTracer);
       VM.play(program, OperationRegistry.getTable());
       callResult = program.getResult();
 
@@ -1164,6 +1255,10 @@ public class Program {
 
         stackPushZero();
 
+        if (simulationTracer != null) {
+          simulationTracer.revertFrame();
+        }
+
         if (callResult.getException() != null) {
           return;
         }
@@ -1171,6 +1266,9 @@ public class Program {
         // 4. THE FLAG OF SUCCESS IS ONE PUSHED INTO THE STACK
         deposit.commit();
         stackPushOne();
+        if (simulationTracer != null) {
+          simulationTracer.exitFrame();
+        }
       }
 
       if (byTestingSuite()) {
@@ -1180,6 +1278,9 @@ public class Program {
       // 4. THE FLAG OF SUCCESS IS ONE PUSHED INTO THE STACK
       deposit.commit();
       stackPushOne();
+      if (simulationTracer != null) {
+        simulationTracer.exitFrame();
+      }
     }
 
     // 3. APPLY RESULTS: result.getHReturn() into out_memory allocated
@@ -1658,6 +1759,10 @@ public class Program {
       return;
     }
 
+    if (simulationTracer != null) {
+      simulationTracer.enterFrame();
+    }
+
     Repository deposit = getContractState().newRepositoryChild();
 
     byte[] senderAddress = getContextAddress();
@@ -1685,6 +1790,9 @@ public class Program {
     if (senderBalance < endowment) {
       stackPushZero();
       refundEnergy(msg.getEnergy().longValue(), REFUND_ENERGY_FROM_MESSAGE_CALL);
+      if (simulationTracer != null) {
+        simulationTracer.revertFrame();
+      }
       return;
     }
     byte[] data = this.memoryChunk(msg.getInDataOffs().intValue(),
@@ -1697,6 +1805,13 @@ public class Program {
         try {
           MUtil.transfer(deposit, senderAddress, contextAddress,
               msg.getEndowment().value().longValueExact());
+          if (simulationTracer != null
+              && msg.getOpCode() != Op.DELEGATECALL
+              && msg.getOpCode() != Op.CALLCODE) {
+            simulationTracer.onTransfer(MUtil.stripTronPrefix(senderAddress),
+                MUtil.stripTronPrefix(contextAddress),
+                msg.getEndowment().value().longValueExact());
+          }
         } catch (ContractValidateException e) {
           throw new BytecodeExecutionException("transfer failure");
         }
@@ -1709,6 +1824,13 @@ public class Program {
         }
         deposit.addTokenBalance(senderAddress, tokenId, -endowment);
         deposit.addTokenBalance(contextAddress, tokenId, endowment);
+        if (simulationTracer != null
+            && msg.getOpCode() != Op.DELEGATECALL
+            && msg.getOpCode() != Op.CALLCODE) {
+          simulationTracer.onTokenTransfer(MUtil.stripTronPrefix(senderAddress),
+              MUtil.stripTronPrefix(contextAddress),
+              Long.parseLong(new String(tokenId)), endowment);
+        }
       }
     }
 
@@ -1718,6 +1840,9 @@ public class Program {
       // regard as consumed the energy
       this.refundEnergy(0, CALL_PRE_COMPILED); //matches cpp logic
       this.stackPushZero();
+      if (simulationTracer != null) {
+        simulationTracer.revertFrame();
+      }
     } else {
       // Delegate or not. if is delegated, we will use msg sender, otherwise use contract address
       if (msg.getOpCode() == Op.DELEGATECALL) {
@@ -1737,10 +1862,16 @@ public class Program {
         this.stackPushOne();
         returnDataBuffer = out.getRight();
         deposit.commit();
+        if (simulationTracer != null) {
+          simulationTracer.exitFrame();
+        }
       } else {
         // spend all energy on failure, push zero and revert state changes
         this.refundEnergy(0, CALL_PRE_COMPILED);
         this.stackPushZero();
+        if (simulationTracer != null) {
+          simulationTracer.revertFrame();
+        }
         if (Objects.nonNull(this.result.getException())) {
           throw result.getException();
         }
