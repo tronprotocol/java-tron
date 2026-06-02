@@ -70,4 +70,10 @@ public class MUtil {
       throw new OutOfTimeException("CPU timeout for create2 executing");
     }
   }
+
+  public static void checkCPUTimeForModExp() {
+    if (ForkController.instance().pass(Parameter.ForkBlockVersionEnum.VERSION_4_8_1_1)) {
+      throw new OutOfTimeException("CPU timeout for modExp executing");
+    }
+  }
 }
