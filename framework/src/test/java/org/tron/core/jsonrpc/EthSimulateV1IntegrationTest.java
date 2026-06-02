@@ -247,58 +247,54 @@ public class EthSimulateV1IntegrationTest extends BaseTest {
   }
 
   /**
-   * Observable contract: CALLCODE (and DELEGATECALL) MUST NOT produce a synthetic ERC-7528
-   * Transfer log under {@code traceTransfers=true}. {@code Program.callToAddress} guards the
+   * Observable contract: CALLCODE MUST NOT produce a synthetic ERC-7528 Transfer log under
+   * {@code traceTransfers=true}. {@code Program.callToAddress} guards the
    * {@code simulationTracer.onTransfer} hook with {@code opcode != DELEGATECALL && opcode !=
    * CALLCODE}. In practice the guard is belt-and-suspenders because the same code path is
    * already gated on {@code senderAddress != contextAddress}, and Program.java:1087 sets
-   * {@code contextAddress = senderAddress} for both opcodes — meaning the transfer block is
-   * never entered. Either layer dropping silently would emit a self-transfer log; this test
-   * pins the observable behaviour regardless of which layer enforces it.
+   * {@code contextAddress = senderAddress} for both opcodes — so the transfer block is never
+   * entered. Either layer dropping silently would emit a self-transfer log; this test pins the
+   * observable behaviour regardless of which layer enforces it.
    *
    * <p>Setup: pre-install a contract whose runtime executes CALLCODE-to-self with value=5,
-   * fund it with 100, trigger from owner with value=0 (so no deploy/trigger transfer log
-   * contaminates the assertion). The only log that could appear from this call is the
-   * CALLCODE's self-transfer — and the production code must omit it.
+   * fund it with 100, trigger from owner with value=0 (so no trigger transfer log contaminates
+   * the assertion). The only log that could appear from this call is the CALLCODE's
+   * self-transfer — and the production code must omit it.
    */
   @Test
-  public void delegatecallCallcodeSkipSyntheticTransferLog() throws Exception {
+  public void callcodeSkipsSyntheticTransferLog() throws Exception {
     // Runtime: PUSH1 0 ×4 (retLen, retOff, argsLen, argsOff); PUSH1 5 (value); ADDRESS;
     //   PUSH3 0x0F4240 (gas); CALLCODE; POP; STOP. 18 bytes.
-    String callcodeRuntime = "6000600060006000600530620F4240F25000";
-    String callcodeAddrTronHex = Wallet.getAddressPreFixString()
-        + "00000000000000000000000000000000000c0de2";
-    byte[] callcodeAddr = ByteArray.fromHexString(callcodeAddrTronHex);
+    String callcodeAddr = "00000000000000000000000000000000000c0de2";
+    installContract(callcodeAddr, "6000600060006000600530620F4240F25000", 100L);
 
-    Repository repo = RepositoryImpl.createRoot(StoreFactory.getInstance());
-    repo.createAccount(callcodeAddr, Protocol.AccountType.Contract);
-    repo.createContract(callcodeAddr, new ContractCapsule(
-        SmartContractOuterClass.SmartContract.newBuilder()
-            .setContractAddress(ByteString.copyFrom(callcodeAddr))
-            .build()));
-    repo.saveCode(callcodeAddr, ByteArray.fromHexString(callcodeRuntime));
-    repo.addBalance(callcodeAddr, 100L);
-    repo.commit();
+    assertNoSyntheticTransferLog(triggerTraced(callcodeAddr), "CALLCODE");
+  }
 
-    CallArguments trigger = new CallArguments();
-    trigger.setFrom(OWNER_ADDRESS_HEX_PREFIXED());
-    trigger.setTo("0x00000000000000000000000000000000000c0de2");
-    trigger.setValue("0x0");
-    trigger.setData("0x");
+  /**
+   * DELEGATECALL counterpart of {@link #callcodeSkipsSyntheticTransferLog}: a DELEGATECALL hop
+   * must never appear as an ERC-7528 Transfer log. Contract A DELEGATECALLs contract B (a no-op
+   * STOP) and we assert the call produced no synthetic Transfer entry.
+   *
+   * <p>Unlike CALLCODE, DELEGATECALL never carries value — standard EVM / Tron sets endowment
+   * to 0 for the opcode, so the {@code endowment > 0} transfer branch is unreachable and the
+   * explicit {@code opcode != DELEGATECALL} guard never even runs. The "no transfer log"
+   * outcome here therefore comes from DELEGATECALL having no value to move, not from the guard.
+   * The test pins that end-state: should a future change ever start routing DELEGATECALL value
+   * through the transfer-logging path, this assertion fails.
+   */
+  @Test
+  public void delegatecallSkipsSyntheticTransferLog() throws Exception {
+    String targetB = "00000000000000000000000000000000000c0de3";
+    String callerA = "00000000000000000000000000000000000c0de4";
 
-    SimulateV1Args args = newArgs(true, false, false, trigger);
-    SimulateCallResult call = tronJsonRpc.ethSimulateV1(args, "latest").get(0).getCalls().get(0);
+    // B: STOP.
+    installContract(targetB, "00", 0L);
+    // A: PUSH1 0 ×4 (retLen, retOff, argsLen, argsOff); PUSH20 B; PUSH3 gas; DELEGATECALL;
+    //   POP; STOP.
+    installContract(callerA, "600060006000600073" + targetB + "620F4240F45000", 100L);
 
-    assertEquals("trigger of CALLCODE-self contract must succeed", "0x1", call.getStatus());
-    List<TronJsonRpc.LogFilterElement> logs = call.getLogs();
-    if (logs != null) {
-      for (TronJsonRpc.LogFilterElement log : logs) {
-        assertTrue(
-            "CALLCODE must NOT produce a synthetic ERC-7528 Transfer log, found one at: "
-                + log.getAddress(),
-            !"0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee".equalsIgnoreCase(log.getAddress()));
-      }
-    }
+    assertNoSyntheticTransferLog(triggerTraced(callerA), "DELEGATECALL");
   }
 
   /**
@@ -404,6 +400,49 @@ public class EthSimulateV1IntegrationTest extends BaseTest {
   }
 
   // ---- helpers ----
+
+  /** Pre-install a contract at the given 20-byte EVM-hex address with runtime code + balance. */
+  private void installContract(String evmAddrHex, String runtimeHex, long preFundBalance) {
+    byte[] tronAddr = ByteArray.fromHexString(Wallet.getAddressPreFixString() + evmAddrHex);
+    Repository repo = RepositoryImpl.createRoot(StoreFactory.getInstance());
+    repo.createAccount(tronAddr, Protocol.AccountType.Contract);
+    repo.createContract(tronAddr, new ContractCapsule(
+        SmartContractOuterClass.SmartContract.newBuilder()
+            .setContractAddress(ByteString.copyFrom(tronAddr))
+            .build()));
+    repo.saveCode(tronAddr, ByteArray.fromHexString(runtimeHex));
+    if (preFundBalance > 0) {
+      repo.addBalance(tronAddr, preFundBalance);
+    }
+    repo.commit();
+  }
+
+  /** Trigger an installed contract from the owner with value=0 and traceTransfers on. */
+  private List<TronJsonRpc.LogFilterElement> triggerTraced(String evmAddrHex) throws Exception {
+    CallArguments trigger = new CallArguments();
+    trigger.setFrom(OWNER_ADDRESS_HEX_PREFIXED());
+    trigger.setTo("0x" + evmAddrHex);
+    trigger.setValue("0x0");
+    trigger.setData("0x");
+
+    SimulateCallResult call = tronJsonRpc.ethSimulateV1(
+        newArgs(true, false, false, trigger), "latest").get(0).getCalls().get(0);
+    assertEquals("trigger of " + evmAddrHex + " must succeed", "0x1", call.getStatus());
+    return call.getLogs();
+  }
+
+  private static void assertNoSyntheticTransferLog(
+      List<TronJsonRpc.LogFilterElement> logs, String opcode) {
+    if (logs == null) {
+      return;
+    }
+    for (TronJsonRpc.LogFilterElement log : logs) {
+      assertTrue(
+          opcode + " must NOT produce a synthetic ERC-7528 Transfer log, found one at: "
+              + log.getAddress(),
+          !"0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee".equalsIgnoreCase(log.getAddress()));
+    }
+  }
 
   private static SimulateV1Args newArgs(boolean traceTransfers, boolean validation,
       boolean returnFullTransactions, CallArguments... calls) {
