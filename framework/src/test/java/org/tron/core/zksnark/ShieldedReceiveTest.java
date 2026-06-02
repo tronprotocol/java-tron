@@ -8,6 +8,7 @@ import com.google.common.primitives.Bytes;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import java.lang.reflect.Field;
 import java.security.SignatureException;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -46,6 +47,7 @@ import org.tron.common.zksnark.LibrustzcashParam.IvkToPkdParams;
 import org.tron.common.zksnark.LibrustzcashParam.OutputProofParams;
 import org.tron.common.zksnark.LibrustzcashParam.SpendSigParams;
 import org.tron.consensus.dpos.DposSlot;
+import org.tron.consensus.dpos.DposTask;
 import org.tron.core.Wallet;
 import org.tron.core.actuator.Actuator;
 import org.tron.core.actuator.ActuatorCreator;
@@ -140,6 +142,8 @@ public class ShieldedReceiveTest extends BaseTest {
   private static final String URL = "https://tron.network";
   @Resource
   private ConsensusService consensusService;
+  @Resource
+  private DposTask dposTask;
   @Resource
   private Wallet wallet;
   @Resource
@@ -2534,6 +2538,11 @@ public class ShieldedReceiveTest extends BaseTest {
       boolean ok2 = dbManager.pushTransaction(transactionCap2);
       Assert.assertTrue(ok2);
     } finally {
+      // DposTask.init() does not reset isRunning (it stays false after stop()), so force it back
+      // to true via reflection before restarting.
+      Field isRunning = DposTask.class.getDeclaredField("isRunning");
+      isRunning.setAccessible(true);
+      isRunning.set(dposTask, true);
       consensusService.start();
     }
   }
