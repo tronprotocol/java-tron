@@ -206,7 +206,7 @@ public class SolidityNode implements ApplicationListener<ContextClosedEvent> {
             blockNum, remoteBlockNum, System.currentTimeMillis() - time);
         return blockNum;
       } catch (Exception e) {
-        if (!flag) {
+        if (!flag || tronNetDelegate.isHitDown()) {
           logger.info("getLastSolidityBlockNum stopped during shutdown.");
           return 0;
         }
