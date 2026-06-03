@@ -115,4 +115,13 @@ public class RealtimeEventServiceTest {
       Assert.assertTrue(e instanceof NullPointerException);
     }
   }
+
+  @Test
+  public void testIsBusy() {
+    RealtimeEventService service = new RealtimeEventService();
+    Assert.assertFalse(service.isBusy());
+
+    ReflectUtils.setFieldValue(service, "maxEventSize", 0);
+    Assert.assertTrue(service.isBusy());
+  }
 }

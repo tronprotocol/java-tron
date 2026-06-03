@@ -59,11 +59,11 @@ public class RealtimeEventService {
     }
   }
 
+  public boolean isBusy() {
+    return queue.size() >= maxEventSize;
+  }
+
   public void add(Event event) {
-    if (queue.size() >= maxEventSize) {
-      logger.warn("Add event failed, blockId {}.", event.getBlockEvent().getBlockId().getString());
-      return;
-    }
     queue.offer(event);
   }
 
