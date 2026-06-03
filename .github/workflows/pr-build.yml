@@ -117,14 +117,14 @@ jobs:
       LC_ALL: en_US.UTF-8
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v5
-
       - name: Install dependencies (Rocky 8 + JDK8)
         run: |
           set -euxo pipefail
           dnf -y install java-1.8.0-openjdk-devel git wget unzip which jq bc curl glibc-langpack-en
           dnf -y groupinstall "Development Tools"
+
+      - name: Checkout code
+        uses: actions/checkout@v5
 
       - name: Check Java version
         run: java -version
@@ -174,14 +174,14 @@ jobs:
       GRADLE_USER_HOME: /github/home/.gradle
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v5
-
       - name: Install dependencies (Debian + build tools)
         run: |
           set -euxo pipefail
           apt-get update
           apt-get install -y git wget unzip build-essential curl jq
+
+      - name: Checkout code
+        uses: actions/checkout@v5
 
       - name: Check Java version
         run: java -version
@@ -238,16 +238,16 @@ jobs:
       contents: read
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v5
-        with:
-          ref: ${{ github.event.pull_request.base.sha }}
-
       - name: Install dependencies (Debian + build tools)
         run: |
           set -euxo pipefail
           apt-get update
           apt-get install -y git wget unzip build-essential curl jq
+
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
 
       - name: Cache Gradle packages
         uses: actions/cache@v5
