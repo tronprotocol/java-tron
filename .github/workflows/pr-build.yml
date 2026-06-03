@@ -63,44 +63,44 @@ jobs:
           java -jar "$JAR" db archive -h
           java -jar "$JAR" keystore --help
 
-#  build-ubuntu:
-#    name: Build ubuntu24 (JDK 17 / aarch64)
-#    if: ${{ github.event_name == 'pull_request' || inputs.job == 'all' || inputs.job == 'ubuntu' }}
-#    runs-on: ubuntu-24.04-arm
-#    timeout-minutes: 60
-#
-#    steps:
-#      - uses: actions/checkout@v5
-#
-#      - name: Set up JDK 17
-#        uses: actions/setup-java@v5
-#        with:
-#          java-version: '17'
-#          distribution: 'temurin'
-#
-#      - name: Check Java version
-#        run: java -version
-#
-#      - name: Cache Gradle packages
-#        uses: actions/cache@v5
-#        with:
-#          path: |
-#            ~/.gradle/caches
-#            ~/.gradle/wrapper
-#          key: ubuntu24-aarch64-gradle-${{ hashFiles('**/*.gradle', '**/gradle-wrapper.properties') }}
-#          restore-keys: ubuntu24-aarch64-gradle-
-#
-#      - name: Build
-#        run: ./gradlew clean build --no-daemon
-#
-#      - name: Toolkit jar smoke test
-#        run: |
-#          set -e
-#          JAR=plugins/build/libs/Toolkit.jar
-#          java -jar "$JAR" help
-#          java -jar "$JAR" db --help
-#          java -jar "$JAR" db archive -h
-#          java -jar "$JAR" keystore --help
+  build-ubuntu:
+    name: Build ubuntu24 (JDK 17 / aarch64)
+    if: ${{ github.event_name == 'pull_request' || inputs.job == 'all' || inputs.job == 'ubuntu' }}
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 60
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Check Java version
+        run: java -version
+
+      - name: Cache Gradle packages
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ubuntu24-aarch64-gradle-${{ hashFiles('**/*.gradle', '**/gradle-wrapper.properties') }}
+          restore-keys: ubuntu24-aarch64-gradle-
+
+      - name: Build
+        run: ./gradlew clean build --no-daemon
+
+      - name: Toolkit jar smoke test
+        run: |
+          set -e
+          JAR=plugins/build/libs/Toolkit.jar
+          java -jar "$JAR" help
+          java -jar "$JAR" db --help
+          java -jar "$JAR" db archive -h
+          java -jar "$JAR" keystore --help
 
   docker-build-rockylinux:
     name: Build rockylinux (JDK 8 / x86_64)
