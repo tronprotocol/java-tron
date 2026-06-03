@@ -1,0 +1,80 @@
+name: Integration Test Single Node (Full)
+
+on:
+  push:
+    branches: [ 'master', 'release_**' ]
+  pull_request:
+    branches: [ 'develop', 'release_**' ]
+    types: [ opened, synchronize, reopened ]
+    paths-ignore: [ '**/*.md', '.gitignore', '**/.gitignore', '.editorconfig',
+                    '.gitattributes', 'docs/**', 'CHANGELOG', '.github/ISSUE_TEMPLATE/**',
+                    '.github/PULL_REQUEST_TEMPLATE/**', '.github/CODEOWNERS' ]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  integration:
+    name: Integration Test Single Node Full (JDK 8 / x86_64)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout java-tron
+        uses: actions/checkout@v5
+
+      - name: Set up JDK 8
+        uses: actions/setup-java@v5
+        with:
+          java-version: '8'
+          distribution: 'temurin'
+
+      - name: Cache Gradle packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-integration-test-${{ hashFiles('**/*.gradle', '**/gradle-wrapper.properties') }}
+          restore-keys: ${{ runner.os }}-gradle-integration-test-
+
+      - name: Build FullNode.jar
+        run: ./gradlew clean build -x test --no-daemon
+
+      - name: Pull integration-test image
+        run: docker pull troninfra/troninfra-ci:latest
+
+      - name: Run integration tests
+        run: |
+          # JAVA_HOME=JDK 8 so FullNode runs on the same JVM family as
+          # production (a few assertions check `java.version` starts with
+          # "1.8"). JAVA_HOME_17 keeps Gradle on JDK 17 for the test
+          # tooling, which requires Java 17.
+          docker run --name integration-test \
+            -e FULLNODE_JAR=/javatron/FullNode.jar \
+            -e JAVA_HOME=/usr/lib/jvm/temurin-8 \
+            -e JAVA_HOME_17=/opt/java/openjdk \
+            -v "${{ github.workspace }}/build/libs/FullNode.jar:/javatron/FullNode.jar:ro" \
+            troninfra/troninfra-ci:latest \
+            --clean
+
+      - name: Extract test reports from container
+        if: always()
+        run: |
+          mkdir -p integration-reports
+          docker cp integration-test:/app/build/reports/. integration-reports/reports/ 2>/dev/null || true
+          docker cp integration-test:/app/build/test-results/. integration-reports/test-results/ 2>/dev/null || true
+          docker cp integration-test:/app/build/test-output.log integration-reports/ 2>/dev/null || true
+          docker cp integration-test:/app/node/node.log integration-reports/ 2>/dev/null || true
+          docker cp integration-test:/app/node/data/logs/tron.log integration-reports/ 2>/dev/null || true
+          docker rm -f integration-test 2>/dev/null || true
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: integration-test-report
+          path: integration-reports/
+          if-no-files-found: warn
