@@ -227,7 +227,7 @@ public class BlockCapsule implements ProtoCapsule<Block> {
         .map(TransactionCapsule::getMerkleHash)
         .collect(Collectors.toCollection(ArrayList::new));
 
-    return MerkleTree.getInstance().createTree(ids).getRoot().getHash();
+    return MerkleTree.build(ids).getRoot().getHash();
   }
 
   public void validateMerkleRoot() throws BadBlockException {
