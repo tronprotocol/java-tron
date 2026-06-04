@@ -228,6 +228,8 @@ import org.tron.protos.Protocol.MarketOrderList;
 import org.tron.protos.Protocol.MarketOrderPairList;
 import org.tron.protos.Protocol.MarketPrice;
 import org.tron.protos.Protocol.MarketPriceList;
+import org.tron.protos.Protocol.Permission;
+import org.tron.protos.Protocol.Permission.PermissionType;
 import org.tron.protos.Protocol.Proposal;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
@@ -629,13 +631,11 @@ public class Wallet {
   public TransactionApprovedList getTransactionApprovedList(Transaction trx) {
     TransactionApprovedList.Builder tswBuilder = TransactionApprovedList.newBuilder();
     TransactionExtention.Builder trxExBuilder = TransactionExtention.newBuilder();
-    trxExBuilder.setTransaction(trx);
     trxExBuilder.setTxid(ByteString.copyFrom(Sha256Hash.hash(CommonParameter
         .getInstance().isECKeyCryptoEngine(), trx.getRawData().toByteArray())));
     Return.Builder retBuilder = Return.newBuilder();
     retBuilder.setResult(true).setCode(response_code.SUCCESS);
     trxExBuilder.setResult(retBuilder);
-    tswBuilder.setTransaction(trxExBuilder);
     TransactionApprovedList.Result.Builder resultBuilder = TransactionApprovedList.Result
         .newBuilder();
 
@@ -650,21 +650,26 @@ public class Wallet {
         if (account == null) {
           throw new PermissionException("Account does not exist!");
         }
+        int permissionId = contract.getPermissionId();
+        Permission permission = account.getPermissionById(permissionId);
+        if (permission == null) {
+          throw new PermissionException("Permission for this, does not exist!");
+        }
+        if (permissionId != 0) {
+          if (permission.getType() != PermissionType.Active) {
+            throw new PermissionException("Permission type is wrong!");
+          }
+          //check operations
+          if (!WalletUtil.checkPermissionOperations(permission, contract)) {
+            throw new PermissionException("Permission denied!");
+          }
+        }
 
         if (trx.getSignatureCount() > 0) {
           List<ByteString> approveList = new ArrayList<ByteString>();
           byte[] hash = Sha256Hash.hash(CommonParameter
               .getInstance().isECKeyCryptoEngine(), trx.getRawData().toByteArray());
-          for (ByteString sig : trx.getSignatureList()) {
-            if (sig.size() < 65) {
-              throw new SignatureFormatException(
-                  "Signature size is " + sig.size());
-            }
-            String base64 = TransactionCapsule.getBase64FromByteString(sig);
-            byte[] address = SignUtils.signatureToAddress(hash, base64, Args.getInstance()
-                .isECKeyCryptoEngine());
-            approveList.add(ByteString.copyFrom(address)); //out put approve list.
-          }
+          TransactionCapsule.checkWeight(permission, trx.getSignatureList(), hash, approveList);
           tswBuilder.addAllApprovedList(approveList);
         }
         resultBuilder.setCode(TransactionApprovedList.Result.response_code.SUCCESS);
@@ -680,6 +685,9 @@ public class Wallet {
       }
     }
 
+    trx = TransactionCapsule.truncateSignatures(trx);
+    trxExBuilder.setTransaction(trx);
+    tswBuilder.setTransaction(trxExBuilder);
     tswBuilder.setResult(resultBuilder);
     return tswBuilder.build();
   }

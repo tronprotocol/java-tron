@@ -18,6 +18,7 @@ package org.tron.core.capsule;
 import static org.tron.common.utils.StringUtil.encode58Check;
 import static org.tron.common.utils.WalletUtil.checkPermissionOperations;
 import static org.tron.core.Constant.MAX_CONTRACT_RESULT_SIZE;
+import static org.tron.core.Constant.PER_SIGN_LENGTH;
 import static org.tron.core.exception.P2pException.TypeEnum.PROTOBUF_ERROR;
 
 import com.google.common.primitives.Bytes;
@@ -251,7 +252,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
       long weight = getWeight(permission, address);
       if (weight == 0) {
         throw new PermissionException(
-            ByteArray.toHexString(sig.toByteArray()) + " is signed by " + encode58Check(address)
+            ByteArray.toHexString(hash) + " is signed by " + encode58Check(address)
                 + " but it is not contained of permission.");
       }
       if (ForkController.instance().pass(Parameter.ForkBlockVersionEnum.VERSION_4_7_1)) {
@@ -465,6 +466,25 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     return ECDSASignature.fromComponents(rsv.getR(), rsv.getS(), rsv.getV()).toBase64();
   }
 
+  public static Transaction truncateSignatures(Transaction trx) {
+    boolean needTruncate = false;
+    for (ByteString sig : trx.getSignatureList()) {
+      if (sig.size() > PER_SIGN_LENGTH) {
+        needTruncate = true;
+        break;
+      }
+    }
+    if (!needTruncate) {
+      return trx;
+    }
+    Transaction.Builder builder = trx.toBuilder().clearSignature();
+    for (ByteString sig : trx.getSignatureList()) {
+      builder.addSignature(
+          sig.size() > PER_SIGN_LENGTH ? sig.substring(0, PER_SIGN_LENGTH) : sig);
+    }
+    return builder.build();
+  }
+
   public static boolean validateSignature(Transaction transaction,
       byte[] hash, AccountStore accountStore, DynamicPropertiesStore dynamicPropertiesStore)
       throws PermissionException, SignatureException, SignatureFormatException {
@@ -631,7 +651,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
         .signHash(getTransactionId().getBytes())));
     this.transaction = this.transaction.toBuilder().addSignature(sig).build();
   }
-  
+
   private static void checkPermission(int permissionId, Permission permission, Transaction.Contract contract) throws PermissionException {
     if (permissionId != 0) {
       if (permission.getType() != PermissionType.Active) {
@@ -714,7 +734,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
         }
       }
       isVerified = true;
-    }  
+    }
     return true;
   }
 

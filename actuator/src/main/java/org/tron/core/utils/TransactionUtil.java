@@ -186,13 +186,11 @@ public class TransactionUtil {
   public TransactionSignWeight getTransactionSignWeight(Transaction trx) {
     TransactionSignWeight.Builder tswBuilder = TransactionSignWeight.newBuilder();
     TransactionExtention.Builder trxExBuilder = TransactionExtention.newBuilder();
-    trxExBuilder.setTransaction(trx);
     trxExBuilder.setTxid(ByteString.copyFrom(Sha256Hash.hash(CommonParameter
         .getInstance().isECKeyCryptoEngine(), trx.getRawData().toByteArray())));
     Return.Builder retBuilder = Return.newBuilder();
     retBuilder.setResult(true).setCode(response_code.SUCCESS);
     trxExBuilder.setResult(retBuilder);
-    tswBuilder.setTransaction(trxExBuilder);
     Result.Builder resultBuilder = Result.newBuilder();
 
     if (trx.getRawData().getContractCount() == 0) {
@@ -249,6 +247,9 @@ public class TransactionUtil {
       }
     }
 
+    trx = TransactionCapsule.truncateSignatures(trx);
+    trxExBuilder.setTransaction(trx);
+    tswBuilder.setTransaction(trxExBuilder);
     tswBuilder.setResult(resultBuilder);
     return tswBuilder.build();
   }
