@@ -699,6 +699,10 @@ public class PrecompiledContracts {
         return Pair.of(false, EMPTY_BYTE_ARRAY);
       }
 
+      if (baseLen == 0 && modLen == 0 && expLen > UPPER_BOUND) {
+        MUtil.checkCPUTimeForModExp();
+      }
+
       BigInteger base = parseArg(data, ARGS_OFFSET, baseLen);
       BigInteger exp = parseArg(data, addSafely(ARGS_OFFSET, baseLen), expLen);
       BigInteger mod = parseArg(data, addSafely(addSafely(ARGS_OFFSET, baseLen), expLen), modLen);

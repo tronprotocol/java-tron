@@ -109,7 +109,7 @@ The TRON network is mainly divided into:
 - **Private Networks**  
   Customized TRON networks set up by private entities for testing, development, or specific use cases.
 
-Network selection is performed by specifying the appropriate configuration file upon full-node startup. Mainnet configuration: [config.conf](framework/src/main/resources/config.conf); Nile testnet configuration: [config-nile.conf](https://github.com/tron-nile-testnet/nile-testnet/blob/master/framework/src/main/resources/config-nile.conf)
+Network selection is performed by specifying the appropriate configuration file upon full-node startup. Built-in configuration template: [reference.conf](common/src/main/resources/reference.conf); Mainnet configuration: [config.conf](framework/src/main/resources/config.conf); Nile testnet configuration: [config-nile.conf](https://github.com/tron-nile-testnet/nile-testnet/blob/master/framework/src/main/resources/config-nile.conf)
 
 ### 1. Join the TRON main network
 Launch a main-network full node with the built-in default configuration:

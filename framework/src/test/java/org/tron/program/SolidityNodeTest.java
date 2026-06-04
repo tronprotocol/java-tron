@@ -3,6 +3,7 @@ package org.tron.program;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 
@@ -326,6 +327,47 @@ public class SolidityNodeTest extends BaseTest {
     } finally {
       setFlag(true);
       clientField.set(solidityNode, orig);
+    }
+  }
+
+  /**
+   * getBlockByNum() must break immediately — without a 1-second sleep — when a
+   * gRPC exception is thrown while flag races to false (the P3 shutdown-race fix).
+   * The invocation time is measured directly so the assertion is independent of
+   * Spring-context startup overhead.
+   */
+  @Test(timeout = 5000)
+  public void testGetBlockByNumNoErrorOnExceptionDuringShutdown() throws Exception {
+    Method m = SolidityNode.class.getDeclaredMethod("getBlockByNum", long.class);
+    m.setAccessible(true);
+    Field clientField = getField("databaseGrpcClient");
+    Object origClient = clientField.get(solidityNode);
+    setFlag(true); // precondition: while(flag) must be entered; do not rely on test-ordering
+    try {
+      DatabaseGrpcClient mockClient = mock(DatabaseGrpcClient.class);
+      // flag races to false inside the gRPC call — exact close() race
+      Mockito.when(mockClient.getBlock(42L)).thenAnswer(inv -> {
+        setFlag(false);
+        throw new RuntimeException("channel closed during shutdown");
+      });
+      clientField.set(solidityNode, mockClient);
+
+      long start = System.currentTimeMillis();
+      InvocationTargetException t = assertThrows(InvocationTargetException.class, () -> {
+        m.invoke(solidityNode, 42L);
+      });
+      assertTrue(t.getCause() instanceof RuntimeException);
+      assertEquals("SolidityNode is closing.", t.getCause().getMessage());
+      long elapsed = System.currentTimeMillis() - start;
+      // Without the fix the catch sleeps exceptionSleepTime (1000 ms) before
+      // re-checking the while condition. With the fix it breaks immediately.
+      assertTrue("Expected break without sleep (<500 ms), got " + elapsed + " ms",
+          elapsed < 500);
+      // No retry: exactly one gRPC call must be made.
+      Mockito.verify(mockClient, Mockito.times(1)).getBlock(42L);
+    } finally {
+      setFlag(true);
+      clientField.set(solidityNode, origClient);
     }
   }
 

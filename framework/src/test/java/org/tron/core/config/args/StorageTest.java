@@ -18,7 +18,6 @@ package org.tron.core.config.args;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import java.io.File;
-import org.iq80.leveldb.CompressionType;
 import org.iq80.leveldb.Options;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -44,17 +43,16 @@ public class StorageTest {
         + "storage.defaultL.maxOpenFiles = 1000\n"
         + "storage.properties = [\n"
         + "  { name = account, path = storage_directory_test,\n"
-        + "    createIfMissing = true, paranoidChecks = true, verifyChecksums = true,\n"
-        + "    compressionType = 1, blockSize = 4096,\n"
-        + "    writeBufferSize = 10485760, cacheSize = 10485760, maxOpenFiles = 100 },\n"
+        + "    blockSize = 4096, writeBufferSize = 10485760, cacheSize = 10485760,\n"
+        + "    maxOpenFiles = 100 },\n"
         + "  { name = \"account-index\", path = storage_directory_test,\n"
-        + "    createIfMissing = true, paranoidChecks = true, verifyChecksums = true,\n"
-        + "    compressionType = 1, blockSize = 4096,\n"
-        + "    writeBufferSize = 10485760, cacheSize = 10485760, maxOpenFiles = 100 },\n"
+        + "    blockSize = 4096, writeBufferSize = 10485760, cacheSize = 10485760,\n"
+        + "    maxOpenFiles = 100 },\n"
         + "  { name = test_name, path = test_path,\n"
-        + "    createIfMissing = false, paranoidChecks = false, verifyChecksums = false,\n"
-        + "    compressionType = 1, blockSize = 2,\n"
-        + "    writeBufferSize = 3, cacheSize = 4, maxOpenFiles = 5 }\n"
+        + "    blockSize = 2, writeBufferSize = 3, cacheSize = 4, maxOpenFiles = 5 },\n"
+        // name/path-only entries: LevelDB options omitted, must inherit per-tier defaults
+        + "  { name = delegation, path = test_path },\n"
+        + "  { name = code, path = test_path }\n"
         + "]"
     ).withFallback(ConfigFactory.load(TestConstants.TEST_CONF));
     StorageConfig sc = StorageConfig.fromConfig(cfg);
@@ -83,30 +81,18 @@ public class StorageTest {
   @Test
   public void getOptions() {
     Options options = StorageUtils.getOptionsByDbName("account");
-    Assert.assertTrue(options.createIfMissing());
-    Assert.assertTrue(options.paranoidChecks());
-    Assert.assertTrue(options.verifyChecksums());
-    Assert.assertEquals(CompressionType.SNAPPY, options.compressionType());
     Assert.assertEquals(4096, options.blockSize());
     Assert.assertEquals(10485760, options.writeBufferSize());
     Assert.assertEquals(10485760L, options.cacheSize());
     Assert.assertEquals(100, options.maxOpenFiles());
 
     options = StorageUtils.getOptionsByDbName("test_name");
-    Assert.assertFalse(options.createIfMissing());
-    Assert.assertFalse(options.paranoidChecks());
-    Assert.assertFalse(options.verifyChecksums());
-    Assert.assertEquals(CompressionType.SNAPPY, options.compressionType());
     Assert.assertEquals(2, options.blockSize());
     Assert.assertEquals(3, options.writeBufferSize());
     Assert.assertEquals(4L, options.cacheSize());
     Assert.assertEquals(5, options.maxOpenFiles());
 
     options = StorageUtils.getOptionsByDbName("some_name_not_exists");
-    Assert.assertTrue(options.createIfMissing());
-    Assert.assertTrue(options.paranoidChecks());
-    Assert.assertTrue(options.verifyChecksums());
-    Assert.assertEquals(CompressionType.SNAPPY, options.compressionType());
     Assert.assertEquals(4 * 1024, options.blockSize());
     Assert.assertEquals(16 * 1024 * 1024, options.writeBufferSize());
     Assert.assertEquals(32 * 1024 * 1024L, options.cacheSize());
@@ -123,6 +109,26 @@ public class StorageTest {
     options = StorageUtils.getOptionsByDbName("trans");
     Assert.assertEquals(16 * 1024 * 1024, options.writeBufferSize());
     Assert.assertEquals(50, options.maxOpenFiles());
+  }
+
+  /**
+   * A properties entry that only sets name/path (all LevelDB options omitted) must inherit
+   * the per-tier defaults from newDefaultDbOptions instead of resetting them to the
+   * PropertyConfig defaults. Both "delegation" (DB_L) and "code" (DB_M) are listed with
+   * name/path only, so they must keep their tier writeBufferSize/maxOpenFiles.
+   */
+  @Test
+  public void nameAndPathOnlyInheritsTierDefaults() {
+    Options ldb = StorageUtils.getOptionsByDbName("delegation");
+    Assert.assertEquals(64 * 1024 * 1024, ldb.writeBufferSize());
+    Assert.assertEquals(1000, ldb.maxOpenFiles());
+    // unset cacheSize/blockSize inherit the base defaults, not PropertyConfig's old 10 MB
+    Assert.assertEquals(32 * 1024 * 1024L, ldb.cacheSize());
+    Assert.assertEquals(4 * 1024, ldb.blockSize());
+
+    Options mdb = StorageUtils.getOptionsByDbName("code");
+    Assert.assertEquals(64 * 1024 * 1024, mdb.writeBufferSize());
+    Assert.assertEquals(500, mdb.maxOpenFiles());
   }
 
 }

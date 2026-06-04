@@ -1,0 +1,119 @@
+name: Integration Test Multinode (Full)
+
+on:
+  push:
+    branches: [ 'master', 'release_**' ]
+  pull_request:
+    branches: [ 'develop', 'release_**' ]
+    types: [ opened, synchronize, reopened ]
+    paths-ignore: [ '**/*.md', '.gitignore', '**/.gitignore', '.editorconfig',
+                    '.gitattributes', 'docs/**', 'CHANGELOG', '.github/ISSUE_TEMPLATE/**',
+                    '.github/PULL_REQUEST_TEMPLATE/**', '.github/CODEOWNERS' ]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  multinode-full:
+    name: Integration Test Multinode Full (JDK 8 / x86_64)
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout java-tron
+        uses: actions/checkout@v5
+
+      - name: Set up JDK 8
+        uses: actions/setup-java@v5
+        with:
+          java-version: '8'
+          distribution: 'temurin'
+
+      - name: Cache Gradle packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-multinode-${{ hashFiles('**/*.gradle', '**/gradle-wrapper.properties') }}
+          restore-keys: ${{ runner.os }}-gradle-multinode-
+
+      - name: Build FullNode.jar
+        run: ./gradlew clean build -x test --no-daemon
+
+      - name: Build local java-tron Docker image (wraps PR-built FullNode.jar)
+        run: |
+          mkdir -p /tmp/tron-image
+          cp build/libs/FullNode.jar /tmp/tron-image/
+          cat > /tmp/tron-image/Dockerfile <<'EOF'
+          FROM tronprotocol/java-tron:latest
+          COPY FullNode.jar /java-tron/lib/FullNode.jar
+          EOF
+          docker build -t java-tron-local:pr /tmp/tron-image
+
+      - name: Pull integration-test image
+        run: docker pull troninfra/troninfra-ci:latest
+
+      - name: Extract compose configs to host (for DinD path-alignment)
+        run: |
+          # start-multinode.sh builds HOST_COMPOSE_DIR as:
+          #   ${HOST_WORKDIR}/docker/multi-node
+          # so the files must live at $HOST_WORKDIR/docker/multi-node/ on the
+          # host. Set HOST_WORKDIR to the workspace root and extract
+          # /app/docker/ 1:1 into workspace/docker/ — the subdirectories
+          # (multi-node/, single-node/) don't collide with java-tron's own
+          # docker/ files.
+          docker create --name it-extract troninfra/troninfra-ci:latest
+          docker cp it-extract:/app/docker/. "${{ github.workspace }}/docker/"
+          docker rm -f it-extract
+
+      - name: Run multinode full tests
+        run: |
+          # --network host: multinode tests talk to nodes via 127.0.0.1:50051 etc.
+          # DinD socket + HOST_WORKDIR path-alignment lets the container orchestrate
+          # the 3-witness compose stack via the host daemon.
+          # Don't override --workdir so the container's default /app entrypoint works.
+          docker run --name integration-multinode \
+            --network host \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            -v "${{ github.workspace }}:${{ github.workspace }}" \
+            -v "${{ github.workspace }}/docker/multi-node:/app/docker/multi-node" \
+            -e HOST_WORKDIR="${{ github.workspace }}" \
+            -e TRON_IMAGE=java-tron-local:pr \
+            -e JAVA_HOME=/usr/lib/jvm/temurin-8 \
+            -e JAVA_HOME_17=/opt/java/openjdk \
+            troninfra/troninfra-ci:latest \
+            --multinode --clean
+
+      - name: Extract test reports from container
+        if: always()
+        run: |
+          mkdir -p integration-reports
+          docker cp integration-multinode:/app/build/reports/. integration-reports/reports/ 2>/dev/null || true
+          docker cp integration-multinode:/app/build/test-results/. integration-reports/test-results/ 2>/dev/null || true
+          docker cp integration-multinode:/app/build/test-output.log integration-reports/ 2>/dev/null || true
+
+      - name: Collect witness node logs
+        if: always()
+        run: |
+          mkdir -p integration-reports/node-logs
+          for c in tron-mn-node1 tron-mn-node2 tron-mn-node3 tron-mn-mongodb; do
+            docker logs "$c" > "integration-reports/node-logs/${c}.log" 2>&1 || true
+          done
+
+      - name: Tear down compose stack
+        if: always()
+        run: |
+          docker rm -f tron-mn-node1 tron-mn-node2 tron-mn-node3 tron-mn-mongodb 2>/dev/null || true
+          docker network rm multi-node_tron-net 2>/dev/null || true
+          docker rm -f integration-multinode 2>/dev/null || true
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: integration-multinode-report
+          path: integration-reports/
+          if-no-files-found: warn
