@@ -1201,6 +1201,7 @@ public class Manager {
           }
         }
       }
+      reApplyLogsFilter(first);
     }
 
   }
@@ -2280,6 +2281,18 @@ public class Manager {
       } catch (BadItemException | ItemNotFoundException e) {
         logger.error("Block header hash does not exist or is bad: {}.",
             getDynamicPropertiesStore().getLatestBlockHeaderHash());
+      }
+    }
+  }
+
+  // Post the FULL-stream block and logs filters for each block of the new canonical branch
+  // (oldest-first), the same way blockTrigger does on the normal path.
+  private void reApplyLogsFilter(List<KhaosBlock> newBranch) {
+    if (CommonParameter.getInstance().isJsonRpcHttpFullNodeEnable()) {
+      for (KhaosBlock khaosBlock : newBranch) {
+        BlockCapsule blockCapsule = khaosBlock.getBlk();
+        postBlockFilter(blockCapsule, false);
+        postLogsFilter(blockCapsule, false, false);
       }
     }
   }
