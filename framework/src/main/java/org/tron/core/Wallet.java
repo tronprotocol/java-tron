@@ -630,14 +630,25 @@ public class Wallet {
 
   public TransactionApprovedList getTransactionApprovedList(Transaction trx) {
     TransactionApprovedList.Builder tswBuilder = TransactionApprovedList.newBuilder();
+    TransactionApprovedList.Result.Builder resultBuilder = TransactionApprovedList.Result
+        .newBuilder();
+    if (trx.getSignatureCount() > chainBaseManager.getDynamicPropertiesStore()
+        .getTotalSignNum()) {
+      resultBuilder.setCode(TransactionApprovedList.Result.response_code.OTHER_ERROR);
+      resultBuilder.setMessage("too many signatures");
+      tswBuilder.setResult(resultBuilder);
+      return tswBuilder.build();
+    }
+
+    trx = TransactionCapsule.truncateSignatures(trx);
     TransactionExtention.Builder trxExBuilder = TransactionExtention.newBuilder();
+    trxExBuilder.setTransaction(trx);
     trxExBuilder.setTxid(ByteString.copyFrom(Sha256Hash.hash(CommonParameter
         .getInstance().isECKeyCryptoEngine(), trx.getRawData().toByteArray())));
     Return.Builder retBuilder = Return.newBuilder();
     retBuilder.setResult(true).setCode(response_code.SUCCESS);
     trxExBuilder.setResult(retBuilder);
-    TransactionApprovedList.Result.Builder resultBuilder = TransactionApprovedList.Result
-        .newBuilder();
+    tswBuilder.setTransaction(trxExBuilder);
 
     if (trx.getRawData().getContractCount() == 0) {
       resultBuilder.setCode(TransactionApprovedList.Result.response_code.OTHER_ERROR);
@@ -666,7 +677,7 @@ public class Wallet {
         }
 
         if (trx.getSignatureCount() > 0) {
-          List<ByteString> approveList = new ArrayList<ByteString>();
+          List<ByteString> approveList = new ArrayList<>();
           byte[] hash = Sha256Hash.hash(CommonParameter
               .getInstance().isECKeyCryptoEngine(), trx.getRawData().toByteArray());
           TransactionCapsule.checkWeight(permission, trx.getSignatureList(), hash, approveList);
@@ -685,9 +696,6 @@ public class Wallet {
       }
     }
 
-    trx = TransactionCapsule.truncateSignatures(trx);
-    trxExBuilder.setTransaction(trx);
-    tswBuilder.setTransaction(trxExBuilder);
     tswBuilder.setResult(resultBuilder);
     return tswBuilder.build();
   }

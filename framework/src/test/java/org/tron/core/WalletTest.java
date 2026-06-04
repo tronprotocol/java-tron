@@ -1442,7 +1442,7 @@ public class WalletTest extends BaseTest {
   }
 
   @Test
-  public void testGetTransactionApprovedListSignatureBound() {
+  public void testApprovedListSigBound() {
     ECKey ecKey = new ECKey(Utils.getRandom());
     AccountCapsule owner = new AccountCapsule(
         ByteString.copyFromUtf8("approved-owner"),
@@ -1490,7 +1490,7 @@ public class WalletTest extends BaseTest {
   }
 
   @Test
-  public void testGetTransactionApprovedListTruncatesOversizedSignature() {
+  public void testApprovedListSigTruncate() {
     ECKey ecKey = new ECKey(Utils.getRandom());
     AccountCapsule owner = new AccountCapsule(
         ByteString.copyFromUtf8("approved-owner-trunc"),
@@ -1530,6 +1530,43 @@ public class WalletTest extends BaseTest {
     assertEquals(1, echoed.getSignatureCount());
     assertEquals(65, echoed.getSignature(0).size());
     assertEquals(validSig, echoed.getSignature(0));
+  }
+
+  @Test
+  public void testApprovedListTooManySigs() {
+    ECKey ecKey = new ECKey(Utils.getRandom());
+    AccountCapsule owner = new AccountCapsule(
+        ByteString.copyFromUtf8("total-sign-num-owner"),
+        ByteString.copyFrom(ecKey.getAddress()),
+        Protocol.AccountType.Normal,
+        initBalance);
+    chainBaseManager.getAccountStore().put(ecKey.getAddress(), owner);
+
+    Transaction unsigned = Transaction.newBuilder().setRawData(
+        Transaction.raw.newBuilder().addContract(
+            Contract.newBuilder().setType(ContractType.TransferContract)
+                .setParameter(Any.pack(TransferContract.newBuilder().setAmount(1)
+                    .setOwnerAddress(ByteString.copyFrom(ecKey.getAddress()))
+                    .setToAddress(ByteString.copyFrom(
+                        ByteArray.fromHexString(RECEIVER_ADDRESS)))
+                    .build())).build()).build()).build();
+
+    TransactionCapsule capsule = new TransactionCapsule(unsigned);
+    capsule.sign(ecKey.getPrivKeyBytes());
+    ByteString oneSig = capsule.getInstance().getSignature(0);
+
+    int totalSignNum = chainBaseManager.getDynamicPropertiesStore().getTotalSignNum();
+    Transaction.Builder overLimit = unsigned.toBuilder();
+    for (int i = 0; i < totalSignNum + 1; i++) {
+      overLimit.addSignature(oneSig);
+    }
+
+    GrpcAPI.TransactionApprovedList rejected =
+        wallet.getTransactionApprovedList(overLimit.build());
+    assertEquals(GrpcAPI.TransactionApprovedList.Result.response_code.OTHER_ERROR,
+        rejected.getResult().getCode());
+    Assert.assertTrue(rejected.getResult().getMessage().contains("too many signatures"));
+    assertEquals(0, rejected.getApprovedListCount());
   }
 }
 

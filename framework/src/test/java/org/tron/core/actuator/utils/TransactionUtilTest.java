@@ -464,7 +464,7 @@ public class TransactionUtilTest extends BaseTest {
   }
 
   @Test
-  public void testGetTransactionSignWeightTruncatesOversizedSignature() {
+  public void testSignWeightSigTruncate() {
     ECKey ecKey = new ECKey(Utils.getRandom());
     AccountCapsule owner = new AccountCapsule(
         ByteString.copyFromUtf8("sign-weight-owner"),
@@ -504,5 +504,42 @@ public class TransactionUtilTest extends BaseTest {
     assertEquals(1, echoed.getSignatureCount());
     assertEquals(65, echoed.getSignature(0).size());
     assertEquals(validSig, echoed.getSignature(0));
+  }
+
+  @Test
+  public void testSignWeightTooManySigs() {
+    ECKey ecKey = new ECKey(Utils.getRandom());
+    AccountCapsule owner = new AccountCapsule(
+        ByteString.copyFromUtf8("sign-weight-total-num"),
+        ByteString.copyFrom(ecKey.getAddress()),
+        AccountType.Normal,
+        10_000_000_000L);
+    chainBaseManager.getAccountStore().put(ecKey.getAddress(), owner);
+
+    Transaction unsigned = Transaction.newBuilder().setRawData(
+        Transaction.raw.newBuilder().addContract(
+            Contract.newBuilder().setType(ContractType.TransferContract)
+                .setParameter(Any.pack(TransferContract.newBuilder().setAmount(1)
+                    .setOwnerAddress(ByteString.copyFrom(ecKey.getAddress()))
+                    .setToAddress(ByteString.copyFrom(
+                        ByteArray.fromHexString(OWNER_ADDRESS)))
+                    .build())).build()).build()).build();
+
+    TransactionCapsule capsule = new TransactionCapsule(unsigned);
+    capsule.sign(ecKey.getPrivKeyBytes());
+    ByteString oneSig = capsule.getInstance().getSignature(0);
+
+    int totalSignNum = chainBaseManager.getDynamicPropertiesStore().getTotalSignNum();
+    Transaction.Builder overLimit = unsigned.toBuilder();
+    for (int i = 0; i < totalSignNum + 1; i++) {
+      overLimit.addSignature(oneSig);
+    }
+
+    TransactionSignWeight reply = transactionUtil.getTransactionSignWeight(
+        overLimit.build());
+    assertEquals(TransactionSignWeight.Result.response_code.OTHER_ERROR,
+        reply.getResult().getCode());
+    Assert.assertTrue(reply.getResult().getMessage().contains("too many signatures"));
+    assertEquals(0, reply.getApprovedListCount());
   }
 }
