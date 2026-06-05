@@ -204,7 +204,7 @@ def collect_keys(path, list_all=False):
         *list_all* is True (``--list`` flag); always empty otherwise.
         status is one of: "commented" | "dedup" | "missing".
     """
-    lines = path.read_text().splitlines()
+    lines = path.read_text(encoding="utf-8").splitlines()
 
     # stack — bracket-nesting context, one frame per open { or [.
     # Each frame is a dict:
