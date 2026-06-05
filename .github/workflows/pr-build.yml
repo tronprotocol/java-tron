@@ -260,9 +260,15 @@ jobs:
             coverage-base-x86_64-gradle-
 
       - name: Build (base)
+        # Test failures on the base branch are tolerated: merge-order races can
+        # leave the base with a pre-existing failing test that is unrelated to
+        # this PR.  The only output we need from this job is the jacoco XML for
+        # coverage diffing, so we must not let a stale test failure block it.
+        continue-on-error: true
         run: ./gradlew clean build --no-daemon --no-build-cache
 
       - name: Test with RocksDB engine (base)
+        continue-on-error: true
         run: ./gradlew :framework:testWithRocksDb --no-daemon --no-build-cache
 
       - name: Generate module coverage reports (base)
@@ -274,7 +280,7 @@ jobs:
           name: jacoco-coverage-base
           path: |
             **/build/reports/jacoco/test/jacocoTestReport.xml
-          if-no-files-found: error
+          if-no-files-found: warn
 
   coverage-gate:
     name: Coverage Gate
