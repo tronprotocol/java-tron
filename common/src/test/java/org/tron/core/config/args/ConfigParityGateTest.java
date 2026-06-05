@@ -82,6 +82,13 @@ public class ConfigParityGateTest {
           "witnesses"    // 27 standby witness nodes; bean ships empty list
       );
 
+  // properties: List<PropertyConfig> parsed manually via StorageConfig.readProperties();
+  // ConfigBeanFactory cannot bind list-of-object fields, so the gate sees it as unbound.
+  private static final Set<String> STORAGE_HOCON_ORPHANS =
+      ConfigParityCheck.allowlist(
+          "properties"  // manually parsed by StorageConfig.readProperties()
+      );
+
   private static final Set<String> NODE_HOCON_ORPHANS =
       ConfigParityCheck.allowlist(
           "isOpenFullTcpDisconnect",  // normalized to bean field openFullTcpDisconnect
@@ -132,7 +139,7 @@ public class ConfigParityGateTest {
     s.add(new Section("rate.limiter", RateLimiterConfig.class,
         empty, empty, empty));
     s.add(new Section("storage", StorageConfig.class,
-        empty, empty, empty));
+        STORAGE_HOCON_ORPHANS, empty, empty));
     s.add(new Section("vm", VmConfig.class,
         empty, empty, empty));
     SECTIONS = Collections.unmodifiableList(s);
