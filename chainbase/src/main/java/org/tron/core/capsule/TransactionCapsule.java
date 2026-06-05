@@ -479,8 +479,11 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     }
     Transaction.Builder builder = trx.toBuilder().clearSignature();
     for (ByteString sig : trx.getSignatureList()) {
-      builder.addSignature(
-          sig.size() > PER_SIGN_LENGTH ? sig.substring(0, PER_SIGN_LENGTH) : sig);
+      if (sig.size() > PER_SIGN_LENGTH) {
+        builder.addSignature(ByteString.copyFrom(sig.substring(0, PER_SIGN_LENGTH).toByteArray()));
+      } else {
+        builder.addSignature(sig);
+      }
     }
     return builder.build();
   }
