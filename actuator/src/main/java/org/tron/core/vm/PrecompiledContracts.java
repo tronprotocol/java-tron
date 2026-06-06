@@ -212,6 +212,15 @@ public class PrecompiledContracts {
   private static final DataWord p256VerifyAddr = new DataWord(
       "0000000000000000000000000000000000000000000000000000000000000100");
 
+  public static final String MINT_NOT_ALLOWED = "shield trc20 mint not allowed";
+  public static final String TRANSFER_NOT_ALLOWED = "shield trc20 transfer not allowed";
+  public static final String BURN_NOT_ALLOWED = "shield trc20 burn not allowed";
+
+  // Staged values of closeShieldedTRC20Transaction(): operation (mint < transfer < burn);
+  public static final long CLOSE_SHIELDED_TRC20_MINT = 1;
+  public static final long CLOSE_SHIELDED_TRC20_TRANSFER = 2;
+  public static final long CLOSE_SHIELDED_TRC20_BURN = 3;
+
   public static PrecompiledContract getOptimizedContractForConstant(PrecompiledContract contract) {
     try {
       Constructor<?> constructor = contract.getClass().getDeclaredConstructor();
@@ -1385,6 +1394,12 @@ public class PrecompiledContracts {
 
     @Override
     public Pair<Boolean, byte[]> execute(byte[] data) {
+      // Mint closed (CLOSE_SHIELDED_TRC20_TRANSACTION level >= 1). Return success (the Boolean
+      // is the CALL success flag) so the caller's unused energy is refunded -- failing here
+      // would "spend all energy". Zero payload + a REVERT (set via runtimeError) still revert.
+      if (VMConfig.closeShieldedTRC20Transaction() >= CLOSE_SHIELDED_TRC20_MINT) {
+        return Pair.of(true, DataWord.ZERO().getData());
+      }
       if (data == null) {
         return Pair.of(true, DataWord.ZERO().getData());
       }
@@ -1463,6 +1478,12 @@ public class PrecompiledContracts {
 
     @Override
     public Pair<Boolean, byte[]> execute(byte[] data) {
+      // Transfer closed (CLOSE_SHIELDED_TRC20_TRANSACTION level >= 2). Return success (the Boolean
+      // is the CALL success flag) so the caller's unused energy is refunded -- failing here
+      // would "spend all energy". Zero payload + a REVERT (set via runtimeError) still revert.
+      if (VMConfig.closeShieldedTRC20Transaction() >= CLOSE_SHIELDED_TRC20_TRANSFER) {
+        return Pair.of(true, DataWord.ZERO().getData());
+      }
       if (data == null) {
         return Pair.of(true, DataWord.ZERO().getData());
       }
@@ -1740,6 +1761,12 @@ public class PrecompiledContracts {
 
     @Override
     public Pair<Boolean, byte[]> execute(byte[] data) {
+      // Burn closed (CLOSE_SHIELDED_TRC20_TRANSACTION level >= 3). Return success (the Boolean
+      // is the CALL success flag) so the caller's unused energy is refunded -- failing here
+      // would "spend all energy". Zero payload + a REVERT (set via runtimeError) still revert.
+      if (VMConfig.closeShieldedTRC20Transaction() >= CLOSE_SHIELDED_TRC20_BURN) {
+        return Pair.of(true, DataWord.ZERO().getData());
+      }
       if (data == null) {
         return Pair.of(true, DataWord.ZERO().getData());
       }

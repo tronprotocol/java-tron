@@ -73,6 +73,25 @@ public class ProposalServiceTest extends BaseTest {
   }
 
   @Test
+  public void testCloseShieldedTRC20Transaction() {
+    long code = ProposalType.CLOSE_SHIELDED_TRC20_TRANSACTION.getCode();
+
+    // process persists the proposed value into the dynamic properties store
+    Proposal proposal = Proposal.newBuilder().putParameters(code, 2).build();
+    boolean result = ProposalService.process(dbManager, new ProposalCapsule(proposal));
+    Assert.assertTrue(result);
+    Assert.assertEquals(2L,
+        dbManager.getDynamicPropertiesStore().getCloseShieldedTRC20Transaction());
+
+    // a subsequent proposal overwrites the stored value
+    proposal = Proposal.newBuilder().putParameters(code, 3).build();
+    result = ProposalService.process(dbManager, new ProposalCapsule(proposal));
+    Assert.assertTrue(result);
+    Assert.assertEquals(3L,
+        dbManager.getDynamicPropertiesStore().getCloseShieldedTRC20Transaction());
+  }
+
+  @Test
   public void testUpdateEnergyFee() {
     String preHistory = dbManager.getDynamicPropertiesStore().getEnergyPriceHistory();
 

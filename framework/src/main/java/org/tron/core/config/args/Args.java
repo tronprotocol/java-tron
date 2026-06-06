@@ -453,6 +453,7 @@ public class Args extends CommonParameter {
     PARAMETER.allowTvmSolidity059 = cc.getAllowTvmSolidity059();
     PARAMETER.forbidTransferToContract = cc.getForbidTransferToContract();
     PARAMETER.allowShieldedTRC20Transaction = cc.getAllowShieldedTRC20Transaction();
+    PARAMETER.closeShieldedTRC20Transaction = cc.getCloseShieldedTRC20Transaction();
     PARAMETER.allowMarketTransaction = cc.getAllowMarketTransaction();
     PARAMETER.allowTransactionFeePool = cc.getAllowTransactionFeePool();
     PARAMETER.allowBlackHoleOptimization = cc.getAllowBlackHoleOptimization();

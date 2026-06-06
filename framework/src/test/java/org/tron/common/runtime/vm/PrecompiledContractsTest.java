@@ -374,6 +374,44 @@ public class PrecompiledContractsTest extends BaseTest {
   }
 
   @Test
+  public void closeShieldedTRC20TransactionTest() {
+    // With the kill-switch engaged at the matching level, each shielded proof
+    // precompile short-circuits to (success, 32 zero bytes) as the very first step of
+    // execute(), before the null/size guards run. The input contents and length are
+    // therefore irrelevant here; these arrays are just non-null placeholders.
+    byte[] zero = DataWord.ZERO().getData();
+    PrecompiledContracts.VerifyMintProof mint = new PrecompiledContracts.VerifyMintProof();
+    PrecompiledContracts.VerifyTransferProof transfer =
+        new PrecompiledContracts.VerifyTransferProof();
+    PrecompiledContracts.VerifyBurnProof burn = new PrecompiledContracts.VerifyBurnProof();
+    byte[] mintData = new byte[1];
+    byte[] transferData = new byte[1];
+    byte[] burnData = new byte[1];
+    try {
+      // level 1 closes mint
+      VMConfig.initCloseShieldedTRC20Transaction(1);
+      Assert.assertEquals(1L, VMConfig.closeShieldedTRC20Transaction());
+      Pair<Boolean, byte[]> r = mint.execute(mintData);
+      Assert.assertTrue(r.getLeft());
+      Assert.assertArrayEquals(zero, r.getRight());
+
+      // level 2 also closes transfer
+      VMConfig.initCloseShieldedTRC20Transaction(2);
+      r = transfer.execute(transferData);
+      Assert.assertTrue(r.getLeft());
+      Assert.assertArrayEquals(zero, r.getRight());
+
+      // level 3 also closes burn
+      VMConfig.initCloseShieldedTRC20Transaction(3);
+      r = burn.execute(burnData);
+      Assert.assertTrue(r.getLeft());
+      Assert.assertArrayEquals(zero, r.getRight());
+    } finally {
+      VMConfig.initCloseShieldedTRC20Transaction(0);
+    }
+  }
+
+  @Test
   public void delegatableResourceTest() {
     VMConfig.initAllowTvmFreezeV2(1L);
 

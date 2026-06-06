@@ -331,6 +331,15 @@ public class ProposalUtilTest extends BaseTest {
         "[ALLOW_STRICT_MATH] has been valid, no need to propose again",
         e34.getMessage());
 
+    // CLOSE_SHIELDED_TRC20_TRANSACTION requires VERSION_4_8_2. VERSION_4_7_7
+    // is already active here but 4_8_2 is not, so the proposal is still rejected.
+    ContractValidateException e35 = Assert.assertThrows(ContractValidateException.class,
+        () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+            ProposalType.CLOSE_SHIELDED_TRC20_TRANSACTION.getCode(), 1));
+    Assert.assertEquals(
+        "Bad chain parameter id [CLOSE_SHIELDED_TRC20_TRANSACTION]",
+        e35.getMessage());
+
     testEnergyAdjustmentProposal();
 
     testConsensusLogicOptimizationProposal();
@@ -349,9 +358,39 @@ public class ProposalUtilTest extends BaseTest {
 
     testAllowHardenExchangeCalculationProposal();
 
+    testCloseShieldedTRC20TransactionProposal();
+
     forkUtils.getManager().getDynamicPropertiesStore()
         .statsByVersion(ForkBlockVersionEnum.ENERGY_LIMIT.getValue(), stats);
     forkUtils.reset();
+  }
+
+  private void testCloseShieldedTRC20TransactionProposal() {
+    // VERSION_4_8_2 has already been activated by the preceding helpers, so the
+    // validator only enforces the 0-3 value range from here on.
+    long code = ProposalType.CLOSE_SHIELDED_TRC20_TRANSACTION.getCode();
+    String rangeError =
+        "This value[CLOSE_SHIELDED_TRC20_TRANSACTION] is only allowed to be in the range 0-3";
+
+    // below range -> rejected
+    ContractValidateException e1 = Assert.assertThrows(ContractValidateException.class,
+        () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils, code, -1));
+    Assert.assertEquals(rangeError, e1.getMessage());
+
+    // above range -> rejected
+    ContractValidateException e2 = Assert.assertThrows(ContractValidateException.class,
+        () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils, code, 4));
+    Assert.assertEquals(rangeError, e2.getMessage());
+
+    // every value in [0, 3] is accepted
+    for (long value = 0; value <= 3; value++) {
+      final long v = value;
+      try {
+        ProposalUtil.validator(dynamicPropertiesStore, forkUtils, code, v);
+      } catch (ContractValidateException e) {
+        Assert.fail("value " + v + " should be valid: " + e.getMessage());
+      }
+    }
   }
 
   private void testEnergyAdjustmentProposal() {

@@ -360,6 +360,10 @@ public class ProposalService extends ProposalUtil {
           manager.getDynamicPropertiesStore().saveAllowOldRewardOpt(entry.getValue());
           break;
         }
+        case CLOSE_SHIELDED_TRC20_TRANSACTION: {
+          manager.getDynamicPropertiesStore().saveCloseShieldedTRC20Transaction(entry.getValue());
+          break;
+        }
         case ALLOW_ENERGY_ADJUSTMENT: {
           manager.getDynamicPropertiesStore().saveAllowEnergyAdjustment(entry.getValue());
           break;

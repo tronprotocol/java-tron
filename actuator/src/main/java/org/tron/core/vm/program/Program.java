@@ -1743,6 +1743,8 @@ public class Program {
         this.refundEnergy(msg.getEnergy().longValue() - requiredEnergy, CALL_PRE_COMPILED);
         this.stackPushOne();
         returnDataBuffer = out.getRight();
+
+        markClosedShieldedTRC20Precompile(contract);
         deposit.commit();
       } else {
         // spend all energy on failure, push zero and revert state changes
@@ -1758,6 +1760,29 @@ public class Program {
       } else {
         this.memorySave(msg.getOutDataOffs().intValue(), out.getRight());
       }
+    }
+  }
+
+  // When the shielded TRC20 kill-switch is engaged, the proof precompile returns success so the
+  // caller's unused energy is refunded (see PrecompiledContracts); we only flag the closed
+  // operation here via a runtime error, which VMActuator later turns into a REVERT.
+  private void markClosedShieldedTRC20Precompile(
+      PrecompiledContracts.PrecompiledContract contract) {
+    long phase = VMConfig.closeShieldedTRC20Transaction();
+    if (phase == 0) {
+      return;
+    }
+    if (contract instanceof PrecompiledContracts.VerifyMintProof
+        && phase >= PrecompiledContracts.CLOSE_SHIELDED_TRC20_MINT) {
+      this.result.setRuntimeError(PrecompiledContracts.MINT_NOT_ALLOWED);
+    }
+    if (contract instanceof PrecompiledContracts.VerifyTransferProof
+        && phase >= PrecompiledContracts.CLOSE_SHIELDED_TRC20_TRANSFER) {
+      this.result.setRuntimeError(PrecompiledContracts.TRANSFER_NOT_ALLOWED);
+    }
+    if (contract instanceof PrecompiledContracts.VerifyBurnProof
+        && phase >= PrecompiledContracts.CLOSE_SHIELDED_TRC20_BURN) {
+      this.result.setRuntimeError(PrecompiledContracts.BURN_NOT_ALLOWED);
     }
   }
 

@@ -13,6 +13,7 @@ import org.tron.core.config.Parameter.ForkBlockVersionConsts;
 import org.tron.core.config.Parameter.ForkBlockVersionEnum;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.store.DynamicPropertiesStore;
+import org.tron.core.vm.PrecompiledContracts;
 
 public class ProposalUtil {
 
@@ -941,6 +942,17 @@ public class ProposalUtil {
         }
         break;
       }
+      case CLOSE_SHIELDED_TRC20_TRANSACTION: {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_8_2)) {
+          throw new ContractValidateException(
+              "Bad chain parameter id [CLOSE_SHIELDED_TRC20_TRANSACTION]");
+        }
+        if (value < 0 || value > 3) {
+          throw new ContractValidateException(
+              "This value[CLOSE_SHIELDED_TRC20_TRANSACTION] is only allowed to be in the range 0-3");
+        }
+        break;
+      }
       default:
         break;
     }
@@ -1018,6 +1030,7 @@ public class ProposalUtil {
     ALLOW_CANCEL_ALL_UNFREEZE_V2(77), // 0, 1
     MAX_DELEGATE_LOCK_PERIOD(78), // (86400, 10512000]
     ALLOW_OLD_REWARD_OPT(79), // 0, 1
+    CLOSE_SHIELDED_TRC20_TRANSACTION(80), // 0, {0,1,2,3}
     ALLOW_ENERGY_ADJUSTMENT(81), // 0, 1
     MAX_CREATE_ACCOUNT_TX_SIZE(82), // [500, 10000]
     ALLOW_TVM_CANCUN(83), // 0, 1

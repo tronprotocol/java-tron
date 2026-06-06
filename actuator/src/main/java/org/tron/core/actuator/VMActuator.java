@@ -6,6 +6,9 @@ import static org.tron.common.math.Maths.addExact;
 import static org.tron.common.math.Maths.floorDiv;
 import static org.tron.common.math.Maths.max;
 import static org.tron.common.math.Maths.min;
+import static org.tron.core.vm.PrecompiledContracts.BURN_NOT_ALLOWED;
+import static org.tron.core.vm.PrecompiledContracts.MINT_NOT_ALLOWED;
+import static org.tron.core.vm.PrecompiledContracts.TRANSFER_NOT_ALLOWED;
 import static org.tron.protos.contract.Common.ResourceCode.ENERGY;
 
 import com.google.protobuf.ByteString;
@@ -231,7 +234,12 @@ public class VMActuator implements Actuator2 {
           return;
         }
 
-        if (result.getException() != null || result.isRevert()) {
+        String errorString = result.getRuntimeError();
+        boolean shieldedProofNotAllowed = MINT_NOT_ALLOWED.equals(errorString)
+            || TRANSFER_NOT_ALLOWED.equals(errorString)
+            || BURN_NOT_ALLOWED.equals(errorString);
+
+        if (result.getException() != null || result.isRevert() || shieldedProofNotAllowed) {
           result.getDeleteAccounts().clear();
           result.getLogInfoList().clear();
           //result.resetFutureRefund();
@@ -243,6 +251,9 @@ public class VMActuator implements Actuator2 {
             }
             result.setRuntimeError(result.getException().getMessage());
             throw result.getException();
+          } else if (shieldedProofNotAllowed) {
+            // Runtime error already set by the precompile; just mark the revert (no energy burn).
+            result.setRevert();
           } else {
             result.setRuntimeError("REVERT opcode executed");
           }
@@ -254,7 +265,6 @@ public class VMActuator implements Actuator2 {
                 .parseLogInfos(program.getResult().getLogInfoList(), rootRepository);
             program.getResult().setTriggerList(triggers);
           }
-
         }
       } else {
         rootRepository.commit();

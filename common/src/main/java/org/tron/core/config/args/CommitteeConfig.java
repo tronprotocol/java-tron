@@ -28,6 +28,7 @@ public class CommitteeConfig {
   private long allowTvmSolidity059 = 0;
   private long forbidTransferToContract = 0;
   private long allowShieldedTRC20Transaction = 0;
+  private long closeShieldedTRC20Transaction = 0;
   private long allowMarketTransaction = 0;
   private long allowTransactionFeePool = 0;
   private long allowBlackHoleOptimization = 0;
