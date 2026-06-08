@@ -18,7 +18,6 @@ package org.tron.core.capsule;
 import static org.tron.common.utils.StringUtil.encode58Check;
 import static org.tron.common.utils.WalletUtil.checkPermissionOperations;
 import static org.tron.core.Constant.MAX_CONTRACT_RESULT_SIZE;
-import static org.tron.core.Constant.PER_SIGN_LENGTH;
 import static org.tron.core.exception.P2pException.TypeEnum.PROTOBUF_ERROR;
 
 import com.google.common.primitives.Bytes;
@@ -464,28 +463,6 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   public static String getBase64FromByteString(ByteString sign) {
     Rsv rsv = Rsv.fromSignature(sign.toByteArray());
     return ECDSASignature.fromComponents(rsv.getR(), rsv.getS(), rsv.getV()).toBase64();
-  }
-
-  public static Transaction truncateSignatures(Transaction trx) {
-    boolean needTruncate = false;
-    for (ByteString sig : trx.getSignatureList()) {
-      if (sig.size() > PER_SIGN_LENGTH) {
-        needTruncate = true;
-        break;
-      }
-    }
-    if (!needTruncate) {
-      return trx;
-    }
-    Transaction.Builder builder = trx.toBuilder().clearSignature();
-    for (ByteString sig : trx.getSignatureList()) {
-      if (sig.size() > PER_SIGN_LENGTH) {
-        builder.addSignature(ByteString.copyFrom(sig.substring(0, PER_SIGN_LENGTH).toByteArray()));
-      } else {
-        builder.addSignature(sig);
-      }
-    }
-    return builder.build();
   }
 
   public static boolean validateSignature(Transaction transaction,

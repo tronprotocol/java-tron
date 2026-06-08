@@ -640,7 +640,7 @@ public class Wallet {
       return tswBuilder.build();
     }
 
-    trx = TransactionCapsule.truncateSignatures(trx);
+    trx = TransactionUtil.truncateSignatures(trx);
     TransactionExtention.Builder trxExBuilder = TransactionExtention.newBuilder();
     trxExBuilder.setTransaction(trx);
     trxExBuilder.setTxid(ByteString.copyFrom(Sha256Hash.hash(CommonParameter
