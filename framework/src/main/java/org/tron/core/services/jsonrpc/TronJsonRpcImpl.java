@@ -3,14 +3,15 @@ package org.tron.core.services.jsonrpc;
 import static org.tron.core.Wallet.CONTRACT_VALIDATE_ERROR;
 import static org.tron.core.services.http.Util.setTransactionExtraData;
 import static org.tron.core.services.http.Util.setTransactionPermissionId;
-import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.BLOCK_NUM_ERROR;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.FINALIZED_STR;
+import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.HASH_REGEX;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.LATEST_STR;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.addressCompatibleToByteArray;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.generateFilterId;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getEnergyUsageTotal;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getTransactionIndex;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getTxID;
+import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.hashToByteArray;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.parseBlockNumber;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.triggerCallContract;
 
@@ -157,7 +158,11 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
   private final Map<String, BlockFilterAndResult> blockFilter2ResultSolidity =
       new ConcurrentHashMap<>();
 
-  public static final String HASH_REGEX = "(0x)?[a-zA-Z0-9]{64}$";
+  // Storage key is a 32-byte word: 64 hex chars + optional "0x" prefix = 66 max.
+  // Reject oversized input before fromHexString / new DataWord, which would otherwise
+  // throw a RuntimeException whose message embeds the whole hex (amplifying log output)
+  // and surface as a -32603 Internal error instead of -32602 invalid params.
+  public static final int MAX_STORAGE_KEY_HEX_LEN = 66;
 
   public static final String INVALID_BLOCK_RANGE = "invalid block range params";
 
@@ -364,20 +369,6 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
       throws JsonRpcInvalidParamsException {
     final Block b = getBlockByNumOrTag(blockNumOrTag);
     return (b == null ? null : getBlockResult(b, fullTransactionObjects));
-  }
-
-  private byte[] hashToByteArray(String hash) throws JsonRpcInvalidParamsException {
-    if (!Pattern.matches(HASH_REGEX, hash)) {
-      throw new JsonRpcInvalidParamsException("invalid hash value");
-    }
-
-    byte[] bHash;
-    try {
-      bHash = ByteArray.fromHexString(hash);
-    } catch (Exception e) {
-      throw new JsonRpcInvalidParamsException(e.getMessage());
-    }
-    return bHash;
   }
 
   /**
@@ -612,7 +603,18 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
       throws JsonRpcInvalidParamsException {
     requireLatestBlockTag(blockNumOrTag);
 
+    if (storageIdx == null || storageIdx.length() > MAX_STORAGE_KEY_HEX_LEN) {
+      throw new JsonRpcInvalidParamsException("invalid storage key value");
+    }
+
     byte[] addressByte = addressCompatibleToByteArray(address);
+
+    DataWord index;
+    try {
+      index = new DataWord(ByteArray.fromHexString(storageIdx));
+    } catch (Exception e) {
+      throw new JsonRpcInvalidParamsException("invalid storage key value");
+    }
 
     // get contract from contractStore
     BytesMessage.Builder build = BytesMessage.newBuilder();
@@ -627,7 +629,7 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
     storage.setContractVersion(smartContract.getVersion());
     storage.generateAddrHash(smartContract.getTrxHash().toByteArray());
 
-    DataWord value = storage.getValue(new DataWord(ByteArray.fromHexString(storageIdx)));
+    DataWord value = storage.getValue(index);
     return ByteArray.toJsonHex(value == null ? new byte[32] : value.getData());
   }
 

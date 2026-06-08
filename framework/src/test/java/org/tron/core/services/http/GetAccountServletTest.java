@@ -14,6 +14,7 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.StringUtil;
 import org.tron.protos.Protocol.Account;
 
 public class GetAccountServletTest extends BaseHttpTest {
@@ -51,6 +52,37 @@ public class GetAccountServletTest extends BaseHttpTest {
 
     MockHttpServletResponse response = newResponse();
     servlet.doGet(request, response);
+    assertEquals(200, response.getStatus());
+    verify(wallet).getAccount(argThat(req -> req != null && req.getAddress().equals(addr)));
+    String content = response.getContentAsString();
+    assertFalse("Should not contain error", content.contains("\"Error\""));
+    assertTrue("Should contain address", content.contains("address"));
+  }
+
+  @Test
+  public void testGetAccountPostOversizedBase58Address() throws Exception {
+    String oversized = addrStr + "0";
+    String jsonParam = "{\"address\": \"" + oversized + "\", \"visible\": true}";
+    MockHttpServletRequest request = postRequest(jsonParam);
+    MockHttpServletResponse response = newResponse();
+    servlet.doPost(request, response);
+    String content = response.getContentAsString();
+    // null from decodeFromBase58Check now surfaces a clear "invalid address" error instead of a
+    // bare NullPointerException (JsonFormat checks for null before ByteString.copyFrom).
+    assertTrue("oversized address should surface a clear invalid-address error: " + content,
+        content.contains("invalid address"));
+  }
+
+  @Test
+  public void testGetAccountPostVisibleBase58Address() throws Exception {
+    // visible=true happy path: a valid 34-char Base58 address decodes back to the same 21 bytes
+    // (decodeFromBase58Check success path) and returns the account with no error.
+    String base58Addr = StringUtil.encode58Check(address);
+    String jsonParam = "{\"address\": \"" + base58Addr + "\", \"visible\": true}";
+    MockHttpServletRequest request = postRequest(jsonParam);
+
+    MockHttpServletResponse response = newResponse();
+    servlet.doPost(request, response);
     assertEquals(200, response.getStatus());
     verify(wallet).getAccount(argThat(req -> req != null && req.getAddress().equals(addr)));
     String content = response.getContentAsString();

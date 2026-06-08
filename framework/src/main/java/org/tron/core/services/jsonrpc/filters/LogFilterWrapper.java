@@ -6,7 +6,6 @@ import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.LATEST_STR;
 import com.google.protobuf.ByteString;
 import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
-import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.jsonrpc.JsonRpcInvalidParamsException;
@@ -35,14 +34,14 @@ public class LogFilterWrapper {
     long fromBlockSrc;
     long toBlockSrc;
     if (fr.getBlockHash() != null) {
-      String blockHash = ByteArray.fromHex(fr.getBlockHash());
       if (fr.getFromBlock() != null || fr.getToBlock() != null) {
         throw new JsonRpcInvalidParamsException(
             "cannot specify both BlockHash and FromBlock/ToBlock, choose one or the other");
       }
+      byte[] blockHashBytes = JsonRpcApiUtil.hashToByteArray(fr.getBlockHash());
       Block block = null;
       if (wallet != null) {
-        block = wallet.getBlockById(ByteString.copyFrom(ByteArray.fromHexString(blockHash)));
+        block = wallet.getBlockById(ByteString.copyFrom(blockHashBytes));
       }
       if (block == null) {
         throw new JsonRpcInvalidParamsException("invalid blockHash");

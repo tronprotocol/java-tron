@@ -8,6 +8,7 @@ import java.math.BigInteger;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.bouncycastle.util.encoders.Hex;
@@ -395,6 +396,11 @@ public class JsonRpcApiUtil {
    */
   public static byte[] addressCompatibleToByteArray(String hexAddress)
       throws JsonRpcInvalidParamsException {
+    // ADDRESS_SIZE (42) is the hex length of a 21-byte address; +2 leaves room for the optional
+    // "0x" prefix, so a 0x-prefixed 21-byte address (0x41..., 44 chars) is still accepted.
+    if (hexAddress == null || hexAddress.length() > DecodeUtil.ADDRESS_SIZE + 2) {
+      throw new JsonRpcInvalidParamsException("invalid address hash value");
+    }
     byte[] addressByte;
     try {
       addressByte = ByteArray.fromHexString(hexAddress);
@@ -413,6 +419,26 @@ public class JsonRpcApiUtil {
       throw new JsonRpcInvalidParamsException(e.getMessage());
     }
     return addressByte;
+  }
+
+  /** Matches a 32-byte hash hex string: optional 0x prefix + 64 hex chars (also caps length). */
+  public static final String HASH_REGEX = "(0x)?[a-zA-Z0-9]{64}$";
+
+  /**
+   * Convert a hash hex string (optional 0x prefix) to a byte array, validating
+   * format and length via {@link #HASH_REGEX} first.
+   */
+  public static byte[] hashToByteArray(String hash) throws JsonRpcInvalidParamsException {
+    if (!Pattern.matches(HASH_REGEX, hash)) {
+      throw new JsonRpcInvalidParamsException("invalid hash value");
+    }
+    byte[] bHash;
+    try {
+      bHash = ByteArray.fromHexString(hash);
+    } catch (Exception e) {
+      throw new JsonRpcInvalidParamsException(e.getMessage());
+    }
+    return bHash;
   }
 
   /**
@@ -603,10 +629,11 @@ public class JsonRpcApiUtil {
   /**
    * Max allowed length for a JSON-RPC block number hex/decimal input.
    * API-level DoS guard: rejects pathological inputs before BigInteger parsing,
-   * whose cost grows quadratically with length. Covers hex (0x + 64 chars for
-   * uint256) and decimal (78 chars for uint256) representations with headroom.
+   * whose cost grows quadratically with length. A block number fits a signed long,
+   * so the longest valid input is 19 chars (decimal Long.MAX_VALUE) or 18 (0x + 16
+   * hex); 20 leaves a small margin.
    */
-  private static final int MAX_BLOCK_NUM_HEX_LEN = 100;
+  private static final int MAX_BLOCK_NUM_HEX_LEN = 20;
 
   /**
    * Parse a JSON-RPC block number (hex "0x..." or decimal) into a long,
@@ -636,16 +663,17 @@ public class JsonRpcApiUtil {
   }
 
   /**
-   * Parse a block tag or hex number. Uses strict jsonHexToLong (requires 0x prefix) for hex.
-   * Callers needing flexible hex parsing (0x -> hex, bare number -> decimal) should use
-   * isBlockTag/parseBlockTag and handle hex separately with hexToBigInteger.
+   * Parse a block tag, or a 0x-prefixed hex block number.
    */
   public static long parseBlockNumber(String blockNumOrTag, Wallet wallet)
       throws JsonRpcInvalidParamsException {
     if (isBlockTag(blockNumOrTag)) {
       return parseBlockTag(blockNumOrTag, wallet);
     }
-    return ByteArray.jsonHexToLong(blockNumOrTag);
+    if (!blockNumOrTag.startsWith("0x")) {
+      throw new JsonRpcInvalidParamsException("Incorrect hex syntax");
+    }
+    return parseBlockNumber(blockNumOrTag);
   }
 
   public static String generateFilterId() {

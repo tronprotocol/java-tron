@@ -514,11 +514,9 @@ public class JsonrpcServiceTest extends BaseTest {
         () -> parseBlockNumber("abc", wallet));
     Assert.assertEquals("Incorrect hex syntax", abcEx.getMessage());
 
-    // parseBlockNumber: malformed hex -> throws
     Exception hexEx = Assert.assertThrows(Exception.class,
         () -> parseBlockNumber("0xxabc", wallet));
-    // https://bugs.openjdk.org/browse/JDK-8176425, from JDK 12, the exception message is changed
-    Assert.assertTrue(hexEx.getMessage().startsWith("For input string: \"xabc\""));
+    Assert.assertEquals("invalid block number", hexEx.getMessage());
   }
 
   @Test
@@ -579,10 +577,29 @@ public class JsonrpcServiceTest extends BaseTest {
         () -> tronJsonRpc.getStorageAt("", "", "abc"));
     Assert.assertEquals("invalid block number", e6.getMessage());
 
+    // storageIdx length oversized -> invalid storage key value
+    String addr = "0xabd4b9367799eaa3197fecb144eb71de1e049abc";
+    Exception e7 = Assert.assertThrows(Exception.class,
+        () -> tronJsonRpc.getStorageAt(addr,
+            "0x" + new String(new char[65]).replace('\0', 'a'), "latest"));
+    Assert.assertEquals("invalid storage key value", e7.getMessage());
+
+    // storageIdx is null -> invalid storage key value
+    Exception e8 = Assert.assertThrows(Exception.class,
+        () -> tronJsonRpc.getStorageAt(addr, null, "latest"));
+    Assert.assertEquals("invalid storage key value", e8.getMessage());
+
+    // storageIdx is valid length but decodes to >32 bytes (66 hex chars without 0x = 33 bytes):
+    // DataWord rejects it -> invalid storage key value (-32602), not a leaked Internal error.
+    Exception e9 = Assert.assertThrows(Exception.class,
+        () -> tronJsonRpc.getStorageAt(addr,
+            new String(new char[66]).replace('\0', 'a'), "latest"));
+    Assert.assertEquals("invalid storage key value", e9.getMessage());
+
     // latest happy path: address is an account, not a contract, so returns 32 zero bytes
     try {
       String value = tronJsonRpc.getStorageAt(
-          "0xabd4b9367799eaa3197fecb144eb71de1e049abc", "0x0", "latest");
+          addr, "0x0", "latest");
       Assert.assertEquals(ByteArray.toJsonHex(new byte[32]), value);
     } catch (Exception e) {
       Assert.fail();
@@ -1005,6 +1022,29 @@ public class JsonrpcServiceTest extends BaseTest {
     } catch (JsonRpcInvalidParamsException e) {
       Assert.fail();
     }
+
+    JsonRpcInvalidParamsException shortHashEx = Assert.assertThrows(
+        JsonRpcInvalidParamsException.class,
+        () -> new LogFilterWrapper(new FilterRequest(null, null, null,
+            null, "0x111111"),
+            100, null, false));
+    Assert.assertEquals("invalid hash value", shortHashEx.getMessage());
+
+    JsonRpcInvalidParamsException oversizedHashEx = Assert.assertThrows(
+        JsonRpcInvalidParamsException.class,
+        () -> new LogFilterWrapper(new FilterRequest(null, null, null,
+            null,
+            "0x" + new String(new char[1000]).replace('\0', 'a')),
+            100, null, false));
+    Assert.assertEquals("invalid hash value", oversizedHashEx.getMessage());
+
+    JsonRpcInvalidParamsException validHashEx = Assert.assertThrows(
+        JsonRpcInvalidParamsException.class,
+        () -> new LogFilterWrapper(new FilterRequest(null, null, null,
+            null,
+            "0x" + new String(new char[64]).replace('\0', 'a')),
+            100, null, false));
+    Assert.assertEquals("invalid blockHash", validHashEx.getMessage());
 
     // reset
     Args.getInstance().setJsonRpcMaxBlockRange(oldMaxBlockRange);

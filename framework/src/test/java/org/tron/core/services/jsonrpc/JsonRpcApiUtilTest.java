@@ -49,8 +49,8 @@ public class JsonRpcApiUtilTest {
 
   @Test
   public void parseBlockNumberRejectsOversized() {
-    // 101 chars exceeds the 100-char limit
-    String tooLong = "0x" + new String(new char[99]).replace('\0', 'a');
+    // 21 chars exceeds the 20-char limit
+    String tooLong = "0x" + new String(new char[18]).replace('\0', '0') + "1";
     JsonRpcInvalidParamsException e = assertThrows(JsonRpcInvalidParamsException.class,
         () -> JsonRpcApiUtil.parseBlockNumber(tooLong));
     assertEquals("invalid block number", e.getMessage());
@@ -74,5 +74,28 @@ public class JsonRpcApiUtilTest {
   public void parseBlockNumberRejectsEmpty() {
     assertThrows(JsonRpcInvalidParamsException.class,
         () -> JsonRpcApiUtil.parseBlockNumber(""));
+  }
+
+  @Test
+  public void addressCompatibleToByteArrayNormal()
+      throws JsonRpcInvalidParamsException {
+    String addr = "0xabd4b9367799eaa3197fecb144eb71de1e049abc";
+    assertEquals(21, JsonRpcApiUtil.addressCompatibleToByteArray(addr).length);
+  }
+
+  @Test
+  public void addressCompatibleToByteArrayRejectsOversized() {
+    // 45 chars
+    String justOver = "0x" + new String(new char[43]).replace('\0', 'a');
+    JsonRpcInvalidParamsException e1 = assertThrows(JsonRpcInvalidParamsException.class,
+        () -> JsonRpcApiUtil.addressCompatibleToByteArray(justOver));
+    assertEquals("invalid address hash value", e1.getMessage());
+  }
+
+  @Test
+  public void addressCompatibleToByteArrayRejectsNull() {
+    JsonRpcInvalidParamsException e = assertThrows(JsonRpcInvalidParamsException.class,
+        () -> JsonRpcApiUtil.addressCompatibleToByteArray(null));
+    assertEquals("invalid address hash value", e.getMessage());
   }
 }

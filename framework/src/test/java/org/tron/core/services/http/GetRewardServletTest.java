@@ -130,4 +130,35 @@ public class GetRewardServletTest extends BaseTest {
     }
   }
 
+  @Test
+  public void getRewardByOversizedValidCharAddressTest() {
+    // 41-char, all-valid-Base58 address: the length guard returns null -> reward 0.
+    MockHttpServletRequest request = createRequest("application/x-www-form-urlencoded");
+    MockHttpServletResponse response = new MockHttpServletResponse();
+    request.addParameter("address", "T" + new String(new char[40]).replace('\0', 'a'));
+    new GetRewardServlet().doPost(request, response);
+    try {
+      JSONObject result = JSONObject.parseObject(response.getContentAsString());
+      Assert.assertEquals(0, (int) result.get("reward"));
+      Assert.assertNull(result.get("Error"));
+    } catch (UnsupportedEncodingException e) {
+      Assert.fail(e.getMessage());
+    }
+  }
+
+  @Test
+  public void getRewardByOversizedIllegalCharAddressTest() {
+    MockHttpServletRequest request = createRequest("application/x-www-form-urlencoded");
+    MockHttpServletResponse response = new MockHttpServletResponse();
+    request.addParameter("address", "T" + new String(new char[40]).replace('\0', '0'));
+    new GetRewardServlet().doPost(request, response);
+    try {
+      JSONObject result = JSONObject.parseObject(response.getContentAsString());
+      Assert.assertEquals(0, (int) result.get("reward"));
+      Assert.assertNull(result.get("Error"));
+    } catch (UnsupportedEncodingException e) {
+      Assert.fail(e.getMessage());
+    }
+  }
+
 }
