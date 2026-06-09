@@ -422,7 +422,7 @@ public class JsonRpcApiUtil {
   }
 
   /** Matches a 32-byte hash hex string: optional 0x prefix + 64 hex chars (also caps length). */
-  public static final String HASH_REGEX = "(0x)?[a-zA-Z0-9]{64}$";
+  public static final String HASH_REGEX = "(0x)?[0-9a-fA-F]{64}$";
 
   /**
    * Convert a hash hex string (optional 0x prefix) to a byte array, validating

@@ -98,4 +98,18 @@ public class JsonRpcApiUtilTest {
         () -> JsonRpcApiUtil.addressCompatibleToByteArray(null));
     assertEquals("invalid address hash value", e.getMessage());
   }
+
+  @Test
+  public void hashToByteArrayAcceptsValidHex() throws JsonRpcInvalidParamsException {
+    String hash = "0x" + new String(new char[64]).replace('\0', 'a');
+    assertEquals(32, JsonRpcApiUtil.hashToByteArray(hash).length);
+  }
+
+  @Test
+  public void hashToByteArrayRejectsNonHexChars() {
+    String hash = "0x" + new String(new char[64]).replace('\0', 'g');
+    JsonRpcInvalidParamsException e = assertThrows(JsonRpcInvalidParamsException.class,
+        () -> JsonRpcApiUtil.hashToByteArray(hash));
+    assertEquals("invalid hash value", e.getMessage());
+  }
 }
