@@ -1461,9 +1461,8 @@ public class JsonrpcServiceTest extends BaseTest {
 
   @Test
   public void testBuildTransactionRejectsDeeplyNestedAbi() {
-    // A pathological ABI with deep nesting overflows the recursive JsonFormat parser.
-    // buildCreateSmartContractTransaction must surface this as invalid-params (-32602),
-    // not let a StackOverflowError escape as a generic internal error.
+    // A deeply nested ABI must surface as invalid-params (-32602), not as a generic
+    // internal error.
     int depth = 200_000;
     StringBuilder abi = new StringBuilder("[],\"x\":");
     for (int i = 0; i < depth; i++) {
