@@ -201,11 +201,24 @@ public class JsonRpcTest {
   @Test
   public void testLogFilter() {
 
-    //topic must be 64 hex string
+    //topic must be 63 or 64 hex string, full 64-char form here
     try {
       new LogFilter(new FilterRequest(null, null, null,
           new String[] {"0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"},
           null));
+    } catch (JsonRpcInvalidParamsException e) {
+      Assert.fail();
+    }
+
+    //63-char form: leading zero stripped by some clients, padded back to the same topic
+    String paddedAddressTopic =
+        "000000000000000000000000f0cc5a2a84cd0f68ed1667070934542d673acbd8";
+    try {
+      LogFilter full = new LogFilter(new FilterRequest(null, null, null,
+          new String[] {null, "0x" + paddedAddressTopic}, null));
+      LogFilter stripped = new LogFilter(new FilterRequest(null, null, null,
+          new String[] {null, "0x" + paddedAddressTopic.substring(1)}, null));
+      Assert.assertArrayEquals(full.getTopics().get(1)[0], stripped.getTopics().get(1)[0]);
     } catch (JsonRpcInvalidParamsException e) {
       Assert.fail();
     }
@@ -224,6 +237,20 @@ public class JsonRpcTest {
     } catch (JsonRpcInvalidParamsException e) {
       Assert.assertTrue(e.getMessage().contains("invalid topic"));
     }
+
+    // non-string element in address array -> -32602, not a leaked ClassCastException
+    JsonRpcInvalidParamsException badAddrElement = Assert.assertThrows(
+        JsonRpcInvalidParamsException.class,
+        () -> new LogFilter(new FilterRequest(null, null,
+            new ArrayList<>(Collections.singletonList(1)), null, null)));
+    Assert.assertEquals("invalid address at index 0: 1", badAddrElement.getMessage());
+
+    // non-string element in nested topic array -> -32602, not a leaked ClassCastException
+    JsonRpcInvalidParamsException badTopicElement = Assert.assertThrows(
+        JsonRpcInvalidParamsException.class,
+        () -> new LogFilter(new FilterRequest(null, null, null,
+            new Object[] {new ArrayList<>(Collections.singletonList(1))}, null)));
+    Assert.assertEquals("invalid topic(s): 1", badTopicElement.getMessage());
 
     // topic size should be <= 4
     try {

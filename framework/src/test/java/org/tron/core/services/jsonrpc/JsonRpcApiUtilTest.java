@@ -114,6 +114,41 @@ public class JsonRpcApiUtilTest {
   }
 
   @Test
+  public void topicToByteArrayAcceptsFullLengthHex() throws JsonRpcInvalidParamsException {
+    String topic = "0x" + new String(new char[64]).replace('\0', 'a');
+    assertEquals(32, JsonRpcApiUtil.topicToByteArray(topic).length);
+  }
+
+  @Test
+  public void topicToByteArrayPadsMissingLeadingZero() throws JsonRpcInvalidParamsException {
+    String stripped = "0x" + new String(new char[63]).replace('\0', 'a');
+    byte[] parsed = JsonRpcApiUtil.topicToByteArray(stripped);
+    assertEquals(32, parsed.length);
+    assertEquals(0x0a, parsed[0]);
+  }
+
+  @Test
+  public void topicToByteArrayRejectsNonHexChars() {
+    String topic = "0x" + new String(new char[64]).replace('\0', 'g');
+    JsonRpcInvalidParamsException e = assertThrows(JsonRpcInvalidParamsException.class,
+        () -> JsonRpcApiUtil.topicToByteArray(topic));
+    assertEquals("invalid topic: " + topic, e.getMessage());
+  }
+
+  @Test
+  public void topicToByteArrayRejectsWrongLength() {
+    // 62 chars (two zeros stripped) and 65 chars are both invalid
+    String tooShort = "0x" + new String(new char[62]).replace('\0', 'a');
+    assertThrows(JsonRpcInvalidParamsException.class,
+        () -> JsonRpcApiUtil.topicToByteArray(tooShort));
+    String tooLong = "0x" + new String(new char[65]).replace('\0', 'a');
+    assertThrows(JsonRpcInvalidParamsException.class,
+        () -> JsonRpcApiUtil.topicToByteArray(tooLong));
+    assertThrows(JsonRpcInvalidParamsException.class,
+        () -> JsonRpcApiUtil.topicToByteArray(null));
+  }
+
+  @Test
   public void parseTxIndexAcceptsHex() throws JsonRpcInvalidParamsException {
     assertEquals(0x1a, JsonRpcApiUtil.parseTxIndex("0x1a"));
     assertEquals(0, JsonRpcApiUtil.parseTxIndex("0x0"));

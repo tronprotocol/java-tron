@@ -1,7 +1,7 @@
 package org.tron.core.services.jsonrpc.filters;
 
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.addressToByteArray;
-import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.hashToByteArray;
+import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.topicToByteArray;
 
 import com.google.protobuf.ByteString;
 import java.util.ArrayList;
@@ -57,6 +57,10 @@ public class LogFilter {
       List<byte[]> addr = new ArrayList<>();
       int i = 0;
       for (Object s : (ArrayList) fr.getAddress()) {
+        if (!(s instanceof String)) {
+          throw new JsonRpcInvalidParamsException(
+              String.format("invalid address at index %d: %s", i, s));
+        }
         try {
           addr.add(addressToByteArray((String) s));
           i++;
@@ -81,7 +85,7 @@ public class LogFilter {
           withTopic((byte[][]) null);
         } else if (topic instanceof String) {
           try {
-            withTopic(new DataWord(hashToByteArray((String) topic)).getData());
+            withTopic(new DataWord(topicToByteArray((String) topic)).getData());
           } catch (JsonRpcInvalidParamsException e) {
             throw new JsonRpcInvalidParamsException("invalid topic(s): " + topic);
           }
@@ -93,8 +97,11 @@ public class LogFilter {
 
           List<byte[]> t = new ArrayList<>();
           for (Object s : ((ArrayList) topic)) {
+            if (!(s instanceof String)) {
+              throw new JsonRpcInvalidParamsException("invalid topic(s): " + s);
+            }
             try {
-              t.add(new DataWord(hashToByteArray((String) s)).getData());
+              t.add(new DataWord(topicToByteArray((String) s)).getData());
             } catch (JsonRpcInvalidParamsException e) {
               throw new JsonRpcInvalidParamsException("invalid topic(s): " + s);
             }

@@ -444,6 +444,26 @@ public class JsonRpcApiUtil {
   }
 
   /**
+   * Matches a 32-byte topic hex string: optional 0x prefix + 63 or 64 hex chars.
+   */
+  public static final String TOPIC_REGEX = "(0x)?[0-9a-fA-F]{63,64}$";
+
+  /**
+   * Convert a topic hex string (optional 0x prefix, leading zero may be omitted) to a 32-byte
+   * array, validating format and length via {@link #TOPIC_REGEX} first.
+   */
+  public static byte[] topicToByteArray(String hexTopic) throws JsonRpcInvalidParamsException {
+    if (hexTopic == null || !Pattern.matches(TOPIC_REGEX, hexTopic)) {
+      throw new JsonRpcInvalidParamsException("invalid topic: " + hexTopic);
+    }
+    try {
+      return ByteArray.fromHexString(hexTopic);
+    } catch (Exception e) {
+      throw new JsonRpcInvalidParamsException("invalid topic: " + hexTopic);
+    }
+  }
+
+  /**
    * convert 40 hex string of address to byte array, padding 0 ahead if length is odd.
    */
   public static byte[] addressToByteArray(String hexAddress) throws JsonRpcInvalidParamsException {
