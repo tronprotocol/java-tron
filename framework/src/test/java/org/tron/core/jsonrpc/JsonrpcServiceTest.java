@@ -1378,6 +1378,10 @@ public class JsonrpcServiceTest extends BaseTest {
         () -> tronJsonRpc.getBlockReceipts("test"));
     Assert.assertEquals("invalid block number", testReceiptsEx.getMessage());
 
+    Exception nullReceiptsEx = Assert.assertThrows(Exception.class,
+        () -> tronJsonRpc.getBlockReceipts(null));
+    Assert.assertEquals("invalid block number", nullReceiptsEx.getMessage());
+
     try {
       List<TransactionReceipt> transactionReceiptList = tronJsonRpc.getBlockReceipts("0x2");
       Assert.assertNull(transactionReceiptList);

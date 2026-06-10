@@ -674,7 +674,7 @@ public class JsonRpcApiUtil {
     if (isBlockTag(blockNumOrTag)) {
       return parseBlockTag(blockNumOrTag, wallet);
     }
-    if (!blockNumOrTag.startsWith("0x")) {
+    if (blockNumOrTag == null || !blockNumOrTag.startsWith("0x")) {
       throw new JsonRpcInvalidParamsException("Incorrect hex syntax");
     }
     return parseBlockNumber(blockNumOrTag);

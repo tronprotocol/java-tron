@@ -933,9 +933,10 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
 
     Block block = null;
 
-    if (Pattern.matches(HASH_REGEX, blockNumOrHashOrTag)) {
+    if (blockNumOrHashOrTag != null && Pattern.matches(HASH_REGEX, blockNumOrHashOrTag)) {
       block = getBlockByJsonHash(blockNumOrHashOrTag);
     } else {
+      // null falls through to getBlockByNumOrTag -> parseBlockNumber -> -32602 (not an NPE)
       block = getBlockByNumOrTag(blockNumOrHashOrTag);
     }
 
