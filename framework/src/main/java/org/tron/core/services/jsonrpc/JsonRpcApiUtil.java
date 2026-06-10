@@ -14,6 +14,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.bouncycastle.util.encoders.Hex;
 import org.tron.api.GrpcAPI.AssetIssueList;
 import org.tron.common.crypto.Hash;
+import org.tron.common.math.StrictMathWrapper;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.utils.ByteArray;
@@ -706,7 +707,7 @@ public class JsonRpcApiUtil {
    */
   public static long calcFeeLimit(long gas, long energyFee) throws JsonRpcInvalidParamsException {
     try {
-      return Math.multiplyExact(gas, energyFee);
+      return StrictMathWrapper.multiplyExact(gas, energyFee);
     } catch (ArithmeticException e) {
       throw new JsonRpcInvalidParamsException("invalid gas: fee limit overflow");
     }
