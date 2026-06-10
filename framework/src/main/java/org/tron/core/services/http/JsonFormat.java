@@ -1313,12 +1313,11 @@ public class JsonFormat {
         throws InvalidEscapeSequence {
       //Address base58 -> ByteString
       if (HttpSelfFormatFieldName.isAddressFormat(fliedName)) {
-        byte[] addressBytes;
+        byte[] addressBytes = null;
         try {
           addressBytes = Commons.decodeFromBase58Check(input);
         } catch (IllegalArgumentException e) {
-          // Base58.decode throw
-          addressBytes = null;
+          // Base58.decode throws on illegal chars -> leave addressBytes null (treated as invalid)
         }
         if (addressBytes == null) {
           // empty / wrong-length / bad-checksum / illegal chars -> all invalid addresses; throw a

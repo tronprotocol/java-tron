@@ -56,6 +56,7 @@ import org.tron.core.services.jsonrpc.TronJsonRpc.LogFilterElement;
 import org.tron.core.services.jsonrpc.TronJsonRpcImpl;
 import org.tron.core.services.jsonrpc.filters.LogFilterWrapper;
 import org.tron.core.services.jsonrpc.types.BlockResult;
+import org.tron.core.services.jsonrpc.types.BuildArguments;
 import org.tron.core.services.jsonrpc.types.TransactionReceipt;
 import org.tron.core.services.jsonrpc.types.TransactionResult;
 import org.tron.json.JSON;
@@ -690,6 +691,31 @@ public class JsonrpcServiceTest extends BaseTest {
     } catch (Exception e) {
       Assert.fail();
     }
+
+    // negative index is out of range too -> null (not an Internal error)
+    try {
+      TransactionResult result = tronJsonRpc.getTransactionByBlockNumberAndIndex(
+          ByteArray.toJsonHex(blockCapsule1.getNum()), "0x-1");
+      Assert.assertNull(result);
+    } catch (Exception e) {
+      Assert.fail();
+    }
+
+    // leading zeros are tolerated: "0x00" parses to index 0
+    try {
+      TransactionResult result = tronJsonRpc.getTransactionByBlockNumberAndIndex(
+          ByteArray.toJsonHex(blockCapsule1.getNum()), "0x00");
+      Assert.assertNotNull(result);
+      Assert.assertEquals(ByteArray.toJsonHex(0L), result.getTransactionIndex());
+    } catch (Exception e) {
+      Assert.fail();
+    }
+
+    // oversized index (> 8 hex digits) rejected before parsing
+    Exception oversizedEx = Assert.assertThrows(Exception.class,
+        () -> tronJsonRpc.getTransactionByBlockNumberAndIndex(
+            ByteArray.toJsonHex(blockCapsule1.getNum()), "0x123456789"));
+    Assert.assertEquals("invalid index value", oversizedEx.getMessage());
 
     // latest -> blockCapsule1 (head)
     try {
@@ -1427,6 +1453,30 @@ public class JsonrpcServiceTest extends BaseTest {
     } finally {
       fullNodeJsonRpcHttpService.stop();
     }
+  }
+
+  @Test
+  public void testBuildTransactionRejectsDeeplyNestedAbi() {
+    // A pathological ABI with deep nesting overflows the recursive JsonFormat parser.
+    // buildCreateSmartContractTransaction must surface this as invalid-params (-32602),
+    // not let a StackOverflowError escape as a generic internal error.
+    int depth = 200_000;
+    StringBuilder abi = new StringBuilder("[],\"x\":");
+    for (int i = 0; i < depth; i++) {
+      abi.append('[');
+    }
+    for (int i = 0; i < depth; i++) {
+      abi.append(']');
+    }
+
+    BuildArguments args = new BuildArguments();
+    args.setFrom("0xabd4b9367799eaa3197fecb144eb71de1e049abc");
+    args.setData("60806040");
+    args.setAbi(abi.toString());
+
+    JsonRpcInvalidParamsException e = Assert.assertThrows(JsonRpcInvalidParamsException.class,
+        () -> tronJsonRpc.buildTransaction(args));
+    Assert.assertEquals("invalid abi", e.getMessage());
   }
 
   @Test

@@ -7,12 +7,14 @@ import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.FINALIZED_STR;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.HASH_REGEX;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.LATEST_STR;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.addressCompatibleToByteArray;
+import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.calcFeeLimit;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.generateFilterId;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getEnergyUsageTotal;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getTransactionIndex;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.getTxID;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.hashToByteArray;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.parseBlockNumber;
+import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.parseTxIndex;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.triggerCallContract;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -814,14 +816,9 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
 
   private TransactionResult getTransactionByBlockAndIndex(Block block, String index)
       throws JsonRpcInvalidParamsException {
-    int txIndex;
-    try {
-      txIndex = ByteArray.jsonHexToInt(index);
-    } catch (Exception e) {
-      throw new JsonRpcInvalidParamsException("invalid index value");
-    }
+    int txIndex = parseTxIndex(index);
 
-    if (txIndex >= block.getTransactionsCount()) {
+    if (txIndex < 0 || txIndex >= block.getTransactionsCount()) {
       return null;
     }
 
@@ -1143,7 +1140,11 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
       ABI.Builder abiBuilder = ABI.newBuilder();
       if (StringUtils.isNotEmpty(args.getAbi())) {
         String abiStr = "{" + "\"entrys\":" + args.getAbi() + "}";
-        JsonFormat.merge(abiStr, abiBuilder, args.isVisible());
+        try {
+          JsonFormat.merge(abiStr, abiBuilder, args.isVisible());
+        } catch (StackOverflowError e) {
+          throw new JsonRpcInvalidParamsException("invalid abi");
+        }
       }
 
       SmartContract.Builder smartBuilder = SmartContract.newBuilder();
@@ -1169,7 +1170,7 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
           .createTransactionCapsule(build.build(), ContractType.CreateSmartContract).getInstance();
       Transaction.Builder txBuilder = tx.toBuilder();
       Transaction.raw.Builder rawBuilder = tx.getRawData().toBuilder();
-      rawBuilder.setFeeLimit(args.parseGas() * wallet.getEnergyFee());
+      rawBuilder.setFeeLimit(calcFeeLimit(args.parseGas(), wallet.getEnergyFee()));
 
       txBuilder.setRawData(rawBuilder);
       tx = setTransactionPermissionId(args.getPermissionId(), txBuilder.build());
@@ -1218,7 +1219,7 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
 
       Transaction.Builder txBuilder = tx.toBuilder();
       Transaction.raw.Builder rawBuilder = tx.getRawData().toBuilder();
-      rawBuilder.setFeeLimit(args.parseGas() * wallet.getEnergyFee());
+      rawBuilder.setFeeLimit(calcFeeLimit(args.parseGas(), wallet.getEnergyFee()));
       txBuilder.setRawData(rawBuilder);
 
       Transaction trx = wallet

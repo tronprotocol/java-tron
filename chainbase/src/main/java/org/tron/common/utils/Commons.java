@@ -52,8 +52,7 @@ public class Commons {
       return null;
     }
     if (addressBase58.length() != BASE58_ADDRESS_LENGTH) {
-      logger.warn("Warning: invalid Base58 address length: {} ,expected {} !!",
-          addressBase58.length(), BASE58_ADDRESS_LENGTH);
+      logger.warn("Warning: invalid Base58 address length !!");
       return null;
     }
     byte[] address = decode58Check(addressBase58);

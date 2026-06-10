@@ -1,7 +1,7 @@
 package org.tron.core.services.jsonrpc.filters;
 
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.addressToByteArray;
-import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.topicToByteArray;
+import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.hashToByteArray;
 
 import com.google.protobuf.ByteString;
 import java.util.ArrayList;
@@ -81,7 +81,7 @@ public class LogFilter {
           withTopic((byte[][]) null);
         } else if (topic instanceof String) {
           try {
-            withTopic(new DataWord(topicToByteArray((String) topic)).getData());
+            withTopic(new DataWord(hashToByteArray((String) topic)).getData());
           } catch (JsonRpcInvalidParamsException e) {
             throw new JsonRpcInvalidParamsException("invalid topic(s): " + topic);
           }
@@ -94,7 +94,7 @@ public class LogFilter {
           List<byte[]> t = new ArrayList<>();
           for (Object s : ((ArrayList) topic)) {
             try {
-              t.add(new DataWord(topicToByteArray((String) s)).getData());
+              t.add(new DataWord(hashToByteArray((String) s)).getData());
             } catch (JsonRpcInvalidParamsException e) {
               throw new JsonRpcInvalidParamsException("invalid topic(s): " + s);
             }

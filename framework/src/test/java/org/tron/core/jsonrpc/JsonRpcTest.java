@@ -143,13 +143,13 @@ public class JsonRpcTest {
     try {
       addressCompatibleToByteArray(rawAddress.substring(1));
     } catch (JsonRpcInvalidParamsException e) {
-      Assert.assertEquals("invalid address hash value", e.getMessage());
+      Assert.assertEquals("invalid address", e.getMessage());
     }
 
     try {
       addressCompatibleToByteArray(rawAddress + "00");
     } catch (JsonRpcInvalidParamsException e) {
-      Assert.assertEquals("invalid address hash value", e.getMessage());
+      Assert.assertEquals("invalid address", e.getMessage());
     }
 
   }
@@ -176,6 +176,22 @@ public class JsonRpcTest {
       Assert.assertArrayEquals(addressToByteArray(address1), addressToByteArray(address2));
     } catch (JsonRpcInvalidParamsException e) {
       Assert.fail();
+    }
+
+    // oversized input rejected before fromHexString
+    try {
+      addressToByteArray("0x" + new String(new char[64]).replace('\0', 'a'));
+      Assert.fail();
+    } catch (JsonRpcInvalidParamsException e) {
+      Assert.assertTrue(e.getMessage().contains("invalid address"));
+    }
+
+    // invalid hex char -> invalid params, not a leaked DecoderException
+    try {
+      addressToByteArray("0x548794500882809695a8a687866e76d4271a1abz");
+      Assert.fail();
+    } catch (JsonRpcInvalidParamsException e) {
+      Assert.assertTrue(e.getMessage().contains("invalid address"));
     }
   }
 

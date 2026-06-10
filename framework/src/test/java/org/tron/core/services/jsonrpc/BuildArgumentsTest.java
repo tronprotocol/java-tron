@@ -70,6 +70,16 @@ public class BuildArgumentsTest extends BaseTest {
   }
 
   @Test
+  public void parseValueRejectsNegative() {
+    // QUANTITY is unsigned; a signed "0x-.." value must be rejected, not returned as negative.
+    BuildArguments args = new BuildArguments();
+    args.setValue("0x-1");
+    JsonRpcInvalidParamsException e = Assert.assertThrows(JsonRpcInvalidParamsException.class,
+        () -> args.parseValue());
+    Assert.assertEquals("invalid param value: negative", e.getMessage());
+  }
+
+  @Test
   public void resolveData_inputOnly_returnsInput() throws JsonRpcInvalidParamsException {
     BuildArguments args = new BuildArguments();
     args.setInput("0xdeadbeef");
