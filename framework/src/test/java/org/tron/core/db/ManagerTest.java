@@ -40,6 +40,7 @@ import org.tron.common.BaseMethodTest;
 import org.tron.common.TestConstants;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.logsfilter.EventPluginLoader;
+import org.tron.common.logsfilter.capsule.BlockFilterCapsule;
 import org.tron.common.logsfilter.capsule.FilterTriggerCapsule;
 import org.tron.common.logsfilter.capsule.LogsFilterCapsule;
 import org.tron.common.logsfilter.trigger.ContractLogTrigger;
@@ -1600,7 +1601,9 @@ public class ManagerTest extends BaseMethodTest {
     Assert.assertEquals("control: head should be A after normal extend",
         a.getBlockId(), chainManager.getDynamicPropertiesStore().getLatestBlockHeaderHash());
     Assert.assertTrue("control: normal-path block A's logs must reach FULL stream (added)",
-        hasFullLogsFilter(queue, a, false));
+        hasLogsFilterCapsule(queue, a, false));
+    Assert.assertTrue("control: normal-path block A must reach the FULL block-filter stream",
+        hasBlockFilterCapsule(queue, a));
 
     // heavier competing branch P -> B1 -> B2, each carrying a transfer, to force switchFork
     BlockCapsule b1 = blockWithTransfer(t + 6001, base + 2, p.getBlockId().getByteString(), keys,
@@ -1615,12 +1618,16 @@ public class ManagerTest extends BaseMethodTest {
 
     // reorg withdraws the orphaned old-branch logs (removed=true)
     Assert.assertTrue("reorg: orphaned block A's logs must be withdrawn (removed=true)",
-        hasFullLogsFilter(queue, a, true));
-    // the fix: new canonical blocks' logs are delivered (added, i.e. removed=false)
+        hasLogsFilterCapsule(queue, a, true));
+    // the fix: new canonical blocks' logs and block filters are delivered
     Assert.assertTrue("reorg: new canonical block B1's logs must reach FULL stream (added)",
-        hasFullLogsFilter(queue, b1, false));
+        hasLogsFilterCapsule(queue, b1, false));
     Assert.assertTrue("reorg: new canonical block B2's logs must reach FULL stream (added)",
-        hasFullLogsFilter(queue, b2, false));
+        hasLogsFilterCapsule(queue, b2, false));
+    Assert.assertTrue("reorg: new canonical block B1 must reach the FULL block-filter stream",
+        hasBlockFilterCapsule(queue, b1));
+    Assert.assertTrue("reorg: new canonical block B2 must reach the FULL block-filter stream",
+        hasBlockFilterCapsule(queue, b2));
   }
 
   private TransactionCapsule transfer(byte[] owner, byte[] to, long amount,
@@ -1647,7 +1654,7 @@ public class ManagerTest extends BaseMethodTest {
     return blockCapsule;
   }
 
-  private boolean hasFullLogsFilter(BlockingQueue<FilterTriggerCapsule> queue, BlockCapsule b,
+  private boolean hasLogsFilterCapsule(BlockingQueue<FilterTriggerCapsule> queue, BlockCapsule b,
       boolean removed) {
     String blockHash = b.getBlockId().toString();
     return queue.stream()
@@ -1655,5 +1662,14 @@ public class ManagerTest extends BaseMethodTest {
         .map(c -> (LogsFilterCapsule) c)
         .anyMatch(c -> !c.isSolidified() && c.isRemoved() == removed
             && blockHash.equals(c.getBlockHash()));
+  }
+
+  private boolean hasBlockFilterCapsule(BlockingQueue<FilterTriggerCapsule> queue,
+      BlockCapsule b) {
+    String blockHash = b.getBlockId().toString();
+    return queue.stream()
+        .filter(c -> c instanceof BlockFilterCapsule)
+        .map(c -> (BlockFilterCapsule) c)
+        .anyMatch(c -> !c.isSolidified() && blockHash.equals(c.getBlockHash()));
   }
 }
