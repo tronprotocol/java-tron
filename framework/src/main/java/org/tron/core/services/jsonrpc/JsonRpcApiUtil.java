@@ -424,7 +424,7 @@ public class JsonRpcApiUtil {
   }
 
   /** Matches a 32-byte hash hex string: optional 0x prefix + 64 hex chars (also caps length). */
-  public static final String HASH_REGEX = "(0x)?[0-9a-fA-F]{64}$";
+  public static final String HASH_REGEX = "^(0x)?[0-9a-fA-F]{64}$";
 
   /**
    * Convert a hash hex string (optional 0x prefix) to a byte array, validating
@@ -446,7 +446,7 @@ public class JsonRpcApiUtil {
   /**
    * Matches a 32-byte topic hex string: optional 0x prefix + 63 or 64 hex chars.
    */
-  public static final String TOPIC_REGEX = "(0x)?[0-9a-fA-F]{63,64}$";
+  public static final String TOPIC_REGEX = "^(0x)?[0-9a-fA-F]{63,64}$";
 
   /**
    * Convert a topic hex string (optional 0x prefix, leading zero may be omitted) to a 32-byte
