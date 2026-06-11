@@ -267,6 +267,7 @@ public class VMActuator implements Actuator2 {
       result = program.getResult();
       result.setException(e);
       result.rejectInternalTransactions();
+      clearExceptionResult(result);
       result.setRuntimeError(result.getException().getMessage());
       logger.info("JVMStackOverFlowException: {}", result.getException().getMessage());
     } catch (OutOfTimeException e) {
@@ -274,6 +275,7 @@ public class VMActuator implements Actuator2 {
       result = program.getResult();
       result.setException(e);
       result.rejectInternalTransactions();
+      clearExceptionResult(result);
       result.setRuntimeError(result.getException().getMessage());
       logger.info("timeout: {}", result.getException().getMessage());
     } catch (Throwable e) {
@@ -282,6 +284,7 @@ public class VMActuator implements Actuator2 {
       }
       result = program.getResult();
       result.rejectInternalTransactions();
+      clearExceptionResult(result);
       if (Objects.isNull(result.getException())) {
         logger.error(e.getMessage(), e);
         result.setException(new RuntimeException("Unknown Throwable"));
@@ -308,6 +311,13 @@ public class VMActuator implements Actuator2 {
       VMUtils.saveProgramTraceFile(txHash, traceContent);
     }
 
+  }
+
+  private void clearExceptionResult(ProgramResult result) {
+    if (VMConfig.allowTvmOsaka()) {
+      result.getDeleteAccounts().clear();
+      result.getLogInfoList().clear();
+    }
   }
 
   private void create()
