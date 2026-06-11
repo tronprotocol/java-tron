@@ -1201,6 +1201,7 @@ public class Manager {
           }
         }
       }
+      // only reached when the whole new branch applied cleanly; a failed switch rethrows above
       reApplyLogsFilter(first);
     }
 
@@ -2286,7 +2287,9 @@ public class Manager {
   }
 
   // Post the FULL-stream block and logs filters for each block of the new canonical branch
-  // (oldest-first), the same way blockTrigger does on the normal path.
+  // (oldest-first). Must be kept in sync with the FULL-filter section of blockTrigger.
+  // Solidity filters are intentionally not posted here: solidification events for these
+  // blocks arrive later, when postSolidityFilter runs against the then-canonical chain.
   private void reApplyLogsFilter(List<KhaosBlock> newBranch) {
     if (CommonParameter.getInstance().isJsonRpcHttpFullNodeEnable()) {
       for (KhaosBlock khaosBlock : newBranch) {
