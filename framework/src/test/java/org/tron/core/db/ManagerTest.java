@@ -2,6 +2,7 @@ package org.tron.core.db;
 
 import static org.junit.Assert.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
@@ -41,8 +42,11 @@ import org.tron.common.TestConstants;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.logsfilter.EventPluginLoader;
 import org.tron.common.logsfilter.capsule.BlockFilterCapsule;
+import org.tron.common.logsfilter.capsule.BlockLogTriggerCapsule;
 import org.tron.common.logsfilter.capsule.FilterTriggerCapsule;
 import org.tron.common.logsfilter.capsule.LogsFilterCapsule;
+import org.tron.common.logsfilter.capsule.TransactionLogTriggerCapsule;
+import org.tron.common.logsfilter.capsule.TriggerCapsule;
 import org.tron.common.logsfilter.trigger.ContractLogTrigger;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.RuntimeImpl;
@@ -1381,7 +1385,8 @@ public class ManagerTest extends BaseMethodTest {
   @Test
   public void blockTrigger() {
     Manager manager = spy(new Manager());
-    doThrow(new RuntimeException("postBlockTrigger mock")).when(manager).postBlockTrigger(any());
+    doThrow(new RuntimeException("postBlockTrigger mock")).when(manager)
+        .postBlockTrigger(any(), anyBoolean());
     TronError thrown = Assert.assertThrows(TronError.class, () ->
         manager.blockTrigger(new BlockCapsule(Block.newBuilder().build()), 1, 1));
     Assert.assertEquals(TronError.ErrCode.EVENT_SUBSCRIBE_ERROR, thrown.getErrCode());
@@ -1422,6 +1427,142 @@ public class ManagerTest extends BaseMethodTest {
       ReflectUtils.setFieldValue(dbManager, "eventPluginLoaded", false);
       Args.getSolidityContractLogTriggerMap().clear();
       Args.getSolidityContractEventTriggerMap().clear();
+    }
+  }
+
+  private EventPluginLoader installMockLoader() throws Exception {
+    ReflectUtils.setFieldValue(dbManager, "eventPluginLoaded", true);
+    EventPluginLoader mockLoader = mock(EventPluginLoader.class);
+    Field instanceField = EventPluginLoader.class.getDeclaredField("instance");
+    instanceField.setAccessible(true);
+    instanceField.set(null, mockLoader);
+    return mockLoader;
+  }
+
+  private void restoreLoader(EventPluginLoader original) throws Exception {
+    Field instanceField = EventPluginLoader.class.getDeclaredField("instance");
+    instanceField.setAccessible(true);
+    instanceField.set(null, original);
+    ReflectUtils.setFieldValue(dbManager, "eventPluginLoaded", false);
+    dbManager.getTriggerCapsuleQueue().clear();
+  }
+
+  private BlockCapsule blockWithOneTransfer() {
+    BlockCapsule block = new BlockCapsule(1, chainManager.getGenesisBlockId(),
+        System.currentTimeMillis(), ByteString.EMPTY);
+    TransferContract tc = TransferContract.newBuilder()
+        .setOwnerAddress(ByteString.copyFrom(new byte[21]))
+        .setToAddress(ByteString.copyFrom(new byte[21]))
+        .setAmount(1L).build();
+    block.addTransaction(new TransactionCapsule(tc, ContractType.TransferContract));
+    return block;
+  }
+
+  @Test
+  public void testReOrgBlockTriggerRemoved() throws Exception {
+    // version-0 reorg emit core: postBlockTrigger threads the removed flag onto both the block
+    // and transaction triggers. reOrgBlockTrigger calls postBlockTrigger(block, true) (rollback),
+    // reApplyBlockEvents calls postBlockTrigger(block, false) (forward); both delegate here.
+    Field instanceField = EventPluginLoader.class.getDeclaredField("instance");
+    instanceField.setAccessible(true);
+    EventPluginLoader originalLoader = (EventPluginLoader) instanceField.get(null);
+    EventPluginLoader mockLoader = installMockLoader();
+    when(mockLoader.isBlockLogTriggerEnable()).thenReturn(true);
+    when(mockLoader.isBlockLogTriggerSolidified()).thenReturn(false);
+    when(mockLoader.isTransactionLogTriggerEnable()).thenReturn(true);
+    when(mockLoader.isTransactionLogTriggerSolidified()).thenReturn(false);
+    when(mockLoader.isTransactionLogTriggerEthCompatible()).thenReturn(false);
+
+    BlockingQueue<TriggerCapsule> queue = dbManager.getTriggerCapsuleQueue();
+    queue.clear();
+    BlockCapsule block = blockWithOneTransfer();
+    try {
+      // rollback: block + transaction triggers re-emitted with removed=true
+      dbManager.postBlockTrigger(block, true);
+      Assert.assertEquals(2, queue.size());
+      Assert.assertTrue(((BlockLogTriggerCapsule) queue.poll()).getBlockLogTrigger().isRemoved());
+      Assert.assertTrue(((TransactionLogTriggerCapsule) queue.poll())
+          .getTransactionLogTrigger().isRemoved());
+
+      // forward: removed=false
+      dbManager.postBlockTrigger(block, false);
+      Assert.assertEquals(2, queue.size());
+      Assert.assertFalse(((BlockLogTriggerCapsule) queue.poll()).getBlockLogTrigger().isRemoved());
+      Assert.assertFalse(((TransactionLogTriggerCapsule) queue.poll())
+          .getTransactionLogTrigger().isRemoved());
+    } finally {
+      restoreLoader(originalLoader);
+    }
+  }
+
+  @Test
+  public void testReApplyBlockEvents() throws Exception {
+    Field instanceField = EventPluginLoader.class.getDeclaredField("instance");
+    instanceField.setAccessible(true);
+    EventPluginLoader originalLoader = (EventPluginLoader) instanceField.get(null);
+    EventPluginLoader mockLoader = installMockLoader();
+    when(mockLoader.getVersion()).thenReturn(0);
+    when(mockLoader.isBlockLogTriggerEnable()).thenReturn(true);
+    when(mockLoader.isBlockLogTriggerSolidified()).thenReturn(false);
+    when(mockLoader.isTransactionLogTriggerEnable()).thenReturn(false);
+
+    BlockingQueue<TriggerCapsule> queue = dbManager.getTriggerCapsuleQueue();
+    queue.clear();
+    BlockCapsule block = new BlockCapsule(1, chainManager.getGenesisBlockId(),
+        System.currentTimeMillis(), ByteString.EMPTY);
+    List<KhaosDatabase.KhaosBlock> branch = new ArrayList<>();
+    branch.add(new KhaosDatabase.KhaosBlock(block));
+    try {
+      Method m = Manager.class.getDeclaredMethod("reApplyBlockEvents", List.class);
+      m.setAccessible(true);
+      m.invoke(dbManager, branch);
+      // forward block trigger emitted for the re-applied fork branch (removed=false)
+      Assert.assertEquals(1, queue.size());
+      Assert.assertFalse(((BlockLogTriggerCapsule) queue.poll())
+          .getBlockLogTrigger().isRemoved());
+    } finally {
+      restoreLoader(originalLoader);
+    }
+  }
+
+  @Test
+  public void testReOrgBlockTrigger() throws Exception {
+    Field instanceField = EventPluginLoader.class.getDeclaredField("instance");
+    instanceField.setAccessible(true);
+    EventPluginLoader originalLoader = (EventPluginLoader) instanceField.get(null);
+    EventPluginLoader mockLoader = installMockLoader();
+    when(mockLoader.isBlockLogTriggerEnable()).thenReturn(true);
+    when(mockLoader.isTransactionLogTriggerEnable()).thenReturn(false);
+    try {
+      Method m = Manager.class.getDeclaredMethod("reOrgBlockTrigger");
+      m.setAccessible(true);
+      // exercises the fetch of the old head block + try/catch; must not throw
+      m.invoke(dbManager);
+    } finally {
+      restoreLoader(originalLoader);
+    }
+  }
+
+  @Test
+  public void testPostSolidityTriggerSolidified() throws Exception {
+    Field instanceField = EventPluginLoader.class.getDeclaredField("instance");
+    instanceField.setAccessible(true);
+    EventPluginLoader originalLoader = (EventPluginLoader) instanceField.get(null);
+    EventPluginLoader mockLoader = installMockLoader();
+    when(mockLoader.isBlockLogTriggerEnable()).thenReturn(true);
+    when(mockLoader.isBlockLogTriggerSolidified()).thenReturn(true);
+    when(mockLoader.isTransactionLogTriggerEnable()).thenReturn(true);
+    when(mockLoader.isTransactionLogTriggerSolidified()).thenReturn(true);
+    when(mockLoader.isTransactionLogTriggerEthCompatible()).thenReturn(false);
+    // make getContinuousBlockCapsule cover the current head block
+    ReflectUtils.setFieldValue(dbManager, "lastUsedSolidityNum", -1L);
+    try {
+      Method m = Manager.class.getDeclaredMethod("postSolidityTrigger", long.class);
+      m.setAccessible(true);
+      // exercises the solidified-mode block/transaction batch emission
+      m.invoke(dbManager, dbManager.getHeadBlockNum());
+    } finally {
+      restoreLoader(originalLoader);
     }
   }
 

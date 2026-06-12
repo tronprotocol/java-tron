@@ -97,6 +97,12 @@ public class TransactionLogTrigger extends Trigger {
   @Setter
   private Map<String, Long> extMap;
 
+  // true when this transaction is being rolled back due to a chain reorg (fork switch);
+  // mirrors the Ethereum log "removed" semantics already used by ContractTrigger.
+  @Getter
+  @Setter
+  private boolean removed;
+
   public TransactionLogTrigger() {
     setTriggerName(Trigger.TRANSACTION_TRIGGER_NAME);
   }

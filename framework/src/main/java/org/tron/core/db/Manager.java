@@ -1127,6 +1127,7 @@ public class Manager {
           .equals(binaryTree.getValue().peekLast().getParentHash())) {
         if (EventPluginLoader.getInstance().getVersion() == 0) {
           reOrgContractTrigger();
+          reOrgBlockTrigger();
         }
         reOrgLogsFilter();
         eraseBlock();
@@ -1202,7 +1203,7 @@ public class Manager {
         }
       }
       // only reached when the whole new branch applied cleanly; a failed switch rethrows above
-      reApplyLogsFilter(first);
+      reApplyBlockEvents(first);
     }
 
   }
@@ -1435,9 +1436,10 @@ public class Manager {
         return;
       }
 
-      // if event subscribe is enabled, post block trigger to queue
-      postBlockTrigger(block);
+      // if event subscribe is enabled, post block trigger to queue (real-time, not removed)
+      postBlockTrigger(block, false);
       // if event subscribe is enabled, post solidity trigger to queue
+      // (also emits solidified-mode block/transaction triggers)
       postSolidityTrigger(newSolid);
     } catch (Exception e) {
       logger.error("Block trigger failed. head: {}, oldSolid: {}, newSolid: {}",
@@ -2205,6 +2207,27 @@ public class Manager {
   }
 
   private void postSolidityTrigger(final long latestSolidifiedBlockNumber) {
+    // solidified-mode block trigger: emit the newly-solidified blocks (never removed,
+    // since solidified blocks cannot be reorged).
+    if (eventPluginLoaded && EventPluginLoader.getInstance().isBlockLogTriggerEnable()
+        && EventPluginLoader.getInstance().isBlockLogTriggerSolidified()) {
+      for (BlockCapsule capsule : getContinuousBlockCapsule(latestSolidifiedBlockNumber)) {
+        BlockLogTriggerCapsule blockLogTriggerCapsule = new BlockLogTriggerCapsule(capsule);
+        blockLogTriggerCapsule.setLatestSolidifiedBlockNumber(latestSolidifiedBlockNumber);
+        if (!triggerCapsuleQueue.offer(blockLogTriggerCapsule)) {
+          logger.info("Too many triggers, block trigger lost: {}.", capsule.getBlockId());
+        }
+      }
+    }
+
+    // solidified-mode transaction trigger: emit transactions of the newly-solidified blocks.
+    if (eventPluginLoaded && EventPluginLoader.getInstance().isTransactionLogTriggerEnable()
+        && EventPluginLoader.getInstance().isTransactionLogTriggerSolidified()) {
+      for (BlockCapsule capsule : getContinuousBlockCapsule(latestSolidifiedBlockNumber)) {
+        processTransactionTrigger(capsule, false);
+      }
+    }
+
     if (eventPluginLoaded && EventPluginLoader.getInstance().isSolidityLogTriggerEnable()) {
       for (Long i : Args.getSolidityContractLogTriggerMap().keySet()) {
         postSolidityLogContractTrigger(i, latestSolidifiedBlockNumber);
@@ -2233,7 +2256,7 @@ public class Manager {
     lastUsedSolidityNum = latestSolidifiedBlockNumber;
   }
 
-  private void processTransactionTrigger(BlockCapsule newBlock) {
+  private void processTransactionTrigger(BlockCapsule newBlock, boolean removed) {
     List<TransactionCapsule> transactionCapsuleList = newBlock.getTransactions();
 
     // need to set eth compatible data from transactionInfoList
@@ -2252,7 +2275,7 @@ public class Manager {
           transactionCapsule.setBlockNum(newBlock.getNum());
 
           cumulativeEnergyUsed += postTransactionTrigger(transactionCapsule, newBlock, i,
-              cumulativeEnergyUsed, cumulativeLogCount, transactionInfo, energyUnitPrice);
+              cumulativeEnergyUsed, cumulativeLogCount, transactionInfo, energyUnitPrice, removed);
 
           cumulativeLogCount += transactionInfo.getLogCount();
         }
@@ -2261,12 +2284,12 @@ public class Manager {
             newBlock.getNum(),
             "the sizes of transactionInfoList and transactionCapsuleList are not equal");
         for (TransactionCapsule e : newBlock.getTransactions()) {
-          postTransactionTrigger(e, newBlock);
+          postTransactionTrigger(e, newBlock, removed);
         }
       }
     } else {
       for (TransactionCapsule e : newBlock.getTransactions()) {
-        postTransactionTrigger(e, newBlock);
+        postTransactionTrigger(e, newBlock, removed);
       }
     }
   }
@@ -2290,12 +2313,23 @@ public class Manager {
   // (oldest-first). Must be kept in sync with the FULL-filter section of blockTrigger.
   // Solidity filters are intentionally not posted here: solidification events for these
   // blocks arrive later, when postSolidityFilter runs against the then-canonical chain.
-  private void reApplyLogsFilter(List<KhaosBlock> newBranch) {
+  // Re-emit the per-block subscription events for a newly-applied fork branch after a chain
+  // reorg: JSON-RPC block/logs filters and event-subscribe block/transaction triggers. The
+  // fork-switch path returns before blockTrigger() runs, so without this these forward events
+  // would be lost for the re-applied blocks (contract triggers are already re-emitted during
+  // applyBlock). All emitted as forward (removed=false): these blocks are now canonical.
+  private void reApplyBlockEvents(List<KhaosBlock> newBranch) {
     if (CommonParameter.getInstance().isJsonRpcHttpFullNodeEnable()) {
       for (KhaosBlock khaosBlock : newBranch) {
         BlockCapsule blockCapsule = khaosBlock.getBlk();
         postBlockFilter(blockCapsule, false);
         postLogsFilter(blockCapsule, false, false);
+      }
+    }
+
+    if (EventPluginLoader.getInstance().getVersion() == 0) {
+      for (KhaosBlock khaosBlock : newBranch) {
+        postBlockTrigger(khaosBlock.getBlk(), false);
       }
     }
   }
@@ -2324,39 +2358,26 @@ public class Manager {
     }
   }
 
-  void postBlockTrigger(final BlockCapsule blockCapsule) {
-    // process block trigger
+  // Real-time block/transaction triggers for a single block. The solidified-mode batch is
+  // handled in postSolidityTrigger (driven by solidification advancement), so here we only
+  // emit for triggers configured as non-solidified. {@code removed=true} re-emits the same
+  // trigger when the block is rolled back by a chain reorg (see reOrgBlockTrigger).
+  void postBlockTrigger(final BlockCapsule blockCapsule, boolean removed) {
     long solidityBlkNum = getDynamicPropertiesStore().getLatestSolidifiedBlockNum();
-    if (eventPluginLoaded && EventPluginLoader.getInstance().isBlockLogTriggerEnable()) {
-      List<BlockCapsule> capsuleList = new ArrayList<>();
-      if (EventPluginLoader.getInstance().isBlockLogTriggerSolidified()) {
-        capsuleList = getContinuousBlockCapsule(solidityBlkNum);
-      } else {
-        capsuleList.add(blockCapsule);
-      }
 
-      for (BlockCapsule capsule : capsuleList) {
-        BlockLogTriggerCapsule blockLogTriggerCapsule = new BlockLogTriggerCapsule(capsule);
-        blockLogTriggerCapsule.setLatestSolidifiedBlockNumber(solidityBlkNum);
-        if (!triggerCapsuleQueue.offer(blockLogTriggerCapsule)) {
-          logger.info("Too many triggers, block trigger lost: {}.", capsule.getBlockId());
-        }
+    if (eventPluginLoaded && EventPluginLoader.getInstance().isBlockLogTriggerEnable()
+        && !EventPluginLoader.getInstance().isBlockLogTriggerSolidified()) {
+      BlockLogTriggerCapsule blockLogTriggerCapsule = new BlockLogTriggerCapsule(blockCapsule);
+      blockLogTriggerCapsule.setLatestSolidifiedBlockNumber(solidityBlkNum);
+      blockLogTriggerCapsule.setRemoved(removed);
+      if (!triggerCapsuleQueue.offer(blockLogTriggerCapsule)) {
+        logger.info("Too many triggers, block trigger lost: {}.", blockCapsule.getBlockId());
       }
     }
 
-    // process transaction trigger
-    if (eventPluginLoaded && EventPluginLoader.getInstance().isTransactionLogTriggerEnable()) {
-      List<BlockCapsule> capsuleList = new ArrayList<>();
-      if (EventPluginLoader.getInstance().isTransactionLogTriggerSolidified()) {
-        capsuleList = getContinuousBlockCapsule(solidityBlkNum);
-      } else {
-        // need to reset block
-        capsuleList.add(blockCapsule);
-      }
-
-      for (BlockCapsule capsule : capsuleList) {
-        processTransactionTrigger(capsule);
-      }
+    if (eventPluginLoaded && EventPluginLoader.getInstance().isTransactionLogTriggerEnable()
+        && !EventPluginLoader.getInstance().isTransactionLogTriggerSolidified()) {
+      processTransactionTrigger(blockCapsule, removed);
     }
   }
 
@@ -2382,11 +2403,13 @@ public class Manager {
   // cumulativeEnergyUsed is the total of energy used before the current transaction
   private long postTransactionTrigger(final TransactionCapsule trxCap,
       final BlockCapsule blockCap, int index, long preCumulativeEnergyUsed,
-      long cumulativeLogCount, final TransactionInfo transactionInfo, long energyUnitPrice) {
+      long cumulativeLogCount, final TransactionInfo transactionInfo, long energyUnitPrice,
+      boolean removed) {
     TransactionLogTriggerCapsule trx = new TransactionLogTriggerCapsule(trxCap, blockCap,
         index, preCumulativeEnergyUsed, cumulativeLogCount, transactionInfo, energyUnitPrice);
     trx.setLatestSolidifiedBlockNumber(getDynamicPropertiesStore()
         .getLatestSolidifiedBlockNum());
+    trx.setRemoved(removed);
     if (!triggerCapsuleQueue.offer(trx)) {
       logger.info("Too many triggers, transaction trigger lost: {}.", trxCap.getTransactionId());
     }
@@ -2396,10 +2419,11 @@ public class Manager {
 
 
   private void postTransactionTrigger(final TransactionCapsule trxCap,
-      final BlockCapsule blockCap) {
+      final BlockCapsule blockCap, boolean removed) {
     TransactionLogTriggerCapsule trx = new TransactionLogTriggerCapsule(trxCap, blockCap);
     trx.setLatestSolidifiedBlockNumber(getDynamicPropertiesStore()
         .getLatestSolidifiedBlockNum());
+    trx.setRemoved(removed);
     if (!triggerCapsuleQueue.offer(trx)) {
       logger.info("Too many triggers, transaction trigger lost: {}.", trxCap.getTransactionId());
     }
@@ -2422,6 +2446,26 @@ public class Manager {
       }
     }
     clearSolidityContractTriggerCache(getHeadBlockNum());
+  }
+
+  // On a chain reorg, re-emit the block/transaction triggers of the block being erased with
+  // removed=true, so subscribers can roll back. Only real-time (non-solidified) triggers were
+  // ever emitted for this block, so postBlockTrigger(.., true) naturally no-ops in solidified
+  // mode. Called in the erase loop before eraseBlock(), so the old head is still current head.
+  private void reOrgBlockTrigger() {
+    if (eventPluginLoaded
+        && (EventPluginLoader.getInstance().isBlockLogTriggerEnable()
+        || EventPluginLoader.getInstance().isTransactionLogTriggerEnable())) {
+      logger.info("Switch fork occurred, post reOrgBlockTrigger.");
+      try {
+        BlockCapsule oldHeadBlock = chainBaseManager.getBlockById(
+            getDynamicPropertiesStore().getLatestBlockHeaderHash());
+        postBlockTrigger(oldHeadBlock, true);
+      } catch (BadItemException | ItemNotFoundException e) {
+        logger.error("Block header hash does not exist or is bad: {}.",
+            getDynamicPropertiesStore().getLatestBlockHeaderHash());
+      }
+    }
   }
 
   private void clearSolidityContractTriggerCache(long blockNum) {
