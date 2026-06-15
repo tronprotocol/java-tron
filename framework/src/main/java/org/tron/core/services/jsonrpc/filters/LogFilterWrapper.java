@@ -98,16 +98,23 @@ public class LogFilterWrapper {
           throw new JsonRpcInvalidParamsException("please verify: fromBlock <= toBlock");
         }
       }
-
-      // till now, it needs to check block range for eth_getLogs
-      int maxBlockRange = Args.getInstance().getJsonRpcMaxBlockRange();
-      if (checkBlockRange && maxBlockRange > 0
-          && min(toBlockSrc, currentMaxBlockNum) - fromBlockSrc > maxBlockRange) {
-        throw new JsonRpcInvalidParamsException("exceed max block range: " + maxBlockRange);
-      }
     }
 
     this.fromBlock = fromBlockSrc;
     this.toBlock = toBlockSrc;
+
+    // eth_getLogs enforces the block range at construction time. eth_newFilter creates the
+    // wrapper with checkBlockRange=false (no creation-time gate); eth_getFilterLogs re-runs this
+    // check against the current head before scanning so the cap cannot be bypassed.
+    if (checkBlockRange) {
+      validateBlockRange(currentMaxBlockNum);
+    }
+  }
+
+  public void validateBlockRange(long currentMaxBlockNum) throws JsonRpcInvalidParamsException {
+    int maxBlockRange = Args.getInstance().getJsonRpcMaxBlockRange();
+    if (maxBlockRange > 0 && min(toBlock, currentMaxBlockNum) - fromBlock > maxBlockRange) {
+      throw new JsonRpcInvalidParamsException("exceed max block range: " + maxBlockRange);
+    }
   }
 }

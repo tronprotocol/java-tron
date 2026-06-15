@@ -1548,7 +1548,9 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
   }
 
   @Override
-  public LogFilterElement[] getFilterLogs(String filterId) throws ExecutionException,
+  public LogFilterElement[] getFilterLogs(String filterId) throws
+      JsonRpcInvalidParamsException,
+      ExecutionException,
       InterruptedException, BadItemException, ItemNotFoundException,
       JsonRpcMethodNotFoundException, JsonRpcTooManyResultException {
     disableInPBFT("eth_getFilterLogs");
@@ -1567,6 +1569,10 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
 
     LogFilterWrapper logFilterWrapper = eventFilter2Result.get(filterId).getLogFilterWrapper();
     long currentMaxBlockNum = wallet.getNowBlock().getBlockHeader().getRawData().getNumber();
+
+    // re-check the block range against the current head: the filter was created without the cap
+    // (eth_newFilter), so enforce it here prevent an unbounded scan.
+    logFilterWrapper.validateBlockRange(currentMaxBlockNum);
 
     return getLogsByLogFilterWrapper(logFilterWrapper, currentMaxBlockNum);
   }

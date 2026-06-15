@@ -1329,6 +1329,35 @@ public class JsonrpcServiceTest extends BaseTest {
   }
 
   @Test
+  public void testGetFilterLogsEnforcesBlockRange() throws Exception {
+    int oldMaxBlockRange = Args.getInstance().getJsonRpcMaxBlockRange();
+    Args.getInstance().setJsonRpcMaxBlockRange(5_000);
+    try {
+      // toBlock=0xf4240 (1_000_000) is clamped to head (LATEST_BLOCK_NUM = 10_000), so the span
+      // is min(1_000_000, 10_000) - 0 = 10_000 > 5_000 cap.
+      String wideFilterId = tronJsonRpc.newFilter(
+          new FilterRequest("0x0", "0xf4240", null, null, null));
+      Assert.assertNotNull(wideFilterId);
+
+      // eth_getFilterLogs must reject it at query time (previously bypassed -> unbounded scan).
+      JsonRpcInvalidParamsException ex = Assert.assertThrows(
+          JsonRpcInvalidParamsException.class,
+          () -> tronJsonRpc.getFilterLogs(wideFilterId));
+      Assert.assertEquals("exceed max block range: 5000", ex.getMessage());
+
+      // A within-cap filter (span 0) is still served normally - no false rejection.
+      String headHex = ByteArray.toJsonHex(blockCapsule1.getNum());
+      int expectedLogs = blockCapsule1.getTransactions().size() * 2;
+      String okFilterId = tronJsonRpc.newFilter(
+          new FilterRequest(headHex, headHex, null, null, null));
+      LogFilterElement[] okResult = tronJsonRpc.getFilterLogs(okFilterId);
+      Assert.assertEquals(expectedLogs, okResult.length);
+    } finally {
+      Args.getInstance().setJsonRpcMaxBlockRange(oldMaxBlockRange);
+    }
+  }
+
+  @Test
   public void testGetBlockReceipts() {
 
     try {
