@@ -66,7 +66,7 @@ public class Constant {
 
   // JSON parsing (DoS protection)
   public static final int MAX_NESTING_DEPTH = 20;
-  public static final int MAX_HTTP_TOKEN_COUNT = 2_000;
+  public static final int MAX_HTTP_TOKEN_COUNT = 5_000;
   public static final int MAX_JSON_RPC_TOKEN_COUNT = 20_000;
 
 }
