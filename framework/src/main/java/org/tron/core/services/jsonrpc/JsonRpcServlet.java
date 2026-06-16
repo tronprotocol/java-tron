@@ -39,7 +39,7 @@ public class JsonRpcServlet extends RateLimiterServlet {
     JsonFactory factory = JsonFactory.builder()
         .streamReadConstraints(StreamReadConstraints.builder()
             .maxNestingDepth(Constant.MAX_NESTING_DEPTH)
-            .maxTokenCount(Constant.MAX_TOKEN_COUNT)
+            .maxTokenCount(Constant.MAX_JSON_RPC_TOKEN_COUNT)
             .build())
         .build();
     return new ObjectMapper(factory);
