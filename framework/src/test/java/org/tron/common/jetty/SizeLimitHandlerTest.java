@@ -1,8 +1,12 @@
 package org.tron.common.jetty;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.Socket;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServlet;
@@ -33,7 +37,7 @@ import org.tron.json.JSONObject;
 
 /**
  * Tests {@link org.eclipse.jetty.server.handler.SizeLimitHandler} body-size
- * enforcement configured in {@link HttpService#initContextHandler()}.
+ * enforcement configured in {@link HttpService}.
  *
  * Covers: accept/reject by size, UTF-8 byte counting, independent limits
  * across HttpService instances, chunked transfer, and zero-limit behavior.
@@ -152,10 +156,69 @@ public class SizeLimitHandlerTest {
     Assert.assertEquals(200, post(httpServerUri, new StringEntity("small body")));
   }
 
+  /**
+   * An oversized request must return 413 carrying the short, uniform bad-message
+   * page produced by the custom ErrorHandler in {@link HttpService} -
+   * not the default Jetty error page that leaks the exception stack, class name
+   * and the internal request size.
+   */
   @Test
   public void testHttpBodyExceedsLimit() throws Exception {
-    Assert.assertEquals(413,
-        post(httpServerUri, new StringEntity(repeat('a', HTTP_MAX_BODY_SIZE + 1))));
+    HttpPost req = new HttpPost(httpServerUri);
+    req.setEntity(new StringEntity(repeat('a', HTTP_MAX_BODY_SIZE + 1)));
+    HttpResponse resp = client.execute(req);
+
+    String body = EntityUtils.toString(resp.getEntity());
+
+    // return value: 413
+    Assert.assertEquals(413, resp.getStatusLine().getStatusCode());
+
+    // returned page: short uniform bad-message page with the generic reason
+    Assert.assertTrue("should render the short bad-message page",
+        body.contains("Bad Message 413"));
+    Assert.assertTrue("reason should be the generic status message",
+        body.contains("Payload Too Large"));
+
+    // must NOT leak Jetty internals
+    Assert.assertFalse("must not leak exception class / stack frames",
+        body.contains("org.eclipse.jetty"));
+  }
+
+  /**
+   * A malformed Content-Length is rejected by the HTTP parser (onBadMessage ->
+   * ErrorHandler.badMessageError()), a different path from the 413 dispatch handler.
+   * Confirms the custom ErrorHandler leaves other 4xx untouched: still the default
+   * 400 bad-message page, not rerouted through the 413 branch.
+   */
+  @Test
+  public void testBadContentLengthReturnsDefault400() throws Exception {
+    String raw = "POST / HTTP/1.1\r\n"
+        + "Host: localhost\r\n"
+        + "Content-Length: +450\r\n"
+        + "\r\n";
+    String resp = sendRaw(httpServerUri, raw);
+
+    Assert.assertTrue("expected 400, got: " + firstLine(resp), resp.startsWith("HTTP/1.1 400"));
+    Assert.assertTrue("should be the default bad-message page", resp.contains("Bad Message 400"));
+    Assert.assertFalse("must not be rerouted through the 413 branch",
+        resp.contains("Payload Too Large"));
+  }
+
+  /**
+   * A request-line URI longer than the request header buffer is rejected by the HTTP
+   * parser (414), again via badMessageError(), not the 413 dispatch handler. Confirms it
+   * is unaffected by the custom ErrorHandler.
+   */
+  @Test
+  public void testOversizedUriReturnsDefault414() throws Exception {
+    String raw = "GET /" + repeat('a', 9000) + " HTTP/1.1\r\n"  // request line > default 8KB
+        + "Host: localhost\r\n"
+        + "\r\n";
+    String resp = sendRaw(httpServerUri, raw);
+
+    Assert.assertTrue("expected 414, got: " + firstLine(resp), resp.startsWith("HTTP/1.1 414"));
+    Assert.assertFalse("must not be rerouted through the 413 branch",
+        resp.contains("Payload Too Large"));
   }
 
   @Test
@@ -323,5 +386,27 @@ public class SizeLimitHandlerTest {
   /** Returns a string of {@code n} repetitions of {@code c}. */
   private static String repeat(char c, int n) {
     return new String(new char[n]).replace('\0', c);
+  }
+
+  /** Sends a raw HTTP request over a socket and returns the full response (until EOF). */
+  private static String sendRaw(URI uri, String rawRequest) throws Exception {
+    try (Socket socket = new Socket(uri.getHost(), uri.getPort())) {
+      socket.getOutputStream().write(rawRequest.getBytes(StandardCharsets.US_ASCII));
+      socket.getOutputStream().flush();
+      ByteArrayOutputStream out = new ByteArrayOutputStream();
+      InputStream in = socket.getInputStream();
+      byte[] buf = new byte[4096];
+      int n;
+      while ((n = in.read(buf)) != -1) {
+        out.write(buf, 0, n);
+      }
+      return new String(out.toByteArray(), StandardCharsets.UTF_8);
+    }
+  }
+
+  /** First line (status line) of a raw HTTP response. */
+  private static String firstLine(String resp) {
+    int idx = resp.indexOf("\r\n");
+    return idx < 0 ? resp : resp.substring(0, idx);
   }
 }
