@@ -3,6 +3,7 @@ package org.tron.core.services.jsonrpc;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.StreamReadConstraints;
+import com.fasterxml.jackson.core.exc.StreamConstraintsException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -114,7 +115,11 @@ public class JsonRpcServlet extends RateLimiterServlet {
         return;
       }
     } catch (JsonProcessingException e) {
-      writeJsonRpcError(resp, JsonRpcError.PARSE_ERROR, "JSON parse error", null, false);
+      if (e instanceof StreamConstraintsException) {
+        writeJsonRpcError(resp, JsonRpcError.PARSE_ERROR, e.getMessage(), null, false);
+      } else {
+        writeJsonRpcError(resp, JsonRpcError.PARSE_ERROR, "JSON parse error", null, false);
+      }
       return;
     }
 
