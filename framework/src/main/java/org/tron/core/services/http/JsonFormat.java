@@ -57,6 +57,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.StringUtil;
+import org.tron.core.Constant;
 import org.tron.json.JSON;
 import org.tron.protos.contract.BalanceContract;
 
@@ -291,6 +292,7 @@ public class JsonFormat {
     tokenizer.consume("{"); // Needs to happen when the object starts.
     while (!tokenizer.tryConsume("}")) { // Continue till the object is done
       mergeField(tokenizer, extensionRegistry, builder, selfType);
+      tokenizer.tryConsume(",");
     }
     // Test to make sure the tokenizer has reached the end of the stream.
     if (!tokenizer.atEnd()) {
@@ -556,8 +558,9 @@ public class JsonFormat {
   }
 
   /**
-   * Parse a single field from {@code tokenizer} and merge it into {@code builder}. If a ',' is
-   * detected after the field ends, the next field will be parsed automatically
+   * Parse a single field from {@code tokenizer} and merge it into {@code builder}. Exactly one
+   * field is consumed; the caller ({@code merge} / {@code handleObject}) consumes any trailing
+   * ',' and loops over the remaining fields.
    */
   protected static void mergeField(Tokenizer tokenizer,
       ExtensionRegistry extensionRegistry, Message.Builder builder,
@@ -628,11 +631,6 @@ public class JsonFormat {
         handleValue(tokenizer, extensionRegistry, builder, field, extension, unknown, selfType);
       }
     }
-
-    if (tokenizer.tryConsume(",")) {
-      // Continue with the next field
-      mergeField(tokenizer, extensionRegistry, builder, selfType);
-    }
   }
 
   private static void handleMissingField(Tokenizer tokenizer,
@@ -642,18 +640,28 @@ public class JsonFormat {
     if ("{".equals(tokenizer.currentToken())) {
       // Message structure
       tokenizer.consume("{");
-      do {
-        tokenizer.consumeIdentifier();
-        handleMissingField(tokenizer, extensionRegistry, builder);
-      } while (tokenizer.tryConsume(","));
-      tokenizer.consume("}");
+      tokenizer.enterRecursion();
+      try {
+        do {
+          tokenizer.consumeIdentifier();
+          handleMissingField(tokenizer, extensionRegistry, builder);
+        } while (tokenizer.tryConsume(","));
+        tokenizer.consume("}");
+      } finally {
+        tokenizer.exitRecursion();
+      }
     } else if ("[".equals(tokenizer.currentToken())) {
       // Collection
       tokenizer.consume("[");
-      do {
-        handleMissingField(tokenizer, extensionRegistry, builder);
-      } while (tokenizer.tryConsume(","));
-      tokenizer.consume("]");
+      tokenizer.enterRecursion();
+      try {
+        do {
+          handleMissingField(tokenizer, extensionRegistry, builder);
+        } while (tokenizer.tryConsume(","));
+        tokenizer.consume("]");
+      } finally {
+        tokenizer.exitRecursion();
+      }
     } else { //if (!",".equals(tokenizer.currentToken)){
       // Primitive value
       if ("null".equals(tokenizer.currentToken())) {
@@ -807,20 +815,25 @@ public class JsonFormat {
     }
 
     tokenizer.consume("{");
-    String endToken = "}";
+    tokenizer.enterRecursion();
+    try {
+      String endToken = "}";
 
-    while (!tokenizer.tryConsume(endToken)) {
-      if (tokenizer.atEnd()) {
-        throw tokenizer.parseException("Expected \"" + endToken + "\".");
+      while (!tokenizer.tryConsume(endToken)) {
+        if (tokenizer.atEnd()) {
+          throw tokenizer.parseException("Expected \"" + endToken + "\".");
+        }
+        mergeField(tokenizer, extensionRegistry, subBuilder, selfType);
+        if (tokenizer.tryConsume(",")) {
+          // there are more fields in the object, so continue
+          continue;
+        }
       }
-      mergeField(tokenizer, extensionRegistry, subBuilder, selfType);
-      if (tokenizer.tryConsume(",")) {
-        // there are more fields in the object, so continue
-        continue;
-      }
+
+      return subBuilder.build();
+    } finally {
+      tokenizer.exitRecursion();
     }
-
-    return subBuilder.build();
   }
 
   /**
@@ -1290,6 +1303,18 @@ public class JsonFormat {
     // errors *after* consuming).
     private int previousLine = 0;
     private int previousColumn = 0;
+    private int currentDepth = 0;
+
+    public void enterRecursion() throws ParseException {
+      if (currentDepth >= Constant.MAX_NESTING_DEPTH) {
+        throw parseException("Hit recursion limit.");
+      }
+      ++currentDepth;
+    }
+
+    public void exitRecursion() {
+      --currentDepth;
+    }
 
     /**
      * Construct a tokenizer that parses tokens from the given text.

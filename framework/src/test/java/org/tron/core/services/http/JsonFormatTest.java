@@ -17,6 +17,7 @@ import java.lang.reflect.Method;
 import org.junit.After;
 import org.junit.Test;
 import org.mockito.Mockito;
+import org.tron.core.Constant;
 import org.tron.protos.Protocol;
 
 public class JsonFormatTest {
@@ -250,6 +251,187 @@ public class JsonFormatTest {
     });
     cause = thrown.getCause();
     assertTrue(cause instanceof NumberFormatException);
+  }
+
+  /*
+   * Compatibility-preserved behavior: these cases pass before and after this fix.
+   * They guard unknown-field skipping, repeated-field syntax, and accepted depth.
+   */
+  @Test
+  public void testMissingFieldSkipsNestedObjectAndArray() throws Exception {
+    String input = "{\"zzz\":{\"a\":1,\"b\":[true,false,null,{\"c\":\"d\"}],\"e\":{\"f\":2}},"
+        + "\"address\":\"61646472657373\"}";
+    Protocol.HelloMessage.Builder builder = Protocol.HelloMessage.newBuilder();
+
+    JsonFormat.merge(input, builder, false);
+
+    assertEquals(ByteString.copyFromUtf8("address"), builder.getAddress());
+  }
+
+  @Test
+  public void testTrailingCommaInKnownRepeatedField() throws Exception {
+    Protocol.Proposal.Builder builder = Protocol.Proposal.newBuilder();
+
+    JsonFormat.merge("{\"approvals\":[\"00\",\"01\",]}", builder, false);
+
+    Protocol.Proposal proposal = builder.build();
+    assertEquals(2, proposal.getApprovalsCount());
+    assertEquals(ByteString.copyFrom(new byte[] {0}), proposal.getApprovals(0));
+    assertEquals(ByteString.copyFrom(new byte[] {1}), proposal.getApprovals(1));
+  }
+
+  @Test
+  public void testKnownRepeatedPrimitiveFieldRejectsNestedArray() {
+    Protocol.Proposal.Builder builder = Protocol.Proposal.newBuilder();
+
+    JsonFormat.ParseException e = assertThrows(JsonFormat.ParseException.class,
+        () -> JsonFormat.merge("{\"approvals\":[[\"00\"]]}", builder, false));
+
+    assertTrue(e.getMessage().contains("Expected string."));
+  }
+
+  @Test
+  public void testKnownRepeatedMessageFieldRejectsNestedArray() {
+    Protocol.Block.Builder builder = Protocol.Block.newBuilder();
+
+    JsonFormat.ParseException e = assertThrows(JsonFormat.ParseException.class,
+        () -> JsonFormat.merge("{\"transactions\":[[]]}", builder, false));
+
+    assertTrue(e.getMessage().contains("Expected \"{\"."));
+  }
+
+  @Test
+  public void testMissingFieldRejectsTrailingCommaInNestedObject() {
+    Protocol.HelloMessage.Builder builder = Protocol.HelloMessage.newBuilder();
+
+    JsonFormat.ParseException e = assertThrows(JsonFormat.ParseException.class,
+        () -> JsonFormat.merge("{\"zzz\":{\"a\":1,}}", builder));
+
+    assertTrue(e.getMessage().contains("Expected identifier"));
+  }
+
+  @Test
+  public void testMissingFieldRejectsTrailingCommaInNestedArray() {
+    Protocol.HelloMessage.Builder builder = Protocol.HelloMessage.newBuilder();
+
+    JsonFormat.ParseException e = assertThrows(JsonFormat.ParseException.class,
+        () -> JsonFormat.merge("{\"zzz\":[1,]}", builder));
+
+    assertTrue(e.getMessage().contains("Expected string."));
+  }
+
+  @Test
+  public void testNestingWithinLimit() throws Exception {
+    int depth = Constant.MAX_NESTING_DEPTH / 2;
+    StringBuilder sb = new StringBuilder();
+    for (int i = 0; i < depth; i++) {
+      sb.append("{\"zzz\":");
+    }
+    sb.append("1");
+    for (int i = 0; i < depth; i++) {
+      sb.append("}");
+    }
+    Protocol.HelloMessage.Builder builder = Protocol.HelloMessage.newBuilder();
+    JsonFormat.merge(sb.toString(), builder);
+    assertNotNull(builder.build());
+  }
+
+  /*
+   * Behavior changed by this fix: the previous parser either missed the depth guard
+   * or failed through recursive comma handling / stack overflow.
+   */
+  @Test
+  public void testTrailingCommaInParsedObjects() throws Exception {
+    String input = "{\"genesisBlockId\":{\"hash\":\"00\",\"number\":1,},"
+        + "\"address\":\"61646472657373\",}";
+    Protocol.HelloMessage.Builder builder = Protocol.HelloMessage.newBuilder();
+
+    JsonFormat.merge(input, builder, false);
+
+    Protocol.HelloMessage message = builder.build();
+    assertEquals(ByteString.copyFrom(new byte[] {0}), message.getGenesisBlockId().getHash());
+    assertEquals(1L, message.getGenesisBlockId().getNumber());
+    assertEquals(ByteString.copyFromUtf8("address"), message.getAddress());
+  }
+
+  @Test
+  public void testMissingFieldRejectsObjectBeyondNestingLimit() {
+    Protocol.HelloMessage.Builder builder = Protocol.HelloMessage.newBuilder();
+
+    JsonFormat.ParseException e = assertThrows(JsonFormat.ParseException.class,
+        () -> JsonFormat.merge(buildUnknownNestedObject(Constant.MAX_NESTING_DEPTH + 1), builder));
+
+    assertTrue(e.getMessage().contains("Hit recursion limit."));
+  }
+
+  @Test
+  public void testMissingFieldRejectsArrayBeyondNestingLimit() {
+    Protocol.HelloMessage.Builder builder = Protocol.HelloMessage.newBuilder();
+
+    JsonFormat.ParseException e = assertThrows(JsonFormat.ParseException.class,
+        () -> JsonFormat.merge(buildUnknownNestedArray(Constant.MAX_NESTING_DEPTH + 1), builder));
+
+    assertTrue(e.getMessage().contains("Hit recursion limit."));
+  }
+
+  @Test
+  public void testDeeplyNestedObject() {
+    int depth = 100_000;
+    StringBuilder sb = new StringBuilder();
+    for (int i = 0; i < depth; i++) {
+      sb.append("{\"zzz\":");
+    }
+    sb.append("1");
+    for (int i = 0; i < depth; i++) {
+      sb.append("}");
+    }
+    Protocol.HelloMessage.Builder builder = Protocol.HelloMessage.newBuilder();
+    assertThrows(JsonFormat.ParseException.class, () -> JsonFormat.merge(sb.toString(), builder));
+  }
+
+  @Test
+  public void testDeeplyNestedArray() {
+    int depth = 100_000;
+    StringBuilder sb = new StringBuilder();
+    sb.append("{\"zzz\":");
+    for (int i = 0; i < depth; i++) {
+      sb.append("[");
+    }
+    sb.append("1");
+    for (int i = 0; i < depth; i++) {
+      sb.append("]");
+    }
+    sb.append("}");
+    Protocol.HelloMessage.Builder builder = Protocol.HelloMessage.newBuilder();
+    assertThrows(JsonFormat.ParseException.class, () -> JsonFormat.merge(sb.toString(), builder));
+  }
+
+  private String buildUnknownNestedObject(int depth) {
+    StringBuilder sb = new StringBuilder();
+    sb.append("{");
+    for (int i = 0; i < depth; i++) {
+      sb.append("\"zzz\":{");
+    }
+    sb.append("\"leaf\":1");
+    for (int i = 0; i < depth; i++) {
+      sb.append("}");
+    }
+    sb.append("}");
+    return sb.toString();
+  }
+
+  private String buildUnknownNestedArray(int depth) {
+    StringBuilder sb = new StringBuilder();
+    sb.append("{\"zzz\":");
+    for (int i = 0; i < depth; i++) {
+      sb.append("[");
+    }
+    sb.append("1");
+    for (int i = 0; i < depth; i++) {
+      sb.append("]");
+    }
+    sb.append("}");
+    return sb.toString();
   }
 
 }

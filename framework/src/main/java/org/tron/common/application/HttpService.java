@@ -16,12 +16,22 @@
 package org.tron.common.application;
 
 import com.google.common.annotations.VisibleForTesting;
+import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.concurrent.CompletableFuture;
+import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.ConnectionLimit;
+import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.handler.ErrorHandler;
 import org.eclipse.jetty.server.handler.SizeLimitHandler;
 import org.eclipse.jetty.servlet.ServletContextHandler;
+import org.eclipse.jetty.util.BufferUtil;
 import org.tron.core.config.args.Args;
 
 @Slf4j(topic = "rpc")
@@ -72,6 +82,7 @@ public abstract class HttpService extends AbstractService {
     if (maxHttpConnectNumber > 0) {
       this.apiServer.addBean(new ConnectionLimit(maxHttpConnectNumber, this.apiServer));
     }
+    this.apiServer.setErrorHandler(new OversizedRequestErrorHandler());
   }
 
   protected ServletContextHandler initContextHandler() {
@@ -87,5 +98,31 @@ public abstract class HttpService extends AbstractService {
 
   protected void addFilter(ServletContextHandler context) {
 
+  }
+
+  /**
+   * For oversized requests (the 413 thrown by SizeLimitHandler during dispatch) logs the
+   * detail server-side and returns the short, uniform bad-message page, instead of the
+   * default error page that leaks the exception stack and internal request sizes. All
+   * other errors keep Jetty's default handling.
+   */
+  private static final class OversizedRequestErrorHandler extends ErrorHandler {
+
+    @Override
+    public void handle(String target, Request baseRequest, HttpServletRequest request,
+        HttpServletResponse response) throws IOException, ServletException {
+      if (response.getStatus() == HttpStatus.PAYLOAD_TOO_LARGE_413) {
+        Throwable cause = (Throwable) request.getAttribute(RequestDispatcher.ERROR_EXCEPTION);
+        logger.info("Reject oversized request, uri: {}, detail: {}",
+            request.getRequestURI(), cause == null ? "413" : cause.getMessage());
+        baseRequest.setHandled(true);
+        ByteBuffer body = badMessageError(HttpStatus.PAYLOAD_TOO_LARGE_413,
+            HttpStatus.getMessage(HttpStatus.PAYLOAD_TOO_LARGE_413),
+            baseRequest.getResponse().getHttpFields());
+        response.getOutputStream().write(BufferUtil.toArray(body));
+        return;
+      }
+      super.handle(target, baseRequest, request, response);
+    }
   }
 }
