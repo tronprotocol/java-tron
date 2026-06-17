@@ -384,7 +384,7 @@ public class JsonRpcServletTest {
 
   @Test
   public void tooManyTokens_returnsParseError() throws Exception {
-    int limit = Constant.MAX_JSON_RPC_TOKEN_COUNT;
+    int limit = Constant.MAX_TOKEN_COUNT;
     StringBuilder sb = new StringBuilder("[");
     for (int i = 0; i < limit; i++) {
       if (i > 0) {

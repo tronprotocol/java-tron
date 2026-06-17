@@ -60,7 +60,7 @@ public final class JSON {
   private static JsonFactory buildFactory() {
     return JsonFactory.builder().streamReadConstraints(StreamReadConstraints.builder()
             .maxNestingDepth(Constant.MAX_NESTING_DEPTH)
-            .maxTokenCount(Constant.MAX_HTTP_TOKEN_COUNT)
+            .maxTokenCount(Constant.MAX_TOKEN_COUNT)
             .build()).build();
   }
 

@@ -1143,7 +1143,7 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
         String abiStr = "{" + "\"entrys\":" + args.getAbi() + "}";
         try {
           JsonFormat.merge(abiStr, abiBuilder, args.isVisible());
-        } catch (JsonFormat.ParseException | StackOverflowError e) {
+        } catch (Exception e) {
           throw new JsonRpcInvalidParamsException("invalid abi");
         }
       }

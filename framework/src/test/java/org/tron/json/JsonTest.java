@@ -371,7 +371,7 @@ public class JsonTest {
   public void testJsonMapperHasConfiguredConstraints() {
     StreamReadConstraints sr = JSON.MAPPER.getFactory().streamReadConstraints();
     assertEquals(Constant.MAX_NESTING_DEPTH, sr.getMaxNestingDepth());
-    assertEquals((long) Constant.MAX_HTTP_TOKEN_COUNT, sr.getMaxTokenCount());
+    assertEquals((long) Constant.MAX_TOKEN_COUNT, sr.getMaxTokenCount());
   }
 
   @Test
