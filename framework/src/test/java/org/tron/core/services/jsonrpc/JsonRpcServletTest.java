@@ -3,6 +3,7 @@ package org.tron.core.services.jsonrpc;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
@@ -62,6 +63,8 @@ public class JsonRpcServletTest {
     JsonNode body = MAPPER.readTree(resp.getContentAsString());
     assertFalse(body.isArray());
     assertEquals(-32700, body.get("error").get("code").asInt());
+    // A non-constraint JsonProcessingException keeps the generic message (else branch).
+    assertEquals("JSON parse error", body.get("error").get("message").asText());
     assertEquals("2.0", body.get("jsonrpc").asText());
     assertTrue(body.get("id").isNull());
   }
@@ -378,8 +381,14 @@ public class JsonRpcServletTest {
 
     MockHttpServletResponse resp = doPost(sb.toString());
     assertEquals(200, resp.getStatus());
-    assertEquals(-32700,
-        MAPPER.readTree(resp.getContentAsString()).get("error").get("code").asInt());
+    JsonNode error = MAPPER.readTree(resp.getContentAsString()).get("error");
+    assertEquals(-32700, error.get("code").asInt());
+    // StreamConstraintsException message must be surfaced verbatim, not the generic text,
+    // so callers can tell which constraint (nesting depth) was hit.
+    String message = error.get("message").asText();
+    assertNotEquals("JSON parse error", message);
+    assertTrue("expected a nesting-depth constraint message, got: " + message,
+        message.contains("nesting depth") && message.contains("exceeds the maximum allowed"));
   }
 
   @Test
@@ -396,8 +405,14 @@ public class JsonRpcServletTest {
 
     MockHttpServletResponse resp = doPost(sb.toString());
     assertEquals(200, resp.getStatus());
-    assertEquals(-32700,
-        MAPPER.readTree(resp.getContentAsString()).get("error").get("code").asInt());
+    JsonNode error = MAPPER.readTree(resp.getContentAsString()).get("error");
+    assertEquals(-32700, error.get("code").asInt());
+    // StreamConstraintsException message must be surfaced verbatim, not the generic text,
+    // so callers can tell which constraint (token count) was hit.
+    String message = error.get("message").asText();
+    assertNotEquals("JSON parse error", message);
+    assertTrue("expected a token-count constraint message, got: " + message,
+        message.contains("Token count") && message.contains("exceeds the maximum allowed"));
   }
 
   // --- helpers ---
