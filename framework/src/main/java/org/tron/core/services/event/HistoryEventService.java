@@ -67,11 +67,15 @@ public class HistoryEventService {
         if (thread.isInterrupted() || isClosed) {
           throw new InterruptedException();
         }
-        if (instance.isUseNativeQueue()) {
-          Thread.sleep(20);
-        } else if (instance.isBusy()) {
+        // isBusy() returns false unless the event plugin is active, so native-only
+        // mode keeps its original 20ms pacing. In combined mode we still honor the
+        // plugin's back-pressure so its async queue is not flooded during sync.
+        if (instance.isBusy()) {
           Thread.sleep(100);
           continue;
+        }
+        if (instance.isUseNativeQueue()) {
+          Thread.sleep(20);
         }
         BlockEvent blockEvent = blockEventGet.getBlockEvent(tmp);
         realtimeEventService.flush(blockEvent, false);

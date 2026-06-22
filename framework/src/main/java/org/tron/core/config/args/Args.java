@@ -372,16 +372,17 @@ public class Args extends CommonParameter {
     epc.setBindPort(nq.getBindport());
     epc.setSendQueueLength(nq.getSendqueuelength());
 
-    if (!nq.isUseNativeQueue()) {
-      if (StringUtils.isNotEmpty(ec.getPath())) {
-        epc.setPluginPath(ec.getPath().trim());
-      }
-      if (StringUtils.isNotEmpty(ec.getServer())) {
-        epc.setServerAddress(ec.getServer().trim());
-      }
-      if (StringUtils.isNotEmpty(ec.getDbconfig())) {
-        epc.setDbConfig(ec.getDbconfig().trim());
-      }
+    // Plugin settings are always copied so the event plugin (e.g. MongoDB) can run
+    // alongside the native ZMQ queue. The native queue and the plugin are activated
+    // independently in EventPluginLoader (useNativeQueue + non-empty pluginPath).
+    if (StringUtils.isNotEmpty(ec.getPath())) {
+      epc.setPluginPath(ec.getPath().trim());
+    }
+    if (StringUtils.isNotEmpty(ec.getServer())) {
+      epc.setServerAddress(ec.getServer().trim());
+    }
+    if (StringUtils.isNotEmpty(ec.getDbconfig())) {
+      epc.setDbConfig(ec.getDbconfig().trim());
     }
 
     // topics

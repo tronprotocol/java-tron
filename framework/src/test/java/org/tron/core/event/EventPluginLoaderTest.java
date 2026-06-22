@@ -17,11 +17,17 @@ public class EventPluginLoaderTest {
   public void testIsBusy() {
 
     EventPluginLoader eventPluginLoader = EventPluginLoader.getInstance();
+
+    // When the event plugin is not active, the node is never "busy" regardless of the
+    // native queue: back-pressure only throttles the plugin's async queue.
+    ReflectUtils.setFieldValue(eventPluginLoader, "useEventPlugin", false);
     ReflectUtils.setFieldValue(eventPluginLoader, "useNativeQueue", true);
     boolean flag = eventPluginLoader.isBusy();
     Assert.assertFalse(flag);
 
-    ReflectUtils.setFieldValue(eventPluginLoader, "useNativeQueue", false);
+    // When the plugin is active (with or without the native queue), busy-ness is driven
+    // by the plugin queue size.
+    ReflectUtils.setFieldValue(eventPluginLoader, "useEventPlugin", true);
 
     IPluginEventListener p1 = mock(IPluginEventListener.class);
     List<IPluginEventListener> list = new ArrayList<>();
