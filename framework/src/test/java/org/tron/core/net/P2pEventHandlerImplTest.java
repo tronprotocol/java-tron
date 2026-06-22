@@ -3,6 +3,7 @@ package org.tron.core.net;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
+import com.google.protobuf.ByteString;
 import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
@@ -210,6 +211,35 @@ public class P2pEventHandlerImplTest extends BaseTest {
     method.invoke(handler, peer, msgBlock1.getSendBytes());
     Assert.assertEquals(100,  // count unchanged: message was dropped
         peer.getPeerStatistics().messageStatistics.tronInBlockInventoryElement.getCount(10));
+  }
+
+  @Test
+  public void testCheckInvRateLimitUnknownTypeRejected() throws Exception {
+    CommonParameter parameter = CommonParameter.getInstance();
+    parameter.setMaxTps(10);
+    parameter.setMaxBlockInvPerSecond(10);
+
+    PeerStatistics peerStatistics = new PeerStatistics();
+    PeerConnection peer = mock(PeerConnection.class);
+    Mockito.when(peer.getPeerStatistics()).thenReturn(peerStatistics);
+
+    P2pEventHandlerImpl handler = new P2pEventHandlerImpl();
+    Method method = handler.getClass()
+        .getDeclaredMethod("processMessage", PeerConnection.class, byte[].class);
+    method.setAccessible(true);
+
+    // craft an Inventory whose enum type holds an undefined value (2)
+    Protocol.Inventory inv = Protocol.Inventory.newBuilder()
+        .setTypeValue(2)
+        .addIds(ByteString.copyFrom(new byte[32]))
+        .build();
+    InventoryMessage msg = new InventoryMessage(inv.toByteArray());
+    Assert.assertEquals(InventoryType.UNRECOGNIZED, msg.getInventoryType());
+
+    method.invoke(handler, peer, msg.getSendBytes());
+
+    // checkInvRateLimit throws BAD_MESSAGE -> processException -> disconnect(BAD_PROTOCOL)
+    verify(peer).disconnect(Protocol.ReasonCode.BAD_PROTOCOL);
   }
 
   @Test

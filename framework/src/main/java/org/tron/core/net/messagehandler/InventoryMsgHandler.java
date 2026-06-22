@@ -63,6 +63,10 @@ public class InventoryMsgHandler implements TronMsgHandler {
     }
 
     InventoryType type = inventoryMessage.getInventoryType();
+    if (type != InventoryType.TRX && type != InventoryType.BLOCK) {
+      throw new P2pException(TypeEnum.BAD_MESSAGE,
+          "unknown inventory type: " + inventoryMessage.getInventory().getTypeValue());
+    }
     int size = hashList.size();
 
     if (peer.isNeedSyncFromPeer() || peer.isNeedSyncFromUs()) {

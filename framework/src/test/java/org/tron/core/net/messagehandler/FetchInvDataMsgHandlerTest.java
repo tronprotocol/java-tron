@@ -157,6 +157,27 @@ public class FetchInvDataMsgHandlerTest {
   }
 
   @Test
+  public void testUnknownInventoryTypeRejected() throws Exception {
+    FetchInvDataMsgHandler handler = new FetchInvDataMsgHandler();
+    PeerConnection peer = Mockito.mock(PeerConnection.class);
+
+    // craft a FetchInvData whose enum type holds an undefined value (2)
+    Protocol.Inventory inv = Protocol.Inventory.newBuilder()
+        .setTypeValue(2)
+        .addIds(com.google.protobuf.ByteString.copyFrom(new byte[32]))
+        .build();
+    FetchInvDataMessage msg = new FetchInvDataMessage(inv.toByteArray());
+    Assert.assertEquals(Protocol.Inventory.InventoryType.UNRECOGNIZED, msg.getInventoryType());
+
+    try {
+      handler.processMessage(peer, msg);
+      Assert.fail("Expected P2pException for unknown inventory type");
+    } catch (P2pException e) {
+      Assert.assertEquals(P2pException.TypeEnum.BAD_MESSAGE, e.getType());
+    }
+  }
+
+  @Test
   public void testRateLimiter() {
     List<Sha256Hash> blockIds = new LinkedList<>();
     for (int i = 0; i <= 100; i++) {
