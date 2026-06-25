@@ -202,6 +202,7 @@ import org.tron.core.store.StoreFactory;
 import org.tron.core.store.VotesStore;
 import org.tron.core.store.WitnessStore;
 import org.tron.core.utils.TransactionUtil;
+import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.program.Program;
 import org.tron.core.zen.ShieldedTRC20ParametersBuilder;
 import org.tron.core.zen.ShieldedTRC20ParametersBuilder.ShieldedTRC20ParametersType;
@@ -3157,8 +3158,14 @@ public class Wallet {
         StoreFactory.getInstance(), true, false);
     VMActuator vmActuator = new VMActuator(true);
 
-    vmActuator.validate(context);
-    vmActuator.execute(context);
+    try {
+      vmActuator.validate(context);
+      vmActuator.execute(context);
+    } finally {
+      // constant call runs on a pooled RPC worker; drop its thread-local VM config view so it
+      // can never leak into a later (block/broadcast) execution on the same thread.
+      VMConfig.clearLocalSnapshot();
+    }
 
     ProgramResult result = context.getProgramResult();
     if (!isEstimating && result.getException() != null

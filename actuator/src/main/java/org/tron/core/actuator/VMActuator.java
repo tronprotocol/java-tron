@@ -120,7 +120,7 @@ public class VMActuator implements Actuator2 {
     }
 
     // Load Config
-    ConfigLoader.load(context.getStoreFactory());
+    ConfigLoader.load(context.getStoreFactory(), isConstantCall);
     // Warm up registry class
     OperationRegistry.init();
     trx = context.getTrxCap().getInstance();
