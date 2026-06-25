@@ -1,7 +1,9 @@
 package org.tron.common.runtime.vm;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -142,11 +144,14 @@ public class VoteWitnessCost3Test extends BaseTest {
         zeroOffset, largeLength, 0);
 
     boolean overflowCaught = false;
+    VMConfig.initAllowTvmOsaka(1);    // cost3 self-dispatches; exercise the v3 (BigInteger) path
     try {
       EnergyCost.getVoteWitnessCost3(program);
     } catch (Program.OutOfMemoryException e) {
       // cost3 should detect memory overflow via checkMemorySize
       overflowCaught = true;
+    } finally {
+      VMConfig.initAllowTvmOsaka(0);
     }
     assertTrue("cost3 should throw memoryOverflow for huge array length", overflowCaught);
   }
@@ -161,10 +166,13 @@ public class VoteWitnessCost3Test extends BaseTest {
         new DataWord(0), new DataWord(1), 0);
 
     boolean overflowCaught = false;
+    VMConfig.initAllowTvmOsaka(1);    // cost3 self-dispatches; exercise the v3 (BigInteger) path
     try {
       EnergyCost.getVoteWitnessCost3(program);
     } catch (Program.OutOfMemoryException e) {
       overflowCaught = true;
+    } finally {
+      VMConfig.initAllowTvmOsaka(0);
     }
     assertTrue("cost3 should throw memoryOverflow for huge offset", overflowCaught);
   }
@@ -237,6 +245,51 @@ public class VoteWitnessCost3Test extends BaseTest {
       assertEquals(expectedCost3, cost);
     } finally {
       VMConfig.initAllowTvmOsaka(0);
+    }
+  }
+
+  @Test
+  public void testCost3FallsBackToCost2WhenOsakaOff() {
+    // cost3 self-dispatches: with osaka off it delegates to cost2, so a cost3 left in the shared
+    // jump table (e.g. read by a constant call whose view has osaka off) still charges v2 energy.
+    String maxHex = "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff";
+    DataWord huge = new DataWord(maxHex);
+    DataWord zero = new DataWord(0);
+
+    VMConfig.initAllowTvmOsaka(0);
+    long viaCost3 =
+        EnergyCost.getVoteWitnessCost3(mockProgram(zero, new DataWord(1), zero, huge, 0));
+    long viaCost2 =
+        EnergyCost.getVoteWitnessCost2(mockProgram(zero, new DataWord(1), zero, huge, 0));
+    assertEquals("cost3 must equal cost2 when osaka is off", viaCost2, viaCost3);
+
+    // sanity: with osaka on, cost3 instead runs v3 and detects the overflow that cost2 wraps away.
+    VMConfig.initAllowTvmOsaka(1);
+    try {
+      EnergyCost.getVoteWitnessCost3(mockProgram(zero, new DataWord(1), zero, huge, 0));
+      fail("cost3 with osaka on must overflow-throw on the huge length");
+    } catch (Program.OutOfMemoryException expected) {
+      // expected
+    } finally {
+      VMConfig.initAllowTvmOsaka(0);
+    }
+  }
+
+  @Test
+  public void testCost2FallsBackToLegacyWhenEnergyAdjustmentOff() {
+    // cost2 self-dispatches: with energyAdjustment off it delegates to the legacy cost.
+    VMConfig.initAllowEnergyAdjustment(0);
+    try {
+      long viaCost2 = EnergyCost.getVoteWitnessCost2(mockProgram(0, 2, 128, 2, 0));
+      long viaLegacy = EnergyCost.getVoteWitnessCost(mockProgram(0, 2, 128, 2, 0));
+      assertEquals("cost2 must equal legacy cost when energyAdjustment is off",
+          viaLegacy, viaCost2);
+
+      // sanity: with energyAdjustment on, cost2 differs from the legacy cost for this input.
+      VMConfig.initAllowEnergyAdjustment(1);
+      assertNotEquals(viaLegacy, EnergyCost.getVoteWitnessCost2(mockProgram(0, 2, 128, 2, 0)));
+    } finally {
+      VMConfig.initAllowEnergyAdjustment(1);
     }
   }
 }
