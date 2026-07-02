@@ -1,6 +1,7 @@
 package org.tron.core.services.http;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
@@ -19,6 +20,9 @@ import org.junit.Test;
 import org.mockito.Mockito;
 import org.tron.core.Constant;
 import org.tron.protos.Protocol;
+import org.tron.protos.contract.ProposalContract.ProposalCreateContract;
+import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
+import org.tron.protos.contract.SmartContractOuterClass.SmartContract.ABI.Entry;
 
 public class JsonFormatTest {
   @After
@@ -281,6 +285,25 @@ public class JsonFormatTest {
   }
 
   @Test
+  public void testKnownFieldNullIsSkipped() throws Exception {
+    Protocol.HelloMessage.Builder hello = Protocol.HelloMessage.newBuilder();
+    JsonFormat.merge("{\"address\":null}", hello, false);
+    assertEquals(ByteString.EMPTY, hello.getAddress());
+
+    Entry.Builder entry = Entry.newBuilder();
+    JsonFormat.merge("{\"outputs\":null}", entry, false);
+    assertEquals(0, entry.getOutputsCount());
+
+    CreateSmartContract.Builder contract = CreateSmartContract.newBuilder();
+    JsonFormat.merge("{\"new_contract\":null}", contract, false);
+    assertFalse(contract.hasNewContract());
+
+    ProposalCreateContract.Builder proposal = ProposalCreateContract.newBuilder();
+    JsonFormat.merge("{\"parameters\":null}", proposal, false);
+    assertTrue(proposal.getParametersMap().isEmpty());
+  }
+
+  @Test
   public void testKnownRepeatedPrimitiveFieldRejectsNestedArray() {
     Protocol.Proposal.Builder builder = Protocol.Proposal.newBuilder();
 
@@ -296,6 +319,16 @@ public class JsonFormatTest {
 
     JsonFormat.ParseException e = assertThrows(JsonFormat.ParseException.class,
         () -> JsonFormat.merge("{\"transactions\":[[]]}", builder, false));
+
+    assertTrue(e.getMessage().contains("Expected \"{\"."));
+  }
+
+  @Test
+  public void testKnownRepeatedMessageFieldRejectsNullElement() {
+    Entry.Builder builder = Entry.newBuilder();
+
+    JsonFormat.ParseException e = assertThrows(JsonFormat.ParseException.class,
+        () -> JsonFormat.merge("{\"outputs\":[null]}", builder, false));
 
     assertTrue(e.getMessage().contains("Expected \"{\"."));
   }

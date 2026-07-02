@@ -17,6 +17,7 @@ import org.tron.core.utils.TransactionUtil;
 import org.tron.json.JSONObject;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Transaction;
+import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
 
 public class UtilTest extends BaseTest {
 
@@ -189,6 +190,50 @@ public class UtilTest extends BaseTest {
     Transaction transaction = Util.packTransaction(strTransaction, false);
     TransactionSignWeight txSignWeight = transactionUtil.getTransactionSignWeight(transaction);
     Assert.assertNotNull(txSignWeight);
+  }
+
+  @Test
+  public void testPackCreateSmartContractOmitsNullAbiOutputs() throws Exception {
+    String strTransaction = "{\n"
+        + "    \"visible\": false,\n"
+        + "    \"raw_data\": {\n"
+        + "        \"contract\": [\n"
+        + "            {\n"
+        + "                \"parameter\": {\n"
+        + "                    \"value\": {\n"
+        + "                      \"owner_address\":\"41c076305e35aea1fe45a772fcaaab8a36e87bdb55\","
+        + "                      \"new_contract\": {\n"
+        + "                        \"origin_address\":"
+        + " \"41c076305e35aea1fe45a772fcaaab8a36e87bdb55\","
+        + "                        \"name\":\"TestContract\","
+        + "                        \"abi\": {\n"
+        + "                          \"entrys\": [\n"
+        + "                            {\"inputs\":[],\"name\":\"test\","
+        + " \"outputs\":null,\"type\":\"function\"}\n"
+        + "                          ]\n"
+        + "                        }\n"
+        + "                      }\n"
+        + "                    },\n"
+        + "                    \"type_url\":"
+        + " \"type.googleapis.com/protocol.CreateSmartContract\"\n"
+        + "                },\n"
+        + "                \"type\": \"CreateSmartContract\"\n"
+        + "            }\n"
+        + "        ],\n"
+        + "        \"ref_block_bytes\": \"d8ed\",\n"
+        + "        \"ref_block_hash\": \"2e066c3259e756f5\",\n"
+        + "        \"expiration\": 1651906644000,\n"
+        + "        \"timestamp\": 1651906586162\n"
+        + "    }\n"
+        + "}";
+
+    Transaction transaction = Util.packTransaction(strTransaction, false);
+    Assert.assertNotNull(transaction);
+    Assert.assertEquals(1, transaction.getRawData().getContractCount());
+    CreateSmartContract contract = transaction.getRawData().getContract(0)
+        .getParameter().unpack(CreateSmartContract.class);
+    Assert.assertEquals(1, contract.getNewContract().getAbi().getEntrysCount());
+    Assert.assertEquals(0, contract.getNewContract().getAbi().getEntrys(0).getOutputsCount());
   }
 
   private Transaction buildTooManySigsTransaction() {
