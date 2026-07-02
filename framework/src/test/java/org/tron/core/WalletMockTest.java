@@ -257,6 +257,97 @@ public class WalletMockTest {
   }
 
   @Test
+  public void testBroadcastTransactionTorDisabledUsesP2p() throws Exception {
+    CommonParameter.getInstance().setTorBroadcastEnable(false);
+    org.tron.core.net.TronNetService netSvc =
+        mock(org.tron.core.net.TronNetService.class);
+    org.tron.core.net.service.tor.TorBroadcastService torSvc =
+        mock(org.tron.core.net.service.tor.TorBroadcastService.class);
+    when(netSvc.fastBroadcastTransaction(any())).thenReturn(2);
+    Wallet wallet = routingWallet(netSvc, torSvc);
+
+    GrpcAPI.Return ret = wallet.broadcastTransaction(routingTransaction());
+
+    assertEquals(GrpcAPI.Return.response_code.SUCCESS, ret.getCode());
+    Mockito.verify(netSvc, Mockito.times(1)).fastBroadcastTransaction(any());
+    Mockito.verify(torSvc, Mockito.never()).broadcastTransaction(any());
+  }
+
+  @Test
+  public void testBroadcastTransactionTorEnabledUsesTor() throws Exception {
+    CommonParameter.getInstance().setTorBroadcastEnable(true);
+    try {
+      org.tron.core.net.TronNetService netSvc =
+          mock(org.tron.core.net.TronNetService.class);
+      org.tron.core.net.service.tor.TorBroadcastService torSvc =
+          mock(org.tron.core.net.service.tor.TorBroadcastService.class);
+      when(torSvc.broadcastTransaction(any())).thenReturn(2);
+      Wallet wallet = routingWallet(netSvc, torSvc);
+
+      GrpcAPI.Return ret = wallet.broadcastTransaction(routingTransaction());
+
+      assertEquals(GrpcAPI.Return.response_code.SUCCESS, ret.getCode());
+      Mockito.verify(torSvc, Mockito.times(1)).broadcastTransaction(any());
+      Mockito.verify(netSvc, Mockito.never()).fastBroadcastTransaction(any());
+    } finally {
+      CommonParameter.getInstance().setTorBroadcastEnable(false);
+    }
+  }
+
+  // Wires a Wallet whose pre-broadcast checks all pass, so broadcastTransaction reaches the
+  // Tor-vs-P2P routing branch; the two broadcast services are mocks the caller stubs and verifies.
+  private Wallet routingWallet(org.tron.core.net.TronNetService netSvc,
+      org.tron.core.net.service.tor.TorBroadcastService torSvc) throws Exception {
+    Wallet wallet = new Wallet();
+    TronNetDelegate netDelegate = mock(TronNetDelegate.class);
+    when(netDelegate.isBlockUnsolidified()).thenReturn(false);
+    Manager dbManager = mock(Manager.class);
+    when(dbManager.isTooManyPending()).thenReturn(false);
+    org.tron.core.ChainBaseManager cbm = mock(org.tron.core.ChainBaseManager.class);
+    DynamicPropertiesStore dps = mock(DynamicPropertiesStore.class);
+    when(cbm.getDynamicPropertiesStore()).thenReturn(dps);
+    when(dps.supportVM()).thenReturn(false);
+    when(dps.getAllowProtoFilterNum()).thenReturn(0L);
+    when(cbm.getNextBlockSlotTime()).thenReturn(0L);
+    // The P2P path builds a TransactionMessage, which validates the contract against the static
+    // DynamicPropertiesStore held by Message; provide it so the message can be constructed.
+    Field messageStore = org.tron.common.overlay.message.Message.class
+        .getDeclaredField("dynamicPropertiesStore");
+    messageStore.setAccessible(true);
+    messageStore.set(null, dps);
+    setWalletField(wallet, "tronNetDelegate", netDelegate);
+    setWalletField(wallet, "dbManager", dbManager);
+    setWalletField(wallet, "chainBaseManager", cbm);
+    setWalletField(wallet, "tronNetService", netSvc);
+    setWalletField(wallet, "torBroadcastService", torSvc);
+    setWalletField(wallet, "minEffectiveConnection", 0);
+    setWalletField(wallet, "trxCacheEnable", false);
+    return wallet;
+  }
+
+  private static Protocol.Transaction routingTransaction() {
+    byte[] addr = new byte[21];
+    addr[0] = 0x41;
+    BalanceContract.TransferContract transfer = BalanceContract.TransferContract.newBuilder()
+        .setOwnerAddress(ByteString.copyFrom(addr))
+        .setToAddress(ByteString.copyFrom(addr))
+        .setAmount(1L)
+        .build();
+    return Protocol.Transaction.newBuilder()
+        .setRawData(Protocol.Transaction.raw.newBuilder()
+            .addContract(Protocol.Transaction.Contract.newBuilder()
+                .setType(Protocol.Transaction.Contract.ContractType.TransferContract)
+                .setParameter(Any.pack(transfer))))
+        .build();
+  }
+
+  private static void setWalletField(Wallet wallet, String name, Object value) throws Exception {
+    Field field = Wallet.class.getDeclaredField(name);
+    field.setAccessible(true);
+    field.set(wallet, value);
+  }
+
+  @Test
   public void testBroadcastTransactionAlreadyExists() throws Exception {
     Wallet wallet = new Wallet();
     Protocol.Transaction transaction = Protocol.Transaction.newBuilder().build();
