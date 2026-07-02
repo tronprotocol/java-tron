@@ -1146,6 +1146,13 @@ public class Manager {
             throw new ValidateSignatureException(
                 "switch fork: block " + item.getBlk().getNum() + " signature invalid");
           }
+          // The new branch is applied on a rewound, diverged state where account permissions
+          // may have changed, so a cached signature-verification result is no longer
+          // trustworthy. Clear it to force every transaction to re-validate its signature
+          // against the fork-chain state.
+          for (TransactionCapsule tx : item.getBlk().getTransactions()) {
+            tx.setVerified(false);
+          }
           applyBlock(item.getBlk().setSwitch(true));
           tmpSession.commit();
         } catch (AccountResourceInsufficientException
