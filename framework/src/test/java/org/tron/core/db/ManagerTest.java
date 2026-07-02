@@ -3,9 +3,11 @@ package org.tron.core.db;
 import static org.junit.Assert.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.tron.common.utils.Commons.adjustAssetBalanceV2;
 import static org.tron.common.utils.Commons.adjustTotalShieldedPoolValue;
@@ -1769,6 +1771,77 @@ public class ManagerTest extends BaseMethodTest {
         hasBlockFilterCapsule(queue, b1));
     Assert.assertTrue("reorg: new canonical block B2 must reach the FULL block-filter stream",
         hasBlockFilterCapsule(queue, b2));
+  }
+
+  /**
+   * A fork switch re-applies the new branch on a rewound, diverged state, so any signature
+   * verification cached on those transactions (isVerified) must be cleared to force
+   * re-validation against the fork-chain state. Drives a real reorg and asserts that switchFork
+   * resets isVerified on the transactions of the branch it switches to.
+   */
+  @Test
+  public void switchForkShouldResetTransactionSignVerifiedOnNewBranch() throws Exception {
+    // bootstrap a head with a known witness
+    String key = PublicMethod.getRandomPrivateKey();
+    byte[] privateKey = ByteArray.fromHexString(key);
+    final ECKey ecKey = ECKey.fromPrivate(privateKey);
+    byte[] address = ecKey.getAddress();
+    ByteString addressByte = ByteString.copyFrom(address);
+    chainManager.getAccountStore().put(addressByte.toByteArray(),
+        new AccountCapsule(Protocol.Account.newBuilder().setAddress(addressByte).build()));
+    WitnessCapsule witnessCapsule = new WitnessCapsule(addressByte);
+    chainManager.getWitnessScheduleStore().saveActiveWitnesses(new ArrayList<>());
+    chainManager.addWitness(addressByte);
+    chainManager.getWitnessStore().put(address, witnessCapsule);
+    Block block = blockGenerate.getSignedBlock(
+        witnessCapsule.getAddress(), 1533529947843L, privateKey);
+    dbManager.pushBlock(new BlockCapsule(block));
+
+    Map<ByteString, String> keys = addTestWitnessAndAccount();
+    keys.put(addressByte, key);
+
+    // fund an owner; transfers go owner -> witness 'address' (an existing account)
+    ECKey ownerKey = new ECKey(Utils.getRandom());
+    byte[] owner = ownerKey.getAddress();
+    AccountCapsule ownerAccount = new AccountCapsule(
+        Protocol.Account.newBuilder().setAddress(ByteString.copyFrom(owner)).build());
+    ownerAccount.setBalance(1_000_000_000L);
+    chainManager.getAccountStore().put(owner, ownerAccount);
+
+    long t = 1533529947843L;
+    long base = chainManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber();
+    long expiration = t + 1_000_000L;
+
+    // common ancestor P (empty) — fork point and tapos reference
+    BlockCapsule p = createTestBlockCapsule(t + 3000, base + 1,
+        chainManager.getDynamicPropertiesStore().getLatestBlockHeaderHash().getByteString(), keys);
+    dbManager.pushBlock(p);
+
+    // old branch: A extends P via the normal path and becomes head
+    BlockCapsule a = blockWithTransfer(t + 6000, base + 2, p.getBlockId().getByteString(), keys,
+        transfer(owner, address, 1L, p, expiration));
+    dbManager.pushBlock(a);
+    Assert.assertEquals("control: head should be A after normal extend",
+        a.getBlockId(), chainManager.getDynamicPropertiesStore().getLatestBlockHeaderHash());
+
+    // heavier competing branch P -> B1 -> B2 forces switchFork; spy the tx on the branch we
+    // switch to and pre-mark it verified to mimic a stale cache computed on a different state
+    BlockCapsule b1 = blockWithTransfer(t + 6001, base + 2, p.getBlockId().getByteString(), keys,
+        transfer(owner, address, 2L, p, expiration));
+    dbManager.pushBlock(b1); // num <= head -> kept in khaosDb, no switch yet
+
+    TransactionCapsule forkTx = transfer(owner, address, 3L, p, expiration);
+    forkTx.setVerified(true);
+    TransactionCapsule spyTx = spy(forkTx);
+    BlockCapsule b2 = blockWithTransfer(t + 9000, base + 3, b1.getBlockId().getByteString(), keys,
+        spyTx);
+    dbManager.pushBlock(b2); // num > head & parent != head -> triggers switchFork
+
+    Assert.assertEquals("reorg must switch the canonical head to the competing branch (B2)",
+        b2.getBlockId(), chainManager.getDynamicPropertiesStore().getLatestBlockHeaderHash());
+    // switchFork must clear the cached verification flag on the new branch's transaction so it
+    // re-validates against the fork-chain state
+    verify(spyTx, atLeastOnce()).setVerified(false);
   }
 
   private TransactionCapsule transfer(byte[] owner, byte[] to, long amount,
