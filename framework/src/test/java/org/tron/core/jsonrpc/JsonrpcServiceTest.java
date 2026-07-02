@@ -1489,6 +1489,52 @@ public class JsonrpcServiceTest extends BaseTest {
   }
 
   @Test
+  public void testBuildCreateSmartContractAcceptsNullAbiOutputsOverHttp() {
+    fullNodeJsonRpcHttpService.start();
+    try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
+      JsonObject buildArgs = new JsonObject();
+      buildArgs.addProperty("from", "0xabd4b9367799eaa3197fecb144eb71de1e049abc");
+      buildArgs.addProperty("data", "608060405234801561001057600080fd5b50");
+      buildArgs.addProperty("gas", "0x3b9aca00");
+      buildArgs.addProperty("abi", "[{\"inputs\":[],\"name\":\"test\",\"outputs\":null,"
+          + "\"type\":\"function\"}]");
+      JsonArray params = new JsonArray();
+      params.add(buildArgs);
+      JsonObject requestBody = new JsonObject();
+      requestBody.addProperty("jsonrpc", "2.0");
+      requestBody.addProperty("method", "buildTransaction");
+      requestBody.add("params", params);
+      requestBody.addProperty("id", 1);
+
+      HttpPost httpPost = new HttpPost("http://127.0.0.1:"
+          + CommonParameter.getInstance().getJsonRpcHttpFullNodePort() + "/jsonrpc");
+      httpPost.addHeader("Content-Type", "application/json");
+      httpPost.setEntity(new StringEntity(requestBody.toString()));
+      try (CloseableHttpResponse response = httpClient.execute(httpPost)) {
+        String resp = EntityUtils.toString(response.getEntity());
+        JSONObject json = JSON.parseObject(resp);
+        Assert.assertNull(resp, json.getJSONObject("error"));
+        JSONObject tx = json.getJSONObject("result").getJSONObject("transaction");
+        Assert.assertNotNull("transaction must be a JSON object", tx);
+
+        JSONArray contracts = tx.getJSONObject("raw_data").getJSONArray("contract");
+        Assert.assertEquals(1, contracts.size());
+        JSONObject contract = contracts.getJSONObject(0);
+        Assert.assertEquals("CreateSmartContract", contract.getString("type"));
+        JSONObject value = contract.getJSONObject("parameter").getJSONObject("value");
+        JSONObject abi = value.getJSONObject("new_contract").getJSONObject("abi");
+        JSONArray entrys = abi.getJSONArray("entrys");
+        Assert.assertEquals(1, entrys.size());
+        Assert.assertFalse(entrys.getJSONObject(0).containsKey("outputs"));
+      }
+    } catch (Exception e) {
+      Assert.fail(e.getMessage());
+    } finally {
+      fullNodeJsonRpcHttpService.stop();
+    }
+  }
+
+  @Test
   public void testBuildTransactionRejectsDeeplyNestedAbi() {
     // A deeply nested ABI must surface as invalid-params (-32602), not as a generic
     // internal error.

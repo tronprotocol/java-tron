@@ -47,6 +47,20 @@ public class GetAccountServletTest extends BaseHttpTest {
   }
 
   @Test
+  public void testGetAccountPostNullAddressKeepsDefault() throws Exception {
+    MockHttpServletRequest request = postRequest("{\"address\": null}");
+
+    MockHttpServletResponse response = newResponse();
+    servlet.doPost(request, response);
+    assertEquals(200, response.getStatus());
+    verify(wallet).getAccount(argThat(req -> req != null
+        && req.getAddress().equals(ByteString.EMPTY)));
+    String content = response.getContentAsString();
+    assertFalse("Should not contain error", content.contains("\"Error\""));
+    assertTrue("Should contain address", content.contains("address"));
+  }
+
+  @Test
   public void testGetAccountGet() throws Exception {
     MockHttpServletRequest request = getRequest("address", addrStr);
 

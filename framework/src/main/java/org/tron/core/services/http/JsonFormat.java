@@ -620,6 +620,10 @@ public class JsonFormat {
 
     if (field != null) {
       tokenizer.consume(":");
+      // Match protobuf JsonFormat: a field whose value is null is treated as absent.
+      if (tokenizer.tryConsume("null")) {
+        return;
+      }
       boolean array = tokenizer.tryConsume("[");
 
       if (array) {
