@@ -31,6 +31,7 @@ import org.tron.core.net.service.statistics.TronStatsManager;
 import org.tron.core.net.service.sync.SyncService;
 import org.tron.p2p.P2pConfig;
 import org.tron.p2p.P2pService;
+import org.tron.p2p.discover.Node;
 import org.tron.p2p.utils.NetUtil;
 
 @Slf4j(topic = "net")
@@ -136,6 +137,15 @@ public class TronNetService {
 
   public int fastBroadcastTransaction(TransactionMessage msg) {
     return advService.fastBroadcastTransaction(msg);
+  }
+
+  /**
+   * Nodes discovered via the (UDP) discovery layer. Only a subset of these is actually connected
+   * as sync peers; the rest are known-but-unconnected and are used as anonymous Tor broadcast
+   * targets (see TorBroadcastService).
+   */
+  public List<Node> getTableNodes() {
+    return p2pService.getTableNodes();
   }
 
   public static boolean hasIpv4Stack(Set<String> ipSet) {

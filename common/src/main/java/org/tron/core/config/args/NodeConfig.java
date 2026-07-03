@@ -117,6 +117,73 @@ public class NodeConfig {
   private List<String> fastForward = new ArrayList<>();
   private List<String> disabledApi = new ArrayList<>();
 
+  // node.tor.* — anonymous outbound transaction broadcast over the Tor SOCKS5 proxy.
+  // Read manually in fromConfig() so an absent [node.tor] block keeps prior behaviour
+  // and no reference.conf defaults are required.
+  @Getter(lombok.AccessLevel.NONE)
+  @Setter(lombok.AccessLevel.NONE)
+  private boolean torBroadcastEnable = false;
+  @Getter(lombok.AccessLevel.NONE)
+  @Setter(lombok.AccessLevel.NONE)
+  private String torSocksHost = "127.0.0.1";
+  @Getter(lombok.AccessLevel.NONE)
+  @Setter(lombok.AccessLevel.NONE)
+  private int torSocksPort = 9050;
+  @Getter(lombok.AccessLevel.NONE)
+  @Setter(lombok.AccessLevel.NONE)
+  private int torConnectTimeout = 30000;
+  @Getter(lombok.AccessLevel.NONE)
+  @Setter(lombok.AccessLevel.NONE)
+  private int torReadTimeout = 30000;
+  @Getter(lombok.AccessLevel.NONE)
+  @Setter(lombok.AccessLevel.NONE)
+  private int torBroadcastCount = 2;
+  @Getter(lombok.AccessLevel.NONE)
+  @Setter(lombok.AccessLevel.NONE)
+  private boolean torCircuitIsolation = true;
+  @Getter(lombok.AccessLevel.NONE)
+  @Setter(lombok.AccessLevel.NONE)
+  private int torControlPort = 0;
+  @Getter(lombok.AccessLevel.NONE)
+  @Setter(lombok.AccessLevel.NONE)
+  private String torControlPassword = "";
+
+  public boolean isTorBroadcastEnable() {
+    return torBroadcastEnable;
+  }
+
+  public String getTorSocksHost() {
+    return torSocksHost;
+  }
+
+  public int getTorSocksPort() {
+    return torSocksPort;
+  }
+
+  public int getTorConnectTimeout() {
+    return torConnectTimeout;
+  }
+
+  public int getTorReadTimeout() {
+    return torReadTimeout;
+  }
+
+  public int getTorBroadcastCount() {
+    return torBroadcastCount;
+  }
+
+  public boolean isTorCircuitIsolation() {
+    return torCircuitIsolation;
+  }
+
+  public int getTorControlPort() {
+    return torControlPort;
+  }
+
+  public String getTorControlPassword() {
+    return torControlPassword;
+  }
+
   // ---- Sub-object fields ----
   private P2pConfig p2p = new P2pConfig();
   private HttpConfig http = new HttpConfig();
@@ -393,6 +460,17 @@ public class NodeConfig {
       logger.warn("Configuring [node.fullNodeAllowShieldedTransaction] will be deprecated. "
           + "Please use [node.allowShieldedTransactionApi] instead.");
     }
+
+    // node.tor.* — read manually so an absent block is a no-op (feature stays off)
+    nc.torBroadcastEnable = getBool(section, "tor.enabled", false);
+    nc.torSocksHost = getString(section, "tor.socksHost", "127.0.0.1");
+    nc.torSocksPort = getInt(section, "tor.socksPort", 9050);
+    nc.torConnectTimeout = getInt(section, "tor.connectTimeout", 30000);
+    nc.torReadTimeout = getInt(section, "tor.readTimeout", 30000);
+    nc.torBroadcastCount = getInt(section, "tor.broadcastCount", 2);
+    nc.torCircuitIsolation = getBool(section, "tor.circuitIsolation", true);
+    nc.torControlPort = getInt(section, "tor.controlPort", 0);
+    nc.torControlPassword = getString(section, "tor.controlPassword", "");
 
     // node.shutdown.* — PascalCase keys (BlockTime, BlockHeight), cannot auto-bind
     nc.shutdownBlockTime = config.hasPath("node.shutdown.BlockTime")

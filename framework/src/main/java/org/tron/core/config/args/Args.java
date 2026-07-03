@@ -640,6 +640,17 @@ public class Args extends CommonParameter {
     PARAMETER.unsolidifiedBlockCheck = nc.isUnsolidifiedBlockCheck();
     PARAMETER.maxUnsolidifiedBlocks = nc.getMaxUnsolidifiedBlocks();
 
+    // ---- Tor anonymous transaction broadcast ----
+    PARAMETER.torBroadcastEnable = nc.isTorBroadcastEnable();
+    PARAMETER.torSocksHost = nc.getTorSocksHost();
+    PARAMETER.torSocksPort = nc.getTorSocksPort();
+    PARAMETER.torConnectTimeout = nc.getTorConnectTimeout();
+    PARAMETER.torReadTimeout = nc.getTorReadTimeout();
+    PARAMETER.torBroadcastCount = nc.getTorBroadcastCount();
+    PARAMETER.torCircuitIsolation = nc.isTorCircuitIsolation();
+    PARAMETER.torControlPort = nc.getTorControlPort();
+    PARAMETER.torControlPassword = nc.getTorControlPassword();
+
     // disabledApi list — lowercase normalization
     PARAMETER.disabledApiList = nc.getDisabledApi().isEmpty()
         ? Collections.emptyList()

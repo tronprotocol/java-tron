@@ -141,6 +141,37 @@ public class CommonParameter {
   @Getter
   @Setter
   public int minParticipationRate;
+  // -- Tor anonymous transaction broadcast --
+  // When enabled, locally-originated transactions are sent through the Tor SOCKS5 proxy
+  // to the HTTP broadcast API of standard (unmodified) TRON nodes instead of being advertised
+  // to P2P peers, hiding the originating node's IP.
+  @Getter
+  @Setter
+  public boolean torBroadcastEnable = false;
+  @Getter
+  @Setter
+  public String torSocksHost = "127.0.0.1";
+  @Getter
+  @Setter
+  public int torSocksPort = 9050;
+  @Getter
+  @Setter
+  public int torConnectTimeout = 30000;
+  @Getter
+  @Setter
+  public int torReadTimeout = 30000;
+  @Getter
+  @Setter
+  public int torBroadcastCount = 2;
+  @Getter
+  @Setter
+  public boolean torCircuitIsolation = true;
+  @Getter
+  @Setter
+  public int torControlPort = 0;
+  @Getter
+  @Setter
+  public String torControlPassword = "";
   @Getter
   public P2pConfig p2pConfig;
   @Getter
@@ -426,7 +457,9 @@ public class CommonParameter {
   // from clearParam(), consistent with mainnet.conf
   public List<InetAddress> passiveNodes = new ArrayList<>();
   @Getter
-  public List<InetSocketAddress> fastForwardNodes; // clearParam: new ArrayList<>()
+  // Default to an empty list (never null) so consumers that capture it at class-load time
+  // (e.g. PeerConnection's static relayNodes) can't capture a null before Args is initialised.
+  public List<InetSocketAddress> fastForwardNodes = new ArrayList<>();
   @Getter
   public int maxFastForwardNum; // clearParam: 4
   @Getter

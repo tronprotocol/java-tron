@@ -189,6 +189,7 @@ import org.tron.core.exception.ZksnarkException;
 import org.tron.core.net.TronNetDelegate;
 import org.tron.core.net.TronNetService;
 import org.tron.core.net.message.adv.TransactionMessage;
+import org.tron.core.net.service.tor.TorBroadcastService;
 import org.tron.core.store.AccountIdIndexStore;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.AccountTraceStore;
@@ -276,6 +277,8 @@ public class Wallet {
   private final SignInterface cryptoEngine;
   @Autowired
   private TronNetService tronNetService;
+  @Autowired
+  private TorBroadcastService torBroadcastService;
   @Autowired
   private TronNetDelegate tronNetDelegate;
   @Autowired
@@ -556,9 +559,24 @@ public class Wallet {
       if (trx.getInstance().getRawData().getContractCount() == 0) {
         throw new ContractValidateException(ActuatorConstant.CONTRACT_NOT_EXIST);
       }
-      TransactionMessage message = new TransactionMessage(trx.getInstance().toByteArray());
       trx.checkExpiration(chainBaseManager.getNextBlockSlotTime());
       dbManager.pushTransaction(trx);
+
+      if (CommonParameter.getInstance().isTorBroadcastEnable()) {
+        // Anonymous path: the transaction is validated and kept locally, but instead of being
+        // advertised to P2P peers (which would expose this node's IP as the origin) it is relayed
+        // through the Tor SOCKS5 proxy to standard TRON nodes, which broadcast it to the network.
+        int relayed = torBroadcastService.broadcastTransaction(signedTransaction);
+        if (relayed == 0) {
+          return builder.setResult(false).setCode(response_code.NOT_ENOUGH_EFFECTIVE_CONNECTION)
+              .setMessage(ByteString.copyFromUtf8("Tor broadcast failed.")).build();
+        }
+        logger.info("Broadcast transaction {} via Tor to {} relay nodes successfully.",
+            txID, relayed);
+        return builder.setResult(true).setCode(response_code.SUCCESS).build();
+      }
+
+      TransactionMessage message = new TransactionMessage(trx.getInstance().toByteArray());
       int num = tronNetService.fastBroadcastTransaction(message);
       if (num == 0 && minEffectiveConnection != 0) {
         return builder.setResult(false).setCode(response_code.NOT_ENOUGH_EFFECTIVE_CONNECTION)
