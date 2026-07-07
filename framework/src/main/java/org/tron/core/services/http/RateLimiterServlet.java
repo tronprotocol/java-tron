@@ -14,6 +14,8 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.jetty.http.BadMessageException;
+import org.eclipse.jetty.http.HttpStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.common.parameter.RateLimiterInitialization;
 import org.tron.common.prometheus.MetricKeys;
@@ -134,6 +136,17 @@ public abstract class RateLimiterServlet extends HttpServlet {
             .println(Util.printErrorMsg(new IllegalAccessException("lack of computing resources")));
       }
     } catch (ServletException | IOException e) {
+      throw e;
+    } catch (BadMessageException e) {
+      if (e.getCode() == HttpStatus.PAYLOAD_TOO_LARGE_413) {
+        logger.info("Reject oversized request, uri: {}, method: {}, detail: {}",
+            url, req.getMethod(), e.getMessage());
+        if (!resp.isCommitted()) {
+          resp.reset();
+          resp.setStatus(HttpStatus.PAYLOAD_TOO_LARGE_413);
+        }
+        return;
+      }
       throw e;
     } catch (Exception unexpected) {
       logger.error("Http Api {}, Method:{}. Error：", url, req.getMethod(), unexpected);
