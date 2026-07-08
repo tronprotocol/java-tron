@@ -262,7 +262,7 @@ public class RateLimiterServletTest {
   }
 
   @Test
-  public void testOversizedRequestBadMessageReturns413() throws Exception {
+  public void testOversizedRequestBadMessagePropagates() throws Exception {
     OversizedRequestServlet oversizedServlet = new OversizedRequestServlet();
     Field f = RateLimiterServlet.class.getDeclaredField("container");
     f.setAccessible(true);
@@ -274,9 +274,10 @@ public class RateLimiterServletTest {
     try (MockedStatic<GlobalRateLimiter> globalMock = mockStatic(GlobalRateLimiter.class)) {
       globalMock.when(() -> GlobalRateLimiter.acquirePermit(any())).thenReturn(true);
 
-      oversizedServlet.service(postRequest, response);
+      BadMessageException e = assertThrows(BadMessageException.class,
+          () -> oversizedServlet.service(postRequest, response));
 
-      assertEquals(HttpStatus.PAYLOAD_TOO_LARGE_413, response.getStatus());
+      assertEquals(HttpStatus.PAYLOAD_TOO_LARGE_413, e.getCode());
     }
   }
 }
