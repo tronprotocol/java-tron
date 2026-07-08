@@ -16,6 +16,8 @@ import java.lang.reflect.Field;
 import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import org.eclipse.jetty.http.BadMessageException;
+import org.eclipse.jetty.http.HttpStatus;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
@@ -66,6 +68,14 @@ public class RateLimiterServletTest {
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) {
       // intentional no-op
+    }
+  }
+
+  static class OversizedRequestServlet extends RateLimiterServlet {
+    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) {
+      throw new BadMessageException(HttpStatus.PAYLOAD_TOO_LARGE_413,
+          "Request body is too large");
     }
   }
 
@@ -248,6 +258,26 @@ public class RateLimiterServletTest {
       servlet.service(request, response);
 
       globalMock.verify(() -> GlobalRateLimiter.acquirePermit(any()), times(1));
+    }
+  }
+
+  @Test
+  public void testOversizedRequestBadMessagePropagates() throws Exception {
+    OversizedRequestServlet oversizedServlet = new OversizedRequestServlet();
+    Field f = RateLimiterServlet.class.getDeclaredField("container");
+    f.setAccessible(true);
+    f.set(oversizedServlet, container);
+    MockHttpServletRequest postRequest = new MockHttpServletRequest("POST", "/jsonrpc");
+    postRequest.setRemoteAddr("10.0.0.1");
+    postRequest.setServletPath("/jsonrpc");
+
+    try (MockedStatic<GlobalRateLimiter> globalMock = mockStatic(GlobalRateLimiter.class)) {
+      globalMock.when(() -> GlobalRateLimiter.acquirePermit(any())).thenReturn(true);
+
+      BadMessageException e = assertThrows(BadMessageException.class,
+          () -> oversizedServlet.service(postRequest, response));
+
+      assertEquals(HttpStatus.PAYLOAD_TOO_LARGE_413, e.getCode());
     }
   }
 }

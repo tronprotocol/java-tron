@@ -26,6 +26,7 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import org.bouncycastle.util.encoders.Hex;
+import org.eclipse.jetty.http.HttpStatus;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -1572,8 +1573,7 @@ public class JsonrpcServiceTest extends BaseTest {
    * Verifies SizeLimitHandler integration with the real JsonRpcServlet + jsonrpc4j stack.
    *
    * Covers: normal request no regression, Content-Length oversized 413,
-   * and chunked oversized handled gracefully (body truncated, 200 + empty body
-   * because jsonrpc4j absorbs the BadMessageException).
+   * and chunked oversized 413 during streaming body reads.
    */
   @Test
   public void testJsonRpcSizeLimitIntegration() {
@@ -1609,11 +1609,11 @@ public class JsonrpcServiceTest extends BaseTest {
         overPost.setEntity(new StringEntity(
             new String(new char[(int) testLimit + 1]).replace('\0', 'x')));
         resp = httpClient.execute(overPost);
-        Assert.assertEquals(413, resp.getStatusLine().getStatusCode());
+        Assert.assertEquals(HttpStatus.PAYLOAD_TOO_LARGE_413,
+            resp.getStatusLine().getStatusCode());
         resp.close();
 
-        // Chunked oversized -> BadMessageException thrown during body read,
-        // absorbed by jsonrpc4j catch(Exception) -> 200 with empty body.
+        // Chunked oversized -> BadMessageException thrown during body read.
         // Body read IS truncated at the limit - OOM protection effective.
         byte[] chunkedData = new String(new char[(int) testLimit * 2])
             .replace('\0', 'x').getBytes("UTF-8");
@@ -1621,10 +1621,8 @@ public class JsonrpcServiceTest extends BaseTest {
         chunkedPost.setEntity(new InputStreamEntity(
             new ByteArrayInputStream(chunkedData), -1));
         resp = httpClient.execute(chunkedPost);
-        Assert.assertEquals(200, resp.getStatusLine().getStatusCode());
-        body = EntityUtils.toString(resp.getEntity());
-        Assert.assertTrue("Chunked oversized should return empty body"
-            + " (jsonrpc4j absorbs BadMessageException)", body.isEmpty());
+        Assert.assertEquals(HttpStatus.PAYLOAD_TOO_LARGE_413,
+            resp.getStatusLine().getStatusCode());
         resp.close();
       }
     } catch (Exception e) {

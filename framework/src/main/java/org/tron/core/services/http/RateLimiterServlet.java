@@ -14,6 +14,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.jetty.http.BadMessageException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.common.parameter.RateLimiterInitialization;
 import org.tron.common.prometheus.MetricKeys;
@@ -133,7 +134,7 @@ public abstract class RateLimiterServlet extends HttpServlet {
         resp.getWriter()
             .println(Util.printErrorMsg(new IllegalAccessException("lack of computing resources")));
       }
-    } catch (ServletException | IOException e) {
+    } catch (ServletException | IOException | BadMessageException e) {
       throw e;
     } catch (Exception unexpected) {
       logger.error("Http Api {}, Method:{}. Error：", url, req.getMethod(), unexpected);
