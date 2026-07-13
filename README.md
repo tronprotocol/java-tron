@@ -203,6 +203,8 @@ More detailed guides live in the [`docs/`](./docs) directory:
   - [Implement a Customized Actuator](./docs/implement-a-customized-actuator-en.md) · [中文](./docs/implement-a-customized-actuator-zh.md)
 - **Protocol**
   - [TRON Protobuf Protocol Document](./docs/protobuf-protocol-document.md) — the maintained, authoritative Protobuf protocol reference
+- **Observability**
+  - [Metrics Changelog](./docs/metrics_changelog.md) — Prometheus metric additions, changes, and removals across java-tron releases
 
 # Community
 
