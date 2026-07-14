@@ -204,7 +204,7 @@ More detailed guides live in the [`docs/`](./docs) directory:
 - **Protocol**
   - [TRON Protobuf Protocol Document](./docs/protobuf-protocol-document.md) — the maintained, authoritative Protobuf protocol reference
 - **Observability**
-  - [Metrics Changelog](./docs/metrics_changelog.md) — Prometheus metric additions, changes, and removals across java-tron releases
+  - [Metrics Changelog](./docs/metrics-changelog.md) — Prometheus metric additions, changes, and removals across java-tron releases
 
 # Community
 
