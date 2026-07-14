@@ -147,7 +147,7 @@ We would like all developers to follow a standard development flow and coding st
 2. Review the code before submission.
 3. Run standardized tests.
 
-`Sonar`-scanner and CI checks (GitHub Actions) will be automatically triggered when a pull request has been submitted. When a PR passes all the checks, the **java-tron** maintainers will then review the PR and offer feedback and modifications when necessary.  Once adopted, the PR will be closed and merged into the `develop` branch.
+CI checks (GitHub Actions) will be automatically triggered when a pull request has been submitted. When a PR passes all the checks, the **java-tron** maintainers will then review the PR and offer feedback and modifications when necessary.  Once adopted, the PR will be closed and merged into the `develop` branch.
 
 We are glad to receive your pull requests and will try our best to review them as soon as we can. Any pull request is welcome, even if it is for a typo.
 
@@ -158,7 +158,6 @@ Please do not be discouraged if your pull request is not accepted, as it may be 
 Please make sure your submission meets the following code style:
 
 - The code must conform to [Google Code Style](https://google.github.io/styleguide/javaguide.html).
-- The code must have passed the Sonar scanner test.
 - The code has to be pulled from the `develop` branch.
 - The commit message should start with a verb, whose initial should not be capitalized.
 - The commit message title should be between 10 and 72 characters in length.
