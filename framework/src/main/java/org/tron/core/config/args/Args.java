@@ -370,10 +370,13 @@ public class Args extends CommonParameter {
     epc.setBindPort(nq.getBindport());
     epc.setSendQueueLength(nq.getSendqueuelength());
 
-    if (!nq.isUseNativeQueue()) {
-      if (StringUtils.isNotEmpty(ec.getPath())) {
-        epc.setPluginPath(ec.getPath().trim());
-      }
+    // Plugin connection settings are copied only when a plugin path is configured, so the
+    // plugin can run either on its own (native queue off) or alongside the native queue.
+    // Without a path the plugin cannot be activated, so server/dbconfig are left unset to
+    // avoid leaving misleading connection settings on EventPluginConfig.
+    boolean hasPluginPath = StringUtils.isNotEmpty(ec.getPath());
+    if (hasPluginPath) {
+      epc.setPluginPath(ec.getPath().trim());
       if (StringUtils.isNotEmpty(ec.getServer())) {
         epc.setServerAddress(ec.getServer().trim());
       }
@@ -381,6 +384,17 @@ public class Args extends CommonParameter {
         epc.setDbConfig(ec.getDbconfig().trim());
       }
     }
+
+    // Resolve plugin activation explicitly (never inferred later from the raw path):
+    //  - native queue OFF: the plugin is the only sink, so activate it whenever a path
+    //    is set (unchanged legacy behavior).
+    //  - native queue ON : the plugin runs alongside the queue ONLY when the operator
+    //    opts in via runPluginWithNativeQueue. A leftover "path" alone never activates
+    //    it, so upgrading a native-queue node cannot suddenly start loading a plugin.
+    boolean useEventPlugin = EventPluginConfig.resolveUseEventPlugin(
+        hasPluginPath, nq.isUseNativeQueue(), ec.isRunPluginWithNativeQueue());
+    epc.setUseEventPlugin(useEventPlugin);
+    epc.setPluginLoadFailurePolicy(ec.getPluginLoadFailurePolicy());
 
     // topics
     List<TriggerConfig> triggerConfigs = new ArrayList<>();
