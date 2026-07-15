@@ -1,8 +1,8 @@
 package org.tron.program;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
-import org.springframework.util.ObjectUtils;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
@@ -35,7 +35,7 @@ public class FullNode {
     }
     if (parameter.isSolidityNode()) {
       logger.info("Solidity node is running.");
-      if (ObjectUtils.isEmpty(parameter.getTrustNodeAddr())) {
+      if (StringUtils.isEmpty(parameter.getTrustNodeAddr())) {
         throw new TronError(new IllegalArgumentException("Trust node is not set."),
             TronError.ErrCode.SOLID_NODE_INIT);
       }

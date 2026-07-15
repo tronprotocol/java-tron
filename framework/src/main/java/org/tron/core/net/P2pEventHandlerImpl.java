@@ -215,7 +215,8 @@ public class P2pEventHandlerImpl extends P2pEventHandler {
     }
   }
 
-  private boolean checkInvRateLimit(PeerConnection peer, InventoryMessage msg) {
+  private boolean checkInvRateLimit(PeerConnection peer, InventoryMessage msg)
+      throws P2pException {
     InventoryType invType = msg.getInventoryType();
     int currentSize = msg.getInventory().getIdsCount();
     MessageStatistics stats = peer.getPeerStatistics().messageStatistics;
@@ -237,6 +238,9 @@ public class P2pEventHandlerImpl extends P2pEventHandler {
             peer.getInetAddress(), count, currentSize, maxBlockInvIn10s);
         return false;
       }
+    } else {
+      throw new P2pException(P2pException.TypeEnum.BAD_MESSAGE,
+          "unknown inventory type: " + msg.getInventory().getTypeValue());
     }
     return true;
   }
@@ -272,7 +276,8 @@ public class P2pEventHandlerImpl extends P2pEventHandler {
           code = Protocol.ReasonCode.BAD_TX;
           break;
         case BAD_BLOCK:
-        case BLOCK_SIGN_ERROR:
+        case BLOCK_SIGN_INVALID:
+        case BLOCK_MERKLE_INVALID:
           code = Protocol.ReasonCode.BAD_BLOCK;
           break;
         case NO_SUCH_MESSAGE:

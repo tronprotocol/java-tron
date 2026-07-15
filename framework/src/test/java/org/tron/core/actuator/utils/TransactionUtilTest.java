@@ -13,18 +13,23 @@ import static org.tron.core.utils.TransactionUtil.validAccountName;
 import static org.tron.core.utils.TransactionUtil.validAssetName;
 import static org.tron.core.utils.TransactionUtil.validTokenAbbrName;
 
+import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import javax.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.tron.api.GrpcAPI.TransactionSignWeight;
 import org.tron.common.BaseTest;
 import org.tron.common.TestConstants;
+import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.Utils;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
@@ -36,13 +41,18 @@ import org.tron.core.utils.TransactionUtil;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
+import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.contract.BalanceContract.DelegateResourceContract;
+import org.tron.protos.contract.BalanceContract.TransferContract;
 
 @Slf4j(topic = "capsule")
 public class TransactionUtilTest extends BaseTest {
 
   private static String OWNER_ADDRESS;
+
+  @Resource
+  private TransactionUtil transactionUtil;
 
   /**
    * Init .
@@ -451,5 +461,85 @@ public class TransactionUtilTest extends BaseTest {
       threadList.get(i).join();
     }
     Assert.assertTrue(true);
+  }
+
+  @Test
+  public void testSignWeightSigTruncate() {
+    ECKey ecKey = new ECKey(Utils.getRandom());
+    AccountCapsule owner = new AccountCapsule(
+        ByteString.copyFromUtf8("sign-weight-owner"),
+        ByteString.copyFrom(ecKey.getAddress()),
+        AccountType.Normal,
+        10_000_000_000L);
+    chainBaseManager.getAccountStore().put(ecKey.getAddress(), owner);
+
+    Transaction unsigned = Transaction.newBuilder().setRawData(
+        Transaction.raw.newBuilder().addContract(
+            Contract.newBuilder().setType(ContractType.TransferContract)
+                .setParameter(Any.pack(TransferContract.newBuilder().setAmount(1)
+                    .setOwnerAddress(ByteString.copyFrom(ecKey.getAddress()))
+                    .setToAddress(ByteString.copyFrom(
+                        ByteArray.fromHexString(OWNER_ADDRESS)))
+                    .build())).build()).build()).build();
+
+    TransactionCapsule capsule = new TransactionCapsule(unsigned);
+    capsule.sign(ecKey.getPrivKeyBytes());
+    ByteString validSig = capsule.getInstance().getSignature(0);
+    assertEquals(65, validSig.size());
+
+    // Pad the 65-byte signature with trailing junk bytes.
+    ByteString oversized = validSig.concat(
+        ByteString.copyFrom(new byte[] {1, 2, 3, 4, 5}));
+    assertEquals(70, oversized.size());
+
+    TransactionSignWeight reply = transactionUtil.getTransactionSignWeight(
+        unsigned.toBuilder().addSignature(oversized).build());
+
+    // Recovery still resolves the owner (weight reached the default threshold).
+    assertEquals(TransactionSignWeight.Result.response_code.ENOUGH_PERMISSION,
+        reply.getResult().getCode());
+    assertEquals(1, reply.getApprovedListCount());
+    // The echoed-back transaction has the signature truncated to 65 bytes.
+    Transaction echoed = reply.getTransaction().getTransaction();
+    assertEquals(1, echoed.getSignatureCount());
+    assertEquals(65, echoed.getSignature(0).size());
+    assertEquals(validSig, echoed.getSignature(0));
+  }
+
+  @Test
+  public void testSignWeightTooManySigs() {
+    ECKey ecKey = new ECKey(Utils.getRandom());
+    AccountCapsule owner = new AccountCapsule(
+        ByteString.copyFromUtf8("sign-weight-total-num"),
+        ByteString.copyFrom(ecKey.getAddress()),
+        AccountType.Normal,
+        10_000_000_000L);
+    chainBaseManager.getAccountStore().put(ecKey.getAddress(), owner);
+
+    Transaction unsigned = Transaction.newBuilder().setRawData(
+        Transaction.raw.newBuilder().addContract(
+            Contract.newBuilder().setType(ContractType.TransferContract)
+                .setParameter(Any.pack(TransferContract.newBuilder().setAmount(1)
+                    .setOwnerAddress(ByteString.copyFrom(ecKey.getAddress()))
+                    .setToAddress(ByteString.copyFrom(
+                        ByteArray.fromHexString(OWNER_ADDRESS)))
+                    .build())).build()).build()).build();
+
+    TransactionCapsule capsule = new TransactionCapsule(unsigned);
+    capsule.sign(ecKey.getPrivKeyBytes());
+    ByteString oneSig = capsule.getInstance().getSignature(0);
+
+    int totalSignNum = chainBaseManager.getDynamicPropertiesStore().getTotalSignNum();
+    Transaction.Builder overLimit = unsigned.toBuilder();
+    for (int i = 0; i < totalSignNum + 1; i++) {
+      overLimit.addSignature(oneSig);
+    }
+
+    TransactionSignWeight reply = transactionUtil.getTransactionSignWeight(
+        overLimit.build());
+    assertEquals(TransactionSignWeight.Result.response_code.OTHER_ERROR,
+        reply.getResult().getCode());
+    Assert.assertTrue(reply.getResult().getMessage().contains("too many signatures"));
+    assertEquals(0, reply.getApprovedListCount());
   }
 }

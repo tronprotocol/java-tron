@@ -377,6 +377,10 @@ public class TransactionLogTriggerCapsule extends TriggerCapsule {
     transactionLogTrigger.setLatestSolidifiedBlockNumber(latestSolidifiedBlockNumber);
   }
 
+  public void setRemoved(boolean removed) {
+    transactionLogTrigger.setRemoved(removed);
+  }
+
   private List<InternalTransactionPojo> getInternalTransactionList(
       List<InternalTransaction> internalTransactionList) {
     List<InternalTransactionPojo> pojoList = new ArrayList<>();

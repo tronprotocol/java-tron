@@ -2,9 +2,12 @@ package org.tron.core.db;
 
 import static org.junit.Assert.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.tron.common.utils.Commons.adjustAssetBalanceV2;
 import static org.tron.common.utils.Commons.adjustTotalShieldedPoolValue;
@@ -23,6 +26,7 @@ import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -39,7 +43,14 @@ import org.tron.common.BaseMethodTest;
 import org.tron.common.TestConstants;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.logsfilter.EventPluginLoader;
+import org.tron.common.logsfilter.capsule.BlockFilterCapsule;
+import org.tron.common.logsfilter.capsule.BlockLogTriggerCapsule;
+import org.tron.common.logsfilter.capsule.FilterTriggerCapsule;
+import org.tron.common.logsfilter.capsule.LogsFilterCapsule;
+import org.tron.common.logsfilter.capsule.TransactionLogTriggerCapsule;
+import org.tron.common.logsfilter.capsule.TriggerCapsule;
 import org.tron.common.logsfilter.trigger.ContractLogTrigger;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.RuntimeImpl;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Commons;
@@ -877,6 +888,47 @@ public class ManagerTest extends BaseMethodTest {
   }
 
   @Test
+  public void getVerifyTxsSkipsBlockWhenPermissionTxAlreadyConsumed() throws Exception {
+    // Scenario: a permission-change tx (A) for owner X has been processed and consumed,
+    // so it is no longer in pendingTransactions but ownerAddressSet still contains X.
+    // A later transfer tx (B) from X with the old signature enters pending with
+    // isVerified=true. A malicious SR produces a block containing only B (no A).
+    // getVerifyTxs must place B into the re-verify list rather than calling
+    // setVerified(true) just because B matches the pending entry.
+    TransferContract bContract = TransferContract.newBuilder()
+        .setOwnerAddress(ByteString.copyFrom("f1".getBytes()))
+        .setAmount(7).build();
+    TransactionCapsule bTx = new TransactionCapsule(bContract, ContractType.TransferContract);
+    String hexOwner = ByteArray.toHexString("f1".getBytes());
+
+    dbManager.getPendingTransactions().clear();
+    dbManager.getPendingTransactions().add(bTx);
+
+    Field field = Manager.class.getDeclaredField("ownerAddressSet");
+    field.setAccessible(true);
+    @SuppressWarnings("unchecked")
+    Set<String> ownerAddressSet = (Set<String>) field.get(dbManager);
+    Set<String> backup = new HashSet<>(ownerAddressSet);
+    ownerAddressSet.clear();
+    ownerAddressSet.add(hexOwner);
+
+    try {
+      List<Transaction> blockTxs = new ArrayList<>();
+      blockTxs.add(bTx.getInstance());
+      BlockCapsule capsule = new BlockCapsule(0, ByteString.EMPTY, 0, blockTxs);
+
+      List<TransactionCapsule> txs = dbManager.getVerifyTxs(capsule);
+
+      Assert.assertEquals(1, txs.size());
+      Assert.assertEquals(bTx.getTransactionId(), txs.get(0).getTransactionId());
+    } finally {
+      ownerAddressSet.clear();
+      ownerAddressSet.addAll(backup);
+      dbManager.getPendingTransactions().clear();
+    }
+  }
+
+  @Test
   public void doNotSwitch()
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       UnLinkedBlockException, ValidateScheduleException, BadItemException,
@@ -1335,7 +1387,8 @@ public class ManagerTest extends BaseMethodTest {
   @Test
   public void blockTrigger() {
     Manager manager = spy(new Manager());
-    doThrow(new RuntimeException("postBlockTrigger mock")).when(manager).postBlockTrigger(any());
+    doThrow(new RuntimeException("postBlockTrigger mock")).when(manager)
+        .postBlockTrigger(any(), anyBoolean());
     TronError thrown = Assert.assertThrows(TronError.class, () ->
         manager.blockTrigger(new BlockCapsule(Block.newBuilder().build()), 1, 1));
     Assert.assertEquals(TronError.ErrCode.EVENT_SUBSCRIBE_ERROR, thrown.getErrCode());
@@ -1376,6 +1429,142 @@ public class ManagerTest extends BaseMethodTest {
       ReflectUtils.setFieldValue(dbManager, "eventPluginLoaded", false);
       Args.getSolidityContractLogTriggerMap().clear();
       Args.getSolidityContractEventTriggerMap().clear();
+    }
+  }
+
+  private EventPluginLoader installMockLoader() throws Exception {
+    ReflectUtils.setFieldValue(dbManager, "eventPluginLoaded", true);
+    EventPluginLoader mockLoader = mock(EventPluginLoader.class);
+    Field instanceField = EventPluginLoader.class.getDeclaredField("instance");
+    instanceField.setAccessible(true);
+    instanceField.set(null, mockLoader);
+    return mockLoader;
+  }
+
+  private void restoreLoader(EventPluginLoader original) throws Exception {
+    Field instanceField = EventPluginLoader.class.getDeclaredField("instance");
+    instanceField.setAccessible(true);
+    instanceField.set(null, original);
+    ReflectUtils.setFieldValue(dbManager, "eventPluginLoaded", false);
+    dbManager.getTriggerCapsuleQueue().clear();
+  }
+
+  private BlockCapsule blockWithOneTransfer() {
+    BlockCapsule block = new BlockCapsule(1, chainManager.getGenesisBlockId(),
+        System.currentTimeMillis(), ByteString.EMPTY);
+    TransferContract tc = TransferContract.newBuilder()
+        .setOwnerAddress(ByteString.copyFrom(new byte[21]))
+        .setToAddress(ByteString.copyFrom(new byte[21]))
+        .setAmount(1L).build();
+    block.addTransaction(new TransactionCapsule(tc, ContractType.TransferContract));
+    return block;
+  }
+
+  @Test
+  public void testReOrgBlockTriggerRemoved() throws Exception {
+    // version-0 reorg emit core: postBlockTrigger threads the removed flag onto both the block
+    // and transaction triggers. reOrgBlockTrigger calls postBlockTrigger(block, true) (rollback),
+    // reApplyBlockEvents calls postBlockTrigger(block, false) (forward); both delegate here.
+    Field instanceField = EventPluginLoader.class.getDeclaredField("instance");
+    instanceField.setAccessible(true);
+    EventPluginLoader originalLoader = (EventPluginLoader) instanceField.get(null);
+    EventPluginLoader mockLoader = installMockLoader();
+    when(mockLoader.isBlockLogTriggerEnable()).thenReturn(true);
+    when(mockLoader.isBlockLogTriggerSolidified()).thenReturn(false);
+    when(mockLoader.isTransactionLogTriggerEnable()).thenReturn(true);
+    when(mockLoader.isTransactionLogTriggerSolidified()).thenReturn(false);
+    when(mockLoader.isTransactionLogTriggerEthCompatible()).thenReturn(false);
+
+    BlockingQueue<TriggerCapsule> queue = dbManager.getTriggerCapsuleQueue();
+    queue.clear();
+    BlockCapsule block = blockWithOneTransfer();
+    try {
+      // rollback: block + transaction triggers re-emitted with removed=true
+      dbManager.postBlockTrigger(block, true);
+      Assert.assertEquals(2, queue.size());
+      Assert.assertTrue(((BlockLogTriggerCapsule) queue.poll()).getBlockLogTrigger().isRemoved());
+      Assert.assertTrue(((TransactionLogTriggerCapsule) queue.poll())
+          .getTransactionLogTrigger().isRemoved());
+
+      // forward: removed=false
+      dbManager.postBlockTrigger(block, false);
+      Assert.assertEquals(2, queue.size());
+      Assert.assertFalse(((BlockLogTriggerCapsule) queue.poll()).getBlockLogTrigger().isRemoved());
+      Assert.assertFalse(((TransactionLogTriggerCapsule) queue.poll())
+          .getTransactionLogTrigger().isRemoved());
+    } finally {
+      restoreLoader(originalLoader);
+    }
+  }
+
+  @Test
+  public void testReApplyBlockEvents() throws Exception {
+    Field instanceField = EventPluginLoader.class.getDeclaredField("instance");
+    instanceField.setAccessible(true);
+    EventPluginLoader originalLoader = (EventPluginLoader) instanceField.get(null);
+    EventPluginLoader mockLoader = installMockLoader();
+    when(mockLoader.getVersion()).thenReturn(0);
+    when(mockLoader.isBlockLogTriggerEnable()).thenReturn(true);
+    when(mockLoader.isBlockLogTriggerSolidified()).thenReturn(false);
+    when(mockLoader.isTransactionLogTriggerEnable()).thenReturn(false);
+
+    BlockingQueue<TriggerCapsule> queue = dbManager.getTriggerCapsuleQueue();
+    queue.clear();
+    BlockCapsule block = new BlockCapsule(1, chainManager.getGenesisBlockId(),
+        System.currentTimeMillis(), ByteString.EMPTY);
+    List<KhaosDatabase.KhaosBlock> branch = new ArrayList<>();
+    branch.add(new KhaosDatabase.KhaosBlock(block));
+    try {
+      Method m = Manager.class.getDeclaredMethod("reApplyBlockEvents", List.class);
+      m.setAccessible(true);
+      m.invoke(dbManager, branch);
+      // forward block trigger emitted for the re-applied fork branch (removed=false)
+      Assert.assertEquals(1, queue.size());
+      Assert.assertFalse(((BlockLogTriggerCapsule) queue.poll())
+          .getBlockLogTrigger().isRemoved());
+    } finally {
+      restoreLoader(originalLoader);
+    }
+  }
+
+  @Test
+  public void testReOrgBlockTrigger() throws Exception {
+    Field instanceField = EventPluginLoader.class.getDeclaredField("instance");
+    instanceField.setAccessible(true);
+    EventPluginLoader originalLoader = (EventPluginLoader) instanceField.get(null);
+    EventPluginLoader mockLoader = installMockLoader();
+    when(mockLoader.isBlockLogTriggerEnable()).thenReturn(true);
+    when(mockLoader.isTransactionLogTriggerEnable()).thenReturn(false);
+    try {
+      Method m = Manager.class.getDeclaredMethod("reOrgBlockTrigger");
+      m.setAccessible(true);
+      // exercises the fetch of the old head block + try/catch; must not throw
+      m.invoke(dbManager);
+    } finally {
+      restoreLoader(originalLoader);
+    }
+  }
+
+  @Test
+  public void testPostSolidityTriggerSolidified() throws Exception {
+    Field instanceField = EventPluginLoader.class.getDeclaredField("instance");
+    instanceField.setAccessible(true);
+    EventPluginLoader originalLoader = (EventPluginLoader) instanceField.get(null);
+    EventPluginLoader mockLoader = installMockLoader();
+    when(mockLoader.isBlockLogTriggerEnable()).thenReturn(true);
+    when(mockLoader.isBlockLogTriggerSolidified()).thenReturn(true);
+    when(mockLoader.isTransactionLogTriggerEnable()).thenReturn(true);
+    when(mockLoader.isTransactionLogTriggerSolidified()).thenReturn(true);
+    when(mockLoader.isTransactionLogTriggerEthCompatible()).thenReturn(false);
+    // make getContinuousBlockCapsule cover the current head block
+    ReflectUtils.setFieldValue(dbManager, "lastUsedSolidityNum", -1L);
+    try {
+      Method m = Manager.class.getDeclaredMethod("postSolidityTrigger", long.class);
+      m.setAccessible(true);
+      // exercises the solidified-mode block/transaction batch emission
+      m.invoke(dbManager, dbManager.getHeadBlockNum());
+    } finally {
+      restoreLoader(originalLoader);
     }
   }
 
@@ -1497,5 +1686,204 @@ public class ManagerTest extends BaseMethodTest {
       throws BalanceInsufficientException {
     Commons.adjustBalance(accountStore, accountAddress, amount,
         chainManager.getDynamicPropertiesStore().disableJavaLangMath());
+  }
+
+  /**
+   * Drives a real reorg and asserts what Manager posts to the jsonrpc filterCapsuleQueue.
+   */
+  @Test
+  public void switchForkShouldPostFullNodeFilterForNewBranch() throws Exception {
+    CommonParameter.getInstance().jsonRpcHttpFullNodeEnable = true;
+    // filterProcessLoop only starts when isJsonRpcFilterEnabled() held at Manager.init() time; it
+    // was false then, so filterCapsuleQueue is produce-only here and fully observable.
+
+    // bootstrap a head with a known witness
+    String key = PublicMethod.getRandomPrivateKey();
+    byte[] privateKey = ByteArray.fromHexString(key);
+    final ECKey ecKey = ECKey.fromPrivate(privateKey);
+    byte[] address = ecKey.getAddress();
+    ByteString addressByte = ByteString.copyFrom(address);
+    chainManager.getAccountStore().put(addressByte.toByteArray(),
+        new AccountCapsule(Protocol.Account.newBuilder().setAddress(addressByte).build()));
+    WitnessCapsule witnessCapsule = new WitnessCapsule(addressByte);
+    chainManager.getWitnessScheduleStore().saveActiveWitnesses(new ArrayList<>());
+    chainManager.addWitness(addressByte);
+    chainManager.getWitnessStore().put(address, witnessCapsule);
+    Block block = blockGenerate.getSignedBlock(
+        witnessCapsule.getAddress(), 1533529947843L, privateKey);
+    dbManager.pushBlock(new BlockCapsule(block));
+
+    Map<ByteString, String> keys = addTestWitnessAndAccount();
+    keys.put(addressByte, key);
+
+    // fund an owner; transfers go owner -> witness 'address' (an existing account)
+    ECKey ownerKey = new ECKey(Utils.getRandom());
+    byte[] owner = ownerKey.getAddress();
+    AccountCapsule ownerAccount = new AccountCapsule(
+        Protocol.Account.newBuilder().setAddress(ByteString.copyFrom(owner)).build());
+    ownerAccount.setBalance(1_000_000_000L);
+    chainManager.getAccountStore().put(owner, ownerAccount);
+
+    long t = 1533529947843L;
+    long base = chainManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber();
+
+    // common ancestor P (empty) — fork point and tapos reference
+    BlockCapsule p = createTestBlockCapsule(t + 3000, base + 1,
+        chainManager.getDynamicPropertiesStore().getLatestBlockHeaderHash().getByteString(), keys);
+    dbManager.pushBlock(p);
+
+    long expiration = t + 1_000_000L;
+    BlockingQueue<FilterTriggerCapsule> queue =
+        ReflectUtils.getFieldValue(dbManager, "filterCapsuleQueue");
+    queue.clear();
+
+    // old branch: A carries a transfer; applied via the normal extend path
+    BlockCapsule a = blockWithTransfer(t + 6000, base + 2, p.getBlockId().getByteString(), keys,
+        transfer(owner, address, 1L, p, expiration));
+    dbManager.pushBlock(a);
+    Assert.assertEquals("control: head should be A after normal extend",
+        a.getBlockId(), chainManager.getDynamicPropertiesStore().getLatestBlockHeaderHash());
+    Assert.assertTrue("control: normal-path block A's logs must reach FULL stream (added)",
+        hasLogsFilterCapsule(queue, a, false));
+    Assert.assertTrue("control: normal-path block A must reach the FULL block-filter stream",
+        hasBlockFilterCapsule(queue, a));
+
+    // heavier competing branch P -> B1 -> B2, each carrying a transfer, to force switchFork
+    BlockCapsule b1 = blockWithTransfer(t + 6001, base + 2, p.getBlockId().getByteString(), keys,
+        transfer(owner, address, 2L, p, expiration));
+    dbManager.pushBlock(b1); // num <= head -> kept in khaosDb, no switch yet
+    BlockCapsule b2 = blockWithTransfer(t + 9000, base + 3, b1.getBlockId().getByteString(), keys,
+        transfer(owner, address, 3L, p, expiration));
+    dbManager.pushBlock(b2); // num > head & parent != head -> triggers switchFork
+
+    Assert.assertEquals("reorg must switch the canonical head to the competing branch (B2)",
+        b2.getBlockId(), chainManager.getDynamicPropertiesStore().getLatestBlockHeaderHash());
+
+    // reorg withdraws the orphaned old-branch logs (removed=true)
+    Assert.assertTrue("reorg: orphaned block A's logs must be withdrawn (removed=true)",
+        hasLogsFilterCapsule(queue, a, true));
+    // the fix: new canonical blocks' logs and block filters are delivered
+    Assert.assertTrue("reorg: new canonical block B1's logs must reach FULL stream (added)",
+        hasLogsFilterCapsule(queue, b1, false));
+    Assert.assertTrue("reorg: new canonical block B2's logs must reach FULL stream (added)",
+        hasLogsFilterCapsule(queue, b2, false));
+    Assert.assertTrue("reorg: new canonical block B1 must reach the FULL block-filter stream",
+        hasBlockFilterCapsule(queue, b1));
+    Assert.assertTrue("reorg: new canonical block B2 must reach the FULL block-filter stream",
+        hasBlockFilterCapsule(queue, b2));
+  }
+
+  /**
+   * A fork switch re-applies the new branch on a rewound, diverged state, so any signature
+   * verification cached on those transactions (isVerified) must be cleared to force
+   * re-validation against the fork-chain state. Drives a real reorg and asserts that switchFork
+   * resets isVerified on the transactions of the branch it switches to.
+   */
+  @Test
+  public void switchForkShouldResetTransactionSignVerifiedOnNewBranch() throws Exception {
+    // bootstrap a head with a known witness
+    String key = PublicMethod.getRandomPrivateKey();
+    byte[] privateKey = ByteArray.fromHexString(key);
+    final ECKey ecKey = ECKey.fromPrivate(privateKey);
+    byte[] address = ecKey.getAddress();
+    ByteString addressByte = ByteString.copyFrom(address);
+    chainManager.getAccountStore().put(addressByte.toByteArray(),
+        new AccountCapsule(Protocol.Account.newBuilder().setAddress(addressByte).build()));
+    WitnessCapsule witnessCapsule = new WitnessCapsule(addressByte);
+    chainManager.getWitnessScheduleStore().saveActiveWitnesses(new ArrayList<>());
+    chainManager.addWitness(addressByte);
+    chainManager.getWitnessStore().put(address, witnessCapsule);
+    Block block = blockGenerate.getSignedBlock(
+        witnessCapsule.getAddress(), 1533529947843L, privateKey);
+    dbManager.pushBlock(new BlockCapsule(block));
+
+    Map<ByteString, String> keys = addTestWitnessAndAccount();
+    keys.put(addressByte, key);
+
+    // fund an owner; transfers go owner -> witness 'address' (an existing account)
+    ECKey ownerKey = new ECKey(Utils.getRandom());
+    byte[] owner = ownerKey.getAddress();
+    AccountCapsule ownerAccount = new AccountCapsule(
+        Protocol.Account.newBuilder().setAddress(ByteString.copyFrom(owner)).build());
+    ownerAccount.setBalance(1_000_000_000L);
+    chainManager.getAccountStore().put(owner, ownerAccount);
+
+    long t = 1533529947843L;
+    long base = chainManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber();
+    long expiration = t + 1_000_000L;
+
+    // common ancestor P (empty) — fork point and tapos reference
+    BlockCapsule p = createTestBlockCapsule(t + 3000, base + 1,
+        chainManager.getDynamicPropertiesStore().getLatestBlockHeaderHash().getByteString(), keys);
+    dbManager.pushBlock(p);
+
+    // old branch: A extends P via the normal path and becomes head
+    BlockCapsule a = blockWithTransfer(t + 6000, base + 2, p.getBlockId().getByteString(), keys,
+        transfer(owner, address, 1L, p, expiration));
+    dbManager.pushBlock(a);
+    Assert.assertEquals("control: head should be A after normal extend",
+        a.getBlockId(), chainManager.getDynamicPropertiesStore().getLatestBlockHeaderHash());
+
+    // heavier competing branch P -> B1 -> B2 forces switchFork; spy the tx on the branch we
+    // switch to and pre-mark it verified to mimic a stale cache computed on a different state
+    BlockCapsule b1 = blockWithTransfer(t + 6001, base + 2, p.getBlockId().getByteString(), keys,
+        transfer(owner, address, 2L, p, expiration));
+    dbManager.pushBlock(b1); // num <= head -> kept in khaosDb, no switch yet
+
+    TransactionCapsule forkTx = transfer(owner, address, 3L, p, expiration);
+    forkTx.setVerified(true);
+    TransactionCapsule spyTx = spy(forkTx);
+    BlockCapsule b2 = blockWithTransfer(t + 9000, base + 3, b1.getBlockId().getByteString(), keys,
+        spyTx);
+    dbManager.pushBlock(b2); // num > head & parent != head -> triggers switchFork
+
+    Assert.assertEquals("reorg must switch the canonical head to the competing branch (B2)",
+        b2.getBlockId(), chainManager.getDynamicPropertiesStore().getLatestBlockHeaderHash());
+    // switchFork must clear the cached verification flag on the new branch's transaction so it
+    // re-validates against the fork-chain state
+    verify(spyTx, atLeastOnce()).setVerified(false);
+  }
+
+  private TransactionCapsule transfer(byte[] owner, byte[] to, long amount,
+      BlockCapsule refBlock, long expiration) {
+    TransferContract contract = TransferContract.newBuilder()
+        .setOwnerAddress(ByteString.copyFrom(owner))
+        .setToAddress(ByteString.copyFrom(to))
+        .setAmount(amount).build();
+    TransactionCapsule tx = new TransactionCapsule(contract, ContractType.TransferContract);
+    tx.setReference(refBlock.getNum(), refBlock.getBlockId().getBytes());
+    tx.setExpiration(expiration);
+    return tx;
+  }
+
+  private BlockCapsule blockWithTransfer(long time, long number, ByteString parentHash,
+      Map<ByteString, String> keys, TransactionCapsule tx) {
+    ByteString witnessAddress = dposSlot.getScheduledWitness(dposSlot.getSlot(time));
+    BlockCapsule blockCapsule = new BlockCapsule(number, Sha256Hash.wrap(parentHash), time,
+        witnessAddress);
+    blockCapsule.addTransaction(tx);
+    blockCapsule.generatedByMyself = true;
+    blockCapsule.setMerkleRoot();
+    blockCapsule.sign(ByteArray.fromHexString(keys.get(witnessAddress)));
+    return blockCapsule;
+  }
+
+  private boolean hasLogsFilterCapsule(BlockingQueue<FilterTriggerCapsule> queue, BlockCapsule b,
+      boolean removed) {
+    String blockHash = b.getBlockId().toString();
+    return queue.stream()
+        .filter(c -> c instanceof LogsFilterCapsule)
+        .map(c -> (LogsFilterCapsule) c)
+        .anyMatch(c -> !c.isSolidified() && c.isRemoved() == removed
+            && blockHash.equals(c.getBlockHash()));
+  }
+
+  private boolean hasBlockFilterCapsule(BlockingQueue<FilterTriggerCapsule> queue,
+      BlockCapsule b) {
+    String blockHash = b.getBlockId().toString();
+    return queue.stream()
+        .filter(c -> c instanceof BlockFilterCapsule)
+        .map(c -> (BlockFilterCapsule) c)
+        .anyMatch(c -> !c.isSolidified() && blockHash.equals(c.getBlockHash()));
   }
 }

@@ -108,9 +108,10 @@ public class RateLimiterInterceptor implements ServerInterceptor {
 
     RuntimeData runtimeData = new RuntimeData(call);
     // Check per-endpoint first to avoid consuming global IP/QPS quota for requests
-    // that would be rejected by the per-endpoint limiter anyway.
-    boolean perEndpointAcquired = rateLimiter == null || rateLimiter.tryAcquire(runtimeData);
-    boolean acquireResource = perEndpointAcquired && GlobalRateLimiter.tryAcquire(runtimeData);
+    // that would be rejected by the per-endpoint limiter anyway. acquirePermit()
+    // chooses blocking or non-blocking semantics based on rate.limiter.apiNonBlocking.
+    boolean perEndpointAcquired = rateLimiter == null || rateLimiter.acquirePermit(runtimeData);
+    boolean acquireResource = perEndpointAcquired && GlobalRateLimiter.acquirePermit(runtimeData);
 
     if (!acquireResource) {
       // Release the per-endpoint permit when global rejected, to avoid semaphore leak.

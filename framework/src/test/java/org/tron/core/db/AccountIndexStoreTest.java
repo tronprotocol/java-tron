@@ -16,7 +16,6 @@ import org.tron.protos.Protocol.AccountType;
 public class AccountIndexStoreTest extends BaseTest {
 
   private static String dbDirectory = "db_AccountIndexStore_test";
-  private static String indexDirectory = "index_AccountIndexStore_test";
   @Resource
   private AccountIndexStore accountIndexStore;
   private static byte[] address = TransactionStoreTest.randomBytes(32);
@@ -26,8 +25,7 @@ public class AccountIndexStoreTest extends BaseTest {
     Args.setParam(
         new String[]{
             "--output-directory", dbPath(),
-            "--storage-db-directory", dbDirectory,
-            "--storage-index-directory", indexDirectory
+            "--storage-db-directory", dbDirectory
         },
         TestConstants.TEST_CONF
     );

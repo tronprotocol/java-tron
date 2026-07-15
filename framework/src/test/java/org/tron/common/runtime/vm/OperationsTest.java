@@ -788,6 +788,72 @@ public class OperationsTest extends BaseTest {
     VMConfig.initAllowTvmSelfdestructRestriction(0);
   }
 
+  @Test
+  public void testCreate2MaxDepthWithOsakaOnly() throws ContractValidateException {
+    boolean allowTvmCompatibleEvm = VMConfig.allowTvmCompatibleEvm();
+    boolean allowTvmOsaka = VMConfig.allowTvmOsaka();
+    VMConfig.initAllowTvmCompatibleEvm(0);
+    VMConfig.initAllowTvmOsaka(1);
+    try {
+      invoke = new ProgramInvokeMockImpl() {
+        @Override
+        public int getCallDeep() {
+          return 64;
+        }
+      };
+      Protocol.Transaction trx = Protocol.Transaction.getDefaultInstance();
+      InternalTransaction interTrx =
+          new InternalTransaction(trx, InternalTransaction.TrxType.TRX_UNKNOWN_TYPE);
+      program = new Program(new byte[0], new byte[0], invoke, interTrx);
+      program.setRootTransactionId(new byte[32]);
+
+      program.createContract2(DataWord.ZERO(), DataWord.ZERO(), DataWord.ZERO(), DataWord.ZERO());
+
+      Assert.assertEquals(DataWord.ZERO(), program.getStack().pop());
+      Assert.assertTrue(program.getResult().getInternalTransactions().isEmpty());
+    } finally {
+      VMConfig.initAllowTvmCompatibleEvm(allowTvmCompatibleEvm ? 1 : 0);
+      VMConfig.initAllowTvmOsaka(allowTvmOsaka ? 1 : 0);
+    }
+  }
+
+  @Test
+  public void testCreate2MaxDepthWithNeitherFlag() throws ContractValidateException {
+    boolean allowTvmCompatibleEvm = VMConfig.allowTvmCompatibleEvm();
+    boolean allowTvmOsaka = VMConfig.allowTvmOsaka();
+    VMConfig.initAllowTvmCompatibleEvm(0);
+    VMConfig.initAllowTvmOsaka(0);
+    try {
+      byte[] contractAddr = Hex.decode("41471fd3ad3e9eeadeec4608b92d16ce6b500704cc");
+      invoke = new ProgramInvokeMockImpl(StoreFactory.getInstance(), new byte[0], contractAddr) {
+        @Override
+        public int getCallDeep() {
+          return 64;
+        }
+
+        @Override
+        public boolean byTestingSuite() {
+          return true;
+        }
+      };
+      program = new Program(null, null, invoke,
+          new InternalTransaction(Protocol.Transaction.getDefaultInstance(),
+              InternalTransaction.TrxType.TRX_UNKNOWN_TYPE));
+      program.setRootTransactionId(new byte[32]);
+
+      program.createContract2(DataWord.ZERO(), DataWord.ZERO(), DataWord.ZERO(), DataWord.ZERO());
+
+      // With neither flag enabled the MAX_DEPTH short-circuit must not fire: CREATE2
+      // proceeds, records an internal transaction and pushes the new contract
+      // address (not 0), unlike the Osaka/CompatibleEvm guarded path above.
+      Assert.assertFalse(program.getResult().getInternalTransactions().isEmpty());
+      Assert.assertFalse(program.getStack().pop().isZero());
+    } finally {
+      VMConfig.initAllowTvmCompatibleEvm(allowTvmCompatibleEvm ? 1 : 0);
+      VMConfig.initAllowTvmOsaka(allowTvmOsaka ? 1 : 0);
+    }
+  }
+
   // TIP-854 outer-frame containment: a CALL to validateMultiSign or
   // batchValidateSign with malformed calldata must (a) push 0 onto the outer
   // stack, (b) leave the outer frame free of any propagated exception, and

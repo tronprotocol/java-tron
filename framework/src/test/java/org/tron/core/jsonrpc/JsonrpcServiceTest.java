@@ -26,6 +26,7 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import org.bouncycastle.util.encoders.Hex;
+import org.eclipse.jetty.http.HttpStatus;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -56,6 +57,7 @@ import org.tron.core.services.jsonrpc.TronJsonRpc.LogFilterElement;
 import org.tron.core.services.jsonrpc.TronJsonRpcImpl;
 import org.tron.core.services.jsonrpc.filters.LogFilterWrapper;
 import org.tron.core.services.jsonrpc.types.BlockResult;
+import org.tron.core.services.jsonrpc.types.BuildArguments;
 import org.tron.core.services.jsonrpc.types.TransactionReceipt;
 import org.tron.core.services.jsonrpc.types.TransactionResult;
 import org.tron.json.JSON;
@@ -514,11 +516,9 @@ public class JsonrpcServiceTest extends BaseTest {
         () -> parseBlockNumber("abc", wallet));
     Assert.assertEquals("Incorrect hex syntax", abcEx.getMessage());
 
-    // parseBlockNumber: malformed hex -> throws
     Exception hexEx = Assert.assertThrows(Exception.class,
         () -> parseBlockNumber("0xxabc", wallet));
-    // https://bugs.openjdk.org/browse/JDK-8176425, from JDK 12, the exception message is changed
-    Assert.assertTrue(hexEx.getMessage().startsWith("For input string: \"xabc\""));
+    Assert.assertEquals("invalid block number", hexEx.getMessage());
   }
 
   @Test
@@ -579,10 +579,29 @@ public class JsonrpcServiceTest extends BaseTest {
         () -> tronJsonRpc.getStorageAt("", "", "abc"));
     Assert.assertEquals("invalid block number", e6.getMessage());
 
+    // storageIdx length oversized -> invalid storage key value
+    String addr = "0xabd4b9367799eaa3197fecb144eb71de1e049abc";
+    Exception e7 = Assert.assertThrows(Exception.class,
+        () -> tronJsonRpc.getStorageAt(addr,
+            "0x" + new String(new char[65]).replace('\0', 'a'), "latest"));
+    Assert.assertEquals("invalid storage key value", e7.getMessage());
+
+    // storageIdx is null -> invalid storage key value
+    Exception e8 = Assert.assertThrows(Exception.class,
+        () -> tronJsonRpc.getStorageAt(addr, null, "latest"));
+    Assert.assertEquals("invalid storage key value", e8.getMessage());
+
+    // storageIdx is valid length but decodes to >32 bytes (66 hex chars without 0x = 33 bytes):
+    // DataWord rejects it -> invalid storage key value (-32602), not a leaked Internal error.
+    Exception e9 = Assert.assertThrows(Exception.class,
+        () -> tronJsonRpc.getStorageAt(addr,
+            new String(new char[66]).replace('\0', 'a'), "latest"));
+    Assert.assertEquals("invalid storage key value", e9.getMessage());
+
     // latest happy path: address is an account, not a contract, so returns 32 zero bytes
     try {
       String value = tronJsonRpc.getStorageAt(
-          "0xabd4b9367799eaa3197fecb144eb71de1e049abc", "0x0", "latest");
+          addr, "0x0", "latest");
       Assert.assertEquals(ByteArray.toJsonHex(new byte[32]), value);
     } catch (Exception e) {
       Assert.fail();
@@ -673,6 +692,31 @@ public class JsonrpcServiceTest extends BaseTest {
     } catch (Exception e) {
       Assert.fail();
     }
+
+    // negative index is out of range too -> null (not an Internal error)
+    try {
+      TransactionResult result = tronJsonRpc.getTransactionByBlockNumberAndIndex(
+          ByteArray.toJsonHex(blockCapsule1.getNum()), "0x-1");
+      Assert.assertNull(result);
+    } catch (Exception e) {
+      Assert.fail();
+    }
+
+    // leading zeros are tolerated: "0x00" parses to index 0
+    try {
+      TransactionResult result = tronJsonRpc.getTransactionByBlockNumberAndIndex(
+          ByteArray.toJsonHex(blockCapsule1.getNum()), "0x00");
+      Assert.assertNotNull(result);
+      Assert.assertEquals(ByteArray.toJsonHex(0L), result.getTransactionIndex());
+    } catch (Exception e) {
+      Assert.fail();
+    }
+
+    // oversized index (> 8 hex digits) rejected before parsing
+    Exception oversizedEx = Assert.assertThrows(Exception.class,
+        () -> tronJsonRpc.getTransactionByBlockNumberAndIndex(
+            ByteArray.toJsonHex(blockCapsule1.getNum()), "0x123456789"));
+    Assert.assertEquals("invalid index value", oversizedEx.getMessage());
 
     // latest -> blockCapsule1 (head)
     try {
@@ -1006,6 +1050,29 @@ public class JsonrpcServiceTest extends BaseTest {
       Assert.fail();
     }
 
+    JsonRpcInvalidParamsException shortHashEx = Assert.assertThrows(
+        JsonRpcInvalidParamsException.class,
+        () -> new LogFilterWrapper(new FilterRequest(null, null, null,
+            null, "0x111111"),
+            100, null, false));
+    Assert.assertEquals("invalid hash value", shortHashEx.getMessage());
+
+    JsonRpcInvalidParamsException oversizedHashEx = Assert.assertThrows(
+        JsonRpcInvalidParamsException.class,
+        () -> new LogFilterWrapper(new FilterRequest(null, null, null,
+            null,
+            "0x" + new String(new char[1000]).replace('\0', 'a')),
+            100, null, false));
+    Assert.assertEquals("invalid hash value", oversizedHashEx.getMessage());
+
+    JsonRpcInvalidParamsException validHashEx = Assert.assertThrows(
+        JsonRpcInvalidParamsException.class,
+        () -> new LogFilterWrapper(new FilterRequest(null, null, null,
+            null,
+            "0x" + new String(new char[64]).replace('\0', 'a')),
+            100, null, false));
+    Assert.assertEquals("invalid blockHash", validHashEx.getMessage());
+
     // reset
     Args.getInstance().setJsonRpcMaxBlockRange(oldMaxBlockRange);
   }
@@ -1263,6 +1330,35 @@ public class JsonrpcServiceTest extends BaseTest {
   }
 
   @Test
+  public void testGetFilterLogsEnforcesBlockRange() throws Exception {
+    int oldMaxBlockRange = Args.getInstance().getJsonRpcMaxBlockRange();
+    Args.getInstance().setJsonRpcMaxBlockRange(5_000);
+    try {
+      // toBlock=0xf4240 (1_000_000) is clamped to head (LATEST_BLOCK_NUM = 10_000), so the span
+      // is min(1_000_000, 10_000) - 0 = 10_000 > 5_000 cap.
+      String wideFilterId = tronJsonRpc.newFilter(
+          new FilterRequest("0x0", "0xf4240", null, null, null));
+      Assert.assertNotNull(wideFilterId);
+
+      // eth_getFilterLogs must reject it at query time (previously bypassed -> unbounded scan).
+      JsonRpcInvalidParamsException ex = Assert.assertThrows(
+          JsonRpcInvalidParamsException.class,
+          () -> tronJsonRpc.getFilterLogs(wideFilterId));
+      Assert.assertEquals("exceed max block range: 5000", ex.getMessage());
+
+      // A within-cap filter (span 0) is still served normally - no false rejection.
+      String headHex = ByteArray.toJsonHex(blockCapsule1.getNum());
+      int expectedLogs = blockCapsule1.getTransactions().size() * 2;
+      String okFilterId = tronJsonRpc.newFilter(
+          new FilterRequest(headHex, headHex, null, null, null));
+      LogFilterElement[] okResult = tronJsonRpc.getFilterLogs(okFilterId);
+      Assert.assertEquals(expectedLogs, okResult.length);
+    } finally {
+      Args.getInstance().setJsonRpcMaxBlockRange(oldMaxBlockRange);
+    }
+  }
+
+  @Test
   public void testGetBlockReceipts() {
 
     try {
@@ -1311,6 +1407,10 @@ public class JsonrpcServiceTest extends BaseTest {
     Exception testReceiptsEx = Assert.assertThrows(Exception.class,
         () -> tronJsonRpc.getBlockReceipts("test"));
     Assert.assertEquals("invalid block number", testReceiptsEx.getMessage());
+
+    Exception nullReceiptsEx = Assert.assertThrows(Exception.class,
+        () -> tronJsonRpc.getBlockReceipts(null));
+    Assert.assertEquals("invalid block number", nullReceiptsEx.getMessage());
 
     try {
       List<TransactionReceipt> transactionReceiptList = tronJsonRpc.getBlockReceipts("0x2");
@@ -1390,6 +1490,75 @@ public class JsonrpcServiceTest extends BaseTest {
   }
 
   @Test
+  public void testBuildCreateSmartContractAcceptsNullAbiOutputsOverHttp() {
+    fullNodeJsonRpcHttpService.start();
+    try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
+      JsonObject buildArgs = new JsonObject();
+      buildArgs.addProperty("from", "0xabd4b9367799eaa3197fecb144eb71de1e049abc");
+      buildArgs.addProperty("data", "608060405234801561001057600080fd5b50");
+      buildArgs.addProperty("gas", "0x3b9aca00");
+      buildArgs.addProperty("abi", "[{\"inputs\":[],\"name\":\"test\",\"outputs\":null,"
+          + "\"type\":\"function\"}]");
+      JsonArray params = new JsonArray();
+      params.add(buildArgs);
+      JsonObject requestBody = new JsonObject();
+      requestBody.addProperty("jsonrpc", "2.0");
+      requestBody.addProperty("method", "buildTransaction");
+      requestBody.add("params", params);
+      requestBody.addProperty("id", 1);
+
+      HttpPost httpPost = new HttpPost("http://127.0.0.1:"
+          + CommonParameter.getInstance().getJsonRpcHttpFullNodePort() + "/jsonrpc");
+      httpPost.addHeader("Content-Type", "application/json");
+      httpPost.setEntity(new StringEntity(requestBody.toString()));
+      try (CloseableHttpResponse response = httpClient.execute(httpPost)) {
+        String resp = EntityUtils.toString(response.getEntity());
+        JSONObject json = JSON.parseObject(resp);
+        Assert.assertNull(resp, json.getJSONObject("error"));
+        JSONObject tx = json.getJSONObject("result").getJSONObject("transaction");
+        Assert.assertNotNull("transaction must be a JSON object", tx);
+
+        JSONArray contracts = tx.getJSONObject("raw_data").getJSONArray("contract");
+        Assert.assertEquals(1, contracts.size());
+        JSONObject contract = contracts.getJSONObject(0);
+        Assert.assertEquals("CreateSmartContract", contract.getString("type"));
+        JSONObject value = contract.getJSONObject("parameter").getJSONObject("value");
+        JSONObject abi = value.getJSONObject("new_contract").getJSONObject("abi");
+        JSONArray entrys = abi.getJSONArray("entrys");
+        Assert.assertEquals(1, entrys.size());
+        Assert.assertFalse(entrys.getJSONObject(0).containsKey("outputs"));
+      }
+    } catch (Exception e) {
+      Assert.fail(e.getMessage());
+    } finally {
+      fullNodeJsonRpcHttpService.stop();
+    }
+  }
+
+  @Test
+  public void testBuildTransactionRejectsDeeplyNestedAbi() {
+    // A deeply nested ABI must surface as invalid-params (-32602), not as a generic
+    // internal error.
+    int depth = 200_000;
+    StringBuilder abi = new StringBuilder("[],\"x\":");
+    for (int i = 0; i < depth; i++) {
+      abi.append('[');
+    }
+    for (int i = 0; i < depth; i++) {
+      abi.append(']');
+    }
+
+    BuildArguments args = new BuildArguments();
+    args.setFrom("0xabd4b9367799eaa3197fecb144eb71de1e049abc");
+    args.setData("60806040");
+    args.setAbi(abi.toString());
+
+    JsonRpcInvalidParamsException e = Assert.assertThrows(JsonRpcInvalidParamsException.class,
+        () -> tronJsonRpc.buildTransaction(args));
+    Assert.assertEquals("invalid abi", e.getMessage());
+  }
+
+  @Test
   public void testWeb3ClientVersion() {
     try {
       String[] versions = tronJsonRpc.web3ClientVersion().split("/");
@@ -1404,8 +1573,7 @@ public class JsonrpcServiceTest extends BaseTest {
    * Verifies SizeLimitHandler integration with the real JsonRpcServlet + jsonrpc4j stack.
    *
    * Covers: normal request no regression, Content-Length oversized 413,
-   * and chunked oversized handled gracefully (body truncated, 200 + empty body
-   * because jsonrpc4j absorbs the BadMessageException).
+   * and chunked oversized 413 during streaming body reads.
    */
   @Test
   public void testJsonRpcSizeLimitIntegration() {
@@ -1441,11 +1609,11 @@ public class JsonrpcServiceTest extends BaseTest {
         overPost.setEntity(new StringEntity(
             new String(new char[(int) testLimit + 1]).replace('\0', 'x')));
         resp = httpClient.execute(overPost);
-        Assert.assertEquals(413, resp.getStatusLine().getStatusCode());
+        Assert.assertEquals(HttpStatus.PAYLOAD_TOO_LARGE_413,
+            resp.getStatusLine().getStatusCode());
         resp.close();
 
-        // Chunked oversized -> BadMessageException thrown during body read,
-        // absorbed by jsonrpc4j catch(Exception) -> 200 with empty body.
+        // Chunked oversized -> BadMessageException thrown during body read.
         // Body read IS truncated at the limit - OOM protection effective.
         byte[] chunkedData = new String(new char[(int) testLimit * 2])
             .replace('\0', 'x').getBytes("UTF-8");
@@ -1453,10 +1621,8 @@ public class JsonrpcServiceTest extends BaseTest {
         chunkedPost.setEntity(new InputStreamEntity(
             new ByteArrayInputStream(chunkedData), -1));
         resp = httpClient.execute(chunkedPost);
-        Assert.assertEquals(200, resp.getStatusLine().getStatusCode());
-        body = EntityUtils.toString(resp.getEntity());
-        Assert.assertTrue("Chunked oversized should return empty body"
-            + " (jsonrpc4j absorbs BadMessageException)", body.isEmpty());
+        Assert.assertEquals(HttpStatus.PAYLOAD_TOO_LARGE_413,
+            resp.getStatusLine().getStatusCode());
         resp.close();
       }
     } catch (Exception e) {

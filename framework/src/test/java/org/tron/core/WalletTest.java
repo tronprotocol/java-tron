@@ -1440,5 +1440,133 @@ public class WalletTest extends BaseTest {
     Block block = wallet.getSolidBlock();
     assertEquals(block2, block);
   }
+
+  @Test
+  public void testApprovedListSigBound() {
+    ECKey ecKey = new ECKey(Utils.getRandom());
+    AccountCapsule owner = new AccountCapsule(
+        ByteString.copyFromUtf8("approved-owner"),
+        ByteString.copyFrom(ecKey.getAddress()),
+        Protocol.AccountType.Normal,
+        initBalance);
+    chainBaseManager.getAccountStore().put(ecKey.getAddress(), owner);
+    // Default owner permission: a single key with weight 1, so keysCount == 1.
+    int keysCount = owner.getPermissionById(0).getKeysCount();
+    assertEquals(1, keysCount);
+
+    Transaction unsigned = Transaction.newBuilder().setRawData(
+        Transaction.raw.newBuilder().addContract(
+            Contract.newBuilder().setType(ContractType.TransferContract)
+                .setParameter(Any.pack(TransferContract.newBuilder().setAmount(1)
+                    .setOwnerAddress(ByteString.copyFrom(ecKey.getAddress()))
+                    .setToAddress(ByteString.copyFrom(
+                        ByteArray.fromHexString(RECEIVER_ADDRESS)))
+                    .build())).build()).build()).build();
+
+    // One valid 65-byte [r][s][recId] signature by the owner.
+    TransactionCapsule capsule = new TransactionCapsule(unsigned);
+    capsule.sign(ecKey.getPrivKeyBytes());
+    ByteString oneSig = capsule.getInstance().getSignature(0);
+
+    // Within keysCount: the single valid signature is recovered, result is SUCCESS.
+    GrpcAPI.TransactionApprovedList okList = wallet.getTransactionApprovedList(
+        unsigned.toBuilder().addSignature(oneSig).build());
+    assertEquals(GrpcAPI.TransactionApprovedList.Result.response_code.SUCCESS,
+        okList.getResult().getCode());
+    assertEquals(1, okList.getApprovedListCount());
+
+    // More signatures than keysCount: checkWeight rejects before recovering any of them,
+    // so the unbounded ecrecover loop can no longer be triggered.
+    Transaction.Builder overLimit = unsigned.toBuilder();
+    for (int i = 0; i < keysCount + 1; i++) {
+      overLimit.addSignature(oneSig);
+    }
+    GrpcAPI.TransactionApprovedList rejected =
+        wallet.getTransactionApprovedList(overLimit.build());
+    assertEquals(GrpcAPI.TransactionApprovedList.Result.response_code.OTHER_ERROR,
+        rejected.getResult().getCode());
+    assertEquals(0, rejected.getApprovedListCount());
+    Assert.assertFalse(rejected.getResult().getMessage().isEmpty());
+  }
+
+  @Test
+  public void testApprovedListSigTruncate() {
+    ECKey ecKey = new ECKey(Utils.getRandom());
+    AccountCapsule owner = new AccountCapsule(
+        ByteString.copyFromUtf8("approved-owner-trunc"),
+        ByteString.copyFrom(ecKey.getAddress()),
+        Protocol.AccountType.Normal,
+        initBalance);
+    chainBaseManager.getAccountStore().put(ecKey.getAddress(), owner);
+
+    Transaction unsigned = Transaction.newBuilder().setRawData(
+        Transaction.raw.newBuilder().addContract(
+            Contract.newBuilder().setType(ContractType.TransferContract)
+                .setParameter(Any.pack(TransferContract.newBuilder().setAmount(1)
+                    .setOwnerAddress(ByteString.copyFrom(ecKey.getAddress()))
+                    .setToAddress(ByteString.copyFrom(
+                        ByteArray.fromHexString(RECEIVER_ADDRESS)))
+                    .build())).build()).build()).build();
+
+    TransactionCapsule capsule = new TransactionCapsule(unsigned);
+    capsule.sign(ecKey.getPrivKeyBytes());
+    ByteString validSig = capsule.getInstance().getSignature(0);
+    assertEquals(65, validSig.size());
+
+    // Pad the 65-byte signature with trailing junk bytes.
+    ByteString oversized = validSig.concat(
+        ByteString.copyFrom(new byte[] {1, 2, 3, 4, 5}));
+    assertEquals(70, oversized.size());
+
+    GrpcAPI.TransactionApprovedList reply = wallet.getTransactionApprovedList(
+        unsigned.toBuilder().addSignature(oversized).build());
+
+    // Recovery still succeeds and resolves the owner.
+    assertEquals(GrpcAPI.TransactionApprovedList.Result.response_code.SUCCESS,
+        reply.getResult().getCode());
+    assertEquals(1, reply.getApprovedListCount());
+    // The echoed-back transaction has the signature truncated to 65 bytes.
+    Transaction echoed = reply.getTransaction().getTransaction();
+    assertEquals(1, echoed.getSignatureCount());
+    assertEquals(65, echoed.getSignature(0).size());
+    assertEquals(validSig, echoed.getSignature(0));
+  }
+
+  @Test
+  public void testApprovedListTooManySigs() {
+    ECKey ecKey = new ECKey(Utils.getRandom());
+    AccountCapsule owner = new AccountCapsule(
+        ByteString.copyFromUtf8("total-sign-num-owner"),
+        ByteString.copyFrom(ecKey.getAddress()),
+        Protocol.AccountType.Normal,
+        initBalance);
+    chainBaseManager.getAccountStore().put(ecKey.getAddress(), owner);
+
+    Transaction unsigned = Transaction.newBuilder().setRawData(
+        Transaction.raw.newBuilder().addContract(
+            Contract.newBuilder().setType(ContractType.TransferContract)
+                .setParameter(Any.pack(TransferContract.newBuilder().setAmount(1)
+                    .setOwnerAddress(ByteString.copyFrom(ecKey.getAddress()))
+                    .setToAddress(ByteString.copyFrom(
+                        ByteArray.fromHexString(RECEIVER_ADDRESS)))
+                    .build())).build()).build()).build();
+
+    TransactionCapsule capsule = new TransactionCapsule(unsigned);
+    capsule.sign(ecKey.getPrivKeyBytes());
+    ByteString oneSig = capsule.getInstance().getSignature(0);
+
+    int totalSignNum = chainBaseManager.getDynamicPropertiesStore().getTotalSignNum();
+    Transaction.Builder overLimit = unsigned.toBuilder();
+    for (int i = 0; i < totalSignNum + 1; i++) {
+      overLimit.addSignature(oneSig);
+    }
+
+    GrpcAPI.TransactionApprovedList rejected =
+        wallet.getTransactionApprovedList(overLimit.build());
+    assertEquals(GrpcAPI.TransactionApprovedList.Result.response_code.OTHER_ERROR,
+        rejected.getResult().getCode());
+    Assert.assertTrue(rejected.getResult().getMessage().contains("too many signatures"));
+    assertEquals(0, rejected.getApprovedListCount());
+  }
 }
 

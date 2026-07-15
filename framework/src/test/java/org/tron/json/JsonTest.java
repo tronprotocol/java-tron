@@ -9,6 +9,7 @@ import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
 import com.fasterxml.jackson.core.StreamReadConstraints;
+import com.fasterxml.jackson.databind.node.NullNode;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Arrays;
@@ -16,6 +17,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import org.junit.Test;
+import org.tron.core.Constant;
 
 /**
  * Tests for Jackson {@code JsonReadFeature} compatibility with Fastjson 1.x.
@@ -155,6 +157,22 @@ public class JsonTest {
     assertNotEquals(JSON.toJSONString(arr, false), JSON.toJSONString(arr, true));
     // pretty for primitive types is just the JSON literal
     assertEquals("\"hi\"", JSON.toJSONString("hi", true));
+  }
+
+  @Test
+  public void testExplicitNullNodeSerializationIsPreserved() {
+    JSONObject parsedNull = JSON.parseObject("{\"a\":null,\"b\":1}");
+    assertTrue(parsedNull.containsKey("a"));
+    assertNull(parsedNull.get("a"));
+    assertEquals("{\"a\":null,\"b\":1}", parsedNull.toJSONString());
+
+    JSONObject explicitNull = new JSONObject().put("a", NullNode.getInstance()).put("b", 1);
+    assertTrue(explicitNull.containsKey("a"));
+    assertEquals("{\"a\":null,\"b\":1}", explicitNull.toJSONString());
+
+    explicitNull.put("a", (Object) null);
+    assertFalse(explicitNull.containsKey("a"));
+    assertEquals("{\"b\":1}", explicitNull.toJSONString());
   }
 
   @Test
@@ -369,8 +387,8 @@ public class JsonTest {
   @Test
   public void testJsonMapperHasConfiguredConstraints() {
     StreamReadConstraints sr = JSON.MAPPER.getFactory().streamReadConstraints();
-    assertEquals(100, sr.getMaxNestingDepth());
-    assertEquals(100_000L, sr.getMaxTokenCount());
+    assertEquals(Constant.MAX_NESTING_DEPTH, sr.getMaxNestingDepth());
+    assertEquals((long) Constant.MAX_TOKEN_COUNT, sr.getMaxTokenCount());
   }
 
   @Test

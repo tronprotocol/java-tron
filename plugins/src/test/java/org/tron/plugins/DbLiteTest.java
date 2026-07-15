@@ -15,6 +15,7 @@ import org.junit.After;
 import org.junit.Rule;
 import org.junit.rules.TemporaryFolder;
 import org.tron.api.WalletGrpc;
+import org.tron.common.TestConstants;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
@@ -74,7 +75,7 @@ public class DbLiteTest {
     dbPath = folder.newFolder().toString();
     Args.setParam(new String[] {
         "-d", dbPath, "-w", "--p2p-disable", "true", "--storage-db-engine", dbType},
-        "config-localtest.conf");
+        TestConstants.SHIELD_CONF);
     // allow account root
     Args.getInstance().setAllowAccountStateRoot(1);
     Args.getInstance().setRpcPort(PublicMethod.chooseRandomPort());

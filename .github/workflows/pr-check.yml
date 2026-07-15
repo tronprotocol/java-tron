@@ -103,6 +103,28 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: .github/scripts/requirements.txt
+
+      - name: Install pyhocon
+        run: pip install --quiet -r .github/scripts/requirements.txt
+
+      - name: Validate reference.conf key names and depth
+        shell: bash
+        run: |
+          python3 .github/scripts/check_reference_conf.py \
+            common/src/main/resources/reference.conf
+
+      - name: Validate reference.conf comment coverage
+        shell: bash
+        run: |
+          python3 .github/scripts/check_reference_comments.py \
+            common/src/main/resources/reference.conf
+
       - name: Set up JDK 17
         uses: actions/setup-java@v5
         with:
@@ -110,7 +132,7 @@ jobs:
           distribution: 'temurin'
 
       - name: Cache Gradle packages
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             ~/.gradle/caches

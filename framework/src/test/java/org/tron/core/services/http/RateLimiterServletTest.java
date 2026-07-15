@@ -16,6 +16,8 @@ import java.lang.reflect.Field;
 import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import org.eclipse.jetty.http.BadMessageException;
+import org.eclipse.jetty.http.HttpStatus;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
@@ -66,6 +68,14 @@ public class RateLimiterServletTest {
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) {
       // intentional no-op
+    }
+  }
+
+  static class OversizedRequestServlet extends RateLimiterServlet {
+    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) {
+      throw new BadMessageException(HttpStatus.PAYLOAD_TOO_LARGE_413,
+          "Request body is too large");
     }
   }
 
@@ -167,14 +177,14 @@ public class RateLimiterServletTest {
   @Test
   public void testPerEndpointRejectedDoesNotConsumeGlobalQuota() throws Exception {
     IPreemptibleRateLimiter perEndpoint = Mockito.mock(IPreemptibleRateLimiter.class);
-    when(perEndpoint.tryAcquire(any(RuntimeData.class))).thenReturn(false);
+    when(perEndpoint.acquirePermit(any(RuntimeData.class))).thenReturn(false);
     container.add(KEY_HTTP, "TestServlet", perEndpoint);
 
     try (MockedStatic<GlobalRateLimiter> globalMock = mockStatic(GlobalRateLimiter.class)) {
       servlet.service(request, response);
 
-      globalMock.verify(() -> GlobalRateLimiter.tryAcquire(any()), never());
-      // tryAcquire returned false — no permit was taken, nothing to release
+      globalMock.verify(() -> GlobalRateLimiter.acquirePermit(any()), never());
+      // acquirePermit returned false — no permit was taken, nothing to release
       verify(perEndpoint, never()).release();
     }
   }
@@ -186,13 +196,13 @@ public class RateLimiterServletTest {
   @Test
   public void testNonPreemptiblePerEndpointRejectedDoesNotConsumeGlobal() throws Exception {
     IRateLimiter perEndpoint = Mockito.mock(IRateLimiter.class);
-    when(perEndpoint.tryAcquire(any(RuntimeData.class))).thenReturn(false);
+    when(perEndpoint.acquirePermit(any(RuntimeData.class))).thenReturn(false);
     container.add(KEY_HTTP, "TestServlet", perEndpoint);
 
     try (MockedStatic<GlobalRateLimiter> globalMock = mockStatic(GlobalRateLimiter.class)) {
       servlet.service(request, response);
 
-      globalMock.verify(() -> GlobalRateLimiter.tryAcquire(any()), never());
+      globalMock.verify(() -> GlobalRateLimiter.acquirePermit(any()), never());
     }
   }
 
@@ -203,11 +213,11 @@ public class RateLimiterServletTest {
   @Test
   public void testGlobalRejectedReleasesPreemptiblePermit() throws Exception {
     IPreemptibleRateLimiter perEndpoint = Mockito.mock(IPreemptibleRateLimiter.class);
-    when(perEndpoint.tryAcquire(any(RuntimeData.class))).thenReturn(true);
+    when(perEndpoint.acquirePermit(any(RuntimeData.class))).thenReturn(true);
     container.add(KEY_HTTP, "TestServlet", perEndpoint);
 
     try (MockedStatic<GlobalRateLimiter> globalMock = mockStatic(GlobalRateLimiter.class)) {
-      globalMock.when(() -> GlobalRateLimiter.tryAcquire(any())).thenReturn(false);
+      globalMock.when(() -> GlobalRateLimiter.acquirePermit(any())).thenReturn(false);
 
       servlet.service(request, response);
 
@@ -223,11 +233,11 @@ public class RateLimiterServletTest {
   @Test
   public void testBothPassPermitReleasedAfterRequest() throws Exception {
     IPreemptibleRateLimiter perEndpoint = Mockito.mock(IPreemptibleRateLimiter.class);
-    when(perEndpoint.tryAcquire(any(RuntimeData.class))).thenReturn(true);
+    when(perEndpoint.acquirePermit(any(RuntimeData.class))).thenReturn(true);
     container.add(KEY_HTTP, "TestServlet", perEndpoint);
 
     try (MockedStatic<GlobalRateLimiter> globalMock = mockStatic(GlobalRateLimiter.class)) {
-      globalMock.when(() -> GlobalRateLimiter.tryAcquire(any())).thenReturn(true);
+      globalMock.when(() -> GlobalRateLimiter.acquirePermit(any())).thenReturn(true);
 
       servlet.service(request, response);
 
@@ -243,11 +253,31 @@ public class RateLimiterServletTest {
   public void testNullRateLimiterConsultsOnlyGlobal() throws Exception {
     // No entry added to container — container.get() returns null
     try (MockedStatic<GlobalRateLimiter> globalMock = mockStatic(GlobalRateLimiter.class)) {
-      globalMock.when(() -> GlobalRateLimiter.tryAcquire(any())).thenReturn(true);
+      globalMock.when(() -> GlobalRateLimiter.acquirePermit(any())).thenReturn(true);
 
       servlet.service(request, response);
 
-      globalMock.verify(() -> GlobalRateLimiter.tryAcquire(any()), times(1));
+      globalMock.verify(() -> GlobalRateLimiter.acquirePermit(any()), times(1));
+    }
+  }
+
+  @Test
+  public void testOversizedRequestBadMessagePropagates() throws Exception {
+    OversizedRequestServlet oversizedServlet = new OversizedRequestServlet();
+    Field f = RateLimiterServlet.class.getDeclaredField("container");
+    f.setAccessible(true);
+    f.set(oversizedServlet, container);
+    MockHttpServletRequest postRequest = new MockHttpServletRequest("POST", "/jsonrpc");
+    postRequest.setRemoteAddr("10.0.0.1");
+    postRequest.setServletPath("/jsonrpc");
+
+    try (MockedStatic<GlobalRateLimiter> globalMock = mockStatic(GlobalRateLimiter.class)) {
+      globalMock.when(() -> GlobalRateLimiter.acquirePermit(any())).thenReturn(true);
+
+      BadMessageException e = assertThrows(BadMessageException.class,
+          () -> oversizedServlet.service(postRequest, response));
+
+      assertEquals(HttpStatus.PAYLOAD_TOO_LARGE_413, e.getCode());
     }
   }
 }

@@ -36,6 +36,24 @@ public class TransactionLogTriggerCapsuleTest {
   }
 
   @Test
+  public void testSetRemoved() {
+    BalanceContract.TransferContract.Builder builder =
+        BalanceContract.TransferContract.newBuilder()
+        .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+        .setToAddress(ByteString.copyFrom(ByteArray.fromHexString(RECEIVER_ADDRESS)))
+        .setAmount(1000L);
+    transactionCapsule = new TransactionCapsule(builder.build(),
+        Protocol.Transaction.Contract.ContractType.TransferContract);
+    TransactionLogTriggerCapsule triggerCapsule =
+        new TransactionLogTriggerCapsule(transactionCapsule, blockCapsule);
+
+    // default is false (forward emit); reorg rollback sets it to true
+    Assert.assertFalse(triggerCapsule.getTransactionLogTrigger().isRemoved());
+    triggerCapsule.setRemoved(true);
+    Assert.assertTrue(triggerCapsule.getTransactionLogTrigger().isRemoved());
+  }
+
+  @Test
   public void testConstructorWithUnfreezeBalanceTrxCapsule() {
     BalanceContract.UnfreezeBalanceContract.Builder builder2 =
         BalanceContract.UnfreezeBalanceContract.newBuilder()

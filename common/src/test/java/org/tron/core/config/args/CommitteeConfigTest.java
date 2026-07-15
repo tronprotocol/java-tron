@@ -20,8 +20,8 @@ public class CommitteeConfigTest {
   public void testDefaults() {
     CommitteeConfig cc = CommitteeConfig.fromConfig(withRef());
     assertEquals(0, cc.getAllowCreationOfContracts());
-    assertEquals(0, cc.getAllowPBFT());
-    assertEquals(20, cc.getPBFTExpireNum());
+    assertEquals(0, cc.getAllowPbft());
+    assertEquals(20, cc.getPbftExpireNum());
     assertEquals(0, cc.getUnfreezeDelayDays());
     assertEquals(0, cc.getAllowDynamicEnergy());
   }
@@ -32,8 +32,8 @@ public class CommitteeConfigTest {
         "committee { allowCreationOfContracts = 1, allowPBFT = 1, pBFTExpireNum = 30 }");
     CommitteeConfig cc = CommitteeConfig.fromConfig(config);
     assertEquals(1, cc.getAllowCreationOfContracts());
-    assertEquals(1, cc.getAllowPBFT());
-    assertEquals(30, cc.getPBFTExpireNum());
+    assertEquals(1, cc.getAllowPbft());
+    assertEquals(30, cc.getPbftExpireNum());
   }
 
   @Test

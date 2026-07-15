@@ -12,7 +12,6 @@ import org.springframework.stereotype.Component;
 import org.tron.common.es.ExecutorServiceManager;
 import org.tron.common.logsfilter.EventPluginLoader;
 import org.tron.common.logsfilter.trigger.Trigger;
-import org.tron.core.db.Manager;
 import org.tron.core.services.event.bo.BlockEvent;
 import org.tron.core.services.event.bo.Event;
 
@@ -24,9 +23,6 @@ public class RealtimeEventService {
 
   @Getter
   private static Object contractLock = new Object();
-
-  @Autowired
-  private Manager manager;
 
   @Autowired
   private SolidEventService solidEventService;
@@ -77,25 +73,31 @@ public class RealtimeEventService {
   public void flush(BlockEvent blockEvent, boolean isRemove) {
     logger.info("Flush realtime event {}", blockEvent.getBlockId().getString());
 
+    // Post block/transaction triggers synchronously to the plugin (processTrigger ->
+    // EventPluginLoader serializes immediately) instead of the async triggerCapsuleQueue: the
+    // capsule is a shared cached object whose removed flag is set per-flush, so an async consumer
+    // could read it after a later flush overwrote it. This mirrors how contract triggers below
+    // are posted directly. isRemove=true re-emits the block/transaction as rolled back on a reorg.
     if (instance.isBlockLogTriggerEnable()
-        && !instance.isBlockLogTriggerSolidified()
-        && !isRemove) {
+        && !instance.isBlockLogTriggerSolidified()) {
       if (blockEvent.getBlockLogTriggerCapsule() == null) {
         logger.warn("BlockLogTriggerCapsule is null. {}", blockEvent.getBlockId().getString());
       } else {
-        manager.getTriggerCapsuleQueue().offer(blockEvent.getBlockLogTriggerCapsule());
+        blockEvent.getBlockLogTriggerCapsule().setRemoved(isRemove);
+        blockEvent.getBlockLogTriggerCapsule().processTrigger();
       }
     }
 
     if (instance.isTransactionLogTriggerEnable()
-        && !instance.isTransactionLogTriggerSolidified()
-        && !isRemove) {
+        && !instance.isTransactionLogTriggerSolidified()) {
       if (blockEvent.getTransactionLogTriggerCapsules() == null) {
         logger.warn("TransactionLogTriggerCapsules is null. {}",
             blockEvent.getBlockId().getString());
       } else {
-        blockEvent.getTransactionLogTriggerCapsules().forEach(v ->
-            manager.getTriggerCapsuleQueue().offer(v));
+        blockEvent.getTransactionLogTriggerCapsules().forEach(v -> {
+          v.setRemoved(isRemove);
+          v.processTrigger();
+        });
       }
     }
 

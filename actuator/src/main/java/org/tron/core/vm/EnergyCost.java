@@ -365,6 +365,10 @@ public class EnergyCost {
   }
 
   public static long getVoteWitnessCost2(Program program) {
+    if (!VMConfig.allowEnergyAdjustment()) {
+      return getVoteWitnessCost(program);
+    }
+
     Stack stack = program.getStack();
     long oldMemSize = program.getMemSize();
     DataWord amountArrayLength = stack.get(stack.size() - 1).clone();
@@ -388,6 +392,10 @@ public class EnergyCost {
   }
 
   public static long getVoteWitnessCost3(Program program) {
+    if (!VMConfig.allowTvmOsaka()) {
+      return getVoteWitnessCost2(program);
+    }
+
     Stack stack = program.getStack();
     long oldMemSize = program.getMemSize();
     BigInteger amountArrayLength = stack.get(stack.size() - 1).value();

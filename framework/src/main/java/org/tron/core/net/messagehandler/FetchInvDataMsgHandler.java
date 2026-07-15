@@ -160,9 +160,13 @@ public class FetchInvDataMsgHandler implements TronMsgHandler {
           "FetchInvData contains duplicate hashes, size: " + hashList.size());
     }
 
-    MessageTypes type = fetchInvDataMsg.getInvMessageType();
+    InventoryType invType = fetchInvDataMsg.getInventoryType();
+    if (invType != InventoryType.TRX && invType != InventoryType.BLOCK) {
+      throw new P2pException(TypeEnum.BAD_MESSAGE,
+          "unknown inventory type: " + fetchInvDataMsg.getInventory().getTypeValue());
+    }
 
-    if (type == MessageTypes.TRX) {
+    if (invType == InventoryType.TRX) {
       for (Sha256Hash hash : fetchInvDataMsg.getHashList()) {
         if (peer.getAdvInvSpread().getIfPresent(new Item(hash, InventoryType.TRX)) == null) {
           throw new P2pException(TypeEnum.BAD_MESSAGE, "not spread inv: " + hash);

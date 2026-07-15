@@ -338,6 +338,91 @@ public class TransactionsMsgHandlerTest extends BaseTest {
   }
 
   @Test
+  public void testInvalidSigLength() throws Exception {
+    TransactionsMsgHandler handler = new TransactionsMsgHandler();
+    handler.init();
+    try {
+      PeerConnection peer = Mockito.mock(PeerConnection.class);
+
+      BalanceContract.TransferContract transferContract = BalanceContract.TransferContract
+          .newBuilder()
+          .setAmount(10)
+          .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString("121212a9cf")))
+          .setToAddress(ByteString.copyFrom(ByteArray.fromHexString("232323a9cf")))
+          .build();
+
+      // signature shorter than 65 bytes → BAD_TRX
+      Protocol.Transaction shortSigTrx = Protocol.Transaction.newBuilder()
+          .setRawData(Protocol.Transaction.raw.newBuilder()
+              .addContract(Protocol.Transaction.Contract.newBuilder()
+                  .setType(Protocol.Transaction.Contract.ContractType.TransferContract)
+                  .setParameter(Any.pack(transferContract)).build())
+              .build())
+          .addSignature(ByteString.copyFrom(new byte[64]))
+          .build();
+
+      List<Protocol.Transaction> shortList = new ArrayList<>();
+      shortList.add(shortSigTrx);
+      stubAdvInvRequest(peer, new TransactionsMessage(shortList));
+      P2pException shortEx = Assert.assertThrows(P2pException.class,
+          () -> handler.processMessage(peer, new TransactionsMessage(shortList)));
+      Assert.assertEquals(TypeEnum.BAD_TRX, shortEx.getType());
+
+      // signature longer than 68 bytes → BAD_TRX
+      Protocol.Transaction longSigTrx = Protocol.Transaction.newBuilder()
+          .setRawData(Protocol.Transaction.raw.newBuilder()
+              .setRefBlockNum(1)
+              .addContract(Protocol.Transaction.Contract.newBuilder()
+                  .setType(Protocol.Transaction.Contract.ContractType.TransferContract)
+                  .setParameter(Any.pack(transferContract)).build())
+              .build())
+          .addSignature(ByteString.copyFrom(new byte[69]))
+          .build();
+
+      List<Protocol.Transaction> longList = new ArrayList<>();
+      longList.add(longSigTrx);
+      stubAdvInvRequest(peer, new TransactionsMessage(longList));
+      P2pException longEx = Assert.assertThrows(P2pException.class,
+          () -> handler.processMessage(peer, new TransactionsMessage(longList)));
+      Assert.assertEquals(TypeEnum.BAD_TRX, longEx.getType());
+
+      // exactly 65 bytes → passes the length check (no P2pException from check)
+      Protocol.Transaction validSigTrx = Protocol.Transaction.newBuilder()
+          .setRawData(Protocol.Transaction.raw.newBuilder()
+              .setRefBlockNum(2)
+              .addContract(Protocol.Transaction.Contract.newBuilder()
+                  .setType(Protocol.Transaction.Contract.ContractType.TransferContract)
+                  .setParameter(Any.pack(transferContract)).build())
+              .build())
+          .addSignature(ByteString.copyFrom(new byte[65]))
+          .build();
+
+      List<Protocol.Transaction> validList = new ArrayList<>();
+      validList.add(validSigTrx);
+      stubAdvInvRequest(peer, new TransactionsMessage(validList));
+      handler.processMessage(peer, new TransactionsMessage(validList));
+
+      // 68 bytes (upper bound) also passes the length check
+      Protocol.Transaction paddedSigTrx = Protocol.Transaction.newBuilder()
+          .setRawData(Protocol.Transaction.raw.newBuilder()
+              .setRefBlockNum(3)
+              .addContract(Protocol.Transaction.Contract.newBuilder()
+                  .setType(Protocol.Transaction.Contract.ContractType.TransferContract)
+                  .setParameter(Any.pack(transferContract)).build())
+              .build())
+          .addSignature(ByteString.copyFrom(new byte[68]))
+          .build();
+
+      List<Protocol.Transaction> paddedList = new ArrayList<>();
+      paddedList.add(paddedSigTrx);
+      stubAdvInvRequest(peer, new TransactionsMessage(paddedList));
+      handler.processMessage(peer, new TransactionsMessage(paddedList));
+    } finally {
+      handler.close();
+    }
+  }
+
+  @Test
   public void testIsBusyWithCachedTransactions() throws Exception {
     TransactionsMsgHandler handler = new TransactionsMsgHandler();
 

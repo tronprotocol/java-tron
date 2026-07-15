@@ -80,8 +80,6 @@ public class Args extends CommonParameter {
     m.put("--storage-db-directory", "storage.db.directory");
     m.put("--storage-db-engine", "storage.db.engine");
     m.put("--storage-db-synchronous", "storage.db.sync");
-    m.put("--storage-index-directory", "storage.index.directory");
-    m.put("--storage-index-switch", "storage.index.switch");
     m.put("--storage-transactionHistory-switch", "storage.transHistory.switch");
     m.put("--contract-parse-enable", "event.subscribe.contractParse");
     m.put("--support-constant", "vm.supportConstant");
@@ -167,16 +165,19 @@ public class Args extends CommonParameter {
         ? cmd.shellConfFileName : confFileName;
     Config config = Configuration.getByFileName(configFilePath);
 
-    // 2. Config overrides defaults
+    // 2. Config overrides defaults (event config bean is read here but not yet applied)
     applyConfigParams(config);
 
-    // 3. CLI overrides Config (highest priority)
+    // 3. CLI overrides Config (highest priority, including --es → eventSubscribe)
     applyCLIParams(cmd, jc);
 
-    // 4. Apply platform constraints (e.g. ARM64 forces RocksDB)
+    // 4. Apply event config after CLI
+    applyEventConfig(eventConfig);
+
+    // 5. Apply platform constraints (e.g. ARM64 forces RocksDB)
     applyPlatformConstraints();
 
-    // 5. Init witness (depends on CLI witness flag)
+    // 6. Init witness (depends on CLI witness flag)
     initLocalWitnesses(config, cmd);
   }
 
@@ -212,12 +213,8 @@ public class Args extends CommonParameter {
     PARAMETER.storage.setDbEngine(sc.getDb().getEngine());
     PARAMETER.storage.setDbSync(sc.getDb().isSync());
     PARAMETER.storage.setDbDirectory(sc.getDb().getDirectory());
-    PARAMETER.storage.setIndexDirectory(sc.getIndex().getDirectory());
-    String indexSwitch = sc.getIndex().getSwitch();
-    PARAMETER.storage.setIndexSwitch(
-        org.apache.commons.lang3.StringUtils.isNotEmpty(indexSwitch) ? indexSwitch : "on");
     PARAMETER.storage.setTransactionHistorySwitch(sc.getTransHistory().getSwitch());
-    // contractParse is set in applyEventConfig — it belongs to event.subscribe domain
+    // contractParse is set in applyConfigParams alongside event config, not here
     PARAMETER.storage.setCheckpointVersion(sc.getCheckpoint().getVersion());
     PARAMETER.storage.setCheckpointSync(sc.getCheckpoint().isSync());
 
@@ -325,6 +322,7 @@ public class Args extends CommonParameter {
     PARAMETER.rateLimiterSyncBlockChain = rl.getP2p().getSyncBlockChain();
     PARAMETER.rateLimiterFetchInvData = rl.getP2p().getFetchInvData();
     PARAMETER.rateLimiterDisconnect = rl.getP2p().getDisconnect();
+    PARAMETER.rateLimiterApiNonBlocking = rl.isApiNonBlocking();
 
     // HTTP/RPC rate limiter items: convert bean lists to business objects
     RateLimiterInitialization initialization = new RateLimiterInitialization();
@@ -344,20 +342,20 @@ public class Args extends CommonParameter {
   }
 
   /**
+   * Package-private entry point only for tests
+   */
+  static void applyEventConfig() {
+    applyEventConfig(eventConfig);
+  }
+
+  /**
    * Bridge EventConfig bean values to CommonParameter fields.
    * Converts EventConfig (raw bean) into EventPluginConfig and FilterQuery (business objects).
    */
   private static void applyEventConfig(EventConfig ec) {
-    PARAMETER.eventSubscribe = ec.isEnable();
-    // contractParse belongs to event.subscribe but Storage object holds it
-    PARAMETER.storage.setContractParseSwitch(ec.isContractParse());
-
-    // PARAMETER.eventPluginConfig and PARAMETER.eventFilter are only consumed by
-    // Manager.startEventSubscribing(), which itself is gated by isEventSubscribe()
-    // (= ec.isEnable()) at Manager.java:564. When subscribe is disabled, building
-    // these objects has no observable effect — skip both early so PARAMETER stays
-    // consistent with the runtime intent.
-    if (!ec.isEnable()) {
+    // cmd parameter has higher priority
+    PARAMETER.eventSubscribe = PARAMETER.eventSubscribe || ec.isEnable();
+    if (!PARAMETER.eventSubscribe) {
       return;
     }
 
@@ -463,8 +461,8 @@ public class Args extends CommonParameter {
     PARAMETER.allowProtoFilterNum = cc.getAllowProtoFilterNum();
     PARAMETER.allowAccountStateRoot = cc.getAllowAccountStateRoot();
     PARAMETER.changedDelegation = cc.getChangedDelegation();
-    PARAMETER.allowPBFT = cc.getAllowPBFT();
-    PARAMETER.pBFTExpireNum = cc.getPBFTExpireNum();
+    PARAMETER.allowPBFT = cc.getAllowPbft();
+    PARAMETER.pBFTExpireNum = cc.getPbftExpireNum();
     PARAMETER.allowTvmFreeze = cc.getAllowTvmFreeze();
     PARAMETER.allowTvmVote = cc.getAllowTvmVote();
     PARAMETER.allowTvmLondon = cc.getAllowTvmLondon();
@@ -545,8 +543,6 @@ public class Args extends CommonParameter {
     PARAMETER.solidityHttpPort = http.getSolidityPort();
     PARAMETER.pBFTHttpPort = http.getPBFTPort();
     PARAMETER.httpMaxMessageSize = http.getMaxMessageSize();
-    PARAMETER.maxNestingDepth = http.getMaxNestingDepth();
-    PARAMETER.maxTokenCount = http.getMaxTokenCount();
 
     // ---- JSON-RPC sub-bean ----
     NodeConfig.JsonRpcConfig jsonrpc = nc.getJsonrpc();
@@ -579,14 +575,7 @@ public class Args extends CommonParameter {
     // ---- Flat scalar fields ----
     PARAMETER.nodeEffectiveCheckEnable = nc.isEffectiveCheckEnable();
 
-    // fetchBlock.timeout — range check [100, 1000], default 500
-    int fetchTimeout = nc.getFetchBlockTimeout();
-    if (fetchTimeout > 1000) {
-      fetchTimeout = 1000;
-    } else if (fetchTimeout < 100) {
-      fetchTimeout = 100;
-    }
-    PARAMETER.fetchBlockTimeout = fetchTimeout;
+    PARAMETER.fetchBlockTimeout = nc.getFetchBlockTimeout();
 
     PARAMETER.maxConnections = nc.getMaxConnections();
     PARAMETER.minConnections = nc.getMinConnections();
@@ -606,14 +595,10 @@ public class Args extends CommonParameter {
     PARAMETER.maxHttpConnectNumber = nc.getMaxHttpConnectNumber();
     PARAMETER.netMaxTrxPerSecond = nc.getNetMaxTrxPerSecond();
 
-    if (StringUtils.isEmpty(PARAMETER.trustNodeAddr)) {
-      String trustNode = nc.getTrustNode();
-      PARAMETER.trustNodeAddr = StringUtils.isEmpty(trustNode) ? null : trustNode;
-    }
+    PARAMETER.trustNodeAddr = nc.getTrustNode();
 
     PARAMETER.validateSignThreadNum = nc.getValidateSignThreadNum();
     PARAMETER.walletExtensionApi = nc.isWalletExtensionApi();
-    PARAMETER.receiveTcpMinDataLength = nc.getReceiveTcpMinDataLength();
     PARAMETER.isOpenFullTcpDisconnect = nc.isOpenFullTcpDisconnect();
     PARAMETER.nodeDetectEnable = nc.isNodeDetectEnable();
 
@@ -629,7 +614,7 @@ public class Args extends CommonParameter {
     PARAMETER.shieldedTransInPendingMaxCounts = nc.getShieldedTransInPendingMaxCounts();
     PARAMETER.agreeNodeCount = nc.getAgreeNodeCount();
 
-    PARAMETER.setOpenHistoryQueryWhenLiteFN(nc.isOpenHistoryQueryWhenLiteFN());
+    PARAMETER.openHistoryQueryWhenLiteFN = nc.isOpenHistoryQueryWhenLiteFN();
     PARAMETER.nodeMetricsEnable = nc.isMetricsEnable();
     PARAMETER.openPrintLog = nc.isOpenPrintLog();
     PARAMETER.openTransactionSort = nc.isOpenTransactionSort();
@@ -770,9 +755,12 @@ public class Args extends CommonParameter {
 
     // node.shutdown — handled in applyNodeConfig
 
-    // Event config: bind from config.conf "event.subscribe" section
+    // Event config: read bean here; applyEventConfig() is called once in setParam()
+    // after applyCLIParams() so that --es is already reflected in eventSubscribe.
     eventConfig = EventConfig.fromConfig(config);
-    applyEventConfig(eventConfig);
+    // contractParse is event-domain but must be set from config before CLI can
+    // override it with --contract-parse-enable (which runs in applyCLIParams).
+    PARAMETER.storage.setContractParseSwitch(eventConfig.isContractParse());
 
     logConfig();
   }
@@ -860,12 +848,6 @@ public class Args extends CommonParameter {
     }
     if (assigned.contains("--contract-parse-enable")) {
       PARAMETER.storage.setContractParseSwitch(Boolean.valueOf(cmd.contractParseEnable));
-    }
-    if (assigned.contains("--storage-index-directory")) {
-      PARAMETER.storage.setIndexDirectory(cmd.storageIndexDirectory);
-    }
-    if (assigned.contains("--storage-index-switch")) {
-      PARAMETER.storage.setIndexSwitch(cmd.storageIndexSwitch);
     }
     if (assigned.contains("--storage-transactionHistory-switch")) {
       PARAMETER.storage.setTransactionHistorySwitch(cmd.storageTransactionHistorySwitch);

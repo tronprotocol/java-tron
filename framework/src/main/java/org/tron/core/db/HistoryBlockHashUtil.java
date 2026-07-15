@@ -52,14 +52,13 @@ public class HistoryBlockHashUtil {
 
   // Account template for the new-account branch of {@code deploy()} (no prior
   // state at the canonical address). Equivalent to create2's
-  // {@code createAccount(addr, name, Contract)}: only type, accountName, and
-  // address are set. The pre-existing-account branch never uses this template
+  // {@code createAccount(addr, Contract)}: only type, and address
+  // are set. The pre-existing-account branch never uses this template
   // — it mutates the existing capsule in place to preserve balance / asset
   // state, mirroring the CREATE2 collision path. Safe to share: the proto is
   // immutable, and AccountCapsule mutations rebuild via {@code toBuilder}.
   private static final Account HISTORY_STORAGE_ACCOUNT = Account.newBuilder()
       .setType(Protocol.AccountType.Contract)
-      .setAccountName(ByteString.copyFromUtf8(HISTORY_STORAGE_NAME))
       .setAddress(ByteString.copyFrom(HISTORY_STORAGE_ADDRESS))
       .build();
 

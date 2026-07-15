@@ -202,6 +202,7 @@ import org.tron.core.store.StoreFactory;
 import org.tron.core.store.VotesStore;
 import org.tron.core.store.WitnessStore;
 import org.tron.core.utils.TransactionUtil;
+import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.program.Program;
 import org.tron.core.zen.ShieldedTRC20ParametersBuilder;
 import org.tron.core.zen.ShieldedTRC20ParametersBuilder.ShieldedTRC20ParametersType;
@@ -228,6 +229,8 @@ import org.tron.protos.Protocol.MarketOrderList;
 import org.tron.protos.Protocol.MarketOrderPairList;
 import org.tron.protos.Protocol.MarketPrice;
 import org.tron.protos.Protocol.MarketPriceList;
+import org.tron.protos.Protocol.Permission;
+import org.tron.protos.Protocol.Permission.PermissionType;
 import org.tron.protos.Protocol.Proposal;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
@@ -270,6 +273,8 @@ public class Wallet {
       "BurnNewLeaf(uint256,bytes32,bytes32,bytes32,bytes32[21])"));
   private static final byte[] SHIELDED_TRC20_LOG_TOPICS_BURN_TOKEN = Hash.sha3(ByteArray
       .fromString("TokenBurn(address,uint256,bytes32[3])"));
+  private static final byte[] SHIELDED_TRC20_LOG_TOPICS_NOTE_SPENT = Hash.sha3(ByteArray
+      .fromString("NoteSpent(bytes32)"));
   private static final String BROADCAST_TRANS_FAILED = "Broadcast transaction {} failed, {}.";
 
   @Getter
@@ -505,6 +510,16 @@ public class Wallet {
     trx.setTime(System.currentTimeMillis());
     Sha256Hash txID = trx.getTransactionId();
     try {
+      for (ByteString sig : signedTransaction.getSignatureList()) {
+        if (!SignUtils.isValidLength(sig.size())) {
+          String info = "Signature size is " + sig.size();
+          logger.warn("Broadcast transaction {} has failed, {}.", txID, info);
+          return builder.setResult(false).setCode(response_code.SIGERROR)
+              .setMessage(ByteString.copyFromUtf8("Validate signature error: " + info))
+              .build();
+        }
+      }
+
       if (tronNetDelegate.isBlockUnsolidified()) {
         logger.warn("Broadcast transaction {} has failed, block unsolidified.", txID);
         return builder.setResult(false).setCode(response_code.BLOCK_UNSOLIDIFIED)
@@ -556,9 +571,9 @@ public class Wallet {
       if (trx.getInstance().getRawData().getContractCount() == 0) {
         throw new ContractValidateException(ActuatorConstant.CONTRACT_NOT_EXIST);
       }
-      TransactionMessage message = new TransactionMessage(trx.getInstance().toByteArray());
       trx.checkExpiration(chainBaseManager.getNextBlockSlotTime());
       dbManager.pushTransaction(trx);
+      TransactionMessage message = new TransactionMessage(trx.getInstance().toByteArray());
       int num = tronNetService.fastBroadcastTransaction(message);
       if (num == 0 && minEffectiveConnection != 0) {
         return builder.setResult(false).setCode(response_code.NOT_ENOUGH_EFFECTIVE_CONNECTION)
@@ -616,6 +631,17 @@ public class Wallet {
 
   public TransactionApprovedList getTransactionApprovedList(Transaction trx) {
     TransactionApprovedList.Builder tswBuilder = TransactionApprovedList.newBuilder();
+    TransactionApprovedList.Result.Builder resultBuilder = TransactionApprovedList.Result
+        .newBuilder();
+    if (trx.getSignatureCount() > chainBaseManager.getDynamicPropertiesStore()
+        .getTotalSignNum()) {
+      resultBuilder.setCode(TransactionApprovedList.Result.response_code.OTHER_ERROR);
+      resultBuilder.setMessage("too many signatures");
+      tswBuilder.setResult(resultBuilder);
+      return tswBuilder.build();
+    }
+
+    trx = TransactionUtil.truncateSignatures(trx);
     TransactionExtention.Builder trxExBuilder = TransactionExtention.newBuilder();
     trxExBuilder.setTransaction(trx);
     trxExBuilder.setTxid(ByteString.copyFrom(Sha256Hash.hash(CommonParameter
@@ -624,8 +650,6 @@ public class Wallet {
     retBuilder.setResult(true).setCode(response_code.SUCCESS);
     trxExBuilder.setResult(retBuilder);
     tswBuilder.setTransaction(trxExBuilder);
-    TransactionApprovedList.Result.Builder resultBuilder = TransactionApprovedList.Result
-        .newBuilder();
 
     if (trx.getRawData().getContractCount() == 0) {
       resultBuilder.setCode(TransactionApprovedList.Result.response_code.OTHER_ERROR);
@@ -638,21 +662,26 @@ public class Wallet {
         if (account == null) {
           throw new PermissionException("Account does not exist!");
         }
+        int permissionId = contract.getPermissionId();
+        Permission permission = account.getPermissionById(permissionId);
+        if (permission == null) {
+          throw new PermissionException("Permission for this, does not exist!");
+        }
+        if (permissionId != 0) {
+          if (permission.getType() != PermissionType.Active) {
+            throw new PermissionException("Permission type is wrong!");
+          }
+          //check operations
+          if (!WalletUtil.checkPermissionOperations(permission, contract)) {
+            throw new PermissionException("Permission denied!");
+          }
+        }
 
         if (trx.getSignatureCount() > 0) {
-          List<ByteString> approveList = new ArrayList<ByteString>();
+          List<ByteString> approveList = new ArrayList<>();
           byte[] hash = Sha256Hash.hash(CommonParameter
               .getInstance().isECKeyCryptoEngine(), trx.getRawData().toByteArray());
-          for (ByteString sig : trx.getSignatureList()) {
-            if (sig.size() < 65) {
-              throw new SignatureFormatException(
-                  "Signature size is " + sig.size());
-            }
-            String base64 = TransactionCapsule.getBase64FromByteString(sig);
-            byte[] address = SignUtils.signatureToAddress(hash, base64, Args.getInstance()
-                .isECKeyCryptoEngine());
-            approveList.add(ByteString.copyFrom(address)); //out put approve list.
-          }
+          TransactionCapsule.checkWeight(permission, trx.getSignatureList(), hash, approveList);
           tswBuilder.addAllApprovedList(approveList);
         }
         resultBuilder.setCode(TransactionApprovedList.Result.response_code.SUCCESS);
@@ -3129,8 +3158,14 @@ public class Wallet {
         StoreFactory.getInstance(), true, false);
     VMActuator vmActuator = new VMActuator(true);
 
-    vmActuator.validate(context);
-    vmActuator.execute(context);
+    try {
+      vmActuator.validate(context);
+      vmActuator.execute(context);
+    } finally {
+      // constant call runs on a pooled RPC worker; drop its thread-local VM config view so it
+      // can never leak into a later (block/broadcast) execution on the same thread.
+      VMConfig.clearLocalSnapshot();
+    }
 
     ProgramResult result = context.getProgramResult();
     if (!isEstimating && result.getException() != null
@@ -3672,9 +3707,7 @@ public class Wallet {
         builder.setTransparentToAddress(transparentToAddressTvm);
         builder.setTransparentToAmount(toAmount);
 
-        Optional<byte[]> cipher = NoteEncryption.Encryption
-            .encryptBurnMessageByOvk(ovk, toAmount, transparentToAddress);
-        cipher.ifPresent(builder::setBurnCiphertext);
+        builder.setOvk(ovk);
 
         ExpandedSpendingKey expsk = new ExpandedSpendingKey(ask, nsk, ovk);
         GrpcAPI.SpendNoteTRC20 spendNote = shieldedSpends.get(0);
@@ -3799,9 +3832,7 @@ public class Wallet {
         System.arraycopy(transparentToAddress, 1, transparentToAddressTvm, 0, 20);
         builder.setTransparentToAddress(transparentToAddressTvm);
         builder.setTransparentToAmount(toAmount);
-        Optional<byte[]> cipher = NoteEncryption.Encryption
-            .encryptBurnMessageByOvk(ovk, toAmount, transparentToAddress);
-        cipher.ifPresent(builder::setBurnCiphertext);
+        builder.setOvk(ovk);
         GrpcAPI.SpendNoteTRC20 spendNote = shieldedSpends.get(0);
         buildShieldedTRC20InputWithAK(builder, spendNote, ak, nsk);
         if (receiveSize == 1) {
@@ -3838,6 +3869,8 @@ public class Wallet {
         return 3;
       } else if (Arrays.equals(topicsBytes, SHIELDED_TRC20_LOG_TOPICS_BURN_TOKEN)) {
         return 4;
+      } else if (Arrays.equals(topicsBytes, SHIELDED_TRC20_LOG_TOPICS_NOTE_SPENT)) {
+        return 5;
       }
     }
     return 0;
@@ -3909,7 +3942,9 @@ public class Wallet {
             int index = 0;
             for (TransactionInfo.Log log : logList) {
               int logType = getShieldedTRC20LogType(log, shieldedTRC20ContractAddress);
-              if (logType > 0) {
+              // Only note-producing log types (1..3) advance the note index;
+              // TokenBurn (4) and NoteSpent (5) do not emit a leaf.
+              if (logType > 0 && logType < 4) {
                 noteBuilder = DecryptNotesTRC20.NoteTx.newBuilder();
                 noteBuilder.setTxid(ByteString.copyFrom(txId));
                 noteBuilder.setIndex(index);
@@ -4001,7 +4036,8 @@ public class Wallet {
 
   private Optional<DecryptNotesTRC20.NoteTx> getNoteTxFromLogListByOvk(
       DecryptNotesTRC20.NoteTx.Builder builder,
-      TransactionInfo.Log log, byte[] ovk, int logType) throws ZksnarkException {
+      TransactionInfo.Log log, byte[] ovk, int logType, byte[] pendingNf)
+      throws ZksnarkException {
     byte[] logData = log.getData().toByteArray();
     if (!ArrayUtils.isEmpty(logData)) {
       if (logType > 0 && logType < 4) {
@@ -4040,18 +4076,36 @@ public class Wallet {
           }
         }
       } else if (logType == 4) {
-        //Data = toAddress(32) + value(32) + ciphertext(80) + padding(16)
+        // Data = toAddress(32) + value(32) + cipher(80) + nonce(12) + reserved/version(4)
+        if (logData.length < 64 + NoteEncryption.Encryption.BURN_CIPHER_RECORD_SIZE) {
+          return Optional.empty();
+        }
         byte[] logToAddress = ByteArray.subArray(logData, 12, 32);
         byte[] logAmountArray = ByteArray.subArray(logData, 32, 64);
         byte[] cipher = ByteArray.subArray(logData, 64, 144);
+        byte[] nonceFromLog = ByteArray.subArray(logData, 144,
+            144 + NoteEncryption.Encryption.BURN_NONCE_LEN);
+        byte[] reservedFromLog = ByteArray.subArray(logData,
+            144 + NoteEncryption.Encryption.BURN_NONCE_LEN,
+            144 + NoteEncryption.Encryption.BURN_NONCE_LEN
+                + NoteEncryption.Encryption.BURN_RESERVED_LEN);
         BigInteger logAmount = ByteUtil.bytesToBigInteger(logAmountArray);
         byte[] plaintext;
         byte[] amountArray = new byte[32];
         byte[] decryptedAddress = new byte[20];
+
+        byte[] addr21FromLog = new byte[21];
+        addr21FromLog[0] = Wallet.getAddressPreFixByte();
+        System.arraycopy(logToAddress, 0, addr21FromLog, 1, 20);
         Optional<byte[]> decryptedText = NoteEncryption.Encryption
-            .decryptBurnMessageByOvk(ovk, cipher);
+            .decryptBurnMessageByOvk(ovk, cipher, nonceFromLog, reservedFromLog, pendingNf,
+                logAmountArray, addr21FromLog);
+
         if (decryptedText.isPresent()) {
           plaintext = decryptedText.get();
+          if (plaintext[32] != Wallet.getAddressPreFixByte()) {
+            return Optional.empty();
+          }
           System.arraycopy(plaintext, 0, amountArray, 0, 32);
           System.arraycopy(plaintext, 33, decryptedAddress, 0, 20);
           BigInteger decryptedAmount = ByteUtil.bytesToBigInteger(amountArray);
@@ -4091,15 +4145,24 @@ public class Wallet {
           if (!Objects.isNull(logList)) {
             Optional<DecryptNotesTRC20.NoteTx> noteTx;
             int index = 0;
+            byte[] pendingNf = null;
             for (TransactionInfo.Log log : logList) {
               int logType = getShieldedTRC20LogType(log, shieldedTRC20ContractAddress);
-              if (logType > 0) {
+              if (logType == 5) {
+                byte[] logData = log.getData().toByteArray();
+                if (logData.length >= 32) {
+                  pendingNf = ByteArray.subArray(logData, 0, 32);
+                }
+              } else if (logType > 0) {
                 noteBuilder = DecryptNotesTRC20.NoteTx.newBuilder();
                 noteBuilder.setTxid(ByteString.copyFrom(txid));
                 noteBuilder.setIndex(index);
                 index += 1;
-                noteTx = getNoteTxFromLogListByOvk(noteBuilder, log, ovk, logType);
+                noteTx = getNoteTxFromLogListByOvk(noteBuilder, log, ovk, logType, pendingNf);
                 noteTx.ifPresent(builder::addNoteTxs);
+                if (logType == 4) {
+                  pendingNf = null;
+                }
               }
             }
           }
@@ -4283,12 +4346,49 @@ public class Wallet {
         parameterType);
     if (parametersBuilder.getShieldedTRC20ParametersType() == ShieldedTRC20ParametersType.BURN) {
       byte[] burnCiper = ByteArray.fromHexString(shieldedTRC20Parameters.getTriggerContractInput());
-      if (!ArrayUtils.isEmpty(burnCiper) && burnCiper.length == 80) {
-        parametersBuilder.setBurnCiphertext(burnCiper);
-      } else {
+      if (ArrayUtils.isEmpty(burnCiper)
+          || burnCiper.length != NoteEncryption.Encryption.BURN_CIPHER_RECORD_SIZE) {
+        if (!ArrayUtils.isEmpty(burnCiper) && burnCiper.length == 80) {
+          throw new ZksnarkException(
+              "legacy 80-byte burn cipher is deprecated and rejected; expected "
+                  + NoteEncryption.Encryption.BURN_CIPHER_RECORD_SIZE + "-byte burn record");
+        }
         throw new ZksnarkException(
             "invalid shielded TRC-20 contract parameters for burn trigger input");
       }
+      // v2-only: length alone would accept a legacy all-zero suffix and bypass
+      // the nf-bound nonce. Require reserved==v2 marker and nonce==derive(nf).
+      byte[] reserved = Arrays.copyOfRange(burnCiper,
+          NoteEncryption.Encryption.BURN_RESERVED_OFFSET,
+          NoteEncryption.Encryption.BURN_RESERVED_OFFSET
+              + NoteEncryption.Encryption.BURN_RESERVED_LEN);
+      if (!Arrays.equals(reserved, NoteEncryption.Encryption.getBurnRecordV2Marker())) {
+        throw new ZksnarkException(
+            "burn trigger input must be v2 (reserved=0x00000001); legacy/unknown markers rejected");
+      }
+      if (shieldedTRC20Parameters.getSpendDescriptionList().size() != 1) {
+        throw new ZksnarkException(
+            "burn trigger input requires exactly one spendDescription for nf-bound nonce");
+      }
+      byte[] nf = shieldedTRC20Parameters.getSpendDescription(0).getNullifier().toByteArray();
+      if (nf.length != 32) {
+        throw new ZksnarkException(
+            "burn trigger input requires 32-byte spendDescription.nullifier");
+      }
+      byte[] nonceFromInput = Arrays.copyOfRange(burnCiper,
+          NoteEncryption.Encryption.BURN_NONCE_OFFSET,
+          NoteEncryption.Encryption.BURN_NONCE_OFFSET
+              + NoteEncryption.Encryption.BURN_NONCE_LEN);
+      byte[] amount32 = ByteUtil.bigIntegerToBytes(value, 32);
+      byte[] addr21 = new byte[21];
+      addr21[0] = Wallet.getAddressPreFixByte();
+      System.arraycopy(transparentToAddressTvm, 0, addr21, 1, 20);
+      byte[] expectedNonce = NoteEncryption.Encryption.deriveBurnNonce(nf, amount32, addr21);
+      if (!Arrays.equals(nonceFromInput, expectedNonce)) {
+        throw new ZksnarkException(
+            "burn trigger input nonce does not match nonce bound to (nf, amount, addr)");
+      }
+      parametersBuilder.setBurnCiphertext(burnCiper);
     }
     String input = parametersBuilder
         .getTriggerContractInput(shieldedTRC20Parameters, spendAuthoritySignature, value, false,

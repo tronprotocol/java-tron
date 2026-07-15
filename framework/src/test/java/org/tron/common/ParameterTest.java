@@ -176,8 +176,6 @@ public class ParameterTest {
     assertEquals(2, parameter.getEstimateEnergyMaxRetry());
     parameter.setKeepAliveInterval(1000);
     assertEquals(1000, parameter.getKeepAliveInterval());
-    parameter.setReceiveTcpMinDataLength(10);
-    assertEquals(10, parameter.getReceiveTcpMinDataLength());
     parameter.setOpenFullTcpDisconnect(false);
     assertFalse(parameter.isOpenFullTcpDisconnect());
     parameter.setNodeDetectEnable(false);
@@ -216,7 +214,6 @@ public class ParameterTest {
     assertEquals(1000, parameter.getRateLimiterGlobalQps());
     parameter.setRateLimiterGlobalIpQps(100);
     assertEquals(100, parameter.getRateLimiterGlobalIpQps());
-    assertNull(parameter.getOverlay());
     assertNull(parameter.getEventPluginConfig());
     assertNull(parameter.getEventFilter());
     parameter.setCryptoEngine(ECKey_ENGINE);

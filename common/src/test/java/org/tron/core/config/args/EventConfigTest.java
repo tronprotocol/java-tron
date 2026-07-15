@@ -79,4 +79,11 @@ public class EventConfigTest {
     assertEquals(2, ec.getFilter().getContractAddress().size());
     assertEquals(1, ec.getFilter().getContractTopic().size());
   }
+
+  @Test
+  public void testTopicsEmptyList() {
+    EventConfig ec = EventConfig.fromConfig(withRef(
+        "event.subscribe.topics = []"));
+    assertTrue(ec.getTopics().isEmpty());
+  }
 }

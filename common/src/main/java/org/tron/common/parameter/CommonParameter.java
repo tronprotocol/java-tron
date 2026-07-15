@@ -14,7 +14,6 @@ import org.tron.common.logsfilter.EventPluginConfig;
 import org.tron.common.logsfilter.FilterQuery;
 import org.tron.common.setting.RocksDbSettings;
 import org.tron.core.Constant;
-import org.tron.core.config.args.Overlay;
 import org.tron.core.config.args.SeedNode;
 import org.tron.core.config.args.Storage;
 import org.tron.p2p.P2pConfig;
@@ -317,9 +316,6 @@ public class CommonParameter {
   public List<String> backupMembers;
   @Getter
   @Setter
-  public long receiveTcpMinDataLength; // clearParam: 2048
-  @Getter
-  @Setter
   public boolean isOpenFullTcpDisconnect;
   @Getter
   @Setter
@@ -411,6 +407,9 @@ public class CommonParameter {
   @Setter
   public double rateLimiterDisconnect; // clearParam: 1.0
   @Getter
+  @Setter
+  public boolean rateLimiterApiNonBlocking = false;
+  @Getter
   public RocksDbSettings rocksDBCustomSettings;
   @Getter
   public GenesisBlock genesisBlock;
@@ -431,8 +430,6 @@ public class CommonParameter {
   public int maxFastForwardNum; // clearParam: 4
   @Getter
   public Storage storage;
-  @Getter
-  public Overlay overlay;
   @Getter
   public SeedNode seedNode;
   @Getter
@@ -521,12 +518,7 @@ public class CommonParameter {
   @Getter
   @Setter
   public int pBFTHttpPort;
-  @Getter
-  @Setter
-  public int maxNestingDepth = 100;
-  @Getter
-  @Setter
-  public int maxTokenCount = 100_000;
+
   @Getter
   @Setter
   public long pBFTExpireNum; // clearParam: 20

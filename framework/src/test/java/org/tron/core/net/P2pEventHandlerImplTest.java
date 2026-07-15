@@ -1,8 +1,11 @@
 package org.tron.core.net;
 
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
+import com.google.protobuf.ByteString;
 import java.lang.reflect.Method;
+import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.Assert;
@@ -14,6 +17,7 @@ import org.tron.common.TestConstants;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.config.args.Args;
+import org.tron.core.exception.P2pException;
 import org.tron.core.net.message.TronMessage;
 import org.tron.core.net.message.adv.FetchInvDataMessage;
 import org.tron.core.net.message.adv.InventoryMessage;
@@ -210,6 +214,35 @@ public class P2pEventHandlerImplTest extends BaseTest {
   }
 
   @Test
+  public void testCheckInvRateLimitUnknownTypeRejected() throws Exception {
+    CommonParameter parameter = CommonParameter.getInstance();
+    parameter.setMaxTps(10);
+    parameter.setMaxBlockInvPerSecond(10);
+
+    PeerStatistics peerStatistics = new PeerStatistics();
+    PeerConnection peer = mock(PeerConnection.class);
+    Mockito.when(peer.getPeerStatistics()).thenReturn(peerStatistics);
+
+    P2pEventHandlerImpl handler = new P2pEventHandlerImpl();
+    Method method = handler.getClass()
+        .getDeclaredMethod("processMessage", PeerConnection.class, byte[].class);
+    method.setAccessible(true);
+
+    // craft an Inventory whose enum type holds an undefined value (2)
+    Protocol.Inventory inv = Protocol.Inventory.newBuilder()
+        .setTypeValue(2)
+        .addIds(ByteString.copyFrom(new byte[32]))
+        .build();
+    InventoryMessage msg = new InventoryMessage(inv.toByteArray());
+    Assert.assertEquals(InventoryType.UNRECOGNIZED, msg.getInventoryType());
+
+    method.invoke(handler, peer, msg.getSendBytes());
+
+    // checkInvRateLimit throws BAD_MESSAGE -> processException -> disconnect(BAD_PROTOCOL)
+    verify(peer).disconnect(Protocol.ReasonCode.BAD_PROTOCOL);
+  }
+
+  @Test
   public void testUpdateLastInteractiveTime() throws Exception {
     PeerConnection peer = new PeerConnection();
     P2pEventHandlerImpl p2pEventHandler = new P2pEventHandlerImpl();
@@ -222,5 +255,54 @@ public class P2pEventHandlerImplTest extends BaseTest {
     FetchInvDataMessage message = new FetchInvDataMessage(new ArrayList<>(), InventoryType.BLOCK);
     method.invoke(p2pEventHandler, peer, message);
     Assert.assertTrue(peer.getLastInteractiveTime() >= t1);
+  }
+
+  /**
+   * Regression for PR #6716: validateMerkleRoot introduced
+   * P2pException.TypeEnum.BLOCK_MERKLE_INVALID, but processException's switch
+   * did not include the new type, so the peer was disconnected with
+   * ReasonCode.UNKNOWN instead of BAD_BLOCK. This test pins that
+   * BLOCK_MERKLE_INVALID is mapped to BAD_BLOCK (and gets the bad-peer ban
+   * window via PeerConnection.processDisconnect).
+   */
+  @Test
+  public void testProcessExceptionMapsBlockMerkleErrorToBadBlock() throws Exception {
+    P2pEventHandlerImpl handler = new P2pEventHandlerImpl();
+    PeerConnection peer = mock(PeerConnection.class);
+    Mockito.when(peer.getInetSocketAddress())
+        .thenReturn(new InetSocketAddress("127.0.0.1", 18888));
+
+    P2pException ex = new P2pException(
+        P2pException.TypeEnum.BLOCK_MERKLE_INVALID, "merkle mismatch");
+
+    Method method = handler.getClass().getDeclaredMethod("processException",
+        PeerConnection.class, TronMessage.class, Exception.class);
+    method.setAccessible(true);
+    method.invoke(handler, peer, null, ex);
+
+    verify(peer).disconnect(Protocol.ReasonCode.BAD_BLOCK);
+  }
+
+  /**
+   * Companion sanity check: BLOCK_SIGN_INVALID already mapped correctly
+   * before this fix; pin it so future refactors do not silently drop it
+   * (or BLOCK_MERKLE_INVALID) back to UNKNOWN.
+   */
+  @Test
+  public void testProcessExceptionMapsBlockSignErrorToBadBlock() throws Exception {
+    P2pEventHandlerImpl handler = new P2pEventHandlerImpl();
+    PeerConnection peer = mock(PeerConnection.class);
+    Mockito.when(peer.getInetSocketAddress())
+        .thenReturn(new InetSocketAddress("127.0.0.1", 18888));
+
+    P2pException ex = new P2pException(
+        P2pException.TypeEnum.BLOCK_SIGN_INVALID, "bad signature");
+
+    Method method = handler.getClass().getDeclaredMethod("processException",
+        PeerConnection.class, TronMessage.class, Exception.class);
+    method.setAccessible(true);
+    method.invoke(handler, peer, null, ex);
+
+    verify(peer).disconnect(Protocol.ReasonCode.BAD_BLOCK);
   }
 }

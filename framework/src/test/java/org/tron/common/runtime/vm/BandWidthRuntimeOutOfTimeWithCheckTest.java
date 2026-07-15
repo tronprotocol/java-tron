@@ -21,6 +21,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.BaseTest;
+import org.tron.common.TestConstants;
 import org.tron.common.runtime.RuntimeImpl;
 import org.tron.common.runtime.TvmTestUtils;
 import org.tron.common.utils.Commons;
@@ -63,7 +64,6 @@ public class BandWidthRuntimeOutOfTimeWithCheckTest extends BaseTest {
 
   public static final long totalBalance = 1000_0000_000_000L;
   private static final String dbDirectory = "db_BandWidthRuntimeOutOfTimeTest_test";
-  private static final String indexDirectory = "index_BandWidthRuntimeOutOfTimeTest_test";
   private static final String OwnerAddress = "TCWHANtDDdkZCTo2T2peyEq3Eg9c2XB7ut";
   private static final String TriggerOwnerAddress = "TCSgeWapPJhCqgWRxXCKb6jJ5AgNWSGjPA";
   private static boolean init;
@@ -73,10 +73,9 @@ public class BandWidthRuntimeOutOfTimeWithCheckTest extends BaseTest {
         new String[]{
             "--output-directory", dbPath(),
             "--storage-db-directory", dbDirectory,
-            "--storage-index-directory", indexDirectory,
             "--debug"
         },
-        "config-test-mainnet.conf"
+        TestConstants.TEST_CONF
     );
   }
 

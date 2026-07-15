@@ -220,6 +220,30 @@ public class RelayServiceTest extends BaseTest {
 
       boolean res = service.checkHelloMessage(helloMessage, c1);
       Assert.assertTrue(res);
+
+      HelloMessage shortSigMsg = new HelloMessage(node, System.currentTimeMillis(),
+          ChainBaseManager.getChainBaseManager());
+      shortSigMsg.setHelloMessage(shortSigMsg.getHelloMessage().toBuilder()
+          .setAddress(address)
+          .setSignature(ByteString.copyFrom(new byte[64]))
+          .build());
+      Assert.assertFalse(service.checkHelloMessage(shortSigMsg, c1));
+
+      HelloMessage longSigMsg = new HelloMessage(node, System.currentTimeMillis(),
+          ChainBaseManager.getChainBaseManager());
+      longSigMsg.setHelloMessage(longSigMsg.getHelloMessage().toBuilder()
+          .setAddress(address)
+          .setSignature(ByteString.copyFrom(new byte[69]))
+          .build());
+      Assert.assertFalse(service.checkHelloMessage(longSigMsg, c1));
+
+      HelloMessage emptySigMsg = new HelloMessage(node, System.currentTimeMillis(),
+          ChainBaseManager.getChainBaseManager());
+      emptySigMsg.setHelloMessage(emptySigMsg.getHelloMessage().toBuilder()
+          .setAddress(address)
+          .setSignature(ByteString.EMPTY)
+          .build());
+      Assert.assertFalse(service.checkHelloMessage(emptySigMsg, c1));
     } catch (Exception e) {
       logger.info("", e);
       assert false;

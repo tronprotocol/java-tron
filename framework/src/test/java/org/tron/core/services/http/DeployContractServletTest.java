@@ -55,4 +55,31 @@ public class DeployContractServletTest extends BaseHttpTest {
         eq(Protocol.Transaction.Contract.ContractType.CreateSmartContract));
     assertTransactionResponse(response);
   }
+
+  @Test
+  public void testDeployContractOmitsNullAbiOutputs() throws Exception {
+    String jsonParam = "{"
+        + "\"owner_address\": \"4199357684BC659F5166046B56C95A0E99F1265CD1\","
+        + "\"name\": \"TestContract\","
+        + "\"abi\": [{\"inputs\":[],\"name\":\"test\",\"outputs\":null,"
+        + "\"type\":\"function\"}],"
+        + "\"bytecode\": \"608060405234801561001057600080fd5b50\","
+        + "\"fee_limit\": 1000000000,"
+        + "\"call_value\": 0,"
+        + "\"consume_user_resource_percent\": 100,"
+        + "\"origin_energy_limit\": 10000000"
+        + "}";
+    MockHttpServletRequest request = postRequest(jsonParam);
+
+    MockHttpServletResponse response = newResponse();
+    servlet.doPost(request, response);
+    assertEquals(200, response.getStatus());
+    verify(wallet).createTransactionCapsule(
+        argThat(c -> c instanceof CreateSmartContract
+            && ((CreateSmartContract) c).getNewContract().getAbi().getEntrysCount() == 1
+            && ((CreateSmartContract) c).getNewContract().getAbi().getEntrys(0)
+                .getOutputsCount() == 0),
+        eq(Protocol.Transaction.Contract.ContractType.CreateSmartContract));
+    assertTransactionResponse(response);
+  }
 }

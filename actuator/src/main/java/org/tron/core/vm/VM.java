@@ -23,8 +23,10 @@ public class VM {
     try {
       long factor = DYNAMIC_ENERGY_FACTOR_DECIMAL;
       long energyUsage = 0L;
+      // hoist once per execution: avoids a per-opcode VMConfig.current() thread-local lookup
+      final boolean allowDynamicEnergy = VMConfig.allowDynamicEnergy();
 
-      if (VMConfig.allowDynamicEnergy()) {
+      if (allowDynamicEnergy) {
         factor = program.updateContextContractFactor();
       }
 
@@ -47,7 +49,7 @@ public class VM {
           String opName = Op.getNameOf(op.getOpcode());
           /* spend energy before execution */
           long energy = op.getEnergyCost(program);
-          if (VMConfig.allowDynamicEnergy()) {
+          if (allowDynamicEnergy) {
             long actualEnergy = energy;
             // CALL Ops have special calculation on energy.
             if (CALL_OPS.contains(op.getOpcode())) {
@@ -101,7 +103,7 @@ public class VM {
         }
       }
 
-      if (VMConfig.allowDynamicEnergy()) {
+      if (allowDynamicEnergy) {
         program.addContextContractUsage(energyUsage);
       }
 

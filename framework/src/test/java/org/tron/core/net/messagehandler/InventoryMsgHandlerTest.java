@@ -2,6 +2,7 @@ package org.tron.core.net.messagehandler;
 
 import static org.mockito.Mockito.mock;
 
+import com.google.protobuf.ByteString;
 import java.lang.reflect.Field;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -18,6 +19,7 @@ import org.tron.core.net.TronNetDelegate;
 import org.tron.core.net.message.adv.InventoryMessage;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.p2p.connection.Channel;
+import org.tron.protos.Protocol.Inventory;
 import org.tron.protos.Protocol.Inventory.InventoryType;
 
 public class InventoryMsgHandlerTest {
@@ -69,6 +71,30 @@ public class InventoryMsgHandlerTest {
     try {
       handler.processMessage(peer, msg);
       Assert.fail("Expected P2pException for duplicate hashes");
+    } catch (P2pException e) {
+      Assert.assertEquals(P2pException.TypeEnum.BAD_MESSAGE, e.getType());
+    }
+  }
+
+  @Test
+  public void testUnknownInventoryTypeRejected() throws Exception {
+    InventoryMsgHandler handler = new InventoryMsgHandler();
+    Args.setParam(new String[] {}, TestConstants.TEST_CONF);
+
+    // craft an Inventory whose enum type holds an undefined value (2)
+    Inventory inv = Inventory.newBuilder()
+        .setTypeValue(2)
+        .addIds(ByteString.copyFrom(new byte[32]))
+        .build();
+    InventoryMessage msg = new InventoryMessage(inv.toByteArray());
+    Assert.assertEquals(InventoryType.UNRECOGNIZED, msg.getInventoryType());
+
+    PeerConnection peer = new PeerConnection();
+    peer.setChannel(getChannel("1.0.0.5", 1000));
+
+    try {
+      handler.processMessage(peer, msg);
+      Assert.fail("Expected P2pException for unknown inventory type");
     } catch (P2pException e) {
       Assert.assertEquals(P2pException.TypeEnum.BAD_MESSAGE, e.getType());
     }

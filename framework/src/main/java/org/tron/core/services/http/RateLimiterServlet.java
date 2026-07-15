@@ -14,6 +14,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.jetty.http.BadMessageException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.common.parameter.RateLimiterInitialization;
 import org.tron.common.prometheus.MetricKeys;
@@ -107,9 +108,10 @@ public abstract class RateLimiterServlet extends HttpServlet {
     IRateLimiter rateLimiter = container.get(KEY_PREFIX_HTTP, getClass().getSimpleName());
 
     // Check per-endpoint first to avoid consuming global IP/QPS quota for requests
-    // that would be rejected by the per-endpoint limiter anyway.
-    boolean perEndpointAcquired = rateLimiter == null || rateLimiter.tryAcquire(runtimeData);
-    boolean acquireResource = perEndpointAcquired && GlobalRateLimiter.tryAcquire(runtimeData);
+    // that would be rejected by the per-endpoint limiter anyway. acquirePermit()
+    // chooses blocking or non-blocking semantics based on rate.limiter.apiNonBlocking.
+    boolean perEndpointAcquired = rateLimiter == null || rateLimiter.acquirePermit(runtimeData);
+    boolean acquireResource = perEndpointAcquired && GlobalRateLimiter.acquirePermit(runtimeData);
 
     String contextPath = req.getContextPath();
     String url = Strings.isNullOrEmpty(req.getServletPath())
@@ -132,7 +134,7 @@ public abstract class RateLimiterServlet extends HttpServlet {
         resp.getWriter()
             .println(Util.printErrorMsg(new IllegalAccessException("lack of computing resources")));
       }
-    } catch (ServletException | IOException e) {
+    } catch (ServletException | IOException | BadMessageException e) {
       throw e;
     } catch (Exception unexpected) {
       logger.error("Http Api {}, Method:{}. Error：", url, req.getMethod(), unexpected);

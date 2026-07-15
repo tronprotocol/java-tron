@@ -6,7 +6,6 @@ import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.LATEST_STR;
 import com.google.protobuf.ByteString;
 import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
-import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.jsonrpc.JsonRpcInvalidParamsException;
@@ -35,14 +34,14 @@ public class LogFilterWrapper {
     long fromBlockSrc;
     long toBlockSrc;
     if (fr.getBlockHash() != null) {
-      String blockHash = ByteArray.fromHex(fr.getBlockHash());
       if (fr.getFromBlock() != null || fr.getToBlock() != null) {
         throw new JsonRpcInvalidParamsException(
             "cannot specify both BlockHash and FromBlock/ToBlock, choose one or the other");
       }
+      byte[] blockHashBytes = JsonRpcApiUtil.hashToByteArray(fr.getBlockHash());
       Block block = null;
       if (wallet != null) {
-        block = wallet.getBlockById(ByteString.copyFrom(ByteArray.fromHexString(blockHash)));
+        block = wallet.getBlockById(ByteString.copyFrom(blockHashBytes));
       }
       if (block == null) {
         throw new JsonRpcInvalidParamsException("invalid blockHash");
@@ -99,16 +98,23 @@ public class LogFilterWrapper {
           throw new JsonRpcInvalidParamsException("please verify: fromBlock <= toBlock");
         }
       }
-
-      // till now, it needs to check block range for eth_getLogs
-      int maxBlockRange = Args.getInstance().getJsonRpcMaxBlockRange();
-      if (checkBlockRange && maxBlockRange > 0
-          && min(toBlockSrc, currentMaxBlockNum) - fromBlockSrc > maxBlockRange) {
-        throw new JsonRpcInvalidParamsException("exceed max block range: " + maxBlockRange);
-      }
     }
 
     this.fromBlock = fromBlockSrc;
     this.toBlock = toBlockSrc;
+
+    // eth_getLogs enforces the block range at construction time. eth_newFilter creates the
+    // wrapper with checkBlockRange=false (no creation-time gate); eth_getFilterLogs re-runs this
+    // check against the current head before scanning so the cap cannot be bypassed.
+    if (checkBlockRange) {
+      validateBlockRange(currentMaxBlockNum);
+    }
+  }
+
+  public void validateBlockRange(long currentMaxBlockNum) throws JsonRpcInvalidParamsException {
+    int maxBlockRange = Args.getInstance().getJsonRpcMaxBlockRange();
+    if (maxBlockRange > 0 && min(toBlock, currentMaxBlockNum) - fromBlock > maxBlockRange) {
+      throw new JsonRpcInvalidParamsException("exceed max block range: " + maxBlockRange);
+    }
   }
 }

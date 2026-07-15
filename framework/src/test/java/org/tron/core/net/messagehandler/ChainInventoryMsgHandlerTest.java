@@ -3,17 +3,31 @@ package org.tron.core.net.messagehandler;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
+import org.tron.common.TestConstants;
 import org.tron.common.utils.Pair;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.config.Parameter.NetConstants;
+import org.tron.core.config.args.Args;
 import org.tron.core.exception.P2pException;
 import org.tron.core.net.message.keepalive.PingMessage;
 import org.tron.core.net.message.sync.ChainInventoryMessage;
 import org.tron.core.net.peer.PeerConnection;
 
 public class ChainInventoryMsgHandlerTest {
+
+  @BeforeClass
+  public static void init() {
+    Args.setParam(new String[]{}, TestConstants.TEST_CONF);
+  }
+
+  @AfterClass
+  public static void destroy() {
+    Args.clearParam();
+  }
 
   private ChainInventoryMsgHandler handler = new ChainInventoryMsgHandler();
   private PeerConnection peer = new PeerConnection();

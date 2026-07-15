@@ -18,6 +18,7 @@ package org.tron.core.utils;
 import static org.tron.common.crypto.Hash.sha3omit12;
 import static org.tron.common.math.Maths.max;
 import static org.tron.core.config.Parameter.ChainConstant.DELEGATE_COST_BASE_SIZE;
+import static org.tron.core.Constant.PER_SIGN_LENGTH;
 import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 
 import com.google.common.base.CaseFormat;
@@ -183,8 +184,30 @@ public class TransactionUtil {
         .replace("_", "");
   }
 
+  public static Transaction truncateSignatures(Transaction trx) {
+    Transaction.Builder builder = trx.toBuilder().clearSignature();
+    for (ByteString sig : trx.getSignatureList()) {
+      if (sig.size() > PER_SIGN_LENGTH) {
+        builder.addSignature(ByteString.copyFrom(sig.substring(0, PER_SIGN_LENGTH).toByteArray()));
+      } else {
+        builder.addSignature(sig);
+      }
+    }
+    return builder.build();
+  }
+
   public TransactionSignWeight getTransactionSignWeight(Transaction trx) {
     TransactionSignWeight.Builder tswBuilder = TransactionSignWeight.newBuilder();
+    Result.Builder resultBuilder = Result.newBuilder();
+    if (trx.getSignatureCount() > chainBaseManager.getDynamicPropertiesStore()
+        .getTotalSignNum()) {
+      resultBuilder.setCode(Result.response_code.OTHER_ERROR);
+      resultBuilder.setMessage("too many signatures");
+      tswBuilder.setResult(resultBuilder);
+      return tswBuilder.build();
+    }
+
+    trx = truncateSignatures(trx);
     TransactionExtention.Builder trxExBuilder = TransactionExtention.newBuilder();
     trxExBuilder.setTransaction(trx);
     trxExBuilder.setTxid(ByteString.copyFrom(Sha256Hash.hash(CommonParameter
@@ -193,7 +216,6 @@ public class TransactionUtil {
     retBuilder.setResult(true).setCode(response_code.SUCCESS);
     trxExBuilder.setResult(retBuilder);
     tswBuilder.setTransaction(trxExBuilder);
-    Result.Builder resultBuilder = Result.newBuilder();
 
     if (trx.getRawData().getContractCount() == 0) {
       resultBuilder.setCode(Result.response_code.OTHER_ERROR);

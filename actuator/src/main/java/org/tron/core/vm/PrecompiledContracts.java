@@ -699,12 +699,19 @@ public class PrecompiledContracts {
         return Pair.of(false, EMPTY_BYTE_ARRAY);
       }
 
+      if (baseLen == 0 && modLen == 0 && expLen > UPPER_BOUND) {
+        MUtil.checkCPUTimeForModExp();
+      }
+
       BigInteger base = parseArg(data, ARGS_OFFSET, baseLen);
       BigInteger exp = parseArg(data, addSafely(ARGS_OFFSET, baseLen), expLen);
       BigInteger mod = parseArg(data, addSafely(addSafely(ARGS_OFFSET, baseLen), expLen), modLen);
 
       // check if modulus is zero
       if (isZero(mod)) {
+        if (VMConfig.allowTvmOsaka()) {
+          return Pair.of(true, new byte[modLen]);
+        }
         return Pair.of(true, EMPTY_BYTE_ARRAY);
       }
 

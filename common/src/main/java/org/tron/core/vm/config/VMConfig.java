@@ -13,57 +13,74 @@ public class VMConfig {
   @Setter
   private static boolean vmTrace = false;
 
-  private static boolean ALLOW_TVM_TRANSFER_TRC10 = false;
+  /**
+   * Snapshot of all chain/store-derived VM config flags. The block-processing (HEAD) path
+   * installs it as the process-wide {@link #globalSnapshot}; a constant call executing against a
+   * non-HEAD (solidity/PBFT) snapshot installs its own view into {@link #localSnapshot} so it never
+   * overwrites the flags the consensus path relies on.
+   */
+  public static class Snapshot {
+    public boolean allowTvmTransferTrc10;
+    public boolean allowTvmConstantinople;
+    public boolean allowMultiSign;
+    public boolean allowTvmSolidity059;
+    public boolean allowShieldedTRC20Transaction;
+    public boolean allowTvmIstanbul;
+    public boolean allowTvmFreeze;
+    public boolean allowTvmVote;
+    public boolean allowTvmLondon;
+    public boolean allowTvmCompatibleEvm;
+    public boolean allowHigherLimitForMaxCpuTimeOfOneTx;
+    public boolean allowTvmFreezeV2;
+    public boolean allowOptimizedReturnValueOfChainId;
+    public boolean allowDynamicEnergy;
+    public long dynamicEnergyThreshold;
+    public long dynamicEnergyIncreaseFactor;
+    public long dynamicEnergyMaxFactor;
+    public boolean allowTvmShanghai;
+    public boolean allowEnergyAdjustment;
+    public boolean allowStrictMath;
+    public boolean allowTvmCancun;
+    public boolean disableJavaLangMath;
+    public boolean allowTvmBlob;
+    public boolean allowTvmSelfdestructRestriction;
+    public boolean allowTvmOsaka;
+    public boolean allowHardenResourceCalculation;
+  }
 
-  private static boolean ALLOW_TVM_CONSTANTINOPLE = false;
+  // HEAD / block-processing config, written by the consensus path; read by everyone with no
+  // thread-local override. volatile so a wholesale install is safely published across threads.
+  private static volatile Snapshot globalSnapshot = new Snapshot();
 
-  private static boolean ALLOW_MULTI_SIGN = false;
+  // Per-thread override used only by constant calls bound to a non-HEAD (solidity/PBFT) snapshot.
+  private static final ThreadLocal<Snapshot> localSnapshot = new ThreadLocal<>();
 
-  private static boolean ALLOW_TVM_SOLIDITY_059 = false;
+  private static Snapshot current() {
+    Snapshot local = localSnapshot.get();
+    return local != null ? local : globalSnapshot;
+  }
 
-  private static boolean ALLOW_SHIELDED_TRC20_TRANSACTION = false;
+  /**
+   * Install the process-wide (HEAD / block-processing) config and drop any thread-local view.
+   */
+  public static void setGlobalSnapshot(Snapshot snapshot) {
+    globalSnapshot = snapshot;
+    localSnapshot.remove();
+  }
 
-  private static boolean ALLOW_TVM_ISTANBUL = false;
+  /**
+   * Install a thread-local config view for a constant call executing against a non-HEAD snapshot.
+   */
+  public static void setLocalSnapshot(Snapshot snapshot) {
+    localSnapshot.set(snapshot);
+  }
 
-  private static boolean ALLOW_TVM_FREEZE = false;
-
-  private static boolean ALLOW_TVM_VOTE = false;
-
-  private static boolean ALLOW_TVM_LONDON = false;
-
-  private static boolean ALLOW_TVM_COMPATIBLE_EVM = false;
-
-  private static boolean ALLOW_HIGHER_LIMIT_FOR_MAX_CPU_TIME_OF_ONE_TX = false;
-
-  private static boolean ALLOW_TVM_FREEZE_V2 = false;
-
-  private static boolean ALLOW_OPTIMIZED_RETURN_VALUE_OF_CHAIN_ID = false;
-
-  private static boolean ALLOW_DYNAMIC_ENERGY = false;
-
-  private static long DYNAMIC_ENERGY_THRESHOLD = 0L;
-
-  private static long DYNAMIC_ENERGY_INCREASE_FACTOR = 0L;
-
-  private static long DYNAMIC_ENERGY_MAX_FACTOR = 0L;
-
-  private static boolean ALLOW_TVM_SHANGHAI = false;
-
-  private static boolean ALLOW_ENERGY_ADJUSTMENT = false;
-
-  private static boolean ALLOW_STRICT_MATH = false;
-
-  private static boolean ALLOW_TVM_CANCUN = false;
-
-  private static Boolean DISABLE_JAVA_LANG_MATH = false;
-
-  private static boolean ALLOW_TVM_BLOB = false;
-
-  private static boolean ALLOW_TVM_SELFDESTRUCT_RESTRICTION = false;
-
-  private static boolean ALLOW_TVM_OSAKA = false;
-
-  private static boolean ALLOW_HARDEN_RESOURCE_CALCULATION = false;
+  /**
+   * Drop the thread-local config view so this thread falls back to the global config.
+   */
+  public static void clearLocalSnapshot() {
+    localSnapshot.remove();
+  }
 
   private VMConfig() {
   }
@@ -80,108 +97,111 @@ public class VMConfig {
     CommonParameter.ENERGY_LIMIT_HARD_FORK = pass;
   }
 
+  // The init* setters below mutate the global (HEAD) config in place. They are kept for tests and
+  // legacy callers; production config loading goes through ConfigLoader -> setGlobalSnapshot, which
+  // publishes a fresh Snapshot wholesale via the volatile field.
   public static void initAllowMultiSign(long allow) {
-    ALLOW_MULTI_SIGN = allow == 1;
+    globalSnapshot.allowMultiSign = allow == 1;
   }
 
   public static void initAllowTvmTransferTrc10(long allow) {
-    ALLOW_TVM_TRANSFER_TRC10 = allow == 1;
+    globalSnapshot.allowTvmTransferTrc10 = allow == 1;
   }
 
   public static void initAllowTvmConstantinople(long allow) {
-    ALLOW_TVM_CONSTANTINOPLE = allow == 1;
+    globalSnapshot.allowTvmConstantinople = allow == 1;
   }
 
   public static void initAllowTvmSolidity059(long allow) {
-    ALLOW_TVM_SOLIDITY_059 = allow == 1;
+    globalSnapshot.allowTvmSolidity059 = allow == 1;
   }
 
   public static void initAllowShieldedTRC20Transaction(long allow) {
-    ALLOW_SHIELDED_TRC20_TRANSACTION = allow == 1;
+    globalSnapshot.allowShieldedTRC20Transaction = allow == 1;
   }
 
   public static void initAllowTvmIstanbul(long allow) {
-    ALLOW_TVM_ISTANBUL = allow == 1;
+    globalSnapshot.allowTvmIstanbul = allow == 1;
   }
 
   public static void initAllowTvmFreeze(long allow) {
-    ALLOW_TVM_FREEZE = allow == 1;
+    globalSnapshot.allowTvmFreeze = allow == 1;
   }
 
   public static void initAllowTvmVote(long allow) {
-    ALLOW_TVM_VOTE = allow == 1;
+    globalSnapshot.allowTvmVote = allow == 1;
   }
 
   public static void initAllowTvmLondon(long allow) {
-    ALLOW_TVM_LONDON = allow == 1;
+    globalSnapshot.allowTvmLondon = allow == 1;
   }
 
   public static void initAllowTvmCompatibleEvm(long allow) {
-    ALLOW_TVM_COMPATIBLE_EVM = allow == 1;
+    globalSnapshot.allowTvmCompatibleEvm = allow == 1;
   }
 
   public static void initAllowHigherLimitForMaxCpuTimeOfOneTx(long allow) {
-    ALLOW_HIGHER_LIMIT_FOR_MAX_CPU_TIME_OF_ONE_TX = allow == 1;
+    globalSnapshot.allowHigherLimitForMaxCpuTimeOfOneTx = allow == 1;
   }
 
   public static void initAllowTvmFreezeV2(long allow) {
-    ALLOW_TVM_FREEZE_V2 = allow == 1;
+    globalSnapshot.allowTvmFreezeV2 = allow == 1;
   }
 
   public static void initAllowOptimizedReturnValueOfChainId(long allow) {
-    ALLOW_OPTIMIZED_RETURN_VALUE_OF_CHAIN_ID = allow == 1;
+    globalSnapshot.allowOptimizedReturnValueOfChainId = allow == 1;
   }
 
   public static void initAllowDynamicEnergy(long allow) {
-    ALLOW_DYNAMIC_ENERGY = allow == 1;
+    globalSnapshot.allowDynamicEnergy = allow == 1;
   }
 
   public static void initDynamicEnergyThreshold(long threshold) {
-    DYNAMIC_ENERGY_THRESHOLD = threshold;
+    globalSnapshot.dynamicEnergyThreshold = threshold;
   }
 
   public static void initDynamicEnergyIncreaseFactor(long increaseFactor) {
-    DYNAMIC_ENERGY_INCREASE_FACTOR = increaseFactor;
+    globalSnapshot.dynamicEnergyIncreaseFactor = increaseFactor;
   }
 
   public static void initDynamicEnergyMaxFactor(long maxFactor) {
-    DYNAMIC_ENERGY_MAX_FACTOR = maxFactor;
+    globalSnapshot.dynamicEnergyMaxFactor = maxFactor;
   }
 
   public static void initAllowTvmShangHai(long allow) {
-    ALLOW_TVM_SHANGHAI = allow == 1;
+    globalSnapshot.allowTvmShanghai = allow == 1;
   }
 
   public static void initAllowEnergyAdjustment(long allow) {
-    ALLOW_ENERGY_ADJUSTMENT = allow == 1;
+    globalSnapshot.allowEnergyAdjustment = allow == 1;
   }
 
   public static void initAllowStrictMath(long allow) {
-    ALLOW_STRICT_MATH = allow == 1;
+    globalSnapshot.allowStrictMath = allow == 1;
   }
 
   public static void initAllowTvmCancun(long allow) {
-    ALLOW_TVM_CANCUN = allow == 1;
+    globalSnapshot.allowTvmCancun = allow == 1;
   }
 
   public static void initDisableJavaLangMath(long allow) {
-    DISABLE_JAVA_LANG_MATH = allow == 1;
+    globalSnapshot.disableJavaLangMath = allow == 1;
   }
 
   public static void initAllowTvmBlob(long allow) {
-    ALLOW_TVM_BLOB = allow == 1;
+    globalSnapshot.allowTvmBlob = allow == 1;
   }
 
   public static void initAllowTvmSelfdestructRestriction(long allow) {
-    ALLOW_TVM_SELFDESTRUCT_RESTRICTION = allow == 1;
+    globalSnapshot.allowTvmSelfdestructRestriction = allow == 1;
   }
 
   public static void initAllowTvmOsaka(long allow) {
-    ALLOW_TVM_OSAKA = allow == 1;
+    globalSnapshot.allowTvmOsaka = allow == 1;
   }
 
   public static void initAllowHardenResourceCalculation(long allow) {
-    ALLOW_HARDEN_RESOURCE_CALCULATION = allow == 1;
+    globalSnapshot.allowHardenResourceCalculation = allow == 1;
   }
 
   public static boolean getEnergyLimitHardFork() {
@@ -189,106 +209,106 @@ public class VMConfig {
   }
 
   public static boolean allowTvmTransferTrc10() {
-    return ALLOW_TVM_TRANSFER_TRC10;
+    return current().allowTvmTransferTrc10;
   }
 
   public static boolean allowTvmConstantinople() {
-    return ALLOW_TVM_CONSTANTINOPLE;
+    return current().allowTvmConstantinople;
   }
 
   public static boolean allowMultiSign() {
-    return ALLOW_MULTI_SIGN;
+    return current().allowMultiSign;
   }
 
   public static boolean allowTvmSolidity059() {
-    return ALLOW_TVM_SOLIDITY_059;
+    return current().allowTvmSolidity059;
   }
 
   public static boolean allowShieldedTRC20Transaction() {
-    return ALLOW_SHIELDED_TRC20_TRANSACTION;
+    return current().allowShieldedTRC20Transaction;
   }
 
   public static boolean allowTvmIstanbul() {
-    return ALLOW_TVM_ISTANBUL;
+    return current().allowTvmIstanbul;
   }
 
   public static boolean allowTvmFreeze() {
-    return ALLOW_TVM_FREEZE;
+    return current().allowTvmFreeze;
   }
 
   public static boolean allowTvmVote() {
-    return ALLOW_TVM_VOTE;
+    return current().allowTvmVote;
   }
 
   public static boolean allowTvmLondon() {
-    return ALLOW_TVM_LONDON;
+    return current().allowTvmLondon;
   }
 
   public static boolean allowTvmCompatibleEvm() {
-    return ALLOW_TVM_COMPATIBLE_EVM;
+    return current().allowTvmCompatibleEvm;
   }
 
   public static boolean allowHigherLimitForMaxCpuTimeOfOneTx() {
-    return ALLOW_HIGHER_LIMIT_FOR_MAX_CPU_TIME_OF_ONE_TX;
+    return current().allowHigherLimitForMaxCpuTimeOfOneTx;
   }
 
   public static boolean allowTvmFreezeV2() {
-    return ALLOW_TVM_FREEZE_V2;
+    return current().allowTvmFreezeV2;
   }
 
   public static boolean allowOptimizedReturnValueOfChainId() {
-    return ALLOW_OPTIMIZED_RETURN_VALUE_OF_CHAIN_ID;
+    return current().allowOptimizedReturnValueOfChainId;
   }
 
   public static boolean allowDynamicEnergy() {
-    return ALLOW_DYNAMIC_ENERGY;
+    return current().allowDynamicEnergy;
   }
 
   public static long getDynamicEnergyThreshold() {
-    return DYNAMIC_ENERGY_THRESHOLD;
+    return current().dynamicEnergyThreshold;
   }
 
   public static long getDynamicEnergyIncreaseFactor() {
-    return DYNAMIC_ENERGY_INCREASE_FACTOR;
+    return current().dynamicEnergyIncreaseFactor;
   }
 
   public static long getDynamicEnergyMaxFactor() {
-    return DYNAMIC_ENERGY_MAX_FACTOR;
+    return current().dynamicEnergyMaxFactor;
   }
 
   public static boolean allowTvmShanghai() {
-    return ALLOW_TVM_SHANGHAI;
+    return current().allowTvmShanghai;
   }
 
   public static boolean allowEnergyAdjustment() {
-    return ALLOW_ENERGY_ADJUSTMENT;
+    return current().allowEnergyAdjustment;
   }
 
   public static boolean allowStrictMath() {
-    return ALLOW_STRICT_MATH;
+    return current().allowStrictMath;
   }
 
   public static boolean allowTvmCancun() {
-    return ALLOW_TVM_CANCUN;
+    return current().allowTvmCancun;
   }
 
   public static boolean disableJavaLangMath() {
-    return DISABLE_JAVA_LANG_MATH;
+    return current().disableJavaLangMath;
   }
 
   public static boolean allowTvmBlob() {
-    return ALLOW_TVM_BLOB;
+    return current().allowTvmBlob;
   }
 
   public static boolean allowTvmSelfdestructRestriction() {
-    return ALLOW_TVM_SELFDESTRUCT_RESTRICTION;
+    return current().allowTvmSelfdestructRestriction;
   }
 
   public static boolean allowTvmOsaka() {
-    return ALLOW_TVM_OSAKA;
+    return current().allowTvmOsaka;
   }
 
   public static boolean allowHardenResourceCalculation() {
-    return ALLOW_HARDEN_RESOURCE_CALCULATION;
+    return current().allowHardenResourceCalculation;
   }
 }

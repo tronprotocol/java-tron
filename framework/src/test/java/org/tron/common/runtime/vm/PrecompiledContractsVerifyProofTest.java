@@ -15,6 +15,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.tron.api.GrpcAPI.ShieldedTRC20Parameters;
 import org.tron.common.BaseTest;
+import org.tron.common.TestConstants;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.FileUtil;
@@ -60,7 +61,7 @@ public class PrecompiledContractsVerifyProofTest extends BaseTest {
 
   @BeforeClass
   public static void init() {
-    Args.setParam(new String[]{"--output-directory", dbPath()}, "config-test.conf");
+    Args.setParam(new String[]{"--output-directory", dbPath()}, TestConstants.TEST_CONF);
     DEFAULT_OVK = ByteArray
         .fromHexString("030c8c2bc59fb3eb8afb047a8ea4b028743d23e7d38c6fa30908358431e2314d");
     SHIELDED_CONTRACT_ADDRESS = WalletClient.decodeFromBase58Check(SHIELDED_CONTRACT_ADDRESS_STR);
@@ -1123,6 +1124,124 @@ public class PrecompiledContractsVerifyProofTest extends BaseTest {
     byte[] result = contractResult.getRight();
 
     Assert.assertEquals(0, result[31]);
+  }
+
+  @Test
+  public void buildBurnRejectsInvalidTransparentToAddress() throws ZksnarkException {
+    long value = 100L;
+    SpendingKey senderSk = SpendingKey.random();
+    ExpandedSpendingKey senderExpsk = senderSk.expandedSpendingKey();
+    FullViewingKey senderFvk = senderSk.fullViewingKey();
+    IncomingViewingKey senderIvk = senderFvk.inViewingKey();
+    byte[] rcm = new byte[32];
+    JLibrustzcash.librustzcashSaplingGenerateR(rcm);
+    PaymentAddress senderPaymentAddress = senderIvk.address(DiversifierT.random()).orElse(null);
+    assertNotNull(senderPaymentAddress);
+
+    ShieldedTRC20ParametersBuilder builder = new ShieldedTRC20ParametersBuilder();
+    builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.BURN);
+    builder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
+    builder.setTransparentToAmount(BigInteger.valueOf(value));
+    builder.setTransparentToAddress(new byte[19]);
+
+    Note senderNote = new Note(senderPaymentAddress.getD(), senderPaymentAddress.getPkD(),
+        value, rcm, new byte[512]);
+    byte[][] cm = new byte[1][32];
+    System.arraycopy(senderNote.cm(), 0, cm[0], 0, 32);
+    IncrementalMerkleTreeContainer tree = new IncrementalMerkleTreeContainer(
+        new IncrementalMerkleTreeCapsule());
+    IncrementalMerkleVoucherContainer voucher = addSimpleMerkleVoucherContainer(tree, cm);
+    byte[] path = decodePath(voucher.path().encode());
+    byte[] anchor = voucher.root().getContent().toByteArray();
+    long position = voucher.position();
+    builder.addSpend(senderExpsk, senderNote, anchor, path, position);
+
+    try {
+      builder.build(true);
+      Assert.fail("expected ZksnarkException for invalid transparentToAddress");
+    } catch (ZksnarkException e) {
+      Assert.assertTrue(e.getMessage().contains("invalid transparentToAddress"));
+    }
+  }
+
+  @Test
+  public void buildBurnRejectsMissingOvk() throws ZksnarkException {
+    long value = 100L;
+    SpendingKey senderSk = SpendingKey.random();
+    ExpandedSpendingKey senderExpsk = senderSk.expandedSpendingKey();
+    FullViewingKey senderFvk = senderSk.fullViewingKey();
+    IncomingViewingKey senderIvk = senderFvk.inViewingKey();
+    byte[] rcm = new byte[32];
+    JLibrustzcash.librustzcashSaplingGenerateR(rcm);
+    PaymentAddress senderPaymentAddress = senderIvk.address(DiversifierT.random()).orElse(null);
+    assertNotNull(senderPaymentAddress);
+
+    ShieldedTRC20ParametersBuilder builder = new ShieldedTRC20ParametersBuilder();
+    builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.BURN);
+    builder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
+    builder.setTransparentToAmount(BigInteger.valueOf(value));
+    builder.setTransparentToAddress(PUBLIC_TO_ADDRESS);
+
+    Note senderNote = new Note(senderPaymentAddress.getD(), senderPaymentAddress.getPkD(),
+        value, rcm, new byte[512]);
+    byte[][] cm = new byte[1][32];
+    System.arraycopy(senderNote.cm(), 0, cm[0], 0, 32);
+    IncrementalMerkleTreeContainer tree = new IncrementalMerkleTreeContainer(
+        new IncrementalMerkleTreeCapsule());
+    IncrementalMerkleVoucherContainer voucher = addSimpleMerkleVoucherContainer(tree, cm);
+    byte[] path = decodePath(voucher.path().encode());
+    byte[] anchor = voucher.root().getContent().toByteArray();
+    long position = voucher.position();
+    builder.addSpend(senderFvk.getAk(), senderExpsk.getNsk(), senderNote,
+        Note.generateR(), anchor, path, position);
+
+    try {
+      builder.build(false);
+      Assert.fail("expected ZksnarkException for missing ovk");
+    } catch (ZksnarkException e) {
+      Assert.assertTrue(e.getMessage().contains("missing ovk for burn encryption"));
+    }
+  }
+
+  @Test
+  public void buildBurnRejectsMissingExpandedSpendingKeyForWithAsk() throws ZksnarkException {
+    long value = 100L;
+    SpendingKey senderSk = SpendingKey.random();
+    ExpandedSpendingKey senderExpsk = senderSk.expandedSpendingKey();
+    FullViewingKey senderFvk = senderSk.fullViewingKey();
+    IncomingViewingKey senderIvk = senderFvk.inViewingKey();
+    byte[] rcm = new byte[32];
+    JLibrustzcash.librustzcashSaplingGenerateR(rcm);
+    PaymentAddress senderPaymentAddress = senderIvk.address(DiversifierT.random()).orElse(null);
+    assertNotNull(senderPaymentAddress);
+
+    ShieldedTRC20ParametersBuilder builder = new ShieldedTRC20ParametersBuilder();
+    builder.setShieldedTRC20ParametersType(ShieldedTRC20ParametersType.BURN);
+    builder.setShieldedTRC20Address(SHIELDED_CONTRACT_ADDRESS);
+    builder.setTransparentToAmount(BigInteger.valueOf(value));
+    builder.setTransparentToAddress(PUBLIC_TO_ADDRESS);
+    builder.setOvk(senderFvk.getOvk());
+
+    Note senderNote = new Note(senderPaymentAddress.getD(), senderPaymentAddress.getPkD(),
+        value, rcm, new byte[512]);
+    byte[][] cm = new byte[1][32];
+    System.arraycopy(senderNote.cm(), 0, cm[0], 0, 32);
+    IncrementalMerkleTreeContainer tree = new IncrementalMerkleTreeContainer(
+        new IncrementalMerkleTreeCapsule());
+    IncrementalMerkleVoucherContainer voucher = addSimpleMerkleVoucherContainer(tree, cm);
+    byte[] path = decodePath(voucher.path().encode());
+    byte[] anchor = voucher.root().getContent().toByteArray();
+    long position = voucher.position();
+    builder.addSpend(senderFvk.getAk(), senderExpsk.getNsk(), senderNote,
+        Note.generateR(), anchor, path, position);
+
+    try {
+      builder.build(true);
+      Assert.fail("expected ZksnarkException for missing expanded spending key");
+    } catch (ZksnarkException e) {
+      Assert.assertTrue(e.getMessage().contains(
+          "missing expanded spending key for spend authorization"));
+    }
   }
 
   @Test

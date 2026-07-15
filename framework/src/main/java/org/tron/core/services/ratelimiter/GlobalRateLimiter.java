@@ -23,21 +23,43 @@ public class GlobalRateLimiter {
   public static boolean tryAcquire(RuntimeData runtimeData) {
     String ip = runtimeData.getRemoteAddr();
     if (!Strings.isNullOrEmpty(ip)) {
-      RateLimiter r;
-      try {
-        // cache.get is atomic: only one loader executes per key under concurrent requests,
-        // preventing multiple RateLimiter instances from being created for the same IP.
-        r = cache.get(ip, () -> RateLimiter.create(IP_QPS));
-      } catch (Exception e) {
-        logger.warn("Failed to load IP rate limiter for {}, denying request: {}",
-            ip, e.getMessage());
-        return false;
-      }
-      if (!r.tryAcquire()) {
+      RateLimiter r = loadIpLimiter(ip);
+      if (r == null || !r.tryAcquire()) {
         return false;
       }
     }
     return rateLimiter.tryAcquire();
+  }
+
+  public static boolean acquire(RuntimeData runtimeData) {
+    String ip = runtimeData.getRemoteAddr();
+    if (!Strings.isNullOrEmpty(ip)) {
+      RateLimiter r = loadIpLimiter(ip);
+      if (r == null) {
+        return false;
+      }
+      r.acquire();
+    }
+    rateLimiter.acquire();
+    return true;
+  }
+
+  public static boolean acquirePermit(RuntimeData runtimeData) {
+    return Args.getInstance().isRateLimiterApiNonBlocking()
+        ? tryAcquire(runtimeData)
+        : acquire(runtimeData);
+  }
+
+  private static RateLimiter loadIpLimiter(String ip) {
+    try {
+      // cache.get is atomic: only one loader executes per key under concurrent requests,
+      // preventing multiple RateLimiter instances from being created for the same IP.
+      return cache.get(ip, () -> RateLimiter.create(IP_QPS));
+    } catch (Exception e) {
+      logger.warn("Failed to load IP rate limiter for {}, denying request: {}",
+          ip, e.getMessage());
+      return null;
+    }
   }
 
 }
