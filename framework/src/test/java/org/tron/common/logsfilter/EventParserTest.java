@@ -5,6 +5,7 @@ import static org.tron.core.Constant.ADD_PRE_FIX_BYTE_MAINNET;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import org.bouncycastle.crypto.OutputLengthException;
 import org.bouncycastle.util.Arrays;
 import org.junit.Assert;
 import org.junit.Test;
@@ -68,7 +69,6 @@ public class EventParserTest {
 
     ABI.Entry entry = null;
     for (ABI.Entry e : abi.getEntrysList()) {
-      System.out.println(e.getName());
       if (e.getName().equalsIgnoreCase("eventBytesL")) {
         entry = e;
         break;
@@ -102,6 +102,91 @@ public class EventParserTest {
   }
 
   @Test
+  public void testParseDataBytesIntegerTypes() {
+    // uint256 = 255
+    byte[] uintData = ByteArray.fromHexString(
+        "00000000000000000000000000000000000000000000000000000000000000ff");
+    Assert.assertEquals("255", ContractEventParser.parseDataBytes(uintData, "uint256", 0));
+
+    // int256 = -1 (two's complement 0xFF..FF is signed negative one)
+    byte[] negIntData = ByteArray.fromHexString(
+        "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+    Assert.assertEquals("-1", ContractEventParser.parseDataBytes(negIntData, "int256", 0));
+
+    // trcToken is classified as INT_NUMBER
+    byte[] tokenData = ByteArray.fromHexString(
+        "0000000000000000000000000000000000000000000000000000000000000064");
+    Assert.assertEquals("100", ContractEventParser.parseDataBytes(tokenData, "trcToken", 0));
+  }
+
+  @Test
+  public void testParseDataBytesBool() {
+    byte[] trueData = ByteArray.fromHexString(
+        "0000000000000000000000000000000000000000000000000000000000000001");
+    Assert.assertEquals("true", ContractEventParser.parseDataBytes(trueData, "bool", 0));
+
+    byte[] falseData = ByteArray.fromHexString(
+        "0000000000000000000000000000000000000000000000000000000000000000");
+    Assert.assertEquals("false", ContractEventParser.parseDataBytes(falseData, "bool", 0));
+  }
+
+  @Test
+  public void testParseDataBytesFixedBytes() {
+    String hex = "1234567890abcdef0000000000000000000000000000000000000000000000ff";
+    byte[] data = ByteArray.fromHexString(hex);
+    Assert.assertEquals(hex, ContractEventParser.parseDataBytes(data, "bytes32", 0));
+  }
+
+  @Test
+  public void testParseDataBytesAddress() {
+    Wallet.setAddressPreFixByte(ADD_PRE_FIX_BYTE_MAINNET);
+    // last 20 bytes = ca35...733c => Base58Check = TUQPrDEJkV4ttkrL7cVv1p3mikWYfM7LWt
+    byte[] data = ByteArray.fromHexString(
+        "000000000000000000000000ca35b7d915458ef540ade6068dfe2f44e8fa733c");
+    Assert.assertEquals("TUQPrDEJkV4ttkrL7cVv1p3mikWYfM7LWt",
+        ContractEventParser.parseDataBytes(data, "address", 0));
+  }
+
+  @Test
+  public void testParseDataBytesDynamicBytes() {
+    // offset 0x20 | length 3 | 0x010203 padded to 32 bytes
+    byte[] data = ByteArray.fromHexString(
+        "0000000000000000000000000000000000000000000000000000000000000020"
+            + "0000000000000000000000000000000000000000000000000000000000000003"
+            + "0102030000000000000000000000000000000000000000000000000000000000");
+    Assert.assertEquals("010203", ContractEventParser.parseDataBytes(data, "bytes", 0));
+  }
+
+  @Test
+  public void testParseDataBytesEmptyString() {
+    // offset 0x20 | length 0
+    byte[] data = ByteArray.fromHexString(
+        "0000000000000000000000000000000000000000000000000000000000000020"
+            + "0000000000000000000000000000000000000000000000000000000000000000");
+    Assert.assertEquals("", ContractEventParser.parseDataBytes(data, "string", 0));
+  }
+
+  @Test
+  public void testParseDataBytesNonEmptyString() {
+    // "hello world" is 11 ASCII bytes (68656c6c6f20776f726c64), padded to 32 bytes.
+    byte[] data = ByteArray.fromHexString(
+        "0000000000000000000000000000000000000000000000000000000000000020"
+            + "000000000000000000000000000000000000000000000000000000000000000b"
+            + "68656c6c6f20776f726c64000000000000000000000000000000000000000000");
+    Assert.assertEquals("hello world", ContractEventParser.parseDataBytes(data, "string", 0));
+  }
+
+  @Test
+  public void testParseDataBytesMultiByteUtf8String() {
+    // "中文" UTF-8 = e4b8ad e69687 (6 bytes), padded to 32 bytes.
+    byte[] data = ByteArray.fromHexString(
+        "0000000000000000000000000000000000000000000000000000000000000020"
+            + "0000000000000000000000000000000000000000000000000000000000000006"
+            + "e4b8ade696870000000000000000000000000000000000000000000000000000");
+    Assert.assertEquals("中文", ContractEventParser.parseDataBytes(data, "string", 0));
+  }
+
+  @Test
   public void testParseRevert() {
     String dataHex = "08c379a0"
         + "0000000000000000000000000000000000000000000000000000000000000020"
@@ -113,5 +198,88 @@ public class EventParserTest {
         "string", 0);
     Assert.assertEquals(msg, "not enough input value");
 
+  }
+
+  @Test
+  public void testSubBytesRejectsOversizedLength() {
+    // Length must fit in the available source bytes. Reject instead of
+    // truncating so oversized ABI lengths are not silently coerced.
+    byte[] src = new byte[]{1, 2, 3};
+    try {
+      ContractEventParser.subBytes(src, 0, Integer.MAX_VALUE);
+      Assert.fail("Expected OutputLengthException");
+    } catch (OutputLengthException e) {
+      Assert.assertTrue(e.getMessage().contains("data start:0"));
+      Assert.assertTrue(e.getMessage().contains("length:2147483647"));
+      Assert.assertTrue(e.getMessage().contains("src.length:3"));
+    }
+  }
+
+  @Test
+  public void testSubBytesAcceptsExactLength() {
+    byte[] src = new byte[]{1, 2, 3, 4};
+    byte[] result = ContractEventParser.subBytes(src, 1, 3);
+    Assert.assertArrayEquals(new byte[]{2, 3, 4}, result);
+  }
+
+  @Test
+  public void testSubBytesRejectsNegativeOffset() {
+    // ABI offsets are unsigned, but BigInteger(byte[]) interprets 0xFF..FF as
+    // -1. The guard should reject that value before System.arraycopy runs.
+    byte[] src = new byte[]{1, 2, 3, 4};
+    try {
+      ContractEventParser.subBytes(src, -1, 3);
+      Assert.fail("Expected OutputLengthException");
+    } catch (OutputLengthException e) {
+      Assert.assertTrue(e.getMessage().contains("data start:-1"));
+      Assert.assertTrue(e.getMessage().contains("length:3"));
+      Assert.assertTrue(e.getMessage().contains("src.length:4"));
+    }
+  }
+
+  @Test
+  public void testSubBytesRejectsEmptySource() {
+    try {
+      ContractEventParser.subBytes(new byte[0], 0, 0);
+      Assert.fail("Expected OutputLengthException");
+    } catch (OutputLengthException e) {
+      Assert.assertTrue(e.getMessage().contains("source data is empty"));
+    }
+  }
+
+  @Test(expected = UnsupportedOperationException.class)
+  public void testParseDataBytesRejectsNegativeOffset() {
+    // End-to-end check: an offset field of 0xFF..FF decodes to -1 and should
+    // be rejected through the existing UnsupportedOperationException path.
+    String dataHex = "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+        + "0000000000000000000000000000000000000000000000000000000000000003"
+        + "414243";
+    byte[] data = ByteArray.fromHexString(dataHex);
+
+    ContractEventParser.parseDataBytes(data, "string", 0);
+  }
+
+  @Test(expected = UnsupportedOperationException.class)
+  public void testParseDataBytesRejectsMalformedLength() {
+    // ABI-encoded "string" whose declared length exceeds the available payload
+    // should be rejected via the existing UnsupportedOperationException path.
+    String dataHex = "0000000000000000000000000000000000000000000000000000000000000020"
+        + "000000000000000000000000000000000000000000000000000000007fffffff"
+        + "414243";
+    byte[] data = ByteArray.fromHexString(dataHex);
+
+    ContractEventParser.parseDataBytes(data, "string", 0);
+  }
+
+  @Test(expected = UnsupportedOperationException.class)
+  public void testParseDataBytesRejectsNegativeLength() {
+    // ABI length is an unsigned word. If 0xFF..FF is decoded as -1, reject it
+    // instead of treating it as an empty string/bytes payload.
+    String dataHex = "0000000000000000000000000000000000000000000000000000000000000020"
+        + "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+        + "414243";
+    byte[] data = ByteArray.fromHexString(dataHex);
+
+    ContractEventParser.parseDataBytes(data, "string", 0);
   }
 }

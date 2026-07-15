@@ -45,7 +45,7 @@ public class DatabaseGrpcClient {
   }
 
   public void shutdown() {
-    channel.shutdown();
+    channel.shutdownNow();
   }
 
   public DynamicProperties getDynamicProperties() {

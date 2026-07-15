@@ -3,12 +3,9 @@ package org.tron.core.services.http;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.tron.common.utils.client.utils.HttpMethed.createRequest;
 
-import com.alibaba.fastjson.JSONObject;
 import com.google.protobuf.ByteString;
-
 import java.io.UnsupportedEncodingException;
 import javax.annotation.Resource;
-
 import org.apache.http.client.methods.HttpPost;
 import org.junit.Assert;
 import org.junit.Before;
@@ -16,8 +13,8 @@ import org.junit.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.tron.common.BaseTest;
+import org.tron.common.TestConstants;
 import org.tron.common.utils.ByteArray;
-import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionCapsule;
@@ -27,6 +24,7 @@ import org.tron.core.config.args.Args;
 import org.tron.core.db.TransactionStore;
 import org.tron.core.db.TransactionStoreTest;
 import org.tron.core.store.TransactionRetStore;
+import org.tron.json.JSONObject;
 import org.tron.protos.Protocol;
 import org.tron.protos.contract.BalanceContract;
 
@@ -50,7 +48,7 @@ public class GetTransactionInfoByIdServletTest extends BaseTest {
     Args.setParam(
             new String[]{
                 "--output-directory", dbPath(),
-            }, Constant.TEST_CONF
+            }, TestConstants.TEST_CONF
     );
   }
 

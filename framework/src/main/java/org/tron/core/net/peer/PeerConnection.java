@@ -88,6 +88,10 @@ public class PeerConnection {
   @Setter
   private volatile long lastInteractiveTime;
 
+  @Setter
+  @Getter
+  private volatile long blockRcvTime;
+
   @Getter
   @Setter
   private volatile TronState tronState = TronState.INIT;
@@ -166,7 +170,8 @@ public class PeerConnection {
 
   public void setChannel(Channel channel) {
     this.channel = channel;
-    if (relayNodes.stream().anyMatch(n -> n.getAddress().equals(channel.getInetAddress()))) {
+    if (relayNodes != null
+        && relayNodes.stream().anyMatch(n -> n.getAddress().equals(channel.getInetAddress()))) {
       this.isRelayPeer = true;
     }
     this.nodeStatistics = TronStatsManager.getNodeStatistics(channel.getInetAddress());

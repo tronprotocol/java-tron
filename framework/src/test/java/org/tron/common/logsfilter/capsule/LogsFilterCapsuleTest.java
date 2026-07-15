@@ -27,7 +27,6 @@ public class LogsFilterCapsuleTest {
     capsule.setRemoved(capsule.isRemoved());
     capsule.setTxInfoList(capsule.getTxInfoList());
     assertNotNull(capsule.toString());
-    capsule.processFilterTrigger();
   }
 
 }

@@ -17,8 +17,12 @@ public class GlobalPreemptibleAdapter implements IPreemptibleRateLimiter {
   }
 
   @Override
+  public boolean tryAcquire(RuntimeData data) {
+    return strategy.tryAcquire();
+  }
+
+  @Override
   public boolean acquire(RuntimeData data) {
     return strategy.acquire();
   }
-
 }

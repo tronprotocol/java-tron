@@ -6,8 +6,8 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.BaseTest;
+import org.tron.common.TestConstants;
 import org.tron.common.utils.ByteArray;
-import org.tron.core.Constant;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.store.AccountIndexStore;
@@ -16,7 +16,6 @@ import org.tron.protos.Protocol.AccountType;
 public class AccountIndexStoreTest extends BaseTest {
 
   private static String dbDirectory = "db_AccountIndexStore_test";
-  private static String indexDirectory = "index_AccountIndexStore_test";
   @Resource
   private AccountIndexStore accountIndexStore;
   private static byte[] address = TransactionStoreTest.randomBytes(32);
@@ -26,10 +25,9 @@ public class AccountIndexStoreTest extends BaseTest {
     Args.setParam(
         new String[]{
             "--output-directory", dbPath(),
-            "--storage-db-directory", dbDirectory,
-            "--storage-index-directory", indexDirectory
+            "--storage-db-directory", dbDirectory
         },
-        Constant.TEST_CONF
+        TestConstants.TEST_CONF
     );
   }
 

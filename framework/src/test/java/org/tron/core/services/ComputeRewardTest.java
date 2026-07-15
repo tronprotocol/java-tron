@@ -5,30 +5,24 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.protobuf.ByteString;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.tron.common.application.TronApplicationContext;
+import org.junit.rules.Timeout;
+import org.tron.common.BaseMethodTest;
 import org.tron.common.error.TronDBException;
 import org.tron.common.es.ExecutorServiceManager;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ReflectUtils;
-import org.tron.core.Constant;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.capsule.WitnessCapsule;
-import org.tron.core.config.DefaultConfig;
-import org.tron.core.config.args.Args;
 import org.tron.core.exception.TronError;
 import org.tron.core.service.MortgageService;
 import org.tron.core.service.RewardViCalService;
@@ -39,7 +33,12 @@ import org.tron.core.store.RewardViStore;
 import org.tron.core.store.WitnessStore;
 import org.tron.protos.Protocol;
 
-public class ComputeRewardTest {
+public class ComputeRewardTest extends BaseMethodTest {
+
+  // setUp() contains a 6-second sleep waiting for async reward calculation;
+  // 60 s total budget covers setup + test body with headroom for slow CI.
+  @Rule
+  public Timeout timeout = Timeout.seconds(60);
 
   private static final byte[] OWNER_ADDRESS = ByteArray.fromHexString(
       "4105b9e8af8ee371cad87317f442d155b39fbd1bf0");
@@ -103,7 +102,6 @@ public class ComputeRewardTest {
   private static final byte[] SR_ADDRESS_26 = ByteArray.fromHexString(
       "4105b9e8af8ee371cad87317f442d155b39fbd1c25");
 
-  private static TronApplicationContext context;
   private static DynamicPropertiesStore propertiesStore;
   private static DelegationStore delegationStore;
   private static AccountStore accountStore;
@@ -111,23 +109,14 @@ public class ComputeRewardTest {
   private static WitnessStore witnessStore;
   private static MortgageService mortgageService;
   private static RewardViStore rewardViStore;
-  @Rule
-  public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
-  @After
-  public void destroy() {
-    context.destroy();
-    Args.clearParam();
+  @Override
+  protected String[] extraArgs() {
+    return new String[]{"--p2p-disable", "true"};
   }
 
-  /**
-   * Init data.
-   */
-  @Before
-  public void init() throws IOException {
-    Args.setParam(new String[]{"--output-directory", temporaryFolder.newFolder().toString(),
-        "--p2p-disable", "true"}, Constant.TEST_CONF);
-    context = new TronApplicationContext(DefaultConfig.class);
+  @Override
+  protected void afterInit() {
     propertiesStore = context.getBean(DynamicPropertiesStore.class);
     delegationStore = context.getBean(DelegationStore.class);
     accountStore = context.getBean(AccountStore.class);

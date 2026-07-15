@@ -7,19 +7,18 @@ import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockConstruction;
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
-import com.google.protobuf.LazyStringArrayList;
-import com.google.protobuf.ProtocolStringList;
-
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -27,6 +26,7 @@ import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.After;
@@ -36,10 +36,13 @@ import org.mockito.MockedConstruction;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.tron.api.GrpcAPI;
+import org.tron.common.crypto.Hash;
 import org.tron.common.parameter.CommonParameter;
+import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.client.WalletClient;
+import org.tron.common.zksnark.JLibrustzcash;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.ContractCapsule;
@@ -77,6 +80,7 @@ import org.tron.core.zen.address.DiversifierT;
 import org.tron.core.zen.address.ExpandedSpendingKey;
 import org.tron.core.zen.address.KeyIo;
 import org.tron.core.zen.address.PaymentAddress;
+import org.tron.core.zen.note.Note;
 import org.tron.protos.Protocol;
 import org.tron.protos.contract.BalanceContract;
 import org.tron.protos.contract.ShieldContract;
@@ -87,7 +91,7 @@ public class WalletMockTest {
 
   @Before
   public void init() {
-    CommonParameter.PARAMETER.setMinEffectiveConnection(0);
+    CommonParameter.getInstance().setMinEffectiveConnection(0);
   }
 
   @After
@@ -164,6 +168,54 @@ public class WalletMockTest {
     }
   }
 
+
+  @Test
+  public void testBroadcastTxInvalidSigLength() throws Exception {
+    Wallet wallet = new Wallet();
+    TronNetDelegate tronNetDelegateMock = mock(TronNetDelegate.class);
+    Field field = wallet.getClass().getDeclaredField("tronNetDelegate");
+    field.setAccessible(true);
+    field.set(wallet, tronNetDelegateMock);
+
+    // signature shorter than 65 bytes → SIGERROR
+    Protocol.Transaction shortSig = Protocol.Transaction.newBuilder()
+        .addSignature(ByteString.copyFrom(new byte[64]))
+        .build();
+    GrpcAPI.Return ret = wallet.broadcastTransaction(shortSig);
+    assertEquals(GrpcAPI.Return.response_code.SIGERROR, ret.getCode());
+
+    // signature longer than 68 bytes → SIGERROR
+    Protocol.Transaction longSig = Protocol.Transaction.newBuilder()
+        .addSignature(ByteString.copyFrom(new byte[69]))
+        .build();
+    ret = wallet.broadcastTransaction(longSig);
+    assertEquals(GrpcAPI.Return.response_code.SIGERROR, ret.getCode());
+
+    // empty signature → SIGERROR
+    Protocol.Transaction emptySig = Protocol.Transaction.newBuilder()
+        .addSignature(ByteString.EMPTY)
+        .build();
+    ret = wallet.broadcastTransaction(emptySig);
+    assertEquals(GrpcAPI.Return.response_code.SIGERROR, ret.getCode());
+
+    // tronNetDelegate must not be consulted because the request is rejected up front
+    Mockito.verify(tronNetDelegateMock, Mockito.never()).isBlockUnsolidified();
+
+    // 65-byte signature passes the length check and proceeds to downstream logic
+    when(tronNetDelegateMock.isBlockUnsolidified()).thenReturn(true);
+    Protocol.Transaction validSig = Protocol.Transaction.newBuilder()
+        .addSignature(ByteString.copyFrom(new byte[65]))
+        .build();
+    ret = wallet.broadcastTransaction(validSig);
+    assertEquals(GrpcAPI.Return.response_code.BLOCK_UNSOLIDIFIED, ret.getCode());
+
+    // 68-byte signature (upper bound) also passes the length check
+    Protocol.Transaction paddedSig = Protocol.Transaction.newBuilder()
+        .addSignature(ByteString.copyFrom(new byte[68]))
+        .build();
+    ret = wallet.broadcastTransaction(paddedSig);
+    assertEquals(GrpcAPI.Return.response_code.BLOCK_UNSOLIDIFIED, ret.getCode());
+  }
 
   @Test
   public void testBroadcastTransactionBlockUnsolidified() throws Exception {
@@ -1058,19 +1110,16 @@ public class WalletMockTest {
     Wallet wallet = new Wallet();
     Protocol.TransactionInfo.Log log = Protocol.TransactionInfo.Log.newBuilder().build();
     byte[] contractAddress = "contractAddress".getBytes(StandardCharsets.UTF_8);
-    LazyStringArrayList topicsList = new LazyStringArrayList();
 
     Throwable thrown = assertThrows(InvocationTargetException.class, () -> {
       Method privateMethod = Wallet.class.getDeclaredMethod(
           "getShieldedTRC20LogType",
           Protocol.TransactionInfo.Log.class,
-          byte[].class,
-          ProtocolStringList.class);
+          byte[].class);
       privateMethod.setAccessible(true);
       privateMethod.invoke(wallet,
           log,
-          contractAddress,
-          topicsList);
+          contractAddress);
     });
     Throwable cause = thrown.getCause();
     assertTrue(cause instanceof ZksnarkException);
@@ -1088,18 +1137,14 @@ public class WalletMockTest {
         .setAddress(ByteString.copyFrom(addressWithoutPrefix))
         .build();
 
-    LazyStringArrayList topicsList = new LazyStringArrayList();
     try {
       Method privateMethod = Wallet.class.getDeclaredMethod(
           "getShieldedTRC20LogType",
           Protocol.TransactionInfo.Log.class,
-          byte[].class,
-          ProtocolStringList.class);
+          byte[].class);
       privateMethod.setAccessible(true);
-      privateMethod.invoke(wallet,
-          log,
-          contractAddress,
-          topicsList);
+      Object result = privateMethod.invoke(wallet, log, contractAddress);
+      assertEquals(0, ((Integer) result).intValue());
     } catch (Exception e) {
       assertTrue(false);
     }
@@ -1119,21 +1164,115 @@ public class WalletMockTest {
         .addTopics(ByteString.copyFrom("topic".getBytes()))
         .build();
 
-    LazyStringArrayList topicsList = new LazyStringArrayList();
-    topicsList.add("topic");
     try {
       Method privateMethod = Wallet.class.getDeclaredMethod(
           "getShieldedTRC20LogType",
           Protocol.TransactionInfo.Log.class,
-          byte[].class,
-          ProtocolStringList.class);
+          byte[].class);
       privateMethod.setAccessible(true);
-      privateMethod.invoke(wallet,
-          log,
-          contractAddress,
-          topicsList);
+      Object result = privateMethod.invoke(wallet, log, contractAddress);
+      assertEquals(0, ((Integer) result).intValue());
     } catch (Exception e) {
       assertTrue(false);
+    }
+  }
+
+  @Test
+  public void testGetShieldedTRC20LogTypeReturnsCorrectInt() throws Exception {
+    Wallet wallet = new Wallet();
+    final String SHIELDED_CONTRACT_ADDRESS_STR = "TGAmX5AqVUoXCf8MoHxbuhQPmhGfWTnEgA";
+    byte[] contractAddress = WalletClient.decodeFromBase58Check(SHIELDED_CONTRACT_ADDRESS_STR);
+    byte[] addressWithoutPrefix = new byte[20];
+    System.arraycopy(contractAddress, 1, addressWithoutPrefix, 0, 20);
+
+    Method privateMethod = Wallet.class.getDeclaredMethod(
+        "getShieldedTRC20LogType",
+        Protocol.TransactionInfo.Log.class,
+        byte[].class);
+    privateMethod.setAccessible(true);
+
+    String[] eventSignatures = {
+        "MintNewLeaf(uint256,bytes32,bytes32,bytes32,bytes32[21])",
+        "TransferNewLeaf(uint256,bytes32,bytes32,bytes32,bytes32[21])",
+        "BurnNewLeaf(uint256,bytes32,bytes32,bytes32,bytes32[21])",
+        "TokenBurn(address,uint256,bytes32[3])",
+        "NoteSpent(bytes32)"
+    };
+    int[] expectedTypes = {1, 2, 3, 4, 5};
+
+    for (int i = 0; i < eventSignatures.length; i++) {
+      byte[] topicHash = Hash.sha3(ByteArray.fromString(eventSignatures[i]));
+      Protocol.TransactionInfo.Log log = Protocol.TransactionInfo.Log.newBuilder()
+          .setAddress(ByteString.copyFrom(addressWithoutPrefix))
+          .addTopics(ByteString.copyFrom(topicHash))
+          .build();
+      Object result = privateMethod.invoke(wallet, log, contractAddress);
+      assertEquals("event " + eventSignatures[i] + " should map to log type "
+          + expectedTypes[i], expectedTypes[i], ((Integer) result).intValue());
+    }
+  }
+
+  @Test
+  public void scanShieldedTRC20NotesByIvkSkipsNoteSpentIndex() throws Exception {
+    final String SHIELDED_CONTRACT_ADDRESS_STR = "TGAmX5AqVUoXCf8MoHxbuhQPmhGfWTnEgA";
+    byte[] contractAddress = WalletClient.decodeFromBase58Check(SHIELDED_CONTRACT_ADDRESS_STR);
+    byte[] addressWithoutPrefix = new byte[20];
+    System.arraycopy(contractAddress, 1, addressWithoutPrefix, 0, 20);
+
+    byte[] noteSpentTopic = Hash.sha3(ByteArray.fromString("NoteSpent(bytes32)"));
+    Protocol.TransactionInfo.Log noteSpentLog = Protocol.TransactionInfo.Log.newBuilder()
+        .setAddress(ByteString.copyFrom(addressWithoutPrefix))
+        .addTopics(ByteString.copyFrom(noteSpentTopic))
+        .setData(ByteString.copyFrom(new byte[32]))
+        .build();
+
+    byte[] transferTopic = Hash.sha3(ByteArray.fromString(
+        "TransferNewLeaf(uint256,bytes32,bytes32,bytes32,bytes32[21])"));
+    // getNoteTxFromLogListByIvk slices bytes 0..708; only `pos` (bytes 0..32) is read here.
+    byte[] transferData = new byte[708];
+    Protocol.TransactionInfo.Log transferLog = Protocol.TransactionInfo.Log.newBuilder()
+        .setAddress(ByteString.copyFrom(addressWithoutPrefix))
+        .addTopics(ByteString.copyFrom(transferTopic))
+        .setData(ByteString.copyFrom(transferData))
+        .build();
+
+    Protocol.TransactionInfo info = Protocol.TransactionInfo.newBuilder()
+        .addLog(noteSpentLog)
+        .addLog(transferLog)
+        .build();
+
+    Protocol.Block block = Protocol.Block.newBuilder()
+        .addTransactions(Protocol.Transaction.newBuilder().build())
+        .build();
+    GrpcAPI.BlockList blockList = GrpcAPI.BlockList.newBuilder().addBlock(block).build();
+
+    Wallet wallet = spy(new Wallet());
+    doReturn(blockList).when(wallet).getBlocksByLimitNext(anyLong(), anyLong());
+    doReturn(info).when(wallet).getTransactionInfoById(any());
+
+    // Bypass the real ZK crypto: return a valid note and a deterministic payment address
+    // so the scanner reaches the index-assignment branch.
+    Note fakeNote = new Note(new DiversifierT(), new byte[32], 100L,
+        new byte[32], new byte[512]);
+    boolean prevAllow = CommonParameter.getInstance().isAllowShieldedTransactionApi();
+    CommonParameter.getInstance().setAllowShieldedTransactionApi(true);
+    try (MockedStatic<Note> noteMock = mockStatic(Note.class);
+        MockedStatic<JLibrustzcash> rustMock = mockStatic(JLibrustzcash.class);
+        MockedStatic<KeyIo> keyIoMock = mockStatic(KeyIo.class)) {
+      noteMock.when(() -> Note.decrypt(any(byte[].class), any(byte[].class),
+          any(byte[].class), any(byte[].class))).thenReturn(Optional.of(fakeNote));
+      rustMock.when(() -> JLibrustzcash.librustzcashIvkToPkd(any())).thenReturn(true);
+      keyIoMock.when(() -> KeyIo.encodePaymentAddress(any())).thenReturn("zaddrFake");
+
+      byte[] ivk = new byte[32];
+      GrpcAPI.DecryptNotesTRC20 result = wallet.scanShieldedTRC20NotesByIvk(
+          0L, 1L, contractAddress, ivk, new byte[0], new byte[0]);
+
+      assertEquals(1, result.getNoteTxsCount());
+      assertEquals("TransferNewLeaf must get index 0; NoteSpent must not advance the counter",
+          0L, result.getNoteTxs(0).getIndex());
+    } finally {
+      CommonParameter.getInstance().setAllowShieldedTransactionApi(prevAllow);
     }
   }
 

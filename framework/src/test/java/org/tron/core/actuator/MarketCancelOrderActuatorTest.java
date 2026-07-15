@@ -2,15 +2,16 @@ package org.tron.core.actuator;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
+import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.BaseTest;
+import org.tron.common.TestConstants;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.ChainBaseManager;
-import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
@@ -51,7 +52,7 @@ public class MarketCancelOrderActuatorTest extends BaseTest {
   private static final String TRX = "_";
 
   static {
-    Args.setParam(new String[]{"--output-directory", dbPath()}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath()}, TestConstants.TEST_CONF);
     OWNER_ADDRESS_FIRST =
         Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     OWNER_ADDRESS_SECOND =
@@ -187,12 +188,9 @@ public class MarketCancelOrderActuatorTest extends BaseTest {
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
         OWNER_ADDRESS_INVALID, orderId));
 
-    try {
-      actuator.validate();
-      Assert.fail("Invalid address");
-    } catch (ContractValidateException e) {
-      Assert.assertEquals("Invalid address", e.getMessage());
-    }
+    ContractValidateException e = Assert.assertThrows(ContractValidateException.class,
+        () -> actuator.validate());
+    Assert.assertEquals("Invalid address", e.getMessage());
   }
 
   /**
@@ -207,12 +205,9 @@ public class MarketCancelOrderActuatorTest extends BaseTest {
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
         OWNER_ADDRESS_NOT_EXIST, orderId));
 
-    try {
-      actuator.validate();
-      Assert.fail("Account does not exist!");
-    } catch (ContractValidateException e) {
-      Assert.assertEquals("Account does not exist!", e.getMessage());
-    }
+    ContractValidateException e = Assert.assertThrows(ContractValidateException.class,
+        () -> actuator.validate());
+    Assert.assertEquals("Account does not exist!", e.getMessage());
   }
 
   /**
@@ -226,12 +221,9 @@ public class MarketCancelOrderActuatorTest extends BaseTest {
     MarketCancelOrderActuator actuator = new MarketCancelOrderActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
         OWNER_ADDRESS_FIRST, orderId));
-    try {
-      actuator.validate();
-      Assert.fail("orderId not exists");
-    } catch (ContractValidateException e) {
-      Assert.assertEquals("orderId not exists", e.getMessage());
-    }
+    ContractValidateException e = Assert.assertThrows(ContractValidateException.class,
+        () -> actuator.validate());
+    Assert.assertEquals("orderId not exists", e.getMessage());
   }
 
   /**
@@ -260,12 +252,9 @@ public class MarketCancelOrderActuatorTest extends BaseTest {
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getContract(
         OWNER_ADDRESS_FIRST, orderId));
 
-    try {
-      actuator.validate();
-      Assert.fail("Order is not active!");
-    } catch (ContractValidateException e) {
-      Assert.assertEquals("Order is not active!", e.getMessage());
-    }
+    ContractValidateException e = Assert.assertThrows(ContractValidateException.class,
+        () -> actuator.validate());
+    Assert.assertEquals("Order is not active!", e.getMessage());
   }
 
 
@@ -758,5 +747,15 @@ public class MarketCancelOrderActuatorTest extends BaseTest {
         .getUnchecked(pairPriceKey);
     Assert.assertNull(orderIdListCapsule);
 
+  }
+
+  @Test
+  public void testGetOwnerAddress() throws InvalidProtocolBufferException {
+    MarketCancelOrderActuator actuator = new MarketCancelOrderActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ADDRESS_FIRST, ByteString.copyFromUtf8("orderId")));
+
+    Assert.assertEquals(OWNER_ADDRESS_FIRST,
+        ByteArray.toHexString(actuator.getOwnerAddress().toByteArray()));
   }
 }

@@ -1,23 +1,20 @@
 package org.tron.core.services.jsonrpc;
 
-import static org.tron.core.services.jsonrpc.TronJsonRpcImpl.EARLIEST_STR;
-import static org.tron.core.services.jsonrpc.TronJsonRpcImpl.FINALIZED_STR;
-import static org.tron.core.services.jsonrpc.TronJsonRpcImpl.LATEST_STR;
-import static org.tron.core.services.jsonrpc.TronJsonRpcImpl.PENDING_STR;
-import static org.tron.core.services.jsonrpc.TronJsonRpcImpl.TAG_PENDING_SUPPORT_ERROR;
-
 import com.google.common.base.Throwables;
 import com.google.common.primitives.Longs;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
+import java.math.BigInteger;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.bouncycastle.util.encoders.Hex;
 import org.tron.api.GrpcAPI.AssetIssueList;
 import org.tron.common.crypto.Hash;
+import org.tron.common.math.StrictMathWrapper;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.utils.ByteArray;
@@ -56,6 +53,18 @@ import org.tron.protos.contract.WitnessContract.VoteWitnessContract.Vote;
 
 @Slf4j(topic = "API")
 public class JsonRpcApiUtil {
+
+  public static final String EARLIEST_STR = "earliest";
+  public static final String PENDING_STR = "pending";
+  public static final String LATEST_STR = "latest";
+  public static final String FINALIZED_STR = "finalized";
+  public static final String SAFE_STR = "safe";
+  public static final String TAG_PENDING_SUPPORT_ERROR = "TAG pending not supported";
+  public static final String TAG_SAFE_SUPPORT_ERROR = "TAG safe not supported";
+  public static final String BLOCK_NUM_ERROR = "invalid block number";
+  public static final String TX_INDEX_ERROR = "invalid index value";
+
+  private static final SecureRandom random = new SecureRandom();
 
   public static byte[] convertToTronAddress(byte[] address) {
     byte[] newAddress = new byte[21];
@@ -389,19 +398,24 @@ public class JsonRpcApiUtil {
    */
   public static byte[] addressCompatibleToByteArray(String hexAddress)
       throws JsonRpcInvalidParamsException {
+    // ADDRESS_SIZE (42) is the hex length of a 21-byte address; +2 leaves room for the optional
+    // "0x" prefix, so a 0x-prefixed 21-byte address (0x41..., 44 chars) is still accepted.
+    if (hexAddress == null || hexAddress.length() > DecodeUtil.ADDRESS_SIZE + 2) {
+      throw new JsonRpcInvalidParamsException("invalid address");
+    }
     byte[] addressByte;
     try {
       addressByte = ByteArray.fromHexString(hexAddress);
       if (addressByte.length != DecodeUtil.ADDRESS_SIZE / 2
           && addressByte.length != DecodeUtil.ADDRESS_SIZE / 2 - 1) {
-        throw new JsonRpcInvalidParamsException("invalid address hash value");
+        throw new JsonRpcInvalidParamsException("invalid address");
       }
 
       if (addressByte.length == DecodeUtil.ADDRESS_SIZE / 2 - 1) {
         addressByte = ByteUtil.merge(new byte[] {DecodeUtil.addressPreFixByte}, addressByte);
       } else if (addressByte[0] != ByteArray.fromHexString(DecodeUtil.addressPreFixString)[0]) {
         // addressByte.length == DecodeUtil.ADDRESS_SIZE / 2
-        throw new JsonRpcInvalidParamsException("invalid address hash value");
+        throw new JsonRpcInvalidParamsException("invalid address");
       }
     } catch (Exception e) {
       throw new JsonRpcInvalidParamsException(e.getMessage());
@@ -409,26 +423,65 @@ public class JsonRpcApiUtil {
     return addressByte;
   }
 
+  /** Matches a 32-byte hash hex string: optional 0x prefix + 64 hex chars (also caps length). */
+  public static final String HASH_REGEX = "^(0x)?[0-9a-fA-F]{64}$";
+
+  /**
+   * Convert a hash hex string (optional 0x prefix) to a byte array, validating
+   * format and length via {@link #HASH_REGEX} first.
+   */
+  public static byte[] hashToByteArray(String hash) throws JsonRpcInvalidParamsException {
+    if (hash == null || !Pattern.matches(HASH_REGEX, hash)) {
+      throw new JsonRpcInvalidParamsException("invalid hash value");
+    }
+    byte[] bHash;
+    try {
+      bHash = ByteArray.fromHexString(hash);
+    } catch (Exception e) {
+      throw new JsonRpcInvalidParamsException(e.getMessage());
+    }
+    return bHash;
+  }
+
+  /**
+   * Matches a 32-byte topic hex string: optional 0x prefix + 63 or 64 hex chars.
+   */
+  public static final String TOPIC_REGEX = "^(0x)?[0-9a-fA-F]{63,64}$";
+
+  /**
+   * Convert a topic hex string (optional 0x prefix, leading zero may be omitted) to a 32-byte
+   * array, validating format and length via {@link #TOPIC_REGEX} first.
+   */
+  public static byte[] topicToByteArray(String hexTopic) throws JsonRpcInvalidParamsException {
+    if (hexTopic == null || !Pattern.matches(TOPIC_REGEX, hexTopic)) {
+      throw new JsonRpcInvalidParamsException("invalid topic: " + hexTopic);
+    }
+    try {
+      return ByteArray.fromHexString(hexTopic);
+    } catch (Exception e) {
+      throw new JsonRpcInvalidParamsException("invalid topic: " + hexTopic);
+    }
+  }
+
   /**
    * convert 40 hex string of address to byte array, padding 0 ahead if length is odd.
    */
   public static byte[] addressToByteArray(String hexAddress) throws JsonRpcInvalidParamsException {
-    byte[] addressByte = ByteArray.fromHexString(hexAddress);
+    if (hexAddress == null) {
+      throw new JsonRpcInvalidParamsException("address is null");
+    } else if (hexAddress.length() > DecodeUtil.ADDRESS_SIZE) {
+      throw new JsonRpcInvalidParamsException("invalid address: " + hexAddress);
+    }
+    byte[] addressByte;
+    try {
+      addressByte = ByteArray.fromHexString(hexAddress);
+    } catch (Exception e) {
+      throw new JsonRpcInvalidParamsException("invalid address: " + hexAddress);
+    }
     if (addressByte.length != DecodeUtil.ADDRESS_SIZE / 2 - 1) {
       throw new JsonRpcInvalidParamsException("invalid address: " + hexAddress);
     }
     return new DataWord(addressByte).getLast20Bytes();
-  }
-
-  /**
-   * check if topic is hex string of size 64, padding 0 ahead if length is odd.
-   */
-  public static byte[] topicToByteArray(String hexTopic) throws JsonRpcInvalidParamsException {
-    byte[] topicByte = ByteArray.fromHexString(hexTopic);
-    if (topicByte.length != 32) {
-      throw new JsonRpcInvalidParamsException("invalid topic: " + hexTopic);
-    }
-    return topicByte;
   }
 
   public static boolean paramStringIsNull(String string) {
@@ -437,6 +490,50 @@ public class JsonRpcApiUtil {
 
   public static boolean paramQuantityIsNull(String quantity) {
     return StringUtils.isEmpty(quantity) || quantity.equals("0x0");
+  }
+
+  /**
+   * Validation mode for {@link #requireValidHex}.
+   */
+  public enum HexMode {
+    /**
+     * Execution-apis BYTES schema: requires {@code 0x} prefix and
+     * even total length; {@code ""} is accepted as empty bytes per
+     * geth's {@code hexutil.Bytes.UnmarshalText}.
+     */
+    STRICT,
+    /**
+     * {@link ByteArray#fromHexString}'s lenient parsing: accepts bare
+     * hex and odd-length input. Kept for backward compatibility.
+     */
+    LENIENT
+  }
+
+  /**
+   * Throws if {@code value} is not parseable hex under the given
+   * {@code mode}. {@code null} is treated as absent and returns
+   * silently. {@code fieldName} is used only in error messages.
+   */
+  public static void requireValidHex(String fieldName, String value, HexMode mode)
+      throws JsonRpcInvalidParamsException {
+    if (value == null) {
+      return;
+    }
+    if (mode == HexMode.STRICT) {
+      if (value.isEmpty()) {
+        return;
+      }
+      if (!value.startsWith("0x") || value.length() % 2 != 0) {
+        throw new JsonRpcInvalidParamsException(
+            "invalid hex string for \"" + fieldName + "\"");
+      }
+    }
+    try {
+      ByteArray.fromHexString(value);
+    } catch (Exception e) {
+      throw new JsonRpcInvalidParamsException(
+          "invalid hex string for \"" + fieldName + "\"");
+    }
   }
 
   public static long parseQuantityValue(String value) throws JsonRpcInvalidParamsException {
@@ -449,7 +546,10 @@ public class JsonRpcApiUtil {
         throw new JsonRpcInvalidParamsException("invalid param value: invalid hex number");
       }
     }
-
+    // QUANTITY is unsigned; reject a signed ("0x-..") value instead of returning a negative.
+    if (callValue < 0) {
+      throw new JsonRpcInvalidParamsException("invalid param value: negative");
+    }
     return callValue;
   }
 
@@ -515,24 +615,125 @@ public class JsonRpcApiUtil {
     return -1;
   }
 
-  public static long getByJsonBlockId(String blockNumOrTag, Wallet wallet)
+  public static boolean isBlockTag(String tag) {
+    return LATEST_STR.equalsIgnoreCase(tag)
+        || EARLIEST_STR.equalsIgnoreCase(tag)
+        || FINALIZED_STR.equalsIgnoreCase(tag)
+        || PENDING_STR.equalsIgnoreCase(tag)
+        || SAFE_STR.equalsIgnoreCase(tag);
+  }
+
+  /**
+   * Parse a block tag (latest, earliest, finalized) to block number.
+   *
+   * <p>Note: for "latest", the returned block number may not yet be available in
+   * blockStore or blockIndexStore due to write ordering. Callers that need the
+   * actual block must handle the not-found case.</p>
+   */
+  public static long parseBlockTag(String tag, Wallet wallet)
       throws JsonRpcInvalidParamsException {
-    if (PENDING_STR.equalsIgnoreCase(blockNumOrTag)) {
+    if (LATEST_STR.equalsIgnoreCase(tag)) {
+      return wallet.getHeadBlockNum();
+    }
+    if (EARLIEST_STR.equalsIgnoreCase(tag)) {
+      return 0;
+    }
+    if (FINALIZED_STR.equalsIgnoreCase(tag)) {
+      return wallet.getSolidBlockNum();
+    }
+    if (PENDING_STR.equalsIgnoreCase(tag)) {
       throw new JsonRpcInvalidParamsException(TAG_PENDING_SUPPORT_ERROR);
     }
-    if (StringUtils.isEmpty(blockNumOrTag) || LATEST_STR.equalsIgnoreCase(blockNumOrTag)) {
-      return -1;
-    } else if (EARLIEST_STR.equalsIgnoreCase(blockNumOrTag)) {
-      return 0;
-    } else if (FINALIZED_STR.equalsIgnoreCase(blockNumOrTag)) {
-      return wallet.getSolidBlockNum();
-    } else {
-      return ByteArray.jsonHexToLong(blockNumOrTag);
+    if (SAFE_STR.equalsIgnoreCase(tag)) {
+      throw new JsonRpcInvalidParamsException(TAG_SAFE_SUPPORT_ERROR);
+    }
+    throw new JsonRpcInvalidParamsException(BLOCK_NUM_ERROR);
+  }
+
+  /**
+   * Max allowed length for a JSON-RPC block number hex/decimal input.
+   * API-level DoS guard: rejects pathological inputs before BigInteger parsing,
+   * whose cost grows quadratically with length. A block number fits a signed long,
+   * so the longest valid input is 19 chars (decimal Long.MAX_VALUE) or 18 (0x + 16
+   * hex); 20 leaves a small margin.
+   */
+  private static final int MAX_BLOCK_NUM_HEX_LEN = 20;
+
+  /**
+   * Parse a JSON-RPC block number (hex "0x..." or decimal) into a long,
+   * enforcing the {@link #MAX_BLOCK_NUM_HEX_LEN} length limit, rejecting
+   * negative values, and rejecting values that overflow a signed 64-bit
+   * block number.
+   */
+  public static long parseBlockNumber(String blockNum)
+      throws JsonRpcInvalidParamsException {
+    if (blockNum == null || blockNum.length() > MAX_BLOCK_NUM_HEX_LEN) {
+      throw new JsonRpcInvalidParamsException(BLOCK_NUM_ERROR);
+    }
+    BigInteger value;
+    try {
+      value = ByteArray.hexToBigInteger(blockNum);
+    } catch (Exception e) {
+      throw new JsonRpcInvalidParamsException(BLOCK_NUM_ERROR);
+    }
+    if (value.signum() < 0) {
+      throw new JsonRpcInvalidParamsException(BLOCK_NUM_ERROR);
+    }
+    try {
+      return value.longValueExact();
+    } catch (ArithmeticException e) {
+      throw new JsonRpcInvalidParamsException(BLOCK_NUM_ERROR);
+    }
+  }
+
+  /**
+   * Parse a block tag, or a 0x-prefixed hex block number.
+   */
+  public static long parseBlockNumber(String blockNumOrTag, Wallet wallet)
+      throws JsonRpcInvalidParamsException {
+    if (isBlockTag(blockNumOrTag)) {
+      return parseBlockTag(blockNumOrTag, wallet);
+    }
+    if (blockNumOrTag == null || !blockNumOrTag.startsWith("0x")) {
+      throw new JsonRpcInvalidParamsException("Incorrect hex syntax");
+    }
+    return parseBlockNumber(blockNumOrTag);
+  }
+
+  /**
+   * Max hex digits of a 32-bit int (0x7FFFFFFF). A transaction index fits a signed int, so the
+   * longest valid input is "0x" + 8 hex digits; the +2 in the guard covers the prefix.
+   */
+  private static final int MAX_TX_INDEX_HEX_LEN = 8;
+
+  /**
+   * Parse a 0x-prefixed hex transaction index at the JSON-RPC boundary.
+   */
+  public static int parseTxIndex(String index) throws JsonRpcInvalidParamsException {
+    if (index == null || index.length() > MAX_TX_INDEX_HEX_LEN + 2) {
+      throw new JsonRpcInvalidParamsException(TX_INDEX_ERROR);
+    }
+    try {
+      return ByteArray.jsonHexToInt(index);
+    } catch (Exception e) {
+      throw new JsonRpcInvalidParamsException(TX_INDEX_ERROR);
+    }
+  }
+
+  /**
+   * Compute feeLimit = gas * energyFee with overflow protection. A gas value large enough to
+   * overflow a signed 64-bit feeLimit is rejected as invalid-params instead of silently wrapping
+   * to a bogus (possibly negative) value.
+   */
+  public static long calcFeeLimit(long gas, long energyFee) throws JsonRpcInvalidParamsException {
+    try {
+      return StrictMathWrapper.multiplyExact(gas, energyFee);
+    } catch (ArithmeticException e) {
+      throw new JsonRpcInvalidParamsException("invalid gas: fee limit overflow");
     }
   }
 
   public static String generateFilterId() {
-    SecureRandom random = new SecureRandom();
     byte[] uid = new byte[16]; // 128 bits are converted to 16 bytes
     random.nextBytes(uid);
     return ByteArray.toHexString(uid);

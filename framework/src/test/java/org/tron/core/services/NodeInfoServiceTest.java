@@ -1,6 +1,5 @@
 package org.tron.core.services;
 
-import com.alibaba.fastjson.JSON;
 import com.google.protobuf.ByteString;
 import java.net.InetSocketAddress;
 import javax.annotation.Resource;
@@ -11,16 +10,17 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.springframework.context.ApplicationContext;
 import org.tron.common.BaseTest;
+import org.tron.common.TestConstants;
 import org.tron.common.entity.NodeInfo;
 import org.tron.common.utils.PublicMethod;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.common.utils.Sha256Hash;
-import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.net.P2pEventHandlerImpl;
 import org.tron.core.net.TronNetService;
 import org.tron.core.net.peer.PeerManager;
+import org.tron.json.JSON;
 import org.tron.p2p.P2pConfig;
 import org.tron.p2p.connection.Channel;
 import org.tron.program.Version;
@@ -42,7 +42,7 @@ public class NodeInfoServiceTest extends BaseTest {
   @BeforeClass
   public static void init() {
     Args.setParam(new String[] {"--output-directory", dbPath(), "--debug"},
-        Constant.TEST_CONF);
+        TestConstants.TEST_CONF);
   }
 
   @After

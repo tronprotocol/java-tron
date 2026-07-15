@@ -4,15 +4,23 @@ import static org.tron.protos.Protocol.Transaction.Result.contractResult.BAD_JUM
 import static org.tron.protos.Protocol.Transaction.Result.contractResult.PRECOMPILED_CONTRACT;
 import static org.tron.protos.Protocol.Transaction.Result.contractResult.SUCCESS;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import com.google.protobuf.ByteString;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.slf4j.LoggerFactory;
 import org.tron.common.BaseTest;
+import org.tron.common.TestConstants;
 import org.tron.common.utils.StringUtil;
-import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.config.args.Args;
 import org.tron.protos.Protocol.AccountType;
@@ -29,7 +37,7 @@ public class TransactionCapsuleTest extends BaseTest {
 
   @BeforeClass
   public static void init() {
-    Args.setParam(new String[]{"-d", dbPath()}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"-d", dbPath()}, TestConstants.TEST_CONF);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "03702350064AD5C1A8AA6B4D74B051199CFF8EA7";
   }
 
@@ -68,5 +76,62 @@ public class TransactionCapsuleTest extends BaseTest {
     transactionCapsule.removeRedundantRet();
     Assert.assertEquals(1, transactionCapsule.getInstance().getRetCount());
     Assert.assertEquals(SUCCESS, transactionCapsule.getInstance().getRet(0).getContractRet());
+  }
+
+  @Test
+  public void slowVerify() {
+    Logger capsuleLogger = (Logger) LoggerFactory.getLogger("capsule");
+    Level originalLevel = capsuleLogger.getLevel();
+    capsuleLogger.setLevel(Level.INFO);
+    ListAppender<ILoggingEvent> appender = new ListAppender<>();
+    appender.start();
+    capsuleLogger.addAppender(appender);
+    try {
+      TransactionCapsule cap = new TransactionCapsule(Transaction.newBuilder().build());
+      long startNs = System.nanoTime() - TimeUnit.MILLISECONDS.toNanos(51);
+      cap.logSlowSigVerify(startNs);
+
+      List<ILoggingEvent> warns = appender.list.stream()
+          .filter(e -> e.getLevel() == Level.WARN)
+          .collect(Collectors.toList());
+      Assert.assertEquals("expected one WARN for a slow verify", 1, warns.size());
+      String rendered = warns.get(0).getFormattedMessage();
+      Assert.assertTrue("WARN should mention slow verify: " + rendered,
+          rendered.contains("slow verify"));
+      Assert.assertTrue("WARN should echo the txId: " + rendered,
+          rendered.contains(cap.getTransactionId().toString()));
+      Assert.assertTrue("WARN should include sigCount: " + rendered,
+          rendered.contains("sigCount="));
+      Assert.assertTrue("WARN should include cost in ms: " + rendered,
+          rendered.contains("cost="));
+      Assert.assertTrue("WARN should render ms suffix: " + rendered,
+          rendered.contains(" ms"));
+    } finally {
+      appender.stop();
+      capsuleLogger.detachAppender(appender);
+      capsuleLogger.setLevel(originalLevel);
+    }
+  }
+
+  @Test
+  public void fastVerify() {
+    Logger capsuleLogger = (Logger) LoggerFactory.getLogger("capsule");
+    Level originalLevel = capsuleLogger.getLevel();
+    capsuleLogger.setLevel(Level.INFO);
+    ListAppender<ILoggingEvent> appender = new ListAppender<>();
+    appender.start();
+    capsuleLogger.addAppender(appender);
+    try {
+      TransactionCapsule cap = new TransactionCapsule(Transaction.newBuilder().build());
+      cap.logSlowSigVerify(System.nanoTime());
+      long warnCount = appender.list.stream()
+          .filter(e -> e.getLevel() == Level.WARN)
+          .count();
+      Assert.assertEquals("no WARN should fire below the threshold", 0, warnCount);
+    } finally {
+      appender.stop();
+      capsuleLogger.detachAppender(appender);
+      capsuleLogger.setLevel(originalLevel);
+    }
   }
 }

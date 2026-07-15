@@ -1,21 +1,19 @@
 package org.tron.common.parameter;
 
-import com.beust.jcommander.Parameter;
+import com.google.common.annotations.VisibleForTesting;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import lombok.Getter;
 import lombok.Setter;
+import org.slf4j.bridge.SLF4JBridgeHandler;
 import org.tron.common.args.GenesisBlock;
-import org.tron.common.config.DbBackupConfig;
 import org.tron.common.cron.CronExpression;
 import org.tron.common.logsfilter.EventPluginConfig;
 import org.tron.common.logsfilter.FilterQuery;
 import org.tron.common.setting.RocksDbSettings;
 import org.tron.core.Constant;
-import org.tron.core.config.args.Overlay;
 import org.tron.core.config.args.SeedNode;
 import org.tron.core.config.args.Storage;
 import org.tron.p2p.P2pConfig;
@@ -23,116 +21,86 @@ import org.tron.p2p.dns.update.PublishConfig;
 
 public class CommonParameter {
 
-  public static final String IGNORE_WRONG_WITNESS_ADDRESS_FORMAT =
-      "The localWitnessAccountAddress format is incorrect, ignored";
-  public static CommonParameter PARAMETER = new CommonParameter();
+  // Install the JUL->SLF4J bridge early so that JUL log records emitted during
+  // static init of grpc classes (or from unit tests that don't invoke
+  // LogService.load()) still reach Logback.
+  // removeHandlersForRootLogger() strips JUL's default ConsoleHandler so the
+  // same record is not emitted twice (once by JUL's own console output and
+  // once via the bridge to Logback).
+  static {
+    SLF4JBridgeHandler.removeHandlersForRootLogger();
+    if (!SLF4JBridgeHandler.isInstalled()) {
+      SLF4JBridgeHandler.install();
+    }
+  }
+
+  protected static CommonParameter PARAMETER = new CommonParameter();
+
+  // Runtime chain state: set by VMConfig.initVmHardFork()
+  // when the energy-limit governance proposal is activated.
+  // Legacy: should belong to VMConfig, not here.
   @Setter
   public static boolean ENERGY_LIMIT_HARD_FORK = false;
+
+  // -- Startup parameters --
   @Getter
-  @Parameter(names = {"-c", "--config"}, description = "Config file (default:config.conf)")
-  public String shellConfFileName = "";
-  @Getter
-  @Parameter(names = {"-d", "--output-directory"},
-      description = "Data directory for the databases (default:output-directory)")
   public String outputDirectory = "output-directory";
   @Getter
-  @Parameter(names = {"--log-config"}, description = "Logback config file")
   public String logbackPath = "";
-  @Getter
-  @Parameter(names = {"-h", "--help"}, help = true, description = "Show help message")
-  public boolean help = false;
+  // -- Flags (CLI + Config) --
   @Getter
   @Setter
-  @Parameter(names = {"-w", "--witness"}, description = "Is witness node")
   public boolean witness = false;
   @Getter
   @Setter
-  @Parameter(names = {"--support-constant"}, description = "Support constant calling for TVM. "
-      + "(defalut: false)")
   public boolean supportConstant = false;
   @Getter
   @Setter
-  @Parameter(names = {"--max-energy-limit-for-constant"}, description = "Max energy limit for "
-      + "constant calling. (default: 100,000,000)")
   public long maxEnergyLimitForConstant = 100_000_000L;
   @Getter
   @Setter
-  @Parameter(names = {"--lru-cache-size"}, description = "Max LRU size for caching bytecode and "
-      + "result of JUMPDEST analysis. (default: 500)")
   public int lruCacheSize = 500;
   @Getter
   @Setter
-  @Parameter(names = {"--debug"}, description = "Switch for TVM debug mode. In debug model, TVM "
-      + "will not check for timeout. (default: false)")
   public boolean debug = false;
   @Getter
   @Setter
-  @Parameter(names = {"--min-time-ratio"}, description = "Minimum CPU tolerance when executing "
-      + "timeout transactions while synchronizing blocks. (default: 0.0)")
   public double minTimeRatio = 0.0;
   @Getter
   @Setter
-  @Parameter(names = {"--max-time-ratio"}, description = "Maximum CPU tolerance when executing "
-      + "non-timeout transactions while synchronizing blocks. (default: 5.0)")
   public double maxTimeRatio = calcMaxTimeRatio();
+  /**
+   * Max TVM execution time (ms) for constant calls — covers
+   * triggerconstantcontract, triggersmartcontract dispatched to view/pure
+   * functions, estimateenergy, eth_call, eth_estimateGas, and any other
+   * RPC routed through Wallet#callConstantContract. 0 = use the same
+   * deadline as block processing (current behaviour). When operators set
+   * this in config the value must be positive and fit VM deadline conversion;
+   * validated at config-load in VmConfig.
+   */
   @Getter
   @Setter
-  @Parameter(names = {"--save-internaltx"}, description = "Save internal transactions generated "
-      + "during TVM execution, such as create, call and suicide. (default: false)")
+  public long constantCallTimeoutMs = 0L;
+  @Getter
+  @Setter
   public boolean saveInternalTx;
   @Getter
   @Setter
-  @Parameter(names = {"--save-featured-internaltx"}, description = "Save featured internal "
-      + "transactions generated during TVM execution, such as freeze, vote and so on. "
-      + "(default: false)")
   public boolean saveFeaturedInternalTx;
   @Getter
   @Setter
-  @Parameter(names = {"--save-cancel-all-unfreeze-v2-details"}, description = "Record the details of the internal "
-      + "transactions generated by the CANCELALLUNFREEZEV2 opcode, such as bandwidth/energy/tronpower cancel amount. "
-      + "(default: false)")
   public boolean saveCancelAllUnfreezeV2Details;
   @Getter
   @Setter
-  @Parameter(names = {"--long-running-time"})
   public int longRunningTime = 10;
   @Getter
   @Setter
-  @Parameter(names = {"--max-connect-number"}, description = "Http server max connect number "
-      + "(default:50)")
   public int maxHttpConnectNumber = 50;
   @Getter
-  @Parameter(description = "--seed-nodes")
   public List<String> seedNodes = new ArrayList<>();
-  @Parameter(names = {"-p", "--private-key"}, description = "Witness private key")
-  public String privateKey = "";
-  @Parameter(names = {"--witness-address"}, description = "witness-address")
-  public String witnessAddress = "";
-  @Parameter(names = {"--password"}, description = "password")
-  public String password;
-  @Parameter(names = {"--storage-db-directory"}, description = "Storage db directory")
-  public String storageDbDirectory = "";
-  @Parameter(names = {
-      "--storage-db-engine"}, description = "Storage db engine.(leveldb or rocksdb)")
-  public String storageDbEngine = "";
-  @Parameter(names = {
-      "--storage-db-synchronous"},
-      description = "Storage db is synchronous or not.(true or false)")
-  public String storageDbSynchronous = "";
-  @Parameter(names = {"--contract-parse-enable"}, description = "Switch for contract parses in " +
-      "java-tron. (default: true)")
-  public String contractParseEnable = "";
-  @Parameter(names = {"--storage-index-directory"},
-      description = "Storage index directory")
-  public String storageIndexDirectory = "";
-  @Parameter(names = {"--storage-index-switch"}, description = "Storage index switch.(on or off)")
-  public String storageIndexSwitch = "";
-  @Parameter(names = {"--storage-transactionHistory-switch"},
-      description = "Storage transaction history switch.(on or off)")
-  public String storageTransactionHistorySwitch = "";
   @Getter
-  @Parameter(names = {"--fast-forward"})
   public boolean fastForward = false;
+  // -- Network / P2P --
   @Getter
   @Setter
   public String chainId;
@@ -150,28 +118,25 @@ public class CommonParameter {
   public boolean nodeEffectiveCheckEnable;
   @Getter
   @Setter
-  public int nodeConnectionTimeout;
-  @Getter
-  @Setter
   public int fetchBlockTimeout;
   @Getter
   @Setter
-  public int nodeChannelReadTimeout;
+  public int maxConnections = 30; // from clearParam(), consistent with mainnet.conf
   @Getter
   @Setter
-  public int maxConnections;
+  public int minConnections = 8; // from clearParam(), consistent with mainnet.conf
   @Getter
   @Setter
-  public int minConnections;
+  public int minActiveConnections = 3; // from clearParam(), consistent with mainnet.conf
   @Getter
   @Setter
-  public int minActiveConnections;
+  public int maxConnectionsWithSameIp = 2; // from clearParam(), consistent with mainnet.conf
   @Getter
   @Setter
-  public int maxConnectionsWithSameIp;
+  public int maxTps; // clearParam: 1000
   @Getter
   @Setter
-  public int maxTps;
+  public int maxBlockInvPerSecond = 10; // default: 10 block inv hashes/s per peer
   @Getter
   @Setter
   public int minParticipationRate;
@@ -194,26 +159,30 @@ public class CommonParameter {
   public boolean nodeEnableIpv6 = false;
   @Getter
   @Setter
-  public List<String> dnsTreeUrls;
+  public List<String> dnsTreeUrls; // clearParam: new ArrayList<>()
   @Getter
   @Setter
   public PublishConfig dnsPublishConfig;
   @Getter
   @Setter
-  public long syncFetchBatchNum;
-
-  //If you are running a solidity node for java tron, this flag is set to true
+  public long syncFetchBatchNum; // clearParam: 2000
   @Getter
   @Setter
-  @Parameter(names = {"--solidity"}, description = "running a solidity node for java tron")
+  public int maxPendingBlockSize;
+
+  // If you are running a solidity node for java tron,
+  // this flag is set to true
+  @Getter
+  @Setter
   public boolean solidityNode = false;
 
-  //If you are running KeystoreFactory, this flag is set to true
+  // If you are running KeystoreFactory,
+  // this flag is set to true
   @Getter
   @Setter
-  @Parameter(names = {"--keystore-factory"}, description = "running KeystoreFactory")
   public boolean keystoreFactory = false;
 
+  // -- RPC / HTTP --
   @Getter
   @Setter
   public int rpcPort;
@@ -237,11 +206,9 @@ public class CommonParameter {
   public int jsonRpcHttpPBFTPort;
   @Getter
   @Setter
-  @Parameter(names = {"--rpc-thread"}, description = "Num of gRPC thread")
   public int rpcThreadNum;
   @Getter
   @Setter
-  @Parameter(names = {"--solidity-thread"}, description = "Num of solidity thread")
   public int solidityThreads;
   @Getter
   @Setter
@@ -249,12 +216,9 @@ public class CommonParameter {
   @Getter
   @Setter
   public int flowControlWindow;
-  // the positive limit of RST_STREAM frames per connection per period for grpc,
-  // 0 or Integer.MAX_VALUE for unlimited, by default there is no limit.
   @Getter
   @Setter
   public int rpcMaxRstStream;
-  // the positive number of seconds per period for grpc
   @Getter
   @Setter
   public int rpcSecondsPerWindow;
@@ -270,9 +234,17 @@ public class CommonParameter {
   @Getter
   @Setter
   public long maxConnectionAgeInMillis;
+  // Refers to RPC (gRPC) max message size; see httpMaxMessageSize / jsonRpcMaxMessageSize
+  // below for the HTTP / JSON-RPC counterparts.
   @Getter
   @Setter
   public int maxMessageSize;
+  @Getter
+  @Setter
+  public long httpMaxMessageSize;
+  @Getter
+  @Setter
+  public long jsonRpcMaxMessageSize;
   @Getter
   @Setter
   public int maxHeaderListSize;
@@ -281,52 +253,46 @@ public class CommonParameter {
   public boolean isRpcReflectionServiceEnable;
   @Getter
   @Setter
-  @Parameter(names = {"--validate-sign-thread"}, description = "Num of validate thread")
   public int validateSignThreadNum;
   @Getter
   @Setter
-  public long maintenanceTimeInterval; // (ms)
+  public long maintenanceTimeInterval;
   @Getter
   @Setter
-  public long proposalExpireTime; // (ms)
+  public long proposalExpireTime;
   @Getter
   @Setter
-  public int checkFrozenTime; // for test only
+  public int checkFrozenTime; // clearParam: 1
+
+  // -- Committee parameters --
   @Getter
   @Setter
-  public long allowCreationOfContracts; //committee parameter
+  public long allowCreationOfContracts;
   @Getter
   @Setter
-  public long allowAdaptiveEnergy; //committee parameter
+  public long allowAdaptiveEnergy;
   @Getter
   @Setter
-  public long allowDelegateResource; //committee parameter
+  public long allowDelegateResource;
   @Getter
   @Setter
-  public long allowSameTokenName; //committee parameter
+  public long allowSameTokenName;
   @Getter
   @Setter
-  public long allowTvmTransferTrc10; //committee parameter
+  public long allowTvmTransferTrc10;
   @Getter
   @Setter
-  public long allowTvmConstantinople; //committee parameter
+  public long allowTvmConstantinople;
   @Getter
   @Setter
-  public long allowTvmSolidity059; //committee parameter
+  public long allowTvmSolidity059;
   @Getter
   @Setter
-  public long forbidTransferToContract; //committee parameter
+  public long forbidTransferToContract;
 
   @Getter
   @Setter
-  public int tcpNettyWorkThreadNum;
-  @Getter
-  @Setter
-  public int udpNettyWorkThreadNum;
-  @Getter
-  @Setter
-  @Parameter(names = {"--trust-node"}, description = "Trust node addr")
-  public String trustNodeAddr;
+  public String trustNodeAddr; // clearParam: ""
   @Getter
   @Setter
   public boolean walletExtensionApi;
@@ -335,7 +301,7 @@ public class CommonParameter {
   public boolean estimateEnergy;
   @Getter
   @Setter
-  public int estimateEnergyMaxRetry;
+  public int estimateEnergyMaxRetry = 3; // from clearParam(), consistent with mainnet.conf
   @Getter
   @Setter
   public int backupPriority;
@@ -350,13 +316,10 @@ public class CommonParameter {
   public List<String> backupMembers;
   @Getter
   @Setter
-  public long receiveTcpMinDataLength;
-  @Getter
-  @Setter
   public boolean isOpenFullTcpDisconnect;
   @Getter
   @Setter
-  public int inactiveThreshold;
+  public int inactiveThreshold = 600; // from clearParam(), consistent with mainnet.conf
   @Getter
   @Setter
   public boolean nodeDetectEnable;
@@ -380,42 +343,34 @@ public class CommonParameter {
   public boolean trxCacheEnable;
   @Getter
   @Setter
-  public long allowMarketTransaction; //committee parameter
-
+  public long allowMarketTransaction;
   @Getter
   @Setter
   public long allowTransactionFeePool;
-
   @Getter
   @Setter
   public long allowBlackHoleOptimization;
-
   @Getter
   @Setter
   public long allowNewResourceModel;
 
-  // @Getter
-  // @Setter
-  // public long allowShieldedTransaction; //committee parameter
-  // full node used this parameter to close shielded transaction
   @Getter
   @Setter
-  public boolean allowShieldedTransactionApi;
+  public boolean allowShieldedTransactionApi; // clearParam: false
   @Getter
   @Setter
   public long blockNumForEnergyLimit;
   @Getter
   @Setter
-  @Parameter(names = {"--es"}, description = "Start event subscribe server")
   public boolean eventSubscribe = false;
   @Getter
   @Setter
-  public long trxExpirationTimeInMilliseconds; // (ms)
-  @Parameter(names = {"-v", "--version"}, description = "Output code version", help = true)
-  public boolean version;
+  public long trxExpirationTimeInMilliseconds;
+
+  // -- Shielded / ZK --
   @Getter
   @Setter
-  public String zenTokenId;
+  public String zenTokenId; // clearParam: "000000"
   @Getter
   @Setter
   public long allowProtoFilterNum;
@@ -427,58 +382,54 @@ public class CommonParameter {
   public int validContractProtoThreadNum = 1;
   @Getter
   @Setter
-  public int shieldedTransInPendingMaxCounts;
+  public int shieldedTransInPendingMaxCounts; // clearParam: 10
   @Getter
   @Setter
   public long changedDelegation;
   @Getter
   @Setter
-  public Set<String> actuatorSet;
-  @Getter
-  @Setter
   public RateLimiterInitialization rateLimiterInitialization;
   @Getter
   @Setter
-  public int rateLimiterGlobalQps;
+  public int rateLimiterGlobalQps = 50000; // from clearParam(), consistent with mainnet.conf
   @Getter
   @Setter
-  public int rateLimiterGlobalIpQps;
+  public int rateLimiterGlobalIpQps = 10000; // from clearParam(), consistent with mainnet.conf
   @Getter
-  public int rateLimiterGlobalApiQps;
-  @Getter
-  @Setter
-  public double rateLimiterSyncBlockChain;
+  public int rateLimiterGlobalApiQps = 1000; // from clearParam(), consistent with mainnet.conf
   @Getter
   @Setter
-  public double rateLimiterFetchInvData;
+  public double rateLimiterSyncBlockChain; // clearParam: 3.0
   @Getter
   @Setter
-  public double rateLimiterDisconnect;
+  public double rateLimiterFetchInvData; // clearParam: 3.0
   @Getter
-  public DbBackupConfig dbBackupConfig;
+  @Setter
+  public double rateLimiterDisconnect; // clearParam: 1.0
+  @Getter
+  @Setter
+  public boolean rateLimiterApiNonBlocking = false;
   @Getter
   public RocksDbSettings rocksDBCustomSettings;
   @Getter
   public GenesisBlock genesisBlock;
   @Getter
   @Setter
-  @Parameter(names = {"--p2p-disable"}, description = "Switch for p2p module initialization. "
-      + "(defalut: false)", arity = 1)
   public boolean p2pDisable = false;
   @Getter
   @Setter
-  public List<InetSocketAddress> activeNodes;
+  // from clearParam(), consistent with mainnet.conf
+  public List<InetSocketAddress> activeNodes = new ArrayList<>();
   @Getter
   @Setter
-  public List<InetAddress> passiveNodes;
+  // from clearParam(), consistent with mainnet.conf
+  public List<InetAddress> passiveNodes = new ArrayList<>();
   @Getter
-  public List<InetSocketAddress> fastForwardNodes;
+  public List<InetSocketAddress> fastForwardNodes; // clearParam: new ArrayList<>()
   @Getter
-  public int maxFastForwardNum;
+  public int maxFastForwardNum; // clearParam: 4
   @Getter
   public Storage storage;
-  @Getter
-  public Overlay overlay;
   @Getter
   public SeedNode seedNode;
   @Getter
@@ -492,26 +443,21 @@ public class CommonParameter {
   @Getter
   @Setter
   public boolean rpcEnable = true;
-
   @Getter
   @Setter
   public boolean rpcSolidityEnable = true;
-
   @Getter
   @Setter
   public boolean rpcPBFTEnable = true;
-
   @Getter
   @Setter
   public boolean fullNodeHttpEnable = true;
   @Getter
   @Setter
   public boolean solidityNodeHttpEnable = true;
-
   @Getter
   @Setter
   public boolean pBFTHttpEnable = true;
-
   @Getter
   @Setter
   public boolean jsonRpcHttpFullNodeEnable = false;
@@ -530,7 +476,18 @@ public class CommonParameter {
   @Getter
   @Setter
   public int jsonRpcMaxBlockFilterNum = 50000;
-
+  @Getter
+  @Setter
+  public int jsonRpcMaxBatchSize = 100;
+  @Getter
+  @Setter
+  public int jsonRpcMaxResponseSize = 25 * 1024 * 1024;
+  @Getter
+  @Setter
+  public int jsonRpcMaxAddressSize = 1000;
+  @Getter
+  @Setter
+  public int jsonRpcMaxLogFilterNum = 20000;
   @Getter
   @Setter
   public int maxTransactionPendingSize;
@@ -539,40 +496,19 @@ public class CommonParameter {
   public long pendingTransactionTimeout;
   @Getter
   @Setter
+  public int maxTrxCacheSize;
+  @Getter
+  @Setter
   public boolean nodeMetricsEnable = false;
-
-  @Getter
-  @Setter
-  public boolean metricsStorageEnable = false;
-
-  @Getter
-  @Setter
-  public String influxDbIp;
-
-  @Getter
-  @Setter
-  public int influxDbPort;
-
-  @Getter
-  @Setter
-  public String influxDbDatabase;
-
-  @Getter
-  @Setter
-  public int metricsReportInterval = 10;
-
   @Getter
   @Setter
   public boolean metricsPrometheusEnable = false;
-
   @Getter
   @Setter
   public int metricsPrometheusPort;
-
   @Getter
   @Setter
   public int agreeNodeCount;
-
   @Getter
   @Setter
   public long allowPBFT;
@@ -582,179 +518,139 @@ public class CommonParameter {
   @Getter
   @Setter
   public int pBFTHttpPort;
+
   @Getter
   @Setter
-  public long pBFTExpireNum;
+  public long pBFTExpireNum; // clearParam: 20
   @Getter
   @Setter
   public long oldSolidityBlockNum = -1;
 
-  @Getter/**/
+  @Getter
   @Setter
   public long allowShieldedTRC20Transaction;
-
-  @Getter/**/
+  @Getter
   @Setter
   public long allowTvmIstanbul;
-
   @Getter
   @Setter
   public long allowTvmFreeze;
-
   @Getter
   @Setter
   public long allowTvmVote;
-
   @Getter
   @Setter
   public long allowTvmLondon;
-
   @Getter
   @Setter
   public long allowTvmCompatibleEvm;
-
   @Getter
   @Setter
   public long allowHigherLimitForMaxCpuTimeOfOneTx;
-
   @Getter
   @Setter
   public boolean openHistoryQueryWhenLiteFN = false;
-
   @Getter
   @Setter
-  @Parameter(names = {"--history-balance-lookup"})
   public boolean historyBalanceLookup = false;
-
   @Getter
   @Setter
   public boolean openPrintLog = true;
   @Getter
   @Setter
   public boolean openTransactionSort = false;
-
   @Getter
   @Setter
   public long allowAccountAssetOptimization;
-
   @Getter
   @Setter
   public long allowAssetOptimization;
-
   @Getter
   @Setter
-  public List<String> disabledApiList;
-
+  public List<String> disabledApiList; // clearParam: Collections.emptyList()
   @Getter
   @Setter
   public CronExpression shutdownBlockTime = null;
-
   @Getter
   @Setter
   public long shutdownBlockHeight = -1;
-
   @Getter
   @Setter
   public long shutdownBlockCount = -1;
-
   @Getter
   @Setter
   public long blockCacheTimeout = 60;
-
   @Getter
   @Setter
   public long allowNewRewardAlgorithm;
-
   @Getter
   @Setter
   public long allowNewReward = 0L;
-
   @Getter
   @Setter
   public long memoFee = 0L;
-
   @Getter
   @Setter
   public long allowDelegateOptimization = 0L;
-
   @Getter
   @Setter
   public long unfreezeDelayDays = 0L;
-
   @Getter
   @Setter
   public long allowOptimizedReturnValueOfChainId = 0L;
-
   @Getter
   @Setter
   public long allowDynamicEnergy = 0L;
-
   @Getter
   @Setter
   public long dynamicEnergyThreshold = 0L;
-
   @Getter
   @Setter
   public long dynamicEnergyIncreaseFactor = 0L;
-
   @Getter
   @Setter
   public long dynamicEnergyMaxFactor = 0L;
-
   @Getter
   @Setter
   public boolean dynamicConfigEnable;
-
   @Getter
   @Setter
-  public long dynamicConfigCheckInterval;
-
+  public long dynamicConfigCheckInterval; // clearParam: 600
   @Getter
   @Setter
   public long allowTvmShangHai;
-
   @Getter
   @Setter
   public long allowCancelAllUnfreezeV2;
-
   @Getter
   @Setter
   public boolean unsolidifiedBlockCheck;
-
   @Getter
   @Setter
-  public int maxUnsolidifiedBlocks;
-
+  public int maxUnsolidifiedBlocks; // clearParam: 54
   @Getter
   @Setter
   public long allowOldRewardOpt;
-
   @Getter
   @Setter
   public long allowEnergyAdjustment;
-
   @Getter
   @Setter
   public long maxCreateAccountTxSize = 1000L;
-
   @Getter
   @Setter
   public long allowStrictMath;
-
   @Getter
   @Setter
-  public long  consensusLogicOptimization;
-
+  public long consensusLogicOptimization;
   @Getter
   @Setter
   public long allowTvmCancun;
-
   @Getter
   @Setter
   public long allowTvmBlob;
 
   private static double calcMaxTimeRatio() {
-    //return max(2.0, min(5.0, 5 * 4.0 / max(Runtime.getRuntime().availableProcessors(), 1)));
     return 5.0;
   }
 
@@ -762,13 +658,24 @@ public class CommonParameter {
     return PARAMETER;
   }
 
-  public boolean isECKeyCryptoEngine() {
+  /**
+   * Reset to a fresh instance. Test-only.
+   */
+  @VisibleForTesting
+  public static void reset() {
+    if (PARAMETER.storage != null) {
+      PARAMETER.storage.deleteAllStoragePaths();
+    }
+    PARAMETER = new CommonParameter();
+  }
 
+  public boolean isECKeyCryptoEngine() {
     return cryptoEngine.equalsIgnoreCase(Constant.ECKey_ENGINE);
   }
 
   public boolean isJsonRpcFilterEnabled() {
-    return jsonRpcHttpFullNodeEnable || jsonRpcHttpSolidityNodeEnable;
+    return jsonRpcHttpFullNodeEnable
+        || jsonRpcHttpSolidityNodeEnable;
   }
 
   public int getSafeLruCacheSize() {

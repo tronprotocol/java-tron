@@ -30,6 +30,31 @@ import org.tron.core.net.peer.PeerManager;
 import org.tron.core.store.AccountStore;
 import org.tron.protos.Protocol;
 
+/**
+ * Base class for tests that need a Spring context (Manager, ChainBaseManager, etc.).
+ * The context is created once per test class.
+ *
+ * Args.setParam() is called in a static block, the context is shared by all @Test
+ * methods in the class, and destroyed in @AfterClass. This is faster but means
+ * test methods within the same class are not isolated from each other.
+ *
+ * Use this when:
+ *   - test methods are read-only or don't interfere with each other
+ *   - no need to change CommonParameter/Args between methods
+ *
+ * Use BaseMethodTest instead when:
+ *   - methods modify database state that would affect other methods
+ *   - methods need different CommonParameter settings (e.g. setP2pDisable)
+ *   - methods need beforeContext() to configure state before Spring starts
+ *
+ * Tests that don't need Spring (e.g. pure unit tests like ArgsTest,
+ * LevelDbDataSourceImplTest) should NOT extend either base class.
+ *
+ * Subclasses must call Args.setParam() in a static initializer block:
+ *   static {
+ *     Args.setParam(new String[]{"--output-directory", dbPath()}, TEST_CONF);
+ *   }
+ */
 @Slf4j
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = {DefaultConfig.class})

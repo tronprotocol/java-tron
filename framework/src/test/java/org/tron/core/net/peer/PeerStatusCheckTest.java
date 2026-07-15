@@ -4,47 +4,30 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.spy;
 
 import io.netty.channel.ChannelHandlerContext;
-import java.io.IOException;
 import java.net.InetSocketAddress;
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 import org.mockito.Mockito;
-import org.tron.common.application.TronApplicationContext;
+import org.tron.common.BaseMethodTest;
 import org.tron.common.utils.ReflectUtils;
-import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule.BlockId;
-import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.Parameter.NetConstants;
 import org.tron.core.config.args.Args;
 import org.tron.p2p.connection.Channel;
 
 
-public class PeerStatusCheckTest {
+public class PeerStatusCheckTest extends BaseMethodTest {
 
-  protected TronApplicationContext context;
   private PeerStatusCheck service;
-  @Rule
-  public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
-  @Before
-  public void init() throws IOException {
-    Args.setParam(new String[] {"--output-directory",
-        temporaryFolder.newFolder().toString(), "--debug"}, Constant.TEST_CONF);
-    context = new TronApplicationContext(DefaultConfig.class);
-    service = context.getBean(PeerStatusCheck.class);
+  @Override
+  protected String[] extraArgs() {
+    return new String[]{"--debug"};
   }
 
-  /**
-   * destroy.
-   */
-  @After
-  public void destroy() {
-    Args.clearParam();
-    context.destroy();
+  @Override
+  protected void afterInit() {
+    service = context.getBean(PeerStatusCheck.class);
   }
 
   @Test

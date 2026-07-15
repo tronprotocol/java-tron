@@ -32,4 +32,12 @@ public class BlockLogTriggerCapsuleTest {
     Assert.assertEquals(100,
         blockLogTriggerCapsule.getBlockLogTrigger().getLatestSolidifiedBlockNumber());
   }
+
+  @Test
+  public void testSetRemoved() {
+    // default is false (forward emit); reorg rollback sets it to true
+    Assert.assertFalse(blockLogTriggerCapsule.getBlockLogTrigger().isRemoved());
+    blockLogTriggerCapsule.setRemoved(true);
+    Assert.assertTrue(blockLogTriggerCapsule.getBlockLogTrigger().isRemoved());
+  }
 }

@@ -30,7 +30,7 @@ static def isWindows() {
     return org.gradle.internal.os.OperatingSystem.current().isWindows()
 }
 
-task version(type: Exec) {
+tasks.register('version', Exec) {
     commandLine 'bash', '-c', '../ver.sh'
 }
 
@@ -38,12 +38,11 @@ dependencies {
     //local libraries
     implementation fileTree(dir: 'libs', include: '*.jar')
     // end local libraries
+    implementation group: 'com.beust', name: 'jcommander', version: '1.78'
     implementation group: 'io.dropwizard.metrics', name: 'metrics-core', version: '3.1.2'
-    implementation group: 'com.github.davidb', name: 'metrics-influxdb', version: '0.8.2'
     // http
-    implementation 'org.eclipse.jetty:jetty-server:9.4.57.v20241219'
-    implementation 'org.eclipse.jetty:jetty-servlet:9.4.57.v20241219'
-    implementation 'com.alibaba:fastjson:1.2.83'
+    implementation 'org.eclipse.jetty:jetty-server:9.4.58.v20250814'
+    implementation 'org.eclipse.jetty:jetty-servlet:9.4.58.v20250814'
     // end http
 
     // https://mvnrepository.com/artifact/com.github.briandilley.jsonrpc4j/jsonrpc4j
@@ -52,11 +51,12 @@ dependencies {
     // https://mvnrepository.com/artifact/javax.portlet/portlet-api
     compileOnly group: 'javax.portlet', name: 'portlet-api', version: '3.0.1'
 
-    implementation (group: 'org.pf4j', name: 'pf4j', version: '3.10.0') {
+    implementation (group: 'org.pf4j', name: 'pf4j', version: '3.14.1') {
         exclude group: "org.slf4j", module: "slf4j-api"
     }
 
     testImplementation group: 'org.springframework', name: 'spring-test', version: "${springVersion}"
+    testImplementation group: 'javax.portlet', name: 'portlet-api', version: '3.0.1'
     implementation group: 'org.zeromq', name: 'jeromq', version: '0.5.3'
     api project(":chainbase")
     api project(":protocol")
@@ -69,6 +69,7 @@ check.dependsOn 'lint'
 checkstyle {
     toolVersion = "${versions.checkstyle}"
     configFile = file("config/checkstyle/checkStyleAll.xml")
+    maxWarnings = 0
 }
 
 
@@ -76,7 +77,7 @@ checkstyleMain {
     source = 'src/main/java'
 }
 
-task lint(type: Checkstyle) {
+tasks.register('lint', Checkstyle) {
     // Cleaning the old log because of the creation of the new ones (not sure if totaly needed)
     delete fileTree(dir: "${project.rootDir}/app/build/reports")
     source 'src'
@@ -104,21 +105,41 @@ run {
     }
 }
 
-test {
-    retry {
+def configureTestTask = { Task t ->
+    t.retry {
         maxRetries = 5
         maxFailures = 20
     }
-    testLogging {
+    t.testLogging {
         exceptionFormat = 'full'
     }
+    if (isWindows()) {
+        t.exclude '**/ShieldedTransferActuatorTest.class'
+        t.exclude '**/ManagerTest.class'
+        t.exclude 'org/tron/core/zksnark/**'
+        t.exclude 'org/tron/common/runtime/vm/PrecompiledContractsVerifyProofTest.class'
+        t.exclude 'org/tron/core/ShieldedTRC20BuilderTest.class'
+        t.exclude 'org/tron/common/runtime/vm/WithdrawRewardTest.class'
+    }
+    t.maxHeapSize = "512m"
+    t.maxParallelForks = Math.max(1, Math.min(4, Runtime.runtime.availableProcessors()))
+    t.systemProperty 'runPrecompileBenchmark',
+            System.getProperty('runPrecompileBenchmark', 'false')
+    t.doFirst {
+        t.forkEvery = 100
+    }
+}
+
+test {
+    configureTestTask(it)
     jacoco {
         destinationFile = file("$buildDir/jacoco/jacocoTest.exec")
         classDumpDir = file("$buildDir/jacoco/classpathdumps")
     }
     if (rootProject.archInfo.isArm64) {
+        systemProperty 'storage.db.engine', 'ROCKSDB'
         exclude { element ->
-            element.file.name.toLowerCase().contains('leveldb')
+            element.file.name.toLowerCase(Locale.ROOT).contains('leveldb')
         }
         filter {
             excludeTestsMatching '*.*leveldb*'
@@ -127,21 +148,21 @@ test {
             excludeTestsMatching '*.*LevelDb*'
         }
     }
-    if (isWindows()) {
-        exclude '**/ShieldedTransferActuatorTest.class'
-        exclude '**/BackupDbUtilTest.class'
-        exclude '**/ManagerTest.class'
-        exclude 'org/tron/core/zksnark/**'
-        exclude 'org/tron/common/runtime/vm/PrecompiledContractsVerifyProofTest.class'
-        exclude 'org/tron/core/ShieldedTRC20BuilderTest.class'
-        exclude 'org/tron/common/runtime/vm/WithdrawRewardTest.class'
-    }
-    maxHeapSize = "1024m"
-    doFirst {
-        // Restart the JVM after every 100 tests to avoid memory leaks and ensure test isolation
-        forkEvery = 100
-        jvmArgs "-XX:MetaspaceSize=128m","-XX:MaxMetaspaceSize=256m", "-XX:+UseG1GC"
-    }
+}
+
+tasks.register('testWithRocksDb', Test) {
+    description = 'Run tests with RocksDB engine'
+    group = 'verification'
+    configureTestTask(it)
+    systemProperty 'storage.db.engine', 'ROCKSDB'
+    // Keep x86 RocksDB coverage focused on engine-sensitive tests instead of
+    // rerunning the entire framework suite with a different storage backend.
+    include 'org/tron/common/storage/**'
+    include 'org/tron/core/config/args/ArgsTest.class'
+    include 'org/tron/core/db/DBIteratorTest.class'
+    include 'org/tron/core/db/TronDatabaseTest.class'
+    include 'org/tron/core/db2/ChainbaseTest.class'
+    exclude '**/LevelDbDataSourceImplTest.class'
 }
 
 jacocoTestReport {
@@ -175,7 +196,9 @@ def binaryRelease(taskName, jarName, mainClass) {
         exclude "META-INF/*.SF"
         exclude "META-INF/*.DSA"
         exclude "META-INF/*.RSA"
-
+        // for service SPI loader for dnsjava
+        // see https://issues.apache.org/jira/browse/HADOOP-19288
+        exclude "META-INF/services/java.net.spi.InetAddressResolverProvider"
         manifest {
             attributes "Main-Class": "${mainClass}"
         }

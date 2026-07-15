@@ -150,6 +150,12 @@ public class RelayService {
       return false;
     }
 
+    if (!SignUtils.isValidLength(msg.getSignature().size())) {
+      logger.warn("HelloMessage from {}, signature size is {}.",
+          channel.getInetAddress(), msg.getSignature().size());
+      return false;
+    }
+
     boolean flag;
     try {
       Sha256Hash hash = Sha256Hash.of(CommonParameter

@@ -8,12 +8,12 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.tron.common.BaseTest;
+import org.tron.common.TestConstants;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.PublicMethod;
 import org.tron.common.utils.client.utils.TransactionUtils;
 import org.tron.common.zksnark.IncrementalMerkleTreeContainer;
 import org.tron.common.zksnark.IncrementalMerkleVoucherContainer;
-import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
@@ -68,7 +68,7 @@ public class ShieldedTransferActuatorTest extends BaseTest {
   private Wallet wallet;
 
   static {
-    Args.setParam(new String[]{"--output-directory", dbPath()}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath()}, TestConstants.TEST_CONF);
     ADDRESS_ONE_PRIVATE_KEY = PublicMethod.getRandomPrivateKey();
     PUBLIC_ADDRESS_ONE = PublicMethod.getHexAddressByPrivateKey(ADDRESS_ONE_PRIVATE_KEY);
 
@@ -1157,6 +1157,9 @@ public class ShieldedTransferActuatorTest extends BaseTest {
       actuator.validate();
       actuator.execute(ret);
       Assert.assertTrue(false);
+    } catch (ArithmeticException e) {
+      // StrictMathWrapper.subtractExact throws ArithmeticException on overflow
+      Assert.assertTrue(true);
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals("librustzcashSaplingFinalCheck error", e.getMessage());
@@ -1344,6 +1347,59 @@ public class ShieldedTransferActuatorTest extends BaseTest {
       Assert.assertTrue(false);
     } catch (Exception e) {
       Assert.assertTrue(false);
+    }
+  }
+
+  /**
+   * Test that shielded transfer transaction validation works even when
+   * allowShieldedTransactionApi is disabled. This verifies that the API flag
+   * only gates wallet/helper APIs, not the core transaction validation logic.
+   */
+  @Test
+  public void shieldedTransferValidationWorksWhenApiDisabled() {
+    boolean orig = Args.getInstance().isAllowShieldedTransactionApi();
+    // Disable the shielded API (this should NOT affect transaction validation)
+    Args.getInstance().setAllowShieldedTransactionApi(false);
+
+    dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
+    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(AMOUNT);
+
+    try {
+      ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
+      SpendingKey sk = SpendingKey.random();
+      ExpandedSpendingKey expsk = sk.expandedSpendingKey();
+      PaymentAddress address = sk.defaultAddress();
+      Note note = new Note(address, AMOUNT);
+      IncrementalMerkleVoucherContainer voucher = createSimpleMerkleVoucherContainer(note.cm());
+      byte[] anchor = voucher.root().getContent().toByteArray();
+      dbManager.getMerkleContainer()
+          .putMerkleTreeIntoStore(anchor, voucher.getVoucherCapsule().getTree());
+      builder.addSpend(expsk, note, anchor, voucher);
+
+      addZeroValueOutputNote(builder);
+
+      long fee = dbManager.getDynamicPropertiesStore().getShieldedTransactionCreateAccountFee();
+      String addressNotExist =
+          Wallet.getAddressPreFixString() + "8ba2aaae540c642e44e3bed5522c63bbc21f0000";
+
+      builder.setTransparentOutput(ByteArray.fromHexString(addressNotExist), AMOUNT - fee);
+
+      TransactionCapsule transactionCap = builder.build();
+      Contract contract =
+          transactionCap.getInstance().toBuilder().getRawDataBuilder().getContract(0);
+      ShieldedTransferActuator actuator = new ShieldedTransferActuator();
+      actuator.setChainBaseManager(dbManager.getChainBaseManager()).setContract(contract)
+          .setTx(transactionCap);
+
+      // Validation should succeed even when API is disabled
+      actuator.validate();
+    } catch (ContractValidateException e) {
+      Assert.fail("Shielded transfer validation should not throw ContractValidateException: "
+          + e.getMessage());
+    } catch (Exception e) {
+      Assert.fail("Shielded transfer should not throw Exception: " + e.getMessage());
+    } finally {
+      Args.getInstance().setAllowShieldedTransactionApi(orig);
     }
   }
 }

@@ -170,6 +170,7 @@ public class SolidityNodeHttpApiService extends HttpService {
     port = Args.getInstance().getSolidityHttpPort();
     enable = !isFullNode() && Args.getInstance().isSolidityNodeHttpEnable();
     contextPath = "/";
+    maxRequestSize = Args.getInstance().getHttpMaxMessageSize();
   }
 
   @Override

@@ -4,15 +4,17 @@ import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import javax.annotation.Resource;
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.BaseTest;
+import org.tron.common.TestConstants;
+import org.tron.common.es.ExecutorServiceManager;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.LogInfo;
 import org.tron.common.utils.ByteArray;
-import org.tron.core.Constant;
 import org.tron.core.capsule.TransactionRetCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.EventBloomException;
@@ -28,8 +30,20 @@ public class SectionBloomStoreTest extends BaseTest {
   @Resource
   SectionBloomStore sectionBloomStore;
 
+  private ExecutorService sectionExecutor;
+
   static {
-    Args.setParam(new String[] {"--output-directory", dbPath()}, Constant.TEST_CONF);
+    Args.setParam(new String[] {"--output-directory", dbPath()}, TestConstants.TEST_CONF);
+  }
+
+  @Before
+  public void setUp() {
+    sectionExecutor = ExecutorServiceManager.newFixedThreadPool("section-bloom-query", 5);
+  }
+
+  @After
+  public void tearDown() {
+    ExecutorServiceManager.shutdownAndAwaitTermination(sectionExecutor, "section-bloom-query");
   }
 
   @Test
@@ -126,7 +140,6 @@ public class SectionBloomStoreTest extends BaseTest {
     }
 
     long currentMaxBlockNum = 50000;
-    ExecutorService sectionExecutor = Executors.newFixedThreadPool(5);
 
     //query one address
     try {
@@ -236,6 +249,5 @@ public class SectionBloomStoreTest extends BaseTest {
       Assert.fail();
     }
 
-    sectionExecutor.shutdownNow();
   }
 }

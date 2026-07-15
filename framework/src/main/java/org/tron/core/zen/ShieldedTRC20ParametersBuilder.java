@@ -14,6 +14,7 @@ import org.bouncycastle.util.encoders.Hex;
 import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.BytesMessage;
 import org.tron.api.GrpcAPI.ShieldedTRC20Parameters;
+import org.tron.common.math.StrictMathWrapper;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Sha256Hash;
@@ -29,6 +30,7 @@ import org.tron.core.zen.address.ExpandedSpendingKey;
 import org.tron.core.zen.address.PaymentAddress;
 import org.tron.core.zen.note.Note;
 import org.tron.core.zen.note.NoteEncryption;
+import org.tron.core.zen.note.NoteEncryption.Encryption;
 import org.tron.core.zen.note.OutgoingPlaintext;
 import org.tron.protos.contract.ShieldContract;
 import org.tron.protos.contract.ShieldContract.ReceiveDescription;
@@ -60,7 +62,17 @@ public class ShieldedTRC20ParametersBuilder {
   @Setter
   private BigInteger transparentToAmount;
   @Setter
-  private byte[] burnCiphertext = new byte[80];
+  private byte[] ovk;
+  private byte[] burnCiphertext = new byte[Encryption.BURN_CIPHER_RECORD_SIZE];
+
+  public void setBurnCiphertext(byte[] burnCiphertext) {
+    if (burnCiphertext == null
+        || burnCiphertext.length != Encryption.BURN_CIPHER_RECORD_SIZE) {
+      throw new IllegalArgumentException(
+          "burnCiphertext must be " + Encryption.BURN_CIPHER_RECORD_SIZE + " bytes");
+    }
+    this.burnCiphertext = burnCiphertext.clone();
+  }
 
   public ShieldedTRC20ParametersBuilder() {
 
@@ -206,6 +218,9 @@ public class ShieldedTRC20ParametersBuilder {
 
   private void createSpendAuth(byte[] dataToBeSigned) throws ZksnarkException {
     for (int i = 0; i < spends.size(); i++) {
+      if (spends.get(i).expsk == null) {
+        throw new ZksnarkException("missing expanded spending key for spend authorization");
+      }
       byte[] result = new byte[64];
       JLibrustzcash.librustzcashSaplingSpendSig(
           new LibrustzcashParam.SpendSigParams(spends.get(i).expsk.getAsk(),
@@ -291,6 +306,25 @@ public class ShieldedTRC20ParametersBuilder {
           SpendDescriptionInfo spend = spends.get(0);
           spendDescription = generateSpendProof(spend, ctx).getInstance();
           builder.addSpendDescription(spendDescription);
+
+          if (ovk == null && spend.expsk != null) {
+            ovk = spend.expsk.getOvk();
+          }
+          if (ovk == null) {
+            throw new ZksnarkException("missing ovk for burn encryption");
+          }
+          byte[] nf = spendDescription.getNullifier().toByteArray();
+          byte[] transparentToAddressTvm = normalizeTransparentToAddress(transparentToAddress);
+          byte[] addr21 = new byte[21];
+          addr21[0] = Wallet.getAddressPreFixByte();
+          System.arraycopy(transparentToAddressTvm, 0, addr21, 1, 20);
+          Optional<byte[]> cipherOpt = Encryption.encryptBurnMessageByOvk(
+              ovk, transparentToAmount, addr21, nf);
+          if (!cipherOpt.isPresent()) {
+            throw new ZksnarkException("encrypt burn message failed");
+          }
+          burnCiphertext = cipherOpt.get();
+
           mergedBytes = ByteUtil.merge(shieldedTRC20Address,
               encodeSpendDescriptionWithoutSpendAuthSig(spendDescription));
           if (receives.size() == 1) {
@@ -301,7 +335,7 @@ public class ShieldedTRC20ParametersBuilder {
                     encodeCencCout(receiveDescription));
           }
           mergedBytes = ByteUtil
-              .merge(mergedBytes, transparentToAddress, ByteArray.fromLong(valueBalance));
+              .merge(mergedBytes, transparentToAddressTvm, ByteArray.fromLong(valueBalance));
           value = transparentToAmount;
           builder.setParameterType("burn");
           break;
@@ -475,12 +509,10 @@ public class ShieldedTRC20ParametersBuilder {
       throw new IllegalArgumentException("the value must be positive");
     }
 
-    if (ArrayUtils.isEmpty(transparentToAddress)) {
-      throw new IllegalArgumentException("the transparent payTo address is null");
-    }
+    byte[] transparentToAddressTvm = normalizeTransparentToAddress(transparentToAddress);
 
     payTo[11] = Wallet.getAddressPreFixByte();
-    System.arraycopy(transparentToAddress, 0, payTo, 12, 20);
+    System.arraycopy(transparentToAddressTvm, 0, payTo, 12, 20);
     ShieldContract.SpendDescription spendDesc = burnParams.getSpendDescription(0);
 
     byte[] spendAuthSign;
@@ -491,7 +523,6 @@ public class ShieldedTRC20ParametersBuilder {
     }
 
     byte[] mergedBytes;
-    byte[] zeros = new byte[16];
     mergedBytes = ByteUtil.merge(
         spendDesc.getNullifier().toByteArray(),
         spendDesc.getAnchor().toByteArray(),
@@ -502,8 +533,7 @@ public class ShieldedTRC20ParametersBuilder {
         ByteUtil.bigIntegerToBytes(value, 32),
         burnParams.getBindingSignature().toByteArray(),
         payTo,
-        burnCiphertext,
-        zeros
+        burnCiphertext
     );
 
     byte[] outputOffsetBytes; // 32
@@ -523,7 +553,7 @@ public class ShieldedTRC20ParametersBuilder {
       coffsetBytes = ByteUtil.longTo32Bytes(mergedBytes.length + 32 * 3 + 32L * 9);
       countBytes = ByteUtil.longTo32Bytes(1L);
       ReceiveDescription recvDesc = burnParams.getReceiveDescription(0);
-      zeros = new byte[12];
+      byte[] zeros = new byte[12];
       mergedBytes = ByteUtil
           .merge(mergedBytes,
               outputOffsetBytes,
@@ -541,14 +571,26 @@ public class ShieldedTRC20ParametersBuilder {
     return Hex.toHexString(mergedBytes);
   }
 
+  private byte[] normalizeTransparentToAddress(byte[] transparentToAddress) {
+    if (transparentToAddress != null && transparentToAddress.length == 20) {
+      return transparentToAddress;
+    }
+    if (transparentToAddress != null && transparentToAddress.length == 21) {
+      byte[] transparentToAddressTvm = new byte[20];
+      System.arraycopy(transparentToAddress, 1, transparentToAddressTvm, 0, 20);
+      return transparentToAddressTvm;
+    }
+    throw new IllegalArgumentException("invalid transparentToAddress for burn encryption");
+  }
+
   public void addSpend(
       ExpandedSpendingKey expsk,
       Note note,
       byte[] anchor,
       byte[] path,
       long position) throws ZksnarkException {
+    valueBalance = StrictMathWrapper.addExact(valueBalance, note.getValue());
     spends.add(new SpendDescriptionInfo(expsk, note, anchor, path, position));
-    valueBalance += note.getValue();
   }
 
   public void addSpend(
@@ -558,8 +600,8 @@ public class ShieldedTRC20ParametersBuilder {
       byte[] anchor,
       byte[] path,
       long position) {
+    valueBalance = StrictMathWrapper.addExact(valueBalance, note.getValue());
     spends.add(new SpendDescriptionInfo(expsk, note, alpha, anchor, path, position));
-    valueBalance += note.getValue();
   }
 
   public void addSpend(
@@ -570,23 +612,23 @@ public class ShieldedTRC20ParametersBuilder {
       byte[] anchor,
       byte[] path,
       long position) {
+    valueBalance = StrictMathWrapper.addExact(valueBalance, note.getValue());
     spends.add(new SpendDescriptionInfo(ak, nsk, note, alpha, anchor, path, position));
-    valueBalance += note.getValue();
   }
 
   public void addOutput(byte[] ovk, PaymentAddress to, long value, byte[] memo)
       throws ZksnarkException {
     Note note = new Note(to, value);
     note.setMemo(memo);
+    valueBalance = StrictMathWrapper.subtractExact(valueBalance, value);
     receives.add(new ReceiveDescriptionInfo(ovk, note));
-    valueBalance -= value;
   }
 
   public void addOutput(byte[] ovk, DiversifierT d, byte[] pkD, long value, byte[] r, byte[] memo) {
     Note note = new Note(d, pkD, value, r);
     note.setMemo(memo);
+    valueBalance = StrictMathWrapper.subtractExact(valueBalance, value);
     receives.add(new ReceiveDescriptionInfo(ovk, note));
-    valueBalance -= value;
   }
 
   public static class SpendDescriptionInfo {

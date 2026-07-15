@@ -54,7 +54,6 @@ import org.tron.protos.Protocol.MarketOrderDetail;
 import org.tron.protos.Protocol.MarketPrice;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
-import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 import org.tron.protos.contract.MarketContract.MarketSellAssetContract;
 
 @Slf4j(topic = "actuator")
@@ -283,7 +282,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
 
   @Override
   public ByteString getOwnerAddress() throws InvalidProtocolBufferException {
-    return any.unpack(AssetIssueContract.class).getOwnerAddress();
+    return any.unpack(MarketSellAssetContract.class).getOwnerAddress();
   }
 
   @Override

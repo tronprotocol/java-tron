@@ -31,12 +31,12 @@ import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.slf4j.LoggerFactory;
+import org.tron.common.TestConstants;
 import org.tron.common.arch.Arch;
 import org.tron.common.log.LogService;
 import org.tron.common.parameter.RateLimiterInitialization;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.common.zksnark.JLibrustzcash;
-import org.tron.core.Constant;
 import org.tron.core.config.args.Args;
 import org.tron.core.services.http.GetBlockServlet;
 import org.tron.core.services.http.RateLimiterServlet;
@@ -93,7 +93,14 @@ public class TronErrorTest {
     LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
 
     try {
-      LogService.load("non-existent.xml");
+      // Empty path means no --log-config supplied: keep the classpath default.
+      LogService.load("");
+      // Non-empty path pointing at a missing file must fail fast so operators
+      // don't silently run with the classpath default.
+      TronError missing = assertThrows(TronError.class,
+          () -> LogService.load("non-existent.xml"));
+      assertEquals(TronError.ErrCode.LOG_LOAD, missing.getErrCode());
+      // Non-empty path pointing at an unparseable file must also surface.
       Path path = temporaryFolder.newFile("logback.xml").toPath();
       TronError thrown = assertThrows(TronError.class, () -> LogService.load(path.toString()));
       assertEquals(TronError.ErrCode.LOG_LOAD, thrown.getErrCode());
@@ -111,14 +118,14 @@ public class TronErrorTest {
   @Test
   public void witnessInitTest() {
     TronError thrown = assertThrows(TronError.class, () -> {
-      Args.setParam(new String[]{"--witness"}, Constant.TEST_CONF);
+      Args.setParam(new String[]{"--witness"}, TestConstants.TEST_CONF);
     });
     assertEquals(TronError.ErrCode.WITNESS_INIT, thrown.getErrCode());
   }
 
   @Test
   public void rateLimiterServletInitTest() {
-    Args.setParam(new String[]{}, Constant.TEST_CONF);
+    Args.setParam(new String[]{}, TestConstants.TEST_CONF);
     RateLimiterInitialization rateLimiter = new RateLimiterInitialization();
     Args.getInstance().setRateLimiterInitialization(rateLimiter);
     Map<String, String> item = new HashMap<>();
@@ -137,11 +144,12 @@ public class TronErrorTest {
   @Test
   public void shutdownBlockTimeInitTest() {
     Map<String, String> params = new HashMap<>();
-    params.put(Constant.NODE_SHUTDOWN_BLOCK_TIME, "0");
+    params.put("node.shutdown.BlockTime", "0");
     params.put("storage.db.directory", "database");
-    Config config = ConfigFactory.defaultOverrides().withFallback(
-        ConfigFactory.parseMap(params));
-    TronError thrown = assertThrows(TronError.class, () -> Args.setParam(config));
+    Config config = ConfigFactory.defaultOverrides()
+        .withFallback(ConfigFactory.parseMap(params))
+        .withFallback(ConfigFactory.defaultReference());
+    TronError thrown = assertThrows(TronError.class, () -> Args.applyConfigParams(config));
     assertEquals(TronError.ErrCode.AUTO_STOP_PARAMS, thrown.getErrCode());
   }
 
@@ -177,15 +185,16 @@ public class TronErrorTest {
       mocked.when(Arch::throwIfUnsupportedJavaVersion).thenCallRealMethod();
 
       if (expectThrow) {
-        TronError err = assertThrows(
-            TronError.class, () -> Args.setParam(new String[]{}, Constant.TEST_CONF));
+        UnsupportedOperationException err = assertThrows(
+            UnsupportedOperationException.class,
+            Arch::throwIfUnsupportedJavaVersion);
 
         String expectedJavaVersion = isX86 ? "1.8" : "17";
         String expectedMessage = String.format(
-            "Java %s is required for %s architecture. Detected version %s",
+            "Java %s is required for %s architecture."
+                + " Detected version %s",
             expectedJavaVersion, osArch, javaVersion);
-        assertEquals(expectedMessage, err.getCause().getMessage());
-        assertEquals(TronError.ErrCode.JDK_VERSION, err.getErrCode());
+        assertEquals(expectedMessage, err.getMessage());
         mocked.verify(Arch::withAll, times(1));
       } else {
         try {

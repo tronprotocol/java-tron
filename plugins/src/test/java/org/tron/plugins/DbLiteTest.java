@@ -1,21 +1,24 @@
 package org.tron.plugins;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.tron.common.utils.PublicMethod.getRandomPrivateKey;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Rule;
 import org.junit.rules.TemporaryFolder;
 import org.tron.api.WalletGrpc;
+import org.tron.common.TestConstants;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
-import org.tron.common.config.DbBackupConfig;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.PublicMethod;
@@ -44,6 +47,7 @@ public class DbLiteTest {
    * init logic.
    */
   public void startApp() {
+    Args.getInstance().setRpcPort(PublicMethod.chooseRandomPort());
     context = new TronApplicationContext(DefaultConfig.class);
     appTest = ApplicationFactory.create(context);
     appTest.startup();
@@ -67,18 +71,17 @@ public class DbLiteTest {
     context.close();
   }
 
-  public void init(String dbType) throws IOException {
+  public void init(String dbType, boolean historyBalanceLookup) throws IOException {
     dbPath = folder.newFolder().toString();
     Args.setParam(new String[] {
         "-d", dbPath, "-w", "--p2p-disable", "true", "--storage-db-engine", dbType},
-        "config-localtest.conf");
+        TestConstants.SHIELD_CONF);
     // allow account root
     Args.getInstance().setAllowAccountStateRoot(1);
     Args.getInstance().setRpcPort(PublicMethod.chooseRandomPort());
     Args.getInstance().setRpcEnable(true);
+    Args.getInstance().setHistoryBalanceLookup(historyBalanceLookup);
     databaseDir = Args.getInstance().getStorage().getDbDirectory();
-    // init dbBackupConfig to avoid NPE
-    Args.getInstance().dbBackupConfig = DbBackupConfig.getInstance();
   }
 
   @After
@@ -88,11 +91,20 @@ public class DbLiteTest {
 
   public void testTools(String dbType, int checkpointVersion)
       throws InterruptedException, IOException {
-    logger.info("dbType {}, checkpointVersion {}", dbType, checkpointVersion);
-    dbPath = String.format("%s_%s_%d", dbPath, dbType, System.currentTimeMillis());
-    init(dbType);
-    final String[] argsForSnapshot =
-        new String[] {"-o", "split", "-t", "snapshot", "--fn-data-path",
+    testTools(dbType, checkpointVersion, false);
+  }
+
+  public void testTools(String dbType, int checkpointVersion, boolean excludeHistoricalBalance)
+      throws InterruptedException, IOException {
+    logger.info("dbType {}, checkpointVersion {}, excludeHistoricalBalance {}",
+        dbType, checkpointVersion, excludeHistoricalBalance);
+    boolean historyBalanceLookup = excludeHistoricalBalance;
+    init(dbType, historyBalanceLookup);
+    final String[] argsForSnapshot = excludeHistoricalBalance
+        ? new String[] {"-o", "split", "-t", "snapshot", "--fn-data-path",
+            dbPath + File.separator + databaseDir, "--dataset-path",
+            dbPath, "--exclude-historical-balance"}
+        : new String[] {"-o", "split", "-t", "snapshot", "--fn-data-path",
             dbPath + File.separator + databaseDir, "--dataset-path",
             dbPath};
     final String[] argsForHistory =
@@ -114,6 +126,16 @@ public class DbLiteTest {
     FileUtil.deleteDir(Paths.get(dbPath, databaseDir, "trans-cache").toFile());
     // generate snapshot
     cli.execute(argsForSnapshot);
+    Path snapshotDir = Paths.get(dbPath, "snapshot");
+    if (excludeHistoricalBalance) {
+      // when --exclude-historical-balance=true, the lite snapshot must not ship
+      // balance-trace / account-trace
+      assertFalse(snapshotDir.resolve("balance-trace").toFile().exists());
+      assertFalse(snapshotDir.resolve("account-trace").toFile().exists());
+    } else {
+      assertTrue(snapshotDir.resolve("balance-trace").toFile().exists());
+      assertTrue(snapshotDir.resolve("account-trace").toFile().exists());
+    }
     // start fullNode
     startApp();
     // produce transactions
@@ -165,7 +187,8 @@ public class DbLiteTest {
       try {
         Thread.sleep(sleepOnce);
       } catch (InterruptedException e) {
-        e.printStackTrace();
+        Thread.currentThread().interrupt();
+        return;
       }
       if ((runTime += sleepOnce) > during) {
         return;

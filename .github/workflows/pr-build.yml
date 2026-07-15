@@ -43,7 +43,7 @@ jobs:
           distribution: 'temurin'
 
       - name: Cache Gradle packages
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             ~/.gradle/caches
@@ -61,6 +61,7 @@ jobs:
           java -jar "$JAR" help
           java -jar "$JAR" db --help
           java -jar "$JAR" db archive -h
+          java -jar "$JAR" keystore --help
 
   build-ubuntu:
     name: Build ubuntu24 (JDK 17 / aarch64)
@@ -81,7 +82,7 @@ jobs:
         run: java -version
 
       - name: Cache Gradle packages
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             ~/.gradle/caches
@@ -99,6 +100,7 @@ jobs:
           java -jar "$JAR" help
           java -jar "$JAR" db --help
           java -jar "$JAR" db archive -h
+          java -jar "$JAR" keystore --help
 
   docker-build-rockylinux:
     name: Build rockylinux (JDK 8 / x86_64)
@@ -115,20 +117,20 @@ jobs:
       LC_ALL: en_US.UTF-8
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v5
-
       - name: Install dependencies (Rocky 8 + JDK8)
         run: |
           set -euxo pipefail
           dnf -y install java-1.8.0-openjdk-devel git wget unzip which jq bc curl glibc-langpack-en
           dnf -y groupinstall "Development Tools"
 
+      - name: Checkout code
+        uses: actions/checkout@v5
+
       - name: Check Java version
         run: java -version
 
       - name: Cache Gradle
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             /github/home/.gradle/caches
@@ -150,7 +152,10 @@ jobs:
           java -jar "$JAR" help
           java -jar "$JAR" db --help
           java -jar "$JAR" db archive -h
+          java -jar "$JAR" keystore --help
 
+      - name: Test with RocksDB engine
+        run: ./gradlew :framework:testWithRocksDb --no-daemon
 
   docker-build-debian11:
     name: Build debian11 (JDK 8 / x86_64)
@@ -169,20 +174,20 @@ jobs:
       GRADLE_USER_HOME: /github/home/.gradle
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v5
-
       - name: Install dependencies (Debian + build tools)
         run: |
           set -euxo pipefail
           apt-get update
           apt-get install -y git wget unzip build-essential curl jq
 
+      - name: Checkout code
+        uses: actions/checkout@v5
+
       - name: Check Java version
         run: java -version
 
       - name: Cache Gradle
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             /github/home/.gradle/caches
@@ -201,7 +206,10 @@ jobs:
           java -jar "$JAR" help
           java -jar "$JAR" db --help
           java -jar "$JAR" db archive -h
+          java -jar "$JAR" keystore --help
 
+      - name: Test with RocksDB engine
+        run: ./gradlew :framework:testWithRocksDb --no-daemon --no-build-cache
 
       - name: Generate module coverage reports
         run: ./gradlew jacocoTestReport --no-daemon
@@ -230,19 +238,19 @@ jobs:
       contents: read
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v5
-        with:
-          ref: ${{ github.event.pull_request.base.sha }}
-
       - name: Install dependencies (Debian + build tools)
         run: |
           set -euxo pipefail
           apt-get update
           apt-get install -y git wget unzip build-essential curl jq
 
+      - name: Checkout code
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+
       - name: Cache Gradle packages
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             /github/home/.gradle/caches
@@ -252,7 +260,16 @@ jobs:
             coverage-base-x86_64-gradle-
 
       - name: Build (base)
+        # Test failures on the base branch are tolerated: merge-order races can
+        # leave the base with a pre-existing failing test that is unrelated to
+        # this PR.  The only output we need from this job is the jacoco XML for
+        # coverage diffing, so we must not let a stale test failure block it.
+        continue-on-error: true
         run: ./gradlew clean build --no-daemon --no-build-cache
+
+      - name: Test with RocksDB engine (base)
+        continue-on-error: true
+        run: ./gradlew :framework:testWithRocksDb --no-daemon --no-build-cache
 
       - name: Generate module coverage reports (base)
         run: ./gradlew jacocoTestReport --no-daemon
@@ -263,7 +280,7 @@ jobs:
           name: jacoco-coverage-base
           path: |
             **/build/reports/jacoco/test/jacocoTestReport.xml
-          if-no-files-found: error
+          if-no-files-found: warn
 
   coverage-gate:
     name: Coverage Gate

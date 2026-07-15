@@ -21,7 +21,6 @@ Actuator 模块抽象出4个方法并定义在 `Actuator` 接口中：
 syntax = "proto3";
 package protocol;
 option java_package = "org.tron.protos.contract"; //Specify the name of the package that generated the Java file
-option go_package = "github.com/tronprotocol/grpc-gateway/core";
 message SumContract {
     int64 param1 = 1;
     int64 param2 = 2;
@@ -38,37 +37,34 @@ message Transaction {
       AccountCreateContract = 0;
       TransferContract = 1;
       ........
-      SumContract = 52;  
+      SumContract = 60;  
     }
   ...
 }
 ```
 
-然后还需要注册一个方法来保证 gRPC 能够接收并识别该类型合约的请求，目前 gRPC 协议统一定义在 src/main/protos/api/api.proto，在 api.proto 中的 Wallet Service 新增 `InvokeSum` 接口：
+然后还需要注册一个方法来保证 gRPC 能够接收并识别该类型合约的请求，目前 gRPC 协议统一定义在 src/main/protos/api/api.proto。首先在 `api.proto` 顶部添加对新 proto 文件的 import：
+
+```protobuf
+import "core/contract/math_contract.proto";
+```
+
+然后在 Wallet service 中新增 `InvokeSum` 接口：
 
 ```protobuf
 service Wallet {
   rpc InvokeSum (SumContract) returns (Transaction) {
-    option (google.api.http) = {
-      post: "/wallet/invokesum"
-      body: "*"
-      additional_bindings {
-        get: "/wallet/invokesum"
-      }
-    };
   };
   ...
 };
 ```
 最后重新编译修改过 proto 文件，可自行编译也可直接通过编译 java-tron 项目来编译 proto 文件：
 
-*目前 java-tron 采用的是 protoc v3.4.0，自行编译时确保 protoc 版本一致。*
-
 ```shell
-# recommended
+# 推荐方式 —— 直接编译项目，proto 文件会自动重新编译
 ./gradlew build -x test
 
-# or build via protoc
+# 或者手动使用 protoc（版本需与 build.gradle 中声明的一致）
 protoc -I=src/main/protos -I=src/main/protos/core --java_out=src/main/java  Tron.proto
 protoc -I=src/main/protos/core/contract --java_out=src/main/java  math_contract.proto
 protoc -I=src/main/protos/api -I=src/main/protos/core -I=src/main/protos  --java_out=src/main/java api.proto
@@ -80,7 +76,11 @@ protoc -I=src/main/protos/api -I=src/main/protos/core -I=src/main/protos  --java
 
 目前 java-tron 默认支持的 Actuator 存放在该模块的 org.tron.core.actuator 目录下，同样在该目录下创建 `SumActuator` ：
 
+> **注意**：Actuator 必须放在 `org.tron.core.actuator` 包下。节点启动时，`TransactionRegister.registerActuator()` 会通过反射扫描该包，自动发现所有 `AbstractActuator` 的子类，并各实例化一次（触发 `super()` 构造器，进而调用 `TransactionFactory.register()`）。因此无需手动编写注册代码。
+
 ```java
+import static org.tron.core.config.Parameter.ChainConstant.TRANSFER_FEE;
+
 public class SumActuator extends AbstractActuator {
 
   public SumActuator() {
@@ -212,53 +212,52 @@ public class WalletApi extends WalletImplBase {
 ```java
 public class SumActuatorTest {
   private static final Logger logger = LoggerFactory.getLogger("Test");
-  private String serviceNode = "127.0.0.1:50051";
-  private String confFile = "config-localtest.conf";
-  private String dbPath = "output-directory";
-  private TronApplicationContext context;
-  private Application appTest;
-  private ManagedChannel channelFull = null;
-  private WalletGrpc.WalletBlockingStub blockingStubFull = null;
+  private static final String SERVICE_NODE = "127.0.0.1:50051";
+
+  @ClassRule
+  public static TemporaryFolder temporaryFolder = new TemporaryFolder();
+
+  @Rule
+  public Timeout timeout = new Timeout(30, TimeUnit.SECONDS);
+
+  private static TronApplicationContext context;
+  private static Application appTest;
+  private static ManagedChannel channelFull;
+  private static WalletGrpc.WalletBlockingStub blockingStubFull;
 
   /**
-   * init the application.
+   * 整个测试类只初始化一次应用上下文。
    */
-  @Before
-  public void init() {
-    CommonParameter argsTest = Args.getInstance();
-    Args.setParam(new String[]{"--output-directory", dbPath},
-            confFile);
+  @BeforeClass
+  public static void init() throws IOException {
+    Args.setParam(new String[]{"--output-directory",
+            temporaryFolder.newFolder().toString()}, "config-test.conf");
     context = new TronApplicationContext(DefaultConfig.class);
-    RpcApiService rpcApiService = context.getBean(RpcApiService.class);
     appTest = ApplicationFactory.create(context);
-    appTest.addService(rpcApiService);
-    appTest.initServices(argsTest);
-    appTest.startServices();
     appTest.startup();
-    channelFull = ManagedChannelBuilder.forTarget(serviceNode)
+    channelFull = ManagedChannelBuilder.forTarget(SERVICE_NODE)
             .usePlaintext()
             .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
   }
 
   /**
-   * destroy the context.
+   * 所有测试结束后统一销毁上下文。
    */
-  @After
-  public void destroy() throws InterruptedException {
+  @AfterClass
+  public static void destroy() throws InterruptedException {
     if (channelFull != null) {
-      channelFull.shutdown().awaitTermination(5, TimeUnit.SECONDS);
+      channelFull.shutdown();
+      channelFull.awaitTermination(5, TimeUnit.SECONDS);
     }
-    Args.clearParam();
-    appTest.shutdownServices();
     appTest.shutdown();
     context.destroy();
-    FileUtil.deleteDir(new File(dbPath));
+    Args.clearParam();
   }
 
   @Test
   public void sumActuatorTest() {
-    // this key is defined in config-localtest.conf as accountName=Sun
+    // this key is defined in config-test.conf as accountName=Sun
     String key = "<your_private_key>";
     byte[] address = PublicMethed.getFinalAddress(key);
     ECKey ecKey = null;

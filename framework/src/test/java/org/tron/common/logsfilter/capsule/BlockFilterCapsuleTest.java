@@ -22,7 +22,6 @@ public class BlockFilterCapsuleTest {
   public void testSetAndGetBlockHash() {
     blockFilterCapsule
         .setBlockHash("e58f33f9baf9305dc6f82b9f1934ea8f0ade2defb951258d50167028c780351f");
-    System.out.println(blockFilterCapsule);
     Assert.assertEquals("e58f33f9baf9305dc6f82b9f1934ea8f0ade2defb951258d50167028c780351f",
         blockFilterCapsule.getBlockHash());
   }
@@ -32,7 +31,6 @@ public class BlockFilterCapsuleTest {
     blockFilterCapsule = new BlockFilterCapsule(
         "e58f33f9baf9305dc6f82b9f1934ea8f0ade2defb951258d50167028c780351f", false);
     blockFilterCapsule.setSolidified(true);
-    blockFilterCapsule.processFilterTrigger();
     Assert.assertTrue(blockFilterCapsule.isSolidified());
   }
 }

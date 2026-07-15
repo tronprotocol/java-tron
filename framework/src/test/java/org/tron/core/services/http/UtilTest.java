@@ -8,14 +8,16 @@ import org.junit.Test;
 import org.tron.api.GrpcAPI.TransactionApprovedList;
 import org.tron.api.GrpcAPI.TransactionSignWeight;
 import org.tron.common.BaseTest;
+import org.tron.common.TestConstants;
 import org.tron.common.utils.ByteArray;
-import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.utils.TransactionUtil;
+import org.tron.json.JSONObject;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Transaction;
+import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
 
 public class UtilTest extends BaseTest {
 
@@ -28,7 +30,7 @@ public class UtilTest extends BaseTest {
 
   static {
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "c076305e35aea1fe45a772fcaaab8a36e87bdb55";
-    Args.setParam(new String[] {"-d", dbPath()}, Constant.TEST_CONF);
+    Args.setParam(new String[] {"-d", dbPath()}, TestConstants.TEST_CONF);
   }
 
   @Before
@@ -130,6 +132,29 @@ public class UtilTest extends BaseTest {
   }
 
   @Test
+  public void testCheckBodySizeUsesHttpLimit() throws Exception {
+    long originalHttpMax = Args.getInstance().getHttpMaxMessageSize();
+    int originalRpcMax = Args.getInstance().getMaxMessageSize();
+    try {
+      // set httpMaxMessageSize larger than maxMessageSize
+      Args.getInstance().setHttpMaxMessageSize(200);
+      Args.getInstance().setMaxMessageSize(100);
+
+      String withinHttpLimit = new String(new char[150]).replace('\0', 'a');
+      // should pass: 150 < httpMaxMessageSize(200), even though > maxMessageSize(100)
+      Util.checkBodySize(withinHttpLimit);
+
+      String exceedsHttpLimit = new String(new char[201]).replace('\0', 'b');
+      Exception e = Assert.assertThrows(Exception.class,
+          () -> Util.checkBodySize(exceedsHttpLimit));
+      Assert.assertTrue(e.getMessage().contains("200"));
+    } finally {
+      Args.getInstance().setHttpMaxMessageSize(originalHttpMax);
+      Args.getInstance().setMaxMessageSize(originalRpcMax);
+    }
+  }
+
+  @Test
   public void testPackTransaction() {
     String strTransaction = "{\n"
         + "    \"visible\": false,\n"
@@ -165,5 +190,115 @@ public class UtilTest extends BaseTest {
     Transaction transaction = Util.packTransaction(strTransaction, false);
     TransactionSignWeight txSignWeight = transactionUtil.getTransactionSignWeight(transaction);
     Assert.assertNotNull(txSignWeight);
+  }
+
+  @Test
+  public void testPackCreateSmartContractOmitsNullAbiOutputs() throws Exception {
+    String strTransaction = "{\n"
+        + "    \"visible\": false,\n"
+        + "    \"raw_data\": {\n"
+        + "        \"contract\": [\n"
+        + "            {\n"
+        + "                \"parameter\": {\n"
+        + "                    \"value\": {\n"
+        + "                      \"owner_address\":\"41c076305e35aea1fe45a772fcaaab8a36e87bdb55\","
+        + "                      \"new_contract\": {\n"
+        + "                        \"origin_address\":"
+        + " \"41c076305e35aea1fe45a772fcaaab8a36e87bdb55\","
+        + "                        \"name\":\"TestContract\","
+        + "                        \"abi\": {\n"
+        + "                          \"entrys\": [\n"
+        + "                            {\"inputs\":[],\"name\":\"test\","
+        + " \"outputs\":null,\"type\":\"function\"}\n"
+        + "                          ]\n"
+        + "                        }\n"
+        + "                      }\n"
+        + "                    },\n"
+        + "                    \"type_url\":"
+        + " \"type.googleapis.com/protocol.CreateSmartContract\"\n"
+        + "                },\n"
+        + "                \"type\": \"CreateSmartContract\"\n"
+        + "            }\n"
+        + "        ],\n"
+        + "        \"ref_block_bytes\": \"d8ed\",\n"
+        + "        \"ref_block_hash\": \"2e066c3259e756f5\",\n"
+        + "        \"expiration\": 1651906644000,\n"
+        + "        \"timestamp\": 1651906586162\n"
+        + "    }\n"
+        + "}";
+
+    Transaction transaction = Util.packTransaction(strTransaction, false);
+    Assert.assertNotNull(transaction);
+    Assert.assertEquals(1, transaction.getRawData().getContractCount());
+    CreateSmartContract contract = transaction.getRawData().getContract(0)
+        .getParameter().unpack(CreateSmartContract.class);
+    Assert.assertEquals(1, contract.getNewContract().getAbi().getEntrysCount());
+    Assert.assertEquals(0, contract.getNewContract().getAbi().getEntrys(0).getOutputsCount());
+  }
+
+  private Transaction buildTooManySigsTransaction() {
+    String strTransaction = "{\n"
+        + "    \"visible\": false,\n"
+        + "    \"txID\": \"fc33817936b06e50d4b6f1797e62f52d69af6c0da580a607241a9c03a48e390e\",\n"
+        + "    \"raw_data\": {\n"
+        + "        \"contract\": [\n"
+        + "            {\n"
+        + "                \"parameter\": {\n"
+        + "                    \"value\": {\n"
+        + "                      \"amount\": 10,\n"
+        + "                      \"owner_address\":\"41c076305e35aea1fe45a772fcaaab8a36e87bdb55\","
+        + "                      \"to_address\": \"415624c12e308b03a1a6b21d9b86e3942fac1ab92b\"\n"
+        + "                    },\n"
+        + "                    \"type_url\": \"type.googleapis.com/protocol.TransferContract\"\n"
+        + "                },\n"
+        + "                \"type\": \"TransferContract\"\n"
+        + "            }\n"
+        + "        ],\n"
+        + "        \"ref_block_bytes\": \"d8ed\",\n"
+        + "        \"ref_block_hash\": \"2e066c3259e756f5\",\n"
+        + "        \"expiration\": 1651906644000,\n"
+        + "        \"timestamp\": 1651906586162\n"
+        + "    },\n"
+        + "    \"raw_data_hex\": \"0a02d8ed22082e066c3259e756f540a090bcea89305a65080112610a2d747970"
+        + "652e676f6f676c65617069732e636f6d2f70726f746f636f6c2e5472616e73666572436f6e74726163741230"
+        + "0a1541c076305e35aea1fe45a772fcaaab8a36e87bdb551215415624c12e308b03a1a6b21d9b86e3942fac1a"
+        + "b92b180a70b2ccb8ea8930\"\n"
+        + "}";
+    Transaction transaction = Util.packTransaction(strTransaction, false);
+    int totalSignNum = dbManager.getDynamicPropertiesStore().getTotalSignNum();
+    ByteString dummySig = ByteString.copyFrom(new byte[65]);
+    Transaction.Builder builder = transaction.toBuilder();
+    for (int i = 0; i < totalSignNum + 1; i++) {
+      builder.addSignature(dummySig);
+    }
+    return builder.build();
+  }
+
+  @Test
+  public void testPrintApprovedListTooManySigsHttpPath() {
+    Transaction transaction = buildTooManySigsTransaction();
+    TransactionApprovedList reply = wallet.getTransactionApprovedList(transaction);
+    Assert.assertEquals(TransactionApprovedList.Result.response_code.OTHER_ERROR,
+        reply.getResult().getCode());
+    // The early-return reply has no transaction; the HTTP print helper must not throw.
+    String json = Util.printTransactionApprovedList(reply, false);
+    JSONObject jsonObject = JSONObject.parseObject(json);
+    Assert.assertNull(jsonObject.getJSONObject("transaction"));
+    Assert.assertTrue(jsonObject.getJSONObject("result").getString("message")
+        .contains("too many signatures"));
+  }
+
+  @Test
+  public void testPrintSignWeightTooManySigsHttpPath() {
+    Transaction transaction = buildTooManySigsTransaction();
+    TransactionSignWeight reply = transactionUtil.getTransactionSignWeight(transaction);
+    Assert.assertEquals(TransactionSignWeight.Result.response_code.OTHER_ERROR,
+        reply.getResult().getCode());
+    // The early-return reply has no transaction; the HTTP print helper must not throw.
+    String json = Util.printTransactionSignWeight(reply, false);
+    JSONObject jsonObject = JSONObject.parseObject(json);
+    Assert.assertNull(jsonObject.getJSONObject("transaction"));
+    Assert.assertTrue(jsonObject.getJSONObject("result").getString("message")
+        .contains("too many signatures"));
   }
 }

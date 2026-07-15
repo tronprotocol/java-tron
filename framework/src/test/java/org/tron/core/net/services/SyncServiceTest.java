@@ -9,67 +9,49 @@ import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Map;
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 import org.mockito.Mockito;
 import org.springframework.context.ApplicationContext;
-import org.tron.common.application.TronApplicationContext;
+import org.tron.common.BaseMethodTest;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.common.utils.Sha256Hash;
-import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule;
-import org.tron.core.config.DefaultConfig;
-import org.tron.core.config.args.Args;
 import org.tron.core.net.P2pEventHandlerImpl;
 import org.tron.core.net.message.adv.BlockMessage;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.PeerManager;
 import org.tron.core.net.peer.TronState;
 import org.tron.core.net.service.sync.SyncService;
+import org.tron.core.net.service.sync.UnparsedBlock;
 import org.tron.p2p.connection.Channel;
 import org.tron.protos.Protocol;
 
-public class SyncServiceTest {
-  protected TronApplicationContext context;
+public class SyncServiceTest extends BaseMethodTest {
   private SyncService service;
   private PeerConnection peer;
   private P2pEventHandlerImpl p2pEventHandler;
   private ApplicationContext ctx;
-  @Rule
-  public TemporaryFolder temporaryFolder = new TemporaryFolder();
   private InetSocketAddress inetSocketAddress =
           new InetSocketAddress("127.0.0.2", 10001);
 
-  public SyncServiceTest() {
+  @Override
+  protected String[] extraArgs() {
+    return new String[]{"--debug"};
   }
 
-  /**
-   * init context.
-   */
-  @Before
-  public void init() throws Exception {
-    Args.setParam(new String[]{"--output-directory",
-            temporaryFolder.newFolder().toString(), "--debug"}, Constant.TEST_CONF);
-    context = new TronApplicationContext(DefaultConfig.class);
+  @Override
+  protected void afterInit() {
     service = context.getBean(SyncService.class);
     p2pEventHandler = context.getBean(P2pEventHandlerImpl.class);
     ctx = (ApplicationContext) ReflectUtils.getFieldObject(p2pEventHandler, "ctx");
   }
 
-  /**
-   * destroy.
-   */
-  @After
-  public void destroy() {
+  @Override
+  protected void beforeDestroy() {
     for (PeerConnection p : PeerManager.getPeers()) {
       PeerManager.remove(p.getChannel());
     }
-    Args.clearParam();
-    context.destroy();
   }
 
   @Test
@@ -117,12 +99,22 @@ public class SyncServiceTest {
     ReflectUtils.setFieldValue(c1, "inetSocketAddress", inetSocketAddress);
     ReflectUtils.setFieldValue(c1, "inetAddress", inetSocketAddress.getAddress());
     peer.setChannel(c1);
-    service.processBlock(peer,
-            new BlockMessage(new BlockCapsule(Protocol.Block.newBuilder().build())));
+
+    BlockCapsule blockCapsule = new BlockCapsule(Protocol.Block.newBuilder().build());
+    BlockMessage blockMessage = new BlockMessage(blockCapsule);
+    service.processBlock(peer, blockMessage);
+
     boolean fetchFlag = (boolean) ReflectUtils.getFieldObject(service, "fetchFlag");
     boolean handleFlag = (boolean) ReflectUtils.getFieldObject(service, "handleFlag");
     Assert.assertTrue(fetchFlag);
     Assert.assertTrue(handleFlag);
+
+    Map<UnparsedBlock, PeerConnection> blockJustReceived =
+        (Map<UnparsedBlock, PeerConnection>)
+            ReflectUtils.getFieldObject(service, "blockJustReceived");
+    Assert.assertEquals(1, blockJustReceived.size());
+    UnparsedBlock stored = blockJustReceived.keySet().iterator().next();
+    Assert.assertEquals(blockMessage.getBlockId(), stored.getBlockId());
   }
 
   @Test
@@ -188,6 +180,46 @@ public class SyncServiceTest {
     peer.getSyncBlockRequested().remove(blockId);
     method.invoke(service);
     Assert.assertTrue(peer.getSyncBlockRequested().get(blockId) == null);
+
+    // reset maxRequestedBlockNum to 0
+    Field maxRequestedBlockNumField = service.getClass().getDeclaredField("maxRequestedBlockNum");
+    maxRequestedBlockNumField.setAccessible(true);
+    maxRequestedBlockNumField.set(service, 0L);
+
+    Map<UnparsedBlock, PeerConnection> blockWaitToProcess =
+        (Map<UnparsedBlock, PeerConnection>)
+            ReflectUtils.getFieldObject(service, "blockWaitToProcess");
+
+    // target block has num=1, above maxRequestedBlockNum=0 so it can be throttled
+    BlockCapsule.BlockId highBlockId = new BlockCapsule.BlockId(Sha256Hash.ZERO_HASH, 1);
+    peer.getSyncBlockToFetch().clear();
+    peer.getSyncBlockToFetch().add(highBlockId);
+    peer.getSyncBlockRequested().clear();
+    requestBlockIds.invalidateAll();
+
+    // fill blockWaitToProcess to reach maxPendingBlockSize (default 500)
+    int maxPendingBlockSize = (int) ReflectUtils.getFieldObject(service, "maxPendingBlockSize");
+    for (int i = 0; i < maxPendingBlockSize; i++) {
+      BlockCapsule.BlockId fillId = new BlockCapsule.BlockId(Sha256Hash.ZERO_HASH, 10000 + i);
+      blockWaitToProcess.put(new UnparsedBlock(fillId, new byte[0]), peer);
+    }
+    method.invoke(service);
+    // highBlockId must NOT be requested: remainNum <= 0 and num > maxRequestedBlockNum
+    Assert.assertNull(peer.getSyncBlockRequested().get(highBlockId));
+
+    // Symmetric retry-exemption case: budget still saturated, but the target block's num
+    // is below maxRequestedBlockNum, so it must still be requested (deadlock-avoidance
+    // retry path — guards an explicit invariant of the throttling design).
+    maxRequestedBlockNumField.set(service, 100L);
+    BlockCapsule.BlockId retryBlockId = new BlockCapsule.BlockId(Sha256Hash.ZERO_HASH, 50);
+    peer.getSyncBlockToFetch().clear();
+    peer.getSyncBlockToFetch().add(retryBlockId);
+    peer.getSyncBlockRequested().clear();
+    requestBlockIds.invalidateAll();
+    method.invoke(service);
+    // retryBlockId MUST be requested: remainNum <= 0 but num=50 <= maxRequestedBlockNum=100
+    Assert.assertNotNull(peer.getSyncBlockRequested().get(retryBlockId));
+    blockWaitToProcess.clear();
   }
 
   @Test
@@ -200,23 +232,18 @@ public class SyncServiceTest {
     Method method = service.getClass().getDeclaredMethod("handleSyncBlock");
     method.setAccessible(true);
 
-    Map<BlockMessage, PeerConnection> blockJustReceived =
-            (Map<BlockMessage, PeerConnection>)
+    Map<UnparsedBlock, PeerConnection> blockJustReceived =
+        (Map<UnparsedBlock, PeerConnection>)
             ReflectUtils.getFieldObject(service, "blockJustReceived");
-    Protocol.BlockHeader.raw.Builder blockHeaderRawBuild = Protocol.BlockHeader.raw.newBuilder();
-    Protocol.BlockHeader.raw blockHeaderRaw = blockHeaderRawBuild
+
+    Protocol.BlockHeader.raw blockHeaderRaw = Protocol.BlockHeader.raw.newBuilder()
         .setNumber(100000)
         .build();
-
-    // block header
-    Protocol.BlockHeader.Builder blockHeaderBuild = Protocol.BlockHeader.newBuilder();
-    Protocol.BlockHeader blockHeader = blockHeaderBuild.setRawData(blockHeaderRaw).build();
-
-    BlockCapsule blockCapsule = new BlockCapsule(Protocol.Block.newBuilder()
-        .setBlockHeader(blockHeader).build());
-
+    Protocol.BlockHeader blockHeader = Protocol.BlockHeader.newBuilder()
+        .setRawData(blockHeaderRaw).build();
+    BlockCapsule blockCapsule = new BlockCapsule(
+        Protocol.Block.newBuilder().setBlockHeader(blockHeader).build());
     BlockCapsule.BlockId blockId = blockCapsule.getBlockId();
-
 
     InetSocketAddress a1 = new InetSocketAddress("127.0.0.1", 10001);
     Channel c1 = mock(Channel.class);
@@ -225,14 +252,14 @@ public class SyncServiceTest {
     PeerManager.add(ctx, c1);
     peer = PeerManager.getPeers().get(0);
 
-    blockJustReceived.put(new BlockMessage(blockCapsule), peer);
+    UnparsedBlock unparsedBlock = new UnparsedBlock(blockId, blockCapsule.getData());
+    blockJustReceived.put(unparsedBlock, peer);
 
     peer.getSyncBlockToFetch().add(blockId);
 
     Cache<BlockCapsule.BlockId, PeerConnection> requestBlockIds =
-            (Cache<BlockCapsule.BlockId, PeerConnection>)
-                    ReflectUtils.getFieldObject(service, "requestBlockIds");
-
+        (Cache<BlockCapsule.BlockId, PeerConnection>)
+            ReflectUtils.getFieldObject(service, "requestBlockIds");
     requestBlockIds.put(blockId, peer);
 
     method.invoke(service);

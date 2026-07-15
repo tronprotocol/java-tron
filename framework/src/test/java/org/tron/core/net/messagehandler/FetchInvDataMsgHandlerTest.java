@@ -15,6 +15,7 @@ import org.tron.common.utils.ReflectUtils;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.Parameter;
+import org.tron.core.exception.P2pException;
 import org.tron.core.net.P2pRateLimiter;
 import org.tron.core.net.TronNetDelegate;
 import org.tron.core.net.message.adv.BlockMessage;
@@ -111,29 +112,76 @@ public class FetchInvDataMsgHandlerTest {
 
     FetchInvDataMsgHandler fetchInvDataMsgHandler = new FetchInvDataMsgHandler();
 
-    try {
-      Mockito.when(peer.getLastSyncBlockId())
+    Mockito.when(peer.getLastSyncBlockId())
         .thenReturn(new BlockCapsule.BlockId(Sha256Hash.ZERO_HASH, 1000L));
-      fetchInvDataMsgHandler.processMessage(peer, msg);
-    } catch (Exception e) {
-      Assert.assertEquals(e.getMessage(), "maxBlockNum: 1000, blockNum: 10000");
-    }
+    Exception e1 = Assert.assertThrows(Exception.class,
+        () -> fetchInvDataMsgHandler.processMessage(peer, msg));
+    Assert.assertEquals("maxBlockNum: 1000, blockNum: 10000", e1.getMessage());
+
+    Mockito.when(peer.getLastSyncBlockId())
+        .thenReturn(new BlockCapsule.BlockId(Sha256Hash.ZERO_HASH, 20000L));
+    Exception e2 = Assert.assertThrows(Exception.class,
+        () -> fetchInvDataMsgHandler.processMessage(peer, msg));
+    Assert.assertEquals("minBlockNum: 16000, blockNum: 10000", e2.getMessage());
+  }
+
+  @Test
+  public void testDuplicateHashRejected() throws Exception {
+    FetchInvDataMsgHandler handler = new FetchInvDataMsgHandler();
+    PeerConnection peer = Mockito.mock(PeerConnection.class);
+    AdvService advService = Mockito.mock(AdvService.class);
+    TronNetDelegate tronNetDelegate = Mockito.mock(TronNetDelegate.class);
+
+    ReflectUtils.setFieldValue(handler, "advService", advService);
+    ReflectUtils.setFieldValue(handler, "tronNetDelegate", tronNetDelegate);
+
+    Sha256Hash hash = Sha256Hash.ZERO_HASH;
+    List<Sha256Hash> hashList = new LinkedList<>();
+    hashList.add(hash);
+    hashList.add(hash); // duplicate
+
+    FetchInvDataMessage msg = new FetchInvDataMessage(hashList,
+        Protocol.Inventory.InventoryType.TRX);
+
+    Cache<Item, Long> advInvSpread = CacheBuilder.newBuilder()
+        .maximumSize(20000).expireAfterWrite(1, TimeUnit.HOURS).build();
+    advInvSpread.put(new Item(hash, Protocol.Inventory.InventoryType.TRX), 1L);
+    Mockito.when(peer.getAdvInvSpread()).thenReturn(advInvSpread);
 
     try {
-      Mockito.when(peer.getLastSyncBlockId())
-        .thenReturn(new BlockCapsule.BlockId(Sha256Hash.ZERO_HASH, 20000L));
-      fetchInvDataMsgHandler.processMessage(peer, msg);
-    } catch (Exception e) {
-      Assert.assertEquals(e.getMessage(), "minBlockNum: 16000, blockNum: 10000");
+      handler.processMessage(peer, msg);
+      Assert.fail("Expected P2pException for duplicate hash");
+    } catch (P2pException e) {
+      Assert.assertEquals(P2pException.TypeEnum.BAD_MESSAGE, e.getType());
+    }
+  }
+
+  @Test
+  public void testUnknownInventoryTypeRejected() throws Exception {
+    FetchInvDataMsgHandler handler = new FetchInvDataMsgHandler();
+    PeerConnection peer = Mockito.mock(PeerConnection.class);
+
+    // craft a FetchInvData whose enum type holds an undefined value (2)
+    Protocol.Inventory inv = Protocol.Inventory.newBuilder()
+        .setTypeValue(2)
+        .addIds(com.google.protobuf.ByteString.copyFrom(new byte[32]))
+        .build();
+    FetchInvDataMessage msg = new FetchInvDataMessage(inv.toByteArray());
+    Assert.assertEquals(Protocol.Inventory.InventoryType.UNRECOGNIZED, msg.getInventoryType());
+
+    try {
+      handler.processMessage(peer, msg);
+      Assert.fail("Expected P2pException for unknown inventory type");
+    } catch (P2pException e) {
+      Assert.assertEquals(P2pException.TypeEnum.BAD_MESSAGE, e.getType());
     }
   }
 
   @Test
   public void testRateLimiter() {
-    BlockCapsule.BlockId blockId = new BlockCapsule.BlockId(Sha256Hash.ZERO_HASH, 10000L);
     List<Sha256Hash> blockIds = new LinkedList<>();
     for (int i = 0; i <= 100; i++) {
-      blockIds.add(blockId);
+      blockIds.add(new BlockCapsule.BlockId(Sha256Hash.ZERO_HASH, (long) i));
     }
     FetchInvDataMessage msg =
         new FetchInvDataMessage(blockIds, Protocol.Inventory.InventoryType.BLOCK);
@@ -148,15 +196,12 @@ public class FetchInvDataMsgHandlerTest {
     Mockito.when(peer.getP2pRateLimiter()).thenReturn(p2pRateLimiter);
     FetchInvDataMsgHandler fetchInvDataMsgHandler = new FetchInvDataMsgHandler();
 
-    try {
-      fetchInvDataMsgHandler.processMessage(peer, msg);
-    } catch (Exception e) {
-      Assert.assertEquals("fetch too many blocks, size:101", e.getMessage());
-    }
-    try {
-      fetchInvDataMsgHandler.processMessage(peer, msg);
-    } catch (Exception e) {
-      Assert.assertTrue(e.getMessage().endsWith("rate limit"));
-    }
+    Exception e1 = Assert.assertThrows(Exception.class,
+        () -> fetchInvDataMsgHandler.processMessage(peer, msg));
+    Assert.assertEquals("fetch too many blocks, size:101", e1.getMessage());
+
+    Exception e2 = Assert.assertThrows(Exception.class,
+        () -> fetchInvDataMsgHandler.processMessage(peer, msg));
+    Assert.assertTrue(e2.getMessage().endsWith("rate limit"));
   }
 }

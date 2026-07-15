@@ -3,38 +3,20 @@ package org.tron.core.db2;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
-import java.io.IOException;
 import java.lang.reflect.Constructor;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.tron.common.application.Application;
-import org.tron.common.application.ApplicationFactory;
-import org.tron.common.application.TronApplicationContext;
-import org.tron.core.Constant;
-import org.tron.core.config.DefaultConfig;
-import org.tron.core.config.args.Args;
+import org.tron.common.BaseMethodTest;
 import org.tron.core.db2.core.Snapshot;
 import org.tron.core.db2.core.SnapshotImpl;
 import org.tron.core.db2.core.SnapshotManager;
 import org.tron.core.db2.core.SnapshotRoot;
 
-public class SnapshotImplTest {
+public class SnapshotImplTest extends BaseMethodTest {
   private RevokingDbWithCacheNewValueTest.TestRevokingTronStore tronDatabase;
-  private TronApplicationContext context;
-  private Application appT;
   private SnapshotManager revokingDatabase;
-  @Rule
-  public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
-  @Before
-  public void init() throws IOException {
-    Args.setParam(new String[]{"-d", temporaryFolder.newFolder().toString()}, Constant.TEST_CONF);
-    context = new TronApplicationContext(DefaultConfig.class);
-    appT = ApplicationFactory.create(context);
-
+  @Override
+  protected void afterInit() {
     tronDatabase = new RevokingDbWithCacheNewValueTest.TestRevokingTronStore(
         "testSnapshotRoot-testMerge");
     revokingDatabase = context.getBean(SnapshotManager.class);
@@ -42,10 +24,8 @@ public class SnapshotImplTest {
     revokingDatabase.add(tronDatabase.getRevokingDB());
   }
 
-  @After
-  public void removeDb() {
-    Args.clearParam();
-    context.destroy();
+  @Override
+  protected void beforeDestroy() {
     tronDatabase.close();
   }
 
@@ -58,7 +38,7 @@ public class SnapshotImplTest {
    * from: get key1 or key2, traverse 0 times
    */
   @Test
-  public void testMergeRoot() {
+  public void testMergeRoot() throws Exception {
     // linklist is: from -> root
     SnapshotRoot root = new SnapshotRoot(tronDatabase.getDb());
     //root.setOptimized(true);
@@ -88,7 +68,7 @@ public class SnapshotImplTest {
    *
    */
   @Test
-  public void testMergeAhead() {
+  public void testMergeAhead() throws Exception {
 
     // linklist is: from2 -> from -> root
     SnapshotRoot root = new SnapshotRoot(tronDatabase.getDb());
@@ -156,7 +136,7 @@ public class SnapshotImplTest {
    * from2: key1=>value1, key2=>value2, key3=>value32, key4=>value4
    */
   @Test
-  public void testMergeOverride() {
+  public void testMergeOverride() throws Exception {
     // linklist is: from2 -> from -> root
     SnapshotRoot root = new SnapshotRoot(tronDatabase.getDb());
     SnapshotImpl from = getSnapshotImplIns(root);
@@ -185,16 +165,11 @@ public class SnapshotImplTest {
    * The constructor of SnapshotImpl is not public
    * so reflection is used to construct the object here.
    */
-  private SnapshotImpl getSnapshotImplIns(Snapshot snapshot) {
+  private SnapshotImpl getSnapshotImplIns(Snapshot snapshot) throws Exception {
     Class clazz = SnapshotImpl.class;
-    try {
-      Constructor constructor = clazz.getDeclaredConstructor(Snapshot.class);
-      constructor.setAccessible(true);
-      return (SnapshotImpl) constructor.newInstance(snapshot);
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
-    return null;
+    Constructor constructor = clazz.getDeclaredConstructor(Snapshot.class);
+    constructor.setAccessible(true);
+    return (SnapshotImpl) constructor.newInstance(snapshot);
   }
 
 }

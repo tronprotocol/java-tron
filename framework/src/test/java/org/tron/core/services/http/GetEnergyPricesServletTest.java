@@ -4,7 +4,6 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.tron.common.utils.client.utils.HttpMethed.createRequest;
 
-import com.alibaba.fastjson.JSONObject;
 import java.io.UnsupportedEncodingException;
 import javax.annotation.Resource;
 import org.apache.http.client.methods.HttpGet;
@@ -14,8 +13,9 @@ import org.junit.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.tron.common.BaseTest;
-import org.tron.core.Constant;
+import org.tron.common.TestConstants;
 import org.tron.core.config.args.Args;
+import org.tron.json.JSONObject;
 
 public class GetEnergyPricesServletTest extends BaseTest {
 
@@ -24,7 +24,7 @@ public class GetEnergyPricesServletTest extends BaseTest {
 
   @BeforeClass
   public static void init() {
-    Args.setParam(new String[]{"-d", dbPath()}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"-d", dbPath()}, TestConstants.TEST_CONF);
   }
 
   @Test

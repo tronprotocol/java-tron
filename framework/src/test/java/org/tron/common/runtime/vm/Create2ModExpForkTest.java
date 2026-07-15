@@ -9,6 +9,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.tron.common.BaseTest;
+import org.tron.common.TestConstants;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.InternalTransaction;
 import org.tron.common.utils.ForkController;
@@ -43,7 +44,7 @@ public class Create2ModExpForkTest extends BaseTest {
 
   @BeforeClass
   public static void init() {
-    Args.setParam(new String[] {"--output-directory", dbPath(), "--debug"}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath(), "--debug"}, TestConstants.TEST_CONF);
     CommonParameter.getInstance().setDebug(true);
   }
 

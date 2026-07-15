@@ -1,5 +1,9 @@
 <configuration>
 
+  <contextListener class="ch.qos.logback.classic.jul.LevelChangePropagator">
+    <resetJUL>true</resetJUL>
+  </contextListener>
+
   <!-- FILE appender is disabled -->
 
   <appender class="ch.qos.logback.core.ConsoleAppender" name="STDOUT">
@@ -7,13 +11,15 @@
       <pattern>%d{HH:mm:ss.SSS} %p [%c{1}] %m%n</pattern>
     </encoder>
     <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-      <level>INFO</level>
+      <level>${console.log.level:-ERROR}</level>
     </filter>
   </appender>
 
   <appender class="ch.qos.logback.core.rolling.RollingFileAppender"
     name="FILE">
     <file>./logs/tron-test.log</file>
+    <bufferSize>8192</bufferSize>
+    <immediateFlush>true</immediateFlush>
     <rollingPolicy
       class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
       <!-- rollover daily -->
@@ -29,12 +35,13 @@
     </encoder>
   </appender>
 
-  <root level="DEBUG">
+  <root level="INFO">
     <appender-ref ref="STDOUT"/>
     <appender-ref ref="FILE"/>
   </root>
 
   <logger level="DEBUG" name="Test"/>
   <logger level="DEBUG" name="Manager"/>
+  <logger level="WARN" name="ROCKSDB"/>  <!--RocksDB start log is very verbose, so we set it to WARN level-->
 
 </configuration>

@@ -10,6 +10,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.BaseTest;
+import org.tron.common.TestConstants;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
@@ -36,7 +37,7 @@ public class FreezeBalanceV2ActuatorTest extends BaseTest {
   private static final long initBalance = 10_000_000_000L;
 
   static {
-    Args.setParam(new String[]{"--output-directory", dbPath()}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"--output-directory", dbPath()}, TestConstants.TEST_CONF);
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc";
     RECEIVER_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049150";
     OWNER_ACCOUNT_INVALID =
@@ -266,33 +267,6 @@ public class FreezeBalanceV2ActuatorTest extends BaseTest {
       Assert.fail();
     }
   }
-
-  //@Test
-  public void moreThanFrozenNumber() {
-    long frozenBalance = 1_000_000_000L;
-    FreezeBalanceActuator actuator = new FreezeBalanceActuator();
-    actuator.setChainBaseManager(dbManager.getChainBaseManager())
-        .setAny(getContractV2ForBandwidth(OWNER_ADDRESS, frozenBalance));
-
-    TransactionResultCapsule ret = new TransactionResultCapsule();
-    try {
-      actuator.validate();
-      actuator.execute(ret);
-    } catch (ContractValidateException | ContractExeException e) {
-      Assert.fail();
-    }
-    try {
-      actuator.validate();
-      actuator.execute(ret);
-      fail("cannot run here.");
-    } catch (ContractValidateException e) {
-      long maxFrozenNumber = ChainConstant.MAX_FROZEN_NUMBER;
-      Assert.assertEquals("max frozen number is: " + maxFrozenNumber, e.getMessage());
-    } catch (ContractExeException e) {
-      Assert.fail();
-    }
-  }
-
 
   @Test
   public void commonErrorCheck() {

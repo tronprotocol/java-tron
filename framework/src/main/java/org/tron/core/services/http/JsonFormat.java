@@ -29,7 +29,6 @@ package org.tron.core.services.http;
   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
-import com.alibaba.fastjson.JSON;
 import com.google.common.collect.ImmutableSet;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Descriptors;
@@ -58,6 +57,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.StringUtil;
+import org.tron.core.Constant;
+import org.tron.json.JSON;
 import org.tron.protos.contract.BalanceContract;
 
 /**
@@ -89,6 +90,41 @@ public class JsonFormat {
       BalanceContract.TransactionBalanceTrace.Operation.class,
       BalanceContract.TransactionBalanceTrace.class
   );
+
+  /**
+   * Thread-local flag controlling whether int64/uint64 fields are serialized as JSON strings.
+   * Set via {@link #setInt64AsString(boolean)} early in request handling and cleared via
+   * {@link #clearInt64AsString()} in a finally block. Centralized in
+   * {@code RateLimiterServlet.service} for GET requests. Does not support nested scopes.
+   */
+  private static final ThreadLocal<Boolean> INT64_AS_STRING =
+      ThreadLocal.withInitial(() -> false);
+
+  /**
+   * Set whether int64/uint64 protobuf fields are serialized as quoted JSON strings to avoid
+   * precision loss in clients whose native number type cannot safely represent integers above
+   * 2^53 - 1 (e.g. JavaScript). Must be paired with {@link #clearInt64AsString()} in a
+   * finally block.
+   */
+  public static void setInt64AsString(boolean enabled) {
+    INT64_AS_STRING.set(enabled);
+  }
+
+  /**
+   * Clear the int64-as-string thread-local. Always call from a finally block to avoid
+   * polluting subsequent requests on the same (reused) thread.
+   */
+  public static void clearInt64AsString() {
+    INT64_AS_STRING.remove();
+  }
+
+  /**
+   * Whether the current thread is in int64-as-string mode. Used by servlets that build
+   * JSON literals manually (i.e. do not go through {@link #printToString}).
+   */
+  public static boolean isInt64AsString() {
+    return INT64_AS_STRING.get();
+  }
 
   /**
    * Outputs a textual representation of the Protocol Message supplied into the parameter output.
@@ -256,6 +292,7 @@ public class JsonFormat {
     tokenizer.consume("{"); // Needs to happen when the object starts.
     while (!tokenizer.tryConsume("}")) { // Continue till the object is done
       mergeField(tokenizer, extensionRegistry, builder, selfType);
+      tokenizer.tryConsume(",");
     }
     // Test to make sure the tokenizer has reached the end of the stream.
     if (!tokenizer.atEnd()) {
@@ -340,16 +377,25 @@ public class JsonFormat {
       throws IOException {
     switch (field.getType()) {
       case INT32:
-      case INT64:
       case SINT32:
-      case SINT64:
       case SFIXED32:
-      case SFIXED64:
       case FLOAT:
       case DOUBLE:
       case BOOL:
         // Good old toString() does what we want for these types.
         generator.print(value.toString());
+        break;
+
+      case INT64:
+      case SINT64:
+      case SFIXED64:
+        if (INT64_AS_STRING.get()) {
+          generator.print("\"");
+          generator.print(value.toString());
+          generator.print("\"");
+        } else {
+          generator.print(value.toString());
+        }
         break;
 
       case UINT32:
@@ -359,7 +405,13 @@ public class JsonFormat {
 
       case UINT64:
       case FIXED64:
-        generator.print(unsignedToString((Long) value));
+        if (INT64_AS_STRING.get()) {
+          generator.print("\"");
+          generator.print(unsignedToString((Long) value));
+          generator.print("\"");
+        } else {
+          generator.print(unsignedToString((Long) value));
+        }
         break;
 
       case STRING:
@@ -506,8 +558,9 @@ public class JsonFormat {
   }
 
   /**
-   * Parse a single field from {@code tokenizer} and merge it into {@code builder}. If a ',' is
-   * detected after the field ends, the next field will be parsed automatically
+   * Parse a single field from {@code tokenizer} and merge it into {@code builder}. Exactly one
+   * field is consumed; the caller ({@code merge} / {@code handleObject}) consumes any trailing
+   * ',' and loops over the remaining fields.
    */
   protected static void mergeField(Tokenizer tokenizer,
       ExtensionRegistry extensionRegistry, Message.Builder builder,
@@ -567,6 +620,10 @@ public class JsonFormat {
 
     if (field != null) {
       tokenizer.consume(":");
+      // Match protobuf JsonFormat: a field whose value is null is treated as absent.
+      if (tokenizer.tryConsume("null")) {
+        return;
+      }
       boolean array = tokenizer.tryConsume("[");
 
       if (array) {
@@ -578,11 +635,6 @@ public class JsonFormat {
         handleValue(tokenizer, extensionRegistry, builder, field, extension, unknown, selfType);
       }
     }
-
-    if (tokenizer.tryConsume(",")) {
-      // Continue with the next field
-      mergeField(tokenizer, extensionRegistry, builder, selfType);
-    }
   }
 
   private static void handleMissingField(Tokenizer tokenizer,
@@ -592,18 +644,28 @@ public class JsonFormat {
     if ("{".equals(tokenizer.currentToken())) {
       // Message structure
       tokenizer.consume("{");
-      do {
-        tokenizer.consumeIdentifier();
-        handleMissingField(tokenizer, extensionRegistry, builder);
-      } while (tokenizer.tryConsume(","));
-      tokenizer.consume("}");
+      tokenizer.enterRecursion();
+      try {
+        do {
+          tokenizer.consumeIdentifier();
+          handleMissingField(tokenizer, extensionRegistry, builder);
+        } while (tokenizer.tryConsume(","));
+        tokenizer.consume("}");
+      } finally {
+        tokenizer.exitRecursion();
+      }
     } else if ("[".equals(tokenizer.currentToken())) {
       // Collection
       tokenizer.consume("[");
-      do {
-        handleMissingField(tokenizer, extensionRegistry, builder);
-      } while (tokenizer.tryConsume(","));
-      tokenizer.consume("]");
+      tokenizer.enterRecursion();
+      try {
+        do {
+          handleMissingField(tokenizer, extensionRegistry, builder);
+        } while (tokenizer.tryConsume(","));
+        tokenizer.consume("]");
+      } finally {
+        tokenizer.exitRecursion();
+      }
     } else { //if (!",".equals(tokenizer.currentToken)){
       // Primitive value
       if ("null".equals(tokenizer.currentToken())) {
@@ -757,20 +819,25 @@ public class JsonFormat {
     }
 
     tokenizer.consume("{");
-    String endToken = "}";
+    tokenizer.enterRecursion();
+    try {
+      String endToken = "}";
 
-    while (!tokenizer.tryConsume(endToken)) {
-      if (tokenizer.atEnd()) {
-        throw tokenizer.parseException("Expected \"" + endToken + "\".");
+      while (!tokenizer.tryConsume(endToken)) {
+        if (tokenizer.atEnd()) {
+          throw tokenizer.parseException("Expected \"" + endToken + "\".");
+        }
+        mergeField(tokenizer, extensionRegistry, subBuilder, selfType);
+        if (tokenizer.tryConsume(",")) {
+          // there are more fields in the object, so continue
+          continue;
+        }
       }
-      mergeField(tokenizer, extensionRegistry, subBuilder, selfType);
-      if (tokenizer.tryConsume(",")) {
-        // there are more fields in the object, so continue
-        continue;
-      }
+
+      return subBuilder.build();
+    } finally {
+      tokenizer.exitRecursion();
     }
-
-    return subBuilder.build();
   }
 
   /**
@@ -1240,6 +1307,18 @@ public class JsonFormat {
     // errors *after* consuming).
     private int previousLine = 0;
     private int previousColumn = 0;
+    private int currentDepth = 0;
+
+    public void enterRecursion() throws ParseException {
+      if (currentDepth >= Constant.MAX_NESTING_DEPTH) {
+        throw parseException("Hit recursion limit.");
+      }
+      ++currentDepth;
+    }
+
+    public void exitRecursion() {
+      --currentDepth;
+    }
 
     /**
      * Construct a tokenizer that parses tokens from the given text.
@@ -1263,7 +1342,18 @@ public class JsonFormat {
         throws InvalidEscapeSequence {
       //Address base58 -> ByteString
       if (HttpSelfFormatFieldName.isAddressFormat(fliedName)) {
-        return ByteString.copyFrom(Commons.decodeFromBase58Check(input));
+        byte[] addressBytes = null;
+        try {
+          addressBytes = Commons.decodeFromBase58Check(input);
+        } catch (IllegalArgumentException e) {
+          // Base58.decode throws on illegal chars -> leave addressBytes null (treated as invalid)
+        }
+        if (addressBytes == null) {
+          // empty / wrong-length / bad-checksum / illegal chars -> all invalid addresses; throw a
+          // clear error instead of letting ByteString.copyFrom(null) throw a bare NPE.
+          throw new InvalidEscapeSequence("invalid address for field: " + fliedName);
+        }
+        return ByteString.copyFrom(addressBytes);
       }
 
       //Normal String -> ByteString

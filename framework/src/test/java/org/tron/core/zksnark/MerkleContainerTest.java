@@ -3,14 +3,16 @@ package org.tron.core.zksnark;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import javax.annotation.Resource;
+import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.tron.common.BaseTest;
+import org.tron.common.TestConstants;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.zksnark.IncrementalMerkleVoucherContainer;
-import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
@@ -38,8 +40,21 @@ public class MerkleContainerTest extends BaseTest {
   //  private static MerkleContainer merkleContainer;
 
 
+  private static boolean origShieldedApi;
+
   static {
-    Args.setParam(new String[]{"-d", dbPath()}, Constant.TEST_CONF);
+    Args.setParam(new String[]{"-d", dbPath()}, TestConstants.TEST_CONF);
+  }
+
+  @BeforeClass
+  public static void enableShieldedApi() {
+    origShieldedApi = Args.getInstance().allowShieldedTransactionApi;
+    Args.getInstance().allowShieldedTransactionApi = true;
+  }
+
+  @AfterClass
+  public static void restoreShieldedApi() {
+    Args.getInstance().allowShieldedTransactionApi = origShieldedApi;
   }
 
   /*@Before

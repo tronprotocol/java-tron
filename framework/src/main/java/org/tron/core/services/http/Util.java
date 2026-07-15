@@ -3,16 +3,12 @@ package org.tron.core.services.http;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.tron.common.utils.Commons.decodeFromBase58Check;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONException;
-import com.alibaba.fastjson.JSONObject;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.GeneratedMessageV3;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
-
+import com.google.protobuf.ProtocolStringList;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -22,6 +18,7 @@ import java.nio.charset.Charset;
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import javax.servlet.http.HttpServletRequest;
@@ -52,6 +49,10 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.TransactionTrace;
 import org.tron.core.services.http.JsonFormat.ParseException;
+import org.tron.json.JSON;
+import org.tron.json.JSONArray;
+import org.tron.json.JSONException;
+import org.tron.json.JSONObject;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
@@ -64,8 +65,12 @@ import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
 @Slf4j(topic = "API")
 public class Util {
 
+  public static final String EVENTS_DEPRECATED_MSG =
+      "'events' field is deprecated and no longer supported";
+
   public static final String PERMISSION_ID = "Permission_id";
   public static final String VISIBLE = "visible";
+  public static final String INT64_AS_STRING_PARAM = "int64_as_string";
   public static final String TRANSACTION = "transaction";
   public static final String TRANSACTION_EXTENSION = "transactionExtension";
   public static final String VALUE = "value";
@@ -79,6 +84,28 @@ public class Util {
   public static final String FUNCTION_SELECTOR = "function_selector";
   public static final String FUNCTION_PARAMETER = "parameter";
   public static final String CALL_DATA = "data";
+
+  public static boolean hasMeaningfulEvents(ProtocolStringList events) {
+    return events.stream().anyMatch(s -> !s.isEmpty());
+  }
+
+  public static void rejectIfEventsPresent(ProtocolStringList events) {
+    if (hasMeaningfulEvents(events)) {
+      logger.info(EVENTS_DEPRECATED_MSG);
+      throw new IllegalArgumentException(EVENTS_DEPRECATED_MSG);
+    }
+  }
+
+  public static void rejectIfEventsPresent(String[] eventsParams) {
+    if (eventsParams != null) {
+      for (String v : eventsParams) {
+        if (v != null && !v.isEmpty()) {
+          logger.info(EVENTS_DEPRECATED_MSG);
+          throw new IllegalArgumentException(EVENTS_DEPRECATED_MSG);
+        }
+      }
+    }
+  }
 
   public static String printTransactionFee(String transactionFee) {
     JSONObject jsonObject = new JSONObject();
@@ -95,7 +122,7 @@ public class Util {
 
   public static String printBlockList(BlockList list, boolean selfType) {
     List<Block> blocks = list.getBlockList();
-    JSONObject jsonObject = JSONObject.parseObject(JsonFormat.printToString(list, selfType));
+    JSONObject jsonObject = new JSONObject();
     JSONArray jsonArray = new JSONArray();
     blocks.stream().forEach(block -> jsonArray.add(printBlockToJSON(block, selfType)));
     jsonObject.put("block", jsonArray);
@@ -110,8 +137,10 @@ public class Util {
   public static JSONObject printBlockToJSON(Block block, boolean selfType) {
     BlockCapsule blockCapsule = new BlockCapsule(block);
     String blockID = ByteArray.toHexString(blockCapsule.getBlockId().getBytes());
-    JSONObject jsonObject = JSONObject.parseObject(JsonFormat.printToString(block, selfType));
+    JSONObject jsonObject = new JSONObject();
     jsonObject.put("blockID", blockID);
+    jsonObject.put("block_header",
+        JSONObject.parseObject(JsonFormat.printToString(block.getBlockHeader(), selfType)));
     if (!blockCapsule.getTransactions().isEmpty()) {
       jsonObject.put("transactions",
           printTransactionListToJSON(blockCapsule.getTransactions(), selfType));
@@ -181,9 +210,12 @@ public class Util {
     String string = JsonFormat.printToString(transactionSignWeight, selfType);
     JSONObject jsonObject = JSONObject.parseObject(string);
     JSONObject jsonObjectExt = jsonObject.getJSONObject(TRANSACTION);
-    jsonObjectExt.put(TRANSACTION,
-        printTransactionToJSON(transactionSignWeight.getTransaction().getTransaction(), selfType));
-    jsonObject.put(TRANSACTION, jsonObjectExt);
+    if (jsonObjectExt != null) {
+      jsonObjectExt.put(TRANSACTION,
+          printTransactionToJSON(transactionSignWeight.getTransaction().getTransaction(),
+              selfType));
+      jsonObject.put(TRANSACTION, jsonObjectExt);
+    }
     return jsonObject.toJSONString();
   }
 
@@ -192,10 +224,12 @@ public class Util {
     String string = JsonFormat.printToString(transactionApprovedList, selfType);
     JSONObject jsonObject = JSONObject.parseObject(string);
     JSONObject jsonObjectExt = jsonObject.getJSONObject(TRANSACTION);
-    jsonObjectExt.put(TRANSACTION,
-        printTransactionToJSON(transactionApprovedList.getTransaction().getTransaction(),
-            selfType));
-    jsonObject.put(TRANSACTION, jsonObjectExt);
+    if (jsonObjectExt != null) {
+      jsonObjectExt.put(TRANSACTION,
+          printTransactionToJSON(transactionApprovedList.getTransaction().getTransaction(),
+              selfType));
+      jsonObject.put(TRANSACTION, jsonObjectExt);
+    }
     return jsonObject.toJSONString();
   }
 
@@ -327,10 +361,12 @@ public class Util {
     }
   }
 
+  @Deprecated
   public static void checkBodySize(String body) throws Exception {
     CommonParameter parameter = Args.getInstance();
-    if (body.getBytes().length > parameter.getMaxMessageSize()) {
-      throw new Exception("body size is too big, the limit is " + parameter.getMaxMessageSize());
+    if (body.getBytes().length > parameter.getHttpMaxMessageSize()) {
+      throw new Exception("body size is too big, the limit is "
+          + parameter.getHttpMaxMessageSize());
     }
   }
 
@@ -344,6 +380,21 @@ public class Util {
 
   public static boolean existVisible(final HttpServletRequest request) {
     return Objects.nonNull(request.getParameter(VISIBLE));
+  }
+
+  /**
+   * Read int64_as_string from URL query parameter. Mirrors
+   * {@link #getVisible(HttpServletRequest)}. The flag is honored only on GET requests
+   * (read by {@link RateLimiterServlet#service}); POST requests do not support it
+   * because that would require caching the request body to allow re-reading by
+   * downstream servlets.
+   */
+  public static boolean getInt64AsString(final HttpServletRequest request) {
+    boolean int64AsString = false;
+    if (StringUtil.isNotBlank(request.getParameter(INT64_AS_STRING_PARAM))) {
+      int64AsString = Boolean.valueOf(request.getParameter(INT64_AS_STRING_PARAM));
+    }
+    return int64AsString;
   }
 
   public static boolean getVisiblePost(final String input) {
@@ -525,10 +576,10 @@ public class Util {
   private static String checkGetParam(HttpServletRequest request, String key) throws Exception {
     String method = request.getMethod();
 
-    if (HttpMethod.GET.toString().toUpperCase().equalsIgnoreCase(method)) {
+    if (HttpMethod.GET.toString().toUpperCase(Locale.ROOT).equalsIgnoreCase(method)) {
       return request.getParameter(key);
     }
-    if (HttpMethod.POST.toString().toUpperCase().equals(method)) {
+    if (HttpMethod.POST.toString().toUpperCase(Locale.ROOT).equals(method)) {
       String contentType = request.getContentType();
       if (StringUtils.isBlank(contentType)) {
         return null;

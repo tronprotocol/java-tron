@@ -32,6 +32,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
@@ -45,6 +48,7 @@ import org.iq80.leveldb.Options;
 import org.iq80.leveldb.ReadOptions;
 import org.iq80.leveldb.WriteBatch;
 import org.iq80.leveldb.WriteOptions;
+import org.tron.common.es.ExecutorServiceManager;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.storage.WriteOptionsWrapper;
 import org.tron.common.storage.metric.DbStat;
@@ -60,6 +64,11 @@ import org.tron.core.exception.TronError;
 @NoArgsConstructor
 public class LevelDbDataSourceImpl extends DbStat implements DbSourceInter<byte[]>,
     Iterable<Entry<byte[], byte[]>>, Instance<LevelDbDataSourceImpl>  {
+
+  /** First watchdog WARN fires this many seconds after factory.open() begins. */
+  private static final long OPEN_WATCHDOG_INITIAL_DELAY_SEC = 60;
+  /** Subsequent watchdog WARN lines are emitted on this interval. */
+  private static final long OPEN_WATCHDOG_PERIOD_SEC = 30;
 
   private String dataBaseName;
   private DB database;
@@ -121,6 +130,14 @@ public class LevelDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
     if (!Files.isSymbolicLink(dbPath.getParent())) {
       Files.createDirectories(dbPath.getParent());
     }
+    final long openStartNs = System.nanoTime();
+    ScheduledExecutorService watchdog = ExecutorServiceManager
+        .newSingleThreadScheduledExecutor("db-open-watchdog-" + dataBaseName, true);
+    ScheduledFuture<?> watchdogTask = watchdog.scheduleAtFixedRate(
+        () -> logSlowOpen(dbPath, openStartNs),
+        OPEN_WATCHDOG_INITIAL_DELAY_SEC,
+        OPEN_WATCHDOG_PERIOD_SEC,
+        TimeUnit.SECONDS);
     try {
       DbSourceInter.checkOrInitEngine(getEngine(), dbPath.toString(),
           TronError.ErrCode.LEVELDB_INIT);
@@ -139,6 +156,28 @@ public class LevelDbDataSourceImpl extends DbStat implements DbSourceInter<byte[
         logger.error("Open Database {} failed", dataBaseName, e);
       }
       throw new TronError(e, TronError.ErrCode.LEVELDB_INIT);
+    } finally {
+      watchdogTask.cancel(false);
+      watchdog.shutdownNow();
+    }
+  }
+
+  /**
+   * Emits a WARN when factory.open() is still blocked — usually because the
+   * MANIFEST has grown large enough to make replay expensive.
+   */
+  void logSlowOpen(Path dbPath, long startNs) {
+    try {
+      long elapsedSec = TimeUnit.NANOSECONDS.toSeconds(System.nanoTime() - startNs);
+      logger.warn("DB {} open still in progress after {}s. path={}. "
+              + "This startup will complete; to speed up future restarts, run "
+              + "`java -jar Toolkit.jar db archive -d {}` before the next startup "
+              + "to rebuild the MANIFEST (the tool requires an exclusive DB lock, "
+              + "so it cannot run while the node is up).",
+          dataBaseName, elapsedSec, dbPath, parentPath);
+    } catch (Exception e) {
+      // Purely observational - never let the watchdog disrupt startup.
+      logger.debug("db-open-watchdog failure for {}: {}", dataBaseName, e.getMessage());
     }
   }
 

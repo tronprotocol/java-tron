@@ -2,11 +2,9 @@ package org.tron.common.runtime;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.tron.common.parameter.CommonParameter;
 import org.tron.core.actuator.Actuator;
 import org.tron.core.actuator.Actuator2;
 import org.tron.core.actuator.ActuatorCreator;
@@ -46,10 +44,6 @@ public class RuntimeImpl implements Runtime {
     switch (contractType.getNumber()) {
       case ContractType.TriggerSmartContract_VALUE:
       case ContractType.CreateSmartContract_VALUE:
-        Set<String> actuatorSet = CommonParameter.getInstance().getActuatorSet();
-        if (!actuatorSet.isEmpty() && !actuatorSet.contains(VMActuator.class.getSimpleName())) {
-          throw new ContractValidateException("not exist contract " + "SmartContract");
-        }
         actuator2 = new VMActuator(context.isStatic());
         break;
       default:

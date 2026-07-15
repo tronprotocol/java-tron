@@ -66,7 +66,8 @@ public class LogMatch {
               topicList,
               ByteArray.toHexString(log.getData().toByteArray()),
               logIndexInBlock,
-              removed
+              removed,
+              transactionInfo.getBlockTimeStamp()
           );
           matchedLog.add(logFilterElement);
         }
@@ -93,13 +94,13 @@ public class LogMatch {
       String blockHash = manager.getChainBaseManager().getBlockIdByNum(blockNum).toString();
       List<LogFilterElement> matchedLog = matchBlock(logFilterWrapper.getLogFilter(), blockNum,
           blockHash, transactionInfoList, false);
-      if (!matchedLog.isEmpty()) {
-        logFilterElementList.addAll(matchedLog);
-      }
 
-      if (logFilterElementList.size() > LogBlockQuery.MAX_RESULT) {
-        throw new JsonRpcTooManyResultException(
-            "query returned more than " + LogBlockQuery.MAX_RESULT + " results");
+      if (!matchedLog.isEmpty()) {
+        if (logFilterElementList.size() + matchedLog.size() > LogBlockQuery.MAX_RESULT) {
+          throw new JsonRpcTooManyResultException(
+              "query returned more than " + LogBlockQuery.MAX_RESULT + " results");
+        }
+        logFilterElementList.addAll(matchedLog);
       }
     }
 

@@ -28,6 +28,7 @@ import com.google.protobuf.CodedOutputStream;
 import com.google.protobuf.GeneratedMessageV3;
 import com.google.protobuf.Internal;
 import com.google.protobuf.InvalidProtocolBufferException;
+import com.google.protobuf.UnknownFieldSet;
 import java.io.IOException;
 import java.security.SignatureException;
 import java.util.ArrayList;
@@ -35,6 +36,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import lombok.Getter;
 import lombok.Setter;
@@ -94,6 +96,8 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
       .newFixedThreadPool(esName, CommonParameter.getInstance()
           .getValidContractProtoThreadNum());
   private static final String OWNER_ADDRESS = "ownerAddress_";
+  // 2-6 ms in general, so we set 50 ms as the threshold for slow signature verification.
+  private static final long SLOW_SIG_VERIFY_MS = 50;
 
   private Transaction transaction;
   @Setter
@@ -247,7 +251,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
       long weight = getWeight(permission, address);
       if (weight == 0) {
         throw new PermissionException(
-            ByteArray.toHexString(sig.toByteArray()) + " is signed by " + encode58Check(address)
+            ByteArray.toHexString(hash) + " is signed by " + encode58Check(address)
                 + " but it is not contained of permission.");
       }
       if (ForkController.instance().pass(Parameter.ForkBlockVersionEnum.VERSION_4_7_1)) {
@@ -491,6 +495,16 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     return false;
   }
 
+  public boolean sanitize() {
+    if (this.transaction.getUnknownFields().asMap().isEmpty()) {
+      return false;
+    }
+    this.transaction = this.transaction.toBuilder()
+        .setUnknownFields(UnknownFieldSet.getDefaultInstance())
+        .build();
+    return true;
+  }
+
   public void resetResult() {
     if (this.getInstance().getRetCount() > 0) {
       this.transaction = this.getInstance().toBuilder().clearRet().build();
@@ -617,7 +631,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
         .signHash(getTransactionId().getBytes())));
     this.transaction = this.transaction.toBuilder().addSignature(sig).build();
   }
-  
+
   private static void checkPermission(int permissionId, Permission permission, Transaction.Contract contract) throws PermissionException {
     if (permissionId != 0) {
       if (permission.getType() != PermissionType.Active) {
@@ -648,6 +662,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
 
       byte[] hash = getTransactionId().getBytes();
 
+      long startNs = System.nanoTime();
       try {
         if (!validateSignature(this.transaction, hash, accountStore, dynamicPropertiesStore)) {
           isVerified = false;
@@ -656,10 +671,25 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
       } catch (SignatureException | PermissionException | SignatureFormatException e) {
         isVerified = false;
         throw new ValidateSignatureException(e.getMessage());
+      } finally {
+        logSlowSigVerify(startNs);
       }
       isVerified = true;
     }
     return true;
+  }
+
+  /**
+   * WARN-logs when a single signature verification exceeds
+   * {@link #SLOW_SIG_VERIFY_MS}. Package-private so it can be exercised from
+   * tests without forcing a real slow crypto path.
+   */
+  void logSlowSigVerify(long startNs) {
+    long costMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNs);
+    if (costMs > SLOW_SIG_VERIFY_MS) {
+      logger.warn("slow verify: txId={}, sigCount={}, cost={} ms",
+          getTransactionId(), this.transaction.getSignatureCount(), costMs);
+    }
   }
 
   /**
@@ -684,7 +714,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
         }
       }
       isVerified = true;
-    }  
+    }
     return true;
   }
 

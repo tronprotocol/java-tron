@@ -10,7 +10,6 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.tron.common.BaseTest;
-import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.config.args.Args;
@@ -25,7 +24,7 @@ public class DelegationServiceTest extends BaseTest {
   @BeforeClass
   public static void init() {
     Args.setParam(new String[] {"--output-directory", dbPath(), "--debug"},
-        Constant.TESTNET_CONF);
+        "config.conf");
   }
 
   private void testPay(int cycle) {
@@ -79,7 +78,6 @@ public class DelegationServiceTest extends BaseTest {
     mortgageService.withdrawReward(sr1);
     accountCapsule = dbManager.getAccountStore().get(sr1);
     allowance = accountCapsule.getAllowance() - allowance;
-    System.out.println("withdrawReward:" + allowance);
     Assert.assertEquals(reward, allowance);
   }
 

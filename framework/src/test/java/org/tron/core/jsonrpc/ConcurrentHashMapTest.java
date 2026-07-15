@@ -7,9 +7,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.junit.Test;
+import org.tron.common.es.ExecutorServiceManager;
 import org.tron.common.logsfilter.capsule.BlockFilterCapsule;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.exception.ItemNotFoundException;
@@ -18,6 +22,8 @@ import org.tron.core.services.jsonrpc.filters.BlockFilterAndResult;
 
 @Slf4j
 public class ConcurrentHashMapTest {
+  private static final String EXECUTOR_NAME = "jsonrpc-concurrent-map-test";
+  private final TronJsonRpcImpl jsonRpc = new TronJsonRpcImpl(null, null);
 
   private static int randomInt(int minInt, int maxInt) {
     return (int) round(random(true) * (maxInt - minInt) + minInt, true);
@@ -34,7 +40,7 @@ public class ConcurrentHashMapTest {
     int times = 100;
     int eachCount = 200;
 
-    Map<String, BlockFilterAndResult> conMap = TronJsonRpcImpl.getBlockFilter2ResultFull();
+    Map<String, BlockFilterAndResult> conMap = jsonRpc.getBlockFilter2ResultFull();
     Map<String, List<String>> resultMap1 = new ConcurrentHashMap<>(); // used to check result
     Map<String, List<String>> resultMap2 = new ConcurrentHashMap<>(); // used to check result
     Map<String, List<String>> resultMap3 = new ConcurrentHashMap<>(); // used to check result
@@ -52,76 +58,75 @@ public class ConcurrentHashMapTest {
     try {
       Thread.sleep(200);
     } catch (InterruptedException e) {
-      e.printStackTrace();
+      Thread.currentThread().interrupt();
+      Assert.fail("Interrupted during test setup: " + e.getMessage());
     }
 
-    Thread putThread = new Thread(new Runnable() {
-      public void run() {
+    ExecutorService executor = ExecutorServiceManager.newFixedThreadPool(EXECUTOR_NAME, 4, true);
 
+    try {
+      Future<?> putTask = executor.submit(() -> {
         for (int i = 1; i <= times; i++) {
           logger.info("put time {}, from {} to {}", i, (1 + (i - 1) * eachCount), i * eachCount);
 
           for (int j = 1 + (i - 1) * eachCount; j <= i * eachCount; j++) {
             BlockFilterCapsule blockFilterCapsule =
                 new BlockFilterCapsule(String.valueOf(j), false);
-            TronJsonRpcImpl.handleBLockFilter(blockFilterCapsule);
+            jsonRpc.handleBLockFilter(blockFilterCapsule);
           }
           try {
             Thread.sleep(randomInt(50, 100));
           } catch (InterruptedException e) {
-            e.printStackTrace();
+            Thread.currentThread().interrupt();
+            throw new AssertionError("putThread interrupted", e);
           }
         }
-      }
+      });
 
-    });
-
-    Thread getThread1 = new Thread(new Runnable() {
-      public void run() {
+      Future<?> getTask1 = executor.submit(() -> {
         for (int t = 1; t <= times * 2; t++) {
 
           try {
             Thread.sleep(randomInt(50, 100));
           } catch (InterruptedException e) {
-            e.printStackTrace();
+            Thread.currentThread().interrupt();
+            throw new AssertionError("getThread1 interrupted", e);
           }
 
           logger.info("Thread1 get time {}", t);
 
           for (int k = 0; k < 5; k++) {
             try {
-              Object[] blockHashList = TronJsonRpcImpl.getFilterResult(String.valueOf(k), conMap,
-                  TronJsonRpcImpl.getEventFilter2ResultFull());
+              Object[] blockHashList = jsonRpc.getFilterResult(String.valueOf(k), conMap,
+                  jsonRpc.getEventFilter2ResultFull());
 
               for (Object str : blockHashList) {
                 resultMap1.get(String.valueOf(k)).add(str.toString());
               }
 
             } catch (ItemNotFoundException e) {
-              e.printStackTrace();
-              // Assert.fail(e.getMessage());
+              Assert.fail("Filter ID should always exist: " + e.getMessage());
             }
           }
         }
-      }
-    });
+      });
 
-    Thread getThread2 = new Thread(new Runnable() {
-      public void run() {
+      Future<?> getTask2 = executor.submit(() -> {
         for (int t = 1; t <= times * 2; t++) {
 
           try {
             Thread.sleep(randomInt(50, 100));
           } catch (InterruptedException e) {
-            e.printStackTrace();
+            Thread.currentThread().interrupt();
+            throw new AssertionError("getThread2 interrupted", e);
           }
 
           logger.info("Thread2 get time {}", t);
 
           for (int k = 0; k < 5; k++) {
             try {
-              Object[] blockHashList = TronJsonRpcImpl.getFilterResult(String.valueOf(k), conMap,
-                  TronJsonRpcImpl.getEventFilter2ResultFull());
+              Object[] blockHashList = jsonRpc.getFilterResult(String.valueOf(k), conMap,
+                  jsonRpc.getEventFilter2ResultFull());
 
               // if (blockHashList.length == 0) {
               //   continue;
@@ -132,59 +137,57 @@ public class ConcurrentHashMapTest {
               }
 
             } catch (ItemNotFoundException e) {
-              // Assert.fail(e.getMessage());
+              Assert.fail("Filter ID should always exist: " + e.getMessage());
             }
           }
         }
-      }
-    });
+      });
 
-    Thread getThread3 = new Thread(new Runnable() {
-      public void run() {
+      Future<?> getTask3 = executor.submit(() -> {
         for (int t = 1; t <= times * 2; t++) {
 
           try {
             Thread.sleep(randomInt(50, 100));
           } catch (InterruptedException e) {
-            e.printStackTrace();
+            Thread.currentThread().interrupt();
+            throw new AssertionError("getThread3 interrupted", e);
           }
 
           logger.info("Thread3 get time {}", t);
 
           for (int k = 0; k < 5; k++) {
             try {
-              Object[] blockHashList = TronJsonRpcImpl.getFilterResult(String.valueOf(k), conMap,
-                  TronJsonRpcImpl.getEventFilter2ResultFull());
+              Object[] blockHashList = jsonRpc.getFilterResult(String.valueOf(k), conMap,
+                  jsonRpc.getEventFilter2ResultFull());
 
               for (Object str : blockHashList) {
                 try {
                   resultMap3.get(String.valueOf(k)).add(str.toString());
                 } catch (Exception e) {
-                  logger.error("resultMap3 get {} exception {}", k, e.getMessage());
-                  e.printStackTrace();
+                  throw new AssertionError("resultMap3 get " + k + " exception", e);
                 }
               }
 
             } catch (ItemNotFoundException e) {
-              // Assert.fail(e.getMessage());
+              Assert.fail("Filter ID should always exist: " + e.getMessage());
             }
           }
         }
+      });
+
+      for (Future<?> future : new Future<?>[] {putTask, getTask1, getTask2, getTask3}) {
+        try {
+          future.get();
+        } catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
+          Assert.fail("Main thread interrupted while waiting for worker threads: "
+              + e.getMessage());
+        } catch (ExecutionException e) {
+          Assert.fail("Worker thread failed: " + e.getCause());
+        }
       }
-    });
-
-    putThread.start();
-    getThread1.start();
-    getThread2.start();
-    getThread3.start();
-
-    try {
-      putThread.join();
-      getThread1.join();
-      getThread2.join();
-      getThread3.join();
-    } catch (InterruptedException e) {
-      e.printStackTrace();
+    } finally {
+      ExecutorServiceManager.shutdownAndAwaitTermination(executor, EXECUTOR_NAME);
     }
 
     logger.info("-----------------------------------------------------------------------");

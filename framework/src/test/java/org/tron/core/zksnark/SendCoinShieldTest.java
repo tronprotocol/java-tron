@@ -2,7 +2,6 @@ package org.tron.core.zksnark;
 
 import static org.tron.core.capsule.TransactionCapsule.getShieldTransactionHashIgnoreTypeException;
 
-import com.alibaba.fastjson.JSONArray;
 import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
 import com.google.common.io.Files;
@@ -22,6 +21,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.tron.api.GrpcAPI;
 import org.tron.common.BaseTest;
+import org.tron.common.TestConstants;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
@@ -80,6 +80,7 @@ import org.tron.core.zen.note.Note.NotePlaintextEncryptionResult;
 import org.tron.core.zen.note.NoteEncryption;
 import org.tron.core.zen.note.NoteEncryption.Encryption;
 import org.tron.core.zen.note.OutgoingPlaintext;
+import org.tron.json.JSONArray;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
@@ -111,7 +112,7 @@ public class SendCoinShieldTest extends BaseTest {
   private static boolean init;
 
   static {
-    Args.setParam(new String[]{"--output-directory", dbPath()}, "config-test-mainnet.conf");
+    Args.setParam(new String[]{"--output-directory", dbPath()}, TestConstants.TEST_CONF);
     Args.getInstance().setZenTokenId(String.valueOf(tokenId));
     PUBLIC_ADDRESS_ONE =
         Wallet.getAddressPreFixString() + "a7d8a35b260395c14aa456297662092ba3b76fc0";

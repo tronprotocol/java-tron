@@ -10,8 +10,8 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.BaseTest;
+import org.tron.common.TestConstants;
 import org.tron.common.utils.ByteArray;
-import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
@@ -48,7 +48,7 @@ public class AccountAssetStoreTest extends BaseTest {
             new String[]{
                 "--output-directory", dbPath(),
             },
-            Constant.TEST_CONF
+            TestConstants.TEST_CONF
     );
   }
 
@@ -84,11 +84,7 @@ public class AccountAssetStoreTest extends BaseTest {
     AssetIssueCapsule assetIssueCapsule = new AssetIssueCapsule(assetIssueContract);
     chainBaseManager.getAssetIssueV2Store()
             .put(assetIssueCapsule.createDbV2Key(), assetIssueCapsule);
-    try {
-      ownerCapsule.addAssetV2(ByteArray.fromString(String.valueOf(id)), TOTAL_SUPPLY);
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
+    ownerCapsule.addAssetV2(ByteArray.fromString(String.valueOf(id)), TOTAL_SUPPLY);
     accountStore.put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
     return id;
   }

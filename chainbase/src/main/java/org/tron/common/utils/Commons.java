@@ -21,6 +21,8 @@ public class Commons {
 
   public static final int ASSET_ISSUE_COUNT_LIMIT_MAX = 1000;
 
+  public static final int BASE58_ADDRESS_LENGTH = 34;
+
   public static byte[] decode58Check(String input) {
     byte[] decodeCheck = Base58.decode(input);
     if (decodeCheck.length <= 4) {
@@ -41,9 +43,16 @@ public class Commons {
     return null;
   }
 
+  /**
+   * Decode a Base58Check address string to its 21-byte form.
+   */
   public static byte[] decodeFromBase58Check(String addressBase58) {
     if (StringUtils.isEmpty(addressBase58)) {
-      logger.warn("Warning: Address is empty !!");
+      logger.debug("address is empty !!");
+      return null;
+    }
+    if (addressBase58.length() != BASE58_ADDRESS_LENGTH) {
+      logger.debug("invalid Base58 address length");
       return null;
     }
     byte[] address = decode58Check(addressBase58);

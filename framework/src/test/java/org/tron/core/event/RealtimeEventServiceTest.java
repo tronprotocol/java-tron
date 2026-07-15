@@ -5,21 +5,17 @@ import static org.mockito.Mockito.mock;
 import com.google.protobuf.ByteString;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.BlockingQueue;
-import org.eclipse.jetty.util.BlockingArrayQueue;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.tron.common.logsfilter.EventPluginLoader;
 import org.tron.common.logsfilter.capsule.BlockLogTriggerCapsule;
 import org.tron.common.logsfilter.capsule.TransactionLogTriggerCapsule;
-import org.tron.common.logsfilter.capsule.TriggerCapsule;
 import org.tron.common.logsfilter.trigger.ContractEventTrigger;
 import org.tron.common.logsfilter.trigger.ContractLogTrigger;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
-import org.tron.core.db.Manager;
 import org.tron.core.services.event.BlockEventCache;
 import org.tron.core.services.event.RealtimeEventService;
 import org.tron.core.services.event.bo.BlockEvent;
@@ -56,39 +52,39 @@ public class RealtimeEventServiceTest {
     EventPluginLoader instance = mock(EventPluginLoader.class);
     ReflectUtils.setFieldValue(realtimeEventService, "instance", instance);
 
-    BlockingQueue<TriggerCapsule> queue = new BlockingArrayQueue<>();
-    Manager manager = mock(Manager.class);
-    Mockito.when(manager.getTriggerCapsuleQueue()).thenReturn(queue);
-    ReflectUtils.setFieldValue(realtimeEventService, "manager", manager);
-
     BlockCapsule blockCapsule = new BlockCapsule(0L, Sha256Hash.ZERO_HASH, 0L,
         ByteString.copyFrom(BlockEventCacheTest.getBlockId()));
-    be2.setBlockLogTriggerCapsule(new BlockLogTriggerCapsule(blockCapsule));
+    // spy so processTrigger() is a no-op (does not reach the real EventPluginLoader),
+    // while setRemoved() still mutates the real trigger so the removed flag can be asserted.
+    BlockLogTriggerCapsule blockCap = Mockito.spy(new BlockLogTriggerCapsule(blockCapsule));
+    Mockito.doNothing().when(blockCap).processTrigger();
+    be2.setBlockLogTriggerCapsule(blockCap);
     Mockito.when(instance.isBlockLogTriggerEnable()).thenReturn(true);
     Mockito.when(instance.isBlockLogTriggerSolidified()).thenReturn(false);
 
-    realtimeEventService.add(event);
-    realtimeEventService.work();
+    // reorg rollback: block trigger re-emitted (posted synchronously) with removed=true
+    realtimeEventService.flush(be2, true);
+    Assert.assertTrue(blockCap.getBlockLogTrigger().isRemoved());
 
-    Assert.assertEquals(0, queue.size());
-
-    event = new Event(be2, false);
-    realtimeEventService.add(event);
-    realtimeEventService.work();
-
-    Assert.assertEquals(1, queue.size());
+    // forward: block trigger posted with removed=false
+    realtimeEventService.flush(be2, false);
+    Assert.assertFalse(blockCap.getBlockLogTrigger().isRemoved());
+    // posted directly to the plugin both times, never via the async queue
+    Mockito.verify(blockCap, Mockito.times(2)).processTrigger();
 
     be2.setBlockLogTriggerCapsule(null);
-    queue.poll();
 
+    TransactionLogTriggerCapsule txCap = mock(TransactionLogTriggerCapsule.class);
     List<TransactionLogTriggerCapsule> list = new ArrayList<>();
-    list.add(mock(TransactionLogTriggerCapsule.class));
+    list.add(txCap);
     be2.setTransactionLogTriggerCapsules(list);
-
     Mockito.when(instance.isTransactionLogTriggerEnable()).thenReturn(true);
     Mockito.when(instance.isTransactionLogTriggerSolidified()).thenReturn(false);
-    realtimeEventService.flush(be2, event.isRemove());
-    Assert.assertEquals(1, queue.size());
+
+    // rollback: tx trigger posted synchronously with removed=true
+    realtimeEventService.flush(be2, true);
+    Mockito.verify(txCap).setRemoved(true);
+    Mockito.verify(txCap).processTrigger();
 
     be2.setTransactionLogTriggerCapsules(null);
 

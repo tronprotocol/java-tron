@@ -1,7 +1,5 @@
 package org.tron.core.config.args;
 
-import static org.apache.commons.lang3.StringUtils.isNoneBlank;
-
 import com.typesafe.config.Config;
 import java.io.File;
 import java.net.InetAddress;
@@ -15,7 +13,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.tron.common.es.ExecutorServiceManager;
 import org.tron.common.parameter.CommonParameter;
-import org.tron.core.Constant;
 import org.tron.core.config.Configuration;
 import org.tron.core.net.TronNetService;
 
@@ -25,6 +22,7 @@ import org.tron.core.net.TronNetService;
 public class DynamicArgs {
   private final CommonParameter parameter = Args.getInstance();
 
+  private File configFile;
   private long lastModified = 0;
 
   private ScheduledExecutorService reloadExecutor;
@@ -36,11 +34,12 @@ public class DynamicArgs {
       reloadExecutor = ExecutorServiceManager.newSingleThreadScheduledExecutor(esName);
       logger.info("Start the dynamic loading configuration service");
       long checkInterval = parameter.getDynamicConfigCheckInterval();
-      File config = getConfigFile();
-      if (config == null) {
+      configFile = new File(Args.getConfigFilePath());
+      if (!configFile.exists()) {
+        logger.warn("Configuration path is required! No such file {}", configFile);
         return;
       }
-      lastModified = config.lastModified();
+      lastModified = configFile.lastModified();
       reloadExecutor.scheduleWithFixedDelay(() -> {
         try {
           run();
@@ -52,45 +51,26 @@ public class DynamicArgs {
   }
 
   public void run() {
-    File config = getConfigFile();
-    if (config != null) {
-      long lastModifiedTime = config.lastModified();
-      if (lastModifiedTime > lastModified) {
-        reload();
-        lastModified = lastModifiedTime;
-      }
+    long lastModifiedTime = configFile.lastModified();
+    if (lastModifiedTime > lastModified) {
+      reload();
+      lastModified = lastModifiedTime;
     }
-  }
-
-  private File getConfigFile() {
-    String confFilePath;
-    if (isNoneBlank(parameter.getShellConfFileName())) {
-      confFilePath = parameter.getShellConfFileName();
-    } else  {
-      confFilePath = Constant.TESTNET_CONF;
-    }
-
-    File confFile = new File(confFilePath);
-    if (!confFile.exists()) {
-      logger.warn("Configuration path is required! No such file {}", confFile);
-      return null;
-    }
-    return confFile;
   }
 
   public void reload() {
     logger.debug("Reloading ... ");
-    Config config = Configuration.getByFileName(parameter.getShellConfFileName(),
-        Constant.TESTNET_CONF);
+    Config config = Configuration.getByFileName(Args.getConfigFilePath());
+    NodeConfig nodeConfig = NodeConfig.fromConfig(config);
 
-    updateActiveNodes(config);
+    updateActiveNodes(nodeConfig);
 
-    updateTrustNodes(config);
+    updateTrustNodes(nodeConfig);
   }
 
-  private void updateActiveNodes(Config config) {
+  private void updateActiveNodes(NodeConfig nodeConfig) {
     List<InetSocketAddress> newActiveNodes =
-        Args.getInetSocketAddress(config, Constant.NODE_ACTIVE, true);
+        Args.filterInetSocketAddress(nodeConfig.getActive(), true);
     parameter.setActiveNodes(newActiveNodes);
     List<InetSocketAddress> activeNodes = TronNetService.getP2pConfig().getActiveNodes();
     activeNodes.clear();
@@ -99,8 +79,11 @@ public class DynamicArgs {
         TronNetService.getP2pConfig().getActiveNodes().toString());
   }
 
-  private void updateTrustNodes(Config config) {
-    List<InetAddress> newPassiveNodes = Args.getInetAddress(config, Constant.NODE_PASSIVE);
+  private void updateTrustNodes(NodeConfig nodeConfig) {
+    List<InetAddress> newPassiveNodes = new java.util.ArrayList<>();
+    for (InetSocketAddress sa : Args.filterInetSocketAddress(nodeConfig.getPassive(), false)) {
+      newPassiveNodes.add(sa.getAddress());
+    }
     parameter.setPassiveNodes(newPassiveNodes);
     List<InetAddress> trustNodes = TronNetService.getP2pConfig().getTrustNodes();
     trustNodes.clear();

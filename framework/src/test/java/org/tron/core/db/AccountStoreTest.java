@@ -17,8 +17,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.tron.common.BaseTest;
+import org.tron.common.TestConstants;
 import org.tron.common.utils.ByteArray;
-import org.tron.core.Constant;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.db2.ISession;
@@ -33,7 +33,6 @@ public class AccountStoreTest extends BaseTest {
 
   private static final byte[] data = TransactionStoreTest.randomBytes(32);
   private static String dbDirectory = "db_AccountStore_test";
-  private static String indexDirectory = "index_AccountStore_test";
   @Resource
   private AccountStore accountStore;
   @Resource
@@ -48,10 +47,9 @@ public class AccountStoreTest extends BaseTest {
     Args.setParam(
         new String[]{
             "--output-directory", dbPath(),
-            "--storage-db-directory", dbDirectory,
-            "--storage-index-directory", indexDirectory
+            "--storage-db-directory", dbDirectory
         },
-        Constant.TEST_CONF
+        TestConstants.TEST_CONF
     );
   }
 
@@ -77,12 +75,9 @@ public class AccountStoreTest extends BaseTest {
     field.set(AccountStore.class, new HashMap<>());
     Config config = mock(Config.class);
     Mockito.when(config.getObjectList("genesis.block.assets")).thenReturn(new ArrayList<>());
-    try {
-      AccountStore.setAccount(config);
-      Assert.fail();
-    } catch (Throwable e) {
-      Assert.assertTrue(e instanceof TronError);
-    }
+    Throwable e = Assert.assertThrows(Throwable.class,
+        () -> AccountStore.setAccount(config));
+    Assert.assertTrue(e instanceof TronError);
   }
 
   @Test

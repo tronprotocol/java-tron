@@ -1,20 +1,17 @@
 package org.tron.core.db2;
 
-import java.io.IOException;
+import static org.tron.common.TestConstants.assumeLevelDbAvailable;
+
 import java.util.HashMap;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.ClassRule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 import org.rocksdb.RocksDB;
+import org.tron.common.BaseMethodTest;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.common.storage.rocksdb.RocksDbDataSourceImpl;
 import org.tron.common.utils.ByteArray;
-import org.tron.core.Constant;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.common.DbSourceInter;
 import org.tron.core.db2.common.LevelDB;
@@ -23,10 +20,8 @@ import org.tron.core.db2.core.Snapshot;
 import org.tron.core.db2.core.SnapshotRoot;
 
 @Slf4j
-public class ChainbaseTest {
+public class ChainbaseTest extends BaseMethodTest {
 
-  @ClassRule
-  public static final TemporaryFolder temporaryFolder = new TemporaryFolder();
   private Chainbase chainbase = null;
 
   private final byte[] value0 = "00000".getBytes();
@@ -57,23 +52,14 @@ public class ChainbaseTest {
   private final byte[] prefix2 = "2000000".getBytes();
   private final byte[] prefix3 = "0000000".getBytes();
 
-  /**
-   * Release resources.
-   */
-  @AfterClass
-  public static void destroy() {
-    Args.clearParam();
-  }
-
-  @Before
-  public void initDb() throws IOException {
+  @Override
+  protected void afterInit() {
     RocksDB.loadLibrary();
-    Args.setParam(new String[] {"--output-directory",
-        temporaryFolder.newFolder().toString()}, Constant.TEST_CONF);
   }
 
   @Test
   public void testPrefixQueryForLeveldb() {
+    assumeLevelDbAvailable();
     LevelDbDataSourceImpl dataSource = new LevelDbDataSourceImpl(
         Args.getInstance().getOutputDirectory(), "testPrefixQueryForLeveldb");
     this.chainbase = new Chainbase(new SnapshotRoot(new LevelDB(dataSource)));

@@ -16,24 +16,27 @@ Here are some guidelines to get started quickly and easily:
   - [Commit Messages](#Commit-Messages)
   - [Branch Naming Conventions](#Branch-Naming-Conventions)
   - [Pull Request Guidelines](#Pull-Request-Guidelines)
+    - [PR Title Format](#PR-Title-Format)
+    - [Type and Scope Reference](#Type-and-Scope-Reference)
+    - [PR Description](#PR-Description)
   - [Special Situations And How To Deal With Them](#Special-Situations-And-How-To-Deal-With-Them)
 - [Conduct](#Conduct)
 
 
-### Reporting An Issue
+## Reporting An Issue
 
-If you're about to raise an issue because you think you've found a problem or bug with java-tron, please respect the following restrictions:
+If you have any question about java-tron, please search [existing issues](https://github.com/tronprotocol/java-tron/issues?q=is%3Aissue%20state%3Aclosed%20OR%20state%3Aopen) first to avoid duplicates. Your questions might already be under discussion or part of our roadmap. Checking first helps us streamline efforts and focus on new contributions.
 
-- Please search for existing issues. Help us keep duplicate issues to a minimum by checking to see if someone has already reported your problem or requested your idea.
+### Ask a question
+Feel free to ask any java-tron related question to solve your doubt. Please click **Ask a question** in GitHub Issues, using [Ask a question](.github/ISSUE_TEMPLATE/ask-a-question.md) template.
 
-- Use the Issue Report Template below.
-    ```
-    1.What did you do? 
+### Report a bug
 
-    2.What did you expect to see? 
+If you think you've found a bug with java-tron, please click **Report a bug** in GitHub Issues, using [Report a bug](.github/ISSUE_TEMPLATE/report-a-bug.md) template.
 
-    3.What did you see instead?
-    ```
+### Request a feature
+
+If you have any good feature suggestions for java-tron, please click **Request a feature** in GitHub Issues, using [Request a feature](.github/ISSUE_TEMPLATE/request-a-feature.md) template.
 
 
 ## Working on java-tron
@@ -66,43 +69,56 @@ java-tron only has `master`, `develop`, `release-*`, `feature-*`, and `hotfix-*`
 
 ### Submitting Code
 
-If you want to contribute codes to java-tron, please follow the following steps:
+If you want to contribute code to java-tron, please follow the following steps.
 
-* Fork code repository
-  Fork a new repository from tronprotocol/java-tron to your personal code repository
+* Fork the Repository
 
-* Edit the code in the fork repository
+  Visit [tronprotocol/java-tron](https://github.com/tronprotocol/java-tron/) and click **Fork** to create a fork repository under your GitHub account.
+
+* Setup Local Environment
+
+  Clone your fork repository to local and add the official repository as **upstream**.
     ```
     git clone https://github.com/yourname/java-tron.git
 
-    git remote add upstream https://github.com/tronprotocol/java-tron.git     ("upstream" refers to upstream projects repositories, namely tronprotocol's repositories, and can be named as you like it. We usually call it "upstream" for convenience) 
-    ```
-  Before developing new features, please synchronize your fork repository with the upstream repository.
-    ```
-    git fetch upstream 
-    git checkout develop 
-    git merge upstream/develop --no-ff (Add --no-ff to turn off the default fast merge mode)
+    cd java-tron
+
+    git remote add upstream https://github.com/tronprotocol/java-tron.git
     ```
 
-  Pull a new branch from the develop branch of your repository for local development. Please refer to [Branch Naming Conventions](#Branch-Naming-Conventions),
+* Synchronize and Develop
+
+  Before developing new features, please synchronize your local `develop` branch with the upstream repository and update to your fork repository.
+    ```
+    git fetch upstream
+    git checkout develop
+    # `--no-ff` means to turn off the default fast merge mode
+    git merge upstream/develop --no-ff
+    git push origin develop
+    ```
+
+  Create a new branch for development. Please refer to [Branch Naming Conventions](#Branch-Naming-Conventions).
     ```
     git checkout -b feature/branch_name develop
     ```
 
-  Write and commit the new code when it is completed. Please refer to [Commit Messages](#Commit-Messages)
+* Commit and Push
+
+  Write and commit the new code when it is completed. Please refer to [Commit Messages](#Commit-Messages).
      ```
      git add .
      git commit -m 'commit message'
      ```
-  Commit the new branch to your personal remote repository
+
+  Push the new branch to your fork repository
      ```
      git push origin feature/branch_name
      ```
 
-* Push code
+* Submit a pull request
 
-  Submit a pull request (PR) from your repository to `tronprotocol/java-tron`.
-  Please be sure to click on the link in the red box shown below. Select the base branch for tronprotocol and the compare branch for your personal fork repository.
+  Submit a pull request (PR) from your fork repository to `tronprotocol/java-tron`.
+  Please be sure to click on the link in the red box shown below. Select the base branch for `tronprotocol/java-tron` and the compare branch for your fork repository.
   ![image](https://raw.githubusercontent.com/tronprotocol/documentation-en/master/images/javatron_pr.png)
 
 
@@ -131,7 +147,7 @@ We would like all developers to follow a standard development flow and coding st
 2. Review the code before submission.
 3. Run standardized tests.
 
-`Sonar`-scanner and `Travis CI` continuous integration scanner will be automatically triggered when a pull request has been submitted. When a PR passes all the checks, the **java-tron** maintainers will then review the PR and offer feedback and modifications when necessary.  Once adopted, the PR will be closed and merged into the `develop` branch.
+`Sonar`-scanner and CI checks (GitHub Actions) will be automatically triggered when a pull request has been submitted. When a PR passes all the checks, the **java-tron** maintainers will then review the PR and offer feedback and modifications when necessary.  Once adopted, the PR will be closed and merged into the `develop` branch.
 
 We are glad to receive your pull requests and will try our best to review them as soon as we can. Any pull request is welcome, even if it is for a typo.
 
@@ -145,7 +161,7 @@ Please make sure your submission meets the following code style:
 - The code must have passed the Sonar scanner test.
 - The code has to be pulled from the `develop` branch.
 - The commit message should start with a verb, whose initial should not be capitalized.
-- The commit message should be less than 50 characters in length.
+- The commit message title should be between 10 and 72 characters in length.
 
 
 
@@ -172,11 +188,15 @@ The message header is a single line that contains succinct description of the ch
 * refactor (refactoring production code)
 * test     (adding or refactoring tests. no production code change)
 * chore    (updating grunt tasks etc. no production code change)
+* ci       (CI/CD configuration)
+* perf     (performance improvement)
+* build    (build system changes)
+* revert   (reverting a previous commit)
 
-The `scope` can be anything specifying place of the commit change. For example:`protobuf`,`api`,`test`,`docs`,`build`,`db`,`net`.You can use * if there isn't a more fitting scope.
+The `scope` can be anything specifying place of the commit change. For example: `framework`, `api`, `tvm`, `db`, `net`. For a full list of scopes, see [Type and Scope Reference](#type-and-scope-reference). You can use `*` if there isn't a more fitting scope.
 
 The subject contains a succinct description of the change:
-1. Limit the subject line, which briefly describes the purpose of the commit, to 50 characters.
+1. Limit the subject line, which briefly describes the purpose of the commit, to 72 characters (minimum 10).
 2. Start with a verb and use first-person present-tense (e.g., use "change" instead of "changed" or "changes").
 3. Do not capitalize the first letter.
 4. Do not end the subject line with a period.
@@ -204,13 +224,96 @@ If the purpose of this submission is to modify one issue, you need to refer to t
 4. Use `feature/` as the prefix of the `feature` branch, briefly describe the feature in the name, and connect words with underline (e.g., feature/new_resource_model, etc.).
 ### Pull Request Guidelines
 
+#### PR Title Format
+
+PR titles must follow the conventional commit format and will be checked by CI:
+
+```
+type(scope): description
+```
+
+| Rule | Requirement |
+|------|-------------|
+| Format | `type: description` or `type(scope): description` |
+| Length | 10 ~ 72 characters |
+| Type must be one of | `feat` `fix` `refactor` `docs` `style` `test` `chore` `ci` `perf` `build` `revert` |
+
+#### Type and Scope Reference
+
+**Type Reference**
+
+| Type | Purpose | Example |
+|------|---------|---------|
+| `feat` | New feature | `feat(tvm): add blob opcodes` |
+| `fix` | Bug fix | `fix(db): improve resource management` |
+| `docs` | Documentation only | `docs: fix formatting issues in README` |
+| `style` | Code style (no logic change) | `style: fix import order and line length` |
+| `refactor` | Code refactoring (no behavior change) | `refactor(config): simplify parameters` |
+| `test` | Adding or updating tests | `test(vm): add unit tests for opcodes` |
+| `chore` | Build tooling, dependencies, etc. | `chore(version): bump to v4.7.8` |
+| `ci` | CI/CD configuration | `ci: add PR check workflow` |
+| `perf` | Performance improvement | `perf(trie): optimize query performance` |
+| `build` | Build system changes | `build: add aarch64 support for RocksDB` |
+| `revert` | Reverting a previous commit | `revert: restore ApiUtilTest.java` |
+
+**Module Scopes**
+
+| Scope | Description |
+|-------|-------------|
+| `framework` | Core framework, services, APIs, RPC interfaces |
+| `chainbase` | Blockchain storage, state management, database layer |
+| `actuator` | Transaction execution engine, smart contract operations |
+| `consensus` | Consensus mechanism (DPoS, PBFT) |
+| `common` | Common utilities, configuration, shared infrastructure |
+| `crypto` | Cryptographic functions, key management, signatures |
+| `plugins` | Node tools (Toolkit, ArchiveManifest, database plugins) |
+| `protocol` | Protocol definitions, protobuf messages, gRPC contracts |
+
+**Functional Domain Scopes**
+
+| Scope | Description | Example |
+|-------|-------------|---------|
+| `net` | P2P networking, message handling, peer sync | `feat(net): optimize sync logic` |
+| `db` | Database operations, queries, persistence | `fix(db): handle null pointer in query` |
+| `vm` / `tvm` | Virtual machine, bytecode execution, EIP impl | `feat(tvm): implement eip-7823` |
+| `api` | HTTP/gRPC API endpoints | `fix(api): handle null response` |
+| `jsonrpc` | JSON-RPC interface (Ethereum-compatible) | `fix(jsonrpc): support blockHash param` |
+| `rpc` | gRPC services and methods | `fix(rpc): handle timeout correctly` |
+| `http` | HTTP server and endpoints | `feat(http): add new endpoint` |
+| `event` | Event logging and event service | `feat(event): optimize concurrent writes` |
+| `config` | Configuration management, feature flags | `refactor(config): simplify parameters` |
+| `block` | Block processing, validation, structure | `fix(block): validate block header` |
+| `proposal` | On-chain governance proposals | `feat(proposal): add Osaka proposal` |
+| `trie` | Merkle tree, state trie operations | `perf(trie): optimize tree query` |
+| `log` | Application logging | `refactor(log): reduce noise` |
+| `metrics` | Performance monitoring, Prometheus | `feat(metrics): add Prometheus support` |
+| `test` | Test infrastructure and utilities | `test(proposal): add unit test cases` |
+| `docker` | Docker containerization and deployment | `feat(docker): add ARM64 support` |
+| `version` | Version and release management | `chore(version): bump to v4.7.8` |
+
+**Feature Scopes**
+
+| Scope | Description |
+|-------|-------------|
+| `freezeV2` | Resource delegation / freeze-unfreeze V2 mechanism |
+| `DynamicEnergy` | Dynamic energy pricing mechanism |
+| `stable-coin` | Stable coin features and operations |
+| `reward` | Block producer rewards distribution |
+| `lite` | Lite fullnode functionality |
+| `toolkit` | Node maintenance tools (Toolkit.jar) |
+
+#### PR Description
+
+- PR description must not be empty, minimum **20 characters**.
+- Should explain **what** the PR does and **why**.
+
+#### General Rules
+
 1. Create one PR for one issue.
 2. Avoid massive PRs.
-3. Write an overview of the purpose of the PR in its title.
-4. Write a description of the PR for future reviewers.
-5. Elaborate on the feedback you need (if any).
-6. Do not capitalize the first letter.
-7. Do not put a period (.) in the end.
+3. Elaborate on the feedback you need (if any).
+4. Do not capitalize the first letter of the description.
+5. Do not put a period (.) at the end of the title.
 
 
 

@@ -1,7 +1,6 @@
 package org.tron.core.db2;
 
 import com.google.common.collect.Sets;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -13,22 +12,15 @@ import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 import org.springframework.util.CollectionUtils;
-import org.tron.common.application.Application;
-import org.tron.common.application.ApplicationFactory;
+import org.tron.common.BaseMethodTest;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.cache.CacheStrategies;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.SessionOptional;
-import org.tron.core.Constant;
 import org.tron.core.capsule.ProtoCapsule;
-import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db2.RevokingDbWithCacheNewValueTest.TestRevokingTronStore;
 import org.tron.core.db2.core.Snapshot;
@@ -36,11 +28,9 @@ import org.tron.core.db2.core.SnapshotManager;
 import org.tron.core.db2.core.SnapshotRoot;
 import org.tron.core.exception.ItemNotFoundException;
 
-public class SnapshotRootTest {
+public class SnapshotRootTest extends BaseMethodTest {
 
   private TestRevokingTronStore tronDatabase;
-  private TronApplicationContext context;
-  private Application appT;
   private SnapshotManager revokingDatabase;
   private final Set<String> noSecondCacheDBs = Sets.newHashSet(Arrays.asList("trans-cache",
           "exchange-v2","nullifier","accountTrie","transactionRetStore","accountid-index",
@@ -50,22 +40,6 @@ public class SnapshotRootTest {
           "exchange","market_order","account-trace","contract-state","trans"));
   private Set<String> allDBNames;
   private Set<String> allRevokingDBNames;
-  @Rule
-  public final TemporaryFolder temporaryFolder = new TemporaryFolder();
-
-
-  @Before
-  public void init() throws IOException {
-    Args.setParam(new String[]{"-d", temporaryFolder.newFolder().toString()}, Constant.TEST_CONF);
-    context = new TronApplicationContext(DefaultConfig.class);
-    appT = ApplicationFactory.create(context);
-  }
-
-  @After
-  public void removeDb() {
-    Args.clearParam();
-    context.destroy();
-  }
 
   @Test
   public synchronized void testRemove() {

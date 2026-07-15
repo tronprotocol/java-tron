@@ -6,8 +6,8 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.tron.common.BaseTest;
+import org.tron.common.TestConstants;
 import org.tron.common.utils.ByteArray;
-import org.tron.core.Constant;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionInfoCapsule;
 import org.tron.core.capsule.TransactionRetCapsule;
@@ -21,7 +21,6 @@ public class TransactionRetStoreTest extends BaseTest {
   private static final byte[] transactionId = TransactionStoreTest.randomBytes(32);
   private static final byte[] blockNum = ByteArray.fromLong(1);
   private static String dbDirectory = "db_TransactionRetStore_test";
-  private static String indexDirectory = "index_TransactionRetStore_test";
   @Resource
   private TransactionRetStore transactionRetStore;
   private static Transaction transaction;
@@ -33,8 +32,7 @@ public class TransactionRetStoreTest extends BaseTest {
 
   static {
     Args.setParam(new String[]{"--output-directory", dbPath(),
-        "--storage-db-directory", dbDirectory,
-        "--storage-index-directory", indexDirectory}, Constant.TEST_CONF);
+        "--storage-db-directory", dbDirectory}, TestConstants.TEST_CONF);
   }
 
   @BeforeClass

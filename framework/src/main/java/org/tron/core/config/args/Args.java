@@ -1,26 +1,17 @@
 package org.tron.core.config.args;
 
 import static java.lang.System.exit;
-import static org.fusesource.jansi.Ansi.ansi;
 import static org.tron.common.math.Maths.max;
-import static org.tron.common.math.Maths.min;
 import static org.tron.core.Constant.ADD_PRE_FIX_BYTE_MAINNET;
-import static org.tron.core.Constant.DEFAULT_PROPOSAL_EXPIRE_TIME;
-import static org.tron.core.Constant.DYNAMIC_ENERGY_INCREASE_FACTOR_RANGE;
-import static org.tron.core.Constant.DYNAMIC_ENERGY_MAX_FACTOR_RANGE;
-import static org.tron.core.Constant.MAX_PROPOSAL_EXPIRE_TIME;
-import static org.tron.core.Constant.MIN_PROPOSAL_EXPIRE_TIME;
-import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCE_TIMEOUT_PERCENT;
-import static org.tron.core.config.Parameter.ChainConstant.MAX_ACTIVE_WITNESS_NUM;
-import static org.tron.core.exception.TronError.ErrCode.PARAMETER_INIT;
+import static org.tron.core.Constant.ENERGY_LIMIT_IN_CONSTANT_TX;
+import static org.tron.core.config.args.InetUtil.resolveInetAddress;
+import static org.tron.core.config.args.InetUtil.resolveInetSocketAddressList;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.ParameterDescription;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.typesafe.config.Config;
-import com.typesafe.config.ConfigObject;
-import io.grpc.internal.GrpcUtil;
-import io.grpc.netty.NettyServerBuilder;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -31,13 +22,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
 import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -45,16 +35,13 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.fusesource.jansi.AnsiConsole;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.arch.Arch;
 import org.tron.common.args.Account;
 import org.tron.common.args.GenesisBlock;
 import org.tron.common.args.Witness;
-import org.tron.common.config.DbBackupConfig;
 import org.tron.common.cron.CronExpression;
 import org.tron.common.logsfilter.EventPluginConfig;
 import org.tron.common.logsfilter.FilterQuery;
@@ -69,8 +56,6 @@ import org.tron.common.utils.LocalWitnesses;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.config.Configuration;
-import org.tron.core.config.Parameter.NetConstants;
-import org.tron.core.config.Parameter.NodeConstant;
 import org.tron.core.exception.TronError;
 import org.tron.core.store.AccountStore;
 import org.tron.p2p.P2pConfig;
@@ -83,6 +68,64 @@ import org.tron.program.Version;
 @NoArgsConstructor
 @Component
 public class Args extends CommonParameter {
+
+  /**
+   * Maps deprecated CLI option names to their config-file equivalents.
+   * Options not in this map have no config equivalent and are being removed entirely.
+   */
+  private static final Map<String, String> DEPRECATED_CLI_TO_CONFIG;
+
+  static {
+    Map<String, String> m = new HashMap<>();
+    m.put("--storage-db-directory", "storage.db.directory");
+    m.put("--storage-db-engine", "storage.db.engine");
+    m.put("--storage-db-synchronous", "storage.db.sync");
+    m.put("--storage-transactionHistory-switch", "storage.transHistory.switch");
+    m.put("--contract-parse-enable", "event.subscribe.contractParse");
+    m.put("--support-constant", "vm.supportConstant");
+    m.put("--max-energy-limit-for-constant", "vm.maxEnergyLimitForConstant");
+    m.put("--lru-cache-size", "vm.lruCacheSize");
+    m.put("--min-time-ratio", "vm.minTimeRatio");
+    m.put("--max-time-ratio", "vm.maxTimeRatio");
+    m.put("--save-internaltx", "vm.saveInternalTx");
+    m.put("--save-featured-internaltx", "vm.saveFeaturedInternalTx");
+    m.put("--save-cancel-all-unfreeze-v2-details", "vm.saveCancelAllUnfreezeV2Details");
+    m.put("--long-running-time", "vm.longRunningTime");
+    m.put("--max-connect-number", "node.maxHttpConnectNumber");
+    m.put("--rpc-thread", "node.rpc.thread");
+    m.put("--solidity-thread", "node.solidity.threads");
+    m.put("--validate-sign-thread", "node.validateSignThreadNum");
+    m.put("--trust-node", "node.trustNode");
+    m.put("--history-balance-lookup", "storage.balance.history.lookup");
+    m.put("--es", "event.subscribe.enable");
+    DEPRECATED_CLI_TO_CONFIG = Collections.unmodifiableMap(m);
+  }
+
+  @Getter
+  private static String configFilePath = "";
+
+  // Singleton config beans — populated at startup, read-only after init.
+  // New code can read directly from these beans instead of CommonParameter.
+  @Getter
+  private static NodeConfig nodeConfig;
+  @Getter
+  private static VmConfig vmConfig;
+  @Getter
+  private static BlockConfig blockConfig;
+  @Getter
+  private static CommitteeConfig committeeConfig;
+  @Getter
+  private static StorageConfig storageConfig;
+  @Getter
+  private static GenesisConfig genesisConfig;
+  @Getter
+  private static MiscConfig miscConfig;
+  @Getter
+  private static RateLimiterConfig rateLimiterConfig;
+  @Getter
+  private static MetricsConfig metricsConfig;
+  @Getter
+  private static EventConfig eventConfig;
 
   @Getter
   @Setter
@@ -99,1281 +142,829 @@ public class Args extends CommonParameter {
       solidityContractEventTriggerMap = new ConcurrentHashMap<>();
 
 
-  public static void clearParam() {
-    PARAMETER.shellConfFileName = "";
-    PARAMETER.outputDirectory = "output-directory";
-    PARAMETER.help = false;
-    PARAMETER.witness = false;
-    PARAMETER.seedNodes = new ArrayList<>();
-    PARAMETER.privateKey = "";
-    PARAMETER.witnessAddress = "";
-    PARAMETER.storageDbDirectory = "";
-    PARAMETER.storageIndexDirectory = "";
-    PARAMETER.storageIndexSwitch = "";
-
-    // FIXME: PARAMETER.storage maybe null ?
-    if (PARAMETER.storage != null) {
-      // WARNING: WILL DELETE DB STORAGE PATHS
-      PARAMETER.storage.deleteAllStoragePaths();
-      PARAMETER.storage = null;
-    }
-
-    PARAMETER.overlay = null;
-    PARAMETER.seedNode = null;
-    PARAMETER.genesisBlock = null;
-    PARAMETER.chainId = null;
-    localWitnesses = null;
-    PARAMETER.needSyncCheck = false;
-    PARAMETER.nodeDiscoveryEnable = false;
-    PARAMETER.nodeDiscoveryPersist = false;
-    PARAMETER.nodeEffectiveCheckEnable = false;
-    PARAMETER.nodeConnectionTimeout = 2000;
-    PARAMETER.activeNodes = new ArrayList<>();
-    PARAMETER.passiveNodes = new ArrayList<>();
-    PARAMETER.fastForwardNodes = new ArrayList<>();
-    PARAMETER.maxFastForwardNum = 4;
-    PARAMETER.nodeChannelReadTimeout = 0;
-    PARAMETER.maxConnections = 30;
-    PARAMETER.minConnections = 8;
-    PARAMETER.minActiveConnections = 3;
-    PARAMETER.maxConnectionsWithSameIp = 2;
-    PARAMETER.maxTps = 1000;
-    PARAMETER.minParticipationRate = 0;
-    PARAMETER.nodeListenPort = 0;
-    PARAMETER.nodeLanIp = "";
-    PARAMETER.nodeExternalIp = "";
-    PARAMETER.nodeP2pVersion = 0;
-    PARAMETER.nodeEnableIpv6 = false;
-    PARAMETER.dnsTreeUrls = new ArrayList<>();
-    PARAMETER.dnsPublishConfig = null;
-    PARAMETER.syncFetchBatchNum = 2000;
-    PARAMETER.rpcPort = 0;
-    PARAMETER.rpcOnSolidityPort = 0;
-    PARAMETER.rpcOnPBFTPort = 0;
-    PARAMETER.fullNodeHttpPort = 0;
-    PARAMETER.solidityHttpPort = 0;
-    PARAMETER.pBFTHttpPort = 0;
-    PARAMETER.pBFTExpireNum = 20;
-    PARAMETER.jsonRpcHttpFullNodePort = 0;
-    PARAMETER.jsonRpcHttpSolidityPort = 0;
-    PARAMETER.jsonRpcHttpPBFTPort = 0;
-    PARAMETER.maintenanceTimeInterval = 0;
-    PARAMETER.proposalExpireTime = 0;
-    PARAMETER.checkFrozenTime = 1;
-    PARAMETER.allowCreationOfContracts = 0;
-    PARAMETER.allowAdaptiveEnergy = 0;
-    PARAMETER.allowTvmTransferTrc10 = 0;
-    PARAMETER.allowTvmConstantinople = 0;
-    PARAMETER.allowDelegateResource = 0;
-    PARAMETER.allowSameTokenName = 0;
-    PARAMETER.allowTvmSolidity059 = 0;
-    PARAMETER.forbidTransferToContract = 0;
-    PARAMETER.tcpNettyWorkThreadNum = 0;
-    PARAMETER.udpNettyWorkThreadNum = 0;
-    PARAMETER.solidityNode = false;
-    PARAMETER.keystoreFactory = false;
-    PARAMETER.trustNodeAddr = "";
-    PARAMETER.walletExtensionApi = false;
-    PARAMETER.estimateEnergy = false;
-    PARAMETER.estimateEnergyMaxRetry = 3;
-    PARAMETER.receiveTcpMinDataLength = 2048;
-    PARAMETER.isOpenFullTcpDisconnect = false;
-    PARAMETER.nodeDetectEnable = false;
-    PARAMETER.inactiveThreshold = 600;
-    PARAMETER.supportConstant = false;
-    PARAMETER.debug = false;
-    PARAMETER.minTimeRatio = 0.0;
-    PARAMETER.maxTimeRatio = 5.0;
-    PARAMETER.longRunningTime = 10;
-    // PARAMETER.allowShieldedTransaction = 0;
-    PARAMETER.maxHttpConnectNumber = 50;
-    PARAMETER.allowMultiSign = 0;
-    PARAMETER.trxExpirationTimeInMilliseconds = 0;
-    PARAMETER.allowShieldedTransactionApi = true;
-    PARAMETER.zenTokenId = "000000";
-    PARAMETER.allowProtoFilterNum = 0;
-    PARAMETER.allowAccountStateRoot = 0;
-    PARAMETER.validContractProtoThreadNum = 1;
-    PARAMETER.shieldedTransInPendingMaxCounts = 10;
-    PARAMETER.changedDelegation = 0;
-    PARAMETER.rpcEnable = true;
-    PARAMETER.rpcSolidityEnable = true;
-    PARAMETER.rpcPBFTEnable = true;
-    PARAMETER.fullNodeHttpEnable = true;
-    PARAMETER.solidityNodeHttpEnable = true;
-    PARAMETER.pBFTHttpEnable = true;
-    PARAMETER.jsonRpcHttpFullNodeEnable = false;
-    PARAMETER.jsonRpcHttpSolidityNodeEnable = false;
-    PARAMETER.jsonRpcHttpPBFTNodeEnable = false;
-    PARAMETER.jsonRpcMaxBlockRange = 5000;
-    PARAMETER.jsonRpcMaxSubTopics = 1000;
-    PARAMETER.jsonRpcMaxBlockFilterNum = 50000;
-    PARAMETER.nodeMetricsEnable = false;
-    PARAMETER.metricsStorageEnable = false;
-    PARAMETER.metricsPrometheusEnable = false;
-    PARAMETER.agreeNodeCount = MAX_ACTIVE_WITNESS_NUM * 2 / 3 + 1;
-    PARAMETER.allowPBFT = 0;
-    PARAMETER.allowShieldedTRC20Transaction = 0;
-    PARAMETER.allowMarketTransaction = 0;
-    PARAMETER.allowTransactionFeePool = 0;
-    PARAMETER.allowBlackHoleOptimization = 0;
-    PARAMETER.allowNewResourceModel = 0;
-    PARAMETER.allowTvmIstanbul = 0;
-    PARAMETER.allowTvmFreeze = 0;
-    PARAMETER.allowTvmVote = 0;
-    PARAMETER.allowTvmLondon = 0;
-    PARAMETER.allowTvmCompatibleEvm = 0;
-    PARAMETER.historyBalanceLookup = false;
-    PARAMETER.openPrintLog = true;
-    PARAMETER.openTransactionSort = false;
-    PARAMETER.allowAccountAssetOptimization = 0;
-    PARAMETER.allowAssetOptimization = 0;
-    PARAMETER.disabledApiList = Collections.emptyList();
-    PARAMETER.shutdownBlockTime = null;
-    PARAMETER.shutdownBlockHeight = -1;
-    PARAMETER.shutdownBlockCount = -1;
-    PARAMETER.blockCacheTimeout = 60;
-    PARAMETER.allowNewRewardAlgorithm = 0;
-    PARAMETER.allowNewReward = 0;
-    PARAMETER.memoFee = 0;
-    PARAMETER.rateLimiterGlobalQps = 50000;
-    PARAMETER.rateLimiterGlobalIpQps = 10000;
-    PARAMETER.rateLimiterGlobalApiQps = 1000;
-    PARAMETER.rateLimiterSyncBlockChain = 3.0;
-    PARAMETER.rateLimiterFetchInvData = 3.0;
-    PARAMETER.rateLimiterDisconnect = 1.0;
-    PARAMETER.p2pDisable = false;
-    PARAMETER.dynamicConfigEnable = false;
-    PARAMETER.dynamicConfigCheckInterval = 600;
-    PARAMETER.allowTvmShangHai = 0;
-    PARAMETER.unsolidifiedBlockCheck = false;
-    PARAMETER.maxUnsolidifiedBlocks = 54;
-    PARAMETER.allowOldRewardOpt = 0;
-    PARAMETER.allowEnergyAdjustment = 0;
-    PARAMETER.allowStrictMath = 0;
-    PARAMETER.consensusLogicOptimization = 0;
-    PARAMETER.allowTvmCancun = 0;
-    PARAMETER.allowTvmBlob = 0;
-    PARAMETER.rpcMaxRstStream = 0;
-    PARAMETER.rpcSecondsPerWindow = 0;
-  }
-
-  /**
-   * print Version.
-   */
-  private static void printVersion() {
-    Properties properties = new Properties();
-    boolean noGitProperties = true;
-    try {
-      InputStream in = Thread.currentThread()
-          .getContextClassLoader().getResourceAsStream("git.properties");
-      if (in != null) {
-        noGitProperties = false;
-        properties.load(in);
-      }
-    } catch (IOException e) {
-      logger.error(e.getMessage());
-    }
-    JCommander jCommander = new JCommander();
-    jCommander.getConsole().println("OS : " + System.getProperty("os.name"));
-    jCommander.getConsole().println("JVM : " + System.getProperty("java.vendor") + " "
-        + System.getProperty("java.version") + " " + System.getProperty("os.arch"));
-    if (!noGitProperties) {
-      jCommander.getConsole().println("Git : " + properties.getProperty("git.commit.id"));
-    }
-    jCommander.getConsole().println("Version : " + Version.getVersion());
-    jCommander.getConsole().println("Code : " + Version.VERSION_CODE);
-  }
-
-  public static void printHelp(JCommander jCommander) {
-    List<ParameterDescription> parameterDescriptionList = jCommander.getParameters();
-    Map<String, ParameterDescription> stringParameterDescriptionMap = new HashMap<>();
-    for (ParameterDescription parameterDescription : parameterDescriptionList) {
-      String parameterName = parameterDescription.getParameterized().getName();
-      stringParameterDescriptionMap.put(parameterName, parameterDescription);
-    }
-
-    StringBuilder helpStr = new StringBuilder();
-    helpStr.append("Name:\n\tFullNode - the java-tron command line interface\n");
-    String programName = Strings.isNullOrEmpty(jCommander.getProgramName()) ? "FullNode.jar" :
-        jCommander.getProgramName();
-    helpStr.append(String.format("%nUsage: java -jar %s [options] [seedNode <seedNode> ...]%n",
-        programName));
-    helpStr.append(String.format("%nVERSION: %n%s-%s%n", Version.getVersion(),
-        getCommitIdAbbrev()));
-
-    Map<String, String[]> groupOptionListMap = Args.getOptionGroup();
-    for (Map.Entry<String, String[]> entry : groupOptionListMap.entrySet()) {
-      String group = entry.getKey();
-      helpStr.append(String.format("%n%s OPTIONS:%n", group.toUpperCase()));
-      int optionMaxLength = Arrays.stream(entry.getValue()).mapToInt(p -> {
-        ParameterDescription tmpParameterDescription = stringParameterDescriptionMap.get(p);
-        if (tmpParameterDescription == null) {
-          return 1;
-        }
-        return tmpParameterDescription.getNames().length();
-      }).max().orElse(1);
-
-      for (String option : groupOptionListMap.get(group)) {
-        ParameterDescription parameterDescription = stringParameterDescriptionMap.get(option);
-        if (parameterDescription == null) {
-          logger.warn("Miss option:{}", option);
-          continue;
-        }
-        String tmpOptionDesc = String.format("%s\t\t\t%s%n",
-            Strings.padEnd(parameterDescription.getNames(), optionMaxLength, ' '),
-            upperFirst(parameterDescription.getDescription()));
-        helpStr.append(tmpOptionDesc);
-      }
-    }
-    jCommander.getConsole().println(helpStr.toString());
-  }
-
-  public static String upperFirst(String name) {
-    if (name.length() <= 1) {
-      return name;
-    }
-    name = name.substring(0, 1).toUpperCase() + name.substring(1);
-    return name;
-  }
-
-  private static String getCommitIdAbbrev() {
-    Properties properties = new Properties();
-    try {
-      InputStream in = Thread.currentThread()
-          .getContextClassLoader().getResourceAsStream("git.properties");
-      if (in == null) {
-        logger.warn("git.properties not found on classpath");
-        return "";
-      }
-      properties.load(in);
-    } catch (IOException e) {
-      logger.warn("Load resource failed,git.properties {}", e.getMessage());
-    }
-    return properties.getProperty("git.commit.id.abbrev");
-  }
-
-  private static Map<String, String[]> getOptionGroup() {
-    String[] tronOption = new String[] {"version", "help", "shellConfFileName", "logbackPath",
-        "eventSubscribe", "solidityNode", "keystoreFactory"};
-    String[] dbOption = new String[] {"outputDirectory"};
-    String[] witnessOption = new String[] {"witness", "privateKey"};
-    String[] vmOption = new String[] {"debug"};
-
-    Map<String, String[]> optionGroupMap = new LinkedHashMap<>();
-    optionGroupMap.put("tron", tronOption);
-    optionGroupMap.put("db", dbOption);
-    optionGroupMap.put("witness", witnessOption);
-    optionGroupMap.put("virtual machine", vmOption);
-
-    for (String[] optionList : optionGroupMap.values()) {
-      for (String option : optionList) {
-        try {
-          CommonParameter.class.getField(option);
-        } catch (NoSuchFieldException e) {
-          logger.warn("NoSuchFieldException:{},{}", option, e.getMessage());
-        }
-      }
-    }
-    return optionGroupMap;
-  }
-
   /**
    * set parameters.
    */
   public static void setParam(final String[] args, final String confFileName) {
-    try {
-      Arch.throwIfUnsupportedJavaVersion();
-    } catch (UnsupportedOperationException e) {
-      AnsiConsole.systemInstall();
-      // To avoid confusion caused by silent execution when using -h or -v flags,
-      // errors are explicitly logged to the console in this context.
-      // Console output is not required for errors in other scenarios.
-      System.out.println(ansi().fgRed().a(e.getMessage()).reset());
-      AnsiConsole.systemUninstall();
-      throw new TronError(e, TronError.ErrCode.JDK_VERSION);
-    }
-    JCommander.newBuilder().addObject(PARAMETER).build().parse(args);
-    if (PARAMETER.version) {
+    // 1. Parse CLI args into a separate object
+    CLIParameter cmd = new CLIParameter();
+    JCommander jc = JCommander.newBuilder().addObject(cmd).build();
+    jc.parse(args);
+
+    if (cmd.version) {
       printVersion();
       exit(0);
     }
-
-    if (PARAMETER.isHelp()) {
-      JCommander jCommander = JCommander.newBuilder().addObject(Args.PARAMETER).build();
-      jCommander.parse(args);
-      Args.printHelp(jCommander);
+    if (cmd.help) {
+      Args.printHelp(jc);
       exit(0);
     }
 
-    Config config = Configuration.getByFileName(PARAMETER.shellConfFileName, confFileName);
-    setParam(config);
+    // Resolve config file path
+    configFilePath = StringUtils.isNoneBlank(cmd.shellConfFileName)
+        ? cmd.shellConfFileName : confFileName;
+    Config config = Configuration.getByFileName(configFilePath);
+
+    // 2. Config overrides defaults (event config bean is read here but not yet applied)
+    applyConfigParams(config);
+
+    // 3. CLI overrides Config (highest priority, including --es → eventSubscribe)
+    applyCLIParams(cmd, jc);
+
+    // 4. Apply event config after CLI
+    applyEventConfig(eventConfig);
+
+    // 5. Apply platform constraints (e.g. ARM64 forces RocksDB)
+    applyPlatformConstraints();
+
+    // 6. Init witness (depends on CLI witness flag)
+    initLocalWitnesses(config, cmd);
   }
 
   /**
-   * set parameters.
+   * Bridge VmConfig bean values to CommonParameter fields.
+   * Temporary until Phase 2 moves fields into domain config objects.
    */
-  public static void setParam(final Config config) {
+  private static void applyVmConfig(VmConfig vm) {
+    PARAMETER.supportConstant = vm.isSupportConstant();
+    PARAMETER.maxEnergyLimitForConstant = vm.getMaxEnergyLimitForConstant();
+    PARAMETER.lruCacheSize = vm.getLruCacheSize();
+    PARAMETER.minTimeRatio = vm.getMinTimeRatio();
+    PARAMETER.maxTimeRatio = vm.getMaxTimeRatio();
+    PARAMETER.longRunningTime = vm.getLongRunningTime();
+    PARAMETER.estimateEnergy = vm.isEstimateEnergy();
+    PARAMETER.estimateEnergyMaxRetry = vm.getEstimateEnergyMaxRetry();
+    PARAMETER.vmTrace = vm.isVmTrace();
+    PARAMETER.saveInternalTx = vm.isSaveInternalTx();
+    PARAMETER.saveFeaturedInternalTx = vm.isSaveFeaturedInternalTx();
+    PARAMETER.saveCancelAllUnfreezeV2Details = vm.isSaveCancelAllUnfreezeV2Details();
+    PARAMETER.constantCallTimeoutMs = vm.getConstantCallTimeoutMs();
+  }
 
-    if (config.hasPath(Constant.NET_TYPE)
-        && Constant.TESTNET.equalsIgnoreCase(config.getString(Constant.NET_TYPE))) {
-      Wallet.setAddressPreFixByte(Constant.ADD_PRE_FIX_BYTE_TESTNET);
-      Wallet.setAddressPreFixString(Constant.ADD_PRE_FIX_STRING_TESTNET);
-    } else {
-      Wallet.setAddressPreFixByte(ADD_PRE_FIX_BYTE_MAINNET);
-      Wallet.setAddressPreFixString(Constant.ADD_PRE_FIX_STRING_MAINNET);
-    }
+  // Old applyStorageConfig removed — merged into applyStorageConfig()
 
-    PARAMETER.cryptoEngine = config.hasPath(Constant.CRYPTO_ENGINE) ? config
-        .getString(Constant.CRYPTO_ENGINE) : Constant.ECKey_ENGINE;
+  /**
+   * Bridge StorageConfig bean to PARAMETER.storage fields.
+   * Reads all storage config from one StorageConfig bean instance.
+   * Config param is still needed for setDefaultDbOptions/setCacheStrategies/setDbRoots
+   * which use raw Config for dynamic nested objects.
+   */
+  private static void applyStorageConfig(StorageConfig sc) {
+    PARAMETER.storage.setDbEngine(sc.getDb().getEngine());
+    PARAMETER.storage.setDbSync(sc.getDb().isSync());
+    PARAMETER.storage.setDbDirectory(sc.getDb().getDirectory());
+    PARAMETER.storage.setTransactionHistorySwitch(sc.getTransHistory().getSwitch());
+    // contractParse is set in applyConfigParams alongside event config, not here
+    PARAMETER.storage.setCheckpointVersion(sc.getCheckpoint().getVersion());
+    PARAMETER.storage.setCheckpointSync(sc.getCheckpoint().isSync());
 
-    localWitnesses = new WitnessInitializer(config).initLocalWitnesses();
-    if (PARAMETER.isWitness()
-        && CollectionUtils.isEmpty(localWitnesses.getPrivateKeys())) {
-      throw new TronError("This is a witness node, but localWitnesses is null",
-          TronError.ErrCode.WITNESS_INIT);
-    }
+    // estimatedTransactions / maxFlushCount clamping & validation run inside
+    // TxCacheConfig.postProcess / SnapshotConfig.postProcess during bean load.
+    PARAMETER.storage.setEstimatedBlockTransactions(sc.getTxCache().getEstimatedTransactions());
+    PARAMETER.storage.setTxCacheInitOptimization(sc.getTxCache().isInitOptimization());
+    PARAMETER.storage.setMaxFlushCount(sc.getSnapshot().getMaxFlushCount());
 
-    if (config.hasPath(Constant.VM_SUPPORT_CONSTANT)) {
-      PARAMETER.supportConstant = config.getBoolean(Constant.VM_SUPPORT_CONSTANT);
-    }
+    // RocksDB settings
+    StorageConfig.DbSettingsConfig dbs = sc.getDbSettings();
+    PARAMETER.rocksDBCustomSettings = RocksDbSettings
+        .initCustomSettings(dbs.getLevelNumber(), dbs.getCompactThreads(),
+            dbs.getBlocksize(), dbs.getMaxBytesForLevelBase(),
+            dbs.getMaxBytesForLevelMultiplier(), dbs.getLevel0FileNumCompactionTrigger(),
+            dbs.getTargetFileSizeBase(), dbs.getTargetFileSizeMultiplier(),
+            dbs.getMaxOpenFiles());
+    RocksDbSettings.loggingSettings();
 
-    if (config.hasPath(Constant.VM_MAX_ENERGY_LIMIT_FOR_CONSTANT)) {
-      long configLimit = config.getLong(Constant.VM_MAX_ENERGY_LIMIT_FOR_CONSTANT);
-      PARAMETER.maxEnergyLimitForConstant = max(3_000_000L, configLimit, true);
-    }
+    // Dynamic nested objects use StorageConfig's raw storage sub-tree
+    // setDefaultDbOptions must be called before setPropertyMapFromBean because
+    // createPropertyFromBean calls newDefaultDbOptions which needs defaultDbOptions initialized
+    PARAMETER.storage.setDefaultDbOptions(sc);
+    PARAMETER.storage.setPropertyMapFromBean(sc.getProperties());
+    PARAMETER.storage.setCacheStrategies(sc.getRawStorageConfig());
+    PARAMETER.storage.setDbRoots(sc.getRawStorageConfig());
+  }
 
-    if (config.hasPath(Constant.VM_LRU_CACHE_SIZE)) {
-      PARAMETER.lruCacheSize = config.getInt(Constant.VM_LRU_CACHE_SIZE);
-    }
+  /**
+   * Bridge NodeConfig backup sub-bean to PARAMETER fields.
+   */
+  private static void applyNodeBackupConfig(NodeConfig nc) {
+    NodeConfig.NodeBackupConfig b = nc.getBackup();
+    PARAMETER.backupPriority = b.getPriority();
+    PARAMETER.backupPort = b.getPort();
+    PARAMETER.keepAliveInterval = b.getKeepAliveInterval();
+    PARAMETER.backupMembers = b.getMembers();
+    checkBackupMembers();
+  }
 
-    if (config.hasPath(Constant.NODE_RPC_ENABLE)) {
-      PARAMETER.rpcEnable = config.getBoolean(Constant.NODE_RPC_ENABLE);
-    }
-
-    if (config.hasPath(Constant.NODE_RPC_SOLIDITY_ENABLE)) {
-      PARAMETER.rpcSolidityEnable = config.getBoolean(Constant.NODE_RPC_SOLIDITY_ENABLE);
-    }
-
-    if (config.hasPath(Constant.NODE_RPC_PBFT_ENABLE)) {
-      PARAMETER.rpcPBFTEnable = config.getBoolean(Constant.NODE_RPC_PBFT_ENABLE);
-    }
-
-    if (config.hasPath(Constant.NODE_HTTP_FULLNODE_ENABLE)) {
-      PARAMETER.fullNodeHttpEnable = config.getBoolean(Constant.NODE_HTTP_FULLNODE_ENABLE);
-    }
-
-    if (config.hasPath(Constant.NODE_HTTP_SOLIDITY_ENABLE)) {
-      PARAMETER.solidityNodeHttpEnable = config.getBoolean(Constant.NODE_HTTP_SOLIDITY_ENABLE);
-    }
-
-    if (config.hasPath(Constant.NODE_HTTP_PBFT_ENABLE)) {
-      PARAMETER.pBFTHttpEnable = config.getBoolean(Constant.NODE_HTTP_PBFT_ENABLE);
-    }
-
-    if (config.hasPath(Constant.NODE_JSONRPC_HTTP_FULLNODE_ENABLE)) {
-      PARAMETER.jsonRpcHttpFullNodeEnable =
-          config.getBoolean(Constant.NODE_JSONRPC_HTTP_FULLNODE_ENABLE);
-    }
-
-    if (config.hasPath(Constant.NODE_JSONRPC_HTTP_SOLIDITY_ENABLE)) {
-      PARAMETER.jsonRpcHttpSolidityNodeEnable =
-          config.getBoolean(Constant.NODE_JSONRPC_HTTP_SOLIDITY_ENABLE);
-    }
-
-    if (config.hasPath(Constant.NODE_JSONRPC_HTTP_PBFT_ENABLE)) {
-      PARAMETER.jsonRpcHttpPBFTNodeEnable =
-          config.getBoolean(Constant.NODE_JSONRPC_HTTP_PBFT_ENABLE);
-    }
-
-    if (config.hasPath(Constant.NODE_JSONRPC_MAX_BLOCK_RANGE)) {
-      PARAMETER.jsonRpcMaxBlockRange =
-          config.getInt(Constant.NODE_JSONRPC_MAX_BLOCK_RANGE);
-    }
-
-    if (config.hasPath(Constant.NODE_JSONRPC_MAX_SUB_TOPICS)) {
-      PARAMETER.jsonRpcMaxSubTopics =
-          config.getInt(Constant.NODE_JSONRPC_MAX_SUB_TOPICS);
-    }
-
-    if (config.hasPath(Constant.NODE_JSONRPC_MAX_BLOCK_FILTER_NUM)) {
-      PARAMETER.jsonRpcMaxBlockFilterNum =
-          config.getInt(Constant.NODE_JSONRPC_MAX_BLOCK_FILTER_NUM);
-    }
-
-    if (config.hasPath(Constant.VM_MIN_TIME_RATIO)) {
-      PARAMETER.minTimeRatio = config.getDouble(Constant.VM_MIN_TIME_RATIO);
-    }
-
-    if (config.hasPath(Constant.VM_MAX_TIME_RATIO)) {
-      PARAMETER.maxTimeRatio = config.getDouble(Constant.VM_MAX_TIME_RATIO);
-    }
-
-    if (config.hasPath(Constant.VM_LONG_RUNNING_TIME)) {
-      PARAMETER.longRunningTime = config.getInt(Constant.VM_LONG_RUNNING_TIME);
-    }
-
-    PARAMETER.storage = new Storage();
-
-    PARAMETER.storage.setDbEngine(Optional.ofNullable(PARAMETER.storageDbEngine)
-        .filter(StringUtils::isNotEmpty)
-        .orElse(Storage.getDbEngineFromConfig(config)));
-
-    PARAMETER.storage.setDbSync(Optional.ofNullable(PARAMETER.storageDbSynchronous)
-        .filter(StringUtils::isNotEmpty)
-        .map(Boolean::valueOf)
-        .orElse(Storage.getDbVersionSyncFromConfig(config)));
-
-    PARAMETER.storage.setContractParseSwitch(Optional.ofNullable(PARAMETER.contractParseEnable)
-        .filter(StringUtils::isNotEmpty)
-        .map(Boolean::valueOf)
-        .orElse(Storage.getContractParseSwitchFromConfig(config)));
-
-    PARAMETER.storage.setDbDirectory(Optional.ofNullable(PARAMETER.storageDbDirectory)
-        .filter(StringUtils::isNotEmpty)
-        .orElse(Storage.getDbDirectoryFromConfig(config)));
-
-    PARAMETER.storage.setIndexDirectory(Optional.ofNullable(PARAMETER.storageIndexDirectory)
-        .filter(StringUtils::isNotEmpty)
-        .orElse(Storage.getIndexDirectoryFromConfig(config)));
-
-    PARAMETER.storage.setIndexSwitch(Optional.ofNullable(PARAMETER.storageIndexSwitch)
-        .filter(StringUtils::isNotEmpty)
-        .orElse(Storage.getIndexSwitchFromConfig(config)));
-
-    PARAMETER.storage
-        .setTransactionHistorySwitch(
-            Optional.ofNullable(PARAMETER.storageTransactionHistorySwitch)
-                .filter(StringUtils::isNotEmpty)
-                .orElse(Storage.getTransactionHistorySwitchFromConfig(config)));
-
-    PARAMETER.storage
-        .setCheckpointVersion(Storage.getCheckpointVersionFromConfig(config));
-    PARAMETER.storage
-        .setCheckpointSync(Storage.getCheckpointSyncFromConfig(config));
-
-    PARAMETER.storage.setEstimatedBlockTransactions(
-        Storage.getEstimatedTransactionsFromConfig(config));
-    PARAMETER.storage.setTxCacheInitOptimization(
-        Storage.getTxCacheInitOptimizationFromConfig(config));
-    PARAMETER.storage.setMaxFlushCount(Storage.getSnapshotMaxFlushCountFromConfig(config));
-
-    PARAMETER.storage.setDefaultDbOptions(config);
-    PARAMETER.storage.setPropertyMapFromConfig(config);
-    PARAMETER.storage.setCacheStrategies(config);
-    PARAMETER.storage.setDbRoots(config);
-
-    PARAMETER.seedNode = new SeedNode();
-    PARAMETER.seedNode.setAddressList(loadSeeds(config));
-
-    if (config.hasPath(Constant.GENESIS_BLOCK)) {
-      PARAMETER.genesisBlock = new GenesisBlock();
-
-      PARAMETER.genesisBlock.setTimestamp(config.getString(Constant.GENESIS_BLOCK_TIMESTAMP));
-      PARAMETER.genesisBlock.setParentHash(config.getString(Constant.GENESIS_BLOCK_PARENTHASH));
-
-      if (config.hasPath(Constant.GENESIS_BLOCK_ASSETS)) {
-        PARAMETER.genesisBlock.setAssets(getAccountsFromConfig(config));
-        AccountStore.setAccount(config);
-      }
-      if (config.hasPath(Constant.GENESIS_BLOCK_WITNESSES)) {
-        PARAMETER.genesisBlock.setWitnesses(getWitnessesFromConfig(config));
-      }
-    } else {
+  /**
+   * Bridge GenesisConfig bean to GenesisBlock business object.
+   * Converts raw address strings via Base58Check decoding.
+   */
+  private static void applyGenesisConfig(GenesisConfig gc, Config config) {
+    if (gc.getTimestamp().isEmpty() && gc.getAssets().isEmpty()) {
       PARAMETER.genesisBlock = GenesisBlock.getDefault();
+      return;
+    }
+    PARAMETER.genesisBlock = new GenesisBlock();
+    PARAMETER.genesisBlock.setTimestamp(gc.getTimestamp());
+    PARAMETER.genesisBlock.setParentHash(gc.getParentHash());
+
+    if (!gc.getAssets().isEmpty()) {
+      List<Account> accounts = new ArrayList<>();
+      for (GenesisConfig.AssetConfig ac : gc.getAssets()) {
+        Account account = new Account();
+        account.setAccountName(ac.getAccountName());
+        account.setAccountType(ac.getAccountType());
+        account.setAddress(Commons.decodeFromBase58Check(ac.getAddress()));
+        account.setBalance(ac.getBalance());
+        accounts.add(account);
+      }
+      PARAMETER.genesisBlock.setAssets(accounts);
+      AccountStore.setAccount(config);
+    }
+    {
+      List<Witness> witnesses = new ArrayList<>();
+      for (GenesisConfig.WitnessConfig wc : gc.getWitnesses()) {
+        Witness witness = new Witness();
+        witness.setAddress(Commons.decodeFromBase58Check(wc.getAddress()));
+        witness.setUrl(wc.getUrl());
+        witness.setVoteCount(wc.getVoteCount());
+        witnesses.add(witness);
+      }
+      PARAMETER.genesisBlock.setWitnesses(witnesses);
+    }
+  }
+
+  /**
+   * Bridge MiscConfig bean values to CommonParameter fields.
+   */
+  private static void applyMiscConfig(MiscConfig mc) {
+    PARAMETER.cryptoEngine = mc.getCryptoEngine();
+    PARAMETER.needToUpdateAsset = mc.isNeedToUpdateAsset();
+    PARAMETER.historyBalanceLookup = mc.isHistoryBalanceLookup();
+    PARAMETER.trxReferenceBlock = mc.getTrxReferenceBlock();
+    PARAMETER.trxExpirationTimeInMilliseconds = mc.getTrxExpirationTimeInMilliseconds();
+    PARAMETER.blockNumForEnergyLimit = mc.getBlockNumForEnergyLimit();
+    // seed.node — top-level config section, not under "node"
+    // Config structure is arguably misplaced but preserved for backward compatibility
+    PARAMETER.seedNode = new SeedNode();
+    PARAMETER.seedNode.setAddressList(resolveInetSocketAddressList(mc.getSeedNodeIpList()));
+  }
+
+  /**
+   * Bridge RateLimiterConfig bean values to CommonParameter fields.
+   * HTTP/RPC rate limiter lists still use getRateLimiterFromConfig() for
+   * conversion to RateLimiterInitialization business objects.
+   */
+  private static void applyRateLimiterConfig(RateLimiterConfig rl) {
+    PARAMETER.rateLimiterGlobalQps = rl.getGlobal().getQps();
+    PARAMETER.rateLimiterGlobalIpQps = rl.getGlobal().getIp().getQps();
+    PARAMETER.rateLimiterGlobalApiQps = rl.getGlobal().getApi().getQps();
+    PARAMETER.rateLimiterSyncBlockChain = rl.getP2p().getSyncBlockChain();
+    PARAMETER.rateLimiterFetchInvData = rl.getP2p().getFetchInvData();
+    PARAMETER.rateLimiterDisconnect = rl.getP2p().getDisconnect();
+    PARAMETER.rateLimiterApiNonBlocking = rl.isApiNonBlocking();
+
+    // HTTP/RPC rate limiter items: convert bean lists to business objects
+    RateLimiterInitialization initialization = new RateLimiterInitialization();
+    ArrayList<RateLimiterInitialization.HttpRateLimiterItem> httpItems = new ArrayList<>();
+    for (RateLimiterConfig.HttpRateLimitItem item : rl.getHttp()) {
+      httpItems.add(new RateLimiterInitialization.HttpRateLimiterItem(
+          item.getComponent(), item.getStrategy(), item.getParamString()));
+    }
+    initialization.setHttpMap(httpItems);
+    ArrayList<RateLimiterInitialization.RpcRateLimiterItem> rpcItems = new ArrayList<>();
+    for (RateLimiterConfig.RpcRateLimitItem item : rl.getRpc()) {
+      rpcItems.add(new RateLimiterInitialization.RpcRateLimiterItem(
+          item.getComponent(), item.getStrategy(), item.getParamString()));
+    }
+    initialization.setRpcMap(rpcItems);
+    PARAMETER.rateLimiterInitialization = initialization;
+  }
+
+  /**
+   * Package-private entry point only for tests
+   */
+  static void applyEventConfig() {
+    applyEventConfig(eventConfig);
+  }
+
+  /**
+   * Bridge EventConfig bean values to CommonParameter fields.
+   * Converts EventConfig (raw bean) into EventPluginConfig and FilterQuery (business objects).
+   */
+  private static void applyEventConfig(EventConfig ec) {
+    // cmd parameter has higher priority
+    PARAMETER.eventSubscribe = PARAMETER.eventSubscribe || ec.isEnable();
+    if (!PARAMETER.eventSubscribe) {
+      return;
     }
 
-    PARAMETER.needSyncCheck =
-        config.hasPath(Constant.BLOCK_NEED_SYNC_CHECK)
-            && config.getBoolean(Constant.BLOCK_NEED_SYNC_CHECK);
+    // Build EventPluginConfig from EventConfig bean
+    EventPluginConfig epc = new EventPluginConfig();
+    epc.setVersion(ec.getVersion());
+    epc.setStartSyncBlockNum(ec.getStartSyncBlockNum());
 
-    PARAMETER.nodeDiscoveryEnable =
-        config.hasPath(Constant.NODE_DISCOVERY_ENABLE)
-            && config.getBoolean(Constant.NODE_DISCOVERY_ENABLE);
+    // native queue
+    EventConfig.NativeConfig nq = ec.getNativeQueue();
+    epc.setUseNativeQueue(nq.isUseNativeQueue());
+    epc.setBindPort(nq.getBindport());
+    epc.setSendQueueLength(nq.getSendqueuelength());
 
-    PARAMETER.nodeDiscoveryPersist =
-        config.hasPath(Constant.NODE_DISCOVERY_PERSIST)
-            && config.getBoolean(Constant.NODE_DISCOVERY_PERSIST);
-
-    PARAMETER.nodeEffectiveCheckEnable =
-        config.hasPath(Constant.NODE_EFFECTIVE_CHECK_ENABLE)
-            && config.getBoolean(Constant.NODE_EFFECTIVE_CHECK_ENABLE);
-
-    PARAMETER.nodeConnectionTimeout =
-        config.hasPath(Constant.NODE_CONNECTION_TIMEOUT)
-            ? config.getInt(Constant.NODE_CONNECTION_TIMEOUT) * 1000
-            : 2000;
-
-    if (!config.hasPath(Constant.NODE_FETCH_BLOCK_TIMEOUT)) {
-      PARAMETER.fetchBlockTimeout = 500;
-    } else if (config.getInt(Constant.NODE_FETCH_BLOCK_TIMEOUT) > 1000) {
-      PARAMETER.fetchBlockTimeout = 1000;
-    } else if (config.getInt(Constant.NODE_FETCH_BLOCK_TIMEOUT) < 100) {
-      PARAMETER.fetchBlockTimeout = 100;
-    } else {
-      PARAMETER.fetchBlockTimeout = config.getInt(Constant.NODE_FETCH_BLOCK_TIMEOUT);
+    if (!nq.isUseNativeQueue()) {
+      if (StringUtils.isNotEmpty(ec.getPath())) {
+        epc.setPluginPath(ec.getPath().trim());
+      }
+      if (StringUtils.isNotEmpty(ec.getServer())) {
+        epc.setServerAddress(ec.getServer().trim());
+      }
+      if (StringUtils.isNotEmpty(ec.getDbconfig())) {
+        epc.setDbConfig(ec.getDbconfig().trim());
+      }
     }
 
-    PARAMETER.nodeChannelReadTimeout =
-        config.hasPath(Constant.NODE_CHANNEL_READ_TIMEOUT)
-            ? config.getInt(Constant.NODE_CHANNEL_READ_TIMEOUT)
-            : 0;
+    // topics
+    List<TriggerConfig> triggerConfigs = new ArrayList<>();
+    for (EventConfig.TopicConfig tc : ec.getTopics()) {
+      TriggerConfig trig = new TriggerConfig();
+      trig.setTriggerName(tc.getTriggerName());
+      trig.setEnabled(tc.isEnable());
+      trig.setTopic(tc.getTopic());
+      trig.setSolidified(tc.isSolidified());
+      trig.setEthCompatible(tc.isEthCompatible());
+      trig.setRedundancy(tc.isRedundancy());
+      triggerConfigs.add(trig);
+    }
+    epc.setTriggerConfigList(triggerConfigs);
 
-    if (config.hasPath(Constant.NODE_MAX_ACTIVE_NODES)) {
-      PARAMETER.maxConnections = config.getInt(Constant.NODE_MAX_ACTIVE_NODES);
-    } else {
-      PARAMETER.maxConnections =
-              config.hasPath(Constant.NODE_MAX_CONNECTIONS)
-                      ? config.getInt(Constant.NODE_MAX_CONNECTIONS) : 30;
+    PARAMETER.eventPluginConfig = epc;
+
+    // Build FilterQuery from EventConfig.FilterConfig bean
+    EventConfig.FilterConfig fc = ec.getFilter();
+    FilterQuery filter = new FilterQuery();
+
+    try {
+      filter.setFromBlock(FilterQuery.parseFromBlockNumber(fc.getFromblock().trim()));
+    } catch (Exception e) {
+      logger.error("invalid filter: fromBlockNumber: {}", fc.getFromblock(), e);
+      PARAMETER.eventFilter = null;
+      return;
     }
 
-    if (config.hasPath(Constant.NODE_MAX_ACTIVE_NODES)
-            && config.hasPath(Constant.NODE_CONNECT_FACTOR)) {
-      PARAMETER.minConnections = (int) (PARAMETER.maxConnections
-              * config.getDouble(Constant.NODE_CONNECT_FACTOR));
-    } else {
-      PARAMETER.minConnections =
-              config.hasPath(Constant.NODE_MIN_CONNECTIONS)
-                      ? config.getInt(Constant.NODE_MIN_CONNECTIONS) : 8;
+    try {
+      filter.setToBlock(FilterQuery.parseToBlockNumber(fc.getToblock().trim()));
+    } catch (Exception e) {
+      logger.error("invalid filter: toBlockNumber: {}", fc.getToblock(), e);
+      PARAMETER.eventFilter = null;
+      return;
     }
 
-    if (config.hasPath(Constant.NODE_MAX_ACTIVE_NODES)
-            && config.hasPath(Constant.NODE_ACTIVE_CONNECT_FACTOR)) {
-      PARAMETER.minActiveConnections = (int) (PARAMETER.maxConnections
-              * config.getDouble(Constant.NODE_ACTIVE_CONNECT_FACTOR));
-    } else {
-      PARAMETER.minActiveConnections =
-              config.hasPath(Constant.NODE_MIN_ACTIVE_CONNECTIONS)
-                      ? config.getInt(Constant.NODE_MIN_ACTIVE_CONNECTIONS) : 3;
-    }
-
-    if (config.hasPath(Constant.NODE_MAX_ACTIVE_NODES_WITH_SAME_IP)) {
-      PARAMETER.maxConnectionsWithSameIp =
-              config.getInt(Constant.NODE_MAX_ACTIVE_NODES_WITH_SAME_IP);
-    } else {
-      PARAMETER.maxConnectionsWithSameIp =
-              config.hasPath(Constant.NODE_MAX_CONNECTIONS_WITH_SAME_IP) ? config
-                      .getInt(Constant.NODE_MAX_CONNECTIONS_WITH_SAME_IP) : 2;
-    }
-
-    PARAMETER.maxTps = config.hasPath(Constant.NODE_MAX_TPS)
-            ? config.getInt(Constant.NODE_MAX_TPS) : 1000;
-
-    PARAMETER.minParticipationRate =
-        config.hasPath(Constant.NODE_MIN_PARTICIPATION_RATE)
-            ? config.getInt(Constant.NODE_MIN_PARTICIPATION_RATE)
-            : 0;
-
-    PARAMETER.p2pConfig = new P2pConfig();
-    PARAMETER.nodeListenPort =
-        config.hasPath(Constant.NODE_LISTEN_PORT)
-            ? config.getInt(Constant.NODE_LISTEN_PORT) : 0;
-
-    PARAMETER.nodeLanIp = PARAMETER.p2pConfig.getLanIp();
-    externalIp(config);
-
-    PARAMETER.nodeP2pVersion =
-        config.hasPath(Constant.NODE_P2P_VERSION)
-            ? config.getInt(Constant.NODE_P2P_VERSION) : 0;
-
-    PARAMETER.nodeEnableIpv6 =
-        config.hasPath(Constant.NODE_ENABLE_IPV6) && config.getBoolean(Constant.NODE_ENABLE_IPV6);
-
-    PARAMETER.dnsTreeUrls = config.hasPath(Constant.NODE_DNS_TREE_URLS) ? config.getStringList(
-        Constant.NODE_DNS_TREE_URLS) : new ArrayList<>();
-
-    PARAMETER.dnsPublishConfig = loadDnsPublishConfig(config);
-
-    PARAMETER.syncFetchBatchNum = config.hasPath(Constant.NODE_SYNC_FETCH_BATCH_NUM) ? config
-        .getInt(Constant.NODE_SYNC_FETCH_BATCH_NUM) : 2000;
-    if (PARAMETER.syncFetchBatchNum > 2000) {
-      PARAMETER.syncFetchBatchNum = 2000;
-    }
-    if (PARAMETER.syncFetchBatchNum < 100) {
-      PARAMETER.syncFetchBatchNum = 100;
-    }
-
-    PARAMETER.rpcPort =
-        config.hasPath(Constant.NODE_RPC_PORT)
-            ? config.getInt(Constant.NODE_RPC_PORT) : 50051;
-
-    PARAMETER.rpcOnSolidityPort =
-        config.hasPath(Constant.NODE_RPC_SOLIDITY_PORT)
-            ? config.getInt(Constant.NODE_RPC_SOLIDITY_PORT) : 50061;
-
-    PARAMETER.rpcOnPBFTPort =
-        config.hasPath(Constant.NODE_RPC_PBFT_PORT)
-            ? config.getInt(Constant.NODE_RPC_PBFT_PORT) : 50071;
-
-    PARAMETER.fullNodeHttpPort =
-        config.hasPath(Constant.NODE_HTTP_FULLNODE_PORT)
-            ? config.getInt(Constant.NODE_HTTP_FULLNODE_PORT) : 8090;
-
-    PARAMETER.solidityHttpPort =
-        config.hasPath(Constant.NODE_HTTP_SOLIDITY_PORT)
-            ? config.getInt(Constant.NODE_HTTP_SOLIDITY_PORT) : 8091;
-
-    PARAMETER.pBFTHttpPort =
-        config.hasPath(Constant.NODE_HTTP_PBFT_PORT)
-            ? config.getInt(Constant.NODE_HTTP_PBFT_PORT) : 8092;
-
-    PARAMETER.jsonRpcHttpFullNodePort =
-        config.hasPath(Constant.NODE_JSONRPC_HTTP_FULLNODE_PORT)
-            ? config.getInt(Constant.NODE_JSONRPC_HTTP_FULLNODE_PORT) : 8545;
-
-    PARAMETER.jsonRpcHttpSolidityPort =
-        config.hasPath(Constant.NODE_JSONRPC_HTTP_SOLIDITY_PORT)
-            ? config.getInt(Constant.NODE_JSONRPC_HTTP_SOLIDITY_PORT) : 8555;
-
-    PARAMETER.jsonRpcHttpPBFTPort =
-        config.hasPath(Constant.NODE_JSONRPC_HTTP_PBFT_PORT)
-            ? config.getInt(Constant.NODE_JSONRPC_HTTP_PBFT_PORT) : 8565;
-
-    PARAMETER.rpcThreadNum =
-        config.hasPath(Constant.NODE_RPC_THREAD) ? config.getInt(Constant.NODE_RPC_THREAD)
-            : (Runtime.getRuntime().availableProcessors() + 1) / 2;
-
-    PARAMETER.solidityThreads =
-        config.hasPath(Constant.NODE_SOLIDITY_THREADS)
-            ? config.getInt(Constant.NODE_SOLIDITY_THREADS)
-            : Runtime.getRuntime().availableProcessors();
-
-    PARAMETER.maxConcurrentCallsPerConnection =
-        config.hasPath(Constant.NODE_RPC_MAX_CONCURRENT_CALLS_PER_CONNECTION)
-            ? config.getInt(Constant.NODE_RPC_MAX_CONCURRENT_CALLS_PER_CONNECTION)
-            : Integer.MAX_VALUE;
-
-    PARAMETER.flowControlWindow = config.hasPath(Constant.NODE_RPC_FLOW_CONTROL_WINDOW)
-        ? config.getInt(Constant.NODE_RPC_FLOW_CONTROL_WINDOW)
-        : NettyServerBuilder.DEFAULT_FLOW_CONTROL_WINDOW;
-    if (config.hasPath(Constant.NODE_RPC_MAX_RST_STREAM)) {
-      PARAMETER.rpcMaxRstStream = config.getInt(Constant.NODE_RPC_MAX_RST_STREAM);
-    }
-    if (config.hasPath(Constant.NODE_RPC_SECONDS_PER_WINDOW)) {
-      PARAMETER.rpcSecondsPerWindow = config.getInt(Constant.NODE_RPC_SECONDS_PER_WINDOW);
-    }
-
-    PARAMETER.maxConnectionIdleInMillis =
-        config.hasPath(Constant.NODE_RPC_MAX_CONNECTION_IDLE_IN_MILLIS)
-            ? config.getLong(Constant.NODE_RPC_MAX_CONNECTION_IDLE_IN_MILLIS)
-            : Long.MAX_VALUE;
-
-    PARAMETER.blockProducedTimeOut = config.hasPath(Constant.NODE_PRODUCED_TIMEOUT)
-        ? config.getInt(Constant.NODE_PRODUCED_TIMEOUT) : BLOCK_PRODUCE_TIMEOUT_PERCENT;
-
-    PARAMETER.maxHttpConnectNumber = config.hasPath(Constant.NODE_MAX_HTTP_CONNECT_NUMBER)
-        ? config.getInt(Constant.NODE_MAX_HTTP_CONNECT_NUMBER)
-        : NodeConstant.MAX_HTTP_CONNECT_NUMBER;
-
-    if (PARAMETER.blockProducedTimeOut < 30) {
-      PARAMETER.blockProducedTimeOut = 30;
-    }
-    if (PARAMETER.blockProducedTimeOut > 100) {
-      PARAMETER.blockProducedTimeOut = 100;
-    }
-
-    PARAMETER.netMaxTrxPerSecond = config.hasPath(Constant.NODE_NET_MAX_TRX_PER_SECOND)
-        ? config.getInt(Constant.NODE_NET_MAX_TRX_PER_SECOND)
-        : NetConstants.NET_MAX_TRX_PER_SECOND;
-
-    PARAMETER.maxConnectionAgeInMillis =
-        config.hasPath(Constant.NODE_RPC_MAX_CONNECTION_AGE_IN_MILLIS)
-            ? config.getLong(Constant.NODE_RPC_MAX_CONNECTION_AGE_IN_MILLIS)
-            : Long.MAX_VALUE;
-
-    PARAMETER.maxMessageSize = config.hasPath(Constant.NODE_RPC_MAX_MESSAGE_SIZE)
-        ? config.getInt(Constant.NODE_RPC_MAX_MESSAGE_SIZE) : GrpcUtil.DEFAULT_MAX_MESSAGE_SIZE;
-
-    PARAMETER.maxHeaderListSize = config.hasPath(Constant.NODE_RPC_MAX_HEADER_LIST_SIZE)
-        ? config.getInt(Constant.NODE_RPC_MAX_HEADER_LIST_SIZE)
-        : GrpcUtil.DEFAULT_MAX_HEADER_LIST_SIZE;
-
-    PARAMETER.isRpcReflectionServiceEnable =
-        config.hasPath(Constant.NODE_RPC_REFLECTION_SERVICE)
-            && config.getBoolean(Constant.NODE_RPC_REFLECTION_SERVICE);
-
-    PARAMETER.maintenanceTimeInterval =
-        config.hasPath(Constant.BLOCK_MAINTENANCE_TIME_INTERVAL) ? config
-            .getInt(Constant.BLOCK_MAINTENANCE_TIME_INTERVAL) : 21600000L;
-
-    PARAMETER.proposalExpireTime = getProposalExpirationTime(config);
-
-    PARAMETER.checkFrozenTime =
-        config.hasPath(Constant.BLOCK_CHECK_FROZEN_TIME) ? config
-            .getInt(Constant.BLOCK_CHECK_FROZEN_TIME) : 1;
-
-    PARAMETER.allowCreationOfContracts =
-        config.hasPath(Constant.COMMITTEE_ALLOW_CREATION_OF_CONTRACTS) ? config
-            .getInt(Constant.COMMITTEE_ALLOW_CREATION_OF_CONTRACTS) : 0;
-
-    PARAMETER.allowMultiSign =
-        config.hasPath(Constant.COMMITTEE_ALLOW_MULTI_SIGN) ? config
-            .getInt(Constant.COMMITTEE_ALLOW_MULTI_SIGN) : 0;
-
-    PARAMETER.allowAdaptiveEnergy =
-        config.hasPath(Constant.COMMITTEE_ALLOW_ADAPTIVE_ENERGY) ? config
-            .getInt(Constant.COMMITTEE_ALLOW_ADAPTIVE_ENERGY) : 0;
-
-    PARAMETER.allowDelegateResource =
-        config.hasPath(Constant.COMMITTEE_ALLOW_DELEGATE_RESOURCE) ? config
-            .getInt(Constant.COMMITTEE_ALLOW_DELEGATE_RESOURCE) : 0;
-
-    PARAMETER.allowSameTokenName =
-        config.hasPath(Constant.COMMITTEE_ALLOW_SAME_TOKEN_NAME) ? config
-            .getInt(Constant.COMMITTEE_ALLOW_SAME_TOKEN_NAME) : 0;
-
-    PARAMETER.allowTvmTransferTrc10 =
-        config.hasPath(Constant.COMMITTEE_ALLOW_TVM_TRANSFER_TRC10) ? config
-            .getInt(Constant.COMMITTEE_ALLOW_TVM_TRANSFER_TRC10) : 0;
-
-    PARAMETER.allowTvmConstantinople =
-        config.hasPath(Constant.COMMITTEE_ALLOW_TVM_CONSTANTINOPLE) ? config
-            .getInt(Constant.COMMITTEE_ALLOW_TVM_CONSTANTINOPLE) : 0;
-
-    PARAMETER.allowTvmSolidity059 =
-        config.hasPath(Constant.COMMITTEE_ALLOW_TVM_SOLIDITY059) ? config
-            .getInt(Constant.COMMITTEE_ALLOW_TVM_SOLIDITY059) : 0;
-
-    PARAMETER.forbidTransferToContract =
-        config.hasPath(Constant.COMMITTEE_FORBID_TRANSFER_TO_CONTRACT) ? config
-            .getInt(Constant.COMMITTEE_FORBID_TRANSFER_TO_CONTRACT) : 0;
-
-    PARAMETER.tcpNettyWorkThreadNum = config.hasPath(Constant.NODE_TCP_NETTY_WORK_THREAD_NUM)
-        ? config.getInt(Constant.NODE_TCP_NETTY_WORK_THREAD_NUM) : 0;
-
-    PARAMETER.udpNettyWorkThreadNum = config.hasPath(Constant.NODE_UDP_NETTY_WORK_THREAD_NUM)
-        ? config.getInt(Constant.NODE_UDP_NETTY_WORK_THREAD_NUM) : 1;
-
-    if (StringUtils.isEmpty(PARAMETER.trustNodeAddr)) {
-      PARAMETER.trustNodeAddr =
-          config.hasPath(Constant.NODE_TRUST_NODE)
-              ? config.getString(Constant.NODE_TRUST_NODE) : null;
-    }
-
-    PARAMETER.validateSignThreadNum =
-        config.hasPath(Constant.NODE_VALIDATE_SIGN_THREAD_NUM) ? config
-            .getInt(Constant.NODE_VALIDATE_SIGN_THREAD_NUM)
-            : Runtime.getRuntime().availableProcessors();
-
-    PARAMETER.walletExtensionApi =
-        config.hasPath(Constant.NODE_WALLET_EXTENSION_API)
-            && config.getBoolean(Constant.NODE_WALLET_EXTENSION_API);
-    PARAMETER.estimateEnergy =
-        config.hasPath(Constant.VM_ESTIMATE_ENERGY)
-            && config.getBoolean(Constant.VM_ESTIMATE_ENERGY);
-    PARAMETER.estimateEnergyMaxRetry = config.hasPath(Constant.VM_ESTIMATE_ENERGY_MAX_RETRY)
-        ? config.getInt(Constant.VM_ESTIMATE_ENERGY_MAX_RETRY) : 3;
-    if (PARAMETER.estimateEnergyMaxRetry < 0) {
-      PARAMETER.estimateEnergyMaxRetry = 0;
-    }
-    if (PARAMETER.estimateEnergyMaxRetry > 10) {
-      PARAMETER.estimateEnergyMaxRetry = 10;
-    }
-
-    PARAMETER.receiveTcpMinDataLength = config.hasPath(Constant.NODE_RECEIVE_TCP_MIN_DATA_LENGTH)
-        ? config.getLong(Constant.NODE_RECEIVE_TCP_MIN_DATA_LENGTH) : 2048;
-
-    PARAMETER.isOpenFullTcpDisconnect = config.hasPath(Constant.NODE_IS_OPEN_FULL_TCP_DISCONNECT)
-        && config.getBoolean(Constant.NODE_IS_OPEN_FULL_TCP_DISCONNECT);
-
-    PARAMETER.nodeDetectEnable = config.hasPath(Constant.NODE_DETECT_ENABLE)
-          && config.getBoolean(Constant.NODE_DETECT_ENABLE);
-
-    PARAMETER.inactiveThreshold = config.hasPath(Constant.NODE_INACTIVE_THRESHOLD)
-        ? config.getInt(Constant.NODE_INACTIVE_THRESHOLD) : 600;
-    if (PARAMETER.inactiveThreshold < 1) {
-      PARAMETER.inactiveThreshold = 1;
-    }
-
-    PARAMETER.maxTransactionPendingSize = config.hasPath(Constant.NODE_MAX_TRANSACTION_PENDING_SIZE)
-        ? config.getInt(Constant.NODE_MAX_TRANSACTION_PENDING_SIZE) : 2000;
-
-    PARAMETER.pendingTransactionTimeout = config.hasPath(Constant.NODE_PENDING_TRANSACTION_TIMEOUT)
-        ? config.getLong(Constant.NODE_PENDING_TRANSACTION_TIMEOUT) : 60_000;
-
-    PARAMETER.needToUpdateAsset =
-        !config.hasPath(Constant.STORAGE_NEEDTO_UPDATE_ASSET) || config
-            .getBoolean(Constant.STORAGE_NEEDTO_UPDATE_ASSET);
-    PARAMETER.trxReferenceBlock = config.hasPath(Constant.TRX_REFERENCE_BLOCK)
-        ? config.getString(Constant.TRX_REFERENCE_BLOCK) : "solid";
-
-    PARAMETER.trxExpirationTimeInMilliseconds =
-        config.hasPath(Constant.TRX_EXPIRATION_TIME_IN_MILLIS_SECONDS)
-            && config.getLong(Constant.TRX_EXPIRATION_TIME_IN_MILLIS_SECONDS) > 0
-            ? config.getLong(Constant.TRX_EXPIRATION_TIME_IN_MILLIS_SECONDS)
-            : Constant.TRANSACTION_DEFAULT_EXPIRATION_TIME;
-
-    PARAMETER.minEffectiveConnection = config.hasPath(Constant.NODE_RPC_MIN_EFFECTIVE_CONNECTION)
-        ? config.getInt(Constant.NODE_RPC_MIN_EFFECTIVE_CONNECTION) : 1;
-
-    PARAMETER.trxCacheEnable = config.hasPath(Constant.NODE_RPC_TRX_CACHE_ENABLE)
-        && config.getBoolean(Constant.NODE_RPC_TRX_CACHE_ENABLE);
-
-    PARAMETER.blockNumForEnergyLimit = config.hasPath(Constant.ENERGY_LIMIT_BLOCK_NUM)
-        ? config.getInt(Constant.ENERGY_LIMIT_BLOCK_NUM) : 4727890L;
-
-    PARAMETER.vmTrace =
-        config.hasPath(Constant.VM_TRACE) && config.getBoolean(Constant.VM_TRACE);
-
-    PARAMETER.saveInternalTx =
-        config.hasPath(Constant.VM_SAVE_INTERNAL_TX)
-            && config.getBoolean(Constant.VM_SAVE_INTERNAL_TX);
-
-    PARAMETER.saveFeaturedInternalTx =
-        config.hasPath(Constant.VM_SAVE_FEATURED_INTERNAL_TX)
-            && config.getBoolean(Constant.VM_SAVE_FEATURED_INTERNAL_TX);
-
-    if (!PARAMETER.saveCancelAllUnfreezeV2Details
-        && config.hasPath(Constant.VM_SAVE_CANCEL_ALL_UNFREEZE_V2_DETAILS)) {
-      PARAMETER.saveCancelAllUnfreezeV2Details =
-          config.getBoolean(Constant.VM_SAVE_CANCEL_ALL_UNFREEZE_V2_DETAILS);
-    }
-
-    if (PARAMETER.saveCancelAllUnfreezeV2Details
-        && (!PARAMETER.saveInternalTx || !PARAMETER.saveFeaturedInternalTx)) {
-      logger.warn("Configuring [vm.saveCancelAllUnfreezeV2Details] won't work as "
-          + "vm.saveInternalTx or vm.saveFeaturedInternalTx is off.");
-    }
-
-    // PARAMETER.allowShieldedTransaction =
-    //     config.hasPath(Constant.COMMITTEE_ALLOW_SHIELDED_TRANSACTION) ? config
-    //         .getInt(Constant.COMMITTEE_ALLOW_SHIELDED_TRANSACTION) : 0;
-
-    PARAMETER.allowShieldedTRC20Transaction =
-        config.hasPath(Constant.COMMITTEE_ALLOW_SHIELDED_TRC20_TRANSACTION) ? config
-            .getInt(Constant.COMMITTEE_ALLOW_SHIELDED_TRC20_TRANSACTION) : 0;
-
-    PARAMETER.allowMarketTransaction =
-        config.hasPath(Constant.COMMITTEE_ALLOW_MARKET_TRANSACTION) ? config
-            .getInt(Constant.COMMITTEE_ALLOW_MARKET_TRANSACTION) : 0;
-
-    PARAMETER.allowTransactionFeePool =
-        config.hasPath(Constant.COMMITTEE_ALLOW_TRANSACTION_FEE_POOL) ? config
-            .getInt(Constant.COMMITTEE_ALLOW_TRANSACTION_FEE_POOL) : 0;
-
-    PARAMETER.allowBlackHoleOptimization =
-        config.hasPath(Constant.COMMITTEE_ALLOW_BLACK_HOLE_OPTIMIZATION) ? config
-            .getInt(Constant.COMMITTEE_ALLOW_BLACK_HOLE_OPTIMIZATION) : 0;
-
-    PARAMETER.allowNewResourceModel =
-        config.hasPath(Constant.COMMITTEE_ALLOW_NEW_RESOURCE_MODEL) ? config
-            .getInt(Constant.COMMITTEE_ALLOW_NEW_RESOURCE_MODEL) : 0;
-
-    PARAMETER.allowTvmIstanbul =
-        config.hasPath(Constant.COMMITTEE_ALLOW_TVM_ISTANBUL) ? config
-            .getInt(Constant.COMMITTEE_ALLOW_TVM_ISTANBUL) : 0;
-
-    PARAMETER.eventPluginConfig =
-        config.hasPath(Constant.EVENT_SUBSCRIBE)
-            ? getEventPluginConfig(config) : null;
-
-    PARAMETER.eventFilter =
-        config.hasPath(Constant.EVENT_SUBSCRIBE_FILTER) ? getEventFilter(config) : null;
-
-    if (config.hasPath(Constant.ALLOW_SHIELDED_TRANSACTION_API)) {
-      PARAMETER.allowShieldedTransactionApi =
-          config.getBoolean(Constant.ALLOW_SHIELDED_TRANSACTION_API);
-    } else if (config.hasPath(Constant.NODE_FULLNODE_ALLOW_SHIELDED_TRANSACTION)) {
-      // for compatibility with previous configuration
-      PARAMETER.allowShieldedTransactionApi =
-          config.getBoolean(Constant.NODE_FULLNODE_ALLOW_SHIELDED_TRANSACTION);
-      logger.warn("Configuring [node.fullNodeAllowShieldedTransaction] will be deprecated. "
-          + "Please use [node.allowShieldedTransactionApi] instead.");
-    } else {
-      PARAMETER.allowShieldedTransactionApi = true;
-    }
-
-    PARAMETER.zenTokenId = config.hasPath(Constant.NODE_ZEN_TOKENID)
-        ? config.getString(Constant.NODE_ZEN_TOKENID) : "000000";
-
-    PARAMETER.allowProtoFilterNum =
-        config.hasPath(Constant.COMMITTEE_ALLOW_PROTO_FILTER_NUM) ? config
-            .getInt(Constant.COMMITTEE_ALLOW_PROTO_FILTER_NUM) : 0;
-
-    PARAMETER.allowAccountStateRoot =
-        config.hasPath(Constant.COMMITTEE_ALLOW_ACCOUNT_STATE_ROOT) ? config
-            .getInt(Constant.COMMITTEE_ALLOW_ACCOUNT_STATE_ROOT) : 0;
-
-    PARAMETER.validContractProtoThreadNum =
-        config.hasPath(Constant.NODE_VALID_CONTRACT_PROTO_THREADS) ? config
-            .getInt(Constant.NODE_VALID_CONTRACT_PROTO_THREADS)
-            : Runtime.getRuntime().availableProcessors();
-
-    PARAMETER.activeNodes = getInetSocketAddress(config, Constant.NODE_ACTIVE, true);
-
-    PARAMETER.passiveNodes = getInetAddress(config, Constant.NODE_PASSIVE);
-
-    PARAMETER.fastForwardNodes = getInetSocketAddress(config, Constant.NODE_FAST_FORWARD, true);
-
-    PARAMETER.maxFastForwardNum = config.hasPath(Constant.NODE_MAX_FAST_FORWARD_NUM) ? config
-            .getInt(Constant.NODE_MAX_FAST_FORWARD_NUM) : 4;
-    if (PARAMETER.maxFastForwardNum > MAX_ACTIVE_WITNESS_NUM) {
-      PARAMETER.maxFastForwardNum = MAX_ACTIVE_WITNESS_NUM;
-    }
-    if (PARAMETER.maxFastForwardNum < 1) {
-      PARAMETER.maxFastForwardNum = 1;
-    }
-
-    PARAMETER.shieldedTransInPendingMaxCounts =
-        config.hasPath(Constant.NODE_SHIELDED_TRANS_IN_PENDING_MAX_COUNTS) ? config
-            .getInt(Constant.NODE_SHIELDED_TRANS_IN_PENDING_MAX_COUNTS) : 10;
-
-    PARAMETER.rateLimiterGlobalQps =
-        config.hasPath(Constant.RATE_LIMITER_GLOBAL_QPS) ? config
-            .getInt(Constant.RATE_LIMITER_GLOBAL_QPS) : 50000;
-
-    PARAMETER.rateLimiterGlobalIpQps =
-        config.hasPath(Constant.RATE_LIMITER_GLOBAL_IP_QPS) ? config
-            .getInt(Constant.RATE_LIMITER_GLOBAL_IP_QPS) : 10000;
-
-    PARAMETER.rateLimiterGlobalApiQps =
-      config.hasPath(Constant.RATE_LIMITER_GLOBAL_API_QPS) ? config
-        .getInt(Constant.RATE_LIMITER_GLOBAL_API_QPS) : 1000;
-
-    PARAMETER.rateLimiterInitialization = getRateLimiterFromConfig(config);
-
-    PARAMETER.rateLimiterSyncBlockChain =
-        config.hasPath(Constant.RATE_LIMITER_P2P_SYNC_BLOCK_CHAIN) ? config
-            .getDouble(Constant.RATE_LIMITER_P2P_SYNC_BLOCK_CHAIN) : 3.0;
-
-    PARAMETER.rateLimiterFetchInvData =
-        config.hasPath(Constant.RATE_LIMITER_P2P_FETCH_INV_DATA) ? config
-            .getDouble(Constant.RATE_LIMITER_P2P_FETCH_INV_DATA) : 3.0;
-
-    PARAMETER.rateLimiterDisconnect =
-        config.hasPath(Constant.RATE_LIMITER_P2P_DISCONNECT) ? config
-            .getDouble(Constant.RATE_LIMITER_P2P_DISCONNECT) : 1.0;
-
-    PARAMETER.changedDelegation =
-        config.hasPath(Constant.COMMITTEE_CHANGED_DELEGATION) ? config
-            .getInt(Constant.COMMITTEE_CHANGED_DELEGATION) : 0;
-
-    PARAMETER.allowPBFT =
-        config.hasPath(Constant.COMMITTEE_ALLOW_PBFT) ? config
-            .getLong(Constant.COMMITTEE_ALLOW_PBFT) : 0;
-
-    PARAMETER.pBFTExpireNum =
-        config.hasPath(Constant.COMMITTEE_PBFT_EXPIRE_NUM) ? config
-            .getLong(Constant.COMMITTEE_PBFT_EXPIRE_NUM) : 20;
-
-    PARAMETER.agreeNodeCount = config.hasPath(Constant.NODE_AGREE_NODE_COUNT) ? config
-        .getInt(Constant.NODE_AGREE_NODE_COUNT) : MAX_ACTIVE_WITNESS_NUM * 2 / 3 + 1;
-    PARAMETER.agreeNodeCount = PARAMETER.agreeNodeCount > MAX_ACTIVE_WITNESS_NUM
-        ? MAX_ACTIVE_WITNESS_NUM : PARAMETER.agreeNodeCount;
-    if (PARAMETER.isWitness()) {
-      //  INSTANCE.agreeNodeCount = MAX_ACTIVE_WITNESS_NUM * 2 / 3 + 1;
-    }
-
-    PARAMETER.allowTvmFreeze =
-        config.hasPath(Constant.COMMITTEE_ALLOW_TVM_FREEZE) ? config
-            .getInt(Constant.COMMITTEE_ALLOW_TVM_FREEZE) : 0;
-
-    PARAMETER.allowTvmVote =
-        config.hasPath(Constant.COMMITTEE_ALLOW_TVM_VOTE) ? config
-            .getInt(Constant.COMMITTEE_ALLOW_TVM_VOTE) : 0;
-
-    PARAMETER.allowTvmLondon =
-        config.hasPath(Constant.COMMITTEE_ALLOW_TVM_LONDON) ? config
-            .getInt(Constant.COMMITTEE_ALLOW_TVM_LONDON) : 0;
-
-    PARAMETER.allowTvmCompatibleEvm =
-        config.hasPath(Constant.COMMITTEE_ALLOW_TVM_COMPATIBLE_EVM) ? config
-            .getInt(Constant.COMMITTEE_ALLOW_TVM_COMPATIBLE_EVM) : 0;
-
+    filter.setContractAddressList(
+        fc.getContractAddress().stream()
+            .filter(StringUtils::isNotEmpty)
+            .collect(Collectors.toList()));
+    filter.setContractTopicList(
+        fc.getContractTopic().stream()
+            .filter(StringUtils::isNotEmpty)
+            .collect(Collectors.toList()));
+
+    PARAMETER.eventFilter = filter;
+  }
+
+  /**
+   * Bridge MetricsConfig bean values to CommonParameter fields.
+   * Note: node.metricsEnable is handled in applyNodeConfig (it's a node-level field).
+   */
+  private static void applyMetricsConfig(MetricsConfig mc) {
+    PARAMETER.metricsPrometheusEnable = mc.getPrometheus().isEnable();
+    PARAMETER.metricsPrometheusPort = mc.getPrometheus().getPort();
+  }
+
+  /**
+   * Bridge CommitteeConfig bean values to CommonParameter fields.
+   */
+  private static void applyCommitteeConfig(CommitteeConfig cc) {
+    PARAMETER.allowCreationOfContracts = cc.getAllowCreationOfContracts();
+    PARAMETER.allowMultiSign = (int) cc.getAllowMultiSign();
+    PARAMETER.allowAdaptiveEnergy = cc.getAllowAdaptiveEnergy();
+    PARAMETER.allowDelegateResource = cc.getAllowDelegateResource();
+    PARAMETER.allowSameTokenName = cc.getAllowSameTokenName();
+    PARAMETER.allowTvmTransferTrc10 = cc.getAllowTvmTransferTrc10();
+    PARAMETER.allowTvmConstantinople = cc.getAllowTvmConstantinople();
+    PARAMETER.allowTvmSolidity059 = cc.getAllowTvmSolidity059();
+    PARAMETER.forbidTransferToContract = cc.getForbidTransferToContract();
+    PARAMETER.allowShieldedTRC20Transaction = cc.getAllowShieldedTRC20Transaction();
+    PARAMETER.allowMarketTransaction = cc.getAllowMarketTransaction();
+    PARAMETER.allowTransactionFeePool = cc.getAllowTransactionFeePool();
+    PARAMETER.allowBlackHoleOptimization = cc.getAllowBlackHoleOptimization();
+    PARAMETER.allowNewResourceModel = cc.getAllowNewResourceModel();
+    PARAMETER.allowTvmIstanbul = cc.getAllowTvmIstanbul();
+    PARAMETER.allowProtoFilterNum = cc.getAllowProtoFilterNum();
+    PARAMETER.allowAccountStateRoot = cc.getAllowAccountStateRoot();
+    PARAMETER.changedDelegation = cc.getChangedDelegation();
+    PARAMETER.allowPBFT = cc.getAllowPbft();
+    PARAMETER.pBFTExpireNum = cc.getPbftExpireNum();
+    PARAMETER.allowTvmFreeze = cc.getAllowTvmFreeze();
+    PARAMETER.allowTvmVote = cc.getAllowTvmVote();
+    PARAMETER.allowTvmLondon = cc.getAllowTvmLondon();
+    PARAMETER.allowTvmCompatibleEvm = cc.getAllowTvmCompatibleEvm();
     PARAMETER.allowHigherLimitForMaxCpuTimeOfOneTx =
-        config.hasPath(Constant.COMMITTEE_ALLOW_HIGHER_LIMIT_FOR_MAX_CPU_TIME_OF_ONE_TX) ? config
-            .getInt(Constant.COMMITTEE_ALLOW_HIGHER_LIMIT_FOR_MAX_CPU_TIME_OF_ONE_TX) : 0;
-
-    PARAMETER.allowNewRewardAlgorithm =
-        config.hasPath(Constant.COMMITTEE_ALLOW_NEW_REWARD_ALGORITHM) ? config
-            .getInt(Constant.COMMITTEE_ALLOW_NEW_REWARD_ALGORITHM) : 0;
-
+        cc.getAllowHigherLimitForMaxCpuTimeOfOneTx();
+    PARAMETER.allowNewRewardAlgorithm = cc.getAllowNewRewardAlgorithm();
     PARAMETER.allowOptimizedReturnValueOfChainId =
-        config.hasPath(Constant.COMMITTEE_ALLOW_OPTIMIZED_RETURN_VALUE_OF_CHAIN_ID) ? config
-            .getInt(Constant.COMMITTEE_ALLOW_OPTIMIZED_RETURN_VALUE_OF_CHAIN_ID) : 0;
+        cc.getAllowOptimizedReturnValueOfChainId();
+    PARAMETER.allowTvmShangHai = cc.getAllowTvmShangHai();
+    PARAMETER.allowOldRewardOpt = cc.getAllowOldRewardOpt();
+    PARAMETER.allowEnergyAdjustment = cc.getAllowEnergyAdjustment();
+    PARAMETER.allowStrictMath = cc.getAllowStrictMath();
+    PARAMETER.consensusLogicOptimization = cc.getConsensusLogicOptimization();
+    PARAMETER.allowTvmCancun = cc.getAllowTvmCancun();
+    PARAMETER.allowTvmBlob = cc.getAllowTvmBlob();
+    PARAMETER.unfreezeDelayDays = cc.getUnfreezeDelayDays();
+    // allowReceiptsMerkleRoot not in CommonParameter — skip for now
+    PARAMETER.allowAccountAssetOptimization = cc.getAllowAccountAssetOptimization();
+    PARAMETER.allowAssetOptimization = cc.getAllowAssetOptimization();
+    PARAMETER.allowNewReward = cc.getAllowNewReward();
+    PARAMETER.memoFee = cc.getMemoFee();
+    PARAMETER.allowDelegateOptimization = cc.getAllowDelegateOptimization();
+    PARAMETER.allowDynamicEnergy = cc.getAllowDynamicEnergy();
+    PARAMETER.dynamicEnergyThreshold = cc.getDynamicEnergyThreshold();
+    PARAMETER.dynamicEnergyIncreaseFactor = cc.getDynamicEnergyIncreaseFactor();
+    PARAMETER.dynamicEnergyMaxFactor = cc.getDynamicEnergyMaxFactor();
+  }
 
-    initBackupProperty(config);
-    if (Constant.ROCKSDB.equalsIgnoreCase(CommonParameter
-        .getInstance().getStorage().getDbEngine())) {
-      initRocksDbBackupProperty(config);
-      initRocksDbSettings(config);
+  /**
+   * Bridge BlockConfig bean values to CommonParameter fields.
+   */
+  private static void applyBlockConfig(BlockConfig block) {
+    PARAMETER.needSyncCheck = block.isNeedSyncCheck();
+    PARAMETER.maintenanceTimeInterval = block.getMaintenanceTimeInterval();
+    PARAMETER.proposalExpireTime = block.getProposalExpireTime();
+    PARAMETER.checkFrozenTime = block.getCheckFrozenTime();
+  }
+
+  /**
+   * Bridge NodeConfig bean values to CommonParameter fields.
+   * Some fields require post-binding range checks or dynamic defaults (e.g. CPUs/2),
+   * which are applied here after copying the bean value.
+   *
+   * @param nc the NodeConfig bean populated from config.conf "node" section
+   *               node.discovery /  (dot-notation paths
+   *               not part of the NodeConfig bean)
+   */
+  @SuppressWarnings("checkstyle:MethodLength")
+  private static void applyNodeConfig(NodeConfig nc) {
+    // ---- RPC sub-bean ----
+    NodeConfig.RpcConfig rpc = nc.getRpc();
+    PARAMETER.rpcEnable = rpc.isEnable();
+    PARAMETER.rpcSolidityEnable = rpc.isSolidityEnable();
+    PARAMETER.rpcPBFTEnable = rpc.isPBFTEnable();
+    PARAMETER.rpcPort = rpc.getPort();
+    PARAMETER.rpcOnSolidityPort = rpc.getSolidityPort();
+    PARAMETER.rpcOnPBFTPort = rpc.getPBFTPort();
+    PARAMETER.rpcThreadNum = rpc.getThread();
+    PARAMETER.maxConcurrentCallsPerConnection = rpc.getMaxConcurrentCallsPerConnection();
+    PARAMETER.flowControlWindow = rpc.getFlowControlWindow();
+    PARAMETER.rpcMaxRstStream = rpc.getMaxRstStream();
+    PARAMETER.rpcSecondsPerWindow = rpc.getSecondsPerWindow();
+    PARAMETER.maxConnectionIdleInMillis = rpc.getMaxConnectionIdleInMillis();
+    PARAMETER.maxConnectionAgeInMillis = rpc.getMaxConnectionAgeInMillis();
+    PARAMETER.maxMessageSize = rpc.getMaxMessageSize();
+    PARAMETER.maxHeaderListSize = rpc.getMaxHeaderListSize();
+    PARAMETER.isRpcReflectionServiceEnable = rpc.isReflectionService();
+    PARAMETER.minEffectiveConnection = rpc.getMinEffectiveConnection();
+    PARAMETER.trxCacheEnable = rpc.isTrxCacheEnable();
+
+    // ---- HTTP sub-bean ----
+    NodeConfig.HttpConfig http = nc.getHttp();
+    PARAMETER.fullNodeHttpEnable = http.isFullNodeEnable();
+    PARAMETER.solidityNodeHttpEnable = http.isSolidityEnable();
+    PARAMETER.pBFTHttpEnable = http.isPBFTEnable();
+    PARAMETER.fullNodeHttpPort = http.getFullNodePort();
+    PARAMETER.solidityHttpPort = http.getSolidityPort();
+    PARAMETER.pBFTHttpPort = http.getPBFTPort();
+    PARAMETER.httpMaxMessageSize = http.getMaxMessageSize();
+
+    // ---- JSON-RPC sub-bean ----
+    NodeConfig.JsonRpcConfig jsonrpc = nc.getJsonrpc();
+    PARAMETER.jsonRpcHttpFullNodeEnable = jsonrpc.isHttpFullNodeEnable();
+    PARAMETER.jsonRpcHttpSolidityNodeEnable = jsonrpc.isHttpSolidityEnable();
+    PARAMETER.jsonRpcHttpPBFTNodeEnable = jsonrpc.isHttpPBFTEnable();
+    PARAMETER.jsonRpcHttpFullNodePort = jsonrpc.getHttpFullNodePort();
+    PARAMETER.jsonRpcHttpSolidityPort = jsonrpc.getHttpSolidityPort();
+    PARAMETER.jsonRpcHttpPBFTPort = jsonrpc.getHttpPBFTPort();
+    PARAMETER.jsonRpcMaxBlockRange = jsonrpc.getMaxBlockRange();
+    PARAMETER.jsonRpcMaxSubTopics = jsonrpc.getMaxSubTopics();
+    PARAMETER.jsonRpcMaxBlockFilterNum = jsonrpc.getMaxBlockFilterNum();
+    PARAMETER.jsonRpcMaxBatchSize = jsonrpc.getMaxBatchSize();
+    PARAMETER.jsonRpcMaxResponseSize = jsonrpc.getMaxResponseSize();
+    PARAMETER.jsonRpcMaxAddressSize = jsonrpc.getMaxAddressSize();
+    PARAMETER.jsonRpcMaxLogFilterNum = jsonrpc.getMaxLogFilterNum();
+    PARAMETER.jsonRpcMaxMessageSize = jsonrpc.getMaxMessageSize();
+
+    // ---- P2P sub-bean ----
+    PARAMETER.nodeP2pVersion = nc.getP2p().getVersion();
+
+    // ---- DNS sub-bean (tree URLs only — publish config uses complex validation) ----
+    PARAMETER.dnsTreeUrls = nc.getDns().getTreeUrls().isEmpty()
+        ? new ArrayList<>() : new ArrayList<>(nc.getDns().getTreeUrls());
+
+    // ---- Dynamic config sub-bean ----
+    PARAMETER.dynamicConfigEnable = nc.getDynamicConfig().isEnable();
+    PARAMETER.dynamicConfigCheckInterval = nc.getDynamicConfig().getCheckInterval();
+
+    // ---- Flat scalar fields ----
+    PARAMETER.nodeEffectiveCheckEnable = nc.isEffectiveCheckEnable();
+
+    PARAMETER.fetchBlockTimeout = nc.getFetchBlockTimeout();
+
+    PARAMETER.maxConnections = nc.getMaxConnections();
+    PARAMETER.minConnections = nc.getMinConnections();
+    PARAMETER.minActiveConnections = nc.getMinActiveConnections();
+    PARAMETER.maxConnectionsWithSameIp = nc.getMaxConnectionsWithSameIp();
+    PARAMETER.maxTps = nc.getMaxTps();
+    PARAMETER.maxBlockInvPerSecond = nc.getMaxBlockInvPerSecond();
+    PARAMETER.minParticipationRate = nc.getMinParticipationRate();
+    PARAMETER.nodeListenPort = nc.getListenPort();
+    PARAMETER.nodeEnableIpv6 = nc.isEnableIpv6();
+
+    PARAMETER.syncFetchBatchNum = nc.getSyncFetchBatchNum();
+    PARAMETER.maxPendingBlockSize = nc.getMaxPendingBlockSize();
+    PARAMETER.solidityThreads = nc.getSolidityThreads();
+    PARAMETER.blockProducedTimeOut = nc.getBlockProducedTimeOut();
+
+    PARAMETER.maxHttpConnectNumber = nc.getMaxHttpConnectNumber();
+    PARAMETER.netMaxTrxPerSecond = nc.getNetMaxTrxPerSecond();
+
+    PARAMETER.trustNodeAddr = nc.getTrustNode();
+
+    PARAMETER.validateSignThreadNum = nc.getValidateSignThreadNum();
+    PARAMETER.walletExtensionApi = nc.isWalletExtensionApi();
+    PARAMETER.isOpenFullTcpDisconnect = nc.isOpenFullTcpDisconnect();
+    PARAMETER.nodeDetectEnable = nc.isNodeDetectEnable();
+
+    PARAMETER.inactiveThreshold = nc.getInactiveThreshold();
+
+    PARAMETER.maxTransactionPendingSize = nc.getMaxTransactionPendingSize();
+    PARAMETER.pendingTransactionTimeout = nc.getPendingTransactionTimeout();
+    PARAMETER.maxTrxCacheSize = nc.getMaxTrxCacheSize();
+
+    PARAMETER.validContractProtoThreadNum = nc.getValidContractProtoThreads();
+
+    PARAMETER.maxFastForwardNum = nc.getMaxFastForwardNum();
+    PARAMETER.shieldedTransInPendingMaxCounts = nc.getShieldedTransInPendingMaxCounts();
+    PARAMETER.agreeNodeCount = nc.getAgreeNodeCount();
+
+    PARAMETER.openHistoryQueryWhenLiteFN = nc.isOpenHistoryQueryWhenLiteFN();
+    PARAMETER.nodeMetricsEnable = nc.isMetricsEnable();
+    PARAMETER.openPrintLog = nc.isOpenPrintLog();
+    PARAMETER.openTransactionSort = nc.isOpenTransactionSort();
+    PARAMETER.blockCacheTimeout = nc.getBlockCacheTimeout();
+    PARAMETER.zenTokenId = nc.getZenTokenId();
+    PARAMETER.allowShieldedTransactionApi = nc.isAllowShieldedTransactionApi();
+
+    PARAMETER.unsolidifiedBlockCheck = nc.isUnsolidifiedBlockCheck();
+    PARAMETER.maxUnsolidifiedBlocks = nc.getMaxUnsolidifiedBlocks();
+
+    // disabledApi list — lowercase normalization
+    PARAMETER.disabledApiList = nc.getDisabledApi().isEmpty()
+        ? Collections.emptyList()
+        : nc.getDisabledApi().stream().map(s -> s.toLowerCase(Locale.ROOT))
+            .collect(Collectors.toList());
+
+    // ---- Fields previously scattered in applyConfigParams ----
+
+    // discovery (dot-notation, read in NodeConfig.fromConfig)
+    PARAMETER.nodeDiscoveryEnable = nc.isDiscoveryEnable();
+    PARAMETER.nodeDiscoveryPersist = nc.isDiscoveryPersist();
+
+    // Legacy maxActiveNodes fallback handled in NodeConfig.fromConfig()
+
+    // p2p config and external IP
+    PARAMETER.p2pConfig = new P2pConfig();
+    PARAMETER.nodeLanIp = PARAMETER.p2pConfig.getLanIp();
+    externalIp(nc);
+
+    // DNS publish config
+    PARAMETER.dnsPublishConfig = loadDnsPublishConfig(nc);
+
+    // Shielded transaction API — legacy fallback handled in NodeConfig.fromConfig()
+    PARAMETER.allowShieldedTransactionApi = nc.isAllowShieldedTransactionApi();
+
+    // Active/passive/fastForward node lists from bean with filtering
+    PARAMETER.activeNodes = filterInetSocketAddress(nc.getActive(), true);
+    PARAMETER.passiveNodes = new ArrayList<>();
+    for (InetSocketAddress sa : filterInetSocketAddress(nc.getPassive(), false)) {
+      PARAMETER.passiveNodes.add(sa.getAddress());
     }
+    PARAMETER.fastForwardNodes = filterInetSocketAddress(nc.getFastForward(), true);
 
-    PARAMETER.actuatorSet =
-        config.hasPath(Constant.ACTUATOR_WHITELIST)
-            ? new HashSet<>(config.getStringList(Constant.ACTUATOR_WHITELIST))
-            : Collections.emptySet();
-
-    if (config.hasPath(Constant.NODE_METRICS_ENABLE)) {
-      PARAMETER.nodeMetricsEnable = config.getBoolean(Constant.NODE_METRICS_ENABLE);
-    }
-
-    PARAMETER.metricsStorageEnable = config.hasPath(Constant.METRICS_STORAGE_ENABLE) && config
-        .getBoolean(Constant.METRICS_STORAGE_ENABLE);
-    PARAMETER.influxDbIp = config.hasPath(Constant.METRICS_INFLUXDB_IP) ? config
-        .getString(Constant.METRICS_INFLUXDB_IP) : Constant.LOCAL_HOST;
-    PARAMETER.influxDbPort = config.hasPath(Constant.METRICS_INFLUXDB_PORT) ? config
-        .getInt(Constant.METRICS_INFLUXDB_PORT) : 8086;
-    PARAMETER.influxDbDatabase = config.hasPath(Constant.METRICS_INFLUXDB_DATABASE) ? config
-        .getString(Constant.METRICS_INFLUXDB_DATABASE) : "metrics";
-    PARAMETER.metricsReportInterval = config.hasPath(Constant.METRICS_REPORT_INTERVAL) ? config
-        .getInt(Constant.METRICS_REPORT_INTERVAL) : 10;
-
-    PARAMETER.metricsPrometheusEnable = config.hasPath(Constant.METRICS_PROMETHEUS_ENABLE) && config
-        .getBoolean(Constant.METRICS_PROMETHEUS_ENABLE);
-    PARAMETER.metricsPrometheusPort = config.hasPath(Constant.METRICS_PROMETHEUS_PORT) ? config
-        .getInt(Constant.METRICS_PROMETHEUS_PORT) : 9527;
-    PARAMETER.setOpenHistoryQueryWhenLiteFN(
-        config.hasPath(Constant.NODE_OPEN_HISTORY_QUERY_WHEN_LITEFN)
-            && config.getBoolean(Constant.NODE_OPEN_HISTORY_QUERY_WHEN_LITEFN));
-
-    PARAMETER.historyBalanceLookup = config.hasPath(Constant.HISTORY_BALANCE_LOOKUP) && config
-        .getBoolean(Constant.HISTORY_BALANCE_LOOKUP);
-
-    if (config.hasPath(Constant.OPEN_PRINT_LOG)) {
-      PARAMETER.openPrintLog = config.getBoolean(Constant.OPEN_PRINT_LOG);
-    }
-
-    PARAMETER.openTransactionSort = config.hasPath(Constant.OPEN_TRANSACTION_SORT) && config
-        .getBoolean(Constant.OPEN_TRANSACTION_SORT);
-
-    PARAMETER.allowAccountAssetOptimization = config
-        .hasPath(Constant.ALLOW_ACCOUNT_ASSET_OPTIMIZATION) ? config
-        .getInt(Constant.ALLOW_ACCOUNT_ASSET_OPTIMIZATION) : 0;
-
-    PARAMETER.allowAssetOptimization = config
-        .hasPath(Constant.ALLOW_ASSET_OPTIMIZATION) ? config
-        .getInt(Constant.ALLOW_ASSET_OPTIMIZATION) : 0;
-
-    PARAMETER.disabledApiList =
-        config.hasPath(Constant.NODE_DISABLED_API_LIST)
-            ? config.getStringList(Constant.NODE_DISABLED_API_LIST)
-            .stream().map(String::toLowerCase).collect(Collectors.toList())
-            : Collections.emptyList();
-
-    if (config.hasPath(Constant.NODE_SHUTDOWN_BLOCK_TIME)) {
+    // node.shutdown from bean (dot-notation, read in NodeConfig.fromConfig)
+    String shutdownBlockTime = nc.getShutdownBlockTime();
+    if (!shutdownBlockTime.isEmpty()) {
       try {
-        PARAMETER.shutdownBlockTime = new CronExpression(config.getString(
-            Constant.NODE_SHUTDOWN_BLOCK_TIME));
+        PARAMETER.shutdownBlockTime = new CronExpression(shutdownBlockTime);
       } catch (ParseException e) {
         throw new TronError(e, TronError.ErrCode.AUTO_STOP_PARAMS);
       }
     }
-
-    if (config.hasPath(Constant.NODE_SHUTDOWN_BLOCK_HEIGHT)) {
-      PARAMETER.shutdownBlockHeight = config.getLong(Constant.NODE_SHUTDOWN_BLOCK_HEIGHT);
+    if (nc.getShutdownBlockHeight() >= 0) {
+      PARAMETER.shutdownBlockHeight = nc.getShutdownBlockHeight();
     }
-
-    if (config.hasPath(Constant.NODE_SHUTDOWN_BLOCK_COUNT)) {
-      PARAMETER.shutdownBlockCount = config.getLong(Constant.NODE_SHUTDOWN_BLOCK_COUNT);
+    if (nc.getShutdownBlockCount() >= 0) {
+      PARAMETER.shutdownBlockCount = nc.getShutdownBlockCount();
     }
+  }
 
-    if (config.hasPath(Constant.BLOCK_CACHE_TIMEOUT)) {
-      PARAMETER.blockCacheTimeout = config.getLong(Constant.BLOCK_CACHE_TIMEOUT);
+  /**
+   * Apply platform-specific constraints after all config sources are resolved.
+   * ARM64 does not support LevelDB (native JNI library unavailable),
+   * so db.engine is forced to RocksDB regardless of config or CLI settings.
+   */
+  private static void applyPlatformConstraints() {
+    if (Arch.isArm64()
+        && !Constant.ROCKSDB.equalsIgnoreCase(PARAMETER.storage.getDbEngine())) {
+      logger.warn("ARM64 only supports RocksDB, ignoring db.engine='{}'",
+          PARAMETER.storage.getDbEngine());
+      PARAMETER.storage.setDbEngine(Constant.ROCKSDB);
     }
+  }
 
-    if (config.hasPath(Constant.ALLOW_NEW_REWARD)) {
-      PARAMETER.allowNewReward = config.getLong(Constant.ALLOW_NEW_REWARD);
-      if (PARAMETER.allowNewReward > 1) {
-        PARAMETER.allowNewReward = 1;
-      }
-      if (PARAMETER.allowNewReward < 0) {
-        PARAMETER.allowNewReward = 0;
-      }
-    }
+  /**
+   * Apply parameters from config file.
+   */
+  public static void applyConfigParams(
+      final Config config) {
 
-    if (config.hasPath(Constant.MEMO_FEE)) {
-      PARAMETER.memoFee = config.getLong(Constant.MEMO_FEE);
-      if (PARAMETER.memoFee > 1_000_000_000) {
-        PARAMETER.memoFee = 1_000_000_000;
-      }
-      if (PARAMETER.memoFee < 0) {
-        PARAMETER.memoFee = 0;
-      }
-    }
+    Wallet.setAddressPreFixByte(ADD_PRE_FIX_BYTE_MAINNET);
+    Wallet.setAddressPreFixString(Constant.ADD_PRE_FIX_STRING_MAINNET);
 
-    if (config.hasPath(Constant.ALLOW_DELEGATE_OPTIMIZATION)) {
-      PARAMETER.allowDelegateOptimization = config.getLong(Constant.ALLOW_DELEGATE_OPTIMIZATION);
-      PARAMETER.allowDelegateOptimization = min(PARAMETER.allowDelegateOptimization, 1, true);
-      PARAMETER.allowDelegateOptimization = max(PARAMETER.allowDelegateOptimization, 0, true);
-    }
+    // crypto.engine handled by MiscConfig
 
-    if (config.hasPath(Constant.COMMITTEE_UNFREEZE_DELAY_DAYS)) {
-      PARAMETER.unfreezeDelayDays = config.getLong(Constant.COMMITTEE_UNFREEZE_DELAY_DAYS);
-      if (PARAMETER.unfreezeDelayDays > 365) {
-        PARAMETER.unfreezeDelayDays = 365;
-      }
-      if (PARAMETER.unfreezeDelayDays < 0) {
-        PARAMETER.unfreezeDelayDays = 0;
-      }
-    }
+    // VM config: bind from config.conf "vm" section
+    vmConfig = VmConfig.fromConfig(config);
+    applyVmConfig(vmConfig);
 
-    if (config.hasPath(Constant.ALLOW_DYNAMIC_ENERGY)) {
-      PARAMETER.allowDynamicEnergy = config.getLong(Constant.ALLOW_DYNAMIC_ENERGY);
-      PARAMETER.allowDynamicEnergy = min(PARAMETER.allowDynamicEnergy, 1, true);
-      PARAMETER.allowDynamicEnergy = max(PARAMETER.allowDynamicEnergy, 0, true);
-    }
+    // Node config: bind from config.conf "node" section
+    nodeConfig = NodeConfig.fromConfig(config);
+    applyNodeConfig(nodeConfig);
 
-    if (config.hasPath(Constant.DYNAMIC_ENERGY_THRESHOLD)) {
-      PARAMETER.dynamicEnergyThreshold = config.getLong(Constant.DYNAMIC_ENERGY_THRESHOLD);
-      PARAMETER.dynamicEnergyThreshold
-          = min(PARAMETER.dynamicEnergyThreshold, 100_000_000_000_000_000L, true);
-      PARAMETER.dynamicEnergyThreshold = max(PARAMETER.dynamicEnergyThreshold, 0, true);
-    }
+    // vm.minTimeRatio, vm.maxTimeRatio, vm.longRunningTime already handled by VmConfig above
 
-    if (config.hasPath(Constant.DYNAMIC_ENERGY_INCREASE_FACTOR)) {
-      PARAMETER.dynamicEnergyIncreaseFactor
-          = config.getLong(Constant.DYNAMIC_ENERGY_INCREASE_FACTOR);
-      PARAMETER.dynamicEnergyIncreaseFactor =
-          min(PARAMETER.dynamicEnergyIncreaseFactor, DYNAMIC_ENERGY_INCREASE_FACTOR_RANGE, true);
-      PARAMETER.dynamicEnergyIncreaseFactor = max(PARAMETER.dynamicEnergyIncreaseFactor, 0, true);
-    }
+    // Storage config: bind from config.conf "storage" section
+    PARAMETER.storage = new Storage();
+    storageConfig = StorageConfig.fromConfig(config);
+    applyStorageConfig(storageConfig);
 
-    if (config.hasPath(Constant.DYNAMIC_ENERGY_MAX_FACTOR)) {
-      PARAMETER.dynamicEnergyMaxFactor
-          = config.getLong(Constant.DYNAMIC_ENERGY_MAX_FACTOR);
-      PARAMETER.dynamicEnergyMaxFactor =
-          min(PARAMETER.dynamicEnergyMaxFactor, DYNAMIC_ENERGY_MAX_FACTOR_RANGE, true);
-      PARAMETER.dynamicEnergyMaxFactor = max(PARAMETER.dynamicEnergyMaxFactor, 0, true);
-    }
+    // seed.node is a top-level config section (not under "node") — config structure
+    // is arguably misplaced, but preserved for backward compatibility
 
-    PARAMETER.dynamicConfigEnable = config.hasPath(Constant.DYNAMIC_CONFIG_ENABLE)
-        && config.getBoolean(Constant.DYNAMIC_CONFIG_ENABLE);
-    if (config.hasPath(Constant.DYNAMIC_CONFIG_CHECK_INTERVAL)) {
-      PARAMETER.dynamicConfigCheckInterval
-          = config.getLong(Constant.DYNAMIC_CONFIG_CHECK_INTERVAL);
-      if (PARAMETER.dynamicConfigCheckInterval <= 0) {
-        PARAMETER.dynamicConfigCheckInterval = 600;
-      }
-    } else {
-      PARAMETER.dynamicConfigCheckInterval = 600;
-    }
+    // Genesis config: bind from config.conf "genesis.block" section
+    genesisConfig = GenesisConfig.fromConfig(config);
+    applyGenesisConfig(genesisConfig, config);
 
-    PARAMETER.allowTvmShangHai =
-        config.hasPath(Constant.COMMITTEE_ALLOW_TVM_SHANGHAI) ? config
-            .getInt(Constant.COMMITTEE_ALLOW_TVM_SHANGHAI) : 0;
+    // Block config: bind from config.conf "block" section
+    blockConfig = BlockConfig.fromConfig(config);
+    applyBlockConfig(blockConfig);
 
-    PARAMETER.unsolidifiedBlockCheck =
-      config.hasPath(Constant.UNSOLIDIFIED_BLOCK_CHECK)
-      && config.getBoolean(Constant.UNSOLIDIFIED_BLOCK_CHECK);
+    // node discovery, legacy fallback, p2p, dns — all handled in applyNodeConfig
 
-    PARAMETER.maxUnsolidifiedBlocks =
-      config.hasPath(Constant.MAX_UNSOLIDIFIED_BLOCKS) ? config
-        .getInt(Constant.MAX_UNSOLIDIFIED_BLOCKS) : 54;
+    // Misc config: storage, trx, energy — small domains, read via beans
+    miscConfig = MiscConfig.fromConfig(config);
+    applyMiscConfig(miscConfig);
 
-    long allowOldRewardOpt = config.hasPath(Constant.COMMITTEE_ALLOW_OLD_REWARD_OPT) ? config
-        .getInt(Constant.COMMITTEE_ALLOW_OLD_REWARD_OPT) : 0;
-    if (allowOldRewardOpt == 1 && PARAMETER.allowNewRewardAlgorithm != 1
-        && PARAMETER.allowNewReward != 1 && PARAMETER.allowTvmVote != 1) {
-      throw new IllegalArgumentException(
-          "At least one of the following proposals is required to be opened first: "
-          + "committee.allowNewRewardAlgorithm = 1"
-          + " or committee.allowNewReward = 1"
-          + " or committee.allowTvmVote = 1.");
-    }
-    PARAMETER.allowOldRewardOpt = allowOldRewardOpt;
+    // vm, committee already handled above
 
-    PARAMETER.allowEnergyAdjustment =
-            config.hasPath(Constant.COMMITTEE_ALLOW_ENERGY_ADJUSTMENT) ? config
-                    .getInt(Constant.COMMITTEE_ALLOW_ENERGY_ADJUSTMENT) : 0;
+    // Committee config: bind from config.conf "committee" section
+    committeeConfig = CommitteeConfig.fromConfig(config);
+    applyCommitteeConfig(committeeConfig);
 
-    PARAMETER.allowStrictMath =
-        config.hasPath(Constant.COMMITTEE_ALLOW_STRICT_MATH) ? config
-            .getInt(Constant.COMMITTEE_ALLOW_STRICT_MATH) : 0;
+    // shielded transaction API, active/passive/fastForward — handled in applyNodeConfig
 
-    PARAMETER.consensusLogicOptimization =
-        config.hasPath(Constant.COMMITTEE_CONSENSUS_LOGIC_OPTIMIZATION) ? config
-            .getInt(Constant.COMMITTEE_CONSENSUS_LOGIC_OPTIMIZATION) : 0;
+    // Rate limiter config: bind from config.conf "rate.limiter" section
+    rateLimiterConfig = RateLimiterConfig.fromConfig(config);
+    applyRateLimiterConfig(rateLimiterConfig);
 
-    PARAMETER.allowTvmCancun =
-        config.hasPath(Constant.COMMITTEE_ALLOW_TVM_CANCUN) ? config
-            .getInt(Constant.COMMITTEE_ALLOW_TVM_CANCUN) : 0;
+    // Node backup: from NodeConfig bean
+    applyNodeBackupConfig(nodeConfig);
 
-    PARAMETER.allowTvmBlob =
-        config.hasPath(Constant.COMMITTEE_ALLOW_TVM_BLOB) ? config
-            .getInt(Constant.COMMITTEE_ALLOW_TVM_BLOB) : 0;
+    // Metrics config: bind from config.conf "node.metrics" section
+    metricsConfig = MetricsConfig.fromConfig(config);
+    applyMetricsConfig(metricsConfig);
+
+    // historyBalanceLookup already handled by MiscConfig above
+
+    // node.shutdown — handled in applyNodeConfig
+
+    // Event config: read bean here; applyEventConfig() is called once in setParam()
+    // after applyCLIParams() so that --es is already reflected in eventSubscribe.
+    eventConfig = EventConfig.fromConfig(config);
+    // contractParse is event-domain but must be set from config before CLI can
+    // override it with --contract-parse-enable (which runs in applyCLIParams).
+    PARAMETER.storage.setContractParseSwitch(eventConfig.isContractParse());
 
     logConfig();
   }
 
-  private static long getProposalExpirationTime(final Config config) {
-    if (config.hasPath(Constant.COMMITTEE_PROPOSAL_EXPIRE_TIME)) {
-      throw new TronError("It is not allowed to configure committee.proposalExpireTime in "
-          + "config.conf, please set the value in block.proposalExpireTime.", PARAMETER_INIT);
+  /**
+   * Apply CLI parameters that were explicitly passed.
+   * Only assigned parameters override Config values.
+   */
+  private static void applyCLIParams(CLIParameter cmd, JCommander jc) {
+    Set<String> assigned = jc.getParameters().stream()
+        .filter(ParameterDescription::isAssigned)
+        .map(ParameterDescription::getLongestName)
+        .collect(Collectors.toSet());
+
+    jc.getParameters().stream()
+        .filter(ParameterDescription::isAssigned)
+        .filter(pd -> {
+          try {
+            return CLIParameter.class.getDeclaredField(pd.getParameterized().getName())
+                .isAnnotationPresent(Deprecated.class);
+          } catch (NoSuchFieldException e) {
+            return false;
+          }
+        })
+        .forEach(pd -> {
+          String cliOption = pd.getLongestName();
+          String configKey = DEPRECATED_CLI_TO_CONFIG.get(cliOption);
+          if (configKey != null) {
+            logger.warn("CLI option '{}' is deprecated and will be removed in a future release."
+                + " Please use config key '{}' instead.", cliOption, configKey);
+          } else {
+            logger.warn("CLI option '{}' is deprecated and will be removed in a future release.",
+                cliOption);
+          }
+        });
+
+    if (assigned.contains("--output-directory")) {
+      PARAMETER.outputDirectory = cmd.outputDirectory;
     }
-    if (config.hasPath(Constant.BLOCK_PROPOSAL_EXPIRE_TIME)) {
-      long proposalExpireTime = config.getLong(Constant.BLOCK_PROPOSAL_EXPIRE_TIME);
-      if (proposalExpireTime <= MIN_PROPOSAL_EXPIRE_TIME
-          || proposalExpireTime >= MAX_PROPOSAL_EXPIRE_TIME) {
-        throw new TronError("The value[block.proposalExpireTime] is only allowed to "
-            + "be greater than " + MIN_PROPOSAL_EXPIRE_TIME + " and less than "
-            + MAX_PROPOSAL_EXPIRE_TIME + "!", PARAMETER_INIT);
-      }
-      return proposalExpireTime;
-    } else {
-      return DEFAULT_PROPOSAL_EXPIRE_TIME;
+    if (assigned.contains("--witness")) {
+      PARAMETER.witness = cmd.witness;
+    }
+    if (assigned.contains("--support-constant")) {
+      PARAMETER.supportConstant = cmd.supportConstant;
+    }
+    if (assigned.contains("--max-energy-limit-for-constant")) {
+      PARAMETER.maxEnergyLimitForConstant = max(ENERGY_LIMIT_IN_CONSTANT_TX,
+          cmd.maxEnergyLimitForConstant, true);
+    }
+    if (assigned.contains("--lru-cache-size")) {
+      PARAMETER.lruCacheSize = cmd.lruCacheSize;
+    }
+    if (assigned.contains("--debug")) {
+      PARAMETER.debug = cmd.debug;
+    }
+    if (assigned.contains("--min-time-ratio")) {
+      PARAMETER.minTimeRatio = cmd.minTimeRatio;
+    }
+    if (assigned.contains("--max-time-ratio")) {
+      PARAMETER.maxTimeRatio = cmd.maxTimeRatio;
+    }
+    if (assigned.contains("--save-internaltx")) {
+      PARAMETER.saveInternalTx = cmd.saveInternalTx;
+    }
+    if (assigned.contains("--save-featured-internaltx")) {
+      PARAMETER.saveFeaturedInternalTx = cmd.saveFeaturedInternalTx;
+    }
+    if (assigned.contains("--save-cancel-all-unfreeze-v2-details")) {
+      PARAMETER.saveCancelAllUnfreezeV2Details = cmd.saveCancelAllUnfreezeV2Details;
+    }
+    if (assigned.contains("--long-running-time")) {
+      PARAMETER.longRunningTime = cmd.longRunningTime;
+    }
+    if (assigned.contains("--max-connect-number")) {
+      PARAMETER.maxHttpConnectNumber = cmd.maxHttpConnectNumber;
+    }
+    if (assigned.contains("--storage-db-directory")) {
+      PARAMETER.storage.setDbDirectory(cmd.storageDbDirectory);
+    }
+    if (assigned.contains("--storage-db-engine")) {
+      PARAMETER.storage.setDbEngine(cmd.storageDbEngine);
+    }
+    if (assigned.contains("--storage-db-synchronous")) {
+      PARAMETER.storage.setDbSync(Boolean.valueOf(cmd.storageDbSynchronous));
+    }
+    if (assigned.contains("--contract-parse-enable")) {
+      PARAMETER.storage.setContractParseSwitch(Boolean.valueOf(cmd.contractParseEnable));
+    }
+    if (assigned.contains("--storage-transactionHistory-switch")) {
+      PARAMETER.storage.setTransactionHistorySwitch(cmd.storageTransactionHistorySwitch);
+    }
+    if (assigned.contains("--fast-forward")) {
+      PARAMETER.fastForward = cmd.fastForward;
+    }
+    if (assigned.contains("--solidity")) {
+      PARAMETER.solidityNode = cmd.solidityNode;
+    }
+    if (assigned.contains("--keystore-factory")) {
+      PARAMETER.keystoreFactory = cmd.keystoreFactory;
+    }
+    if (assigned.contains("--rpc-thread")) {
+      PARAMETER.rpcThreadNum = cmd.rpcThreadNum;
+    }
+    if (assigned.contains("--solidity-thread")) {
+      PARAMETER.solidityThreads = cmd.solidityThreads;
+    }
+    if (assigned.contains("--validate-sign-thread")) {
+      PARAMETER.validateSignThreadNum = cmd.validateSignThreadNum;
+    }
+    if (assigned.contains("--trust-node")) {
+      PARAMETER.trustNodeAddr = cmd.trustNodeAddr;
+    }
+    if (assigned.contains("--es")) {
+      PARAMETER.eventSubscribe = cmd.eventSubscribe;
+    }
+    if (assigned.contains("--p2p-disable")) {
+      PARAMETER.p2pDisable = cmd.p2pDisable;
+    }
+    if (assigned.contains("--history-balance-lookup")) {
+      PARAMETER.historyBalanceLookup = cmd.historyBalanceLookup;
+    }
+    if (assigned.contains("--log-config")) {
+      PARAMETER.logbackPath = cmd.logbackPath;
+    }
+    // seedNodes is a JCommander positional (main) parameter, which does not support
+    // isAssigned(). An empty-check is used instead — this is safe because the default
+    // is an empty list, so non-empty means the user explicitly passed values on CLI.
+    if (!cmd.seedNodes.isEmpty()) {
+      logger.warn("Positional seed-node arguments are deprecated. "
+          + "Please use seed.node.ip.list in the config file instead.");
+      List<InetSocketAddress> seeds = resolveInetSocketAddressList(cmd.seedNodes);
+      PARAMETER.seedNode.setAddressList(seeds);
     }
   }
 
-  private static List<Witness> getWitnessesFromConfig(final com.typesafe.config.Config config) {
-    return config.getObjectList(Constant.GENESIS_BLOCK_WITNESSES).stream()
-        .map(Args::createWitness)
-        .collect(Collectors.toCollection(ArrayList::new));
-  }
-
-  private static Witness createWitness(final ConfigObject witnessAccount) {
-    final Witness witness = new Witness();
-    witness.setAddress(
-        Commons.decodeFromBase58Check(witnessAccount.get("address").unwrapped().toString()));
-    witness.setUrl(witnessAccount.get("url").unwrapped().toString());
-    witness.setVoteCount(witnessAccount.toConfig().getLong("voteCount"));
-    return witness;
-  }
-
-  private static List<Account> getAccountsFromConfig(final com.typesafe.config.Config config) {
-    return config.getObjectList(Constant.GENESIS_BLOCK_ASSETS).stream()
-        .map(Args::createAccount)
-        .collect(Collectors.toCollection(ArrayList::new));
-  }
-
-  private static Account createAccount(final ConfigObject asset) {
-    final Account account = new Account();
-    account.setAccountName(asset.get("accountName").unwrapped().toString());
-    account.setAccountType(asset.get("accountType").unwrapped().toString());
-    account.setAddress(Commons.decodeFromBase58Check(asset.get("address").unwrapped().toString()));
-    account.setBalance(asset.get("balance").unwrapped().toString());
-    return account;
-  }
-
-  private static RateLimiterInitialization getRateLimiterFromConfig(
-          final com.typesafe.config.Config config) {
-    RateLimiterInitialization initialization = new RateLimiterInitialization();
-    if (config.hasPath(Constant.RATE_LIMITER_HTTP)) {
-      ArrayList<RateLimiterInitialization.HttpRateLimiterItem> list1 = config
-              .getObjectList(Constant.RATE_LIMITER_HTTP).stream()
-              .map(RateLimiterInitialization::createHttpItem)
-              .collect(Collectors.toCollection(ArrayList::new));
-      initialization.setHttpMap(list1);
+  private static void initLocalWitnesses(Config config, CLIParameter cmd) {
+    // not a witness node, skip
+    if (!PARAMETER.isWitness()) {
+      localWitnesses = new LocalWitnesses();
+      return;
     }
-    if (config.hasPath(Constant.RATE_LIMITER_RPC)) {
-      ArrayList<RateLimiterInitialization.RpcRateLimiterItem> list2 = config
-              .getObjectList(Constant.RATE_LIMITER_RPC).stream()
-              .map(RateLimiterInitialization::createRpcItem)
-              .collect(Collectors.toCollection(ArrayList::new));
-      initialization.setRpcMap(list2);
+
+    // path 1: CLI --private-key
+    if (StringUtils.isNotBlank(cmd.privateKey)) {
+      localWitnesses = WitnessInitializer.initFromCLIPrivateKey(
+          cmd.privateKey, cmd.witnessAddress);
+      return;
     }
-    return initialization;
+
+    LocalWitnessConfig lwConfig = LocalWitnessConfig.fromConfig(config);
+
+    // path 2: config localwitness (private key list)
+    if (!lwConfig.getPrivateKeys().isEmpty()) {
+      localWitnesses = WitnessInitializer.initFromCFGPrivateKey(
+          lwConfig.getPrivateKeys(), lwConfig.getAccountAddress());
+      return;
+    }
+
+    // path 3: config localwitnesskeystore + password
+    if (!lwConfig.getKeystores().isEmpty()) {
+      localWitnesses = WitnessInitializer.initFromKeystore(
+          lwConfig.getKeystores(), cmd.password, lwConfig.getAccountAddress());
+      return;
+    }
+
+    // no private key source configured
+    throw new TronError("This is a witness node, but localWitnesses is null",
+        TronError.ErrCode.WITNESS_INIT);
   }
 
-  public static List<InetSocketAddress> getInetSocketAddress(
-      final com.typesafe.config.Config config, String path, boolean filter) {
+  @VisibleForTesting
+  public static void clearParam() {
+    CommonParameter.reset();
+    configFilePath = "";
+    localWitnesses = null;
+    nodeConfig = null;
+    vmConfig = null;
+    blockConfig = null;
+    committeeConfig = null;
+    storageConfig = null;
+    genesisConfig = null;
+    miscConfig = null;
+    rateLimiterConfig = null;
+    metricsConfig = null;
+    eventConfig = null;
+  }
+
+  // getProposalExpirationTime removed — logic moved to BlockConfig.fromConfig()
+
+  // getWitnessesFromConfig, createWitness, getAccountsFromConfig, createAccount
+  // removed — logic moved to applyGenesisConfig()
+
+  // getRateLimiterFromConfig removed — logic moved to applyRateLimiterConfig()
+
+  // getInetSocketAddress removed — use filterInetSocketAddress
+
+  /**
+   * Parse and optionally filter a list of address strings.
+   * Overload that accepts a pre-read list from a bean instead of a config path.
+   */
+  public static List<InetSocketAddress> filterInetSocketAddress(
+      List<String> addressList, boolean filter) {
     List<InetSocketAddress> ret = new ArrayList<>();
-    if (!config.hasPath(path)) {
-      return ret;
-    }
-    List<String> list = config.getStringList(path);
-    for (String configString : list) {
-      InetSocketAddress inetSocketAddress = NetUtil.parseInetSocketAddress(configString);
+    for (InetSocketAddress inetSocketAddress : resolveInetSocketAddressList(addressList)) {
       if (filter) {
         String ip = inetSocketAddress.getAddress().getHostAddress();
         int port = inetSocketAddress.getPort();
@@ -1390,162 +981,72 @@ public class Args extends CommonParameter {
     return ret;
   }
 
-  public static List<InetAddress> getInetAddress(
-      final com.typesafe.config.Config config, String path) {
-    List<InetAddress> ret = new ArrayList<>();
-    if (!config.hasPath(path)) {
-      return ret;
-    }
-    List<String> list = config.getStringList(path);
-    for (String configString : list) {
-      InetSocketAddress inetSocketAddress = NetUtil.parseInetSocketAddress(configString);
-      ret.add(inetSocketAddress.getAddress());
-    }
-    return ret;
-  }
+  // getInetAddress removed — use filterInetSocketAddress
 
-  private static EventPluginConfig getEventPluginConfig(
-          final com.typesafe.config.Config config) {
-    EventPluginConfig eventPluginConfig = new EventPluginConfig();
+  // getEventPluginConfig removed — logic moved to applyEventConfig()
 
-    if (config.hasPath(Constant.EVENT_SUBSCRIBE_VERSION)) {
-      eventPluginConfig.setVersion(config.getInt(Constant.EVENT_SUBSCRIBE_VERSION));
-    }
 
-    if (config.hasPath(Constant.EVENT_SUBSCRIBE_START_SYNC_BLOCK_NUM)) {
-      eventPluginConfig.setStartSyncBlockNum(config
-          .getLong(Constant.EVENT_SUBSCRIBE_START_SYNC_BLOCK_NUM));
-    }
-
-    boolean useNativeQueue = false;
-    int bindPort = 0;
-    int sendQueueLength = 0;
-    if (config.hasPath(Constant.USE_NATIVE_QUEUE)) {
-      useNativeQueue = config.getBoolean(Constant.USE_NATIVE_QUEUE);
-
-      if (config.hasPath(Constant.NATIVE_QUEUE_BIND_PORT)) {
-        bindPort = config.getInt(Constant.NATIVE_QUEUE_BIND_PORT);
-      }
-
-      if (config.hasPath(Constant.NATIVE_QUEUE_SEND_LENGTH)) {
-        sendQueueLength = config.getInt(Constant.NATIVE_QUEUE_SEND_LENGTH);
-      }
-
-      eventPluginConfig.setUseNativeQueue(useNativeQueue);
-      eventPluginConfig.setBindPort(bindPort);
-      eventPluginConfig.setSendQueueLength(sendQueueLength);
-    }
-
-    // use event plugin
-    if (!useNativeQueue) {
-      if (config.hasPath(Constant.EVENT_SUBSCRIBE_PATH)) {
-        String pluginPath = config.getString(Constant.EVENT_SUBSCRIBE_PATH);
-        if (StringUtils.isNotEmpty(pluginPath)) {
-          eventPluginConfig.setPluginPath(pluginPath.trim());
-        }
-      }
-
-      if (config.hasPath(Constant.EVENT_SUBSCRIBE_SERVER)) {
-        String serverAddress = config.getString(Constant.EVENT_SUBSCRIBE_SERVER);
-        if (StringUtils.isNotEmpty(serverAddress)) {
-          eventPluginConfig.setServerAddress(serverAddress.trim());
-        }
-      }
-
-      if (config.hasPath(Constant.EVENT_SUBSCRIBE_DB_CONFIG)) {
-        String dbConfig = config.getString(Constant.EVENT_SUBSCRIBE_DB_CONFIG);
-        if (StringUtils.isNotEmpty(dbConfig)) {
-          eventPluginConfig.setDbConfig(dbConfig.trim());
-        }
-      }
-    }
-
-    if (config.hasPath(Constant.EVENT_SUBSCRIBE_TOPICS)) {
-      List<TriggerConfig> triggerConfigList = config.getObjectList(Constant.EVENT_SUBSCRIBE_TOPICS)
-          .stream()
-          .map(Args::createTriggerConfig)
-          .collect(Collectors.toCollection(ArrayList::new));
-
-      eventPluginConfig.setTriggerConfigList(triggerConfigList);
-    }
-
-    return eventPluginConfig;
-  }
-
-  private static List<InetSocketAddress> loadSeeds(final com.typesafe.config.Config config) {
-    List<InetSocketAddress> inetSocketAddressList = new ArrayList<>();
-    if (PARAMETER.seedNodes != null && !PARAMETER.seedNodes.isEmpty()) {
-      for (String s : PARAMETER.seedNodes) {
-        InetSocketAddress inetSocketAddress = NetUtil.parseInetSocketAddress(s);
-        inetSocketAddressList.add(inetSocketAddress);
-      }
-    } else {
-      inetSocketAddressList = getInetSocketAddress(config, Constant.SEED_NODE_IP_LIST, false);
-    }
-
-    return inetSocketAddressList;
-  }
-
-  public static PublishConfig loadDnsPublishConfig(final com.typesafe.config.Config config) {
+  public static PublishConfig loadDnsPublishConfig(NodeConfig nodeConfig) {
     PublishConfig publishConfig = new PublishConfig();
-    if (config.hasPath(Constant.NODE_DNS_PUBLISH)) {
-      publishConfig.setDnsPublishEnable(config.getBoolean(Constant.NODE_DNS_PUBLISH));
-    }
-    loadDnsPublishParameters(config, publishConfig);
+    NodeConfig.DnsConfig dns = nodeConfig.getDns();
+    publishConfig.setDnsPublishEnable(dns.isPublish());
+    loadDnsPublishParameters(dns, publishConfig);
     return publishConfig;
   }
 
+  /**
+   * Load DNS publish parameters from bean into PublishConfig.
+   * Public method — called by tests and external code.
+   */
   public static void loadDnsPublishParameters(final com.typesafe.config.Config config,
       PublishConfig publishConfig) {
+    NodeConfig nodeConfig = NodeConfig.fromConfig(config);
+    loadDnsPublishParameters(nodeConfig.getDns(), publishConfig);
+  }
+
+  private static void loadDnsPublishParameters(NodeConfig.DnsConfig dns,
+      PublishConfig publishConfig) {
+
     if (publishConfig.isDnsPublishEnable()) {
-      if (config.hasPath(Constant.NODE_DNS_DOMAIN) && StringUtils.isNotEmpty(
-          config.getString(Constant.NODE_DNS_DOMAIN))) {
-        publishConfig.setDnsDomain(config.getString(Constant.NODE_DNS_DOMAIN));
+      if (StringUtils.isNotEmpty(dns.getDnsDomain())) {
+        publishConfig.setDnsDomain(dns.getDnsDomain());
       } else {
-        logEmptyError(Constant.NODE_DNS_DOMAIN);
+        logEmptyError("node.dns.dnsDomain");
       }
 
-      if (config.hasPath(Constant.NODE_DNS_CHANGE_THRESHOLD)) {
-        double changeThreshold = config.getDouble(Constant.NODE_DNS_CHANGE_THRESHOLD);
-        if (changeThreshold > 0) {
-          publishConfig.setChangeThreshold(changeThreshold);
-        } else {
-          logger.error("Check {}, should be bigger than 0, default 0.1",
-              Constant.NODE_DNS_CHANGE_THRESHOLD);
-        }
+      if (dns.getChangeThreshold() > 0) {
+        publishConfig.setChangeThreshold(dns.getChangeThreshold());
+      } else if (Double.compare(dns.getChangeThreshold(), 0.0) != 0) {
+        logger.error("Check node.dns.changeThreshold, should be bigger than 0, default 0.1");
       }
 
-      if (config.hasPath(Constant.NODE_DNS_MAX_MERGE_SIZE)) {
-        int maxMergeSize = config.getInt(Constant.NODE_DNS_MAX_MERGE_SIZE);
-        if (maxMergeSize >= 1 && maxMergeSize <= 5) {
-          publishConfig.setMaxMergeSize(maxMergeSize);
-        } else {
-          logger.error("Check {}, should be [1~5], default 5", Constant.NODE_DNS_MAX_MERGE_SIZE);
-        }
+      int maxMergeSize = dns.getMaxMergeSize();
+      if (maxMergeSize >= 1 && maxMergeSize <= 5) {
+        publishConfig.setMaxMergeSize(maxMergeSize);
+      } else if (maxMergeSize != 0) {
+        logger.error("Check node.dns.maxMergeSize, should be [1~5], default 5");
       }
 
-      if (config.hasPath(Constant.NODE_DNS_PRIVATE) && StringUtils.isNotEmpty(
-          config.getString(Constant.NODE_DNS_PRIVATE))) {
-        publishConfig.setDnsPrivate(config.getString(Constant.NODE_DNS_PRIVATE));
+      if (StringUtils.isNotEmpty(dns.getDnsPrivate())) {
+        publishConfig.setDnsPrivate(dns.getDnsPrivate());
       } else {
-        logEmptyError(Constant.NODE_DNS_PRIVATE);
+        logEmptyError("node.dns.dnsPrivate");
       }
 
-      if (config.hasPath(Constant.NODE_DNS_KNOWN_URLS)) {
-        publishConfig.setKnownTreeUrls(config.getStringList(Constant.NODE_DNS_KNOWN_URLS));
+      if (!dns.getKnownUrls().isEmpty()) {
+        publishConfig.setKnownTreeUrls(dns.getKnownUrls());
       }
 
-      if (config.hasPath(Constant.NODE_DNS_STATIC_NODES)) {
+      if (!dns.getStaticNodes().isEmpty()) {
         publishConfig.setStaticNodes(
-            getInetSocketAddress(config, Constant.NODE_DNS_STATIC_NODES, false));
+            filterInetSocketAddress(dns.getStaticNodes(), false));
       }
 
-      if (config.hasPath(Constant.NODE_DNS_SERVER_TYPE) && StringUtils.isNotEmpty(
-          config.getString(Constant.NODE_DNS_SERVER_TYPE))) {
-        String serverType = config.getString(Constant.NODE_DNS_SERVER_TYPE);
+      String serverType = dns.getServerType();
+      if (StringUtils.isNotEmpty(serverType)) {
         if (!"aws".equalsIgnoreCase(serverType) && !"aliyun".equalsIgnoreCase(serverType)) {
           throw new IllegalArgumentException(
-              String.format("Check %s, must be aws or aliyun", Constant.NODE_DNS_SERVER_TYPE));
+              "Check node.dns.serverType, must be aws or aliyun");
         }
         if ("aws".equalsIgnoreCase(serverType)) {
           publishConfig.setDnsType(DnsType.AwsRoute53);
@@ -1553,38 +1054,34 @@ public class Args extends CommonParameter {
           publishConfig.setDnsType(DnsType.AliYun);
         }
       } else {
-        logEmptyError(Constant.NODE_DNS_SERVER_TYPE);
+        logEmptyError("node.dns.serverType");
       }
 
-      if (config.hasPath(Constant.NODE_DNS_ACCESS_KEY_ID) && StringUtils.isNotEmpty(
-          config.getString(Constant.NODE_DNS_ACCESS_KEY_ID))) {
-        publishConfig.setAccessKeyId(config.getString(Constant.NODE_DNS_ACCESS_KEY_ID));
+      if (StringUtils.isNotEmpty(dns.getAccessKeyId())) {
+        publishConfig.setAccessKeyId(dns.getAccessKeyId());
       } else {
-        logEmptyError(Constant.NODE_DNS_ACCESS_KEY_ID);
+        logEmptyError("node.dns.accessKeyId");
       }
-      if (config.hasPath(Constant.NODE_DNS_ACCESS_KEY_SECRET) && StringUtils.isNotEmpty(
-          config.getString(Constant.NODE_DNS_ACCESS_KEY_SECRET))) {
-        publishConfig.setAccessKeySecret(config.getString(Constant.NODE_DNS_ACCESS_KEY_SECRET));
+      if (StringUtils.isNotEmpty(dns.getAccessKeySecret())) {
+        publishConfig.setAccessKeySecret(dns.getAccessKeySecret());
       } else {
-        logEmptyError(Constant.NODE_DNS_ACCESS_KEY_SECRET);
+        logEmptyError("node.dns.accessKeySecret");
       }
 
       if (publishConfig.getDnsType() == DnsType.AwsRoute53) {
-        if (config.hasPath(Constant.NODE_DNS_AWS_REGION) && StringUtils.isNotEmpty(
-            config.getString(Constant.NODE_DNS_AWS_REGION))) {
-          publishConfig.setAwsRegion(config.getString(Constant.NODE_DNS_AWS_REGION));
+        if (StringUtils.isNotEmpty(dns.getAwsRegion())) {
+          publishConfig.setAwsRegion(dns.getAwsRegion());
         } else {
-          logEmptyError(Constant.NODE_DNS_AWS_REGION);
+          logEmptyError("node.dns.awsRegion");
         }
-        if (config.hasPath(Constant.NODE_DNS_AWS_HOST_ZONE_ID)) {
-          publishConfig.setAwsHostZoneId(config.getString(Constant.NODE_DNS_AWS_HOST_ZONE_ID));
+        if (StringUtils.isNotEmpty(dns.getAwsHostZoneId())) {
+          publishConfig.setAwsHostZoneId(dns.getAwsHostZoneId());
         }
       } else {
-        if (config.hasPath(Constant.NODE_DNS_ALIYUN_ENDPOINT) && StringUtils.isNotEmpty(
-            config.getString(Constant.NODE_DNS_ALIYUN_ENDPOINT))) {
-          publishConfig.setAliDnsEndpoint(config.getString(Constant.NODE_DNS_ALIYUN_ENDPOINT));
+        if (StringUtils.isNotEmpty(dns.getAliyunDnsEndpoint())) {
+          publishConfig.setAliDnsEndpoint(dns.getAliyunDnsEndpoint());
         } else {
-          logEmptyError(Constant.NODE_DNS_ALIYUN_ENDPOINT);
+          logEmptyError("node.dns.aliyunDnsEndpoint");
         }
       }
     }
@@ -1594,80 +1091,13 @@ public class Args extends CommonParameter {
     throw new IllegalArgumentException(String.format("Check %s, must not be null or empty", arg));
   }
 
-  private static TriggerConfig createTriggerConfig(ConfigObject triggerObject) {
-    if (Objects.isNull(triggerObject)) {
-      return null;
-    }
+  // createTriggerConfig removed — logic moved to applyEventConfig()
+  // getEventFilter removed — logic moved to applyEventConfig()
 
-    TriggerConfig triggerConfig = new TriggerConfig();
-
-    String triggerName = triggerObject.get("triggerName").unwrapped().toString();
-    triggerConfig.setTriggerName(triggerName);
-
-    String enabled = triggerObject.get("enable").unwrapped().toString();
-    triggerConfig.setEnabled("true".equalsIgnoreCase(enabled));
-
-    String topic = triggerObject.get("topic").unwrapped().toString();
-    triggerConfig.setTopic(topic);
-
-    if (triggerObject.containsKey("redundancy")) {
-      String redundancy = triggerObject.get("redundancy").unwrapped().toString();
-      triggerConfig.setRedundancy("true".equalsIgnoreCase(redundancy));
-    }
-
-    if (triggerObject.containsKey("ethCompatible")) {
-      String ethCompatible = triggerObject.get("ethCompatible").unwrapped().toString();
-      triggerConfig.setEthCompatible("true".equalsIgnoreCase(ethCompatible));
-    }
-
-    if (triggerObject.containsKey("solidified")) {
-      String solidified = triggerObject.get("solidified").unwrapped().toString();
-      triggerConfig.setSolidified("true".equalsIgnoreCase(solidified));
-    }
-
-    return triggerConfig;
-  }
-
-  private static FilterQuery getEventFilter(final com.typesafe.config.Config config) {
-    FilterQuery filter = new FilterQuery();
-    long fromBlockLong = 0;
-    long toBlockLong = 0;
-
-    String fromBlock = config.getString(Constant.EVENT_SUBSCRIBE_FROM_BLOCK).trim();
-    try {
-      fromBlockLong = FilterQuery.parseFromBlockNumber(fromBlock);
-    } catch (Exception e) {
-      logger.error("invalid filter: fromBlockNumber: {}", fromBlock, e);
-      return null;
-    }
-    filter.setFromBlock(fromBlockLong);
-
-    String toBlock = config.getString(Constant.EVENT_SUBSCRIBE_TO_BLOCK).trim();
-    try {
-      toBlockLong = FilterQuery.parseToBlockNumber(toBlock);
-    } catch (Exception e) {
-      logger.error("invalid filter: toBlockNumber: {}", toBlock, e);
-      return null;
-    }
-    filter.setToBlock(toBlockLong);
-
-    List<String> addressList = config.getStringList(Constant.EVENT_SUBSCRIBE_CONTRACT_ADDRESS);
-    addressList = addressList.stream().filter(address -> StringUtils.isNotEmpty(address)).collect(
-        Collectors.toList());
-    filter.setContractAddressList(addressList);
-
-    List<String> topicList = config.getStringList(Constant.EVENT_SUBSCRIBE_CONTRACT_TOPIC);
-    topicList = topicList.stream().filter(top -> StringUtils.isNotEmpty(top)).collect(
-        Collectors.toList());
-    filter.setContractTopicList(topicList);
-
-    return filter;
-  }
-
-  private static void externalIp(final com.typesafe.config.Config config) {
-    if (!config.hasPath(Constant.NODE_DISCOVERY_EXTERNAL_IP) || config
-        .getString(Constant.NODE_DISCOVERY_EXTERNAL_IP).trim().isEmpty()) {
-      if (PARAMETER.nodeExternalIp == null) {
+  private static void externalIp(NodeConfig nodeConfig) {
+    String externalIp = nodeConfig.getDiscoveryExternalIp();
+    if (StringUtils.isEmpty(externalIp)) {
+      if (StringUtils.isEmpty(PARAMETER.nodeExternalIp)) {
         logger.info("External IP wasn't set, using ipv4 from libp2p");
         PARAMETER.nodeExternalIp = PARAMETER.p2pConfig.getIp();
         if (StringUtils.isEmpty(PARAMETER.nodeExternalIp)) {
@@ -1675,68 +1105,21 @@ public class Args extends CommonParameter {
         }
       }
     } else {
-      PARAMETER.nodeExternalIp = config.getString(Constant.NODE_DISCOVERY_EXTERNAL_IP).trim();
+      PARAMETER.nodeExternalIp = externalIp;
     }
   }
 
-  private static void initRocksDbSettings(Config config) {
-    String prefix = Constant.STORAGE_DB_SETTING;
-    int levelNumber = config.hasPath(prefix + "levelNumber")
-        ? config.getInt(prefix + "levelNumber") : 7;
-    int compactThreads = config.hasPath(prefix + "compactThreads")
-        ? config.getInt(prefix + "compactThreads")
-        : max(Runtime.getRuntime().availableProcessors(), 1, true);
-    int blocksize = config.hasPath(prefix + "blocksize")
-        ? config.getInt(prefix + "blocksize") : 16;
-    long maxBytesForLevelBase = config.hasPath(prefix + "maxBytesForLevelBase")
-        ? config.getInt(prefix + "maxBytesForLevelBase") : 256;
-    double maxBytesForLevelMultiplier = config.hasPath(prefix + "maxBytesForLevelMultiplier")
-        ? config.getDouble(prefix + "maxBytesForLevelMultiplier") : 10;
-    int level0FileNumCompactionTrigger =
-        config.hasPath(prefix + "level0FileNumCompactionTrigger") ? config
-            .getInt(prefix + "level0FileNumCompactionTrigger") : 2;
-    long targetFileSizeBase = config.hasPath(prefix + "targetFileSizeBase") ? config
-        .getLong(prefix + "targetFileSizeBase") : 64;
-    int targetFileSizeMultiplier = config.hasPath(prefix + "targetFileSizeMultiplier") ? config
-        .getInt(prefix + "targetFileSizeMultiplier") : 1;
-    int maxOpenFiles = config.hasPath(prefix + "maxOpenFiles")
-        ? config.getInt(prefix + "maxOpenFiles") : 5000;
+  // initRocksDbSettings, initRocksDbBackupProperty, initBackupProperty
+  // removed — logic moved to applyStorageConfig() and applyNodeBackupConfig()
 
-    PARAMETER.rocksDBCustomSettings = RocksDbSettings
-        .initCustomSettings(levelNumber, compactThreads, blocksize, maxBytesForLevelBase,
-            maxBytesForLevelMultiplier, level0FileNumCompactionTrigger,
-            targetFileSizeBase, targetFileSizeMultiplier, maxOpenFiles);
-    RocksDbSettings.loggingSettings();
-  }
-
-  private static void initRocksDbBackupProperty(Config config) {
-    boolean enable =
-        config.hasPath(Constant.STORAGE_BACKUP_ENABLE)
-            && config.getBoolean(Constant.STORAGE_BACKUP_ENABLE);
-    String propPath = config.hasPath(Constant.STORAGE_BACKUP_PROP_PATH)
-        ? config.getString(Constant.STORAGE_BACKUP_PROP_PATH) : "prop.properties";
-    String bak1path = config.hasPath(Constant.STORAGE_BACKUP_BAK1PATH)
-        ? config.getString(Constant.STORAGE_BACKUP_BAK1PATH) : "bak1/database/";
-    String bak2path = config.hasPath(Constant.STORAGE_BACKUP_BAK2PATH)
-        ? config.getString(Constant.STORAGE_BACKUP_BAK2PATH) : "bak2/database/";
-    int frequency = config.hasPath(Constant.STORAGE_BACKUP_FREQUENCY)
-        ? config.getInt(Constant.STORAGE_BACKUP_FREQUENCY) : 10000;
-    PARAMETER.dbBackupConfig = DbBackupConfig.getInstance()
-        .initArgs(enable, propPath, bak1path, bak2path, frequency);
-  }
-
-  private static void initBackupProperty(Config config) {
-    PARAMETER.backupPriority = config.hasPath(Constant.NODE_BACKUP_PRIORITY)
-        ? config.getInt(Constant.NODE_BACKUP_PRIORITY) : 0;
-
-    PARAMETER.backupPort = config.hasPath(Constant.NODE_BACKUP_PORT)
-        ? config.getInt(Constant.NODE_BACKUP_PORT) : 10001;
-
-    PARAMETER.keepAliveInterval = config.hasPath(Constant.NODE_BACKUP_KEEPALIVEINTERVAL)
-        ? config.getInt(Constant.NODE_BACKUP_KEEPALIVEINTERVAL) : 3000;
-
-    PARAMETER.backupMembers = config.hasPath(Constant.NODE_BACKUP_MEMBERS)
-        ? config.getStringList(Constant.NODE_BACKUP_MEMBERS) : new ArrayList<>();
+  private static void checkBackupMembers() {
+    for (String member : PARAMETER.backupMembers) {
+      InetAddress inetAddress = resolveInetAddress(member);
+      if (inetAddress == null) {
+        throw new TronError("Failed to resolve backup member: " + member,
+            TronError.ErrCode.PARAMETER_INIT);
+      }
+    }
   }
 
   public static void logConfig() {
@@ -1796,6 +1179,140 @@ public class Args extends CommonParameter {
       return this.outputDirectory + File.separator;
     }
     return this.outputDirectory;
+  }
+
+  // ── CLI help / version utilities ─────────────────
+
+  private static void printVersion() {
+    Properties properties = new Properties();
+    boolean noGitProperties = true;
+    try {
+      InputStream in = Thread.currentThread()
+          .getContextClassLoader().getResourceAsStream("git.properties");
+      if (in != null) {
+        noGitProperties = false;
+        properties.load(in);
+      }
+    } catch (IOException e) {
+      logger.error(e.getMessage());
+    }
+    JCommander jCommander = new JCommander();
+    jCommander.getConsole().println("OS : " + System.getProperty("os.name"));
+    jCommander.getConsole().println("JVM : " + System.getProperty("java.vendor") + " "
+        + System.getProperty("java.version") + " " + System.getProperty("os.arch"));
+    if (!noGitProperties) {
+      jCommander.getConsole().println("Git : " + properties.getProperty("git.commit.id"));
+    }
+    jCommander.getConsole().println("Version : " + Version.getVersion());
+    jCommander.getConsole().println("Code : " + Version.VERSION_CODE);
+  }
+
+  public static void printHelp(JCommander jCommander) {
+    List<ParameterDescription> parameterDescriptionList = jCommander.getParameters();
+    Map<String, ParameterDescription> stringParameterDescriptionMap = new HashMap<>();
+    for (ParameterDescription parameterDescription : parameterDescriptionList) {
+      String parameterName = parameterDescription.getParameterized().getName();
+      stringParameterDescriptionMap.put(parameterName, parameterDescription);
+    }
+
+    StringBuilder helpStr = new StringBuilder();
+    helpStr.append("Name:\n\tFullNode - the java-tron command line interface\n");
+    String programName = Strings.isNullOrEmpty(jCommander.getProgramName()) ? "FullNode.jar" :
+        jCommander.getProgramName();
+    helpStr.append(String.format("%nUsage: java -jar %s [options] [seedNode <seedNode> ...]%n",
+        programName));
+    helpStr.append(String.format(
+        "%nNote: Positional seedNode arguments are deprecated."
+            + " Use seed.node.ip.list in the config file instead.%n"));
+    helpStr.append(String.format("%nVERSION: %n%s-%s%n", Version.getVersion(),
+        getCommitIdAbbrev()));
+
+    Map<String, String[]> groupOptionListMap = Args.getOptionGroup();
+    for (Map.Entry<String, String[]> entry : groupOptionListMap.entrySet()) {
+      String group = entry.getKey();
+      helpStr.append(String.format("%n%s OPTIONS:%n", group.toUpperCase(Locale.ROOT)));
+      int optionMaxLength = Arrays.stream(entry.getValue()).mapToInt(p -> {
+        ParameterDescription tmpParameterDescription = stringParameterDescriptionMap.get(p);
+        if (tmpParameterDescription == null) {
+          return 1;
+        }
+        return tmpParameterDescription.getNames().length();
+      }).max().orElse(1);
+
+      for (String option : groupOptionListMap.get(group)) {
+        ParameterDescription parameterDescription = stringParameterDescriptionMap.get(option);
+        if (parameterDescription == null) {
+          logger.warn("Miss option:{}", option);
+          continue;
+        }
+        boolean isDeprecated;
+        try {
+          isDeprecated = CLIParameter.class.getDeclaredField(
+              parameterDescription.getParameterized().getName())
+              .isAnnotationPresent(Deprecated.class);
+        } catch (NoSuchFieldException e) {
+          isDeprecated = false;
+        }
+        String desc = upperFirst(parameterDescription.getDescription());
+        if (isDeprecated) {
+          desc += " (deprecated)";
+        }
+        String tmpOptionDesc = String.format("%s\t\t\t%s%n",
+            Strings.padEnd(parameterDescription.getNames(), optionMaxLength, ' '),
+            desc);
+        helpStr.append(tmpOptionDesc);
+      }
+    }
+    jCommander.getConsole().println(helpStr.toString());
+  }
+
+  public static String upperFirst(String name) {
+    if (name.length() <= 1) {
+      return name;
+    }
+    name = name.substring(0, 1).toUpperCase(Locale.ROOT) + name.substring(1);
+    return name;
+  }
+
+  private static String getCommitIdAbbrev() {
+    Properties properties = new Properties();
+    try {
+      InputStream in = Thread.currentThread()
+          .getContextClassLoader().getResourceAsStream("git.properties");
+      if (in == null) {
+        logger.warn("git.properties not found on classpath");
+        return "";
+      }
+      properties.load(in);
+    } catch (IOException e) {
+      logger.warn("Load resource failed,git.properties {}", e.getMessage());
+    }
+    return properties.getProperty("git.commit.id.abbrev");
+  }
+
+  private static Map<String, String[]> getOptionGroup() {
+    String[] tronOption = new String[] {"version", "help", "shellConfFileName", "logbackPath",
+        "eventSubscribe", "solidityNode", "keystoreFactory"};
+    String[] dbOption = new String[] {"outputDirectory"};
+    String[] witnessOption = new String[] {"witness", "privateKey"};
+    String[] vmOption = new String[] {"debug"};
+
+    Map<String, String[]> optionGroupMap = new LinkedHashMap<>();
+    optionGroupMap.put("tron", tronOption);
+    optionGroupMap.put("db", dbOption);
+    optionGroupMap.put("witness", witnessOption);
+    optionGroupMap.put("virtual machine", vmOption);
+
+    for (String[] optionList : optionGroupMap.values()) {
+      for (String option : optionList) {
+        try {
+          CLIParameter.class.getField(option);
+        } catch (NoSuchFieldException e) {
+          logger.warn("NoSuchFieldException:{},{}", option, e.getMessage());
+        }
+      }
+    }
+    return optionGroupMap;
   }
 }
 

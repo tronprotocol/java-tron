@@ -5,8 +5,8 @@ import javax.annotation.Resource;
 import org.junit.Assert;
 import org.junit.Test;
 import org.tron.common.BaseTest;
+import org.tron.common.TestConstants;
 import org.tron.common.utils.ByteArray;
-import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionRetCapsule;
@@ -24,7 +24,7 @@ public class TransactionReceiptTest extends BaseTest {
   @Resource private TransactionRetStore transactionRetStore;
 
   static {
-    Args.setParam(new String[] {"-d", dbPath()}, Constant.TEST_CONF);
+    Args.setParam(new String[] {"-d", dbPath()}, TestConstants.TEST_CONF);
   }
 
   @Test
@@ -32,6 +32,7 @@ public class TransactionReceiptTest extends BaseTest {
     Protocol.TransactionInfo transactionInfo = Protocol.TransactionInfo.newBuilder()
         .setId(ByteString.copyFrom("1".getBytes()))
         .setContractAddress(ByteString.copyFrom("address1".getBytes()))
+        .setBlockTimeStamp(1000000L)
         .setReceipt(Protocol.ResourceReceipt.newBuilder()
             .setEnergyUsageTotal(100L)
             .setResult(Protocol.Transaction.Result.contractResult.DEFAULT)
@@ -53,8 +54,11 @@ public class TransactionReceiptTest extends BaseTest {
 
     Protocol.Block block = Protocol.Block.newBuilder().setBlockHeader(
         Protocol.BlockHeader.newBuilder().setRawData(
-            Protocol.BlockHeader.raw.newBuilder().setNumber(1))).addTransactions(
-        transaction).build();
+            Protocol.BlockHeader.raw.newBuilder()
+                .setNumber(1)
+                .setTimestamp(1000000L)))
+        .addTransactions(transaction)
+        .build();
 
     BlockCapsule blockCapsule = new BlockCapsule(block);
     long energyFee = wallet.getEnergyFee(blockCapsule.getTimeStamp());
@@ -65,35 +69,35 @@ public class TransactionReceiptTest extends BaseTest {
         new TransactionReceipt(blockCapsule, transactionInfo, context, energyFee);
 
     Assert.assertNotNull(transactionReceipt);
-    String blockHash = "0x0000000000000001464f071c8a336fd22eb5145dff1b245bda013ec89add8497";
+    String blockHash = "0x0000000000000001ba51f50f562758a449ff4a98df4febef89e122c1bb7e1a0c";
 
     // assert basic fields
-    Assert.assertEquals(transactionReceipt.getBlockHash(), blockHash);
-    Assert.assertEquals(transactionReceipt.getBlockNumber(), "0x1");
-    Assert.assertEquals(transactionReceipt.getTransactionHash(), "0x31");
-    Assert.assertEquals(transactionReceipt.getTransactionIndex(), "0x0");
-    Assert.assertEquals(transactionReceipt.getCumulativeGasUsed(), ByteArray.toJsonHex(102));
-    Assert.assertEquals(transactionReceipt.getGasUsed(), ByteArray.toJsonHex(100));
-    Assert.assertEquals(transactionReceipt.getEffectiveGasPrice(), ByteArray.toJsonHex(energyFee));
-    Assert.assertEquals(transactionReceipt.getStatus(), "0x1");
+    Assert.assertEquals(blockHash, transactionReceipt.getBlockHash());
+    Assert.assertEquals("0x1", transactionReceipt.getBlockNumber());
+    Assert.assertEquals("0x31", transactionReceipt.getTransactionHash());
+    Assert.assertEquals("0x0", transactionReceipt.getTransactionIndex());
+    Assert.assertEquals(ByteArray.toJsonHex(102), transactionReceipt.getCumulativeGasUsed());
+    Assert.assertEquals(ByteArray.toJsonHex(100), transactionReceipt.getGasUsed());
+    Assert.assertEquals(ByteArray.toJsonHex(energyFee), transactionReceipt.getEffectiveGasPrice());
+    Assert.assertEquals("0x1", transactionReceipt.getStatus());
 
     // assert contract fields
-    Assert.assertEquals(transactionReceipt.getFrom(), ByteArray.toJsonHexAddress(new byte[0]));
-    Assert.assertEquals(transactionReceipt.getTo(), ByteArray.toJsonHexAddress(new byte[0]));
+    Assert.assertEquals(ByteArray.toJsonHexAddress(new byte[0]), transactionReceipt.getFrom());
+    Assert.assertEquals(ByteArray.toJsonHexAddress(new byte[0]), transactionReceipt.getTo());
     Assert.assertNull(transactionReceipt.getContractAddress());
 
     // assert logs fields
-    Assert.assertEquals(transactionReceipt.getLogs().length, 1);
-    Assert.assertEquals(transactionReceipt.getLogs()[0].getLogIndex(), "0x3");
-    Assert.assertEquals(
-        transactionReceipt.getLogs()[0].getBlockHash(), blockHash);
-    Assert.assertEquals(transactionReceipt.getLogs()[0].getBlockNumber(), "0x1");
-    Assert.assertEquals(transactionReceipt.getLogs()[0].getTransactionHash(), "0x31");
-    Assert.assertEquals(transactionReceipt.getLogs()[0].getTransactionIndex(), "0x0");
+    Assert.assertEquals(1, transactionReceipt.getLogs().length);
+    Assert.assertEquals("0x3", transactionReceipt.getLogs()[0].getLogIndex());
+    Assert.assertEquals(blockHash, transactionReceipt.getLogs()[0].getBlockHash());
+    Assert.assertEquals("0x1", transactionReceipt.getLogs()[0].getBlockNumber());
+    Assert.assertEquals("0x31", transactionReceipt.getLogs()[0].getTransactionHash());
+    Assert.assertEquals("0x0", transactionReceipt.getLogs()[0].getTransactionIndex());
+    Assert.assertEquals("0x3e8", transactionReceipt.getLogs()[0].getBlockTimestamp());
 
     // assert default fields
     Assert.assertNull(transactionReceipt.getRoot());
-    Assert.assertEquals(transactionReceipt.getType(), "0x0");
-    Assert.assertEquals(transactionReceipt.getLogsBloom(), ByteArray.toJsonHex(new byte[256]));
+    Assert.assertEquals("0x0", transactionReceipt.getType());
+    Assert.assertEquals(ByteArray.toJsonHex(new byte[256]), transactionReceipt.getLogsBloom());
   }
 }

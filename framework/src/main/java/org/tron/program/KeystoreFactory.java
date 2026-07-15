@@ -2,6 +2,7 @@ package org.tron.program;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Locale;
 import java.util.Scanner;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -15,11 +16,20 @@ import org.tron.keystore.Credentials;
 import org.tron.keystore.WalletUtils;
 
 @Slf4j(topic = "app")
+@Deprecated
 public class KeystoreFactory {
 
   private static final String FilePath = "Wallet";
 
   public static void start() {
+    System.err.println("WARNING: --keystore-factory is deprecated and will be removed "
+        + "in a future release.");
+    System.err.println("Please use: java -jar Toolkit.jar keystore <command>");
+    System.err.println("  keystore new       - Generate a new keystore");
+    System.err.println("  keystore import    - Import a private key");
+    System.err.println("  keystore list      - List keystores");
+    System.err.println("  keystore update    - Change password");
+    System.err.println();
     KeystoreFactory cli = new KeystoreFactory();
     cli.run();
   }
@@ -57,15 +67,16 @@ public class KeystoreFactory {
 
 
   private void genKeystore() throws CipherException, IOException {
+    boolean ecKey = CommonParameter.getInstance().isECKeyCryptoEngine();
     String password = WalletUtils.inputPassword2Twice();
 
-    SignInterface eCkey = SignUtils.getGeneratedRandomSign(Utils.random,
-        CommonParameter.getInstance().isECKeyCryptoEngine());
+    SignInterface eCkey = SignUtils.getGeneratedRandomSign(Utils.random, ecKey);
     File file = new File(FilePath);
     fileCheck(file);
     String fileName = WalletUtils.generateWalletFile(password, eCkey, file, true);
     System.out.println("Gen a keystore its name " + fileName);
-    Credentials credentials = WalletUtils.loadCredentials(password, new File(file, fileName));
+    Credentials credentials = WalletUtils.loadCredentials(password, new File(file, fileName),
+        ecKey);
     System.out.println("Your address is " + credentials.getAddress());
   }
 
@@ -84,22 +95,25 @@ public class KeystoreFactory {
 
     String password = WalletUtils.inputPassword2Twice();
 
-    SignInterface eCkey = SignUtils.fromPrivate(ByteArray.fromHexString(privateKey),
-        CommonParameter.getInstance().isECKeyCryptoEngine());
+    boolean ecKey = CommonParameter.getInstance().isECKeyCryptoEngine();
+    SignInterface eCkey = SignUtils.fromPrivate(ByteArray.fromHexString(privateKey), ecKey);
     File file = new File(FilePath);
     fileCheck(file);
     String fileName = WalletUtils.generateWalletFile(password, eCkey, file, true);
     System.out.println("Gen a keystore its name " + fileName);
-    Credentials credentials = WalletUtils.loadCredentials(password, new File(file, fileName));
+    Credentials credentials = WalletUtils.loadCredentials(password, new File(file, fileName),
+        ecKey);
     System.out.println("Your address is " + credentials.getAddress());
   }
 
   private void help() {
-    System.out.println("You can enter the following command: ");
-    System.out.println("GenKeystore");
-    System.out.println("ImportPrivateKey");
-    System.out.println("Exit or Quit");
-    System.out.println("Input any one of them, you will get more tips.");
+    System.out.println("NOTE: --keystore-factory is deprecated. Use Toolkit.jar instead:");
+    System.out.println("  java -jar Toolkit.jar keystore new|import|list|update");
+    System.out.println();
+    System.out.println("Legacy commands (will be removed):");
+    System.out.println("  GenKeystore");
+    System.out.println("  ImportPrivateKey");
+    System.out.println("  Exit or Quit");
   }
 
   private void run() {
@@ -114,7 +128,7 @@ public class KeystoreFactory {
         if ("".equals(cmd)) {
           continue;
         }
-        String cmdLowerCase = cmd.toLowerCase();
+        String cmdLowerCase = cmd.toLowerCase(Locale.ROOT);
 
         switch (cmdLowerCase) {
           case "help": {

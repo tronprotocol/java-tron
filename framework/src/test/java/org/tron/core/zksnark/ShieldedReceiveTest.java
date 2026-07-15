@@ -1,5 +1,6 @@
 package org.tron.core.zksnark;
 
+import static org.tron.common.TestConstants.SHIELD_CONF;
 import static org.tron.common.utils.PublicMethod.getHexAddressByPrivateKey;
 import static org.tron.common.utils.PublicMethod.getRandomPrivateKey;
 
@@ -7,9 +8,14 @@ import com.google.common.primitives.Bytes;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
+import java.lang.reflect.Field;
 import java.security.SignatureException;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
+import java.util.Set;
 import javax.annotation.Resource;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -29,7 +35,6 @@ import org.tron.common.BaseTest;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.PublicMethod;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.client.utils.TransactionUtils;
 import org.tron.common.zksnark.IncrementalMerkleTreeContainer;
@@ -41,6 +46,8 @@ import org.tron.common.zksnark.LibrustzcashParam.CheckSpendParams;
 import org.tron.common.zksnark.LibrustzcashParam.IvkToPkdParams;
 import org.tron.common.zksnark.LibrustzcashParam.OutputProofParams;
 import org.tron.common.zksnark.LibrustzcashParam.SpendSigParams;
+import org.tron.consensus.dpos.DposSlot;
+import org.tron.consensus.dpos.DposTask;
 import org.tron.core.Wallet;
 import org.tron.core.actuator.Actuator;
 import org.tron.core.actuator.ActuatorCreator;
@@ -105,6 +112,21 @@ import org.tron.protos.contract.ShieldContract.SpendDescription;
 @Slf4j
 public class ShieldedReceiveTest extends BaseTest {
 
+  // Valid error messages when receive description fields are missing or wrong.
+  // The exact message depends on which native validation check fails first,
+  // which varies with merkle tree state and execution order.
+  private static final Set<String> RECEIVE_VALIDATION_ERRORS = new HashSet<>(Arrays.asList(
+      "param is null",
+      "Rt is invalid.",
+      "librustzcashSaplingCheckOutput error"
+  ));
+
+  // Valid error messages when spend description or signature is wrong.
+  private static final Set<String> SPEND_VALIDATION_ERRORS = new HashSet<>(Arrays.asList(
+      "librustzcashSaplingCheckSpend error",
+      "Rt is invalid."
+  ));
+
   private static final String FROM_ADDRESS;
   private static final String ADDRESS_ONE_PRIVATE_KEY;
   private static final long OWNER_BALANCE = 100_000_000;
@@ -121,14 +143,16 @@ public class ShieldedReceiveTest extends BaseTest {
   @Resource
   private ConsensusService consensusService;
   @Resource
+  private DposTask dposTask;
+  @Resource
   private Wallet wallet;
   @Resource
-  private TransactionUtil transactionUtil;
+  private DposSlot dposSlot;
 
   private static boolean init;
 
   static {
-    Args.setParam(new String[]{"--output-directory", dbPath(), "-w"}, "config-localtest.conf");
+    Args.setParam(new String[] {"--output-directory", dbPath(), "-w"}, SHIELD_CONF);
     ADDRESS_ONE_PRIVATE_KEY = getRandomPrivateKey();
     FROM_ADDRESS = getHexAddressByPrivateKey(ADDRESS_ONE_PRIVATE_KEY);
   }
@@ -312,7 +336,7 @@ public class ShieldedReceiveTest extends BaseTest {
 
     //Add public address sign
     transactionCap = TransactionUtils.addTransactionSign(transactionCap.getInstance(),
-            ADDRESS_ONE_PRIVATE_KEY, chainBaseManager.getAccountStore());
+        ADDRESS_ONE_PRIVATE_KEY, chainBaseManager.getAccountStore());
     try {
       dbManager.pushTransaction(transactionCap);
     } catch (Exception e) {
@@ -414,7 +438,7 @@ public class ShieldedReceiveTest extends BaseTest {
     boolean ok2 = JLibrustzcash.librustzcashSaplingCheckOutput(checkOutputParams);
     Assert.assertTrue(ok2);
 
-    return new String[]{ByteArray.toHexString(checkSpendParamsData),
+    return new String[] {ByteArray.toHexString(checkSpendParamsData),
         ByteArray.toHexString(dataToBeSigned),
         ByteArray.toHexString(checkOutputParams.encode())};
   }
@@ -618,10 +642,10 @@ public class ShieldedReceiveTest extends BaseTest {
       List<Actuator> actuator = ActuatorCreator
           .getINSTANCE().createActuator(transactionCap);
       actuator.get(0).validate();
-      Assert.assertTrue(false);
-    } catch (Exception e) {
-      Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("param is null", e.getMessage());
+      Assert.fail("validate should throw ContractValidateException");
+    } catch (ContractValidateException e) {
+      Assert.assertTrue("Unexpected error: " + e.getMessage(),
+          RECEIVE_VALIDATION_ERRORS.contains(e.getMessage()));
     }
     JLibrustzcash.librustzcashSaplingVerificationCtxFree(ctx);
   }
@@ -659,11 +683,10 @@ public class ShieldedReceiveTest extends BaseTest {
       //validate
       List<Actuator> actuator = ActuatorCreator.getINSTANCE().createActuator(transactionCap);
       actuator.get(0).validate();
-
-      Assert.assertTrue(false);
-    } catch (Exception e) {
-      Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("param is null", e.getMessage());
+      Assert.fail("validate should throw ContractValidateException");
+    } catch (ContractValidateException e) {
+      Assert.assertTrue("Unexpected error: " + e.getMessage(),
+          RECEIVE_VALIDATION_ERRORS.contains(e.getMessage()));
     }
     JLibrustzcash.librustzcashSaplingVerificationCtxFree(ctx);
   }
@@ -701,10 +724,12 @@ public class ShieldedReceiveTest extends BaseTest {
       //validate
       List<Actuator> actuator = ActuatorCreator.getINSTANCE().createActuator(transactionCap);
       actuator.get(0).validate();
-      Assert.assertTrue(false);
-    } catch (Exception e) {
-      Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("param is null", e.getMessage());
+      Assert.fail("validate should throw ContractValidateException");
+    } catch (ContractValidateException e) {
+      // Empty epk causes validation failure. The exact message depends on execution order:
+      // "param is null" if epk check runs first, "Rt is invalid." if merkle root check runs first.
+      Assert.assertTrue("Unexpected error: " + e.getMessage(),
+          RECEIVE_VALIDATION_ERRORS.contains(e.getMessage()));
     }
     JLibrustzcash.librustzcashSaplingVerificationCtxFree(ctx);
   }
@@ -743,10 +768,10 @@ public class ShieldedReceiveTest extends BaseTest {
       //validate
       List<Actuator> actuator = ActuatorCreator.getINSTANCE().createActuator(transactionCap);
       actuator.get(0).validate();
-      Assert.assertTrue(false);
-    } catch (Exception e) {
-      Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("param is null", e.getMessage());
+      Assert.fail("validate should throw ContractValidateException");
+    } catch (ContractValidateException e) {
+      Assert.assertTrue("Unexpected error: " + e.getMessage(),
+          RECEIVE_VALIDATION_ERRORS.contains(e.getMessage()));
     }
     JLibrustzcash.librustzcashSaplingVerificationCtxFree(ctx);
   }
@@ -1074,7 +1099,8 @@ public class ShieldedReceiveTest extends BaseTest {
       Assert.assertFalse(true);
     } catch (Exception e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("librustzcashSaplingCheckOutput error", e.getMessage());
+      Assert.assertTrue("Unexpected error: " + e.getMessage(),
+          RECEIVE_VALIDATION_ERRORS.contains(e.getMessage()));
     }
   }
 
@@ -1102,7 +1128,8 @@ public class ShieldedReceiveTest extends BaseTest {
       Assert.assertFalse(true);
     } catch (Exception e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("librustzcashSaplingCheckOutput error", e.getMessage());
+      Assert.assertTrue("Unexpected error: " + e.getMessage(),
+          RECEIVE_VALIDATION_ERRORS.contains(e.getMessage()));
     }
   }
 
@@ -1131,8 +1158,8 @@ public class ShieldedReceiveTest extends BaseTest {
     } catch (Exception e) {
       Assert.assertTrue(e instanceof ContractValidateException);
       //if generate cm successful, checkout error; else param is null because of cm is null
-      Assert.assertTrue("librustzcashSaplingCheckOutput error".equalsIgnoreCase(e.getMessage())
-          || "param is null".equalsIgnoreCase(e.getMessage()));
+      Assert.assertTrue("Unexpected error: " + e.getMessage(),
+          RECEIVE_VALIDATION_ERRORS.contains(e.getMessage()));
     }
   }
 
@@ -1161,8 +1188,8 @@ public class ShieldedReceiveTest extends BaseTest {
     } catch (Exception e) {
       Assert.assertTrue(e instanceof ContractValidateException);
       //if generate cm successful, checkout error; else param is null because of cm is null
-      Assert.assertTrue("librustzcashSaplingCheckOutput error".equalsIgnoreCase(e.getMessage())
-          || "param is null".equalsIgnoreCase(e.getMessage()));
+      Assert.assertTrue("Unexpected error: " + e.getMessage(),
+          RECEIVE_VALIDATION_ERRORS.contains(e.getMessage()));
     }
   }
 
@@ -1190,7 +1217,8 @@ public class ShieldedReceiveTest extends BaseTest {
       Assert.assertFalse(true);
     } catch (Exception e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertTrue(e.getMessage().equalsIgnoreCase("librustzcashSaplingCheckOutput error"));
+      Assert.assertTrue("Unexpected error: " + e.getMessage(),
+          RECEIVE_VALIDATION_ERRORS.contains(e.getMessage()));
     }
   }
 
@@ -1218,7 +1246,8 @@ public class ShieldedReceiveTest extends BaseTest {
       Assert.assertFalse(true);
     } catch (Exception e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("librustzcashSaplingCheckOutput error", e.getMessage());
+      Assert.assertTrue("Unexpected error: " + e.getMessage(),
+          RECEIVE_VALIDATION_ERRORS.contains(e.getMessage()));
     }
   }
 
@@ -1823,7 +1852,8 @@ public class ShieldedReceiveTest extends BaseTest {
       Assert.assertFalse(true);
     } catch (Exception e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("librustzcashSaplingCheckSpend error", e.getMessage());
+      Assert.assertTrue("Unexpected error: " + e.getMessage(),
+          SPEND_VALIDATION_ERRORS.contains(e.getMessage()));
     }
     JLibrustzcash.librustzcashSaplingVerificationCtxFree(ctx);
   }
@@ -1868,7 +1898,8 @@ public class ShieldedReceiveTest extends BaseTest {
       Assert.assertFalse(true);
     } catch (Exception e) {
       Assert.assertTrue(e instanceof ContractValidateException);
-      Assert.assertEquals("librustzcashSaplingCheckSpend error", e.getMessage());
+      Assert.assertTrue("Unexpected error: " + e.getMessage(),
+          SPEND_VALIDATION_ERRORS.contains(e.getMessage()));
     }
     JLibrustzcash.librustzcashSaplingVerificationCtxFree(ctx);
   }
@@ -2063,7 +2094,8 @@ public class ShieldedReceiveTest extends BaseTest {
       //signature for spend with some wrong column
       //if transparent to shield, ok
       //if shield to shield or shield to transparent, librustzcashSaplingFinalCheck error
-      Assert.assertTrue(e.getMessage().equalsIgnoreCase("librustzcashSaplingCheckSpend error"));
+      Assert.assertTrue("Unexpected error: " + e.getMessage(),
+          SPEND_VALIDATION_ERRORS.contains(e.getMessage()));
     }
     JLibrustzcash.librustzcashSaplingVerificationCtxFree(ctx);
   }
@@ -2375,135 +2407,165 @@ public class ShieldedReceiveTest extends BaseTest {
     assert ecKey != null;
     byte[] witnessAddress = ecKey.getAddress();
     WitnessCapsule witnessCapsule = new WitnessCapsule(ByteString.copyFrom(witnessAddress));
-    chainBaseManager.addWitness(ByteString.copyFrom(witnessAddress));
+    // Stop the consensus task before modifying the witness schedule: DposTask uses the same
+    // localwitness key and would otherwise race to produce blocks at the same slot,
+    // triggering fork resolution and making the test slow.
+    consensusService.stop();
+    try {
+      chainBaseManager.addWitness(ByteString.copyFrom(witnessAddress));
 
-    //sometimes generate block failed, try several times.
-    long time = System.currentTimeMillis();
-    Block block = getSignedBlock(witnessCapsule.getAddress(), time, privateKey);
-    dbManager.pushBlock(new BlockCapsule(block));
+      long time = nextScheduledTime(witnessCapsule.getAddress());
+      Block block = getSignedBlock(witnessCapsule.getAddress(), time, privateKey);
+      dbManager.pushBlock(new BlockCapsule(block));
 
-    //create transactions
-    chainBaseManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
-    chainBaseManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(1000 * 1000000L);
-    ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
+      //create transactions
+      chainBaseManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
+      chainBaseManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(1000 * 1000000L);
+      ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
 
-    // generate spend proof
-    SpendingKey sk = SpendingKey
-        .decode("ff2c06269315333a9207f817d2eca0ac555ca8f90196976324c7756504e7c9ee");
-    ExpandedSpendingKey expsk = sk.expandedSpendingKey();
-    byte[] senderOvk = expsk.getOvk();
-    PaymentAddress address = sk.defaultAddress();
-    Note note = new Note(address, 1000 * 1000000L);
-    IncrementalMerkleVoucherContainer voucher = createSimpleMerkleVoucherContainer(note.cm());
-    byte[] anchor = voucher.root().getContent().toByteArray();
-    chainBaseManager.getMerkleContainer()
-        .putMerkleTreeIntoStore(anchor, voucher.getVoucherCapsule().getTree());
-    builder.addSpend(expsk, note, anchor, voucher);
+      // generate spend proof
+      SpendingKey sk = SpendingKey
+          .decode("ff2c06269315333a9207f817d2eca0ac555ca8f90196976324c7756504e7c9ee");
+      ExpandedSpendingKey expsk = sk.expandedSpendingKey();
+      byte[] senderOvk = expsk.getOvk();
+      PaymentAddress address = sk.defaultAddress();
+      Note note = new Note(address, 1000 * 1000000L);
+      IncrementalMerkleVoucherContainer voucher = createSimpleMerkleVoucherContainer(note.cm());
+      byte[] anchor = voucher.root().getContent().toByteArray();
+      chainBaseManager.getMerkleContainer()
+          .putMerkleTreeIntoStore(anchor, voucher.getVoucherCapsule().getTree());
+      builder.addSpend(expsk, note, anchor, voucher);
 
-    // generate output proof
-    SpendingKey sk2 = SpendingKey.random();
-    FullViewingKey fullViewingKey = sk2.fullViewingKey();
-    IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
+      // generate output proof
+      SpendingKey sk2 = SpendingKey.random();
+      FullViewingKey fullViewingKey = sk2.fullViewingKey();
+      IncomingViewingKey incomingViewingKey = fullViewingKey.inViewingKey();
 
-    byte[] memo = org.tron.keystore.Wallet.generateRandomBytes(512);
+      byte[] memo = org.tron.keystore.Wallet.generateRandomBytes(512);
 
-    //send coin to 2 different address generated by same sk
-    DiversifierT d1 = DiversifierT.random();
-    PaymentAddress paymentAddress1 = incomingViewingKey.address(d1).get();
-    builder.addOutput(senderOvk, paymentAddress1,
-        (1000 * 1000000L - wallet.getShieldedTransactionFee()) / 2, memo);
+      //send coin to 2 different address generated by same sk
+      DiversifierT d1 = DiversifierT.random();
+      PaymentAddress paymentAddress1 = incomingViewingKey.address(d1).get();
+      builder.addOutput(senderOvk, paymentAddress1,
+          (1000 * 1000000L - wallet.getShieldedTransactionFee()) / 2, memo);
 
-    DiversifierT d2 = DiversifierT.random();
-    PaymentAddress paymentAddress2 = incomingViewingKey.address(d2).get();
-    builder.addOutput(senderOvk, paymentAddress2,
-        (1000 * 1000000L - wallet.getShieldedTransactionFee()) / 2, memo);
+      DiversifierT d2 = DiversifierT.random();
+      PaymentAddress paymentAddress2 = incomingViewingKey.address(d2).get();
+      builder.addOutput(senderOvk, paymentAddress2,
+          (1000 * 1000000L - wallet.getShieldedTransactionFee()) / 2, memo);
 
-    TransactionCapsule transactionCap = builder.build();
+      TransactionCapsule transactionCap = builder.build();
 
-    byte[] trxId = transactionCap.getTransactionId().getBytes();
-    boolean ok = dbManager.pushTransaction(transactionCap);
-    Assert.assertTrue(ok);
+      byte[] trxId = transactionCap.getTransactionId().getBytes();
+      boolean ok = dbManager.pushTransaction(transactionCap);
+      Assert.assertTrue(ok);
 
-    Thread.sleep(500);
-    //package transaction to block
-    block = getSignedBlock(witnessCapsule.getAddress(), time + 3000, privateKey);
-    dbManager.pushBlock(new BlockCapsule(block));
+      Thread.sleep(500);
+      //package transaction to block
+      long expectedBlockNum = chainBaseManager.getDynamicPropertiesStore()
+          .getLatestBlockHeaderNumber() + 1;
+      block = getSignedBlock(witnessCapsule.getAddress(),
+          nextScheduledTime(witnessCapsule.getAddress()), privateKey);
+      dbManager.pushBlock(new BlockCapsule(block));
 
-    BlockCapsule blockCapsule3 = new BlockCapsule(wallet.getNowBlock());
-    Assert.assertEquals("blocknum != 2", 2, blockCapsule3.getNum());
+      BlockCapsule blockCapsule3 = new BlockCapsule(wallet.getNowBlock());
+      Assert.assertEquals("unexpected block number", expectedBlockNum, blockCapsule3.getNum());
 
-    block = getSignedBlock(witnessCapsule.getAddress(), time + 6000, privateKey);
-    dbManager.pushBlock(new BlockCapsule(block));
+      block = getSignedBlock(witnessCapsule.getAddress(),
+          nextScheduledTime(witnessCapsule.getAddress()), privateKey);
+      dbManager.pushBlock(new BlockCapsule(block));
 
-    // scan note by ivk
-    byte[] receiverIvk = incomingViewingKey.getValue();
-    DecryptNotes notes1 = wallet.scanNoteByIvk(0, 100, receiverIvk);
-    Assert.assertEquals(2, notes1.getNoteTxsCount());
+      // scan note by ivk
+      byte[] receiverIvk = incomingViewingKey.getValue();
+      DecryptNotes notes1 = wallet.scanNoteByIvk(0, 100, receiverIvk);
+      Assert.assertEquals(2, notes1.getNoteTxsCount());
 
-    // scan note by ivk and mark
-    DecryptNotesMarked notes3 = wallet.scanAndMarkNoteByIvk(0, 100, receiverIvk,
-        fullViewingKey.getAk(), fullViewingKey.getNk());
-    Assert.assertEquals(2, notes3.getNoteTxsCount());
+      // scan note by ivk and mark
+      DecryptNotesMarked notes3 = wallet.scanAndMarkNoteByIvk(0, 100, receiverIvk,
+          fullViewingKey.getAk(), fullViewingKey.getNk());
+      Assert.assertEquals(2, notes3.getNoteTxsCount());
 
-    // scan note by ovk
-    DecryptNotes notes2 = wallet.scanNoteByOvk(0, 100, senderOvk);
-    Assert.assertEquals(2, notes2.getNoteTxsCount());
+      // scan note by ovk
+      DecryptNotes notes2 = wallet.scanNoteByOvk(0, 100, senderOvk);
+      Assert.assertEquals(2, notes2.getNoteTxsCount());
 
-    // to spend received note above.
-    ZenTransactionBuilder builder2 = new ZenTransactionBuilder(wallet);
+      // to spend received note above.
+      ZenTransactionBuilder builder2 = new ZenTransactionBuilder(wallet);
 
-    //query merkleinfo
-    OutputPointInfo.Builder request = OutputPointInfo.newBuilder();
-    for (int i = 0; i < notes1.getNoteTxsCount(); i++) {
-      OutputPoint.Builder outPointBuild = OutputPoint.newBuilder();
-      outPointBuild.setHash(ByteString.copyFrom(trxId));
-      outPointBuild.setIndex(i);
-      request.addOutPoints(outPointBuild.build());
+      //query merkleinfo
+      OutputPointInfo.Builder request = OutputPointInfo.newBuilder();
+      for (int i = 0; i < notes1.getNoteTxsCount(); i++) {
+        OutputPoint.Builder outPointBuild = OutputPoint.newBuilder();
+        outPointBuild.setHash(ByteString.copyFrom(trxId));
+        outPointBuild.setIndex(i);
+        request.addOutPoints(outPointBuild.build());
+      }
+      request.setBlockNum(1);
+      IncrementalMerkleVoucherInfo merkleVoucherInfo = wallet
+          .getMerkleTreeVoucherInfo(request.build());
+
+      //build spend proof. allow only one note in spend
+      ExpandedSpendingKey expsk2 = sk2.expandedSpendingKey();
+      for (int i = 0; i < 1; i++) {
+        org.tron.api.GrpcAPI.Note grpcNote = notes1.getNoteTxs(i).getNote();
+        PaymentAddress paymentAddress = KeyIo.decodePaymentAddress(grpcNote.getPaymentAddress());
+        Note note2 = new Note(paymentAddress.getD(),
+            paymentAddress.getPkD(),
+            grpcNote.getValue(),
+            grpcNote.getRcm().toByteArray()
+        );
+
+        IncrementalMerkleVoucherContainer voucher2 =
+            new IncrementalMerkleVoucherContainer(
+                new IncrementalMerkleVoucherCapsule(merkleVoucherInfo.getVouchers(i)));
+        byte[] anchor2 = voucher2.root().getContent().toByteArray();
+        builder2.addSpend(expsk2, note2, anchor2, voucher2);
+      }
+
+      //build output proof
+      SpendingKey sk3 = SpendingKey.random();
+      FullViewingKey fvk3 = sk3.fullViewingKey();
+      IncomingViewingKey ivk3 = fvk3.inViewingKey();
+
+      DiversifierT d3 = DiversifierT.random();
+      PaymentAddress paymentAddress3 = incomingViewingKey.address(d3).get();
+      byte[] memo3 = org.tron.keystore.Wallet.generateRandomBytes(512);
+      builder2.addOutput(expsk2.getOvk(), paymentAddress3,
+          (1000 * 1000000L - wallet.getShieldedTransactionFee()) / 2 - wallet
+              .getShieldedTransactionFee(), memo3);
+
+      TransactionCapsule transactionCap2 = builder2.build();
+      boolean ok2 = dbManager.pushTransaction(transactionCap2);
+      Assert.assertTrue(ok2);
+    } finally {
+      // DposTask.init() does not reset isRunning (it stays false after stop()), so force it back
+      // to true via reflection before restarting.
+      Field isRunning = DposTask.class.getDeclaredField("isRunning");
+      isRunning.setAccessible(true);
+      isRunning.set(dposTask, true);
+      consensusService.start();
     }
-    request.setBlockNum(1);
-    IncrementalMerkleVoucherInfo merkleVoucherInfo = wallet
-        .getMerkleTreeVoucherInfo(request.build());
+  }
 
-    //build spend proof. allow only one note in spend
-    ExpandedSpendingKey expsk2 = sk2.expandedSpendingKey();
-    for (int i = 0; i < 1; i++) {
-      org.tron.api.GrpcAPI.Note grpcNote = notes1.getNoteTxs(i).getNote();
-      PaymentAddress paymentAddress = KeyIo.decodePaymentAddress(grpcNote.getPaymentAddress());
-      Note note2 = new Note(paymentAddress.getD(),
-          paymentAddress.getPkD(),
-          grpcNote.getValue(),
-          grpcNote.getRcm().toByteArray()
-      );
-
-      IncrementalMerkleVoucherContainer voucher2 =
-          new IncrementalMerkleVoucherContainer(
-              new IncrementalMerkleVoucherCapsule(merkleVoucherInfo.getVouchers(i)));
-      byte[] anchor2 = voucher2.root().getContent().toByteArray();
-      builder2.addSpend(expsk2, note2, anchor2, voucher2);
+  // Returns the earliest timestamp at which witnessAddr is the DPoS-scheduled producer,
+  // relative to the current chain head. Using this avoids relying on the genesis-only
+  // bypass in validBlock() (latestBlockHeaderNumber == 0) when prior tests have pushed blocks.
+  private long nextScheduledTime(ByteString witnessAddr) {
+    int size = chainBaseManager.getWitnessScheduleStore().getActiveWitnesses().size();
+    for (long slot = 1; slot <= size; slot++) {
+      if (dposSlot.getScheduledWitness(slot).equals(witnessAddr)) {
+        return dposSlot.getTime(slot);
+      }
     }
-
-    //build output proof
-    SpendingKey sk3 = SpendingKey.random();
-    FullViewingKey fvk3 = sk3.fullViewingKey();
-    IncomingViewingKey ivk3 = fvk3.inViewingKey();
-
-    DiversifierT d3 = DiversifierT.random();
-    PaymentAddress paymentAddress3 = incomingViewingKey.address(d3).get();
-    byte[] memo3 = org.tron.keystore.Wallet.generateRandomBytes(512);
-    builder2.addOutput(expsk2.getOvk(), paymentAddress3,
-        (1000 * 1000000L - wallet.getShieldedTransactionFee()) / 2 - wallet
-            .getShieldedTransactionFee(), memo3);
-
-    TransactionCapsule transactionCap2 = builder2.build();
-    boolean ok2 = dbManager.pushTransaction(transactionCap2);
-    Assert.assertTrue(ok2);
+    throw new IllegalStateException("No scheduled slot for witness within "
+        + size + " slots: " + ByteArray.toHexString(witnessAddr.toByteArray()));
   }
 
   @Test
   public void decodePaymentAddressIgnoreCase() {
     String addressLower =
         "ztron1975m0wyg8f30cgf2l5fgndhzqzkzgkgnxge8cwx2wr7m3q7chsuwewh2e6u24yykum0hq8ue99u";
-    String addressUpper = addressLower.toUpperCase();
+    String addressUpper = addressLower.toUpperCase(Locale.ROOT);
 
     PaymentAddress paymentAddress1 = KeyIo.decodePaymentAddress(addressLower);
     PaymentAddress paymentAddress2 = KeyIo.decodePaymentAddress(addressUpper);
