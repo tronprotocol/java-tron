@@ -9,7 +9,7 @@ Guidance for AI coding assistants and new contributors working on java-tron: how
 
 ## Build & Test
 
-Supported platforms: **Linux** and **macOS** only. JDK requirement: **JDK 8** on x86_64, **JDK 17** on ARM64/aarch64 (e.g. Apple Silicon Macs, or Linux aarch64 servers such as AWS Graviton).
+Supported platforms: **Linux** and **macOS** only. JDK requirement is by CPU architecture: **JDK 8** on x86_64, **JDK 17** on ARM64/aarch64 (e.g. Apple Silicon Macs, or Linux aarch64 servers such as AWS Graviton). The build fails fast if the JDK major version does not match the architecture.
 
 ```bash
 ./gradlew clean build -x test                # build without tests
@@ -19,7 +19,7 @@ Supported platforms: **Linux** and **macOS** only. JDK requirement: **JDK 8** on
 ./gradlew test --tests "org.tron.core.db.TronDatabaseTest"           # one class
 ./gradlew test --tests "org.tron.core.db.TronDatabaseTest.testX"     # one method
 ./gradlew :framework:testWithRocksDb         # RocksDB tests (x86 only)
-./gradlew lint                               # Checkstyle (main)
+./gradlew lint                               # Checkstyle (framework main only)
 ./gradlew checkstyleMain checkstyleTest      # Checkstyle main + test (as CI runs)
 ./gradlew jacocoTestReport                   # coverage report
 ```
@@ -27,7 +27,7 @@ Supported platforms: **Linux** and **macOS** only. JDK requirement: **JDK 8** on
 - Main entry point: `org.tron.program.FullNode`.
 - Tests run in parallel locally, serially in CI (detected via the `CI` env var); the test-retry plugin retries up to 5 times.
 - On ARM64/aarch64, only the RocksDB storage engine is supported; the build forces RocksDB and skips the LevelDB tests.
-- Protobuf / gRPC Java stubs are generated at build time from `protocol/src/main/protos/*.proto` (via the `com.google.protobuf` Gradle plugin) and are git-ignored — rebuild after changing a `.proto`; never hand-edit or commit generated sources.
+- Protobuf / gRPC Java stubs are generated at build time from the `.proto` files under `protocol/src/main/protos/` (subdirectories `core/`, `api/`; via the `com.google.protobuf` Gradle plugin) and are git-ignored — rebuild after changing a `.proto`; never hand-edit or commit generated sources.
 
 **Before pushing:**
 - `./gradlew checkstyleMain checkstyleTest` and `./gradlew test` must pass.
@@ -44,7 +44,8 @@ Supported platforms: **Linux** and **macOS** only. JDK requirement: **JDK 8** on
 | `actuator` | Transaction execution; one Actuator class per transaction type |
 | `crypto` | Cryptographic primitives (depends only on `common`) |
 | `common` | Shared utilities |
-| `plugins` | Standalone tools (e.g. `Toolkit.jar`) |
+| `platform` | Architecture-specific implementations selected at build time (separate `x86` / `arm` / `common` source sets): math wrappers, LevelDB/RocksDB order-price comparators — relevant to cross-JVM determinism |
+| `plugins` | Standalone tools (`Toolkit.jar`, `ArchiveManifest.jar`) |
 
 **Module dependency direction is one-way — do not introduce reverse dependencies:**
 
@@ -54,6 +55,8 @@ actuator  → chainbase
 consensus → chainbase / common   (only via ConsensusDelegate; never call Manager directly)
 crypto    → common
 ```
+
+`platform` is a leaf module (no project dependencies of its own) that `common`, `framework`, and `plugins` depend on for architecture-specific code.
 
 ## Hard Constraints
 
