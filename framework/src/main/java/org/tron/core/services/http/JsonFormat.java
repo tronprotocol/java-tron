@@ -43,8 +43,6 @@ import com.google.protobuf.UnknownFieldSet;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.CharBuffer;
-import java.text.CharacterIterator;
-import java.text.StringCharacterIterator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
@@ -58,7 +56,6 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.Constant;
-import org.tron.json.JSON;
 import org.tron.protos.contract.BalanceContract;
 
 /**
@@ -82,6 +79,12 @@ public class JsonFormat {
       = "Writing to a StringBuilder threw an IOException (should never happen).";
   private static final String EXPECTED_STRING = "Expected string.";
   private static final String MISSING_END_QUOTE = "String missing ending quote.";
+  /**
+   * What an unpaired surrogate is rendered as. Matches the substitution Java and protobuf apply
+   * when encoding such a string to UTF-8, so JSON output is the same whether or not the message
+   * has already been through a protobuf round trip.
+   */
+  private static final char UNPAIRED_SURROGATE_REPLACEMENT = '?';
 
   public static final boolean ALWAYS_OUTPUT_DEFAULT_VALUE_FIELDS = true;
   public static final Set<Class<? extends Message>> MESSAGES = ImmutableSet.of(
@@ -866,14 +869,16 @@ public class JsonFormat {
     }
     //Normal String
     if (HttpSelfFormatFieldName.isNameStringFormat(fliedName)) {
-      String result = new String(input.toByteArray());
-      result = result.replaceAll("\"", "\\\\\"");
-      try {
-        JSON.parseObject("{\"key\":\"" + result + "\"}");
-        return result;
-      } catch (Exception e) {
+      // Bytes that are not valid UTF-8 fall back to hex. This keeps the hex representation
+      // faithful (instead of lossy U+FFFD mojibake produced by a default-charset decode) and
+      // guarantees escapeText() never sees an unpaired surrogate. Note that hex is not byte
+      // round-trippable through the inbound unescapeBytesSelfType(copyFromUtf8) path.
+      if (!input.isValidUtf8()) {
         return ByteArray.toHexString(input.toByteArray());
       }
+      // Delegate to the same JSON string escaping used for proto string fields, so backslash,
+      // double quote and every control char 0x00-0x1F are escaped properly.
+      return escapeText(input.toStringUtf8());
     }
     //HEX
     return ByteArray.toHexString(input.toByteArray());
@@ -905,7 +910,8 @@ public class JsonFormat {
   // them.
 
   /**
-   * Implements JSON string escaping as specified <a href="http://www.ietf.org/rfc/rfc4627.txt">here</a>.
+   * Implements JSON string escaping as specified in
+   * <a href="https://www.rfc-editor.org/rfc/rfc8259">RFC 8259</a> (which obsoletes RFC 4627).
    * <ul> <li>The following characters are escaped by prefixing them with a '\' :
    * \b,\f,\n,\r,\t,\,"</li> <li>Other control characters in the range 0x0000-0x001F are escaped
    * using the \\uXXXX notation</li> <li>UTF-16 surrogate pairs are encoded using the \\uXXXX\\uXXXX
@@ -913,8 +919,10 @@ public class JsonFormat {
    */
   static String escapeText(String input) {
     StringBuilder builder = new StringBuilder(input.length());
-    CharacterIterator iter = new StringCharacterIterator(input);
-    for (char c = iter.first(); c != CharacterIterator.DONE; c = iter.next()) {
+    // Index based on purpose: CharacterIterator.DONE is the real code point U+FFFF, so driving
+    // this loop with an iterator silently truncated any value containing U+FFFF.
+    for (int i = 0; i < input.length(); i++) {
+      char c = input.charAt(i);
       switch (c) {
         case '\b':
           builder.append("\\b");
@@ -942,15 +950,22 @@ public class JsonFormat {
           if (c >= 0x0000 && c <= 0x001F) {
             appendEscapedUnicode(builder, c);
           } else if (Character.isHighSurrogate(c)) {
-            // Encode the surrogate pair using 2 six-character sequence (\\uXXXX\\uXXXX)
-            appendEscapedUnicode(builder, c);
-            c = iter.next();
-            if (c == CharacterIterator.DONE) {
-              throw new IllegalArgumentException(
-                  "invalid unicode string: unexpected high surrogate pair value "
-                      + "without corresponding low value.");
+            if (i + 1 < input.length() && Character.isLowSurrogate(input.charAt(i + 1))) {
+              // Encode the surrogate pair using 2 six-character sequence (\\uXXXX\\uXXXX)
+              appendEscapedUnicode(builder, c);
+              ++i;
+              appendEscapedUnicode(builder, input.charAt(i));
+            } else {
+              // Unpaired high surrogate: it has no UTF-8 encoding, and emitting a lone \\uXXXX
+              // escape would produce a string no correct consumer can decode. Substitute the
+              // same replacement Java and protobuf use when encoding such a string to UTF-8,
+              // so this output matches what the value becomes once it is persisted. Throwing
+              // here instead would let an IllegalArgumentException escape the serializer.
+              builder.append(UNPAIRED_SURROGATE_REPLACEMENT);
             }
-            appendEscapedUnicode(builder, c);
+          } else if (Character.isLowSurrogate(c)) {
+            // Low surrogate with no preceding high surrogate: unpaired for the same reason.
+            builder.append(UNPAIRED_SURROGATE_REPLACEMENT);
           } else {
             // Anything else can be printed as-is
             builder.append(c);
@@ -1010,10 +1025,27 @@ public class JsonFormat {
             case '\'':
               builder.append('\'');
               break;
+            case '/':
+              // RFC 8259 allows an escaped solidus. It is never emitted by escapeText(), but
+              // several JSON encoders produce it (for example PHP json_encode without
+              // JSON_UNESCAPED_SLASHES), so it must be accepted on the way in.
+              builder.append('/');
+              break;
             case 'u':
               // read the next 4 chars
               if (i + 4 < array.length) {
                 ++i;
+                // Validate each digit first. Integer.parseInt accepts a leading sign, so an
+                // escape written with '+' would be accepted, and one written with '-' would
+                // even yield a negative value that wraps into an unrelated char. RFC 8259
+                // allows exactly four hex digits here.
+                for (int j = i; j < i + 4; j++) {
+                  if (!isHex(array[j])) {
+                    throw new InvalidEscapeSequence(
+                        "Invalid escape sequence: '\\u" + new String(array, i, 4) + "'");
+                  }
+                }
+                // Safe now: four validated hex digits cannot overflow or be negative.
                 int code = Integer.parseInt(new String(array, i, 4), 16);
                 // this cast is safe because we know how many chars we read
                 builder.append((char) code);
@@ -1231,16 +1263,22 @@ public class JsonFormat {
 
       for (int i = 0; i < size; i++) {
         if (text.charAt(i) == '\n') {
-          write(text.subSequence(pos, size), i - pos + 1);
+          // Emit only up to and including this newline. Passing (pos, size) here wrote the
+          // whole remainder on every newline, duplicating the tail once per line break.
+          write(text.subSequence(pos, i + 1));
           pos = i + 1;
           atStartOfLine = true;
         }
       }
-      write(text.subSequence(pos, size), size - pos);
+      write(text.subSequence(pos, size));
     }
 
-    private void write(CharSequence data, int size) throws IOException {
-      if (size == 0) {
+    // Single argument on purpose. The old (data, size) form let the caller pass a length that
+    // did not describe the data actually written, which is exactly how the tail-duplication bug
+    // above went unnoticed: only the length argument was narrowed, never the subSequence.
+    // Matches protobuf-java-util's own TextGenerator.write(CharSequence).
+    private void write(CharSequence data) throws IOException {
+      if (data.length() == 0) {
         return;
       }
       if (atStartOfLine) {
@@ -1358,7 +1396,12 @@ public class JsonFormat {
 
       //Normal String -> ByteString
       if (HttpSelfFormatFieldName.isNameStringFormat(fliedName)) {
-        return ByteString.copyFromUtf8(input);
+        // The token still carries its JSON escapes, so undo them before taking the bytes.
+        // This mirrors escapeBytesSelfType() on the way out and matches how proto string
+        // fields are already handled. Without it a value containing a backslash or a quote
+        // does not survive a print -> merge round trip, which breaks
+        // create -> sign -> broadcast (the rebuilt raw_data, and therefore the txID, differ).
+        return ByteString.copyFromUtf8(unescapeText(input));
       }
 
       return unescapeBytes(input);
