@@ -1,5 +1,6 @@
 package org.tron.common.backup;
 
+import io.netty.channel.Channel;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.InetAddress;
@@ -11,7 +12,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
+import java.util.function.BooleanSupplier;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -35,6 +38,7 @@ public class BackupManagerTest {
   private BackupManager manager;
   private BackupServer backupServer;
   private BiFunction<String, Boolean, InetAddress> savedLookup;
+  private boolean backupServerClosed;
 
   @Before
   public void setUp() throws Exception {
@@ -47,9 +51,34 @@ public class BackupManagerTest {
   }
 
   @After
-  public void tearDown() {
-    InetUtil.dnsLookup = savedLookup;
-    Args.clearParam();
+  public void tearDown() throws Exception {
+    Throwable failure = null;
+    try {
+      if (!backupServerClosed && backupServer != null) {
+        backupServer.close();
+      }
+    } catch (Throwable t) {
+      failure = t;
+    } finally {
+      try {
+        if (manager != null) {
+          manager.stop();
+        }
+        assertExecutorsTerminated();
+      } catch (Throwable t) {
+        if (failure == null) {
+          failure = t;
+        } else {
+          failure.addSuppressed(t);
+        }
+      } finally {
+        InetUtil.dnsLookup = savedLookup;
+        Args.clearParam();
+      }
+    }
+    if (failure != null) {
+      throw new AssertionError("backup test cleanup failed", failure);
+    }
   }
 
   @Test
@@ -121,7 +150,7 @@ public class BackupManagerTest {
   }
 
   @Test
-  public void testSendKeepAliveMessage() throws Exception {
+  public void testBackupServerLifecycleDuringKeepAliveInterval() throws Exception {
     CommonParameter parameter = CommonParameter.getInstance();
     parameter.setBackupPriority(8);
     List<String> members = new ArrayList<>();
@@ -134,21 +163,21 @@ public class BackupManagerTest {
 
     Assert.assertEquals(manager.getStatus(), BackupManager.BackupStatusEnum.MASTER);
     backupServer.initServer();
+    awaitCondition("backup channel to become active", () -> getChannel(backupServer) != null
+        && getChannel(backupServer).isActive());
+    awaitCondition("backup message handler assignment", () -> getFieldValue(manager,
+        "messageHandler") != null);
     manager.init();
-
-    Thread.sleep(parameter.getKeepAliveInterval() + 1000);//test send KeepAliveMessage
-
-    field = manager.getClass().getDeclaredField("executorService");
-    field.setAccessible(true);
-    ScheduledExecutorService executorService = (ScheduledExecutorService) field.get(manager);
-    executorService.shutdown();
-
-    Field field2 = backupServer.getClass().getDeclaredField("executor");
-    field2.setAccessible(true);
-    ExecutorService executorService2 = (ExecutorService) field2.get(backupServer);
-    executorService2.shutdown();
+    long keepAliveDeadline = System.nanoTime()
+        + TimeUnit.MILLISECONDS.toNanos(parameter.getKeepAliveInterval() + 1000L);
+    awaitCondition("keep-alive interval", () -> System.nanoTime() >= keepAliveDeadline);
 
     Assert.assertEquals(BackupManager.BackupStatusEnum.INIT, manager.getStatus());
+    Channel channel = getChannel(backupServer);
+    backupServer.close();
+    backupServerClosed = true;
+    Assert.assertFalse("backup channel must close", channel.isOpen());
+    assertExecutorsTerminated();
   }
 
   // ===== domain-handling tests for init() =====
@@ -254,4 +283,44 @@ public class BackupManagerTest {
     m.setAccessible(true);
     m.invoke(mgr);
   }
+
+  private Channel getChannel(BackupServer server) {
+    try {
+      return getField(server, "channel");
+    } catch (Exception e) {
+      throw new AssertionError("cannot inspect backup channel", e);
+    }
+  }
+
+  private Object getFieldValue(Object target, String name) {
+    try {
+      return getField(target, name);
+    } catch (Exception e) {
+      throw new AssertionError("cannot inspect " + name, e);
+    }
+  }
+
+  private void assertExecutorsTerminated() throws Exception {
+    if (manager == null || backupServer == null) {
+      return;
+    }
+    ScheduledExecutorService managerExecutor = getField(manager, "executorService");
+    Assert.assertTrue("backup manager executor must terminate", managerExecutor.isTerminated());
+    ExecutorService serverExecutor = getField(backupServer, "executor");
+    if (serverExecutor != null) {
+      Assert.assertTrue("backup server executor must terminate", serverExecutor.isTerminated());
+    }
+  }
+
+  private void awaitCondition(String description, BooleanSupplier condition) throws Exception {
+    long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(10);
+    while (System.nanoTime() < deadline) {
+      if (condition.getAsBoolean()) {
+        return;
+      }
+      Thread.sleep(20);
+    }
+    Assert.fail("timed out waiting for " + description);
+  }
+
 }
