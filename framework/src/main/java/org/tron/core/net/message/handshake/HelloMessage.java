@@ -1,6 +1,7 @@
 package org.tron.core.net.message.handshake;
 
 import com.google.protobuf.ByteString;
+import com.google.protobuf.DiscardUnknownFieldsParser;
 import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
 import org.tron.common.utils.ByteArray;
@@ -24,12 +25,14 @@ public class HelloMessage extends TronMessage {
 
   public HelloMessage(byte type, byte[] rawData) throws Exception {
     super(type, rawData);
-    this.helloMessage = Protocol.HelloMessage.parseFrom(rawData);
+    this.helloMessage = DiscardUnknownFieldsParser.wrap(Protocol.HelloMessage.parser())
+        .parseFrom(rawData);
   }
 
   public HelloMessage(byte[] data) throws Exception {
     super(MessageTypes.P2P_HELLO.asByte(), data);
-    this.helloMessage = Protocol.HelloMessage.parseFrom(data);
+    this.helloMessage = DiscardUnknownFieldsParser.wrap(Protocol.HelloMessage.parser())
+        .parseFrom(data);
   }
 
   public HelloMessage(Node from, long timestamp, ChainBaseManager chainBaseManager) {

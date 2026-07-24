@@ -2,12 +2,36 @@ package org.tron.common.backup;
 
 import static org.tron.common.backup.message.UdpMessageTypeEnum.BACKUP_KEEP_ALIVE;
 
+import com.google.protobuf.ByteString;
+import com.google.protobuf.UnknownFieldSet;
 import org.junit.Assert;
 import org.junit.Test;
 import org.tron.common.backup.message.KeepAliveMessage;
 import org.tron.protos.Discover;
 
 public class KeepAliveMessageTest {
+
+  // A field number not used by BackupMessage, so it always parses as an unknown field.
+  private static final int UNKNOWN_FIELD_NUMBER = 1000;
+
+  @Test
+  public void discardsUnknownFields() throws Exception {
+    Discover.BackupMessage backupMessage = Discover.BackupMessage.newBuilder()
+        .setFlag(true).setPriority(10).build();
+    UnknownFieldSet unknown = UnknownFieldSet.newBuilder()
+        .addField(UNKNOWN_FIELD_NUMBER, UnknownFieldSet.Field.newBuilder()
+            .addLengthDelimited(ByteString.copyFrom(new byte[8192]))
+            .build())
+        .build();
+    byte[] padded = backupMessage.toBuilder().setUnknownFields(unknown).build().toByteArray();
+    Assert.assertTrue(padded.length > backupMessage.toByteArray().length + 8000);
+
+    // Parsing uses DiscardUnknownFieldsParser, so the padded message still parses and its known
+    // fields are intact while the unknown padding is discarded from the parsed proto.
+    KeepAliveMessage m = new KeepAliveMessage(padded);
+    Assert.assertTrue(m.getFlag());
+    Assert.assertEquals(10, m.getPriority());
+  }
 
   @Test
   public void test() throws Exception {

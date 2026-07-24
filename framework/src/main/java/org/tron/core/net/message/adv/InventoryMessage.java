@@ -1,5 +1,6 @@
 package org.tron.core.net.message.adv;
 
+import com.google.protobuf.DiscardUnknownFieldsParser;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
@@ -19,7 +20,7 @@ public class InventoryMessage extends TronMessage {
   public InventoryMessage(byte[] data) throws Exception {
     super(data);
     this.type = MessageTypes.INVENTORY.asByte();
-    this.inv = Protocol.Inventory.parseFrom(data);
+    this.inv = DiscardUnknownFieldsParser.wrap(Protocol.Inventory.parser()).parseFrom(data);
   }
 
   public InventoryMessage(Inventory inv) {

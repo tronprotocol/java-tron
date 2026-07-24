@@ -1,5 +1,6 @@
 package org.tron.core.net.message.sync;
 
+import com.google.protobuf.DiscardUnknownFieldsParser;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.LinkedList;
@@ -18,7 +19,8 @@ public class ChainInventoryMessage extends TronMessage {
   public ChainInventoryMessage(byte[] data) throws Exception {
     super(data);
     this.type = MessageTypes.BLOCK_CHAIN_INVENTORY.asByte();
-    chainInventory = Protocol.ChainInventory.parseFrom(data);
+    chainInventory = DiscardUnknownFieldsParser.wrap(Protocol.ChainInventory.parser())
+        .parseFrom(data);
   }
 
   public ChainInventoryMessage(List<BlockId> blockIds, Long remainNum) {

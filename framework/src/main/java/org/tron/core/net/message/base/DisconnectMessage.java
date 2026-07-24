@@ -1,5 +1,6 @@
 package org.tron.core.net.message.base;
 
+import com.google.protobuf.DiscardUnknownFieldsParser;
 import org.tron.core.net.message.MessageTypes;
 import org.tron.core.net.message.TronMessage;
 import org.tron.protos.Protocol;
@@ -11,12 +12,14 @@ public class DisconnectMessage extends TronMessage {
 
   public DisconnectMessage(byte type, byte[] rawData) throws Exception {
     super(type, rawData);
-    this.disconnectMessage = Protocol.DisconnectMessage.parseFrom(this.data);
+    this.disconnectMessage = DiscardUnknownFieldsParser.wrap(Protocol.DisconnectMessage.parser())
+        .parseFrom(this.data);
   }
 
   public DisconnectMessage(byte[] data) throws Exception {
     super(MessageTypes.P2P_DISCONNECT.asByte(), data);
-    this.disconnectMessage = Protocol.DisconnectMessage.parseFrom(data);
+    this.disconnectMessage = DiscardUnknownFieldsParser.wrap(Protocol.DisconnectMessage.parser())
+        .parseFrom(data);
   }
 
   public DisconnectMessage(ReasonCode reasonCode) {
