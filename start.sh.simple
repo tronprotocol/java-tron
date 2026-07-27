@@ -137,6 +137,7 @@ startService() {
     -XX:MetaspaceSize=256m \
     -XX:MaxMetaspaceSize=512m \
     -XX:MaxDirectMemorySize=1g \
+    -Dio.netty.allocator.type=pooled \
     -XX:+HeapDumpOnOutOfMemoryError \
     -jar "$FULL_NODE_JAR" "${FULL_START_OPT[@]}" \
     >> start.log 2>&1 &
