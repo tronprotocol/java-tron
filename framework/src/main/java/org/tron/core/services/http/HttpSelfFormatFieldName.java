@@ -246,7 +246,7 @@ public class HttpSelfFormatFieldName {
     //authority
     NameFieldNameMap.put("protocol.authority.permission_name", 1);
     //Transaction
-    // NameFieldNameMap.put("protocol.Transaction.Contract.ContractName", 1);
+    NameFieldNameMap.put("protocol.Transaction.Contract.ContractName", 1);
     //TransactionInfo
     NameFieldNameMap.put("protocol.TransactionInfo.resMessage", 1);
 
