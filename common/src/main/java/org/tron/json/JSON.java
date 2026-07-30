@@ -50,6 +50,8 @@ public final class JSON {
       .configure(DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS, true)
       // Fastjson Feature.IgnoreNotMatch (default ON) — unknown fields silently ignored
       .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+      // Fastjson 1.x rejects non-comment tokens after the root value
+      .configure(DeserializationFeature.FAIL_ON_TRAILING_TOKENS, true)
       // Fastjson serializes empty beans as "{}" without error
       .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false)
       // Fastjson omits null-valued fields by default (WriteMapNullValue is OFF by default)
