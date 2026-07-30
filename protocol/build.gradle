@@ -2,8 +2,6 @@ apply plugin: 'com.google.protobuf'
 apply from: 'protoLint.gradle'
 
 def protobufVersion = '3.25.8'
-// keep same version as protoc-gen-grpc-java for arm64 or macOS, see rootProject.archInfo.requires.ProtocGenVersion
-def grpcVersion = '1.81.0'
 
 dependencies {
     api group: 'com.google.protobuf', name: 'protobuf-java', version: protobufVersion
@@ -12,11 +10,11 @@ dependencies {
 
 //    checkstyleConfig "com.puppycrawl.tools:checkstyle:${versions.checkstyle}"
     // google grpc
-    api group: 'io.grpc', name: 'grpc-netty', version: grpcVersion
-    api group: 'io.grpc', name: 'grpc-protobuf', version: grpcVersion
-    api group: 'io.grpc', name: 'grpc-stub', version: grpcVersion
-    api group: 'io.grpc', name: 'grpc-core', version: grpcVersion
-    api group: 'io.grpc', name: 'grpc-services', version: grpcVersion
+    api group: 'io.grpc', name: 'grpc-netty', version: rootProject.grpcVersion
+    api group: 'io.grpc', name: 'grpc-protobuf', version: rootProject.grpcVersion
+    api group: 'io.grpc', name: 'grpc-stub', version: rootProject.grpcVersion
+    api group: 'io.grpc', name: 'grpc-core', version: rootProject.grpcVersion
+    api group: 'io.grpc', name: 'grpc-services', version: rootProject.grpcVersion
 
     // end google grpc
 

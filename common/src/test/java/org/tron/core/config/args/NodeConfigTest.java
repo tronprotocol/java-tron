@@ -2,11 +2,13 @@ package org.tron.core.config.args;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.junit.Test;
+import org.tron.core.exception.TronError;
 
 public class NodeConfigTest {
 
@@ -102,7 +104,8 @@ public class NodeConfigTest {
     NodeConfig.RpcConfig rpc = nc.getRpc();
 
     // reference.conf provides actual final defaults, no sentinel conversion needed
-    assertEquals(2147483647, rpc.getMaxConcurrentCallsPerConnection());
+    assertEquals(NodeConfig.RpcConfig.DEFAULT_MAX_CONCURRENT_CALLS_PER_CONNECTION,
+        rpc.getMaxConcurrentCallsPerConnection());
     assertEquals(1048576, rpc.getFlowControlWindow());
     assertEquals(9223372036854775807L, rpc.getMaxConnectionIdleInMillis());
     assertEquals(9223372036854775807L, rpc.getMaxConnectionAgeInMillis());
@@ -120,6 +123,27 @@ public class NodeConfigTest {
         "node { rpc { minEffectiveConnection = 0 } }");
     NodeConfig nc = NodeConfig.fromConfig(config);
     assertEquals(0, nc.getRpc().getMinEffectiveConnection());
+  }
+
+  @Test
+  public void testRpcZeroConcurrentCallsUsesSecureDefault() {
+    Config config = withRef(
+        "node { rpc { maxConcurrentCallsPerConnection = 0 } }");
+    NodeConfig nc = NodeConfig.fromConfig(config);
+    assertEquals(NodeConfig.RpcConfig.DEFAULT_MAX_CONCURRENT_CALLS_PER_CONNECTION,
+        nc.getRpc().getMaxConcurrentCallsPerConnection());
+  }
+
+  @Test
+  public void testRpcNegativeConcurrentCallsRejected() {
+    Config config = withRef(
+        "node { rpc { maxConcurrentCallsPerConnection = -1 } }");
+
+    TronError exception = assertThrows(TronError.class,
+        () -> NodeConfig.fromConfig(config));
+
+    assertTrue(exception.getMessage().contains(
+        "node.rpc.maxConcurrentCallsPerConnection must be non-negative, got: -1"));
   }
 
   @Test

@@ -6,3 +6,4 @@
 -XX:MaxMetaspaceSize=512m
 -XX:MaxDirectMemorySize=1g
 -XX:+HeapDumpOnOutOfMemoryError
+-Dio.netty.allocator.type=pooled

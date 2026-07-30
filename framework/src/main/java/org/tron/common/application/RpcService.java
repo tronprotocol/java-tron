@@ -100,8 +100,9 @@ public abstract class RpcService extends AbstractService {
       serverBuilder = serverBuilder.executor(this.executorService);
     }
     // Set configs from config.conf or default value
+    serverBuilder = GrpcNettyMaxConcurrentStreamsLimiter.configurePlaintext(
+        serverBuilder, parameter.getMaxConcurrentCallsPerConnection());
     serverBuilder
-        .maxConcurrentCallsPerConnection(parameter.getMaxConcurrentCallsPerConnection())
         .flowControlWindow(parameter.getFlowControlWindow())
         .maxConnectionIdle(parameter.getMaxConnectionIdleInMillis(), TimeUnit.MILLISECONDS)
         .maxConnectionAge(parameter.getMaxConnectionAgeInMillis(), TimeUnit.MILLISECONDS)

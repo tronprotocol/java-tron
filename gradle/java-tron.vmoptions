@@ -5,3 +5,4 @@
 -XX:+CMSParallelRemarkEnabled
 -XX:ReservedCodeCacheSize=256m
 -XX:+CMSScavengeBeforeRemark
+-Dio.netty.allocator.type=pooled
