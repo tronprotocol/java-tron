@@ -104,8 +104,8 @@ node {
     port = 50051
     solidityEnable = true
     solidityPort = 50061
-    # Maximum concurrent calls per connection. 0 = no limit.
-    maxConcurrentCallsPerConnection = 0
+    # Maximum concurrent calls per connection. 0 uses the secure default of 100.
+    maxConcurrentCallsPerConnection = 100
     # Idle connection timeout (ms). 0 = no limit.
     maxConnectionIdleInMillis = 0
     # Minimum active connections required before broadcasting transactions.
@@ -113,6 +113,10 @@ node {
   }
 }
 ```
+
+> **Upgrade note:** `node.rpc.maxConcurrentCallsPerConnection = 0` previously meant no limit.
+> It now selects the secure default of 100. Configure an explicit positive value if a client
+> needs more than 100 concurrent calls on one connection.
 
 To disable an API endpoint that you do not want to expose publicly, set its `Enable` flag to `false` or add endpoints to `node.disabledApi`:
 

@@ -94,6 +94,23 @@ public class JsonTest {
     obj = JSON.parseObject("{/* comment */\"a\":1}");
     assertNotNull(obj);
     assertEquals(1, obj.getIntValue("a"));
+    obj = JSON.parseObject("{\"a\":1} /* trailing comment */");
+    assertNotNull(obj);
+    assertEquals(1, obj.getIntValue("a"));
+  }
+
+  @Test
+  public void testTrailingNonCommentTokensRejected() {
+    assertThrows(JSONException.class,
+        () -> JSON.parseObject("{\"a\":1} {\"b\":2}"));
+    assertThrows(JSONException.class,
+        () -> JSONObject.parseObject("{\"a\":1} [2]"));
+    assertThrows(JSONException.class,
+        () -> JSON.parse("{\"a\":1} garbage"));
+    assertThrows(JSONException.class,
+        () -> JSON.parseArray("[1] [2]"));
+    assertThrows(JSONException.class,
+        () -> JSONArray.parseArray("[1] true"));
   }
 
 

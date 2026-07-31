@@ -54,8 +54,9 @@ node {
     # Number of gRPC thread, default availableProcessors / 2
     # thread = 16
 
-    # The maximum number of concurrent calls permitted for each incoming connection
-    # maxConcurrentCallsPerConnection =
+    # The maximum number of concurrent calls permitted for each incoming connection,
+    # default 100. Setting 0 also uses the secure default.
+    # maxConcurrentCallsPerConnection = 100
 
     # The HTTP/2 flow control window, default 1MB
     # flowControlWindow =
@@ -74,6 +75,10 @@ node {
   }
 }
 ```
+
+> **Upgrade note:** `maxConcurrentCallsPerConnection = 0` previously disabled the limit.
+> It now selects the secure default of 100. Configure an explicit positive value if a node
+> requires more than 100 concurrent calls on one connection.
 
 ## backup
 You can customize backup options in the `node.backup` part of `config.conf`, which looks like:
