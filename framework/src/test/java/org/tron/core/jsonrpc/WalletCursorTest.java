@@ -16,11 +16,15 @@ import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.db2.core.Chainbase.Cursor;
+import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.jsonrpc.JsonRpcExceedLimitException;
+import org.tron.core.exception.jsonrpc.JsonRpcInvalidParamsException;
+import org.tron.core.exception.jsonrpc.JsonRpcMethodNotFoundException;
 import org.tron.core.services.NodeInfoService;
 import org.tron.core.services.jsonrpc.TronJsonRpc.FilterRequest;
 import org.tron.core.services.jsonrpc.TronJsonRpcImpl;
 import org.tron.core.services.jsonrpc.TronJsonRpcImpl.RequestSource;
+import org.tron.core.services.jsonrpc.filters.BlockFilterAndResult;
 import org.tron.core.services.jsonrpc.filters.LogFilterAndResult;
 import org.tron.core.services.jsonrpc.types.BuildArguments;
 import org.tron.protos.Protocol;
@@ -56,6 +60,114 @@ public class WalletCursorTest extends BaseTest {
             10000_000_000L);
     dbManager.getAccountStore().put(accountCapsule.getAddress().toByteArray(), accountCapsule);
     init = true;
+  }
+
+  @Test
+  public void testNullParameterChecksRespectRequestSource() throws Exception {
+    TronJsonRpcImpl tronJsonRpc = new TronJsonRpcImpl(nodeInfoService, wallet);
+    tronJsonRpc.setManager(dbManager);
+
+    try {
+      dbManager.setCursor(Cursor.SOLIDITY);
+      Assert.assertThrows(JsonRpcInvalidParamsException.class,
+          () -> tronJsonRpc.newFilter(null));
+      Assert.assertThrows(JsonRpcInvalidParamsException.class,
+          () -> tronJsonRpc.getLogs(null));
+      Assert.assertFalse(tronJsonRpc.uninstallFilter(null));
+      Assert.assertThrows(ItemNotFoundException.class,
+          () -> tronJsonRpc.getFilterChanges(null));
+      Assert.assertThrows(ItemNotFoundException.class,
+          () -> tronJsonRpc.getFilterLogs(null));
+      Assert.assertThrows(JsonRpcMethodNotFoundException.class,
+          () -> tronJsonRpc.buildTransaction(null));
+
+      dbManager.resetCursor();
+      dbManager.setCursor(Cursor.PBFT);
+      Assert.assertThrows(JsonRpcMethodNotFoundException.class,
+          () -> tronJsonRpc.newFilter(null));
+      Assert.assertThrows(JsonRpcMethodNotFoundException.class,
+          () -> tronJsonRpc.getLogs(null));
+      Assert.assertThrows(JsonRpcMethodNotFoundException.class,
+          () -> tronJsonRpc.uninstallFilter(null));
+      Assert.assertThrows(JsonRpcMethodNotFoundException.class,
+          () -> tronJsonRpc.getFilterChanges(null));
+      Assert.assertThrows(JsonRpcMethodNotFoundException.class,
+          () -> tronJsonRpc.getFilterLogs(null));
+      Assert.assertThrows(JsonRpcMethodNotFoundException.class,
+          () -> tronJsonRpc.buildTransaction(null));
+    } finally {
+      dbManager.resetCursor();
+      tronJsonRpc.close();
+    }
+  }
+
+  @Test
+  public void testUninstallFilterKeepsSourcesIsolated() throws Exception {
+    try (TronJsonRpcImpl tronJsonRpc = new TronJsonRpcImpl(nodeInfoService, wallet)) {
+      for (boolean eventFilter : new boolean[] {true, false}) {
+        if (eventFilter) {
+          tronJsonRpc.getEventFilter2ResultFull()
+              .put("10", new LogFilterAndResult(new FilterRequest(), 0L, wallet));
+          tronJsonRpc.getEventFilter2ResultSolidity()
+              .put("20", new LogFilterAndResult(new FilterRequest(), 0L, wallet));
+        } else {
+          tronJsonRpc.getBlockFilter2ResultFull().put("10", new BlockFilterAndResult());
+          tronJsonRpc.getBlockFilter2ResultSolidity().put("20", new BlockFilterAndResult());
+        }
+        Map<String, ?> fullFilters = eventFilter
+            ? tronJsonRpc.getEventFilter2ResultFull() : tronJsonRpc.getBlockFilter2ResultFull();
+        Map<String, ?> solidityFilters = eventFilter
+            ? tronJsonRpc.getEventFilter2ResultSolidity()
+            : tronJsonRpc.getBlockFilter2ResultSolidity();
+        Object fullFilter = fullFilters.get("10");
+        Object solidityFilter = solidityFilters.get("20");
+
+        dbManager.resetCursor();
+        dbManager.setCursor(Cursor.HEAD);
+        Assert.assertFalse(tronJsonRpc.uninstallFilter("0x20"));
+        Assert.assertSame(solidityFilter, solidityFilters.get("20"));
+
+        dbManager.resetCursor();
+        dbManager.setCursor(Cursor.SOLIDITY);
+        Assert.assertFalse(tronJsonRpc.uninstallFilter("0x10"));
+        Assert.assertSame(fullFilter, fullFilters.get("10"));
+        Assert.assertTrue(tronJsonRpc.uninstallFilter("0x20"));
+        Assert.assertFalse(solidityFilters.containsKey("20"));
+        Assert.assertFalse(tronJsonRpc.uninstallFilter("0x20"));
+
+        dbManager.resetCursor();
+        dbManager.setCursor(Cursor.HEAD);
+        Assert.assertTrue(tronJsonRpc.uninstallFilter("0x10"));
+        Assert.assertFalse(fullFilters.containsKey("10"));
+        Assert.assertFalse(tronJsonRpc.uninstallFilter("0x10"));
+      }
+    } finally {
+      dbManager.resetCursor();
+    }
+  }
+
+  @Test
+  public void testUninstallFilterInPbftRejectsAllIdsBeforeRemoval() throws Exception {
+    try (TronJsonRpcImpl tronJsonRpc = new TronJsonRpcImpl(nodeInfoService, wallet)) {
+      BlockFilterAndResult fullFilter = new BlockFilterAndResult();
+      BlockFilterAndResult solidityFilter = new BlockFilterAndResult();
+      tronJsonRpc.getBlockFilter2ResultFull().put("10", fullFilter);
+      tronJsonRpc.getBlockFilter2ResultSolidity().put("20", solidityFilter);
+      dbManager.setCursor(Cursor.PBFT);
+
+      String[] filterIds = {null, "0x10", "0x20", "0xdeadbeef", "", "not-hex"};
+      for (String filterId : filterIds) {
+        JsonRpcMethodNotFoundException error = Assert.assertThrows(
+            JsonRpcMethodNotFoundException.class, () -> tronJsonRpc.uninstallFilter(filterId));
+        Assert.assertEquals(
+            "the method eth_uninstallFilter does not exist/is not available in PBFT",
+            error.getMessage());
+      }
+      Assert.assertSame(fullFilter, tronJsonRpc.getBlockFilter2ResultFull().get("10"));
+      Assert.assertSame(solidityFilter, tronJsonRpc.getBlockFilter2ResultSolidity().get("20"));
+    } finally {
+      dbManager.resetCursor();
+    }
   }
 
   @Test

@@ -122,6 +122,7 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
   }
 
   private static final String FILTER_NOT_FOUND = "filter not found";
+  private static final String INVALID_PARAMS = "invalid params";
   public static final int EXPIRE_SECONDS = 5 * 60;
   private final int maxBlockFilterNum = Args.getInstance().getJsonRpcMaxBlockFilterNum();
   private final int maxLogFilterNum = Args.getInstance().getJsonRpcMaxLogFilterNum();
@@ -363,14 +364,14 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
   public BlockResult ethGetBlockByHash(String blockHash, Boolean fullTransactionObjects)
       throws JsonRpcInvalidParamsException {
     final Block b = getBlockByJsonHash(blockHash);
-    return getBlockResult(b, fullTransactionObjects);
+    return getBlockResult(b, Boolean.TRUE.equals(fullTransactionObjects));
   }
 
   @Override
   public BlockResult ethGetBlockByNumber(String blockNumOrTag, Boolean fullTransactionObjects)
       throws JsonRpcInvalidParamsException {
     final Block b = getBlockByNumOrTag(blockNumOrTag);
-    return (b == null ? null : getBlockResult(b, fullTransactionObjects));
+    return (b == null ? null : getBlockResult(b, Boolean.TRUE.equals(fullTransactionObjects)));
   }
 
   /**
@@ -673,6 +674,10 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
   @Override
   public String estimateGas(CallArguments args) throws JsonRpcInvalidRequestException,
       JsonRpcInvalidParamsException, JsonRpcInternalException {
+    if (args == null) {
+      throw new JsonRpcInvalidParamsException(INVALID_PARAMS);
+    }
+
     byte[] ownerAddress = addressCompatibleToByteArray(args.getFrom());
 
     ContractType contractType = args.getContractType(wallet);
@@ -1001,6 +1006,9 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
   public String getCall(CallArguments transactionCall, Object blockParamObj)
       throws JsonRpcInvalidParamsException, JsonRpcInvalidRequestException,
       JsonRpcInternalException {
+    if (transactionCall == null) {
+      throw new JsonRpcInvalidParamsException(INVALID_PARAMS);
+    }
 
     String blockNumOrTag;
     if (blockParamObj instanceof HashMap) {
@@ -1333,6 +1341,10 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
       throw new JsonRpcMethodNotFoundException(msg);
     }
 
+    if (args == null) {
+      throw new JsonRpcInvalidParamsException(INVALID_PARAMS);
+    }
+
     byte[] fromAddressData;
     try {
       fromAddressData = addressCompatibleToByteArray(args.getFrom());
@@ -1441,6 +1453,10 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
       JsonRpcMethodNotFoundException, JsonRpcExceedLimitException {
     disableInPBFT("eth_newFilter");
 
+    if (fr == null) {
+      throw new JsonRpcInvalidParamsException(JsonRpcApiUtil.INVALID_FILTER_REQUEST);
+    }
+
     // not supports finalized as block parameter
     if (FINALIZED_STR.equalsIgnoreCase(fr.getFromBlock())
         || FINALIZED_STR.equalsIgnoreCase(fr.getToBlock())) {
@@ -1488,9 +1504,12 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
   }
 
   @Override
-  public boolean uninstallFilter(String filterId) throws ItemNotFoundException,
-      JsonRpcMethodNotFoundException {
+  public boolean uninstallFilter(String filterId) throws JsonRpcMethodNotFoundException {
     disableInPBFT("eth_uninstallFilter");
+
+    if (filterId == null) {
+      return false;
+    }
 
     Map<String, BlockFilterAndResult> blockFilter2Result;
     Map<String, LogFilterAndResult> eventFilter2Result;
@@ -1503,21 +1522,20 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
     }
 
     filterId = ByteArray.fromHex(filterId);
-    if (eventFilter2Result.containsKey(filterId)) {
-      eventFilter2Result.remove(filterId);
-    } else if (blockFilter2Result.containsKey(filterId)) {
-      blockFilter2Result.remove(filterId);
-    } else {
-      throw new ItemNotFoundException(FILTER_NOT_FOUND);
+    if (eventFilter2Result.remove(filterId) != null) {
+      return true;
     }
-
-    return true;
+    return blockFilter2Result.remove(filterId) != null;
   }
 
   @Override
   public Object[] getFilterChanges(String filterId) throws ItemNotFoundException,
       JsonRpcMethodNotFoundException {
     disableInPBFT("eth_getFilterChanges");
+
+    if (filterId == null) {
+      throw new ItemNotFoundException(FILTER_NOT_FOUND);
+    }
 
     Map<String, BlockFilterAndResult> blockFilter2Result;
     Map<String, LogFilterAndResult> eventFilter2Result;
@@ -1540,6 +1558,10 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
       JsonRpcMethodNotFoundException, JsonRpcTooManyResultException {
     disableInPBFT("eth_getLogs");
 
+    if (fr == null) {
+      throw new JsonRpcInvalidParamsException(JsonRpcApiUtil.INVALID_FILTER_REQUEST);
+    }
+
     long currentMaxBlockNum = wallet.getNowBlock().getBlockHeader().getRawData().getNumber();
     //convert FilterRequest to LogFilterWrapper
     LogFilterWrapper logFilterWrapper = new LogFilterWrapper(fr, currentMaxBlockNum, wallet, true);
@@ -1553,6 +1575,10 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
       InterruptedException, BadItemException, ItemNotFoundException,
       JsonRpcMethodNotFoundException, JsonRpcTooManyResultException {
     disableInPBFT("eth_getFilterLogs");
+
+    if (filterId == null) {
+      throw new ItemNotFoundException(FILTER_NOT_FOUND);
+    }
 
     Map<String, LogFilterAndResult> eventFilter2Result;
     if (getSource() == RequestSource.FULLNODE) {

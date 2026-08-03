@@ -18,6 +18,7 @@ import org.tron.core.Wallet;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.jsonrpc.JsonRpcInternalException;
+import org.tron.core.exception.jsonrpc.JsonRpcInvalidParamsException;
 import org.tron.core.services.NodeInfoService;
 import org.tron.core.services.jsonrpc.TronJsonRpcImpl;
 import org.tron.core.services.jsonrpc.types.CallArguments;
@@ -49,6 +50,34 @@ public class JsonRpcCallAndEstimateGasTest {
       mockRpc = null;
     }
     CommonParameter.getInstance().setEstimateEnergy(originalEstimateEnergy);
+  }
+
+  @Test
+  public void testNullCallArgumentsRejectedAsInvalidParams() throws Exception {
+    mockRpc = new TronJsonRpcImpl(mock(NodeInfoService.class), mock(Wallet.class));
+
+    JsonRpcInvalidParamsException callError = assertThrows(JsonRpcInvalidParamsException.class,
+        () -> mockRpc.getCall(null, "latest"));
+    Assert.assertEquals("invalid params", callError.getMessage());
+
+    JsonRpcInvalidParamsException estimateError = assertThrows(JsonRpcInvalidParamsException.class,
+        () -> mockRpc.estimateGas(null));
+    Assert.assertEquals("invalid params", estimateError.getMessage());
+  }
+
+  @Test
+  public void testEstimateGasKeepsInvalidQuantityAndDataAsInvalidParams() throws Exception {
+    mockRpc = new TronJsonRpcImpl(mock(NodeInfoService.class), mock(Wallet.class));
+
+    CallArguments invalidQuantity = newCallArgs();
+    invalidQuantity.setValue("0xzz");
+    assertThrows(JsonRpcInvalidParamsException.class,
+        () -> mockRpc.estimateGas(invalidQuantity));
+
+    CallArguments invalidData = newCallArgs();
+    invalidData.setData("0xzz");
+    assertThrows(JsonRpcInvalidParamsException.class,
+        () -> mockRpc.estimateGas(invalidData));
   }
 
   @Test

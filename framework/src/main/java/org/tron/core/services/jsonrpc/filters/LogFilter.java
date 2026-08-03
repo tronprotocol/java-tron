@@ -1,5 +1,6 @@
 package org.tron.core.services.jsonrpc.filters;
 
+import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.INVALID_FILTER_REQUEST;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.addressToByteArray;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.topicToByteArray;
 
@@ -28,7 +29,8 @@ public class LogFilter {
   private byte[][] contractAddresses = new byte[0][];
   // example: [[func1, func2], null, [A, B], [C]]
   // first topic must be func1 or func2，second can be any，third must be A or B，forth must be C
-  // [A, null] is not allowed.
+  // A null positional topic is a wildcard, so [A, null] is valid.
+  // A null entry in an OR-list is invalid, so [[A, null]] is not allowed.
   @Getter
   @Setter
   private List<byte[][]> topics = new ArrayList<>();
@@ -46,6 +48,10 @@ public class LogFilter {
    * construct one LogFilter from part parameters of FilterRequest
    */
   public LogFilter(FilterRequest fr) throws JsonRpcInvalidParamsException {
+    if (fr == null) {
+      throw new JsonRpcInvalidParamsException(INVALID_FILTER_REQUEST);
+    }
+
     if (fr.getAddress() instanceof String) {
       withContractAddress(addressToByteArray((String) fr.getAddress()));
 

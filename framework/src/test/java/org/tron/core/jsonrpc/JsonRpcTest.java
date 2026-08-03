@@ -229,14 +229,16 @@ public class JsonRpcTest {
       Assert.assertTrue(e.getMessage().contains("invalid topic"));
     }
 
-    // not empty topic and null cannot be in same level
-    try {
-      new LogFilter(new FilterRequest(null, null, null, new String[][] {
-          {"0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef", null},
-      }, null));
-    } catch (JsonRpcInvalidParamsException e) {
-      Assert.assertTrue(e.getMessage().contains("invalid topic"));
-    }
+    // null is invalid inside an OR-list. Use ArrayList to match Jackson's nested-array binding.
+    ArrayList<Object> invalidOrTopics = new ArrayList<>();
+    invalidOrTopics.add(
+        "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef");
+    invalidOrTopics.add(null);
+    JsonRpcInvalidParamsException invalidOrTopic = Assert.assertThrows(
+        JsonRpcInvalidParamsException.class,
+        () -> new LogFilter(new FilterRequest(
+            null, null, null, new Object[] {invalidOrTopics}, null)));
+    Assert.assertEquals("invalid topic(s): null", invalidOrTopic.getMessage());
 
     // non-string element in address array -> -32602, not a leaked ClassCastException
     JsonRpcInvalidParamsException badAddrElement = Assert.assertThrows(
@@ -285,6 +287,14 @@ public class JsonRpcTest {
     } catch (JsonRpcInvalidParamsException e) {
       Assert.assertTrue(e.getMessage().contains("invalid address"));
     }
+  }
+
+  @Test
+  public void testNullLogFilterRequestRejectedAsInvalidParams() {
+    JsonRpcInvalidParamsException error = Assert.assertThrows(
+        JsonRpcInvalidParamsException.class, () -> new LogFilter(null));
+
+    Assert.assertEquals("invalid filter request", error.getMessage());
   }
 
   @Test
