@@ -43,11 +43,11 @@ jobs:
               errors.push(`PR title is too long (${title.length}/72 characters).`);
             }
 
-            // 2. Conventional format check
-            const conventionalRegex = /^(feat|fix|refactor|docs|style|test|chore|ci|perf|build|revert)(\([^)]+\))?:\s\S.*/;
+            // 2. Conventional format check (space after the colon is optional)
+            const conventionalRegex = /^(feat|fix|refactor|docs|style|test|chore|ci|perf|build|revert)(\([^)]+\))?:\s*\S.*/;
             if (title && !conventionalRegex.test(title)) {
               errors.push(
-                'PR title must follow conventional format: `type(scope): description`\n' +
+                'PR title must follow conventional format: `type(scope): description` or `type(scope):description`\n' +
                 '  Allowed types: ' + allowedTypes.map(t => `\`${t}\``).join(', ') + '\n' +
                 '  Example: `feat(tvm): add blob opcodes`'
               );
@@ -131,14 +131,8 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Cache Gradle packages
-        uses: actions/cache@v5
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle', '**/gradle-wrapper.properties') }}
-          restore-keys: ${{ runner.os }}-gradle-
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
 
       - name: Run Checkstyle
         run: ./gradlew :framework:checkstyleMain :framework:checkstyleTest :plugins:checkstyleMain

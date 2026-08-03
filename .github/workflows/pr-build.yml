@@ -1,6 +1,11 @@
 name: PR Build
 
 on:
+  push:
+    branches: [ 'develop' ]
+    paths-ignore: [ '**/*.md', '.gitignore', '**/.gitignore', '.editorconfig',
+                    '.gitattributes', 'docs/**', 'CHANGELOG', '.github/ISSUE_TEMPLATE/**',
+                    '.github/PULL_REQUEST_TEMPLATE/**', '.github/CODEOWNERS' ]
   pull_request:
     branches: [ 'master','develop', 'release_**' ]
     types: [ opened, synchronize, reopened ]
@@ -22,7 +27,7 @@ jobs:
 
   build-macos:
     name: Build macos26 (JDK ${{ matrix.java }} / ${{ matrix.arch }})
-    if: ${{ github.event_name == 'pull_request' || inputs.job == 'all' || inputs.job == 'macos' }}
+    if: ${{ github.event_name == 'push' || github.event_name == 'pull_request' || inputs.job == 'all' || inputs.job == 'macos' }}
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 60
     strategy:
@@ -42,14 +47,8 @@ jobs:
           java-version: ${{ matrix.java }}
           distribution: 'temurin'
 
-      - name: Cache Gradle packages
-        uses: actions/cache@v5
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: macos26-${{ matrix.arch }}-gradle-${{ hashFiles('**/*.gradle', '**/gradle-wrapper.properties') }}
-          restore-keys: macos26-${{ matrix.arch }}-gradle-
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
 
       - name: Build
         run: ./gradlew clean build --no-daemon
@@ -65,7 +64,7 @@ jobs:
 
   build-ubuntu:
     name: Build ubuntu24 (JDK 17 / aarch64)
-    if: ${{ github.event_name == 'pull_request' || inputs.job == 'all' || inputs.job == 'ubuntu' }}
+    if: ${{ github.event_name == 'push' || github.event_name == 'pull_request' || inputs.job == 'all' || inputs.job == 'ubuntu' }}
     runs-on: ubuntu-24.04-arm
     timeout-minutes: 60
 
@@ -81,14 +80,8 @@ jobs:
       - name: Check Java version
         run: java -version
 
-      - name: Cache Gradle packages
-        uses: actions/cache@v5
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ubuntu24-aarch64-gradle-${{ hashFiles('**/*.gradle', '**/gradle-wrapper.properties') }}
-          restore-keys: ubuntu24-aarch64-gradle-
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
 
       - name: Build
         run: ./gradlew clean build --no-daemon
@@ -104,7 +97,7 @@ jobs:
 
   docker-build-rockylinux:
     name: Build rockylinux (JDK 8 / x86_64)
-    if: ${{ github.event_name == 'pull_request' || inputs.job == 'all' || inputs.job == 'rockylinux' }}
+    if: ${{ github.event_name == 'push' || github.event_name == 'pull_request' || inputs.job == 'all' || inputs.job == 'rockylinux' }}
     runs-on: ubuntu-latest
     timeout-minutes: 60
 
@@ -129,15 +122,8 @@ jobs:
       - name: Check Java version
         run: java -version
 
-      - name: Cache Gradle
-        uses: actions/cache@v5
-        with:
-          path: |
-            /github/home/.gradle/caches
-            /github/home/.gradle/wrapper
-          key: rockylinux-x86_64-gradle-${{ hashFiles('**/*.gradle', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            rockylinux-x86_64-gradle-
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
 
       - name: Stop Gradle daemon
         run: ./gradlew --stop || true
@@ -159,7 +145,7 @@ jobs:
 
   docker-build-debian11:
     name: Build debian11 (JDK 8 / x86_64)
-    if: ${{ github.event_name == 'pull_request' || inputs.job == 'all' || inputs.job == 'debian11' }}
+    if: ${{ github.event_name == 'push' || github.event_name == 'pull_request' || inputs.job == 'all' || inputs.job == 'debian11' }}
     runs-on: ubuntu-latest
     timeout-minutes: 60
 
@@ -186,15 +172,8 @@ jobs:
       - name: Check Java version
         run: java -version
 
-      - name: Cache Gradle
-        uses: actions/cache@v5
-        with:
-          path: |
-            /github/home/.gradle/caches
-            /github/home/.gradle/wrapper
-          key: debian11-x86_64-gradle-${{ hashFiles('**/*.gradle', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            debian11-x86_64-gradle-
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
 
       - name: Build
         run: ./gradlew clean build --no-daemon --no-build-cache
@@ -249,15 +228,8 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.base.sha }}
 
-      - name: Cache Gradle packages
-        uses: actions/cache@v5
-        with:
-          path: |
-            /github/home/.gradle/caches
-            /github/home/.gradle/wrapper
-          key: coverage-base-x86_64-gradle-${{ hashFiles('**/*.gradle', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            coverage-base-x86_64-gradle-
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
 
       - name: Build (base)
         # Test failures on the base branch are tolerated: merge-order races can
