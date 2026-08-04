@@ -58,7 +58,6 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.Constant;
-import org.tron.json.JSON;
 import org.tron.protos.contract.BalanceContract;
 
 /**
@@ -851,29 +850,27 @@ public class JsonFormat {
     return ByteArray.toHexString(input.toByteArray());
   }
 
-  static String escapeBytes(ByteString input, final String fliedName, boolean selfType) {
+  static String escapeBytes(ByteString input, final String fieldName, boolean selfType) {
     if (!selfType) {
       return ByteArray.toHexString(input.toByteArray());
     } else {
-      return escapeBytesSelfType(input, fliedName);
+      return escapeBytesSelfType(input, fieldName);
     }
   }
 
-  static String escapeBytesSelfType(ByteString input, final String fliedName) {
+  static String escapeBytesSelfType(ByteString input, final String fieldName) {
     //Address
-    if (HttpSelfFormatFieldName.isAddressFormat(fliedName)) {
+    if (HttpSelfFormatFieldName.isAddressFormat(fieldName)) {
       return StringUtil.encode58Check(input.toByteArray());
     }
     //Normal String
-    if (HttpSelfFormatFieldName.isNameStringFormat(fliedName)) {
-      String result = new String(input.toByteArray());
-      result = result.replaceAll("\"", "\\\\\"");
-      try {
-        JSON.parseObject("{\"key\":\"" + result + "\"}");
-        return result;
-      } catch (Exception e) {
+    if (HttpSelfFormatFieldName.isNameStringFormat(fieldName)) {
+      // Preserve arbitrary bytes losslessly as hex instead of decoding malformed UTF-8 with
+      // the platform default charset.
+      if (!input.isValidUtf8()) {
         return ByteArray.toHexString(input.toByteArray());
       }
+      return escapeNameStringText(input.toStringUtf8());
     }
     //HEX
     return ByteArray.toHexString(input.toByteArray());
@@ -903,6 +900,29 @@ public class JsonFormat {
   //
   // Some of these methods are package-private because Descriptors.java uses
   // them.
+
+  /**
+   * Escapes a valid UTF-8 name-string without exposing it to the U+FFFF sentinel used by
+   * {@link StringCharacterIterator}. Keeping this workaround on the new bytes path avoids
+   * changing the established behavior of {@link #escapeText(String)} for proto string fields.
+   */
+  private static String escapeNameStringText(String input) {
+    int index = input.indexOf(Character.MAX_VALUE);
+    if (index < 0) {
+      return escapeText(input);
+    }
+
+    StringBuilder result = new StringBuilder(input.length());
+    int start = 0;
+    while (index >= 0) {
+      result.append(escapeText(input.substring(start, index)));
+      result.append(Character.MAX_VALUE);
+      start = index + 1;
+      index = input.indexOf(Character.MAX_VALUE, start);
+    }
+    result.append(escapeText(input.substring(start)));
+    return result.toString();
+  }
 
   /**
    * Implements JSON string escaping as specified <a href="http://www.ietf.org/rfc/rfc4627.txt">here</a>.
@@ -1003,6 +1023,9 @@ public class JsonFormat {
               break;
             case '\\':
               builder.append('\\');
+              break;
+            case '/':
+              builder.append('/');
               break;
             case '"':
               builder.append('\"');
@@ -1358,7 +1381,7 @@ public class JsonFormat {
 
       //Normal String -> ByteString
       if (HttpSelfFormatFieldName.isNameStringFormat(fliedName)) {
-        return ByteString.copyFromUtf8(input);
+        return ByteString.copyFromUtf8(unescapeText(input));
       }
 
       return unescapeBytes(input);

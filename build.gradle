@@ -5,6 +5,10 @@ plugins {
     id 'net.ltgt.errorprone' version '5.0.0' apply false
 }
 
+ext {
+    grpcVersion = "1.83.0"
+}
+
 allprojects {
     version = "1.0.0"
     apply plugin: "java-library"
@@ -41,7 +45,7 @@ ext.archInfo = [
                 // https://github.com/grpc/grpc-java/issues/7690
                 // https://github.com/grpc/grpc-java/pull/12319, Add support for macOS aarch64 with universal binary
                 // https://github.com/grpc/grpc-java/pull/11371 , 1.64.x is not supported CentOS 7.
-                ProtocGenVersion: isArm64 || isMac ? '1.81.0' : '1.60.0'
+                ProtocGenVersion: isArm64 || isMac ? rootProject.grpcVersion : '1.60.0'
         ],
         VMOptions: isArm64 ? "${rootDir}/gradle/jdk17/java-tron.vmoptions" : "${rootDir}/gradle/java-tron.vmoptions"
 ]
