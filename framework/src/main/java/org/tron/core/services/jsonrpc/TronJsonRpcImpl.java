@@ -460,7 +460,12 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
       byte[] chainId = wallet.getBlockCapsuleByNum(0).getBlockId().getBytes();
       return ByteArray.toJsonHex(Arrays.copyOfRange(chainId, chainId.length - 4, chainId.length));
     } catch (Exception e) {
-      throw new JsonRpcInternalException(e.getMessage());
+      Error fatal = JsonRpcErrorResolver.findFatalCause(e);
+      if (fatal != null) {
+        throw fatal;
+      }
+      logger.debug("Chain identity lookup failed", e);
+      throw new JsonRpcInternalException("Chain identity unavailable", e);
     }
   }
 
