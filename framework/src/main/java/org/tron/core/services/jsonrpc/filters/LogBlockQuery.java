@@ -15,6 +15,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.tron.common.bloom.Bloom;
 import org.tron.common.crypto.Hash;
 import org.tron.core.exception.jsonrpc.JsonRpcTooManyResultException;
+import org.tron.core.services.jsonrpc.JsonRpcErrorResolver;
 import org.tron.core.store.SectionBloomStore;
 
 /**
@@ -158,7 +159,22 @@ public class LogBlockQuery {
     // 3. Wait for all results and cache them
     Map<Integer, BitSet> resultCache = new HashMap<>();
     for (Map.Entry<Integer, Future<BitSet>> entry : bitIndexResults.entrySet()) {
-      BitSet result = entry.getValue().get();
+      BitSet result;
+      try {
+        result = entry.getValue().get();
+      } catch (ExecutionException e) {
+        // The executor wraps anything the task threw, including an Error, so classify first.
+        Error fatal = JsonRpcErrorResolver.findFatalCause(e);
+        if (fatal != null) {
+          throw fatal;
+        }
+        logger.warn("JSON-RPC log query failed", e.getCause());
+        throw e;
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        logger.warn("JSON-RPC log query interrupted", e);
+        throw e;
+      }
       if (result != null) {
         resultCache.put(entry.getKey(), result);
       }
