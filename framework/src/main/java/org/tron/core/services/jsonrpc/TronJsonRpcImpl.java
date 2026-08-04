@@ -122,6 +122,7 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
   }
 
   private static final String FILTER_NOT_FOUND = "filter not found";
+  private static final String CHAIN_IDENTITY_OPERATION = "chain identity";
   public static final int EXPIRE_SECONDS = 5 * 60;
   private final int maxBlockFilterNum = Args.getInstance().getJsonRpcMaxBlockFilterNum();
   private final int maxLogFilterNum = Args.getInstance().getJsonRpcMaxLogFilterNum();
@@ -424,9 +425,23 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
     // return hash of genesis block
     try {
       byte[] chainId = wallet.getBlockCapsuleByNum(0).getBlockId().getBytes();
-      return ByteArray.toJsonHex(Arrays.copyOfRange(chainId, chainId.length - 4, chainId.length));
+      return ByteArray.toJsonHex(
+          Arrays.copyOfRange(chainId, chainId.length - 4, chainId.length));
     } catch (Exception e) {
-      throw new JsonRpcInternalException(e.getMessage());
+      // Classify before logging so a wrapped fatal cause is never recorded as a lookup failure.
+      Error fatal = JsonRpcErrorResolver.findFatalCause(e);
+      if (fatal != null) {
+        throw fatal;
+      }
+      // Mapped errors bypass the resolver's unhandled-exception log, so record the cause here,
+      // once per exception type; eth_chainId and net_version share this operation key.
+      if (JsonRpcErrorResolver.firstOccurrence(CHAIN_IDENTITY_OPERATION, e)) {
+        logger.warn("Chain identity lookup failed", e);
+      } else {
+        logger.debug("Repeated chain identity lookup failure ({})", e.getClass().getName());
+      }
+      // Keep the cause for diagnosis and carry the public message on the exception itself.
+      throw new JsonRpcInternalException("Chain identity unavailable", e);
     }
   }
 

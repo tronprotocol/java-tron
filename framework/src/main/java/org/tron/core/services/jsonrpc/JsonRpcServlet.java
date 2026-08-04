@@ -8,7 +8,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.googlecode.jsonrpc4j.HttpStatusCodeProvider;
 import com.googlecode.jsonrpc4j.JsonRpcInterceptor;
 import com.googlecode.jsonrpc4j.JsonRpcServer;
 import com.googlecode.jsonrpc4j.ProxyUtil;
@@ -19,6 +18,8 @@ import java.io.InputStream;
 import java.util.Collections;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
+import javax.servlet.ServletResponse;
+import javax.servlet.ServletResponseWrapper;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -27,7 +28,6 @@ import org.springframework.stereotype.Component;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.core.Constant;
 import org.tron.core.services.filter.BufferedResponseWrapper;
-import org.tron.core.services.filter.CachedBodyRequestWrapper;
 import org.tron.core.services.http.RateLimiterServlet;
 
 @Component
@@ -35,6 +35,7 @@ import org.tron.core.services.http.RateLimiterServlet;
 public class JsonRpcServlet extends RateLimiterServlet {
 
   private static final ObjectMapper MAPPER = buildMapper();
+  private static final int MAX_RESPONSE_WRAPPER_DEPTH = 16;
 
   private static ObjectMapper buildMapper() {
     JsonFactory factory = JsonFactory.builder()
@@ -68,6 +69,10 @@ public class JsonRpcServlet extends RateLimiterServlet {
   @Autowired
   private JsonRpcInterceptor interceptor;
 
+  void setRpcServer(JsonRpcServer rpcServer) {
+    this.rpcServer = rpcServer;
+  }
+
   @Override
   public void init(ServletConfig config) throws ServletException {
     super.init(config);
@@ -82,19 +87,6 @@ public class JsonRpcServlet extends RateLimiterServlet {
     rpcServer = new JsonRpcServer(compositeService);
     rpcServer.setErrorResolver(JsonRpcErrorResolver.INSTANCE);
 
-    HttpStatusCodeProvider httpStatusCodeProvider = new HttpStatusCodeProvider() {
-      @Override
-      public int getHttpStatusCode(int resultCode) {
-        return 200;
-      }
-
-      @Override
-      public Integer getJsonRpcCode(int httpStatusCode) {
-        return null;
-      }
-    };
-    rpcServer.setHttpStatusCodeProvider(httpStatusCodeProvider);
-
     rpcServer.setShouldLogInvocationErrors(false);
     if (CommonParameter.getInstance().isMetricsPrometheusEnable()) {
       rpcServer.setInterceptorList(Collections.singletonList(interceptor));
@@ -103,6 +95,15 @@ public class JsonRpcServlet extends RateLimiterServlet {
 
   @Override
   protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+    try {
+      doPostInternal(req, resp);
+    } catch (Error fatal) {
+      commitBareInternalServerError(resp);
+      throw fatal;
+    }
+  }
+
+  private void doPostInternal(HttpServletRequest req, HttpServletResponse resp) throws IOException {
     CommonParameter parameter = CommonParameter.getInstance();
 
     // Transport IOException from readBody propagates as HTTP 500 (genuine IO failure).
@@ -133,6 +134,15 @@ public class JsonRpcServlet extends RateLimiterServlet {
       writeJsonRpcError(resp, JsonRpcError.INVALID_REQUEST, "Invalid Request", null, false);
       return;
     }
+    if (!isBatch && hasInvalidRequestId(rootNode)) {
+      writeJsonRpcError(resp, JsonRpcError.INVALID_REQUEST, "Invalid Request", null, false);
+      return;
+    }
+    if (!isBatch && hasScalarParams(rootNode)) {
+      writeJsonRpcError(resp, JsonRpcError.INVALID_REQUEST, "Invalid Request",
+          rootNode.get("id"), false);
+      return;
+    }
     int batchSize = parameter.getJsonRpcMaxBatchSize();
     if (isBatch && batchSize > 0 && rootNode.size() > batchSize) {
       writeJsonRpcError(resp, JsonRpcError.EXCEED_LIMIT,
@@ -144,25 +154,35 @@ public class JsonRpcServlet extends RateLimiterServlet {
     if (isBatch) {
       handleBatch(resp, rootNode, maxResponseSize);
     } else {
-      handleSingle(req, resp, rootNode, body, maxResponseSize);
+      handleSingle(resp, rootNode, body, maxResponseSize);
     }
   }
 
-  private void handleSingle(HttpServletRequest req, HttpServletResponse resp,
-      JsonNode rootNode, byte[] body, int maxResponseSize) throws IOException {
-    CachedBodyRequestWrapper cachedReq = new CachedBodyRequestWrapper(req, body);
+  private void handleSingle(HttpServletResponse resp, JsonNode rootNode, byte[] body,
+      int maxResponseSize) throws IOException {
     BufferedResponseWrapper bufferedResp = new BufferedResponseWrapper(
         resp, maxResponseSize);
 
     try {
-      rpcServer.handle(cachedReq, bufferedResp);
-    } catch (RuntimeException e) {
+      // JsonRpcServer.handle catches Throwable and would swallow fatal errors rethrown by the
+      // resolver. Use the lower-level entry point so single and batch requests share a boundary.
+      rpcServer.handleRequest(new ByteArrayInputStream(body), bufferedResp.getOutputStream());
+    } catch (RuntimeException | IOException | Error e) {
+      rethrowIfFatal(e);
       logger.error("RPC execution failed", e);
+      if (!rootNode.has("id")) {
+        resp.setContentType("application/json-rpc");
+        resp.setStatus(HttpServletResponse.SC_OK);
+        resp.setContentLength(0);
+        return;
+      }
       writeJsonRpcError(resp, JsonRpcError.INTERNAL_ERROR, "Internal error",
           rootNode.get("id"), false);
       return;
     }
 
+    bufferedResp.setContentType("application/json-rpc");
+    bufferedResp.setStatus(HttpServletResponse.SC_OK);
     bufferedResp.commitToResponse();
     if (bufferedResp.isOverflow()) {
       writeJsonRpcError(resp, JsonRpcError.RESPONSE_TOO_LARGE,
@@ -177,14 +197,30 @@ public class JsonRpcServlet extends RateLimiterServlet {
     ArrayNode batchResult = MAPPER.createArrayNode();
     int accumulatedSize = 2; // "[]"
     boolean overflow = false;
+    BatchFailureLog failureLog = new BatchFailureLog();
 
     for (int i = 0; i < rootNode.size(); i++) {
       JsonNode subRequest = rootNode.get(i);
 
+      if (!subRequest.isObject() || hasInvalidRequestId(subRequest)
+          || hasScalarParams(subRequest)) {
+        ObjectNode errNode = buildErrorNode(JsonRpcError.INVALID_REQUEST, "Invalid Request",
+            subRequest.get("id"));
+        if (!overflow) {
+          byte[] errBytes = MAPPER.writeValueAsBytes(errNode);
+          int addition = errBytes.length + (!batchResult.isEmpty() ? 1 : 0);
+          if (maxResponseSize > 0 && accumulatedSize + addition > maxResponseSize) {
+            overflow = true;
+          } else {
+            accumulatedSize += addition;
+          }
+        }
+        batchResult.add(errNode);
+        continue;
+      }
+
       if (overflow) {
-        if (!subRequest.isObject()) {
-          batchResult.add(buildErrorNode(JsonRpcError.INVALID_REQUEST, "Invalid Request", null));
-        } else if (subRequest.has("id")) {
+        if (subRequest.has("id")) {
           // Notifications (no "id") do not get a response even on overflow.
           batchResult.add(buildErrorNode(JsonRpcError.RESPONSE_TOO_LARGE,
               "Response exceeds the limit of " + maxResponseSize + " bytes",
@@ -193,43 +229,14 @@ public class JsonRpcServlet extends RateLimiterServlet {
         continue;
       }
 
-      if (!subRequest.isObject()) {
-        ObjectNode errNode = buildErrorNode(JsonRpcError.INVALID_REQUEST, "Invalid Request", null);
-        byte[] errBytes = MAPPER.writeValueAsBytes(errNode);
-        int addition = errBytes.length + (!batchResult.isEmpty() ? 1 : 0);
-        if (maxResponseSize > 0 && accumulatedSize + addition > maxResponseSize) {
-          overflow = true;
-        } else {
-          accumulatedSize += addition;
-        }
-        batchResult.add(errNode);
-        continue;
-      }
-
-      byte[] subBody;
-      try {
-        subBody = MAPPER.writeValueAsBytes(subRequest);
-      } catch (JsonProcessingException e) {
-        writeJsonRpcError(resp, JsonRpcError.INTERNAL_ERROR, "Internal error", null, true);
-        return;
-      }
-
-      ByteArrayOutputStream subOutput = new ByteArrayOutputStream();
-      try {
-        rpcServer.handleRequest(new ByteArrayInputStream(subBody), subOutput);
-      } catch (RuntimeException e) {
-        logger.error("RPC execution failed for batch sub-request {}", i, e);
-        writeJsonRpcError(resp, JsonRpcError.INTERNAL_ERROR, "Internal error", null, true);
-        return;
-      }
-
-      byte[] responseBytes = subOutput.toByteArray();
+      byte[] responseBytes = executeBatchRequest(subRequest, i, failureLog);
       if (responseBytes.length == 0) {
         continue; // notification — no response
       }
 
       // comma(,) separator between array elements
       int addition = responseBytes.length + (!batchResult.isEmpty() ? 1 : 0);
+      // Reject bytes beyond the remaining budget before parsing, even if they are malformed.
       if (maxResponseSize > 0 && accumulatedSize + addition > maxResponseSize) {
         overflow = true;
         batchResult.add(buildErrorNode(JsonRpcError.RESPONSE_TOO_LARGE,
@@ -237,15 +244,24 @@ public class JsonRpcServlet extends RateLimiterServlet {
             subRequest.get("id")));
         continue;
       }
-      accumulatedSize += addition;
-
       JsonNode responseNode;
       try {
         responseNode = MAPPER.readTree(responseBytes);
       } catch (IOException e) {
-        writeJsonRpcError(resp, JsonRpcError.INTERNAL_ERROR, "Internal error", null, true);
-        return;
+        responseBytes = internalErrorResponse(subRequest.get("id"));
+        responseNode = MAPPER.readTree(responseBytes);
+        // Charge only the replacement, not the discarded malformed response bytes.
+        addition = responseBytes.length + (!batchResult.isEmpty() ? 1 : 0);
+        // A replacement error can be larger than the malformed response it replaces.
+        if (maxResponseSize > 0 && accumulatedSize + addition > maxResponseSize) {
+          overflow = true;
+          batchResult.add(buildErrorNode(JsonRpcError.RESPONSE_TOO_LARGE,
+              "Response exceeds the limit of " + maxResponseSize + " bytes",
+              subRequest.get("id")));
+          continue;
+        }
       }
+      accumulatedSize += addition;
       batchResult.add(responseNode);
     }
 
@@ -265,6 +281,82 @@ public class JsonRpcServlet extends RateLimiterServlet {
     resp.getOutputStream().flush();
   }
 
+  private byte[] executeBatchRequest(JsonNode subRequest, int index, BatchFailureLog failureLog)
+      throws IOException {
+    byte[] subBody;
+    try {
+      subBody = MAPPER.writeValueAsBytes(subRequest);
+    } catch (JsonProcessingException e) {
+      return internalErrorResponse(subRequest.get("id"));
+    }
+
+    ByteArrayOutputStream subOutput = new ByteArrayOutputStream();
+    try {
+      rpcServer.handleRequest(new ByteArrayInputStream(subBody), subOutput);
+    } catch (RuntimeException | IOException | Error e) {
+      rethrowIfFatal(e);
+      failureLog.record(index, e);
+      return internalErrorResponse(subRequest.get("id"));
+    }
+    return subOutput.toByteArray();
+  }
+
+  private static class BatchFailureLog {
+    private boolean logged;
+
+    private void record(int index, Throwable failure) {
+      if (!logged) {
+        logged = true;
+        logger.error("RPC execution failed for batch sub-request {}", index, failure);
+      } else {
+        logger.debug("RPC execution failed for batch sub-request {} ({})",
+            index, failure.getClass().getName());
+      }
+    }
+  }
+
+  private byte[] internalErrorResponse(JsonNode id) throws JsonProcessingException {
+    return MAPPER.writeValueAsBytes(
+        buildErrorNode(JsonRpcError.INTERNAL_ERROR, "Internal error", id));
+  }
+
+  private static void rethrowIfFatal(Throwable exception) {
+    Error fatal = JsonRpcErrorResolver.findFatalCause(exception);
+    if (fatal != null) {
+      throw fatal;
+    }
+  }
+
+  private static void commitBareInternalServerError(HttpServletResponse resp) {
+    try {
+      // Response decorators such as CharResponseWrapper do not propagate flushBuffer.
+      // Bound this allocation-free walk and never delegate cleanup through an unresolved wrapper.
+      HttpServletResponse target = resp;
+      int depth = 0;
+      while (target instanceof ServletResponseWrapper) {
+        if (depth++ >= MAX_RESPONSE_WRAPPER_DEPTH) {
+          return;
+        }
+        ServletResponse inner = ((ServletResponseWrapper) target).getResponse();
+        if (inner == target || !(inner instanceof HttpServletResponse)) {
+          return;
+        }
+        target = (HttpServletResponse) inner;
+      }
+      if (target.isCommitted()) {
+        return;
+      }
+      // Best effort: commit an empty response before rethrowing the Error so the container does
+      // not render its default error page, which may expose Throwable details.
+      target.resetBuffer();
+      target.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+      target.setContentLength(0);
+      target.flushBuffer();
+    } catch (Throwable ignored) {
+      // Cleanup must never replace the original fatal Error.
+    }
+  }
+
   private byte[] readBody(InputStream in) throws IOException {
     ByteArrayOutputStream buffer = new ByteArrayOutputStream();
     byte[] tmp = new byte[4096];
@@ -281,12 +373,25 @@ public class JsonRpcServlet extends RateLimiterServlet {
     ObjectNode errNode = errorObj.putObject("error");
     errNode.put("code", error.code);
     errNode.put("message", message);
-    if (id != null && !id.isNull() && !id.isMissingNode()) {
+    if (isValidRequestId(id) && !id.isNull()) {
       errorObj.set("id", id);
     } else {
       errorObj.putNull("id");
     }
     return errorObj;
+  }
+
+  private static boolean hasInvalidRequestId(JsonNode request) {
+    return request.has("id") && !isValidRequestId(request.get("id"));
+  }
+
+  private static boolean hasScalarParams(JsonNode request) {
+    // Explicit null keeps the existing jsonrpc4j dispatch semantics.
+    return request.hasNonNull("params") && !request.get("params").isContainerNode();
+  }
+
+  private static boolean isValidRequestId(JsonNode id) {
+    return id != null && (id.isNull() || id.isTextual() || id.isNumber());
   }
 
   private void writeJsonRpcError(HttpServletResponse resp, JsonRpcError error, String message,
