@@ -142,6 +142,7 @@ public class ECKeyTest {
     ECKey key = ECKey.fromPrivate(BigInteger.TEN);
     ECDSASignature lowS = key.sign(messageHash);
     int recId = lowS.v - 27;
+    BigInteger curveOrder = ECKey.CURVE.getN();
 
     assertArrayEquals(key.getPubKey(),
         ECKey.recoverPubBytesFromSignature(recId, lowS, messageHash, false));
@@ -153,8 +154,28 @@ public class ECKeyTest {
     assertThrows(IllegalArgumentException.class,
         () -> ECKey.recoverPubBytesFromSignature(4, lowS, messageHash, true));
 
+    for (BigInteger invalidScalar : Arrays.asList(
+        BigInteger.ZERO, curveOrder, curveOrder.add(BigInteger.ONE))) {
+      ECDSASignature invalidR = new ECDSASignature(invalidScalar, lowS.s);
+      invalidR.v = lowS.v;
+      assertThrows(IllegalArgumentException.class,
+          () -> ECKey.recoverPubBytesFromSignature(recId, invalidR, messageHash, true));
+
+      ECDSASignature invalidS = new ECDSASignature(lowS.r, invalidScalar);
+      invalidS.v = lowS.v;
+      assertThrows(IllegalArgumentException.class,
+          () -> ECKey.recoverPubBytesFromSignature(recId, invalidS, messageHash, true));
+    }
+
+    for (byte invalidHeader : new byte[]{26, 35}) {
+      ECDSASignature invalidSignature = new ECDSASignature(lowS.r, lowS.s);
+      invalidSignature.v = invalidHeader;
+      assertThrows(SignatureException.class,
+          () -> ECKey.signatureToKeyBytes(messageHash, invalidSignature, true));
+    }
+
     ECDSASignature highS = new ECDSASignature(
-        lowS.r, ECKey.CURVE.getN().subtract(lowS.s));
+        lowS.r, curveOrder.subtract(lowS.s));
     highS.v = (byte) (27 + (recId ^ 1));
     assertArrayEquals(key.getPubKey(), ECKey.signatureToKeyBytes(messageHash, highS, true));
   }

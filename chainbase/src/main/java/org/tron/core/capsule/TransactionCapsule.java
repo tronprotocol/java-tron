@@ -100,8 +100,8 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   private static final long SLOW_SIG_VERIFY_MS = 50;
 
   private Transaction transaction;
-  @Setter
-  private boolean isVerified = false;
+  @Getter
+  private volatile boolean isVerified = false;
   @Setter
   @Getter
   private long blockNum = -1;
@@ -706,7 +706,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   /**
    * validate signature
    */
-  public boolean validateSignature(AccountStore accountStore,
+  public synchronized boolean validateSignature(AccountStore accountStore,
       DynamicPropertiesStore dynamicPropertiesStore) throws ValidateSignatureException {
     if (!isVerified) {
       //Do not support multi contracts in one transaction
@@ -727,6 +727,10 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
       isVerified = true;
     }
     return true;
+  }
+
+  public synchronized void setVerified(boolean verified) {
+    isVerified = verified;
   }
 
   public Sha256Hash getTransactionId() {

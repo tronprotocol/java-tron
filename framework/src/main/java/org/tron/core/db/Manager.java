@@ -1260,7 +1260,9 @@ public class Manager {
     block.getTransactions().forEach(capsule -> {
       String address = Hex.toHexString(capsule.getOwnerAddress());
       String txId = Hex.toHexString(capsule.getTransactionId().getBytes());
-      if (multiAddresses.contains(address) || !isSameSig(capsule, txMap.get(txId))) {
+      TransactionCapsule pendingTx = txMap.get(txId);
+      if (multiAddresses.contains(address) || pendingTx == null || !pendingTx.isVerified()
+          || !isSameSig(capsule, pendingTx)) {
         txs.add(capsule);
       } else {
         capsule.setVerified(true);
@@ -1919,7 +1921,14 @@ public class Manager {
     boolean flag = chainBaseManager.getDynamicPropertiesStore().getNextMaintenanceTime()
         <= block.getTimeStamp();
     if (flag) {
+      boolean strictEcdsaValidation = getDynamicPropertiesStore()
+          .allowStrictEcdsaValidation();
       proposalController.processProposals();
+      if (!strictEcdsaValidation && getDynamicPropertiesStore()
+          .allowStrictEcdsaValidation()) {
+        // Legacy verification results must not survive the consensus-rule activation boundary.
+        invalidateTransactionVerificationCache();
+      }
     }
 
     if (!consensus.applyBlock(block)) {
@@ -1941,6 +1950,13 @@ public class Manager {
         .initBlockSection(transactionRetCapsule);
     chainBaseManager.getSectionBloomStore().write(block.getNum());
     block.setBloom(blockBloom);
+  }
+
+  private void invalidateTransactionVerificationCache() {
+    pendingTransactions.forEach(tx -> tx.setVerified(false));
+    rePushTransactions.forEach(tx -> tx.setVerified(false));
+    poppedTransactions.forEach(tx -> tx.setVerified(false));
+    pushTransactionQueue.forEach(tx -> tx.setVerified(false));
   }
 
   private void payReward(BlockCapsule block) {

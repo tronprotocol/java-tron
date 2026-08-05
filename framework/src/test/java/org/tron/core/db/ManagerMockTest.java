@@ -26,6 +26,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -700,6 +702,37 @@ public class ManagerMockTest {
     verify(goodBlock, atLeastOnce()).validateSignature(
         any(DynamicPropertiesStore.class), any(AccountStore.class));
     verify(goodBlock, atLeastOnce()).setSwitch(true);
+  }
+
+  @Test
+  public void shouldInvalidateTransactionVerificationCacheAcrossAllQueues()
+      throws Exception {
+    Manager manager = new Manager();
+    TransactionCapsule pendingTx = mock(TransactionCapsule.class);
+    TransactionCapsule rePushTx = mock(TransactionCapsule.class);
+    TransactionCapsule poppedTx = mock(TransactionCapsule.class);
+    TransactionCapsule pushingTx = mock(TransactionCapsule.class);
+    BlockingQueue<TransactionCapsule> pending = new LinkedBlockingQueue<>();
+    BlockingQueue<TransactionCapsule> rePush = new LinkedBlockingQueue<>();
+    List<TransactionCapsule> popped = new ArrayList<>();
+    BlockingQueue<TransactionCapsule> pushing = new LinkedBlockingQueue<>();
+    pending.add(pendingTx);
+    rePush.add(rePushTx);
+    popped.add(poppedTx);
+    pushing.add(pushingTx);
+    setField(manager, "pendingTransactions", pending);
+    setField(manager, "rePushTransactions", rePush);
+    setField(manager, "poppedTransactions", popped);
+    setField(manager, "pushTransactionQueue", pushing);
+
+    Method method = Manager.class.getDeclaredMethod("invalidateTransactionVerificationCache");
+    method.setAccessible(true);
+    method.invoke(manager);
+
+    verify(pendingTx).setVerified(false);
+    verify(rePushTx).setVerified(false);
+    verify(poppedTx).setVerified(false);
+    verify(pushingTx).setVerified(false);
   }
 
   private static void setField(Object target, String name, Object value) throws Exception {
