@@ -58,8 +58,6 @@ jobs:
             -e JAVA_HOME_17=/opt/java/openjdk \
             -v "${{ github.workspace }}/build/libs/FullNode.jar:/javatron/FullNode.jar:ro" \
             troninfra/troninfra-ci:latest \
-            # Smoke only: the full single-node suite is currently unstable
-            # (per the integration-test team), so run the smoke subset.
             --clean --smoke
 
       - name: Extract smoke test reports from container
