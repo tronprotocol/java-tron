@@ -1,14 +1,17 @@
 name: Integration Test Multinode (Full)
 
 on:
-  push:
-    branches: [ 'master', 'release_**' ]
-  pull_request:
-    branches: [ 'develop', 'release_**' ]
-    types: [ opened, synchronize, reopened ]
-    paths-ignore: [ '**/*.md', '.gitignore', '**/.gitignore', '.editorconfig',
-                    '.gitattributes', 'docs/**', 'CHANGELOG', '.github/ISSUE_TEMPLATE/**',
-                    '.github/PULL_REQUEST_TEMPLATE/**', '.github/CODEOWNERS' ]
+  # Disabled: the multinode integration suite is currently unstable (see the
+  # integration-test team). Re-enable the push/pull_request triggers below
+  # once the suite is fixed.
+  # push:
+  #   branches: [ 'master', 'release_**' ]
+  # pull_request:
+  #   branches: [ 'develop', 'release_**' ]
+  #   types: [ opened, synchronize, reopened ]
+  #   paths-ignore: [ '**/*.md', '.gitignore', '**/.gitignore', '.editorconfig',
+  #                   '.gitattributes', 'docs/**', 'CHANGELOG', '.github/ISSUE_TEMPLATE/**',
+  #                   '.github/PULL_REQUEST_TEMPLATE/**', '.github/CODEOWNERS' ]
   workflow_dispatch:
 
 concurrency:
