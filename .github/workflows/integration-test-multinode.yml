@@ -43,16 +43,30 @@ jobs:
           key: ${{ runner.os }}-gradle-multinode-${{ hashFiles('**/*.gradle', '**/gradle-wrapper.properties') }}
           restore-keys: ${{ runner.os }}-gradle-multinode-
 
-      - name: Build FullNode.jar
+      - name: Build all java-tron module jars
         run: ./gradlew clean build -x test --no-daemon
 
-      - name: Build local java-tron Docker image (wraps PR-built FullNode.jar)
+      - name: Build local java-tron Docker image (wraps PR-built jars)
         run: |
+          # Build the image from the PR's own distribution: the dist zip's
+          # lib/ contains every runtime jar this build produces (all module
+          # jars plus third-party dependencies from one dependency
+          # resolution). Swapping only FullNode.jar keeps the base image's
+          # stale jars on the classpath, and the node then dies during Spring
+          # startup with NoSuchMethodError while the container stays "Up",
+          # surfacing only as "container tron-mn-node1 is unhealthy".
+          # Using the dist also auto-adapts to modules being added, renamed,
+          # or dependency-version bumps by the PR itself.
           mkdir -p /tmp/tron-image
-          cp build/libs/FullNode.jar /tmp/tron-image/
+          unzip -q framework/build/distributions/java-tron-1.0.0.zip \
+            'java-tron-1.0.0/lib/*' -d /tmp/tron-image
+          mv /tmp/tron-image/java-tron-1.0.0/lib /tmp/tron-image/lib
+          rmdir /tmp/tron-image/java-tron-1.0.0
+          cp framework/build/libs/FullNode.jar /tmp/tron-image/lib/
           cat > /tmp/tron-image/Dockerfile <<'EOF'
           FROM tronprotocol/java-tron:latest
-          COPY FullNode.jar /java-tron/lib/FullNode.jar
+          RUN rm -rf /java-tron/lib
+          COPY lib/ /java-tron/lib/
           EOF
           docker build -t java-tron-local:pr /tmp/tron-image
 
@@ -104,6 +118,11 @@ jobs:
           mkdir -p integration-reports/node-logs
           for c in tron-mn-node1 tron-mn-node2 tron-mn-node3 tron-mn-mongodb; do
             docker logs "$c" > "integration-reports/node-logs/${c}.log" 2>&1 || true
+            # docker logs only captures stdout (Logback init noise); java-tron
+            # writes its real application log to /java-tron/logs/tron.log inside
+            # the container. Copy it out — without it a node startup failure
+            # is undiagnosable from CI artifacts.
+            docker cp "$c":/java-tron/logs/. "integration-reports/node-logs/${c}-applogs/" 2>/dev/null || true
           done
 
       - name: Tear down compose stack
