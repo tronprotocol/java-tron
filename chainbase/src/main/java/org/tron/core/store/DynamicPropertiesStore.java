@@ -255,6 +255,9 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] ALLOW_HARDEN_EXCHANGE_CALCULATION =
       "ALLOW_HARDEN_EXCHANGE_CALCULATION".getBytes();
 
+  private static final byte[] ALLOW_STRICT_ECDSA_VALIDATION =
+      "ALLOW_STRICT_ECDSA_VALIDATION".getBytes();
+
   private static final byte[] TURKISH_KEY_MIGRATION_DONE =
       "TURKISH_KEY_MIGRATION_DONE".getBytes();
 
@@ -3069,6 +3072,21 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   public boolean allowHardenExchangeCalculation() {
     return getAllowHardenExchangeCalculation() == 1L;
+  }
+
+  public long getAllowStrictEcdsaValidation() {
+    return Optional.ofNullable(getUnchecked(ALLOW_STRICT_ECDSA_VALIDATION))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElse(0L);
+  }
+
+  public void saveAllowStrictEcdsaValidation(long value) {
+    this.put(ALLOW_STRICT_ECDSA_VALIDATION, new BytesCapsule(ByteArray.fromLong(value)));
+  }
+
+  public boolean allowStrictEcdsaValidation() {
+    return getAllowStrictEcdsaValidation() == 1L;
   }
 
   public void saveTurkishKeyMigrationDone(long num) {

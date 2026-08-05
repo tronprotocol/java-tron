@@ -6,16 +6,20 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.tron.common.utils.client.utils.AbiUtil.generateOccupationConstantPrivateKey;
 
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
 import java.security.KeyPairGenerator;
 import java.security.Security;
 import java.security.SignatureException;
 import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
+import org.bouncycastle.util.BigIntegers;
+import org.bouncycastle.util.encoders.Base64;
 import org.bouncycastle.util.encoders.Hex;
 import org.junit.Test;
 import org.tron.common.crypto.ECKey.ECDSASignature;
@@ -117,6 +121,60 @@ public class ECKeyTest {
     byte[] messageHash = new byte[32];
     ECKey.signatureToKey(messageHash, "abcdefg");
     fail("Expecting a SignatureException for invalid signature length");
+  }
+
+  @Test
+  public void testStrictSignatureLength() throws SignatureException {
+    byte[] messageHash = new byte[32];
+    ECKey key = ECKey.fromPrivate(BigInteger.ONE);
+    byte[] signature = Base64.decode(key.signHash(messageHash));
+    byte[] padded = Arrays.copyOf(signature, 66);
+    String paddedBase64 = new String(Base64.encode(padded), StandardCharsets.UTF_8);
+
+    assertArrayEquals(key.getPubKey(), ECKey.signatureToKeyBytes(messageHash, paddedBase64));
+    assertThrows(SignatureException.class,
+        () -> ECKey.signatureToKeyBytes(messageHash, paddedBase64, true));
+  }
+
+  @Test
+  public void testStrictRecoveryBoundsAndHighS() throws SignatureException {
+    byte[] messageHash = new byte[32];
+    ECKey key = ECKey.fromPrivate(BigInteger.TEN);
+    ECDSASignature lowS = key.sign(messageHash);
+    int recId = lowS.v - 27;
+
+    assertArrayEquals(key.getPubKey(),
+        ECKey.recoverPubBytesFromSignature(recId, lowS, messageHash, false));
+    assertArrayEquals(key.getPubKey(),
+        ECKey.recoverPubBytesFromSignature(recId, lowS, messageHash, true));
+    assertThrows(IllegalArgumentException.class,
+        () -> ECKey.recoverPubBytesFromSignature(-1, lowS, messageHash, true));
+    assertNull(ECKey.recoverPubBytesFromSignature(4, lowS, messageHash, false));
+    assertThrows(IllegalArgumentException.class,
+        () -> ECKey.recoverPubBytesFromSignature(4, lowS, messageHash, true));
+
+    ECDSASignature highS = new ECDSASignature(
+        lowS.r, ECKey.CURVE.getN().subtract(lowS.s));
+    highS.v = (byte) (27 + (recId ^ 1));
+    assertArrayEquals(key.getPubKey(), ECKey.signatureToKeyBytes(messageHash, highS, true));
+  }
+
+  @Test
+  public void testModOddInverseConformance() {
+    BigInteger n = ECKey.CURVE.getN();
+    BigInteger[] values = {
+        BigInteger.ONE,
+        BigInteger.valueOf(2),
+        BigInteger.TEN,
+        new BigInteger("123456789abcdef", 16),
+        n.subtract(BigInteger.ONE)
+    };
+
+    for (BigInteger value : values) {
+      BigInteger inverse = BigIntegers.modOddInverse(n, value);
+      assertEquals(value.modInverse(n), inverse);
+      assertEquals(BigInteger.ONE, value.multiply(inverse).mod(n));
+    }
   }
 
   @Test

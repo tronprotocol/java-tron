@@ -9,6 +9,9 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import com.google.protobuf.ByteString;
+import java.math.BigInteger;
+import java.security.SignatureException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -20,10 +23,14 @@ import org.junit.Test;
 import org.slf4j.LoggerFactory;
 import org.tron.common.BaseTest;
 import org.tron.common.TestConstants;
+import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.Wallet;
 import org.tron.core.config.args.Args;
+import org.tron.core.exception.SignatureFormatException;
 import org.tron.protos.Protocol.AccountType;
+import org.tron.protos.Protocol.Key;
+import org.tron.protos.Protocol.Permission;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result;
@@ -62,6 +69,58 @@ public class TransactionCapsuleTest extends BaseTest {
     trxCap.setResultCode(contractResult);
     Assert.assertEquals(trxCap.getInstance()
         .getRet(0).getContractRet(), Result.contractResult.OUT_OF_TIME);
+  }
+
+  @Test
+  public void shouldGateStrictSignatureLength() throws Exception {
+    byte[] hash = new byte[32];
+    ECKey key = ECKey.fromPrivate(BigInteger.TEN);
+    Permission permission = permissionFor(key);
+    ByteString signature = ByteString.copyFrom(key.Base64toBytes(key.signHash(hash)));
+    ByteString padded = signature.concat(ByteString.copyFrom(new byte[3]));
+
+    Assert.assertEquals(1L, TransactionCapsule.checkWeight(
+        permission, Arrays.asList(signature), hash, null, true));
+    Assert.assertEquals(1L, TransactionCapsule.checkWeight(
+        permission, Arrays.asList(padded), hash, null, false));
+    Assert.assertThrows(SignatureFormatException.class,
+        () -> TransactionCapsule.checkWeight(
+            permission, Arrays.asList(padded), hash, null, true));
+  }
+
+  @Test
+  public void shouldRejectInvalidComponentsInStrictMode() {
+    byte[] hash = new byte[32];
+    ECKey key = ECKey.fromPrivate(BigInteger.TEN);
+    Permission permission = permissionFor(key);
+    byte[] signature = key.Base64toBytes(key.signHash(hash));
+
+    byte[] zeroR = Arrays.copyOf(signature, signature.length);
+    Arrays.fill(zeroR, 0, 32, (byte) 0);
+    Assert.assertThrows(SignatureException.class,
+        () -> TransactionCapsule.checkWeight(permission,
+            Arrays.asList(ByteString.copyFrom(zeroR)), hash, null, true));
+
+    byte[] zeroS = Arrays.copyOf(signature, signature.length);
+    Arrays.fill(zeroS, 32, 64, (byte) 0);
+    Assert.assertThrows(SignatureException.class,
+        () -> TransactionCapsule.checkWeight(permission,
+            Arrays.asList(ByteString.copyFrom(zeroS)), hash, null, true));
+
+    byte[] invalidV = Arrays.copyOf(signature, signature.length);
+    invalidV[64] = 8;
+    Assert.assertThrows(SignatureException.class,
+        () -> TransactionCapsule.checkWeight(permission,
+            Arrays.asList(ByteString.copyFrom(invalidV)), hash, null, true));
+  }
+
+  private Permission permissionFor(ECKey key) {
+    return Permission.newBuilder()
+        .setThreshold(1)
+        .addKeys(Key.newBuilder()
+            .setAddress(ByteString.copyFrom(key.getAddress()))
+            .setWeight(1))
+        .build();
   }
 
   @Test

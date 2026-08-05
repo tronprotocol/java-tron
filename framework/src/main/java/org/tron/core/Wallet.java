@@ -1524,6 +1524,11 @@ public class Wallet {
         .setValue(dbManager.getDynamicPropertiesStore().getAllowHardenExchangeCalculation())
         .build());
 
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAllowStrictEcdsaValidation")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowStrictEcdsaValidation())
+        .build());
+
     return builder.build();
   }
 

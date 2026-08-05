@@ -186,10 +186,17 @@ public class BlockCapsule implements ProtoCapsule<Block> {
   public boolean validateSignature(DynamicPropertiesStore dynamicPropertiesStore,
       AccountStore accountStore) throws ValidateSignatureException {
     try {
+      ByteString witnessSignature = block.getBlockHeader().getWitnessSignature();
+      boolean strictEcdsaValidation = CommonParameter.getInstance().isECKeyCryptoEngine()
+          && dynamicPropertiesStore.allowStrictEcdsaValidation();
+      if (strictEcdsaValidation
+          && !SignUtils.isValidLength(witnessSignature.size())) {
+        throw new ValidateSignatureException("Invalid ECDSA signature format");
+      }
       byte[] sigAddress = SignUtils.signatureToAddress(getRawHash().getBytes(),
           TransactionCapsule.getBase64FromByteString(
-              block.getBlockHeader().getWitnessSignature()),
-          CommonParameter.getInstance().isECKeyCryptoEngine());
+              witnessSignature),
+          CommonParameter.getInstance().isECKeyCryptoEngine(), strictEcdsaValidation);
       byte[] witnessAccountAddress = block.getBlockHeader().getRawData().getWitnessAddress()
           .toByteArray();
 

@@ -1,6 +1,5 @@
 package org.tron.common.crypto;
 
-import static org.tron.core.Constant.MAX_PER_SIGN_LENGTH;
 import static org.tron.core.Constant.PER_SIGN_LENGTH;
 
 import java.security.SecureRandom;
@@ -13,17 +12,15 @@ public class SignUtils {
 
   /**
    * Strict signature-length check for admission entry-points (RPC broadcast,
-   * P2P transaction ingress, peer hello handshake). Accepts only sizes in
-   * [{@link org.tron.core.Constant#PER_SIGN_LENGTH PER_SIGN_LENGTH},
-   * {@link org.tron.core.Constant#MAX_PER_SIGN_LENGTH MAX_PER_SIGN_LENGTH}].
+   * P2P transaction ingress, peer hello handshake). Accepts exactly
+   * {@link org.tron.core.Constant#PER_SIGN_LENGTH PER_SIGN_LENGTH} bytes.
    *
-   * <p>Consensus paths (e.g. {@code TransactionCapsule.checkWeight}) intentionally
-   * keep the looser {@code size < 65} check to remain compatible with historical
-   * on-chain signatures that carry trailing padding bytes; do not call this
-   * helper from those paths.
+   * <p>Consensus paths use the governance-controlled strict-validation flag. Their
+   * legacy behavior remains compatible with historical on-chain signatures that
+   * carry trailing padding bytes.
    */
   public static boolean isValidLength(int size) {
-    return size >= PER_SIGN_LENGTH && size <= MAX_PER_SIGN_LENGTH;
+    return size == PER_SIGN_LENGTH;
   }
 
   public static SignInterface getGeneratedRandomSign(
@@ -44,9 +41,15 @@ public class SignUtils {
   public static byte[] signatureToAddress(
       byte[] messageHash, String signatureBase64, boolean isECKeyCryptoEngine)
       throws SignatureException {
+    return signatureToAddress(messageHash, signatureBase64, isECKeyCryptoEngine, false);
+  }
+
+  public static byte[] signatureToAddress(
+      byte[] messageHash, String signatureBase64, boolean isECKeyCryptoEngine,
+      boolean strictEcdsaValidation) throws SignatureException {
     try {
       if (isECKeyCryptoEngine) {
-        return ECKey.signatureToAddress(messageHash, signatureBase64);
+        return ECKey.signatureToAddress(messageHash, signatureBase64, strictEcdsaValidation);
       }
       return SM2.signatureToAddress(messageHash, signatureBase64);
     } catch (Exception e) {

@@ -349,6 +349,8 @@ public class ProposalUtilTest extends BaseTest {
 
     testAllowHardenExchangeCalculationProposal();
 
+    testAllowStrictEcdsaValidationProposal();
+
     forkUtils.getManager().getDynamicPropertiesStore()
         .statsByVersion(ForkBlockVersionEnum.ENERGY_LIMIT.getValue(), stats);
     forkUtils.reset();
@@ -742,6 +744,36 @@ public class ProposalUtilTest extends BaseTest {
     } catch (Throwable e) {
       Assert.fail("Should pass when toggling 1 -> 0: " + e.getMessage());
     }
+  }
+
+  private void testAllowStrictEcdsaValidationProposal() {
+    long code = ProposalType.ALLOW_STRICT_ECDSA_VALIDATION.getCode();
+    ThrowingRunnable proposeZero = () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+        code, 0);
+    ThrowingRunnable proposeOne = () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+        code, 1);
+
+    ContractValidateException thrown = assertThrows(ContractValidateException.class, proposeOne);
+    assertEquals("Bad chain parameter id [ALLOW_STRICT_ECDSA_VALIDATION]",
+        thrown.getMessage());
+
+    activateFork(ForkBlockVersionEnum.VERSION_4_8_3);
+
+    thrown = assertThrows(ContractValidateException.class, proposeZero);
+    assertEquals("This value[ALLOW_STRICT_ECDSA_VALIDATION] is only allowed to be 1",
+        thrown.getMessage());
+
+    try {
+      proposeOne.run();
+    } catch (Throwable e) {
+      Assert.fail("Should allow one-way activation: " + e.getMessage());
+    }
+
+    dynamicPropertiesStore.saveAllowStrictEcdsaValidation(1);
+    thrown = assertThrows(ContractValidateException.class, proposeOne);
+    assertEquals(
+        "[ALLOW_STRICT_ECDSA_VALIDATION] has been valid, no need to propose again",
+        thrown.getMessage());
   }
 
   private void testAllowMarketTransaction() {
