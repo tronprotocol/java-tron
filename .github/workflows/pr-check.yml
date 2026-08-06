@@ -43,8 +43,8 @@ jobs:
               errors.push(`PR title is too long (${title.length}/72 characters).`);
             }
 
-            // 2. Conventional format check
-            const conventionalRegex = /^(feat|fix|refactor|docs|style|test|chore|ci|perf|build|revert)(\([^)]+\))?:\s\S.*/;
+            // 2. Conventional format check (allow a missing recommended space)
+            const conventionalRegex = /^(feat|fix|refactor|docs|style|test|chore|ci|perf|build|revert)(\([^)]+\))?: ?\S.*/;
             if (title && !conventionalRegex.test(title)) {
               errors.push(
                 'PR title must follow conventional format: `type(scope): description`\n' +
@@ -60,7 +60,7 @@ jobs:
 
             // 4. Description part should not start with a capital letter
             if (title) {
-              const descMatch = title.match(/^\w+(?:\([^)]+\))?:\s*(.+)/);
+              const descMatch = title.match(/^\w+(?:\([^)]+\))?: ?(.+)/);
               if (descMatch) {
                 const desc = descMatch[1];
                 if (/^[A-Z]/.test(desc)) {
