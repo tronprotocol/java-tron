@@ -4,6 +4,17 @@ After modularization, the recommended way to launch java-tron is via the shell s
 
 > **Supported platforms**: Linux and macOS. Windows is not supported.
 
+## Prerequisites
+
+The JDK version required to build and run java-tron is currently tied to the CPU architecture; the two versions are not interchangeable:
+
+| CPU Architecture | Required JDK |
+| :--------------- | :----------- |
+| `x86_64` / `amd64` | JDK 8 |
+| `ARM64` / `aarch64` | JDK 17 |
+
+> **Note**: `ARM64` / `aarch64` support is available starting with GreatVoyage-v4.8.1.
+
 ## Download
 
 ```
@@ -45,11 +56,9 @@ java-tron-1.0.0/bin/FullNode -c config.conf -w
 
 JVM options can also be specified, located in `bin/java-tron.vmoptions`:
 ```
-# demo (compatible with JDK 8 / JDK 17)
+# Heap-size customization example
 -Xms2g
 -Xmx9g
--XX:+PrintGCDetails
--Xloggc:./gc.log
--XX:+PrintGCDateStamps
--XX:ReservedCodeCacheSize=256m
 ```
+
+The generated `java-tron.vmoptions` file already contains GC options appropriate for the build architecture and its required JDK. Keep those architecture-specific options when changing the heap size; do not copy GC options between JDK 8 and JDK 17 deployments.
