@@ -1,0 +1,157 @@
+apply plugin: 'com.google.protobuf'
+apply plugin: 'checkstyle'
+
+// Unit tests for this module live in framework/src/test/java/ — following the
+// project-wide convention where module unit tests are consolidated under the
+// framework module.
+//
+// Reference code for using p2p as a library lives in src/example/java/. It's
+// compiled in a separate sourceSet (so API changes surface here too) but NOT
+// packaged into the main jar and NOT executed as tests.
+
+checkstyle {
+    toolVersion = '8.7'
+    configFile = file("${rootDir}/config/checkstyle/checkStyleAll.xml")
+    maxWarnings = 0
+}
+
+checkstyleMain {
+    source = 'src/main/java'
+    exclude '**/protos/**'
+}
+
+// Exclude example code from checkstyle — it's reference-only and follows
+// upstream libp2p's style, not java-tron's strict rules.
+tasks.matching { it.name == 'checkstyleExample' }.configureEach { it.enabled = false }
+
+// Match the root-level encoding setting (which targets compileJava +
+// compileTestJava only) for the custom example sourceSet.
+tasks.matching { it.name == 'compileExampleJava' }
+    .configureEach { it.options.encoding = 'UTF-8' }
+
+def protobufVersion = '3.25.8'
+
+sourceSets {
+    main {
+        proto {
+            srcDir 'src/main/protos'
+        }
+        java {
+            srcDir 'src/main/java'
+        }
+    }
+    example {
+        // srcDirs for java and resources default to src/example/{java,resources};
+        // no explicit srcDir calls needed. Explicit calls would add duplicates
+        // and break :p2p:processExampleResources.
+        //
+        // example code compiles against main's output + implementation deps,
+        // so API changes in main surface as example compile errors.
+        compileClasspath += sourceSets.main.output
+        runtimeClasspath += sourceSets.main.output
+    }
+}
+
+configurations {
+    exampleImplementation.extendsFrom implementation
+    exampleRuntimeOnly.extendsFrom runtimeOnly
+}
+
+// These exclusions used to live on the `libp2p` dependency in common/build.gradle.
+// Internalizing the module moves the same transitive dom4j tail (pulled in by the
+// Aliyun/Route53 SDKs) here, so the exclusions move with it — dropping them would
+// silently re-admit artifacts the project has excluded since:
+//   https://github.com/dom4j/dom4j/pull/116
+//   https://github.com/gradle/gradle/issues/13656
+//   https://github.com/dom4j/dom4j/issues/99
+configurations.configureEach {
+    exclude group: 'jaxen', module: 'jaxen'
+    exclude group: 'javax.xml.stream', module: 'stax-api'
+    exclude group: 'net.java.dev.msv', module: 'msv'
+    exclude group: 'net.java.dev.msv', module: 'xsdlib'
+    exclude group: 'relaxngDatatype', module: 'relaxngDatatype'
+    exclude group: 'pull-parser', module: 'pull-parser'
+    exclude group: 'xpp3', module: 'xpp3'
+}
+
+dependencies {
+    // protobuf & grpc (implementation scope: not leaked to consumers)
+    implementation "com.google.protobuf:protobuf-java:${protobufVersion}"
+    implementation "com.google.protobuf:protobuf-java-util:${protobufVersion}"
+    // grpc-netty provides Netty transitively, which p2p uses for TCP/UDP transport.
+    // grpc itself is not used (p2p protos define only messages, no services).
+    // Track the project's grpc version rather than pinning libp2p's, so p2p
+    // cannot drift from the Netty that the rest of java-tron resolves.
+    implementation "io.grpc:grpc-netty:${rootProject.grpcVersion}"
+    // Netty 4.2 split io.netty.handler.codec.protobuf out of netty-codec into its
+    // own artifact, so the varint32 framing codecs p2p puts on every channel
+    // pipeline no longer arrive transitively. framework/build.gradle declares the
+    // same dependency for the same reason; this mirrors it, excludes included.
+    implementation('io.netty:netty-codec-protobuf:4.2.15.Final') {
+        exclude group: 'com.google.protobuf'
+        exclude group: 'com.google.protobuf.nano'
+    }
+
+    // p2p-specific dependencies
+    implementation 'org.xerial.snappy:snappy-java:1.1.10.5'
+    // Matches the bcprov-jdk18on version root build.gradle gives every
+    // subproject; bcpkix is not provided there, so declare it explicitly.
+    implementation 'org.bouncycastle:bcpkix-jdk18on:1.84'
+    implementation 'dnsjava:dnsjava:3.6.2'
+    implementation 'commons-cli:commons-cli:1.5.0'
+    implementation('software.amazon.awssdk:route53:2.18.41') {
+        exclude group: 'io.netty', module: 'netty-codec-http2'
+        exclude group: 'io.netty', module: 'netty-codec-http'
+        exclude group: 'io.netty', module: 'netty-common'
+        exclude group: 'io.netty', module: 'netty-buffer'
+        exclude group: 'io.netty', module: 'netty-transport'
+        exclude group: 'io.netty', module: 'netty-codec'
+        exclude group: 'io.netty', module: 'netty-handler'
+        exclude group: 'io.netty', module: 'netty-resolver'
+        exclude group: 'io.netty', module: 'netty-transport-classes-epoll'
+        exclude group: 'io.netty', module: 'netty-transport-native-unix-common'
+        exclude group: 'software.amazon.awssdk', module: 'netty-nio-client'
+    }
+    implementation('com.aliyun:alidns20150109:3.0.1') {
+        exclude group: 'org.bouncycastle', module: 'bcprov-jdk15on'
+        exclude group: 'org.bouncycastle', module: 'bcpkix-jdk15on'
+        exclude group: 'pull-parser', module: 'pull-parser'
+        exclude group: 'xpp3', module: 'xpp3'
+    }
+
+    // commons-lang3: root provides 3.4 as 'implementation' (not on compile classpath).
+    // Re-declare here so p2p can compile. Uses 3.4-compatible API (new Builder() not builder()).
+    implementation 'org.apache.commons:commons-lang3:3.4'
+
+    // provided by root build.gradle for all subprojects:
+    // slf4j-api, logback, bcprov-jdk18on, lombok, junit, mockito
+
+    // Lombok for the example sourceSet (root build.gradle only wires it for
+    // main + test).
+    exampleCompileOnly 'org.projectlombok:lombok:1.18.34'
+    exampleAnnotationProcessor 'org.projectlombok:lombok:1.18.34'
+}
+
+protobuf {
+    generatedFilesBaseDir = "$projectDir/src"
+    protoc {
+        artifact = "com.google.protobuf:protoc:${protobufVersion}"
+    }
+    generateProtoTasks {
+        all().each { task ->
+            task.builtins {
+                java { outputSubDir = "java" }
+            }
+        }
+    }
+}
+
+clean.doFirst {
+    delete "src/main/java/org/tron/p2p/protos"
+}
+
+processResources.dependsOn(generateProto)
+
+// No jacocoTestReport block: this module has no local tests. Coverage for
+// p2p code is captured by the tests in framework/src/test/ and reported via
+// :framework:jacocoTestReport.
