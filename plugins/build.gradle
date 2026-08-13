@@ -148,8 +148,11 @@ def binaryRelease(taskName, jarName, mainClass) {
         // not warn about implicit_dependency and disable execution optimizations
         // (and so partial / parallel builds cannot run binaryRelease before the
         // dependency jars exist).
+        // :p2p arrives transitively through :common, which exposes it via
+        // `api project(":p2p")`, so its jar is on runtimeClasspath too.
         dependsOn (project(':protocol').jar, project(':platform').jar,
-                project(':crypto').jar, project(':common').jar) // explicit_dependency
+                project(':crypto').jar, project(':common').jar,
+                project(':p2p').jar) // explicit_dependency
         from {
             configurations.runtimeClasspath.collect { // https://docs.gradle.org/current/userguide/upgrading_version_6.html#changes_6.3
                 it.isDirectory() ? it : zipTree(it)

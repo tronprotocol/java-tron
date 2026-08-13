@@ -187,8 +187,14 @@ def binaryRelease(taskName, jarName, mainClass) {
         }
 
         // explicit_dependency
+        // :p2p is included because :common now exposes it via `api project(":p2p")`,
+        // so p2p-1.0.0.jar is on runtimeClasspath and gets zipped into the fat jar.
+        // Without it Gradle reports an implicit_dependency and disables execution
+        // optimizations, and a parallel build could assemble FullNode.jar before
+        // :p2p:jar has been written.
         dependsOn (project(':actuator').jar, project(':consensus').jar, project(':chainbase').jar,
-                project(':crypto').jar, project(':common').jar, project(':protocol').jar, project(':platform').jar)
+                project(':crypto').jar, project(':common').jar, project(':protocol').jar,
+                project(':platform').jar, project(':p2p').jar)
 
         from {
             configurations.runtimeClasspath.collect {

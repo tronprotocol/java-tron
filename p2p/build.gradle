@@ -119,9 +119,6 @@ dependencies {
         exclude group: 'xpp3', module: 'xpp3'
     }
 
-    // commons-lang3: root provides 3.4 as 'implementation' (not on compile classpath).
-    // Re-declare here so p2p can compile. Uses 3.4-compatible API (new Builder() not builder()).
-    implementation 'org.apache.commons:commons-lang3:3.4'
 
     // provided by root build.gradle for all subprojects:
     // slf4j-api, logback, bcprov-jdk18on, lombok, junit, mockito
@@ -151,6 +148,15 @@ clean.doFirst {
 }
 
 processResources.dependsOn(generateProto)
+
+// generatedFilesBaseDir points at $projectDir/src, so the protobuf plugin registers
+// src/example/{proto,resources} as outputs of generateExampleProto even though the
+// example sourceSet has no .proto files. processExampleResources reads that same
+// directory, which Gradle reports as an undeclared producer/consumer pair and answers
+// by disabling execution optimizations. Declare the edge, matching the line above.
+tasks.matching { it.name == 'processExampleResources' }.configureEach {
+    it.dependsOn(tasks.named('generateExampleProto'))
+}
 
 // No jacocoTestReport block: this module has no local tests. Coverage for
 // p2p code is captured by the tests in framework/src/test/ and reported via
