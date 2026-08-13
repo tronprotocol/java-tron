@@ -265,7 +265,6 @@ public class HttpApiOnSolidityService extends HttpService {
     context.addServlet(new ServletHolder(getMarketPairListOnSolidityServlet),
         "/walletsolidity/getmarketpairlist");
 
-    // only for SolidityNode
     context.addServlet(new ServletHolder(getTransactionByIdOnSolidityServlet),
         "/walletsolidity/gettransactionbyid");
     context.addServlet(new ServletHolder(getTransactionInfoByIdOnSolidityServlet),
