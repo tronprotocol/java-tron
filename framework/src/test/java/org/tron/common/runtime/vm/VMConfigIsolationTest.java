@@ -73,6 +73,17 @@ public class VMConfigIsolationTest {
     assertFalse("setGlobalSnapshot must drop the thread-local view", VMConfig.allowTvmOsaka());
   }
 
+  @Test
+  public void testSnapshotGlobalPreservesStrictEcdsaValidation() {
+    VMConfig.initAllowStrictEcdsaValidation(1);
+    VMConfig.Snapshot snapshot = snapshotGlobal();
+
+    VMConfig.initAllowStrictEcdsaValidation(0);
+    VMConfig.setGlobalSnapshot(snapshot);
+
+    assertTrue(VMConfig.allowStrictEcdsaValidation());
+  }
+
   // Deep-copy the current global config through the public getters (no thread-local set here, so
   // the getters read the global) so @After can restore the exact prior state.
   private static VMConfig.Snapshot snapshotGlobal() {
@@ -103,6 +114,7 @@ public class VMConfigIsolationTest {
     snapshot.allowTvmSelfdestructRestriction = VMConfig.allowTvmSelfdestructRestriction();
     snapshot.allowTvmOsaka = VMConfig.allowTvmOsaka();
     snapshot.allowHardenResourceCalculation = VMConfig.allowHardenResourceCalculation();
+    snapshot.allowStrictEcdsaValidation = VMConfig.allowStrictEcdsaValidation();
     return snapshot;
   }
 }

@@ -11,12 +11,14 @@ import java.lang.reflect.InvocationTargetException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
 import org.bouncycastle.util.Arrays;
+import org.bouncycastle.util.BigIntegers;
 import org.bouncycastle.util.encoders.Hex;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.BaseTest;
 import org.tron.common.TestConstants;
+import org.tron.common.crypto.ECKey;
 import org.tron.common.runtime.ProgramResult;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
@@ -165,6 +167,29 @@ public class PrecompiledContractsTest extends BaseTest {
     ProgramResult programResult = new ProgramResult();
     contract.setResult(programResult);
     return contract;
+  }
+
+  @Test
+  public void testECRecoverPointAtInfinityStrictValidation() {
+    byte[] input = new byte[128];
+    input[31] = 1;
+    input[63] = 27;
+    byte[] r = BigIntegers.asUnsignedByteArray(
+        32, ECKey.CURVE.getG().getAffineXCoord().toBigInteger());
+    System.arraycopy(r, 0, input, 64, r.length);
+    input[127] = 1;
+    PrecompiledContract contract = new PrecompiledContracts.ECRecover();
+    boolean previousStrictValidation = VMConfig.allowStrictEcdsaValidation();
+
+    try {
+      VMConfig.initAllowStrictEcdsaValidation(0);
+      Assert.assertEquals(32, contract.execute(input).getRight().length);
+
+      VMConfig.initAllowStrictEcdsaValidation(1);
+      Assert.assertArrayEquals(new byte[0], contract.execute(input).getRight());
+    } finally {
+      VMConfig.initAllowStrictEcdsaValidation(previousStrictValidation ? 1 : 0);
+    }
   }
 
   //@Test

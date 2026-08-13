@@ -474,7 +474,12 @@ public class ECKey implements Serializable, SignInterface {
   public static byte[] signatureToAddress(byte[] messageHash,
       ECDSASignature sig) throws
       SignatureException {
-    return Hash.computeAddress(signatureToKeyBytes(messageHash, sig));
+    return signatureToAddress(messageHash, sig, false);
+  }
+
+  public static byte[] signatureToAddress(byte[] messageHash,
+      ECDSASignature sig, boolean strictValidation) throws SignatureException {
+    return Hash.computeAddress(signatureToKeyBytes(messageHash, sig, strictValidation));
   }
 
   /**
@@ -541,6 +546,8 @@ public class ECKey implements Serializable, SignInterface {
   @Nullable
   public static byte[] recoverPubBytesFromSignature(int recId,
       ECDSASignature sig, byte[] messageHash, boolean strictValidation) {
+    check(sig != null && sig.r != null && sig.s != null,
+        "signature and its components must not be null");
     check(recId >= 0, "recId must be positive");
     check(sig.r.signum() >= 0, "r must be positive");
     check(sig.s.signum() >= 0, "s must be positive");
@@ -616,6 +623,9 @@ public class ECKey implements Serializable, SignInterface {
     BigInteger eInvrInv = rInv.multiply(eInv).mod(n);
     ECPoint.Fp q = (ECPoint.Fp) ECAlgorithms.sumOfTwoMultiplies(CURVE
         .getG(), eInvrInv, R, srInv);
+    if (strictValidation && q.isInfinity()) {
+      return null;
+    }
     return q.getEncoded(/* compressed */ false);
   }
 

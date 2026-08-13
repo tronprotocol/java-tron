@@ -181,6 +181,35 @@ public class ECKeyTest {
   }
 
   @Test
+  public void testRecoveryRejectsNullSignatureComponents() {
+    byte[] messageHash = new byte[32];
+
+    assertThrows(IllegalArgumentException.class,
+        () -> ECKey.recoverPubBytesFromSignature(0, null, messageHash, false));
+    assertThrows(IllegalArgumentException.class,
+        () -> ECKey.recoverPubBytesFromSignature(0,
+            new ECDSASignature(null, BigInteger.ONE), messageHash, false));
+    assertThrows(IllegalArgumentException.class,
+        () -> ECKey.recoverPubBytesFromSignature(0,
+            new ECDSASignature(BigInteger.ONE, null), messageHash, false));
+  }
+
+  @Test
+  public void testStrictRecoveryRejectsPointAtInfinity() {
+    byte[] messageHash = new byte[32];
+    messageHash[messageHash.length - 1] = 1;
+    ECDSASignature signature = new ECDSASignature(
+        ECKey.CURVE.getG().getAffineXCoord().toBigInteger(), BigInteger.ONE);
+    signature.v = 27;
+
+    assertArrayEquals(new byte[]{0},
+        ECKey.recoverPubBytesFromSignature(0, signature, messageHash, false));
+    assertNull(ECKey.recoverPubBytesFromSignature(0, signature, messageHash, true));
+    assertThrows(SignatureException.class,
+        () -> ECKey.signatureToKeyBytes(messageHash, signature, true));
+  }
+
+  @Test
   public void testModOddInverseConformance() {
     BigInteger n = ECKey.CURVE.getN();
     BigInteger[] values = {
