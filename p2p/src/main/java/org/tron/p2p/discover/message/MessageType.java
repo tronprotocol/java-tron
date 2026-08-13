@@ -32,6 +32,7 @@ public enum MessageType {
       map.put(value.type, value);
     }
   }
+
   public static MessageType fromByte(byte type) {
     MessageType typeEnum = map.get(type);
     return typeEnum == null ? UNKNOWN : typeEnum;

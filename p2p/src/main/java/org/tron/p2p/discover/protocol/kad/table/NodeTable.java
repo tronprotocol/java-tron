@@ -1,13 +1,13 @@
 package org.tron.p2p.discover.protocol.kad.table;
 
+import static org.tron.p2p.discover.protocol.kad.table.KademliaOptions.BUCKET_SIZE;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.tron.p2p.discover.Node;
-
-import static org.tron.p2p.discover.protocol.kad.table.KademliaOptions.BUCKET_SIZE;
 
 public class NodeTable {
   private final Node node;  // our node
@@ -82,7 +82,7 @@ public class NodeTable {
 
   public int getBucketId(NodeEntry e) {
     int id = e.getDistance() - 1;
-    return Math.max(id, 0);
+    return StrictMath.max(id, 0);
   }
 
   public synchronized int getNodesCount() {

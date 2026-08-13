@@ -78,7 +78,7 @@ public class KadService implements DiscoverService {
         discoverTask.close();
       }
     } catch (Exception e) {
-      log.error("Close nodeManagerTasksTimer or pongTimer failed", e);
+      logger.error("Close nodeManagerTasksTimer or pongTimer failed", e);
       throw e;
     }
   }

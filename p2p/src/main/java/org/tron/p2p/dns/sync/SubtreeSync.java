@@ -1,6 +1,5 @@
 package org.tron.p2p.dns.sync;
 
-
 import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.LinkedList;

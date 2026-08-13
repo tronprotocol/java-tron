@@ -52,9 +52,9 @@ public class HelloMessage extends Message {
 
   @Override
   public String toString() {
-    return "HelloMessage networkId: " + getNetworkId() +
-            ", version: " + getVersion() +
-            ", code: " + getCode();
+    return "HelloMessage networkId: " + getNetworkId()
+        + ", version: " + getVersion()
+        + ", code: " + getCode();
   }
 
   @Override

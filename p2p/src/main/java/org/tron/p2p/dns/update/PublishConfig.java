@@ -1,6 +1,5 @@
 package org.tron.p2p.dns.update;
 
-
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;

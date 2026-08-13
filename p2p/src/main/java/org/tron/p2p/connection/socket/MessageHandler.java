@@ -29,7 +29,7 @@ public class MessageHandler extends ByteToMessageDecoder {
 
   @Override
   public void channelActive(ChannelHandlerContext ctx) {
-    log.debug("Channel active, {}", ctx.channel().remoteAddress());
+    logger.debug("Channel active, {}", ctx.channel().remoteAddress());
     channel.setChannelHandlerContext(ctx);
     if (channel.isActive()) {
       if (channel.isDiscoveryMode()) {
@@ -76,7 +76,7 @@ public class MessageHandler extends ByteToMessageDecoder {
       }
       channel.processException(e);
     } catch (Throwable t) {
-      log.error("Decode message from {} failed, message:{}", channel.getInetSocketAddress(),
+      logger.error("Decode message from {} failed, message:{}", channel.getInetSocketAddress(),
           ByteArray.toHexString(data));
       throw t;
     }

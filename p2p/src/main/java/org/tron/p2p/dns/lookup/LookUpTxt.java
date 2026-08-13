@@ -1,6 +1,5 @@
 package org.tron.p2p.dns.lookup;
 
-
 import com.google.common.annotations.VisibleForTesting;
 import java.net.Inet4Address;
 import java.net.Inet6Address;
@@ -10,9 +9,9 @@ import java.time.Duration;
 import java.util.Random;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import lombok.extern.slf4j.Slf4j;
@@ -82,7 +81,7 @@ public class LookUpTxt {
   // as dns server has dns cache, we may get the name's latest TXTRecord ttl later after it changes
   public static TXTRecord lookUpTxt(String name) throws TextParseException, UnknownHostException {
     TXTRecord txt = null;
-    log.info("LookUp name: {}", name);
+    logger.info("LookUp name: {}", name);
     Lookup lookup = new Lookup(name, Type.TXT);
     int times = 0;
     Record[] records = null;
@@ -102,15 +101,15 @@ public class LookUpTxt {
       long end = System.currentTimeMillis();
       times += 1;
       if (records != null) {
-        log.debug("Succeed to use dns: {}, cur cost: {}ms, total cost: {}ms", publicDns,
+        logger.debug("Succeed to use dns: {}, cur cost: {}ms, total cost: {}ms", publicDns,
             end - thisTime, end - start);
         break;
       } else {
-        log.debug("Failed to use dns: {}, cur cost: {}ms", publicDns, end - thisTime);
+        logger.debug("Failed to use dns: {}, cur cost: {}ms", publicDns, end - thisTime);
       }
     }
     if (records == null) {
-      log.error("Failed to lookUp name:{}", name);
+      logger.error("Failed to lookUp name:{}", name);
       return null;
     }
     for (Record item : records) {
@@ -126,14 +125,15 @@ public class LookUpTxt {
    *   <li>Random public DNS server (fallback, retried up to {@link #maxRetryTimes} times).</li>
    *
    * @param domain the domain name to resolve (e.g. {@code "nodes.example.com"})
-   * @param useIPv4 {@code true} to query A records (IPv4); {@code false} to query AAAA records (IPv6)
+   * @param useIPv4 {@code true} to query A records (IPv4); {@code false} to query AAAA
+   *     records (IPv6)
    * @return the resolved {@link InetAddress}, or {@code null} if resolution fails
    */
   public static InetAddress lookUpIp(String domain, boolean useIPv4) {
     if (StringUtils.isEmpty(domain)) {
       return null;
     }
-    log.debug("LookUp {} for domain: {}", useIPv4 ? "IPv4" : "IPv6", domain);
+    logger.debug("LookUp {} for domain: {}", useIPv4 ? "IPv4" : "IPv6", domain);
 
     // Step 1: OS name resolver — honours /etc/hosts, so LAN mappings work without a DNS query.
     Future<InetAddress[]> future = OS_RESOLVER_EXECUTOR.submit(
@@ -142,7 +142,7 @@ public class LookUpTxt {
       for (InetAddress addr : future.get(2000, TimeUnit.MILLISECONDS)) {
         if ((useIPv4 && addr instanceof Inet4Address)
             || (!useIPv4 && addr instanceof Inet6Address)) {
-          log.debug("Resolved {} via OS name resolver (may be /etc/hosts): {}", domain,
+          logger.debug("Resolved {} via OS name resolver (may be /etc/hosts): {}", domain,
               addr.getHostAddress());
           return addr;
         }
@@ -153,12 +153,12 @@ public class LookUpTxt {
       // will keep running until the OS-level resolution completes or times out.
       // This is an accepted limitation of wrapping non-interruptible I/O in a Future.
       future.cancel(true);
-      log.debug("OS name resolver timed out for {}", domain);
+      logger.debug("OS name resolver timed out for {}", domain);
     } catch (ExecutionException e) {
-      log.debug("OS name resolver failed for {}: {}", domain, e.getCause().getMessage());
+      logger.debug("OS name resolver failed for {}: {}", domain, e.getCause().getMessage());
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt(); // restore interrupt flag
-      log.debug("OS name resolver interrupted for {}", domain);
+      logger.debug("OS name resolver interrupted for {}", domain);
     }
 
     // Step 2: fall back to random public DNS servers.
@@ -179,18 +179,18 @@ public class LookUpTxt {
           InetAddress address = useIPv4
               ? ((ARecord) records[0]).getAddress()
               : ((AAAARecord) records[0]).getAddress();
-          log.debug("Resolved {} via public DNS {}, cur cost: {}ms, total cost: {}ms",
+          logger.debug("Resolved {} via public DNS {}, cur cost: {}ms, total cost: {}ms",
               domain, dns, end - thisTime, end - start);
           return address;
         }
-        log.debug("Public DNS {} failed for {}, cur cost: {}ms", dns, domain,
+        logger.debug("Public DNS {} failed for {}, cur cost: {}ms", dns, domain,
             System.currentTimeMillis() - thisTime);
       } catch (TextParseException | UnknownHostException e) {
-        log.debug("Public DNS {} error for {}: {}", dns, domain, e.getMessage());
+        logger.debug("Public DNS {} error for {}: {}", dns, domain, e.getMessage());
       }
     }
 
-    log.warn("Failed to resolve {} for domain: {}", useIPv4 ? "IPv4" : "IPv6", domain);
+    logger.warn("Failed to resolve {} for domain: {}", useIPv4 ? "IPv4" : "IPv6", domain);
     return null;
   }
 

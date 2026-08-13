@@ -6,9 +6,8 @@ import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
 import io.netty.channel.socket.DatagramPacket;
-import lombok.Getter;
-
 import java.util.concurrent.atomic.AtomicLong;
+import lombok.Getter;
 
 public class TrafficStats {
   public static final TrafficStatHandler tcp = new TrafficStatHandler();

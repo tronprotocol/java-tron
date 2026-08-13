@@ -1,6 +1,5 @@
 package org.tron.p2p.dns;
 
-
 import static org.tron.p2p.discover.message.kad.KadMessage.getEndpointFromNode;
 
 import com.google.protobuf.InvalidProtocolBufferException;

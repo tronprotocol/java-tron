@@ -30,19 +30,19 @@ public class DiscoverServer {
       try {
         start();
       } catch (Exception e) {
-        log.error("Discovery server start failed", e);
+        logger.error("Discovery server start failed", e);
       }
     }, "DiscoverServer").start();
   }
 
   public void close() {
-    log.info("Closing discovery server...");
+    logger.info("Closing discovery server...");
     shutdown = true;
     if (channel != null) {
       try {
         channel.close().await(SERVER_CLOSE_WAIT, TimeUnit.SECONDS);
       } catch (Exception e) {
-        log.error("Closing discovery server failed", e);
+        logger.error("Closing discovery server failed", e);
       }
     }
   }
@@ -71,21 +71,21 @@ public class DiscoverServer {
 
         channel = b.bind(port).sync().channel();
 
-        log.info("Discovery server started, bind port {}", port);
+        logger.info("Discovery server started, bind port {}", port);
 
         channel.closeFuture().sync();
         if (shutdown) {
-          log.info("Shutdown discovery server");
+          logger.info("Shutdown discovery server");
           break;
         }
-        log.warn("Restart discovery server after 5 sec pause...");
+        logger.warn("Restart discovery server after 5 sec pause...");
         Thread.sleep(SERVER_RESTART_WAIT);
       }
     } catch (InterruptedException e) {
-      log.warn("Discover server interrupted");
+      logger.warn("Discover server interrupted");
       Thread.currentThread().interrupt();
     } catch (Exception e) {
-      log.error("Start discovery server with port {} failed", port, e);
+      logger.error("Start discovery server with port {} failed", port, e);
     } finally {
       group.shutdownGracefully().sync();
     }

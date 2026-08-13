@@ -1,6 +1,5 @@
 package org.tron.p2p.dns.tree;
 
-
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.security.SignatureException;

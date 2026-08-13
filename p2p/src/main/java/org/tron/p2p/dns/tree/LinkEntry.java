@@ -1,6 +1,5 @@
 package org.tron.p2p.dns.tree;
 
-
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.p2p.exception.DnsException;

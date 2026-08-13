@@ -38,7 +38,7 @@ public class PeerClient {
         f.sync().channel().closeFuture().sync();
       }
     } catch (Exception e) {
-      log.warn("PeerClient can't connect to {}:{} ({})", host, port, e.getMessage());
+      logger.warn("PeerClient can't connect to {}:{} ({})", host, port, e.getMessage());
     }
   }
 
@@ -69,7 +69,7 @@ public class PeerClient {
     if (channelFuture != null) {
       channelFuture.addListener((ChannelFutureListener) future -> {
         if (!future.isSuccess()) {
-          log.warn("Connect to peer {} fail, cause:{}", node.getPreferInetSocketAddress(),
+          logger.warn("Connect to peer {} fail, cause:{}", node.getPreferInetSocketAddress(),
               future.cause().getMessage());
           future.channel().close();
           if (!discoveryMode) {

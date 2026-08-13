@@ -1,6 +1,5 @@
 package org.tron.p2p.example;
 
-
 import static java.lang.Thread.sleep;
 
 import java.net.InetSocketAddress;

@@ -1,9 +1,8 @@
 package org.tron.p2p.discover;
 
+import java.util.List;
 import org.tron.p2p.discover.socket.EventHandler;
 import org.tron.p2p.discover.socket.UdpEvent;
-
-import java.util.List;
 
 public interface DiscoverService extends EventHandler {
 

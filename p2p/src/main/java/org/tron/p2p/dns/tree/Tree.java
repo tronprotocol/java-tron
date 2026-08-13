@@ -1,6 +1,5 @@
 package org.tron.p2p.dns.tree;
 
-
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.math.BigInteger;
 import java.net.UnknownHostException;
@@ -9,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import lombok.Getter;
@@ -62,7 +62,7 @@ public class Tree {
     List<Entry> subtrees = new ArrayList<>();
     while (!leafs.isEmpty()) {
       int total = leafs.size();
-      int n = Math.min(MaxChildren, total);
+      int n = StrictMath.min(MaxChildren, total);
       Entry branch = build(leafs.subList(0, n));
 
       leafs = leafs.subList(n, total);
@@ -159,7 +159,7 @@ public class Tree {
     for (Map.Entry<String, Entry> item : entries.entrySet()) {
       String hash = item.getKey();
       String newKey = StringUtils.isNoneEmpty(rootDomain) ? hash + "." + rootDomain : hash;
-      dnsRecords.put(newKey.toLowerCase(), item.getValue().toString());
+      dnsRecords.put(newKey.toLowerCase(Locale.ROOT), item.getValue().toString());
     }
     return dnsRecords;
   }
@@ -237,7 +237,7 @@ public class Tree {
       try {
         subNodes = DnsNode.decompress(joinStr);
       } catch (InvalidProtocolBufferException | UnknownHostException e) {
-        log.error("", e);
+        logger.error("", e);
         continue;
       }
       nodes.addAll(subNodes);

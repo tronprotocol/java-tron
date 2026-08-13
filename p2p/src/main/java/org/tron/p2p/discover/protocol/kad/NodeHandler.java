@@ -129,7 +129,7 @@ public class NodeHandler {
 
   public void handleNeighbours(NeighborsMessage msg, InetSocketAddress sender) {
     if (!waitForNeighbors) {
-      log.warn("Receive neighbors from {} without send find nodes", sender);
+      logger.warn("Receive neighbors from {} without send find nodes", sender);
       return;
     }
     findNodeFail = 0;
@@ -174,7 +174,7 @@ public class NodeHandler {
           handleTimedOut();
         }
       } catch (Exception e) {
-        log.error("Unhandled exception in pong timer schedule", e);
+        logger.error("Unhandled exception in pong timer schedule", e);
       }
     }, KadService.getPingTimeout(), TimeUnit.MILLISECONDS);
   }

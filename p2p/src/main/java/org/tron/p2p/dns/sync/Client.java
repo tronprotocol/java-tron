@@ -1,6 +1,5 @@
 package org.tron.p2p.dns.sync;
 
-
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import java.net.UnknownHostException;
@@ -66,7 +65,7 @@ public class Client {
       try {
         syncTree(urlScheme, clientTree, tree);
       } catch (Exception e) {
-        log.error("SyncTree failed, url:" + urlScheme, e);
+        logger.error("SyncTree failed, url:" + urlScheme, e);
         continue;
       }
     }
@@ -97,7 +96,7 @@ public class Client {
     }
 
     tree.setRootEntry(clientTree.getRoot());
-    log.info("SyncTree {} complete, LinkEntry size:{}, NodesEntry size:{}, node size:{}",
+    logger.info("SyncTree {} complete, LinkEntry size:{}, NodesEntry size:{}, node size:{}",
         urlScheme, tree.getLinksEntry().size(), tree.getNodesEntry().size(),
         tree.getDnsNodes().size());
   }
@@ -118,7 +117,8 @@ public class Client {
     throw new DnsException(TypeEnum.NO_ROOT_FOUND, "domain: " + linkEntry.getDomain());
   }
 
-  // resolveEntry retrieves an entry from the cache or fetches it from the network if it isn't cached.
+  // resolveEntry retrieves an entry from the cache or fetches it from the network
+  // if it isn't cached.
   public Entry resolveEntry(String domain, String hash)
       throws DnsException, TextParseException, UnknownHostException {
     Entry entry = cache.getIfPresent(hash);
@@ -174,7 +174,7 @@ public class Client {
       try {
         randomIterator.addTree(urlScheme);
       } catch (DnsException e) {
-        log.error("AddTree failed " + urlScheme, e);
+        logger.error("AddTree failed " + urlScheme, e);
       }
     }
     return randomIterator;

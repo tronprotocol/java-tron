@@ -41,7 +41,21 @@ public class NetUtil {
 
   //https://codeantenna.com/a/jvrULhCbdj
   public static final Pattern PATTERN_IPv6 = Pattern.compile(
-      "^((([0-9A-Fa-f]{1,4}:){7}([0-9A-Fa-f]{1,4}|:))|(([0-9A-Fa-f]{1,4}:){6}(:[0-9A-Fa-f]{1,4}|((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){5}(((:[0-9A-Fa-f]{1,4}){1,2})|:((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){4}(((:[0-9A-Fa-f]{1,4}){1,3})|((:[0-9A-Fa-f]{1,4})?:((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){3}(((:[0-9A-Fa-f]{1,4}){1,4})|((:[0-9A-Fa-f]{1,4}){0,2}:((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){2}(((:[0-9A-Fa-f]{1,4}){1,5})|((:[0-9A-Fa-f]{1,4}){0,3}:((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){1}(((:[0-9A-Fa-f]{1,4}){1,6})|((:[0-9A-Fa-f]{1,4}){0,4}:((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3}))|:))|(:(((:[0-9A-Fa-f]{1,4}){1,7})|((:[0-9A-Fa-f]{1,4}){0,5}:((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3}))|:)))(%\\S+)?$");
+      "^((([0-9A-Fa-f]{1,4}:){7}([0-9A-Fa-f]{1,4}|:))|(([0-9A-Fa-f]{1,4}:){6}(:[0-9A-Fa"
+          + "-f]{1,4}|((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1"
+          + "-9]?\\d)){3})|:))|(([0-9A-Fa-f]{1,4}:){5}(((:[0-9A-Fa-f]{1,4}){1,2})|:((25[0-5]|"
+          + "2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3})|:))|("
+          + "([0-9A-Fa-f]{1,4}:){4}(((:[0-9A-Fa-f]{1,4}){1,3})|((:[0-9A-Fa-f]{1,4})?:((25[0-5"
+          + "]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){3}))|:)"
+          + ")|(([0-9A-Fa-f]{1,4}:){3}(((:[0-9A-Fa-f]{1,4}){1,4})|((:[0-9A-Fa-f]{1,4}){0,2}:("
+          + "(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){"
+          + "3}))|:))|(([0-9A-Fa-f]{1,4}:){2}(((:[0-9A-Fa-f]{1,4}){1,5})|((:[0-9A-Fa-f]{1,4})"
+          + "{0,3}:((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]"
+          + "?\\d)){3}))|:))|(([0-9A-Fa-f]{1,4}:){1}(((:[0-9A-Fa-f]{1,4}){1,6})|((:[0-9A-Fa-f"
+          + "]{1,4}){0,4}:((25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\"
+          + "d|[1-9]?\\d)){3}))|:))|(:(((:[0-9A-Fa-f]{1,4}){1,7})|((:[0-9A-Fa-f]{1,4}){0,5}:("
+          + "(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(\\.(25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)){"
+          + "3}))|:)))(%\\S+)?$");
 
   private static final String IPADDRESS_LOCALHOST = "127.0.0.1";
 
@@ -112,7 +126,7 @@ public class NetUtil {
       }
       return ip;
     } catch (Exception e) {
-      log.warn("Fail to get {} by {}, cause:{}",
+      logger.warn("Fail to get {} by {}, cause:{}",
           Constant.ipV4Urls.contains(url) ? "ipv4" : "ipv6", url, e.getMessage());
       return null;
     } finally {
@@ -131,7 +145,7 @@ public class NetUtil {
     try {
       networkInterfaces = NetworkInterface.getNetworkInterfaces();
     } catch (SocketException e) {
-      log.warn("GetOuterIPv6Address failed", e);
+      logger.warn("GetOuterIPv6Address failed", e);
       return null;
     }
     while (networkInterfaces.hasMoreElements()) {
@@ -157,7 +171,7 @@ public class NetUtil {
     try {
       networkInterfaces = NetworkInterface.getNetworkInterfaces();
     } catch (SocketException e) {
-      log.warn("GetAllLocalAddress failed", e);
+      logger.warn("GetAllLocalAddress failed", e);
       return localIpSet;
     }
     while (networkInterfaces.hasMoreElements()) {
@@ -183,7 +197,7 @@ public class NetUtil {
   public static String getExternalIpV4() {
     long t1 = System.currentTimeMillis();
     String ipV4 = getIp(Constant.ipV4Urls, true);
-    log.debug("GetExternalIpV4 cost {} ms", System.currentTimeMillis() - t1);
+    logger.debug("GetExternalIpV4 cost {} ms", System.currentTimeMillis() - t1);
     return ipV4;
   }
 
@@ -193,7 +207,7 @@ public class NetUtil {
     if (null == ipV6) {
       ipV6 = getOuterIPv6Address();
     }
-    log.debug("GetExternalIpV6 cost {} ms", System.currentTimeMillis() - t1);
+    logger.debug("GetExternalIpV6 cost {} ms", System.currentTimeMillis() - t1);
     return ipV6;
   }
 
@@ -251,7 +265,7 @@ public class NetUtil {
     try {
       networkInterfaces = NetworkInterface.getNetworkInterfaces();
     } catch (SocketException e) {
-      log.warn("Can't get lan IP. Fall back to {}", IPADDRESS_LOCALHOST, e);
+      logger.warn("Can't get lan IP. Fall back to {}", IPADDRESS_LOCALHOST, e);
       return IPADDRESS_LOCALHOST;
     }
     while (networkInterfaces.hasMoreElements()) {
@@ -274,7 +288,7 @@ public class NetUtil {
         }
       }
     }
-    log.warn("Can't get lan IP. Fall back to {}", IPADDRESS_LOCALHOST);
+    logger.warn("Can't get lan IP. Fall back to {}", IPADDRESS_LOCALHOST);
     return IPADDRESS_LOCALHOST;
   }
 }

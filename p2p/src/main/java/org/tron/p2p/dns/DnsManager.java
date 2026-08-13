@@ -1,6 +1,5 @@
 package org.tron.p2p.dns;
 
-
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -48,11 +47,12 @@ public class DnsManager {
     Set<DnsNode> nodes = new HashSet<>();
     for (Map.Entry<String, Tree> entry : syncClient.getTrees().entrySet()) {
       Tree tree = entry.getValue();
-      int v4Size = 0, v6Size = 0;
+      int v4Size = 0;
+      int v6Size = 0;
       List<DnsNode> dnsNodes = tree.getDnsNodes();
       List<DnsNode> ipv6Nodes = new ArrayList<>();
       for (DnsNode dnsNode : dnsNodes) {
-        //log.debug("DnsNode:{}", dnsNode);
+        //logger.debug("DnsNode:{}", dnsNode);
         if (dnsNode.getInetSocketAddressV4() != null) {
           v4Size += 1;
         }
@@ -66,7 +66,7 @@ public class DnsManager {
           .filter(node -> !localIpSet.contains(
               node.getPreferInetSocketAddress().getAddress().getHostAddress()))
           .collect(Collectors.toList());
-      log.debug("Tree {} node size:{}, v4 node size:{}, v6 node size:{}, connectable size:{}",
+      logger.debug("Tree {} node size:{}, v4 node size:{}, v6 node size:{}, connectable size:{}",
           entry.getKey(), dnsNodes.size(), v4Size, v6Size, connectAbleNodes.size());
       nodes.addAll(connectAbleNodes);
     }

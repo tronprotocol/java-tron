@@ -38,10 +38,10 @@ public class DiscoverTask {
         }
         discover(nodeId, 0, new ArrayList<>());
       } catch (Exception e) {
-        log.error("DiscoverTask fails to be executed", e);
+        logger.error("DiscoverTask fails to be executed", e);
       }
     }, 1, KademliaOptions.DISCOVER_CYCLE, TimeUnit.MILLISECONDS);
-    log.debug("DiscoverTask started");
+    logger.debug("DiscoverTask started");
   }
 
   private void discover(byte[] nodeId, int round, List<Node> prevTriedNodes) {
@@ -54,7 +54,7 @@ public class DiscoverTask {
           kadService.getNodeHandler(n).sendFindNode(nodeId);
           tried.add(n);
         } catch (Exception e) {
-          log.error("Unexpected Exception occurred while sending FindNodeMessage", e);
+          logger.error("Unexpected Exception occurred while sending FindNodeMessage", e);
         }
       }
 
@@ -66,7 +66,7 @@ public class DiscoverTask {
     try {
       Thread.sleep(KademliaOptions.WAIT_TIME);
     } catch (InterruptedException e) {
-      log.warn("Discover task interrupted");
+      logger.warn("Discover task interrupted");
       Thread.currentThread().interrupt();
     }
 
