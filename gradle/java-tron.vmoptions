@@ -1,6 +1,6 @@
 -XX:+UseConcMarkSweepGC
 -XX:+PrintGCDetails
--Xloggc:./gc.log
+-Xloggc:./logs/gc.log
 -XX:+PrintGCDateStamps
 -XX:+CMSParallelRemarkEnabled
 -XX:ReservedCodeCacheSize=256m
