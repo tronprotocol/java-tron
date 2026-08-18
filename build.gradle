@@ -6,7 +6,7 @@ plugins {
 }
 
 ext {
-    grpcVersion = "1.83.0"
+    grpcVersion = "1.83.1"
 }
 
 allprojects {
