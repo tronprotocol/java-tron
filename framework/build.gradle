@@ -40,7 +40,7 @@ dependencies {
     // end local libraries
     implementation group: 'com.beust', name: 'jcommander', version: '1.78'
     implementation group: 'io.dropwizard.metrics', name: 'metrics-core', version: '3.1.2'
-    implementation('io.netty:netty-codec-protobuf:4.2.15.Final') {
+    implementation("io.netty:netty-codec-protobuf:${rootProject.nettyVersion}") {
         exclude group: 'com.google.protobuf'
         exclude group: 'com.google.protobuf.nano'
     }

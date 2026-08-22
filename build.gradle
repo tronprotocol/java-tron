@@ -7,6 +7,13 @@ plugins {
 
 ext {
     grpcVersion = "1.83.1"
+    // Netty 4.2 split io.netty.handler.codec.protobuf out of netty-codec into its
+    // own artifact. Both :framework and :p2p put the varint32 framing codecs on
+    // their channel pipelines and so must declare it explicitly. Netty itself
+    // arrives transitively through grpc-netty, so this version has to move with
+    // grpcVersion above — keeping it here makes that coupling visible instead of
+    // leaving two literals to drift apart.
+    nettyVersion = "4.2.15.Final"
 }
 
 allprojects {

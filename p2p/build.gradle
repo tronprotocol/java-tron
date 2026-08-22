@@ -86,8 +86,8 @@ dependencies {
     // Netty 4.2 split io.netty.handler.codec.protobuf out of netty-codec into its
     // own artifact, so the varint32 framing codecs p2p puts on every channel
     // pipeline no longer arrive transitively. framework/build.gradle declares the
-    // same dependency for the same reason; this mirrors it, excludes included.
-    implementation('io.netty:netty-codec-protobuf:4.2.15.Final') {
+    // same dependency for the same reason; both track rootProject.nettyVersion.
+    implementation("io.netty:netty-codec-protobuf:${rootProject.nettyVersion}") {
         exclude group: 'com.google.protobuf'
         exclude group: 'com.google.protobuf.nano'
     }
