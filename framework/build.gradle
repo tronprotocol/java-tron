@@ -66,6 +66,16 @@ dependencies {
     api project(":protocol")
     api project(":actuator")
     api project(":consensus")
+    // org.tron.p2p is used directly in 17 files under src/main/java (org.tron.core.net
+    // and org.tron.core.config.args). It currently arrives only transitively, three
+    // hops away, because :common exposes it via `api project(":p2p")` -- and :common
+    // has to, since CommonParameter publishes P2pConfig/PublishConfig in its own API.
+    // Declare the direct use here as well, so framework keeps compiling if that
+    // transitive chain is ever narrowed. api, not implementation: framework does
+    // re-export p2p types -- P2pEventHandlerImpl extends org.tron.p2p.P2pEventHandler,
+    // HelloMessage.getFrom() returns org.tron.p2p.discover.Node, PeerManager takes
+    // org.tron.p2p.connection.Channel, Args.loadDnsPublishConfig returns PublishConfig.
+    api project(":p2p")
 }
 
 check.dependsOn 'lint'
