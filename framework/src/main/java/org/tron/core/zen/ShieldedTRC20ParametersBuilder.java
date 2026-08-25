@@ -402,6 +402,9 @@ public class ShieldedTRC20ParametersBuilder {
     if (value.compareTo(BigInteger.ZERO) <= 0) {
       throw new IllegalArgumentException("require the value be positive");
     }
+    if (mintParams.getReceiveDescriptionCount() != 1) {
+      throw new IllegalArgumentException("invalid mint description number");
+    }
 
     ShieldContract.ReceiveDescription revDesc = mintParams.getReceiveDescription(0);
     byte[] zeros = new byte[12];
@@ -422,12 +425,22 @@ public class ShieldedTRC20ParametersBuilder {
   private String transferParamsToHexString(GrpcAPI.ShieldedTRC20Parameters transferParams,
       List<BytesMessage> spendAuthoritySignature,
       boolean withAsk) {
+    List<ShieldContract.SpendDescription> spendDescs = transferParams.getSpendDescriptionList();
+    List<ShieldContract.ReceiveDescription> recvDescs = transferParams.getReceiveDescriptionList();
+    long spendCount = spendDescs.size();
+    long recvCount = recvDescs.size();
+    if (spendCount < 1 || spendCount > 2) {
+      throw new IllegalArgumentException("invalid transfer input number");
+    }
+    if (recvCount < 1 || recvCount > 2) {
+      throw new IllegalArgumentException("invalid transfer output number");
+    }
+
     byte[] input = new byte[0];
     byte[] spendAuthSig = new byte[0];
     byte[] output = new byte[0];
     byte[] c = new byte[0];
     byte[] bindingSig;
-    List<ShieldContract.SpendDescription> spendDescs = transferParams.getSpendDescriptionList();
     for (ShieldContract.SpendDescription spendDesc : spendDescs) {
       input = ByteUtil.merge(input,
           spendDesc.getNullifier().toByteArray(),
@@ -440,10 +453,6 @@ public class ShieldedTRC20ParametersBuilder {
         spendAuthSig = ByteUtil.merge(
             spendAuthSig, spendDesc.getSpendAuthoritySignature().toByteArray());
       }
-    }
-    long spendCount = spendDescs.size();
-    if (spendCount < 1 || spendCount > 2) {
-      throw new IllegalArgumentException("invalid transfer input number");
     }
     if (!withAsk) {
       if (spendCount == 1) {
@@ -458,7 +467,6 @@ public class ShieldedTRC20ParametersBuilder {
     byte[] spendCountBytes = ByteUtil.longTo32Bytes(spendCount);
     byte[] authOffsetBytes = ByteUtil.longTo32Bytes(192 + 32 + 320 * spendCount);
 
-    List<ShieldContract.ReceiveDescription> recvDescs = transferParams.getReceiveDescriptionList();
     for (ShieldContract.ReceiveDescription recvDesc : recvDescs) {
       output = ByteUtil.merge(output,
           recvDesc.getNoteCommitment().toByteArray(),
@@ -474,7 +482,6 @@ public class ShieldedTRC20ParametersBuilder {
       );
     }
 
-    long recvCount = recvDescs.size();
     byte[] recvCountBytes = ByteUtil.longTo32Bytes(recvCount);
     byte[] outputOffsetbytes = ByteUtil
         .longTo32Bytes(192 + 32 + 320 * spendCount + 32 + 64 * spendCount);

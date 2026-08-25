@@ -907,6 +907,9 @@ public class WalletMockTest {
     GrpcAPI.ShieldedTRC20Parameters shieldedTRC20Parameters =
         GrpcAPI.ShieldedTRC20Parameters.newBuilder()
             .addSpendDescription(spendDescription)
+            // a transfer requires exactly one receive description to clear the output-arity gate;
+            // the rejection of a wrong count is covered by WalletShieldedDescriptionValidationTest
+            .addReceiveDescription(ShieldContract.ReceiveDescription.getDefaultInstance())
             .setParameterType("transfer")
             .build();
     GrpcAPI.BytesMessage bytesMessage =
