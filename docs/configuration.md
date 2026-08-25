@@ -151,14 +151,14 @@ storage.properties = [
 ### Block Production (Super Representatives)
 
 ```hocon
-# Plain private key (use localwitnesskeystore for production)
-localwitness = [
-  "your-private-key-hex"
+# Recommended for production: encrypted keystore file
+localwitnesskeystore = [
+  "localwitnesskeystore.json"
 ]
 
-# Recommended: keystore file
-# localwitnesskeystore = [
-#   "/path/to/localwitnesskeystore.json"
+# Plaintext compatibility option for isolated test environments only
+# localwitness = [
+#   "your-private-key-hex"
 # ]
 
 # Required when the witness account has delegated block-signing to a separate key
