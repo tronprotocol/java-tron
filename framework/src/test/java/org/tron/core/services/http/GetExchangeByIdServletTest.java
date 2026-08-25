@@ -1,10 +1,12 @@
 package org.tron.core.services.http;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import com.google.protobuf.ByteString;
@@ -48,5 +50,18 @@ public class GetExchangeByIdServletTest extends BaseHttpTest {
     verify(wallet).getExchangeById(eq(exchangeId));
     assertEquals(200, response.getStatus());
     assertTrue(response.getContentAsString().contains("exchange_id"));
+  }
+
+  @Test
+  public void oversizedQuotedIdIsRejectedBeforeWalletCall() throws Exception {
+    String oversized = "99999999999999999999999999999999999999999999999999999999999999999";
+    MockHttpServletResponse response = newResponse();
+
+    servlet.doPost(postRequest("{\"id\":\"" + oversized + "\"}"), response);
+
+    verifyNoInteractions(wallet);
+    assertTrue(response.getContentAsString().contains("id"));
+    assertTrue(response.getContentAsString().contains("64 characters"));
+    assertFalse(response.getContentAsString().contains(oversized));
   }
 }

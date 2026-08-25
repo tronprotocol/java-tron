@@ -4,6 +4,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.lang.reflect.Field;
 import javax.servlet.http.HttpServlet;
@@ -20,6 +21,8 @@ import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
 import org.tron.core.config.args.Args;
 import org.tron.protos.Protocol.Transaction;
+import org.tron.protos.Protocol.Transaction.Contract.ContractType;
+import org.tron.protos.contract.AccountContract.AccountCreateContract;
 
 /**
  * Base class for HTTP servlet unit tests.
@@ -32,8 +35,19 @@ import org.tron.protos.Protocol.Transaction;
  */
 public abstract class BaseHttpTest {
 
+  /**
+   * A stand-in transaction for the mocked wallet. The type is the one an all-default Contract
+   * already declared (enum 0); what it did not carry was a matching payload, and
+   * Util.printTransactionToJSON drops a contract whose Any does not match its declared type --
+   * silently, and only once TransactionFactory knows that type, which depends on whether any
+   * actuator has been constructed elsewhere in the jvm. Packing the payload the way the node's
+   * own builders do makes the rendering independent of that global state.
+   */
   protected static final Transaction MINIMAL_TX = Transaction.newBuilder()
-      .setRawData(Transaction.raw.newBuilder().addContract(Transaction.Contract.newBuilder()))
+      .setRawData(Transaction.raw.newBuilder().addContract(
+          Transaction.Contract.newBuilder()
+              .setType(ContractType.AccountCreateContract)
+              .setParameter(Any.pack(AccountCreateContract.getDefaultInstance()))))
       .build();
 
   @Mock

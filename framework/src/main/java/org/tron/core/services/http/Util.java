@@ -74,6 +74,9 @@ public class Util {
       "'events' field is deprecated and no longer supported";
 
   public static final String PERMISSION_ID = "Permission_id";
+  private static final String INVALID_PERMISSION_ID =
+      "invalid " + PERMISSION_ID + ": expect a 32-bit integer";
+  private static final int MAX_JSON_INTEGER_VALUE_LENGTH = 64;
   public static final String VISIBLE = "visible";
   public static final String INT64_AS_STRING_PARAM = "int64_as_string";
   public static final String TRANSACTION = "transaction";
@@ -441,14 +444,48 @@ public class Util {
     return ByteArray.toHexString(ByteString.copyFromUtf8(string).toByteArray());
   }
 
+  /**
+   * Rejects a json value that cannot be a bounded-length number, before anything converts it. A
+   * container is not a number and reaches the conversion as its full serialized form, so it has to
+   * be turned away by type rather than by length. An absent value is left to the caller, which is
+   * what distinguishes an optional key from a required one.
+   *
+   * @throws InvalidParameterException if the value is not a number, or is longer than the bound
+   */
+  private static void checkJsonNumberValue(Object rawValue, String message) {
+    if (rawValue == null) {
+      return;
+    }
+    if (!(rawValue instanceof String || rawValue instanceof Number)
+        || rawValue.toString().length() > MAX_JSON_INTEGER_VALUE_LENGTH) {
+      throw new InvalidParameterException(message);
+    }
+  }
+
   public static Transaction setTransactionPermissionId(JSONObject jsonObject,
       Transaction transaction) {
-    if (jsonObject.containsKey(PERMISSION_ID)) {
-      int permissionId = jsonObject.getInteger(PERMISSION_ID);
-      return setTransactionPermissionId(permissionId, transaction);
+    if (!jsonObject.containsKey(PERMISSION_ID)) {
+      return transaction;
     }
-
-    return transaction;
+    int permissionId;
+    try {
+      Object rawValue = jsonObject.get(PERMISSION_ID);
+      checkJsonNumberValue(rawValue, INVALID_PERMISSION_ID);
+      BigDecimal value = jsonObject.getBigDecimal(PERMISSION_ID);
+      if (value == null) {
+        throw new InvalidParameterException(INVALID_PERMISSION_ID);
+      }
+      // Preserve getInteger's legacy string syntax, but require it to match the exact conversion.
+      int exact = value.intValueExact();
+      Integer legacy = jsonObject.getInteger(PERMISSION_ID);
+      if (legacy == null || legacy != exact) {
+        throw new InvalidParameterException(INVALID_PERMISSION_ID);
+      }
+      permissionId = exact;
+    } catch (NumberFormatException | ArithmeticException | JSONException e) {
+      throw new InvalidParameterException(INVALID_PERMISSION_ID);
+    }
+    return setTransactionPermissionId(permissionId, transaction);
   }
 
   public static Transaction setTransactionPermissionId(int permissionId, Transaction transaction) {
@@ -515,6 +552,9 @@ public class Util {
   }
 
   public static long getJsonLongValue(JSONObject jsonObject, String key, boolean required) {
+    Object rawValue = jsonObject.get(key);
+    checkJsonNumberValue(rawValue, "invalid key [" + key + "]: expect a number of at most "
+        + MAX_JSON_INTEGER_VALUE_LENGTH + " characters");
     BigDecimal bigDecimal = jsonObject.getBigDecimal(key);
     if (required && bigDecimal == null) {
       throw new InvalidParameterException("key [" + key + "] does not exist");
