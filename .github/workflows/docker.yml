@@ -1,0 +1,517 @@
+name: Docker CI
+
+on:
+  pull_request:
+    branches: [master, develop, 'release_**']
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [master, develop]
+    paths:
+      - '.dockerignore'
+      - 'docker/Dockerfile'
+      - 'docker/arm64/Dockerfile'
+      - 'docker/.dockerignore'
+      - 'docker/docker.sh'
+      - 'docker/tests/**'
+      - 'build.gradle'
+      - 'settings.gradle'
+      - 'gradle.properties'
+      - 'framework/build.gradle'
+      - 'framework/src/main/resources/config.conf'
+      - 'gradle/unixStartScript.txt'
+      - 'gradle/java-tron.vmoptions'
+      - 'gradle/jdk17/java-tron.vmoptions'
+      - 'gradle/wrapper/**'
+      - '.github/workflows/docker.yml'
+  schedule:
+    - cron: '0 3 * * 1'
+  workflow_dispatch:
+    inputs:
+      source_mode:
+        description: Source mode for full image builds
+        required: true
+        default: local
+        type: choice
+        options:
+          - local
+          - remote
+
+permissions:
+  contents: read
+
+concurrency:
+  group: docker-${{ github.workflow }}-${{ github.event_name == 'schedule' && 'schedule' || github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  changes:
+    name: Analyze Docker changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      fast: ${{ steps.select.outputs.fast }}
+      amd64: ${{ steps.select.outputs.amd64 }}
+      arm64: ${{ steps.select.outputs.arm64 }}
+      source_mode: ${{ steps.select.outputs.source_mode }}
+      remote_amd64: ${{ steps.select.outputs.remote_amd64 }}
+      remote_arm64: ${{ steps.select.outputs.remote_arm64 }}
+      remote_source_ref: ${{ steps.select.outputs.remote_source_ref }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          # Pull requests check out the synthetic merge commit. Depth 2 is
+          # enough to diff that commit against its first parent (the base).
+          # Other events retain full history.
+          fetch-depth: ${{ github.event_name == 'pull_request' && 2 || 0 }}
+
+      - name: Select required checks
+        id: select
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          HEAD_SHA: ${{ github.sha }}
+          BEFORE_SHA: ${{ github.event.before }}
+          DISPATCH_SOURCE_MODE: ${{ inputs.source_mode }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+
+          fast=false
+          amd64=false
+          arm64=false
+          source_mode=local
+          remote_amd64=false
+          remote_arm64=false
+          remote_source_ref=master
+          changed_files=$(mktemp)
+          trap 'rm -f "$changed_files"' EXIT
+
+          case "$EVENT_NAME" in
+            schedule)
+              fast=true
+              amd64=true
+              arm64=true
+              source_mode=remote
+              remote_source_ref=master
+              ;;
+            workflow_dispatch)
+              fast=true
+              amd64=true
+              arm64=true
+              source_mode="${DISPATCH_SOURCE_MODE:-local}"
+              remote_source_ref="$REF_NAME"
+              ;;
+            pull_request)
+              remote_source_ref=master
+              if ! git rev-parse -q --verify HEAD^1 >/dev/null; then
+                echo "Pull request merge commit is missing its base parent." >&2
+                exit 1
+              fi
+              git diff --name-only HEAD^1 HEAD -- > "$changed_files"
+              ;;
+            push)
+              remote_source_ref=master
+              if [[ -z "$BEFORE_SHA" || "$BEFORE_SHA" =~ ^0+$ ]]; then
+                git diff-tree --no-commit-id --name-only -r "$HEAD_SHA" > "$changed_files"
+              else
+                git diff --name-only "$BEFORE_SHA" "$HEAD_SHA" -- > "$changed_files"
+              fi
+              ;;
+            *)
+              echo "Unsupported event: $EVENT_NAME" >&2
+              exit 1
+              ;;
+          esac
+
+          while IFS= read -r path; do
+            case "$path" in
+              docker/tests/vmoptions-test.sh|docker/tests/docker-sh-run-smoke.sh|docker/tests/verify-runtime-image.sh)
+                fast=true
+                amd64=true
+                arm64=true
+                ;;
+              # Keep docker.sh-only PRs fast: mock tests cover helper behavior.
+              # Real architecture smoke runs for image-affecting changes and
+              # in the scheduled weekly build.
+              docker/docker.sh|docker/tests/*)
+                fast=true
+                ;;
+              docker/Dockerfile)
+                fast=true
+                amd64=true
+                remote_amd64=true
+                ;;
+              gradle/java-tron.vmoptions)
+                fast=true
+                amd64=true
+                ;;
+              docker/arm64/Dockerfile)
+                fast=true
+                arm64=true
+                remote_arm64=true
+                ;;
+              gradle/jdk17/java-tron.vmoptions)
+                fast=true
+                arm64=true
+                ;;
+              docker/.dockerignore|.github/workflows/docker.yml)
+                fast=true
+                amd64=true
+                arm64=true
+                remote_amd64=true
+                remote_arm64=true
+                ;;
+              .dockerignore|build.gradle|settings.gradle|gradle.properties|framework/build.gradle|framework/src/main/resources/config.conf|gradle/unixStartScript.txt|gradle/wrapper/*)
+                fast=true
+                amd64=true
+                arm64=true
+                ;;
+            esac
+          done < "$changed_files"
+
+          echo "fast=$fast" >> "$GITHUB_OUTPUT"
+          echo "amd64=$amd64" >> "$GITHUB_OUTPUT"
+          echo "arm64=$arm64" >> "$GITHUB_OUTPUT"
+          echo "source_mode=$source_mode" >> "$GITHUB_OUTPUT"
+          echo "remote_amd64=$remote_amd64" >> "$GITHUB_OUTPUT"
+          echo "remote_arm64=$remote_arm64" >> "$GITHUB_OUTPUT"
+          echo "remote_source_ref=$remote_source_ref" >> "$GITHUB_OUTPUT"
+
+          {
+            echo "### Docker CI selection"
+            echo ""
+            echo "- Fast checks: $fast"
+            echo "- Build amd64: $amd64"
+            echo "- Build arm64: $arm64"
+            echo "- Source mode: $source_mode"
+            echo "- Additional remote amd64 build: $remote_amd64"
+            echo "- Additional remote arm64 build: $remote_arm64"
+            echo "- Remote source ref: $remote_source_ref"
+            if [ -s "$changed_files" ]; then
+              echo ""
+              echo "Changed files:"
+              sed 's/^/- `/' "$changed_files" | sed 's/$/`/'
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  script-check:
+    name: Docker script and definition checks
+    needs: changes
+    if: needs.changes.outputs.fast == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Validate shell scripts
+        run: |
+          bash -n docker/docker.sh
+          bash -n docker/tests/docker-sh-test.sh
+          bash -n docker/tests/docker-lifecycle-test.sh
+          bash -n docker/tests/docker-sh-run-smoke.sh
+          bash -n docker/tests/dockerignore-test.sh
+          bash -n docker/tests/docker-workflow-test.sh
+          bash -n docker/tests/vmoptions-test.sh
+          bash -n docker/tests/verify-runtime-image.sh
+          bash -n docker/tests/unix-start-script-test.sh
+          shellcheck docker/docker.sh docker/tests/docker-sh-test.sh docker/tests/docker-lifecycle-test.sh docker/tests/docker-sh-run-smoke.sh docker/tests/dockerignore-test.sh docker/tests/docker-workflow-test.sh docker/tests/vmoptions-test.sh docker/tests/verify-runtime-image.sh docker/tests/unix-start-script-test.sh
+
+      - name: Test shell helpers
+        run: |
+          bash docker/tests/docker-sh-test.sh
+          bash docker/tests/docker-lifecycle-test.sh
+          bash docker/tests/dockerignore-test.sh
+          bash docker/tests/docker-workflow-test.sh
+          bash docker/tests/unix-start-script-test.sh
+
+      - name: Check Dockerfiles with distribution context
+        run: |
+          set -euo pipefail
+          context=$(mktemp -d)
+          trap 'rm -rf "$context"' EXIT
+          mkdir -p "$context/java-tron/bin" "$context/java-tron/lib"
+          touch "$context/java-tron/bin/FullNode"
+          touch "$context/java-tron/bin/java-tron.vmoptions"
+          touch "$context/java-tron/config.conf"
+
+          cp docker/Dockerfile "$context/Dockerfile"
+          DOCKER_BUILDKIT=1 docker build --check --target local --file "$context/Dockerfile" "$context"
+
+          cp docker/arm64/Dockerfile "$context/Dockerfile"
+          DOCKER_BUILDKIT=1 docker build --check --target local --file "$context/Dockerfile" "$context"
+
+      - name: Check Dockerfiles with remote context
+        run: |
+          DOCKER_BUILDKIT=1 docker build --check --target remote --file "$PWD/docker/Dockerfile" docker
+          DOCKER_BUILDKIT=1 docker build --check --target remote --file "$PWD/docker/arm64/Dockerfile" docker
+
+  build-amd64:
+    name: Build Docker image (amd64)
+    needs: changes
+    if: needs.changes.outputs.amd64 == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    env:
+      IMAGE: java-tron:ci-amd64
+      SOURCE_MODE: ${{ needs.changes.outputs.source_mode }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Set up JDK 8 for local distribution
+        if: env.SOURCE_MODE == 'local'
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '8'
+          cache: gradle
+
+      - name: Prepare local build context
+        if: env.SOURCE_MODE == 'local'
+        run: |
+          set -euo pipefail
+          umask 077
+          bash docker/docker.sh --build --source local \
+            --export-context "$RUNNER_TEMP/java-tron-local-context"
+
+      - name: Build local image
+        if: env.SOURCE_MODE == 'local'
+        uses: docker/build-push-action@v7
+        with:
+          context: ${{ runner.temp }}/java-tron-local-context
+          target: local
+          load: true
+          tags: ${{ env.IMAGE }}
+          cache-from: type=gha,scope=java-tron-amd64-local
+          cache-to: type=gha,mode=max,scope=java-tron-amd64-local,ignore-error=true
+
+      - name: Build remote image
+        if: env.SOURCE_MODE == 'remote'
+        uses: docker/build-push-action@v7
+        with:
+          context: docker
+          file: docker/Dockerfile
+          target: remote
+          pull: true
+          no-cache-filters: remote-builder
+          load: true
+          tags: ${{ env.IMAGE }}
+          build-args: |
+            SOURCE_REPOSITORY=${{ github.server_url }}/${{ github.repository }}.git
+            SOURCE_REF=${{ needs.changes.outputs.remote_source_ref }}
+          cache-from: type=gha,scope=java-tron-amd64-remote
+          cache-to: type=gha,mode=max,scope=java-tron-amd64-remote,ignore-error=true
+
+      - name: Verify runtime image
+        run: bash docker/tests/verify-runtime-image.sh "$IMAGE" 'version "1\.8'
+
+      - name: Validate startup script and VM options
+        run: docker run --rm --env JAVA_OPTS=-version "$IMAGE"
+
+      - name: Test JVM options file parsing
+        run: bash docker/tests/vmoptions-test.sh "$IMAGE"
+
+      - name: Smoke docker.sh --run
+        run: bash docker/tests/docker-sh-run-smoke.sh "$IMAGE"
+
+  build-arm64:
+    name: Build Docker image (arm64)
+    needs: changes
+    if: needs.changes.outputs.arm64 == 'true'
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 60
+    env:
+      IMAGE: java-tron:ci-arm64
+      SOURCE_MODE: ${{ needs.changes.outputs.source_mode }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Set up JDK 17 for local distribution
+        if: env.SOURCE_MODE == 'local'
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+
+      - name: Prepare local build context
+        if: env.SOURCE_MODE == 'local'
+        run: |
+          set -euo pipefail
+          umask 077
+          bash docker/docker.sh --build --source local \
+            --export-context "$RUNNER_TEMP/java-tron-local-context"
+
+      - name: Build local image
+        if: env.SOURCE_MODE == 'local'
+        uses: docker/build-push-action@v7
+        with:
+          context: ${{ runner.temp }}/java-tron-local-context
+          target: local
+          load: true
+          tags: ${{ env.IMAGE }}
+          cache-from: type=gha,scope=java-tron-arm64-local
+          cache-to: type=gha,mode=max,scope=java-tron-arm64-local,ignore-error=true
+
+      - name: Build remote image
+        if: env.SOURCE_MODE == 'remote'
+        uses: docker/build-push-action@v7
+        with:
+          context: docker
+          file: docker/arm64/Dockerfile
+          target: remote
+          pull: true
+          no-cache-filters: remote-builder
+          load: true
+          tags: ${{ env.IMAGE }}
+          build-args: |
+            SOURCE_REPOSITORY=${{ github.server_url }}/${{ github.repository }}.git
+            SOURCE_REF=${{ needs.changes.outputs.remote_source_ref }}
+          cache-from: type=gha,scope=java-tron-arm64-remote
+          cache-to: type=gha,mode=max,scope=java-tron-arm64-remote,ignore-error=true
+
+      - name: Verify runtime image
+        run: bash docker/tests/verify-runtime-image.sh "$IMAGE" 'version "17\.'
+
+      - name: Validate startup script and VM options
+        run: docker run --rm --env JAVA_OPTS=-version "$IMAGE"
+
+      - name: Test JVM options file parsing
+        run: bash docker/tests/vmoptions-test.sh "$IMAGE"
+
+      - name: Smoke docker.sh --run
+        run: bash docker/tests/docker-sh-run-smoke.sh "$IMAGE"
+
+  remote-build-amd64:
+    name: Build remote Docker image (amd64)
+    needs: changes
+    if: needs.changes.outputs.remote_amd64 == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    env:
+      IMAGE: java-tron:ci-remote-amd64
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Build remote image
+        uses: docker/build-push-action@v7
+        with:
+          context: docker
+          file: docker/Dockerfile
+          target: remote
+          pull: true
+          no-cache-filters: remote-builder
+          load: true
+          tags: ${{ env.IMAGE }}
+          build-args: |
+            SOURCE_REPOSITORY=${{ github.server_url }}/${{ github.repository }}.git
+            SOURCE_REF=${{ needs.changes.outputs.remote_source_ref }}
+          cache-from: type=gha,scope=java-tron-amd64-remote
+          cache-to: type=gha,mode=max,scope=java-tron-amd64-remote,ignore-error=true
+
+      - name: Verify remote runtime image
+        run: bash docker/tests/verify-runtime-image.sh "$IMAGE" 'version "1\.8'
+
+      - name: Validate remote startup script and VM options
+        run: docker run --rm --env JAVA_OPTS=-version "$IMAGE"
+
+      - name: Test remote JVM options file parsing
+        run: bash docker/tests/vmoptions-test.sh "$IMAGE"
+
+      - name: Smoke remote docker.sh --run
+        run: bash docker/tests/docker-sh-run-smoke.sh "$IMAGE"
+
+  remote-build-arm64:
+    name: Build remote Docker image (arm64)
+    needs: changes
+    if: needs.changes.outputs.remote_arm64 == 'true'
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 60
+    env:
+      IMAGE: java-tron:ci-remote-arm64
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Build remote image
+        uses: docker/build-push-action@v7
+        with:
+          context: docker
+          file: docker/arm64/Dockerfile
+          target: remote
+          pull: true
+          no-cache-filters: remote-builder
+          load: true
+          tags: ${{ env.IMAGE }}
+          build-args: |
+            SOURCE_REPOSITORY=${{ github.server_url }}/${{ github.repository }}.git
+            SOURCE_REF=${{ needs.changes.outputs.remote_source_ref }}
+          cache-from: type=gha,scope=java-tron-arm64-remote
+          cache-to: type=gha,mode=max,scope=java-tron-arm64-remote,ignore-error=true
+
+      - name: Verify remote runtime image
+        run: bash docker/tests/verify-runtime-image.sh "$IMAGE" 'version "17\.'
+
+      - name: Validate remote startup script and VM options
+        run: docker run --rm --env JAVA_OPTS=-version "$IMAGE"
+
+      - name: Test remote JVM options file parsing
+        run: bash docker/tests/vmoptions-test.sh "$IMAGE"
+
+      - name: Smoke remote docker.sh --run
+        run: bash docker/tests/docker-sh-run-smoke.sh "$IMAGE"
+
+  gate:
+    name: Docker CI Gate
+    needs: [changes, script-check, build-amd64, build-arm64, remote-build-amd64, remote-build-arm64]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      CHANGES_RESULT: ${{ needs.changes.result }}
+      FAST_REQUIRED: ${{ needs.changes.outputs.fast }}
+      FAST_RESULT: ${{ needs.script-check.result }}
+      AMD64_REQUIRED: ${{ needs.changes.outputs.amd64 }}
+      AMD64_RESULT: ${{ needs.build-amd64.result }}
+      ARM64_REQUIRED: ${{ needs.changes.outputs.arm64 }}
+      ARM64_RESULT: ${{ needs.build-arm64.result }}
+      REMOTE_AMD64_REQUIRED: ${{ needs.changes.outputs.remote_amd64 }}
+      REMOTE_AMD64_RESULT: ${{ needs.remote-build-amd64.result }}
+      REMOTE_ARM64_REQUIRED: ${{ needs.changes.outputs.remote_arm64 }}
+      REMOTE_ARM64_RESULT: ${{ needs.remote-build-arm64.result }}
+    steps:
+      - name: Require selected checks
+        run: |
+          set -euo pipefail
+
+          if [ "$CHANGES_RESULT" != success ]; then
+            echo "Docker change analysis did not succeed: $CHANGES_RESULT" >&2
+            exit 1
+          fi
+
+          require_success() {
+            local required="$1"
+            local result="$2"
+            local name="$3"
+            if [ "$required" = true ] && [ "$result" != success ]; then
+              echo "$name was required but finished with result: $result" >&2
+              exit 1
+            fi
+          }
+
+          require_success "$FAST_REQUIRED" "$FAST_RESULT" "Docker script checks"
+          require_success "$AMD64_REQUIRED" "$AMD64_RESULT" "amd64 image build"
+          require_success "$ARM64_REQUIRED" "$ARM64_RESULT" "arm64 image build"
+          require_success "$REMOTE_AMD64_REQUIRED" "$REMOTE_AMD64_RESULT" "amd64 remote image build"
+          require_success "$REMOTE_ARM64_REQUIRED" "$REMOTE_ARM64_RESULT" "arm64 remote image build"
+
+          echo "All selected Docker CI checks succeeded."
