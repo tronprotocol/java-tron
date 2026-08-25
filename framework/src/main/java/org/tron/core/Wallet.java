@@ -261,6 +261,9 @@ public class Wallet {
       "Shielded transaction API is disabled; "
           + "set node.allowShieldedTransactionApi=true to enable.";
   private static final String PAYMENT_ADDRESS_FORMAT_WRONG = "paymentAddress format is wrong";
+  // the authoritative bound is checkBigIntegerRange: uint256 max is 78 decimal digits,
+  // this only keeps the string short enough to convert cheaply
+  private static final int MAX_SHIELDED_AMOUNT_LENGTH = 80;
   private static final String SHIELDED_TRANSACTION_SCAN_RANGE =
       "request requires start_block_index >= 0 && end_block_index > "
           + "start_block_index && end_block_index - start_block_index <= 1000";
@@ -4222,6 +4225,9 @@ public class Wallet {
     if (trimmedIn.length() == 0) {
       return BigInteger.ZERO;
     }
+    if (trimmedIn.length() > MAX_SHIELDED_AMOUNT_LENGTH) {
+      throw new IllegalArgumentException("invalid shielded amount");
+    }
     return new BigInteger(trimmedIn, 10);
   }
 
@@ -4333,7 +4339,12 @@ public class Wallet {
 
     ShieldedTRC20Parameters shieldedTRC20Parameters = request.getShieldedTRC20Parameters();
     List<BytesMessage> spendAuthoritySignature = request.getSpendAuthoritySignatureList();
-    BigInteger value = getBigIntegerFromString(request.getAmount());
+    BigInteger value;
+    try {
+      value = getBigIntegerFromString(request.getAmount());
+    } catch (IllegalArgumentException e) {
+      throw new ContractValidateException("invalid amount");
+    }
     checkBigIntegerRange(value);
     byte[] transparentToAddress = request.getTransparentToAddress().toByteArray();
     byte[] transparentToAddressTvm = new byte[20];
@@ -4398,9 +4409,16 @@ public class Wallet {
       }
       parametersBuilder.setBurnCiphertext(burnCiper);
     }
-    String input = parametersBuilder
-        .getTriggerContractInput(shieldedTRC20Parameters, spendAuthoritySignature, value, false,
-            transparentToAddressTvm);
+    String input;
+    try {
+      input = parametersBuilder
+          .getTriggerContractInput(shieldedTRC20Parameters, spendAuthoritySignature, value, false,
+              transparentToAddressTvm);
+    } catch (IllegalArgumentException e) {
+      // the builder names the offending argument in fixed strings; none of them echoes an input
+      throw new ContractValidateException(
+          "invalid shielded TRC-20 trigger input: " + e.getMessage(), e);
+    }
     if (Objects.isNull(input)) {
       throw new ZksnarkException("generate the trigger contract parameters error");
     }
