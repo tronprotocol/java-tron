@@ -1,3 +1,6 @@
+# Runtime profile: ARM64 / aarch64 with JDK 17 only.
+# Keep these architecture-specific GC options when changing heap settings.
+# Do not copy GC options from the x86_64 / JDK 8 profile.
 -XX:+UseZGC
 -Xlog:gc,gc+heap:file=gc.log:time,tags,level:filecount=10,filesize=100M
 -XX:ReservedCodeCacheSize=256m

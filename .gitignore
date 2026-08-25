@@ -45,6 +45,11 @@ src/main/resources/META-INF/
 
 # output directory
 /output-directory/
+/docker/output-directory/
+
+# Private-network configuration downloaded by docker.sh
+/config/private_net_config.conf
+/docker/config/private_net_config.conf
 
 /output_manager/
 /output_witness/

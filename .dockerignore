@@ -1,3 +1,15 @@
-./*
-!docker-entrypoint.sh
-
+# Remote targets do not read from the build context. Local targets accept only
+# the runtime files emitted by the supported Gradle distribution plus the
+# Mainnet configuration staged by docker.sh. Everything else stays excluded.
+**
+!java-tron/
+java-tron/**
+!java-tron/bin/
+java-tron/bin/**
+!java-tron/bin/FullNode
+!java-tron/bin/FullNode.bat
+!java-tron/bin/java-tron.vmoptions
+!java-tron/lib/
+java-tron/lib/**
+!java-tron/lib/*.jar
+!java-tron/config.conf

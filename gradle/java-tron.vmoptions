@@ -1,3 +1,6 @@
+# Runtime profile: x86_64 / amd64 with JDK 8 only.
+# Keep these architecture-specific GC options when changing heap settings.
+# Do not copy GC options from the ARM64 / JDK 17 profile.
 -XX:+UseConcMarkSweepGC
 -XX:+PrintGCDetails
 -Xloggc:./gc.log
