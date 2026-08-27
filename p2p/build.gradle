@@ -2,10 +2,6 @@ apply plugin: 'com.google.protobuf'
 apply plugin: 'checkstyle'
 
 // Unit tests live in src/test/java/, alongside the code they cover.
-//
-// Reference code for using p2p as a library lives in src/example/java/. It's
-// compiled in a separate sourceSet (so API changes surface here too) but NOT
-// packaged into the main jar and NOT executed as tests.
 
 checkstyle {
     toolVersion = '8.7'
@@ -22,15 +18,6 @@ checkstyleTest {
     source = 'src/test/java'
 }
 
-// Exclude example code from checkstyle — it's reference-only and follows
-// upstream libp2p's style, not java-tron's strict rules.
-tasks.matching { it.name == 'checkstyleExample' }.configureEach { it.enabled = false }
-
-// Match the root-level encoding setting (which targets compileJava +
-// compileTestJava only) for the custom example sourceSet.
-tasks.matching { it.name == 'compileExampleJava' }
-    .configureEach { it.options.encoding = 'UTF-8' }
-
 def protobufVersion = '3.25.8'
 
 sourceSets {
@@ -42,21 +29,6 @@ sourceSets {
             srcDir 'src/main/java'
         }
     }
-    example {
-        // srcDirs for java and resources default to src/example/{java,resources};
-        // no explicit srcDir calls needed. Explicit calls would add duplicates
-        // and break :p2p:processExampleResources.
-        //
-        // example code compiles against main's output + implementation deps,
-        // so API changes in main surface as example compile errors.
-        compileClasspath += sourceSets.main.output
-        runtimeClasspath += sourceSets.main.output
-    }
-}
-
-configurations {
-    exampleImplementation.extendsFrom implementation
-    exampleRuntimeOnly.extendsFrom runtimeOnly
 }
 
 // These exclusions used to live on the `libp2p` dependency in common/build.gradle.
@@ -124,11 +96,6 @@ dependencies {
 
     // provided by root build.gradle for all subprojects:
     // slf4j-api, logback, bcprov-jdk18on, lombok, junit, mockito
-
-    // Lombok for the example sourceSet (root build.gradle only wires it for
-    // main + test).
-    exampleCompileOnly 'org.projectlombok:lombok:1.18.34'
-    exampleAnnotationProcessor 'org.projectlombok:lombok:1.18.34'
 }
 
 protobuf {
@@ -150,15 +117,6 @@ clean.doFirst {
 }
 
 processResources.dependsOn(generateProto)
-
-// generatedFilesBaseDir points at $projectDir/src, so the protobuf plugin registers
-// src/example/{proto,resources} as outputs of generateExampleProto even though the
-// example sourceSet has no .proto files. processExampleResources reads that same
-// directory, which Gradle reports as an undeclared producer/consumer pair and answers
-// by disabling execution optimizations. Declare the edge, matching the line above.
-tasks.matching { it.name == 'processExampleResources' }.configureEach {
-    it.dependsOn(tasks.named('generateExampleProto'))
-}
 
 // The module reports its own coverage now that it has a test sourceSet. CI
 // collects **/build/reports/jacoco/test/jacocoTestReport.xml across every

@@ -54,10 +54,9 @@ public class StartApp {
     }
 
     if (cli.hasOption("t")) {
-      InetSocketAddress address = new InetSocketAddress(cli.getOptionValue("t"), 0);
-      List<InetAddress> trustNodes = new ArrayList<>();
-      trustNodes.add(address.getAddress());
-      Parameter.p2pConfig.setTrustNodes(trustNodes);
+      // The option is declared as ip[,ip[...]]; resolving the whole comma-
+      // separated value as one hostname left every listed peer untrusted.
+      Parameter.p2pConfig.setTrustNodes(app.parseInetAddressList(cli.getOptionValue("t")));
       logger.info("Trust nodes {}", Parameter.p2pConfig.getTrustNodes());
     }
 
@@ -324,13 +323,16 @@ public class StartApp {
     Option opt3 = new Option(null, configKnownUrls, true,
         "known dns urls to publish, url format tree://{pubkey}@{domain}, optional, url[,url[...]]");
     Option opt4 = new Option(null, configStaticNodes, true,
-        "static nodes to publish, if exist then nodes from kad will be ignored, optional, ip:port[,ip:port[...]]");
+        "static nodes to publish, if exist then nodes from kad will be ignored, "
+            + "optional, ip:port[,ip:port[...]]");
     Option opt5 = new Option(null, configDomain, true,
         "dns domain to publish nodes, required, string");
     Option opt6 = new Option(null, configChangeThreshold, true,
-        "change threshold of add and delete to publish, optional, should be > 0 and < 1.0, default 0.1");
+        "change threshold of add and delete to publish, optional, "
+            + "should be > 0 and < 1.0, default 0.1");
     Option opt7 = new Option(null, configMaxMergeSize, true,
-        "max merge size to merge node to a leaf node in dns tree, optional, should be [1~5], default 5");
+        "max merge size to merge node to a leaf node in dns tree, optional, "
+            + "should be [1~5], default 5");
     Option opt8 = new Option(null, configServerType, true,
         "dns server to publish, required, only aws or aliyun is support");
     Option opt9 = new Option(null, configAccessId, true,
@@ -370,6 +372,23 @@ public class StartApp {
     helpFormatter.setSyntaxPrefix("\n");
     helpFormatter.printHelp("available dns publish cli options:", dnsPublishOptions);
     helpFormatter.setSyntaxPrefix("\n");
+  }
+
+  private List<InetAddress> parseInetAddressList(String paras) {
+    List<InetAddress> addresses = new ArrayList<>();
+    for (String para : paras.split(",")) {
+      String host = para.trim();
+      if (host.isEmpty()) {
+        continue;
+      }
+      InetAddress address = new InetSocketAddress(host, 0).getAddress();
+      if (address != null) {
+        addresses.add(address);
+      } else {
+        logger.warn("Ignoring unresolvable trust ip {}", host);
+      }
+    }
+    return addresses;
   }
 
   private List<InetSocketAddress> parseInetSocketAddressList(String paras) {
