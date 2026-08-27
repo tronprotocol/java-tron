@@ -137,9 +137,30 @@ jacocoTestReport {
         html.required = false
     }
     // Generated protobuf code, matching the checkstyle exclusion above.
+    //
+    // org/tron/p2p/example holds StartApp, the standalone CLI entry point for
+    // driving this module without java-tron. It is argument parsing, option
+    // declarations and a main() that starts services and blocks -- not module
+    // logic, and not code the node runs. It also sat in the checkstyle- and
+    // coverage-exempt `example` sourceSet until this PR, so excluding it keeps
+    // the measured surface the same rather than hiding newly counted logic.
+    // The parsing helpers it does own are covered by StartAppArgsTest.
     classDirectories.setFrom(files(classDirectories.files.collect {
-        fileTree(dir: it, excludes: ['**/protos/**'])
+        fileTree(dir: it, excludes: ['**/protos/**', '**/example/**'])
     }))
+
+    // :framework's own tests -- org.tron.core.net and friends -- execute a good
+    // deal of this module's code. That coverage is real, and while p2p's classes
+    // hung off :framework:jacocoTestReport it was counted. Reading framework's
+    // exec data here keeps counting it now that the classes live in this
+    // module's report instead. Without this the coverage gate sees a ~0.3 point
+    // drop for code that is still being exercised, just no longer measured.
+    //
+    // The fileTree is empty when :framework:test has not run, so :p2p:build on
+    // its own still works -- it just reports this module's tests alone.
+    executionData.from(fileTree("${rootProject.projectDir}/framework/build/jacoco")
+        .include('**/*.exec'))
+    mustRunAfter ':framework:test'
 }
 
 // Prints the module's runtime classpath, so StartApp can be launched standalone

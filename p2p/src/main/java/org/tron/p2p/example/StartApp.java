@@ -374,7 +374,9 @@ public class StartApp {
     helpFormatter.setSyntaxPrefix("\n");
   }
 
-  private List<InetAddress> parseInetAddressList(String paras) {
+  // Package-private so StartAppArgsTest can pin the parsing, including the
+  // multi-address handling that --trust-ips used to get wrong.
+  List<InetAddress> parseInetAddressList(String paras) {
     List<InetAddress> addresses = new ArrayList<>();
     for (String para : paras.split(",")) {
       String host = para.trim();
@@ -391,7 +393,7 @@ public class StartApp {
     return addresses;
   }
 
-  private List<InetSocketAddress> parseInetSocketAddressList(String paras) {
+  List<InetSocketAddress> parseInetSocketAddressList(String paras) {
     List<InetSocketAddress> nodes = new ArrayList<>();
     for (String para : paras.split(",")) {
       InetSocketAddress inetSocketAddress = NetUtil.parseInetSocketAddress(para);
