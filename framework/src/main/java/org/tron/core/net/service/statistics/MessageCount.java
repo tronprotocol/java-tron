@@ -15,7 +15,7 @@ public class MessageCount {
 
   private long totalCount = 0;
 
-  private void update() {
+  private synchronized void update() {
     long time = System.currentTimeMillis() / 1000;
     long gap = time - indexTime;
     int k = gap > SIZE ? SIZE : (int) gap;
@@ -28,19 +28,19 @@ public class MessageCount {
     }
   }
 
-  public void add() {
+  public synchronized void add() {
     update();
     szCount[index]++;
     totalCount++;
   }
 
-  public void add(int count) {
+  public synchronized void add(int count) {
     update();
     szCount[index] += count;
     totalCount += count;
   }
 
-  public int getCount(int interval) {
+  public synchronized int getCount(int interval) {
     if (interval > SIZE) {
       logger.warn("Param interval({}) is gt SIZE({})", interval, SIZE);
       return 0;
@@ -53,16 +53,16 @@ public class MessageCount {
     return count;
   }
 
-  public long getTotalCount() {
+  public synchronized long getTotalCount() {
     return totalCount;
   }
 
-  public void reset() {
+  public synchronized void reset() {
     totalCount = 0;
   }
 
   @Override
-  public String toString() {
+  public synchronized String toString() {
     return String.valueOf(totalCount);
   }
 

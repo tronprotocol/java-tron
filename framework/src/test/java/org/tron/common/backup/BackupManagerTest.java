@@ -2,6 +2,7 @@ package org.tron.common.backup;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
@@ -50,6 +51,13 @@ public class BackupManagerTest {
   public void tearDown() {
     InetUtil.dnsLookup = savedLookup;
     Args.clearParam();
+  }
+
+  @Test
+  public void statusIsVolatileForCrossThreadVisibility() throws Exception {
+    Field status = BackupManager.class.getDeclaredField("status");
+
+    Assert.assertTrue(Modifier.isVolatile(status.getModifiers()));
   }
 
   @Test
