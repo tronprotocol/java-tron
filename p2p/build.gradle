@@ -54,16 +54,15 @@ if (releaseBinary == 'true') {
     }
 }
 
-sourceSets {
-    main {
-        proto {
-            srcDir 'src/main/protos'
-        }
-        java {
-            srcDir 'src/main/java'
-        }
-    }
-}
+// .proto files sit in src/main/proto, the protobuf plugin's default, so no
+// sourceSet override is needed. The previous layout, src/main/protos with an
+// explicit srcDir, builds fine but IDEA's protobuf plugin does not read the
+// Gradle override -- it resolves imports against the default path -- so
+// `import "Discover.proto"` and every type it brings in showed as unresolved
+// in the editor.
+//
+// Generated sources still land in src/main/java/org/tron/p2p/protos via
+// generatedFilesBaseDir below, and are gitignored.
 
 // These exclusions used to live on the `libp2p` dependency in common/build.gradle.
 // Internalizing the module moves the same transitive dom4j tail (pulled in by the
