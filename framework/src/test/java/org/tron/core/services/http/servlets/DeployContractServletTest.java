@@ -1,16 +1,22 @@
 package org.tron.core.services.http.servlets;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import com.google.common.base.Strings;
 import org.junit.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.json.JSONObject;
 import org.tron.protos.Protocol;
 import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
 
@@ -81,5 +87,53 @@ public class DeployContractServletTest extends BaseHttpTest {
                 .getOutputsCount() == 0),
         eq(Protocol.Transaction.Contract.ContractType.CreateSmartContract));
     assertTransactionResponse(response);
+  }
+
+  @Test
+  public void testRejectsOversizedAbiIntegerWithBoundedResponse() throws Exception {
+    // This test scopes the response bound to the ABI parser used by this endpoint. Numeric
+    // request fields use a separate conversion path and are outside this test's scope.
+    String oversizedValue = Strings.repeat("9", 100_000);
+    String jsonParam = "{"
+        + "\"owner_address\":\"4199357684BC659F5166046B56C95A0E99F1265CD1\","
+        + "\"abi\":\"[{\\\"name\\\":\\\"x\\\",\\\"type\\\":"
+        + oversizedValue + "}]\""
+        + "}";
+    MockHttpServletResponse response = newResponse();
+
+    servlet.doPost(postRequest(jsonParam), response);
+
+    String content = response.getContentAsString();
+    JSONObject result = JSONObject.parseObject(content);
+    String error = result.getString("Error");
+    assertNotNull("Missing Error field in response: " + content, error);
+    assertTrue(error.contains("Integer token is too long"));
+    assertTrue("Unexpectedly large response", response.getContentAsByteArray().length < 512);
+    assertFalse("Response echoes the request token", content.contains(Strings.repeat("9", 8)));
+    verifyNoInteractions(wallet);
+  }
+
+  @Test
+  public void testRejectsOversizedAbiEnumIdentifierWithBoundedResponse() throws Exception {
+    // This test scopes the response bound to the ABI parser used by this endpoint. Numeric
+    // request fields use a separate conversion path and are outside this test's scope.
+    String oversizedValue = Strings.repeat("9", 100_000);
+    String jsonParam = "{"
+        + "\"owner_address\":\"4199357684BC659F5166046B56C95A0E99F1265CD1\","
+        + "\"abi\":\"[{\\\"name\\\":\\\"x\\\",\\\"type\\\":\\\""
+        + oversizedValue + "\\\"}]\""
+        + "}";
+    MockHttpServletResponse response = newResponse();
+
+    servlet.doPost(postRequest(jsonParam), response);
+
+    String content = response.getContentAsString();
+    JSONObject result = JSONObject.parseObject(content);
+    String error = result.getString("Error");
+    assertNotNull("Missing Error field in response: " + content, error);
+    assertTrue(error.contains("Enum token is too long"));
+    assertTrue("Unexpectedly large response", response.getContentAsByteArray().length < 512);
+    assertFalse("Response echoes the request token", content.contains(Strings.repeat("9", 8)));
+    verifyNoInteractions(wallet);
   }
 }
