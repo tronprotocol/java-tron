@@ -5,9 +5,7 @@ plugins {
 apply plugin: 'application'
 apply plugin: 'checkstyle'
 
-def versions = [
-        checkstyle: '8.7',
-]
+
 mainClassName = 'org.tron.plugins.ArchiveManifest'
 group 'org.tron'
 version '1.0.0'
@@ -75,7 +73,7 @@ dependencies {
 check.dependsOn 'lint'
 
 checkstyle {
-    toolVersion = "${versions.checkstyle}"
+    toolVersion = "${rootProject.checkstyleVersion}"
     configFile = file("../framework/config/checkstyle/checkStyleAll.xml")
     maxWarnings = 0
 }

@@ -11,9 +11,7 @@ apply plugin: 'checkstyle'
 
 mainClassName = 'org.tron.program.FullNode'
 
-def versions = [
-        checkstyle: '8.7',
-]
+
 
 
 
@@ -82,7 +80,7 @@ dependencies {
 check.dependsOn 'lint'
 
 checkstyle {
-    toolVersion = "${versions.checkstyle}"
+    toolVersion = "${rootProject.checkstyleVersion}"
     configFile = file("config/checkstyle/checkStyleAll.xml")
     maxWarnings = 0
 }

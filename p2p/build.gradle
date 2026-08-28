@@ -4,7 +4,7 @@ apply plugin: 'checkstyle'
 // Unit tests live in src/test/java/, alongside the code they cover.
 
 checkstyle {
-    toolVersion = '8.7'
+    toolVersion = "${rootProject.checkstyleVersion}"
     configFile = file("${rootDir}/config/checkstyle/checkStyleAll.xml")
     maxWarnings = 0
 }
@@ -18,16 +18,41 @@ checkstyleTest {
     source = 'src/test/java'
 }
 
-// StartApp is the entry point for driving this module on its own, without
-// starting java-tron. The jar is thin, so it needs the runtime classpath
-// alongside it — see README.md.
-jar {
-    manifest {
-        attributes 'Main-Class': 'org.tron.p2p.example.StartApp'
+// The plain jar stays thin -- it is what :common depends on. Declaring
+// Main-Class on it would be a trap: `java -jar p2p-1.0.0.jar` would resolve the
+// entry point and then die on the first dependency it touches
+// (NoClassDefFoundError: org/apache/commons/cli/ParseException). The runnable
+// artifact is p2p-standalone.jar below.
+//
+// Same shape as :framework's FullNode.jar and :plugins' Toolkit.jar, including
+// the -PbinaryRelease=false opt-out and the signature/SPI exclusions.
+def releaseBinary = hasProperty('binaryRelease') ? getProperty('binaryRelease') : 'true'
+if (releaseBinary == 'true') {
+    artifacts {
+        archives(tasks.create('buildStandaloneJar', Jar) {
+            baseName = 'p2p-standalone'
+            version = null
+            from(sourceSets.main.output) {
+                include '/**'
+            }
+            from {
+                configurations.runtimeClasspath.collect {
+                    it.isDirectory() ? it : zipTree(it)
+                }
+            }
+            duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+            // Bouncy Castle ships signed jars; merged signatures fail verification.
+            exclude 'META-INF/*.SF'
+            exclude 'META-INF/*.DSA'
+            exclude 'META-INF/*.RSA'
+            // dnsjava's resolver SPI, see HADOOP-19288
+            exclude 'META-INF/services/java.net.spi.InetAddressResolverProvider'
+            manifest {
+                attributes 'Main-Class': 'org.tron.p2p.example.StartApp'
+            }
+        })
     }
 }
-
-def protobufVersion = '3.25.8'
 
 sourceSets {
     main {
@@ -59,8 +84,8 @@ configurations.configureEach {
 
 dependencies {
     // protobuf & grpc (implementation scope: not leaked to consumers)
-    implementation "com.google.protobuf:protobuf-java:${protobufVersion}"
-    implementation "com.google.protobuf:protobuf-java-util:${protobufVersion}"
+    implementation "com.google.protobuf:protobuf-java:${rootProject.protobufVersion}"
+    implementation "com.google.protobuf:protobuf-java-util:${rootProject.protobufVersion}"
     // grpc-netty provides Netty transitively, which p2p uses for TCP/UDP transport.
     // grpc itself is not used (p2p protos define only messages, no services).
     // Track the project's grpc version rather than pinning libp2p's, so p2p
@@ -110,7 +135,7 @@ dependencies {
 protobuf {
     generatedFilesBaseDir = "$projectDir/src"
     protoc {
-        artifact = "com.google.protobuf:protoc:${protobufVersion}"
+        artifact = "com.google.protobuf:protoc:${rootProject.protobufVersion}"
     }
     generateProtoTasks {
         all().each { task ->

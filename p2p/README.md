@@ -1,29 +1,40 @@
-> **Vendored module.** This is `tronprotocol/libp2p` v2.2.9 living inside
-> java-tron as the `:p2p` Gradle module. java-tron consumes it as a project
-> dependency, not as a published artifact — `:common` exposes it via
-> `api project(":p2p")`. The document below is the upstream README, kept because
-> the module still runs standalone for debugging.
->
-> **Running it standalone.** `p2p-1.0.0.jar` is a thin jar, so its dependencies
-> have to be on the classpath. From the repository root:
->
-> ```bash
-> ./gradlew :p2p:jar
-> java -cp "p2p/build/libs/p2p-1.0.0.jar:$(./gradlew -q :p2p:printRuntimeClasspath)" \
->     org.tron.p2p.example.StartApp [options]
-> ```
->
-> The commands below are written as `java -jar` for brevity; substitute the
-> classpath form above.
+# p2p
 
-libp2p can run independently or be used as a dependency.
+Peer discovery, connection management and DNS-based node lists for java-tron.
+
+> **Vendored from [tronprotocol/libp2p](https://github.com/tronprotocol/libp2p)
+> v2.2.9.** It lives here as the `:p2p` Gradle module and is consumed as a
+> project dependency, not as a published artifact — `:common` exposes it via
+> `api project(":p2p")`. Upstream's own README follows, edited where
+> internalizing changed the facts; treat this file as the module's docs rather
+> than as a mirror of upstream.
+
+## Running it on its own
+
+`./gradlew :p2p:build` produces two jars:
+
+| | |
+|---|---|
+| `p2p-1.0.0.jar` | thin — what java-tron depends on, no `Main-Class` |
+| `p2p-standalone.jar` | all dependencies bundled, `Main-Class` set to `StartApp` |
+
+Use the standalone one to drive the module without starting java-tron:
+
+```bash
+./gradlew :p2p:buildStandaloneJar
+java -jar p2p/build/libs/p2p-standalone.jar --help
+```
+
+`-PbinaryRelease=false` skips building it, matching `:framework` and `:plugins`.
+
+This module can run on its own, or be used as a library.
 
 # 1. Run independently
 
 command of start a p2p node:
 
 ```bash
-$ java -jar p2p/build/libs/p2p-1.0.0.jar [options]
+$ java -jar p2p/build/libs/p2p-standalone.jar [options]
 ```
 
 available cli options:
@@ -86,25 +97,25 @@ For details please
 check [StartApp](src/main/java/org/tron/p2p/example/StartApp.java)
 .
 
-## 1.1 Construct a p2p network using libp2p
+## 1.1 Construct a p2p network
 
 For example
 Node A, starts with default configuration parameters. Let's say its IP is 127.0.0.1
 
 ```bash
-$ java -jar p2p/build/libs/p2p-1.0.0.jar
+$ java -jar p2p/build/libs/p2p-standalone.jar
 ```
 
 Node B, start with seed nodes(127.0.0.1:18888). Let's say its IP is 127.0.0.2
 
 ```bash
-$ java -jar p2p/build/libs/p2p-1.0.0.jar -s 127.0.0.1:18888
+$ java -jar p2p/build/libs/p2p-standalone.jar -s 127.0.0.1:18888
 ```
 
 Node C, start with with seed nodes(127.0.0.1:18888). Let's say its IP is 127.0.0.3
 
 ```bash
-$ java -jar p2p/build/libs/p2p-1.0.0.jar -s 127.0.0.1:18888
+$ java -jar p2p/build/libs/p2p-standalone.jar -s 127.0.0.1:18888
 ```
 
 After the three nodes are successfully started, the usual situation is that node B can discover node
@@ -130,7 +141,7 @@ Suppose you have a domain example.org hosted by Amazon Route 53, you can publish
 like this:
 
 ```bash
-java -jar p2p/build/libs/p2p-1.0.0.jar -p 18888 -v 201910292 -d 1 -s 127.0.0.1:18888 \
+java -jar p2p/build/libs/p2p-standalone.jar -p 18888 -v 201910292 -d 1 -s 127.0.0.1:18888 \
 -publish \
 --dns-private b71c71a67e1177ad4e901695e1b4b9ee17ae16c6668d313eac2f96dbcda3f291 \
 --server-type aws \
@@ -172,15 +183,15 @@ tree to get nodes dynamically.
 
 ## 2.1 Core classes
 
-* [P2pService](https://github.com/tronprotocol/libp2p/blob/main/src/main/java/org/tron/p2p/P2pService.java)
+* [P2pService](src/main/java/org/tron/p2p/P2pService.java)
   is the entry class of p2p service and provides the startup interface of p2p service and the main
   interfaces provided by p2p module.
-* [P2pConfig](https://github.com/tronprotocol/libp2p/blob/main/src/main/java/org/tron/p2p/P2pConfig.java)
+* [P2pConfig](src/main/java/org/tron/p2p/P2pConfig.java)
   defines all the configurations of the p2p module, such as the listening port, the maximum number
   of connections, etc.
-* [P2pEventHandler](https://github.com/tronprotocol/libp2p/blob/main/src/main/java/org/tron/p2p/P2pEventHandler.java)
+* [P2pEventHandler](src/main/java/org/tron/p2p/P2pEventHandler.java)
   is the abstract class for p2p event handler.
-* [Channel](https://github.com/tronprotocol/libp2p/blob/main/src/main/java/org/tron/p2p/connection/Channel.java)
+* [Channel](src/main/java/org/tron/p2p/connection/Channel.java)
   is an implementation of the TCP connection channel in the p2p module. The new connection channel
   is obtained through the `P2pEventHandler.onConnect` method.
 
@@ -314,7 +325,7 @@ config.setMaxConnectionsWithSameIp(2);
 ```
 
 ### 2.3.2 (optional) Config dns parameters if needed
-Suppose these scenes in libp2p:
+Suppose these scenes:
 * you don't want to config one or many fixed seed nodes in mobile app such as wallet, because nodes may be out of service but you cannot update the app timely
 * you don't known any seed node but you still want to establish tcp connection
 
@@ -328,7 +339,7 @@ config.setDiscoverEnable(false);
 String[] urls = new String[] {"tree://APFGGTFOBVE2ZNAB3CSMNNX6RRK3ODIRLP2AA5U4YFAA6MSYZUYTQ@nodes.example.org"};
 config.setTreeUrls(Arrays.asList(urls));
 ```
-After that, libp2p will download the nodes from nile.nftderby1.net periodically.
+After that, the module will download the nodes from nile.nftderby1.net periodically.
 
 ### 2.3.3 TCP Handler
 

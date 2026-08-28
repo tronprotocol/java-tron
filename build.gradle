@@ -14,6 +14,10 @@ ext {
     // grpcVersion above — keeping it here makes that coupling visible instead of
     // leaving two literals to drift apart.
     nettyVersion = "4.2.15.Final"
+    // Shared by :protocol and :p2p, which both generate from .proto files.
+    protobufVersion = "3.25.8"
+    // Shared by :framework, :plugins and :p2p.
+    checkstyleVersion = "8.7"
 }
 
 allprojects {
