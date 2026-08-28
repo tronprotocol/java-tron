@@ -5,9 +5,11 @@ import static org.mockito.Mockito.mock;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ScheduledExecutorService;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
+import org.tron.common.logsfilter.EventPluginLoader;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.BlockCapsule;
@@ -22,6 +24,31 @@ import org.tron.core.store.DynamicPropertiesStore;
 
 public class BlockEventLoadTest {
   BlockEventLoad blockEventLoad = new BlockEventLoad();
+
+  @Test(timeout = 2_000)
+  public void shouldNotLoadWhenRealtimeEventServiceIsBusy() throws Exception {
+    EventPluginLoader eventPluginLoader = mock(EventPluginLoader.class);
+    RealtimeEventService realtimeEventService = mock(RealtimeEventService.class);
+    Manager manager = mock(Manager.class);
+    ReflectUtils.setFieldValue(blockEventLoad, "instance", eventPluginLoader);
+    ReflectUtils.setFieldValue(blockEventLoad, "realtimeEventService", realtimeEventService);
+    ReflectUtils.setFieldValue(blockEventLoad, "manager", manager);
+    Mockito.when(eventPluginLoader.isBusy()).thenReturn(false);
+    Mockito.when(realtimeEventService.isBusy()).thenReturn(true);
+
+    Field executorField = BlockEventLoad.class.getDeclaredField("executor");
+    executorField.setAccessible(true);
+    ScheduledExecutorService executor = (ScheduledExecutorService) executorField
+        .get(blockEventLoad);
+    try {
+      blockEventLoad.init();
+
+      Mockito.verify(realtimeEventService, Mockito.timeout(1_000).atLeastOnce()).isBusy();
+      Mockito.verifyNoInteractions(manager);
+    } finally {
+      executor.shutdownNow();
+    }
+  }
 
   @Test
   public void test() throws Exception {
