@@ -48,6 +48,8 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.TransactionTrace;
+import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.MaintenanceUnavailableException;
 import org.tron.core.services.http.JsonFormat.ParseException;
 import org.tron.json.JSON;
 import org.tron.json.JSONArray;
@@ -64,6 +66,10 @@ import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
 
 @Slf4j(topic = "API")
 public class Util {
+
+  private static final String INTERNAL_SERVER_ERROR = "internal server error";
+  public static final String RATE_LIMITER_ERROR_MSG = "lack of computing resources";
+  static final String INVALID_ADDRESS_MSG = "INVALID address";
 
   public static final String EVENTS_DEPRECATED_MSG =
       "'events' field is deprecated and no longer supported";
@@ -114,10 +120,29 @@ public class Util {
     return jsonObject.toJSONString();
   }
 
-  public static String printErrorMsg(Exception e) {
+  private static String printErrorMsg(String msg) {
     JSONObject jsonObject = new JSONObject();
-    jsonObject.put("Error", e.getClass() + " : " + e.getMessage());
+    jsonObject.put("Error", msg);
     return jsonObject.toJSONString();
+  }
+
+  private static String clientMessage(Exception e) {
+    if (e == null) {
+      return INTERNAL_SERVER_ERROR;
+    }
+
+    Class<?> type = e.getClass();
+    if (type == IllegalArgumentException.class) {
+      return EVENTS_DEPRECATED_MSG.equals(e.getMessage())
+          ? EVENTS_DEPRECATED_MSG : INTERNAL_SERVER_ERROR;
+    }
+    if (type == ParseException.class
+        || type == ContractValidateException.class
+        || type == MaintenanceUnavailableException.class) {
+      String message = e.getMessage();
+      return StringUtils.isBlank(message) ? INTERNAL_SERVER_ERROR : message;
+    }
+    return INTERNAL_SERVER_ERROR;
   }
 
   public static String printBlockList(BlockList list, boolean selfType) {
@@ -526,11 +551,16 @@ public class Util {
   }
 
   public static void processError(Exception e, HttpServletResponse response) {
-    logger.debug(e.getMessage(), e);
+    logger.debug("HTTP request failed", e);
+    writeAuditedError(clientMessage(e), response);
+  }
+
+  // Bypasses clientMessage: callers must pass audited fixed or pre-existing client texts only.
+  static void writeAuditedError(String msg, HttpServletResponse response) {
     try {
-      response.getWriter().println(Util.printErrorMsg(e));
+      response.getWriter().println(Util.printErrorMsg(msg));
     } catch (IOException ioe) {
-      logger.debug("IOException: {}", ioe.getMessage());
+      logger.debug("Failed to write HTTP error response", ioe);
     }
   }
 

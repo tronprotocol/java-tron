@@ -1,6 +1,5 @@
 package org.tron.core.services.http;
 
-import java.io.IOException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -29,19 +28,9 @@ public class GetRewardServlet extends RateLimiterServlet {
           : "{\"reward\": " + value + "}";
       response.getWriter().println(out);
     } catch (DecoderException | IllegalArgumentException e) {
-      try {
-        response.getWriter()
-            .println("{\"Error\": " + "\"INVALID address, " + e.getMessage() + "\"}");
-      } catch (IOException ioe) {
-        logger.debug("IOException: {}", ioe.getMessage());
-      }
+      Util.writeAuditedError(Util.INVALID_ADDRESS_MSG, response);
     } catch (Exception e) {
-      logger.error("", e);
-      try {
-        response.getWriter().println(Util.printErrorMsg(e));
-      } catch (IOException ioe) {
-        logger.debug("IOException: {}", ioe.getMessage());
-      }
+      Util.processError(e, response);
     }
   }
 

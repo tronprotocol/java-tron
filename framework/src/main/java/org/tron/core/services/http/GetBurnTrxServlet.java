@@ -1,6 +1,5 @@
 package org.tron.core.services.http;
 
-import java.io.IOException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -24,12 +23,7 @@ public class GetBurnTrxServlet extends RateLimiterServlet {
           : "{\"burnTrxAmount\": " + value + "}";
       response.getWriter().println(out);
     } catch (Exception e) {
-      logger.error("", e);
-      try {
-        response.getWriter().println(Util.printErrorMsg(e));
-      } catch (IOException ioe) {
-        logger.debug("IOException: {}", ioe.getMessage());
-      }
+      Util.processError(e, response);
     }
   }
 
