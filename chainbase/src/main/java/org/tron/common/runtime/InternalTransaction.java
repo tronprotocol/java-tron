@@ -71,6 +71,11 @@ public class InternalTransaction {
    */
   private String extra;
 
+  /*
+   * output/return data of the internal call
+   */
+  private byte[] output;
+
 
   /**
    * Construct a root InternalTransaction
@@ -217,6 +222,17 @@ public class InternalTransaction {
 
   public String getExtra() {
     return extra == null ? "" : extra;
+  }
+
+  public void setOutput(byte[] output) {
+    this.output = output;
+  }
+
+  public byte[] getOutput() {
+    if (output == null) {
+      return EMPTY_BYTE_ARRAY;
+    }
+    return output.clone();
   }
 
   public final byte[] getHash() {
