@@ -58,8 +58,7 @@ public class SyncBlockChainMsgHandler implements TronMsgHandler {
   }
 
   private boolean check(PeerConnection peer, SyncBlockChainMessage msg) throws P2pException {
-    if (peer.getRemainNum() > 0
-        && !peer.getP2pRateLimiter().tryAcquire(msg.getType().asByte())) {
+    if (!peer.getP2pRateLimiter().tryAcquire(msg.getType().asByte())) {
       // Discard messages that exceed the rate limit
       logger.warn("{} message from peer {} exceeds the rate limit",
           msg.getType(), peer.getInetSocketAddress());
