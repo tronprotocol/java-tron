@@ -139,6 +139,7 @@ public class RepositoryImpl implements Repository {
   private final HashMap<Key, Value<DelegatedResourceAccountIndex>> delegatedResourceAccountIndexCache = new HashMap<>();
   private final HashBasedTable<Key, Key, Value<byte[]>> transientStorage = HashBasedTable.create();
   private final HashSet<Key> newContractCache = new HashSet<>();
+  private final HashSet<Key> selfDestructCache = new HashSet<>();
 
   public static void removeLruCache(byte[] address) {
   }
@@ -573,6 +574,29 @@ public class RepositoryImpl implements Repository {
   }
 
   @Override
+  public void markSelfDestruct(byte[] address) {
+    selfDestructCache.add(Key.create(address));
+  }
+
+  @Override
+  public boolean isSelfDestructed(byte[] address) {
+    Key key = Key.create(address);
+    if (selfDestructCache.contains(key)) {
+      return true;
+    }
+
+    if (parent != null) {
+      boolean isSelfDestructed = parent.isSelfDestructed(address);
+      if (isSelfDestructed) {
+        selfDestructCache.add(key);
+      }
+      return isSelfDestructed;
+    } else {
+      return false;
+    }
+  }
+
+  @Override
   public void updateAccount(byte[] address, AccountCapsule accountCapsule) {
     accountCache.put(Key.create(address),
         Value.create(accountCapsule, Type.DIRTY));
@@ -780,6 +804,7 @@ public class RepositoryImpl implements Repository {
     commitDelegatedResourceAccountIndexCache(repository);
     commitTransientStorage(repository);
     commitNewContractCache(repository);
+    commitSelfDestructCache(repository);
   }
 
   @Override
@@ -1139,6 +1164,12 @@ public class RepositoryImpl implements Repository {
   public void commitNewContractCache(Repository deposit) {
     if (deposit != null) {
       newContractCache.forEach(key -> deposit.putNewContract(key.getData()));
+    }
+  }
+
+  private void commitSelfDestructCache(Repository deposit) {
+    if (deposit != null) {
+      selfDestructCache.forEach(key -> deposit.markSelfDestruct(key.getData()));
     }
   }
 

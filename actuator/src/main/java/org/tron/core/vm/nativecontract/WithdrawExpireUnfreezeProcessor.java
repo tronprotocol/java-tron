@@ -17,6 +17,7 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.vm.nativecontract.param.WithdrawExpireUnfreezeParam;
 import org.tron.core.vm.repository.Repository;
+import org.tron.core.vm.utils.MUtil;
 import org.tron.protos.Protocol;
 
 @Slf4j(topic = "VMProcessor")
@@ -51,6 +52,10 @@ public class WithdrawExpireUnfreezeProcessor {
     } catch (ArithmeticException e) {
       logger.debug(e.getMessage(), e);
       throw new ContractValidateException(e.getMessage());
+    }
+
+    if (accountCapsule.hasInvalidDelegatedV2()) {
+      MUtil.checkCPUTimeForInvalidDelegatedV2Balance();
     }
   }
 
