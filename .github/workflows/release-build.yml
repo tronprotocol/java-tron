@@ -1,0 +1,239 @@
+name: Release JAR Build
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  validate-source:
+    name: Validate release source
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Require master branch
+        env:
+          GIT_REF: ${{ github.ref }}
+        run: |
+          if [ "$GIT_REF" != "refs/heads/master" ]; then
+            echo "Release JARs must be built from master; received $GIT_REF." >&2
+            exit 1
+          fi
+
+  build-x64:
+    name: Build x64 JARs (Temurin 8)
+    needs: validate-source
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    container:
+      image: eclipse-temurin:8-jdk
+
+    env:
+      GRADLE_USER_HOME: /github/home/.gradle
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Install build dependencies
+        run: |
+          set -euxo pipefail
+          apt-get update
+          apt-get install -y git unzip build-essential
+
+      - name: Checkout source commit
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.sha }}
+
+      - name: Cache Gradle packages
+        uses: actions/cache@v5
+        with:
+          path: |
+            /github/home/.gradle/caches
+            /github/home/.gradle/wrapper
+          key: release-x64-gradle-${{ hashFiles('**/*.gradle', '**/gradle-wrapper.properties') }}
+          restore-keys: release-x64-gradle-
+
+      - name: Record build environment
+        run: |
+          set -euo pipefail
+          mkdir -p release-jars
+          {
+            echo "architecture=x64"
+            echo "commit_sha=$(git rev-parse HEAD)"
+            echo "git_ref=${GITHUB_REF}"
+            echo "workflow_run=${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+            echo "java_version:"
+            java -version 2>&1
+          } > release-jars/build-metadata-x64.txt
+
+      - name: Build release JARs
+        run: |
+          ./gradlew :framework:buildFullNodeJar \
+            :plugins:buildToolkitJar \
+            :plugins:buildArchiveManifestJar \
+            --no-daemon \
+            --no-build-cache
+
+      - name: Smoke test release JARs
+        run: |
+          set -euo pipefail
+          fullnode_version=$(java -jar framework/build/libs/FullNode.jar --version)
+          printf '%s\n' "$fullnode_version"
+          grep -F -- "Git : ${GITHUB_SHA}" <<< "$fullnode_version"
+          java -jar plugins/build/libs/Toolkit.jar help
+          java -jar plugins/build/libs/ArchiveManifest.jar -h
+
+      - name: Collect x64 JARs
+        run: |
+          set -euo pipefail
+          install -m 0644 framework/build/libs/FullNode.jar release-jars/FullNode-x64.jar
+          install -m 0644 plugins/build/libs/Toolkit.jar release-jars/Toolkit-x64.jar
+          install -m 0644 plugins/build/libs/ArchiveManifest.jar release-jars/ArchiveManifest-x64.jar
+
+      - name: Upload x64 JARs
+        uses: actions/upload-artifact@v6
+        with:
+          name: release-jars-x64
+          path: release-jars/
+          if-no-files-found: error
+          retention-days: 7
+          overwrite: true
+
+  build-aarch64:
+    name: Build aarch64 JARs (Temurin 17)
+    needs: validate-source
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout source commit
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.sha }}
+
+      - name: Set up Temurin 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Cache Gradle packages
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: release-aarch64-gradle-${{ hashFiles('**/*.gradle', '**/gradle-wrapper.properties') }}
+          restore-keys: release-aarch64-gradle-
+
+      - name: Record build environment
+        run: |
+          set -euo pipefail
+          mkdir -p release-jars
+          {
+            echo "architecture=aarch64"
+            echo "commit_sha=$(git rev-parse HEAD)"
+            echo "git_ref=${GITHUB_REF}"
+            echo "workflow_run=${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+            echo "java_version:"
+            java -version 2>&1
+          } > release-jars/build-metadata-aarch64.txt
+
+      - name: Build release JARs
+        run: |
+          ./gradlew :framework:buildFullNodeJar \
+            :plugins:buildToolkitJar \
+            :plugins:buildArchiveManifestJar \
+            --no-daemon \
+            --no-build-cache
+
+      - name: Smoke test release JARs
+        run: |
+          set -euo pipefail
+          fullnode_version=$(java -jar framework/build/libs/FullNode.jar --version)
+          printf '%s\n' "$fullnode_version"
+          grep -F -- "Git : ${GITHUB_SHA}" <<< "$fullnode_version"
+          java -jar plugins/build/libs/Toolkit.jar help
+          java -jar plugins/build/libs/ArchiveManifest.jar -h
+
+      - name: Collect aarch64 JARs
+        run: |
+          set -euo pipefail
+          install -m 0644 framework/build/libs/FullNode.jar release-jars/FullNode-aarch64.jar
+          install -m 0644 plugins/build/libs/Toolkit.jar release-jars/Toolkit-aarch64.jar
+          install -m 0644 plugins/build/libs/ArchiveManifest.jar release-jars/ArchiveManifest-aarch64.jar
+
+      - name: Upload aarch64 JARs
+        uses: actions/upload-artifact@v6
+        with:
+          name: release-jars-aarch64
+          path: release-jars/
+          if-no-files-found: error
+          retention-days: 7
+          overwrite: true
+
+  assemble:
+    name: Assemble release JAR artifact
+    needs: [build-x64, build-aarch64]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Download x64 JARs
+        uses: actions/download-artifact@v8
+        with:
+          name: release-jars-x64
+          path: staging/x64
+
+      - name: Download aarch64 JARs
+        uses: actions/download-artifact@v8
+        with:
+          name: release-jars-aarch64
+          path: staging/aarch64
+
+      - name: Assemble and verify release artifact
+        run: |
+          set -euo pipefail
+          mkdir -p release-jars
+          cp staging/x64/*.jar release-jars/
+          cp staging/aarch64/*.jar release-jars/
+          cp staging/x64/build-metadata-x64.txt release-jars/
+          cp staging/aarch64/build-metadata-aarch64.txt release-jars/
+
+          for name in FullNode Toolkit ArchiveManifest; do
+            if cmp -s "release-jars/${name}-x64.jar" "release-jars/${name}-aarch64.jar"; then
+              echo "${name} x64 and aarch64 JARs are unexpectedly identical." >&2
+              exit 1
+            fi
+            cp "release-jars/${name}-x64.jar" "release-jars/${name}.jar"
+          done
+
+          jar_count=$(find release-jars -maxdepth 1 -type f -name '*.jar' | wc -l)
+          if [ "$jar_count" -ne 9 ]; then
+            echo "Expected 9 release JARs, found $jar_count." >&2
+            exit 1
+          fi
+
+          (
+            cd release-jars
+            sha256sum -- *.jar | sort -k2 > SHA256SUMS
+          )
+
+      - name: Upload release JAR artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: release-jars-${{ github.sha }}
+          path: release-jars/
+          if-no-files-found: error
+          retention-days: 30
+          overwrite: true
