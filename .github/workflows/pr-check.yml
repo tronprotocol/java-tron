@@ -43,9 +43,16 @@ jobs:
               errors.push(`PR title is too long (${title.length}/72 characters).`);
             }
 
-            // 2. Conventional format check (allow a missing recommended space)
-            const conventionalRegex = /^(feat|fix|refactor|docs|style|test|chore|ci|perf|build|revert)(\([^)]+\))?: ?\S.*/;
-            if (title && !conventionalRegex.test(title)) {
+            // 2. Conventional format check (require a space after the colon)
+            const titlePrefix = '(?:feat|fix|refactor|docs|style|test|chore|ci|perf|build|revert)(?:[(][^)]+[)])?';
+            const missingSpaceAfterColonRegex = new RegExp(`^${titlePrefix}:[^ ]`);
+            const conventionalRegex = new RegExp(`^${titlePrefix}: [^ ].*`);
+            if (title && missingSpaceAfterColonRegex.test(title)) {
+              errors.push(
+                'PR title must include a space after the colon.\n' +
+                '  Example: `feat(tvm): add blob opcodes`'
+              );
+            } else if (title && !conventionalRegex.test(title)) {
               errors.push(
                 'PR title must follow conventional format: `type(scope): description`\n' +
                 '  Allowed types: ' + allowedTypes.map(t => `\`${t}\``).join(', ') + '\n' +
@@ -60,7 +67,7 @@ jobs:
 
             // 4. Description part should not start with a capital letter
             if (title) {
-              const descMatch = title.match(/^\w+(?:\([^)]+\))?: ?(.+)/);
+              const descMatch = title.match(/^\w+(?:\([^)]+\))?: (.+)/);
               if (descMatch) {
                 const desc = descMatch[1];
                 if (/^[A-Z]/.test(desc)) {
