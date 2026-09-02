@@ -51,7 +51,7 @@ public class OperationsTest extends BaseTest {
 
   private ProgramInvokeMockImpl invoke;
   private Program program;
-  private final JumpTable jumpTable = OperationRegistry.getTable();
+  private final JumpTable jumpTable = OperationRegistry.prepareAndGetTable(false);
   @Autowired
   private Wallet wallet;
 

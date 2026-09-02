@@ -52,4 +52,12 @@ public class Operation {
   public boolean isEnabled() {
     return enabled.getAsBoolean();
   }
+
+  public Operation adjustCost(Function<Program, Long> newCost) {
+    return new Operation(opcode, require, ret, newCost, action, enabled);
+  }
+
+  public Operation adjustAction(Consumer<Program> newAction) {
+    return new Operation(opcode, require, ret, cost, newAction, enabled);
+  }
 }

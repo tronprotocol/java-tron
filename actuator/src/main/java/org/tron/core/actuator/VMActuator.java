@@ -189,7 +189,8 @@ public class VMActuator implements Actuator2 {
           throw e;
         }
 
-        VM.play(program, OperationRegistry.getTable());
+        // Prepare the table once for this execution and all nested calls.
+        VM.play(program, OperationRegistry.prepareAndGetTable(isConstantCall));
         result = program.getResult();
 
         if (VMConfig.allowEnergyAdjustment()) {
