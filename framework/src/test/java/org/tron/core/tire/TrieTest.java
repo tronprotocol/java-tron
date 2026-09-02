@@ -27,8 +27,8 @@ import java.util.Map;
 import java.util.Random;
 import org.junit.Assert;
 import org.junit.Test;
-import org.tron.core.capsule.utils.FastByteComparisons;
-import org.tron.core.capsule.utils.RLP;
+import org.tron.common.utils.ByteUtil;
+import org.tron.common.utils.FastByteComparisons;
 import org.tron.core.trie.TrieImpl;
 import org.tron.core.trie.TrieImpl.Node;
 
@@ -47,38 +47,38 @@ public class TrieTest {
   public void test() {
     TrieImpl trie = new TrieImpl();
     trie.put(new byte[]{1}, c.getBytes());
-    Assert.assertArrayEquals(trie.get(RLP.encodeInt(1)), c.getBytes());
+    Assert.assertArrayEquals(trie.get(ByteUtil.intToBytesNoLeadZeroes(1)), c.getBytes());
     trie.put(new byte[]{1, 0}, ca.getBytes());
     trie.put(new byte[]{1, 1}, cat.getBytes());
     trie.put(new byte[]{1, 2}, dog.getBytes());
-    trie.put(RLP.encodeInt(5), doge.getBytes());
-    trie.put(RLP.encodeInt(6), doge.getBytes());
-    trie.put(RLP.encodeInt(7), doge.getBytes());
-    trie.put(RLP.encodeInt(11), doge.getBytes());
-    trie.put(RLP.encodeInt(12), dude.getBytes());
-    trie.put(RLP.encodeInt(13), test.getBytes());
-    trie.delete(RLP.encodeInt(3));
+    trie.put(ByteUtil.intToBytesNoLeadZeroes(5), doge.getBytes());
+    trie.put(ByteUtil.intToBytesNoLeadZeroes(6), doge.getBytes());
+    trie.put(ByteUtil.intToBytesNoLeadZeroes(7), doge.getBytes());
+    trie.put(ByteUtil.intToBytesNoLeadZeroes(11), doge.getBytes());
+    trie.put(ByteUtil.intToBytesNoLeadZeroes(12), dude.getBytes());
+    trie.put(ByteUtil.intToBytesNoLeadZeroes(13), test.getBytes());
+    trie.delete(ByteUtil.intToBytesNoLeadZeroes(3));
     byte[] rootHash = trie.getRootHash();
     TrieImpl trieCopy = new TrieImpl(trie.getCache(), rootHash);
-    Assert.assertNull(trie.prove(RLP.encodeInt(111)));
+    Assert.assertNull(trie.prove(ByteUtil.intToBytesNoLeadZeroes(111)));
     Map<byte[], Node> map = trieCopy.prove(new byte[]{1, 1});
     boolean result = trie
         .verifyProof(trieCopy.getRootHash(), new byte[]{1, 1}, (LinkedHashMap<byte[], Node>) map);
     Assert.assertTrue(result);
-    assertTrue(RLP.encodeInt(5), trieCopy);
-    assertTrue(RLP.encodeInt(5), RLP.encodeInt(6), trieCopy);
-    assertTrue(RLP.encodeInt(6), trieCopy);
-    assertTrue(RLP.encodeInt(6), RLP.encodeInt(5), trieCopy);
+    assertTrue(ByteUtil.intToBytesNoLeadZeroes(5), trieCopy);
+    assertTrue(ByteUtil.intToBytesNoLeadZeroes(5), ByteUtil.intToBytesNoLeadZeroes(6), trieCopy);
+    assertTrue(ByteUtil.intToBytesNoLeadZeroes(6), trieCopy);
+    assertTrue(ByteUtil.intToBytesNoLeadZeroes(6), ByteUtil.intToBytesNoLeadZeroes(5), trieCopy);
     //
-    trie.put(RLP.encodeInt(5), doge.getBytes());
+    trie.put(ByteUtil.intToBytesNoLeadZeroes(5), doge.getBytes());
     byte[] rootHash2 = trie.getRootHash();
     Assert.assertArrayEquals(rootHash, rootHash2);
     trieCopy = new TrieImpl(trie.getCache(), rootHash2);
     //
-    assertTrue(RLP.encodeInt(5), trieCopy);
-    assertTrue(RLP.encodeInt(5), RLP.encodeInt(6), trieCopy);
-    assertTrue(RLP.encodeInt(6), trieCopy);
-    assertTrue(RLP.encodeInt(6), RLP.encodeInt(5), trieCopy);
+    assertTrue(ByteUtil.intToBytesNoLeadZeroes(5), trieCopy);
+    assertTrue(ByteUtil.intToBytesNoLeadZeroes(5), ByteUtil.intToBytesNoLeadZeroes(6), trieCopy);
+    assertTrue(ByteUtil.intToBytesNoLeadZeroes(6), trieCopy);
+    assertTrue(ByteUtil.intToBytesNoLeadZeroes(6), ByteUtil.intToBytesNoLeadZeroes(5), trieCopy);
   }
 
   @Test
@@ -86,13 +86,13 @@ public class TrieTest {
     TrieImpl trie = new TrieImpl();
     int n = 100;
     for (int i = 1; i < n; i++) {
-      trie.put(RLP.encodeInt(i), String.valueOf(i).getBytes());
+      trie.put(ByteUtil.intToBytesNoLeadZeroes(i), String.valueOf(i).getBytes());
     }
     byte[] rootHash1 = trie.getRootHash();
 
     TrieImpl trie2 = new TrieImpl();
     for (int i = 1; i < n; i++) {
-      trie2.put(RLP.encodeInt(i), String.valueOf(i).getBytes());
+      trie2.put(ByteUtil.intToBytesNoLeadZeroes(i), String.valueOf(i).getBytes());
     }
     byte[] rootHash2 = trie2.getRootHash();
     Assert.assertArrayEquals(rootHash1, rootHash2);
@@ -103,17 +103,18 @@ public class TrieTest {
     TrieImpl trie = new TrieImpl();
     int n = 100;
     for (int i = 1; i < n; i++) {
-      trie.put(RLP.encodeInt(i), String.valueOf(i).getBytes());
+      trie.put(ByteUtil.intToBytesNoLeadZeroes(i), String.valueOf(i).getBytes());
     }
     byte[] rootHash = trie.getRootHash();
     TrieImpl trieCopy = new TrieImpl(trie.getCache(), rootHash);
     for (int i = 1; i < n; i++) {
-      assertTrue(RLP.encodeInt(i), trieCopy);
+      assertTrue(ByteUtil.intToBytesNoLeadZeroes(i), trieCopy);
     }
     for (int i = 1; i < n; i++) {
       for (int j = 1; j < n; j++) {
         if (i != j) {
-          assertFalse(RLP.encodeInt(i), RLP.encodeInt(j), trieCopy);
+          assertFalse(ByteUtil.intToBytesNoLeadZeroes(i),
+              ByteUtil.intToBytesNoLeadZeroes(j), trieCopy);
         }
       }
     }
@@ -139,14 +140,14 @@ public class TrieTest {
     List<Integer> value = new ArrayList<>();
     for (int i = 1; i < n; i++) {
       value.add(i);
-      trie.put(RLP.encodeInt(i), String.valueOf(i).getBytes());
+      trie.put(ByteUtil.intToBytesNoLeadZeroes(i), String.valueOf(i).getBytes());
     }
-    trie.put(RLP.encodeInt(10), String.valueOf(10).getBytes());
+    trie.put(ByteUtil.intToBytesNoLeadZeroes(10), String.valueOf(10).getBytes());
     value.add(10);
     byte[] rootHash1 = trie.getRootHash();
     TrieImpl baseline = new TrieImpl();
     for (int i = 1; i < n; i++) {
-      baseline.put(RLP.encodeInt(i), String.valueOf(i).getBytes());
+      baseline.put(ByteUtil.intToBytesNoLeadZeroes(i), String.valueOf(i).getBytes());
     }
     Assert.assertArrayEquals(baseline.getRootHash(), rootHash1);
     Collections.shuffle(value, new Random(SHUFFLE_SEED));
@@ -213,7 +214,7 @@ public class TrieTest {
   private static void assertTrieRootHash(byte[] rootHash1, List<Integer> value) {
     TrieImpl trie2 = new TrieImpl();
     for (int i : value) {
-      trie2.put(RLP.encodeInt(i), String.valueOf(i).getBytes());
+      trie2.put(ByteUtil.intToBytesNoLeadZeroes(i), String.valueOf(i).getBytes());
     }
     byte[] rootHash2 = trie2.getRootHash();
     Assert.assertArrayEquals(rootHash1, rootHash2);
@@ -250,13 +251,13 @@ public class TrieTest {
     List<Integer> value = new ArrayList<>();
     for (int i = 1; i < n; i++) {
       value.add(i);
-      trie.put(RLP.encodeInt(i), String.valueOf(i).getBytes());
+      trie.put(ByteUtil.intToBytesNoLeadZeroes(i), String.valueOf(i).getBytes());
     }
     byte[] rootHash1 = trie.getRootHash();
     Collections.shuffle(value, new Random(42));
     TrieImpl trie2 = new TrieImpl();
     for (int i : value) {
-      trie2.put(RLP.encodeInt(i), String.valueOf(i).getBytes());
+      trie2.put(ByteUtil.intToBytesNoLeadZeroes(i), String.valueOf(i).getBytes());
     }
     byte[] rootHash2 = trie2.getRootHash();
     Assert.assertArrayEquals(rootHash1, rootHash2);
