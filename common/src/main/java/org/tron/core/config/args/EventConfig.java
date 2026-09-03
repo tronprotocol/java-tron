@@ -25,6 +25,15 @@ public class EventConfig {
   private String server = "";
   private String dbconfig = "";
   private boolean contractParse = true;
+  // When the native queue is enabled, the event plugin is only activated in addition
+  // to it when this flag is explicitly set to true. This keeps existing native-queue
+  // deployments (which may still carry a stale "path") on native-only behavior after
+  // an upgrade. Ignored when useNativeQueue = false (plugin is the only sink then).
+  private boolean runPluginWithNativeQueue = false;
+  // What to do when the event plugin fails to load:
+  //   "fail"   - abort node startup (default, avoids silently losing plugin data)
+  //   "ignore" - log the error and keep running with the native queue only
+  private String pluginLoadFailurePolicy = "fail";
   // "native" is a Java reserved word; config key cannot match field name directly.
   // @Setter(NONE) prevents ConfigBeanFactory from requiring a "nativeQueue" key.
   @Setter(lombok.AccessLevel.NONE)

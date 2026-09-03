@@ -67,11 +67,13 @@ public class HistoryEventService {
         if (thread.isInterrupted() || isClosed) {
           throw new InterruptedException();
         }
-        if (instance.isUseNativeQueue()) {
-          Thread.sleep(20);
-        } else if (instance.isBusy()) {
+        // Respect the plugin's back-pressure first so it holds even in dual-sink mode
+        // (native queue + plugin), then apply the native queue's own pacing throttle.
+        if (instance.isBusy()) {
           Thread.sleep(100);
           continue;
+        } else if (instance.isUseNativeQueue()) {
+          Thread.sleep(20);
         }
         BlockEvent blockEvent = blockEventGet.getBlockEvent(tmp);
         realtimeEventService.flush(blockEvent, false);
