@@ -165,6 +165,10 @@ localwitness = [
 # localWitnessAccountAddress = "T..."
 ```
 
+> **Security — protect the block-producing key.** A Super Representative's key can produce blocks and control the account's funds. Prefer the encrypted `localwitnesskeystore` over a plaintext `localwitness` key, and:
+> - Restrict the key/keystore file so other users on the host cannot read it: `chmod 600 <key-or-keystore-file>`.
+> - **Never commit a config file that contains a real private key to Git** — it stays in the history permanently. Add such files to `.gitignore` and keep the key file **outside** the repository directory.
+
 ### JSON-RPC (Ethereum-compatible, `node.jsonrpc`)
 
 ```hocon
