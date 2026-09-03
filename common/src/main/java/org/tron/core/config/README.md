@@ -20,7 +20,7 @@ storage {
   # block_KDB, peers, properties, recent-block, trans,
   # utxo, votes, witness, witness_schedule.
 
-  # Otherwise, db configs will remain defualt and data will be stored in
+  # Otherwise, db configs will remain default and data will be stored in
   # the path of "output-directory" or which is set by "-d" ("--output-directory").
 
   # Attention: name is a required field that must be set !!!
