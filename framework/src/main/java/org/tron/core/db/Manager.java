@@ -55,6 +55,7 @@ import org.tron.api.GrpcAPI.TransactionInfoList;
 import org.tron.common.args.GenesisBlock;
 import org.tron.common.bloom.Bloom;
 import org.tron.common.cron.CronExpression;
+import org.tron.common.crypto.SignUtils;
 import org.tron.common.es.ExecutorServiceManager;
 import org.tron.common.exit.ExitManager;
 import org.tron.common.logsfilter.EventPluginLoader;
@@ -2125,6 +2126,7 @@ public class Manager {
     Histogram.Timer requestTimer = Metrics.histogramStartTimer(
         MetricKeys.Histogram.VERIFY_SIGN_LATENCY, MetricLabels.TRX);
     try {
+      validateTransactionSignatureLengths(txs);
       CountDownLatch countDownLatch = new CountDownLatch(transSize);
       List<Future<Boolean>> futures = new ArrayList<>(transSize);
 
@@ -2144,6 +2146,20 @@ public class Manager {
       }
     } finally {
       Metrics.histogramObserve(requestTimer);
+    }
+  }
+
+  private void validateTransactionSignatureLengths(List<TransactionCapsule> txs)
+      throws ValidateSignatureException {
+    boolean strictEcdsaValidation = CommonParameter.getInstance().isECKeyCryptoEngine()
+        && chainBaseManager.getDynamicPropertiesStore().allowStrictEcdsaValidation();
+    for (TransactionCapsule transaction : txs) {
+      for (ByteString signature : transaction.getInstance().getSignatureList()) {
+        if (signature.size() < Constant.PER_SIGN_LENGTH
+            || (strictEcdsaValidation && !SignUtils.isValidLength(signature.size()))) {
+          throw new ValidateSignatureException("Signature size is " + signature.size());
+        }
+      }
     }
   }
 

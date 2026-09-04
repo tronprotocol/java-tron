@@ -6,9 +6,12 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
+import static org.tron.core.Constant.PER_SIGN_LENGTH;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.UnknownFieldSet;
+import com.google.protobuf.UnsafeByteOperations;
+import java.util.Arrays;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -22,9 +25,8 @@ import org.tron.protos.Protocol.Transaction;
 
 /**
  * Verifies the {@code sanitize()} helpers on {@link BlockCapsule},
- * {@link TransactionCapsule} and {@link BlockMessage}: they strip outer
- * unknown protobuf fields while leaving every consensus-hashed / signed
- * region byte-identical.
+ * {@link TransactionCapsule} and {@link BlockMessage}: they canonicalize
+ * representations outside consensus-hashed / signed regions.
  */
 public class SanitizeUnknownFieldsTest {
 
@@ -108,6 +110,56 @@ public class SanitizeUnknownFieldsTest {
   }
 
   @Test
+  public void testBlockCapsuleSanitizeTruncatesOverlongWitnessSignature() {
+    byte[] oversizedSignature = new byte[PER_SIGN_LENGTH + 1024];
+    for (int i = 0; i < PER_SIGN_LENGTH; i++) {
+      oversizedSignature[i] = (byte) i;
+    }
+    byte[] canonicalSignature = Arrays.copyOf(oversizedSignature, PER_SIGN_LENGTH);
+    ByteString paddedSignature = UnsafeByteOperations.unsafeWrap(oversizedSignature);
+    Block padded = sampleBlock().toBuilder()
+        .setBlockHeader(sampleBlock().getBlockHeader().toBuilder()
+            .setWitnessSignature(paddedSignature)
+            .build())
+        .build();
+    BlockCapsule capsule = new BlockCapsule(padded);
+    BlockCapsule.BlockId originalBlockId = capsule.getBlockId();
+    long originalSize = capsule.getSerializedSize();
+
+    assertTrue("sanitize() should report it truncated the witness signature",
+        capsule.sanitize());
+
+    ByteString sanitizedSignature = capsule.getInstance().getBlockHeader()
+        .getWitnessSignature();
+    Arrays.fill(oversizedSignature, 0, PER_SIGN_LENGTH, (byte) 0x7f);
+    assertEquals(PER_SIGN_LENGTH, sanitizedSignature.size());
+    assertArrayEquals("Sanitized signature must not retain the oversized backing array",
+        canonicalSignature, sanitizedSignature.toByteArray());
+    assertEquals("Witness signature padding must not affect the block id",
+        originalBlockId, capsule.getBlockId());
+    assertTrue("Sanitized capsule bytes should shrink",
+        capsule.getSerializedSize() < originalSize);
+    assertFalse("Canonicalization should be idempotent", capsule.sanitize());
+  }
+
+  @Test
+  public void testBlockCapsuleSanitizePreservesCanonicalWitnessSignature() {
+    ByteString signature = ByteString.copyFrom(new byte[PER_SIGN_LENGTH]);
+    Block clean = sampleBlock().toBuilder()
+        .setBlockHeader(sampleBlock().getBlockHeader().toBuilder()
+            .setWitnessSignature(signature)
+            .build())
+        .build();
+    BlockCapsule capsule = new BlockCapsule(clean);
+    Block beforeInstance = capsule.getInstance();
+
+    assertFalse("A canonical witness signature should not be rewritten", capsule.sanitize());
+    assertSame(beforeInstance, capsule.getInstance());
+    assertEquals(signature,
+        capsule.getInstance().getBlockHeader().getWitnessSignature());
+  }
+
+  @Test
   public void blockCapsuleSanitizeIsNoOpOnCleanBlock() {
     Block clean = sampleBlock();
     BlockCapsule capsule = new BlockCapsule(clean);
@@ -184,6 +236,27 @@ public class SanitizeUnknownFieldsTest {
         msg.getBlockCapsule().getData(), msg.getData());
     assertNotEquals("msg.data should no longer match the padded wire bytes",
         paddedBytes.length, msg.getData().length);
+  }
+
+  @Test
+  public void testBlockMessageSanitizeRewritesOverlongWitnessSignature() throws Exception {
+    ByteString paddedSignature = ByteString.copyFrom(new byte[PER_SIGN_LENGTH + 1024]);
+    Block padded = sampleBlock().toBuilder()
+        .setBlockHeader(sampleBlock().getBlockHeader().toBuilder()
+            .setWitnessSignature(paddedSignature)
+            .build())
+        .build();
+    BlockMessage msg = new BlockMessage(padded.toByteArray());
+    int originalSize = msg.getData().length;
+
+    msg.sanitize();
+
+    assertEquals(PER_SIGN_LENGTH, msg.getBlockCapsule().getInstance()
+        .getBlockHeader().getWitnessSignature().size());
+    assertTrue(msg.getData().length < originalSize);
+    assertArrayEquals(msg.getBlockCapsule().getData(), msg.getData());
+    assertEquals(PER_SIGN_LENGTH, Block.parseFrom(msg.getData())
+        .getBlockHeader().getWitnessSignature().size());
   }
 
   @Test

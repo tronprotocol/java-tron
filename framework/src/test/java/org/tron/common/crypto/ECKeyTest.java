@@ -132,8 +132,11 @@ public class ECKeyTest {
     String paddedBase64 = new String(Base64.encode(padded), StandardCharsets.UTF_8);
 
     assertArrayEquals(key.getPubKey(), ECKey.signatureToKeyBytes(messageHash, paddedBase64));
+    assertArrayEquals(key.getPubKey(), ECKey.signatureToKey(messageHash, paddedBase64).getPubKey());
     assertThrows(SignatureException.class,
         () -> ECKey.signatureToKeyBytes(messageHash, paddedBase64, true));
+    assertThrows(SignatureException.class,
+        () -> ECKey.signatureToKey(messageHash, paddedBase64, true));
   }
 
   @Test
@@ -148,6 +151,10 @@ public class ECKeyTest {
         ECKey.recoverPubBytesFromSignature(recId, lowS, messageHash, false));
     assertArrayEquals(key.getPubKey(),
         ECKey.recoverPubBytesFromSignature(recId, lowS, messageHash, true));
+    assertArrayEquals(key.getAddress(),
+        ECKey.recoverAddressFromSignature(recId, lowS, messageHash, true));
+    assertArrayEquals(key.getPubKey(),
+        ECKey.recoverFromSignature(recId, lowS, messageHash, true).getPubKey());
     assertThrows(IllegalArgumentException.class,
         () -> ECKey.recoverPubBytesFromSignature(-1, lowS, messageHash, true));
     assertNull(ECKey.recoverPubBytesFromSignature(4, lowS, messageHash, false));
@@ -183,7 +190,23 @@ public class ECKeyTest {
   @Test
   public void testRecoveryRejectsNullSignatureComponents() {
     byte[] messageHash = new byte[32];
+    ECDSASignature signature = new ECDSASignature(BigInteger.ONE, BigInteger.ONE);
+    signature.v = 27;
 
+    assertThrows(IllegalArgumentException.class,
+        () -> ECKey.signatureToKeyBytes(messageHash, (ECDSASignature) null, true));
+    assertThrows(IllegalArgumentException.class,
+        () -> ECKey.signatureToKeyBytes(messageHash, (ECDSASignature) null, false));
+    assertThrows(IllegalArgumentException.class,
+        () -> ECKey.signatureToKeyBytes(null, signature, true));
+    assertThrows(IllegalArgumentException.class,
+        () -> ECKey.signatureToKeyBytes(messageHash, (String) null, true));
+    assertThrows(IllegalArgumentException.class,
+        () -> ECKey.signatureToKeyBytes(messageHash,
+            new ECDSASignature(null, BigInteger.ONE), true));
+    assertThrows(IllegalArgumentException.class,
+        () -> ECKey.signatureToKeyBytes(messageHash,
+            new ECDSASignature(BigInteger.ONE, null), false));
     assertThrows(IllegalArgumentException.class,
         () -> ECKey.recoverPubBytesFromSignature(0, null, messageHash, false));
     assertThrows(IllegalArgumentException.class,
@@ -204,7 +227,11 @@ public class ECKeyTest {
 
     assertArrayEquals(new byte[]{0},
         ECKey.recoverPubBytesFromSignature(0, signature, messageHash, false));
+    assertNotNull(ECKey.recoverAddressFromSignature(0, signature, messageHash));
+    assertNotNull(ECKey.recoverFromSignature(0, signature, messageHash));
     assertNull(ECKey.recoverPubBytesFromSignature(0, signature, messageHash, true));
+    assertNull(ECKey.recoverAddressFromSignature(0, signature, messageHash, true));
+    assertNull(ECKey.recoverFromSignature(0, signature, messageHash, true));
     assertThrows(SignatureException.class,
         () -> ECKey.signatureToKeyBytes(messageHash, signature, true));
   }
