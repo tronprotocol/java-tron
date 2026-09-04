@@ -59,6 +59,12 @@ public class MUtil {
     return !isNullOrEmpty(str);
   }
 
+  public static void checkCPUTimeForContractHashFields() {
+    if (ForkController.instance().pass(Parameter.ForkBlockVersionEnum.VERSION_4_8_2_2)) {
+      throw new OutOfTimeException("CPU timeout for contract hash fields");
+    }
+  }
+
   public static void checkCPUTime() {
     if (ForkController.instance().pass(Parameter.ForkBlockVersionEnum.VERSION_4_7_1)) {
       throw new OutOfTimeException("CPU timeout for 0x0a executing");

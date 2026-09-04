@@ -25,6 +25,7 @@ import org.tron.common.runtime.InternalTransaction.ExecutorType;
 import org.tron.common.runtime.InternalTransaction.TrxType;
 import org.tron.common.runtime.ProgramResult;
 import org.tron.common.runtime.vm.DataWord;
+import org.tron.common.utils.ForkController;
 import org.tron.common.utils.StorageUtils;
 import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.WalletUtil;
@@ -33,6 +34,7 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.ReceiptCapsule;
+import org.tron.core.config.Parameter;
 import org.tron.core.db.EnergyProcessor;
 import org.tron.core.db.TransactionContext;
 import org.tron.core.exception.ContractExeException;
@@ -217,6 +219,9 @@ public class VMActuator implements Actuator2 {
           } else {
             result.spendEnergy(saveCodeEnergy);
             if (VMConfig.allowTvmConstantinople()) {
+              CreateSmartContract createContract =
+                  ContractCapsule.getSmartContractFromTransaction(trx);
+              checkContractHashFields(createContract.getNewContract());
               rootRepository.saveCode(program.getContractAddress().getNoLeadZeroesData(), code);
             }
           }
@@ -330,6 +335,7 @@ public class VMActuator implements Actuator2 {
     if (contract == null) {
       throw new ContractValidateException("Cannot get CreateSmartContract from transaction");
     }
+
     SmartContract newSmartContract;
     if (VMConfig.allowTvmCompatibleEvm()) {
       newSmartContract = contract.getNewContract().toBuilder().setVersion(1).build();
@@ -341,11 +347,7 @@ public class VMActuator implements Actuator2 {
       throw new ContractValidateException("OwnerAddress is not equals OriginAddress");
     }
 
-    byte[] contractName = newSmartContract.getName().getBytes();
-
-    if (contractName.length > VMConstant.CONTRACT_NAME_LENGTH) {
-      throw new ContractValidateException("contractName's length cannot be greater than 32");
-    }
+    checkContractNameLength(contract.getNewContract());
 
     long percent = contract.getNewContract().getConsumeUserResourcePercent();
     if (percent < 0 || percent > VMConstant.ONE_HUNDRED) {
@@ -453,6 +455,22 @@ public class VMActuator implements Actuator2 {
           tokenValue);
     }
 
+  }
+
+  static void checkContractHashFields(SmartContract contract) {
+    if (!contract.getCodeHash().isEmpty() || !contract.getTrxHash().isEmpty()) {
+      MUtil.checkCPUTimeForContractHashFields();
+    }
+  }
+
+  static void checkContractNameLength(SmartContract contract) throws ContractValidateException {
+    int contractNameLength =
+        ForkController.instance().pass(Parameter.ForkBlockVersionEnum.VERSION_4_8_2_2)
+            ? contract.getNameBytes().size()
+            : contract.getName().getBytes().length;
+    if (contractNameLength > VMConstant.CONTRACT_NAME_LENGTH) {
+      throw new ContractValidateException("contractName's length cannot be greater than 32");
+    }
   }
 
   /**
