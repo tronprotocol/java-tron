@@ -6,12 +6,17 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.LongSupplier;
 import org.tron.core.db2.archive.StateArchiveCheckpointMaterializer;
 import org.tron.core.db2.archive.StateArchiveCheckpointReadSnapshot;
 import org.tron.core.db2.stateroot.PathStateStoreManifest.Engine;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** Isolated composition boundary for the next-format common-checkpoint runtime. */
 public final class CommonCheckpointRuntime implements AutoCloseable {
+
+  private static final Logger logger = LoggerFactory.getLogger("DB");
 
   private final CommonCheckpointRuntimeOwner owner;
   private final List<Chainbase> databases;
@@ -20,6 +25,8 @@ public final class CommonCheckpointRuntime implements AutoCloseable {
   private final Engine engine;
   private final StateArchiveCheckpointReadSnapshot.PinnedLatestStateFactory latestFactory;
   private final CommonCheckpointMemoryRebaser memoryRebaser;
+  private final LongSupplier nanoTime;
+  private final TimingSink timingSink;
   private final CommonCheckpointPayloadFactory payloadFactory = new CommonCheckpointPayloadFactory();
   private final CommonCheckpointSnapshotRebaser rebaser = new CommonCheckpointSnapshotRebaser();
   private CommonCheckpointTarget publishedTarget;
@@ -28,6 +35,15 @@ public final class CommonCheckpointRuntime implements AutoCloseable {
       Path archiveDirectory, byte[] formatIdentity, Engine engine,
       StateArchiveCheckpointReadSnapshot.PinnedLatestStateFactory latestFactory,
       CommonCheckpointMemoryRebaser memoryRebaser) {
+    this(owner, databases, archiveDirectory, formatIdentity, engine, latestFactory,
+        memoryRebaser, System::nanoTime, CommonCheckpointRuntime::logTiming);
+  }
+
+  CommonCheckpointRuntime(CommonCheckpointRuntimeOwner owner, List<Chainbase> databases,
+      Path archiveDirectory, byte[] formatIdentity, Engine engine,
+      StateArchiveCheckpointReadSnapshot.PinnedLatestStateFactory latestFactory,
+      CommonCheckpointMemoryRebaser memoryRebaser, LongSupplier nanoTime,
+      TimingSink timingSink) {
     this.owner = Objects.requireNonNull(owner, "owner");
     this.databases = new ArrayList<>(Objects.requireNonNull(databases, "databases"));
     if (this.databases.isEmpty() || this.databases.contains(null)) {
@@ -38,6 +54,8 @@ public final class CommonCheckpointRuntime implements AutoCloseable {
     this.engine = Objects.requireNonNull(engine, "engine");
     this.latestFactory = Objects.requireNonNull(latestFactory, "latestFactory");
     this.memoryRebaser = Objects.requireNonNull(memoryRebaser, "memoryRebaser");
+    this.nanoTime = Objects.requireNonNull(nanoTime, "nanoTime");
+    this.timingSink = Objects.requireNonNull(timingSink, "timingSink");
   }
 
   /** Completes durable redo before this runtime admits checkpoint reads or new flushes. */
@@ -55,17 +73,33 @@ public final class CommonCheckpointRuntime implements AutoCloseable {
    */
   public synchronized CommonCheckpointTarget checkpointAndRebase(int flushCount)
       throws IOException {
-    CommonCheckpointPayload payload = payloadFactory.capture(formatIdentity, databases,
-        flushCount);
+    long totalStart = nanoTime.getAsLong();
+    Timing timing = new Timing(flushCount);
+    long captureStart = nanoTime.getAsLong();
+    CommonCheckpointPayload payload = payloadFactory.capture(formatIdentity, databases, flushCount);
+    timing.payloadCaptureUs = elapsedUs(captureStart);
     CommonCheckpointTarget target = CommonCheckpointTarget.from(payload);
+    timing.head = target.getLastBlock().getBlockNumber();
+    long ownerApplyStart = nanoTime.getAsLong();
     owner.apply(payload, () -> {
+      long chainbasePrepareStart = nanoTime.getAsLong();
       CommonCheckpointSnapshotRebaser.Plan chainbasePlan =
           rebaser.prepare(databases, target, flushCount);
+      timing.chainbaseRebasePrepareUs = elapsedUs(chainbasePrepareStart);
+      long pathStatePrepareStart = nanoTime.getAsLong();
       CommonCheckpointMemoryRebaser.RebasePlan pathStatePlan = memoryRebaser.prepare(target);
+      timing.pathStateRebasePrepareUs = elapsedUs(pathStatePrepareStart);
+      long chainbaseApplyStart = nanoTime.getAsLong();
       chainbasePlan.apply();
+      timing.chainbaseRebaseApplyUs = elapsedUs(chainbaseApplyStart);
+      long pathStateApplyStart = nanoTime.getAsLong();
       pathStatePlan.apply();
+      timing.pathStateRebaseApplyUs = elapsedUs(pathStateApplyStart);
     });
+    timing.ownerApplyUs = elapsedUs(ownerApplyStart);
     publishedTarget = target;
+    timing.totalUs = elapsedUs(totalStart);
+    emitTiming(timing);
     return target;
   }
 
@@ -96,5 +130,84 @@ public final class CommonCheckpointRuntime implements AutoCloseable {
       throw new IllegalArgumentException("formatIdentity must contain exactly 32 bytes");
     }
     return admitted;
+  }
+
+  private long elapsedUs(long start) {
+    return Math.max(0L, (nanoTime.getAsLong() - start) / 1_000L);
+  }
+
+  private void emitTiming(Timing timing) {
+    try {
+      timingSink.accept(timing);
+    } catch (RuntimeException ignored) {
+      // Diagnostics must not turn an already completed checkpoint into a caller-visible failure.
+    }
+  }
+
+  private static void logTiming(Timing timing) {
+    logger.info("Common checkpoint runtime stages: head={}, blocks={}, payloadCaptureUs={}, "
+            + "ownerApplyUs={}, chainbaseRebasePrepareUs={}, pathStateRebasePrepareUs={}, "
+            + "chainbaseRebaseApplyUs={}, pathStateRebaseApplyUs={}, totalUs={}",
+        timing.head, timing.blocks, timing.payloadCaptureUs, timing.ownerApplyUs,
+        timing.chainbaseRebasePrepareUs, timing.pathStateRebasePrepareUs,
+        timing.chainbaseRebaseApplyUs, timing.pathStateRebaseApplyUs, timing.totalUs);
+  }
+
+  static final class Timing {
+
+    private long head;
+    private final int blocks;
+    private long payloadCaptureUs;
+    private long ownerApplyUs;
+    private long chainbaseRebasePrepareUs;
+    private long pathStateRebasePrepareUs;
+    private long chainbaseRebaseApplyUs;
+    private long pathStateRebaseApplyUs;
+    private long totalUs;
+
+    private Timing(int blocks) {
+      this.blocks = blocks;
+    }
+
+    long getHead() {
+      return head;
+    }
+
+    int getBlocks() {
+      return blocks;
+    }
+
+    long getPayloadCaptureUs() {
+      return payloadCaptureUs;
+    }
+
+    long getOwnerApplyUs() {
+      return ownerApplyUs;
+    }
+
+    long getChainbaseRebasePrepareUs() {
+      return chainbaseRebasePrepareUs;
+    }
+
+    long getPathStateRebasePrepareUs() {
+      return pathStateRebasePrepareUs;
+    }
+
+    long getChainbaseRebaseApplyUs() {
+      return chainbaseRebaseApplyUs;
+    }
+
+    long getPathStateRebaseApplyUs() {
+      return pathStateRebaseApplyUs;
+    }
+
+    long getTotalUs() {
+      return totalUs;
+    }
+  }
+
+  @FunctionalInterface
+  interface TimingSink {
+    void accept(Timing timing);
   }
 }

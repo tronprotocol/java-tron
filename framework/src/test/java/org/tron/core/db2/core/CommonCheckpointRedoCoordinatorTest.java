@@ -19,6 +19,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicLong;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -46,6 +47,92 @@ public class CommonCheckpointRedoCoordinatorTest {
     int actionCount = fixture.actions.size();
     assertEquals(RecoveryAction.NO_CHECKPOINT, fixture.coordinator.recover());
     assertEquals(actionCount, fixture.actions.size());
+  }
+
+  @Test
+  public void recordsDeterministicRedoPhaseTimingsWithoutChangingBarrierCalls()
+      throws Exception {
+    Fixture fixture = fixture("timings", null);
+    AtomicLong clock = new AtomicLong();
+    List<CommonCheckpointRedoCoordinator.Timing> timings = new ArrayList<>();
+    CommonCheckpointRedoCoordinator coordinator = new CommonCheckpointRedoCoordinator(
+        fixture.file, fixture.materializers.get(0), fixture.materializers.get(1),
+        fixture.materializers.get(2), stage -> { }, () -> clock.addAndGet(1_000L),
+        timings::add);
+
+    assertEquals(RecoveryAction.COMPLETED_REDO, coordinator.apply(fixture.payload));
+    assertEquals(1, timings.size());
+    CommonCheckpointRedoCoordinator.Timing timing = timings.get(0);
+    assertEquals("apply", timing.getMode());
+    assertEquals(1, timing.getHead());
+    assertEquals(1, timing.getBlocks());
+    assertEquals(1, timing.getWalPublishUs());
+    assertEquals(1, timing.getWalLoadUs());
+    assertEquals(1, timing.getWalRetireUs());
+    for (Authority authority : Authority.values()) {
+      assertEquals(1, timing.begin(authority));
+      assertEquals(5, timing.inspect(authority));
+      assertEquals(5, timing.inspectCount(authority));
+      assertEquals(1, timing.materialize(authority));
+      assertEquals(1, timing.materializeCount(authority));
+      assertEquals(1, timing.publish(authority));
+      assertEquals(1, timing.publishCount(authority));
+      assertEquals(1, timing.end(authority));
+    }
+    assertTrue(timing.getTotalUs() > 0);
+  }
+
+  @Test
+  public void ignoresTimingSinkFailureAfterDurableCheckpointCompletes() throws Exception {
+    Fixture fixture = fixture("timing-sink-failure", null);
+    AtomicLong clock = new AtomicLong();
+    CommonCheckpointRedoCoordinator coordinator = new CommonCheckpointRedoCoordinator(
+        fixture.file, fixture.materializers.get(0), fixture.materializers.get(1),
+        fixture.materializers.get(2), stage -> { }, () -> clock.addAndGet(1_000L),
+        timing -> {
+          throw new IllegalStateException("injected timing sink failure");
+        });
+
+    assertEquals(RecoveryAction.COMPLETED_REDO, coordinator.apply(fixture.payload));
+    assertFalse(Files.exists(fixture.file.getCheckpointPath()));
+    for (FakeMaterializer materializer : fixture.materializers) {
+      assertEquals(Status.PUBLISHED, materializer.status);
+    }
+  }
+
+  @Test
+  public void recordsRecoveryTimingsWithoutRepeatingPublishedAuthorityWork() throws Exception {
+    Fixture fixture = fixture("recovery-timings",
+        CommonCheckpointRedoCoordinator.Stage.BEFORE_CHECKPOINT_RETIRE);
+    assertThrows(IOException.class, () -> fixture.coordinator.apply(fixture.payload));
+    assertTrue(Files.isRegularFile(fixture.file.getCheckpointPath()));
+
+    AtomicLong clock = new AtomicLong();
+    List<CommonCheckpointRedoCoordinator.Timing> timings = new ArrayList<>();
+    CommonCheckpointRedoCoordinator recovered = new CommonCheckpointRedoCoordinator(
+        fixture.file, fixture.materializers.get(0), fixture.materializers.get(1),
+        fixture.materializers.get(2), stage -> { }, () -> clock.addAndGet(1_000L),
+        timings::add);
+
+    assertEquals(RecoveryAction.COMPLETED_REDO, recovered.recover());
+    assertEquals(1, timings.size());
+    CommonCheckpointRedoCoordinator.Timing timing = timings.get(0);
+    assertEquals("recover", timing.getMode());
+    assertEquals(0, timing.getWalPublishUs());
+    assertEquals(1, timing.getWalLoadUs());
+    assertEquals(1, timing.getWalRetireUs());
+    for (Authority authority : Authority.values()) {
+      assertEquals(1, timing.begin(authority));
+      assertEquals(3, timing.inspect(authority));
+      assertEquals(3, timing.inspectCount(authority));
+      assertEquals(0, timing.materialize(authority));
+      assertEquals(0, timing.materializeCount(authority));
+      assertEquals(0, timing.publish(authority));
+      assertEquals(0, timing.publishCount(authority));
+      assertEquals(1, timing.end(authority));
+    }
+    assertTrue(timing.getTotalUs() > 0);
+    assertFalse(Files.exists(fixture.file.getCheckpointPath()));
   }
 
   @Test

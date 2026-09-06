@@ -6,6 +6,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -17,6 +18,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Rule;
@@ -361,16 +363,29 @@ public class ChainbaseCheckpointMaterializerTest {
         root.resolve("archive"), format);
     CommonCheckpointRedoCoordinator coordinator = new CommonCheckpointRedoCoordinator(
         new CommonCheckpointFile(root.resolve("wal")), chainbase, pathState, archive);
+    AtomicLong clock = new AtomicLong();
+    List<CommonCheckpointRuntime.Timing> timings = new ArrayList<>();
     CommonCheckpointRuntime runtime = new CommonCheckpointRuntime(
         new CommonCheckpointRuntimeOwner(coordinator), databases, root.resolve("archive"),
         format, Engine.LEVELDB,
         (blockNumber, blockHash) -> new TestLatest(code, blockNumber, blockHash),
-        target -> () -> { });
+        target -> () -> { }, () -> clock.addAndGet(1_000L), timings::add);
 
     assertEquals(CommonCheckpointRedoCoordinator.RecoveryAction.NO_CHECKPOINT,
         runtime.recoverBeforeServing());
     CommonCheckpointTarget target = runtime.checkpointAndRebase(1);
     assertEquals(meta, target.getLastBlock());
+    assertEquals(1, timings.size());
+    CommonCheckpointRuntime.Timing timing = timings.get(0);
+    assertEquals(1, timing.getHead());
+    assertEquals(1, timing.getBlocks());
+    assertEquals(1, timing.getPayloadCaptureUs());
+    assertTrue(timing.getOwnerApplyUs() > 0);
+    assertEquals(1, timing.getChainbaseRebasePrepareUs());
+    assertEquals(1, timing.getPathStateRebasePrepareUs());
+    assertEquals(1, timing.getChainbaseRebaseApplyUs());
+    assertEquals(1, timing.getPathStateRebaseApplyUs());
+    assertTrue(timing.getTotalUs() >= timing.getOwnerApplyUs());
     assertSame(database.getHead().getRoot(), database.getHead());
     assertEquals(1, code.syncedFlushes);
     try (StateArchiveCheckpointReadSnapshot snapshot = runtime.pinPoint(0)) {
