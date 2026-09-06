@@ -1,6 +1,7 @@
 package org.tron.core.db2.core;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.Objects;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -28,6 +29,7 @@ public final class CommonCheckpointRuntimeOwner implements AutoCloseable {
         return action;
       } catch (IOException | RuntimeException failure) {
         state = State.FAILED;
+        closeAfterFailure(failure);
         throw failure;
       }
     } finally {
@@ -56,6 +58,7 @@ public final class CommonCheckpointRuntimeOwner implements AutoCloseable {
         return action;
       } catch (IOException | RuntimeException failure) {
         state = State.FAILED;
+        closeAfterFailure(failure);
         throw failure;
       }
     } finally {
@@ -86,13 +89,43 @@ public final class CommonCheckpointRuntimeOwner implements AutoCloseable {
     return state;
   }
 
+  /** Permanently fails this owner and releases authority resources after an outer runtime error. */
+  void fail(Throwable failure) {
+    gate.writeLock().lock();
+    try {
+      if (state != State.CLOSED) {
+        state = State.FAILED;
+        closeAfterFailure(Objects.requireNonNull(failure, "failure"));
+      }
+    } finally {
+      gate.writeLock().unlock();
+    }
+  }
+
   @Override
   public void close() {
     gate.writeLock().lock();
     try {
-      state = State.CLOSED;
+      if (state == State.CLOSED) {
+        return;
+      }
+      try {
+        coordinator.close();
+      } catch (IOException failure) {
+        throw new UncheckedIOException("Failed to close common checkpoint authorities", failure);
+      } finally {
+        state = State.CLOSED;
+      }
     } finally {
       gate.writeLock().unlock();
+    }
+  }
+
+  private void closeAfterFailure(Throwable failure) {
+    try {
+      coordinator.close();
+    } catch (IOException | RuntimeException closing) {
+      failure.addSuppressed(closing);
     }
   }
 

@@ -56,6 +56,8 @@ public final class StateArchiveCheckpointMaterializer implements CommonCheckpoin
   private final CommonCheckpointBaseline baseline;
   private final Engine engine;
   private StateArchiveCheckpointServingIndex.Session checkpointServingIndex;
+  private CommonCheckpointTarget activeCheckpoint;
+  private boolean closed;
 
   public StateArchiveCheckpointMaterializer(Path directory, byte[] formatIdentity) {
     this(directory, formatIdentity, null, StateArchiveCheckpointServingIndex.configuredEngine(),
@@ -100,16 +102,37 @@ public final class StateArchiveCheckpointMaterializer implements CommonCheckpoin
 
   @Override
   public synchronized void beginCheckpoint(CommonCheckpointTarget target) throws IOException {
-    requireTarget(target);
-    if (checkpointServingIndex != null) {
+    CommonCheckpointTarget admitted = requireTarget(target);
+    requireOpen();
+    if (activeCheckpoint != null) {
       throw new IOException("State Archive checkpoint serving session is already open");
     }
-    checkpointServingIndex = StateArchiveCheckpointServingIndex.session(directory, engine);
+    if (checkpointServingIndex == null) {
+      checkpointServingIndex = StateArchiveCheckpointServingIndex.session(directory, engine);
+    }
+    activeCheckpoint = admitted;
   }
 
   @Override
   public synchronized void endCheckpoint(CommonCheckpointTarget target) throws IOException {
-    requireTarget(target);
+    CommonCheckpointTarget admitted = requireTarget(target);
+    if (activeCheckpoint == null) {
+      return;
+    }
+    if (!activeCheckpoint.equals(admitted)) {
+      throw new IOException("State Archive checkpoint serving session target differs");
+    }
+    activeCheckpoint = null;
+  }
+
+  /** Releases the serving-index writer retained across checkpoint targets. */
+  @Override
+  public synchronized void close() throws IOException {
+    if (closed) {
+      return;
+    }
+    closed = true;
+    activeCheckpoint = null;
     if (checkpointServingIndex != null) {
       try {
         checkpointServingIndex.close();
@@ -121,6 +144,7 @@ public final class StateArchiveCheckpointMaterializer implements CommonCheckpoin
 
   @Override
   public synchronized Status inspect(CommonCheckpointTarget target) throws IOException {
+    requireOpen();
     CommonCheckpointTarget admitted = requireTarget(target);
     byte[] expected = encodeTarget(admitted);
     Path readable = directory.resolve(READABLE_FILE);
@@ -184,6 +208,7 @@ public final class StateArchiveCheckpointMaterializer implements CommonCheckpoin
   @Override
   public synchronized void materialize(CommonCheckpointPayload payload,
       CommonCheckpointTarget target) throws IOException {
+    requireOpen();
     CommonCheckpointPayload admittedPayload = Objects.requireNonNull(payload, "payload");
     CommonCheckpointTarget admittedTarget = requireTarget(target);
     if (!admittedTarget.equals(CommonCheckpointTarget.from(admittedPayload))) {
@@ -218,6 +243,7 @@ public final class StateArchiveCheckpointMaterializer implements CommonCheckpoin
 
   @Override
   public synchronized void publish(CommonCheckpointTarget target) throws IOException {
+    requireOpen();
     CommonCheckpointTarget admitted = requireTarget(target);
     Status status = inspect(admitted);
     if (status == Status.PUBLISHED) {
@@ -255,6 +281,12 @@ public final class StateArchiveCheckpointMaterializer implements CommonCheckpoin
       throw new IOException("State Archive checkpoint format identity differs");
     }
     return admitted;
+  }
+
+  private void requireOpen() throws IOException {
+    if (closed) {
+      throw new IOException("State Archive checkpoint materializer is closed");
+    }
   }
 
   private void requireParent(TargetMarker current, CommonCheckpointTarget target)

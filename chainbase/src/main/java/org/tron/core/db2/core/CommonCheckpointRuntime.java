@@ -61,10 +61,15 @@ public final class CommonCheckpointRuntime implements AutoCloseable {
   /** Completes durable redo before this runtime admits checkpoint reads or new flushes. */
   public synchronized CommonCheckpointRedoCoordinator.RecoveryAction recoverBeforeServing()
       throws IOException {
-    CommonCheckpointRedoCoordinator.RecoveryAction action = owner.recoverBeforeServing();
-    publishedTarget = StateArchiveCheckpointMaterializer.loadPublishedTargetIfPresent(
-        archiveDirectory, formatIdentity, engine).orElse(null);
-    return action;
+    try {
+      CommonCheckpointRedoCoordinator.RecoveryAction action = owner.recoverBeforeServing();
+      publishedTarget = StateArchiveCheckpointMaterializer.loadPublishedTargetIfPresent(
+          archiveDirectory, formatIdentity, engine).orElse(null);
+      return action;
+    } catch (IOException | RuntimeException failure) {
+      owner.fail(failure);
+      throw failure;
+    }
   }
 
   /**
@@ -73,34 +78,40 @@ public final class CommonCheckpointRuntime implements AutoCloseable {
    */
   public synchronized CommonCheckpointTarget checkpointAndRebase(int flushCount)
       throws IOException {
-    long totalStart = nanoTime.getAsLong();
-    Timing timing = new Timing(flushCount);
-    long captureStart = nanoTime.getAsLong();
-    CommonCheckpointPayload payload = payloadFactory.capture(formatIdentity, databases, flushCount);
-    timing.payloadCaptureUs = elapsedUs(captureStart);
-    CommonCheckpointTarget target = CommonCheckpointTarget.from(payload);
-    timing.head = target.getLastBlock().getBlockNumber();
-    long ownerApplyStart = nanoTime.getAsLong();
-    owner.apply(payload, () -> {
-      long chainbasePrepareStart = nanoTime.getAsLong();
-      CommonCheckpointSnapshotRebaser.Plan chainbasePlan =
-          rebaser.prepare(databases, target, flushCount);
-      timing.chainbaseRebasePrepareUs = elapsedUs(chainbasePrepareStart);
-      long pathStatePrepareStart = nanoTime.getAsLong();
-      CommonCheckpointMemoryRebaser.RebasePlan pathStatePlan = memoryRebaser.prepare(target);
-      timing.pathStateRebasePrepareUs = elapsedUs(pathStatePrepareStart);
-      long chainbaseApplyStart = nanoTime.getAsLong();
-      chainbasePlan.apply();
-      timing.chainbaseRebaseApplyUs = elapsedUs(chainbaseApplyStart);
-      long pathStateApplyStart = nanoTime.getAsLong();
-      pathStatePlan.apply();
-      timing.pathStateRebaseApplyUs = elapsedUs(pathStateApplyStart);
-    });
-    timing.ownerApplyUs = elapsedUs(ownerApplyStart);
-    publishedTarget = target;
-    timing.totalUs = elapsedUs(totalStart);
-    emitTiming(timing);
-    return target;
+    try {
+      long totalStart = nanoTime.getAsLong();
+      Timing timing = new Timing(flushCount);
+      long captureStart = nanoTime.getAsLong();
+      CommonCheckpointPayload payload = payloadFactory.capture(formatIdentity, databases,
+          flushCount);
+      timing.payloadCaptureUs = elapsedUs(captureStart);
+      CommonCheckpointTarget target = CommonCheckpointTarget.from(payload);
+      timing.head = target.getLastBlock().getBlockNumber();
+      long ownerApplyStart = nanoTime.getAsLong();
+      owner.apply(payload, () -> {
+        long chainbasePrepareStart = nanoTime.getAsLong();
+        CommonCheckpointSnapshotRebaser.Plan chainbasePlan =
+            rebaser.prepare(databases, target, flushCount);
+        timing.chainbaseRebasePrepareUs = elapsedUs(chainbasePrepareStart);
+        long pathStatePrepareStart = nanoTime.getAsLong();
+        CommonCheckpointMemoryRebaser.RebasePlan pathStatePlan = memoryRebaser.prepare(target);
+        timing.pathStateRebasePrepareUs = elapsedUs(pathStatePrepareStart);
+        long chainbaseApplyStart = nanoTime.getAsLong();
+        chainbasePlan.apply();
+        timing.chainbaseRebaseApplyUs = elapsedUs(chainbaseApplyStart);
+        long pathStateApplyStart = nanoTime.getAsLong();
+        pathStatePlan.apply();
+        timing.pathStateRebaseApplyUs = elapsedUs(pathStateApplyStart);
+      });
+      timing.ownerApplyUs = elapsedUs(ownerApplyStart);
+      publishedTarget = target;
+      timing.totalUs = elapsedUs(totalStart);
+      emitTiming(timing);
+      return target;
+    } catch (IOException | RuntimeException failure) {
+      owner.fail(failure);
+      throw failure;
+    }
   }
 
   /** Pins one point-only historical request under the same publication gate. */

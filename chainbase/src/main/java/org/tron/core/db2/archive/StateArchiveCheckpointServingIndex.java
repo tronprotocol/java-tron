@@ -77,6 +77,10 @@ final class StateArchiveCheckpointServingIndex {
     return new Session(archiveDirectory, engine);
   }
 
+  static int openReferenceCount(Path archiveDirectory, Engine engine) {
+    return StateArchiveIndexDatabase.openReferenceCount(databasePath(archiveDirectory), engine);
+  }
+
   private static Status inspect(byte[] encoded, CommonCheckpointTarget target)
       throws IOException {
     if (encoded == null) {

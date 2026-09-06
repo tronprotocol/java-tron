@@ -11,7 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** Two-barrier, idempotent redo coordinator for one durable common checkpoint. */
-public final class CommonCheckpointRedoCoordinator {
+public final class CommonCheckpointRedoCoordinator implements AutoCloseable {
 
   private static final Logger logger = LoggerFactory.getLogger("DB");
   private static final Authority[] ORDER = {
@@ -22,6 +22,7 @@ public final class CommonCheckpointRedoCoordinator {
   private final FaultHook faultHook;
   private final LongSupplier nanoTime;
   private final TimingSink timingSink;
+  private boolean closed;
 
   public CommonCheckpointRedoCoordinator(CommonCheckpointFile checkpointFile,
       CommonCheckpointMaterializer chainbase, CommonCheckpointMaterializer pathState,
@@ -52,6 +53,7 @@ public final class CommonCheckpointRedoCoordinator {
 
   /** Durably publishes the redo payload before applying it to any authority. */
   public synchronized RecoveryAction apply(CommonCheckpointPayload payload) throws IOException {
+    requireOpen();
     CommonCheckpointPayload admitted = Objects.requireNonNull(payload, "payload");
     Timing timing = new Timing("apply", CommonCheckpointTarget.from(admitted),
         admitted.getBlocks().size());
@@ -67,6 +69,7 @@ public final class CommonCheckpointRedoCoordinator {
 
   /** Resumes the only durable checkpoint, or performs no work when none exists. */
   public synchronized RecoveryAction recover() throws IOException {
+    requireOpen();
     long totalStart = nanoTime.getAsLong();
     Holder<CommonCheckpointPayload> loaded = new Holder<>();
     long loadUs = timed(() -> loaded.value = checkpointFile.loadIfPresent());
@@ -80,6 +83,34 @@ public final class CommonCheckpointRedoCoordinator {
     timing.totalUs = elapsedUs(totalStart);
     emitTiming(timing);
     return action;
+  }
+
+  /** Closes runtime-owned authority resources in reverse publication order. */
+  @Override
+  public synchronized void close() throws IOException {
+    if (closed) {
+      return;
+    }
+    closed = true;
+    Throwable failure = null;
+    for (int index = ORDER.length - 1; index >= 0; index--) {
+      CommonCheckpointMaterializer materializer = materializers.get(ORDER[index]);
+      try {
+        materializer.close();
+      } catch (IOException | RuntimeException closing) {
+        if (failure == null) {
+          failure = closing;
+        } else {
+          failure.addSuppressed(closing);
+        }
+      }
+    }
+    if (failure instanceof IOException) {
+      throw (IOException) failure;
+    }
+    if (failure != null) {
+      throw (RuntimeException) failure;
+    }
   }
 
   private RecoveryAction redo(CommonCheckpointPayload payload, Timing timing) throws IOException {
@@ -219,6 +250,12 @@ public final class CommonCheckpointRedoCoordinator {
       timingSink.accept(timing);
     } catch (RuntimeException ignored) {
       // Diagnostics must not turn an already durable checkpoint into a caller-visible failure.
+    }
+  }
+
+  private void requireOpen() throws IOException {
+    if (closed) {
+      throw new IOException("common checkpoint coordinator is closed");
     }
   }
 

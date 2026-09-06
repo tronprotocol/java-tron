@@ -113,6 +113,57 @@ public class StateArchiveCheckpointMaterializerTest {
   }
 
   @Test
+  public void reusesServingWriterAcrossTargetsAndClosesItWithMaterializer() throws Exception {
+    for (Engine engine : Engine.values()) {
+      Path root = temporaryFolder.newFolder("writer-lifecycle-" + engine).toPath();
+      byte[] format = hash(89);
+      StateArchiveCheckpointMaterializer materializer =
+          new StateArchiveCheckpointMaterializer(root, format, null, engine);
+
+      CommonCheckpointPayload first = payload(format, 1, 2, hash(0), hash(10), hash(12));
+      CommonCheckpointTarget firstTarget = CommonCheckpointTarget.from(first);
+      materializer.beginCheckpoint(firstTarget);
+      materializer.materialize(first, firstTarget);
+      materializer.publish(firstTarget);
+      materializer.endCheckpoint(firstTarget);
+      assertEquals(1, StateArchiveCheckpointServingIndex.openReferenceCount(root, engine));
+
+      CommonCheckpointPayload second = payload(format, 3, 2, hash(2), hash(12), hash(14));
+      CommonCheckpointTarget secondTarget = CommonCheckpointTarget.from(second);
+      materializer.beginCheckpoint(secondTarget);
+      materializer.materialize(second, secondTarget);
+      materializer.publish(secondTarget);
+      materializer.endCheckpoint(secondTarget);
+      assertEquals(1, StateArchiveCheckpointServingIndex.openReferenceCount(root, engine));
+
+      materializer.close();
+      materializer.close();
+      assertEquals(0, StateArchiveCheckpointServingIndex.openReferenceCount(root, engine));
+      assertThrows(IOException.class, () -> materializer.inspect(secondTarget));
+    }
+  }
+
+  @Test
+  public void releasesRetainedWriterAfterCheckpointFailure() throws Exception {
+    for (Engine engine : Engine.values()) {
+      Path root = temporaryFolder.newFolder("writer-failure-" + engine).toPath();
+      byte[] format = hash(88);
+      CommonCheckpointPayload payload = payload(format, 1, 2, hash(0), hash(10), hash(12));
+      CommonCheckpointTarget target = CommonCheckpointTarget.from(payload);
+      StateArchiveCheckpointMaterializer materializer = new StateArchiveCheckpointMaterializer(
+          root, format, engine,
+          failAt(StateArchiveCheckpointMaterializer.Stage.AFTER_SERVING_INDEX_BATCH));
+
+      materializer.beginCheckpoint(target);
+      assertThrows(IOException.class, () -> materializer.materialize(payload, target));
+      assertEquals(1, StateArchiveCheckpointServingIndex.openReferenceCount(root, engine));
+      materializer.endCheckpoint(target);
+      materializer.close();
+      assertEquals(0, StateArchiveCheckpointServingIndex.openReferenceCount(root, engine));
+    }
+  }
+
+  @Test
   public void resumesEveryDurabilityBoundaryUsingOnlyCheckpointRedo() throws Exception {
     for (StateArchiveCheckpointMaterializer.Stage stage
         : StateArchiveCheckpointMaterializer.Stage.values()) {

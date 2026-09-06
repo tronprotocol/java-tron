@@ -3,7 +3,7 @@ package org.tron.core.db2.core;
 import java.io.IOException;
 
 /** One idempotent authority participant in common-checkpoint redo and publication. */
-public interface CommonCheckpointMaterializer {
+public interface CommonCheckpointMaterializer extends AutoCloseable {
 
   Authority authority();
 
@@ -13,6 +13,11 @@ public interface CommonCheckpointMaterializer {
 
   /** Releases resources opened for one target after publication, retirement, or failure. */
   default void endCheckpoint(CommonCheckpointTarget target) throws IOException {
+  }
+
+  /** Releases resources owned across checkpoint targets; implementations must be idempotent. */
+  @Override
+  default void close() throws IOException {
   }
 
   /**

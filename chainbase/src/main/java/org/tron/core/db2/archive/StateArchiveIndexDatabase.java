@@ -58,6 +58,16 @@ final class StateArchiveIndexDatabase {
     checkpointLevel(from, to);
   }
 
+  static synchronized int openReferenceCount(Path directory, Engine engine) {
+    Path path = normalize(directory);
+    if (engine == Engine.LEVELDB) {
+      SharedLevelDatabase shared = LEVEL_DATABASES.get(path);
+      return shared == null ? 0 : shared.references;
+    }
+    SharedRocksDatabase shared = ROCKS_DATABASES.get(path);
+    return shared == null ? 0 : shared.references;
+  }
+
   private static void checkpointLevel(Path source, Path target) throws IOException {
     SharedLevelDatabase shared = acquireLevel(source, false, configuredOptions());
     boolean suspended = false;

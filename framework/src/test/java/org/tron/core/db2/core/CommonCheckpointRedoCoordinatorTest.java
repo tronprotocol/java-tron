@@ -200,6 +200,18 @@ public class CommonCheckpointRedoCoordinatorTest {
   }
 
   @Test
+  public void closesEveryAuthorityOnceWhenOneCloseFails() throws Exception {
+    Fixture fixture = fixture("close-failure", null);
+    fixture.materializers.get(1).closeFailure = true;
+
+    assertThrows(IOException.class, fixture.coordinator::close);
+    fixture.coordinator.close();
+    for (FakeMaterializer materializer : fixture.materializers) {
+      assertEquals(1, materializer.closed);
+    }
+  }
+
+  @Test
   public void runtimeOwnerRequiresStartupRecoveryAndGatesReadsAroundApply() throws Exception {
     Fixture fixture = fixture("runtime-owner", null);
     CommonCheckpointRuntimeOwner owner = new CommonCheckpointRuntimeOwner(fixture.coordinator);
@@ -212,6 +224,10 @@ public class CommonCheckpointRedoCoordinatorTest {
     assertEquals(CommonCheckpointRuntimeOwner.State.READY, owner.getState());
     assertEquals("published", owner.read(() -> "published"));
     owner.close();
+    owner.close();
+    for (FakeMaterializer materializer : fixture.materializers) {
+      assertEquals(1, materializer.closed);
+    }
     assertThrows(IOException.class, () -> owner.read(() -> "unreachable"));
   }
 
@@ -250,6 +266,9 @@ public class CommonCheckpointRedoCoordinatorTest {
     assertEquals(RecoveryAction.NO_CHECKPOINT, failed.recoverBeforeServing());
     assertThrows(IOException.class, () -> failed.apply(fixture.payload));
     assertEquals(CommonCheckpointRuntimeOwner.State.FAILED, failed.getState());
+    for (FakeMaterializer materializer : fixture.materializers) {
+      assertEquals(1, materializer.closed);
+    }
     assertThrows(IOException.class, () -> failed.read(() -> "unreachable"));
 
     CommonCheckpointRuntimeOwner recovered = new CommonCheckpointRuntimeOwner(
@@ -348,6 +367,8 @@ public class CommonCheckpointRedoCoordinatorTest {
     private boolean advanceAfterMaterialize = true;
     private int scopesStarted;
     private int scopesEnded;
+    private int closed;
+    private boolean closeFailure;
     private boolean scopeOpen;
 
     private FakeMaterializer(Authority authority, List<String> actions) {
@@ -370,6 +391,14 @@ public class CommonCheckpointRedoCoordinatorTest {
     public void endCheckpoint(CommonCheckpointTarget expected) {
       scopesEnded++;
       scopeOpen = false;
+    }
+
+    @Override
+    public void close() throws IOException {
+      closed++;
+      if (closeFailure) {
+        throw new IOException("injected close failure");
+      }
     }
 
     @Override
