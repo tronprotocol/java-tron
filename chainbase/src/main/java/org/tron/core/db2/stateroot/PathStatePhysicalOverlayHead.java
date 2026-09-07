@@ -18,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.tron.core.db2.archive.BlockSnapshotMeta;
 import org.tron.core.db2.core.CommonCheckpointBaseline;
 import org.tron.core.db2.core.CommonCheckpointMemoryRebaser;
+import org.tron.core.db2.core.CommonCheckpointMaterializedStore;
 import org.tron.core.db2.core.CommonCheckpointTarget;
 import org.tron.core.db2.stateroot.PathStateCanonicalizer.P66Phase;
 import org.tron.core.db2.stateroot.PathStateStoreManifest.Engine;
@@ -151,8 +152,15 @@ public final class PathStatePhysicalOverlayHead implements PathStateHead {
   /** Creates the PathState authority over the same stores used by this in-memory head. */
   public synchronized PathStateCheckpointMaterializer checkpointMaterializer(
       byte[] formatIdentity, CommonCheckpointBaseline baseline) throws IOException {
+    return checkpointMaterializer(formatIdentity, baseline, null);
+  }
+
+  public synchronized PathStateCheckpointMaterializer checkpointMaterializer(
+      byte[] formatIdentity, CommonCheckpointBaseline baseline,
+      CommonCheckpointMaterializedStore materializedStore) throws IOException {
     requireHealthy();
-    return new PathStateCheckpointMaterializer(stores, scope, formatIdentity, baseline);
+    return new PathStateCheckpointMaterializer(stores, scope, formatIdentity, baseline,
+        materializedStore);
   }
 
   /** Builds a fully validated parentless-target plus reversible-suffix memory rebase. */

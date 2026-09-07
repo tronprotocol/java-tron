@@ -142,6 +142,7 @@ import org.tron.core.db2.core.CommonCheckpointBaseline;
 import org.tron.core.db2.core.CommonCheckpointBaselineFile;
 import org.tron.core.db2.core.CommonCheckpointFile;
 import org.tron.core.db2.core.CommonCheckpointFormat;
+import org.tron.core.db2.core.CommonCheckpointMaterializedStore;
 import org.tron.core.db2.core.CommonCheckpointRedoCoordinator;
 import org.tron.core.db2.core.CommonCheckpointRuntime;
 import org.tron.core.db2.core.CommonCheckpointRuntimeAttachment;
@@ -860,20 +861,22 @@ public class Manager {
           supplementalStores = commonCheckpointSupplementalStores(snapshots);
       LatestStateGenerationAdapter latest = LatestStateGenerationCoordinatorFactory.createAdapter(
           snapshots, supplementalStores);
+      CommonCheckpointMaterializedStore materializedStore =
+          new CommonCheckpointMaterializedStore(checkpointDirectory);
       PathStateCheckpointMaterializer pathMaterializer = pathOwner.checkpointMaterializer(
-          formatIdentity, baseline);
+          formatIdentity, baseline, materializedStore);
       CommonCheckpointRedoCoordinator coordinator = new CommonCheckpointRedoCoordinator(
           new CommonCheckpointFile(checkpointDirectory),
           new ChainbaseCheckpointMaterializer(checkpointDirectory, formatIdentity,
-              snapshots.getDbs(), baseline),
+              snapshots.getDbs(), baseline, materializedStore),
           pathMaterializer,
           new StateArchiveCheckpointMaterializer(archiveDirectory, formatIdentity, baseline,
-              engine));
+              engine, materializedStore));
       PathStatePhysicalOverlayHead admittedOwner = pathOwner;
       attachment = CommonCheckpointRuntimeAttachment.open(true,
           () -> new CommonCheckpointRuntime(new CommonCheckpointRuntimeOwner(coordinator),
               snapshots.getDbs(), archiveDirectory, formatIdentity, engine, latest::pin,
-              admittedOwner::prepareCommonCheckpointRebase));
+              admittedOwner::prepareCommonCheckpointRebase, materializedStore));
 
       canonical = currentCanonicalBlockMeta();
       if (Files.isRegularFile(pathDirectory.resolve(PathStateCheckpointMaterializer.CURRENT_FILE),
@@ -886,7 +889,7 @@ public class Manager {
       if (Files.isRegularFile(pathDirectory.resolve(PathStateCheckpointMaterializer.CURRENT_FILE),
           LinkOption.NOFOLLOW_LINKS)) {
         requireCommonPublishedAuthorities(checkpointDirectory, archiveDirectory, pathDirectory,
-            formatIdentity, engine);
+            formatIdentity, engine, materializedStore);
       }
       PathStateRootMetadata recovered = admittedOwner.getHead();
       if (recovered.getBlockNumber() != canonical.getBlockNumber()
@@ -956,14 +959,15 @@ public class Manager {
 
   private static void requireCommonPublishedAuthorities(Path checkpointDirectory,
       Path archiveDirectory, Path pathDirectory, byte[] formatIdentity,
-      PathStateStoreManifest.Engine engine) throws java.io.IOException {
+      PathStateStoreManifest.Engine engine,
+      CommonCheckpointMaterializedStore materializedStore) throws java.io.IOException {
     ChainbaseCheckpointMaterializer.PublishedHead chain =
         ChainbaseCheckpointMaterializer.loadPublishedHead(checkpointDirectory, formatIdentity);
     PathStateCheckpointMaterializer.PublishedHead path =
         PathStateCheckpointMaterializer.loadPublishedHead(pathDirectory, formatIdentity);
     org.tron.core.db2.core.CommonCheckpointTarget archive =
         StateArchiveCheckpointMaterializer.loadPublishedTarget(archiveDirectory, formatIdentity,
-            engine);
+            engine, materializedStore);
     BlockSnapshotMeta last = archive.getLastBlock();
     if (chain.getEpoch() != last.getEpoch() || path.getEpoch() != last.getEpoch()
         || chain.getBlockNumber() != last.getBlockNumber()

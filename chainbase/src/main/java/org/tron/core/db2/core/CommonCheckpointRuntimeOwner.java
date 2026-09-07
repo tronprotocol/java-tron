@@ -37,6 +37,23 @@ public final class CommonCheckpointRuntimeOwner implements AutoCloseable {
     }
   }
 
+  /** Cross-validates all published authorities before the attachment becomes externally ready. */
+  void requirePublishedBeforeServing(CommonCheckpointTarget target) throws IOException {
+    gate.writeLock().lock();
+    try {
+      requireState(State.READY, "common checkpoint startup recovery is not complete");
+      try {
+        coordinator.requirePublished(Objects.requireNonNull(target, "target"));
+      } catch (IOException | RuntimeException failure) {
+        state = State.FAILED;
+        closeAfterFailure(failure);
+        throw failure;
+      }
+    } finally {
+      gate.writeLock().unlock();
+    }
+  }
+
   /** Blocks all read leases while the durable payload and both barriers are in progress. */
   public CommonCheckpointRedoCoordinator.RecoveryAction apply(CommonCheckpointPayload payload)
       throws IOException {
