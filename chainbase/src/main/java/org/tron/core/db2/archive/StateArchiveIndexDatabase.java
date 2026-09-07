@@ -24,7 +24,7 @@ import org.tron.common.parameter.CommonParameter;
 import org.tron.core.config.args.StorageConfig.NativeDbConfig;
 import org.tron.core.db2.stateroot.PathStateStoreManifest.Engine;
 
-/** Engine-neutral native store for Archive serving indexes. */
+/** Engine-neutral native store for Archive indexes and independent hot-history generations. */
 final class StateArchiveIndexDatabase {
 
   private static final Logger logger = LoggerFactory.getLogger("DB");
@@ -35,15 +35,25 @@ final class StateArchiveIndexDatabase {
   }
 
   static Reader openReader(Path directory, Engine engine) throws IOException {
+    return openReader(directory, engine, configuredOptions());
+  }
+
+  static Reader openReader(Path directory, Engine engine, NativeDbConfig suppliedConfig)
+      throws IOException {
     Path path = normalize(directory);
-    NativeDbConfig config = configuredOptions();
+    NativeDbConfig config = Objects.requireNonNull(suppliedConfig, "suppliedConfig");
     return engine == Engine.LEVELDB ? new LevelReader(acquireLevel(path, false, config))
         : new RocksReader(acquireRocks(path, false, config));
   }
 
   static Writer openWriter(Path directory, Engine engine) throws IOException {
+    return openWriter(directory, engine, configuredOptions());
+  }
+
+  static Writer openWriter(Path directory, Engine engine, NativeDbConfig suppliedConfig)
+      throws IOException {
     Path path = normalize(directory);
-    NativeDbConfig config = configuredOptions();
+    NativeDbConfig config = Objects.requireNonNull(suppliedConfig, "suppliedConfig");
     return engine == Engine.LEVELDB ? new LevelWriter(acquireLevel(path, true, config))
         : new RocksWriter(acquireRocks(path, true, config));
   }
@@ -112,6 +122,10 @@ final class StateArchiveIndexDatabase {
     return new Mutation(key, value);
   }
 
+  static Mutation delete(byte[] key) {
+    return new Mutation(key, null);
+  }
+
   private static Path normalize(Path directory) {
     return Objects.requireNonNull(directory, "directory").toAbsolutePath().normalize();
   }
@@ -139,7 +153,7 @@ final class StateArchiveIndexDatabase {
         throw failure;
       }
       LEVEL_DATABASES.put(directory, shared);
-      logger.info("Archive serving index opened: directory={}, engine=LEVELDB, blockBytes={}, "
+      logger.info("Archive native database opened: directory={}, engine=LEVELDB, blockBytes={}, "
               + "writeBufferBytes={}, cacheBytes={}, maxOpenFiles={}", directory,
           config.getBlockSize(), config.getWriteBufferSize(), config.getCacheSize(),
           config.getMaxOpenFiles());
@@ -161,7 +175,7 @@ final class StateArchiveIndexDatabase {
         throw new IOException("Failed to open RocksDB Archive serving index", failure);
       }
       ROCKS_DATABASES.put(directory, shared);
-      logger.info("Archive serving index opened: directory={}, engine=ROCKSDB, blockBytes={}, "
+      logger.info("Archive native database opened: directory={}, engine=ROCKSDB, blockBytes={}, "
               + "writeBufferBytes={}, cacheBytes={}, maxOpenFiles={}", directory,
           config.getBlockSize(), config.getWriteBufferSize(), config.getCacheSize(),
           config.getMaxOpenFiles());
@@ -238,7 +252,7 @@ final class StateArchiveIndexDatabase {
 
     private Mutation(byte[] key, byte[] value) {
       this.key = Arrays.copyOf(Objects.requireNonNull(key, "key"), key.length);
-      this.value = Arrays.copyOf(Objects.requireNonNull(value, "value"), value.length);
+      this.value = value == null ? null : Arrays.copyOf(value, value.length);
     }
   }
 
@@ -414,7 +428,11 @@ final class StateArchiveIndexDatabase {
     public void write(List<Mutation> mutations, boolean sync) throws IOException {
       try (org.iq80.leveldb.WriteBatch batch = shared.database.createWriteBatch()) {
         for (Mutation mutation : mutations) {
-          batch.put(mutation.key, mutation.value);
+          if (mutation.value == null) {
+            batch.delete(mutation.key);
+          } else {
+            batch.put(mutation.key, mutation.value);
+          }
         }
         shared.database.write(batch, new org.iq80.leveldb.WriteOptions().sync(sync));
       }
@@ -555,7 +573,11 @@ final class StateArchiveIndexDatabase {
     public void write(List<Mutation> mutations, boolean sync) throws IOException {
       try (org.rocksdb.WriteBatch batch = new org.rocksdb.WriteBatch()) {
         for (Mutation mutation : mutations) {
-          batch.put(mutation.key, mutation.value);
+          if (mutation.value == null) {
+            batch.delete(mutation.key);
+          } else {
+            batch.put(mutation.key, mutation.value);
+          }
         }
         try (org.rocksdb.WriteOptions selected = new org.rocksdb.WriteOptions().setSync(sync)) {
           shared.database.write(selected, batch);

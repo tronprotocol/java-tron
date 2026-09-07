@@ -1,5 +1,6 @@
 package org.tron.core.db2.core;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
@@ -9,6 +10,8 @@ import java.util.Objects;
 import org.tron.core.db2.archive.ArchiveStoreScope;
 import org.tron.core.db2.archive.BlockReverseDiff;
 import org.tron.core.db2.archive.BlockSnapshotMeta;
+import org.tron.core.db2.archive.StateArchiveHotBatchDescriptor;
+import org.tron.core.db2.archive.StateArchiveHotCheckpointMaterializer;
 import org.tron.core.db2.common.Key;
 import org.tron.core.db2.common.Value;
 import org.tron.core.db2.common.WrappedByteArray;
@@ -17,6 +20,22 @@ import org.tron.core.db2.stateroot.PathStateSnapshotDelta;
 
 /** Builds one immutable common-checkpoint redo payload without querying durable databases. */
 public final class CommonCheckpointPayloadFactory {
+
+  /** Captures v2 coordination data while retaining Archive bodies only in transient memory. */
+  public CommonCheckpointCapture captureV2(byte[] formatIdentity, List<Chainbase> databases,
+      int flushCount, StateArchiveHotCheckpointMaterializer hotMaterializer) throws IOException {
+    CommonCheckpointPayload captured = capture(formatIdentity, databases, flushCount);
+    List<BlockReverseDiff> archiveDiffs = new ArrayList<>();
+    for (CommonCheckpointPayload.BlockPayload block : captured.getBlocks()) {
+      archiveDiffs.add(block.getArchiveDiff());
+    }
+    StateArchiveHotBatchDescriptor binding = Objects.requireNonNull(hotMaterializer,
+        "hotMaterializer")
+        .planCheckpoint(archiveDiffs);
+    CommonCheckpointPayload coordination = CommonCheckpointPayload.coordinateV2(captured,
+        binding);
+    return new CommonCheckpointCapture(coordination, archiveDiffs, binding);
+  }
 
   /** Captures the oldest {@code flushCount} Snapshot layers from every registered Store. */
   public CommonCheckpointPayload capture(byte[] formatIdentity, List<Chainbase> databases,

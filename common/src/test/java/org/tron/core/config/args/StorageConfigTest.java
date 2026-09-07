@@ -2,6 +2,7 @@ package org.tron.core.config.args;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
@@ -63,6 +64,13 @@ public class StorageConfigTest {
     assertEquals("state-archive", defaults.getStateArchive().getDirectory());
     assertEquals(1073741824L, defaults.getStateArchive().getMaxSegmentSize());
     assertEquals(256, defaults.getStateArchive().getQueueCapacity());
+    assertFalse(defaults.getStateArchive().getHotStore().isEnabled());
+    assertEquals(10000L, defaults.getStateArchive().getHotStore().getMaxBlocks());
+    assertEquals(2147483648L,
+        defaults.getStateArchive().getHotStore().getMaxEncodedBytes());
+    assertEquals(8, defaults.getStateArchive().getHotStore().getMaxFrozenGenerations());
+    assertEquals(4, defaults.getStateArchive().getHotStore().getYellowFrozenGenerations());
+    assertEquals(7, defaults.getStateArchive().getHotStore().getRedFrozenGenerations());
 
     StorageConfig configured = StorageConfig.fromConfig(withRef(
         "storage.stateArchive { enabled = true, directory = archive-test, "
@@ -80,6 +88,8 @@ public class StorageConfigTest {
         defaults.getStateArchive().getServingIndex().getWriteBufferSize());
     assertEquals(33554432L,
         defaults.getStateArchive().getServingIndex().getCacheSize());
+    assertNotSame(defaults.getStateArchive().getServingIndex(),
+        defaults.getStateArchive().getHotStore().getDbSettings());
     assertEquals(16777216,
         defaults.getPathStateRoot().getDbSettings().getSmall().getWriteBufferSize());
     assertEquals(67108864,
@@ -90,13 +100,25 @@ public class StorageConfigTest {
     StorageConfig configured = StorageConfig.fromConfig(withRef(
         "storage.pathStateRoot.dbSettings.small.cacheSize = 1048576\n"
             + "storage.pathStateRoot.dbSettings.giant.maxOpenFiles = 321\n"
-            + "storage.stateArchive.servingIndex.writeBufferSize = 8388608"));
+            + "storage.stateArchive.servingIndex.writeBufferSize = 8388608\n"
+            + "storage.stateArchive.hotStore.dbSettings.writeBufferSize = 4194304"));
     assertEquals(1048576L,
         configured.getPathStateRoot().getDbSettings().getSmall().getCacheSize());
     assertEquals(321,
         configured.getPathStateRoot().getDbSettings().getGiant().getMaxOpenFiles());
     assertEquals(8388608,
         configured.getStateArchive().getServingIndex().getWriteBufferSize());
+    assertEquals(4194304,
+        configured.getStateArchive().getHotStore().getDbSettings().getWriteBufferSize());
+    assertEquals(67108864,
+        defaults.getStateArchive().getHotStore().getDbSettings().getWriteBufferSize());
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testHotStoreRejectsInvalidFrozenWatermarks() {
+    StorageConfig.fromConfig(withRef(
+        "storage.stateArchive.hotStore.yellowFrozenGenerations = 7\n"
+            + "storage.stateArchive.hotStore.redFrozenGenerations = 7"));
   }
 
   @Test(expected = IllegalArgumentException.class)
@@ -127,6 +149,23 @@ public class StorageConfigTest {
   @Test(expected = IllegalArgumentException.class)
   public void testCommonCheckpointRequiresBothAuthorities() {
     StorageConfig.fromConfig(withRef("storage.commonCheckpoint.enabled = true"));
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testHotStoreRequiresCommonCheckpoint() {
+    StorageConfig.fromConfig(withRef(
+        "storage.stateArchive.enabled = true\n"
+            + "storage.stateArchive.hotStore.enabled = true"));
+  }
+
+  @Test
+  public void testHotStoreAdmitsOnlyWithCommonCheckpointAuthorities() {
+    StorageConfig configured = StorageConfig.fromConfig(withRef(
+        "storage.stateArchive.enabled = true\n"
+            + "storage.stateArchive.hotStore.enabled = true\n"
+            + "storage.pathStateRoot.enabled = true\n"
+            + "storage.commonCheckpoint.enabled = true"));
+    assertTrue(configured.getStateArchive().getHotStore().isEnabled());
   }
 
   @Test(expected = IllegalArgumentException.class)

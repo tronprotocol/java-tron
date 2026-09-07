@@ -107,6 +107,10 @@ public class Storage {
 
   @Getter
   @Setter
+  private StorageConfig.StateArchiveHotStoreConfig stateArchiveHotStoreSettings;
+
+  @Getter
+  @Setter
   private boolean commonCheckpointEnabled;
 
   @Getter

@@ -16,6 +16,11 @@ public final class CommonCheckpointRuntimeOwner implements AutoCloseable {
     this.coordinator = Objects.requireNonNull(coordinator, "coordinator");
   }
 
+  void requireMaterializer(CommonCheckpointMaterializer materializer) {
+    CommonCheckpointMaterializer admitted = Objects.requireNonNull(materializer, "materializer");
+    coordinator.requireMaterializer(admitted.authority(), admitted);
+  }
+
   /** Completes any durable redo before allowing the first read lease. */
   public CommonCheckpointRedoCoordinator.RecoveryAction recoverBeforeServing()
       throws IOException {

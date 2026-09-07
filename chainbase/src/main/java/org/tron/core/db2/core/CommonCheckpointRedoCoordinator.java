@@ -85,6 +85,15 @@ public final class CommonCheckpointRedoCoordinator implements AutoCloseable {
     return action;
   }
 
+  synchronized void requireMaterializer(Authority authority,
+      CommonCheckpointMaterializer expected) {
+    if (materializers.get(Objects.requireNonNull(authority, "authority"))
+        != Objects.requireNonNull(expected, "expected")) {
+      throw new IllegalArgumentException(
+          "common checkpoint runtime materializer identity differs: " + authority);
+    }
+  }
+
   /** Closes runtime-owned authority resources in reverse publication order. */
   @Override
   public synchronized void close() throws IOException {

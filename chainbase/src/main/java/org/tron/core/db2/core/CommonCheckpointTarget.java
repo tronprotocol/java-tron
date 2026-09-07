@@ -3,6 +3,7 @@ package org.tron.core.db2.core;
 import java.util.Arrays;
 import java.util.Objects;
 import org.tron.core.db2.archive.BlockSnapshotMeta;
+import org.tron.core.db2.archive.StateArchiveHotBatchDescriptor;
 
 /** Immutable identity every authority must reach for one common-checkpoint payload. */
 public final class CommonCheckpointTarget {
@@ -13,16 +14,18 @@ public final class CommonCheckpointTarget {
   private final BlockSnapshotMeta lastBlock;
   private final byte[] parentStateRoot;
   private final byte[] stateRoot;
+  private final StateArchiveHotBatchDescriptor archiveBinding;
 
   private CommonCheckpointTarget(byte[] formatIdentity, byte[] payloadDigest,
       BlockSnapshotMeta firstBlock, BlockSnapshotMeta lastBlock, byte[] parentStateRoot,
-      byte[] stateRoot) {
+      byte[] stateRoot, StateArchiveHotBatchDescriptor archiveBinding) {
     this.formatIdentity = copy(formatIdentity);
     this.payloadDigest = copy(payloadDigest);
     this.firstBlock = Objects.requireNonNull(firstBlock, "firstBlock");
     this.lastBlock = Objects.requireNonNull(lastBlock, "lastBlock");
     this.parentStateRoot = copy(parentStateRoot);
     this.stateRoot = copy(stateRoot);
+    this.archiveBinding = archiveBinding;
   }
 
   public static CommonCheckpointTarget from(CommonCheckpointPayload payload) {
@@ -31,7 +34,9 @@ public final class CommonCheckpointTarget {
         new CommonCheckpointPayloadCodec().digest(admitted),
         admitted.getBlocks().get(0).getMeta(),
         admitted.getBlocks().get(admitted.getBlocks().size() - 1).getMeta(),
-        admitted.getParentStateRoot(), admitted.getStateRoot());
+        admitted.getParentStateRoot(), admitted.getStateRoot(),
+        admitted.getVersion() == CommonCheckpointPayload.COORDINATION_FORMAT_VERSION
+            ? admitted.getArchiveBinding() : null);
   }
 
   /** Reconstructs a target identity from a checksummed authority publication record. */
@@ -46,7 +51,8 @@ public final class CommonCheckpointTarget {
     }
     return new CommonCheckpointTarget(requireDigest(formatIdentity, "formatIdentity"),
         requireDigest(payloadDigest, "payloadDigest"), first, last,
-        requireDigest(parentStateRoot, "parentStateRoot"), requireDigest(stateRoot, "stateRoot"));
+        requireDigest(parentStateRoot, "parentStateRoot"), requireDigest(stateRoot, "stateRoot"),
+        null);
   }
 
   public byte[] getFormatIdentity() {
@@ -71,6 +77,13 @@ public final class CommonCheckpointTarget {
 
   public byte[] getStateRoot() {
     return copy(stateRoot);
+  }
+
+  public StateArchiveHotBatchDescriptor getArchiveBinding() {
+    if (archiveBinding == null) {
+      throw new IllegalStateException("checkpoint target has no Hot Archive binding");
+    }
+    return archiveBinding;
   }
 
   @Override

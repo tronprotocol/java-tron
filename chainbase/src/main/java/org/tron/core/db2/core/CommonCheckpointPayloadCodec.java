@@ -14,16 +14,20 @@ import java.util.List;
 import org.tron.core.db2.archive.BlockHistoryCodec;
 import org.tron.core.db2.archive.BlockReverseDiff;
 import org.tron.core.db2.archive.BlockSnapshotMeta;
+import org.tron.core.db2.archive.StateArchiveHotBatchDescriptor;
+import org.tron.core.db2.archive.StateArchiveHotBatchDescriptor.BlockDigest;
 import org.tron.core.db2.core.CommonCheckpointPayload.BlockPayload;
 import org.tron.core.db2.core.CommonCheckpointPayload.Mutation;
 import org.tron.core.db2.core.CommonCheckpointPayload.PathStoreTarget;
 import org.tron.core.db2.core.CommonCheckpointPayload.StoreMutations;
+import org.tron.core.db2.stateroot.PathStateStoreManifest.Engine;
 
-/** Deterministic, bounded and checksummed codec for a complete common-checkpoint redo payload. */
+/** Deterministic, bounded codec for v1 redo bodies and v2 digest-only Archive coordination. */
 public final class CommonCheckpointPayloadCodec {
 
   public static final int MAGIC = 0x54434350; // TCCP
   public static final short VERSION = 1;
+  public static final short COORDINATION_VERSION = 2;
   public static final int HEADER_LENGTH = 44;
   public static final int DEFAULT_MAX_ENCODED_LENGTH = 256 * 1024 * 1024;
   private static final int DIGEST_LENGTH = 32;
@@ -54,7 +58,7 @@ public final class CommonCheckpointPayloadCodec {
       ByteArrayOutputStream bytes = new ByteArrayOutputStream(HEADER_LENGTH + body.length);
       DataOutputStream output = new DataOutputStream(bytes);
       output.writeInt(MAGIC);
-      output.writeShort(VERSION);
+      output.writeShort(payload.getVersion());
       output.writeShort(0);
       output.writeInt(body.length);
       output.write(Hashing.sha256().hashBytes(body).asBytes());
@@ -76,7 +80,8 @@ public final class CommonCheckpointPayloadCodec {
       if (input.readInt() != MAGIC) {
         throw new IllegalArgumentException("invalid common checkpoint magic");
       }
-      if (input.readShort() != VERSION) {
+      short version = input.readShort();
+      if (version != VERSION && version != COORDINATION_VERSION) {
         throw new IllegalArgumentException("unsupported common checkpoint version");
       }
       if (input.readShort() != 0) {
@@ -91,7 +96,7 @@ public final class CommonCheckpointPayloadCodec {
       if (!Arrays.equals(expectedDigest, Hashing.sha256().hashBytes(body).asBytes())) {
         throw new IllegalArgumentException("common checkpoint payload checksum mismatch");
       }
-      return decodeBody(body);
+      return version == VERSION ? decodeBodyV1(body) : decodeBodyV2(body);
     } catch (EOFException truncated) {
       throw new IllegalArgumentException("common checkpoint payload is truncated", truncated);
     } catch (IOException invalid) {
@@ -117,7 +122,14 @@ public final class CommonCheckpointPayloadCodec {
       output.write(block.getStateRoot());
       output.write(block.getTransitionPayloadDigest());
       output.write(block.getMutationViewDigest());
-      writeBytes(output, historyCodec.encode(block.getArchiveDiff()));
+      if (admitted.getVersion() == CommonCheckpointPayload.FORMAT_VERSION) {
+        writeBytes(output, historyCodec.encode(block.getArchiveDiff()));
+      } else {
+        output.write(block.getArchiveRecordDigest());
+      }
+    }
+    if (admitted.getVersion() == CommonCheckpointPayload.COORDINATION_FORMAT_VERSION) {
+      writeArchiveBinding(output, admitted.getArchiveBinding());
     }
     writeStores(output, admitted.getChainbaseStores());
     output.writeInt(admitted.getPathStores().size());
@@ -133,7 +145,7 @@ public final class CommonCheckpointPayloadCodec {
     return bytes.toByteArray();
   }
 
-  private CommonCheckpointPayload decodeBody(byte[] body) throws IOException {
+  private CommonCheckpointPayload decodeBodyV1(byte[] body) throws IOException {
     DataInputStream input = new DataInputStream(new ByteArrayInputStream(body));
     byte[] formatIdentity = readExact(input, DIGEST_LENGTH);
     byte[] parentStateRoot = readExact(input, DIGEST_LENGTH);
@@ -168,6 +180,97 @@ public final class CommonCheckpointPayloadCodec {
     }
     return CommonCheckpointPayload.restore(formatIdentity, blocks, parentStateRoot, stateRoot,
         chainbase, pathStores, superNodes);
+  }
+
+  private CommonCheckpointPayload decodeBodyV2(byte[] body) throws IOException {
+    DataInputStream input = new DataInputStream(new ByteArrayInputStream(body));
+    byte[] formatIdentity = readExact(input, DIGEST_LENGTH);
+    byte[] parentStateRoot = readExact(input, DIGEST_LENGTH);
+    byte[] stateRoot = readExact(input, DIGEST_LENGTH);
+    int blockCount = readCount(input, MAX_BLOCKS, "block");
+    List<BlockPayload> blocks = new ArrayList<>(blockCount);
+    List<BlockDigest> archiveBlocks = new ArrayList<>(blockCount);
+    for (int index = 0; index < blockCount; index++) {
+      BlockSnapshotMeta meta = readMeta(input);
+      byte[] parentRoot = readExact(input, DIGEST_LENGTH);
+      byte[] blockRoot = readExact(input, DIGEST_LENGTH);
+      byte[] transitionDigest = readExact(input, DIGEST_LENGTH);
+      byte[] viewDigest = readExact(input, DIGEST_LENGTH);
+      byte[] recordDigest = readExact(input, DIGEST_LENGTH);
+      blocks.add(BlockPayload.coordination(meta, parentRoot, blockRoot, transitionDigest,
+          viewDigest, recordDigest));
+      archiveBlocks.add(BlockDigest.restore(meta, viewDigest, recordDigest));
+    }
+    StateArchiveHotBatchDescriptor archiveBinding = readArchiveBinding(input, archiveBlocks);
+    List<StoreMutations> chainbase = readStores(input);
+    int pathStoreCount = readCount(input, MAX_STORES, "path-state Store");
+    List<PathStoreTarget> pathStores = new ArrayList<>(pathStoreCount);
+    for (int index = 0; index < pathStoreCount; index++) {
+      int storeId = input.readInt();
+      String dbName = readName(input);
+      byte[] storeRoot = readExact(input, DIGEST_LENGTH);
+      pathStores.add(new PathStoreTarget(storeId, dbName, storeRoot,
+          readMutations(input), readMutations(input)));
+    }
+    List<Mutation> superNodes = readMutations(input);
+    if (input.available() != 0) {
+      throw new IllegalArgumentException("common checkpoint payload has trailing bytes");
+    }
+    return CommonCheckpointPayload.restoreV2(formatIdentity, blocks, parentStateRoot, stateRoot,
+        chainbase, pathStores, superNodes, archiveBinding);
+  }
+
+  private static void writeArchiveBinding(DataOutputStream output,
+      StateArchiveHotBatchDescriptor binding) throws IOException {
+    output.writeShort(StateArchiveHotBatchDescriptor.HOT_FORMAT_VERSION);
+    output.writeShort(engineTag(binding.getEngine()));
+    output.writeLong(binding.getParentPublishedBlock());
+    output.write(binding.getParentPublishedHash());
+    writeMeta(output, binding.getFirstBlock());
+    writeMeta(output, binding.getLastBlock());
+    output.writeLong(binding.getBlockCount());
+    output.writeLong(binding.getEncodedBytes());
+    output.write(binding.getParentContentDigest());
+    output.write(binding.getResultContentDigest());
+    output.write(binding.getOrderedRecordDigest());
+    output.write(binding.getMutationViewRangeDigest());
+  }
+
+  private static StateArchiveHotBatchDescriptor readArchiveBinding(DataInputStream input,
+      List<BlockDigest> blocks) throws IOException {
+    if (input.readUnsignedShort() != StateArchiveHotBatchDescriptor.HOT_FORMAT_VERSION) {
+      throw new IllegalArgumentException("unsupported Hot Archive binding version");
+    }
+    Engine engine = engine(input.readUnsignedShort());
+    long parentBlock = input.readLong();
+    byte[] parentHash = readExact(input, DIGEST_LENGTH);
+    BlockSnapshotMeta first = readMeta(input);
+    BlockSnapshotMeta last = readMeta(input);
+    long blockCount = input.readLong();
+    long encodedBytes = input.readLong();
+    byte[] parentContent = readExact(input, DIGEST_LENGTH);
+    byte[] resultContent = readExact(input, DIGEST_LENGTH);
+    byte[] orderedRecords = readExact(input, DIGEST_LENGTH);
+    byte[] mutationViews = readExact(input, DIGEST_LENGTH);
+    if (blockCount != blocks.size()) {
+      throw new IllegalArgumentException("Hot Archive binding block count differs");
+    }
+    return StateArchiveHotBatchDescriptor.restore(engine, parentBlock, parentHash, first, last,
+        encodedBytes, parentContent, resultContent, orderedRecords, mutationViews, blocks);
+  }
+
+  private static int engineTag(Engine engine) {
+    return engine == Engine.LEVELDB ? 1 : 2;
+  }
+
+  private static Engine engine(int tag) {
+    if (tag == 1) {
+      return Engine.LEVELDB;
+    }
+    if (tag == 2) {
+      return Engine.ROCKSDB;
+    }
+    throw new IllegalArgumentException("unsupported Hot Archive engine tag");
   }
 
   private void writeStores(DataOutputStream output, List<StoreMutations> stores)

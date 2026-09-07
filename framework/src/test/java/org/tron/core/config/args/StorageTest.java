@@ -81,6 +81,9 @@ public class StorageTest {
     Assert.assertNotNull(storage.getStateArchiveServingIndexDbSettings());
     Assert.assertEquals(64 * 1024 * 1024,
         storage.getStateArchiveServingIndexDbSettings().getWriteBufferSize());
+    Assert.assertNotNull(storage.getStateArchiveHotStoreSettings());
+    Assert.assertFalse(storage.getStateArchiveHotStoreSettings().isEnabled());
+    Assert.assertEquals(10_000L, storage.getStateArchiveHotStoreSettings().getMaxBlocks());
   }
 
   @Test

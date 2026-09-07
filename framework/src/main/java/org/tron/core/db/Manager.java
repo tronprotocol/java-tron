@@ -135,6 +135,8 @@ import org.tron.core.db2.archive.SnapshotOldValueCollector;
 import org.tron.core.db2.archive.SnapshotPathStateTransitionCollector;
 import org.tron.core.db2.archive.StateArchiveCheckpointMaterializer;
 import org.tron.core.db2.archive.StateArchiveCheckpointReadSnapshot;
+import org.tron.core.db2.archive.StateArchiveHotCheckpointMaterializer;
+import org.tron.core.db2.archive.StateArchiveHotStore;
 import org.tron.core.db2.archive.StateArchiveRuntimeOwner;
 import org.tron.core.db2.core.Chainbase;
 import org.tron.core.db2.core.ChainbaseCheckpointMaterializer;
@@ -142,6 +144,8 @@ import org.tron.core.db2.core.CommonCheckpointBaseline;
 import org.tron.core.db2.core.CommonCheckpointBaselineFile;
 import org.tron.core.db2.core.CommonCheckpointFile;
 import org.tron.core.db2.core.CommonCheckpointFormat;
+import org.tron.core.db2.core.CommonCheckpointHotRecovery;
+import org.tron.core.db2.core.CommonCheckpointRecoveryStateAdapter;
 import org.tron.core.db2.core.CommonCheckpointRedoCoordinator;
 import org.tron.core.db2.core.CommonCheckpointRuntime;
 import org.tron.core.db2.core.CommonCheckpointRuntimeAttachment;
@@ -775,6 +779,7 @@ public class Manager {
     byte[] formatIdentity = CommonCheckpointFormat.identity();
     PathStatePhysicalOverlayHead pathOwner = null;
     CommonCheckpointRuntimeAttachment attachment = null;
+    StateArchiveHotStore hotStore = null;
     try {
       PathStateStoreManifest.Engine engine = PathStateStoreManifest.Engine.valueOf(
           storage.getDbEngine());
@@ -862,18 +867,54 @@ public class Manager {
           snapshots, supplementalStores);
       PathStateCheckpointMaterializer pathMaterializer = pathOwner.checkpointMaterializer(
           formatIdentity, baseline);
+      org.tron.core.config.args.StorageConfig.StateArchiveHotStoreConfig hotConfig =
+          storage.getStateArchiveHotStoreSettings();
+      boolean hotEnabled = hotConfig != null && hotConfig.isEnabled();
+      Path hotDirectory = archiveDirectory.resolve("hot");
+      if (hotEnabled && !Files.exists(hotDirectory, LinkOption.NOFOLLOW_LINKS)) {
+        requireEmptyOrMissing(archiveDirectory, "State Archive v2");
+        if (!baseline.getHead().equals(canonical)) {
+          throw new IllegalStateException(
+              "State Archive Hot DB requires a fresh common checkpoint baseline");
+        }
+      }
+      CommonCheckpointFile checkpointFile = new CommonCheckpointFile(checkpointDirectory);
+      StateArchiveHotCheckpointMaterializer hotMaterializer = null;
+      org.tron.core.db2.core.CommonCheckpointMaterializer archiveMaterializer;
+      if (hotEnabled) {
+        hotStore = StateArchiveHotStore.openOrCreate(hotDirectory, formatIdentity, engine,
+            baseline.getHead().getBlockNumber(), baseline.getHead().getBlockHash(), hotConfig);
+        hotMaterializer = new StateArchiveHotCheckpointMaterializer(hotStore);
+        archiveMaterializer = hotMaterializer;
+      } else {
+        archiveMaterializer = new StateArchiveCheckpointMaterializer(archiveDirectory,
+            formatIdentity, baseline, engine);
+      }
       CommonCheckpointRedoCoordinator coordinator = new CommonCheckpointRedoCoordinator(
-          new CommonCheckpointFile(checkpointDirectory),
+          checkpointFile,
           new ChainbaseCheckpointMaterializer(checkpointDirectory, formatIdentity,
               snapshots.getDbs(), baseline),
-          pathMaterializer,
-          new StateArchiveCheckpointMaterializer(archiveDirectory, formatIdentity, baseline,
-              engine));
+          pathMaterializer, archiveMaterializer);
       PathStatePhysicalOverlayHead admittedOwner = pathOwner;
+      StateArchiveHotCheckpointMaterializer admittedHotMaterializer = hotMaterializer;
+      StateArchiveHotStore admittedHotStore = hotStore;
       attachment = CommonCheckpointRuntimeAttachment.open(true,
-          () -> new CommonCheckpointRuntime(new CommonCheckpointRuntimeOwner(coordinator),
-              snapshots.getDbs(), archiveDirectory, formatIdentity, engine, latest::pin,
-              admittedOwner::prepareCommonCheckpointRebase));
+          () -> {
+            CommonCheckpointRuntimeOwner owner = new CommonCheckpointRuntimeOwner(coordinator);
+            if (admittedHotMaterializer == null) {
+              return new CommonCheckpointRuntime(owner, snapshots.getDbs(), archiveDirectory,
+                  formatIdentity, engine, latest::pin,
+                  admittedOwner::prepareCommonCheckpointRebase);
+            }
+            CommonCheckpointRecoveryStateAdapter recoveryState =
+                new CommonCheckpointRecoveryStateAdapter(getDynamicPropertiesStore(),
+                    chainBaseManager);
+            CommonCheckpointHotRecovery recovery = new CommonCheckpointHotRecovery(checkpointFile,
+                recoveryState, recoveryState, admittedHotMaterializer::reconcilePreparedTail);
+            return new CommonCheckpointRuntime(owner, snapshots.getDbs(), archiveDirectory,
+                formatIdentity, engine, latest::pin,
+                admittedOwner::prepareCommonCheckpointRebase, admittedHotMaterializer, recovery);
+          });
 
       canonical = currentCanonicalBlockMeta();
       if (Files.isRegularFile(pathDirectory.resolve(PathStateCheckpointMaterializer.CURRENT_FILE),
@@ -885,8 +926,13 @@ public class Manager {
       }
       if (Files.isRegularFile(pathDirectory.resolve(PathStateCheckpointMaterializer.CURRENT_FILE),
           LinkOption.NOFOLLOW_LINKS)) {
-        requireCommonPublishedAuthorities(checkpointDirectory, archiveDirectory, pathDirectory,
-            formatIdentity, engine);
+        if (admittedHotStore == null) {
+          requireCommonPublishedAuthorities(checkpointDirectory, archiveDirectory, pathDirectory,
+              formatIdentity, engine);
+        } else {
+          requireHotCommonPublishedAuthorities(checkpointDirectory, pathDirectory,
+              formatIdentity, admittedHotStore);
+        }
       }
       PathStateRootMetadata recovered = admittedOwner.getHead();
       if (recovered.getBlockNumber() != canonical.getBlockNumber()
@@ -902,6 +948,7 @@ public class Manager {
       commonCheckpointRuntime = attachment;
       pathOwner = null;
       attachment = null;
+      hotStore = null;
       logger.info("Common checkpoint runtime attached: checkpoint={}, archive={}, path={}, "
               + "head={}, format={}", checkpointDirectory, archiveDirectory, pathDirectory,
           canonical.getBlockNumber(), CommonCheckpointFormat.ID);
@@ -925,6 +972,14 @@ public class Manager {
       }
       if (attachment != null) {
         attachment.close();
+        hotStore = null;
+      }
+      if (hotStore != null) {
+        try {
+          hotStore.close();
+        } catch (java.io.IOException closeFailure) {
+          failure.addSuppressed(closeFailure);
+        }
       }
       if (pathOwner != null) {
         try {
@@ -975,6 +1030,27 @@ public class Manager {
         || !Arrays.equals(chain.getStateRoot(), archive.getStateRoot())
         || !Arrays.equals(path.getStateRoot(), archive.getStateRoot())) {
       throw new java.io.IOException("Common checkpoint published authorities differ");
+    }
+  }
+
+  private static void requireHotCommonPublishedAuthorities(Path checkpointDirectory,
+      Path pathDirectory, byte[] formatIdentity, StateArchiveHotStore hotStore)
+      throws java.io.IOException {
+    ChainbaseCheckpointMaterializer.PublishedHead chain =
+        ChainbaseCheckpointMaterializer.loadPublishedHead(checkpointDirectory, formatIdentity);
+    PathStateCheckpointMaterializer.PublishedHead path =
+        PathStateCheckpointMaterializer.loadPublishedHead(pathDirectory, formatIdentity);
+    Optional<byte[]> hotTarget = hotStore.getPublishedTargetDigest();
+    if (!hotTarget.isPresent()
+        || chain.getEpoch() != path.getEpoch()
+        || chain.getBlockNumber() != path.getBlockNumber()
+        || chain.getBlockNumber() != hotStore.getCommittedHead()
+        || !Arrays.equals(chain.getBlockHash(), path.getBlockHash())
+        || !Arrays.equals(chain.getBlockHash(), hotStore.getCommittedHeadHash())
+        || !Arrays.equals(chain.getPayloadDigest(), path.getPayloadDigest())
+        || !Arrays.equals(chain.getPayloadDigest(), hotTarget.get())
+        || !Arrays.equals(chain.getStateRoot(), path.getStateRoot())) {
+      throw new java.io.IOException("Hot common checkpoint published authorities differ");
     }
   }
 

@@ -153,6 +153,7 @@ public class StorageConfig {
     private long maxSegmentSize = 1073741824L;
     private int queueCapacity = 256;
     private NativeDbConfig servingIndex = NativeDbConfig.large();
+    private StateArchiveHotStoreConfig hotStore = new StateArchiveHotStoreConfig();
 
     void postProcess() {
       if (directory == null || directory.trim().isEmpty()) {
@@ -167,6 +168,39 @@ public class StorageConfig {
             "stateArchive.queueCapacity must be in [1, 65536]");
       }
       servingIndex.validate("storage.stateArchive.servingIndex");
+      hotStore.postProcess();
+    }
+  }
+
+  /** Independent, default-off Hot DB limits and native database options. */
+  @Getter
+  @Setter
+  public static class StateArchiveHotStoreConfig {
+
+    private boolean enabled = false;
+    private long maxBlocks = 10000L;
+    private long maxEncodedBytes = 2147483648L;
+    private int maxFrozenGenerations = 8;
+    private int yellowFrozenGenerations = 4;
+    private int redFrozenGenerations = 7;
+    private NativeDbConfig dbSettings = NativeDbConfig.large();
+
+    void postProcess() {
+      validate();
+    }
+
+    public void validate() {
+      if (maxBlocks <= 0 || maxEncodedBytes <= 0) {
+        throw new IllegalArgumentException(
+            "stateArchive.hotStore rotation limits must be positive");
+      }
+      if (maxFrozenGenerations <= 0 || yellowFrozenGenerations <= 0
+          || redFrozenGenerations <= yellowFrozenGenerations
+          || redFrozenGenerations > maxFrozenGenerations) {
+        throw new IllegalArgumentException(
+            "stateArchive.hotStore frozen watermarks must satisfy 0 < yellow < red <= max");
+      }
+      dbSettings.validate("storage.stateArchive.hotStore.dbSettings");
     }
   }
 
@@ -361,6 +395,10 @@ public class StorageConfig {
         && (!sc.stateArchive.enabled || !sc.pathStateRoot.enabled)) {
       throw new IllegalArgumentException(
           "commonCheckpoint.enabled requires stateArchive.enabled and pathStateRoot.enabled");
+    }
+    if (sc.stateArchive.hotStore.enabled && !sc.commonCheckpoint.enabled) {
+      throw new IllegalArgumentException(
+          "stateArchive.hotStore.enabled requires commonCheckpoint.enabled");
     }
     if (sc.commonCheckpoint.enabled
         && (sc.pathStateRoot.volatileSnapshotBenchmark

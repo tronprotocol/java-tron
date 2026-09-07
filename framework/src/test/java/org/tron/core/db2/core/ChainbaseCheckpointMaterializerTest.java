@@ -11,6 +11,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -18,6 +20,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -35,6 +38,8 @@ import org.tron.core.db2.archive.HistoricalRangeOverlay;
 import org.tron.core.db2.archive.OldValue;
 import org.tron.core.db2.archive.StateArchiveCheckpointMaterializer;
 import org.tron.core.db2.archive.StateArchiveCheckpointReadSnapshot;
+import org.tron.core.db2.archive.StateArchiveHotCheckpointMaterializer;
+import org.tron.core.db2.archive.StateArchiveHotStore;
 import org.tron.core.db2.common.DB;
 import org.tron.core.db2.common.Flusher;
 import org.tron.core.db2.common.WrappedByteArray;
@@ -143,7 +148,7 @@ public class ChainbaseCheckpointMaterializerTest {
   }
 
   @Test
-  public void payloadFactoryCoalescesSnapshotMutationsWithoutDurableReads() {
+  public void payloadFactoryCoalescesSnapshotMutationsWithoutDurableReads() throws Exception {
     MemoryDb code = new MemoryDb("code");
     MemoryDb storage = new MemoryDb("storage-row");
     Chainbase codeChainbase = new Chainbase(new SnapshotRoot(code));
@@ -195,6 +200,23 @@ public class ChainbaseCheckpointMaterializerTest {
     assertEquals(true, storageStore.getMutations().get(0).isDelete());
     assertEquals(0, code.getCalls);
     assertEquals(0, storage.getCalls);
+
+    java.nio.file.Path hotRoot = temporaryFolder.newFolder("capture-v2-hot").toPath();
+    try (StateArchiveHotStore hotStore = StateArchiveHotStore.openOrCreate(hotRoot, hash(80),
+        Engine.LEVELDB, 0, hash(0), 3, 10, 1024 * 1024)) {
+      CommonCheckpointCapture capture = new CommonCheckpointPayloadFactory().captureV2(hash(80),
+          databases, 2, new StateArchiveHotCheckpointMaterializer(hotStore));
+      assertEquals(CommonCheckpointPayload.COORDINATION_FORMAT_VERSION,
+          capture.getPayload().getVersion());
+      assertEquals(2, capture.getArchiveDiffs().size());
+      assertEquals(2, capture.getArchiveBinding().getBlockCount());
+      assertEquals(0, hotStore.getMaterializedHead());
+      assertThrows(IllegalStateException.class,
+          () -> capture.getPayload().getBlocks().get(0).getArchiveDiff());
+      CommonCheckpointPayloadCodec codec = new CommonCheckpointPayloadCodec();
+      assertEquals(capture.getArchiveBinding(),
+          codec.decode(codec.encode(capture.getPayload())).getArchiveBinding());
+    }
   }
 
   @Test
@@ -375,11 +397,13 @@ public class ChainbaseCheckpointMaterializerTest {
         runtime.recoverBeforeServing());
     CommonCheckpointTarget target = runtime.checkpointAndRebase(1);
     assertEquals(meta, target.getLastBlock());
+    assertThrows(IllegalStateException.class, target::getArchiveBinding);
     assertEquals(1, timings.size());
     CommonCheckpointRuntime.Timing timing = timings.get(0);
     assertEquals(1, timing.getHead());
     assertEquals(1, timing.getBlocks());
     assertEquals(1, timing.getPayloadCaptureUs());
+    assertEquals(0, timing.getHotPrepareUs());
     assertTrue(timing.getOwnerApplyUs() > 0);
     assertEquals(1, timing.getChainbaseRebasePrepareUs());
     assertEquals(1, timing.getPathStateRebasePrepareUs());
@@ -404,6 +428,82 @@ public class ChainbaseCheckpointMaterializerTest {
     assertEquals(CommonCheckpointRuntimeOwner.State.CLOSED, runtime.getState());
   }
 
+  @Test
+  public void hotRuntimePreparesV2BeforeWalAndCompletesBothBarriers() throws Exception {
+    java.nio.file.Path root = temporaryFolder.newFolder("hot-runtime-v2").toPath();
+    byte[] format = hash(94);
+    V2Snapshots snapshots = new V2Snapshots();
+    StateArchiveHotStore hotStore = StateArchiveHotStore.openOrCreate(root.resolve("hot"),
+        format, Engine.LEVELDB, 0, hash(0), 3, 10, 1024 * 1024);
+    List<CommonCheckpointRuntime.Timing> timings = new ArrayList<>();
+    CommonCheckpointRuntime runtime = hotRuntime(root,
+        new CommonCheckpointFile(root.resolve("wal")), snapshots, hotStore, format, timings);
+
+    assertEquals(CommonCheckpointRedoCoordinator.RecoveryAction.NO_CHECKPOINT,
+        runtime.recoverBeforeServing());
+    CommonCheckpointTarget target = runtime.checkpointAndRebase(1);
+
+    assertEquals(snapshots.meta, target.getLastBlock());
+    assertEquals(1, target.getArchiveBinding().getBlockCount());
+    assertEquals(1, hotStore.getMaterializedHead());
+    assertEquals(1, hotStore.getCommittedHead());
+    assertFalse(java.nio.file.Files.exists(root.resolve("wal")
+        .resolve(CommonCheckpointFile.FILE_NAME)));
+    assertSame(snapshots.codeDatabase.getHead().getRoot(), snapshots.codeDatabase.getHead());
+    assertSame(snapshots.propertiesDatabase.getHead().getRoot(),
+        snapshots.propertiesDatabase.getHead());
+    assertEquals(1, timings.size());
+    assertEquals(1, timings.get(0).getHotPrepareUs());
+    assertThrows(IOException.class, () -> runtime.pinPoint(1));
+    runtime.close();
+  }
+
+  @Test
+  public void hotRuntimeRetriesAfterPrepareButBeforeWalPublication() throws Exception {
+    java.nio.file.Path root = temporaryFolder.newFolder("hot-runtime-retry").toPath();
+    byte[] format = hash(95);
+    V2Snapshots snapshots = new V2Snapshots();
+    StateArchiveHotStore firstHot = StateArchiveHotStore.openOrCreate(root.resolve("hot"),
+        format, Engine.LEVELDB, 0, hash(0), 3, 10, 1024 * 1024);
+    AtomicBoolean failedOnce = new AtomicBoolean();
+    CommonCheckpointFile interruptedFile = new CommonCheckpointFile(root.resolve("wal"),
+        CommonCheckpointPayloadCodec.DEFAULT_MAX_ENCODED_LENGTH, (stage, path) -> {
+      if (stage == CommonCheckpointFile.Stage.AFTER_TEMPORARY_FORCE
+          && failedOnce.compareAndSet(false, true)) {
+        throw new IOException("injected failure after Hot prepare and temporary WAL force");
+      }
+    });
+    CommonCheckpointRuntime interrupted = hotRuntime(root, interruptedFile, snapshots, firstHot,
+        format, new ArrayList<>());
+    interrupted.recoverBeforeServing();
+
+    assertThrows(IOException.class, () -> interrupted.checkpointAndRebase(1));
+    assertEquals(CommonCheckpointRuntimeOwner.State.FAILED, interrupted.getState());
+    assertFalse(java.nio.file.Files.exists(root.resolve("wal")
+        .resolve(CommonCheckpointFile.FILE_NAME)));
+    assertTrue(java.nio.file.Files.exists(root.resolve("wal")
+        .resolve(CommonCheckpointFile.TEMPORARY_FILE_NAME)));
+    assertSame(snapshots.codeLayer, snapshots.codeDatabase.getHead());
+
+    StateArchiveHotStore recoveredHot = StateArchiveHotStore.openOrCreate(root.resolve("hot"),
+        format, Engine.LEVELDB, 0, hash(0), 3, 10, 1024 * 1024);
+    assertEquals(1, recoveredHot.getMaterializedHead());
+    assertEquals(0, recoveredHot.getCommittedHead());
+    CommonCheckpointRuntime recovered = hotRuntime(root,
+        new CommonCheckpointFile(root.resolve("wal")), snapshots, recoveredHot, format,
+        new ArrayList<>());
+    assertEquals(CommonCheckpointRedoCoordinator.RecoveryAction.NO_CHECKPOINT,
+        recovered.recoverBeforeServing());
+    assertEquals(0, recoveredHot.getMaterializedHead());
+
+    CommonCheckpointTarget target = recovered.checkpointAndRebase(1);
+    assertEquals(snapshots.meta, target.getLastBlock());
+    assertEquals(1, recoveredHot.getCommittedHead());
+    assertFalse(java.nio.file.Files.exists(root.resolve("wal")
+        .resolve(CommonCheckpointFile.TEMPORARY_FILE_NAME)));
+    recovered.close();
+  }
+
   private Fixture fixture(String name, ChainbaseCheckpointMaterializer.Stage failedStage)
       throws Exception {
     java.nio.file.Path root = temporaryFolder.newFolder(name).toPath();
@@ -416,6 +516,27 @@ public class ChainbaseCheckpointMaterializerTest {
     ChainbaseCheckpointMaterializer materializer = new ChainbaseCheckpointMaterializer(root,
         format, databases, failAt(failedStage));
     return new Fixture(root, code, storage, databases, format, payload, materializer);
+  }
+
+  private static CommonCheckpointRuntime hotRuntime(java.nio.file.Path root,
+      CommonCheckpointFile file, V2Snapshots snapshots, StateArchiveHotStore hotStore,
+      byte[] format, List<CommonCheckpointRuntime.Timing> timings) {
+    StateArchiveHotCheckpointMaterializer hotMaterializer =
+        new StateArchiveHotCheckpointMaterializer(hotStore);
+    BlockSnapshotMeta persisted = BlockSnapshotMeta.forBlock(0, hash(0), hash(-1), 0);
+    CommonCheckpointHotRecovery recovery = new CommonCheckpointHotRecovery(file,
+        () -> new CommonCheckpointHotRecovery.PersistentDynamicHead(0, hash(0)),
+        ignored -> persisted, hotMaterializer::reconcilePreparedTail);
+    CommonCheckpointRedoCoordinator coordinator = new CommonCheckpointRedoCoordinator(file,
+        new ChainbaseCheckpointMaterializer(root.resolve("chainbase"), format,
+            snapshots.databases),
+        new PublishingMaterializer(Authority.PATH_STATE), hotMaterializer);
+    AtomicLong clock = new AtomicLong();
+    return new CommonCheckpointRuntime(new CommonCheckpointRuntimeOwner(coordinator),
+        snapshots.databases, root.resolve("legacy-archive"), format, Engine.LEVELDB,
+        (blockNumber, blockHash) -> new TestLatest(snapshots.code, blockNumber, blockHash),
+        target -> () -> { }, hotMaterializer, recovery, () -> clock.addAndGet(1_000L),
+        timings::add);
   }
 
   private static ChainbaseCheckpointMaterializer.FaultHook failAt(
@@ -556,6 +677,32 @@ public class ChainbaseCheckpointMaterializerTest {
     }
   }
 
+  private static final class V2Snapshots {
+
+    private final MemoryDb code = new MemoryDb("code");
+    private final MemoryDb properties = new MemoryDb("properties");
+    private final Chainbase codeDatabase = new Chainbase(new SnapshotRoot(code));
+    private final Chainbase propertiesDatabase = new Chainbase(new SnapshotRoot(properties));
+    private final List<Chainbase> databases = Arrays.asList(codeDatabase, propertiesDatabase);
+    private final BlockSnapshotMeta meta = BlockSnapshotMeta.forBlock(1, hash(1), hash(0),
+        3_000L);
+    private final SnapshotImpl codeLayer;
+
+    private V2Snapshots() {
+      byte[] view = hash(41);
+      PathStateSnapshotDelta path = pathDelta(meta, hash(10), hash(11), view);
+      BlockReverseDiff archive = new BlockReverseDiff(meta,
+          Collections.singletonList(new DbGroup("code", Collections.singletonList(
+              new Entry(new byte[]{1}, OldValue.present(new byte[]{0}))))), view);
+      codeLayer = append(codeDatabase, meta, archive, path);
+      SnapshotImpl propertiesLayer = append(propertiesDatabase, meta, archive, path);
+      codeLayer.put(new byte[]{1}, new byte[]{2});
+      propertiesLayer.put("latest_block_header_number".getBytes(StandardCharsets.UTF_8),
+          ByteBuffer.allocate(Long.BYTES).putLong(1).array());
+      propertiesLayer.put("latest_block_header_hash".getBytes(StandardCharsets.UTF_8), hash(1));
+    }
+  }
+
   private static final class PublishingMaterializer implements CommonCheckpointMaterializer {
 
     private final Authority authority;
@@ -674,7 +821,9 @@ public class ChainbaseCheckpointMaterializerTest {
 
     @Override
     public Iterator<Map.Entry<byte[], byte[]>> iterator() {
-      throw new UnsupportedOperationException();
+      Map<byte[], byte[]> copy = new LinkedHashMap<>();
+      values.forEach((key, value) -> copy.put(key.getBytes(), value));
+      return copy.entrySet().iterator();
     }
 
     @Override

@@ -2246,6 +2246,21 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     return -1;
   }
 
+  /**
+   * Gets the latest block hash from the persistent Snapshot root, excluding reversible layers.
+   */
+  public Sha256Hash getLatestBlockHeaderHashFromDB() {
+    try {
+      byte[] blockHash = Optional.ofNullable(getFromRoot(LATEST_BLOCK_HEADER_HASH))
+          .map(BytesCapsule::getData)
+          .orElseThrow(() -> new IllegalArgumentException("not found block hash"));
+      return Sha256Hash.wrap(blockHash);
+    } catch (ItemNotFoundException | BadItemException | IllegalArgumentException e) {
+      logger.error("Get header hash from DB, {}.", e.getMessage());
+    }
+    return null;
+  }
+
   public int getStateFlag() {
     return Optional.ofNullable(getUnchecked(STATE_FLAG))
         .map(BytesCapsule::getData)

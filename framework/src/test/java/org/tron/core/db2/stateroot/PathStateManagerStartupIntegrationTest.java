@@ -27,6 +27,7 @@ import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.config.args.Storage;
+import org.tron.core.config.args.StorageConfig.StateArchiveHotStoreConfig;
 import org.tron.core.db.Manager;
 import org.tron.core.db2.ISession;
 import org.tron.core.db2.archive.BlockSnapshotMeta;
@@ -344,6 +345,7 @@ public class PathStateManagerStartupIntegrationTest {
     assertTrue(Files.isRegularFile(output.resolve("path-state-root")
         .resolve(PathStateCheckpointMaterializer.COMMON_MODE_FILE)));
     assertFalse(Files.exists(output.resolve("path-state-root/CURRENT")));
+    assertFalse(Files.exists(output.resolve("state-archive/hot")));
 
     BlockId childId = new BlockId(Sha256Hash.wrap(bytes(32)), 101L);
     byte[] childHash = childId.getBytes();
@@ -387,6 +389,52 @@ public class PathStateManagerStartupIntegrationTest {
     assertEquals(102L, manager.getPathStateSnapshotHead().getHead().getBlockNumber());
     assertArrayEquals(pendingId.getBytes(),
         manager.getPathStateSnapshotHead().getHead().getBlockHash());
+    invoke(manager, "closeCommonCheckpoint");
+    invoke(manager, "closePathStateRoot");
+  }
+
+  @Test
+  public void hotCommonCheckpointUsesDualGateAndPersistentRecoverySources() throws Exception {
+    Path output = temporaryFolder.newFolder("hot-common-checkpoint-startup").toPath();
+    long baseNumber = 100L;
+    BlockId baseId = new BlockId(Sha256Hash.wrap(bytes(61)), baseNumber);
+    DynamicPropertiesStore dynamic = mock(DynamicPropertiesStore.class);
+    when(dynamic.getLatestBlockHeaderNumber()).thenReturn(baseNumber);
+    when(dynamic.getLatestBlockHeaderHash()).thenReturn(baseId);
+    when(dynamic.getLatestBlockHeaderTimestamp()).thenReturn(300L);
+    when(dynamic.getLatestBlockHeaderNumberFromDB()).thenReturn(baseNumber);
+    when(dynamic.getLatestBlockHeaderHashFromDB()).thenReturn(baseId);
+    when(dynamic.getAllowAccountAssetOptimizationFromRoot()).thenReturn(1L);
+    BlockCapsule baseBlock = mock(BlockCapsule.class);
+    when(baseBlock.getNum()).thenReturn(baseNumber);
+    when(baseBlock.getBlockId()).thenReturn(baseId);
+    when(baseBlock.getParentHash()).thenReturn(Sha256Hash.wrap(bytes(60)));
+    when(baseBlock.getTimeStamp()).thenReturn(300L);
+    ChainBaseManager chainBase = mock(ChainBaseManager.class);
+    when(chainBase.getDynamicPropertiesStore()).thenReturn(dynamic);
+    when(chainBase.getBlockByNum(baseNumber)).thenReturn(baseBlock);
+    when(chainBase.getAccountAssetStore()).thenReturn(mock(AccountAssetStore.class));
+
+    Manager manager = new Manager();
+    setChainBaseManager(manager, chainBase);
+    withHotCommonConfig(output, () -> {
+      SnapshotManager snapshots = new SnapshotManager("");
+      AtomicInteger closed = new AtomicInteger();
+      for (PathStateParticipantDescriptor.StoreIdentity participant
+          : PathStateParticipantDescriptor.current().getStores()) {
+        snapshots.getDbs().add(emptyNativeStore(participant.getDbName(), baseNumber,
+            baseId.getBytes(), closed));
+      }
+      snapshots.enable();
+      snapshots.setUnChecked(false);
+      setField(manager, "revokingStore", snapshots);
+      invoke(manager, "initCommonCheckpoint");
+    });
+
+    assertNotNull(manager.getCommonCheckpointRuntime());
+    assertTrue(Files.isRegularFile(output.resolve("state-archive/hot/CURRENT")));
+    assertFalse(Files.exists(output.resolve("state-archive/READABLE")));
+    assertFalse(Files.exists(output.resolve("state-archive/checkpoint-targets")));
     invoke(manager, "closeCommonCheckpoint");
     invoke(manager, "closePathStateRoot");
   }
@@ -514,6 +562,11 @@ public class PathStateManagerStartupIntegrationTest {
   }
 
   private static void withCommonConfig(Path output, ThrowingRunnable action) throws Exception {
+    withCommonConfig(output, false, action);
+  }
+
+  private static void withCommonConfig(Path output, boolean hotEnabled,
+      ThrowingRunnable action) throws Exception {
     CommonParameter args = CommonParameter.getInstance();
     Storage oldStorage = args.getStorage();
     String oldOutput = args.outputDirectory;
@@ -524,6 +577,9 @@ public class PathStateManagerStartupIntegrationTest {
       storage.setDbEngine("ROCKSDB");
       storage.setStateArchiveEnabled(true);
       storage.setStateArchiveDirectory("state-archive");
+      StateArchiveHotStoreConfig hotConfig = new StateArchiveHotStoreConfig();
+      hotConfig.setEnabled(hotEnabled);
+      storage.setStateArchiveHotStoreSettings(hotConfig);
       storage.setCommonCheckpointEnabled(true);
       storage.setCommonCheckpointDirectory("common-checkpoint");
       storage.setPathStateRootEnabled(true);
@@ -538,6 +594,10 @@ public class PathStateManagerStartupIntegrationTest {
       args.outputDirectory = oldOutput;
       args.storage = oldStorage;
     }
+  }
+
+  private static void withHotCommonConfig(Path output, ThrowingRunnable action) throws Exception {
+    withCommonConfig(output, true, action);
   }
 
   private static void setChainBaseManager(Manager manager, ChainBaseManager chainBase)
