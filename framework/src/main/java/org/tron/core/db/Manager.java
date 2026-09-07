@@ -816,6 +816,9 @@ public class Manager {
       PathStateLayerLimits limits = new PathStateLayerLimits(
           storage.getPathStateRootReversibleLayerLimit(),
           storage.getPathStateRootReversibleLayerBytes());
+      recoverPendingCommonCheckpoint(snapshots, checkpointDirectory, archiveDirectory,
+          pathDirectory, engine, storage.getPathStateRootNodeCacheBytes(), formatIdentity,
+          baselineFile, baselineExists, modeAdmitted);
       BlockSnapshotMeta canonical = currentCanonicalBlockMeta();
       P66Phase phase = currentPathStatePhase();
       if (modeAdmitted && Files.isRegularFile(
@@ -937,6 +940,38 @@ public class Manager {
         }
       }
       throw new IllegalStateException("Failed to recover common checkpoint startup", failure);
+    }
+  }
+
+  private void recoverPendingCommonCheckpoint(SnapshotManager snapshots,
+      Path checkpointDirectory, Path archiveDirectory, Path pathDirectory,
+      PathStateStoreManifest.Engine engine, long residentNodeCacheBytes, byte[] formatIdentity,
+      CommonCheckpointBaselineFile baselineFile, boolean baselineExists, boolean modeAdmitted)
+      throws java.io.IOException {
+    CommonCheckpointFile checkpointFile = new CommonCheckpointFile(checkpointDirectory);
+    if (!checkpointFile.isPresent()) {
+      return;
+    }
+    if (!baselineExists || !modeAdmitted) {
+      throw new java.io.IOException(
+          "Common checkpoint WAL requires an admitted PathState baseline");
+    }
+    CommonCheckpointBaseline baseline = baselineFile.load();
+    CommonCheckpointMaterializedStore materializedStore =
+        new CommonCheckpointMaterializedStore(checkpointDirectory);
+    try (PathStateCheckpointMaterializer.RecoverySession pathRecovery =
+        PathStateCheckpointMaterializer.openRecovery(pathDirectory, engine,
+            residentNodeCacheBytes, formatIdentity, baseline, materializedStore);
+        CommonCheckpointRedoCoordinator coordinator = new CommonCheckpointRedoCoordinator(
+            checkpointFile,
+            new ChainbaseCheckpointMaterializer(checkpointDirectory, formatIdentity,
+                snapshots.getDbs(), baseline, materializedStore),
+            pathRecovery.getMaterializer(),
+            new StateArchiveCheckpointMaterializer(archiveDirectory, formatIdentity, baseline,
+                engine, materializedStore))) {
+      CommonCheckpointRedoCoordinator.RecoveryAction action = coordinator.recover();
+      logger.info("Common checkpoint startup redo completed before PathState open: action={}",
+          action);
     }
   }
 

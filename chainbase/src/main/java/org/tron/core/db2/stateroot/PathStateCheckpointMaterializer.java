@@ -20,6 +20,7 @@ import org.tron.core.db2.core.CommonCheckpointMaterializedStore;
 import org.tron.core.db2.core.CommonCheckpointMaterializer;
 import org.tron.core.db2.core.CommonCheckpointPayload;
 import org.tron.core.db2.core.CommonCheckpointTarget;
+import org.tron.core.db2.stateroot.PathStateStoreManifest.Engine;
 
 /** Next-format PathState participant for the common-checkpoint two-barrier protocol. */
 public final class PathStateCheckpointMaterializer implements CommonCheckpointMaterializer {
@@ -64,7 +65,7 @@ public final class PathStateCheckpointMaterializer implements CommonCheckpointMa
     this(stores, scope, formatIdentity, null, null, faultHook);
   }
 
-  private PathStateCheckpointMaterializer(PathStatePhysicalStoreSet stores,
+  PathStateCheckpointMaterializer(PathStatePhysicalStoreSet stores,
       PathStateParticipantScope scope, byte[] formatIdentity, CommonCheckpointBaseline baseline,
       CommonCheckpointMaterializedStore materializedStore, FaultHook faultHook) {
     this.stores = Objects.requireNonNull(stores, "stores");
@@ -74,6 +75,29 @@ public final class PathStateCheckpointMaterializer implements CommonCheckpointMa
     this.faultHook = Objects.requireNonNull(faultHook, "faultHook");
     this.baseline = baseline;
     this.materializedStore = materializedStore;
+  }
+
+  /**
+   * Opens physical stores for WAL redo without first trusting the possibly stale published
+   * PathState CURRENT. The session must be closed before the normal overlay is opened.
+   */
+  public static RecoverySession openRecovery(Path directory, Engine engine,
+      long residentNodeCacheBytes, byte[] formatIdentity, CommonCheckpointBaseline baseline,
+      CommonCheckpointMaterializedStore materializedStore) throws IOException {
+    PathStateParticipantScope scope = new PathStateCanonicalizer().participantScope();
+    PathStatePhysicalStoreSet stores = PathStatePhysicalStoreSet.openExisting(directory, scope,
+        engine, residentNodeCacheBytes);
+    try {
+      return new RecoverySession(stores, new PathStateCheckpointMaterializer(stores, scope,
+          formatIdentity, baseline, materializedStore));
+    } catch (RuntimeException failure) {
+      try {
+        stores.close();
+      } catch (IOException closeFailure) {
+        failure.addSuppressed(closeFailure);
+      }
+      throw failure;
+    }
   }
 
   @Override
@@ -363,6 +387,28 @@ public final class PathStateCheckpointMaterializer implements CommonCheckpointMa
   @FunctionalInterface
   interface FaultHook {
     void after(Stage stage, int storeId) throws IOException;
+  }
+
+  /** Short-lived owner used only while replaying a durable common-checkpoint WAL. */
+  public static final class RecoverySession implements AutoCloseable {
+
+    private final PathStatePhysicalStoreSet stores;
+    private final PathStateCheckpointMaterializer materializer;
+
+    private RecoverySession(PathStatePhysicalStoreSet stores,
+        PathStateCheckpointMaterializer materializer) {
+      this.stores = stores;
+      this.materializer = materializer;
+    }
+
+    public PathStateCheckpointMaterializer getMaterializer() {
+      return materializer;
+    }
+
+    @Override
+    public void close() throws IOException {
+      stores.close();
+    }
   }
 
   private static final class Marker {
