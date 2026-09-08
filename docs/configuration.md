@@ -106,6 +106,10 @@ node {
     solidityPort = 50061
     # Maximum concurrent calls per connection. 0 uses the secure default of 100.
     maxConcurrentCallsPerConnection = 100
+    # Maximum RST_STREAM frames per connection per window. 0 uses the default of 1000.
+    maxRstStream = 1000
+    # RST_STREAM counting window in seconds. 0 uses the default of 5.
+    secondsPerWindow = 5
     # Idle connection timeout (ms). 0 = no limit.
     maxConnectionIdleInMillis = 0
     # Minimum active connections required before broadcasting transactions.
@@ -117,6 +121,15 @@ node {
 > **Upgrade note:** `node.rpc.maxConcurrentCallsPerConnection = 0` previously meant no limit.
 > It now selects the secure default of 100. Configure an explicit positive value if a client
 > needs more than 100 concurrent calls on one connection.
+
+> **Upgrade note:** `node.rpc.maxRstStream = 0` and `node.rpc.secondsPerWindow = 0`
+> no longer disable RST_STREAM flood protection. Each zero independently falls back to its
+> secure default (1000 frames / 5 seconds), with a startup warning. Negative values and
+> `maxRstStream = 2147483647` (`Integer.MAX_VALUE`, grpc-java's disable sentinel) are rejected.
+> These are java-tron defaults; grpc-java itself defaults to no limit.
+> Exceeding the limit closes that connection with `GOAWAY(ENHANCE_YOUR_CALM)`.
+> Clients that frequently cancel calls, including deadline cancellations, may need explicit
+> positive limits tuned to their workload; keep `maxRstStream` below `2147483647`.
 
 To disable an API endpoint that you do not want to expose publicly, set its `Enable` flag to `false` or add endpoints to `node.disabledApi`:
 

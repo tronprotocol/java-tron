@@ -208,6 +208,8 @@ public class NodeConfig {
   public static class RpcConfig {
 
     public static final int DEFAULT_MAX_CONCURRENT_CALLS_PER_CONNECTION = 100;
+    public static final int DEFAULT_MAX_RST_STREAM = 1000;
+    public static final int DEFAULT_SECONDS_PER_WINDOW = 5;
 
     private boolean enable = true;
     private int port = 50051;
@@ -224,8 +226,8 @@ public class NodeConfig {
     private long maxConnectionAgeInMillis = 0;
     private int maxMessageSize = 4194304;
     private int maxHeaderListSize = 8192;
-    private int maxRstStream = 0;
-    private int secondsPerWindow = 0;
+    private int maxRstStream = DEFAULT_MAX_RST_STREAM;
+    private int secondsPerWindow = DEFAULT_SECONDS_PER_WINDOW;
     private int minEffectiveConnection = 1;
     private boolean reflectionService = false;
     private boolean trxCacheEnable = false;
@@ -372,6 +374,29 @@ public class NodeConfig {
           RpcConfig.DEFAULT_MAX_CONCURRENT_CALLS_PER_CONNECTION);
       rpc.maxConcurrentCallsPerConnection =
           RpcConfig.DEFAULT_MAX_CONCURRENT_CALLS_PER_CONNECTION;
+    }
+    if (rpc.maxRstStream < 0) {
+      throw new TronError("node.rpc.maxRstStream must be non-negative, got: "
+          + rpc.maxRstStream, PARAMETER_INIT);
+    }
+    if (rpc.secondsPerWindow < 0) {
+      throw new TronError("node.rpc.secondsPerWindow must be non-negative, got: "
+          + rpc.secondsPerWindow, PARAMETER_INIT);
+    }
+    // Only the frame count has a grpc-java disable sentinel; the window does not.
+    if (rpc.maxRstStream == Integer.MAX_VALUE) {
+      throw new TronError("node.rpc.maxRstStream must not be Integer.MAX_VALUE because grpc-java "
+          + "treats it as disabling RST_STREAM flood protection", PARAMETER_INIT);
+    }
+    if (rpc.maxRstStream == 0) {
+      logger.warn("Configuring [node.rpc.maxRstStream] as 0 no longer disables RST_STREAM flood "
+          + "protection; using the secure default of {}.", RpcConfig.DEFAULT_MAX_RST_STREAM);
+      rpc.maxRstStream = RpcConfig.DEFAULT_MAX_RST_STREAM;
+    }
+    if (rpc.secondsPerWindow == 0) {
+      logger.warn("Configuring [node.rpc.secondsPerWindow] as 0 no longer disables RST_STREAM flood "
+          + "protection; using the secure default of {}.", RpcConfig.DEFAULT_SECONDS_PER_WINDOW);
+      rpc.secondsPerWindow = RpcConfig.DEFAULT_SECONDS_PER_WINDOW;
     }
     if (rpc.maxConnectionIdleInMillis == 0) {
       rpc.maxConnectionIdleInMillis = Long.MAX_VALUE;
