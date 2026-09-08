@@ -132,6 +132,16 @@ public class ContractState implements Repository, ProgramListenerAware {
   }
 
   @Override
+  public void markSelfDestruct(byte[] address) {
+    repository.markSelfDestruct(address);
+  }
+
+  @Override
+  public boolean isSelfDestructed(byte[] address) {
+    return repository.isSelfDestructed(address);
+  }
+
+  @Override
   public void updateAccount(byte[] address, AccountCapsule accountCapsule) {
     repository.updateAccount(address, accountCapsule);
   }

@@ -3,6 +3,7 @@ package org.tron.common.runtime.vm;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.tron.core.config.Parameter.ChainConstant.FROZEN_PERIOD;
+import static org.tron.core.config.Parameter.ForkBlockVersionEnum.VERSION_4_8_2_2;
 
 import java.util.List;
 import java.util.Locale;
@@ -16,6 +17,7 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.StringUtils;
@@ -24,6 +26,7 @@ import org.tron.common.TestConstants;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.InternalTransaction;
 import org.tron.common.utils.DecodeUtil;
+import org.tron.common.utils.ForkController;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
@@ -42,6 +45,7 @@ import org.tron.core.vm.VM;
 import org.tron.core.vm.config.ConfigLoader;
 import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.program.Program;
+import org.tron.core.vm.program.Program.OutOfTimeException;
 import org.tron.core.vm.program.invoke.ProgramInvokeMockImpl;
 import org.tron.core.vm.repository.Repository;
 import org.tron.protos.Protocol;
@@ -1182,6 +1186,7 @@ public class OperationsTest extends BaseTest {
 
     program.suicide(new DataWord(
         dbManager.getAccountStore().getBlackhole().getAddress().toByteArray()));
+    Assert.assertTrue(program.getContractState().isSelfDestructed(program.getContextAddress()));
 
     DecodeUtil.addressPreFixByte = prePrefixByte;
     VMConfig.initAllowEnergyAdjustment(0);
@@ -1240,6 +1245,7 @@ public class OperationsTest extends BaseTest {
     OperationActions.suicideAction2(program);
 
     Assert.assertEquals(1, program.getResult().getDeleteAccounts().size());
+    Assert.assertTrue(program.getContractState().isSelfDestructed(contractAddr));
 
 
     invoke = new ProgramInvokeMockImpl(StoreFactory.getInstance(), new byte[0], contractAddr);
@@ -1256,6 +1262,7 @@ public class OperationsTest extends BaseTest {
         dbManager.getAccountStore().getBlackhole().getAddress().toByteArray()));
 
     Assert.assertEquals(0, spyProgram.getResult().getDeleteAccounts().size());
+    Assert.assertTrue(spyProgram.getContractState().isSelfDestructed(contractAddr));
 
     DecodeUtil.addressPreFixByte = prePrefixByte;
     VMConfig.initAllowEnergyAdjustment(0);
@@ -1264,6 +1271,31 @@ public class OperationsTest extends BaseTest {
     VMConfig.initAllowTvmFreezeV2(0);
     VMConfig.initAllowTvmCompatibleEvm(0);
     VMConfig.initAllowTvmVote(0);
+  }
+
+  @Test
+  public void testSuicide2RejectsSelfDestructedBeneficiaryAfterFork()
+      throws ContractValidateException {
+    byte[] contractAddr = Hex.decode("41471fd3ad3e9eeadeec4608b92d16ce6b500704cc");
+    byte[] beneficiary = Hex.decode("411111111111111111111111111111111111111111");
+    invoke = new ProgramInvokeMockImpl(StoreFactory.getInstance(), new byte[0], contractAddr);
+    program = new Program(null, null, invoke,
+        new InternalTransaction(
+            Protocol.Transaction.getDefaultInstance(),
+            InternalTransaction.TrxType.TRX_UNKNOWN_TYPE));
+    program.getContractState().markSelfDestruct(beneficiary);
+
+    ForkController forkController = Mockito.mock(ForkController.class);
+    try (MockedStatic<ForkController> fork = Mockito.mockStatic(ForkController.class)) {
+      fork.when(ForkController::instance).thenReturn(forkController);
+      Mockito.when(forkController.pass(VERSION_4_8_2_2)).thenReturn(true);
+
+      OutOfTimeException exception = Assert.assertThrows(OutOfTimeException.class,
+          () -> program.suicide2(new DataWord(beneficiary)));
+      Assert.assertEquals(
+          "CPU timeout for SELFDESTRUCT with selfdestructed beneficiary",
+          exception.getMessage());
+    }
   }
 
   @Test
