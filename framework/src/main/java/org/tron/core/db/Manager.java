@@ -29,6 +29,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -749,7 +750,9 @@ public class Manager {
       recovered = null;
       logger.info("State archive runtime attached: directory={}, head={}, actions={}, engine={}",
           archiveDirectory, archiveHead.getBlockNumber(),
-          stateArchiveRuntime.getStartupRecoveryActionCount(), storage.getDbEngine());
+          stateArchiveRuntime.getStartupRecoveryActionCount(),
+          configuredAuxiliaryEngine(storage.getStateArchiveServingIndexEngine(),
+              storage.getDbEngine()));
     } catch (java.io.IOException | BadItemException | ItemNotFoundException
         | RuntimeException failure) {
       if (recovered != null) {
@@ -781,8 +784,10 @@ public class Manager {
     CommonCheckpointRuntimeAttachment attachment = null;
     StateArchiveHotStore hotStore = null;
     try {
-      PathStateStoreManifest.Engine engine = PathStateStoreManifest.Engine.valueOf(
-          storage.getDbEngine());
+      PathStateStoreManifest.Engine pathEngine = configuredAuxiliaryEngine(
+          storage.getPathStateRootEngine(), storage.getDbEngine());
+      PathStateStoreManifest.Engine servingIndexEngine = configuredAuxiliaryEngine(
+          storage.getStateArchiveServingIndexEngine(), storage.getDbEngine());
       boolean pathExisted = Files.exists(pathDirectory, LinkOption.NOFOLLOW_LINKS);
       boolean modeAdmitted = pathExisted
           && PathStateCheckpointMaterializer.isCommonModeAdmitted(pathDirectory, formatIdentity);
@@ -807,14 +812,14 @@ public class Manager {
         }
       }
       if (!pathExisted) {
-        rebuildPathStateRoot(snapshots, pathDirectory, engine);
+        rebuildPathStateRoot(snapshots, pathDirectory, pathEngine);
       } else if (!modeAdmitted && !Files.isRegularFile(
           pathDirectory.resolve(PathStateCheckpointMaterializer.CURRENT_FILE),
           LinkOption.NOFOLLOW_LINKS)
           && !Files.isRegularFile(pathDirectory.resolve(
           PathStateCheckpointMaterializer.COMMON_BASELINE_HEAD_FILE),
           LinkOption.NOFOLLOW_LINKS)) {
-        rebuildPathStateRoot(snapshots, pathDirectory, engine);
+        rebuildPathStateRoot(snapshots, pathDirectory, pathEngine);
       }
 
       PathStateLayerLimits limits = new PathStateLayerLimits(
@@ -825,7 +830,7 @@ public class Manager {
       if (modeAdmitted && Files.isRegularFile(
           pathDirectory.resolve(PathStateCheckpointMaterializer.CURRENT_FILE),
           LinkOption.NOFOLLOW_LINKS)) {
-        pathOwner = PathStatePhysicalOverlayHead.openCommonCheckpoint(pathDirectory, engine,
+        pathOwner = PathStatePhysicalOverlayHead.openCommonCheckpoint(pathDirectory, pathEngine,
             limits, storage.getPathStateRootNodeCacheBytes(),
             storage.getPathStateRootParticipantThreads(), storage.getPathStateRootBranchThreads(),
             formatIdentity, canonical, phase);
@@ -833,11 +838,11 @@ public class Manager {
         pathOwner = modeAdmitted || Files.isRegularFile(pathDirectory.resolve(
             PathStateCheckpointMaterializer.COMMON_BASELINE_HEAD_FILE),
             LinkOption.NOFOLLOW_LINKS)
-            ? PathStatePhysicalOverlayHead.openCommonBaseline(pathDirectory, engine, limits,
+            ? PathStatePhysicalOverlayHead.openCommonBaseline(pathDirectory, pathEngine, limits,
                 storage.getPathStateRootNodeCacheBytes(),
                 storage.getPathStateRootParticipantThreads(),
                 storage.getPathStateRootBranchThreads())
-            : PathStatePhysicalOverlayHead.open(pathDirectory, engine, limits,
+            : PathStatePhysicalOverlayHead.open(pathDirectory, pathEngine, limits,
                 storage.getPathStateRootNodeCacheBytes(),
                 storage.getPathStateRootParticipantThreads(),
                 storage.getPathStateRootBranchThreads());
@@ -870,6 +875,10 @@ public class Manager {
       org.tron.core.config.args.StorageConfig.StateArchiveHotStoreConfig hotConfig =
           storage.getStateArchiveHotStoreSettings();
       boolean hotEnabled = hotConfig != null && hotConfig.isEnabled();
+      PathStateStoreManifest.Engine hotEngine = configuredAuxiliaryEngine(
+          hotConfig == null ? null : hotConfig.getEngine(), storage.getDbEngine());
+      PathStateStoreManifest.Engine archiveRuntimeEngine = hotEnabled
+          ? hotEngine : servingIndexEngine;
       Path hotDirectory = archiveDirectory.resolve("hot");
       if (hotEnabled && !Files.exists(hotDirectory, LinkOption.NOFOLLOW_LINKS)) {
         requireEmptyOrMissing(archiveDirectory, "State Archive v2");
@@ -882,13 +891,13 @@ public class Manager {
       StateArchiveHotCheckpointMaterializer hotMaterializer = null;
       org.tron.core.db2.core.CommonCheckpointMaterializer archiveMaterializer;
       if (hotEnabled) {
-        hotStore = StateArchiveHotStore.openOrCreate(hotDirectory, formatIdentity, engine,
+        hotStore = StateArchiveHotStore.openOrCreate(hotDirectory, formatIdentity, hotEngine,
             baseline.getHead().getBlockNumber(), baseline.getHead().getBlockHash(), hotConfig);
         hotMaterializer = new StateArchiveHotCheckpointMaterializer(hotStore);
         archiveMaterializer = hotMaterializer;
       } else {
         archiveMaterializer = new StateArchiveCheckpointMaterializer(archiveDirectory,
-            formatIdentity, baseline, engine);
+            formatIdentity, baseline, servingIndexEngine);
       }
       CommonCheckpointRedoCoordinator coordinator = new CommonCheckpointRedoCoordinator(
           checkpointFile,
@@ -903,7 +912,7 @@ public class Manager {
             CommonCheckpointRuntimeOwner owner = new CommonCheckpointRuntimeOwner(coordinator);
             if (admittedHotMaterializer == null) {
               return new CommonCheckpointRuntime(owner, snapshots.getDbs(), archiveDirectory,
-                  formatIdentity, engine, latest::pin,
+                  formatIdentity, archiveRuntimeEngine, latest::pin,
                   admittedOwner::prepareCommonCheckpointRebase);
             }
             CommonCheckpointRecoveryStateAdapter recoveryState =
@@ -912,7 +921,7 @@ public class Manager {
             CommonCheckpointHotRecovery recovery = new CommonCheckpointHotRecovery(checkpointFile,
                 recoveryState, recoveryState, admittedHotMaterializer::reconcilePreparedTail);
             return new CommonCheckpointRuntime(owner, snapshots.getDbs(), archiveDirectory,
-                formatIdentity, engine, latest::pin,
+                formatIdentity, archiveRuntimeEngine, latest::pin,
                 admittedOwner::prepareCommonCheckpointRebase, admittedHotMaterializer, recovery);
           });
 
@@ -928,7 +937,7 @@ public class Manager {
           LinkOption.NOFOLLOW_LINKS)) {
         if (admittedHotStore == null) {
           requireCommonPublishedAuthorities(checkpointDirectory, archiveDirectory, pathDirectory,
-              formatIdentity, engine);
+              formatIdentity, servingIndexEngine);
         } else {
           requireHotCommonPublishedAuthorities(checkpointDirectory, pathDirectory,
               formatIdentity, admittedHotStore);
@@ -950,8 +959,9 @@ public class Manager {
       attachment = null;
       hotStore = null;
       logger.info("Common checkpoint runtime attached: checkpoint={}, archive={}, path={}, "
-              + "head={}, format={}", checkpointDirectory, archiveDirectory, pathDirectory,
-          canonical.getBlockNumber(), CommonCheckpointFormat.ID);
+              + "head={}, format={}, pathEngine={}, archiveEngine={}", checkpointDirectory,
+          archiveDirectory, pathDirectory, canonical.getBlockNumber(), CommonCheckpointFormat.ID,
+          pathEngine, archiveRuntimeEngine);
     } catch (java.io.IOException | BadItemException | ItemNotFoundException
         | RuntimeException failure) {
       if (pathStateRuntime != null) {
@@ -1069,6 +1079,20 @@ public class Manager {
     }
   }
 
+  private static PathStateStoreManifest.Engine configuredAuxiliaryEngine(String configured,
+      String fallback) {
+    String selected = configured == null ? fallback : configured;
+    if (selected == null) {
+      return PathStateStoreManifest.Engine.ROCKSDB;
+    }
+    try {
+      return PathStateStoreManifest.Engine.valueOf(selected.trim().toUpperCase(Locale.ROOT));
+    } catch (IllegalArgumentException failure) {
+      throw new IllegalStateException("Unsupported auxiliary database engine: " + selected,
+          failure);
+    }
+  }
+
   private java.util.Map<String, LatestStateGenerationAdapter.SnapshotCapableStore>
       commonCheckpointSupplementalStores(SnapshotManager snapshots) {
     if (snapshots.getDbs().stream().anyMatch(database ->
@@ -1114,8 +1138,8 @@ public class Manager {
         storage.getPathStateRootDirectory()).normalize();
     PathStateHead recovered = null;
     try {
-      PathStateStoreManifest.Engine engine = PathStateStoreManifest.Engine.valueOf(
-          storage.getDbEngine());
+      PathStateStoreManifest.Engine engine = configuredAuxiliaryEngine(
+          storage.getPathStateRootEngine(), storage.getDbEngine());
       PathStatePhysicalRuntimeAdmission.Result admission =
           PathStatePhysicalRuntimeAdmission.inspect(true, directory, engine);
       if (admission.getStatus()
@@ -1154,7 +1178,7 @@ public class Manager {
               + "volatileSnapshotBenchmark={}, asyncPrepareBenchmark={}, nodeCacheBytes={}, "
               + "participantThreads={}, branchThreads={}",
           directory,
-          recoveredHead.getBlockNumber(), storage.getDbEngine(),
+          recoveredHead.getBlockNumber(), engine,
           storage.isPathStateRootVolatileSnapshotBenchmark(),
           storage.isPathStateRootAsyncPrepareBenchmark(),
           storage.getPathStateRootNodeCacheBytes(), storage.getPathStateRootParticipantThreads(),

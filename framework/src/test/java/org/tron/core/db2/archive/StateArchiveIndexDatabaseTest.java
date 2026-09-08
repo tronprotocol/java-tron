@@ -17,6 +17,7 @@ import java.util.stream.Stream;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.tron.core.config.args.StorageConfig.NativeDbConfig;
 import org.tron.core.db2.stateroot.PathStateStoreManifest.Engine;
 
 public class StateArchiveIndexDatabaseTest {
@@ -67,6 +68,18 @@ public class StateArchiveIndexDatabaseTest {
     assertTrue(nativeOptions.contains("write_buffer_size=67108864"));
     assertTrue(nativeOptions.contains("block_size=4096"));
     assertTrue(nativeOptions.contains("filter_policy=rocksdb.BuiltinBloomFilter"));
+  }
+
+  @Test
+  public void hotRocksRejectsLegacySingleColumnFamilyLayout() throws Exception {
+    Path database = temporaryFolder.newFolder("rocks-flat-hot-reject").toPath().resolve("keys");
+    try (StateArchiveIndexDatabase.Writer writer =
+        StateArchiveIndexDatabase.openWriter(database, Engine.ROCKSDB)) {
+      writer.write(Arrays.asList(StateArchiveIndexDatabase.put(new byte[]{1}, new byte[]{2})));
+    }
+
+    assertThrows(IOException.class, () -> StateArchiveIndexDatabase.openHotWriter(
+        database, Engine.ROCKSDB, NativeDbConfig.large()));
   }
 
   @Test

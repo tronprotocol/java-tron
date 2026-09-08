@@ -64,7 +64,9 @@ public class StorageConfigTest {
     assertEquals("state-archive", defaults.getStateArchive().getDirectory());
     assertEquals(1073741824L, defaults.getStateArchive().getMaxSegmentSize());
     assertEquals(256, defaults.getStateArchive().getQueueCapacity());
+    assertEquals("ROCKSDB", defaults.getStateArchive().getServingIndexEngine());
     assertFalse(defaults.getStateArchive().getHotStore().isEnabled());
+    assertEquals("ROCKSDB", defaults.getStateArchive().getHotStore().getEngine());
     assertEquals(10000L, defaults.getStateArchive().getHotStore().getMaxBlocks());
     assertEquals(2147483648L,
         defaults.getStateArchive().getHotStore().getMaxEncodedBytes());
@@ -74,11 +76,14 @@ public class StorageConfigTest {
 
     StorageConfig configured = StorageConfig.fromConfig(withRef(
         "storage.stateArchive { enabled = true, directory = archive-test, "
-            + "maxSegmentSize = 134217728, queueCapacity = 8 }"));
+            + "maxSegmentSize = 134217728, queueCapacity = 8, "
+            + "servingIndexEngine = leveldb, hotStore.engine = leveldb }"));
     assertTrue(configured.getStateArchive().isEnabled());
     assertEquals("archive-test", configured.getStateArchive().getDirectory());
     assertEquals(134217728L, configured.getStateArchive().getMaxSegmentSize());
     assertEquals(8, configured.getStateArchive().getQueueCapacity());
+    assertEquals("LEVELDB", configured.getStateArchive().getServingIndexEngine());
+    assertEquals("LEVELDB", configured.getStateArchive().getHotStore().getEngine());
   }
 
   @Test
@@ -183,6 +188,7 @@ public class StorageConfigTest {
     assertFalse(defaults.getPathStateRoot().isEnabled());
     assertEquals("shadow", defaults.getPathStateRoot().getMode());
     assertEquals("path-state-root", defaults.getPathStateRoot().getDirectory());
+    assertEquals("ROCKSDB", defaults.getPathStateRoot().getEngine());
     assertEquals(1, defaults.getPathStateRoot().getFormatVersion());
     assertEquals(128, defaults.getPathStateRoot().getReversibleLayerLimit());
     assertEquals(2147483648L, defaults.getPathStateRoot().getReversibleLayerBytes());
@@ -196,7 +202,8 @@ public class StorageConfigTest {
     assertFalse(defaults.getPathStateRoot().isAsyncPrepareBenchmark());
 
     StorageConfig configured = StorageConfig.fromConfig(withRef(
-        "storage.pathStateRoot { enabled = true, mode = shadow, directory = root-test, "
+        "storage.pathStateRoot { enabled = true, engine = leveldb, mode = shadow, "
+            + "directory = root-test, "
             + "formatVersion = 1, reversibleLayerLimit = 8, reversibleLayerBytes = 4096, "
             + "writeBufferBytes = 1024, nodeCacheBytes = 2048, participantThreads = 2, "
             + "branchThreads = 3, rebuildFromGenesis = false, "
@@ -204,6 +211,7 @@ public class StorageConfigTest {
             + "asyncPrepareBenchmark = true }"));
     assertTrue(configured.getPathStateRoot().isEnabled());
     assertEquals("root-test", configured.getPathStateRoot().getDirectory());
+    assertEquals("LEVELDB", configured.getPathStateRoot().getEngine());
     assertEquals(8, configured.getPathStateRoot().getReversibleLayerLimit());
     assertEquals(4096L, configured.getPathStateRoot().getReversibleLayerBytes());
     assertEquals(1024L, configured.getPathStateRoot().getWriteBufferBytes());
@@ -222,6 +230,11 @@ public class StorageConfigTest {
   @Test(expected = IllegalArgumentException.class)
   public void testPathStateRootRejectsUnsupportedMode() {
     StorageConfig.fromConfig(withRef("storage.pathStateRoot.mode = consensus"));
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testRejectsUnsupportedAuxiliaryDatabaseEngine() {
+    StorageConfig.fromConfig(withRef("storage.stateArchive.servingIndexEngine = memory"));
   }
 
   @Test

@@ -112,10 +112,17 @@ final class StateArchiveCheckpointServingIndex {
 
   static Engine configuredEngine() {
     org.tron.core.config.args.Storage storage = CommonParameter.getInstance().getStorage();
-    if (storage == null || storage.getDbEngine() == null) {
-      return Engine.LEVELDB;
+    if (storage == null) {
+      return Engine.ROCKSDB;
     }
-    return Engine.valueOf(storage.getDbEngine().toUpperCase(Locale.ROOT));
+    String configured = storage.getStateArchiveServingIndexEngine();
+    if (configured == null) {
+      configured = storage.getDbEngine();
+    }
+    if (configured == null) {
+      return Engine.ROCKSDB;
+    }
+    return Engine.valueOf(configured.trim().toUpperCase(Locale.ROOT));
   }
 
   private static void requireParent(Marker marker, CommonCheckpointTarget target)

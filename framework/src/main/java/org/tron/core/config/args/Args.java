@@ -221,6 +221,8 @@ public class Args extends CommonParameter {
     PARAMETER.storage.setStateArchiveDirectory(sc.getStateArchive().getDirectory());
     PARAMETER.storage.setStateArchiveMaxSegmentSize(sc.getStateArchive().getMaxSegmentSize());
     PARAMETER.storage.setStateArchiveQueueCapacity(sc.getStateArchive().getQueueCapacity());
+    PARAMETER.storage.setStateArchiveServingIndexEngine(
+        sc.getStateArchive().getServingIndexEngine());
     PARAMETER.storage.setStateArchiveServingIndexDbSettings(
         sc.getStateArchive().getServingIndex());
     PARAMETER.storage.setStateArchiveHotStoreSettings(sc.getStateArchive().getHotStore());
@@ -229,6 +231,7 @@ public class Args extends CommonParameter {
     PARAMETER.storage.setPathStateRootEnabled(sc.getPathStateRoot().isEnabled());
     PARAMETER.storage.setPathStateRootMode(sc.getPathStateRoot().getMode());
     PARAMETER.storage.setPathStateRootDirectory(sc.getPathStateRoot().getDirectory());
+    PARAMETER.storage.setPathStateRootEngine(sc.getPathStateRoot().getEngine());
     PARAMETER.storage.setPathStateRootFormatVersion(sc.getPathStateRoot().getFormatVersion());
     PARAMETER.storage.setPathStateRootReversibleLayerLimit(
         sc.getPathStateRoot().getReversibleLayerLimit());

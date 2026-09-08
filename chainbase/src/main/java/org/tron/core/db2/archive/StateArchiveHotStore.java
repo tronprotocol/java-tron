@@ -58,6 +58,8 @@ public final class StateArchiveHotStore implements Closeable {
   private static final short RECORD_VIEW_DIGEST = 1;
   private static final byte[] BODY_PREFIX = new byte[]{0x42};
   private static final byte[] INDEX_PREFIX = new byte[]{0x4b};
+  private static final String BLOCKS_COLUMN =
+      StateArchiveIndexDatabase.HOT_BLOCKS_COLUMN_FAMILY;
   private static final byte[] META_FORMAT = bytes("meta/format");
   private static final byte[] META_ID = bytes("meta/id");
   private static final byte[] META_BASE_BLOCK = bytes("meta/base-block");
@@ -205,7 +207,8 @@ public final class StateArchiveHotStore implements Closeable {
     }
     loadAndValidateGenerations(selected);
     current = selected;
-    writer = StateArchiveIndexDatabase.openWriter(generationPath(current.id).resolve(DATABASE),
+    writer = StateArchiveIndexDatabase.openHotWriter(
+        generationPath(current.id).resolve(DATABASE),
         engine, dbSettings);
     resumeTruncateIfPresent();
   }
@@ -325,14 +328,16 @@ public final class StateArchiveHotStore implements Closeable {
         throw new IllegalArgumentException("Hot Archive block sequence is not contiguous");
       }
       byte[] bodyKey = bodyKey(meta.getBlockNumber());
-      requireNewKey(bodyKey, newKeys);
+      requireNewKey(BLOCKS_COLUMN, bodyKey, newKeys);
       byte[] record = encodeRecord(diff);
-      mutations.add(StateArchiveIndexDatabase.put(bodyKey, record));
+      mutations.add(StateArchiveIndexDatabase.put(BLOCKS_COLUMN, bodyKey, record));
       for (DbGroup group : diff.getGroups()) {
+        String storeColumn = storeColumn(group.getDbName());
         for (Entry entry : group.getEntries()) {
           byte[] indexKey = indexKey(group.getDbName(), entry.getKey(), meta.getBlockNumber());
-          requireNewKey(indexKey, newKeys);
-          mutations.add(StateArchiveIndexDatabase.put(indexKey, longBytes(meta.getBlockNumber())));
+          requireNewKey(storeColumn, indexKey, newKeys);
+          mutations.add(StateArchiveIndexDatabase.put(storeColumn, indexKey,
+              longBytes(meta.getBlockNumber())));
         }
       }
       if (startBlock < 0) {
@@ -498,7 +503,7 @@ public final class StateArchiveHotStore implements Closeable {
     faultHook.after(Stage.AFTER_CURRENT);
     frozen.add(current);
     current = next;
-    writer = StateArchiveIndexDatabase.openWriter(generationPath(nextId).resolve(DATABASE),
+    writer = StateArchiveIndexDatabase.openHotWriter(generationPath(nextId).resolve(DATABASE),
         engine, dbSettings);
     return frozenId;
   }
@@ -521,6 +526,12 @@ public final class StateArchiveHotStore implements Closeable {
       return Optional.empty();
     }
     byte[] prefix = indexPrefix(dbName, rawKey);
+    String storeColumn;
+    try {
+      storeColumn = storeColumn(dbName);
+    } catch (IllegalArgumentException unknownStore) {
+      return Optional.empty();
+    }
     byte[] seek = ByteBuffer.allocate(prefix.length + Long.BYTES).put(prefix)
         .putLong(targetBlock + 1).array();
     long candidate = Long.MAX_VALUE;
@@ -528,9 +539,9 @@ public final class StateArchiveHotStore implements Closeable {
       if (generation.blockCount == 0 || generation.publishedBlock <= targetBlock) {
         continue;
       }
-      try (StateArchiveIndexDatabase.Reader reader = StateArchiveIndexDatabase.openReader(
+      try (StateArchiveIndexDatabase.Reader reader = StateArchiveIndexDatabase.openHotReader(
           generationPath(generation.id).resolve(DATABASE), engine, dbSettings)) {
-        StateArchiveIndexDatabase.KeyValue found = reader.seek(seek);
+        StateArchiveIndexDatabase.KeyValue found = reader.seek(storeColumn, seek);
         if (found != null && isIndexCandidate(found.getKey(), prefix)) {
           long block = ByteBuffer.wrap(found.getKey(), prefix.length, Long.BYTES).getLong();
           if (!Arrays.equals(found.getValue(), longBytes(block))) {
@@ -556,9 +567,9 @@ public final class StateArchiveHotStore implements Closeable {
           || blockNumber > generation.publishedBlock) {
         continue;
       }
-      try (StateArchiveIndexDatabase.Reader reader = StateArchiveIndexDatabase.openReader(
+      try (StateArchiveIndexDatabase.Reader reader = StateArchiveIndexDatabase.openHotReader(
           generationPath(generation.id).resolve(DATABASE), engine, dbSettings)) {
-        byte[] encoded = reader.get(bodyKey(blockNumber));
+        byte[] encoded = reader.get(BLOCKS_COLUMN, bodyKey(blockNumber));
         if (encoded == null) {
           throw new ArchivePersistenceException("Hot Archive body is missing for indexed block");
         }
@@ -704,7 +715,7 @@ public final class StateArchiveHotStore implements Closeable {
         .published(current.publishedTarget, current.publishedDescriptor);
     long removed = current.endBlock - ceiling.blockNumber;
     for (long block = current.endBlock; block > ceiling.blockNumber; block--) {
-      byte[] body = writer.get(bodyKey(block));
+      byte[] body = writer.get(BLOCKS_COLUMN, bodyKey(block));
       if (body == null) {
         continue;
       }
@@ -716,11 +727,11 @@ public final class StateArchiveHotStore implements Closeable {
       List<StateArchiveIndexDatabase.Mutation> deletes = new ArrayList<>();
       for (DbGroup group : diff.getGroups()) {
         for (Entry entry : group.getEntries()) {
-          deletes.add(StateArchiveIndexDatabase.delete(
+          deletes.add(StateArchiveIndexDatabase.delete(storeColumn(group.getDbName()),
               indexKey(group.getDbName(), entry.getKey(), block)));
         }
       }
-      deletes.add(StateArchiveIndexDatabase.delete(bodyKey(block)));
+      deletes.add(StateArchiveIndexDatabase.delete(BLOCKS_COLUMN, bodyKey(block)));
       writer.write(deletes, true);
       faultHook.after(Stage.AFTER_TRUNCATE_DELETE_BATCH);
     }
@@ -739,7 +750,7 @@ public final class StateArchiveHotStore implements Closeable {
     GenerationMeta retained = GenerationMeta.empty(current.id, current.baseBlock,
         current.baseHash);
     for (long block = current.baseBlock + 1; block <= ceiling; block++) {
-      byte[] record = writer.get(bodyKey(block));
+      byte[] record = writer.get(BLOCKS_COLUMN, bodyKey(block));
       if (record == null) {
         throw new ArchivePersistenceException(
             "Hot Archive retained prefix body is missing");
@@ -761,7 +772,7 @@ public final class StateArchiveHotStore implements Closeable {
     if (blockNumber == current.baseBlock) {
       actual = current.baseHash;
     } else {
-      byte[] record = writer.get(bodyKey(blockNumber));
+      byte[] record = writer.get(BLOCKS_COLUMN, bodyKey(blockNumber));
       if (record == null) {
         throw new ArchivePersistenceException(
             "Hot Archive recovery ceiling body is missing");
@@ -798,7 +809,7 @@ public final class StateArchiveHotStore implements Closeable {
     StateArchiveIndexEngineManifest.openOrCreate(path, engine);
     GenerationMeta meta = GenerationMeta.empty(id, baseBlock, baseHash)
         .published(publishedTarget, publishedDescriptor);
-    try (StateArchiveIndexDatabase.Writer created = StateArchiveIndexDatabase.openWriter(
+    try (StateArchiveIndexDatabase.Writer created = StateArchiveIndexDatabase.openHotWriter(
         path.resolve(DATABASE), engine, dbSettings)) {
       created.write(meta.createMutations(formatIdentity), true);
     }
@@ -840,7 +851,7 @@ public final class StateArchiveHotStore implements Closeable {
   private GenerationMeta loadGeneration(long id) throws IOException {
     Path path = generationPath(id);
     StateArchiveIndexEngineManifest.require(path, engine);
-    try (StateArchiveIndexDatabase.Reader reader = StateArchiveIndexDatabase.openReader(
+    try (StateArchiveIndexDatabase.Reader reader = StateArchiveIndexDatabase.openHotReader(
         path.resolve(DATABASE), engine, dbSettings)) {
       byte[] storedFormat = required(reader, META_FORMAT, HASH_LENGTH);
       if (!Arrays.equals(formatIdentity, storedFormat)) {
@@ -908,7 +919,7 @@ public final class StateArchiveHotStore implements Closeable {
     long encodedBytes = 0;
     byte[] contentDigest = descriptor.getParentContentDigest();
     for (StateArchiveHotBatchDescriptor.BlockDigest block : descriptor.getBlocks()) {
-      byte[] record = reader.get(bodyKey(block.getMeta().getBlockNumber()));
+      byte[] record = reader.get(BLOCKS_COLUMN, bodyKey(block.getMeta().getBlockNumber()));
       if (record == null) {
         throw new ArchivePersistenceException("Hot Archive descriptor body is missing");
       }
@@ -1074,10 +1085,18 @@ public final class StateArchiveHotStore implements Closeable {
     }
   }
 
-  private void requireNewKey(byte[] key, Set<ByteArrayKey> newKeys) throws IOException {
-    if (!newKeys.add(new ByteArrayKey(key)) || writer.get(key) != null) {
+  private void requireNewKey(String columnFamily, byte[] key, Set<ByteArrayKey> newKeys)
+      throws IOException {
+    byte[] column = columnFamily.getBytes(StandardCharsets.UTF_8);
+    byte[] qualified = ByteBuffer.allocate(Integer.BYTES + column.length + key.length)
+        .putInt(column.length).put(column).put(key).array();
+    if (!newKeys.add(new ByteArrayKey(qualified)) || writer.get(columnFamily, key) != null) {
       throw new ArchivePersistenceException("Hot Archive append would overwrite existing data");
     }
+  }
+
+  private static String storeColumn(String dbName) {
+    return StateArchiveIndexDatabase.hotStoreColumnFamily(dbName);
   }
 
   private static OldValue findExactOldValue(BlockReverseDiff diff, String dbName, byte[] rawKey)

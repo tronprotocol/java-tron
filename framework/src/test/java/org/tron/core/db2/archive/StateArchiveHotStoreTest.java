@@ -3,16 +3,20 @@ package org.tron.core.db2.archive;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.Optional;
+import java.util.Set;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -62,6 +66,61 @@ public class StateArchiveHotStoreTest {
       assertTrue(Files.isRegularFile(root.resolve(StateArchiveHotStore.CURRENT)));
       assertTrue(Files.isDirectory(root.resolve(StateArchiveHotStore.GENERATIONS)
           .resolve("00000000000000000000").resolve(StateArchiveHotStore.DATABASE)));
+    }
+  }
+
+  @Test
+  public void rocksCheckpointWritesOneExactCrossColumnFamilyBatch() throws Exception {
+    Path root = temporaryFolder.newFolder("hot-rocks-column-families").toPath();
+    byte[] format = hash(120);
+    byte[] target = hash(121);
+    BlockReverseDiff block = new BlockReverseDiff(meta(1, 0, 1), Arrays.asList(
+        new DbGroup("account", Collections.singletonList(
+            new Entry(new byte[]{1}, OldValue.absent()))),
+        new DbGroup("code", Collections.singletonList(
+            new Entry(new byte[]{2}, OldValue.present(new byte[]{22})))),
+        new DbGroup("storage-row", Collections.singletonList(
+            new Entry(new byte[]{3}, OldValue.present(new byte[0]))))), hash(122));
+    Path database = root.resolve(StateArchiveHotStore.GENERATIONS)
+        .resolve("00000000000000000000").resolve(StateArchiveHotStore.DATABASE);
+
+    try (StateArchiveHotStore store = open(root, format, Engine.ROCKSDB,
+        0, hash(0), 3, 10)) {
+      store.prepareCheckpoint(target, Collections.singletonList(block));
+      try (StateArchiveIndexDatabase.Reader reader = StateArchiveIndexDatabase.openHotReader(
+          database, Engine.ROCKSDB, NativeDbConfig.large())) {
+        assertArrayEquals(target, reader.get("meta/prepared-target"
+            .getBytes(StandardCharsets.US_ASCII)));
+        assertNotNull(reader.get(StateArchiveIndexDatabase.HOT_BLOCKS_COLUMN_FAMILY,
+            hotBodyKey(1)));
+        for (DbGroup group : block.getGroups()) {
+          Entry entry = group.getEntries().get(0);
+          assertArrayEquals(ByteBuffer.allocate(Long.BYTES).putLong(1).array(), reader.get(
+              StateArchiveIndexDatabase.hotStoreColumnFamily(group.getDbName()),
+              hotIndexKey(group.getDbName(), entry.getKey(), 1)));
+        }
+      }
+      store.publishCheckpoint(target);
+    }
+
+    Set<String> actual = new LinkedHashSet<>();
+    try (org.rocksdb.Options options = new org.rocksdb.Options()) {
+      for (byte[] name : org.rocksdb.RocksDB.listColumnFamilies(options, database.toString())) {
+        actual.add(new String(name, StandardCharsets.UTF_8));
+      }
+    }
+    assertEquals(new LinkedHashSet<>(StateArchiveIndexDatabase.hotColumnFamilies()), actual);
+    assertEquals(29, actual.size());
+
+    try (StateArchiveHotStore reopened = open(root, format, Engine.ROCKSDB,
+        0, hash(0), 3, 10)) {
+      assertEquals(1, reopened.getCommittedHead());
+      assertLookup(reopened.findOldValueAfter("account", new byte[]{1}, 0), 1,
+          OldValue.absent());
+      assertLookup(reopened.findOldValueAfter("code", new byte[]{2}, 0), 1,
+          OldValue.present(new byte[]{22}));
+      assertLookup(reopened.findOldValueAfter("storage-row", new byte[]{3}, 0), 1,
+          OldValue.present(new byte[0]));
     }
   }
 
@@ -292,7 +351,7 @@ public class StateArchiveHotStoreTest {
       }
       Path database = root.resolve(StateArchiveHotStore.GENERATIONS)
           .resolve("00000000000000000000").resolve(StateArchiveHotStore.DATABASE);
-      try (StateArchiveIndexDatabase.Writer writer = StateArchiveIndexDatabase.openWriter(
+      try (StateArchiveIndexDatabase.Writer writer = StateArchiveIndexDatabase.openHotWriter(
           database, engine, NativeDbConfig.large())) {
         writer.write(Collections.singletonList(StateArchiveIndexDatabase.put(
             "meta/prepared-descriptor".getBytes(StandardCharsets.US_ASCII),
@@ -398,6 +457,17 @@ public class StateArchiveHotStoreTest {
 
   private static BlockSnapshotMeta meta(long block, int parent, int hashMarker) {
     return BlockSnapshotMeta.forBlock(block, hash(hashMarker), hash(parent), block * 3_000);
+  }
+
+  private static byte[] hotBodyKey(long block) {
+    return ByteBuffer.allocate(1 + Long.BYTES).put((byte) 0x42).putLong(block).array();
+  }
+
+  private static byte[] hotIndexKey(String dbName, byte[] rawKey, long block) {
+    byte[] name = dbName.getBytes(StandardCharsets.UTF_8);
+    return ByteBuffer.allocate(1 + Short.BYTES + name.length + Integer.BYTES + rawKey.length
+        + Long.BYTES).put((byte) 0x4b).putShort((short) name.length).put(name)
+        .putInt(rawKey.length).put(rawKey).putLong(block).array();
   }
 
   private static void assertLookup(Optional<StateArchiveHotStore.HotLookup> found,

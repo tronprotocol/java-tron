@@ -103,6 +103,10 @@ public class Storage {
 
   @Getter
   @Setter
+  private String stateArchiveServingIndexEngine;
+
+  @Getter
+  @Setter
   private StorageConfig.NativeDbConfig stateArchiveServingIndexDbSettings;
 
   @Getter
@@ -128,6 +132,10 @@ public class Storage {
   @Getter
   @Setter
   private String pathStateRootDirectory;
+
+  @Getter
+  @Setter
+  private String pathStateRootEngine;
 
   @Getter
   @Setter

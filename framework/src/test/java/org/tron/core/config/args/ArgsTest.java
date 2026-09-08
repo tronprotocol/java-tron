@@ -316,6 +316,7 @@ public class ArgsTest {
     Map<String, String> override = new HashMap<>();
     override.put("storage.db.directory", "database");
     override.put("storage.pathStateRoot.enabled", "true");
+    override.put("storage.pathStateRoot.engine", "LEVELDB");
     override.put("storage.pathStateRoot.directory", "root-mapped");
     override.put("storage.pathStateRoot.reversibleLayerLimit", "9");
     override.put("storage.pathStateRoot.reversibleLayerBytes", "8192");
@@ -333,6 +334,7 @@ public class ArgsTest {
     Assert.assertTrue(storage.isPathStateRootEnabled());
     Assert.assertEquals("shadow", storage.getPathStateRootMode());
     Assert.assertEquals("root-mapped", storage.getPathStateRootDirectory());
+    Assert.assertEquals("LEVELDB", storage.getPathStateRootEngine());
     Assert.assertEquals(1, storage.getPathStateRootFormatVersion());
     Assert.assertEquals(9, storage.getPathStateRootReversibleLayerLimit());
     Assert.assertEquals(8192L, storage.getPathStateRootReversibleLayerBytes());
@@ -344,6 +346,26 @@ public class ArgsTest {
     Assert.assertTrue(storage.isPathStateRootVerifyEveryBlock());
     Assert.assertTrue(storage.isPathStateRootVolatileSnapshotBenchmark());
     Assert.assertTrue(storage.isPathStateRootAsyncPrepareBenchmark());
+    Args.clearParam();
+  }
+
+  @Test
+  public void testAuxiliaryDatabaseEnginesMapIndependentlyFromChainbase() {
+    Map<String, String> override = new HashMap<>();
+    override.put("storage.db.engine", "LEVELDB");
+    override.put("storage.stateArchive.servingIndexEngine", "ROCKSDB");
+    override.put("storage.stateArchive.hotStore.engine", "LEVELDB");
+    override.put("storage.pathStateRoot.engine", "ROCKSDB");
+    Config config = ConfigFactory.parseMap(override)
+        .withFallback(ConfigFactory.defaultReference());
+
+    Args.applyConfigParams(config);
+
+    Storage storage = Args.getInstance().getStorage();
+    Assert.assertEquals("LEVELDB", storage.getDbEngine());
+    Assert.assertEquals("ROCKSDB", storage.getStateArchiveServingIndexEngine());
+    Assert.assertEquals("LEVELDB", storage.getStateArchiveHotStoreSettings().getEngine());
+    Assert.assertEquals("ROCKSDB", storage.getPathStateRootEngine());
     Args.clearParam();
   }
 

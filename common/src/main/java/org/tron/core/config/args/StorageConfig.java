@@ -152,6 +152,7 @@ public class StorageConfig {
     private String directory = "state-archive";
     private long maxSegmentSize = 1073741824L;
     private int queueCapacity = 256;
+    private String servingIndexEngine = "ROCKSDB";
     private NativeDbConfig servingIndex = NativeDbConfig.large();
     private StateArchiveHotStoreConfig hotStore = new StateArchiveHotStoreConfig();
 
@@ -167,6 +168,8 @@ public class StorageConfig {
         throw new IllegalArgumentException(
             "stateArchive.queueCapacity must be in [1, 65536]");
       }
+      servingIndexEngine = normalizeAuxiliaryEngine(servingIndexEngine,
+          "storage.stateArchive.servingIndexEngine");
       servingIndex.validate("storage.stateArchive.servingIndex");
       hotStore.postProcess();
     }
@@ -178,6 +181,7 @@ public class StorageConfig {
   public static class StateArchiveHotStoreConfig {
 
     private boolean enabled = false;
+    private String engine = "ROCKSDB";
     private long maxBlocks = 10000L;
     private long maxEncodedBytes = 2147483648L;
     private int maxFrozenGenerations = 8;
@@ -190,6 +194,7 @@ public class StorageConfig {
     }
 
     public void validate() {
+      engine = normalizeAuxiliaryEngine(engine, "storage.stateArchive.hotStore.engine");
       if (maxBlocks <= 0 || maxEncodedBytes <= 0) {
         throw new IllegalArgumentException(
             "stateArchive.hotStore rotation limits must be positive");
@@ -223,6 +228,7 @@ public class StorageConfig {
   public static class PathStateRootConfig {
 
     private boolean enabled = false;
+    private String engine = "ROCKSDB";
     private String mode = "shadow";
     private String directory = "path-state-root";
     private int formatVersion = 1;
@@ -239,6 +245,7 @@ public class StorageConfig {
     private PathStateDbSettingsConfig dbSettings = new PathStateDbSettingsConfig();
 
     void postProcess() {
+      engine = normalizeAuxiliaryEngine(engine, "storage.pathStateRoot.engine");
       if (!"shadow".equals(mode)) {
         throw new IllegalArgumentException("pathStateRoot.mode must be shadow");
       }
@@ -269,6 +276,17 @@ public class StorageConfig {
       }
       dbSettings.validate();
     }
+  }
+
+  private static String normalizeAuxiliaryEngine(String engine, String path) {
+    if (engine == null) {
+      throw new IllegalArgumentException(path + " must be LEVELDB or ROCKSDB");
+    }
+    String normalized = engine.trim().toUpperCase(java.util.Locale.ROOT);
+    if (!"LEVELDB".equals(normalized) && !"ROCKSDB".equals(normalized)) {
+      throw new IllegalArgumentException(path + " must be LEVELDB or ROCKSDB");
+    }
+    return normalized;
   }
 
   /** Engine-neutral native options for one Archive/PathState resource tier. */
