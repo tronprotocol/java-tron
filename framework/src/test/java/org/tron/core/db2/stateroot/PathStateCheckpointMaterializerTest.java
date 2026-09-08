@@ -158,13 +158,11 @@ public class PathStateCheckpointMaterializerTest {
       byte[] parentHash, byte[] blockHash, byte[] parentRoot, byte[] stateRoot) {
     BlockSnapshotMeta meta = BlockSnapshotMeta.forBlock(blockNumber, blockHash, parentHash,
         blockNumber * 3_000L);
-    byte[] viewDigest = hash((int) blockNumber + 20);
     PathStateFlushTarget.BlockBinding binding = mock(PathStateFlushTarget.BlockBinding.class);
     when(binding.getMeta()).thenReturn(meta);
     when(binding.getParentStateRoot()).thenReturn(parentRoot);
     when(binding.getStateRoot()).thenReturn(stateRoot);
     when(binding.getTransitionPayloadDigest()).thenReturn(hash((int) blockNumber + 30));
-    when(binding.getMutationViewDigest()).thenReturn(viewDigest);
 
     PathStateFlushTarget.StoreTarget store = mock(PathStateFlushTarget.StoreTarget.class);
     when(store.getStoreId()).thenReturn(4);
@@ -183,7 +181,7 @@ public class PathStateCheckpointMaterializerTest {
     when(target.getSuperNodeMutations()).thenReturn(Collections.singletonList(
         new PathStateSnapshotDelta.Mutation(new byte[]{5}, new byte[]{6})));
     return CommonCheckpointPayload.create(formatIdentity, target,
-        Collections.singletonList(new BlockReverseDiff(meta, Collections.emptyList(), viewDigest)),
+        Collections.singletonList(new BlockReverseDiff(meta, Collections.emptyList())),
         Collections.emptyList());
   }
 

@@ -17,7 +17,7 @@ import org.tron.core.db2.stateroot.PathStateStoreManifest.Engine;
 final class StateArchiveHotBatchDescriptorCodec {
 
   private static final int MAGIC = 0x53414844; // SAHD
-  private static final short VERSION = 1;
+  private static final short VERSION = 2;
   private static final int DIGEST_LENGTH = 32;
   private static final int HEADER_LENGTH = 44;
   private static final int MAX_BLOCKS = 100_000;
@@ -38,10 +38,8 @@ final class StateArchiveHotBatchDescriptorCodec {
       body.write(descriptor.getParentContentDigest());
       body.write(descriptor.getResultContentDigest());
       body.write(descriptor.getOrderedRecordDigest());
-      body.write(descriptor.getMutationViewRangeDigest());
       for (BlockDigest block : descriptor.getBlocks()) {
         writeMeta(body, block.getMeta());
-        body.write(block.getMutationViewDigest());
         body.write(block.getArchiveRecordDigest());
       }
       body.flush();
@@ -102,23 +100,20 @@ final class StateArchiveHotBatchDescriptorCodec {
       byte[] parentContent = readExact(input, DIGEST_LENGTH);
       byte[] resultContent = readExact(input, DIGEST_LENGTH);
       byte[] orderedRecords = readExact(input, DIGEST_LENGTH);
-      byte[] mutationViews = readExact(input, DIGEST_LENGTH);
       if (blockCount <= 0 || blockCount > MAX_BLOCKS) {
         throw new ArchivePersistenceException("Hot Archive descriptor block count is invalid");
       }
       List<BlockDigest> blocks = new ArrayList<>((int) blockCount);
       for (long index = 0; index < blockCount; index++) {
         BlockSnapshotMeta meta = readMeta(input);
-        blocks.add(BlockDigest.restore(meta, readExact(input, DIGEST_LENGTH),
-            readExact(input, DIGEST_LENGTH)));
+        blocks.add(BlockDigest.restore(meta, readExact(input, DIGEST_LENGTH)));
       }
       if (input.available() != 0) {
         throw new ArchivePersistenceException("Hot Archive descriptor has trailing bytes");
       }
       try {
         return StateArchiveHotBatchDescriptor.restore(engine, parentBlock, parentHash, first,
-            last, encodedBytes, parentContent, resultContent, orderedRecords, mutationViews,
-            blocks);
+            last, encodedBytes, parentContent, resultContent, orderedRecords, blocks);
       } catch (IllegalArgumentException invalid) {
         throw new ArchivePersistenceException("Hot Archive descriptor is inconsistent", invalid);
       }

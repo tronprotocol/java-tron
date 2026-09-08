@@ -107,20 +107,18 @@ public class CommonCheckpointFileTest {
 
   private static CommonCheckpointPayload payload(int seed) {
     BlockSnapshotMeta meta = BlockSnapshotMeta.forBlock(1, hash(1), hash(0), 3_000L);
-    byte[] viewDigest = hash(4);
     PathStateFlushTarget.BlockBinding binding = mock(PathStateFlushTarget.BlockBinding.class);
     when(binding.getMeta()).thenReturn(meta);
     when(binding.getParentStateRoot()).thenReturn(hash(5));
     when(binding.getStateRoot()).thenReturn(hash(6));
     when(binding.getTransitionPayloadDigest()).thenReturn(hash(3));
-    when(binding.getMutationViewDigest()).thenReturn(viewDigest);
     PathStateFlushTarget target = mock(PathStateFlushTarget.class);
     when(target.getBlocks()).thenReturn(Collections.singletonList(binding));
     when(target.getParentStateRoot()).thenReturn(hash(5));
     when(target.getStateRoot()).thenReturn(hash(6));
     when(target.getStores()).thenReturn(Collections.emptyList());
     when(target.getSuperNodeMutations()).thenReturn(Collections.emptyList());
-    BlockReverseDiff archive = new BlockReverseDiff(meta, Collections.emptyList(), viewDigest);
+    BlockReverseDiff archive = new BlockReverseDiff(meta, Collections.emptyList());
     return CommonCheckpointPayload.create(hash(seed), target,
         Collections.singletonList(archive), Collections.singletonList(
             new CommonCheckpointPayload.StoreMutations("code", Collections.singletonList(

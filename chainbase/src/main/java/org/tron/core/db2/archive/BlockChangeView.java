@@ -1,8 +1,5 @@
 package org.tron.core.db2.archive;
 
-import com.google.common.hash.Hasher;
-import com.google.common.hash.Hashing;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -22,18 +19,12 @@ import org.tron.core.db2.core.SnapshotImpl;
  */
 public final class BlockChangeView {
 
-  private static final byte[] DIGEST_DOMAIN =
-      "java-tron/block-change-view".getBytes(StandardCharsets.US_ASCII);
-  private static final int DIGEST_VERSION = 1;
-
   private final BlockSnapshotMeta meta;
   private final List<DatabaseChanges> databases;
-  private final byte[] mutationViewDigest;
 
   private BlockChangeView(BlockSnapshotMeta meta, List<DatabaseChanges> databases) {
     this.meta = Objects.requireNonNull(meta, "meta");
     this.databases = Collections.unmodifiableList(new ArrayList<>(databases));
-    this.mutationViewDigest = digest(meta, this.databases);
   }
 
   public static BlockChangeView capture(BlockSnapshotMeta meta, List<Chainbase> databases) {
@@ -65,30 +56,6 @@ public final class BlockChangeView {
 
   public List<DatabaseChanges> getDatabases() {
     return databases;
-  }
-
-  /** Canonical identity of the exact block-final database/key/post-value view. */
-  public byte[] getMutationViewDigest() {
-    return Arrays.copyOf(mutationViewDigest, mutationViewDigest.length);
-  }
-
-  private static byte[] digest(BlockSnapshotMeta meta, List<DatabaseChanges> databases) {
-    Hasher digest = Hashing.sha256().newHasher();
-    digest.putInt(DIGEST_DOMAIN.length).putBytes(DIGEST_DOMAIN).putInt(DIGEST_VERSION)
-        .putLong(meta.getEpoch()).putLong(meta.getBlockNumber()).putBytes(meta.getBlockHash())
-        .putBytes(meta.getParentHash()).putLong(meta.getTimestamp()).putInt(databases.size());
-    for (DatabaseChanges database : databases) {
-      byte[] dbName = database.dbName.getBytes(StandardCharsets.UTF_8);
-      digest.putInt(dbName.length).putBytes(dbName).putInt(database.changes.size());
-      for (Change change : database.changes) {
-        digest.putInt(change.key.length).putBytes(change.key)
-            .putBoolean(change.postValue.present);
-        if (change.postValue.present) {
-          digest.putInt(change.postValue.value.length).putBytes(change.postValue.value);
-        }
-      }
-    }
-    return digest.hash().asBytes();
   }
 
   public static final class DatabaseChanges {

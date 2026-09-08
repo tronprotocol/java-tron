@@ -514,8 +514,8 @@ public class PathStateManagerStartupIntegrationTest {
       PathStateFlushTarget target = PathStateFlushTarget.coalesce(
           Collections.singletonList(delta));
       payload = CommonCheckpointPayload.create(formatIdentity, target,
-          Collections.singletonList(new BlockReverseDiff(targetMeta, Collections.emptyList(),
-              delta.getMutationViewDigest())), Collections.emptyList());
+          Collections.singletonList(new BlockReverseDiff(targetMeta, Collections.emptyList())),
+          Collections.emptyList());
     }
     CommonCheckpointTarget target = CommonCheckpointTarget.from(payload);
     CommonCheckpointMaterializedStore materializedStore =

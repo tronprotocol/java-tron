@@ -193,31 +193,6 @@ public class SnapshotImplTest extends BaseMethodTest {
     assertSame(delta, layer.getPreparedPathStateDelta());
   }
 
-  @Test
-  public void testAttachBlockArtifactsRequiresOneMutationViewIdentity() throws Exception {
-    SnapshotRoot root = new SnapshotRoot(tronDatabase.getDb());
-    SnapshotImpl layer = getSnapshotImplIns(root);
-    BlockSnapshotMeta meta = BlockSnapshotMeta.forBlock(1, hash(1), hash(0), 3_000L);
-    byte[] viewDigest = hash(7);
-    BlockReverseDiff reverseDiff = new BlockReverseDiff(meta, Collections.emptyList(),
-        viewDigest);
-    PathStateSnapshotDelta delta = mock(PathStateSnapshotDelta.class);
-    when(delta.getMeta()).thenReturn(meta);
-    when(delta.getMutationViewDigest()).thenReturn(viewDigest);
-
-    attachBlockArtifacts(layer, meta, reverseDiff, delta);
-    assertSame(reverseDiff, layer.getPreparedArchiveBlock());
-    assertSame(delta, layer.getPreparedPathStateDelta());
-
-    PathStateSnapshotDelta wrong = mock(PathStateSnapshotDelta.class);
-    when(wrong.getMeta()).thenReturn(meta);
-    when(wrong.getMutationViewDigest()).thenReturn(hash(8));
-    InvocationTargetException failure = assertThrows(InvocationTargetException.class,
-        () -> attachBlockArtifacts(layer, meta, reverseDiff, wrong));
-    assertEquals(IllegalArgumentException.class, failure.getCause().getClass());
-    assertSame(delta, layer.getPreparedPathStateDelta());
-  }
-
   /**
    * The constructor of SnapshotImpl is not public
    * so reflection is used to construct the object here.

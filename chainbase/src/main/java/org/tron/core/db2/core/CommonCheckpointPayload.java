@@ -15,8 +15,8 @@ import org.tron.core.db2.stateroot.PathStateSnapshotDelta;
 /** Versioned immutable redo or coordination input for one cross-authority checkpoint. */
 public final class CommonCheckpointPayload {
 
-  public static final int FORMAT_VERSION = 1;
-  public static final int COORDINATION_FORMAT_VERSION = 2;
+  public static final int FORMAT_VERSION = 3;
+  public static final int COORDINATION_FORMAT_VERSION = 4;
   private static final int DIGEST_LENGTH = 32;
   private static final Comparator<Mutation> MUTATION_ORDER =
       (left, right) -> compareUnsigned(left.key, right.key);
@@ -68,16 +68,12 @@ public final class CommonCheckpointPayload {
     for (int index = 0; index < archives.size(); index++) {
       PathStateFlushTarget.BlockBinding binding = path.getBlocks().get(index);
       BlockReverseDiff archive = Objects.requireNonNull(archives.get(index), "archiveBlock");
-      if (!binding.getMeta().equals(archive.getMeta())
-          || archive.getMutationViewDigest() == null
-          || !Arrays.equals(binding.getMutationViewDigest(),
-              archive.getMutationViewDigest())) {
+      if (!binding.getMeta().equals(archive.getMeta())) {
         throw new IllegalArgumentException(
             "common checkpoint Archive and PathState block identity differs");
       }
       blocks.add(new BlockPayload(binding.getMeta(), binding.getParentStateRoot(),
-          binding.getStateRoot(), binding.getTransitionPayloadDigest(),
-          binding.getMutationViewDigest(), archive));
+          binding.getStateRoot(), binding.getTransitionPayloadDigest(), archive));
     }
     List<PathStoreTarget> pathStores = new ArrayList<>();
     for (PathStateFlushTarget.StoreTarget store : path.getStores()) {
@@ -105,14 +101,13 @@ public final class CommonCheckpointPayload {
     for (int index = 0; index < path.getBlocks().size(); index++) {
       PathStateFlushTarget.BlockBinding binding = path.getBlocks().get(index);
       StateArchiveHotBatchDescriptor.BlockDigest digest = archive.getBlocks().get(index);
-      if (!binding.getMeta().equals(digest.getMeta())
-          || !Arrays.equals(binding.getMutationViewDigest(), digest.getMutationViewDigest())) {
+      if (!binding.getMeta().equals(digest.getMeta())) {
         throw new IllegalArgumentException(
             "common checkpoint Hot Archive and PathState block identity differs");
       }
       blocks.add(BlockPayload.coordination(binding.getMeta(), binding.getParentStateRoot(),
           binding.getStateRoot(), binding.getTransitionPayloadDigest(),
-          binding.getMutationViewDigest(), digest.getArchiveRecordDigest()));
+          digest.getArchiveRecordDigest()));
     }
     List<PathStoreTarget> pathStores = new ArrayList<>();
     for (PathStateFlushTarget.StoreTarget store : path.getStores()) {
@@ -140,14 +135,12 @@ public final class CommonCheckpointPayload {
     for (int index = 0; index < source.blocks.size(); index++) {
       BlockPayload block = source.blocks.get(index);
       StateArchiveHotBatchDescriptor.BlockDigest digest = archive.getBlocks().get(index);
-      if (!block.meta.equals(digest.getMeta())
-          || !Arrays.equals(block.mutationViewDigest, digest.getMutationViewDigest())) {
+      if (!block.meta.equals(digest.getMeta())) {
         throw new IllegalArgumentException(
             "common checkpoint Hot Archive and captured block identity differs");
       }
       blocks.add(BlockPayload.coordination(block.meta, block.parentStateRoot, block.stateRoot,
-          block.transitionPayloadDigest, block.mutationViewDigest,
-          digest.getArchiveRecordDigest()));
+          block.transitionPayloadDigest, digest.getArchiveRecordDigest()));
     }
     return new CommonCheckpointPayload(COORDINATION_FORMAT_VERSION, source.formatIdentity,
         blocks, source.parentStateRoot, source.stateRoot, source.chainbaseStores,
@@ -224,10 +217,7 @@ public final class CommonCheckpointPayload {
     for (BlockPayload block : blocks) {
       BlockPayload current = Objects.requireNonNull(block, "block");
       if (version == FORMAT_VERSION) {
-        byte[] archiveView = current.requireArchiveDiff().getMutationViewDigest();
-        if (archiveView == null || !Arrays.equals(archiveView, current.mutationViewDigest)) {
-          throw new IllegalArgumentException("checkpoint block mutation-view identity differs");
-        }
+        current.requireArchiveDiff();
       } else if (current.archiveDiff != null || current.archiveRecordDigest == null) {
         throw new IllegalArgumentException("coordination checkpoint contains Archive body");
       }
@@ -260,7 +250,6 @@ public final class CommonCheckpointPayload {
         BlockPayload block = blocks.get(index);
         StateArchiveHotBatchDescriptor.BlockDigest archive = archiveBlocks.get(index);
         if (!block.meta.equals(archive.getMeta())
-            || !Arrays.equals(block.mutationViewDigest, archive.getMutationViewDigest())
             || !Arrays.equals(block.archiveRecordDigest, archive.getArchiveRecordDigest())) {
           throw new IllegalArgumentException("common checkpoint Archive block binding differs");
         }
@@ -335,19 +324,16 @@ public final class CommonCheckpointPayload {
     private final byte[] parentStateRoot;
     private final byte[] stateRoot;
     private final byte[] transitionPayloadDigest;
-    private final byte[] mutationViewDigest;
     private final BlockReverseDiff archiveDiff;
     private final byte[] archiveRecordDigest;
 
     BlockPayload(BlockSnapshotMeta meta, byte[] parentStateRoot, byte[] stateRoot,
-        byte[] transitionPayloadDigest, byte[] mutationViewDigest,
-        BlockReverseDiff archiveDiff) {
+        byte[] transitionPayloadDigest, BlockReverseDiff archiveDiff) {
       this.meta = Objects.requireNonNull(meta, "meta");
       this.parentStateRoot = digest(parentStateRoot, "parentStateRoot");
       this.stateRoot = digest(stateRoot, "stateRoot");
       this.transitionPayloadDigest = digest(transitionPayloadDigest,
           "transitionPayloadDigest");
-      this.mutationViewDigest = digest(mutationViewDigest, "mutationViewDigest");
       this.archiveDiff = Objects.requireNonNull(archiveDiff, "archiveDiff");
       this.archiveRecordDigest = null;
       if (!meta.equals(archiveDiff.getMeta())) {
@@ -356,23 +342,20 @@ public final class CommonCheckpointPayload {
     }
 
     private BlockPayload(BlockSnapshotMeta meta, byte[] parentStateRoot, byte[] stateRoot,
-        byte[] transitionPayloadDigest, byte[] mutationViewDigest,
-        byte[] archiveRecordDigest) {
+        byte[] transitionPayloadDigest, byte[] archiveRecordDigest) {
       this.meta = Objects.requireNonNull(meta, "meta");
       this.parentStateRoot = digest(parentStateRoot, "parentStateRoot");
       this.stateRoot = digest(stateRoot, "stateRoot");
       this.transitionPayloadDigest = digest(transitionPayloadDigest,
           "transitionPayloadDigest");
-      this.mutationViewDigest = digest(mutationViewDigest, "mutationViewDigest");
       this.archiveDiff = null;
       this.archiveRecordDigest = digest(archiveRecordDigest, "archiveRecordDigest");
     }
 
     static BlockPayload coordination(BlockSnapshotMeta meta, byte[] parentStateRoot,
-        byte[] stateRoot, byte[] transitionPayloadDigest, byte[] mutationViewDigest,
-        byte[] archiveRecordDigest) {
+        byte[] stateRoot, byte[] transitionPayloadDigest, byte[] archiveRecordDigest) {
       return new BlockPayload(meta, parentStateRoot, stateRoot, transitionPayloadDigest,
-          mutationViewDigest, archiveRecordDigest);
+          archiveRecordDigest);
     }
 
     public BlockSnapshotMeta getMeta() {
@@ -389,10 +372,6 @@ public final class CommonCheckpointPayload {
 
     public byte[] getTransitionPayloadDigest() {
       return copy(transitionPayloadDigest);
-    }
-
-    public byte[] getMutationViewDigest() {
-      return copy(mutationViewDigest);
     }
 
     public BlockReverseDiff getArchiveDiff() {

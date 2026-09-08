@@ -10,6 +10,7 @@ import static org.mockito.Mockito.when;
 
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Collections;
 import org.junit.Rule;
 import org.junit.Test;
@@ -38,22 +39,25 @@ public class CommonCheckpointPayloadV2Test {
       oldValueSentinel[index] = (byte) (0xa0 + index % 31);
     }
     BlockSnapshotMeta meta = BlockSnapshotMeta.forBlock(1, hash(1), hash(0), 3_000L);
-    byte[] viewDigest = hash(61);
     BlockReverseDiff diff = new BlockReverseDiff(meta,
         Collections.singletonList(new DbGroup("code", Collections.singletonList(
-            new Entry(new byte[]{1}, OldValue.present(oldValueSentinel))))), viewDigest);
+            new Entry(new byte[]{1}, OldValue.present(oldValueSentinel))))));
     Path root = temporaryFolder.newFolder("payload-v2").toPath();
     try (StateArchiveHotStore hotStore = StateArchiveHotStore.openOrCreate(root, format,
         Engine.LEVELDB, 0, hash(0), 3, 10, 1024 * 1024)) {
       StateArchiveHotBatchDescriptor descriptor = hotStore.planCheckpoint(
           Collections.singletonList(diff));
       CommonCheckpointPayload payload = CommonCheckpointPayload.createV2(format,
-          pathState(meta, viewDigest), descriptor, Collections.emptyList());
+          pathState(meta), descriptor, Collections.emptyList());
       CommonCheckpointPayloadCodec codec = new CommonCheckpointPayloadCodec();
       byte[] encoded = codec.encode(payload);
 
       assertEquals(CommonCheckpointPayload.COORDINATION_FORMAT_VERSION,
           ByteBuffer.wrap(encoded, Integer.BYTES, Short.BYTES).getShort());
+      byte[] oldCoordinationVersion = Arrays.copyOf(encoded, encoded.length);
+      ByteBuffer.wrap(oldCoordinationVersion).putShort(Integer.BYTES, (short) 2);
+      assertThrows(IllegalArgumentException.class,
+          () -> codec.decode(oldCoordinationVersion));
       assertFalse(contains(encoded, oldValueSentinel));
       CommonCheckpointPayload decoded = codec.decode(encoded);
       assertEquals(CommonCheckpointPayload.COORDINATION_FORMAT_VERSION,
@@ -71,13 +75,13 @@ public class CommonCheckpointPayloadV2Test {
 
       BlockReverseDiff changedBody = new BlockReverseDiff(meta,
           Collections.singletonList(new DbGroup("code", Collections.singletonList(
-              new Entry(new byte[]{1}, OldValue.absent())))), viewDigest);
+              new Entry(new byte[]{1}, OldValue.absent())))));
       assertThrows(ArchivePersistenceException.class,
           () -> hotStore.prepareCheckpoint(hash(120), descriptor,
               Collections.singletonList(changedBody)));
 
       CommonCheckpointPayload v1 = CommonCheckpointPayload.create(format,
-          pathState(meta, viewDigest), Collections.singletonList(diff), Collections.emptyList());
+          pathState(meta), Collections.singletonList(diff), Collections.emptyList());
       byte[] encodedV1 = codec.encode(v1);
       assertEquals(CommonCheckpointPayload.FORMAT_VERSION,
           ByteBuffer.wrap(encodedV1, Integer.BYTES, Short.BYTES).getShort());
@@ -90,8 +94,7 @@ public class CommonCheckpointPayloadV2Test {
   public void roundTripsExplicitRocksEngineIdentity() throws Exception {
     byte[] format = hash(8);
     BlockSnapshotMeta meta = BlockSnapshotMeta.forBlock(1, hash(1), hash(0), 3_000L);
-    byte[] viewDigest = hash(62);
-    BlockReverseDiff diff = new BlockReverseDiff(meta, Collections.emptyList(), viewDigest);
+    BlockReverseDiff diff = new BlockReverseDiff(meta, Collections.emptyList());
     Path root = temporaryFolder.newFolder("payload-v2-rocks").toPath();
     try (StateArchiveHotStore hotStore = StateArchiveHotStore.openOrCreate(root, format,
         Engine.ROCKSDB, 0, hash(0), 3, 10, 1024 * 1024)) {
@@ -99,18 +102,17 @@ public class CommonCheckpointPayloadV2Test {
           Collections.singletonList(diff));
       CommonCheckpointPayload decoded = new CommonCheckpointPayloadCodec().decode(
           new CommonCheckpointPayloadCodec().encode(CommonCheckpointPayload.createV2(format,
-              pathState(meta, viewDigest), descriptor, Collections.emptyList())));
+              pathState(meta), descriptor, Collections.emptyList())));
       assertEquals(Engine.ROCKSDB, decoded.getArchiveBinding().getEngine());
     }
   }
 
-  private static PathStateFlushTarget pathState(BlockSnapshotMeta meta, byte[] viewDigest) {
+  private static PathStateFlushTarget pathState(BlockSnapshotMeta meta) {
     PathStateFlushTarget.BlockBinding binding = mock(PathStateFlushTarget.BlockBinding.class);
     when(binding.getMeta()).thenReturn(meta);
     when(binding.getParentStateRoot()).thenReturn(hash(5));
     when(binding.getStateRoot()).thenReturn(hash(6));
     when(binding.getTransitionPayloadDigest()).thenReturn(hash(71));
-    when(binding.getMutationViewDigest()).thenReturn(viewDigest);
     PathStateFlushTarget pathState = mock(PathStateFlushTarget.class);
     when(pathState.getBlocks()).thenReturn(Collections.singletonList(binding));
     when(pathState.getParentStateRoot()).thenReturn(hash(5));

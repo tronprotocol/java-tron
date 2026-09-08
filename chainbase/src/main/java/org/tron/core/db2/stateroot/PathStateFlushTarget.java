@@ -170,14 +170,12 @@ public final class PathStateFlushTarget {
     private final byte[] parentStateRoot;
     private final byte[] stateRoot;
     private final byte[] transitionPayloadDigest;
-    private final byte[] mutationViewDigest;
 
     private BlockBinding(PathStateSnapshotDelta delta) {
       this.meta = delta.getMeta();
       this.parentStateRoot = delta.getParentStateRoot();
       this.stateRoot = delta.getStateRoot();
       this.transitionPayloadDigest = delta.getTransitionPayloadDigest();
-      this.mutationViewDigest = delta.getMutationViewDigest();
     }
 
     public BlockSnapshotMeta getMeta() {
@@ -196,9 +194,6 @@ public final class PathStateFlushTarget {
       return copy(transitionPayloadDigest);
     }
 
-    public byte[] getMutationViewDigest() {
-      return copy(mutationViewDigest);
-    }
   }
 
   /** Final target for one participant changed anywhere in the coalesced range. */

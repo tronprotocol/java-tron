@@ -57,7 +57,6 @@ public class StateArchiveHotStoreTest {
         assertEquals(1, reopened.getCurrentGenerationId());
         assertEquals(Collections.singletonList(0L), reopened.getFrozenGenerationIds());
         assertEquals(1, reopened.loadBlock(1).getMeta().getBlockNumber());
-        assertArrayEquals(hash(61), reopened.loadBlock(1).getMutationViewDigest());
         assertLookup(reopened.findOldValueAfter("account", new byte[]{3}, 2), 3,
             OldValue.present(new byte[]{33}));
         assertFalse(reopened.findOldValueAfter("missing", new byte[]{1}, 0).isPresent());
@@ -80,7 +79,7 @@ public class StateArchiveHotStoreTest {
         new DbGroup("code", Collections.singletonList(
             new Entry(new byte[]{2}, OldValue.present(new byte[]{22})))),
         new DbGroup("storage-row", Collections.singletonList(
-            new Entry(new byte[]{3}, OldValue.present(new byte[0]))))), hash(122));
+            new Entry(new byte[]{3}, OldValue.present(new byte[0]))))));
     Path database = root.resolve(StateArchiveHotStore.GENERATIONS)
         .resolve("00000000000000000000").resolve(StateArchiveHotStore.DATABASE);
 
@@ -121,6 +120,30 @@ public class StateArchiveHotStoreTest {
           OldValue.present(new byte[]{22}));
       assertLookup(reopened.findOldValueAfter("storage-row", new byte[]{3}, 0), 1,
           OldValue.present(new byte[0]));
+    }
+  }
+
+  @Test
+  public void rejectsDescriptorLayoutBeforeMutationDigestRemoval() throws Exception {
+    Path root = temporaryFolder.newFolder("hot-descriptor-version").toPath();
+    byte[] format = hash(123);
+    try (StateArchiveHotStore store = open(root, format, Engine.LEVELDB,
+        0, hash(0), 3, 10)) {
+      StateArchiveHotBatchDescriptor descriptor = store.planCheckpoint(
+          Collections.singletonList(diff(1, 0, "code", new byte[]{1}, OldValue.absent())));
+      StateArchiveHotBatchDescriptorCodec codec = new StateArchiveHotBatchDescriptorCodec();
+      byte[] encoded = codec.encode(descriptor);
+
+      byte[] oldEnvelopeVersion = Arrays.copyOf(encoded, encoded.length);
+      ByteBuffer.wrap(oldEnvelopeVersion).putShort(Integer.BYTES, (short) 1);
+      assertThrows(ArchivePersistenceException.class, () -> codec.decode(oldEnvelopeVersion));
+
+      byte[] oldBodyVersion = Arrays.copyOf(encoded, encoded.length);
+      ByteBuffer.wrap(oldBodyVersion).putShort(44, (short) 1);
+      byte[] body = Arrays.copyOfRange(oldBodyVersion, 44, oldBodyVersion.length);
+      byte[] checksum = com.google.common.hash.Hashing.sha256().hashBytes(body).asBytes();
+      System.arraycopy(checksum, 0, oldBodyVersion, 12, checksum.length);
+      assertThrows(ArchivePersistenceException.class, () -> codec.decode(oldBodyVersion));
     }
   }
 
@@ -452,7 +475,7 @@ public class StateArchiveHotStoreTest {
       OldValue oldValue) {
     return new BlockReverseDiff(BlockSnapshotMeta.forBlock(block, hash((int) block), hash(parent),
         block * 3_000), Collections.singletonList(new DbGroup(dbName,
-        Collections.singletonList(new Entry(key, oldValue)))), hash(60 + (int) block));
+        Collections.singletonList(new Entry(key, oldValue)))));
   }
 
   private static BlockSnapshotMeta meta(long block, int parent, int hashMarker) {

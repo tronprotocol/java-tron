@@ -175,16 +175,14 @@ public class ChainbaseCheckpointMaterializerTest {
           number * 3_000L);
       byte[] parentRoot = hash(10 + number - 1);
       byte[] stateRoot = hash(10 + number);
-      byte[] view = hash(40 + number);
       PathStateSnapshotDelta path = mock(PathStateSnapshotDelta.class);
       when(path.getMeta()).thenReturn(meta);
       when(path.getParentStateRoot()).thenReturn(parentRoot);
       when(path.getStateRoot()).thenReturn(stateRoot);
       when(path.getTransitionPayloadDigest()).thenReturn(hash(50 + number));
-      when(path.getMutationViewDigest()).thenReturn(view);
       when(path.getStores()).thenReturn(Collections.emptyList());
       when(path.getSuperNodeMutations()).thenReturn(Collections.emptyList());
-      BlockReverseDiff archive = new BlockReverseDiff(meta, Collections.emptyList(), view);
+      BlockReverseDiff archive = new BlockReverseDiff(meta, Collections.emptyList());
 
       SnapshotImpl codeLayer = append(codeChainbase, meta, archive, path);
       SnapshotImpl storageLayer = append(storageChainbase, meta, archive, path);
@@ -315,10 +313,9 @@ public class ChainbaseCheckpointMaterializerTest {
     for (int number = 1; number <= 3; number++) {
       BlockSnapshotMeta meta = BlockSnapshotMeta.forBlock(number, hash(number), hash(number - 1),
           number * 3_000L);
-      byte[] view = hash(40 + number);
       PathStateSnapshotDelta path = pathDelta(meta, hash(10 + number - 1), hash(10 + number),
-          view);
-      BlockReverseDiff archive = new BlockReverseDiff(meta, Collections.emptyList(), view);
+          hash(40 + number));
+      BlockReverseDiff archive = new BlockReverseDiff(meta, Collections.emptyList());
       append(codeChainbase, meta, archive, path).put(new byte[]{1},
           new byte[]{(byte) number});
       append(storageChainbase, meta, archive, path).put(new byte[]{3},
@@ -379,7 +376,7 @@ public class ChainbaseCheckpointMaterializerTest {
     BlockSnapshotMeta meta = BlockSnapshotMeta.forBlock(1, hash(1), hash(0), 3_000L);
     byte[] view = hash(41);
     PathStateSnapshotDelta path = pathDelta(meta, hash(10), hash(11), view);
-    BlockReverseDiff archiveBlock = new BlockReverseDiff(meta, Collections.emptyList(), view);
+    BlockReverseDiff archiveBlock = new BlockReverseDiff(meta, Collections.emptyList());
     SnapshotImpl layer = append(database, meta, archiveBlock, path);
     layer.put(new byte[]{1}, new byte[]{2});
 
@@ -420,7 +417,7 @@ public class ChainbaseCheckpointMaterializerTest {
     PathStateSnapshotDelta path = pathDelta(meta, hash(10), hash(11), view);
     BlockReverseDiff archiveBlock = new BlockReverseDiff(meta,
         Collections.singletonList(new DbGroup("code", Collections.singletonList(
-            new Entry(new byte[]{1}, OldValue.present(new byte[]{0}))))), view);
+            new Entry(new byte[]{1}, OldValue.present(new byte[]{0}))))));
     append(database, meta, archiveBlock, path).put(new byte[]{1}, new byte[]{2});
 
     ChainbaseCheckpointMaterializer chainbase = new ChainbaseCheckpointMaterializer(
@@ -598,13 +595,11 @@ public class ChainbaseCheckpointMaterializerTest {
       String... storeOverride) {
     BlockSnapshotMeta meta = BlockSnapshotMeta.forBlock(blockNumber, blockHash, parentHash,
         blockNumber * 3_000L);
-    byte[] view = hash(40 + (int) blockNumber);
     PathStateFlushTarget.BlockBinding binding = mock(PathStateFlushTarget.BlockBinding.class);
     when(binding.getMeta()).thenReturn(meta);
     when(binding.getParentStateRoot()).thenReturn(parentRoot);
     when(binding.getStateRoot()).thenReturn(stateRoot);
     when(binding.getTransitionPayloadDigest()).thenReturn(hash(50 + (int) blockNumber));
-    when(binding.getMutationViewDigest()).thenReturn(view);
     PathStateFlushTarget pathState = mock(PathStateFlushTarget.class);
     when(pathState.getBlocks()).thenReturn(Collections.singletonList(binding));
     when(pathState.getParentStateRoot()).thenReturn(parentRoot);
@@ -622,7 +617,7 @@ public class ChainbaseCheckpointMaterializerTest {
           Collections.singletonList(
               new CommonCheckpointPayload.Mutation(new byte[]{3}, new byte[]{4}))));
     }
-    BlockReverseDiff archive = new BlockReverseDiff(meta, Collections.emptyList(), view);
+    BlockReverseDiff archive = new BlockReverseDiff(meta, Collections.emptyList());
     return CommonCheckpointPayload.create(format, pathState,
         Collections.singletonList(archive), stores);
   }
@@ -639,13 +634,11 @@ public class ChainbaseCheckpointMaterializerTest {
       PathStateParticipantScope scope) {
     long blockNumber = 1;
     BlockSnapshotMeta meta = BlockSnapshotMeta.forBlock(blockNumber, hash(1), hash(0), 3_000L);
-    byte[] view = hash(41);
     PathStateFlushTarget.BlockBinding binding = mock(PathStateFlushTarget.BlockBinding.class);
     when(binding.getMeta()).thenReturn(meta);
     when(binding.getParentStateRoot()).thenReturn(hash(10));
     when(binding.getStateRoot()).thenReturn(hash(11));
     when(binding.getTransitionPayloadDigest()).thenReturn(hash(51));
-    when(binding.getMutationViewDigest()).thenReturn(view);
     PathStateFlushTarget.StoreTarget account = mock(PathStateFlushTarget.StoreTarget.class);
     when(account.getStoreId()).thenReturn(scope.require("account").getStoreId());
     when(account.getDbName()).thenReturn("account");
@@ -665,7 +658,7 @@ public class ChainbaseCheckpointMaterializerTest {
         new CommonCheckpointPayload.StoreMutations("code", Collections.singletonList(
             new CommonCheckpointPayload.Mutation(new byte[]{1}, new byte[]{2}))));
     return CommonCheckpointPayload.create(format, pathState,
-        Collections.singletonList(new BlockReverseDiff(meta, Collections.emptyList(), view)),
+        Collections.singletonList(new BlockReverseDiff(meta, Collections.emptyList())),
         chainbase);
   }
 
@@ -691,7 +684,6 @@ public class ChainbaseCheckpointMaterializerTest {
     when(path.getParentStateRoot()).thenReturn(parentRoot);
     when(path.getStateRoot()).thenReturn(stateRoot);
     when(path.getTransitionPayloadDigest()).thenReturn(hash(50 + (int) meta.getBlockNumber()));
-    when(path.getMutationViewDigest()).thenReturn(view);
     when(path.getStores()).thenReturn(Collections.emptyList());
     when(path.getSuperNodeMutations()).thenReturn(Collections.emptyList());
     return path;
@@ -738,7 +730,7 @@ public class ChainbaseCheckpointMaterializerTest {
       PathStateSnapshotDelta path = pathDelta(meta, hash(10), hash(11), view);
       BlockReverseDiff archive = new BlockReverseDiff(meta,
           Collections.singletonList(new DbGroup("code", Collections.singletonList(
-              new Entry(new byte[]{1}, OldValue.present(new byte[]{0}))))), view);
+              new Entry(new byte[]{1}, OldValue.present(new byte[]{0}))))));
       codeLayer = append(codeDatabase, meta, archive, path);
       SnapshotImpl propertiesLayer = append(propertiesDatabase, meta, archive, path);
       codeLayer.put(new byte[]{1}, new byte[]{2});

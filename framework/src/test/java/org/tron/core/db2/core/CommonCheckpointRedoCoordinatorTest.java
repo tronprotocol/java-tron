@@ -327,13 +327,11 @@ public class CommonCheckpointRedoCoordinatorTest {
 
   private static CommonCheckpointPayload payload() {
     BlockSnapshotMeta meta = BlockSnapshotMeta.forBlock(1, hash(1), hash(0), 3_000L);
-    byte[] viewDigest = hash(4);
     PathStateFlushTarget.BlockBinding binding = mock(PathStateFlushTarget.BlockBinding.class);
     when(binding.getMeta()).thenReturn(meta);
     when(binding.getParentStateRoot()).thenReturn(hash(5));
     when(binding.getStateRoot()).thenReturn(hash(6));
     when(binding.getTransitionPayloadDigest()).thenReturn(hash(3));
-    when(binding.getMutationViewDigest()).thenReturn(viewDigest);
     PathStateFlushTarget target = mock(PathStateFlushTarget.class);
     when(target.getBlocks()).thenReturn(Collections.singletonList(binding));
     when(target.getParentStateRoot()).thenReturn(hash(5));
@@ -341,7 +339,7 @@ public class CommonCheckpointRedoCoordinatorTest {
     when(target.getStores()).thenReturn(Collections.emptyList());
     when(target.getSuperNodeMutations()).thenReturn(Collections.emptyList());
     return CommonCheckpointPayload.create(hash(7), target,
-        Collections.singletonList(new BlockReverseDiff(meta, Collections.emptyList(), viewDigest)),
+        Collections.singletonList(new BlockReverseDiff(meta, Collections.emptyList())),
         Collections.emptyList());
   }
 

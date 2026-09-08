@@ -121,7 +121,7 @@ public class StateArchiveHotProcessRecoveryTest {
 
   private static BlockReverseDiff diff(long block, int parent) {
     return new BlockReverseDiff(meta(block, parent), Arrays.asList(
-        group("account"), group("code"), group("storage-row")), hash(60 + (int) block));
+        group("account"), group("code"), group("storage-row")));
   }
 
   private static DbGroup group(String store) {

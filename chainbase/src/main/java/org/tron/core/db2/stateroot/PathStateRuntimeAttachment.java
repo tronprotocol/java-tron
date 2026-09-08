@@ -417,8 +417,7 @@ public final class PathStateRuntimeAttachment {
       return;
     }
     if (!meta.equals(delta.getMeta())
-        || !Arrays.equals(transition.getPayloadDigest(), delta.getTransitionPayloadDigest())
-        || !Arrays.equals(transition.getMutationViewDigest(), delta.getMutationViewDigest())) {
+        || !Arrays.equals(transition.getPayloadDigest(), delta.getTransitionPayloadDigest())) {
       throw new IOException("path-state Snapshot delta identity mismatch");
     }
   }

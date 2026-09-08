@@ -54,8 +54,7 @@ public final class StateArchiveHotStore implements Closeable {
   private static final int CATALOG_LENGTH = Integer.BYTES + 2 * Short.BYTES + Long.BYTES
       + HASH_LENGTH + Integer.BYTES;
   private static final int RECORD_MAGIC = 0x53414842; // SAHB
-  private static final short RECORD_VERSION = 1;
-  private static final short RECORD_VIEW_DIGEST = 1;
+  private static final short RECORD_VERSION = 2;
   private static final byte[] BODY_PREFIX = new byte[]{0x42};
   private static final byte[] INDEX_PREFIX = new byte[]{0x4b};
   private static final String BLOCKS_COLUMN =
@@ -264,16 +263,13 @@ public final class StateArchiveHotStore implements Closeable {
     byte[] resultContentDigest = current.publishedContentDigest;
     long encodedBytes = 0;
     Hasher orderedRecords = Hashing.sha256().newHasher();
-    Hasher mutationViews = Hashing.sha256().newHasher();
     List<StateArchiveHotBatchDescriptor.BlockDigest> blocks = new ArrayList<>();
     for (BlockReverseDiff diff : admitted) {
       BlockReverseDiff block = Objects.requireNonNull(diff, "diff");
       BlockSnapshotMeta meta = block.getMeta();
-      byte[] viewDigest = block.getMutationViewDigest();
       if (meta.getEpoch() != meta.getBlockNumber()
           || meta.getBlockNumber() != previousBlock + 1
-          || !Arrays.equals(meta.getParentHash(), previousHash)
-          || viewDigest == null) {
+          || !Arrays.equals(meta.getParentHash(), previousHash)) {
         throw new IllegalArgumentException(
             "Hot Archive checkpoint identity is not contiguous");
       }
@@ -282,8 +278,7 @@ public final class StateArchiveHotStore implements Closeable {
       encodedBytes = Math.addExact(encodedBytes, record.length);
       resultContentDigest = nextContentDigest(resultContentDigest, meta, record);
       orderedRecords.putLong(meta.getBlockNumber()).putBytes(recordDigest);
-      mutationViews.putLong(meta.getBlockNumber()).putBytes(viewDigest);
-      blocks.add(new StateArchiveHotBatchDescriptor.BlockDigest(meta, viewDigest, recordDigest));
+      blocks.add(new StateArchiveHotBatchDescriptor.BlockDigest(meta, recordDigest));
       previousBlock = meta.getBlockNumber();
       previousHash = meta.getBlockHash();
     }
@@ -291,7 +286,7 @@ public final class StateArchiveHotStore implements Closeable {
         current.publishedHash, admitted.get(0).getMeta(),
         admitted.get(admitted.size() - 1).getMeta(), encodedBytes,
         current.publishedContentDigest, resultContentDigest,
-        orderedRecords.hash().asBytes(), mutationViews.hash().asBytes(), blocks);
+        orderedRecords.hash().asBytes(), blocks);
   }
 
   private void append(List<BlockReverseDiff> diffs, byte[] preparedTarget,
@@ -925,8 +920,6 @@ public final class StateArchiveHotStore implements Closeable {
       }
       BlockReverseDiff diff = decodeRecord(record);
       if (!diff.getMeta().equals(block.getMeta())
-          || diff.getMutationViewDigest() == null
-          || !Arrays.equals(diff.getMutationViewDigest(), block.getMutationViewDigest())
           || !Arrays.equals(Hashing.sha256().hashBytes(record).asBytes(),
           block.getArchiveRecordDigest())) {
         throw new ArchivePersistenceException("Hot Archive descriptor body identity differs");
@@ -1023,16 +1016,11 @@ public final class StateArchiveHotStore implements Closeable {
   private byte[] encodeRecord(BlockReverseDiff diff) {
     try {
       byte[] history = historyCodec.encode(diff);
-      byte[] viewDigest = diff.getMutationViewDigest();
-      short flags = viewDigest == null ? 0 : RECORD_VIEW_DIGEST;
-      ByteArrayOutputStream bytes = new ByteArrayOutputStream(history.length + 48);
+      ByteArrayOutputStream bytes = new ByteArrayOutputStream(history.length + 16);
       DataOutputStream output = new DataOutputStream(bytes);
       output.writeInt(RECORD_MAGIC);
       output.writeShort(RECORD_VERSION);
-      output.writeShort(flags);
-      if (viewDigest != null) {
-        output.write(viewDigest);
-      }
+      output.writeShort(0);
       output.writeInt(history.length);
       output.write(history);
       output.flush();
@@ -1059,13 +1047,8 @@ public final class StateArchiveHotStore implements Closeable {
         throw new ArchivePersistenceException("Hot Archive record format is unsupported");
       }
       short flags = input.readShort();
-      if ((flags & ~RECORD_VIEW_DIGEST) != 0) {
+      if (flags != 0) {
         throw new ArchivePersistenceException("Hot Archive record flags are unsupported");
-      }
-      byte[] viewDigest = null;
-      if ((flags & RECORD_VIEW_DIGEST) != 0) {
-        viewDigest = new byte[HASH_LENGTH];
-        input.readFully(viewDigest);
       }
       int historyLength = input.readInt();
       if (historyLength <= 0 || historyLength != input.available()) {
@@ -1079,7 +1062,7 @@ public final class StateArchiveHotStore implements Closeable {
       } catch (IllegalArgumentException invalid) {
         throw new ArchivePersistenceException("Hot Archive history is corrupt", invalid);
       }
-      return new BlockReverseDiff(decoded.getMeta(), decoded.getGroups(), viewDigest);
+      return decoded;
     } catch (EOFException truncated) {
       throw new ArchivePersistenceException("Hot Archive record is truncated", truncated);
     }

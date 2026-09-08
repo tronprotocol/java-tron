@@ -12,7 +12,7 @@ import org.tron.core.db2.stateroot.PathStateStoreManifest.Engine;
 /** Immutable logical binding between transient Archive diffs and one Hot DB prepare batch. */
 public final class StateArchiveHotBatchDescriptor {
 
-  public static final int HOT_FORMAT_VERSION = 1;
+  public static final int HOT_FORMAT_VERSION = 2;
   private static final int DIGEST_LENGTH = 32;
 
   private final Engine engine;
@@ -24,13 +24,12 @@ public final class StateArchiveHotBatchDescriptor {
   private final byte[] parentContentDigest;
   private final byte[] resultContentDigest;
   private final byte[] orderedRecordDigest;
-  private final byte[] mutationViewRangeDigest;
   private final List<BlockDigest> blocks;
 
   StateArchiveHotBatchDescriptor(Engine engine, long parentPublishedBlock,
       byte[] parentPublishedHash, BlockSnapshotMeta firstBlock, BlockSnapshotMeta lastBlock,
       long encodedBytes, byte[] parentContentDigest, byte[] resultContentDigest,
-      byte[] orderedRecordDigest, byte[] mutationViewRangeDigest, List<BlockDigest> blocks) {
+      byte[] orderedRecordDigest, List<BlockDigest> blocks) {
     this.engine = Objects.requireNonNull(engine, "engine");
     if (parentPublishedBlock < 0 || encodedBytes <= 0) {
       throw new IllegalArgumentException("Hot Archive batch counters are invalid");
@@ -43,8 +42,6 @@ public final class StateArchiveHotBatchDescriptor {
     this.parentContentDigest = digest(parentContentDigest, "parentContentDigest");
     this.resultContentDigest = digest(resultContentDigest, "resultContentDigest");
     this.orderedRecordDigest = digest(orderedRecordDigest, "orderedRecordDigest");
-    this.mutationViewRangeDigest = digest(mutationViewRangeDigest,
-        "mutationViewRangeDigest");
     List<BlockDigest> admitted = new ArrayList<>(Objects.requireNonNull(blocks, "blocks"));
     if (admitted.isEmpty() || admitted.size() != lastBlock.getBlockNumber()
         - firstBlock.getBlockNumber() + 1L
@@ -55,7 +52,6 @@ public final class StateArchiveHotBatchDescriptor {
     }
     BlockDigest previous = null;
     Hasher orderedRecords = Hashing.sha256().newHasher();
-    Hasher mutationViews = Hashing.sha256().newHasher();
     for (BlockDigest block : admitted) {
       BlockDigest current = Objects.requireNonNull(block, "block");
       if (current.meta.getEpoch() != current.meta.getBlockNumber()) {
@@ -70,12 +66,9 @@ public final class StateArchiveHotBatchDescriptor {
       }
       orderedRecords.putLong(current.meta.getBlockNumber())
           .putBytes(current.archiveRecordDigest);
-      mutationViews.putLong(current.meta.getBlockNumber())
-          .putBytes(current.mutationViewDigest);
       previous = current;
     }
-    if (!Arrays.equals(this.orderedRecordDigest, orderedRecords.hash().asBytes())
-        || !Arrays.equals(this.mutationViewRangeDigest, mutationViews.hash().asBytes())) {
+    if (!Arrays.equals(this.orderedRecordDigest, orderedRecords.hash().asBytes())) {
       throw new IllegalArgumentException("Hot Archive batch aggregate digest differs");
     }
     this.blocks = Collections.unmodifiableList(admitted);
@@ -85,11 +78,10 @@ public final class StateArchiveHotBatchDescriptor {
   public static StateArchiveHotBatchDescriptor restore(Engine engine,
       long parentPublishedBlock, byte[] parentPublishedHash, BlockSnapshotMeta firstBlock,
       BlockSnapshotMeta lastBlock, long encodedBytes, byte[] parentContentDigest,
-      byte[] resultContentDigest, byte[] orderedRecordDigest,
-      byte[] mutationViewRangeDigest, List<BlockDigest> blocks) {
+      byte[] resultContentDigest, byte[] orderedRecordDigest, List<BlockDigest> blocks) {
     return new StateArchiveHotBatchDescriptor(engine, parentPublishedBlock,
         parentPublishedHash, firstBlock, lastBlock, encodedBytes, parentContentDigest,
-        resultContentDigest, orderedRecordDigest, mutationViewRangeDigest, blocks);
+        resultContentDigest, orderedRecordDigest, blocks);
   }
 
   public Engine getEngine() {
@@ -132,10 +124,6 @@ public final class StateArchiveHotBatchDescriptor {
     return copy(orderedRecordDigest);
   }
 
-  public byte[] getMutationViewRangeDigest() {
-    return copy(mutationViewRangeDigest);
-  }
-
   public List<BlockDigest> getBlocks() {
     return blocks;
   }
@@ -158,8 +146,7 @@ public final class StateArchiveHotBatchDescriptor {
         && Arrays.equals(parentPublishedHash, that.parentPublishedHash)
         && Arrays.equals(parentContentDigest, that.parentContentDigest)
         && Arrays.equals(resultContentDigest, that.resultContentDigest)
-        && Arrays.equals(orderedRecordDigest, that.orderedRecordDigest)
-        && Arrays.equals(mutationViewRangeDigest, that.mutationViewRangeDigest);
+        && Arrays.equals(orderedRecordDigest, that.orderedRecordDigest);
   }
 
   @Override
@@ -170,7 +157,6 @@ public final class StateArchiveHotBatchDescriptor {
     result = 31 * result + Arrays.hashCode(parentContentDigest);
     result = 31 * result + Arrays.hashCode(resultContentDigest);
     result = 31 * result + Arrays.hashCode(orderedRecordDigest);
-    result = 31 * result + Arrays.hashCode(mutationViewRangeDigest);
     return result;
   }
 
@@ -189,26 +175,19 @@ public final class StateArchiveHotBatchDescriptor {
   /** Digest-only per-block Archive identity retained by the coordination payload. */
   public static final class BlockDigest {
     private final BlockSnapshotMeta meta;
-    private final byte[] mutationViewDigest;
     private final byte[] archiveRecordDigest;
 
-    BlockDigest(BlockSnapshotMeta meta, byte[] mutationViewDigest, byte[] archiveRecordDigest) {
+    BlockDigest(BlockSnapshotMeta meta, byte[] archiveRecordDigest) {
       this.meta = Objects.requireNonNull(meta, "meta");
-      this.mutationViewDigest = digest(mutationViewDigest, "mutationViewDigest");
       this.archiveRecordDigest = digest(archiveRecordDigest, "archiveRecordDigest");
     }
 
-    public static BlockDigest restore(BlockSnapshotMeta meta, byte[] mutationViewDigest,
-        byte[] archiveRecordDigest) {
-      return new BlockDigest(meta, mutationViewDigest, archiveRecordDigest);
+    public static BlockDigest restore(BlockSnapshotMeta meta, byte[] archiveRecordDigest) {
+      return new BlockDigest(meta, archiveRecordDigest);
     }
 
     public BlockSnapshotMeta getMeta() {
       return meta;
-    }
-
-    public byte[] getMutationViewDigest() {
-      return copy(mutationViewDigest);
     }
 
     public byte[] getArchiveRecordDigest() {
@@ -222,14 +201,12 @@ public final class StateArchiveHotBatchDescriptor {
       }
       BlockDigest that = (BlockDigest) object;
       return meta.equals(that.meta)
-          && Arrays.equals(mutationViewDigest, that.mutationViewDigest)
           && Arrays.equals(archiveRecordDigest, that.archiveRecordDigest);
     }
 
     @Override
     public int hashCode() {
       int result = meta.hashCode();
-      result = 31 * result + Arrays.hashCode(mutationViewDigest);
       result = 31 * result + Arrays.hashCode(archiveRecordDigest);
       return result;
     }

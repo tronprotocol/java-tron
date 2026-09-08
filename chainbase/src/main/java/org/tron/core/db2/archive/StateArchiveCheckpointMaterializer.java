@@ -40,13 +40,13 @@ public final class StateArchiveCheckpointMaterializer implements CommonCheckpoin
   private static final int TARGET_MAGIC = 0x53414354; // SACT
   private static final short TARGET_VERSION = 2;
   private static final int BLOCK_MAGIC = 0x53414342; // SACB
-  private static final short BLOCK_VERSION = 1;
+  private static final short BLOCK_VERSION = 2;
   private static final int DIGEST_LENGTH = 32;
   private static final int META_LENGTH = 3 * Long.BYTES + 2 * DIGEST_LENGTH;
   private static final int TARGET_LENGTH = Integer.BYTES + 2 * Short.BYTES
       + 4 * DIGEST_LENGTH + 2 * META_LENGTH + DIGEST_LENGTH;
   private static final int BLOCK_FIXED_LENGTH = Integer.BYTES + 2 * Short.BYTES
-      + DIGEST_LENGTH + Integer.BYTES + DIGEST_LENGTH;
+      + Integer.BYTES + DIGEST_LENGTH;
   private static final long MAX_BLOCK_LENGTH = BlockHistoryCodec.DEFAULT_MAX_RECORD_LENGTH
       + (long) BLOCK_FIXED_LENGTH;
 
@@ -383,7 +383,6 @@ public final class StateArchiveCheckpointMaterializer implements CommonCheckpoin
       output.writeInt(BLOCK_MAGIC);
       output.writeShort(BLOCK_VERSION);
       output.writeShort(0);
-      output.write(block.getMutationViewDigest());
       output.writeInt(history.length);
       output.write(history);
       output.flush();
@@ -415,7 +414,6 @@ public final class StateArchiveCheckpointMaterializer implements CommonCheckpoin
           || input.readShort() != 0) {
         throw new IOException("State Archive checkpoint block format is unsupported");
       }
-      byte[] viewDigest = readDigest(input);
       int historyLength = input.readInt();
       if (historyLength <= 0 || historyLength != input.available()) {
         throw new IOException("State Archive checkpoint history length is invalid");
@@ -428,7 +426,7 @@ public final class StateArchiveCheckpointMaterializer implements CommonCheckpoin
       } catch (IllegalArgumentException invalid) {
         throw new IOException("State Archive checkpoint history is corrupt", invalid);
       }
-      return new BlockReverseDiff(decoded.getMeta(), decoded.getGroups(), viewDigest);
+      return decoded;
     } catch (EOFException truncated) {
       throw new IOException("State Archive checkpoint block is truncated", truncated);
     }

@@ -54,8 +54,6 @@ public class StateArchiveCheckpointMaterializerTest {
     for (int index = 0; index < payload.getBlocks().size(); index++) {
       BlockReverseDiff actual = materializer.loadBlock(target, index);
       assertEquals(payload.getBlocks().get(index).getMeta(), actual.getMeta());
-      assertArrayEquals(payload.getBlocks().get(index).getMutationViewDigest(),
-          actual.getMutationViewDigest());
       assertEquals("code", actual.getGroups().get(0).getDbName());
     }
 
@@ -251,7 +249,6 @@ public class StateArchiveCheckpointMaterializerTest {
       long number = firstBlock + index;
       byte[] blockHash = hash((int) number);
       byte[] nextRoot = index == count - 1 ? stateRoot : hash(30 + (int) number);
-      byte[] view = hash(60 + (int) number);
       BlockSnapshotMeta meta = BlockSnapshotMeta.forBlock(number, blockHash, priorHash,
           number * 3_000L);
       PathStateFlushTarget.BlockBinding binding = mock(PathStateFlushTarget.BlockBinding.class);
@@ -259,11 +256,11 @@ public class StateArchiveCheckpointMaterializerTest {
       when(binding.getParentStateRoot()).thenReturn(priorRoot);
       when(binding.getStateRoot()).thenReturn(nextRoot);
       when(binding.getTransitionPayloadDigest()).thenReturn(hash(70 + (int) number));
-      when(binding.getMutationViewDigest()).thenReturn(view);
       bindings.add(binding);
-      archives.add(new BlockReverseDiff(meta, Collections.singletonList(new DbGroup(
-          "code", Collections.singletonList(new Entry(new byte[]{(byte) number},
-          OldValue.present(new byte[]{(byte) (number - 1)}))))), view));
+      DbGroup group = new DbGroup("code", Collections.singletonList(
+          new Entry(new byte[]{(byte) number},
+              OldValue.present(new byte[]{(byte) (number - 1)}))));
+      archives.add(new BlockReverseDiff(meta, Collections.singletonList(group)));
       priorHash = blockHash;
       priorRoot = nextRoot;
     }

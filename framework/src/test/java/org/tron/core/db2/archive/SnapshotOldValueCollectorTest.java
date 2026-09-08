@@ -100,8 +100,7 @@ public class SnapshotOldValueCollectorTest extends BaseMethodTest {
       return new PathStateBlockTransition(meta.getBlockNumber(), meta.getBlockHash(),
           meta.getParentHash(), meta.getTimestamp(), P66Phase.P66_ON,
           Collections.singletonList(
-              PathStateMutation.put("code", bytes("contract"), bytes("runtime"))),
-          view.getMutationViewDigest());
+              PathStateMutation.put("code", bytes("contract"), bytes("runtime"))));
     }, published::set, (blockNumber, blockHash) -> { }, null, (meta, transition) -> null);
     attachment.synchronizeReadyHead(PathStateRootMetadata.base(0, hash(0), hash(9), 0,
         P66Phase.P66_ON, hash(7), hash(8), hash(6)));
@@ -137,14 +136,10 @@ public class SnapshotOldValueCollectorTest extends BaseMethodTest {
     manager.enable();
     manager.installArchiveCollector(new SnapshotOldValueCollector(), diff -> { });
     AtomicReference<PathStateBlockTransition> published = new AtomicReference<>();
-    AtomicReference<byte[]> capturedViewDigest = new AtomicReference<>();
     SnapshotPathStateTransitionCollector collector = new SnapshotPathStateTransitionCollector(
         key -> Collections.emptyMap());
     PathStateRuntimeAttachment attachment = new PathStateRuntimeAttachment(
-        view -> {
-          capturedViewDigest.set(view.getMutationViewDigest());
-          return collector.collect(view);
-        }, published::set,
+        collector::collect, published::set,
         (blockNumber, blockHash) -> { }, null, (meta, transition) -> null);
     manager.attachPathStateRuntime(attachment);
 
@@ -159,9 +154,6 @@ public class SnapshotOldValueCollectorTest extends BaseMethodTest {
     assertEquals(1, published.get().getMutations().size());
     assertEquals("code", published.get().getMutations().get(0).getDbName());
     assertArrayEquals(key, published.get().getMutations().get(0).getCanonicalKey());
-    assertArrayEquals(capturedViewDigest.get(), published.get().getMutationViewDigest());
-    assertFalse(Arrays.equals(published.get().getPayloadDigest(),
-        published.get().getMutationViewDigest()));
     assertSame(attachment, manager.detachPathStateRuntime(attachment));
     manager.shutdown();
   }
@@ -181,13 +173,11 @@ public class SnapshotOldValueCollectorTest extends BaseMethodTest {
       return new PathStateBlockTransition(meta.getBlockNumber(), meta.getBlockHash(),
           meta.getParentHash(), meta.getTimestamp(), P66Phase.P66_ON,
           Collections.singletonList(
-              PathStateMutation.put("code", bytes("contract"), bytes("runtime"))),
-          view.getMutationViewDigest());
+              PathStateMutation.put("code", bytes("contract"), bytes("runtime"))));
     }, published::set, (blockNumber, blockHash) -> { }, null, (meta, transition) -> {
       PathStateSnapshotDelta delta = mock(PathStateSnapshotDelta.class);
       when(delta.getMeta()).thenReturn(meta);
       when(delta.getTransitionPayloadDigest()).thenReturn(transition.getPayloadDigest());
-      when(delta.getMutationViewDigest()).thenReturn(transition.getMutationViewDigest());
       prepared.set(delta);
       return delta;
     });

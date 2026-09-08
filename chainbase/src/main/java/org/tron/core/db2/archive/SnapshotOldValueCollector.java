@@ -71,7 +71,7 @@ public final class SnapshotOldValueCollector implements OldValueCollector {
       groups.add(new BlockReverseDiff.DbGroup(
           AccountAssetArchiveProjector.ACCOUNT_ASSET_DB, accountAssetEntries));
     }
-    return new BlockReverseDiff(view.getMeta(), groups, view.getMutationViewDigest());
+    return new BlockReverseDiff(view.getMeta(), groups);
   }
 
   /** Resolves proposal 66 from the same immutable target block view being projected. */

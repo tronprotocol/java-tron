@@ -68,14 +68,6 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
     if (pathStateDelta != null && !admitted.equals(pathStateDelta.getMeta())) {
       throw new IllegalArgumentException("path-state delta differs from Snapshot block identity");
     }
-    if (reverseDiff != null && pathStateDelta != null) {
-      byte[] archiveView = reverseDiff.getMutationViewDigest();
-      if (archiveView == null
-          || !Arrays.equals(archiveView, pathStateDelta.getMutationViewDigest())) {
-        throw new IllegalArgumentException(
-            "archive and path-state artifacts differ from mutation view identity");
-      }
-    }
     blockSnapshotMeta = meta;
     preparedArchiveBlock = reverseDiff;
     preparedPathStateDelta = pathStateDelta;

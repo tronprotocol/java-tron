@@ -834,8 +834,8 @@ public class PathStateNativeNodeStoreTest {
       PathStateFlushTarget target = PathStateFlushTarget.coalesce(
           Collections.singletonList(delta));
       CommonCheckpointPayload payload = CommonCheckpointPayload.create(formatIdentity, target,
-          Collections.singletonList(new BlockReverseDiff(block, Collections.emptyList(),
-              delta.getMutationViewDigest())), Collections.emptyList());
+          Collections.singletonList(new BlockReverseDiff(block, Collections.emptyList())),
+          Collections.emptyList());
       CommonCheckpointTarget checkpointTarget = CommonCheckpointTarget.from(payload);
       PathStateCheckpointMaterializer materializer = head.checkpointMaterializer(formatIdentity,
           baseline);
@@ -1769,8 +1769,7 @@ public class PathStateNativeNodeStoreTest {
     PathStateFlushTarget target = PathStateFlushTarget.coalesce(deltas);
     List<BlockReverseDiff> archive = new ArrayList<>();
     for (PathStateSnapshotDelta delta : deltas) {
-      archive.add(new BlockReverseDiff(delta.getMeta(), Collections.emptyList(),
-          delta.getMutationViewDigest()));
+      archive.add(new BlockReverseDiff(delta.getMeta(), Collections.emptyList()));
     }
     return CommonCheckpointPayload.create(formatIdentity, target, archive,
         Collections.emptyList());

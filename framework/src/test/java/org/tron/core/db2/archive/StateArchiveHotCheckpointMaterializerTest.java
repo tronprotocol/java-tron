@@ -51,7 +51,7 @@ public class StateArchiveHotCheckpointMaterializerTest {
       assertThrows(IllegalArgumentException.class,
           () -> materializer.prepare(target, Collections.singletonList(
               new BlockReverseDiff(BlockSnapshotMeta.forBlock(2, hash(2), hash(1), 6_000L),
-                  Collections.emptyList(), hash(62)))));
+                  Collections.emptyList()))));
       assertThrows(ArchivePersistenceException.class, () -> store.loadBlock(1));
       assertThrows(java.io.IOException.class,
           () -> materializer.materialize(payload, target));
@@ -116,13 +116,11 @@ public class StateArchiveHotCheckpointMaterializerTest {
   private static CommonCheckpointPayload payload(byte[] format,
       StateArchiveHotBatchDescriptor descriptor) {
     BlockSnapshotMeta meta = BlockSnapshotMeta.forBlock(1, hash(1), hash(0), 3_000L);
-    byte[] viewDigest = hash(61);
     PathStateFlushTarget.BlockBinding binding = mock(PathStateFlushTarget.BlockBinding.class);
     when(binding.getMeta()).thenReturn(meta);
     when(binding.getParentStateRoot()).thenReturn(hash(5));
     when(binding.getStateRoot()).thenReturn(hash(6));
     when(binding.getTransitionPayloadDigest()).thenReturn(hash(71));
-    when(binding.getMutationViewDigest()).thenReturn(viewDigest);
     PathStateFlushTarget pathState = mock(PathStateFlushTarget.class);
     when(pathState.getBlocks()).thenReturn(Collections.singletonList(binding));
     when(pathState.getParentStateRoot()).thenReturn(hash(5));
@@ -137,7 +135,7 @@ public class StateArchiveHotCheckpointMaterializerTest {
     return new BlockReverseDiff(BlockSnapshotMeta.forBlock(1, hash(1), hash(0), 3_000L),
         Collections.singletonList(new BlockReverseDiff.DbGroup("code",
             Collections.singletonList(new BlockReverseDiff.Entry(new byte[]{1},
-                OldValue.absent())))), hash(61));
+                OldValue.absent())))));
   }
 
   private static byte[] hash(int marker) {

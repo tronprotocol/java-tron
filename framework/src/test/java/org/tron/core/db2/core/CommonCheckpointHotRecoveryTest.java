@@ -95,7 +95,7 @@ public class CommonCheckpointHotRecoveryTest {
     Path root = temporaryFolder.newFolder("dynamic-authority").toPath();
     byte[] format = hash(70);
     BlockSnapshotMeta block = meta(1);
-    BlockReverseDiff diff = new BlockReverseDiff(block, Collections.emptyList(), hash(40));
+    BlockReverseDiff diff = new BlockReverseDiff(block, Collections.emptyList());
     try (StateArchiveHotStore hot = StateArchiveHotStore.openOrCreate(root.resolve("hot"),
         format, Engine.LEVELDB, 0, hash(0), 3, 10, 1024 * 1024)) {
       StateArchiveHotBatchDescriptor descriptor = hot.planCheckpoint(
@@ -165,11 +165,10 @@ public class CommonCheckpointHotRecoveryTest {
 
   private CommonCheckpointPayload payload(Path hotPath, BlockSnapshotMeta meta,
       List<CommonCheckpointPayload.StoreMutations> stores, Engine engine) throws Exception {
-    byte[] viewDigest = hash(40);
-    BlockReverseDiff diff = new BlockReverseDiff(meta, Collections.emptyList(), viewDigest);
+    BlockReverseDiff diff = new BlockReverseDiff(meta, Collections.emptyList());
     try (StateArchiveHotStore hot = StateArchiveHotStore.openOrCreate(hotPath, hash(70), engine,
         0, hash(0), 3, 10, 1024 * 1024)) {
-      return CommonCheckpointPayload.createV2(hash(70), pathState(meta, viewDigest),
+      return CommonCheckpointPayload.createV2(hash(70), pathState(meta),
           hot.planCheckpoint(Collections.singletonList(diff)), stores);
     }
   }
@@ -185,13 +184,12 @@ public class CommonCheckpointHotRecoveryTest {
             new CommonCheckpointPayload.Mutation(HASH_KEY, hash))));
   }
 
-  private static PathStateFlushTarget pathState(BlockSnapshotMeta meta, byte[] viewDigest) {
+  private static PathStateFlushTarget pathState(BlockSnapshotMeta meta) {
     PathStateFlushTarget.BlockBinding binding = mock(PathStateFlushTarget.BlockBinding.class);
     when(binding.getMeta()).thenReturn(meta);
     when(binding.getParentStateRoot()).thenReturn(hash(50));
     when(binding.getStateRoot()).thenReturn(hash(51));
     when(binding.getTransitionPayloadDigest()).thenReturn(hash(52));
-    when(binding.getMutationViewDigest()).thenReturn(viewDigest);
     PathStateFlushTarget pathState = mock(PathStateFlushTarget.class);
     when(pathState.getBlocks()).thenReturn(Collections.singletonList(binding));
     when(pathState.getParentStateRoot()).thenReturn(hash(50));

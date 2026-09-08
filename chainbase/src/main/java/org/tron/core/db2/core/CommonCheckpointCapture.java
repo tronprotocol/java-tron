@@ -1,7 +1,6 @@
 package org.tron.core.db2.core;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -32,10 +31,7 @@ public final class CommonCheckpointCapture {
       BlockReverseDiff diff = Objects.requireNonNull(this.archiveDiffs.get(index),
           "archiveDiff");
       StateArchiveHotBatchDescriptor.BlockDigest block = archiveBinding.getBlocks().get(index);
-      if (!diff.getMeta().equals(block.getMeta())
-          || diff.getMutationViewDigest() == null
-          || !Arrays.equals(diff.getMutationViewDigest(),
-          block.getMutationViewDigest())) {
+      if (!diff.getMeta().equals(block.getMeta())) {
         throw new IllegalArgumentException("common checkpoint transient Archive diff differs");
       }
     }

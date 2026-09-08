@@ -2,7 +2,6 @@ package org.tron.core.db2.core;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -145,8 +144,7 @@ public final class CommonCheckpointPayloadFactory {
   private static void requireArtifacts(BlockSnapshotMeta meta, BlockReverseDiff archive,
       PathStateSnapshotDelta path, String dbName) {
     if (archive == null || path == null || !meta.equals(archive.getMeta())
-        || !meta.equals(path.getMeta()) || archive.getMutationViewDigest() == null
-        || !Arrays.equals(archive.getMutationViewDigest(), path.getMutationViewDigest())) {
+        || !meta.equals(path.getMeta())) {
       throw new IllegalStateException("common checkpoint Snapshot artifacts differ: " + dbName);
     }
   }
@@ -154,15 +152,7 @@ public final class CommonCheckpointPayloadFactory {
   private static void requireSameArtifacts(BlockReverseDiff expectedArchive,
       PathStateSnapshotDelta expectedPath, BlockReverseDiff archive,
       PathStateSnapshotDelta path, String dbName) {
-    if (!expectedArchive.getMeta().equals(archive.getMeta())
-        || !Arrays.equals(expectedArchive.getMutationViewDigest(),
-            archive.getMutationViewDigest())
-        || !expectedPath.getMeta().equals(path.getMeta())
-        || !Arrays.equals(expectedPath.getParentStateRoot(), path.getParentStateRoot())
-        || !Arrays.equals(expectedPath.getStateRoot(), path.getStateRoot())
-        || !Arrays.equals(expectedPath.getTransitionPayloadDigest(),
-            path.getTransitionPayloadDigest())
-        || !Arrays.equals(expectedPath.getMutationViewDigest(), path.getMutationViewDigest())) {
+    if (expectedArchive != archive || expectedPath != path) {
       throw new IllegalStateException("common checkpoint artifacts differ across state Stores: "
           + dbName);
     }

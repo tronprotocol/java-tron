@@ -13,19 +13,11 @@ public final class BlockReverseDiff {
 
   private final BlockSnapshotMeta meta;
   private final List<DbGroup> groups;
-  private final byte[] mutationViewDigest;
-
   public BlockReverseDiff(BlockSnapshotMeta meta, List<DbGroup> groups) {
-    this(meta, groups, null);
-  }
-
-  public BlockReverseDiff(BlockSnapshotMeta meta, List<DbGroup> groups,
-      byte[] mutationViewDigest) {
     this.meta = Objects.requireNonNull(meta, "meta");
     List<DbGroup> sorted = new ArrayList<>(groups);
     sorted.sort(Comparator.comparing(DbGroup::getDbName));
     this.groups = Collections.unmodifiableList(sorted);
-    this.mutationViewDigest = optionalDigest(mutationViewDigest);
   }
 
   public BlockSnapshotMeta getMeta() {
@@ -34,23 +26,6 @@ public final class BlockReverseDiff {
 
   public List<DbGroup> getGroups() {
     return groups;
-  }
-
-  /** Returns the block-final mutation-view identity, or null for decoded legacy payloads. */
-  public byte[] getMutationViewDigest() {
-    return mutationViewDigest == null ? null
-        : Arrays.copyOf(mutationViewDigest, mutationViewDigest.length);
-  }
-
-  private static byte[] optionalDigest(byte[] supplied) {
-    if (supplied == null) {
-      return null;
-    }
-    byte[] copy = Arrays.copyOf(supplied, supplied.length);
-    if (copy.length != 32) {
-      throw new IllegalArgumentException("mutationViewDigest must contain exactly 32 bytes");
-    }
-    return copy;
   }
 
   public static final class DbGroup {

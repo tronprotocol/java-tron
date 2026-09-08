@@ -106,7 +106,6 @@ public class PathStateSnapshotHeadTest {
     assertArrayEquals(fixture.base.getStateRoot(), delta.getParentStateRoot());
     assertArrayEquals(prepared.getStateRoot(), delta.getStateRoot());
     assertArrayEquals(transition.getPayloadDigest(), delta.getTransitionPayloadDigest());
-    assertArrayEquals(transition.getMutationViewDigest(), delta.getMutationViewDigest());
     assertEquals(1, delta.getStores().size());
     PathStateSnapshotDelta.StoreDelta store = delta.getStores().get(0);
     assertEquals("proposal", store.getDbName());
@@ -178,10 +177,10 @@ public class PathStateSnapshotHeadTest {
 
     java.util.List<BlockReverseDiff> archiveBlocks = new ArrayList<>();
     for (PathStateFlushTarget.BlockBinding block : target.getBlocks()) {
-      archiveBlocks.add(new BlockReverseDiff(block.getMeta(), Collections.singletonList(
-          new BlockReverseDiff.DbGroup("proposal", Collections.singletonList(
-              new BlockReverseDiff.Entry(new byte[]{1}, OldValue.present(new byte[]{2}))))),
-          block.getMutationViewDigest()));
+      BlockReverseDiff.DbGroup group = new BlockReverseDiff.DbGroup("proposal",
+          Collections.singletonList(
+              new BlockReverseDiff.Entry(new byte[]{1}, OldValue.present(new byte[]{2}))));
+      archiveBlocks.add(new BlockReverseDiff(block.getMeta(), Collections.singletonList(group)));
     }
     CommonCheckpointPayload payload = CommonCheckpointPayload.create(bytes(77), target,
         archiveBlocks, Arrays.asList(
@@ -199,8 +198,6 @@ public class PathStateSnapshotHeadTest {
     assertEquals(3, decoded.getBlocks().size());
     assertEquals(2, decoded.getChainbaseStores().size());
     assertEquals(2, decoded.getPathStores().size());
-    assertArrayEquals(target.getBlocks().get(1).getMutationViewDigest(),
-        decoded.getBlocks().get(1).getArchiveDiff().getMutationViewDigest());
     assertArrayEquals(codec.digest(payload), codec.digest(decoded));
     byte[] corrupt = Arrays.copyOf(encoded, encoded.length);
     corrupt[corrupt.length - 1] ^= 1;
@@ -214,8 +211,10 @@ public class PathStateSnapshotHeadTest {
         () -> new CommonCheckpointPayloadCodec(encoded.length - 1).decode(encoded));
     java.util.List<BlockReverseDiff> mismatchedArchive = new ArrayList<>(archiveBlocks);
     PathStateFlushTarget.BlockBinding firstBlock = target.getBlocks().get(0);
-    mismatchedArchive.set(0, new BlockReverseDiff(firstBlock.getMeta(),
-        Collections.emptyList(), bytes(88)));
+    BlockSnapshotMeta wrongBlock = BlockSnapshotMeta.forBlock(
+        firstBlock.getMeta().getBlockNumber(), bytes(88),
+        firstBlock.getMeta().getParentHash(), firstBlock.getMeta().getTimestamp());
+    mismatchedArchive.set(0, new BlockReverseDiff(wrongBlock, Collections.emptyList()));
     assertThrows(IllegalArgumentException.class, () -> CommonCheckpointPayload.create(
         bytes(77), target, mismatchedArchive, Collections.emptyList()));
 

@@ -22,12 +22,12 @@ import org.tron.core.db2.core.CommonCheckpointPayload.PathStoreTarget;
 import org.tron.core.db2.core.CommonCheckpointPayload.StoreMutations;
 import org.tron.core.db2.stateroot.PathStateStoreManifest.Engine;
 
-/** Deterministic, bounded codec for v1 redo bodies and v2 digest-only Archive coordination. */
+/** Deterministic, bounded codec for redo bodies and digest-only Archive coordination. */
 public final class CommonCheckpointPayloadCodec {
 
   public static final int MAGIC = 0x54434350; // TCCP
-  public static final short VERSION = 1;
-  public static final short COORDINATION_VERSION = 2;
+  public static final short VERSION = 3;
+  public static final short COORDINATION_VERSION = 4;
   public static final int HEADER_LENGTH = 44;
   public static final int DEFAULT_MAX_ENCODED_LENGTH = 256 * 1024 * 1024;
   private static final int DIGEST_LENGTH = 32;
@@ -121,7 +121,6 @@ public final class CommonCheckpointPayloadCodec {
       output.write(block.getParentStateRoot());
       output.write(block.getStateRoot());
       output.write(block.getTransitionPayloadDigest());
-      output.write(block.getMutationViewDigest());
       if (admitted.getVersion() == CommonCheckpointPayload.FORMAT_VERSION) {
         writeBytes(output, historyCodec.encode(block.getArchiveDiff()));
       } else {
@@ -157,12 +156,8 @@ public final class CommonCheckpointPayloadCodec {
       byte[] parentRoot = readExact(input, DIGEST_LENGTH);
       byte[] blockRoot = readExact(input, DIGEST_LENGTH);
       byte[] transitionDigest = readExact(input, DIGEST_LENGTH);
-      byte[] viewDigest = readExact(input, DIGEST_LENGTH);
       BlockReverseDiff decoded = historyCodec.decode(readBytes(input));
-      BlockReverseDiff archive = new BlockReverseDiff(decoded.getMeta(), decoded.getGroups(),
-          viewDigest);
-      blocks.add(new BlockPayload(meta, parentRoot, blockRoot, transitionDigest, viewDigest,
-          archive));
+      blocks.add(new BlockPayload(meta, parentRoot, blockRoot, transitionDigest, decoded));
     }
     List<StoreMutations> chainbase = readStores(input);
     int pathStoreCount = readCount(input, MAX_STORES, "path-state Store");
@@ -195,11 +190,10 @@ public final class CommonCheckpointPayloadCodec {
       byte[] parentRoot = readExact(input, DIGEST_LENGTH);
       byte[] blockRoot = readExact(input, DIGEST_LENGTH);
       byte[] transitionDigest = readExact(input, DIGEST_LENGTH);
-      byte[] viewDigest = readExact(input, DIGEST_LENGTH);
       byte[] recordDigest = readExact(input, DIGEST_LENGTH);
       blocks.add(BlockPayload.coordination(meta, parentRoot, blockRoot, transitionDigest,
-          viewDigest, recordDigest));
-      archiveBlocks.add(BlockDigest.restore(meta, viewDigest, recordDigest));
+          recordDigest));
+      archiveBlocks.add(BlockDigest.restore(meta, recordDigest));
     }
     StateArchiveHotBatchDescriptor archiveBinding = readArchiveBinding(input, archiveBlocks);
     List<StoreMutations> chainbase = readStores(input);
@@ -233,7 +227,6 @@ public final class CommonCheckpointPayloadCodec {
     output.write(binding.getParentContentDigest());
     output.write(binding.getResultContentDigest());
     output.write(binding.getOrderedRecordDigest());
-    output.write(binding.getMutationViewRangeDigest());
   }
 
   private static StateArchiveHotBatchDescriptor readArchiveBinding(DataInputStream input,
@@ -251,12 +244,11 @@ public final class CommonCheckpointPayloadCodec {
     byte[] parentContent = readExact(input, DIGEST_LENGTH);
     byte[] resultContent = readExact(input, DIGEST_LENGTH);
     byte[] orderedRecords = readExact(input, DIGEST_LENGTH);
-    byte[] mutationViews = readExact(input, DIGEST_LENGTH);
     if (blockCount != blocks.size()) {
       throw new IllegalArgumentException("Hot Archive binding block count differs");
     }
     return StateArchiveHotBatchDescriptor.restore(engine, parentBlock, parentHash, first, last,
-        encodedBytes, parentContent, resultContent, orderedRecords, mutationViews, blocks);
+        encodedBytes, parentContent, resultContent, orderedRecords, blocks);
   }
 
   private static int engineTag(Engine engine) {

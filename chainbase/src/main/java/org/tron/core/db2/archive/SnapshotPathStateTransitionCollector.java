@@ -68,8 +68,7 @@ public final class SnapshotPathStateTransitionCollector
     }
     BlockSnapshotMeta meta = admitted.getMeta();
     return new PathStateBlockTransition(meta.getBlockNumber(), meta.getBlockHash(),
-        meta.getParentHash(), meta.getTimestamp(), phase, mutations.values(),
-        admitted.getMutationViewDigest());
+        meta.getParentHash(), meta.getTimestamp(), phase, mutations.values());
   }
 
   private void collectActivationAccounts(

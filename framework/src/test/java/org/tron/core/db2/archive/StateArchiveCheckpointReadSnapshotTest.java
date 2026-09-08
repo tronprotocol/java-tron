@@ -113,7 +113,6 @@ public class StateArchiveCheckpointReadSnapshotTest {
       long number = firstBlock + index;
       byte[] blockHash = hash((int) number);
       byte[] nextRoot = hash(31 + index);
-      byte[] view = hash(60 + index);
       BlockSnapshotMeta meta = BlockSnapshotMeta.forBlock(number, blockHash, priorHash,
           number * 3_000L);
       PathStateFlushTarget.BlockBinding binding = mock(PathStateFlushTarget.BlockBinding.class);
@@ -121,11 +120,11 @@ public class StateArchiveCheckpointReadSnapshotTest {
       when(binding.getParentStateRoot()).thenReturn(priorRoot);
       when(binding.getStateRoot()).thenReturn(nextRoot);
       when(binding.getTransitionPayloadDigest()).thenReturn(hash(70 + index));
-      when(binding.getMutationViewDigest()).thenReturn(view);
       bindings.add(binding);
-      archives.add(new BlockReverseDiff(meta, Collections.singletonList(new DbGroup(
-          "code", Collections.singletonList(new Entry(new byte[]{(byte) number},
-          OldValue.present(new byte[]{(byte) (number - 1)}))))), view));
+      DbGroup group = new DbGroup("code", Collections.singletonList(
+          new Entry(new byte[]{(byte) number},
+              OldValue.present(new byte[]{(byte) (number - 1)}))));
+      archives.add(new BlockReverseDiff(meta, Collections.singletonList(group)));
       priorHash = blockHash;
       priorRoot = nextRoot;
     }

@@ -25,18 +25,16 @@ public final class PathStateSnapshotDelta {
   private final byte[] parentStateRoot;
   private final byte[] stateRoot;
   private final byte[] transitionPayloadDigest;
-  private final byte[] mutationViewDigest;
   private final List<StoreDelta> stores;
   private final List<Mutation> superNodeMutations;
 
   private PathStateSnapshotDelta(BlockSnapshotMeta meta, byte[] parentStateRoot,
-      byte[] stateRoot, byte[] transitionPayloadDigest, byte[] mutationViewDigest,
+      byte[] stateRoot, byte[] transitionPayloadDigest,
       List<StoreDelta> stores, List<Mutation> superNodeMutations) {
     this.meta = Objects.requireNonNull(meta, "meta");
     this.parentStateRoot = root(parentStateRoot, "parentStateRoot");
     this.stateRoot = root(stateRoot, "stateRoot");
     this.transitionPayloadDigest = root(transitionPayloadDigest, "transitionPayloadDigest");
-    this.mutationViewDigest = root(mutationViewDigest, "mutationViewDigest");
     this.stores = Collections.unmodifiableList(new ArrayList<>(stores));
     this.superNodeMutations = immutableMutations(superNodeMutations);
   }
@@ -82,8 +80,7 @@ public final class PathStateSnapshotDelta {
       }
     }
     return new PathStateSnapshotDelta(admittedMeta, candidate.getParent().getStateRoot(),
-        candidate.getStateRoot(), transition.getPayloadDigest(),
-        transition.getMutationViewDigest(), deltas, superMutations);
+        candidate.getStateRoot(), transition.getPayloadDigest(), deltas, superMutations);
   }
 
   static PathStateSnapshotDelta fromPhysical(BlockSnapshotMeta meta,
@@ -97,8 +94,8 @@ public final class PathStateSnapshotDelta {
     PathStateRoot.Snapshot admittedSnapshot = Objects.requireNonNull(snapshot, "snapshot");
     requireSameBlock(admittedMeta, admittedTransition);
     return new PathStateSnapshotDelta(admittedMeta, admittedParent.getStateRoot(),
-        admittedSnapshot.getStateRoot(), admittedTransition.getPayloadDigest(),
-        admittedTransition.getMutationViewDigest(), stores, superNodeMutations);
+        admittedSnapshot.getStateRoot(), admittedTransition.getPayloadDigest(), stores,
+        superNodeMutations);
   }
 
   public BlockSnapshotMeta getMeta() {
@@ -111,10 +108,6 @@ public final class PathStateSnapshotDelta {
 
   public byte[] getStateRoot() {
     return Arrays.copyOf(stateRoot, stateRoot.length);
-  }
-
-  public byte[] getMutationViewDigest() {
-    return Arrays.copyOf(mutationViewDigest, mutationViewDigest.length);
   }
 
   public byte[] getTransitionPayloadDigest() {
