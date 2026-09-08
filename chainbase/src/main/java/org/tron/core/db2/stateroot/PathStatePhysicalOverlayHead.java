@@ -277,6 +277,7 @@ public final class PathStatePhysicalOverlayHead implements PathStateHead {
     }
     head = pending.metadata;
     snapshot = pending.snapshot;
+    compactRetainedSnapshotsIfNeeded();
     logger.info("Path-state volatile overlay advanced: head={}, mutations={}, "
             + "nodeMutations={}, nativeNodeReads={}, cacheBytes={}, cacheEntries={}, "
             + "cacheEvictions={}, changedParticipants={}, maxParticipantMutations={}, "
@@ -311,6 +312,44 @@ public final class PathStatePhysicalOverlayHead implements PathStateHead {
         head.getBlockNumber(), pending.stats.perStore);
     pending = null;
     return copy(head);
+  }
+
+  private void compactRetainedSnapshotsIfNeeded() throws IOException {
+    int previousDepth = snapshot.maxTrieDepth();
+    if (history.isEmpty() || previousDepth <= (long) maxHistory * 2) {
+      return;
+    }
+    HeadState first = history.get(0);
+    PathStateRootMetadata candidateHead = first.metadata;
+    PathStateRoot.Snapshot candidateSnapshot = first.snapshot.detach();
+    List<HeadState> candidateHistory = new ArrayList<>(history.size());
+    BlockSnapshotMeta replayParent = BlockSnapshotMeta.forBlock(
+        candidateHead.getBlockNumber(), candidateHead.getBlockHash(),
+        candidateHead.getParentHash(), candidateHead.getTimestamp());
+    for (int index = 0; index < history.size(); index++) {
+      HeadState retained = history.get(index);
+      PathStateRootMetadata child = index + 1 < history.size()
+          ? history.get(index + 1).metadata : head;
+      validateReplayStep(candidateHead, replayParent, retained.deltaToChild, child);
+      candidateHistory.add(new HeadState(candidateHead, candidateSnapshot,
+          retained.deltaToChild));
+      PathStateRoot.Snapshot childSnapshot = index + 1 < history.size()
+          ? history.get(index + 1).snapshot : snapshot;
+      candidateSnapshot = childSnapshot.reparent(candidateSnapshot);
+      candidateHead = copy(child);
+      replayParent = retained.deltaToChild.getMeta();
+    }
+    if (!Arrays.equals(candidateSnapshot.getStateRoot(), snapshot.getStateRoot())
+        || candidateHead.getBlockNumber() != head.getBlockNumber()
+        || !Arrays.equals(candidateHead.getBlockHash(), head.getBlockHash())) {
+      throw new IOException("path-state retained snapshot compaction differs from live head");
+    }
+    snapshot = candidateSnapshot;
+    history.clear();
+    history.addAll(candidateHistory);
+    logger.info("Path-state volatile snapshot parents compacted: head={}, suffixBlocks={}, "
+            + "previousDepth={}, retainedDepth={}", head.getBlockNumber(), history.size(),
+        previousDepth, snapshot.maxTrieDepth());
   }
 
   @Override

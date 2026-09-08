@@ -705,6 +705,30 @@ public final class PathStateRoot {
       return Arrays.copyOf(stateRoot, stateRoot.length);
     }
 
+    Snapshot detach() {
+      Map<String, PathMerkleTrie.Snapshot> detached = new LinkedHashMap<>();
+      for (Map.Entry<String, PathMerkleTrie.Snapshot> entry : participants.entrySet()) {
+        detached.put(entry.getKey(), entry.getValue().detach());
+      }
+      return new Snapshot(detached, superTrie.detach(), stateRoot);
+    }
+
+    Snapshot reparent(Snapshot newParent) {
+      Snapshot parent = Objects.requireNonNull(newParent, "newParent");
+      Map<String, PathMerkleTrie.Snapshot> reparented = new LinkedHashMap<>();
+      for (Map.Entry<String, PathMerkleTrie.Snapshot> entry : participants.entrySet()) {
+        PathMerkleTrie.Snapshot parentTrie = parent.participants.get(entry.getKey());
+        if (parentTrie == null) {
+          throw new IllegalArgumentException("snapshot parent participant set differs");
+        }
+        reparented.put(entry.getKey(), entry.getValue().reparent(parentTrie));
+      }
+      if (reparented.size() != parent.participants.size()) {
+        throw new IllegalArgumentException("snapshot parent participant set differs");
+      }
+      return new Snapshot(reparented, superTrie.reparent(parent.superTrie), stateRoot);
+    }
+
     byte[] participantRoot(String dbName) {
       PathMerkleTrie.Snapshot participant = participants.get(
           Objects.requireNonNull(dbName, "dbName"));

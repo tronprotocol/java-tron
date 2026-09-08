@@ -809,6 +809,44 @@ public class PathStateNativeNodeStoreTest {
   }
 
   @Test
+  public void volatileOverlayBoundsSnapshotParentDepthAfterHistoryTrim() throws Exception {
+    PathStateParticipantScope scope = new PathStateCanonicalizer().participantScope();
+    Path root = temporaryFolder.newFolder("physical-volatile-retention").toPath();
+    preparePublishedPhysicalTarget(root, scope);
+
+    int maxHistory = 4;
+    try (PathStatePhysicalOverlayHead head = PathStatePhysicalOverlayHead.open(root,
+        Engine.ROCKSDB, new PathStateLayerLimits(maxHistory, 1L << 20))) {
+      byte[] parentHash = head.getHead().getBlockHash();
+      for (int number = 1; number <= 20; number++) {
+        byte[] blockHash = bytes(140 + number);
+        PathStateBlockTransition transition = new PathStateBlockTransition(number, blockHash,
+            parentHash, number * 3L, P66Phase.P66_ON, Collections.singletonList(
+            PathStateMutation.put("code", new byte[]{1}, new byte[]{(byte) number})));
+        head.prepareSnapshotDelta(
+            BlockSnapshotMeta.forBlock(number, blockHash, parentHash, number * 3L), transition);
+        head.advance(transition);
+        parentHash = blockHash;
+      }
+
+      PathStatePhysicalOverlayHead.RetentionCensus census = head.retentionCensus();
+      assertEquals(maxHistory, census.getSuffixBlocks());
+      assertTrue("snapshot parent depth must stay bounded: " + census.getMaxSnapshotDepth(),
+          census.getMaxSnapshotDepth() <= maxHistory * 2);
+
+      PathStateRootMetadata rewound = head.rewindTo(18, bytes(158));
+      assertEquals(18, rewound.getBlockNumber());
+      PathStateBlockTransition sibling = new PathStateBlockTransition(19, bytes(180), bytes(158),
+          60, P66Phase.P66_ON, Collections.singletonList(
+          PathStateMutation.put("proposal", new byte[]{2}, new byte[]{9})));
+      head.prepareSnapshotDelta(BlockSnapshotMeta.forBlock(19, bytes(180), bytes(158), 60),
+          sibling);
+      assertEquals(19, head.advance(sibling).getBlockNumber());
+      assertTrue(head.retentionCensus().getMaxSnapshotDepth() <= maxHistory * 2);
+    }
+  }
+
+  @Test
   public void commonOverlayReplacesInMemoryTrieAfterStartupRedo() throws Exception {
     PathStateParticipantScope scope = new PathStateCanonicalizer().participantScope();
     Path root = temporaryFolder.newFolder("physical-common-redo-overlay").toPath();

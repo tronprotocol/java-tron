@@ -1756,6 +1756,35 @@ public final class PathMerkleTrie {
       return Arrays.copyOf(rootHash, rootHash.length);
     }
 
+    Snapshot detach() {
+      Map<BytesKey, byte[]> effective = new TreeMap<>(UNSIGNED_KEY_COMPARATOR);
+      populateLeaves(effective);
+      IdentityHashMap<Node, BytesKey> indexed = new IdentityHashMap<>();
+      indexReachableMaterializedNodes(rootNode, EMPTY_PATH, indexed);
+      return new Snapshot(null, effective, indexed, rootNode, rootHash, leafCount);
+    }
+
+    private void indexReachableMaterializedNodes(Node node, byte[] path,
+        IdentityHashMap<Node, BytesKey> indexed) {
+      if (node == null) {
+        return;
+      }
+      BytesKey materialized = materializedPath(node);
+      if (materialized != null) {
+        if (!Arrays.equals(materialized.bytes, path)) {
+          throw new IllegalStateException("materialized path trie node moved from its durable path");
+        }
+        indexed.put(node, materialized);
+      }
+      visitChildren(node, path,
+          (child, childPath) -> indexReachableMaterializedNodes(child, childPath, indexed));
+    }
+
+    Snapshot reparent(Snapshot newParent) {
+      return new Snapshot(Objects.requireNonNull(newParent, "newParent"), leaves,
+          materializedNodes, rootNode, rootHash, leafCount);
+    }
+
     int depth() {
       int depth = 0;
       Snapshot cursor = this;
