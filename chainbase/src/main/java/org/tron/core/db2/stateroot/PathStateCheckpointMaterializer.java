@@ -15,10 +15,12 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 import org.tron.core.db2.archive.BlockSnapshotMeta;
-import org.tron.core.db2.core.CommonCheckpointMaterializer;
 import org.tron.core.db2.core.CommonCheckpointBaseline;
+import org.tron.core.db2.core.CommonCheckpointMaterializedStore;
+import org.tron.core.db2.core.CommonCheckpointMaterializer;
 import org.tron.core.db2.core.CommonCheckpointPayload;
 import org.tron.core.db2.core.CommonCheckpointTarget;
+import org.tron.core.db2.stateroot.PathStateStoreManifest.Engine;
 
 /** Next-format PathState participant for the common-checkpoint two-barrier protocol. */
 public final class PathStateCheckpointMaterializer implements CommonCheckpointMaterializer {
@@ -40,31 +42,62 @@ public final class PathStateCheckpointMaterializer implements CommonCheckpointMa
   private final byte[] formatIdentity;
   private final FaultHook faultHook;
   private final CommonCheckpointBaseline baseline;
+  private final CommonCheckpointMaterializedStore materializedStore;
 
   public PathStateCheckpointMaterializer(PathStatePhysicalStoreSet stores,
       PathStateParticipantScope scope, byte[] formatIdentity) {
-    this(stores, scope, formatIdentity, null, (stage, storeId) -> { });
+    this(stores, scope, formatIdentity, null, null, (stage, storeId) -> { });
   }
 
   public PathStateCheckpointMaterializer(PathStatePhysicalStoreSet stores,
       PathStateParticipantScope scope, byte[] formatIdentity, CommonCheckpointBaseline baseline) {
-    this(stores, scope, formatIdentity, baseline, (stage, storeId) -> { });
+    this(stores, scope, formatIdentity, baseline, null, (stage, storeId) -> { });
+  }
+
+  public PathStateCheckpointMaterializer(PathStatePhysicalStoreSet stores,
+      PathStateParticipantScope scope, byte[] formatIdentity, CommonCheckpointBaseline baseline,
+      CommonCheckpointMaterializedStore materializedStore) {
+    this(stores, scope, formatIdentity, baseline, materializedStore, (stage, storeId) -> { });
   }
 
   PathStateCheckpointMaterializer(PathStatePhysicalStoreSet stores,
       PathStateParticipantScope scope, byte[] formatIdentity, FaultHook faultHook) {
-    this(stores, scope, formatIdentity, null, faultHook);
+    this(stores, scope, formatIdentity, null, null, faultHook);
   }
 
-  private PathStateCheckpointMaterializer(PathStatePhysicalStoreSet stores,
+  PathStateCheckpointMaterializer(PathStatePhysicalStoreSet stores,
       PathStateParticipantScope scope, byte[] formatIdentity, CommonCheckpointBaseline baseline,
-      FaultHook faultHook) {
+      CommonCheckpointMaterializedStore materializedStore, FaultHook faultHook) {
     this.stores = Objects.requireNonNull(stores, "stores");
     this.scope = Objects.requireNonNull(scope, "scope");
     this.directory = stores.getDirectory();
     this.formatIdentity = digest(formatIdentity, "formatIdentity");
     this.faultHook = Objects.requireNonNull(faultHook, "faultHook");
     this.baseline = baseline;
+    this.materializedStore = materializedStore;
+  }
+
+  /**
+   * Opens physical stores for WAL redo without first trusting the possibly stale published
+   * PathState CURRENT. The session must be closed before the normal overlay is opened.
+   */
+  public static RecoverySession openRecovery(Path directory, Engine engine,
+      long residentNodeCacheBytes, byte[] formatIdentity, CommonCheckpointBaseline baseline,
+      CommonCheckpointMaterializedStore materializedStore) throws IOException {
+    PathStateParticipantScope scope = new PathStateCanonicalizer().participantScope();
+    PathStatePhysicalStoreSet stores = PathStatePhysicalStoreSet.openExisting(directory, scope,
+        engine, residentNodeCacheBytes);
+    try {
+      return new RecoverySession(stores, new PathStateCheckpointMaterializer(stores, scope,
+          formatIdentity, baseline, materializedStore));
+    } catch (RuntimeException failure) {
+      try {
+        stores.close();
+      } catch (IOException closeFailure) {
+        failure.addSuppressed(closeFailure);
+      }
+      throw failure;
+    }
   }
 
   @Override
@@ -153,11 +186,9 @@ public final class PathStateCheckpointMaterializer implements CommonCheckpointMa
     } else if (baseline != null) {
       baseline.requireParent(admitted, "PathState");
     }
-    Path materialized = materializedPath(admitted);
-    if (!Files.exists(materialized, LinkOption.NOFOLLOW_LINKS)) {
+    if (!isMaterialized(admitted, expected)) {
       return Status.NEEDS_MATERIALIZATION;
     }
-    requireExact(materialized, expected);
     return Status.MATERIALIZED;
   }
 
@@ -194,7 +225,7 @@ public final class PathStateCheckpointMaterializer implements CommonCheckpointMa
       faultHook.after(Stage.AFTER_SUPER_BATCH, 0);
     }
     byte[] encoded = encode(admittedTarget);
-    PathStateMetadataFile.publishImmutableBytes(materializedPath(admittedTarget), encoded);
+    recordMaterialized(admittedTarget, encoded);
     faultHook.after(Stage.AFTER_MATERIALIZED_TARGET, 0);
   }
 
@@ -222,7 +253,31 @@ public final class PathStateCheckpointMaterializer implements CommonCheckpointMa
 
   private void requireMaterialized(CommonCheckpointTarget target, byte[] expected)
       throws IOException {
-    requireExact(materializedPath(target), expected);
+    if (!isMaterialized(target, expected)) {
+      throw new IOException("PathState materialized checkpoint target is missing");
+    }
+  }
+
+  private boolean isMaterialized(CommonCheckpointTarget target, byte[] expected)
+      throws IOException {
+    if (materializedStore != null && materializedStore.exists(Authority.PATH_STATE)) {
+      return materializedStore.matches(Authority.PATH_STATE, expected);
+    }
+    Path legacy = materializedPath(target);
+    if (!Files.exists(legacy, LinkOption.NOFOLLOW_LINKS)) {
+      return false;
+    }
+    requireExact(legacy, expected);
+    return true;
+  }
+
+  private void recordMaterialized(CommonCheckpointTarget target, byte[] encoded)
+      throws IOException {
+    if (materializedStore == null) {
+      PathStateMetadataFile.publishImmutableBytes(materializedPath(target), encoded);
+    } else {
+      materializedStore.replace(Authority.PATH_STATE, encoded);
+    }
   }
 
   private void requireParent(Marker current, CommonCheckpointTarget target) throws IOException {
@@ -332,6 +387,28 @@ public final class PathStateCheckpointMaterializer implements CommonCheckpointMa
   @FunctionalInterface
   interface FaultHook {
     void after(Stage stage, int storeId) throws IOException;
+  }
+
+  /** Short-lived owner used only while replaying a durable common-checkpoint WAL. */
+  public static final class RecoverySession implements AutoCloseable {
+
+    private final PathStatePhysicalStoreSet stores;
+    private final PathStateCheckpointMaterializer materializer;
+
+    private RecoverySession(PathStatePhysicalStoreSet stores,
+        PathStateCheckpointMaterializer materializer) {
+      this.stores = stores;
+      this.materializer = materializer;
+    }
+
+    public PathStateCheckpointMaterializer getMaterializer() {
+      return materializer;
+    }
+
+    @Override
+    public void close() throws IOException {
+      stores.close();
+    }
   }
 
   private static final class Marker {

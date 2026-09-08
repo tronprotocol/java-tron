@@ -127,6 +127,21 @@ public class ChainbaseCheckpointMaterializerTest {
   }
 
   @Test
+  public void admitsLegacyMarkerOnlyUntilCentralSlotExists() throws Exception {
+    Fixture fixture = fixture("legacy-central", null);
+    fixture.materializer.materialize(fixture.payload, fixture.target);
+    fixture.materializer.publish(fixture.target);
+    CommonCheckpointMaterializedStore store = new CommonCheckpointMaterializedStore(
+        fixture.root.resolve("common"));
+    ChainbaseCheckpointMaterializer migrated = new ChainbaseCheckpointMaterializer(
+        fixture.root, fixture.format, fixture.databases, null, store);
+
+    assertEquals(Status.PUBLISHED, migrated.inspect(fixture.target));
+    store.replace(Authority.CHAINBASE, new byte[]{1});
+    assertThrows(IOException.class, () -> migrated.inspect(fixture.target));
+  }
+
+  @Test
   public void rejectsUnknownStoreForeignFormatAndNonParentTarget() throws Exception {
     Fixture fixture = fixture("reject", null);
     CommonCheckpointPayload unknown = payload(fixture.format, 1, hash(0), hash(1), hash(10),
@@ -230,15 +245,17 @@ public class ChainbaseCheckpointMaterializerTest {
     PathStateParticipantScope scope = new PathStateCanonicalizer().participantScope();
     CommonCheckpointPayload payload = integratedPayload(format, scope);
     CommonCheckpointTarget target = CommonCheckpointTarget.from(payload);
+    CommonCheckpointMaterializedStore materializedStore =
+        new CommonCheckpointMaterializedStore(root.resolve("wal"));
 
     try (PathStatePhysicalStoreSet pathStores = PathStatePhysicalStoreSet.open(
         root.resolve("path-state"), scope, Engine.ROCKSDB)) {
       ChainbaseCheckpointMaterializer chainbase = new ChainbaseCheckpointMaterializer(
-          root.resolve("chainbase"), format, databases);
+          root.resolve("chainbase"), format, databases, null, materializedStore);
       PathStateCheckpointMaterializer pathState = new PathStateCheckpointMaterializer(pathStores,
-          scope, format);
+          scope, format, null, materializedStore);
       StateArchiveCheckpointMaterializer archive = new StateArchiveCheckpointMaterializer(
-          root.resolve("archive"), format);
+          root.resolve("archive"), format, null, Engine.LEVELDB, materializedStore);
       CommonCheckpointFile file = new CommonCheckpointFile(root.resolve("wal"));
       CommonCheckpointRedoCoordinator coordinator = new CommonCheckpointRedoCoordinator(file,
           chainbase, pathState, archive);
@@ -255,6 +272,34 @@ public class ChainbaseCheckpointMaterializerTest {
           new byte[]{3}));
       assertFalse(java.nio.file.Files.exists(root.resolve("wal").resolve(
           CommonCheckpointFile.FILE_NAME)));
+      try (java.util.stream.Stream<java.nio.file.Path> markers = java.nio.file.Files.list(
+          root.resolve("wal/materialized"))) {
+        assertEquals(3L, markers.count());
+      }
+      assertFalse(java.nio.file.Files.exists(
+          root.resolve("chainbase/chainbase-checkpoint-materialized")));
+      assertFalse(java.nio.file.Files.exists(
+          root.resolve("path-state/checkpoint-materialized")));
+      try (java.util.stream.Stream<java.nio.file.Path> paths = java.nio.file.Files.walk(
+          root.resolve("archive/checkpoint-targets"))) {
+        assertFalse(paths.anyMatch(path -> "MATERIALIZED".equals(
+            path.getFileName().toString())));
+      }
+      coordinator.close();
+      CommonCheckpointMaterializedStore reopenedStore =
+          new CommonCheckpointMaterializedStore(root.resolve("wal"));
+      ChainbaseCheckpointMaterializer reopenedChainbase =
+          new ChainbaseCheckpointMaterializer(root.resolve("chainbase"), format, databases,
+              null, reopenedStore);
+      PathStateCheckpointMaterializer reopenedPathState =
+          new PathStateCheckpointMaterializer(pathStores, scope, format, null, reopenedStore);
+      StateArchiveCheckpointMaterializer reopenedArchive =
+          new StateArchiveCheckpointMaterializer(root.resolve("archive"), format, null,
+              Engine.LEVELDB, reopenedStore);
+      assertEquals(Status.PUBLISHED, reopenedChainbase.inspect(target));
+      assertEquals(Status.PUBLISHED, reopenedPathState.inspect(target));
+      assertEquals(Status.PUBLISHED, reopenedArchive.inspect(target));
+      reopenedArchive.close();
     }
   }
 

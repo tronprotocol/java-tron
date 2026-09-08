@@ -22,8 +22,9 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
-import org.tron.core.db2.core.CommonCheckpointMaterializer;
 import org.tron.core.db2.core.CommonCheckpointBaseline;
+import org.tron.core.db2.core.CommonCheckpointMaterializedStore;
+import org.tron.core.db2.core.CommonCheckpointMaterializer;
 import org.tron.core.db2.core.CommonCheckpointPayload;
 import org.tron.core.db2.core.CommonCheckpointTarget;
 import org.tron.core.db2.stateroot.PathStateStoreManifest.Engine;
@@ -55,44 +56,54 @@ public final class StateArchiveCheckpointMaterializer implements CommonCheckpoin
   private final FaultHook faultHook;
   private final CommonCheckpointBaseline baseline;
   private final Engine engine;
+  private final CommonCheckpointMaterializedStore materializedStore;
   private StateArchiveCheckpointServingIndex.Session checkpointServingIndex;
   private CommonCheckpointTarget activeCheckpoint;
   private boolean closed;
 
   public StateArchiveCheckpointMaterializer(Path directory, byte[] formatIdentity) {
     this(directory, formatIdentity, null, StateArchiveCheckpointServingIndex.configuredEngine(),
-        (stage, blockIndex) -> { });
+        null, (stage, blockIndex) -> { });
   }
 
   public StateArchiveCheckpointMaterializer(Path directory, byte[] formatIdentity,
       CommonCheckpointBaseline baseline) {
     this(directory, formatIdentity, baseline,
-        StateArchiveCheckpointServingIndex.configuredEngine(), (stage, blockIndex) -> { });
+        StateArchiveCheckpointServingIndex.configuredEngine(), null, (stage, blockIndex) -> { });
   }
 
   public StateArchiveCheckpointMaterializer(Path directory, byte[] formatIdentity,
       CommonCheckpointBaseline baseline, Engine engine) {
-    this(directory, formatIdentity, baseline, engine, (stage, blockIndex) -> { });
+    this(directory, formatIdentity, baseline, engine, null, (stage, blockIndex) -> { });
+  }
+
+  public StateArchiveCheckpointMaterializer(Path directory, byte[] formatIdentity,
+      CommonCheckpointBaseline baseline, Engine engine,
+      CommonCheckpointMaterializedStore materializedStore) {
+    this(directory, formatIdentity, baseline, engine, materializedStore,
+        (stage, blockIndex) -> { });
   }
 
   StateArchiveCheckpointMaterializer(Path directory, byte[] formatIdentity,
       FaultHook faultHook) {
     this(directory, formatIdentity, null, StateArchiveCheckpointServingIndex.configuredEngine(),
-        faultHook);
+        null, faultHook);
   }
 
   StateArchiveCheckpointMaterializer(Path directory, byte[] formatIdentity, Engine engine,
       FaultHook faultHook) {
-    this(directory, formatIdentity, null, engine, faultHook);
+    this(directory, formatIdentity, null, engine, null, faultHook);
   }
 
   private StateArchiveCheckpointMaterializer(Path directory, byte[] formatIdentity,
-      CommonCheckpointBaseline baseline, Engine engine, FaultHook faultHook) {
+      CommonCheckpointBaseline baseline, Engine engine,
+      CommonCheckpointMaterializedStore materializedStore, FaultHook faultHook) {
     this.directory = Objects.requireNonNull(directory, "directory");
     this.formatIdentity = digest(formatIdentity, "formatIdentity");
     this.faultHook = Objects.requireNonNull(faultHook, "faultHook");
     this.baseline = baseline;
     this.engine = Objects.requireNonNull(engine, "engine");
+    this.materializedStore = materializedStore;
   }
 
   @Override
@@ -151,7 +162,7 @@ public final class StateArchiveCheckpointMaterializer implements CommonCheckpoin
     if (Files.exists(readable, LinkOption.NOFOLLOW_LINKS)) {
       TargetMarker current = loadTarget(readable);
       if (Arrays.equals(current.encoded, expected)) {
-        requireExact(materializedPath(admitted), expected);
+        requireMaterialized(admitted, expected);
         requireServingIndex(admitted);
         return Status.PUBLISHED;
       }
@@ -159,11 +170,9 @@ public final class StateArchiveCheckpointMaterializer implements CommonCheckpoin
     } else if (baseline != null) {
       baseline.requireParent(admitted, "State Archive");
     }
-    Path materialized = materializedPath(admitted);
-    if (!Files.exists(materialized, LinkOption.NOFOLLOW_LINKS)) {
+    if (!isMaterialized(admitted, expected)) {
       return Status.NEEDS_MATERIALIZATION;
     }
-    requireExact(materialized, expected);
     requireServingIndex(admitted);
     return Status.MATERIALIZED;
   }
@@ -177,8 +186,15 @@ public final class StateArchiveCheckpointMaterializer implements CommonCheckpoin
 
   public static CommonCheckpointTarget loadPublishedTarget(Path directory,
       byte[] expectedFormatIdentity, Engine engine) throws IOException {
+    return loadPublishedTarget(directory, expectedFormatIdentity, engine, null);
+  }
+
+  public static CommonCheckpointTarget loadPublishedTarget(Path directory,
+      byte[] expectedFormatIdentity, Engine engine,
+      CommonCheckpointMaterializedStore materializedStore) throws IOException {
     StateArchiveCheckpointMaterializer materializer =
-        new StateArchiveCheckpointMaterializer(directory, expectedFormatIdentity, null, engine);
+        new StateArchiveCheckpointMaterializer(directory, expectedFormatIdentity, null, engine,
+            materializedStore);
     Path readable = directory.resolve(READABLE_FILE);
     if (!Files.exists(readable, LinkOption.NOFOLLOW_LINKS)) {
       throw new IOException("State Archive READABLE target is missing");
@@ -194,10 +210,17 @@ public final class StateArchiveCheckpointMaterializer implements CommonCheckpoin
   /** Returns the published target when present, validating its complete serving boundary once. */
   public static Optional<CommonCheckpointTarget> loadPublishedTargetIfPresent(Path directory,
       byte[] expectedFormatIdentity, Engine engine) throws IOException {
+    return loadPublishedTargetIfPresent(directory, expectedFormatIdentity, engine, null);
+  }
+
+  public static Optional<CommonCheckpointTarget> loadPublishedTargetIfPresent(Path directory,
+      byte[] expectedFormatIdentity, Engine engine,
+      CommonCheckpointMaterializedStore materializedStore) throws IOException {
     if (!Files.exists(directory.resolve(READABLE_FILE), LinkOption.NOFOLLOW_LINKS)) {
       return Optional.empty();
     }
-    return Optional.of(loadPublishedTarget(directory, expectedFormatIdentity, engine));
+    return Optional.of(loadPublishedTarget(directory, expectedFormatIdentity, engine,
+        materializedStore));
   }
 
   /** Resolves the configured Archive index engine at runtime construction boundaries. */
@@ -237,7 +260,7 @@ public final class StateArchiveCheckpointMaterializer implements CommonCheckpoin
       checkpointServingIndex.apply(admittedPayload, admittedTarget);
     }
     faultHook.after(Stage.AFTER_SERVING_INDEX_BATCH, -1);
-    publishImmutable(materializedPath(admittedTarget), encodeTarget(admittedTarget));
+    recordMaterialized(admittedTarget, encodeTarget(admittedTarget));
     faultHook.after(Stage.AFTER_MATERIALIZED_TARGET, -1);
   }
 
@@ -321,6 +344,35 @@ public final class StateArchiveCheckpointMaterializer implements CommonCheckpoin
 
   private Path materializedPath(CommonCheckpointTarget target) {
     return targetPath(target).resolve(MATERIALIZED_FILE);
+  }
+
+  private boolean isMaterialized(CommonCheckpointTarget target, byte[] expected)
+      throws IOException {
+    if (materializedStore != null && materializedStore.exists(Authority.STATE_ARCHIVE)) {
+      return materializedStore.matches(Authority.STATE_ARCHIVE, expected);
+    }
+    Path legacy = materializedPath(target);
+    if (!Files.exists(legacy, LinkOption.NOFOLLOW_LINKS)) {
+      return false;
+    }
+    requireExact(legacy, expected);
+    return true;
+  }
+
+  private void requireMaterialized(CommonCheckpointTarget target, byte[] expected)
+      throws IOException {
+    if (!isMaterialized(target, expected)) {
+      throw new IOException("State Archive materialized checkpoint target is missing");
+    }
+  }
+
+  private void recordMaterialized(CommonCheckpointTarget target, byte[] encoded)
+      throws IOException {
+    if (materializedStore == null) {
+      publishImmutable(materializedPath(target), encoded);
+    } else {
+      materializedStore.replace(Authority.STATE_ARCHIVE, encoded);
+    }
   }
 
   private byte[] encodeBlock(CommonCheckpointPayload.BlockPayload block) {

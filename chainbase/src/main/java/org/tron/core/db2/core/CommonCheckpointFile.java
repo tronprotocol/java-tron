@@ -89,6 +89,11 @@ public final class CommonCheckpointFile {
     return loadRequired();
   }
 
+  /** Returns whether startup must run redo before opening a published physical state. */
+  public synchronized boolean isPresent() {
+    return Files.exists(checkpoint, LinkOption.NOFOLLOW_LINKS);
+  }
+
   /** Retires only this checkpoint and its non-authoritative temporary file. */
   public synchronized void retire() throws IOException {
     requireDirectory();

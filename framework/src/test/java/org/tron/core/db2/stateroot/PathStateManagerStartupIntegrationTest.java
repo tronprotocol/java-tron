@@ -30,12 +30,20 @@ import org.tron.core.config.args.Storage;
 import org.tron.core.config.args.StorageConfig.StateArchiveHotStoreConfig;
 import org.tron.core.db.Manager;
 import org.tron.core.db2.ISession;
+import org.tron.core.db2.archive.BlockReverseDiff;
 import org.tron.core.db2.archive.BlockSnapshotMeta;
 import org.tron.core.db2.archive.LatestStateGenerationAdapter.SnapshotCapableStore;
 import org.tron.core.db2.archive.LatestStateGenerationAdapter.StoreSnapshot;
 import org.tron.core.db2.common.DB;
 import org.tron.core.db2.core.Chainbase;
+import org.tron.core.db2.core.ChainbaseCheckpointMaterializer;
+import org.tron.core.db2.core.CommonCheckpointBaseline;
 import org.tron.core.db2.core.CommonCheckpointBaselineFile;
+import org.tron.core.db2.core.CommonCheckpointFile;
+import org.tron.core.db2.core.CommonCheckpointFormat;
+import org.tron.core.db2.core.CommonCheckpointMaterializedStore;
+import org.tron.core.db2.core.CommonCheckpointPayload;
+import org.tron.core.db2.core.CommonCheckpointTarget;
 import org.tron.core.db2.core.SnapshotManager;
 import org.tron.core.db2.core.SnapshotRoot;
 import org.tron.core.db2.stateroot.PathStateCanonicalizer.P66Phase;
@@ -440,6 +448,115 @@ public class PathStateManagerStartupIntegrationTest {
   }
 
   @Test
+  public void commonCheckpointRedoPrecedesPathStateOpenAfterPartialMaterialization()
+      throws Exception {
+    Path output = temporaryFolder.newFolder("common-checkpoint-partial-path-redo").toPath();
+    Path pathDirectory = output.resolve("path-state-root");
+    Path checkpointDirectory = output.resolve("common-checkpoint");
+    Path archiveDirectory = output.resolve("state-archive");
+    long baseNumber = 100L;
+    BlockId baseId = new BlockId(Sha256Hash.wrap(bytes(61)), baseNumber);
+    Sha256Hash baseParent = Sha256Hash.wrap(bytes(60));
+    DynamicPropertiesStore dynamic = mock(DynamicPropertiesStore.class);
+    when(dynamic.getLatestBlockHeaderNumber()).thenReturn(baseNumber);
+    when(dynamic.getLatestBlockHeaderHash()).thenReturn(baseId);
+    when(dynamic.getLatestBlockHeaderTimestamp()).thenReturn(300L);
+    when(dynamic.getAllowAccountAssetOptimizationFromRoot()).thenReturn(1L);
+    BlockCapsule baseBlock = block(baseNumber, baseId, baseParent, 300L);
+    ChainBaseManager chainBase = mock(ChainBaseManager.class);
+    when(chainBase.getDynamicPropertiesStore()).thenReturn(dynamic);
+    when(chainBase.getBlockByNum(baseNumber)).thenReturn(baseBlock);
+    when(chainBase.getAccountAssetStore()).thenReturn(mock(AccountAssetStore.class));
+
+    AtomicInteger closed = new AtomicInteger();
+    SnapshotManager[] holder = new SnapshotManager[1];
+    Manager manager = new Manager();
+    setChainBaseManager(manager, chainBase);
+    withCommonConfig(output, "LEVELDB", () -> {
+      SnapshotManager snapshots = new SnapshotManager("");
+      for (PathStateParticipantDescriptor.StoreIdentity participant
+          : PathStateParticipantDescriptor.current().getStores()) {
+        snapshots.getDbs().add(emptyNativeStore(participant.getDbName(), baseNumber,
+            baseId.getBytes(), closed));
+      }
+      snapshots.enable();
+      snapshots.setUnChecked(false);
+      holder[0] = snapshots;
+      setField(manager, "revokingStore", snapshots);
+      invoke(manager, "initCommonCheckpoint");
+    });
+    SnapshotManager snapshots = holder[0];
+    BlockId firstId = new BlockId(Sha256Hash.wrap(bytes(62)), 101L);
+    try (ISession session = snapshots.buildSession()) {
+      session.commit(BlockSnapshotMeta.forBlock(101L, firstId.getBytes(), baseId.getBytes(),
+          303L));
+    }
+    setSnapshotField(snapshots, "flushCount", 1);
+    snapshots.flush();
+    invoke(manager, "closeCommonCheckpoint");
+    invoke(manager, "closePathStateRoot");
+
+    byte[] formatIdentity = CommonCheckpointFormat.identity();
+    CommonCheckpointBaseline baseline = new CommonCheckpointBaselineFile(checkpointDirectory)
+        .load();
+    BlockId targetId = new BlockId(Sha256Hash.wrap(bytes(63)), 102L);
+    BlockSnapshotMeta targetMeta = BlockSnapshotMeta.forBlock(102L, targetId.getBytes(),
+        firstId.getBytes(), 306L);
+    CommonCheckpointPayload payload;
+    try (PathStatePhysicalOverlayHead head = PathStatePhysicalOverlayHead.openCommonCheckpoint(
+        pathDirectory, Engine.LEVELDB, new PathStateLayerLimits(8, 1L << 20), 1L << 20,
+        2, 2, formatIdentity, targetMeta, P66Phase.P66_ON)) {
+      PathStateBlockTransition transition = new PathStateBlockTransition(102L,
+          targetId.getBytes(), firstId.getBytes(), 306L, P66Phase.P66_ON,
+          Collections.singletonList(
+              PathStateMutation.put("code", new byte[]{1}, new byte[]{2})));
+      PathStateSnapshotDelta delta = head.prepareSnapshotDelta(targetMeta, transition);
+      PathStateFlushTarget target = PathStateFlushTarget.coalesce(
+          Collections.singletonList(delta));
+      payload = CommonCheckpointPayload.create(formatIdentity, target,
+          Collections.singletonList(new BlockReverseDiff(targetMeta, Collections.emptyList(),
+              delta.getMutationViewDigest())), Collections.emptyList());
+    }
+    CommonCheckpointTarget target = CommonCheckpointTarget.from(payload);
+    CommonCheckpointMaterializedStore materializedStore =
+        new CommonCheckpointMaterializedStore(checkpointDirectory);
+    new CommonCheckpointFile(checkpointDirectory).publish(payload);
+    new ChainbaseCheckpointMaterializer(checkpointDirectory, formatIdentity,
+        snapshots.getDbs(), baseline, materializedStore).materialize(payload, target);
+    PathStateParticipantScope scope = new PathStateCanonicalizer().participantScope();
+    try (PathStatePhysicalStoreSet stores = PathStatePhysicalStoreSet.openExisting(pathDirectory,
+        scope, Engine.LEVELDB)) {
+      PathStateCheckpointMaterializer interrupted = new PathStateCheckpointMaterializer(stores,
+          scope, formatIdentity, baseline, materializedStore, failAfterParticipantBatch());
+      assertThrows(java.io.IOException.class,
+          () -> interrupted.materialize(payload, target));
+    }
+    assertThrows(IllegalStateException.class,
+        () -> PathStatePhysicalOverlayHead.openCommonCheckpoint(pathDirectory, Engine.LEVELDB,
+            new PathStateLayerLimits(8, 1L << 20), 1L << 20, 2, 2, formatIdentity,
+            targetMeta, P66Phase.P66_ON));
+
+    when(dynamic.getLatestBlockHeaderNumber()).thenReturn(102L);
+    when(dynamic.getLatestBlockHeaderHash()).thenReturn(targetId);
+    when(dynamic.getLatestBlockHeaderTimestamp()).thenReturn(306L);
+    BlockCapsule targetBlock = block(102L, targetId, firstId, 306L);
+    when(chainBase.getBlockByNum(102L)).thenReturn(targetBlock);
+    withCommonConfig(output, "LEVELDB", () -> invoke(manager, "initCommonCheckpoint"));
+    assertFalse(Files.exists(checkpointDirectory.resolve("COMMON_CHECKPOINT")));
+    assertEquals(102L, manager.getPathStateSnapshotHead().getHead().getBlockNumber());
+    assertArrayEquals(targetId.getBytes(),
+        manager.getPathStateSnapshotHead().getHead().getBlockHash());
+    invoke(manager, "closeCommonCheckpoint");
+    invoke(manager, "closePathStateRoot");
+
+    withCommonConfig(output, "LEVELDB", () -> invoke(manager, "initCommonCheckpoint"));
+    assertEquals(102L, manager.getPathStateSnapshotHead().getHead().getBlockNumber());
+    assertFalse(Files.exists(checkpointDirectory.resolve("COMMON_CHECKPOINT")));
+    invoke(manager, "closeCommonCheckpoint");
+    invoke(manager, "closePathStateRoot");
+  }
+
+  @Test
   public void commonCheckpointAdoptsCompatibleLegacyCurrentWithoutRebuild() throws Exception {
     Path output = temporaryFolder.newFolder("common-checkpoint-legacy-current").toPath();
     long baseNumber = 100L;
@@ -540,6 +657,23 @@ public class PathStateManagerStartupIntegrationTest {
     return new Chainbase(new SnapshotRoot(database));
   }
 
+  private static BlockCapsule block(long number, BlockId id, Sha256Hash parent, long timestamp) {
+    BlockCapsule block = mock(BlockCapsule.class);
+    when(block.getNum()).thenReturn(number);
+    when(block.getBlockId()).thenReturn(id);
+    when(block.getParentHash()).thenReturn(parent);
+    when(block.getTimeStamp()).thenReturn(timestamp);
+    return block;
+  }
+
+  private static PathStateCheckpointMaterializer.FaultHook failAfterParticipantBatch() {
+    return (stage, storeId) -> {
+      if (stage == PathStateCheckpointMaterializer.Stage.AFTER_PARTICIPANT_BATCH) {
+        throw new java.io.IOException("simulated process death during PathState");
+      }
+    };
+  }
+
   private static void withConfig(Path output, boolean enabled, ThrowingRunnable action)
       throws Exception {
     CommonParameter args = CommonParameter.getInstance();
@@ -562,10 +696,20 @@ public class PathStateManagerStartupIntegrationTest {
   }
 
   private static void withCommonConfig(Path output, ThrowingRunnable action) throws Exception {
-    withCommonConfig(output, false, action);
+    withCommonConfig(output, "ROCKSDB", false, action);
   }
 
   private static void withCommonConfig(Path output, boolean hotEnabled,
+      ThrowingRunnable action) throws Exception {
+    withCommonConfig(output, "ROCKSDB", hotEnabled, action);
+  }
+
+  private static void withCommonConfig(Path output, String engine, ThrowingRunnable action)
+      throws Exception {
+    withCommonConfig(output, engine, false, action);
+  }
+
+  private static void withCommonConfig(Path output, String engine, boolean hotEnabled,
       ThrowingRunnable action) throws Exception {
     CommonParameter args = CommonParameter.getInstance();
     Storage oldStorage = args.getStorage();
@@ -574,7 +718,7 @@ public class PathStateManagerStartupIntegrationTest {
       Storage storage = new Storage();
       args.outputDirectory = output.toString();
       args.storage = storage;
-      storage.setDbEngine("ROCKSDB");
+      storage.setDbEngine(engine);
       storage.setStateArchiveEnabled(true);
       storage.setStateArchiveDirectory("state-archive");
       StateArchiveHotStoreConfig hotConfig = new StateArchiveHotStoreConfig();

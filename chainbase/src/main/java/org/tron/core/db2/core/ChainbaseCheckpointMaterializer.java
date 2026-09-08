@@ -40,29 +40,39 @@ public final class ChainbaseCheckpointMaterializer implements CommonCheckpointMa
   private final Map<String, Chainbase> databases;
   private final FaultHook faultHook;
   private final CommonCheckpointBaseline baseline;
+  private final CommonCheckpointMaterializedStore materializedStore;
 
   public ChainbaseCheckpointMaterializer(Path directory, byte[] formatIdentity,
       List<Chainbase> databases) {
-    this(directory, formatIdentity, databases, null, (stage, dbName) -> { });
+    this(directory, formatIdentity, databases, null, null, (stage, dbName) -> { });
   }
 
   public ChainbaseCheckpointMaterializer(Path directory, byte[] formatIdentity,
       List<Chainbase> databases, CommonCheckpointBaseline baseline) {
-    this(directory, formatIdentity, databases, baseline, (stage, dbName) -> { });
+    this(directory, formatIdentity, databases, baseline, null, (stage, dbName) -> { });
+  }
+
+  public ChainbaseCheckpointMaterializer(Path directory, byte[] formatIdentity,
+      List<Chainbase> databases, CommonCheckpointBaseline baseline,
+      CommonCheckpointMaterializedStore materializedStore) {
+    this(directory, formatIdentity, databases, baseline, materializedStore,
+        (stage, dbName) -> { });
   }
 
   ChainbaseCheckpointMaterializer(Path directory, byte[] formatIdentity,
       List<Chainbase> databases, FaultHook faultHook) {
-    this(directory, formatIdentity, databases, null, faultHook);
+    this(directory, formatIdentity, databases, null, null, faultHook);
   }
 
   private ChainbaseCheckpointMaterializer(Path directory, byte[] formatIdentity,
-      List<Chainbase> databases, CommonCheckpointBaseline baseline, FaultHook faultHook) {
+      List<Chainbase> databases, CommonCheckpointBaseline baseline,
+      CommonCheckpointMaterializedStore materializedStore, FaultHook faultHook) {
     this.directory = Objects.requireNonNull(directory, "directory");
     this.formatIdentity = digest(formatIdentity, "formatIdentity");
     this.databases = index(databases);
     this.faultHook = Objects.requireNonNull(faultHook, "faultHook");
     this.baseline = baseline;
+    this.materializedStore = materializedStore;
   }
 
   @Override
@@ -90,18 +100,16 @@ public final class ChainbaseCheckpointMaterializer implements CommonCheckpointMa
     if (Files.exists(currentPath, LinkOption.NOFOLLOW_LINKS)) {
       Marker current = load(currentPath);
       if (Arrays.equals(current.encoded, expected)) {
-        requireExact(materializedPath(admitted), expected);
+        requireMaterialized(admitted, expected);
         return Status.PUBLISHED;
       }
       requireParent(current, admitted);
     } else if (baseline != null) {
       baseline.requireParent(admitted, "Chainbase");
     }
-    Path materialized = materializedPath(admitted);
-    if (!Files.exists(materialized, LinkOption.NOFOLLOW_LINKS)) {
+    if (!isMaterialized(admitted, expected)) {
       return Status.NEEDS_MATERIALIZATION;
     }
-    requireExact(materialized, expected);
     return Status.MATERIALIZED;
   }
 
@@ -132,7 +140,7 @@ public final class ChainbaseCheckpointMaterializer implements CommonCheckpointMa
       ((SnapshotRoot) root).applyCheckpointMutations(batch(store));
       faultHook.after(Stage.AFTER_STORE_BATCH, store.getDbName());
     }
-    publishImmutable(materializedPath(admittedTarget), encode(admittedTarget));
+    recordMaterialized(admittedTarget, encode(admittedTarget));
     faultHook.after(Stage.AFTER_MATERIALIZED_TARGET, null);
   }
 
@@ -171,6 +179,35 @@ public final class ChainbaseCheckpointMaterializer implements CommonCheckpointMa
 
   private Path materializedPath(CommonCheckpointTarget target) {
     return directory.resolve(MATERIALIZED_DIRECTORY).resolve(hex(target.getPayloadDigest()));
+  }
+
+  private boolean isMaterialized(CommonCheckpointTarget target, byte[] expected)
+      throws IOException {
+    if (materializedStore != null && materializedStore.exists(Authority.CHAINBASE)) {
+      return materializedStore.matches(Authority.CHAINBASE, expected);
+    }
+    Path legacy = materializedPath(target);
+    if (!Files.exists(legacy, LinkOption.NOFOLLOW_LINKS)) {
+      return false;
+    }
+    requireExact(legacy, expected);
+    return true;
+  }
+
+  private void requireMaterialized(CommonCheckpointTarget target, byte[] expected)
+      throws IOException {
+    if (!isMaterialized(target, expected)) {
+      throw new IOException("Chainbase materialized checkpoint target is missing");
+    }
+  }
+
+  private void recordMaterialized(CommonCheckpointTarget target, byte[] encoded)
+      throws IOException {
+    if (materializedStore == null) {
+      publishImmutable(materializedPath(target), encoded);
+    } else {
+      materializedStore.replace(Authority.CHAINBASE, encoded);
+    }
   }
 
   private static Map<WrappedByteArray, WrappedByteArray> batch(

@@ -146,6 +146,7 @@ import org.tron.core.db2.core.CommonCheckpointBaselineFile;
 import org.tron.core.db2.core.CommonCheckpointFile;
 import org.tron.core.db2.core.CommonCheckpointFormat;
 import org.tron.core.db2.core.CommonCheckpointHotRecovery;
+import org.tron.core.db2.core.CommonCheckpointMaterializedStore;
 import org.tron.core.db2.core.CommonCheckpointRecoveryStateAdapter;
 import org.tron.core.db2.core.CommonCheckpointRedoCoordinator;
 import org.tron.core.db2.core.CommonCheckpointRuntime;
@@ -825,6 +826,10 @@ public class Manager {
       PathStateLayerLimits limits = new PathStateLayerLimits(
           storage.getPathStateRootReversibleLayerLimit(),
           storage.getPathStateRootReversibleLayerBytes());
+      recoverPendingCommonCheckpoint(snapshots, checkpointDirectory, archiveDirectory,
+          pathDirectory, pathEngine, servingIndexEngine,
+          storage.getPathStateRootNodeCacheBytes(), formatIdentity, baselineFile, baselineExists,
+          modeAdmitted);
       BlockSnapshotMeta canonical = currentCanonicalBlockMeta();
       P66Phase phase = currentPathStatePhase();
       if (modeAdmitted && Files.isRegularFile(
@@ -870,8 +875,10 @@ public class Manager {
           supplementalStores = commonCheckpointSupplementalStores(snapshots);
       LatestStateGenerationAdapter latest = LatestStateGenerationCoordinatorFactory.createAdapter(
           snapshots, supplementalStores);
+      CommonCheckpointMaterializedStore materializedStore =
+          new CommonCheckpointMaterializedStore(checkpointDirectory);
       PathStateCheckpointMaterializer pathMaterializer = pathOwner.checkpointMaterializer(
-          formatIdentity, baseline);
+          formatIdentity, baseline, materializedStore);
       org.tron.core.config.args.StorageConfig.StateArchiveHotStoreConfig hotConfig =
           storage.getStateArchiveHotStoreSettings();
       boolean hotEnabled = hotConfig != null && hotConfig.isEnabled();
@@ -897,12 +904,12 @@ public class Manager {
         archiveMaterializer = hotMaterializer;
       } else {
         archiveMaterializer = new StateArchiveCheckpointMaterializer(archiveDirectory,
-            formatIdentity, baseline, servingIndexEngine);
+            formatIdentity, baseline, servingIndexEngine, materializedStore);
       }
       CommonCheckpointRedoCoordinator coordinator = new CommonCheckpointRedoCoordinator(
           checkpointFile,
           new ChainbaseCheckpointMaterializer(checkpointDirectory, formatIdentity,
-              snapshots.getDbs(), baseline),
+              snapshots.getDbs(), baseline, materializedStore),
           pathMaterializer, archiveMaterializer);
       PathStatePhysicalOverlayHead admittedOwner = pathOwner;
       StateArchiveHotCheckpointMaterializer admittedHotMaterializer = hotMaterializer;
@@ -913,7 +920,7 @@ public class Manager {
             if (admittedHotMaterializer == null) {
               return new CommonCheckpointRuntime(owner, snapshots.getDbs(), archiveDirectory,
                   formatIdentity, archiveRuntimeEngine, latest::pin,
-                  admittedOwner::prepareCommonCheckpointRebase);
+                  admittedOwner::prepareCommonCheckpointRebase, materializedStore);
             }
             CommonCheckpointRecoveryStateAdapter recoveryState =
                 new CommonCheckpointRecoveryStateAdapter(getDynamicPropertiesStore(),
@@ -937,7 +944,7 @@ public class Manager {
           LinkOption.NOFOLLOW_LINKS)) {
         if (admittedHotStore == null) {
           requireCommonPublishedAuthorities(checkpointDirectory, archiveDirectory, pathDirectory,
-              formatIdentity, servingIndexEngine);
+              formatIdentity, servingIndexEngine, materializedStore);
         } else {
           requireHotCommonPublishedAuthorities(checkpointDirectory, pathDirectory,
               formatIdentity, admittedHotStore);
@@ -1002,6 +1009,39 @@ public class Manager {
     }
   }
 
+  private void recoverPendingCommonCheckpoint(SnapshotManager snapshots,
+      Path checkpointDirectory, Path archiveDirectory, Path pathDirectory,
+      PathStateStoreManifest.Engine pathEngine,
+      PathStateStoreManifest.Engine archiveEngine, long residentNodeCacheBytes,
+      byte[] formatIdentity, CommonCheckpointBaselineFile baselineFile, boolean baselineExists,
+      boolean modeAdmitted) throws java.io.IOException {
+    CommonCheckpointFile checkpointFile = new CommonCheckpointFile(checkpointDirectory);
+    if (!checkpointFile.isPresent()) {
+      return;
+    }
+    if (!baselineExists || !modeAdmitted) {
+      throw new java.io.IOException(
+          "Common checkpoint WAL requires an admitted PathState baseline");
+    }
+    CommonCheckpointBaseline baseline = baselineFile.load();
+    CommonCheckpointMaterializedStore materializedStore =
+        new CommonCheckpointMaterializedStore(checkpointDirectory);
+    try (PathStateCheckpointMaterializer.RecoverySession pathRecovery =
+        PathStateCheckpointMaterializer.openRecovery(pathDirectory, pathEngine,
+            residentNodeCacheBytes, formatIdentity, baseline, materializedStore);
+        CommonCheckpointRedoCoordinator coordinator = new CommonCheckpointRedoCoordinator(
+            checkpointFile,
+            new ChainbaseCheckpointMaterializer(checkpointDirectory, formatIdentity,
+                snapshots.getDbs(), baseline, materializedStore),
+            pathRecovery.getMaterializer(),
+            new StateArchiveCheckpointMaterializer(archiveDirectory, formatIdentity, baseline,
+                archiveEngine, materializedStore))) {
+      CommonCheckpointRedoCoordinator.RecoveryAction action = coordinator.recover();
+      logger.info("Common checkpoint startup redo completed before PathState open: action={}",
+          action);
+    }
+  }
+
   private BlockSnapshotMeta currentCanonicalBlockMeta()
       throws BadItemException, ItemNotFoundException {
     long number = getDynamicPropertiesStore().getLatestBlockHeaderNumber();
@@ -1021,14 +1061,15 @@ public class Manager {
 
   private static void requireCommonPublishedAuthorities(Path checkpointDirectory,
       Path archiveDirectory, Path pathDirectory, byte[] formatIdentity,
-      PathStateStoreManifest.Engine engine) throws java.io.IOException {
+      PathStateStoreManifest.Engine engine,
+      CommonCheckpointMaterializedStore materializedStore) throws java.io.IOException {
     ChainbaseCheckpointMaterializer.PublishedHead chain =
         ChainbaseCheckpointMaterializer.loadPublishedHead(checkpointDirectory, formatIdentity);
     PathStateCheckpointMaterializer.PublishedHead path =
         PathStateCheckpointMaterializer.loadPublishedHead(pathDirectory, formatIdentity);
     org.tron.core.db2.core.CommonCheckpointTarget archive =
         StateArchiveCheckpointMaterializer.loadPublishedTarget(archiveDirectory, formatIdentity,
-            engine);
+            engine, materializedStore);
     BlockSnapshotMeta last = archive.getLastBlock();
     if (chain.getEpoch() != last.getEpoch() || path.getEpoch() != last.getEpoch()
         || chain.getBlockNumber() != last.getBlockNumber()

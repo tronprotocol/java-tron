@@ -94,6 +94,16 @@ public final class CommonCheckpointRedoCoordinator implements AutoCloseable {
     }
   }
 
+  /** Requires every authority to expose the same fully published startup target. */
+  synchronized void requirePublished(CommonCheckpointTarget target) throws IOException {
+    requireOpen();
+    CommonCheckpointTarget admitted = Objects.requireNonNull(target, "target");
+    for (Authority authority : ORDER) {
+      requireStatus(authority, Status.PUBLISHED,
+          materializers.get(authority).inspect(admitted), "startup validation");
+    }
+  }
+
   /** Closes runtime-owned authority resources in reverse publication order. */
   @Override
   public synchronized void close() throws IOException {

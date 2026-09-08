@@ -28,6 +28,7 @@ public final class CommonCheckpointRuntime implements AutoCloseable {
   private final CommonCheckpointMemoryRebaser memoryRebaser;
   private final CommonCheckpointHotRecovery hotRecovery;
   private final StateArchiveHotCheckpointMaterializer hotMaterializer;
+  private final CommonCheckpointMaterializedStore materializedStore;
   private final LongSupplier nanoTime;
   private final TimingSink timingSink;
   private final CommonCheckpointPayloadFactory payloadFactory = new CommonCheckpointPayloadFactory();
@@ -39,7 +40,8 @@ public final class CommonCheckpointRuntime implements AutoCloseable {
       StateArchiveCheckpointReadSnapshot.PinnedLatestStateFactory latestFactory,
       CommonCheckpointMemoryRebaser memoryRebaser) {
     this(owner, databases, archiveDirectory, formatIdentity, engine, latestFactory,
-        memoryRebaser, null, null, System::nanoTime, CommonCheckpointRuntime::logTiming);
+        memoryRebaser, null, null, null, System::nanoTime,
+        CommonCheckpointRuntime::logTiming);
   }
 
   /** Constructs the default-off Hot DB v2 path selected by the dual-gated Manager branch. */
@@ -50,8 +52,18 @@ public final class CommonCheckpointRuntime implements AutoCloseable {
       StateArchiveHotCheckpointMaterializer hotMaterializer,
       CommonCheckpointHotRecovery hotRecovery) {
     this(owner, databases, archiveDirectory, formatIdentity, engine, latestFactory,
-        memoryRebaser, Objects.requireNonNull(hotMaterializer, "hotMaterializer"),
+        memoryRebaser, null, Objects.requireNonNull(hotMaterializer, "hotMaterializer"),
         Objects.requireNonNull(hotRecovery, "hotRecovery"), System::nanoTime,
+        CommonCheckpointRuntime::logTiming);
+  }
+
+  public CommonCheckpointRuntime(CommonCheckpointRuntimeOwner owner, List<Chainbase> databases,
+      Path archiveDirectory, byte[] formatIdentity, Engine engine,
+      StateArchiveCheckpointReadSnapshot.PinnedLatestStateFactory latestFactory,
+      CommonCheckpointMemoryRebaser memoryRebaser,
+      CommonCheckpointMaterializedStore materializedStore) {
+    this(owner, databases, archiveDirectory, formatIdentity, engine, latestFactory,
+        memoryRebaser, materializedStore, null, null, System::nanoTime,
         CommonCheckpointRuntime::logTiming);
   }
 
@@ -61,13 +73,24 @@ public final class CommonCheckpointRuntime implements AutoCloseable {
       CommonCheckpointMemoryRebaser memoryRebaser, LongSupplier nanoTime,
       TimingSink timingSink) {
     this(owner, databases, archiveDirectory, formatIdentity, engine, latestFactory,
-        memoryRebaser, null, null, nanoTime, timingSink);
+        memoryRebaser, null, null, null, nanoTime, timingSink);
   }
 
   CommonCheckpointRuntime(CommonCheckpointRuntimeOwner owner, List<Chainbase> databases,
       Path archiveDirectory, byte[] formatIdentity, Engine engine,
       StateArchiveCheckpointReadSnapshot.PinnedLatestStateFactory latestFactory,
       CommonCheckpointMemoryRebaser memoryRebaser,
+      StateArchiveHotCheckpointMaterializer hotMaterializer,
+      CommonCheckpointHotRecovery hotRecovery, LongSupplier nanoTime, TimingSink timingSink) {
+    this(owner, databases, archiveDirectory, formatIdentity, engine, latestFactory,
+        memoryRebaser, null, hotMaterializer, hotRecovery, nanoTime, timingSink);
+  }
+
+  CommonCheckpointRuntime(CommonCheckpointRuntimeOwner owner, List<Chainbase> databases,
+      Path archiveDirectory, byte[] formatIdentity, Engine engine,
+      StateArchiveCheckpointReadSnapshot.PinnedLatestStateFactory latestFactory,
+      CommonCheckpointMemoryRebaser memoryRebaser,
+      CommonCheckpointMaterializedStore materializedStore,
       StateArchiveHotCheckpointMaterializer hotMaterializer,
       CommonCheckpointHotRecovery hotRecovery, LongSupplier nanoTime, TimingSink timingSink) {
     this.owner = Objects.requireNonNull(owner, "owner");
@@ -80,6 +103,7 @@ public final class CommonCheckpointRuntime implements AutoCloseable {
     this.engine = Objects.requireNonNull(engine, "engine");
     this.latestFactory = Objects.requireNonNull(latestFactory, "latestFactory");
     this.memoryRebaser = Objects.requireNonNull(memoryRebaser, "memoryRebaser");
+    this.materializedStore = materializedStore;
     this.hotRecovery = hotRecovery;
     this.hotMaterializer = hotMaterializer;
     if ((hotRecovery == null) != (hotMaterializer == null)) {
@@ -103,7 +127,10 @@ public final class CommonCheckpointRuntime implements AutoCloseable {
       CommonCheckpointRedoCoordinator.RecoveryAction action = owner.recoverBeforeServing();
       publishedTarget = hotMaterializer == null
           ? StateArchiveCheckpointMaterializer.loadPublishedTargetIfPresent(
-              archiveDirectory, formatIdentity, engine).orElse(null) : null;
+              archiveDirectory, formatIdentity, engine, materializedStore).orElse(null) : null;
+      if (publishedTarget != null) {
+        owner.requirePublishedBeforeServing(publishedTarget);
+      }
       return action;
     } catch (IOException | RuntimeException failure) {
       owner.fail(failure);

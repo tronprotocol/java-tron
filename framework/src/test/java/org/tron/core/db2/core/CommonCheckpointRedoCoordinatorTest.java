@@ -278,6 +278,41 @@ public class CommonCheckpointRedoCoordinatorTest {
     assertEquals("recovered", recovered.read(() -> "recovered"));
   }
 
+  @Test
+  public void startupPublishedValidationRequiresEveryAuthority() throws Exception {
+    Fixture accepted = fixture("runtime-owner-published", null);
+    CommonCheckpointTarget target = CommonCheckpointTarget.from(accepted.payload);
+    for (FakeMaterializer materializer : accepted.materializers) {
+      materializer.target = target;
+      materializer.status = Status.PUBLISHED;
+    }
+    CommonCheckpointRuntimeOwner owner = new CommonCheckpointRuntimeOwner(accepted.coordinator);
+    assertEquals(RecoveryAction.NO_CHECKPOINT, owner.recoverBeforeServing());
+    owner.requirePublishedBeforeServing(target);
+    assertEquals(CommonCheckpointRuntimeOwner.State.READY, owner.getState());
+    owner.close();
+    for (FakeMaterializer materializer : accepted.materializers) {
+      assertEquals(1, materializer.closed);
+    }
+
+    Fixture rejected = fixture("runtime-owner-partial-published", null);
+    CommonCheckpointTarget rejectedTarget = CommonCheckpointTarget.from(rejected.payload);
+    for (FakeMaterializer materializer : rejected.materializers) {
+      materializer.target = rejectedTarget;
+      materializer.status = Status.PUBLISHED;
+    }
+    rejected.materializers.get(1).status = Status.MATERIALIZED;
+    CommonCheckpointRuntimeOwner rejectedOwner =
+        new CommonCheckpointRuntimeOwner(rejected.coordinator);
+    assertEquals(RecoveryAction.NO_CHECKPOINT, rejectedOwner.recoverBeforeServing());
+    assertThrows(IOException.class,
+        () -> rejectedOwner.requirePublishedBeforeServing(rejectedTarget));
+    assertEquals(CommonCheckpointRuntimeOwner.State.FAILED, rejectedOwner.getState());
+    for (FakeMaterializer materializer : rejected.materializers) {
+      assertEquals(1, materializer.closed);
+    }
+  }
+
   private Fixture fixture(String name, CommonCheckpointRedoCoordinator.Stage failure) {
     CommonCheckpointPayload payload = payload();
     CommonCheckpointFile file = new CommonCheckpointFile(
