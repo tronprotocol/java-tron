@@ -923,7 +923,8 @@ public class Program {
       if (VMConfig.allowTvmCompatibleEvm()) {
         program.setContractVersion(getContractVersion());
       }
-      VM.play(program, OperationRegistry.getTable());
+      // Reuse the table prepared by the top-level execution.
+      VM.play(program, OperationRegistry.getTable(isConstantCall()));
       createResult = program.getResult();
       getTrace().merge(program.getTrace());
       // always commit nonce
@@ -1155,7 +1156,8 @@ public class Program {
         program.setContractVersion(invoke.getDeposit()
             .getContract(codeAddress).getContractVersion());
       }
-      VM.play(program, OperationRegistry.getTable());
+      // Reuse the table prepared by the top-level execution.
+      VM.play(program, OperationRegistry.getTable(isConstantCall()));
       callResult = program.getResult();
 
       getTrace().merge(program.getTrace());
