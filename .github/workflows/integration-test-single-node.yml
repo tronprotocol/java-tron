@@ -1,4 +1,4 @@
-name: Integration Test Single Node (Full)
+name: Integration Test Single Node (Smoke)
 
 on:
   push:
@@ -17,7 +17,7 @@ concurrency:
 
 jobs:
   integration:
-    name: Integration Test Single Node Full (JDK 8 / x86_64)
+    name: Integration Test Single Node Smoke (JDK 8 / x86_64)
     runs-on: ubuntu-latest
     timeout-minutes: 45
 
@@ -46,7 +46,7 @@ jobs:
       - name: Pull integration-test image
         run: docker pull troninfra/troninfra-ci:latest
 
-      - name: Run integration tests
+      - name: Run integration smoke tests
         run: |
           # JAVA_HOME=JDK 8 so FullNode runs on the same JVM family as
           # production (a few assertions check `java.version` starts with
@@ -58,9 +58,9 @@ jobs:
             -e JAVA_HOME_17=/opt/java/openjdk \
             -v "${{ github.workspace }}/build/libs/FullNode.jar:/javatron/FullNode.jar:ro" \
             troninfra/troninfra-ci:latest \
-            --clean
+            --clean --smoke
 
-      - name: Extract test reports from container
+      - name: Extract smoke test reports from container
         if: always()
         run: |
           mkdir -p integration-reports
@@ -71,10 +71,10 @@ jobs:
           docker cp integration-test:/app/node/data/logs/tron.log integration-reports/ 2>/dev/null || true
           docker rm -f integration-test 2>/dev/null || true
 
-      - name: Upload test reports
+      - name: Upload smoke test reports
         if: always()
         uses: actions/upload-artifact@v6
         with:
-          name: integration-test-report
+          name: integration-smoke-test-report
           path: integration-reports/
           if-no-files-found: warn
