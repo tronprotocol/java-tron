@@ -68,15 +68,12 @@ jobs:
           java -jar "$JAR" keystore --help
 
       - name: Upload test diagnostics
-        if: always()
+        if: failure()
         uses: actions/upload-artifact@v6
         with:
           name: tron-test-logs-${{ github.job }}-jdk${{ matrix.java }}-${{ matrix.arch }}
           path: |
             **/logs/tron-test.log
-            **/logs/tron-test-*.log.zip
-            **/build/test-results/**/TEST-*.xml
-            **/build/reports/tests/**
             ci-logs/*.log
           if-no-files-found: warn
           retention-days: 7
@@ -125,15 +122,12 @@ jobs:
           java -jar "$JAR" keystore --help
 
       - name: Upload test diagnostics
-        if: always()
+        if: failure()
         uses: actions/upload-artifact@v6
         with:
           name: tron-test-logs-${{ github.job }}
           path: |
             **/logs/tron-test.log
-            **/logs/tron-test-*.log.zip
-            **/build/test-results/**/TEST-*.xml
-            **/build/reports/tests/**
             ci-logs/*.log
           if-no-files-found: warn
           retention-days: 7
@@ -213,15 +207,12 @@ jobs:
           ./gradlew :framework:testWithRocksDb --no-daemon --console=plain 2>&1 | tee ci-logs/rocksdb-test.log
 
       - name: Upload test diagnostics
-        if: always()
+        if: failure()
         uses: actions/upload-artifact@v6
         with:
           name: tron-test-logs-${{ github.job }}
           path: |
             **/logs/tron-test.log
-            **/logs/tron-test-*.log.zip
-            **/build/test-results/**/TEST-*.xml
-            **/build/reports/tests/**
             ci-logs/*.log
           if-no-files-found: warn
           retention-days: 7
@@ -304,15 +295,12 @@ jobs:
           if-no-files-found: error
 
       - name: Upload test diagnostics
-        if: always()
+        if: failure()
         uses: actions/upload-artifact@v6
         with:
           name: tron-test-logs-${{ github.job }}
           path: |
             **/logs/tron-test.log
-            **/logs/tron-test-*.log.zip
-            **/build/test-results/**/TEST-*.xml
-            **/build/reports/tests/**
             ci-logs/*.log
           if-no-files-found: warn
           retention-days: 7
@@ -355,6 +343,7 @@ jobs:
             coverage-base-x86_64-gradle-
 
       - name: Build (base)
+        id: base_build
         # Test failures on the base branch are tolerated: merge-order races can
         # leave the base with a pre-existing failing test that is unrelated to
         # this PR.  The only output we need from this job is the jacoco XML for
@@ -367,6 +356,7 @@ jobs:
           ./gradlew clean build --no-daemon --no-build-cache --console=plain 2>&1 | tee ci-logs/build.log
 
       - name: Test with RocksDB engine (base)
+        id: base_rocksdb_test
         continue-on-error: true
         shell: bash
         run: |
@@ -390,15 +380,13 @@ jobs:
           if-no-files-found: warn
 
       - name: Upload test diagnostics
-        if: always()
+        # Preserve logs for test failures tolerated by continue-on-error above.
+        if: ${{ failure() || steps.base_build.outcome == 'failure' || steps.base_rocksdb_test.outcome == 'failure' }}
         uses: actions/upload-artifact@v6
         with:
           name: tron-test-logs-${{ github.job }}
           path: |
             **/logs/tron-test.log
-            **/logs/tron-test-*.log.zip
-            **/build/test-results/**/TEST-*.xml
-            **/build/reports/tests/**
             ci-logs/*.log
           if-no-files-found: warn
           retention-days: 7
