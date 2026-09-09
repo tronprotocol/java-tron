@@ -66,9 +66,10 @@ public final class PathStatePhysicalStoreSet implements Closeable {
   private static final String REVERSE_DIRECTORY = "reverse";
   static final String INTENT_FILE = "INTENT";
   static final String CURRENT_FILE = "CURRENT";
-  private static final byte FLAT_PREFIX = 'F';
-  private static final byte NODE_PREFIX = 'N';
-  private static final byte META_PREFIX = 'M';
+  // Stable persisted keyspace tags. The descriptive names carry semantics; byte values keep ABI.
+  private static final byte FLAT_STATE_PREFIX = 'F';
+  private static final byte TRIE_NODE_PREFIX = 'N';
+  private static final byte METADATA_PREFIX = 'M';
   private static final byte[] FLAT_ROOT_METADATA = new byte[]{'f', 'l', 'a', 't', '-', 'r', 'o',
       'o', 't'};
   private static final byte[] FLAT_COMPLETE_METADATA = new byte[]{'f', 'l', 'a', 't', '-', 'c',
@@ -301,7 +302,7 @@ public final class PathStatePhysicalStoreSet implements Closeable {
       byte[] key = Arrays.copyOf(physicalKey, physicalKey.length);
       byte[] secureKey = PathStateCommitmentCodec.storeLeafKey(participant.getStoreId(), key);
       byte[] encodedLeaf = PathStateCommitmentCodec.presentLeafValue(physicalValue);
-      byte[] storedKey = prefixed(FLAT_PREFIX, secureKey, "secureKey");
+      byte[] storedKey = prefixed(FLAT_STATE_PREFIX, secureKey, "secureKey");
       long mutationBytes = storedKey.length + encodedLeaf.length;
       if (!pending.isEmpty()
           && pendingBytes[0] + mutationBytes > BOOTSTRAP_WRITE_BATCH_BYTES) {
@@ -1655,7 +1656,8 @@ public final class PathStatePhysicalStoreSet implements Closeable {
 
   private static byte[] unprefixedFlatKey(byte[] storedKey) {
     byte[] key = Arrays.copyOf(Objects.requireNonNull(storedKey, "storedKey"), storedKey.length);
-    if (key.length != PathStateCommitmentCodec.ROOT_LENGTH + 1 || key[0] != FLAT_PREFIX) {
+    if (key.length != PathStateCommitmentCodec.ROOT_LENGTH + 1
+        || key[0] != FLAT_STATE_PREFIX) {
       throw new IllegalStateException("path-state physical F key is corrupt");
     }
     return Arrays.copyOfRange(key, 1, key.length);
@@ -1690,7 +1692,7 @@ public final class PathStatePhysicalStoreSet implements Closeable {
     }
 
     public void putFlat(byte[] secureKey, byte[] encodedLeaf) {
-      nativeStore.put(prefixed(FLAT_PREFIX, secureKey, "secureKey"), encodedLeaf);
+      nativeStore.put(prefixed(FLAT_STATE_PREFIX, secureKey, "secureKey"), encodedLeaf);
     }
 
     private void writeBatch(List<PathStateNativeNodeStore.BatchMutation> mutations) {
@@ -1698,15 +1700,16 @@ public final class PathStatePhysicalStoreSet implements Closeable {
     }
 
     public byte[] getFlat(byte[] secureKey) {
-      return nativeStore.get(prefixed(FLAT_PREFIX, secureKey, "secureKey"));
+      return nativeStore.get(prefixed(FLAT_STATE_PREFIX, secureKey, "secureKey"));
     }
 
     public void deleteFlat(byte[] secureKey) {
-      nativeStore.delete(prefixed(FLAT_PREFIX, secureKey, "secureKey"));
+      nativeStore.delete(prefixed(FLAT_STATE_PREFIX, secureKey, "secureKey"));
     }
 
     void scanFlat(PathStateNativeNodeStore.EntryConsumer consumer) throws IOException {
-      nativeStore.scanPrefix(new byte[]{FLAT_PREFIX}, Objects.requireNonNull(consumer, "consumer"));
+      nativeStore.scanPrefix(new byte[]{FLAT_STATE_PREFIX},
+          Objects.requireNonNull(consumer, "consumer"));
     }
 
     public PathNodeStore nodeStore() {
@@ -1744,7 +1747,7 @@ public final class PathStatePhysicalStoreSet implements Closeable {
     void clearNodes() throws IOException {
       nodeStore.clear();
       List<PathStateNativeNodeStore.BatchMutation> pending = new ArrayList<>(4096);
-      nativeStore.scanPrefix(new byte[]{NODE_PREFIX}, entry -> {
+      nativeStore.scanPrefix(new byte[]{TRIE_NODE_PREFIX}, entry -> {
         pending.add(PathStateNativeNodeStore.BatchMutation.delete(entry.getKey()));
         if (pending.size() == 4096) {
           nativeStore.writeBatch(new ArrayList<>(pending));
@@ -1760,7 +1763,7 @@ public final class PathStatePhysicalStoreSet implements Closeable {
         byte[] flatDigest, byte[] generation, byte[] storeRoot) {
       List<PathStateNativeNodeStore.BatchMutation> mutations = new ArrayList<>();
       mutations.add(PathStateNativeNodeStore.BatchMutation.delete(
-          prefixed(FLAT_PREFIX, secureKey, "secureKey")));
+          prefixed(FLAT_STATE_PREFIX, secureKey, "secureKey")));
       appendNodeMutations(mutations, nodeMutations);
       mutations.add(metadataMutation(FLAT_DIGEST_METADATA, flatDigest));
       mutations.add(metadataMutation(STORE_GENERATION_METADATA, generation));
@@ -1774,7 +1777,7 @@ public final class PathStatePhysicalStoreSet implements Closeable {
         byte[] storeRoot) {
       List<PathStateNativeNodeStore.BatchMutation> mutations = new ArrayList<>();
       for (FlatMutation mutation : Objects.requireNonNull(flatMutations, "flatMutations")) {
-        byte[] key = prefixed(FLAT_PREFIX, mutation.secureKey, "secureKey");
+        byte[] key = prefixed(FLAT_STATE_PREFIX, mutation.secureKey, "secureKey");
         mutations.add(mutation.encodedValue == null
             ? PathStateNativeNodeStore.BatchMutation.delete(key)
             : PathStateNativeNodeStore.BatchMutation.put(key, mutation.encodedValue));
@@ -1801,7 +1804,7 @@ public final class PathStatePhysicalStoreSet implements Closeable {
         byte[] marker) {
       List<PathStateNativeNodeStore.BatchMutation> mutations = new ArrayList<>();
       for (CommonCheckpointPayload.Mutation mutation : target.getFlatMutations()) {
-        byte[] key = prefixed(FLAT_PREFIX, mutation.getKey(), "secureKey");
+        byte[] key = prefixed(FLAT_STATE_PREFIX, mutation.getKey(), "secureKey");
         mutations.add(mutation.isDelete()
             ? PathStateNativeNodeStore.BatchMutation.delete(key)
             : PathStateNativeNodeStore.BatchMutation.put(key, mutation.getValue()));
@@ -1811,8 +1814,10 @@ public final class PathStatePhysicalStoreSet implements Closeable {
         byte[] path = mutation.getKey();
         byte[] value = mutation.getValue();
         mutations.add(mutation.isDelete()
-            ? PathStateNativeNodeStore.BatchMutation.delete(prefixed(NODE_PREFIX, path, "path"))
-            : PathStateNativeNodeStore.BatchMutation.put(prefixed(NODE_PREFIX, path, "path"),
+            ? PathStateNativeNodeStore.BatchMutation.delete(
+                prefixed(TRIE_NODE_PREFIX, path, "path"))
+            : PathStateNativeNodeStore.BatchMutation.put(
+                prefixed(TRIE_NODE_PREFIX, path, "path"),
                 value));
         cacheMutations.add(new NodeMutation(path, value));
       }
@@ -1828,8 +1833,10 @@ public final class PathStatePhysicalStoreSet implements Closeable {
         byte[] path = mutation.getKey();
         byte[] value = mutation.getValue();
         mutations.add(mutation.isDelete()
-            ? PathStateNativeNodeStore.BatchMutation.delete(prefixed(NODE_PREFIX, path, "path"))
-            : PathStateNativeNodeStore.BatchMutation.put(prefixed(NODE_PREFIX, path, "path"),
+            ? PathStateNativeNodeStore.BatchMutation.delete(
+                prefixed(TRIE_NODE_PREFIX, path, "path"))
+            : PathStateNativeNodeStore.BatchMutation.put(
+                prefixed(TRIE_NODE_PREFIX, path, "path"),
                 value));
         cacheMutations.add(new NodeMutation(path, value));
       }
@@ -1846,7 +1853,7 @@ public final class PathStatePhysicalStoreSet implements Closeable {
         List<PathStateNativeNodeStore.BatchMutation> target,
         List<NodeMutation> nodeMutations) {
       for (NodeMutation mutation : Objects.requireNonNull(nodeMutations, "nodeMutations")) {
-        byte[] key = prefixed(NODE_PREFIX, mutation.path, "path");
+        byte[] key = prefixed(TRIE_NODE_PREFIX, mutation.path, "path");
         target.add(mutation.encodedNode == null
             ? PathStateNativeNodeStore.BatchMutation.delete(key)
             : PathStateNativeNodeStore.BatchMutation.put(key, mutation.encodedNode));
@@ -1855,20 +1862,20 @@ public final class PathStatePhysicalStoreSet implements Closeable {
 
     private static PathStateNativeNodeStore.BatchMutation metadataMutation(byte[] name,
         byte[] value) {
-      return PathStateNativeNodeStore.BatchMutation.put(prefixed(META_PREFIX, name,
+      return PathStateNativeNodeStore.BatchMutation.put(prefixed(METADATA_PREFIX, name,
           "metadata name"), value);
     }
 
     public void putMetadata(byte[] name, byte[] value) {
-      nativeStore.put(prefixed(META_PREFIX, name, "metadata name"), value);
+      nativeStore.put(prefixed(METADATA_PREFIX, name, "metadata name"), value);
     }
 
     public byte[] getMetadata(byte[] name) {
-      return nativeStore.get(prefixed(META_PREFIX, name, "metadata name"));
+      return nativeStore.get(prefixed(METADATA_PREFIX, name, "metadata name"));
     }
 
     void deleteMetadata(byte[] name) {
-      nativeStore.delete(prefixed(META_PREFIX, name, "metadata name"));
+      nativeStore.delete(prefixed(METADATA_PREFIX, name, "metadata name"));
     }
 
     public Path getDirectory() {
@@ -1892,17 +1899,17 @@ public final class PathStatePhysicalStoreSet implements Closeable {
 
     @Override
     public byte[] get(byte[] path) {
-      return nativeStore.get(prefixed(NODE_PREFIX, path, "path"));
+      return nativeStore.get(prefixed(TRIE_NODE_PREFIX, path, "path"));
     }
 
     @Override
     public void put(byte[] path, byte[] encodedNode) {
-      nativeStore.put(prefixed(NODE_PREFIX, path, "path"), encodedNode);
+      nativeStore.put(prefixed(TRIE_NODE_PREFIX, path, "path"), encodedNode);
     }
 
     @Override
     public void delete(byte[] path) {
-      nativeStore.delete(prefixed(NODE_PREFIX, path, "path"));
+      nativeStore.delete(prefixed(TRIE_NODE_PREFIX, path, "path"));
     }
   }
 
@@ -2120,12 +2127,12 @@ public final class PathStatePhysicalStoreSet implements Closeable {
     @Override
     public byte[] get(byte[] path) {
       flush();
-      return nativeStore.get(prefixed(NODE_PREFIX, path, "path"));
+      return nativeStore.get(prefixed(TRIE_NODE_PREFIX, path, "path"));
     }
 
     @Override
     public void put(byte[] path, byte[] encodedNode) {
-      byte[] key = prefixed(NODE_PREFIX, path, "path");
+      byte[] key = prefixed(TRIE_NODE_PREFIX, path, "path");
       byte[] value = Arrays.copyOf(Objects.requireNonNull(encodedNode, "encodedNode"),
           encodedNode.length);
       flushBeforeOversizedMutation(key.length + value.length);
@@ -2136,7 +2143,7 @@ public final class PathStatePhysicalStoreSet implements Closeable {
 
     @Override
     public void delete(byte[] path) {
-      byte[] key = prefixed(NODE_PREFIX, path, "path");
+      byte[] key = prefixed(TRIE_NODE_PREFIX, path, "path");
       flushBeforeOversizedMutation(key.length);
       pending.add(PathStateNativeNodeStore.BatchMutation.delete(key));
       pendingBytes = Math.addExact(pendingBytes, key.length);
