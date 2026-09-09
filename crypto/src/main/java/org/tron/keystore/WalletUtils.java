@@ -19,12 +19,14 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.NoSuchElementException;
 import java.util.Scanner;
 import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.tron.common.crypto.SignInterface;
 import org.tron.core.exception.CipherException;
+import org.tron.core.exception.TronError;
 
 /**
  * Utility functions for working with Wallet files.
@@ -233,6 +235,14 @@ public class WalletUtils {
     while (true) {
       if (cons != null) {
         char[] pwd = cons.readPassword("password: ");
+        // Console EOF (e.g. Ctrl+D) returns null; fail fast instead of
+        // crashing with a raw NullPointerException.
+        if (pwd == null) {
+          throw new TronError(
+              "password input closed (EOF) while reading from the console; "
+                  + "restart with --password or provide an interactive TTY",
+              TronError.ErrCode.WITNESS_KEYSTORE_LOAD);
+        }
         password = String.valueOf(pwd);
       } else {
         // Preserve the full password including embedded whitespace.
@@ -241,7 +251,18 @@ public class WalletUtils {
         // staple" to "correct" when piped via stdin (e.g. echo ... | java).
         // stripPasswordLine only removes the UTF-8 BOM and trailing line
         // terminators — internal whitespace is part of the password.
-        password = stripPasswordLine(in.nextLine());
+        String line;
+        try {
+          line = in.nextLine();
+        } catch (NoSuchElementException e) {
+          // Piped stdin reached EOF before a password line was available;
+          // fail fast instead of leaking a raw NoSuchElementException.
+          throw new TronError(
+              "password input closed (EOF): piped stdin provided no password "
+                  + "line; restart with --password or provide an interactive TTY",
+              e, TronError.ErrCode.WITNESS_KEYSTORE_LOAD);
+        }
+        password = stripPasswordLine(line);
       }
       if (passwordValid(password)) {
         return password;
