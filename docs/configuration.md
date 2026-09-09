@@ -151,12 +151,13 @@ storage.properties = [
 ### Block Production (Super Representatives)
 
 ```hocon
-# Plain private key (use localwitnesskeystore for production)
+# DEPRECATED: plain private key, insecure (anyone reading the config file
+# sees the keys). Use localwitnesskeystore for production.
 localwitness = [
   "your-private-key-hex"
 ]
 
-# Recommended: keystore file
+# Recommended: encrypted keystore file
 # localwitnesskeystore = [
 #   "/path/to/localwitnesskeystore.json"
 # ]

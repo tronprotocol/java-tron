@@ -905,6 +905,9 @@ public class Args extends CommonParameter {
 
     // path 1: CLI --private-key
     if (StringUtils.isNotBlank(cmd.privateKey)) {
+      logger.warn("Passing the witness private key via -p/--private-key is deprecated and "
+          + "insecure: the key is visible in the process list and shell history. Use "
+          + "localwitnesskeystore in the config file instead.");
       localWitnesses = WitnessInitializer.initFromCLIPrivateKey(
           cmd.privateKey, cmd.witnessAddress);
       return;
@@ -914,6 +917,8 @@ public class Args extends CommonParameter {
 
     // path 2: config localwitness (private key list)
     if (!lwConfig.getPrivateKeys().isEmpty()) {
+      logger.warn("Storing plain witness private keys in 'localwitness' is insecure: any "
+          + "reader of the config file sees the keys. Use localwitnesskeystore instead.");
       localWitnesses = WitnessInitializer.initFromCFGPrivateKey(
           lwConfig.getPrivateKeys(), lwConfig.getAccountAddress());
       return;
@@ -921,6 +926,11 @@ public class Args extends CommonParameter {
 
     // path 3: config localwitnesskeystore + password
     if (!lwConfig.getKeystores().isEmpty()) {
+      if (StringUtils.isNotBlank(cmd.password)) {
+        logger.warn("Passing the keystore password via --password is insecure: it is visible "
+            + "in the process list and shell history. Omit --password to enter it "
+            + "interactively when prompted.");
+      }
       localWitnesses = WitnessInitializer.initFromKeystore(
           lwConfig.getKeystores(), cmd.password, lwConfig.getAccountAddress());
       return;
