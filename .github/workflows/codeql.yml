@@ -34,6 +34,9 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v5
 
+    - name: Validate Gradle wrapper
+      uses: gradle/actions/wrapper-validation@v6
+
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL
       uses: github/codeql-action/init@v4

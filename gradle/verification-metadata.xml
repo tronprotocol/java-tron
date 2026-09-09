@@ -3,11 +3,6 @@
    <configuration>
       <verify-metadata>true</verify-metadata>
       <verify-signatures>false</verify-signatures>
-      <trusted-artifacts>
-         <trust file=".*-javadoc[.]jar" regex="true"/>
-         <trust file=".*-sources[.]jar" regex="true"/>
-         <trust group=".*" name=".*" version=".*-SNAPSHOT" regex="true"/>
-      </trusted-artifacts>
    </configuration>
    <components>
       <component group="antlr" name="antlr" version="2.7.7">

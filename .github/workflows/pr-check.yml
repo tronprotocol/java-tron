@@ -103,6 +103,9 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
+      - name: Validate Gradle wrapper
+        uses: gradle/actions/wrapper-validation@v6
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
