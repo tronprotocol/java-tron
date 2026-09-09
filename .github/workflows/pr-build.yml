@@ -113,15 +113,26 @@ jobs:
 
     env:
       GRADLE_USER_HOME: /github/home/.gradle
-      LANG: en_US.UTF-8
-      LC_ALL: en_US.UTF-8
+      LANG: C.utf8
+      LC_ALL: C.utf8
 
     steps:
       - name: Install dependencies (Rocky 8 + JDK8)
         run: |
           set -euxo pipefail
-          dnf -y install java-1.8.0-openjdk-devel git wget unzip which jq bc curl glibc-langpack-en
-          dnf -y groupinstall "Development Tools"
+          # Rocky 8 already provides CA certificates, JNI runtime libraries, tar and gzip.
+          # Its built-in C.utf8 locale provides UTF-8 without an extra language pack.
+          # git-core provides checkout commands; zstd supports actions/cache compression.
+          dnf -y --setopt=install_weak_deps=False install \
+            java-1.8.0-openjdk-devel git-core zstd
+          # Set JAVA_HOME so the Gradle wrapper does not need which.
+          javac_path=$(command -v javac)
+          javac_real=$(readlink -f "$javac_path")
+          jdk_bin=$(dirname "$javac_real")
+          jdk_home=$(dirname "$jdk_bin")
+          test -x "$jdk_home/bin/java"
+          test -x "$jdk_home/bin/javac"
+          printf 'JAVA_HOME=%s\n' "$jdk_home" >> "$GITHUB_ENV"
 
       - name: Checkout code
         uses: actions/checkout@v5
