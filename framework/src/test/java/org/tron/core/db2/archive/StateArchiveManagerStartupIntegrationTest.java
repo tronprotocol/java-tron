@@ -926,8 +926,13 @@ public class StateArchiveManagerStartupIntegrationTest {
       Manager manager = manager(snapshots, head);
 
       withArchiveConfig(output, engine, true, () -> invoke(manager, "initStateArchive"));
+      Path runtimeBuilder = archive.resolve(
+          StateArchiveRuntimeOwner.SERVING_INDEX_RUNTIME_DIRECTORY).resolve("keys");
+      Engine selectedEngine = Engine.valueOf(engine);
 
       assertEquals(State.RUNNING, manager.getStateArchiveRuntime().getState());
+      assertEquals(1,
+          StateArchiveIndexDatabase.openReferenceCount(runtimeBuilder, selectedEngine));
       assertEquals(0, manager.getStateArchiveRuntime().getStartupRecoveryActionCount());
       assertEquals(head.getMeta(), manager.getStateArchiveRuntime().getRecoveredHead());
       assertNotNull(manager.getArchiveHistoryWriter());
@@ -971,10 +976,14 @@ public class StateArchiveManagerStartupIntegrationTest {
             .getTotalSstBytes().isAvailable());
         assertEquals("ROCKSDB".equals(engine), inspection.getGeneration().getEngine()
             .getPendingCompactionBytes().isAvailable());
+        assertEquals(1,
+            StateArchiveIndexDatabase.openReferenceCount(runtimeBuilder, selectedEngine));
         setField(snapshots, "size", 0);
       }
 
       invoke(manager, "closeStateArchive");
+      assertEquals(0,
+          StateArchiveIndexDatabase.openReferenceCount(runtimeBuilder, selectedEngine));
       assertEquals(-1, snapshots.getArchiveReadableEpoch());
       assertNull(manager.getStateArchiveRuntime());
       assertNull(manager.getArchiveHistoryWriter());

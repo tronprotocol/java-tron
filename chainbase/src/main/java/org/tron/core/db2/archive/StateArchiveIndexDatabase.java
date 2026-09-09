@@ -39,6 +39,8 @@ final class StateArchiveIndexDatabase {
   static final String HOT_BLOCKS_COLUMN_FAMILY = "blocks";
   private static final Map<Path, SharedLevelDatabase> LEVEL_DATABASES = new HashMap<>();
   private static final Map<Path, SharedRocksDatabase> ROCKS_DATABASES = new HashMap<>();
+  private static final Map<Path, SharedRocksDatabase> IMMUTABLE_ROCKS_DATABASES =
+      new HashMap<>();
   private static final Map<Path, SharedHotRocksDatabase> HOT_ROCKS_DATABASES = new HashMap<>();
   private static final List<String> HOT_COLUMN_FAMILIES = createHotColumnFamilies();
   private static final Set<String> HOT_COLUMN_FAMILY_SET =
@@ -57,6 +59,13 @@ final class StateArchiveIndexDatabase {
     NativeDbConfig config = Objects.requireNonNull(suppliedConfig, "suppliedConfig");
     return engine == Engine.LEVELDB ? new LevelReader(acquireLevel(path, false, config))
         : new RocksReader(acquireRocks(path, false, config));
+  }
+
+  static Reader openImmutableReader(Path directory, Engine engine) throws IOException {
+    Path path = normalize(directory);
+    NativeDbConfig config = configuredOptions();
+    return engine == Engine.LEVELDB ? new LevelReader(acquireLevel(path, false, config))
+        : new RocksReader(acquireImmutableRocks(path, config));
   }
 
   static Writer openWriter(Path directory, Engine engine) throws IOException {
@@ -115,6 +124,16 @@ final class StateArchiveIndexDatabase {
     Path to = normalize(target);
     if (engine == Engine.ROCKSDB) {
       checkpointRocks(from, to);
+      return;
+    }
+    checkpointLevel(from, to);
+  }
+
+  static void checkpointImmutable(Path source, Path target, Engine engine) throws IOException {
+    Path from = normalize(source);
+    Path to = normalize(target);
+    if (engine == Engine.ROCKSDB) {
+      checkpointFrozenRocks(from, to);
       return;
     }
     checkpointLevel(from, to);
@@ -244,7 +263,7 @@ final class StateArchiveIndexDatabase {
       RocksResources resources = new RocksResources(config, create);
       try {
         shared = new SharedRocksDatabase(directory,
-            org.rocksdb.RocksDB.open(resources.options, directory.toString()), resources);
+            org.rocksdb.RocksDB.open(resources.options, directory.toString()), resources, false);
       } catch (org.rocksdb.RocksDBException | RuntimeException failure) {
         resources.close();
         throw new IOException("Failed to open RocksDB Archive serving index", failure);
@@ -254,6 +273,28 @@ final class StateArchiveIndexDatabase {
               + "writeBufferBytes={}, cacheBytes={}, maxOpenFiles={}", directory,
           config.getBlockSize(), config.getWriteBufferSize(), config.getCacheSize(),
           config.getMaxOpenFiles());
+    }
+    shared.references++;
+    return shared;
+  }
+
+  private static synchronized SharedRocksDatabase acquireImmutableRocks(Path directory,
+      NativeDbConfig config) throws IOException {
+    SharedRocksDatabase shared = IMMUTABLE_ROCKS_DATABASES.get(directory);
+    if (shared == null) {
+      RocksResources resources = new RocksResources(config, false);
+      try {
+        shared = new SharedRocksDatabase(directory,
+            org.rocksdb.RocksDB.openReadOnly(resources.options, directory.toString()), resources,
+            true);
+      } catch (org.rocksdb.RocksDBException | RuntimeException failure) {
+        resources.close();
+        throw new IOException("Failed to open immutable RocksDB Archive serving index", failure);
+      }
+      IMMUTABLE_ROCKS_DATABASES.put(directory, shared);
+      logger.info("Immutable Archive native database opened: directory={}, engine=ROCKSDB, "
+              + "blockBytes={}, cacheBytes={}, maxOpenFiles={}", directory,
+          config.getBlockSize(), config.getCacheSize(), config.getMaxOpenFiles());
     }
     shared.references++;
     return shared;
@@ -285,7 +326,11 @@ final class StateArchiveIndexDatabase {
     if (--shared.references != 0) {
       return;
     }
-    ROCKS_DATABASES.remove(shared.directory);
+    if (shared.immutable) {
+      IMMUTABLE_ROCKS_DATABASES.remove(shared.directory);
+    } else {
+      ROCKS_DATABASES.remove(shared.directory);
+    }
     shared.database.close();
     shared.resources.close();
   }
@@ -307,6 +352,32 @@ final class StateArchiveIndexDatabase {
     } finally {
       releaseRocks(shared);
     }
+  }
+
+  private static void checkpointFrozenRocks(Path source, Path target) throws IOException {
+    Files.createDirectory(target);
+    try (java.util.stream.Stream<Path> entries = Files.list(source)) {
+      for (Path entry : (Iterable<Path>) entries::iterator) {
+        if (!Files.isRegularFile(entry, LinkOption.NOFOLLOW_LINKS)) {
+          continue;
+        }
+        String name = entry.getFileName().toString();
+        if ("LOCK".equals(name) || "LOG".equals(name) || "LOG.old".equals(name)) {
+          continue;
+        }
+        Path destination = target.resolve(name);
+        if (name.endsWith(".sst")) {
+          Files.createLink(destination, entry);
+        } else {
+          Files.copy(entry, destination, StandardCopyOption.COPY_ATTRIBUTES);
+          try (java.nio.channels.FileChannel channel = java.nio.channels.FileChannel.open(
+              destination, java.nio.file.StandardOpenOption.WRITE)) {
+            channel.force(true);
+          }
+        }
+      }
+    }
+    HistorySegmentStore.syncDirectory(target);
   }
 
   private static NativeDbConfig configuredOptions() {
@@ -408,13 +479,15 @@ final class StateArchiveIndexDatabase {
     private final Path directory;
     private final org.rocksdb.RocksDB database;
     private final RocksResources resources;
+    private final boolean immutable;
     private int references;
 
     private SharedRocksDatabase(Path directory, org.rocksdb.RocksDB database,
-        RocksResources resources) {
+        RocksResources resources, boolean immutable) {
       this.directory = directory;
       this.database = database;
       this.resources = resources;
+      this.immutable = immutable;
     }
   }
 

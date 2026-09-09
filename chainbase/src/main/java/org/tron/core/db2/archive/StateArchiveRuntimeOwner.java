@@ -23,6 +23,8 @@ import org.tron.core.db2.core.SnapshotManager;
 /** Sole owner for exact-27 State Archive resources from recovered startup through shutdown. */
 public final class StateArchiveRuntimeOwner implements Closeable {
 
+  static final String SERVING_INDEX_RUNTIME_DIRECTORY = ".serving-index-runtime";
+
   public enum ServingIndexStage {
     BEFORE_BUILD,
     GENERATION_INSTALLED,
@@ -68,6 +70,8 @@ public final class StateArchiveRuntimeOwner implements Closeable {
   private Closeable latestCoordinator;
   private Closeable servingCatalog;
   private PersistentServingKeyIndexCatalog servingIndexCatalog;
+  // Process-owned writer: checkpoint targets borrow it and only owner shutdown closes it.
+  private PersistentServingKeyIndexGeneration.RuntimeBuilder servingIndexBuilder;
   private LatestStateGenerationCoordinator latestStateCoordinator;
   private BlockSnapshotMeta latestAuthorityHead;
   private volatile BlockSnapshotMeta readableHead;
@@ -90,6 +94,7 @@ public final class StateArchiveRuntimeOwner implements Closeable {
     this.latestCoordinator = Objects.requireNonNull(latestCoordinator, "latestCoordinator");
     this.servingCatalog = Objects.requireNonNull(servingCatalog, "servingCatalog");
     this.servingIndexCatalog = null;
+    this.servingIndexBuilder = null;
     this.latestStateCoordinator = null;
     this.latestAuthorityHead = null;
     this.readableHead = null;
@@ -119,6 +124,7 @@ public final class StateArchiveRuntimeOwner implements Closeable {
     this.latestCoordinator = null;
     this.servingCatalog = null;
     this.servingIndexCatalog = null;
+    this.servingIndexBuilder = null;
     this.latestStateCoordinator = null;
     this.latestAuthorityHead = null;
     this.lastServingApply = null;
@@ -259,6 +265,7 @@ public final class StateArchiveRuntimeOwner implements Closeable {
     ArchiveHistoryWriter writer = null;
     AsyncArchiveHistorySink asyncSink = null;
     PersistentServingKeyIndexCatalog catalog = null;
+    PersistentServingKeyIndexGeneration.RuntimeBuilder builder = null;
     LatestStateGenerationCoordinator latest = null;
     ArchiveRuntimeAttachment candidate = null;
     boolean attached = false;
@@ -274,19 +281,25 @@ public final class StateArchiveRuntimeOwner implements Closeable {
           storeNames());
       catalog = openOrCreateServingCatalog(writer);
       validateServingIndex(writer, catalog, canonicalHead);
+      try (PersistentServingKeyIndexGeneration current = catalog.pin()) {
+        builder = current.openRuntimeBuilder(
+            archiveDirectory.resolve(SERVING_INDEX_RUNTIME_DIRECTORY));
+      }
       latest = LatestStateGenerationCoordinatorFactory.create(snapshotManager,
           supplementalStores, this::readLatestAuthority);
-      restoreLatestState(writer, catalog, latest, canonicalHead);
+      restoreLatestState(writer, catalog, builder, latest, canonicalHead);
       if (lastServingApply == null) {
         lastServingApply = ServingIndexApplyStatistics.zeroAction(canonicalHead);
       }
       asyncSink = new AsyncArchiveHistorySink(writer, queueCapacity);
       ArchiveHistoryWriter attachedWriter = writer;
       PersistentServingKeyIndexCatalog attachedCatalog = catalog;
+      PersistentServingKeyIndexGeneration.RuntimeBuilder attachedBuilder = builder;
       LatestStateGenerationCoordinator attachedLatest = latest;
       candidate = new ArchiveRuntimeAttachment(collector, asyncSink,
           target -> publishServingIndex(attachedWriter, attachedCatalog, target),
-          target -> publishReadableState(attachedWriter, attachedCatalog, attachedLatest, target));
+          target -> publishReadableState(attachedWriter, attachedCatalog, attachedBuilder,
+              attachedLatest, target));
       snapshotManager.attachArchiveRuntime(candidate);
       attached = true;
       snapshotManager.markArchiveReadableThrough(canonicalHead.getEpoch());
@@ -295,6 +308,7 @@ public final class StateArchiveRuntimeOwner implements Closeable {
       sink = asyncSink;
       historyWriter = writer;
       servingIndexCatalog = catalog;
+      servingIndexBuilder = builder;
       latestStateCoordinator = latest;
       latestCoordinator = latest;
       servingCatalog = catalog;
@@ -317,6 +331,13 @@ public final class StateArchiveRuntimeOwner implements Closeable {
         try {
           writer.close();
         } catch (IOException closeFailure) {
+          failure.addSuppressed(closeFailure);
+        }
+      }
+      if (builder != null) {
+        try {
+          builder.close();
+        } catch (IOException | RuntimeException closeFailure) {
           failure.addSuppressed(closeFailure);
         }
       }
@@ -402,8 +423,9 @@ public final class StateArchiveRuntimeOwner implements Closeable {
   }
 
   private synchronized void restoreLatestState(ArchiveHistoryWriter writer,
-      PersistentServingKeyIndexCatalog catalog, LatestStateGenerationCoordinator latest,
-      BlockSnapshotMeta target) throws IOException {
+      PersistentServingKeyIndexCatalog catalog,
+      PersistentServingKeyIndexGeneration.RuntimeBuilder builder,
+      LatestStateGenerationCoordinator latest, BlockSnapshotMeta target) throws IOException {
     try (PersistentServingKeyIndexGeneration serving = catalog.pin()) {
       validateServingGeneration(writer, serving, target);
       if (serving.isLatestSourceIdentityBound()) {
@@ -411,18 +433,19 @@ public final class StateArchiveRuntimeOwner implements Closeable {
         return;
       }
     }
-    bindAndPublishLatest(writer, catalog, latest, target);
+    bindAndPublishLatest(writer, catalog, builder, latest, target);
   }
 
   private synchronized void publishReadableState(ArchiveHistoryWriter writer,
-      PersistentServingKeyIndexCatalog catalog, LatestStateGenerationCoordinator latest,
-      BlockSnapshotMeta target) throws IOException {
+      PersistentServingKeyIndexCatalog catalog,
+      PersistentServingKeyIndexGeneration.RuntimeBuilder builder,
+      LatestStateGenerationCoordinator latest, BlockSnapshotMeta target) throws IOException {
     if (!target.equals(writer.committedHeadMeta())) {
       throw new ArchivePersistenceException(
           "Readable-state target differs from committed history head");
     }
     readableStateFaultHook.afterStage(ReadableStateStage.CANONICAL_REFRESHED);
-    bindAndPublishLatest(writer, catalog, latest, target);
+    bindAndPublishLatest(writer, catalog, builder, latest, target);
     readableStateFaultHook.afterStage(ReadableStateStage.LATEST_PUBLISHED);
     long previousReadable = snapshotManager.getArchiveReadableEpoch();
     BlockSnapshotMeta previousReadableHead = readableHead;
@@ -452,8 +475,9 @@ public final class StateArchiveRuntimeOwner implements Closeable {
   }
 
   private void bindAndPublishLatest(ArchiveHistoryWriter writer,
-      PersistentServingKeyIndexCatalog catalog, LatestStateGenerationCoordinator latest,
-      BlockSnapshotMeta target) throws IOException {
+      PersistentServingKeyIndexCatalog catalog,
+      PersistentServingKeyIndexGeneration.RuntimeBuilder builder,
+      LatestStateGenerationCoordinator latest, BlockSnapshotMeta target) throws IOException {
     String expectedLatest = latest.getCurrentGenerationId();
     long started = System.nanoTime();
     latestAuthorityHead = target;
@@ -478,8 +502,8 @@ public final class StateArchiveRuntimeOwner implements Closeable {
       }
       try (LatestStateGenerationCoordinator.Candidate candidate =
           latest.acquire(generationId(target))) {
-        publishServingAndLatest(catalog, latest, current, plan, candidate, expectedLatest,
-            target);
+        publishServingAndLatest(catalog, builder, latest, current, plan, candidate,
+            expectedLatest, target);
         lastServingApply = ServingIndexApplyStatistics.from(plan, true,
             System.nanoTime() - started);
       }
@@ -489,12 +513,13 @@ public final class StateArchiveRuntimeOwner implements Closeable {
   }
 
   private void publishServingAndLatest(PersistentServingKeyIndexCatalog catalog,
+      PersistentServingKeyIndexGeneration.RuntimeBuilder builder,
       LatestStateGenerationCoordinator latest, PersistentServingKeyIndexGeneration current,
       ServingIndexIncrementalPlan plan, LatestStateGenerationCoordinator.Candidate candidate,
       String expectedLatest, BlockSnapshotMeta target) throws IOException {
     String generationId = candidate.getGenerationId();
     Path shadow = archiveDirectory.resolve(".serving-index-build-" + UUID.randomUUID());
-    try (PersistentServingKeyIndexGeneration built = current.extendExact(shadow,
+    try (PersistentServingKeyIndexGeneration built = builder.extendExact(shadow,
         generationId, plan, candidate.getSourceIdentityDigest())) {
       validateIncrementCandidate(current, plan, built, target);
     }
@@ -907,6 +932,9 @@ public final class StateArchiveRuntimeOwner implements Closeable {
     IOException failure = null;
     if (latestCoordinator != null) {
       failure = closeOwned("latest coordinator", latestCoordinator, failure);
+    }
+    if (servingIndexBuilder != null) {
+      failure = closeOwned("serving index runtime builder", servingIndexBuilder, failure);
     }
     if (servingCatalog != null) {
       failure = closeOwned("serving catalog", servingCatalog, failure);

@@ -73,7 +73,7 @@ public final class PersistentServingKeyIndexGeneration implements ServingKeyInde
     }
     StateArchiveIndexDatabase.Reader opened = null;
     try {
-      opened = StateArchiveIndexDatabase.openReader(directory.resolve(DATABASE), engine);
+      opened = StateArchiveIndexDatabase.openImmutableReader(directory.resolve(DATABASE), engine);
       if (descriptor.formatVersion == EXACT_VERSION) {
         validateExactStoreCoverage(opened, descriptor);
       }
@@ -248,7 +248,7 @@ public final class PersistentServingKeyIndexGeneration implements ServingKeyInde
     }
     Files.createDirectories(directory);
     StateArchiveIndexEngineManifest.openOrCreate(directory, engine);
-    StateArchiveIndexDatabase.checkpoint(this.directory.resolve(DATABASE),
+    StateArchiveIndexDatabase.checkpointImmutable(this.directory.resolve(DATABASE),
         directory.resolve(DATABASE), engine);
     byte[] sourceDigest = rollSourceDigest(descriptor.sourceDigest,
         plan.getSourceStepDigests());
@@ -265,6 +265,18 @@ public final class PersistentServingKeyIndexGeneration implements ServingKeyInde
     persistDescriptor(directory, replacement);
     HistorySegmentStore.syncDirectory(directory);
     return open(directory, engine);
+  }
+
+  /**
+   * Creates a process-owned mutable copy used to publish immutable generations without reopening
+   * the write database for every checkpoint target.
+   */
+  synchronized RuntimeBuilder openRuntimeBuilder(Path builderDirectory) throws IOException {
+    ensureOpen();
+    if (descriptor.formatVersion != EXACT_VERSION) {
+      throw new IllegalStateException("Serving runtime builder requires exact-only format");
+    }
+    return RuntimeBuilder.open(builderDirectory, this);
   }
 
   @Override
@@ -666,6 +678,122 @@ public final class PersistentServingKeyIndexGeneration implements ServingKeyInde
     faultHook.beforeWrite();
     target.write(mutations, true);
     return changes.values().stream().mapToLong(List::size).sum();
+  }
+
+  static final class RuntimeBuilder implements java.io.Closeable {
+
+    private final Path directory;
+    private final Engine engine;
+    private final StateArchiveIndexDatabase.Writer writer;
+    private Descriptor descriptor;
+    private boolean closed;
+
+    private RuntimeBuilder(Path directory, Engine engine,
+        StateArchiveIndexDatabase.Writer writer, Descriptor descriptor) {
+      this.directory = directory;
+      this.engine = engine;
+      this.writer = writer;
+      this.descriptor = descriptor;
+    }
+
+    private static RuntimeBuilder open(Path directory,
+        PersistentServingKeyIndexGeneration source) throws IOException {
+      Objects.requireNonNull(directory, "directory");
+      requireReplaceableBuilderDirectory(directory);
+      deleteBuilderDirectory(directory);
+      Files.createDirectories(directory);
+      StateArchiveIndexEngineManifest.openOrCreate(directory, source.engine);
+      StateArchiveIndexDatabase.Writer writer = null;
+      try {
+        StateArchiveIndexDatabase.checkpointImmutable(source.directory.resolve(DATABASE),
+            directory.resolve(DATABASE), source.engine);
+        writer = StateArchiveIndexDatabase.openWriter(directory.resolve(DATABASE), source.engine);
+        return new RuntimeBuilder(directory, source.engine, writer, source.descriptor);
+      } catch (IOException | RuntimeException failure) {
+        if (writer != null) {
+          try {
+            writer.close();
+          } catch (IOException closeFailure) {
+            failure.addSuppressed(closeFailure);
+          }
+        }
+        throw failure;
+      }
+    }
+
+    synchronized PersistentServingKeyIndexGeneration extendExact(Path shadow,
+        String generationId, ServingIndexIncrementalPlan plan,
+        byte[] latestSourceIdentityDigest) throws IOException {
+      ensureOpen();
+      validateExactIdentity(generationId, plan, latestSourceIdentityDigest);
+      if (plan.getIndexedFrom() != descriptor.indexedThrough
+          || !Arrays.equals(plan.getIndexedFromHash(), descriptor.headHash)
+          || !plan.getParticipatingDatabases().equals(descriptor.participants)) {
+        throw new IllegalArgumentException("Exact serving increment does not extend runtime I");
+      }
+      if (Files.exists(shadow, LinkOption.NOFOLLOW_LINKS)) {
+        throw new IllegalArgumentException("Serving generation directory already exists");
+      }
+      byte[] sourceDigest = rollSourceDigest(descriptor.sourceDigest,
+          plan.getSourceStepDigests());
+      long added = applyExactPlan(writer, generationId, plan, descriptor.indexedFrom,
+          sourceDigest, () -> { });
+      Descriptor replacement = new Descriptor(EXACT_VERSION, descriptor.scopeIdentity,
+          generationId, descriptor.indexedFrom, plan.getIndexedThrough(), plan.getHeadHash(),
+          sourceDigest, latestSourceIdentityDigest, descriptor.participants,
+          descriptor.keyChanges + added);
+      descriptor = replacement;
+
+      Files.createDirectories(shadow);
+      StateArchiveIndexEngineManifest.openOrCreate(shadow, engine);
+      StateArchiveIndexDatabase.checkpoint(directory.resolve(DATABASE),
+          shadow.resolve(DATABASE), engine);
+      persistDescriptor(shadow, replacement);
+      HistorySegmentStore.syncDirectory(shadow);
+      return PersistentServingKeyIndexGeneration.open(shadow, engine);
+    }
+
+    @Override
+    public synchronized void close() throws IOException {
+      if (!closed) {
+        closed = true;
+        writer.close();
+      }
+    }
+
+    private void ensureOpen() {
+      if (closed) {
+        throw new IllegalStateException("Serving runtime builder is closed");
+      }
+    }
+
+    private static void requireReplaceableBuilderDirectory(Path directory) throws IOException {
+      if (!Files.exists(directory, LinkOption.NOFOLLOW_LINKS)) {
+        return;
+      }
+      if (Files.isSymbolicLink(directory)
+          || !Files.isDirectory(directory, LinkOption.NOFOLLOW_LINKS)) {
+        throw new ArchivePersistenceException(
+            "Serving runtime builder path is not a direct directory");
+      }
+    }
+
+    private static void deleteBuilderDirectory(Path directory) throws IOException {
+      if (!Files.exists(directory, LinkOption.NOFOLLOW_LINKS)) {
+        return;
+      }
+      List<Path> paths = new ArrayList<>();
+      try (Stream<Path> walk = Files.walk(directory)) {
+        walk.sorted(java.util.Comparator.reverseOrder()).forEach(paths::add);
+      }
+      for (Path path : paths) {
+        if (Files.isSymbolicLink(path)) {
+          throw new ArchivePersistenceException(
+              "Serving runtime builder contains a symbolic link");
+        }
+        Files.delete(path);
+      }
+    }
   }
 
   private static void appendExactChanges(StateArchiveIndexDatabase.Writer target,
