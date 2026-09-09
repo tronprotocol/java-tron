@@ -44,8 +44,7 @@ ext.archInfo = [
                 RocksdbVersion: isArm64 ? '9.7.4' : '5.15.10',
                 // https://github.com/grpc/grpc-java/issues/7690
                 // https://github.com/grpc/grpc-java/pull/12319, Add support for macOS aarch64 with universal binary
-                // https://github.com/grpc/grpc-java/pull/11371 , 1.64.x is not supported CentOS 7.
-                ProtocGenVersion: isArm64 || isMac ? rootProject.grpcVersion : '1.60.0'
+                ProtocGenVersion: rootProject.grpcVersion
         ],
         VMOptions: isArm64 ? "${rootDir}/gradle/jdk17/java-tron.vmoptions" : "${rootDir}/gradle/java-tron.vmoptions"
 ]
