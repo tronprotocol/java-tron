@@ -31,6 +31,7 @@ import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.VMIllegalException;
 import org.tron.core.store.StoreFactory;
 import org.tron.core.vm.EnergyCost;
+import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.repository.RepositoryImpl;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
@@ -257,12 +258,26 @@ public class TransferToAccountTest extends BaseTest {
 
     VMActuator vmActuator = new VMActuator(true);
 
-    vmActuator.validate(context);
-    vmActuator.execute(context);
+    try {
+      vmActuator.validate(context);
+      vmActuator.execute(context);
+    } finally {
+      // Match Wallet's constant-call lifecycle, including validation/execution failures.
+      VMConfig.clearLocalSnapshot();
+    }
 
     ProgramResult result = context.getProgramResult();
 
     Assert.assertNull(result.getRuntimeError());
+
+    // Later tests on this worker must observe global updates, not this call's snapshot.
+    boolean londonEnabled = VMConfig.allowTvmLondon();
+    try {
+      VMConfig.initAllowTvmLondon(londonEnabled ? 0 : 1);
+      Assert.assertEquals(!londonEnabled, VMConfig.allowTvmLondon());
+    } finally {
+      VMConfig.initAllowTvmLondon(londonEnabled ? 1 : 0);
+    }
 
   }
 

@@ -67,6 +67,8 @@ public class PrometheusApiServiceTest extends BaseTest {
 
   protected static void initParameter(CommonParameter parameter) {
     parameter.setMetricsPrometheusEnable(true);
+    // Only the registry is asserted; let the OS allocate a port for each test JVM.
+    parameter.setMetricsPrometheusPort(0);
   }
 
   protected void check(byte[] address, Map<ByteString, String> witnessAndAccount) throws Exception {
