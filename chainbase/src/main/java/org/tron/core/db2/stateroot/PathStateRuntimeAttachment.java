@@ -191,10 +191,22 @@ public final class PathStateRuntimeAttachment {
     }
     long startedNanos = System.nanoTime();
     try {
-      deferredQueue.put(admitted);
-      logger.info("Path-state deferred view enqueued: head={}, queueDepth={}, enqueueMicros={}",
-          admitted.getMeta().getBlockNumber(), deferredQueue.size(),
-          TimeUnit.NANOSECONDS.toMicros(System.nanoTime() - startedNanos));
+      while (true) {
+        if (deferredWorkerUnavailable()) {
+          return;
+        }
+        if (!deferredQueue.offer(admitted, 100L, TimeUnit.MILLISECONDS)) {
+          continue;
+        }
+        if (deferredWorkerUnavailable()) {
+          deferredQueue.remove(admitted);
+          return;
+        }
+        logger.info("Path-state deferred view enqueued: head={}, queueDepth={}, enqueueMicros={}",
+            admitted.getMeta().getBlockNumber(), deferredQueue.size(),
+            TimeUnit.NANOSECONDS.toMicros(System.nanoTime() - startedNanos));
+        return;
+      }
     } catch (InterruptedException interrupted) {
       Thread.currentThread().interrupt();
       fail(FailureStage.PUBLISH, interrupted);
@@ -227,11 +239,29 @@ public final class PathStateRuntimeAttachment {
           fail(FailureStage.CAPTURE, interrupted);
         }
         return;
-      } catch (IOException | RuntimeException currentFailure) {
+      } catch (Throwable currentFailure) {
         fail(FailureStage.CAPTURE, currentFailure);
+        deferredQueue.clear();
         return;
       }
     }
+  }
+
+  private synchronized boolean deferredWorkerUnavailable() {
+    if (failure != null) {
+      return true;
+    }
+    if (closed) {
+      fail(FailureStage.PUBLISH,
+          new IOException("deferred PathState runtime closed while publishing"));
+      return true;
+    }
+    if (!deferredWorker.isAlive()) {
+      fail(FailureStage.CAPTURE,
+          new IllegalStateException("deferred PathState worker terminated unexpectedly"));
+      return true;
+    }
+    return false;
   }
 
   /** Drains the deferred benchmark worker before its Manager-owned head is closed. */

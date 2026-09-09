@@ -447,6 +447,38 @@ public class PathMerkleTrieTest {
     assertArrayEquals(referenceRoot(keys, values), secondBlock.rootHash());
   }
 
+  @Test
+  public void detachedSnapshotDoesNotDuplicateTheResolvedNodeIndex() {
+    int leafCount = 512;
+    byte[][] keys = new byte[leafCount][];
+    byte[][] values = new byte[leafCount][];
+    InMemoryPathNodeStore store = new InMemoryPathNodeStore();
+    PathMerkleTrie source = new PathMerkleTrie(store);
+    for (int index = 0; index < leafCount; index++) {
+      keys[index] = Hash.sha3(value("detached-key-" + index));
+      values[index] = value("detached-value-" + index);
+      source.put(keys[index], values[index]);
+    }
+    byte[] root = source.rootHash();
+
+    PathMerkleTrie restored = new PathMerkleTrie(store);
+    restored.restoreRoot(root);
+    for (int index = 0; index < leafCount; index++) {
+      assertArrayEquals(values[index], restored.get(keys[index]));
+    }
+    PathMerkleTrie.Snapshot resolved = restored.snapshot();
+    assertTrue(resolved.materializedIndexSize() > leafCount);
+
+    PathMerkleTrie.Snapshot detached = resolved.detach();
+    assertEquals(1, detached.depth());
+    assertEquals(0, detached.materializedIndexSize());
+
+    PathMerkleTrie next = PathMerkleTrie.fromSnapshot(store, detached);
+    values[17] = value("detached-updated-value");
+    next.put(keys[17], values[17]);
+    assertArrayEquals(referenceRoot(keys, values), next.rootHash());
+  }
+
   private static byte[] referenceRoot(byte[][] keys, byte[][] values) {
     TrieImpl reference = new TrieImpl();
     reference.setAsync(false);

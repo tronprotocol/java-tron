@@ -1759,25 +1759,9 @@ public final class PathMerkleTrie {
     Snapshot detach() {
       Map<BytesKey, byte[]> effective = new TreeMap<>(UNSIGNED_KEY_COMPARATOR);
       populateLeaves(effective);
-      IdentityHashMap<Node, BytesKey> indexed = new IdentityHashMap<>();
-      indexReachableMaterializedNodes(rootNode, EMPTY_PATH, indexed);
-      return new Snapshot(null, effective, indexed, rootNode, rootHash, leafCount);
-    }
-
-    private void indexReachableMaterializedNodes(Node node, byte[] path,
-        IdentityHashMap<Node, BytesKey> indexed) {
-      if (node == null) {
-        return;
-      }
-      BytesKey materialized = materializedPath(node);
-      if (materialized != null) {
-        if (!Arrays.equals(materialized.bytes, path)) {
-          throw new IllegalStateException("materialized path trie node moved from its durable path");
-        }
-        indexed.put(node, materialized);
-      }
-      visitChildren(node, path,
-          (child, childPath) -> indexReachableMaterializedNodes(child, childPath, indexed));
+      // Materialized nodes bind their durable path on creation. Re-indexing the reachable graph
+      // duplicates the complete resolved trie and can exhaust the heap while compacting parents.
+      return new Snapshot(null, effective, new IdentityHashMap<>(), rootNode, rootHash, leafCount);
     }
 
     Snapshot reparent(Snapshot newParent) {
@@ -1793,6 +1777,10 @@ public final class PathMerkleTrie {
         cursor = cursor.parent;
       }
       return depth;
+    }
+
+    int materializedIndexSize() {
+      return materializedNodes.size();
     }
   }
 

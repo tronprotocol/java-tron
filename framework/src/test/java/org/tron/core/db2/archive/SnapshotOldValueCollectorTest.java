@@ -36,6 +36,9 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -119,6 +122,74 @@ public class SnapshotOldValueCollectorTest extends BaseMethodTest {
     assertEquals(PathStateRuntimeAttachment.State.READY, attachment.status().getState());
     assertTrue(attachment.isReadyForHeaderDiagnostic(1L, hash(1)));
     assertSame(attachment, manager.detachPathStateRuntime(attachment));
+    manager.shutdown();
+  }
+
+  @Test
+  public void deferredPathStateWorkerErrorFailsRuntimeWithoutLeavingAProducerBlocked()
+      throws Exception {
+    SnapshotManager manager = new SnapshotManager("");
+    Chainbase code = new Chainbase(new SnapshotRoot(new MemoryDb("code")));
+    manager.add(code);
+    manager.enable();
+    CountDownLatch attempted = new CountDownLatch(1);
+    CountDownLatch release = new CountDownLatch(1);
+    AssertionError workerFailure = new AssertionError("injected deferred worker error");
+    PathStateRuntimeAttachment attachment = PathStateRuntimeAttachment.deferred(view -> {
+      attempted.countDown();
+      try {
+        if (!release.await(5, TimeUnit.SECONDS)) {
+          throw new AssertionError("timed out waiting to fail deferred worker");
+        }
+      } catch (InterruptedException interrupted) {
+        Thread.currentThread().interrupt();
+        throw new AssertionError("deferred worker interrupted", interrupted);
+      }
+      throw workerFailure;
+    }, transition -> { }, (blockNumber, blockHash) -> { }, null,
+        (meta, transition) -> null);
+    attachment.synchronizeReadyHead(PathStateRootMetadata.base(0, hash(0), hash(9), 0,
+        P66Phase.P66_ON, hash(7), hash(8), hash(6)));
+
+    BlockChangeView first = captureView(manager, code,
+        BlockSnapshotMeta.forBlock(1, hash(1), hash(0), 1L));
+    attachment.capture(first);
+    attachment.publish(null);
+    assertTrue(attempted.await(5, TimeUnit.SECONDS));
+
+    for (int number = 2; number <= 65; number++) {
+      BlockChangeView queued = captureView(manager, code,
+          BlockSnapshotMeta.forBlock(number, hash(number), hash(number - 1), number));
+      attachment.capture(queued);
+      attachment.publish(null);
+    }
+    BlockChangeView blocked = captureView(manager, code,
+        BlockSnapshotMeta.forBlock(66, hash(66), hash(65), 66L));
+    attachment.capture(blocked);
+    ExecutorService publisher = Executors.newSingleThreadExecutor();
+    try {
+      Future<?> blockedPublish = publisher.submit(() -> attachment.publish(null));
+      release.countDown();
+      blockedPublish.get(5, TimeUnit.SECONDS);
+    } finally {
+      release.countDown();
+      publisher.shutdownNow();
+    }
+
+    assertSame(workerFailure, attachment.getFailure());
+    IOException closeFailure = assertThrows(IOException.class, attachment::close);
+    assertSame(workerFailure, closeFailure.getCause());
+    assertEquals(PathStateRuntimeAttachment.State.FAILED, attachment.status().getState());
+    assertEquals(PathStateRuntimeAttachment.FailureStage.CAPTURE,
+        attachment.status().getFailureStage());
+    assertEquals(PathStateRuntimeAttachment.FailureKind.RUNTIME,
+        attachment.status().getFailureKind());
+
+    BlockChangeView second = captureView(manager, code,
+        BlockSnapshotMeta.forBlock(67, hash(67), hash(66), 67L));
+    attachment.capture(second);
+    attachment.publish(null);
+    assertSame(workerFailure, attachment.getFailure());
     manager.shutdown();
   }
 
