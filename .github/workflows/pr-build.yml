@@ -63,6 +63,18 @@ jobs:
           java -jar "$JAR" db archive -h
           java -jar "$JAR" keystore --help
 
+      - name: Upload unit test logs
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: tron-test-logs-${{ github.job }}-jdk${{ matrix.java }}-${{ matrix.arch }}
+          path: |
+            **/logs/tron-test.log
+            **/logs/tron-test-*.log.zip
+            **/build/test-results/**/TEST-*.xml
+          if-no-files-found: warn
+          retention-days: 7
+
   build-ubuntu:
     name: Build ubuntu24 (JDK 17 / aarch64)
     if: ${{ github.event_name == 'pull_request' || inputs.job == 'all' || inputs.job == 'ubuntu' }}
@@ -101,6 +113,18 @@ jobs:
           java -jar "$JAR" db --help
           java -jar "$JAR" db archive -h
           java -jar "$JAR" keystore --help
+
+      - name: Upload unit test logs
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: tron-test-logs-${{ github.job }}
+          path: |
+            **/logs/tron-test.log
+            **/logs/tron-test-*.log.zip
+            **/build/test-results/**/TEST-*.xml
+          if-no-files-found: warn
+          retention-days: 7
 
   docker-build-rockylinux:
     name: Build rockylinux (JDK 8 / x86_64)
@@ -168,6 +192,18 @@ jobs:
       - name: Test with RocksDB engine
         run: ./gradlew :framework:testWithRocksDb --no-daemon
 
+      - name: Upload unit test logs
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: tron-test-logs-${{ github.job }}
+          path: |
+            **/logs/tron-test.log
+            **/logs/tron-test-*.log.zip
+            **/build/test-results/**/TEST-*.xml
+          if-no-files-found: warn
+          retention-days: 7
+
   docker-build-debian11:
     name: Build debian11 (JDK 8 / x86_64)
     if: ${{ github.event_name == 'pull_request' || inputs.job == 'all' || inputs.job == 'debian11' }}
@@ -233,6 +269,18 @@ jobs:
             **/build/reports/jacoco/test/jacocoTestReport.xml
           if-no-files-found: error
 
+      - name: Upload unit test logs
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: tron-test-logs-${{ github.job }}
+          path: |
+            **/logs/tron-test.log
+            **/logs/tron-test-*.log.zip
+            **/build/test-results/**/TEST-*.xml
+          if-no-files-found: warn
+          retention-days: 7
+
   coverage-base:
     name: Coverage Base (JDK 8 / x86_64)
     if: ${{ github.event_name == 'pull_request' }}
@@ -292,6 +340,18 @@ jobs:
           path: |
             **/build/reports/jacoco/test/jacocoTestReport.xml
           if-no-files-found: warn
+
+      - name: Upload unit test logs
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: tron-test-logs-${{ github.job }}
+          path: |
+            **/logs/tron-test.log
+            **/logs/tron-test-*.log.zip
+            **/build/test-results/**/TEST-*.xml
+          if-no-files-found: warn
+          retention-days: 7
 
   coverage-gate:
     name: Coverage Gate
