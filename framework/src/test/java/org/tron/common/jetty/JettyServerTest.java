@@ -2,10 +2,10 @@ package org.tron.common.jetty;
 
 import java.net.URI;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.servlet.DefaultServlet;
@@ -15,7 +15,6 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.tron.common.utils.PublicMethod;
 
 @Slf4j
 public class JettyServerTest {
@@ -26,7 +25,7 @@ public class JettyServerTest {
   public static void startJetty() throws Exception {
     server = new Server();
     ServerConnector connector = new ServerConnector(server);
-    connector.setPort(PublicMethod.chooseRandomPort());
+    connector.setPort(0);
     server.addConnector(connector);
 
     ServletContextHandler context = new ServletContextHandler();
@@ -53,12 +52,13 @@ public class JettyServerTest {
 
   @Test
   public void testGet() throws Exception {
-    HttpClient client = new DefaultHttpClient();
     HttpGet request = new HttpGet(serverUri.resolve("/"));
     request.setHeader("Content-Length", "+450");
-    HttpResponse mockResponse = client.execute(request);
-    Assert.assertTrue(mockResponse.getStatusLine().toString().contains(
-        "400 Invalid Content-Length Value"));
+    try (CloseableHttpClient client = HttpClients.createDefault();
+        CloseableHttpResponse response = client.execute(request)) {
+      Assert.assertTrue(response.getStatusLine().toString().contains(
+          "400 Invalid Content-Length Value"));
+    }
   }
 
 }

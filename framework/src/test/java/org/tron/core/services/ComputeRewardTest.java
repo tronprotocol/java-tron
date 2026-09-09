@@ -102,6 +102,8 @@ public class ComputeRewardTest extends BaseMethodTest {
   private static final byte[] SR_ADDRESS_26 = ByteArray.fromHexString(
       "4105b9e8af8ee371cad87317f442d155b39fbd1c25");
 
+  private final Map<String, ListeningExecutorService> flushServices = new HashMap<>();
+
   private static DynamicPropertiesStore propertiesStore;
   private static DelegationStore delegationStore;
   private static AccountStore accountStore;
@@ -127,9 +129,16 @@ public class ComputeRewardTest extends BaseMethodTest {
     setUp();
   }
 
+  @Override
+  protected void beforeDestroy() {
+    // Stop test-owned workers before BaseMethodTest closes the stores they access.
+    flushServices.forEach((name, executor) ->
+        ExecutorServiceManager.shutdownAndAwaitTermination(executor, "flush-service-" + name));
+    flushServices.clear();
+  }
+
   private void setUp() {
     // mock flush service
-    Map<String, ListeningExecutorService> flushServices = new HashMap<>();
     flushServices.put("propertiesStore", MoreExecutors.listeningDecorator(
         ExecutorServiceManager.newSingleThreadExecutor(
             "flush-service-propertiesStore")));

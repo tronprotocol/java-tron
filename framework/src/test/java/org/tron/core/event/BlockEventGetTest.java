@@ -174,7 +174,7 @@ public class BlockEventGetTest extends BlockGenerate {
 
     EventPluginConfig config = new EventPluginConfig();
     config.setSendQueueLength(1000);
-    config.setBindPort(5555);
+    config.setBindPort(PublicMethod.chooseRandomPort());
     config.setUseNativeQueue(true);
     config.setTriggerConfigList(new ArrayList<>());
 
@@ -205,8 +205,8 @@ public class BlockEventGetTest extends BlockGenerate {
     contractlogTriggerConfig.setRedundancy(true);
     config.getTriggerConfigList().add(contractlogTriggerConfig);
 
-    EventPluginLoader.getInstance().start(config);
     try {
+      Assert.assertTrue(EventPluginLoader.getInstance().start(config));
       BlockEvent blockEvent = blockEventGet.getBlockEvent(1);
       Assert.assertNotNull(blockEvent);
       Assert.assertEquals(1, blockEvent.getTransactionLogTriggerCapsules().size());
@@ -216,8 +216,8 @@ public class BlockEventGetTest extends BlockGenerate {
       Assert.assertEquals(100,
           blockEvent.getTransactionLogTriggerCapsules().get(0).getTransactionLogTrigger()
               .getEnergyUnitPrice());
-    } catch (Exception e) {
-      Assert.fail();
+    } finally {
+      EventPluginLoader.getInstance().stopPlugin();
     }
   }
 

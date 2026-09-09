@@ -1,18 +1,19 @@
 package org.tron.core.services.filter;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.lang.reflect.Method;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import javax.annotation.Resource;
-import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
+import org.apache.http.util.EntityUtils;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
 import org.tron.common.BaseTest;
@@ -34,7 +35,7 @@ public class HttpApiAccessFilterTest extends BaseTest {
   private HttpApiOnPBFTService httpApiOnPBFTService;
   @Resource
   private HttpApiAccessFilter httpApiAccessFilter;
-  private static final CloseableHttpClient httpClient = HttpClients.createDefault();
+  private final CloseableHttpClient httpClient = HttpClients.createDefault();
 
   static {
     Args.setParam(new String[]{"-d", dbPath()}, TestConstants.TEST_CONF);
@@ -49,7 +50,7 @@ public class HttpApiAccessFilterTest extends BaseTest {
   }
 
   @Test
-  public void testHttpFilter() {
+  public void testHttpFilter() throws IOException {
     appT.startup();
     List<String> disabledApiList = new ArrayList<>();
     disabledApiList.add("getaccount");
@@ -80,7 +81,7 @@ public class HttpApiAccessFilterTest extends BaseTest {
         Args.getInstance().setDisabledApiList(disabledApiList);
         String response = sendGetRequest(url);
         Assert.assertEquals("{\"Error\":\"this API is unavailable due to config\"}",
-            response);
+            response.trim());
 
         Args.getInstance().setDisabledApiList(emptyList);
         int statusCode = getRequestCode(url);
@@ -89,39 +90,25 @@ public class HttpApiAccessFilterTest extends BaseTest {
     }
   }
 
-  private String sendGetRequest(String url) {
-    HttpGet request = new HttpGet(url);
-    request.setHeader("User-Agent", "Java client");
-    HttpResponse response;
-    try {
-      response = httpClient.execute(request);
-      BufferedReader rd = new BufferedReader(
-              new InputStreamReader(response.getEntity().getContent()));
-      StringBuilder result = new StringBuilder();
-      String line;
-      while ((line = rd.readLine()) != null) {
-        result.append(line);
-      }
-      return result.toString();
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
-    return null;
+  @After
+  public void closeHttpClient() throws IOException {
+    httpClient.close();
   }
 
-  private int getRequestCode(String url) {
+  private String sendGetRequest(String url) throws IOException {
     HttpGet request = new HttpGet(url);
     request.setHeader("User-Agent", "Java client");
-    HttpResponse response;
-
-    try {
-      response = httpClient.execute(request);
-      return response.getStatusLine().getStatusCode();
-    } catch (IOException e) {
-      e.printStackTrace();
+    try (CloseableHttpResponse response = httpClient.execute(request)) {
+      return EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
     }
+  }
 
-    return 0;
+  private int getRequestCode(String url) throws IOException {
+    HttpGet request = new HttpGet(url);
+    request.setHeader("User-Agent", "Java client");
+    try (CloseableHttpResponse response = httpClient.execute(request)) {
+      return response.getStatusLine().getStatusCode();
+    }
   }
 
   @Test
