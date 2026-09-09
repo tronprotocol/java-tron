@@ -153,7 +153,8 @@ jobs:
           # Rocky 8 already provides CA certificates, JNI runtime libraries, tar and gzip.
           # Its built-in C.utf8 locale provides UTF-8 without an extra language pack.
           # git-core provides checkout commands; zstd supports actions/cache compression.
-          dnf -y --setopt=install_weak_deps=False install \
+          # Download more packages concurrently when mirror requests are slow.
+          dnf -y --setopt=install_weak_deps=False --setopt=max_parallel_downloads=10 install \
             java-1.8.0-openjdk-devel git-core zstd
           # Set JAVA_HOME so the Gradle wrapper does not need which.
           javac_path=$(command -v javac)
