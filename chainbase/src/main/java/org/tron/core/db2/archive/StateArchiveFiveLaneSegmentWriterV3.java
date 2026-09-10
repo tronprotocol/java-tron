@@ -32,6 +32,7 @@ import org.tron.core.db2.archive.StateArchiveSegmentFormatV3.CurrentSegment;
 import org.tron.core.db2.archive.StateArchiveSegmentFormatV3.DurableMarker;
 import org.tron.core.db2.archive.StateArchiveSegmentFormatV3.SealedSegment;
 import org.tron.core.db2.archive.StateArchiveSegmentFormatV3.SegmentHeader;
+import org.tron.core.db2.archive.StateArchiveSegmentFormatV3.SegmentManifest;
 import org.tron.core.db2.archive.StateArchiveSegmentFormatV3.SegmentSeal;
 
 /** Default-off five-lane append writer for State Archive v3 segment data and block indexes. */
@@ -42,6 +43,7 @@ public final class StateArchiveFiveLaneSegmentWriterV3 implements AutoCloseable 
   private static final int PREVIOUS_HISTORY_DIGEST_OFFSET = 152;
   private static final int RESULT_HISTORY_DIGEST_OFFSET = 248;
   private static final int ENTRY_COUNT_OFFSET = 304;
+  private static final int COVERAGE_BITMAP_OFFSET = 280;
   private static final int RAW_PAYLOAD_LENGTH_OFFSET = 312;
   private static final int COMPRESSION_ID_OFFSET = 322;
   private static final int ENCODED_DIGEST_FROM_END = 48;
@@ -55,6 +57,8 @@ public final class StateArchiveFiveLaneSegmentWriterV3 implements AutoCloseable 
       new StateArchiveFiveLaneBlockCodecV3();
   private final Map<Integer, LaneState> lanes = new HashMap<>();
   private final List<SealedSegment> sealedSegments = new ArrayList<>();
+  private final StateArchiveHistoryCatalogV3 catalog;
+  private boolean structuralChanged;
   private BlockSnapshotMeta appendHead;
   private byte[] resultHistoryDigest;
   private boolean failed;
@@ -136,6 +140,7 @@ public final class StateArchiveFiveLaneSegmentWriterV3 implements AutoCloseable 
     this.archiveRoot = archiveRoot;
     this.segmentRoot = archiveRoot.resolve("segments");
     Files.createDirectories(segmentRoot);
+    this.catalog = StateArchiveHistoryCatalogV3.openOrEmpty(archiveRoot);
     requireNoLegacyIntent();
     Intent existingIntent = loadIntent();
     if (existingIntent != null) {
@@ -279,16 +284,30 @@ public final class StateArchiveFiveLaneSegmentWriterV3 implements AutoCloseable 
         }
         appendLaneFrame(state, meta, lane);
       }
+      appendHead = meta;
+      resultHistoryDigest = decoded.getResultHistoryDigest();
+      if (structuralChanged || !catalog.isPublished()) {
+        publishCatalog();
+      }
     } catch (IOException | RuntimeException failure) {
       failed = true;
       throw failure;
     }
-    appendHead = meta;
-    resultHistoryDigest = decoded.getResultHistoryDigest();
   }
 
   public synchronized BlockSnapshotMeta getAppendHead() {
     return appendHead;
+  }
+
+  public synchronized long getHistoryStartBlock() {
+    long first = Long.MAX_VALUE;
+    for (CurrentSegment segment : getCurrentSegments()) {
+      first = Math.min(first, segment.getFirstBlock());
+    }
+    for (SealedSegment segment : sealedSegments) {
+      first = Math.min(first, segment.getFirstBlock());
+    }
+    return first == Long.MAX_VALUE ? -1 : first;
   }
 
   public synchronized byte[] getResultHistoryDigest() {
@@ -304,6 +323,72 @@ public final class StateArchiveFiveLaneSegmentWriterV3 implements AutoCloseable 
 
   public synchronized List<SealedSegment> getSealedSegments() {
     return Collections.unmodifiableList(new ArrayList<>(sealedSegments));
+  }
+
+  /** Replays complete five-lane bundles from Catalog-selected authority for serving repair. */
+  public synchronized List<BlockReverseDiff> readCommittedDiffs(long fromExclusive, long through)
+      throws IOException {
+    requireUsable();
+    if (fromExclusive < 0 || through < fromExclusive || appendHead == null
+        || through > appendHead.getBlockNumber()) {
+      throw new IllegalArgumentException("Invalid State Archive committed read range");
+    }
+    Map<Long, Map<Integer, byte[]>> bundles = new java.util.TreeMap<>();
+    for (Path path : listDataFiles(false)) {
+      try (FileChannel data = FileChannel.open(path, StandardOpenOption.READ)) {
+        long offset = StateArchiveFileFormatV3.PART_HEADER_LENGTH;
+        while (offset < data.size()) {
+          byte[] envelope = readExact(data, offset,
+              StateArchiveFileFormatV3.FRAME_ENVELOPE_LENGTH);
+          ByteBuffer fields = ByteBuffer.wrap(envelope);
+          if (fields.getInt(0) != StateArchiveFileFormatV3.FRAME_MAGIC) {
+            throw new IOException("State Archive serving source frame magic mismatch");
+          }
+          short frameType = fields.getShort(8);
+          long length = fields.getLong(16);
+          if (length <= 0 || length > Integer.MAX_VALUE || length > data.size() - offset) {
+            throw new IOException("State Archive serving source frame length mismatch");
+          }
+          byte[] frame = readExact(data, offset, (int) length);
+          if (frameType == StateArchiveFileFormatV3.BLOCK_FRAME_TYPE) {
+            long block = blockNumber(frame);
+            if (block > fromExclusive && block <= through) {
+              int laneId = laneIdFromFrame(frame);
+              byte[] previous = bundles.computeIfAbsent(block, ignored -> new HashMap<>())
+                  .put(laneId, frame);
+              if (previous != null) {
+                throw new IOException("Duplicate State Archive serving source lane frame");
+              }
+            }
+          }
+          offset += length;
+        }
+      }
+    }
+    List<BlockReverseDiff> result = new ArrayList<>();
+    for (long block = fromExclusive + 1; block <= through; block++) {
+      Map<Integer, byte[]> laneFrames = bundles.get(block);
+      if (laneFrames == null
+          || laneFrames.size() != StateArchiveFileFormatV3.fiveLaneIds().length) {
+        throw new IOException("Incomplete State Archive serving source bundle");
+      }
+      List<byte[]> ordered = new ArrayList<>();
+      for (int laneId : StateArchiveFileFormatV3.fiveLaneIds()) {
+        ordered.add(laneFrames.get(laneId));
+      }
+      result.add(codec.decode(ordered).getDiff());
+    }
+    return Collections.unmodifiableList(result);
+  }
+
+  private static int laneIdFromFrame(byte[] frame) throws IOException {
+    long coverage = ByteBuffer.wrap(frame).getLong(COVERAGE_BITMAP_OFFSET);
+    for (int laneId : StateArchiveFileFormatV3.fiveLaneIds()) {
+      if (coverage == StateArchiveFileFormatV3.laneCoverage(laneId)) {
+        return laneId;
+      }
+    }
+    throw new IOException("State Archive serving source lane coverage mismatch");
   }
 
   public synchronized ArchiveDurabilityProof getLastDurabilityProof() {
@@ -539,6 +624,7 @@ public final class StateArchiveFiveLaneSegmentWriterV3 implements AutoCloseable 
           decodedHeader.getHeaderDigest(), previousHistory, data, index,
           newContentDigest(headerBytes));
       lanes.put(laneId, state);
+      structuralChanged = true;
       return state;
     } catch (IOException | RuntimeException failure) {
       data.close();
@@ -651,16 +737,28 @@ public final class StateArchiveFiveLaneSegmentWriterV3 implements AutoCloseable 
         + state.blockFrameCount * StateArchiveFileFormatV3.BLOCK_INDEX_ENTRY_LENGTH) {
       throw new IllegalStateException("State Archive sealed block index length mismatch");
     }
+    byte[] previousSegmentDigest = state.segmentSeq == 0
+        ? StateArchiveSegmentFormatV3.laneBaselineDigest(state.laneId)
+        : previousChainDigest(state.laneId, state.segmentSeq - 1);
+    SegmentManifest manifest = new SegmentManifest(state.laneId, state.segmentSeq,
+        state.firstBlock, state.lastBlock, state.blockFrameCount, state.entryCount,
+        state.logicalPayloadBytes, state.encodedBlockFrameBytes,
+        state.dataEndOffset + sealLength, state.index.size(), previousSegmentDigest,
+        state.endHistoryDigest);
+    byte[] encodedManifest = StateArchiveSegmentFormatV3.encodeManifest(manifest);
+    SegmentManifest decodedManifest = StateArchiveSegmentFormatV3.decodeManifest(encodedManifest);
+    publishManifest(state.laneId, state.segmentSeq, encodedManifest);
     sealedSegments.add(new SealedSegment(state.laneId, state.segmentSeq,
         state.firstBlock, state.lastBlock, state.blockFrameCount,
         state.dataEndOffset + sealLength, state.index.size(), state.headerDigest,
-        contentDigest, decodedSeal.getEncodedFrameDigest(), new byte[32]));
+        contentDigest, decodedSeal.getEncodedFrameDigest(), decodedManifest.getManifestDigest()));
     state.close();
     lanes.remove(state.laneId);
+    structuralChanged = true;
   }
 
   private void reopen(Long recoveryBoundary) throws IOException {
-    List<Path> dataFiles = listDataFiles();
+    List<Path> dataFiles = listDataFiles(recoveryBoundary != null || activeRecoveryIntent != null);
     if (dataFiles.isEmpty()) {
       resultHistoryDigest = Arrays.copyOf(baselineHistoryDigest,
           baselineHistoryDigest.length);
@@ -723,6 +821,7 @@ public final class StateArchiveFiveLaneSegmentWriterV3 implements AutoCloseable 
     }
     if (!recovering) {
       rebuildLastDurabilityProof(scannedSegments, bundles);
+      validateCatalogSelection();
     }
     if (recovering) {
       Intent intent = activeRecoveryIntent;
@@ -791,6 +890,8 @@ public final class StateArchiveFiveLaneSegmentWriterV3 implements AutoCloseable 
         try {
           verifyRecoveredIntent(intent);
           recoveryFaultHook.after(RecoveryStage.TARGET_VERIFIED, -1);
+          structuralChanged = true;
+          publishCatalog();
           clearIntent();
           activeRecoveryIntent = null;
         } catch (IOException | RuntimeException failure) {
@@ -1130,7 +1231,7 @@ public final class StateArchiveFiveLaneSegmentWriterV3 implements AutoCloseable 
         throw new IllegalArgumentException("Truncated State Archive block index header");
       }
       ScannedSegment scanned = new ScannedSegment(path, data, index, indexPath, header,
-          headerBytes);
+          headerBytes, isCatalogSelectedCurrent(name));
       long offset = StateArchiveFileFormatV3.PART_HEADER_LENGTH;
       while (offset < data.size()) {
         if (data.size() - offset < StateArchiveFileFormatV3.FRAME_ENVELOPE_LENGTH) {
@@ -1304,13 +1405,104 @@ public final class StateArchiveFiveLaneSegmentWriterV3 implements AutoCloseable 
     throw new IllegalStateException("Missing previous State Archive sealed segment");
   }
 
-  private List<Path> listDataFiles() throws IOException {
+  private List<Path> listDataFiles(boolean recovering) throws IOException {
+    if (catalog.isPublished()) {
+      List<Path> selected = new ArrayList<>();
+      for (SealedSegment segment : catalog.selected().getSealed()) {
+        selected.add(dataPath(segment.getLaneId(), segment.getSegmentSeq()));
+      }
+      for (CurrentSegment segment : catalog.selected().getCurrent()) {
+        selected.add(dataPath(segment.getLaneId(), segment.getSegmentSeq()));
+        Path successor = dataPath(segment.getLaneId(), segment.getSegmentSeq() + 1);
+        if (Files.isRegularFile(successor)) {
+          selected.add(successor);
+        }
+      }
+      for (Path path : selected) {
+        if (!Files.isRegularFile(path)) {
+          if (!recovering) {
+            throw new IOException("State Archive Catalog selected segment is missing");
+          }
+        }
+      }
+      selected.removeIf(path -> !Files.isRegularFile(path));
+      selected.sort(Comparator.comparing((Path path) -> parseName(path).laneId)
+          .thenComparingLong(path -> parseName(path).segmentSeq));
+      return selected;
+    }
     try (Stream<Path> paths = Files.walk(segmentRoot)) {
-      return paths.filter(Files::isRegularFile)
+      List<Path> discovered = paths.filter(Files::isRegularFile)
           .filter(path -> path.getFileName().toString().endsWith(".dat"))
           .sorted(Comparator.comparing((Path path) -> parseName(path).laneId)
               .thenComparingLong(path -> parseName(path).segmentSeq))
           .collect(Collectors.toList());
+      if (!discovered.isEmpty()) {
+        throw new IOException("State Archive Catalog CURRENT is missing");
+      }
+      return discovered;
+    }
+  }
+
+  private void publishCatalog() throws IOException {
+    catalog.publish(rotationTargetBytes, getCurrentSegments(), getSealedSegments());
+    structuralChanged = false;
+  }
+
+  private boolean isCatalogSelectedCurrent(ParsedName name) {
+    return catalog.isPublished() && catalog.selected().getCurrent().stream().anyMatch(segment ->
+        segment.getLaneId() == name.laneId && segment.getSegmentSeq() == name.segmentSeq);
+  }
+
+  private void validateCatalogSelection() throws IOException {
+    if (!catalog.isPublished()) {
+      if (!lanes.isEmpty() || !sealedSegments.isEmpty()) {
+        throw new IOException("State Archive Catalog selection is missing");
+      }
+      return;
+    }
+    List<CurrentSegment> expectedCurrent = catalog.selected().getCurrent();
+    List<CurrentSegment> actualCurrent = getCurrentSegments();
+    List<SealedSegment> expectedSealed = catalog.selected().getSealed();
+    for (SealedSegment expected : expectedSealed) {
+      SealedSegment actual = sealedSegments.stream().filter(candidate ->
+          candidate.getLaneId() == expected.getLaneId()
+              && candidate.getSegmentSeq() == expected.getSegmentSeq())
+          .findFirst().orElse(null);
+      if (actual == null || !Arrays.equals(StateArchiveSegmentFormatV3.encodeSealedMapRecord(
+          expected), StateArchiveSegmentFormatV3.encodeSealedMapRecord(actual))) {
+        throw new IOException("State Archive Catalog sealed segment identity mismatch");
+      }
+    }
+    for (CurrentSegment expected : expectedCurrent) {
+      CurrentSegment same = actualCurrent.stream().filter(actual ->
+          actual.getLaneId() == expected.getLaneId()
+              && actual.getSegmentSeq() == expected.getSegmentSeq()).findFirst().orElse(null);
+      if (same != null) {
+        if (same.getFirstBlock() != expected.getFirstBlock()
+            || !Arrays.equals(same.getHeaderDigest(), expected.getHeaderDigest())) {
+          throw new IOException("State Archive Catalog current segment identity mismatch");
+        }
+        continue;
+      }
+      SealedSegment promoted = sealedSegments.stream().filter(actual ->
+          actual.getLaneId() == expected.getLaneId()
+              && actual.getSegmentSeq() == expected.getSegmentSeq()).findFirst().orElse(null);
+      if (promoted == null
+          || !Arrays.equals(promoted.getSegmentHeaderDigest(), expected.getHeaderDigest())) {
+        throw new IOException("State Archive Catalog selected current segment disappeared");
+      }
+      CurrentSegment successor = actualCurrent.stream().filter(actual ->
+          actual.getLaneId() == expected.getLaneId()
+              && actual.getSegmentSeq() == expected.getSegmentSeq() + 1)
+          .findFirst().orElse(null);
+      if (successor != null && successor.getFirstBlock() != promoted.getLastBlock() + 1) {
+        throw new IOException("State Archive Catalog rotation successor is discontinuous");
+      }
+    }
+    if (actualCurrent.size() == StateArchiveFileFormatV3.fiveLaneIds().length
+        && sealedSegments.size() > expectedSealed.size()) {
+      structuralChanged = true;
+      publishCatalog();
     }
   }
 
@@ -1333,6 +1525,28 @@ public final class StateArchiveFiveLaneSegmentWriterV3 implements AutoCloseable 
     String name = dataPath(laneId, sequence).getFileName().toString();
     return dataPath(laneId, sequence).resolveSibling(
         name.substring(0, name.length() - 4) + ".bidx");
+  }
+
+  private Path manifestPath(int laneId, long sequence) {
+    String name = dataPath(laneId, sequence).getFileName().toString();
+    return dataPath(laneId, sequence).resolveSibling(
+        name.substring(0, name.length() - 4) + ".manifest");
+  }
+
+  private void publishManifest(int laneId, long sequence, byte[] encoded) throws IOException {
+    Path target = manifestPath(laneId, sequence);
+    Path temporary = target.resolveSibling(target.getFileName() + ".tmp");
+    try (FileChannel channel = FileChannel.open(temporary, StandardOpenOption.CREATE,
+        StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE)) {
+      writeFully(channel, ByteBuffer.wrap(encoded));
+      channel.force(true);
+    }
+    try {
+      Files.move(temporary, target, StandardCopyOption.ATOMIC_MOVE);
+    } catch (AtomicMoveNotSupportedException unsupported) {
+      throw new IOException("State Archive manifest requires atomic publication", unsupported);
+    }
+    syncDirectory(target.getParent());
   }
 
   private static ParsedName parseName(Path path) {
@@ -1437,6 +1651,21 @@ public final class StateArchiveFiveLaneSegmentWriterV3 implements AutoCloseable 
     try (FileChannel channel = FileChannel.open(directory, StandardOpenOption.READ)) {
       channel.force(true);
     }
+  }
+
+  private static void publishRecoveredManifest(Path target, byte[] encoded) throws IOException {
+    Path temporary = target.resolveSibling(target.getFileName() + ".tmp");
+    try (FileChannel channel = FileChannel.open(temporary, StandardOpenOption.CREATE,
+        StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE)) {
+      writeFully(channel, ByteBuffer.wrap(encoded));
+      channel.force(true);
+    }
+    try {
+      Files.move(temporary, target, StandardCopyOption.ATOMIC_MOVE);
+    } catch (AtomicMoveNotSupportedException unsupported) {
+      throw new IOException("State Archive recovered manifest requires atomic move", unsupported);
+    }
+    syncDirectory(target.getParent());
   }
 
   private static byte[] requireHash(byte[] value, String name) {
@@ -1774,6 +2003,7 @@ public final class StateArchiveFiveLaneSegmentWriterV3 implements AutoCloseable 
     private final FileChannel index;
     private final Path indexPath;
     private final SegmentHeader header;
+    private final boolean catalogSelectedCurrent;
     private final MessageDigest contentDigest;
     private final List<BlockIndexEntry> expectedIndex = new ArrayList<>();
     private long firstBlock = -1;
@@ -1789,6 +2019,7 @@ public final class StateArchiveFiveLaneSegmentWriterV3 implements AutoCloseable 
     private byte[] endHistory;
     private byte[] content;
     private SegmentSeal seal;
+    private byte[] manifestDigest;
     private long markedCount;
     private long markedLogicalBytes;
     private long markedEncodedBytes;
@@ -1799,12 +2030,14 @@ public final class StateArchiveFiveLaneSegmentWriterV3 implements AutoCloseable 
     private boolean tailDamaged;
 
     private ScannedSegment(Path dataPath, FileChannel data, FileChannel index,
-        Path indexPath, SegmentHeader header, byte[] headerBytes) {
+        Path indexPath, SegmentHeader header, byte[] headerBytes,
+        boolean catalogSelectedCurrent) {
       this.dataPath = dataPath;
       this.data = data;
       this.index = index;
       this.indexPath = indexPath;
       this.header = header;
+      this.catalogSelectedCurrent = catalogSelectedCurrent;
       this.contentDigest = newContentDigest(headerBytes);
     }
 
@@ -1903,6 +2136,38 @@ public final class StateArchiveFiveLaneSegmentWriterV3 implements AutoCloseable 
             || !Arrays.equals(seal.getSegmentContentDigest(), content)) {
           throw new IllegalArgumentException("State Archive segment seal mismatch");
         }
+        Path manifestPath = dataPath.resolveSibling(
+            dataPath.getFileName().toString().replace(".dat", ".manifest"));
+        if (!Files.isRegularFile(manifestPath)) {
+          if (!catalogSelectedCurrent) {
+            throw new IllegalArgumentException("State Archive sealed manifest is missing");
+          }
+          SegmentManifest recovered = new SegmentManifest(header.getLaneId(),
+              header.getSegmentSeq(), firstBlock, lastBlock, count, entryCount, logicalBytes,
+              encodedBytes, data.size(), StateArchiveFileFormatV3.BLOCK_INDEX_HEADER_LENGTH
+                  + count * StateArchiveFileFormatV3.BLOCK_INDEX_ENTRY_LENGTH,
+              header.getPreviousSegmentDigest(), endHistory);
+          publishRecoveredManifest(manifestPath,
+              StateArchiveSegmentFormatV3.encodeManifest(recovered));
+        }
+        SegmentManifest manifest = StateArchiveSegmentFormatV3.decodeManifest(
+            Files.readAllBytes(manifestPath));
+        long indexBytes = StateArchiveFileFormatV3.BLOCK_INDEX_HEADER_LENGTH
+            + count * StateArchiveFileFormatV3.BLOCK_INDEX_ENTRY_LENGTH;
+        if (manifest.getLaneId() != header.getLaneId()
+            || manifest.getSegmentSeq() != header.getSegmentSeq()
+            || manifest.getFirstBlock() != firstBlock || manifest.getLastBlock() != lastBlock
+            || manifest.getBlockFrameCount() != count || manifest.getEntryCount() != entryCount
+            || manifest.getLogicalPayloadBytes() != logicalBytes
+            || manifest.getEncodedBlockFrameBytes() != encodedBytes
+            || manifest.getDataFileBytes() != data.size()
+            || manifest.getBlockIndexBytes() != indexBytes
+            || !Arrays.equals(manifest.getPreviousSegmentDigest(),
+                header.getPreviousSegmentDigest())
+            || !Arrays.equals(manifest.getFinalHistoryDigest(), endHistory)) {
+          throw new IllegalArgumentException("State Archive sealed manifest identity mismatch");
+        }
+        manifestDigest = manifest.getManifestDigest();
         data.close();
         index.close();
       }
@@ -2103,7 +2368,7 @@ public final class StateArchiveFiveLaneSegmentWriterV3 implements AutoCloseable 
           StateArchiveFileFormatV3.BLOCK_INDEX_HEADER_LENGTH
               + count * StateArchiveFileFormatV3.BLOCK_INDEX_ENTRY_LENGTH,
           header.getHeaderDigest(), content,
-          seal.getEncodedFrameDigest(), new byte[32]);
+          seal.getEncodedFrameDigest(), manifestDigest);
     }
   }
 }

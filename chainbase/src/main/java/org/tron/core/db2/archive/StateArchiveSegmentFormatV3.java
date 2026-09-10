@@ -16,6 +16,8 @@ public final class StateArchiveSegmentFormatV3 {
   private static final int MARKER_CRC_OFFSET = 328;
   private static final int BLOCK_INDEX_HEADER_DIGEST_OFFSET = 92;
   private static final int BLOCK_INDEX_HEADER_CRC_OFFSET = 124;
+  private static final int MANIFEST_DIGEST_OFFSET = 256;
+  private static final int MANIFEST_CRC_OFFSET = 296;
 
   private StateArchiveSegmentFormatV3() {
   }
@@ -467,6 +469,104 @@ public final class StateArchiveSegmentFormatV3 {
     requireLong(bytes, 0, "SegmentMap reserved field");
     result.validate();
     return result;
+  }
+
+  /** Encodes the frozen 304-byte SAM3 sealed-segment manifest. */
+  public static byte[] encodeManifest(SegmentManifest manifest) {
+    Objects.requireNonNull(manifest, "manifest");
+    manifest.validate();
+    ByteBuffer bytes = ByteBuffer.allocate(StateArchiveFileFormatV3.MANIFEST_TOTAL_LENGTH);
+    bytes.putInt(StateArchiveFileFormatV3.SEGMENT_MANIFEST_MAGIC);
+    bytes.putShort(StateArchiveFileFormatV3.MAJOR_VERSION);
+    bytes.putShort(StateArchiveFileFormatV3.MINOR_VERSION);
+    bytes.putInt(StateArchiveFileFormatV3.MANIFEST_HEADER_LENGTH);
+    bytes.putInt(0);
+    bytes.putLong(StateArchiveFileFormatV3.MANIFEST_TOTAL_LENGTH);
+    bytes.putShort(StateArchiveFileFormatV3.laneKind(manifest.laneId));
+    bytes.putShort((short) manifest.laneId);
+    bytes.putShort(StateArchiveFileFormatV3.SEGMENT_LAYOUT_ID);
+    bytes.putShort((short) 0);
+    bytes.putLong(manifest.segmentSeq);
+    bytes.putLong(manifest.firstBlock);
+    bytes.putLong(manifest.lastBlock);
+    bytes.putLong(manifest.blockFrameCount);
+    bytes.putLong(manifest.entryCount);
+    bytes.putLong(manifest.logicalPayloadBytes);
+    bytes.putLong(manifest.encodedBlockFrameBytes);
+    bytes.putLong(manifest.dataFileBytes);
+    bytes.putLong(manifest.blockIndexBytes);
+    bytes.put(StateArchiveFileFormatV3.fiveLaneDescriptorDigest());
+    bytes.put(StateArchiveFileFormatV3.compositeFormatDigest());
+    bytes.put(manifest.previousSegmentDigest);
+    bytes.put(manifest.finalHistoryDigest);
+    bytes.put(new byte[24]);
+    if (bytes.position() != MANIFEST_DIGEST_OFFSET) {
+      throw new IllegalStateException("Invalid State Archive manifest header layout");
+    }
+    bytes.put(StateArchiveFileFormatV3.sha256(
+        Arrays.copyOf(bytes.array(), MANIFEST_DIGEST_OFFSET)));
+    bytes.putLong(StateArchiveFileFormatV3.MANIFEST_TOTAL_LENGTH);
+    bytes.putInt(crc32c(bytes.array(), 0, MANIFEST_CRC_OFFSET));
+    bytes.putInt(StateArchiveFileFormatV3.SEGMENT_MANIFEST_TRAILER_MAGIC);
+    if (bytes.hasRemaining()) {
+      throw new IllegalStateException("Invalid State Archive manifest length");
+    }
+    return bytes.array();
+  }
+
+  /** Decodes and validates the frozen 304-byte SAM3 sealed-segment manifest. */
+  public static SegmentManifest decodeManifest(byte[] encoded) {
+    requireLength(encoded, StateArchiveFileFormatV3.MANIFEST_TOTAL_LENGTH,
+        "segment manifest");
+    ByteBuffer bytes = ByteBuffer.wrap(encoded);
+    requireInt(bytes, StateArchiveFileFormatV3.SEGMENT_MANIFEST_MAGIC, "manifest magic");
+    requireShort(bytes, StateArchiveFileFormatV3.MAJOR_VERSION, "manifest major version");
+    requireShort(bytes, StateArchiveFileFormatV3.MINOR_VERSION, "manifest minor version");
+    requireInt(bytes, StateArchiveFileFormatV3.MANIFEST_HEADER_LENGTH,
+        "manifest header length");
+    requireInt(bytes, 0, "manifest flags");
+    requireLong(bytes, StateArchiveFileFormatV3.MANIFEST_TOTAL_LENGTH,
+        "manifest total length");
+    short laneKind = bytes.getShort();
+    int laneId = Short.toUnsignedInt(bytes.getShort());
+    if (laneKind != StateArchiveFileFormatV3.laneKind(laneId)) {
+      throw new IllegalArgumentException("State Archive manifest lane kind mismatch");
+    }
+    requireShort(bytes, StateArchiveFileFormatV3.SEGMENT_LAYOUT_ID,
+        "manifest segment layout");
+    requireShort(bytes, (short) 0, "manifest reserved field");
+    long segmentSeq = requireNonNegative(bytes.getLong(), "manifest segment sequence");
+    long firstBlock = requireNonNegative(bytes.getLong(), "manifest first block");
+    long lastBlock = requireNonNegative(bytes.getLong(), "manifest last block");
+    long blockFrameCount = requireNonNegative(bytes.getLong(), "manifest block count");
+    long entryCount = requireNonNegative(bytes.getLong(), "manifest entry count");
+    long logicalPayloadBytes = requireNonNegative(bytes.getLong(),
+        "manifest logical payload bytes");
+    long encodedBlockFrameBytes = requireNonNegative(bytes.getLong(),
+        "manifest encoded frame bytes");
+    long dataFileBytes = requireNonNegative(bytes.getLong(), "manifest data bytes");
+    long blockIndexBytes = requireNonNegative(bytes.getLong(),
+        "manifest block index bytes");
+    requireArray(getBytes(bytes, 32), StateArchiveFileFormatV3.fiveLaneDescriptorDigest(),
+        "manifest descriptor digest");
+    requireArray(getBytes(bytes, 32), StateArchiveFileFormatV3.compositeFormatDigest(),
+        "manifest composite format digest");
+    byte[] previousSegmentDigest = getBytes(bytes, 32);
+    byte[] finalHistoryDigest = getBytes(bytes, 32);
+    requireZero(bytes, 24, "manifest reserved bytes");
+    byte[] manifestDigest = getBytes(bytes, 32);
+    requireArray(manifestDigest, StateArchiveFileFormatV3.sha256(
+        Arrays.copyOf(encoded, MANIFEST_DIGEST_OFFSET)), "manifest digest");
+    requireLong(bytes, StateArchiveFileFormatV3.MANIFEST_TOTAL_LENGTH,
+        "manifest repeated length");
+    if (bytes.getInt() != crc32c(encoded, 0, MANIFEST_CRC_OFFSET)) {
+      throw new IllegalArgumentException("State Archive manifest checksum mismatch");
+    }
+    requireInt(bytes, StateArchiveFileFormatV3.SEGMENT_MANIFEST_TRAILER_MAGIC,
+        "manifest trailer magic");
+    return new SegmentManifest(laneId, segmentSeq, firstBlock, lastBlock, blockFrameCount,
+        entryCount, logicalPayloadBytes, encodedBlockFrameBytes, dataFileBytes, blockIndexBytes,
+        previousSegmentDigest, finalHistoryDigest, manifestDigest);
   }
 
   private static void requireCompression(short compressionId) {
@@ -988,6 +1088,89 @@ public final class StateArchiveSegmentFormatV3 {
 
     public byte[] getHeaderDigest() {
       return headerDigest == null ? null : Arrays.copyOf(headerDigest, headerDigest.length);
+    }
+  }
+
+  public static final class SegmentManifest {
+    private final int laneId;
+    private final long segmentSeq;
+    private final long firstBlock;
+    private final long lastBlock;
+    private final long blockFrameCount;
+    private final long entryCount;
+    private final long logicalPayloadBytes;
+    private final long encodedBlockFrameBytes;
+    private final long dataFileBytes;
+    private final long blockIndexBytes;
+    private final byte[] previousSegmentDigest;
+    private final byte[] finalHistoryDigest;
+    private final byte[] manifestDigest;
+
+    public SegmentManifest(int laneId, long segmentSeq, long firstBlock, long lastBlock,
+        long blockFrameCount, long entryCount, long logicalPayloadBytes,
+        long encodedBlockFrameBytes, long dataFileBytes, long blockIndexBytes,
+        byte[] previousSegmentDigest, byte[] finalHistoryDigest) {
+      this(laneId, segmentSeq, firstBlock, lastBlock, blockFrameCount, entryCount,
+          logicalPayloadBytes, encodedBlockFrameBytes, dataFileBytes, blockIndexBytes,
+          previousSegmentDigest, finalHistoryDigest, null);
+    }
+
+    private SegmentManifest(int laneId, long segmentSeq, long firstBlock, long lastBlock,
+        long blockFrameCount, long entryCount, long logicalPayloadBytes,
+        long encodedBlockFrameBytes, long dataFileBytes, long blockIndexBytes,
+        byte[] previousSegmentDigest, byte[] finalHistoryDigest, byte[] manifestDigest) {
+      this.laneId = laneId;
+      this.segmentSeq = segmentSeq;
+      this.firstBlock = firstBlock;
+      this.lastBlock = lastBlock;
+      this.blockFrameCount = blockFrameCount;
+      this.entryCount = entryCount;
+      this.logicalPayloadBytes = logicalPayloadBytes;
+      this.encodedBlockFrameBytes = encodedBlockFrameBytes;
+      this.dataFileBytes = dataFileBytes;
+      this.blockIndexBytes = blockIndexBytes;
+      this.previousSegmentDigest = requireHash(previousSegmentDigest,
+          "manifest previous segment digest");
+      this.finalHistoryDigest = requireHash(finalHistoryDigest,
+          "manifest final history digest");
+      this.manifestDigest = manifestDigest == null ? null
+          : requireHash(manifestDigest, "manifest digest");
+      validate();
+    }
+
+    private void validate() {
+      StateArchiveFileFormatV3.laneKind(laneId);
+      if (segmentSeq < 0 || firstBlock < 0 || lastBlock < firstBlock
+          || blockFrameCount <= 0 || lastBlock - firstBlock + 1 != blockFrameCount
+          || entryCount < 0 || logicalPayloadBytes < 0 || encodedBlockFrameBytes < 0
+          || dataFileBytes < StateArchiveFileFormatV3.PART_HEADER_LENGTH
+              + StateArchiveFileFormatV3.SEAL_HEADER_LENGTH
+              + StateArchiveFileFormatV3.FRAME_TRAILER_LENGTH
+          || blockIndexBytes != StateArchiveFileFormatV3.BLOCK_INDEX_HEADER_LENGTH
+              + blockFrameCount * StateArchiveFileFormatV3.BLOCK_INDEX_ENTRY_LENGTH) {
+        throw new IllegalArgumentException("Invalid State Archive segment manifest state");
+      }
+    }
+
+    public int getLaneId() { return laneId; }
+    public long getSegmentSeq() { return segmentSeq; }
+    public long getFirstBlock() { return firstBlock; }
+    public long getLastBlock() { return lastBlock; }
+    public long getBlockFrameCount() { return blockFrameCount; }
+    public long getEntryCount() { return entryCount; }
+    public long getLogicalPayloadBytes() { return logicalPayloadBytes; }
+    public long getEncodedBlockFrameBytes() { return encodedBlockFrameBytes; }
+    public long getDataFileBytes() { return dataFileBytes; }
+    public long getBlockIndexBytes() { return blockIndexBytes; }
+    public byte[] getPreviousSegmentDigest() {
+      return Arrays.copyOf(previousSegmentDigest, previousSegmentDigest.length);
+    }
+    public byte[] getFinalHistoryDigest() {
+      return Arrays.copyOf(finalHistoryDigest, finalHistoryDigest.length);
+    }
+    public byte[] getManifestDigest() {
+      return manifestDigest == null ? null : Arrays.copyOf(manifestDigest,
+          manifestDigest.length);
     }
   }
 

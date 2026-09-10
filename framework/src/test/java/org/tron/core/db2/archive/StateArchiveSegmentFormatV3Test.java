@@ -13,6 +13,7 @@ import org.tron.core.db2.archive.StateArchiveSegmentFormatV3.BlockIndexHeader;
 import org.tron.core.db2.archive.StateArchiveSegmentFormatV3.DurableMarker;
 import org.tron.core.db2.archive.StateArchiveSegmentFormatV3.SealedSegment;
 import org.tron.core.db2.archive.StateArchiveSegmentFormatV3.SegmentHeader;
+import org.tron.core.db2.archive.StateArchiveSegmentFormatV3.SegmentManifest;
 import org.tron.core.db2.archive.StateArchiveSegmentFormatV3.SegmentSeal;
 
 public class StateArchiveSegmentFormatV3Test {
@@ -105,6 +106,40 @@ public class StateArchiveSegmentFormatV3Test {
     ByteBuffer.wrap(invalid).putLong(32, 4);
     assertThrows(IllegalArgumentException.class,
         () -> StateArchiveSegmentFormatV3.decodeSealedMapRecord(invalid));
+  }
+
+  @Test
+  public void roundTripsFrozenSealedManifestAndRejectsEveryTrailerAuthority() {
+    SegmentManifest input = new SegmentManifest(22, 7, 100, 102, 3, 9,
+        300, 2_000, 2_880, 224, hash(1), hash(2));
+    byte[] encoded = StateArchiveSegmentFormatV3.encodeManifest(input);
+    assertEquals(304, encoded.length);
+    ByteBuffer bytes = ByteBuffer.wrap(encoded);
+    assertEquals(StateArchiveFileFormatV3.SEGMENT_MANIFEST_MAGIC, bytes.getInt(0));
+    assertEquals(256, bytes.getInt(8));
+    assertEquals(304, bytes.getLong(16));
+    assertEquals(22, Short.toUnsignedInt(bytes.getShort(26)));
+    assertEquals(7, bytes.getLong(32));
+    assertEquals(100, bytes.getLong(40));
+    assertEquals(102, bytes.getLong(48));
+    assertArrayEquals(StateArchiveFileFormatV3.fiveLaneDescriptorDigest(),
+        slice(encoded, 104, 32));
+    assertArrayEquals(StateArchiveFileFormatV3.compositeFormatDigest(),
+        slice(encoded, 136, 32));
+
+    SegmentManifest decoded = StateArchiveSegmentFormatV3.decodeManifest(encoded);
+    assertEquals(7, decoded.getSegmentSeq());
+    assertEquals(9, decoded.getEntryCount());
+    assertArrayEquals(hash(1), decoded.getPreviousSegmentDigest());
+    assertArrayEquals(hash(2), decoded.getFinalHistoryDigest());
+    assertArrayEquals(slice(encoded, 256, 32), decoded.getManifestDigest());
+
+    for (int offset : new int[]{232, 260, 291, 299, 303}) {
+      byte[] corrupt = encoded.clone();
+      corrupt[offset] ^= 1;
+      assertThrows(IllegalArgumentException.class,
+          () -> StateArchiveSegmentFormatV3.decodeManifest(corrupt));
+    }
   }
 
   @Test

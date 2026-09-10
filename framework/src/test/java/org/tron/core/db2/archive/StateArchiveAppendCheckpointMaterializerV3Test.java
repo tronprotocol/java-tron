@@ -65,6 +65,9 @@ public class StateArchiveAppendCheckpointMaterializerV3Test {
     try (StateArchiveAppendCheckpointMaterializerV3 reopened = materializer(
         root, format, baseline, 10_000)) {
       assertEquals(Status.PUBLISHED, reopened.inspect(target));
+      assertEquals(1, reopened.servingIndexStatus().getIndexedThrough());
+      assertEquals(StateArchiveServingIndexBuildCoordinatorV3.Mode.BULK_CATCH_UP,
+          reopened.servingIndexStatus().getMode());
       reopened.materialize(payload, target);
       reopened.publish(target);
     }
@@ -134,6 +137,13 @@ public class StateArchiveAppendCheckpointMaterializerV3Test {
           firstPayload, Collections.singletonList(first), firstDescriptor));
       archive.publish(firstTarget);
       assertEquals(Status.PUBLISHED, archive.inspect(firstTarget));
+      assertEquals(StateArchiveServingIndexBuildCoordinatorV3.Mode.BULK_CATCH_UP,
+          archive.servingIndexStatus().getMode());
+      assertEquals(1, archive.servingIndexStatus().getPendingBlocks());
+      archive.completeServingInitialSync(firstTarget);
+      assertEquals(StateArchiveServingIndexBuildCoordinatorV3.Mode.LIVE_IMMEDIATE,
+          archive.servingIndexStatus().getMode());
+      assertEquals(1, archive.servingIndexStatus().getIndexedThrough());
 
       BlockReverseDiff second = diff(2, 16);
       StateArchiveHotBatchDescriptor secondDescriptor = archive.planCheckpoint(
@@ -145,6 +155,8 @@ public class StateArchiveAppendCheckpointMaterializerV3Test {
       assertEquals(Status.MATERIALIZED, archive.inspect(secondTarget));
       archive.publish(secondTarget);
       assertEquals(Status.PUBLISHED, archive.inspect(secondTarget));
+      assertEquals(2, archive.servingIndexStatus().getIndexedThrough());
+      assertEquals(0, archive.servingIndexStatus().getPendingBlocks());
       assertThrows(java.io.IOException.class, () -> archive.inspect(firstTarget));
     }
   }

@@ -101,6 +101,68 @@ public final class ServingIndexIncrementalPlan {
         Collections.unmodifiableMap(immutableChanges));
   }
 
+  /** Plans an exact-27 increment directly from Common-committed captured reverse diffs. */
+  static ServingIndexIncrementalPlan planCommittedDiffs(long indexedThrough, byte[] headHash,
+      List<BlockReverseDiff> committedDiffs) {
+    if (indexedThrough < 0) {
+      throw new IllegalArgumentException("indexedThrough must not be negative");
+    }
+    requireHash(headHash, "headHash");
+    List<String> participants = exactParticipants(
+        new ArrayList<>(ArchiveStoreScope.getStateDatabases()));
+    List<BlockReverseDiff> diffs = new ArrayList<>(Objects.requireNonNull(committedDiffs,
+        "committedDiffs"));
+    Map<String, List<KeyChange>> changes = new LinkedHashMap<>();
+    participants.forEach(database -> changes.put(database, new ArrayList<>()));
+    MessageDigest seed = sha256();
+    updateLong(seed, indexedThrough);
+    seed.update(headHash);
+    updateParticipants(seed, participants);
+    byte[] sourceSeed = seed.digest();
+    MessageDigest delta = sha256();
+    delta.update(sourceSeed);
+    List<byte[]> steps = new ArrayList<>();
+    long previousBlock = indexedThrough;
+    byte[] previousHash = Arrays.copyOf(headHash, headHash.length);
+    BlockHistoryCodec sourceCodec = new BlockHistoryCodec();
+    for (BlockReverseDiff diff : diffs) {
+      BlockSnapshotMeta meta = Objects.requireNonNull(diff, "committedDiff").getMeta();
+      if (meta.getEpoch() != previousBlock + 1 || meta.getBlockNumber() != previousBlock + 1
+          || !Arrays.equals(meta.getParentHash(), previousHash)) {
+        throw new IllegalArgumentException("Serving committed diff suffix is not contiguous");
+      }
+      String previousDatabase = null;
+      for (BlockReverseDiff.DbGroup group : diff.getGroups()) {
+        List<KeyChange> database = changes.get(group.getDbName());
+        if (database == null || previousDatabase != null
+            && previousDatabase.compareTo(group.getDbName()) >= 0) {
+          throw new IllegalArgumentException("Serving committed diff Store coverage is invalid");
+        }
+        byte[] previousKey = null;
+        for (BlockReverseDiff.Entry entry : group.getEntries()) {
+          byte[] key = entry.getKey();
+          if (previousKey != null && BlockReverseDiff.compareUnsigned(previousKey, key) >= 0) {
+            throw new IllegalArgumentException("Serving committed diff keys are not unique");
+          }
+          database.add(new KeyChange(key, meta.getEpoch()));
+          previousKey = key;
+        }
+        previousDatabase = group.getDbName();
+      }
+      byte[] step = sha256().digest(sourceCodec.encode(diff));
+      steps.add(step);
+      delta.update(step);
+      previousBlock = meta.getBlockNumber();
+      previousHash = meta.getBlockHash();
+    }
+    Map<String, List<KeyChange>> immutable = new LinkedHashMap<>();
+    changes.forEach((database, databaseChanges) -> immutable.put(database,
+        Collections.unmodifiableList(new ArrayList<>(databaseChanges))));
+    return new ServingIndexIncrementalPlan(indexedThrough, headHash, previousBlock,
+        previousHash, delta.digest(), sourceSeed, steps, participants,
+        Collections.unmodifiableMap(immutable));
+  }
+
   public long getIndexedFrom() {
     return indexedFrom;
   }

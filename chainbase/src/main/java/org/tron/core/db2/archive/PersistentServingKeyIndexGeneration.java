@@ -195,6 +195,13 @@ public final class PersistentServingKeyIndexGeneration implements ServingKeyInde
   static PersistentServingKeyIndexGeneration buildExact(Path directory, String generationId,
       ServingIndexIncrementalPlan plan, byte[] latestSourceIdentityDigest,
       ExactWriteFaultHook faultHook) throws IOException {
+    return buildExact(directory, generationId, plan, latestSourceIdentityDigest,
+        configuredEngine(), faultHook);
+  }
+
+  static PersistentServingKeyIndexGeneration buildExact(Path directory, String generationId,
+      ServingIndexIncrementalPlan plan, byte[] latestSourceIdentityDigest, Engine engine,
+      ExactWriteFaultHook faultHook) throws IOException {
     Objects.requireNonNull(directory, "directory");
     Objects.requireNonNull(plan, "plan");
     Objects.requireNonNull(faultHook, "faultHook");
@@ -203,7 +210,6 @@ public final class PersistentServingKeyIndexGeneration implements ServingKeyInde
       throw new IllegalArgumentException("Serving generation directory already exists");
     }
     Files.createDirectories(directory);
-    Engine engine = configuredEngine();
     StateArchiveIndexEngineManifest.openOrCreate(directory, engine);
     byte[] sourceDigest = rollSourceDigest(plan.getSourceSeedDigest(),
         plan.getSourceStepDigests());

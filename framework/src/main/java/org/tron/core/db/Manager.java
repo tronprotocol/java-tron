@@ -255,6 +255,8 @@ public class Manager {
   private PathStateRuntimeAttachment pathStateRuntime;
   @Getter
   private CommonCheckpointRuntimeAttachment commonCheckpointRuntime;
+  private StateArchiveAppendCheckpointMaterializerV3 stateArchiveAppendMaterializer;
+  private boolean stateArchiveServingLive;
   private StateArchiveRuntimeOwner.ServingIndexFaultHook stateArchiveServingIndexFaultHook =
       stage -> { };
   private StateArchiveRuntimeOwner.ReadableStateFaultHook stateArchiveReadableStateFaultHook =
@@ -983,6 +985,7 @@ public class Manager {
       attachPathStateBlockFinalRuntime();
       snapshots.attachCommonCheckpointRuntime(attachment);
       commonCheckpointRuntime = attachment;
+      stateArchiveAppendMaterializer = admittedAppendMaterializer;
       pathOwner = null;
       attachment = null;
       hotStore = null;
@@ -2329,9 +2332,21 @@ public class Manager {
       DupTransactionException, TransactionExpirationException,
       BadNumberBlockException, BadBlockException, NonCommonBlockException,
       ReceiptCheckErrException, VMIllegalException, ZksnarkException, EventBloomException {
+    pushBlock(block, false);
+  }
+
+  /** Saves a block while preserving the explicit network sync/live source transition. */
+  public void pushBlock(final BlockCapsule block, boolean syncSource)
+      throws ValidateSignatureException, ContractValidateException, ContractExeException,
+      UnLinkedBlockException, ValidateScheduleException, AccountResourceInsufficientException,
+      TaposException, TooBigTransactionException, TooBigTransactionResultException,
+      DupTransactionException, TransactionExpirationException,
+      BadNumberBlockException, BadBlockException, NonCommonBlockException,
+      ReceiptCheckErrException, VMIllegalException, ZksnarkException, EventBloomException {
     setBlockWaitLock(true);
     try {
       synchronized (this) {
+        updateStateArchiveServingMode(syncSource);
         Metrics.histogramObserve(blockedTimer.get());
         blockedTimer.remove();
         if (Metrics.enabled()) {
@@ -3793,6 +3808,25 @@ public class Manager {
     ((SnapshotManager) revokingStore).detachCommonCheckpointRuntime(runtime);
     runtime.close();
     commonCheckpointRuntime = null;
+    stateArchiveAppendMaterializer = null;
+    stateArchiveServingLive = false;
+  }
+
+  private void updateStateArchiveServingMode(boolean syncSource) {
+    StateArchiveAppendCheckpointMaterializerV3 materializer = stateArchiveAppendMaterializer;
+    if (materializer == null || syncSource || stateArchiveServingLive) {
+      return;
+    }
+    try {
+      java.util.Optional<org.tron.core.db2.core.CommonCheckpointTarget> published =
+          materializer.loadPublishedTargetIfPresent();
+      if (published.isPresent()) {
+        materializer.completeServingInitialSync(published.get());
+        stateArchiveServingLive = true;
+      }
+    } catch (java.io.IOException failure) {
+      throw new IllegalStateException("State Archive serving-index handoff failed", failure);
+    }
   }
 
   private void closePathStateRoot() {

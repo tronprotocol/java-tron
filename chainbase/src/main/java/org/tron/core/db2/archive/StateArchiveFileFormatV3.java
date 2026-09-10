@@ -22,6 +22,8 @@ public final class StateArchiveFileFormatV3 {
   public static final int BLOCK_INDEX_MAGIC = 0x53424933;
   public static final int RECOVERY_INTENT_MAGIC = 0x53524933;
   public static final int RECOVERY_INTENT_TRAILER_MAGIC = 0x33495253;
+  public static final int SEGMENT_MANIFEST_MAGIC = 0x53414d33;
+  public static final int SEGMENT_MANIFEST_TRAILER_MAGIC = 0x334d4153;
 
   public static final short MAJOR_VERSION = 3;
   public static final short MINOR_VERSION = 0;
@@ -58,6 +60,8 @@ public final class StateArchiveFileFormatV3 {
   public static final int MANIFEST_HEADER_LENGTH = 256;
   public static final int MANIFEST_PART_RECORD_LENGTH = 160;
   public static final int MANIFEST_TRAILER_LENGTH = 48;
+  public static final int MANIFEST_TOTAL_LENGTH = MANIFEST_HEADER_LENGTH
+      + MANIFEST_TRAILER_LENGTH;
   public static final int SEGMENT_LAYOUT_DESCRIPTOR_LENGTH = 64;
   public static final int SEGMENT_MAP_ENTRY_LENGTH = 192;
   public static final int RECOVERY_INTENT_LAYOUT_DESCRIPTOR_LENGTH = 32;
