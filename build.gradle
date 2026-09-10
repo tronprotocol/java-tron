@@ -17,6 +17,7 @@ def arch = System.getProperty("os.arch").toLowerCase(Locale.ROOT)
 def javaVersion = JavaVersion.current()
 def isArm64 = Architectures.AARCH64.isAlias(arch)
 def requestedRocksdbVersion = findProperty('rocksdbVersion')
+def java17Candidate = findProperty('java17Candidate') == 'true'
 def archSource = isArm64 ? "arm" : (requestedRocksdbVersion == '9.7.4' ? "x86-high" : "x86")
 def isMac = OperatingSystem.current().isMacOsX()
 
@@ -37,7 +38,8 @@ ext.archInfo = [
             ]
         ],
         requires: [
-                JavaVersion: isArm64 ? JavaVersion.VERSION_17 : JavaVersion.VERSION_1_8,
+                JavaVersion: (isArm64 || java17Candidate)
+                        ? JavaVersion.VERSION_17 : JavaVersion.VERSION_1_8,
                 // Allow an explicitly pinned validation candidate to use the same JNI
                 // generation across architectures; the default remains the legacy x86
                 // baseline until the candidate passes the AMD compatibility gate.
@@ -47,7 +49,9 @@ ext.archInfo = [
                 // https://github.com/grpc/grpc-java/pull/11371 , 1.64.x is not supported CentOS 7.
                 ProtocGenVersion: isArm64 || isMac ? '1.81.0' : '1.60.0'
         ],
-        VMOptions: isArm64 ? "${rootDir}/gradle/jdk17/java-tron.vmoptions" : "${rootDir}/gradle/java-tron.vmoptions"
+        VMOptions: (isArm64 || java17Candidate)
+                ? "${rootDir}/gradle/jdk17/java-tron.vmoptions"
+                : "${rootDir}/gradle/java-tron.vmoptions"
 ]
 
 if (!archInfo.java.is(archInfo.requires.JavaVersion)) {
