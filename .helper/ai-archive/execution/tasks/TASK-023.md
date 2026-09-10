@@ -32,6 +32,7 @@ active_branch: feature/archive_block2
 - 第二份完整快照在 control 保持停止期间启动 JDK17 smoke 成功，HTTP/PBFT API 全部启动并返回快照 head；候选随后停止并恢复 JDK8 control。
 - 在完整性校验通过且 control 全程停止的前提下，JDK17+RocksDB9.7.4 P2P 窗口从 `85151013` 到 `85151045`（120 秒 +32，约 `0.267 block/s`），采样 CPU 约 471%、RSS 约 9.8 GB；窗口后已恢复 control。该值仍需与同快照 JDK8 交错复测。
 - 对比校准：真正 ARM-001 为 `10.255.10.101`，当前 live 实际是 JDK8、Chainbase RocksDB、`pathStateRoot.mode=shadow`，且 unit 无 MemoryHigh/Max；AMD-002 是 JDK8、Chainbase LevelDB、同步 PathState、30 GiB cgroup。不能把 ARM 历史 shadow/无硬内存上限窗口与 AMD 同步/30 GiB窗口直接比较。
+- 2026-09-11 对齐动作：ARM-001 现场确认已是 JDK17、RocksDB、shadow 模式且 `volatileSnapshotBenchmark=false`/`asyncPrepareBenchmark=false`，unit 已是 MemoryHigh/Max=30 GiB；代码不接受字面 `mode=sync`。AMD-002 已切换 JDK17+RocksDB9.7.4 live，启动后 60 秒 `85151840→85151866`、0 restart。
 
 ## 实验顺序
 
