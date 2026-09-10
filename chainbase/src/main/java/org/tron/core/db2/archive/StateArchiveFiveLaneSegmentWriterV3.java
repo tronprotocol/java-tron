@@ -17,7 +17,9 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.NavigableMap;
 import java.util.Objects;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.tron.core.db2.archive.StateArchiveFiveLaneBlockCodecV3.DecodedBundle;
@@ -71,6 +73,9 @@ public final class StateArchiveFiveLaneSegmentWriterV3 implements AutoCloseable 
   private final List<FileTailProof> pendingRotationTails = new ArrayList<>();
   private long activeCheckpointSequence = -1;
   private byte[] activeCommonTargetDigest;
+  private Map<Integer, NavigableMap<Long, SealedSegment>> servingSegments;
+  private long servingReadFrames;
+  private long servingReadBytes;
 
   public StateArchiveFiveLaneSegmentWriterV3(Path archiveRoot,
       byte[] baselineHistoryDigest, short compressionId) throws IOException {
@@ -336,41 +341,48 @@ public final class StateArchiveFiveLaneSegmentWriterV3 implements AutoCloseable 
         || through > appendHead.getBlockNumber()) {
       throw new IllegalArgumentException("Invalid State Archive committed read range");
     }
-    Map<Long, Map<Integer, byte[]>> bundles = new java.util.TreeMap<>();
-    for (Path path : listDataFiles(false)) {
-      try (FileChannel data = FileChannel.open(path, StandardOpenOption.READ)) {
-        long offset = StateArchiveFileFormatV3.PART_HEADER_LENGTH;
-        while (offset < data.size()) {
-          byte[] envelope = readExact(data, offset,
-              StateArchiveFileFormatV3.FRAME_ENVELOPE_LENGTH);
-          ByteBuffer fields = ByteBuffer.wrap(envelope);
-          if (fields.getInt(0) != StateArchiveFileFormatV3.FRAME_MAGIC) {
-            throw new IOException("State Archive serving source frame magic mismatch");
-          }
-          short frameType = fields.getShort(8);
-          long length = fields.getLong(16);
-          if (length <= 0 || length > Integer.MAX_VALUE || length > data.size() - offset) {
-            throw new IOException("State Archive serving source frame length mismatch");
-          }
-          byte[] frame = readExact(data, offset, (int) length);
-          if (frameType == StateArchiveFileFormatV3.BLOCK_FRAME_TYPE) {
-            long block = blockNumber(frame);
-            if (block > fromExclusive && block <= through) {
-              int laneId = laneIdFromFrame(frame);
-              byte[] previous = bundles.computeIfAbsent(block, ignored -> new HashMap<>())
-                  .put(laneId, frame);
-              if (previous != null) {
-                throw new IOException("Duplicate State Archive serving source lane frame");
-              }
-            }
-          }
-          offset += length;
+    servingReadFrames = 0;
+    servingReadBytes = 0;
+    if (fromExclusive == through) {
+      return Collections.emptyList();
+    }
+    Map<Long, Map<Integer, byte[]>> bundles = new TreeMap<>();
+    if (servingSegments == null) {
+      servingSegments = new HashMap<>();
+      for (int laneId : StateArchiveFileFormatV3.fiveLaneIds()) {
+        servingSegments.put(laneId, new TreeMap<>());
+      }
+      for (SealedSegment segment : sealedSegments) {
+        servingSegments.get(segment.getLaneId()).put(segment.getFirstBlock(), segment);
+      }
+    }
+    long first = fromExclusive + 1;
+    for (int laneId : StateArchiveFileFormatV3.fiveLaneIds()) {
+      NavigableMap<Long, SealedSegment> segments = servingSegments.get(laneId);
+      Map.Entry<Long, SealedSegment> selected = segments.floorEntry(first);
+      if (selected == null) {
+        selected = segments.ceilingEntry(first);
+      }
+      while (selected != null && selected.getKey() <= through) {
+        SealedSegment segment = selected.getValue();
+        if (segment.getLastBlock() >= first) {
+          readIndexedRange(laneId, segment.getSegmentSeq(), segment.getFirstBlock(),
+              Math.max(first, segment.getFirstBlock()),
+              Math.min(through, segment.getLastBlock()), segment.getSegmentHeaderDigest(),
+              bundles);
         }
+        selected = segments.higherEntry(selected.getKey());
+      }
+      LaneState current = lanes.get(laneId);
+      if (current != null && current.firstBlock <= through && current.lastBlock >= first) {
+        readIndexedRange(laneId, current.segmentSeq, current.firstBlock,
+            Math.max(first, current.firstBlock), Math.min(through, current.lastBlock),
+            current.headerDigest, bundles);
       }
     }
     List<BlockReverseDiff> result = new ArrayList<>();
     for (long block = fromExclusive + 1; block <= through; block++) {
-      Map<Integer, byte[]> laneFrames = bundles.get(block);
+      Map<Integer, byte[]> laneFrames = bundles.remove(block);
       if (laneFrames == null
           || laneFrames.size() != StateArchiveFileFormatV3.fiveLaneIds().length) {
         throw new IOException("Incomplete State Archive serving source bundle");
@@ -382,6 +394,61 @@ public final class StateArchiveFiveLaneSegmentWriterV3 implements AutoCloseable 
       result.add(codec.decode(ordered).getDiff());
     }
     return Collections.unmodifiableList(result);
+  }
+
+  synchronized long getServingReadFrames() {
+    return servingReadFrames;
+  }
+
+  synchronized long getServingReadBytes() {
+    return servingReadBytes;
+  }
+
+  private void readIndexedRange(int laneId, long sequence, long segmentFirst,
+      long first, long last, byte[] headerDigest,
+      Map<Long, Map<Integer, byte[]>> bundles) throws IOException {
+    try (FileChannel data = FileChannel.open(dataPath(laneId, sequence),
+        StandardOpenOption.READ);
+        FileChannel index = FileChannel.open(indexPath(laneId, sequence),
+            StandardOpenOption.READ)) {
+      BlockIndexHeader header = StateArchiveSegmentFormatV3.decodeBlockIndexHeader(
+          readExact(index, 0, StateArchiveFileFormatV3.BLOCK_INDEX_HEADER_LENGTH));
+      if (header.getLaneId() != laneId || header.getSegmentSeq() != sequence
+          || !Arrays.equals(headerDigest, header.getDataSegmentHeaderDigest())) {
+        throw new IOException("State Archive serving block index identity mismatch");
+      }
+      long dataBytes = data.size();
+      int entryBytes = StateArchiveFileFormatV3.BLOCK_INDEX_ENTRY_LENGTH;
+      byte[] entries = null;
+      for (long block = first; block <= last; block++) {
+        int entryInBatch = (int) ((block - first) % 256);
+        if (entryInBatch == 0) {
+          long offset = Math.addExact(StateArchiveFileFormatV3.BLOCK_INDEX_HEADER_LENGTH,
+              Math.multiplyExact(block - segmentFirst, entryBytes));
+          int count = (int) Math.min(256, last - block + 1);
+          entries = readExact(index, offset, count * entryBytes);
+        }
+        BlockIndexEntry entry = StateArchiveSegmentFormatV3.decodeBlockIndexEntry(
+            Arrays.copyOfRange(entries, entryInBatch * entryBytes,
+                (entryInBatch + 1) * entryBytes));
+        if (entry.getBlockNumber() != block
+            || entry.getFrameOffset() > dataBytes - entry.getFrameLength()) {
+          throw new IOException("State Archive serving block index range mismatch");
+        }
+        byte[] frame = readExact(data, entry.getFrameOffset(), entry.getFrameLength());
+        servingReadFrames++;
+        servingReadBytes += frame.length;
+        if (blockNumber(frame) != block || laneIdFromFrame(frame) != laneId
+            || ByteBuffer.wrap(frame).getLong(frame.length - ENCODED_DIGEST_FROM_END)
+            != entry.getEncodedFrameDigestPrefix()) {
+          throw new IOException("State Archive serving block index frame mismatch");
+        }
+        if (bundles.computeIfAbsent(block, ignored -> new HashMap<>()).put(laneId, frame)
+            != null) {
+          throw new IOException("Duplicate State Archive serving source lane frame");
+        }
+      }
+    }
   }
 
   private static int laneIdFromFrame(byte[] frame) throws IOException {
@@ -761,6 +828,7 @@ public final class StateArchiveFiveLaneSegmentWriterV3 implements AutoCloseable 
   }
 
   private void reopen(Long recoveryBoundary) throws IOException {
+    servingSegments = null;
     List<Path> dataFiles = listDataFiles(recoveryBoundary != null || activeRecoveryIntent != null);
     if (dataFiles.isEmpty()) {
       resultHistoryDigest = Arrays.copyOf(baselineHistoryDigest,
@@ -1447,6 +1515,7 @@ public final class StateArchiveFiveLaneSegmentWriterV3 implements AutoCloseable 
   }
 
   private void publishCatalog() throws IOException {
+    servingSegments = null;
     catalog.publish(rotationTargetBytes, getCurrentSegments(), getSealedSegments());
     structuralChanged = false;
   }

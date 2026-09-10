@@ -88,6 +88,76 @@ public class StateArchiveFiveLaneSegmentWriterV3Test {
   }
 
   @Test
+  public void indexedRangesReadOnlyRequestedFramesAcrossGrowingHistory() throws Exception {
+    Path root = temporaryFolder.newFolder("bounded-serving-read").toPath();
+    byte[] baseline = hash(89);
+    StateArchiveFiveLaneBlockCodecV3 codec = new StateArchiveFiveLaneBlockCodecV3();
+    try (StateArchiveFiveLaneSegmentWriterV3 writer =
+        new StateArchiveFiveLaneSegmentWriterV3(root, baseline,
+            StateArchiveFileFormatV3.COMPRESSION_NONE, 800_000)) {
+      byte[] previous = baseline;
+      long shortHistoryBytes = 0;
+      for (int block = 1; block <= 2_048; block++) {
+        EncodedBundle bundle = codec.encode(diff(block, 1_400), previous,
+            StateArchiveFileFormatV3.COMPRESSION_NONE);
+        writer.appendForCheckpoint(bundle, 1, hash(109));
+        previous = bundle.getResultHistoryDigest();
+        if (block == 64) {
+          assertEquals(8, writer.readCommittedDiffs(56, 64).size());
+          assertEquals(40, writer.getServingReadFrames());
+          shortHistoryBytes = writer.getServingReadBytes();
+        }
+      }
+      long start = System.nanoTime();
+      long totalFrames = 0;
+      for (int first = 0; first < 2_048; first += 64) {
+        List<BlockReverseDiff> read = writer.readCommittedDiffs(first, first + 64);
+        assertEquals(64, read.size());
+        assertEquals(320, writer.getServingReadFrames());
+        totalFrames += writer.getServingReadFrames();
+        for (int offset = 0; offset < read.size(); offset++) {
+          assertArrayEquals(new BlockHistoryCodec().encode(diff(first + offset + 1, 1_400)),
+              new BlockHistoryCodec().encode(read.get(offset)));
+        }
+      }
+      assertEquals(10_240, totalFrames);
+      assertEquals(1_000, writer.readCommittedDiffs(1_000, 2_000).size());
+      assertEquals(5_000, writer.getServingReadFrames());
+      assertEquals(8, writer.readCommittedDiffs(2_040, 2_048).size());
+      assertEquals(40, writer.getServingReadFrames());
+      assertEquals(shortHistoryBytes, writer.getServingReadBytes());
+      // Out-of-range data is neither opened nor read, even when that segment is unavailable.
+      Files.move(segment(root, 0, ".dat"), root.resolve("unrelated-segment.dat"));
+      assertEquals(8, writer.readCommittedDiffs(2_040, 2_048).size());
+      System.out.printf("SERVING_RANGE_READ blocks=2048 batches=32 frames=%d seconds=%.6f%n",
+          totalFrames, (System.nanoTime() - start) / 1_000_000_000.0);
+    }
+  }
+
+  @Test
+  public void indexedRangesRejectCorruptSelectedIndexWithoutScanningData() throws Exception {
+    Path root = temporaryFolder.newFolder("corrupt-serving-index").toPath();
+    byte[] baseline = hash(89);
+    StateArchiveFiveLaneBlockCodecV3 codec = new StateArchiveFiveLaneBlockCodecV3();
+    try (StateArchiveFiveLaneSegmentWriterV3 writer =
+        new StateArchiveFiveLaneSegmentWriterV3(root, baseline,
+            StateArchiveFileFormatV3.COMPRESSION_NONE, 80_000)) {
+      writer.append(codec.encode(diff(1, 1_400), baseline,
+          StateArchiveFileFormatV3.COMPRESSION_NONE));
+      assertEquals(1, writer.readCommittedDiffs(0, 1).size());
+      try (FileChannel index = FileChannel.open(segment(root, 0, ".bidx"),
+          StandardOpenOption.WRITE)) {
+        ByteBuffer wrongBlock = ByteBuffer.allocate(8);
+        wrongBlock.putLong(2).flip();
+        index.write(wrongBlock, StateArchiveFileFormatV3.BLOCK_INDEX_HEADER_LENGTH);
+      }
+      assertThrows(java.io.IOException.class, () -> writer.readCommittedDiffs(0, 1));
+      assertEquals(0, writer.getServingReadFrames());
+      assertTrue(writer.readCommittedDiffs(1, 1).isEmpty());
+    }
+  }
+
+  @Test
   public void rotatesPreviouslyPublishedTailAtNextCheckpointBoundary() throws Exception {
     Path root = temporaryFolder.newFolder("published-tail-rotation").toPath();
     byte[] baseline = hash(89);
