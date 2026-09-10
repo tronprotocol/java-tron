@@ -3,6 +3,7 @@ package org.tron.core.db2.archive;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -65,8 +66,10 @@ public class StateArchiveAppendCheckpointMaterializerV3Test {
     try (StateArchiveAppendCheckpointMaterializerV3 reopened = materializer(
         root, format, baseline, 10_000)) {
       assertEquals(Status.PUBLISHED, reopened.inspect(target));
+      reopened.afterCommit(target);
+      reopened.completeServingInitialSync(target);
       assertEquals(1, reopened.servingIndexStatus().getIndexedThrough());
-      assertEquals(StateArchiveServingIndexBuildCoordinatorV3.Mode.BULK_CATCH_UP,
+      assertEquals(StateArchiveServingIndexBuildCoordinatorV3.Mode.LIVE_IMMEDIATE,
           reopened.servingIndexStatus().getMode());
       reopened.materialize(payload, target);
       reopened.publish(target);
@@ -118,6 +121,49 @@ public class StateArchiveAppendCheckpointMaterializerV3Test {
     }
   }
 
+  @Test(timeout = 15000)
+  public void commonRetiresWhileDerivedBuilderIsBlocked() throws Exception {
+    Path root = temporaryFolder.newFolder("isolated-serving").toPath();
+    java.util.concurrent.CountDownLatch entered = new java.util.concurrent.CountDownLatch(1);
+    java.util.concurrent.CountDownLatch release = new java.util.concurrent.CountDownLatch(1);
+    StateArchiveAppendCheckpointMaterializerV3 archive =
+        new StateArchiveAppendCheckpointMaterializerV3(root.resolve("history"), hash(71),
+            Engine.LEVELDB, hash(81), StateArchiveFileFormatV3.COMPRESSION_NONE, 10000, () -> {
+          entered.countDown();
+          try {
+            if (!release.await(5, java.util.concurrent.TimeUnit.SECONDS)) {
+              throw new IllegalStateException("test release timed out");
+            }
+          } catch (InterruptedException failure) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException(failure);
+          }
+        });
+    CommonCheckpointFile wal = new CommonCheckpointFile(root.resolve("wal"));
+    CommonCheckpointRedoCoordinator coordinator = new CommonCheckpointRedoCoordinator(wal,
+        new FakeMaterializer(Authority.CHAINBASE), new FakeMaterializer(Authority.PATH_STATE),
+        archive);
+    try {
+      List<BlockReverseDiff> diffs = Collections.singletonList(diff(1, 32));
+      StateArchiveHotBatchDescriptor descriptor = archive.planCheckpoint(diffs);
+      CommonCheckpointPayload payload = payload(hash(71), diffs, descriptor);
+      CommonCheckpointTarget target = archive.prepare(
+          CommonCheckpointCapture.create(payload, diffs, descriptor));
+      coordinator.apply(payload);
+      assertTrue(entered.await(5, java.util.concurrent.TimeUnit.SECONDS));
+      assertEquals(CommonCheckpointRedoCoordinator.RecoveryAction.NO_CHECKPOINT,
+          coordinator.recover());
+      assertEquals(Status.PUBLISHED, archive.inspect(target));
+      assertEquals(-1, archive.servingIndexStatus().getIndexedThrough());
+      release.countDown();
+      archive.completeServingInitialSync(target);
+      assertEquals(1, archive.servingIndexStatus().getIndexedThrough());
+    } finally {
+      release.countDown();
+      coordinator.close();
+    }
+  }
+
   @Test
   public void advancesTwoPublishedTargetsAndPreservesFreshHotBindingBytes() throws Exception {
     Path root = temporaryFolder.newFolder("append-materializer-sequential").toPath();
@@ -139,7 +185,7 @@ public class StateArchiveAppendCheckpointMaterializerV3Test {
       assertEquals(Status.PUBLISHED, archive.inspect(firstTarget));
       assertEquals(StateArchiveServingIndexBuildCoordinatorV3.Mode.BULK_CATCH_UP,
           archive.servingIndexStatus().getMode());
-      assertEquals(1, archive.servingIndexStatus().getPendingBlocks());
+      archive.afterCommit(firstTarget);
       archive.completeServingInitialSync(firstTarget);
       assertEquals(StateArchiveServingIndexBuildCoordinatorV3.Mode.LIVE_IMMEDIATE,
           archive.servingIndexStatus().getMode());
@@ -154,6 +200,7 @@ public class StateArchiveAppendCheckpointMaterializerV3Test {
           secondPayload, Collections.singletonList(second), secondDescriptor));
       assertEquals(Status.MATERIALIZED, archive.inspect(secondTarget));
       archive.publish(secondTarget);
+      archive.afterCommit(secondTarget);
       assertEquals(Status.PUBLISHED, archive.inspect(secondTarget));
       assertEquals(2, archive.servingIndexStatus().getIndexedThrough());
       assertEquals(0, archive.servingIndexStatus().getPendingBlocks());

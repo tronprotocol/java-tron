@@ -336,6 +336,11 @@ public final class StateArchiveFiveLaneSegmentWriterV3 implements AutoCloseable 
   /** Replays complete five-lane bundles from Catalog-selected authority for serving repair. */
   public synchronized List<BlockReverseDiff> readCommittedDiffs(long fromExclusive, long through)
       throws IOException {
+    return readCommittedDiffs(fromExclusive, through, Long.MAX_VALUE);
+  }
+
+  synchronized List<BlockReverseDiff> readCommittedDiffs(long fromExclusive, long through,
+      long maxEncodedBytes) throws IOException {
     requireUsable();
     if (fromExclusive < 0 || through < fromExclusive || appendHead == null
         || through > appendHead.getBlockNumber()) {
@@ -372,7 +377,7 @@ public final class StateArchiveFiveLaneSegmentWriterV3 implements AutoCloseable 
           readIndexedRange(laneId, segment.getSegmentSeq(), segment.getFirstBlock(),
               Math.max(first, segment.getFirstBlock()),
               Math.min(through, segment.getLastBlock()), segment.getSegmentHeaderDigest(),
-              first, bundles[laneOrdinal]);
+              first, bundles[laneOrdinal], maxEncodedBytes);
         }
         selected = segments.higherEntry(selected.getKey());
       }
@@ -380,7 +385,7 @@ public final class StateArchiveFiveLaneSegmentWriterV3 implements AutoCloseable 
       if (current != null && current.firstBlock <= through && current.lastBlock >= first) {
         readIndexedRange(laneId, current.segmentSeq, current.firstBlock,
             Math.max(first, current.firstBlock), Math.min(through, current.lastBlock),
-            current.headerDigest, first, bundles[laneOrdinal]);
+            current.headerDigest, first, bundles[laneOrdinal], maxEncodedBytes);
       }
     }
     List<BlockReverseDiff> result = new ArrayList<>(blockCount);
@@ -403,13 +408,19 @@ public final class StateArchiveFiveLaneSegmentWriterV3 implements AutoCloseable 
     return servingReadFrames;
   }
 
+  static final class ServingReadBudgetException extends IOException {
+    ServingReadBudgetException() {
+      super("Serving source encoded-byte budget exceeded");
+    }
+  }
+
   synchronized long getServingReadBytes() {
     return servingReadBytes;
   }
 
   private void readIndexedRange(int laneId, long sequence, long segmentFirst,
       long first, long last, byte[] headerDigest,
-      long rangeFirst, byte[][] laneFrames) throws IOException {
+      long rangeFirst, byte[][] laneFrames, long maxEncodedBytes) throws IOException {
     try (FileChannel data = FileChannel.open(dataPath(laneId, sequence),
         StandardOpenOption.READ);
         FileChannel index = FileChannel.open(indexPath(laneId, sequence),
@@ -437,6 +448,9 @@ public final class StateArchiveFiveLaneSegmentWriterV3 implements AutoCloseable 
         if (entry.getBlockNumber() != block
             || entry.getFrameOffset() > dataBytes - entry.getFrameLength()) {
           throw new IOException("State Archive serving block index range mismatch");
+        }
+        if (entry.getFrameLength() > maxEncodedBytes - servingReadBytes) {
+          throw new ServingReadBudgetException();
         }
         byte[] frame = readExact(data, entry.getFrameOffset(), entry.getFrameLength());
         servingReadFrames++;

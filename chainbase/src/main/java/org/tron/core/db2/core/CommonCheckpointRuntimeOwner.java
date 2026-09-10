@@ -73,10 +73,11 @@ public final class CommonCheckpointRuntimeOwner implements AutoCloseable {
       requireState(State.READY, "common checkpoint runtime is not ready to flush");
       state = State.CHECKPOINTING;
       try {
-        CommonCheckpointRedoCoordinator.RecoveryAction action = coordinator.apply(
+        CommonCheckpointRedoCoordinator.RecoveryAction action = coordinator.applyDurable(
             Objects.requireNonNull(payload, "payload"));
         Objects.requireNonNull(completion, "completion").run();
         state = State.READY;
+        coordinator.notifyCommitted(CommonCheckpointTarget.from(payload));
         return action;
       } catch (IOException | RuntimeException failure) {
         state = State.FAILED;

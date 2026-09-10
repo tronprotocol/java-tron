@@ -146,6 +146,11 @@ public final class StateArchiveServingIndexBuildCoordinatorV3 implements AutoClo
     return progress();
   }
 
+  synchronized void flushRecoveryBatch() throws IOException {
+    requireOpen();
+    flushPending();
+  }
+
   @Override
   public synchronized void close() throws IOException {
     if (!closed) {
@@ -266,7 +271,7 @@ public final class StateArchiveServingIndexBuildCoordinatorV3 implements AutoClo
     private final int pendingBlocks;
     private final long buildSequence;
 
-    private BuildProgress(Mode mode, long indexedThrough, long committedThrough,
+    BuildProgress(Mode mode, long indexedThrough, long committedThrough,
         int pendingBlocks, long buildSequence) {
       this.mode = mode;
       this.indexedThrough = indexedThrough;

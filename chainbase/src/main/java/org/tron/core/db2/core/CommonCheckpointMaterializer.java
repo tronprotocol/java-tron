@@ -33,6 +33,10 @@ public interface CommonCheckpointMaterializer extends AutoCloseable {
   /** Idempotently publishes this authority's already-materialized exact target. */
   void publish(CommonCheckpointTarget target) throws IOException;
 
+  /** Best-effort derived work, invoked only after durable redo and WAL retirement complete. */
+  default void afterCommit(CommonCheckpointTarget target) {
+  }
+
   enum Authority {
     CHAINBASE,
     PATH_STATE,

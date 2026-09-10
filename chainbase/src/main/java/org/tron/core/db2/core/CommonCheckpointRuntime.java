@@ -7,6 +7,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.LongSupplier;
+import org.tron.core.db2.archive.StateArchiveAppendCheckpointMaterializerV3;
 import org.tron.core.db2.archive.StateArchiveCheckpointMaterializer;
 import org.tron.core.db2.archive.StateArchiveCheckpointPlanner;
 import org.tron.core.db2.archive.StateArchiveCheckpointReadSnapshot;
@@ -141,8 +142,15 @@ public final class CommonCheckpointRuntime implements AutoCloseable {
       publishedTarget = archivePlanner == null
           ? StateArchiveCheckpointMaterializer.loadPublishedTargetIfPresent(
               archiveDirectory, formatIdentity, engine, materializedStore).orElse(null) : null;
+      if (archivePlanner instanceof StateArchiveAppendCheckpointMaterializerV3) {
+        publishedTarget = ((StateArchiveAppendCheckpointMaterializerV3) archivePlanner)
+            .loadPublishedTargetIfPresent().orElse(null);
+      }
       if (publishedTarget != null) {
         owner.requirePublishedBeforeServing(publishedTarget);
+        if (archivePlanner != null) {
+          archivePlanner.afterCommit(publishedTarget);
+        }
       }
       return action;
     } catch (IOException | RuntimeException failure) {

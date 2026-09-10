@@ -6,7 +6,6 @@ import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -30,10 +29,7 @@ public final class StateArchiveAppendCheckpointMaterializerV3
   private final StateArchiveFiveLaneBlockCodecV3 codec =
       new StateArchiveFiveLaneBlockCodecV3();
   private final StateArchiveFiveLaneSegmentWriterV3 writer;
-  private final StateArchiveServingIndexBuildCoordinatorV3 servingCoordinator;
-  private StateArchiveServingIndexBuildCoordinatorV3.LiveServingIndexer liveServingIndexer;
-  private List<BlockReverseDiff> stagedServingDiffs;
-  private CommonCheckpointTarget stagedServingTarget;
+  private final StateArchiveServingWorkerV3 servingWorker;
   private boolean closed;
 
   public StateArchiveAppendCheckpointMaterializerV3(Path directory,
@@ -46,15 +42,22 @@ public final class StateArchiveAppendCheckpointMaterializerV3
   public StateArchiveAppendCheckpointMaterializerV3(Path directory,
       byte[] commonFormatIdentity, Engine bindingEngine, byte[] baselineHistoryDigest,
       short compressionId, long rotationTargetBytes) throws IOException {
+    this(directory, commonFormatIdentity, bindingEngine, baselineHistoryDigest, compressionId,
+        rotationTargetBytes, () -> { });
+  }
+
+  StateArchiveAppendCheckpointMaterializerV3(Path directory,
+      byte[] commonFormatIdentity, Engine bindingEngine, byte[] baselineHistoryDigest,
+      short compressionId, long rotationTargetBytes, Runnable beforeServingBuild) throws IOException {
     this.directory = Objects.requireNonNull(directory, "directory");
     this.commonFormatIdentity = requireDigest(commonFormatIdentity, "Common format identity");
     this.bindingEngine = Objects.requireNonNull(bindingEngine, "bindingEngine");
     this.compressionId = compressionId;
     this.writer = new StateArchiveFiveLaneSegmentWriterV3(directory,
         baselineHistoryDigest, compressionId, rotationTargetBytes);
-    this.servingCoordinator = new StateArchiveServingIndexBuildCoordinatorV3(directory,
-        bindingEngine, 1_000);
-    recoverServingIndex();
+    this.servingWorker = new StateArchiveServingWorkerV3(
+        () -> new StateArchiveServingIndexBuildCoordinatorV3(directory, bindingEngine, 1_000),
+        writer, beforeServingBuild);
   }
 
   @Override
@@ -93,8 +96,6 @@ public final class StateArchiveAppendCheckpointMaterializerV3
       return target;
     }
     List<BlockReverseDiff> diffs = admittedDiffs(admitted.getArchiveDiffs());
-    stagedServingDiffs = diffs;
-    stagedServingTarget = target;
     if (!admitted.getArchiveBinding().equals(planCheckpoint(diffs))) {
       throw new IOException("Append-file Archive checkpoint binding differs");
     }
@@ -187,26 +188,39 @@ public final class StateArchiveAppendCheckpointMaterializerV3
     CommonCheckpointTarget admitted = requireTarget(target);
     Status status = inspect(admitted);
     if (status == Status.PUBLISHED) {
-      dispatchServingIfStaged(admitted);
       return;
     }
     if (status != Status.MATERIALIZED) {
       throw new IOException("Append-file Archive target is not materialized");
     }
     StateArchiveCheckpointMaterializer.publishReadableTarget(directory, admitted);
-    dispatchServingIfStaged(admitted);
+  }
+
+  @Override
+  public void afterCommit(CommonCheckpointTarget target) {
+    try {
+      servingWorker.offer(target);
+    } catch (IOException | RuntimeException failure) {
+      org.slf4j.LoggerFactory.getLogger("DB").error(
+          "Archive serving degraded after Common commit at {}",
+          target.getLastBlock().getBlockNumber(), failure);
+    }
   }
 
   /** Explicit sync-lifecycle handoff; it never infers completion from peer/head timing. */
   public synchronized void completeServingInitialSync(CommonCheckpointTarget boundary)
       throws IOException {
     requireOpen();
-    liveServingIndexer = servingCoordinator.completeInitialSync(boundary);
+    servingWorker.completeInitialSync(boundary);
   }
 
   public synchronized StateArchiveServingIndexBuildCoordinatorV3.BuildProgress
       servingIndexStatus() {
-    return servingCoordinator.status();
+    return servingWorker.status();
+  }
+
+  public IOException servingIndexFailure() {
+    return servingWorker.failure();
   }
 
   @Override
@@ -215,7 +229,7 @@ public final class StateArchiveAppendCheckpointMaterializerV3
       closed = true;
       IOException failure = null;
       try {
-        servingCoordinator.close();
+        servingWorker.close();
       } catch (IOException closeFailure) {
         failure = closeFailure;
       }
@@ -311,48 +325,6 @@ public final class StateArchiveAppendCheckpointMaterializerV3
 
   private short writerCompressionId() {
     return compressionId;
-  }
-
-  private void dispatchServingIfStaged(CommonCheckpointTarget target) throws IOException {
-    if (stagedServingTarget == null || !stagedServingTarget.equals(target)
-        || stagedServingDiffs == null) {
-      return;
-    }
-    if (liveServingIndexer == null) {
-      servingCoordinator.offerCommittedRange(stagedServingDiffs, target);
-    } else {
-      liveServingIndexer.indexNow(stagedServingDiffs, target);
-    }
-    stagedServingDiffs = null;
-    stagedServingTarget = null;
-  }
-
-  private void recoverServingIndex() throws IOException {
-    Optional<CommonCheckpointTarget> published =
-        StateArchiveCheckpointMaterializer.loadReadableTargetIfPresent(directory);
-    if (!published.isPresent()) {
-      return;
-    }
-    CommonCheckpointTarget boundary = published.get();
-    long indexed = servingCoordinator.status().getIndexedThrough();
-    long target = boundary.getLastBlock().getBlockNumber();
-    if (indexed > target) {
-      throw new IOException("Append-file serving index is ahead of Common W");
-    }
-    if (indexed == target) {
-      servingCoordinator.recoverCommittedRange(Collections.emptyList(), boundary, true);
-      return;
-    }
-    long cursor = indexed >= 0 ? indexed : writer.getHistoryStartBlock() - 1;
-    if (cursor < 0) {
-      throw new IOException("Append-file serving recovery source is missing");
-    }
-    while (cursor < target) {
-      long batchEnd = Math.min(target, cursor + 1_000);
-      List<BlockReverseDiff> batch = writer.readCommittedDiffs(cursor, batchEnd);
-      servingCoordinator.recoverCommittedRange(batch, boundary, batchEnd == target);
-      cursor = batchEnd;
-    }
   }
 
   private void requireOpen() throws IOException {

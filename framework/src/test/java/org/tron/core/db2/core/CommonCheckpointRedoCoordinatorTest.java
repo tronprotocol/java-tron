@@ -83,6 +83,20 @@ public class CommonCheckpointRedoCoordinatorTest {
   }
 
   @Test
+  public void derivedFailureOccursAfterRetirementAndCannotFailCommon() throws Exception {
+    Fixture fixture = fixture("derived-failure", null);
+    FakeMaterializer archive = fixture.materializers.get(2);
+    archive.afterCommitHook = () -> {
+      assertFalse(Files.exists(fixture.file.getCheckpointPath()));
+      assertFalse(archive.scopeOpen);
+      throw new IllegalStateException("injected derived failure");
+    };
+    assertEquals(RecoveryAction.COMPLETED_REDO, fixture.coordinator.apply(fixture.payload));
+    assertEquals(RecoveryAction.NO_CHECKPOINT, fixture.coordinator.recover());
+    assertEquals(Status.PUBLISHED, archive.status);
+  }
+
+  @Test
   public void ignoresTimingSinkFailureAfterDurableCheckpointCompletes() throws Exception {
     Fixture fixture = fixture("timing-sink-failure", null);
     AtomicLong clock = new AtomicLong();
@@ -403,6 +417,12 @@ public class CommonCheckpointRedoCoordinatorTest {
     private int closed;
     private boolean closeFailure;
     private boolean scopeOpen;
+    private Runnable afterCommitHook = () -> { };
+
+    @Override
+    public void afterCommit(CommonCheckpointTarget expected) {
+      afterCommitHook.run();
+    }
 
     private FakeMaterializer(Authority authority, List<String> actions) {
       this.authority = authority;

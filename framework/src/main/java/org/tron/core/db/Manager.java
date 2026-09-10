@@ -3834,15 +3834,20 @@ public class Manager {
     if (materializer == null || syncSource || stateArchiveServingLive) {
       return;
     }
+    java.util.Optional<org.tron.core.db2.core.CommonCheckpointTarget> published;
     try {
-      java.util.Optional<org.tron.core.db2.core.CommonCheckpointTarget> published =
-          materializer.loadPublishedTargetIfPresent();
+      published = materializer.loadPublishedTargetIfPresent();
+    } catch (java.io.IOException failure) {
+      throw new IllegalStateException("State Archive authority verification failed", failure);
+    }
+    try {
       if (published.isPresent()) {
         materializer.completeServingInitialSync(published.get());
         stateArchiveServingLive = true;
       }
     } catch (java.io.IOException failure) {
-      throw new IllegalStateException("State Archive serving-index handoff failed", failure);
+      logger.error("State Archive serving-index handoff failed; historical queries unavailable",
+          failure);
     }
   }
 

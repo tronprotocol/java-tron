@@ -53,6 +53,12 @@ public final class CommonCheckpointRedoCoordinator implements AutoCloseable {
 
   /** Durably publishes the redo payload before applying it to any authority. */
   public synchronized RecoveryAction apply(CommonCheckpointPayload payload) throws IOException {
+    RecoveryAction action = applyDurable(payload);
+    notifyCommitted(CommonCheckpointTarget.from(payload));
+    return action;
+  }
+
+  synchronized RecoveryAction applyDurable(CommonCheckpointPayload payload) throws IOException {
     requireOpen();
     CommonCheckpointPayload admitted = Objects.requireNonNull(payload, "payload");
     Timing timing = new Timing("apply", CommonCheckpointTarget.from(admitted),
@@ -82,6 +88,7 @@ public final class CommonCheckpointRedoCoordinator implements AutoCloseable {
     RecoveryAction action = redo(loaded.value, timing);
     timing.totalUs = elapsedUs(totalStart);
     emitTiming(timing);
+    notifyCommitted(CommonCheckpointTarget.from(loaded.value));
     return action;
   }
 
@@ -91,6 +98,17 @@ public final class CommonCheckpointRedoCoordinator implements AutoCloseable {
         != Objects.requireNonNull(expected, "expected")) {
       throw new IllegalArgumentException(
           "common checkpoint runtime materializer identity differs: " + authority);
+    }
+  }
+
+  synchronized void notifyCommitted(CommonCheckpointTarget target) {
+    for (Authority authority : ORDER) {
+      try {
+        materializers.get(authority).afterCommit(target);
+      } catch (RuntimeException failure) {
+        logger.error("Derived post-commit work failed for {} at {}", authority,
+            target.getLastBlock().getBlockNumber(), failure);
+      }
     }
   }
 
