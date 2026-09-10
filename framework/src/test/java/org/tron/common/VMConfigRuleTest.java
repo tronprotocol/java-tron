@@ -2,11 +2,13 @@ package org.tron.common;
 
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.Description;
 import org.junit.runner.JUnitCore;
 import org.junit.runner.Result;
+import org.junit.runners.BlockJUnit4ClassRunner;
 import org.junit.runners.model.Statement;
 import org.tron.core.vm.config.ConfigLoader;
 import org.tron.core.vm.config.VMConfig;
@@ -40,10 +42,21 @@ public class VMConfigRuleTest {
   }
 
   @Test
-  public void restoresConfigAfterSetupFailure() {
-    Result result = JUnitCore.runClasses(FailingSetup.class);
+  public void restoresConfigAfterSetupFailure() throws Exception {
+    // Explicitly run the fixture while normal test discovery honors its class-level @Ignore.
+    Result result = new JUnitCore().run(new BlockJUnit4ClassRunner(FailingSetup.class));
+    Assert.assertEquals(1, result.getRunCount());
     Assert.assertEquals(1, result.getFailureCount());
     Assert.assertEquals("intentional setup failure", result.getFailures().get(0).getMessage());
+    assertConfigRestored();
+  }
+
+  @Test
+  public void skipsFixtureDuringNormalDiscovery() {
+    Result result = JUnitCore.runClasses(FailingSetup.class);
+    Assert.assertEquals(0, result.getRunCount());
+    Assert.assertEquals(0, result.getFailureCount());
+    Assert.assertEquals(1, result.getIgnoreCount());
     assertConfigRestored();
   }
 
@@ -58,6 +71,7 @@ public class VMConfigRuleTest {
     Assert.assertFalse("Config loader switch leaked", ConfigLoader.disable);
   }
 
+  @Ignore("Failure fixture executed explicitly by VMConfigRuleTest")
   public static class FailingSetup {
     @Rule
     public final VMConfigRule vmConfigRule = new VMConfigRule();
