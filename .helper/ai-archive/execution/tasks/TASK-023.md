@@ -25,6 +25,7 @@ active_branch: feature/archive_block2
 - AMD-002 已安装 OpenJDK 17.0.20，路径 `/usr/lib/jvm/java-17-openjdk-amd64/bin/java`；系统默认 `java` 已切换为 JDK17，因此 control 必须使用显式 JDK8 路径 `/usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java`。
 - `9ea27f2797` 增加 `-Dtron.java17.x86.candidate=true` 的显式 x86 JDK17 候选门禁；JDK17+RocksDB9.7.4 候选在现有快照上 P2P-disabled 启动成功，27 个 PathState store、Common checkpoint 与 State Archive 数据库均打开。
 - 同一候选 P2P 窗口约 120 秒从区块 85150075 到 85150103（+28，约 0.23 block/s），未见 ERROR/Exception；窗口结束后已恢复 JDK8 control。该样本起点为候选旧快照，不能与实时 control 直接作严格 A/B 晋级结论。
+- 同快照顺序 A/B：JDK8 control 120 秒 `85150420→85150443`（+23，约 0.192 block/s）；JDK17+RocksDB9.7.4 120 秒 `85150409→85150435`（+26，约 0.217 block/s）。候选约高 13%，但受顺序网络窗口与起点微差影响，仅作方向性证据。
 
 ## 实验顺序
 
