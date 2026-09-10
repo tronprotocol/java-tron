@@ -9,7 +9,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.BiFunction;
 import org.junit.After;
@@ -138,15 +137,8 @@ public class BackupManagerTest {
 
     Thread.sleep(parameter.getKeepAliveInterval() + 1000);//test send KeepAliveMessage
 
-    field = manager.getClass().getDeclaredField("executorService");
-    field.setAccessible(true);
-    ScheduledExecutorService executorService = (ScheduledExecutorService) field.get(manager);
-    executorService.shutdown();
-
-    Field field2 = backupServer.getClass().getDeclaredField("executor");
-    field2.setAccessible(true);
-    ExecutorService executorService2 = (ExecutorService) field2.get(backupServer);
-    executorService2.shutdown();
+    // also stops the manager's keep-alive executor
+    backupServer.close();
 
     Assert.assertEquals(BackupManager.BackupStatusEnum.INIT, manager.getStatus());
   }

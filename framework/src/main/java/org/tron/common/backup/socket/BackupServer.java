@@ -27,12 +27,12 @@ public class BackupServer implements AutoCloseable {
 
   private BackupManager backupManager;
 
-  private Channel channel;
-
   private volatile boolean shutdown = false;
 
   private final String name = "BackupServer";
-  private ExecutorService executor;
+  private volatile ExecutorService executor;
+
+  private volatile NioEventLoopGroup group;
 
   @Autowired
   public BackupServer(final BackupManager backupManager) {
@@ -41,6 +41,14 @@ public class BackupServer implements AutoCloseable {
 
   public void initServer() {
     if (port > 0 && commonParameter.getBackupMembers().size() > 0) {
+      try {
+        // Let close() reach the group before bind() completes.
+        group = new NioEventLoopGroup(1);
+      } catch (RuntimeException e) {
+        // Do not propagate selector failures to block processing.
+        logger.error("Start backup server with port {} failed.", port, e);
+        return;
+      }
       executor = ExecutorServiceManager.newSingleThreadExecutor(name);
       executor.submit(() -> {
         try {
@@ -53,7 +61,6 @@ public class BackupServer implements AutoCloseable {
   }
 
   private void start() throws Exception {
-    NioEventLoopGroup group = new NioEventLoopGroup(1);
     try {
       while (!shutdown) {
         Bootstrap b = new Bootstrap();
@@ -73,7 +80,7 @@ public class BackupServer implements AutoCloseable {
               }
             });
 
-        channel = b.bind(port).sync().channel();
+        Channel channel = b.bind(port).sync().channel();
 
         logger.info("Backup server started, bind port {}", port);
 
@@ -84,10 +91,15 @@ public class BackupServer implements AutoCloseable {
         }
         logger.warn("Restart backup server ...");
       }
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      if (!shutdown) {
+        logger.error("Backup server interrupted.", e);
+      }
     } catch (Exception e) {
       logger.error("Start backup server with port {} failed.", port, e);
     } finally {
-      group.shutdownGracefully().sync();
+      group.shutdownGracefully();
     }
   }
 
@@ -96,14 +108,12 @@ public class BackupServer implements AutoCloseable {
     logger.info("Closing backup server...");
     shutdown = true;
     backupManager.stop();
-    if (channel != null) {
-      try {
-        channel.close().await(10, TimeUnit.SECONDS);
-      } catch (Exception e) {
-        logger.warn("Closing backup server failed.", e);
-      }
+    if (executor != null) {
+      executor.shutdownNow();
     }
-    ExecutorServiceManager.shutdownAndAwaitTermination(executor, name);
+    if (group != null) {
+      group.shutdownGracefully().awaitUninterruptibly(10, TimeUnit.SECONDS);
+    }
     logger.info("Backup server closed.");
   }
 }
