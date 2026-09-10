@@ -2,20 +2,97 @@ package org.tron.core.store;
 
 import com.google.common.primitives.Bytes;
 import com.google.common.primitives.Longs;
+import java.util.HashMap;
+import java.util.Map;
 import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
+import org.tron.common.storage.rocksdb.RocksDbDataSourceImpl;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.db.TronDatabase;
+import org.tron.core.db2.common.DB;
+import org.tron.core.db2.common.LevelDB;
+import org.tron.core.db2.common.RocksDB;
 import org.tron.core.db2.common.WrappedByteArray;
+import org.tron.core.db2.core.Chainbase;
+import org.tron.core.db2.core.SnapshotManager;
+import org.tron.core.db2.core.SnapshotRoot;
 import org.tron.protos.Protocol;
-
-import java.util.HashMap;
-import java.util.Map;
 
 @Component
 public class AccountAssetStore extends TronDatabase<byte[]> {
+
+  private volatile Chainbase snapshots;
+
+  /** Shares the existing native DB; registers before recovery and before any sessions exist. */
+  public synchronized void enableSnapshots(SnapshotManager manager) {
+    if (snapshots != null) {
+      throw new IllegalStateException("AccountAsset Snapshot lane already attached");
+    }
+    DB<byte[], byte[]> engine;
+    if (dbSource instanceof LevelDbDataSourceImpl) {
+      engine = new LevelDB(
+          (LevelDbDataSourceImpl) dbSource);
+    } else if (dbSource instanceof RocksDbDataSourceImpl) {
+      engine = new RocksDB(
+          (RocksDbDataSourceImpl) dbSource);
+    } else {
+      throw new IllegalStateException("Unsupported AccountAsset Snapshot engine");
+    }
+    Chainbase lane = new Chainbase(
+        new SnapshotRoot(engine));
+    lane.setRegistrationSource(AccountAssetStore.class.getName());
+    manager.installP66SnapshotLane(lane);
+    snapshots = lane;
+  }
+
+  @Override
+  public void close() {
+    if (snapshots != null) {
+      snapshots.close();
+    }
+    super.close();
+  }
+
+  @Override
+  public Map<WrappedByteArray, byte[]> prefixQuery(byte[] key) {
+    return snapshots == null ? super.prefixQuery(key) : snapshots.prefixQuery(key);
+  }
+
+  @Override
+  public void updateByBatch(Map<byte[], byte[]> rows) {
+    if (snapshots == null) {
+      super.updateByBatch(rows);
+    } else {
+      rows.forEach((key, value) -> {
+        if (value == null) {
+          snapshots.delete(key);
+        } else {
+          snapshots.put(key, value);
+        }
+      });
+    }
+  }
+
+  @Override
+  public void updateByBatchSynced(Map<byte[], byte[]> rows) {
+    if (snapshots != null) {
+      throw new IllegalStateException("AccountAsset durability belongs to Common checkpoint");
+    }
+    super.updateByBatchSynced(rows);
+  }
+
+  @Override
+  public byte[] getFromRoot(byte[] key) {
+    return dbSource.getData(key);
+  }
+
+  @Override
+  public byte[] getUnchecked(byte[] key) {
+    return get(key);
+  }
 
   @Autowired
   protected AccountAssetStore(@Value("account-asset") String dbName) {
@@ -24,22 +101,30 @@ public class AccountAssetStore extends TronDatabase<byte[]> {
 
   @Override
   public void put(byte[] key, byte[] item) {
-    dbSource.putData(key, item);
+    if (snapshots == null) {
+      dbSource.putData(key, item);
+    } else {
+      snapshots.put(key, item);
+    }
   }
 
   @Override
   public void delete(byte[] key) {
-    dbSource.deleteData(key);
+    if (snapshots == null) {
+      dbSource.deleteData(key);
+    } else {
+      snapshots.delete(key);
+    }
   }
 
   @Override
   public byte[] get(byte[] key) {
-    return dbSource.getData(key);
+    return snapshots == null ? dbSource.getData(key) : snapshots.getUnchecked(key);
   }
 
   @Override
   public boolean has(byte[] key) {
-    return dbSource.getData(key) != null;
+    return get(key) != null;
   }
 
   public void putAccount(Protocol.Account account) {

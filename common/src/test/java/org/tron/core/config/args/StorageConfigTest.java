@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
 import com.typesafe.config.Config;
@@ -142,9 +143,22 @@ public class StorageConfigTest {
   }
 
   @Test
+  public void testP66SnapshotRequiresCommonAndAcceptsExplicitOptIn() {
+    assertThrows(IllegalArgumentException.class, () -> StorageConfig.fromConfig(withRef(
+        "storage.commonCheckpoint.p66SnapshotEnabled = true")));
+    StorageConfig configured = StorageConfig.fromConfig(withRef(
+        "storage.stateArchive.enabled = true\n"
+            + "storage.pathStateRoot.enabled = true\n"
+            + "storage.commonCheckpoint.enabled = true\n"
+            + "storage.commonCheckpoint.p66SnapshotEnabled = true"));
+    assertTrue(configured.getCommonCheckpoint().isP66SnapshotEnabled());
+  }
+
+  @Test
   public void testCommonCheckpointDefaultsAndAdmission() {
     StorageConfig defaults = StorageConfig.fromConfig(withRef());
     assertFalse(defaults.getCommonCheckpoint().isEnabled());
+    assertFalse(defaults.getCommonCheckpoint().isP66SnapshotEnabled());
     assertEquals("common-checkpoint", defaults.getCommonCheckpoint().getDirectory());
 
     StorageConfig configured = StorageConfig.fromConfig(withRef(

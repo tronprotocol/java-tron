@@ -20,9 +20,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -53,14 +56,14 @@ import org.tron.core.db2.archive.DurableBlockReverseDiffSink;
 import org.tron.core.db2.archive.DurableHistoryMarkerRangeEvidence;
 import org.tron.core.db2.archive.HistoryCommitMarker;
 import org.tron.core.db2.archive.OldValueCollector;
-import org.tron.core.db2.stateroot.PathStateBlockTransition;
-import org.tron.core.db2.stateroot.PathStateRuntimeAttachment;
-import org.tron.core.db2.stateroot.PathStateSnapshotDelta;
 import org.tron.core.db2.common.DB;
 import org.tron.core.db2.common.IRevokingDB;
 import org.tron.core.db2.common.Key;
 import org.tron.core.db2.common.Value;
 import org.tron.core.db2.common.WrappedByteArray;
+import org.tron.core.db2.stateroot.PathStateBlockTransition;
+import org.tron.core.db2.stateroot.PathStateRuntimeAttachment;
+import org.tron.core.db2.stateroot.PathStateSnapshotDelta;
 import org.tron.core.exception.RevokingStoreIllegalStateException;
 import org.tron.core.exception.TronError;
 import org.tron.core.store.CheckPointV2Store;
@@ -70,6 +73,35 @@ import org.tron.core.store.CheckTmpStore;
 public class SnapshotManager implements RevokingDatabase {
 
   public static final int DEFAULT_MIN_FLUSH_COUNT = 1;
+  private P66CoupledMutationMaterializer p66Materializer;
+  private ExecutorService artifactExecutor;
+
+  public synchronized void installP66SnapshotLane(Chainbase assets) {
+    if (size != 0 || activeSession != 0 || p66Materializer != null
+        || dbs.stream().anyMatch(db -> "account-asset".equals(db.getDbName()))) {
+      throw new IllegalStateException("P66 Snapshot lane must be installed once before sessions");
+    }
+    Chainbase accounts = requireDatabase("account");
+    Chainbase properties = requireDatabase("properties");
+    if (!Snapshot.isRoot(accounts.getHead()) || !Snapshot.isRoot(assets.getHead())) {
+      throw new IllegalStateException("P66 Snapshot installation requires root heads");
+    }
+    add(assets);
+    ((SnapshotRoot) accounts.getHead()).useMaterializedCoupledMutations();
+    p66Materializer = new P66CoupledMutationMaterializer(accounts, assets, properties);
+    artifactExecutor = new ThreadPoolExecutor(1, 1, 0L,
+        TimeUnit.MILLISECONDS, new ArrayBlockingQueue<>(1), task -> {
+          Thread thread = new Thread(task, "block-final-archive");
+          thread.setDaemon(true);
+          return thread;
+        });
+  }
+
+  private Chainbase requireDatabase(String name) {
+    return dbs.stream().filter(db -> name.equals(db.getDbName())).findFirst()
+        .orElseThrow(() -> new IllegalStateException("Missing P66 participant: " + name));
+  }
+
   private static final int DEFAULT_STACK_MAX_SIZE = 256;
   private static final long ONE_MINUTE_MILLS = 60*1000L;
   private static final String CHECKPOINT_V2_DIR = "checkpoint";
@@ -271,21 +303,91 @@ public class SnapshotManager implements RevokingDatabase {
       }
     }
 
+    if (p66Materializer != null) {
+      long p66Start = System.nanoTime();
+      P66CoupledMutationMaterializer.Statistics stats = p66Materializer.materialize();
+      logger.info("P66 Snapshot materialized: head={}, changedAccounts={}, migratedAccounts={}, "
+              + "emptyAssetSkips={}, assetPuts={}, assetDeletes={}, prefixQueries={}, "
+              + "prefixRows={}, activationAccountScans=0, duplicateRootMigrations=0, "
+              + "materializeMs={}", meta.getBlockNumber(), stats.changedAccounts,
+          stats.migratedAccounts, stats.emptyAssetSkips, stats.assetPuts, stats.assetDeletes,
+          stats.prefixQueries, stats.prefixRows, elapsedMillis(p66Start, System.nanoTime()));
+    }
     BlockChangeView changeView = null;
     if (oldValueCollector != null || pathStateRuntimeAttachment != null) {
       changeView = BlockChangeView.capture(meta, dbs);
     }
     long frozenNanos = System.nanoTime();
-    BlockReverseDiff reverseDiff = null;
-    if (oldValueCollector != null) {
-      reverseDiff = Objects.requireNonNull(
-          oldValueCollector.collect(changeView),
-          "archive collector returned null");
+    BlockReverseDiff reverseDiff;
+    PathStateBlockTransition pathStateTransition;
+    long archiveNanos;
+    long pathNanos;
+    if (p66Materializer != null && oldValueCollector != null
+        && pathStateRuntimeAttachment != null) {
+      BlockChangeView frozen = changeView;
+      long parallelStart = System.nanoTime();
+      long[] archiveElapsed = new long[1];
+      Future<BlockReverseDiff> archive = artifactExecutor.submit(() -> {
+        long start = System.nanoTime();
+        try {
+          return Objects.requireNonNull(oldValueCollector.collect(frozen),
+              "archive collector returned null");
+        } finally {
+          archiveElapsed[0] = System.nanoTime() - start;
+        }
+      });
+      long pathStart = System.nanoTime();
+      Throwable pathFailure = null;
+      pathStateTransition = null;
+      try {
+        pathStateTransition = Objects.requireNonNull(pathStateRuntimeAttachment.capture(frozen),
+            "PathState capture failed before block-final barrier");
+      } catch (Throwable failure) {
+        pathFailure = failure;
+      }
+      long pathElapsed = System.nanoTime() - pathStart;
+      // Never cancel-and-revoke: the other reader must finish before releasing the Snapshot.
+      boolean interrupted = false;
+      Throwable archiveFailure = null;
+      reverseDiff = null;
+      while (true) {
+        try {
+          reverseDiff = archive.get();
+          break;
+        } catch (InterruptedException failure) {
+          interrupted = true;
+        } catch (ExecutionException failure) {
+          archiveFailure = failure.getCause();
+          break;
+        }
+      }
+      if (interrupted) {
+        Thread.currentThread().interrupt();
+      }
+      if (pathFailure != null || archiveFailure != null || interrupted) {
+        Throwable failure = pathFailure != null ? pathFailure : archiveFailure;
+        IllegalStateException rejected = new IllegalStateException(
+            "Block-final parallel barrier failed", failure);
+        if (pathFailure != null && archiveFailure != null) {
+          rejected.addSuppressed(archiveFailure);
+        }
+        pathStateRuntimeAttachment.fail(rejected);
+        throw rejected;
+      }
+      archiveNanos = System.nanoTime();
+      pathNanos = archiveNanos;
+      logger.info("Block-final parallel barrier: head={}, archiveMs={}, pathMs={}, wallMs={}, "
+              + "archiveP66Projection=0, pathP66Projection=0", meta.getBlockNumber(),
+          TimeUnit.NANOSECONDS.toMillis(archiveElapsed[0]),
+          TimeUnit.NANOSECONDS.toMillis(pathElapsed), elapsedMillis(parallelStart, pathNanos));
+    } else {
+      reverseDiff = oldValueCollector == null ? null : Objects.requireNonNull(
+          oldValueCollector.collect(changeView), "archive collector returned null");
+      archiveNanos = System.nanoTime();
+      pathStateTransition = pathStateRuntimeAttachment == null ? null
+          : pathStateRuntimeAttachment.capture(changeView);
+      pathNanos = System.nanoTime();
     }
-    long archiveNanos = System.nanoTime();
-    PathStateBlockTransition pathStateTransition = pathStateRuntimeAttachment == null ? null
-        : pathStateRuntimeAttachment.capture(changeView);
-    long pathNanos = System.nanoTime();
     PathStateSnapshotDelta pathStateDelta = pathStateTransition == null ? null
         : pathStateRuntimeAttachment.preparedSnapshotDelta(pathStateTransition);
 
@@ -301,12 +403,21 @@ public class SnapshotManager implements RevokingDatabase {
           stateDatabase ? reverseDiff : null, stateDatabase ? pathStateDelta : null);
     }
     long attachedNanos = System.nanoTime();
-    --activeSession;
+    if (p66Materializer == null) {
+      --activeSession;
+    }
     if (pathStateRuntimeAttachment != null) {
       pathStateRuntimeAttachment.publish(pathStateTransition);
+      if (p66Materializer != null && pathStateRuntimeAttachment.getFailure() != null) {
+        throw new IllegalStateException("Block-final PathState publication failed",
+            pathStateRuntimeAttachment.getFailure());
+      }
+    }
+    if (p66Materializer != null) {
+      --activeSession;
     }
     long completedNanos = System.nanoTime();
-    if (changeView != null) {
+    if (changeView != null && p66Materializer == null) {
       logger.info("Block-final artifact stages: head={}, freezeMs={}, archiveMs={}, "
               + "pathCaptureMs={}, attachMs={}, publishMs={}, totalMs={}",
           meta.getBlockNumber(), elapsedMillis(startedNanos, frozenNanos),
@@ -327,6 +438,9 @@ public class SnapshotManager implements RevokingDatabase {
     }
     if (pathStateRuntimeAttachment == null) {
       return null;
+    }
+    if (p66Materializer != null) {
+      p66Materializer.materialize();
     }
     return pathStateRuntimeAttachment.preview(BlockChangeView.capture(
         Objects.requireNonNull(meta, "meta"), dbs));
@@ -566,6 +680,9 @@ public class SnapshotManager implements RevokingDatabase {
   @Override
   public void shutdown() {
     Closeable legacyArchiveSink = prepareArchiveShutdown();
+    if (artifactExecutor != null) {
+      ExecutorServiceManager.shutdownAndAwaitTermination(artifactExecutor, "block-final-archive");
+    }
     ExecutorServiceManager.shutdownAndAwaitTermination(pruneCheckpointThread, pruneName);
     flushServices.forEach((key, value) -> ExecutorServiceManager.shutdownAndAwaitTermination(value,
         "flush-service-" + key));

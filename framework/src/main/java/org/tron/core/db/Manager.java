@@ -569,6 +569,12 @@ public class Manager {
     accountStateCallBack.setChainBaseManager(chainBaseManager);
     trieService.setChainBaseManager(chainBaseManager);
     revokingStore.disable();
+    if (Args.getInstance().getStorage().isP66SnapshotEnabled()) {
+      if (!Args.getInstance().getStorage().isCommonCheckpointEnabled()) {
+        throw new IllegalStateException("P66 Snapshot requires Common checkpoint");
+      }
+      chainBaseManager.getAccountAssetStore().enableSnapshots((SnapshotManager) revokingStore);
+    }
     revokingStore.check();
     transactionCache.initCache();
     rewardViCalService.init();
@@ -784,7 +790,7 @@ public class Manager {
         storage.getStateArchiveDirectory()).normalize();
     Path checkpointDirectory = Paths.get(Args.getInstance().getOutputDirectory(),
         storage.getCommonCheckpointDirectory()).normalize();
-    byte[] formatIdentity = CommonCheckpointFormat.identity();
+    byte[] formatIdentity = CommonCheckpointFormat.identity(storage.isP66SnapshotEnabled());
     org.tron.core.config.args.StorageConfig.StateArchiveAppendFileConfig appendConfig =
         storage.getStateArchiveAppendFileSettings();
     boolean appendEnabled = appendConfig != null && appendConfig.isEnabled();
@@ -806,6 +812,14 @@ public class Manager {
       boolean baselineExists = Files.isRegularFile(
           checkpointDirectory.resolve(CommonCheckpointBaselineFile.FILE_NAME),
           LinkOption.NOFOLLOW_LINKS);
+      if (storage.isP66SnapshotEnabled() && pathExisted && !baselineExists
+          && !baselineFile.hasBootstrapIntent(formatIdentity)) {
+        throw new IllegalStateException("P66 Snapshot mode requires a fresh Common baseline");
+      }
+      if (baselineExists && !Arrays.equals(baselineFile.load().getFormatIdentity(),
+          formatIdentity)) {
+        throw new IllegalStateException("Common checkpoint Snapshot semantics differ");
+      }
       if (!baselineExists) {
         requireEmptyOrMissing(archiveDirectory, "State Archive");
         if (!pathExisted) {
@@ -1312,8 +1326,11 @@ public class Manager {
       throw new IllegalStateException(
           "Path-state block-final capture requires account-asset Store");
     }
-    SnapshotPathStateTransitionCollector collector = new SnapshotPathStateTransitionCollector(
-        accountAssetStore::prefixQuery, this::scanPathStateActivationAccounts);
+    org.tron.core.db2.stateroot.PathStateTransitionCollector collector =
+        Args.getInstance().getStorage().isP66SnapshotEnabled()
+            ? new org.tron.core.db2.archive.PhysicalSnapshotPathStateCollector()
+            : new SnapshotPathStateTransitionCollector(
+                accountAssetStore::prefixQuery, this::scanPathStateActivationAccounts);
     org.tron.core.config.args.Storage storage = Args.getInstance().getStorage();
     PathStateRuntimeAttachment attachment = storage.isCommonCheckpointEnabled()
         ? PathStateRuntimeAttachment.commonCheckpoint(collector, this::advancePathStateRoot,
