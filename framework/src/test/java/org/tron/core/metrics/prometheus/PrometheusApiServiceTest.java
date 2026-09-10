@@ -58,6 +58,9 @@ public class PrometheusApiServiceTest extends BaseTest {
   @Resource
   private ChainBaseManager chainManager;
 
+  private double initialProcessedBlocks;
+  private double initialErrorLogs;
+
   static {
     Args.setParam(new String[] {"-d", dbPath()}, TestConstants.TEST_CONF);
     Args.getInstance().setNodeListenPort(10000 + port.incrementAndGet());
@@ -85,7 +88,7 @@ public class PrometheusApiServiceTest extends BaseTest {
         "tron:block_process_latency_seconds_count",
         new String[] {"sync"}, new String[] {"false"});
     Assert.assertNotNull(pushBlock);
-    Assert.assertEquals(pushBlock.intValue(), blocks + 1);
+    Assert.assertEquals(blocks + 1, pushBlock - initialProcessedBlocks, 0.0);
 
     String minerBase58 = StringUtil.encode58Check(address);
     // Query histogram bucket le="0.0" for empty blocks
@@ -114,7 +117,8 @@ public class PrometheusApiServiceTest extends BaseTest {
 
     Double errorLogs = CollectorRegistry.defaultRegistry.getSampleValue(
         "tron:error_info_total", new String[] {"net"}, new String[] {MetricLabels.UNDEFINED});
-    Assert.assertNull(errorLogs);
+    Assert.assertEquals("Unexpected net error logs during block processing", initialErrorLogs,
+        errorLogs == null ? 0.0 : errorLogs, 0.0);
   }
 
   @Before
@@ -148,6 +152,13 @@ public class PrometheusApiServiceTest extends BaseTest {
 
   @Test
   public void testMetric() throws Exception {
+    Double processedBlocks = CollectorRegistry.defaultRegistry.getSampleValue(
+        "tron:block_process_latency_seconds_count",
+        new String[] {"sync"}, new String[] {"false"});
+    initialProcessedBlocks = processedBlocks == null ? 0.0 : processedBlocks;
+    Double errorLogs = CollectorRegistry.defaultRegistry.getSampleValue(
+        "tron:error_info_total", new String[] {"net"}, new String[] {MetricLabels.UNDEFINED});
+    initialErrorLogs = errorLogs == null ? 0.0 : errorLogs;
 
     final ECKey ecKey = ECKey.fromPrivate(privateKey);
     Assert.assertNotNull(ecKey);

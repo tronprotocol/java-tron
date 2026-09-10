@@ -49,10 +49,11 @@ public class EventLoaderTest {
 
     config.setTriggerConfigList(triggerConfigList);
 
+    EventPluginLoader loader = new EventPluginLoader();
     try {
-      assertTrue(EventPluginLoader.getInstance().start(config));
+      assertTrue(loader.start(config));
     } finally {
-      EventPluginLoader.getInstance().stopPlugin();
+      loader.stopPlugin();
     }
   }
 

@@ -4,6 +4,7 @@ import static org.mockito.Mockito.mock;
 
 import com.google.protobuf.ByteString;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -16,11 +17,13 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.mockito.Mockito;
 import org.tron.api.GrpcAPI;
 import org.tron.common.TestConstants;
+import org.tron.common.VMConfigRule;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.logsfilter.EventPluginConfig;
 import org.tron.common.logsfilter.EventPluginLoader;
@@ -53,6 +56,12 @@ public class BlockEventGetTest extends BlockGenerate {
   @ClassRule
   public static final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
+  @Rule
+  public final VMConfigRule vmConfigRule = new VMConfigRule();
+
+  private static Field pluginInstanceField;
+  private static EventPluginLoader originalPluginLoader;
+
   static ChainBaseManager chainManager;
 
   private final String key = PublicMethod.getRandomPrivateKey();
@@ -76,13 +85,17 @@ public class BlockEventGetTest extends BlockGenerate {
     try {
       return temporaryFolder.newFolder().toString();
     } catch (IOException e) {
-      Assert.fail("create temp folder failed");
+      throw new AssertionError("create temp folder failed", e);
     }
-    return null;
   }
 
   @BeforeClass
-  public static void init() {
+  public static void init() throws ReflectiveOperationException {
+    pluginInstanceField = EventPluginLoader.class.getDeclaredField("instance");
+    pluginInstanceField.setAccessible(true);
+    originalPluginLoader = (EventPluginLoader) pluginInstanceField.get(null);
+    // Install before creating the context so all its services see the test-owned loader.
+    pluginInstanceField.set(null, new EventPluginLoader());
     Args.setParam(new String[] {"--output-directory", dbPath()}, TestConstants.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
   }
@@ -113,10 +126,6 @@ public class BlockEventGetTest extends BlockGenerate {
     // Reset global static flag that other tests may leave as true, which would prevent
     // ConfigLoader.load() from updating VMConfig during VMActuator.execute().
     ConfigLoader.disable = false;
-    // Reset filterQuery so FilterQueryTest's leftover state does not suppress processTrigger
-    // coverage when tests share the same Gradle forkEvery JVM batch.
-    EventPluginLoader.getInstance().setFilterQuery(null);
-
     DynamicPropertiesStore dps = dbManager.getDynamicPropertiesStore();
     dps.saveAllowTvmTransferTrc10(1);
     dps.saveAllowTvmConstantinople(1);
@@ -124,9 +133,21 @@ public class BlockEventGetTest extends BlockGenerate {
   }
 
   @AfterClass
-  public static void after() throws IOException {
-    context.destroy();
-    Args.clearParam();
+  public static void after() throws IllegalAccessException {
+    try {
+      if (context != null) {
+        context.close();
+      }
+    } finally {
+      context = null;
+      try {
+        Args.clearParam();
+      } finally {
+        if (pluginInstanceField != null) {
+          pluginInstanceField.set(null, originalPluginLoader);
+        }
+      }
+    }
   }
 
   @Test
