@@ -84,6 +84,20 @@ public class UtilProcessErrorTest {
     assertEquals("{}", response.getContentAsString().trim());
   }
 
+  @Test
+  public void serverErrorChannelSanitizesLikeTheSharedPath() throws Exception {
+    assertServerError(new NullPointerException("internal field name"), INTERNAL_SERVER_ERROR);
+    assertServerError(new ContractValidateException("balance is not sufficient"),
+        "balance is not sufficient");
+  }
+
+  private static void assertServerError(Exception error, String expected) throws Exception {
+    MockHttpServletResponse response = new MockHttpServletResponse();
+    Util.processServerError(error, response);
+    JSONObject body = JSONObject.parseObject(response.getContentAsString());
+    assertEquals(expected, body.getString("Error"));
+  }
+
   private static void assertError(Exception error, String expected) throws Exception {
     MockHttpServletResponse response = new MockHttpServletResponse();
     Util.processError(error, response);

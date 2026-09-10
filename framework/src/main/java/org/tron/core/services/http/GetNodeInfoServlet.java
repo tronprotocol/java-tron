@@ -23,7 +23,7 @@ public class GetNodeInfoServlet extends RateLimiterServlet {
       response.getWriter().println(JSON.toJSONString(nodeInfo));
 
     } catch (Exception e) {
-      Util.processError(e, response);
+      Util.processServerError(e, response);
     }
   }
 

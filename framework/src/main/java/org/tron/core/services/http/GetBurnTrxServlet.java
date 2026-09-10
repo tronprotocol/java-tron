@@ -23,7 +23,7 @@ public class GetBurnTrxServlet extends RateLimiterServlet {
           : "{\"burnTrxAmount\": " + value + "}";
       response.getWriter().println(out);
     } catch (Exception e) {
-      Util.processError(e, response);
+      Util.processServerError(e, response);
     }
   }
 

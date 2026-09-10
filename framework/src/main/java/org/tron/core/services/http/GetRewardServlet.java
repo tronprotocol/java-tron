@@ -30,7 +30,7 @@ public class GetRewardServlet extends RateLimiterServlet {
     } catch (DecoderException | IllegalArgumentException e) {
       Util.writeAuditedError(Util.INVALID_ADDRESS_MSG, response);
     } catch (Exception e) {
-      Util.processError(e, response);
+      Util.processServerError(e, response);
     }
   }
 

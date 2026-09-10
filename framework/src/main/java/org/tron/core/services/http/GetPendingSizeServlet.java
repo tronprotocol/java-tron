@@ -23,7 +23,7 @@ public class GetPendingSizeServlet extends RateLimiterServlet {
           : "{\"pendingSize\": " + value + "}";
       response.getWriter().println(out);
     } catch (Exception e) {
-      Util.processError(e, response);
+      Util.processServerError(e, response);
     }
   }
 

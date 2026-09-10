@@ -555,6 +555,14 @@ public class Util {
     writeAuditedError(clientMessage(e), response);
   }
 
+  // For catch blocks that cover server-side work only, so the failure stays visible at the
+  // default log level. The Exception entry point above keeps debug because its callers also
+  // cover request parsing, which an unauthenticated client can fail cheaply and repeatedly.
+  static void processServerError(Exception e, HttpServletResponse response) {
+    logger.error("HTTP request failed", e);
+    writeAuditedError(clientMessage(e), response);
+  }
+
   // Bypasses clientMessage: callers must pass audited fixed or pre-existing client texts only.
   static void writeAuditedError(String msg, HttpServletResponse response) {
     try {
