@@ -9,6 +9,7 @@ fi
 target=$1
 unit=$2
 output=$3
+unit_cgroup=${unit%.service}.service
 mkdir -p "$(dirname "$output")"
 if [[ ! -s "$output" ]]; then
   printf 'epoch\thead\tprocess_count\tpush_count\tpid\trestarts\tmemory_current\tmemory_high\tmemory_max\tpsi_io_some_avg60\tpsi_io_full_avg60\tcpu_pct\trss_kib\n' > "$output"
@@ -22,7 +23,7 @@ while :; do
   push_count=$(printf '%s\n' "$metrics" | awk '/^tron:block_push_latency_seconds_count / {print $2; exit}')
   pid=$(systemctl show "$unit" -p MainPID --value 2>/dev/null || printf 0)
   restarts=$(systemctl show "$unit" -p NRestarts --value 2>/dev/null || printf 0)
-  cg=/sys/fs/cgroup/system.slice/${unit}
+  cg=/sys/fs/cgroup/system.slice/${unit_cgroup}
   current=$(cat "$cg/memory.current" 2>/dev/null || printf 0)
   high=$(cat "$cg/memory.high" 2>/dev/null || printf 0)
   max=$(cat "$cg/memory.max" 2>/dev/null || printf 0)
