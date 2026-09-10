@@ -494,6 +494,19 @@ public final class StateArchiveCheckpointMaterializer implements CommonCheckpoin
     }
   }
 
+  static Optional<CommonCheckpointTarget> loadReadableTargetIfPresent(Path directory)
+      throws IOException {
+    Path readable = Objects.requireNonNull(directory, "directory").resolve(READABLE_FILE);
+    return Files.exists(readable, LinkOption.NOFOLLOW_LINKS)
+        ? Optional.of(loadTarget(readable).target) : Optional.empty();
+  }
+
+  static void publishReadableTarget(Path directory, CommonCheckpointTarget target)
+      throws IOException {
+    replace(Objects.requireNonNull(directory, "directory").resolve(READABLE_FILE),
+        encodeTarget(Objects.requireNonNull(target, "target")));
+  }
+
   private static void requireExact(Path path, byte[] expected) throws IOException {
     if (!Arrays.equals(loadTarget(path).encoded, expected)) {
       throw new IOException("State Archive checkpoint target identity differs");

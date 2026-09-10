@@ -115,6 +115,10 @@ public class Storage {
 
   @Getter
   @Setter
+  private StorageConfig.StateArchiveAppendFileConfig stateArchiveAppendFileSettings;
+
+  @Getter
+  @Setter
   private boolean commonCheckpointEnabled;
 
   @Getter

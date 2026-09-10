@@ -226,6 +226,7 @@ public class Args extends CommonParameter {
     PARAMETER.storage.setStateArchiveServingIndexDbSettings(
         sc.getStateArchive().getServingIndex());
     PARAMETER.storage.setStateArchiveHotStoreSettings(sc.getStateArchive().getHotStore());
+    PARAMETER.storage.setStateArchiveAppendFileSettings(sc.getStateArchive().getAppendFile());
     PARAMETER.storage.setCommonCheckpointEnabled(sc.getCommonCheckpoint().isEnabled());
     PARAMETER.storage.setCommonCheckpointDirectory(sc.getCommonCheckpoint().getDirectory());
     PARAMETER.storage.setPathStateRootEnabled(sc.getPathStateRoot().isEnabled());

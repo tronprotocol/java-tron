@@ -975,9 +975,12 @@ public class SnapshotManager implements RevokingDatabase {
   private boolean hasDurableCommonCheckpointAuthority() {
     org.tron.core.config.args.Storage storage =
         CommonParameter.getInstance().getStorage();
+    if (!storage.isCommonCheckpointEnabled()) {
+      return false;
+    }
     Path directory = Paths.get(CommonParameter.getInstance().getOutputDirectory(),
         storage.getCommonCheckpointDirectory()).normalize();
-    return hasDurableCommonCheckpointAuthority(storage.isCommonCheckpointEnabled(), directory);
+    return hasDurableCommonCheckpointAuthority(true, directory);
   }
 
   static boolean hasDurableCommonCheckpointAuthority(boolean enabled, Path directory) {

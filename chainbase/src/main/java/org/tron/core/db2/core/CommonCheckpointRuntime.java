@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.LongSupplier;
 import org.tron.core.db2.archive.StateArchiveCheckpointMaterializer;
+import org.tron.core.db2.archive.StateArchiveCheckpointPlanner;
 import org.tron.core.db2.archive.StateArchiveCheckpointReadSnapshot;
 import org.tron.core.db2.archive.StateArchiveHotCheckpointMaterializer;
 import org.tron.core.db2.stateroot.PathStateStoreManifest.Engine;
@@ -27,7 +28,7 @@ public final class CommonCheckpointRuntime implements AutoCloseable {
   private final StateArchiveCheckpointReadSnapshot.PinnedLatestStateFactory latestFactory;
   private final CommonCheckpointMemoryRebaser memoryRebaser;
   private final CommonCheckpointHotRecovery hotRecovery;
-  private final StateArchiveHotCheckpointMaterializer hotMaterializer;
+  private final StateArchiveCheckpointPlanner archivePlanner;
   private final CommonCheckpointMaterializedStore materializedStore;
   private final LongSupplier nanoTime;
   private final TimingSink timingSink;
@@ -55,6 +56,17 @@ public final class CommonCheckpointRuntime implements AutoCloseable {
         memoryRebaser, null, Objects.requireNonNull(hotMaterializer, "hotMaterializer"),
         Objects.requireNonNull(hotRecovery, "hotRecovery"), System::nanoTime,
         CommonCheckpointRuntime::logTiming);
+  }
+
+  /** Constructs the default-off append-file v3 participant without Hot DB recovery. */
+  public CommonCheckpointRuntime(CommonCheckpointRuntimeOwner owner, List<Chainbase> databases,
+      Path archiveDirectory, byte[] formatIdentity, Engine engine,
+      StateArchiveCheckpointReadSnapshot.PinnedLatestStateFactory latestFactory,
+      CommonCheckpointMemoryRebaser memoryRebaser,
+      StateArchiveCheckpointPlanner archivePlanner) {
+    this(owner, databases, archiveDirectory, formatIdentity, engine, latestFactory,
+        memoryRebaser, null, Objects.requireNonNull(archivePlanner, "archivePlanner"),
+        null, System::nanoTime, CommonCheckpointRuntime::logTiming);
   }
 
   public CommonCheckpointRuntime(CommonCheckpointRuntimeOwner owner, List<Chainbase> databases,
@@ -91,7 +103,7 @@ public final class CommonCheckpointRuntime implements AutoCloseable {
       StateArchiveCheckpointReadSnapshot.PinnedLatestStateFactory latestFactory,
       CommonCheckpointMemoryRebaser memoryRebaser,
       CommonCheckpointMaterializedStore materializedStore,
-      StateArchiveHotCheckpointMaterializer hotMaterializer,
+      StateArchiveCheckpointPlanner archivePlanner,
       CommonCheckpointHotRecovery hotRecovery, LongSupplier nanoTime, TimingSink timingSink) {
     this.owner = Objects.requireNonNull(owner, "owner");
     this.databases = new ArrayList<>(Objects.requireNonNull(databases, "databases"));
@@ -105,13 +117,14 @@ public final class CommonCheckpointRuntime implements AutoCloseable {
     this.memoryRebaser = Objects.requireNonNull(memoryRebaser, "memoryRebaser");
     this.materializedStore = materializedStore;
     this.hotRecovery = hotRecovery;
-    this.hotMaterializer = hotMaterializer;
-    if ((hotRecovery == null) != (hotMaterializer == null)) {
+    this.archivePlanner = archivePlanner;
+    if (archivePlanner instanceof StateArchiveHotCheckpointMaterializer
+        != (hotRecovery != null)) {
       throw new IllegalArgumentException(
           "Hot common checkpoint runtime requires materializer and recovery together");
     }
-    if (hotMaterializer != null) {
-      owner.requireMaterializer(hotMaterializer);
+    if (archivePlanner != null) {
+      owner.requireMaterializer(archivePlanner);
     }
     this.nanoTime = Objects.requireNonNull(nanoTime, "nanoTime");
     this.timingSink = Objects.requireNonNull(timingSink, "timingSink");
@@ -125,7 +138,7 @@ public final class CommonCheckpointRuntime implements AutoCloseable {
         hotRecovery.reconcileBeforeCommonRedo();
       }
       CommonCheckpointRedoCoordinator.RecoveryAction action = owner.recoverBeforeServing();
-      publishedTarget = hotMaterializer == null
+      publishedTarget = archivePlanner == null
           ? StateArchiveCheckpointMaterializer.loadPublishedTargetIfPresent(
               archiveDirectory, formatIdentity, engine, materializedStore).orElse(null) : null;
       if (publishedTarget != null) {
@@ -148,8 +161,8 @@ public final class CommonCheckpointRuntime implements AutoCloseable {
       long totalStart = nanoTime.getAsLong();
       Timing timing = new Timing(flushCount);
       long captureStart = nanoTime.getAsLong();
-      CommonCheckpointCapture capture = hotMaterializer == null ? null
-          : payloadFactory.captureV2(formatIdentity, databases, flushCount, hotMaterializer);
+      CommonCheckpointCapture capture = archivePlanner == null ? null
+          : payloadFactory.captureV2(formatIdentity, databases, flushCount, archivePlanner);
       CommonCheckpointPayload payload = capture == null
           ? payloadFactory.capture(formatIdentity, databases, flushCount) : capture.getPayload();
       timing.payloadCaptureUs = elapsedUs(captureStart);
@@ -158,7 +171,7 @@ public final class CommonCheckpointRuntime implements AutoCloseable {
       if (capture != null) {
         CommonCheckpointHotRecovery.requireWalDynamicIdentity(payload, target.getLastBlock());
         long hotPrepareStart = nanoTime.getAsLong();
-        CommonCheckpointTarget prepared = hotMaterializer.prepare(capture);
+        CommonCheckpointTarget prepared = archivePlanner.prepare(capture);
         timing.hotPrepareUs = elapsedUs(hotPrepareStart);
         if (!target.equals(prepared)) {
           throw new IOException("Hot Archive prepared checkpoint target differs");
@@ -194,7 +207,7 @@ public final class CommonCheckpointRuntime implements AutoCloseable {
   /** Pins one point-only historical request under the same publication gate. */
   public synchronized StateArchiveCheckpointReadSnapshot pinPoint(long targetBlock)
       throws IOException {
-    if (hotMaterializer != null) {
+    if (archivePlanner != null) {
       throw new IOException("Hot Archive runtime point reads are not integrated");
     }
     CommonCheckpointTarget target = publishedTarget;

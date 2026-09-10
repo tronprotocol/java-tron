@@ -134,8 +134,10 @@ import org.tron.core.db2.archive.LatestStateGenerationCoordinatorFactory;
 import org.tron.core.db2.archive.OldValue;
 import org.tron.core.db2.archive.SnapshotOldValueCollector;
 import org.tron.core.db2.archive.SnapshotPathStateTransitionCollector;
+import org.tron.core.db2.archive.StateArchiveAppendCheckpointMaterializerV3;
 import org.tron.core.db2.archive.StateArchiveCheckpointMaterializer;
 import org.tron.core.db2.archive.StateArchiveCheckpointReadSnapshot;
+import org.tron.core.db2.archive.StateArchiveFileFormatV3;
 import org.tron.core.db2.archive.StateArchiveHotCheckpointMaterializer;
 import org.tron.core.db2.archive.StateArchiveHotStore;
 import org.tron.core.db2.archive.StateArchiveRuntimeOwner;
@@ -781,9 +783,14 @@ public class Manager {
     Path checkpointDirectory = Paths.get(Args.getInstance().getOutputDirectory(),
         storage.getCommonCheckpointDirectory()).normalize();
     byte[] formatIdentity = CommonCheckpointFormat.identity();
+    org.tron.core.config.args.StorageConfig.StateArchiveAppendFileConfig appendConfig =
+        storage.getStateArchiveAppendFileSettings();
+    boolean appendEnabled = appendConfig != null && appendConfig.isEnabled();
+    Path appendDirectory = archiveDirectory.resolve("history").resolve("v3");
     PathStatePhysicalOverlayHead pathOwner = null;
     CommonCheckpointRuntimeAttachment attachment = null;
     StateArchiveHotStore hotStore = null;
+    StateArchiveAppendCheckpointMaterializerV3 appendMaterializer = null;
     try {
       PathStateStoreManifest.Engine pathEngine = configuredAuxiliaryEngine(
           storage.getPathStateRootEngine(), storage.getDbEngine());
@@ -829,7 +836,7 @@ public class Manager {
       recoverPendingCommonCheckpoint(snapshots, checkpointDirectory, archiveDirectory,
           pathDirectory, pathEngine, servingIndexEngine,
           storage.getPathStateRootNodeCacheBytes(), formatIdentity, baselineFile, baselineExists,
-          modeAdmitted);
+          modeAdmitted, appendEnabled, appendDirectory, appendConfig);
       BlockSnapshotMeta canonical = currentCanonicalBlockMeta();
       P66Phase phase = currentPathStatePhase();
       if (modeAdmitted && Files.isRegularFile(
@@ -897,7 +904,12 @@ public class Manager {
       CommonCheckpointFile checkpointFile = new CommonCheckpointFile(checkpointDirectory);
       StateArchiveHotCheckpointMaterializer hotMaterializer = null;
       org.tron.core.db2.core.CommonCheckpointMaterializer archiveMaterializer;
-      if (hotEnabled) {
+      if (appendEnabled) {
+        appendMaterializer = new StateArchiveAppendCheckpointMaterializerV3(
+            appendDirectory, formatIdentity, archiveRuntimeEngine, baseline.getStateRoot(),
+            StateArchiveFileFormatV3.COMPRESSION_NONE, appendConfig.getSegmentTargetBytes());
+        archiveMaterializer = appendMaterializer;
+      } else if (hotEnabled) {
         hotStore = StateArchiveHotStore.openOrCreate(hotDirectory, formatIdentity, hotEngine,
             baseline.getHead().getBlockNumber(), baseline.getHead().getBlockHash(), hotConfig);
         hotMaterializer = new StateArchiveHotCheckpointMaterializer(hotStore);
@@ -914,9 +926,15 @@ public class Manager {
       PathStatePhysicalOverlayHead admittedOwner = pathOwner;
       StateArchiveHotCheckpointMaterializer admittedHotMaterializer = hotMaterializer;
       StateArchiveHotStore admittedHotStore = hotStore;
+      StateArchiveAppendCheckpointMaterializerV3 admittedAppendMaterializer = appendMaterializer;
       attachment = CommonCheckpointRuntimeAttachment.open(true,
           () -> {
             CommonCheckpointRuntimeOwner owner = new CommonCheckpointRuntimeOwner(coordinator);
+            if (admittedAppendMaterializer != null) {
+              return new CommonCheckpointRuntime(owner, snapshots.getDbs(), appendDirectory,
+                  formatIdentity, archiveRuntimeEngine, latest::pin,
+                  admittedOwner::prepareCommonCheckpointRebase, admittedAppendMaterializer);
+            }
             if (admittedHotMaterializer == null) {
               return new CommonCheckpointRuntime(owner, snapshots.getDbs(), archiveDirectory,
                   formatIdentity, archiveRuntimeEngine, latest::pin,
@@ -942,7 +960,10 @@ public class Manager {
       }
       if (Files.isRegularFile(pathDirectory.resolve(PathStateCheckpointMaterializer.CURRENT_FILE),
           LinkOption.NOFOLLOW_LINKS)) {
-        if (admittedHotStore == null) {
+        if (admittedAppendMaterializer != null) {
+          requireAppendCommonPublishedAuthorities(checkpointDirectory, pathDirectory,
+              formatIdentity, admittedAppendMaterializer);
+        } else if (admittedHotStore == null) {
           requireCommonPublishedAuthorities(checkpointDirectory, archiveDirectory, pathDirectory,
               formatIdentity, servingIndexEngine, materializedStore);
         } else {
@@ -965,6 +986,7 @@ public class Manager {
       pathOwner = null;
       attachment = null;
       hotStore = null;
+      appendMaterializer = null;
       logger.info("Common checkpoint runtime attached: checkpoint={}, archive={}, path={}, "
               + "head={}, format={}, pathEngine={}, archiveEngine={}", checkpointDirectory,
           archiveDirectory, pathDirectory, canonical.getBlockNumber(), CommonCheckpointFormat.ID,
@@ -990,10 +1012,18 @@ public class Manager {
       if (attachment != null) {
         attachment.close();
         hotStore = null;
+        appendMaterializer = null;
       }
       if (hotStore != null) {
         try {
           hotStore.close();
+        } catch (java.io.IOException closeFailure) {
+          failure.addSuppressed(closeFailure);
+        }
+      }
+      if (appendMaterializer != null) {
+        try {
+          appendMaterializer.close();
         } catch (java.io.IOException closeFailure) {
           failure.addSuppressed(closeFailure);
         }
@@ -1014,7 +1044,9 @@ public class Manager {
       PathStateStoreManifest.Engine pathEngine,
       PathStateStoreManifest.Engine archiveEngine, long residentNodeCacheBytes,
       byte[] formatIdentity, CommonCheckpointBaselineFile baselineFile, boolean baselineExists,
-      boolean modeAdmitted) throws java.io.IOException {
+      boolean modeAdmitted, boolean appendEnabled, Path appendDirectory,
+      org.tron.core.config.args.StorageConfig.StateArchiveAppendFileConfig appendConfig)
+      throws java.io.IOException {
     CommonCheckpointFile checkpointFile = new CommonCheckpointFile(checkpointDirectory);
     if (!checkpointFile.isPresent()) {
       return;
@@ -1026,16 +1058,22 @@ public class Manager {
     CommonCheckpointBaseline baseline = baselineFile.load();
     CommonCheckpointMaterializedStore materializedStore =
         new CommonCheckpointMaterializedStore(checkpointDirectory);
+    org.tron.core.db2.core.CommonCheckpointMaterializer archiveRecovery = appendEnabled
+        ? new StateArchiveAppendCheckpointMaterializerV3(appendDirectory, formatIdentity,
+            archiveEngine, baseline.getStateRoot(), StateArchiveFileFormatV3.COMPRESSION_NONE,
+            appendConfig.getSegmentTargetBytes())
+        : new StateArchiveCheckpointMaterializer(archiveDirectory, formatIdentity, baseline,
+            archiveEngine, materializedStore);
     try (PathStateCheckpointMaterializer.RecoverySession pathRecovery =
         PathStateCheckpointMaterializer.openRecovery(pathDirectory, pathEngine,
             residentNodeCacheBytes, formatIdentity, baseline, materializedStore);
+        org.tron.core.db2.core.CommonCheckpointMaterializer admittedArchive = archiveRecovery;
         CommonCheckpointRedoCoordinator coordinator = new CommonCheckpointRedoCoordinator(
             checkpointFile,
             new ChainbaseCheckpointMaterializer(checkpointDirectory, formatIdentity,
                 snapshots.getDbs(), baseline, materializedStore),
             pathRecovery.getMaterializer(),
-            new StateArchiveCheckpointMaterializer(archiveDirectory, formatIdentity, baseline,
-                archiveEngine, materializedStore))) {
+            admittedArchive)) {
       CommonCheckpointRedoCoordinator.RecoveryAction action = coordinator.recover();
       logger.info("Common checkpoint startup redo completed before PathState open: action={}",
           action);
@@ -1102,6 +1140,30 @@ public class Manager {
         || !Arrays.equals(chain.getPayloadDigest(), hotTarget.get())
         || !Arrays.equals(chain.getStateRoot(), path.getStateRoot())) {
       throw new java.io.IOException("Hot common checkpoint published authorities differ");
+    }
+  }
+
+  private static void requireAppendCommonPublishedAuthorities(Path checkpointDirectory,
+      Path pathDirectory, byte[] formatIdentity,
+      StateArchiveAppendCheckpointMaterializerV3 materializer) throws java.io.IOException {
+    ChainbaseCheckpointMaterializer.PublishedHead chain =
+        ChainbaseCheckpointMaterializer.loadPublishedHead(checkpointDirectory, formatIdentity);
+    PathStateCheckpointMaterializer.PublishedHead path =
+        PathStateCheckpointMaterializer.loadPublishedHead(pathDirectory, formatIdentity);
+    org.tron.core.db2.core.CommonCheckpointTarget archive = materializer
+        .loadPublishedTargetIfPresent().orElseThrow(() ->
+            new java.io.IOException("Append-file Archive readable target is missing"));
+    BlockSnapshotMeta last = archive.getLastBlock();
+    if (chain.getEpoch() != last.getEpoch() || path.getEpoch() != last.getEpoch()
+        || chain.getBlockNumber() != last.getBlockNumber()
+        || path.getBlockNumber() != last.getBlockNumber()
+        || !Arrays.equals(chain.getBlockHash(), last.getBlockHash())
+        || !Arrays.equals(path.getBlockHash(), last.getBlockHash())
+        || !Arrays.equals(chain.getPayloadDigest(), archive.getPayloadDigest())
+        || !Arrays.equals(path.getPayloadDigest(), archive.getPayloadDigest())
+        || !Arrays.equals(chain.getStateRoot(), archive.getStateRoot())
+        || !Arrays.equals(path.getStateRoot(), archive.getStateRoot())) {
+      throw new java.io.IOException("Append-file common checkpoint authorities differ");
     }
   }
 

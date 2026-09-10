@@ -73,6 +73,10 @@ public class StorageConfigTest {
     assertEquals(8, defaults.getStateArchive().getHotStore().getMaxFrozenGenerations());
     assertEquals(4, defaults.getStateArchive().getHotStore().getYellowFrozenGenerations());
     assertEquals(7, defaults.getStateArchive().getHotStore().getRedFrozenGenerations());
+    assertFalse(defaults.getStateArchive().getAppendFile().isEnabled());
+    assertEquals(3, defaults.getStateArchive().getAppendFile().getFormatVersion());
+    assertEquals(2000000000L,
+        defaults.getStateArchive().getAppendFile().getSegmentTargetBytes());
 
     StorageConfig configured = StorageConfig.fromConfig(withRef(
         "storage.stateArchive { enabled = true, directory = archive-test, "
@@ -171,6 +175,33 @@ public class StorageConfigTest {
             + "storage.pathStateRoot.enabled = true\n"
             + "storage.commonCheckpoint.enabled = true"));
     assertTrue(configured.getStateArchive().getHotStore().isEnabled());
+  }
+
+  @Test
+  public void testAppendFileAdmitsOnlyWithCommonCheckpointAuthorities() {
+    StorageConfig configured = StorageConfig.fromConfig(withRef(
+        "storage.stateArchive.enabled = true\n"
+            + "storage.stateArchive.appendFile.enabled = true\n"
+            + "storage.pathStateRoot.enabled = true\n"
+            + "storage.commonCheckpoint.enabled = true"));
+    assertTrue(configured.getStateArchive().getAppendFile().isEnabled());
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testAppendFileRequiresCommonCheckpoint() {
+    StorageConfig.fromConfig(withRef(
+        "storage.stateArchive.enabled = true\n"
+            + "storage.stateArchive.appendFile.enabled = true"));
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void testAppendFileRejectsHotStoreCombination() {
+    StorageConfig.fromConfig(withRef(
+        "storage.stateArchive.enabled = true\n"
+            + "storage.stateArchive.appendFile.enabled = true\n"
+            + "storage.stateArchive.hotStore.enabled = true\n"
+            + "storage.pathStateRoot.enabled = true\n"
+            + "storage.commonCheckpoint.enabled = true"));
   }
 
   @Test(expected = IllegalArgumentException.class)

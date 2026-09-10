@@ -355,6 +355,7 @@ public class ArgsTest {
     override.put("storage.db.engine", "LEVELDB");
     override.put("storage.stateArchive.servingIndexEngine", "ROCKSDB");
     override.put("storage.stateArchive.hotStore.engine", "LEVELDB");
+    override.put("storage.stateArchive.appendFile.segmentTargetBytes", "123456789");
     override.put("storage.pathStateRoot.engine", "ROCKSDB");
     Config config = ConfigFactory.parseMap(override)
         .withFallback(ConfigFactory.defaultReference());
@@ -365,6 +366,8 @@ public class ArgsTest {
     Assert.assertEquals("LEVELDB", storage.getDbEngine());
     Assert.assertEquals("ROCKSDB", storage.getStateArchiveServingIndexEngine());
     Assert.assertEquals("LEVELDB", storage.getStateArchiveHotStoreSettings().getEngine());
+    Assert.assertEquals(123456789L,
+        storage.getStateArchiveAppendFileSettings().getSegmentTargetBytes());
     Assert.assertEquals("ROCKSDB", storage.getPathStateRootEngine());
     Args.clearParam();
   }

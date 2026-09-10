@@ -39,7 +39,7 @@ public class StorageRowKeyCodecTest {
 
   @Test
   public void latestVmStorageUsesTheSharedCodec() {
-    Storage storage = new Storage(ADDRESS, null);
+    Storage storage = new Storage(ADDRESS, null, key -> null);
     storage.setContractVersion(1);
     storage.generateAddrHash(TRANSACTION_HASH);
     DataWord slot = new DataWord(SLOT);

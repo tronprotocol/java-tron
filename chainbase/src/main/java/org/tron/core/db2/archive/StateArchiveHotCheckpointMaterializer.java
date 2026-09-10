@@ -10,7 +10,7 @@ import org.tron.core.db2.core.CommonCheckpointTarget;
 
 /** Default-off State Archive participant backed only by the independent Hot DB. */
 public final class StateArchiveHotCheckpointMaterializer
-    implements CommonCheckpointMaterializer {
+    implements CommonCheckpointMaterializer, StateArchiveCheckpointPlanner {
 
   private final StateArchiveHotStore hotStore;
 
@@ -19,12 +19,14 @@ public final class StateArchiveHotCheckpointMaterializer
   }
 
   /** Computes the exact Hot batch identity without writing bodies or checkpoint metadata. */
+  @Override
   public synchronized StateArchiveHotBatchDescriptor planCheckpoint(
       List<BlockReverseDiff> diffs) throws IOException {
     return hotStore.planCheckpoint(Objects.requireNonNull(diffs, "diffs"));
   }
 
   /** Prepares one capture whose payload, descriptor and transient bodies share one identity. */
+  @Override
   public synchronized CommonCheckpointTarget prepare(CommonCheckpointCapture capture)
       throws IOException {
     CommonCheckpointCapture admitted = Objects.requireNonNull(capture, "capture");

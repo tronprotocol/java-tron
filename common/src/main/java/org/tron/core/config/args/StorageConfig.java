@@ -155,6 +155,7 @@ public class StorageConfig {
     private String servingIndexEngine = "ROCKSDB";
     private NativeDbConfig servingIndex = NativeDbConfig.large();
     private StateArchiveHotStoreConfig hotStore = new StateArchiveHotStoreConfig();
+    private StateArchiveAppendFileConfig appendFile = new StateArchiveAppendFileConfig();
 
     void postProcess() {
       if (directory == null || directory.trim().isEmpty()) {
@@ -172,6 +173,32 @@ public class StorageConfig {
           "storage.stateArchive.servingIndexEngine");
       servingIndex.validate("storage.stateArchive.servingIndex");
       hotStore.postProcess();
+      appendFile.postProcess();
+    }
+  }
+
+  /** Independent, default-off five-lane append-file v3 prototype settings. */
+  @Getter
+  @Setter
+  public static class StateArchiveAppendFileConfig {
+
+    private boolean enabled = false;
+    private int formatVersion = 3;
+    private int appendBufferBytes = 2097152;
+    private int maxBlockFrameBytes = 67108864;
+    private long segmentTargetBytes = 2000000000L;
+    private int shardMaxSegments = 1024;
+
+    void postProcess() {
+      if (formatVersion != 3 || appendBufferBytes != 2097152
+          || maxBlockFrameBytes != 67108864 || shardMaxSegments != 1024) {
+        throw new IllegalArgumentException(
+            "stateArchive.appendFile v3 fixed format settings differ");
+      }
+      if (segmentTargetBytes <= 512) {
+        throw new IllegalArgumentException(
+            "stateArchive.appendFile.segmentTargetBytes must exceed the segment header");
+      }
     }
   }
 
@@ -417,6 +444,14 @@ public class StorageConfig {
     if (sc.stateArchive.hotStore.enabled && !sc.commonCheckpoint.enabled) {
       throw new IllegalArgumentException(
           "stateArchive.hotStore.enabled requires commonCheckpoint.enabled");
+    }
+    if (sc.stateArchive.appendFile.enabled && !sc.commonCheckpoint.enabled) {
+      throw new IllegalArgumentException(
+          "stateArchive.appendFile.enabled requires commonCheckpoint.enabled");
+    }
+    if (sc.stateArchive.appendFile.enabled && sc.stateArchive.hotStore.enabled) {
+      throw new IllegalArgumentException(
+          "stateArchive.appendFile.enabled is mutually exclusive with hotStore.enabled");
     }
     if (sc.commonCheckpoint.enabled
         && (sc.pathStateRoot.volatileSnapshotBenchmark

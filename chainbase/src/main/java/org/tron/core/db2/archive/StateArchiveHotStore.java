@@ -250,17 +250,35 @@ public final class StateArchiveHotStore implements Closeable {
   public synchronized StateArchiveHotBatchDescriptor planCheckpoint(List<BlockReverseDiff> diffs)
       throws IOException {
     ensureOpen();
-    List<BlockReverseDiff> admitted = new ArrayList<>(Objects.requireNonNull(diffs, "diffs"));
-    if (admitted.isEmpty()) {
-      throw new IllegalArgumentException("Hot Archive checkpoint must contain blocks");
-    }
     if (current.prepared != null || current.publishedBlock != current.endBlock) {
       throw new ArchivePersistenceException(
           "Hot Archive cannot plan across an unpublished checkpoint");
     }
-    long previousBlock = current.publishedBlock;
-    byte[] previousHash = current.publishedHash;
-    byte[] resultContentDigest = current.publishedContentDigest;
+    return planCheckpointDescriptor(engine, current.publishedBlock, current.publishedHash,
+        current.publishedContentDigest, diffs, historyCodec);
+  }
+
+  /** Pure v2 descriptor planner shared with append-file Common compatibility binding. */
+  static StateArchiveHotBatchDescriptor planCheckpointDescriptor(Engine engine,
+      long baseBlock, byte[] baseHash, byte[] baseContentDigest,
+      List<BlockReverseDiff> diffs) {
+    return planCheckpointDescriptor(engine, baseBlock, baseHash, baseContentDigest, diffs,
+        new BlockHistoryCodec());
+  }
+
+  private static StateArchiveHotBatchDescriptor planCheckpointDescriptor(Engine engine,
+      long baseBlock, byte[] baseHash, byte[] baseContentDigest,
+      List<BlockReverseDiff> diffs, BlockHistoryCodec codec) {
+    List<BlockReverseDiff> admitted = new ArrayList<>(Objects.requireNonNull(diffs, "diffs"));
+    if (admitted.isEmpty()) {
+      throw new IllegalArgumentException("Hot Archive checkpoint must contain blocks");
+    }
+    long previousBlock = baseBlock;
+    byte[] previousHash = Arrays.copyOf(Objects.requireNonNull(baseHash, "baseHash"),
+        baseHash.length);
+    byte[] resultContentDigest = Arrays.copyOf(
+        Objects.requireNonNull(baseContentDigest, "baseContentDigest"),
+        baseContentDigest.length);
     long encodedBytes = 0;
     Hasher orderedRecords = Hashing.sha256().newHasher();
     List<StateArchiveHotBatchDescriptor.BlockDigest> blocks = new ArrayList<>();
@@ -273,7 +291,7 @@ public final class StateArchiveHotStore implements Closeable {
         throw new IllegalArgumentException(
             "Hot Archive checkpoint identity is not contiguous");
       }
-      byte[] record = encodeRecord(block);
+      byte[] record = encodeRecord(block, codec);
       byte[] recordDigest = Hashing.sha256().hashBytes(record).asBytes();
       encodedBytes = Math.addExact(encodedBytes, record.length);
       resultContentDigest = nextContentDigest(resultContentDigest, meta, record);
@@ -282,10 +300,10 @@ public final class StateArchiveHotStore implements Closeable {
       previousBlock = meta.getBlockNumber();
       previousHash = meta.getBlockHash();
     }
-    return new StateArchiveHotBatchDescriptor(engine, current.publishedBlock,
-        current.publishedHash, admitted.get(0).getMeta(),
+    return new StateArchiveHotBatchDescriptor(Objects.requireNonNull(engine, "engine"), baseBlock,
+        baseHash, admitted.get(0).getMeta(),
         admitted.get(admitted.size() - 1).getMeta(), encodedBytes,
-        current.publishedContentDigest, resultContentDigest,
+        baseContentDigest, resultContentDigest,
         orderedRecords.hash().asBytes(), blocks);
   }
 
@@ -1014,8 +1032,12 @@ public final class StateArchiveHotStore implements Closeable {
   }
 
   private byte[] encodeRecord(BlockReverseDiff diff) {
+    return encodeRecord(diff, historyCodec);
+  }
+
+  private static byte[] encodeRecord(BlockReverseDiff diff, BlockHistoryCodec codec) {
     try {
-      byte[] history = historyCodec.encode(diff);
+      byte[] history = codec.encode(diff);
       ByteArrayOutputStream bytes = new ByteArrayOutputStream(history.length + 16);
       DataOutputStream output = new DataOutputStream(bytes);
       output.writeInt(RECORD_MAGIC);

@@ -42,7 +42,7 @@ public class StateArchiveCheckpointMaterializerTest {
     CommonCheckpointPayload payload = payload(format, 1, 3, hash(0), hash(10), hash(13));
     CommonCheckpointTarget target = CommonCheckpointTarget.from(payload);
     StateArchiveCheckpointMaterializer materializer =
-        new StateArchiveCheckpointMaterializer(root, format);
+        new StateArchiveCheckpointMaterializer(root, format, null, Engine.LEVELDB);
 
     assertEquals(Status.NEEDS_MATERIALIZATION, materializer.inspect(target));
     materializer.materialize(payload, target);
@@ -50,7 +50,7 @@ public class StateArchiveCheckpointMaterializerTest {
     assertFalse(Files.exists(root.resolve(StateArchiveCheckpointMaterializer.READABLE_FILE)));
     assertEquals(3, blockFileCount(root));
     assertThrows(IOException.class,
-        () -> StateArchiveCheckpointReadAdapter.open(root, target));
+        () -> StateArchiveCheckpointReadAdapter.open(root, target, Engine.LEVELDB));
     for (int index = 0; index < payload.getBlocks().size(); index++) {
       BlockReverseDiff actual = materializer.loadBlock(target, index);
       assertEquals(payload.getBlocks().get(index).getMeta(), actual.getMeta());
@@ -62,9 +62,9 @@ public class StateArchiveCheckpointMaterializerTest {
     materializer.publish(target);
     assertEquals(Status.PUBLISHED, materializer.inspect(target));
     try (StateArchiveCheckpointReadAdapter reader =
-        StateArchiveCheckpointReadAdapter.open(root, target);
+        StateArchiveCheckpointReadAdapter.open(root, target, Engine.LEVELDB);
         StateArchiveCheckpointReadAdapter concurrent =
-            StateArchiveCheckpointReadAdapter.open(root, target)) {
+            StateArchiveCheckpointReadAdapter.open(root, target, Engine.LEVELDB)) {
       assertEquals(0, reader.getIndexedFrom());
       assertEquals(3, reader.getIndexedThrough());
       assertArrayEquals(new byte[]{0}, reader.findOldValueAfter("code", new byte[]{1}, 0)
@@ -80,7 +80,7 @@ public class StateArchiveCheckpointMaterializerTest {
     assertThrows(IOException.class, () -> wrongEngine.inspect(target));
 
     StateArchiveCheckpointMaterializer reopened =
-        new StateArchiveCheckpointMaterializer(root, format);
+        new StateArchiveCheckpointMaterializer(root, format, null, Engine.LEVELDB);
     assertEquals(Status.PUBLISHED, reopened.inspect(target));
     reopened.publish(target);
 
@@ -90,7 +90,7 @@ public class StateArchiveCheckpointMaterializerTest {
     reopened.publish(childTarget);
     assertEquals(Status.PUBLISHED, reopened.inspect(childTarget));
     try (StateArchiveCheckpointReadAdapter reader =
-        StateArchiveCheckpointReadAdapter.open(root, childTarget)) {
+        StateArchiveCheckpointReadAdapter.open(root, childTarget, Engine.LEVELDB)) {
       assertEquals(0, reader.getIndexedFrom());
       assertEquals(5, reader.getIndexedThrough());
       assertArrayEquals(hash(5), reader.getHeadHash());
@@ -100,10 +100,10 @@ public class StateArchiveCheckpointMaterializerTest {
           .get().getValue());
     }
     CommonCheckpointTarget restored =
-        StateArchiveCheckpointMaterializer.loadPublishedTarget(root, format);
+        StateArchiveCheckpointMaterializer.loadPublishedTarget(root, format, Engine.LEVELDB);
     assertEquals(childTarget, restored);
     try (StateArchiveCheckpointReadAdapter reader =
-        StateArchiveCheckpointReadAdapter.open(root, format)) {
+        StateArchiveCheckpointReadAdapter.open(root, format, Engine.LEVELDB)) {
       assertEquals(5, reader.getIndexedThrough());
       assertArrayEquals(new byte[]{1}, reader.findOldValueAfter("code", new byte[]{2}, 0)
           .get().getValue());
@@ -197,14 +197,15 @@ public class StateArchiveCheckpointMaterializerTest {
     CommonCheckpointPayload payload = payload(format, 1, 2, hash(0), hash(30), hash(32));
     CommonCheckpointTarget target = CommonCheckpointTarget.from(payload);
     StateArchiveCheckpointMaterializer materializer =
-        new StateArchiveCheckpointMaterializer(root, format);
+        new StateArchiveCheckpointMaterializer(root, format, null, Engine.LEVELDB);
 
     CommonCheckpointPayload foreign = payload(hash(99), 1, 1, hash(0), hash(30), hash(31));
     assertThrows(IOException.class, () -> materializer.materialize(foreign,
         CommonCheckpointTarget.from(foreign)));
 
     StateArchiveCheckpointMaterializer interrupted = new StateArchiveCheckpointMaterializer(root,
-        format, failAt(StateArchiveCheckpointMaterializer.Stage.AFTER_BLOCK_FILE));
+        format, Engine.LEVELDB,
+        failAt(StateArchiveCheckpointMaterializer.Stage.AFTER_BLOCK_FILE));
     assertThrows(IOException.class, () -> interrupted.materialize(payload, target));
     Path block = firstBlockFile(root);
     byte[] corrupt = Files.readAllBytes(block);
@@ -214,7 +215,7 @@ public class StateArchiveCheckpointMaterializerTest {
 
     Path cleanRoot = temporaryFolder.newFolder("non-parent").toPath();
     StateArchiveCheckpointMaterializer clean =
-        new StateArchiveCheckpointMaterializer(cleanRoot, format);
+        new StateArchiveCheckpointMaterializer(cleanRoot, format, null, Engine.LEVELDB);
     clean.materialize(payload, target);
     clean.publish(target);
     CommonCheckpointPayload nonChild = payload(format, 5, 1, hash(9), hash(40), hash(41));
