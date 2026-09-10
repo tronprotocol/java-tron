@@ -346,7 +346,9 @@ public final class StateArchiveFiveLaneSegmentWriterV3 implements AutoCloseable 
     if (fromExclusive == through) {
       return Collections.emptyList();
     }
-    Map<Long, Map<Integer, byte[]>> bundles = new TreeMap<>();
+    int blockCount = Math.toIntExact(through - fromExclusive);
+    int[] laneIds = StateArchiveFileFormatV3.fiveLaneIds();
+    byte[][][] bundles = new byte[laneIds.length][blockCount][];
     if (servingSegments == null) {
       servingSegments = new HashMap<>();
       for (int laneId : StateArchiveFileFormatV3.fiveLaneIds()) {
@@ -357,7 +359,8 @@ public final class StateArchiveFiveLaneSegmentWriterV3 implements AutoCloseable 
       }
     }
     long first = fromExclusive + 1;
-    for (int laneId : StateArchiveFileFormatV3.fiveLaneIds()) {
+    for (int laneOrdinal = 0; laneOrdinal < laneIds.length; laneOrdinal++) {
+      int laneId = laneIds[laneOrdinal];
       NavigableMap<Long, SealedSegment> segments = servingSegments.get(laneId);
       Map.Entry<Long, SealedSegment> selected = segments.floorEntry(first);
       if (selected == null) {
@@ -369,7 +372,7 @@ public final class StateArchiveFiveLaneSegmentWriterV3 implements AutoCloseable 
           readIndexedRange(laneId, segment.getSegmentSeq(), segment.getFirstBlock(),
               Math.max(first, segment.getFirstBlock()),
               Math.min(through, segment.getLastBlock()), segment.getSegmentHeaderDigest(),
-              bundles);
+              first, bundles[laneOrdinal]);
         }
         selected = segments.higherEntry(selected.getKey());
       }
@@ -377,19 +380,19 @@ public final class StateArchiveFiveLaneSegmentWriterV3 implements AutoCloseable 
       if (current != null && current.firstBlock <= through && current.lastBlock >= first) {
         readIndexedRange(laneId, current.segmentSeq, current.firstBlock,
             Math.max(first, current.firstBlock), Math.min(through, current.lastBlock),
-            current.headerDigest, bundles);
+            current.headerDigest, first, bundles[laneOrdinal]);
       }
     }
-    List<BlockReverseDiff> result = new ArrayList<>();
-    for (long block = fromExclusive + 1; block <= through; block++) {
-      Map<Integer, byte[]> laneFrames = bundles.remove(block);
-      if (laneFrames == null
-          || laneFrames.size() != StateArchiveFileFormatV3.fiveLaneIds().length) {
-        throw new IOException("Incomplete State Archive serving source bundle");
-      }
-      List<byte[]> ordered = new ArrayList<>();
-      for (int laneId : StateArchiveFileFormatV3.fiveLaneIds()) {
-        ordered.add(laneFrames.get(laneId));
+    List<BlockReverseDiff> result = new ArrayList<>(blockCount);
+    for (int block = 0; block < blockCount; block++) {
+      List<byte[]> ordered = new ArrayList<>(laneIds.length);
+      for (int lane = 0; lane < laneIds.length; lane++) {
+        byte[] frame = bundles[lane][block];
+        if (frame == null) {
+          throw new IOException("Incomplete State Archive serving source bundle");
+        }
+        ordered.add(frame);
+        bundles[lane][block] = null;
       }
       result.add(codec.decode(ordered).getDiff());
     }
@@ -406,7 +409,7 @@ public final class StateArchiveFiveLaneSegmentWriterV3 implements AutoCloseable 
 
   private void readIndexedRange(int laneId, long sequence, long segmentFirst,
       long first, long last, byte[] headerDigest,
-      Map<Long, Map<Integer, byte[]>> bundles) throws IOException {
+      long rangeFirst, byte[][] laneFrames) throws IOException {
     try (FileChannel data = FileChannel.open(dataPath(laneId, sequence),
         StandardOpenOption.READ);
         FileChannel index = FileChannel.open(indexPath(laneId, sequence),
@@ -443,10 +446,11 @@ public final class StateArchiveFiveLaneSegmentWriterV3 implements AutoCloseable 
             != entry.getEncodedFrameDigestPrefix()) {
           throw new IOException("State Archive serving block index frame mismatch");
         }
-        if (bundles.computeIfAbsent(block, ignored -> new HashMap<>()).put(laneId, frame)
-            != null) {
+        int slot = Math.toIntExact(block - rangeFirst);
+        if (laneFrames[slot] != null) {
           throw new IOException("Duplicate State Archive serving source lane frame");
         }
+        laneFrames[slot] = frame;
       }
     }
   }
@@ -1535,11 +1539,16 @@ public final class StateArchiveFiveLaneSegmentWriterV3 implements AutoCloseable 
     List<CurrentSegment> expectedCurrent = catalog.selected().getCurrent();
     List<CurrentSegment> actualCurrent = getCurrentSegments();
     List<SealedSegment> expectedSealed = catalog.selected().getSealed();
+    Map<Integer, Map<Long, SealedSegment>> actualSealed = new HashMap<>();
+    for (SealedSegment segment : sealedSegments) {
+      if (actualSealed.computeIfAbsent(segment.getLaneId(), ignored -> new HashMap<>())
+          .put(segment.getSegmentSeq(), segment) != null) {
+        throw new IOException("State Archive duplicate sealed segment identity");
+      }
+    }
     for (SealedSegment expected : expectedSealed) {
-      SealedSegment actual = sealedSegments.stream().filter(candidate ->
-          candidate.getLaneId() == expected.getLaneId()
-              && candidate.getSegmentSeq() == expected.getSegmentSeq())
-          .findFirst().orElse(null);
+      SealedSegment actual = actualSealed.getOrDefault(expected.getLaneId(),
+          Collections.emptyMap()).get(expected.getSegmentSeq());
       if (actual == null || !Arrays.equals(StateArchiveSegmentFormatV3.encodeSealedMapRecord(
           expected), StateArchiveSegmentFormatV3.encodeSealedMapRecord(actual))) {
         throw new IOException("State Archive Catalog sealed segment identity mismatch");

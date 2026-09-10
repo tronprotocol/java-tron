@@ -60,6 +60,43 @@ public class StateArchiveCatalogAndServingCornerCaseTest {
   }
 
   @Test
+  public void liveRangePublishesEveryBlockWithTheBulkLogicalIdentity() throws Exception {
+    List<BlockReverseDiff> all = diffs(1, 17, 0);
+    Path bulkRoot = temporaryFolder.newFolder("bulk-reference").toPath();
+    Path liveRoot = temporaryFolder.newFolder("live-range").toPath();
+    try (StateArchiveServingIndexBuildCoordinatorV3 bulk =
+        new StateArchiveServingIndexBuildCoordinatorV3(bulkRoot, Engine.LEVELDB, 17);
+        StateArchiveServingIndexBuildCoordinatorV3 liveOwner =
+            new StateArchiveServingIndexBuildCoordinatorV3(liveRoot, Engine.LEVELDB, 1)) {
+      bulk.offerCommittedRange(all, target(all, 1));
+      List<BlockReverseDiff> first = all.subList(0, 1);
+      liveOwner.offerCommittedRange(first, target(first, 2));
+      LiveServingIndexer live = liveOwner.completeInitialSync(target(first, 2));
+      List<BlockReverseDiff> suffix = all.subList(1, all.size());
+      live.indexNow(suffix, target(suffix, 3));
+      assertEquals(17, liveOwner.status().getIndexedThrough());
+      assertEquals(17, liveOwner.status().getBuildSequence());
+      assertEquals(0, liveOwner.status().getPendingBlocks());
+    }
+    try (PersistentServingKeyIndexCatalog bulk = PersistentServingKeyIndexCatalog.open(
+        bulkRoot.resolve(StateArchiveServingIndexBuildCoordinatorV3.DIRECTORY),
+        Engine.LEVELDB, stage -> { });
+        PersistentServingKeyIndexCatalog live = PersistentServingKeyIndexCatalog.open(
+            liveRoot.resolve(StateArchiveServingIndexBuildCoordinatorV3.DIRECTORY),
+            Engine.LEVELDB, stage -> { });
+        PersistentServingKeyIndexGeneration expected = bulk.pin();
+        PersistentServingKeyIndexGeneration actual = live.pin()) {
+      assertArrayEquals(expected.getAuthoritativePrefixDigest(),
+          actual.getAuthoritativePrefixDigest());
+      assertEquals(expected.getKeyChangeCount(), actual.getKeyChangeCount());
+      for (int key = 0; key < 8; key++) {
+        assertEquals(expected.firstChangeAfter("code", new byte[]{(byte) key}, 0, 17),
+            actual.firstChangeAfter("code", new byte[]{(byte) key}, 0, 17));
+      }
+    }
+  }
+
+  @Test
   public void gapInvalidatesLiveHandleWithoutAdvancingI() throws Exception {
     Path root = temporaryFolder.newFolder("live-gap").toPath();
     List<BlockReverseDiff> first = diffs(1, 1, 0);

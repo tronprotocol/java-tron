@@ -304,19 +304,25 @@ public final class StateArchiveServingIndexBuildCoordinatorV3 implements AutoClo
           throw new IllegalStateException("Serving live handle is stale");
         }
         List<BlockReverseDiff> admitted = new ArrayList<>(Objects.requireNonNull(diffs, "diffs"));
+        int published = 0;
+        boolean rangeAccepted = false;
         try {
           admit(admitted, target);
+          rangeAccepted = true;
+          pending.clear();
           for (BlockReverseDiff diff : admitted) {
-            List<BlockReverseDiff> remainder = new ArrayList<>(pending);
-            pending.clear();
             pending.add(diff);
             flushPending();
-            pending.addAll(remainder.subList(1, remainder.size()));
+            published++;
           }
           sequence = buildSequence;
           generation = catalog.getCurrentGenerationId();
           return progress();
         } catch (IOException | RuntimeException failure) {
+          if (rangeAccepted) {
+            pending.clear();
+            pending.addAll(admitted.subList(published, admitted.size()));
+          }
           valid = false;
           mode = Mode.CATCH_UP_REQUIRED;
           throw failure;
