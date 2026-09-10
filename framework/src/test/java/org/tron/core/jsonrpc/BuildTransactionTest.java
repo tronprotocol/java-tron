@@ -77,7 +77,7 @@ public class BuildTransactionTest extends BaseTest {
       ContractType contractType = buildArguments.getContractType(wallet);
       Assert.assertEquals(ContractType.TransferContract, contractType);
     } catch (Exception e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
   }
 
@@ -93,7 +93,7 @@ public class BuildTransactionTest extends BaseTest {
       ContractType contractType = buildArguments.getContractType(wallet);
       Assert.assertEquals(ContractType.TransferAssetContract, contractType);
     } catch (Exception e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
   }
 
@@ -138,7 +138,7 @@ public class BuildTransactionTest extends BaseTest {
       ContractType contractType = buildArguments.getContractType(wallet);
       Assert.assertEquals(ContractType.CreateSmartContract, contractType);
     } catch (Exception e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
   }
 
@@ -160,7 +160,7 @@ public class BuildTransactionTest extends BaseTest {
       ContractType contractType = buildArguments.getContractType(wallet);
       Assert.assertEquals(ContractType.TriggerSmartContract, contractType);
     } catch (Exception e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
   }
 

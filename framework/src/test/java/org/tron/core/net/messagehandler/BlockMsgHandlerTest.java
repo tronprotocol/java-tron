@@ -1,171 +1,148 @@
 package org.tron.core.net.messagehandler;
 
-import static org.junit.Assert.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
-
-import com.google.common.collect.ImmutableList;
+import com.google.common.cache.CacheBuilder;
 import com.google.protobuf.ByteString;
-import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.util.ArrayList;
-import java.util.List;
-import javax.annotation.Resource;
-import lombok.extern.slf4j.Slf4j;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.concurrent.ConcurrentHashMap;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.Mockito;
-import org.tron.common.BaseTest;
-import org.tron.common.TestConstants;
-import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.ReflectUtils;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.config.Parameter;
-import org.tron.core.config.args.Args;
 import org.tron.core.exception.P2pException;
 import org.tron.core.net.TronNetDelegate;
 import org.tron.core.net.message.adv.BlockMessage;
 import org.tron.core.net.peer.Item;
 import org.tron.core.net.peer.PeerConnection;
-import org.tron.p2p.connection.Channel;
+import org.tron.core.net.service.adv.AdvService;
+import org.tron.core.net.service.fetchblock.FetchBlockService;
+import org.tron.core.net.service.sync.SyncService;
+import org.tron.core.services.WitnessProductBlockService;
 import org.tron.protos.Protocol.Inventory.InventoryType;
 import org.tron.protos.Protocol.Transaction;
 
-@Slf4j
-public class BlockMsgHandlerTest extends BaseTest {
-
-  @Resource
+public class BlockMsgHandlerTest {
   private BlockMsgHandler handler;
-  @Resource
   private PeerConnection peer;
-
-  /**
-   * init context.
-   */
-  @BeforeClass
-  public static void init() {
-    Args.setParam(new String[] {"--output-directory", dbPath(), "--debug"},
-        TestConstants.TEST_CONF);
-  }
+  private TronNetDelegate delegate;
+  private AdvService advService;
+  private SyncService syncService;
+  private FetchBlockService fetchService;
+  private WitnessProductBlockService witnessService;
 
   @Before
-  public void before() throws Exception {
-    Channel c1 = new Channel();
-    InetSocketAddress a1 = new InetSocketAddress("100.1.1.1", 100);
-    Field field = c1.getClass().getDeclaredField("inetAddress");
-    field.setAccessible(true);
-    field.set(c1, a1.getAddress());
-    peer.setChannel(c1);
+  public void before() {
+    // Each test owns its handler and collaborators; no Spring singleton is modified.
+    handler = new BlockMsgHandler();
+    peer = Mockito.mock(PeerConnection.class);
+    delegate = Mockito.mock(TronNetDelegate.class);
+    advService = Mockito.mock(AdvService.class);
+    syncService = Mockito.mock(SyncService.class);
+    fetchService = Mockito.mock(FetchBlockService.class);
+    witnessService = Mockito.mock(WitnessProductBlockService.class);
+    ReflectUtils.setFieldValue(handler, "tronNetDelegate", delegate);
+    ReflectUtils.setFieldValue(handler, "advService", advService);
+    ReflectUtils.setFieldValue(handler, "syncService", syncService);
+    ReflectUtils.setFieldValue(handler, "fetchBlockService", fetchService);
+    ReflectUtils.setFieldValue(handler, "witnessProductBlockService", witnessService);
+    ReflectUtils.setFieldValue(handler, "fastForward", false);
+    Mockito.when(peer.getAdvInvRequest()).thenReturn(new ConcurrentHashMap<>());
+    Mockito.when(peer.getSyncBlockRequested()).thenReturn(new ConcurrentHashMap<>());
+    Mockito.when(peer.getSyncBlockInProcess()).thenReturn(new HashSet<>());
+    Mockito.when(peer.getAdvInvReceive()).thenReturn(CacheBuilder.newBuilder().build());
+    Mockito.when(peer.getInetAddress()).thenReturn(InetAddress.getLoopbackAddress());
+    Mockito.when(peer.getInetSocketAddress()).thenReturn(
+        new InetSocketAddress(InetAddress.getLoopbackAddress(), 100));
   }
 
   @Test
-  public void testProcessMessage() {
-    BlockCapsule blockCapsule;
-    BlockMessage msg;
-    try {
-      blockCapsule = new BlockCapsule(1, Sha256Hash.ZERO_HASH,
-          System.currentTimeMillis(), Sha256Hash.ZERO_HASH.getByteString());
-      msg = new BlockMessage(blockCapsule);
-      handler.processMessage(peer, msg);
-    } catch (P2pException e) {
-      assertEquals("no request", e.getMessage());
-    }
-
-    try {
-      List<Transaction> transactionList = ImmutableList.of(
-          Transaction.newBuilder()
-              .setRawData(Transaction.raw.newBuilder()
-                  .setData(
-                      ByteString.copyFrom(
-                          new byte[Parameter.ChainConstant.BLOCK_SIZE + Constant.ONE_THOUSAND])))
-              .build());
-      blockCapsule = new BlockCapsule(1, Sha256Hash.ZERO_HASH.getByteString(),
-          System.currentTimeMillis() + 10000, transactionList);
-      msg = new BlockMessage(blockCapsule);
-      System.out.println("len = " + blockCapsule.getInstance().getSerializedSize());
-      peer.getAdvInvRequest()
-          .put(new Item(msg.getBlockId(), InventoryType.BLOCK), System.currentTimeMillis());
-      handler.processMessage(peer, msg);
-    } catch (P2pException e) {
-      //System.out.println(e);
-      assertEquals("block size over limit", e.getMessage());
-    }
-
-    try {
-      blockCapsule = new BlockCapsule(1, Sha256Hash.ZERO_HASH,
-          System.currentTimeMillis() + 10000, Sha256Hash.ZERO_HASH.getByteString());
-      msg = new BlockMessage(blockCapsule);
-      peer.getAdvInvRequest()
-          .put(new Item(msg.getBlockId(), InventoryType.BLOCK), System.currentTimeMillis());
-      handler.processMessage(peer, msg);
-    } catch (P2pException e) {
-      //System.out.println(e);
-      assertEquals("block time error", e.getMessage());
-    }
-
-    try {
-      blockCapsule = new BlockCapsule(1, Sha256Hash.ZERO_HASH,
-          System.currentTimeMillis() + 1000, Sha256Hash.ZERO_HASH.getByteString());
-      msg = new BlockMessage(blockCapsule);
-      peer.getSyncBlockRequested()
-          .put(msg.getBlockId(), System.currentTimeMillis());
-      handler.processMessage(peer, msg);
-    } catch (P2pException e) {
-      //System.out.println(e);
-    }
-
-    try {
-      blockCapsule = new BlockCapsule(1, Sha256Hash.ZERO_HASH,
-          System.currentTimeMillis() + 1000, Sha256Hash.ZERO_HASH.getByteString());
-      msg = new BlockMessage(blockCapsule);
-      peer.getAdvInvRequest()
-          .put(new Item(msg.getBlockId(), InventoryType.BLOCK), System.currentTimeMillis());
-      handler.processMessage(peer, msg);
-    } catch (NullPointerException | P2pException e) {
-      logger.error("error", e);
-    }
+  public void testUnrequestedBlock() {
+    BlockMessage msg = new BlockMessage(block(1, 1));
+    assertRejected(msg, "no request");
   }
 
   @Test
-  public void testProcessBlock() {
-    TronNetDelegate tronNetDelegate = Mockito.mock(TronNetDelegate.class);
+  public void testOversizedBlock() {
+    Transaction trx = Transaction.newBuilder().setRawData(Transaction.raw.newBuilder()
+        .setData(ByteString.copyFrom(new byte[Parameter.ChainConstant.BLOCK_SIZE
+            + Constant.ONE_THOUSAND]))).build();
+    BlockCapsule block = new BlockCapsule(1, Sha256Hash.ZERO_HASH.getByteString(), 1,
+        Collections.singletonList(trx));
+    assertRejected(new BlockMessage(block), "block size over limit");
+  }
 
-    try {
-      Field field = handler.getClass().getDeclaredField("tronNetDelegate");
-      field.setAccessible(true);
-      field.set(handler, tronNetDelegate);
+  @Test
+  public void testFutureBlock() {
+    assertRejected(new BlockMessage(block(1, Long.MAX_VALUE)), "block time error");
+  }
 
-      BlockCapsule blockCapsule0 = new BlockCapsule(1,
-          Sha256Hash.wrap(ByteString
-              .copyFrom(ByteArray
-                  .fromHexString(
-                      "9938a342238077182498b464ac0292229938a342238077182498b464ac029222"))),
-          1234,
-          ByteString.copyFrom("1234567".getBytes()));
+  @Test
+  public void testSyncBlock() throws Exception {
+    BlockMessage msg = new BlockMessage(block(1, 1));
+    peer.getSyncBlockRequested().put(msg.getBlockId(), 1L);
+    handler.processMessage(peer, msg);
+    Assert.assertTrue(peer.getSyncBlockRequested().isEmpty());
+    Assert.assertTrue(peer.getSyncBlockInProcess().contains(msg.getBlockId()));
+    Mockito.verify(syncService).processBlock(peer, msg);
+    Mockito.verifyNoInteractions(delegate, advService, fetchService, witnessService);
+  }
 
-      peer.getAdvInvReceive()
-          .put(new Item(blockCapsule0.getBlockId(), InventoryType.BLOCK),
-              System.currentTimeMillis());
+  @Test
+  public void testAdvertisedBlock() throws Exception {
+    BlockCapsule block = block(1, 1);
+    BlockMessage msg = new BlockMessage(block);
+    peer.getAdvInvRequest().put(new Item(msg.getBlockId(), InventoryType.BLOCK), 1L);
+    stubValidBlock(block);
+    handler.processMessage(peer, msg);
+    Assert.assertTrue(peer.getAdvInvRequest().isEmpty());
+    Mockito.verify(fetchService).blockFetchSuccess(msg.getBlockId());
+    Mockito.verify(delegate).processBlock(block, false);
+    Mockito.verify(advService).broadcast(Mockito.any(BlockMessage.class));
+    Mockito.verify(witnessService).validWitnessProductTwoBlock(block);
+  }
 
-      Mockito.doReturn(true).when(tronNetDelegate).validBlock(any(BlockCapsule.class));
-      Mockito.doReturn(true).when(tronNetDelegate).containBlock(any(BlockId.class));
-      Mockito.doReturn(blockCapsule0.getBlockId()).when(tronNetDelegate).getHeadBlockId();
-      Mockito.doNothing().when(tronNetDelegate).processBlock(any(BlockCapsule.class), anyBoolean());
-      List<PeerConnection> peers = new ArrayList<>();
-      peers.add(peer);
-      Mockito.doReturn(peers).when(tronNetDelegate).getActivePeer();
+  @Test
+  public void testProcessBlock() throws Exception {
+    BlockCapsule block = block(1, 1);
+    stubValidBlock(block);
+    peer.getAdvInvReceive().put(new Item(block.getBlockId(), InventoryType.BLOCK), 1L);
+    Method method = BlockMsgHandler.class.getDeclaredMethod("processBlock",
+        PeerConnection.class, BlockCapsule.class);
+    method.setAccessible(true);
+    method.invoke(handler, peer, block);
+    Mockito.verify(delegate).processBlock(block, false);
+    Mockito.verify(peer).setBlockBothHave(block.getBlockId());
+    Mockito.verify(witnessService).validWitnessProductTwoBlock(block);
+  }
 
-      Method method = handler.getClass()
-          .getDeclaredMethod("processBlock", PeerConnection.class, BlockCapsule.class);
-      method.setAccessible(true);
-      method.invoke(handler, peer, blockCapsule0);
-    } catch (Exception e) {
-      Assert.fail();
-    }
+  private void assertRejected(BlockMessage msg, String reason) {
+    P2pException failure = Assert.assertThrows(P2pException.class,
+        () -> handler.processMessage(peer, msg));
+    Assert.assertEquals(P2pException.TypeEnum.BAD_MESSAGE, failure.getType());
+    Assert.assertEquals(reason, failure.getMessage());
+    Mockito.verifyNoInteractions(delegate, advService, syncService, fetchService, witnessService);
+  }
+
+  private void stubValidBlock(BlockCapsule block) throws Exception {
+    Mockito.when(delegate.validBlock(block)).thenReturn(true);
+    Mockito.when(delegate.containBlock(Mockito.any(BlockId.class))).thenReturn(true);
+    Mockito.when(delegate.getHeadBlockId()).thenReturn(block.getBlockId());
+    Mockito.when(delegate.getActivePeer()).thenReturn(Collections.singletonList(peer));
+  }
+
+  private BlockCapsule block(long number, long timestamp) {
+    BlockCapsule block = new BlockCapsule(number, Sha256Hash.ZERO_HASH, timestamp,
+        Sha256Hash.ZERO_HASH.getByteString());
+    block.setMerkleRoot();
+    return block;
   }
 }

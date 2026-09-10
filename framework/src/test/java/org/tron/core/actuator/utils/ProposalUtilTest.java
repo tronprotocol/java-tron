@@ -390,7 +390,7 @@ public class ProposalUtilTest extends BaseTest {
       ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
           ProposalType.ALLOW_ENERGY_ADJUSTMENT.getCode(), 1);
     } catch (Throwable t) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", t);
     }
 
     ProposalCapsule proposalCapsule = new ProposalCapsule(ByteString.empty(), 0);

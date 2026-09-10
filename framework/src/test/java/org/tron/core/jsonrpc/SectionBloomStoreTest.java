@@ -56,7 +56,7 @@ public class SectionBloomStoreTest extends BaseTest {
       sectionBloomStore.put(100, 101, bitSet);
       Assert.assertEquals(bitSet, sectionBloomStore.get(100, 101));
     } catch (EventBloomException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
   }
 
@@ -116,7 +116,7 @@ public class SectionBloomStoreTest extends BaseTest {
     try {
       sectionBloomStore.write(10000);
     } catch (EventBloomException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
 
     //add2
@@ -126,7 +126,7 @@ public class SectionBloomStoreTest extends BaseTest {
     try {
       sectionBloomStore.write(20000);
     } catch (EventBloomException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
 
     //add3
@@ -136,7 +136,7 @@ public class SectionBloomStoreTest extends BaseTest {
     try {
       sectionBloomStore.write(30000);
     } catch (EventBloomException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
 
     long currentMaxBlockNum = 50000;
@@ -152,7 +152,7 @@ public class SectionBloomStoreTest extends BaseTest {
       List<Long> possibleBlockList = logBlockQuery.getPossibleBlock();
       Assert.assertTrue(possibleBlockList.contains(10000L));
     } catch (Exception e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
 
     //query multi address
@@ -170,7 +170,7 @@ public class SectionBloomStoreTest extends BaseTest {
       Assert.assertTrue(possibleBlockList.contains(10000L));
       Assert.assertTrue(possibleBlockList.contains(30000L));
     } catch (Exception e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
 
     //query one topic
@@ -186,7 +186,7 @@ public class SectionBloomStoreTest extends BaseTest {
       Assert.assertTrue(possibleBlockList.contains(10000L));
       Assert.assertTrue(possibleBlockList.contains(20000L));
     } catch (Exception e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
 
     //query another topic
@@ -201,7 +201,7 @@ public class SectionBloomStoreTest extends BaseTest {
       List<Long> possibleBlockList = logBlockQuery.getPossibleBlock();
       Assert.assertTrue(possibleBlockList.contains(30000L));
     } catch (Exception e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
 
     //query multi topic in "or" condition
@@ -221,7 +221,7 @@ public class SectionBloomStoreTest extends BaseTest {
       Assert.assertTrue(possibleBlockList.contains(20000L));
       Assert.assertTrue(possibleBlockList.contains(30000L));
     } catch (Exception e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
 
     //add4
@@ -231,7 +231,7 @@ public class SectionBloomStoreTest extends BaseTest {
     try {
       sectionBloomStore.write(10000);
     } catch (EventBloomException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
 
     //query multi topic in "and" condition. Match Bloom only, but not match exactly.
@@ -246,7 +246,7 @@ public class SectionBloomStoreTest extends BaseTest {
       List<Long> possibleBlockList = logBlockQuery.getPossibleBlock();
       Assert.assertTrue(possibleBlockList.contains(10000L));
     } catch (Exception e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
 
   }

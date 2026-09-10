@@ -145,7 +145,7 @@ public class WithdrawExpireUnfreezeActuatorTest extends BaseTest {
     } catch (ContractValidateException e) {
       assertEquals("Account[" + OWNER_ACCOUNT_INVALID + "] not exists", e.getMessage());
     } catch (ContractExeException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
   }
 

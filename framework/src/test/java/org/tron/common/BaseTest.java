@@ -88,9 +88,8 @@ public abstract class BaseTest {
     try {
       return temporaryFolder.newFolder().toString();
     } catch (IOException e) {
-      Assert.fail("create temp folder failed");
+      throw new AssertionError("create temp folder failed", e);
     }
-    return null;
   }
 
   @AfterClass

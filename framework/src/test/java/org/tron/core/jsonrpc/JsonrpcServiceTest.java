@@ -226,7 +226,7 @@ public class JsonrpcServiceTest extends BaseTest {
     try {
       result = tronJsonRpc.web3Sha3("0x1122334455667788");
     } catch (Exception e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
 
     Assert.assertEquals("0x1360118a9c9fd897720cf4e26de80683f402dd7c28e000aa98ea51b85c60161c",
@@ -252,7 +252,7 @@ public class JsonrpcServiceTest extends BaseTest {
       result = tronJsonRpc.ethGetBlockTransactionCountByHash(
           "0x1111111111111111111111111111111111111111111111111111111111111111");
     } catch (Exception e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
     Assert.assertNull(result);
 
@@ -260,7 +260,7 @@ public class JsonrpcServiceTest extends BaseTest {
       result = tronJsonRpc.ethGetBlockTransactionCountByHash(
           Hex.toHexString((blockCapsule1.getBlockId().getBytes())));
     } catch (Exception e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
     Assert.assertEquals(ByteArray.toJsonHex(blockCapsule1.getTransactions().size()), result);
 
@@ -286,7 +286,7 @@ public class JsonrpcServiceTest extends BaseTest {
     try {
       result = tronJsonRpc.ethGetBlockTransactionCountByNumber("latest");
     } catch (Exception e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
     Assert.assertEquals(ByteArray.toJsonHex(blockCapsule1.getTransactions().size()), result);
 
@@ -294,7 +294,7 @@ public class JsonrpcServiceTest extends BaseTest {
       result = tronJsonRpc.ethGetBlockTransactionCountByNumber(
           ByteArray.toJsonHex(blockCapsule1.getNum()));
     } catch (Exception e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
     Assert.assertEquals(ByteArray.toJsonHex(blockCapsule1.getTransactions().size()), result);
 
@@ -317,7 +317,7 @@ public class JsonrpcServiceTest extends BaseTest {
           tronJsonRpc.ethGetBlockByHash(Hex.toHexString((blockCapsule1.getBlockId().getBytes())),
               false);
     } catch (Exception e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
     Assert.assertEquals(ByteArray.toJsonHex(blockCapsule1.getNum()), blockResult.getNumber());
     Assert.assertEquals(blockCapsule1.getTransactions().size(),
@@ -333,7 +333,7 @@ public class JsonrpcServiceTest extends BaseTest {
       blockResult =
           tronJsonRpc.ethGetBlockByNumber(ByteArray.toJsonHex(blockCapsule1.getNum()), false);
     } catch (Exception e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
     Assert.assertEquals(ByteArray.toJsonHex(blockCapsule1.getNum()), blockResult.getNumber());
     Assert.assertEquals(blockCapsule1.getTransactions().size(),
@@ -344,7 +344,7 @@ public class JsonrpcServiceTest extends BaseTest {
     try {
       blockResult = tronJsonRpc.ethGetBlockByNumber("earliest", false);
     } catch (Exception e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
     Assert.assertEquals(ByteArray.toJsonHex(0L), blockResult.getNumber());
     Assert.assertEquals(ByteArray.toJsonHex(blockCapsule0.getNum()), blockResult.getNumber());
@@ -355,7 +355,7 @@ public class JsonrpcServiceTest extends BaseTest {
     try {
       blockResult = tronJsonRpc.ethGetBlockByNumber("latest", false);
     } catch (Exception e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
     Assert.assertEquals(ByteArray.toJsonHex(LATEST_BLOCK_NUM), blockResult.getNumber());
     Assert.assertEquals(ByteArray.toJsonHex(blockCapsule1.getNum()), blockResult.getNumber());
@@ -364,7 +364,7 @@ public class JsonrpcServiceTest extends BaseTest {
     try {
       blockResult = tronJsonRpc.ethGetBlockByNumber("finalized", false);
     } catch (Exception e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
     Assert.assertEquals(ByteArray.toJsonHex(LATEST_SOLIDIFIED_BLOCK_NUM), blockResult.getNumber());
     Assert.assertEquals(ByteArray.toJsonHex(blockCapsule2.getNum()), blockResult.getNumber());
@@ -397,7 +397,7 @@ public class JsonrpcServiceTest extends BaseTest {
       transactionResult = tronJsonRpc.getTransactionByHash(
           "0x1111111111111111111111111111111111111111111111111111111111111111");
     } catch (Exception e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
     Assert.assertNull(transactionResult);
 
@@ -405,7 +405,7 @@ public class JsonrpcServiceTest extends BaseTest {
       transactionResult = tronJsonRpc.getTransactionByHash(
           ByteArray.toJsonHex(transactionCapsule1.getTransactionId().getBytes()));
     } catch (Exception e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
     Assert.assertEquals(ByteArray.toJsonHex(transactionCapsule1.getBlockNum()),
         transactionResult.getBlockNumber());
@@ -484,7 +484,7 @@ public class JsonrpcServiceTest extends BaseTest {
       long blkNum = parseBlockTag("latest", wallet);
       Assert.assertEquals(LATEST_BLOCK_NUM, blkNum);
     } catch (Exception e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
 
     // parseBlockTag: earliest -> 0
@@ -492,7 +492,7 @@ public class JsonrpcServiceTest extends BaseTest {
       long blkNum = parseBlockTag("earliest", wallet);
       Assert.assertEquals(0L, blkNum);
     } catch (Exception e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
 
     // parseBlockTag: finalized -> solidBlockNum
@@ -500,7 +500,7 @@ public class JsonrpcServiceTest extends BaseTest {
       long blkNum = parseBlockTag("finalized", wallet);
       Assert.assertEquals(LATEST_SOLIDIFIED_BLOCK_NUM, blkNum);
     } catch (Exception e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
 
     // parseBlockNumber: hex -> number
@@ -508,7 +508,7 @@ public class JsonrpcServiceTest extends BaseTest {
       long blkNum = parseBlockNumber("0xa", wallet);
       Assert.assertEquals(10L, blkNum);
     } catch (Exception e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
 
     // parseBlockNumber: bad hex -> throws
@@ -545,7 +545,7 @@ public class JsonrpcServiceTest extends BaseTest {
       balance = tronJsonRpc.getTrxBalance("0xabd4b9367799eaa3197fecb144eb71de1e049abc",
           "latest");
     } catch (Exception e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
     Assert.assertEquals("0x2540be400", balance);
   }
@@ -604,7 +604,7 @@ public class JsonrpcServiceTest extends BaseTest {
           addr, "0x0", "latest");
       Assert.assertEquals(ByteArray.toJsonHex(new byte[32]), value);
     } catch (Exception e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
   }
 
@@ -643,7 +643,7 @@ public class JsonrpcServiceTest extends BaseTest {
           "0xabd4b9367799eaa3197fecb144eb71de1e049abc", "latest");
       Assert.assertEquals("0x", code);
     } catch (Exception e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
   }
 
@@ -681,7 +681,7 @@ public class JsonrpcServiceTest extends BaseTest {
       Assert.assertEquals(ByteArray.toJsonHex(blockCapsule1.getNum()), result.getBlockNumber());
       Assert.assertEquals(ByteArray.toJsonHex(0L), result.getTransactionIndex());
     } catch (Exception e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
 
     // index out of range in an existing block returns null
@@ -690,7 +690,7 @@ public class JsonrpcServiceTest extends BaseTest {
           ByteArray.toJsonHex(blockCapsule1.getNum()), "0x5");
       Assert.assertNull(result);
     } catch (Exception e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
 
     // negative index is out of range too -> null (not an Internal error)
@@ -699,7 +699,7 @@ public class JsonrpcServiceTest extends BaseTest {
           ByteArray.toJsonHex(blockCapsule1.getNum()), "0x-1");
       Assert.assertNull(result);
     } catch (Exception e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
 
     // leading zeros are tolerated: "0x00" parses to index 0
@@ -709,7 +709,7 @@ public class JsonrpcServiceTest extends BaseTest {
       Assert.assertNotNull(result);
       Assert.assertEquals(ByteArray.toJsonHex(0L), result.getTransactionIndex());
     } catch (Exception e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
 
     // oversized index (> 8 hex digits) rejected before parsing
@@ -724,7 +724,7 @@ public class JsonrpcServiceTest extends BaseTest {
       Assert.assertNotNull(result);
       Assert.assertEquals(ByteArray.toJsonHex(blockCapsule1.getNum()), result.getBlockNumber());
     } catch (Exception e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
 
     // finalized -> blockCapsule2 (solid), has 1 tx
@@ -733,7 +733,7 @@ public class JsonrpcServiceTest extends BaseTest {
           tronJsonRpc.getTransactionByBlockNumberAndIndex("finalized", "0x0");
       Assert.assertNotNull(result);
     } catch (Exception e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
 
     // non-existent block number returns null (not an error)
@@ -741,7 +741,7 @@ public class JsonrpcServiceTest extends BaseTest {
       TransactionResult result = tronJsonRpc.getTransactionByBlockNumberAndIndex("0x1", "0x0");
       Assert.assertNull(result);
     } catch (Exception e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
 
     // pending tag rejected
@@ -826,7 +826,7 @@ public class JsonrpcServiceTest extends BaseTest {
       Assert.assertEquals(100, logFilterWrapper.getFromBlock());
       Assert.assertEquals(Long.MAX_VALUE, logFilterWrapper.getToBlock());
     } catch (JsonRpcInvalidParamsException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
 
     // fromBlock is not empty and smaller than currentMaxBlockNum, toBlock is empty
@@ -836,7 +836,7 @@ public class JsonrpcServiceTest extends BaseTest {
       Assert.assertEquals(20, logFilterWrapper.getFromBlock());
       Assert.assertEquals(Long.MAX_VALUE, logFilterWrapper.getToBlock());
     } catch (JsonRpcInvalidParamsException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
 
     // fromBlock is not empty and bigger than currentMaxBlockNum, toBlock is empty
@@ -846,7 +846,7 @@ public class JsonrpcServiceTest extends BaseTest {
       Assert.assertEquals(120, logFilterWrapper.getFromBlock());
       Assert.assertEquals(Long.MAX_VALUE, logFilterWrapper.getToBlock());
     } catch (JsonRpcInvalidParamsException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
 
     // fromBlock is empty, toBlock is not empty and smaller than currentMaxBlockNum
@@ -856,7 +856,7 @@ public class JsonrpcServiceTest extends BaseTest {
       Assert.assertEquals(20, logFilterWrapper.getFromBlock());
       Assert.assertEquals(20, logFilterWrapper.getToBlock());
     } catch (JsonRpcInvalidParamsException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
 
     // fromBlock is empty, toBlock is not empty and bigger than currentMaxBlockNum
@@ -866,7 +866,7 @@ public class JsonrpcServiceTest extends BaseTest {
       Assert.assertEquals(100, logFilterWrapper.getFromBlock());
       Assert.assertEquals(120, logFilterWrapper.getToBlock());
     } catch (JsonRpcInvalidParamsException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
 
     // fromBlock is not empty, toBlock is not empty
@@ -876,7 +876,7 @@ public class JsonrpcServiceTest extends BaseTest {
       Assert.assertEquals(20, logFilterWrapper.getFromBlock());
       Assert.assertEquals(120, logFilterWrapper.getToBlock());
     } catch (JsonRpcInvalidParamsException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
     JsonRpcInvalidParamsException fromToEx =
         Assert.assertThrows(JsonRpcInvalidParamsException.class,
@@ -891,7 +891,7 @@ public class JsonrpcServiceTest extends BaseTest {
       Assert.assertEquals(0, logFilterWrapper.getFromBlock());
       Assert.assertEquals(Long.MAX_VALUE, logFilterWrapper.getToBlock());
     } catch (JsonRpcInvalidParamsException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
     try {
       LogFilterWrapper logFilterWrapper = new LogFilterWrapper(new FilterRequest("latest", null,
@@ -899,7 +899,7 @@ public class JsonrpcServiceTest extends BaseTest {
       Assert.assertEquals(100, logFilterWrapper.getFromBlock());
       Assert.assertEquals(Long.MAX_VALUE, logFilterWrapper.getToBlock());
     } catch (JsonRpcInvalidParamsException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
     JsonRpcInvalidParamsException pendingFilterEx = Assert.assertThrows(
         JsonRpcInvalidParamsException.class,
@@ -912,7 +912,7 @@ public class JsonrpcServiceTest extends BaseTest {
       Assert.assertEquals(LATEST_SOLIDIFIED_BLOCK_NUM, logFilterWrapper.getFromBlock());
       Assert.assertEquals(Long.MAX_VALUE, logFilterWrapper.getToBlock());
     } catch (JsonRpcInvalidParamsException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
     JsonRpcInvalidParamsException testSyntaxEx = Assert.assertThrows(
         JsonRpcInvalidParamsException.class,
@@ -925,7 +925,7 @@ public class JsonrpcServiceTest extends BaseTest {
       new LogFilterWrapper(new FilterRequest("0x0", "0x1f40", null,
           null, null), LATEST_BLOCK_NUM, null, false);
     } catch (JsonRpcInvalidParamsException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
 
     JsonRpcInvalidParamsException rangeEx1 = Assert.assertThrows(
@@ -940,7 +940,7 @@ public class JsonrpcServiceTest extends BaseTest {
       new LogFilterWrapper(new FilterRequest("0x0", "latest", null,
           null, null), LATEST_BLOCK_NUM, null, false);
     } catch (JsonRpcInvalidParamsException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
 
     JsonRpcInvalidParamsException rangeEx2 = Assert.assertThrows(
@@ -956,13 +956,13 @@ public class JsonrpcServiceTest extends BaseTest {
       new LogFilterWrapper(new FilterRequest("0x64", "latest", null,
           null, null), 5_000, null, true);
     } catch (JsonRpcInvalidParamsException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
     try {
       new LogFilterWrapper(new FilterRequest("0x64", "latest", null,
           null, null), LATEST_BLOCK_NUM, null, false);
     } catch (Exception e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
 
     // from = 100
@@ -977,7 +977,7 @@ public class JsonrpcServiceTest extends BaseTest {
       new LogFilterWrapper(new FilterRequest("0x64", "latest", null,
           null, null), LATEST_BLOCK_NUM, null, false);
     } catch (Exception e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
 
     // from = 9_000
@@ -985,26 +985,26 @@ public class JsonrpcServiceTest extends BaseTest {
       new LogFilterWrapper(new FilterRequest("0x2328", "latest", null,
           null, null), LATEST_BLOCK_NUM, null, true);
     } catch (Exception e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
     try {
       new LogFilterWrapper(new FilterRequest("0x2328", "latest", null,
           null, null), LATEST_BLOCK_NUM, null, false);
     } catch (Exception e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
 
     try {
       new LogFilterWrapper(new FilterRequest("latest", "latest", null,
           null, null), LATEST_BLOCK_NUM, null, true);
     } catch (JsonRpcInvalidParamsException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
     try {
       new LogFilterWrapper(new FilterRequest("latest", "latest", null,
           null, null), LATEST_BLOCK_NUM, null, false);
     } catch (JsonRpcInvalidParamsException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
 
     int oldMaxBlockRange = Args.getInstance().getJsonRpcMaxBlockRange();
@@ -1013,13 +1013,13 @@ public class JsonrpcServiceTest extends BaseTest {
       new LogFilterWrapper(new FilterRequest("0x0", "0x1f40", null,
           null, null), LATEST_BLOCK_NUM, null, true);
     } catch (JsonRpcInvalidParamsException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
     try {
       new LogFilterWrapper(new FilterRequest("0x0", "0x1f40", null,
           null, null), LATEST_BLOCK_NUM, null, false);
     } catch (JsonRpcInvalidParamsException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
 
     Args.getInstance().setJsonRpcMaxBlockRange(0);
@@ -1027,13 +1027,13 @@ public class JsonrpcServiceTest extends BaseTest {
       new LogFilterWrapper(new FilterRequest("0x0", "0x1f40", null,
           null, null), LATEST_BLOCK_NUM, null, true);
     } catch (JsonRpcInvalidParamsException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
     try {
       new LogFilterWrapper(new FilterRequest("0x0", "0x1f40", null,
           null, null), LATEST_BLOCK_NUM, null, false);
     } catch (JsonRpcInvalidParamsException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
 
     Args.getInstance().setJsonRpcMaxBlockRange(-2);
@@ -1041,13 +1041,13 @@ public class JsonrpcServiceTest extends BaseTest {
       new LogFilterWrapper(new FilterRequest("0x0", "0x1f40", null,
           null, null), LATEST_BLOCK_NUM, null, true);
     } catch (JsonRpcInvalidParamsException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
     try {
       new LogFilterWrapper(new FilterRequest("0x0", "0x1f40", null,
           null, null), LATEST_BLOCK_NUM, null, false);
     } catch (JsonRpcInvalidParamsException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
 
     JsonRpcInvalidParamsException shortHashEx = Assert.assertThrows(
@@ -1106,7 +1106,7 @@ public class JsonrpcServiceTest extends BaseTest {
           "exceed max topics: " + Args.getInstance().getJsonRpcMaxSubTopics(),
           e.getMessage());
     } catch (Exception e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
 
     try {
@@ -1118,7 +1118,7 @@ public class JsonrpcServiceTest extends BaseTest {
           "exceed max topics: " + Args.getInstance().getJsonRpcMaxSubTopics(),
           e.getMessage());
     } catch (Exception e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
 
     int oldMaxSubTopics = Args.getInstance().getJsonRpcMaxSubTopics();
@@ -1127,7 +1127,7 @@ public class JsonrpcServiceTest extends BaseTest {
       new LogFilterWrapper(new FilterRequest("0xbb8", "0x1f40",
           null, topics.toArray(), null), LATEST_BLOCK_NUM, null, false);
     } catch (JsonRpcInvalidParamsException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
 
     Args.getInstance().setJsonRpcMaxSubTopics(0);
@@ -1135,13 +1135,13 @@ public class JsonrpcServiceTest extends BaseTest {
       new LogFilterWrapper(new FilterRequest("0xbb8", "0x1f40",
           null, topics.toArray(), null), LATEST_BLOCK_NUM, null, false);
     } catch (JsonRpcInvalidParamsException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
     try {
       tronJsonRpc.newFilter(new FilterRequest("0xbb8", "0x1f40",
           null, topics.toArray(), null));
     } catch (Exception e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
 
     Args.getInstance().setJsonRpcMaxSubTopics(-2);
@@ -1149,13 +1149,13 @@ public class JsonrpcServiceTest extends BaseTest {
       new LogFilterWrapper(new FilterRequest("0xbb8", "0x1f40",
           null, topics.toArray(), null), LATEST_BLOCK_NUM, null, false);
     } catch (JsonRpcInvalidParamsException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
     try {
       tronJsonRpc.newFilter(new FilterRequest("0xbb8", "0x1f40",
           null, topics.toArray(), null));
     } catch (Exception e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
 
     Args.getInstance().setJsonRpcMaxSubTopics(oldMaxSubTopics);
@@ -1172,21 +1172,21 @@ public class JsonrpcServiceTest extends BaseTest {
           "exceed max block range: " + Args.getInstance().jsonRpcMaxBlockRange,
           e.getMessage());
     } catch (Exception e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
 
     try {
       tronJsonRpc.newFilter(new FilterRequest("0x0", "0x1f40", null,
           null, null));
     } catch (Exception e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
 
     try {
       tronJsonRpc.getLogs(new FilterRequest("0x0", "0x1", null,
           null, null));
     } catch (Exception e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
   }
 
@@ -1210,7 +1210,7 @@ public class JsonrpcServiceTest extends BaseTest {
       Assert.assertEquals(ByteArray.toJsonHex(blockCapsule1.getTimeStamp() / 1000),
           log.getBlockTimestamp());
     } catch (Exception e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
   }
 
@@ -1220,7 +1220,7 @@ public class JsonrpcServiceTest extends BaseTest {
     try {
       tronJsonRpc.newFilter(new FilterRequest(null, null, null, null, null));
     } catch (Exception e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
 
     Exception e1 = Assert.assertThrows(Exception.class,
@@ -1565,7 +1565,7 @@ public class JsonrpcServiceTest extends BaseTest {
       String javaVersion = versions[versions.length - 1];
       Assert.assertTrue("Java1.8".equals(javaVersion) || "Java17".equals(javaVersion));
     } catch (Exception e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
   }
 

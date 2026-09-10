@@ -137,7 +137,7 @@ public class JsonRpcTest {
       Assert.assertArrayEquals(expectedBytes, addressCompatibleToByteArray(addressNoPre));
       Assert.assertArrayEquals(expectedBytes, addressCompatibleToByteArray(addressWithPre));
     } catch (JsonRpcInvalidParamsException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
 
     try {
@@ -163,7 +163,7 @@ public class JsonRpcTest {
       Assert.assertArrayEquals(expectedBytes, addressToByteArray(rawAddress));
       Assert.assertArrayEquals(expectedBytes, addressToByteArray(addressNoPre));
     } catch (JsonRpcInvalidParamsException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
 
     //test padding 0 ahead if length(address) = 39
@@ -175,7 +175,7 @@ public class JsonRpcTest {
       Assert.assertArrayEquals(addressToByteArray(address1), expectedBytes2);
       Assert.assertArrayEquals(addressToByteArray(address1), addressToByteArray(address2));
     } catch (JsonRpcInvalidParamsException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
 
     // oversized input rejected before fromHexString
@@ -207,7 +207,7 @@ public class JsonRpcTest {
           new String[] {"0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"},
           null));
     } catch (JsonRpcInvalidParamsException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
 
     //63-char form: leading zero stripped by some clients, padded back to the same topic
@@ -220,7 +220,7 @@ public class JsonRpcTest {
           new String[] {null, "0x" + paddedAddressTopic.substring(1)}, null));
       Assert.assertArrayEquals(full.getTopics().get(1)[0], stripped.getTopics().get(1)[0]);
     } catch (JsonRpcInvalidParamsException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
 
     try {
@@ -274,7 +274,7 @@ public class JsonRpcTest {
       new LogFilter(
           new FilterRequest(null, null, "0xaa6612f03443517ced2bdcf27958c22353ceeab9", null, null));
     } catch (JsonRpcInvalidParamsException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
 
     //address length of 42 hex string with 41 ahead will be invalid
@@ -409,7 +409,7 @@ public class JsonRpcTest {
           getBloomIndex("0x00000000000000000000000056178a0d5f301baf6cf3e1cd53d9863437345bf9"));
 
     } catch (JsonRpcInvalidParamsException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
   }
 
@@ -449,7 +449,7 @@ public class JsonRpcTest {
           getBloomIndex("0x3038114c1a1e72c5bfa8b003bc3650ad2ba254a0"));
 
     } catch (JsonRpcInvalidParamsException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
   }
 

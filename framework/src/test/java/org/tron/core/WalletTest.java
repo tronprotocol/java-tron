@@ -722,7 +722,7 @@ public class WalletTest extends BaseTest {
       Assert.assertEquals(0L,
           delegatedResourceList.getDelegatedResource(0).getExpireTimeForBandwidth());
     } catch (Exception e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
   }
 

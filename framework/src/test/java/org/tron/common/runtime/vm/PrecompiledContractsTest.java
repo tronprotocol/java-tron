@@ -283,7 +283,7 @@ public class PrecompiledContractsTest extends BaseTest {
       Assert.assertEquals(State.CANCELED, proposalCapsule.getState());
 
     } catch (ItemNotFoundException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
   }
 

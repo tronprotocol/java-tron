@@ -62,14 +62,14 @@ public class ShieldWalletTest extends BaseTest {
     try {
       JsonFormat.merge(transactionStr1, builder1, false);
     } catch (ParseException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
 
     try {
       TransactionCapsule transactionCapsule = wallet.createShieldedTransaction(builder1.build());
       Assert.assertNotNull(transactionCapsule);
     } catch (Exception e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
   }
 
@@ -169,14 +169,14 @@ public class ShieldWalletTest extends BaseTest {
     try {
       JsonFormat.merge(transactionStr2, builder2, true);
     } catch (ParseException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
 
     try {
       TransactionCapsule transactionCapsule = wallet.createShieldedTransaction(builder2.build());
       Assert.assertNotNull(transactionCapsule);
     } catch (Exception e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
   }
 
@@ -277,7 +277,7 @@ public class ShieldWalletTest extends BaseTest {
     try {
       JsonFormat.merge(transactionStr3, builder3, false);
     } catch (ParseException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
 
     try {
@@ -285,7 +285,7 @@ public class ShieldWalletTest extends BaseTest {
           builder3.build());
       Assert.assertNotNull(transactionCapsule);
     } catch (Exception e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
   }
 
@@ -295,7 +295,7 @@ public class ShieldWalletTest extends BaseTest {
       ShieldedAddressInfo shieldedAddressInfo = wallet.getNewShieldedAddress();
       Assert.assertNotNull(shieldedAddressInfo);
     } catch (Exception e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
   }
 
@@ -329,7 +329,7 @@ public class ShieldWalletTest extends BaseTest {
     try {
       JsonFormat.merge(parameter, builder, false);
     } catch (ParseException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
 
     try {
@@ -337,7 +337,7 @@ public class ShieldWalletTest extends BaseTest {
           builder.build());
       Assert.assertNotNull(shieldedTRC20Parameters);
     } catch (Exception e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
   }
 
@@ -370,7 +370,7 @@ public class ShieldWalletTest extends BaseTest {
     try {
       JsonFormat.merge(parameter, builder, false);
     } catch (ParseException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
 
     PrivateShieldedTRC20Parameters.Builder finalBuilder = builder;
@@ -401,7 +401,7 @@ public class ShieldWalletTest extends BaseTest {
     try {
       JsonFormat.merge(parameter2, builder, false);
     } catch (ParseException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
 
     PrivateShieldedTRC20Parameters.Builder finalBuilder1 = builder;
@@ -443,7 +443,7 @@ public class ShieldWalletTest extends BaseTest {
     try {
       JsonFormat.merge(parameter, builder, false);
     } catch (ParseException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
 
     try {
@@ -451,7 +451,7 @@ public class ShieldWalletTest extends BaseTest {
           wallet1.createShieldedContractParametersWithoutAsk(builder.build());
       Assert.assertNotNull(shieldedTRC20Parameters);
     } catch (Exception e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
   }
 
