@@ -88,6 +88,33 @@ public class StateArchiveFiveLaneSegmentWriterV3Test {
   }
 
   @Test
+  public void rotatesPreviouslyPublishedTailAtNextCheckpointBoundary() throws Exception {
+    Path root = temporaryFolder.newFolder("published-tail-rotation").toPath();
+    byte[] baseline = hash(89);
+    StateArchiveFiveLaneBlockCodecV3 codec = new StateArchiveFiveLaneBlockCodecV3();
+    EncodedBundle first = codec.encode(diff(1, 1_400), baseline,
+        StateArchiveFileFormatV3.COMPRESSION_NONE);
+    EncodedBundle second = codec.encode(diff(2, 0), first.getResultHistoryDigest(),
+        StateArchiveFileFormatV3.COMPRESSION_NONE);
+    try (StateArchiveFiveLaneSegmentWriterV3 writer =
+        new StateArchiveFiveLaneSegmentWriterV3(root, baseline,
+            StateArchiveFileFormatV3.COMPRESSION_NONE, 1_500)) {
+      writer.appendForCheckpoint(first, 11, hash(109));
+      writer.sync(11, point(first), hash(109));
+      writer.appendForCheckpoint(second, 12, hash(110));
+      ArchiveDurabilityProof proof = writer.sync(12, point(second), hash(110));
+      assertEquals(5, proof.getFileTails().size());
+      assertFalse(writer.getSealedSegments().isEmpty());
+    }
+    try (StateArchiveFiveLaneSegmentWriterV3 reopened =
+        new StateArchiveFiveLaneSegmentWriterV3(root, baseline,
+            StateArchiveFileFormatV3.COMPRESSION_NONE, 1_500)) {
+      assertEquals(2, reopened.getAppendHead().getBlockNumber());
+      assertEquals(2, reopened.readCommittedDiffs(0, 2).size());
+    }
+  }
+
+  @Test
   public void provesSealedAndCurrentTailsAcrossIndependentRotation() throws Exception {
     Path root = temporaryFolder.newFolder("five-lane-rotation-proof").toPath();
     byte[] baseline = hash(89);

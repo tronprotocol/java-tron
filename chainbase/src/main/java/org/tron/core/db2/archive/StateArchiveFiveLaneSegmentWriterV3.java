@@ -271,7 +271,10 @@ public final class StateArchiveFiveLaneSegmentWriterV3 implements AutoCloseable 
         LaneState state = lanes.get(lane.getLaneId());
         if (state != null && StateArchiveSegmentFormatV3.shouldRotate(
             state.blockFrameCount, state.dataEndOffset, rotationTargetBytes)) {
-          if (checkpointSequence >= 0) {
+          // A fully marked segment belongs to the preceding checkpoint. Seal it without
+          // adding its old marker to the new checkpoint's durability proof.
+          if (checkpointSequence >= 0
+              && state.markedBlockFrameCount < state.blockFrameCount) {
             addPendingTail(markRotation(state, checkpointSequence,
                 commonTargetDigest, faultHook));
           }
