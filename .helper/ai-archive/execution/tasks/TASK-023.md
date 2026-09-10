@@ -24,6 +24,7 @@ active_branch: feature/archive_block2
 - `abd9b1bbfb`：RocksDB JNI 9.7.4 在当前完整 runtime reflink 上启动兼容通过；P2P 窗口 60s=8 blocks、180s=20 blocks（约0.11–0.13 block/s），随后回滚；候选 runtime/evidence 保留。
 - AMD-002 已安装 OpenJDK 17.0.20，路径 `/usr/lib/jvm/java-17-openjdk-amd64/bin/java`；系统默认 `java` 已切换为 JDK17，因此 control 必须使用显式 JDK8 路径 `/usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java`。
 - `9ea27f2797` 增加 `-Dtron.java17.x86.candidate=true` 的显式 x86 JDK17 候选门禁；JDK17+RocksDB9.7.4 候选在现有快照上 P2P-disabled 启动成功，27 个 PathState store、Common checkpoint 与 State Archive 数据库均打开。
+- 同一候选 P2P 窗口约 120 秒从区块 85150075 到 85150103（+28，约 0.23 block/s），未见 ERROR/Exception；窗口结束后已恢复 JDK8 control。该样本起点为候选旧快照，不能与实时 control 直接作严格 A/B 晋级结论。
 
 ## 实验顺序
 
