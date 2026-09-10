@@ -6,6 +6,9 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j(topic = "arch")
 public final class Arch {
 
+  /** Explicit opt-in for the x86 Java 17 validation candidate. */
+  public static final String JAVA17_X86_CANDIDATE_PROPERTY = "tron.java17.x86.candidate";
+
   private Arch() {
   }
 
@@ -74,8 +77,12 @@ public final class Arch {
     return javaSpecificationVersion().equals("17");
   }
 
+  public static boolean isJava17X86Candidate() {
+    return Boolean.parseBoolean(System.getProperty(JAVA17_X86_CANDIDATE_PROPERTY, "false"));
+  }
+
   public static void throwIfUnsupportedJavaVersion() {
-    if ((isX86() && !isJava8()) || (isArm64() && !isJava17())) {
+    if ((isX86() && !isJava8() && !isJava17X86Candidate()) || (isArm64() && !isJava17())) {
       logger.info(withAll());
       throw new UnsupportedOperationException(String.format(
           "Java %s is required for %s architecture. Detected version %s", isX86() ? "1.8" : "17",
