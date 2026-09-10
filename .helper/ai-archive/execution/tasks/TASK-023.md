@@ -30,6 +30,7 @@ active_branch: feature/archive_block2
 - 进一步日志确认失败 clone 的 `latestBlockHeaderNumber=0`（`Total block:1`），与残缺 block DB 一致；现有失败目录可作为复制完整性负例。
 - 使用独立长时 copy unit 重新复制后，block DB 校验为 769 文件/5,050,533,467 字节，PathState 3272 文件，Archive hot 149 文件，关键 CURRENT/MANIFEST hash 与源一致。后续 smoke 因 control 已恢复、Prometheus 端口冲突而不计入性能/启动结论。
 - 第二份完整快照在 control 保持停止期间启动 JDK17 smoke 成功，HTTP/PBFT API 全部启动并返回快照 head；候选随后停止并恢复 JDK8 control。
+- 在完整性校验通过且 control 全程停止的前提下，JDK17+RocksDB9.7.4 P2P 窗口从 `85151013` 到 `85151045`（120 秒 +32，约 `0.267 block/s`），采样 CPU 约 471%、RSS 约 9.8 GB；窗口后已恢复 control。该值仍需与同快照 JDK8 交错复测。
 
 ## 实验顺序
 
