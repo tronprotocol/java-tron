@@ -29,6 +29,9 @@ import org.tron.program.Version;
 @Slf4j
 public class NodeInfoServiceTest extends BaseTest {
 
+  private P2pConfig savedP2pConfig;
+  private boolean p2pStarted;
+
   @Resource
   protected NodeInfoService nodeInfoService;
   @Resource
@@ -47,7 +50,17 @@ public class NodeInfoServiceTest extends BaseTest {
 
   @After
   public void clearPeers() {
-    closePeer();
+    try {
+      closePeer();
+    } finally {
+      if (p2pStarted) {
+        try {
+          TronNetService.getP2pService().close();
+        } finally {
+          ReflectUtils.setFieldValue(tronNetService, "p2pConfig", savedP2pConfig);
+        }
+      }
+    }
   }
 
   @Test
@@ -73,7 +86,9 @@ public class NodeInfoServiceTest extends BaseTest {
     P2pConfig p2pConfig = new P2pConfig();
     p2pConfig.setIp("127.0.0.1");
     p2pConfig.setPort(port);
+    savedP2pConfig = TronNetService.getP2pConfig();
     ReflectUtils.setFieldValue(tronNetService, "p2pConfig", p2pConfig);
+    p2pStarted = true;
     TronNetService.getP2pService().start(p2pConfig);
 
     ApplicationContext ctx = (ApplicationContext) ReflectUtils.getFieldObject(p2pEventHandler,

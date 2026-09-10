@@ -1,15 +1,16 @@
 package org.tron.core.services.ratelimiter.adaptor;
 
 import com.google.common.cache.Cache;
+import com.google.common.util.concurrent.FakeTimeRateLimiter;
 import com.google.common.util.concurrent.RateLimiter;
 import java.util.concurrent.Semaphore;
-import java.util.concurrent.TimeUnit;
-import org.junit.AfterClass;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 import org.tron.common.TestConstants;
-import org.tron.common.es.ExecutorServiceManager;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.core.config.args.Args;
 import org.tron.core.services.ratelimiter.RuntimeData;
@@ -23,14 +24,25 @@ import org.tron.core.services.ratelimiter.strategy.QpsStrategy;
 
 public class AdaptorTest {
 
+  private MockedStatic<RateLimiter> rateLimiterFactory;
+
   @Before
   public void setUp() {
     Args.setParam(new String[0], TestConstants.TEST_CONF);
+    rateLimiterFactory = Mockito.mockStatic(RateLimiter.class, Mockito.CALLS_REAL_METHODS);
+    rateLimiterFactory.when(() -> RateLimiter.create(Mockito.anyDouble()))
+        .thenAnswer(invocation -> FakeTimeRateLimiter.create(invocation.getArgument(0)));
   }
 
-  @AfterClass
-  public static void tearDown() {
-    Args.clearParam();
+  @After
+  public void tearDown() {
+    try {
+      if (rateLimiterFactory != null) {
+        rateLimiterFactory.close();
+      }
+    } finally {
+      Args.clearParam();
+    }
   }
 
   /**
@@ -184,7 +196,8 @@ public class AdaptorTest {
         .parseDouble(ReflectUtils.getFieldValue(strategy.getMapParams().get("qps"),
             "value").toString()), 0.0);
 
-    Thread.sleep(1000);
+    ReflectUtils.setFieldValue(strategy, "rateLimiter",
+        FakeTimeRateLimiter.createWithStoredPermit(1));
 
     boolean flag = strategy.tryAcquire();
     Assert.assertTrue(flag);
@@ -200,5 +213,4 @@ public class AdaptorTest {
     Assert.assertFalse(flag);
   }
 }
-
 

@@ -8,46 +8,30 @@ import static org.tron.common.utils.FileUtil.readData;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.nio.file.FileVisitResult;
-import java.nio.file.FileVisitor;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.List;
-import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 public class FileUtilTest {
+  @Rule
+  public final TemporaryFolder temporaryFolder = new TemporaryFolder();
+
   private Path tempDir;
 
   @Before
   public void setUp() throws IOException {
-    tempDir = Files.createTempDirectory("testDir");
+    tempDir = temporaryFolder.newFolder("testDir").toPath();
 
     Files.createFile(tempDir.resolve("file1.txt"));
     Files.createFile(tempDir.resolve("file2.txt"));
 
     Path subDir = Files.createDirectory(tempDir.resolve("subdir"));
     Files.createFile(subDir.resolve("file3.txt"));
-  }
-
-  @After
-  public void tearDown() throws IOException {
-    Files.walk(tempDir)
-        .sorted(Comparator.reverseOrder())
-        .forEach(path -> {
-          try {
-            Files.delete(path);
-          } catch (IOException e) {
-            e.printStackTrace();
-          }
-        });
   }
 
   @Test
@@ -63,11 +47,10 @@ public class FileUtilTest {
 
   @Test
   public void testReadData_NormalFile() throws IOException {
-    Path tempFile = Files.createTempFile("testfile", ".txt");
+    Path tempFile = Files.createFile(tempDir.resolve("testfile.txt"));
     try (FileWriter writer = new FileWriter(tempFile.toFile())) {
       writer.write("Hello, World!");
     }
-    tempFile.toFile().deleteOnExit();
 
     char[] buffer = new char[1024];
     int len = readData(tempFile.toString(), buffer);
@@ -86,43 +69,35 @@ public class FileUtilTest {
 
 
   @Test
-  public void testCreateFileIfNotExists() {
-    String existFile = "existsfile.txt";
+  public void testCreateFileIfNotExists() throws IOException {
+    String existFile = tempDir.resolve("existsfile.txt").toString();
     File file1 = new File(existFile);
-    try {
-      file1.createNewFile();
-    } catch (IOException e) {
-      System.out.println("ignore this exception.");
-    }
+    assertTrue(file1.createNewFile());
     assertTrue(file1.exists());
     assertTrue(FileUtil.createDirIfNotExists(existFile));
     assertTrue(file1.exists());
 
-    String notExistFile = "notexistsfile.txt";
+    String notExistFile = tempDir.resolve("notexistsfile.txt").toString();
     File file2 = new File(notExistFile);
     assertTrue(!file2.exists());
     assertTrue(FileUtil.createDirIfNotExists(notExistFile));
     assertTrue(file2.exists());
-    file1.delete();
-    file2.delete();
   }
 
   @Test
   public void testCreateDirIfNotExists() {
-    String existDir = "existsdir";
+    String existDir = tempDir.resolve("existsdir").toString();
     File fileDir1 = new File(existDir);
     fileDir1.mkdir();
     assertTrue(fileDir1.exists());
     assertTrue(FileUtil.createDirIfNotExists(existDir));
     assertTrue(fileDir1.exists());
 
-    String notExistDir = "notexistsdir";
+    String notExistDir = tempDir.resolve("notexistsdir").toString();
     File fileDir2 = new File(notExistDir);
     assertTrue(!fileDir2.exists());
     assertTrue(FileUtil.createDirIfNotExists(notExistDir));
     assertTrue(fileDir2.exists());
-    fileDir1.delete();
-    fileDir2.delete();
   }
 
 

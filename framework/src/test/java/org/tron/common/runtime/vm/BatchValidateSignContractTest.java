@@ -7,7 +7,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
 import org.bouncycastle.util.encoders.Hex;
 import org.junit.Assert;
+import org.junit.Rule;
 import org.junit.Test;
+import org.tron.common.VMConfigRule;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.Hash;
 import org.tron.common.utils.ByteUtil;
@@ -21,6 +23,9 @@ import org.tron.core.vm.config.VMConfig;
 
 @Slf4j
 public class BatchValidateSignContractTest {
+
+  @Rule
+  public final VMConfigRule vmConfigRule = new VMConfigRule();
 
   private static final String METHOD_SIGN = "batchvalidatesign(bytes32,bytes[],address[])";
   private static final byte[] smellData;

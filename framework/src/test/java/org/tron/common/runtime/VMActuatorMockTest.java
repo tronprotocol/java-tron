@@ -8,9 +8,11 @@ import java.lang.reflect.Field;
 import java.util.Collections;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
+import org.tron.common.VMConfigRule;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.LogInfo;
 import org.tron.core.actuator.VMActuator;
@@ -23,6 +25,9 @@ import org.tron.core.vm.program.Program;
 import org.tron.core.vm.repository.Repository;
 
 public class VMActuatorMockTest {
+
+  @Rule
+  public final VMConfigRule vmConfigRule = new VMConfigRule();
 
   @BeforeClass
   public static void init() {

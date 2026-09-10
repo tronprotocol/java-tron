@@ -5,8 +5,8 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.tron.common.BaseMethodTest;
 import org.tron.common.parameter.CommonParameter;
+import org.tron.common.utils.PublicMethod;
 import org.tron.core.config.args.Args;
-import org.tron.core.services.RpcApiService;
 import org.tron.program.Version;
 import org.tron.protos.Protocol;
 
@@ -14,9 +14,7 @@ import org.tron.protos.Protocol;
 public class MetricsApiServiceTest extends BaseMethodTest {
 
   private static String dbDirectory = "metrics-database";
-  private static int port = 10001;
   private MetricsApiService metricsApiService;
-  private RpcApiService rpcApiService;
 
   @Override
   protected String[] extraArgs() {
@@ -29,7 +27,7 @@ public class MetricsApiServiceTest extends BaseMethodTest {
   @Override
   protected void afterInit() {
     CommonParameter parameter = Args.getInstance();
-    parameter.setNodeListenPort(port);
+    parameter.setNodeListenPort(PublicMethod.chooseRandomPort());
     parameter.getSeedNode().getAddressList().clear();
     parameter.setNodeExternalIp("127.0.0.1");
     metricsApiService = context.getBean(MetricsApiService.class);
