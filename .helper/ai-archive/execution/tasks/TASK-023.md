@@ -29,6 +29,7 @@ active_branch: feature/archive_block2
 - 第二组候选从最新 live 停机快照启动时触发 `Asset num is wrong!`，未进入 API/性能窗口；失败 runtime 的 `database/block` 仅约 16 KB、`CURRENT=MANIFEST-000002`，而 live 为约 4.7 GB、`MANIFEST-001533`，确认是 reflink 复制未完成/残缺导致的空 block DB。已停止并恢复 control；后续必须先做 regular-file/manifest/marker 完整性校验。
 - 进一步日志确认失败 clone 的 `latestBlockHeaderNumber=0`（`Total block:1`），与残缺 block DB 一致；现有失败目录可作为复制完整性负例。
 - 使用独立长时 copy unit 重新复制后，block DB 校验为 769 文件/5,050,533,467 字节，PathState 3272 文件，Archive hot 149 文件，关键 CURRENT/MANIFEST hash 与源一致。后续 smoke 因 control 已恢复、Prometheus 端口冲突而不计入性能/启动结论。
+- 第二份完整快照在 control 保持停止期间启动 JDK17 smoke 成功，HTTP/PBFT API 全部启动并返回快照 head；候选随后停止并恢复 JDK8 control。
 
 ## 实验顺序
 
