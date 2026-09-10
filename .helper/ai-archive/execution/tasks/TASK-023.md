@@ -26,6 +26,7 @@ active_branch: feature/archive_block2
 - `9ea27f2797` 增加 `-Dtron.java17.x86.candidate=true` 的显式 x86 JDK17 候选门禁；JDK17+RocksDB9.7.4 候选在现有快照上 P2P-disabled 启动成功，27 个 PathState store、Common checkpoint 与 State Archive 数据库均打开。
 - 同一候选 P2P 窗口约 120 秒从区块 85150075 到 85150103（+28，约 0.23 block/s），未见 ERROR/Exception；窗口结束后已恢复 JDK8 control。该样本起点为候选旧快照，不能与实时 control 直接作严格 A/B 晋级结论。
 - 同快照顺序 A/B：JDK8 control 120 秒 `85150420→85150443`（+23，约 0.192 block/s）；JDK17+RocksDB9.7.4 120 秒 `85150409→85150435`（+26，约 0.217 block/s）。候选约高 13%，但受顺序网络窗口与起点微差影响，仅作方向性证据。
+- 第二组候选从最新 live 停机快照启动时触发 `Asset num is wrong!`，未进入 API/性能窗口；已停止并恢复 control。该失败说明“当前 live 直接 reflink”仍需先验证 Archive/PathState 共享身份与 marker 完整性，不能继续盲目重复启动。
 
 ## 实验顺序
 
