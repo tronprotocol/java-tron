@@ -164,11 +164,11 @@
 
 ### 当前同步持久化对照校准（2026-09-10）
 
-- ARM-001 文档曾记录 r15 的同步 durable 配置，但 2026-09-11 现场 live PID `1665805` 实际使用
-  `config-p66-live.conf`：JDK17、Chainbase/PathState/Hot/serving 均 RocksDB，`pathStateRoot.mode=shadow`；因此
-  r15 记录不是当前 live 配置，不能用于当前性能对照。
-- AMD-002 当前 live PID `2725661` 实际使用显式 JDK8、Chainbase LevelDB、同步 PathState/Archive 语义，MemoryHigh/Max
-  为 29/30 GiB；JDK17+RocksDB9.7.4 仅在隔离候选窗口验证，未切换 live。
+- ARM-001 文档曾记录 r15 的同步 durable 配置；2026-09-11 对齐后 live 使用
+  `config-p66-live.conf`：JDK17、Chainbase/PathState/Hot/serving 均 RocksDB，`pathStateRoot.mode=shadow`、
+  `volatileSnapshotBenchmark=false`、`asyncPrepareBenchmark=false`，unit MemoryHigh/Max=29/30 GiB。
+- AMD-002 2026-09-11 已切换 live PID `2726724`：显式 JDK17 + RocksDB9.7.4，Chainbase LevelDB、同步
+  PathState/Archive 语义，MemoryHigh/Max=29/30 GiB；JDK17 x86 通过显式候选属性放行。
 - 因此此前“ARM 异步/AMD 同步”的速度归因已撤销。后续比较必须绑定 DB engine/JNI、JDK、JVM/cgroup、config hash、
   起始 head/hash、tx/block 与窗口；不能把 ARM 的历史 async 窗口与 AMD 的 synchronous 窗口直接比较。
 
