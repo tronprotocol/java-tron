@@ -34,6 +34,7 @@ active_branch: feature/archive_block2
 - 对比校准：真正 ARM-001 为 `10.255.10.101`，当前 live 实际是 JDK8、Chainbase RocksDB、`pathStateRoot.mode=shadow`，且 unit 无 MemoryHigh/Max；AMD-002 是 JDK8、Chainbase LevelDB、同步 PathState、30 GiB cgroup。不能把 ARM 历史 shadow/无硬内存上限窗口与 AMD 同步/30 GiB窗口直接比较。
 - 2026-09-11 对齐动作：ARM-001 现场确认已是 JDK17、RocksDB、shadow 模式且 `volatileSnapshotBenchmark=false`/`asyncPrepareBenchmark=false`，unit 已是 MemoryHigh/Max=30 GiB；代码不接受字面 `mode=sync`。AMD-002 已切换 JDK17+RocksDB9.7.4 live，启动后 60 秒 `85151840→85151866`、0 restart。
 - 对齐后在线观察（metrics）：ARM block-process 计数 `530→565`（约 73 秒，`0.48 block/s`），AMD `777→804`（约 76 秒，`0.36 block/s`）。两端仅 Chainbase engine 仍不同，但该自然流量窗口未锁定 tx/block、peer/network 和时间交错，暂作基线不作因果结论。
+- 1k 观察锚点：ARM header `83,851,674`，目标 `83,852,674`；AMD header `85,152,623`，目标 `85,153,623`。两端继续保持 JDK17、29/30 GiB cgroup、同 PathState/Archive/Common 语义；达到目标后按完整 1k 窗口汇总 PushBlock、checkpoint、tx/block、CPU、I/O PSI、RSS/cgroup 与 GC。
 
 ## 实验顺序
 
