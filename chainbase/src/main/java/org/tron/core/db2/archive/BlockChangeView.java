@@ -5,8 +5,11 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import org.tron.core.db2.archive.BlockSnapshotMeta;
 import org.tron.core.db2.common.Value;
+import org.tron.core.db2.common.WrappedByteArray;
 import org.tron.core.db2.core.Chainbase;
 import org.tron.core.db2.core.Snapshot;
 import org.tron.core.db2.core.SnapshotImpl;
@@ -61,6 +64,8 @@ public final class BlockChangeView {
   public static final class DatabaseChanges {
     private final String dbName;
     private final Snapshot previous;
+    private final ConcurrentMap<WrappedByteArray,
+        PostValue> previousValues = new ConcurrentHashMap<>();
     private final List<Change> changes;
 
     private DatabaseChanges(String dbName, Snapshot previous, List<Change> changes) {
@@ -74,7 +79,12 @@ public final class BlockChangeView {
     }
 
     public byte[] getPrevious(byte[] key) {
-      return previous.get(key);
+      PostValue value = previousValues.computeIfAbsent(
+          WrappedByteArray.copyOf(key), ignored -> {
+            byte[] bytes = previous.get(key);
+            return bytes == null ? PostValue.absent() : PostValue.present(bytes);
+          });
+      return value.isPresent() ? value.getValue() : null;
     }
 
     public List<Change> getChanges() {

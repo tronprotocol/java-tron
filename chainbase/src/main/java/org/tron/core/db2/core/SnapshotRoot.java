@@ -26,6 +26,11 @@ public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
   @Getter
   private Snapshot solidity;
   private boolean isAccountDB;
+  private boolean coupledMutationsMaterialized;
+
+  void useMaterializedCoupledMutations() {
+    coupledMutationsMaterialized = true;
+  }
 
   private TronCache<WrappedByteArray, WrappedByteArray> cache;
   private static final List<String> CACHE_DBS = CommonParameter.getInstance()
@@ -42,7 +47,7 @@ public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
   }
 
   private boolean needOptAsset() {
-    return isAccountDB && ChainBaseManager.getInstance().getDynamicPropertiesStore()
+    return isAccountDB && !coupledMutationsMaterialized && ChainBaseManager.getInstance().getDynamicPropertiesStore()
             .getAllowAccountAssetOptimizationFromRoot() == 1;
   }
 
@@ -242,7 +247,9 @@ public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
 
   @Override
   public Snapshot newInstance() {
-    return new SnapshotRoot(db.newInstance());
+    SnapshotRoot replacement = new SnapshotRoot(db.newInstance());
+    replacement.coupledMutationsMaterialized = coupledMutationsMaterialized;
+    return replacement;
   }
 
   @Override
