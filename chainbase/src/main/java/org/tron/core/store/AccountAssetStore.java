@@ -25,9 +25,14 @@ import org.tron.protos.Protocol;
 public class AccountAssetStore extends TronDatabase<byte[]> {
 
   private volatile Chainbase snapshots;
+  private boolean recoveringSnapshots;
 
   /** Shares the existing native DB; registers before recovery and before any sessions exist. */
   public synchronized void enableSnapshots(SnapshotManager manager) {
+    enableSnapshots(manager, false);
+  }
+
+  public synchronized void enableSnapshots(SnapshotManager manager, boolean recovering) {
     if (snapshots != null) {
       throw new IllegalStateException("AccountAsset Snapshot lane already attached");
     }
@@ -44,8 +49,14 @@ public class AccountAssetStore extends TronDatabase<byte[]> {
     Chainbase lane = new Chainbase(
         new SnapshotRoot(engine));
     lane.setRegistrationSource(AccountAssetStore.class.getName());
-    manager.installP66SnapshotLane(lane);
+    manager.installP66SnapshotLane(lane, recovering);
+    recoveringSnapshots = recovering;
     snapshots = lane;
+  }
+
+  public synchronized void finishSnapshotRecovery(SnapshotManager manager) {
+    manager.finishP66Recovery();
+    recoveringSnapshots = false;
   }
 
   @Override
@@ -78,7 +89,7 @@ public class AccountAssetStore extends TronDatabase<byte[]> {
 
   @Override
   public void updateByBatchSynced(Map<byte[], byte[]> rows) {
-    if (snapshots != null) {
+    if (snapshots != null && !recoveringSnapshots) {
       throw new IllegalStateException("AccountAsset durability belongs to Common checkpoint");
     }
     super.updateByBatchSynced(rows);

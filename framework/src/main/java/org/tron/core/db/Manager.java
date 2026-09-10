@@ -573,7 +573,8 @@ public class Manager {
       if (!Args.getInstance().getStorage().isCommonCheckpointEnabled()) {
         throw new IllegalStateException("P66 Snapshot requires Common checkpoint");
       }
-      chainBaseManager.getAccountAssetStore().enableSnapshots((SnapshotManager) revokingStore);
+      chainBaseManager.getAccountAssetStore()
+          .enableSnapshots((SnapshotManager) revokingStore, true);
     }
     revokingStore.check();
     transactionCache.initCache();
@@ -790,7 +791,7 @@ public class Manager {
         storage.getStateArchiveDirectory()).normalize();
     Path checkpointDirectory = Paths.get(Args.getInstance().getOutputDirectory(),
         storage.getCommonCheckpointDirectory()).normalize();
-    byte[] formatIdentity = CommonCheckpointFormat.identity(storage.isP66SnapshotEnabled());
+    byte[] formatIdentity = CommonCheckpointFormat.identity();
     org.tron.core.config.args.StorageConfig.StateArchiveAppendFileConfig appendConfig =
         storage.getStateArchiveAppendFileSettings();
     boolean appendEnabled = appendConfig != null && appendConfig.isEnabled();
@@ -812,10 +813,6 @@ public class Manager {
       boolean baselineExists = Files.isRegularFile(
           checkpointDirectory.resolve(CommonCheckpointBaselineFile.FILE_NAME),
           LinkOption.NOFOLLOW_LINKS);
-      if (storage.isP66SnapshotEnabled() && pathExisted && !baselineExists
-          && !baselineFile.hasBootstrapIntent(formatIdentity)) {
-        throw new IllegalStateException("P66 Snapshot mode requires a fresh Common baseline");
-      }
       if (baselineExists && !Arrays.equals(baselineFile.load().getFormatIdentity(),
           formatIdentity)) {
         throw new IllegalStateException("Common checkpoint Snapshot semantics differ");
@@ -853,6 +850,9 @@ public class Manager {
           pathDirectory, pathEngine, servingIndexEngine,
           storage.getPathStateRootNodeCacheBytes(), formatIdentity, baselineFile, baselineExists,
           modeAdmitted, appendEnabled, appendDirectory, appendConfig);
+      if (storage.isP66SnapshotEnabled()) {
+        chainBaseManager.getAccountAssetStore().finishSnapshotRecovery(snapshots);
+      }
       BlockSnapshotMeta canonical = currentCanonicalBlockMeta();
       P66Phase phase = currentPathStatePhase();
       if (modeAdmitted && Files.isRegularFile(

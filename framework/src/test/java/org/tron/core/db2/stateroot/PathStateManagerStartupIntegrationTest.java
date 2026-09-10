@@ -393,7 +393,10 @@ public class PathStateManagerStartupIntegrationTest {
     invoke(manager, "closeCommonCheckpoint");
     invoke(manager, "closePathStateRoot");
 
-    withCommonConfig(output, () -> invoke(manager, "initCommonCheckpoint"));
+    withCommonConfig(output, () -> {
+      CommonParameter.getInstance().getStorage().setP66SnapshotEnabled(true);
+      invoke(manager, "initCommonCheckpoint");
+    });
     assertEquals(102L, manager.getPathStateSnapshotHead().getHead().getBlockNumber());
     assertArrayEquals(pendingId.getBytes(),
         manager.getPathStateSnapshotHead().getHead().getBlockHash());

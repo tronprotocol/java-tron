@@ -14,12 +14,6 @@ public final class CommonCheckpointFormat {
   private CommonCheckpointFormat() {
   }
 
-  public static byte[] identity(boolean physicalSnapshot) {
-    return physicalSnapshot ? Hashing.sha256()
-        .hashString(ID + "/p66-physical-snapshot-v1", StandardCharsets.UTF_8).asBytes()
-        : identity();
-  }
-
   public static byte[] identity() {
     return Arrays.copyOf(DIGEST, DIGEST.length);
   }

@@ -77,6 +77,10 @@ public class SnapshotManager implements RevokingDatabase {
   private ExecutorService artifactExecutor;
 
   public synchronized void installP66SnapshotLane(Chainbase assets) {
+    installP66SnapshotLane(assets, false);
+  }
+
+  public synchronized void installP66SnapshotLane(Chainbase assets, boolean recovering) {
     if (size != 0 || activeSession != 0 || p66Materializer != null
         || dbs.stream().anyMatch(db -> "account-asset".equals(db.getDbName()))) {
       throw new IllegalStateException("P66 Snapshot lane must be installed once before sessions");
@@ -87,7 +91,9 @@ public class SnapshotManager implements RevokingDatabase {
       throw new IllegalStateException("P66 Snapshot installation requires root heads");
     }
     add(assets);
-    ((SnapshotRoot) accounts.getHead()).useMaterializedCoupledMutations();
+    if (!recovering) {
+      ((SnapshotRoot) accounts.getHead()).useMaterializedCoupledMutations();
+    }
     p66Materializer = new P66CoupledMutationMaterializer(accounts, assets, properties);
     artifactExecutor = new ThreadPoolExecutor(1, 1, 0L,
         TimeUnit.MILLISECONDS, new ArrayBlockingQueue<>(1), task -> {
@@ -95,6 +101,14 @@ public class SnapshotManager implements RevokingDatabase {
           thread.setDaemon(true);
           return thread;
         });
+  }
+
+  public synchronized void finishP66Recovery() {
+    if (size != 0 || activeSession != 0 || p66Materializer == null) {
+      throw new IllegalStateException("P66 recovery must finish before sessions");
+    }
+    ((SnapshotRoot) requireDatabase("account").getHead().getRoot())
+        .useMaterializedCoupledMutations();
   }
 
   private Chainbase requireDatabase(String name) {

@@ -345,7 +345,7 @@ public class P66SnapshotPipelineTest {
     Path checkpoint = temporaryFolder.newFolder().toPath();
     PathStateParticipantScope scope = new PathStateCanonicalizer().participantScope();
     PathStateRootMetadata baselineHead;
-    byte[] format = CommonCheckpointFormat.identity(true);
+    byte[] format = CommonCheckpointFormat.identity();
     try (PathStatePhysicalStoreSet stores = PathStatePhysicalStoreSet.open(path, scope,
         Engine.LEVELDB)) {
       PathStateRoot root = stores.createRoot();
@@ -432,7 +432,7 @@ public class P66SnapshotPipelineTest {
         f.accounts.put(ADDRESS, account(false, 9).toByteArray());
         block.commit(meta(1));
       }
-      payload = new CommonCheckpointPayloadFactory().capture(CommonCheckpointFormat.identity(true),
+      payload = new CommonCheckpointPayloadFactory().capture(CommonCheckpointFormat.identity(),
           f.manager.getDbs(), 1);
       assertTrue(payload.getChainbaseStores().stream()
           .anyMatch(store -> store.getDbName().equals("account-asset")));
@@ -446,7 +446,7 @@ public class P66SnapshotPipelineTest {
       assertNull(f.assets.getHead().getRoot().get(ASSET));
       f.manager.fastPop();
       ChainbaseCheckpointMaterializer materializer = new ChainbaseCheckpointMaterializer(
-          checkpoint.resolve("chainbase"), CommonCheckpointFormat.identity(true),
+          checkpoint.resolve("chainbase"), CommonCheckpointFormat.identity(),
           f.manager.getDbs());
       CommonCheckpointPayload loaded = wal.loadRequired();
       CommonCheckpointTarget target = CommonCheckpointTarget.from(loaded);
@@ -455,8 +455,10 @@ public class P66SnapshotPipelineTest {
       assertEquals(9, Longs.fromByteArray(f.assets.getUnchecked(ASSET)));
       materializer.materialize(loaded, target);
       assertEquals(CommonCheckpointMaterializer.Status.PUBLISHED, materializer.inspect(target));
+      ChainbaseCheckpointMaterializer.loadPublishedHead(
+          checkpoint.resolve("chainbase"), CommonCheckpointFormat.identity());
       assertThrows(java.io.IOException.class, () -> ChainbaseCheckpointMaterializer
-          .loadPublishedHead(checkpoint.resolve("chainbase"), CommonCheckpointFormat.identity()));
+          .loadPublishedHead(checkpoint.resolve("chainbase"), addressHash(7)));
     }
   }
 
