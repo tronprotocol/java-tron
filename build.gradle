@@ -16,7 +16,8 @@ allprojects {
 def arch = System.getProperty("os.arch").toLowerCase(Locale.ROOT)
 def javaVersion = JavaVersion.current()
 def isArm64 = Architectures.AARCH64.isAlias(arch)
-def archSource = isArm64 ? "arm" : "x86"
+def requestedRocksdbVersion = findProperty('rocksdbVersion')
+def archSource = isArm64 ? "arm" : (requestedRocksdbVersion == '9.7.4' ? "x86-high" : "x86")
 def isMac = OperatingSystem.current().isMacOsX()
 
 ext.archInfo = [
@@ -37,7 +38,10 @@ ext.archInfo = [
         ],
         requires: [
                 JavaVersion: isArm64 ? JavaVersion.VERSION_17 : JavaVersion.VERSION_1_8,
-                RocksdbVersion: isArm64 ? '9.7.4' : '5.15.10',
+                // Allow an explicitly pinned validation candidate to use the same JNI
+                // generation across architectures; the default remains the legacy x86
+                // baseline until the candidate passes the AMD compatibility gate.
+                RocksdbVersion: requestedRocksdbVersion ?: (isArm64 ? '9.7.4' : '5.15.10'),
                 // https://github.com/grpc/grpc-java/issues/7690
                 // https://github.com/grpc/grpc-java/pull/12319, Add support for macOS aarch64 with universal binary
                 // https://github.com/grpc/grpc-java/pull/11371 , 1.64.x is not supported CentOS 7.

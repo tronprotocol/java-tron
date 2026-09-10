@@ -26,11 +26,9 @@ public class MarketOrderPriceComparatorForRocksDB extends DirectBytewiseComparat
   public byte[] convertDataToBytes(DirectSlice directSlice) {
     int capacity = directSlice.data().capacity();
     byte[] bytes = new byte[capacity];
-
     for (int i = 0; i < capacity; i++) {
       bytes[i] = directSlice.get(i);
     }
-
     return bytes;
   }
 
