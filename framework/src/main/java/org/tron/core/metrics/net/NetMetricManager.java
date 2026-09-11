@@ -181,7 +181,7 @@ public class NetMetricManager {
     // udp
     RateInfo udpInTraffic = net.getUdpInTraffic();
     Protocol.MetricsInfo.RateInfo udpInTrafficInfo = udpInTraffic.toProtoEntity();
-    netInfo.setTcpOutTraffic(udpInTrafficInfo);
+    netInfo.setUdpInTraffic(udpInTrafficInfo);
     RateInfo udpOutTraffic = net.getUdpOutTraffic();
     Protocol.MetricsInfo.RateInfo udpOutTrafficInfo = udpOutTraffic.toProtoEntity();
     netInfo.setUdpOutTraffic(udpOutTrafficInfo);

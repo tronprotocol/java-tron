@@ -38,6 +38,10 @@ public class MetricsApiServiceTest extends BaseMethodTest {
 
   @Test
   public void testProcessMessage() {
+    MetricsUtil.getMeter(MetricsKey.NET_TCP_IN_TRAFFIC).mark(1000);
+    MetricsUtil.getMeter(MetricsKey.NET_TCP_OUT_TRAFFIC).mark(2000);
+    MetricsUtil.getMeter(MetricsKey.NET_UDP_IN_TRAFFIC).mark(4000);
+    MetricsUtil.getMeter(MetricsKey.NET_UDP_OUT_TRAFFIC).mark(8000);
 
     MetricsInfo m1 = metricsApiService.getMetricsInfo();
 
@@ -79,6 +83,20 @@ public class MetricsApiServiceTest extends BaseMethodTest {
     Assert.assertEquals(m1.getNet().getErrorProtoCount(), m2.getNet().getErrorProtoCount());
     Assert
         .assertEquals(m1.getNet().getValidConnectionCount(), m2.getNet().getValidConnectionCount());
+
+    long tcpIn = m1.getNet().getTcpInTraffic().getCount();
+    long tcpOut = m1.getNet().getTcpOutTraffic().getCount();
+    long udpIn = m1.getNet().getUdpInTraffic().getCount();
+    long udpOut = m1.getNet().getUdpOutTraffic().getCount();
+
+    Assert.assertNotEquals(tcpOut, udpIn);
+    Assert.assertNotEquals(tcpIn, tcpOut);
+    Assert.assertNotEquals(udpIn, udpOut);
+
+    Assert.assertEquals(tcpIn, m2.getNet().getTcpInTraffic().getCount());
+    Assert.assertEquals(tcpOut, m2.getNet().getTcpOutTraffic().getCount());
+    Assert.assertEquals(udpIn, m2.getNet().getUdpInTraffic().getCount());
+    Assert.assertEquals(udpOut, m2.getNet().getUdpOutTraffic().getCount());
   }
 
 }
