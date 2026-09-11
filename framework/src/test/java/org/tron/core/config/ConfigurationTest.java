@@ -35,6 +35,7 @@ import org.tron.common.TestConstants;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
+import org.tron.core.config.args.StorageConfig;
 
 @Slf4j
 public class ConfigurationTest {
@@ -90,5 +91,21 @@ public class ConfigurationTest {
     assertTrue(config.hasPath("storage"));
     assertTrue(config.hasPath("seed.node"));
     assertTrue(config.hasPath("genesis.block"));
+  }
+
+  @Test
+  public void defaultConfigShouldPreserveEffectiveRocksDbSettings() {
+    Config config = Configuration.getByFileName("config.conf");
+    StorageConfig.DbSettingsConfig settings = StorageConfig.fromConfig(config).getDbSettings();
+
+    assertTrue(config.hasPath("storage.dbSettings.blocksize"));
+    assertEquals(64, settings.getBlocksize());
+    assertEquals(7, settings.getLevelNumber());
+    assertEquals(256, settings.getMaxBytesForLevelBase());
+    assertEquals(10, settings.getMaxBytesForLevelMultiplier(), 0.01);
+    assertEquals(4, settings.getLevel0FileNumCompactionTrigger());
+    assertEquals(256, settings.getTargetFileSizeBase());
+    assertEquals(1, settings.getTargetFileSizeMultiplier());
+    assertEquals(5000, settings.getMaxOpenFiles());
   }
 }
