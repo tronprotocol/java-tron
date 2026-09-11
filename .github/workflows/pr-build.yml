@@ -197,7 +197,7 @@ jobs:
             debian11-x86_64-gradle-
 
       - name: Build
-        run: ./gradlew clean build --no-daemon --no-build-cache
+        run: ./gradlew clean build --no-daemon
 
       - name: Toolkit jar smoke test
         run: |
@@ -209,7 +209,7 @@ jobs:
           java -jar "$JAR" keystore --help
 
       - name: Test with RocksDB engine
-        run: ./gradlew :framework:testWithRocksDb --no-daemon --no-build-cache
+        run: ./gradlew :framework:testWithRocksDb --no-daemon
 
       - name: Generate module coverage reports
         run: ./gradlew jacocoTestReport --no-daemon
@@ -265,11 +265,11 @@ jobs:
         # this PR.  The only output we need from this job is the jacoco XML for
         # coverage diffing, so we must not let a stale test failure block it.
         continue-on-error: true
-        run: ./gradlew clean build --no-daemon --no-build-cache
+        run: ./gradlew clean build --no-daemon
 
       - name: Test with RocksDB engine (base)
         continue-on-error: true
-        run: ./gradlew :framework:testWithRocksDb --no-daemon --no-build-cache
+        run: ./gradlew :framework:testWithRocksDb --no-daemon
 
       - name: Generate module coverage reports (base)
         run: ./gradlew jacocoTestReport --no-daemon
