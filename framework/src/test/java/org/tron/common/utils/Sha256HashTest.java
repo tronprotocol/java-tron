@@ -5,15 +5,17 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import ch.qos.logback.core.util.FileUtil;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.stream.IntStream;
-import org.apache.commons.io.FileUtils;
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import org.junit.Assert;
 import org.junit.Test;
 import org.tron.common.parameter.CommonParameter;
@@ -55,33 +57,36 @@ public class Sha256HashTest {
   }
 
   @Test
-  public void testMultiThreadingHash() {
+  public void testMultiThreadingHash() throws Exception {
     byte[] input = ByteArray.fromHexString("A0E11973395042BA3C0B52B4CDF4E15EA77818F275");
     byte[] hash = ByteArray
         .fromHexString("CD5D4A7E8BE869C00E17F8F7712F41DBE2DDBD4D8EC36A7280CD578863717084");
-    AtomicLong countFailed = new AtomicLong(0);
-    AtomicLong countAll = new AtomicLong(0);
-    IntStream.range(0, 7).parallel().forEach(index -> {
-      Thread thread =
-          new Thread(() -> {
-            for (int i = 0; i < 10000; i++) {
-              byte[] hash0 = Sha256Hash.hash(CommonParameter.getInstance()
-                  .isECKeyCryptoEngine(), input);
-              countAll.incrementAndGet();
-              if (!Arrays.equals(hash, hash0)) {
-                countFailed.incrementAndGet();
-                Assert.fail();
-              }
+    int workerCount = 7;
+    CountDownLatch ready = new CountDownLatch(workerCount);
+    ExecutorService executor = Executors.newFixedThreadPool(workerCount);
+    List<Future<Integer>> futures = new ArrayList<>();
+    try {
+      for (int worker = 0; worker < workerCount; worker++) {
+        futures.add(executor.submit(() -> {
+          ready.countDown();
+          assertTrue("Hash workers did not start", ready.await(10, TimeUnit.SECONDS));
+          for (int i = 0; i < 10_000; i++) {
+            if (Thread.currentThread().isInterrupted()) {
+              throw new InterruptedException("Hash worker cancelled");
             }
-          });
-      thread.start();
-      try {
-        thread.join();
-      } catch (InterruptedException e) {
-        e.printStackTrace();
+            Assert.assertArrayEquals(hash, Sha256Hash.hash(true, input));
+          }
+          return 10_000;
+        }));
       }
-    });
-    assertEquals(70000, countAll.get());
-    assertEquals(0, countFailed.get());
+      int completed = 0;
+      for (Future<Integer> future : futures) {
+        completed += future.get(30, TimeUnit.SECONDS);
+      }
+      assertEquals(70_000, completed);
+    } finally {
+      executor.shutdownNow();
+      assertTrue("Hash workers did not stop", executor.awaitTermination(5, TimeUnit.SECONDS));
+    }
   }
 }

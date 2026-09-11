@@ -169,7 +169,7 @@ public class AccountPermissionUpdateActuatorTest extends BaseTest {
       Assert.assertTrue(true);
       Assert.assertEquals(expectedMsg, e.getMessage());
     } catch (ContractExeException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
   }
 
@@ -248,7 +248,7 @@ public class AccountPermissionUpdateActuatorTest extends BaseTest {
       Assert.assertEquals(activePermission1, activePermission);
 
     } catch (ContractValidateException | ContractExeException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
   }
 

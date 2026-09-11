@@ -5,6 +5,7 @@ import static org.tron.common.runtime.TvmTestUtils.generateTriggerSmartContractA
 
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -22,6 +23,7 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ReceiptCheckErrException;
 import org.tron.core.exception.VMIllegalException;
 import org.tron.core.store.StoreFactory;
+import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.repository.Repository;
 import org.tron.core.vm.repository.RepositoryImpl;
 import org.tron.protos.Protocol.AccountType;
@@ -60,6 +62,12 @@ public class RuntimeImplTest extends BaseTest {
     repository.createAccount(creatorAddress, AccountType.Normal);
     repository.addBalance(creatorAddress, creatorTotalBalance);
     repository.commit();
+  }
+
+  @After
+  public void clearConstantCallConfig() {
+    // Keep the snapshot for this test's energy assertions, then release it for the next test.
+    VMConfig.clearLocalSnapshot();
   }
 
   // // solidity src code

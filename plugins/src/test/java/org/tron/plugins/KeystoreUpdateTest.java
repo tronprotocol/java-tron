@@ -412,10 +412,8 @@ public class KeystoreUpdateTest {
     String address = Credentials.create(keyPair).getAddress();
 
     // Create two keystores for the same address via direct API
-    WalletUtils.generateWalletFile(password, keyPair, dir, true);
-    // Small delay to get different filename timestamps
-    Thread.sleep(50);
-    WalletUtils.generateWalletFile(password, keyPair, dir, true);
+    String first = WalletUtils.generateWalletFile(password, keyPair, dir, true);
+    Files.copy(new File(dir, first).toPath(), new File(dir, "duplicate.json").toPath());
 
     File pwFile = tempFolder.newFile("pw-multi.txt");
     Files.write(pwFile.toPath(),

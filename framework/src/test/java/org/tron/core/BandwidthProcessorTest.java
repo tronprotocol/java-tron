@@ -683,7 +683,7 @@ public class BandwidthProcessorTest extends BaseTest {
     } catch (AccountResourceInsufficientException e) {
       Assert.assertFalse(e instanceof AccountResourceInsufficientException);
     } catch (TooBigTransactionException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     } finally {
       chainBaseManager.getAccountStore().delete(ByteArray.fromHexString(OWNER_ADDRESS));
       chainBaseManager.getAccountStore().delete(ByteArray.fromHexString(TO_ADDRESS));
@@ -791,7 +791,7 @@ public class BandwidthProcessorTest extends BaseTest {
     } catch (AccountResourceInsufficientException e) {
       Assert.assertFalse(e instanceof AccountResourceInsufficientException);
     } catch (TooBigTransactionException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     } finally {
       chainBaseManager.getAccountStore().delete(ByteArray.fromHexString(OWNER_ADDRESS));
       chainBaseManager.getAccountStore().delete(ByteArray.fromHexString(TO_ADDRESS));
@@ -862,7 +862,7 @@ public class BandwidthProcessorTest extends BaseTest {
     } catch (AccountResourceInsufficientException e) {
       Assert.assertFalse(e instanceof AccountResourceInsufficientException);
     } catch (TooBigTransactionException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     } finally {
       chainBaseManager.getAccountStore().delete(ByteArray.fromHexString(OWNER_ADDRESS));
       chainBaseManager.getAccountStore().delete(ByteArray.fromHexString(TO_ADDRESS));

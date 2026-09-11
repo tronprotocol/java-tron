@@ -1,8 +1,17 @@
 package org.tron.core.services.http;
 
 import com.google.gson.JsonObject;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.http.HttpResponse;
+import org.apache.http.client.config.RequestConfig;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.util.EntityUtils;
 import org.bouncycastle.util.encoders.Hex;
 import org.junit.Assert;
 import org.junit.Before;
@@ -12,12 +21,12 @@ import org.tron.common.BaseTest;
 import org.tron.common.TestConstants;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.PublicMethod;
-import org.tron.common.utils.client.utils.HttpMethed;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.store.StoreFactory;
 import org.tron.core.vm.repository.Repository;
 import org.tron.core.vm.repository.RepositoryImpl;
+import org.tron.json.JSONObject;
 import org.tron.protos.Protocol;
 import org.tron.protos.contract.SmartContractOuterClass;
 
@@ -61,28 +70,25 @@ public class TriggerSmartContractServletTest extends BaseTest {
 
 
   @Test
-  public void testNormalCall() {
-    HttpMethed.waitToProduceOneBlock(httpNode);
+  public void testNormalCall() throws IOException {
     JsonObject parameter = new JsonObject();
     parameter.addProperty("owner_address", ByteArray.toHexString(ownerAddr));
     parameter.addProperty("contract_address", ByteArray.toHexString(contractAddr));
     parameter.addProperty("function_selector", "test()");
-    HttpResponse triggersmartcontract1 = invokeToLocal("triggersmartcontract", parameter);
-    HttpResponse triggersmartcontract2 = invokeToLocal("triggerconstantcontract", parameter);
-    HttpResponse triggersmartcontract3 = invokeToLocal("estimateenergy", parameter);
-    Assert.assertNotNull(triggersmartcontract1);
-    Assert.assertNotNull(triggersmartcontract2);
-    Assert.assertNotNull(triggersmartcontract3);
-  }
-
-  public static HttpResponse invokeToLocal(
-      String method, JsonObject parameter) {
-    try {
-      final String requestUrl = "http://" + httpNode + "/wallet/" + method;
-      return HttpMethed.createConnect(requestUrl, parameter);
-    } catch (Exception e) {
-      e.printStackTrace();
-      return null;
+    RequestConfig timeouts = RequestConfig.custom().setConnectTimeout(5000)
+        .setConnectionRequestTimeout(5000).setSocketTimeout(10000).build();
+    try (CloseableHttpClient client = HttpClients.custom()
+        .setDefaultRequestConfig(timeouts).build()) {
+      for (String method : new String[]{"triggersmartcontract", "triggerconstantcontract",
+          "estimateenergy"}) {
+        HttpPost request = new HttpPost("http://" + httpNode + "/wallet/" + method);
+        request.setEntity(new StringEntity(parameter.toString(), ContentType.APPLICATION_JSON));
+        try (CloseableHttpResponse response = client.execute(request)) {
+          Assert.assertEquals(method, 200, response.getStatusLine().getStatusCode());
+          String body = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
+          Assert.assertNotNull(method, JSONObject.parseObject(body));
+        }
+      }
     }
   }
 }

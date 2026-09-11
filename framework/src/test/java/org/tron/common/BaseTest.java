@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.springframework.test.annotation.DirtiesContext;
@@ -61,6 +62,9 @@ import org.tron.protos.Protocol;
 @DirtiesContext
 public abstract class BaseTest {
 
+  @Rule
+  public final VMConfigRule vmConfigRule = new VMConfigRule();
+
   @ClassRule
   public static final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
@@ -84,15 +88,20 @@ public abstract class BaseTest {
     try {
       return temporaryFolder.newFolder().toString();
     } catch (IOException e) {
-      Assert.fail("create temp folder failed");
+      throw new AssertionError("create temp folder failed", e);
     }
-    return null;
   }
 
   @AfterClass
   public static void destroy() {
-    appT1.shutdown();
-    Args.clearParam();
+    try {
+      if (appT1 != null) {
+        appT1.shutdown();
+      }
+    } finally {
+      appT1 = null;
+      Args.clearParam();
+    }
   }
 
   public void closePeer() {

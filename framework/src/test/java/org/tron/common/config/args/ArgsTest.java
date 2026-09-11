@@ -61,7 +61,7 @@ public class ArgsTest {
       method.setAccessible(true);
       method.invoke(Args.class);
     } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
     Args.printHelp(jCommander);
   }

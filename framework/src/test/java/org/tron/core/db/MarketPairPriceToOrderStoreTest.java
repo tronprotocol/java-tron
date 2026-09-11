@@ -99,7 +99,7 @@ public class MarketPairPriceToOrderStoreTest extends BaseTest {
           .assertArrayEquals(capsule3.getData(),
               marketPairPriceToOrderStore.get(pairPriceKey3).getData());
     } catch (ItemNotFoundException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
 
     byte[] nextKey = marketPairPriceToOrderStore.getNextKey(pairPriceKey2);
@@ -157,7 +157,7 @@ public class MarketPairPriceToOrderStoreTest extends BaseTest {
           .assertArrayEquals(capsule3.getData(),
               marketPairPriceToOrderStore.get(pairPriceKey3).getData());
     } catch (ItemNotFoundException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
 
     byte[] nextKey = marketPairPriceToOrderStore.getNextKey(pairPriceKey2);
@@ -227,7 +227,7 @@ public class MarketPairPriceToOrderStoreTest extends BaseTest {
           .assertArrayEquals(capsule3.getData(),
               marketPairPriceToOrderStore.get(pairPriceKey3).getData());
     } catch (ItemNotFoundException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
 
     byte[] nextKey = marketPairPriceToOrderStore.getNextKey(pairPriceKey2);
@@ -284,7 +284,7 @@ public class MarketPairPriceToOrderStoreTest extends BaseTest {
           .assertArrayEquals(capsule2.getData(),
               marketPairPriceToOrderStore.get(pairPriceKey2).getData());
     } catch (ItemNotFoundException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
 
     Assert.assertTrue(marketPairPriceToOrderStore.has(pairPriceKey2));
@@ -297,7 +297,7 @@ public class MarketPairPriceToOrderStoreTest extends BaseTest {
           .assertArrayEquals(capsule3.getData(),
               marketPairPriceToOrderStore.get(pairPriceKey3).getData());
     } catch (ItemNotFoundException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
 
     Assert.assertFalse(marketPairPriceToOrderStore.has(pairPriceKey1));
@@ -312,7 +312,7 @@ public class MarketPairPriceToOrderStoreTest extends BaseTest {
           .assertArrayEquals(capsule3.getData(),
               marketPairPriceToOrderStore.get(pairPriceKey3).getData());
     } catch (ItemNotFoundException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
 
     byte[] nextKey = marketPairPriceToOrderStore.getNextKey(pairPriceKey2);
@@ -366,7 +366,7 @@ public class MarketPairPriceToOrderStoreTest extends BaseTest {
           .assertArrayEquals(capsule1.getData(),
               marketPairPriceToOrderStore.get(pairPriceKey1).getData());
     } catch (ItemNotFoundException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
 
     marketPairPriceToOrderStore.put(pairPriceKey2, capsule2);
@@ -375,7 +375,7 @@ public class MarketPairPriceToOrderStoreTest extends BaseTest {
           .assertArrayEquals(capsule2.getData(),
               marketPairPriceToOrderStore.get(pairPriceKey2).getData());
     } catch (ItemNotFoundException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
 
     marketPairPriceToOrderStore.put(pairPriceKey3, capsule3);
@@ -394,7 +394,7 @@ public class MarketPairPriceToOrderStoreTest extends BaseTest {
           .assertArrayEquals(capsule3.getData(),
               marketPairPriceToOrderStore.get(pairPriceKey3).getData());
     } catch (ItemNotFoundException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
 
     byte[] nextKey = marketPairPriceToOrderStore.getNextKey(pairPriceKey2);
@@ -531,7 +531,7 @@ public class MarketPairPriceToOrderStoreTest extends BaseTest {
           .assertArrayEquals(capsule2.getData(),
               marketPairPriceToOrderStore.get(pairPriceKey2).getData());
     } catch (ItemNotFoundException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
 
     // pairPriceKey1 and pairPriceKey2 has the same value,
@@ -549,7 +549,7 @@ public class MarketPairPriceToOrderStoreTest extends BaseTest {
           .assertArrayEquals(capsule1.getData(),
               marketPairPriceToOrderStore.get(pairPriceKey2).getData());
     } catch (ItemNotFoundException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
 
     Assert.assertFalse(marketPairPriceToOrderStore.has(pairPriceKey0));
@@ -581,7 +581,7 @@ public class MarketPairPriceToOrderStoreTest extends BaseTest {
           .assertArrayEquals(capsule3.getData(),
               marketPairPriceToOrderStore.get(pairPriceKey3).getData());
     } catch (ItemNotFoundException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
 
     // We will not have pairPriceKey2 in DB
@@ -656,7 +656,7 @@ public class MarketPairPriceToOrderStoreTest extends BaseTest {
           .assertArrayEquals(capsule2.getData(),
               marketPairPriceToOrderStore.get(pairPriceKey2).getData());
     } catch (ItemNotFoundException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
 
     // pairPriceKey1 and pairPriceKey2 has the same value,
@@ -674,7 +674,7 @@ public class MarketPairPriceToOrderStoreTest extends BaseTest {
           .assertArrayEquals(capsule1.getData(),
               marketPairPriceToOrderStore.get(pairPriceKey2).getData());
     } catch (ItemNotFoundException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
 
     Assert.assertFalse(marketPairPriceToOrderStore.has(pairPriceKey0));
@@ -706,7 +706,7 @@ public class MarketPairPriceToOrderStoreTest extends BaseTest {
           .assertArrayEquals(capsule3.getData(),
               marketPairPriceToOrderStore.get(pairPriceKey3).getData());
     } catch (ItemNotFoundException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
 
     // We will not have pairPriceKey2 in DB

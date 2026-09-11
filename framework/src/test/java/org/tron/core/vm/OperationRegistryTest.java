@@ -3,10 +3,15 @@ package org.tron.core.vm;
 import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertSame;
 
+import org.junit.Rule;
 import org.junit.Test;
+import org.tron.common.VMConfigRule;
 import org.tron.core.vm.config.VMConfig;
 
 public class OperationRegistryTest {
+
+  @Rule
+  public final VMConfigRule vmConfigRule = new VMConfigRule();
 
   @Test
   public void constantAndTransactionExecutionsUseDedicatedTables() {

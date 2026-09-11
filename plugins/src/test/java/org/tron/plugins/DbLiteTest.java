@@ -15,6 +15,7 @@ import org.junit.After;
 import org.junit.Rule;
 import org.junit.rules.TemporaryFolder;
 import org.tron.api.WalletGrpc;
+import org.tron.common.ClassLevelAppContextFixture;
 import org.tron.common.TestConstants;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
@@ -65,10 +66,16 @@ public class DbLiteTest {
    * shutdown the fullNode.
    */
   public void shutdown() throws InterruptedException {
-    if (channelFull != null) {
-      channelFull.shutdownNow();
+    try {
+      ClassLevelAppContextFixture.shutdownChannel(channelFull);
+    } finally {
+      channelFull = null;
+      blockingStubFull = null;
+      if (context != null) {
+        context.close();
+        context = null;
+      }
     }
-    context.close();
   }
 
   public void init(String dbType, boolean historyBalanceLookup) throws IOException {
@@ -85,8 +92,13 @@ public class DbLiteTest {
   }
 
   @After
-  public void clear() {
-    Args.clearParam();
+  public void clear() throws InterruptedException {
+    try {
+      shutdown();
+    } finally {
+      DbLite.reSetRecentBlks();
+      Args.clearParam();
+    }
   }
 
   public void testTools(String dbType, int checkpointVersion)

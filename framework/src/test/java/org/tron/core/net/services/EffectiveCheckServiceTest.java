@@ -2,10 +2,15 @@ package org.tron.core.net.services;
 
 import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ScheduledExecutorService;
 import javax.annotation.Resource;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mockito;
 import org.tron.common.BaseTest;
 import org.tron.common.TestConstants;
 import org.tron.common.utils.PublicMethod;
@@ -16,6 +21,20 @@ import org.tron.core.net.service.effective.EffectiveCheckService;
 import org.tron.p2p.P2pConfig;
 
 public class EffectiveCheckServiceTest extends BaseTest {
+
+  private P2pConfig savedP2pConfig;
+  private boolean p2pStarted;
+
+  @After
+  public void closeP2p() {
+    if (p2pStarted) {
+      try {
+        TronNetService.getP2pService().close();
+      } finally {
+        ReflectUtils.setFieldValue(tronNetService, "p2pConfig", savedP2pConfig);
+      }
+    }
+  }
 
   @Resource
   private EffectiveCheckService service;
@@ -45,15 +64,29 @@ public class EffectiveCheckServiceTest extends BaseTest {
     P2pConfig p2pConfig = new P2pConfig();
     p2pConfig.setIp("127.0.0.1");
     p2pConfig.setPort(port);
+    savedP2pConfig = TronNetService.getP2pConfig();
     ReflectUtils.setFieldValue(tronNetService, "p2pConfig", p2pConfig);
+    p2pStarted = true;
     TronNetService.getP2pService().start(p2pConfig);
 
-    service.triggerNext();
-    Assert.assertNull(service.getCur());
+    ScheduledExecutorService executor = Mockito.mock(ScheduledExecutorService.class);
+    Mockito.when(executor.submit(Mockito.any(Runnable.class)))
+        .thenReturn(CompletableFuture.completedFuture(null));
+    ScheduledExecutorService originalExecutor = ReflectUtils.getFieldValue(service, "executor");
+    try {
+      ReflectUtils.setFieldValue(service, "executor", executor);
+      service.triggerNext();
+      ArgumentCaptor<Runnable> task = ArgumentCaptor.forClass(Runnable.class);
+      Mockito.verify(executor).submit(task.capture());
+      task.getValue().run();
+      Assert.assertNull(service.getCur());
 
-    ReflectUtils.invokeMethod(service, "resetCount");
-    InetSocketAddress cur = new InetSocketAddress("192.168.0.1", port);
-    service.setCur(cur);
-    service.onDisconnect(cur);
+      ReflectUtils.invokeMethod(service, "resetCount");
+      InetSocketAddress cur = new InetSocketAddress("192.168.0.1", port);
+      service.setCur(cur);
+      service.onDisconnect(cur);
+    } finally {
+      ReflectUtils.setFieldValue(service, "executor", originalExecutor);
+    }
   }
 }

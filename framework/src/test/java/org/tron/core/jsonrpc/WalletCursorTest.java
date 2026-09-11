@@ -150,7 +150,7 @@ public class WalletCursorTest extends BaseTest {
       tronJsonRpc.buildTransaction(buildArguments);
       tronJsonRpc.close();
     } catch (Exception e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
   }
 

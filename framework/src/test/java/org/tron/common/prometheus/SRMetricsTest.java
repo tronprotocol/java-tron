@@ -38,6 +38,8 @@ public class SRMetricsTest extends BaseTest {
     Args.setParam(new String[]{"-d", dbPath()}, TestConstants.TEST_CONF);
     Args.getInstance().setNodeListenPort(20000 + PORT.incrementAndGet());
     Args.getInstance().setMetricsPrometheusEnable(true);
+    // Only the registry is asserted; let the OS allocate a port for each test JVM.
+    Args.getInstance().setMetricsPrometheusPort(0);
     Metrics.init();
   }
 

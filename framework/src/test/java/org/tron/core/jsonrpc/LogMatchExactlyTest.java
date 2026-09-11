@@ -62,7 +62,7 @@ public class LogMatchExactlyTest {
               null));
       Assert.assertTrue(logFilter.matchesExactly(transactionInfo.getLog(0)));
     } catch (JsonRpcInvalidParamsException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
   }
 
@@ -75,7 +75,7 @@ public class LogMatchExactlyTest {
               null));
       Assert.assertTrue(logFilter.matchesExactly(transactionInfo.getLog(0)));
     } catch (JsonRpcInvalidParamsException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
   }
 
@@ -88,7 +88,7 @@ public class LogMatchExactlyTest {
               null));
       Assert.assertFalse(logFilter.matchesExactly(transactionInfo.getLog(0)));
     } catch (JsonRpcInvalidParamsException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
   }
 
@@ -104,7 +104,7 @@ public class LogMatchExactlyTest {
               null));
       Assert.assertTrue(logFilter.matchesExactly(transactionInfo.getLog(0)));
     } catch (JsonRpcInvalidParamsException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
   }
 
@@ -116,7 +116,7 @@ public class LogMatchExactlyTest {
           new String[] {topicTest1}, null));
       Assert.assertTrue(logFilter.matchesExactly(transactionInfo.getLog(0)));
     } catch (JsonRpcInvalidParamsException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
   }
 
@@ -128,7 +128,7 @@ public class LogMatchExactlyTest {
           new String[] {topicTest2}, null));
       Assert.assertFalse(logFilter.matchesExactly(transactionInfo.getLog(0)));
     } catch (JsonRpcInvalidParamsException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
   }
 
@@ -143,7 +143,7 @@ public class LogMatchExactlyTest {
           new Object[] {topicList}, null));
       Assert.assertTrue(logFilter.matchesExactly(transactionInfo.getLog(0)));
     } catch (JsonRpcInvalidParamsException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
   }
 
@@ -160,7 +160,7 @@ public class LogMatchExactlyTest {
           new Object[] {null, topicList}, null));
       Assert.assertFalse(logFilter.matchesExactly(transactionInfo.getLog(0)));
     } catch (JsonRpcInvalidParamsException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
   }
 
@@ -179,7 +179,7 @@ public class LogMatchExactlyTest {
           new Object[] {topicList1, null, topicList2}, null));
       Assert.assertTrue(logFilter.matchesExactly(transactionInfo.getLog(0)));
     } catch (JsonRpcInvalidParamsException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
   }
 
@@ -206,7 +206,7 @@ public class LogMatchExactlyTest {
           new Object[] {topicTest2, null, topicList2}, null));
       Assert.assertFalse(logFilter.matchesExactly(transactionInfo.getLog(0)));
     } catch (JsonRpcInvalidParamsException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
   }
 
@@ -237,7 +237,7 @@ public class LogMatchExactlyTest {
       Assert.assertEquals(logFilterElement1, logFilterElement2);
 
     } catch (JsonRpcInvalidParamsException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
   }
 }

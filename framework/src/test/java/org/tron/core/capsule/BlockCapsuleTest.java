@@ -8,6 +8,11 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -278,19 +283,30 @@ public class BlockCapsuleTest {
   }
 
   @Test
-  public void testConcurrentToString() throws InterruptedException {
-    List<Thread> threadList = new ArrayList<>();
-    int n = 10;
-    for (int i = 0; i < n; i++) {
-      threadList.add(new Thread(() -> blockCapsule0.toString()));
+  public void testConcurrentToString() throws Exception {
+    int threadCount = 10;
+    ExecutorService executor = Executors.newFixedThreadPool(threadCount);
+    CountDownLatch start = new CountDownLatch(1);
+    List<Future<String>> results = new ArrayList<>();
+    try {
+      for (int i = 0; i < threadCount; i++) {
+        results.add(executor.submit(() -> {
+          start.await();
+          return blockCapsule0.toString();
+        }));
+      }
+      start.countDown();
+      String expected = results.get(0).get(10, TimeUnit.SECONDS);
+      Assert.assertNotNull(expected);
+      for (Future<String> result : results) {
+        Assert.assertEquals(expected, result.get(10, TimeUnit.SECONDS));
+      }
+    } finally {
+      start.countDown();
+      executor.shutdownNow();
+      Assert.assertTrue("Concurrent toString workers did not terminate",
+          executor.awaitTermination(5, TimeUnit.SECONDS));
     }
-    for (int i = 0; i < n; i++) {
-      threadList.get(i).start();
-    }
-    for (int i = 0; i < n; i++) {
-      threadList.get(i).join();
-    }
-    Assert.assertTrue(true);
   }
 
 }

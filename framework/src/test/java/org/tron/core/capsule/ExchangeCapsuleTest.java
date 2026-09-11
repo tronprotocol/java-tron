@@ -136,7 +136,7 @@ public class ExchangeCapsuleTest extends BaseTest {
       Assert.assertEquals(buyBalance, exchangeCapsule.getSecondTokenBalance());
 
     } catch (ItemNotFoundException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
 
   }

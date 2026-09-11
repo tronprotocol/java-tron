@@ -7,10 +7,11 @@ import static org.mockito.Mockito.times;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import com.google.common.util.concurrent.FakeTimeRateLimiter;
 import com.google.common.util.concurrent.RateLimiter;
 import java.lang.reflect.Field;
 import java.util.concurrent.TimeUnit;
-import org.junit.AfterClass;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -22,6 +23,11 @@ import org.tron.core.config.args.Args;
 
 public class GlobalRateLimiterTest {
 
+  private Object savedIpQps;
+  private Object savedLimiter;
+  private Object savedCache;
+  private MockedStatic<RateLimiter> rateLimiterFactory;
+
   /**
    * Reset GlobalRateLimiter's static state to known rates before each test.
    * Static fields are initialized at class-load time from Args, so we must
@@ -31,6 +37,12 @@ public class GlobalRateLimiterTest {
   public void setUp() throws Exception {
     String[] a = new String[0];
     Args.setParam(a, TestConstants.TEST_CONF);
+    savedIpQps = field("IP_QPS").get(null);
+    savedLimiter = field("rateLimiter").get(null);
+    savedCache = field("cache").get(null);
+    rateLimiterFactory = mockStatic(RateLimiter.class, Mockito.CALLS_REAL_METHODS);
+    rateLimiterFactory.when(() -> RateLimiter.create(Mockito.anyDouble()))
+        .thenAnswer(invocation -> FakeTimeRateLimiter.create(invocation.getArgument(0)));
     resetGlobalRateLimiter(2.0, 1.0);
   }
 
@@ -40,13 +52,8 @@ public class GlobalRateLimiterTest {
     ipQpsField.setAccessible(true);
     ipQpsField.set(null, ipQps);
 
-    // Create a fresh rate limiter, then sleep one stable interval (1000/qps ms) so
-    // Guava's SmoothBursty accumulates exactly 1 stored permit.  With 1 stored permit
-    // the first tryAcquire() consumes it (no advance of nextFreeTicket), and the second
-    // call pre-bills the next slot and still returns true — giving exactly floor(qps)=2
-    // consecutive successes without touching Guava-internal fields.
-    RateLimiter rl = RateLimiter.create(globalQps);
-    Thread.sleep((long) (1000.0 / globalQps));
+    // One stored permit plus the next reserved slot allow exactly two immediate requests.
+    RateLimiter rl = FakeTimeRateLimiter.createWithStoredPermit(globalQps);
 
     Field rateLimiterField = GlobalRateLimiter.class.getDeclaredField("rateLimiter");
     rateLimiterField.setAccessible(true);
@@ -241,8 +248,25 @@ public class GlobalRateLimiterTest {
     f.set(null, qps);
   }
 
-  @AfterClass
-  public static void destroy() {
-    Args.clearParam();
+  private static Field field(String name) throws Exception {
+    Field field = GlobalRateLimiter.class.getDeclaredField(name);
+    field.setAccessible(true);
+    return field;
+  }
+
+  @After
+  public void destroy() throws Exception {
+    try {
+      if (rateLimiterFactory != null) {
+        rateLimiterFactory.close();
+      }
+      if (savedLimiter != null) {
+        field("IP_QPS").set(null, savedIpQps);
+        field("rateLimiter").set(null, savedLimiter);
+        field("cache").set(null, savedCache);
+      }
+    } finally {
+      Args.clearParam();
+    }
   }
 }

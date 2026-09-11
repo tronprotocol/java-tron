@@ -15,6 +15,7 @@ import org.pf4j.PluginManager;
 import org.pf4j.PluginWrapper;
 import org.tron.common.logsfilter.trigger.BlockLogTrigger;
 import org.tron.common.logsfilter.trigger.TransactionLogTrigger;
+import org.tron.common.utils.PublicMethod;
 
 public class EventLoaderTest {
 
@@ -22,7 +23,7 @@ public class EventLoaderTest {
   public void launchNativeQueue() {
     EventPluginConfig config = new EventPluginConfig();
     config.setSendQueueLength(1000);
-    config.setBindPort(5555);
+    config.setBindPort(PublicMethod.chooseRandomPort());
     config.setUseNativeQueue(true);
     config.setPluginPath("pluginPath");
     config.setServerAddress("serverAddress");
@@ -48,9 +49,12 @@ public class EventLoaderTest {
 
     config.setTriggerConfigList(triggerConfigList);
 
-    assertTrue(EventPluginLoader.getInstance().start(config));
-
-    EventPluginLoader.getInstance().stopPlugin();
+    EventPluginLoader loader = new EventPluginLoader();
+    try {
+      assertTrue(loader.start(config));
+    } finally {
+      loader.stopPlugin();
+    }
   }
 
   @Test

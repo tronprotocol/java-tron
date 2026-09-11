@@ -9,8 +9,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import org.junit.After;
 import org.junit.Assert;
@@ -18,10 +18,13 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mockito;
 import org.tron.common.TestConstants;
 import org.tron.common.backup.BackupManager.BackupStatusEnum;
 import org.tron.common.backup.message.KeepAliveMessage;
 import org.tron.common.backup.socket.BackupServer;
+import org.tron.common.backup.socket.MessageHandler;
 import org.tron.common.backup.socket.UdpEvent;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.PublicMethod;
@@ -48,8 +51,16 @@ public class BackupManagerTest {
 
   @After
   public void tearDown() {
-    InetUtil.dnsLookup = savedLookup;
-    Args.clearParam();
+    try {
+      if (backupServer != null) {
+        backupServer.close();
+      } else if (manager != null) {
+        manager.stop();
+      }
+    } finally {
+      InetUtil.dnsLookup = savedLookup;
+      Args.clearParam();
+    }
   }
 
   @Test
@@ -133,21 +144,27 @@ public class BackupManagerTest {
     field.set(manager, "127.0.0.1");
 
     Assert.assertEquals(manager.getStatus(), BackupManager.BackupStatusEnum.MASTER);
-    backupServer.initServer();
+    ScheduledExecutorService scheduler = Mockito.mock(ScheduledExecutorService.class);
+    Mockito.when(scheduler.awaitTermination(Mockito.anyLong(), Mockito.any()))
+        .thenReturn(true);
+    Field schedulerField = manager.getClass().getDeclaredField("executorService");
+    schedulerField.setAccessible(true);
+    ((ScheduledExecutorService) schedulerField.get(manager)).shutdownNow();
+    schedulerField.set(manager, scheduler);
+    MessageHandler handler = Mockito.mock(MessageHandler.class);
+    manager.setMessageHandler(handler);
     manager.init();
 
-    Thread.sleep(parameter.getKeepAliveInterval() + 1000);//test send KeepAliveMessage
+    ArgumentCaptor<Runnable> heartbeat = ArgumentCaptor.forClass(Runnable.class);
+    Mockito.verify(scheduler).scheduleWithFixedDelay(heartbeat.capture(), Mockito.eq(1000L),
+        Mockito.eq((long) parameter.getKeepAliveInterval()), Mockito.eq(TimeUnit.MILLISECONDS));
+    heartbeat.getValue().run();
 
-    field = manager.getClass().getDeclaredField("executorService");
-    field.setAccessible(true);
-    ScheduledExecutorService executorService = (ScheduledExecutorService) field.get(manager);
-    executorService.shutdown();
-
-    Field field2 = backupServer.getClass().getDeclaredField("executor");
-    field2.setAccessible(true);
-    ExecutorService executorService2 = (ExecutorService) field2.get(backupServer);
-    executorService2.shutdown();
-
+    ArgumentCaptor<UdpEvent> sent = ArgumentCaptor.forClass(UdpEvent.class);
+    Mockito.verify(handler).accept(sent.capture());
+    Assert.assertEquals("127.0.0.2", sent.getValue().getAddress().getHostString());
+    Assert.assertEquals(parameter.getBackupPort(), sent.getValue().getAddress().getPort());
+    Assert.assertFalse(((KeepAliveMessage) sent.getValue().getMessage()).getFlag());
     Assert.assertEquals(BackupManager.BackupStatusEnum.INIT, manager.getStatus());
   }
 

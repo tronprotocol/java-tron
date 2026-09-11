@@ -2,14 +2,19 @@ package org.tron.core.capsule;
 
 import org.junit.After;
 import org.junit.Assert;
+import org.junit.Rule;
 import org.junit.Test;
 import org.mockito.Mockito;
+import org.tron.common.VMConfigRule;
 import org.tron.core.config.args.Args;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.vm.config.VMConfig;
 import org.tron.protos.contract.SmartContractOuterClass;
 
 public class ContractStateCapsuleTest {
+
+  @Rule
+  public final VMConfigRule vmConfigRule = new VMConfigRule();
 
   @Test
   public void testCatchUpCycle() {

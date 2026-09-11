@@ -17,12 +17,14 @@ import static org.tron.common.zksnark.JLibrustzcash.librustzcashSaplingSpendSig;
 import static org.tron.common.zksnark.JLibsodium.CRYPTO_AEAD_CHACHA20POLY1305_IETF_NPUBBYTES;
 
 import com.google.protobuf.ByteString;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.stream.LongStream;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.BeforeClass;
@@ -30,6 +32,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.tron.common.BaseTest;
 import org.tron.common.TestConstants;
+import org.tron.common.math.StrictMathWrapper;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.zksnark.IncrementalMerkleTreeContainer;
@@ -275,28 +278,25 @@ public class LibrustzcashTest extends BaseTest {
 
     int count = 2;
 
-    CountDownLatch countDownLatch = new CountDownLatch(count);
-
     int availableProcessors = Runtime.getRuntime().availableProcessors();
     logger.info("availableProcessors:" + availableProcessors);
-
-    ExecutorService generatePool =
-        Executors.newFixedThreadPool(
-            availableProcessors,
-            r -> new Thread(r, "generate-transaction"));
-
+    ExecutorService generatePool = Executors.newFixedThreadPool(
+        StrictMathWrapper.min(count, availableProcessors),
+        r -> new Thread(r, "generate-transaction"));
     long startGenerate = System.currentTimeMillis();
-    LongStream.range(0L, count).forEach(l -> generatePool.execute(() -> {
-      try {
-        benchmarkCreateSpend();
-      } catch (Exception ex) {
-        ex.printStackTrace();
-        logger.error("", ex);
+    try {
+      List<Future<Long>> results = new ArrayList<>();
+      for (int i = 0; i < count; i++) {
+        results.add(generatePool.submit(this::benchmarkCreateSpend));
       }
-    }));
-
-    countDownLatch.await();
-    generatePool.shutdown();
+      for (Future<Long> result : results) {
+        result.get(60, TimeUnit.SECONDS);
+      }
+    } finally {
+      generatePool.shutdownNow();
+      assertTrue("Benchmark workers did not terminate",
+          generatePool.awaitTermination(5, TimeUnit.SECONDS));
+    }
 
     logger.info("generate cost time:" + (System.currentTimeMillis() - startGenerate));
   }

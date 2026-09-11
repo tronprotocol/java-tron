@@ -290,7 +290,7 @@ public class MarketCancelOrderActuatorTest extends BaseTest {
     } catch (ContractValidateException e) {
       Assert.assertEquals("Order does not belong to the account!", e.getMessage());
     } catch (ContractExeException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
   }
 
@@ -332,7 +332,7 @@ public class MarketCancelOrderActuatorTest extends BaseTest {
     } catch (ContractValidateException e) {
       Assert.assertEquals("No enough balance !", e.getMessage());
     } catch (ContractExeException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     } finally {
       // reset fee
       dbManager.getDynamicPropertiesStore().saveMarketCancelFee(0L);

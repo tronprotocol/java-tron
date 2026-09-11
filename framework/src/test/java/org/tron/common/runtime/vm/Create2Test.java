@@ -216,7 +216,7 @@ public class Create2Test extends VMTestBase {
           tronJsonRpc.getStorageAt(ByteArray.toHexString(actualContract), "0", "latest");
       Assert.assertEquals(loop, ByteArray.jsonHexToLong(res));
     } catch (JsonRpcInvalidParamsException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
   }
 

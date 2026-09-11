@@ -145,7 +145,7 @@ public class FreezeBalanceActuatorTest extends BaseTest {
       Assert.assertEquals(owner.getFrozenBalance(), frozenBalance);
       Assert.assertEquals(frozenBalance, owner.getTronPower());
     } catch (ContractValidateException | ContractExeException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
   }
 
@@ -171,7 +171,7 @@ public class FreezeBalanceActuatorTest extends BaseTest {
       Assert.assertEquals(frozenBalance, owner.getEnergyFrozenBalance());
       Assert.assertEquals(frozenBalance, owner.getTronPower());
     } catch (ContractValidateException | ContractExeException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
   }
 
@@ -203,7 +203,7 @@ public class FreezeBalanceActuatorTest extends BaseTest {
     } catch (ContractValidateException e) {
       Assert.assertEquals("Do not allow delegate resources to contract addresses", e.getMessage());
     } catch (ContractExeException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
   }
 
@@ -268,7 +268,7 @@ public class FreezeBalanceActuatorTest extends BaseTest {
 
 
     } catch (ContractValidateException | ContractExeException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
   }
 
@@ -399,7 +399,7 @@ public class FreezeBalanceActuatorTest extends BaseTest {
           .contains(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS))));
 
     } catch (ContractValidateException | ContractExeException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
   }
 
@@ -438,7 +438,7 @@ public class FreezeBalanceActuatorTest extends BaseTest {
           totalEnergyWeightAfter);
 
     } catch (ContractValidateException | ContractExeException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
   }
 
@@ -458,7 +458,7 @@ public class FreezeBalanceActuatorTest extends BaseTest {
     } catch (ContractValidateException e) {
       Assert.assertEquals("frozenBalance must be positive", e.getMessage());
     } catch (ContractExeException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
   }
 
@@ -479,7 +479,7 @@ public class FreezeBalanceActuatorTest extends BaseTest {
       Assert.assertEquals(
           "frozenBalance must be less than or equal to accountBalance", e.getMessage());
     } catch (ContractExeException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
   }
 
@@ -500,7 +500,7 @@ public class FreezeBalanceActuatorTest extends BaseTest {
     } catch (ContractValidateException e) {
       Assert.assertEquals("Invalid address", e.getMessage());
     } catch (ContractExeException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
 
   }
@@ -522,7 +522,7 @@ public class FreezeBalanceActuatorTest extends BaseTest {
       Assert.assertEquals("Account[" + OWNER_ACCOUNT_INVALID + "] not exists",
           e.getMessage());
     } catch (ContractExeException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
   }
 
@@ -546,7 +546,7 @@ public class FreezeBalanceActuatorTest extends BaseTest {
       Assert.assertEquals("frozenDuration must be less than " + maxFrozenTime + " days "
           + "and more than " + minFrozenTime + " days", e.getMessage());
     } catch (ContractExeException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
   }
 
@@ -569,7 +569,7 @@ public class FreezeBalanceActuatorTest extends BaseTest {
       Assert.assertEquals("frozenDuration must be less than " + maxFrozenTime + " days "
           + "and more than " + minFrozenTime + " days", e.getMessage());
     } catch (ContractExeException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
   }
 
@@ -590,7 +590,7 @@ public class FreezeBalanceActuatorTest extends BaseTest {
       Assert.assertEquals("frozenBalance must be greater than or equal to 1 TRX",
           e.getMessage());
     } catch (ContractExeException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
   }
 
@@ -616,7 +616,7 @@ public class FreezeBalanceActuatorTest extends BaseTest {
     } catch (ContractValidateException e) {
       Assert.assertEquals("frozenCount must be 0 or 1", e.getMessage());
     } catch (ContractExeException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
   }
 
@@ -663,7 +663,7 @@ public class FreezeBalanceActuatorTest extends BaseTest {
       Assert.assertEquals(-1L, owner.getInstance().getOldTronPower());
       Assert.assertEquals(0L, owner.getAllTronPower());
     } catch (ContractValidateException | ContractExeException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
   }
 
@@ -694,7 +694,7 @@ public class FreezeBalanceActuatorTest extends BaseTest {
       Assert.assertEquals(100L, owner.getInstance().getOldTronPower());
       Assert.assertEquals(100L, owner.getAllTronPower());
     } catch (ContractValidateException | ContractExeException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
   }
 
@@ -725,7 +725,7 @@ public class FreezeBalanceActuatorTest extends BaseTest {
       Assert.assertEquals(100L, owner.getInstance().getOldTronPower());
       Assert.assertEquals(frozenBalance + 100L, owner.getAllTronPower());
     } catch (ContractValidateException | ContractExeException e) {
-      Assert.fail();
+      throw new AssertionError("Unexpected exception", e);
     }
   }
 

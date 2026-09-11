@@ -8,7 +8,6 @@ import com.google.common.primitives.Bytes;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
-import java.lang.reflect.Field;
 import java.security.SignatureException;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -171,6 +170,9 @@ public class ShieldedReceiveTest extends BaseTest {
       return;
     }
     consensusService.start();
+    // Initialize consensus metadata, but keep block production under test control.
+    // A background block would reset the pending session and discard synthetic Merkle roots.
+    dposTask.stop();
     chainBaseManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(10_000_000_000L);
     init = true;
   }
@@ -2538,12 +2540,9 @@ public class ShieldedReceiveTest extends BaseTest {
       boolean ok2 = dbManager.pushTransaction(transactionCap2);
       Assert.assertTrue(ok2);
     } finally {
-      // DposTask.init() does not reset isRunning (it stays false after stop()), so force it back
-      // to true via reflection before restarting.
-      Field isRunning = DposTask.class.getDeclaredField("isRunning");
-      isRunning.setAccessible(true);
-      isRunning.set(dposTask, true);
+      // Restore consensus metadata without restarting background block production.
       consensusService.start();
+      dposTask.stop();
     }
   }
 
