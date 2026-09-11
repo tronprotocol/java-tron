@@ -19,7 +19,7 @@ This file tracks Prometheus metric additions, changes, and removals in java-tron
 
 **Pre-4.8.2 Baseline**
 
-Snapshot of metrics emitted prior to this changelog. Per-version provenance is not tracked here; consult `git log` on [`common/src/main/java/org/tron/common/prometheus/`](common/src/main/java/org/tron/common/prometheus/) for exact origin of each metric.
+Snapshot of metrics emitted prior to this changelog. Per-version provenance is not tracked here; consult `git log` on [`common/src/main/java/org/tron/common/prometheus/`](../common/src/main/java/org/tron/common/prometheus/) for exact origin of each metric.
 
 ### Existing Metrics
 
