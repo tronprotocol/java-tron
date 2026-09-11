@@ -2,7 +2,7 @@ package org.tron.core.actuator;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
-import org.joda.time.DateTime;
+import java.time.ZonedDateTime;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -403,8 +403,8 @@ public class ParticipateAssetIssueActuatorTest extends BaseTest {
    */
   @Test
   public void sameTokenNameCloseAssetIssueTimeRight() {
-    DateTime now = DateTime.now();
-    initAssetIssue(now.minusDays(1).getMillis(), now.getMillis());
+    ZonedDateTime now = ZonedDateTime.now();
+    initAssetIssue(now.minusDays(1).toInstant().toEpochMilli(), now.toInstant().toEpochMilli());
     ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator();
     actuator.setChainBaseManager(chainBaseManager).setAny(getContract(1000L));
 
@@ -436,8 +436,8 @@ public class ParticipateAssetIssueActuatorTest extends BaseTest {
   @Test
   public void sameTokenNameOpenAssetIssueTimeRight() {
     chainBaseManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
-    DateTime now = DateTime.now();
-    initAssetIssue(now.minusDays(1).getMillis(), now.getMillis());
+    ZonedDateTime now = ZonedDateTime.now();
+    initAssetIssue(now.minusDays(1).toInstant().toEpochMilli(), now.toInstant().toEpochMilli());
     ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator();
     actuator.setChainBaseManager(chainBaseManager).setAny(getContract(1000L));
 
@@ -470,8 +470,8 @@ public class ParticipateAssetIssueActuatorTest extends BaseTest {
    */
   @Test
   public void sameTokenNameCloseAssetIssueTimeLeft() {
-    DateTime now = DateTime.now();
-    initAssetIssue(now.minusDays(1).getMillis(), now.getMillis());
+    ZonedDateTime now = ZonedDateTime.now();
+    initAssetIssue(now.minusDays(1).toInstant().toEpochMilli(), now.toInstant().toEpochMilli());
     ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator();
     actuator.setChainBaseManager(chainBaseManager).setAny(getContract(1000L));
 
@@ -504,8 +504,8 @@ public class ParticipateAssetIssueActuatorTest extends BaseTest {
   @Test
   public void sameTokenNameOpenAssetIssueTimeLeft() {
     chainBaseManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
-    DateTime now = DateTime.now();
-    initAssetIssue(now.minusDays(1).getMillis(), now.getMillis());
+    ZonedDateTime now = ZonedDateTime.now();
+    initAssetIssue(now.minusDays(1).toInstant().toEpochMilli(), now.toInstant().toEpochMilli());
     ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator();
     actuator.setChainBaseManager(chainBaseManager).setAny(getContract(1000L));
 
@@ -605,8 +605,9 @@ public class ParticipateAssetIssueActuatorTest extends BaseTest {
    */
   @Test
   public void sameTokenNameCloseNegativeAmountTest() {
-    DateTime now = DateTime.now();
-    initAssetIssue(now.minusDays(1).getMillis(), now.plusDays(1).getMillis());
+    ZonedDateTime now = ZonedDateTime.now();
+    initAssetIssue(now.minusDays(1).toInstant().toEpochMilli(),
+        now.plusDays(1).toInstant().toEpochMilli());
     ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator();
     actuator.setChainBaseManager(chainBaseManager).setAny(getContract(-999L));
 
@@ -639,8 +640,9 @@ public class ParticipateAssetIssueActuatorTest extends BaseTest {
   @Test
   public void sameTokenNameOpenNegativeAmountTest() {
     chainBaseManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
-    DateTime now = DateTime.now();
-    initAssetIssue(now.minusDays(1).getMillis(), now.plusDays(1).getMillis());
+    ZonedDateTime now = ZonedDateTime.now();
+    initAssetIssue(now.minusDays(1).toInstant().toEpochMilli(),
+        now.plusDays(1).toInstant().toEpochMilli());
     ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator();
     actuator.setChainBaseManager(chainBaseManager).setAny(getContract(-999L));
 
@@ -675,8 +677,9 @@ public class ParticipateAssetIssueActuatorTest extends BaseTest {
    */
   @Test
   public void sameTokenNameCloseZeroAmountTest() {
-    DateTime now = DateTime.now();
-    initAssetIssue(now.minusDays(1).getMillis(), now.plusDays(1).getMillis());
+    ZonedDateTime now = ZonedDateTime.now();
+    initAssetIssue(now.minusDays(1).toInstant().toEpochMilli(),
+        now.plusDays(1).toInstant().toEpochMilli());
     ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator();
     actuator.setChainBaseManager(chainBaseManager).setAny(getContract(0));
 
@@ -709,8 +712,9 @@ public class ParticipateAssetIssueActuatorTest extends BaseTest {
   @Test
   public void sameTokenNameOpenZeroAmountTest() {
     chainBaseManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
-    DateTime now = DateTime.now();
-    initAssetIssue(now.minusDays(1).getMillis(), now.plusDays(1).getMillis());
+    ZonedDateTime now = ZonedDateTime.now();
+    initAssetIssue(now.minusDays(1).toInstant().toEpochMilli(),
+        now.plusDays(1).toInstant().toEpochMilli());
     ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator();
     actuator.setChainBaseManager(chainBaseManager).setAny(getContract(0));
 
@@ -746,8 +750,9 @@ public class ParticipateAssetIssueActuatorTest extends BaseTest {
    */
   @Test
   public void sameTokenNameCloseNoExitOwnerTest() {
-    DateTime now = DateTime.now();
-    initAssetIssue(now.minusDays(1).getMillis(), now.plusDays(1).getMillis());
+    ZonedDateTime now = ZonedDateTime.now();
+    initAssetIssue(now.minusDays(1).toInstant().toEpochMilli(),
+        now.plusDays(1).toInstant().toEpochMilli());
     ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator();
     actuator.setChainBaseManager(chainBaseManager)
         .setAny(getContractWithOwner(101, NOT_EXIT_ADDRESS));
@@ -782,8 +787,9 @@ public class ParticipateAssetIssueActuatorTest extends BaseTest {
   @Test
   public void sameTokenNameOpenNoExitOwnerTest() {
     chainBaseManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
-    DateTime now = DateTime.now();
-    initAssetIssue(now.minusDays(1).getMillis(), now.plusDays(1).getMillis());
+    ZonedDateTime now = ZonedDateTime.now();
+    initAssetIssue(now.minusDays(1).toInstant().toEpochMilli(),
+        now.plusDays(1).toInstant().toEpochMilli());
     ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator();
     actuator.setChainBaseManager(chainBaseManager)
         .setAny(getContractWithOwner(101, NOT_EXIT_ADDRESS));
@@ -1310,8 +1316,9 @@ public class ParticipateAssetIssueActuatorTest extends BaseTest {
    */
   @Test
   public void sameTokenNameCloseNoneExistAssetTest() {
-    DateTime now = DateTime.now();
-    initAssetIssue(now.minusDays(1).getMillis(), now.plusDays(1).getMillis());
+    ZonedDateTime now = ZonedDateTime.now();
+    initAssetIssue(now.minusDays(1).toInstant().toEpochMilli(),
+        now.plusDays(1).toInstant().toEpochMilli());
     ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator();
     actuator.setChainBaseManager(chainBaseManager)
         .setAny(getContract(1, "TTTTTTTTTTTT"));
@@ -1346,8 +1353,9 @@ public class ParticipateAssetIssueActuatorTest extends BaseTest {
   @Test
   public void sameTokenNameOpenNoneExistAssetTest() {
     chainBaseManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
-    DateTime now = DateTime.now();
-    initAssetIssue(now.minusDays(1).getMillis(), now.plusDays(1).getMillis());
+    ZonedDateTime now = ZonedDateTime.now();
+    initAssetIssue(now.minusDays(1).toInstant().toEpochMilli(),
+        now.plusDays(1).toInstant().toEpochMilli());
     ParticipateAssetIssueActuator actuator = new ParticipateAssetIssueActuator();
     actuator.setChainBaseManager(chainBaseManager)
         .setAny(getContract(1, "TTTTTTTTTTTT"));

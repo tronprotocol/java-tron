@@ -30,12 +30,12 @@ import static org.tron.protos.contract.Common.ResourceCode.ENERGY;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import javax.annotation.Resource;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.joda.time.DateTime;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -113,21 +113,29 @@ public class WalletTest extends BaseTest {
   public static final long BLOCK_NUM_THREE = 3;
   public static final long BLOCK_NUM_FOUR = 4;
   public static final long BLOCK_NUM_FIVE = 5;
-  public static final long BLOCK_TIMESTAMP_ONE = DateTime.now().minusDays(4).getMillis();
-  public static final long BLOCK_TIMESTAMP_TWO = DateTime.now().minusDays(3).getMillis();
-  public static final long BLOCK_TIMESTAMP_THREE = DateTime.now().minusDays(2).getMillis();
-  public static final long BLOCK_TIMESTAMP_FOUR = DateTime.now().minusDays(1).getMillis();
-  public static final long BLOCK_TIMESTAMP_FIVE = DateTime.now().getMillis();
+  public static final long BLOCK_TIMESTAMP_ONE =
+      ZonedDateTime.now().minusDays(4).toInstant().toEpochMilli();
+  public static final long BLOCK_TIMESTAMP_TWO =
+      ZonedDateTime.now().minusDays(3).toInstant().toEpochMilli();
+  public static final long BLOCK_TIMESTAMP_THREE =
+      ZonedDateTime.now().minusDays(2).toInstant().toEpochMilli();
+  public static final long BLOCK_TIMESTAMP_FOUR =
+      ZonedDateTime.now().minusDays(1).toInstant().toEpochMilli();
+  public static final long BLOCK_TIMESTAMP_FIVE = System.currentTimeMillis();
   public static final long BLOCK_WITNESS_ONE = 12;
   public static final long BLOCK_WITNESS_TWO = 13;
   public static final long BLOCK_WITNESS_THREE = 14;
   public static final long BLOCK_WITNESS_FOUR = 15;
   public static final long BLOCK_WITNESS_FIVE = 16;
-  public static final long TRANSACTION_TIMESTAMP_ONE = DateTime.now().minusDays(4).getMillis();
-  public static final long TRANSACTION_TIMESTAMP_TWO = DateTime.now().minusDays(3).getMillis();
-  public static final long TRANSACTION_TIMESTAMP_THREE = DateTime.now().minusDays(2).getMillis();
-  public static final long TRANSACTION_TIMESTAMP_FOUR = DateTime.now().minusDays(1).getMillis();
-  public static final long TRANSACTION_TIMESTAMP_FIVE = DateTime.now().getMillis();
+  public static final long TRANSACTION_TIMESTAMP_ONE =
+      ZonedDateTime.now().minusDays(4).toInstant().toEpochMilli();
+  public static final long TRANSACTION_TIMESTAMP_TWO =
+      ZonedDateTime.now().minusDays(3).toInstant().toEpochMilli();
+  public static final long TRANSACTION_TIMESTAMP_THREE =
+      ZonedDateTime.now().minusDays(2).toInstant().toEpochMilli();
+  public static final long TRANSACTION_TIMESTAMP_FOUR =
+      ZonedDateTime.now().minusDays(1).toInstant().toEpochMilli();
+  public static final long TRANSACTION_TIMESTAMP_FIVE = System.currentTimeMillis();
   @Resource
   private Wallet wallet;
   private static Block block1;
