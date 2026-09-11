@@ -3,8 +3,10 @@ package org.tron.core.event;
 import static org.mockito.Mockito.mock;
 
 import com.google.protobuf.ByteString;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.BlockingQueue;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -25,6 +27,33 @@ import org.tron.core.services.event.bo.SmartContractTrigger;
 public class RealtimeEventServiceTest {
 
   RealtimeEventService realtimeEventService = new RealtimeEventService();
+
+  @Test
+  public void shouldBecomeBusyAt500EventsAndRetainLaterEvents() throws Exception {
+    Field queueField = RealtimeEventService.class.getDeclaredField("queue");
+    queueField.setAccessible(true);
+    BlockingQueue<Event> queue = (BlockingQueue<Event>) queueField.get(null);
+    queue.clear();
+
+    try {
+      Event event = mock(Event.class);
+      for (int i = 0; i < 499; i++) {
+        realtimeEventService.add(event);
+      }
+
+      Assert.assertFalse(realtimeEventService.isBusy());
+
+      realtimeEventService.add(event);
+      Assert.assertTrue(realtimeEventService.isBusy());
+
+      realtimeEventService.add(event);
+      Assert.assertEquals(501, queue.size());
+    } finally {
+      queue.clear();
+    }
+
+    Assert.assertFalse(realtimeEventService.isBusy());
+  }
 
   @Test
   public void test() throws Exception {

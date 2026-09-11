@@ -1,5 +1,6 @@
 package org.tron.common.logsfilter;
 
+import java.lang.reflect.Field;
 import java.util.concurrent.ExecutorService;
 import org.junit.After;
 import org.junit.Assert;
@@ -21,8 +22,18 @@ public class NativeMessageQueueTest {
 
   @After
   public void tearDown() {
+    NativeMessageQueue.getInstance().stop();
     ExecutorServiceManager.shutdownAndAwaitTermination(subscriberExecutor, zmqSubscriber);
     subscriberExecutor = null;
+  }
+
+  @Test
+  public void configuredSendQueueLengthIsAppliedToPublisherSocket() throws Exception {
+    int sendQueueLength = 2000;
+
+    Assert.assertTrue(NativeMessageQueue.getInstance().start(bindPort, sendQueueLength));
+
+    Assert.assertEquals(sendQueueLength, getPublisher().getSndHWM());
   }
 
   @Test
@@ -33,10 +44,17 @@ public class NativeMessageQueueTest {
   }
 
   @Test
-  public void invalidSendLength() {
-    boolean bRet = NativeMessageQueue.getInstance().start(0, -2222);
-    Assert.assertEquals(true, bRet);
-    NativeMessageQueue.getInstance().stop();
+  public void negativeSendQueueLengthUsesDefaultSndHWM() throws Exception {
+    Assert.assertTrue(NativeMessageQueue.getInstance().start(bindPort, -1));
+
+    Assert.assertEquals(1000, getPublisher().getSndHWM());
+  }
+
+  @Test
+  public void zeroSendQueueLengthUsesDefaultSndHWM() throws Exception {
+    Assert.assertTrue(NativeMessageQueue.getInstance().start(bindPort, 0));
+
+    Assert.assertEquals(1000, getPublisher().getSndHWM());
   }
 
   @Test
@@ -83,5 +101,11 @@ public class NativeMessageQueueTest {
         // ZMQ.Socket will be automatically closed when ZContext is closed
       }
     });
+  }
+
+  private ZMQ.Socket getPublisher() throws ReflectiveOperationException {
+    Field publisherField = NativeMessageQueue.class.getDeclaredField("publisher");
+    publisherField.setAccessible(true);
+    return (ZMQ.Socket) publisherField.get(NativeMessageQueue.getInstance());
   }
 }
