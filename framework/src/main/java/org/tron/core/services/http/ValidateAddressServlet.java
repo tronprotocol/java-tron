@@ -47,7 +47,7 @@ public class ValidateAddressServlet extends RateLimiterServlet {
       }
     } catch (Exception e) {
       result = false;
-      msg = e.getMessage();
+      msg = "Invalid address";
     }
 
     JSONObject jsonAddress = new JSONObject();

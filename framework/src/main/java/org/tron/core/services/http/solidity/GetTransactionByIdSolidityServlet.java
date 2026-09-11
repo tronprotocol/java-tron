@@ -30,12 +30,7 @@ public class GetTransactionByIdSolidityServlet extends RateLimiterServlet {
       String input = request.getParameter("value");
       fillResponse(ByteString.copyFrom(ByteArray.fromHexString(input)), visible, response);
     } catch (Exception e) {
-      logger.debug("Exception: {}", e.getMessage());
-      try {
-        response.getWriter().println(e.getMessage());
-      } catch (IOException ioe) {
-        logger.debug("IOException: {}", ioe.getMessage());
-      }
+      Util.processError(e, response);
     }
   }
 
@@ -46,12 +41,7 @@ public class GetTransactionByIdSolidityServlet extends RateLimiterServlet {
       JsonFormat.merge(params.getParams(), build, params.isVisible());
       fillResponse(build.build().getValue(), params.isVisible(), response);
     } catch (Exception e) {
-      logger.debug("Exception: {}", e.getMessage());
-      try {
-        response.getWriter().println(e.getMessage());
-      } catch (IOException ioe) {
-        logger.debug("IOException: {}", ioe.getMessage());
-      }
+      Util.processError(e, response);
     }
   }
 
