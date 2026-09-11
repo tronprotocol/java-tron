@@ -1,11 +1,14 @@
 package org.tron.core.config.args;
 
+import static org.tron.core.exception.TronError.ErrCode.PARAMETER_INIT;
+
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigBeanFactory;
 import com.typesafe.config.ConfigValue;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.tron.core.exception.TronError;
 
 /**
  * Committee (governance) configuration bean.
@@ -160,11 +163,11 @@ public class CommitteeConfig {
     // cross-field: allowOldRewardOpt requires at least one reward/vote flag
     if (allowOldRewardOpt == 1 && allowNewRewardAlgorithm != 1
         && allowNewReward != 1 && allowTvmVote != 1) {
-      throw new IllegalArgumentException(
+      throw new TronError(
           "At least one of the following proposals is required to be opened first: "
               + "committee.allowNewRewardAlgorithm = 1"
               + " or committee.allowNewReward = 1"
-              + " or committee.allowTvmVote = 1.");
+              + " or committee.allowTvmVote = 1.", PARAMETER_INIT);
     }
   }
 }

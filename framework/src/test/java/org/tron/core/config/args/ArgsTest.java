@@ -520,6 +520,64 @@ public class ArgsTest {
   }
 
   @Test
+  public void testDnsPublishRejectsInvalidServerTypeWithParameterInitError() {
+    Config config = dnsPublishConfig(
+        "node.dns.serverType", "unsupported");
+
+    TronError error = Assert.assertThrows(TronError.class,
+        () -> Args.loadDnsPublishConfig(NodeConfig.fromConfig(config)));
+
+    Assert.assertEquals(TronError.ErrCode.PARAMETER_INIT, error.getErrCode());
+    Assert.assertEquals("Check node.dns.serverType, must be aws or aliyun",
+        error.getMessage());
+  }
+
+  @Test
+  public void testDnsPublishRejectsEmptyRequiredParameterWithParameterInitError() {
+    Config config = dnsPublishConfig("node.dns.dnsDomain", "");
+
+    TronError error = Assert.assertThrows(TronError.class,
+        () -> Args.loadDnsPublishConfig(NodeConfig.fromConfig(config)));
+
+    Assert.assertEquals(TronError.ErrCode.PARAMETER_INIT, error.getErrCode());
+    Assert.assertEquals("Check node.dns.dnsDomain, must not be null or empty",
+        error.getMessage());
+  }
+
+  @Test
+  public void testCommitteeConfigRejectsOldRewardOptimizationWithoutPrerequisite() {
+    Map<String, Object> configMap = new HashMap<>();
+    configMap.put("storage.db.directory", "database");
+    configMap.put("committee.allowOldRewardOpt", 1);
+    Config config = ConfigFactory.parseMap(configMap)
+        .withFallback(ConfigFactory.defaultReference());
+
+    try {
+      TronError error = Assert.assertThrows(TronError.class,
+          () -> Args.applyConfigParams(config));
+
+      Assert.assertEquals(TronError.ErrCode.PARAMETER_INIT, error.getErrCode());
+    } finally {
+      Args.clearParam();
+    }
+  }
+
+  private Config dnsPublishConfig(String key, String value) {
+    Map<String, Object> configMap = new HashMap<>();
+    configMap.put("node.dns.publish", true);
+    configMap.put("node.dns.dnsDomain", "nodes.example.org");
+    configMap.put("node.dns.dnsPrivate",
+        "1234567890123456789012345678901234567890123456789012345678901234");
+    configMap.put("node.dns.serverType", "aliyun");
+    configMap.put("node.dns.accessKeyId", "access-key-id");
+    configMap.put("node.dns.accessKeySecret", "access-key-secret");
+    configMap.put("node.dns.aliyunDnsEndpoint", "dns.aliyuncs.com");
+    configMap.put(key, value);
+    return ConfigFactory.parseMap(configMap)
+        .withFallback(ConfigFactory.defaultReference());
+  }
+
+  @Test
   public void testRpcMaxMessageSizeExceedsIntMax() {
     // HOCON's Config.getInt() throws when a numeric value exceeds int range.
     // This documents the failure mode for node.rpc.maxMessageSize (int field).

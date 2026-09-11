@@ -1,10 +1,12 @@
 package org.tron.core.config.args;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.junit.Test;
+import org.tron.core.exception.TronError;
 
 public class CommitteeConfigTest {
 
@@ -57,9 +59,16 @@ public class CommitteeConfigTest {
         .getDynamicEnergyThreshold());
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test
   public void testAllowOldRewardOptWithoutPrerequisites() {
-    CommitteeConfig.fromConfig(withRef("committee { allowOldRewardOpt = 1 }"));
+    TronError error = assertThrows(TronError.class,
+        () -> CommitteeConfig.fromConfig(withRef("committee { allowOldRewardOpt = 1 }")));
+
+    assertEquals(TronError.ErrCode.PARAMETER_INIT, error.getErrCode());
+    assertEquals("At least one of the following proposals is required to be opened first: "
+        + "committee.allowNewRewardAlgorithm = 1"
+        + " or committee.allowNewReward = 1"
+        + " or committee.allowTvmVote = 1.", error.getMessage());
   }
 
   @Test
