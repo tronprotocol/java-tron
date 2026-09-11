@@ -7,6 +7,7 @@ import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 
+import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.protobuf.ByteString;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -551,6 +552,7 @@ public class SolidityNodeTest extends BaseTest {
   @Test(timeout = 8000)
   @SuppressWarnings("unchecked")
   public void testGetBlockShutdownPaths() throws Exception {
+    boolean origFlag = getFlag();
     long origID     = atomicLong("ID").get();
     long origRemote = atomicLong("remoteBlockNum").get();
     Field clientField   = getField("databaseGrpcClient");
@@ -560,6 +562,7 @@ public class SolidityNodeTest extends BaseTest {
 
     LinkedBlockingDeque<Block> queue =
         (LinkedBlockingDeque<Block>) getField("blockQueue").get(solidityNode);
+    Thread worker = null;
     try {
       // ── Part 1: interrupt during blockQueue.put() ──────────────────────────
       // Fill the queue to capacity so the next put() call blocks.
@@ -581,18 +584,18 @@ public class SolidityNodeTest extends BaseTest {
       Method getBlockM = SolidityNode.class.getDeclaredMethod("getBlock");
       getBlockM.setAccessible(true);
       AtomicReference<Throwable> workerFailure = new AtomicReference<>();
-      Thread t = new Thread(() -> {
+      worker = new Thread(() -> {
         try {
           getBlockM.invoke(solidityNode);
         } catch (Exception e) {
           workerFailure.set(e);
         }
       });
-      t.start();
+      worker.start();
       Thread.sleep(200); // let the thread block inside blockQueue.put()
-      t.interrupt();     // simulate ExecutorService.shutdownNow()
-      t.join(4000);
-      assertFalse("getBlock must exit cleanly when interrupted during put()", t.isAlive());
+      worker.interrupt();     // simulate ExecutorService.shutdownNow()
+      worker.join(4000);
+      assertFalse("getBlock must exit cleanly when interrupted during put()", worker.isAlive());
       Assert.assertNull("getBlock worker failed", workerFailure.get());
       queue.clear();
       setFlag(true);
@@ -612,7 +615,8 @@ public class SolidityNodeTest extends BaseTest {
       // Must return without throwing and without infinite retry.
       getBlockM.invoke(solidityNode);
     } finally {
-      setFlag(true);
+      stopWorker(worker);
+      setFlag(origFlag);
       queue.clear();
       atomicLong("ID").set(origID);
       atomicLong("remoteBlockNum").set(origRemote);
@@ -668,12 +672,12 @@ public class SolidityNodeTest extends BaseTest {
    */
   @Test(timeout = 8000)
   public void testProcessSolidityBlockHandlesInterrupt() throws Exception {
+    boolean origFlag = getFlag();
     TronNetDelegate mockDelegate = mock(TronNetDelegate.class);
     Mockito.when(mockDelegate.isHitDown()).thenReturn(false);
 
     Field delegateField = getField("tronNetDelegate");
     Object origDelegate = delegateField.get(solidityNode);
-    delegateField.set(solidityNode, mockDelegate);
 
     Method m = SolidityNode.class.getDeclaredMethod("processSolidityBlock");
     m.setAccessible(true);
@@ -686,6 +690,7 @@ public class SolidityNodeTest extends BaseTest {
       }
     });
     try {
+      delegateField.set(solidityNode, mockDelegate);
       t.start();
       Thread.sleep(150); // let the thread enter blockQueue.poll(1000 ms)
       t.interrupt();
@@ -693,12 +698,23 @@ public class SolidityNodeTest extends BaseTest {
       assertFalse("processSolidityBlock must exit after interrupt", t.isAlive());
       Assert.assertNull("processSolidityBlock worker failed", workerFailure.get());
     } finally {
-      setFlag(true);
+      stopWorker(t);
+      setFlag(origFlag);
       delegateField.set(solidityNode, origDelegate);
     }
   }
 
   // ── private helpers ──────────────────────────────────────────────────────────
+
+  private void stopWorker(Thread worker) throws Exception {
+    // A timeout may interrupt the test thread before it reaches the normal shutdown path.
+    setFlag(false);
+    if (worker != null) {
+      worker.interrupt();
+      Uninterruptibles.joinUninterruptibly(worker, 5, TimeUnit.SECONDS);
+      assertFalse("Test worker must stop before restoring shared state", worker.isAlive());
+    }
+  }
 
   private static Field getField(String name) throws Exception {
     Field f = SolidityNode.class.getDeclaredField(name);

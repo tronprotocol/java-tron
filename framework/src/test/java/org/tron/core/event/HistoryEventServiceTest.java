@@ -5,6 +5,10 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.google.common.util.concurrent.Uninterruptibles;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import org.junit.After;
@@ -17,6 +21,7 @@ import org.tron.common.utils.Sha256Hash;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.db.Manager;
+import org.tron.core.services.event.BlockEventCache;
 import org.tron.core.services.event.BlockEventGet;
 import org.tron.core.services.event.BlockEventLoad;
 import org.tron.core.services.event.HistoryEventService;
@@ -35,9 +40,16 @@ public class HistoryEventServiceTest {
   private final BlockEventGet get = mock(BlockEventGet.class);
   private final ChainBaseManager chain = mock(ChainBaseManager.class);
   private final DynamicPropertiesStore properties = mock(DynamicPropertiesStore.class);
+  private final Map<String, Object> savedCacheState = new LinkedHashMap<>();
 
   @Before
   public void setUp() {
+    for (String field : new String[]{"solidNum", "head", "solidId", "blockEventMap", "numMap"}) {
+      savedCacheState.put(field, ReflectionTestUtils.getField(BlockEventCache.class, field));
+    }
+    // init() clears both maps, so use test-owned maps to preserve the original contents.
+    ReflectionTestUtils.setField(BlockEventCache.class, "blockEventMap", new ConcurrentHashMap<>());
+    ReflectionTestUtils.setField(BlockEventCache.class, "numMap", new ConcurrentHashMap<>());
     Manager manager = mock(Manager.class);
     when(manager.getChainBaseManager()).thenReturn(chain);
     when(manager.getDynamicPropertiesStore()).thenReturn(properties);
@@ -52,9 +64,20 @@ public class HistoryEventServiceTest {
 
   @After
   public void tearDown() {
-    service.close();
-    Thread worker = (Thread) ReflectionTestUtils.getField(service, "thread");
-    Assert.assertTrue("History worker did not terminate", worker == null || !worker.isAlive());
+    try {
+      service.close();
+    } finally {
+      Thread worker = (Thread) ReflectionTestUtils.getField(service, "thread");
+      if (worker != null) {
+        worker.interrupt();
+        Uninterruptibles.joinUninterruptibly(worker, 5, TimeUnit.SECONDS);
+        Assert.assertFalse("History worker did not terminate", worker.isAlive());
+      }
+      // Restore only after the worker can no longer change the shared cache.
+      savedCacheState.forEach((field, value) ->
+          ReflectionTestUtils.setField(BlockEventCache.class, field, value));
+      savedCacheState.clear();
+    }
   }
 
   @Test

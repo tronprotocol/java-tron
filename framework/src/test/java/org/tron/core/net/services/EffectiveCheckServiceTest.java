@@ -72,16 +72,21 @@ public class EffectiveCheckServiceTest extends BaseTest {
     ScheduledExecutorService executor = Mockito.mock(ScheduledExecutorService.class);
     Mockito.when(executor.submit(Mockito.any(Runnable.class)))
         .thenReturn(CompletableFuture.completedFuture(null));
-    ReflectUtils.setFieldValue(service, "executor", executor);
-    service.triggerNext();
-    ArgumentCaptor<Runnable> task = ArgumentCaptor.forClass(Runnable.class);
-    Mockito.verify(executor).submit(task.capture());
-    task.getValue().run();
-    Assert.assertNull(service.getCur());
+    ScheduledExecutorService originalExecutor = ReflectUtils.getFieldValue(service, "executor");
+    try {
+      ReflectUtils.setFieldValue(service, "executor", executor);
+      service.triggerNext();
+      ArgumentCaptor<Runnable> task = ArgumentCaptor.forClass(Runnable.class);
+      Mockito.verify(executor).submit(task.capture());
+      task.getValue().run();
+      Assert.assertNull(service.getCur());
 
-    ReflectUtils.invokeMethod(service, "resetCount");
-    InetSocketAddress cur = new InetSocketAddress("192.168.0.1", port);
-    service.setCur(cur);
-    service.onDisconnect(cur);
+      ReflectUtils.invokeMethod(service, "resetCount");
+      InetSocketAddress cur = new InetSocketAddress("192.168.0.1", port);
+      service.setCur(cur);
+      service.onDisconnect(cur);
+    } finally {
+      ReflectUtils.setFieldValue(service, "executor", originalExecutor);
+    }
   }
 }
