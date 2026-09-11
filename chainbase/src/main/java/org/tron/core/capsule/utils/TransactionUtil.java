@@ -169,6 +169,8 @@ public class TransactionUtil {
     itBuilder.setNote(ByteString.copyFrom(it.getNote().getBytes()));
     itBuilder.setRejected(it.isRejected());
     itBuilder.setExtra(it.getExtra());
+    itBuilder.setData(ByteString.copyFrom(it.getData()));
+    itBuilder.setOutput(ByteString.copyFrom(it.getOutput()));
     return itBuilder.build();
   }
 
