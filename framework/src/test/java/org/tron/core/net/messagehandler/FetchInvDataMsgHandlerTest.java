@@ -69,6 +69,29 @@ public class FetchInvDataMsgHandlerTest {
   }
 
   @Test
+  public void testSyncBlockIdCacheRetainsOldestHashInValidWindow() {
+    PeerConnection peer = new PeerConnection();
+    Sha256Hash firstHash = createHash(0);
+    int windowSize = 2 * (int) Parameter.NetConstants.SYNC_FETCH_BATCH_NUM + 1;
+
+    for (int i = 0; i < windowSize; i++) {
+      peer.getSyncBlockIdCache().put(createHash(i), (long) i);
+    }
+    peer.getSyncBlockIdCache().cleanUp();
+
+    Assert.assertNotNull(peer.getSyncBlockIdCache().getIfPresent(firstHash));
+  }
+
+  private Sha256Hash createHash(int value) {
+    byte[] bytes = new byte[Sha256Hash.LENGTH];
+    bytes[28] = (byte) (value >>> 24);
+    bytes[29] = (byte) (value >>> 16);
+    bytes[30] = (byte) (value >>> 8);
+    bytes[31] = (byte) value;
+    return Sha256Hash.wrap(bytes);
+  }
+
+  @Test
   public void testIsAdvInv() {
     FetchInvDataMsgHandler fetchInvDataMsgHandler = new FetchInvDataMsgHandler();
 
