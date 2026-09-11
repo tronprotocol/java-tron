@@ -39,6 +39,18 @@ public class EventPluginConfig {
   @Setter
   private boolean useNativeQueue;
 
+  // Whether the event plugin should be activated. Resolved in Args from the plugin path
+  // and the runPluginWithNativeQueue opt-in, so the loader never has to infer activation
+  // from a possibly-stale path on its own.
+  @Getter
+  @Setter
+  private boolean useEventPlugin;
+
+  // See EventConfig#pluginLoadFailurePolicy ("fail" | "ignore").
+  @Getter
+  @Setter
+  private String pluginLoadFailurePolicy = "fail";
+
   @Getter
   @Setter
   private int bindPort;
@@ -51,6 +63,24 @@ public class EventPluginConfig {
   @Getter
   @Setter
   private List<TriggerConfig> triggerConfigList;
+
+  /**
+   * Decide whether the event plugin should be an active sink.
+   *
+   * <p>Backward-compatible by design:
+   * <ul>
+   *   <li>native queue OFF: the plugin is the only sink, so it is active whenever a
+   *       plugin path is configured (unchanged legacy behavior);</li>
+   *   <li>native queue ON: the plugin runs alongside the queue only when the operator
+   *       opts in via {@code runPluginWithNativeQueue}. A leftover path alone never
+   *       activates it, so upgrading a native-queue node cannot suddenly load a plugin.
+   *       </li>
+   * </ul>
+   */
+  public static boolean resolveUseEventPlugin(boolean hasPluginPath, boolean useNativeQueue,
+      boolean runPluginWithNativeQueue) {
+    return hasPluginPath && (!useNativeQueue || runPluginWithNativeQueue);
+  }
 
   public EventPluginConfig() {
     pluginPath = "";

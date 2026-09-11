@@ -9,6 +9,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -90,6 +91,17 @@ public class EventPluginLoader {
 
   @Getter
   private boolean useNativeQueue = false;
+
+  // Whether the event plugin is an active sink. May be turned off at runtime if the
+  // plugin fails to load under the "ignore" failure policy.
+  @Getter
+  private boolean useEventPlugin = false;
+
+  private static final String FAIL_POLICY = "fail";
+
+  private static final String IGNORE_POLICY = "ignore";
+
+  private String pluginLoadFailurePolicy = FAIL_POLICY;
 
   public static EventPluginLoader getInstance() {
     if (Objects.isNull(instance)) {
@@ -247,12 +259,54 @@ public class EventPluginLoader {
     this.triggerConfigList = config.getTriggerConfigList();
 
     useNativeQueue = config.isUseNativeQueue();
+    useEventPlugin = config.isUseEventPlugin();
+    // Re-resolved every start() so no policy state leaks across runs; any unrecognized
+    // value defaults to the safe "fail" policy rather than silently becoming "ignore".
+    pluginLoadFailurePolicy = normalizeFailurePolicy(config.getPluginLoadFailurePolicy());
 
-    if (config.isUseNativeQueue()) {
-      return launchNativeQueue(config);
+    if (!useNativeQueue && !useEventPlugin) {
+      logger.error("No event sink is configured: enable the native queue "
+          + "or set a plugin path.");
+      return false;
     }
 
-    return launchEventPlugin(config);
+    // Start the plugin first so that, under the "fail" policy, a plugin problem is
+    // surfaced before the native queue starts accepting subscribers.
+    if (useEventPlugin && !launchEventPlugin(config)) {
+      if (!IGNORE_POLICY.equals(pluginLoadFailurePolicy)) {
+        return false;
+      }
+      // "ignore" policy: fall back to native-queue-only operation.
+      logger.warn("Event plugin failed to load; continuing without it "
+          + "(pluginLoadFailurePolicy = ignore).");
+      useEventPlugin = false;
+      if (!useNativeQueue) {
+        return false;
+      }
+    }
+
+    if (useNativeQueue && !launchNativeQueue(config)) {
+      // Native queue failed after the plugin already started; stop the plugin so a
+      // failed startup does not leak its threads/resources.
+      if (useEventPlugin) {
+        stopPlugin();
+      }
+      return false;
+    }
+
+    return true;
+  }
+
+  private String normalizeFailurePolicy(String policy) {
+    String p = Objects.isNull(policy) ? "" : policy.trim();
+    if (IGNORE_POLICY.equalsIgnoreCase(p)) {
+      return IGNORE_POLICY;
+    }
+    if (!p.isEmpty() && !FAIL_POLICY.equalsIgnoreCase(p)) {
+      logger.warn("Unknown pluginLoadFailurePolicy '{}', falling back to '{}'.",
+          p, FAIL_POLICY);
+    }
+    return FAIL_POLICY;
   }
 
   private void setPluginConfig() {
@@ -284,7 +338,7 @@ public class EventPluginLoader {
         blockLogTriggerSolidified = false;
       }
 
-      if (!useNativeQueue) {
+      if (useEventPlugin) {
         setPluginTopic(Trigger.BLOCK_TRIGGER, triggerConfig.getTopic());
       }
 
@@ -304,7 +358,7 @@ public class EventPluginLoader {
         transactionLogTriggerSolidified = false;
       }
 
-      if (!useNativeQueue) {
+      if (useEventPlugin) {
         setPluginTopic(Trigger.TRANSACTION_TRIGGER, triggerConfig.getTopic());
       }
 
@@ -316,7 +370,7 @@ public class EventPluginLoader {
         contractEventTriggerEnable = false;
       }
 
-      if (!useNativeQueue) {
+      if (useEventPlugin) {
         setPluginTopic(Trigger.CONTRACTEVENT_TRIGGER, triggerConfig.getTopic());
       }
 
@@ -332,7 +386,7 @@ public class EventPluginLoader {
         contractLogTriggerRedundancy = false;
       }
 
-      if (!useNativeQueue) {
+      if (useEventPlugin) {
         setPluginTopic(Trigger.CONTRACTLOG_TRIGGER, triggerConfig.getTopic());
       }
     } else if (EventPluginConfig.SOLIDITY_TRIGGER_NAME
@@ -342,7 +396,7 @@ public class EventPluginLoader {
       } else {
         solidityTriggerEnable = false;
       }
-      if (!useNativeQueue) {
+      if (useEventPlugin) {
         setPluginTopic(Trigger.SOLIDITY_TRIGGER, triggerConfig.getTopic());
       }
     } else if (EventPluginConfig.SOLIDITY_EVENT_NAME
@@ -353,7 +407,7 @@ public class EventPluginLoader {
         solidityEventTriggerEnable = false;
       }
 
-      if (!useNativeQueue) {
+      if (useEventPlugin) {
         setPluginTopic(Trigger.SOLIDITY_EVENT_TRIGGER, triggerConfig.getTopic());
       }
     } else if (EventPluginConfig.SOLIDITY_LOG_NAME
@@ -367,19 +421,38 @@ public class EventPluginLoader {
         solidityLogTriggerEnable = false;
         solidityLogTriggerRedundancy = false;
       }
-      if (!useNativeQueue) {
+      if (useEventPlugin) {
         setPluginTopic(Trigger.SOLIDITY_LOG_TRIGGER, triggerConfig.getTopic());
       }
     }
   }
 
+  // Route a trigger to the plugin listeners, keeping a plugin fault from tearing down
+  // the node's event thread. Serialization is done once by the caller and shared with
+  // the native queue, so dual-sink mode adds no extra serialization on the hot path.
+  private void postToPlugin(Consumer<IPluginEventListener> handler) {
+    if (Objects.isNull(eventListeners)) {
+      return;
+    }
+    // Isolate per listener so one misbehaving plugin can neither block delivery to the
+    // others nor tear down the node's event thread. Errors (e.g. OutOfMemoryError) are
+    // intentionally not caught and are allowed to propagate.
+    for (IPluginEventListener listener : eventListeners) {
+      try {
+        handler.accept(listener);
+      } catch (Exception e) {
+        logger.error("event plugin listener failed to handle trigger", e);
+      }
+    }
+  }
+
   public void postSolidityTrigger(SolidityTrigger trigger) {
+    String json = toJsonString(trigger);
     if (useNativeQueue) {
-      NativeMessageQueue.getInstance()
-          .publishTrigger(toJsonString(trigger), trigger.getTriggerName());
-    } else {
-      eventListeners.forEach(listener ->
-          listener.handleSolidityTrigger(toJsonString(trigger)));
+      NativeMessageQueue.getInstance().publishTrigger(json, trigger.getTriggerName());
+    }
+    if (useEventPlugin) {
+      postToPlugin(listener -> listener.handleSolidityTrigger(json));
     }
   }
 
@@ -440,6 +513,9 @@ public class EventPluginLoader {
   }
 
   private void setPluginTopic(int eventType, String topic) {
+    if (Objects.isNull(eventListeners)) {
+      return;
+    }
     eventListeners.forEach(listener -> listener.setTopic(eventType, topic));
   }
 
@@ -514,66 +590,70 @@ public class EventPluginLoader {
   }
 
   public void postBlockTrigger(BlockLogTrigger trigger) {
+    String json = toJsonString(trigger);
     if (useNativeQueue) {
-      NativeMessageQueue.getInstance()
-          .publishTrigger(toJsonString(trigger), trigger.getTriggerName());
-    } else {
-      eventListeners.forEach(listener ->
-          listener.handleBlockEvent(toJsonString(trigger)));
+      NativeMessageQueue.getInstance().publishTrigger(json, trigger.getTriggerName());
+    }
+    if (useEventPlugin) {
+      postToPlugin(listener -> listener.handleBlockEvent(json));
     }
   }
 
   public void postSolidityLogTrigger(ContractLogTrigger trigger) {
+    String json = toJsonString(trigger);
     if (useNativeQueue) {
-      NativeMessageQueue.getInstance()
-          .publishTrigger(toJsonString(trigger), trigger.getTriggerName());
-    } else {
-      eventListeners.forEach(listener ->
-          listener.handleSolidityLogTrigger(toJsonString(trigger)));
+      NativeMessageQueue.getInstance().publishTrigger(json, trigger.getTriggerName());
+    }
+    if (useEventPlugin) {
+      postToPlugin(listener -> listener.handleSolidityLogTrigger(json));
     }
   }
 
   public void postSolidityEventTrigger(ContractEventTrigger trigger) {
+    String json = toJsonString(trigger);
     if (useNativeQueue) {
-      NativeMessageQueue.getInstance()
-          .publishTrigger(toJsonString(trigger), trigger.getTriggerName());
-    } else {
-      eventListeners.forEach(listener ->
-          listener.handleSolidityEventTrigger(toJsonString(trigger)));
+      NativeMessageQueue.getInstance().publishTrigger(json, trigger.getTriggerName());
+    }
+    if (useEventPlugin) {
+      postToPlugin(listener -> listener.handleSolidityEventTrigger(json));
     }
   }
 
   public void postTransactionTrigger(TransactionLogTrigger trigger) {
+    String json = toJsonString(trigger);
     if (useNativeQueue) {
-      NativeMessageQueue.getInstance()
-          .publishTrigger(toJsonString(trigger), trigger.getTriggerName());
-    } else {
-      eventListeners.forEach(listener -> listener.handleTransactionTrigger(toJsonString(trigger)));
+      NativeMessageQueue.getInstance().publishTrigger(json, trigger.getTriggerName());
+    }
+    if (useEventPlugin) {
+      postToPlugin(listener -> listener.handleTransactionTrigger(json));
     }
   }
 
   public void postContractLogTrigger(ContractLogTrigger trigger) {
+    String json = toJsonString(trigger);
     if (useNativeQueue) {
-      NativeMessageQueue.getInstance()
-          .publishTrigger(toJsonString(trigger), trigger.getTriggerName());
-    } else {
-      eventListeners.forEach(listener ->
-          listener.handleContractLogTrigger(toJsonString(trigger)));
+      NativeMessageQueue.getInstance().publishTrigger(json, trigger.getTriggerName());
+    }
+    if (useEventPlugin) {
+      postToPlugin(listener -> listener.handleContractLogTrigger(json));
     }
   }
 
   public void postContractEventTrigger(ContractEventTrigger trigger) {
+    String json = toJsonString(trigger);
     if (useNativeQueue) {
-      NativeMessageQueue.getInstance()
-          .publishTrigger(toJsonString(trigger), trigger.getTriggerName());
-    } else {
-      eventListeners.forEach(listener ->
-          listener.handleContractEventTrigger(toJsonString(trigger)));
+      NativeMessageQueue.getInstance().publishTrigger(json, trigger.getTriggerName());
+    }
+    if (useEventPlugin) {
+      postToPlugin(listener -> listener.handleContractEventTrigger(json));
     }
   }
 
   public boolean isBusy() {
-    if (useNativeQueue) {
+    // Back-pressure guards the plugin's async pending queue, so it applies whenever the
+    // plugin is an active sink — including dual-sink mode. The native queue has no such
+    // queue of its own and never reports busy.
+    if (!useEventPlugin) {
       return false;
     }
     int queueSize = 0;
