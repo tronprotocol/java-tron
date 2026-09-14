@@ -75,14 +75,12 @@ git checkout -t origin/master
 
 # Executables
 
-The java-tron project comes with several runnable artifacts and helper scripts found in the project root and build directories.
+The java-tron project comes with several runnable artifacts found in the build directories.
 
 |     Artifact/Script     | Description |
 | :---------------------- | :---------- |
 | **`FullNode.jar`**      | Main TRON node executable (generated in `build/libs/` after a successful build following the above guidance). Runs as a full node by default. `java -jar FullNode.jar --help` for command line options|
 | **`Toolkit.jar`** | Node management utility (generated in `build/libs/`): partition, prune, copy, convert DBs; shadow-fork tool. [Usage](https://tronprotocol.github.io/documentation-en/using_javatron/toolkit/#toolkit-a-java-tron-node-maintenance-suite) |
-| **`start.sh`**          | Quick start script (x86_64, JDK 8) to download/build/run `FullNode.jar`. See the tool [guide](./shell.md). |
-| **`start.sh.simple`**   | Quick start script template (ARM64, JDK 17). See usage notes inside the script. |
 
 # Running java-tron
 
