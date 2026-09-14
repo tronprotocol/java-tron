@@ -208,6 +208,9 @@ public class NodeConfig {
   public static class RpcConfig {
 
     public static final int DEFAULT_MAX_CONCURRENT_CALLS_PER_CONNECTION = 100;
+    // Secure built-in default for gRPC connection lifetime (idle & max age).
+    // Applied by postProcess() when the configured value is 0 (the default).
+    public static final long DEFAULT_MAX_CONNECTION_LIFETIME_IN_MILLIS = 60_000L;
 
     private boolean enable = true;
     private int port = 50051;
@@ -373,11 +376,33 @@ public class NodeConfig {
       rpc.maxConcurrentCallsPerConnection =
           RpcConfig.DEFAULT_MAX_CONCURRENT_CALLS_PER_CONNECTION;
     }
+    // node.rpc.maxRstStream and node.rpc.secondsPerWindow only take effect
+    // together (RpcService applies RST limiting only when both are > 0). A
+    // half-configured pair would silently disable RST_STREAM flood
+    // protection — warn loudly so the misconfiguration is visible.
+    if (rpc.maxRstStream < 0 || rpc.secondsPerWindow < 0) {
+      throw new TronError("node.rpc.maxRstStream and node.rpc.secondsPerWindow "
+          + "must be non-negative, got: maxRstStream=" + rpc.maxRstStream
+          + ", secondsPerWindow=" + rpc.secondsPerWindow, PARAMETER_INIT);
+    }
+    if ((rpc.maxRstStream > 0 && rpc.secondsPerWindow <= 0)
+        || (rpc.maxRstStream <= 0 && rpc.secondsPerWindow > 0)) {
+      logger.warn("node.rpc.maxRstStream and node.rpc.secondsPerWindow only "
+          + "take effect together: exactly one of them is set while the other "
+          + "is 0, so RST_STREAM flood protection is DISABLED. Set both to "
+          + "positive values to enable it, or leave both at 0 (got: "
+          + "maxRstStream={}, secondsPerWindow={})",
+          rpc.maxRstStream, rpc.secondsPerWindow);
+    }
+    // 0 (the default) means "use the secure built-in default" (60s), NOT
+    // unlimited: the old 0 -> Long.MAX_VALUE conversion silently turned an
+    // unset or explicitly-zero value into an unbounded connection lifetime.
+    // Operators who want a longer lifetime must set an explicit positive value.
     if (rpc.maxConnectionIdleInMillis == 0) {
-      rpc.maxConnectionIdleInMillis = Long.MAX_VALUE;
+      rpc.maxConnectionIdleInMillis = RpcConfig.DEFAULT_MAX_CONNECTION_LIFETIME_IN_MILLIS;
     }
     if (rpc.maxConnectionAgeInMillis == 0) {
-      rpc.maxConnectionAgeInMillis = Long.MAX_VALUE;
+      rpc.maxConnectionAgeInMillis = RpcConfig.DEFAULT_MAX_CONNECTION_LIFETIME_IN_MILLIS;
     }
 
     // validateSignThreadNum: 0 = auto-detect
