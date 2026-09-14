@@ -127,6 +127,18 @@ public class P2pEventHandlerImpl extends P2pEventHandler {
       return;
     }
 
+    if (data == null || data.length == 0) {
+      peerConnection.disconnect(Protocol.ReasonCode.BAD_PROTOCOL);
+      return;
+    }
+
+    if (peerConnection.getHelloMessageReceive() == null
+        && data[0] != MessageTypes.P2P_HELLO.asByte()
+        && data[0] != MessageTypes.P2P_DISCONNECT.asByte()) {
+      peerConnection.disconnect(Protocol.ReasonCode.BAD_PROTOCOL);
+      return;
+    }
+
     if (MessageTypes.PBFT_MSG.asByte() == data[0]) {
       PbftMessage message = null;
       try {
