@@ -6,7 +6,6 @@ import com.google.protobuf.ByteString;
 import java.util.concurrent.ExecutorService;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
@@ -15,6 +14,7 @@ import org.tron.common.exit.ExitManager;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.Time;
 import org.tron.consensus.ConsensusDelegate;
 import org.tron.consensus.base.Param.Miner;
 import org.tron.consensus.base.State;
@@ -123,7 +123,7 @@ public class DposTask {
         BlockHeader.raw raw = blockCapsule.getInstance().getBlockHeader().getRawData();
         logger.info("Produce block successfully, num: {}, time: {}, witness: {}, ID:{}, parentID:{}",
                 raw.getNumber(),
-                new DateTime(raw.getTimestamp()),
+                Time.getIsoTimeString(raw.getTimestamp()),
                 ByteArray.toHexString(raw.getWitnessAddress().toByteArray()),
                 new Sha256Hash(raw.getNumber(), Sha256Hash.of(CommonParameter
                         .getInstance().isECKeyCryptoEngine(), raw.toByteArray())),

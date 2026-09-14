@@ -4,6 +4,7 @@ import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -14,7 +15,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
 
 import lombok.Getter;
-import org.joda.time.DateTime;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -67,7 +67,7 @@ public class TransactionsMsgHandlerTest extends BaseTest {
           .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString("121212a9cf")))
           .setToAddress(ByteString.copyFrom(ByteArray.fromHexString("232323a9cf"))).build();
 
-      long transactionTimestamp = DateTime.now().minusDays(4).getMillis();
+      long transactionTimestamp = ZonedDateTime.now().minusDays(4).toInstant().toEpochMilli();
       Protocol.Transaction trx = Protocol.Transaction.newBuilder().setRawData(
           Protocol.Transaction.raw.newBuilder().setTimestamp(transactionTimestamp)
           .setRefBlockNum(1)
