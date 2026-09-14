@@ -205,37 +205,6 @@ public class KhaosDatabase extends TronDatabase {
     }
   }
 
-  /**
-   * Find two block's most recent common parent block.
-   */
-  @Deprecated
-  public Pair<LinkedList<BlockCapsule>, LinkedList<BlockCapsule>> getBranch(
-      BlockId block1, BlockId block2) {
-    LinkedList<BlockCapsule> list1 = new LinkedList<>();
-    LinkedList<BlockCapsule> list2 = new LinkedList<>();
-    KhaosBlock kblk1 = miniStore.getByHash(block1);
-    KhaosBlock kblk2 = miniStore.getByHash(block2);
-
-    if (kblk1 != null && kblk2 != null) {
-      while (!Objects.equals(kblk1, kblk2)) {
-        if (kblk1.num > kblk2.num) {
-          list1.add(kblk1.blk);
-          kblk1 = kblk1.getParent();
-        } else if (kblk1.num < kblk2.num) {
-          list2.add(kblk2.blk);
-          kblk2 = kblk2.getParent();
-        } else {
-          list1.add(kblk1.blk);
-          list2.add(kblk2.blk);
-          kblk1 = kblk1.getParent();
-          kblk2 = kblk2.getParent();
-        }
-      }
-    }
-
-    return new Pair<>(list1, list2);
-  }
-
   // only for unit test
   public BlockCapsule getParentBlock(Sha256Hash hash) {
     return Stream.of(miniStore.getByHash(hash), miniUnlinkedStore.getByHash(hash))
