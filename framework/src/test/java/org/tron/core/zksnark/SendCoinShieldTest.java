@@ -14,6 +14,7 @@ import java.util.Objects;
 import java.util.Optional;
 import javax.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -106,6 +107,7 @@ public class SendCoinShieldTest extends BaseTest {
   private static final int VOTE_SCORE = 2;
   private static final String DESCRIPTION = "TRX";
   private static final String URL = "https://tron.network";
+  private long previousAllowShieldedTransaction;
   @Resource
   private Wallet wallet;
 
@@ -130,6 +132,8 @@ public class SendCoinShieldTest extends BaseTest {
    */
   @Before
   public void init() {
+    previousAllowShieldedTransaction = dbManager.getDynamicPropertiesStore()
+        .getAllowShieldedTransaction();
     if (init) {
       return;
     }
@@ -153,6 +157,12 @@ public class SendCoinShieldTest extends BaseTest {
     dbManager.getAssetIssueV2Store().put(assetIssueCapsule.createDbV2Key(), assetIssueCapsule);
 
     init = true;
+  }
+
+  @After
+  public void restoreAllowShieldedTransaction() {
+    dbManager.getDynamicPropertiesStore()
+        .saveAllowShieldedTransaction(previousAllowShieldedTransaction);
   }
 
   private void addZeroValueOutputNote(ZenTransactionBuilder builder) throws ZksnarkException {
