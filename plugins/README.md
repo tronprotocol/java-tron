@@ -161,7 +161,7 @@ DB backfill bloom rebuilds missing historical SectionBloom indexes from transact
 - The command creates or updates the `section-bloom` database in the specified database directory.
 - An existing `section-bloom` directory uses its own engine. A new one inherits the engine of `transactionRetStore`. Missing `engine.properties` is treated as LevelDB for compatibility with older databases.
 - On ARM64, only RocksDB is supported. LevelDB is rejected before any database is opened or created.
-- The operation is idempotent. If it is interrupted, safely rerun the same block range. Existing SectionBloom bits are preserved and set again. Do not run multiple backfill processes concurrently.
+- The operation is idempotent. If it is interrupted, safely rerun the same block range. Existing SectionBloom bits are preserved, and unchanged index records are not rewritten. Do not run multiple backfill processes concurrently.
 
 ### Available parameters
 
@@ -189,7 +189,9 @@ java -jar Toolkit.jar db backfill-bloom -d /path/to/database -c 8
 
 ### Progress and performance
 
-The terminal progress bar displays completed blocks, elapsed time, and estimated remaining time. `toolkit.log` records progress every 10,000 scanned blocks and includes the percentage, elapsed time, average rate, and estimated remaining time. The final summary reports scanned and successful blocks, blocks containing logs, errors, Bloom writes, duration, rates, and the concurrency used.
+Each worker accumulates index bits for one section of up to 2,048 blocks. At the end of the section, each touched index record is read once, merged with existing bits, and written only if it changes. The Bloom write count reports actual index-record writes.
+
+The terminal progress bar displays scanned blocks, elapsed time, and estimated remaining time. `toolkit.log` records progress every 10,000 scanned blocks and includes the percentage, elapsed time, average rate, and estimated remaining time. A section's successful-block and log-block counts are added only after its required index writes finish. If a section write fails, none of its blocks are counted as successful; rerunning the same range completes any partially written section. The final summary reports scanned and successful blocks, blocks containing logs, block/task errors, Bloom writes, duration, rates, and the concurrency used.
 
 Performance depends on the number of logs, storage engine, disk, CPU, and database compaction. Increase `--max-concurrency` gradually while monitoring disk latency and CPU usage.
 

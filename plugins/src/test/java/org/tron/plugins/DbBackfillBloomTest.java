@@ -4,11 +4,13 @@ import static org.mockito.AdditionalMatchers.aryEq;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.CALLS_REAL_METHODS;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockConstruction;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -34,6 +36,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.atomic.AtomicInteger;
 import me.tongfei.progressbar.ProgressBar;
 import org.junit.After;
 import org.junit.Assert;
@@ -43,6 +46,7 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.mockito.MockedConstruction;
 import org.mockito.MockedStatic;
+import org.mockito.stubbing.Answer;
 import org.slf4j.LoggerFactory;
 import org.tron.common.TestConstants;
 import org.tron.common.arch.Arch;
@@ -226,17 +230,22 @@ public class DbBackfillBloomTest {
     when(properties.get(aryEq(HEADER_KEY))).thenReturn(ByteArray.fromLong(2050));
     Error[] failures = {new AssertionError("worker failed"),
         new NoClassDefFoundError("missing worker dependency")};
-    when(transactions.get(aryEq(ByteArray.fromLong(1)))).thenThrow(failures[0]);
-    when(transactions.get(aryEq(ByteArray.fromLong(2048)))).thenThrow(failures[1]);
+    when(transactions.get(aryEq(ByteArray.fromLong(1)))).thenReturn(transactionRet.toByteArray());
+    when(transactions.get(aryEq(ByteArray.fromLong(2)))).thenThrow(failures[0]);
+    when(transactions.get(aryEq(ByteArray.fromLong(2048))))
+        .thenReturn(transactionRet.toByteArray());
+    when(transactions.get(aryEq(ByteArray.fromLong(2049)))).thenThrow(failures[1]);
     try (MockedStatic<DbTool> ignored = mockDatabases()) {
       Assert.assertEquals(1, execute("-c", "2"));
       Assert.assertTrue(output.toString().contains("Errors encountered: 2"));
-      Assert.assertTrue(output.toString().contains("Total blocks scanned: 2"));
+      Assert.assertTrue(output.toString().contains("Total blocks scanned: 4"));
       Assert.assertTrue(output.toString().contains("Successfully processed: 0"));
       Assert.assertTrue(output.toString().contains("Backfill failed;"));
       Assert.assertFalse(output.toString().contains("Backfill completed successfully!"));
-      verify(transactions, never()).get(aryEq(ByteArray.fromLong(2)));
-      verify(transactions, never()).get(aryEq(ByteArray.fromLong(2049)));
+      verify(transactions, never()).get(aryEq(ByteArray.fromLong(3)));
+      verify(transactions, never()).get(aryEq(ByteArray.fromLong(2050)));
+      verify(bloom, never()).get(any(byte[].class));
+      verify(bloom, never()).put(any(byte[].class), any(byte[].class));
       for (int i = 0; i < failures.length; i++) {
         String message = "Error processing section " + (i == 0 ? "1 to 2047" : "2048 to 2050");
         Assert.assertTrue(errors.toString().contains(message));
@@ -274,13 +283,13 @@ public class DbBackfillBloomTest {
     try (MockedStatic<DbTool> ignored = mockDatabases()) {
       Assert.assertEquals(1, execute("-e", "1"));
       verify(bloom).put(any(byte[].class), any(byte[].class));
-      Assert.assertTrue(errors.toString().contains("Error processing block 1"));
-      Assert.assertFalse(output.toString().contains("Error processing block 1"));
+      Assert.assertTrue(errors.toString().contains("Error writing section 1 to 1"));
+      Assert.assertFalse(output.toString().contains("Error writing section 1 to 1"));
       Assert.assertTrue(output.toString().contains("Errors encountered: 1"));
       Assert.assertTrue(output.toString().contains("Successfully processed: 0"));
       Assert.assertFalse(output.toString().contains("Backfill completed successfully!"));
       ILoggingEvent event = appender.list.stream()
-          .filter(entry -> "Error processing block 1".equals(entry.getFormattedMessage()))
+          .filter(entry -> "Error writing section 1 to 1".equals(entry.getFormattedMessage()))
           .findFirst().orElse(null);
       Assert.assertNotNull(event);
       ThrowableProxy throwable = (ThrowableProxy) event.getThrowableProxy();
@@ -291,13 +300,104 @@ public class DbBackfillBloomTest {
   }
 
   @Test(timeout = 30_000)
-  public void testMalformedProtobufFailsWithoutWritingBloom() throws Exception {
-    writeSource(1, 1, 1);
-    openDb("transactionRetStore").put(ByteArray.fromLong(1), new byte[] {(byte) 0x80});
+  public void testMalformedProtobufSkipsOnlyInvalidBlock() throws Exception {
+    writeSource(1, 3, 3);
+    openDb("transactionRetStore").put(ByteArray.fromLong(2), new byte[] {(byte) 0x80});
     DbTool.close();
-    Assert.assertEquals(1, execute());
-    Assert.assertTrue(errors.toString().contains("Error processing block 1"));
+    Assert.assertEquals(1, execute("-s", "2", "-e", "2"));
+    Assert.assertTrue(errors.toString().contains("Error processing block 2"));
     Assert.assertTrue(readBloomEntries().isEmpty());
+    Assert.assertEquals(1, execute());
+    Assert.assertTrue(output.toString().contains("Errors encountered: 1"));
+    Assert.assertTrue(output.toString().contains("Successfully processed: 2"));
+    BitSet expected = new BitSet();
+    expected.set(1);
+    expected.set(3);
+    assertIndexedBlocks(expected);
+  }
+
+  @Test(timeout = 30_000)
+  public void testSectionReadsAndWritesEachChangedIndexOnce() throws Exception {
+    writeSource(1, 128, 128);
+    BitSet indexes = BitSet.valueOf(BloomUtils.createBloom(transactionRet));
+    Assert.assertTrue(indexes.cardinality() > 1);
+    int unchangedIndex = indexes.nextSetBit(0);
+    BitSet existing = new BitSet();
+    existing.set(512);
+    writeBloom(ByteUtil.compress(existing.toByteArray()));
+    BitSet expected = (BitSet) existing.clone();
+    expected.set(1, 129);
+    openDb("section-bloom").put(bloomKey(0, unchangedIndex),
+        ByteUtil.compress(expected.toByteArray()));
+    DbTool.close();
+
+    for (int run = 0; run < 2; run++) {
+      int expectedWrites = run == 0 ? indexes.cardinality() - 1 : 0;
+      try (MockedStatic<DbTool> ignored = mockRealDatabases()) {
+        Assert.assertEquals(0, execute());
+        Assert.assertTrue(output.toString().contains("Successfully processed: 128"));
+        Assert.assertTrue(output.toString().contains("Total bloom writes: " + expectedWrites));
+        verify(bloom, times(indexes.cardinality())).get(any(byte[].class));
+        verify(bloom, times(expectedWrites)).put(any(byte[].class), any(byte[].class));
+        for (int bit = indexes.nextSetBit(0); bit >= 0; bit = indexes.nextSetBit(bit + 1)) {
+          verify(bloom).get(aryEq(bloomKey(0, bit)));
+          verify(bloom, times(run == 0 && bit != unchangedIndex ? 1 : 0))
+              .put(aryEq(bloomKey(0, bit)), any(byte[].class));
+        }
+      }
+      assertIndexedBlocks(expected);
+    }
+  }
+
+  @Test(timeout = 30_000)
+  public void testPartialSectionFailureCanBeRerun() throws Exception {
+    for (boolean failOnRead : new boolean[] {false, true}) {
+      databaseRoot = temporaryFolder.newFolder();
+      writeSource(1, 3, 3);
+      BitSet existing = new BitSet();
+      existing.set(7);
+      writeBloom(ByteUtil.compress(existing.toByteArray()));
+      RuntimeException failure = new RuntimeException("index I/O failed");
+      AtomicInteger attempts = new AtomicInteger();
+      Answer<Object> failSecondOperation = invocation -> {
+        if (attempts.incrementAndGet() == 2) {
+          throw failure;
+        }
+        return invocation.callRealMethod();
+      };
+      try (MockedStatic<DbTool> ignored = mockRealDatabases()) {
+        if (failOnRead) {
+          doAnswer(failSecondOperation).when(bloom).get(any(byte[].class));
+        } else {
+          doAnswer(failSecondOperation).when(bloom).put(any(byte[].class), any(byte[].class));
+        }
+        Assert.assertEquals(1, execute());
+        Assert.assertEquals(2, attempts.get());
+        Assert.assertTrue(errors.toString().contains("Error writing section 1 to 3"));
+        Assert.assertTrue(output.toString().contains("Errors encountered: 1"));
+        Assert.assertTrue(output.toString().contains("Total blocks scanned: 3"));
+        Assert.assertTrue(output.toString().contains("Successfully processed: 0"));
+        Assert.assertTrue(output.toString().contains("Blocks with logs: 0"));
+        Assert.assertTrue(output.toString().contains("Total bloom writes: 1"));
+      }
+      BitSet indexes = BitSet.valueOf(BloomUtils.createBloom(transactionRet));
+      Assert.assertTrue(indexes.cardinality() > 1);
+      BitSet expected = (BitSet) existing.clone();
+      expected.set(1, 4);
+      Map<ByteString, byte[]> partial = readBloomEntries();
+      Assert.assertEquals(indexes.cardinality(), partial.size());
+      for (int bit = indexes.nextSetBit(0); bit >= 0; bit = indexes.nextSetBit(bit + 1)) {
+        byte[] value = partial.get(ByteString.copyFrom(bloomKey(0, bit)));
+        Assert.assertNotNull(value);
+        Assert.assertEquals(bit == indexes.nextSetBit(0) ? expected : existing,
+            BitSet.valueOf(ByteUtil.decompress(value)));
+      }
+      Assert.assertEquals(0, execute());
+      Assert.assertTrue(output.toString().contains("Successfully processed: 3"));
+      Assert.assertTrue(output.toString().contains(
+          "Total bloom writes: " + (indexes.cardinality() - 1)));
+      assertIndexedBlocks(expected);
+    }
   }
 
   @Test(timeout = 30_000)
@@ -360,6 +460,7 @@ public class DbBackfillBloomTest {
     TransactionRet second = createTransactionRet(82);
     TransactionRet empty = TransactionRet.newBuilder()
         .addTransactioninfo(TransactionInfo.getDefaultInstance()).build();
+    openDb("transactionRetStore").put(ByteArray.fromLong(2046), second.toByteArray());
     openDb("transactionRetStore").put(ByteArray.fromLong(2047), transactionRet.toByteArray());
     openDb("transactionRetStore").put(ByteArray.fromLong(2048), second.toByteArray());
     openDb("transactionRetStore").put(ByteArray.fromLong(2049), empty.toByteArray());
@@ -372,6 +473,8 @@ public class DbBackfillBloomTest {
     SectionBloomStore nodeStore = null;
     try {
       nodeStore = new SectionBloomStore("section-bloom");
+      nodeStore.initBlockSection(new TransactionRetCapsule(second.toByteArray()));
+      nodeStore.write(2046);
       nodeStore.initBlockSection(new TransactionRetCapsule(transactionRet.toByteArray()));
       nodeStore.write(2047);
       nodeStore.initBlockSection(new TransactionRetCapsule(second.toByteArray()));
@@ -388,9 +491,12 @@ public class DbBackfillBloomTest {
           writeBloom(ByteUtil.compress(existing.toByteArray()));
         }
         Assert.assertEquals(0, execute("-c", "2"));
-        Assert.assertTrue(output.toString().contains("Blocks with logs: 2"));
-        Assert.assertTrue(output.toString().contains("Successfully processed: 4"));
+        Assert.assertTrue(output.toString().contains("Blocks with logs: 3"));
+        Assert.assertTrue(output.toString().contains("Successfully processed: 5"));
         Assert.assertTrue(output.toString().contains("Processing 2 sections with 2 threads"));
+        if (run == 2) {
+          Assert.assertTrue(output.toString().contains("Total bloom writes: 0"));
+        }
         Assert.assertEquals(DbType.RocksDB,
             DbTool.getDbType(databaseRoot.toString(), "section-bloom"));
         Map<ByteString, byte[]> expected = readNodeSections(nodeStore);
@@ -484,6 +590,15 @@ public class DbBackfillBloomTest {
     return dbTool;
   }
 
+  private MockedStatic<DbTool> mockRealDatabases() throws Exception {
+    transactions = openDb("transactionRetStore");
+    properties = openDb("properties");
+    bloom = spy(openDb("section-bloom"));
+    MockedStatic<DbTool> dbTool = mockDatabases();
+    dbTool.when(DbTool::close).thenCallRealMethod();
+    return dbTool;
+  }
+
   private void assertNoDatabasesOpened(MockedStatic<DbTool> dbTool) {
     dbTool.verify(() -> DbTool.getDB(anyString(), anyString()), never());
     dbTool.verify(() -> DbTool.getDB(anyString(), anyString(), any(DbType.class)), never());
@@ -529,12 +644,16 @@ public class DbBackfillBloomTest {
   }
 
   private void assertIndexedBlocks(int first, int last) throws Exception {
+    BitSet expected = new BitSet();
+    expected.set(first, last + 1);
+    assertIndexedBlocks(expected);
+  }
+
+  private void assertIndexedBlocks(BitSet expected) throws Exception {
     Map<ByteString, byte[]> actual = readBloomEntries();
     BitSet indexes = BitSet.valueOf(BloomUtils.createBloom(transactionRet));
     Assert.assertFalse(indexes.isEmpty());
     Assert.assertEquals(indexes.cardinality(), actual.size());
-    BitSet expected = new BitSet();
-    expected.set(first, last + 1);
     for (int bit = indexes.nextSetBit(0); bit >= 0; bit = indexes.nextSetBit(bit + 1)) {
       byte[] value = actual.get(ByteString.copyFrom(bloomKey(0, bit)));
       Assert.assertNotNull(value);

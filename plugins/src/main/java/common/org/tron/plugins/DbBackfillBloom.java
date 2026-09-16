@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.List;
 import java.util.Locale;
-import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -81,9 +80,9 @@ public class DbBackfillBloom implements Callable<Integer> {
   // Statistics
   // Number of blocks traversed (including failed ones)
   private final AtomicLong processedBlocks = new AtomicLong(0);
-  // Number of successfully processed blocks
+  // Number of successfully processed blocks in fully written sections
   private final AtomicLong successfulBlocks = new AtomicLong(0);
-  // Number of blocks containing logs
+  // Number of blocks containing logs in fully written sections
   private final AtomicLong blocksWithLogs = new AtomicLong(0);
   // Number of block and task failures
   private final AtomicLong errorCount = new AtomicLong(0);
@@ -373,10 +372,15 @@ public class DbBackfillBloom implements Callable<Integer> {
 
   private void processSection(long sectionStart, long sectionEnd, long totalBlocks, long startTime,
       ProgressBar pb) {
+    BitSet[] sectionBloom = new BitSet[BloomUtils.BLOOM_BIT_SIZE];
+    long sectionSuccessfulBlocks = 0;
+    long sectionBlocksWithLogs = 0;
     for (long blockNum = sectionStart; blockNum <= sectionEnd; blockNum++) {
       try {
-        backfillBlockBloom(blockNum, transactionRetDb, sectionBloomDb);
-        successfulBlocks.incrementAndGet();
+        if (accumulateBlockBloom(blockNum, sectionBloom)) {
+          sectionBlocksWithLogs++;
+        }
+        sectionSuccessfulBlocks++;
       } catch (Exception e) {
         printError(e, "Error processing block %d", blockNum);
         errorCount.incrementAndGet();
@@ -385,6 +389,15 @@ public class DbBackfillBloom implements Callable<Integer> {
         logProgress(processed, totalBlocks, startTime);
         pb.step();
       }
+    }
+
+    try {
+      flushSectionBloom((int) (sectionStart / BLOCKS_PER_SECTION), sectionBloom);
+      successfulBlocks.addAndGet(sectionSuccessfulBlocks);
+      blocksWithLogs.addAndGet(sectionBlocksWithLogs);
+    } catch (Exception e) {
+      printError(e, "Error writing section %d to %d", sectionStart, sectionEnd);
+      errorCount.incrementAndGet();
     }
   }
 
@@ -413,15 +426,15 @@ public class DbBackfillBloom implements Callable<Integer> {
     return String.format(Locale.ROOT, "%02d:%02d:%02d", hours, minutes, seconds);
   }
 
-  private void backfillBlockBloom(long blockNum, DBInterface transactionRetDb,
-      DBInterface sectionBloomDb) throws InvalidProtocolBufferException, EventBloomException {
+  private boolean accumulateBlockBloom(long blockNum, BitSet[] sectionBloom)
+      throws InvalidProtocolBufferException {
 
     // Get transaction info for this block
     byte[] blockKey = ByteArray.fromLong(blockNum);
     byte[] transactionRetData = transactionRetDb.get(blockKey);
 
     if (transactionRetData == null) {
-      return;
+      return false;
     }
 
     TransactionRet transactionRet = TransactionRet.parseFrom(transactionRetData);
@@ -429,47 +442,39 @@ public class DbBackfillBloom implements Callable<Integer> {
     // Create bloom filter for this block using the same logic as SectionBloomStore
     byte[] blockBloom = BloomUtils.createBloom(transactionRet);
 
-    if (blockBloom != null) {
-      // Extract bit positions from bloom filter
-      List<Integer> bitList = extractBitPositions(blockBloom);
-
-      // A non-null bloom contains at least one set bit from a log address.
-      writeSectionBloom(blockNum, bitList, sectionBloomDb);
-      blocksWithLogs.incrementAndGet();
+    if (blockBloom == null) {
+      return false;
     }
-  }
 
-  private List<Integer> extractBitPositions(byte[] blockBloom) {
-    List<Integer> bitList = new ArrayList<>();
-    BitSet bs = BitSet.valueOf(blockBloom);
-    for (int i = bs.nextSetBit(0); i >= 0; i = bs.nextSetBit(i + 1)) {
-      // operate on index i here
-      if (i == Integer.MAX_VALUE) {
-        break; // or (i+1) would overflow
-      }
-      bitList.add(i);
-    }
-    return bitList;
-  }
-
-  private void writeSectionBloom(long blockNum, List<Integer> bitList, DBInterface sectionBloomDb)
-      throws EventBloomException {
-
-    int section = (int) (blockNum / BLOCKS_PER_SECTION);
     int blockNumOffset = (int) (blockNum % BLOCKS_PER_SECTION);
+    BitSet bloomBits = BitSet.valueOf(blockBloom);
+    for (int bit = bloomBits.nextSetBit(0); bit >= 0; bit = bloomBits.nextSetBit(bit + 1)) {
+      if (sectionBloom[bit] == null) {
+        sectionBloom[bit] = new BitSet(BLOCKS_PER_SECTION);
+      }
+      sectionBloom[bit].set(blockNumOffset);
+    }
+    return true;
+  }
 
-    for (int bitIndex : bitList) {
-      // Get existing BitSet from database
-      BitSet bitSet = getSectionBloomBitSet(section, bitIndex, sectionBloomDb);
-      if (Objects.isNull(bitSet)) {
-        bitSet = new BitSet(BLOCKS_PER_SECTION);
+  private void flushSectionBloom(int section, BitSet[] sectionBloom)
+      throws EventBloomException {
+    for (int bitIndex = 0; bitIndex < sectionBloom.length; bitIndex++) {
+      BitSet additions = sectionBloom[bitIndex];
+      if (additions == null) {
+        continue;
+      }
+      // Read each touched index once, preserving bits outside the requested block range.
+      BitSet existing = getSectionBloomBitSet(section, bitIndex, sectionBloomDb);
+      if (existing != null) {
+        additions.andNot(existing);
+        if (additions.isEmpty()) {
+          continue;
+        }
+        additions.or(existing);
       }
 
-      // Update the bit for this block
-      bitSet.set(blockNumOffset);
-
-      // Put back into database
-      putSectionBloomBitSet(section, bitIndex, bitSet, sectionBloomDb);
+      putSectionBloomBitSet(section, bitIndex, additions, sectionBloomDb);
       totalBloomWrites.incrementAndGet();
     }
   }
