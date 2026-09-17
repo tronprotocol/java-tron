@@ -178,17 +178,6 @@ crypto    → common
 
 ## Commit & PR Convention
 
-`type(scope): description` (Conventional Commits), 10–72 characters, no trailing period.
+Commit messages and PR titles follow `type(scope): description`. The allowed types, the full scope list and the subject rules are defined in [CONTRIBUTING.md](./CONTRIBUTING.md#commit-messages) — follow it there.
 
-- **type:** `feat` `fix` `refactor` `docs` `style` `test` `chore` `ci` `perf` `build` `revert`
-- **scope:** `framework` `chainbase` `actuator` `consensus` `common` `crypto` `plugins` `protocol` `net` `db` `vm` `tvm` `api` `jsonrpc` `rpc` `http` `event` `config` `block` `proposal` `trie` `log` `metrics` `test` `docker` `version`
-
-Examples:
-
-```
-fix(vm): correct energy accounting for CREATE2
-feat(api): add block header endpoint to solidity node
-refactor(chainbase): extract snapshot flush into its own method
-```
-
-**PR titles follow the same convention and are validated automatically** (`.github/workflows/pr-check.yml`): 10–72 characters, a recognised `type(scope)` prefix, and no trailing period. Fill in `.github/PULL_REQUEST_TEMPLATE.md`; the description is checked as well.
+PR titles and descriptions are validated in CI by `.github/workflows/pr-check.yml`. Fill in `.github/PULL_REQUEST_TEMPLATE.md`.
