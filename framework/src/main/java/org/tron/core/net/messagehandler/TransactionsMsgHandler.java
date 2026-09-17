@@ -183,7 +183,11 @@ public class TransactionsMsgHandler implements TronMsgHandler {
 
     try {
       trx.getTransactionCapsule().checkExpiration(chainBaseManager.getNextBlockSlotTime());
-      tronNetDelegate.pushTransaction(trx.getTransactionCapsule());
+      if (!tronNetDelegate.pushTransaction(trx.getTransactionCapsule())) {
+        logger.debug("Drop trx {} from {}, local admission rejected",
+            trx.getMessageId(), peer.getInetAddress());
+        return;
+      }
       advService.broadcast(trx);
     } catch (P2pException e) {
       logger.warn("Trx {} from peer {} process failed. type: {}, reason: {}",
