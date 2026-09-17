@@ -43,6 +43,11 @@ public abstract class HttpService extends AbstractService {
 
   protected long maxRequestSize = 4 * 1024 * 1024; // 4MB
 
+  // Applied by ConnectionLimit only while maxHttpConnectNumber is reached: existing
+  // connections idle out after this long so the acceptor can resume. Jetty restores the
+  // connector default (30s) once the count drops back below the limit.
+  private static final long CONNECTION_LIMIT_IDLE_TIMEOUT_MS = 5000L;
+
   @VisibleForTesting
   public long getMaxRequestSize() {
     return this.maxRequestSize;
@@ -80,7 +85,9 @@ public abstract class HttpService extends AbstractService {
     this.apiServer = new Server(this.port);
     int maxHttpConnectNumber = Args.getInstance().getMaxHttpConnectNumber();
     if (maxHttpConnectNumber > 0) {
-      this.apiServer.addBean(new ConnectionLimit(maxHttpConnectNumber, this.apiServer));
+      ConnectionLimit connectionLimit = new ConnectionLimit(maxHttpConnectNumber, this.apiServer);
+      connectionLimit.setIdleTimeout(CONNECTION_LIMIT_IDLE_TIMEOUT_MS);
+      this.apiServer.addBean(connectionLimit);
     }
     this.apiServer.setErrorHandler(new OversizedRequestErrorHandler());
   }

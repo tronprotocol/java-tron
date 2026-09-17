@@ -13,6 +13,9 @@ import org.springframework.mock.web.MockHttpServletResponse;
 import org.tron.common.BaseTest;
 import org.tron.common.TestConstants;
 import org.tron.core.config.args.Args;
+import org.tron.core.services.http.servlets.GetBurnTrxServlet;
+import org.tron.core.services.http.servlets.GetNowBlockServlet;
+import org.tron.core.services.http.servlets.JsonFormat;
 
 /**
  * End-to-end integration tests for {@link RateLimiterServlet#service} wiring of the

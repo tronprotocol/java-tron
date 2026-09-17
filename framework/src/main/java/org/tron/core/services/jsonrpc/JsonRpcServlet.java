@@ -28,7 +28,7 @@ import org.tron.common.parameter.CommonParameter;
 import org.tron.core.Constant;
 import org.tron.core.services.filter.BufferedResponseWrapper;
 import org.tron.core.services.filter.CachedBodyRequestWrapper;
-import org.tron.core.services.http.RateLimiterServlet;
+import org.tron.core.services.http.servlets.RateLimiterServlet;
 
 @Component
 @Slf4j(topic = "API")

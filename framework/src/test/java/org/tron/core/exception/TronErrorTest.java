@@ -38,10 +38,9 @@ import org.tron.common.parameter.RateLimiterInitialization;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.common.zksnark.JLibrustzcash;
 import org.tron.core.config.args.Args;
-import org.tron.core.services.http.GetBlockServlet;
-import org.tron.core.services.http.RateLimiterServlet;
+import org.tron.core.services.http.servlets.GetBlockServlet;
+import org.tron.core.services.http.servlets.RateLimiterServlet;
 import org.tron.core.zen.ZksnarkInitService;
-
 
 @RunWith(MockitoJUnitRunner.class)
 public class TronErrorTest {

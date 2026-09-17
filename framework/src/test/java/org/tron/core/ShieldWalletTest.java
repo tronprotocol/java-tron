@@ -26,8 +26,8 @@ import org.tron.core.config.args.Args;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ZksnarkException;
-import org.tron.core.services.http.JsonFormat;
-import org.tron.core.services.http.JsonFormat.ParseException;
+import org.tron.core.services.http.servlets.JsonFormat;
+import org.tron.core.services.http.servlets.JsonFormat.ParseException;
 
 
 public class ShieldWalletTest extends BaseTest {
