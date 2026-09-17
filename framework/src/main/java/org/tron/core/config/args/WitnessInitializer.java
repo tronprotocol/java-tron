@@ -97,7 +97,7 @@ public class WitnessInitializer {
             "Tip: keystores created via `FullNode.jar --keystore-factory` in "
                 + "non-TTY mode were encrypted with only the first "
                 + "whitespace-separated word of the password. Try restarting "
-                + "with only that first word as `--password`, then reset the "
+                + "with only that first word as the password, then reset the "
                 + "password via `java -jar Toolkit.jar keystore update`.");
       }
       throw new TronError(e, TronError.ErrCode.WITNESS_KEYSTORE_LOAD);

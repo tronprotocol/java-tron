@@ -90,6 +90,15 @@ public class ArgsTest {
   }
 
   @Test
+  public void testRemovedKeystoreFactoryTakesPrecedenceOverInvalidConfig() {
+    TronError exception = Assert.assertThrows(TronError.class,
+        () -> Args.setParam(new String[] {"--keystore-factory", "-c", "no-such-file.conf"},
+            TestConstants.TEST_CONF));
+
+    Assert.assertEquals(TronError.ErrCode.PARAMETER_INIT, exception.getErrCode());
+  }
+
+  @Test
   public void get() {
     Args.setParam(new String[] {}, TestConstants.TEST_CONF);
 
