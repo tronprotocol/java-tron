@@ -24,6 +24,7 @@ import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.tron.common.TestConstants;
 import org.tron.core.config.args.Args;
+import org.tron.core.services.http.servlets.RateLimiterServlet;
 import org.tron.core.services.interfaceJsonRpcOnPBFT.JsonRpcOnPBFTServlet;
 import org.tron.core.services.interfaceJsonRpcOnSolidity.JsonRpcOnSolidityServlet;
 import org.tron.core.services.interfaceOnPBFT.WalletOnPBFT;
