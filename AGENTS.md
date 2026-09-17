@@ -155,7 +155,7 @@ crypto    → common
 
 **API / Threads:**
 - New HTTP servlets must go through `HttpApiAccessFilter` and use `Wallet` (never inject `Manager` directly).
-- New gRPC methods must join the `LiteFnQueryGrpcInterceptor` chain.
+- A new gRPC or HTTP query that depends on historical data (unavailable on a lite fullnode) must be added to the deny-list in `LiteFnQueryGrpcInterceptor` / `LiteFnQueryHttpFilter`; other methods need no action — the interceptor and filter are installed server-wide.
 - No bare `new Thread()` — use a named Executor, shut down via `shutdown()` → `awaitTermination()` → `shutdownNow()`.
 
 ## Common Pitfalls
