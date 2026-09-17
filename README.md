@@ -77,7 +77,7 @@ git checkout -t origin/master
 
 The java-tron project comes with several runnable artifacts found in the build directories.
 
-|     Artifact/Script     | Description |
+|        Artifact         | Description |
 | :---------------------- | :---------- |
 | **`FullNode.jar`**      | Main TRON node executable (generated in `build/libs/` after a successful build following the above guidance). Runs as a full node by default. `java -jar FullNode.jar --help` for command line options|
 | **`Toolkit.jar`** | Node management utility (generated in `build/libs/`): partition, prune, copy, convert DBs; shadow-fork tool. [Usage](https://tronprotocol.github.io/documentation-en/using_javatron/toolkit/#toolkit-a-java-tron-node-maintenance-suite) |
