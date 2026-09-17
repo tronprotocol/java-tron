@@ -133,7 +133,7 @@ crypto    → common
 ## Hard Constraints
 
 **Cross-JVM determinism** (consensus, state transition, block ordering) — the same block must produce the same state on every supported platform:
-- Never use `java.lang.Math` — use `StrictMathWrapper` (CI-enforced, see checklist step 4).
+- Never use `java.lang.Math` — use `org.tron.common.math.StrictMathWrapper` instead (CI-enforced, see checklist step 4).
 - Never use `float` / `double` in consensus-relevant arithmetic.
 - Never depend on `HashMap` iteration order for a business decision.
 - Use the DPoS slot time for produced-block timestamps, not `System.currentTimeMillis()`.
