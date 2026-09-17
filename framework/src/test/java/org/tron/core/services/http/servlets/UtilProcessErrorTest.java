@@ -1,4 +1,4 @@
-package org.tron.core.services.http;
+package org.tron.core.services.http.servlets;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
