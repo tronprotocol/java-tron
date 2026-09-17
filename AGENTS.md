@@ -140,7 +140,7 @@ crypto    → common
 - Never call `String.toLowerCase()` / `toUpperCase()` without an explicit `Locale` — ErrorProne enforces this as a compile error (`StringCaseLocaleUsage`).
 
 **DB / Store:**
-- All writes must happen inside a `Session` / `Dialog` — no bare `put()`.
+- All writes must happen inside a revocable session — `try (ISession session = revokingStore.buildSession())` — never a bare `put()`.
 - A new store must extend `TronStoreWithRevoking<T>` and register with the `RevokingDatabase`.
 - Multi-store updates must roll back fully on exception.
 
