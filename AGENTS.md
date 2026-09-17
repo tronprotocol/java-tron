@@ -17,8 +17,8 @@ Supported platforms: **Linux** and **macOS** only. The JDK requirement is determ
 ./gradlew build                              # build with tests
 ./gradlew test                               # run all tests
 ./gradlew :framework:test                    # test one module
-./gradlew test --tests "org.tron.core.db.TronDatabaseTest"           # one class
-./gradlew test --tests "org.tron.core.db.TronDatabaseTest.testX"     # one method
+./gradlew :framework:test --tests "org.tron.core.db.TronDatabaseTest"           # one class
+./gradlew :framework:test --tests "org.tron.core.db.TronDatabaseTest.testX"     # one method
 ./gradlew :framework:testWithRocksDb         # RocksDB tests (x86 only)
 ./gradlew jacocoTestReport                   # coverage report
 ```
