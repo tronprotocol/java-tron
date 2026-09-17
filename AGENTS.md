@@ -145,7 +145,7 @@ crypto    → common
 - Multi-store updates must roll back fully on exception.
 
 **Actuator:**
-- Register new actuators in `ActuatorFactory`.
+- New actuators are registered automatically: place the class in the `org.tron.core.actuator` package, extend `AbstractActuator`, and pass the `ContractType` to `super(...)` from a no-arg constructor. `TransactionRegister.registerActuator()` discovers it by reflection at startup — there is no manual registration step.
 - Charge fees before `execute()`.
 - `validate()` must not mutate state.
 
