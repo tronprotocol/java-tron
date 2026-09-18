@@ -21,7 +21,6 @@ jobs:
               'pr-build.yml',
               'codeql.yml',
               'integration-test-single-node.yml',
-              'integration-test-multinode.yml',
             ];
             const headSha = context.payload.pull_request.head.sha;
             const prNumber = context.payload.pull_request.number;
