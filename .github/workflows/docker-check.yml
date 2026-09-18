@@ -1,0 +1,56 @@
+name: Docker Check
+
+on:
+  push:
+    branches: [ 'master', 'release_**' ]
+    paths:
+      - 'docker/docker.sh'
+      - 'docker/Dockerfile'
+      - 'docker/arm64/Dockerfile'
+      - '.github/workflows/docker-check.yml'
+  pull_request:
+    branches: [ 'master', 'develop', 'release_**' ]
+    paths:
+      - 'docker/docker.sh'
+      - 'docker/Dockerfile'
+      - 'docker/arm64/Dockerfile'
+      - '.github/workflows/docker-check.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  docker-check:
+    name: Docker Static Check
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Check shell syntax
+        run: bash -n docker/docker.sh
+
+      - name: Run ShellCheck
+        run: shellcheck docker/docker.sh
+
+      - name: Check amd64 Dockerfile
+        run: >
+          docker buildx build
+          --check
+          --platform linux/amd64
+          --file docker/Dockerfile
+          docker
+
+      - name: Check ARM64 Dockerfile
+        run: >
+          docker buildx build
+          --check
+          --platform linux/arm64
+          --file docker/arm64/Dockerfile
+          docker
