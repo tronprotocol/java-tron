@@ -1,10 +1,17 @@
 package org.tron.common.logsfilter;
 
-import java.util.concurrent.ExecutorService;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockConstruction;
+import static org.mockito.Mockito.when;
+
 import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
-import org.tron.common.es.ExecutorServiceManager;
+import org.mockito.InOrder;
+import org.mockito.MockedConstruction;
 import org.tron.common.logsfilter.nativequeue.NativeMessageQueue;
 import org.zeromq.SocketType;
 import org.zeromq.ZContext;
@@ -12,76 +19,75 @@ import org.zeromq.ZMQ;
 
 public class NativeMessageQueueTest {
 
-  public int bindPort = 5555;
-  public String dataToSend = "################";
-  public String topic = "testTopic";
+  private NativeMessageQueue queue;
+  private ZMQ.Socket publisher;
+  private MockedConstruction<ZContext> contexts;
 
-  private ExecutorService subscriberExecutor;
-  private final String zmqSubscriber = "zmq-subscriber";
+  @Before
+  public void setUp() {
+    publisher = mock(ZMQ.Socket.class);
+    when(publisher.bind(anyString())).thenReturn(true);
+    contexts = mockConstruction(ZContext.class, (context, construction) ->
+        when(context.createSocket(SocketType.PUB)).thenReturn(publisher));
+    queue = new NativeMessageQueue();
+  }
 
   @After
   public void tearDown() {
-    ExecutorServiceManager.shutdownAndAwaitTermination(subscriberExecutor, zmqSubscriber);
-    subscriberExecutor = null;
-  }
-
-  @Test
-  public void invalidBindPort() {
-    boolean bRet = NativeMessageQueue.getInstance().start(-1111, 0);
-    Assert.assertEquals(true, bRet);
-    NativeMessageQueue.getInstance().stop();
-  }
-
-  @Test
-  public void invalidSendLength() {
-    boolean bRet = NativeMessageQueue.getInstance().start(0, -2222);
-    Assert.assertEquals(true, bRet);
-    NativeMessageQueue.getInstance().stop();
-  }
-
-  @Test
-  public void publishTrigger() {
-
-    int sendLength = 0;
-    boolean bRet = NativeMessageQueue.getInstance().start(bindPort, sendLength);
-    Assert.assertEquals(true, bRet);
-
-    startSubscribeThread();
-
     try {
-      Thread.sleep(1000);
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-    }
-
-    NativeMessageQueue.getInstance().publishTrigger(dataToSend, topic);
-
-    try {
-      Thread.sleep(1000);
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-    }
-
-    NativeMessageQueue.getInstance().stop();
-  }
-
-  public void startSubscribeThread() {
-    subscriberExecutor = ExecutorServiceManager.newSingleThreadExecutor(zmqSubscriber);
-    subscriberExecutor.execute(() -> {
-      try (ZContext context = new ZContext()) {
-        ZMQ.Socket subscriber = context.createSocket(SocketType.SUB);
-
-        Assert.assertTrue(subscriber.connect(String.format("tcp://localhost:%d", bindPort)));
-        Assert.assertTrue(subscriber.subscribe(topic));
-
-        while (!Thread.currentThread().isInterrupted()) {
-          byte[] message = subscriber.recv();
-          String triggerMsg = new String(message);
-
-          Assert.assertTrue(triggerMsg.contains(dataToSend) || triggerMsg.contains(topic));
-        }
-        // ZMQ.Socket will be automatically closed when ZContext is closed
+      if (queue != null) {
+        queue.stop();
       }
-    });
+    } finally {
+      if (contexts != null) {
+        contexts.close();
+      }
+    }
+  }
+
+  @Test
+  public void configuredSendQueueLengthIsAppliedBeforeSocketCreation() {
+    assertStartup(6000, 2000, 6000, 2000);
+  }
+
+  @Test
+  public void invalidBindPortUsesDefaultPort() {
+    assertStartup(-1111, 1000, 5555, 1000);
+  }
+
+  @Test
+  public void negativeSendQueueLengthUsesDefaultSndHWM() {
+    assertStartup(6000, -1, 6000, 1000);
+  }
+
+  @Test
+  public void zeroSendQueueLengthUsesDefaultSndHWM() {
+    assertStartup(6000, 0, 6000, 1000);
+  }
+
+  @Test
+  public void publishTriggerSendsTopicBeforePayload() {
+    Assert.assertTrue(queue.start(6000, 1000));
+
+    queue.publishTrigger("payload", "topic");
+
+    InOrder delivery = inOrder(publisher);
+    delivery.verify(publisher).bind("tcp://*:6000");
+    delivery.verify(publisher).sendMore("topic");
+    delivery.verify(publisher).send("payload");
+    delivery.verifyNoMoreInteractions();
+  }
+
+  private void assertStartup(int port, int queueLength, int expectedPort, int expectedQueueLength) {
+    Assert.assertTrue(queue.start(port, queueLength));
+    Assert.assertEquals(1, contexts.constructed().size());
+    ZContext context = contexts.constructed().get(0);
+
+    // ZContext applies its defaults when creating the socket, so ordering matters.
+    InOrder startup = inOrder(context, publisher);
+    startup.verify(context).setSndHWM(expectedQueueLength);
+    startup.verify(context).createSocket(SocketType.PUB);
+    startup.verify(publisher).bind("tcp://*:" + expectedPort);
+    startup.verifyNoMoreInteractions();
   }
 }
