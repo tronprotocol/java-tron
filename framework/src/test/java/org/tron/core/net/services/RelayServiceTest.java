@@ -306,6 +306,34 @@ public class RelayServiceTest extends BaseTest {
   }
 
   @Test
+  public void testCheckHelloMessage_futureTimestampDoesNotPoisonCache() throws Exception {
+    assertTimestampRejectedWithoutPoisoningCache(
+        System.currentTimeMillis() + TimeUnit.HOURS.toMillis(1));
+  }
+
+  @Test
+  public void testCheckHelloMessage_maxTimestampDoesNotPoisonCache() throws Exception {
+    assertTimestampRejectedWithoutPoisoningCache(Long.MAX_VALUE);
+  }
+
+  @Test
+  public void testCheckHelloMessage_minTimestampDoesNotPoisonCache() throws Exception {
+    assertTimestampRejectedWithoutPoisoningCache(Long.MIN_VALUE);
+  }
+
+  private void assertTimestampRejectedWithoutPoisoningCache(long timestamp) throws Exception {
+    initWitness();
+    setupRelayServiceDeps();
+    Args.getInstance().fastForward = true;
+    Channel channel = buildChannel();
+    Assert.assertFalse(service.checkHelloMessage(buildSignedHello(timestamp), channel));
+    Assert.assertFalse(TronNetService.getP2pConfig().getTrustNodes()
+        .contains(channel.getInetAddress()));
+    Assert.assertTrue(service.checkHelloMessage(
+        buildSignedHello(System.currentTimeMillis()), channel));
+  }
+
+  @Test
   public void testCheckHelloMessage_freshTimestamp() throws Exception {
     initWitness();
     setupRelayServiceDeps();

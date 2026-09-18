@@ -164,9 +164,11 @@ public class RelayService {
     }
 
     long now = System.currentTimeMillis();
-    if (now - msg.getTimestamp() > HELLO_MESSAGE_TIMESTAMP_THRESHOLD) {
-      logger.warn("HelloMessage from {}, timestamp age is {} ms",
-          channel.getInetAddress(), now - msg.getTimestamp());
+    long timestamp = msg.getTimestamp();
+    if (timestamp < now - HELLO_MESSAGE_TIMESTAMP_THRESHOLD
+        || timestamp > now + HELLO_MESSAGE_TIMESTAMP_THRESHOLD) {
+      logger.warn("HelloMessage from {}, timestamp {} is outside the window around {}",
+          channel.getInetAddress(), timestamp, now);
       return false;
     }
 
