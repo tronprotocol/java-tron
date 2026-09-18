@@ -82,21 +82,28 @@ public class TransactionsMsgHandlerTest extends BaseTest {
       Item item = new Item(new TransactionMessage(trx).getMessageId(),
           Protocol.Inventory.InventoryType.TRX);
       advInvRequest.put(item, 0L);
+      // The non-executing pool must be installed before the first submission so no
+      // real-pool worker can touch the peer mock while the test re-stubs it (Mockito
+      // stubbing is not thread-safe). The latch counts down only for off-thread callers,
+      // which after the replacement is exactly the smart-contract scheduler.
+      CountDownLatch smartContractSubmitted = new CountDownLatch(1);
+      Thread testThread = Thread.currentThread();
+      ExecutorService mockPool = Mockito.mock(ExecutorService.class);
+      Future<?> submittedTask = Mockito.mock(Future.class);
+      Mockito.when(mockPool.submit(Mockito.any(Runnable.class))).thenAnswer(invocation -> {
+        if (Thread.currentThread() != testThread) {
+          smartContractSubmitted.countDown();
+        }
+        return submittedTask;
+      });
+      originalPool = replaceTrxHandlePool(transactionsMsgHandler, mockPool);
+
       Mockito.when(peer.getAdvInvRequest()).thenReturn(advInvRequest);
 
       List<Protocol.Transaction> transactionList = new ArrayList<>();
       transactionList.add(trx);
       transactionsMsgHandler.processMessage(peer, new TransactionsMessage(transactionList));
       Assert.assertNull(advInvRequest.get(item));
-
-      CountDownLatch smartContractSubmitted = new CountDownLatch(1);
-      ExecutorService mockPool = Mockito.mock(ExecutorService.class);
-      Future<?> submittedTask = Mockito.mock(Future.class);
-      Mockito.when(mockPool.submit(Mockito.any(Runnable.class))).thenAnswer(invocation -> {
-        smartContractSubmitted.countDown();
-        return submittedTask;
-      });
-      originalPool = replaceTrxHandlePool(transactionsMsgHandler, mockPool);
       BlockingQueue<?> smartContractQueue = new LinkedBlockingQueue<>(1);
       Field field1 = TransactionsMsgHandler.class.getDeclaredField("smartContractQueue");
       field1.setAccessible(true);

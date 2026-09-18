@@ -18,9 +18,11 @@ import org.tron.protos.Protocol.ReasonCode;
  * <p>{@link PeerManager#close()} neither clears the raw static peers/counters nor rebuilds the
  * static executor, and tests share one JVM across Spring contexts.
  *
- * <p>The old executor is drained <em>before</em> touching any state: {@code check()} is not
- * synchronized (it snapshots peers, then removes entries and decrements counters), so a task
- * left running would decrement the counters zeroed in step 4 and leave them negative.
+ * <p>The old executor is drained to termination <em>before</em> touching any state: {@code
+ * check()} is not synchronized (it snapshots peers, then removes entries and decrements
+ * counters), so a task left running would decrement the counters zeroed in step 4 and leave
+ * them negative; shutdown alone does not guarantee that, so reset fails if termination cannot
+ * be confirmed.
  * Residual peers are disconnected before the raw list is cleared because {@code close()} may
  * fail midway and leave live channels that a bare {@code clear()} would orphan; each peer is
  * handled defensively (null channel tolerated, per-peer catch). A fresh executor is then
@@ -39,10 +41,17 @@ public final class PeerManagerStateResetter {
 
   public static synchronized void reset() {
     // 1) Drain the old executor first: let running/queued check() tasks die out so they
-    // cannot interleave with the list/counter reset below.
+    // cannot interleave with the list/counter reset below. Gate on isTerminated(), not
+    // isShutdown(): shutdown() still lets a running check() finish asynchronously, and
+    // check() decrements the counters even when its peers.remove() is a no-op. If
+    // termination cannot be confirmed, fail the setup instead of resetting anyway.
     ScheduledExecutorService executor = getFieldValue("executor");
-    if (executor != null && !executor.isShutdown()) {
+    if (executor != null && !executor.isTerminated()) {
       ExecutorServiceManager.shutdownAndAwaitTermination(executor, EXECUTOR_NAME);
+      if (!executor.isTerminated()) {
+        throw new IllegalStateException(
+            "peer-manager executor did not terminate; refusing to reset shared state");
+      }
     }
     // 2) Unconditionally install a fresh executor (the old one may be shut down or null);
     // its thread is created lazily.
