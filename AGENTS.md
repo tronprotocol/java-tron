@@ -24,7 +24,7 @@ Supported platforms: **Linux** and **macOS** only. The JDK requirement is determ
 ```
 
 - Main entry point: `org.tron.program.FullNode`.
-- Tests run in parallel locally, serially in CI (detected via the `CI` env var); the test-retry plugin retries up to 5 times.
+- Tests also run in parallel in CI: `framework/build.gradle` sets `maxParallelForks` without checking the `CI` env var. Each module configures its own test parallelism in its `build.gradle`.
 - On ARM64/aarch64, only the RocksDB storage engine is supported; the build forces RocksDB and skips the LevelDB tests.
 - CI builds the full matrix: **JDK 8 / x86_64** (rockylinux, debian11) and **JDK 17 / aarch64** (macOS, ubuntu24). A change must compile on both.
 
@@ -146,7 +146,7 @@ crypto    → common
 
 **Actuator:**
 - New actuators are registered automatically: place the class in the `org.tron.core.actuator` package, extend `AbstractActuator`, and pass the `ContractType` to `super(...)` from a no-arg constructor. `TransactionRegister.registerActuator()` discovers it by reflection at startup — there is no manual registration step.
-- Charge fees before `execute()`.
+- `validate()` must check that the owner can afford `calcFee()` plus any amount being moved; the fee itself is charged inside `execute()` together with the state change, so a failed `execute()` rolls back both. Bandwidth, multi-signature and memo fees are charged by `Manager.processTransaction()` before the actuator runs — an actuator never touches them.
 - `validate()` must not mutate state.
 
 **Protobuf:**
