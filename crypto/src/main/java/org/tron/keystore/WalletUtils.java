@@ -201,13 +201,10 @@ public class WalletUtils {
 
   /**
    * Lazily-initialized Scanner shared across successive
-   * {@link #inputPassword()} calls on the non-TTY path so that
-   * {@link #inputPassword2Twice()} can read two lines in sequence
-   * without losing data. Each call to {@code new Scanner(System.in)}
-   * internally buffers bytes from the underlying {@link BufferedReader};
-   * constructing a second Scanner after the first has been discarded
-   * drops any buffered bytes the first pulled from stdin, causing
-   * {@code NoSuchElementException}.
+   * {@link #inputPassword()} calls on the non-TTY path. Each call to
+   * {@code new Scanner(System.in)} buffers ahead from stdin; constructing
+   * a second Scanner after the first has been discarded drops any bytes
+   * the first pulled, causing {@code NoSuchElementException}.
    */
   private static Scanner sharedStdinScanner;
 
@@ -250,18 +247,4 @@ public class WalletUtils {
     }
   }
 
-  public static String inputPassword2Twice() {
-    String password0;
-    while (true) {
-      System.out.println("Please input password.");
-      password0 = inputPassword();
-      System.out.println("Please input password again.");
-      String password1 = inputPassword();
-      if (password0.equals(password1)) {
-        break;
-      }
-      System.out.println("Two passwords do not match, please input again.");
-    }
-    return password0;
-  }
 }

@@ -50,7 +50,12 @@ public class CLIParameter {
   @Parameter(names = {"--solidity"}, description = "running a solidity node for java tron")
   public boolean solidityNode;
 
-  @Parameter(names = {"--keystore-factory"}, description = "running KeystoreFactory")
+  /**
+   * Tombstone for the removed --keystore-factory: Args.setParam exits with migration
+   * guidance. Keep declared — undeclared, JCommander parses the flag into seedNodes.
+   */
+  @Deprecated
+  @Parameter(names = {"--keystore-factory"}, description = "removed; use Toolkit.jar keystore")
   public boolean keystoreFactory;
 
   @Deprecated

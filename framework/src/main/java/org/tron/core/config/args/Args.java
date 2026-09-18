@@ -159,6 +159,20 @@ public class Args extends CommonParameter {
       Args.printHelp(jc);
       exit(0);
     }
+    // Check assignment, not the field value: JCommander toggles arity-0 booleans
+    // per occurrence, so a repeated flag parses back to false.
+    boolean keystoreFactoryPassed = jc.getParameters().stream()
+        .filter(pd -> "--keystore-factory".equals(pd.getLongestName()))
+        .anyMatch(ParameterDescription::isAssigned);
+    if (keystoreFactoryPassed) {
+      // stderr, not logger: the default logback config has no console appender
+      System.err.println("--keystore-factory was removed.");
+      System.err.println("Use: java -jar Toolkit.jar keystore <new|import|list|update>");
+      System.err.println("SM2 nodes (crypto.engine = 'sm2'): append --sm2 to commands that create "
+          + "or modify a keystore.");
+      throw new TronError("--keystore-factory was removed; use Toolkit.jar keystore",
+          TronError.ErrCode.PARAMETER_INIT);
+    }
 
     // Resolve config file path
     configFilePath = StringUtils.isNoneBlank(cmd.shellConfFileName)
@@ -858,9 +872,6 @@ public class Args extends CommonParameter {
     if (assigned.contains("--solidity")) {
       PARAMETER.solidityNode = cmd.solidityNode;
     }
-    if (assigned.contains("--keystore-factory")) {
-      PARAMETER.keystoreFactory = cmd.keystoreFactory;
-    }
     if (assigned.contains("--rpc-thread")) {
       PARAMETER.rpcThreadNum = cmd.rpcThreadNum;
     }
@@ -1292,7 +1303,7 @@ public class Args extends CommonParameter {
 
   private static Map<String, String[]> getOptionGroup() {
     String[] tronOption = new String[] {"version", "help", "shellConfFileName", "logbackPath",
-        "eventSubscribe", "solidityNode", "keystoreFactory"};
+        "eventSubscribe", "solidityNode"};
     String[] dbOption = new String[] {"outputDirectory"};
     String[] witnessOption = new String[] {"witness", "privateKey"};
     String[] vmOption = new String[] {"debug"};
