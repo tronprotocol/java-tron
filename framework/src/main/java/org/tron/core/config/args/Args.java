@@ -104,6 +104,12 @@ public class Args extends CommonParameter {
   @Getter
   private static String configFilePath = "";
 
+  @Getter
+  private static String ipcSocketFile;
+
+  @Getter
+  private static String ipcExecCommand;
+
   // Singleton config beans — populated at startup, read-only after init.
   // New code can read directly from these beans instead of CommonParameter.
   @Getter
@@ -146,18 +152,31 @@ public class Args extends CommonParameter {
    * set parameters.
    */
   public static void setParam(final String[] args, final String confFileName) {
-    // 1. Parse CLI args into a separate object
-    CLIParameter cmd = new CLIParameter();
-    JCommander jc = JCommander.newBuilder().addObject(cmd).build();
-    jc.parse(args);
+    setParam(new CommandLineArguments(args), confFileName);
+  }
+
+  /**
+   * Reuses the options parsed by FullNode before it chooses client or node startup.
+   */
+  public static void setParam(CommandLineArguments arguments, final String confFileName) {
+    CLIParameter cmd = arguments.getParameters();
 
     if (cmd.version) {
       printVersion();
       exit(0);
     }
     if (cmd.help) {
-      Args.printHelp(jc);
+      Args.printHelp(arguments.getCommander());
       exit(0);
+    }
+    List<ParameterDescription> assignedParameters = arguments.getAssignedParameters();
+    if (arguments.isAttachMode()) {
+      ipcSocketFile = cmd.ipcSocketFile;
+      ipcExecCommand = cmd.ipcExecCommand;
+      if (StringUtils.isNotEmpty(cmd.logbackPath)) {
+        PARAMETER.logbackPath = cmd.logbackPath;
+      }
+      return;
     }
 
     // Resolve config file path
@@ -169,7 +188,7 @@ public class Args extends CommonParameter {
     applyConfigParams(config);
 
     // 3. CLI overrides Config (highest priority, including --es → eventSubscribe)
-    applyCLIParams(cmd, jc);
+    applyCLIParams(cmd, assignedParameters);
 
     // 4. Apply event config after CLI
     applyEventConfig(eventConfig);
@@ -561,6 +580,16 @@ public class Args extends CommonParameter {
     PARAMETER.jsonRpcMaxLogFilterNum = jsonrpc.getMaxLogFilterNum();
     PARAMETER.jsonRpcMaxMessageSize = jsonrpc.getMaxMessageSize();
 
+    // ---- Admin HTTP / IPC ----
+    NodeConfig.AdminIpcConfig adminIpc = nc.getAdmin().getIpc();
+    NodeConfig.AdminHttpConfig adminHttp = nc.getAdmin().getHttp();
+    PARAMETER.adminHttpEnable = adminHttp.isEnable();
+    PARAMETER.adminHttpListenAddress = adminHttp.getListenAddress();
+    PARAMETER.adminHttpListenPort = adminHttp.getPort();
+    PARAMETER.adminHttpVirtualHosts = new ArrayList<>(adminHttp.getVirtualHosts());
+    PARAMETER.ipcEnable = adminIpc.isEnable();
+    PARAMETER.ipcSocketDirectory = adminIpc.getSocketDirectory();
+
     // ---- P2P sub-bean ----
     PARAMETER.nodeP2pVersion = nc.getP2p().getVersion();
 
@@ -769,14 +798,13 @@ public class Args extends CommonParameter {
    * Apply CLI parameters that were explicitly passed.
    * Only assigned parameters override Config values.
    */
-  private static void applyCLIParams(CLIParameter cmd, JCommander jc) {
-    Set<String> assigned = jc.getParameters().stream()
-        .filter(ParameterDescription::isAssigned)
+  private static void applyCLIParams(CLIParameter cmd,
+      List<ParameterDescription> assignedParameters) {
+    Set<String> assigned = assignedParameters.stream()
         .map(ParameterDescription::getLongestName)
         .collect(Collectors.toSet());
 
-    jc.getParameters().stream()
-        .filter(ParameterDescription::isAssigned)
+    assignedParameters.stream()
         .filter(pd -> {
           try {
             return CLIParameter.class.getDeclaredField(pd.getParameterized().getName())
@@ -946,6 +974,8 @@ public class Args extends CommonParameter {
     rateLimiterConfig = null;
     metricsConfig = null;
     eventConfig = null;
+    ipcSocketFile = null;
+    ipcExecCommand = null;
   }
 
   // getProposalExpirationTime removed — logic moved to BlockConfig.fromConfig()
@@ -1292,7 +1322,8 @@ public class Args extends CommonParameter {
 
   private static Map<String, String[]> getOptionGroup() {
     String[] tronOption = new String[] {"version", "help", "shellConfFileName", "logbackPath",
-        "eventSubscribe", "solidityNode", "keystoreFactory"};
+        "eventSubscribe", "solidityNode", "keystoreFactory", "ipcSocketFile",
+        "ipcExecCommand"};
     String[] dbOption = new String[] {"outputDirectory"};
     String[] witnessOption = new String[] {"witness", "privateKey"};
     String[] vmOption = new String[] {"debug"};
@@ -1315,4 +1346,3 @@ public class Args extends CommonParameter {
     return optionGroupMap;
   }
 }
-

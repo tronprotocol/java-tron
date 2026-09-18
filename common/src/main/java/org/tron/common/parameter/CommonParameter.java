@@ -4,6 +4,7 @@ import com.google.common.annotations.VisibleForTesting;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
@@ -488,6 +489,25 @@ public class CommonParameter {
   @Getter
   @Setter
   public int jsonRpcMaxLogFilterNum = 20000;
+  @Getter
+  @Setter
+  public boolean adminHttpEnable = false;
+  @Getter
+  @Setter
+  public String adminHttpListenAddress = Constant.LOCAL_HOST;
+  @Getter
+  @Setter
+  public int adminHttpListenPort = 8575;
+  @Getter
+  @Setter
+  public List<String> adminHttpVirtualHosts =
+      new ArrayList<>(Collections.singletonList("localhost"));
+  @Getter
+  @Setter
+  public boolean ipcEnable = false;
+  @Getter
+  @Setter
+  public String ipcSocketDirectory = "";
   @Getter
   @Setter
   public int maxTransactionPendingSize;

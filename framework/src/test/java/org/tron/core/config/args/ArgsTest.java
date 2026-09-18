@@ -20,6 +20,8 @@ import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import io.grpc.internal.GrpcUtil;
 import io.grpc.netty.NettyServerBuilder;
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.InetAddress;
@@ -47,6 +49,81 @@ public class ArgsTest {
   private final String privateKey = PublicMethod.getRandomPrivateKey();
   @Rule
   public ExpectedException thrown = ExpectedException.none();
+
+  @Test
+  public void testAttachWithExecParameters() {
+    Args.clearParam();
+    try {
+      Args.setParam(new String[] {
+          "--attach", "/tmp/java-tron.sock",
+          "--exec", "admin_example one two",
+          "--log-config", "attach-logback.xml"
+      }, TestConstants.TEST_CONF);
+
+      Assert.assertEquals("/tmp/java-tron.sock", Args.getIpcSocketFile());
+      Assert.assertEquals("admin_example one two", Args.getIpcExecCommand());
+      Assert.assertEquals("attach-logback.xml", Args.getInstance().getLogbackPath());
+      Assert.assertNull(Args.getNodeConfig());
+      Assert.assertNull(Args.getLocalWitnesses());
+    } finally {
+      Args.clearParam();
+    }
+    Assert.assertNull(Args.getIpcSocketFile());
+    Assert.assertNull(Args.getIpcExecCommand());
+  }
+
+  @Test
+  public void testAttachRejectsNodeConfigOption() {
+    Args.clearParam();
+    try {
+      assertAttachParameterError(new String[] {
+          "--attach", "/tmp/java-tron.sock",
+          "--config", "config.conf"
+      }, "Error: --attach cannot be combined with: --config");
+    } finally {
+      Args.clearParam();
+    }
+  }
+
+  @Test
+  public void testAttachRejectsEmptySocketPath() {
+    Args.clearParam();
+    try {
+      assertAttachParameterError(new String[] {"--attach", ""},
+          "Error: --attach requires a non-empty <socket-path>");
+    } finally {
+      Args.clearParam();
+    }
+  }
+
+  @Test
+  public void testExecRequiresAttach() {
+    Args.clearParam();
+    try {
+      assertAttachParameterError(new String[] {"--exec", "admin_example"},
+          "Error: --exec requires --attach <socket-path>");
+    } finally {
+      Args.clearParam();
+    }
+  }
+
+  private void assertAttachParameterError(String[] args, String expectedMessage) {
+    PrintStream originalErr = System.err;
+    ByteArrayOutputStream errorOutput = new ByteArrayOutputStream();
+    PrintStream capturedErr = new PrintStream(errorOutput);
+    try {
+      System.setErr(capturedErr);
+      Args.setParam(args, TestConstants.TEST_CONF);
+      Assert.fail("Expected invalid attach parameters to fail");
+    } catch (TronError e) {
+      Assert.assertEquals(TronError.ErrCode.PARAMETER_INIT, e.getErrCode());
+      Assert.assertEquals(expectedMessage, e.getMessage());
+      Assert.assertEquals(expectedMessage + System.lineSeparator(), errorOutput.toString());
+    } finally {
+      System.setErr(originalErr);
+      capturedErr.close();
+    }
+  }
 
   @Test
   public void get() {
@@ -278,6 +355,34 @@ public class ArgsTest {
     Assert.assertEquals(-4, Args.getInstance().getJsonRpcMaxSubTopics());
 
     Args.clearParam();
+  }
+
+  @Test
+  public void testAdminHttpAndIpcConfigBinding() {
+    Map<String, Object> override = new HashMap<>();
+    override.put("storage.db.directory", "database");
+    override.put("node.admin.ipc.enable", "true");
+    override.put("node.admin.ipc.socketDirectory", "/tmp/tron-ipc");
+    override.put("node.admin.http.enable", "true");
+    override.put("node.admin.http.listenAddress", "127.0.0.2");
+    override.put("node.admin.http.port", "18575");
+    override.put("node.admin.http.virtualHosts",
+        Arrays.asList("admin.example.com", "localhost"));
+    Config config = ConfigFactory.parseMap(override)
+        .withFallback(ConfigFactory.defaultReference());
+
+    try {
+      Args.applyConfigParams(config);
+      Assert.assertTrue(Args.getInstance().isIpcEnable());
+      Assert.assertEquals("/tmp/tron-ipc", Args.getInstance().getIpcSocketDirectory());
+      Assert.assertTrue(Args.getInstance().isAdminHttpEnable());
+      Assert.assertEquals("127.0.0.2", Args.getInstance().getAdminHttpListenAddress());
+      Assert.assertEquals(18575, Args.getInstance().getAdminHttpListenPort());
+      Assert.assertEquals(Arrays.asList("admin.example.com", "localhost"),
+          Args.getInstance().getAdminHttpVirtualHosts());
+    } finally {
+      Args.clearParam();
+    }
   }
 
   /**
