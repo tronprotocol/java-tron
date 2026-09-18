@@ -277,8 +277,16 @@ public class TransactionsMsgHandlerTest extends BaseTest {
 
       // happy path → push and broadcast
       Mockito.when(chainBaseManager.getNextBlockSlotTime()).thenReturn(now);
+      Mockito.when(tronNetDelegate.pushTransaction(Mockito.any())).thenReturn(true);
       handleTx.invoke(handler, peer, trxMsg);
       Mockito.verify(advService).broadcast(trxMsg);
+
+      // local capacity rejection → do not broadcast or penalize the peer
+      Mockito.when(tronNetDelegate.pushTransaction(Mockito.any())).thenReturn(false);
+      handleTx.invoke(handler, peer, trxMsg);
+      Mockito.verify(advService, Mockito.times(1)).broadcast(trxMsg);
+      Mockito.verify(peer, Mockito.never()).setBadPeer(true);
+      Mockito.verify(peer, Mockito.never()).disconnect(Mockito.any());
 
       // P2pException BAD_TRX → disconnect
       Mockito.doThrow(new P2pException(TypeEnum.BAD_TRX, "bad"))
