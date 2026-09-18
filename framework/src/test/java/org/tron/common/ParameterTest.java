@@ -168,8 +168,6 @@ public class ParameterTest {
     assertEquals(1, parameter.getForbidTransferToContract());
     parameter.setTrustNodeAddr("address");
     assertEquals("address", parameter.getTrustNodeAddr());
-    parameter.setWalletExtensionApi(false);
-    assertFalse(parameter.isWalletExtensionApi());
     parameter.setEstimateEnergy(false);
     assertFalse(parameter.isEstimateEnergy());
     parameter.setEstimateEnergyMaxRetry(2);

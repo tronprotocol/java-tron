@@ -598,7 +598,6 @@ public class Args extends CommonParameter {
     PARAMETER.trustNodeAddr = nc.getTrustNode();
 
     PARAMETER.validateSignThreadNum = nc.getValidateSignThreadNum();
-    PARAMETER.walletExtensionApi = nc.isWalletExtensionApi();
     PARAMETER.isOpenFullTcpDisconnect = nc.isOpenFullTcpDisconnect();
     PARAMETER.nodeDetectEnable = nc.isNodeDetectEnable();
 

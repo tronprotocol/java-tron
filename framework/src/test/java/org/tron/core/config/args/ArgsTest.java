@@ -369,6 +369,18 @@ public class ArgsTest {
     Args.clearParam();
   }
 
+  /**
+   * The removed node.walletExtensionApi key must stay harmless in operator configs:
+   * binding ignores it and fromConfig logs a removal warning. Lives here rather than
+   * NodeConfigTest because module jacoco reports only aggregate framework execution data.
+   */
+  @Test
+  public void testRemovedWalletExtensionApiKeyIsIgnored() {
+    Config config = ConfigFactory.parseString("node { walletExtensionApi = true }")
+        .withFallback(ConfigFactory.defaultReference());
+    Assert.assertNotNull(NodeConfig.fromConfig(config));
+  }
+
   // ===========================================================================
   // Boundary tests for node.fetchBlock.timeout clamping.
   //
