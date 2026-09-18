@@ -4,6 +4,7 @@ import com.google.protobuf.ByteString;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.Assert;
 import org.junit.Test;
@@ -12,6 +13,14 @@ import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 
 public class WitnessProductBlockServiceTest {
+
+  @Test
+  public void cheatWitnessInfoMapSupportsConcurrentUpdates() {
+    WitnessProductBlockService witnessProductBlockService = new WitnessProductBlockService();
+
+    Assert.assertTrue(witnessProductBlockService.queryCheatWitnessInfo()
+        instanceof ConcurrentHashMap);
+  }
 
   @Test
   public void GetSetCheatWitnessInfoTest() {
