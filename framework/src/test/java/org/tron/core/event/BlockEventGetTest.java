@@ -125,6 +125,10 @@ public class BlockEventGetTest extends BlockGenerate {
 
   @AfterClass
   public static void after() throws IOException {
+    // stopPlugin() is safe when never started: it null-checks pluginManager, and
+    // NativeMessageQueue.stop() null-checks publisher/context. Ensures the native
+    // queue socket bound in test() is released even when assertions fail earlier.
+    EventPluginLoader.getInstance().stopPlugin();
     context.destroy();
     Args.clearParam();
   }
@@ -174,7 +178,7 @@ public class BlockEventGetTest extends BlockGenerate {
 
     EventPluginConfig config = new EventPluginConfig();
     config.setSendQueueLength(1000);
-    config.setBindPort(5555);
+    config.setBindPort(PublicMethod.chooseRandomPort());
     config.setUseNativeQueue(true);
     config.setTriggerConfigList(new ArrayList<>());
 

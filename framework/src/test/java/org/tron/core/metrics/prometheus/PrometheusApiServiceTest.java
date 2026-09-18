@@ -62,6 +62,7 @@ public class PrometheusApiServiceTest extends BaseTest {
     Args.setParam(new String[] {"-d", dbPath()}, TestConstants.TEST_CONF);
     Args.getInstance().setNodeListenPort(10000 + port.incrementAndGet());
     initParameter(Args.getInstance());
+    Args.getInstance().setMetricsPrometheusPort(PublicMethod.chooseRandomPort());
     Metrics.init();
   }
 
