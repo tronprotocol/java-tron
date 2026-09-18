@@ -148,6 +148,53 @@ NOTE: large db may GC overhead limit exceeded.
 - `--db`: db name.
 - `-h | --help`: provide the help info
 
+## DB Backfill-Bloom
+
+DB backfill bloom rebuilds missing historical SectionBloom indexes from transaction results stored in `transactionRetStore`, enabling `eth_getLogs` to filter by address and topics. This is useful for historical blocks processed by versions before v4.8.1 while JSON-RPC filtering (`isJsonRpcFilterEnabled`) was disabled. Since v4.8.1, SectionBloom indexes are generated independently of this setting.
+
+### Prerequisites and behavior
+
+- Stop the node and any other process using the database before running the command.
+- The database directory must contain the `properties` and `transactionRetStore` databases. `transactionRetStore` must contain at least one non-zero block.
+- Ensure `storage.transHistory.switch` was enabled while the historical blocks were processed. Only blocks whose transaction results are still present in `transactionRetStore` can be backfilled; this tool cannot recover missing transaction results.
+- The start and end block numbers are inclusive.
+- The command creates or updates the `section-bloom` database in the specified database directory.
+- An existing `section-bloom` directory uses its own engine. A new one inherits the engine of `transactionRetStore`. Missing `engine.properties` is treated as LevelDB for compatibility with older databases.
+- On ARM64, only RocksDB is supported. LevelDB is rejected before any database is opened or created.
+- The operation is idempotent. If it is interrupted, safely rerun the same block range. Existing SectionBloom bits are preserved, and unchanged index records are not rewritten. Do not run multiple backfill processes concurrently.
+
+### Available parameters
+
+- `-d | --database-directory`: Parent directory containing the source databases and the destination `section-bloom` database. Default: `output-directory/database`.
+- `-s | --start-block`: Inclusive start block. Omitted or `0` selects the earliest non-zero block in `transactionRetStore`. A lower value is automatically raised to the earliest available block. Negative values are rejected.
+- `-e | --end-block`: Inclusive end block. Omitted or `0` selects the latest persisted block header number (`latest_block_header_number`) in `properties`. A higher value is automatically reduced to this height. Negative values are rejected.
+- `-c | --max-concurrency`: Maximum number of processing threads, from 1 to 128. Default: 8. Use 4–8 for SATA SSD, 8–16 for NVMe SSD, or 1–2 for HDD. The actual concurrency does not exceed the number of sections being processed.
+- `-h | --help`: Display the help message.
+
+### Examples
+
+```shell script
+# Full command
+java -jar Toolkit.jar db backfill-bloom [-d <databaseDirectory>] [-s <startBlock>] [-e <endBlock>] [-c <maxConcurrency>] [-h]
+
+# Backfill the complete available range in the default database directory
+java -jar Toolkit.jar db backfill-bloom
+
+# Backfill blocks 1,000,000 through 2,000,000, inclusive
+java -jar Toolkit.jar db backfill-bloom -s 1000000 -e 2000000
+
+# Use a custom database directory and eight processing threads
+java -jar Toolkit.jar db backfill-bloom -d /path/to/database -c 8
+```
+
+### Progress and performance
+
+Each worker accumulates index bits for one section of up to 2,048 blocks. At the end of the section, each touched index record is read once, merged with existing bits, and written only if it changes. The Bloom write count reports actual index-record writes.
+
+The terminal progress bar displays scanned blocks, elapsed time, and estimated remaining time. `toolkit.log` records progress every 10,000 scanned blocks and includes the percentage, elapsed time, average rate, and estimated remaining time. A section's successful-block and log-block counts are added only after its required index writes finish. If a section write fails, none of its blocks are counted as successful; rerunning the same range completes any partially written section. The final summary reports scanned and successful blocks, blocks containing logs, block/task errors, Bloom writes, duration, rates, and the concurrency used.
+
+Performance depends on the number of logs, storage engine, disk, CPU, and database compaction. Increase `--max-concurrency` gradually while monitoring disk latency and CPU usage.
+
 ## Keystore
 
 Keystore provides commands for managing account keystore files (Web3 Secret Storage format).
