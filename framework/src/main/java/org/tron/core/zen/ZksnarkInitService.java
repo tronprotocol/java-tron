@@ -1,12 +1,22 @@
 package org.tron.core.zen;
 
-import java.io.File;
+import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.LinkOption;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.PosixFilePermissions;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.springframework.stereotype.Component;
 import org.tron.common.zksnark.JLibrustzcash;
 import org.tron.common.zksnark.LibrustzcashParam;
@@ -18,6 +28,9 @@ import org.tron.core.exception.ZksnarkException;
 public class ZksnarkInitService {
 
   private static final AtomicBoolean initialized = new AtomicBoolean(false);
+  private static final Set<PosixFilePermission> OWNER_ONLY =
+      Collections.unmodifiableSet(EnumSet.of(
+          PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE));
 
   @PostConstruct
   private void init() {
@@ -56,19 +69,63 @@ public class ZksnarkInitService {
     }
   }
 
-  private static String getParamsFile(String fileName) {
-    InputStream in = Thread.currentThread().getContextClassLoader()
-        .getResourceAsStream("params" + File.separator + fileName);
-    File fileOut = new File(System.getProperty("java.io.tmpdir")
-        + File.separator + fileName + "." + System.currentTimeMillis());
+  @VisibleForTesting
+  static String getParamsFile(String fileName) {
+    InputStream resource = ZksnarkInitService.class.getResourceAsStream("/params/" + fileName);
+    if (resource == null) {
+      throw new TronError("Missing zk param resource: " + fileName,
+          TronError.ErrCode.ZCASH_INIT);
+    }
+
+    Path fileOut = null;
+    try (InputStream in = resource) {
+      fileOut = copyToSecureTempFile(in, fileName);
+      fileOut.toFile().deleteOnExit();
+      return fileOut.toAbsolutePath().toString();
+    } catch (IOException | RuntimeException e) {
+      deleteTempFile(fileOut, e);
+      throw new TronError("Failed to release zk param resource: " + fileName, e,
+          TronError.ErrCode.ZCASH_INIT);
+    }
+  }
+
+  @VisibleForTesting
+  static Path copyToSecureTempFile(InputStream in, String fileName) throws IOException {
+    int dotIndex = fileName.lastIndexOf('.');
+    String prefix = (dotIndex > 0 ? fileName.substring(0, dotIndex) : fileName) + "-";
+    String suffix = dotIndex > 0 ? fileName.substring(dotIndex) : ".params";
+    Path fileOut = createTempFile(prefix, suffix);
+
+    try (OutputStream out = Files.newOutputStream(fileOut,
+        StandardOpenOption.WRITE,
+        StandardOpenOption.TRUNCATE_EXISTING,
+        LinkOption.NOFOLLOW_LINKS)) {
+      IOUtils.copyLarge(in, out);
+      return fileOut;
+    } catch (IOException | RuntimeException e) {
+      deleteTempFile(fileOut, e);
+      throw e;
+    }
+  }
+
+  private static Path createTempFile(String prefix, String suffix) throws IOException {
     try {
-      FileUtils.copyToFile(in, fileOut);
-    } catch (IOException e) {
-      logger.error(e.getMessage(), e);
+      return Files.createTempFile(prefix, suffix,
+          PosixFilePermissions.asFileAttribute(OWNER_ONLY));
+    } catch (UnsupportedOperationException e) {
+      // Non-POSIX providers still create the unpredictable name atomically.
+      return Files.createTempFile(prefix, suffix);
     }
-    if (fileOut.exists()) {
-      fileOut.deleteOnExit();
+  }
+
+  private static void deleteTempFile(Path file, Throwable failure) {
+    if (file == null) {
+      return;
     }
-    return fileOut.getAbsolutePath();
+    try {
+      Files.deleteIfExists(file);
+    } catch (IOException | RuntimeException cleanupError) {
+      failure.addSuppressed(cleanupError);
+    }
   }
 }
