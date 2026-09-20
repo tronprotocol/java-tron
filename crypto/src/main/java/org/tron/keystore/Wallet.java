@@ -81,6 +81,14 @@ public class Wallet {
   public static WalletFile create(String password, SignInterface sign, int n, int p)
       throws CipherException {
 
+    // Keep create() symmetric with validate()/decrypt(): reject KDF cost
+    // parameters that the decryption path would refuse, so create() can
+    // never produce a wallet file that only this class rejects.
+    String paramError = scryptKdfParamsError(DKLEN, n, R, p);
+    if (paramError != null) {
+      throw new CipherException(paramError);
+    }
+
     byte[] salt = generateRandomBytes(32);
 
     byte[] derivedKey = generateDerivedScryptKey(password.getBytes(UTF_8), salt, n, R, p, DKLEN);

@@ -4,7 +4,7 @@ ENV TMP_DIR="/tron-build"
 ENV BASE_DIR="/java-tron"
 
 RUN set -o errexit -o nounset \
-    && dnf -y install git wget unzip java-1.8.0-openjdk-devel \
+    && dnf -y install git wget unzip which java-1.8.0-openjdk-devel \
     && echo "git clone" \
     && mkdir -p $TMP_DIR \
     && cd $TMP_DIR \
@@ -17,7 +17,7 @@ RUN set -o errexit -o nounset \
     && mv java-tron-1.0.0 $BASE_DIR \
     && rm -rf $TMP_DIR \
     && rm -rf ~/.gradle \
-    && dnf -y remove java-1.8.0-openjdk-devel \
+    && dnf -y --setopt=clean_requirements_on_remove=0 remove java-1.8.0-openjdk-devel \
     && dnf clean all
 
 RUN wget -P $BASE_DIR/config https://raw.githubusercontent.com/tronprotocol/tron-deployment/master/main_net_config.conf

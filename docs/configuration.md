@@ -106,7 +106,7 @@ node {
     solidityPort = 50061
     # Maximum concurrent calls per connection. 0 uses the secure default of 100.
     maxConcurrentCallsPerConnection = 100
-    # Idle connection timeout (ms). 0 = no limit.
+    # Idle connection timeout (ms). 0 = secure default (60 s).
     maxConnectionIdleInMillis = 0
     # Minimum active connections required before broadcasting transactions.
     minEffectiveConnection = 1

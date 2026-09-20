@@ -149,6 +149,28 @@ public class NodeConfigTest {
   }
 
   @Test
+  public void testRpcNegativeIdleAndAgeRejected() {
+    Config config = withRef(
+        "node { rpc { maxConnectionIdleInMillis = -1, maxConnectionAgeInMillis = 60000 } }");
+
+    TronError exception = assertThrows(TronError.class,
+        () -> NodeConfig.fromConfig(config));
+
+    assertTrue(exception.getMessage().contains(
+        "node.rpc.maxConnectionIdleInMillis and node.rpc.maxConnectionAgeInMillis "
+            + "must be non-negative, got: maxConnectionIdleInMillis=-1"));
+
+    Config config2 = withRef(
+        "node { rpc { maxConnectionIdleInMillis = 60000, maxConnectionAgeInMillis = -5 } }");
+
+    exception = assertThrows(TronError.class,
+        () -> NodeConfig.fromConfig(config2));
+
+    assertTrue(exception.getMessage().contains(
+        "maxConnectionAgeInMillis=-5"));
+  }
+
+  @Test
   public void testRpcExplicitZeroIdleAndAgeFallsBackToSecureDefault() {
     // Explicit 0 no longer means unlimited: postProcess converts 0 to the
     // secure built-in 60s default. Operators wanting a longer lifetime must

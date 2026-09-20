@@ -394,10 +394,16 @@ public class NodeConfig {
           + "maxRstStream={}, secondsPerWindow={})",
           rpc.maxRstStream, rpc.secondsPerWindow);
     }
+    if (rpc.maxConnectionIdleInMillis < 0 || rpc.maxConnectionAgeInMillis < 0) {
+      throw new TronError("node.rpc.maxConnectionIdleInMillis and node.rpc.maxConnectionAgeInMillis "
+          + "must be non-negative, got: maxConnectionIdleInMillis=" + rpc.maxConnectionIdleInMillis
+          + ", maxConnectionAgeInMillis=" + rpc.maxConnectionAgeInMillis, PARAMETER_INIT);
+    }
     // 0 (the default) means "use the secure built-in default" (60s), NOT
     // unlimited: the old 0 -> Long.MAX_VALUE conversion silently turned an
     // unset or explicitly-zero value into an unbounded connection lifetime.
-    // Operators who want a longer lifetime must set an explicit positive value.
+    // Negative values are rejected outright. Operators who want a longer
+    // lifetime must set an explicit positive value.
     if (rpc.maxConnectionIdleInMillis == 0) {
       rpc.maxConnectionIdleInMillis = RpcConfig.DEFAULT_MAX_CONNECTION_LIFETIME_IN_MILLIS;
     }

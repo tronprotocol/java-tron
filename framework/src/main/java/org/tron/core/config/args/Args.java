@@ -926,7 +926,7 @@ public class Args extends CommonParameter {
 
     // path 3: config localwitnesskeystore + password
     if (!lwConfig.getKeystores().isEmpty()) {
-      if (StringUtils.isNotBlank(cmd.password)) {
+      if (StringUtils.isNotEmpty(cmd.password)) {
         logger.warn("Passing the keystore password via --password is insecure: it is visible "
             + "in the process list and shell history. Omit --password to enter it "
             + "interactively when prompted.");

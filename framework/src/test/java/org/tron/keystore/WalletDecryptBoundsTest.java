@@ -1,5 +1,6 @@
 package org.tron.keystore;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
@@ -8,6 +9,9 @@ import static org.junit.Assert.fail;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Test;
+import org.tron.common.crypto.SignInterface;
+import org.tron.common.crypto.SignUtils;
+import org.tron.common.utils.Utils;
 import org.tron.core.exception.CipherException;
 
 /**
@@ -254,5 +258,33 @@ public class WalletDecryptBoundsTest {
     CipherException err = assertThrows(CipherException.class,
         () -> Wallet.decrypt("password123", walletFile, true));
     assertEquals("Invalid password provided", err.getMessage());
+  }
+
+  // ---------- create(): KDF params validated symmetric with decrypt() ----------
+
+  @Test
+  public void testCreateRejectsOutOfBoundsKdfParams() {
+    // p=16 exceeds the SCRYPT_P_MAX=8 bound that validate()/decrypt() enforce,
+    // so create(n=2^18, p=16) would previously produce a wallet file that only
+    // this class would later refuse to decrypt. Must throw before any KDF run.
+    SignInterface keyPair = SignUtils.getGeneratedRandomSign(Utils.getRandom(), true);
+
+    CipherException err = assertThrows(CipherException.class,
+        () -> Wallet.create("password123", keyPair, 1 << 18, 16));
+    assertTrue(err.getMessage(), err.getMessage().contains("Scrypt p"));
+  }
+
+  @Test(timeout = 60000)
+  public void testCreateAcceptsInBoundsKdfParams() throws Exception {
+    // n=2^12 (4096), p=1 is well within the enforced bounds; create must
+    // succeed and the resulting file must pass validate() and decrypt().
+    SignInterface keyPair = SignUtils.getGeneratedRandomSign(Utils.getRandom(), true);
+    byte[] originalKey = keyPair.getPrivateKey();
+
+    WalletFile walletFile = Wallet.create("password123", keyPair, 1 << 12, 1);
+    Wallet.validate(walletFile);
+
+    SignInterface recovered = Wallet.decrypt("password123", walletFile, true);
+    assertArrayEquals(originalKey, recovered.getPrivateKey());
   }
 }
