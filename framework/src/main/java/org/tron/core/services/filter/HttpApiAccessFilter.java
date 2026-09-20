@@ -29,9 +29,9 @@ public class HttpApiAccessFilter implements Filter {
       if (request instanceof HttpServletRequest) {
         String contextPath = ((HttpServletRequest) request).getContextPath();
         String endpoint = contextPath + ((HttpServletRequest) request).getServletPath();
-        HttpServletResponse resp = (HttpServletResponse) response;
 
         if (isDisabled(endpoint)) {
+          HttpServletResponse resp = (HttpServletResponse) response;
           resp.setStatus(HttpServletResponse.SC_NOT_FOUND);
           resp.setContentType("application/json; charset=utf-8");
           JSONObject jsonObject = new JSONObject();
@@ -39,13 +39,9 @@ public class HttpApiAccessFilter implements Filter {
           resp.getWriter().println(jsonObject.toJSONString());
           return;
         }
-
-        CharResponseWrapper responseWrapper = new CharResponseWrapper(resp);
-        chain.doFilter(request, responseWrapper);
-
-      } else {
-        chain.doFilter(request, response);
       }
+
+      chain.doFilter(request, response);
 
     } catch (Exception e) {
       logger.error("http api access filter exception: {}", e.getMessage());
@@ -74,6 +70,3 @@ public class HttpApiAccessFilter implements Filter {
   }
 
 }
-
-
-
