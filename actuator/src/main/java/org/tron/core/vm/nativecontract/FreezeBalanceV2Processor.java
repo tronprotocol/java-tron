@@ -14,6 +14,7 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.vm.nativecontract.param.FreezeBalanceV2Param;
 import org.tron.core.vm.repository.Repository;
+import org.tron.core.vm.utils.MUtil;
 
 @Slf4j(topic = "VMProcessor")
 public class FreezeBalanceV2Processor {
@@ -62,6 +63,10 @@ public class FreezeBalanceV2Processor {
           throw new ContractValidateException(
               "Unknown ResourceCode, valid ResourceCode[BANDWIDTH、ENERGY]");
         }
+    }
+
+    if (repo.isSelfDestructed(ownerAddress)) {
+      MUtil.checkCPUTimeForFreezeV2AfterSelfDestruct();
     }
   }
 

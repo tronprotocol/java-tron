@@ -12,13 +12,13 @@ import java.util.Optional;
 import java.util.stream.IntStream;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.Time;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.db.TronStoreWithRevoking;
@@ -2261,8 +2261,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     logger.info(
         "Do update nextMaintenanceTime, currentMaintenanceTime: {}, blockTime: {}, "
             + "nextMaintenanceTime: {}.",
-        new DateTime(currentMaintenanceTime), new DateTime(blockTime),
-        new DateTime(nextMaintenanceTime)
+        Time.getIsoTimeString(currentMaintenanceTime), Time.getIsoTimeString(blockTime),
+        Time.getIsoTimeString(nextMaintenanceTime)
     );
   }
 

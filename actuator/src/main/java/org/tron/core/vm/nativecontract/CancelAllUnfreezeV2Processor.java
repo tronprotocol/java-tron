@@ -19,6 +19,7 @@ import org.tron.core.exception.ContractValidateException;
 import org.tron.core.vm.VMConstant;
 import org.tron.core.vm.nativecontract.param.CancelAllUnfreezeV2Param;
 import org.tron.core.vm.repository.Repository;
+import org.tron.core.vm.utils.MUtil;
 import org.tron.protos.Protocol;
 
 @Slf4j(topic = "VMProcessor")
@@ -38,6 +39,10 @@ public class CancelAllUnfreezeV2Processor {
       String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
       throw new ContractValidateException(
           ACCOUNT_EXCEPTION_STR + readableOwnerAddress + NOT_EXIST_STR);
+    }
+
+    if (accountCapsule.hasInvalidDelegatedV2()) {
+      MUtil.checkCPUTimeForInvalidDelegatedV2Balance();
     }
   }
 
