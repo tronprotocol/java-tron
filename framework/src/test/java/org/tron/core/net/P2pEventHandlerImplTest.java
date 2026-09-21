@@ -18,6 +18,7 @@ import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.P2pException;
+import org.tron.core.net.message.MessageTypes;
 import org.tron.core.net.message.TronMessage;
 import org.tron.core.net.message.adv.FetchInvDataMessage;
 import org.tron.core.net.message.adv.InventoryMessage;
@@ -32,6 +33,19 @@ public class P2pEventHandlerImplTest extends BaseTest {
   public static void init() throws Exception {
     Args.setParam(new String[] {"--output-directory", dbPath(), "--debug"},
         TestConstants.TEST_CONF);
+  }
+
+  @Test
+  public void testInvalidHelloRejectedBeforeLoggingAndHandshake() throws Exception {
+    PeerConnection peer = mock(PeerConnection.class);
+    P2pEventHandlerImpl handler = new P2pEventHandlerImpl();
+    Method method = handler.getClass()
+        .getDeclaredMethod("processMessage", PeerConnection.class, byte[].class);
+    method.setAccessible(true);
+    method.invoke(handler, peer, new byte[]{MessageTypes.P2P_HELLO.asByte()});
+
+    verify(peer).disconnect(Protocol.ReasonCode.BAD_PROTOCOL);
+    Mockito.verify(peer, Mockito.never()).getPeerStatistics();
   }
 
   @Test

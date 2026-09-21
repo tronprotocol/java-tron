@@ -338,6 +338,28 @@ public class TransactionsMsgHandlerTest extends BaseTest {
   }
 
   @Test
+  public void testUnrequestedTransactionReportsTransactionId() throws Exception {
+    TransactionsMsgHandler handler = new TransactionsMsgHandler();
+    try {
+      PeerConnection peer = Mockito.mock(PeerConnection.class);
+      Mockito.when(peer.getAdvInvRequest()).thenReturn(new ConcurrentHashMap<>());
+      TransactionsMessage msg = buildTransferMessage(1);
+      Protocol.Transaction trx = msg.getTransactions().getTransactions(0);
+      String transactionId = new TransactionMessage(trx).getMessageId().toString();
+
+      try {
+        handler.processMessage(peer, msg);
+        Assert.fail("Expected an unrequested transaction to be rejected");
+      } catch (P2pException e) {
+        Assert.assertEquals(P2pException.TypeEnum.BAD_MESSAGE, e.getType());
+        Assert.assertTrue(e.getMessage().contains(transactionId));
+      }
+    } finally {
+      handler.close();
+    }
+  }
+
+  @Test
   public void testInvalidSigLength() throws Exception {
     TransactionsMsgHandler handler = new TransactionsMsgHandler();
     handler.init();
