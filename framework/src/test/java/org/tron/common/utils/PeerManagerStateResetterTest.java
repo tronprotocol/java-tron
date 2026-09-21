@@ -64,7 +64,8 @@ public class PeerManagerStateResetterTest {
 
     List<String> unclassified = new java.util.ArrayList<>();
     for (Field field : PeerManager.class.getDeclaredFields()) {
-      if (!Modifier.isStatic(field.getModifiers())) {
+      // skip compiler/JaCoCo-generated synthetic fields (e.g. $jacocoData) — not business state
+      if (!Modifier.isStatic(field.getModifiers()) || field.isSynthetic()) {
         continue;
       }
       String name = field.getName();
