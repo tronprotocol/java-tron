@@ -59,13 +59,23 @@ jobs:
             const normalize = s => s.toLowerCase().replace(/[\s\-_]/g, '');
 
             // ── Extract scope from conventional commit title ──────────
-            // Format: type(scope): description
+            // Formats documented by CONTRIBUTING.md:
+            //   type(scope): description
+            //   type: description
             // Also supports: type(scope1,scope2): description
+            // Only bare "ci" currently has an equivalent reviewer scope.
             const scopeMatch = title.match(/^\w+\(([^)]+)\):/);
-            const rawScope = scopeMatch ? scopeMatch[1] : null;
+            const bareTypeMatch = title.match(/^(\w+):/);
+            const inferredScope = !scopeMatch && bareTypeMatch?.[1].toLowerCase() === 'ci'
+              ? 'ci'
+              : null;
+            const rawScope = scopeMatch ? scopeMatch[1] : inferredScope;
 
             core.info(`PR title : ${title}`);
             core.info(`Raw scope: ${rawScope || '(none)'}`);
+            if (inferredScope) {
+              core.info('Inferred scope "ci" from bare "ci" PR title type.');
+            }
 
             // ── Skip if reviewers already assigned ──────────────────
             const pr = await github.rest.pulls.get({
