@@ -282,4 +282,28 @@ public class TrieTest {
     Assert.assertEquals(0, FastByteComparisons.compareTo(test1, 1, 5, test2, 0, 5));
   }
 
+  /*
+   * TrieImpl equality is defined by root hash, so two distinct instances holding
+   * the same root are equal and instances holding different roots are not. The
+   * identity, null and foreign-type branches are checked alongside it.
+   */
+  @Test
+  public void testEqualsByRootHash() {
+    TrieImpl trie = new TrieImpl();
+    trie.put("key".getBytes(), "value".getBytes());
+    byte[] rootHash = trie.getRootHash();
+
+    TrieImpl sameRoot = new TrieImpl(trie.getCache(), rootHash);
+    Assert.assertNotSame(trie, sameRoot);
+    Assert.assertEquals(trie, sameRoot);
+
+    TrieImpl differentRoot = new TrieImpl();
+    differentRoot.put("key".getBytes(), "another".getBytes());
+    Assert.assertNotEquals(trie, differentRoot);
+
+    Assert.assertEquals(trie, trie);
+    Assert.assertNotEquals(trie, null);
+    Assert.assertNotEquals(trie, "not a trie");
+  }
+
 }
