@@ -74,8 +74,8 @@ public class AllowTvmLondonTest extends VMTestBase {
             factoryAddress, Hex.decode(hexInput), 0, feeLimit, manager, null);
     byte[] returnValue = result.getRuntime().getResult().getHReturn();
     Assert.assertNull(result.getRuntime().getRuntimeError());
-    Assert.assertArrayEquals(returnValue,
-        longTo32Bytes(manager.getDynamicPropertiesStore().getEnergyFee()));
+    Assert.assertArrayEquals(longTo32Bytes(manager.getDynamicPropertiesStore().getEnergyFee()),
+        returnValue);
   }
 
   @Test
