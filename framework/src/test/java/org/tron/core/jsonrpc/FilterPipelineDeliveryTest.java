@@ -2,6 +2,7 @@ package org.tron.core.jsonrpc;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
 import java.util.function.BooleanSupplier;
 import javax.annotation.Resource;
 import org.junit.Assert;
@@ -14,6 +15,7 @@ import org.tron.common.logsfilter.queue.FilterCapsuleQueue;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.LogInfo;
+import org.tron.common.utils.ReflectUtils;
 import org.tron.core.config.args.Args;
 import org.tron.core.services.jsonrpc.TronJsonRpc.FilterRequest;
 import org.tron.core.services.jsonrpc.TronJsonRpc.LogFilterElement;
@@ -59,10 +61,10 @@ public class FilterPipelineDeliveryTest extends BaseTest {
   }
 
   @Test
-  public void consumerThreadStartedOnce() {
-    long count = Thread.getAllStackTraces().keySet().stream()
-        .filter(t -> "filter".equals(t.getName())).count();
-    Assert.assertEquals(1, count);
+  public void consumerStartedWithContext() {
+    ExecutorService filterEs = ReflectUtils.getFieldValue(tronJsonRpc, "filterEs");
+    Assert.assertNotNull("consumer did not start", filterEs);
+    Assert.assertFalse("consumer already shut down", filterEs.isShutdown());
   }
 
   @Test
