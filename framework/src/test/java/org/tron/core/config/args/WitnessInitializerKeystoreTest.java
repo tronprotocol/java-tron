@@ -5,6 +5,9 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mockStatic;
 
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
@@ -18,11 +21,13 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.mockito.MockedStatic;
 import org.slf4j.LoggerFactory;
 import org.tron.common.crypto.SignInterface;
 import org.tron.common.crypto.SignUtils;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.LocalWitnesses;
+import org.tron.core.exception.CipherException;
 import org.tron.core.exception.TronError;
 import org.tron.keystore.Credentials;
 import org.tron.keystore.WalletFile;
@@ -180,6 +185,23 @@ public class WitnessInitializerKeystoreTest {
           cause.getMessage().contains("address mismatch"));
     } finally {
       keystoreFile.delete();
+    }
+  }
+
+  @Test
+  public void testInvalidPrivateKeyLoadError() {
+    java.util.List<String> keystores =
+        java.util.Collections.singletonList(keystoreFileName);
+
+    try (MockedStatic<SignUtils> mockedSignUtils = mockStatic(SignUtils.class)) {
+      mockedSignUtils.when(() -> SignUtils.fromPrivate(any(byte[].class), eq(true)))
+          .thenThrow(new IllegalArgumentException("Invalid private key"));
+
+      TronError err = assertThrows(TronError.class,
+          () -> WitnessInitializer.initFromKeystore(keystores, PASSWORD, null));
+      assertEquals(TronError.ErrCode.WITNESS_KEYSTORE_LOAD, err.getErrCode());
+      assertTrue(err.getCause() instanceof CipherException);
+      assertTrue(err.getCause().getCause() instanceof IllegalArgumentException);
     }
   }
 
