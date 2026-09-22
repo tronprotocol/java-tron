@@ -67,12 +67,7 @@ public class ApplicationImpl implements Application {
       solidityNode.close();
     }
     // producers are stopped; stop the json-rpc filter consumer before the DB closes
-    // (idempotent — Spring bean destruction may call close() again)
-    try {
-      tronJsonRpc.close();
-    } catch (Exception e) {
-      logger.warn("Closing TronJsonRpcImpl failed.", e);
-    }
+    tronJsonRpc.close();
     dbManager.close();
     shutdown.countDown();
   }

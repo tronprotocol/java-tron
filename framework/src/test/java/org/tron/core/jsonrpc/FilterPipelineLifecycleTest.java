@@ -1,6 +1,5 @@
 package org.tron.core.jsonrpc;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
@@ -56,7 +55,7 @@ public class FilterPipelineLifecycleTest {
   }
 
   @After
-  public void tearDown() throws IOException {
+  public void tearDown() {
     if (tronJsonRpc != null) {
       tronJsonRpc.close();
     }
@@ -97,7 +96,7 @@ public class FilterPipelineLifecycleTest {
     Assert.fail(message);
   }
 
-  private static long timedClose(TronJsonRpcImpl rpc) throws IOException {
+  private static long timedClose(TronJsonRpcImpl rpc) {
     long t0 = System.nanoTime();
     rpc.close();
     return (System.nanoTime() - t0) / 1_000_000;
@@ -216,18 +215,18 @@ public class FilterPipelineLifecycleTest {
       }
     }, "test-closer");
     closer.start();
-    Thread.sleep(500);
-    Assert.assertTrue("close() finished while a capsule was in flight", closer.isAlive());
-
-    closer.interrupt();
-    closer.join(GRACEFUL_BOUND_MS);
-    Assert.assertFalse("interrupted close() did not return", closer.isAlive());
-    Assert.assertNull("close() failed", closeError.get());
-    Assert.assertTrue("close() swallowed the interrupt status", interruptKept.get());
-
-    // assert before releasing the latch: a released consumer would finish on its own,
-    // so only a still-blocked one proves close() cancelled it
     try {
+      await(filterEs()::isShutdown, "close() did not start stopping the consumer");
+      Assert.assertTrue("close() finished while a capsule was in flight", closer.isAlive());
+
+      closer.interrupt();
+      closer.join(GRACEFUL_BOUND_MS);
+      Assert.assertFalse("interrupted close() did not return", closer.isAlive());
+      Assert.assertNull("close() failed", closeError.get());
+      Assert.assertTrue("close() swallowed the interrupt status", interruptKept.get());
+
+      // assert before releasing the latch: a released consumer would finish on its own,
+      // so only a still-blocked one proves close() cancelled it
       Assert.assertTrue("consumer was not cancelled",
           filterEs().awaitTermination(10, TimeUnit.SECONDS));
     } finally {

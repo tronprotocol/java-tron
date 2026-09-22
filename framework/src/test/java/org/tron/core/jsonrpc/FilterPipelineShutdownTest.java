@@ -1,7 +1,5 @@
 package org.tron.core.jsonrpc;
 
-import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.util.Collections;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -38,7 +36,7 @@ public class FilterPipelineShutdownTest {
   }
 
   @After
-  public void tearDown() throws IOException {
+  public void tearDown() {
     tronJsonRpc.close();
     CommonParameter.getInstance().setJsonRpcHttpFullNodeEnable(false);
   }
@@ -84,22 +82,23 @@ public class FilterPipelineShutdownTest {
         Collections.singletonList(buildTxInfoWithLog()), false, false);
     filterCapsuleQueue.offer(queued);
 
-    Thread closer = new Thread(() -> {
-      try {
-        tronJsonRpc.close();
-      } catch (IOException e) {
-        throw new UncheckedIOException(e);
-      }
-    }, "test-closer");
+    ExecutorService filterEs = ReflectUtils.getFieldValue(tronJsonRpc, "filterEs");
+    Thread closer = new Thread(tronJsonRpc::close, "test-closer");
     closer.start();
-    // close() must be parked awaiting the consumer, with logsFilterPool still open
-    Thread.sleep(500);
-    Assert.assertTrue("close() finished while a capsule was in flight", closer.isAlive());
+    try {
+      // close() must be parked awaiting the consumer, with logsFilterPool still open
+      long deadline = System.currentTimeMillis() + 10_000;
+      while (!filterEs.isShutdown() && System.currentTimeMillis() < deadline) {
+        Thread.sleep(10);
+      }
+      Assert.assertTrue("close() did not start stopping the consumer", filterEs.isShutdown());
+      Assert.assertTrue("close() finished while a capsule was in flight", closer.isAlive());
+    } finally {
+      release.countDown();
+    }
 
-    release.countDown();
     closer.join(150_000);
     Assert.assertFalse("close() did not finish", closer.isAlive());
-    ExecutorService filterEs = ReflectUtils.getFieldValue(tronJsonRpc, "filterEs");
     Assert.assertTrue("consumer still running after close()", filterEs.isTerminated());
     Assert.assertEquals("in-flight capsule was lost during close()",
         1, filter.getResult().size());
