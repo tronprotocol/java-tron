@@ -1,9 +1,7 @@
 apply plugin: 'com.google.protobuf'
 apply plugin: 'checkstyle'
 
-// Unit tests for this module live in framework/src/test/java/ — following the
-// project-wide convention where module unit tests are consolidated under the
-// framework module.
+// Unit tests live in src/test/java/, alongside the code they cover.
 //
 // Reference code for using p2p as a library lives in src/example/java/. It's
 // compiled in a separate sourceSet (so API changes surface here too) but NOT
@@ -18,6 +16,10 @@ checkstyle {
 checkstyleMain {
     source = 'src/main/java'
     exclude '**/protos/**'
+}
+
+checkstyleTest {
+    source = 'src/test/java'
 }
 
 // Exclude example code from checkstyle — it's reference-only and follows
@@ -158,6 +160,17 @@ tasks.matching { it.name == 'processExampleResources' }.configureEach {
     it.dependsOn(tasks.named('generateExampleProto'))
 }
 
-// No jacocoTestReport block: this module has no local tests. Coverage for
-// p2p code is captured by the tests in framework/src/test/ and reported via
-// :framework:jacocoTestReport.
+// The module reports its own coverage now that it has a test sourceSet. CI
+// collects **/build/reports/jacoco/test/jacocoTestReport.xml across every
+// module, so this is picked up without any wiring in :framework.
+jacocoTestReport {
+    dependsOn test
+    reports {
+        xml.required = true
+        html.required = false
+    }
+    // Generated protobuf code, matching the checkstyle exclusion above.
+    classDirectories.setFrom(files(classDirectories.files.collect {
+        fileTree(dir: it, excludes: ['**/protos/**'])
+    }))
+}
