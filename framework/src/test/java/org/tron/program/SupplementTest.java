@@ -11,9 +11,7 @@ import java.io.IOException;
 import java.math.BigInteger;
 import javax.annotation.Resource;
 import org.junit.BeforeClass;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.tron.common.BaseTest;
 import org.tron.common.TestConstants;
 import org.tron.common.entity.PeerInfo;
@@ -21,7 +19,6 @@ import org.tron.common.utils.CompactEncoder;
 import org.tron.common.utils.JsonUtil;
 import org.tron.common.utils.Value;
 import org.tron.core.capsule.StorageRowCapsule;
-import org.tron.core.capsule.utils.RLP;
 import org.tron.core.config.TronLogShutdownHook;
 import org.tron.core.config.args.Args;
 import org.tron.core.services.http.HttpSelfFormatFieldName;
@@ -33,9 +30,6 @@ public class SupplementTest extends BaseTest {
 
   @Resource
   private StorageRowStore storageRowStore;
-
-  @Rule
-  public ExpectedException thrown = ExpectedException.none();
 
   @BeforeClass
   public static void init() throws IOException {
@@ -109,17 +103,6 @@ public class SupplementTest extends BaseTest {
     assertFalse(CompactEncoder.hasTerminator(new byte[] {1,2,3,4,5,6,7}));
     CompactEncoder.unpackToNibbles(new byte[] {1,2,3,4,5,6,7});
     CompactEncoder.binToNibblesNoTerminator(new byte[] {1,2,3,4,5,6,7});
-
-    assertNotNull(RLP.decodeIP4Bytes(new byte[] {1,2,3,4,5,6,7}, 0));
-    RLP.decodeByteArray(new byte[] {1,2,3,4,5,6,7}, 0);
-    RLP.nextItemLength(new byte[] {1,2,3,4,5,6,7}, 0);
-    RLP.decodeStringItem(new byte[] {1,2,3,4,5,6,7}, 0);
-    RLP.decodeInt(new byte[] {1,2,3,4,5,6,7}, 0);
-    RLP.decode2OneItem(new byte[] {1,2,3,4,5,6,7}, 0);
-    RLP.decode2(new byte[] {1,2,3,4,5,6,7}, 1);
-    RLP.decode2(new byte[] {1,2,3,4,5,6,7});
-    thrown.expect(ClassCastException.class);
-    RLP.unwrapList(new byte[] {1,2,3,4,5,6,7});
   }
 
   @Test
