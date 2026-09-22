@@ -18,6 +18,15 @@ checkstyleTest {
     source = 'src/test/java'
 }
 
+// StartApp is the entry point for driving this module on its own, without
+// starting java-tron. The jar is thin, so it needs the runtime classpath
+// alongside it — see README.md.
+jar {
+    manifest {
+        attributes 'Main-Class': 'org.tron.p2p.example.StartApp'
+    }
+}
+
 def protobufVersion = '3.25.8'
 
 sourceSets {
@@ -131,4 +140,12 @@ jacocoTestReport {
     classDirectories.setFrom(files(classDirectories.files.collect {
         fileTree(dir: it, excludes: ['**/protos/**'])
     }))
+}
+
+// Prints the module's runtime classpath, so StartApp can be launched standalone
+// against a thin jar. See README.md.
+tasks.register('printRuntimeClasspath') {
+    doLast {
+        println sourceSets.main.runtimeClasspath.asPath
+    }
 }

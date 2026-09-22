@@ -1,3 +1,21 @@
+> **Vendored module.** This is `tronprotocol/libp2p` v2.2.9 living inside
+> java-tron as the `:p2p` Gradle module. java-tron consumes it as a project
+> dependency, not as a published artifact — `:common` exposes it via
+> `api project(":p2p")`. The document below is the upstream README, kept because
+> the module still runs standalone for debugging.
+>
+> **Running it standalone.** `p2p-1.0.0.jar` is a thin jar, so its dependencies
+> have to be on the classpath. From the repository root:
+>
+> ```bash
+> ./gradlew :p2p:jar
+> java -cp "p2p/build/libs/p2p-1.0.0.jar:$(./gradlew -q :p2p:printRuntimeClasspath)" \
+>     org.tron.p2p.example.StartApp [options]
+> ```
+>
+> The commands below are written as `java -jar` for brevity; substitute the
+> classpath form above.
+
 libp2p can run independently or be used as a dependency.
 
 # 1. Run independently
@@ -5,7 +23,7 @@ libp2p can run independently or be used as a dependency.
 command of start a p2p node:
 
 ```bash
-$ java -jar libp2p.jar [options]
+$ java -jar p2p/build/libs/p2p-1.0.0.jar [options]
 ```
 
 available cli options:
@@ -65,7 +83,7 @@ available dns publish cli options:
 ```
 
 For details please
-check [StartApp](https://github.com/tronprotocol/libp2p/blob/main/src/main/java/org/tron/p2p/example/StartApp.java)
+check [StartApp](src/main/java/org/tron/p2p/example/StartApp.java)
 .
 
 ## 1.1 Construct a p2p network using libp2p
@@ -74,19 +92,19 @@ For example
 Node A, starts with default configuration parameters. Let's say its IP is 127.0.0.1
 
 ```bash
-$ java -jar libp2p.jar
+$ java -jar p2p/build/libs/p2p-1.0.0.jar
 ```
 
 Node B, start with seed nodes(127.0.0.1:18888). Let's say its IP is 127.0.0.2
 
 ```bash
-$ java -jar libp2p.jar -s 127.0.0.1:18888
+$ java -jar p2p/build/libs/p2p-1.0.0.jar -s 127.0.0.1:18888
 ```
 
 Node C, start with with seed nodes(127.0.0.1:18888). Let's say its IP is 127.0.0.3
 
 ```bash
-$ java -jar libp2p.jar -s 127.0.0.1:18888
+$ java -jar p2p/build/libs/p2p-1.0.0.jar -s 127.0.0.1:18888
 ```
 
 After the three nodes are successfully started, the usual situation is that node B can discover node
@@ -112,7 +130,7 @@ Suppose you have a domain example.org hosted by Amazon Route 53, you can publish
 like this:
 
 ```bash
-java -jar libp2p.jar -p 18888 -v 201910292 -d 1 -s 127.0.0.1:18888 \
+java -jar p2p/build/libs/p2p-1.0.0.jar -p 18888 -v 201910292 -d 1 -s 127.0.0.1:18888 \
 -publish \
 --dns-private b71c71a67e1177ad4e901695e1b4b9ee17ae16c6668d313eac2f96dbcda3f291 \
 --server-type aws \
@@ -416,6 +434,9 @@ p2pService.start(config);
 ```
 
 For details please
-check [ImportUsing](ImportUsing.java), [DnsExample1](DnsExample1.java), [DnsExample2](DnsExample2.java)
+The former `ImportUsing`, `DnsExample1` and `DnsExample2` reference classes have
+been replaced by
+[ExampleUsageTest](src/test/java/org/tron/p2p/example/ExampleUsageTest.java),
+which asserts the same configuration shapes instead of only compiling them.
 
 
