@@ -21,11 +21,11 @@ public class WalletAddressValidationTest {
   @Test
   public void testDecryptAcceptsMatchingAddress() throws Exception {
     String password = "test123456";
-    SignInterface keyPair = SignUtils.getGeneratedRandomSign(Utils.getRandom(), true);
+    SignInterface keyPair = SignUtils.getGeneratedRandomSign(Utils.getRandom());
     WalletFile walletFile = Wallet.createStandard(password, keyPair);
 
     // createStandard sets the correct derived address — should decrypt fine
-    SignInterface recovered = Wallet.decrypt(password, walletFile, true);
+    SignInterface recovered = Wallet.decrypt(password, walletFile);
     assertEquals("Private key must match",
         org.tron.common.utils.ByteArray.toHexString(keyPair.getPrivateKey()),
         org.tron.common.utils.ByteArray.toHexString(recovered.getPrivateKey()));
@@ -34,14 +34,14 @@ public class WalletAddressValidationTest {
   @Test
   public void testDecryptRejectsSpoofedAddress() throws Exception {
     String password = "test123456";
-    SignInterface keyPair = SignUtils.getGeneratedRandomSign(Utils.getRandom(), true);
+    SignInterface keyPair = SignUtils.getGeneratedRandomSign(Utils.getRandom());
     WalletFile walletFile = Wallet.createStandard(password, keyPair);
 
     // Tamper with the address to simulate a spoofed keystore
     walletFile.setAddress("TTamperedAddressXXXXXXXXXXXXXXXXXX");
 
     try {
-      Wallet.decrypt(password, walletFile, true);
+      Wallet.decrypt(password, walletFile);
       fail("Expected CipherException due to address mismatch");
     } catch (CipherException e) {
       assertTrue("Error should mention address mismatch, got: " + e.getMessage(),
@@ -53,11 +53,11 @@ public class WalletAddressValidationTest {
   public void testDecryptAllowsNullAddress() throws Exception {
     // Ethereum-style keystores may not include the address field — should still decrypt
     String password = "test123456";
-    SignInterface keyPair = SignUtils.getGeneratedRandomSign(Utils.getRandom(), true);
+    SignInterface keyPair = SignUtils.getGeneratedRandomSign(Utils.getRandom());
     WalletFile walletFile = Wallet.createStandard(password, keyPair);
     walletFile.setAddress(null);
 
-    SignInterface recovered = Wallet.decrypt(password, walletFile, true);
+    SignInterface recovered = Wallet.decrypt(password, walletFile);
     assertNotNull(recovered);
     assertEquals(org.tron.common.utils.ByteArray.toHexString(keyPair.getPrivateKey()),
         org.tron.common.utils.ByteArray.toHexString(recovered.getPrivateKey()));
@@ -66,28 +66,13 @@ public class WalletAddressValidationTest {
   @Test
   public void testDecryptAllowsEmptyAddress() throws Exception {
     String password = "test123456";
-    SignInterface keyPair = SignUtils.getGeneratedRandomSign(Utils.getRandom(), true);
+    SignInterface keyPair = SignUtils.getGeneratedRandomSign(Utils.getRandom());
     WalletFile walletFile = Wallet.createStandard(password, keyPair);
     walletFile.setAddress("");
 
     // Empty-string address is treated as absent (no validation)
-    SignInterface recovered = Wallet.decrypt(password, walletFile, true);
+    SignInterface recovered = Wallet.decrypt(password, walletFile);
     assertNotNull(recovered);
   }
 
-  @Test
-  public void testDecryptRejectsSpoofedAddressSm2() throws Exception {
-    String password = "test123456";
-    SignInterface keyPair = SignUtils.getGeneratedRandomSign(Utils.getRandom(), false);
-    WalletFile walletFile = Wallet.createStandard(password, keyPair);
-
-    walletFile.setAddress("TSpoofedSm2Addr123456789XXXXXXXX");
-
-    try {
-      Wallet.decrypt(password, walletFile, false);
-      fail("Expected CipherException due to address mismatch on SM2");
-    } catch (CipherException e) {
-      assertTrue(e.getMessage().contains("address mismatch"));
-    }
-  }
 }

@@ -15,7 +15,6 @@ import org.tron.common.BaseTest;
 import org.tron.common.TestConstants;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.Hash;
-import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Sha256Hash;
@@ -103,14 +102,12 @@ public class ValidateMultiSignContractTest extends BaseTest {
 
     byte[] address = key.getAddress();
     int permissionId = 2;
-    byte[] data = Sha256Hash.hash(CommonParameter
-        .getInstance().isECKeyCryptoEngine(), longData);
+    byte[] data = Sha256Hash.hash(longData);
 
     //combine data
     byte[] merged = ByteUtil.merge(address, ByteArray.fromInt(permissionId), data);
     //sha256 of it
-    byte[] toSign = Sha256Hash.hash(CommonParameter
-        .getInstance().isECKeyCryptoEngine(), merged);
+    byte[] toSign = Sha256Hash.hash(merged);
 
     //sign data
 
@@ -219,9 +216,9 @@ public class ValidateMultiSignContractTest extends BaseTest {
         Collections.singletonList(activePermission));
     dbManager.getAccountStore().put(key.getAddress(), toAccount);
 
-    byte[] data = Sha256Hash.hash(CommonParameter.getInstance().isECKeyCryptoEngine(), longData);
+    byte[] data = Sha256Hash.hash(longData);
     byte[] merged = ByteUtil.merge(key.getAddress(), ByteArray.fromInt(2), data);
-    byte[] toSign = Sha256Hash.hash(CommonParameter.getInstance().isECKeyCryptoEngine(), merged);
+    byte[] toSign = Sha256Hash.hash(merged);
     List<Object> signs = new ArrayList<>();
     signs.add(Hex.toHexString(key1.sign(toSign).toByteArray()));
     signs.add(Hex.toHexString(key2.sign(toSign).toByteArray()));

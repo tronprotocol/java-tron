@@ -166,7 +166,7 @@ Generate a new keystore file with a random keypair.
 
 ```shell script
 # full command
-  java -jar Toolkit.jar keystore new [-h] [--keystore-dir=<dir>] [--password-file=<file>] [--sm2] [--json]
+  java -jar Toolkit.jar keystore new [-h] [--keystore-dir=<dir>] [--password-file=<file>] [--json]
 # examples
   java -jar Toolkit.jar keystore new                                  # interactive prompt
   java -jar Toolkit.jar keystore new --keystore-dir /data/keystores   # custom directory
@@ -179,7 +179,7 @@ Import a private key into a new keystore file.
 
 ```shell script
 # full command
-  java -jar Toolkit.jar keystore import [-h] [--keystore-dir=<dir>] [--password-file=<file>] [--key-file=<file>] [--sm2] [--force] [--json]
+  java -jar Toolkit.jar keystore import [-h] [--keystore-dir=<dir>] [--password-file=<file>] [--key-file=<file>] [--force] [--json]
 # examples
   java -jar Toolkit.jar keystore import                                # interactive prompt
   java -jar Toolkit.jar keystore import --key-file key.txt --json      # from file with JSON output
@@ -205,7 +205,7 @@ Change the password of a keystore file.
 
 ```shell script
 # full command
-  java -jar Toolkit.jar keystore update [-h] <address> [--keystore-dir=<dir>] [--password-file=<file>] [--sm2] [--json]
+  java -jar Toolkit.jar keystore update [-h] <address> [--keystore-dir=<dir>] [--password-file=<file>] [--json]
 # examples
   java -jar Toolkit.jar keystore update TXyz...abc                          # interactive prompt
   java -jar Toolkit.jar keystore update TXyz...abc --keystore-dir /data/ks  # custom directory
@@ -219,6 +219,5 @@ When using `--password-file` with `update`, the file must contain exactly two li
 - `--password-file`: Read password from a file instead of interactive prompt. For `keystore update`, the file must contain exactly two lines (current password, then new password).
 - `--key-file`: Read the private key (hex, with or without `0x` prefix) from a file instead of the interactive prompt (`keystore import` only).
 - `--force`: For `keystore import`, allow importing a private key whose address already has a keystore in the directory (creates an additional file).
-- `--sm2`: Use SM2 algorithm instead of ECDSA (for `new` and `import`).
 - `--json`: Output in JSON format for scripting.
 - `-h | --help`: Provide the help info.

@@ -95,7 +95,7 @@ public abstract class PbftBaseMessage extends Message {
   public abstract String getNo();
 
   public void analyzeSignature() throws SignatureException {
-    byte[] hash = Sha256Hash.hash(true, getPbftMessage().getRawData().toByteArray());
+    byte[] hash = Sha256Hash.hash(getPbftMessage().getRawData().toByteArray());
     publicKey = ECKey.signatureToAddress(hash, TransactionCapsule
         .getBase64FromByteString(getPbftMessage().getSignature()));
   }

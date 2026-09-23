@@ -8,7 +8,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.tron.common.crypto.SignInterface;
 import org.tron.common.crypto.SignUtils;
-import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
 import org.tron.core.exception.CipherException;
@@ -67,16 +66,14 @@ public class KeystoreFactory {
 
 
   private void genKeystore() throws CipherException, IOException {
-    boolean ecKey = CommonParameter.getInstance().isECKeyCryptoEngine();
     String password = WalletUtils.inputPassword2Twice();
 
-    SignInterface eCkey = SignUtils.getGeneratedRandomSign(Utils.random, ecKey);
+    SignInterface eCkey = SignUtils.getGeneratedRandomSign(Utils.random);
     File file = new File(FilePath);
     fileCheck(file);
     String fileName = WalletUtils.generateWalletFile(password, eCkey, file, true);
     System.out.println("Gen a keystore its name " + fileName);
-    Credentials credentials = WalletUtils.loadCredentials(password, new File(file, fileName),
-        ecKey);
+    Credentials credentials = WalletUtils.loadCredentials(password, new File(file, fileName));
     System.out.println("Your address is " + credentials.getAddress());
   }
 
@@ -95,14 +92,12 @@ public class KeystoreFactory {
 
     String password = WalletUtils.inputPassword2Twice();
 
-    boolean ecKey = CommonParameter.getInstance().isECKeyCryptoEngine();
-    SignInterface eCkey = SignUtils.fromPrivate(ByteArray.fromHexString(privateKey), ecKey);
+    SignInterface eCkey = SignUtils.fromPrivate(ByteArray.fromHexString(privateKey));
     File file = new File(FilePath);
     fileCheck(file);
     String fileName = WalletUtils.generateWalletFile(password, eCkey, file, true);
     System.out.println("Gen a keystore its name " + fileName);
-    Credentials credentials = WalletUtils.loadCredentials(password, new File(file, fileName),
-        ecKey);
+    Credentials credentials = WalletUtils.loadCredentials(password, new File(file, fileName));
     System.out.println("Your address is " + credentials.getAddress());
   }
 

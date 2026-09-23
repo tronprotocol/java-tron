@@ -191,8 +191,7 @@ public class RewardViCalService {
   }
 
   private Sha256Hash getHash(Map.Entry<byte[], byte[]> entry) {
-    return Sha256Hash.of(CommonParameter.getInstance().isECKeyCryptoEngine(),
-        Bytes.concat(entry.getKey(), entry.getValue()));
+    return Sha256Hash.of(Bytes.concat(entry.getKey(), entry.getValue()));
   }
 
   private void startRewardCal() {

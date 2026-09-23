@@ -5,18 +5,14 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import ch.qos.logback.core.util.FileUtil;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.IntStream;
-import org.apache.commons.io.FileUtils;
 import org.junit.Assert;
 import org.junit.Test;
-import org.tron.common.parameter.CommonParameter;
 
 public class Sha256HashTest {
 
@@ -24,10 +20,8 @@ public class Sha256HashTest {
   public void testHash() throws IOException {
     //Example from https://github.com/tronprotocol/tips/blob/master/TWP-001.md
     byte[] input = ByteArray.fromHexString("A0E11973395042BA3C0B52B4CDF4E15EA77818F275");
-    byte[] hash0 = Sha256Hash.hash(CommonParameter
-        .getInstance().isECKeyCryptoEngine(), input);
-    byte[] hash1 = Sha256Hash.hash(CommonParameter
-        .getInstance().isECKeyCryptoEngine(), hash0);
+    byte[] hash0 = Sha256Hash.hash(input);
+    byte[] hash1 = Sha256Hash.hash(hash0);
     assertEquals(Arrays.toString(hash0), Arrays.toString(ByteArray
         .fromHexString("CD5D4A7E8BE869C00E17F8F7712F41DBE2DDBD4D8EC36A7280CD578863717084")));
     assertEquals(Arrays.toString(hash1), Arrays.toString(ByteArray
@@ -36,22 +30,16 @@ public class Sha256HashTest {
     Sha256Hash sha256Hash = new Sha256Hash(1, new byte[32]);
     assertNotNull(sha256Hash.toBigInteger());
 
-    Sha256Hash.create(true, ("byte1-1").getBytes(StandardCharsets.UTF_8));
+    Sha256Hash.create(("byte1-1").getBytes(StandardCharsets.UTF_8));
     File testfile = createTempFile("testfile", ".txt").toFile();
-    Sha256Hash.of(true, testfile);
-    Sha256Hash.createDouble(true, new byte[0]);
-    Sha256Hash.twiceOf(true, new byte[0]);
-    Sha256Hash.hashTwice(true, new byte[0]);
-    Sha256Hash.hashTwice(false, new byte[0]);
-    Sha256Hash.hashTwice(true, new byte[0], 0, 0);
-    Sha256Hash.hashTwice(false, new byte[0], 0, 0);
-    Sha256Hash.hash(false, new byte[0], 0, 0);
-    Sha256Hash.hashTwice(true, new byte[0], 0, 0, new byte[0], 0, 0);
-    Sha256Hash.hashTwice(false, new byte[0], 0, 0, new byte[0], 0, 0);
+    Sha256Hash.of(testfile);
+    Sha256Hash.createDouble(new byte[0]);
+    Sha256Hash.twiceOf(new byte[0]);
+    Sha256Hash.hashTwice(new byte[0]);
+    Sha256Hash.hashTwice(new byte[0], 0, 0);
+    Sha256Hash.hash(new byte[0], 0, 0);
+    Sha256Hash.hashTwice(new byte[0], 0, 0, new byte[0], 0, 0);
     assertTrue(testfile.delete());
-
-
-
   }
 
   @Test
@@ -65,8 +53,7 @@ public class Sha256HashTest {
       Thread thread =
           new Thread(() -> {
             for (int i = 0; i < 10000; i++) {
-              byte[] hash0 = Sha256Hash.hash(CommonParameter.getInstance()
-                  .isECKeyCryptoEngine(), input);
+              byte[] hash0 = Sha256Hash.hash(input);
               countAll.incrementAndGet();
               if (!Arrays.equals(hash, hash0)) {
                 countFailed.incrementAndGet();

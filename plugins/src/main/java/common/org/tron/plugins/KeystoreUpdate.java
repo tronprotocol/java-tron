@@ -46,10 +46,6 @@ public class KeystoreUpdate implements Callable<Integer> {
       description = "Read old and new passwords from file (one per line)")
   private File passwordFile;
 
-  @Option(names = {"--sm2"},
-      description = "Use SM2 algorithm instead of ECDSA")
-  private boolean sm2;
-
   @Override
   public Integer call() {
     PrintWriter out = spec.commandLine().getOut();
@@ -143,7 +139,6 @@ public class KeystoreUpdate implements Callable<Integer> {
         return 1;
       }
 
-      boolean ecKey = !sm2;
       // Re-read via NOFOLLOW byte channel to close the TOCTOU window between
       // findKeystoreByAddress and this read — an attacker with directory
       // write access could otherwise swap the file for a symlink in between.
@@ -153,7 +148,7 @@ public class KeystoreUpdate implements Callable<Integer> {
         return 1;
       }
       WalletFile walletFile = MAPPER.readValue(keystoreBytes, WalletFile.class);
-      SignInterface keyPair = Wallet.decrypt(oldPassword, walletFile, ecKey);
+      SignInterface keyPair = Wallet.decrypt(oldPassword, walletFile);
 
       // createStandard already sets the correctly-derived address. Do NOT override
       // with walletFile.getAddress() — that would propagate a potentially spoofed

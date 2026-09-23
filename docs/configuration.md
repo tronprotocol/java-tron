@@ -38,6 +38,22 @@ java-tron-1.0.0/bin/FullNode -c /path/to/node.conf -w
 
 If `-c` is omitted, the node loads the `config.conf` bundled inside the jar (the same file shipped with the distribution) merged with `reference.conf` as fallback. The bundled file already enables discovery/persist for mainnet operation. For production, copy it out, edit, and pass the edited copy via `-c` to make your configuration visible to operators.
 
+## Migrating legacy `crypto.engine` settings
+
+SM2/SM3 support has been removed. The node always uses ECKey/secp256k1 and SHA-256;
+`crypto.engine` no longer selects a runtime cryptographic engine.
+
+| Existing setting | Startup behavior | Operator action |
+|------------------|------------------|-----------------|
+| Key absent | Uses ECKey and SHA-256 | No change needed |
+| `crypto.engine = "eckey"` (case-insensitive) | Starts with a deprecation warning | Remove the redundant setting |
+| Any other value, including `"sm2"`, an empty string, `null`, or a non-string value | Fails before database or keystore initialization | Verify the network's cryptographic suite before upgrading |
+
+An existing SM2/SM3 deployment must remain on a compatible release until it has a
+separately planned migration. Removing the setting or changing it to `eckey` does
+not convert its chain data, addresses, keys, or signatures. Do not open an existing
+SM2/SM3 chain database with this ECKey/SHA-256-only node.
+
 ## Minimal Config File
 
 Your config file only needs to contain what you want to change. The following is sufficient for a mainnet full node:
@@ -233,7 +249,6 @@ Not all parameters support hot-reload. Parameters that affect node identity, gen
 
 | Parameter | Reason |
 |-----------|--------|
-| `crypto.engine` | Changing the key-derivation algorithm will fork the node |
 | `genesis.block.*` | Must be identical on every node in the network |
 | `committee.*` | Controlled by on-chain governance proposals; manual overrides are for private chains only |
 | `node.p2p.version` | Must match the network (11111 for mainnet) |
