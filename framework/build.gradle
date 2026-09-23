@@ -51,7 +51,7 @@ dependencies {
 
     // https://mvnrepository.com/artifact/com.github.briandilley.jsonrpc4j/jsonrpc4j
     implementation group: 'com.github.briandilley.jsonrpc4j', name: 'jsonrpc4j', version: '1.6'
-    implementation 'org.apache.httpcomponents:httpcore:4.4.4'
+    implementation 'org.apache.httpcomponents:httpcore:4.4.13'
 
     // https://mvnrepository.com/artifact/javax.portlet/portlet-api
     compileOnly group: 'javax.portlet', name: 'portlet-api', version: '3.0.1'
@@ -61,8 +61,8 @@ dependencies {
     }
 
     testImplementation group: 'org.springframework', name: 'spring-test', version: "${springVersion}"
-    testImplementation 'com.google.code.gson:gson:2.8.9'
-    testImplementation('org.apache.httpcomponents:httpclient:4.5.1') {
+    testImplementation 'com.google.code.gson:gson:2.14.0'
+    testImplementation('org.apache.httpcomponents:httpclient:4.5.13') {
         exclude group: 'commons-codec', module: 'commons-codec' // provided by :common
     }
     testImplementation group: 'javax.portlet', name: 'portlet-api', version: '3.0.1'
