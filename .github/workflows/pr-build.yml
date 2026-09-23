@@ -266,7 +266,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p ci-logs
-          ./gradlew clean build --no-daemon --no-build-cache --console=plain 2>&1 | tee ci-logs/build.log
+          ./gradlew clean build --no-daemon --console=plain 2>&1 | tee ci-logs/build.log
 
       - name: Toolkit jar smoke test
         run: |
@@ -282,7 +282,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p ci-logs
-          ./gradlew :framework:testWithRocksDb --no-daemon --no-build-cache --console=plain 2>&1 | tee ci-logs/rocksdb-test.log
+          ./gradlew :framework:testWithRocksDb --no-daemon --console=plain 2>&1 | tee ci-logs/rocksdb-test.log
 
       - name: Generate module coverage reports
         shell: bash
@@ -358,7 +358,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p ci-logs
-          ./gradlew clean build --no-daemon --no-build-cache --console=plain 2>&1 | tee ci-logs/build.log
+          ./gradlew clean build --no-daemon --console=plain 2>&1 | tee ci-logs/build.log
 
       - name: Test with RocksDB engine (base)
         id: base_rocksdb_test
@@ -367,7 +367,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p ci-logs
-          ./gradlew :framework:testWithRocksDb --no-daemon --no-build-cache --console=plain 2>&1 | tee ci-logs/rocksdb-test.log
+          ./gradlew :framework:testWithRocksDb --no-daemon --console=plain 2>&1 | tee ci-logs/rocksdb-test.log
 
       - name: Generate module coverage reports (base)
         shell: bash
