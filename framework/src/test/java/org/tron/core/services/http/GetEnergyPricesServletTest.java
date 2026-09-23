@@ -31,7 +31,7 @@ public class GetEnergyPricesServletTest extends BaseTest {
   public void testGet() {
     MockHttpServletRequest request = createRequest(HttpGet.METHOD_NAME);
     MockHttpServletResponse response = new MockHttpServletResponse();
-    getEnergyPricesServlet.doPost(request, response);
+    getEnergyPricesServlet.doGet(request, response);
     try {
       String contentAsString = response.getContentAsString();
       JSONObject result = JSONObject.parseObject(contentAsString);

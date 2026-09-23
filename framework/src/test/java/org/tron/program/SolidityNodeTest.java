@@ -3,6 +3,7 @@ package org.tron.program;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
@@ -15,6 +16,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
@@ -584,11 +586,12 @@ public class SolidityNodeTest extends BaseTest {
 
       Method getBlockM = SolidityNode.class.getDeclaredMethod("getBlock");
       getBlockM.setAccessible(true);
+      AtomicReference<Throwable> workerFailure = new AtomicReference<>();
       Thread t = new Thread(() -> {
         try {
           getBlockM.invoke(solidityNode);
         } catch (Exception e) {
-          Thread.currentThread().interrupt();
+          workerFailure.set(e);
         }
       });
       t.start();
@@ -596,6 +599,7 @@ public class SolidityNodeTest extends BaseTest {
       t.interrupt();     // simulate ExecutorService.shutdownNow()
       t.join(4000);
       assertFalse("getBlock must exit cleanly when interrupted during put()", t.isAlive());
+      assertNull("getBlock must handle the interruption internally", workerFailure.get());
       queue.clear();
       setFlag(true);
 
@@ -679,11 +683,12 @@ public class SolidityNodeTest extends BaseTest {
 
     Method m = SolidityNode.class.getDeclaredMethod("processSolidityBlock");
     m.setAccessible(true);
+    AtomicReference<Throwable> workerFailure = new AtomicReference<>();
     Thread t = new Thread(() -> {
       try {
         m.invoke(solidityNode);
-      } catch (Exception ignored) {
-        // InvocationTargetException should not happen; the method handles interrupt internally
+      } catch (Exception e) {
+        workerFailure.set(e);
       }
     });
     try {
@@ -692,6 +697,8 @@ public class SolidityNodeTest extends BaseTest {
       t.interrupt();
       t.join(5000);
       assertFalse("processSolidityBlock must exit after interrupt", t.isAlive());
+      assertNull("processSolidityBlock must handle the interruption internally",
+          workerFailure.get());
     } finally {
       setFlag(true);
       delegateField.set(solidityNode, origDelegate);

@@ -18,10 +18,9 @@ package org.tron.common.runtime.vm;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
-import org.tron.common.BaseTest;
-import org.tron.common.TestConstants;
+import org.tron.common.BaseMethodTest;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.RuntimeImpl;
 import org.tron.common.runtime.TvmTestUtils;
 import org.tron.common.utils.Commons;
@@ -29,7 +28,6 @@ import org.tron.core.Constant;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
-import org.tron.core.config.args.Args;
 import org.tron.core.db.TransactionTrace;
 import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.exception.ContractExeException;
@@ -43,6 +41,7 @@ import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
+import org.tron.protos.Protocol.Transaction.Result.contractResult;
 import org.tron.protos.Protocol.Transaction.raw;
 import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
@@ -58,34 +57,24 @@ import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
  * function fibonacciNotify(uint number) returns(uint result) { result = fibonacci(number);
  * Notify(number, result); } }
  */
-public class BandWidthRuntimeOutOfTimeTest extends BaseTest {
+public class BandWidthRuntimeOutOfTimeTest extends BaseMethodTest {
 
   public static final long totalBalance = 1000_0000_000_000L;
   private static final String dbDirectory = "db_BandWidthRuntimeOutOfTimeTest_test";
 
   private static final String OwnerAddress = "TCWHANtDDdkZCTo2T2peyEq3Eg9c2XB7ut";
   private static final String TriggerOwnerAddress = "TCSgeWapPJhCqgWRxXCKb6jJ5AgNWSGjPA";
-  private static boolean init;
 
-  static {
-    Args.setParam(
-        new String[]{
-            "--output-directory", dbPath(),
-            "--storage-db-directory", dbDirectory,
-            "--debug"
-        },
-        TestConstants.TEST_CONF
-    );
+  @Override
+  protected String[] extraArgs() {
+    return new String[]{"--storage-db-directory", dbDirectory, "--debug"};
   }
 
   /**
    * Init data.
    */
-  @Before
-  public void init() {
-    if (init) {
-      return;
-    }
+  @Override
+  protected void afterInit() {
     //init energy
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(1526647828000L);
     dbManager.getDynamicPropertiesStore().saveTotalEnergyWeight(10_000_000L);
@@ -109,13 +98,18 @@ public class BandWidthRuntimeOutOfTimeTest extends BaseTest {
         .put(Commons.decodeFromBase58Check(TriggerOwnerAddress), accountCapsule2);
     dbManager.getDynamicPropertiesStore()
         .saveLatestBlockHeaderTimestamp(System.currentTimeMillis() / 1000);
-    init = true;
   }
 
   @Test
   public void testSuccess() {
+    boolean originalDebug = CommonParameter.getInstance().isDebug();
+    long originalCpuLimit = dbManager.getDynamicPropertiesStore().getMaxCpuTimeOfOneTx();
     try {
       byte[] contractAddress = createContract();
+      // VMActuator uses this limit to set the VM deadline to its start time.
+      // Deployment runs with debug enabled; only the invocation must time out.
+      CommonParameter.getInstance().setDebug(false);
+      dbManager.getDynamicPropertiesStore().saveMaxCpuTimeOfOneTx(0);
       AccountCapsule triggerOwner = dbManager.getAccountStore()
           .get(Commons.decodeFromBase58Check(TriggerOwnerAddress));
       long energy = triggerOwner.getEnergyUsage();
@@ -125,7 +119,7 @@ public class BandWidthRuntimeOutOfTimeTest extends BaseTest {
           0, Commons.decodeFromBase58Check(TriggerOwnerAddress));
       Transaction transaction = Transaction.newBuilder().setRawData(raw.newBuilder().addContract(
           Contract.newBuilder().setParameter(Any.pack(triggerContract))
-              .setType(ContractType.TriggerSmartContract)).setFeeLimit(100000000000L)).build();
+              .setType(ContractType.TriggerSmartContract)).setFeeLimit(1000000000L)).build();
       TransactionCapsule trxCap = new TransactionCapsule(transaction);
       TransactionTrace trace = new TransactionTrace(trxCap, StoreFactory.getInstance(),
           new RuntimeImpl());
@@ -133,12 +127,14 @@ public class BandWidthRuntimeOutOfTimeTest extends BaseTest {
       BlockCapsule blockCapsule = null;
       trace.init(blockCapsule);
       trace.exec();
+      trace.setResult();
       trace.finalization();
 
       triggerOwner = dbManager.getAccountStore()
           .get(Commons.decodeFromBase58Check(TriggerOwnerAddress));
       energy = triggerOwner.getEnergyUsage() - energy;
       balance = balance - triggerOwner.getBalance();
+      Assert.assertEquals(contractResult.OUT_OF_TIME, trace.getReceipt().getResult());
       Assert.assertNotNull(trace.getRuntimeError());
       Assert.assertTrue(trace.getRuntimeError().contains(" timeout "));
       Assert.assertEquals(9950000, trace.getReceipt().getEnergyUsageTotal());
@@ -147,7 +143,10 @@ public class BandWidthRuntimeOutOfTimeTest extends BaseTest {
       Assert.assertEquals(9950000 * Constant.SUN_PER_ENERGY,
           balance + energy * Constant.SUN_PER_ENERGY);
     } catch (TronException e) {
-      Assert.assertNotNull(e);
+      throw new AssertionError("Unexpected transaction failure", e);
+    } finally {
+      dbManager.getDynamicPropertiesStore().saveMaxCpuTimeOfOneTx(originalCpuLimit);
+      CommonParameter.getInstance().setDebug(originalDebug);
     }
   }
 
@@ -205,9 +204,7 @@ public class BandWidthRuntimeOutOfTimeTest extends BaseTest {
     Assert.assertEquals(50000, energy);
     Assert.assertEquals(3852900, balance);
     Assert.assertEquals(88529 * 100, balance + energy * 100);
-    if (trace.getRuntimeError() != null) {
-      return trace.getRuntimeResult().getContractAddress();
-    }
+    Assert.assertNull(trace.getRuntimeError());
     return trace.getRuntimeResult().getContractAddress();
 
   }

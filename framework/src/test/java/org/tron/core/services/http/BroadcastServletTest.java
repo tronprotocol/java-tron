@@ -1,162 +1,86 @@
 package org.tron.core.services.http;
 
-import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.mock;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.io.PrintStream;
-import java.io.PrintWriter;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.net.URLStreamHandlerFactory;
-import java.nio.charset.StandardCharsets;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import lombok.extern.slf4j.Slf4j;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
+import com.google.protobuf.Any;
+import com.google.protobuf.ByteString;
+import java.math.BigInteger;
 import org.junit.Test;
-import org.tron.common.utils.FileUtil;
-import org.tron.common.utils.PublicMethod;
-import org.tron.core.services.http.solidity.mockito.HttpUrlStreamHandler;
+import org.springframework.mock.web.MockHttpServletResponse;
+import org.tron.api.GrpcAPI.Return;
+import org.tron.common.crypto.ECKey;
+import org.tron.common.utils.ByteArray;
+import org.tron.core.actuator.TransactionFactory;
+import org.tron.core.capsule.TransactionCapsule;
+import org.tron.json.JSONObject;
+import org.tron.protos.Protocol.Transaction;
+import org.tron.protos.Protocol.Transaction.Contract;
+import org.tron.protos.Protocol.Transaction.Contract.ContractType;
+import org.tron.protos.contract.BalanceContract.TransferContract;
 
-@Slf4j
-public class BroadcastServletTest {
+public class BroadcastServletTest extends BaseHttpTest {
 
-  private static HttpUrlStreamHandler httpUrlStreamHandler;
-  private BroadcastServlet broadcastServlet;
-  private HttpServletRequest request;
-  private HttpServletResponse response;
-  private HttpURLConnection httpUrlConnection;
-  private OutputStreamWriter outputStreamWriter;
-  private URL url;
+  private Transaction transaction;
+  private String requestBody;
+  private BroadcastServlet servlet;
 
-  /**
-   * init before class.
-   */
-  @BeforeClass
-  public static void init() {
-    // Allows for mocking URL connections
-    URLStreamHandlerFactory urlStreamHandlerFactory = mock(URLStreamHandlerFactory.class);
-    try {
-      URL.setURLStreamHandlerFactory(urlStreamHandlerFactory);
-    } catch (Error e) {
-      logger.info("Ignore error: {}", e.getMessage());
-    }
-
-
-    httpUrlStreamHandler = new HttpUrlStreamHandler();
-    given(urlStreamHandlerFactory.createURLStreamHandler("http")).willReturn(httpUrlStreamHandler);
-
-  }
-
-  /**
-   * set up.
-   *
-   */
-  @Before
-  public void setUp() {
-    broadcastServlet = new BroadcastServlet();
-    this.request = mock(HttpServletRequest.class);
-    this.response = mock(HttpServletResponse.class);
-    this.httpUrlConnection = mock(HttpURLConnection.class);
-    this.outputStreamWriter = mock(OutputStreamWriter.class);
-    httpUrlStreamHandler.resetConnections();
-  }
-
-  /**
-   * after test.
-   */
-  @After
-  public void tearDown() {
-    if (FileUtil.deleteDir(new File("temp.txt"))) {
-      logger.info("Release resources successful.");
-    } else {
-      logger.info("Release resources failure.");
-    }
+  @Override
+  protected void setUpMocks() throws Exception {
+    TransactionFactory.register(ContractType.TransferContract, null, TransferContract.class);
+    servlet = new BroadcastServlet();
+    injectWallet(servlet);
+    ECKey owner = ECKey.fromPrivate(BigInteger.ONE);
+    long now = System.currentTimeMillis();
+    Transaction unsigned = Transaction.newBuilder()
+        .setRawData(Transaction.raw.newBuilder().setTimestamp(now).setExpiration(now + 60_000L)
+            .addContract(Contract.newBuilder()
+                .setType(ContractType.TransferContract)
+                .setParameter(Any.pack(TransferContract.newBuilder()
+                    .setOwnerAddress(ByteString.copyFrom(owner.getAddress()))
+                    .setToAddress(ByteString.copyFrom(ByteArray.fromHexString(
+                        "410000000000000000000000000000000000000002")))
+                    .setAmount(1000L)
+                    .build()))))
+        .build();
+    TransactionCapsule capsule = new TransactionCapsule(unsigned);
+    capsule.sign(owner.getPrivKeyBytes());
+    transaction = capsule.getInstance();
+    requestBody = Util.printTransaction(transaction, false);
   }
 
   @Test
-  public void doPostTest() throws IOException {
-    URLStreamHandlerFactory urlStreamHandlerFactory = mock(URLStreamHandlerFactory.class);
-    httpUrlStreamHandler = new HttpUrlStreamHandler();
-    given(urlStreamHandlerFactory.createURLStreamHandler("http")).willReturn(httpUrlStreamHandler);
+  public void testPostReturnsBroadcastResultAndTransactionId() throws Exception {
+    when(wallet.broadcastTransaction(eq(transaction)))
+        .thenReturn(Return.newBuilder().setResult(true).build());
 
-    broadcastServlet = new BroadcastServlet();
-    this.request = mock(HttpServletRequest.class);
-    this.response = mock(HttpServletResponse.class);
-    this.httpUrlConnection = mock(HttpURLConnection.class);
-    this.outputStreamWriter = mock(OutputStreamWriter.class);
-    httpUrlStreamHandler.resetConnections();
+    MockHttpServletResponse response = newResponse();
+    servlet.doPost(postRequest(requestBody), response);
 
-    final ByteArrayOutputStream outContent = new ByteArrayOutputStream();
-    System.setOut(new PrintStream(outContent));
-    String href = "http://127.0.0.1:"
-        + PublicMethod.chooseRandomPort() + "/wallet/broadcasttransaction";
-    httpUrlStreamHandler.addConnection(new URL(href), httpUrlConnection);
-    httpUrlConnection.setRequestMethod("POST");
-    httpUrlConnection.setRequestProperty("Content-Type", "application/json");
-    httpUrlConnection.setRequestProperty("Connection", "Keep-Alive");
-    httpUrlConnection.setUseCaches(false);
-    httpUrlConnection.setDoOutput(true);
-    String postData = "{\"signature\":[\"97c825b41c77de2a8bd65b3df55cd4c0df59c307c0187e"
-        + "42321dcc1cc455ddba583dd9502e17cfec5945b34cad0511985a6165999092a6dec84c2bdd9"
-        + "7e649fc01\"],\"txID\":\"454f156bf1256587ff6ccdbc56e64ad0c51e4f8efea5490dcbc7"
-        + "20ee606bc7b8\",\"raw_data\":{\"contract\":[{\"parame"
-        + "ter\":{\"value\":{\"amount\":1000,\"owner_address\":\"41e552f6"
-        + "487585c2b58bc2c9bb4492bc1f17132cd0\",\"to_address\":\"41d1e7a6bc354106cb410e"
-        + "65ff8b181c600ff14292\"},\"type_url\":\"type.googl"
-        + "eapis.com/protocol.TransferContract\"},\"type\":\"TransferCon"
-        + "tract\"}],\"ref_block_bytes\":\"267e\",\"ref_block_hash\":\"9a447d222e8"
-        + "de9f2\",\"expiration\":1530893064000,\"timestamp\":1530893006233}}";
-    httpUrlConnection.setRequestProperty("Content-Length", String.valueOf(postData.length()));
+    verify(wallet).broadcastTransaction(eq(transaction));
+    assertEquals(200, response.getStatus());
+    JSONObject result = JSONObject.parseObject(response.getContentAsString());
+    assertFalse(result.containsKey("Error"));
+    assertEquals(Boolean.TRUE, result.getBoolean("result"));
+    assertEquals(new TransactionCapsule(transaction).getTransactionId().toString(),
+        result.getString("txid"));
+  }
 
-    when(httpUrlConnection.getOutputStream()).thenReturn(outContent);
-    OutputStreamWriter out = new OutputStreamWriter(httpUrlConnection.getOutputStream(),
-        StandardCharsets.UTF_8);
-    out.write(postData);
-    out.flush();
-    out.close();
-    PrintWriter writer = new PrintWriter("temp.txt");
-    when(response.getWriter()).thenReturn(writer);
+  @Test
+  public void testPostReturnsSanitizedErrorWhenWalletFails() throws Exception {
+    when(wallet.broadcastTransaction(eq(transaction)))
+        .thenThrow(new IllegalStateException("internal transaction store detail"));
 
-    broadcastServlet.doPost(request, response);
-    //    Get Response Body
-    String line;
-    StringBuilder result = new StringBuilder();
+    MockHttpServletResponse response = newResponse();
+    servlet.doPost(postRequest(requestBody), response);
 
-    byte[] buffer = new byte[1024];
-    ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(buffer);
-    when(httpUrlConnection.getInputStream()).thenReturn(byteArrayInputStream);
-    BufferedReader in = new BufferedReader(new InputStreamReader(httpUrlConnection.getInputStream(),
-        StandardCharsets.UTF_8));
-
-    while ((line = in.readLine()) != null) {
-      result.append(line).append("\n");
-    }
-    Assert.assertNotNull(result);
-    in.close();
-    writer.flush();
-    FileInputStream fileInputStream = new FileInputStream("temp.txt");
-    InputStreamReader inputStreamReader = new InputStreamReader(fileInputStream);
-    BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
-
-    StringBuilder sb = new StringBuilder();
-    String text;
-    while ((text = bufferedReader.readLine()) != null) {
-      sb.append(text);
-    }
-    Assert.assertTrue(sb.toString().contains("{\"Error\":\"internal server error\"}"));
-    httpUrlConnection.disconnect();
+    verify(wallet).broadcastTransaction(eq(transaction));
+    assertEquals(200, response.getStatus());
+    JSONObject result = JSONObject.parseObject(response.getContentAsString());
+    assertEquals(1, result.size());
+    assertEquals("internal server error", result.getString("Error"));
   }
 }

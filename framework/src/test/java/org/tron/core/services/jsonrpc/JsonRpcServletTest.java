@@ -9,6 +9,9 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -41,9 +44,7 @@ public class JsonRpcServletTest {
   public void setUp() throws Exception {
     servlet = new TestableServlet();
     mockRpcServer = mock(JsonRpcServer.class);
-    Field f = JsonRpcServlet.class.getDeclaredField("rpcServer");
-    f.setAccessible(true);
-    f.set(servlet, mockRpcServer);
+    setRpcServer(mockRpcServer);
     savedMaxBatchSize = CommonParameter.getInstance().jsonRpcMaxBatchSize;
     savedMaxResponseSize = CommonParameter.getInstance().jsonRpcMaxResponseSize;
   }
@@ -93,20 +94,20 @@ public class JsonRpcServletTest {
   @Test
   public void batchWithinLimit_proceedsToRpcServer() throws Exception {
     CommonParameter.getInstance().jsonRpcMaxBatchSize = 5;
-    byte[] singleResp = "{\"jsonrpc\":\"2.0\",\"result\":\"ok\",\"id\":1}"
-        .getBytes(StandardCharsets.UTF_8);
-    doAnswer(inv -> {
-      OutputStream out = inv.getArgument(1);
-      out.write(singleResp);
-      return 0;
-    }).when(mockRpcServer).handleRequest(any(InputStream.class), any(OutputStream.class));
+    TronJsonRpc rpc = useRealRpcServer();
 
-    MockHttpServletResponse resp = doPost("[{\"id\":1},{\"id\":2}]");
+    MockHttpServletResponse resp = doPost("["
+        + "{\"jsonrpc\":\"2.0\",\"method\":\"eth_blockNumber\",\"id\":1},"
+        + "{\"jsonrpc\":\"2.0\",\"method\":\"eth_blockNumber\",\"id\":2}]");
     assertEquals(200, resp.getStatus());
     JsonNode body = MAPPER.readTree(resp.getContentAsByteArray());
     assertTrue("batch response must be a JSON array", body.isArray());
     assertEquals("each sub-request must produce a response", 2, body.size());
-    assertEquals("ok", body.get(0).get("result").asText());
+    assertEquals("0x1", body.get(0).get("result").asText());
+    assertEquals("0x1", body.get(1).get("result").asText());
+    assertEquals(1, body.get(0).get("id").asInt());
+    assertEquals(2, body.get(1).get("id").asInt());
+    verify(rpc, times(2)).getLatestBlockNum();
   }
 
   @Test
@@ -123,16 +124,14 @@ public class JsonRpcServletTest {
   @Test
   public void batchLimitDisabled_largeBatchAllowed() throws Exception {
     CommonParameter.getInstance().jsonRpcMaxBatchSize = 0;
-    // write nothing — simulates notifications (no response expected)
-    doAnswer(inv -> 0).when(mockRpcServer)
-        .handleRequest(any(InputStream.class), any(OutputStream.class));
+    TronJsonRpc rpc = useRealRpcServer();
 
     StringBuilder sb = new StringBuilder("[");
     for (int i = 0; i < 500; i++) {
       if (i > 0) {
         sb.append(',');
       }
-      sb.append("{}");
+      sb.append("{\"jsonrpc\":\"2.0\",\"method\":\"eth_blockNumber\"}");
     }
     sb.append("]");
     MockHttpServletResponse resp = doPost(sb.toString());
@@ -140,6 +139,7 @@ public class JsonRpcServletTest {
     assertEquals("all-notification batch must return empty body per JSON-RPC 2.0 §6",
         0, resp.getContentLength());
     assertEquals("", resp.getContentAsString());
+    verify(rpc, times(500)).getLatestBlockNum();
   }
 
   // --- rpcServer.handle exceptions ---
@@ -148,7 +148,8 @@ public class JsonRpcServletTest {
   public void rpcServerThrowsRuntimeException_returnsInternalError() throws Exception {
     doThrow(new RuntimeException("server exploded")).when(mockRpcServer)
         .handle(any(HttpServletRequest.class), any(HttpServletResponse.class));
-    MockHttpServletResponse resp = doPost("{\"method\":\"eth_blockNumber\",\"id\":42}");
+    MockHttpServletResponse resp = doPost(
+        "{\"jsonrpc\":\"2.0\",\"method\":\"eth_blockNumber\",\"id\":42}");
     assertEquals(200, resp.getStatus());
     JsonNode body = MAPPER.readTree(resp.getContentAsString());
     assertFalse(body.isArray());
@@ -159,7 +160,8 @@ public class JsonRpcServletTest {
   public void batchRpcServerThrows_internalErrorIsArray() throws Exception {
     doThrow(new RuntimeException("boom")).when(mockRpcServer)
         .handleRequest(any(InputStream.class), any(OutputStream.class));
-    MockHttpServletResponse resp = doPost("[{\"method\":\"eth_blockNumber\"}]");
+    MockHttpServletResponse resp = doPost(
+        "[{\"jsonrpc\":\"2.0\",\"method\":\"eth_blockNumber\",\"id\":1}]");
     assertEquals(200, resp.getStatus());
     JsonNode body = MAPPER.readTree(resp.getContentAsString());
     assertTrue("batch internal error must be an array", body.isArray());
@@ -195,7 +197,8 @@ public class JsonRpcServletTest {
       return 0;
     }).when(mockRpcServer).handleRequest(any(InputStream.class), any(OutputStream.class));
 
-    MockHttpServletResponse resp = doPost("[{\"method\":\"eth_getLogs\"}]");
+    MockHttpServletResponse resp = doPost(
+        "[{\"jsonrpc\":\"2.0\",\"method\":\"eth_getLogs\",\"id\":1}]");
     assertEquals(200, resp.getStatus());
     JsonNode body = MAPPER.readTree(resp.getContentAsString());
     assertTrue("batch response-too-large must be an array", body.isArray());
@@ -273,14 +276,14 @@ public class JsonRpcServletTest {
 
   @Test
   public void allNotificationBatch_contentTypeIsApplicationJsonRpc() throws Exception {
-    // notification: rpcServer returns 0 bytes → empty batchResult → early return path
-    doAnswer(inv -> 0).when(mockRpcServer)
-        .handleRequest(any(InputStream.class), any(OutputStream.class));
+    TronJsonRpc rpc = useRealRpcServer();
 
-    MockHttpServletResponse resp = doPost("[{\"method\":\"eth_blockNumber\"}]");
+    MockHttpServletResponse resp = doPost(
+        "[{\"jsonrpc\":\"2.0\",\"method\":\"eth_blockNumber\"}]");
     assertEquals(200, resp.getStatus());
     assertEquals(0, resp.getContentLength());
     assertEquals("application/json-rpc", resp.getContentType());
+    verify(rpc).getLatestBlockNum();
   }
 
   // --- Primitive root node → Invalid Request (-32600), id must be JSON null ---
@@ -416,6 +419,19 @@ public class JsonRpcServletTest {
   }
 
   // --- helpers ---
+
+  private void setRpcServer(JsonRpcServer server) throws Exception {
+    Field f = JsonRpcServlet.class.getDeclaredField("rpcServer");
+    f.setAccessible(true);
+    f.set(servlet, server);
+  }
+
+  private TronJsonRpc useRealRpcServer() throws Exception {
+    TronJsonRpc rpc = mock(TronJsonRpc.class);
+    when(rpc.getLatestBlockNum()).thenReturn("0x1");
+    setRpcServer(new JsonRpcServer(rpc, TronJsonRpc.class));
+    return rpc;
+  }
 
   private MockHttpServletResponse doPost(String body) throws Exception {
     MockHttpServletRequest req = new MockHttpServletRequest("POST", "/jsonrpc");

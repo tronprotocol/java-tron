@@ -56,9 +56,9 @@ public class LiteFnQueryHttpFilterTest extends BaseTest {
   }
 
   @Test
-  public void testHttpFilter() {
+  public void testHttpFilter() throws IOException {
     Set<String> urlPathSets = LiteFnQueryHttpFilter.getFilterPaths();
-    urlPathSets.forEach(urlPath -> {
+    for (String urlPath : urlPathSets) {
       if (urlPath.contains("/walletsolidity")) {
         fullHttpPort = Args.getInstance().getSolidityHttpPort();
       } else if (urlPath.contains("/walletpbft")) {
@@ -72,9 +72,13 @@ public class LiteFnQueryHttpFilterTest extends BaseTest {
       Args.getInstance().setOpenHistoryQueryWhenLiteFN(false);
       String response = sendGetRequest(url);
       logger.info("response:{}", response);
+      // This endpoint is registered on all three services; some legacy filter paths are not.
+      if (urlPath.endsWith("/getblockbynum")) {
+        Assert.assertEquals("this API is closed because this node is a lite fullnode", response);
+      }
 
       // test lite fullnode with history query opened
-      chainBaseManager.setNodeType(FULL);
+      chainBaseManager.setNodeType(LITE);
       Args.getInstance().setOpenHistoryQueryWhenLiteFN(true);
       response = sendGetRequest(url);
       Assert.assertNotEquals("this API is closed because this node is a lite fullnode",
@@ -82,32 +86,27 @@ public class LiteFnQueryHttpFilterTest extends BaseTest {
 
       // test normal fullnode
       chainBaseManager.setNodeType(FULL);
-      Args.getInstance().setOpenHistoryQueryWhenLiteFN(true);
+      Args.getInstance().setOpenHistoryQueryWhenLiteFN(false);
       response = sendGetRequest(url);
       Assert.assertNotEquals("this API is closed because this node is a lite fullnode",
               response);
-    });
+    }
 
   }
 
-  private String sendGetRequest(String url) {
+  private String sendGetRequest(String url) throws IOException {
     HttpGet request = new HttpGet(url);
     request.setHeader("User-Agent", "Java client");
-    HttpResponse response;
-    try {
-      response = httpClient.execute(request);
-      BufferedReader rd = new BufferedReader(
-              new InputStreamReader(response.getEntity().getContent()));
+    HttpResponse response = httpClient.execute(request);
+    try (BufferedReader rd = new BufferedReader(
+        new InputStreamReader(response.getEntity().getContent()))) {
       StringBuilder result = new StringBuilder();
       String line;
       while ((line = rd.readLine()) != null) {
         result.append(line);
       }
       return result.toString();
-    } catch (IOException e) {
-      e.printStackTrace();
     }
-    return null;
   }
 
   private String sendPostRequest(String url, String body) throws IOException {

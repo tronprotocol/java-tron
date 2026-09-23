@@ -1,5 +1,6 @@
 package org.tron.core.services.filter;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThrows;
@@ -7,6 +8,7 @@ import static org.junit.Assert.assertTrue;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import io.grpc.stub.ServerCallStreamObserver;
 import java.io.IOException;
@@ -120,8 +122,10 @@ public class RpcApiAccessInterceptorTest {
     Args.getInstance().setDisabledApiList(disabledApiList);
 
     final NumberMessage message = NumberMessage.newBuilder().setNum(0).build();
-    assertThrows("this API is unavailable due to config", StatusRuntimeException.class,
+    StatusRuntimeException error = assertThrows(StatusRuntimeException.class,
         () -> blockingStubFull.getBlockByNum(message));
+    assertEquals(Status.Code.UNAVAILABLE, error.getStatus().getCode());
+    assertEquals("this API is unavailable due to config", error.getStatus().getDescription());
   }
 
   @Test
@@ -237,8 +241,10 @@ public class RpcApiAccessInterceptorTest {
     Args.getInstance().setDisabledApiList(disabledApiList);
 
     final NumberMessage message = NumberMessage.newBuilder().setNum(0).build();
-    assertThrows("this API is unavailable due to config", StatusRuntimeException.class,
+    StatusRuntimeException error = assertThrows(StatusRuntimeException.class,
         () -> blockingStubSolidity.getBlockByNum(message));
+    assertEquals(Status.Code.UNAVAILABLE, error.getStatus().getCode());
+    assertEquals("this API is unavailable due to config", error.getStatus().getDescription());
   }
 
   @Test
@@ -249,8 +255,10 @@ public class RpcApiAccessInterceptorTest {
     Args.getInstance().setDisabledApiList(disabledApiList);
 
     final NumberMessage message = NumberMessage.newBuilder().setNum(0).build();
-    assertThrows("this API is unavailable due to config", StatusRuntimeException.class,
+    StatusRuntimeException error = assertThrows(StatusRuntimeException.class,
         () -> blockingStubPBFT.getBlockByNum(message));
+    assertEquals(Status.Code.UNAVAILABLE, error.getStatus().getCode());
+    assertEquals("this API is unavailable due to config", error.getStatus().getDescription());
   }
 
   @Test

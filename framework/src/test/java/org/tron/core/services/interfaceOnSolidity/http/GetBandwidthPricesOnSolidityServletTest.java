@@ -31,7 +31,7 @@ public class GetBandwidthPricesOnSolidityServletTest extends BaseTest {
   public void testGet() {
     MockHttpServletRequest request = createRequest(HttpGet.METHOD_NAME);
     MockHttpServletResponse response = new MockHttpServletResponse();
-    getBandwidthPricesOnSolidityServlet.doPost(request, response);
+    getBandwidthPricesOnSolidityServlet.doGet(request, response);
     try {
       String contentAsString = response.getContentAsString();
       JSONObject result = JSONObject.parseObject(contentAsString);

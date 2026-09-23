@@ -930,16 +930,21 @@ public class WalletMockTest {
   @Test
   public void testGetShieldedContractScalingFactorException() throws Exception {
     Wallet walletMock = mock(Wallet.class);
-    byte[] contractAddress = "".getBytes(StandardCharsets.UTF_8);
-    Protocol.Transaction transaction = Protocol.Transaction.newBuilder().build();
+    byte[] contractAddress = ByteArray.fromHexString("410000000000000000000000000000000000000001");
+    SmartContractOuterClass.TriggerSmartContract contract =
+        SmartContractOuterClass.TriggerSmartContract.newBuilder()
+            .setContractAddress(ByteString.copyFrom(contractAddress)).build();
     when(walletMock.createTransactionCapsule(any(), any()))
-        .thenReturn(new TransactionCapsule(transaction));
+        .thenReturn(new TransactionCapsule(contract,
+            Protocol.Transaction.Contract.ContractType.TriggerSmartContract));
+    when(walletMock.triggerConstantContract(any(), any(), any(), any()))
+        .thenThrow(new ContractValidateException("Smart contract is not exist."));
+    when(walletMock.getShieldedContractScalingFactor(contractAddress)).thenCallRealMethod();
 
-    try {
-      when(walletMock.getShieldedContractScalingFactor(contractAddress)).thenCallRealMethod();
-    } catch (Exception e) {
-      assertNotNull(e);
-    }
+    ContractExeException error = assertThrows(ContractExeException.class,
+        () -> walletMock.getShieldedContractScalingFactor(contractAddress));
+    assertEquals("trigger contract to get scaling factor error.", error.getMessage());
+    Mockito.verify(walletMock).triggerConstantContract(any(), any(), any(), any());
   }
 
   @Test

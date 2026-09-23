@@ -31,7 +31,7 @@ public class GetTransactionListFromPendingServletTest extends BaseTest {
   public void testGet() {
     MockHttpServletRequest request = createRequest(HttpGet.METHOD_NAME);
     MockHttpServletResponse response = new MockHttpServletResponse();
-    getTransactionListFromPendingServlet.doPost(request, response);
+    getTransactionListFromPendingServlet.doGet(request, response);
     assertEquals(200, response.getStatus());
   }
 

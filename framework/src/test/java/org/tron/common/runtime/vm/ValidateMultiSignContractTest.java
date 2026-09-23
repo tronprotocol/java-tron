@@ -241,21 +241,18 @@ public class ValidateMultiSignContractTest extends BaseTest {
     }
   }
 
-  // TIP-854: before activation, malformed calldata reaches the legacy decoder.
-  // Assert the guard is not taken — this precompile has no outer catch, so a
-  // too-short input raises inside the decoder; that is the documented
-  // pre-activation failure mode the TIP explicitly preserves.
+  // Before TIP-854, the legacy decoder reads zero signatures from this input.
   @Test
   public void testTip854PreActivationNoOp() {
-    VMConfig.initAllowTvmOsaka(0);
-    contract.setRepository(RepositoryImpl.createRoot(StoreFactory.getInstance()));
+    boolean originalOsaka = VMConfig.allowTvmOsaka();
     try {
+      VMConfig.initAllowTvmOsaka(0);
+      contract.setRepository(RepositoryImpl.createRoot(StoreFactory.getInstance()));
       Pair<Boolean, byte[]> ret = contract.execute(new byte[(5 + 1) * 32]);
-      // If the decoder happened to handle it without raising, we must not have
-      // taken the post-activation reject path (false, empty).
-      Assert.assertNotSame(ByteUtil.EMPTY_BYTE_ARRAY, ret.getRight());
-    } catch (RuntimeException expectedLegacyBehaviour) {
-      // Pre-activation: decoder may throw — this is the existing behaviour.
+      Assert.assertTrue(ret.getLeft());
+      Assert.assertArrayEquals(DataWord.ZERO().getData(), ret.getRight());
+    } finally {
+      VMConfig.initAllowTvmOsaka(originalOsaka ? 1 : 0);
     }
   }
 
