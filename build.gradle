@@ -72,6 +72,7 @@ subprojects {
     buildscript {
         repositories {
             mavenCentral()
+            maven { url 'https://jitpack.io' }
             maven {
                 url "https://plugins.gradle.org/m2/"
             }
@@ -83,9 +84,10 @@ subprojects {
     }
 
     repositories {
+        mavenLocal()
         mavenCentral()
         maven { url 'https://repo.spring.io/plugins-release' }
-        mavenLocal()
+        maven { url 'https://jitpack.io' }
     }
 
     dependencies {
