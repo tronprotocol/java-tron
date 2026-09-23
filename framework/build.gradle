@@ -51,6 +51,7 @@ dependencies {
 
     // https://mvnrepository.com/artifact/com.github.briandilley.jsonrpc4j/jsonrpc4j
     implementation group: 'com.github.briandilley.jsonrpc4j', name: 'jsonrpc4j', version: '1.6'
+    implementation 'org.apache.httpcomponents:httpcore:4.4.4'
 
     // https://mvnrepository.com/artifact/javax.portlet/portlet-api
     compileOnly group: 'javax.portlet', name: 'portlet-api', version: '3.0.1'
@@ -60,6 +61,10 @@ dependencies {
     }
 
     testImplementation group: 'org.springframework', name: 'spring-test', version: "${springVersion}"
+    testImplementation 'com.google.code.gson:gson:2.8.9'
+    testImplementation('org.apache.httpcomponents:httpclient:4.5.1') {
+        exclude group: 'commons-codec', module: 'commons-codec' // provided by :common
+    }
     testImplementation group: 'javax.portlet', name: 'portlet-api', version: '3.0.1'
     implementation group: 'org.zeromq', name: 'jeromq', version: '0.5.3'
     api project(":chainbase")

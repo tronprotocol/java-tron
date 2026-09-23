@@ -5,8 +5,6 @@ def protobufVersion = '3.25.8'
 
 dependencies {
     api group: 'com.google.protobuf', name: 'protobuf-java', version: protobufVersion
-    api group: 'com.google.protobuf', name: 'protobuf-java-util', version: protobufVersion
-    api group: 'net.jcip', name: 'jcip-annotations', version: '1.0'
 
 //    checkstyleConfig "com.puppycrawl.tools:checkstyle:${versions.checkstyle}"
     // google grpc
@@ -17,8 +15,6 @@ dependencies {
     api group: 'io.grpc', name: 'grpc-services', version: rootProject.grpcVersion
 
     // end google grpc
-
-    api group: 'com.google.api.grpc', name: 'proto-google-common-protos', version: '2.15.0'
 }
 
 tasks.matching { it instanceof Test }.all {
