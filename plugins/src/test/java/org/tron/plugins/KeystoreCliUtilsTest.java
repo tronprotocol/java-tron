@@ -355,9 +355,10 @@ public class KeystoreCliUtilsTest {
   }
 
   private static void makeOwnerOnly(File f) throws IOException {
-    org.junit.Assume.assumeTrue("POSIX permissions required",
-        Files.getFileAttributeView(f.toPath(),
-            java.nio.file.attribute.PosixFileAttributeView.class) != null);
+    if (Files.getFileAttributeView(f.toPath(),
+        java.nio.file.attribute.PosixFileAttributeView.class) == null) {
+      return; // non-POSIX FS: skip chmod, mirroring KeystoreCliUtils runtime behavior
+    }
     Files.setPosixFilePermissions(f.toPath(),
         java.nio.file.attribute.PosixFilePermissions.fromString("rw-------"));
   }
@@ -366,6 +367,9 @@ public class KeystoreCliUtilsTest {
   public void testReadRegularFileRejectsGroupReadable() throws Exception {
     File f = tempFolder.newFile("group-readable.txt");
     Files.write(f.toPath(), "hello".getBytes(StandardCharsets.UTF_8));
+    org.junit.Assume.assumeTrue("POSIX permissions test, skip on Windows",
+        Files.getFileAttributeView(f.toPath(),
+            java.nio.file.attribute.PosixFileAttributeView.class) != null);
     makeOwnerOnly(f);
     Files.setPosixFilePermissions(f.toPath(),
         java.nio.file.attribute.PosixFilePermissions.fromString("rw-r-----"));
