@@ -17,6 +17,7 @@ import org.tron.common.application.TronApplicationContext;
 import org.tron.common.crypto.SignInterface;
 import org.tron.common.crypto.SignUtils;
 import org.tron.common.utils.FileUtil;
+import org.tron.common.utils.PeerManagerStateResetter;
 import org.tron.common.utils.PublicMethod;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.common.utils.Sha256Hash;
@@ -46,6 +47,7 @@ public class PbftMsgHandlerTest {
 
   @BeforeClass
   public static void init() {
+    PeerManagerStateResetter.reset();
     Args.setParam(new String[] {"--output-directory", dbPath, "--debug"},
         TestConstants.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);

@@ -17,6 +17,7 @@ import org.tron.api.WalletGrpc;
 import org.tron.common.ClassLevelAppContextFixture;
 import org.tron.common.TestConstants;
 import org.tron.common.application.TronApplicationContext;
+import org.tron.common.utils.PeerManagerStateResetter;
 import org.tron.common.utils.PublicMethod;
 import org.tron.common.utils.TimeoutInterceptor;
 import org.tron.core.config.args.Args;
@@ -38,6 +39,7 @@ public class WalletApiTest {
 
   @BeforeClass
   public static void init() throws IOException {
+    PeerManagerStateResetter.reset();
     Args.setParam(new String[] {"-d", temporaryFolder.newFolder().toString(),
         "--p2p-disable", "true"}, TestConstants.TEST_CONF);
     Args.getInstance().setRpcPort(PublicMethod.chooseRandomPort());
