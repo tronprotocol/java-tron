@@ -56,6 +56,7 @@ if (!archInfo.java.is(archInfo.requires.JavaVersion)) {
 
 println "Building for architecture: ${archInfo.name}, Java version: ${archInfo.java}"
 
+apply from: "$rootDir/gradle/hawtjni.gradle"
 
 subprojects {
     apply plugin: "jacoco"
