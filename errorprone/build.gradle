@@ -2,6 +2,8 @@ if (!JavaVersion.current().isJava11Compatible()) {
     // ErrorProne core requires JDK 11+; skip this module on JDK 8
     tasks.withType(JavaCompile).configureEach { enabled = false }
     tasks.withType(Jar).configureEach { enabled = false }
+    // No jar is produced, so the root maven-publish setup must not try to publish one
+    tasks.withType(AbstractPublishToMaven).configureEach { enabled = false }
 } else {
     dependencies {
         compileOnly "com.google.errorprone:error_prone_annotations:${errorproneVersion}"

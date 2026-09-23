@@ -9,7 +9,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
-import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -42,7 +41,7 @@ public class RandomGeneratorTest {
     final List<WitnessCapsule> witnessCapsuleListBefore = this.getWitnessList();
     logger.info("updateWitnessSchedule,before: " + getWitnessStringList(witnessCapsuleListBefore));
     final List<WitnessCapsule> witnessCapsuleListAfter = new RandomGenerator<WitnessCapsule>()
-        .shuffle(witnessCapsuleListBefore, DateTime.now().getMillis());
+        .shuffle(witnessCapsuleListBefore, System.currentTimeMillis());
     logger.info("updateWitnessSchedule,after: " + getWitnessStringList(witnessCapsuleListAfter));
   }
 

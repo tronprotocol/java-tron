@@ -23,6 +23,7 @@ import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.nativecontract.param.UnfreezeBalanceV2Param;
 import org.tron.core.vm.repository.Repository;
+import org.tron.core.vm.utils.MUtil;
 import org.tron.core.vm.utils.VoteRewardUtil;
 import org.tron.protos.Protocol;
 import org.tron.protos.contract.Common;
@@ -85,6 +86,10 @@ public class UnfreezeBalanceV2Processor {
     if (!checkUnfreezeBalance(accountCapsule, param.getUnfreezeBalance(), param.getResourceType())) {
       throw new ContractValidateException(
           "Invalid unfreeze_balance, [" + param.getUnfreezeBalance() + "] is invalid");
+    }
+
+    if (accountCapsule.hasInvalidDelegatedV2()) {
+      MUtil.checkCPUTimeForInvalidDelegatedV2Balance();
     }
   }
 

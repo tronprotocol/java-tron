@@ -33,7 +33,7 @@ public class TriggerConfig {
     triggerName = "";
     enabled = false;
     topic = "";
-    redundancy = false; // event will also write to log
+    redundancy = false; // if true, event triggers will also be emitted as log triggers
     ethCompatible = false; // add eth compatible fields, just for transaction now
     solidified = false; // just write solidified data, just for block and transaction now
   }
