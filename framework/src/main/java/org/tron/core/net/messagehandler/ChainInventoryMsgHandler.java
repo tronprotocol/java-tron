@@ -53,13 +53,11 @@ public class ChainInventoryMsgHandler implements TronMsgHandler {
     Deque<BlockId> blockIdWeGet = new LinkedList<>(chainInventoryMessage.getBlockIds());
 
     if (blockIdWeGet.size() == 1 && tronNetDelegate.containBlock(blockIdWeGet.peek())) {
-      // A single earlier summary block means the peer is behind the request snapshot.
-      // Completing our download must not mark both sync directions as complete.
-      if (!blockIdWeGet.peek().equals(requested.getKey().peekLast())) {
-        peer.setNeedSyncFromUs(true);
-      }
       peer.setRemainNum(0);
       peer.setTronState(TronState.SYNC_COMPLETED);
+      // This trusts the peer's claim that no blocks remain. A peer can echo an earlier
+      // known summary block while withholding newer blocks, so ending this download
+      // does not prove that we have caught up with the peer's actual chain. todo fix
       peer.setNeedSyncFromPeer(false);
       return;
     }

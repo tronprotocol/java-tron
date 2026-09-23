@@ -9,12 +9,15 @@ import static org.tron.core.net.PeerSyncTestSupport.blockId;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
+import org.tron.common.overlay.message.Message;
 import org.tron.common.utils.Pair;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.common.utils.Sha256Hash;
@@ -24,11 +27,15 @@ import org.tron.core.exception.P2pException;
 import org.tron.core.exception.P2pException.TypeEnum;
 import org.tron.core.net.PeerSyncTestSupport;
 import org.tron.core.net.TronNetDelegate;
+import org.tron.core.net.message.adv.InventoryMessage;
 import org.tron.core.net.message.sync.ChainInventoryMessage;
 import org.tron.core.net.message.sync.SyncBlockChainMessage;
+import org.tron.core.net.peer.Item;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.TronState;
+import org.tron.core.net.service.adv.AdvService;
 import org.tron.core.net.service.sync.SyncService;
+import org.tron.protos.Protocol.Inventory.InventoryType;
 
 public class ChainInventoryCompletionTest {
 
@@ -75,25 +82,25 @@ public class ChainInventoryCompletionTest {
   }
 
   @Test
-  public void testEarlierSummaryBlockMarksPeerBehind() throws Exception {
+  public void testEarlierSummaryBlockPreservesNoUploadRequirement() throws Exception {
     respond(0, blockId(50));
 
     assertDownloadCompleted();
-    Assert.assertTrue(peer.isNeedSyncFromUs());
-    Assert.assertFalse(peer.isSyncFinish());
+    Assert.assertFalse(peer.isNeedSyncFromUs());
+    Assert.assertTrue(peer.isSyncFinish());
   }
 
   @Test
-  public void testEarliestSummaryBlockCannotCompleteBothDirections() throws Exception {
+  public void testEarliestSummaryBlockPreservesNoUploadRequirement() throws Exception {
     respond(0, blockId(0));
 
     assertDownloadCompleted();
-    Assert.assertTrue(peer.isNeedSyncFromUs());
-    Assert.assertFalse(peer.isSyncFinish());
+    Assert.assertFalse(peer.isNeedSyncFromUs());
+    Assert.assertTrue(peer.isSyncFinish());
   }
 
   @Test
-  public void testTailComparisonUsesRequestSnapshotAfterHeadAdvances() throws Exception {
+  public void testKnownResponseCompletesDownloadAfterHeadAdvances() throws Exception {
     when(delegate.getHeadBlockId()).thenReturn(blockId(101));
 
     respond(0, blockId(100));
@@ -111,6 +118,63 @@ public class ChainInventoryCompletionTest {
     assertDownloadCompleted();
     Assert.assertTrue(peer.isNeedSyncFromUs());
     Assert.assertFalse(peer.isSyncFinish());
+  }
+
+  @Test
+  public void testEarlierSummaryBlockPreservesExistingUploadRequirement() throws Exception {
+    peer.setNeedSyncFromUs(true);
+
+    respond(0, blockId(50));
+
+    assertDownloadCompleted();
+    Assert.assertTrue(peer.isNeedSyncFromUs());
+    Assert.assertFalse(peer.isSyncFinish());
+  }
+
+  @Test
+  public void testSingleBlockReplyFromExistingPeerKeepsInventoryFlow() throws Exception {
+    // The remote peer still believes it is ahead based on Hello. Our summary now includes
+    // newer blocks learned from another connection; replying does not start a remote download.
+    PeerConnection remotePeer = PeerSyncTestSupport.peer(10002);
+    remotePeer.setNeedSyncFromPeer(false);
+    remotePeer.setNeedSyncFromUs(true);
+    TronNetDelegate remoteDelegate = mock(TronNetDelegate.class);
+    when(remoteDelegate.getHeadBlockId()).thenReturn(blockId(50));
+    when(remoteDelegate.containBlockInMainChain(any())).thenAnswer(invocation ->
+        ((BlockId) invocation.getArgument(0)).getNum() <= 50);
+    SyncBlockChainMsgHandler remoteHandler = new SyncBlockChainMsgHandler();
+    ReflectUtils.setFieldValue(remoteHandler, "tronNetDelegate", remoteDelegate);
+
+    remoteHandler.processMessage(remotePeer,
+        new SyncBlockChainMessage(new ArrayList<>(peer.getSyncChainRequested().getKey())));
+
+    ArgumentCaptor<Message> reply = ArgumentCaptor.forClass(Message.class);
+    verify(remotePeer).sendMessage(reply.capture());
+    Assert.assertTrue(reply.getValue() instanceof ChainInventoryMessage);
+    ChainInventoryMessage response = new ChainInventoryMessage(reply.getValue().getData());
+    Assert.assertEquals(Collections.singletonList(blockId(50)), response.getBlockIds());
+    Assert.assertEquals(Long.valueOf(0), response.getRemainNum());
+    handler.processMessage(peer, response);
+
+    assertDownloadCompleted();
+    Assert.assertTrue(peer.isSyncFinish());
+    Assert.assertTrue(remotePeer.isSyncFinish());
+    verify(remotePeer, never()).disconnect(any());
+
+    InventoryMsgHandler inventoryHandler = new InventoryMsgHandler();
+    AdvService adv = mock(AdvService.class);
+    ReflectUtils.setFieldValue(inventoryHandler, "tronNetDelegate", delegate);
+    ReflectUtils.setFieldValue(inventoryHandler, "advService", adv);
+    ReflectUtils.setFieldValue(inventoryHandler, "transactionsMsgHandler",
+        mock(TransactionsMsgHandler.class));
+    for (InventoryType type : Arrays.asList(InventoryType.BLOCK, InventoryType.TRX)) {
+      Item item = new Item(blockId(101), type);
+      inventoryHandler.processMessage(peer,
+          new InventoryMessage(Collections.singletonList(item.getHash()), type));
+      Assert.assertNotNull(peer.getAdvInvReceive().getIfPresent(item));
+      verify(adv).addInv(item);
+    }
+    verify(peer, never()).disconnect(any());
   }
 
   @Test
