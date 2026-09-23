@@ -146,7 +146,7 @@ The Dockerfiles clone the remote java-tron repository and check out `master` at 
 
 The helper uses `tronprotocol/java-tron:latest` for `--pull`, `--build`, and `--run` and does not support selecting another image reference through command-line options or environment variables. After `--build`, the local `tronprotocol/java-tron:latest` tag points to the newly built `master` image, so subsequent `--run` commands use that build. Use Docker directly when a separate tag, digest, or image name is required.
 
-Then build the image:
+Use a complete java-tron checkout containing the matching Dockerfiles. From its `docker` directory, build the image:
 
 ```shell
 $ bash docker.sh --build
@@ -175,7 +175,9 @@ docker build --no-cache --platform linux/arm64 \
 
 These commands rerun the build steps without deleting existing build caches.
 
-When the script is used from a java-tron checkout, only the Dockerfile and build context are resolved relative to `docker.sh`, regardless of the current working directory. The current checkout's Java sources are not added to that context. If only `docker.sh` was downloaded, the required architecture-specific Dockerfile is downloaded into a temporary build context and removed after the build. Both paths build the remote `master` branch.
+When the script is used from a java-tron checkout, only the Dockerfile and build context are resolved relative to `docker.sh`, regardless of the current working directory. The current checkout's Java sources are not added to that context; the Dockerfiles build the remote `master` branch.
+
+Standalone `--build` using only a downloaded `docker.sh` is currently unavailable. The helper downloads only the architecture-specific Dockerfile from `develop`, but the current `develop` Dockerfiles also require `docker-entrypoint.sh`, which is missing from the temporary build context. Use a complete checkout containing the matching Dockerfiles until those files are synchronized to `develop` and standalone builds are verified for both architectures.
 
 ## Options
 
