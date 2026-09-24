@@ -6,7 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.ChainBaseManager;
-import org.tron.core.ChainBaseManager.NodeType;
+import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.config.args.Args;
 import org.tron.core.net.TronNetService;
 import org.tron.core.net.message.handshake.HelloMessage;
@@ -108,6 +108,16 @@ public class HandshakeService {
         logger.info("Peer {} solid block is below than my lowest", peer.getInetSocketAddress());
         peer.disconnect(ReasonCode.LIGHT_NODE_SYNC_FAIL);
       }
+      return;
+    }
+
+    BlockId peerHeadBlockId = msg.getHeadBlockId();
+    if (peerHeadBlockId.getNum() <= headBlockNum
+        && peerHeadBlockId.getNum() >= chainBaseManager.getLowestBlockNum()
+        && !chainBaseManager.containBlockInMainChain(peerHeadBlockId)) {
+      logger.info("Peer {} head block is not in my main chain, peer->{}",
+          peer.getInetSocketAddress(), peerHeadBlockId.getString());
+      peer.disconnect(ReasonCode.FORKED);
       return;
     }
 
