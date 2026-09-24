@@ -9,6 +9,7 @@ import java.util.concurrent.BlockingQueue;
 import org.eclipse.jetty.util.BlockingArrayQueue;
 import org.junit.Assert;
 import org.junit.Test;
+import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.tron.common.logsfilter.EventPluginLoader;
 import org.tron.common.logsfilter.capsule.BlockLogTriggerCapsule;
@@ -17,6 +18,7 @@ import org.tron.common.logsfilter.capsule.TransactionLogTriggerCapsule;
 import org.tron.common.logsfilter.capsule.TriggerCapsule;
 import org.tron.common.logsfilter.trigger.ContractEventTrigger;
 import org.tron.common.logsfilter.trigger.ContractLogTrigger;
+import org.tron.common.logsfilter.trigger.Trigger;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
@@ -94,24 +96,30 @@ public class SolidEventServiceTest {
     SmartContractTrigger contractTrigger = new SmartContractTrigger();
     be2.setSmartContractTrigger(contractTrigger);
 
-    contractTrigger.getContractEventTriggers().add(mock(ContractEventTrigger.class));
-    Mockito.when(instance.isSolidityLogTriggerEnable()).thenReturn(true);
-    try {
-      solidEventService.flush(be2);
-    } catch (Exception e) {
-      Assert.assertTrue(e instanceof NullPointerException);
-    }
-
-    contractTrigger.getContractEventTriggers().clear();
-
-    solidEventService.flush(be2);
-
-    contractTrigger.getContractLogTriggers().add(mock(ContractLogTrigger.class));
+    ContractEventTrigger eventTrigger = new ContractEventTrigger();
+    eventTrigger.setRemoved(true);
+    contractTrigger.getContractEventTriggers().add(eventTrigger);
     Mockito.when(instance.isSolidityEventTriggerEnable()).thenReturn(true);
-    try {
+    try (MockedStatic<EventPluginLoader> loader = Mockito.mockStatic(EventPluginLoader.class)) {
+      loader.when(EventPluginLoader::getInstance).thenReturn(instance);
       solidEventService.flush(be2);
-    } catch (Exception e) {
-      Assert.assertTrue(e instanceof NullPointerException);
+      Assert.assertEquals(Trigger.SOLIDITYEVENT_TRIGGER_NAME, eventTrigger.getTriggerName());
+      Assert.assertFalse(eventTrigger.isRemoved());
+      Mockito.verify(instance).postSolidityEventTrigger(eventTrigger);
+
+      contractTrigger.getContractEventTriggers().clear();
+
+      solidEventService.flush(be2);
+
+      ContractLogTrigger logTrigger = new ContractLogTrigger();
+      logTrigger.setRemoved(true);
+      contractTrigger.getContractLogTriggers().add(logTrigger);
+      Mockito.when(instance.isSolidityEventTriggerEnable()).thenReturn(false);
+      Mockito.when(instance.isSolidityLogTriggerEnable()).thenReturn(true);
+      solidEventService.flush(be2);
+      Assert.assertEquals(Trigger.SOLIDITYLOG_TRIGGER_NAME, logTrigger.getTriggerName());
+      Assert.assertFalse(logTrigger.isRemoved());
+      Mockito.verify(instance).postSolidityLogTrigger(logTrigger);
     }
 
     be2.setSmartContractTrigger(null);

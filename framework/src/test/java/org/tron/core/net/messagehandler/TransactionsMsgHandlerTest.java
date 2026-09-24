@@ -135,28 +135,29 @@ public class TransactionsMsgHandlerTest extends BaseTest {
       Assert.assertTrue("smart-contract scheduler did not submit work",
           smartContractSubmitted.await(3, TimeUnit.SECONDS));
 
-      // test 0 contract
+      // Unrequested transactions are rejected before their contract count is checked.
       Protocol.Transaction trx2 = Protocol.Transaction.newBuilder().setRawData(
           Protocol.Transaction.raw.newBuilder().setTimestamp(transactionTimestamp)
               .setRefBlockNum(1).build())
           .build();
       List<Protocol.Transaction> transactionList2 = new ArrayList<>();
       transactionList2.add(trx2);
-      try {
-        transactionsMsgHandler.processMessage(peer, new TransactionsMessage(transactionList2));
-      } catch (Exception ep) {
-        Assert.assertTrue(true);
-      }
+      P2pException unrequested = Assert.assertThrows(P2pException.class,
+          () -> transactionsMsgHandler.processMessage(peer,
+              new TransactionsMessage(transactionList2)));
+      Assert.assertEquals(P2pException.TypeEnum.BAD_MESSAGE, unrequested.getType());
+      Assert.assertTrue(unrequested.getMessage().contains("without request"));
       Map<Item, Long> advInvRequest2 = new ConcurrentHashMap<>();
       Item item2 = new Item(new TransactionMessage(trx2).getMessageId(),
           Protocol.Inventory.InventoryType.TRX);
       advInvRequest2.put(item2, 0L);
       Mockito.when(peer.getAdvInvRequest()).thenReturn(advInvRequest2);
-      try {
-        transactionsMsgHandler.processMessage(peer, new TransactionsMessage(transactionList2));
-      } catch (Exception ep) {
-        Assert.assertTrue(true);
-      }
+      P2pException emptyContract = Assert.assertThrows(P2pException.class,
+          () -> transactionsMsgHandler.processMessage(peer,
+              new TransactionsMessage(transactionList2)));
+      Assert.assertEquals(P2pException.TypeEnum.BAD_TRX, emptyContract.getType());
+      Assert.assertTrue(emptyContract.getMessage()
+          .contains("contract size should be greater than 0"));
     } catch (Exception e) {
       Assert.fail(e.getMessage());
     } finally {

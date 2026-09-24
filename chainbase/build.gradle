@@ -1,15 +1,11 @@
 description = "chainbase – a decentralized database for blockchain."
 
-// Dependency versions
-// ---------------------------------------
-def jansiVersion = "1.16"
-// --------------------------------------
-
 dependencies {
     api project(":protocol")
     api project(":common")
     api project(":crypto")
-    api "org.fusesource.jansi:jansi:$jansiVersion"
+    // Its bundled HawtJNI loader supports ARM native libraries; leveldbjni-all's older loader does not.
+    api 'org.fusesource.jansi:jansi:1.16'
     api 'org.reflections:reflections:0.9.11'
 }
 

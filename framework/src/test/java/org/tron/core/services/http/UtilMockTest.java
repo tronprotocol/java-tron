@@ -334,7 +334,12 @@ public class UtilMockTest  {
         .addAllLog(logs);
     List<Protocol.TransactionInfo.Log>  logList =
         Util.convertLogAddressToTronAddress(builder.build());
-    Assert.assertNotNull(logList.size() > 0);
+    Assert.assertEquals(1, logList.size());
+    Assert.assertArrayEquals(
+        ByteArray.fromHexString("410000000000000000000000000061646472657373"),
+        logList.get(0).getAddress().toByteArray());
+    Assert.assertEquals(logs.get(0).getData(), logList.get(0).getData());
+    Assert.assertEquals(logs.get(0).getTopicsList(), logList.get(0).getTopicsList());
   }
 
   @Test

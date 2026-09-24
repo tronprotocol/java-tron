@@ -4,14 +4,17 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockConstruction;
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -35,8 +38,6 @@ import org.junit.Test;
 import org.mockito.MockedConstruction;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 
 import org.tron.common.cron.CronExpression;
 import org.tron.common.logsfilter.EventPluginLoader;
@@ -47,6 +48,7 @@ import org.tron.common.runtime.ProgramResult;
 import org.tron.common.runtime.vm.LogInfo;
 import org.tron.common.utils.Pair;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.consensus.Consensus;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
@@ -78,65 +80,47 @@ public class ManagerMockTest {
 
   @Test
   public void processTransactionCostTimeMoreThan100() throws Exception {
-    TransactionTrace traceMock = mock(TransactionTrace.class);
-    BandwidthProcessor bandwidthProcessorMock = mock(BandwidthProcessor.class);
-    try (MockedConstruction<TransactionTrace> mockedConstruction2
-             = mockConstruction(TransactionTrace.class,(mock, context) -> {
-               when(mock).thenReturn(traceMock); });
-         MockedConstruction<BandwidthProcessor> mockedConstruction3
-             = mockConstruction(BandwidthProcessor.class,(mock, context) -> {
-               when(mock).thenReturn(bandwidthProcessorMock);
-             });
+    ProgramResult result = new ProgramResult();
+    result.setResultCode(Protocol.Transaction.Result.contractResult.SUCCESS);
+    try (MockedConstruction<TransactionTrace> traces
+             = mockConstruction(TransactionTrace.class, (trace, context) ->
+                 when(trace.getRuntimeResult()).thenReturn(result));
          MockedStatic<TransactionUtil> mockedStatic = mockStatic(TransactionUtil.class)) {
-      Manager dbManager = mock(Manager.class);
+      Manager dbManager = spy(new Manager());
       BalanceContract.TransferContract transferContract =
           BalanceContract.TransferContract.newBuilder()
               .setAmount(10)
               .setOwnerAddress(ByteString.copyFromUtf8("aaa"))
               .setToAddress(ByteString.copyFromUtf8("bbb"))
               .build();
-      StringBuilder sb = new StringBuilder();
-      for (int i = 0; i < 6666; i++) {
-        sb.append("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
-      }
       Protocol.Transaction transaction = Protocol.Transaction.newBuilder().setRawData(
           Protocol.Transaction.raw.newBuilder()
-              .setData(ByteString.copyFrom(sb.toString().getBytes(StandardCharsets.UTF_8)))
               .addContract(
                   Protocol.Transaction.Contract.newBuilder()
                       .setParameter(Any.pack(transferContract))
                       .setType(Protocol.Transaction.Contract.ContractType.TransferContract)))
           .build();
-      TransactionCapsule trxCap = new TransactionCapsule(transaction);
-      ProgramResult result = new ProgramResult();
-      result.setResultCode(Protocol.Transaction.Result.contractResult.SUCCESS);
-
+      TransactionCapsule trxCap = spy(new TransactionCapsule(transaction));
       Sha256Hash transactionId = trxCap.getTransactionId();
-      TransactionCapsule trxCapMock = mock(TransactionCapsule.class);
 
       ChainBaseManager chainBaseManagerMock = mock(ChainBaseManager.class);
       BalanceTraceStore balanceTraceStoreMock = mock(BalanceTraceStore.class);
       TransactionStore transactionStoreMock = mock(TransactionStore.class);
-      TransactionInfoCapsule transactionInfoCapsuleMock = mock(TransactionInfoCapsule.class);
-      Protocol.TransactionInfo transactionInfo = Protocol.TransactionInfo.newBuilder().build();
+      Protocol.TransactionInfo transactionInfo = Protocol.TransactionInfo.newBuilder()
+          .setId(transactionId.getByteString()).setFee(100L).build();
 
-      Field field = dbManager.getClass().getDeclaredField("chainBaseManager");
+      Field field = Manager.class.getDeclaredField("chainBaseManager");
       field.setAccessible(true);
       field.set(dbManager, chainBaseManagerMock);
 
       BlockCapsule blockCapMock = Mockito.mock(BlockCapsule.class);
 
-      when(TransactionUtil
-          .buildTransactionInfoInstance(trxCapMock, blockCapMock, traceMock))
-          .thenReturn(transactionInfoCapsuleMock);
-
-      // this make cost > 100 cond is true
-      when(blockCapMock.isMerkleRootEmpty()).thenAnswer(new Answer<Boolean>() {
-        @Override
-        public Boolean answer(InvocationOnMock invocation) throws Throwable {
-          Thread.sleep(100);
-          return true;
-        }
+      mockedStatic.when(() -> TransactionUtil.buildTransactionInfoInstance(
+          eq(trxCap), eq(blockCapMock), any(TransactionTrace.class)))
+          .thenReturn(new TransactionInfoCapsule(transactionInfo));
+      when(blockCapMock.isMerkleRootEmpty()).thenAnswer(invocation -> {
+        Thread.sleep(110);
+        return true;
       });
 
       when(chainBaseManagerMock.getBalanceTraceStore()).thenReturn(balanceTraceStoreMock);
@@ -144,34 +128,29 @@ public class ManagerMockTest {
       when(chainBaseManagerMock.getDynamicPropertiesStore())
           .thenReturn(mock(DynamicPropertiesStore.class));
       when(chainBaseManagerMock.getTransactionStore()).thenReturn(transactionStoreMock);
-      when(trxCapMock.getTransactionId()).thenReturn(transactionId);
-      when(traceMock.getRuntimeResult()).thenReturn(result);
-      when(transactionInfoCapsuleMock.getId()).thenReturn(transactionId.getBytes());
-      when(transactionInfoCapsuleMock.getInstance()).thenReturn(transactionInfo);
-      when(trxCapMock.getInstance()).thenReturn(trxCap.getInstance());
-      when(trxCapMock.validatePubSignature(
-          Mockito.any(AccountStore.class),
-          Mockito.any(DynamicPropertiesStore.class))).thenReturn(true);
-      when(trxCapMock.validateSignature(
-          Mockito.any(AccountStore.class),
-          Mockito.any(DynamicPropertiesStore.class))).thenReturn(true);
+      doReturn(true).when(trxCap).validateSignature(
+          any(AccountStore.class), any(DynamicPropertiesStore.class));
+      doNothing().when(dbManager).validateTapos(trxCap);
+      doNothing().when(dbManager).validateCommon(trxCap);
+      doNothing().when(dbManager).validateDup(trxCap);
+      doNothing().when(dbManager).consumeBandwidth(eq(trxCap), any(TransactionTrace.class));
 
-      doNothing().when(dbManager).validateTapos(trxCapMock);
-      doNothing().when(dbManager).validateCommon(trxCapMock);
-      doNothing().when(dbManager).validateDup(trxCapMock);
+      Assert.assertEquals(transactionInfo, dbManager.processTransaction(trxCap, blockCapMock));
 
-
-      doNothing().when(transactionStoreMock).put(transactionId.getBytes(), trxCapMock);
-      doNothing().when(bandwidthProcessorMock).consume(trxCapMock, traceMock);
-      doNothing().when(dbManager).consumeBandwidth(trxCapMock, traceMock);
-      doNothing().when(balanceTraceStoreMock).initCurrentTransactionBalanceTrace(trxCapMock);
-      doNothing().when(balanceTraceStoreMock).updateCurrentTransactionStatus(anyString());
-      doNothing().when(balanceTraceStoreMock).resetCurrentTransactionTrace();
-
-
-      assertNotNull(
-          when(dbManager.processTransaction(trxCapMock, blockCapMock)).thenCallRealMethod()
-      );
+      Assert.assertEquals(1, traces.constructed().size());
+      TransactionTrace trace = traces.constructed().get(0);
+      verify(trace).init(blockCapMock, false);
+      verify(trace).exec();
+      verify(trace).finalization();
+      // The second call selects the log label only after processing exceeds 100 ms.
+      verify(blockCapMock, times(2)).hasWitnessSignature();
+      verify(transactionStoreMock).put(transactionId.getBytes(), trxCap);
+      verify(balanceTraceStoreMock).initCurrentTransactionBalanceTrace(trxCap);
+      verify(balanceTraceStoreMock).updateCurrentTransactionStatus("SUCCESS");
+      verify(balanceTraceStoreMock).resetCurrentTransactionTrace();
+      assertTrue(trxCap.isInBlock());
+      Assert.assertEquals(100L, trxCap.getOrder());
+      Assert.assertNull(trxCap.getTrxTrace());
     }
   }
 
@@ -179,35 +158,30 @@ public class ManagerMockTest {
                            long exitHeight, long exitCount, String blockTime)
       throws Exception {
     ChainBaseManager chainBaseManagerMock = mock(ChainBaseManager.class);
-    Args argsMock = mock(Args.class);
-
-    when(Args.getInstance()).thenReturn(argsMock);
+    CommonParameter parameter = new CommonParameter();
+    parameter.setShutdownBlockHeight(exitHeight);
+    parameter.setShutdownBlockCount(exitCount);
+    parameter.setShutdownBlockTime(blockTime == null ? null : new CronExpression(blockTime));
+    when(CommonParameter.getInstance()).thenReturn(parameter);
 
     when(chainBaseManagerMock.getHeadBlockNum()).thenReturn(headNum);
     when(chainBaseManagerMock.getHeadBlockTimeStamp()).thenReturn(headTime);
 
-    when(argsMock.getShutdownBlockHeight()).thenReturn(exitHeight);
-    when(argsMock.getShutdownBlockCount()).thenReturn(exitCount);
-    when(argsMock.isP2pDisable()).thenReturn(false);
-    when(argsMock.getShutdownBlockTime())
-        .thenReturn(new CronExpression(blockTime));  //"0 0 12 * * ?"
-
-    Field field = dbManager.getClass().getDeclaredField("chainBaseManager");
+    Field field = Manager.class.getDeclaredField("chainBaseManager");
     field.setAccessible(true);
     field.set(dbManager, chainBaseManagerMock);
   }
 
   @Test
   public void testInitAutoStop() throws Exception {
-    Manager dbManager = spy(new Manager());
+    Manager dbManager = new Manager();
     try (MockedStatic<CommonParameter> methodTestMockedStatic
              = mockStatic(CommonParameter.class)) {
       initMockEnv(dbManager, 100L, 12345L,
-          10L, 0L, "0 0 12 * * ?");
+          10L, -1L, null);
 
-      assertThrows(
-          "shutDownBlockHeight 10 is less than headNum 100",
-          Exception.class,
+      InvocationTargetException thrown = assertThrows(
+          InvocationTargetException.class,
           () -> {
             Method privateMethod = Manager.class.getDeclaredMethod(
                 "initAutoStop");
@@ -215,21 +189,23 @@ public class ManagerMockTest {
             privateMethod.invoke(dbManager);
           }
       );
+      Assert.assertEquals(IllegalArgumentException.class, thrown.getCause().getClass());
+      Assert.assertEquals("shutDownBlockHeight 10 is less than headNum 100",
+          thrown.getCause().getMessage());
     }
 
   }
 
   @Test
   public void testInitAutoStop1() throws Exception {
-    Manager dbManager = spy(new Manager());
+    Manager dbManager = new Manager();
     try (MockedStatic<CommonParameter> methodTestMockedStatic
              = mockStatic(CommonParameter.class)) {
       initMockEnv(dbManager,10L, 12345L,
-          100L, 0L, "0 0 12 * * ?");
+          0L, 0L, null);
 
-      assertThrows(
-          "shutDownBlockCount 0 is less than 1",
-          Exception.class,
+      InvocationTargetException thrown = assertThrows(
+          InvocationTargetException.class,
           () -> {
             Method privateMethod = Manager.class.getDeclaredMethod(
                 "initAutoStop");
@@ -237,20 +213,22 @@ public class ManagerMockTest {
             privateMethod.invoke(dbManager);
           }
       );
+      Assert.assertEquals(IllegalArgumentException.class, thrown.getCause().getClass());
+      Assert.assertEquals("shutDownBlockCount 0 is less than 1", thrown.getCause().getMessage());
     }
   }
 
   @Test
   public void testInitAutoStop2() throws Exception {
-    Manager dbManager = spy(new Manager());
+    Manager dbManager = new Manager();
     try (MockedStatic<CommonParameter> methodTestMockedStatic
              = mockStatic(CommonParameter.class)) {
-      initMockEnv(dbManager,10L, 99726143865000L,
-          100L, 1L, "0 0 12 * * ?");
+      // The scheduled time in 2020 has passed at this head timestamp (2021-01-01 UTC).
+      initMockEnv(dbManager, 10L, 1609459200000L,
+          0L, -1L, "0 0 12 1 1 ? 2020");
 
-      assertThrows(
-          "shutDownBlockTime 0 0 12 * * ? is illegal",
-          Exception.class,
+      InvocationTargetException thrown = assertThrows(
+          InvocationTargetException.class,
           () -> {
             Method privateMethod = Manager.class.getDeclaredMethod(
                 "initAutoStop");
@@ -258,21 +236,23 @@ public class ManagerMockTest {
             privateMethod.invoke(dbManager);
           }
       );
+      Assert.assertEquals(IllegalArgumentException.class, thrown.getCause().getClass());
+      Assert.assertEquals("shutDownBlockTime 0 0 12 1 1 ? 2020 is illegal",
+          thrown.getCause().getMessage());
     }
 
   }
 
   @Test
   public void testInitAutoStop3() throws Exception {
-    Manager dbManager = spy(new Manager());
+    Manager dbManager = new Manager();
     try (MockedStatic<CommonParameter> methodTestMockedStatic
              = mockStatic(CommonParameter.class)) {
       initMockEnv(dbManager,10L, 12345L,
-          100L, 1L, "0 0 12 * * ?");
+          100L, 1L, null);
 
-      assertThrows(
-          "shutDownBlockHeight 100 and shutDownBlockCount 1 set both",
-          Exception.class,
+      InvocationTargetException thrown = assertThrows(
+          InvocationTargetException.class,
           () -> {
             Method privateMethod = Manager.class.getDeclaredMethod(
                 "initAutoStop");
@@ -280,21 +260,23 @@ public class ManagerMockTest {
             privateMethod.invoke(dbManager);
           }
       );
+      Assert.assertEquals(IllegalArgumentException.class, thrown.getCause().getClass());
+      Assert.assertEquals("shutDownBlockHeight 100 and shutDownBlockCount 1 set both",
+          thrown.getCause().getMessage());
     }
 
   }
 
   @Test
   public void testInitAutoStop4() throws Exception {
-    Manager dbManager = spy(new Manager());
+    Manager dbManager = new Manager();
     try (MockedStatic<CommonParameter> methodTestMockedStatic
              = mockStatic(CommonParameter.class)) {
       initMockEnv(dbManager, 10L, 12345L,
           100L, -1L, "0 0 12 * * ?");
 
-      assertThrows(
-          "shutDownBlockHeight 100 and shutDownBlockTime 0 0 12 * * ? set both",
-          Exception.class,
+      InvocationTargetException thrown = assertThrows(
+          InvocationTargetException.class,
           () -> {
             Method privateMethod = Manager.class.getDeclaredMethod(
                 "initAutoStop");
@@ -302,21 +284,23 @@ public class ManagerMockTest {
             privateMethod.invoke(dbManager);
           }
       );
+      Assert.assertEquals(IllegalArgumentException.class, thrown.getCause().getClass());
+      Assert.assertEquals("shutDownBlockHeight 100 and shutDownBlockTime 0 0 12 * * ? set both",
+          thrown.getCause().getMessage());
     }
 
   }
 
   @Test
   public void testInitAutoStop5() throws Exception {
-    Manager dbManager = spy(new Manager());
+    Manager dbManager = new Manager();
     try (MockedStatic<CommonParameter> methodTestMockedStatic
              = mockStatic(CommonParameter.class)) {
       initMockEnv(dbManager,10L, 12345L,
           0L, 1L, "0 0 12 * * ?");
 
-      assertThrows(
-          "shutDownBlockCount 1 and shutDownBlockTime 0 0 12 * * ? set both",
-          Exception.class,
+      InvocationTargetException thrown = assertThrows(
+          InvocationTargetException.class,
           () -> {
             Method privateMethod = Manager.class.getDeclaredMethod(
                 "initAutoStop");
@@ -324,6 +308,9 @@ public class ManagerMockTest {
             privateMethod.invoke(dbManager);
           }
       );
+      Assert.assertEquals(IllegalArgumentException.class, thrown.getCause().getClass());
+      Assert.assertEquals("shutDownBlockCount 1 and shutDownBlockTime 0 0 12 * * ? set both",
+          thrown.getCause().getMessage());
     }
 
   }
@@ -575,16 +562,15 @@ public class ManagerMockTest {
    * validation, the new `if (!validateSignature) throw` block must fire,
    * surfacing ValidateSignatureException through the existing catch list.
    *
-   * <p>Strategy: spy(Manager), inject mocked khaosDb/revokingStore/chainBaseManager
-   * so switchFork enters the first apply loop with a single mock block whose
-   * validateSignature returns false. The throw is exercised; downstream
-   * switchback/finally exceptions from partially-mocked applyBlock are tolerated
-   * since the throw line is already executed before they run.
+   * The old branch fails schedule validation during rollback, which switchFork
+   * handles without replacing the new branch's signature-validation failure.
    */
   @SneakyThrows
   @Test
   public void testSwitchForkRejectsBlockWithInvalidSignature() {
     Manager dbManager = spy(new Manager());
+    Consensus consensus = mock(Consensus.class);
+    setField(dbManager, "consensus", consensus);
 
     // chainBaseManager + stores so getDynamicPropertiesStore() / getAccountStore() resolve.
     ChainBaseManager cbm = mock(ChainBaseManager.class);
@@ -620,6 +606,7 @@ public class ManagerMockTest {
     BlockCapsule.BlockId oldBlockId = mock(BlockCapsule.BlockId.class);
     when(oldBlock.getBlockId()).thenReturn(oldBlockId);
     when(oldBlock.getParentHash()).thenReturn(sharedHash);
+    when(oldBlock.setSwitch(true)).thenReturn(oldBlock);
 
     LinkedList<KhaosDatabase.KhaosBlock> first = new LinkedList<>();
     first.add(new KhaosDatabase.KhaosBlock(badBlock));
@@ -631,18 +618,18 @@ public class ManagerMockTest {
     Method switchFork = Manager.class.getDeclaredMethod("switchFork", BlockCapsule.class);
     switchFork.setAccessible(true);
 
-    // The throw fires before the finally's switchback runs. Switchback's applyBlock
-    // may surface another exception due to partial mocks; we tolerate any throwable
-    // here because the new code's throw has already been executed (line covered).
-    try {
-      switchFork.invoke(dbManager, badBlock);
-    } catch (Throwable ignored) {
-      // expected: switchback path partially mocked
-    }
+    InvocationTargetException exception = assertThrows(InvocationTargetException.class,
+        () -> switchFork.invoke(dbManager, badBlock));
+    Assert.assertEquals(ValidateSignatureException.class, exception.getCause().getClass());
+    Assert.assertEquals("switch fork: block 100 signature invalid",
+        exception.getCause().getMessage());
 
     // The fix's contract: validateSignature was invoked on the replayed block.
     verify(badBlock, atLeastOnce()).validateSignature(
         any(DynamicPropertiesStore.class), any(AccountStore.class));
+    verify(badBlock, never()).setSwitch(true);
+    verify(consensus, never()).validBlock(badBlock);
+    verify(khaosDb).removeBlk(badBlockId);
   }
 
   /**
@@ -654,6 +641,8 @@ public class ManagerMockTest {
   @Test
   public void testSwitchForkPassesValidSignatureBlockToApply() {
     Manager dbManager = spy(new Manager());
+    Consensus consensus = mock(Consensus.class);
+    setField(dbManager, "consensus", consensus);
 
     ChainBaseManager cbm = mock(ChainBaseManager.class);
     DynamicPropertiesStore dps = mock(DynamicPropertiesStore.class);
@@ -680,6 +669,8 @@ public class ManagerMockTest {
         any(AccountStore.class))).thenReturn(true);
     // setSwitch returns self for chained call from applyBlock argument expression.
     when(goodBlock.setSwitch(true)).thenReturn(goodBlock);
+    RuntimeException reachedApply = new RuntimeException("reached block application");
+    when(consensus.validBlock(goodBlock)).thenThrow(reachedApply);
 
     LinkedList<KhaosDatabase.KhaosBlock> first = new LinkedList<>();
     first.add(new KhaosDatabase.KhaosBlock(goodBlock));
@@ -689,17 +680,16 @@ public class ManagerMockTest {
 
     Method switchFork = Manager.class.getDeclaredMethod("switchFork", BlockCapsule.class);
     switchFork.setAccessible(true);
-    try {
-      switchFork.invoke(dbManager, goodBlock);
-    } catch (Throwable ignored) {
-      // applyBlock against a mocked BlockCapsule will NPE somewhere; tolerated.
-    }
+    InvocationTargetException exception = assertThrows(InvocationTargetException.class,
+        () -> switchFork.invoke(dbManager, goodBlock));
+    Assert.assertSame(reachedApply, exception.getCause());
 
     // Validation ran AND setSwitch was reached — proves the `if` did not short-circuit
     // on the false branch when validateSignature returned true.
     verify(goodBlock, atLeastOnce()).validateSignature(
         any(DynamicPropertiesStore.class), any(AccountStore.class));
     verify(goodBlock, atLeastOnce()).setSwitch(true);
+    verify(consensus).validBlock(goodBlock);
   }
 
   private static void setField(Object target, String name, Object value) throws Exception {

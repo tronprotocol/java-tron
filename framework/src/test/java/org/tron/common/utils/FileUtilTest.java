@@ -2,6 +2,7 @@ package org.tron.common.utils;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.tron.common.utils.FileUtil.readData;
 
@@ -87,24 +88,15 @@ public class FileUtilTest {
 
   @Test
   public void testCreateFileIfNotExists() {
-    String existFile = "existsfile.txt";
-    File file1 = new File(existFile);
-    try {
-      file1.createNewFile();
-    } catch (IOException e) {
-      System.out.println("ignore this exception.");
-    }
-    assertTrue(file1.exists());
-    assertTrue(FileUtil.createDirIfNotExists(existFile));
-    assertTrue(file1.exists());
+    Path existingFile = tempDir.resolve("file1.txt");
+    assertTrue(Files.isRegularFile(existingFile));
+    assertTrue(FileUtil.createFileIfNotExists(existingFile.toString()));
+    assertTrue(Files.isRegularFile(existingFile));
 
-    String notExistFile = "notexistsfile.txt";
-    File file2 = new File(notExistFile);
-    assertTrue(!file2.exists());
-    assertTrue(FileUtil.createDirIfNotExists(notExistFile));
-    assertTrue(file2.exists());
-    file1.delete();
-    file2.delete();
+    Path newFile = tempDir.resolve("new-file.txt");
+    assertFalse(Files.exists(newFile));
+    assertTrue(FileUtil.createFileIfNotExists(newFile.toString()));
+    assertTrue(Files.isRegularFile(newFile));
   }
 
   @Test

@@ -570,9 +570,13 @@ public class BandwidthProcessorTest extends BaseTest {
     trx.setInBlock(false);
     TransactionTrace trace = new TransactionTrace(trx, StoreFactory
         .getInstance(), new RuntimeImpl());
-    assertThrows(
-        "Too big transaction result, TxId %s, the result size is %d bytes, maxResultSize %d",
+    TooBigTransactionResultException error = assertThrows(
         TooBigTransactionResultException.class, () -> dbManager.consumeBandwidth(trx, trace));
+    Assert.assertEquals(String.format(
+        "Too big transaction result, TxId %s, the result size is %d bytes, maxResultSize %d",
+        trx.getTransactionId(), trx.getResultSizeWithMaxContractRet(),
+        Constant.MAX_RESULT_SIZE_IN_TX),
+        error.getMessage());
   }
 
   /**

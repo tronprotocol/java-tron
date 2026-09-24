@@ -311,10 +311,8 @@ public class TransactionStoreTest extends BaseTest {
         chainBaseManager.getAccountStore());
     byte[] key = null;
     transactionStore.put(key, ret);
-    try {
-      transactionStore.get(key);
-    } catch (RuntimeException e) {
-      Assert.assertEquals("The key argument cannot be null", e.getMessage());
-    }
+    IllegalArgumentException exception = Assert.assertThrows(IllegalArgumentException.class,
+        () -> transactionStore.get(key));
+    Assert.assertEquals("The key argument cannot be null", exception.getMessage());
   }
 }
