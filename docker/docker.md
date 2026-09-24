@@ -1,110 +1,202 @@
 # Docker Shell Guide
 
-java-tron support containerized processes, we maintain a Docker image with latest version build from our master branch on DockerHub. To simplify the use of Docker and common docker commands, we also provide a shell script to help you better manage container services，this guide describes how to use the script tool.
-
+java-tron supports containerized processes. Official versioned release images are published on Docker Hub. The mutable `latest` tag points to the latest published release; it does not represent the current head of `master`. The `docker.sh` helper simplifies common image and container lifecycle operations.
 
 ## Prerequisites
 
-Requires a docker to be installed on the system. Docker version >=20.10.12. 
+Install Docker 20.10.12 or later before using the helper.
 
+`docker.sh` requires Bash. On Windows, use Docker Desktop with Linux containers and run the helper from [WSL 2](https://docs.docker.com/desktop/features/wsl/) with Docker integration enabled. It cannot be executed directly from PowerShell or Command Prompt.
 
 ## Quick Start
 
-Shell can be obtained from the java-tron project or independently, you can get the script from [here](https://github.com/tronprotocol/java-tron/blob/develop/docker/docker.sh) or download via the wget:
+Obtain the helper from the java-tron repository, or download it independently:
+
 ```shell
 $ wget https://raw.githubusercontent.com/tronprotocol/java-tron/develop/docker/docker.sh
 ```
 
-### Pull the mirror image
-Get the `tronprotocol/java-tron` image from the DockerHub, this image contains the full JDK environment and the host network configuration file, using the script for simple docker operations.
+### Pull the official image
+
+Get the `tronprotocol/java-tron` image from Docker Hub. The image contains a Java runtime environment and the mainnet configuration file. The helper pulls `tronprotocol/java-tron:latest`. For long-running or reproducible deployments, use Docker directly to select a versioned tag or an `image@sha256:...` reference. See the available [Docker Hub tags](https://hub.docker.com/r/tronprotocol/java-tron/tags).
+
 ```shell
-$ sh docker.sh --pull
+$ bash docker.sh --pull
 ```
 
 ### Run the service
-Before running the java-tron service, make sure some ports on your local machine are open,the image has the following ports automatically exposed:
-- `8090`: used by the HTTP based JSON API
-- `50051`: used by the GRPC based API
-- `18888`: TCP and UDP, used by the P2P protocol running the network
+
+Before running java-tron, make sure the required ports are available on the host. By default, HTTP and gRPC APIs are bound to the host loopback interface. Mainnet P2P remains available on all host interfaces:
+
+- `127.0.0.1:8090`: used by the HTTP-based JSON API
+- `127.0.0.1:50051`: used by the gRPC-based API
+- `18888`: TCP and UDP on all host interfaces, used by the P2P protocol
+
+The helper manages one container named `tronprotocol-java-tron` and creates it with Docker's `always` restart policy. If this container already exists, `--run` exits without changing it. Use `--start` to start a stopped container, or use `--rm` before `--run` to recreate it with new settings. The helper cannot run mainnet and private-network instances simultaneously; remove the existing container before switching networks. A manually stopped container remains stopped until it is manually restarted or the Docker daemon restarts. Use Docker directly when multiple instances, a custom container name, or a different restart policy is required.
 
 #### Full node on the main network
 
 ```shell
-$ sh docker.sh --run --net main
-```
-or you can use `-p` to customize the port mapping, more custom parameters, please refer to [Options](#Options)
-
-```shell
-$ sh docker.sh --run --net main -p 8080:8090 -p 40051:50051 
+$ bash docker.sh --run
 ```
 
-#### Full node on the nile test network
+The helper does not provide an option for setting JVM heap parameters. Nodes started this way use the JVM options bundled in the image and the JVM's automatically selected heap size. For production mainnet deployments that require explicit heap sizing or other JVM tuning, use the direct `docker run` example in the [quick-start guide](../quickstart.md#run-a-mainnet-fullnode).
+
+The mainnet configuration is bundled in the image at `/java-tron/config.conf` and comes from the same java-tron revision used to build the image. `--net main` remains available as an explicit form.
+
+Use `-p` to customize the port mapping. Supplying any custom `-p` replaces the complete default port set, so include both TCP and UDP mappings for P2P. For more parameters, see [Options](#options).
+
 ```shell
-$ sh docker.sh --run --net test
+$ bash docker.sh --run --net main \
+    -p 127.0.0.1:8080:8090 \
+    -p 127.0.0.1:40051:50051 \
+    -p 18888:18888 \
+    -p 18888:18888/udp
 ```
 
-#### Full node on the private network
-you can also build your own private-net and will download a configuration file from the network for your private network, which will be stored in your local `config` directory.
+#### Single-node private network
+
+You can also run a single-node private network with the configuration maintained by `tron-deployment`. If `config/private_net_config.conf` does not exist in the current directory, the script downloads it automatically. An existing local configuration is reused so that local changes are preserved.
+
 ```shell
-$ sh docker.sh --run --net private
+$ bash docker.sh --run --net private
 ```
+
+Private mode starts FullNode with `--witness` so that the genesis witness produces blocks. By default, the helper publishes the following ports used by `private_net_config.conf`:
+
+- `127.0.0.1:16667`: used by the HTTP-based JSON API
+- `127.0.0.1:50051`: used by the gRPC-based API
+
+The private configuration also enables JSON-RPC on container port `8545` and listens for P2P on container port `16666`, but the helper publishes neither port by default. To make JSON-RPC available on the host loopback interface, provide the complete custom port set because specifying any `-p` replaces all default mappings:
+
+```shell
+$ bash docker.sh --run --net private \
+    -p 127.0.0.1:16667:16667 \
+    -p 127.0.0.1:50051:50051 \
+    -p 127.0.0.1:8545:8545
+```
+
+The downloaded configuration contains a publicly known development witness key and genesis accounts. Use it only for isolated local development. For a multi-node, shared, or security-sensitive private network, use the maintained [`tron-docker/private_net`](https://github.com/tronprotocol/tron-docker/tree/main/private_net) setup and replace its keys and configuration as appropriate.
+
+To connect an intentionally configured helper-based node from another machine, provide the complete custom port set and include explicit P2P mappings such as `-p <host-interface-address>:16666:16666` and `-p <host-interface-address>:16666:16666/udp`. Before exposing P2P, replace the public development credentials and configure the peers and witness roles; publishing the ports alone does not create a multi-node private network.
+
+Existing containers keep their original port mappings when restarted. After upgrading from a helper version that published private P2P by default, run `bash docker.sh --rm` and then create the private node again with `bash docker.sh --run --net private`.
+
+To replace an existing local copy with the latest maintained configuration, explicitly request an update. This overwrites `config/private_net_config.conf`.
+
+```shell
+$ bash docker.sh --run --net private --update-config true
+```
+
 #### Configuration
-The script will automatically download and use the corresponding configuration file from the github repository according to the `--net` parameter. if you don't want to update the configuration file every time you start the service, please add a startup parameter.
+
+Mainnet uses the configuration bundled in the image and never downloads another configuration. The `private` network option uses `config/private_net_config.conf` from the current directory, downloading it from `tron-deployment` only when it is missing or an update is explicitly requested. It also enables witness mode so that the single-node network can produce blocks.
+
+Nile is intentionally not supported by this script because it may require features that are not yet available on the mainnet source revision. Follow the Nile-specific build instructions in the project README instead.
+
+Alternatively, mount a configuration into the container and select it with `-c`:
 
 ```shell
-$ sh docker.sh --run --update-config false
+$ bash docker.sh --run \
+    -v /absolute/path/custom.conf:/java-tron/custom.conf:ro \
+    -c /java-tron/custom.conf
 ```
 
-Or use the `-c` parameter to specify your own configuration file, which will not automatically download a new configuration file from github repository.
+### Data and log persistence
 
+By default, the helper bind-mounts `output-directory` from the directory where `docker.sh` is executed to `/java-tron/output-directory` in the container. The blockchain database therefore remains on the host after the container is removed. Make sure that the current filesystem has sufficient space, or mount a dedicated data directory:
+
+```shell
+$ mkdir -p "$PWD/mainnet-data"
+$ bash docker.sh --run --net main \
+    -v "$PWD/mainnet-data:/java-tron/output-directory"
+```
+
+Do not reuse one database directory across different networks. Use separate directories for mainnet and private-network data.
+
+Application logs are not persisted by default; they remain in the container writable layer and are deleted with the container. To retain logs after `--rm`, mount a host directory explicitly:
+
+```shell
+$ mkdir -p "$PWD/logs"
+$ bash docker.sh --run --net main \
+    -v "$PWD/logs:/java-tron/logs"
+```
+
+Adding a log or configuration volume does not disable the default database mount. The default is replaced only when a custom volume targets `/java-tron/output-directory`.
 
 ### View logs
-If you want to see the logs of the java-tron service, please use the `--log` parameter
+
+Use `--log` to follow the java-tron service log:
 
 ```shell
-$ sh docker.sh --log | grep 'PushBlock'
+$ bash docker.sh --log | grep 'PushBlock'
 ```
+
 ### Stop the service
 
-If you want to stop the container of java-tron, you can execute
+Use `--stop` to stop the java-tron container:
 
 ```shell
-$ sh docker.sh --stop
+$ bash docker.sh --stop
 ```
 
 ## Build Image
 
-If you do not want to use the default official image, you can also compile your own local image, first you need to change some parameters in the shell script to specify your own mirror info.
-`DOCKER_REPOSITORY` is your repository name
-`DOCKER_IMAGES` is the image name
-`DOCKER_TARGET` is the version number, here is an example:
+The Dockerfiles clone the remote java-tron repository and check out `master` at build time. They do not build the Java sources in the current checkout. The resulting image can differ from the published Docker Hub `latest` image.
+
+The helper uses `tronprotocol/java-tron:latest` for `--pull`, `--build`, and `--run` and does not support selecting another image reference through command-line options or environment variables. After `--build`, the local `tronprotocol/java-tron:latest` tag points to the newly built `master` image, so subsequent `--run` commands use that build. Use Docker directly when a separate tag, digest, or image name is required.
+
+Use a complete java-tron checkout containing the matching Dockerfiles. From its `docker` directory, build the image:
 
 ```shell
-DOCKER_REPOSITORY="your_repository"
-DOCKER_IMAGES="java-tron"
-DOCKER_TARGET="1.0"
+$ bash docker.sh --build
 ```
 
-then execute the build:
+The script detects the Docker daemon architecture by default. You can also select the target architecture explicitly:
 
 ```shell
-$ sh docker.sh --build
+$ bash docker.sh --build amd64
+$ bash docker.sh --build arm64
 ```
+
+Building for an architecture different from the Docker daemon requires a builder with the corresponding emulation support. Docker Desktop provides this by default; standalone Docker Engine installations may require QEMU/binfmt configuration.
+
+Docker may reuse cached layers, so rebuilding does not necessarily fetch the latest remote `master`. To fetch the source again, run one of the following commands from the java-tron repository root. The helper does not accept `--no-cache`; use Docker directly:
+
+```shell
+# amd64
+docker build --no-cache --platform linux/amd64 \
+  -f docker/Dockerfile -t tronprotocol/java-tron:latest docker
+
+# arm64
+docker build --no-cache --platform linux/arm64 \
+  -f docker/arm64/Dockerfile -t tronprotocol/java-tron:latest docker
+```
+
+These commands rerun the build steps without deleting existing build caches.
+
+When the script is used from a java-tron checkout, only the Dockerfile and build context are resolved relative to `docker.sh`, regardless of the current working directory. The current checkout's Java sources are not added to that context; the Dockerfiles build the remote `master` branch.
+
+Standalone `--build` using only a downloaded `docker.sh` is currently unavailable. The helper downloads only the architecture-specific Dockerfile from `develop`, but the current `develop` Dockerfiles also require `docker-entrypoint.sh`, which is missing from the temporary build context. Use a complete checkout containing the matching Dockerfiles until those files are synchronized to `develop` and standalone builds are verified for both architectures.
 
 ## Options
 
-Parameters for all functions：
+### Commands
 
-* **`--build`** building a local mirror image
-* **`--pull`** download a docker mirror from **DockerHub**
-* **`--run`** run the docker mirror
-* **`--log`** exporting the java-tron run log on the container
-* **`--stop`** stopping a running container
-* **`--rm`** remove container,only deletes the container, not the image
-* **`-p`** publish a container's port to the host, format:`-p hostPort:containerPort`
-* **`-c`** specify other java-tron configuration file in the container
-* **`-v`** bind mount a volume for the container,format: `-v host-src:container-dest`, the `host-src` is an absolute path
-* **`--net`** select the network, you can join the main-net, test-net
-* **`--update-config`** update configuration file, default true
+- **`--build [amd64|arm64]`**: build `tronprotocol/java-tron:latest` from the remote `master` branch, optionally for the specified architecture
+- **`--pull`**: download `tronprotocol/java-tron:latest` from Docker Hub
+- **`--run`**: run `tronprotocol/java-tron:latest`
+- **`--start`**: start the existing java-tron container
+- **`--log`**: follow the java-tron log in the container
+- **`--stop`**: stop the running container
+- **`--rm`**: remove the container without removing the image
 
+### Run options
 
+The following options apply only to `--run`:
+
+- **`-p`**: publish a container port using `-p hostPort:containerPort[/protocol]`; custom mappings replace all defaults
+- **`-c`**: specify another java-tron configuration file in the container
+- **`-v`**: bind mount a volume using `-v host-src:container-dest`; `host-src` must be an absolute path
+- **`--net`**: select `main` or `private`; a missing private configuration is downloaded automatically
+- **`--update-config`**: set to `true` with `--net private` to replace the local private configuration
