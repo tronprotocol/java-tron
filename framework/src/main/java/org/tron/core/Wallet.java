@@ -264,6 +264,8 @@ public class Wallet {
   private static final String SHIELDED_TRANSACTION_SCAN_RANGE =
       "request requires start_block_index >= 0 && end_block_index > "
           + "start_block_index && end_block_index - start_block_index <= 1000";
+  // ABI: pos(32) + cm(32) + cv(32) + epk(32) + ciphertext bytes32[21](672)
+  private static final int SHIELDED_TRC20_NOTE_LOG_SIZE = 800;
   private static String addressPreFixString = Constant.ADD_PRE_FIX_STRING_MAINNET;//default testnet
   private static final byte[] SHIELDED_TRC20_LOG_TOPICS_MINT = Hash.sha3(ByteArray.fromString(
       "MintNewLeaf(uint256,bytes32,bytes32,bytes32,bytes32[21])"));
@@ -572,7 +574,13 @@ public class Wallet {
         throw new ContractValidateException(ActuatorConstant.CONTRACT_NOT_EXIST);
       }
       trx.checkExpiration(chainBaseManager.getNextBlockSlotTime());
-      dbManager.pushTransaction(trx);
+      if (!dbManager.pushTransaction(trx)) {
+        logger.info("Broadcast transaction {} has failed, local admission rejected.", txID);
+        return builder.setResult(false).setCode(response_code.SERVER_BUSY)
+            .setMessage(ByteString.copyFromUtf8(
+                "Transaction was not admitted to the pending pool."))
+            .build();
+      }
       TransactionMessage message = new TransactionMessage(trx.getInstance().toByteArray());
       int num = tronNetService.fastBroadcastTransaction(message);
       if (num == 0 && minEffectiveConnection != 0) {
@@ -3882,7 +3890,7 @@ public class Wallet {
       int logType)
       throws ZksnarkException, ContractExeException {
     byte[] logData = log.getData().toByteArray();
-    if (!ArrayUtils.isEmpty(logData) && logType > 0 && logType < 4) {
+    if (logData.length == SHIELDED_TRC20_NOTE_LOG_SIZE && logType > 0 && logType < 4) {
       // Data = pos(32) + cm(32) + cv(32) + epk(32) + c_enc(580) + c_out(80)
       long pos = ByteArray.toLong(ByteArray.subArray(logData, 0, 32));
       byte[] cm = ByteArray.subArray(logData, 32, 64);
@@ -4039,84 +4047,82 @@ public class Wallet {
       TransactionInfo.Log log, byte[] ovk, int logType, byte[] pendingNf)
       throws ZksnarkException {
     byte[] logData = log.getData().toByteArray();
-    if (!ArrayUtils.isEmpty(logData)) {
-      if (logType > 0 && logType < 4) {
-        //Data = pos(32) + cm(32) + cv(32) + epk(32) + c_enc(580) + c_out(80)
-        byte[] cm = ByteArray.subArray(logData, 32, 64);
-        byte[] cv = ByteArray.subArray(logData, 64, 96);
-        byte[] epk = ByteArray.subArray(logData, 96, 128);
-        byte[] cenc = ByteArray.subArray(logData, 128, 708);
-        byte[] coutText = ByteArray.subArray(logData, 708, 788);
-        Encryption.OutCiphertext cout = new Encryption.OutCiphertext();
-        cout.setData(coutText);
-        Optional<OutgoingPlaintext> notePlaintext = OutgoingPlaintext.decrypt(cout,//ciphertext
-            ovk, cv, cm, epk);
-        if (notePlaintext.isPresent()) {
-          OutgoingPlaintext decryptedOutCtUnwrapped = notePlaintext.get();
-          //decode c_enc with pkd、esk
-          Encryption.EncCiphertext ciphertext = new Encryption.EncCiphertext();
-          ciphertext.setData(cenc);
-          Optional<Note> foo = Note.decrypt(ciphertext,
-              epk,
-              decryptedOutCtUnwrapped.getEsk(),
-              decryptedOutCtUnwrapped.getPkD(),
-              cm);
-          if (foo.isPresent()) {
-            Note bar = foo.get();
-            String paymentAddress = KeyIo.encodePaymentAddress(
-                new PaymentAddress(bar.getD(), decryptedOutCtUnwrapped.getPkD()));
-            GrpcAPI.Note note = GrpcAPI.Note.newBuilder()
-                .setPaymentAddress(paymentAddress)
-                .setValue(bar.getValue())
-                .setRcm(ByteString.copyFrom(bar.getRcm()))
-                .setMemo(ByteString.copyFrom(stripRightZero(bar.getMemo())))
-                .build();
-            builder.setNote(note);
-            return Optional.of(builder.build());
-          }
+    if (logData.length == SHIELDED_TRC20_NOTE_LOG_SIZE && logType > 0 && logType < 4) {
+      // Data = pos(32) + cm(32) + cv(32) + epk(32) + c_enc(580) + c_out(80)
+      byte[] cm = ByteArray.subArray(logData, 32, 64);
+      byte[] cv = ByteArray.subArray(logData, 64, 96);
+      byte[] epk = ByteArray.subArray(logData, 96, 128);
+      byte[] cenc = ByteArray.subArray(logData, 128, 708);
+      byte[] coutText = ByteArray.subArray(logData, 708, 788);
+      Encryption.OutCiphertext cout = new Encryption.OutCiphertext();
+      cout.setData(coutText);
+      Optional<OutgoingPlaintext> notePlaintext = OutgoingPlaintext.decrypt(cout,//ciphertext
+          ovk, cv, cm, epk);
+      if (notePlaintext.isPresent()) {
+        OutgoingPlaintext decryptedOutCtUnwrapped = notePlaintext.get();
+        //decode c_enc with pkd、esk
+        Encryption.EncCiphertext ciphertext = new Encryption.EncCiphertext();
+        ciphertext.setData(cenc);
+        Optional<Note> foo = Note.decrypt(ciphertext,
+            epk,
+            decryptedOutCtUnwrapped.getEsk(),
+            decryptedOutCtUnwrapped.getPkD(),
+            cm);
+        if (foo.isPresent()) {
+          Note bar = foo.get();
+          String paymentAddress = KeyIo.encodePaymentAddress(
+              new PaymentAddress(bar.getD(), decryptedOutCtUnwrapped.getPkD()));
+          GrpcAPI.Note note = GrpcAPI.Note.newBuilder()
+              .setPaymentAddress(paymentAddress)
+              .setValue(bar.getValue())
+              .setRcm(ByteString.copyFrom(bar.getRcm()))
+              .setMemo(ByteString.copyFrom(stripRightZero(bar.getMemo())))
+              .build();
+          builder.setNote(note);
+          return Optional.of(builder.build());
         }
-      } else if (logType == 4) {
-        // Data = toAddress(32) + value(32) + cipher(80) + nonce(12) + reserved/version(4)
-        if (logData.length < 64 + NoteEncryption.Encryption.BURN_CIPHER_RECORD_SIZE) {
+      }
+    } else if (logType == 4) {
+      // Data = toAddress(32) + value(32) + cipher(80) + nonce(12) + reserved/version(4)
+      if (logData.length < 64 + NoteEncryption.Encryption.BURN_CIPHER_RECORD_SIZE) {
+        return Optional.empty();
+      }
+      byte[] logToAddress = ByteArray.subArray(logData, 12, 32);
+      byte[] logAmountArray = ByteArray.subArray(logData, 32, 64);
+      byte[] cipher = ByteArray.subArray(logData, 64, 144);
+      byte[] nonceFromLog = ByteArray.subArray(logData, 144,
+          144 + NoteEncryption.Encryption.BURN_NONCE_LEN);
+      byte[] reservedFromLog = ByteArray.subArray(logData,
+          144 + NoteEncryption.Encryption.BURN_NONCE_LEN,
+          144 + NoteEncryption.Encryption.BURN_NONCE_LEN
+              + NoteEncryption.Encryption.BURN_RESERVED_LEN);
+      BigInteger logAmount = ByteUtil.bytesToBigInteger(logAmountArray);
+      byte[] plaintext;
+      byte[] amountArray = new byte[32];
+      byte[] decryptedAddress = new byte[20];
+
+      byte[] addr21FromLog = new byte[21];
+      addr21FromLog[0] = Wallet.getAddressPreFixByte();
+      System.arraycopy(logToAddress, 0, addr21FromLog, 1, 20);
+      Optional<byte[]> decryptedText = NoteEncryption.Encryption
+          .decryptBurnMessageByOvk(ovk, cipher, nonceFromLog, reservedFromLog, pendingNf,
+              logAmountArray, addr21FromLog);
+
+      if (decryptedText.isPresent()) {
+        plaintext = decryptedText.get();
+        if (plaintext[32] != Wallet.getAddressPreFixByte()) {
           return Optional.empty();
         }
-        byte[] logToAddress = ByteArray.subArray(logData, 12, 32);
-        byte[] logAmountArray = ByteArray.subArray(logData, 32, 64);
-        byte[] cipher = ByteArray.subArray(logData, 64, 144);
-        byte[] nonceFromLog = ByteArray.subArray(logData, 144,
-            144 + NoteEncryption.Encryption.BURN_NONCE_LEN);
-        byte[] reservedFromLog = ByteArray.subArray(logData,
-            144 + NoteEncryption.Encryption.BURN_NONCE_LEN,
-            144 + NoteEncryption.Encryption.BURN_NONCE_LEN
-                + NoteEncryption.Encryption.BURN_RESERVED_LEN);
-        BigInteger logAmount = ByteUtil.bytesToBigInteger(logAmountArray);
-        byte[] plaintext;
-        byte[] amountArray = new byte[32];
-        byte[] decryptedAddress = new byte[20];
-
-        byte[] addr21FromLog = new byte[21];
-        addr21FromLog[0] = Wallet.getAddressPreFixByte();
-        System.arraycopy(logToAddress, 0, addr21FromLog, 1, 20);
-        Optional<byte[]> decryptedText = NoteEncryption.Encryption
-            .decryptBurnMessageByOvk(ovk, cipher, nonceFromLog, reservedFromLog, pendingNf,
-                logAmountArray, addr21FromLog);
-
-        if (decryptedText.isPresent()) {
-          plaintext = decryptedText.get();
-          if (plaintext[32] != Wallet.getAddressPreFixByte()) {
-            return Optional.empty();
-          }
-          System.arraycopy(plaintext, 0, amountArray, 0, 32);
-          System.arraycopy(plaintext, 33, decryptedAddress, 0, 20);
-          BigInteger decryptedAmount = ByteUtil.bytesToBigInteger(amountArray);
-          if (logAmount.equals(decryptedAmount) && Hex.toHexString(logToAddress)
-              .equals(Hex.toHexString(decryptedAddress))) {
-            byte[] addressWithPrefix = new byte[21];
-            System.arraycopy(plaintext, 32, addressWithPrefix, 0, 21);
-            builder.setToAmount(logAmount.toString(10))
-                .setTransparentToAddress(ByteString.copyFrom(addressWithPrefix));
-            return Optional.of(builder.build());
-          }
+        System.arraycopy(plaintext, 0, amountArray, 0, 32);
+        System.arraycopy(plaintext, 33, decryptedAddress, 0, 20);
+        BigInteger decryptedAmount = ByteUtil.bytesToBigInteger(amountArray);
+        if (logAmount.equals(decryptedAmount) && Hex.toHexString(logToAddress)
+            .equals(Hex.toHexString(decryptedAddress))) {
+          byte[] addressWithPrefix = new byte[21];
+          System.arraycopy(plaintext, 32, addressWithPrefix, 0, 21);
+          builder.setToAmount(logAmount.toString(10))
+              .setTransparentToAddress(ByteString.copyFrom(addressWithPrefix));
+          return Optional.of(builder.build());
         }
       }
     }

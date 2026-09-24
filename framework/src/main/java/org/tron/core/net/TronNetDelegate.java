@@ -322,10 +322,10 @@ public class TronNetDelegate {
     }
   }
 
-  public void pushTransaction(TransactionCapsule trx) throws P2pException {
+  public boolean pushTransaction(TransactionCapsule trx) throws P2pException {
     try {
       trx.setTime(System.currentTimeMillis());
-      dbManager.pushTransaction(trx);
+      return dbManager.pushTransaction(trx);
     } catch (ContractSizeNotEqualToOneException
         | VMIllegalException e) {
       throw new P2pException(TypeEnum.BAD_TRX, e);
