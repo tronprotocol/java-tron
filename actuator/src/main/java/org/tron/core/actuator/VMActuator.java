@@ -309,10 +309,6 @@ public class VMActuator implements Actuator2 {
           .error(result.getException())
           .toString();
 
-      if (VMConfig.vmTraceCompressed()) {
-        traceContent = VMUtils.zipAndEncode(traceContent);
-      }
-
       String txHash = Hex.toHexString(rootInternalTx.getHash());
       VMUtils.saveProgramTraceFile(txHash, traceContent);
     }
