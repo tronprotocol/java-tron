@@ -15,8 +15,6 @@ import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.P2pException;
 import org.tron.core.exception.P2pException.TypeEnum;
-import org.tron.core.metrics.MetricsKey;
-import org.tron.core.metrics.MetricsUtil;
 import org.tron.core.net.TronNetDelegate;
 import org.tron.core.net.message.TronMessage;
 import org.tron.core.net.message.adv.BlockMessage;
@@ -91,10 +89,19 @@ public class BlockMsgHandler implements TronMsgHandler {
       }
       Long time = peer.getAdvInvRequest().remove(item);
       if (null != time) {
-        MetricsUtil.histogramUpdateUnCheck(MetricsKey.NET_LATENCY_FETCH_BLOCK
-                + peer.getInetAddress(), now - time);
+        peer.updateFetchLatency(now - time);
         Metrics.histogramObserve(MetricKeys.Histogram.BLOCK_FETCH_LATENCY,
             (now - time) / Metrics.MILLISECONDS_PER_SECOND);
+        // Best-effort duplicate signal: only responses matched to an outstanding adv
+        // request whose exact block id was already known before this response is
+        // processed (a concurrent or redundant arrival) are counted. The lookup is
+        // exact-id (block store + khaos), not a height comparison: an unknown fork
+        // block below head must not count. Concurrency can still let a simultaneous
+        // arrival slip through, and a duplicate is not attributed to a secondary
+        // fetch, so this is a lower-bound indicator rather than an exact count.
+        if (tronNetDelegate.containBlock(blockId)) {
+          Metrics.counterInc(MetricKeys.Counter.BLOCK_ALREADY_KNOWN, 1);
+        }
       }
       Metrics.histogramObserve(MetricKeys.Histogram.BLOCK_RECEIVE_DELAY,
           (now - blockMessage.getBlockCapsule().getTimeStamp()) / Metrics.MILLISECONDS_PER_SECOND);

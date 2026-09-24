@@ -756,6 +756,8 @@ message NodeInfo {
 }
 
 message MetricsInfo {
+  option deprecated = true;
+
   int64 interval = 1;
   NodeInfo node = 2;
   BlockChainInfo blockchain = 3;

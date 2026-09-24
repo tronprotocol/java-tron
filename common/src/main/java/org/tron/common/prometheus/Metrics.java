@@ -65,4 +65,8 @@ public class Metrics {
   public static void histogramObserve(String key, double amt, String... labels) {
     MetricsHistogram.observe(key, amt, labels);
   }
+
+  public static void info(String key, String... labels) {
+    MetricsInfo.set(key, labels);
+  }
 }
