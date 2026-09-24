@@ -1,0 +1,196 @@
+apply plugin: 'com.google.protobuf'
+apply plugin: 'checkstyle'
+
+// Unit tests live in src/test/java/, alongside the code they cover.
+
+checkstyle {
+    toolVersion = "${rootProject.checkstyleVersion}"
+    configFile = file("${rootDir}/config/checkstyle/checkStyleAll.xml")
+    maxWarnings = 0
+}
+
+checkstyleMain {
+    source = 'src/main/java'
+    exclude '**/protos/**'
+}
+
+checkstyleTest {
+    source = 'src/test/java'
+}
+
+// The plain jar stays thin -- it is what :common depends on. Declaring
+// Main-Class on it would be a trap: `java -jar p2p-1.0.0.jar` would resolve the
+// entry point and then die on the first dependency it touches
+// (NoClassDefFoundError: org/apache/commons/cli/ParseException). The runnable
+// artifact is p2p-standalone.jar below.
+//
+// Same shape as :framework's FullNode.jar and :plugins' Toolkit.jar, including
+// the -PbinaryRelease=false opt-out and the signature/SPI exclusions.
+def releaseBinary = hasProperty('binaryRelease') ? getProperty('binaryRelease') : 'true'
+if (releaseBinary == 'true') {
+    artifacts {
+        archives(tasks.create('buildStandaloneJar', Jar) {
+            baseName = 'p2p-standalone'
+            version = null
+            from(sourceSets.main.output) {
+                include '/**'
+            }
+            from {
+                configurations.runtimeClasspath.collect {
+                    it.isDirectory() ? it : zipTree(it)
+                }
+            }
+            duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+            // Bouncy Castle ships signed jars; merged signatures fail verification.
+            exclude 'META-INF/*.SF'
+            exclude 'META-INF/*.DSA'
+            exclude 'META-INF/*.RSA'
+            // dnsjava's resolver SPI, see HADOOP-19288
+            exclude 'META-INF/services/java.net.spi.InetAddressResolverProvider'
+            manifest {
+                attributes 'Main-Class': 'org.tron.p2p.example.StartApp'
+            }
+        })
+    }
+}
+
+// .proto files sit in src/main/proto, the protobuf plugin's default, so no
+// sourceSet override is needed. The previous layout, src/main/protos with an
+// explicit srcDir, builds fine but IDEA's protobuf plugin does not read the
+// Gradle override -- it resolves imports against the default path -- so
+// `import "Discover.proto"` and every type it brings in showed as unresolved
+// in the editor.
+//
+// Generated sources still land in src/main/java/org/tron/p2p/protos via
+// generatedFilesBaseDir below, and are gitignored.
+
+// These exclusions used to live on the `libp2p` dependency in common/build.gradle.
+// Internalizing the module moves the same transitive dom4j tail (pulled in by the
+// Aliyun/Route53 SDKs) here, so the exclusions move with it — dropping them would
+// silently re-admit artifacts the project has excluded since:
+//   https://github.com/dom4j/dom4j/pull/116
+//   https://github.com/gradle/gradle/issues/13656
+//   https://github.com/dom4j/dom4j/issues/99
+configurations.configureEach {
+    exclude group: 'jaxen', module: 'jaxen'
+    exclude group: 'javax.xml.stream', module: 'stax-api'
+    exclude group: 'net.java.dev.msv', module: 'msv'
+    exclude group: 'net.java.dev.msv', module: 'xsdlib'
+    exclude group: 'relaxngDatatype', module: 'relaxngDatatype'
+    exclude group: 'pull-parser', module: 'pull-parser'
+    exclude group: 'xpp3', module: 'xpp3'
+}
+
+dependencies {
+    // protobuf & grpc (implementation scope: not leaked to consumers)
+    implementation "com.google.protobuf:protobuf-java:${rootProject.protobufVersion}"
+    implementation "com.google.protobuf:protobuf-java-util:${rootProject.protobufVersion}"
+    // grpc-netty provides Netty transitively, which p2p uses for TCP/UDP transport.
+    // grpc itself is not used (p2p protos define only messages, no services).
+    // Track the project's grpc version rather than pinning libp2p's, so p2p
+    // cannot drift from the Netty that the rest of java-tron resolves.
+    implementation "io.grpc:grpc-netty:${rootProject.grpcVersion}"
+    // Netty 4.2 split io.netty.handler.codec.protobuf out of netty-codec into its
+    // own artifact, so the varint32 framing codecs p2p puts on every channel
+    // pipeline no longer arrive transitively. framework/build.gradle declares the
+    // same dependency for the same reason; both track rootProject.nettyVersion.
+    implementation("io.netty:netty-codec-protobuf:${rootProject.nettyVersion}") {
+        exclude group: 'com.google.protobuf'
+        exclude group: 'com.google.protobuf.nano'
+    }
+
+    // p2p-specific dependencies
+    implementation 'org.xerial.snappy:snappy-java:1.1.10.5'
+    // Matches the bcprov-jdk18on version root build.gradle gives every
+    // subproject; bcpkix is not provided there, so declare it explicitly.
+    implementation 'org.bouncycastle:bcpkix-jdk18on:1.84'
+    implementation 'dnsjava:dnsjava:3.6.2'
+    implementation 'commons-cli:commons-cli:1.5.0'
+    implementation('software.amazon.awssdk:route53:2.18.41') {
+        exclude group: 'io.netty', module: 'netty-codec-http2'
+        exclude group: 'io.netty', module: 'netty-codec-http'
+        exclude group: 'io.netty', module: 'netty-common'
+        exclude group: 'io.netty', module: 'netty-buffer'
+        exclude group: 'io.netty', module: 'netty-transport'
+        exclude group: 'io.netty', module: 'netty-codec'
+        exclude group: 'io.netty', module: 'netty-handler'
+        exclude group: 'io.netty', module: 'netty-resolver'
+        exclude group: 'io.netty', module: 'netty-transport-classes-epoll'
+        exclude group: 'io.netty', module: 'netty-transport-native-unix-common'
+        exclude group: 'software.amazon.awssdk', module: 'netty-nio-client'
+    }
+    implementation('com.aliyun:alidns20150109:3.0.1') {
+        exclude group: 'org.bouncycastle', module: 'bcprov-jdk15on'
+        exclude group: 'org.bouncycastle', module: 'bcpkix-jdk15on'
+        exclude group: 'pull-parser', module: 'pull-parser'
+        exclude group: 'xpp3', module: 'xpp3'
+    }
+
+
+    // provided by root build.gradle for all subprojects:
+    // slf4j-api, logback, bcprov-jdk18on, lombok, junit, mockito
+}
+
+protobuf {
+    generatedFilesBaseDir = "$projectDir/src"
+    protoc {
+        artifact = "com.google.protobuf:protoc:${rootProject.protobufVersion}"
+    }
+    generateProtoTasks {
+        all().each { task ->
+            task.builtins {
+                java { outputSubDir = "java" }
+            }
+        }
+    }
+}
+
+clean.doFirst {
+    delete "src/main/java/org/tron/p2p/protos"
+}
+
+processResources.dependsOn(generateProto)
+
+// The module reports its own coverage now that it has a test sourceSet. CI
+// collects **/build/reports/jacoco/test/jacocoTestReport.xml across every
+// module, so this is picked up without any wiring in :framework.
+jacocoTestReport {
+    dependsOn test
+    reports {
+        xml.required = true
+        html.required = false
+    }
+    // Generated protobuf code, matching the checkstyle exclusion above.
+    //
+    // org/tron/p2p/example holds StartApp, the standalone CLI entry point for
+    // driving this module without java-tron. It is argument parsing, option
+    // declarations and a main() that starts services and blocks -- not module
+    // logic, and not code the node runs. It also sat in the checkstyle- and
+    // coverage-exempt `example` sourceSet until this PR, so excluding it keeps
+    // the measured surface the same rather than hiding newly counted logic.
+    // The parsing helpers it does own are covered by StartAppArgsTest.
+    classDirectories.setFrom(files(classDirectories.files.collect {
+        fileTree(dir: it, excludes: ['**/protos/**', '**/example/**'])
+    }))
+
+    // :framework's own tests -- org.tron.core.net and friends -- execute a good
+    // deal of this module's code. That coverage is real, and while p2p's classes
+    // hung off :framework:jacocoTestReport it was counted. Reading framework's
+    // exec data here keeps counting it now that the classes live in this
+    // module's report instead. Without this the coverage gate sees a ~0.3 point
+    // drop for code that is still being exercised, just no longer measured.
+    //
+    // The fileTree is empty when :framework:test has not run, so :p2p:build on
+    // its own still works -- it just reports this module's tests alone.
+    executionData.from(fileTree("${rootProject.projectDir}/framework/build/jacoco")
+        .include('**/*.exec'))
+    mustRunAfter ':framework:test'
+}
+
+// Prints the module's runtime classpath, so StartApp can be launched standalone
+// against a thin jar. See README.md.
+tasks.register('printRuntimeClasspath') {
+    doLast {
+        println sourceSets.main.runtimeClasspath.asPath
+    }
+}
