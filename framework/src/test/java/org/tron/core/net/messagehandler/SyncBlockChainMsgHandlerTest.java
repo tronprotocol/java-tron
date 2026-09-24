@@ -1,5 +1,7 @@
 package org.tron.core.net.messagehandler;
 
+import static org.tron.core.net.message.MessageTypes.SYNC_BLOCK_CHAIN;
+
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -14,6 +16,7 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.mockito.Mockito;
 import org.tron.common.TestConstants;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.utils.Sha256Hash;
@@ -22,6 +25,7 @@ import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.P2pException;
+import org.tron.core.net.P2pRateLimiter;
 import org.tron.core.net.TronNetDelegate;
 import org.tron.core.net.message.sync.BlockInventoryMessage;
 import org.tron.core.net.message.sync.SyncBlockChainMessage;
@@ -158,6 +162,24 @@ public class SyncBlockChainMsgHandlerTest {
           e.getCause() instanceof P2pException
           && ((P2pException) e.getCause()).getMessage().contains("exceeds limit"));
     }
+  }
+
+  @Test
+  public void testRemainNumZeroStillConsumesSyncBlockChainRateLimit() throws Exception {
+    PeerConnection rateLimitedPeer = Mockito.mock(PeerConnection.class);
+    P2pRateLimiter rateLimiter = new P2pRateLimiter();
+    rateLimiter.register(SYNC_BLOCK_CHAIN.asByte(), 0.0001D);
+    Mockito.when(rateLimitedPeer.getP2pRateLimiter()).thenReturn(rateLimiter);
+
+    BlockId genesis = context.getBean(TronNetDelegate.class).getGenesisBlockId();
+    SyncBlockChainMessage message = new SyncBlockChainMessage(
+        java.util.Collections.singletonList(genesis));
+    Method checkMethod = SyncBlockChainMsgHandler.class
+        .getDeclaredMethod("check", PeerConnection.class, SyncBlockChainMessage.class);
+    checkMethod.setAccessible(true);
+
+    Assert.assertTrue((boolean) checkMethod.invoke(handler, rateLimitedPeer, message));
+    Assert.assertFalse((boolean) checkMethod.invoke(handler, rateLimitedPeer, message));
   }
 
   @AfterClass

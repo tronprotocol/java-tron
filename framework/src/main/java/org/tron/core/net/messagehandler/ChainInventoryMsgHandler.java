@@ -108,6 +108,11 @@ public class ChainInventoryMsgHandler implements TronMsgHandler {
       throw new P2pException(TypeEnum.BAD_MESSAGE, "blockIds is empty");
     }
 
+    if (msg.getRemainNum() < 0) {
+      throw new P2pException(TypeEnum.BAD_MESSAGE,
+          "remainNum is negative: " + msg.getRemainNum());
+    }
+
     if (blockIds.size() > NetConstants.SYNC_FETCH_BATCH_NUM + 1) {
       throw new P2pException(TypeEnum.BAD_MESSAGE, "big blockIds size: " + blockIds.size());
     }
@@ -137,9 +142,12 @@ public class ChainInventoryMsgHandler implements TronMsgHandler {
       long maxFutureNum =
           maxRemainTime / BLOCK_PRODUCED_INTERVAL + tronNetDelegate.getSolidBlockId().getNum();
       long lastNum = blockIds.get(blockIds.size() - 1).getNum();
-      if (lastNum + msg.getRemainNum() > maxFutureNum) {
-        throw new P2pException(TypeEnum.BAD_MESSAGE, "lastNum: " + lastNum + " + remainNum: "
-            + msg.getRemainNum() + " > futureMaxNum: " + maxFutureNum);
+      long declaredHighestNum = lastNum + msg.getRemainNum();
+      if (declaredHighestNum < 0 || declaredHighestNum > maxFutureNum) {
+        throw new P2pException(TypeEnum.BAD_MESSAGE,
+            "Invalid declared highest block number: " + declaredHighestNum
+                + ", lastNum: " + lastNum + ", remainNum: " + msg.getRemainNum()
+                + ", futureMaxNum: " + maxFutureNum);
       }
     }
   }
