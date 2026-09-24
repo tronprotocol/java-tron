@@ -13,6 +13,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.BaseTest;
 import org.tron.common.TestConstants;
+import org.tron.common.utils.PublicMethod;
 import org.tron.common.utils.StringUtil;
 import org.tron.consensus.dpos.MaintenanceManager;
 import org.tron.core.capsule.AccountCapsule;
@@ -38,6 +39,7 @@ public class SRMetricsTest extends BaseTest {
     Args.setParam(new String[]{"-d", dbPath()}, TestConstants.TEST_CONF);
     Args.getInstance().setNodeListenPort(20000 + PORT.incrementAndGet());
     Args.getInstance().setMetricsPrometheusEnable(true);
+    Args.getInstance().setMetricsPrometheusPort(PublicMethod.chooseRandomPort());
     Metrics.init();
   }
 
