@@ -22,7 +22,9 @@ import static org.junit.Assert.fail;
 
 import com.google.common.collect.Lists;
 import java.io.IOException;
+import java.math.BigInteger;
 import java.security.SecureRandom;
+import java.util.Arrays;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
@@ -30,6 +32,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.tron.common.TestConstants;
+import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.LocalWitnesses;
 import org.tron.common.utils.PublicMethod;
@@ -130,6 +133,22 @@ public class LocalWitnessTest {
     assertTronError(localWitnesses, privateKey, expectedMessage2);
     final String privateKey2 = "xy" + ByteArray.toHexString(keyBytes);
     assertTronError(localWitnesses, privateKey2, expectedMessage2);
+  }
+
+  @Test
+  public void testPrivateKeyRange() {
+    for (BigInteger scalar : Arrays.asList(BigInteger.ZERO, ECKey.CURVE.getN())) {
+      String key = String.format("%064x", scalar);
+      assertTronError(localWitness, key, "Invalid ECDSA witness private key");
+      TronError error = assertThrows(TronError.class,
+          () -> localWitness.setPrivateKeys(Arrays.asList(PRIVATE_KEY, key)));
+      assertEquals(ErrCode.WITNESS_INIT, error.getErrCode());
+    }
+    for (BigInteger scalar : Arrays.asList(BigInteger.ONE,
+        ECKey.CURVE.getN().subtract(BigInteger.ONE))) {
+      String key = String.format("%064x", scalar);
+      assertEquals(key, new LocalWitnesses(key).getPrivateKey());
+    }
   }
 
   private void assertTronError(LocalWitnesses localWitnesses, String privateKey,

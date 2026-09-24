@@ -5,9 +5,8 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
@@ -15,14 +14,16 @@ import ch.qos.logback.core.read.ListAppender;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
+import java.math.BigInteger;
 import java.security.SecureRandom;
+import java.util.Collections;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import org.mockito.MockedStatic;
 import org.slf4j.LoggerFactory;
+import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.SignInterface;
 import org.tron.common.crypto.SignUtils;
 import org.tron.common.utils.ByteArray;
@@ -30,6 +31,7 @@ import org.tron.common.utils.LocalWitnesses;
 import org.tron.core.exception.CipherException;
 import org.tron.core.exception.TronError;
 import org.tron.keystore.Credentials;
+import org.tron.keystore.Wallet;
 import org.tron.keystore.WalletFile;
 import org.tron.keystore.WalletUtils;
 
@@ -189,20 +191,22 @@ public class WitnessInitializerKeystoreTest {
   }
 
   @Test
-  public void testInvalidPrivateKeyLoadError() {
-    java.util.List<String> keystores =
-        java.util.Collections.singletonList(keystoreFileName);
+  public void testInvalidPrivateKeyLoadError() throws Exception {
+    // Only mock the source of bytes for encryption. Decryption and key validation are real.
+    SignInterface invalidKey = mock(SignInterface.class);
+    when(invalidKey.getPrivateKey()).thenReturn(new byte[32]);
+    when(invalidKey.getAddress()).thenReturn(ECKey.fromPrivate(BigInteger.ONE).getAddress());
+    WalletFile walletFile = Wallet.createLight(PASSWORD, invalidKey);
+    String fileName = DIR_NAME + "/invalid-key.json";
+    new ObjectMapper().writeValue(new File(System.getProperty("user.dir"), fileName), walletFile);
 
-    try (MockedStatic<SignUtils> mockedSignUtils = mockStatic(SignUtils.class)) {
-      mockedSignUtils.when(() -> SignUtils.fromPrivate(any(byte[].class), eq(true)))
-          .thenThrow(new IllegalArgumentException("Invalid private key"));
-
-      TronError err = assertThrows(TronError.class,
-          () -> WitnessInitializer.initFromKeystore(keystores, PASSWORD, null));
-      assertEquals(TronError.ErrCode.WITNESS_KEYSTORE_LOAD, err.getErrCode());
-      assertTrue(err.getCause() instanceof CipherException);
-      assertTrue(err.getCause().getCause() instanceof IllegalArgumentException);
-    }
+    TronError err = assertThrows(TronError.class,
+        () -> WitnessInitializer.initFromKeystore(
+            Collections.singletonList(fileName), PASSWORD, null));
+    assertEquals(TronError.ErrCode.WITNESS_KEYSTORE_LOAD, err.getErrCode());
+    assertTrue(err.getCause() instanceof CipherException);
+    assertEquals("Invalid private key in keystore", err.getCause().getMessage());
+    assertTrue(err.getCause().getCause() instanceof IllegalArgumentException);
   }
 
   private static ListAppender<ILoggingEvent> attachAppender() {
