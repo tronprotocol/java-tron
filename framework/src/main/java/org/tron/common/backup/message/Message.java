@@ -1,7 +1,6 @@
 package org.tron.common.backup.message;
 
 import org.apache.commons.lang3.ArrayUtils;
-import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.exception.P2pException;

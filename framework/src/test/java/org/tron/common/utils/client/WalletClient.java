@@ -25,7 +25,6 @@ import org.tron.api.GrpcAPI.NodeList;
 import org.tron.api.GrpcAPI.TransactionList;
 import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.common.crypto.ECKey;
-import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.Sha256Hash;

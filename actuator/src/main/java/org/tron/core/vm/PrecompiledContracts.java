@@ -61,7 +61,6 @@ import org.tron.common.crypto.zksnark.Fp;
 import org.tron.common.crypto.zksnark.PairingCheck;
 import org.tron.common.es.ExecutorServiceManager;
 import org.tron.common.math.StrictMathWrapper;
-import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.ProgramResult;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.utils.BIUtil;

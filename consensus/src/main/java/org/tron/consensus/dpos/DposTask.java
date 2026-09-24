@@ -11,7 +11,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
 import org.tron.common.es.ExecutorServiceManager;
 import org.tron.common.exit.ExitManager;
-import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Time;

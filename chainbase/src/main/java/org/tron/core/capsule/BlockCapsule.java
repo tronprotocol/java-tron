@@ -34,7 +34,6 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.tron.common.bloom.Bloom;
 import org.tron.common.crypto.SignInterface;
 import org.tron.common.crypto.SignUtils;
-import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Time;

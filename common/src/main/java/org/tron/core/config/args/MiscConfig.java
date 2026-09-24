@@ -1,7 +1,6 @@
 package org.tron.core.config.args;
 
 import com.typesafe.config.Config;
-import com.typesafe.config.ConfigValueType;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.Getter;
@@ -64,9 +63,11 @@ public class MiscConfig {
       return;
     }
 
-    if (config.getIsNull(LEGACY_CRYPTO_ENGINE_KEY)
-        || config.getValue(LEGACY_CRYPTO_ENGINE_KEY).valueType() != ConfigValueType.STRING
-        || !SUPPORTED_CRYPTO_ENGINE.equalsIgnoreCase(config.getString(LEGACY_CRYPTO_ENGINE_KEY))) {
+    Object engine = config.getIsNull(LEGACY_CRYPTO_ENGINE_KEY)
+        ? null : config.getAnyRef(LEGACY_CRYPTO_ENGINE_KEY);
+
+    if (!(engine instanceof String)
+        || !SUPPORTED_CRYPTO_ENGINE.equalsIgnoreCase((String) engine)) {
       throw new IllegalArgumentException(
           "SM2/SM3 support has been removed; crypto.engine only accepts eckey. "
               + "For ECKey networks, remove the setting or use eckey. "

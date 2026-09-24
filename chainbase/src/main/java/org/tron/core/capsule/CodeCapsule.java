@@ -17,7 +17,6 @@ package org.tron.core.capsule;
 
 import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
-import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.Sha256Hash;
 
 @Slf4j(topic = "capsule")

@@ -3,7 +3,6 @@ package org.tron.common.utils.client.utils;
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 
-import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.Sha256Hash;
 

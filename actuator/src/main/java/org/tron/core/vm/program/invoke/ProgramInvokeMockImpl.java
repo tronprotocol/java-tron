@@ -5,7 +5,6 @@ import org.bouncycastle.util.Arrays;
 import org.bouncycastle.util.encoders.Hex;
 import org.tron.common.crypto.Hash;
 import org.tron.common.crypto.SignUtils;
-import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.store.StoreFactory;

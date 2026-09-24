@@ -13,7 +13,6 @@ import org.tron.common.cron.CronExpression;
 import org.tron.common.logsfilter.EventPluginConfig;
 import org.tron.common.logsfilter.FilterQuery;
 import org.tron.common.setting.RocksDbSettings;
-import org.tron.core.Constant;
 import org.tron.core.config.args.SeedNode;
 import org.tron.core.config.args.Storage;
 import org.tron.p2p.P2pConfig;

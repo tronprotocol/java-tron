@@ -11,7 +11,6 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.tron.common.BaseTest;
 import org.tron.common.TestConstants;
-import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Pair;
 import org.tron.common.utils.Sha256Hash;
