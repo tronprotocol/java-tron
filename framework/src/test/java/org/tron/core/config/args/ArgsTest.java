@@ -20,6 +20,8 @@ import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import io.grpc.internal.GrpcUtil;
 import io.grpc.netty.NettyServerBuilder;
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.InetAddress;
@@ -27,6 +29,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
@@ -48,9 +51,56 @@ public class ArgsTest {
   @Rule
   public ExpectedException thrown = ExpectedException.none();
 
+  @After
+  public void tearDown() {
+    Args.clearParam();
+  }
+
+  @Test
+  public void testRemovedKeystoreFactoryExitsWithMigrationGuidance() throws Exception {
+    ByteArrayOutputStream errorOutput = new ByteArrayOutputStream();
+    PrintStream capturedError = new PrintStream(errorOutput, true, "UTF-8");
+    PrintStream originalError = System.err;
+
+    try {
+      System.setErr(capturedError);
+
+      TronError exception = Assert.assertThrows(TronError.class,
+          () -> Args.setParam(new String[] {"--keystore-factory"}, TestConstants.TEST_CONF));
+
+      Assert.assertEquals(TronError.ErrCode.PARAMETER_INIT, exception.getErrCode());
+    } finally {
+      System.setErr(originalError);
+      capturedError.close();
+    }
+
+    String errorMessage = errorOutput.toString("UTF-8");
+    Assert.assertTrue(errorMessage.contains("--keystore-factory was removed."));
+    Assert.assertTrue(errorMessage.contains("Toolkit.jar keystore <new|import|list|update>"));
+    Assert.assertTrue(errorMessage.contains(
+        "SM2 nodes (crypto.engine = 'sm2'): append --sm2 to commands that create or modify "
+            + "a keystore."));
+  }
+
+  @Test
+  public void testRemovedKeystoreFactoryRepeatedFlagStillExits() {
+    Assert.assertThrows(TronError.class,
+        () -> Args.setParam(new String[] {"--keystore-factory", "--keystore-factory"},
+            TestConstants.TEST_CONF));
+  }
+
+  @Test
+  public void testRemovedKeystoreFactoryTakesPrecedenceOverInvalidConfig() {
+    TronError exception = Assert.assertThrows(TronError.class,
+        () -> Args.setParam(new String[] {"--keystore-factory", "-c", "no-such-file.conf"},
+            TestConstants.TEST_CONF));
+
+    Assert.assertEquals(TronError.ErrCode.PARAMETER_INIT, exception.getErrCode());
+  }
+
   @Test
   public void get() {
-    Args.setParam(new String[] {"--keystore-factory"}, TestConstants.TEST_CONF);
+    Args.setParam(new String[] {}, TestConstants.TEST_CONF);
 
     CommonParameter parameter = Args.getInstance();
 
@@ -122,8 +172,6 @@ public class ArgsTest {
     Assert.assertEquals(address,
         ByteArray.toHexString(Args.getLocalWitnesses()
             .getWitnessAccountAddress()));
-
-    Assert.assertTrue(parameter.isKeystoreFactory());
   }
 
   @Test

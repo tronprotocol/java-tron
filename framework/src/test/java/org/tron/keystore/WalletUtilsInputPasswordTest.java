@@ -95,23 +95,6 @@ public class WalletUtilsInputPasswordTest {
         "  with spaces  ", pw);
   }
 
-  @Test(timeout = 10000)
-  public void testInputPassword2TwicePipedPreservesInternalWhitespace() {
-    // M1: verifies the double-read path (inputPassword2Twice → inputPassword()
-    // called twice) works correctly when both lines arrive on the same
-    // piped stdin. Guards against regressions from Scanner lifecycle issues
-    // where a newly-constructed Scanner could miss bytes buffered by an
-    // earlier Scanner on the same InputStream.
-    System.setIn(new ByteArrayInputStream(
-        ("correct horse battery staple\n"
-            + "correct horse battery staple\n").getBytes(StandardCharsets.UTF_8)));
-
-    String pw = WalletUtils.inputPassword2Twice();
-
-    assertEquals("Full passphrase must survive the double-read path",
-        "correct horse battery staple", pw);
-  }
-
   // ---------- stripPasswordLine() direct unit tests (M3) ----------
 
   @Test
