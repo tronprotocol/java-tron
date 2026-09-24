@@ -1,11 +1,14 @@
 package org.tron.core.net.peer;
 
+import java.util.Deque;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.es.ExecutorServiceManager;
+import org.tron.common.utils.Pair;
+import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.config.Parameter.NetConstants;
 import org.tron.core.net.TronNetDelegate;
 import org.tron.protos.Protocol.ReasonCode;
@@ -61,6 +64,15 @@ public class PeerStatusCheck {
             .anyMatch(time -> time < now - NetConstants.ADV_TIME_OUT);
         if (isDisconnected) {
           logger.warn("Peer {} get avd message timeout", peer.getInetAddress());
+        }
+      }
+
+      if (!isDisconnected) {
+        Pair<Deque<BlockId>, Long> requested = peer.getSyncChainRequested();
+        isDisconnected = requested != null
+            && requested.getValue() < now - NetConstants.SYNC_TIME_OUT;
+        if (isDisconnected) {
+          logger.warn("Peer {} get chain inventory timeout", peer.getInetAddress());
         }
       }
 
