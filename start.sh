@@ -180,6 +180,8 @@ upgrade() {
 }
 
 download() {
+  echo "warn: download is disabled, fetch $1 manually and verify it"
+  return 1
   local url=$1
   local file_name=$2
   if type wget >/dev/null 2>&1; then
