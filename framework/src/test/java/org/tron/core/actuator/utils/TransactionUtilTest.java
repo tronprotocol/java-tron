@@ -464,7 +464,7 @@ public class TransactionUtilTest extends BaseTest {
   }
 
   @Test
-  public void testSignWeightSigTruncate() {
+  public void testSignWeightRejectsPaddedSignature() {
     ECKey ecKey = new ECKey(Utils.getRandom());
     AccountCapsule owner = new AccountCapsule(
         ByteString.copyFromUtf8("sign-weight-owner"),
@@ -495,15 +495,10 @@ public class TransactionUtilTest extends BaseTest {
     TransactionSignWeight reply = transactionUtil.getTransactionSignWeight(
         unsigned.toBuilder().addSignature(oversized).build());
 
-    // Recovery still resolves the owner (weight reached the default threshold).
-    assertEquals(TransactionSignWeight.Result.response_code.ENOUGH_PERMISSION,
+    assertEquals(TransactionSignWeight.Result.response_code.SIGNATURE_FORMAT_ERROR,
         reply.getResult().getCode());
-    assertEquals(1, reply.getApprovedListCount());
-    // The echoed-back transaction has the signature truncated to 65 bytes.
-    Transaction echoed = reply.getTransaction().getTransaction();
-    assertEquals(1, echoed.getSignatureCount());
-    assertEquals(65, echoed.getSignature(0).size());
-    assertEquals(validSig, echoed.getSignature(0));
+    assertEquals(0, reply.getApprovedListCount());
+    assertFalse(reply.hasTransaction());
   }
 
   @Test

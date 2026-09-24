@@ -88,6 +88,8 @@ public class TransactionCapsuleTest extends BaseTest {
     Assert.assertEquals(1L, TransactionCapsule.checkWeight(
         permission, Arrays.asList(signature), hash, null, true));
     Assert.assertEquals(1L, TransactionCapsule.checkWeight(
+        permission, Arrays.asList(signature), hash, null));
+    Assert.assertEquals(1L, TransactionCapsule.checkWeight(
         permission, Arrays.asList(padded), hash, null, false));
     Assert.assertThrows(SignatureFormatException.class,
         () -> TransactionCapsule.checkWeight(
@@ -115,6 +117,29 @@ public class TransactionCapsuleTest extends BaseTest {
       invalidSignature[64] = invalidV;
       assertStrictComponentRejected(permission, hash, invalidSignature);
     }
+  }
+
+  @Test
+  public void testCheckWeightRejectsInfinityByDefault() throws Exception {
+    byte[] hash = new byte[32];
+    hash[31] = 1;
+    byte[] signature = new byte[65];
+    System.arraycopy(ByteUtil.bigIntegerToBytes(
+        ECKey.CURVE.getG().getAffineXCoord().toBigInteger(), 32), 0, signature, 0, 32);
+    signature[63] = 1;
+    Permission permission = Permission.newBuilder()
+        .setThreshold(1)
+        .addKeys(Key.newBuilder()
+            .setAddress(StringUtil.hexString2ByteString(
+                "41dcc703c0e500b653ca82273b7bfad8045d85a470"))
+            .setWeight(1))
+        .build();
+    List<ByteString> signatures = Arrays.asList(ByteString.copyFrom(signature));
+
+    Assert.assertEquals(1L, TransactionCapsule.checkWeight(
+        permission, signatures, hash, null, false));
+    Assert.assertThrows(SignatureException.class,
+        () -> TransactionCapsule.checkWeight(permission, signatures, hash, null));
   }
 
   private byte[] replaceScalar(byte[] signature, int offset, BigInteger scalar) {

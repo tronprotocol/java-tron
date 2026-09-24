@@ -233,7 +233,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   public static long checkWeight(Permission permission, List<ByteString> sigs, byte[] hash,
       List<ByteString> approveList)
       throws SignatureException, PermissionException, SignatureFormatException {
-    return checkWeight(permission, sigs, hash, approveList, false);
+    return checkWeight(permission, sigs, hash, approveList, true);
   }
 
   public static long checkWeight(Permission permission, List<ByteString> sigs, byte[] hash,

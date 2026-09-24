@@ -1,5 +1,6 @@
 package org.tron.common.runtime.vm;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -10,6 +11,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.Hash;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.client.utils.AbiUtil;
@@ -34,6 +36,57 @@ public class BatchValidateSignContractTest {
   }
 
   PrecompiledContracts.BatchValidateSign contract = new BatchValidateSign();
+
+  @Test
+  public void testStrictValidationMixedBatchConstantCall() {
+    assertStrictValidationMixedBatch(true);
+  }
+
+  @Test
+  public void testStrictValidationMixedBatchWorkerCall() {
+    assertStrictValidationMixedBatch(false);
+  }
+
+  private void assertStrictValidationMixedBatch(boolean constantCall) {
+    String previousEngine = CommonParameter.getInstance().getCryptoEngine();
+    boolean previousStrict = VMConfig.allowStrictEcdsaValidation();
+    try {
+      CommonParameter.getInstance().setCryptoEngine("ECKey");
+      contract.setConstantCall(constantCall);
+      byte[] hash = DataWord.ONE().getData();
+      ECKey first = ECKey.fromPrivate(BigInteger.ONE);
+      ECKey last = ECKey.fromPrivate(BigInteger.TEN);
+      // For hash = 1, R = G and s = 1 recover the point at infinity.
+      ECKey.ECDSASignature infinity = new ECKey.ECDSASignature(
+          ECKey.CURVE.getG().getAffineXCoord().toBigInteger(), BigInteger.ONE);
+      infinity.v = 27;
+      List<Object> signatures = Arrays.asList(
+          Hex.toHexString(first.sign(hash).toByteArray()),
+          Hex.toHexString(infinity.toByteArray()),
+          Hex.toHexString(last.sign(hash).toByteArray()));
+      List<Object> addresses = Arrays.asList(StringUtil.encode58Check(first.getAddress()),
+          StringUtil.encode58Check(Hash.sha3omit12(new byte[0])),
+          StringUtil.encode58Check(last.getAddress()));
+      List<Object> parameters = Arrays.asList("0x" + Hex.toHexString(hash), signatures, addresses);
+      byte[] input = Hex.decode(AbiUtil.parseParameters(METHOD_SIGN, parameters));
+
+      for (int strict : new int[] {0, 1}) {
+        VMConfig.initAllowStrictEcdsaValidation(strict);
+        // Allow for cold worker startup under coverage; this test checks results, not timing.
+        contract.setVmShouldEndInUs(System.nanoTime() / 1000 + 30_000_000);
+        Pair<Boolean, byte[]> result = contract.execute(input);
+        byte[] expected = new byte[32];
+        expected[0] = 1;
+        expected[1] = (byte) (strict == 0 ? 1 : 0);
+        expected[2] = 1;
+        Assert.assertTrue(result.getLeft());
+        Assert.assertArrayEquals("strict=" + strict, expected, result.getRight());
+      }
+    } finally {
+      VMConfig.initAllowStrictEcdsaValidation(previousStrict ? 1 : 0);
+      CommonParameter.getInstance().setCryptoEngine(previousEngine);
+    }
+  }
 
   @Test
   public void staticCallTest() {
