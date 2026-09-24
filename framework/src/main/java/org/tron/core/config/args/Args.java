@@ -104,12 +104,6 @@ public class Args extends CommonParameter {
   @Getter
   private static String configFilePath = "";
 
-  @Getter
-  private static String ipcSocketFile;
-
-  @Getter
-  private static String ipcExecCommand;
-
   // Singleton config beans — populated at startup, read-only after init.
   // New code can read directly from these beans instead of CommonParameter.
   @Getter
@@ -156,7 +150,7 @@ public class Args extends CommonParameter {
   }
 
   /**
-   * Reuses the options parsed by FullNode before it chooses client or node startup.
+   * Initializes node configuration from parsed options. FullNode handles attach mode separately.
    */
   public static void setParam(CommandLineArguments arguments, final String confFileName) {
     CLIParameter cmd = arguments.getParameters();
@@ -170,14 +164,6 @@ public class Args extends CommonParameter {
       exit(0);
     }
     List<ParameterDescription> assignedParameters = arguments.getAssignedParameters();
-    if (arguments.isAttachMode()) {
-      ipcSocketFile = cmd.ipcSocketFile;
-      ipcExecCommand = cmd.ipcExecCommand;
-      if (StringUtils.isNotEmpty(cmd.logbackPath)) {
-        PARAMETER.logbackPath = cmd.logbackPath;
-      }
-      return;
-    }
 
     // Resolve config file path
     configFilePath = StringUtils.isNoneBlank(cmd.shellConfFileName)
@@ -974,8 +960,6 @@ public class Args extends CommonParameter {
     rateLimiterConfig = null;
     metricsConfig = null;
     eventConfig = null;
-    ipcSocketFile = null;
-    ipcExecCommand = null;
   }
 
   // getProposalExpirationTime removed — logic moved to BlockConfig.fromConfig()
