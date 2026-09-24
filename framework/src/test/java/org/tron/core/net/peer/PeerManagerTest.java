@@ -3,10 +3,12 @@ package org.tron.core.net.peer;
 import static org.mockito.Mockito.mock;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -188,6 +190,52 @@ public class PeerManagerTest {
     PeerManager.sortPeers();
 
     Assert.assertEquals(PeerManager.getPeers().get(0), p2);
+  }
+
+  @Test
+  public void checkDoesNotRemoveOrCleanUpPeerAfterDisconnectCallback() throws Exception {
+    assertCheckDoesNotRemovePeerTwice(true);
+    assertCheckDoesNotRemovePeerTwice(false);
+  }
+
+  private void assertCheckDoesNotRemovePeerTwice(boolean active) throws Exception {
+    AtomicReference<PeerConnection> removedByCallback = new AtomicReference<>();
+    Channel channel = new Channel() {
+      @Override
+      public boolean isActive() {
+        return active;
+      }
+
+      @Override
+      public long getDisconnectTime() {
+        removedByCallback.set(PeerManager.remove(this));
+        return System.currentTimeMillis() - 120_000;
+      }
+    };
+    PeerConnection peer = mock(PeerConnection.class);
+    Mockito.when(peer.getChannel()).thenReturn(channel);
+
+    Field peersField = PeerManager.class.getDeclaredField("peers");
+    peersField.setAccessible(true);
+    peersField.set(null, Collections.synchronizedList(
+        new ArrayList<>(Collections.singletonList(peer))));
+    PeerManager.getActivePeersCount().set(active ? 1 : 0);
+    PeerManager.getPassivePeersCount().set(active ? 0 : 1);
+
+    Method check = PeerManager.class.getDeclaredMethod("check");
+    check.setAccessible(true);
+    try {
+      check.invoke(null);
+
+      Assert.assertSame(peer, removedByCallback.get());
+      Assert.assertEquals(0, PeerManager.getActivePeersCount().get());
+      Assert.assertEquals(0, PeerManager.getPassivePeersCount().get());
+      Mockito.verify(peer, Mockito.never()).onDisconnect();
+    } finally {
+      peersField.set(null, Collections.synchronizedList(new ArrayList<>()));
+      PeerManager.getActivePeersCount().set(0);
+      PeerManager.getPassivePeersCount().set(0);
+    }
   }
 
 }
