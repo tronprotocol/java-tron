@@ -13,6 +13,7 @@ import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 
 import java.io.File;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -92,6 +93,20 @@ public class WitnessInitializerTest {
         () -> WitnessInitializer.initFromCFGPrivateKey(
             Arrays.asList(privateKey, privateKey), address));
     assertEquals(ErrCode.WITNESS_INIT, err.getErrCode());
+  }
+
+  @Test
+  public void testRejectInvalidPlaintextPrivateKeys() {
+    String key = String.format("%064x", BigInteger.ZERO);
+    for (String witnessAddress : Arrays.asList(null, address)) {
+      TronError cliError = assertThrows(TronError.class,
+          () -> WitnessInitializer.initFromCLIPrivateKey(key, witnessAddress));
+      assertEquals(ErrCode.WITNESS_INIT, cliError.getErrCode());
+      TronError configError = assertThrows(TronError.class,
+          () -> WitnessInitializer.initFromCFGPrivateKey(
+              Collections.singletonList(key), witnessAddress));
+      assertEquals(ErrCode.WITNESS_INIT, configError.getErrCode());
+    }
   }
 
   @Test
