@@ -29,9 +29,9 @@ final class IpcRequestHandler {
 
   private final JsonRpcServer jsonRpcServer;
   @Getter(AccessLevel.PACKAGE)
-  private final int maxRequestSize;
+  private final long maxRequestSize;
 
-  IpcRequestHandler(AdminJsonRpc adminJsonRpc, int maxRequestSize) {
+  IpcRequestHandler(AdminJsonRpc adminJsonRpc, long maxRequestSize) {
     this.maxRequestSize = maxRequestSize;
     jsonRpcServer = new JsonRpcServer(OBJECT_MAPPER, adminJsonRpc, AdminJsonRpc.class);
     jsonRpcServer.setErrorResolver(JsonRpcErrorResolver.INSTANCE);

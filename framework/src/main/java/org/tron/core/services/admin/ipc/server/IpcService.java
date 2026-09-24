@@ -62,7 +62,8 @@ public class IpcService extends AbstractService {
   @Autowired
   public IpcService(AdminJsonRpc adminJsonRpc) {
     enable = isFullNode() && Args.getInstance().isIpcEnable();
-    requestHandler = new IpcRequestHandler(adminJsonRpc, Args.getInstance().maxMessageSize);
+    requestHandler = new IpcRequestHandler(adminJsonRpc,
+        Args.getInstance().getJsonRpcMaxMessageSize());
   }
 
   @Override

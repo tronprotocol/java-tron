@@ -39,16 +39,20 @@ import org.tron.core.services.admin.AdminJsonRpcImpl;
 public class IpcServiceTest {
 
   private int originalMaxMessageSize;
+  private long originalJsonRpcMaxMessageSize;
 
   @Before
   public void setUp() {
     originalMaxMessageSize = Args.getInstance().maxMessageSize;
+    originalJsonRpcMaxMessageSize = Args.getInstance().jsonRpcMaxMessageSize;
     Args.getInstance().maxMessageSize = 4 * 1024 * 1024;
+    Args.getInstance().jsonRpcMaxMessageSize = 4 * 1024 * 1024;
   }
 
   @After
   public void tearDown() {
     Args.getInstance().maxMessageSize = originalMaxMessageSize;
+    Args.getInstance().jsonRpcMaxMessageSize = originalJsonRpcMaxMessageSize;
   }
 
   @Test
@@ -57,37 +61,50 @@ public class IpcServiceTest {
   }
 
   @Test(timeout = 10_000)
-  public void testRequestSizePreservesConfiguredZero() throws Exception {
+  public void testRequestSizeUsesJsonRpcConfiguration() throws Exception {
     assumePosixFileSystem();
-    Args.getInstance().maxMessageSize = 0;
     CommonParameter parameter = Args.getInstance();
-    String originalOutputDirectory = parameter.outputDirectory;
-    String originalSocketDirectory = parameter.ipcSocketDirectory;
-    Path outputDirectory = Files.createTempDirectory(Paths.get("/tmp"), "ipc-zero-");
-    AdminJsonRpc adminJsonRpc = Mockito.mock(AdminJsonRpc.class);
-    IpcService service = new IpcService(adminJsonRpc);
-    boolean started = false;
-    Path socketFile = null;
-    try {
-      parameter.outputDirectory = outputDirectory.toString();
-      parameter.ipcSocketDirectory = "";
-      service.innerStart();
-      started = true;
-      socketFile = resolveSocketFilePath(parameter, getPid(service));
+    for (long limit : new long[] {0, (long) Integer.MAX_VALUE + 1}) {
+      parameter.jsonRpcMaxMessageSize = limit;
+      parameter.maxMessageSize = limit == 0 ? 4 * 1024 * 1024 : 0;
+      String originalOutputDirectory = parameter.outputDirectory;
+      String originalSocketDirectory = parameter.ipcSocketDirectory;
+      Path outputDirectory = Files.createTempDirectory(Paths.get("/tmp"), "ipc-limit-");
+      AdminJsonRpc adminJsonRpc = Mockito.mock(AdminJsonRpc.class);
+      IpcService service = new IpcService(adminJsonRpc);
+      boolean started = false;
+      Path socketFile = null;
+      try {
+        parameter.outputDirectory = outputDirectory.toString();
+        parameter.ipcSocketDirectory = "";
+        service.innerStart();
+        started = true;
+        socketFile = resolveSocketFilePath(parameter, getPid(service));
 
-      try (AFUNIXSocket client = AFUNIXSocket.newInstance()) {
-        client.connect(AFUNIXSocketAddress.of(socketFile.toFile()));
-        client.setSoTimeout(2_000);
-        client.getOutputStream().write('{');
-        client.getOutputStream().flush();
-        Assert.assertEquals("A zero limit must close the connection on its first byte",
-            -1, client.getInputStream().read());
-        Mockito.verifyNoInteractions(adminJsonRpc);
+        try (AFUNIXSocket client = AFUNIXSocket.newInstance()) {
+          client.connect(AFUNIXSocketAddress.of(socketFile.toFile()));
+          client.setSoTimeout(2_000);
+          if (limit == 0) {
+            client.getOutputStream().write('{');
+            client.getOutputStream().flush();
+            Assert.assertEquals("A zero limit must close the connection on its first byte",
+                -1, client.getInputStream().read());
+            Mockito.verifyNoInteractions(adminJsonRpc);
+          } else {
+            Mockito.when(adminJsonRpc.adminExample("a", "b")).thenReturn("a:b");
+            BufferedWriter writer = new BufferedWriter(
+                new OutputStreamWriter(client.getOutputStream(), StandardCharsets.UTF_8));
+            BufferedReader reader = new BufferedReader(
+                new InputStreamReader(client.getInputStream(), StandardCharsets.UTF_8));
+            assertSuccessfulResponse(sendRequest(writer, reader, 1), 1);
+            Mockito.verify(adminJsonRpc).adminExample("a", "b");
+          }
+        }
+      } finally {
+        parameter.ipcSocketDirectory = originalSocketDirectory;
+        cleanupIpcService(service, started, parameter, originalOutputDirectory, socketFile,
+            outputDirectory);
       }
-    } finally {
-      parameter.ipcSocketDirectory = originalSocketDirectory;
-      cleanupIpcService(service, started, parameter, originalOutputDirectory, socketFile,
-          outputDirectory);
     }
   }
 
