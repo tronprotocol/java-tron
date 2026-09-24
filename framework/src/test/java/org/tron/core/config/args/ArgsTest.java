@@ -58,7 +58,7 @@ public class ArgsTest {
 
     LocalWitnesses localWitnesses = new LocalWitnesses();
     localWitnesses.setPrivateKeys(Arrays.asList(privateKey));
-    localWitnesses.initWitnessAccountAddress(null, true);
+    localWitnesses.initWitnessAccountAddress(null);
     Args.setLocalWitnesses(localWitnesses);
     String address = ByteArray.toHexString(Args.getLocalWitnesses()
         .getWitnessAccountAddress());

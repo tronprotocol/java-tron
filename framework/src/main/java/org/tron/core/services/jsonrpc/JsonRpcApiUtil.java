@@ -15,7 +15,6 @@ import org.bouncycastle.util.encoders.Hex;
 import org.tron.api.GrpcAPI.AssetIssueList;
 import org.tron.common.crypto.Hash;
 import org.tron.common.math.StrictMathWrapper;
-import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
@@ -113,7 +112,7 @@ public class JsonRpcApiUtil {
 
   public static String getBlockID(Block block) {
     long blockNum = block.getBlockHeader().getRawData().getNumber();
-    byte[] blockHash = Sha256Hash.of(true, block.getBlockHeader().getRawData().toByteArray())
+    byte[] blockHash = Sha256Hash.of(block.getBlockHeader().getRawData().toByteArray())
         .getByteString().toByteArray();
     byte[] numBytes = Longs.toByteArray(blockNum);
     byte[] hash = new byte[blockHash.length];
@@ -215,7 +214,7 @@ public class JsonRpcApiUtil {
   }
 
   public static String getTxID(Transaction transaction) {
-    return ByteArray.toHexString(Sha256Hash.hash(true, transaction.getRawData().toByteArray()));
+    return ByteArray.toHexString(Sha256Hash.hash(transaction.getRawData().toByteArray()));
   }
 
   public static long getTransactionAmount(Transaction.Contract contract, String hash,
@@ -556,9 +555,7 @@ public class JsonRpcApiUtil {
   public static long getEnergyUsageTotal(Transaction transaction, Wallet wallet) {
     long energyUsageTotal = 0;
 
-    byte[] txHash = Sha256Hash
-        .hash(CommonParameter.getInstance().isECKeyCryptoEngine(),
-            transaction.getRawData().toByteArray());
+    byte[] txHash = Sha256Hash.hash(transaction.getRawData().toByteArray());
     TransactionInfo transactionInfo = wallet
         .getTransactionInfoById(ByteString.copyFrom(txHash));
     if (transactionInfo != null) {

@@ -300,8 +300,7 @@ public class Wallet {
    * Creates a new Wallet with a random ECKey.
    */
   public Wallet() {
-    this.cryptoEngine = SignUtils.getGeneratedRandomSign(Utils.getRandom(),
-            CommonParameter.getInstance().isECKeyCryptoEngine());
+    this.cryptoEngine = SignUtils.getGeneratedRandomSign(Utils.getRandom());
   }
 
   /**
@@ -644,8 +643,7 @@ public class Wallet {
     trx = TransactionUtil.truncateSignatures(trx);
     TransactionExtention.Builder trxExBuilder = TransactionExtention.newBuilder();
     trxExBuilder.setTransaction(trx);
-    trxExBuilder.setTxid(ByteString.copyFrom(Sha256Hash.hash(CommonParameter
-        .getInstance().isECKeyCryptoEngine(), trx.getRawData().toByteArray())));
+    trxExBuilder.setTxid(ByteString.copyFrom(Sha256Hash.hash(trx.getRawData().toByteArray())));
     Return.Builder retBuilder = Return.newBuilder();
     retBuilder.setResult(true).setCode(response_code.SUCCESS);
     trxExBuilder.setResult(retBuilder);
@@ -679,8 +677,7 @@ public class Wallet {
 
         if (trx.getSignatureCount() > 0) {
           List<ByteString> approveList = new ArrayList<>();
-          byte[] hash = Sha256Hash.hash(CommonParameter
-              .getInstance().isECKeyCryptoEngine(), trx.getRawData().toByteArray());
+          byte[] hash = Sha256Hash.hash(trx.getRawData().toByteArray());
           TransactionCapsule.checkWeight(permission, trx.getSignatureList(), hash, approveList);
           tswBuilder.addAllApprovedList(approveList);
         }
@@ -4527,8 +4524,7 @@ public class Wallet {
     List<String> localWitnessAddresses = new ArrayList<>();
     for (String privateKey : localPrivateKeys) {
       localWitnessAddresses.add(Hex.toHexString(SignUtils
-          .fromPrivate(ByteArray.fromHexString(privateKey),
-              CommonParameter.getInstance().isECKeyCryptoEngine()).getAddress()));
+          .fromPrivate(ByteArray.fromHexString(privateKey)).getAddress()));
     }
 
     // get all witnesses
@@ -4558,8 +4554,7 @@ public class Wallet {
     List<String> localWitnessAddresses = new ArrayList<>();
     for (String privateKey : localPrivateKeys) {
       localWitnessAddresses.add(Hex.toHexString(SignUtils
-          .fromPrivate(ByteArray.fromHexString(privateKey),
-              CommonParameter.getInstance().isECKeyCryptoEngine()).getAddress()));
+          .fromPrivate(ByteArray.fromHexString(privateKey)).getAddress()));
     }
 
     // get active witnesses

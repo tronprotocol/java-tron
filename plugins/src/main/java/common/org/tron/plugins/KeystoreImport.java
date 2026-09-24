@@ -45,10 +45,6 @@ public class KeystoreImport implements Callable<Integer> {
       description = "Read password from file instead of interactive prompt")
   private File passwordFile;
 
-  @Option(names = {"--sm2"},
-      description = "Use SM2 algorithm instead of ECDSA")
-  private boolean sm2;
-
   @Option(names = {"--force"},
       description = "Allow import even if address already exists")
   private boolean force;
@@ -81,14 +77,11 @@ public class KeystoreImport implements Callable<Integer> {
         return 1;
       }
 
-      boolean ecKey = !sm2;
       SignInterface keyPair;
       try {
-        keyPair = SignUtils.fromPrivate(
-            ByteArray.fromHexString(privateKey), ecKey);
+        keyPair = SignUtils.fromPrivate(ByteArray.fromHexString(privateKey));
       } catch (Exception e) {
-        err.println("Invalid private key: not a valid key"
-            + " for the selected algorithm.");
+        err.println("Invalid private key: not a valid ECKey private key.");
         return 1;
       }
       String address = Credentials.create(keyPair).getAddress();

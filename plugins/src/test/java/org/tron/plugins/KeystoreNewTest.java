@@ -23,6 +23,15 @@ public class KeystoreNewTest {
   public TemporaryFolder tempFolder = new TemporaryFolder();
 
   @Test
+  public void testSm2OptionIsRejected() {
+    CommandLine cmd = new CommandLine(new Toolkit());
+
+    int exitCode = cmd.execute("keystore", "new", "--sm2");
+
+    assertEquals("Removed --sm2 option must be rejected", 2, exitCode);
+  }
+
+  @Test
   public void testNewKeystoreWithPasswordFile() throws Exception {
     File dir = tempFolder.newFolder("keystore");
     File pwFile = tempFolder.newFile("password.txt");
@@ -45,7 +54,7 @@ public class KeystoreNewTest {
     assertEquals("Should create exactly one keystore file", 1, files.length);
 
     // Verify the file is a valid keystore
-    Credentials creds = WalletUtils.loadCredentials("test123456", files[0], true);
+    Credentials creds = WalletUtils.loadCredentials("test123456", files[0]);
     assertNotNull(creds.getAddress());
     assertTrue(creds.getAddress().startsWith("T"));
   }
@@ -142,29 +151,6 @@ public class KeystoreNewTest {
   }
 
   @Test
-  public void testNewKeystoreWithSm2() throws Exception {
-    File dir = tempFolder.newFolder("keystore-sm2");
-    File pwFile = tempFolder.newFile("pw-sm2.txt");
-    Files.write(pwFile.toPath(), "test123456".getBytes(StandardCharsets.UTF_8));
-
-    CommandLine cmd = new CommandLine(new Toolkit());
-    int exitCode = cmd.execute("keystore", "new",
-        "--keystore-dir", dir.getAbsolutePath(),
-        "--password-file", pwFile.getAbsolutePath(),
-        "--sm2");
-
-    assertEquals("SM2 keystore creation should succeed", 0, exitCode);
-    File[] files = dir.listFiles((d, name) -> name.endsWith(".json"));
-    assertNotNull(files);
-    assertEquals(1, files.length);
-
-    // Verify SM2 keystore can be decrypted with ecKey=false
-    org.tron.keystore.Credentials creds =
-        org.tron.keystore.WalletUtils.loadCredentials("test123456", files[0], false);
-    assertNotNull(creds.getAddress());
-  }
-
-  @Test
   public void testNewKeystoreSpecialCharPassword() throws Exception {
     File dir = tempFolder.newFolder("keystore-special");
     File pwFile = tempFolder.newFile("pw-special.txt");
@@ -182,7 +168,7 @@ public class KeystoreNewTest {
     assertEquals(1, files.length);
 
     // Verify can decrypt with same special-char password
-    Credentials creds = WalletUtils.loadCredentials(password, files[0], true);
+    Credentials creds = WalletUtils.loadCredentials(password, files[0]);
     assertNotNull(creds.getAddress());
   }
 
