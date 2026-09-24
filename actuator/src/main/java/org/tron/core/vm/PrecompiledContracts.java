@@ -1089,6 +1089,9 @@ public class PrecompiledContracts {
             List<byte[]> executedSignList = new ArrayList<>();
             for (byte[] sign : signatures) {
               byte[] recoveredAddr = recoverAddrBySign(sign, hash);
+              if (recoveredAddr == null) {
+                return Pair.of(true, DATA_FALSE);
+              }
 
               sign = merge(recoveredAddr, sign);
               if (ByteArray.matrixContains(executedSignList, recoveredAddr)) {

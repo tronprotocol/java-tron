@@ -1,6 +1,7 @@
 package org.tron.common.runtime.vm;
 
 import com.google.protobuf.ByteString;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -63,6 +64,55 @@ public class ValidateMultiSignContractTest extends BaseTest {
     Assert.assertArrayEquals(
         validateMultiSign(StringUtil.encode58Check(key.getAddress()), 1, hash, signs)
             .getValue(), DataWord.ZERO().getData());
+  }
+
+  @Test
+  public void testStrictValidationRejectsInfinityPermissionSigner() {
+    String previousEngine = CommonParameter.getInstance().getCryptoEngine();
+    boolean previousStrict = VMConfig.allowStrictEcdsaValidation();
+    try {
+      CommonParameter.getInstance().setCryptoEngine("ECKey");
+      ECKey key = ECKey.fromPrivate(BigInteger.TEN);
+      byte[] address = key.getAddress();
+      byte[] data = DataWord.ONE().getData();
+      byte[] hash = Sha256Hash.hash(true,
+          ByteUtil.merge(address, ByteArray.fromInt(0), data));
+      // R = G and s = hash mod n make sR - hash*G the point at infinity.
+      ECKey.ECDSASignature infinity = new ECKey.ECDSASignature(
+          ECKey.CURVE.getG().getAffineXCoord().toBigInteger(),
+          new BigInteger(1, hash).mod(ECKey.CURVE.getN()));
+      infinity.v = 27;
+      byte[] infinityAddress = Hash.sha3omit12(new byte[0]);
+      Assert.assertTrue(infinity.validateComponents());
+      Assert.assertArrayEquals(infinityAddress,
+          ECKey.recoverAddressFromSignature(0, infinity, hash));
+
+      Protocol.Permission permission = Protocol.Permission.newBuilder()
+          .setType(Protocol.Permission.PermissionType.Owner).setId(0).setThreshold(1)
+          .addKeys(Protocol.Key.newBuilder().setAddress(ByteString.copyFrom(infinityAddress))
+              .setWeight(1))
+          .addKeys(Protocol.Key.newBuilder().setAddress(ByteString.copyFrom(address)).setWeight(1))
+          .build();
+      AccountCapsule account = new AccountCapsule(Protocol.Account.newBuilder()
+          .setAddress(ByteString.copyFrom(address)).setOwnerPermission(permission).build());
+      dbManager.getAccountStore().put(address, account);
+
+      for (int strict : new int[] {0, 1}) {
+        VMConfig.initAllowStrictEcdsaValidation(strict);
+        Pair<Boolean, byte[]> result = validateMultiSign(StringUtil.encode58Check(address), 0,
+            data, Collections.singletonList(Hex.toHexString(infinity.toByteArray())));
+        Assert.assertTrue(result.getLeft());
+        Assert.assertArrayEquals(new DataWord(strict == 0 ? 1 : 0).getData(), result.getRight());
+
+        Pair<Boolean, byte[]> valid = validateMultiSign(StringUtil.encode58Check(address), 0,
+            data, Collections.singletonList(Hex.toHexString(key.sign(hash).toByteArray())));
+        Assert.assertTrue(valid.getLeft());
+        Assert.assertArrayEquals(DataWord.ONE().getData(), valid.getRight());
+      }
+    } finally {
+      VMConfig.initAllowStrictEcdsaValidation(previousStrict ? 1 : 0);
+      CommonParameter.getInstance().setCryptoEngine(previousEngine);
+    }
   }
 
   @Test

@@ -136,7 +136,7 @@ public class SanitizeUnknownFieldsTest {
     assertArrayEquals("Sanitized signature must not retain the oversized backing array",
         canonicalSignature, sanitizedSignature.toByteArray());
     assertEquals("Witness signature padding must not affect the block id",
-        originalBlockId, capsule.getBlockId());
+        originalBlockId, new BlockCapsule(capsule.getInstance()).getBlockId());
     assertTrue("Sanitized capsule bytes should shrink",
         capsule.getSerializedSize() < originalSize);
     assertFalse("Canonicalization should be idempotent", capsule.sanitize());
