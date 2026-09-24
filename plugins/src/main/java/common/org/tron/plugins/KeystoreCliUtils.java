@@ -15,7 +15,11 @@ import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.PosixFileAttributeView;
+import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -78,6 +82,20 @@ final class KeystoreCliUtils {
     }
     if (attrs.size() > maxSize) {
       err.println(label + " too large (max " + maxSize + " bytes): " + file.getPath());
+      return null;
+    }
+
+    // Refuse secret files readable or writable by group/other. Only owner
+    // bits are allowed; filesystems without POSIX attributes are skipped.
+    PosixFileAttributeView posixView = Files.getFileAttributeView(
+        file.toPath(), PosixFileAttributeView.class, LinkOption.NOFOLLOW_LINKS);
+    if (posixView != null
+        && !EnumSet.of(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE,
+            PosixFilePermission.OWNER_EXECUTE)
+            .containsAll(posixView.readAttributes().permissions())) {
+      err.println(label + " must be owner-only (no group/other access), got "
+          + PosixFilePermissions.toString(posixView.readAttributes().permissions())
+          + ": " + file.getPath());
       return null;
     }
 

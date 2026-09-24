@@ -63,8 +63,31 @@ public class Wallet {
   private static final int CURRENT_VERSION = 3;
   private static final String CIPHER = "aes-128-ctr";
 
+  // Upper bounds for untrusted keystore KDF cost parameters. A hostile
+  // keystore file may declare arbitrary KDF strengths: extreme scrypt
+  // parameters make Bouncy Castle either allocate unbounded memory
+  // (n*r*128 bytes — e.g. n=2^22, r=8 requests 4 GiB and dies with OOM)
+  // or compute for hours, and out-of-range values can crash the JVM with
+  // NegativeArraySizeException / ArithmeticException inside SCrypt.generate.
+  // All values here are rejected by validationError() before any KDF runs.
+  private static final int SCRYPT_N_MIN = 1 << 12;
+  private static final int SCRYPT_N_MAX = 1 << 20;
+  private static final int SCRYPT_R_MAX = 8;
+  private static final int SCRYPT_P_MAX = 8;
+  private static final long SCRYPT_MEMORY_MAX_BYTES = 1L << 30; // 128 * r * n cap = 1 GiB
+  private static final int KDF_DKLEN_MAX = 128;
+  private static final int PBKDF2_C_MAX = 1 << 20;
+
   public static WalletFile create(String password, SignInterface sign, int n, int p)
       throws CipherException {
+
+    // Keep create() symmetric with validate()/decrypt(): reject KDF cost
+    // parameters that the decryption path would refuse, so create() can
+    // never produce a wallet file that only this class rejects.
+    String paramError = scryptKdfParamsError(DKLEN, n, R, p);
+    if (paramError != null) {
+      throw new CipherException(paramError);
+    }
 
     byte[] salt = generateRandomBytes(32);
 
@@ -194,7 +217,16 @@ public class Wallet {
       int p = scryptKdfParams.getP();
       int r = scryptKdfParams.getR();
       byte[] salt = ByteArray.fromHexString(scryptKdfParams.getSalt());
-      derivedKey = generateDerivedScryptKey(password.getBytes(UTF_8), salt, n, r, p, dklen);
+      try {
+        derivedKey = generateDerivedScryptKey(password.getBytes(UTF_8), salt, n, r, p, dklen);
+      } catch (RuntimeException e) {
+        // Defense-in-depth: any residual KDF engine failure (e.g. an
+        // IllegalArgumentException from Bouncy Castle) must surface as a
+        // clean CipherException, never as a raw RuntimeException stack.
+        // Errors (OutOfMemoryError etc.) are deliberately not caught —
+        // they remain fatal.
+        throw new CipherException("Scrypt key derivation failed", e);
+      }
     } else if (kdfParams instanceof WalletFile.Aes128CtrKdfParams) {
       WalletFile.Aes128CtrKdfParams aes128CtrKdfParams =
           (WalletFile.Aes128CtrKdfParams) crypto.getKdfparams();
@@ -202,7 +234,11 @@ public class Wallet {
       String prf = aes128CtrKdfParams.getPrf();
       byte[] salt = ByteArray.fromHexString(aes128CtrKdfParams.getSalt());
 
-      derivedKey = generateAes128CtrDerivedKey(password.getBytes(UTF_8), salt, c, prf);
+      try {
+        derivedKey = generateAes128CtrDerivedKey(password.getBytes(UTF_8), salt, c, prf);
+      } catch (RuntimeException e) {
+        throw new CipherException("Pbkdf2 key derivation failed", e);
+      }
     } else {
       throw new CipherException("Unable to deserialize params: " + crypto.getKdf());
     }
@@ -237,11 +273,15 @@ public class Wallet {
   /**
    * Returns a description of the first schema violation found in
    * {@code walletFile}, or {@code null} if the file matches the supported
-   * V3 keystore shape (current version, known cipher, known KDF).
+   * V3 keystore shape (current version, known cipher, known KDF, and KDF
+   * cost parameters within safe bounds).
    *
-   * <p>Shared by {@link #validate(WalletFile)} (which throws the message)
-   * and {@link #isValidKeystoreFile(WalletFile)} (which returns boolean
-   * for discovery-style filtering).
+   * <p>KDF cost bounds are enforced here — the single chokepoint shared by
+   * {@link #validate(WalletFile)} (which throws the message) and
+   * {@link #isValidKeystoreFile(WalletFile)} (which returns boolean for
+   * discovery-style filtering) — so untrusted keystore files can never
+   * drive the KDF into unbounded memory allocation, multi-hour CPU
+   * exhaustion, or engine-level crashes before {@link #decrypt} runs.
    */
   private static String validationError(WalletFile walletFile) {
     if (walletFile.getVersion() != CURRENT_VERSION) {
@@ -258,6 +298,58 @@ public class Wallet {
     String kdf = crypto.getKdf();
     if (kdf == null || (!kdf.equals(PBKDF2) && !kdf.equals(SCRYPT))) {
       return "KDF type is not supported";
+    }
+    WalletFile.KdfParams kdfParams = crypto.getKdfparams();
+    if (kdfParams == null) {
+      // Structural stubs (e.g. tooling fixtures) may omit kdfparams entirely;
+      // there are no cost parameters to bound. Real keystores always carry them.
+      return null;
+    }
+    if (SCRYPT.equals(kdf)) {
+      if (!(kdfParams instanceof WalletFile.ScryptKdfParams)) {
+        return "Scrypt KDF params are missing or malformed";
+      }
+      WalletFile.ScryptKdfParams params = (WalletFile.ScryptKdfParams) kdfParams;
+      return scryptKdfParamsError(params.getDklen(), params.getN(), params.getR(), params.getP());
+    }
+    if (!(kdfParams instanceof WalletFile.Aes128CtrKdfParams)) {
+      return "Pbkdf2 KDF params are missing or malformed";
+    }
+    WalletFile.Aes128CtrKdfParams params = (WalletFile.Aes128CtrKdfParams) kdfParams;
+    return pbkdf2KdfParamsError(params.getDklen(), params.getC());
+  }
+
+  private static String scryptKdfParamsError(int dklen, int n, int r, int p) {
+    // dklen must yield at least 32 bytes: generateMac copies derivedKey[16..32)
+    // and AES-128 needs bytes [0..16); smaller keys throw raw ArrayIndexOutOfBoundsException.
+    if (dklen < 32 || dklen > KDF_DKLEN_MAX) {
+      return "Scrypt dklen is out of range [32, " + KDF_DKLEN_MAX + "]: " + dklen;
+    }
+    if (n < SCRYPT_N_MIN || n > SCRYPT_N_MAX || (n & (n - 1)) != 0) {
+      return "Scrypt n must be a power of 2 in [" + SCRYPT_N_MIN + ", " + SCRYPT_N_MAX
+          + "]: " + n;
+    }
+    if (r < 1 || r > SCRYPT_R_MAX) {
+      return "Scrypt r is out of range [1, " + SCRYPT_R_MAX + "]: " + r;
+    }
+    if (p < 1 || p > SCRYPT_P_MAX) {
+      return "Scrypt p is out of range [1, " + SCRYPT_P_MAX + "]: " + p;
+    }
+    // Compute in long arithmetic: hostile r * n must not overflow int.
+    long memoryBytes = 128L * r * n;
+    if (memoryBytes > SCRYPT_MEMORY_MAX_BYTES) {
+      return "Scrypt memory requirement 128*r*n=" + memoryBytes
+          + " exceeds the " + SCRYPT_MEMORY_MAX_BYTES + " byte limit";
+    }
+    return null;
+  }
+
+  private static String pbkdf2KdfParamsError(int dklen, int c) {
+    if (dklen < 1 || dklen > KDF_DKLEN_MAX) {
+      return "Pbkdf2 dklen is out of range [1, " + KDF_DKLEN_MAX + "]: " + dklen;
+    }
+    if (c < 1 || c > PBKDF2_C_MAX) {
+      return "Pbkdf2 iteration count c is out of range [1, " + PBKDF2_C_MAX + "]: " + c;
     }
     return null;
   }
