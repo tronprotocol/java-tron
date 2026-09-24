@@ -161,7 +161,7 @@ public class DbTool {
     }
   }
 
-  private static DbType getDbType(String sourceDir, String dbName) {
+  public static DbType getDbType(String sourceDir, String dbName) {
     String engineFile = Paths.get(sourceDir, dbName, ENGINE_FILE).toString();
     if (!new File(engineFile).exists()) {
       return DbType.LevelDB;
