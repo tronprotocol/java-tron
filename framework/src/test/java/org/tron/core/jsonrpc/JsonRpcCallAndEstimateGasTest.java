@@ -211,8 +211,7 @@ public class JsonRpcCallAndEstimateGasTest {
           });
     }
 
-    TronJsonRpcImpl rpc = new TronJsonRpcImpl(mockNodeInfo, mockWallet);
-    rpc.setManager(mockManager);
+    TronJsonRpcImpl rpc = new TronJsonRpcImpl(mockNodeInfo, mockWallet, mockManager);
     return rpc;
   }
 
@@ -239,8 +238,7 @@ public class JsonRpcCallAndEstimateGasTest {
               .build();
         });
 
-    TronJsonRpcImpl rpc = new TronJsonRpcImpl(mockNodeInfo, mockWallet);
-    rpc.setManager(mockManager);
+    TronJsonRpcImpl rpc = new TronJsonRpcImpl(mockNodeInfo, mockWallet, mockManager);
     return rpc;
   }
 
@@ -276,8 +274,7 @@ public class JsonRpcCallAndEstimateGasTest {
           });
     }
 
-    TronJsonRpcImpl rpc = new TronJsonRpcImpl(mockNodeInfo, mockWallet);
-    rpc.setManager(mockManager);
+    TronJsonRpcImpl rpc = new TronJsonRpcImpl(mockNodeInfo, mockWallet, mockManager);
     return rpc;
   }
 }
