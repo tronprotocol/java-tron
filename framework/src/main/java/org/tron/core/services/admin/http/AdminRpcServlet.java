@@ -4,18 +4,21 @@ import com.googlecode.jsonrpc4j.HttpStatusCodeProvider;
 import com.googlecode.jsonrpc4j.JsonRpcInterceptor;
 import com.googlecode.jsonrpc4j.JsonRpcServer;
 import com.googlecode.jsonrpc4j.ProxyUtil;
+import io.prometheus.client.Histogram;
 import java.io.IOException;
 import java.util.Collections;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.parameter.CommonParameter;
+import org.tron.common.prometheus.MetricKeys;
+import org.tron.common.prometheus.Metrics;
 import org.tron.core.services.admin.AdminJsonRpc;
-import org.tron.core.services.http.RateLimiterServlet;
 import org.tron.core.services.jsonrpc.JsonRpcErrorResolver;
 import org.tron.core.services.jsonrpc.JsonRpcMapper;
 import org.tron.core.services.jsonrpc.JsonRpcMediaType;
@@ -24,14 +27,15 @@ import org.tron.core.services.jsonrpc.JsonRpcMediaType;
  * Serves the {@link AdminJsonRpc} API at {@code POST /admin} through jsonrpc4j.
  *
  * <p>This endpoint is intended for trusted node operators. Deployments must restrict access to
- * loopback or a controlled management network. It intentionally does not apply the public JSON-RPC
- * batch-size or response-size limits. HTTP request-size limits are enforced by
+ * loopback or a controlled management network. This low-frequency management endpoint intentionally
+ * bypasses public API rate limiting and JSON-RPC batch-size and response-size limits.
+ * HTTP request-size limits are enforced by
  * {@link org.tron.common.application.HttpService}; JSON parser limits come from
  * {@link JsonRpcMapper}.
  */
 @Component
 @Slf4j(topic = "API")
-public class AdminRpcServlet extends RateLimiterServlet {
+public class AdminRpcServlet extends HttpServlet {
 
   private static final long serialVersionUID = 0L;
 
@@ -83,6 +87,19 @@ public class AdminRpcServlet extends RateLimiterServlet {
     }
     virtualHostValidator = new VirtualHostValidator(
         CommonParameter.getInstance().getAdminHttpVirtualHosts());
+  }
+
+  @Override
+  protected void service(HttpServletRequest req, HttpServletResponse resp)
+      throws ServletException, IOException {
+    resp.setContentType("application/json; charset=utf-8");
+    Histogram.Timer requestTimer = Metrics.histogramStartTimer(
+        MetricKeys.Histogram.HTTP_SERVICE_LATENCY, req.getContextPath() + req.getServletPath());
+    try {
+      super.service(req, resp);
+    } finally {
+      Metrics.histogramObserve(requestTimer);
+    }
   }
 
   /**
