@@ -54,6 +54,7 @@ dependencies {
     implementation group: 'com.typesafe', name: 'config', version: '1.3.2'
     implementation group: 'me.tongfei', name: 'progressbar', version: '0.9.3'
     if (rootProject.archInfo.isArm64) {
+        testRuntimeOnly group: 'org.fusesource.hawtjni', name: 'hawtjni-runtime', version: '1.18' // for test
         implementation project(":platform")
     } else {
         implementation project(":platform"), {

@@ -4,6 +4,8 @@ dependencies {
     api project(":protocol")
     api project(":common")
     api project(":crypto")
+    // Its bundled HawtJNI loader supports ARM native libraries; leveldbjni-all's older loader does not.
+    api 'org.fusesource.jansi:jansi:1.16'
     api 'org.reflections:reflections:0.9.11'
 }
 
