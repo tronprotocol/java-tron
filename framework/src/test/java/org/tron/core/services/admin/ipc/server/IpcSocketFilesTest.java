@@ -8,6 +8,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.EnumSet;
+import java.util.Set;
 import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Test;
@@ -116,15 +117,13 @@ public class IpcSocketFilesTest {
   }
 
   @Test
-  public void testRecreateSocketDirectoryRejectsRegularFile() throws Exception {
+  public void testCreateSocketDirectoryRejectsRegularFile() throws Exception {
+    assumePosixFileSystem();
     Path outputDirectory = Files.createTempDirectory("ipc-regular-file-test-");
     Path socketDirectory = outputDirectory.resolve("ipc");
     Files.createFile(socketDirectory);
     try {
-      socketFiles.recreateSocketDirectory(socketDirectory);
-      Assert.fail("Expected a regular file at the reserved directory path to be preserved");
-    } catch (TronError e) {
-      Assert.assertEquals("Refusing to replace a non-directory IPC path", e.getMessage());
+      assertExistingPathRejected(socketDirectory);
       Assert.assertTrue(Files.isRegularFile(socketDirectory, LinkOption.NOFOLLOW_LINKS));
     } finally {
       Files.deleteIfExists(socketDirectory);
@@ -133,7 +132,7 @@ public class IpcSocketFilesTest {
   }
 
   @Test
-  public void testRecreateSocketDirectoryRejectsSymbolicLink() throws Exception {
+  public void testCreateSocketDirectoryRejectsSymbolicLink() throws Exception {
     assumePosixFileSystem();
     Path outputDirectory = Files.createTempDirectory("ipc-symbolic-link-test-");
     Path targetFile = outputDirectory.resolve("target");
@@ -141,12 +140,12 @@ public class IpcSocketFilesTest {
     Files.createFile(targetFile);
     Files.createSymbolicLink(socketDirectory, targetFile.getFileName());
     try {
-      socketFiles.recreateSocketDirectory(socketDirectory);
-      Assert.fail("Expected a symbolic link to be preserved");
-    } catch (TronError e) {
-      Assert.assertEquals("Refusing to replace a non-directory IPC path", e.getMessage());
+      assertExistingPathRejected(socketDirectory);
       Assert.assertTrue(Files.isSymbolicLink(socketDirectory));
       Assert.assertTrue(Files.exists(targetFile));
+      Files.delete(targetFile);
+      assertExistingPathRejected(socketDirectory);
+      Assert.assertTrue(Files.isSymbolicLink(socketDirectory));
     } finally {
       Files.deleteIfExists(socketDirectory);
       Files.deleteIfExists(targetFile);
@@ -155,24 +154,49 @@ public class IpcSocketFilesTest {
   }
 
   @Test
-  public void testRecreateSocketDirectoryRemovesStaleFilesAndUsesOwnerOnlyPermissions()
-      throws Exception {
+  public void testCreateSocketDirectoryUsesOwnerOnlyPermissions() throws Exception {
     assumePosixFileSystem();
-    Path outputDirectory = Files.createTempDirectory("ipc-stale-directory-test-");
-    Path socketDirectory = Files.createDirectory(outputDirectory.resolve("ipc"));
-    Files.createFile(socketDirectory.resolve("1234.sock"));
+    Path outputDirectory = Files.createTempDirectory("ipc-directory-test-");
+    Path socketDirectory = outputDirectory.resolve("ipc");
     try {
-      socketFiles.recreateSocketDirectory(socketDirectory);
+      socketFiles.createSocketDirectory(socketDirectory);
 
       Assert.assertTrue(Files.isDirectory(socketDirectory));
       Assert.assertEquals(
           EnumSet.of(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE,
               PosixFilePermission.OWNER_EXECUTE),
           Files.getPosixFilePermissions(socketDirectory));
-      Assert.assertFalse(Files.exists(socketDirectory.resolve("1234.sock")));
     } finally {
       Files.deleteIfExists(socketDirectory);
       Files.deleteIfExists(outputDirectory);
+    }
+  }
+
+  @Test
+  public void testCreateSocketDirectoryPreservesExistingDirectoryAndContents() throws Exception {
+    assumePosixFileSystem();
+    Path root = Files.createTempDirectory("ipc-existing-test-");
+    Path directory = Files.createDirectory(root.resolve("ipc"));
+    Path socketFile = directory.resolve("1234.sock");
+    Path unrelatedFile = directory.resolve("operator-note.txt");
+    byte[] contents = "keep me".getBytes(StandardCharsets.UTF_8);
+    try {
+      Set<PosixFilePermission> permissions = Files.getPosixFilePermissions(directory);
+      assertExistingPathRejected(directory);
+      Assert.assertTrue(Files.isDirectory(directory));
+      Files.write(socketFile, contents);
+      Files.write(unrelatedFile, contents);
+
+      assertExistingPathRejected(directory);
+
+      Assert.assertArrayEquals(contents, Files.readAllBytes(socketFile));
+      Assert.assertArrayEquals(contents, Files.readAllBytes(unrelatedFile));
+      Assert.assertEquals(permissions, Files.getPosixFilePermissions(directory));
+    } finally {
+      Files.deleteIfExists(socketFile);
+      Files.deleteIfExists(unrelatedFile);
+      Files.deleteIfExists(directory);
+      Files.deleteIfExists(root);
     }
   }
 
@@ -196,13 +220,13 @@ public class IpcSocketFilesTest {
       socketFiles.deleteSocketFile(socketFile);
       Assert.assertFalse(Files.exists(socketFile));
       Assert.assertTrue(Files.isDirectory(directory));
-      socketFiles.deleteSocketDirectory(socketFile);
+      socketFiles.deleteSocketDirectory(directory);
       Assert.assertFalse(Files.exists(directory));
       Assert.assertTrue(Files.isDirectory(root));
 
       // Cleanup also runs before bind or after an earlier cleanup already removed the files.
       socketFiles.deleteSocketFile(socketFile);
-      socketFiles.deleteSocketDirectory(socketFile);
+      socketFiles.deleteSocketDirectory(directory);
       socketFiles.deleteSocketFile(null);
       socketFiles.deleteSocketDirectory(null);
       Assert.assertTrue(Files.isDirectory(root));
@@ -210,6 +234,19 @@ public class IpcSocketFilesTest {
       Files.deleteIfExists(socketFile);
       Files.deleteIfExists(directory);
       Files.deleteIfExists(root);
+    }
+  }
+
+  private void assertExistingPathRejected(Path path) throws Exception {
+    try {
+      socketFiles.createSocketDirectory(path);
+      Assert.fail("Expected an existing IPC path to be preserved");
+    } catch (TronError e) {
+      Assert.assertEquals(TronError.ErrCode.API_SERVER_INIT, e.getErrCode());
+      Assert.assertTrue(e.getMessage().contains("IPC directory already exists"));
+      Assert.assertTrue(e.getMessage().contains("Confirm that no node is using it"));
+      Assert.assertTrue(e.getMessage().contains("remove it manually"));
+      Assert.assertFalse(e.getMessage().contains(path.toString()));
     }
   }
 

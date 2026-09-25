@@ -5,6 +5,8 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.lang.management.ManagementFactory;
+import java.lang.management.RuntimeMXBean;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -12,6 +14,7 @@ import java.net.SocketException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.PosixFilePermission;
@@ -33,6 +36,7 @@ import org.newsclub.net.unix.AFUNIXSocket;
 import org.newsclub.net.unix.AFUNIXSocketAddress;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.core.config.args.Args;
+import org.tron.core.exception.TronError;
 import org.tron.core.services.admin.AdminJsonRpc;
 import org.tron.core.services.admin.AdminJsonRpcImpl;
 
@@ -130,6 +134,173 @@ public class IpcServiceTest {
     } finally {
       cleanupIpcService(service, started, parameter, originalOutputDirectory, socketFile,
           outputDirectory);
+    }
+  }
+
+  @Test(timeout = 10_000)
+  public void testRejectedStartupAndStopPreserveExistingPaths() throws Exception {
+    assumePosixFileSystem();
+    CommonParameter parameter = Args.getInstance();
+    String originalSocketDirectory = parameter.ipcSocketDirectory;
+    Path root = Files.createTempDirectory(Paths.get("/tmp"), "ipc-existing-");
+    Path directory = root.resolve("ipc");
+    Path target = Files.createDirectory(root.resolve("target"));
+    Path unrelated = directory.resolve("operator-note.txt");
+    byte[] contents = "keep me".getBytes(StandardCharsets.UTF_8);
+    try {
+      parameter.ipcSocketDirectory = root.toString();
+      for (int kind = 0; kind < 4; kind++) {
+        IpcService service = newIpcService();
+        Path socketFile = resolveSocketFilePath(parameter, getPid(service));
+        if (kind == 0 || kind == 1) {
+          Files.createDirectory(directory);
+          if (kind == 1) {
+            Files.write(socketFile, contents);
+            Files.write(unrelated, contents);
+          }
+        } else if (kind == 2) {
+          Files.write(directory, contents);
+        } else {
+          Files.createSymbolicLink(directory, target);
+        }
+        try {
+          assertStartupRejectsExistingDirectory(service);
+          service.innerStop();
+
+          Assert.assertTrue(Files.exists(directory, LinkOption.NOFOLLOW_LINKS));
+          if (kind == 1) {
+            Assert.assertArrayEquals(contents, Files.readAllBytes(socketFile));
+            Assert.assertArrayEquals(contents, Files.readAllBytes(unrelated));
+          } else if (kind == 2) {
+            Assert.assertArrayEquals(contents, Files.readAllBytes(directory));
+          } else if (kind == 3) {
+            Assert.assertEquals(target, Files.readSymbolicLink(directory));
+          }
+        } finally {
+          service.innerStop();
+          if (kind == 1) {
+            Files.deleteIfExists(socketFile);
+            Files.deleteIfExists(unrelated);
+          }
+          Files.deleteIfExists(directory);
+        }
+      }
+    } finally {
+      parameter.ipcSocketDirectory = originalSocketDirectory;
+      Files.deleteIfExists(target);
+      Files.deleteIfExists(root);
+    }
+  }
+
+  @Test(timeout = 15_000)
+  public void testSecondNodeRejectionPreservesFirstNodeEndpoint() throws Exception {
+    assumePosixFileSystem();
+    CommonParameter parameter = Args.getInstance();
+    String originalSocketDirectory = parameter.ipcSocketDirectory;
+    Path root = Files.createTempDirectory(Paths.get("/tmp"), "ipc-two-nodes-");
+    IpcService first = newIpcService();
+    IpcService second = newIpcService();
+    Path socketFile = null;
+    try {
+      parameter.ipcSocketDirectory = root.toString();
+      first.innerStart();
+      String firstPid = getPid(first);
+      socketFile = resolveSocketFilePath(parameter, firstPid);
+      assertNewConnectionSucceeds(socketFile);
+
+      // Model another JVM's PID while exercising the real service and Unix socket.
+      RuntimeMXBean secondRuntime = Mockito.mock(RuntimeMXBean.class);
+      Mockito.when(secondRuntime.getName()).thenReturn(firstPid + "0@localhost");
+      try (MockedStatic<ManagementFactory> management = Mockito.mockStatic(
+          ManagementFactory.class, Mockito.CALLS_REAL_METHODS)) {
+        management.when(ManagementFactory::getRuntimeMXBean).thenReturn(secondRuntime);
+        Assert.assertNotEquals(firstPid, getPid(second));
+        assertStartupRejectsExistingDirectory(second);
+      }
+      assertNewConnectionSucceeds(socketFile);
+      second.innerStop();
+      assertNewConnectionSucceeds(socketFile);
+      first.innerStop();
+      Assert.assertFalse(Files.exists(socketFile));
+      Assert.assertFalse(Files.exists(socketFile.getParent()));
+    } finally {
+      parameter.ipcSocketDirectory = originalSocketDirectory;
+      try {
+        second.innerStop();
+      } finally {
+        first.innerStop();
+        if (socketFile != null) {
+          Files.deleteIfExists(socketFile);
+          Files.deleteIfExists(socketFile.getParent());
+        }
+        Files.deleteIfExists(root);
+      }
+    }
+  }
+
+  @Test(timeout = 10_000)
+  public void testBindFailureCleansOwnedDirectoryAndReleasesOwnership() throws Exception {
+    assumePosixFileSystem();
+    CommonParameter parameter = Args.getInstance();
+    String originalSocketDirectory = parameter.ipcSocketDirectory;
+    Path root = Files.createTempDirectory(Paths.get("/tmp"), "ipc-bind-fail-");
+    Path directory = root.resolve("ipc");
+    IpcService service = newIpcService();
+    try {
+      parameter.ipcSocketDirectory = root.toString();
+      try (MockedStatic<AFUNIXServerSocket> sockets = Mockito.mockStatic(
+          AFUNIXServerSocket.class)) {
+        sockets.when(() -> AFUNIXServerSocket.bindOn(Mockito.any(AFUNIXSocketAddress.class)))
+            .thenThrow(new IOException("bind failed"));
+        try {
+          service.innerStart();
+          Assert.fail("Expected bind failure");
+        } catch (IOException e) {
+          Assert.assertEquals("bind failed", e.getMessage());
+        }
+      }
+      Assert.assertFalse(Files.exists(directory));
+      Files.createDirectory(directory);
+      service.innerStop();
+      Assert.assertTrue("Stop must not remove a replacement directory",
+          Files.isDirectory(directory));
+    } finally {
+      parameter.ipcSocketDirectory = originalSocketDirectory;
+      service.innerStop();
+      Files.deleteIfExists(directory);
+      Files.deleteIfExists(root);
+    }
+  }
+
+  @Test(timeout = 10_000)
+  public void testRepeatedStopPreservesReplacementPaths() throws Exception {
+    assumePosixFileSystem();
+    CommonParameter parameter = Args.getInstance();
+    String originalSocketDirectory = parameter.ipcSocketDirectory;
+    Path root = Files.createTempDirectory(Paths.get("/tmp"), "ipc-repeat-stop-");
+    IpcService service = newIpcService();
+    Path socketFile = null;
+    try {
+      parameter.ipcSocketDirectory = root.toString();
+      service.innerStart();
+      socketFile = resolveSocketFilePath(parameter, getPid(service));
+      service.innerStop();
+      Assert.assertFalse(Files.exists(socketFile.getParent()));
+      Files.createDirectory(socketFile.getParent());
+      byte[] contents = "replacement".getBytes(StandardCharsets.UTF_8);
+      Files.write(socketFile, contents);
+
+      service.innerStop();
+
+      Assert.assertArrayEquals(contents, Files.readAllBytes(socketFile));
+    } finally {
+      parameter.ipcSocketDirectory = originalSocketDirectory;
+      service.innerStop();
+      if (socketFile != null) {
+        Files.deleteIfExists(socketFile);
+        Files.deleteIfExists(socketFile.getParent());
+      }
+      Files.deleteIfExists(root);
     }
   }
 
@@ -457,6 +628,7 @@ public class IpcServiceTest {
     Mockito.doThrow(new IOException("server close failed")).when(serverSocket).close();
     setField(service, "unixServerSocket", serverSocket);
     setField(service, "socketFilePath", socketFile);
+    setField(service, "socketDirectoryPath", socketDirectory);
     getActiveClientSockets(service).add(clientSocket);
 
     try {
@@ -522,6 +694,7 @@ public class IpcServiceTest {
     Mockito.doThrow(new IOException("server close failed")).when(serverSocket).close();
     setField(service, "unixServerSocket", serverSocket);
     setField(service, "socketFilePath", socketDirectory.resolve("1234.sock"));
+    setField(service, "socketDirectoryPath", socketDirectory);
 
     try {
       service.innerStop();
@@ -530,6 +703,7 @@ public class IpcServiceTest {
       Assert.assertEquals("server close failed", e.getMessage());
       Assert.assertEquals(1, e.getSuppressed().length);
       Assert.assertTrue(e.getSuppressed()[0] instanceof IOException);
+      Assert.assertTrue("Unrelated files must survive cleanup", Files.exists(childFile));
     } finally {
       Files.deleteIfExists(childFile);
       Files.deleteIfExists(socketDirectory);
@@ -564,6 +738,30 @@ public class IpcServiceTest {
 
   private IpcService newIpcService() {
     return new IpcService(new AdminJsonRpcImpl());
+  }
+
+  private void assertStartupRejectsExistingDirectory(IpcService service) throws Exception {
+    try {
+      service.innerStart();
+      Assert.fail("Expected startup to reject an existing IPC directory");
+    } catch (TronError e) {
+      Assert.assertEquals(TronError.ErrCode.API_SERVER_INIT, e.getErrCode());
+      Assert.assertTrue(e.getMessage().contains("IPC directory already exists"));
+      Assert.assertTrue(e.getMessage().contains("remove it manually"));
+      Assert.assertFalse(isRunning(service));
+    }
+  }
+
+  private void assertNewConnectionSucceeds(Path socketFile) throws IOException {
+    try (AFUNIXSocket client = AFUNIXSocket.newInstance()) {
+      client.connect(AFUNIXSocketAddress.of(socketFile.toFile()));
+      client.setSoTimeout(2_000);
+      BufferedWriter writer = new BufferedWriter(
+          new OutputStreamWriter(client.getOutputStream(), StandardCharsets.UTF_8));
+      BufferedReader reader = new BufferedReader(
+          new InputStreamReader(client.getInputStream(), StandardCharsets.UTF_8));
+      assertSuccessfulResponse(sendRequest(writer, reader, 1), 1);
+    }
   }
 
   private void cleanupIpcService(IpcService service, boolean started, CommonParameter parameter,

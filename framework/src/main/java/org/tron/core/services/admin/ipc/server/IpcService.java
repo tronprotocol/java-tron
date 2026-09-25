@@ -55,6 +55,8 @@ public class IpcService extends AbstractService {
 
   private final Set<AFUNIXSocket> activeClientSockets = ConcurrentHashMap.newKeySet();
   private AFUNIXServerSocket unixServerSocket;
+  // Record paths only after this instance successfully creates the corresponding resource.
+  private Path socketDirectoryPath;
   private Path socketFilePath;
 
   private volatile boolean isRunning;
@@ -81,15 +83,17 @@ public class IpcService extends AbstractService {
   @Override
   public void innerStart() throws Exception {
     CommonParameter parameter = Args.getInstance();
-    socketFilePath = socketFiles.resolveSocketFilePath(parameter.getOutputDirectory(),
+    Path resolvedSocketFile = socketFiles.resolveSocketFilePath(parameter.getOutputDirectory(),
         parameter.getIpcSocketDirectory(), getPid());
-    Path socketDirectory = socketFilePath.getParent();
+    Path socketDirectory = resolvedSocketFile.getParent();
     socketFiles.validateSocketRootDirectory(socketDirectory.getParent());
     try {
-      socketFiles.recreateSocketDirectory(socketDirectory);
-      File socketFile = socketFilePath.toFile();
+      socketFiles.createSocketDirectory(socketDirectory);
+      socketDirectoryPath = socketDirectory;
+      File socketFile = resolvedSocketFile.toFile();
       AFUNIXSocketAddress address = AFUNIXSocketAddress.of(socketFile);
       unixServerSocket = AFUNIXServerSocket.bindOn(address);
+      socketFilePath = resolvedSocketFile;
       socketFiles.setOwnerOnlyPermissions(socketFilePath);
       unixServerSocket.setShutdownOnClose(true);
 
@@ -192,8 +196,7 @@ public class IpcService extends AbstractService {
         this::shutdownActiveClients,
         this::shutdownExecutors,
         activeClientSockets::clear,
-        () -> socketFiles.deleteSocketFile(socketFilePath),
-        () -> socketFiles.deleteSocketDirectory(socketFilePath));
+        this::deleteSocketFiles);
 
     if (failure != null) {
       throw failure;
@@ -203,7 +206,9 @@ public class IpcService extends AbstractService {
 
   private void closeServerSocket() throws IOException {
     if (unixServerSocket != null) {
-      unixServerSocket.close();
+      AFUNIXServerSocket serverSocket = unixServerSocket;
+      unixServerSocket = null;
+      serverSocket.close();
     }
   }
 
@@ -246,11 +251,19 @@ public class IpcService extends AbstractService {
   }
 
   private Exception rollbackStartup(Exception failure) {
-    if (unixServerSocket != null) {
-      failure = runCleanup(failure, this::closeServerSocket,
-          () -> socketFiles.deleteSocketFile(socketFilePath));
+    return runCleanup(failure, this::closeServerSocket, this::deleteSocketFiles);
+  }
+
+  private void deleteSocketFiles() throws Exception {
+    Exception failure = runCleanup(null,
+        () -> socketFiles.deleteSocketFile(socketFilePath),
+        () -> socketFiles.deleteSocketDirectory(socketDirectoryPath));
+    // A later stop must not remove resources created by another instance at the same paths.
+    socketFilePath = null;
+    socketDirectoryPath = null;
+    if (failure != null) {
+      throw failure;
     }
-    return runCleanup(failure, () -> socketFiles.deleteSocketDirectory(socketFilePath));
   }
 
   /**

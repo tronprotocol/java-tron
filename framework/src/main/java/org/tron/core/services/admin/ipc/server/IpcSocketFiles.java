@@ -2,12 +2,10 @@ package org.tron.core.services.admin.ipc.server;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.nio.file.DirectoryStream;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
-import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.PosixFileAttributeView;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
@@ -72,28 +70,16 @@ final class IpcSocketFiles {
     }
   }
 
-  void recreateSocketDirectory(Path socketDirectory) throws IOException {
-    if (Files.exists(socketDirectory, LinkOption.NOFOLLOW_LINKS)) {
-      BasicFileAttributes attributes = Files.readAttributes(socketDirectory,
-          BasicFileAttributes.class, LinkOption.NOFOLLOW_LINKS);
-      if (attributes.isSymbolicLink() || !attributes.isDirectory()) {
-        throw new TronError("Refusing to replace a non-directory IPC path",
-            ErrCode.API_SERVER_INIT);
-      }
-      deleteDirectoryWithDirectEntries(socketDirectory);
+  void createSocketDirectory(Path socketDirectory) throws IOException {
+    try {
+      Files.createDirectory(socketDirectory, PosixFilePermissions.asFileAttribute(
+          EnumSet.of(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE,
+              PosixFilePermission.OWNER_EXECUTE)));
+    } catch (FileAlreadyExistsException e) {
+      throw new TronError("IPC directory already exists. Startup aborted. "
+          + "Confirm that no node is using it, then remove it manually and retry.",
+          ErrCode.API_SERVER_INIT);
     }
-    Files.createDirectory(socketDirectory, PosixFilePermissions.asFileAttribute(
-        EnumSet.of(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE,
-            PosixFilePermission.OWNER_EXECUTE)));
-  }
-
-  private void deleteDirectoryWithDirectEntries(Path directory) throws IOException {
-    try (DirectoryStream<Path> entries = Files.newDirectoryStream(directory)) {
-      for (Path entry : entries) {
-        Files.delete(entry);
-      }
-    }
-    Files.delete(directory);
   }
 
   void setOwnerOnlyPermissions(Path socketFilePath) throws IOException {
@@ -107,9 +93,9 @@ final class IpcSocketFiles {
     }
   }
 
-  void deleteSocketDirectory(Path socketFilePath) throws IOException {
-    if (socketFilePath != null) {
-      Files.deleteIfExists(socketFilePath.getParent());
+  void deleteSocketDirectory(Path socketDirectory) throws IOException {
+    if (socketDirectory != null) {
+      Files.deleteIfExists(socketDirectory);
     }
   }
 }
