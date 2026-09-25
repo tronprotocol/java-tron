@@ -16,6 +16,7 @@ import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -117,7 +118,19 @@ public class IpcClientTest {
         String.join(System.lineSeparator(), "Available commands:",
             "  admin_example <param1:string> <param2:string>",
             "  help [command]", "  exit/quit", ""),
-        "Invalid cmd: unknown" + System.lineSeparator());
+        "Invalid command." + System.lineSeparator());
+  }
+
+  @Test(timeout = 10_000)
+  public void testExecLongUnknownCommandDoesNotEchoInputOrSendRequest() throws Exception {
+    char[] command = new char[100_000];
+    Arrays.fill(command, 'x');
+
+    assertLocalExec(new String(command), IpcClient.EXIT_FAILURE,
+        String.join(System.lineSeparator(), "Available commands:",
+            "  admin_example <param1:string> <param2:string>",
+            "  help [command]", "  exit/quit", ""),
+        "Invalid command." + System.lineSeparator());
   }
 
   @Test
@@ -165,6 +178,52 @@ public class IpcClientTest {
 
     Assert.assertEquals("Error -32603: Internal error" + System.lineSeparator(),
         errorOutput.toString("UTF-8"));
+  }
+
+  @Test
+  public void testExecRejectsInvalidResponses() throws Exception {
+    String valid = "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":true}";
+    for (String response : new String[] {"{\"result\":true}",
+        "{\"id\":1,\"result\":true}", "{\"jsonrpc\":\"2.0\",\"result\":true}",
+        "{\"jsonrpc\":\"1.0\",\"id\":1,\"result\":true}",
+        "{\"jsonrpc\":2.0,\"id\":1,\"result\":true}",
+        "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":true,\"error\":null}",
+        "{\"jsonrpc\":\"2.0\",\"id\":1}",
+        "{\"jsonrpc\":\"2.0\",\"id\":1,\"error\":{}}",
+        "{broken-sensitive-detail", "[]", valid + " garbage", valid + " " + valid}) {
+      assertExecResponse(new IpcClient("unused"), 1, response, IpcClient.EXIT_FAILURE, "",
+          "Invalid IPC response." + System.lineSeparator());
+    }
+  }
+
+  @Test
+  public void testExecRejectsMismatchedResponseIds() throws Exception {
+    for (String id : new String[] {"2", "\"1\"", "null", "4294967297", "1.5"}) {
+      String response = "{\"jsonrpc\":\"2.0\",\"id\":" + id + ",\"result\":true}";
+      assertExecResponse(new IpcClient("unused"), 1, response, IpcClient.EXIT_FAILURE, "",
+          "IPC response ID does not match request." + System.lineSeparator());
+    }
+  }
+
+  @Test
+  public void testExecAcceptsNullAndFalseResults() throws Exception {
+    for (String value : new String[] {"null", "false"}) {
+      String response = "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":" + value + "}";
+      assertExecResponse(new IpcClient("unused"), 1, response, IpcClient.EXIT_SUCCESS,
+          value + System.lineSeparator(), "");
+    }
+  }
+
+  @Test
+  public void testExecUsesEachCommandsRequestId() throws Exception {
+    IpcClient client = new IpcClient("unused");
+    assertExecResponse(client, 1, "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":true}",
+        IpcClient.EXIT_SUCCESS, "true" + System.lineSeparator(), "");
+    String secondResponse = "{\"jsonrpc\":\"2.0\",\"id\":2,\"result\":true}";
+    assertExecResponse(client, 2, secondResponse,
+        IpcClient.EXIT_SUCCESS, "true" + System.lineSeparator(), "");
+    assertExecResponse(client, 3, secondResponse, IpcClient.EXIT_FAILURE, "",
+        "IPC response ID does not match request." + System.lineSeparator());
   }
 
   @Test
@@ -294,9 +353,12 @@ public class IpcClientTest {
 
       Assert.assertTrue("IPC client did not start reading terminal input",
           inputStarted.await(5, TimeUnit.SECONDS));
-      serverConnection.getOutputStream().write("\nresponse\n\n".getBytes(StandardCharsets.UTF_8));
+      String responses = "\ninvalid-response\n"
+          + "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":\"response\"}\n\n";
+      serverConnection.getOutputStream().write(responses.getBytes(StandardCharsets.UTF_8));
       serverConnection.getOutputStream().flush();
       Mockito.verify(reader, Mockito.timeout(5_000)).printAbove("response");
+      Mockito.verify(reader).printAbove("Invalid IPC response.");
 
       serverConnection.close();
       sessionThread.join(5_000);
@@ -356,6 +418,34 @@ public class IpcClientTest {
         Assert.assertSame(expected, e);
       }
     }
+  }
+
+  private void assertExecResponse(IpcClient client, int requestId, String response, int exitCode,
+      String output, String error) throws Exception {
+    Socket socket = Mockito.mock(Socket.class);
+    ByteArrayOutputStream requestOutput = new ByteArrayOutputStream();
+    Mockito.when(socket.getOutputStream()).thenReturn(requestOutput);
+    Mockito.when(socket.getInputStream()).thenReturn(new ByteArrayInputStream(
+        (response + "\n").getBytes(StandardCharsets.UTF_8)));
+    PrintStream originalOut = System.out;
+    PrintStream originalErr = System.err;
+    ByteArrayOutputStream consoleOutput = new ByteArrayOutputStream();
+    ByteArrayOutputStream errorOutput = new ByteArrayOutputStream();
+    try (PrintStream capturedOut = new PrintStream(consoleOutput, true, "UTF-8");
+        PrintStream capturedErr = new PrintStream(errorOutput, true, "UTF-8")) {
+      System.setOut(capturedOut);
+      System.setErr(capturedErr);
+      Assert.assertEquals(response, exitCode, client.runExec(socket, "admin_example a b"));
+    } finally {
+      System.setOut(originalOut);
+      System.setErr(originalErr);
+    }
+    JsonNode request = OBJECT_MAPPER.readTree(requestOutput.toByteArray());
+    Assert.assertEquals(requestId, request.get("id").asInt());
+    Assert.assertEquals("admin_example", request.get("method").asText());
+    Assert.assertEquals(response, output, consoleOutput.toString("UTF-8"));
+    Assert.assertEquals(response, error, errorOutput.toString("UTF-8"));
+    Mockito.verify(socket).setSoTimeout(30_000);
   }
 
   private void assertLocalExec(String input, int exitCode, String output, String error)

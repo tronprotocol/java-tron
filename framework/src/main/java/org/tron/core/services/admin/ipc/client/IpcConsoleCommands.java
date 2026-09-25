@@ -66,21 +66,21 @@ final class IpcConsoleCommands {
 
   private Command prepare(List<String> words) throws JsonProcessingException {
     if (words.isEmpty()) {
-      return new Command(Action.EMPTY, null, null, null);
+      return new Command(Action.EMPTY, null, null, null, null);
     }
     String name = words.get(0).toLowerCase(Locale.ROOT);
     if ("exit".equals(name) || "quit".equals(name)) {
-      return new Command(Action.EXIT, null, null, null);
+      return new Command(Action.EXIT, null, null, null, null);
     }
     if ("help".equals(name)) {
       AdminCommand command = words.size() == 2
           ? adminCommands.get(words.get(1).toLowerCase(Locale.ROOT)) : null;
       String help = command == null ? buildHelp() : "usage: " + formatUsage(command);
-      return new Command(Action.HELP, null, help, null);
+      return new Command(Action.HELP, null, null, help, null);
     }
     AdminCommand command = adminCommands.get(name);
     if (command == null) {
-      return new Command(Action.ERROR, null, buildHelp(), "Invalid cmd: " + words.get(0));
+      return new Command(Action.ERROR, null, null, buildHelp(), "Invalid command.");
     }
     if (words.size() - 1 != command.parameters.size()) {
       return error("Invalid parameter, usage: " + formatUsage(command));
@@ -95,8 +95,9 @@ final class IpcConsoleCommands {
     request.put("jsonrpc", "2.0");
     request.put("method", command.name);
     request.put("params", values);
-    request.put("id", ++requestId);
-    return new Command(Action.REQUEST, OBJECT_MAPPER.writeValueAsString(request), null, null);
+    int id = ++requestId;
+    request.put("id", id);
+    return new Command(Action.REQUEST, OBJECT_MAPPER.writeValueAsString(request), id, null, null);
   }
 
   private List<String> parseCommandLine(String commandLine) {
@@ -214,20 +215,21 @@ final class IpcConsoleCommands {
   }
 
   private Command error(String message) {
-    return new Command(Action.ERROR, null, null, message);
+    return new Command(Action.ERROR, null, null, null, message);
   }
 
   enum Action {
     EMPTY, EXIT, HELP, REQUEST, ERROR
   }
 
-  /** Immutable result; only REQUEST carries wire data, while help/errors carry console text. */
+  /** Immutable command; only REQUEST carries wire data and a request ID. */
   @Getter(AccessLevel.PACKAGE)
   @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
   static final class Command {
 
     private final Action action;
     private final String request;
+    private final Integer requestId;
     private final String output;
     private final String error;
   }

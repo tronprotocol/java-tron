@@ -1,6 +1,7 @@
 package org.tron.core.services.admin.ipc.client;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AccessLevel;
@@ -21,32 +22,60 @@ final class IpcResponse {
   }
 
   /**
-   * Parses a JSON-RPC response into console text and a success flag.
+   * Validates a JSON-RPC response and formats it for the interactive console.
    *
-   * <p>A non-null error takes precedence over any result; otherwise, a result field, including
-   * a null value, marks the response as successful. Text results are unquoted and other values
-   * are formatted as JSON. Responses without a result are unsuccessful; empty or malformed
-   * input is preserved verbatim.
+   * <p>A response must declare version 2.0, contain an ID and exactly one of result or error.
+   * A result field, including a null value, marks a valid response as successful. Text results
+   * are unquoted and other values are formatted as JSON. Invalid responses use a fixed message.
    */
   static IpcResponse parse(String response) {
+    return parse(response, null);
+  }
+
+  /** Also verifies the numeric request ID when called for single-command execution. */
+  static IpcResponse parse(String response, Integer expectedId) {
     try {
-      JsonNode root = OBJECT_MAPPER.readTree(response);
-      if (root == null || root.isMissingNode()) {
-        return new IpcResponse(response, false);
+      JsonNode root = OBJECT_MAPPER.reader()
+          .with(DeserializationFeature.FAIL_ON_TRAILING_TOKENS).readTree(response);
+      if (!isValidEnvelope(root)) {
+        return invalidResponse();
       }
-      JsonNode error = root.get("error");
-      if (error != null && !error.isNull()) {
-        String code = error.has("code") ? " " + error.get("code").asText() : "";
-        String message = error.has("message") ? error.get("message").asText() : "Unknown error";
-        return new IpcResponse("Error" + code + ": " + message, false);
+      JsonNode id = root.get("id");
+      if (expectedId != null && (!id.isIntegralNumber() || !id.canConvertToInt()
+          || id.intValue() != expectedId)) {
+        return new IpcResponse("IPC response ID does not match request.", false);
       }
-      if (root.has("result")) {
-        return new IpcResponse(formatJsonValue(root.get("result")), true);
+      if (root.has("error")) {
+        return parseError(root.get("error"));
       }
-      return new IpcResponse(formatJsonValue(root), false);
+      // only output column "result" of jsonrpc and ignore other columns
+      return new IpcResponse(formatJsonValue(root.get("result")), true);
     } catch (JsonProcessingException e) {
-      return new IpcResponse(response, false);
+      return invalidResponse();
     }
+  }
+
+  private static boolean isValidEnvelope(JsonNode root) {
+    if (root == null || !root.isObject()
+        || !"2.0".equals(root.path("jsonrpc").textValue())
+        || !root.has("id") || root.has("result") == root.has("error")) {
+      return false;
+    }
+    JsonNode id = root.get("id");
+    return id.isTextual() || id.isNumber() || id.isNull();
+  }
+
+  private static IpcResponse parseError(JsonNode error) {
+    if (!error.isObject() || !error.path("code").isIntegralNumber()
+        || !error.path("message").isTextual()) {
+      return invalidResponse();
+    }
+    return new IpcResponse("Error " + error.get("code").asText()
+        + ": " + error.get("message").textValue(), false);
+  }
+
+  private static IpcResponse invalidResponse() {
+    return new IpcResponse("Invalid IPC response.", false);
   }
 
   private static String formatJsonValue(JsonNode value) throws JsonProcessingException {

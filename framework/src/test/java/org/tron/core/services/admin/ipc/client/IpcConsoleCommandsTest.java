@@ -23,6 +23,7 @@ public class IpcConsoleCommandsTest {
 
     Assert.assertEquals(Action.HELP, help.getAction());
     Assert.assertNull(help.getRequest());
+    Assert.assertNull(help.getRequestId());
     Assert.assertNull(help.getError());
     Assert.assertEquals(String.join(System.lineSeparator(),
         "Available commands:", "  admin_example <param1:string> <param2:string>",
@@ -93,12 +94,14 @@ public class IpcConsoleCommandsTest {
       Command command = commands.prepare(input);
       Assert.assertEquals(Action.EMPTY, command.getAction());
       Assert.assertNull(command.getRequest());
+      Assert.assertNull(command.getRequestId());
       Assert.assertNull(command.getError());
     }
     for (String input : new String[] {"exit", "QUIT", "Exit ignored"}) {
       Command command = commands.prepare(input);
       Assert.assertEquals(Action.EXIT, command.getAction());
       Assert.assertNull(command.getRequest());
+      Assert.assertNull(command.getRequestId());
       Assert.assertNull(command.getOutput());
       Assert.assertNull(command.getError());
     }
@@ -112,7 +115,7 @@ public class IpcConsoleCommandsTest {
   @Test
   public void testUnknownCommandIncludesHelpButArityErrorOnlyIncludesUsage() {
     Command unknown = commands.prepare("unknown secret");
-    assertError(unknown, "Invalid cmd: unknown");
+    assertError(unknown, "Invalid command.");
     Assert.assertEquals(commands.prepare("help").getOutput(), unknown.getOutput());
 
     Command wrongArity = commands.prepare("admin_example secret");
@@ -175,12 +178,17 @@ public class IpcConsoleCommandsTest {
     Assert.assertNull(command.getError());
     Assert.assertNull(command.getOutput());
     Assert.assertNotNull(command.getRequest());
-    return OBJECT_MAPPER.readTree(command.getRequest());
+    JsonNode request = OBJECT_MAPPER.readTree(command.getRequest());
+    Assert.assertNotNull(command.getRequestId());
+    Assert.assertTrue(request.get("id").isIntegralNumber());
+    Assert.assertEquals(command.getRequestId().intValue(), request.get("id").intValue());
+    return request;
   }
 
   private void assertError(Command command, String error) {
     Assert.assertEquals(Action.ERROR, command.getAction());
     Assert.assertNull(command.getRequest());
+    Assert.assertNull(command.getRequestId());
     Assert.assertEquals(error, command.getError());
   }
 
