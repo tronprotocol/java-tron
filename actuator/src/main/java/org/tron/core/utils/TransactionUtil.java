@@ -18,7 +18,6 @@ package org.tron.core.utils;
 import static org.tron.common.crypto.Hash.sha3omit12;
 import static org.tron.common.math.Maths.max;
 import static org.tron.core.config.Parameter.ChainConstant.DELEGATE_COST_BASE_SIZE;
-import static org.tron.core.Constant.PER_SIGN_LENGTH;
 import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 
 import com.google.common.base.CaseFormat;
@@ -38,6 +37,7 @@ import org.tron.api.GrpcAPI.Return.response_code;
 import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.GrpcAPI.TransactionSignWeight;
 import org.tron.api.GrpcAPI.TransactionSignWeight.Result;
+import org.tron.common.crypto.SignUtils;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.ChainBaseManager;
@@ -184,16 +184,15 @@ public class TransactionUtil {
         .replace("_", "");
   }
 
-  public static Transaction truncateSignatures(Transaction trx) {
-    Transaction.Builder builder = trx.toBuilder().clearSignature();
+  /**
+   * Checks every supplied query signature before recovery, without rewriting the transaction.
+   */
+  public static void validateSignatureLengths(Transaction trx) throws SignatureFormatException {
     for (ByteString sig : trx.getSignatureList()) {
-      if (sig.size() > PER_SIGN_LENGTH) {
-        builder.addSignature(ByteString.copyFrom(sig.substring(0, PER_SIGN_LENGTH).toByteArray()));
-      } else {
-        builder.addSignature(sig);
+      if (!SignUtils.isValidLength(sig.size())) {
+        throw new SignatureFormatException("Signature size is " + sig.size());
       }
     }
-    return builder.build();
   }
 
   public TransactionSignWeight getTransactionSignWeight(Transaction trx) {
@@ -207,7 +206,13 @@ public class TransactionUtil {
       return tswBuilder.build();
     }
 
-    trx = truncateSignatures(trx);
+    try {
+      validateSignatureLengths(trx);
+    } catch (SignatureFormatException e) {
+      return tswBuilder.setResult(resultBuilder.setCode(Result.response_code.SIGNATURE_FORMAT_ERROR)
+          .setMessage(e.getMessage())).build();
+    }
+
     TransactionExtention.Builder trxExBuilder = TransactionExtention.newBuilder();
     trxExBuilder.setTransaction(trx);
     trxExBuilder.setTxid(ByteString.copyFrom(Sha256Hash.hash(CommonParameter

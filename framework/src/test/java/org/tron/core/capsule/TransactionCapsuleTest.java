@@ -9,8 +9,13 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import com.google.protobuf.ByteString;
+import java.math.BigInteger;
+import java.security.SignatureException;
+import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
@@ -20,10 +25,18 @@ import org.junit.Test;
 import org.slf4j.LoggerFactory;
 import org.tron.common.BaseTest;
 import org.tron.common.TestConstants;
+import org.tron.common.crypto.ECKey;
+import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.Wallet;
 import org.tron.core.config.args.Args;
+import org.tron.core.exception.SignatureFormatException;
+import org.tron.core.exception.ValidateSignatureException;
+import org.tron.core.store.AccountStore;
+import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.protos.Protocol.AccountType;
+import org.tron.protos.Protocol.Key;
+import org.tron.protos.Protocol.Permission;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result;
@@ -62,6 +75,68 @@ public class TransactionCapsuleTest extends BaseTest {
     trxCap.setResultCode(contractResult);
     Assert.assertEquals(trxCap.getInstance()
         .getRet(0).getContractRet(), Result.contractResult.OUT_OF_TIME);
+  }
+
+  @Test
+  public void shouldGateStrictSignatureLength() throws Exception {
+    byte[] hash = new byte[32];
+    ECKey key = ECKey.fromPrivate(BigInteger.TEN);
+    Permission permission = permissionFor(key);
+    ByteString signature = ByteString.copyFrom(key.Base64toBytes(key.signHash(hash)));
+    ByteString padded = signature.concat(ByteString.copyFrom(new byte[3]));
+
+    Assert.assertEquals(1L, TransactionCapsule.checkWeight(
+        permission, Arrays.asList(signature), hash, null, true));
+    Assert.assertEquals(1L, TransactionCapsule.checkWeight(
+        permission, Arrays.asList(padded), hash, null, false));
+    Assert.assertThrows(SignatureFormatException.class,
+        () -> TransactionCapsule.checkWeight(
+            permission, Arrays.asList(padded), hash, null, true));
+  }
+
+  @Test
+  public void shouldRejectInvalidComponentsInStrictMode() {
+    byte[] hash = new byte[32];
+    ECKey key = ECKey.fromPrivate(BigInteger.TEN);
+    Permission permission = permissionFor(key);
+    byte[] signature = key.Base64toBytes(key.signHash(hash));
+    BigInteger curveOrder = ECKey.CURVE.getN();
+
+    for (BigInteger invalidScalar : Arrays.asList(
+        BigInteger.ZERO, curveOrder, curveOrder.add(BigInteger.ONE))) {
+      assertStrictComponentRejected(permission, hash,
+          replaceScalar(signature, 0, invalidScalar));
+      assertStrictComponentRejected(permission, hash,
+          replaceScalar(signature, 32, invalidScalar));
+    }
+
+    for (byte invalidV : new byte[]{8, 26, 35}) {
+      byte[] invalidSignature = Arrays.copyOf(signature, signature.length);
+      invalidSignature[64] = invalidV;
+      assertStrictComponentRejected(permission, hash, invalidSignature);
+    }
+  }
+
+  private byte[] replaceScalar(byte[] signature, int offset, BigInteger scalar) {
+    byte[] result = Arrays.copyOf(signature, signature.length);
+    System.arraycopy(ByteUtil.bigIntegerToBytes(scalar, 32), 0, result, offset, 32);
+    return result;
+  }
+
+  private void assertStrictComponentRejected(Permission permission, byte[] hash,
+      byte[] signature) {
+    Assert.assertThrows(SignatureException.class,
+        () -> TransactionCapsule.checkWeight(permission,
+            Arrays.asList(ByteString.copyFrom(signature)), hash, null, true));
+  }
+
+  private Permission permissionFor(ECKey key) {
+    return Permission.newBuilder()
+        .setThreshold(1)
+        .addKeys(Key.newBuilder()
+            .setAddress(ByteString.copyFrom(key.getAddress()))
+            .setWeight(1))
+        .build();
   }
 
   @Test
@@ -132,6 +207,67 @@ public class TransactionCapsuleTest extends BaseTest {
       appender.stop();
       capsuleLogger.detachAppender(appender);
       capsuleLogger.setLevel(originalLevel);
+    }
+  }
+
+  @Test
+  public void shouldInvalidateVerificationCacheAfterInFlightValidation() throws Exception {
+    CountDownLatch validationStarted = new CountDownLatch(1);
+    CountDownLatch continueValidation = new CountDownLatch(1);
+    CountDownLatch invalidationCompleted = new CountDownLatch(1);
+    AtomicReference<Throwable> failure = new AtomicReference<>();
+    Transaction transaction = Transaction.newBuilder()
+        .setRawData(raw.newBuilder()
+            .addContract(Transaction.Contract.newBuilder()
+                .setType(ContractType.TransferContract)))
+        .build();
+    TransactionCapsule capsule = new TransactionCapsule(transaction) {
+      @Override
+      public boolean validatePubSignature(AccountStore accountStore,
+          DynamicPropertiesStore dynamicPropertiesStore) throws ValidateSignatureException {
+        validationStarted.countDown();
+        try {
+          if (!continueValidation.await(5, TimeUnit.SECONDS)) {
+            throw new ValidateSignatureException("timed out waiting to continue validation");
+          }
+        } catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
+          throw new ValidateSignatureException("validation interrupted");
+        }
+        return true;
+      }
+    };
+
+    Thread validationThread = new Thread(() -> {
+      try {
+        capsule.validateSignature(null, null);
+      } catch (Throwable t) {
+        failure.set(t);
+      }
+    });
+    Thread invalidationThread = new Thread(() -> {
+      capsule.setVerified(false);
+      invalidationCompleted.countDown();
+    });
+
+    try {
+      validationThread.start();
+      Assert.assertTrue(validationStarted.await(5, TimeUnit.SECONDS));
+      invalidationThread.start();
+      Assert.assertFalse(invalidationCompleted.await(100, TimeUnit.MILLISECONDS));
+
+      continueValidation.countDown();
+      validationThread.join(TimeUnit.SECONDS.toMillis(5));
+      invalidationThread.join(TimeUnit.SECONDS.toMillis(5));
+
+      Assert.assertFalse(validationThread.isAlive());
+      Assert.assertFalse(invalidationThread.isAlive());
+      Assert.assertNull(failure.get());
+      Assert.assertFalse(capsule.isVerified());
+    } finally {
+      continueValidation.countDown();
+      validationThread.interrupt();
+      invalidationThread.interrupt();
     }
   }
 }
