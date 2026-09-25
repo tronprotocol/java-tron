@@ -119,9 +119,44 @@ public class AdminRpcServletTest {
   public void invalidJsonReturnsParseErrorBeforeInvocation() throws Exception {
     String valid = REQUEST_PREFIX + "0}";
     for (String body : new String[] {"", " \t\r\n", "{broken-sensitive-detail", REQUEST_PREFIX,
-        valid + " {broken", valid + " " + valid}) {
+        valid + " {broken", valid + " " + valid, "[" + valid,
+        "[" + valid + ",{broken]", "[" + valid + "] " + valid}) {
       assertParseError(doPost(body));
     }
+  }
+
+  @Test
+  public void emptyBatchIsRejectedBeforeInvocation() throws Exception {
+    assertBatchRejected("[]");
+  }
+
+  @Test
+  public void batchRequestsAreRejectedBeforeInvocation() throws Exception {
+    String first = REQUEST_PREFIX + "0}";
+    String second = "{\"jsonrpc\":\"2.0\",\"method\":\"admin_example\","
+        + "\"params\":[\"c\",\"d\"],\"id\":8}";
+
+    assertBatchRejected("[" + first + "]");
+    assertBatchRejected("[" + first + "," + second + "]");
+  }
+
+  @Test
+  public void notificationOnlyBatchIsRejectedBeforeInvocation() throws Exception {
+    String notification = "{\"jsonrpc\":\"2.0\",\"method\":\"admin_example\","
+        + "\"params\":[\"a\",\"b\"]}";
+
+    assertBatchRejected("[" + notification + "]");
+    assertBatchRejected("[" + notification + "," + notification + "]");
+  }
+
+  @Test
+  public void mixedBatchIsRejectedBeforeInvocation() throws Exception {
+    String notification = "{\"jsonrpc\":\"2.0\",\"method\":\"admin_example\","
+        + "\"params\":[\"c\",\"d\"]}";
+    String request = REQUEST_PREFIX + "0}";
+
+    assertBatchRejected("[" + notification + "," + request + "]");
+    assertBatchRejected("[" + request + "," + notification + "]");
   }
 
   @Test
@@ -322,6 +357,23 @@ public class AdminRpcServletTest {
     assertTrue(error.get("id").isNull());
     assertEquals(-32700, error.get("error").get("code").asInt());
     assertEquals("JSON parse error", error.get("error").get("message").asText());
+    assertEquals(2, error.get("error").size());
+    assertFalse(error.has("result"));
+    verifyNoInteractions(adminJsonRpc);
+  }
+
+  private void assertBatchRejected(String body) throws Exception {
+    MockHttpServletResponse response = doPost(body);
+
+    assertEquals(HttpServletResponse.SC_OK, response.getStatus());
+    assertTrue(JsonRpcMediaType.isSupported(response.getContentType()));
+    assertEquals(response.getContentAsByteArray().length, response.getContentLength());
+    JsonNode error = JsonRpcMapper.create().readTree(response.getContentAsByteArray());
+    assertTrue(error.isObject());
+    assertEquals("2.0", error.get("jsonrpc").asText());
+    assertTrue(error.get("id").isNull());
+    assertEquals(-32600, error.get("error").get("code").asInt());
+    assertEquals("Batch requests are not supported", error.get("error").get("message").asText());
     assertEquals(2, error.get("error").size());
     assertFalse(error.has("result"));
     verifyNoInteractions(adminJsonRpc);

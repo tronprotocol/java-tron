@@ -95,6 +95,40 @@ public class IpcRequestHandlerTest {
   }
 
   @Test
+  public void testEmptyBatchIsRejectedBeforeInvocation() throws Exception {
+    assertBatchRejected("[]");
+  }
+
+  @Test
+  public void testBatchRequestsAreRejectedBeforeInvocation() throws Exception {
+    String first = REQUEST_PREFIX + "0}";
+    String second = "{\"jsonrpc\":\"2.0\",\"method\":\"admin_example\","
+        + "\"params\":[\"c\",\"d\"],\"id\":12}";
+
+    assertBatchRejected("[" + first + "]");
+    assertBatchRejected("[" + first + "," + second + "]");
+  }
+
+  @Test
+  public void testNotificationOnlyBatchIsRejectedBeforeInvocation() throws Exception {
+    String notification = "{\"jsonrpc\":\"2.0\",\"method\":\"admin_example\","
+        + "\"params\":[\"a\",\"b\"]}";
+
+    assertBatchRejected("[" + notification + "]");
+    assertBatchRejected("[" + notification + "," + notification + "]");
+  }
+
+  @Test
+  public void testMixedBatchIsRejectedBeforeInvocation() throws Exception {
+    String notification = "{\"jsonrpc\":\"2.0\",\"method\":\"admin_example\","
+        + "\"params\":[\"c\",\"d\"]}";
+    String request = REQUEST_PREFIX + "0}";
+
+    assertBatchRejected("[" + notification + "," + request + "]");
+    assertBatchRejected("[" + request + "," + notification + "]");
+  }
+
+  @Test
   public void testIpcMapperRejectsExcessiveNestingBeforeInvocation() throws Exception {
     AdminJsonRpc adminJsonRpc = Mockito.mock(AdminJsonRpc.class);
     Mockito.when(adminJsonRpc.adminExample("a", "b")).thenReturn("a:b");
@@ -147,7 +181,8 @@ public class IpcRequestHandlerTest {
     IpcRequestHandler constrainedHandler = new IpcRequestHandler(adminJsonRpc, MAX_REQUEST_SIZE);
     String valid = REQUEST_PREFIX + "0}";
     for (String body : new String[] {"", " \t\r\n", "{broken-sensitive-detail", REQUEST_PREFIX,
-        valid + " {broken", valid + " " + valid}) {
+        valid + " {broken", valid + " " + valid, "[" + valid,
+        "[" + valid + ",{broken]", "[" + valid + "] " + valid}) {
       assertParseError(constrainedHandler.handleCommand(body));
     }
     Mockito.verifyNoInteractions(adminJsonRpc);
@@ -228,5 +263,25 @@ public class IpcRequestHandlerTest {
     Assert.assertEquals("JSON parse error", error.get("error").get("message").asText());
     Assert.assertEquals(2, error.get("error").size());
     Assert.assertFalse(error.has("result"));
+  }
+
+  private void assertBatchRejected(String body) throws Exception {
+    AdminJsonRpc adminJsonRpc = Mockito.mock(AdminJsonRpc.class);
+    IpcRequestHandler rejectingHandler = new IpcRequestHandler(adminJsonRpc, MAX_REQUEST_SIZE);
+
+    String response = rejectingHandler.handleCommand(body);
+
+    Assert.assertFalse(response.contains("\n"));
+    Assert.assertFalse(response.contains("\r"));
+    JsonNode error = OBJECT_MAPPER.readTree(response);
+    Assert.assertTrue(error.isObject());
+    Assert.assertEquals("2.0", error.get("jsonrpc").asText());
+    Assert.assertTrue(error.get("id").isNull());
+    Assert.assertEquals(-32600, error.get("error").get("code").asInt());
+    Assert.assertEquals("Batch requests are not supported",
+        error.get("error").get("message").asText());
+    Assert.assertEquals(2, error.get("error").size());
+    Assert.assertFalse(error.has("result"));
+    Mockito.verifyNoInteractions(adminJsonRpc);
   }
 }

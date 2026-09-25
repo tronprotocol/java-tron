@@ -8,6 +8,8 @@ import org.tron.core.exception.jsonrpc.JsonRpcInvalidParamsException;
 
 public interface AdminJsonRpc {
 
+  String BATCH_NOT_SUPPORTED_MESSAGE = "Batch requests are not supported";
+
   @JsonRpcMethod("admin_example")
   @JsonRpcErrors({
       @JsonRpcError(exception = JsonRpcInvalidParamsException.class, code = -32602, data = "{}"),

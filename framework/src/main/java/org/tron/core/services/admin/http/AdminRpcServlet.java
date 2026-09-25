@@ -35,7 +35,8 @@ import org.tron.core.services.jsonrpc.JsonRpcMediaType;
  *
  * <p>This endpoint is intended for trusted node operators. Deployments must restrict access to
  * loopback or a controlled management network. This low-frequency management endpoint intentionally
- * bypasses public API rate limiting and JSON-RPC batch-size and response-size limits.
+ * bypasses public API rate limiting and JSON-RPC response-size limits.
+ * Only individual request objects are supported; batch requests are rejected.
  * HTTP request-size limits are enforced by
  * {@link org.tron.common.application.HttpService}; JSON parser limits come from
  * {@link JsonRpcMapper}.
@@ -113,15 +114,21 @@ public class AdminRpcServlet extends HttpServlet {
       return;
     }
     byte[] body = ByteStreams.toByteArray(req.getInputStream());
+    JsonNode request;
     try {
-      JsonNode request = OBJECT_MAPPER.reader()
+      request = OBJECT_MAPPER.reader()
           .with(DeserializationFeature.FAIL_ON_TRAILING_TOKENS).readTree(body);
       if (request == null || request.isMissingNode()) {
-        writeParseError(resp);
+        writeErrorResponse(resp, JsonError.PARSE_ERROR.code, JsonError.PARSE_ERROR.message);
         return;
       }
     } catch (JsonProcessingException e) {
-      writeParseError(resp);
+      writeErrorResponse(resp, JsonError.PARSE_ERROR.code, JsonError.PARSE_ERROR.message);
+      return;
+    }
+    if (request.isArray()) {
+      writeErrorResponse(resp, JsonError.INVALID_REQUEST.code,
+          AdminJsonRpc.BATCH_NOT_SUPPORTED_MESSAGE);
       return;
     }
     ByteArrayOutputStream output = new ByteArrayOutputStream();
@@ -129,9 +136,10 @@ public class AdminRpcServlet extends HttpServlet {
     writeResponse(resp, output.toByteArray());
   }
 
-  private void writeParseError(HttpServletResponse resp) throws IOException {
-    byte[] body = OBJECT_MAPPER.writeValueAsBytes(JsonRpcMapper.createErrorResponse(
-        JsonError.PARSE_ERROR.code, JsonError.PARSE_ERROR.message, null));
+  private void writeErrorResponse(HttpServletResponse resp, int code, String message)
+      throws IOException {
+    byte[] body = OBJECT_MAPPER.writeValueAsBytes(
+        JsonRpcMapper.createErrorResponse(code, message, null));
     writeResponse(resp, body);
   }
 

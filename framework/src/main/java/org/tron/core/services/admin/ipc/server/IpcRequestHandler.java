@@ -20,6 +20,7 @@ import org.tron.core.services.jsonrpc.JsonRpcMapper;
 
 /**
  * Reads bounded IPC request lines and dispatches Admin JSON-RPC calls.
+ * Only individual request objects are supported; batch requests are rejected.
  * Per-request buffers are local so one handler can serve concurrent client connections.
  * Stream and socket ownership remains with {@link IpcService}.
  */
@@ -72,6 +73,10 @@ final class IpcRequestHandler {
       }
     } catch (JsonProcessingException e) {
       return buildErrorResponse(JsonError.PARSE_ERROR.code, JsonError.PARSE_ERROR.message, null);
+    }
+    if (request.isArray()) {
+      return buildErrorResponse(
+          JsonError.INVALID_REQUEST.code, AdminJsonRpc.BATCH_NOT_SUPPORTED_MESSAGE, null);
     }
     ByteArrayInputStream input =
         new ByteArrayInputStream(jsonRequest.getBytes(StandardCharsets.UTF_8));
