@@ -1,9 +1,10 @@
 package org.tron.core.services.admin.ipc.server;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.NullNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.googlecode.jsonrpc4j.ErrorResolver.JsonError;
 import com.googlecode.jsonrpc4j.JsonRpcServer;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -62,6 +63,16 @@ final class IpcRequestHandler {
   }
 
   String handleCommand(String jsonRequest) {
+    JsonNode request;
+    try {
+      request = OBJECT_MAPPER.reader()
+          .with(DeserializationFeature.FAIL_ON_TRAILING_TOKENS).readTree(jsonRequest);
+      if (request == null || request.isMissingNode()) {
+        return buildErrorResponse(JsonError.PARSE_ERROR.code, JsonError.PARSE_ERROR.message, null);
+      }
+    } catch (JsonProcessingException e) {
+      return buildErrorResponse(JsonError.PARSE_ERROR.code, JsonError.PARSE_ERROR.message, null);
+    }
     ByteArrayInputStream input =
         new ByteArrayInputStream(jsonRequest.getBytes(StandardCharsets.UTF_8));
     ByteArrayOutputStream output = new ByteArrayOutputStream();
@@ -75,30 +86,14 @@ final class IpcRequestHandler {
       return response == null ? "" : OBJECT_MAPPER.writeValueAsString(response);
     } catch (Exception e) {
       logger.debug("Failed to dispatch IPC request");
-      return buildInternalErrorResponse(jsonRequest);
+      return buildErrorResponse(-32603, "Internal error", request.get("id"));
     }
   }
 
-  private String buildInternalErrorResponse(String jsonRequest) {
-    JsonNode requestId = NullNode.getInstance();
+  private String buildErrorResponse(int code, String message, JsonNode requestId) {
     try {
-      JsonNode request = OBJECT_MAPPER.readTree(jsonRequest);
-      if (request != null && request.has("id")) {
-        requestId = request.get("id");
-      }
-    } catch (IOException e) {
-      logger.debug("Unable to read request id from invalid IPC request");
-    }
-
-    ObjectNode error = OBJECT_MAPPER.createObjectNode();
-    error.put("code", -32603);
-    error.put("message", "Internal error");
-    ObjectNode response = OBJECT_MAPPER.createObjectNode();
-    response.put("jsonrpc", "2.0");
-    response.set("error", error);
-    response.set("id", requestId);
-    try {
-      return OBJECT_MAPPER.writeValueAsString(response);
+      return OBJECT_MAPPER.writeValueAsString(
+          JsonRpcMapper.createErrorResponse(code, message, requestId));
     } catch (IOException e) {
       throw new IllegalStateException("Failed to serialize IPC error response", e);
     }

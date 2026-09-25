@@ -1,10 +1,17 @@
 package org.tron.core.services.admin.http;
 
-import com.googlecode.jsonrpc4j.HttpStatusCodeProvider;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.io.ByteStreams;
+import com.googlecode.jsonrpc4j.ErrorResolver.JsonError;
 import com.googlecode.jsonrpc4j.JsonRpcInterceptor;
 import com.googlecode.jsonrpc4j.JsonRpcServer;
 import com.googlecode.jsonrpc4j.ProxyUtil;
 import io.prometheus.client.Histogram;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Collections;
 import javax.servlet.ServletConfig;
@@ -38,6 +45,7 @@ import org.tron.core.services.jsonrpc.JsonRpcMediaType;
 public class AdminRpcServlet extends HttpServlet {
 
   private static final long serialVersionUID = 0L;
+  private static final ObjectMapper OBJECT_MAPPER = JsonRpcMapper.create();
 
   private JsonRpcServer rpcServer = null;
   private VirtualHostValidator virtualHostValidator =
@@ -64,22 +72,8 @@ public class AdminRpcServlet extends HttpServlet {
         true);
 
     // Keep parser constraints and annotation-based error mapping consistent with the IPC transport.
-    rpcServer = new JsonRpcServer(JsonRpcMapper.create(), compositeService);
+    rpcServer = new JsonRpcServer(OBJECT_MAPPER, compositeService);
     rpcServer.setErrorResolver(JsonRpcErrorResolver.INSTANCE);
-
-    // JSON-RPC result codes belong in the response body. HTTP validation below still uses 403/415.
-    HttpStatusCodeProvider httpStatusCodeProvider = new HttpStatusCodeProvider() {
-      @Override
-      public int getHttpStatusCode(int resultCode) {
-        return 200;
-      }
-
-      @Override
-      public Integer getJsonRpcCode(int httpStatusCode) {
-        return null;
-      }
-    };
-    rpcServer.setHttpStatusCodeProvider(httpStatusCodeProvider);
 
     rpcServer.setShouldLogInvocationErrors(false);
     if (CommonParameter.getInstance().isMetricsPrometheusEnable()) {
@@ -103,7 +97,7 @@ public class AdminRpcServlet extends HttpServlet {
   }
 
   /**
-   * Applies HTTP-specific checks before handing request parsing and dispatch to jsonrpc4j.
+   * Validates HTTP headers and JSON input before dispatching through jsonrpc4j.
    */
   @Override
   protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
@@ -118,6 +112,35 @@ public class AdminRpcServlet extends HttpServlet {
       resp.setContentLength(0);
       return;
     }
-    rpcServer.handle(req, resp);
+    byte[] body = ByteStreams.toByteArray(req.getInputStream());
+    try {
+      JsonNode request = OBJECT_MAPPER.reader()
+          .with(DeserializationFeature.FAIL_ON_TRAILING_TOKENS).readTree(body);
+      if (request == null || request.isMissingNode()) {
+        writeParseError(resp);
+        return;
+      }
+    } catch (JsonProcessingException e) {
+      writeParseError(resp);
+      return;
+    }
+    ByteArrayOutputStream output = new ByteArrayOutputStream();
+    rpcServer.handleRequest(new ByteArrayInputStream(body), output);
+    writeResponse(resp, output.toByteArray());
+  }
+
+  private void writeParseError(HttpServletResponse resp) throws IOException {
+    byte[] body = OBJECT_MAPPER.writeValueAsBytes(JsonRpcMapper.createErrorResponse(
+        JsonError.PARSE_ERROR.code, JsonError.PARSE_ERROR.message, null));
+    writeResponse(resp, body);
+  }
+
+  private void writeResponse(HttpServletResponse resp, byte[] body) throws IOException {
+    // JSON-RPC result codes belong in the response body. HTTP validation still uses 403/415.
+    resp.setContentType("application/json-rpc");
+    resp.setStatus(HttpServletResponse.SC_OK);
+    resp.setContentLength(body.length);
+    resp.getOutputStream().write(body);
+    resp.getOutputStream().flush();
   }
 }

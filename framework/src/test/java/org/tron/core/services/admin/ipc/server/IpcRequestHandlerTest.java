@@ -23,6 +23,9 @@ public class IpcRequestHandlerTest {
 
   private static final int MAX_REQUEST_SIZE = 128;
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+  private static final String REQUEST_PREFIX =
+      "{\"jsonrpc\":\"2.0\",\"method\":\"admin_example\","
+          + "\"params\":[\"a\",\"b\"],\"id\":11,\"extra\":";
   private final IpcRequestHandler handler =
       new IpcRequestHandler(new AdminJsonRpcImpl(), MAX_REQUEST_SIZE);
 
@@ -60,9 +63,6 @@ public class IpcRequestHandlerTest {
       Assert.assertFalse(response, response.contains("sensitive-detail"));
       Assert.assertFalse(response, response.contains("\n"));
 
-      JsonNode malformed = OBJECT_MAPPER.readTree(failingHandler.handleCommand("{broken"));
-      Assert.assertEquals(-32603, malformed.get("error").get("code").asInt());
-      Assert.assertTrue(malformed.get("id").isNull());
     }
   }
 
@@ -99,10 +99,8 @@ public class IpcRequestHandlerTest {
     AdminJsonRpc adminJsonRpc = Mockito.mock(AdminJsonRpc.class);
     Mockito.when(adminJsonRpc.adminExample("a", "b")).thenReturn("a:b");
     IpcRequestHandler constrainedHandler = new IpcRequestHandler(adminJsonRpc, MAX_REQUEST_SIZE);
-    String requestPrefix = "{\"jsonrpc\":\"2.0\",\"method\":\"admin_example\","
-        + "\"params\":[\"a\",\"b\"],\"id\":11,\"extra\":";
     JsonNode valid = OBJECT_MAPPER.readTree(
-        constrainedHandler.handleCommand(requestPrefix + "[0]}"));
+        constrainedHandler.handleCommand(REQUEST_PREFIX + "[0]}"));
     Assert.assertEquals("a:b", valid.get("result").asText());
     Mockito.verify(adminJsonRpc).adminExample("a", "b");
     Mockito.clearInvocations(adminJsonRpc);
@@ -115,11 +113,55 @@ public class IpcRequestHandlerTest {
     for (int i = 0; i <= Constant.MAX_NESTING_DEPTH; i++) {
       nested.append(']');
     }
-    JsonNode rejected = OBJECT_MAPPER.readTree(
-        constrainedHandler.handleCommand(requestPrefix + nested + "}"));
-    Assert.assertTrue(rejected.toString(), rejected.has("error"));
-    Assert.assertFalse(rejected.has("result"));
+    assertParseError(constrainedHandler.handleCommand(REQUEST_PREFIX + nested + "}"));
     Mockito.verifyNoInteractions(adminJsonRpc);
+  }
+
+  @Test
+  public void testIpcMapperRejectsExcessiveTokensBeforeInvocation() throws Exception {
+    AdminJsonRpc adminJsonRpc = Mockito.mock(AdminJsonRpc.class);
+    Mockito.when(adminJsonRpc.adminExample("a", "b")).thenReturn("a:b");
+    IpcRequestHandler constrainedHandler = new IpcRequestHandler(adminJsonRpc, MAX_REQUEST_SIZE);
+    JsonNode valid = OBJECT_MAPPER.readTree(
+        constrainedHandler.handleCommand(REQUEST_PREFIX + "[0]}"));
+    Assert.assertEquals("a:b", valid.get("result").asText());
+    Mockito.verify(adminJsonRpc).adminExample("a", "b");
+    Mockito.clearInvocations(adminJsonRpc);
+
+    StringBuilder request = new StringBuilder(REQUEST_PREFIX + "[");
+    for (int i = 0; i < Constant.MAX_TOKEN_COUNT; i++) {
+      if (i > 0) {
+        request.append(',');
+      }
+      request.append('0');
+    }
+    request.append("]}");
+
+    assertParseError(constrainedHandler.handleCommand(request.toString()));
+    Mockito.verifyNoInteractions(adminJsonRpc);
+  }
+
+  @Test
+  public void testInvalidJsonReturnsParseErrorBeforeInvocation() throws Exception {
+    AdminJsonRpc adminJsonRpc = Mockito.mock(AdminJsonRpc.class);
+    IpcRequestHandler constrainedHandler = new IpcRequestHandler(adminJsonRpc, MAX_REQUEST_SIZE);
+    String valid = REQUEST_PREFIX + "0}";
+    for (String body : new String[] {"", " \t\r\n", "{broken-sensitive-detail", REQUEST_PREFIX,
+        valid + " {broken", valid + " " + valid}) {
+      assertParseError(constrainedHandler.handleCommand(body));
+    }
+    Mockito.verifyNoInteractions(adminJsonRpc);
+  }
+
+  @Test
+  public void testStringNullRequestIdIsPreserved() throws Exception {
+    JsonNode response = OBJECT_MAPPER.readTree(handler.handleCommand(
+        "{\"jsonrpc\":\"2.0\",\"method\":\"admin_example\","
+            + "\"params\":[\"a\",\"b\"],\"id\":\"null\"}"));
+
+    Assert.assertTrue(response.get("id").isTextual());
+    Assert.assertEquals("null", response.get("id").asText());
+    Assert.assertEquals("a:b", response.get("result").asText());
   }
 
   @Test
@@ -174,5 +216,17 @@ public class IpcRequestHandlerTest {
     } catch (RequestTooLargeException expected) {
       // Zero must not silently fall back to a default limit.
     }
+  }
+
+  private void assertParseError(String response) throws Exception {
+    Assert.assertFalse(response.contains("\n"));
+    Assert.assertFalse(response.contains("\r"));
+    JsonNode error = OBJECT_MAPPER.readTree(response);
+    Assert.assertEquals("2.0", error.get("jsonrpc").asText());
+    Assert.assertTrue(error.get("id").isNull());
+    Assert.assertEquals(-32700, error.get("error").get("code").asInt());
+    Assert.assertEquals("JSON parse error", error.get("error").get("message").asText());
+    Assert.assertEquals(2, error.get("error").size());
+    Assert.assertFalse(error.has("result"));
   }
 }
