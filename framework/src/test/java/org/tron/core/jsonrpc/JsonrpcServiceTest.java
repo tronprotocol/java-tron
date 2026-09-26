@@ -41,6 +41,7 @@ import org.eclipse.jetty.http.HttpStatus;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
 import org.tron.common.BaseTest;
 import org.tron.common.TestConstants;
 import org.tron.common.application.HttpService;
@@ -103,6 +104,10 @@ public class JsonrpcServiceTest extends BaseTest {
   private static final long LATEST_SOLIDIFIED_BLOCK_NUM = 4L;
   private static final String TAG_NOT_SUPPORT_ERROR =
       "TAG [earliest | pending | finalized | safe] not supported";
+  // Well-formed selectors that do not identify a block in the test chain.
+  private static final String MISSING_BLOCK_HASH =
+      "0x1111111111111111111111111111111111111111111111111111111111111111";
+  private static final String MISSING_BLOCK_NUMBER = "0x5f5e100";
 
   private static TronJsonRpcImpl tronJsonRpc;
   @Resource
@@ -359,13 +364,11 @@ public class JsonrpcServiceTest extends BaseTest {
     Assert.assertEquals(blockCapsule1.getTransactions().size(),
         blockResult.getTransactions().length);
 
-    try {
-      blockResult = tronJsonRpc.ethGetBlockByHash(
-          Hex.toHexString(blockCapsule1.getBlockId().getBytes()), null);
-    } catch (Exception e) {
-      Assert.fail(e.getMessage());
-    }
-    Assert.assertTrue(blockResult.getTransactions()[0] instanceof String);
+    JsonRpcInvalidParamsException nullFullTxByHashError = Assert.assertThrows(
+        JsonRpcInvalidParamsException.class,
+        () -> tronJsonRpc.ethGetBlockByHash(
+            Hex.toHexString(blockCapsule1.getBlockId().getBytes()), null));
+    Assert.assertEquals("invalid params", nullFullTxByHashError.getMessage());
 
     JsonRpcInvalidParamsException nullHashError = Assert.assertThrows(
         JsonRpcInvalidParamsException.class,
@@ -386,12 +389,10 @@ public class JsonrpcServiceTest extends BaseTest {
     }
     Assert.assertEquals(ByteArray.toJsonHex(blockCapsule1.getNum()), blockResult.getNumber());
 
-    try {
-      blockResult = tronJsonRpc.ethGetBlockByNumber("latest", null);
-    } catch (Exception e) {
-      Assert.fail(e.getMessage());
-    }
-    Assert.assertTrue(blockResult.getTransactions()[0] instanceof String);
+    JsonRpcInvalidParamsException nullFullTxByNumberError = Assert.assertThrows(
+        JsonRpcInvalidParamsException.class,
+        () -> tronJsonRpc.ethGetBlockByNumber("latest", null));
+    Assert.assertEquals("invalid params", nullFullTxByNumberError.getMessage());
 
     JsonRpcInvalidParamsException nullNumberError = Assert.assertThrows(
         JsonRpcInvalidParamsException.class,
@@ -762,17 +763,50 @@ public class JsonrpcServiceTest extends BaseTest {
         JsonRpcInvalidParamsException.class, () -> tronJsonRpc.newFilter(null));
     Assert.assertEquals("invalid filter request", newFilterError.getMessage());
 
-    Assert.assertFalse(tronJsonRpc.uninstallFilter(null));
+    JsonRpcInvalidParamsException uninstallError = Assert.assertThrows(
+        JsonRpcInvalidParamsException.class, () -> tronJsonRpc.uninstallFilter(null));
+    Assert.assertEquals("invalid params", uninstallError.getMessage());
 
-    ItemNotFoundException changesError = Assert.assertThrows(ItemNotFoundException.class,
-        () -> tronJsonRpc.getFilterChanges(null));
-    Assert.assertEquals("filter not found", changesError.getMessage());
+    JsonRpcInvalidParamsException changesError = Assert.assertThrows(
+        JsonRpcInvalidParamsException.class, () -> tronJsonRpc.getFilterChanges(null));
+    Assert.assertEquals("invalid params", changesError.getMessage());
 
-    ItemNotFoundException filterLogsError = Assert.assertThrows(ItemNotFoundException.class,
-        () -> tronJsonRpc.getFilterLogs(null));
-    Assert.assertEquals("filter not found", filterLogsError.getMessage());
+    JsonRpcInvalidParamsException filterLogsError = Assert.assertThrows(
+        JsonRpcInvalidParamsException.class, () -> tronJsonRpc.getFilterLogs(null));
+    Assert.assertEquals("invalid params", filterLogsError.getMessage());
 
     Assert.assertFalse(tronJsonRpc.uninstallFilter("0xdeadbeef"));
+
+    String existingHash = ByteArray.toJsonHex(blockCapsule1.getBlockId().getBytes());
+    for (String hash : new String[] {existingHash, MISSING_BLOCK_HASH}) {
+      JsonRpcInvalidParamsException e = Assert.assertThrows(hash,
+          JsonRpcInvalidParamsException.class, () -> tronJsonRpc.ethGetBlockByHash(hash, null));
+      Assert.assertEquals(hash, "invalid params", e.getMessage());
+    }
+    for (String number : new String[] {"latest", MISSING_BLOCK_NUMBER}) {
+      JsonRpcInvalidParamsException e = Assert.assertThrows(number,
+          JsonRpcInvalidParamsException.class,
+          () -> tronJsonRpc.ethGetBlockByNumber(number, null));
+      Assert.assertEquals(number, "invalid params", e.getMessage());
+    }
+
+    // Parameter 0 is validated before the flag, so its error wins when both are invalid.
+    JsonRpcInvalidParamsException bothInvalidByHash = Assert.assertThrows(
+        JsonRpcInvalidParamsException.class, () -> tronJsonRpc.ethGetBlockByHash(null, null));
+    Assert.assertEquals("invalid hash value", bothInvalidByHash.getMessage());
+    JsonRpcInvalidParamsException bothInvalidByNumber = Assert.assertThrows(
+        JsonRpcInvalidParamsException.class, () -> tronJsonRpc.ethGetBlockByNumber(null, null));
+    Assert.assertEquals("invalid block number", bothInvalidByNumber.getMessage());
+
+    JsonRpcInvalidParamsException badHash = Assert.assertThrows(
+        JsonRpcInvalidParamsException.class, () -> tronJsonRpc.ethGetBlockByHash("0xzz", null));
+    Assert.assertEquals("invalid hash value", badHash.getMessage());
+    JsonRpcInvalidParamsException emptyHexNumber = Assert.assertThrows(
+        JsonRpcInvalidParamsException.class, () -> tronJsonRpc.ethGetBlockByNumber("0x", null));
+    Assert.assertEquals("invalid block number", emptyHexNumber.getMessage());
+    JsonRpcInvalidParamsException safeTag = Assert.assertThrows(
+        JsonRpcInvalidParamsException.class, () -> tronJsonRpc.ethGetBlockByNumber("safe", null));
+    Assert.assertEquals(TAG_SAFE_SUPPORT_ERROR, safeTag.getMessage());
 
     JsonRpcInvalidParamsException receiptError = Assert.assertThrows(
         JsonRpcInvalidParamsException.class, () -> tronJsonRpc.getTransactionReceipt(null));
@@ -799,24 +833,34 @@ public class JsonrpcServiceTest extends BaseTest {
     assertMappedError(handleJsonRpc(server, "eth_call", jsonParams(null, "latest")),
         -32602, "invalid params");
 
-    JSONObject uninstallNull = handleJsonRpc(
-        server, "eth_uninstallFilter", jsonParams((Object) null));
-    assertBooleanResult(uninstallNull, false);
-
+    assertMappedError(handleJsonRpc(server, "eth_uninstallFilter", jsonParams((Object) null)),
+        -32602, "invalid params");
     assertBooleanResult(handleJsonRpc(server, "eth_uninstallFilter",
         jsonParams("0xdeadbeef")), false);
     assertMappedError(handleJsonRpc(server, "eth_getFilterChanges", jsonParams((Object) null)),
-        -32000, "filter not found");
+        -32602, "invalid params");
     assertMappedError(handleJsonRpc(server, "eth_getFilterLogs", jsonParams((Object) null)),
-        -32000, "filter not found");
+        -32602, "invalid params");
 
     String blockHash = ByteArray.toJsonHex(blockCapsule1.getBlockId().getBytes());
-    JSONObject blockByHash = handleJsonRpc(
-        server, "eth_getBlockByHash", jsonParams(blockHash, null));
-    assertHashOnlyTransactions(blockByHash);
-    JSONObject blockByNumber = handleJsonRpc(
-        server, "eth_getBlockByNumber", jsonParams("latest", null));
-    assertHashOnlyTransactions(blockByNumber);
+    for (String hash : new String[] {blockHash, MISSING_BLOCK_HASH}) {
+      assertMappedError(handleJsonRpc(server, "eth_getBlockByHash", jsonParams(hash, null)),
+          -32602, "invalid params");
+    }
+    for (String number : new String[] {"latest", MISSING_BLOCK_NUMBER}) {
+      assertMappedError(handleJsonRpc(server, "eth_getBlockByNumber", jsonParams(number, null)),
+          -32602, "invalid params");
+    }
+    assertMappedError(handleJsonRpc(server, "eth_getBlockByHash", jsonParams(null, null)),
+        -32602, "invalid hash value");
+    assertMappedError(handleJsonRpc(server, "eth_getBlockByNumber", jsonParams(null, null)),
+        -32602, "invalid block number");
+    assertMappedError(handleJsonRpc(server, "eth_getBlockByHash", jsonParams("0xzz", null)),
+        -32602, "invalid hash value");
+    assertMappedError(handleJsonRpc(server, "eth_getBlockByNumber", jsonParams("0x", null)),
+        -32602, "invalid block number");
+    assertMappedError(handleJsonRpc(server, "eth_getBlockByNumber", jsonParams("safe", null)),
+        -32602, TAG_SAFE_SUPPORT_ERROR);
 
     assertMappedError(handleJsonRpc(server, "eth_getBlockByHash", jsonParams(null, true)),
         -32602, "invalid hash value");
@@ -842,10 +886,28 @@ public class JsonrpcServiceTest extends BaseTest {
   @Test
   public void testUninstallFilterLookupMisses() throws Exception {
     JsonRpcServer server = newJsonRpcServer();
-    for (String filterId : new String[] {null, "0xdeadbeef", "", "0x", "not-hex", "0xz"}) {
+    for (String filterId : new String[] {"0xdeadbeef", "", "0x", "not-hex", "0xz"}) {
       Assert.assertFalse("filter ID: " + filterId, tronJsonRpc.uninstallFilter(filterId));
       assertBooleanResult(handleJsonRpc(server, "eth_uninstallFilter", jsonParams(filterId)),
           false);
+    }
+  }
+
+  @Test
+  public void testNullFullTransactionObjectsRejectedBeforeBlockLookup() throws Exception {
+    Wallet mockWallet = Mockito.mock(Wallet.class);
+    try (TronJsonRpcImpl rpc = new TronJsonRpcImpl(nodeInfoService, mockWallet)) {
+      String hash = ByteArray.toJsonHex(blockCapsule1.getBlockId().getBytes());
+      Assert.assertThrows(JsonRpcInvalidParamsException.class,
+          () -> rpc.ethGetBlockByHash(hash, null));
+      for (String selector : new String[] {"latest", "earliest", "finalized", "0x1"}) {
+        Assert.assertThrows(selector, JsonRpcInvalidParamsException.class,
+            () -> rpc.ethGetBlockByNumber(selector, null));
+      }
+      // Resolving "finalized" reads the solidified block number, not a block.
+      Mockito.verify(mockWallet, Mockito.never()).getBlockById(Mockito.any());
+      Mockito.verify(mockWallet, Mockito.never()).getBlockByNum(Mockito.anyLong());
+      Mockito.verify(mockWallet, Mockito.never()).getNowBlock();
     }
   }
 
@@ -2103,14 +2165,6 @@ public class JsonrpcServiceTest extends BaseTest {
   private static void assertBooleanResult(JSONObject response, boolean expected) {
     Assert.assertEquals(response.toJSONString(), Boolean.valueOf(expected), response.get("result"));
     Assert.assertFalse(response.toJSONString(), response.containsKey("error"));
-  }
-
-  private static void assertHashOnlyTransactions(JSONObject response) {
-    JSONObject result = response.getJSONObject("result");
-    Assert.assertNotNull(response.toJSONString(), result);
-    JSONArray transactions = result.getJSONArray("transactions");
-    Assert.assertTrue(transactions.size() > 0);
-    Assert.assertTrue(transactions.get(0) instanceof String);
   }
 
   private static JsonObject newTransferBuildArguments() {
