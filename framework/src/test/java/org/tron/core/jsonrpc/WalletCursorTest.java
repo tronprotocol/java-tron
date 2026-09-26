@@ -16,7 +16,6 @@ import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.db2.core.Chainbase.Cursor;
-import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.jsonrpc.JsonRpcExceedLimitException;
 import org.tron.core.exception.jsonrpc.JsonRpcInvalidParamsException;
 import org.tron.core.exception.jsonrpc.JsonRpcMethodNotFoundException;
@@ -73,10 +72,11 @@ public class WalletCursorTest extends BaseTest {
           () -> tronJsonRpc.newFilter(null));
       Assert.assertThrows(JsonRpcInvalidParamsException.class,
           () -> tronJsonRpc.getLogs(null));
-      Assert.assertFalse(tronJsonRpc.uninstallFilter(null));
-      Assert.assertThrows(ItemNotFoundException.class,
+      Assert.assertThrows(JsonRpcInvalidParamsException.class,
+          () -> tronJsonRpc.uninstallFilter(null));
+      Assert.assertThrows(JsonRpcInvalidParamsException.class,
           () -> tronJsonRpc.getFilterChanges(null));
-      Assert.assertThrows(ItemNotFoundException.class,
+      Assert.assertThrows(JsonRpcInvalidParamsException.class,
           () -> tronJsonRpc.getFilterLogs(null));
       Assert.assertThrows(JsonRpcMethodNotFoundException.class,
           () -> tronJsonRpc.buildTransaction(null));
@@ -95,6 +95,9 @@ public class WalletCursorTest extends BaseTest {
           () -> tronJsonRpc.getFilterLogs(null));
       Assert.assertThrows(JsonRpcMethodNotFoundException.class,
           () -> tronJsonRpc.buildTransaction(null));
+      // Block queries stay available on PBFT, so a null flag reaches the parameter check.
+      Assert.assertThrows(JsonRpcInvalidParamsException.class,
+          () -> tronJsonRpc.ethGetBlockByNumber("latest", null));
     } finally {
       dbManager.resetCursor();
       tronJsonRpc.close();
