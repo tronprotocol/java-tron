@@ -5,6 +5,8 @@ import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.paramStringIsNull;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.parseQuantityValue;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.requireValidHex;
 
+import com.fasterxml.jackson.annotation.JsonSetter;
+import com.fasterxml.jackson.annotation.Nulls;
 import com.google.protobuf.ByteString;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -20,6 +22,13 @@ import org.tron.core.services.jsonrpc.JsonRpcApiUtil.HexMode;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 
+/**
+ * Arguments for EVM call-style JSON-RPC methods.
+ *
+ * <p>Fields annotated with {@link JsonSetter} retain their defaults when an explicit JSON
+ * {@code null} is deserialized. This protection applies to Jackson input only; direct setter calls
+ * may still assign {@code null} and callers must preserve the DTO invariants.
+ */
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
@@ -27,6 +36,7 @@ public class CallArguments {
 
   @Getter
   @Setter
+  @JsonSetter(nulls = Nulls.SKIP)
   private String from = "0x0000000000000000000000000000000000000000";
   @Getter
   @Setter

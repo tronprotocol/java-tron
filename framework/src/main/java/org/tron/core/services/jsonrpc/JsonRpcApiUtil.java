@@ -63,6 +63,7 @@ public class JsonRpcApiUtil {
   public static final String TAG_SAFE_SUPPORT_ERROR = "TAG safe not supported";
   public static final String BLOCK_NUM_ERROR = "invalid block number";
   public static final String TX_INDEX_ERROR = "invalid index value";
+  public static final String INVALID_FILTER_REQUEST = "invalid filter request";
 
   private static final SecureRandom random = new SecureRandom();
 
