@@ -982,9 +982,13 @@ public class PrecompiledContracts {
       }
 
       PairingCheck check = PairingCheck.create();
+      long deadlineNs = pairingDeadlineNs();
 
       // iterating over all pairs
       for (int offset = 0; offset < data.length; offset += PAIR_SIZE) {
+        if (deadlineNs < System.nanoTime()) {
+          throw Program.Exception.notEnoughTime("precompiled contract pair");
+        }
 
         Pair<BN128G1, BN128G2> pair = decodePair(data, offset);
 
@@ -996,10 +1000,21 @@ public class PrecompiledContracts {
         check.addPair(pair.getLeft(), pair.getRight());
       }
 
-      check.run();
+      if (!check.run(deadlineNs)) {
+        throw Program.Exception.notEnoughTime("precompiled contract pair");
+      }
       int result = check.result();
 
       return Pair.of(true, new DataWord(result).getData());
+    }
+
+    /** Same skip as {@link Program#checkCPUTimeLimit}: debug and solidity nodes do not enforce it. */
+    private long pairingDeadlineNs() {
+      if (CommonParameter.getInstance().isDebug()
+          || CommonParameter.getInstance().isSolidityNode()) {
+        return Long.MAX_VALUE;
+      }
+      return getVmShouldEndInUs() * VMConstant.ONE_THOUSAND;
     }
 
     private Pair<BN128G1, BN128G2> decodePair(byte[] in, int offset) {

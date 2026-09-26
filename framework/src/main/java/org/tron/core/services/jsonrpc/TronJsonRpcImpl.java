@@ -627,7 +627,8 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
     }
 
     StorageRowStore store = manager.getStorageRowStore();
-    Storage storage = new Storage(addressByte, store);
+    Storage storage = new Storage(addressByte, store,
+        manager.getDynamicPropertiesStore().allowOptimizeTvmStorage());
     storage.setContractVersion(smartContract.getVersion());
     storage.generateAddrHash(smartContract.getTrxHash().toByteArray());
 
