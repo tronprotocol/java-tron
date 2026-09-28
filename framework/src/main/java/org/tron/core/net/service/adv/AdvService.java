@@ -377,7 +377,7 @@ public class AdvService {
     invSender.sendInv();
   }
 
-  class InvSender {
+  private class InvSender {
 
     private HashMap<PeerConnection, HashMap<InventoryType, LinkedList<Sha256Hash>>> send
         = new HashMap<>();
@@ -433,7 +433,7 @@ public class AdvService {
       }));
     }
 
-    void sendFetch() {
+    private void sendFetch() {
       send.forEach((peer, ids) -> ids.forEach((key, value) -> {
         if (key.equals(InventoryType.BLOCK)) {
           value.sort(Comparator.comparingLong(value1 -> new BlockId(value1).getNum()));

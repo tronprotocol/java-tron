@@ -60,7 +60,7 @@ public class FetchBlockService {
   }
 
   public synchronized void fetchBlock(List<Sha256Hash> sha256HashList, PeerConnection peer) {
-    if (sha256HashList.size() > 0) {
+    if (!sha256HashList.isEmpty()) {
       logger.info("Begin fetch block {} from {}",
           new BlockCapsule.BlockId(sha256HashList.get(0)).getString(),
           peer.getInetAddress());
@@ -71,9 +71,10 @@ public class FetchBlockService {
       return;
     }
     fetchBlockInfo = null;
-    sha256HashList.stream().filter(sha256Hash -> new BlockCapsule.BlockId(sha256Hash).getNum()
-        == headNum + 1)
-        .findFirst().ifPresent(sha256Hash -> {
+    sha256HashList.stream()
+        .filter(sha256Hash -> new BlockCapsule.BlockId(sha256Hash).getNum() == headNum + 1)
+        .findFirst()
+        .ifPresent(sha256Hash -> {
           Long requestTime = peer.getAdvInvRequest().get(new Item(sha256Hash, InventoryType.BLOCK));
           if (requestTime != null) {
             fetchBlockInfo = new FetchBlockInfo(sha256Hash, peer, requestTime);
@@ -82,7 +83,6 @@ public class FetchBlockService {
           }
         });
   }
-
 
   public synchronized void blockFetchSuccess(Sha256Hash sha256Hash) {
     FetchBlockInfo fetchBlockInfoTemp = this.fetchBlockInfo;
@@ -173,7 +173,5 @@ public class FetchBlockService {
       this.hash = hash;
       this.time = time;
     }
-
   }
-
 }
