@@ -738,7 +738,7 @@ public class JsonRpcApiUtil {
       throws JsonRpcPrunedHistoryException {
     long lowestReceiptBlockNum = wallet.getLowestBlockNumOfReceiptStore();
     if (lowestReceiptBlockNum == Long.MAX_VALUE
-        || wallet.isLiteNode() && blockNum < lowestReceiptBlockNum) {
+        || (wallet.isLiteNode() && blockNum < lowestReceiptBlockNum)) {
       throw new JsonRpcPrunedHistoryException(PRUNED_HISTORY_ERROR);
     }
   }
