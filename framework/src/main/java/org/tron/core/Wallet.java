@@ -201,7 +201,6 @@ import org.tron.core.store.MarketPairToPriceStore;
 import org.tron.core.store.StoreFactory;
 import org.tron.core.store.VotesStore;
 import org.tron.core.store.WitnessStore;
-import org.tron.core.utils.ResultCodeUtil;
 import org.tron.core.utils.TransactionUtil;
 import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.program.Program;
@@ -3200,8 +3199,6 @@ public class Wallet {
     ret.setStatus(0, code.SUCESS);
     if (StringUtils.isNoneEmpty(result.getRuntimeError())) {
       ret.setStatus(0, code.FAILED);
-      // same failure classification as executed transactions
-      ret.setResultCode(ResultCodeUtil.resolve(result.getException()));
       retBuilder
           .setMessage(ByteString.copyFromUtf8(result.getRuntimeError()))
           .build();

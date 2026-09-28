@@ -934,6 +934,7 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
    * @return List of TransactionReceipt objects for all transactions in the block,
    * null if block not found
    * @throws JsonRpcInvalidParamsException if the parameter format is invalid
+   * @throws JsonRpcPrunedHistoryException if the node does not have the block's receipts
    * @throws JsonRpcInternalException if there's an internal error
    */
   @Override
@@ -950,14 +951,13 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
       block = getBlockByNumOrTag(blockNumOrHashOrTag);
     }
 
-    // block receipts not available: block is genesis, not produced yet, or pruned in light node
+    // block receipts not available: block is genesis, not produced yet, or unknown hash
     if (block == null || block.getBlockHeader().getRawData().getNumber() == 0) {
       return null;
     }
 
     BlockCapsule blockCapsule = new BlockCapsule(block);
     long blockNum = blockCapsule.getNum();
-    int transactionSizeInBlock = blockCapsule.getTransactions().size();
     // below the receipt floor the body exists but the receipts do not — 4444, not -32000
     JsonRpcApiUtil.checkPrunedReceiptHistory(blockNum, wallet);
     TransactionInfoList transactionInfoList = wallet.getTransactionInfoByBlockNum(blockNum);
@@ -966,6 +966,7 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
     long energyFee = wallet.getEnergyFee(blockCapsule.getTimeStamp());
 
     // Validate transaction list size consistency
+    int transactionSizeInBlock = blockCapsule.getTransactions().size();
     if (transactionSizeInBlock != transactionInfoList.getTransactionInfoCount()) {
       throw new JsonRpcInternalException(
           String.format("TransactionList size mismatch: "

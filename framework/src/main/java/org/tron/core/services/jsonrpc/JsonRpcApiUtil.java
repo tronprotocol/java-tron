@@ -704,7 +704,7 @@ public class JsonRpcApiUtil {
 
   /**
    * The lowest block for which everything the node persists is available; what "earliest"
-   * resolves to and what a 4444 error carries in {@code data}. On a LiteNode this is the
+   * resolves to. On a LiteNode this is the
    * receipt floor when receipts are persisted, otherwise the body floor (receipt endpoints
    * answer 4444 on such a node regardless of this value). On a FullNode it is genesis.
    */
@@ -723,7 +723,7 @@ public class JsonRpcApiUtil {
   public static void checkPrunedHistory(long blockNum, Wallet wallet)
       throws JsonRpcPrunedHistoryException {
     if (wallet.isLiteNode() && blockNum < wallet.getLowestBlockNum()) {
-      throw prunedHistory(earliestAvailableBlock(wallet));
+      throw new JsonRpcPrunedHistoryException(PRUNED_HISTORY_ERROR);
     }
   }
 
@@ -736,21 +736,9 @@ public class JsonRpcApiUtil {
   public static void checkPrunedReceiptHistory(long blockNum, Wallet wallet)
       throws JsonRpcPrunedHistoryException {
     long receiptFloor = wallet.getLowestReceiptBlockNum();
-    if (receiptFloor == Long.MAX_VALUE) {
+    if (receiptFloor == Long.MAX_VALUE || wallet.isLiteNode() && blockNum < receiptFloor) {
       throw new JsonRpcPrunedHistoryException(PRUNED_HISTORY_ERROR);
     }
-    if (wallet.isLiteNode() && blockNum < receiptFloor) {
-      throw prunedHistory(receiptFloor);
-    }
-  }
-
-  /**
-   * The Execution API fixes the message verbatim; the earliest available block travels in
-   * {@code data} so a client can pick a fallback node from it.
-   */
-  private static JsonRpcPrunedHistoryException prunedHistory(long earliestAvailable) {
-    return new JsonRpcPrunedHistoryException(PRUNED_HISTORY_ERROR,
-        "0x" + Long.toHexString(earliestAvailable));
   }
 
   /**

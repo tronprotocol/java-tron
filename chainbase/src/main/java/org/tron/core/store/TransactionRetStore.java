@@ -2,7 +2,6 @@ package org.tron.core.store;
 
 import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
-import java.util.Map;
 import java.util.Objects;
 import java.util.OptionalLong;
 import lombok.extern.slf4j.Slf4j;
@@ -48,13 +47,8 @@ public class TransactionRetStore extends TronStoreWithRevoking<TransactionRetCap
    * layers, {@code getNext} does not merge deletions correctly.
    */
   public OptionalLong getLowestBlockNum() {
-    Map<byte[], byte[]> entries = revokingDB.getNext(ByteArray.fromLong(0), 1);
-    for (byte[] key : entries.keySet()) {
-      if (key.length == Long.BYTES) {
-        return OptionalLong.of(Longs.fromByteArray(key));
-      }
-    }
-    return OptionalLong.empty();
+    return revokingDB.getNext(ByteArray.fromLong(0), 1).keySet().stream()
+        .mapToLong(Longs::fromByteArray).findFirst();
   }
 
   public TransactionInfoCapsule getTransactionInfo(byte[] key) throws BadItemException {

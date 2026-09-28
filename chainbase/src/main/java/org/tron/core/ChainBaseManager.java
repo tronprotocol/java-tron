@@ -248,7 +248,6 @@ public class ChainBaseManager {
 
   // lowest block with receipts; above lowestBlockNum on a LiteNode
   @Getter
-  @Setter
   private long lowestReceiptBlockNum = -1;
 
   @Getter

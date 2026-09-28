@@ -1387,6 +1387,35 @@ public class WalletTest extends BaseTest {
   }
 
   @Test
+  @SneakyThrows
+  public void testTriggerConstantRevertSetsContractRet() {
+    String contractAddress = "0x1A622D84ed49f01045f5f1a5AfcEb9c57e9cC3cd";
+
+    SmartContractOuterClass.SmartContract smartContract =
+        SmartContractOuterClass.SmartContract.newBuilder().build();
+    ContractCapsule capsule = new ContractCapsule(smartContract);
+    dbManager.getContractStore().put(ByteArray.fromHexString(contractAddress), capsule);
+
+    // PUSH1 0 PUSH1 0 REVERT
+    CodeCapsule codeCapsule = new CodeCapsule(ByteArray.fromHexString("60006000fd"));
+    dbManager.getCodeStore().put(ByteArray.fromHexString(contractAddress), codeCapsule);
+
+    SmartContractOuterClass.TriggerSmartContract contract =
+        SmartContractOuterClass.TriggerSmartContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+            .setContractAddress(ByteString.copyFrom(ByteArray.fromHexString(contractAddress)))
+            .build();
+    TransactionCapsule trxCap = wallet.createTransactionCapsule(contract,
+        ContractType.TriggerSmartContract);
+
+    Transaction tx = wallet.triggerConstantContract(contract, trxCap,
+        GrpcAPI.TransactionExtention.newBuilder(), GrpcAPI.Return.newBuilder());
+    Assert.assertEquals(Transaction.Result.code.FAILED, tx.getRet(0).getRet());
+    Assert.assertEquals(Transaction.Result.contractResult.REVERT,
+        tx.getRet(0).getContractRet());
+  }
+
+  @Test
   public void testListNodes() {
     try {
       wallet.listNodes();

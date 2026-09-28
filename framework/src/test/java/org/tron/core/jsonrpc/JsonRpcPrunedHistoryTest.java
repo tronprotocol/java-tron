@@ -29,7 +29,6 @@ public class JsonRpcPrunedHistoryTest {
   private static final long RECEIPT_FLOOR_BLOCK_NUM = 150L;
   private static final long HEAD_BLOCK_NUM = 200L;
   private static final String PRUNED_MESSAGE = "Pruned history unavailable";
-  private static final String BODY_FLOOR_HEX = "0x64";
   private static final String BELOW_CUTOFF_HEX = "0x10";
   private static final String AT_CUTOFF_HEX = "0x64";
   private static final long IN_RECEIPT_GAP_NUM = 112L;
@@ -101,18 +100,7 @@ public class JsonRpcPrunedHistoryTest {
     JsonRpcPrunedHistoryException e = assertThrows(JsonRpcPrunedHistoryException.class,
         () -> liteRpc.ethGetBlockByNumber(BELOW_CUTOFF_HEX, false));
     Assert.assertEquals(PRUNED_MESSAGE, e.getMessage());
-    // data carries the same height "earliest" resolves to, not the endpoint's own floor
-    Assert.assertEquals(RECEIPT_FLOOR_HEX, e.getData());
-  }
-
-  @Test
-  public void testGetBlockByNumberBelowCutoffWithHistoryOffReportsBodyFloor() {
-    rpc = new TronJsonRpcImpl(mock(NodeInfoService.class), newHistoryOffMockWallet());
-
-    JsonRpcPrunedHistoryException e = assertThrows(JsonRpcPrunedHistoryException.class,
-        () -> rpc.ethGetBlockByNumber(BELOW_CUTOFF_HEX, false));
-    Assert.assertEquals(PRUNED_MESSAGE, e.getMessage());
-    Assert.assertEquals(BODY_FLOOR_HEX, e.getData());
+    Assert.assertNull(e.getData());
   }
 
   @Test
@@ -167,7 +155,7 @@ public class JsonRpcPrunedHistoryTest {
     JsonRpcPrunedHistoryException e = assertThrows(JsonRpcPrunedHistoryException.class,
         () -> liteRpc.ethGetBlockTransactionCountByNumber(BELOW_CUTOFF_HEX));
     Assert.assertEquals(PRUNED_MESSAGE, e.getMessage());
-    Assert.assertEquals(RECEIPT_FLOOR_HEX, e.getData());
+    Assert.assertNull(e.getData());
   }
 
   @Test
@@ -177,7 +165,7 @@ public class JsonRpcPrunedHistoryTest {
     JsonRpcPrunedHistoryException e = assertThrows(JsonRpcPrunedHistoryException.class,
         () -> liteRpc.getTransactionByBlockNumberAndIndex(BELOW_CUTOFF_HEX, "0x0"));
     Assert.assertEquals(PRUNED_MESSAGE, e.getMessage());
-    Assert.assertEquals(RECEIPT_FLOOR_HEX, e.getData());
+    Assert.assertNull(e.getData());
   }
 
   @Test
@@ -187,18 +175,15 @@ public class JsonRpcPrunedHistoryTest {
     JsonRpcPrunedHistoryException e = assertThrows(JsonRpcPrunedHistoryException.class,
         () -> liteRpc.getBlockReceipts(BELOW_CUTOFF_HEX));
     Assert.assertEquals(PRUNED_MESSAGE, e.getMessage());
-    Assert.assertEquals(RECEIPT_FLOOR_HEX, e.getData());
+    Assert.assertNull(e.getData());
   }
 
   @Test
-  public void testGetBlockReceiptsBelowCutoffWithHistoryOffReportsBodyFloor() {
-    // with receipts never persisted, "earliest" falls back to the body floor and so does data
+  public void testGetBlockReceiptsFutureBlockWithHistoryOffReturnsNull() throws Exception {
+    // a block that does not exist yet is not pruned history
     rpc = new TronJsonRpcImpl(mock(NodeInfoService.class), newHistoryOffMockWallet());
 
-    JsonRpcPrunedHistoryException e = assertThrows(JsonRpcPrunedHistoryException.class,
-        () -> rpc.getBlockReceipts(BELOW_CUTOFF_HEX));
-    Assert.assertEquals(PRUNED_MESSAGE, e.getMessage());
-    Assert.assertEquals(BODY_FLOOR_HEX, e.getData());
+    Assert.assertNull(rpc.getBlockReceipts("0x7fffffff"));
   }
 
   @Test
@@ -209,7 +194,7 @@ public class JsonRpcPrunedHistoryTest {
     JsonRpcPrunedHistoryException e = assertThrows(JsonRpcPrunedHistoryException.class,
         () -> liteRpc.getLogs(fr));
     Assert.assertEquals(PRUNED_MESSAGE, e.getMessage());
-    Assert.assertEquals(RECEIPT_FLOOR_HEX, e.getData());
+    Assert.assertNull(e.getData());
   }
 
   @Test
@@ -220,7 +205,7 @@ public class JsonRpcPrunedHistoryTest {
     JsonRpcPrunedHistoryException e = assertThrows(JsonRpcPrunedHistoryException.class,
         () -> liteRpc.newFilter(fr));
     Assert.assertEquals(PRUNED_MESSAGE, e.getMessage());
-    Assert.assertEquals(RECEIPT_FLOOR_HEX, e.getData());
+    Assert.assertNull(e.getData());
   }
 
   @Test
@@ -273,7 +258,7 @@ public class JsonRpcPrunedHistoryTest {
     JsonRpcPrunedHistoryException e = assertThrows(JsonRpcPrunedHistoryException.class,
         () -> liteRpc.getLogs(fr));
     Assert.assertEquals(PRUNED_MESSAGE, e.getMessage());
-    Assert.assertEquals(RECEIPT_FLOOR_HEX, e.getData());
+    Assert.assertNull(e.getData());
   }
 
   @Test
@@ -286,12 +271,12 @@ public class JsonRpcPrunedHistoryTest {
     JsonRpcPrunedHistoryException e = assertThrows(JsonRpcPrunedHistoryException.class,
         () -> rpc.getBlockReceipts(IN_RECEIPT_GAP_HEX));
     Assert.assertEquals(PRUNED_MESSAGE, e.getMessage());
-    Assert.assertEquals(RECEIPT_FLOOR_HEX, e.getData());
+    Assert.assertNull(e.getData());
   }
 
   @Test
   public void testGetBlockReceiptsEmptyBlockInReceiptGapReturns4444() {
-    // the floor is checked before the body is read, so an empty block is not special-cased
+    // the floor check ignores the transaction count, so an empty block is not special-cased
     Wallet wallet = newMockWallet(true);
     when(wallet.getBlockByNum(IN_RECEIPT_GAP_NUM))
         .thenReturn(newBlock(IN_RECEIPT_GAP_NUM, 0));
@@ -300,7 +285,7 @@ public class JsonRpcPrunedHistoryTest {
     JsonRpcPrunedHistoryException e = assertThrows(JsonRpcPrunedHistoryException.class,
         () -> rpc.getBlockReceipts(IN_RECEIPT_GAP_HEX));
     Assert.assertEquals(PRUNED_MESSAGE, e.getMessage());
-    Assert.assertEquals(RECEIPT_FLOOR_HEX, e.getData());
+    Assert.assertNull(e.getData());
   }
 
   @Test
