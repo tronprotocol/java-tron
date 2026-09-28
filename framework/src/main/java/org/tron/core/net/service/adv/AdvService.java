@@ -44,6 +44,7 @@ import org.tron.protos.Protocol.Inventory.InventoryType;
 @Slf4j(topic = "net")
 @Component
 public class AdvService {
+
   private final int MAX_INV_TO_FETCH_CACHE_SIZE = 100_000;
   private final int MAX_TRX_CACHE_SIZE = 50_000;
   private final int MAX_BLOCK_CACHE_SIZE = 10;
@@ -162,8 +163,8 @@ public class AdvService {
   public int fastBroadcastTransaction(TransactionMessage msg) {
 
     List<PeerConnection> peers = tronNetDelegate.getActivePeer().stream()
-            .filter(peer -> !peer.isNeedSyncFromPeer() && !peer.isNeedSyncFromUs())
-            .collect(Collectors.toList());
+        .filter(peer -> !peer.isNeedSyncFromPeer() && !peer.isNeedSyncFromUs())
+        .collect(Collectors.toList());
 
     if (peers.size() == 0) {
       logger.warn("Broadcast transaction {} failed, no connection", msg.getMessageId());
@@ -179,9 +180,9 @@ public class AdvService {
     InventoryMessage inventoryMessage = new InventoryMessage(list, InventoryType.TRX);
 
     int peersCount = 0;
-    for (PeerConnection peer: peers) {
+    for (PeerConnection peer : peers) {
       if (peer.getAdvInvReceive().getIfPresent(item) == null
-              && peer.getAdvInvSpread().getIfPresent(item) == null) {
+          && peer.getAdvInvSpread().getIfPresent(item) == null) {
         peersCount++;
         peer.getAdvInvSpread().put(item, Time.getCurrentMillis());
         peer.sendMessage(inventoryMessage);
@@ -233,12 +234,14 @@ public class AdvService {
   }
 
   public void onDisconnect(PeerConnection peer) {
+    // Release this peer's retry tracking before looking for another outstanding request.
     fetchBlockService.onDisconnect(peer);
     if (!peer.getAdvInvRequest().isEmpty()) {
       peer.getAdvInvRequest().keySet().forEach(item -> {
         synchronized (this) {
           Collection<PeerConnection> peers = tronNetDelegate.getActivePeer().stream()
               .filter(p -> !p.equals(peer) && !p.isDisconnect()).collect(Collectors.toList());
+          // Another provider may have already delivered the block.
           if (item.getType() == InventoryType.BLOCK
               && (blockCache.getIfPresent(item) != null
               || tronNetDelegate.containBlock(new BlockId(item.getHash())))) {
@@ -248,14 +251,17 @@ public class AdvService {
             Optional<PeerConnection> pending = peers.stream()
                 .filter(p -> p.getAdvInvRequest().containsKey(item)).findFirst();
             if (pending.isPresent()) {
+              // Reuse the pending request and its original timestamp instead of sending it again.
               fetchBlockService.fetchBlock(Collections.singletonList(item.getHash()),
                   pending.get());
               return;
             }
           }
           if (peers.stream().anyMatch(p -> p.getAdvInvReceive().getIfPresent(item) != null)) {
+            // Let normal scheduling select a replacement from the remaining advertisers.
             invToFetch.put(item, System.currentTimeMillis());
           } else {
+            // Allow future announcements to enqueue the item again when no source remains.
             invToFetch.remove(item);
             invToFetchCache.invalidate(item);
           }
@@ -263,18 +269,21 @@ public class AdvService {
       });
     }
 
-    if (invToFetch.size() > 0) {
+    if (!invToFetch.isEmpty()) {
       consumerInvToFetch();
     }
   }
 
   private void consumerInvToFetch() {
+    // Snapshot connected peers; block fetching can still use peers with pending TRX requests.
     Collection<PeerConnection> peers = tronNetDelegate.getActivePeer().stream()
         .filter(peer -> !peer.isDisconnect())
         .collect(Collectors.toList());
     Collection<PeerConnection> trxPeers = peers.stream().filter(PeerConnection::isIdle)
         .collect(Collectors.toList());
+    // Batch sizes count requests assigned in this pass, not all outstanding requests on a peer.
     InvSender invSender = new InvSender();
+    // Coordinate queue updates with inventory admission, other consumers, and disconnect recovery.
     synchronized (this) {
       if (invToFetch.isEmpty() || peers.isEmpty()) {
         return;
@@ -284,21 +293,28 @@ public class AdvService {
       invToFetch.forEach((item, time) -> {
         long timeout = item.getType() == InventoryType.BLOCK ? NetConstants.ADV_TIME_OUT : TIMEOUT;
         if (time < now - timeout) {
+          // Release the deduplication entry so a later announcement can enqueue this item again.
           logger.info("This obj is too late to fetch, type: {} hash: {}", item.getType(),
-                  item.getHash());
+              item.getHash());
           invToFetch.remove(item);
           invToFetchCache.invalidate(item);
           return;
         }
         if (item.getType() == InventoryType.BLOCK) {
+          // Defer block allocation until all queued blocks can be ordered by height.
           blocks.add(item);
           return;
         }
-        trxPeers.stream().filter(peer -> {
-          Long t = peer.getAdvInvReceive().getIfPresent(item);
-          return t != null && now - t < TIMEOUT && invSender.getSize(peer) < MAX_TRX_FETCH_PER_PEER;
-        }).sorted(Comparator.comparingInt(peer -> invSender.getSize(peer)))
-            .findFirst().ifPresent(peer -> {
+        // Use recent advertisers, enforce the per-peer TRX batch limit, and prefer smaller batches.
+        trxPeers.stream()
+            .filter(peer -> {
+              Long t = peer.getAdvInvReceive().getIfPresent(item);
+              return t != null && now - t < TIMEOUT
+                  && invSender.getSize(peer) < MAX_TRX_FETCH_PER_PEER;
+            })
+            .min(Comparator.comparingInt(invSender::getSize))
+            .ifPresent(peer -> {
+              // Reserve the request before sending; an existing request must not be sent again.
               if (peer.checkAndPutAdvInvRequest(item, now)) {
                 invSender.add(item, peer);
               }
@@ -309,13 +325,17 @@ public class AdvService {
       // Reserve peers for earlier blocks before later blocks can make them busy.
       blocks.sort(Comparator.comparingLong(item -> new BlockId(item.getHash()).getNum()));
       blocks.forEach(item -> {
+        // A cached, stored, or already requested block no longer needs an initial fetch.
         if (blockCache.getIfPresent(item) != null
             || tronNetDelegate.containBlock(new BlockId(item.getHash()))
             || peers.stream().anyMatch(peer -> peer.getAdvInvRequest().containsKey(item))) {
           invToFetch.remove(item);
           return;
         }
-        peers.stream().filter(peer -> fetchBlockService.canFetchBlock(peer, item, now))
+        // Recheck eligibility after earlier reservations. Initial fetches prefer smaller batches;
+        // latency ranking is reserved for backup fetches in FetchBlockService.
+        peers.stream()
+            .filter(peer -> fetchBlockService.canFetchBlock(peer, item, now))
             .min(Comparator.comparingInt(invSender::getSize))
             .ifPresent(peer -> {
               if (peer.checkAndPutAdvInvRequest(item, now)) {
@@ -324,8 +344,10 @@ public class AdvService {
               }
             });
       });
+      // Items without an eligible provider remain queued for a later pass.
     }
 
+    // Send outside the scheduling lock; sendFetch() registers block retry state before sending.
     invSender.sendFetch();
   }
 
