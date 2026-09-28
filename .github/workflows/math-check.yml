@@ -19,30 +19,9 @@ jobs:
         shell: bash
         run: |
           echo "Checking for java.lang.Math usage..."
-          
-          touch math_usage.txt
-          
-          while IFS= read -r file; do
-            filename=$(basename "$file")
-            if [[ "$filename" == "StrictMathWrapper.java" || "$filename" == "MathWrapper.java" ]]; then
-              continue
-            fi
-          
-            perl -0777 -ne '
-              s/"([^"\\]|\\.)*"//g;
-              s/'\''([^'\''\\]|\\.)*'\''//g;
-              s!/\*([^*]|\*[^/])*\*/!!g;
-              s!//[^\n]*!!g;
-              $hasMath = 0;
-              $hasMath = 1 if /^[\s]*import[\s]+java\.lang\.Math\b/m;
-              $hasMath = 1 if /\bjava\s*\.\s*lang\s*\.\s*Math\s*\./;
-              $hasMath = 1 if /(?<![\w\.])(?<!Strict)Math\s*\./;
-              print "$ARGV\n" if $hasMath;
-            ' "$file" >> math_usage.txt
-          done < <(find . -type f -name "*.java")
-          
-          sort -u math_usage.txt -o math_usage.txt
-          
+
+          bash .github/scripts/check_math_usage.sh > math_usage.txt
+
           if [ -s math_usage.txt ]; then
             echo "❌ Error: Forbidden Math usage found in the following files:"
             cat math_usage.txt

@@ -17,8 +17,8 @@ Supported platforms: **Linux** and **macOS** only. The JDK requirement is determ
 ./gradlew build                              # build with tests
 ./gradlew test                               # run all tests
 ./gradlew :framework:test                    # test one module
-./gradlew :framework:test --tests "org.tron.core.db.TronDatabaseTest"           # one class
-./gradlew :framework:test --tests "org.tron.core.db.TronDatabaseTest.testX"     # one method
+./gradlew :framework:test --tests "org.tron.core.db.TronDatabaseTest"                   # one class
+./gradlew :framework:test --tests "org.tron.core.db.TronDatabaseTest.TestGetUnchecked"  # one method
 ./gradlew :framework:testWithRocksDb         # RocksDB tests (x86 only)
 ./gradlew jacocoTestReport                   # coverage report
 ```
@@ -52,23 +52,19 @@ Run exactly what CI runs (`.github/workflows/pr-check.yml`):
 ./gradlew :framework:checkstyleMain :framework:checkstyleTest :plugins:checkstyleMain
 ```
 
-Checkstyle is configured only for `framework`, `protocol`, and `plugins`. A bare `./gradlew checkstyleMain` does not reproduce the CI gate.
+Checkstyle is configured only for `framework` and `plugins`; `protocol` is checked by `protoLint` instead (see Protobuf below). A bare `./gradlew checkstyleMain` does not reproduce the CI gate.
 
 ### 4. Forbidden `Math` usage
 
-CI (`.github/workflows/math-check.yml`) **fails the build on any use of `java.lang.Math`** anywhere in the repository. Only `StrictMathWrapper.java` and `MathWrapper.java` are exempt.
+CI (`.github/workflows/math-check.yml`) **fails the build on any use of `java.lang.Math`** anywhere in the repository: bare `Math.` calls, fully qualified `java.lang.Math.` calls (including static imports), and `import java.lang.Math`. Only `StrictMathWrapper.java` and `MathWrapper.java` are exempt.
 
-Use `org.tron.common.math.StrictMathWrapper` instead. Self-check before pushing (same matching logic as CI; `StrictMath.` and string/comment occurrences are correctly ignored):
+Use `org.tron.common.math.StrictMathWrapper` instead. Self-check before pushing with the script CI runs (`StrictMath.` and occurrences in strings or comments are ignored):
 
 ```bash
-find . -name '*.java' -not -path '*/build/*' | while IFS= read -r f; do
-  case "$(basename "$f")" in StrictMathWrapper.java|MathWrapper.java) continue;; esac
-  perl -0777 -ne 's/"([^"\\]|\\.)*"//g; s!/\*([^*]|\*[^/])*\*/!!g; s!//[^\n]*!!g;
-    print "$ARGV\n" if /(?<![\w.])(?<!Strict)Math\s*\./;' "$f"
-done | sort -u
+bash .github/scripts/check_math_usage.sh
 ```
 
-No output means the gate passes. (`grep -E` cannot express this — the rule needs a negative lookbehind.)
+No output means the gate passes.
 
 This exists because `java.lang.Math` gives platform-dependent results for floating-point operations, which breaks cross-JVM determinism between the x86/JDK 8 and ARM64/JDK 17 builds.
 
@@ -152,6 +148,7 @@ crypto    → common
 **Protobuf:**
 - Fields may only be added — never removed or renumbered.
 - Message field numbers start at `1`; the first enum value must be `0`.
+- In a new enum, the zero value's name must start with `UNKNOWN_` (e.g. `UNKNOWN_STATUS = 0;`, not `SUCCESS = 0;`). `protocol/protoLint.gradle` enforces this during `./gradlew build`; only the existing enums in its `legacyEnums` whitelist are exempt.
 
 **API / Threads:**
 - New HTTP servlets must go through `HttpApiAccessFilter` and use `Wallet` (never inject `Manager` directly).
