@@ -1,20 +1,14 @@
 package org.tron.core.vm;
 
 import static java.lang.String.format;
-import static org.apache.commons.codec.binary.Base64.encodeBase64String;
 import static org.tron.common.math.Maths.addExact;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Arrays;
-import java.util.zip.Deflater;
-import java.util.zip.DeflaterOutputStream;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
@@ -28,8 +22,6 @@ import org.tron.core.vm.repository.Repository;
 
 @Slf4j(topic = "VM")
 public final class VMUtils {
-
-  private static final int BUF_SIZE = 4096;
 
   private VMUtils() {
   }
@@ -96,43 +88,6 @@ public final class VMUtils {
       writeStringToFile(file, content);
     }
   }
-
-  private static void write(InputStream in, OutputStream out, int bufSize) throws IOException {
-    try {
-      byte[] buf = new byte[bufSize];
-      for (int count = in.read(buf); count != -1; count = in.read(buf)) {
-        out.write(buf, 0, count);
-      }
-    } finally {
-      closeQuietly(in);
-      closeQuietly(out);
-    }
-  }
-
-  public static byte[] compress(byte[] bytes) throws IOException {
-    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-
-    ByteArrayInputStream in = new ByteArrayInputStream(bytes);
-    DeflaterOutputStream out = new DeflaterOutputStream(baos, new Deflater(), BUF_SIZE);
-
-    write(in, out, BUF_SIZE);
-
-    return baos.toByteArray();
-  }
-
-  public static byte[] compress(String content) throws IOException {
-    return compress(content.getBytes("UTF-8"));
-  }
-
-  public static String zipAndEncode(String content) {
-    try {
-      return encodeBase64String(compress(content));
-    } catch (Exception e) {
-      logger.error("Cannot zip or encode: ", e);
-      return content;
-    }
-  }
-
 
   public static boolean validateForSmartContract(Repository deposit, byte[] ownerAddress,
       byte[] toAddress, long amount) throws ContractValidateException {

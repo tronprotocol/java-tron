@@ -77,9 +77,7 @@ public class GetBlockServlet extends RateLimiterServlet {
         response.getWriter().println("{}");
       }
     } catch (IllegalArgumentException e) {
-      JSONObject jsonObject = new JSONObject();
-      jsonObject.put("Error", e.getMessage());
-      response.getWriter().println(jsonObject.toJSONString());
+      Util.writeAuditedError(e.getMessage(), response);
     }
   }
 

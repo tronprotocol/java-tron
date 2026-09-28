@@ -131,8 +131,7 @@ public abstract class RateLimiterServlet extends HttpServlet {
         super.service(req, resp);
         Metrics.histogramObserve(requestTimer);
       } else {
-        resp.getWriter()
-            .println(Util.printErrorMsg(new IllegalAccessException("lack of computing resources")));
+        Util.writeAuditedError(Util.RATE_LIMITER_ERROR_MSG, resp);
       }
     } catch (ServletException | IOException | BadMessageException e) {
       throw e;

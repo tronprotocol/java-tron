@@ -22,14 +22,13 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Wallet;
 import org.tron.core.config.args.Args;
 import org.tron.json.JSONObject;
-import org.tron.protos.Protocol.Transaction;
+import org.tron.protos.Protocol.TransactionInfo;
 
 @RunWith(Parameterized.class)
-public class GetTransactionByIdSolidityServletTest {
+public class GetTransactionInfoByIdSolidityServletTest {
 
   private static final String TRANSACTION_ID =
       "309b6fa3d01353e46f57dd8a8f27611f98e392b50d035cef213f2c55225a8bd2";
@@ -39,7 +38,7 @@ public class GetTransactionByIdSolidityServletTest {
   @Parameter
   public String method;
 
-  private GetTransactionByIdSolidityServlet servlet;
+  private GetTransactionInfoByIdSolidityServlet servlet;
   private Wallet wallet;
   private long savedMaxMessageSize;
 
@@ -52,7 +51,7 @@ public class GetTransactionByIdSolidityServletTest {
   public void setUp() {
     savedMaxMessageSize = Args.getInstance().getHttpMaxMessageSize();
     Args.getInstance().setHttpMaxMessageSize(1024);
-    servlet = new GetTransactionByIdSolidityServlet();
+    servlet = new GetTransactionInfoByIdSolidityServlet();
     wallet = mock(Wallet.class);
     ReflectionTestUtils.setField(servlet, "wallet", wallet);
   }
@@ -64,13 +63,13 @@ public class GetTransactionByIdSolidityServletTest {
 
   @Test
   public void walletFailureReturnsSanitizedJson() throws Exception {
-    when(wallet.getTransactionById(TRANSACTION_ID_BYTES))
+    when(wallet.getTransactionInfoById(TRANSACTION_ID_BYTES))
         .thenThrow(new NullPointerException("internal transaction store detail"));
 
     MockHttpServletResponse response = request(TRANSACTION_ID);
 
     assertEquals("internal server error", errorMessage(response));
-    verify(wallet).getTransactionById(TRANSACTION_ID_BYTES);
+    verify(wallet).getTransactionInfoById(TRANSACTION_ID_BYTES);
   }
 
   @Test
@@ -92,39 +91,29 @@ public class GetTransactionByIdSolidityServletTest {
 
     assertEquals(200, response.getStatus());
     assertEquals("{}", response.getContentAsString().trim());
-    verify(wallet).getTransactionById(TRANSACTION_ID_BYTES);
+    verify(wallet).getTransactionInfoById(TRANSACTION_ID_BYTES);
   }
 
   @Test
-  public void successfulLookupKeepsTransaction() throws Exception {
-    ByteString signature = ByteString.copyFromUtf8("transaction signature");
-    Transaction transaction = Transaction.newBuilder()
-        .setRawData(Transaction.raw.newBuilder().setTimestamp(123).setExpiration(456))
-        .addSignature(signature).build();
-    when(wallet.getTransactionById(TRANSACTION_ID_BYTES)).thenReturn(transaction);
+  public void successfulLookupKeepsTransactionInfo() throws Exception {
+    TransactionInfo info = TransactionInfo.newBuilder()
+        .setId(TRANSACTION_ID_BYTES).setFee(7).setBlockNumber(123).build();
+    when(wallet.getTransactionInfoById(TRANSACTION_ID_BYTES)).thenReturn(info);
 
     MockHttpServletResponse response = request(TRANSACTION_ID);
 
     assertEquals(200, response.getStatus());
     JSONObject body = JSONObject.parseObject(response.getContentAsString());
-    assertEquals(4, body.size());
-    JSONObject rawData = body.getJSONObject("raw_data");
-    assertEquals(123L, rawData.getLongValue("timestamp"));
-    assertEquals(456L, rawData.getLongValue("expiration"));
-    assertEquals(0, rawData.getJSONArray("contract").size());
-    assertEquals(ByteArray.toHexString(transaction.getRawData().toByteArray()),
-        body.getString("raw_data_hex"));
-    assertEquals(Sha256Hash.of(Args.getInstance().isECKeyCryptoEngine(),
-        transaction.getRawData().toByteArray()).toString(), body.getString("txID"));
-    assertEquals(1, body.getJSONArray("signature").size());
-    assertEquals(ByteArray.toHexString(signature.toByteArray()),
-        body.getJSONArray("signature").getString(0));
-    verify(wallet).getTransactionById(TRANSACTION_ID_BYTES);
+    assertEquals(3, body.size());
+    assertEquals(TRANSACTION_ID, body.getString("id"));
+    assertEquals(7L, body.getLongValue("fee"));
+    assertEquals(123L, body.getLongValue("blockNumber"));
+    verify(wallet).getTransactionInfoById(TRANSACTION_ID_BYTES);
   }
 
   private MockHttpServletResponse request(String value) throws Exception {
     MockHttpServletRequest request = new MockHttpServletRequest(method,
-        "/walletsolidity/gettransactionbyid");
+        "/walletsolidity/gettransactioninfobyid");
     MockHttpServletResponse response = new MockHttpServletResponse();
     if ("GET".equals(method)) {
       request.setParameter("value", value);
