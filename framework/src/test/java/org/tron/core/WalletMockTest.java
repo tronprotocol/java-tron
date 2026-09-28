@@ -353,7 +353,7 @@ public class WalletMockTest {
     GrpcAPI.Return result = wallet.broadcastTransaction(transaction);
 
     assertEquals(GrpcAPI.Return.response_code.SERVER_BUSY, result.getCode());
-    assertEquals("Transaction was not admitted to the pending pool.",
+    assertEquals("Transaction was rejected locally.",
         result.getMessage().toStringUtf8());
     assertEquals(Boolean.TRUE, transactionIdCache.getIfPresent(txId));
     assertEquals(GrpcAPI.Return.response_code.DUP_TRANSACTION_ERROR,

@@ -575,10 +575,10 @@ public class Wallet {
       }
       trx.checkExpiration(chainBaseManager.getNextBlockSlotTime());
       if (!dbManager.pushTransaction(trx)) {
-        logger.info("Broadcast transaction {} has failed, local admission rejected.", txID);
+        logger.info("Broadcast transaction {} has failed, transaction was rejected locally.", txID);
         return builder.setResult(false).setCode(response_code.SERVER_BUSY)
             .setMessage(ByteString.copyFromUtf8(
-                "Transaction was not admitted to the pending pool."))
+                "Transaction was rejected locally."))
             .build();
       }
       TransactionMessage message = new TransactionMessage(trx.getInstance().toByteArray());
@@ -4084,7 +4084,7 @@ public class Wallet {
       }
     } else if (logType == 4) {
       // Data = toAddress(32) + value(32) + cipher(80) + nonce(12) + reserved/version(4)
-      if (logData.length < 64 + NoteEncryption.Encryption.BURN_CIPHER_RECORD_SIZE) {
+      if (logData.length != 64 + NoteEncryption.Encryption.BURN_CIPHER_RECORD_SIZE) {
         return Optional.empty();
       }
       byte[] logToAddress = ByteArray.subArray(logData, 12, 32);

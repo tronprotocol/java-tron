@@ -3,6 +3,7 @@ package org.tron.core.zksnark;
 import com.google.protobuf.ByteString;
 import java.lang.reflect.Method;
 import java.math.BigInteger;
+import java.util.Arrays;
 import java.util.Optional;
 import javax.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
@@ -389,6 +390,40 @@ public class NoteEncDecryTest extends BaseTest {
     m.setAccessible(true);
     Object result = m.invoke(w, builder, log, ovk, 4, nf);
     Assert.assertTrue(((Optional<?>) result).isPresent());
+  }
+
+  @Test
+  public void testGetNoteTxFromLogListByOvkBurnLogLengths() throws Exception {
+    Wallet w = new Wallet();
+    byte[] ovk = new byte[32];
+    Arrays.fill(ovk, (byte) 1);
+    BigInteger amount = BigInteger.valueOf(1000L);
+    byte[] toAddress = new byte[21];
+    toAddress[0] = Wallet.getAddressPreFixByte();
+    toAddress[20] = 0x42;
+    byte[] nf = new byte[32];
+    nf[0] = (byte) 0xAB;
+    byte[] validLogData = buildBurnLog(ovk, amount, toAddress, nf).getData().toByteArray();
+    Assert.assertEquals(160, validLogData.length);
+
+    Method m = Wallet.class.getDeclaredMethod("getNoteTxFromLogListByOvk",
+        GrpcAPI.DecryptNotesTRC20.NoteTx.Builder.class,
+        TransactionInfo.Log.class, byte[].class, int.class, byte[].class);
+    m.setAccessible(true);
+
+    for (int length : new int[]{159, 160, 161, 192}) {
+      TransactionInfo.Log log = TransactionInfo.Log.newBuilder()
+          .setData(ByteString.copyFrom(Arrays.copyOf(validLogData, length))).build();
+      Optional<?> result = (Optional<?>) m.invoke(
+          w, GrpcAPI.DecryptNotesTRC20.NoteTx.newBuilder(), log, ovk, 4, nf);
+      Assert.assertEquals("Unexpected result for TokenBurn log length " + length,
+          length == 160, result.isPresent());
+      if (result.isPresent()) {
+        GrpcAPI.DecryptNotesTRC20.NoteTx noteTx = (GrpcAPI.DecryptNotesTRC20.NoteTx) result.get();
+        Assert.assertEquals(amount.toString(10), noteTx.getToAmount());
+        Assert.assertEquals(ByteString.copyFrom(toAddress), noteTx.getTransparentToAddress());
+      }
+    }
   }
 
   @Test

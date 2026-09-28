@@ -184,7 +184,7 @@ public class TransactionsMsgHandler implements TronMsgHandler {
     try {
       trx.getTransactionCapsule().checkExpiration(chainBaseManager.getNextBlockSlotTime());
       if (!tronNetDelegate.pushTransaction(trx.getTransactionCapsule())) {
-        logger.debug("Drop trx {} from {}, local admission rejected",
+        logger.debug("Drop trx {} from {}, transaction was rejected locally",
             trx.getMessageId(), peer.getInetAddress());
         return;
       }
