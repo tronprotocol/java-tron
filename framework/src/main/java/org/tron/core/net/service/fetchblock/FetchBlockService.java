@@ -1,6 +1,5 @@
 package org.tron.core.net.service.fetchblock;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -100,17 +99,13 @@ public class FetchBlockService {
     }
   }
 
-  public Optional<PeerConnection> selectBlockPeer(Collection<PeerConnection> peers,
-      Item item, long now) {
-    return peers.stream()
-        .filter(peer -> !peer.isDisconnect())
-        .filter(peer -> !peer.isNeedSyncFromPeer() && !peer.isNeedSyncFromUs())
-        .filter(PeerConnection::isBlockFetchIdle)
-        .filter(peer -> {
-          Long received = peer.getAdvInvReceive().getIfPresent(item);
-          return received != null && received >= now - NetConstants.ADV_TIME_OUT;
-        })
-        .min(Comparator.comparingDouble(this::getPeerTop75));
+  public boolean canFetchBlock(PeerConnection peer, Item item, long now) {
+    if (peer.isDisconnect() || peer.isNeedSyncFromPeer() || peer.isNeedSyncFromUs()
+        || !peer.isBlockFetchIdle()) {
+      return false;
+    }
+    Long received = peer.getAdvInvReceive().getIfPresent(item);
+    return received != null && received >= now - NetConstants.ADV_TIME_OUT;
   }
 
   private synchronized void fetchBlockProcess(FetchBlockInfo fetchBlock) {
@@ -128,8 +123,9 @@ public class FetchBlockService {
       return;
     }
     Item item = new Item(fetchBlock.getHash(), InventoryType.BLOCK);
-    Optional<PeerConnection> optionalPeerConnection = selectBlockPeer(
-        tronNetDelegate.getActivePeer(), item, now);
+    Optional<PeerConnection> optionalPeerConnection = tronNetDelegate.getActivePeer().stream()
+        .filter(peer -> canFetchBlock(peer, item, now))
+        .min(Comparator.comparingDouble(this::getPeerTop75));
 
     if (optionalPeerConnection.isPresent()) {
       optionalPeerConnection.ifPresent(firstPeer -> {

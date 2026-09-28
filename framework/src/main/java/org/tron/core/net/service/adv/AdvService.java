@@ -301,6 +301,7 @@ public class AdvService {
         return;
       }
       long now = System.currentTimeMillis();
+      List<Item> blocks = new ArrayList<>();
       invToFetch.forEach((item, time) -> {
         long timeout = item.getType() == InventoryType.BLOCK ? NetConstants.ADV_TIME_OUT : TIMEOUT;
         if (time < now - timeout) {
@@ -311,18 +312,7 @@ public class AdvService {
           return;
         }
         if (item.getType() == InventoryType.BLOCK) {
-          if (blockCache.getIfPresent(item) != null
-              || tronNetDelegate.containBlock(new BlockId(item.getHash()))
-              || peers.stream().anyMatch(peer -> peer.getAdvInvRequest().containsKey(item))) {
-            invToFetch.remove(item);
-            return;
-          }
-          fetchBlockService.selectBlockPeer(peers, item, now).ifPresent(peer -> {
-            if (peer.checkAndPutAdvInvRequest(item, now)) {
-              invSender.add(item, peer);
-              invToFetch.remove(item);
-            }
-          });
+          blocks.add(item);
           return;
         }
         trxPeers.stream().filter(peer -> {
@@ -334,6 +324,25 @@ public class AdvService {
                 invSender.add(item, peer);
               }
               invToFetch.remove(item);
+            });
+      });
+
+      // Reserve peers for earlier blocks before later blocks can make them busy.
+      blocks.sort(Comparator.comparingLong(item -> new BlockId(item.getHash()).getNum()));
+      blocks.forEach(item -> {
+        if (blockCache.getIfPresent(item) != null
+            || tronNetDelegate.containBlock(new BlockId(item.getHash()))
+            || peers.stream().anyMatch(peer -> peer.getAdvInvRequest().containsKey(item))) {
+          invToFetch.remove(item);
+          return;
+        }
+        peers.stream().filter(peer -> fetchBlockService.canFetchBlock(peer, item, now))
+            .min(Comparator.comparingInt(invSender::getSize))
+            .ifPresent(peer -> {
+              if (peer.checkAndPutAdvInvRequest(item, now)) {
+                invSender.add(item, peer);
+                invToFetch.remove(item);
+              }
             });
       });
     }
