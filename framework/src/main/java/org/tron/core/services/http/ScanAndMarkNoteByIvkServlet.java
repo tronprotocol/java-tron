@@ -27,7 +27,7 @@ public class ScanAndMarkNoteByIvkServlet extends RateLimiterServlet {
     if (notes.getNoteTxsCount() == 0) {
       return resultString;
     } else {
-      JSONObject markedNotes = JSONObject.parseObject(resultString);
+      JSONObject markedNotes = JSONObject.outboundParseObject(resultString);
       JSONArray array = markedNotes.getJSONArray("noteTxs");
       for (int index = 0; index < array.size(); index++) {
         JSONObject item = array.getJSONObject(index);

@@ -93,7 +93,7 @@ import org.tron.core.services.jsonrpc.types.TransactionReceipt.TransactionContex
 import org.tron.core.services.jsonrpc.types.TransactionResult;
 import org.tron.core.store.StorageRowStore;
 import org.tron.core.vm.program.Storage;
-import org.tron.json.JSON;
+import org.tron.json.JSONObject;
 import org.tron.program.Version;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
@@ -1178,7 +1178,8 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
       tx = setTransactionPermissionId(args.getPermissionId(), txBuilder.build());
 
       TransactionJson transactionJson = new TransactionJson();
-      transactionJson.setTransaction(JSON.parseObject(Util.printCreateTransaction(tx, false)));
+      transactionJson.setTransaction(
+          JSONObject.outboundParseObject(Util.printCreateTransaction(tx, false)));
 
       return transactionJson;
     } catch (JsonRpcInvalidParamsException e) {
@@ -1245,7 +1246,7 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
     String jsonString = Util.printTransaction(trxExtBuilder.build().getTransaction(),
         args.isVisible());
     TransactionJson transactionJson = new TransactionJson();
-    transactionJson.setTransaction(JSON.parseObject(jsonString));
+    transactionJson.setTransaction(JSONObject.outboundParseObject(jsonString));
 
     return transactionJson;
   }
@@ -1261,8 +1262,8 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
       tx = setTransactionExtraData(args.getExtraData(), tx, args.isVisible());
 
       TransactionJson transactionJson = new TransactionJson();
-      transactionJson
-          .setTransaction(JSON.parseObject(Util.printCreateTransaction(tx, args.isVisible())));
+      transactionJson.setTransaction(
+          JSONObject.outboundParseObject(Util.printCreateTransaction(tx, args.isVisible())));
 
       return transactionJson;
     } catch (ContractValidateException e) {
