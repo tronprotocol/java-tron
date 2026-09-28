@@ -82,6 +82,8 @@ public class DbBackfillBloom implements Callable<Integer> {
   private final AtomicLong processedBlocks = new AtomicLong(0);
   // Number of successfully processed blocks in fully written sections
   private final AtomicLong successfulBlocks = new AtomicLong(0);
+  // Number of scanned blocks skipped because no transaction result exists
+  private final AtomicLong blocksWithoutTransactionRet = new AtomicLong(0);
   // Number of blocks containing logs in fully written sections
   private final AtomicLong blocksWithLogs = new AtomicLong(0);
   // Number of block and task failures
@@ -377,7 +379,12 @@ public class DbBackfillBloom implements Callable<Integer> {
     long sectionBlocksWithLogs = 0;
     for (long blockNum = sectionStart; blockNum <= sectionEnd; blockNum++) {
       try {
-        if (accumulateBlockBloom(blockNum, sectionBloom)) {
+        byte[] transactionRetData = transactionRetDb.get(ByteArray.fromLong(blockNum));
+        if (transactionRetData == null) {
+          blocksWithoutTransactionRet.incrementAndGet();
+          continue;
+        }
+        if (accumulateBlockBloom(blockNum, transactionRetData, sectionBloom)) {
           sectionBlocksWithLogs++;
         }
         sectionSuccessfulBlocks++;
@@ -426,17 +433,8 @@ public class DbBackfillBloom implements Callable<Integer> {
     return String.format(Locale.ROOT, "%02d:%02d:%02d", hours, minutes, seconds);
   }
 
-  private boolean accumulateBlockBloom(long blockNum, BitSet[] sectionBloom)
-      throws InvalidProtocolBufferException {
-
-    // Get transaction info for this block
-    byte[] blockKey = ByteArray.fromLong(blockNum);
-    byte[] transactionRetData = transactionRetDb.get(blockKey);
-
-    if (transactionRetData == null) {
-      return false;
-    }
-
+  private boolean accumulateBlockBloom(long blockNum, byte[] transactionRetData,
+      BitSet[] sectionBloom) throws InvalidProtocolBufferException {
     TransactionRet transactionRet = TransactionRet.parseFrom(transactionRetData);
 
     // Create bloom filter for this block using the same logic as SectionBloomStore
@@ -516,16 +514,20 @@ public class DbBackfillBloom implements Callable<Integer> {
 
     printInfo("Total blocks scanned: %d", processedBlocks.get());
     printInfo("Successfully processed: %d", successfulBlocks.get());
+    printInfo("Blocks without transactionRet: %d", blocksWithoutTransactionRet.get());
     printInfo("Blocks with logs: %d", blocksWithLogs.get());
     printInfo("Errors encountered: %d", errorCount.get());
     printInfo("Duration: %d seconds", duration);
 
-    // Success rate statistics
-    if (processedBlocks.get() > 0) {
-      double successRate = (double) successfulBlocks.get() / processedBlocks.get() * 100;
-      double logRate = (double) blocksWithLogs.get() / processedBlocks.get() * 100;
+    // Skipped blocks do not affect the success rate.
+    long nonSkippedBlocks = processedBlocks.get() - blocksWithoutTransactionRet.get();
+    if (nonSkippedBlocks > 0) {
+      double successRate = (double) successfulBlocks.get() / nonSkippedBlocks * 100;
       printInfo("Success rate: %.2f%% (%d/%d)",
-          successRate, successfulBlocks.get(), processedBlocks.get());
+          successRate, successfulBlocks.get(), nonSkippedBlocks);
+    }
+    if (processedBlocks.get() > 0) {
+      double logRate = (double) blocksWithLogs.get() / processedBlocks.get() * 100;
       printInfo("Blocks with logs rate: %.2f%% (%d/%d)",
           logRate, blocksWithLogs.get(), processedBlocks.get());
     }

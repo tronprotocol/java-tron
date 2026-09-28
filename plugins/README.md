@@ -157,6 +157,7 @@ DB backfill bloom rebuilds missing historical SectionBloom indexes from transact
 - Stop the node and any other process using the database before running the command.
 - The database directory must contain the `properties` and `transactionRetStore` databases. `transactionRetStore` must contain at least one non-zero block.
 - Ensure `storage.transHistory.switch` was enabled while the historical blocks were processed. Only blocks whose transaction results are still present in `transactionRetStore` can be backfilled; this tool cannot recover missing transaction results.
+- Blocks without a `transactionRetStore` entry are skipped and reported as `Blocks without transactionRet`, separately from successfully processed blocks. Empty blocks normally have no entry. Skipping does not cause a nonzero exit status; the tool processes retained transaction results without checking the block database for historical completeness.
 - The start and end block numbers are inclusive.
 - The command creates or updates the `section-bloom` database in the specified database directory.
 - An existing `section-bloom` directory uses its own engine. A new one inherits the engine of `transactionRetStore`. Missing `engine.properties` is treated as LevelDB for compatibility with older databases.
@@ -191,7 +192,7 @@ java -jar Toolkit.jar db backfill-bloom -d /path/to/database -c 8
 
 Each worker accumulates index bits for one section of up to 2,048 blocks. At the end of the section, each touched index record is read once, merged with existing bits, and written only if it changes. The Bloom write count reports actual index-record writes.
 
-The terminal progress bar displays scanned blocks, elapsed time, and estimated remaining time. `toolkit.log` records progress every 10,000 scanned blocks and includes the percentage, elapsed time, average rate, and estimated remaining time. A section's successful-block and log-block counts are added only after its required index writes finish. If a section write fails, none of its blocks are counted as successful; rerunning the same range completes any partially written section. The final summary reports scanned and successful blocks, blocks containing logs, block/task errors, Bloom writes, duration, rates, and the concurrency used.
+The terminal progress bar displays scanned blocks, elapsed time, and estimated remaining time. `toolkit.log` records progress every 10,000 scanned blocks and includes the percentage, elapsed time, average rate, and estimated remaining time. A section's successful-block and log-block counts are added only after its required index writes finish. If a section write fails, none of its blocks are counted as successful; rerunning the same range completes any partially written section. The final summary reports scanned and successful blocks, blocks without transaction results, blocks containing logs, block/task errors, Bloom writes, duration, rates, and the concurrency used. The success rate excludes skipped blocks and is omitted when all scanned blocks are skipped. Blocks with transaction results but no logs still count as successfully processed.
 
 Performance depends on the number of logs, storage engine, disk, CPU, and database compaction. Increase `--max-concurrency` gradually while monitoring disk latency and CPU usage.
 

@@ -212,10 +212,13 @@ public class DbBackfillBloomTest {
   @Test(timeout = 30_000)
   public void testProgressAndSummary() {
     when(properties.get(aryEq(HEADER_KEY))).thenReturn(ByteArray.fromLong(10_000));
+    when(transactions.get(any(byte[].class)))
+        .thenReturn(TransactionRet.getDefaultInstance().toByteArray());
     try (MockedStatic<DbTool> ignored = mockDatabases()) {
       Assert.assertEquals(0, execute("-c", "1"));
       Assert.assertTrue(output.toString().contains("Total blocks scanned: 10000"));
       Assert.assertTrue(output.toString().contains("Successfully processed: 10000"));
+      Assert.assertTrue(output.toString().contains("Blocks without transactionRet: 0"));
       Assert.assertTrue(output.toString().contains("Success rate: 100.00%"));
       Assert.assertTrue(output.toString().contains("Backfill completed successfully!"));
       Assert.assertFalse(output.toString().contains("Backfill progress:"));
@@ -262,6 +265,8 @@ public class DbBackfillBloomTest {
   @Test(timeout = 30_000)
   public void testSummaryReportsProgressFailureWithoutBlockErrors() {
     RuntimeException failure = new RuntimeException("progress close failed");
+    when(transactions.get(aryEq(ByteArray.fromLong(1))))
+        .thenReturn(transactionRet.toByteArray());
     try (MockedStatic<DbTool> ignored = mockDatabases();
         MockedConstruction<ProgressBar> progressBars = mockConstruction(ProgressBar.class,
             (bar, context) -> doThrow(failure).when(bar).close())) {
@@ -281,15 +286,17 @@ public class DbBackfillBloomTest {
     RuntimeException failure = new RuntimeException("section-bloom", new IOException("disk full"));
     doThrow(failure).when(bloom).put(any(byte[].class), any(byte[].class));
     try (MockedStatic<DbTool> ignored = mockDatabases()) {
-      Assert.assertEquals(1, execute("-e", "1"));
+      Assert.assertEquals(1, execute("-e", "2"));
       verify(bloom).put(any(byte[].class), any(byte[].class));
-      Assert.assertTrue(errors.toString().contains("Error writing section 1 to 1"));
-      Assert.assertFalse(output.toString().contains("Error writing section 1 to 1"));
+      Assert.assertTrue(errors.toString().contains("Error writing section 1 to 2"));
+      Assert.assertFalse(output.toString().contains("Error writing section 1 to 2"));
       Assert.assertTrue(output.toString().contains("Errors encountered: 1"));
       Assert.assertTrue(output.toString().contains("Successfully processed: 0"));
+      Assert.assertTrue(output.toString().contains("Blocks without transactionRet: 1"));
+      Assert.assertTrue(output.toString().contains("Success rate: 0.00% (0/1)"));
       Assert.assertFalse(output.toString().contains("Backfill completed successfully!"));
       ILoggingEvent event = appender.list.stream()
-          .filter(entry -> "Error writing section 1 to 1".equals(entry.getFormattedMessage()))
+          .filter(entry -> "Error writing section 1 to 2".equals(entry.getFormattedMessage()))
           .findFirst().orElse(null);
       Assert.assertNotNull(event);
       ThrowableProxy throwable = (ThrowableProxy) event.getThrowableProxy();
@@ -301,7 +308,7 @@ public class DbBackfillBloomTest {
 
   @Test(timeout = 30_000)
   public void testMalformedProtobufSkipsOnlyInvalidBlock() throws Exception {
-    writeSource(1, 3, 3);
+    writeSource(1, 3, 4);
     openDb("transactionRetStore").put(ByteArray.fromLong(2), new byte[] {(byte) 0x80});
     DbTool.close();
     Assert.assertEquals(1, execute("-s", "2", "-e", "2"));
@@ -310,6 +317,8 @@ public class DbBackfillBloomTest {
     Assert.assertEquals(1, execute());
     Assert.assertTrue(output.toString().contains("Errors encountered: 1"));
     Assert.assertTrue(output.toString().contains("Successfully processed: 2"));
+    Assert.assertTrue(output.toString().contains("Blocks without transactionRet: 1"));
+    Assert.assertTrue(output.toString().contains("Success rate: 66.67% (2/3)"));
     BitSet expected = new BitSet();
     expected.set(1);
     expected.set(3);
@@ -491,8 +500,12 @@ public class DbBackfillBloomTest {
           writeBloom(ByteUtil.compress(existing.toByteArray()));
         }
         Assert.assertEquals(0, execute("-c", "2"));
+        Assert.assertTrue(output.toString().contains("Total blocks scanned: 5"));
         Assert.assertTrue(output.toString().contains("Blocks with logs: 3"));
-        Assert.assertTrue(output.toString().contains("Successfully processed: 5"));
+        Assert.assertTrue(output.toString().contains("Successfully processed: 4"));
+        Assert.assertTrue(output.toString().contains("Blocks without transactionRet: 1"));
+        Assert.assertTrue(output.toString().contains("Errors encountered: 0"));
+        Assert.assertTrue(output.toString().contains("Success rate: 100.00% (4/4)"));
         Assert.assertTrue(output.toString().contains("Processing 2 sections with 2 threads"));
         if (run == 2) {
           Assert.assertTrue(output.toString().contains("Total bloom writes: 0"));
@@ -516,6 +529,23 @@ public class DbBackfillBloomTest {
         Args.clearParam();
       }
     }
+  }
+
+  @Test(timeout = 30_000)
+  public void testRangeWithoutTransactionRetIsSkipped() throws Exception {
+    writeSource(1, 1, 4096);
+    Assert.assertEquals(0, execute("-s", "2", "-c", "2"));
+    Assert.assertTrue(output.toString().contains("Total blocks scanned: 4095"));
+    Assert.assertTrue(output.toString().contains("Successfully processed: 0"));
+    Assert.assertTrue(output.toString().contains("Blocks without transactionRet: 4095"));
+    Assert.assertTrue(output.toString().contains("Blocks with logs: 0"));
+    Assert.assertTrue(output.toString().contains("Errors encountered: 0"));
+    Assert.assertTrue(output.toString().contains("Total bloom writes: 0"));
+    Assert.assertTrue(output.toString().contains("Processing 3 sections with 2 threads"));
+    Assert.assertTrue(output.toString().contains("Backfill completed successfully!"));
+    Assert.assertFalse(output.toString().contains("Success rate:"));
+    Assert.assertTrue(errors.toString().isEmpty());
+    Assert.assertTrue(readBloomEntries().isEmpty());
   }
 
   @Test(timeout = 30_000)
