@@ -155,8 +155,6 @@ public class EnergyProcessor extends ResourceProcessor {
     long totalEnergyWeight = dynamicPropertiesStore.getTotalEnergyWeight();
     if (dynamicPropertiesStore.allowNewReward() && totalEnergyWeight <= 0) {
       return 0;
-    } else {
-      assert totalEnergyWeight > 0;
     }
     if (hardenCalculation()) {
       return calculateGlobalLimitV1(frozeBalance, totalEnergyLimit, totalEnergyWeight);
@@ -204,5 +202,4 @@ public class EnergyProcessor extends ResourceProcessor {
     return value * numerator / denominator;
   }
 }
-
 
