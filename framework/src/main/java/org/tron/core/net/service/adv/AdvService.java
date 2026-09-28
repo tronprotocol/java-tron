@@ -232,27 +232,6 @@ public class AdvService {
     }
   }
 
-  /*
-  public void fastForward(BlockMessage msg) {
-    Item item = new Item(msg.getBlockId(), InventoryType.BLOCK);
-    List<PeerConnection> peers = tronNetDelegate.getActivePeer().stream()
-        .filter(peer -> !peer.isNeedSyncFromPeer() && !peer.isNeedSyncFromUs())
-        .filter(peer -> peer.getAdvInvReceive().getIfPresent(item) == null
-            && peer.getAdvInvSpread().getIfPresent(item) == null)
-        .collect(Collectors.toList());
-
-    if (!fastForward) {
-      peers = peers.stream().filter(peer -> peer.isFastForwardPeer()).collect(Collectors.toList());
-    }
-
-    peers.forEach(peer -> {
-      peer.fastSend(msg);
-      peer.getAdvInvSpread().put(item, System.currentTimeMillis());
-      peer.setFastForwardBlock(msg.getBlockId());
-    });
-  }
-  */
-
   public void onDisconnect(PeerConnection peer) {
     fetchBlockService.onDisconnect(peer);
     if (!peer.getAdvInvRequest().isEmpty()) {
