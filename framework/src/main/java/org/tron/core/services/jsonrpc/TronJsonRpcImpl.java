@@ -958,7 +958,7 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
 
     BlockCapsule blockCapsule = new BlockCapsule(block);
     long blockNum = blockCapsule.getNum();
-    // below the receipt floor the body exists but the receipts do not — 4444, not -32000
+    // below the lowest receipt block the body exists but the receipts do not — 4444, not -32000
     JsonRpcApiUtil.checkPrunedReceiptHistory(blockNum, wallet);
     TransactionInfoList transactionInfoList = wallet.getTransactionInfoByBlockNum(blockNum);
 

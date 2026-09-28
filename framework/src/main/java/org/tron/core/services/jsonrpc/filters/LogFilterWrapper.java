@@ -105,7 +105,7 @@ public class LogFilterWrapper {
     this.fromBlock = fromBlockSrc;
     this.toBlock = toBlockSrc;
 
-    // Reject a range starting below the receipt floor with 4444. Exception: a genesis-only
+    // Reject a range starting below the lowest receipt block with 4444. Exception: a genesis-only
     // query (from = to = 0, or the genesis blockHash) — block 0 is retained.
     if (wallet != null && !(fromBlockSrc == 0 && toBlockSrc == 0)) {
       JsonRpcApiUtil.checkPrunedReceiptHistory(fromBlockSrc, wallet);

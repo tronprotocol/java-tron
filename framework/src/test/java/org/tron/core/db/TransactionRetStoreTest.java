@@ -85,18 +85,18 @@ public class TransactionRetStoreTest extends BaseTest {
   }
 
   @Test
-  public void probeLowestReceiptBlockNumReadsStore() {
+  public void probeLowestBlockNumOfReceiptStoreReadsStore() {
     // the probe runs after checkpoint recovery, so it must reflect whatever the store holds
     // at call time: the first key while present, the next block once the store is empty
-    chainBaseManager.probeLowestReceiptBlockNum();
-    Assert.assertEquals(1L, chainBaseManager.getLowestReceiptBlockNum());
+    chainBaseManager.probeLowestBlockNumOfReceiptStore();
+    Assert.assertEquals(1L, chainBaseManager.getLowestBlockNumOfReceiptStore());
 
     // head must be non-zero, otherwise head + 1 collides with the first key asserted above
     transactionRetStore.delete(blockNum);
     chainBaseManager.getDynamicPropertiesStore().saveLatestBlockHeaderNumber(5);
     try {
-      chainBaseManager.probeLowestReceiptBlockNum();
-      Assert.assertEquals(6L, chainBaseManager.getLowestReceiptBlockNum());
+      chainBaseManager.probeLowestBlockNumOfReceiptStore();
+      Assert.assertEquals(6L, chainBaseManager.getLowestBlockNumOfReceiptStore());
     } finally {
       chainBaseManager.getDynamicPropertiesStore().saveLatestBlockHeaderNumber(0);
     }

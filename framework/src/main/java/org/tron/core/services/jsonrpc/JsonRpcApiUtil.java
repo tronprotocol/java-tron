@@ -705,15 +705,16 @@ public class JsonRpcApiUtil {
   /**
    * The lowest block for which everything the node persists is available; what "earliest"
    * resolves to. On a LiteNode this is the
-   * receipt floor when receipts are persisted, otherwise the body floor (receipt endpoints
+   * lowest receipt block when receipts are persisted, otherwise the lowest block (receipt endpoints
    * answer 4444 on such a node regardless of this value). On a FullNode it is genesis.
    */
   public static long earliestAvailableBlock(Wallet wallet) {
     if (!wallet.isLiteNode()) {
       return 0;
     }
-    long receiptFloor = wallet.getLowestReceiptBlockNum();
-    return receiptFloor == Long.MAX_VALUE ? wallet.getLowestBlockNum() : receiptFloor;
+    long lowestReceiptBlockNum = wallet.getLowestBlockNumOfReceiptStore();
+    return lowestReceiptBlockNum == Long.MAX_VALUE
+        ? wallet.getLowestBlockNum() : lowestReceiptBlockNum;
   }
 
   /**
@@ -729,14 +730,15 @@ public class JsonRpcApiUtil {
 
   /**
    * Receipt form of {@link #checkPrunedHistory(long, Wallet)} for endpoints that read
-   * receipts or logs; their floor is the first block with receipts. Same raw-primitive
+   * receipts or logs; their lower bound is the lowest receipt block. Same raw-primitive
    * contract. Receipt persistence is a per-node switch independent of node type, so a node
    * that never persists receipts is rejected before the LiteNode gate.
    */
   public static void checkPrunedReceiptHistory(long blockNum, Wallet wallet)
       throws JsonRpcPrunedHistoryException {
-    long receiptFloor = wallet.getLowestReceiptBlockNum();
-    if (receiptFloor == Long.MAX_VALUE || wallet.isLiteNode() && blockNum < receiptFloor) {
+    long lowestReceiptBlockNum = wallet.getLowestBlockNumOfReceiptStore();
+    if (lowestReceiptBlockNum == Long.MAX_VALUE
+        || wallet.isLiteNode() && blockNum < lowestReceiptBlockNum) {
       throw new JsonRpcPrunedHistoryException(PRUNED_HISTORY_ERROR);
     }
   }

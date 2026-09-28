@@ -26,14 +26,14 @@ import org.tron.protos.Protocol.Transaction;
 public class JsonRpcPrunedHistoryTest {
 
   private static final long LOWEST_BLOCK_NUM = 100L;
-  private static final long RECEIPT_FLOOR_BLOCK_NUM = 150L;
+  private static final long LOWEST_RECEIPT_BLOCK_NUM = 150L;
   private static final long HEAD_BLOCK_NUM = 200L;
   private static final String PRUNED_MESSAGE = "Pruned history unavailable";
   private static final String BELOW_CUTOFF_HEX = "0x10";
   private static final String AT_CUTOFF_HEX = "0x64";
   private static final long IN_RECEIPT_GAP_NUM = 112L;
   private static final String IN_RECEIPT_GAP_HEX = "0x70";
-  private static final String RECEIPT_FLOOR_HEX = "0x96";
+  private static final String LOWEST_RECEIPT_BLOCK_HEX = "0x96";
 
   private TronJsonRpcImpl rpc;
 
@@ -58,8 +58,8 @@ public class JsonRpcPrunedHistoryTest {
     Wallet wallet = mock(Wallet.class);
     when(wallet.isLiteNode()).thenReturn(liteNode);
     when(wallet.getLowestBlockNum()).thenReturn(liteNode ? LOWEST_BLOCK_NUM : 0L);
-    when(wallet.getLowestReceiptBlockNum())
-        .thenReturn(liteNode ? RECEIPT_FLOOR_BLOCK_NUM : 0L);
+    when(wallet.getLowestBlockNumOfReceiptStore())
+        .thenReturn(liteNode ? LOWEST_RECEIPT_BLOCK_NUM : 0L);
     when(wallet.getCursor()).thenReturn(Chainbase.Cursor.HEAD);
     when(wallet.getNowBlock()).thenReturn(newBlock(HEAD_BLOCK_NUM, 0));
     // a LiteNode snapshot copies genesis explicitly, so block 0 stays retrievable below the cutoff
@@ -78,13 +78,13 @@ public class JsonRpcPrunedHistoryTest {
 
   private static Wallet newHistoryOffMockWallet(boolean liteNode) {
     Wallet wallet = newMockWallet(liteNode);
-    when(wallet.getLowestReceiptBlockNum()).thenReturn(Long.MAX_VALUE);
+    when(wallet.getLowestBlockNumOfReceiptStore()).thenReturn(Long.MAX_VALUE);
     return wallet;
   }
 
   @Test
   public void testParseBlockTagEarliestOnLiteNode() throws Exception {
-    Assert.assertEquals(RECEIPT_FLOOR_BLOCK_NUM,
+    Assert.assertEquals(LOWEST_RECEIPT_BLOCK_NUM,
         JsonRpcApiUtil.parseBlockTag("earliest", newMockWallet(true)));
   }
 
@@ -276,7 +276,7 @@ public class JsonRpcPrunedHistoryTest {
 
   @Test
   public void testGetBlockReceiptsEmptyBlockInReceiptGapReturns4444() {
-    // the floor check ignores the transaction count, so an empty block is not special-cased
+    // the check ignores the transaction count, so an empty block is not special-cased
     Wallet wallet = newMockWallet(true);
     when(wallet.getBlockByNum(IN_RECEIPT_GAP_NUM))
         .thenReturn(newBlock(IN_RECEIPT_GAP_NUM, 0));
@@ -289,15 +289,15 @@ public class JsonRpcPrunedHistoryTest {
   }
 
   @Test
-  public void testGetBlockReceiptsAtReceiptFloorPasses() throws Exception {
+  public void testGetBlockReceiptsAtLowestReceiptBlockPasses() throws Exception {
     Wallet wallet = newMockWallet(true);
-    when(wallet.getBlockByNum(RECEIPT_FLOOR_BLOCK_NUM))
-        .thenReturn(newBlock(RECEIPT_FLOOR_BLOCK_NUM, 0));
-    when(wallet.getTransactionInfoByBlockNum(RECEIPT_FLOOR_BLOCK_NUM))
+    when(wallet.getBlockByNum(LOWEST_RECEIPT_BLOCK_NUM))
+        .thenReturn(newBlock(LOWEST_RECEIPT_BLOCK_NUM, 0));
+    when(wallet.getTransactionInfoByBlockNum(LOWEST_RECEIPT_BLOCK_NUM))
         .thenReturn(TransactionInfoList.getDefaultInstance());
     rpc = new TronJsonRpcImpl(mock(NodeInfoService.class), wallet);
 
-    Assert.assertNotNull(rpc.getBlockReceipts(RECEIPT_FLOOR_HEX));
+    Assert.assertNotNull(rpc.getBlockReceipts(LOWEST_RECEIPT_BLOCK_HEX));
   }
 
   @Test
@@ -311,7 +311,7 @@ public class JsonRpcPrunedHistoryTest {
   }
 
   @Test
-  public void testParseBlockTagEarliestWithHistoryOffFallsBackToBodyFloor() throws Exception {
+  public void testParseBlockTagEarliestWithHistoryOffFallsBackToLowestBlock() throws Exception {
     Assert.assertEquals(LOWEST_BLOCK_NUM,
         JsonRpcApiUtil.parseBlockTag("earliest", newHistoryOffMockWallet()));
   }
@@ -326,7 +326,7 @@ public class JsonRpcPrunedHistoryTest {
   @Test
   public void testGetLogsWithHistoryOffReturns4444() {
     rpc = new TronJsonRpcImpl(mock(NodeInfoService.class), newHistoryOffMockWallet());
-    FilterRequest fr = new FilterRequest(RECEIPT_FLOOR_HEX, "latest", null, null, null);
+    FilterRequest fr = new FilterRequest(LOWEST_RECEIPT_BLOCK_HEX, "latest", null, null, null);
 
     JsonRpcPrunedHistoryException e = assertThrows(JsonRpcPrunedHistoryException.class,
         () -> rpc.getLogs(fr));
@@ -337,12 +337,12 @@ public class JsonRpcPrunedHistoryTest {
   @Test
   public void testGetBlockReceiptsWithHistoryOffReturns4444() {
     Wallet wallet = newHistoryOffMockWallet();
-    when(wallet.getBlockByNum(RECEIPT_FLOOR_BLOCK_NUM))
-        .thenReturn(newBlock(RECEIPT_FLOOR_BLOCK_NUM, 1));
+    when(wallet.getBlockByNum(LOWEST_RECEIPT_BLOCK_NUM))
+        .thenReturn(newBlock(LOWEST_RECEIPT_BLOCK_NUM, 1));
     rpc = new TronJsonRpcImpl(mock(NodeInfoService.class), wallet);
 
     JsonRpcPrunedHistoryException e = assertThrows(JsonRpcPrunedHistoryException.class,
-        () -> rpc.getBlockReceipts(RECEIPT_FLOOR_HEX));
+        () -> rpc.getBlockReceipts(LOWEST_RECEIPT_BLOCK_HEX));
     Assert.assertEquals(PRUNED_MESSAGE, e.getMessage());
     Assert.assertNull(e.getData());
   }
@@ -358,12 +358,12 @@ public class JsonRpcPrunedHistoryTest {
   @Test
   public void testGetBlockReceiptsEmptyBlockWithHistoryOffReturns4444() {
     Wallet wallet = newHistoryOffMockWallet();
-    when(wallet.getBlockByNum(RECEIPT_FLOOR_BLOCK_NUM))
-        .thenReturn(newBlock(RECEIPT_FLOOR_BLOCK_NUM, 0));
+    when(wallet.getBlockByNum(LOWEST_RECEIPT_BLOCK_NUM))
+        .thenReturn(newBlock(LOWEST_RECEIPT_BLOCK_NUM, 0));
     rpc = new TronJsonRpcImpl(mock(NodeInfoService.class), wallet);
 
     JsonRpcPrunedHistoryException e = assertThrows(JsonRpcPrunedHistoryException.class,
-        () -> rpc.getBlockReceipts(RECEIPT_FLOOR_HEX));
+        () -> rpc.getBlockReceipts(LOWEST_RECEIPT_BLOCK_HEX));
     Assert.assertEquals(PRUNED_MESSAGE, e.getMessage());
     Assert.assertNull(e.getData());
   }
@@ -383,12 +383,12 @@ public class JsonRpcPrunedHistoryTest {
   @Test
   public void testGetBlockReceiptsOnFullNodeWithHistoryOffReturns4444() {
     Wallet wallet = newHistoryOffMockWallet(false);
-    when(wallet.getBlockByNum(RECEIPT_FLOOR_BLOCK_NUM))
-        .thenReturn(newBlock(RECEIPT_FLOOR_BLOCK_NUM, 1));
+    when(wallet.getBlockByNum(LOWEST_RECEIPT_BLOCK_NUM))
+        .thenReturn(newBlock(LOWEST_RECEIPT_BLOCK_NUM, 1));
     rpc = new TronJsonRpcImpl(mock(NodeInfoService.class), wallet);
 
     JsonRpcPrunedHistoryException e = assertThrows(JsonRpcPrunedHistoryException.class,
-        () -> rpc.getBlockReceipts(RECEIPT_FLOOR_HEX));
+        () -> rpc.getBlockReceipts(LOWEST_RECEIPT_BLOCK_HEX));
     Assert.assertEquals(PRUNED_MESSAGE, e.getMessage());
     Assert.assertNull(e.getData());
   }

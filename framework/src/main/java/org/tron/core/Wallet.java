@@ -746,8 +746,8 @@ public class Wallet {
     return chainBaseManager.getLowestBlockNum();
   }
 
-  public long getLowestReceiptBlockNum() {
-    return chainBaseManager.getLowestReceiptBlockNum();
+  public long getLowestBlockNumOfReceiptStore() {
+    return chainBaseManager.getLowestBlockNumOfReceiptStore();
   }
 
   public BlockCapsule getBlockCapsuleByNum(long blockNum) {

@@ -41,7 +41,7 @@ public class TransactionRetStore extends TronStoreWithRevoking<TransactionRetCap
 
   /**
    * Lowest block number that has receipts, or empty when the store has none. On a LiteNode
-   * this is generally above the block floor: a snapshot ships block bodies but no receipts.
+   * this is generally above the lowest block: a snapshot ships block bodies but no receipts.
    *
    * <p>Startup probe only — must run before any session is built. With in-flight snapshot
    * layers, {@code getNext} does not merge deletions correctly.
