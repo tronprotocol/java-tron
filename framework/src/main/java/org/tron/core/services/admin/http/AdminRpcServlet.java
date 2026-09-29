@@ -1,17 +1,8 @@
 package org.tron.core.services.admin.http;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.io.ByteStreams;
-import com.googlecode.jsonrpc4j.ErrorResolver.JsonError;
 import com.googlecode.jsonrpc4j.JsonRpcInterceptor;
-import com.googlecode.jsonrpc4j.JsonRpcServer;
-import com.googlecode.jsonrpc4j.ProxyUtil;
 import io.prometheus.client.Histogram;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Collections;
 import javax.servlet.ServletConfig;
@@ -26,7 +17,7 @@ import org.tron.common.parameter.CommonParameter;
 import org.tron.common.prometheus.MetricKeys;
 import org.tron.common.prometheus.Metrics;
 import org.tron.core.services.admin.AdminJsonRpc;
-import org.tron.core.services.jsonrpc.JsonRpcErrorResolver;
+import org.tron.core.services.admin.AdminJsonRpcRequestHandler;
 import org.tron.core.services.jsonrpc.JsonRpcMapper;
 import org.tron.core.services.jsonrpc.JsonRpcMediaType;
 
@@ -46,9 +37,7 @@ import org.tron.core.services.jsonrpc.JsonRpcMediaType;
 public class AdminRpcServlet extends HttpServlet {
 
   private static final long serialVersionUID = 0L;
-  private static final ObjectMapper OBJECT_MAPPER = JsonRpcMapper.create();
-
-  private JsonRpcServer rpcServer = null;
+  private AdminJsonRpcRequestHandler requestHandler;
   private VirtualHostValidator virtualHostValidator =
       new VirtualHostValidator(Collections.emptyList());
 
@@ -65,20 +54,9 @@ public class AdminRpcServlet extends HttpServlet {
   public void init(ServletConfig config) throws ServletException {
     super.init(config);
 
-    ClassLoader cl = Thread.currentThread().getContextClassLoader();
-    // Expose the annotated Admin interface through the same proxy mechanism as public JSON-RPC.
-    Object compositeService = ProxyUtil.createCompositeServiceProxy(cl,
-        new Object[] {adminJsonRpc},
-        new Class[] {AdminJsonRpc.class},
-        true);
-
-    // Keep parser constraints and annotation-based error mapping consistent with the IPC transport.
-    rpcServer = new JsonRpcServer(OBJECT_MAPPER, compositeService);
-    rpcServer.setErrorResolver(JsonRpcErrorResolver.INSTANCE);
-
-    rpcServer.setShouldLogInvocationErrors(false);
+    requestHandler = new AdminJsonRpcRequestHandler(adminJsonRpc);
     if (CommonParameter.getInstance().isMetricsPrometheusEnable()) {
-      rpcServer.setInterceptorList(Collections.singletonList(interceptor));
+      requestHandler.setInterceptorList(Collections.singletonList(interceptor));
     }
     virtualHostValidator = new VirtualHostValidator(
         CommonParameter.getInstance().getAdminHttpVirtualHosts());
@@ -114,33 +92,7 @@ public class AdminRpcServlet extends HttpServlet {
       return;
     }
     byte[] body = ByteStreams.toByteArray(req.getInputStream());
-    JsonNode request;
-    try {
-      request = OBJECT_MAPPER.reader()
-          .with(DeserializationFeature.FAIL_ON_TRAILING_TOKENS).readTree(body);
-      if (request == null || request.isMissingNode()) {
-        writeErrorResponse(resp, JsonError.PARSE_ERROR.code, JsonError.PARSE_ERROR.message);
-        return;
-      }
-    } catch (JsonProcessingException e) {
-      writeErrorResponse(resp, JsonError.PARSE_ERROR.code, JsonError.PARSE_ERROR.message);
-      return;
-    }
-    if (request.isArray()) {
-      writeErrorResponse(resp, JsonError.INVALID_REQUEST.code,
-          AdminJsonRpc.BATCH_NOT_SUPPORTED_MESSAGE);
-      return;
-    }
-    ByteArrayOutputStream output = new ByteArrayOutputStream();
-    rpcServer.handleRequest(new ByteArrayInputStream(body), output);
-    writeResponse(resp, output.toByteArray());
-  }
-
-  private void writeErrorResponse(HttpServletResponse resp, int code, String message)
-      throws IOException {
-    byte[] body = OBJECT_MAPPER.writeValueAsBytes(
-        JsonRpcMapper.createErrorResponse(code, message, null));
-    writeResponse(resp, body);
+    writeResponse(resp, requestHandler.handleRequest(body));
   }
 
   private void writeResponse(HttpServletResponse resp, byte[] body) throws IOException {

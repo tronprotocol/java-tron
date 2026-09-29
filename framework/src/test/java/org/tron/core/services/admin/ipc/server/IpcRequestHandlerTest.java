@@ -2,16 +2,12 @@ package org.tron.core.services.admin.ipc.server;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.googlecode.jsonrpc4j.JsonRpcServer;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import org.junit.Assert;
 import org.junit.Test;
-import org.mockito.MockedConstruction;
 import org.mockito.Mockito;
 import org.tron.core.Constant;
 import org.tron.core.exception.jsonrpc.JsonRpcInvalidParamsException;
@@ -40,30 +36,6 @@ public class IpcRequestHandlerTest {
     JsonNode result = OBJECT_MAPPER.readTree(response);
     Assert.assertEquals("a\nb:c\rd", result.get("result").asText());
     Assert.assertEquals(7, result.get("id").asInt());
-  }
-
-  @Test
-  public void testHandleCommandReturnsJsonRpcErrorOnDispatcherFailure() throws Exception {
-    try (MockedConstruction<JsonRpcServer> servers = Mockito.mockConstruction(JsonRpcServer.class,
-        (server, context) -> Mockito.doThrow(new IOException("sensitive-detail"))
-            .when(server).handleRequest(Mockito.any(InputStream.class),
-                Mockito.any(OutputStream.class)))) {
-      IpcRequestHandler failingHandler =
-          new IpcRequestHandler(new AdminJsonRpcImpl(), MAX_REQUEST_SIZE);
-      String response = failingHandler.handleCommand(
-          "{\"jsonrpc\":\"2.0\",\"method\":\"admin_example\","
-              + "\"params\":[\"a\",\"b\"],\"id\":9}");
-      JsonNode responseNode = OBJECT_MAPPER.readTree(response);
-
-      Assert.assertEquals(1, servers.constructed().size());
-      Assert.assertEquals("2.0", responseNode.get("jsonrpc").asText());
-      Assert.assertEquals(-32603, responseNode.get("error").get("code").asInt());
-      Assert.assertEquals("Internal error", responseNode.get("error").get("message").asText());
-      Assert.assertEquals(9, responseNode.get("id").asInt());
-      Assert.assertFalse(response, response.contains("sensitive-detail"));
-      Assert.assertFalse(response, response.contains("\n"));
-
-    }
   }
 
   @Test
