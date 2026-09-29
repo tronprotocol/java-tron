@@ -455,6 +455,10 @@ public class DbMoveTest {
     String[] args = new String[] {"db", "mv", "-h"};
     CommandLine cli = new CommandLine(new Toolkit());
     Assert.assertEquals(0, cli.execute(args));
+    CommandLine db = cli.getSubcommands().get("db");
+    Assert.assertFalse(db.getUsageMessage().contains("`db`"));
+    Assert.assertTrue(db.getSubcommands().get("mv").getUsageMessage()
+        .contains("you must stop the currently running FullNode service"));
   }
 
   @Test

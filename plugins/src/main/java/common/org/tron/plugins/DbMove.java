@@ -26,6 +26,7 @@ import picocli.CommandLine.Command;
 
 @Slf4j(topic = "move")
 @Command(name = "mv", aliases = "move",
+    header = Db.STOP_NODE_HEADER,
     description = "Move db to pre-set new path . For example HDD,reduce storage expenses.")
 public class DbMove implements Callable<Integer> {
 
