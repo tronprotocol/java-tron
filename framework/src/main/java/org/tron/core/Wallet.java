@@ -118,7 +118,6 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.Sha256Hash;
-import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.Utils;
 import org.tron.common.utils.WalletUtil;
 import org.tron.common.zksnark.IncrementalMerkleTreeContainer;
@@ -3213,7 +3212,7 @@ public class Wallet {
     if (accountCapsule == null) {
       logger.warn(
           "Get contract failed, the account {} does not exist or the account "
-              + "does not have a code hash!", StringUtil.encode58Check(address));
+              + "does not have a code hash!", WalletUtil.getAddressString(address));
       return null;
     }
 
@@ -3245,7 +3244,7 @@ public class Wallet {
     if (accountCapsule == null) {
       logger.warn(
           "Get contract failed, the account {} does not exist or the account does not have a code "
-              + "hash!", StringUtil.encode58Check(address));
+              + "hash!", WalletUtil.getAddressString(address));
       return null;
     }
 
