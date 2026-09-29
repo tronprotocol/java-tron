@@ -19,6 +19,7 @@ import org.tron.core.services.filter.LiteFnQueryHttpFilter;
 import org.tron.core.services.http.servlets.GetNodeInfoServlet;
 import org.tron.core.services.http.servlets.ListNodesServlet;
 import org.tron.core.services.http.servlets.MetricsServlet;
+import org.tron.core.services.http.servlets.RateLimiterServlet;
 
 @Component("fullNodeHttpApiService")
 @Slf4j(topic = "API")
@@ -45,13 +46,14 @@ public class FullNodeHttpApiService extends HttpService {
   }
 
   /**
-   * Registry-driven registration: mounts every endpoint the registry declares for the FULL
-   * surface under the /wallet prefix, resolving servlet beans from the application context.
-   * The three root-mounted endpoints (net / monitor) are not under /wallet and are mounted
-   * explicitly; their paths must stay listed in the access-filter pathSpecs in
-   * {@link #addFilter}.
+   * Registry-driven registration: tags the context with the FULL surface and mounts every
+   * endpoint the registry declares for it under the /wallet prefix, resolving servlet beans from
+   * the application context. The three root-mounted endpoints (net / monitor) are not under
+   * /wallet and are mounted explicitly; their paths must stay listed in the access-filter
+   * pathSpecs in {@link #addFilter}.
    */
   protected void addServletsFromRegistry(ServletContextHandler context) {
+    context.setAttribute(RateLimiterServlet.SURFACE_ATTRIBUTE, HttpApi.Surface.FULL);
     for (HttpApiRegistry.Entry def : HttpApiRegistry.forSurface(HttpApi.Surface.FULL)) {
       context.addServlet(new ServletHolder(appContext.getBean(def.getServlet())),
           "/wallet/" + def.getSuffix());

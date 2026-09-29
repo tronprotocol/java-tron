@@ -11,13 +11,15 @@ import org.tron.core.db.Manager;
 import org.tron.core.db2.core.Chainbase;
 
 /**
- * Selects which state view (HEAD / SOLIDITY / PBFT) the http servlets on this port read from.
+ * Selects which state view the http servlets on this port read from.
  *
  * <p>The read cursor is a per-thread setting ({@code ThreadLocal} in {@code Chainbase}): it only
  * decides from which snapshot the current thread starts its reads, and has no effect on any
  * other thread. This filter sets the cursor before the servlet runs, so the same stateless
- * servlet beans can serve {@code /wallet} (HEAD), {@code /walletsolidity} (SOLIDITY) and
- * {@code /walletpbft} (PBFT) without per-port subclasses.
+ * servlet beans can serve {@code /wallet} (HEAD) and {@code /walletsolidity} (SOLIDITY) without
+ * per-port subclasses. The SOLIDITY view is resolved from the live head on every read, so it can
+ * be selected before rate limiting; the PBFT view is an offset from the head and is selected by
+ * {@code RateLimiterServlet} once the request is admitted.
  *
  * <p>The cursor is always reset to HEAD in a finally block: jetty pools its worker threads, and
  * a leftover cursor would leak into the next request served by the same thread. Only read-only

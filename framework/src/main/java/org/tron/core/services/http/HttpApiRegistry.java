@@ -21,6 +21,7 @@ import org.springframework.stereotype.Component;
 import org.tron.core.exception.TronError;
 import org.tron.core.services.http.HttpApi.Access;
 import org.tron.core.services.http.HttpApi.Surface;
+import org.tron.core.services.http.servlets.RateLimiterServlet;
 
 /**
  * Read-only view of the node's http endpoints, derived at class-load from the {@link HttpApi}
@@ -46,7 +47,9 @@ import org.tron.core.services.http.HttpApi.Surface;
  *   <li>every endpoint whose access is not {@link Access#READ} is exposed on the FULL surface
  *       only — a cursor surface (SOLIDITY / PBFT) must never run a write path on a
  *       cursor-switched thread, and the standalone SolidityNode surface cannot propagate
- *       transactions.</li>
+ *       transactions;</li>
+ *   <li>every endpoint exposed on PBFT extends {@link RateLimiterServlet}, which selects the
+ *       PBFT cursor once a request passes rate limiting.</li>
  * </ul>
  *
  * <p>Annotations are read with {@link Class#getDeclaredAnnotation} and {@link HttpApi} is not
@@ -224,6 +227,11 @@ public final class HttpApiRegistry {
       throw new IllegalStateException(String.format(
           "%s is %s and may only be exposed on the FULL surface, found %s",
           clazz.getName(), api.access(), surfaces));
+    }
+    // RateLimiterServlet selects the PBFT cursor; any other servlet would read HEAD on that port
+    if (surfaces.contains(Surface.PBFT) && !RateLimiterServlet.class.isAssignableFrom(clazz)) {
+      throw new IllegalStateException(clazz.getName()
+          + " is exposed on the PBFT surface and must extend RateLimiterServlet");
     }
     return new Entry(suffix, clazz.asSubclass(HttpServlet.class), surfaces);
   }

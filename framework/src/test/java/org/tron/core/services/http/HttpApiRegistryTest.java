@@ -11,6 +11,7 @@ import java.io.InputStreamReader;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumMap;
@@ -26,6 +27,7 @@ import org.junit.Test;
 import org.mockito.Answers;
 import org.springframework.context.ApplicationContext;
 import org.tron.core.services.http.HttpApi.Surface;
+import org.tron.core.services.http.servlets.RateLimiterServlet;
 import org.tron.core.services.http.solidity.SolidityNodeHttpApiService;
 import org.tron.core.services.interfaceOnPBFT.HttpApiOnPBFTService;
 import org.tron.core.services.interfaceOnSolidity.HttpApiOnSolidityService;
@@ -137,6 +139,15 @@ public class HttpApiRegistryTest {
     assertBuildFails(REGTEST + "nested", "must be a concrete top-level class");
   }
 
+  /**
+   * The PBFT cursor is selected by {@link RateLimiterServlet}, so any other servlet on the PBFT
+   * surface would serve HEAD state there.
+   */
+  @Test
+  public void testPbftEndpointWithoutRateLimiterServletRejected() {
+    assertBuildFails(REGTEST + "pbftplain", "must extend RateLimiterServlet");
+  }
+
   private void assertBuildFails(String pkg, String fragment) {
     try {
       HttpApiRegistry.buildFromPackage(pkg);
@@ -172,6 +183,48 @@ public class HttpApiRegistryTest {
       Assert.assertEquals(surface + " endpoints removed since the pre-refactor baseline",
           INTENTIONAL_REMOVED.getOrDefault(surface, Collections.emptySet()), removed);
     }
+  }
+
+  /**
+   * Every endpoint keeps, on each surface, the rate-limiter name of the class the pre-refactor
+   * list mounted there, so existing {@code rate.limiter.http} entries still apply and the
+   * surfaces keep separate quotas.
+   */
+  @Test
+  public void testRateLimiterNamesMatchPreRefactorServlets() throws Exception {
+    List<String[]> rows = readBaseline();
+    int removed = 0;
+    for (Set<String> suffixes : INTENTIONAL_REMOVED.values()) {
+      removed += suffixes.size();
+    }
+    int checked = 0;
+    for (String[] row : rows) {
+      Surface surface = Surface.valueOf(row[0]);
+      Class<?> servlet = servletOf(surface, row[1]);
+      if (servlet == null) {
+        Assert.assertTrue(row[0] + " " + row[1] + " is no longer served",
+            INTENTIONAL_REMOVED.getOrDefault(surface, Collections.emptySet()).contains(row[1]));
+        continue;
+      }
+      Assert.assertEquals(row[0] + " " + row[1], row[2],
+          RateLimiterServlet.limiterName(servlet, surface));
+      checked++;
+    }
+    Assert.assertEquals(rows.size() - removed, checked);
+  }
+
+  /**
+   * Each service tags its jetty context with its surface. {@link RateLimiterServlet} picks the
+   * rate limiter, and on PBFT the read cursor, from that tag, so an untagged port would share the
+   * FULL quota and read HEAD state.
+   */
+  @Test
+  public void testEachServiceTagsItsContextWithItsSurface() throws Exception {
+    Assert.assertEquals(Surface.FULL, surfaceOf(mount(FullNodeHttpApiService.class)));
+    Assert.assertEquals(Surface.SOLIDITY, surfaceOf(mount(HttpApiOnSolidityService.class)));
+    Assert.assertEquals(Surface.PBFT, surfaceOf(mount(HttpApiOnPBFTService.class)));
+    Assert.assertEquals(Surface.SOLIDITY_NODE,
+        surfaceOf(mount(SolidityNodeHttpApiService.class)));
   }
 
   @Test
@@ -211,31 +264,59 @@ public class HttpApiRegistryTest {
     return paths;
   }
 
-  /** Reads {@link #BASELINE}: one {@code <surface> <suffix>} per line, {@code #} comments. */
+  private static Class<?> servletOf(Surface surface, String suffix) {
+    for (HttpApiRegistry.Entry entry : HttpApiRegistry.forSurface(surface)) {
+      if (entry.getSuffix().equals(suffix)) {
+        return entry.getServlet();
+      }
+    }
+    return null;
+  }
+
+  /** Suffixes per surface in {@link #BASELINE}. */
   private static Map<Surface, Set<String>> loadBaseline() throws Exception {
     Map<Surface, Set<String>> baseline = new EnumMap<>(Surface.class);
+    for (String[] row : readBaseline()) {
+      baseline.computeIfAbsent(Surface.valueOf(row[0]), s -> new TreeSet<>()).add(row[1]);
+    }
+    return baseline;
+  }
+
+  /** Reads {@link #BASELINE}: {@code <surface> <suffix> <servlet>} per line, {@code #} comments. */
+  private static List<String[]> readBaseline() throws Exception {
+    List<String[]> rows = new ArrayList<>();
     try (InputStream in = HttpApiRegistryTest.class.getResourceAsStream(BASELINE)) {
       Assert.assertNotNull("missing baseline fixture " + BASELINE, in);
       BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
       String line;
       while ((line = reader.readLine()) != null) {
         line = line.trim();
-        if (line.isEmpty() || line.startsWith("#")) {
-          continue;
+        if (!line.isEmpty() && !line.startsWith("#")) {
+          rows.add(line.split(" "));
         }
-        String[] parts = line.split(" ");
-        baseline.computeIfAbsent(Surface.valueOf(parts[0]), s -> new TreeSet<>()).add(parts[1]);
       }
     }
-    return baseline;
+    return rows;
+  }
+
+  private static Object surfaceOf(ServletContextHandler context) {
+    return context.getServletContext().getAttribute(RateLimiterServlet.SURFACE_ATTRIBUTE);
+  }
+
+  private static Set<String> mountedPaths(Class<?> serviceClass) throws Exception {
+    Set<String> mounted = new HashSet<>();
+    for (ServletMapping mapping : mount(serviceClass).getServletHandler().getServletMappings()) {
+      mounted.addAll(Arrays.asList(mapping.getPathSpecs()));
+    }
+    return mounted;
   }
 
   /**
    * Instantiates the service without running its constructor, injects a mock application
-   * context whose beans are mocks, runs the registry-driven registration against a real
-   * jetty context and returns every mounted path spec.
+   * context whose beans are mocks, and runs the registry-driven registration against a real
+   * jetty context.
    */
-  private static Set<String> mountedPaths(Class<?> serviceClass) throws Exception {
+  private static ServletContextHandler mount(Class<?> serviceClass) throws Exception {
     ApplicationContext ctx = mock(ApplicationContext.class);
     given(ctx.getBean(any(Class.class))).willAnswer(inv -> mock((Class<?>) inv.getArgument(0)));
 
@@ -250,11 +331,6 @@ public class HttpApiRegistryTest {
         .getDeclaredMethod("addServletsFromRegistry", ServletContextHandler.class);
     register.setAccessible(true);
     register.invoke(service, context);
-
-    Set<String> mounted = new HashSet<>();
-    for (ServletMapping mapping : context.getServletHandler().getServletMappings()) {
-      mounted.addAll(Arrays.asList(mapping.getPathSpecs()));
-    }
-    return mounted;
+    return context;
   }
 }

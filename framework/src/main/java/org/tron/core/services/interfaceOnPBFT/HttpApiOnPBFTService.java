@@ -12,9 +12,9 @@ import org.tron.common.application.HttpService;
 import org.tron.core.config.args.Args;
 import org.tron.core.services.filter.HttpApiAccessFilter;
 import org.tron.core.services.filter.LiteFnQueryHttpFilter;
-import org.tron.core.services.filter.PbftCursorFilter;
 import org.tron.core.services.http.HttpApi;
 import org.tron.core.services.http.HttpApiRegistry;
+import org.tron.core.services.http.servlets.RateLimiterServlet;
 
 @Slf4j(topic = "API")
 public class HttpApiOnPBFTService extends HttpService {
@@ -23,8 +23,6 @@ public class HttpApiOnPBFTService extends HttpService {
   private LiteFnQueryHttpFilter liteFnQueryHttpFilter;
   @Autowired
   private HttpApiAccessFilter httpApiAccessFilter;
-  @Autowired
-  private PbftCursorFilter pbftCursorFilter;
   @Autowired
   private ApplicationContext appContext;
 
@@ -41,10 +39,13 @@ public class HttpApiOnPBFTService extends HttpService {
   }
 
   /**
-   * Registry-driven registration: mounts every endpoint the registry declares for the PBFT
-   * surface, resolving servlet beans from the application context.
+   * Registry-driven registration: tags the context with the PBFT surface and mounts every
+   * endpoint the registry declares for it, resolving servlet beans from the application context.
+   * The tag makes {@link RateLimiterServlet} read the PBFT state view for every request on this
+   * port, selected after the request passes rate limiting.
    */
   protected void addServletsFromRegistry(ServletContextHandler context) {
+    context.setAttribute(RateLimiterServlet.SURFACE_ATTRIBUTE, HttpApi.Surface.PBFT);
     for (HttpApiRegistry.Entry def : HttpApiRegistry.forSurface(HttpApi.Surface.PBFT)) {
       context.addServlet(new ServletHolder(appContext.getBean(def.getServlet())),
           "/" + def.getSuffix());
@@ -60,10 +61,6 @@ public class HttpApiOnPBFTService extends HttpService {
 
     // api access filter
     context.addFilter(new FilterHolder(httpApiAccessFilter), "/*",
-        EnumSet.allOf(DispatcherType.class));
-
-    // every request on this port reads the PBFT state view
-    context.addFilter(new FilterHolder(pbftCursorFilter), "/*",
         EnumSet.allOf(DispatcherType.class));
   }
 }

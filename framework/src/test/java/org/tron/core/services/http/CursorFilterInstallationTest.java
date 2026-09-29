@@ -19,16 +19,16 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Answers;
 import org.tron.core.db.Manager;
-import org.tron.core.services.filter.PbftCursorFilter;
 import org.tron.core.services.filter.SolidityCursorFilter;
+import org.tron.core.services.filter.WalletCursorFilter;
 import org.tron.core.services.http.solidity.SolidityNodeHttpApiService;
 import org.tron.core.services.interfaceOnPBFT.HttpApiOnPBFTService;
 import org.tron.core.services.interfaceOnSolidity.HttpApiOnSolidityService;
 
 /**
  * Guards that each http service installs (or omits) its read-cursor filter. The route tests cannot
- * catch a dropped cursor filter — the paths would still mount, but a solidity/pbft read would
- * silently serve HEAD state. This pins the filter to its port so that regression fails a test.
+ * catch a dropped cursor filter — the paths would still mount, but a solidity read would silently
+ * serve HEAD state. This pins the filter to its port so that regression fails a test.
  */
 public class CursorFilterInstallationTest {
 
@@ -40,10 +40,10 @@ public class CursorFilterInstallationTest {
   }
 
   @Test
-  public void testPbftServiceInstallsPbftCursorFilterOnAllPaths() throws Exception {
-    Map<String, Set<String>> cursor = cursorFilterMappings(HttpApiOnPBFTService.class);
-    Assert.assertEquals(Collections.singleton("/*"), cursor.get("PbftCursorFilter"));
-    Assert.assertEquals(1, cursor.size());
+  public void testPbftServiceInstallsNoCursorFilter() throws Exception {
+    // RateLimiterServlet selects the PBFT cursor once the request passes rate limiting; a filter
+    // would select it before a blocking admission, letting reads pass the PBFT-finalized block
+    Assert.assertTrue(cursorFilterMappings(HttpApiOnPBFTService.class).isEmpty());
   }
 
   @Test
@@ -73,8 +73,6 @@ public class CursorFilterInstallationTest {
       field.setAccessible(true);
       if (field.getType() == SolidityCursorFilter.class) {
         field.set(service, new SolidityCursorFilter(manager));
-      } else if (field.getType() == PbftCursorFilter.class) {
-        field.set(service, new PbftCursorFilter(manager));
       } else {
         field.set(service, mock(field.getType()));
       }
@@ -85,15 +83,12 @@ public class CursorFilterInstallationTest {
     addFilter.setAccessible(true);
     addFilter.invoke(service, context);
 
-    // identify cursor filters by held class name (an instance holder's getFilter() is null before
-    // start, but its class name is set in the constructor)
+    // any WalletCursorFilter counts, so a cursor filter of another class is caught as well
     Map<String, String> cursorFilterNames = new HashMap<>();
     for (FilterHolder holder : context.getServletHandler().getFilters()) {
-      String className = holder.getClassName();
-      if (SolidityCursorFilter.class.getName().equals(className)
-          || PbftCursorFilter.class.getName().equals(className)) {
-        cursorFilterNames.put(holder.getName(),
-            className.substring(className.lastIndexOf('.') + 1));
+      Class<?> held = holder.getHeldClass();
+      if (held != null && WalletCursorFilter.class.isAssignableFrom(held)) {
+        cursorFilterNames.put(holder.getName(), held.getSimpleName());
       }
     }
     Map<String, Set<String>> result = new HashMap<>();

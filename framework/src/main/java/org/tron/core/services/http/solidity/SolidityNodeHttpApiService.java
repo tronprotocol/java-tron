@@ -15,6 +15,7 @@ import org.tron.core.services.filter.HttpApiAccessFilter;
 import org.tron.core.services.http.HttpApi;
 import org.tron.core.services.http.HttpApiRegistry;
 import org.tron.core.services.http.servlets.GetNodeInfoServlet;
+import org.tron.core.services.http.servlets.RateLimiterServlet;
 
 @Component
 @Slf4j(topic = "API")
@@ -39,11 +40,13 @@ public class SolidityNodeHttpApiService extends HttpService {
   }
 
   /**
-   * Registry-driven registration: mounts every endpoint the registry declares for the
-   * SOLIDITY_NODE surface under the /walletsolidity prefix, resolving servlet beans from the
-   * application context; getnodeinfo is additionally reachable under the fullnode prefix.
+   * Registry-driven registration: tags the context with the SOLIDITY_NODE surface and mounts
+   * every endpoint the registry declares for it under the /walletsolidity prefix, resolving
+   * servlet beans from the application context; getnodeinfo is additionally reachable under the
+   * fullnode prefix.
    */
   protected void addServletsFromRegistry(ServletContextHandler context) {
+    context.setAttribute(RateLimiterServlet.SURFACE_ATTRIBUTE, HttpApi.Surface.SOLIDITY_NODE);
     for (HttpApiRegistry.Entry def : HttpApiRegistry.forSurface(HttpApi.Surface.SOLIDITY_NODE)) {
       context.addServlet(new ServletHolder(appContext.getBean(def.getServlet())),
           "/walletsolidity/" + def.getSuffix());
