@@ -11,8 +11,8 @@ import java.lang.annotation.Target;
  * whether it mutates state, and the surfaces (http services) it is exposed on.
  *
  * <p>This annotation is the single declaration of an endpoint's exposure. {@link HttpApiRegistry}
- * derives a read-only registry and the audit matrix from it, so no hand-maintained table repeats
- * the information and an endpoint cannot drift between its implementation and its registration.
+ * is a read-only view derived from it, so no hand-maintained table repeats the information and
+ * an endpoint cannot drift between its implementation and its registration.
  *
  * <p><b>Deliberately not {@code @Inherited}, and read only via
  * {@link Class#getDeclaredAnnotation}.</b> Servlets in this code base have historically been
