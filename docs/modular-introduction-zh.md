@@ -32,7 +32,7 @@ common 模块对公共组件和一些工具类进行了封装，以方便其他�
 
 ### p2p
 
-p2p 模块负责节点发现、连接管理和基于 DNS 的节点列表：节点之间通过 UDP 相互发现、通过 TCP 建立连接；节点列表还可以发布为 DNS TXT 记录（支持 Amazon Route 53 和阿里云 DNS），其他节点通过 `tree://{pubkey}@{domain}` 形式的地址获取。该模块内置自 [tronprotocol/libp2p](https://github.com/tronprotocol/libp2p) v2.2.9，不依赖项目中的其他模块，由 `common` 对外暴露。单独运行方式和接口说明见 [p2p/README.md](../p2p/README.md)。
+p2p 模块负责节点发现、连接管理和基于 DNS 的节点列表：节点之间通过 UDP 相互发现、通过 TCP 建立连接；节点列表还可以发布为 DNS TXT 记录，供其他节点获取。该模块内置自 [tronprotocol/libp2p](https://github.com/tronprotocol/libp2p)，不依赖项目中的其他模块。单独运行方式和接口说明见 [p2p/README.md](../p2p/README.md)。
 
 ### chainbase
 

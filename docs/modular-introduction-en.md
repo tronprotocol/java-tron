@@ -35,7 +35,7 @@ Common module encapsulates common components and tools for other modules to acce
 
 ### p2p
 
-The p2p module handles peer discovery, connection management and DNS-based node lists: nodes discover each other over UDP and connect over TCP, and a node list can be published as DNS TXT records (Amazon Route 53 or Aliyun DNS) that other nodes fetch through a `tree://{pubkey}@{domain}` URL. The module is vendored from [tronprotocol/libp2p](https://github.com/tronprotocol/libp2p) v2.2.9, depends on no other module of the project, and is exposed to the rest of java-tron by `common`. See [p2p/README.md](../p2p/README.md) for standalone use and the API.
+The p2p module handles peer discovery, connection management and DNS-based node lists: nodes discover each other over UDP and connect over TCP, and a node list can be published as DNS TXT records for other nodes to fetch. The module is vendored from [tronprotocol/libp2p](https://github.com/tronprotocol/libp2p) and depends on no other module of the project. See [p2p/README.md](../p2p/README.md) for standalone use and the API.
 
 ### chainbase
 

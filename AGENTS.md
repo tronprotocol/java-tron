@@ -110,7 +110,7 @@ No `*.jar`, `build/`, logs, or database files — whether produced by the main b
 | `actuator` | Transaction execution; one Actuator class per transaction type |
 | `crypto` | Cryptographic primitives (depends only on `common`) |
 | `common` | Shared utilities |
-| `p2p` | Peer discovery, connection management and DNS-based node lists; vendored from [tronprotocol/libp2p](https://github.com/tronprotocol/libp2p) v2.2.9 (see [`p2p/README.md`](./p2p/README.md)) |
+| `p2p` | Peer discovery, connection management and DNS-based node lists; vendored from [tronprotocol/libp2p](https://github.com/tronprotocol/libp2p) (see [`p2p/README.md`](./p2p/README.md)) |
 | `platform` | Architecture-specific implementations selected at build time (separate `x86` / `arm` / `common` source sets): math wrappers, LevelDB/RocksDB order-price comparators — relevant to cross-JVM determinism |
 | `plugins` | Standalone tools (`Toolkit.jar`, `ArchiveManifest.jar`) |
 
