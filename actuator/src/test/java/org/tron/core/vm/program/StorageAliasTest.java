@@ -6,6 +6,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
@@ -85,32 +86,51 @@ public class StorageAliasTest {
   @Test
   public void aliasedReadsRemainAllowedBeforeFork() {
     when(controller.pass(ForkBlockVersionEnum.VERSION_4_8_2_3)).thenReturn(false);
+    Storage before = new Storage(new byte[21], store, false);
     when(store.get(any(byte[].class))).thenAnswer(
         invocation -> new StorageRowCapsule(new DataWord(5).getData()));
-    assertEquals(new DataWord(5), storage.getValue(slot));
-    assertEquals(new DataWord(5), storage.getValue(alias));
-    storage.put(alias, new DataWord(8));
-    assertEquals(new DataWord(8), storage.getValue(alias));
+    assertEquals(new DataWord(5), before.getValue(slot));
+    assertEquals(new DataWord(5), before.getValue(alias));
+    before.put(alias, new DataWord(8));
+    assertEquals(new DataWord(8), before.getValue(alias));
   }
 
   @Test
-  public void writesBeforeForkAreNotTracked() {
+  public void forkFlagIsCapturedOnceAtConstruction() {
+    clearInvocations(controller);
     when(controller.pass(ForkBlockVersionEnum.VERSION_4_8_2_3)).thenReturn(false);
-    storage.put(slot, new DataWord(5));
+    Storage before = new Storage(new byte[21], store, false);
+    before.put(slot, new DataWord(5));
 
     when(controller.pass(ForkBlockVersionEnum.VERSION_4_8_2_3)).thenReturn(true);
-    storage.put(alias, new DataWord(8));
-    assertEquals(new DataWord(8), storage.getValue(alias));
-    assertThrows(OutOfTimeException.class, () -> storage.put(slot, new DataWord(7)));
+    before.put(alias, new DataWord(8));
+    assertEquals(new DataWord(8), before.getValue(alias));
+    Storage child = new Storage(before);
+    child.put(slot, new DataWord(1));
+    child.put(alias, new DataWord(2));
+    verify(controller, times(1)).pass(ForkBlockVersionEnum.VERSION_4_8_2_3);
+
+    Storage after = new Storage(new byte[21], store, false);
+    after.put(alias, new DataWord(8));
+    assertThrows(OutOfTimeException.class, () -> after.put(slot, new DataWord(7)));
+    verify(controller, times(2)).pass(ForkBlockVersionEnum.VERSION_4_8_2_3);
+
+    clearInvocations(controller);
+    Storage optimized = new Storage(new byte[21], store, true);
+    optimized.put(slot, new DataWord(1));
+    optimized.put(alias, new DataWord(2));
+    assertEquals(new DataWord(2), optimized.getValue(alias));
+    verify(controller, times(1)).pass(ForkBlockVersionEnum.VERSION_4_8_2_3);
   }
 
   @Test
   public void aliasedWritesRemainAllowedBeforeFork() {
     when(controller.pass(ForkBlockVersionEnum.VERSION_4_8_2_3)).thenReturn(false);
-    storage.put(slot, new DataWord(5));
-    storage.put(alias, new DataWord(8));
-    assertEquals(new DataWord(5), storage.getValue(slot));
-    assertEquals(new DataWord(8), storage.getValue(alias));
+    Storage before = new Storage(new byte[21], store, false);
+    before.put(slot, new DataWord(5));
+    before.put(alias, new DataWord(8));
+    assertEquals(new DataWord(5), before.getValue(slot));
+    assertEquals(new DataWord(8), before.getValue(alias));
   }
 
   @Test

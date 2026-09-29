@@ -28,6 +28,7 @@ public class Storage {
   private final Map<DataWord, DataWord> oldRowKeyOwners = new HashMap<>();
   private final Map<DataWord, ReadKind> readKinds = new HashMap<>();
   private final boolean optimizeTvmStorage;
+  private final boolean aliasCheckEnabled;
 
   @Getter
   private byte[] addrHash;
@@ -43,6 +44,7 @@ public class Storage {
     this.address = address;
     this.store = store;
     this.optimizeTvmStorage = optimizeTvmStorage;
+    this.aliasCheckEnabled = ForkController.instance().pass(ForkBlockVersionEnum.VERSION_4_8_2_3);
   }
 
   public Storage(Storage storage) {
@@ -51,6 +53,7 @@ public class Storage {
     this.store = storage.store;
     this.contractVersion = storage.contractVersion;
     this.optimizeTvmStorage = storage.optimizeTvmStorage;
+    this.aliasCheckEnabled = storage.aliasCheckEnabled;
     storage.getRowCache().forEach((DataWord key, StorageRowCapsule row) -> {
       StorageRowCapsule newRow = new StorageRowCapsule(row);
       this.rowCache.put(key.clone(), newRow);
@@ -104,7 +107,7 @@ public class Storage {
     if (optimizeTvmStorage) {
       return getOptimized(key);
     }
-    if (aliasCheckEnabled()) {
+    if (aliasCheckEnabled) {
       checkAlias(key);
     }
     if (rowCache.containsKey(key)) {
@@ -120,7 +123,7 @@ public class Storage {
   }
 
   public void put(DataWord key, DataWord value) {
-    if (!optimizeTvmStorage && aliasCheckEnabled()) {
+    if (!optimizeTvmStorage && aliasCheckEnabled) {
       checkAlias(key);
     }
     if (rowCache.containsKey(key)) {
@@ -239,7 +242,4 @@ public class Storage {
     store.put(getNewRowKey(key), new StorageRowCapsule(value));
   }
 
-  private boolean aliasCheckEnabled() {
-    return ForkController.instance().pass(ForkBlockVersionEnum.VERSION_4_8_2_3);
-  }
 }
