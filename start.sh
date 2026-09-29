@@ -21,7 +21,6 @@
 FULL_NODE_DIR="FullNode"
 FULL_NODE_CONFIG_DIR="config"
 # config file
-FULL_NODE_CONFIG_MAIN_NET="main_net_config.conf"
 FULL_NODE_CONFIG_TEST_NET="test_net_config.conf"
 FULL_NODE_CONFIG_PRIVATE_NET="private_net_config.conf"
 DEFAULT_FULL_NODE_CONFIG='config.conf'
@@ -42,25 +41,29 @@ MAX_STOP_TIME=60
 # Modify this option to allow the minimum memory to be started, unit MB
 ALLOW_MIN_MEMORY=8192
 
-# JVM option
+# JVM option, adjust as needed
 MAX_DIRECT_MEMORY=1g
 JVM_MS=4g
-JVM_MX=4g
+JVM_MX=12g
 IS_BACKUP_GC_LOG=true
 
 SPECIFY_MEMORY=0
-RUN=false
 UPGRADE=false
 
 # Rebuild manifest
 REBUILD_MANIFEST=true
 REBUILD_DIR="$PWD/output-directory/database"
-REBUILD_MANIFEST_SIZE=0
+REBUILD_MANIFEST_SIZE=128
 REBUILD_BATCH_SIZE=80000
 
 # Download and upgrade
 DOWNLOAD=false
 RELEASE_URL='https://github.com/tronprotocol/java-tron/releases'
+# Release jars are signed with this key, see "Integrity Check" in README.md
+RELEASE_KEY_FINGERPRINT='1254F859D2B1BD9F66E7107DF859BCB44A28290B'
+RELEASE_KEY_SERVERS='hkps://keys.openpgp.org hkps://keyserver.ubuntu.com'
+MAIN_NET_CONFIG_URL='https://raw.githubusercontent.com/tronprotocol/java-tron/master/framework/src/main/resources/config.conf'
+TEST_NET_CONFIG_URL='https://raw.githubusercontent.com/tron-nile-testnet/nile-testnet/master/framework/src/main/resources/config-nile.conf'
 QUICK_START=false
 CLONE_BUILD=false
 
@@ -69,6 +72,11 @@ if [[ $GITHUB_CLONE_TYPE == 'HTTPS' ]]; then
 else
   GITHUB_REPOSITORY=$GITHUB_REPOSITORY_SSH_URL
 fi
+
+darwin=false
+case "`uname`" in
+  Darwin*) darwin=true ;;
+esac
 
 # Determine the Java command to use to start the JVM.
 if [ -z "$JAVA_HOME" ]; then
@@ -114,6 +122,20 @@ if [ -z "$JAVA_HOME" ] ; then
   echo "Warning: JAVA_HOME environment variable is not set."
 fi
 
+JAVA_PROPERTIES=$("$JAVACMD" -XshowSettings:properties -version 2>&1)
+javaProperty() {
+  echo "$JAVA_PROPERTIES" | awk -F ' = ' -v key="$1" '$1 ~ "^ *" key "$" {print $2; exit}'
+}
+
+# x86_64 runs on JDK 8 and ARM64 on JDK 17, each with its own release jars
+JAVA_SPEC_VERSION=$(javaProperty java.specification.version)
+case "$(javaProperty os.arch)" in
+  aarch64|arm64) RELEASE_ARCH_SUFFIX='-aarch64' ;;
+  *) RELEASE_ARCH_SUFFIX='' ;;
+esac
+RELEASE_JAR="FullNode$RELEASE_ARCH_SUFFIX.jar"
+RELEASE_ARCHIVE_JAR="ArchiveManifest$RELEASE_ARCH_SUFFIX.jar"
+
 backupGCLog() {
   local maxFile=5
   local gcLogDir=logs/gc_logs/
@@ -142,37 +164,24 @@ backupGCLog() {
 }
 
 getLatestReleaseVersion() {
-  full_node_version=`git ls-remote --tags $GITHUB_REPOSITORY |grep GreatVoyage- | awk -F '/' 'END{print $3}'`
-  if [[ -n $full_node_version ]]; then
-   echo $full_node_version
-  else
-   echo ''
-  fi
-}
-
-checkVersion() {
- github_release_version=$(`echo getLatestReleaseVersion`)
- if [[ -n $github_release_version ]]; then
-  echo "info: github latest version: $github_release_version"
-  echo $github_release_version
- else
-    echo 'info: not getting the latest version'
-    exit
- fi
+  git ls-remote --tags --refs $GITHUB_REPOSITORY 2>/dev/null | awk -F '/' '{print $3}' \
+    | grep -E '^GreatVoyage-v[0-9]+(\.[0-9]+)*$' | sort -V | tail -1
 }
 
 upgrade() {
-  latest_version=$(`echo getLatestReleaseVersion`)
+  latest_version=$(getLatestReleaseVersion)
   echo "info: latest version: $latest_version"
   if [[ -n $latest_version ]]; then
-    old_jar="$PWD/$JAR_NAME"
-    if [[ -f $old_jar ]]; then
-      echo "info: backup $old_jar"
-      mv $PWD/$JAR_NAME $PWD/$JAR_NAME'_bak'
-    fi
-    download $RELEASE_URL/download/$latest_version/$JAR_NAME $JAR_NAME
-    if [[ $? == 0 ]]; then
+    if downloadRelease $latest_version $RELEASE_JAR $JAR_NAME.download; then
+      if [[ -f $JAR_NAME ]]; then
+        echo "info: backup $JAR_NAME"
+        mv $JAR_NAME $JAR_NAME'_bak'
+      fi
+      mv $JAR_NAME.download $JAR_NAME
       echo "info: download version $latest_version success"
+    else
+      echo "warn: upgrade aborted, $JAR_NAME is unchanged"
+      exit 1
     fi
   else
     echo 'info: nothing to upgrade'
@@ -180,18 +189,22 @@ upgrade() {
 }
 
 download() {
-  echo "warn: download is disabled, fetch $1 manually and verify it"
-  return 1
   local url=$1
   local file_name=$2
   if type wget >/dev/null 2>&1; then
-    wget --no-check-certificate -q $url
+    wget -q -O "$file_name" "$url" || { rm -f "$file_name"; return 1; }
   elif type curl >/dev/null 2>&1; then
-    echo "curl -OLJ $url"
-    curl -OLJ $url
+    echo "curl -fsSL -o $file_name $url"
+    curl -fsSL -o "$file_name" "$url" || { rm -f "$file_name"; return 1; }
   else
     echo 'info: no exists wget or curl, make sure the system can use the "wget" or "curl" command'
+    return 1
   fi
+}
+
+# Downloads asset $2 of release $1 to file $3 and verifies its signature.
+downloadRelease() {
+  download "$RELEASE_URL/download/$1/$2" "$3" && checkSign "$1" "$2" "$3"
 }
 
 mkdirFullNode() {
@@ -206,41 +219,42 @@ mkdirFullNode() {
 }
 
 quickStart() {
-  full_node_version=$(`echo getLatestReleaseVersion`)
+  full_node_version=$(getLatestReleaseVersion)
   if [[ -n $full_node_version ]]; then
     mkdirFullNode
     echo "info: check latest version: $full_node_version"
     echo 'info: download config'
-    download https://raw.githubusercontent.com/tronprotocol/tron-deployment/$GITHUB_BRANCH/$FULL_NODE_CONFIG_MAIN_NET $FULL_NODE_CONFIG_MAIN_NET
-    mv $FULL_NODE_CONFIG_MAIN_NET 'config.conf'
+    download $MAIN_NET_CONFIG_URL config.conf || exit 1
 
     echo "info: download $full_node_version"
-    download $RELEASE_URL/download/$full_node_version/$JAR_NAME $JAR_NAME
-    checkSign
+    downloadRelease $full_node_version $RELEASE_JAR $JAR_NAME || exit 1
   else
     echo 'info: not getting the latest version'
-    exit
+    exit 1
   fi
 }
 
 cloneCode() {
   if type git >/dev/null 2>&1; then
-    git_clone=$(git clone -b $GITHUB_BRANCH $GITHUB_REPOSITORY)
-    if [[ git_clone == 0 ]]; then
+    if git clone -b $GITHUB_BRANCH $GITHUB_REPOSITORY; then
       echo 'info: git clone java-tron success'
+    else
+      echo 'warn: git clone java-tron failed'
+      return 1
     fi
   else
     echo 'info: no exists git, make sure the system can use the "git" command'
+    return 1
   fi
 }
 
 cloneBuild() {
   local currentPwd=$PWD
   echo 'info: clone java-tron'
-  cloneCode
+  cloneCode || exit 1
 
   echo 'info: build java-tron'
-  cd java-tron
+  cd java-tron || exit 1
   sh gradlew clean build -x test
   if [[ $? == 0 ]];then
     cd $currentPwd
@@ -253,18 +267,14 @@ cloneBuild() {
 }
 
 checkPid() {
-  if [[ $JAR_NAME =~ '/' ]]; then
-    JAR_NAME=$(echo $JAR_NAME |awk -F '/' '{print $NF}')
-  fi
-  pid=$(ps -ef | grep -v start | grep $JAR_NAME | grep -v grep | awk '{print $2}')
-  return $pid
+  pid=$(ps -ef | grep -v start | grep "${JAR_NAME##*/}" | grep -v grep | awk '{print $2}')
 }
 
 stopService() {
   count=1
   while [ $count -le $MAX_STOP_TIME ]; do
     checkPid
-    if [ $pid ]; then
+    if [ -n "$pid" ]; then
       kill -15 $pid
       sleep 1
     else
@@ -290,12 +300,12 @@ checkAllowMemory() {
 
   if [[ $total -lt $ALLOW_MIN_MEMORY ]]; then
     echo "warn: the memory $total MB cannot be smaller than the minimum memory $ALLOW_MIN_MEMORY MB"
-    exit
+    exit 1
   elif [[ $SPECIFY_MEMORY -gt 0 ]] &&
    [[ $SPECIFY_MEMORY -lt $ALLOW_MIN_MEMORY ]]; then
     echo "warn: the specified memory $SPECIFY_MEMORY MB cannot be smaller than the minimum memory $ALLOW_MIN_MEMORY MB"
     echo 'warn: start abort'
-    exit
+    exit 1
   fi
 }
 
@@ -319,25 +329,25 @@ getTotalMemory() {
     echo $total
     return
   elif [[  $os == 'Darwin' ]]; then
-    total=$(sysctl -a | grep mem |grep hw.memsize |awk -F ' ' '{print $2}')
-    echo `expr $total / 1024`
+    total=$(sysctl -n hw.memsize)
+    echo $((total / 1024))
   fi
 }
 
 setJVMMemory() {
   os=`uname`
   if [[ $os == 'Linux' ]] || [[ $os == 'linux' ]] ; then
-    if [[ $SPECIFY_MEMORY >0 ]]; then
-      max_direct=$(echo "$SPECIFY_MEMORY/1024*0.1" | bc | awk -F. '{print $1"g"}')
-      if [[ "$max_direct" != "g" ]]; then
-        MAX_DIRECT_MEMORY=$max_direct
-      fi
-      JVM_MX=$(echo "$SPECIFY_MEMORY/1024*0.6" | bc | awk -F. '{print $1"g"}')
-      JVM_MS=$JVM_MX
+    local total_gb
+    if [[ $SPECIFY_MEMORY -gt 0 ]]; then
+      total_gb=$((SPECIFY_MEMORY / 1024))
     else
-      total=$(`echo getTotalMemory`)
-      MAX_DIRECT_MEMORY=$(echo "$total/1024/1024*0.1" | bc | awk -F. '{print $1"g"}')
-      JVM_MX=$(echo "$total/1024/1024*0.6" | bc | awk -F. '{print $1"g"}')
+      total_gb=$(($(getTotalMemory) / 1024 / 1024))
+    fi
+    if [[ $((total_gb / 10)) -gt 0 ]]; then
+      MAX_DIRECT_MEMORY="$((total_gb / 10))g"
+    fi
+    if [[ $((total_gb * 6 / 10)) -gt 0 ]]; then
+      JVM_MX="$((total_gb * 6 / 10))g"
       JVM_MS=$JVM_MX
     fi
 
@@ -348,22 +358,25 @@ setJVMMemory() {
 
 startService() {
   echo $(date) >>start.log
-  if [[ ! $JAR_NAME =~ '-c' ]]; then
-     FULL_START_OPT="$FULL_START_OPT -c $DEFAULT_FULL_NODE_CONFIG"
-  fi
-
   if [[ ! -f $JAR_NAME ]]; then
     echo "warn: jar file $JAR_NAME not exist"
-    exit
+    exit 1
   fi
 
-  nohup $JAVACMD -Xms$JVM_MS -Xmx$JVM_MX -XX:+UseConcMarkSweepGC -XX:+PrintGCDetails -Xloggc:./gc.log \
-    -XX:+PrintGCDateStamps -XX:+CMSParallelRemarkEnabled -XX:ReservedCodeCacheSize=256m -XX:+UseCodeCacheFlushing \
+  local gc_opts='-XX:+UseZGC -Xlog:gc,gc+heap:file=gc.log:time,tags,level:filecount=10,filesize=100M'
+  local tail_opts=''
+  if [[ $JAVA_SPEC_VERSION == '1.8' ]]; then
+    gc_opts='-XX:+UseConcMarkSweepGC -XX:+PrintGCDetails -Xloggc:./gc.log -XX:+PrintGCDateStamps -XX:+CMSParallelRemarkEnabled'
+    tail_opts='-XX:NewRatio=2'
+  fi
+
+  ulimit -n 65535 2>/dev/null || echo 'warn: failed to set ulimit -n 65535'
+  nohup $JAVACMD -Xms$JVM_MS -Xmx$JVM_MX $gc_opts -XX:ReservedCodeCacheSize=256m -XX:+UseCodeCacheFlushing \
     -XX:MetaspaceSize=256m -XX:MaxMetaspaceSize=512m \
     -XX:MaxDirectMemorySize=$MAX_DIRECT_MEMORY -Dio.netty.allocator.type=pooled \
     -XX:+HeapDumpOnOutOfMemoryError \
-    -XX:NewRatio=2 -jar \
-    $JAR_NAME $FULL_START_OPT >>start.log 2>&1 &
+    $tail_opts -jar \
+    $JAR_NAME $FULL_START_OPT -c $DEFAULT_FULL_NODE_CONFIG >>start.log 2>&1 &
   checkPid
   echo "info: start java-tron with pid $pid on $HOSTNAME"
   echo "info: if you need to stop the service, execute: sh start.sh --stop"
@@ -375,25 +388,26 @@ rebuildManifest() {
     return
   fi
 
+  if [[ -n $RELEASE_ARCH_SUFFIX ]]; then
+    echo 'info: ARM64 only supports RocksDB, skip rebuild manifest'
+    return
+  fi
+
   if [[ ! -d $REBUILD_DIR ]]; then
     echo "info: database not exists, skip rebuild manifest"
     return
   fi
 
   ARCHIVE_JAR='ArchiveManifest.jar'
-  if [[ -f $ARCHIVE_JAR ]]; then
-    echo 'info: execute rebuild manifest.'
-    $JAVACMD -jar $ARCHIVE_JAR -d $REBUILD_DIR -m $REBUILD_MANIFEST_SIZE -b $REBUILD_BATCH_SIZE
-  else
+  if [[ ! -f $ARCHIVE_JAR ]]; then
     echo 'info: download the rebuild manifest plugin from the github'
-    local latest=$(`echo getLatestReleaseVersion`)
-    download $RELEASE_URL/download/GreatVoyage-v"$latest"/$ARCHIVE_JAR $ARCHIVE_JAR
-    if [[ $download == 0 ]]; then
-      echo 'info: download success, rebuild manifest'
-      $JAVACMD -jar $ARCHIVE_JAR $REBUILD_DIR -m $REBUILD_MANIFEST_SIZE -b $REBUILD_BATCH_SIZE
+    if ! downloadRelease "$(getLatestReleaseVersion)" $RELEASE_ARCHIVE_JAR $ARCHIVE_JAR; then
+      echo 'warn: skip rebuild manifest'
+      return
     fi
   fi
-  if [[ $? == 0 ]]; then
+  echo 'info: execute rebuild manifest.'
+  if $JAVACMD -jar $ARCHIVE_JAR -d $REBUILD_DIR -m $REBUILD_MANIFEST_SIZE -b $REBUILD_BATCH_SIZE; then
     echo 'info: rebuild manifest success'
   else
     echo 'info: rebuild manifest fail, log in logs/archive.log'
@@ -404,54 +418,61 @@ specifyConfig(){
   echo "info: specify the net: $1"
   local netType=$1
   local configName;
+  local configUrl;
   if [[ "$netType" = 'test' ]]; then
     configName=$FULL_NODE_CONFIG_TEST_NET
+    configUrl=$TEST_NET_CONFIG_URL
   elif [[ "$netType" = 'private' ]]; then
     configName=$FULL_NODE_CONFIG_PRIVATE_NET
+    configUrl=https://raw.githubusercontent.com/tronprotocol/tron-deployment/$GITHUB_BRANCH/$configName
   else
-    echo "warn: no support config $nodeType"
-    exit
+    echo "warn: no support config $netType"
+    exit 1
   fi
 
   if [[ ! -d $FULL_NODE_CONFIG_DIR ]]; then
     mkdir -p $FULL_NODE_CONFIG_DIR
   fi
 
-  if [[ -d $FULL_NODE_CONFIG_DIR/$configName ]]; then
-    DEFAULT_FULL_NODE_CONFIG=$FULL_NODE_CONFIG_DIR/$configName
-    break
-  fi
-
   if [[ ! -f $FULL_NODE_CONFIG_DIR/$configName ]]; then
-    download https://raw.githubusercontent.com/tronprotocol/tron-deployment/$GITHUB_BRANCH/$configName $configName
-    mv  $configName $FULL_NODE_CONFIG_DIR/$configName
-    DEFAULT_FULL_NODE_CONFIG=$FULL_NODE_CONFIG_DIR/$configName
+    download $configUrl $FULL_NODE_CONFIG_DIR/$configName || exit 1
   fi
+  DEFAULT_FULL_NODE_CONFIG=$FULL_NODE_CONFIG_DIR/$configName
 }
 
+# Verifies file $3 against the signature of asset $2 in release $1, which must be made
+# by the release key. Removes $3 if the signature is missing or invalid.
 checkSign() {
   echo 'info: verify signature'
-  local latest_version=$(`echo getLatestReleaseVersion`)
-  download $RELEASE_URL/download/$latest_version/sha256sum.txt sha256sum.txt
-  fullNodeSha256=$(cat sha256sum.txt|grep 'FullNode'| awk -F ' ' '{print $1}')
-
-  os=`uname`
-  if [[ $os == 'Linux' ]] || [[ $os == 'linux' ]] ; then
-    releaseFullNodeSha256=$(sha256sum FullNode.jar| grep FullNode | awk -F ' ' '{print $1}')
-  elif [[ $os == 'Darwin' ]]; then
-    releaseFullNodeSha256=$(shasum -a 256 FullNode.jar| grep FullNode | awk -F ' ' '{print $1}')
-    cat $releaseFullNodeSha256 | awk -F ' ' '{print $0}'
-  fi
-
-  echo "info:      release sha256sum sign: $releaseFullNodeSha256"
-  echo "info: FullNode.jar sha256sum sign: $fullNodeSha256"
-
-  if [[ "$fullNodeSha256" == "$releaseFullNodeSha256" ]]; then
-    echo 'info: sha256 signatures pass'
+  local version=$1
+  local asset=$2
+  local file=$3
+  local gnupg_home
+  local server
+  local verified=false
+  if type gpg >/dev/null 2>&1; then
+    gnupg_home=$(mktemp -d)
+    for server in $RELEASE_KEY_SERVERS; do
+      gpg --homedir "$gnupg_home" --batch --quiet --keyserver "$server" \
+        --recv-keys "$RELEASE_KEY_FINGERPRINT" >/dev/null 2>&1 && break
+    done
+    if download "$RELEASE_URL/download/$version/$asset.sig" "$file.sig" \
+        && gpg --homedir "$gnupg_home" --batch --status-fd 1 --verify "$file.sig" "$file" 2>/dev/null \
+          | grep '^\[GNUPG:\] VALIDSIG ' | grep -q -w "$RELEASE_KEY_FINGERPRINT"; then
+      verified=true
+    fi
+    gpgconf --homedir "$gnupg_home" --kill all >/dev/null 2>&1
+    rm -rf "$gnupg_home" "$file.sig"
   else
-    echo 'info: sha256 signature exception!!!'
-    echo 'info: please compile from the code or download the latest version from https://github.com/tronprotocol/java-tron'
+    echo 'warn: gpg is required to verify the release signature'
   fi
+  if [[ $verified == true ]]; then
+    echo 'info: signature verified'
+    return 0
+  fi
+  echo "warn: signature verification failed, remove $file"
+  rm -f "$file"
+  return 1
 }
 
 restart() {
@@ -543,25 +564,20 @@ while [ -n "$1" ]; do
     shift 1
     ;;
   --run)
-    if [[ $ALL_OPT_LENGTH -eq 1 ]]; then
-      restart
-    fi
-    RUN=true
     shift 1
     ;;
-  --stop)
+  --stop|-s)
     stopService
+    exit 0
     ;;
   FullNode)
-    RUN=true
     shift 1
     ;;
   FullNode.jar)
-    RUN=true
     shift 1
     ;;
   *.jar)
-    RUN=true
+    JAR_NAME=$1
     shift 1
     ;;
   *)
@@ -592,13 +608,6 @@ fi
 
 if [[ $QUICK_START == true ]]; then
   quickStart
-  if [[ $? == 0 ]] ; then
-    if [[ $RUN == true ]]; then
-      cd $FULL_NODE_DIR
-      FULL_START_OPT=''
-      restart
-    fi
-  fi
 fi
 
 if [[ $UPGRADE == true ]]; then
@@ -606,20 +615,15 @@ if [[ $UPGRADE == true ]]; then
 fi
 
 if [[ $DOWNLOAD == true ]]; then
-  latest=$(`echo getLatestReleaseVersion`)
+  latest=$(getLatestReleaseVersion)
   if [[ -n $latest ]]; then
-    download $RELEASE_URL/download/$latest/$JAR_NAME $latest
+    downloadRelease $latest $RELEASE_JAR $JAR_NAME.download && mv $JAR_NAME.download $JAR_NAME
     exit
   else
     echo 'info: not getting the latest version'
+    exit 1
   fi
 fi
 
-if [[ $ALL_OPT_LENGTH -eq 0 || $ALL_OPT_LENGTH -gt 0 ]]; then
-  restart
-fi
-
-if [[ $RUN == true ]]; then
-  restart
-fi
+restart
 

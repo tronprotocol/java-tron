@@ -8,6 +8,10 @@ If you already downloaded the `FullNode.jar`, you can use `start.sh` to run it, 
 
 The script is available in the java-tron project at [github](https://github.com/tronprotocol/java-tron), or if you need a separate script: [start.sh](https://github.com/tronprotocol/java-tron/blob/develop/start.sh)
 
+The script runs on x86_64 with JDK 8 and on ARM64 with JDK 17. It picks the JVM options for the Java version it finds, and downloads the release jars built for that architecture (`FullNode-aarch64.jar` on ARM64).
+
+Downloaded release jars are verified against the GPG signature published with each release, made by the key listed under "Integrity Check" in the [README](./README.md), so `gpg` must be installed; a jar that fails verification is not used. The mainnet config is downloaded from java-tron and the Nile testnet config from [nile-testnet](https://github.com/tron-nile-testnet/nile-testnet).
+
 ***
 
 # Usage
@@ -58,7 +62,7 @@ The script is available in the java-tron project at [github](https://github.com/
 
   start the service
 
-* `--stop`
+* `--stop` or `-s`
 
   stop the service
 
@@ -79,7 +83,7 @@ The script is available in the java-tron project at [github](https://github.com/
   Specify the maximum memory of the `FullNode.jar` service in`MB`, jvm's startup maximum memory will be adjusted according to this parameter.
   
 * `--net`
-    Select test and private networks.
+    Select test (Nile) and private networks.
 
 ### build project
 
@@ -91,6 +95,14 @@ The script is available in the java-tron project at [github](https://github.com/
 
   Get the latest released version of the `jar` package from github.
 
+* `--upgrade`
+
+  Replace the local `jar` package with the latest release; the previous one is kept as `FullNode.jar_bak`.
+
+* `--download`
+
+  Download the latest released `jar` package into the current directory without starting it.
+
 
 ### rebuild the manifest
 
@@ -100,7 +112,7 @@ The script is available in the java-tron project at [github](https://github.com/
 
 * `-m`
 
-  specify the minimum required manifest file size ，unit:M，default：0
+  specify the minimum required manifest file size ，unit:M，default：128
 
 * `-b`
 
@@ -219,7 +231,7 @@ Following file structure will be created：
 
 ### 3. rebuild manifest tool
 
-This tool provides the ability to reformat the manifest based on current database, Enabled by default.
+This tool provides the ability to reformat the manifest based on current database, Enabled by default. It applies to LevelDB only and is skipped on ARM64, which runs RocksDB.
 
 1.Local mode:
 
