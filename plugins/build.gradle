@@ -5,9 +5,7 @@ plugins {
 apply plugin: 'application'
 apply plugin: 'checkstyle'
 
-def versions = [
-        checkstyle: '8.7',
-]
+
 mainClassName = 'org.tron.plugins.ArchiveManifest'
 group 'org.tron'
 version '1.0.0'
@@ -35,7 +33,10 @@ dependencies {
     testImplementation project(":framework")
     testImplementation project(":framework").sourceSets.test.output
     implementation(project(":crypto")) {
-        exclude group: 'io.github.tronprotocol', module: 'libp2p'
+        // :p2p arrives through :crypto -> :common (`api project(":p2p")`). Neither
+        // Toolkit nor ArchiveManifest uses it, so keep it and its DNS-publish SDKs
+        // (Route53, Aliyun) out of both fat jars, as the libp2p exclude did before.
+        exclude group: 'java-tron', module: 'p2p'
         exclude group: 'io.prometheus'
         exclude group: 'org.aspectj'
         exclude group: 'org.apache.httpcomponents'
@@ -75,7 +76,7 @@ dependencies {
 check.dependsOn 'lint'
 
 checkstyle {
-    toolVersion = "${versions.checkstyle}"
+    toolVersion = "${rootProject.checkstyleVersion}"
     configFile = file("../framework/config/checkstyle/checkStyleAll.xml")
     maxWarnings = 0
 }
