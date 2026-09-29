@@ -50,6 +50,7 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.TransactionTrace;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.InvalidHttpParameterException;
 import org.tron.core.exception.MaintenanceUnavailableException;
 import org.tron.core.services.http.JsonFormat.ParseException;
 import org.tron.json.JSON;
@@ -143,7 +144,8 @@ public class Util {
     }
     if (type == ParseException.class
         || type == ContractValidateException.class
-        || type == MaintenanceUnavailableException.class) {
+        || type == MaintenanceUnavailableException.class
+        || type == InvalidHttpParameterException.class) {
       String message = e.getMessage();
       return StringUtils.isBlank(message) ? INTERNAL_SERVER_ERROR : message;
     }
@@ -453,7 +455,7 @@ public class Util {
    * be turned away by type rather than by length. An absent value is left to the caller, which is
    * what distinguishes an optional key from a required one.
    *
-   * @throws InvalidParameterException if the value is not a number, or is longer than the bound
+   * @throws InvalidHttpParameterException if the value is not a number, or is longer than the bound
    */
   private static void checkJsonNumberValue(Object rawValue, String message) {
     if (rawValue == null) {
@@ -461,7 +463,7 @@ public class Util {
     }
     if (!(rawValue instanceof String || rawValue instanceof Number)
         || rawValue.toString().length() > MAX_JSON_INTEGER_VALUE_LENGTH) {
-      throw new InvalidParameterException(message);
+      throw new InvalidHttpParameterException(message);
     }
   }
 
@@ -476,17 +478,17 @@ public class Util {
       checkJsonNumberValue(rawValue, INVALID_PERMISSION_ID);
       BigDecimal value = jsonObject.getBigDecimal(PERMISSION_ID);
       if (value == null) {
-        throw new InvalidParameterException(INVALID_PERMISSION_ID);
+        throw new InvalidHttpParameterException(INVALID_PERMISSION_ID);
       }
       // Preserve getInteger's legacy string syntax, but require it to match the exact conversion.
       int exact = value.intValueExact();
       Integer legacy = jsonObject.getInteger(PERMISSION_ID);
       if (legacy == null || legacy != exact) {
-        throw new InvalidParameterException(INVALID_PERMISSION_ID);
+        throw new InvalidHttpParameterException(INVALID_PERMISSION_ID);
       }
       permissionId = exact;
     } catch (NumberFormatException | ArithmeticException | JSONException e) {
-      throw new InvalidParameterException(INVALID_PERMISSION_ID);
+      throw new InvalidHttpParameterException(INVALID_PERMISSION_ID);
     }
     return setTransactionPermissionId(permissionId, transaction);
   }
@@ -555,14 +557,17 @@ public class Util {
   }
 
   public static long getJsonLongValue(JSONObject jsonObject, String key, boolean required) {
-    Object rawValue = jsonObject.get(key);
-    checkJsonNumberValue(rawValue, "invalid key [" + key + "]: expect a number of at most "
-        + MAX_JSON_INTEGER_VALUE_LENGTH + " characters");
-    BigDecimal bigDecimal = jsonObject.getBigDecimal(key);
-    if (required && bigDecimal == null) {
-      throw new InvalidParameterException("key [" + key + "] does not exist");
+    String invalid = "invalid key [" + key + "]: expect a 64-bit integer";
+    try {
+      checkJsonNumberValue(jsonObject.get(key), invalid);
+      BigDecimal bigDecimal = jsonObject.getBigDecimal(key);
+      if (required && bigDecimal == null) {
+        throw new InvalidHttpParameterException("key [" + key + "] does not exist");
+      }
+      return (bigDecimal == null) ? 0L : bigDecimal.longValueExact();
+    } catch (NumberFormatException | ArithmeticException | JSONException e) {
+      throw new InvalidHttpParameterException(invalid, e);
     }
-    return (bigDecimal == null) ? 0L : bigDecimal.longValueExact();
   }
 
   public static String getMemo(byte[] memo) {
@@ -627,11 +632,13 @@ public class Util {
   }
 
   /**
-   * Returns the address the request carries. Every way the request can fail to name one is
-   * reported as an IllegalArgumentException whose message is the fixed text the caller is
-   * answered with, so that the address-keyed endpoints and their solidity/PBFT mirrors answer a
-   * given malformed request identically without each having to classify the failure. Nothing
-   * derived from the request may go into that message: it is written straight to the response.
+   * Returns the address the request carries. An address parameter that is missing or unusable,
+   * and a json body that cannot be parsed, are reported as an IllegalArgumentException whose
+   * message is the fixed text the caller is answered with, so that the address-keyed endpoints
+   * and their solidity/PBFT mirrors answer a given malformed request identically without each
+   * having to classify the failure. Nothing derived from the request may go into that message:
+   * it is written straight to the response. A query string or form body the container itself
+   * cannot parse is not classified here and propagates unchanged.
    */
   public static byte[] getAddress(HttpServletRequest request) throws Exception {
     String addressParam = "address";

@@ -61,7 +61,7 @@ public class GetExchangeByIdServletTest extends BaseHttpTest {
 
     verifyNoInteractions(wallet);
     assertTrue(response.getContentAsString().contains("id"));
-    assertTrue(response.getContentAsString().contains("64 characters"));
+    assertTrue(response.getContentAsString().contains("64-bit integer"));
     assertFalse(response.getContentAsString().contains(oversized));
   }
 }
