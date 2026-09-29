@@ -1,4 +1,4 @@
-> ⚠️ **本副本已过时（最后更新于 2022 年）。** 维护中的权威协议文档是 [`docs/protobuf-protocol-document.md`](../../../../docs/protobuf-protocol-document.md)，请以该文件为准；此副本仅作历史参考保留。
+> ⚠️ **本副本已过时（最后更新于 2022 年）。** 当前的协议说明见 [`docs/protobuf-protocol-document.md`](../../../../docs/protobuf-protocol-document.md)，字段定义以本目录下的 `.proto` 文件为准；此副本仅作历史参考保留。
 
 # TRON protobuf protocol
 

@@ -168,7 +168,7 @@ crypto    → common
 
 - **Build / run / node operation:** [README](./README.md)
 - **Configuration:** [`docs/configuration.md`](./docs/configuration.md), [`docs/configuration-conventions.md`](./docs/configuration-conventions.md)
-- **Protobuf protocol:** [`docs/protobuf-protocol-document.md`](./docs/protobuf-protocol-document.md) is the maintained reference (the copies under `protocol/src/main/protos/` are outdated).
+- **Protobuf protocol:** the `.proto` files under `protocol/src/main/protos/` are the source of truth; [`docs/protobuf-protocol-document.md`](./docs/protobuf-protocol-document.md) explains the main messages (the Markdown copies under `protocol/src/main/protos/` are outdated).
 - **Extending / deployment:** the [`docs/`](./docs) directory (customized actuator, modular deployment).
 - **Contributing:** [CONTRIBUTING.md](./CONTRIBUTING.md) (workflow, coding style, commit/PR conventions).
 - **Security policy:** [SECURITY.md](./SECURITY.md) (supported versions, vulnerability disclosure).

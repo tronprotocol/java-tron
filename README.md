@@ -209,7 +209,7 @@ More detailed guides live in the [`docs/`](./docs) directory:
 - **Extending java-tron**
   - [Implement a Customized Actuator](./docs/implement-a-customized-actuator-en.md) · [中文版](./docs/implement-a-customized-actuator-zh.md)
 - **Protocol**
-  - [TRON Protobuf Protocol Document](./docs/protobuf-protocol-document.md) — the maintained, authoritative Protobuf protocol reference
+  - [TRON Protobuf Protocol Document](./docs/protobuf-protocol-document.md) — guide to the main Protobuf messages; the `.proto` files under [`protocol/src/main/protos`](./protocol/src/main/protos) are the source of truth
 - **Observability**
   - [Metrics Changelog](./docs/metrics-changelog.md) — Prometheus metric additions, changes, and removals across java-tron releases
 
