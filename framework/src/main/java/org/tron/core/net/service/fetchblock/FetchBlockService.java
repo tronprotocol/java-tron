@@ -1,5 +1,6 @@
 package org.tron.core.net.service.fetchblock;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -39,6 +40,8 @@ public class FetchBlockService {
   private final long fetchTimeOut = CommonParameter.getInstance().fetchBlockTimeout;
 
   private static final double BLOCK_FETCH_LEFT_TIME_PERCENT = 0.5;
+
+  private static final int MAX_IN_FLIGHT_REQUESTS_PER_BLOCK = 2;
 
   private final String esName = "fetch-block";
 
@@ -123,7 +126,15 @@ public class FetchBlockService {
       return;
     }
     Item item = new Item(fetchBlock.getHash(), InventoryType.BLOCK);
-    Optional<PeerConnection> optionalPeerConnection = tronNetDelegate.getActivePeer().stream()
+    Collection<PeerConnection> peers = tronNetDelegate.getActivePeer();
+    long pendingRequests = peers.stream()
+        .filter(peer -> peer.getAdvInvRequest().containsKey(item))
+        .count();
+    // Keep retry tracking and timeout responsibility while the original and backup are pending.
+    if (pendingRequests >= MAX_IN_FLIGHT_REQUESTS_PER_BLOCK) {
+      return;
+    }
+    Optional<PeerConnection> optionalPeerConnection = peers.stream()
         .filter(peer -> canFetchBlock(peer, item, now))
         .min(Comparator.comparingDouble(this::getPeerTop75));
 
@@ -143,7 +154,7 @@ public class FetchBlockService {
     double newPeerTop75 = getPeerTop75(newPeer);
     double oldPeerTop75 = getPeerTop75(fetchBlock.getPeer());
     long oldPeerSpendTime = System.currentTimeMillis() - fetchBlock.getTime();
-    if (oldPeerTop75 > fetchTimeOut || oldPeerSpendTime >= fetchTimeOut) {
+    if (oldPeerSpendTime >= fetchTimeOut) {
       return true;
     }
 

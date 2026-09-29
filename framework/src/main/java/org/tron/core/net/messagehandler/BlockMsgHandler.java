@@ -148,7 +148,7 @@ public class BlockMsgHandler implements TronMsgHandler {
       return BlockResult.STATE_FAILED;
     }
 
-    peer.setLastInteractiveTime(System.currentTimeMillis());
+    peer.updateLastInteractiveTime(System.currentTimeMillis());
     long headNum = tronNetDelegate.getHeadBlockId().getNum();
     if (block.getNum() < headNum || tronNetDelegate.containBlock(blockId)) {
       logger.warn("Receive a low block {}, head {}", blockId.getString(), headNum);
@@ -175,6 +175,7 @@ public class BlockMsgHandler implements TronMsgHandler {
     if (tronNetDelegate.isHitDown()) {
       return BlockResult.IGNORED;
     }
+    advService.confirmBlockInventory(blockId);
     witnessProductBlockService.validWitnessProductTwoBlock(block);
 
     Item item = new Item(blockId, InventoryType.BLOCK);

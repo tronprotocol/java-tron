@@ -201,6 +201,153 @@ public class FetchBlockRetryTest {
   }
 
   @Test
+  public void testBackupRequestsAreLimitedPerBlock() throws Exception {
+    for (int i = 0; i < 4; i++) {
+      peers.add(PeerBlockTestSupport.peer(18890 + i));
+    }
+    peers.forEach(peer -> peer.getAdvInvReceive().put(item, System.currentTimeMillis()));
+    beginAgedFetch(2_000);
+    Long originalRequestTime = first.getAdvInvRequest().get(item);
+
+    try (MockedStatic<MetricsUtil> metrics = mockBlockLatencies(peers,
+        2_000L, 2_000L, 2_000L, 2_000L, 2_000L, 2_000L)) {
+      tick(state());
+      Assert.assertSame(second, ReflectUtils.getFieldObject(state(), "peer"));
+      ageState(2_000);
+      Object backupState = state();
+      Long backupRequestTime = second.getAdvInvRequest().get(item);
+      for (int i = 0; i < 10; i++) {
+        // An eligible third provider and an expired short timeout must not bypass the cap.
+        Assert.assertTrue(fetch.canFetchBlock(peers.get(2), item, System.currentTimeMillis()));
+        tick(state());
+      }
+      Assert.assertSame(backupState, state());
+      Assert.assertEquals(backupRequestTime, second.getAdvInvRequest().get(item));
+    }
+
+    assertBlockRequests(second, item);
+    verify(first, never()).sendMessage(any());
+    for (int i = 2; i < peers.size(); i++) {
+      verify(peers.get(i), never()).sendMessage(any());
+    }
+    Assert.assertEquals(2L, peers.stream()
+        .filter(peer -> peer.getAdvInvRequest().containsKey(item)).count());
+    Assert.assertEquals(originalRequestTime, first.getAdvInvRequest().get(item));
+  }
+
+  @Test
+  public void testSlowBackupWaitsForActualTimeout() throws Exception {
+    // Leave enough time for assertions without relying on sleeps or a sub-second test run.
+    ReflectUtils.setFieldValue(fetch, "fetchTimeOut", 10_000L);
+    second.getAdvInvReceive().put(item, System.currentTimeMillis());
+
+    try (MockedStatic<MetricsUtil> metrics = mockBlockLatencies(first, 15_000L, second, 15_000L)) {
+      beginAgedFetch(100);
+      Object originalState = state();
+      tick(state());
+
+      Assert.assertSame(originalState, state());
+      Assert.assertFalse(second.getAdvInvRequest().containsKey(item));
+      verify(second, never()).sendMessage(any());
+
+      ageState(11_000);
+      Long originalRequestTime = first.getAdvInvRequest().get(item);
+      tick(state());
+
+      assertBlockRequests(second, item);
+      Assert.assertSame(second, ReflectUtils.getFieldObject(state(), "peer"));
+      Assert.assertEquals(originalRequestTime, first.getAdvInvRequest().get(item));
+    }
+  }
+
+  @Test
+  public void testFasterBackupCanStartBeforeTimeout() throws Exception {
+    ReflectUtils.setFieldValue(fetch, "fetchTimeOut", 10_000L);
+    second.getAdvInvReceive().put(item, System.currentTimeMillis());
+
+    try (MockedStatic<MetricsUtil> metrics = mockBlockLatencies(first, 8_000L, second, 100L)) {
+      beginAgedFetch(100);
+      Long originalRequestTime = first.getAdvInvRequest().get(item);
+      tick(state());
+
+      assertBlockRequests(second, item);
+      Assert.assertTrue(System.currentTimeMillis() - originalRequestTime < 10_000);
+      Assert.assertEquals(originalRequestTime, first.getAdvInvRequest().get(item));
+      Assert.assertSame(second, ReflectUtils.getFieldObject(state(), "peer"));
+    }
+  }
+
+  @Test
+  public void testOtherRequestsDoNotUseBlockBackupLimit() throws Exception {
+    PeerConnection otherProvider = PeerBlockTestSupport.peer(18890);
+    peers.add(otherProvider);
+    Item otherBlock = new Item(block.getParentBlockId(), InventoryType.BLOCK);
+    Item transaction = new Item(item.getHash(), InventoryType.TRX);
+    long now = System.currentTimeMillis();
+    otherProvider.getAdvInvRequest().put(otherBlock, now);
+    second.getAdvInvRequest().put(transaction, now);
+    second.getAdvInvReceive().put(item, now);
+    beginAgedFetch(2_000);
+
+    tick(state());
+
+    assertBlockRequests(second, item);
+    Assert.assertTrue(second.getAdvInvRequest().containsKey(item));
+    Assert.assertEquals(Long.valueOf(now), second.getAdvInvRequest().get(transaction));
+    Assert.assertEquals(Long.valueOf(now), otherProvider.getAdvInvRequest().get(otherBlock));
+    verify(otherProvider, never()).sendMessage(any());
+  }
+
+  @Test
+  public void testOriginalDisconnectAllowsReplacementBackup() throws Exception {
+    PeerConnection replacement = PeerBlockTestSupport.peer(18890);
+    peers.add(replacement);
+    beginAgedFetch(2_000);
+    second.getAdvInvReceive().put(item, System.currentTimeMillis());
+    tick(state());
+    ageState(2_000);
+    Long backupRequestTime = second.getAdvInvRequest().get(item);
+    replacement.getAdvInvReceive().put(item, System.currentTimeMillis());
+    tick(state());
+    verify(replacement, never()).sendMessage(any());
+
+    disconnect(first);
+    tick(state());
+
+    assertBlockRequests(second, item);
+    assertBlockRequests(replacement, item);
+    Assert.assertEquals(backupRequestTime, second.getAdvInvRequest().get(item));
+    Assert.assertTrue(replacement.getAdvInvRequest().containsKey(item));
+    Assert.assertSame(replacement, ReflectUtils.getFieldObject(state(), "peer"));
+  }
+
+  @Test
+  public void testBackupDisconnectAllowsReplacementBackup() throws Exception {
+    PeerConnection replacement = PeerBlockTestSupport.peer(18890);
+    peers.add(replacement);
+    beginAgedFetch(2_000);
+    Long originalRequestTime = first.getAdvInvRequest().get(item);
+    second.getAdvInvReceive().put(item, System.currentTimeMillis());
+    tick(state());
+    ageState(2_000);
+    replacement.getAdvInvReceive().put(item, System.currentTimeMillis());
+    tick(state());
+    verify(replacement, never()).sendMessage(any());
+
+    disconnect(second);
+    Assert.assertSame(first, ReflectUtils.getFieldObject(state(), "peer"));
+    Assert.assertEquals(originalRequestTime, ReflectUtils.getFieldObject(state(), "time"));
+    tick(state());
+
+    assertBlockRequests(second, item);
+    assertBlockRequests(replacement, item);
+    verify(first, never()).sendMessage(any());
+    Assert.assertEquals(originalRequestTime, first.getAdvInvRequest().get(item));
+    Assert.assertTrue(replacement.getAdvInvRequest().containsKey(item));
+    Assert.assertSame(replacement, ReflectUtils.getFieldObject(state(), "peer"));
+  }
+
+  @Test
   public void testQueuedBlocksAreFetchedInHeightOrder() throws Exception {
     List<Item> blocks = queueBlocksInReverseHeightOrder();
     Item transaction = new Item(Sha256Hash.ZERO_HASH, InventoryType.TRX);
@@ -501,11 +648,15 @@ public class FetchBlockRetryTest {
 
   private MockedStatic<MetricsUtil> mockBlockLatencies(PeerConnection left, Long leftLatency,
       PeerConnection right, Long rightLatency) {
+    return mockBlockLatencies(Arrays.asList(left, right), leftLatency, rightLatency);
+  }
+
+  private MockedStatic<MetricsUtil> mockBlockLatencies(List<PeerConnection> candidates,
+      Long... latencies) {
+    Assert.assertEquals(candidates.size(), latencies.length);
     MetricRegistry registry = new MetricRegistry();
-    PeerConnection[] candidates = {left, right};
-    Long[] latencies = {leftLatency, rightLatency};
-    for (int i = 0; i < candidates.length; i++) {
-      PeerConnection peer = candidates[i];
+    for (int i = 0; i < candidates.size(); i++) {
+      PeerConnection peer = candidates.get(i);
       InetSocketAddress address = new InetSocketAddress("127.0.0." + (i + 2),
           peer.getInetSocketAddress().getPort());
       when(peer.getChannel().getInetAddress()).thenReturn(address.getAddress());
@@ -524,7 +675,8 @@ public class FetchBlockRetryTest {
   private void ageState(long age) {
     long time = System.currentTimeMillis() - age;
     ReflectUtils.setFieldValue(state(), "time", time);
-    first.getAdvInvRequest().put(item, time);
+    PeerConnection provider = (PeerConnection) ReflectUtils.getFieldObject(state(), "peer");
+    provider.getAdvInvRequest().put(item, time);
   }
 
   private Object state() {

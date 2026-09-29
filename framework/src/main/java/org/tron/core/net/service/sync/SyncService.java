@@ -32,6 +32,7 @@ import org.tron.core.net.message.sync.SyncBlockChainMessage;
 import org.tron.core.net.messagehandler.PbftDataSyncHandler;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.TronState;
+import org.tron.core.net.service.adv.AdvService;
 import org.tron.protos.Protocol.Inventory.InventoryType;
 import org.tron.protos.Protocol.ReasonCode;
 
@@ -44,6 +45,9 @@ public class SyncService {
 
   @Autowired
   private PbftDataSyncHandler pbftDataSyncHandler;
+
+  @Autowired
+  private AdvService advService;
 
   private Map<UnparsedBlock, PeerConnection> blockWaitToProcess = new ConcurrentHashMap<>();
 
@@ -342,7 +346,8 @@ public class SyncService {
       if (tronNetDelegate.isHitDown()) {
         return;
       }
-      peerConnection.setLastInteractiveTime(System.currentTimeMillis());
+      advService.confirmBlockInventory(blockId);
+      peerConnection.updateLastInteractiveTime(System.currentTimeMillis());
       if (useful) {
         peerConnection.setBlockRcvTime(System.currentTimeMillis());
       }
@@ -374,7 +379,7 @@ public class SyncService {
             syncNext(peer);
           }
         } else {
-          peer.disconnect(ReasonCode.SYNC_FAIL);
+          peer.disconnect(ReasonCode.BAD_BLOCK);
         }
       }
     }
