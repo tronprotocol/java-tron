@@ -4,7 +4,6 @@ import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import java.io.File;
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
@@ -115,11 +114,6 @@ public class DbMove implements Callable<Integer> {
   }
 
   private boolean copy(Property p) {
-    if (!p.destination.toFile().mkdirs()) {
-      spec.commandLine().getErr().println(String.format("%s create failed.", p.destination));
-      return false;
-    }
-
     AtomicBoolean hasError = new AtomicBoolean(false);
     try (Stream<Path> files = Files.walk(p.original)) {
       // Collect the tree before copying anything: a traversal failure must
@@ -127,18 +121,19 @@ public class DbMove implements Callable<Integer> {
       // before the failure could recreate the destination after the rollback
       // has already deleted it, and the retry would then be rejected.
       List<Path> sources = files.collect(Collectors.toList());
+      Files.createDirectories(p.destination);
       ProgressBar.wrap(sources.parallelStream(), p.name).forEach(source -> {
         if (hasError.get()) {
           return;
         }
         try {
           copyEntry(p, source);
-        } catch (IOException e) {
+        } catch (IOException | RuntimeException e) {
           hasError.set(true);
           spec.commandLine().getErr().println(e);
         }
       });
-    } catch (IOException | UncheckedIOException e) {
+    } catch (IOException | RuntimeException e) {
       hasError.set(true);
       spec.commandLine().getErr().println(e);
     }
