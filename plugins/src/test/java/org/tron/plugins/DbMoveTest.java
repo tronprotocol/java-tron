@@ -9,7 +9,13 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Base64;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.TreeMap;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Assert;
@@ -17,8 +23,12 @@ import org.junit.Assume;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.mockito.ArgumentMatchers;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 import org.rocksdb.RocksDBException;
 import org.tron.plugins.utils.DBUtils;
+import org.tron.plugins.utils.FileUtils;
 import org.tron.plugins.utils.db.DbTool;
 import picocli.CommandLine;
 
@@ -101,6 +111,24 @@ public class DbMoveTest {
     Assert.assertFalse(Files.isSymbolicLink(source.toPath()));
   }
 
+  private static File destination(String name) {
+    return Paths.get(OUTPUT_DIRECTORY, "dest", "database", name).toFile();
+  }
+
+  private static Map<String, String> snapshot(File dir) throws IOException {
+    Path root = dir.toPath();
+    List<Path> files;
+    try (Stream<Path> paths = Files.walk(root)) {
+      files = paths.filter(Files::isRegularFile).collect(Collectors.toList());
+    }
+    Map<String, String> contents = new TreeMap<>();
+    for (Path file : files) {
+      contents.put(root.relativize(file).toString(),
+          Base64.getEncoder().encodeToString(Files.readAllBytes(file)));
+    }
+    return contents;
+  }
+
   @Test
   public void testMvForLevelDB() throws RocksDBException, IOException {
     File database = temporaryFolder.newFolder("database");
@@ -125,8 +153,9 @@ public class DbMoveTest {
     File database = newDatabase();
     File accountDir = Paths.get(database.getPath(), ACCOUNT).toFile();
     File marketDir = Paths.get(database.getPath(), DBUtils.MARKET_PAIR_PRICE_TO_ORDER).toFile();
-    File victim = Objects.requireNonNull(accountDir.listFiles(File::isFile))[0];
-    // Make one source file unreadable so its copy fails part-way through the move.
+    Map<String, String> accountBefore = snapshot(accountDir);
+    Map<String, String> marketBefore = snapshot(marketDir);
+    File victim = Objects.requireNonNull(marketDir.listFiles(File::isFile))[0];
     Assert.assertTrue(victim.setReadable(false, false));
 
     String[] args = mvArgs(database, getConfig("config.conf"));
@@ -134,29 +163,20 @@ public class DbMoveTest {
     StringWriter output = new StringWriter();
     cli.setOut(new PrintWriter(output));
     try {
-      // Skip when the platform ignores the read bit (e.g. running as root).
       Assume.assumeFalse("file still readable (root?), cannot simulate copy failure",
           victim.canRead());
       Assert.assertEquals(1, cli.execute(args));
-
-      // A failed copy must keep every source intact and roll back all destinations.
-      Assert.assertTrue("source dir must be kept on copy failure", accountDir.exists());
-      Assert.assertFalse("source must not be replaced by a symlink",
-          Files.isSymbolicLink(accountDir.toPath()));
-      Assert.assertTrue("source file must still exist", victim.exists());
-      Assert.assertTrue("other source dirs must not be moved after a copy failure",
-          marketDir.exists());
-      Assert.assertFalse("other source dirs must not be replaced by symlinks",
-          Files.isSymbolicLink(marketDir.toPath()));
-      Assert.assertFalse("partial destination must be removed",
-          Paths.get(OUTPUT_DIRECTORY, "dest", "database", ACCOUNT).toFile().exists());
-      Assert.assertFalse("failure must not be reported as success",
-          output.toString().contains("move db done."));
     } finally {
       victim.setReadable(true, false);
     }
+    Assert.assertFalse(output.toString().contains("move db done."));
+    assertUntouched(accountDir);
+    assertUntouched(marketDir);
+    Assert.assertEquals(accountBefore, snapshot(accountDir));
+    Assert.assertEquals(marketBefore, snapshot(marketDir));
+    Assert.assertFalse(destination(ACCOUNT).exists());
+    Assert.assertFalse(destination(DBUtils.MARKET_PAIR_PRICE_TO_ORDER).exists());
 
-    // Once the I/O problem is fixed, the unchanged command must be directly retryable.
     Assert.assertEquals(0, cli.execute(args));
     Assert.assertTrue(Files.isSymbolicLink(accountDir.toPath()));
     Assert.assertTrue(Files.isSymbolicLink(marketDir.toPath()));
@@ -196,7 +216,7 @@ public class DbMoveTest {
         Files.isSymbolicLink(accountDir.toPath()));
     Assert.assertTrue("symlink target must never be touched", sentinel.exists());
     Assert.assertFalse("partial destination must be rolled back",
-        Paths.get(OUTPUT_DIRECTORY, "dest", "database", ACCOUNT).toFile().exists());
+        destination(ACCOUNT).exists());
   }
 
   @Test
@@ -253,7 +273,7 @@ public class DbMoveTest {
       Assert.assertFalse("source must not be replaced by a symlink",
           Files.isSymbolicLink(accountDir.toPath()));
       Assert.assertFalse("partial destination must be rolled back",
-          Paths.get(OUTPUT_DIRECTORY, "dest", "database", ACCOUNT).toFile().exists());
+          destination(ACCOUNT).exists());
     } finally {
       subDir.setReadable(true, false);
     }
@@ -303,7 +323,7 @@ public class DbMoveTest {
       Assert.assertTrue("source dir must be kept", accountDir.exists());
       Assert.assertFalse("source must not be replaced by a symlink",
           Files.isSymbolicLink(accountDir.toPath()));
-      File dest = Paths.get(OUTPUT_DIRECTORY, "dest", "database", ACCOUNT).toFile();
+      File dest = destination(ACCOUNT);
       Assert.assertTrue("complete copy must be kept for manual recovery", dest.exists());
       String expectedHint = String.format(
           "To recover manually: remove %s if present, then create a symbolic link at %s"
@@ -348,6 +368,76 @@ public class DbMoveTest {
     assertUntouched(transDir);
     Assert.assertFalse(new File(transDir, "nested").exists());
     Assert.assertFalse(Paths.get(OUTPUT_DIRECTORY, "dest").toFile().exists());
+  }
+
+  @Test
+  public void testLeftoverReportedWhenCleanupFails() throws RocksDBException, IOException {
+    File database = newDatabase();
+    File accountDir = Paths.get(database.getPath(), ACCOUNT).toFile();
+    File marketDir = Paths.get(database.getPath(), DBUtils.MARKET_PAIR_PRICE_TO_ORDER).toFile();
+    File accountDest = destination(ACCOUNT).getCanonicalFile();
+    Map<String, String> accountBefore = snapshot(accountDir);
+    Map<String, String> marketBefore = snapshot(marketDir);
+    File victim = Objects.requireNonNull(marketDir.listFiles(File::isFile))[0];
+    Assert.assertTrue(victim.setReadable(false, false));
+
+    CommandLine cli = new CommandLine(new Toolkit());
+    StringWriter output = new StringWriter();
+    StringWriter error = new StringWriter();
+    cli.setOut(new PrintWriter(output));
+    cli.setErr(new PrintWriter(error));
+    try (MockedStatic<FileUtils> fileUtils =
+        Mockito.mockStatic(FileUtils.class, Mockito.CALLS_REAL_METHODS)) {
+      Assume.assumeFalse("file still readable (root?), cannot simulate copy failure",
+          victim.canRead());
+      fileUtils.when(() -> FileUtils.deleteDir(ArgumentMatchers.argThat(accountDest::equals)))
+          .thenReturn(false);
+      Assert.assertEquals(1, cli.execute(mvArgs(database, getConfig("config.conf"))));
+    } finally {
+      victim.setReadable(true, false);
+    }
+    Assert.assertFalse(output.toString().contains("move db done."));
+    assertUntouched(accountDir);
+    assertUntouched(marketDir);
+    Assert.assertEquals(accountBefore, snapshot(accountDir));
+    Assert.assertEquals(marketBefore, snapshot(marketDir));
+    Assert.assertTrue(accountDest.isDirectory());
+    Assert.assertFalse(destination(DBUtils.MARKET_PAIR_PRICE_TO_ORDER).exists());
+    Assert.assertTrue(error.toString().contains(accountDest + " cleanup failed"));
+    Assert.assertTrue(error.toString().contains("leftover copies remain"));
+  }
+
+  @Test
+  public void testRecoveryHintWhenLinkCreationFails() throws RocksDBException, IOException {
+    File database = newDatabase();
+    File accountDir = Paths.get(database.getPath(), ACCOUNT).toFile().getCanonicalFile();
+    File marketDir = Paths.get(database.getPath(), DBUtils.MARKET_PAIR_PRICE_TO_ORDER).toFile();
+    File accountDest = destination(ACCOUNT).getCanonicalFile();
+    Map<String, String> accountBefore = snapshot(accountDir);
+
+    CommandLine cli = new CommandLine(new Toolkit());
+    StringWriter output = new StringWriter();
+    StringWriter error = new StringWriter();
+    cli.setOut(new PrintWriter(output));
+    cli.setErr(new PrintWriter(error));
+    try (MockedStatic<FileUtils> fileUtils =
+        Mockito.mockStatic(FileUtils.class, Mockito.CALLS_REAL_METHODS)) {
+      fileUtils.when(() -> FileUtils.deleteDir(ArgumentMatchers.argThat(accountDir::equals)))
+          .thenAnswer(invocation -> {
+            boolean deleted = (boolean) invocation.callRealMethod();
+            Files.createFile(accountDir.toPath());
+            return deleted;
+          });
+      Assert.assertEquals(1, cli.execute(mvArgs(database, getConfig("config.conf"))));
+    }
+    Assert.assertFalse(output.toString().contains("move db done."));
+    Assert.assertEquals(accountBefore, snapshot(accountDest));
+    Assert.assertTrue(error.toString().contains(
+        accountDir + " move failed; the complete copy is at " + accountDest + ", keep it."));
+    Assert.assertTrue(error.toString().contains(String.format(
+        "To recover manually: remove %s if present, then create a symbolic link at %s"
+            + " pointing to %s.", accountDir, accountDir, accountDest)));
+    Assert.assertTrue(Files.isSymbolicLink(marketDir.toPath()));
   }
 
   @Test
