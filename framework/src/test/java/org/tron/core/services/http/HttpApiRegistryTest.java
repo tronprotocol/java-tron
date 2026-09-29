@@ -5,11 +5,18 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.withSettings;
 
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.EnumMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import org.eclipse.jetty.servlet.ServletContextHandler;
@@ -26,6 +33,29 @@ import org.tron.core.services.interfaceOnSolidity.HttpApiOnSolidityService;
 public class HttpApiRegistryTest {
 
   private static final String REGTEST = "org.tron.core.services.http.regtest.";
+
+  private static final String BASELINE = "/http/pre-refactor-routes.txt";
+
+  /**
+   * Endpoints the registry adds to a surface relative to {@link #BASELINE}. Together with
+   * {@link #INTENTIONAL_REMOVED} this is the reviewed difference from the pre-refactor
+   * registration lists; any other change to a surface's endpoints fails
+   * {@link #testDerivedRoutesMatchPreRefactorBaseline}.
+   */
+  private static final Map<Surface, Set<String>> INTENTIONAL_ADDED = new EnumMap<>(Surface.class);
+
+  /** Endpoints the registry removes from a surface relative to {@link #BASELINE}. */
+  private static final Map<Surface, Set<String>> INTENTIONAL_REMOVED = new EnumMap<>(Surface.class);
+
+  static {
+    // exposed on FULL, SOLIDITY and SOLIDITY_NODE, but missing from the PBFT list
+    INTENTIONAL_ADDED.put(Surface.PBFT, new TreeSet<>(Arrays.asList(
+        "getpaginatednowwitnesslist", "gettransactioninfobyblocknum")));
+    // shielded endpoints disabled on FULL, SOLIDITY and SOLIDITY_NODE, but left on the PBFT list
+    INTENTIONAL_REMOVED.put(Surface.PBFT, new TreeSet<>(Arrays.asList(
+        "getmerkletreevoucherinfo", "isspend", "scanandmarknotebyivk", "scannotebyivk",
+        "scannotebyovk")));
+  }
 
   @Test
   public void testValidFixturePackageBuilds() {
@@ -117,6 +147,33 @@ public class HttpApiRegistryTest {
     }
   }
 
+  /**
+   * The independent check behind the mount-parity tests below: for every surface, the endpoints
+   * the registry derives differ from the pre-refactor registration lists in {@link #BASELINE} by
+   * exactly the reviewed deltas. Expected and actual come from different sources, so an
+   * {@code @HttpApi} edit that adds, drops or moves an endpoint fails here until the change is
+   * recorded in {@link #INTENTIONAL_ADDED} or {@link #INTENTIONAL_REMOVED}.
+   */
+  @Test
+  public void testDerivedRoutesMatchPreRefactorBaseline() throws Exception {
+    Map<Surface, Set<String>> baseline = loadBaseline();
+    for (Surface surface : Surface.values()) {
+      Set<String> before = baseline.getOrDefault(surface, Collections.emptySet());
+      Set<String> actual = new TreeSet<>();
+      for (HttpApiRegistry.Entry entry : HttpApiRegistry.forSurface(surface)) {
+        actual.add(entry.getSuffix());
+      }
+      Set<String> added = new TreeSet<>(actual);
+      added.removeAll(before);
+      Set<String> removed = new TreeSet<>(before);
+      removed.removeAll(actual);
+      Assert.assertEquals(surface + " endpoints added since the pre-refactor baseline",
+          INTENTIONAL_ADDED.getOrDefault(surface, Collections.emptySet()), added);
+      Assert.assertEquals(surface + " endpoints removed since the pre-refactor baseline",
+          INTENTIONAL_REMOVED.getOrDefault(surface, Collections.emptySet()), removed);
+    }
+  }
+
   @Test
   public void testFullNodeServiceMountsExactlyTheRegistry() throws Exception {
     Set<String> expected = pathsOf(Surface.FULL, "/wallet/");
@@ -152,6 +209,25 @@ public class HttpApiRegistryTest {
       paths.add(prefix + entry.getSuffix());
     }
     return paths;
+  }
+
+  /** Reads {@link #BASELINE}: one {@code <surface> <suffix>} per line, {@code #} comments. */
+  private static Map<Surface, Set<String>> loadBaseline() throws Exception {
+    Map<Surface, Set<String>> baseline = new EnumMap<>(Surface.class);
+    try (InputStream in = HttpApiRegistryTest.class.getResourceAsStream(BASELINE)) {
+      Assert.assertNotNull("missing baseline fixture " + BASELINE, in);
+      BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
+      String line;
+      while ((line = reader.readLine()) != null) {
+        line = line.trim();
+        if (line.isEmpty() || line.startsWith("#")) {
+          continue;
+        }
+        String[] parts = line.split(" ");
+        baseline.computeIfAbsent(Surface.valueOf(parts[0]), s -> new TreeSet<>()).add(parts[1]);
+      }
+    }
+    return baseline;
   }
 
   /**
