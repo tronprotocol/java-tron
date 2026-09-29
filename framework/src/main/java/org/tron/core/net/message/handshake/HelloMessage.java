@@ -121,6 +121,10 @@ public class HelloMessage extends TronMessage {
 
   @Override
   public String toString() {
+    if (!valid()) {
+      return "P2P_HELLO: invalid hello message";
+    }
+
     StringBuilder builder = new StringBuilder();
 
     builder.append(super.toString())
