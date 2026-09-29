@@ -139,6 +139,12 @@ public class HttpApiRegistryTest {
     assertBuildFails(REGTEST + "nested", "must be a concrete top-level class");
   }
 
+  /** An abstract class can never be mounted either; declaring an endpoint on one fails too. */
+  @Test
+  public void testAbstractEndpointDeclarationRejected() {
+    assertBuildFails(REGTEST + "abstractdecl", "must be a concrete top-level class");
+  }
+
   /**
    * The PBFT cursor is selected by {@link RateLimiterServlet}, so any other servlet on the PBFT
    * surface would serve HEAD state there.
