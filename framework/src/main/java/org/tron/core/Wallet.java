@@ -641,7 +641,14 @@ public class Wallet {
       return tswBuilder.build();
     }
 
-    trx = TransactionUtil.truncateSignatures(trx);
+    try {
+      TransactionUtil.validateSignatureLengths(trx);
+    } catch (SignatureFormatException e) {
+      return tswBuilder.setResult(resultBuilder
+          .setCode(TransactionApprovedList.Result.response_code.SIGNATURE_FORMAT_ERROR)
+          .setMessage(e.getMessage())).build();
+    }
+
     TransactionExtention.Builder trxExBuilder = TransactionExtention.newBuilder();
     trxExBuilder.setTransaction(trx);
     trxExBuilder.setTxid(ByteString.copyFrom(Sha256Hash.hash(CommonParameter
@@ -1522,6 +1529,11 @@ public class Wallet {
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
         .setKey("getAllowHardenExchangeCalculation")
         .setValue(dbManager.getDynamicPropertiesStore().getAllowHardenExchangeCalculation())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAllowStrictEcdsaValidation")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowStrictEcdsaValidation())
         .build());
 
     return builder.build();

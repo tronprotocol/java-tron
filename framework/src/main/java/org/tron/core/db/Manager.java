@@ -55,6 +55,7 @@ import org.tron.api.GrpcAPI.TransactionInfoList;
 import org.tron.common.args.GenesisBlock;
 import org.tron.common.bloom.Bloom;
 import org.tron.common.cron.CronExpression;
+import org.tron.common.crypto.SignUtils;
 import org.tron.common.es.ExecutorServiceManager;
 import org.tron.common.exit.ExitManager;
 import org.tron.common.logsfilter.EventPluginLoader;
@@ -1260,7 +1261,9 @@ public class Manager {
     block.getTransactions().forEach(capsule -> {
       String address = Hex.toHexString(capsule.getOwnerAddress());
       String txId = Hex.toHexString(capsule.getTransactionId().getBytes());
-      if (multiAddresses.contains(address) || !isSameSig(capsule, txMap.get(txId))) {
+      TransactionCapsule pendingTx = txMap.get(txId);
+      if (multiAddresses.contains(address) || pendingTx == null || !pendingTx.isVerified()
+          || !isSameSig(capsule, pendingTx)) {
         txs.add(capsule);
       } else {
         capsule.setVerified(true);
@@ -1919,7 +1922,14 @@ public class Manager {
     boolean flag = chainBaseManager.getDynamicPropertiesStore().getNextMaintenanceTime()
         <= block.getTimeStamp();
     if (flag) {
+      boolean strictEcdsaValidation = getDynamicPropertiesStore()
+          .allowStrictEcdsaValidation();
       proposalController.processProposals();
+      if (!strictEcdsaValidation && getDynamicPropertiesStore()
+          .allowStrictEcdsaValidation()) {
+        // Legacy verification results must not survive the consensus-rule activation boundary.
+        invalidateTransactionVerificationCache();
+      }
     }
 
     if (!consensus.applyBlock(block)) {
@@ -1941,6 +1951,13 @@ public class Manager {
         .initBlockSection(transactionRetCapsule);
     chainBaseManager.getSectionBloomStore().write(block.getNum());
     block.setBloom(blockBloom);
+  }
+
+  private void invalidateTransactionVerificationCache() {
+    pendingTransactions.forEach(tx -> tx.setVerified(false));
+    rePushTransactions.forEach(tx -> tx.setVerified(false));
+    poppedTransactions.forEach(tx -> tx.setVerified(false));
+    pushTransactionQueue.forEach(tx -> tx.setVerified(false));
   }
 
   private void payReward(BlockCapsule block) {
@@ -2109,6 +2126,7 @@ public class Manager {
     Histogram.Timer requestTimer = Metrics.histogramStartTimer(
         MetricKeys.Histogram.VERIFY_SIGN_LATENCY, MetricLabels.TRX);
     try {
+      validateTransactionSignatureLengths(txs);
       CountDownLatch countDownLatch = new CountDownLatch(transSize);
       List<Future<Boolean>> futures = new ArrayList<>(transSize);
 
@@ -2128,6 +2146,20 @@ public class Manager {
       }
     } finally {
       Metrics.histogramObserve(requestTimer);
+    }
+  }
+
+  private void validateTransactionSignatureLengths(List<TransactionCapsule> txs)
+      throws ValidateSignatureException {
+    boolean strictEcdsaValidation = CommonParameter.getInstance().isECKeyCryptoEngine()
+        && chainBaseManager.getDynamicPropertiesStore().allowStrictEcdsaValidation();
+    for (TransactionCapsule transaction : txs) {
+      for (ByteString signature : transaction.getInstance().getSignatureList()) {
+        if (signature.size() < Constant.PER_SIGN_LENGTH
+            || (strictEcdsaValidation && !SignUtils.isValidLength(signature.size()))) {
+          throw new ValidateSignatureException("Signature size is " + signature.size());
+        }
+      }
     }
   }
 

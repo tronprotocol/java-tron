@@ -135,6 +135,19 @@ public class ProposalServiceTest extends BaseTest {
   }
 
   @Test
+  public void shouldActivateStrictEcdsaValidation() {
+    dbManager.getDynamicPropertiesStore().saveAllowStrictEcdsaValidation(0);
+    Proposal proposal = Proposal.newBuilder()
+        .putParameters(ProposalType.ALLOW_STRICT_ECDSA_VALIDATION.getCode(), 1)
+        .build();
+
+    Assert.assertTrue(ProposalService.process(dbManager, new ProposalCapsule(proposal)));
+    Assert.assertEquals(1L,
+        dbManager.getDynamicPropertiesStore().getAllowStrictEcdsaValidation());
+    Assert.assertTrue(dbManager.getDynamicPropertiesStore().allowStrictEcdsaValidation());
+  }
+
+  @Test
   public void testProposalExpireTime() {
     long defaultWindow = dbManager.getDynamicPropertiesStore().getProposalExpireTime();
     long proposalExpireTime = CommonParameter.getInstance().getProposalExpireTime();

@@ -941,6 +941,21 @@ public class ProposalUtil {
         }
         break;
       }
+      case ALLOW_STRICT_ECDSA_VALIDATION: {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_8_3)) {
+          throw new ContractValidateException(
+              "Bad chain parameter id [ALLOW_STRICT_ECDSA_VALIDATION]");
+        }
+        if (dynamicPropertiesStore.allowStrictEcdsaValidation()) {
+          throw new ContractValidateException(
+              "[ALLOW_STRICT_ECDSA_VALIDATION] has been valid, no need to propose again");
+        }
+        if (value != 1) {
+          throw new ContractValidateException(
+              "This value[ALLOW_STRICT_ECDSA_VALIDATION] is only allowed to be 1");
+        }
+        break;
+      }
       default:
         break;
     }
@@ -1029,7 +1044,8 @@ public class ProposalUtil {
     ALLOW_TVM_PRAGUE(95), // 0, 1
     ALLOW_TVM_OSAKA(96), // 0, 1
     ALLOW_HARDEN_RESOURCE_CALCULATION(97), // 0, 1
-    ALLOW_HARDEN_EXCHANGE_CALCULATION(98); // 0, 1
+    ALLOW_HARDEN_EXCHANGE_CALCULATION(98), // 0, 1
+    ALLOW_STRICT_ECDSA_VALIDATION(99); // 0, 1
     private long code;
 
     ProposalType(long code) {

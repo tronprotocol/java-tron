@@ -163,7 +163,7 @@ public class RelayService {
       String sig =
           TransactionCapsule.getBase64FromByteString(msg.getSignature());
       byte[] sigAddress = SignUtils.signatureToAddress(hash.getBytes(), sig,
-          Args.getInstance().isECKeyCryptoEngine());
+          Args.getInstance().isECKeyCryptoEngine(), true);
       if (manager.getDynamicPropertiesStore().getAllowMultiSign() != 1) {
         flag = Arrays.equals(sigAddress, msg.getAddress().toByteArray());
       } else {

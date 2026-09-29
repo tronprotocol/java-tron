@@ -379,7 +379,8 @@ public class PrecompiledContracts {
           CommonParameter.getInstance().isECKeyCryptoEngine());
       if (signature.validateComponents()) {
         out = SignUtils.signatureToAddress(hash, signature,
-            CommonParameter.getInstance().isECKeyCryptoEngine());
+            CommonParameter.getInstance().isECKeyCryptoEngine(),
+            VMConfig.allowStrictEcdsaValidation());
       }
     } catch (Throwable any) {
       logger.info("ECRecover error", any.getMessage());
@@ -616,8 +617,9 @@ public class PrecompiledContracts {
         SignatureInterface signature = SignUtils.fromComponents(r, s, v[31]
             , CommonParameter.getInstance().isECKeyCryptoEngine());
         if (validateV(v) && signature.validateComponents()) {
-          out = new DataWord(SignUtils.signatureToAddress(h, signature
-              , CommonParameter.getInstance().isECKeyCryptoEngine()));
+          out = new DataWord(SignUtils.signatureToAddress(h, signature,
+              CommonParameter.getInstance().isECKeyCryptoEngine(),
+              VMConfig.allowStrictEcdsaValidation()));
         }
       } catch (Throwable any) {
       }
@@ -1087,6 +1089,9 @@ public class PrecompiledContracts {
             List<byte[]> executedSignList = new ArrayList<>();
             for (byte[] sign : signatures) {
               byte[] recoveredAddr = recoverAddrBySign(sign, hash);
+              if (recoveredAddr == null) {
+                return Pair.of(true, DATA_FALSE);
+              }
 
               sign = merge(recoveredAddr, sign);
               if (ByteArray.matrixContains(executedSignList, recoveredAddr)) {

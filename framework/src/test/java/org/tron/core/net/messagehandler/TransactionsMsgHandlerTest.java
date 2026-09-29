@@ -438,7 +438,7 @@ public class TransactionsMsgHandlerTest extends BaseTest {
           () -> handler.processMessage(peer, new TransactionsMessage(shortList)));
       Assert.assertEquals(TypeEnum.BAD_TRX, shortEx.getType());
 
-      // signature longer than 68 bytes → BAD_TRX
+      // signature longer than 65 bytes → BAD_TRX
       Protocol.Transaction longSigTrx = Protocol.Transaction.newBuilder()
           .setRawData(Protocol.Transaction.raw.newBuilder()
               .setRefBlockNum(1)
@@ -472,7 +472,7 @@ public class TransactionsMsgHandlerTest extends BaseTest {
       stubAdvInvRequest(peer, new TransactionsMessage(validList));
       handler.processMessage(peer, new TransactionsMessage(validList));
 
-      // 68 bytes (upper bound) also passes the length check
+      // padded signatures are rejected
       Protocol.Transaction paddedSigTrx = Protocol.Transaction.newBuilder()
           .setRawData(Protocol.Transaction.raw.newBuilder()
               .setRefBlockNum(3)
@@ -486,7 +486,9 @@ public class TransactionsMsgHandlerTest extends BaseTest {
       List<Protocol.Transaction> paddedList = new ArrayList<>();
       paddedList.add(paddedSigTrx);
       stubAdvInvRequest(peer, new TransactionsMessage(paddedList));
-      handler.processMessage(peer, new TransactionsMessage(paddedList));
+      P2pException paddedEx = Assert.assertThrows(P2pException.class,
+          () -> handler.processMessage(peer, new TransactionsMessage(paddedList)));
+      Assert.assertEquals(TypeEnum.BAD_TRX, paddedEx.getType());
     } finally {
       closeHandlerAndOriginalPool(handler, originalPool);
     }
