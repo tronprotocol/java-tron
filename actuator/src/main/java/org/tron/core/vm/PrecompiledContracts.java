@@ -49,10 +49,10 @@ import org.bouncycastle.crypto.params.ECPublicKeyParameters;
 import org.bouncycastle.crypto.signers.ECDSASigner;
 import org.bouncycastle.math.ec.ECPoint;
 import org.tron.common.crypto.Blake2bfMessageDigest;
+import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.crypto.Hash;
 import org.tron.common.crypto.Rsv;
 import org.tron.common.crypto.SignUtils;
-import org.tron.common.crypto.SignatureInterface;
 import org.tron.common.crypto.zksnark.BN128;
 import org.tron.common.crypto.zksnark.BN128Fp;
 import org.tron.common.crypto.zksnark.BN128G1;
@@ -374,7 +374,7 @@ public class PrecompiledContracts {
     }
     try {
       Rsv rsv = Rsv.fromSignature(sign);
-      SignatureInterface signature = SignUtils.fromComponents(rsv.getR(), rsv.getS(), rsv.getV());
+      ECDSASignature signature = SignUtils.fromComponents(rsv.getR(), rsv.getS(), rsv.getV());
       if (signature.validateComponents()) {
         out = SignUtils.signatureToAddress(hash, signature);
       }
@@ -606,7 +606,7 @@ public class PrecompiledContracts {
         int sLength = data.length < 128 ? data.length - 96 : 32;
         System.arraycopy(data, 96, s, 0, sLength);
 
-        SignatureInterface signature = SignUtils.fromComponents(r, s, v[31]);
+        ECDSASignature signature = SignUtils.fromComponents(r, s, v[31]);
         if (validateV(v) && signature.validateComponents()) {
           out = new DataWord(SignUtils.signatureToAddress(h, signature));
         }

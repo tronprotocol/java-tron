@@ -2,10 +2,13 @@ package org.tron.core.capsule;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import org.junit.Test;
+import org.tron.common.crypto.ECKey.ECDSASignature;
+import org.tron.common.crypto.Rsv;
 import org.tron.common.crypto.SignUtils;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
@@ -81,6 +84,15 @@ public class ECKeyCompatibilityTest {
     // Signing must not change the ID, which hashes only the transaction's raw data.
     assertArrayEquals(ByteArray.fromHexString(TRANSACTION_ID),
         new TransactionCapsule(transaction.getInstance()).getTransactionId().getBytes());
+  }
+
+  @Test
+  public void testSignatureComponentsVector() throws Exception {
+    Rsv rsv = Rsv.fromSignature(ByteArray.fromHexString(TRANSACTION_SIGNATURE));
+    ECDSASignature signature = SignUtils.fromComponents(rsv.getR(), rsv.getS(), rsv.getV());
+    assertTrue(signature.validateComponents());
+    assertArrayEquals(ByteArray.fromHexString(ADDRESS),
+        SignUtils.signatureToAddress(ByteArray.fromHexString(TRANSACTION_ID), signature));
   }
 
   @Test

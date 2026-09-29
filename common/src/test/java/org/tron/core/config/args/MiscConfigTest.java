@@ -16,6 +16,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.LoggerFactory;
 import org.tron.core.Constant;
+import org.tron.core.exception.TronError;
 
 public class MiscConfigTest {
 
@@ -91,8 +92,9 @@ public class MiscConfigTest {
     for (String engine : new String[]{"sm2", "SM2", "unknown", "\"\"", "null", "true",
         "42", "[]", "{}"}) {
       Config config = withRef("crypto.engine = " + engine);
-      IllegalArgumentException exception = assertThrows(engine, IllegalArgumentException.class,
+      TronError exception = assertThrows(engine, TronError.class,
           () -> MiscConfig.fromConfig(config));
+      assertEquals(TronError.ErrCode.PARAMETER_INIT, exception.getErrCode());
       assertTrue(exception.getMessage().contains("SM2/SM3 support has been removed"));
       assertTrue(exception.getMessage().contains("crypto.engine only accepts eckey"));
       assertTrue(exception.getMessage().contains("remain on a compatible release"));

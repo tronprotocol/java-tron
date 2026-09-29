@@ -30,6 +30,7 @@ import org.tron.common.log.LogService;
 import org.tron.common.prometheus.Metrics;
 import org.tron.core.config.args.Args;
 import org.tron.core.config.args.WitnessInitializer;
+import org.tron.core.exception.TronError;
 
 public class FullNodeCryptoEngineTest {
 
@@ -70,9 +71,10 @@ public class FullNodeCryptoEngineTest {
            MockedStatic<KeystoreFactory> keystore = mockStatic(KeystoreFactory.class);
            MockedConstruction<TronApplicationContext> contexts =
                mockConstruction(TronApplicationContext.class)) {
-        IllegalArgumentException exception = assertThrows(engine, IllegalArgumentException.class,
+        TronError exception = assertThrows(engine, TronError.class,
             () -> FullNode.main(new String[]{"-c", config.toString(), "-d", output.toString(),
                 "-w", "--password", "test-password"}));
+        assertEquals(TronError.ErrCode.PARAMETER_INIT, exception.getErrCode());
         assertTrue(exception.getMessage().contains("SM2/SM3 support has been removed"));
         assertTrue(contexts.constructed().isEmpty());
         witness.verifyNoInteractions();
@@ -83,8 +85,9 @@ public class FullNodeCryptoEngineTest {
 
         // The legacy keystore-factory entry point must reject the same configuration.
         Args.clearParam();
-        IllegalArgumentException keystoreException = assertThrows(IllegalArgumentException.class,
+        TronError keystoreException = assertThrows(TronError.class,
             () -> FullNode.main(new String[]{"-c", config.toString(), "--keystore-factory"}));
+        assertEquals(TronError.ErrCode.PARAMETER_INIT, keystoreException.getErrCode());
         assertTrue(keystoreException.getMessage().contains("SM2/SM3 support has been removed"));
         keystore.verifyNoInteractions();
         assertTrue(contexts.constructed().isEmpty());

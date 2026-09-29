@@ -1,11 +1,14 @@
 package org.tron.core.config.args;
 
+import static org.tron.core.exception.TronError.ErrCode.PARAMETER_INIT;
+
 import com.typesafe.config.Config;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.core.Constant;
+import org.tron.core.exception.TronError;
 
 /**
  * Miscellaneous small config domains that don't warrant their own bean class.
@@ -68,11 +71,11 @@ public class MiscConfig {
 
     if (!(engine instanceof String)
         || !SUPPORTED_CRYPTO_ENGINE.equalsIgnoreCase((String) engine)) {
-      throw new IllegalArgumentException(
+      throw new TronError(
           "SM2/SM3 support has been removed; crypto.engine only accepts eckey. "
               + "For ECKey networks, remove the setting or use eckey. "
               + "For existing SM2/SM3 networks, remain on a compatible release until migration; "
-              + "do not reuse the chain database with ECKey/SHA-256.");
+              + "do not reuse the chain database with ECKey/SHA-256.", PARAMETER_INIT);
     }
 
     logger.warn("crypto.engine is deprecated and ignored; ECKey and SHA-256 are always used");

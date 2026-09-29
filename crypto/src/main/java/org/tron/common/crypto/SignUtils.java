@@ -5,6 +5,7 @@ import static org.tron.core.Constant.PER_SIGN_LENGTH;
 
 import java.security.SecureRandom;
 import java.security.SignatureException;
+import org.tron.common.crypto.ECKey.ECDSASignature;
 
 public class SignUtils {
 
@@ -40,12 +41,12 @@ public class SignUtils {
     }
   }
 
-  public static SignatureInterface fromComponents(byte[] r, byte[] s, byte v) {
-    return ECKey.ECDSASignature.fromComponents(r, s, v);
+  public static ECDSASignature fromComponents(byte[] r, byte[] s, byte v) {
+    return ECDSASignature.fromComponents(r, s, v);
   }
 
-  public static byte[] signatureToAddress(byte[] messageHash, SignatureInterface signatureInterface)
+  public static byte[] signatureToAddress(byte[] messageHash, ECDSASignature signature)
       throws SignatureException {
-    return ECKey.signatureToAddress(messageHash, (ECKey.ECDSASignature) signatureInterface);
+    return ECKey.signatureToAddress(messageHash, signature);
   }
 }

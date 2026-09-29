@@ -11,7 +11,7 @@ import org.tron.common.utils.PublicMethod;
 
 
 @Slf4j
-public class SignatureInterfaceTest {
+public class SignInterfaceTest {
 
   private String EC_privString = PublicMethod.getRandomPrivateKey();
   private byte[] EC_privateKey = Hex.decode(EC_privString);
