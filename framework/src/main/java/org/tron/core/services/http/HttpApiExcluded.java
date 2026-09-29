@@ -8,7 +8,9 @@ import java.lang.annotation.Target;
 
 /**
  * Marks a concrete servlet under the registry-managed package as deliberately not exposed through
- * {@link HttpApiRegistry}, with the reason recorded on the class itself.
+ * {@link HttpApiRegistry}, with the reason recorded on the class itself. Excluded does not mean
+ * unreachable: a service can still mount such a servlet outside the registry, as the fullnode
+ * service mounts {@code MetricsServlet} at {@code /monitor/getstatsinfo}.
  *
  * <p>{@link HttpApiRegistry} requires every concrete servlet in that package to carry either
  * {@link HttpApi} or this annotation. Without that rule a servlet could be added and simply never
