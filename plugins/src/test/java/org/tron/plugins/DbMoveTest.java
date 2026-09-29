@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -81,6 +82,23 @@ public class DbMoveTest {
   /** Run {@code db mv} with a fresh CommandLine and return the exit code. */
   private static int mv(File database, String configPath) {
     return new CommandLine(new Toolkit()).execute(mvArgs(database, configPath));
+  }
+
+  private File writeConfig(String fileName, String[]... entries) throws IOException {
+    StringBuilder content = new StringBuilder("storage {\n  properties = [\n");
+    for (String[] entry : entries) {
+      content.append("    {\n      name = \"").append(entry[0])
+          .append("\",\n      path = \"").append(entry[1]).append("\",\n    },\n");
+    }
+    content.append("  ]\n}\n");
+    File config = temporaryFolder.newFile(fileName);
+    Files.write(config.toPath(), content.toString().getBytes(StandardCharsets.UTF_8));
+    return config;
+  }
+
+  private static void assertUntouched(File source) {
+    Assert.assertTrue(source.isDirectory());
+    Assert.assertFalse(Files.isSymbolicLink(source.toPath()));
   }
 
   @Test
@@ -301,6 +319,35 @@ public class DbMoveTest {
     } finally {
       accountDir.setWritable(true, false);
     }
+  }
+
+  @Test
+  public void testDestinationInsideOwnSourceRejected() throws RocksDBException, IOException {
+    File database = newDatabase();
+    File accountDir = Paths.get(database.getPath(), ACCOUNT).toFile();
+    File config = writeConfig("self-nested.conf", new String[] {ACCOUNT, accountDir.getPath()});
+
+    Assert.assertEquals(2, mv(database, config.getPath()));
+    assertUntouched(accountDir);
+    Assert.assertFalse(new File(accountDir, "database").exists());
+  }
+
+  @Test
+  public void testDestinationInsideOtherSourceRejected() throws RocksDBException, IOException {
+    File database = newDatabase();
+    File accountDir = Paths.get(database.getPath(), ACCOUNT).toFile();
+    File transDir = Paths.get(database.getPath(), TRANS).toFile();
+    String[] trans = {TRANS, OUTPUT_DIRECTORY + "/dest"};
+    String[] account = {ACCOUNT, new File(transDir, "nested").getPath()};
+    File transFirst = writeConfig("trans-first.conf", trans, account);
+    File accountFirst = writeConfig("account-first.conf", account, trans);
+
+    Assert.assertEquals(2, mv(database, transFirst.getPath()));
+    Assert.assertEquals(2, mv(database, accountFirst.getPath()));
+    assertUntouched(accountDir);
+    assertUntouched(transDir);
+    Assert.assertFalse(new File(transDir, "nested").exists());
+    Assert.assertFalse(Paths.get(OUTPUT_DIRECTORY, "dest").toFile().exists());
   }
 
   @Test

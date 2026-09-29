@@ -91,6 +91,9 @@ public class DbMove implements Callable<Integer> {
           return 2;
         }
       }
+      if (hasNestedDestination(toBeMove)) {
+        return 2;
+      }
       boolean allCopied = ProgressBar.wrap(toBeMove.stream(), "copy task")
           .allMatch(this::copy);
       if (!allCopied) {
@@ -222,6 +225,20 @@ public class DbMove implements Callable<Integer> {
 
   private void printNotExist() {
     spec.commandLine().getErr().println(NOT_FIND);
+  }
+
+  private boolean hasNestedDestination(List<Property> properties) {
+    for (Property source : properties) {
+      for (Property target : properties) {
+        if (target.destination.startsWith(source.original)) {
+          spec.commandLine().getErr().println(String.format(
+              "destination [%s] can not be inside original [%s], please check!",
+              target.destination, source.original));
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
 
