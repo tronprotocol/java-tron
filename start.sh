@@ -80,22 +80,25 @@ esac
 
 # Determine the Java command to use to start the JVM.
 if [ -z "$JAVA_HOME" ]; then
-  javaExecutable="`which javac`"
-  if [ -n "$javaExecutable" ] && ! [ "`expr \"$javaExecutable\" : '\([^ ]*\)'`" = "no" ]; then
-    # readlink(1) is not available as standard on Solaris 10.
-    readLink=`which readlink`
-    if [ ! `expr "$readLink" : '\([^ ]*\)'` = "no" ]; then
-      if $darwin ; then
-        javaHome="`dirname \"$javaExecutable\"`"
-        javaExecutable="`cd \"$javaHome\" && pwd -P`/javac"
-      else
+  if $darwin ; then
+    # /usr/bin/java and /usr/bin/javac are stubs that run the JDK selected by
+    # /usr/libexec/java_home. Deriving JAVA_HOME from their path gives /usr, and the
+    # stub then runs itself forever.
+    JAVA_HOME="`/usr/libexec/java_home 2>/dev/null`"
+  else
+    javaExecutable="`which javac`"
+    if [ -n "$javaExecutable" ] && ! [ "`expr \"$javaExecutable\" : '\([^ ]*\)'`" = "no" ]; then
+      # readlink(1) is not available as standard on Solaris 10.
+      readLink=`which readlink`
+      if [ ! `expr "$readLink" : '\([^ ]*\)'` = "no" ]; then
         javaExecutable="`readlink -f \"$javaExecutable\"`"
+        javaHome="`dirname \"$javaExecutable\"`"
+        JAVA_HOME=`expr "$javaHome" : '\(.*\)/bin'`
       fi
-      javaHome="`dirname \"$javaExecutable\"`"
-      javaHome=`expr "$javaHome" : '\(.*\)/bin'`
-      JAVA_HOME="$javaHome"
-      export JAVA_HOME
     fi
+  fi
+  if [ -n "$JAVA_HOME" ]; then
+    export JAVA_HOME
   fi
 fi
 
@@ -123,6 +126,7 @@ if [ -z "$JAVA_HOME" ] ; then
 fi
 
 JAVA_PROPERTIES=$("$JAVACMD" -XshowSettings:properties -version 2>&1)
+# Prints one JVM system property from the -XshowSettings output above.
 javaProperty() {
   echo "$JAVA_PROPERTIES" | awk -F ' = ' -v key="$1" '$1 ~ "^ *" key "$" {print $2; exit}'
 }
@@ -136,6 +140,7 @@ esac
 RELEASE_JAR="FullNode$RELEASE_ARCH_SUFFIX.jar"
 RELEASE_ARCHIVE_JAR="ArchiveManifest$RELEASE_ARCH_SUFFIX.jar"
 
+# Archives the previous gc.log into logs/gc_logs/ before a start and keeps the newest 5 archives.
 backupGCLog() {
   local maxFile=5
   local gcLogDir=logs/gc_logs/
@@ -163,11 +168,15 @@ backupGCLog() {
   fi
 }
 
+# Prints the newest GreatVoyage release tag of the java-tron repository; prints nothing when
+# the tags cannot be listed.
 getLatestReleaseVersion() {
   git ls-remote --tags --refs $GITHUB_REPOSITORY 2>/dev/null | awk -F '/' '{print $3}' \
     | grep -E '^GreatVoyage-v[0-9]+(\.[0-9]+)*$' | sort -V | tail -1
 }
 
+# --upgrade: downloads and verifies the latest release jar, then replaces $JAR_NAME with it and
+# keeps the previous file as ${JAR_NAME}_bak. Exits without touching $JAR_NAME if that fails.
 upgrade() {
   latest_version=$(getLatestReleaseVersion)
   echo "info: latest version: $latest_version"
@@ -188,6 +197,8 @@ upgrade() {
   fi
 }
 
+# Downloads $1 to file $2 with wget or curl, verifying the TLS certificate. Returns 1 and
+# leaves no file behind when the download fails.
 download() {
   local url=$1
   local file_name=$2
@@ -207,6 +218,7 @@ downloadRelease() {
   download "$RELEASE_URL/download/$1/$2" "$3" && checkSign "$1" "$2" "$3"
 }
 
+# Creates the $FULL_NODE_DIR directory with a copy of this script and changes into it.
 mkdirFullNode() {
   if [ ! -d $FULL_NODE_DIR ]; then
     echo "info: create $FULL_NODE_DIR"
@@ -218,6 +230,8 @@ mkdirFullNode() {
   fi
 }
 
+# --release / --deploy: sets up $FULL_NODE_DIR with the mainnet config and the latest verified
+# release jar. Exits when the version, the config or the jar cannot be fetched.
 quickStart() {
   full_node_version=$(getLatestReleaseVersion)
   if [[ -n $full_node_version ]]; then
@@ -234,6 +248,7 @@ quickStart() {
   fi
 }
 
+# --clone: clones branch $GITHUB_BRANCH of java-tron into the current directory.
 cloneCode() {
   if type git >/dev/null 2>&1; then
     if git clone -b $GITHUB_BRANCH $GITHUB_REPOSITORY; then
@@ -248,6 +263,8 @@ cloneCode() {
   fi
 }
 
+# -cb: clones and builds java-tron, then copies FullNode.jar and config.conf into
+# $FULL_NODE_DIR. Exits when the clone or the build fails.
 cloneBuild() {
   local currentPwd=$PWD
   echo 'info: clone java-tron'
@@ -266,10 +283,13 @@ cloneBuild() {
   fi
 }
 
+# Sets $pid to the process ids of the running $JAR_NAME; empty when it is not running.
 checkPid() {
   pid=$(ps -ef | grep -v start | grep "${JAR_NAME##*/}" | grep -v grep | awk '{print $2}')
 }
 
+# Stops the running node: sends SIGTERM once per second for up to MAX_STOP_TIME seconds,
+# then SIGKILL.
 stopService() {
   count=1
   while [ $count -le $MAX_STOP_TIME ]; do
@@ -290,6 +310,8 @@ stopService() {
   sleep 5
 }
 
+# Linux only: refuses to start with less than ALLOW_MIN_MEMORY MB of memory, or when -mem
+# asks for less than that.
 checkAllowMemory() {
   os=`uname`
   totalMemory=$(`echo getTotalMemory`)
@@ -309,6 +331,7 @@ checkAllowMemory() {
   fi
 }
 
+# Linux only: preloads tcmalloc when it is installed at /usr/lib64/libtcmalloc.so.
 setTCMalloc() {
   os=`uname`
   if [[ $os == 'Linux' ]] || [[ $os == 'linux' ]] ; then
@@ -322,6 +345,7 @@ setTCMalloc() {
   fi
 }
 
+# Prints the total memory of the machine in KB.
 getTotalMemory() {
   os=`uname`
   if [[ $os == 'Linux' ]] || [[ $os == 'linux' ]] ; then
@@ -334,6 +358,8 @@ getTotalMemory() {
   fi
 }
 
+# Linux only: sizes the heap to 60% and the direct memory to 10% of the total memory, or of
+# the -mem value when given. macOS keeps JVM_MS / JVM_MX and uses 1g of direct memory.
 setJVMMemory() {
   os=`uname`
   if [[ $os == 'Linux' ]] || [[ $os == 'linux' ]] ; then
@@ -356,6 +382,9 @@ setJVMMemory() {
   fi
 }
 
+# Starts $JAR_NAME in the background with the JVM options for the detected Java version
+# (CMS on JDK 8, ZGC on JDK 17), passing $FULL_START_OPT and the config file. Output goes
+# to start.log.
 startService() {
   echo $(date) >>start.log
   if [[ ! -f $JAR_NAME ]]; then
@@ -382,6 +411,9 @@ startService() {
   echo "info: if you need to stop the service, execute: sh start.sh --stop"
 }
 
+# Rewrites LevelDB manifests of at least REBUILD_MANIFEST_SIZE MB under $REBUILD_DIR before
+# a start, so the databases open faster (TIP-298). Downloads and verifies ArchiveManifest.jar
+# when it is missing. Skipped with -dr, on ARM64 (RocksDB only) and without a database.
 rebuildManifest() {
   if [[ $REBUILD_MANIFEST = false ]]; then
     echo 'info: disable rebuild manifest!'
@@ -414,6 +446,9 @@ rebuildManifest() {
   fi
 }
 
+# --net: selects the test (Nile) or private network config under $FULL_NODE_CONFIG_DIR,
+# downloading it when the file does not exist yet. Exits on an unknown network or a failed
+# download.
 specifyConfig(){
   echo "info: specify the net: $1"
   local netType=$1
@@ -475,6 +510,7 @@ checkSign() {
   return 1
 }
 
+# Stops a running node and starts it again with the current settings.
 restart() {
   stopService
   checkAllowMemory
@@ -484,6 +520,7 @@ restart() {
   startService
 }
 
+# Command line options. Anything not listed here is passed to FullNode as is.
 while [ -n "$1" ]; do
   case "$1" in
   -c)
@@ -598,6 +635,7 @@ while [ -n "$1" ]; do
   esac
 done
 
+# Main flow: optional clone / download steps, then one start of the node.
 if [[ $IS_BACKUP_GC_LOG = true ]]; then
   backupGCLog
 fi
