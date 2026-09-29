@@ -7,10 +7,12 @@ import com.typesafe.config.Config;
 import com.typesafe.config.ConfigBeanFactory;
 import com.typesafe.config.ConfigValueFactory;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.tron.core.Constant;
 import org.tron.core.exception.TronError;
 
 // Node configuration bean for the "node" section of config.conf.
@@ -128,6 +130,7 @@ public class NodeConfig {
   private HttpConfig http = new HttpConfig();
   private RpcConfig rpc = new RpcConfig();
   private JsonRpcConfig jsonrpc = new JsonRpcConfig();
+  private AdminConfig admin = new AdminConfig();
   private NodeBackupConfig backup = new NodeBackupConfig();
   private DynamicConfigSection dynamicConfig = new DynamicConfigSection();
   private DnsConfig dns = new DnsConfig();
@@ -250,6 +253,32 @@ public class NodeConfig {
     private int maxAddressSize = 1000;
     private int maxLogFilterNum = 20000;
     private long maxMessageSize = 4194304;
+  }
+
+  @Getter
+  @Setter
+  public static class AdminConfig {
+
+    private AdminIpcConfig ipc = new AdminIpcConfig();
+    private AdminHttpConfig http = new AdminHttpConfig();
+  }
+
+  @Getter
+  @Setter
+  public static class AdminIpcConfig {
+
+    private boolean enable = false;
+    private String socketDirectory = "";
+  }
+
+  @Getter
+  @Setter
+  public static class AdminHttpConfig {
+
+    private boolean enable = false;
+    private String listenAddress = Constant.LOCAL_HOST;
+    private int port = 8575;
+    private List<String> virtualHosts = new ArrayList<>(Collections.singletonList("localhost"));
   }
 
   @Getter

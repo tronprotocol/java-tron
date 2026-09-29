@@ -1,8 +1,6 @@
 package org.tron.core.services.jsonrpc;
 
-import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.StreamReadConstraints;
 import com.fasterxml.jackson.core.exc.StreamConstraintsException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -25,7 +23,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.parameter.CommonParameter;
-import org.tron.core.Constant;
 import org.tron.core.services.filter.BufferedResponseWrapper;
 import org.tron.core.services.filter.CachedBodyRequestWrapper;
 import org.tron.core.services.http.RateLimiterServlet;
@@ -34,17 +31,7 @@ import org.tron.core.services.http.RateLimiterServlet;
 @Slf4j(topic = "API")
 public class JsonRpcServlet extends RateLimiterServlet {
 
-  private static final ObjectMapper MAPPER = buildMapper();
-
-  private static ObjectMapper buildMapper() {
-    JsonFactory factory = JsonFactory.builder()
-        .streamReadConstraints(StreamReadConstraints.builder()
-            .maxNestingDepth(Constant.MAX_NESTING_DEPTH)
-            .maxTokenCount(Constant.MAX_TOKEN_COUNT)
-            .build())
-        .build();
-    return new ObjectMapper(factory);
-  }
+  private static final ObjectMapper MAPPER = JsonRpcMapper.create();
 
   private enum JsonRpcError {
     PARSE_ERROR(-32700),
