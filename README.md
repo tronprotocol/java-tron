@@ -206,6 +206,7 @@ More detailed guides live in the [`docs/`](./docs) directory:
 - **Modular architecture & deployment**
   - [Modular Introduction](./docs/modular-introduction-en.md) · [中文版](./docs/modular-introduction-zh.md)
   - [Modular Deployment](./docs/modular-deployment-en.md) · [中文版](./docs/modular-deployment-zh.md)
+  - [P2P Module](./p2p/README.md) — peer discovery, connection management and DNS-based node lists
 - **Extending java-tron**
   - [Implement a Customized Actuator](./docs/implement-a-customized-actuator-en.md) · [中文版](./docs/implement-a-customized-actuator-zh.md)
 - **Protocol**

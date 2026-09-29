@@ -52,7 +52,7 @@ Run exactly what CI runs (`.github/workflows/pr-check.yml`):
 ./gradlew :framework:checkstyleMain :framework:checkstyleTest :plugins:checkstyleMain
 ```
 
-Checkstyle is configured only for `framework` and `plugins`; `protocol` is checked by `protoLint` instead (see Protobuf below). A bare `./gradlew checkstyleMain` does not reproduce the CI gate.
+CI runs Checkstyle only for `framework` and `plugins`; `protocol` is checked by `protoLint` instead (see Protobuf below). `p2p` has its own Checkstyle configuration (`./gradlew :p2p:checkstyleMain :p2p:checkstyleTest`) that is not part of the CI gate. A bare `./gradlew checkstyleMain` does not reproduce the CI gate.
 
 ### 4. Forbidden `Math` usage
 
@@ -110,6 +110,7 @@ No `*.jar`, `build/`, logs, or database files — whether produced by the main b
 | `actuator` | Transaction execution; one Actuator class per transaction type |
 | `crypto` | Cryptographic primitives (depends only on `common`) |
 | `common` | Shared utilities |
+| `p2p` | Peer discovery, connection management and DNS-based node lists; vendored from [tronprotocol/libp2p](https://github.com/tronprotocol/libp2p) v2.2.9 (see [`p2p/README.md`](./p2p/README.md)) |
 | `platform` | Architecture-specific implementations selected at build time (separate `x86` / `arm` / `common` source sets): math wrappers, LevelDB/RocksDB order-price comparators — relevant to cross-JVM determinism |
 | `plugins` | Standalone tools (`Toolkit.jar`, `ArchiveManifest.jar`) |
 
@@ -125,6 +126,8 @@ crypto    → common
 ```
 
 `platform` is a leaf module (no project dependencies of its own) that `common`, `framework`, and `plugins` depend on for architecture-specific code.
+
+`p2p` is also a leaf module. 
 
 ## Hard Constraints
 
@@ -170,6 +173,7 @@ crypto    → common
 - **Configuration:** [`docs/configuration.md`](./docs/configuration.md), [`docs/configuration-conventions.md`](./docs/configuration-conventions.md)
 - **Protobuf protocol:** the `.proto` files under `protocol/src/main/protos/` are the source of truth; [`docs/protobuf-protocol-document.md`](./docs/protobuf-protocol-document.md) explains the main messages (the Markdown copies under `protocol/src/main/protos/` are outdated).
 - **Extending / deployment:** the [`docs/`](./docs) directory (customized actuator, modular deployment).
+- **P2P module:** [`p2p/README.md`](./p2p/README.md) (standalone use, DNS node-list publishing, API).
 - **Contributing:** [CONTRIBUTING.md](./CONTRIBUTING.md) (workflow, coding style, commit/PR conventions).
 - **Security policy:** [SECURITY.md](./SECURITY.md) (supported versions, vulnerability disclosure).
 
