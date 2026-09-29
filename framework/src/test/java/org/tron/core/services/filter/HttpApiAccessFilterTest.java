@@ -21,8 +21,8 @@ import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.PublicMethod;
 import org.tron.core.config.args.Args;
 import org.tron.core.services.http.FullNodeHttpApiService;
-import org.tron.core.services.interfaceOnPBFT.http.PBFT.HttpApiOnPBFTService;
-import org.tron.core.services.interfaceOnSolidity.http.solidity.HttpApiOnSolidityService;
+import org.tron.core.services.interfaceOnPBFT.HttpApiOnPBFTService;
+import org.tron.core.services.interfaceOnSolidity.HttpApiOnSolidityService;
 
 public class HttpApiAccessFilterTest extends BaseTest {
 
