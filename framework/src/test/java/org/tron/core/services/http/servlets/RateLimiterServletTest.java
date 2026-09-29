@@ -384,6 +384,24 @@ public class RateLimiterServletTest {
   }
 
   /**
+   * A servlet mounted on a surface its @HttpApi does not declare has no limiter under that
+   * surface's name; it must then share the class-name limiter, not run unlimited.
+   */
+  @Test
+  public void testSurfaceWithoutOwnLimiterFallsBackToClassNameLimiter() throws Exception {
+    IRateLimiter classNameLimiter = Mockito.mock(IRateLimiter.class);
+    when(classNameLimiter.acquirePermit(any(RuntimeData.class))).thenReturn(true);
+    container.add(KEY_HTTP, "TestServlet", classNameLimiter);
+
+    try (MockedStatic<GlobalRateLimiter> globalMock = mockStatic(GlobalRateLimiter.class)) {
+      globalMock.when(() -> GlobalRateLimiter.acquirePermit(any())).thenReturn(true);
+      servlet.service(requestOn(Surface.SOLIDITY), response);
+    }
+
+    verify(classNameLimiter, times(1)).acquirePermit(any(RuntimeData.class));
+  }
+
+  /**
    * A PBFT cursor is an offset from the live head, so it must be selected only after both
    * limiters admitted the request; selected earlier, a blocking admission would let the read
    * pass the PBFT-finalized block while the head advances.

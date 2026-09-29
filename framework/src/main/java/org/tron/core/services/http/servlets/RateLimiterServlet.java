@@ -167,6 +167,11 @@ public abstract class RateLimiterServlet extends HttpServlet {
     Surface surface = surfaceOf(req);
     RuntimeData runtimeData = new RuntimeData(req);
     IRateLimiter rateLimiter = container.get(KEY_PREFIX_HTTP, limiterName(getClass(), surface));
+    if (rateLimiter == null) {
+      // a surface this servlet's @HttpApi does not declare: share the class-name limiter rather
+      // than skip per-endpoint limiting on that port
+      rateLimiter = container.get(KEY_PREFIX_HTTP, getClass().getSimpleName());
+    }
 
     // Check per-endpoint first to avoid consuming global IP/QPS quota for requests
     // that would be rejected by the per-endpoint limiter anyway. acquirePermit()
