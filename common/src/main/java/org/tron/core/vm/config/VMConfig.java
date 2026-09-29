@@ -8,8 +8,6 @@ import org.tron.common.parameter.CommonParameter;
  */
 public class VMConfig {
 
-  private static boolean vmTraceCompressed = false;
-
   @Setter
   private static boolean vmTrace = false;
 
@@ -87,10 +85,6 @@ public class VMConfig {
 
   public static boolean vmTrace() {
     return vmTrace;
-  }
-
-  public static boolean vmTraceCompressed() {
-    return vmTraceCompressed;
   }
 
   public static void initVmHardFork(boolean pass) {
