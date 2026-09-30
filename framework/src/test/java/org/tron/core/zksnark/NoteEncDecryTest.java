@@ -1,5 +1,8 @@
 package org.tron.core.zksnark;
 
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.spy;
+
 import com.google.protobuf.ByteString;
 import java.lang.reflect.Method;
 import java.math.BigInteger;
@@ -13,18 +16,22 @@ import org.junit.Test;
 import org.tron.api.GrpcAPI;
 import org.tron.common.BaseTest;
 import org.tron.common.TestConstants;
+import org.tron.common.crypto.Hash;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.zksnark.JLibsodium;
 import org.tron.common.zksnark.JLibsodiumParam.Chacha20Poly1305IetfEncryptParams;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AssetIssueCapsule;
+import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.ZksnarkException;
 import org.tron.core.zen.note.Note;
 import org.tron.core.zen.note.NoteEncryption.Encryption;
 import org.tron.core.zen.note.NoteEncryption.Encryption.OutCiphertext;
 import org.tron.core.zen.note.OutgoingPlaintext;
+import org.tron.protos.Protocol.Block;
+import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.TransactionInfo;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 import org.tron.protos.contract.ShieldContract;
@@ -509,6 +516,63 @@ public class NoteEncDecryTest extends BaseTest {
         w, GrpcAPI.DecryptNotesTRC20.NoteTx.newBuilder(), log2, ovk, 4, nf1);
     Assert.assertFalse("burn1 must not decrypt under nf2", bad1.isPresent());
     Assert.assertFalse("burn2 must not decrypt under nf1", bad2.isPresent());
+  }
+
+  @Test
+  public void testScanShieldedTRC20NotesByOvkNoteSpentLengths() throws Exception {
+    Wallet scanner = spy(new Wallet());
+    byte[] ovk = new byte[32];
+    Arrays.fill(ovk, (byte) 1);
+    byte[] contractAddress = ByteArray.fromHexString(FROM_ADDRESS);
+    ByteString logAddress = ByteString.copyFrom(Arrays.copyOfRange(contractAddress, 1, 21));
+    BigInteger amount = BigInteger.valueOf(1000L);
+    byte[] nf = new byte[32];
+    nf[0] = (byte) 0xAB;
+    TransactionInfo.Log noteSpent = TransactionInfo.Log.newBuilder()
+        .setAddress(logAddress)
+        .addTopics(ByteString.copyFrom(Hash.sha3(ByteArray.fromString("NoteSpent(bytes32)"))))
+        .setData(ByteString.copyFrom(nf)).build();
+    TransactionInfo.Log burn = buildBurnLog(ovk, amount, contractAddress, nf).toBuilder()
+        .setAddress(logAddress)
+        .addTopics(ByteString.copyFrom(Hash.sha3(
+            ByteArray.fromString("TokenBurn(address,uint256,bytes32[3])"))))
+        .build();
+    Transaction transaction = Transaction.getDefaultInstance();
+    ByteString txid = new TransactionCapsule(transaction).getTransactionId().getByteString();
+    GrpcAPI.BlockList blocks = GrpcAPI.BlockList.newBuilder()
+        .addBlock(Block.newBuilder().addTransactions(transaction)).build();
+    doReturn(blocks).when(scanner).getBlocksByLimitNext(0, 1);
+
+    boolean previousAllow = Args.getInstance().isAllowShieldedTransactionApi();
+    Args.getInstance().setAllowShieldedTransactionApi(true);
+    try {
+      for (int length : new int[]{0, 31, 32, 33, 64}) {
+        TransactionInfo info = TransactionInfo.newBuilder()
+            .addLog(noteSpent)
+            .addLog(noteSpent.toBuilder().setData(ByteString.copyFrom(Arrays.copyOf(nf, length))))
+            .addLog(burn)
+            // A fresh valid NoteSpent restores the context for exactly one burn.
+            .addLog(noteSpent)
+            .addLog(burn)
+            .addLog(burn)
+            .build();
+        doReturn(info).when(scanner).getTransactionInfoById(txid);
+
+        GrpcAPI.DecryptNotesTRC20 result = scanner.scanShieldedTRC20NotesByOvk(
+            0, 1, ovk, contractAddress);
+
+        Assert.assertEquals("Unexpected burn count for NoteSpent length " + length,
+            length == 32 ? 2 : 1, result.getNoteTxsCount());
+        Assert.assertEquals(length == 32 ? 0 : 1, result.getNoteTxs(0).getIndex());
+        for (GrpcAPI.DecryptNotesTRC20.NoteTx noteTx : result.getNoteTxsList()) {
+          Assert.assertEquals(amount.toString(10), noteTx.getToAmount());
+          Assert.assertEquals(ByteString.copyFrom(contractAddress),
+              noteTx.getTransparentToAddress());
+        }
+      }
+    } finally {
+      Args.getInstance().setAllowShieldedTransactionApi(previousAllow);
+    }
   }
 
   private TransactionInfo.Log buildBurnLog(byte[] ovk, BigInteger amount, byte[] toAddress,

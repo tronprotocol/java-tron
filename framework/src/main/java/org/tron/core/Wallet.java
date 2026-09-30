@@ -4156,9 +4156,7 @@ public class Wallet {
               int logType = getShieldedTRC20LogType(log, shieldedTRC20ContractAddress);
               if (logType == 5) {
                 byte[] logData = log.getData().toByteArray();
-                if (logData.length >= 32) {
-                  pendingNf = ByteArray.subArray(logData, 0, 32);
-                }
+                pendingNf = logData.length == 32 ? logData : null;
               } else if (logType > 0) {
                 noteBuilder = DecryptNotesTRC20.NoteTx.newBuilder();
                 noteBuilder.setTxid(ByteString.copyFrom(txid));
