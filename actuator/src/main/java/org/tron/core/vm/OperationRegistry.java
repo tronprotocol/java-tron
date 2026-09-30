@@ -7,12 +7,45 @@ import org.tron.core.vm.config.VMConfig;
 
 public class OperationRegistry {
 
+  private static final Operation DEFAULT_MLOAD = new Operation(
+      Op.MLOAD, 1, 1, EnergyCost::getMloadCost, OperationActions::mLoadAction);
+
+  private static final Operation DEFAULT_MSTORE = new Operation(
+      Op.MSTORE, 2, 0, EnergyCost::getMStoreCost, OperationActions::mStoreAction);
+
+  private static final Operation DEFAULT_MSTORE8 = new Operation(
+      Op.MSTORE8, 2, 0, EnergyCost::getMStore8Cost, OperationActions::mStore8Action);
+
+  private static final Operation ADJUSTED_MLOAD =
+      DEFAULT_MLOAD.adjustCost(EnergyCost::getMloadCost2);
+
+  private static final Operation ADJUSTED_MSTORE =
+      DEFAULT_MSTORE.adjustCost(EnergyCost::getMStoreCost2);
+
+  private static final Operation ADJUSTED_MSTORE8 =
+      DEFAULT_MSTORE8.adjustCost(EnergyCost::getMStore8Cost2);
+
+  private static final Operation DEFAULT_VOTEWITNESS = new Operation(
+      Op.VOTEWITNESS, 4, 1, EnergyCost::getVoteWitnessCost,
+      OperationActions::voteWitnessAction, VMConfig::allowTvmVote);
+
+  private static final Operation ADJUSTED_VOTEWITNESS =
+      DEFAULT_VOTEWITNESS.adjustCost(EnergyCost::getVoteWitnessCost2);
+
+  private static final Operation OSAKA_VOTEWITNESS =
+      DEFAULT_VOTEWITNESS.adjustCost(EnergyCost::getVoteWitnessCost3);
+
+  private static final Operation DEFAULT_SUICIDE = new Operation(
+      Op.SUICIDE, 1, 0, EnergyCost::getSuicideCost, OperationActions::suicideAction);
+
+  private static final Operation ADJUSTED_SUICIDE =
+      DEFAULT_SUICIDE.adjustCost(EnergyCost::getSuicideCost2);
+
+  private static final Operation RESTRICTED_SUICIDE =
+      DEFAULT_SUICIDE.adjustCost(EnergyCost::getSuicideCost3)
+          .adjustAction(OperationActions::suicideAction2);
+
   public enum Version {
-    TRON_V1_0,
-    TRON_V1_1,
-    TRON_V1_2,
-    TRON_V1_3,
-    TRON_V1_4,
     TRON_V1_5,
     // add more
     // TRON_V2,
@@ -21,13 +54,21 @@ public class OperationRegistry {
 
   private static final Map<Version, JumpTable> tableMap = new HashMap<>();
 
+  // The newest version in use. Bump this when a newer operation set is added,
+  // together with newLatestOperationSet() below.
+  private static final Version LATEST_VERSION = Version.TRON_V1_5;
+
   static {
-    tableMap.put(Version.TRON_V1_0, newTronV10OperationSet());
-    tableMap.put(Version.TRON_V1_1, newTronV11OperationSet());
-    tableMap.put(Version.TRON_V1_2, newTronV12OperationSet());
-    tableMap.put(Version.TRON_V1_3, newTronV13OperationSet());
-    tableMap.put(Version.TRON_V1_4, newTronV14OperationSet());
-    tableMap.put(Version.TRON_V1_5, newTronV15OperationSet());
+    tableMap.put(LATEST_VERSION, newLatestOperationSet());
+  }
+
+  // Constant calls get a dedicated instance of the newest table, isolated from
+  // the shared consensus table above.
+  private static final JumpTable CONSTANT_CALL_TABLE = newLatestOperationSet();
+
+  // The single place that decides which operation set is the newest.
+  private static JumpTable newLatestOperationSet() {
+    return newTronV15OperationSet();
   }
 
   public static JumpTable newTronV10OperationSet() {
@@ -74,28 +115,22 @@ public class OperationRegistry {
   // Just for warming up class to avoid out_of_time
   public static void init() {}
 
-  public static JumpTable getTable() {
-    // always get the table which has the newest version
-    JumpTable table = tableMap.get(Version.TRON_V1_5);
-
-    // next make the corresponding changes, exclude activating opcode
-    if (VMConfig.allowHigherLimitForMaxCpuTimeOfOneTx()) {
-      adjustMemOperations(table);
-    }
-
-    if (VMConfig.allowEnergyAdjustment()) {
-      adjustForFairEnergy(table);
-    }
-
-    if (VMConfig.allowTvmSelfdestructRestriction()) {
-      adjustSelfdestruct(table);
-    }
-
-    if (VMConfig.allowTvmOsaka()) {
-      adjustVoteWitnessCost(table);
-    }
-
+  public static JumpTable prepareAndGetTable(boolean isConstantCall) {
+    JumpTable table = getTable(isConstantCall);
+    // Apply configuration-dependent changes once at the top level.
+    adjustTable(table);
     return table;
+  }
+
+  public static JumpTable getTable(boolean isConstantCall) {
+    return isConstantCall ? CONSTANT_CALL_TABLE : tableMap.get(LATEST_VERSION);
+  }
+
+  private static void adjustTable(JumpTable table) {
+    // Make the corresponding changes, excluding opcode activation.
+    adjustMemOperations(table);
+    adjustVoteWitness(table);
+    adjustSelfdestruct(table);
   }
 
   public static JumpTable newBaseOperationSet() {
@@ -331,20 +366,11 @@ public class OperationRegistry {
         EnergyCost::getBaseTierCost,
         OperationActions::popAction));
 
-    table.set(new Operation(
-        Op.MLOAD, 1, 1,
-        EnergyCost::getMloadCost,
-        OperationActions::mLoadAction));
+    table.set(DEFAULT_MLOAD);
 
-    table.set(new Operation(
-        Op.MSTORE, 2, 0,
-        EnergyCost::getMStoreCost,
-        OperationActions::mStoreAction));
+    table.set(DEFAULT_MSTORE);
 
-    table.set(new Operation(
-        Op.MSTORE8, 2, 0,
-        EnergyCost::getMStore8Cost,
-        OperationActions::mStore8Action));
+    table.set(DEFAULT_MSTORE8);
 
     table.set(new Operation(
         Op.SLOAD, 1, 1,
@@ -449,10 +475,7 @@ public class OperationRegistry {
         EnergyCost::getRevertCost,
         OperationActions::revertAction));
 
-    table.set(new Operation(
-        Op.SUICIDE, 1, 0,
-        EnergyCost::getSuicideCost,
-        OperationActions::suicideAction));
+    table.set(DEFAULT_SUICIDE);
 
     return table;
   }
@@ -570,11 +593,7 @@ public class OperationRegistry {
   public static void appendVoteOperations(JumpTable table) {
     BooleanSupplier proposal = VMConfig::allowTvmVote;
 
-    table.set(new Operation(
-        Op.VOTEWITNESS, 4, 1,
-        EnergyCost::getVoteWitnessCost,
-        OperationActions::voteWitnessAction,
-        proposal));
+    table.set(DEFAULT_VOTEWITNESS);
 
     table.set(new Operation(
         Op.WITHDRAWREWARD, 0, 1,
@@ -591,23 +610,6 @@ public class OperationRegistry {
         EnergyCost::getBaseTierCost,
         OperationActions::baseFeeAction,
         proposal));
-  }
-
-  public static void adjustMemOperations(JumpTable table) {
-    table.set(new Operation(
-        Op.MLOAD, 1, 1,
-        EnergyCost::getMloadCost2,
-        OperationActions::mLoadAction));
-
-    table.set(new Operation(
-        Op.MSTORE, 2, 0,
-        EnergyCost::getMStoreCost2,
-        OperationActions::mStoreAction));
-
-    table.set(new Operation(
-        Op.MSTORE8, 2, 0,
-        EnergyCost::getMStore8Cost2,
-        OperationActions::mStore8Action));
   }
 
   public static void appendFreezeV2Operations(JumpTable table) {
@@ -664,19 +666,6 @@ public class OperationRegistry {
         proposal));
   }
 
-  public static void adjustForFairEnergy(JumpTable table) {
-    table.set(new Operation(
-        Op.VOTEWITNESS, 4, 1,
-        EnergyCost::getVoteWitnessCost2,
-        OperationActions::voteWitnessAction,
-        VMConfig::allowTvmVote));
-
-    table.set(new Operation(
-        Op.SUICIDE, 1, 0,
-        EnergyCost::getSuicideCost2,
-        OperationActions::suicideAction));
-  }
-
   public static void appendCancunOperations(JumpTable table) {
     BooleanSupplier proposal = VMConfig::allowTvmCancun;
     BooleanSupplier tvmBlobProposal = VMConfig::allowTvmBlob;
@@ -722,18 +711,30 @@ public class OperationRegistry {
         proposal));
   }
 
-  public static void adjustSelfdestruct(JumpTable table) {
-    table.set(new Operation(
-        Op.SUICIDE, 1, 0,
-        EnergyCost::getSuicideCost3,
-        OperationActions::suicideAction2));
+  public static void adjustMemOperations(JumpTable table) {
+    boolean adjusted = VMConfig.allowHigherLimitForMaxCpuTimeOfOneTx();
+    table.set(adjusted ? ADJUSTED_MLOAD : DEFAULT_MLOAD);
+    table.set(adjusted ? ADJUSTED_MSTORE : DEFAULT_MSTORE);
+    table.set(adjusted ? ADJUSTED_MSTORE8 : DEFAULT_MSTORE8);
   }
 
-  public static void adjustVoteWitnessCost(JumpTable table) {
-    table.set(new Operation(
-        Op.VOTEWITNESS, 4, 1,
-        EnergyCost::getVoteWitnessCost3,
-        OperationActions::voteWitnessAction,
-        VMConfig::allowTvmVote));
+  public static void adjustVoteWitness(JumpTable table) {
+    if (VMConfig.allowTvmOsaka()) {
+      table.set(OSAKA_VOTEWITNESS);
+    } else if (VMConfig.allowEnergyAdjustment()) {
+      table.set(ADJUSTED_VOTEWITNESS);
+    } else {
+      table.set(DEFAULT_VOTEWITNESS);
+    }
+  }
+
+  public static void adjustSelfdestruct(JumpTable table) {
+    if (VMConfig.allowTvmSelfdestructRestriction()) {
+      table.set(RESTRICTED_SUICIDE);
+    } else if (VMConfig.allowEnergyAdjustment()) {
+      table.set(ADJUSTED_SUICIDE);
+    } else {
+      table.set(DEFAULT_SUICIDE);
+    }
   }
 }

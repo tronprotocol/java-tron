@@ -217,7 +217,7 @@ public class VoteWitnessCost3Test extends BaseTest {
   @Test
   public void testOperationRegistryWithoutOsaka() {
     VMConfig.initAllowTvmOsaka(0);
-    JumpTable table = OperationRegistry.getTable();
+    JumpTable table = OperationRegistry.prepareAndGetTable(false);
     Operation voteOp = table.get(Op.VOTEWITNESS);
     assertTrue(voteOp.isEnabled());
 
@@ -233,7 +233,7 @@ public class VoteWitnessCost3Test extends BaseTest {
   public void testOperationRegistryWithOsaka() {
     VMConfig.initAllowTvmOsaka(1);
     try {
-      JumpTable table = OperationRegistry.getTable();
+      JumpTable table = OperationRegistry.prepareAndGetTable(false);
       Operation voteOp = table.get(Op.VOTEWITNESS);
       assertTrue(voteOp.isEnabled());
 

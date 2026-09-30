@@ -14,12 +14,12 @@ import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.args.GenesisBlock;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.Time;
 import org.tron.consensus.ConsensusDelegate;
 import org.tron.consensus.base.BlockHandle;
 import org.tron.consensus.base.ConsensusInterface;
@@ -134,14 +134,14 @@ public class DposService implements ConsensusInterface {
     if (slot == 0
       && consensusDelegate.getDynamicPropertiesStore().allowConsensusLogicOptimization()) {
       logger.warn("ValidBlock failed: slot error, witness: {}, timeStamp: {}",
-        ByteArray.toHexString(witnessAddress.toByteArray()), new DateTime(timeStamp));
+        ByteArray.toHexString(witnessAddress.toByteArray()), Time.getIsoTimeString(timeStamp));
       return false;
     }
     final ByteString scheduledWitness = dposSlot.getScheduledWitness(slot);
     if (!scheduledWitness.equals(witnessAddress)) {
       logger.warn("ValidBlock failed: sWitness: {}, bWitness: {}, bTimeStamp: {}, slot: {}",
           ByteArray.toHexString(scheduledWitness.toByteArray()),
-          ByteArray.toHexString(witnessAddress.toByteArray()), new DateTime(timeStamp), slot);
+          ByteArray.toHexString(witnessAddress.toByteArray()), Time.getIsoTimeString(timeStamp), slot);
       return false;
     }
 

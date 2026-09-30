@@ -512,12 +512,18 @@ public class Program {
         internalTx.setValue(internalTx.getValue() + expireUnfrozenBalance);
       }
     }
+
+    getContractState().markSelfDestruct(owner);
     getResult().addDeleteAccount(this.getContractAddress());
   }
 
   public void suicide2(DataWord obtainerAddress) {
-
     byte[] owner = getContextAddress();
+
+    if (getContractState().isSelfDestructed(obtainerAddress.toTronAddress())) {
+      MUtil.checkCPUTimeForSelfDestructedBeneficiary();
+    }
+
     boolean isNewContract = getContractState().isNewContract(owner);
     if (isNewContract) {
       suicide(obtainerAddress);
@@ -540,6 +546,7 @@ public class Program {
         "suicide", nonce, getContractState().getAccount(owner).getAssetMapV2());
 
     if (FastByteComparisons.isEqual(owner, obtainer)) {
+      getContractState().markSelfDestruct(owner);
       return;
     }
 
@@ -579,6 +586,8 @@ public class Program {
         internalTx.setValue(internalTx.getValue() + expireUnfrozenBalance);
       }
     }
+
+    getContractState().markSelfDestruct(owner);
   }
 
   public Repository getContractState() {
@@ -914,7 +923,8 @@ public class Program {
       if (VMConfig.allowTvmCompatibleEvm()) {
         program.setContractVersion(getContractVersion());
       }
-      VM.play(program, OperationRegistry.getTable());
+      // Reuse the table prepared by the top-level execution.
+      VM.play(program, OperationRegistry.getTable(isConstantCall()));
       createResult = program.getResult();
       getTrace().merge(program.getTrace());
       // always commit nonce
@@ -1146,7 +1156,8 @@ public class Program {
         program.setContractVersion(invoke.getDeposit()
             .getContract(codeAddress).getContractVersion());
       }
-      VM.play(program, OperationRegistry.getTable());
+      // Reuse the table prepared by the top-level execution.
+      VM.play(program, OperationRegistry.getTable(isConstantCall()));
       callResult = program.getResult();
 
       getTrace().merge(program.getTrace());
