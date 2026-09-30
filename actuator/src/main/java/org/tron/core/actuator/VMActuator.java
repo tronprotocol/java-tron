@@ -299,6 +299,10 @@ public class VMActuator implements Actuator2 {
         result.setRuntimeError(result.getException().getMessage());
       }
       logger.info("runtime result is :{}", result.getException().getMessage());
+    } finally {
+      if (isConstantCall) {
+        VMConfig.clearLocalSnapshot();
+      }
     }
     //use program returned fill context
     context.setProgramResult(result);
