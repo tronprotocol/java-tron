@@ -14,6 +14,7 @@ import java.lang.reflect.Field;
 import java.net.ServerSocket;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -67,12 +68,17 @@ public class CursorInterceptorServerTest {
     final List<String> setOn = new CopyOnWriteArrayList<>();
     final List<String> resetOn = new CopyOnWriteArrayList<>();
     final String[] handlerOn = new String[1];
+    // the client can receive the response before the server leaves onHalfClose's finally block
+    final CountDownLatch resetDone = new CountDownLatch(1);
 
     Manager manager = mock(Manager.class);
     doAnswer(inv -> setOn.add(Thread.currentThread().getName()))
         .when(manager).setCursor(any(Chainbase.Cursor.class));
-    doAnswer(inv -> resetOn.add(Thread.currentThread().getName()))
-        .when(manager).resetCursor();
+    doAnswer(inv -> {
+      resetOn.add(Thread.currentThread().getName());
+      resetDone.countDown();
+      return null;
+    }).when(manager).resetCursor();
 
     SolidityCursorInterceptor interceptor = new SolidityCursorInterceptor();
     Field dbManager = CursorServerInterceptor.class.getDeclaredField("dbManager");
@@ -99,6 +105,8 @@ public class CursorInterceptorServerTest {
     try {
       DatabaseGrpc.newBlockingStub(channel).getNowBlock(EmptyMessage.getDefaultInstance());
 
+      Assert.assertTrue("cursor was not restored after the call",
+          resetDone.await(5, TimeUnit.SECONDS));
       Assert.assertEquals("cursor must be set exactly once per call", 1, setOn.size());
       Assert.assertEquals("cursor must be restored exactly once per call", 1, resetOn.size());
       Assert.assertNotNull("handler did not run", handlerOn[0]);

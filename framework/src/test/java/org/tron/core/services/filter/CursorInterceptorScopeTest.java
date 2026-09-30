@@ -35,20 +35,26 @@ public class CursorInterceptorScopeTest {
 
   private Manager manager;
   private Chainbase.Cursor cursorDuringHandler;
-  private Chainbase.Cursor cursorAfterCall;
-  private Chainbase.Cursor current;
+  private Chainbase.Cursor cursorOnThreadAAfterInterceptCall;
+
+  /** Per-thread cursor, like the ThreadLocal in Chainbase; HEAD when nothing is set. */
+  private final ThreadLocal<Chainbase.Cursor> cursor =
+      ThreadLocal.withInitial(() -> Chainbase.Cursor.HEAD);
 
   @Before
   public void setUp() {
     threadA = Executors.newSingleThreadExecutor(r -> new Thread(r, "cursor-thread-A"));
     threadB = Executors.newSingleThreadExecutor(r -> new Thread(r, "cursor-thread-B"));
 
-    // a Manager whose cursor state is observable, standing in for the ThreadLocal in Chainbase
-    current = Chainbase.Cursor.HEAD;
     manager = mock(Manager.class);
-    doAnswer(inv -> current = inv.getArgument(0))
-        .when(manager).setCursor(any(Chainbase.Cursor.class));
-    doAnswer(inv -> current = Chainbase.Cursor.HEAD).when(manager).resetCursor();
+    doAnswer(inv -> {
+      cursor.set(inv.getArgument(0));
+      return null;
+    }).when(manager).setCursor(any(Chainbase.Cursor.class));
+    doAnswer(inv -> {
+      cursor.set(Chainbase.Cursor.HEAD);
+      return null;
+    }).when(manager).resetCursor();
   }
 
   @After
@@ -64,15 +70,17 @@ public class CursorInterceptorScopeTest {
     ServerCall.Listener<Object> listener = startCallOnThreadA(false);
 
     // the handler runs from onHalfClose, on a different thread than interceptCall
-    runOn(threadB, () -> {
+    Chainbase.Cursor cursorOnThreadBAfterHalfClose = runOn(threadB, () -> {
       listener.onHalfClose();
-      return null;
+      return cursor.get();
     });
 
+    Assert.assertEquals("interceptCall must not select the cursor on its own thread",
+        Chainbase.Cursor.HEAD, cursorOnThreadAAfterInterceptCall);
     Assert.assertEquals("handler must observe the SOLIDITY cursor",
         Chainbase.Cursor.SOLIDITY, cursorDuringHandler);
-    Assert.assertEquals("cursor must be back at HEAD once the handler returns",
-        Chainbase.Cursor.HEAD, cursorAfterCall);
+    Assert.assertEquals("cursor must be back at HEAD on the handler thread once it returns",
+        Chainbase.Cursor.HEAD, cursorOnThreadBAfterHalfClose);
   }
 
   @Test
@@ -89,8 +97,9 @@ public class CursorInterceptorScopeTest {
       // what matters is the cursor state below
     }
 
+    // threadB is a single thread, so this reads the cursor of the thread the handler threw on
     Assert.assertEquals("a throwing handler must still leave the cursor at HEAD",
-        Chainbase.Cursor.HEAD, current);
+        Chainbase.Cursor.HEAD, runOn(threadB, cursor::get));
   }
 
   /** Runs interceptCall on thread A and returns the listener, with a handler that records state. */
@@ -109,7 +118,7 @@ public class CursorInterceptorScopeTest {
     ServerCallHandler<Object, Object> handler = (c, h) -> new ServerCall.Listener<Object>() {
       @Override
       public void onHalfClose() {
-        cursorDuringHandler = current;
+        cursorDuringHandler = cursor.get();
         if (handlerThrows) {
           throw new IllegalStateException("boom");
         }
@@ -118,7 +127,7 @@ public class CursorInterceptorScopeTest {
 
     return runOn(threadA, () -> {
       ServerCall.Listener<Object> l = interceptor.interceptCall(call, new Metadata(), handler);
-      cursorAfterCall = current;
+      cursorOnThreadAAfterInterceptCall = cursor.get();
       return l;
     });
   }
