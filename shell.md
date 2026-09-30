@@ -36,6 +36,8 @@ Downloaded release jars are verified against the GPG signature published with ea
   sh start.sh --stop
   ```
 
+  `--run` records the process id in `<jar name>.pid` (`FullNode.jar.pid` by default) next to `start.log`, and `--stop` reads it. Run `--stop` in the directory the node was started from, with the same `-j` name if one was given. After `--release` or `-cb` the node runs in `FullNode/`; `--stop` finds it there from the parent directory as well. A node started by an earlier version of the script (a `start.log` but no pid file) is still found by its jar name.
+
 * Get the latest version of `FullNode.jar` and start it
 
   ```
@@ -64,15 +66,19 @@ Downloaded release jars are verified against the GPG signature published with ea
 
 * `--stop` or `-s`
 
-  stop the service
+  stop the service started from the current directory
+
+* `--`
+
+  Everything after it is passed to `FullNode.jar` unchanged. Options the script does not know are passed on as well, so `--` is only needed when a value of such an option looks like a script option or a jar name.
 
 * `-c`
 
-  Specify the configuration file, by default it will load the `config.conf` in the same directory as `FullNode.jar`
+  Specify the configuration file, by default it will load the `config.conf` in the current directory
 
 * `-d`
 
-  Specify the database storage path, The default path is the same directory where `FullNode.jar` is located.
+  Specify the database storage path. The default is `output-directory` in the directory the script is run from (`FullNode/` after `--release` or `-cb`).
 
 * `-j`
 
@@ -164,7 +170,7 @@ sh start.sh --stop
 Format:
 
 ```
-sh start.sh <[--release | -cb]> <--run> [-m <manifest size>] | [-b <batch size>] | [-d <db database-directory> | [-dr | --disable-rewrite-manifes]]
+sh start.sh <[--release | -cb]> <--run> [-m <manifest size>] | [-b <batch size>] | [-d <db database-directory> | [-dr | --disable-rewrite-manifest]]
 ```
 
 Get the latest released version.
@@ -174,13 +180,15 @@ Get the latest released version.
 sh start.sh --release --run
 ```
 
-Following file structure will be generated after executing the above command and the `FullNode.jar` will be started. 
+Following file structure will be generated after executing the above command and the `FullNode.jar` will be started. The node runs from `FullNode/`, so later `--run` commands are executed there with the copied script; `--stop` works both there and from the parent directory.
 
 ```
 ├── ...
 ├── FullNode/
     ├── config.conf
     ├── FullNode.jar
+    ├── FullNode.jar.pid
+    ├── start.log
     ├── start.sh
 ```
 
@@ -226,6 +234,8 @@ Following file structure will be created：
 ├── FullNode/
     |── config.conf
     ├── FullNode.jar
+    ├── FullNode.jar.pid
+    ├── start.log
     ├── start.sh
 ```
 
