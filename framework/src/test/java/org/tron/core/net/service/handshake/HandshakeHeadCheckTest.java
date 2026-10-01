@@ -40,6 +40,7 @@ public class HandshakeHeadCheckTest {
   private MockedStatic<TronNetService> netService;
   private MockedStatic<PeerManager> peerManager;
   private BlockId genesis;
+  private BlockId solid;
   private BlockId localHead;
 
   @Before
@@ -58,14 +59,16 @@ public class HandshakeHeadCheckTest {
     when(relayService.checkHelloMessage(any(), any())).thenReturn(true);
 
     genesis = blockId(0, 1);
+    solid = blockId(80, 3);
     localHead = blockId(100, 2);
     when(chain.getGenesisBlockId()).thenReturn(genesis);
-    when(chain.getSolidBlockId()).thenReturn(blockId(80, 3));
+    when(chain.getSolidBlockId()).thenReturn(solid);
     when(chain.getHeadBlockId()).thenReturn(localHead);
     when(chain.getHeadBlockNum()).thenReturn(100L);
     when(chain.getLowestBlockNum()).thenReturn(10L);
     when(chain.getNodeType()).thenReturn(NodeType.FULL);
     when(chain.containBlockInMainChain(genesis)).thenReturn(true);
+    when(chain.containBlockInMainChain(solid)).thenReturn(true);
     when(chain.containBlockInMainChain(localHead)).thenReturn(true);
 
     P2pService p2p = mock(P2pService.class);
@@ -81,15 +84,30 @@ public class HandshakeHeadCheckTest {
   }
 
   @Test
-  public void testRejectUnknownHeadAtLocalHeight() {
+  public void testAcceptUnknownHeadAtLocalHeight() {
     BlockId unknown = blockId(100, 4);
     HelloMessage hello = hello(unknown);
     Assert.assertTrue(hello.valid());
+    Assert.assertEquals(chain.getSolidBlockId(), hello.getSolidBlockId());
+    Assert.assertNotEquals(localHead, unknown);
+    Assert.assertFalse(chain.containBlockInMainChain(unknown));
 
     service.processHelloMessage(peer, hello);
 
-    verify(chain).containBlockInMainChain(unknown);
-    assertRejected(ReasonCode.FORKED);
+    assertAccepted(hello);
+  }
+
+  @Test
+  public void testAcceptCachedForkHeadAtLocalHeight() {
+    BlockId forkHead = blockId(100, 12);
+    when(chain.containBlock(forkHead)).thenReturn(true);
+    Assert.assertTrue(chain.containBlock(forkHead));
+    Assert.assertFalse(chain.containBlockInMainChain(forkHead));
+    HelloMessage hello = hello(forkHead);
+
+    service.processHelloMessage(peer, hello);
+
+    assertAccepted(hello);
   }
 
   @Test
@@ -98,7 +116,6 @@ public class HandshakeHeadCheckTest {
 
     service.processHelloMessage(peer, hello);
 
-    verify(chain).containBlockInMainChain(localHead);
     assertAccepted(hello);
   }
 
@@ -110,41 +127,42 @@ public class HandshakeHeadCheckTest {
 
     service.processHelloMessage(peer, hello);
 
-    verify(chain).containBlockInMainChain(older);
     assertAccepted(hello);
   }
 
   @Test
-  public void testRejectForkHeadEvenWhenSolidBlockMatches() {
+  public void testAcceptForkHeadWhenSolidBlockMatches() {
     BlockId forkHead = blockId(90, 6);
     HelloMessage hello = hello(forkHead);
-    // A common solid block does not make a different, locally verifiable head acceptable.
+    Assert.assertEquals(chain.getSolidBlockId(), hello.getSolidBlockId());
+    // Keep the connection available so a short-lived fork can converge through sync/broadcast.
     service.processHelloMessage(peer, hello);
 
-    verify(chain).containBlockInMainChain(genesis);
-    verify(chain).containBlockInMainChain(forkHead);
-    assertRejected(ReasonCode.FORKED);
+    verify(chain).containBlockInMainChain(solid);
+    assertAccepted(hello);
   }
 
   @Test
-  public void testCheckHeadAtLowestRetainedHeight() {
-    BlockId boundary = blockId(10, 7);
+  public void testAcceptOlderForkHeadBelowLocalSolid() {
+    when(chain.getSolidBlockId()).thenReturn(blockId(95, 13));
+    HelloMessage hello = hello(blockId(90, 7));
+    Assert.assertTrue(hello.getSolidBlockId().getNum() < hello.getHeadBlockId().getNum());
+    Assert.assertTrue(hello.getHeadBlockId().getNum() < chain.getSolidBlockId().getNum());
 
-    service.processHelloMessage(peer, hello(boundary));
+    service.processHelloMessage(peer, hello);
 
-    verify(chain).containBlockInMainChain(boundary);
-    assertRejected(ReasonCode.FORKED);
+    verify(chain).containBlockInMainChain(solid);
+    assertAccepted(hello);
   }
 
   @Test
   public void testAcceptKnownHeadAtLowestRetainedHeight() {
-    BlockId boundary = blockId(10, 7);
-    when(chain.containBlockInMainChain(boundary)).thenReturn(true);
-    HelloMessage hello = hello(boundary);
+    when(chain.getLowestBlockNum()).thenReturn(solid.getNum());
+    HelloMessage hello = hello(solid);
 
     service.processHelloMessage(peer, hello);
 
-    verify(chain).containBlockInMainChain(boundary);
+    verify(chain).containBlockInMainChain(solid);
     assertAccepted(hello);
   }
 
@@ -160,25 +178,38 @@ public class HandshakeHeadCheckTest {
   }
 
   @Test
-  public void testPrunedHeadContinuesToSync() {
-    BlockId pruned = blockId(9, 9);
-    HelloMessage hello = hello(pruned);
+  public void testUnverifiableSolidBelowRetainedHistoryIsRejected() {
+    BlockId prunedSolid = blockId(9, 9);
+    HelloMessage hello = hello(blockId(90, 14));
+    hello.setHelloMessage(hello.getInstance().toBuilder()
+        .setSolidBlockId(protoBlockId(prunedSolid)).build());
 
     service.processHelloMessage(peer, hello);
 
-    verify(chain, never()).containBlockInMainChain(pruned);
-    assertAccepted(hello);
+    verify(chain).containBlockInMainChain(prunedSolid);
+    assertRejected(ReasonCode.LIGHT_NODE_SYNC_FAIL);
   }
 
   @Test
-  public void testFullNodeChecksUnknownHeadAtHeightZero() {
-    when(chain.getLowestBlockNum()).thenReturn(0L);
-    BlockId unknown = blockId(0, 10);
+  public void testGenesisMismatchIsStillRejected() {
+    HelloMessage hello = hello(localHead);
+    hello.setHelloMessage(hello.getInstance().toBuilder()
+        .setGenesisBlockId(protoBlockId(blockId(0, 10))).build());
 
-    service.processHelloMessage(peer, hello(unknown));
+    service.processHelloMessage(peer, hello);
 
-    verify(chain).containBlockInMainChain(unknown);
-    assertRejected(ReasonCode.FORKED);
+    assertRejected(ReasonCode.INCOMPATIBLE_CHAIN);
+  }
+
+  @Test
+  public void testVersionMismatchIsStillRejected() {
+    HelloMessage hello = hello(localHead);
+    hello.setHelloMessage(hello.getInstance().toBuilder()
+        .setVersion(hello.getVersion() + 1).build());
+
+    service.processHelloMessage(peer, hello);
+
+    assertRejected(ReasonCode.INCOMPATIBLE_VERSION);
   }
 
   @Test
@@ -194,7 +225,7 @@ public class HandshakeHeadCheckTest {
   }
 
   @Test
-  public void testSolidForkIsRejectedBeforeHeadCheck() {
+  public void testSolidForkIsStillRejected() {
     BlockId differentSolid = blockId(80, 11);
     HelloMessage hello = hello(localHead);
     hello.setHelloMessage(hello.getInstance().toBuilder()
@@ -202,7 +233,7 @@ public class HandshakeHeadCheckTest {
 
     service.processHelloMessage(peer, hello);
 
-    verify(chain, never()).containBlockInMainChain(localHead);
+    verify(chain).containBlockInMainChain(differentSolid);
     assertRejected(ReasonCode.FORKED);
   }
 
@@ -220,7 +251,7 @@ public class HandshakeHeadCheckTest {
     HelloMessage hello = new HelloMessage(
         new Node(new byte[64], "127.0.0.1", null, 18888), 0, chain);
     hello.setHelloMessage(hello.getInstance().toBuilder()
-        .setSolidBlockId(protoBlockId(genesis))
+        .setSolidBlockId(protoBlockId(solid))
         .setHeadBlockId(protoBlockId(head)).build());
     return hello;
   }
