@@ -98,6 +98,7 @@ public class Parameter {
   public class NetConstants {
 
     public static final long SYNC_FETCH_BATCH_NUM = 2000;
+    public static final long HELLO_TIME_OUT = 10000L;
     public static final long ADV_TIME_OUT = 20000L;
     public static final long SYNC_TIME_OUT = 5000L;
     public static final long NET_MAX_TRX_PER_SECOND = 700L;

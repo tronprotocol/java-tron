@@ -4,7 +4,6 @@ import com.google.protobuf.ByteString;
 import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
 import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.ChainBaseManager;
@@ -13,12 +12,15 @@ import org.tron.core.config.args.Args;
 import org.tron.core.net.message.MessageTypes;
 import org.tron.core.net.message.TronMessage;
 import org.tron.p2p.discover.Node;
+import org.tron.p2p.utils.NetUtil;
 import org.tron.program.Version;
 import org.tron.protos.Discover.Endpoint;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.HelloMessage.Builder;
 
 public class HelloMessage extends TronMessage {
+
+  private static final int MAX_BYTE_SIZE = 200;
 
   @Getter
   private Protocol.HelloMessage helloMessage;
@@ -121,6 +123,10 @@ public class HelloMessage extends TronMessage {
 
   @Override
   public String toString() {
+    if (!valid()) {
+      return "P2P_HELLO: invalid hello message";
+    }
+
     StringBuilder builder = new StringBuilder();
 
     builder.append(super.toString())
@@ -156,6 +162,10 @@ public class HelloMessage extends TronMessage {
   }
 
   public boolean valid() {
+    if (!validEndPoint()) {
+      return false;
+    }
+
     byte[] genesisBlockByte = this.helloMessage.getGenesisBlockId().getHash().toByteArray();
     if (genesisBlockByte.length != Sha256Hash.LENGTH) {
       return false;
@@ -171,22 +181,42 @@ public class HelloMessage extends TronMessage {
       return false;
     }
 
-    int maxByteSize = 200;
     ByteString address = this.helloMessage.getAddress();
-    if (!address.isEmpty() && address.toByteArray().length > maxByteSize) {
+    if (!address.isEmpty() && address.toByteArray().length > MAX_BYTE_SIZE) {
       return false;
     }
 
     ByteString sig = this.helloMessage.getSignature();
-    if (!sig.isEmpty() && sig.toByteArray().length > maxByteSize) {
+    if (!sig.isEmpty() && sig.toByteArray().length > MAX_BYTE_SIZE) {
       return false;
     }
 
     ByteString codeVersion = this.helloMessage.getCodeVersion();
-    if (!codeVersion.isEmpty() && codeVersion.toByteArray().length > maxByteSize) {
+    if (!codeVersion.isEmpty() && codeVersion.toByteArray().length > MAX_BYTE_SIZE) {
       return false;
     }
 
+    return true;
+  }
+
+  public boolean validEndPoint() {
+    Endpoint from = this.helloMessage.getFrom();
+    ByteString ipv4 = from.getAddress();
+    ByteString ipv6 = from.getAddressIpv6();
+    if (from.getPort() <= 0 || from.getPort() > 0xFFFF
+        || ipv4.size() > MAX_BYTE_SIZE || ipv6.size() > MAX_BYTE_SIZE) {
+      return false;
+    }
+    if (ipv4.isEmpty() && ipv6.isEmpty()) {
+      return false;
+    }
+    // Validate raw literals before getFrom() constructs a Node during logging.
+    if (!ipv4.isEmpty() && !NetUtil.validIpV4(ByteArray.toStr(ipv4.toByteArray()))) {
+      return false;
+    }
+    if (!ipv6.isEmpty() && !NetUtil.validIpV6(ByteArray.toStr(ipv6.toByteArray()))) {
+      return false;
+    }
     return true;
   }
 

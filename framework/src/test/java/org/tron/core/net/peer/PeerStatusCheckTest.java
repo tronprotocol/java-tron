@@ -13,6 +13,7 @@ import org.tron.common.utils.ReflectUtils;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.config.Parameter.NetConstants;
 import org.tron.core.config.args.Args;
+import org.tron.core.net.message.handshake.HelloMessage;
 import org.tron.p2p.connection.Channel;
 
 
@@ -44,7 +45,7 @@ public class PeerStatusCheckTest extends BaseMethodTest {
       ReflectUtils.setFieldValue(c1, "ctx", spy(ChannelHandlerContext.class));
       Mockito.doNothing().when(c1).send((byte[]) any());
 
-      PeerManager.add(context, c1);
+      PeerManager.add(context, c1).setHelloMessageReceive(Mockito.mock(HelloMessage.class));
     }
 
     PeerManager.getPeers().get(0).getSyncBlockRequested()
