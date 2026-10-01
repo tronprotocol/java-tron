@@ -12,6 +12,7 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.classic.util.LogbackMDCAdapter;
 import ch.qos.logback.core.read.ListAppender;
 import com.google.protobuf.ByteString;
+import java.net.InetSocketAddress;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.After;
 import org.junit.Assert;
@@ -49,6 +50,7 @@ public class HelloMessageTest {
         {"", "::1"}, {"", "::ffff:192.0.2.1"}}) {
       for (int port : new int[] {1, 18888, 65535}) {
         HelloMessage message = spy(hello(hosts[0], hosts[1], port));
+        Assert.assertTrue(message.validEndPoint());
         Assert.assertTrue(message.valid());
         verify(message, never()).getFrom();
       }
@@ -107,13 +109,16 @@ public class HelloMessageTest {
   @Test(timeout = 5000)
   public void testValidAddressLogFormat() throws Exception {
     for (String[] hosts : new String[][] {
-        {"192.0.2.1", "", "/192.0.2.1:18888"},
-        {"", "2001:db8::1", "/[2001:db8:0:0:0:0:0:1]:18888"},
-        {"192.0.2.1", "2001:db8::1", "/192.0.2.1:18888"}}) {
+        {"192.0.2.1", "", "192.0.2.1"},
+        {"", "2001:db8::1", "2001:db8::1"},
+        {"192.0.2.1", "2001:db8::1", "192.0.2.1"}}) {
       HelloMessage message = hello(hosts[0], hosts[1], 18888);
       Assert.assertTrue(message.valid());
+      // InetSocketAddress adds IPv6 brackets on JDK 17, but not on JDK 8.
+      InetSocketAddress expectedEndpoint = new InetSocketAddress(hosts[2], 18888);
+      Assert.assertFalse(expectedEndpoint.isUnresolved());
       String formatted = message.toString();
-      Assert.assertTrue(formatted.contains("from: " + hosts[2] + "\n"));
+      Assert.assertTrue(formatted, formatted.contains("from: " + expectedEndpoint + "\n"));
       Assert.assertTrue(formatted.contains("timestamp: 123\n"));
       Assert.assertTrue(formatted.contains("headBlockId: "
           + message.getHeadBlockId().getString() + "\n"));
@@ -156,6 +161,7 @@ public class HelloMessageTest {
     HelloMessage checked = spy(message);
     doThrow(new AssertionError("Invalid endpoint reached Node construction"))
         .when(checked).getFrom();
+    Assert.assertFalse(checked.validEndPoint());
     Assert.assertFalse(checked.valid());
     Assert.assertEquals("P2P_HELLO: invalid hello message", checked.toString());
     verify(checked, never()).getFrom();

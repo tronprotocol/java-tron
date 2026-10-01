@@ -162,7 +162,7 @@ public class HelloMessage extends TronMessage {
   }
 
   public boolean valid() {
-    if (!validEndPoint(this.helloMessage.getFrom())) {
+    if (!validEndPoint()) {
       return false;
     }
 
@@ -199,7 +199,8 @@ public class HelloMessage extends TronMessage {
     return true;
   }
 
-  private static boolean validEndPoint(Endpoint from) {
+  public boolean validEndPoint() {
+    Endpoint from = this.helloMessage.getFrom();
     ByteString ipv4 = from.getAddress();
     ByteString ipv6 = from.getAddressIpv6();
     if (from.getPort() <= 0 || from.getPort() > 0xFFFF
