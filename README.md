@@ -161,6 +161,9 @@ Fill in the private key of your SR account into the `localwitness` list in the c
     <your_private_key>
  ]
 ```
+
+> **Note**: Plain private keys in `localwitness` (and the `-p/--private-key` CLI flag) are deprecated and insecure — they are readable by anyone with access to the config file, process list, or shell history. Use the encrypted [`localwitnesskeystore`](https://tronprotocol.github.io/documentation-en/using_javatron/toolkit/) instead.
+
 Check [Starting a Block Production Node](https://tronprotocol.github.io/documentation-en/using_javatron/installing_javatron/#starting-a-block-production-node) for more details.
 You could also test the process by connecting to a testnet or setting up a private network.
 

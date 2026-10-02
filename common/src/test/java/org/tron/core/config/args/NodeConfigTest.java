@@ -107,8 +107,10 @@ public class NodeConfigTest {
     assertEquals(NodeConfig.RpcConfig.DEFAULT_MAX_CONCURRENT_CALLS_PER_CONNECTION,
         rpc.getMaxConcurrentCallsPerConnection());
     assertEquals(1048576, rpc.getFlowControlWindow());
-    assertEquals(9223372036854775807L, rpc.getMaxConnectionIdleInMillis());
-    assertEquals(9223372036854775807L, rpc.getMaxConnectionAgeInMillis());
+    // reference.conf keeps 0 (the default marker); postProcess converts 0 to
+    // the secure built-in 60s default, so the effective default is 60s.
+    assertEquals(60000L, rpc.getMaxConnectionIdleInMillis());
+    assertEquals(60000L, rpc.getMaxConnectionAgeInMillis());
     assertEquals(4194304, rpc.getMaxMessageSize());
     assertEquals(8192, rpc.getMaxHeaderListSize());
     assertEquals(1, rpc.getMinEffectiveConnection());
@@ -144,6 +146,93 @@ public class NodeConfigTest {
 
     assertTrue(exception.getMessage().contains(
         "node.rpc.maxConcurrentCallsPerConnection must be non-negative, got: -1"));
+  }
+
+  @Test
+  public void testRpcNegativeIdleAndAgeRejected() {
+    Config config = withRef(
+        "node { rpc { maxConnectionIdleInMillis = -1, maxConnectionAgeInMillis = 60000 } }");
+
+    TronError exception = assertThrows(TronError.class,
+        () -> NodeConfig.fromConfig(config));
+
+    assertTrue(exception.getMessage().contains(
+        "node.rpc.maxConnectionIdleInMillis and node.rpc.maxConnectionAgeInMillis "
+            + "must be non-negative, got: maxConnectionIdleInMillis=-1"));
+
+    Config config2 = withRef(
+        "node { rpc { maxConnectionIdleInMillis = 60000, maxConnectionAgeInMillis = -5 } }");
+
+    exception = assertThrows(TronError.class,
+        () -> NodeConfig.fromConfig(config2));
+
+    assertTrue(exception.getMessage().contains(
+        "maxConnectionAgeInMillis=-5"));
+  }
+
+  @Test
+  public void testRpcExplicitZeroIdleAndAgeFallsBackToSecureDefault() {
+    // Explicit 0 no longer means unlimited: postProcess converts 0 to the
+    // secure built-in 60s default. Operators wanting a longer lifetime must
+    // set an explicit positive value.
+    Config config = withRef(
+        "node { rpc { maxConnectionIdleInMillis = 0, maxConnectionAgeInMillis = 0 } }");
+    NodeConfig nc = NodeConfig.fromConfig(config);
+    assertEquals(NodeConfig.RpcConfig.DEFAULT_MAX_CONNECTION_LIFETIME_IN_MILLIS,
+        nc.getRpc().getMaxConnectionIdleInMillis());
+    assertEquals(NodeConfig.RpcConfig.DEFAULT_MAX_CONNECTION_LIFETIME_IN_MILLIS,
+        nc.getRpc().getMaxConnectionAgeInMillis());
+  }
+
+  // ----- maxRstStream / secondsPerWindow: must be configured together -----
+
+  @Test
+  public void testRpcRstPairBothZeroOk() {
+    // Default: feature off. Must not throw.
+    NodeConfig nc = NodeConfig.fromConfig(withRef());
+    assertEquals(0, nc.getRpc().getMaxRstStream());
+    assertEquals(0, nc.getRpc().getSecondsPerWindow());
+  }
+
+  @Test
+  public void testRpcRstPairBothPositiveOk() {
+    Config config = withRef(
+        "node { rpc { maxRstStream = 1000, secondsPerWindow = 60 } }");
+    NodeConfig nc = NodeConfig.fromConfig(config);
+    assertEquals(1000, nc.getRpc().getMaxRstStream());
+    assertEquals(60, nc.getRpc().getSecondsPerWindow());
+  }
+
+  private static TronError rstError(String hocon) {
+    Config config = withRef("node { rpc { " + hocon + " } }");
+    return assertThrows(TronError.class, () -> NodeConfig.fromConfig(config));
+  }
+
+  @Test
+  public void testRpcRstPairHalfConfiguredWarnsButStarts() {
+    // Only maxRstStream set: RST flood protection stays disabled, startup
+    // continues with a warning.
+    Config config = withRef("node { rpc { maxRstStream = 100 } }");
+    NodeConfig nc = NodeConfig.fromConfig(config);
+    assertEquals(100, nc.getRpc().getMaxRstStream());
+    assertEquals(0, nc.getRpc().getSecondsPerWindow());
+
+    // Only secondsPerWindow set: same trap, same warn-and-continue.
+    config = withRef("node { rpc { secondsPerWindow = 60 } }");
+    nc = NodeConfig.fromConfig(config);
+    assertEquals(0, nc.getRpc().getMaxRstStream());
+    assertEquals(60, nc.getRpc().getSecondsPerWindow());
+  }
+
+  @Test
+  public void testRpcRstNegativeValuesRejected() {
+    TronError exception = rstError("maxRstStream = -1, secondsPerWindow = 60");
+    assertTrue(exception.getMessage().contains(
+        "must be non-negative, got: maxRstStream=-1"));
+
+    exception = rstError("maxRstStream = 100, secondsPerWindow = -5");
+    assertTrue(exception.getMessage().contains(
+        "must be non-negative, got: maxRstStream=100, secondsPerWindow=-5"));
   }
 
   @Test
