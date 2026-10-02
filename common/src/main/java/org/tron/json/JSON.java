@@ -22,42 +22,47 @@ import org.tron.core.Constant;
 @Deprecated
 public final class JSON {
 
-  static final ObjectMapper MAPPER = JsonMapper.builder(buildFactory())
-      // Fastjson Feature.AllowUnQuotedFieldNames (default ON)
-      .enable(JsonReadFeature.ALLOW_UNQUOTED_FIELD_NAMES)
-      // Fastjson Feature.AllowSingleQuotes (default ON)
-      .enable(JsonReadFeature.ALLOW_SINGLE_QUOTES)
-      // Partial compatibility with Fastjson Feature.AllowArbitraryCommas:
-      // this only covers a single trailing comma like {"a":1,} or [1,2,].
-      // Repeated/arbitrary commas like {"a":1,,,,} and [1,,2] remain rejected.
-      .enable(JsonReadFeature.ALLOW_TRAILING_COMMA)
-      // Fastjson accepts a leading plus sign for numbers (for example +123, +0.5)
-      .enable(JsonReadFeature.ALLOW_LEADING_PLUS_SIGN_FOR_NUMBERS)
-      // Partial compatibility for Fastjson's asymmetric decimal behavior:
-      // Fastjson accepts +.5 but rejects .5 by default. Jackson cannot model only
-      // the signed form, so enabling this also accepts .5.
-      .enable(JsonReadFeature.ALLOW_LEADING_DECIMAL_POINT_FOR_NUMBERS)
-      // Fastjson accepts a trailing decimal point for numbers (for example 5.)
-      .enable(JsonReadFeature.ALLOW_TRAILING_DECIMAL_POINT_FOR_NUMBERS)
-      // Fastjson accepts leading zeros for numbers (for example 007)
-      .enable(JsonReadFeature.ALLOW_LEADING_ZEROS_FOR_NUMBERS)
-      // Fastjson accepts unescaped control chars in strings (for example raw tab/newline)
-      .enable(JsonReadFeature.ALLOW_UNESCAPED_CONTROL_CHARS)
-      // Fastjson accepts Java-style comments (// and /* */)
-      .enable(JsonReadFeature.ALLOW_JAVA_COMMENTS)
-      // Fastjson Feature.UseBigDecimal (default ON)
-      // https://github.com/alibaba/fastjson/wiki/deserialize_disable_bigdecimal_cn
-      .configure(DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS, true)
-      // Fastjson Feature.IgnoreNotMatch (default ON) — unknown fields silently ignored
-      .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-      // Fastjson 1.x rejects non-comment tokens after the root value
-      .configure(DeserializationFeature.FAIL_ON_TRAILING_TOKENS, true)
-      // Fastjson serializes empty beans as "{}" without error
-      .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false)
-      // Fastjson omits null-valued fields by default (WriteMapNullValue is OFF by default)
-      // https://github.com/alibaba/fastjson/wiki/WriteNull_cn
-      .serializationInclusion(JsonInclude.Include.NON_NULL)
-      .build();
+  static final ObjectMapper MAPPER = buildMapper(buildFactory());
+  private static final ObjectMapper OUTBOUND_MAPPER = buildMapper(new JsonFactory());
+
+  private static ObjectMapper buildMapper(JsonFactory factory) {
+    return JsonMapper.builder(factory)
+        // Fastjson Feature.AllowUnQuotedFieldNames (default ON)
+        .enable(JsonReadFeature.ALLOW_UNQUOTED_FIELD_NAMES)
+        // Fastjson Feature.AllowSingleQuotes (default ON)
+        .enable(JsonReadFeature.ALLOW_SINGLE_QUOTES)
+        // Partial compatibility with Fastjson Feature.AllowArbitraryCommas:
+        // this only covers a single trailing comma like {"a":1,} or [1,2,].
+        // Repeated/arbitrary commas like {"a":1,,,,} and [1,,2] remain rejected.
+        .enable(JsonReadFeature.ALLOW_TRAILING_COMMA)
+        // Fastjson accepts a leading plus sign for numbers (for example +123, +0.5)
+        .enable(JsonReadFeature.ALLOW_LEADING_PLUS_SIGN_FOR_NUMBERS)
+        // Partial compatibility for Fastjson's asymmetric decimal behavior:
+        // Fastjson accepts +.5 but rejects .5 by default. Jackson cannot model only
+        // the signed form, so enabling this also accepts .5.
+        .enable(JsonReadFeature.ALLOW_LEADING_DECIMAL_POINT_FOR_NUMBERS)
+        // Fastjson accepts a trailing decimal point for numbers (for example 5.)
+        .enable(JsonReadFeature.ALLOW_TRAILING_DECIMAL_POINT_FOR_NUMBERS)
+        // Fastjson accepts leading zeros for numbers (for example 007)
+        .enable(JsonReadFeature.ALLOW_LEADING_ZEROS_FOR_NUMBERS)
+        // Fastjson accepts unescaped control chars in strings (for example raw tab/newline)
+        .enable(JsonReadFeature.ALLOW_UNESCAPED_CONTROL_CHARS)
+        // Fastjson accepts Java-style comments (// and /* */)
+        .enable(JsonReadFeature.ALLOW_JAVA_COMMENTS)
+        // Fastjson Feature.UseBigDecimal (default ON)
+        // https://github.com/alibaba/fastjson/wiki/deserialize_disable_bigdecimal_cn
+        .configure(DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS, true)
+        // Fastjson Feature.IgnoreNotMatch (default ON) — unknown fields silently ignored
+        .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+        // Fastjson 1.x rejects non-comment tokens after the root value
+        .configure(DeserializationFeature.FAIL_ON_TRAILING_TOKENS, true)
+        // Fastjson serializes empty beans as "{}" without error
+        .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false)
+        // Fastjson omits null-valued fields by default (WriteMapNullValue is OFF by default)
+        // https://github.com/alibaba/fastjson/wiki/WriteNull_cn
+        .serializationInclusion(JsonInclude.Include.NON_NULL)
+        .build();
+  }
 
   private static JsonFactory buildFactory() {
     return JsonFactory.builder().streamReadConstraints(StreamReadConstraints.builder()
@@ -82,11 +87,15 @@ public final class JSON {
   }
 
   public static JSONObject parseObject(String text) {
+    return parseObject(text, MAPPER);
+  }
+
+  private static JSONObject parseObject(String text, ObjectMapper mapper) {
     if (isNullLiteral(text)) {
       return null;
     }
     try {
-      JsonNode node = MAPPER.readTree(text);
+      JsonNode node = mapper.readTree(text);
       if (node == null || node.isNull()) {
         return null;
       }
@@ -99,6 +108,10 @@ public final class JSON {
     } catch (Exception e) {
       throw new JSONException(e.getMessage(), e);
     }
+  }
+
+  static JSONObject outboundParseObject(String text) {
+    return parseObject(text, OUTBOUND_MAPPER);
   }
 
   public static JsonNode parse(String text) {
