@@ -1,5 +1,8 @@
 package org.tron.core;
 
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.spy;
+
 import com.google.protobuf.ByteString;
 import java.math.BigInteger;
 import java.util.Arrays;
@@ -11,9 +14,10 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.bouncycastle.util.encoders.Hex;
 import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
+import org.springframework.test.util.AopTestUtils;
 import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.BytesMessage;
 import org.tron.api.GrpcAPI.PrivateShieldedTRC20Parameters;
@@ -23,6 +27,7 @@ import org.tron.api.GrpcAPI.ShieldedTRC20TriggerContractParameters;
 import org.tron.api.GrpcAPI.SpendAuthSigParameters;
 import org.tron.common.BaseTest;
 import org.tron.common.TestConstants;
+import org.tron.common.crypto.Hash;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.PublicMethod;
@@ -33,6 +38,7 @@ import org.tron.common.zksnark.JLibrustzcash;
 import org.tron.common.zksnark.LibrustzcashParam;
 import org.tron.core.capsule.IncrementalMerkleTreeCapsule;
 import org.tron.core.capsule.PedersenHashCapsule;
+import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
@@ -49,6 +55,9 @@ import org.tron.core.zen.address.KeyIo;
 import org.tron.core.zen.address.PaymentAddress;
 import org.tron.core.zen.address.SpendingKey;
 import org.tron.core.zen.note.Note;
+import org.tron.protos.Protocol.Block;
+import org.tron.protos.Protocol.Transaction;
+import org.tron.protos.Protocol.TransactionInfo;
 import org.tron.protos.contract.ShieldContract;
 import org.tron.protos.contract.ShieldContract.SpendDescription;
 
@@ -84,12 +93,19 @@ public class ShieldedTRC20BuilderTest extends BaseTest {
     Args.getInstance().allowShieldedTransactionApi = true;
   }
 
+  @Before
+  public void mockContractScalingFactor() throws ContractExeException {
+    // The test database has no deployed shielded TRC-20 contract.
+    wallet = spy(AopTestUtils.<Wallet>getTargetObject(wallet));
+    doReturn(ByteUtil.longTo32Bytes(1)).when(wallet)
+        .getShieldedContractScalingFactor(SHIELDED_CONTRACT_ADDRESS);
+  }
+
   @AfterClass
   public static void restoreShieldedApi() {
     Args.getInstance().allowShieldedTransactionApi = origShieldedApi;
   }
 
-  @Ignore
   @Test
   public void createShieldedContractParametersForMint()
       throws ZksnarkException, ContractValidateException, ContractExeException {
@@ -127,7 +143,6 @@ public class ShieldedTRC20BuilderTest extends BaseTest {
   /*
   * With 1 mint, 1 spendNote, 1 receiveNote
   * */
-  @Ignore
   @Test
   public void createShieldedContractParametersForTransfer1to1()
       throws ZksnarkException, ContractValidateException, ContractExeException {
@@ -258,7 +273,6 @@ public class ShieldedTRC20BuilderTest extends BaseTest {
   /*
    * With 1 mint, 1 spendNote, 2 receiveNote
    * */
-  @Ignore
   @Test
   public void createShieldedContractParametersForTransfer1to2()
       throws ZksnarkException, ContractValidateException, ContractExeException {
@@ -408,7 +422,6 @@ public class ShieldedTRC20BuilderTest extends BaseTest {
   /*
    * With 2 mint, 2 spendNote, 1 receiveNote
    * */
-  @Ignore
   @Test
   public void createShieldedContractParametersForTransfer2to1()
       throws ZksnarkException, ContractValidateException, ContractExeException {
@@ -596,7 +609,6 @@ public class ShieldedTRC20BuilderTest extends BaseTest {
   /*
    * With 2 mint, 2 spendNote, 2 receiveNote
    * */
-  @Ignore
   @Test
   public void createShieldedContractParametersForTransfer2to2()
       throws ZksnarkException, ContractValidateException, ContractExeException {
@@ -800,7 +812,6 @@ public class ShieldedTRC20BuilderTest extends BaseTest {
   /*
    * With 1 spendNote
    */
-  @Ignore
   @Test
   public void createShieldedContractParametersForBurn1()
       throws ZksnarkException, ContractValidateException, ContractExeException {
@@ -878,6 +889,7 @@ public class ShieldedTRC20BuilderTest extends BaseTest {
         ExpandedSpendingKey expsk = senderSk.expandedSpendingKey();
         privateTRC20Builder.setAsk(ByteString.copyFrom(expsk.getAsk()));
         privateTRC20Builder.setNsk(ByteString.copyFrom(expsk.getNsk()));
+        privateTRC20Builder.setOvk(ByteString.copyFrom(expsk.getOvk()));
         privateTRC20Builder.setToAmount(BigInteger.valueOf(value).toString());
         privateTRC20Builder.setTransparentToAddress(ByteString.copyFrom(PUBLIC_TO_ADDRESS));
         privateTRC20Builder
@@ -896,7 +908,6 @@ public class ShieldedTRC20BuilderTest extends BaseTest {
   /*
    * With 1 spendNote, 1 receiveNote
    */
-  @Ignore
   @Test
   public void createShieldedContractParametersForBurn1to1()
       throws ZksnarkException, ContractValidateException, ContractExeException {
@@ -974,6 +985,7 @@ public class ShieldedTRC20BuilderTest extends BaseTest {
         ExpandedSpendingKey expsk = senderSk.expandedSpendingKey();
         privateTRC20Builder.setAsk(ByteString.copyFrom(expsk.getAsk()));
         privateTRC20Builder.setNsk(ByteString.copyFrom(expsk.getNsk()));
+        privateTRC20Builder.setOvk(ByteString.copyFrom(expsk.getOvk()));
         privateTRC20Builder.setToAmount(BigInteger.valueOf(60).toString());
         privateTRC20Builder.setTransparentToAddress(ByteString.copyFrom(PUBLIC_TO_ADDRESS));
         privateTRC20Builder
@@ -995,8 +1007,8 @@ public class ShieldedTRC20BuilderTest extends BaseTest {
         GrpcAPI.ShieldedTRC20Parameters burnParam = wallet
             .createShieldedContractParameters(privateTRC20Builder.build());
 
-        byte[] inputData = abiEncodeForBurn(burnParam, value);
-        Pair<Boolean, byte[]> contractResult = burnContract.execute(inputData);
+        byte[] inputData = abiEncodeForTransfer(burnParam, frontier, leafCount, 60);
+        Pair<Boolean, byte[]> contractResult = verifyTransfer(inputData);
         byte[] result = contractResult.getRight();
         Assert.assertEquals(1, result[31]);
 
@@ -1004,7 +1016,8 @@ public class ShieldedTRC20BuilderTest extends BaseTest {
         //if slot == 0, frontier[0:31]=noteCommitment
         int slot = result[63];
         if (slot == 0) {
-          System.arraycopy(result, 0, frontier, 0, 32);
+          System.arraycopy(burnParam.getReceiveDescription(0).getNoteCommitment().toByteArray(),
+              0, frontier, 0, 32);
         } else {
           int srcPos = (slot + 1) * 32;
           int destPos = slot * 32;
@@ -1018,7 +1031,6 @@ public class ShieldedTRC20BuilderTest extends BaseTest {
   /*
    * With 1 mint, 1 spendNote, 1 receiveNote
    */
-  @Ignore
   @Test
   public void createShieldedContractParametersWithoutAskForTransfer1to1()
       throws Exception {
@@ -1191,7 +1203,6 @@ public class ShieldedTRC20BuilderTest extends BaseTest {
   /*
    * With 1 mint, 1 spendNote, 2 receiveNote
    */
-  @Ignore
   @Test
   public void createShieldedContractParametersWithoutAskForTransfer1to2()
       throws Exception {
@@ -1380,7 +1391,6 @@ public class ShieldedTRC20BuilderTest extends BaseTest {
   /*
    * With 2 mint, 2 spendNote, 1 receiveNote
    */
-  @Ignore
   @Test
   public void createShieldedContractParametersWithoutAskForTransfer2to1()
       throws Exception {
@@ -1623,7 +1633,6 @@ public class ShieldedTRC20BuilderTest extends BaseTest {
   /*
    * With 2 mint, 2 spendNote, 2 receiveNote
    */
-  @Ignore
   @Test
   public void createShieldedContractParametersWithoutAskForTransfer2to2()
       throws Exception {
@@ -1884,7 +1893,6 @@ public class ShieldedTRC20BuilderTest extends BaseTest {
    * With 1 mint, 1 spendNote
    * Burn to Transparent address
    */
-  @Ignore
   @Test
   public void createShieldedContractParametersWithoutAskForBurn1to1()
       throws Exception {
@@ -1962,6 +1970,7 @@ public class ShieldedTRC20BuilderTest extends BaseTest {
         ExpandedSpendingKey expsk = senderSk.expandedSpendingKey();
         privateTRC20Builder.setAk(ByteString.copyFrom(senderFvk.getAk()));
         privateTRC20Builder.setNsk(ByteString.copyFrom(expsk.getNsk()));
+        privateTRC20Builder.setOvk(ByteString.copyFrom(expsk.getOvk()));
         privateTRC20Builder.setToAmount(BigInteger.valueOf(value).toString());
         privateTRC20Builder.setTransparentToAddress(ByteString.copyFrom(PUBLIC_TO_ADDRESS));
         privateTRC20Builder
@@ -2020,7 +2029,6 @@ public class ShieldedTRC20BuilderTest extends BaseTest {
    * With 1 mint, 1 spendNote, 1 receiveNote
    * Burn to Transparent address and A change z-address
    */
-  @Ignore
   @Test
   public void createShieldedContractParametersWithoutAskForBurn1to2()
       throws Exception {
@@ -2098,6 +2106,7 @@ public class ShieldedTRC20BuilderTest extends BaseTest {
         ExpandedSpendingKey expsk = senderSk.expandedSpendingKey();
         privateTRC20Builder.setAk(ByteString.copyFrom(senderFvk.getAk()));
         privateTRC20Builder.setNsk(ByteString.copyFrom(expsk.getNsk()));
+        privateTRC20Builder.setOvk(ByteString.copyFrom(expsk.getOvk()));
         privateTRC20Builder.setToAmount(BigInteger.valueOf(60).toString());
         privateTRC20Builder.setTransparentToAddress(ByteString.copyFrom(PUBLIC_TO_ADDRESS));
         privateTRC20Builder
@@ -2135,7 +2144,7 @@ public class ShieldedTRC20BuilderTest extends BaseTest {
                 .newBuilder();
         triggerParam.setShieldedTRC20Parameters(burnParam);
         triggerParam.addSpendAuthoritySignature(signMsg1);
-        triggerParam.setAmount(BigInteger.valueOf(value).toString());
+        triggerParam.setAmount(privateTRC20Builder.getToAmount());
         triggerParam.setTransparentToAddress(ByteString.copyFrom(PUBLIC_TO_ADDRESS));
         BytesMessage triggerInput = wallet
             .getTriggerInputForShieldedTRC20Contract(triggerParam.build());
@@ -2153,13 +2162,14 @@ public class ShieldedTRC20BuilderTest extends BaseTest {
 
         ShieldedTRC20Parameters.Builder bindingSigBuilder = ShieldedTRC20Parameters.newBuilder();
         bindingSigBuilder.addSpendDescription(spendDesBuilder1.build());
+        bindingSigBuilder.addReceiveDescription(burnParam.getReceiveDescription(0));
         bindingSigBuilder.setMessageHash(burnParam.getMessageHash());
         bindingSigBuilder.setBindingSignature(burnParam.getBindingSignature());
         bindingSigBuilder.setParameterType(burnParam.getParameterType());
         burnParam = bindingSigBuilder.build();
 
-        byte[] inputData = abiEncodeForBurn(burnParam, value);
-        Pair<Boolean, byte[]> contractResult = burnContract.execute(inputData);
+        byte[] inputData = abiEncodeForTransfer(burnParam, frontier, leafCount, 60);
+        Pair<Boolean, byte[]> contractResult = verifyTransfer(inputData);
         byte[] result = contractResult.getRight();
         Assert.assertEquals(1, result[31]);
 
@@ -2167,7 +2177,8 @@ public class ShieldedTRC20BuilderTest extends BaseTest {
         //if slot == 0, frontier[0:31]=noteCommitment
         int slot = result[63];
         if (slot == 0) {
-          System.arraycopy(result, 0, frontier, 0, 32);
+          System.arraycopy(burnParam.getReceiveDescription(0).getNoteCommitment().toByteArray(),
+              0, frontier, 0, 32);
         } else {
           int srcPos = (slot + 1) * 32;
           int destPos = slot * 32;
@@ -2178,7 +2189,6 @@ public class ShieldedTRC20BuilderTest extends BaseTest {
     }
   }
 
-  @Ignore
   @Test
   public void getTriggerInputForForMint() throws Exception {
     SpendingKey sk = SpendingKey.random();
@@ -2274,6 +2284,46 @@ public class ShieldedTRC20BuilderTest extends BaseTest {
     for (GrpcAPI.DecryptNotesTRC20.NoteTx noteTx : scannedNotes.getNoteTxsList()) {
       logger.info(noteTx.toString());
     }
+  }
+
+  @Test
+  public void testScanShieldedTRC20NotesSkipsInvalidLogLengths() throws Exception {
+    PrivateShieldedTRC20Parameters params = mintParams(
+        priKey, 100, SHIELDED_CONTRACT_ADDRESS_STR, null);
+    ShieldContract.ReceiveDescription receive = wallet.createShieldedContractParameters(params)
+        .getReceiveDescription(0);
+    byte[] data = ByteUtil.merge(ByteUtil.longTo32Bytes(7),
+        receive.getNoteCommitment().toByteArray(), receive.getValueCommitment().toByteArray(),
+        receive.getEpk().toByteArray(), receive.getCEnc().toByteArray(),
+        receive.getCOut().toByteArray());
+    String[] events = {"MintNewLeaf", "TransferNewLeaf", "BurnNewLeaf"};
+    TransactionInfo.Builder info = TransactionInfo.newBuilder();
+    for (String event : events) {
+      TransactionInfo.Log.Builder log = TransactionInfo.Log.newBuilder()
+          .setAddress(ByteString.copyFrom(Arrays.copyOfRange(SHIELDED_CONTRACT_ADDRESS, 1, 21)))
+          .addTopics(ByteString.copyFrom(Hash.sha3(ByteArray.fromString(
+              event + "(uint256,bytes32,bytes32,bytes32,bytes32[21])"))));
+      // Only the complete 800-byte ABI encoding should produce a note.
+      for (int length : new int[] {0, 788, 799, 800, 801, 832}) {
+        info.addLog(log.setData(ByteString.copyFrom(Arrays.copyOf(data, length))));
+      }
+    }
+
+    Transaction transaction = Transaction.getDefaultInstance();
+    ByteString txid = new TransactionCapsule(transaction).getTransactionId().getByteString();
+    GrpcAPI.BlockList blocks = GrpcAPI.BlockList.newBuilder()
+        .addBlock(Block.newBuilder().addTransactions(transaction)).build();
+    // Supply stored logs while retaining the real scanner and note decryption.
+    doReturn(blocks).when(wallet).getBlocksByLimitNext(0, 1);
+    doReturn(info.build()).when(wallet).getTransactionInfoById(txid);
+
+    FullViewingKey fvk = SpendingKey.decode(priKey).fullViewingKey();
+    Assert.assertEquals("IVK should accept only 800-byte logs", events.length,
+        wallet.scanShieldedTRC20NotesByIvk(0, 1, SHIELDED_CONTRACT_ADDRESS,
+            fvk.inViewingKey().value, new byte[0], new byte[0]).getNoteTxsCount());
+    Assert.assertEquals("OVK should accept only 800-byte logs", events.length,
+        wallet.scanShieldedTRC20NotesByOvk(0, 1, fvk.getOvk(), SHIELDED_CONTRACT_ADDRESS)
+            .getNoteTxsCount());
   }
 
   @Test(expected = ZksnarkException.class)
@@ -2418,6 +2468,11 @@ public class ShieldedTRC20BuilderTest extends BaseTest {
 
   private byte[] abiEncodeForTransfer(ShieldedTRC20Parameters params, byte[] frontier,
       long leafCount) {
+    return abiEncodeForTransfer(params, frontier, leafCount, 0);
+  }
+
+  private byte[] abiEncodeForTransfer(ShieldedTRC20Parameters params, byte[] frontier,
+      long leafCount, long valueBalance) {
     byte[] input = new byte[0];
     byte[] spendAuthSig = new byte[0];
     byte[] output = new byte[0];
@@ -2434,10 +2489,10 @@ public class ShieldedTRC20BuilderTest extends BaseTest {
       spendAuthSig = ByteUtil.merge(
           spendAuthSig, spendDesc.getSpendAuthoritySignature().toByteArray());
     }
-    byte[] inputOffsetbytes = longTo32Bytes(1280);
+    byte[] inputOffsetbytes = longTo32Bytes(1312);
     long spendCount = spendDescs.size();
     byte[] spendCountBytes = longTo32Bytes(spendCount);
-    byte[] authOffsetBytes = longTo32Bytes(1280 + 32 + 320 * spendCount);
+    byte[] authOffsetBytes = longTo32Bytes(1312 + 32 + 320 * spendCount);
     List<ShieldContract.ReceiveDescription> recvDescs = params.getReceiveDescriptionList();
     for (ShieldContract.ReceiveDescription recvDesc : recvDescs) {
       output = ByteUtil.merge(output,
@@ -2449,12 +2504,13 @@ public class ShieldedTRC20BuilderTest extends BaseTest {
     }
     long recvCount = recvDescs.size();
     byte[] recvCountBytes = longTo32Bytes(recvCount);
-    byte[] outputOffsetbytes = longTo32Bytes(1280 + 32 + 320 * spendCount + 32 + 64 * spendCount);
+    byte[] outputOffsetbytes = longTo32Bytes(1312 + 32 + 320 * spendCount + 32 + 64 * spendCount);
     mergedBytes = ByteUtil.merge(inputOffsetbytes,
         authOffsetBytes,
         outputOffsetbytes,
         params.getBindingSignature().toByteArray(),
         params.getMessageHash().toByteArray(),
+        longTo32Bytes(valueBalance),
         frontier,
         longTo32Bytes(leafCount),
         spendCountBytes,
@@ -2472,6 +2528,4 @@ public class ShieldedTRC20BuilderTest extends BaseTest {
     byte[] zeroBytes = new byte[24];
     return ByteUtil.merge(zeroBytes, longBytes);
   }
-
-
 }

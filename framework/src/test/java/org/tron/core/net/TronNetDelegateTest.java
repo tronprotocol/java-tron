@@ -134,6 +134,20 @@ public class TronNetDelegateTest {
     Mockito.verify(dbManager, Mockito.times(1)).pushBlock(Mockito.any());
   }
 
+  @Test
+  public void testPushTransactionReturnsAdmissionResult() throws Exception {
+    TronNetDelegate tronNetDelegate = new TronNetDelegate();
+    Manager dbManager = Mockito.mock(Manager.class);
+    TransactionCapsule transaction = new TransactionCapsule(
+        TransferContract.getDefaultInstance(), ContractType.TransferContract);
+    setField(tronNetDelegate, "dbManager", dbManager);
+
+    Mockito.when(dbManager.pushTransaction(transaction)).thenReturn(false, true);
+
+    Assert.assertFalse(tronNetDelegate.pushTransaction(transaction));
+    Assert.assertTrue(tronNetDelegate.pushTransaction(transaction));
+  }
+
   private static void setField(Object obj, String name, Object value) throws Exception {
     Field f = obj.getClass().getDeclaredField(name);
     f.setAccessible(true);
