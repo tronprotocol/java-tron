@@ -137,7 +137,8 @@ public class BlockMsgHandler implements TronMsgHandler {
   private BlockResult processBlock(PeerConnection peer, BlockCapsule block) throws P2pException {
     BlockId blockId = block.getBlockId();
     boolean activeWitness = tronNetDelegate.validBlock(block);
-    // Keep the request until validation succeeds so disconnect can retry invalid data.
+    // Retain pending fetch/request state if validation throws so disconnect can retry.
+    // Otherwise, complete the fetch; inactive witnesses trigger sync recovery below.
     fetchBlockService.blockFetchSuccess(blockId);
     peer.getAdvInvRequest().remove(new Item(blockId, InventoryType.BLOCK));
     if (!activeWitness) {
