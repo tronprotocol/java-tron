@@ -1,6 +1,7 @@
 package org.tron.core.db;
 
 import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -23,6 +24,7 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.vm.config.ConfigLoader;
+import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.program.Program.IllegalOperationException;
 import org.tron.core.vm.program.Storage;
 import org.tron.protos.Protocol;
@@ -88,7 +90,7 @@ public class HistoryBlockHashVmTest extends BaseTest {
     chainBaseManager.getContractStore().delete(addr);
     chainBaseManager.getAccountStore().delete(addr);
 
-    Storage storage = new Storage(addr, chainBaseManager.getStorageRowStore());
+    Storage storage = openStorage();
     for (long slot : new long[]{0L, 1L, 50L, 100L, 900L, 999L, 1000L}) {
       storage.put(new DataWord(slot), DataWord.ZERO());
     }
@@ -96,9 +98,7 @@ public class HistoryBlockHashVmTest extends BaseTest {
   }
 
   private void writeSlot(long slot, byte[] hash) {
-    Storage storage = new Storage(
-        HistoryBlockHashUtil.HISTORY_STORAGE_ADDRESS,
-        chainBaseManager.getStorageRowStore());
+    Storage storage = openStorage();
     storage.put(new DataWord(slot), new DataWord(hash));
     storage.commit();
   }
@@ -113,6 +113,12 @@ public class HistoryBlockHashVmTest extends BaseTest {
     // bare TriggerSmartContract built by TvmTestUtils carries no Ret entry.
     block.generatedByMyself = true;
     return block;
+  }
+
+  private Storage openStorage() {
+    return new Storage(HistoryBlockHashUtil.HISTORY_STORAGE_ADDRESS,
+        dbManager.getStorageRowStore(),
+        dbManager.getDynamicPropertiesStore().allowOptimizeTvmStorage());
   }
 
   private static byte[] uint256(long n) {
@@ -239,5 +245,37 @@ public class HistoryBlockHashVmTest extends BaseTest {
         ex instanceof IllegalOperationException);
     assertFalse("normal read must not revert",
         result.getRuntime().getResult().isRevert());
+  }
+
+  @Test
+  public void writeUsesDatabaseFlagWhenVmConfigIsOff() {
+    VMConfig.initAllowOptimizeTvmStorage(0);
+    chainBaseManager.getDynamicPropertiesStore().saveAllowOptimizeTvmStorage(1);
+    byte[] parent = new byte[32];
+    Arrays.fill(parent, (byte) 0x11);
+    BlockCapsule block = new BlockCapsule(
+        1000L,
+        Sha256Hash.wrap(parent),
+        System.currentTimeMillis(),
+        ByteString.copyFrom(new byte[21]));
+    HistoryBlockHashUtil.write(dbManager, block);
+
+    long slot = 999L;
+    DataWord expected = new DataWord(parent);
+    Storage optimized = new Storage(
+        HistoryBlockHashUtil.HISTORY_STORAGE_ADDRESS,
+        chainBaseManager.getStorageRowStore(),
+        true);
+    Storage legacy = new Storage(
+        HistoryBlockHashUtil.HISTORY_STORAGE_ADDRESS,
+        chainBaseManager.getStorageRowStore(),
+        false);
+    assertEquals(expected, optimized.getValue(new DataWord(slot)));
+    assertNull(legacy.getValue(new DataWord(slot)));
+    assertFalse(VMConfig.allowOptimizeTvmStorage());
+
+    chainBaseManager.getDynamicPropertiesStore().saveAllowOptimizeTvmStorage(0);
+    optimized.put(new DataWord(slot), DataWord.ZERO());
+    optimized.commit();
   }
 }
