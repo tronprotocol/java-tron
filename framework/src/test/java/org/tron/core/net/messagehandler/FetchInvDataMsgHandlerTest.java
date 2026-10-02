@@ -5,8 +5,13 @@ import static org.tron.core.net.message.MessageTypes.FETCH_INV_DATA;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import org.junit.Assert;
 import org.junit.Test;
@@ -66,6 +71,67 @@ public class FetchInvDataMsgHandlerTest {
     fetchInvDataMsgHandler.processMessage(peer,
         new FetchInvDataMessage(blockIds, Protocol.Inventory.InventoryType.BLOCK));
     Assert.assertNotNull(syncBlockIdCache.getIfPresent(blockId));
+  }
+
+  @Test
+  public void testSyncBlockIdCacheRetainsFullWindowAndRejectsDuplicates() throws Exception {
+    assertFullWindowRetainedAndDuplicatesRejected(false);
+  }
+
+  @Test
+  public void testSyncBlockIdCacheRetainsShuffledWindowAndRejectsDuplicates() throws Exception {
+    assertFullWindowRetainedAndDuplicatesRejected(true);
+  }
+
+  private void assertFullWindowRetainedAndDuplicatesRejected(boolean shuffled) throws Exception {
+    PeerConnection peer = new PeerConnection();
+    int windowSize = 2 * (int) Parameter.NetConstants.SYNC_FETCH_BATCH_NUM + 1;
+    long lastHeight = 10000L;
+    peer.setNeedSyncFromUs(true);
+    peer.setLastSyncBlockId(new BlockCapsule.BlockId(Sha256Hash.ZERO_HASH, lastHeight));
+
+    FetchInvDataMsgHandler handler = new FetchInvDataMsgHandler();
+    Method check = FetchInvDataMsgHandler.class.getDeclaredMethod(
+        "check", PeerConnection.class, FetchInvDataMessage.class, boolean.class);
+    check.setAccessible(true);
+    List<Sha256Hash> hashes = new ArrayList<>();
+    for (int i = 0; i < windowSize; i++) {
+      hashes.add(new BlockCapsule.BlockId(createHash(i), lastHeight - windowSize + 1 + i));
+    }
+    if (shuffled) {
+      Collections.shuffle(hashes, new Random(6966L));
+    }
+
+    for (Sha256Hash hash : hashes) {
+      check.invoke(handler, peer, new FetchInvDataMessage(Collections.singletonList(hash),
+          Protocol.Inventory.InventoryType.BLOCK), false);
+    }
+    peer.getSyncBlockIdCache().cleanUp();
+
+    for (Sha256Hash hash : hashes) {
+      Assert.assertNotNull("Missing block " + new BlockCapsule.BlockId(hash).getNum(),
+          peer.getSyncBlockIdCache().getIfPresent(hash));
+    }
+    for (Sha256Hash hash : hashes) {
+      FetchInvDataMessage message = new FetchInvDataMessage(Collections.singletonList(hash),
+          Protocol.Inventory.InventoryType.BLOCK);
+      InvocationTargetException exception = Assert.assertThrows(InvocationTargetException.class,
+          () -> check.invoke(handler, peer, message, false));
+      Assert.assertTrue(exception.getCause() instanceof P2pException);
+      P2pException cause = (P2pException) exception.getCause();
+      Assert.assertEquals(P2pException.TypeEnum.BAD_MESSAGE, cause.getType());
+      Assert.assertEquals(new BlockCapsule.BlockId(hash).getString() + " is exist",
+          cause.getMessage());
+    }
+  }
+
+  private Sha256Hash createHash(int value) {
+    byte[] bytes = new byte[Sha256Hash.LENGTH];
+    bytes[28] = (byte) (value >>> 24);
+    bytes[29] = (byte) (value >>> 16);
+    bytes[30] = (byte) (value >>> 8);
+    bytes[31] = (byte) value;
+    return Sha256Hash.wrap(bytes);
   }
 
   @Test
