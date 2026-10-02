@@ -58,7 +58,7 @@ public class BackupManager implements EventHandler {
   private MessageHandler messageHandler;
 
   @Getter
-  private BackupStatusEnum status = MASTER;
+  private volatile BackupStatusEnum status = MASTER;
 
   private volatile long lastKeepAliveTime;
 

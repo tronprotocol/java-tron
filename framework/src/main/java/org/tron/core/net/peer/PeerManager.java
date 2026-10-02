@@ -84,13 +84,16 @@ public class PeerManager {
     return peerConnection;
   }
 
-  private static void remove(PeerConnection peerConnection) {
-    peers.remove(peerConnection);
+  private static synchronized boolean remove(PeerConnection peerConnection) {
+    if (!peers.remove(peerConnection)) {
+      return false;
+    }
     if (peerConnection.getChannel().isActive()) {
       activePeersCount.decrementAndGet();
     } else {
       passivePeersCount.decrementAndGet();
     }
+    return true;
   }
 
   public static synchronized void sortPeers() {
@@ -126,13 +129,9 @@ public class PeerManager {
       long disconnectTime = peer.getChannel().getDisconnectTime();
       if (disconnectTime != 0 && now - disconnectTime > DISCONNECTION_TIME_OUT) {
         logger.warn("Notify disconnect peer {}.", peer.getInetSocketAddress());
-        peers.remove(peer);
-        if (peer.getChannel().isActive()) {
-          activePeersCount.decrementAndGet();
-        } else {
-          passivePeersCount.decrementAndGet();
+        if (remove(peer)) {
+          peer.onDisconnect();
         }
-        peer.onDisconnect();
       }
     }
   }

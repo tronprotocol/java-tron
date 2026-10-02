@@ -34,7 +34,7 @@ public class FetchBlockService {
   @Autowired
   private ChainBaseManager chainBaseManager;
 
-  private FetchBlockInfo fetchBlockInfo = null;
+  private volatile FetchBlockInfo fetchBlockInfo = null;
 
   private final long fetchTimeOut = CommonParameter.getInstance().fetchBlockTimeout;
 
