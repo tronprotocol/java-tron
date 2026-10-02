@@ -23,11 +23,11 @@ public class WalletPropertyTest {
   public void encryptDecryptRoundtripLight() throws Exception {
     for (int i = 0; i < 100; i++) {
       String password = randomPassword(6, 32);
-      SignInterface keyPair = SignUtils.getGeneratedRandomSign(Utils.getRandom(), true);
+      SignInterface keyPair = SignUtils.getGeneratedRandomSign(Utils.getRandom());
       byte[] originalKey = keyPair.getPrivateKey();
 
       WalletFile walletFile = Wallet.createLight(password, keyPair);
-      SignInterface recovered = Wallet.decrypt(password, walletFile, true);
+      SignInterface recovered = Wallet.decrypt(password, walletFile);
 
       assertArrayEquals("Roundtrip failed at iteration " + i,
           originalKey, recovered.getPrivateKey());
@@ -39,11 +39,11 @@ public class WalletPropertyTest {
     // Fewer iterations for standard scrypt (slow, ~10s each)
     for (int i = 0; i < 2; i++) {
       String password = randomPassword(6, 16);
-      SignInterface keyPair = SignUtils.getGeneratedRandomSign(Utils.getRandom(), true);
+      SignInterface keyPair = SignUtils.getGeneratedRandomSign(Utils.getRandom());
       byte[] originalKey = keyPair.getPrivateKey();
 
       WalletFile walletFile = Wallet.createStandard(password, keyPair);
-      SignInterface recovered = Wallet.decrypt(password, walletFile, true);
+      SignInterface recovered = Wallet.decrypt(password, walletFile);
 
       assertArrayEquals("Standard roundtrip failed at iteration " + i,
           originalKey, recovered.getPrivateKey());
@@ -54,11 +54,11 @@ public class WalletPropertyTest {
   public void wrongPasswordFailsDecrypt() throws Exception {
     for (int i = 0; i < 50; i++) {
       String password = randomPassword(6, 16);
-      SignInterface keyPair = SignUtils.getGeneratedRandomSign(Utils.getRandom(), true);
+      SignInterface keyPair = SignUtils.getGeneratedRandomSign(Utils.getRandom());
       WalletFile walletFile = Wallet.createLight(password, keyPair);
 
       try {
-        Wallet.decrypt(password + "X", walletFile, true);
+        Wallet.decrypt(password + "X", walletFile);
         throw new AssertionError("Expected CipherException at iteration " + i);
       } catch (CipherException e) {
         // Expected

@@ -31,7 +31,6 @@ import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
-import org.bouncycastle.crypto.digests.SM3Digest;
 
 
 /**
@@ -87,8 +86,8 @@ public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
    * Use {@link #of(byte[])} instead: this old name is ambiguous.
    */
   @Deprecated
-  public static Sha256Hash create(boolean isSha256, byte[] contents) {
-    return of(isSha256, contents);
+  public static Sha256Hash create(byte[] contents) {
+    return of(contents);
   }
 
   /**
@@ -97,8 +96,8 @@ public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
    * @param contents the bytes on which the hash value is calculated
    * @return a new instance containing the calculated (one-time) hash
    */
-  public static Sha256Hash of(boolean isSha256, byte[] contents) {
-    return wrap(hash(isSha256, contents));
+  public static Sha256Hash of(byte[] contents) {
+    return wrap(hash(contents));
   }
 
   /**
@@ -110,10 +109,10 @@ public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
    * @return a new instance containing the calculated (one-time) hash
    * @throws IOException if an error occurs while reading the file
    */
-  public static Sha256Hash of(boolean isSha256, File file) throws IOException {
+  public static Sha256Hash of(File file) throws IOException {
 
     try (FileInputStream in = new FileInputStream(file)) {
-      return of(isSha256, ByteStreams.toByteArray(in));
+      return of(ByteStreams.toByteArray(in));
     }
   }
 
@@ -121,8 +120,8 @@ public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
    * Use {@link #twiceOf(byte[])} instead: this old name is ambiguous.
    */
   @Deprecated
-  public static Sha256Hash createDouble(boolean isSha256, byte[] contents) {
-    return twiceOf(isSha256, contents);
+  public static Sha256Hash createDouble(byte[] contents) {
+    return twiceOf(contents);
   }
 
   /**
@@ -131,8 +130,8 @@ public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
    * @param contents the bytes on which the hash value is calculated
    * @return a new instance containing the calculated (two-time) hash
    */
-  public static Sha256Hash twiceOf(boolean isSha256, byte[] contents) {
-    return wrap(hashTwice(isSha256, contents));
+  public static Sha256Hash twiceOf(byte[] contents) {
+    return wrap(hashTwice(contents));
   }
 
   /**
@@ -150,23 +149,13 @@ public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
   }
 
   /**
-   * Returns a new SM3 MessageDigest instance. This is a convenience method which wraps the checked
-   * exception that can never occur with a RuntimeException.
-   *
-   * @return a new SM3 MessageDigest instance
-   */
-  public static SM3Digest newSM3Digest() {
-    return new SM3Digest();
-  }
-
-  /**
    * Calculates the SHA-256 hash of the given bytes.
    *
    * @param input the bytes to hash
    * @return the hash (in big-endian order)
    */
-  public static byte[] hash(boolean isSha256, byte[] input) {
-    return hash(isSha256, input, 0, input.length);
+  public static byte[] hash(byte[] input) {
+    return hash(input, 0, input.length);
   }
 
   /**
@@ -177,19 +166,10 @@ public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
    * @param length the number of bytes to hash
    * @return the hash (in big-endian order)
    */
-  public static byte[] hash(boolean isSha256, byte[] input, int offset, int length) {
-    if (isSha256) {
-      MessageDigest digest = newDigest();
-      digest.update(input, offset, length);
-      return digest.digest();
-    } else {
-      SM3Digest digest = newSM3Digest();
-      digest.update(input, offset, length);
-      byte[] eHash = new byte[digest.getDigestSize()];
-      digest.doFinal(eHash, 0);
-      return eHash;
-    }
-
+  public static byte[] hash(byte[] input, int offset, int length) {
+    MessageDigest digest = newDigest();
+    digest.update(input, offset, length);
+    return digest.digest();
   }
 
   /**
@@ -198,8 +178,8 @@ public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
    * @param input the bytes to hash
    * @return the double-hash (in big-endian order)
    */
-  public static byte[] hashTwice(boolean isSha256, byte[] input) {
-    return hashTwice(isSha256, input, 0, input.length);
+  public static byte[] hashTwice(byte[] input) {
+    return hashTwice(input, 0, input.length);
   }
 
   /**
@@ -210,43 +190,22 @@ public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
    * @param length the number of bytes to hash
    * @return the double-hash (in big-endian order)
    */
-  public static byte[] hashTwice(boolean isSha256, byte[] input, int offset, int length) {
-    if (isSha256) {
-      MessageDigest digest = newDigest();
-      digest.update(input, offset, length);
-      return digest.digest(digest.digest());
-    } else {
-      SM3Digest digest = newSM3Digest();
-      digest.update(input, offset, length);
-      byte[] eHash = new byte[digest.getDigestSize()];
-      digest.doFinal(eHash, 0);
-      digest.reset();
-      digest.update(eHash, 0, eHash.length);
-      digest.doFinal(eHash, 0);
-      return eHash;
-    }
-
+  public static byte[] hashTwice(byte[] input, int offset, int length) {
+    MessageDigest digest = newDigest();
+    digest.update(input, offset, length);
+    return digest.digest(digest.digest());
   }
 
   /**
    * Calculates the hash of hash on the given byte ranges. This is equivalent to concatenating the
    * two ranges and then passing the result to {@link #hashTwice(byte[])}.
    */
-  public static byte[] hashTwice(boolean isSha256, byte[] input1, int offset1, int length1,
+  public static byte[] hashTwice(byte[] input1, int offset1, int length1,
       byte[] input2, int offset2, int length2) {
-    if (isSha256) {
-      MessageDigest digest = newDigest();
-      digest.update(input1, offset1, length1);
-      digest.update(input2, offset2, length2);
-      return digest.digest(digest.digest());
-    } else {
-      SM3Digest digest = newSM3Digest();
-      digest.update(input1, offset1, length1);
-      digest.update(input2, offset2, length2);
-      byte[] eHash = new byte[digest.getDigestSize()];
-      digest.doFinal(eHash, 0);
-      return eHash;
-    }
+    MessageDigest digest = newDigest();
+    digest.update(input1, offset1, length1);
+    digest.update(input2, offset2, length2);
+    return digest.digest(digest.digest());
   }
 
   private byte[] generateBlockId(long blockNum, Sha256Hash blockHash) {

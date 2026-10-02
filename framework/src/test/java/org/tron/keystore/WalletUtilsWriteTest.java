@@ -35,7 +35,7 @@ public class WalletUtilsWriteTest {
   public TemporaryFolder tempFolder = new TemporaryFolder();
 
   private static WalletFile lightWalletFile(String password) throws Exception {
-    SignInterface keyPair = SignUtils.getGeneratedRandomSign(Utils.getRandom(), true);
+    SignInterface keyPair = SignUtils.getGeneratedRandomSign(Utils.getRandom());
     return Wallet.createLight(password, keyPair);
   }
 
@@ -45,7 +45,7 @@ public class WalletUtilsWriteTest {
         !System.getProperty("os.name").toLowerCase(Locale.ROOT).contains("win"));
 
     File dir = tempFolder.newFolder("gen-perms");
-    SignInterface keyPair = SignUtils.getGeneratedRandomSign(Utils.getRandom(), true);
+    SignInterface keyPair = SignUtils.getGeneratedRandomSign(Utils.getRandom());
 
     String fileName = WalletUtils.generateWalletFile("password123", keyPair, dir, false);
 
@@ -61,7 +61,7 @@ public class WalletUtilsWriteTest {
   @Test
   public void testGenerateWalletFileLeavesNoTempFile() throws Exception {
     File dir = tempFolder.newFolder("gen-no-temp");
-    SignInterface keyPair = SignUtils.getGeneratedRandomSign(Utils.getRandom(), true);
+    SignInterface keyPair = SignUtils.getGeneratedRandomSign(Utils.getRandom());
 
     WalletUtils.generateWalletFile("password123", keyPair, dir, false);
 
@@ -74,7 +74,7 @@ public class WalletUtilsWriteTest {
   @Test
   public void testGenerateWalletFileLightScrypt() throws Exception {
     File dir = tempFolder.newFolder("gen-light");
-    SignInterface keyPair = SignUtils.getGeneratedRandomSign(Utils.getRandom(), true);
+    SignInterface keyPair = SignUtils.getGeneratedRandomSign(Utils.getRandom());
 
     String fileName = WalletUtils.generateWalletFile("password123", keyPair, dir, false);
     assertNotNull(fileName);
@@ -176,7 +176,7 @@ public class WalletUtilsWriteTest {
         !System.getProperty("os.name").toLowerCase(Locale.ROOT).contains("win"));
 
     File realDir = tempFolder.newFolder("load-symlink-target");
-    SignInterface keyPair = SignUtils.getGeneratedRandomSign(Utils.getRandom(), true);
+    SignInterface keyPair = SignUtils.getGeneratedRandomSign(Utils.getRandom());
     String realName = WalletUtils.generateWalletFile("password123", keyPair, realDir, false);
     File realKeystore = new File(realDir, realName);
 
@@ -188,18 +188,18 @@ public class WalletUtilsWriteTest {
     // for the operator. Hard-rejecting would silently break legitimate SR
     // deployments that organize keystores via symlinks.
     Credentials creds =
-        WalletUtils.loadCredentials("password123", symlink, true);
+        WalletUtils.loadCredentials("password123", symlink);
     assertNotNull(creds.getAddress());
   }
 
   @Test
   public void testLoadCredentialsAcceptsRegularFile() throws Exception {
     File dir = tempFolder.newFolder("load-ok");
-    SignInterface keyPair = SignUtils.getGeneratedRandomSign(Utils.getRandom(), true);
+    SignInterface keyPair = SignUtils.getGeneratedRandomSign(Utils.getRandom());
     String fileName = WalletUtils.generateWalletFile("password123", keyPair, dir, false);
 
     Credentials creds =
-        WalletUtils.loadCredentials("password123", new File(dir, fileName), true);
+        WalletUtils.loadCredentials("password123", new File(dir, fileName));
     assertNotNull(creds.getAddress());
   }
 }

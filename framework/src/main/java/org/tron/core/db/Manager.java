@@ -2638,8 +2638,7 @@ public class Manager {
           List<Transaction> listTransaction = block.getTransactionsList();
           for (Transaction transaction : listTransaction) {
             TransactionInfoCapsule transactionInfoCapsule = getTransactionHistoryStore()
-                    .get(Sha256Hash.hash(CommonParameter.getInstance()
-                            .isECKeyCryptoEngine(), transaction.getRawData().toByteArray()));
+                    .get(Sha256Hash.hash(transaction.getRawData().toByteArray()));
 
             if (transactionInfoCapsule != null) {
               transactionInfoList.addTransactionInfo(transactionInfoCapsule.getInstance());
