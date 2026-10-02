@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.prometheus.MetricKeys;
 import org.tron.common.prometheus.Metrics;
+import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
@@ -77,6 +78,12 @@ public class BlockMsgHandler implements TronMsgHandler {
       check(peer, blockMessage);
     }
 
+    if (blockCapsule.getNum() <= 0
+        || blockCapsule.getParentHashStr().size() != Sha256Hash.LENGTH
+        || new BlockId(blockCapsule.getParentHash()).getNum() != blockCapsule.getNum() - 1) {
+      throw new P2pException(TypeEnum.BAD_BLOCK, "block number does not follow parent");
+    }
+
     blockMessage.sanitize();
 
     if (peer.getSyncBlockRequested().containsKey(blockId)) {
@@ -89,7 +96,12 @@ public class BlockMsgHandler implements TronMsgHandler {
       if (peer.isRelayPeer()) {
         peer.getAdvInvSpread().put(item, now);
       }
-      Long time = peer.getAdvInvRequest().remove(item);
+      Long time = peer.getAdvInvRequest().get(item);
+      long interval = blockId.getNum() - tronNetDelegate.getHeadBlockId().getNum();
+      BlockResult result = processBlock(peer, blockMessage.getBlockCapsule());
+      if (result == BlockResult.ACCEPTED || result == BlockResult.SYNC_REQUIRED) {
+        peer.setBlockRcvTime(System.currentTimeMillis());
+      }
       if (null != time) {
         MetricsUtil.histogramUpdateUnCheck(MetricsKey.NET_LATENCY_FETCH_BLOCK
                 + peer.getInetAddress(), now - time);
@@ -98,9 +110,6 @@ public class BlockMsgHandler implements TronMsgHandler {
       }
       Metrics.histogramObserve(MetricKeys.Histogram.BLOCK_RECEIVE_DELAY,
           (now - blockMessage.getBlockCapsule().getTimeStamp()) / Metrics.MILLISECONDS_PER_SECOND);
-      fetchBlockService.blockFetchSuccess(blockId);
-      long interval = blockId.getNum() - tronNetDelegate.getHeadBlockId().getNum();
-      processBlock(peer, blockMessage.getBlockCapsule());
       logger.info(
               "Receive block/interval {}/{} from {} fetch/delay {}/{}ms, "
                       + "txs/process {}/{}ms, witness: {}",
@@ -125,46 +134,62 @@ public class BlockMsgHandler implements TronMsgHandler {
     }
   }
 
-  private void processBlock(PeerConnection peer, BlockCapsule block) throws P2pException {
+  private BlockResult processBlock(PeerConnection peer, BlockCapsule block) throws P2pException {
     BlockId blockId = block.getBlockId();
-    boolean flag = tronNetDelegate.validBlock(block);
-    if (!flag) {
-      logger.warn("Receive a bad block from {}, {}, {}",
+    boolean activeWitness = tronNetDelegate.validBlock(block);
+    // Retain pending fetch/request state if validation throws so disconnect can retry.
+    // Otherwise, complete the fetch; inactive witnesses trigger sync recovery below.
+    fetchBlockService.blockFetchSuccess(blockId);
+    peer.getAdvInvRequest().remove(new Item(blockId, InventoryType.BLOCK));
+    if (!activeWitness) {
+      logger.warn("Receive a block from an inactive witness, peer {}, block {}, witness {}",
           peer.getInetSocketAddress(), blockId.getString(),
           Hex.toHexString(block.getWitnessAddress().toByteArray()));
-      return;
+      syncService.startSync(peer);
+      return BlockResult.STATE_FAILED;
+    }
+
+    peer.updateLastInteractiveTime(System.currentTimeMillis());
+    long headNum = tronNetDelegate.getHeadBlockId().getNum();
+    if (block.getNum() < headNum || tronNetDelegate.containBlock(blockId)) {
+      logger.warn("Receive a low block {}, head {}", blockId.getString(), headNum);
+      return BlockResult.IGNORED;
     }
 
     if (!tronNetDelegate.containBlock(block.getParentBlockId())) {
       logger.warn("Get unlink block {} from {}, head is {}", blockId.getString(),
               peer.getInetAddress(), tronNetDelegate.getHeadBlockId().getString());
       syncService.startSync(peer);
-      return;
-    }
-
-    long headNum = tronNetDelegate.getHeadBlockId().getNum();
-    if (block.getNum() < headNum) {
-      logger.warn("Receive a low block {}, head {}", blockId.getString(), headNum);
-      return;
+      return BlockResult.SYNC_REQUIRED;
     }
 
     broadcast(new BlockMessage(block));
 
     try {
       tronNetDelegate.processBlock(block, false);
-      peer.setBlockRcvTime(System.currentTimeMillis());
-      witnessProductBlockService.validWitnessProductTwoBlock(block);
-
-      Item item = new Item(blockId, InventoryType.BLOCK);
-      tronNetDelegate.getActivePeer().forEach(p -> {
-        if (p.getAdvInvReceive().getIfPresent(item) != null) {
-          p.setBlockBothHave(blockId);
-        }
-      });
     } catch (Exception e) {
       logger.warn("Process adv block {} from peer {} failed. reason: {}",
               blockId, peer.getInetAddress(), e.getMessage());
+      syncService.startSync(peer);
+      return BlockResult.STATE_FAILED;
     }
+    if (tronNetDelegate.isHitDown()) {
+      return BlockResult.IGNORED;
+    }
+    advService.confirmBlockInventory(blockId);
+    witnessProductBlockService.validWitnessProductTwoBlock(block);
+
+    Item item = new Item(blockId, InventoryType.BLOCK);
+    tronNetDelegate.getActivePeer().forEach(p -> {
+      if (p.getAdvInvReceive().getIfPresent(item) != null) {
+        p.setBlockBothHave(blockId);
+      }
+    });
+    return BlockResult.ACCEPTED;
+  }
+
+  private enum BlockResult {
+    ACCEPTED, SYNC_REQUIRED, IGNORED, STATE_FAILED
   }
 
   private void broadcast(BlockMessage blockMessage) {

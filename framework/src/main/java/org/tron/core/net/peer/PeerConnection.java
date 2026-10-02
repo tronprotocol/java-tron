@@ -10,7 +10,6 @@ import com.google.protobuf.ByteString;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.Deque;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -122,6 +121,11 @@ public class PeerConnection {
   private Cache<Item, Long> advInvReceive = CacheBuilder.newBuilder().maximumSize(invCacheSize)
       .expireAfterWrite(1, TimeUnit.HOURS).recordStats().build();
 
+  // Eligible block INV receipt times, pending successful block processing before activity updates.
+  @Getter
+  private Cache<Item, Long> advBlockInvReceive = CacheBuilder.newBuilder().maximumSize(100)
+      .expireAfterWrite(1, TimeUnit.MINUTES).build();
+
   @Setter
   @Getter
   private Cache<Item, Long> advInvSpread = CacheBuilder.newBuilder().maximumSize(invCacheSize)
@@ -158,7 +162,7 @@ public class PeerConnection {
   private volatile Pair<Deque<BlockId>, Long> syncChainRequested = null;
   @Setter
   @Getter
-  private Set<BlockId> syncBlockInProcess = new HashSet<>();
+  private Set<BlockId> syncBlockInProcess = ConcurrentHashMap.newKeySet();
   @Setter
   @Getter
   private volatile boolean needSyncFromPeer = true;
@@ -175,7 +179,7 @@ public class PeerConnection {
       this.isRelayPeer = true;
     }
     this.nodeStatistics = TronStatsManager.getNodeStatistics(channel.getInetAddress());
-    lastInteractiveTime = System.currentTimeMillis();
+    updateLastInteractiveTime(System.currentTimeMillis());
     p2pRateLimiter.register(SYNC_BLOCK_CHAIN.asByte(),
         Args.getInstance().getRateLimiterSyncBlockChain());
     p2pRateLimiter.register(FETCH_INV_DATA.asByte(),
@@ -189,10 +193,39 @@ public class PeerConnection {
     this.blockBothHaveUpdateTime = System.currentTimeMillis();
   }
 
+  public synchronized void updateLastInteractiveTime(long time) {
+    if (time > lastInteractiveTime) {
+      lastInteractiveTime = time;
+    }
+  }
+
+  /**
+   * Returns whether there are no outstanding inventory or sync requests.
+   *
+   * <p>Sync blocks already being processed and sync direction flags are not checked.
+   */
   public boolean isIdle() {
     return advInvRequest.isEmpty() && isSyncIdle();
   }
 
+  /**
+   * Returns whether there are no outstanding block or sync requests and no sync blocks
+   * being processed. Outstanding transaction inventory requests do not make this check fail.
+   *
+   * <p>Callers must check connection state and sync direction flags separately before fetching.
+   */
+  public boolean isBlockFetchIdle() {
+    return advInvRequest.keySet().stream()
+        .noneMatch(item -> item.getType() == Protocol.Inventory.InventoryType.BLOCK)
+        && isSyncIdle() && syncBlockInProcess.isEmpty();
+  }
+
+  /**
+   * Returns whether there are no outstanding sync block or chain-summary requests.
+   *
+   * <p>This does not mean synchronization is complete: received blocks may still be processing,
+   * and sync direction flags are not checked.
+   */
   public boolean isSyncIdle() {
     return syncBlockRequested.isEmpty() && syncChainRequested == null;
   }
@@ -225,6 +258,7 @@ public class PeerConnection {
     syncService.onDisconnect(this);
     advService.onDisconnect(this);
     advInvReceive.invalidateAll();
+    advBlockInvReceive.invalidateAll();
     advInvSpread.invalidateAll();
     advInvRequest.clear();
     syncBlockIdCache.invalidateAll();
