@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.common.utils.Pair;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.Parameter.NetConstants;
@@ -18,6 +19,7 @@ import org.tron.core.exception.P2pException;
 import org.tron.core.exception.P2pException.TypeEnum;
 import org.tron.core.net.TronNetDelegate;
 import org.tron.core.net.message.TronMessage;
+import org.tron.core.net.message.handshake.HelloMessage;
 import org.tron.core.net.message.sync.ChainInventoryMessage;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.TronState;
@@ -40,7 +42,8 @@ public class ChainInventoryMsgHandler implements TronMsgHandler {
 
     ChainInventoryMessage chainInventoryMessage = (ChainInventoryMessage) msg;
 
-    check(peer, chainInventoryMessage);
+    Pair<Deque<BlockId>, Long> requested = peer.getSyncChainRequested();
+    check(peer, requested, chainInventoryMessage);
 
     peer.setFetchAble(false);
 
@@ -51,6 +54,7 @@ public class ChainInventoryMsgHandler implements TronMsgHandler {
     Deque<BlockId> blockIdWeGet = new LinkedList<>(chainInventoryMessage.getBlockIds());
 
     if (blockIdWeGet.size() == 1 && tronNetDelegate.containBlock(blockIdWeGet.peek())) {
+      peer.setRemainNum(0);
       peer.setTronState(TronState.SYNC_COMPLETED);
       peer.setNeedSyncFromPeer(false);
       return;
@@ -98,9 +102,15 @@ public class ChainInventoryMsgHandler implements TronMsgHandler {
     }
   }
 
-  private void check(PeerConnection peer, ChainInventoryMessage msg) throws P2pException {
-    if (peer.getSyncChainRequested() == null) {
+  private void check(PeerConnection peer, Pair<Deque<BlockId>, Long> requested,
+      ChainInventoryMessage msg) throws P2pException {
+    if (requested == null) {
       throw new P2pException(TypeEnum.BAD_MESSAGE, "not send syncBlockChainMsg");
+    }
+
+    HelloMessage hello = peer.getHelloMessageReceive();
+    if (hello == null) {
+      throw new P2pException(TypeEnum.BAD_MESSAGE, "hello message not received");
     }
 
     List<BlockId> blockIds = msg.getBlockIds();
@@ -112,7 +122,8 @@ public class ChainInventoryMsgHandler implements TronMsgHandler {
       throw new P2pException(TypeEnum.BAD_MESSAGE, "big blockIds size: " + blockIds.size());
     }
 
-    if (msg.getRemainNum() != 0 && blockIds.size() < NetConstants.SYNC_FETCH_BATCH_NUM) {
+    if (msg.getRemainNum() < 0
+        || (msg.getRemainNum() != 0 && blockIds.size() < NetConstants.SYNC_FETCH_BATCH_NUM)) {
       throw new P2pException(TypeEnum.BAD_MESSAGE,
           "remain: " + msg.getRemainNum() + ", blockIds size: " + blockIds.size());
     }
@@ -124,9 +135,9 @@ public class ChainInventoryMsgHandler implements TronMsgHandler {
       }
     }
 
-    if (!peer.getSyncChainRequested().getKey().contains(blockIds.get(0))) {
+    if (!requested.getKey().contains(blockIds.get(0))) {
       throw new P2pException(TypeEnum.BAD_MESSAGE, "unlinked block, my head: "
-          + peer.getSyncChainRequested().getKey().getLast().getString()
+          + requested.getKey().getLast().getString()
           + ", peer: " + blockIds.get(0).getString());
     }
 
@@ -137,9 +148,18 @@ public class ChainInventoryMsgHandler implements TronMsgHandler {
       long maxFutureNum =
           maxRemainTime / BLOCK_PRODUCED_INTERVAL + tronNetDelegate.getSolidBlockId().getNum();
       long lastNum = blockIds.get(blockIds.size() - 1).getNum();
-      if (lastNum + msg.getRemainNum() > maxFutureNum) {
+      if (lastNum > maxFutureNum || msg.getRemainNum() > maxFutureNum - lastNum) {
         throw new P2pException(TypeEnum.BAD_MESSAGE, "lastNum: " + lastNum + " + remainNum: "
             + msg.getRemainNum() + " > futureMaxNum: " + maxFutureNum);
+      }
+    }
+
+    if (blockIds.size() == 1) {
+      long lastNum = blockIds.get(0).getNum();
+      long helloHeadNum = hello.getHeadBlockId().getNum();
+      if (lastNum < helloHeadNum) {
+        throw new P2pException(TypeEnum.SYNC_FAILED,
+            "Single-block response height " + lastNum + " is below hello head " + helloHeadNum);
       }
     }
   }
