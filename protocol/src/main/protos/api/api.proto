@@ -646,6 +646,8 @@ service Database {
 };
 
 service Monitor {
+  option deprecated = true;
+
   rpc GetStatsInfo (EmptyMessage) returns (MetricsInfo) {
   }
 }

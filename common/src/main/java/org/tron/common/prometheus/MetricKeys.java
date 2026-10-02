@@ -21,6 +21,10 @@ public class MetricKeys {
     public static final String P2P_ERROR = "tron:p2p_error";
     public static final String P2P_DISCONNECT = "tron:p2p_disconnect";
     public static final String INTERNAL_SERVICE_FAIL = "tron:internal_service_fail";
+    // verification counters for the bounded fetch latency estimator rollout
+    public static final String BLOCK_FETCH_ARMED = "tron:block_fetch_armed";
+    public static final String BLOCK_FETCH_SECONDARY = "tron:block_fetch_secondary";
+    public static final String BLOCK_ALREADY_KNOWN = "tron:block_already_known";
 
     private Counter() {
       throw new IllegalStateException("Counter");
@@ -40,6 +44,16 @@ public class MetricKeys {
 
     private Gauge() {
       throw new IllegalStateException("Gauge");
+    }
+
+  }
+
+  // Info
+  public static class Info {
+    public static final String NODE_INFO = "tron:node";
+
+    private Info() {
+      throw new IllegalStateException("Info");
     }
 
   }

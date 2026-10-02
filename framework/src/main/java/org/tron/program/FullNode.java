@@ -10,6 +10,7 @@ import org.tron.common.arch.Arch;
 import org.tron.common.exit.ExitManager;
 import org.tron.common.log.LogService;
 import org.tron.common.parameter.CommonParameter;
+import org.tron.common.prometheus.MetricKeys;
 import org.tron.common.prometheus.Metrics;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
@@ -51,6 +52,11 @@ public class FullNode {
     // init metrics first
     Metrics.init();
 
+    if (parameter.isNodeMetricsEnable()) {
+      logger.warn("legacy metrics stack (node.metricsEnable) is deprecated and will be "
+          + "removed in a future major release; migrate to node.metrics.prometheus.enable");
+    }
+
     DefaultListableBeanFactory beanFactory = new DefaultListableBeanFactory();
     beanFactory.setAllowCircularReferences(false);
     TronApplicationContext context =
@@ -60,6 +66,10 @@ public class FullNode {
     Application appT = ApplicationFactory.create(context);
     context.registerShutdownHook();
     appT.startup();
+    // the genesis block id (chainId) is only available after the context refresh
+    // (Manager.initGenesis)
+    Metrics.info(MetricKeys.Info.NODE_INFO, Version.getVersion(),
+        Args.getInstance().getChainId());
     if (parameter.isSolidityNode()) {
       SolidityNode node = context.getBean(SolidityNode.class);
       node.run();

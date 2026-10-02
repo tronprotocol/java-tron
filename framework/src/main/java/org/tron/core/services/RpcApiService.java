@@ -10,6 +10,7 @@ import io.grpc.StatusRuntimeException;
 import io.grpc.netty.NettyServerBuilder;
 import io.grpc.stub.StreamObserver;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -2655,9 +2656,15 @@ public class RpcApiService extends RpcService {
 
   public class MonitorApi extends MonitorGrpc.MonitorImplBase {
 
+    private final AtomicBoolean deprecatedWarned = new AtomicBoolean(false);
+
     @Override
     public void getStatsInfo(EmptyMessage request,
         StreamObserver<Protocol.MetricsInfo> responseObserver) {
+      if (deprecatedWarned.compareAndSet(false, true)) {
+        logger.warn("rpc Monitor.GetStatsInfo is deprecated and will be removed in a "
+            + "future major release; migrate to the prometheus metrics endpoint");
+      }
       responseObserver.onNext(metricsApiService.getMetricProtoInfo());
       responseObserver.onCompleted();
     }

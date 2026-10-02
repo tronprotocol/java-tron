@@ -24,7 +24,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+import org.tron.common.math.StrictMathWrapper;
 import org.tron.common.overlay.message.Message;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.prometheus.MetricKeys;
 import org.tron.common.prometheus.Metrics;
 import org.tron.common.utils.Pair;
@@ -91,6 +93,21 @@ public class PeerConnection {
   @Setter
   @Getter
   private volatile long blockRcvTime;
+
+  /**
+   * EWMA smoothing divisor for the fetch latency estimator: the previous estimate is
+   * weighted (EWMA_DIVISOR - 1) / EWMA_DIVISOR and the new sample 1 / EWMA_DIVISOR,
+   * i.e. alpha = 0.1. This trades off smoothing against responsiveness and sits in the
+   * same order of magnitude as TCP's SRTT gain (1/8, RFC 6298). Under a large
+   * degradation the relative ordering of two peers can flip within 1-2 samples, while
+   * the absolute value converges smoothly (e.g. seeded at 100, ten 500ms samples walk
+   * 140, 176, 208, 237, 263, 286, 307, 326, 343, 358 without ever hitting the clamp).
+   */
+  private static final int EWMA_DIVISOR = 10;
+
+  private volatile long fetchLatency;
+
+  private volatile boolean fetchLatencySeeded;
 
   @Getter
   @Setter
@@ -182,6 +199,49 @@ public class PeerConnection {
         Args.getInstance().getRateLimiterFetchInvData());
     p2pRateLimiter.register(P2P_DISCONNECT.asByte(),
         Args.getInstance().getRateLimiterDisconnect());
+  }
+
+  /**
+   * Bounded fetch latency estimator with an explicit unsampled state.
+   *
+   * <p>The channel's average latency is never part of the sample sequence; it is only a
+   * read fallback while the estimator is unsampled (see {@link #getFetchLatency()}). The
+   * first measured fetch latency directly replaces the unsampled state (isomorphic to
+   * RFC 6298 SRTT initialization), and subsequent samples are blended with an EWMA of
+   * alpha = 1 / EWMA_DIVISOR = 0.1. With integer division the EWMA has a fixed point, e.g.
+   * (499 * 9 + 500) / 10 = 499, which damps jitter around the saturation bound.
+   *
+   * <p>A single fetch worker reads this value while the channel event loop writes it;
+   * volatile is sufficient for this benign race and no lock should be added.
+   *
+   * @param latencyMillis measured fetch latency in milliseconds
+   */
+  public void updateFetchLatency(long latencyMillis) {
+    if (!fetchLatencySeeded) {
+      fetchLatency = clampFetchLatency(latencyMillis);
+      fetchLatencySeeded = true;
+    } else {
+      fetchLatency = clampFetchLatency(
+          (fetchLatency * (EWMA_DIVISOR - 1) + latencyMillis) / EWMA_DIVISOR);
+    }
+  }
+
+  /**
+   * Returns the bounded fetch latency estimate. While the estimator has not observed a
+   * real fetch sample yet, the channel's average latency is returned as a read fallback
+   * (an unknown peer is treated via its transport-level estimate instead of 0).
+   */
+  public long getFetchLatency() {
+    if (!fetchLatencySeeded) {
+      return channel.getAvgLatency();
+    }
+    return fetchLatency;
+  }
+
+  private long clampFetchLatency(long latency) {
+    // Saturation intentionally makes the >= timeout gate in FetchBlockService trigger.
+    return StrictMathWrapper.max(0,
+        StrictMathWrapper.min(CommonParameter.getInstance().fetchBlockTimeout, latency));
   }
 
   public void setBlockBothHave(BlockId blockId) {
