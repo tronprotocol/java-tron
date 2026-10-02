@@ -60,6 +60,49 @@ public class TransactionRetStoreTest extends BaseTest {
   }
 
   @Test
+  public void getLowestBlockNum() {
+    Assert.assertEquals(1L, transactionRetStore.getLowestBlockNum().getAsLong());
+  }
+
+  @Test
+  public void getLowestBlockNumPicksMinimumKey() {
+    transactionRetStore.put(ByteArray.fromLong(7), transactionRetCapsule);
+    transactionRetStore.put(ByteArray.fromLong(3), transactionRetCapsule);
+    try {
+      Assert.assertEquals(1L, transactionRetStore.getLowestBlockNum().getAsLong());
+      transactionRetStore.delete(blockNum);
+      Assert.assertEquals(3L, transactionRetStore.getLowestBlockNum().getAsLong());
+    } finally {
+      transactionRetStore.delete(ByteArray.fromLong(3));
+      transactionRetStore.delete(ByteArray.fromLong(7));
+    }
+  }
+
+  @Test
+  public void getLowestBlockNumOnEmptyStore() {
+    transactionRetStore.delete(blockNum);
+    Assert.assertFalse(transactionRetStore.getLowestBlockNum().isPresent());
+  }
+
+  @Test
+  public void initLowestBlockNumOfReceiptStoreReadsStore() {
+    // the init runs after checkpoint recovery, so it must reflect whatever the store holds
+    // at call time: the first key while present, the next block once the store is empty
+    chainBaseManager.initLowestBlockNumOfReceiptStore();
+    Assert.assertEquals(1L, chainBaseManager.getLowestBlockNumOfReceiptStore());
+
+    // head must be non-zero, otherwise head + 1 collides with the first key asserted above
+    transactionRetStore.delete(blockNum);
+    chainBaseManager.getDynamicPropertiesStore().saveLatestBlockHeaderNumber(5);
+    try {
+      chainBaseManager.initLowestBlockNumOfReceiptStore();
+      Assert.assertEquals(6L, chainBaseManager.getLowestBlockNumOfReceiptStore());
+    } finally {
+      chainBaseManager.getDynamicPropertiesStore().saveLatestBlockHeaderNumber(0);
+    }
+  }
+
+  @Test
   public void get() throws BadItemException {
     TransactionInfoCapsule resultCapsule = transactionRetStore.getTransactionInfo(transactionId);
     Assert.assertNotNull("get transaction ret store", resultCapsule);
@@ -78,7 +121,12 @@ public class TransactionRetStoreTest extends BaseTest {
     Assert.assertNull("put transaction info error",
         transactionRetStore.getUnchecked(transactionInfoCapsule.getId()));
     transactionRetStore.put(transactionInfoCapsule.getId(), transactionRetCapsule);
-    Assert.assertNotNull("get transaction info error",
-        transactionRetStore.getUnchecked(transactionInfoCapsule.getId()));
+    try {
+      Assert.assertNotNull("get transaction info error",
+          transactionRetStore.getUnchecked(transactionInfoCapsule.getId()));
+    } finally {
+      // a 32-byte key left behind breaks getNext's fixed-length key comparison
+      transactionRetStore.delete(transactionInfoCapsule.getId());
+    }
   }
 }

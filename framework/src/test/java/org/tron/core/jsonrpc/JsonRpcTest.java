@@ -20,6 +20,7 @@ import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Commons;
+import org.tron.core.exception.jsonrpc.JsonRpcException;
 import org.tron.core.exception.jsonrpc.JsonRpcInvalidParamsException;
 import org.tron.core.services.jsonrpc.JsonRpcApiUtil;
 import org.tron.core.services.jsonrpc.TronJsonRpc.FilterRequest;
@@ -408,7 +409,7 @@ public class JsonRpcTest {
       Assert.assertArrayEquals(conditions[2][4],
           getBloomIndex("0x00000000000000000000000056178a0d5f301baf6cf3e1cd53d9863437345bf9"));
 
-    } catch (JsonRpcInvalidParamsException e) {
+    } catch (JsonRpcException e) {
       Assert.fail();
     }
   }
@@ -448,7 +449,7 @@ public class JsonRpcTest {
       Assert.assertArrayEquals(conditions[0][1],
           getBloomIndex("0x3038114c1a1e72c5bfa8b003bc3650ad2ba254a0"));
 
-    } catch (JsonRpcInvalidParamsException e) {
+    } catch (JsonRpcException e) {
       Assert.fail();
     }
   }
