@@ -21,8 +21,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.crypto.Hash;
 import org.tron.common.es.ExecutorServiceManager;
+import org.tron.common.utils.FastByteComparisons;
 import org.tron.core.capsule.BytesCapsule;
-import org.tron.core.capsule.utils.FastByteComparisons;
 import org.tron.core.capsule.utils.RLP;
 import org.tron.core.db2.common.ConcurrentHashDB;
 import org.tron.core.db2.common.DB;
@@ -321,7 +321,7 @@ public class TrieImpl implements Trie<byte[]> {
 
     TrieImpl trieImpl1 = (TrieImpl) o;
 
-    return FastByteComparisons.equalByte(getRootHash(), trieImpl1.getRootHash());
+    return FastByteComparisons.isEqual(getRootHash(), trieImpl1.getRootHash());
 
   }
 
@@ -561,7 +561,7 @@ public class TrieImpl implements Trie<byte[]> {
   }
 
   public void setRoot(byte[] root) {
-    if (root != null && !FastByteComparisons.equalByte(root, EMPTY_TRIE_HASH)) {
+    if (root != null && !FastByteComparisons.isEqual(root, EMPTY_TRIE_HASH)) {
       this.root = new Node(root);
     } else {
       this.root = null;
