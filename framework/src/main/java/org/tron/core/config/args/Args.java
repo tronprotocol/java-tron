@@ -1017,14 +1017,16 @@ public class Args extends CommonParameter {
       if (dns.getChangeThreshold() > 0) {
         publishConfig.setChangeThreshold(dns.getChangeThreshold());
       } else if (Double.compare(dns.getChangeThreshold(), 0.0) != 0) {
-        logger.error("Check node.dns.changeThreshold, should be bigger than 0, default 0.1");
+        throw new TronError("Check node.dns.changeThreshold, should be bigger than 0, default 0.1",
+            TronError.ErrCode.PARAMETER_INIT);
       }
 
       int maxMergeSize = dns.getMaxMergeSize();
       if (maxMergeSize >= 1 && maxMergeSize <= 5) {
         publishConfig.setMaxMergeSize(maxMergeSize);
       } else if (maxMergeSize != 0) {
-        logger.error("Check node.dns.maxMergeSize, should be [1~5], default 5");
+        throw new TronError("Check node.dns.maxMergeSize, should be [1~5], default 5",
+            TronError.ErrCode.PARAMETER_INIT);
       }
 
       if (StringUtils.isNotEmpty(dns.getDnsPrivate())) {

@@ -43,6 +43,10 @@ public abstract class HttpService extends AbstractService {
 
   protected long maxRequestSize = 4 * 1024 * 1024; // 4MB
 
+  // Once maxHttpConnectNumber is reached, open connections time out after this much
+  // inactivity, so connections that send nothing cannot hold every slot.
+  private static final long CONNECTION_LIMIT_IDLE_TIMEOUT_MS = 10_000;
+
   @VisibleForTesting
   public long getMaxRequestSize() {
     return this.maxRequestSize;
@@ -80,7 +84,9 @@ public abstract class HttpService extends AbstractService {
     this.apiServer = new Server(this.port);
     int maxHttpConnectNumber = Args.getInstance().getMaxHttpConnectNumber();
     if (maxHttpConnectNumber > 0) {
-      this.apiServer.addBean(new ConnectionLimit(maxHttpConnectNumber, this.apiServer));
+      ConnectionLimit connectionLimit = new ConnectionLimit(maxHttpConnectNumber, this.apiServer);
+      connectionLimit.setIdleTimeout(CONNECTION_LIMIT_IDLE_TIMEOUT_MS);
+      this.apiServer.addBean(connectionLimit);
     }
     this.apiServer.setErrorHandler(new OversizedRequestErrorHandler());
   }
