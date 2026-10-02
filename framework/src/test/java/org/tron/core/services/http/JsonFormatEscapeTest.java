@@ -12,6 +12,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
+import java.nio.CharBuffer;
 import java.nio.charset.StandardCharsets;
 import org.junit.Test;
 import org.tron.common.utils.ByteArray;
@@ -222,6 +223,28 @@ public class JsonFormatEscapeTest {
     String emoji = new String(Character.toChars(0x1F600));
 
     assertEquals("\\ud83d\\ude00", escapeName(emoji, URL_FIELD));
+  }
+
+  @Test
+  public void testIsolatedLowSurrogatesKeepLegacyReplacement() throws Exception {
+    for (char low = Character.MIN_LOW_SURROGATE; low <= Character.MAX_LOW_SURROGATE; low++) {
+      String input = String.valueOf(low);
+      String escaped = JsonFormat.escapeText(input);
+
+      assertEquals("?", escaped);
+      StandardCharsets.UTF_8.newEncoder().encode(CharBuffer.wrap(escaped));
+    }
+  }
+
+  @Test
+  public void testLowSurrogateReplacementPreservesFollowingCharacters() {
+    String low = String.valueOf((char) 0xDE00);
+    String emoji = new String(Character.toChars(0x1F600));
+
+    assertEquals("prefix?suffix", JsonFormat.escapeText("prefix" + low + "suffix"));
+    assertEquals("??", JsonFormat.escapeText(low + low));
+    assertEquals("?\\n\\\"\\\\", JsonFormat.escapeText(low + "\n\"\\"));
+    assertEquals("?\\ud83d\\ude00", JsonFormat.escapeText(low + emoji));
   }
 
   // Field integrity through HTTP normalization
