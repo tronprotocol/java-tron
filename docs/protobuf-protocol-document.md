@@ -4,6 +4,8 @@
 
 This is the description of  Google Protobuf implementation of Tron's protocol.
 
+> The `.proto` files under [`protocol/src/main/protos`](../protocol/src/main/protos) are the source of truth for every message and field. This document explains the main messages.
+
 ## Contents 
 
 #### [1. Account](#account)
@@ -34,7 +36,7 @@ enum AccountType {
 }
 ```
 
-- message `Account` has multiple attributes and 2 nested messages: 
+- message `Account` has multiple attributes and 4 nested messages: 
 
   message `Frozen`:
 
@@ -57,6 +59,35 @@ enum AccountType {
     int64 storage_limit = 6;
     int64 storage_usage = 7;
     int64 latest_exchange_storage_time = 8;
+    int64 energy_window_size = 9;
+    int64 delegated_frozenV2_balance_for_energy = 10;
+    int64 acquired_delegated_frozenV2_balance_for_energy = 11;
+    bool energy_window_optimized = 12;
+  }
+  ```
+
+  `energy_window_size`: the window, in blocks, over which energy usage recovers; `0` means the default of 24 hours. When `energy_window_optimized` is true, the value is stored multiplied by 1000.
+
+  `delegated_frozenV2_balance_for_energy`: TRX staked by this account under Stake 2.0 whose energy is delegated to other accounts.
+
+  `acquired_delegated_frozenV2_balance_for_energy`: TRX staked by other accounts under Stake 2.0 whose energy is delegated to this account.
+
+  message `FreezeV2`: TRX staked under Stake 2.0 for one resource type.
+
+  ```java
+  message FreezeV2 {
+    ResourceCode type = 1;
+    int64 amount = 2;
+  }
+  ```
+
+  message `UnFreezeV2`: TRX unstaked under Stake 2.0 and waiting to be withdrawn; `unfreeze_expire_time` is when it becomes withdrawable.
+
+  ```java
+  message UnFreezeV2 {
+    ResourceCode type = 1;
+    int64 unfreeze_amount = 3;
+    int64 unfreeze_expire_time = 4;
   }
   ```
   
@@ -118,6 +149,22 @@ enum AccountType {
 
   `latest_consume_free_time`: the latest consume free bandwidth time of this account.
 
+  `net_window_size`: the window, in blocks, over which bandwidth usage recovers; `0` means the default of 24 hours. When `net_window_optimized` is true, the value is stored multiplied by 1000.
+
+  `frozenV2`: TRX staked under Stake 2.0, one entry per resource type.
+
+  `unfrozenV2`: TRX unstaked under Stake 2.0 and waiting to be withdrawn, with the time each amount becomes withdrawable.
+
+  `delegated_frozenV2_balance_for_bandwidth`: TRX staked by this account under Stake 2.0 whose bandwidth is delegated to other accounts.
+
+  `acquired_delegated_frozenV2_balance_for_bandwidth`: TRX staked by other accounts under Stake 2.0 whose bandwidth is delegated to this account.
+
+  `old_tron_power`: under the new resource model (`getAllowNewResourceModel`), the voting power recorded from the account's bandwidth and energy stakes. `0` means not recorded yet, so those stakes still count in full; `-1` means they no longer count and only TRON Power stakes give voting power.
+
+  `tron_power`: TRX frozen under Stake 1.0 for TRON Power (voting power only), available under the new resource model.
+
+  `asset_optimized`: true when this account's TRC-10 balances are kept in a separate account-asset store instead of the `asset` / `assetV2` maps.
+
  ```java
 message Account {
     message Frozen {
@@ -135,6 +182,9 @@ message Account {
     int64 net_usage = 8;
     int64 acquired_delegated_frozen_balance_for_bandwidth = 41;
     int64 delegated_frozen_balance_for_bandwidth = 42;
+    int64 old_tron_power = 46;
+    Frozen tron_power = 47;
+    bool asset_optimized = 60;
     int64 create_time = 0x09;
     int64 latest_opration_time = 10;
     int64 allowance = 0x0B;
@@ -153,6 +203,8 @@ message Account {
     int64 latest_consume_time = 21;
     int64 latest_consume_free_time = 22;
     bytes account_id = 23;
+    int64 net_window_size = 24;
+    bool net_window_optimized = 25;
     message AccountResource {
       int64 energy_usage = 1;
       Frozen frozen_balance_for_energy = 2;
@@ -162,12 +214,29 @@ message Account {
       int64 storage_limit = 6;
       int64 storage_usage = 7;
       int64 latest_exchange_storage_time = 8;
+      int64 energy_window_size = 9;
+      int64 delegated_frozenV2_balance_for_energy = 10;
+      int64 acquired_delegated_frozenV2_balance_for_energy = 11;
+      bool energy_window_optimized = 12;
     }
     AccountResource account_resource = 26;
     bytes codeHash = 30;
     Permission owner_permission = 31;
     Permission witness_permission = 32;
     repeated Permission active_permission = 33;
+    message FreezeV2 {
+      ResourceCode type = 1;
+      int64 amount = 2;
+    }
+    message UnFreezeV2 {
+      ResourceCode type = 1;
+      int64 unfreeze_amount = 3;
+      int64 unfreeze_expire_time = 4;
+    }
+    repeated FreezeV2 frozenV2 = 34;
+    repeated UnFreezeV2 unfrozenV2 = 35;
+    int64 delegated_frozenV2_balance_for_bandwidth = 36;
+    int64 acquired_delegated_frozenV2_balance_for_bandwidth = 37;
   }
   ```
   
@@ -385,19 +454,6 @@ Transaction and transaction-related messages.
   }
   ```
 
-  - message `TransactionSign`
-
-    `transaction`: transaction data.
-
-    `privateKey`: private key.
-
-    ```java
-    message TransactionSign {
-      Transaction transaction = 1;
-      bytes privateKey = 2;
-    }
-    ```
-
   - message `ResourceReceipt`
 
     `energy_usage`: consume yourself account energy.
@@ -414,6 +470,8 @@ Transaction and transaction-related messages.
 
     `result`: the result of executing transaction.
 
+    `energy_penalty_total`: extra energy charged by the dynamic energy model; it is included in `energy_usage_total`.
+
     ```java
     message ResourceReceipt {
       int64 energy_usage = 1;
@@ -423,6 +481,7 @@ Transaction and transaction-related messages.
       int64 net_usage = 5;
       int64 net_fee = 6;
       Transaction.Result.contractResult result = 7;
+      int64 energy_penalty_total = 8;
     }
     ```
 
@@ -451,6 +510,8 @@ Transaction and transaction-related messages.
 
     `callValueInfo`: Refers to asset transfer information in internal transactions, including trx and trc10.
 
+    `extra`: JSON details for some internal transactions, such as the votes cast by a contract, or the amounts staked again per resource by a contract's cancel-all-unstake call when `vm.saveCancelAllUnfreezeV2Details` is enabled.
+
    ```java
        message InternalTransaction {
           bytes hash = 1;
@@ -463,6 +524,7 @@ Transaction and transaction-related messages.
           repeated CallValueInfo callValueInfo = 4;
           bytes note = 5;
           bool rejected = 6;
+          string extra = 7;
         }
    ```
     
@@ -505,6 +567,14 @@ Transaction and transaction-related messages.
      `exchange_id`:
      
      `shielded_transaction_fee`:
+
+     `orderId`: ID of the order created by `MarketSellAssetContract`.
+
+     `orderDetails`: orders matched when that order was placed.
+
+     `withdraw_expire_amount`: expired unstaked TRX withdrawn to the balance by this transaction.
+
+     `cancel_unfreezeV2_amount`: for `CancelAllUnfreezeV2Contract`, the unstaked amounts staked again, keyed by resource type.
      
      ```java
        message Result {
@@ -528,6 +598,7 @@ Transaction and transaction-related messages.
              JVM_STACK_OVER_FLOW = 12;
              UNKNOWN = 13;
              TRANSFER_FAILED = 14;
+             INVALID_CODE = 15;
            }
            int64 fee = 1;
            code ret = 2;
@@ -541,6 +612,10 @@ Transaction and transaction-related messages.
            int64 exchange_withdraw_another_amount = 20;
            int64 exchange_id = 21;
            int64 shielded_transaction_fee = 22;
+           bytes orderId = 25;
+           repeated MarketOrderDetail orderDetails = 26;
+           int64 withdraw_expire_amount = 27;
+           map<string, int64> cancel_unfreezeV2_amount = 28;
          }
      ```
   
@@ -657,6 +732,7 @@ Transaction and transaction-related messages.
           JVM_STACK_OVER_FLOW = 12;
           UNKNOWN = 13;
           TRANSFER_FAILED = 14;
+          INVALID_CODE = 15;
         }
         int64 fee = 1;
         code ret = 2;
@@ -670,6 +746,10 @@ Transaction and transaction-related messages.
         int64 exchange_withdraw_another_amount = 20;
         int64 exchange_id = 21;
         int64 shielded_transaction_fee = 22;
+        bytes orderId = 25;
+        repeated MarketOrderDetail orderDetails = 26;
+        int64 withdraw_expire_amount = 27;
+        map<string, int64> cancel_unfreezeV2_amount = 28;
       }
     
       message raw {
@@ -757,6 +837,16 @@ Transaction and transaction-related messages.
 
    `shielded_transaction_fee`: the usage fee for shielded transaction.
 
+   `orderId`: ID of the order created by `MarketSellAssetContract`.
+
+   `orderDetails`: orders matched when that order was placed.
+
+   `packingFee`: the part of the bandwidth and energy fees paid into the transaction fee pool, from which block producers are rewarded; set only when the transaction fee pool (`getAllowTransactionFeePool`) is enabled.
+
+   `withdraw_expire_amount`: expired unstaked TRX withdrawn to the balance by this transaction.
+
+   `cancel_unfreezeV2_amount`: for `CancelAllUnfreezeV2Contract`, the unstaked amounts staked again, keyed by resource type.
+
    ```java
   message TransactionInfo {
       enum code {
@@ -788,6 +878,11 @@ Transaction and transaction-related messages.
       int64 exchange_withdraw_another_amount = 20;
       int64 exchange_id = 21;
       int64 shielded_transaction_fee = 22;
+      bytes orderId = 25;
+      repeated MarketOrderDetail orderDetails = 26;
+      int64 packingFee = 27;
+      int64 withdraw_expire_amount = 28;
+      map<string, int64> cancel_unfreezeV2_amount = 29;
     }
    ```
    - message `Transactions`
@@ -829,7 +924,7 @@ Transaction and transaction-related messages.
 
 Contract and contract-related messages.
 
-- Tron has 33 types of Contracts declared within [`Transaction`](#trans).
+- Tron has 41 types of Contracts declared within [`Transaction`](#trans).
 
 - message `Contract`
 
@@ -898,7 +993,7 @@ Contract and contract-related messages.
   }
   ```
 
-- There are 15 types of results while deploying contracts (refer to `Transaction.Result`):
+- There are 16 types of results while deploying contracts (refer to `Transaction.Result`):
 
   ```java
   enum contractResult {
@@ -917,6 +1012,7 @@ Contract and contract-related messages.
     JVM_STACK_OVER_FLOW = 12;
     UNKNOWN = 13;
     TRANSFER_FAILED = 14;
+    INVALID_CODE = 15;
   }
   ```
 
@@ -1531,6 +1627,114 @@ Contract and contract-related messages.
       ```
     
   attributes' type refer to [Shield Contract Related](#shieldc)
+
+  - message `FreezeBalanceV2Contract`
+
+    Stakes TRX under Stake 2.0 to obtain bandwidth, energy, or, under the new resource model (`getAllowNewResourceModel`), TRON Power.
+
+    `owner_address`: address of owner.
+
+    `frozen_balance`: amount of TRX to stake, in sun; at least 1 TRX and no more than the account balance.
+
+    `resource`: type of resource to obtain: BANDWIDTH / ENERGY / TRON_POWER.
+
+    ```java
+    message FreezeBalanceV2Contract {
+      bytes owner_address = 1;
+      int64 frozen_balance = 2;
+      ResourceCode resource = 3;
+    }
+    ```
+
+  - message `UnfreezeBalanceV2Contract`
+
+    Unstakes TRX staked under Stake 2.0. The amount becomes withdrawable after the unstaking period (`getUnfreezeDelayDays` days), and an account can have at most 32 unstakes pending at a time. Unstaked amounts whose period has already ended are withdrawn to the balance in the same transaction.
+
+    `owner_address`: address of owner.
+
+    `unfreeze_balance`: amount of TRX to unstake, in sun.
+
+    `resource`: type of resource the TRX was staked for: BANDWIDTH / ENERGY / TRON_POWER.
+
+    ```java
+    message UnfreezeBalanceV2Contract {
+      bytes owner_address = 1;
+      int64 unfreeze_balance = 2;
+      ResourceCode resource = 3;
+    }
+    ```
+
+  - message `WithdrawExpireUnfreezeContract`
+
+    Withdraws all unstaked TRX whose unstaking period has ended to the account balance.
+
+    `owner_address`: address of owner.
+
+    ```java
+    message WithdrawExpireUnfreezeContract {
+      bytes owner_address = 1;
+    }
+    ```
+
+  - message `DelegateResourceContract`
+
+    Delegates the bandwidth or energy of TRX staked under Stake 2.0 to another account.
+
+    `owner_address`: address of owner.
+
+    `resource`: type of resource to delegate: BANDWIDTH / ENERGY.
+
+    `balance`: amount of staked TRX whose resource is delegated, in sun; at least 1 TRX.
+
+    `receiver_address`: account that receives the resource; it cannot be the owner or a contract.
+
+    `lock`: if true, the delegation cannot be reclaimed until the lock period ends.
+
+    `lock_period`: lock period in blocks (3 seconds each), up to `getMaxDelegateLockPeriod`; `0` means the default of 3 days. A new locked delegation of the same resource to the same receiver moves the lock end of all balance already locked for that resource and receiver to the new end time, and its lock period cannot be shorter than the time left on the current lock.
+
+    ```java
+    message DelegateResourceContract {
+      bytes owner_address = 1;
+      ResourceCode resource = 2;
+      int64 balance = 3;
+      bytes receiver_address = 4;
+      bool lock = 5;
+      int64 lock_period = 6;
+    }
+    ```
+
+  - message `UnDelegateResourceContract`
+
+    Reclaims resource delegated with `DelegateResourceContract`. Locked delegations can be reclaimed only after their lock period ends.
+
+    `owner_address`: address of owner.
+
+    `resource`: type of resource to reclaim: BANDWIDTH / ENERGY.
+
+    `balance`: amount of delegated staked TRX to reclaim, in sun.
+
+    `receiver_address`: account the resource was delegated to.
+
+    ```java
+    message UnDelegateResourceContract {
+      bytes owner_address = 1;
+      ResourceCode resource = 2;
+      int64 balance = 3;
+      bytes receiver_address = 4;
+    }
+    ```
+
+  - message `CancelAllUnfreezeV2Contract`
+
+    Cancels all pending Stake 2.0 unstakes: amounts still in the unstaking period are staked again, and amounts whose period has ended are withdrawn to the balance.
+
+    `owner_address`: address of owner.
+
+    ```java
+    message CancelAllUnfreezeV2Contract {
+      bytes owner_address = 1;
+    }
+    ```
   
 
   
@@ -1554,6 +1758,7 @@ message `SmartContract` has multiple attributes and nested message `ABI`
               Event = 3;
               Fallback = 4;
               Receive = 5;
+              Error = 6;
           }
           ```
   
@@ -1623,6 +1828,8 @@ message `SmartContract` has multiple attributes and nested message `ABI`
   `code_hash`: hash of smart contract bytecode.
   
   `trx_hash`:  transactionId of Deploying contract transaction.
+
+  `version`: contract version; `1` for contracts created while EVM compatibility (`getAllowTvmCompatibleEvm`) is enabled, otherwise `0`.
   
   ```java
     message SmartContract {
@@ -1635,6 +1842,7 @@ message `SmartContract` has multiple attributes and nested message `ABI`
                      Event = 3;
                      Fallback = 4;
                      Receive = 5;
+                     Error = 6;
                 }
                 message Param {
                     bool indexed = 1;
@@ -1670,6 +1878,7 @@ message `SmartContract` has multiple attributes and nested message `ABI`
         int64 origin_energy_limit = 8;
         bytes code_hash = 9;
         bytes trx_hash = 10;
+        int32 version = 11;
     }
     ```
   
@@ -2053,6 +2262,10 @@ message `SmartContract` has multiple attributes and nested message `ABI`
       TIME_OUT = 0x20;
       CONNECT_FAIL = 0x21;
       TOO_MANY_PEERS_WITH_SAME_IP = 0x22;
+      LIGHT_NODE_SYNC_FAIL = 0x23;
+      BELOW_THAN_ME = 0x24;
+      NOT_WITNESS = 0x25;
+      NO_SUCH_MESSAGE = 0x26;
       UNKNOWN = 0xFF;
     }
     ```
@@ -2100,6 +2313,12 @@ message `SmartContract` has multiple attributes and nested message `ABI`
 
     `signature`: signature for sender.
 
+    `nodeType`: node type, `0` for a full node and `1` for a lite fullnode.
+
+    `lowestBlockNum`: lowest block number stored by a lite fullnode; `0` for a full node.
+
+    `codeVersion`: java-tron version of the sender.
+
     ```java
     message DisconnectMessage {
       ReasonCode reason = 1;
@@ -2119,6 +2338,9 @@ message `SmartContract` has multiple attributes and nested message `ABI`
       BlockId headBlockId = 6;
       bytes address = 7;
       bytes signature = 8;
+      int32 nodeType = 9;
+      int64 lowestBlockNum = 10;
+      bytes codeVersion = 11;
     }
     ```
 
