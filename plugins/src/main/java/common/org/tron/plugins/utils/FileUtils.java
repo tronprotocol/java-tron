@@ -20,6 +20,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.Properties;
+import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -137,36 +138,41 @@ public class FileUtils {
    */
   public static void copyDatabases(Path src, Path dest, List<String> subDirs)
       throws IOException {
-    // create subdirs, as using parallel() to run, so should create dirs first.
-    subDirs.forEach(dir -> {
-      if (isExists(Paths.get(src.toString(), dir).toString())) {
-        try {
-          Files.walk(Paths.get(src.toString(), dir), FileVisitOption.FOLLOW_LINKS)
-              .forEach(source -> copy(source, dest.resolve(src.relativize(source))));
-        } catch (IOException e) {
-          logger.error("copy database failed, src: {}, dest: {}, error: {}",
-              Paths.get(src.toString(), dir), Paths.get(dest.toString(), dir), e.getMessage());
-          throw new RuntimeException(e);
-        }
+    for (String dir : subDirs) {
+      if (!isExists(Paths.get(src.toString(), dir).toString())) {
+        continue;
       }
-    });
-  }
-
-  public static void copyDir(Path src, Path dest, String dir) {
-    if (isExists(Paths.get(src.toString(), dir).toString())) {
       try {
-        if (createDirIfNotExists(Paths.get(dest.toString(), dir).toString())) {
-          Files.walk(Paths.get(src.toString(), dir), FileVisitOption.FOLLOW_LINKS)
-              .forEach(source -> copy(source, dest.resolve(src.relativize(source))));
-        } else {
-          throw new IOException(String.format("dest %s create fail ",
-              Paths.get(dest.toString(), dir)));
-        }
+        copyTree(src, dest, dir);
       } catch (IOException e) {
-        logger.error("copy dir failed, src: {}, dest: {}, error: {}",
+        logger.error("copy database failed, src: {}, dest: {}, error: {}",
             Paths.get(src.toString(), dir), Paths.get(dest.toString(), dir), e.getMessage());
         throw new RuntimeException(e);
       }
+    }
+  }
+
+  public static void copyDir(Path src, Path dest, String dir) {
+    if (!isExists(Paths.get(src.toString(), dir).toString())) {
+      return;
+    }
+    try {
+      if (!createDirIfNotExists(Paths.get(dest.toString(), dir).toString())) {
+        throw new IOException(String.format("dest %s create fail ",
+            Paths.get(dest.toString(), dir)));
+      }
+      copyTree(src, dest, dir);
+    } catch (IOException e) {
+      logger.error("copy dir failed, src: {}, dest: {}, error: {}",
+          Paths.get(src.toString(), dir), Paths.get(dest.toString(), dir), e.getMessage());
+      throw new RuntimeException(e);
+    }
+  }
+
+  private static void copyTree(Path src, Path dest, String dir) throws IOException {
+    try (Stream<Path> paths = Files.walk(
+        Paths.get(src.toString(), dir), FileVisitOption.FOLLOW_LINKS)) {
+      paths.forEach(source -> copy(source, dest.resolve(src.relativize(source))));
     }
   }
 

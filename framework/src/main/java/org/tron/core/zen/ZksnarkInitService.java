@@ -57,11 +57,14 @@ public class ZksnarkInitService {
   }
 
   private static String getParamsFile(String fileName) {
-    InputStream in = Thread.currentThread().getContextClassLoader()
-        .getResourceAsStream("params" + File.separator + fileName);
+    String resourcePath = "params" + File.separator + fileName;
     File fileOut = new File(System.getProperty("java.io.tmpdir")
         + File.separator + fileName + "." + System.currentTimeMillis());
-    try {
+    try (InputStream in = Thread.currentThread().getContextClassLoader()
+        .getResourceAsStream(resourcePath)) {
+      if (in == null) {
+        throw new IllegalStateException("Resource not found: " + resourcePath);
+      }
       FileUtils.copyToFile(in, fileOut);
     } catch (IOException e) {
       logger.error(e.getMessage(), e);

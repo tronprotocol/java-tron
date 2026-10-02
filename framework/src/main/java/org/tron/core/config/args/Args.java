@@ -1188,9 +1188,8 @@ public class Args extends CommonParameter {
   private static void printVersion() {
     Properties properties = new Properties();
     boolean noGitProperties = true;
-    try {
-      InputStream in = Thread.currentThread()
-          .getContextClassLoader().getResourceAsStream("git.properties");
+    try (InputStream in = Thread.currentThread()
+        .getContextClassLoader().getResourceAsStream("git.properties")) {
       if (in != null) {
         noGitProperties = false;
         properties.load(in);
@@ -1278,9 +1277,8 @@ public class Args extends CommonParameter {
 
   private static String getCommitIdAbbrev() {
     Properties properties = new Properties();
-    try {
-      InputStream in = Thread.currentThread()
-          .getContextClassLoader().getResourceAsStream("git.properties");
+    try (InputStream in = Thread.currentThread()
+        .getContextClassLoader().getResourceAsStream("git.properties")) {
       if (in == null) {
         logger.warn("git.properties not found on classpath");
         return "";
