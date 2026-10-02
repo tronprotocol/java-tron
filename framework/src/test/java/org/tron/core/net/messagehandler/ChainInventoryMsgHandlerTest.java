@@ -6,6 +6,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.tron.core.net.PeerSyncTestSupport.blockId;
+import static org.tron.core.net.PeerSyncTestSupport.helloMessage;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -29,6 +30,7 @@ import org.tron.core.config.Parameter.NetConstants;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.P2pException;
 import org.tron.core.exception.P2pException.TypeEnum;
+import org.tron.core.net.P2pEventHandlerImpl;
 import org.tron.core.net.PeerSyncTestSupport;
 import org.tron.core.net.TronNetDelegate;
 import org.tron.core.net.message.adv.InventoryMessage;
@@ -40,6 +42,7 @@ import org.tron.core.net.peer.TronState;
 import org.tron.core.net.service.adv.AdvService;
 import org.tron.core.net.service.sync.SyncService;
 import org.tron.protos.Protocol.Inventory.InventoryType;
+import org.tron.protos.Protocol.ReasonCode;
 
 public class ChainInventoryMsgHandlerTest {
 
@@ -82,6 +85,7 @@ public class ChainInventoryMsgHandlerTest {
     when(delegate.getBlockIdByNum(org.mockito.ArgumentMatchers.anyLong()))
         .thenAnswer(invocation -> blockId(invocation.getArgument(0)));
     peer = PeerSyncTestSupport.peer(10001);
+    peer.setHelloMessageReceive(helloMessage(100));
     peer.setTronState(TronState.SYNCING);
     peer.setNeedSyncFromPeer(true);
     peer.setNeedSyncFromUs(false);
@@ -118,6 +122,7 @@ public class ChainInventoryMsgHandlerTest {
     for (long height : new long[]{0, 50, 100}) {
       for (boolean needSyncFromUs : new boolean[]{false, true}) {
         resetFixture();
+        peer.setHelloMessageReceive(helloMessage(height));
         peer.setNeedSyncFromUs(needSyncFromUs);
         try {
           respond(0, blockId(height));
@@ -130,6 +135,63 @@ public class ChainInventoryMsgHandlerTest {
         }
       }
     }
+  }
+
+  @Test
+  public void testSingleBlockBelowHelloHeadIsRejected() throws Exception {
+    for (long height : new long[]{50, 100, 199}) {
+      for (boolean needSyncFromUs : new boolean[]{false, true}) {
+        resetFixture();
+        peer.setHelloMessageReceive(helloMessage(200));
+        peer.setNeedSyncFromUs(needSyncFromUs);
+        request(blockId(0), blockId(50), blockId(100), blockId(199));
+
+        assertRejected(new ChainInventoryMessage(Collections.singletonList(blockId(height)), 0L),
+            TypeEnum.SYNC_FAILED);
+        Assert.assertFalse(peer.isSyncFinish());
+      }
+    }
+  }
+
+  @Test
+  public void testSingleBlockBelowHelloHeadDisconnectsWithSyncFail() throws Exception {
+    peer.setHelloMessageReceive(helloMessage(200));
+    Pair<Deque<BlockId>, Long> requested = peer.getSyncChainRequested();
+    P2pEventHandlerImpl events = new P2pEventHandlerImpl();
+    ReflectUtils.setFieldValue(events, "chainInventoryMsgHandler", handler);
+    ChainInventoryMessage response = new ChainInventoryMessage(
+        Collections.singletonList(blockId(100)), 0L);
+
+    ReflectUtils.invokeMethod(events, "processMessage",
+        new Class<?>[]{PeerConnection.class, byte[].class}, peer, response.getSendBytes());
+
+    verify(peer).disconnect(ReasonCode.SYNC_FAIL);
+    verify(peer, never()).disconnect(ReasonCode.BAD_PROTOCOL);
+    Assert.assertSame(requested, peer.getSyncChainRequested());
+    Assert.assertTrue(peer.isNeedSyncFromPeer());
+    Assert.assertEquals(TronState.SYNCING, peer.getTronState());
+    verify(sync, never()).syncNext(any());
+    verify(sync, never()).setFetchFlag(true);
+  }
+
+  @Test
+  public void testSingleBlockAboveHelloHeadCompletesDownload() throws Exception {
+    peer.setHelloMessageReceive(helloMessage(99));
+
+    respond(0, blockId(100));
+
+    assertDownloadCompleted();
+    Assert.assertTrue(peer.isSyncFinish());
+  }
+
+  @Test
+  public void testResponseWithoutHelloIsRejected() {
+    peer.setHelloMessageReceive(null);
+
+    P2pException exception = assertRejected(new ChainInventoryMessage(
+        Collections.singletonList(blockId(100)), 0L));
+
+    Assert.assertEquals("hello message not received", exception.getMessage());
   }
 
   @Test
@@ -146,6 +208,7 @@ public class ChainInventoryMsgHandlerTest {
   public void testSingleBlockReplyFromExistingPeerKeepsInventoryFlow() throws Exception {
     // The remote peer still believes it is ahead based on Hello. Our summary now includes
     // newer blocks learned from another connection; replying does not start a remote download.
+    peer.setHelloMessageReceive(helloMessage(50));
     PeerConnection remotePeer = PeerSyncTestSupport.peer(10002);
     remotePeer.setNeedSyncFromPeer(false);
     remotePeer.setNeedSyncFromUs(true);
@@ -190,6 +253,7 @@ public class ChainInventoryMsgHandlerTest {
 
   @Test
   public void testPeerBehindCanStartAnotherDownloadLater() throws Exception {
+    peer.setHelloMessageReceive(helloMessage(50));
     respond(0, blockId(50));
     SyncService service = new SyncService();
     ReflectUtils.setFieldValue(service, "tronNetDelegate", delegate);
@@ -323,14 +387,21 @@ public class ChainInventoryMsgHandlerTest {
   }
 
   private P2pException assertRejected(ChainInventoryMessage message) {
+    return assertRejected(message, TypeEnum.BAD_MESSAGE);
+  }
+
+  private P2pException assertRejected(ChainInventoryMessage message, TypeEnum expectedType) {
     String context = message.toString();
     Pair<Deque<BlockId>, Long> requested = peer.getSyncChainRequested();
+    boolean needSyncFromUs = peer.isNeedSyncFromUs();
+    long blockBothHaveUpdateTime = peer.getBlockBothHaveUpdateTime();
     P2pException exception = Assert.assertThrows(context, P2pException.class,
         () -> handler.processMessage(peer, message));
-    Assert.assertEquals(context, TypeEnum.BAD_MESSAGE, exception.getType());
+    Assert.assertEquals(context, expectedType, exception.getType());
     Assert.assertSame(context, requested, peer.getSyncChainRequested());
     Assert.assertTrue(context, peer.isNeedSyncFromPeer());
-    Assert.assertFalse(context, peer.isNeedSyncFromUs());
+    Assert.assertEquals(context, needSyncFromUs, peer.isNeedSyncFromUs());
+    Assert.assertEquals(context, blockBothHaveUpdateTime, peer.getBlockBothHaveUpdateTime());
     Assert.assertTrue(context, peer.isFetchAble());
     Assert.assertEquals(context, TronState.SYNCING, peer.getTronState());
     Assert.assertEquals(context, 99, peer.getRemainNum());

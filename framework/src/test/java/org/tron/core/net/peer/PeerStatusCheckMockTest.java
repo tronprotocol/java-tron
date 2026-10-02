@@ -11,6 +11,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.tron.core.net.PeerSyncTestSupport.blockId;
+import static org.tron.core.net.PeerSyncTestSupport.helloMessage;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -175,6 +176,7 @@ public class PeerStatusCheckMockTest {
 
   @Test
   public void testCompletedResponseClearsDeadlineWithoutContribution() throws Exception {
+    peer.setHelloMessageReceive(helloMessage(20));
     ChainInventoryMsgHandler handler = new ChainInventoryMsgHandler();
     ReflectUtils.setFieldValue(handler, "tronNetDelegate", delegate);
     ReflectUtils.setFieldValue(handler, "syncService", mock(SyncService.class));
