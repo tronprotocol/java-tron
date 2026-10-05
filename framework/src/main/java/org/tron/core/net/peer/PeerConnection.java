@@ -95,7 +95,8 @@ public class PeerConnection {
   private volatile long blockRcvTime;
 
   /**
-   * Sliding factor of the fetch latency EWMA: each new sample contributes
+   * Sliding factor of the fetch latency Exponentially Weighted Moving Average (EWMA):
+   * each new sample contributes
    * 1 / FETCH_LATENCY_EWMA_FACTOR (alpha = 0.1), balancing smoothing against
    * responsiveness, in the same order as TCP's SRTT gain (1/8, RFC 6298).
    */
@@ -103,7 +104,7 @@ public class PeerConnection {
 
   private volatile long fetchLatency;
 
-  private volatile boolean fetchLatencySeeded;
+  private volatile boolean hasFetchLatencySampled;
 
   @Getter
   @Setter
@@ -207,9 +208,9 @@ public class PeerConnection {
    * @param latencyMillis measured fetch latency in milliseconds
    */
   public void updateFetchLatency(long latencyMillis) {
-    if (!fetchLatencySeeded) {
+    if (!hasFetchLatencySampled) {
       fetchLatency = clampFetchLatency(latencyMillis);
-      fetchLatencySeeded = true;
+      hasFetchLatencySampled = true;
     } else {
       fetchLatency = clampFetchLatency(
           (fetchLatency * (FETCH_LATENCY_EWMA_FACTOR - 1) + latencyMillis)
@@ -223,7 +224,7 @@ public class PeerConnection {
    * (an unknown peer is treated via its transport-level estimate instead of 0).
    */
   public long getFetchLatency() {
-    if (!fetchLatencySeeded) {
+    if (!hasFetchLatencySampled) {
       return channel.getAvgLatency();
     }
     return fetchLatency;
