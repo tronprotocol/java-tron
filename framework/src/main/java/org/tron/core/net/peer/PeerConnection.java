@@ -95,15 +95,11 @@ public class PeerConnection {
   private volatile long blockRcvTime;
 
   /**
-   * EWMA smoothing divisor for the fetch latency estimator: the previous estimate is
-   * weighted (EWMA_DIVISOR - 1) / EWMA_DIVISOR and the new sample 1 / EWMA_DIVISOR,
-   * i.e. alpha = 0.1. This trades off smoothing against responsiveness and sits in the
-   * same order of magnitude as TCP's SRTT gain (1/8, RFC 6298). Under a large
-   * degradation the relative ordering of two peers can flip within 1-2 samples, while
-   * the absolute value converges smoothly (e.g. seeded at 100, ten 500ms samples walk
-   * 140, 176, 208, 237, 263, 286, 307, 326, 343, 358 without ever hitting the clamp).
+   * Sliding factor of the fetch latency EWMA: each new sample contributes
+   * 1 / FETCH_LATENCY_EWMA_FACTOR (alpha = 0.1), balancing smoothing against
+   * responsiveness, in the same order as TCP's SRTT gain (1/8, RFC 6298).
    */
-  private static final int EWMA_DIVISOR = 10;
+  private static final int FETCH_LATENCY_EWMA_FACTOR = 10;
 
   private volatile long fetchLatency;
 
@@ -202,17 +198,11 @@ public class PeerConnection {
   }
 
   /**
-   * Bounded fetch latency estimator with an explicit unsampled state.
-   *
-   * <p>The channel's average latency is never part of the sample sequence; it is only a
-   * read fallback while the estimator is unsampled (see {@link #getFetchLatency()}). The
-   * first measured fetch latency directly replaces the unsampled state (isomorphic to
-   * RFC 6298 SRTT initialization), and subsequent samples are blended with an EWMA of
-   * alpha = 1 / EWMA_DIVISOR = 0.1. With integer division the EWMA has a fixed point, e.g.
-   * (499 * 9 + 500) / 10 = 499, which damps jitter around the saturation bound.
-   *
-   * <p>A single fetch worker reads this value while the channel event loop writes it;
-   * volatile is sufficient for this benign race and no lock should be added.
+   * Updates the fetch latency estimator, which has an explicit unsampled state: the
+   * channel's average latency is only a read fallback and never enters the sample sequence.
+   * The first measured sample directly replaces the placeholder; subsequent samples are
+   * blended with alpha = 1 / FETCH_LATENCY_EWMA_FACTOR. A single fetch worker reads while
+   * the channel event loop writes, so volatile suffices and no lock should be added.
    *
    * @param latencyMillis measured fetch latency in milliseconds
    */
@@ -222,7 +212,8 @@ public class PeerConnection {
       fetchLatencySeeded = true;
     } else {
       fetchLatency = clampFetchLatency(
-          (fetchLatency * (EWMA_DIVISOR - 1) + latencyMillis) / EWMA_DIVISOR);
+          (fetchLatency * (FETCH_LATENCY_EWMA_FACTOR - 1) + latencyMillis)
+              / FETCH_LATENCY_EWMA_FACTOR);
     }
   }
 
