@@ -42,6 +42,14 @@ public class JSONObject {
     return JSON.parseObject(text);
   }
 
+  /**
+   * Parses internally generated outbound JSON with Jackson's default read constraints instead of
+   * the request limits. Use {@link #parseObject(String)} for external input.
+   */
+  public static JSONObject outboundParseObject(String text) {
+    return JSON.outboundParseObject(text);
+  }
+
   public boolean containsKey(String key) {
     return node.has(key);
   }

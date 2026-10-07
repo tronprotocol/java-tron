@@ -32,6 +32,7 @@ import org.tron.core.services.http.RateLimiterServlet;
 public class JsonRpcServlet extends RateLimiterServlet {
 
   private static final ObjectMapper MAPPER = JsonRpcMapper.create();
+  private static final ObjectMapper OUTBOUND_MAPPER = new ObjectMapper();
 
   private enum JsonRpcError {
     PARSE_ERROR(-32700),
@@ -228,7 +229,7 @@ public class JsonRpcServlet extends RateLimiterServlet {
 
       JsonNode responseNode;
       try {
-        responseNode = MAPPER.readTree(responseBytes);
+        responseNode = OUTBOUND_MAPPER.readTree(responseBytes);
       } catch (IOException e) {
         writeJsonRpcError(resp, JsonRpcError.INTERNAL_ERROR, "Internal error", null, true);
         return;
