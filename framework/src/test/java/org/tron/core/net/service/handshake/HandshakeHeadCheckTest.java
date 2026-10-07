@@ -6,13 +6,17 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.google.protobuf.ByteString;
 import java.net.InetSocketAddress;
+import java.util.HashMap;
+import java.util.Map;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
+import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.ChainBaseManager;
@@ -24,8 +28,12 @@ import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.PeerManager;
 import org.tron.core.net.service.effective.EffectiveCheckService;
 import org.tron.core.net.service.relay.RelayService;
+import org.tron.p2p.P2pConfig;
 import org.tron.p2p.P2pService;
+import org.tron.p2p.base.Parameter;
 import org.tron.p2p.connection.Channel;
+import org.tron.p2p.connection.ChannelManager;
+import org.tron.p2p.connection.message.base.P2pDisconnectMessage;
 import org.tron.p2p.discover.Node;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.ReasonCode;
@@ -36,6 +44,7 @@ public class HandshakeHeadCheckTest {
   private ChainBaseManager chain;
   private PeerConnection peer;
   private Channel channel;
+  private P2pService p2p;
   private EffectiveCheckService effectiveCheckService;
   private MockedStatic<TronNetService> netService;
   private MockedStatic<PeerManager> peerManager;
@@ -71,7 +80,7 @@ public class HandshakeHeadCheckTest {
     when(chain.containBlockInMainChain(solid)).thenReturn(true);
     when(chain.containBlockInMainChain(localHead)).thenReturn(true);
 
-    P2pService p2p = mock(P2pService.class);
+    p2p = mock(P2pService.class);
     netService = Mockito.mockStatic(TronNetService.class);
     netService.when(TronNetService::getP2pService).thenReturn(p2p);
     peerManager = Mockito.mockStatic(PeerManager.class);
@@ -245,6 +254,58 @@ public class HandshakeHeadCheckTest {
     service.processHelloMessage(peer, hello);
 
     assertRejected(ReasonCode.BAD_PROTOCOL);
+  }
+
+  @Test
+  public void testInvalidHelloDoesNotCloseDuplicateConnection() {
+    HelloMessage hello = Mockito.spy(hello(localHead));
+    Assert.assertTrue(hello.valid());
+    String nodeId = ByteArray.toHexString(hello.getInstance().getFrom().getNodeId().toByteArray());
+    hello.setHelloMessage(hello.getInstance().toBuilder()
+        .setHeadBlockId(hello.getInstance().getHeadBlockId().toBuilder()
+            .setHash(ByteString.copyFrom(new byte[31])))
+        .build());
+    // A valid endpoint must not bypass rejection of other malformed HELLO fields.
+    Assert.assertTrue(hello.validEndPoint());
+    Assert.assertFalse(hello.valid());
+
+    Channel other = mock(Channel.class);
+    InetSocketAddress address = peer.getInetSocketAddress();
+    InetSocketAddress otherAddress = new InetSocketAddress("127.0.0.2", 18888);
+    when(channel.getInetSocketAddress()).thenReturn(address);
+    when(channel.getNodeId()).thenReturn(nodeId);
+    when(channel.getStartTime()).thenReturn(100L);
+    when(other.getInetSocketAddress()).thenReturn(otherAddress);
+    when(other.getNodeId()).thenReturn(nodeId);
+    when(other.getStartTime()).thenReturn(200L);
+    Mockito.doCallRealMethod().when(p2p).updateNodeId(any(), any());
+    Map<InetSocketAddress, Channel> channels = ChannelManager.getChannels();
+    Map<InetSocketAddress, Channel> savedChannels = new HashMap<>(channels);
+    P2pConfig savedConfig = Parameter.p2pConfig;
+    try {
+      Parameter.p2pConfig = new P2pConfig();
+      channels.clear();
+      channels.put(channel.getInetSocketAddress(), channel);
+      channels.put(otherAddress, other);
+
+      service.processHelloMessage(peer, hello);
+
+      assertRejected(ReasonCode.INCOMPATIBLE_PROTOCOL);
+      verify(hello, never()).getFrom();
+      verify(p2p, never()).updateNodeId(any(), any());
+      verify(channel, never()).setNodeId(any());
+      verify(other, never()).send(any(P2pDisconnectMessage.class));
+      verify(other, never()).close();
+
+      // Prove the fixture would close the other connection if deduplication ran.
+      p2p.updateNodeId(channel, nodeId);
+      verify(other).send(any(P2pDisconnectMessage.class));
+      verify(other).close();
+    } finally {
+      channels.clear();
+      channels.putAll(savedChannels);
+      Parameter.p2pConfig = savedConfig;
+    }
   }
 
   private HelloMessage hello(BlockId head) {

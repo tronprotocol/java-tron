@@ -39,13 +39,6 @@ public class HandshakeService {
       return;
     }
 
-    TronNetService.getP2pService().updateNodeId(peer.getChannel(), msg.getFrom().getHexId());
-    if (peer.isDisconnect()) {
-      logger.info("Duplicate Peer {}", peer.getInetSocketAddress());
-      peer.disconnect(ReasonCode.DUPLICATE_PEER);
-      return;
-    }
-
     if (!msg.valid()) {
       logger.warn("Peer {} invalid hello message parameters, genesisHashLength: {}, "
               + "solidHashLength: {}, headHashLength: {}, address: {}, sig: {}, codeVersion: {}, "
@@ -59,6 +52,13 @@ public class HandshakeService {
           msg.getInstance().getCodeVersion().size(),
           msg.validEndPoint());
       peer.disconnect(ReasonCode.INCOMPATIBLE_PROTOCOL);
+      return;
+    }
+
+    TronNetService.getP2pService().updateNodeId(peer.getChannel(), msg.getFrom().getHexId());
+    if (peer.isDisconnect()) {
+      logger.info("Duplicate Peer {}", peer.getInetSocketAddress());
+      peer.disconnect(ReasonCode.DUPLICATE_PEER);
       return;
     }
 

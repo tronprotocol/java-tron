@@ -21,6 +21,7 @@ import org.junit.Test;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.tron.p2p.P2pConfig;
+import org.tron.p2p.base.Constant;
 import org.tron.p2p.base.Parameter;
 import org.tron.p2p.utils.NetUtil;
 import org.tron.protos.Discover.Endpoint;
@@ -53,6 +54,26 @@ public class HelloMessageTest {
         Assert.assertTrue(message.validEndPoint());
         Assert.assertTrue(message.valid());
         verify(message, never()).getFrom();
+      }
+    }
+  }
+
+  @Test(timeout = 5000)
+  public void testNodeIdLengthBoundaries() throws Exception {
+    for (int length : new int[] {0, 63, 64, 65}) {
+      HelloMessage message = hello("192.0.2.1", "", 18888);
+      Assert.assertTrue(message.valid());
+      message.setHelloMessage(message.getInstance().toBuilder()
+          .setFrom(message.getInstance().getFrom().toBuilder()
+              .setNodeId(ByteString.copyFrom(new byte[length])))
+          .build());
+      if (length == 64) {
+        HelloMessage checked = spy(message);
+        Assert.assertTrue(checked.validEndPoint());
+        Assert.assertTrue(checked.valid());
+        verify(checked, never()).getFrom();
+      } else {
+        assertRejectedBeforeNodeConstruction(message);
       }
     }
   }
@@ -172,7 +193,7 @@ public class HelloMessageTest {
         .setHash(ByteString.copyFrom(new byte[32])).build();
     Endpoint endpoint = Endpoint.newBuilder().setAddress(ByteString.copyFromUtf8(ipv4))
         .setAddressIpv6(ByteString.copyFromUtf8(ipv6))
-        .setNodeId(ByteString.copyFrom(new byte[64])).setPort(port).build();
+        .setNodeId(ByteString.copyFrom(new byte[Constant.NODE_ID_LEN])).setPort(port).build();
     return new HelloMessage(Protocol.HelloMessage.newBuilder().setFrom(endpoint)
         .setGenesisBlockId(block).setSolidBlockId(block).setHeadBlockId(block)
         .setTimestamp(123).build().toByteArray());

@@ -363,6 +363,15 @@ public class HandShakeServiceTest {
     assertInvalidHelloLog(32, 32, 32, endpoint("", "2001:db8::1", 18888), 201, true);
   }
 
+  @Test(timeout = 5000)
+  public void testInvalidHelloLogsNodeIdLengths() throws Exception {
+    for (int length : new int[] {0, 63, 65}) {
+      Endpoint invalidEndpoint = endpoint("127.0.0.1", "", 18888).toBuilder()
+          .setNodeId(ByteString.copyFrom(new byte[length])).build();
+      assertInvalidHelloLog(32, 32, 32, invalidEndpoint, 0, false);
+    }
+  }
+
   private void assertInvalidHelloLog(int genesisLength, int solidLength, int headLength,
       Endpoint endpoint, int signatureLength, boolean expectedEndpointValid) throws Exception {
     Protocol.HelloMessage proto = Protocol.HelloMessage.newBuilder()
@@ -373,7 +382,9 @@ public class HandShakeServiceTest {
         .setSignature(ByteString.copyFrom(new byte[signatureLength]))
         .build();
     Assert.assertTrue(proto.getSerializedSize() + 1 < Parameter.MAX_MESSAGE_LENGTH);
-    HelloMessage hello = new HelloMessage(proto.toByteArray());
+    HelloMessage hello = Mockito.spy(new HelloMessage(proto.toByteArray()));
+    Mockito.doThrow(new AssertionError("Invalid HELLO reached Node construction"))
+        .when(hello).getFrom();
     Assert.assertEquals(expectedEndpointValid, hello.validEndPoint());
     Assert.assertFalse(hello.valid());
 
@@ -405,6 +416,8 @@ public class HandShakeServiceTest {
 
       new HandshakeService().processHelloMessage(testPeer, hello);
 
+      verify(hello, never()).getFrom();
+      Mockito.verifyNoInteractions(p2p);
       verify(testPeer).disconnect(ReasonCode.INCOMPATIBLE_PROTOCOL);
       verify(testPeer, never()).setHelloMessageReceive(any());
       verify(testPeer, never()).onConnect();

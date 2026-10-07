@@ -11,6 +11,7 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.net.message.MessageTypes;
 import org.tron.core.net.message.TronMessage;
+import org.tron.p2p.base.Constant;
 import org.tron.p2p.discover.Node;
 import org.tron.p2p.utils.NetUtil;
 import org.tron.program.Version;
@@ -203,7 +204,8 @@ public class HelloMessage extends TronMessage {
     Endpoint from = this.helloMessage.getFrom();
     ByteString ipv4 = from.getAddress();
     ByteString ipv6 = from.getAddressIpv6();
-    if (from.getPort() <= 0 || from.getPort() > 0xFFFF
+    if (from.getNodeId().size() != Constant.NODE_ID_LEN
+        || from.getPort() <= 0 || from.getPort() > 0xFFFF
         || ipv4.size() > MAX_BYTE_SIZE || ipv6.size() > MAX_BYTE_SIZE) {
       return false;
     }
