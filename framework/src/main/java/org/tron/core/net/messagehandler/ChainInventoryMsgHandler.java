@@ -154,12 +154,15 @@ public class ChainInventoryMsgHandler implements TronMsgHandler {
       }
     }
 
-    if (blockIds.size() == 1) {
-      long lastNum = blockIds.get(0).getNum();
+    if (msg.getRemainNum() == 0) {
+      long lastNum = blockIds.get(blockIds.size() - 1).getNum();
       long helloHeadNum = hello.getHeadBlockId().getNum();
       if (lastNum < helloHeadNum) {
+        // In rare cases, a fork rollback can put an honest peer below its HELLO head.
+        // Accept the transient SYNC_FAIL disconnect; the peer can reconnect with a fresh
+        // HELLO after the default one-minute cooldown.
         throw new P2pException(TypeEnum.SYNC_FAILED,
-            "Single-block response height " + lastNum + " is below hello head " + helloHeadNum);
+            "lastNum " + lastNum + " (remainNum=0) is below hello head " + helloHeadNum);
       }
     }
   }
