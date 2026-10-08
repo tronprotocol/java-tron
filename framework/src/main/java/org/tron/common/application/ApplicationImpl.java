@@ -66,7 +66,8 @@ public class ApplicationImpl implements Application {
     if (solidityNode != null) {
       solidityNode.close();
     }
-    // producers are stopped; stop the json-rpc filter consumer before the DB closes
+    // Stop the json-rpc filter consumer explicitly, once the producers above are stopped,
+    // rather than in Spring's destroy phase.
     tronJsonRpc.close();
     dbManager.close();
     shutdown.countDown();
