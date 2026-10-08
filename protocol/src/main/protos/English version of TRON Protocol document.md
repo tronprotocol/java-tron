@@ -666,24 +666,28 @@ Input, transaction and head block all require signature.
 
 + The message structure of UDP.
 
+  The following UDP discovery messages are defined in [p2p/src/main/proto/Discover.proto](../../../../p2p/src/main/proto/Discover.proto).
+
   `Endpoint`: the storage structure of nodes' information.  
-  message`Endpoint` contains 3 parameters:  
-  `address`: the address of nodes.  
+  message`Endpoint` contains 4 parameters:
+  `address`: the node's IPv4 address.
   `port`: the port number.  
   `nodeId`:the ID of nodes.
+  `addressIpv6`: the node's IPv6 address.
    
    
       message Endpoint {
          bytes address = 1;
          int32 port = 2;
          bytes nodeId = 3;
+         bytes addressIpv6 = 4;
        }
    
-   `PingMessage`: the message sent from one node to another in the connecting process.  
+   `PingMessage`: a UDP request for node discovery and liveness checks.
    message`PingMessage` contains 4 parameters:  
    `from`: which node does the message send from.  
    `to`: which node will the message send to.  
-   `version`: the version of the Internet.  
+   `version`: the sending node's network identifier (`networkId`).
    `timestamp`: the timestamp of message.
    
        message PingMessage {
@@ -693,10 +697,10 @@ Input, transaction and head block all require signature.
          int64 timestamp = 4;
         }
    
-   `PongMessage`: the message implies that nodes are connected.  
+   `PongMessage`: a response to a UDP node discovery and liveness probe.
    message`PongMessage` contains 3 parameters:  
    `from`: which node does the message send from.  
-   `echo`:  
+   `echo`: the responding node's network identifier (`networkId`).
    `timestamp`: the timestamp of message.
 
         message PongMessage {
@@ -705,10 +709,10 @@ Input, transaction and head block all require signature.
           int64 timestamp = 3;
          }
    
-   `FindNeighbours`: the message sent from one node to find another one.  
+   `FindNeighbours`: a request for nodes closest to `targetId`.
    message`FindNeighbours` contains 3 parameters:  
    `from`: which node does the message send from.  
-   `targetId`: the ID of targeted node.  
+   `targetId`: the target node ID used to find nearby nodes.
    `timestamp`: the timestamp of message. 
     
         message FindNeighbours {
@@ -717,11 +721,11 @@ Input, transaction and head block all require signature.
           int64 timestamp = 3;
          }
   
-   `FindNeighbour`: the message replied by the neighbour node.  
+   `Neighbours`: a response to `FindNeighbours` containing nodes closest to `targetId`.
     message`Neighbours` contains 3 parameters:  
     `from`: which node does the message send from.    
-    `neighbours`: the neighbour node.  
-    `timestamp`: the timestamp of message.
+    `neighbours`: the returned list of nodes.
+    `timestamp`: the timestamp copied from the corresponding `FindNeighbours` request.
 
         message Neighbours {
           Endpoint from = 1;
