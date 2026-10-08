@@ -823,10 +823,7 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
         energyUsageTotal, wallet.getEnergyFee(blockCapsule.getTimeStamp()), wallet);
   }
 
-  private TransactionResult getTransactionByBlockAndIndex(Block block, String index)
-      throws JsonRpcInvalidParamsException {
-    int txIndex = parseTxIndex(index);
-
+  private TransactionResult getTransactionByBlockAndIndex(Block block, int txIndex) {
     if (txIndex < 0 || txIndex >= block.getTransactionsCount()) {
       return null;
     }
@@ -842,24 +839,26 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
   @Override
   public TransactionResult getTransactionByBlockHashAndIndex(String blockHash, String index)
       throws JsonRpcInvalidParamsException {
+    int txIndex = parseTxIndex(index);
     final Block block = getBlockByJsonHash(blockHash);
 
     if (block == null) {
       return null;
     }
 
-    return getTransactionByBlockAndIndex(block, index);
+    return getTransactionByBlockAndIndex(block, txIndex);
   }
 
   @Override
   public TransactionResult getTransactionByBlockNumberAndIndex(String blockNumOrTag, String index)
       throws JsonRpcInvalidParamsException, JsonRpcPrunedHistoryException {
+    int txIndex = parseTxIndex(index);
     Block block = getBlockByNumOrTag(blockNumOrTag);
     if (block == null) {
       return null;
     }
 
-    return getTransactionByBlockAndIndex(block, index);
+    return getTransactionByBlockAndIndex(block, txIndex);
   }
 
   /**

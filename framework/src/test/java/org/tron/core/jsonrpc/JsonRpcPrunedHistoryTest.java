@@ -34,6 +34,8 @@ public class JsonRpcPrunedHistoryTest {
   private static final long IN_RECEIPT_GAP_NUM = 112L;
   private static final String IN_RECEIPT_GAP_HEX = "0x70";
   private static final String LOWEST_RECEIPT_BLOCK_HEX = "0x96";
+  private static final String INVALID_INDEX = "1a";
+  private static final String UNKNOWN_HASH = "0x" + Strings.repeat("ab", 32);
 
   private TronJsonRpcImpl rpc;
 
@@ -166,6 +168,30 @@ public class JsonRpcPrunedHistoryTest {
         () -> liteRpc.getTransactionByBlockNumberAndIndex(BELOW_CUTOFF_HEX, "0x0"));
     Assert.assertEquals(PRUNED_MESSAGE, e.getMessage());
     Assert.assertNull(e.getData());
+  }
+
+  @Test
+  public void testGetTransactionByBlockNumberAndIndexInvalidIndexBelowCutoff() {
+    TronJsonRpcImpl liteRpc = newRpc(true);
+
+    assertThrows(JsonRpcInvalidParamsException.class,
+        () -> liteRpc.getTransactionByBlockNumberAndIndex(BELOW_CUTOFF_HEX, INVALID_INDEX));
+  }
+
+  @Test
+  public void testGetTransactionByBlockNumberAndIndexInvalidIndexMissingBlock() {
+    TronJsonRpcImpl liteRpc = newRpc(true);
+
+    assertThrows(JsonRpcInvalidParamsException.class,
+        () -> liteRpc.getTransactionByBlockNumberAndIndex(AT_CUTOFF_HEX, INVALID_INDEX));
+  }
+
+  @Test
+  public void testGetTransactionByBlockHashAndIndexInvalidIndexMissingBlock() {
+    TronJsonRpcImpl liteRpc = newRpc(true);
+
+    assertThrows(JsonRpcInvalidParamsException.class,
+        () -> liteRpc.getTransactionByBlockHashAndIndex(UNKNOWN_HASH, INVALID_INDEX));
   }
 
   @Test
