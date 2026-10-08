@@ -1,5 +1,6 @@
 package org.tron.core.jsonrpc;
 
+import com.google.common.util.concurrent.Uninterruptibles;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
@@ -15,6 +16,7 @@ import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.tron.common.TestConstants;
 import org.tron.common.application.TronApplicationContext;
@@ -26,6 +28,7 @@ import org.tron.common.utils.ReflectUtils;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.services.jsonrpc.TronJsonRpcImpl;
+import org.tron.core.services.jsonrpc.filters.LogFilterAndResult;
 
 /**
  * Lifecycle of the filter consumer owned by TronJsonRpcImpl. Only the context-destruction
@@ -232,5 +235,49 @@ public class FilterPipelineLifecycleTest {
     } finally {
       release.countDown();
     }
+  }
+
+  /**
+   * Interrupted closer with an over-threshold filter map: the in-flight capsule is handed
+   * to logsFilterPool, so the pool must outlive the consumer.
+   */
+  @Test
+  public void interruptedCloserKeepsPoolUntilConsumerExits() throws Exception {
+    startStandalone(true);
+    tronJsonRpc.setFilterParallelThreshold(1);
+    LogFilterAndResult expired = Mockito.mock(LogFilterAndResult.class);
+    Mockito.when(expired.isExpire()).thenReturn(true);
+    Map<String, LogFilterAndResult> filters = tronJsonRpc.getEventFilter2ResultFull();
+    filters.put("0x1", expired);
+    filters.put("0x2", expired);
+
+    CountDownLatch entered = new CountDownLatch(1);
+    CountDownLatch release = new CountDownLatch(1);
+    queue.offer(new LogsFilterCapsule(150L, "0xblocked", null,
+        Collections.emptyList(), false, false) {
+      @Override
+      public boolean isSolidified() {
+        entered.countDown();
+        Uninterruptibles.awaitUninterruptibly(release);
+        return false;
+      }
+    });
+    Assert.assertTrue("consumer did not pick up the capsule",
+        entered.await(10, TimeUnit.SECONDS));
+
+    Thread closer = new Thread(tronJsonRpc::close, "test-closer");
+    closer.start();
+    try {
+      await(filterEs()::isShutdown, "close() did not start stopping the consumer");
+      closer.interrupt();
+      // without the fix close() returns here and shuts the pool before the release
+      closer.join(500);
+    } finally {
+      release.countDown();
+    }
+    closer.join(GRACEFUL_BOUND_MS);
+    Assert.assertFalse("interrupted close() did not return", closer.isAlive());
+    Assert.assertTrue("consumer still alive", filterEs().awaitTermination(10, TimeUnit.SECONDS));
+    Assert.assertTrue("over-threshold capsule was rejected by a closed pool", filters.isEmpty());
   }
 }

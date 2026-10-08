@@ -20,6 +20,7 @@ import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.triggerCallContract;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.GeneratedMessageV3;
 import java.io.Closeable;
@@ -1651,8 +1652,12 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
       return;
     }
     // The consumer loop submits to logsFilterPool (over-threshold path), so it must
-    // terminate before the pool shuts down.
+    // terminate before the pool shuts down, even if the closing thread is interrupted.
     ExecutorServiceManager.shutdownAndAwaitTermination(filterEs, filterEsName);
+    if (filterEs != null && !filterEs.isTerminated()
+        && !Uninterruptibles.awaitTerminationUninterruptibly(filterEs, 2, TimeUnit.SECONDS)) {
+      logger.warn("Pool {} did not terminate before logs-filter-pool shutdown", filterEsName);
+    }
     ExecutorServiceManager.shutdownAndAwaitTermination(logsFilterPool, "logs-filter-pool");
     logElementCache.invalidateAll();
     blockHashCache.invalidateAll();
