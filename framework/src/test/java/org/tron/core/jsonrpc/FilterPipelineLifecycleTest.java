@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -47,9 +48,11 @@ public class FilterPipelineLifecycleTest {
 
   private final FilterCapsuleQueue queue = new FilterCapsuleQueue();
   private TronJsonRpcImpl tronJsonRpc;
+  private Set<Thread> threadsBeforeStart;
   private TronApplicationContext context;
 
   private void startStandalone(boolean filterEnabled) {
+    threadsBeforeStart = Thread.getAllStackTraces().keySet();
     CommonParameter.getInstance().setJsonRpcHttpFullNodeEnable(filterEnabled);
     CommonParameter.getInstance().setJsonRpcHttpSolidityNodeEnable(false);
     tronJsonRpc = new TronJsonRpcImpl(null, null, null);
@@ -76,14 +79,16 @@ public class FilterPipelineLifecycleTest {
     return ReflectUtils.getFieldValue(tronJsonRpc, "filterEs");
   }
 
-  private static Optional<Thread> filterThread() {
+  // only a thread started by this instance, not a consumer leaked by another test
+  private Optional<Thread> filterThread() {
     return Thread.getAllStackTraces().entrySet().stream()
-        .filter(e -> FILTER_THREAD.equals(e.getKey().getName()) && Arrays.stream(e.getValue())
+        .filter(e -> !threadsBeforeStart.contains(e.getKey())
+            && FILTER_THREAD.equals(e.getKey().getName()) && Arrays.stream(e.getValue())
             .anyMatch(frame -> LOOP_METHOD.equals(frame.getMethodName())))
         .map(Map.Entry::getKey).findFirst();
   }
 
-  private static boolean consumerRunning() {
+  private boolean consumerRunning() {
     return filterThread().isPresent();
   }
 
@@ -155,7 +160,7 @@ public class FilterPipelineLifecycleTest {
   @Test
   public void emptyQueueStopsWithoutForcedCancellation() throws Exception {
     startStandalone(true);
-    await(FilterPipelineLifecycleTest::consumerRunning, "consumer did not start");
+    await(this::consumerRunning, "consumer did not start");
 
     long elapsedMs = timedClose(tronJsonRpc);
     Assert.assertTrue("graceful stop took " + elapsedMs + "ms", elapsedMs < GRACEFUL_BOUND_MS);
@@ -170,7 +175,7 @@ public class FilterPipelineLifecycleTest {
   @Test
   public void interruptDuringPollExitsLoop() throws Exception {
     startStandalone(true);
-    await(FilterPipelineLifecycleTest::consumerRunning, "consumer did not start");
+    await(this::consumerRunning, "consumer did not start");
 
     filterThread().get().interrupt();
     await(() -> !consumerRunning(), "loop kept running after interrupt");
