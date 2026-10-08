@@ -264,6 +264,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   private static final byte[] ALLOW_ML_DSA_44 = "ALLOW_ML_DSA_44".getBytes();
 
+  private static final byte[] ALLOW_OPTIMIZE_TVM_STORAGE = "ALLOW_OPTIMIZE_TVM_STORAGE".getBytes();
+
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
     super(dbName);
@@ -3145,6 +3147,21 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       default:
         return false;
     }
+  }
+
+  public long getAllowOptimizeTvmStorage() {
+    return Optional.ofNullable(getUnchecked(ALLOW_OPTIMIZE_TVM_STORAGE))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElse(0L);
+  }
+
+  public void saveAllowOptimizeTvmStorage(long value) {
+    this.put(ALLOW_OPTIMIZE_TVM_STORAGE, new BytesCapsule(ByteArray.fromLong(value)));
+  }
+
+  public boolean allowOptimizeTvmStorage() {
+    return getAllowOptimizeTvmStorage() == 1L;
   }
 
   private static class DynamicResourceProperties {
