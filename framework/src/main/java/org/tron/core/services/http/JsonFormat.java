@@ -43,6 +43,7 @@ import com.google.protobuf.UnknownFieldSet;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.CharBuffer;
+import java.nio.charset.StandardCharsets;
 import java.text.CharacterIterator;
 import java.text.StringCharacterIterator;
 import java.util.Iterator;
@@ -929,7 +930,8 @@ public class JsonFormat {
    * <ul> <li>The following characters are escaped by prefixing them with a '\' :
    * \b,\f,\n,\r,\t,\,"</li> <li>Other control characters in the range 0x0000-0x001F are escaped
    * using the \\uXXXX notation</li> <li>UTF-16 surrogate pairs are encoded using the \\uXXXX\\uXXXX
-   * notation</li> <li>any other character is printed as-is</li> </ul>
+   * notation; isolated low surrogates are replaced with '?' as in the legacy UTF-8 writer</li>
+   * <li>any other character is printed as-is</li> </ul>
    */
   static String escapeText(String input) {
     StringBuilder builder = new StringBuilder(input.length());
@@ -961,6 +963,8 @@ public class JsonFormat {
           // Check for other control characters
           if (c >= 0x0000 && c <= 0x001F) {
             appendEscapedUnicode(builder, c);
+          } else if (Character.isLowSurrogate(c)) {
+            builder.append(replaceMalformedSurrogates(String.valueOf(c)));
           } else if (Character.isHighSurrogate(c)) {
             // Encode the surrogate pair using 2 six-character sequence (\\uXXXX\\uXXXX)
             appendEscapedUnicode(builder, c);
@@ -1046,7 +1050,8 @@ public class JsonFormat {
               }
               break;
             default:
-              throw new InvalidEscapeSequence("Invalid escape sequence: '\\" + c + "'");
+              throw new InvalidEscapeSequence(
+                  replaceMalformedSurrogates("Invalid escape sequence: '\\" + c + "'"));
           }
         } else {
           throw new InvalidEscapeSequence("Invalid escape sequence: '\\' at end of string.");
@@ -1057,6 +1062,14 @@ public class JsonFormat {
     }
 
     return builder.toString();
+  }
+
+  private static String replaceMalformedSurrogates(String value) {
+    if (value == null) {
+      return null;
+    }
+    // Match the legacy UTF-8 OutputStreamWriter's replacement of malformed surrogates.
+    return new String(value.getBytes(StandardCharsets.UTF_8), StandardCharsets.UTF_8);
   }
 
   /**
@@ -1719,7 +1732,8 @@ public class JsonFormat {
      */
     public ParseException parseException(String description) {
       // Note: People generally prefer one-based line and column numbers.
-      return new ParseException((line + 1) + ":" + (column + 1) + ": " + description);
+      return new ParseException((line + 1) + ":" + (column + 1) + ": "
+          + replaceMalformedSurrogates(description));
     }
 
     /**
@@ -1729,7 +1743,7 @@ public class JsonFormat {
     public ParseException parseExceptionPreviousToken(String description) {
       // Note: People generally prefer one-based line and column numbers.
       return new ParseException((previousLine + 1) + ":" + (previousColumn + 1) + ": "
-          + description);
+          + replaceMalformedSurrogates(description));
     }
 
     /**
