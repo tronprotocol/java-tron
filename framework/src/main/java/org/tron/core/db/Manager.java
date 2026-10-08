@@ -1831,7 +1831,8 @@ public class Manager {
   private boolean isMultiSignTransaction(Transaction transaction) {
     Contract contract = transaction.getRawData().getContract(0);
     switch (contract.getType()) {
-      case AccountPermissionUpdateContract: {
+      case AccountPermissionUpdateContract:
+      case WitnessCreateContract: {
         return true;
       }
       default:
