@@ -638,7 +638,7 @@ public class JsonRpcApiUtil {
       return wallet.getHeadBlockNum();
     }
     if (EARLIEST_STR.equalsIgnoreCase(tag)) {
-      return earliestAvailableBlock(wallet);
+      return resolveEarliestBlockNum(wallet);
     }
     if (FINALIZED_STR.equalsIgnoreCase(tag)) {
       return wallet.getSolidBlockNum();
@@ -708,7 +708,7 @@ public class JsonRpcApiUtil {
    * lowest receipt block when receipts are persisted, otherwise the lowest block (receipt endpoints
    * answer 4444 on such a node regardless of this value). On a FullNode it is genesis.
    */
-  public static long earliestAvailableBlock(Wallet wallet) {
+  public static long resolveEarliestBlockNum(Wallet wallet) {
     if (!wallet.isLiteNode()) {
       return 0;
     }
@@ -721,7 +721,7 @@ public class JsonRpcApiUtil {
    * Rejects a query for a block below the LiteNode pruning cutoff with error code 4444.
    * Raw primitive — no genesis exemption; callers own that semantics.
    */
-  public static void checkPrunedHistory(long blockNum, Wallet wallet)
+  public static void checkPrunedBlockHistory(long blockNum, Wallet wallet)
       throws JsonRpcPrunedHistoryException {
     if (wallet.isLiteNode() && blockNum < wallet.getLowestBlockNum()) {
       throw new JsonRpcPrunedHistoryException(PRUNED_HISTORY_ERROR);
@@ -729,7 +729,7 @@ public class JsonRpcApiUtil {
   }
 
   /**
-   * Receipt form of {@link #checkPrunedHistory(long, Wallet)} for endpoints that read
+   * Receipt form of {@link #checkPrunedBlockHistory(long, Wallet)} for endpoints that read
    * receipts or logs; their lower bound is the lowest receipt block. Same raw-primitive
    * contract. Receipt persistence is a per-node switch independent of node type, so a node
    * that never persists receipts is rejected before the LiteNode gate.

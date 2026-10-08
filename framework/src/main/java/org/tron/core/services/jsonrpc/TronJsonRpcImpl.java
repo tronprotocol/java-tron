@@ -414,7 +414,7 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
     // history it cannot serve. Genesis is exempt: a snapshot copies block 0 explicitly, and
     // lowestBlockNum is computed from block 1 upwards, so block 0 is always retained.
     if (blockNum > 0) {
-      JsonRpcApiUtil.checkPrunedHistory(blockNum, wallet);
+      JsonRpcApiUtil.checkPrunedBlockHistory(blockNum, wallet);
     }
     return wallet.getBlockByNum(blockNum);
   }
