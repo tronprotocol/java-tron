@@ -409,6 +409,55 @@ public class JsonTest {
   }
 
   @Test
+  public void testOutboundParseObjectPreservesCompatibility() {
+    for (String text : Arrays.asList(null, "", " \n\t", "null", "/* comment */ null")) {
+      assertNull(JSONObject.outboundParseObject(text));
+    }
+    for (String text : Arrays.asList(
+        "{unquoted:'value', trailing:1,}",
+        "{a:+1,b:-2,c:.3,d:-.4,e:+.5,f:+6.,g:007}",
+        "{/* comment */a:'line1\n\tline2'} // trailing comment",
+        "{amount:1,amount:2,decimal:0.12345678901234567890123456789}",
+        "{large:9223372036854775808,missing:null,array:[{nested:true},false]}")) {
+      assertEquals(JSONObject.parseObject(text).toJSONString(),
+          JSONObject.outboundParseObject(text).toJSONString());
+    }
+    assertEquals(new BigDecimal("0.12345678901234567890123456789"),
+        JSONObject.outboundParseObject("{value:0.12345678901234567890123456789}")
+            .getBigDecimal("value"));
+  }
+
+  @Test
+  public void testOutboundParseObjectPreservesParseErrors() {
+    for (String text : Arrays.asList("[]", "1", "{a:abc}", "{} {}", "NULL", "{a:NaN}")) {
+      JSONException expected = assertThrows(JSONException.class,
+          () -> JSONObject.parseObject(text));
+      JSONException actual = assertThrows(JSONException.class,
+          () -> JSONObject.outboundParseObject(text));
+      assertEquals(expected.getMessage(), actual.getMessage());
+    }
+  }
+
+  @Test
+  public void testOutboundParseObjectPreservesArray() {
+    String text = "{\"values\":[0,1,2]}";
+    JSONObject parsed = JSONObject.outboundParseObject(text);
+    JSONArray values = parsed.getJSONArray("values");
+    assertEquals(3, values.size());
+    assertEquals(Integer.valueOf(0), values.get(0));
+    assertEquals(Integer.valueOf(2), values.get(2));
+    assertEquals(text, parsed.toJSONString());
+  }
+
+  @Test
+  public void testOutboundParseObjectPreservesNestedObjects() {
+    String text = "{\"outer\":{\"inner\":{\"value\":1}}}";
+    JSONObject parsed = JSONObject.outboundParseObject(text);
+    assertEquals(1, parsed.getJSONObject("outer").getJSONObject("inner").getIntValue("value"));
+    assertEquals(text, parsed.toJSONString());
+  }
+
+  @Test
   public void testParseObjectRejectsOverDepth() {
     StringBuilder open = new StringBuilder();
     StringBuilder close = new StringBuilder();
