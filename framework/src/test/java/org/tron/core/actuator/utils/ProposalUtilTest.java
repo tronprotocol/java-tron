@@ -69,6 +69,8 @@ public class ProposalUtilTest extends BaseTest {
 
     long code = 32;
     Assert.assertEquals(ProposalType.ALLOW_TVM_SOLIDITY_059, ProposalType.getEnum(code));
+    Assert.assertEquals(ProposalType.ALLOW_OPTIMIZE_TVM_STORAGE, ProposalType.getEnum(99));
+    Assert.assertEquals(ProposalType.ALLOW_STRICT_ECDSA_VALIDATION, ProposalType.getEnum(100));
 
   }
 
@@ -754,6 +756,11 @@ public class ProposalUtilTest extends BaseTest {
         code, 1);
 
     ContractValidateException thrown = assertThrows(ContractValidateException.class, proposeOne);
+    assertEquals("Bad chain parameter id [ALLOW_STRICT_ECDSA_VALIDATION]",
+        thrown.getMessage());
+
+    activateFork(ForkBlockVersionEnum.VERSION_4_8_2_3);
+    thrown = assertThrows(ContractValidateException.class, proposeOne);
     assertEquals("Bad chain parameter id [ALLOW_STRICT_ECDSA_VALIDATION]",
         thrown.getMessage());
 

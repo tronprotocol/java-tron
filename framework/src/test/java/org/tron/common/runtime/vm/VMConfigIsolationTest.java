@@ -74,13 +74,16 @@ public class VMConfigIsolationTest {
   }
 
   @Test
-  public void testSnapshotGlobalPreservesStrictEcdsaValidation() {
+  public void testSnapshotGlobalPreservesGovernanceFlags() {
+    VMConfig.initAllowOptimizeTvmStorage(1);
     VMConfig.initAllowStrictEcdsaValidation(1);
     VMConfig.Snapshot snapshot = snapshotGlobal();
 
+    VMConfig.initAllowOptimizeTvmStorage(0);
     VMConfig.initAllowStrictEcdsaValidation(0);
     VMConfig.setGlobalSnapshot(snapshot);
 
+    assertTrue(VMConfig.allowOptimizeTvmStorage());
     assertTrue(VMConfig.allowStrictEcdsaValidation());
   }
 
@@ -114,6 +117,7 @@ public class VMConfigIsolationTest {
     snapshot.allowTvmSelfdestructRestriction = VMConfig.allowTvmSelfdestructRestriction();
     snapshot.allowTvmOsaka = VMConfig.allowTvmOsaka();
     snapshot.allowHardenResourceCalculation = VMConfig.allowHardenResourceCalculation();
+    snapshot.allowOptimizeTvmStorage = VMConfig.allowOptimizeTvmStorage();
     snapshot.allowStrictEcdsaValidation = VMConfig.allowStrictEcdsaValidation();
     return snapshot;
   }

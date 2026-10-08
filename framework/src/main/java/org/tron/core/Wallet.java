@@ -1532,6 +1532,11 @@ public class Wallet {
         .build());
 
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAllowOptimizeTvmStorage")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowOptimizeTvmStorage())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
         .setKey("getAllowStrictEcdsaValidation")
         .setValue(dbManager.getDynamicPropertiesStore().getAllowStrictEcdsaValidation())
         .build());
