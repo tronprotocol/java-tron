@@ -154,6 +154,8 @@ DB backfill bloom rebuilds missing historical SectionBloom indexes from transact
 
 ### Prerequisites and behavior
 
+- Use a database from a fully synchronized node that has been running v4.8.1 or later with unconditional SectionBloom generation for a sustained period, or a recent database snapshot produced by such a node. Sections containing pre-upgrade indexing gaps must already be outside the checkpoint replay range.
+- An old database immediately after upgrade, while affected sections remain in the checkpoint replay range, is outside the supported scope. The command does not inspect or update checkpoints; replay on the next node start can overwrite backfilled bits in overlapping records. Waiting with the node stopped does not advance checkpoints.
 - Stop the node and any other process using the database before running the command.
 - The database directory must contain the `properties` and `transactionRetStore` databases. `transactionRetStore` must contain at least one non-zero block.
 - Ensure `storage.transHistory.switch` was enabled while the historical blocks were processed. Only blocks whose transaction results are still present in `transactionRetStore` can be backfilled; this tool cannot recover missing transaction results.
@@ -162,7 +164,7 @@ DB backfill bloom rebuilds missing historical SectionBloom indexes from transact
 - The command creates or updates the `section-bloom` database in the specified database directory.
 - An existing `section-bloom` directory uses its own engine. A new one inherits the engine of `transactionRetStore`. Missing `engine.properties` is treated as LevelDB for compatibility with older databases.
 - On ARM64, only RocksDB is supported. LevelDB is rejected before any database is opened or created.
-- The operation is idempotent. If it is interrupted, safely rerun the same block range. Existing SectionBloom bits are preserved, and unchanged index records are not rewritten. Do not run multiple backfill processes concurrently.
+- Under these prerequisites, the operation is idempotent. If it is interrupted, safely rerun the same block range. Existing SectionBloom bits are preserved, and unchanged index records are not rewritten. Do not run multiple backfill processes concurrently.
 
 ### Available parameters
 
