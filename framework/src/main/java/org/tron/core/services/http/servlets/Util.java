@@ -29,6 +29,7 @@ import org.bouncycastle.util.encoders.DecoderException;
 import org.bouncycastle.util.encoders.Hex;
 import org.eclipse.jetty.http.HttpMethod;
 import org.eclipse.jetty.http.MimeTypes;
+import org.eclipse.jetty.server.handler.ContextHandler;
 import org.eclipse.jetty.util.MultiMap;
 import org.eclipse.jetty.util.StringUtil;
 import org.eclipse.jetty.util.UrlEncoded;
@@ -756,13 +757,14 @@ public class Util {
     }
   }
 
-  public static String getJsonString(String str) {
+  public static String getJsonString(String str) throws ParseException {
     if (StringUtils.isEmpty(str)) {
       return EMPTY;
     }
     if (isValidJson(str)) {
       return str;
     }
+    checkFormPairs(str);
     MultiMap<String> params = new MultiMap<>();
     UrlEncoded.decodeUtf8To(str, params);
     JSONObject json = new JSONObject();
@@ -776,6 +778,16 @@ public class Util {
       }
     }
     return json.toString();
+  }
+
+  private static void checkFormPairs(String form) throws ParseException {
+    int max = ContextHandler.DEFAULT_MAX_FORM_KEYS;
+    int pairs = 1;
+    for (int i = 0; i < form.length(); i++) {
+      if (form.charAt(i) == '&' && ++pairs > max) {
+        throw new ParseException("form has too many parameters, the limit is " + max);
+      }
+    }
   }
 
   public static boolean isValidJson(String json) {
