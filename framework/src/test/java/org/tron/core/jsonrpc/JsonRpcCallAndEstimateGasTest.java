@@ -54,7 +54,8 @@ public class JsonRpcCallAndEstimateGasTest {
 
   @Test
   public void testNullCallArgumentsRejectedAsInvalidParams() throws Exception {
-    mockRpc = new TronJsonRpcImpl(mock(NodeInfoService.class), mock(Wallet.class));
+    mockRpc = new TronJsonRpcImpl(
+        mock(NodeInfoService.class), mock(Wallet.class), mock(Manager.class));
 
     JsonRpcInvalidParamsException callError = assertThrows(JsonRpcInvalidParamsException.class,
         () -> mockRpc.getCall(null, "latest"));
@@ -67,7 +68,8 @@ public class JsonRpcCallAndEstimateGasTest {
 
   @Test
   public void testEstimateGasKeepsInvalidQuantityAndDataAsInvalidParams() throws Exception {
-    mockRpc = new TronJsonRpcImpl(mock(NodeInfoService.class), mock(Wallet.class));
+    mockRpc = new TronJsonRpcImpl(
+        mock(NodeInfoService.class), mock(Wallet.class), mock(Manager.class));
 
     CallArguments invalidQuantity = newCallArgs();
     invalidQuantity.setValue("0xzz");

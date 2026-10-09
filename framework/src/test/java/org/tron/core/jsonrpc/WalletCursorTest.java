@@ -63,8 +63,7 @@ public class WalletCursorTest extends BaseTest {
 
   @Test
   public void testNullParameterChecksRespectRequestSource() throws Exception {
-    TronJsonRpcImpl tronJsonRpc = new TronJsonRpcImpl(nodeInfoService, wallet);
-    tronJsonRpc.setManager(dbManager);
+    TronJsonRpcImpl tronJsonRpc = new TronJsonRpcImpl(nodeInfoService, wallet, dbManager);
 
     try {
       dbManager.setCursor(Cursor.SOLIDITY);
@@ -106,7 +105,7 @@ public class WalletCursorTest extends BaseTest {
 
   @Test
   public void testUninstallFilterKeepsSourcesIsolated() throws Exception {
-    try (TronJsonRpcImpl tronJsonRpc = new TronJsonRpcImpl(nodeInfoService, wallet)) {
+    try (TronJsonRpcImpl tronJsonRpc = new TronJsonRpcImpl(nodeInfoService, wallet, dbManager)) {
       for (boolean eventFilter : new boolean[] {true, false}) {
         if (eventFilter) {
           tronJsonRpc.getEventFilter2ResultFull()
@@ -151,7 +150,7 @@ public class WalletCursorTest extends BaseTest {
 
   @Test
   public void testUninstallFilterInPbftRejectsAllIdsBeforeRemoval() throws Exception {
-    try (TronJsonRpcImpl tronJsonRpc = new TronJsonRpcImpl(nodeInfoService, wallet)) {
+    try (TronJsonRpcImpl tronJsonRpc = new TronJsonRpcImpl(nodeInfoService, wallet, dbManager)) {
       BlockFilterAndResult fullFilter = new BlockFilterAndResult();
       BlockFilterAndResult solidityFilter = new BlockFilterAndResult();
       tronJsonRpc.getBlockFilter2ResultFull().put("10", fullFilter);

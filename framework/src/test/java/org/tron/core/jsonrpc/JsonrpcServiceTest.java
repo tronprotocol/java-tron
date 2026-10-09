@@ -895,7 +895,7 @@ public class JsonrpcServiceTest extends BaseTest {
   @Test
   public void testNullFullTransactionObjectsRejectedBeforeBlockLookup() throws Exception {
     Wallet mockWallet = Mockito.mock(Wallet.class);
-    try (TronJsonRpcImpl rpc = new TronJsonRpcImpl(nodeInfoService, mockWallet)) {
+    try (TronJsonRpcImpl rpc = new TronJsonRpcImpl(nodeInfoService, mockWallet, dbManager)) {
       String hash = ByteArray.toJsonHex(blockCapsule1.getBlockId().getBytes());
       Assert.assertThrows(JsonRpcInvalidParamsException.class,
           () -> rpc.ethGetBlockByHash(hash, null));
