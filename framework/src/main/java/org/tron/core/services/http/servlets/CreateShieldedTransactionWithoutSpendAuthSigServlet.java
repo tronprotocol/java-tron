@@ -33,7 +33,7 @@ public class CreateShieldedTransactionWithoutSpendAuthSigServlet extends RateLim
           .createShieldedTransactionWithoutSpendAuthSig(build.build())
           .getInstance();
       String txString = Util.printCreateTransaction(tx, params.isVisible());
-      JSONObject jsonObject = JSON.parseObject(txString);
+      JSONObject jsonObject = JSON.outboundParseObject(txString);
       if (jsonObject.containsKey("txID")) {
         jsonObject.remove("txID");
       }
