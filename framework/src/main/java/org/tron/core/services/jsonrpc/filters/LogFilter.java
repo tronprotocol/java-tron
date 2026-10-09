@@ -1,6 +1,5 @@
 package org.tron.core.services.jsonrpc.filters;
 
-import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.INVALID_FILTER_REQUEST;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.addressToByteArray;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.topicToByteArray;
 
@@ -48,10 +47,6 @@ public class LogFilter {
    * construct one LogFilter from part parameters of FilterRequest
    */
   public LogFilter(FilterRequest fr) throws JsonRpcInvalidParamsException {
-    if (fr == null) {
-      throw new JsonRpcInvalidParamsException(INVALID_FILTER_REQUEST);
-    }
-
     if (fr.getAddress() instanceof String) {
       withContractAddress(addressToByteArray((String) fr.getAddress()));
 

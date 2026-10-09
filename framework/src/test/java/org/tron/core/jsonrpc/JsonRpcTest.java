@@ -290,14 +290,6 @@ public class JsonRpcTest {
   }
 
   @Test
-  public void testNullLogFilterRequestRejectedAsInvalidParams() {
-    JsonRpcInvalidParamsException error = Assert.assertThrows(
-        JsonRpcInvalidParamsException.class, () -> new LogFilter(null));
-
-    Assert.assertEquals("invalid filter request", error.getMessage());
-  }
-
-  @Test
   public void testLogFilterAddressSizeLimit() {
     // Two valid 20-byte addresses (40 hex chars with 0x prefix)
     String addr1 = "0xaa6612f03443517ced2bdcf27958c22353ceeab9";
