@@ -8,8 +8,11 @@ import com.google.common.collect.ImmutableList;
 import com.google.protobuf.ByteString;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.math.BigInteger;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import javax.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
@@ -17,21 +20,33 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.tron.common.BaseTest;
 import org.tron.common.TestConstants;
+import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.ReflectUtils;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
+import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.Parameter;
 import org.tron.core.config.args.Args;
+import org.tron.core.db.Manager;
 import org.tron.core.exception.P2pException;
 import org.tron.core.net.TronNetDelegate;
 import org.tron.core.net.message.adv.BlockMessage;
 import org.tron.core.net.peer.Item;
 import org.tron.core.net.peer.PeerConnection;
+import org.tron.core.net.service.adv.AdvService;
+import org.tron.core.net.service.fetchblock.FetchBlockService;
+import org.tron.core.net.service.sync.SyncService;
+import org.tron.core.services.WitnessProductBlockService;
+import org.tron.core.store.AccountStore;
+import org.tron.core.store.DynamicPropertiesStore;
+import org.tron.core.store.WitnessScheduleStore;
 import org.tron.p2p.connection.Channel;
 import org.tron.protos.Protocol.Inventory.InventoryType;
 import org.tron.protos.Protocol.Transaction;
@@ -167,5 +182,142 @@ public class BlockMsgHandlerTest extends BaseTest {
     } catch (Exception e) {
       Assert.fail();
     }
+  }
+
+  @Test
+  public void testPaddedWitnessIngress() throws Exception {
+    BlockCapsule canonical = signedWitnessBlock();
+    ByteString signature = canonical.getInstance().getBlockHeader().getWitnessSignature();
+    for (boolean strict : new boolean[]{false, true}) {
+      TronNetDelegate delegate = witnessDelegate(strict, canonical.getWitnessAddress());
+      AdvService adv = Mockito.mock(AdvService.class);
+      BlockMsgHandler ingress = witnessHandler(delegate, adv, Mockito.mock(SyncService.class));
+      BlockMessage message = withWitnessSignature(canonical,
+          signature.concat(ByteString.copyFrom(new byte[3])));
+      PeerConnection sender = witnessPeer();
+      sender.getAdvInvRequest().put(new Item(message.getBlockId(), InventoryType.BLOCK), 0L);
+
+      ingress.processMessage(sender, message);
+
+      ArgumentCaptor<BlockCapsule> processed = ArgumentCaptor.forClass(BlockCapsule.class);
+      Mockito.verify(delegate).processBlock(processed.capture(), Mockito.eq(false));
+      Assert.assertEquals(canonical.getInstance(), processed.getValue().getInstance());
+      ArgumentCaptor<BlockMessage> forwarded = ArgumentCaptor.forClass(BlockMessage.class);
+      Mockito.verify(adv).broadcast(forwarded.capture());
+      Assert.assertArrayEquals(canonical.getData(), forwarded.getValue().getData());
+      Assert.assertArrayEquals(canonical.getData(), message.getData());
+      Assert.assertEquals(canonical.getBlockId(), message.getBlockId());
+      Assert.assertTrue(sender.getAdvInvRequest().isEmpty());
+    }
+  }
+
+  @Test
+  public void testInvalidWitnessIngress() throws Exception {
+    BlockCapsule canonical = signedWitnessBlock();
+    ByteString signature = canonical.getInstance().getBlockHeader().getWitnessSignature();
+    for (boolean strict : new boolean[]{false, true}) {
+      for (ByteString invalid : Arrays.asList(signature.substring(0, 64),
+          ByteString.copyFrom(new byte[68]))) {
+        TronNetDelegate delegate = witnessDelegate(strict, canonical.getWitnessAddress());
+        AdvService adv = Mockito.mock(AdvService.class);
+        BlockMsgHandler ingress = witnessHandler(delegate, adv, Mockito.mock(SyncService.class));
+        BlockMessage message = withWitnessSignature(canonical, invalid);
+        PeerConnection sender = witnessPeer();
+        sender.getAdvInvRequest().put(new Item(message.getBlockId(), InventoryType.BLOCK), 0L);
+
+        P2pException error = Assert.assertThrows(P2pException.class,
+            () -> ingress.processMessage(sender, message));
+
+        Assert.assertEquals(P2pException.TypeEnum.BLOCK_SIGN_INVALID, error.getType());
+        Mockito.verify(delegate, Mockito.never()).processBlock(any(BlockCapsule.class),
+            anyBoolean());
+        Mockito.verify(adv, Mockito.never()).broadcast(any());
+      }
+    }
+  }
+
+  @Test
+  public void testPaddedWitnessSyncHandoff() throws Exception {
+    BlockCapsule canonical = signedWitnessBlock();
+    ByteString signature = canonical.getInstance().getBlockHeader().getWitnessSignature();
+    BlockMessage message = withWitnessSignature(canonical,
+        signature.concat(ByteString.copyFrom(new byte[3])));
+    SyncService sync = Mockito.mock(SyncService.class);
+    BlockMsgHandler ingress = witnessHandler(Mockito.mock(TronNetDelegate.class),
+        Mockito.mock(AdvService.class), sync);
+    PeerConnection sender = witnessPeer();
+    sender.getSyncBlockRequested().put(message.getBlockId(), 0L);
+
+    ingress.processMessage(sender, message);
+
+    ArgumentCaptor<BlockMessage> queued = ArgumentCaptor.forClass(BlockMessage.class);
+    Mockito.verify(sync).processBlock(Mockito.eq(sender), queued.capture());
+    Assert.assertArrayEquals(canonical.getData(), queued.getValue().getData());
+    Assert.assertEquals(canonical.getInstance(), queued.getValue().getBlockCapsule().getInstance());
+    Assert.assertTrue(sender.getSyncBlockRequested().isEmpty());
+    Assert.assertTrue(sender.getSyncBlockInProcess().contains(canonical.getBlockId()));
+  }
+
+  private BlockCapsule signedWitnessBlock() {
+    ECKey key = ECKey.fromPrivate(BigInteger.TEN);
+    BlockCapsule block = new BlockCapsule(1, Sha256Hash.ZERO_HASH, 1234,
+        ByteString.copyFrom(key.getAddress()));
+    // A padded transaction signature must survive witness normalization, including sync handoff.
+    Transaction transaction = Transaction.newBuilder()
+        .setRawData(Transaction.raw.newBuilder().setTimestamp(1234))
+        .addSignature(ByteString.copyFrom(new byte[68])).build();
+    block.addTransaction(new TransactionCapsule(transaction));
+    block.setMerkleRoot();
+    block.sign(key.getPrivKeyBytes());
+    return block;
+  }
+
+  private BlockMessage withWitnessSignature(BlockCapsule block, ByteString signature)
+      throws Exception {
+    return new BlockMessage(block.getInstance().toBuilder()
+        .setBlockHeader(block.getInstance().getBlockHeader().toBuilder()
+            .setWitnessSignature(signature)).build().toByteArray());
+  }
+
+  private TronNetDelegate witnessDelegate(boolean strict, ByteString witness) throws Exception {
+    Assert.assertTrue(Args.getInstance().isECKeyCryptoEngine());
+    DynamicPropertiesStore properties = Mockito.mock(DynamicPropertiesStore.class);
+    Mockito.when(properties.allowStrictEcdsaValidation()).thenReturn(strict);
+    Manager manager = Mockito.mock(Manager.class);
+    Mockito.when(manager.getDynamicPropertiesStore()).thenReturn(properties);
+    Mockito.when(manager.getAccountStore()).thenReturn(Mockito.mock(AccountStore.class));
+    WitnessScheduleStore schedule = Mockito.mock(WitnessScheduleStore.class);
+    Mockito.when(schedule.getActiveWitnesses()).thenReturn(Collections.singletonList(witness));
+    TronNetDelegate delegate = Mockito.spy(new TronNetDelegate());
+    ReflectUtils.setFieldValue(delegate, "dbManager", manager);
+    ReflectUtils.setFieldValue(delegate, "witnessScheduleStore", schedule);
+    Mockito.doReturn(true).when(delegate).containBlock(any(BlockId.class));
+    Mockito.doReturn(new BlockId(Sha256Hash.ZERO_HASH, 0)).when(delegate).getHeadBlockId();
+    Mockito.doReturn(Collections.emptyList()).when(delegate).getActivePeer();
+    Mockito.doNothing().when(delegate).processBlock(any(BlockCapsule.class), anyBoolean());
+    return delegate;
+  }
+
+  private BlockMsgHandler witnessHandler(TronNetDelegate delegate, AdvService adv, SyncService sync)
+      throws Exception {
+    BlockMsgHandler ingress = new BlockMsgHandler();
+    ReflectUtils.setFieldValue(ingress, "tronNetDelegate", delegate);
+    ReflectUtils.setFieldValue(ingress, "advService", adv);
+    ReflectUtils.setFieldValue(ingress, "syncService", sync);
+    ReflectUtils.setFieldValue(ingress, "fetchBlockService", Mockito.mock(FetchBlockService.class));
+    ReflectUtils.setFieldValue(ingress, "witnessProductBlockService",
+        Mockito.mock(WitnessProductBlockService.class));
+    ReflectUtils.setFieldValue(ingress, "fastForward", false);
+    return ingress;
+  }
+
+  private PeerConnection witnessPeer() {
+    InetSocketAddress address = new InetSocketAddress("127.0.0.254", 10001);
+    Channel channel = Mockito.mock(Channel.class);
+    Mockito.when(channel.getInetAddress()).thenReturn(address.getAddress());
+    Mockito.when(channel.getInetSocketAddress()).thenReturn(address);
+    PeerConnection sender = new PeerConnection();
+    sender.setChannel(channel);
+    return sender;
   }
 }

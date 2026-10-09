@@ -96,10 +96,15 @@ public class TransactionsMsgHandler implements TronMsgHandler {
     int smartContractQueueSize = 0;
     int trxHandlePoolQueueSize = 0;
     int dropSmartContractCount = 0;
+    int invalidSignatureCount = 0;
     for (Transaction trx : transactionsMessage.getTransactions().getTransactionsList()) {
       if (isClosed) {
         logger.info("TransactionsMsgHandler is closed during processing, stop submit");
         break;
+      }
+      if (!hasValidSignatureLengths(trx)) {
+        invalidSignatureCount++;
+        continue;
       }
       int type = trx.getRawData().getContract(0).getType().getNumber();
       if (type == ContractType.TriggerSmartContract_VALUE
@@ -120,6 +125,10 @@ public class TransactionsMsgHandler implements TronMsgHandler {
       }
     }
 
+    if (invalidSignatureCount > 0) {
+      logger.debug("Drop {} transactions with invalid signature lengths from {}",
+          invalidSignatureCount, peer.getInetSocketAddress());
+    }
     if (dropSmartContractCount > 0) {
       logger.warn("Add smart contract failed, drop count: {}, queueSize {}:{}",
           dropSmartContractCount, smartContractQueueSize, trxHandlePoolQueueSize);
@@ -144,13 +153,16 @@ public class TransactionsMsgHandler implements TronMsgHandler {
         throw new P2pException(TypeEnum.BAD_TRX,
             "tx " + item.getHash() + " contract size should be greater than 0");
       }
-      for (ByteString sig : trx.getSignatureList()) {
-        if (!SignUtils.isValidLength(sig.size())) {
-          throw new P2pException(TypeEnum.BAD_TRX,
-              "tx " + item.getHash() + " signature size is " + sig.size());
-        }
+    }
+  }
+
+  private boolean hasValidSignatureLengths(Transaction trx) {
+    for (ByteString sig : trx.getSignatureList()) {
+      if (!SignUtils.isValidLength(sig.size())) {
+        return false;
       }
     }
+    return true;
   }
 
   private void handleSmartContract() {
