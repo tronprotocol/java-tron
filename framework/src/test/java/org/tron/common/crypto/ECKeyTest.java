@@ -112,14 +112,14 @@ public class ECKeyTest {
   @Test(expected = SignatureException.class)
   public void testBadBase64Sig() throws SignatureException {
     byte[] messageHash = new byte[32];
-    ECKey.signatureToKey(messageHash, "This is not valid Base64!");
+    ECKey.signatureToKeyBytes(messageHash, "This is not valid Base64!", false);
     fail("Expecting a SignatureException for invalid Base64");
   }
 
   @Test(expected = SignatureException.class)
   public void testInvalidSignatureLength() throws SignatureException {
     byte[] messageHash = new byte[32];
-    ECKey.signatureToKey(messageHash, "abcdefg");
+    ECKey.signatureToKeyBytes(messageHash, "abcdefg", false);
     fail("Expecting a SignatureException for invalid signature length");
   }
 
@@ -131,12 +131,10 @@ public class ECKeyTest {
     byte[] padded = Arrays.copyOf(signature, 66);
     String paddedBase64 = new String(Base64.encode(padded), StandardCharsets.UTF_8);
 
-    assertArrayEquals(key.getPubKey(), ECKey.signatureToKeyBytes(messageHash, paddedBase64));
-    assertArrayEquals(key.getPubKey(), ECKey.signatureToKey(messageHash, paddedBase64).getPubKey());
+    assertArrayEquals(key.getPubKey(),
+        ECKey.signatureToKeyBytes(messageHash, paddedBase64, false));
     assertThrows(SignatureException.class,
         () -> ECKey.signatureToKeyBytes(messageHash, paddedBase64, true));
-    assertThrows(SignatureException.class,
-        () -> ECKey.signatureToKey(messageHash, paddedBase64, true));
   }
 
   @Test

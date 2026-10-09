@@ -419,11 +419,6 @@ public class ECKey implements Serializable, SignInterface {
   }
 
   public static byte[] signatureToKeyBytes(byte[] messageHash,
-      ECDSASignature sig) throws SignatureException {
-    return signatureToKeyBytes(messageHash, sig, false);
-  }
-
-  public static byte[] signatureToKeyBytes(byte[] messageHash,
       ECDSASignature sig, boolean strictValidation) throws SignatureException {
     check(messageHash != null, "messageHash must not be null");
     check(sig != null && sig.r != null && sig.s != null,
@@ -477,12 +472,6 @@ public class ECKey implements Serializable, SignInterface {
    * @return 20-byte address
    */
   public static byte[] signatureToAddress(byte[] messageHash,
-      ECDSASignature sig) throws
-      SignatureException {
-    return signatureToAddress(messageHash, sig, false);
-  }
-
-  public static byte[] signatureToAddress(byte[] messageHash,
       ECDSASignature sig, boolean strictValidation) throws SignatureException {
     return Hash.computeAddress(signatureToKeyBytes(messageHash, sig, strictValidation));
   }
@@ -494,11 +483,6 @@ public class ECKey implements Serializable, SignInterface {
    * @param signatureBase64 Base-64 encoded signature
    * @return ECKey
    */
-  public static ECKey signatureToKey(byte[] messageHash, String
-      signatureBase64) throws SignatureException {
-    return signatureToKey(messageHash, signatureBase64, false);
-  }
-
   public static ECKey signatureToKey(byte[] messageHash, String
       signatureBase64, boolean strictValidation) throws SignatureException {
     final byte[] keyBytes = signatureToKeyBytes(messageHash,
@@ -870,7 +854,7 @@ public class ECKey implements Serializable, SignInterface {
     int recId = -1;
     byte[] thisKey = this.pub.getEncoded(/* compressed */ false);
     for (int i = 0; i < 4; i++) {
-      byte[] k = ECKey.recoverPubBytesFromSignature(i, sig, messageHash);
+      byte[] k = ECKey.recoverPubBytesFromSignature(i, sig, messageHash, true);
       if (k != null && Arrays.equals(k, thisKey)) {
         recId = i;
         break;

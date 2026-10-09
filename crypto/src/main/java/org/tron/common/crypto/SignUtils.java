@@ -74,10 +74,14 @@ public class SignUtils {
   public static byte[] signatureToAddress(
       byte[] messageHash, SignatureInterface signatureInterface, boolean isECKeyCryptoEngine,
       boolean strictEcdsaValidation) throws SignatureException {
-    if (isECKeyCryptoEngine) {
-      return ECKey.signatureToAddress(messageHash, (ECDSASignature) signatureInterface,
-          strictEcdsaValidation);
+    try {
+      if (isECKeyCryptoEngine) {
+        return ECKey.signatureToAddress(messageHash, (ECDSASignature) signatureInterface,
+            strictEcdsaValidation);
+      }
+      return SM2.signatureToAddress(messageHash, (SM2Signature) signatureInterface);
+    } catch (RuntimeException e) {
+      throw new SignatureException(e);
     }
-    return SM2.signatureToAddress(messageHash, (SM2Signature) signatureInterface);
   }
 }
