@@ -20,10 +20,10 @@ import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.triggerCallContract;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.GeneratedMessageV3;
 import java.io.Closeable;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -36,7 +36,9 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
+import javax.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -53,7 +55,9 @@ import org.tron.common.crypto.Hash;
 import org.tron.common.es.ExecutorServiceManager;
 import org.tron.common.logsfilter.ContractEventParser;
 import org.tron.common.logsfilter.capsule.BlockFilterCapsule;
+import org.tron.common.logsfilter.capsule.FilterTriggerCapsule;
 import org.tron.common.logsfilter.capsule.LogsFilterCapsule;
+import org.tron.common.logsfilter.queue.FilterCapsuleQueue;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.utils.ByteArray;
@@ -93,7 +97,7 @@ import org.tron.core.services.jsonrpc.types.TransactionReceipt.TransactionContex
 import org.tron.core.services.jsonrpc.types.TransactionResult;
 import org.tron.core.store.StorageRowStore;
 import org.tron.core.vm.program.Storage;
-import org.tron.json.JSON;
+import org.tron.json.JSONObject;
 import org.tron.program.Version;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
@@ -193,20 +197,50 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
   private final ExecutorService sectionExecutor;
   private final NodeInfoService nodeInfoService;
   private final Wallet wallet;
-  @Autowired
-  private Manager manager;
+  private final Manager manager;
   private final String esName = "query-section";
 
   @Autowired
-  public TronJsonRpcImpl(@Autowired NodeInfoService nodeInfoService, @Autowired Wallet wallet) {
+  private FilterCapsuleQueue filterCapsuleQueue;
+  private ExecutorService filterEs;
+  private static final String filterEsName = "filter";
+  private final AtomicBoolean closed = new AtomicBoolean(false);
+
+  @Autowired
+  public TronJsonRpcImpl(NodeInfoService nodeInfoService, Wallet wallet, Manager manager) {
     this.nodeInfoService = nodeInfoService;
     this.wallet = wallet;
+    this.manager = manager;
     this.sectionExecutor = ExecutorServiceManager.newFixedThreadPool(esName, 5);
   }
 
-  @VisibleForTesting
-  public void setManager(Manager manager) {
-    this.manager = manager;
+  @PostConstruct
+  private void start() {
+    if (CommonParameter.getInstance().isJsonRpcFilterEnabled()) {
+      filterEs = ExecutorServiceManager.newSingleThreadExecutor(filterEsName, true);
+      ExecutorServiceManager.submit(filterEs, this::filterProcessLoop);
+    }
+  }
+
+  private void filterProcessLoop() {
+    while (!closed.get()) {
+      try {
+        FilterTriggerCapsule filterCapsule = filterCapsuleQueue.poll(1, TimeUnit.SECONDS);
+        if (filterCapsule instanceof LogsFilterCapsule) {
+          handleLogsFilter((LogsFilterCapsule) filterCapsule);
+        } else if (filterCapsule instanceof BlockFilterCapsule) {
+          handleBLockFilter((BlockFilterCapsule) filterCapsule);
+        } else if (filterCapsule != null) {
+          logger.warn("Unknown FilterTriggerCapsule: {}", filterCapsule.getClass().getName());
+        }
+      } catch (InterruptedException e) {
+        logger.error("FilterProcessLoop get InterruptedException, error is {}.", e.getMessage());
+        Thread.currentThread().interrupt();
+        return;
+      } catch (Throwable throwable) {
+        logger.error("Unknown throwable happened in filterProcessLoop. ", throwable);
+      }
+    }
   }
 
   @VisibleForTesting
@@ -627,7 +661,8 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
     }
 
     StorageRowStore store = manager.getStorageRowStore();
-    Storage storage = new Storage(addressByte, store);
+    Storage storage = new Storage(addressByte, store,
+        manager.getDynamicPropertiesStore().allowOptimizeTvmStorage());
     storage.setContractVersion(smartContract.getVersion());
     storage.generateAddrHash(smartContract.getTrxHash().toByteArray());
 
@@ -1177,7 +1212,8 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
       tx = setTransactionPermissionId(args.getPermissionId(), txBuilder.build());
 
       TransactionJson transactionJson = new TransactionJson();
-      transactionJson.setTransaction(JSON.parseObject(Util.printCreateTransaction(tx, false)));
+      transactionJson.setTransaction(
+          JSONObject.outboundParseObject(Util.printCreateTransaction(tx, false)));
 
       return transactionJson;
     } catch (JsonRpcInvalidParamsException e) {
@@ -1244,7 +1280,7 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
     String jsonString = Util.printTransaction(trxExtBuilder.build().getTransaction(),
         args.isVisible());
     TransactionJson transactionJson = new TransactionJson();
-    transactionJson.setTransaction(JSON.parseObject(jsonString));
+    transactionJson.setTransaction(JSONObject.outboundParseObject(jsonString));
 
     return transactionJson;
   }
@@ -1260,8 +1296,8 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
       tx = setTransactionExtraData(args.getExtraData(), tx, args.isVisible());
 
       TransactionJson transactionJson = new TransactionJson();
-      transactionJson
-          .setTransaction(JSON.parseObject(Util.printCreateTransaction(tx, args.isVisible())));
+      transactionJson.setTransaction(
+          JSONObject.outboundParseObject(Util.printCreateTransaction(tx, args.isVisible())));
 
       return transactionJson;
     } catch (ContractValidateException e) {
@@ -1613,7 +1649,17 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
   }
 
   @Override
-  public void close() throws IOException {
+  public void close() {
+    if (!closed.compareAndSet(false, true)) {
+      return;
+    }
+    // The consumer loop submits to logsFilterPool (over-threshold path), so it must
+    // terminate before the pool shuts down, even if the closing thread is interrupted.
+    ExecutorServiceManager.shutdownAndAwaitTermination(filterEs, filterEsName);
+    if (filterEs != null && !filterEs.isTerminated()
+        && !Uninterruptibles.awaitTerminationUninterruptibly(filterEs, 2, TimeUnit.SECONDS)) {
+      logger.warn("Pool {} did not terminate before logs-filter-pool shutdown", filterEsName);
+    }
     ExecutorServiceManager.shutdownAndAwaitTermination(logsFilterPool, "logs-filter-pool");
     logElementCache.invalidateAll();
     blockHashCache.invalidateAll();

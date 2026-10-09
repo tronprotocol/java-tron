@@ -115,7 +115,7 @@ public class Util {
 
   public static String printTransactionFee(String transactionFee) {
     JSONObject jsonObject = new JSONObject();
-    JSONObject receipt = JSONObject.parseObject(transactionFee);
+    JSONObject receipt = JSONObject.outboundParseObject(transactionFee);
     jsonObject.put("Receipt", receipt.get("receipt"));
     return jsonObject.toJSONString();
   }
@@ -165,7 +165,7 @@ public class Util {
     JSONObject jsonObject = new JSONObject();
     jsonObject.put("blockID", blockID);
     jsonObject.put("block_header",
-        JSONObject.parseObject(JsonFormat.printToString(block.getBlockHeader(), selfType)));
+        JSONObject.outboundParseObject(JsonFormat.printToString(block.getBlockHeader(), selfType)));
     if (!blockCapsule.getTransactions().isEmpty()) {
       jsonObject.put("transactions",
           printTransactionListToJSON(blockCapsule.getTransactions(), selfType));
@@ -175,7 +175,8 @@ public class Util {
 
   public static String printTransactionList(TransactionList list, boolean selfType) {
     List<Transaction> transactions = list.getTransactionList();
-    JSONObject jsonObject = JSONObject.parseObject(JsonFormat.printToString(list, selfType));
+    JSONObject jsonObject = JSONObject.outboundParseObject(
+        JsonFormat.printToString(list, selfType));
     JSONArray jsonArray = new JSONArray();
     transactions.stream()
         .forEach(transaction -> jsonArray.add(printTransactionToJSON(transaction, selfType)));
@@ -185,7 +186,8 @@ public class Util {
   }
 
   public static String printTransactionIdList(TransactionIdList list, boolean selfType) {
-    JSONObject jsonObject = JSONObject.parseObject(JsonFormat.printToString(list, selfType));
+    JSONObject jsonObject = JSONObject.outboundParseObject(
+        JsonFormat.printToString(list, selfType));
 
     return jsonObject.toJSONString();
   }
@@ -215,7 +217,7 @@ public class Util {
   public static String printTransactionExtention(TransactionExtention transactionExtention,
       boolean selfType) {
     String string = JsonFormat.printToString(transactionExtention, selfType);
-    JSONObject jsonObject = JSONObject.parseObject(string);
+    JSONObject jsonObject = JSONObject.outboundParseObject(string);
     if (transactionExtention.getResult().getResult()) {
       JSONObject transactionObject = printTransactionToJSON(transactionExtention.getTransaction(),
           selfType);
@@ -233,7 +235,7 @@ public class Util {
   public static String printTransactionSignWeight(TransactionSignWeight transactionSignWeight,
       boolean selfType) {
     String string = JsonFormat.printToString(transactionSignWeight, selfType);
-    JSONObject jsonObject = JSONObject.parseObject(string);
+    JSONObject jsonObject = JSONObject.outboundParseObject(string);
     JSONObject jsonObjectExt = jsonObject.getJSONObject(TRANSACTION);
     if (jsonObjectExt != null) {
       jsonObjectExt.put(TRANSACTION,
@@ -247,7 +249,7 @@ public class Util {
   public static String printTransactionApprovedList(TransactionApprovedList transactionApprovedList,
       boolean selfType) {
     String string = JsonFormat.printToString(transactionApprovedList, selfType);
-    JSONObject jsonObject = JSONObject.parseObject(string);
+    JSONObject jsonObject = JSONObject.outboundParseObject(string);
     JSONObject jsonObjectExt = jsonObject.getJSONObject(TRANSACTION);
     if (jsonObjectExt != null) {
       jsonObjectExt.put(TRANSACTION,
@@ -274,7 +276,7 @@ public class Util {
 
   public static JSONObject printTransactionToJSON(Transaction transaction, boolean selfType) {
     JSONObject jsonTransaction = JSONObject
-        .parseObject(JsonFormat.printToString(transaction, selfType));
+        .outboundParseObject(JsonFormat.printToString(transaction, selfType));
     JSONArray contracts = new JSONArray();
     transaction.getRawData().getContractList().stream().forEach(contract -> {
       try {
@@ -285,7 +287,7 @@ public class Util {
             CreateSmartContract deployContract = contractParameter
                 .unpack(CreateSmartContract.class);
             contractJson = JSONObject
-                .parseObject(JsonFormat.printToString(deployContract, selfType));
+                .outboundParseObject(JsonFormat.printToString(deployContract, selfType));
             byte[] ownerAddress = deployContract.getOwnerAddress().toByteArray();
             byte[] contractAddress = generateContractAddress(transaction, ownerAddress);
             jsonTransaction.put(CONTRACT_ADDRESS, ByteArray.toHexString(contractAddress));
@@ -293,8 +295,9 @@ public class Util {
           default:
             Class clazz = TransactionFactory.getContract(contract.getType());
             if (clazz != null) {
-              contractJson = JSONObject
-                  .parseObject(JsonFormat.printToString(contractParameter.unpack(clazz), selfType));
+              String parameterJson = JsonFormat.printToString(
+                  contractParameter.unpack(clazz), selfType);
+              contractJson = JSONObject.outboundParseObject(parameterJson);
             }
             break;
         }
@@ -314,9 +317,8 @@ public class Util {
       }
     });
 
-    JSONObject rawData = JSONObject.parseObject(jsonTransaction.get("raw_data").toString());
+    JSONObject rawData = jsonTransaction.getJSONObject("raw_data");
     rawData.put("contract", contracts);
-    jsonTransaction.put("raw_data", rawData);
     String rawDataHex = ByteArray.toHexString(transaction.getRawData().toByteArray());
     jsonTransaction.put("raw_data_hex", rawDataHex);
     String txID = ByteArray.toHexString(Sha256Hash
@@ -576,7 +578,8 @@ public class Util {
     if (account.getAssetIssuedID().isEmpty()) {
       return JsonFormat.printToString(account, false);
     } else {
-      JSONObject accountJson = JSONObject.parseObject(JsonFormat.printToString(account, false));
+      JSONObject accountJson = JSONObject.outboundParseObject(
+          JsonFormat.printToString(account, false));
       String assetId = accountJson.get("asset_issued_ID").toString();
       accountJson.put("asset_issued_ID",
           ByteString.copyFrom(ByteArray.fromHexString(assetId)).toStringUtf8());
