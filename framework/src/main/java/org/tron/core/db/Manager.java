@@ -86,6 +86,7 @@ import org.tron.consensus.base.Param.Miner;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
+import org.tron.core.actuator.ActuatorConstant;
 import org.tron.core.actuator.ActuatorCreator;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockBalanceTraceCapsule;
@@ -1476,8 +1477,7 @@ public class Manager {
     Sha256Hash txId = trxCap.getTransactionId();
     if (trxCap.getInstance().getRawData().getContractList().size() != 1) {
       throw new ContractSizeNotEqualToOneException(
-          String.format(
-              "tx %s contract size should be exactly 1, this is extend feature ,actual :%d",
+          String.format("tx %s " + ActuatorConstant.CONTRACT_SIZE_NOT_EQUAL_TO_ONE,
               txId, trxCap.getInstance().getRawData().getContractList().size()));
     }
     Contract contract = trxCap.getInstance().getRawData().getContract(0);

@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.api.GrpcAPI.TransactionApprovedList;
 import org.tron.core.Wallet;
+import org.tron.core.exception.ContractSizeNotEqualToOneException;
 import org.tron.core.services.http.HttpApi;
 import org.tron.core.services.http.HttpApi.Access;
 import org.tron.core.services.http.HttpApi.Surface;
@@ -28,8 +29,17 @@ public class GetTransactionApprovedListServlet extends RateLimiterServlet {
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
       PostParams params = PostParams.getPostParams(request);
-      Transaction transaction = Util.packTransaction(params.getParams(), params.isVisible());
-      TransactionApprovedList reply = wallet.getTransactionApprovedList(transaction);
+      TransactionApprovedList reply;
+      try {
+        Transaction transaction = Util.packTransaction(params.getParams(), params.isVisible());
+        reply = wallet.getTransactionApprovedList(transaction);
+      } catch (ContractSizeNotEqualToOneException e) {
+        TransactionApprovedList.Result result = TransactionApprovedList.Result.newBuilder()
+            .setCode(TransactionApprovedList.Result.response_code.OTHER_ERROR)
+            .setMessage("Invalid transaction: " + e.getMessage())
+            .build();
+        reply = TransactionApprovedList.newBuilder().setResult(result).build();
+      }
       if (reply != null) {
         response.getWriter().println(Util.printTransactionApprovedList(reply, params.isVisible()));
       } else {

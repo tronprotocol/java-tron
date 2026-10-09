@@ -8,6 +8,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.api.GrpcAPI.BytesMessage;
 import org.tron.core.Wallet;
+import org.tron.core.exception.ContractSizeNotEqualToOneException;
+import org.tron.core.exception.ContractValidateException;
 import org.tron.core.services.http.HttpApiExcluded;
 import org.tron.protos.Protocol.Transaction;
 
@@ -29,7 +31,13 @@ public class GetShieldTransactionHashServlet extends RateLimiterServlet {
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(input);
       boolean visible = Util.getVisiblePost(input);
-      Transaction transaction = Util.packTransaction(input, visible);
+      Transaction transaction;
+      try {
+        transaction = Util.packTransaction(input, visible);
+      } catch (ContractSizeNotEqualToOneException e) {
+        // Util.clientMessage matches exact exception classes and would hide a subclass message.
+        throw new ContractValidateException(e.getMessage());
+      }
 
       BytesMessage result = wallet.getShieldTransactionHash(transaction);
       response.getWriter().println(JsonFormat.printToString(result, visible));

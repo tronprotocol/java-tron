@@ -45,11 +45,13 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Constant;
+import org.tron.core.actuator.ActuatorConstant;
 import org.tron.core.actuator.TransactionFactory;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.TransactionTrace;
+import org.tron.core.exception.ContractSizeNotEqualToOneException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.InvalidHttpParameterException;
 import org.tron.core.exception.MaintenanceUnavailableException;
@@ -321,13 +323,21 @@ public class Util {
   }
 
   /**
-   * Note: the contracts of the returned transaction may be empty
+   * Note: the contracts of the returned transaction may be empty, or more than one when a
+   * field-number key replaces raw_data; null is returned when the transaction cannot be parsed.
+   *
+   * @throws ContractSizeNotEqualToOneException if raw_data.contract has more than one element
    */
-  public static Transaction packTransaction(String strTransaction, boolean selfType) {
+  public static Transaction packTransaction(String strTransaction, boolean selfType)
+      throws ContractSizeNotEqualToOneException {
     JSONObject jsonTransaction = JSON.parseObject(strTransaction);
     JSONObject rawData = jsonTransaction.getJSONObject("raw_data");
     JSONArray contracts = new JSONArray();
     JSONArray rawContractArray = rawData.getJSONArray("contract");
+    if (rawContractArray.size() > 1) {
+      throw new ContractSizeNotEqualToOneException(String.format(
+          ActuatorConstant.CONTRACT_SIZE_NOT_EQUAL_TO_ONE, rawContractArray.size()));
+    }
 
     String contractType = null;
     for (int i = 0; i < rawContractArray.size(); i++) {
