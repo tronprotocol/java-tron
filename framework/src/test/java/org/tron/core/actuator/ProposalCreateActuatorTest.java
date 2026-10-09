@@ -30,6 +30,7 @@ import org.tron.core.config.args.Args;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ItemNotFoundException;
+import org.tron.core.utils.ProposalUtil.ProposalType;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.contract.AssetIssueContractOuterClass;
@@ -486,7 +487,7 @@ public class ProposalCreateActuatorTest extends BaseTest {
   @Test
   public void closeExchangeSingleParamRejectedByForkGateWhenForkUnpassed() {
     HashMap<Long, Long> paras = new HashMap<>();
-    paras.put(99L, 1L);
+    paras.put(ProposalType.CLOSE_EXCHANGE.getCode(), 1L);
     ContractValidateException e = assertThrows(ContractValidateException.class,
         () -> buildCreateActuator(paras).validate());
     Assert.assertEquals("Bad chain parameter id [CLOSE_EXCHANGE]", e.getMessage());
@@ -553,7 +554,7 @@ public class ProposalCreateActuatorTest extends BaseTest {
     activateCloseExchangeFork();
     try {
       HashMap<Long, Long> paras = new HashMap<>();
-      paras.put(99L, 1L);
+      paras.put(ProposalType.CLOSE_EXCHANGE.getCode(), 1L);
       ProposalCreateActuator actuator = buildCreateActuator(paras);
       TransactionResultCapsule ret = new TransactionResultCapsule();
       try {
@@ -569,7 +570,8 @@ public class ProposalCreateActuatorTest extends BaseTest {
         ProposalCapsule proposalCapsule =
             dbManager.getProposalStore().get(ByteArray.fromLong(id));
         Assert.assertNotNull(proposalCapsule);
-        Assert.assertEquals(1L, proposalCapsule.getParameters().get(99L).longValue());
+        Assert.assertEquals(1L, proposalCapsule.getParameters()
+            .get(ProposalType.CLOSE_EXCHANGE.getCode()).longValue());
       } catch (ItemNotFoundException ex) {
         Assert.fail("created CLOSE_EXCHANGE proposal must be stored: " + ex.getMessage());
       }

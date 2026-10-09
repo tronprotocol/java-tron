@@ -747,7 +747,7 @@ public class ProposalUtilTest extends BaseTest {
   }
 
   /**
-   * CLOSE_EXCHANGE(99): fork gate, step-by-step progression, and the close-level lockout of
+   * CLOSE_EXCHANGE(100): fork gate, step-by-step progression, and the close-level lockout of
    * the legacy exchange parameters 12 (EXCHANGE_CREATE_FEE) and 98
    * (ALLOW_HARDEN_EXCHANGE_CALCULATION): freely proposable at level 0, rejected once the
    * level reaches 1.
@@ -920,10 +920,23 @@ public class ProposalUtilTest extends BaseTest {
 
   @Test
   public void blockVersionCheck() {
+    // Merged tree: VERSION_4_8_3(39) is deliberately dormant — CLOSE_EXCHANGE must not be
+    // activatable until a future release bumps BLOCK_VERSION to 39. It is the only fork
+    // allowed to exceed the current BLOCK_VERSION (38).
     for (ForkBlockVersionEnum forkVersion : ForkBlockVersionEnum.values()) {
+      if (forkVersion == ForkBlockVersionEnum.VERSION_4_8_3) {
+        Assert.assertEquals(39, forkVersion.getValue());
+        Assert.assertTrue("VERSION_4_8_3 gate must exceed BLOCK_VERSION while dormant",
+            forkVersion.getValue() > Parameter.ChainConstant.BLOCK_VERSION);
+        continue;
+      }
       if (forkVersion.getValue() > Parameter.ChainConstant.BLOCK_VERSION) {
         Assert.fail("ForkBlockVersion must be less than BLOCK_VERSION");
       }
     }
+    // Upstream consensus fork preserved verbatim: VERSION_4_8_2_3 == BLOCK_VERSION == 38.
+    Assert.assertEquals(38, ForkBlockVersionEnum.VERSION_4_8_2_3.getValue());
+    Assert.assertEquals(Parameter.ChainConstant.BLOCK_VERSION,
+        ForkBlockVersionEnum.VERSION_4_8_2_3.getValue());
   }
 }
