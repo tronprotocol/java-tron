@@ -45,10 +45,10 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.logsfilter.EventPluginLoader;
 import org.tron.common.logsfilter.capsule.BlockFilterCapsule;
 import org.tron.common.logsfilter.capsule.BlockLogTriggerCapsule;
-import org.tron.common.logsfilter.capsule.FilterTriggerCapsule;
 import org.tron.common.logsfilter.capsule.LogsFilterCapsule;
 import org.tron.common.logsfilter.capsule.TransactionLogTriggerCapsule;
 import org.tron.common.logsfilter.capsule.TriggerCapsule;
+import org.tron.common.logsfilter.queue.FilterCapsuleQueue;
 import org.tron.common.logsfilter.trigger.ContractLogTrigger;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.RuntimeImpl;
@@ -1694,8 +1694,8 @@ public class ManagerTest extends BaseMethodTest {
   @Test
   public void switchForkShouldPostFullNodeFilterForNewBranch() throws Exception {
     CommonParameter.getInstance().jsonRpcHttpFullNodeEnable = true;
-    // filterProcessLoop only starts when isJsonRpcFilterEnabled() held at Manager.init() time; it
-    // was false then, so filterCapsuleQueue is produce-only here and fully observable.
+    // The consumer thread only starts when isJsonRpcFilterEnabled() held at context startup; it
+    // was false then, so the FilterCapsuleQueue bean is produce-only here and fully observable.
 
     // bootstrap a head with a known witness
     String key = PublicMethod.getRandomPrivateKey();
@@ -1733,9 +1733,7 @@ public class ManagerTest extends BaseMethodTest {
     dbManager.pushBlock(p);
 
     long expiration = t + 1_000_000L;
-    BlockingQueue<FilterTriggerCapsule> queue =
-        ReflectUtils.getFieldValue(dbManager, "filterCapsuleQueue");
-    queue.clear();
+    FilterCapsuleQueue queue = context.getBean(FilterCapsuleQueue.class);
 
     // old branch: A carries a transfer; applied via the normal extend path
     BlockCapsule a = blockWithTransfer(t + 6000, base + 2, p.getBlockId().getByteString(), keys,
@@ -1868,7 +1866,7 @@ public class ManagerTest extends BaseMethodTest {
     return blockCapsule;
   }
 
-  private boolean hasLogsFilterCapsule(BlockingQueue<FilterTriggerCapsule> queue, BlockCapsule b,
+  private boolean hasLogsFilterCapsule(FilterCapsuleQueue queue, BlockCapsule b,
       boolean removed) {
     String blockHash = b.getBlockId().toString();
     return queue.stream()
@@ -1878,7 +1876,7 @@ public class ManagerTest extends BaseMethodTest {
             && blockHash.equals(c.getBlockHash()));
   }
 
-  private boolean hasBlockFilterCapsule(BlockingQueue<FilterTriggerCapsule> queue,
+  private boolean hasBlockFilterCapsule(FilterCapsuleQueue queue,
       BlockCapsule b) {
     String blockHash = b.getBlockId().toString();
     return queue.stream()

@@ -60,8 +60,7 @@ public class WalletCursorTest extends BaseTest {
 
   @Test
   public void testSource() {
-    TronJsonRpcImpl tronJsonRpc = new TronJsonRpcImpl(nodeInfoService, wallet);
-    tronJsonRpc.setManager(dbManager);
+    TronJsonRpcImpl tronJsonRpc = new TronJsonRpcImpl(nodeInfoService, wallet, dbManager);
 
     Assert.assertEquals(Cursor.HEAD, wallet.getCursor());
     Assert.assertEquals(RequestSource.FULLNODE, tronJsonRpc.getSource());
@@ -92,8 +91,7 @@ public class WalletCursorTest extends BaseTest {
 
     dbManager.setCursor(Cursor.SOLIDITY);
 
-    TronJsonRpcImpl tronJsonRpc = new TronJsonRpcImpl(nodeInfoService, wallet);
-    tronJsonRpc.setManager(dbManager);
+    TronJsonRpcImpl tronJsonRpc = new TronJsonRpcImpl(nodeInfoService, wallet, dbManager);
     try {
       tronJsonRpc.buildTransaction(buildArguments);
       tronJsonRpc.close();
@@ -115,8 +113,7 @@ public class WalletCursorTest extends BaseTest {
 
     dbManager.setCursor(Cursor.PBFT);
 
-    TronJsonRpcImpl tronJsonRpc = new TronJsonRpcImpl(nodeInfoService, wallet);
-    tronJsonRpc.setManager(dbManager);
+    TronJsonRpcImpl tronJsonRpc = new TronJsonRpcImpl(nodeInfoService, wallet, dbManager);
     try {
       tronJsonRpc.buildTransaction(buildArguments);
     } catch (Exception e) {
@@ -143,8 +140,7 @@ public class WalletCursorTest extends BaseTest {
     buildArguments.setTo("0x548794500882809695a8a687866e76d4271a1abc");
     buildArguments.setValue("0x1f4");
 
-    TronJsonRpcImpl tronJsonRpc = new TronJsonRpcImpl(nodeInfoService, wallet);
-    tronJsonRpc.setManager(dbManager);
+    TronJsonRpcImpl tronJsonRpc = new TronJsonRpcImpl(nodeInfoService, wallet, dbManager);
 
     try {
       tronJsonRpc.buildTransaction(buildArguments);
@@ -164,8 +160,7 @@ public class WalletCursorTest extends BaseTest {
     int saved = Args.getInstance().getJsonRpcMaxLogFilterNum();
     Args.getInstance().setJsonRpcMaxLogFilterNum(cap);
     FilterRequest fr = new FilterRequest();
-    TronJsonRpcImpl tronJsonRpc = new TronJsonRpcImpl(nodeInfoService, wallet);
-    tronJsonRpc.setManager(dbManager);
+    TronJsonRpcImpl tronJsonRpc = new TronJsonRpcImpl(nodeInfoService, wallet, dbManager);
     Map<String, LogFilterAndResult> map = tronJsonRpc.getEventFilter2ResultFull();
     List<String> addedKeys = new ArrayList<>();
 
