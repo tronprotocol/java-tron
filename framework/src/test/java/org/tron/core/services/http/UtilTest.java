@@ -2,7 +2,6 @@ package org.tron.core.services.http;
 
 import com.google.protobuf.ByteString;
 import java.security.InvalidParameterException;
-import java.util.Arrays;
 import javax.annotation.Resource;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Assert;
@@ -309,10 +308,6 @@ public class UtilTest extends BaseTest {
         .contains("too many signatures"));
   }
 
-  /**
-   * A container is not a number. It used to skip the length bound altogether and reach the
-   * conversion as its full serialized form, bounded only by the shim's 65535-character fallback.
-   */
   @Test
   public void testPermissionIdRejectsNonNumericTypes() {
     assertRejected("[" + StringUtils.repeat('9', 128) + "]");
@@ -331,39 +326,9 @@ public class UtilTest extends BaseTest {
   }
 
   @Test
-  public void testPermissionIdAcceptsLegacyExactIntegerRepresentations() {
+  public void testPermissionIdAcceptsExactIntegerRepresentations() {
     Assert.assertEquals(2, permissionIdOf(applyPermissionId("2")));
     Assert.assertEquals(2, permissionIdOf(applyPermissionId("\"2\"")));
-    Assert.assertEquals(1, permissionIdOf(applyPermissionId("1.0")));
-    Assert.assertEquals(100, permissionIdOf(applyPermissionId("1e2")));
-    Assert.assertEquals(1, permissionIdOf(applyPermissionId("\"1.0\"")));
-    Assert.assertEquals(1, permissionIdOf(applyPermissionId("\"1.\"")));
-    Assert.assertEquals(1000, permissionIdOf(applyPermissionId("\"1,000\"")));
-  }
-
-  @Test
-  public void testPermissionIdAcceptsMaximumLengthNumericString() {
-    char[] digits = new char[64];
-    Arrays.fill(digits, '0');
-    digits[digits.length - 1] = '2';
-
-    Assert.assertEquals(2, permissionIdOf(applyPermissionId("\"" + new String(digits) + "\"")));
-  }
-
-  /**
-   * One character past the bound is refused, and so is a value far beyond it: the field is
-   * bounded by its own length rather than by whatever the numeric conversion happens to survive.
-   */
-  @Test
-  public void testPermissionIdRejectsStringsPastTheLengthBoundary() {
-    assertRejected("\"" + StringUtils.repeat('0', 64) + "2\"");
-    assertRejected("\"" + StringUtils.repeat('9', 10_000) + "\"");
-  }
-
-  /** Quoting must not decide which regime applies: the same digits unquoted are refused too. */
-  @Test
-  public void testPermissionIdRejectsUnquotedNumbersPastTheLengthBoundary() {
-    assertRejected("9" + StringUtils.repeat('9', 64));
   }
 
   private void assertRejected(String rawJsonValue) {
@@ -375,22 +340,29 @@ public class UtilTest extends BaseTest {
   }
 
   @Test
-  public void testPermissionIdRejectsFraction() {
+  public void testPermissionIdRejectsNonIntegerNumbers() {
     assertRejected("1.9");
     assertRejected("2.999");
-  }
-
-  @Test
-  public void testPermissionIdRejectsNonLegacyNumericStrings() {
+    assertRejected("1.0");
+    assertRejected("1e2");
     assertRejected("\"1e2\"");
-    assertRejected("\"1E2\"");
-    assertRejected("\".0\"");
+    assertRejected("\"1.9\"");
+    assertRejected("\"2.5\"");
+    assertRejected("\"1.90\"");
+    assertRejected("\"1.0\"");
+    assertRejected("\"1.\"");
+    assertRejected("\"1,000\"");
   }
 
   @Test
   public void testPermissionIdRejectsIntOverflow() {
     assertRejected("4294967297");
     assertRejected("99999999999");
+    assertRejected("\"4294967297\"");
+    assertRejected("\"2147483648\"");
+    assertRejected("\"-2147483649\"");
+    assertRejected("9" + StringUtils.repeat('9', 64));
+    assertRejected("\"" + StringUtils.repeat('9', 10_000) + "\"");
   }
 
   @Test

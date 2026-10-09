@@ -44,6 +44,7 @@ public class UtilProcessErrorTest {
         decoder,
         new HeaderNotFound("latest block not found"),
         new IllegalArgumentException("No enum constant internal.Type.VALUE"),
+        new InvalidParameterException("base parameter detail"),
         new IllegalAccessException(RATE_LIMITER_ERROR_MSG),
         new IllegalAccessException("other access failure"),
         new ZkProofValidateException("wrapped validation detail", true)

@@ -472,23 +472,18 @@ public class Util {
     if (!jsonObject.containsKey(PERMISSION_ID)) {
       return transaction;
     }
+    Object rawValue = jsonObject.get(PERMISSION_ID);
     int permissionId;
     try {
-      Object rawValue = jsonObject.get(PERMISSION_ID);
-      checkJsonNumberValue(rawValue, INVALID_PERMISSION_ID);
-      BigDecimal value = jsonObject.getBigDecimal(PERMISSION_ID);
-      if (value == null) {
+      if (rawValue instanceof Integer) {
+        permissionId = (Integer) rawValue;
+      } else if (rawValue instanceof String) {
+        permissionId = Integer.parseInt((String) rawValue);
+      } else {
         throw new InvalidHttpParameterException(INVALID_PERMISSION_ID);
       }
-      // Preserve getInteger's legacy string syntax, but require it to match the exact conversion.
-      int exact = value.intValueExact();
-      Integer legacy = jsonObject.getInteger(PERMISSION_ID);
-      if (legacy == null || legacy != exact) {
-        throw new InvalidHttpParameterException(INVALID_PERMISSION_ID);
-      }
-      permissionId = exact;
-    } catch (NumberFormatException | ArithmeticException | JSONException e) {
-      throw new InvalidHttpParameterException(INVALID_PERMISSION_ID);
+    } catch (NumberFormatException e) {
+      throw new InvalidHttpParameterException(INVALID_PERMISSION_ID, e);
     }
     return setTransactionPermissionId(permissionId, transaction);
   }
@@ -633,12 +628,11 @@ public class Util {
 
   /**
    * Returns the address the request carries. An address parameter that is missing or unusable,
-   * and a json body that cannot be parsed, are reported as an IllegalArgumentException whose
-   * message is the fixed text the caller is answered with, so that the address-keyed endpoints
-   * and their solidity/PBFT mirrors answer a given malformed request identically without each
-   * having to classify the failure. Nothing derived from the request may go into that message:
-   * it is written straight to the response. A query string or form body the container itself
-   * cannot parse is not classified here and propagates unchanged.
+   * and a json body that cannot be parsed, are reported as an InvalidHttpParameterException whose
+   * message is a fixed text, so that the address-keyed endpoints and their solidity/PBFT mirrors
+   * answer a given malformed request identically without each having to classify the failure.
+   * Nothing derived from the request may go into that message. A query string or form body the
+   * container itself cannot parse is not classified here and propagates unchanged.
    */
   public static byte[] getAddress(HttpServletRequest request) throws Exception {
     String addressParam = "address";
@@ -646,18 +640,16 @@ public class Util {
     try {
       addressStr = checkGetParam(request, addressParam);
     } catch (JSONException e) {
-      throw new IllegalArgumentException(INVALID_JSON_BODY);
-    } catch (IllegalArgumentException e) {
-      throw new IllegalArgumentException(INVALID_ADDRESS_MSG);
+      throw new InvalidHttpParameterException(INVALID_JSON_BODY);
     }
     if (StringUtils.isBlank(addressStr)) {
-      throw new IllegalArgumentException(INVALID_ADDRESS_MSG);
+      throw new InvalidHttpParameterException(INVALID_ADDRESS_MSG);
     }
 
     boolean hex = StringUtils.startsWith(addressStr, Constant.ADD_PRE_FIX_STRING_MAINNET);
     // bound the hex input before decoding, mirroring the base58 length short-circuit
     if (hex && addressStr.length() != DecodeUtil.ADDRESS_SIZE) {
-      throw new IllegalArgumentException(INVALID_ADDRESS_MSG);
+      throw new InvalidHttpParameterException(INVALID_ADDRESS_MSG);
     }
 
     byte[] address;
@@ -665,11 +657,11 @@ public class Util {
       address = hex ? Hex.decode(addressStr) : decodeFromBase58Check(addressStr);
     } catch (DecoderException | IllegalArgumentException exception) {
       // both decoders name the offending character and its offset, which is caller input
-      throw new IllegalArgumentException(INVALID_ADDRESS_MSG);
+      throw new InvalidHttpParameterException(INVALID_ADDRESS_MSG);
     }
     // base58 is validated inside the decoder; hex used to be returned unchecked
     if (address == null || (hex && !DecodeUtil.addressValid(address))) {
-      throw new IllegalArgumentException(INVALID_ADDRESS_MSG);
+      throw new InvalidHttpParameterException(INVALID_ADDRESS_MSG);
     }
     return address;
   }

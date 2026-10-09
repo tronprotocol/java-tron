@@ -149,6 +149,7 @@ public abstract class AddressQueryServletTestBase extends BaseTest {
     assertInvalid(formRequest(null), null);
     assertInvalid(formRequest(""), null);
     assertInvalid(jsonRequest(null), null);
+    assertInvalid(jsonRequest(""), null);
   }
 
   @Test

@@ -19,9 +19,6 @@ public class GetRewardServlet extends RateLimiterServlet {
     byte[] address;
     try {
       address = Util.getAddress(request);
-    } catch (IllegalArgumentException e) {
-      Util.writeAuditedError(e.getMessage(), response);
-      return;
     } catch (Exception e) {
       Util.processError(e, response);
       return;

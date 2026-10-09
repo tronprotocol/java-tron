@@ -113,15 +113,6 @@ public class TransferServletTest extends BaseHttpTest {
     assertFalse("must not echo the submitted value", content.contains("4294967297"));
   }
 
-  @Test
-  public void testQuotedScientificPermissionIdIsRejected() throws Exception {
-    String content = post("\"1e2\"").getContentAsString();
-
-    assertTrue("must report an error", content.contains("\"Error\""));
-    assertFalse("must not hand back a transaction", content.contains("txID"));
-    assertFalse(content.contains("\"raw_data\""));
-  }
-
   /**
    * An explicit null used to reach getInteger(), whose null return blew up on unboxing with a
    * bare NullPointerException. It stays an error -- writing the key states intent, so a null

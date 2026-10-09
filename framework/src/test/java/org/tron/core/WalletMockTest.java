@@ -1402,10 +1402,8 @@ public class WalletMockTest {
   @Test
   public void testGetContractInfo() throws Exception {
     Wallet wallet = new Wallet();
-    byte[] address = new byte[21];
-    address[0] = Wallet.getAddressPreFixByte();
     GrpcAPI.BytesMessage bytesMessage = GrpcAPI.BytesMessage.newBuilder()
-        .setValue(ByteString.copyFrom(address))
+        .setValue(ByteString.copyFrom("test".getBytes()))
         .build();
 
     ChainBaseManager chainBaseManagerMock = mock(ChainBaseManager.class);
@@ -1424,10 +1422,8 @@ public class WalletMockTest {
   @Test
   public void testGetContractInfo1() throws Exception {
     Wallet wallet = new Wallet();
-    byte[] address = new byte[21];
-    address[0] = Wallet.getAddressPreFixByte();
     GrpcAPI.BytesMessage bytesMessage = GrpcAPI.BytesMessage.newBuilder()
-        .setValue(ByteString.copyFrom(address))
+        .setValue(ByteString.copyFrom("test".getBytes()))
         .build();
 
     ChainBaseManager chainBaseManagerMock = mock(ChainBaseManager.class);
