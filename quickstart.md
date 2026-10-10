@@ -2,222 +2,155 @@
 
 ## Introduction
 
-This guide provides two ways for TRON quickstart:
-- Set up a FullNode using the official tools: providing a wealth of configurable parameters to startup a FullNode
-- Set up a complete private network for Tron development using a third-party tool: [docker-tron-quickstart](https://github.com/TRON-US/docker-tron-quickstart)
+This guide covers three common ways to get started with TRON:
+
+- Run a mainnet FullNode with the official java-tron Docker image.
+- Start an isolated local development chain with [TRON Runtime Environment (TRE)](https://hub.docker.com/r/tronbox/tre).
+- Deploy a multi-node private network with the official [tron-docker](https://github.com/tronprotocol/tron-docker/tree/main/private_net) configuration.
 
 ## Dependencies
 
-### Docker
+Install the latest Docker release for your platform:
 
-Please download and install the latest Docker from Docker official website:
-* Docker Installation for [Mac](https://docs.docker.com/docker-for-mac/install/)
-* Docker Installation for [Windows](https://docs.docker.com/docker-for-windows/install/)   
+- [macOS](https://docs.docker.com/desktop/setup/install/mac-install/)
+- [Windows](https://docs.docker.com/desktop/setup/install/windows-install/)
+- [Linux](https://docs.docker.com/engine/install/)
 
-## Quickstart based on official tools
+All commands in this guide use POSIX shell syntax. On Windows, use Docker Desktop with Linux containers and run the commands from [WSL 2](https://docs.docker.com/desktop/features/wsl/) with Docker integration enabled. The examples are not intended for native PowerShell or Command Prompt.
 
-### Build the docker image from source
+## Run a mainnet FullNode
 
-#### Clone the java-tron repo
+Pull the official image from Docker Hub:
 
-Clone the java-tron repo from github and enter the directory `java-tron`:
-```
-git clone https://github.com/tronprotocol/java-tron.git
-cd java-tron
-```
-
-#### Build the docker image
-
-Use the command below to navigate to the docker directory and start the build:
-```
-cd docker
-docker build -t tronprotocol/java-tron .
-```
-
-#### Using the official Docker images
-
-Download the official docker image from the Dockerhub with below command if you'd like to use the official images:
-```
-docker pull tronprotocol/java-tron
-```
-
-### Run the container
-
-You can run the command below to start the java-tron:
-```
-docker run -it -d -p 8090:8090 -p 18888:18888 -p 50051:50051 --restart always tronprotocol/java-tron 
-```
-
-The `-p` flag defines the ports that the container needs to be mapped on the host machine. By default the container will start and join in the mainnet
-using the built-in configuration file, you can specify other configuration file by mounting a directory and using the flag `-c`.
-This image also supports customizing some startup parameters，here is an example for running a FullNode as an SR in production env:
-```
-docker run -it -d -p 8080:8080 -p 8090:8090 -p 18888:18888 -p 50051:50051 \
-           -v /Users/quan/tron/docker/conf:/java-tron/conf \
-           -v /Users/quan/tron/docker/datadir:/java-tron/data \
-           tronprotocol/java-tron \
-           -jvm "{-Xmx10g -Xms10g}" \
-           -c /java-tron/conf/config-localtest.conf \
-           -d /java-tron/data \
-           -w 
-```
-Note: The directory `/Users/tron/docker/conf` must contain the file `config-localtest.conf`. The jvm parameters must be enclosed in double quotes and braces.
-
-## Quickstart for using docker-tron-quickstart
-
-The image exposes a Full Node and Event Server. Through TRON Quickstart, users can deploy DApps, smart contracts, and interact with the TronWeb library.
-
-> Note: `docker-tron-quickstart` is a community-maintained tool. Check its repository for the latest status: [Quickstart](https://github.com/TRON-US/docker-tron-quickstart)
-
-### Node.JS Console
-  Node.JS is used to interact with the Full and Solidity Nodes via Tron-Web.  
-  [Node.JS](https://nodejs.org/en/) Console Download
-  
-### Clone TRON Quickstart  
 ```shell
-git clone https://github.com/TRON-US/docker-tron-quickstart.git
-```  
+docker pull tronprotocol/java-tron:latest
+```
 
-### Pull the image using docker:
-```shell
-docker pull trontools/quickstart
-```  
+Create host directories for the blockchain database and application logs:
 
-## Setup TRON Quickstart   
-### TRON Quickstart Run
-Run the "docker run" command to launch TRON Quickstart. TRON Quickstart exposes port 9090 for Full Node and Event Server.
 ```shell
-docker run -it \
-  -p 9090:9090 \
-  --rm \
+mkdir -p output-directory logs
+```
+
+Set JVM memory options for the architecture used by the Docker image. Run one of the following commands:
+
+```shell
+# amd64 / JDK 8
+JAVA_TRON_JVM_OPTIONS="-Xms9G -Xmx12G -XX:MaxDirectMemorySize=1G"
+```
+
+```shell
+# ARM64 / JDK 17
+JAVA_TRON_JVM_OPTIONS="-Xmx9G -XX:MaxDirectMemorySize=1G"
+```
+
+These baseline values follow the official guidance for a host with 16 GB of memory. For hosts with 32 GB or more, size the heap using the official [JVM tuning guide][jvm-guide] and leave sufficient memory for direct buffers, native allocations, the operating system, and the database page cache.
+
+Start the FullNode with the mainnet configuration bundled in the image:
+
+```shell
+docker run -d \
+  --name java-tron \
+  --restart unless-stopped \
+  -v "$(pwd)/output-directory:/java-tron/output-directory" \
+  -v "$(pwd)/logs:/java-tron/logs" \
+  -p 127.0.0.1:8090:8090 \
+  -p 127.0.0.1:50051:50051 \
+  -p 18888:18888 \
+  -p 18888:18888/udp \
+  tronprotocol/java-tron:latest \
+  -jvm "{$JAVA_TRON_JVM_OPTIONS}" \
+  -c /java-tron/config.conf
+```
+
+The HTTP and gRPC APIs are bound to localhost by default, while the TCP and UDP P2P ports are available to the network. Change the API bindings only when remote access is required, and protect them with appropriate network controls. Pin a versioned image tag or digest for long-running or reproducible deployments. The image also loads architecture-specific GC options from `bin/java-tron.vmoptions`; do not copy JDK 8 GC options to an ARM64/JDK 17 deployment.
+
+View the FullNode log:
+
+```shell
+docker exec java-tron tail -100f /java-tron/logs/tron.log
+```
+
+Stop the container:
+
+```shell
+docker stop java-tron
+```
+
+Restart the stopped container:
+
+```shell
+docker start java-tron
+```
+
+To recreate the container with a different image or configuration, remove the stopped container first:
+
+```shell
+docker rm java-tron
+```
+
+The bind-mounted database and logs remain on the host after the container is removed.
+
+The optional `docker.sh` helper provides shorter commands for image builds, private network configuration, common port mappings, and lifecycle operations. See the [Docker Shell Guide](docker/docker.md) for details.
+
+### Mainnet and SR requirements
+
+A Mainnet FullNode requires production-grade CPU, memory, SSD capacity, and network bandwidth. The current official deployment requirements are:
+
+| Deployment | CPU | Memory | High-performance SSD | Network bandwidth |
+| --- | ---: | ---: | ---: | ---: |
+| Minimum FullNode | 8 cores | 16 GB | 3 TB | 100 Mbps |
+| Recommended FullNode | 16 cores | 32 GB | 3.5 TB or more | 100 Mbps |
+| Block-producing SR | 32 cores | 64 GB | 3.5 TB or more | 100 Mbps |
+
+The example above stores the database under `$(pwd)/output-directory`. Before starting it, ensure that the current filesystem has sufficient high-performance SSD capacity, or replace the host side of the volume mapping with a dedicated data disk.
+
+A new node otherwise synchronizes the full chain; use a compatible [data snapshot][snapshot-guide] to reduce the initial synchronization time. [Lite FullNode][lite-guide] deployments have different storage requirements and require the corresponding Lite data and configuration.
+
+Review the official [java-tron deployment guide][deployment-guide] and [JVM tuning guide][jvm-guide] before choosing JVM values, storage layout, snapshots, monitoring, and upgrade procedures.
+
+Do not convert the quick-start container into a production Super Representative merely by adding `--witness`. An SR requires stronger hardware, protected block-signing keys, an SR-specific configuration, monitoring, backup, and operational failover. Follow the official [block-production deployment guide][block-production-guide] and review the [Super Representative requirements][sr-guide] before enabling block production.
+
+[deployment-guide]: https://tronprotocol.github.io/documentation-en/using_javatron/installing_javatron/
+[jvm-guide]: https://tronprotocol.github.io/documentation-en/using_javatron/installing_javatron/#jvm-parameter-optimization-for-mainnet-fullnode-deployment
+[snapshot-guide]: https://tronprotocol.github.io/documentation-en/using_javatron/installing_javatron/#speeding-up-node-data-synchronization
+[lite-guide]: https://tronprotocol.github.io/documentation-en/using_javatron/litefullnode/
+[block-production-guide]: https://tronprotocol.github.io/documentation-en/using_javatron/installing_javatron/#starting-a-block-production-node
+[sr-guide]: https://tronprotocol.github.io/documentation-en/mechanism-algorithm/sr/
+
+## Start a local development chain with TRE
+
+[TRE](https://hub.docker.com/r/tronbox/tre) is the maintained successor for local smart-contract and DApp development. It provides a single-container development chain with funded test accounts, automatic block production, and commonly used HTTP and event APIs on port `9090`.
+
+Pull and run the current stable image:
+
+```shell
+docker pull tronbox/tre
+docker run --rm \
   --name tron \
-  trontools/quickstart
-```  
-Notice: the option --rm automatically removes the container after it exits. This is very important because the container cannot be restarted, it MUST be run from scratch to correctly configure the environment.
-
-### Testing
-
-If everything goes well, your terminal console output will look like following : 
- <details>
-
-<summary>Run Console Output </summary>
-<!-- **Run Output:** -->
-
-    [PM2] Spawning PM2 daemon with pm2_home=/root/.pm2
-    [PM2] PM2 Successfully daemonized
-    [PM2][WARN] Applications eventron not running, starting...
-    [PM2] App [eventron] launched (1 instances)
-    ┌──────────┬────┬─────────┬──────┬─────┬────────┬─────────┬────────┬─────┬───────────┬──────┬──────────┐
-    │ App name │ id │ version │ mode │ pid │ status │ restart │ uptime │ cpu │ mem       │ user │ watching │
-    ├──────────┼────┼─────────┼──────┼─────┼────────┼─────────┼────────┼─────┼───────────┼──────┼──────────┤
-    │ eventron │ 0  │ N/A     │ fork │ 60  │ online │ 0       │ 0s     │ 0%  │ 25.4 MB   │ root │ disabled │
-    └──────────┴────┴─────────┴──────┴─────┴────────┴─────────┴────────┴─────┴───────────┴──────┴──────────┘
-    Use `pm2 show <id|name>` to get more details about an app
-    Start the http proxy for dApps...
-    [HPM] Proxy created: /  ->  http://127.0.0.1:18191
-    [HPM] Proxy created: /  ->  http://127.0.0.1:18190
-    [HPM] Proxy created: /  ->  http://127.0.0.1:8060
-
-    Tron Quickstart listening on http://127.0.0.1:9090
-
-
-
-    ADMIN /admin/accounts-generation
-    Sleeping for 1 second...Waiting when nodes are ready to generate 10 accounts...
-    (1) Waiting for sync...
-    Slept.
-    ...
-    Loading the accounts and waiting for the node to mine the transactions...
-    (1) Waiting for receipts...
-    Sending 10000 TRX to TSjfWSWcKCrJ1DbgMZSCbSqNK8DsEfqM9p
-    Sending 10000 TRX to THpWnj3dBQ5FrqW1KMVXXYSbHPtcBKeUJY
-    Sending 10000 TRX to TWFTHaKdeHWi3oPoaBokyZFfA7q1iiiAAb
-    Sending 10000 TRX to TFDGQo6f6dm9ikoV4Rc9NyTxMD5NNiSFJD
-    Sending 10000 TRX to TDZZNigWitFp5aE6j2j8YcycF7DVjtogBu
-    Sending 10000 TRX to TT8NRMcwdS9P3X9pvPC8JWi3x2zjwxZuhs
-    Sending 10000 TRX to TBBJw6Bk7w2NSZeqmzfUPnsn6CwDJAXTv8
-    Sending 10000 TRX to TVcgSLpT97mvoiyv5ChyhQ6hWbjYLWdCVB
-    Sending 10000 TRX to TYjQd4xrLZQGYMdLJqsTCuXVGapPqUp9ZX
-    Sending 10000 TRX to THCw6hPZpFcLCWDcsZg3W77rXZ9rJQPncD
-    Sleeping for 3 seconds... Slept.
-    (2) Waiting for receipts...
-    Sleeping for 3 seconds... Slept.
-    (3) Waiting for receipts...
-    Sleeping for 3 seconds... Slept.
-    (4) Waiting for receipts...
-    Sleeping for 3 seconds... Slept.
-    (5) Waiting for receipts...
-    Sleeping for 3 seconds... Slept.
-    (6) Waiting for receipts...
-    Sleeping for 3 seconds... Slept.
-    (7) Waiting for receipts...
-    Done.
-
-    Available Accounts
-    ==================
-
-    (0) TSjfWSWcKCrJ1DbgMZSCbSqNK8DsEfqM9p (10000 TRX)
-    (1) THpWnj3dBQ5FrqW1KMVXXYSbHPtcBKeUJY (10000 TRX)
-    (2) TWFTHaKdeHWi3oPoaBokyZFfA7q1iiiAAb (10000 TRX)
-    (3) TFDGQo6f6dm9ikoV4Rc9NyTxMD5NNiSFJD (10000 TRX)
-    (4) TDZZNigWitFp5aE6j2j8YcycF7DVjtogBu (10000 TRX)
-    (5) TT8NRMcwdS9P3X9pvPC8JWi3x2zjwxZuhs (10000 TRX)
-    (6) TBBJw6Bk7w2NSZeqmzfUPnsn6CwDJAXTv8 (10000 TRX)
-    (7) TVcgSLpT97mvoiyv5ChyhQ6hWbjYLWdCVB (10000 TRX)
-    (8) TYjQd4xrLZQGYMdLJqsTCuXVGapPqUp9ZX (10000 TRX)
-    (9) THCw6hPZpFcLCWDcsZg3W77rXZ9rJQPncD (10000 TRX)
-
-</details>
-  
-
-### web browser ###
-1. open your web browser
-2. enter : http://127.0.0.1:9090/
-3. there will be a response JSON data: 
-
-```
- {"Welcome to":"TronGrid v2.2.8"}
+  -p 127.0.0.1:9090:9090 \
+  -e useDefaultPrivateKey=true \
+  tronbox/tre
 ```
 
-## Docker Commands 
-Here are some useful docker commands, which will help you manage the TRON Quickstart Docker container on your machine. 
+The container runs in the foreground. In another terminal, check that the HTTP service is running:
 
-**To list all active containers on your machine, run:**
 ```shell
-docker container ps
-```  
-**Output:**
-```shell
-docker container ps
-
-CONTAINER ID        IMAGE               COMMAND                 CREATED             STATUS              PORTS                                              NAMES
-513078dc7816        tron                "./quickstart v2.0.0"   About an hour ago   Up About an hour    0.0.0.0:9090->9090/tcp, 0.0.0.0:18190->18190/tcp   tron
-```  
-**To kill an active container, run:**
-```shell
-docker container kill 513078dc7816   // use your container ID
-```  
-
-### How to check the logs of the FullNode ###
-```
-  docker exec -it tron tail -f /tron/FullNode/logs/tron.log 
+curl -fsS http://127.0.0.1:9090/healthcheck
 ```
 
- <details>
+Account generation and funding continue asynchronously after the HTTP service starts. Before running tests that depend on funded accounts, wait for `/admin/accounts` to report them as available:
 
-<summary>Output: something like following </summary>
+```shell
+until curl -fsS http://127.0.0.1:9090/admin/accounts | grep -q 'Available Accounts'; do
+  sleep 1
+done
+```
 
-  ```
-  number=204
-  parentId=00000000000000cb0985978b3c780e4219dc51e4329beecabe7b71f99d269985
-  witness address=41928c9af0651632157ef27a2cf17ca72c575a4d21
-  generated by myself=true
-  generate time=2019-12-09 18:33:33.0
-  txs are empty
-  ]
-  18:33:33.008 INFO  [Thread-5] [DB](Manager.java:1095) pushBlock block number:204, cost/txs:1/0
-  18:33:33.008 INFO  [Thread-5] [witness](WitnessService.java:283) Produce block successfully, blockNumber:204, abSlot[525305471], blockId:00000000000000ccc37f1f5c2ceb574d14c490e3d0b86909855646f9384ba666, transactionSize:0, blockTime:2019-12-09T18:33:33.000Z, parentBlockId:00000000000000cb0985978b3c780e4219dc51e4329beecabe7b71f99d269985
-  18:33:33.008 INFO  [Thread-5] [net](AdvService.java:156) Ready to broadcast block Num:204,ID:00000000000000ccc37f1f5c2ceb574d14c490e3d0b86909855646f9384ba666
-  ........  etc
-  ```
-</details>
+The default image tag follows the current stable release. Pin a versioned tag or image digest in CI when reproducible builds are required. See the [TronBox documentation](https://tronbox.io/docs/quickstart) for contract development and deployment workflows.
+
+> **Warning:** TRE is intended only for isolated development and testing. The default private key, funded accounts, and administrative APIs are not secure. Keep port `9090` bound to localhost and never expose this environment to production or an untrusted network.
+
+## Deploy a multi-node private network
+
+For multi-node private network deployment, follow the official [tron-docker private network guide](https://github.com/tronprotocol/tron-docker/tree/main/private_net).
