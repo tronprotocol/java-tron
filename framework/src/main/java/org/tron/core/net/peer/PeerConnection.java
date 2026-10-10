@@ -146,7 +146,8 @@ public class PeerConnection {
   private volatile long remainNum;
   @Getter
   private Cache<Sha256Hash, Long> syncBlockIdCache = CacheBuilder.newBuilder()
-      .maximumSize(2 * NetConstants.SYNC_FETCH_BATCH_NUM).recordStats().build();
+      .concurrencyLevel(1)
+      .maximumSize(2 * NetConstants.SYNC_FETCH_BATCH_NUM + 1).recordStats().build();
   @Setter
   @Getter
   private Deque<BlockId> syncBlockToFetch = new ConcurrentLinkedDeque<>();
