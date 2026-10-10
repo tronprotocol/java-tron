@@ -844,9 +844,15 @@ public class ManagerTest extends BaseMethodTest {
     List<TransactionCapsule> txs = dbManager.getVerifyTxs(capsule);
     Assert.assertEquals(txs.size(), 1);
 
+    t1.setVerified(true);
     dbManager.getPendingTransactions().add(t1);
     txs = dbManager.getVerifyTxs(capsule);
     Assert.assertEquals(txs.size(), 0);
+
+    t1.setVerified(false);
+    txs = dbManager.getVerifyTxs(capsule);
+    Assert.assertEquals(txs.size(), 1);
+    t1.setVerified(true);
 
     list.add(t2.getInstance());
     capsule = new BlockCapsule(0, ByteString.EMPTY, 0, list);
@@ -859,6 +865,7 @@ public class ManagerTest extends BaseMethodTest {
 
     dbManager.getPendingTransactions().clear();
     capsule = new BlockCapsule(0, ByteString.EMPTY, 0, list);
+    t2.setVerified(true);
     dbManager.getPendingTransactions().add(t1);
     dbManager.getPendingTransactions().add(t2);
     txs = dbManager.getVerifyTxs(capsule);

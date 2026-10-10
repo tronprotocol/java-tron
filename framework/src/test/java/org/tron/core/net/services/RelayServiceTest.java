@@ -8,8 +8,11 @@ import com.google.protobuf.ByteString;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.math.BigInteger;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
@@ -24,6 +27,8 @@ import org.mockito.Mockito;
 import org.springframework.context.ApplicationContext;
 import org.tron.common.BaseTest;
 import org.tron.common.TestConstants;
+import org.tron.common.crypto.ECKey;
+import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.crypto.SignInterface;
 import org.tron.common.crypto.SignUtils;
 import org.tron.common.parameter.CommonParameter;
@@ -34,6 +39,7 @@ import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.args.Args;
+import org.tron.core.db.Manager;
 import org.tron.core.net.P2pEventHandlerImpl;
 import org.tron.core.net.TronNetDelegate;
 import org.tron.core.net.TronNetService;
@@ -43,6 +49,8 @@ import org.tron.core.net.peer.Item;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.PeerManager;
 import org.tron.core.net.service.relay.RelayService;
+import org.tron.core.store.DynamicPropertiesStore;
+import org.tron.core.store.WitnessScheduleStore;
 import org.tron.p2p.P2pConfig;
 import org.tron.p2p.connection.Channel;
 import org.tron.p2p.discover.Node;
@@ -248,6 +256,79 @@ public class RelayServiceTest extends BaseTest {
       logger.info("", e);
       assert false;
     }
+  }
+
+  @Test
+  public void testStrictHelloAuthentication() throws Exception {
+    Assert.assertTrue(Args.getInstance().isECKeyCryptoEngine());
+    long timestamp = 1720000000000L;
+    byte[] hash = Sha256Hash.of(true, ByteArray.fromLong(timestamp)).getBytes();
+    ECKey key = ECKey.fromPrivate(BigInteger.TEN);
+    ByteString address = ByteString.copyFrom(key.getAddress());
+    ByteString signature = ByteString.copyFrom(key.sign(hash).toByteArray());
+    ByteString paddedSignature = signature.concat(ByteString.copyFrom(new byte[3]));
+
+    // R = G and s = e mod n make sR - eG the point at infinity for this HELLO digest.
+    BigInteger s = new BigInteger(1, hash).mod(ECKey.CURVE.getN());
+    Assert.assertTrue(s.signum() > 0);
+    ECDSASignature infinity = new ECDSASignature(
+        ECKey.CURVE.getG().getAffineXCoord().toBigInteger(), s);
+    infinity.v = 27;
+    ByteString infinitySignature = ByteString.copyFrom(infinity.toByteArray());
+    ByteString infinityAddress = getFromHexString("41dcc703c0e500b653ca82273b7bfad8045d85a470");
+    Assert.assertArrayEquals(infinityAddress.toByteArray(), SignUtils.signatureToAddress(hash,
+        infinity.toBase64(), true, false));
+
+    RelayService relay = new RelayService();
+    P2pConfig previousConfig = TronNetService.getP2pConfig();
+    try {
+      CommonParameter parameter = mock(CommonParameter.class);
+      Mockito.when(parameter.isFastForward()).thenReturn(true);
+      WitnessScheduleStore schedule = mock(WitnessScheduleStore.class);
+      Mockito.when(schedule.getActiveWitnesses())
+          .thenReturn(Arrays.asList(address, infinityAddress));
+      DynamicPropertiesStore properties = mock(DynamicPropertiesStore.class);
+      Mockito.when(properties.getAllowMultiSign()).thenReturn(0L);
+      Manager manager = mock(Manager.class);
+      Mockito.when(manager.getDynamicPropertiesStore()).thenReturn(properties);
+      TronNetDelegate delegate = mock(TronNetDelegate.class);
+      Mockito.when(delegate.getActivePeer()).thenReturn(Collections.emptyList());
+      ReflectUtils.setFieldValue(relay, "parameter", parameter);
+      ReflectUtils.setFieldValue(relay, "witnessScheduleStore", schedule);
+      ReflectUtils.setFieldValue(relay, "manager", manager);
+      ReflectUtils.setFieldValue(relay, "tronNetDelegate", delegate);
+      ReflectUtils.setFieldValue(tronNetService, "p2pConfig", new P2pConfig());
+
+      for (long flag : new long[]{0, 1}) {
+        Mockito.when(properties.getAllowStrictEcdsaValidation()).thenReturn(flag);
+        Mockito.when(properties.allowStrictEcdsaValidation()).thenReturn(flag == 1);
+        assertHelloAuthentication(relay, timestamp, address, signature,
+            "127.0." + flag + ".1", true);
+        assertHelloAuthentication(relay, timestamp, address, paddedSignature,
+            "127.0." + flag + ".2", false);
+        assertHelloAuthentication(relay, timestamp, infinityAddress, infinitySignature,
+            "127.0." + flag + ".3", false);
+      }
+    } finally {
+      ReflectUtils.setFieldValue(tronNetService, "p2pConfig", previousConfig);
+      relay.close();
+    }
+  }
+
+  private void assertHelloAuthentication(RelayService relay, long timestamp, ByteString address,
+      ByteString signature, String host, boolean expected) throws Exception {
+    InetSocketAddress socketAddress = new InetSocketAddress(host, 10001);
+    Channel channel = mock(Channel.class);
+    Mockito.when(channel.getInetSocketAddress()).thenReturn(socketAddress);
+    Mockito.when(channel.getInetAddress()).thenReturn(socketAddress.getAddress());
+    HelloMessage message = new HelloMessage(Protocol.HelloMessage.newBuilder()
+        .setTimestamp(timestamp).setAddress(address).setSignature(signature).build().toByteArray());
+
+    Assert.assertFalse(TronNetService.getP2pConfig().getTrustNodes()
+        .contains(socketAddress.getAddress()));
+    Assert.assertEquals(expected, relay.checkHelloMessage(message, channel));
+    Assert.assertEquals(expected, TronNetService.getP2pConfig().getTrustNodes()
+        .contains(socketAddress.getAddress()));
   }
 
   @Test

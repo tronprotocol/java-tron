@@ -69,6 +69,8 @@ public class ProposalUtilTest extends BaseTest {
 
     long code = 32;
     Assert.assertEquals(ProposalType.ALLOW_TVM_SOLIDITY_059, ProposalType.getEnum(code));
+    Assert.assertEquals(ProposalType.ALLOW_OPTIMIZE_TVM_STORAGE, ProposalType.getEnum(99));
+    Assert.assertEquals(ProposalType.ALLOW_STRICT_ECDSA_VALIDATION, ProposalType.getEnum(100));
 
   }
 
@@ -348,6 +350,8 @@ public class ProposalUtilTest extends BaseTest {
     testAllowHardenResourceCalculationProposal();
 
     testAllowHardenExchangeCalculationProposal();
+
+    testAllowStrictEcdsaValidationProposal();
 
     forkUtils.getManager().getDynamicPropertiesStore()
         .statsByVersion(ForkBlockVersionEnum.ENERGY_LIMIT.getValue(), stats);
@@ -742,6 +746,41 @@ public class ProposalUtilTest extends BaseTest {
     } catch (Throwable e) {
       Assert.fail("Should pass when toggling 1 -> 0: " + e.getMessage());
     }
+  }
+
+  private void testAllowStrictEcdsaValidationProposal() {
+    long code = ProposalType.ALLOW_STRICT_ECDSA_VALIDATION.getCode();
+    ThrowingRunnable proposeZero = () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+        code, 0);
+    ThrowingRunnable proposeOne = () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+        code, 1);
+
+    ContractValidateException thrown = assertThrows(ContractValidateException.class, proposeOne);
+    assertEquals("Bad chain parameter id [ALLOW_STRICT_ECDSA_VALIDATION]",
+        thrown.getMessage());
+
+    activateFork(ForkBlockVersionEnum.VERSION_4_8_2_3);
+    thrown = assertThrows(ContractValidateException.class, proposeOne);
+    assertEquals("Bad chain parameter id [ALLOW_STRICT_ECDSA_VALIDATION]",
+        thrown.getMessage());
+
+    activateFork(ForkBlockVersionEnum.VERSION_4_8_3);
+
+    thrown = assertThrows(ContractValidateException.class, proposeZero);
+    assertEquals("This value[ALLOW_STRICT_ECDSA_VALIDATION] is only allowed to be 1",
+        thrown.getMessage());
+
+    try {
+      proposeOne.run();
+    } catch (Throwable e) {
+      Assert.fail("Should allow one-way activation: " + e.getMessage());
+    }
+
+    dynamicPropertiesStore.saveAllowStrictEcdsaValidation(1);
+    thrown = assertThrows(ContractValidateException.class, proposeOne);
+    assertEquals(
+        "[ALLOW_STRICT_ECDSA_VALIDATION] has been valid, no need to propose again",
+        thrown.getMessage());
   }
 
   private void testAllowMarketTransaction() {

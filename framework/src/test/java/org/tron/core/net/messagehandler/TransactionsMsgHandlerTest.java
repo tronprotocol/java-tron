@@ -6,6 +6,8 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
@@ -20,12 +22,14 @@ import java.util.concurrent.TimeUnit;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.tron.common.BaseTest;
 import org.tron.common.TestConstants;
 import org.tron.common.runtime.TvmTestUtils;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.ChainBaseManager;
+import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.P2pException;
 import org.tron.core.exception.P2pException.TypeEnum;
@@ -396,100 +400,166 @@ public class TransactionsMsgHandlerTest extends BaseTest {
 
   @Test
   public void testInvalidSigLength() throws Exception {
+    Protocol.Transaction base = buildTransferMessage(1).getTransactions().getTransactions(0);
+    for (int length : new int[]{0, 64, 65, 66, 67, 68, 96}) {
+      Protocol.Transaction transaction = withSignatures(base, length);
+      List<Protocol.Transaction> expected = length == 65
+          ? Collections.singletonList(transaction) : Collections.emptyList();
+      assertSignatureBatch(Collections.singletonList(transaction), expected,
+          Collections.emptyList());
+    }
+    assertSignatureBatch(Collections.singletonList(base), Collections.singletonList(base),
+        Collections.emptyList());
+  }
+
+  @Test
+  public void testMixedSignatureLengths() throws Exception {
+    List<Protocol.Transaction> base = buildTransferMessage(3).getTransactions()
+        .getTransactionsList();
+    for (int invalidIndex = 0; invalidIndex < base.size(); invalidIndex++) {
+      List<Protocol.Transaction> transactions = new ArrayList<>();
+      List<Protocol.Transaction> expected = new ArrayList<>();
+      for (int i = 0; i < base.size(); i++) {
+        Protocol.Transaction transaction = i == invalidIndex
+            ? withSignatures(base.get(i), 65, 66 + invalidIndex)
+            : withSignatures(base.get(i), 65);
+        transactions.add(transaction);
+        if (i != invalidIndex) {
+          expected.add(transaction);
+        }
+      }
+      assertSignatureBatch(transactions, expected, Collections.emptyList());
+    }
+  }
+
+  @Test
+  public void testSmartContractSignatureLengths() throws Exception {
+    byte[] address = ByteArray.fromHexString("121212a9cf");
+    Protocol.Transaction valid = withSignatures(
+        TvmTestUtils.generateTriggerSmartContractAndGetTransaction(address, address,
+            ByteArray.fromHexString("123456"), 100, 100000000, 0, 0), 65);
+    Protocol.Transaction invalid = withSignatures(
+        TvmTestUtils.generateTriggerSmartContractAndGetTransaction(address, address,
+            ByteArray.fromHexString("123457"), 100, 100000000, 0, 0), 65, 68);
+    Protocol.Transaction transfer = withSignatures(
+        buildTransferMessage(1).getTransactions().getTransactions(0), 65);
+    assertSignatureBatch(Arrays.asList(invalid, valid, transfer),
+        Collections.singletonList(transfer), Collections.singletonList(valid));
+  }
+
+  @Test
+  public void testInvalidSignaturePreservesProtocolChecks() throws Exception {
+    List<Protocol.Transaction> base = buildTransferMessage(2).getTransactions()
+        .getTransactionsList();
+    Protocol.Transaction padded = withSignatures(base.get(0), 68);
+    Protocol.Transaction valid = withSignatures(base.get(1), 65);
+    assertProtocolRejection(Arrays.asList(padded, valid), 1, TypeEnum.BAD_MESSAGE);
+    assertProtocolRejection(Arrays.asList(padded, withSignatures(base.get(0), 65)), 2,
+        TypeEnum.BAD_MESSAGE);
+    Protocol.Transaction noContract = valid.toBuilder()
+        .setRawData(valid.getRawData().toBuilder().clearContract()).build();
+    assertProtocolRejection(Arrays.asList(padded, noContract), 2, TypeEnum.BAD_TRX);
+  }
+
+  private Protocol.Transaction withSignatures(Protocol.Transaction transaction, int... lengths) {
+    Protocol.Transaction.Builder builder = transaction.toBuilder().clearSignature();
+    for (int length : lengths) {
+      builder.addSignature(ByteString.copyFrom(new byte[length]));
+    }
+    return builder.build();
+  }
+
+  private void assertSignatureBatch(List<Protocol.Transaction> transactions,
+      List<Protocol.Transaction> expectedTransfers, List<Protocol.Transaction> expectedContracts)
+      throws Exception {
     TransactionsMsgHandler handler = new TransactionsMsgHandler();
-    handler.init();
     ExecutorService originalPool = null;
     try {
-      // Mock pool never executes submitted tasks: the async worker would invoke isBadPeer()
-      // on the stubbed peer concurrently with main-thread re-stubbing of getAdvInvRequest(),
-      // and Mockito's per-mock invocationForStubbing state is not thread-safe
-      // (intermittent WrongTypeOfReturnValue: ConcurrentHashMap cannot be returned by
-      // isBadPeer()). This test only asserts the synchronous check() length validation,
-      // so not running the worker is intentional.
-      ExecutorService mockPool = Mockito.mock(ExecutorService.class);
+      TronNetDelegate delegate = Mockito.mock(TronNetDelegate.class);
+      AdvService advService = Mockito.mock(AdvService.class);
+      ChainBaseManager chainBaseManager = Mockito.mock(ChainBaseManager.class);
+      setField(handler, "tronNetDelegate", delegate);
+      setField(handler, "advService", advService);
+      setField(handler, "chainBaseManager", chainBaseManager);
+
+      ExecutorService pool = Mockito.mock(ExecutorService.class);
       Future<?> submittedTask = Mockito.mock(Future.class);
-      Mockito.when(mockPool.submit(Mockito.any(Runnable.class)))
-          .thenAnswer(invocation -> submittedTask);
-      originalPool = replaceTrxHandlePool(handler, mockPool);
+      Mockito.when(pool.submit(Mockito.any(Runnable.class))).thenAnswer(invocation -> {
+        ((Runnable) invocation.getArgument(0)).run();
+        return submittedTask;
+      });
+      originalPool = replaceTrxHandlePool(handler, pool);
 
       PeerConnection peer = Mockito.mock(PeerConnection.class);
+      TransactionsMessage message = new TransactionsMessage(transactions);
+      stubAdvInvRequest(peer, message);
+      Map<Item, Long> requests = peer.getAdvInvRequest();
+      Protocol.Transaction unrelated = buildTransferMessage(4).getTransactions().getTransactions(3);
+      Item unrelatedItem = new Item(new TransactionMessage(unrelated).getMessageId(),
+          Protocol.Inventory.InventoryType.TRX);
+      requests.put(unrelatedItem, 0L);
 
-      BalanceContract.TransferContract transferContract = BalanceContract.TransferContract
-          .newBuilder()
-          .setAmount(10)
-          .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString("121212a9cf")))
-          .setToAddress(ByteString.copyFrom(ByteArray.fromHexString("232323a9cf")))
-          .build();
+      handler.processMessage(peer, message);
 
-      // signature shorter than 65 bytes → BAD_TRX
-      Protocol.Transaction shortSigTrx = Protocol.Transaction.newBuilder()
-          .setRawData(Protocol.Transaction.raw.newBuilder()
-              .addContract(Protocol.Transaction.Contract.newBuilder()
-                  .setType(Protocol.Transaction.Contract.ContractType.TransferContract)
-                  .setParameter(Any.pack(transferContract)).build())
-              .build())
-          .addSignature(ByteString.copyFrom(new byte[64]))
-          .build();
+      Assert.assertEquals(Collections.singletonMap(unrelatedItem, 0L), requests);
+      Mockito.verify(peer, Mockito.never()).disconnect(Mockito.any());
+      Mockito.verify(peer, Mockito.never()).setBadPeer(Mockito.anyBoolean());
+      ArgumentCaptor<TransactionCapsule> pushed = ArgumentCaptor.forClass(TransactionCapsule.class);
+      Mockito.verify(delegate, Mockito.times(expectedTransfers.size()))
+          .pushTransaction(pushed.capture());
+      List<Protocol.Transaction> actualTransfers = new ArrayList<>();
+      pushed.getAllValues().forEach(transaction -> actualTransfers.add(transaction.getInstance()));
+      Assert.assertEquals(expectedTransfers, actualTransfers);
+      ArgumentCaptor<TransactionMessage> broadcast =
+          ArgumentCaptor.forClass(TransactionMessage.class);
+      Mockito.verify(advService, Mockito.times(expectedTransfers.size()))
+          .broadcast(broadcast.capture());
+      List<Protocol.Transaction> actualBroadcasts = new ArrayList<>();
+      broadcast.getAllValues().forEach(transaction ->
+          actualBroadcasts.add(transaction.getTransactionCapsule().getInstance()));
+      Assert.assertEquals(expectedTransfers, actualBroadcasts);
 
-      List<Protocol.Transaction> shortList = new ArrayList<>();
-      shortList.add(shortSigTrx);
-      stubAdvInvRequest(peer, new TransactionsMessage(shortList));
-      P2pException shortEx = Assert.assertThrows(P2pException.class,
-          () -> handler.processMessage(peer, new TransactionsMessage(shortList)));
-      Assert.assertEquals(TypeEnum.BAD_TRX, shortEx.getType());
-
-      // signature longer than 68 bytes → BAD_TRX
-      Protocol.Transaction longSigTrx = Protocol.Transaction.newBuilder()
-          .setRawData(Protocol.Transaction.raw.newBuilder()
-              .setRefBlockNum(1)
-              .addContract(Protocol.Transaction.Contract.newBuilder()
-                  .setType(Protocol.Transaction.Contract.ContractType.TransferContract)
-                  .setParameter(Any.pack(transferContract)).build())
-              .build())
-          .addSignature(ByteString.copyFrom(new byte[69]))
-          .build();
-
-      List<Protocol.Transaction> longList = new ArrayList<>();
-      longList.add(longSigTrx);
-      stubAdvInvRequest(peer, new TransactionsMessage(longList));
-      P2pException longEx = Assert.assertThrows(P2pException.class,
-          () -> handler.processMessage(peer, new TransactionsMessage(longList)));
-      Assert.assertEquals(TypeEnum.BAD_TRX, longEx.getType());
-
-      // exactly 65 bytes → passes the length check (no P2pException from check)
-      Protocol.Transaction validSigTrx = Protocol.Transaction.newBuilder()
-          .setRawData(Protocol.Transaction.raw.newBuilder()
-              .setRefBlockNum(2)
-              .addContract(Protocol.Transaction.Contract.newBuilder()
-                  .setType(Protocol.Transaction.Contract.ContractType.TransferContract)
-                  .setParameter(Any.pack(transferContract)).build())
-              .build())
-          .addSignature(ByteString.copyFrom(new byte[65]))
-          .build();
-
-      List<Protocol.Transaction> validList = new ArrayList<>();
-      validList.add(validSigTrx);
-      stubAdvInvRequest(peer, new TransactionsMessage(validList));
-      handler.processMessage(peer, new TransactionsMessage(validList));
-
-      // 68 bytes (upper bound) also passes the length check
-      Protocol.Transaction paddedSigTrx = Protocol.Transaction.newBuilder()
-          .setRawData(Protocol.Transaction.raw.newBuilder()
-              .setRefBlockNum(3)
-              .addContract(Protocol.Transaction.Contract.newBuilder()
-                  .setType(Protocol.Transaction.Contract.ContractType.TransferContract)
-                  .setParameter(Any.pack(transferContract)).build())
-              .build())
-          .addSignature(ByteString.copyFrom(new byte[68]))
-          .build();
-
-      List<Protocol.Transaction> paddedList = new ArrayList<>();
-      paddedList.add(paddedSigTrx);
-      stubAdvInvRequest(peer, new TransactionsMessage(paddedList));
-      handler.processMessage(peer, new TransactionsMessage(paddedList));
+      Field queueField = TransactionsMsgHandler.class.getDeclaredField("smartContractQueue");
+      queueField.setAccessible(true);
+      BlockingQueue<?> contracts = (BlockingQueue<?>) queueField.get(handler);
+      List<Protocol.Transaction> actualContracts = new ArrayList<>();
+      for (Object entry : contracts) {
+        TransactionsMsgHandler.TrxEvent event = (TransactionsMsgHandler.TrxEvent) entry;
+        actualContracts.add(event.getMsg().getTransactionCapsule().getInstance());
+      }
+      Assert.assertEquals(expectedContracts, actualContracts);
     } finally {
       closeHandlerAndOriginalPool(handler, originalPool);
     }
+  }
+
+  private void assertProtocolRejection(List<Protocol.Transaction> transactions, int requestedCount,
+      TypeEnum expected) throws Exception {
+    TransactionsMsgHandler handler = new TransactionsMsgHandler();
+    ExecutorService originalPool = null;
+    try {
+      ExecutorService pool = Mockito.mock(ExecutorService.class);
+      originalPool = replaceTrxHandlePool(handler, pool);
+      PeerConnection peer = Mockito.mock(PeerConnection.class);
+      stubAdvInvRequest(peer, new TransactionsMessage(transactions.subList(0, requestedCount)));
+      int requestCount = peer.getAdvInvRequest().size();
+
+      P2pException error = Assert.assertThrows(P2pException.class,
+          () -> handler.processMessage(peer, new TransactionsMessage(transactions)));
+
+      Assert.assertEquals(expected, error.getType());
+      Assert.assertEquals(requestCount, peer.getAdvInvRequest().size());
+      Mockito.verify(pool, Mockito.never()).submit(Mockito.any(Runnable.class));
+    } finally {
+      closeHandlerAndOriginalPool(handler, originalPool);
+    }
+  }
+
+  private void setField(TransactionsMsgHandler handler, String name, Object value)
+      throws Exception {
+    Field field = TransactionsMsgHandler.class.getDeclaredField(name);
+    field.setAccessible(true);
+    field.set(handler, value);
   }
 
   @Test

@@ -416,6 +416,11 @@ public class ProposalService extends ProposalUtil {
           manager.getDynamicPropertiesStore().saveAllowOptimizeTvmStorage(entry.getValue());
           break;
         }
+        case ALLOW_STRICT_ECDSA_VALIDATION: {
+          manager.getDynamicPropertiesStore()
+              .saveAllowStrictEcdsaValidation(entry.getValue());
+          break;
+        }
         default:
           find = false;
           break;

@@ -135,6 +135,31 @@ public class ProposalServiceTest extends BaseTest {
   }
 
   @Test
+  public void testIndependentGovernanceActivation() {
+    long savedStorage = dbManager.getDynamicPropertiesStore().getAllowOptimizeTvmStorage();
+    long savedEcdsa = dbManager.getDynamicPropertiesStore().getAllowStrictEcdsaValidation();
+    try {
+      dbManager.getDynamicPropertiesStore().saveAllowOptimizeTvmStorage(0);
+      dbManager.getDynamicPropertiesStore().saveAllowStrictEcdsaValidation(0);
+      Proposal storageProposal = Proposal.newBuilder().putParameters(99, 1).build();
+
+      Assert.assertTrue(ProposalService.process(dbManager, new ProposalCapsule(storageProposal)));
+      Assert.assertTrue(dbManager.getDynamicPropertiesStore().allowOptimizeTvmStorage());
+      Assert.assertFalse(dbManager.getDynamicPropertiesStore().allowStrictEcdsaValidation());
+
+      dbManager.getDynamicPropertiesStore().saveAllowOptimizeTvmStorage(0);
+      Proposal ecdsaProposal = Proposal.newBuilder().putParameters(100, 1).build();
+
+      Assert.assertTrue(ProposalService.process(dbManager, new ProposalCapsule(ecdsaProposal)));
+      Assert.assertTrue(dbManager.getDynamicPropertiesStore().allowStrictEcdsaValidation());
+      Assert.assertFalse(dbManager.getDynamicPropertiesStore().allowOptimizeTvmStorage());
+    } finally {
+      dbManager.getDynamicPropertiesStore().saveAllowOptimizeTvmStorage(savedStorage);
+      dbManager.getDynamicPropertiesStore().saveAllowStrictEcdsaValidation(savedEcdsa);
+    }
+  }
+
+  @Test
   public void testProposalExpireTime() {
     long defaultWindow = dbManager.getDynamicPropertiesStore().getProposalExpireTime();
     long proposalExpireTime = CommonParameter.getInstance().getProposalExpireTime();
