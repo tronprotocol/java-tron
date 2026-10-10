@@ -22,7 +22,7 @@ public class QpsStrategy extends Strategy {
   @Override
   protected Map<String, ParamItem> defaultParam() {
     Map<String, ParamItem> map = new HashMap<>();
-    map.put(STRATEGY_PARAM_QPS, new ParamItem(Double.class, DEFAULT_QPS));
+    map.put(STRATEGY_PARAM_QPS, new ParamItem(Double.class, (double) DEFAULT_QPS));
     return map;
   }
 

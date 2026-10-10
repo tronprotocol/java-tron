@@ -10,9 +10,11 @@ import org.tron.common.utils.StringUtil;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.args.Args;
+import org.tron.core.exception.P2pException;
 import org.tron.core.net.message.MessageTypes;
 import org.tron.core.net.message.TronMessage;
 import org.tron.p2p.discover.Node;
+import org.tron.p2p.utils.NetUtil;
 import org.tron.program.Version;
 import org.tron.protos.Discover.Endpoint;
 import org.tron.protos.Protocol;
@@ -31,6 +33,9 @@ public class HelloMessage extends TronMessage {
   public HelloMessage(byte[] data) throws Exception {
     super(MessageTypes.P2P_HELLO.asByte(), data);
     this.helloMessage = Protocol.HelloMessage.parseFrom(data);
+    if (!valid()) {
+      throw new P2pException(P2pException.TypeEnum.BAD_MESSAGE, "invalid hello message");
+    }
   }
 
   public HelloMessage(Node from, long timestamp, ChainBaseManager chainBaseManager) {
@@ -124,7 +129,6 @@ public class HelloMessage extends TronMessage {
     StringBuilder builder = new StringBuilder();
 
     builder.append(super.toString())
-            .append("from: ").append(getFrom().getPreferInetSocketAddress()).append("\n")
             .append("timestamp: ").append(getTimestamp()).append("\n")
             .append("headBlockId: ").append(getHeadBlockId().getString()).append("\n")
             .append("nodeType: ").append(helloMessage.getNodeType()).append("\n")
@@ -156,6 +160,10 @@ public class HelloMessage extends TronMessage {
   }
 
   public boolean valid() {
+    if (helloMessage.hasFrom() && !NetUtil.validNode(getFrom())) {
+      return false;
+    }
+
     byte[] genesisBlockByte = this.helloMessage.getGenesisBlockId().getHash().toByteArray();
     if (genesisBlockByte.length != Sha256Hash.LENGTH) {
       return false;

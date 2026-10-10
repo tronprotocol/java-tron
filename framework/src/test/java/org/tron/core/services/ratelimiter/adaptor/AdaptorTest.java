@@ -199,6 +199,17 @@ public class AdaptorTest {
     flag = strategy.tryAcquire();
     Assert.assertFalse(flag);
   }
+
+  @Test
+  public void testDefaultQpsValueHasDeclaredType() {
+    QpsStrategy strategy = new QpsStrategy("");
+    Object value = ReflectUtils.getFieldObject(strategy.getMapParams().get("qps"), "value");
+    Assert.assertTrue(value instanceof Double);
+    Assert.assertEquals((double) QpsStrategy.DEFAULT_QPS, (Double) value, 0.0);
+
+    QpsStrategy fallback = new QpsStrategy("qps=invalid");
+    Object fallbackValue = ReflectUtils.getFieldObject(
+        fallback.getMapParams().get("qps"), "value");
+    Assert.assertEquals((double) QpsStrategy.DEFAULT_QPS, (Double) fallbackValue, 0.0);
+  }
 }
-
-
