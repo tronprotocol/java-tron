@@ -590,6 +590,30 @@ public class ArgsTest {
   }
 
   @Test
+  public void testDnsPublishRejectsInvalidChangeThresholdWithParameterInitError() {
+    Config config = dnsPublishConfig("node.dns.changeThreshold", "-0.1");
+
+    TronError error = Assert.assertThrows(TronError.class,
+        () -> Args.loadDnsPublishConfig(NodeConfig.fromConfig(config)));
+
+    Assert.assertEquals(TronError.ErrCode.PARAMETER_INIT, error.getErrCode());
+    Assert.assertEquals("Check node.dns.changeThreshold, should be bigger than 0, default 0.1",
+        error.getMessage());
+  }
+
+  @Test
+  public void testDnsPublishRejectsInvalidMaxMergeSizeWithParameterInitError() {
+    Config config = dnsPublishConfig("node.dns.maxMergeSize", "6");
+
+    TronError error = Assert.assertThrows(TronError.class,
+        () -> Args.loadDnsPublishConfig(NodeConfig.fromConfig(config)));
+
+    Assert.assertEquals(TronError.ErrCode.PARAMETER_INIT, error.getErrCode());
+    Assert.assertEquals("Check node.dns.maxMergeSize, should be [1~5], default 5",
+        error.getMessage());
+  }
+
+  @Test
   public void testCommitteeConfigRejectsOldRewardOptimizationWithoutPrerequisite() {
     Map<String, Object> configMap = new HashMap<>();
     configMap.put("storage.db.directory", "database");
