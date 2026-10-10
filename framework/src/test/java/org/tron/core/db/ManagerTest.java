@@ -147,7 +147,7 @@ public class ManagerTest extends BaseMethodTest {
 
     localWitnesses = new LocalWitnesses();
     localWitnesses.setPrivateKeys(Arrays.asList(privateKey));
-    localWitnesses.initWitnessAccountAddress(null, true);
+    localWitnesses.initWitnessAccountAddress(null);
     Args.setLocalWitnesses(localWitnesses);
 
     blockCapsule2 =

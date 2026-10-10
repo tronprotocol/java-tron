@@ -31,7 +31,7 @@ public class KeystoreImportTest {
 
     // Generate a known private key
     SignInterface keyPair = SignUtils.getGeneratedRandomSign(
-        SecureRandom.getInstance("NativePRNG"), true);
+        SecureRandom.getInstance("NativePRNG"));
     String privateKeyHex = ByteArray.toHexString(keyPair.getPrivateKey());
     String expectedAddress = Credentials.create(keyPair).getAddress();
 
@@ -54,7 +54,7 @@ public class KeystoreImportTest {
     assertEquals(1, files.length);
 
     // Verify roundtrip: decrypt should recover the same private key
-    Credentials creds = WalletUtils.loadCredentials("test123456", files[0], true);
+    Credentials creds = WalletUtils.loadCredentials("test123456", files[0]);
     assertEquals("Address must match", expectedAddress, creds.getAddress());
     assertArrayEquals("Private key must survive import roundtrip",
         keyPair.getPrivateKey(), creds.getSignInterface().getPrivateKey());
@@ -114,41 +114,10 @@ public class KeystoreImportTest {
   }
 
   @Test
-  public void testImportWithSm2() throws Exception {
-    File dir = tempFolder.newFolder("keystore-sm2");
-    // SM2 uses same 32-byte private key format
-    SignInterface keyPair = SignUtils.getGeneratedRandomSign(
-        SecureRandom.getInstance("NativePRNG"), false);
-    String privateKeyHex = ByteArray.toHexString(keyPair.getPrivateKey());
-
-    File keyFile = tempFolder.newFile("sm2.key");
-    Files.write(keyFile.toPath(), privateKeyHex.getBytes(StandardCharsets.UTF_8));
-    File pwFile = tempFolder.newFile("pw-sm2.txt");
-    Files.write(pwFile.toPath(), "test123456".getBytes(StandardCharsets.UTF_8));
-
-    CommandLine cmd = new CommandLine(new Toolkit());
-    int exitCode = cmd.execute("keystore", "import",
-        "--keystore-dir", dir.getAbsolutePath(),
-        "--key-file", keyFile.getAbsolutePath(),
-        "--password-file", pwFile.getAbsolutePath(),
-        "--sm2");
-
-    assertEquals("SM2 import should succeed", 0, exitCode);
-    File[] files = dir.listFiles((d, name) -> name.endsWith(".json"));
-    assertNotNull(files);
-    assertEquals(1, files.length);
-
-    // Verify SM2 keystore can be decrypted
-    Credentials creds = WalletUtils.loadCredentials("test123456", files[0], false);
-    assertArrayEquals("SM2 key must survive import roundtrip",
-        keyPair.getPrivateKey(), creds.getSignInterface().getPrivateKey());
-  }
-
-  @Test
   public void testImportKeyFileWithWhitespace() throws Exception {
     File dir = tempFolder.newFolder("keystore-ws");
     SignInterface keyPair = SignUtils.getGeneratedRandomSign(
-        SecureRandom.getInstance("NativePRNG"), true);
+        SecureRandom.getInstance("NativePRNG"));
     String privateKeyHex = ByteArray.toHexString(keyPair.getPrivateKey());
 
     // Key file with leading/trailing whitespace and newlines
@@ -169,7 +138,7 @@ public class KeystoreImportTest {
     File[] files = dir.listFiles((d, name) -> name.endsWith(".json"));
     assertNotNull(files);
     assertEquals(1, files.length);
-    Credentials creds = WalletUtils.loadCredentials("test123456", files[0], true);
+    Credentials creds = WalletUtils.loadCredentials("test123456", files[0]);
     assertArrayEquals("Key must survive whitespace-trimmed import",
         keyPair.getPrivateKey(), creds.getSignInterface().getPrivateKey());
   }
@@ -178,7 +147,7 @@ public class KeystoreImportTest {
   public void testImportDuplicateAddressBlocked() throws Exception {
     File dir = tempFolder.newFolder("keystore-dup");
     SignInterface keyPair = SignUtils.getGeneratedRandomSign(
-        SecureRandom.getInstance("NativePRNG"), true);
+        SecureRandom.getInstance("NativePRNG"));
     String privateKeyHex = ByteArray.toHexString(keyPair.getPrivateKey());
 
     File keyFile = tempFolder.newFile("dup.key");
@@ -214,7 +183,7 @@ public class KeystoreImportTest {
   public void testImportDuplicateAddressWithForce() throws Exception {
     File dir = tempFolder.newFolder("keystore-force");
     SignInterface keyPair = SignUtils.getGeneratedRandomSign(
-        SecureRandom.getInstance("NativePRNG"), true);
+        SecureRandom.getInstance("NativePRNG"));
     String privateKeyHex = ByteArray.toHexString(keyPair.getPrivateKey());
 
     File keyFile = tempFolder.newFile("force.key");
@@ -261,7 +230,7 @@ public class KeystoreImportTest {
   public void testImportWith0xPrefix() throws Exception {
     File dir = tempFolder.newFolder("keystore-0x");
     SignInterface keyPair = SignUtils.getGeneratedRandomSign(
-        SecureRandom.getInstance("NativePRNG"), true);
+        SecureRandom.getInstance("NativePRNG"));
     String privateKeyHex = ByteArray.toHexString(keyPair.getPrivateKey());
     String expectedAddress = Credentials.create(keyPair).getAddress();
 
@@ -281,7 +250,7 @@ public class KeystoreImportTest {
     File[] files = dir.listFiles((d, name) -> name.endsWith(".json"));
     assertNotNull(files);
     assertEquals(1, files.length);
-    Credentials creds = WalletUtils.loadCredentials("test123456", files[0], true);
+    Credentials creds = WalletUtils.loadCredentials("test123456", files[0]);
     assertEquals("Address must match", expectedAddress, creds.getAddress());
   }
 
@@ -289,7 +258,7 @@ public class KeystoreImportTest {
   public void testImportWith0XUppercasePrefix() throws Exception {
     File dir = tempFolder.newFolder("keystore-0X");
     SignInterface keyPair = SignUtils.getGeneratedRandomSign(
-        SecureRandom.getInstance("NativePRNG"), true);
+        SecureRandom.getInstance("NativePRNG"));
     String privateKeyHex = ByteArray.toHexString(keyPair.getPrivateKey());
 
     File keyFile = tempFolder.newFile("0X.key");
@@ -311,7 +280,7 @@ public class KeystoreImportTest {
   public void testImportWarnsOnCorruptedFile() throws Exception {
     File dir = tempFolder.newFolder("keystore-corrupt");
     SignInterface keyPair = SignUtils.getGeneratedRandomSign(
-        SecureRandom.getInstance("NativePRNG"), true);
+        SecureRandom.getInstance("NativePRNG"));
     String privateKeyHex = ByteArray.toHexString(keyPair.getPrivateKey());
 
     // Create a corrupted JSON in the keystore dir
@@ -347,7 +316,7 @@ public class KeystoreImportTest {
 
     File dir = tempFolder.newFolder("keystore-perms");
     SignInterface keyPair = SignUtils.getGeneratedRandomSign(
-        SecureRandom.getInstance("NativePRNG"), true);
+        SecureRandom.getInstance("NativePRNG"));
     String privateKeyHex = ByteArray.toHexString(keyPair.getPrivateKey());
 
     File keyFile = tempFolder.newFile("perm.key");
@@ -384,7 +353,7 @@ public class KeystoreImportTest {
     // Create a real key file and a symlink pointing to it
     File target = tempFolder.newFile("real.key");
     SignInterface keyPair = SignUtils.getGeneratedRandomSign(
-        SecureRandom.getInstance("NativePRNG"), true);
+        SecureRandom.getInstance("NativePRNG"));
     Files.write(target.toPath(),
         ByteArray.toHexString(keyPair.getPrivateKey()).getBytes(StandardCharsets.UTF_8));
 
@@ -414,7 +383,7 @@ public class KeystoreImportTest {
 
     File dir = tempFolder.newFolder("keystore-pwsymlink");
     SignInterface keyPair = SignUtils.getGeneratedRandomSign(
-        SecureRandom.getInstance("NativePRNG"), true);
+        SecureRandom.getInstance("NativePRNG"));
     File keyFile = tempFolder.newFile("sym-pw.key");
     Files.write(keyFile.toPath(),
         ByteArray.toHexString(keyPair.getPrivateKey()).getBytes(StandardCharsets.UTF_8));
@@ -441,7 +410,7 @@ public class KeystoreImportTest {
   public void testImportDuplicateCheckSkipsInvalidVersion() throws Exception {
     File dir = tempFolder.newFolder("keystore-badver");
     SignInterface keyPair = SignUtils.getGeneratedRandomSign(
-        SecureRandom.getInstance("NativePRNG"), true);
+        SecureRandom.getInstance("NativePRNG"));
     String privateKeyHex = ByteArray.toHexString(keyPair.getPrivateKey());
     String address = Credentials.create(keyPair).getAddress();
 
@@ -474,7 +443,7 @@ public class KeystoreImportTest {
     File dir = tempFolder.newFolder("keystore-dup-symlink");
 
     SignInterface keyPair = SignUtils.getGeneratedRandomSign(
-        SecureRandom.getInstance("NativePRNG"), true);
+        SecureRandom.getInstance("NativePRNG"));
     String privateKeyHex = ByteArray.toHexString(keyPair.getPrivateKey());
 
     File target = tempFolder.newFile("outside.json");
@@ -510,7 +479,7 @@ public class KeystoreImportTest {
     // "old\nnew" becomes the password.
     File dir = tempFolder.newFolder("keystore-multi-pw");
     SignInterface keyPair = SignUtils.getGeneratedRandomSign(
-        SecureRandom.getInstance("NativePRNG"), true);
+        SecureRandom.getInstance("NativePRNG"));
     String privateKeyHex = ByteArray.toHexString(keyPair.getPrivateKey());
 
     File keyFile = tempFolder.newFile("multi.key");

@@ -1669,13 +1669,9 @@ public class ShieldedReceiveTest extends BaseTest {
         .setRawData(rawBuilder).build();
 
     byte[] mergedByte = Bytes.concat(
-        Sha256Hash.of(
-            CommonParameter
-                .getInstance().isECKeyCryptoEngine(),
-            CommonParameter.getInstance().getZenTokenId().getBytes()).getBytes(),
+        Sha256Hash.of(CommonParameter.getInstance().getZenTokenId().getBytes()).getBytes(),
         transaction.getRawData().toByteArray());
-    return Sha256Hash.of(CommonParameter
-        .getInstance().isECKeyCryptoEngine(), mergedByte).getBytes();
+    return Sha256Hash.of(mergedByte).getBytes();
   }
 
   private ZenTransactionBuilder generateShield2ShieldBuilder(ZenTransactionBuilder builder,

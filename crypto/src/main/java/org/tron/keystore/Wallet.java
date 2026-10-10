@@ -172,8 +172,8 @@ public class Wallet {
     return Hash.sha3(result);
   }
 
-  public static SignInterface decrypt(String password, WalletFile walletFile,
-      boolean ecKey) throws CipherException {
+  public static SignInterface decrypt(String password, WalletFile walletFile)
+      throws CipherException {
 
     validate(walletFile);
 
@@ -216,7 +216,7 @@ public class Wallet {
     byte[] encryptKey = Arrays.copyOfRange(derivedKey, 0, 16);
     byte[] privateKey = performCipherOperation(Cipher.DECRYPT_MODE, iv, encryptKey, cipherText);
 
-    SignInterface keyPair = SignUtils.fromPrivate(privateKey, ecKey);
+    SignInterface keyPair = SignUtils.fromPrivate(privateKey);
 
     // Enforce address consistency: if the keystore declares an address, it MUST match
     // the address derived from the decrypted private key. Prevents address spoofing

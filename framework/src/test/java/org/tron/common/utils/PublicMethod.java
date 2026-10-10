@@ -17,8 +17,6 @@ import org.bouncycastle.util.encoders.Hex;
 import org.tron.api.GrpcAPI;
 import org.tron.api.WalletGrpc;
 import org.tron.common.crypto.ECKey;
-import org.tron.common.crypto.sm2.SM2;
-import org.tron.common.crypto.sm2.SM2Signer;
 import org.tron.common.utils.client.utils.TransactionUtils;
 import org.tron.core.Wallet;
 import org.tron.protos.Protocol;
@@ -53,37 +51,6 @@ public class PublicMethod {
   public static byte[] getPublicKeyFromPrivate(String privateKey) {
     BigInteger tmpKey = new BigInteger(privateKey, 16);
     return ECKey.publicKeyFromPrivate(tmpKey, true);
-  }
-
-  public static String getSM2RandomPrivateKey() {
-    SM2 key = new SM2(Utils.getRandom());
-    return Hex.toHexString(
-            Objects.requireNonNull(key.getPrivKeyBytes()));
-  }
-
-  public static SM2 getSM2byPrivate(String privateKey) {
-    BigInteger priK = new BigInteger(privateKey, 16);
-    return SM2.fromPrivate(priK);
-  }
-
-  public static String getSM2PublicByPrivateKey(String privateKey) {
-    return Hex.toHexString(getSM2byPrivate(privateKey).getPubKey());
-  }
-
-  public static String getSM2AddressByPrivateKey(String privateKey) {
-    return ByteArray
-            .toHexString(getSM2byPrivate(privateKey).getAddress());
-  }
-
-  public static byte[] getSM2PublicKeyFromPrivate(String privateKey) {
-    BigInteger tmpKey = new BigInteger(privateKey, 16);
-    return SM2.publicKeyFromPrivate(tmpKey, true);
-  }
-
-  public static byte[] getSM2HashByPubKey(byte[] pubKey, String message) {
-    SM2 key = SM2.fromPublicOnly(pubKey);
-    SM2Signer signer = key.getSM2SignerForHash();
-    return signer.generateSM3Hash(message.getBytes());
   }
 
   /** constructor. */

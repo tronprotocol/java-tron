@@ -4,7 +4,6 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.tron.common.crypto.SignInterface;
-import org.tron.common.crypto.sm2.SM2;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.StringUtil;
 
@@ -29,15 +28,6 @@ public class CredentialsTest {
         StringUtil.encode58Check(ADDRESS_1), credentials.getAddress());
     Assert.assertSame("Credentials cryptoEngine create failed", signInterface,
         credentials.getSignInterface());
-  }
-
-  @Test
-  public void testCreateFromSM2() {
-    Exception e = Assert.assertThrows(Exception.class,
-        () -> Credentials.create(SM2.fromNodeId(ByteUtil.hexToBytes("fffffffffff"
-            + "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
-            + "fffffffffffffffffffffffffffffffffffffff"))));
-    Assert.assertTrue(e instanceof IllegalArgumentException);
   }
 
   @Test

@@ -34,7 +34,6 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.tron.common.bloom.Bloom;
 import org.tron.common.crypto.SignInterface;
 import org.tron.common.crypto.SignUtils;
-import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Time;
@@ -166,8 +165,7 @@ public class BlockCapsule implements ProtoCapsule<Block> {
 
   // TODO add unit test for sig2.getbytes
   public void sign(byte[] privateKey) {
-    SignInterface ecKeyEngine = SignUtils
-        .fromPrivate(privateKey, CommonParameter.getInstance().isECKeyCryptoEngine());
+    SignInterface ecKeyEngine = SignUtils.fromPrivate(privateKey);
 
     ByteString sig = ByteString.copyFrom(ecKeyEngine.Base64toBytes(ecKeyEngine.signHash(getRawHash()
         .getBytes())));
@@ -179,8 +177,7 @@ public class BlockCapsule implements ProtoCapsule<Block> {
   }
 
   private Sha256Hash getRawHash() {
-    return Sha256Hash.of(CommonParameter.getInstance().isECKeyCryptoEngine(),
-        this.block.getBlockHeader().getRawData().toByteArray());
+    return Sha256Hash.of(this.block.getBlockHeader().getRawData().toByteArray());
   }
 
   public boolean validateSignature(DynamicPropertiesStore dynamicPropertiesStore,
@@ -188,8 +185,7 @@ public class BlockCapsule implements ProtoCapsule<Block> {
     try {
       byte[] sigAddress = SignUtils.signatureToAddress(getRawHash().getBytes(),
           TransactionCapsule.getBase64FromByteString(
-              block.getBlockHeader().getWitnessSignature()),
-          CommonParameter.getInstance().isECKeyCryptoEngine());
+              block.getBlockHeader().getWitnessSignature()));
       byte[] witnessAccountAddress = block.getBlockHeader().getRawData().getWitnessAddress()
           .toByteArray();
 
@@ -209,7 +205,7 @@ public class BlockCapsule implements ProtoCapsule<Block> {
   public BlockId getBlockId() {
     if (blockId.equals(Sha256Hash.ZERO_HASH)) {
       blockId =
-          new BlockId(Sha256Hash.of(CommonParameter.getInstance().isECKeyCryptoEngine(),
+          new BlockId(Sha256Hash.of(
               this.block.getBlockHeader().getRawData().toByteArray()), getNum());
     }
     return blockId;

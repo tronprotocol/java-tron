@@ -119,11 +119,11 @@ public class WalletUtils {
     }
   }
 
-  public static Credentials loadCredentials(String password, File source, boolean ecKey)
+  public static Credentials loadCredentials(String password, File source)
       throws IOException, CipherException {
     warnIfSymbolicLink(source);
     WalletFile walletFile = objectMapper.readValue(source, WalletFile.class);
-    return Credentials.create(Wallet.decrypt(password, walletFile, ecKey));
+    return Credentials.create(Wallet.decrypt(password, walletFile));
   }
 
   /**
