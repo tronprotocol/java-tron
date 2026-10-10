@@ -2,10 +2,12 @@ package org.tron.core.net.messagehandler;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
+import com.google.protobuf.UnknownFieldSet;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
@@ -25,7 +27,9 @@ import org.tron.common.BaseTest;
 import org.tron.common.TestConstants;
 import org.tron.common.runtime.TvmTestUtils;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.ReflectUtils;
 import org.tron.core.ChainBaseManager;
+import org.tron.core.Constant;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.P2pException;
 import org.tron.core.exception.P2pException.TypeEnum;
@@ -199,6 +203,7 @@ public class TransactionsMsgHandlerTest extends BaseTest {
       // 2 transfer transactions, submit throws on the first → catch + break, only called once
       handler.processMessage(peer, msg);
 
+      Assert.assertTrue(peer.getAdvInvRequest().isEmpty());
       Mockito.verify(mockPool, Mockito.times(1)).submit(Mockito.any(Runnable.class));
     } finally {
       closeHandlerAndOriginalPool(handler, originalPool);
@@ -389,8 +394,39 @@ public class TransactionsMsgHandlerTest extends BaseTest {
       } catch (P2pException e) {
         Assert.assertEquals(P2pException.TypeEnum.BAD_MESSAGE, e.getType());
       }
+      Assert.assertEquals(1, advInvRequest.size());
+      Assert.assertTrue(advInvRequest.containsKey(item));
     } finally {
       handler.close();
+    }
+  }
+
+  @Test
+  public void testInvalidBatchPreservesRequests() throws Exception {
+    TransactionsMsgHandler handler = new TransactionsMsgHandler();
+    ExecutorService originalPool = null;
+    try {
+      ExecutorService pool = Mockito.mock(ExecutorService.class);
+      originalPool = replaceTrxHandlePool(handler, pool);
+      List<Protocol.Transaction> transactions = new ArrayList<>(
+          buildTransferMessage(2).getTransactions().getTransactionsList());
+      // The first transaction passes; the second fails signature-length validation.
+      transactions.set(1, transactions.get(1).toBuilder()
+          .addSignature(ByteString.copyFrom(new byte[64])).build());
+      TransactionsMessage msg = new TransactionsMessage(transactions);
+      PeerConnection peer = Mockito.mock(PeerConnection.class);
+      stubAdvInvRequest(peer, msg);
+      Map<Item, Long> requests = new ConcurrentHashMap<>(peer.getAdvInvRequest());
+      Assert.assertEquals(2, requests.size());
+
+      P2pException exception = Assert.assertThrows(P2pException.class,
+          () -> handler.processMessage(peer, msg));
+
+      Assert.assertEquals(TypeEnum.BAD_TRX, exception.getType());
+      Assert.assertEquals(requests, peer.getAdvInvRequest());
+      Mockito.verify(pool, Mockito.never()).submit(Mockito.any(Runnable.class));
+    } finally {
+      closeHandlerAndOriginalPool(handler, originalPool);
     }
   }
 
@@ -490,6 +526,122 @@ public class TransactionsMsgHandlerTest extends BaseTest {
     } finally {
       closeHandlerAndOriginalPool(handler, originalPool);
     }
+  }
+
+  @Test
+  public void testSanitizeBeforeQueueAdmission() throws Exception {
+    for (boolean smart : new boolean[] {false, true}) {
+      Protocol.Transaction base = admissionTransaction(smart);
+      Protocol.Transaction clean = base.toBuilder().setRawData(base.getRawData().toBuilder()
+          .setUnknownFields(padding(32))).build();
+      Protocol.Transaction padded = clean.toBuilder().setUnknownFields(padding(600 * 1024))
+          .build();
+      assertAdmission(padded, clean);
+    }
+  }
+
+  @Test
+  public void testOversizedTransactionDroppedBeforeQueueAdmission() throws Exception {
+    for (boolean smart : new boolean[] {false, true}) {
+      Protocol.Transaction base = admissionTransaction(smart);
+      Protocol.Transaction oversized = base.toBuilder().setRawData(base.getRawData().toBuilder()
+          .setData(ByteString.copyFrom(new byte[600 * 1024]))).build();
+      assertAdmission(oversized, null);
+    }
+  }
+
+  @Test
+  public void testQueueAdmissionSizeBoundary() throws Exception {
+    int limit = (int) Constant.TRANSACTION_MAX_BYTE_SIZE;
+    for (boolean smart : new boolean[] {false, true}) {
+      Protocol.Transaction.raw.Builder raw = admissionTransaction(smart).getRawData().toBuilder()
+          .setData(ByteString.copyFrom(new byte[limit]));
+      int overhead = Protocol.Transaction.newBuilder().setRawData(raw).build()
+          .getSerializedSize() - limit;
+      Protocol.Transaction exact = Protocol.Transaction.newBuilder().setRawData(
+          raw.setData(ByteString.copyFrom(new byte[limit - overhead]))).build();
+      Assert.assertEquals(limit, exact.getSerializedSize());
+      assertAdmission(exact, exact);
+      Protocol.Transaction over = exact.toBuilder().setRawData(
+          raw.setData(ByteString.copyFrom(new byte[limit - overhead + 1]))).build();
+      Assert.assertEquals(limit + 1, over.getSerializedSize());
+      assertAdmission(over, null);
+    }
+  }
+
+  @Test
+  public void testRedundantResultsTrimmedBeforeQueueAdmission() throws Exception {
+    for (boolean smart : new boolean[] {false, true}) {
+      Protocol.Transaction expected = admissionTransaction(smart).toBuilder()
+          .addRet(Protocol.Transaction.Result.newBuilder()
+              .setContractRet(Protocol.Transaction.Result.contractResult.SUCCESS)).build();
+      Protocol.Transaction padded = expected.toBuilder().addRet(
+          Protocol.Transaction.Result.newBuilder().setUnknownFields(padding(600 * 1024))).build();
+      assertAdmission(padded, expected);
+    }
+  }
+
+  private void assertAdmission(Protocol.Transaction input, Protocol.Transaction expected)
+      throws Exception {
+    TransactionsMsgHandler handler = new TransactionsMsgHandler();
+    ExecutorService originalPool = null;
+    try {
+      ExecutorService pool = Mockito.mock(ExecutorService.class);
+      Mockito.when(pool.submit(Mockito.any(Runnable.class))).thenAnswer(call -> {
+        ((Runnable) call.getArgument(0)).run();
+        return Mockito.mock(Future.class);
+      });
+      originalPool = replaceTrxHandlePool(handler, pool);
+      TronNetDelegate delegate = Mockito.mock(TronNetDelegate.class);
+      AdvService adv = Mockito.mock(AdvService.class);
+      ReflectUtils.setFieldValue(handler, "tronNetDelegate", delegate);
+      ReflectUtils.setFieldValue(handler, "advService", adv);
+      ReflectUtils.setFieldValue(handler, "chainBaseManager", Mockito.mock(ChainBaseManager.class));
+      PeerConnection peer = Mockito.mock(PeerConnection.class);
+      TransactionsMessage message = new TransactionsMessage(Collections.singletonList(input));
+      stubAdvInvRequest(peer, message);
+      handler.processMessage(peer, message);
+      BlockingQueue<?> smartQueue = (BlockingQueue<?>)
+          ReflectUtils.getFieldObject(handler, "smartContractQueue");
+      if (expected == null) {
+        Assert.assertTrue(smartQueue.isEmpty());
+        Mockito.verify(pool, Mockito.never()).submit(Mockito.any(Runnable.class));
+      } else {
+        TransactionMessage admitted;
+        if (input.getRawData().getContract(0).getType()
+            == Protocol.Transaction.Contract.ContractType.TriggerSmartContract) {
+          Assert.assertEquals(1, smartQueue.size());
+          admitted = (TransactionMessage) ReflectUtils.getFieldObject(smartQueue.peek(), "msg");
+        } else {
+          org.mockito.ArgumentCaptor<TransactionMessage> captured =
+              org.mockito.ArgumentCaptor.forClass(TransactionMessage.class);
+          Mockito.verify(adv).broadcast(captured.capture());
+          admitted = captured.getValue();
+        }
+        Assert.assertEquals(expected, admitted.getTransactionCapsule().getInstance());
+        Assert.assertArrayEquals(expected.toByteArray(), admitted.getData());
+        Assert.assertEquals(new TransactionMessage(input).getMessageId(), admitted.getMessageId());
+      }
+      Assert.assertTrue(peer.getAdvInvRequest().isEmpty());
+      Mockito.verify(peer, Mockito.never()).disconnect(Mockito.any());
+    } finally {
+      closeHandlerAndOriginalPool(handler, originalPool);
+    }
+  }
+
+  private Protocol.Transaction admissionTransaction(boolean smart) {
+    if (smart) {
+      return TvmTestUtils.generateTriggerSmartContractAndGetTransaction(
+          ByteArray.fromHexString("121212a9cf"), ByteArray.fromHexString("121212a9cf"),
+          ByteArray.fromHexString("123456"), 100, 100000000, 0, 0);
+    }
+    return buildTransferMessage(1).getTransactions().getTransactions(0);
+  }
+
+  private UnknownFieldSet padding(int size) {
+    return UnknownFieldSet.newBuilder().addField(99999,
+        UnknownFieldSet.Field.newBuilder().addLengthDelimited(ByteString.copyFrom(new byte[size]))
+            .build()).build();
   }
 
   @Test
