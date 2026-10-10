@@ -216,8 +216,7 @@ public class JsonrpcServiceTest extends BaseTest {
     dbManager.getTransactionRetStore()
         .put(ByteArray.fromLong(blockCapsule2.getNum()), transactionRetCapsule2);
 
-    tronJsonRpc = new TronJsonRpcImpl(nodeInfoService, wallet);
-    tronJsonRpc.setManager(dbManager);
+    tronJsonRpc = new TronJsonRpcImpl(nodeInfoService, wallet, dbManager);
   }
 
   @Test

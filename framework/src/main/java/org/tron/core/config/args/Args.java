@@ -598,7 +598,6 @@ public class Args extends CommonParameter {
     PARAMETER.trustNodeAddr = nc.getTrustNode();
 
     PARAMETER.validateSignThreadNum = nc.getValidateSignThreadNum();
-    PARAMETER.walletExtensionApi = nc.isWalletExtensionApi();
     PARAMETER.isOpenFullTcpDisconnect = nc.isOpenFullTcpDisconnect();
     PARAMETER.nodeDetectEnable = nc.isNodeDetectEnable();
 
@@ -1045,8 +1044,9 @@ public class Args extends CommonParameter {
       String serverType = dns.getServerType();
       if (StringUtils.isNotEmpty(serverType)) {
         if (!"aws".equalsIgnoreCase(serverType) && !"aliyun".equalsIgnoreCase(serverType)) {
-          throw new IllegalArgumentException(
-              "Check node.dns.serverType, must be aws or aliyun");
+          throw new TronError(
+              "Check node.dns.serverType, must be aws or aliyun",
+              TronError.ErrCode.PARAMETER_INIT);
         }
         if ("aws".equalsIgnoreCase(serverType)) {
           publishConfig.setDnsType(DnsType.AwsRoute53);
@@ -1088,7 +1088,8 @@ public class Args extends CommonParameter {
   }
 
   private static void logEmptyError(String arg) {
-    throw new IllegalArgumentException(String.format("Check %s, must not be null or empty", arg));
+    throw new TronError(String.format("Check %s, must not be null or empty", arg),
+        TronError.ErrCode.PARAMETER_INIT);
   }
 
   // createTriggerConfig removed — logic moved to applyEventConfig()
@@ -1315,4 +1316,3 @@ public class Args extends CommonParameter {
     return optionGroupMap;
   }
 }
-

@@ -63,13 +63,10 @@ import org.tron.api.GrpcAPI.TransactionApprovedList;
 import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.GrpcAPI.TransactionIdList;
 import org.tron.api.GrpcAPI.TransactionInfoList;
-import org.tron.api.GrpcAPI.TransactionList;
-import org.tron.api.GrpcAPI.TransactionListExtention;
 import org.tron.api.GrpcAPI.TransactionSignWeight;
 import org.tron.api.GrpcAPI.ViewingKeyMessage;
 import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.api.MonitorGrpc;
-import org.tron.api.WalletExtensionGrpc;
 import org.tron.api.WalletGrpc.WalletImplBase;
 import org.tron.api.WalletSolidityGrpc.WalletSolidityImplBase;
 import org.tron.common.application.RpcService;
@@ -201,9 +198,6 @@ public class RpcApiService extends RpcService {
     CommonParameter parameter = Args.getInstance();
     if (parameter.isSolidityNode()) {
       serverBuilder.addService(walletSolidityApi);
-      if (parameter.isWalletExtensionApi()) {
-        serverBuilder.addService(new WalletExtensionApi());
-      }
     } else {
       serverBuilder.addService(walletApi);
     }
@@ -649,26 +643,7 @@ public class RpcApiService extends RpcService {
   }
 
   /**
-   * WalletExtensionApi.
-   */
-  public class WalletExtensionApi extends WalletExtensionGrpc.WalletExtensionImplBase {
-
-    private TransactionListExtention transactionList2Extention(TransactionList transactionList) {
-      if (transactionList == null) {
-        return null;
-      }
-      TransactionListExtention.Builder builder = TransactionListExtention.newBuilder();
-      for (Transaction transaction : transactionList.getTransactionList()) {
-        builder.addTransaction(transaction2Extention(transaction));
-      }
-      return builder.build();
-    }
-  }
-
-  /**
-   * WalletApi is the full implementation of the {@code protocol.Wallet} gRPC service, including
-   * write and build endpoints. {@link WalletSolidityApi} is the read-only subset of this surface
-   * and delegates its handlers here.
+   * WalletApi.
    */
   public class WalletApi extends WalletImplBase {
 
