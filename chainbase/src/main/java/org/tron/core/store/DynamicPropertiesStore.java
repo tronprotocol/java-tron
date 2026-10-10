@@ -255,6 +255,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] ALLOW_HARDEN_EXCHANGE_CALCULATION =
       "ALLOW_HARDEN_EXCHANGE_CALCULATION".getBytes();
 
+  private static final byte[] CLOSE_EXCHANGE = "CLOSE_EXCHANGE".getBytes();
+
   private static final byte[] TURKISH_KEY_MIGRATION_DONE =
       "TURKISH_KEY_MIGRATION_DONE".getBytes();
 
@@ -1628,6 +1630,18 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .map(ByteArray::toLong)
         .orElseThrow(
             () -> new IllegalArgumentException("not found EXCHANGE_CREATE_FEE"));
+  }
+
+  public void saveCloseExchange(int level) {
+    this.put(CLOSE_EXCHANGE, new BytesCapsule(ByteArray.fromLong(level)));
+  }
+
+  public int getCloseExchange() {
+    return Optional.ofNullable(getUnchecked(CLOSE_EXCHANGE))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElse(0L)
+        .intValue();
   }
 
   public void saveExchangeBalanceLimit(long limit) {

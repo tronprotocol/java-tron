@@ -72,8 +72,15 @@ public class ProposalUtil {
         break;
       }
       case ENERGY_FEE:
-      case EXCHANGE_CREATE_FEE:
         break;
+      case EXCHANGE_CREATE_FEE: {
+        if (dynamicPropertiesStore.getCloseExchange() >= 1) {
+          // Exchange creation is locked once the close level reaches 1;
+          // at level 0 the parameter stays freely proposable.
+          throw new ContractValidateException("Bad chain parameter id [EXCHANGE_CREATE_FEE]");
+        }
+        break;
+      }
       case MAX_CPU_TIME_OF_ONE_TX:
         if (dynamicPropertiesStore.getAllowHigherLimitForMaxCpuTimeOfOneTx() == 1) {
           if (value < 10 || value > 400) {
@@ -926,6 +933,11 @@ public class ProposalUtil {
         break;
       }
       case ALLOW_HARDEN_EXCHANGE_CALCULATION: {
+        if (dynamicPropertiesStore.getCloseExchange() >= 1) {
+          // Locked once the close level reaches 1; at level 0 the parameter
+          // stays freely proposable (subject to the VERSION_4_8_2 check below).
+          throw new ContractValidateException(BAD_PARAM_ID);
+        }
         if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_8_2)) {
           throw new ContractValidateException(
               "Bad chain parameter id [ALLOW_HARDEN_EXCHANGE_CALCULATION]");
@@ -953,6 +965,26 @@ public class ProposalUtil {
         if (value != 1) {
           throw new ContractValidateException(
               "This value[ALLOW_OPTIMIZE_TVM_STORAGE] is only allowed to be 1");
+        }
+        break;
+      }
+      case CLOSE_EXCHANGE: {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_8_3)) {
+          throw new ContractValidateException("Bad chain parameter id [CLOSE_EXCHANGE]");
+        }
+        int current = dynamicPropertiesStore.getCloseExchange();
+        // Irreversible by design: CLOSE_EXCHANGE only advances one level at a time.
+        if (value == current) {
+          throw new ContractValidateException(
+              "[CLOSE_EXCHANGE] has been set to " + value + ", no need to propose again");
+        }
+        if (current == 2) {
+          throw new ContractValidateException(
+              "[CLOSE_EXCHANGE] has reached its terminal value 2; no further change is allowed");
+        }
+        if (value != current + 1 || value < 1 || value > 2) {
+          throw new ContractValidateException(
+              "This value[CLOSE_EXCHANGE] must be " + (current + 1) + " and within [1,2]");
         }
         break;
       }
@@ -1045,7 +1077,8 @@ public class ProposalUtil {
     ALLOW_TVM_OSAKA(96), // 0, 1
     ALLOW_HARDEN_RESOURCE_CALCULATION(97), // 0, 1
     ALLOW_HARDEN_EXCHANGE_CALCULATION(98), // 0, 1
-    ALLOW_OPTIMIZE_TVM_STORAGE(99); // 0, 1
+    ALLOW_OPTIMIZE_TVM_STORAGE(99), // 0, 1
+    CLOSE_EXCHANGE(100); // 0, 1, 2
     private long code;
 
     ProposalType(long code) {

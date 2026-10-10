@@ -149,6 +149,11 @@ public class ExchangeCreateActuator extends AbstractExchangeActuator {
     if (chainBaseManager == null) {
       throw new ContractValidateException(ActuatorConstant.STORE_NOT_EXIST);
     }
+    int closeLevel = chainBaseManager.getDynamicPropertiesStore().getCloseExchange();
+    if (closeLevel >= 1) {
+      throw new ContractValidateException(
+          "ExchangeCreateContract is rejected by exchange close level " + closeLevel);
+    }
     AccountStore accountStore = chainBaseManager.getAccountStore();
     DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
     if (!this.any.is(ExchangeCreateContract.class)) {

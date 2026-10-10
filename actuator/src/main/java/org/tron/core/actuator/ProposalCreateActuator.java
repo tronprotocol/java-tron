@@ -111,6 +111,13 @@ public class ProposalCreateActuator extends AbstractActuator {
       throw new ContractValidateException("This proposal has no parameter.");
     }
 
+    if (contract.getParametersMap().containsKey(
+        ProposalUtil.ProposalType.CLOSE_EXCHANGE.getCode())
+        && contract.getParametersMap().size() != 1) {
+      throw new ContractValidateException(
+          "CLOSE_EXCHANGE proposal must contain only one parameter");
+    }
+
     for (Map.Entry<Long, Long> entry : contract.getParametersMap().entrySet()) {
       validateValue(entry);
     }
