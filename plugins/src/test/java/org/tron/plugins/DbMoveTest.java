@@ -1,5 +1,6 @@
 package org.tron.plugins;
 
+import com.typesafe.config.ConfigException;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -108,9 +109,27 @@ public class DbMoveTest {
           .append("\",\n      path = \"").append(entry[1]).append("\",\n    },\n");
     }
     content.append("  ]\n}\n");
+    return writeConfig(fileName, content.toString());
+  }
+
+  private File writeConfig(String fileName, String content) throws IOException {
     File config = temporaryFolder.newFile(fileName);
-    Files.write(config.toPath(), content.toString().getBytes(StandardCharsets.UTF_8));
+    Files.write(config.toPath(), content.getBytes(StandardCharsets.UTF_8));
     return config;
+  }
+
+  private void assertConfigRejected(String content) throws RocksDBException, IOException {
+    File database = newDatabase();
+    File accountDir = Paths.get(database.getPath(), ACCOUNT).toFile();
+    Map<String, String> accountBefore = snapshot(accountDir);
+    File config = writeConfig("invalid.conf", content);
+
+    StringWriter err = new StringWriter();
+    Assert.assertEquals(2, mv(database, config.getPath(), err));
+    Assert.assertTrue(err.toString().contains(ConfigException.WrongType.class.getName()));
+    assertUntouched(accountDir);
+    Assert.assertEquals(accountBefore, snapshot(accountDir));
+    Assert.assertFalse(Paths.get(OUTPUT_DIRECTORY, "dest").toFile().exists());
   }
 
   private static void assertUntouched(File source) {
@@ -560,6 +579,17 @@ public class DbMoveTest {
         "To recover manually: remove %s if present, then create a symbolic link at %s"
             + " pointing to %s.", accountDir, accountDir, accountDest)));
     Assert.assertTrue(Files.isSymbolicLink(marketDir.toPath()));
+  }
+
+  @Test
+  public void testInvalidPathTypeRejected() throws RocksDBException, IOException {
+    assertConfigRejected("storage.properties = [{name = \"" + ACCOUNT + "\", path = [1, 2]}]");
+  }
+
+  @Test
+  public void testInvalidDbDirectoryTypeRejected() throws RocksDBException, IOException {
+    assertConfigRejected("storage {\n  db.directory = [1]\n  properties = [{name = \""
+        + ACCOUNT + "\", path = \"" + OUTPUT_DIRECTORY + "/dest\"}]\n}\n");
   }
 
   @Test

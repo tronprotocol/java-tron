@@ -1,6 +1,7 @@
 package org.tron.plugins;
 
 import com.typesafe.config.Config;
+import com.typesafe.config.ConfigException;
 import com.typesafe.config.ConfigFactory;
 import java.io.File;
 import java.io.IOException;
@@ -68,9 +69,6 @@ public class DbMove implements Callable<Integer> {
         printNotExist();
         return 0;
       }
-      String dbPath = config.hasPath(DB_DIRECTORY_CONFIG_KEY)
-          ? config.getString(DB_DIRECTORY_CONFIG_KEY) : DEFAULT_DB_DIRECTORY;
-
       dbs = dbs.stream()
           .filter(c -> c.hasPath(NAME_CONFIG_KEY) && c.hasPath(PATH_CONFIG_KEY))
           .collect(Collectors.toList());
@@ -80,15 +78,18 @@ public class DbMove implements Callable<Integer> {
         return 0;
       }
       List<Property> toBeMove = new ArrayList<>();
-      for (Config c : dbs) {
-        try {
-          toBeMove.add(new Property(c.getString(NAME_CONFIG_KEY),
-              Paths.get(database.toString(), dbPath, c.getString(NAME_CONFIG_KEY)),
-              Paths.get(c.getString(PATH_CONFIG_KEY), dbPath, c.getString(NAME_CONFIG_KEY))));
-        } catch (IOException e) {
-          spec.commandLine().getErr().println(e);
-          return 2;
+      try {
+        String dbPath = config.hasPath(DB_DIRECTORY_CONFIG_KEY)
+            ? config.getString(DB_DIRECTORY_CONFIG_KEY) : DEFAULT_DB_DIRECTORY;
+        for (Config c : dbs) {
+          String name = c.getString(NAME_CONFIG_KEY);
+          toBeMove.add(new Property(name,
+              Paths.get(database.toString(), dbPath, name),
+              Paths.get(c.getString(PATH_CONFIG_KEY), dbPath, name)));
         }
+      } catch (IOException | ConfigException e) {
+        spec.commandLine().getErr().println(e);
+        return 2;
       }
       if (hasOverlappingPaths(toBeMove)) {
         return 2;
