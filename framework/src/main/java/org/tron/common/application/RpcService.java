@@ -15,9 +15,16 @@
 
 package org.tron.common.application;
 
+import io.grpc.MethodDescriptor;
 import io.grpc.Server;
+import io.grpc.ServerMethodDefinition;
+import io.grpc.ServerServiceDefinition;
+import io.grpc.ServiceDescriptor;
 import io.grpc.netty.NettyServerBuilder;
+import io.grpc.protobuf.ProtoMethodDescriptorSupplier;
 import io.grpc.protobuf.services.ProtoReflectionService;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -25,11 +32,15 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.common.es.ExecutorServiceManager;
 import org.tron.common.parameter.CommonParameter;
+import org.tron.core.admission.AdmissionCheckedHandler;
+import org.tron.core.admission.GuardedTransactionMarshaller;
+import org.tron.core.admission.TransactionAdmissionGuard;
 import org.tron.core.config.args.Args;
 import org.tron.core.services.filter.LiteFnQueryGrpcInterceptor;
 import org.tron.core.services.ratelimiter.PrometheusInterceptor;
 import org.tron.core.services.ratelimiter.RateLimiterInterceptor;
 import org.tron.core.services.ratelimiter.RpcApiAccessInterceptor;
+import org.tron.protos.Protocol.Transaction;
 
 @Slf4j(topic = "rpc")
 public abstract class RpcService extends AbstractService {
@@ -117,6 +128,61 @@ public abstract class RpcService extends AbstractService {
   }
 
   protected abstract void addService(NettyServerBuilder serverBuilder);
+
+  /** Guards every method whose request is a {@code Transaction}; other methods are kept. */
+  protected static ServerServiceDefinition guardTransactionMethods(
+      ServerServiceDefinition definition) {
+    return guardTransactionMethods(definition, Args.getInstance().getMaxMessageSize(),
+        TransactionAdmissionGuard.MAX_TX_OCCURRENCES);
+  }
+
+  static ServerServiceDefinition guardTransactionMethods(ServerServiceDefinition definition,
+      int maxMessageSize, int maxOccurrences) {
+    ServiceDescriptor service = definition.getServiceDescriptor();
+    ServiceDescriptor.Builder serviceBuilder = ServiceDescriptor.newBuilder(service.getName())
+        .setSchemaDescriptor(service.getSchemaDescriptor());
+    List<ServerMethodDefinition<?, ?>> methods = new ArrayList<>();
+    for (ServerMethodDefinition<?, ?> method : definition.getMethods()) {
+      MethodDescriptor<?, ?> descriptor = method.getMethodDescriptor();
+      if (isTransactionRequest(descriptor)) {
+        @SuppressWarnings("unchecked")
+        ServerMethodDefinition<Transaction, Object> original =
+            (ServerMethodDefinition<Transaction, Object>) method;
+        MethodDescriptor<Transaction, Object> guarded = original.getMethodDescriptor().toBuilder(
+            new GuardedTransactionMarshaller(
+                original.getMethodDescriptor().getRequestMarshaller(),
+                maxMessageSize, maxOccurrences),
+            original.getMethodDescriptor().getResponseMarshaller()).build();
+        methods.add(ServerMethodDefinition.create(guarded,
+            new AdmissionCheckedHandler<>(original.getServerCallHandler())));
+      } else {
+        methods.add(method);
+      }
+    }
+    // grpc requires the same MethodDescriptor instances in both descriptors.
+    for (ServerMethodDefinition<?, ?> method : methods) {
+      serviceBuilder.addMethod(method.getMethodDescriptor());
+    }
+    ServerServiceDefinition.Builder builder =
+        ServerServiceDefinition.builder(serviceBuilder.build());
+    for (ServerMethodDefinition<?, ?> method : methods) {
+      builder.addMethod(method);
+    }
+    return builder.build();
+  }
+
+  // The schema decides when there is one; otherwise the request marshaller's prototype.
+  static boolean isTransactionRequest(MethodDescriptor<?, ?> descriptor) {
+    Object schema = descriptor.getSchemaDescriptor();
+    if (schema instanceof ProtoMethodDescriptorSupplier) {
+      return Transaction.getDescriptor().equals(
+          ((ProtoMethodDescriptorSupplier) schema).getMethodDescriptor().getInputType());
+    }
+    MethodDescriptor.Marshaller<?> request = descriptor.getRequestMarshaller();
+    return request instanceof MethodDescriptor.PrototypeMarshaller
+        && ((MethodDescriptor.PrototypeMarshaller<?>) request).getMessagePrototype()
+        instanceof Transaction;
+  }
 
   protected void addInterceptor(NettyServerBuilder serverBuilder) {
     // add a ratelimiter interceptor

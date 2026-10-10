@@ -27,10 +27,10 @@ public class RpcApiServiceOnSolidity extends RpcService {
   /** SOLIDITY cursor bound at the service level, so it brackets only these two read services. */
   @Override
   protected void addService(NettyServerBuilder serverBuilder) {
-    serverBuilder.addService(
-        ServerInterceptors.intercept(rpcApiService.getDatabaseApi(), solidityCursorInterceptor));
-    serverBuilder.addService(ServerInterceptors.intercept(
-        rpcApiService.getWalletSolidityApi(), solidityCursorInterceptor));
+    serverBuilder.addService(guardTransactionMethods(ServerInterceptors.intercept(
+        rpcApiService.getDatabaseApi(), solidityCursorInterceptor)));
+    serverBuilder.addService(guardTransactionMethods(ServerInterceptors.intercept(
+        rpcApiService.getWalletSolidityApi(), solidityCursorInterceptor)));
   }
 
 }
