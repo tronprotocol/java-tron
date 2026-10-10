@@ -70,6 +70,8 @@ public class PeerConnectionTest {
     Long time = System.currentTimeMillis();
     BlockCapsule.BlockId blockId = new BlockCapsule.BlockId();
     peerConnection.getAdvInvReceive().put(item, time);
+    peerConnection.getAdvBlockInvReceive().put(
+        new Item(blockId, Protocol.Inventory.InventoryType.BLOCK), time);
     peerConnection.getAdvInvSpread().put(item, time);
     peerConnection.getSyncBlockIdCache().put(item.getHash(), time);
     peerConnection.getSyncBlockToFetch().add(blockId);
@@ -79,11 +81,22 @@ public class PeerConnectionTest {
     peerConnection.onDisconnect();
 
     Assert.assertEquals(0, peerConnection.getAdvInvReceive().size());
+    Assert.assertEquals(0, peerConnection.getAdvBlockInvReceive().size());
     Assert.assertEquals(0, peerConnection.getAdvInvSpread().size());
     Assert.assertEquals(0, peerConnection.getSyncBlockIdCache().size());
     Assert.assertEquals(0, peerConnection.getSyncBlockToFetch().size());
     Assert.assertEquals(0, peerConnection.getSyncBlockRequested().size());
     Assert.assertEquals(0, peerConnection.getSyncBlockInProcess().size());
+  }
+
+  @Test
+  public void testLastInteractiveTimeOnlyAdvances() {
+    PeerConnection peer = new PeerConnection();
+    peer.updateLastInteractiveTime(200);
+    peer.updateLastInteractiveTime(100);
+    Assert.assertEquals(200, peer.getLastInteractiveTime());
+    peer.updateLastInteractiveTime(300);
+    Assert.assertEquals(300, peer.getLastInteractiveTime());
   }
 
   @Test
