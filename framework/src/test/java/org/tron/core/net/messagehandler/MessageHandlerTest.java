@@ -24,6 +24,7 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.net.P2pEventHandlerImpl;
 import org.tron.core.net.TronNetService;
+import org.tron.core.net.message.handshake.HelloMessage;
 import org.tron.core.net.message.keepalive.PingMessage;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.PeerManager;
@@ -82,6 +83,7 @@ public class MessageHandlerTest {
     Assert.assertFalse(c1.isDisconnect());
 
     peer = PeerManager.getPeers().get(0);
+    peer.setHelloMessageReceive(mock(HelloMessage.class));
     BlockCapsule blockCapsule = new BlockCapsule(1, Sha256Hash.ZERO_HASH,
         System.currentTimeMillis(), ByteString.EMPTY);
     PbftMessage pbftMessage = PbftMessage.fullNodePrePrepareBlockMsg(blockCapsule, 0L);
@@ -102,7 +104,7 @@ public class MessageHandlerTest {
     Channel c1 = mock(Channel.class);
     Mockito.when(c1.getInetSocketAddress()).thenReturn(a1);
     Mockito.when(c1.getInetAddress()).thenReturn(a1.getAddress());
-    PeerManager.add(ctx, c1);
+    PeerManager.add(ctx, c1).setHelloMessageReceive(mock(HelloMessage.class));
 
     PingMessage pingMessage = new PingMessage();
     p2pEventHandler.onMessage(c1, pingMessage.getSendBytes());

@@ -1,13 +1,29 @@
 package org.tron.core.net.services;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static org.tron.core.net.message.handshake.HelloMessage.getEndpointFromNode;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.Appender;
+import ch.qos.logback.core.read.ListAppender;
 import com.google.protobuf.ByteString;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Random;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.stream.Collectors;
+import org.apache.commons.lang3.StringUtils;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -15,7 +31,9 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.mockito.MockedStatic;
 import org.mockito.Mockito;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 import org.tron.common.TestConstants;
 import org.tron.common.application.TronApplicationContext;
@@ -33,6 +51,7 @@ import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.PeerManager;
 import org.tron.core.net.service.handshake.HandshakeService;
 import org.tron.p2p.P2pConfig;
+import org.tron.p2p.P2pService;
 import org.tron.p2p.base.Parameter;
 import org.tron.p2p.connection.Channel;
 import org.tron.p2p.discover.Node;
@@ -41,6 +60,7 @@ import org.tron.program.Version;
 import org.tron.protos.Discover.Endpoint;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.HelloMessage.Builder;
+import org.tron.protos.Protocol.ReasonCode;
 
 public class HandShakeServiceTest {
 
@@ -314,6 +334,127 @@ public class HandShakeServiceTest {
     } catch (Exception e) {
       Assert.fail();
     }
+  }
+
+  @Test
+  public void testInvalidHelloLogsHashLengths() throws Exception {
+    int largeHashLength = Parameter.MAX_MESSAGE_LENGTH - 1024;
+    Endpoint validEndpoint = endpoint("127.0.0.1", "", 18888);
+    for (int[] lengths : new int[][] {
+        {32, 32, 32}, {0, 32, 32}, {32, 31, 32}, {32, 32, 33}, {0, 31, 33},
+        {largeHashLength, 32, 32}, {32, largeHashLength, 32}, {32, 32, largeHashLength}}) {
+      // The oversized signature also exercises logging when all three hashes are 32 bytes.
+      assertInvalidHelloLog(lengths[0], lengths[1], lengths[2], validEndpoint, 201, true);
+    }
+  }
+
+  @Test
+  public void testInvalidHelloLogsEndpointValidity() throws Exception {
+    for (Endpoint invalidEndpoint : new Endpoint[] {
+        endpoint("127.0.0.1", "", 0), endpoint("127.0.0.1", "", 65536),
+        Endpoint.getDefaultInstance(), endpoint("", "", 18888),
+        endpoint("hello.invalid", "", 18888), endpoint("127.0.0.1", "2001:db8:::1", 18888),
+        endpoint("127.0.0.1\nforged", "", 18888),
+        endpoint(StringUtils.repeat('a', Parameter.MAX_MESSAGE_LENGTH - 1024), "", 18888),
+        endpoint("127.0.0.1", StringUtils.repeat('a', 201), 18888)}) {
+      // Keep all other HELLO fields valid so the endpoint alone causes rejection.
+      assertInvalidHelloLog(32, 32, 32, invalidEndpoint, 0, false);
+    }
+    assertInvalidHelloLog(32, 32, 32, endpoint("", "2001:db8::1", 18888), 201, true);
+  }
+
+  @Test(timeout = 5000)
+  public void testInvalidHelloLogsNodeIdLengths() throws Exception {
+    for (int length : new int[] {0, 63, 65}) {
+      Endpoint invalidEndpoint = endpoint("127.0.0.1", "", 18888).toBuilder()
+          .setNodeId(ByteString.copyFrom(new byte[length])).build();
+      assertInvalidHelloLog(32, 32, 32, invalidEndpoint, 0, false);
+    }
+  }
+
+  private void assertInvalidHelloLog(int genesisLength, int solidLength, int headLength,
+      Endpoint endpoint, int signatureLength, boolean expectedEndpointValid) throws Exception {
+    Protocol.HelloMessage proto = Protocol.HelloMessage.newBuilder()
+        .setFrom(endpoint)
+        .setGenesisBlockId(blockId(genesisLength, (byte) 0x11))
+        .setSolidBlockId(blockId(solidLength, (byte) 0x22))
+        .setHeadBlockId(blockId(headLength, (byte) 0x33))
+        .setSignature(ByteString.copyFrom(new byte[signatureLength]))
+        .build();
+    Assert.assertTrue(proto.getSerializedSize() + 1 < Parameter.MAX_MESSAGE_LENGTH);
+    HelloMessage hello = Mockito.spy(new HelloMessage(proto.toByteArray()));
+    Mockito.doThrow(new AssertionError("Invalid HELLO reached Node construction"))
+        .when(hello).getFrom();
+    Assert.assertEquals(expectedEndpointValid, hello.validEndPoint());
+    Assert.assertFalse(hello.valid());
+
+    PeerConnection testPeer = mock(PeerConnection.class);
+    when(testPeer.getChannel()).thenReturn(mock(Channel.class));
+    when(testPeer.getInetSocketAddress()).thenReturn(new InetSocketAddress("127.0.0.1", 18888));
+    P2pService p2p = mock(P2pService.class);
+    Logger logger = (Logger) LoggerFactory.getLogger("net");
+    Level originalLevel = logger.getLevel();
+    boolean originalAdditive = logger.isAdditive();
+    List<Appender<ILoggingEvent>> originalAppenders = new ArrayList<>();
+    Iterator<Appender<ILoggingEvent>> iterator = logger.iteratorForAppenders();
+    while (iterator.hasNext()) {
+      originalAppenders.add(iterator.next());
+    }
+    ListAppender<ILoggingEvent> sink = new ListAppender<>();
+    // The shared application context can also log from background threads.
+    sink.list = new CopyOnWriteArrayList<>();
+    sink.setContext(logger.getLoggerContext());
+    sink.start();
+    try (MockedStatic<TronNetService> netService = Mockito.mockStatic(TronNetService.class)) {
+      netService.when(TronNetService::getP2pService).thenReturn(p2p);
+      for (Appender<ILoggingEvent> appender : originalAppenders) {
+        logger.detachAppender(appender);
+      }
+      logger.setAdditive(false);
+      logger.setLevel(Level.WARN);
+      logger.addAppender(sink);
+
+      new HandshakeService().processHelloMessage(testPeer, hello);
+
+      verify(hello, never()).getFrom();
+      Mockito.verifyNoInteractions(p2p);
+      verify(testPeer).disconnect(ReasonCode.INCOMPATIBLE_PROTOCOL);
+      verify(testPeer, never()).setHelloMessageReceive(any());
+      verify(testPeer, never()).onConnect();
+      List<ILoggingEvent> warnings = sink.list.stream()
+          .filter(event -> event.getMessage()
+              .startsWith("Peer {} invalid hello message parameters"))
+          .collect(Collectors.toList());
+      Assert.assertEquals(1, warnings.size());
+      ILoggingEvent event = warnings.get(0);
+      Assert.assertEquals(Level.WARN, event.getLevel());
+      String text = event.getFormattedMessage();
+      Assert.assertTrue("Invalid HELLO warning must remain bounded", text.length() < 512);
+      Assert.assertEquals("Peer /127.0.0.1:18888 invalid hello message parameters, "
+          + "genesisHashLength: " + genesisLength + ", solidHashLength: " + solidLength
+          + ", headHashLength: " + headLength + ", address: 0, sig: " + signatureLength
+          + ", codeVersion: 0, endpointValid: " + expectedEndpointValid, text);
+    } finally {
+      logger.detachAppender(sink);
+      sink.stop();
+      for (Appender<ILoggingEvent> appender : originalAppenders) {
+        logger.addAppender(appender);
+      }
+      logger.setLevel(originalLevel);
+      logger.setAdditive(originalAdditive);
+    }
+  }
+
+  private static Endpoint endpoint(String ipv4, String ipv6, int port) {
+    return Endpoint.newBuilder().setNodeId(ByteString.copyFrom(new byte[64]))
+        .setAddress(ByteString.copyFromUtf8(ipv4)).setAddressIpv6(ByteString.copyFromUtf8(ipv6))
+        .setPort(port).build();
+  }
+
+  private static Protocol.HelloMessage.BlockId blockId(int length, byte value) {
+    byte[] hash = new byte[length];
+    Arrays.fill(hash, value);
+    return Protocol.HelloMessage.BlockId.newBuilder().setHash(ByteString.copyFrom(hash)).build();
   }
 
   private Protocol.HelloMessage.Builder getHelloMessageBuilder(Node from, long timestamp,
