@@ -613,21 +613,6 @@ service WalletSolidity {
   }
 };
 
-service WalletExtension {
-  //Please use GetTransactionsFromThis2 instead of this function.
-  rpc GetTransactionsFromThis (AccountPaginated) returns (TransactionList) {
-  }
-  //Use this function instead of GetTransactionsFromThis.
-  rpc GetTransactionsFromThis2 (AccountPaginated) returns (TransactionListExtention) {
-  }
-  //Please use GetTransactionsToThis2 instead of this function.
-  rpc GetTransactionsToThis (AccountPaginated) returns (TransactionList) {
-  }
-  //Use this function instead of GetTransactionsToThis.
-  rpc GetTransactionsToThis2 (AccountPaginated) returns (TransactionListExtention) {
-  }
-};
-
 // the api of tron's db
 service Database {
   // for tapos
@@ -699,9 +684,6 @@ message AssetIssueList {
 message BlockList {
   repeated Block block = 1;
 }
-message TransactionList {
-  repeated Transaction transaction = 1;
-}
 message TransactionIdList {
   repeated string txId = 1;
 }
@@ -764,10 +746,6 @@ message NumberMessage {
 message BytesMessage {
   bytes value = 1;
 }
-message TimeMessage {
-  int64 beginInMilliseconds = 1;
-  int64 endInMilliseconds = 2;
-}
 message BlockReq {
   string id_or_num = 1;
   bool   detail = 2;
@@ -779,16 +757,6 @@ message BlockLimit {
 message TransactionLimit {
   bytes transactionId = 1;
   int64 limitNum = 2;
-}
-message AccountPaginated {
-  Account account = 1;
-  int64 offset = 2;
-  int64 limit = 3;
-}
-message TimePaginatedMessage {
-  TimeMessage timeMessage = 1;
-  int64 offset = 2;
-  int64 limit = 3;
 }
 //deprecated
 message AccountNetMessage {
@@ -852,10 +820,6 @@ message BlockExtention {
 
 message BlockListExtention {
   repeated BlockExtention block = 1;
-}
-
-message TransactionListExtention {
-  repeated TransactionExtention transaction = 1;
 }
 
 message BlockIncrementalMerkleTree {

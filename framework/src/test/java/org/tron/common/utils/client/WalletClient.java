@@ -22,7 +22,6 @@ import org.tron.api.GrpcAPI.AccountNetMessage;
 import org.tron.api.GrpcAPI.AssetIssueList;
 import org.tron.api.GrpcAPI.BlockList;
 import org.tron.api.GrpcAPI.NodeList;
-import org.tron.api.GrpcAPI.TransactionList;
 import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.parameter.CommonParameter;
@@ -647,14 +646,6 @@ public class WalletClient {
     return rpcCli.listNodes();
   }
 
-  public static Optional<TransactionList> getTransactionsFromThis(byte[] address) {
-    return rpcCli.getTransactionsFromThis(address);
-  }
-
-  public static Optional<TransactionList> getTransactionsToThis(byte[] address) {
-    return rpcCli.getTransactionsToThis(address);
-  }
-
   public static Block getBlock(long blockNum) {
     return rpcCli.getBlock(blockNum);
   }
@@ -700,15 +691,6 @@ public class WalletClient {
     transaction = TransactionUtils.setTimestamp(transaction);
     return TransactionUtils.sign(transaction, this.ecKey);
   }
-
-  /*    public static Optional<AssetIssueList> getAssetIssueListByTimestamp(long timestamp) {
-        return rpcCli.getAssetIssueListByTimestamp(timestamp);
-  }*/
-
-  /*    public static Optional<TransactionList> getTransactionsByTimestamp(
-  long start, long end, int offset, int limit) {
-        return rpcCli.getTransactionsByTimestamp(start, end, offset, limit);
-  }*/
 
   /**
    * constructor.
