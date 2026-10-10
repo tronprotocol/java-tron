@@ -90,9 +90,9 @@ public class TransactionsMsgHandler implements TronMsgHandler {
       return;
     }
     TransactionsMessage transactionsMessage = (TransactionsMessage) msg;
-    check(peer, transactionsMessage);
-    for (Transaction trx : transactionsMessage.getTransactions().getTransactionsList()) {
-      Item item = new Item(new TransactionCapsule(trx).getTransactionId(), InventoryType.TRX);
+    Set<Sha256Hash> ids = check(peer, transactionsMessage);
+    for (Sha256Hash id : ids) {
+      Item item = new Item(id, InventoryType.TRX);
       peer.getAdvInvRequest().remove(item);
     }
     int smartContractQueueSize = 0;
@@ -141,7 +141,8 @@ public class TransactionsMsgHandler implements TronMsgHandler {
     }
   }
 
-  private void check(PeerConnection peer, TransactionsMessage msg) throws P2pException {
+  private Set<Sha256Hash> check(PeerConnection peer, TransactionsMessage msg)
+      throws P2pException {
     List<Transaction> list = msg.getTransactions().getTransactionsList();
     Set<Sha256Hash> seen = new HashSet<>(list.size() * 2);
     for (Transaction trx : list) {
@@ -166,6 +167,7 @@ public class TransactionsMsgHandler implements TronMsgHandler {
         }
       }
     }
+    return seen;
   }
 
   private void handleSmartContract() {

@@ -203,6 +203,7 @@ public class TransactionsMsgHandlerTest extends BaseTest {
       // 2 transfer transactions, submit throws on the first → catch + break, only called once
       handler.processMessage(peer, msg);
 
+      Assert.assertTrue(peer.getAdvInvRequest().isEmpty());
       Mockito.verify(mockPool, Mockito.times(1)).submit(Mockito.any(Runnable.class));
     } finally {
       closeHandlerAndOriginalPool(handler, originalPool);
@@ -393,8 +394,39 @@ public class TransactionsMsgHandlerTest extends BaseTest {
       } catch (P2pException e) {
         Assert.assertEquals(P2pException.TypeEnum.BAD_MESSAGE, e.getType());
       }
+      Assert.assertEquals(1, advInvRequest.size());
+      Assert.assertTrue(advInvRequest.containsKey(item));
     } finally {
       handler.close();
+    }
+  }
+
+  @Test
+  public void testInvalidBatchPreservesRequests() throws Exception {
+    TransactionsMsgHandler handler = new TransactionsMsgHandler();
+    ExecutorService originalPool = null;
+    try {
+      ExecutorService pool = Mockito.mock(ExecutorService.class);
+      originalPool = replaceTrxHandlePool(handler, pool);
+      List<Protocol.Transaction> transactions = new ArrayList<>(
+          buildTransferMessage(2).getTransactions().getTransactionsList());
+      // The first transaction passes; the second fails signature-length validation.
+      transactions.set(1, transactions.get(1).toBuilder()
+          .addSignature(ByteString.copyFrom(new byte[64])).build());
+      TransactionsMessage msg = new TransactionsMessage(transactions);
+      PeerConnection peer = Mockito.mock(PeerConnection.class);
+      stubAdvInvRequest(peer, msg);
+      Map<Item, Long> requests = new ConcurrentHashMap<>(peer.getAdvInvRequest());
+      Assert.assertEquals(2, requests.size());
+
+      P2pException exception = Assert.assertThrows(P2pException.class,
+          () -> handler.processMessage(peer, msg));
+
+      Assert.assertEquals(TypeEnum.BAD_TRX, exception.getType());
+      Assert.assertEquals(requests, peer.getAdvInvRequest());
+      Mockito.verify(pool, Mockito.never()).submit(Mockito.any(Runnable.class));
+    } finally {
+      closeHandlerAndOriginalPool(handler, originalPool);
     }
   }
 
