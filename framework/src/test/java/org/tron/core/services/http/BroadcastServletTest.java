@@ -146,15 +146,15 @@ public class BroadcastServletTest {
     }
     Assert.assertNotNull(result);
     in.close();
-    writer.flush();
-    FileInputStream fileInputStream = new FileInputStream("temp.txt");
-    InputStreamReader inputStreamReader = new InputStreamReader(fileInputStream);
-    BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
+    writer.close();
 
     StringBuilder sb = new StringBuilder();
-    String text;
-    while ((text = bufferedReader.readLine()) != null) {
-      sb.append(text);
+    try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(
+        new FileInputStream("temp.txt"), StandardCharsets.UTF_8))) {
+      String text;
+      while ((text = bufferedReader.readLine()) != null) {
+        sb.append(text);
+      }
     }
     Assert.assertTrue(sb.toString().contains("{\"Error\":\"internal server error\"}"));
     httpUrlConnection.disconnect();

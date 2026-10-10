@@ -50,7 +50,7 @@ public class Configuration {
     if (confFile.exists()) {
       config = ConfigFactory.parseFile(confFile)
           .withFallback(ConfigFactory.defaultReference());
-    } else if (Thread.currentThread().getContextClassLoader().getResourceAsStream(fileName)
+    } else if (Thread.currentThread().getContextClassLoader().getResource(fileName)
         != null) {
       config = ConfigFactory.load(fileName);
     } else {
@@ -59,4 +59,3 @@ public class Configuration {
     }
   }
 }
-
