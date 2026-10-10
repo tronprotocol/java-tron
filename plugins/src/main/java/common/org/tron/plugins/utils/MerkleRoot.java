@@ -56,7 +56,7 @@ public class MerkleRoot {
   }
 
   private static Sha256Hash computeHash(Sha256Hash leftHash, Sha256Hash rightHash) {
-    return Sha256Hash.of(true,
+    return Sha256Hash.of(
         leftHash.getByteString().concat(rightHash.getByteString()).toByteArray());
   }
 

@@ -13,7 +13,6 @@ import org.tron.common.cron.CronExpression;
 import org.tron.common.logsfilter.EventPluginConfig;
 import org.tron.common.logsfilter.FilterQuery;
 import org.tron.common.setting.RocksDbSettings;
-import org.tron.core.Constant;
 import org.tron.core.config.args.SeedNode;
 import org.tron.core.config.args.Storage;
 import org.tron.p2p.P2pConfig;
@@ -295,9 +294,6 @@ public class CommonParameter {
   public String trustNodeAddr; // clearParam: ""
   @Getter
   @Setter
-  public boolean walletExtensionApi;
-  @Getter
-  @Setter
   public boolean estimateEnergy;
   @Getter
   @Setter
@@ -436,10 +432,6 @@ public class CommonParameter {
   public EventPluginConfig eventPluginConfig;
   @Getter
   public FilterQuery eventFilter;
-  @Getter
-  @Setter
-  public String cryptoEngine = Constant.ECKey_ENGINE;
-
   @Getter
   @Setter
   public boolean rpcEnable = true;
@@ -667,10 +659,6 @@ public class CommonParameter {
       PARAMETER.storage.deleteAllStoragePaths();
     }
     PARAMETER = new CommonParameter();
-  }
-
-  public boolean isECKeyCryptoEngine() {
-    return cryptoEngine.equalsIgnoreCase(Constant.ECKey_ENGINE);
   }
 
   public boolean isJsonRpcFilterEnabled() {

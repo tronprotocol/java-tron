@@ -49,10 +49,10 @@ import org.bouncycastle.crypto.params.ECPublicKeyParameters;
 import org.bouncycastle.crypto.signers.ECDSASigner;
 import org.bouncycastle.math.ec.ECPoint;
 import org.tron.common.crypto.Blake2bfMessageDigest;
+import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.crypto.Hash;
 import org.tron.common.crypto.Rsv;
 import org.tron.common.crypto.SignUtils;
-import org.tron.common.crypto.SignatureInterface;
 import org.tron.common.crypto.zksnark.BN128;
 import org.tron.common.crypto.zksnark.BN128Fp;
 import org.tron.common.crypto.zksnark.BN128G1;
@@ -375,11 +375,9 @@ public class PrecompiledContracts {
     }
     try {
       Rsv rsv = Rsv.fromSignature(sign);
-      SignatureInterface signature = SignUtils.fromComponents(rsv.getR(), rsv.getS(), rsv.getV(),
-          CommonParameter.getInstance().isECKeyCryptoEngine());
+      ECDSASignature signature = SignUtils.fromComponents(rsv.getR(), rsv.getS(), rsv.getV());
       if (signature.validateComponents()) {
-        out = SignUtils.signatureToAddress(hash, signature,
-            CommonParameter.getInstance().isECKeyCryptoEngine());
+        out = SignUtils.signatureToAddress(hash, signature);
       }
     } catch (Throwable any) {
       logger.info("ECRecover error", any.getMessage());
@@ -541,11 +539,9 @@ public class PrecompiledContracts {
     public Pair<Boolean, byte[]> execute(byte[] data) {
 
       if (data == null) {
-        return Pair.of(true, Sha256Hash.hash(CommonParameter
-            .getInstance().isECKeyCryptoEngine(), EMPTY_BYTE_ARRAY));
+        return Pair.of(true, Sha256Hash.hash(EMPTY_BYTE_ARRAY));
       }
-      return Pair.of(true, Sha256Hash.hash(CommonParameter
-          .getInstance().isECKeyCryptoEngine(), data));
+      return Pair.of(true, Sha256Hash.hash(data));
     }
   }
 
@@ -571,11 +567,9 @@ public class PrecompiledContracts {
         data = EMPTY_BYTE_ARRAY;
       }
 
-      byte[] orig = Sha256Hash.hash(CommonParameter.getInstance()
-          .isECKeyCryptoEngine(), data);
+      byte[] orig = Sha256Hash.hash(data);
       System.arraycopy(orig, 0, target, 0, 20);
-      return Pair.of(true, Sha256Hash.hash(CommonParameter.getInstance()
-          .isECKeyCryptoEngine(), target));
+      return Pair.of(true, Sha256Hash.hash(target));
     }
   }
 
@@ -613,11 +607,9 @@ public class PrecompiledContracts {
         int sLength = data.length < 128 ? data.length - 96 : 32;
         System.arraycopy(data, 96, s, 0, sLength);
 
-        SignatureInterface signature = SignUtils.fromComponents(r, s, v[31]
-            , CommonParameter.getInstance().isECKeyCryptoEngine());
+        ECDSASignature signature = SignUtils.fromComponents(r, s, v[31]);
         if (validateV(v) && signature.validateComponents()) {
-          out = new DataWord(SignUtils.signatureToAddress(h, signature
-              , CommonParameter.getInstance().isECKeyCryptoEngine()));
+          out = new DataWord(SignUtils.signatureToAddress(h, signature));
         }
       } catch (Throwable any) {
       }
@@ -982,9 +974,13 @@ public class PrecompiledContracts {
       }
 
       PairingCheck check = PairingCheck.create();
+      long deadlineNs = pairingDeadlineNs();
 
       // iterating over all pairs
       for (int offset = 0; offset < data.length; offset += PAIR_SIZE) {
+        if (deadlineNs < System.nanoTime()) {
+          throw Program.Exception.notEnoughTime("precompiled contract pair");
+        }
 
         Pair<BN128G1, BN128G2> pair = decodePair(data, offset);
 
@@ -996,10 +992,21 @@ public class PrecompiledContracts {
         check.addPair(pair.getLeft(), pair.getRight());
       }
 
-      check.run();
+      if (!check.run(deadlineNs)) {
+        throw Program.Exception.notEnoughTime("precompiled contract pair");
+      }
       int result = check.result();
 
       return Pair.of(true, new DataWord(result).getData());
+    }
+
+    /** Same skip as {@link Program#checkCPUTimeLimit}: debug and solidity nodes do not enforce it. */
+    private long pairingDeadlineNs() {
+      if (CommonParameter.getInstance().isDebug()
+          || CommonParameter.getInstance().isSolidityNode()) {
+        return Long.MAX_VALUE;
+      }
+      return getVmShouldEndInUs() * VMConstant.ONE_THOUSAND;
     }
 
     private Pair<BN128G1, BN128G2> decodePair(byte[] in, int offset) {
@@ -1060,8 +1067,7 @@ public class PrecompiledContracts {
       byte[] data = words[2].getData();
 
       byte[] combine = ByteUtil.merge(address, ByteArray.fromInt(permissionId), data);
-      byte[] hash = Sha256Hash.hash(CommonParameter
-          .getInstance().isECKeyCryptoEngine(), combine);
+      byte[] hash = Sha256Hash.hash(combine);
 
       if (VMConfig.allowTvmSelfdestructRestriction()) {
         int sigArraySize = words[words[3].intValueSafe() / WORD_SIZE].intValueSafe();

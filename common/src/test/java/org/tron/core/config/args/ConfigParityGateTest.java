@@ -110,7 +110,6 @@ public class ConfigParityGateTest {
   // sneaks in" hole. See everyReferenceConfTopLevelKeyIsCovered.
   private static final Set<String> TOP_LEVEL_NON_BEAN =
       ConfigParityCheck.allowlist(
-          "crypto",       // MiscConfig.cryptoEngine manual-read root
           "enery",        // MiscConfig manual-read root (preserves historical typo of "energy")
           "localwitness", // bound by LocalWitnessConfig, not in the *ConfigBean factory pattern
           "net",          // deprecated wrapper for net.type; intentionally empty in reference.conf

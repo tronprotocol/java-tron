@@ -23,7 +23,7 @@ import org.tron.core.services.jsonrpc.filters.BlockFilterAndResult;
 @Slf4j
 public class ConcurrentHashMapTest {
   private static final String EXECUTOR_NAME = "jsonrpc-concurrent-map-test";
-  private final TronJsonRpcImpl jsonRpc = new TronJsonRpcImpl(null, null);
+  private final TronJsonRpcImpl jsonRpc = new TronJsonRpcImpl(null, null, null);
 
   private static int randomInt(int minInt, int maxInt) {
     return (int) round(random(true) * (maxInt - minInt) + minInt, true);

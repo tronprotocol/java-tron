@@ -298,7 +298,6 @@ public class Args extends CommonParameter {
    * Bridge MiscConfig bean values to CommonParameter fields.
    */
   private static void applyMiscConfig(MiscConfig mc) {
-    PARAMETER.cryptoEngine = mc.getCryptoEngine();
     PARAMETER.needToUpdateAsset = mc.isNeedToUpdateAsset();
     PARAMETER.historyBalanceLookup = mc.isHistoryBalanceLookup();
     PARAMETER.trxReferenceBlock = mc.getTrxReferenceBlock();
@@ -598,7 +597,6 @@ public class Args extends CommonParameter {
     PARAMETER.trustNodeAddr = nc.getTrustNode();
 
     PARAMETER.validateSignThreadNum = nc.getValidateSignThreadNum();
-    PARAMETER.walletExtensionApi = nc.isWalletExtensionApi();
     PARAMETER.isOpenFullTcpDisconnect = nc.isOpenFullTcpDisconnect();
     PARAMETER.nodeDetectEnable = nc.isNodeDetectEnable();
 
@@ -695,10 +693,11 @@ public class Args extends CommonParameter {
   public static void applyConfigParams(
       final Config config) {
 
+    // Reject legacy crypto engines before storage or witness/keystore initialization.
+    miscConfig = MiscConfig.fromConfig(config);
+
     Wallet.setAddressPreFixByte(ADD_PRE_FIX_BYTE_MAINNET);
     Wallet.setAddressPreFixString(Constant.ADD_PRE_FIX_STRING_MAINNET);
-
-    // crypto.engine handled by MiscConfig
 
     // VM config: bind from config.conf "vm" section
     vmConfig = VmConfig.fromConfig(config);
@@ -729,7 +728,6 @@ public class Args extends CommonParameter {
     // node discovery, legacy fallback, p2p, dns — all handled in applyNodeConfig
 
     // Misc config: storage, trx, energy — small domains, read via beans
-    miscConfig = MiscConfig.fromConfig(config);
     applyMiscConfig(miscConfig);
 
     // vm, committee already handled above

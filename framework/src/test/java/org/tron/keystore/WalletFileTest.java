@@ -14,9 +14,9 @@ public class WalletFileTest {
   @Test
   public void testGetAddress() throws NoSuchAlgorithmException, CipherException {
     WalletFile walletFile1 = Wallet.createStandard("", SignUtils.getGeneratedRandomSign(
-        SecureRandom.getInstance("NativePRNG"),true));
+        SecureRandom.getInstance("NativePRNG")));
     WalletFile walletFile2 = Wallet.createStandard("", SignUtils.getGeneratedRandomSign(
-        SecureRandom.getInstance("NativePRNG"),true));
+        SecureRandom.getInstance("NativePRNG")));
     WalletFile walletFile3 = (WalletFile) getSame(walletFile1);
     Assert.assertNotEquals(walletFile1.getAddress(), walletFile2.getAddress());
     Assert.assertNotEquals(walletFile1.getCrypto(), walletFile2.getCrypto());
