@@ -1,20 +1,23 @@
 package org.tron.plugins;
 
 import com.typesafe.config.Config;
+import com.typesafe.config.ConfigException;
 import com.typesafe.config.ConfigFactory;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
-import java.util.Arrays;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
 import me.tongfei.progressbar.ProgressBar;
 import org.tron.plugins.utils.FileUtils;
@@ -23,6 +26,7 @@ import picocli.CommandLine.Command;
 
 @Slf4j(topic = "move")
 @Command(name = "mv", aliases = "move",
+    header = Db.STOP_NODE_HEADER,
     description = "Move db to pre-set new path . For example HDD,reduce storage expenses.")
 public class DbMove implements Callable<Integer> {
 
@@ -65,9 +69,6 @@ public class DbMove implements Callable<Integer> {
         printNotExist();
         return 0;
       }
-      String dbPath = config.hasPath(DB_DIRECTORY_CONFIG_KEY)
-          ? config.getString(DB_DIRECTORY_CONFIG_KEY) : DEFAULT_DB_DIRECTORY;
-
       dbs = dbs.stream()
           .filter(c -> c.hasPath(NAME_CONFIG_KEY) && c.hasPath(PATH_CONFIG_KEY))
           .collect(Collectors.toList());
@@ -76,41 +77,34 @@ public class DbMove implements Callable<Integer> {
         printNotExist();
         return 0;
       }
-      List<Property> toBeMove = dbs.stream()
-          .map(c -> {
-            try {
-              return new Property(c.getString(NAME_CONFIG_KEY),
-                  Paths.get(database.toString(), dbPath, c.getString(NAME_CONFIG_KEY)),
-                  Paths.get(c.getString(PATH_CONFIG_KEY), dbPath, c.getString(NAME_CONFIG_KEY)));
-            } catch (IOException e) {
-              spec.commandLine().getErr().println(e);
-            }
-            return null;
-          }).filter(Objects::nonNull)
-          .filter(p -> !p.destination.equals(p.original)).collect(Collectors.toList());
-
-      if (toBeMove.isEmpty()) {
-        printNotExist();
-        return 0;
+      List<Property> toBeMove = new ArrayList<>();
+      try {
+        String dbPath = config.hasPath(DB_DIRECTORY_CONFIG_KEY)
+            ? config.getString(DB_DIRECTORY_CONFIG_KEY) : DEFAULT_DB_DIRECTORY;
+        for (Config c : dbs) {
+          String name = c.getString(NAME_CONFIG_KEY);
+          toBeMove.add(new Property(name,
+              Paths.get(database.toString(), dbPath, name),
+              Paths.get(c.getString(PATH_CONFIG_KEY), dbPath, name)));
+        }
+      } catch (IOException | ConfigException e) {
+        spec.commandLine().getErr().println(e);
+        return 2;
       }
-      toBeMove = toBeMove.stream()
-          .filter(property -> {
-            if (property.destination.toFile().exists()) {
-              spec.commandLine().getOut().println(String.format("%s already exist,skip.",
-                  property.destination));
-              return false;
-            } else {
-              return true;
-            }
-          }).collect(Collectors.toList());
-
-      if (toBeMove.isEmpty()) {
-        printNotExist();
-        return 0;
+      if (hasOverlappingPaths(toBeMove)) {
+        return 2;
       }
-      ProgressBar.wrap(toBeMove.stream(), "mv task").forEach(this::run);
+      if (!copyAll(toBeMove)) {
+        cleanupDestinations(toBeMove);
+        return 1;
+      }
+
+      boolean allMoved = ProgressBar.wrap(toBeMove.stream(), "link task")
+          .map(this::replaceSourceWithLink).reduce(Boolean.TRUE, Boolean::logicalAnd);
+      if (!allMoved) {
+        return 1;
+      }
       spec.commandLine().getOut().println("move db done.");
-
     } else {
       printNotExist();
       return 0;
@@ -118,28 +112,128 @@ public class DbMove implements Callable<Integer> {
     return 0;
   }
 
-  private void run(Property p) {
-    if (p.destination.toFile().mkdirs()) {
-      ProgressBar.wrap(Arrays.stream(Objects.requireNonNull(p.original.toFile().listFiles()))
-          .filter(File::isFile).map(File::getName).parallel(), p.name).forEach(file -> {
-            Path original = Paths.get(p.original.toString(), file);
-            Path destination = Paths.get(p.destination.toString(), file);
-            try {
-              Files.copy(original, destination,
-                  StandardCopyOption.REPLACE_EXISTING);
-            } catch (IOException e) {
-              spec.commandLine().getErr().println(e);
-            }
-          });
-      try {
-        if (FileUtils.deleteDir(p.original.toFile())) {
-          Files.createSymbolicLink(p.original, p.destination);
+  private boolean copyAll(List<Property> properties) {
+    try (ProgressBar bar = new ProgressBar("copy task", properties.size())) {
+      for (Property p : properties) {
+        if (!copy(p)) {
+          return false;
         }
-      } catch (IOException | UnsupportedOperationException x) {
-        spec.commandLine().getErr().println(x);
+        bar.step();
       }
+      return true;
+    }
+  }
+
+  private boolean copy(Property p) {
+    AtomicBoolean hasError = new AtomicBoolean(false);
+    try (Stream<Path> files = Files.walk(p.original)) {
+      // Collect the tree before copying anything: a traversal failure must
+      // surface while no copy task is in flight, otherwise a task started
+      // before the failure could recreate the destination after the rollback
+      // has already deleted it, and the retry would then be rejected.
+      List<Path> sources = files.collect(Collectors.toList());
+      Files.createDirectories(p.destination.getParent());
+      Files.createDirectory(p.destination);
+      p.created = true;
+      ProgressBar.wrap(sources.parallelStream(), p.name).forEach(source -> {
+        if (hasError.get()) {
+          return;
+        }
+        try {
+          copyEntry(p, source);
+        } catch (IOException | RuntimeException e) {
+          hasError.set(true);
+          spec.commandLine().getErr().println(e);
+        }
+      });
+    } catch (IOException | RuntimeException e) {
+      hasError.set(true);
+      spec.commandLine().getErr().println(e);
+    }
+
+    if (hasError.get()) {
+      spec.commandLine().getErr().println(String.format(
+          "%s copy to %s failed, source kept.",
+          p.original, p.destination));
+      return false;
+    }
+    return true;
+  }
+
+  private void copyEntry(Property p, Path source) throws IOException {
+    BasicFileAttributes attributes = Files.readAttributes(
+        source, BasicFileAttributes.class, LinkOption.NOFOLLOW_LINKS);
+    Path destination = p.destination.resolve(p.original.relativize(source));
+    if (attributes.isDirectory()) {
+      Files.createDirectories(destination);
+    } else if (attributes.isRegularFile()) {
+      Files.createDirectories(destination.getParent());
+      Files.copy(source, destination);
     } else {
-      spec.commandLine().getErr().println(String.format("%s create failed.", p.destination));
+      throw new IOException(String.format(
+          "%s is neither a regular file nor a directory, can not be moved.", source));
+    }
+  }
+
+  private boolean replaceSourceWithLink(Property p) {
+    try {
+      if (!FileUtils.deleteDir(p.original.toFile())) {
+        spec.commandLine().getErr().println(String.format(
+            "%s delete failed and may be incomplete; the only complete copy is at %s, keep it.",
+            p.original, p.destination));
+        printRecoveryHint(p);
+        return false;
+      }
+      Files.createSymbolicLink(p.original, p.destination);
+      return true;
+    } catch (IOException | RuntimeException x) {
+      spec.commandLine().getErr().println(x);
+      spec.commandLine().getErr().println(String.format(
+          "%s move failed; the complete copy is at %s, keep it.",
+          p.original, p.destination));
+      printRecoveryHint(p);
+      return false;
+    }
+  }
+
+  private void printRecoveryHint(Property p) {
+    spec.commandLine().getErr().println(String.format(
+        "To recover manually: remove %s if present, then create a symbolic link at %s"
+            + " pointing to %s.",
+        p.original, p.original, p.destination));
+  }
+
+  private void cleanupDestinations(List<Property> properties) {
+    boolean allCleaned = properties.stream().map(property -> {
+      File destination = property.destination.toFile();
+      if (Files.notExists(destination.toPath(), LinkOption.NOFOLLOW_LINKS)) {
+        return true;
+      }
+      if (!property.created) {
+        spec.commandLine().getErr().println(String.format(
+            "%s was not created by this run and was kept; move it aside before retrying.",
+            property.destination));
+        return false;
+      }
+      try {
+        if (FileUtils.deleteDir(destination)) {
+          return true;
+        }
+      } catch (RuntimeException e) {
+        spec.commandLine().getErr().println(e);
+      }
+      spec.commandLine().getErr().println(String.format(
+          "%s cleanup failed; remove the leftover copy before retrying.",
+          property.destination));
+      return false;
+    }).reduce(Boolean.TRUE, Boolean::logicalAnd);
+
+    if (allCleaned) {
+      spec.commandLine().getErr().println(
+          "move db failed; all source databases were kept, please retry.");
+    } else {
+      spec.commandLine().getErr().println(
+          "move db failed; all source databases were kept, but some destinations remain.");
     }
   }
 
@@ -147,12 +241,39 @@ public class DbMove implements Callable<Integer> {
     spec.commandLine().getErr().println(NOT_FIND);
   }
 
+  private boolean hasOverlappingPaths(List<Property> properties) {
+    for (Property outer : properties) {
+      for (Property inner : properties) {
+        if (isInside("destination", inner.destination, "original", outer.original)) {
+          return true;
+        }
+        if (inner == outer) {
+          continue;
+        }
+        if (isInside("original", inner.original, "original", outer.original)
+            || isInside("destination", inner.destination, "destination", outer.destination)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  private boolean isInside(String kind, Path path, String rootKind, Path root) {
+    if (!path.startsWith(root)) {
+      return false;
+    }
+    spec.commandLine().getErr().println(String.format(
+        "%s [%s] can not be inside %s [%s], please check!", kind, path, rootKind, root));
+    return true;
+  }
 
   static class Property {
 
     private final String name;
     private final Path original;
     final Path destination;
+    private boolean created;
 
     public Property(String name, Path original, Path destination) throws IOException {
       this.name = name;
@@ -167,7 +288,7 @@ public class DbMove implements Callable<Integer> {
         throw new IOException(original + " is  symbolicLink!");
       }
       this.destination = destination.toFile().getCanonicalFile().toPath();
-      if (this.destination.toFile().exists()) {
+      if (!Files.notExists(this.destination, LinkOption.NOFOLLOW_LINKS)) {
         throw new IOException(this.destination + " already exist!");
       }
       if (this.destination.equals(this.original)) {
@@ -195,9 +316,6 @@ public class DbMove implements Callable<Integer> {
           if (dbs.isEmpty()) {
             throw notFind;
           }
-          String dbPath = config.hasPath(DB_DIRECTORY_CONFIG_KEY)
-              ? config.getString(DB_DIRECTORY_CONFIG_KEY) : DEFAULT_DB_DIRECTORY;
-
           dbs = dbs.stream()
               .filter(c -> c.hasPath(NAME_CONFIG_KEY) && c.hasPath(PATH_CONFIG_KEY))
               .collect(Collectors.toList());
@@ -207,13 +325,10 @@ public class DbMove implements Callable<Integer> {
           }
           Set<String> toBeMove = new HashSet<>();
           for (Config c : dbs) {
-            if (!toBeMove.add(new Property(c.getString(NAME_CONFIG_KEY),
-                Paths.get(database.toString(), dbPath, c.getString(NAME_CONFIG_KEY)),
-                Paths.get(c.getString(PATH_CONFIG_KEY), dbPath,
-                    c.getString(NAME_CONFIG_KEY))).name)) {
+            String name = c.getString(NAME_CONFIG_KEY);
+            if (!toBeMove.add(name)) {
               throw new IllegalArgumentException(
-                  "DB config has duplicate key:[" + c.getString(NAME_CONFIG_KEY)
-                      + "],please check! ");
+                  "DB config has duplicate key:[" + name + "],please check! ");
             }
           }
         } else {
