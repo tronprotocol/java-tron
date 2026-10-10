@@ -138,10 +138,10 @@ public class BlockChainMetricManager {
       BlockCapsule oldBlock = witnessInfo.get(witnessAddress);
       if ((!oldBlock.getBlockId().equals(block.getBlockId()))
           && oldBlock.getTimeStamp() == block.getTimeStamp()) {
+        dupWitnessBlockNum.put(witnessAddress, block.getNum());
         MetricsUtil.counterInc(MetricsKey.BLOCKCHAIN_DUP_WITNESS + witnessAddress);
         Metrics.counterInc(MetricKeys.Counter.MINER, 1,
             StringUtil.encode58Check(address), MetricLabels.Counter.MINE_DUP);
-        dupWitnessBlockNum.put(witnessAddress, block.getNum());
       }
     }
     witnessInfo.put(witnessAddress, block);
@@ -204,7 +204,7 @@ public class BlockChainMetricManager {
     for (Map.Entry<String, Counter> entry : dupWitnessMap.entrySet()) {
       DupWitnessInfo dupWitness = new DupWitnessInfo();
       String witness = entry.getKey().substring(MetricsKey.BLOCKCHAIN_DUP_WITNESS.length());
-      long blockNum = dupWitnessBlockNum.get(witness);
+      long blockNum = dupWitnessBlockNum.getOrDefault(witness, 0L);
       dupWitness.setAddress(witness);
       dupWitness.setBlockNum(blockNum);
       dupWitness.setCount((int) entry.getValue().getCount());

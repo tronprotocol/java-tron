@@ -3,10 +3,10 @@ package org.tron.core.services;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -20,7 +20,7 @@ public class WitnessProductBlockService {
   private Cache<Long, BlockCapsule> historyBlockCapsuleCache = CacheBuilder.newBuilder()
       .initialCapacity(200).maximumSize(200).build();
 
-  private Map<String, CheatWitnessInfo> cheatWitnessInfoMap = new HashMap<>();
+  private Map<String, CheatWitnessInfo> cheatWitnessInfoMap = new ConcurrentHashMap<>();
 
   public void validWitnessProductTwoBlock(BlockCapsule block) {
     try {
