@@ -5,9 +5,14 @@ import static org.mockito.Mockito.mock;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
+import org.tron.common.logsfilter.EventPluginLoader;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.BlockCapsule;
@@ -22,6 +27,57 @@ import org.tron.core.store.DynamicPropertiesStore;
 
 public class BlockEventLoadTest {
   BlockEventLoad blockEventLoad = new BlockEventLoad();
+
+  @After
+  public void tearDown() throws Exception {
+    getExecutor().shutdownNow();
+  }
+
+  @Test
+  public void shouldNotLoadWhenRealtimeEventServiceIsBusy() throws Exception {
+    verifyScheduledLoad(false, true, 0);
+  }
+
+  @Test
+  public void shouldNotLoadWhenPluginIsBusy() throws Exception {
+    verifyScheduledLoad(true, false, 0);
+  }
+
+  @Test
+  public void shouldLoadWhenBothConsumersAreReady() throws Exception {
+    verifyScheduledLoad(false, false, 1);
+  }
+
+  private void verifyScheduledLoad(boolean pluginBusy, boolean realtimeBusy, int loadCalls)
+      throws Exception {
+    EventPluginLoader plugin = mock(EventPluginLoader.class);
+    RealtimeEventService realtime = mock(RealtimeEventService.class);
+    ScheduledExecutorService scheduler = mock(ScheduledExecutorService.class);
+    // Replace only scheduling and loading; execute the real init() task synchronously.
+    getExecutor().shutdownNow();
+    ReflectUtils.setFieldValue(blockEventLoad, "executor", scheduler);
+    ReflectUtils.setFieldValue(blockEventLoad, "instance", plugin);
+    ReflectUtils.setFieldValue(blockEventLoad, "realtimeEventService", realtime);
+    Mockito.when(plugin.isBusy()).thenReturn(pluginBusy);
+    Mockito.when(realtime.isBusy()).thenReturn(realtimeBusy);
+    blockEventLoad = Mockito.spy(blockEventLoad);
+    Mockito.doNothing().when(blockEventLoad).load();
+
+    blockEventLoad.init();
+    ArgumentCaptor<Runnable> task = ArgumentCaptor.forClass(Runnable.class);
+    Mockito.verify(scheduler).scheduleWithFixedDelay(task.capture(), Mockito.anyLong(),
+        Mockito.anyLong(), Mockito.eq(TimeUnit.MILLISECONDS));
+    task.getValue().run();
+
+    Mockito.verify(blockEventLoad, Mockito.times(loadCalls)).load();
+    Mockito.verify(blockEventLoad, Mockito.never()).close();
+  }
+
+  private ScheduledExecutorService getExecutor() throws ReflectiveOperationException {
+    Field field = BlockEventLoad.class.getDeclaredField("executor");
+    field.setAccessible(true);
+    return (ScheduledExecutorService) field.get(blockEventLoad);
+  }
 
   @Test
   public void test() throws Exception {

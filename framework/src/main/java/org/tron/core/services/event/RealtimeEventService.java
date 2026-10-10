@@ -29,7 +29,7 @@ public class RealtimeEventService {
 
   private static BlockingQueue<Event> queue = new LinkedBlockingQueue<>();
 
-  private int maxEventSize = 10000;
+  private static final int BUSY_EVENT_SIZE = 500;
 
   private final ScheduledExecutorService executor = ExecutorServiceManager
       .newSingleThreadScheduledExecutor("realtime-event");
@@ -56,11 +56,11 @@ public class RealtimeEventService {
   }
 
   public void add(Event event) {
-    if (queue.size() >= maxEventSize) {
-      logger.warn("Add event failed, blockId {}.", event.getBlockEvent().getBlockId().getString());
-      return;
-    }
     queue.offer(event);
+  }
+
+  public boolean isBusy() {
+    return queue.size() >= BUSY_EVENT_SIZE;
   }
 
   public synchronized void work() {

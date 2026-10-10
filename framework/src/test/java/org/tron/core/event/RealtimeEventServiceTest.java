@@ -3,10 +3,15 @@ package org.tron.core.event;
 import static org.mockito.Mockito.mock;
 
 import com.google.protobuf.ByteString;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.BlockingQueue;
 import org.junit.Assert;
 import org.junit.Test;
+import org.mockito.InOrder;
+import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.tron.common.logsfilter.EventPluginLoader;
 import org.tron.common.logsfilter.capsule.BlockLogTriggerCapsule;
@@ -25,6 +30,38 @@ import org.tron.core.services.event.bo.SmartContractTrigger;
 public class RealtimeEventServiceTest {
 
   RealtimeEventService realtimeEventService = new RealtimeEventService();
+
+  @Test
+  public void shouldBecomeBusyAt500EventsAndRetainLaterEvents() throws Exception {
+    Field queueField = RealtimeEventService.class.getDeclaredField("queue");
+    queueField.setAccessible(true);
+    BlockingQueue<Event> queue = (BlockingQueue<Event>) queueField.get(null);
+    queue.clear();
+
+    try {
+      Event event = new Event(new BlockEvent(), false);
+      for (int i = 0; i < 499; i++) {
+        realtimeEventService.add(event);
+      }
+
+      Assert.assertFalse(realtimeEventService.isBusy());
+
+      realtimeEventService.add(event);
+      Assert.assertTrue(realtimeEventService.isBusy());
+
+      Event laterEvent = new Event(new BlockEvent(), true);
+      realtimeEventService.add(laterEvent);
+      Assert.assertEquals(501, queue.size());
+      for (int i = 0; i < 500; i++) {
+        Assert.assertSame(event, queue.remove());
+      }
+      Assert.assertSame(laterEvent, queue.remove());
+    } finally {
+      queue.clear();
+    }
+
+    Assert.assertFalse(realtimeEventService.isBusy());
+  }
 
   @Test
   public void test() throws Exception {
@@ -54,10 +91,13 @@ public class RealtimeEventServiceTest {
 
     BlockCapsule blockCapsule = new BlockCapsule(0L, Sha256Hash.ZERO_HASH, 0L,
         ByteString.copyFrom(BlockEventCacheTest.getBlockId()));
-    // spy so processTrigger() is a no-op (does not reach the real EventPluginLoader),
-    // while setRemoved() still mutates the real trigger so the removed flag can be asserted.
+    // Capture the removed flag at delivery time, before the cached capsule is reused.
     BlockLogTriggerCapsule blockCap = Mockito.spy(new BlockLogTriggerCapsule(blockCapsule));
-    Mockito.doNothing().when(blockCap).processTrigger();
+    List<Boolean> deliveredRemovedFlags = new ArrayList<>();
+    Mockito.doAnswer(invocation -> {
+      deliveredRemovedFlags.add(blockCap.getBlockLogTrigger().isRemoved());
+      return null;
+    }).when(blockCap).processTrigger();
     be2.setBlockLogTriggerCapsule(blockCap);
     Mockito.when(instance.isBlockLogTriggerEnable()).thenReturn(true);
     Mockito.when(instance.isBlockLogTriggerSolidified()).thenReturn(false);
@@ -70,7 +110,7 @@ public class RealtimeEventServiceTest {
     realtimeEventService.flush(be2, false);
     Assert.assertFalse(blockCap.getBlockLogTrigger().isRemoved());
     // posted directly to the plugin both times, never via the async queue
-    Mockito.verify(blockCap, Mockito.times(2)).processTrigger();
+    Assert.assertEquals(Arrays.asList(true, false), deliveredRemovedFlags);
 
     be2.setBlockLogTriggerCapsule(null);
 
@@ -83,32 +123,79 @@ public class RealtimeEventServiceTest {
 
     // rollback: tx trigger posted synchronously with removed=true
     realtimeEventService.flush(be2, true);
-    Mockito.verify(txCap).setRemoved(true);
-    Mockito.verify(txCap).processTrigger();
+    realtimeEventService.flush(be2, false);
+    InOrder delivery = Mockito.inOrder(txCap);
+    delivery.verify(txCap).setRemoved(true);
+    delivery.verify(txCap).processTrigger();
+    delivery.verify(txCap).setRemoved(false);
+    delivery.verify(txCap).processTrigger();
+    delivery.verifyNoMoreInteractions();
 
-    be2.setTransactionLogTriggerCapsules(null);
+  }
 
-    SmartContractTrigger contractTrigger = new SmartContractTrigger();
-    be2.setSmartContractTrigger(contractTrigger);
+  @Test
+  public void shouldDeliverContractEventsOnlyWhenEnabledWithCurrentRemovedFlag() {
+    EventPluginLoader plugin = mock(EventPluginLoader.class);
+    ReflectUtils.setFieldValue(realtimeEventService, "instance", plugin);
+    BlockEvent block = new BlockEvent();
+    block.setBlockId(new BlockCapsule.BlockId(BlockEventCacheTest.getBlockId(), 1));
+    SmartContractTrigger triggers = new SmartContractTrigger();
+    ContractEventTrigger event = new ContractEventTrigger();
+    event.setTriggerName("staleName");
+    triggers.getContractEventTriggers().add(event);
+    block.setSmartContractTrigger(triggers);
+    List<Boolean> deliveredFlags = new ArrayList<>();
+    Mockito.doAnswer(invocation -> {
+      Assert.assertEquals("contractEventTrigger", event.getTriggerName());
+      deliveredFlags.add(event.isRemoved());
+      return null;
+    }).when(plugin).postContractEventTrigger(event);
 
-    contractTrigger.getContractEventTriggers().add(mock(ContractEventTrigger.class));
-    Mockito.when(instance.isContractLogTriggerEnable()).thenReturn(true);
-    try {
-      realtimeEventService.flush(be2, event.isRemove());
-    } catch (Exception e) {
-      Assert.assertTrue(e instanceof NullPointerException);
+    try (MockedStatic<EventPluginLoader> loader = Mockito.mockStatic(EventPluginLoader.class)) {
+      loader.when(EventPluginLoader::getInstance).thenReturn(plugin);
+      realtimeEventService.flush(block, true);
+      Mockito.verify(plugin, Mockito.never()).postContractEventTrigger(Mockito.any());
+
+      Mockito.when(plugin.isContractEventTriggerEnable()).thenReturn(true);
+      realtimeEventService.flush(block, true);
+      realtimeEventService.flush(block, false);
+
+      Assert.assertEquals(Arrays.asList(true, false), deliveredFlags);
+      Mockito.verify(plugin, Mockito.times(2)).postContractEventTrigger(event);
+      Mockito.verify(plugin, Mockito.never()).postContractLogTrigger(Mockito.any());
     }
+  }
 
-    contractTrigger.getContractEventTriggers().clear();
+  @Test
+  public void shouldDeliverContractLogsOnlyWhenEnabledWithCurrentRemovedFlag() {
+    EventPluginLoader plugin = mock(EventPluginLoader.class);
+    ReflectUtils.setFieldValue(realtimeEventService, "instance", plugin);
+    BlockEvent block = new BlockEvent();
+    block.setBlockId(new BlockCapsule.BlockId(BlockEventCacheTest.getBlockId(), 1));
+    SmartContractTrigger triggers = new SmartContractTrigger();
+    ContractLogTrigger log = new ContractLogTrigger();
+    log.setTriggerName("staleName");
+    triggers.getContractLogTriggers().add(log);
+    block.setSmartContractTrigger(triggers);
+    List<Boolean> deliveredFlags = new ArrayList<>();
+    Mockito.doAnswer(invocation -> {
+      Assert.assertEquals("contractLogTrigger", log.getTriggerName());
+      deliveredFlags.add(log.isRemoved());
+      return null;
+    }).when(plugin).postContractLogTrigger(log);
 
-    realtimeEventService.flush(be2, event.isRemove());
+    try (MockedStatic<EventPluginLoader> loader = Mockito.mockStatic(EventPluginLoader.class)) {
+      loader.when(EventPluginLoader::getInstance).thenReturn(plugin);
+      realtimeEventService.flush(block, true);
+      Mockito.verify(plugin, Mockito.never()).postContractLogTrigger(Mockito.any());
 
-    contractTrigger.getContractLogTriggers().add(mock(ContractLogTrigger.class));
-    Mockito.when(instance.isContractEventTriggerEnable()).thenReturn(true);
-    try {
-      realtimeEventService.flush(be2, event.isRemove());
-    } catch (Exception e) {
-      Assert.assertTrue(e instanceof NullPointerException);
+      Mockito.when(plugin.isContractLogTriggerEnable()).thenReturn(true);
+      realtimeEventService.flush(block, true);
+      realtimeEventService.flush(block, false);
+
+      Assert.assertEquals(Arrays.asList(true, false), deliveredFlags);
+      Mockito.verify(plugin, Mockito.times(2)).postContractLogTrigger(log);
+      Mockito.verify(plugin, Mockito.never()).postContractEventTrigger(Mockito.any());
     }
   }
 }
