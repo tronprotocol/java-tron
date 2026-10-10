@@ -10,6 +10,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
@@ -19,6 +20,7 @@ import java.util.TreeMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
+import me.tongfei.progressbar.ProgressBar;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Assume;
@@ -26,6 +28,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.mockito.ArgumentMatchers;
+import org.mockito.MockedConstruction;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.rocksdb.RocksDBException;
@@ -590,6 +593,27 @@ public class DbMoveTest {
   public void testInvalidDbDirectoryTypeRejected() throws RocksDBException, IOException {
     assertConfigRejected("storage {\n  db.directory = [1]\n  properties = [{name = \""
         + ACCOUNT + "\", path = \"" + OUTPUT_DIRECTORY + "/dest\"}]\n}\n");
+  }
+
+  @Test
+  public void testCopyProgressBarClosedOnFailure() throws RocksDBException, IOException {
+    File database = newDatabase();
+    File accountDir = Paths.get(database.getPath(), ACCOUNT).toFile();
+    Files.createSymbolicLink(Paths.get(accountDir.getPath(), "evil-link"),
+        temporaryFolder.newFolder("outside").toPath());
+
+    List<ProgressBar> copyBars = new ArrayList<>();
+    try (MockedConstruction<ProgressBar> bars = Mockito.mockConstruction(ProgressBar.class,
+        (bar, context) -> {
+          if ("copy task".equals(context.arguments().get(0))) {
+            copyBars.add(bar);
+          }
+        })) {
+      Assert.assertEquals(1, mv(database, getConfig("config.conf")));
+    }
+    Assert.assertEquals(1, copyBars.size());
+    Mockito.verify(copyBars.get(0)).close();
+    Mockito.verify(copyBars.get(0), Mockito.never()).step();
   }
 
   @Test

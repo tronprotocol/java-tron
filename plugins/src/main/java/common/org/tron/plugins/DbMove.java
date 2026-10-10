@@ -94,9 +94,7 @@ public class DbMove implements Callable<Integer> {
       if (hasOverlappingPaths(toBeMove)) {
         return 2;
       }
-      boolean allCopied = ProgressBar.wrap(toBeMove.stream(), "copy task")
-          .allMatch(this::copy);
-      if (!allCopied) {
+      if (!copyAll(toBeMove)) {
         cleanupDestinations(toBeMove);
         return 1;
       }
@@ -112,6 +110,18 @@ public class DbMove implements Callable<Integer> {
       return 0;
     }
     return 0;
+  }
+
+  private boolean copyAll(List<Property> properties) {
+    try (ProgressBar bar = new ProgressBar("copy task", properties.size())) {
+      for (Property p : properties) {
+        if (!copy(p)) {
+          return false;
+        }
+        bar.step();
+      }
+      return true;
+    }
   }
 
   private boolean copy(Property p) {
