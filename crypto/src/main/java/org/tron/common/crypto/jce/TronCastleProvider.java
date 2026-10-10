@@ -19,7 +19,6 @@
 package org.tron.common.crypto.jce;
 
 import java.security.Provider;
-import java.security.Security;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.tron.common.crypto.cryptohash.Keccak256;
 import org.tron.common.crypto.cryptohash.Keccak512;
@@ -35,9 +34,8 @@ public final class TronCastleProvider {
     private static final Provider INSTANCE;
 
     static {
-      Provider p = Security.getProvider("BC");
-
-      INSTANCE = (p != null) ? p : new BouncyCastleProvider();
+      // Use our own instance instead of trusting a globally registered provider named BC.
+      INSTANCE = new BouncyCastleProvider();
       INSTANCE.put("MessageDigest.TRON-KECCAK-256", Keccak256.class.getName());
       INSTANCE.put("MessageDigest.TRON-KECCAK-512", Keccak512.class.getName());
     }
