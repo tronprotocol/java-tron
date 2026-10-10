@@ -10,6 +10,7 @@ import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.junit.Before;
@@ -477,6 +478,86 @@ public class ProposalCreateActuatorTest extends BaseTest {
         .setForkUtils(dbManager.getChainBaseManager().getForkController())
         .setAny(getContract(OWNER_ADDRESS_FIRST, paras));
     return actuator;
+  }
+
+  /**
+   * A proposal containing CLOSE_EXCHANGE plus any other parameter must be rejected up
+   * front, regardless of the parameter order inside the capsule; unrelated
+   * multi-parameter proposals stay untouched.
+   */
+  @Test
+  public void closeExchangeProposalMustBeSingleParameter() {
+    long closeExchange = ProposalType.CLOSE_EXCHANGE.getCode();
+    // CLOSE_EXCHANGE + one unrelated parameter -> rejected in both orders
+    HashMap<Long, Long> paras = new LinkedHashMap<>();
+    paras.put(closeExchange, 1L);
+    paras.put(0L, 1000000L);
+    ContractValidateException e = assertThrows(ContractValidateException.class,
+        () -> buildCreateActuator(paras).validate());
+    Assert.assertEquals("CLOSE_EXCHANGE proposal must contain only one parameter",
+        e.getMessage());
+
+    HashMap<Long, Long> parasReversed = new LinkedHashMap<>();
+    parasReversed.put(0L, 1000000L);
+    parasReversed.put(closeExchange, 1L);
+    e = assertThrows(ContractValidateException.class,
+        () -> buildCreateActuator(parasReversed).validate());
+    Assert.assertEquals("CLOSE_EXCHANGE proposal must contain only one parameter",
+        e.getMessage());
+
+    // CLOSE_EXCHANGE + EXCHANGE_CREATE_FEE(12) -> rejected in both orders
+    HashMap<Long, Long> withExchangeFee = new LinkedHashMap<>();
+    withExchangeFee.put(closeExchange, 1L);
+    withExchangeFee.put(12L, 1024_000_000L);
+    e = assertThrows(ContractValidateException.class,
+        () -> buildCreateActuator(withExchangeFee).validate());
+    Assert.assertEquals("CLOSE_EXCHANGE proposal must contain only one parameter",
+        e.getMessage());
+
+    HashMap<Long, Long> withExchangeFeeReversed = new LinkedHashMap<>();
+    withExchangeFeeReversed.put(12L, 1024_000_000L);
+    withExchangeFeeReversed.put(closeExchange, 1L);
+    e = assertThrows(ContractValidateException.class,
+        () -> buildCreateActuator(withExchangeFeeReversed).validate());
+    Assert.assertEquals("CLOSE_EXCHANGE proposal must contain only one parameter",
+        e.getMessage());
+
+    // CLOSE_EXCHANGE + ALLOW_HARDEN_EXCHANGE_CALCULATION(98) -> rejected in both orders
+    HashMap<Long, Long> withHarden = new LinkedHashMap<>();
+    withHarden.put(closeExchange, 1L);
+    withHarden.put(98L, 1L);
+    e = assertThrows(ContractValidateException.class,
+        () -> buildCreateActuator(withHarden).validate());
+    Assert.assertEquals("CLOSE_EXCHANGE proposal must contain only one parameter",
+        e.getMessage());
+
+    HashMap<Long, Long> withHardenReversed = new LinkedHashMap<>();
+    withHardenReversed.put(98L, 1L);
+    withHardenReversed.put(closeExchange, 1L);
+    e = assertThrows(ContractValidateException.class,
+        () -> buildCreateActuator(withHardenReversed).validate());
+    Assert.assertEquals("CLOSE_EXCHANGE proposal must contain only one parameter",
+        e.getMessage());
+
+    // CLOSE_EXCHANGE + two unrelated parameters -> rejected as well
+    HashMap<Long, Long> parasThree = new LinkedHashMap<>();
+    parasThree.put(closeExchange, 1L);
+    parasThree.put(0L, 1000000L);
+    parasThree.put(2L, 1000L);
+    e = assertThrows(ContractValidateException.class,
+        () -> buildCreateActuator(parasThree).validate());
+    Assert.assertEquals("CLOSE_EXCHANGE proposal must contain only one parameter",
+        e.getMessage());
+
+    // unrelated multi-parameter proposals are unchanged (no CLOSE_EXCHANGE key)
+    HashMap<Long, Long> unrelated = new HashMap<>();
+    unrelated.put(0L, 1000000L);
+    unrelated.put(2L, 1000L);
+    try {
+      buildCreateActuator(unrelated).validate();
+    } catch (ContractValidateException ex) {
+      Assert.fail("unrelated multi-parameter proposal must still validate: " + ex.getMessage());
+    }
   }
 
   /**
