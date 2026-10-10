@@ -63,7 +63,7 @@ public class ZksnarkInitService {
     try (InputStream in = Thread.currentThread().getContextClassLoader()
         .getResourceAsStream(resourcePath)) {
       if (in == null) {
-        throw new IllegalStateException("Resource not found: " + resourcePath);
+        throw new TronError("Resource not found: " + resourcePath, TronError.ErrCode.ZCASH_INIT);
       }
       FileUtils.copyToFile(in, fileOut);
     } catch (IOException e) {
