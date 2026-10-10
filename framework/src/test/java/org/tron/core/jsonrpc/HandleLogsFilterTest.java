@@ -11,7 +11,6 @@ import org.junit.Test;
 import org.tron.common.logsfilter.capsule.LogsFilterCapsule;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.LogInfo;
-import org.tron.core.exception.jsonrpc.JsonRpcInvalidParamsException;
 import org.tron.core.services.jsonrpc.TronJsonRpc.FilterRequest;
 import org.tron.core.services.jsonrpc.TronJsonRpcImpl;
 import org.tron.core.services.jsonrpc.filters.FilterResult;
@@ -45,7 +44,7 @@ public class HandleLogsFilterTest {
    * Events dispatched to a matching filter in the serial (<=10000 entries) path.
    */
   @Test
-  public void testMatchingFilter_receivesLogElements() throws JsonRpcInvalidParamsException {
+  public void testMatchingFilter_receivesLogElements() throws Exception {
     FilterRequest fr = new FilterRequest();
     LogFilterAndResult filterAndResult = new LogFilterAndResult(fr, 100L, null);
     jsonRpc.getEventFilter2ResultFull().put(FILTER_ID_1, filterAndResult);
@@ -64,7 +63,7 @@ public class HandleLogsFilterTest {
    * Filter with fromBlock=100 does not receive a capsule whose blockNumber is 50.
    */
   @Test
-  public void testBlockNumberBelowRange_noResult() throws JsonRpcInvalidParamsException {
+  public void testBlockNumberBelowRange_noResult() throws Exception {
     FilterRequest fr = new FilterRequest();
     // currentMaxBlockNum=100 → fromBlock=100, toBlock=MAX_VALUE
     LogFilterAndResult filterAndResult = new LogFilterAndResult(fr, 100L, null);
@@ -110,7 +109,7 @@ public class HandleLogsFilterTest {
    * A solidified capsule is routed only to the solidity map; the full-node map is untouched.
    */
   @Test
-  public void testSolidifiedCapsule_routedToSolidityMap() throws JsonRpcInvalidParamsException {
+  public void testSolidifiedCapsule_routedToSolidityMap() throws Exception {
     FilterRequest fr = new FilterRequest();
     LogFilterAndResult solidityFilter = new LogFilterAndResult(fr, 100L, null);
     jsonRpc.getEventFilter2ResultSolidity().put(FILTER_ID_1, solidityFilter);
@@ -133,7 +132,7 @@ public class HandleLogsFilterTest {
    * A non-solidified capsule is routed only to the full-node map.
    */
   @Test
-  public void testNonSolidifiedCapsule_routedToFullMap() throws JsonRpcInvalidParamsException {
+  public void testNonSolidifiedCapsule_routedToFullMap() throws Exception {
     FilterRequest fr = new FilterRequest();
     LogFilterAndResult solidityFilter = new LogFilterAndResult(fr, 100L, null);
     jsonRpc.getEventFilter2ResultSolidity().put(FILTER_ID_1, solidityFilter);
@@ -156,7 +155,7 @@ public class HandleLogsFilterTest {
    * Both filters in the map receive events when both match.
    */
   @Test
-  public void testMultipleMatchingFilters_bothReceiveEvents() throws JsonRpcInvalidParamsException {
+  public void testMultipleMatchingFilters_bothReceiveEvents() throws Exception {
     FilterRequest fr = new FilterRequest();
     LogFilterAndResult filter1 = new LogFilterAndResult(fr, 100L, null);
     LogFilterAndResult filter2 = new LogFilterAndResult(fr, 100L, null);
@@ -178,7 +177,7 @@ public class HandleLogsFilterTest {
    * An empty txInfoList produces no results.
    */
   @Test
-  public void testEmptyTxInfoList_noResult() throws JsonRpcInvalidParamsException {
+  public void testEmptyTxInfoList_noResult() throws Exception {
     FilterRequest fr = new FilterRequest();
     LogFilterAndResult filterAndResult = new LogFilterAndResult(fr, 100L, null);
     jsonRpc.getEventFilter2ResultFull().put(FILTER_ID_1, filterAndResult);

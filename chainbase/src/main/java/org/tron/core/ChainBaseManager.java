@@ -9,8 +9,10 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.BooleanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.storage.metric.DbStatService;
 import org.tron.common.utils.ForkController;
 import org.tron.common.utils.Sha256Hash;
@@ -244,9 +246,37 @@ public class ChainBaseManager {
   @Setter
   private long lowestBlockNum = -1; // except num = 0.
 
+  // first block of transactionRetStore; head + 1 when the store is empty,
+  // Long.MAX_VALUE when receipts are not persisted
+  @Getter
+  private long lowestBlockNumOfReceiptStore = -1;
+
   @Getter
   @Setter
   private long latestSaveBlockTime;
+
+  @PostConstruct
+  private void init() {
+    this.lowestBlockNum = this.blockIndexStore.getLimitNumber(1, 1).stream()
+            .map(BlockId::getNum).findFirst().orElse(0L);
+    this.nodeType = getLowestBlockNum() > 1 ? NodeType.LITE : NodeType.FULL;
+    this.latestSaveBlockTime = System.currentTimeMillis();
+  }
+
+  /**
+   * Reads the lowest receipt block from the store itself, not from snapshot metadata; an empty
+   * store means receipts begin with the next executed block. With receipt persistence off
+   * the store never grows, so no lower bound exists. Must run after checkpoint recovery (so the
+   * last session's tail is visible) and before any session is built ({@code getNext} does
+   * not merge in-flight layers).
+   */
+  public void initLowestBlockNumOfReceiptStore() {
+    boolean persistReceipts = BooleanUtils.toBoolean(CommonParameter.getInstance()
+        .getStorage().getTransactionHistorySwitch());
+    this.lowestBlockNumOfReceiptStore = persistReceipts
+        ? this.transactionRetStore.getLowestBlockNum().orElseGet(() -> getHeadBlockNum() + 1)
+        : Long.MAX_VALUE;
+  }
 
   // for test only
   public List<ByteString> getWitnesses() {
@@ -387,14 +417,6 @@ public class ChainBaseManager {
     }
     return dynamicPropertiesStore.getLatestBlockHeaderTimestamp()
         + slotCount * BLOCK_PRODUCED_INTERVAL;
-  }
-
-  @PostConstruct
-  private void init() {
-    this.lowestBlockNum = this.blockIndexStore.getLimitNumber(1, 1).stream()
-            .map(BlockId::getNum).findFirst().orElse(0L);
-    this.nodeType = getLowestBlockNum() > 1 ? NodeType.LITE : NodeType.FULL;
-    this.latestSaveBlockTime = System.currentTimeMillis();
   }
 
   public void shutdown() {

@@ -46,6 +46,7 @@ import org.tron.core.capsule.TransactionInfoCapsule;
 import org.tron.core.capsule.TransactionRetCapsule;
 import org.tron.core.capsule.utils.BlockUtil;
 import org.tron.core.config.args.Args;
+import org.tron.core.exception.jsonrpc.JsonRpcException;
 import org.tron.core.exception.jsonrpc.JsonRpcInternalException;
 import org.tron.core.exception.jsonrpc.JsonRpcInvalidParamsException;
 import org.tron.core.services.NodeInfoService;
@@ -824,7 +825,7 @@ public class JsonrpcServiceTest extends BaseTest {
           new LogFilterWrapper(new FilterRequest(null, null, null, null, null), 100, null, false);
       Assert.assertEquals(100, logFilterWrapper.getFromBlock());
       Assert.assertEquals(Long.MAX_VALUE, logFilterWrapper.getToBlock());
-    } catch (JsonRpcInvalidParamsException e) {
+    } catch (JsonRpcException e) {
       Assert.fail();
     }
 
@@ -834,7 +835,7 @@ public class JsonrpcServiceTest extends BaseTest {
           new LogFilterWrapper(new FilterRequest("0x14", null, null, null, null), 100, null, false);
       Assert.assertEquals(20, logFilterWrapper.getFromBlock());
       Assert.assertEquals(Long.MAX_VALUE, logFilterWrapper.getToBlock());
-    } catch (JsonRpcInvalidParamsException e) {
+    } catch (JsonRpcException e) {
       Assert.fail();
     }
 
@@ -844,7 +845,7 @@ public class JsonrpcServiceTest extends BaseTest {
           new LogFilterWrapper(new FilterRequest("0x78", null, null, null, null), 100, null, false);
       Assert.assertEquals(120, logFilterWrapper.getFromBlock());
       Assert.assertEquals(Long.MAX_VALUE, logFilterWrapper.getToBlock());
-    } catch (JsonRpcInvalidParamsException e) {
+    } catch (JsonRpcException e) {
       Assert.fail();
     }
 
@@ -854,7 +855,7 @@ public class JsonrpcServiceTest extends BaseTest {
           new LogFilterWrapper(new FilterRequest(null, "0x14", null, null, null), 100, null, false);
       Assert.assertEquals(20, logFilterWrapper.getFromBlock());
       Assert.assertEquals(20, logFilterWrapper.getToBlock());
-    } catch (JsonRpcInvalidParamsException e) {
+    } catch (JsonRpcException e) {
       Assert.fail();
     }
 
@@ -864,7 +865,7 @@ public class JsonrpcServiceTest extends BaseTest {
           new LogFilterWrapper(new FilterRequest(null, "0x78", null, null, null), 100, null, false);
       Assert.assertEquals(100, logFilterWrapper.getFromBlock());
       Assert.assertEquals(120, logFilterWrapper.getToBlock());
-    } catch (JsonRpcInvalidParamsException e) {
+    } catch (JsonRpcException e) {
       Assert.fail();
     }
 
@@ -874,7 +875,7 @@ public class JsonrpcServiceTest extends BaseTest {
           null, null, null), 100, null, false);
       Assert.assertEquals(20, logFilterWrapper.getFromBlock());
       Assert.assertEquals(120, logFilterWrapper.getToBlock());
-    } catch (JsonRpcInvalidParamsException e) {
+    } catch (JsonRpcException e) {
       Assert.fail();
     }
     JsonRpcInvalidParamsException fromToEx =
@@ -886,10 +887,10 @@ public class JsonrpcServiceTest extends BaseTest {
     //fromBlock or toBlock is not hex num
     try {
       LogFilterWrapper logFilterWrapper = new LogFilterWrapper(new FilterRequest("earliest", null,
-          null, null, null), 100, null, false);
+          null, null, null), 100, wallet, false);
       Assert.assertEquals(0, logFilterWrapper.getFromBlock());
       Assert.assertEquals(Long.MAX_VALUE, logFilterWrapper.getToBlock());
-    } catch (JsonRpcInvalidParamsException e) {
+    } catch (JsonRpcException e) {
       Assert.fail();
     }
     try {
@@ -897,7 +898,7 @@ public class JsonrpcServiceTest extends BaseTest {
           null, null, null), 100, null, false);
       Assert.assertEquals(100, logFilterWrapper.getFromBlock());
       Assert.assertEquals(Long.MAX_VALUE, logFilterWrapper.getToBlock());
-    } catch (JsonRpcInvalidParamsException e) {
+    } catch (JsonRpcException e) {
       Assert.fail();
     }
     JsonRpcInvalidParamsException pendingFilterEx = Assert.assertThrows(
@@ -910,7 +911,7 @@ public class JsonrpcServiceTest extends BaseTest {
           null, null, null), 100, wallet, false);
       Assert.assertEquals(LATEST_SOLIDIFIED_BLOCK_NUM, logFilterWrapper.getFromBlock());
       Assert.assertEquals(Long.MAX_VALUE, logFilterWrapper.getToBlock());
-    } catch (JsonRpcInvalidParamsException e) {
+    } catch (JsonRpcException e) {
       Assert.fail();
     }
     JsonRpcInvalidParamsException testSyntaxEx = Assert.assertThrows(
@@ -923,7 +924,7 @@ public class JsonrpcServiceTest extends BaseTest {
     try {
       new LogFilterWrapper(new FilterRequest("0x0", "0x1f40", null,
           null, null), LATEST_BLOCK_NUM, null, false);
-    } catch (JsonRpcInvalidParamsException e) {
+    } catch (JsonRpcException e) {
       Assert.fail();
     }
 
@@ -938,7 +939,7 @@ public class JsonrpcServiceTest extends BaseTest {
     try {
       new LogFilterWrapper(new FilterRequest("0x0", "latest", null,
           null, null), LATEST_BLOCK_NUM, null, false);
-    } catch (JsonRpcInvalidParamsException e) {
+    } catch (JsonRpcException e) {
       Assert.fail();
     }
 
@@ -954,7 +955,7 @@ public class JsonrpcServiceTest extends BaseTest {
     try {
       new LogFilterWrapper(new FilterRequest("0x64", "latest", null,
           null, null), 5_000, null, true);
-    } catch (JsonRpcInvalidParamsException e) {
+    } catch (JsonRpcException e) {
       Assert.fail();
     }
     try {
@@ -996,13 +997,13 @@ public class JsonrpcServiceTest extends BaseTest {
     try {
       new LogFilterWrapper(new FilterRequest("latest", "latest", null,
           null, null), LATEST_BLOCK_NUM, null, true);
-    } catch (JsonRpcInvalidParamsException e) {
+    } catch (JsonRpcException e) {
       Assert.fail();
     }
     try {
       new LogFilterWrapper(new FilterRequest("latest", "latest", null,
           null, null), LATEST_BLOCK_NUM, null, false);
-    } catch (JsonRpcInvalidParamsException e) {
+    } catch (JsonRpcException e) {
       Assert.fail();
     }
 
@@ -1011,13 +1012,13 @@ public class JsonrpcServiceTest extends BaseTest {
     try {
       new LogFilterWrapper(new FilterRequest("0x0", "0x1f40", null,
           null, null), LATEST_BLOCK_NUM, null, true);
-    } catch (JsonRpcInvalidParamsException e) {
+    } catch (JsonRpcException e) {
       Assert.fail();
     }
     try {
       new LogFilterWrapper(new FilterRequest("0x0", "0x1f40", null,
           null, null), LATEST_BLOCK_NUM, null, false);
-    } catch (JsonRpcInvalidParamsException e) {
+    } catch (JsonRpcException e) {
       Assert.fail();
     }
 
@@ -1025,13 +1026,13 @@ public class JsonrpcServiceTest extends BaseTest {
     try {
       new LogFilterWrapper(new FilterRequest("0x0", "0x1f40", null,
           null, null), LATEST_BLOCK_NUM, null, true);
-    } catch (JsonRpcInvalidParamsException e) {
+    } catch (JsonRpcException e) {
       Assert.fail();
     }
     try {
       new LogFilterWrapper(new FilterRequest("0x0", "0x1f40", null,
           null, null), LATEST_BLOCK_NUM, null, false);
-    } catch (JsonRpcInvalidParamsException e) {
+    } catch (JsonRpcException e) {
       Assert.fail();
     }
 
@@ -1039,13 +1040,13 @@ public class JsonrpcServiceTest extends BaseTest {
     try {
       new LogFilterWrapper(new FilterRequest("0x0", "0x1f40", null,
           null, null), LATEST_BLOCK_NUM, null, true);
-    } catch (JsonRpcInvalidParamsException e) {
+    } catch (JsonRpcException e) {
       Assert.fail();
     }
     try {
       new LogFilterWrapper(new FilterRequest("0x0", "0x1f40", null,
           null, null), LATEST_BLOCK_NUM, null, false);
-    } catch (JsonRpcInvalidParamsException e) {
+    } catch (JsonRpcException e) {
       Assert.fail();
     }
 
@@ -1100,7 +1101,7 @@ public class JsonrpcServiceTest extends BaseTest {
       tronJsonRpc.getLogs(new FilterRequest("0xbb8", "0x1f40",
           null, topics.toArray(), null));
       Assert.fail("Expected to be thrown");
-    } catch (JsonRpcInvalidParamsException e) {
+    } catch (JsonRpcException e) {
       Assert.assertEquals(
           "exceed max topics: " + Args.getInstance().getJsonRpcMaxSubTopics(),
           e.getMessage());
@@ -1112,7 +1113,7 @@ public class JsonrpcServiceTest extends BaseTest {
       tronJsonRpc.newFilter(new FilterRequest("0xbb8", "0x1f40",
           null, topics.toArray(), null));
       Assert.fail("Expected to be thrown");
-    } catch (JsonRpcInvalidParamsException e) {
+    } catch (JsonRpcException e) {
       Assert.assertEquals(
           "exceed max topics: " + Args.getInstance().getJsonRpcMaxSubTopics(),
           e.getMessage());
@@ -1125,7 +1126,7 @@ public class JsonrpcServiceTest extends BaseTest {
     try {
       new LogFilterWrapper(new FilterRequest("0xbb8", "0x1f40",
           null, topics.toArray(), null), LATEST_BLOCK_NUM, null, false);
-    } catch (JsonRpcInvalidParamsException e) {
+    } catch (JsonRpcException e) {
       Assert.fail();
     }
 
@@ -1133,7 +1134,7 @@ public class JsonrpcServiceTest extends BaseTest {
     try {
       new LogFilterWrapper(new FilterRequest("0xbb8", "0x1f40",
           null, topics.toArray(), null), LATEST_BLOCK_NUM, null, false);
-    } catch (JsonRpcInvalidParamsException e) {
+    } catch (JsonRpcException e) {
       Assert.fail();
     }
     try {
@@ -1147,7 +1148,7 @@ public class JsonrpcServiceTest extends BaseTest {
     try {
       new LogFilterWrapper(new FilterRequest("0xbb8", "0x1f40",
           null, topics.toArray(), null), LATEST_BLOCK_NUM, null, false);
-    } catch (JsonRpcInvalidParamsException e) {
+    } catch (JsonRpcException e) {
       Assert.fail();
     }
     try {
@@ -1166,7 +1167,7 @@ public class JsonrpcServiceTest extends BaseTest {
       tronJsonRpc.getLogs(new FilterRequest("0x0", "0x1f40", null,
           null, null));
       Assert.fail("Expected to be thrown");
-    } catch (JsonRpcInvalidParamsException e) {
+    } catch (JsonRpcException e) {
       Assert.assertEquals(
           "exceed max block range: " + Args.getInstance().jsonRpcMaxBlockRange,
           e.getMessage());
@@ -1374,28 +1375,28 @@ public class JsonrpcServiceTest extends BaseTest {
         Assert.assertEquals(ByteArray.toJsonHex(blockCapsule1.getTimeStamp() / 1000),
             transactionReceipt1.getLogs()[0].getBlockTimestamp());
       }
-    } catch (JsonRpcInvalidParamsException | JsonRpcInternalException e) {
+    } catch (JsonRpcException e) {
       throw new RuntimeException(e);
     }
 
     try {
       List<TransactionReceipt> transactionReceiptList = tronJsonRpc.getBlockReceipts("earliest");
       Assert.assertNull(transactionReceiptList);
-    } catch (JsonRpcInvalidParamsException | JsonRpcInternalException e) {
+    } catch (JsonRpcException e) {
       throw new RuntimeException(e);
     }
 
     try {
       List<TransactionReceipt> transactionReceiptList = tronJsonRpc.getBlockReceipts("latest");
       Assert.assertFalse(transactionReceiptList.isEmpty());
-    } catch (JsonRpcInvalidParamsException | JsonRpcInternalException e) {
+    } catch (JsonRpcException e) {
       throw new RuntimeException(e);
     }
 
     try {
       List<TransactionReceipt> transactionReceiptList = tronJsonRpc.getBlockReceipts("finalized");
       Assert.assertFalse(transactionReceiptList.isEmpty());
-    } catch (JsonRpcInvalidParamsException | JsonRpcInternalException e) {
+    } catch (JsonRpcException e) {
       throw new RuntimeException(e);
     }
 
@@ -1414,7 +1415,7 @@ public class JsonrpcServiceTest extends BaseTest {
     try {
       List<TransactionReceipt> transactionReceiptList = tronJsonRpc.getBlockReceipts("0x2");
       Assert.assertNull(transactionReceiptList);
-    } catch (JsonRpcInvalidParamsException | JsonRpcInternalException e) {
+    } catch (JsonRpcException e) {
       throw new RuntimeException(e);
     }
 
@@ -1428,7 +1429,7 @@ public class JsonrpcServiceTest extends BaseTest {
       Assert.assertFalse(transactionReceiptList.isEmpty());
       Assert.assertEquals(JSON.toJSONString(transactionReceiptList),
           JSON.toJSONString(transactionReceiptList2));
-    } catch (JsonRpcInvalidParamsException | JsonRpcInternalException e) {
+    } catch (JsonRpcException e) {
       throw new RuntimeException(e);
     }
 

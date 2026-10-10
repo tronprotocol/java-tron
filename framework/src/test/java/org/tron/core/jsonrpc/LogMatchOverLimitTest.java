@@ -76,7 +76,7 @@ public class LogMatchOverLimitTest {
   }
 
   private LogMatch buildLogMatch(List<Long> blockNums, Manager manager)
-      throws JsonRpcInvalidParamsException {
+      throws Exception {
     FilterRequest fr = new FilterRequest(); // match-all filter
     LogFilterWrapper wrapper = new LogFilterWrapper(fr, 0L, null, false);
     return new LogMatch(wrapper, blockNums, manager);
@@ -85,8 +85,7 @@ public class LogMatchOverLimitTest {
   /** Under the limit: all logs returned without exception. */
   @Test
   public void testUnderLimit_returnsAllResults()
-      throws BadItemException, ItemNotFoundException, JsonRpcTooManyResultException,
-             JsonRpcInvalidParamsException {
+      throws Exception {
     int logCount = MAX_RESULT / 2; // 5000, well under limit
     Manager manager = buildMockManager(100L, buildTxList(logCount));
     LogMatch logMatch = buildLogMatch(Collections.singletonList(100L), manager);
@@ -101,8 +100,7 @@ public class LogMatchOverLimitTest {
    */
   @Test
   public void testAtExactLimit_succeeds()
-      throws BadItemException, ItemNotFoundException, JsonRpcTooManyResultException,
-             JsonRpcInvalidParamsException {
+      throws Exception {
     // block 1: MAX_RESULT - 1 logs, block 2: 1 log → total == MAX_RESULT
     Manager manager = buildMockManager(
         1L, buildTxList(MAX_RESULT - 1),
@@ -119,7 +117,7 @@ public class LogMatchOverLimitTest {
    */
   @Test
   public void testExceedsLimit_throws()
-      throws ItemNotFoundException, JsonRpcInvalidParamsException {
+      throws Exception {
     // block 1: MAX_RESULT - 1 logs, block 2: 2 logs → 9999 + 2 = 10001 > MAX_RESULT
     Manager manager = buildMockManager(
         1L, buildTxList(MAX_RESULT - 1),
@@ -132,8 +130,7 @@ public class LogMatchOverLimitTest {
   /** A block with no matching logs is skipped without incrementing the result count. */
   @Test
   public void testEmptyBlockSkipped()
-      throws BadItemException, ItemNotFoundException, JsonRpcTooManyResultException,
-             JsonRpcInvalidParamsException {
+      throws Exception {
     // block 1: no logs (empty txInfoList → skipped), block 2: 3 logs
     Manager manager = mock(Manager.class);
     ChainBaseManager chainBaseManager = mock(ChainBaseManager.class);

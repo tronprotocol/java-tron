@@ -19,10 +19,12 @@ import org.tron.common.utils.ByteArray;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.jsonrpc.JsonRpcExceedLimitException;
+import org.tron.core.exception.jsonrpc.JsonRpcExecutionRevertedException;
 import org.tron.core.exception.jsonrpc.JsonRpcInternalException;
 import org.tron.core.exception.jsonrpc.JsonRpcInvalidParamsException;
 import org.tron.core.exception.jsonrpc.JsonRpcInvalidRequestException;
 import org.tron.core.exception.jsonrpc.JsonRpcMethodNotFoundException;
+import org.tron.core.exception.jsonrpc.JsonRpcPrunedHistoryException;
 import org.tron.core.exception.jsonrpc.JsonRpcTooManyResultException;
 import org.tron.core.services.jsonrpc.types.BlockResult;
 import org.tron.core.services.jsonrpc.types.BuildArguments;
@@ -55,8 +57,10 @@ public interface TronJsonRpc {
   @JsonRpcMethod("eth_getBlockTransactionCountByNumber")
   @JsonRpcErrors({
       @JsonRpcError(exception = JsonRpcInvalidParamsException.class, code = -32602, data = "{}"),
+      @JsonRpcError(exception = JsonRpcPrunedHistoryException.class, code = 4444, data = "{}"),
   })
-  String ethGetBlockTransactionCountByNumber(String bnOrId) throws JsonRpcInvalidParamsException;
+  String ethGetBlockTransactionCountByNumber(String bnOrId)
+      throws JsonRpcInvalidParamsException, JsonRpcPrunedHistoryException;
 
   @JsonRpcMethod("eth_getBlockByHash")
   @JsonRpcErrors({
@@ -68,9 +72,10 @@ public interface TronJsonRpc {
   @JsonRpcMethod("eth_getBlockByNumber")
   @JsonRpcErrors({
       @JsonRpcError(exception = JsonRpcInvalidParamsException.class, code = -32602, data = "{}"),
+      @JsonRpcError(exception = JsonRpcPrunedHistoryException.class, code = 4444, data = "{}"),
   })
   BlockResult ethGetBlockByNumber(String bnOrId, Boolean fullTransactionObjects)
-      throws JsonRpcInvalidParamsException;
+      throws JsonRpcInvalidParamsException, JsonRpcPrunedHistoryException;
 
   @JsonRpcMethod("net_version")
   String getNetVersion() throws JsonRpcInternalException;
@@ -120,10 +125,12 @@ public interface TronJsonRpc {
   @JsonRpcErrors({
       @JsonRpcError(exception = JsonRpcInvalidRequestException.class, code = -32600, data = "{}"),
       @JsonRpcError(exception = JsonRpcInvalidParamsException.class, code = -32602, data = "{}"),
+      @JsonRpcError(exception = JsonRpcExecutionRevertedException.class, code = 3, data = "{}"),
       @JsonRpcError(exception = JsonRpcInternalException.class, code = -32000, data = "{}"),
   })
   String estimateGas(CallArguments args) throws JsonRpcInvalidRequestException,
-      JsonRpcInvalidParamsException, JsonRpcInternalException;
+      JsonRpcInvalidParamsException, JsonRpcInternalException,
+      JsonRpcExecutionRevertedException;
 
   @JsonRpcMethod("eth_getTransactionByHash")
   @JsonRpcErrors({
@@ -141,9 +148,10 @@ public interface TronJsonRpc {
   @JsonRpcMethod("eth_getTransactionByBlockNumberAndIndex")
   @JsonRpcErrors({
       @JsonRpcError(exception = JsonRpcInvalidParamsException.class, code = -32602, data = "{}"),
+      @JsonRpcError(exception = JsonRpcPrunedHistoryException.class, code = 4444, data = "{}"),
   })
   TransactionResult getTransactionByBlockNumberAndIndex(String blockNumOrTag, String index)
-      throws JsonRpcInvalidParamsException;
+      throws JsonRpcInvalidParamsException, JsonRpcPrunedHistoryException;
 
   @JsonRpcMethod("eth_getTransactionReceipt")
   @JsonRpcErrors({
@@ -154,20 +162,23 @@ public interface TronJsonRpc {
   @JsonRpcMethod("eth_getBlockReceipts")
   @JsonRpcErrors({
       @JsonRpcError(exception = JsonRpcInvalidParamsException.class, code = -32602, data = "{}"),
+      @JsonRpcError(exception = JsonRpcPrunedHistoryException.class, code = 4444, data = "{}"),
       @JsonRpcError(exception = JsonRpcInternalException.class, code = -32000, data = "{}")
   })
   List<TransactionReceipt> getBlockReceipts(String blockNumOrHashOrTag)
-      throws JsonRpcInvalidParamsException, JsonRpcInternalException;
+      throws JsonRpcInvalidParamsException, JsonRpcInternalException,
+      JsonRpcPrunedHistoryException;
 
   @JsonRpcMethod("eth_call")
   @JsonRpcErrors({
       @JsonRpcError(exception = JsonRpcInvalidRequestException.class, code = -32600, data = "{}"),
       @JsonRpcError(exception = JsonRpcInvalidParamsException.class, code = -32602, data = "{}"),
+      @JsonRpcError(exception = JsonRpcExecutionRevertedException.class, code = 3, data = "{}"),
       @JsonRpcError(exception = JsonRpcInternalException.class, code = -32000, data = "{}"),
   })
   String getCall(CallArguments transactionCall, Object blockNumOrTag)
       throws JsonRpcInvalidParamsException, JsonRpcInvalidRequestException,
-      JsonRpcInternalException;
+      JsonRpcInternalException, JsonRpcExecutionRevertedException;
 
   @JsonRpcMethod("net_peerCount")
   String getPeerCount();
@@ -292,9 +303,10 @@ public interface TronJsonRpc {
       @JsonRpcError(exception = JsonRpcMethodNotFoundException.class, code = -32601, data = "{}"),
       @JsonRpcError(exception = JsonRpcInvalidParamsException.class, code = -32602, data = "{}"),
       @JsonRpcError(exception = JsonRpcExceedLimitException.class, code = -32005, data = "{}"),
+      @JsonRpcError(exception = JsonRpcPrunedHistoryException.class, code = 4444, data = "{}"),
   })
   String newFilter(FilterRequest fr) throws JsonRpcInvalidParamsException,
-      JsonRpcMethodNotFoundException, JsonRpcExceedLimitException;
+      JsonRpcMethodNotFoundException, JsonRpcExceedLimitException, JsonRpcPrunedHistoryException;
 
   @JsonRpcMethod("eth_newBlockFilter")
   @JsonRpcErrors({
@@ -327,6 +339,7 @@ public interface TronJsonRpc {
       @JsonRpcError(exception = JsonRpcInvalidParamsException.class, code = -32602, data = "{}"),
       @JsonRpcError(exception = JsonRpcMethodNotFoundException.class, code = -32601, data = "{}"),
       @JsonRpcError(exception = JsonRpcTooManyResultException.class, code = -32005, data = "{}"),
+      @JsonRpcError(exception = JsonRpcPrunedHistoryException.class, code = 4444, data = "{}"),
       @JsonRpcError(exception = BadItemException.class, code = -32000, data = "{}"),
       @JsonRpcError(exception = ExecutionException.class, code = -32000, data = "{}"),
       @JsonRpcError(exception = InterruptedException.class, code = -32000, data = "{}"),
@@ -334,7 +347,8 @@ public interface TronJsonRpc {
   })
   LogFilterElement[] getLogs(FilterRequest fr) throws JsonRpcInvalidParamsException,
       ExecutionException, InterruptedException, BadItemException, ItemNotFoundException,
-      JsonRpcMethodNotFoundException, JsonRpcTooManyResultException;
+      JsonRpcMethodNotFoundException, JsonRpcTooManyResultException,
+      JsonRpcPrunedHistoryException;
 
   @JsonRpcMethod("eth_getFilterLogs")
   @JsonRpcErrors({

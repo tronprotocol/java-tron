@@ -9,6 +9,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.tron.core.Wallet;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.jsonrpc.JsonRpcInvalidParamsException;
+import org.tron.core.exception.jsonrpc.JsonRpcPrunedHistoryException;
 import org.tron.core.services.jsonrpc.JsonRpcApiUtil;
 import org.tron.core.services.jsonrpc.TronJsonRpc.FilterRequest;
 import org.tron.protos.Protocol.Block;
@@ -25,7 +26,8 @@ public class LogFilterWrapper {
   private final long toBlock;
 
   public LogFilterWrapper(FilterRequest fr, long currentMaxBlockNum, Wallet wallet,
-      boolean checkBlockRange) throws JsonRpcInvalidParamsException {
+      boolean checkBlockRange)
+      throws JsonRpcInvalidParamsException, JsonRpcPrunedHistoryException {
 
     // 1.convert FilterRequest to LogFilter
     this.logFilter = new LogFilter(fr);
@@ -102,6 +104,12 @@ public class LogFilterWrapper {
 
     this.fromBlock = fromBlockSrc;
     this.toBlock = toBlockSrc;
+
+    // Reject a range starting below the lowest receipt block with 4444. Exception: a genesis-only
+    // query (from = to = 0, or the genesis blockHash) — block 0 is retained.
+    if (wallet != null && (fromBlockSrc != 0 || toBlockSrc != 0)) {
+      JsonRpcApiUtil.checkPrunedReceiptHistory(fromBlockSrc, wallet);
+    }
 
     // eth_getLogs enforces the block range at construction time. eth_newFilter creates the
     // wrapper with checkBlockRange=false (no creation-time gate); eth_getFilterLogs re-runs this

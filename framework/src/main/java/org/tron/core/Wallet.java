@@ -236,6 +236,7 @@ import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
+import org.tron.protos.Protocol.Transaction.Result.contractResult;
 import org.tron.protos.Protocol.TransactionInfo;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 import org.tron.protos.contract.BalanceContract;
@@ -735,6 +736,18 @@ public class Wallet {
 
   public long getHeadBlockNum() {
     return chainBaseManager.getHeadBlockNum();
+  }
+
+  public boolean isLiteNode() {
+    return chainBaseManager.isLiteNode();
+  }
+
+  public long getLowestBlockNum() {
+    return chainBaseManager.getLowestBlockNum();
+  }
+
+  public long getLowestBlockNumOfReceiptStore() {
+    return chainBaseManager.getLowestBlockNumOfReceiptStore();
   }
 
   public BlockCapsule getBlockCapsuleByNum(long blockNum) {
@@ -3197,6 +3210,7 @@ public class Wallet {
     }
     if (result.isRevert()) {
       ret.setStatus(0, code.FAILED);
+      ret.setResultCode(contractResult.REVERT);
       retBuilder.setMessage(ByteString.copyFromUtf8("REVERT opcode executed"))
           .build();
     }
