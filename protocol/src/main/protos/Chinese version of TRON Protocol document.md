@@ -631,23 +631,27 @@
               
 +  网络UDP消息结构。
 
+  以下 UDP 节点发现消息定义位于 java-tron 仓库的 `p2p/src/main/proto/Discover.proto`。
+
   `Endpoint`：网络中节点信息存储结构.  
-  消息体`Endpoint` 包含3个参数：  
-   `address`：节点地址。  
+  消息体`Endpoint` 包含4个参数：  
+   `address`：节点的 IPv4 地址。  
    `port`：端口号。  
-   `nodeId`： 节点ID信息。
+   `nodeId`： 节点ID信息。  
+   `addressIpv6`：节点的 IPv6 地址。
 
     message Endpoint {
       bytes address = 1;
       int32 port = 2;
       bytes nodeId = 3;
+      bytes addressIpv6 = 4;
      }
 
-   `PingMessage`：节点建立连接时所发送的消息。  
+   `PingMessage`：用于 UDP 节点发现与存活探测的请求消息。  
    消息体`PingMessage` 包含4个参数：  
    `from`：消息来自的节点。  
    `to`： 消息发送的节点。  
-   `version`： 网络版本。  
+   `version`：发送节点的网络标识（`networkId`）。  
    `timestamp`：消息创建时的时间戳。
 
     message PingMessage {
@@ -657,10 +661,10 @@
        int64 timestamp = 4;
      }
     
-   `PongMessage`：连接建立成功时的回复消息。  
+   `PongMessage`：对 UDP 节点发现与存活探测请求的响应消息。  
    消息体`PongMessage` 包含3个参数：  
    `from`：消息来自的节点。  
-   `echo`：  
+   `echo`：响应节点的网络标识（`networkId`）。  
    `timestamp`：消息创建时的时间戳。
    
     message PongMessage {
@@ -669,10 +673,10 @@
       int64 timestamp = 3;
      }
    
-   `FindNeighbours`：节点查询相邻节点时所发送的消息。  
+   `FindNeighbours`：查询接近 `targetId` 的节点列表的请求消息。  
    消息体`FindNeighbours` 包含3个参数：  
    `from`: 消息来自的节点。  
-   `targetId`: 目标节点的信息。  
+   `targetId`: 用于查找邻近节点的目标节点 ID。  
    `timestamp`: 消息创建时的时间戳。
 
     message FindNeighbours {
@@ -681,11 +685,11 @@
       int64 timestamp = 3;
      }
 
-   `Neighbour`：相邻接点回复消息。  
+   `Neighbours`：对 `FindNeighbours` 请求的响应消息，返回接近 `targetId` 的节点列表。  
    消息体`Neighbours` 包含3个参数：  
    `from`: 消息来自的节点。  
-   `neighbours`: 相邻节点。  
-   `timestamp`: 消息创建时的时间戳。
+   `neighbours`: 返回的节点列表。  
+   `timestamp`: 对应 `FindNeighbours` 请求的时间戳。
    
     message Neighbours {
       Endpoint from = 1;

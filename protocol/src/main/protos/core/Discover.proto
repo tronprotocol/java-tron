@@ -13,31 +13,6 @@ message Endpoint {
   bytes addressIpv6 = 4;
 }
 
-message PingMessage {
-  Endpoint from = 1;
-  Endpoint to = 2;
-  int32 version = 3;
-  int64 timestamp = 4;
-}
-
-message PongMessage {
-  Endpoint from = 1;
-  int32 echo = 2;
-  int64 timestamp = 3;
-}
-
-message FindNeighbours {
-  Endpoint from = 1;
-  bytes targetId = 2;
-  int64 timestamp = 3;
-}
-
-message Neighbours {
-  Endpoint from = 1;
-  repeated Endpoint neighbours = 2;
-  int64 timestamp = 3;
-}
-
 message BackupMessage {
   bool flag = 1;
   int32 priority = 2;
