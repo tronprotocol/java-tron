@@ -6,6 +6,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.security.SecureRandom;
@@ -37,9 +38,11 @@ public class KeystoreImportTest {
 
     File keyFile = tempFolder.newFile("private.key");
     Files.write(keyFile.toPath(), privateKeyHex.getBytes(StandardCharsets.UTF_8));
+    makeOwnerOnly(keyFile);
 
     File pwFile = tempFolder.newFile("password.txt");
     Files.write(pwFile.toPath(), "test123456".getBytes(StandardCharsets.UTF_8));
+    makeOwnerOnly(pwFile);
 
     CommandLine cmd = new CommandLine(new Toolkit());
     int exitCode = cmd.execute("keystore", "import",
@@ -65,9 +68,11 @@ public class KeystoreImportTest {
     File dir = tempFolder.newFolder("keystore-bad");
     File keyFile = tempFolder.newFile("bad.key");
     Files.write(keyFile.toPath(), "abcdef1234".getBytes(StandardCharsets.UTF_8));
+    makeOwnerOnly(keyFile);
 
     File pwFile = tempFolder.newFile("pw.txt");
     Files.write(pwFile.toPath(), "test123456".getBytes(StandardCharsets.UTF_8));
+    makeOwnerOnly(pwFile);
 
     CommandLine cmd = new CommandLine(new Toolkit());
     int exitCode = cmd.execute("keystore", "import",
@@ -85,9 +90,11 @@ public class KeystoreImportTest {
     Files.write(keyFile.toPath(),
         "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz"
             .getBytes(StandardCharsets.UTF_8));
+    makeOwnerOnly(keyFile);
 
     File pwFile = tempFolder.newFile("pw.txt");
     Files.write(pwFile.toPath(), "test123456".getBytes(StandardCharsets.UTF_8));
+    makeOwnerOnly(pwFile);
 
     CommandLine cmd = new CommandLine(new Toolkit());
     int exitCode = cmd.execute("keystore", "import",
@@ -103,6 +110,7 @@ public class KeystoreImportTest {
     File dir = tempFolder.newFolder("keystore-notty");
     File pwFile = tempFolder.newFile("pw2.txt");
     Files.write(pwFile.toPath(), "test123456".getBytes(StandardCharsets.UTF_8));
+    makeOwnerOnly(pwFile);
 
     // No --key-file and System.console() is null in CI
     CommandLine cmd = new CommandLine(new Toolkit());
@@ -123,8 +131,10 @@ public class KeystoreImportTest {
 
     File keyFile = tempFolder.newFile("sm2.key");
     Files.write(keyFile.toPath(), privateKeyHex.getBytes(StandardCharsets.UTF_8));
+    makeOwnerOnly(keyFile);
     File pwFile = tempFolder.newFile("pw-sm2.txt");
     Files.write(pwFile.toPath(), "test123456".getBytes(StandardCharsets.UTF_8));
+    makeOwnerOnly(pwFile);
 
     CommandLine cmd = new CommandLine(new Toolkit());
     int exitCode = cmd.execute("keystore", "import",
@@ -155,8 +165,10 @@ public class KeystoreImportTest {
     File keyFile = tempFolder.newFile("ws.key");
     Files.write(keyFile.toPath(),
         ("  " + privateKeyHex + "  \n\n").getBytes(StandardCharsets.UTF_8));
+    makeOwnerOnly(keyFile);
     File pwFile = tempFolder.newFile("pw-ws.txt");
     Files.write(pwFile.toPath(), "test123456".getBytes(StandardCharsets.UTF_8));
+    makeOwnerOnly(pwFile);
 
     CommandLine cmd = new CommandLine(new Toolkit());
     int exitCode = cmd.execute("keystore", "import",
@@ -183,8 +195,10 @@ public class KeystoreImportTest {
 
     File keyFile = tempFolder.newFile("dup.key");
     Files.write(keyFile.toPath(), privateKeyHex.getBytes(StandardCharsets.UTF_8));
+    makeOwnerOnly(keyFile);
     File pwFile = tempFolder.newFile("pw-dup.txt");
     Files.write(pwFile.toPath(), "test123456".getBytes(StandardCharsets.UTF_8));
+    makeOwnerOnly(pwFile);
 
     // First import succeeds
     CommandLine cmd1 = new CommandLine(new Toolkit());
@@ -219,8 +233,10 @@ public class KeystoreImportTest {
 
     File keyFile = tempFolder.newFile("force.key");
     Files.write(keyFile.toPath(), privateKeyHex.getBytes(StandardCharsets.UTF_8));
+    makeOwnerOnly(keyFile);
     File pwFile = tempFolder.newFile("pw-force.txt");
     Files.write(pwFile.toPath(), "test123456".getBytes(StandardCharsets.UTF_8));
+    makeOwnerOnly(pwFile);
 
     // First import
     CommandLine cmd1 = new CommandLine(new Toolkit());
@@ -247,6 +263,7 @@ public class KeystoreImportTest {
     File dir = tempFolder.newFolder("keystore-nokey");
     File pwFile = tempFolder.newFile("pw-nokey.txt");
     Files.write(pwFile.toPath(), "test123456".getBytes(StandardCharsets.UTF_8));
+    makeOwnerOnly(pwFile);
 
     CommandLine cmd = new CommandLine(new Toolkit());
     int exitCode = cmd.execute("keystore", "import",
@@ -268,8 +285,10 @@ public class KeystoreImportTest {
     File keyFile = tempFolder.newFile("0x.key");
     Files.write(keyFile.toPath(),
         ("0x" + privateKeyHex).getBytes(StandardCharsets.UTF_8));
+    makeOwnerOnly(keyFile);
     File pwFile = tempFolder.newFile("pw-0x.txt");
     Files.write(pwFile.toPath(), "test123456".getBytes(StandardCharsets.UTF_8));
+    makeOwnerOnly(pwFile);
 
     CommandLine cmd = new CommandLine(new Toolkit());
     int exitCode = cmd.execute("keystore", "import",
@@ -295,8 +314,10 @@ public class KeystoreImportTest {
     File keyFile = tempFolder.newFile("0X.key");
     Files.write(keyFile.toPath(),
         ("0X" + privateKeyHex).getBytes(StandardCharsets.UTF_8));
+    makeOwnerOnly(keyFile);
     File pwFile = tempFolder.newFile("pw-0X.txt");
     Files.write(pwFile.toPath(), "test123456".getBytes(StandardCharsets.UTF_8));
+    makeOwnerOnly(pwFile);
 
     CommandLine cmd = new CommandLine(new Toolkit());
     int exitCode = cmd.execute("keystore", "import",
@@ -320,8 +341,10 @@ public class KeystoreImportTest {
 
     File keyFile = tempFolder.newFile("warn.key");
     Files.write(keyFile.toPath(), privateKeyHex.getBytes(StandardCharsets.UTF_8));
+    makeOwnerOnly(keyFile);
     File pwFile = tempFolder.newFile("pw-warn.txt");
     Files.write(pwFile.toPath(), "test123456".getBytes(StandardCharsets.UTF_8));
+    makeOwnerOnly(pwFile);
 
     java.io.StringWriter out = new java.io.StringWriter();
     java.io.StringWriter err = new java.io.StringWriter();
@@ -352,8 +375,10 @@ public class KeystoreImportTest {
 
     File keyFile = tempFolder.newFile("perm.key");
     Files.write(keyFile.toPath(), privateKeyHex.getBytes(StandardCharsets.UTF_8));
+    makeOwnerOnly(keyFile);
     File pwFile = tempFolder.newFile("pw-perm.txt");
     Files.write(pwFile.toPath(), "test123456".getBytes(StandardCharsets.UTF_8));
+    makeOwnerOnly(pwFile);
 
     CommandLine cmd = new CommandLine(new Toolkit());
     int exitCode = cmd.execute("keystore", "import",
@@ -393,6 +418,7 @@ public class KeystoreImportTest {
 
     File pwFile = tempFolder.newFile("pw-symlink.txt");
     Files.write(pwFile.toPath(), "test123456".getBytes(StandardCharsets.UTF_8));
+    makeOwnerOnly(pwFile);
 
     java.io.StringWriter err = new java.io.StringWriter();
     CommandLine cmd = new CommandLine(new Toolkit());
@@ -418,9 +444,11 @@ public class KeystoreImportTest {
     File keyFile = tempFolder.newFile("sym-pw.key");
     Files.write(keyFile.toPath(),
         ByteArray.toHexString(keyPair.getPrivateKey()).getBytes(StandardCharsets.UTF_8));
+    makeOwnerOnly(keyFile);
 
     File realPwFile = tempFolder.newFile("real-pw.txt");
     Files.write(realPwFile.toPath(), "test123456".getBytes(StandardCharsets.UTF_8));
+    makeOwnerOnly(realPwFile);
     File pwSymlink = new File(tempFolder.getRoot(), "pw-symlink.txt");
     Files.createSymbolicLink(pwSymlink.toPath(), realPwFile.toPath());
 
@@ -453,8 +481,10 @@ public class KeystoreImportTest {
 
     File keyFile = tempFolder.newFile("ver.key");
     Files.write(keyFile.toPath(), privateKeyHex.getBytes(StandardCharsets.UTF_8));
+    makeOwnerOnly(keyFile);
     File pwFile = tempFolder.newFile("pw-ver.txt");
     Files.write(pwFile.toPath(), "test123456".getBytes(StandardCharsets.UTF_8));
+    makeOwnerOnly(pwFile);
 
     CommandLine cmd = new CommandLine(new Toolkit());
     int exitCode = cmd.execute("keystore", "import",
@@ -486,8 +516,10 @@ public class KeystoreImportTest {
     File keyFile = tempFolder.newFile("dup-sym.key");
     Files.write(keyFile.toPath(),
         privateKeyHex.getBytes(StandardCharsets.UTF_8));
+    makeOwnerOnly(keyFile);
     File pwFile = tempFolder.newFile("pw-dup-sym.txt");
     Files.write(pwFile.toPath(), "test123456".getBytes(StandardCharsets.UTF_8));
+    makeOwnerOnly(pwFile);
 
     java.io.StringWriter err = new java.io.StringWriter();
     CommandLine cmd = new CommandLine(new Toolkit());
@@ -515,9 +547,11 @@ public class KeystoreImportTest {
 
     File keyFile = tempFolder.newFile("multi.key");
     Files.write(keyFile.toPath(), privateKeyHex.getBytes(StandardCharsets.UTF_8));
+    makeOwnerOnly(keyFile);
     File pwFile = tempFolder.newFile("multi-pw.txt");
     Files.write(pwFile.toPath(),
         "oldpass123\nnewpass456".getBytes(StandardCharsets.UTF_8));
+    makeOwnerOnly(pwFile);
 
     java.io.StringWriter err = new java.io.StringWriter();
     CommandLine cmd = new CommandLine(new Toolkit());
@@ -533,5 +567,14 @@ public class KeystoreImportTest {
     File[] files = dir.listFiles((d, name) -> name.endsWith(".json"));
     assertTrue("No keystore should have been created",
         files == null || files.length == 0);
+  }
+
+  private static void makeOwnerOnly(File f) throws IOException {
+    if (Files.getFileAttributeView(f.toPath(),
+        java.nio.file.attribute.PosixFileAttributeView.class) == null) {
+      return; // non-POSIX FS: skip chmod, mirroring KeystoreCliUtils runtime behavior
+    }
+    Files.setPosixFilePermissions(f.toPath(),
+        java.nio.file.attribute.PosixFilePermissions.fromString("rw-------"));
   }
 }

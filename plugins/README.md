@@ -222,3 +222,5 @@ When using `--password-file` with `update`, the file must contain exactly two li
 - `--sm2`: Use SM2 algorithm instead of ECDSA (for `new` and `import`).
 - `--json`: Output in JSON format for scripting.
 - `-h | --help`: Provide the help info.
+
+> **Note:** `--password-file` and `--key-file` must be owner-only (`chmod 600`). Files readable or writable by group/other are rejected — create them with a restrictive umask or run `chmod 600 <file>` before use.

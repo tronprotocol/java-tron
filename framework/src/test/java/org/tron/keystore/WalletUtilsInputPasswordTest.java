@@ -2,6 +2,7 @@ package org.tron.keystore;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThrows;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -9,6 +10,7 @@ import java.nio.charset.StandardCharsets;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.tron.core.exception.TronError;
 
 /**
  * Verifies that {@link WalletUtils#inputPassword()} preserves the full
@@ -93,6 +95,23 @@ public class WalletUtilsInputPasswordTest {
 
     assertEquals("Leading and trailing spaces are part of the password",
         "  with spaces  ", pw);
+  }
+
+  // ---------- EOF fail-fast tests ----------
+
+  @Test(timeout = 5000)
+  public void testInputPasswordPipedStdinEofThrowsTronError() {
+    // Non-TTY branch: Scanner.nextLine() throws NoSuchElementException at
+    // EOF; it must be translated into a fail-fast TronError.
+    // (The TTY branch's Console.readPassword() null-on-EOF check cannot be
+    // exercised under JUnit, where System.console() is always null and
+    // java.io.Console is final — covered by code review only.)
+    System.setIn(new ByteArrayInputStream(new byte[0]));
+
+    TronError err = assertThrows(TronError.class, WalletUtils::inputPassword);
+
+    assertEquals("Piped stdin EOF must map to the keystore-load error code",
+        TronError.ErrCode.WITNESS_KEYSTORE_LOAD, err.getErrCode());
   }
 
   @Test(timeout = 10000)

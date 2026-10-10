@@ -1,5 +1,6 @@
 package org.tron.program;
 
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
 import java.io.ByteArrayInputStream;
@@ -12,6 +13,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.TestConstants;
 import org.tron.core.config.args.Args;
+import org.tron.core.exception.TronError;
 
 /**
  * Verifies the deprecated --keystore-factory CLI.
@@ -115,19 +117,18 @@ public class KeystoreFactoryDeprecationTest {
 
   @Test(timeout = 10000)
   public void testGenKeystoreTriggersError() throws Exception {
-    // genkeystore reads password via a nested Scanner, which conflicts
-    // with the outer Scanner and throws "No line found". The error is
-    // caught and logged, and the REPL continues.
+    // genkeystore reads the password via WalletUtils.inputPassword; the
+    // scripted stdin hits EOF on the second read, so the prompt now throws
+    // TronError (KEY-01 fix) instead of being caught by the REPL loop.
     ByteArrayOutputStream outContent = new ByteArrayOutputStream();
     System.setOut(new PrintStream(outContent));
     System.setIn(new ByteArrayInputStream("genkeystore\nexit\n".getBytes()));
 
-    KeystoreFactory.start();
+    assertThrows(TronError.class, KeystoreFactory::start);
 
     String out = outContent.toString("UTF-8");
     assertTrue("genKeystore should prompt for password",
         out.contains("Please input password"));
-    assertTrue("REPL should continue to exit", out.contains("Exit"));
   }
 
   @Test(timeout = 10000)
