@@ -295,9 +295,6 @@ public class CommonParameter {
   public String trustNodeAddr; // clearParam: ""
   @Getter
   @Setter
-  public boolean walletExtensionApi;
-  @Getter
-  @Setter
   public boolean estimateEnergy;
   @Getter
   @Setter
