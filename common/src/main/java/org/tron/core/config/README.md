@@ -58,6 +58,12 @@ node {
     # default 100. Setting 0 also uses the secure default.
     # maxConcurrentCallsPerConnection = 100
 
+    # Maximum RST_STREAM frames per connection per window; 0 uses the default of 1000.
+    # maxRstStream = 1000
+
+    # RST_STREAM counting window in seconds; 0 uses the default of 5.
+    # secondsPerWindow = 5
+
     # The HTTP/2 flow control window, default 1MB
     # flowControlWindow =
 
@@ -79,6 +85,15 @@ node {
 > **Upgrade note:** `maxConcurrentCallsPerConnection = 0` previously disabled the limit.
 > It now selects the secure default of 100. Configure an explicit positive value if a node
 > requires more than 100 concurrent calls on one connection.
+
+> **Upgrade note:** `maxRstStream = 0` and `secondsPerWindow = 0` no longer disable
+> RST_STREAM flood protection. Each zero independently falls back to its secure default
+> (1000 frames / 5 seconds), with a startup warning. Negative values and
+> `maxRstStream = 2147483647` (`Integer.MAX_VALUE`, grpc-java's disable sentinel) are rejected.
+> These are java-tron defaults; grpc-java itself defaults to no limit.
+> Exceeding the limit closes that connection with `GOAWAY(ENHANCE_YOUR_CALM)`.
+> Clients that frequently cancel calls, including deadline cancellations, may need explicit
+> positive limits tuned to their workload; keep `maxRstStream` below `2147483647`.
 
 ## backup
 You can customize backup options in the `node.backup` part of `config.conf`, which looks like:
