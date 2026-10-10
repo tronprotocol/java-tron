@@ -43,9 +43,9 @@ public class BN128Fp2 extends BN128<Fp2> {
   }
 
   /**
-   * Checks whether provided data are coordinates of a point on the curve, then checks if this point
-   * is a member of subgroup of order "r" and if checks have been passed it returns a point,
-   * otherwise returns null
+   * Checks whether the provided coordinates are valid field elements and define a point on the
+   * curve, accepting (0, 0) as the point at infinity. Returns the point if valid, otherwise null.
+   * Subgroup membership is checked by {@link BN128G2#create(byte[], byte[], byte[], byte[])}.
    */
   public static BN128<Fp2> create(byte[] aa, byte[] bb, byte[] cc, byte[] dd) {
 
