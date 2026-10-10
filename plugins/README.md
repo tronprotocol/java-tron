@@ -152,9 +152,10 @@ NOTE: large db may GC overhead limit exceeded.
 
 Keystore provides commands for managing account keystore files (Web3 Secret Storage format).
 
-> **Migrating from `--keystore-factory`**: The legacy `FullNode.jar --keystore-factory` interactive mode is deprecated. Use the Toolkit keystore commands below instead. The mapping is:
+> **Migrating from `--keystore-factory`**: The legacy `FullNode.jar --keystore-factory` interactive mode has been removed. Use the Toolkit keystore commands below instead. The mapping is:
 > - `GenKeystore` → `keystore new`
 > - `ImportPrivateKey` → `keystore import`
+> - SM2 nodes (`crypto.engine = 'sm2'`): append `--sm2` — the legacy mode followed the node config, while Toolkit defaults to ECDSA
 > - (new) `keystore list` — list all keystores in a directory
 > - (new) `keystore update` — change the password of a keystore
 
@@ -219,6 +220,6 @@ When using `--password-file` with `update`, the file must contain exactly two li
 - `--password-file`: Read password from a file instead of interactive prompt. For `keystore update`, the file must contain exactly two lines (current password, then new password).
 - `--key-file`: Read the private key (hex, with or without `0x` prefix) from a file instead of the interactive prompt (`keystore import` only).
 - `--force`: For `keystore import`, allow importing a private key whose address already has a keystore in the directory (creates an additional file).
-- `--sm2`: Use SM2 algorithm instead of ECDSA (for `new` and `import`).
+- `--sm2`: Use SM2 algorithm instead of ECDSA (for `new`, `import` and `update`).
 - `--json`: Output in JSON format for scripting.
 - `-h | --help`: Provide the help info.
