@@ -188,6 +188,20 @@ public class InetUtil {
     return address;
   }
 
+  /**
+   * Checks whether a configured IP literal or hostname resolves to a loopback address.
+   *
+   * <p>Uses {@link #resolveInetAddress(String)} for hostname resolution. A null or unresolvable
+   * address returns false.
+   */
+  public static boolean isLoopbackAddress(String ipOrDomain) {
+    if (ipOrDomain == null) {
+      return false;
+    }
+    InetAddress address = resolveInetAddress(ipOrDomain);
+    return address != null && address.isLoopbackAddress();
+  }
+
   private static boolean isIpLiteral(String host) {
     return NetUtil.validIpV4(host) || NetUtil.validIpV6(host);
   }

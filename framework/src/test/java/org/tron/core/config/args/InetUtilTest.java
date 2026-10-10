@@ -1,6 +1,7 @@
 package org.tron.core.config.args;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -302,5 +303,62 @@ public class InetUtilTest {
     InetUtil.dnsLookup = (host, ipv4) -> null;
     InetAddress result = InetUtil.resolveInetAddress("bad.invalid");
     assertNull(result);
+  }
+
+  @Test
+  public void testLoopbackIpLiteralsAreRecognizedWithoutDns() {
+    InetUtil.dnsLookup = (host, ipv4) -> {
+      throw new AssertionError("IP literals must not require DNS resolution");
+    };
+
+    assertTrue(InetUtil.isLoopbackAddress("127.0.0.1"));
+    assertTrue(InetUtil.isLoopbackAddress("::1"));
+  }
+
+  @Test
+  public void testNullAndNonLoopbackAddressesAreRejected() throws Exception {
+    InetAddress ipv4Wildcard = InetAddress.getByName("0.0.0.0");
+    InetAddress ipv6Wildcard = InetAddress.getByName("::");
+    InetUtil.dnsLookup = (host, ipv4) -> {
+      // NetUtil's literal validation excludes wildcard addresses, so preserve that resolver path.
+      if ("0.0.0.0".equals(host)) {
+        return ipv4Wildcard;
+      }
+      if ("::".equals(host)) {
+        return ipv6Wildcard;
+      }
+      throw new AssertionError("Unexpected DNS lookup");
+    };
+
+    assertFalse(InetUtil.isLoopbackAddress(null));
+    assertFalse(InetUtil.isLoopbackAddress("0.0.0.0"));
+    assertFalse(InetUtil.isLoopbackAddress("::"));
+    assertFalse(InetUtil.isLoopbackAddress("192.0.2.1"));
+    assertFalse(InetUtil.isLoopbackAddress("2001:db8::1"));
+  }
+
+  @Test
+  public void testLoopbackHostnamesSupportIpv4AndIpv6Resolution() throws Exception {
+    InetAddress ipv4Loopback = InetAddress.getByName("127.0.0.1");
+    InetAddress ipv6Loopback = InetAddress.getByName("::1");
+    InetUtil.dnsLookup = (host, ipv4) -> {
+      if ("localhost".equals(host) && ipv4) {
+        return ipv4Loopback;
+      }
+      return "ipv6-loopback.invalid".equals(host) && !ipv4 ? ipv6Loopback : null;
+    };
+
+    assertTrue(InetUtil.isLoopbackAddress("localhost"));
+    assertTrue(InetUtil.isLoopbackAddress("ipv6-loopback.invalid"));
+  }
+
+  @Test
+  public void testNonLoopbackAndUnresolvableHostnamesAreRejected() throws Exception {
+    InetAddress remoteAddress = InetAddress.getByName("192.0.2.1");
+    InetUtil.dnsLookup = (host, ipv4) ->
+        "remote.invalid".equals(host) && ipv4 ? remoteAddress : null;
+
+    assertFalse(InetUtil.isLoopbackAddress("remote.invalid"));
+    assertFalse(InetUtil.isLoopbackAddress("unresolvable.invalid"));
   }
 }
