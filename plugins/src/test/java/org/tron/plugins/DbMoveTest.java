@@ -10,6 +10,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Base64;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -92,6 +93,12 @@ public class DbMoveTest {
   /** Run {@code db mv} with a fresh CommandLine and return the exit code. */
   private static int mv(File database, String configPath) {
     return new CommandLine(new Toolkit()).execute(mvArgs(database, configPath));
+  }
+
+  private static int mv(File database, String configPath, StringWriter err) {
+    CommandLine cli = new CommandLine(new Toolkit());
+    cli.setErr(new PrintWriter(err));
+    return cli.execute(mvArgs(database, configPath));
   }
 
   private File writeConfig(String fileName, String[]... entries) throws IOException {
@@ -371,6 +378,121 @@ public class DbMoveTest {
   }
 
   @Test
+  public void testOverlappingDestinationsRejected() throws RocksDBException, IOException {
+    File database = newDatabase();
+    File accountDir = Paths.get(database.getPath(), ACCOUNT).toFile();
+    File transDir = Paths.get(database.getPath(), TRANS).toFile();
+    Files.write(Paths.get(accountDir.getPath(), "data"), new byte[] {1});
+    Path nestedData = Paths.get(transDir.getPath(), "database", ACCOUNT, "data");
+    Files.createDirectories(nestedData.getParent());
+    Files.write(nestedData, new byte[] {2});
+    Map<String, String> accountBefore = snapshot(accountDir);
+    Map<String, String> transBefore = snapshot(transDir);
+    String[] account = {ACCOUNT, destination(TRANS).getPath()};
+    String[] trans = {TRANS, OUTPUT_DIRECTORY + "/dest"};
+    File accountFirst = writeConfig("overlap-account-first.conf", account, trans);
+    File transFirst = writeConfig("overlap-trans-first.conf", trans, account);
+    String rejection = String.format("destination [%s] can not be inside destination [%s]",
+        new File(destination(TRANS), "database/" + ACCOUNT).getCanonicalPath(),
+        destination(TRANS).getCanonicalPath());
+
+    StringWriter accountFirstErr = new StringWriter();
+    Assert.assertEquals(2, mv(database, accountFirst.getPath(), accountFirstErr));
+    Assert.assertTrue(accountFirstErr.toString().contains(rejection));
+    StringWriter transFirstErr = new StringWriter();
+    Assert.assertEquals(2, mv(database, transFirst.getPath(), transFirstErr));
+    Assert.assertTrue(transFirstErr.toString().contains(rejection));
+    assertUntouched(accountDir);
+    assertUntouched(transDir);
+    Assert.assertEquals(accountBefore, snapshot(accountDir));
+    Assert.assertEquals(transBefore, snapshot(transDir));
+    Assert.assertFalse(Paths.get(OUTPUT_DIRECTORY, "dest").toFile().exists());
+  }
+
+  @Test
+  public void testDestinationAppearingAfterValidationKept() throws RocksDBException, IOException {
+    File database = newDatabase();
+    File accountDir = Paths.get(database.getPath(), ACCOUNT).toFile();
+    File marketDir = Paths.get(database.getPath(), DBUtils.MARKET_PAIR_PRICE_TO_ORDER).toFile();
+    Map<String, String> accountBefore = snapshot(accountDir);
+    Path sentinel = destination(ACCOUNT).toPath().resolve("sentinel");
+    byte[] payload = {7};
+
+    CommandLine cli = new CommandLine(new Toolkit());
+    StringWriter output = new StringWriter();
+    StringWriter error = new StringWriter();
+    cli.setOut(new PrintWriter(output));
+    cli.setErr(new PrintWriter(error));
+    try (MockedStatic<FileUtils> fileUtils =
+        Mockito.mockStatic(FileUtils.class, Mockito.CALLS_REAL_METHODS)) {
+      fileUtils.when(() -> FileUtils.isSymbolicLink(
+          ArgumentMatchers.argThat(f -> f.getName().equals(marketDir.getName()))))
+          .thenAnswer(invocation -> {
+            Files.createDirectories(sentinel.getParent());
+            Files.write(sentinel, payload);
+            return invocation.callRealMethod();
+          });
+      Assert.assertEquals(1, cli.execute(mvArgs(database, getConfig("config.conf"))));
+    }
+    Assert.assertFalse(output.toString().contains("move db done."));
+    assertUntouched(accountDir);
+    assertUntouched(marketDir);
+    Assert.assertEquals(accountBefore, snapshot(accountDir));
+    Assert.assertEquals(Collections.singletonMap("sentinel",
+        Base64.getEncoder().encodeToString(payload)), snapshot(destination(ACCOUNT)));
+    Assert.assertFalse(destination(DBUtils.MARKET_PAIR_PRICE_TO_ORDER).exists());
+    Assert.assertTrue(error.toString().contains(destination(ACCOUNT).getCanonicalPath()
+        + " was not created by this run and was kept"));
+    Assert.assertTrue(error.toString().contains("some destinations remain"));
+  }
+
+  @Test
+  public void testFileCollisionInsideFreshDestinationFails()
+      throws RocksDBException, IOException {
+    File database = newDatabase();
+    File accountDir = Paths.get(database.getPath(), ACCOUNT).toFile();
+    Map<String, String> accountBefore = snapshot(accountDir);
+    Path accountDest = destination(ACCOUNT).getCanonicalFile().toPath();
+    String collision = Objects.requireNonNull(accountDir.listFiles(File::isFile))[0].getName();
+
+    try (MockedStatic<Files> files = Mockito.mockStatic(Files.class, Mockito.CALLS_REAL_METHODS)) {
+      files.when(() -> Files.createDirectory(ArgumentMatchers.eq(accountDest)))
+          .thenAnswer(invocation -> {
+            Path created = (Path) invocation.callRealMethod();
+            Files.write(created.resolve(collision), new byte[] {7});
+            return created;
+          });
+      Assert.assertEquals(1, mv(database, getConfig("config.conf")));
+    }
+    assertUntouched(accountDir);
+    Assert.assertEquals(accountBefore, snapshot(accountDir));
+    Assert.assertFalse(destination(ACCOUNT).exists());
+  }
+
+  @Test
+  public void testAliasedSourceRejected() throws RocksDBException, IOException {
+    File database = newDatabase();
+    File accountDir = Paths.get(database.getPath(), ACCOUNT).toFile();
+    Map<String, String> accountBefore = snapshot(accountDir);
+    String rejection = String.format("original [%1$s] can not be inside original [%1$s]",
+        accountDir.getCanonicalPath());
+
+    String[] aliases = {ACCOUNT + "/", "./" + ACCOUNT};
+    for (int i = 0; i < aliases.length; i++) {
+      File config = writeConfig("alias-" + i + ".conf",
+          new String[] {ACCOUNT, OUTPUT_DIRECTORY + "/dest"},
+          new String[] {aliases[i], OUTPUT_DIRECTORY + "/dest2"});
+      StringWriter err = new StringWriter();
+      Assert.assertEquals(2, mv(database, config.getPath(), err));
+      Assert.assertTrue(err.toString().contains(rejection));
+    }
+    assertUntouched(accountDir);
+    Assert.assertEquals(accountBefore, snapshot(accountDir));
+    Assert.assertFalse(Paths.get(OUTPUT_DIRECTORY, "dest").toFile().exists());
+    Assert.assertFalse(Paths.get(OUTPUT_DIRECTORY, "dest2").toFile().exists());
+  }
+
+  @Test
   public void testLeftoverReportedWhenCleanupFails() throws RocksDBException, IOException {
     File database = newDatabase();
     File accountDir = Paths.get(database.getPath(), ACCOUNT).toFile();
@@ -404,7 +526,7 @@ public class DbMoveTest {
     Assert.assertTrue(accountDest.isDirectory());
     Assert.assertFalse(destination(DBUtils.MARKET_PAIR_PRICE_TO_ORDER).exists());
     Assert.assertTrue(error.toString().contains(accountDest + " cleanup failed"));
-    Assert.assertTrue(error.toString().contains("leftover copies remain"));
+    Assert.assertTrue(error.toString().contains("some destinations remain"));
   }
 
   @Test

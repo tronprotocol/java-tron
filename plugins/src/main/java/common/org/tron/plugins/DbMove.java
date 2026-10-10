@@ -8,7 +8,6 @@ import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -91,7 +90,7 @@ public class DbMove implements Callable<Integer> {
           return 2;
         }
       }
-      if (hasNestedDestination(toBeMove)) {
+      if (hasOverlappingPaths(toBeMove)) {
         return 2;
       }
       boolean allCopied = ProgressBar.wrap(toBeMove.stream(), "copy task")
@@ -122,7 +121,9 @@ public class DbMove implements Callable<Integer> {
       // before the failure could recreate the destination after the rollback
       // has already deleted it, and the retry would then be rejected.
       List<Path> sources = files.collect(Collectors.toList());
-      Files.createDirectories(p.destination);
+      Files.createDirectories(p.destination.getParent());
+      Files.createDirectory(p.destination);
+      p.created = true;
       ProgressBar.wrap(sources.parallelStream(), p.name).forEach(source -> {
         if (hasError.get()) {
           return;
@@ -156,7 +157,7 @@ public class DbMove implements Callable<Integer> {
       Files.createDirectories(destination);
     } else if (attributes.isRegularFile()) {
       Files.createDirectories(destination.getParent());
-      Files.copy(source, destination, StandardCopyOption.REPLACE_EXISTING);
+      Files.copy(source, destination);
     } else {
       throw new IOException(String.format(
           "%s is neither a regular file nor a directory, can not be moved.", source));
@@ -197,6 +198,12 @@ public class DbMove implements Callable<Integer> {
       if (Files.notExists(destination.toPath(), LinkOption.NOFOLLOW_LINKS)) {
         return true;
       }
+      if (!property.created) {
+        spec.commandLine().getErr().println(String.format(
+            "%s was not created by this run and was kept; move it aside before retrying.",
+            property.destination));
+        return false;
+      }
       try {
         if (FileUtils.deleteDir(destination)) {
           return true;
@@ -215,7 +222,7 @@ public class DbMove implements Callable<Integer> {
           "move db failed; all source databases were kept, please retry.");
     } else {
       spec.commandLine().getErr().println(
-          "move db failed; all source databases were kept, but leftover copies remain.");
+          "move db failed; all source databases were kept, but some destinations remain.");
     }
   }
 
@@ -223,13 +230,17 @@ public class DbMove implements Callable<Integer> {
     spec.commandLine().getErr().println(NOT_FIND);
   }
 
-  private boolean hasNestedDestination(List<Property> properties) {
-    for (Property source : properties) {
-      for (Property target : properties) {
-        if (target.destination.startsWith(source.original)) {
-          spec.commandLine().getErr().println(String.format(
-              "destination [%s] can not be inside original [%s], please check!",
-              target.destination, source.original));
+  private boolean hasOverlappingPaths(List<Property> properties) {
+    for (Property outer : properties) {
+      for (Property inner : properties) {
+        if (isInside("destination", inner.destination, "original", outer.original)) {
+          return true;
+        }
+        if (inner == outer) {
+          continue;
+        }
+        if (isInside("original", inner.original, "original", outer.original)
+            || isInside("destination", inner.destination, "destination", outer.destination)) {
           return true;
         }
       }
@@ -237,12 +248,21 @@ public class DbMove implements Callable<Integer> {
     return false;
   }
 
+  private boolean isInside(String kind, Path path, String rootKind, Path root) {
+    if (!path.startsWith(root)) {
+      return false;
+    }
+    spec.commandLine().getErr().println(String.format(
+        "%s [%s] can not be inside %s [%s], please check!", kind, path, rootKind, root));
+    return true;
+  }
 
   static class Property {
 
     private final String name;
     private final Path original;
     final Path destination;
+    private boolean created;
 
     public Property(String name, Path original, Path destination) throws IOException {
       this.name = name;
