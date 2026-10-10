@@ -24,7 +24,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+import org.tron.common.math.StrictMathWrapper;
 import org.tron.common.overlay.message.Message;
+import org.tron.common.parameter.CommonParameter;
 import org.tron.common.prometheus.MetricKeys;
 import org.tron.common.prometheus.Metrics;
 import org.tron.common.utils.Pair;
@@ -91,6 +93,18 @@ public class PeerConnection {
   @Setter
   @Getter
   private volatile long blockRcvTime;
+
+  /**
+   * Sliding factor of the fetch latency Exponentially Weighted Moving Average (EWMA):
+   * each new sample contributes
+   * 1 / FETCH_LATENCY_EWMA_FACTOR (alpha = 0.1), balancing smoothing against
+   * responsiveness, in the same order as TCP's SRTT gain (1/8, RFC 6298).
+   */
+  private static final int FETCH_LATENCY_EWMA_FACTOR = 10;
+
+  private volatile long fetchLatency;
+
+  private volatile boolean hasFetchLatencySampled;
 
   @Getter
   @Setter
@@ -182,6 +196,44 @@ public class PeerConnection {
         Args.getInstance().getRateLimiterFetchInvData());
     p2pRateLimiter.register(P2P_DISCONNECT.asByte(),
         Args.getInstance().getRateLimiterDisconnect());
+  }
+
+  /**
+   * Updates the fetch latency estimator, which has an explicit unsampled state: the
+   * channel's average latency is only a read fallback and never enters the sample sequence.
+   * The first measured sample directly replaces the placeholder; subsequent samples are
+   * blended with alpha = 1 / FETCH_LATENCY_EWMA_FACTOR. A single fetch worker reads while
+   * the channel event loop writes, so volatile suffices and no lock should be added.
+   *
+   * @param latencyMillis measured fetch latency in milliseconds
+   */
+  public void updateFetchLatency(long latencyMillis) {
+    if (!hasFetchLatencySampled) {
+      fetchLatency = clampFetchLatency(latencyMillis);
+      hasFetchLatencySampled = true;
+    } else {
+      fetchLatency = clampFetchLatency(
+          (fetchLatency * (FETCH_LATENCY_EWMA_FACTOR - 1) + latencyMillis)
+              / FETCH_LATENCY_EWMA_FACTOR);
+    }
+  }
+
+  /**
+   * Returns the bounded fetch latency estimate. While the estimator has not observed a
+   * real fetch sample yet, the channel's average latency is returned as a read fallback
+   * (an unknown peer is treated via its transport-level estimate instead of 0).
+   */
+  public long getFetchLatency() {
+    if (!hasFetchLatencySampled) {
+      return channel.getAvgLatency();
+    }
+    return fetchLatency;
+  }
+
+  private long clampFetchLatency(long latency) {
+    // Saturation intentionally makes the >= timeout gate in FetchBlockService trigger.
+    return StrictMathWrapper.max(0,
+        StrictMathWrapper.min(CommonParameter.getInstance().fetchBlockTimeout, latency));
   }
 
   public void setBlockBothHave(BlockId blockId) {
