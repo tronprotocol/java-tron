@@ -172,8 +172,8 @@ public class Wallet {
     return Hash.sha3(result);
   }
 
-  public static SignInterface decrypt(String password, WalletFile walletFile,
-      boolean ecKey) throws CipherException {
+  public static SignInterface decrypt(String password, WalletFile walletFile)
+      throws CipherException {
 
     validate(walletFile);
 
@@ -219,7 +219,7 @@ public class Wallet {
     try {
       SignInterface keyPair;
       try {
-        keyPair = SignUtils.fromPrivate(privateKey, ecKey);
+        keyPair = SignUtils.fromPrivate(privateKey);
       } catch (IllegalArgumentException e) {
         throw new CipherException("Invalid private key in keystore", e);
       }

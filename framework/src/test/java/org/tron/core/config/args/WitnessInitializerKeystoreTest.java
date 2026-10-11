@@ -62,7 +62,7 @@ public class WitnessInitializerKeystoreTest {
         "config-test.conf");
 
     SignInterface keyPair = SignUtils.getGeneratedRandomSign(
-        SecureRandom.getInstance("NativePRNG"), true);
+        SecureRandom.getInstance("NativePRNG"));
     expectedPrivateKey = ByteArray.toHexString(keyPair.getPrivateKey());
 
     File dir = new File(System.getProperty("user.dir"), DIR_NAME);
@@ -161,7 +161,7 @@ public class WitnessInitializerKeystoreTest {
     // through the WitnessInitializer path.
     File dir = new File(System.getProperty("user.dir"), DIR_NAME);
     SignInterface keyPair = SignUtils.getGeneratedRandomSign(
-        SecureRandom.getInstance("NativePRNG"), true);
+        SecureRandom.getInstance("NativePRNG"));
     String pwd = "tamperpwd123";
     String generatedName = WalletUtils.generateWalletFile(pwd, keyPair, dir, true);
     File keystoreFile = new File(dir, generatedName);
