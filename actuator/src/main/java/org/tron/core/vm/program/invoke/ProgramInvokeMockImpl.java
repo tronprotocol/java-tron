@@ -5,7 +5,6 @@ import org.bouncycastle.util.Arrays;
 import org.bouncycastle.util.encoders.Hex;
 import org.tron.common.crypto.Hash;
 import org.tron.common.crypto.SignUtils;
-import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.store.StoreFactory;
@@ -79,8 +78,7 @@ public class ProgramInvokeMockImpl implements ProgramInvoke {
   public DataWord getOriginAddress() {
 
     byte[] cowPrivKey = Hash.sha3("horse".getBytes());
-    byte[] addr = SignUtils.fromPrivate(cowPrivKey
-        , CommonParameter.getInstance().isECKeyCryptoEngine()).getAddress();
+    byte[] addr = SignUtils.fromPrivate(cowPrivKey).getAddress();
 
     return new DataWord(addr);
   }
@@ -89,8 +87,7 @@ public class ProgramInvokeMockImpl implements ProgramInvoke {
   public DataWord getCallerAddress() {
 
     byte[] cowPrivKey = Hash.sha3("monkey".getBytes());
-    byte[] addr = SignUtils.fromPrivate(cowPrivKey
-        , CommonParameter.getInstance().isECKeyCryptoEngine()).getAddress();
+    byte[] addr = SignUtils.fromPrivate(cowPrivKey).getAddress();
     return new DataWord(addr);
   }
 
