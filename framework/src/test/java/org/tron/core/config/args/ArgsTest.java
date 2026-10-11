@@ -15,6 +15,10 @@
 
 package org.tron.core.config.args;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import com.google.common.collect.Lists;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
@@ -31,6 +35,7 @@ import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.slf4j.LoggerFactory;
 import org.tron.common.TestConstants;
 import org.tron.common.args.GenesisBlock;
 import org.tron.common.parameter.CommonParameter;
@@ -58,7 +63,7 @@ public class ArgsTest {
 
     LocalWitnesses localWitnesses = new LocalWitnesses();
     localWitnesses.setPrivateKeys(Arrays.asList(privateKey));
-    localWitnesses.initWitnessAccountAddress(null, true);
+    localWitnesses.initWitnessAccountAddress(null);
     Args.setLocalWitnesses(localWitnesses);
     String address = ByteArray.toHexString(Args.getLocalWitnesses()
         .getWitnessAccountAddress());
@@ -367,6 +372,46 @@ public class ArgsTest {
     Assert.assertEquals(expectedEngine, parameter.getStorage().getDbEngine());
 
     Args.clearParam();
+  }
+
+  /**
+   * The removed node.walletExtensionApi key must stay harmless in operator configs:
+   * binding ignores it and fromConfig logs a removal warning. Lives here rather than
+   * NodeConfigTest because module jacoco reports only aggregate framework execution data.
+   */
+  @Test
+  public void testRemovedWalletExtensionApiKeyWarnsWhenTrue() {
+    Assert.assertEquals(1, countWalletExtensionApiWarnings("node { walletExtensionApi = true }"));
+  }
+
+  @Test
+  public void testRemovedWalletExtensionApiKeyWarnsWhenFalse() {
+    Assert.assertEquals(1, countWalletExtensionApiWarnings("node { walletExtensionApi = false }"));
+  }
+
+  @Test
+  public void testNoWalletExtensionApiWarningWhenKeyAbsent() {
+    Assert.assertEquals(0, countWalletExtensionApiWarnings(""));
+  }
+
+  private static long countWalletExtensionApiWarnings(String hocon) {
+    Config config = ConfigFactory.parseString(hocon)
+        .withFallback(ConfigFactory.defaultReference());
+    Logger logger = (Logger) LoggerFactory.getLogger(NodeConfig.class);
+    ListAppender<ILoggingEvent> appender = new ListAppender<>();
+    appender.start();
+    logger.addAppender(appender);
+    try {
+      Assert.assertNotNull(NodeConfig.fromConfig(config));
+    } finally {
+      logger.detachAppender(appender);
+      appender.stop();
+    }
+    return appender.list.stream()
+        .filter(e -> e.getLevel() == Level.WARN)
+        .filter(e -> e.getFormattedMessage()
+            .contains("[node.walletExtensionApi] has been removed and is ignored"))
+        .count();
   }
 
   // ===========================================================================
