@@ -159,18 +159,7 @@ public class Args extends CommonParameter {
       Args.printHelp(jc);
       exit(0);
     }
-    // Check assignment, not the field value: JCommander toggles arity-0 booleans
-    // per occurrence, so a repeated flag parses back to false.
-    boolean keystoreFactoryPassed = jc.getParameters().stream()
-        .filter(pd -> "--keystore-factory".equals(pd.getLongestName()))
-        .anyMatch(ParameterDescription::isAssigned);
-    if (keystoreFactoryPassed) {
-      // stderr, not logger: the default logback config has no console appender
-      System.err.println("--keystore-factory was removed.");
-      System.err.println("Use: java -jar Toolkit.jar keystore <new|import|list|update>");
-      throw new TronError("--keystore-factory was removed; use Toolkit.jar keystore",
-          TronError.ErrCode.PARAMETER_INIT);
-    }
+    cmd.validateRemovedOptions();
 
     // Resolve config file path
     configFilePath = StringUtils.isNoneBlank(cmd.shellConfFileName)
