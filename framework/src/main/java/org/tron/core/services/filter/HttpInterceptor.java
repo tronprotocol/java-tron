@@ -10,6 +10,7 @@ import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jetty.http.BadMessageException;
 import org.eclipse.jetty.http.HttpStatus;
+import org.eclipse.jetty.server.Request;
 import org.tron.common.prometheus.MetricKeys;
 import org.tron.common.prometheus.MetricLabels;
 import org.tron.common.prometheus.Metrics;
@@ -37,17 +38,15 @@ public class HttpInterceptor implements Filter {
       }
       String contextPath = ((HttpServletRequest) request).getContextPath();
       endpoint = contextPath + ((HttpServletRequest) request).getServletPath();
-      CharResponseWrapper responseWrapper = new CharResponseWrapper(
-              (HttpServletResponse) response);
-      chain.doFilter(request, responseWrapper);
+      chain.doFilter(request, response);
       HttpServletResponse resp = (HttpServletResponse) response;
-      int size = responseWrapper.getByteSize();
+      long size = getContentCount(request);
       MetricsUtil.meterMark(MetricsKey.NET_API_OUT_TRAFFIC, size);
       MetricsUtil.meterMark(MetricsKey.NET_API_QPS);
       if (resp.getStatus() >= HTTP_BAD_REQUEST && resp.getStatus() <= HTTP_NOT_ACCEPTABLE) {
         MetricsUtil.meterMark(MetricsKey.NET_API_FAIL_QPS);
         Metrics.histogramObserve(MetricKeys.Histogram.HTTP_BYTES,
-                size, MetricLabels.UNDEFINED, String.valueOf(responseWrapper.getStatus()));
+            size, MetricLabels.UNDEFINED, String.valueOf(resp.getStatus()));
         return;
       }
       if (resp.getStatus() == HTTP_SUCCESS) {
@@ -58,7 +57,7 @@ public class HttpInterceptor implements Filter {
       }
       MetricsUtil.meterMark(MetricsKey.NET_API_DETAIL_OUT_TRAFFIC + endpoint, size);
       Metrics.histogramObserve(MetricKeys.Histogram.HTTP_BYTES,
-              size, endpoint, String.valueOf(responseWrapper.getStatus()));
+          size, endpoint, String.valueOf(resp.getStatus()));
     } catch (Exception e) {
       String key = MetricsKey.NET_API_DETAIL_QPS + endpoint;
       if (MetricsUtil.getMeters(MetricsKey.NET_API_DETAIL_QPS).containsKey(key)) {
@@ -74,9 +73,12 @@ public class HttpInterceptor implements Filter {
     }
   }
 
+  private long getContentCount(ServletRequest request) {
+    Request baseRequest = Request.getBaseRequest(request);
+    return baseRequest == null ? 0L : baseRequest.getResponse().getContentCount();
+  }
+
   @Override
   public void destroy() {
   }
 }
-
-

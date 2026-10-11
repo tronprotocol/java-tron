@@ -8,18 +8,13 @@ import static org.tron.common.utils.FileUtil.readData;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.nio.file.FileVisitResult;
-import java.nio.file.FileVisitor;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Stream;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -39,15 +34,16 @@ public class FileUtilTest {
 
   @After
   public void tearDown() throws IOException {
-    Files.walk(tempDir)
-        .sorted(Comparator.reverseOrder())
-        .forEach(path -> {
-          try {
-            Files.delete(path);
-          } catch (IOException e) {
-            e.printStackTrace();
-          }
-        });
+    try (Stream<Path> paths = Files.walk(tempDir)) {
+      paths.sorted(Comparator.reverseOrder())
+          .forEach(path -> {
+            try {
+              Files.delete(path);
+            } catch (IOException e) {
+              e.printStackTrace();
+            }
+          });
+    }
   }
 
   @Test
