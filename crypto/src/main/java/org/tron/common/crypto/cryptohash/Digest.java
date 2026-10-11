@@ -18,6 +18,8 @@
 
 package org.tron.common.crypto.cryptohash;
 
+import java.security.DigestException;
+
 /**
  * Copyright (c) 2007-2010  Project RNRT SAPHIR
  *
@@ -82,17 +84,17 @@ public interface Digest {
 
   /**
    * Finalize the current hash computation and store the hash value in the provided output buffer.
-   * The {@code len} parameter contains the maximum number of bytes that should be written; no more
-   * bytes than the natural hash function output length will be produced. If {@code len} is smaller
-   * than the natural hash output length, the hash output is truncated to its first {@code len}
-   * bytes. The object is resetted.
+   * The {@code len} parameter contains the number of bytes available for the digest. The complete
+   * digest is written and the object is reset on success. Partial digests are not returned.
    *
    * @param outbuf the output buffer
    * @param off the output offset within {@code outbuf}
-   * @param len the requested hash output length (in bytes)
+   * @param len the available output length (in bytes)
    * @return the number of bytes actually written in {@code outbuf}
+   * @throws DigestException if {@code len} is smaller than the digest length
+   * @throws IllegalArgumentException if the output buffer is null or the output range is invalid
    */
-  int digest(byte[] outbuf, int off, int len);
+  int digest(byte[] outbuf, int off, int len) throws DigestException;
 
   /**
    * Get the natural hash function output length (in bytes).
