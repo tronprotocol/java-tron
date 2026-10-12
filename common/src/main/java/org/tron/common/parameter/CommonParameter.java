@@ -296,9 +296,6 @@ public class CommonParameter {
   public String trustNodeAddr; // clearParam: ""
   @Getter
   @Setter
-  public boolean walletExtensionApi;
-  @Getter
-  @Setter
   public boolean estimateEnergy;
   @Getter
   @Setter
@@ -437,10 +434,6 @@ public class CommonParameter {
   public EventPluginConfig eventPluginConfig;
   @Getter
   public FilterQuery eventFilter;
-  @Getter
-  @Setter
-  public String cryptoEngine = Constant.ECKey_ENGINE;
-
   @Getter
   @Setter
   public boolean rpcEnable = true;
@@ -687,10 +680,6 @@ public class CommonParameter {
       PARAMETER.storage.deleteAllStoragePaths();
     }
     PARAMETER = new CommonParameter();
-  }
-
-  public boolean isECKeyCryptoEngine() {
-    return cryptoEngine.equalsIgnoreCase(Constant.ECKey_ENGINE);
   }
 
   public boolean isJsonRpcFilterEnabled() {

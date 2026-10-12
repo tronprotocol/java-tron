@@ -35,10 +35,6 @@ public class KeystoreNew implements Callable<Integer> {
       description = "Read password from file instead of interactive prompt")
   private File passwordFile;
 
-  @Option(names = {"--sm2"},
-      description = "Use SM2 algorithm instead of ECDSA")
-  private boolean sm2;
-
   @Override
   public Integer call() {
     PrintWriter out = spec.commandLine().getOut();
@@ -51,8 +47,7 @@ public class KeystoreNew implements Callable<Integer> {
         return 1;
       }
 
-      boolean ecKey = !sm2;
-      SignInterface keyPair = SignUtils.getGeneratedRandomSign(Utils.getRandom(), ecKey);
+      SignInterface keyPair = SignUtils.getGeneratedRandomSign(Utils.getRandom());
       String fileName = WalletUtils.generateWalletFile(
           password, keyPair, keystoreDir, true);
 

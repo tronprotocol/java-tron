@@ -38,7 +38,6 @@ import org.tron.api.GrpcAPI.Return.response_code;
 import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.GrpcAPI.TransactionSignWeight;
 import org.tron.api.GrpcAPI.TransactionSignWeight.Result;
-import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.AccountCapsule;
@@ -118,8 +117,7 @@ public class TransactionUtil {
   }
 
   public static Sha256Hash getTransactionId(Transaction transaction) {
-    return Sha256Hash.of(CommonParameter.getInstance().isECKeyCryptoEngine(),
-        transaction.getRawData().toByteArray());
+    return Sha256Hash.of(transaction.getRawData().toByteArray());
   }
 
 
@@ -210,8 +208,7 @@ public class TransactionUtil {
     trx = truncateSignatures(trx);
     TransactionExtention.Builder trxExBuilder = TransactionExtention.newBuilder();
     trxExBuilder.setTransaction(trx);
-    trxExBuilder.setTxid(ByteString.copyFrom(Sha256Hash.hash(CommonParameter
-        .getInstance().isECKeyCryptoEngine(), trx.getRawData().toByteArray())));
+    trxExBuilder.setTxid(ByteString.copyFrom(Sha256Hash.hash(trx.getRawData().toByteArray())));
     Return.Builder retBuilder = Return.newBuilder();
     retBuilder.setResult(true).setCode(response_code.SUCCESS);
     trxExBuilder.setResult(retBuilder);
@@ -246,8 +243,7 @@ public class TransactionUtil {
         if (trx.getSignatureCount() > 0) {
           List<ByteString> approveList = new ArrayList<>();
           long currentWeight = TransactionCapsule.checkWeight(permission, trx.getSignatureList(),
-              Sha256Hash.hash(CommonParameter.getInstance()
-                  .isECKeyCryptoEngine(), trx.getRawData().toByteArray()), approveList);
+              Sha256Hash.hash(trx.getRawData().toByteArray()), approveList);
           tswBuilder.addAllApprovedList(approveList);
           tswBuilder.setCurrentWeight(currentWeight);
         }

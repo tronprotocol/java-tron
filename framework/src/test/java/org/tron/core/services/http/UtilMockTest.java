@@ -198,16 +198,6 @@ public class UtilMockTest  {
     }
   }
 
-  @Test
-  public void testPrintTransactionList() {
-    TransactionCapsule transactionCapsule = getTransactionCapsuleExample();
-    GrpcAPI.TransactionList list = GrpcAPI.TransactionList.newBuilder()
-        .addTransaction(transactionCapsule.getInstance())
-        .build();
-    String out = Util.printTransactionList(list, true);
-    Assert.assertNotNull(out);
-  }
-
   private TransactionCapsule getTransactionCapsuleExample() {
     final String OWNER_ADDRESS = "41548794500882809695a8a687866e76d4271a1abc";
     final String RECEIVER_ADDRESS = "41abd4b9367799eaa3197fecb144eb71de1e049150";
