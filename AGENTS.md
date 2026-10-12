@@ -160,7 +160,7 @@ crypto    → common
 
 ## Common Pitfalls
 
-1. **ErrorProne only runs on JDK 11+.** Building on x86/JDK 8 will *not* surface `StringCaseLocaleUsage` violations, but the aarch64/JDK 17 CI jobs will fail. If you only build on x86, you will not see these locally.
+1. **ErrorProne is skipped below JDK 17.** An x86/JDK 8 build therefore does not report `StringCaseLocaleUsage` violations, while the same code fails to compile in the aarch64/JDK 17 CI jobs.
 2. **`./gradlew checkstyleMain` is not the CI gate.** Use the exact module-scoped command in checklist step 3.
 3. **Adding a config key without a comment fails CI**, even if the key itself is valid.
 4. **Changing a dependency without regenerating `verification-metadata.xml` breaks the build for everyone**, not just you.
