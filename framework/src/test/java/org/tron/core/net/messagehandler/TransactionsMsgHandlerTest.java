@@ -2,6 +2,7 @@ package org.tron.core.net.messagehandler;
 
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
+import io.prometheus.client.CollectorRegistry;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.time.ZonedDateTime;
@@ -26,6 +27,8 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.tron.common.BaseTest;
 import org.tron.common.TestConstants;
+import org.tron.common.prometheus.MetricKeys;
+import org.tron.common.prometheus.MetricLabels;
 import org.tron.common.runtime.TvmTestUtils;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.ChainBaseManager;
@@ -433,6 +436,75 @@ public class TransactionsMsgHandlerTest extends BaseTest {
   }
 
   @Test
+  public void testDroppedTransactionMetricCountsTransactions() throws Exception {
+    boolean metricsEnabled = Args.getInstance().isMetricsPrometheusEnable();
+    Args.getInstance().setMetricsPrometheusEnable(true);
+    try {
+      List<Protocol.Transaction> base = buildTransferMessage(3).getTransactions()
+          .getTransactionsList();
+      Protocol.Transaction valid = withSignatures(base.get(0), 65);
+      Protocol.Transaction shortSignature = withSignatures(base.get(1), 64);
+      Protocol.Transaction invalidMultiSign = withSignatures(base.get(2), 65, 66, 68);
+      double before = droppedTransactions();
+
+      for (int batch = 1; batch <= 2; batch++) {
+        assertSignatureBatch(Arrays.asList(shortSignature, valid, invalidMultiSign),
+            Collections.singletonList(valid), Collections.emptyList());
+        Assert.assertEquals(before + 2 * batch, droppedTransactions(), 0);
+      }
+    } finally {
+      Args.getInstance().setMetricsPrometheusEnable(metricsEnabled);
+    }
+  }
+
+  @Test
+  public void testAcceptedTransactionsDoNotIncrementDropMetric() throws Exception {
+    boolean metricsEnabled = Args.getInstance().isMetricsPrometheusEnable();
+    Args.getInstance().setMetricsPrometheusEnable(true);
+    try {
+      List<Protocol.Transaction> base = buildTransferMessage(2).getTransactions()
+          .getTransactionsList();
+      List<Protocol.Transaction> transactions = Arrays.asList(
+          withSignatures(base.get(0), 65, 65), base.get(1));
+      double before = droppedTransactions();
+
+      assertSignatureBatch(transactions, transactions, Collections.emptyList());
+
+      Assert.assertEquals(before, droppedTransactions(), 0);
+    } finally {
+      Args.getInstance().setMetricsPrometheusEnable(metricsEnabled);
+    }
+  }
+
+  @Test
+  public void testDisabledDropMetricPreservesTransactionHandling() throws Exception {
+    boolean metricsEnabled = Args.getInstance().isMetricsPrometheusEnable();
+    Args.getInstance().setMetricsPrometheusEnable(false);
+    try {
+      List<Protocol.Transaction> base = buildTransferMessage(2).getTransactions()
+          .getTransactionsList();
+      Protocol.Transaction valid = withSignatures(base.get(0), 65);
+      Protocol.Transaction invalid = withSignatures(base.get(1), 68);
+      double before = droppedTransactions();
+
+      assertSignatureBatch(Arrays.asList(invalid, valid),
+          Collections.singletonList(valid), Collections.emptyList());
+
+      Assert.assertEquals(before, droppedTransactions(), 0);
+    } finally {
+      Args.getInstance().setMetricsPrometheusEnable(metricsEnabled);
+    }
+  }
+
+  private double droppedTransactions() {
+    Double value = CollectorRegistry.defaultRegistry.getSampleValue(
+        MetricKeys.Counter.TX_REJECT + "_total", new String[]{"source", "reason"},
+        new String[]{MetricLabels.Counter.TX_REJECT_P2P,
+            MetricLabels.Counter.TX_REJECT_INVALID_SIGNATURE_LENGTH});
+    return value == null ? 0 : value;
+  }
+
+  @Test
   public void testSmartContractSignatureLengths() throws Exception {
     byte[] address = ByteArray.fromHexString("121212a9cf");
     Protocol.Transaction valid = withSignatures(
@@ -449,16 +521,24 @@ public class TransactionsMsgHandlerTest extends BaseTest {
 
   @Test
   public void testInvalidSignaturePreservesProtocolChecks() throws Exception {
-    List<Protocol.Transaction> base = buildTransferMessage(2).getTransactions()
-        .getTransactionsList();
-    Protocol.Transaction padded = withSignatures(base.get(0), 68);
-    Protocol.Transaction valid = withSignatures(base.get(1), 65);
-    assertProtocolRejection(Arrays.asList(padded, valid), 1, TypeEnum.BAD_MESSAGE);
-    assertProtocolRejection(Arrays.asList(padded, withSignatures(base.get(0), 65)), 2,
-        TypeEnum.BAD_MESSAGE);
-    Protocol.Transaction noContract = valid.toBuilder()
-        .setRawData(valid.getRawData().toBuilder().clearContract()).build();
-    assertProtocolRejection(Arrays.asList(padded, noContract), 2, TypeEnum.BAD_TRX);
+    boolean metricsEnabled = Args.getInstance().isMetricsPrometheusEnable();
+    Args.getInstance().setMetricsPrometheusEnable(true);
+    try {
+      double before = droppedTransactions();
+      List<Protocol.Transaction> base = buildTransferMessage(2).getTransactions()
+          .getTransactionsList();
+      Protocol.Transaction padded = withSignatures(base.get(0), 68);
+      Protocol.Transaction valid = withSignatures(base.get(1), 65);
+      assertProtocolRejection(Arrays.asList(padded, valid), 1, TypeEnum.BAD_MESSAGE);
+      assertProtocolRejection(Arrays.asList(padded, withSignatures(base.get(0), 65)), 2,
+          TypeEnum.BAD_MESSAGE);
+      Protocol.Transaction noContract = valid.toBuilder()
+          .setRawData(valid.getRawData().toBuilder().clearContract()).build();
+      assertProtocolRejection(Arrays.asList(padded, noContract), 2, TypeEnum.BAD_TRX);
+      Assert.assertEquals(before, droppedTransactions(), 0);
+    } finally {
+      Args.getInstance().setMetricsPrometheusEnable(metricsEnabled);
+    }
   }
 
   private Protocol.Transaction withSignatures(Protocol.Transaction transaction, int... lengths) {

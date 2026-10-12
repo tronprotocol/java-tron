@@ -16,6 +16,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.crypto.SignUtils;
 import org.tron.common.es.ExecutorServiceManager;
+import org.tron.common.prometheus.MetricKeys;
+import org.tron.common.prometheus.MetricLabels;
+import org.tron.common.prometheus.Metrics;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.config.args.Args;
@@ -126,6 +129,9 @@ public class TransactionsMsgHandler implements TronMsgHandler {
     }
 
     if (invalidSignatureCount > 0) {
+      Metrics.counterInc(MetricKeys.Counter.TX_REJECT, invalidSignatureCount,
+          MetricLabels.Counter.TX_REJECT_P2P,
+          MetricLabels.Counter.TX_REJECT_INVALID_SIGNATURE_LENGTH);
       logger.debug("Drop {} transactions with invalid signature lengths from {}",
           invalidSignatureCount, peer.getInetSocketAddress());
     }

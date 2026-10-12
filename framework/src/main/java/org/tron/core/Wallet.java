@@ -112,6 +112,9 @@ import org.tron.common.crypto.Hash;
 import org.tron.common.crypto.SignInterface;
 import org.tron.common.crypto.SignUtils;
 import org.tron.common.parameter.CommonParameter;
+import org.tron.common.prometheus.MetricKeys;
+import org.tron.common.prometheus.MetricLabels;
+import org.tron.common.prometheus.Metrics;
 import org.tron.common.runtime.ProgramResult;
 import org.tron.common.runtime.vm.LogInfo;
 import org.tron.common.utils.ByteArray;
@@ -511,6 +514,9 @@ public class Wallet {
     try {
       for (ByteString sig : signedTransaction.getSignatureList()) {
         if (!SignUtils.isValidLength(sig.size())) {
+          Metrics.counterInc(MetricKeys.Counter.TX_REJECT, 1,
+              MetricLabels.Counter.TX_REJECT_API,
+              MetricLabels.Counter.TX_REJECT_INVALID_SIGNATURE_LENGTH);
           String info = "Signature size is " + sig.size();
           logger.warn("Broadcast transaction {} has failed, {}.", txID, info);
           return builder.setResult(false).setCode(response_code.SIGERROR)
