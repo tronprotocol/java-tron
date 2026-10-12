@@ -199,7 +199,7 @@ public class CLIParameter {
         "Use: java -jar Toolkit.jar keystore <new|import|list|update>");
   }
 
-  private static void rejectIfPresent(Object value, String option, String migration) {
+  private void rejectIfPresent(Object value, String option, String migration) {
     if (value == null) {
       return;
     }
