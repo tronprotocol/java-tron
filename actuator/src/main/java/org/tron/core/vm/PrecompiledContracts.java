@@ -30,11 +30,13 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
@@ -487,6 +489,101 @@ public class PrecompiledContracts {
       } else {
         return left;
       }
+    }
+
+    /**
+     * Returns whether to collect results under the precompile's historical timeout policy.
+     * DROP rejects any timed-out wait. MATCH_CPU_CHECK still accepts one when
+     * {@link #allowTimedOutResult()} is true. A budget exhausted before waiting is
+     * rejected either way. Cancellation belongs to {@link #collectParallel}.
+     */
+    boolean awaitParallel(CountDownLatch latch, ParallelTimeout timeout)
+        throws InterruptedException {
+      boolean withNoTimeout;
+      try {
+        withNoTimeout = latch.await(getCPUTimeLeftInNanoSecond(), TimeUnit.NANOSECONDS);
+      } catch (OutOfTimeException expired) {
+        // Budget was already gone, so the historical path does not read results.
+        return false;
+      } catch (InterruptedException interrupted) {
+        Thread.currentThread().interrupt();
+        throw interrupted;
+      }
+      return withNoTimeout
+          || (timeout == ParallelTimeout.MATCH_CPU_CHECK && allowTimedOutResult());
+    }
+
+    /**
+     * Returns null on timeout or cancellation; propagates interruption and worker failures.
+     * The latch opens before FutureTask publishes its result, so a bounded read uses the
+     * same instant as {@link Program#checkCPUTimeLimit}. Values are copied into the
+     * returned list before {@code finally} runs. Cancel is a no-op on a completed future
+     * and does not discard those values.
+     */
+    <T> List<T> collectParallel(CountDownLatch latch, List<? extends Future<T>> futures,
+        ParallelTimeout timeout) throws InterruptedException, ExecutionException {
+      try {
+        if (!awaitParallel(latch, timeout)) {
+          return null;
+        }
+        List<T> results = new ArrayList<>(futures.size());
+        for (Future<T> future : futures) {
+          results.add(readFuture(future));
+        }
+        return results;
+      } catch (TimeoutException | CancellationException ignored) {
+        return null;
+      } catch (InterruptedException interrupted) {
+        Thread.currentThread().interrupt();
+        throw interrupted;
+      } finally {
+        cancelAll(futures);
+      }
+    }
+
+    private <T> T readFuture(Future<T> future)
+        throws InterruptedException, ExecutionException, TimeoutException {
+      if (!boundsCollection()) {
+        return future.get();
+      }
+      long remainNs = (getVmShouldEndInUs() + 1) * VMConstant.ONE_THOUSAND - System.nanoTime();
+      if (remainNs <= 0) {
+        throw new TimeoutException();
+      }
+      return future.get(remainNs, TimeUnit.NANOSECONDS);
+    }
+
+    /** Debug, solidity, and pre-energy-adjustment nodes keep the historical untimed read. */
+    private static boolean boundsCollection() {
+      CommonParameter parameter = CommonParameter.getInstance();
+      if (parameter.isDebug() || parameter.isSolidityNode()) {
+        return false;
+      }
+      return VMConfig.allowEnergyAdjustment();
+    }
+
+    /** Completed futures are unaffected; cancellation of running work is best effort. */
+    static void cancelAll(List<? extends Future<?>> futures) {
+      for (Future<?> future : futures) {
+        future.cancel(true);
+      }
+    }
+
+    /**
+     * A timed-out latch may still be read when the VM will not turn this call into
+     * an out-of-time transaction. Debug and solidity nodes skip
+     * {@link Program#checkCPUTimeLimit}. Without energy adjustment there is no
+     * end-of-transaction check, so a last opcode can still succeed. Otherwise the
+     * same microsecond boundary as that opcode check applies.
+     */
+    private boolean allowTimedOutResult() {
+      return !boundsCollection()
+          || System.nanoTime() / VMConstant.ONE_THOUSAND <= getVmShouldEndInUs();
+    }
+
+    enum ParallelTimeout {
+      DROP,
+      MATCH_CPU_CHECK
     }
 
     protected byte[] dataOne() {
@@ -1206,26 +1303,27 @@ public class PrecompiledContracts {
         // add check
         CountDownLatch countDownLatch = new CountDownLatch(cnt);
         List<Future<RecoverAddrResult>> futures = new ArrayList<>(cnt);
-
-        for (int i = 0; i < cnt; i++) {
-          Future<RecoverAddrResult> future = workers
-              .submit(new RecoverAddrTask(countDownLatch, hash, signatures[i], i));
-          futures.add(future);
-        }
-        boolean withNoTimeout = countDownLatch
-            .await(getCPUTimeLeftInNanoSecond(), TimeUnit.NANOSECONDS);
-
-        if (!withNoTimeout) {
-          logger.info("BatchValidateSign timeout");
-          throw Program.Exception.notEnoughTime("call BatchValidateSign precompile method");
-        }
-
-        for (Future<RecoverAddrResult> future : futures) {
-          RecoverAddrResult result = future.get();
-          int index = result.nonce;
-          if (DataWord.equalAddressByteArray(result.addr, addresses[index])) {
-            res[index] = 1;
+        try {
+          for (int i = 0; i < cnt; i++) {
+            Future<RecoverAddrResult> future = workers
+                .submit(new RecoverAddrTask(countDownLatch, hash, signatures[i], i));
+            futures.add(future);
           }
+          List<RecoverAddrResult> results = collectParallel(countDownLatch, futures,
+              ParallelTimeout.DROP);
+          if (results == null) {
+            logger.info("BatchValidateSign timeout");
+            throw Program.Exception.notEnoughTime("call BatchValidateSign precompile method");
+          }
+          for (RecoverAddrResult result : results) {
+            int index = result.nonce;
+            if (DataWord.equalAddressByteArray(result.addr, addresses[index])) {
+              res[index] = 1;
+            }
+          }
+        } finally {
+          // Also covers failure partway through submission.
+          cancelAll(futures);
         }
       }
       return Pair.of(true, res);
@@ -1580,42 +1678,49 @@ public class PrecompiledContracts {
           workers = workersInNonConstantCall;
         }
 
-        // submit check spend task
-        for (int i = 0; i < spendCount; i++) {
-          Future<Boolean> futureCheckSpend = workers
-              .submit(new SaplingCheckSpendTask(countDownLatch, spendCv[i], anchor[i],
-                  nullifier[i], rk[i], spendProof[i], spendAuthSig[i], signHash));
-          futures.add(futureCheckSpend);
-        }
-        //submit check output task
-        for (int i = 0; i < receiveCount; i++) {
-          Future<Boolean> futureCheckOutput = workers
-              .submit(new SaplingCheckOutputTask(countDownLatch, receiveCv[i], receiveCm[i],
-                  receiveEpk[i], receiveProof[i]));
-          futures.add(futureCheckOutput);
-        }
-        // submit check binding signature
-        Future<Boolean> futureCheckBindingSig = workers
-            .submit(new SaplingCheckBingdingSig(countDownLatch, value, bindingSig,
-                signHash, spendCvs, spendCount * 32, receiveCvs, receiveCount * 32));
-        futures.add(futureCheckBindingSig);
+        try {
+          // submit check spend task
+          for (int i = 0; i < spendCount; i++) {
+            Future<Boolean> futureCheckSpend = workers
+                .submit(new SaplingCheckSpendTask(countDownLatch, spendCv[i], anchor[i],
+                    nullifier[i], rk[i], spendProof[i], spendAuthSig[i], signHash));
+            futures.add(futureCheckSpend);
+          }
+          //submit check output task
+          for (int i = 0; i < receiveCount; i++) {
+            Future<Boolean> futureCheckOutput = workers
+                .submit(new SaplingCheckOutputTask(countDownLatch, receiveCv[i], receiveCm[i],
+                    receiveEpk[i], receiveProof[i]));
+            futures.add(futureCheckOutput);
+          }
+          // submit check binding signature
+          Future<Boolean> futureCheckBindingSig = workers
+              .submit(new SaplingCheckBingdingSig(countDownLatch, value, bindingSig,
+                  signHash, spendCvs, spendCount * 32, receiveCvs, receiveCount * 32));
+          futures.add(futureCheckBindingSig);
 
-        boolean withNoTimeout = countDownLatch.await(getCPUTimeLeftInNanoSecond(),
-            TimeUnit.NANOSECONDS);
-        boolean checkResult = true;
-        for (Future<Boolean> future : futures) {
-          boolean eachTaskResult = future.get();
-          checkResult = checkResult && eachTaskResult;
+          List<Boolean> results = collectParallel(countDownLatch, futures,
+              ParallelTimeout.MATCH_CPU_CHECK);
+          if (results == null) {
+            return Pair.of(true, DataWord.ZERO().getData());
+          }
+          boolean checkResult = true;
+          for (Boolean eachTaskResult : results) {
+            checkResult = checkResult && eachTaskResult;
+          }
+          if (checkResult) {
+            return insertLeaves(frontier, leafCount, receiveCm);
+          } else {
+            return Pair.of(true, DataWord.ZERO().getData());
+          }
+        } finally {
+          // Also covers failure partway through submission.
+          cancelAll(futures);
         }
-        if (checkResult) {
-          return insertLeaves(frontier, leafCount, receiveCm);
-        } else {
-          return Pair.of(true, DataWord.ZERO().getData());
-        }
-      } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
-        logger.info("VerifyTransferProof exception: " + e.getMessage());
       } catch (Throwable any) {
+        if (any instanceof InterruptedException) {
+          Thread.currentThread().interrupt();
+        }
         String errorMsg = any.getMessage();
         if (errorMsg == null && any.getCause() != null) {
           errorMsg = any.getCause().getMessage();
