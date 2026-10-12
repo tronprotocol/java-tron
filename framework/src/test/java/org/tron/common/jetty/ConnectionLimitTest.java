@@ -31,15 +31,19 @@ import org.tron.core.config.args.Args;
 /**
  * Tests the connection limit configured in {@link HttpService}: once connections that send
  * nothing hold every slot, the server closes them after the limit's idle timeout and serves
- * new clients, instead of waiting for the connector's 30-second idle timeout.
+ * new clients, instead of waiting for the connector's 30-second idle timeout. The test shortens
+ * the limit's idle timeout to one second (production uses ten) so it finishes in a few seconds.
  */
 public class ConnectionLimitTest {
 
   private static final int MAX_CONNECTIONS = 2;
 
-  // Below the connector's default 30-second idle timeout, above the limit's 10-second one
-  // applied twice (Jetty half-closes an idle connection before closing it).
-  private static final int TIMEOUT_MS = 25_000;
+  private static final long LIMIT_IDLE_TIMEOUT_MS = 1_000;
+
+  // Well above the limit's idle timeout applied twice (Jetty half-closes an idle connection
+  // before closing it), and below the connector's default 30-second idle timeout, so the test
+  // fails if only the connector's timeout frees the slots.
+  private static final int TIMEOUT_MS = 10_000;
 
   @ClassRule
   public static final TemporaryFolder temporaryFolder = new TemporaryFolder();
@@ -59,6 +63,7 @@ public class ConnectionLimitTest {
     TestHttpService(int port) {
       this.port = port;
       this.contextPath = "/";
+      setConnectionLimitIdleTimeoutMs(LIMIT_IDLE_TIMEOUT_MS);
     }
 
     @Override
@@ -92,7 +97,7 @@ public class ConnectionLimitTest {
     }
   }
 
-  @Test(timeout = 60_000)
+  @Test(timeout = 30_000)
   public void testIdleConnectionsDoNotLockOutClients() throws Exception {
     List<Socket> idleSockets = new ArrayList<>();
     try {
