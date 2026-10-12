@@ -298,7 +298,6 @@ public class Args extends CommonParameter {
    * Bridge MiscConfig bean values to CommonParameter fields.
    */
   private static void applyMiscConfig(MiscConfig mc) {
-    PARAMETER.cryptoEngine = mc.getCryptoEngine();
     PARAMETER.needToUpdateAsset = mc.isNeedToUpdateAsset();
     PARAMETER.historyBalanceLookup = mc.isHistoryBalanceLookup();
     PARAMETER.trxReferenceBlock = mc.getTrxReferenceBlock();
@@ -694,10 +693,11 @@ public class Args extends CommonParameter {
   public static void applyConfigParams(
       final Config config) {
 
+    // Reject legacy crypto engines before storage or witness/keystore initialization.
+    miscConfig = MiscConfig.fromConfig(config);
+
     Wallet.setAddressPreFixByte(ADD_PRE_FIX_BYTE_MAINNET);
     Wallet.setAddressPreFixString(Constant.ADD_PRE_FIX_STRING_MAINNET);
-
-    // crypto.engine handled by MiscConfig
 
     // VM config: bind from config.conf "vm" section
     vmConfig = VmConfig.fromConfig(config);
@@ -728,7 +728,6 @@ public class Args extends CommonParameter {
     // node discovery, legacy fallback, p2p, dns — all handled in applyNodeConfig
 
     // Misc config: storage, trx, energy — small domains, read via beans
-    miscConfig = MiscConfig.fromConfig(config);
     applyMiscConfig(miscConfig);
 
     // vm, committee already handled above
@@ -1187,9 +1186,8 @@ public class Args extends CommonParameter {
   private static void printVersion() {
     Properties properties = new Properties();
     boolean noGitProperties = true;
-    try {
-      InputStream in = Thread.currentThread()
-          .getContextClassLoader().getResourceAsStream("git.properties");
+    try (InputStream in = Thread.currentThread()
+        .getContextClassLoader().getResourceAsStream("git.properties")) {
       if (in != null) {
         noGitProperties = false;
         properties.load(in);
@@ -1277,9 +1275,8 @@ public class Args extends CommonParameter {
 
   private static String getCommitIdAbbrev() {
     Properties properties = new Properties();
-    try {
-      InputStream in = Thread.currentThread()
-          .getContextClassLoader().getResourceAsStream("git.properties");
+    try (InputStream in = Thread.currentThread()
+        .getContextClassLoader().getResourceAsStream("git.properties")) {
       if (in == null) {
         logger.warn("git.properties not found on classpath");
         return "";
