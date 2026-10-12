@@ -105,7 +105,9 @@ public class CursorInterceptorServerTest {
     ManagedChannel channel = ManagedChannelBuilder.forAddress("127.0.0.1", server.getPort())
         .usePlaintext().directExecutor().build();
     try {
-      DatabaseGrpc.newBlockingStub(channel).getNowBlock(EmptyMessage.getDefaultInstance());
+      // the deadline keeps a server that never answers from hanging the test
+      DatabaseGrpc.newBlockingStub(channel).withDeadlineAfter(5, TimeUnit.SECONDS)
+          .getNowBlock(EmptyMessage.getDefaultInstance());
 
       Assert.assertTrue("cursor was not restored after the call",
           resetDone.await(5, TimeUnit.SECONDS));

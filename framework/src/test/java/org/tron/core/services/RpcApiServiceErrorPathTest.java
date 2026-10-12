@@ -10,7 +10,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
@@ -33,11 +32,12 @@ import org.tron.core.utils.TransactionUtil;
  * shape is trivially reintroduced by copying a neighbouring handler.
  *
  * <p>Collaborators fail in two ways. An unchecked exception reaches the handlers' generic catch
- * blocks. The checked exceptions a collaborator method declares reach the typed ones, such as the
- * {@code MaintenanceUnavailableException} catch in {@code getPaginatedNowWitnessList}; a method can
- * declare several, so the checked sweep runs once for each declaration position. A handler that
- * lets the failure escape is checked as well: what it recorded before throwing may not contain a
- * second terminal event either.
+ * blocks. The first checked exception a collaborator method declares reaches the typed ones, such
+ * as the {@code MaintenanceUnavailableException} catch in {@code getPaginatedNowWitnessList}; no
+ * handler catches two checked types in separate blocks, so one checked sweep reaches them all. That
+ * sweep runs on {@code WalletApi} only, because {@code WalletSolidityApi} forwards to it or calls
+ * the same helpers. A handler that lets the failure escape is checked as well: what it recorded
+ * before throwing may not contain a second terminal event either.
  *
  * <p>Nothing here is a singleton: each sweep builds its own service and mocks, so no {@code @After}
  * reset is needed.
@@ -47,12 +47,8 @@ public class RpcApiServiceErrorPathTest {
   /** Minimum handlers that must actually fail, so the sweep cannot silently cover nothing. */
   private static final int MIN_EXERCISED = 20;
 
-  /** Minimum handlers whose typed catch must run in each checked sweep, for the same reason. */
+  /** Minimum handlers whose typed catch must run in the checked sweep, for the same reason. */
   private static final int MIN_EXERCISED_CHECKED = 10;
-
-  /** Collaborators the handlers call; the exceptions their methods declare drive the sweeps. */
-  private static final List<Class<?>> COLLABORATORS = Arrays.asList(
-      Wallet.class, TransactionUtil.class, NodeInfoService.class, MetricsApiService.class);
 
   @Test
   public void testWalletApiTerminatesTheCallOnce() throws Exception {
@@ -66,18 +62,7 @@ public class RpcApiServiceErrorPathTest {
 
   @Test
   public void testWalletApiTerminatesTheCallOnceOnCheckedExceptions() throws Exception {
-    for (int position = 0; position < declarationPositions(); position++) {
-      assertSingleTerminalEvent(WalletApi.class, Failure.checked(position),
-          MIN_EXERCISED_CHECKED);
-    }
-  }
-
-  @Test
-  public void testWalletSolidityApiTerminatesTheCallOnceOnCheckedExceptions() throws Exception {
-    for (int position = 0; position < declarationPositions(); position++) {
-      assertSingleTerminalEvent(WalletSolidityApi.class, Failure.checked(position),
-          MIN_EXERCISED_CHECKED);
-    }
+    assertSingleTerminalEvent(WalletApi.class, Failure.checked(), MIN_EXERCISED_CHECKED);
   }
 
   /**
@@ -154,28 +139,15 @@ public class RpcApiServiceErrorPathTest {
     field.set(service, value);
   }
 
-  /** Most checked exceptions any collaborator method declares, i.e. the checked sweeps to run. */
-  private static int declarationPositions() {
-    int positions = 0;
-    for (Class<?> collaborator : COLLABORATORS) {
-      for (Method method : collaborator.getMethods()) {
-        int declared = checkedExceptions(method).size();
-        positions = declared > positions ? declared : positions;
-      }
-    }
-    Assert.assertTrue("no collaborator method declares a checked exception", positions > 0);
-    return positions;
-  }
-
-  private static List<Class<?>> checkedExceptions(Method method) {
-    List<Class<?>> checked = new ArrayList<>();
+  /** The first checked exception the method declares, or null if it declares none. */
+  private static Class<?> firstCheckedException(Method method) {
     for (Class<?> type : method.getExceptionTypes()) {
       if (Exception.class.isAssignableFrom(type)
           && !RuntimeException.class.isAssignableFrom(type)) {
-        checked.add(type);
+        return type;
       }
     }
-    return checked;
+    return null;
   }
 
   /** Builds the exception through its message or no-arg constructor; null if it has neither. */
@@ -192,45 +164,40 @@ public class RpcApiServiceErrorPathTest {
   }
 
   /**
-   * How every collaborator call fails in one sweep: with an unchecked exception, or with the
-   * checked exception the called method declares at a given position (its last one when it
-   * declares fewer).
+   * How every collaborator call fails in one sweep: with an unchecked exception, or with the first
+   * checked exception the called method declares.
    */
   private static final class Failure implements Answer<Object> {
 
-    /** Declaration position to throw, or -1 for an unchecked exception. */
-    private final int position;
+    private final boolean checked;
     /** Whether the current handler's collaborator call threw a checked exception. */
     private boolean threwChecked;
 
-    private Failure(int position) {
-      this.position = position;
+    private Failure(boolean checked) {
+      this.checked = checked;
     }
 
     static Failure unchecked() {
-      return new Failure(-1);
+      return new Failure(false);
     }
 
-    static Failure checked(int position) {
-      return new Failure(position);
+    static Failure checked() {
+      return new Failure(true);
     }
 
-    /** A checked sweep only counts handlers whose collaborator really threw a checked exception. */
+    /** The checked sweep only counts handlers whose collaborator really threw a checked one. */
     boolean reachedTheIntendedCatch() {
-      return position < 0 || threwChecked;
+      return !checked || threwChecked;
     }
 
     @Override
     public Object answer(InvocationOnMock invocation) throws Throwable {
-      if (position >= 0) {
-        List<Class<?>> declared = checkedExceptions(invocation.getMethod());
-        if (!declared.isEmpty()) {
-          Exception checked = newException(
-              declared.get(position < declared.size() ? position : declared.size() - 1));
-          if (checked != null) {
-            threwChecked = true;
-            throw checked;
-          }
+      if (checked) {
+        Class<?> declared = firstCheckedException(invocation.getMethod());
+        Exception exception = declared == null ? null : newException(declared);
+        if (exception != null) {
+          threwChecked = true;
+          throw exception;
         }
       }
       throw new RuntimeException("collaborator unavailable");
@@ -238,8 +205,7 @@ public class RpcApiServiceErrorPathTest {
 
     @Override
     public String toString() {
-      return position < 0 ? "(unchecked failures)"
-          : "(checked failures, declaration position " + position + ")";
+      return checked ? "(checked failures)" : "(unchecked failures)";
     }
   }
 

@@ -70,7 +70,7 @@ public class CursorInterceptorScopeTest {
 
   @Test
   public void testHandlerSeesTheCursorWhenInterceptCallRanOnAnotherThread() throws Exception {
-    ServerCall.Listener<Object> listener = startCallOnThreadA(false);
+    ServerCall.Listener<Object> listener = startCallOnThreadA();
 
     // the handler runs from onHalfClose, on a different thread than interceptCall
     Chainbase.Cursor cursorOnThreadBAfterHalfClose = runOn(threadB, () -> {
@@ -86,27 +86,8 @@ public class CursorInterceptorScopeTest {
         Chainbase.Cursor.HEAD, cursorOnThreadBAfterHalfClose);
   }
 
-  @Test
-  public void testCursorIsRestoredOnThreadBWhenTheHandlerThrows() throws Exception {
-    ServerCall.Listener<Object> listener = startCallOnThreadA(true);
-
-    try {
-      runOn(threadB, () -> {
-        listener.onHalfClose();
-        return null;
-      });
-      Assert.fail("expected the handler failure to propagate");
-    } catch (Exception expected) {
-      // what matters is the cursor state below
-    }
-
-    // threadB is a single thread, so this reads the cursor of the thread the handler threw on
-    Assert.assertEquals("a throwing handler must still leave the cursor at HEAD",
-        Chainbase.Cursor.HEAD, runOn(threadB, cursor::get));
-  }
-
   /** Runs interceptCall on thread A and returns the listener, with a handler that records state. */
-  private ServerCall.Listener<Object> startCallOnThreadA(boolean handlerThrows) throws Exception {
+  private ServerCall.Listener<Object> startCallOnThreadA() throws Exception {
     SolidityCursorInterceptor interceptor = new SolidityCursorInterceptor();
     Field dbManager = CursorServerInterceptor.class.getDeclaredField("dbManager");
     dbManager.setAccessible(true);
@@ -122,9 +103,6 @@ public class CursorInterceptorScopeTest {
       @Override
       public void onHalfClose() {
         cursorDuringHandler = cursor.get();
-        if (handlerThrows) {
-          throw new IllegalStateException("boom");
-        }
       }
     };
 

@@ -4,12 +4,10 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.withSettings;
 
-import io.grpc.BindableService;
 import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
 import io.grpc.ServerCall;
@@ -116,7 +114,8 @@ public class CursorInterceptorWiringTest {
 
   /**
    * Runs the service's real addService against a mock builder and returns the definitions it
-   * registered, failing if any went through the {@code BindableService} overload.
+   * registered. A service added through the {@code BindableService} overload is not among them, so
+   * the count check below fails for it.
    */
   private static List<ServerServiceDefinition> register(Class<?> serviceClass,
       CursorServerInterceptor interceptor, Answer<Object> collaborator) throws Exception {
@@ -141,7 +140,6 @@ public class CursorInterceptorWiringTest {
     addService.setAccessible(true);
     addService.invoke(service, builder);
 
-    verify(builder, never()).addService(any(BindableService.class));
     ArgumentCaptor<ServerServiceDefinition> registered =
         ArgumentCaptor.forClass(ServerServiceDefinition.class);
     verify(builder, times(2)).addService(registered.capture());
