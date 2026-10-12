@@ -8,6 +8,7 @@ import java.io.StringWriter;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -121,7 +122,8 @@ public class DbMoveTest {
     return config;
   }
 
-  private void assertConfigRejected(String content) throws RocksDBException, IOException {
+  private void assertConfigRejected(String content, Class<? extends Exception> expected)
+      throws RocksDBException, IOException {
     File database = newDatabase();
     File accountDir = Paths.get(database.getPath(), ACCOUNT).toFile();
     Map<String, String> accountBefore = snapshot(accountDir);
@@ -129,7 +131,7 @@ public class DbMoveTest {
 
     StringWriter err = new StringWriter();
     Assert.assertEquals(2, mv(database, config.getPath(), err));
-    Assert.assertTrue(err.toString().contains(ConfigException.WrongType.class.getName()));
+    Assert.assertTrue(err.toString().contains(expected.getName()));
     assertUntouched(accountDir);
     Assert.assertEquals(accountBefore, snapshot(accountDir));
     Assert.assertFalse(Paths.get(OUTPUT_DIRECTORY, "dest").toFile().exists());
@@ -586,13 +588,22 @@ public class DbMoveTest {
 
   @Test
   public void testInvalidPathTypeRejected() throws RocksDBException, IOException {
-    assertConfigRejected("storage.properties = [{name = \"" + ACCOUNT + "\", path = [1, 2]}]");
+    assertConfigRejected("storage.properties = [{name = \"" + ACCOUNT + "\", path = [1, 2]}]",
+        ConfigException.WrongType.class);
   }
 
   @Test
   public void testInvalidDbDirectoryTypeRejected() throws RocksDBException, IOException {
     assertConfigRejected("storage {\n  db.directory = [1]\n  properties = [{name = \""
-        + ACCOUNT + "\", path = \"" + OUTPUT_DIRECTORY + "/dest\"}]\n}\n");
+        + ACCOUNT + "\", path = \"" + OUTPUT_DIRECTORY + "/dest\"}]\n}\n",
+        ConfigException.WrongType.class);
+  }
+
+  @Test
+  public void testInvalidPathRejected() throws RocksDBException, IOException {
+    String nul = "\\" + "u0000";
+    assertConfigRejected("storage.properties = [{name = \"" + ACCOUNT + "\", path = \""
+        + OUTPUT_DIRECTORY + "/dest" + nul + "\"}]", InvalidPathException.class);
   }
 
   @Test

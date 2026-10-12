@@ -6,6 +6,7 @@ import com.typesafe.config.ConfigFactory;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -87,7 +88,7 @@ public class DbMove implements Callable<Integer> {
               Paths.get(database.toString(), dbPath, name),
               Paths.get(c.getString(PATH_CONFIG_KEY), dbPath, name)));
         }
-      } catch (IOException | ConfigException e) {
+      } catch (IOException | ConfigException | InvalidPathException e) {
         spec.commandLine().getErr().println(e);
         return 2;
       }
