@@ -659,6 +659,19 @@ public class ArgsTest {
   }
 
   @Test
+  public void testDnsPublishDisabledIgnoresInvalidPublishParameters() {
+    Map<String, Object> configMap = new HashMap<>();
+    configMap.put("node.dns.publish", false);
+    configMap.put("node.dns.changeThreshold", -0.1);
+    configMap.put("node.dns.maxMergeSize", 6);
+    Config config = ConfigFactory.parseMap(configMap)
+        .withFallback(ConfigFactory.defaultReference());
+
+    Assert.assertFalse(Args.loadDnsPublishConfig(NodeConfig.fromConfig(config))
+        .isDnsPublishEnable());
+  }
+
+  @Test
   public void testCommitteeConfigRejectsOldRewardOptimizationWithoutPrerequisite() {
     Map<String, Object> configMap = new HashMap<>();
     configMap.put("storage.db.directory", "database");
