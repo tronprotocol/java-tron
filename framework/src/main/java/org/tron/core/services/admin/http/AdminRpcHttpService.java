@@ -33,7 +33,9 @@ public class AdminRpcHttpService extends HttpService {
   public void innerStart() throws Exception {
     if (enable && !InetUtil.isLoopbackAddress(listenAddress)) {
       logger.warn("Admin HTTP is enabled on {} and may be accessible remotely. "
-          + "Restrict access to trusted networks.", listenAddress);
+          + "Admin HTTP has no built-in authentication; the Host allowlist is not authentication. "
+          + "Enforce access control externally and restrict access to trusted networks.",
+          listenAddress);
     }
     super.innerStart();
   }

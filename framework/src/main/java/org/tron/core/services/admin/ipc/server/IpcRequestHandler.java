@@ -11,6 +11,7 @@ import org.tron.core.services.admin.AdminJsonRpcRequestHandler;
 
 /**
  * Reads bounded IPC request lines and dispatches Admin JSON-RPC calls.
+ * The byte limit excludes LF or CRLF terminators; other CR bytes count toward the limit.
  * Only individual request objects are supported; batch requests are rejected.
  * Per-request buffers are local so one handler can serve concurrent client connections.
  * Stream and socket ownership remains with {@link IpcService}.
@@ -33,7 +34,9 @@ final class IpcRequestHandler {
       if (value == '\n') {
         break;
       }
-      if (request.size() >= maxRequestSize) {
+      // Allow one extra CR until the next byte determines whether it belongs to CRLF.
+      if (request.size() > maxRequestSize
+          || (request.size() == maxRequestSize && value != '\r')) {
         throw new RequestTooLargeException();
       }
       request.write(value);
@@ -43,8 +46,11 @@ final class IpcRequestHandler {
     }
     byte[] bytes = request.toByteArray();
     int length = bytes.length;
-    if (length > 0 && bytes[length - 1] == '\r') {
+    if (value == '\n' && length > 0 && bytes[length - 1] == '\r') {
       length--;
+    }
+    if (length > maxRequestSize) {
+      throw new RequestTooLargeException();
     }
     return new String(bytes, 0, length, StandardCharsets.UTF_8);
   }

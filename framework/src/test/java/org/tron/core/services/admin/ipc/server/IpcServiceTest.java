@@ -164,7 +164,7 @@ public class IpcServiceTest {
           Files.createSymbolicLink(directory, target);
         }
         try {
-          assertStartupRejectsExistingDirectory(service);
+          assertStartupRejectsExistingDirectory(service, directory);
           service.innerStop();
 
           Assert.assertTrue(Files.exists(directory, LinkOption.NOFOLLOW_LINKS));
@@ -215,7 +215,7 @@ public class IpcServiceTest {
           ManagementFactory.class, Mockito.CALLS_REAL_METHODS)) {
         management.when(ManagementFactory::getRuntimeMXBean).thenReturn(secondRuntime);
         Assert.assertNotEquals(firstPid, getPid(second));
-        assertStartupRejectsExistingDirectory(second);
+        assertStartupRejectsExistingDirectory(second, root.resolve("ipc"));
       }
       assertNewConnectionSucceeds(socketFile);
       second.innerStop();
@@ -740,13 +740,15 @@ public class IpcServiceTest {
     return new IpcService(new AdminJsonRpcImpl());
   }
 
-  private void assertStartupRejectsExistingDirectory(IpcService service) throws Exception {
+  private void assertStartupRejectsExistingDirectory(IpcService service, Path directory)
+      throws Exception {
     try {
       service.innerStart();
       Assert.fail("Expected startup to reject an existing IPC directory");
     } catch (TronError e) {
       Assert.assertEquals(TronError.ErrCode.API_SERVER_INIT, e.getErrCode());
       Assert.assertTrue(e.getMessage().contains("IPC directory already exists"));
+      Assert.assertTrue(e.getMessage().contains(directory.toString()));
       Assert.assertTrue(e.getMessage().contains("remove it manually"));
       Assert.assertFalse(isRunning(service));
     }

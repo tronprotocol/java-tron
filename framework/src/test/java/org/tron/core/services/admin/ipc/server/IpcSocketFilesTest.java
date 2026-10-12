@@ -246,7 +246,7 @@ public class IpcSocketFilesTest {
       Assert.assertTrue(e.getMessage().contains("IPC directory already exists"));
       Assert.assertTrue(e.getMessage().contains("Confirm that no node is using it"));
       Assert.assertTrue(e.getMessage().contains("remove it manually"));
-      Assert.assertFalse(e.getMessage().contains(path.toString()));
+      Assert.assertTrue(e.getMessage().contains(path.toString()));
     }
   }
 

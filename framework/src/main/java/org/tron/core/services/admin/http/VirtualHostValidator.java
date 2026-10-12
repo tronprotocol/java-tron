@@ -8,6 +8,8 @@ import java.util.Set;
 
 /**
  * Applies the Admin HTTP virtual-host policy without resolving request hostnames through DNS.
+ * IP literals and missing or empty Host headers are allowed, the latter for HTTP/1.0 compatibility.
+ * This policy is not an authentication mechanism.
  */
 final class VirtualHostValidator {
 

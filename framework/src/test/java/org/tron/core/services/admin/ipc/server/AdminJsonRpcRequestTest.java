@@ -195,12 +195,29 @@ public class AdminJsonRpcRequestTest {
       JsonNode response = assertError(sender.send(REQUEST + ",\"id\":" + id + "}"), -32602, id);
       Assert.assertEquals("Invalid admin parameters", response.path("error").path("message")
           .asText());
+      Assert.assertEquals("{}", response.path("error").path("data").asText());
       Mockito.verify(adminJsonRpc).adminExample("a", "b");
       Mockito.clearInvocations(adminJsonRpc);
       assertError(sender.send(REQUEST.replace("admin_example", "admin_missing")
           + ",\"id\":" + id + "}"), -32601, id);
       Mockito.verifyNoInteractions(adminJsonRpc);
     }
+  }
+
+  @Test
+  public void unmappedInvocationFailureIsSanitizedAndSilencesNotifications() throws Exception {
+    Mockito.when(adminJsonRpc.adminExample("a", "b"))
+        .thenThrow(new IllegalStateException("sensitive-detail"));
+    for (String id : new String[] {"9", "null", "\"request\""}) {
+      String body = sender.send(REQUEST + ",\"id\":" + id + "}");
+      JsonNode error = assertError(body, -32603, id).get("error");
+      Assert.assertEquals("internal error", error.get("message").asText());
+      Assert.assertEquals(2, error.size());
+      Assert.assertFalse(body.contains("sensitive-detail"));
+      Assert.assertFalse(body.contains(IllegalStateException.class.getName()));
+    }
+    Assert.assertEquals("", sender.send(REQUEST + "}"));
+    Mockito.verify(adminJsonRpc, Mockito.times(4)).adminExample("a", "b");
   }
 
   @Test

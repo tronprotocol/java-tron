@@ -28,7 +28,10 @@ public final class AdminJsonRpcRequestHandler extends JsonRpcBasicServer {
 
   public AdminJsonRpcRequestHandler(AdminJsonRpc adminJsonRpc) {
     super(OBJECT_MAPPER, adminJsonRpc, AdminJsonRpc.class);
-    setErrorResolver(JsonRpcErrorResolver.INSTANCE);
+    setErrorResolver((exception, method, arguments) -> {
+      JsonError error = JsonRpcErrorResolver.INSTANCE.resolveError(exception, method, arguments);
+      return error == null ? JsonError.INTERNAL_ERROR : error;
+    });
     setShouldLogInvocationErrors(false);
   }
 
