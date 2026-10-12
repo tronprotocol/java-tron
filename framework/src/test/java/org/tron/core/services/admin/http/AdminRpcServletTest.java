@@ -13,24 +13,33 @@ import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.base.Strings;
 import com.googlecode.jsonrpc4j.JsonRpcInterceptor;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.concurrent.TimeUnit;
 import javax.servlet.ServletInputStream;
 import javax.servlet.http.HttpServletResponse;
+import org.eclipse.jetty.server.Connector;
+import org.eclipse.jetty.server.LocalConnector;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.MockedStatic;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.mock.web.MockServletConfig;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.core.Constant;
+import org.tron.core.config.args.Args;
 import org.tron.core.exception.jsonrpc.JsonRpcInvalidParamsException;
 import org.tron.core.services.admin.AdminJsonRpc;
 import org.tron.core.services.jsonrpc.JsonRpcMapper;
@@ -39,6 +48,8 @@ import org.tron.core.services.ratelimiter.GlobalRateLimiter;
 
 public class AdminRpcServletTest {
 
+  private static final int REQUEST_LIMIT = 1024;
+  private static final ObjectMapper MAPPER = JsonRpcMapper.create();
   private static final String REQUEST_PREFIX =
       "{\"jsonrpc\":\"2.0\",\"method\":\"admin_example\","
           + "\"params\":[\"a\",\"b\"],\"id\":7,\"extra\":";
@@ -332,6 +343,71 @@ public class AdminRpcServletTest {
     assertEquals(HttpServletResponse.SC_OK, response.getStatus());
   }
 
+  @Test(timeout = 10_000)
+  public void testContentLengthRequestsUseJsonRpcLimit() throws Exception {
+    assertRequestLimit(false, REQUEST_LIMIT - 1, REQUEST_LIMIT, REQUEST_LIMIT + 1);
+  }
+
+  @Test(timeout = 10_000)
+  public void testChunkedRequestsUseJsonRpcLimit() throws Exception {
+    // Jetty 9's streaming interceptor can count the same content more than once.
+    // Check a small valid body and an oversized body; exact boundaries are covered above.
+    assertRequestLimit(true, REQUEST_LIMIT / 4, REQUEST_LIMIT + 1);
+  }
+
+  private void assertRequestLimit(boolean chunked, int... sizes) throws Exception {
+    CommonParameter parameter = Args.getInstance();
+    long originalJsonRpcLimit = parameter.getJsonRpcMaxMessageSize();
+    long originalHttpLimit = parameter.getHttpMaxMessageSize();
+    TestAdminRpcHttpService service = null;
+    try {
+      parameter.setJsonRpcMaxMessageSize(REQUEST_LIMIT);
+      parameter.setHttpMaxMessageSize(REQUEST_LIMIT * 2);
+      when(adminJsonRpc.adminExample("a", "b")).thenReturn("a:b");
+      service = new TestAdminRpcHttpService();
+      ReflectionTestUtils.setField(service, "adminRpcServlet", servlet);
+      service.start().get(5, TimeUnit.SECONDS);
+
+      for (int size : sizes) {
+        clearInvocations(adminJsonRpc);
+        String response = service.post(requestBody(size), chunked);
+        if (size <= REQUEST_LIMIT) {
+          assertTrue(response, response.startsWith("HTTP/1.1 200 "));
+          int headerEnd = response.indexOf("\r\n\r\n");
+          assertTrue("Response must include complete headers", headerEnd >= 0);
+          JsonNode result = MAPPER.readTree(response.substring(headerEnd + 4));
+          assertEquals(1, result.path("id").asInt());
+          assertEquals("a:b", result.path("result").asText());
+          verify(adminJsonRpc).adminExample("a", "b");
+          verifyNoMoreInteractions(adminJsonRpc);
+        } else {
+          assertTrue(response, response.startsWith("HTTP/1.1 413 "));
+          verifyNoInteractions(adminJsonRpc);
+        }
+      }
+    } finally {
+      try {
+        if (service != null) {
+          service.stop().get(5, TimeUnit.SECONDS);
+        }
+      } finally {
+        parameter.setJsonRpcMaxMessageSize(originalJsonRpcLimit);
+        parameter.setHttpMaxMessageSize(originalHttpLimit);
+      }
+    }
+  }
+
+  private String requestBody(int size) throws Exception {
+    ObjectNode request = MAPPER.createObjectNode();
+    request.put("jsonrpc", "2.0");
+    request.put("method", "admin_example");
+    request.putArray("params").add("a").add("b");
+    request.put("id", 1);
+    String json = MAPPER.writeValueAsString(request);
+    // The ASCII body is padded with valid JSON whitespace to exercise exact byte boundaries.
+    return json + Strings.repeat(" ", size - json.length());
+  }
+
   private void setField(String name, Object value) throws Exception {
     Field field = AdminRpcServlet.class.getDeclaredField(name);
     field.setAccessible(true);
@@ -404,6 +480,31 @@ public class AdminRpcServletTest {
 
   private void setVirtualHosts(String... hosts) throws Exception {
     setField("virtualHostValidator", new VirtualHostValidator(Arrays.asList(hosts)));
+  }
+
+  private static class TestAdminRpcHttpService extends AdminRpcHttpService {
+
+    private LocalConnector connector;
+
+    @Override
+    protected void initServer() {
+      super.initServer();
+      // Keep the production handler, servlet and filters, without binding a network port.
+      connector = new LocalConnector(apiServer);
+      apiServer.setConnectors(new Connector[] {connector});
+    }
+
+    String post(String body, boolean chunked) throws Exception {
+      String framing = chunked ? "Transfer-Encoding: chunked\r\n"
+          : "Content-Length: " + body.length() + "\r\n";
+      String content = chunked ? Integer.toHexString(body.length()) + "\r\n"
+          + body + "\r\n0\r\n\r\n" : body;
+      String request = "POST /admin HTTP/1.1\r\n"
+          + "Host: 127.0.0.1\r\n"
+          + "Content-Type: application/json\r\n"
+          + "Connection: close\r\n" + framing + "\r\n" + content;
+      return connector.getResponse(request, 5, TimeUnit.SECONDS);
+    }
   }
 
 }

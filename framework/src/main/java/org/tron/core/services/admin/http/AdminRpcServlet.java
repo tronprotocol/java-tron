@@ -28,9 +28,9 @@ import org.tron.core.services.jsonrpc.JsonRpcMediaType;
  * loopback or a controlled management network. This low-frequency management endpoint intentionally
  * bypasses public API rate limiting and JSON-RPC response-size limits.
  * Only individual request objects are supported; batch requests are rejected.
- * HTTP request-size limits are enforced by
- * {@link org.tron.common.application.HttpService}; JSON parser limits come from
- * {@link JsonRpcMapper}.
+ * HTTP request-size limits use {@code node.jsonrpc.maxMessageSize}, shared with Admin IPC and
+ * public JSON-RPC HTTP, and are enforced by {@link org.tron.common.application.HttpService};
+ * JSON parser limits come from {@link JsonRpcMapper}.
  */
 @Component
 @Slf4j(topic = "API")

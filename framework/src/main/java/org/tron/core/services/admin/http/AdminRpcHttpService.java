@@ -26,6 +26,7 @@ public class AdminRpcHttpService extends HttpService {
     listenAddress = Args.getInstance().getAdminHttpListenAddress();
     port = Args.getInstance().getAdminHttpListenPort();
     contextPath = "/";
+    maxRequestSize = Args.getInstance().getJsonRpcMaxMessageSize();
   }
 
   @Override
