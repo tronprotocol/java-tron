@@ -207,16 +207,18 @@ public class Wallet {
       throw new CipherException("Unable to deserialize params: " + crypto.getKdf());
     }
 
-    byte[] derivedMac = generateMac(derivedKey, cipherText);
-
-    if (!java.security.MessageDigest.isEqual(derivedMac, mac)) {
-      throw new CipherException("Invalid password provided");
-    }
-
-    byte[] encryptKey = Arrays.copyOfRange(derivedKey, 0, 16);
-    byte[] privateKey = performCipherOperation(Cipher.DECRYPT_MODE, iv, encryptKey, cipherText);
-
+    byte[] encryptKey = null;
+    byte[] privateKey = null;
     try {
+      byte[] derivedMac = generateMac(derivedKey, cipherText);
+
+      if (!java.security.MessageDigest.isEqual(derivedMac, mac)) {
+        throw new CipherException("Invalid password provided");
+      }
+
+      encryptKey = Arrays.copyOfRange(derivedKey, 0, 16);
+      privateKey = performCipherOperation(Cipher.DECRYPT_MODE, iv, encryptKey, cipherText);
+
       SignInterface keyPair;
       try {
         keyPair = SignUtils.fromPrivate(privateKey);
@@ -239,7 +241,13 @@ public class Wallet {
 
       return keyPair;
     } finally {
-      Arrays.fill(privateKey, (byte) 0);
+      Arrays.fill(derivedKey, (byte) 0);
+      if (encryptKey != null) {
+        Arrays.fill(encryptKey, (byte) 0);
+      }
+      if (privateKey != null) {
+        Arrays.fill(privateKey, (byte) 0);
+      }
     }
   }
 
