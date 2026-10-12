@@ -29,10 +29,6 @@ public class FullNode {
 
     LogService.load(parameter.getLogbackPath());
 
-    if (parameter.isKeystoreFactory()) {
-      KeystoreFactory.start();
-      return;
-    }
     if (parameter.isSolidityNode()) {
       logger.info("Solidity node is running.");
       if (StringUtils.isEmpty(parameter.getTrustNodeAddr())) {
