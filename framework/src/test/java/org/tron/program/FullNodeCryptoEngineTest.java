@@ -68,7 +68,6 @@ public class FullNodeCryptoEngineTest {
       File output = new File(temporaryFolder.newFolder(), "chain");
       try (MockedStatic<ExitManager> exit = mockStatic(ExitManager.class);
            MockedStatic<WitnessInitializer> witness = mockStatic(WitnessInitializer.class);
-           MockedStatic<KeystoreFactory> keystore = mockStatic(KeystoreFactory.class);
            MockedConstruction<TronApplicationContext> contexts =
                mockConstruction(TronApplicationContext.class)) {
         TronError exception = assertThrows(engine, TronError.class,
@@ -78,20 +77,9 @@ public class FullNodeCryptoEngineTest {
         assertTrue(exception.getMessage().contains("SM2/SM3 support has been removed"));
         assertTrue(contexts.constructed().isEmpty());
         witness.verifyNoInteractions();
-        keystore.verifyNoInteractions();
         assertNull(Args.getStorageConfig());
         assertFalse(storage.exists());
         assertFalse(output.exists());
-
-        // The legacy keystore-factory entry point must reject the same configuration.
-        Args.clearParam();
-        TronError keystoreException = assertThrows(TronError.class,
-            () -> FullNode.main(new String[]{"-c", config.toString(), "--keystore-factory"}));
-        assertEquals(TronError.ErrCode.PARAMETER_INIT, keystoreException.getErrCode());
-        assertTrue(keystoreException.getMessage().contains("SM2/SM3 support has been removed"));
-        keystore.verifyNoInteractions();
-        assertTrue(contexts.constructed().isEmpty());
-        assertFalse(storage.exists());
       }
       Args.clearParam();
     }

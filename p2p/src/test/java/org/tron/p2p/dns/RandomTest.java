@@ -3,6 +3,7 @@ package org.tron.p2p.dns;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.tron.p2p.P2pConfig;
 import org.tron.p2p.base.Parameter;
@@ -11,6 +12,7 @@ import org.tron.p2p.dns.sync.RandomIterator;
 
 public class RandomTest {
 
+  @Ignore("might fail due to no network")
   @Test
   public void testRandomIterator() {
     Parameter.p2pConfig = new P2pConfig();
