@@ -11,7 +11,6 @@ import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import io.grpc.stub.StreamObserver;
 import java.lang.reflect.Field;
-import java.net.ServerSocket;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
@@ -38,6 +37,9 @@ import org.tron.protos.Protocol.Block;
  *
  * <p>CursorInterceptorScopeTest covers the interceptor's own logic on a synthetic harness; this is
  * the end-to-end half.
+ *
+ * <p>The interceptor under test is not a singleton: each test builds its own instance and server,
+ * so nothing needs resetting between tests; {@code tearDown} only stops this test's executor.
  */
 public class CursorInterceptorServerTest {
 
@@ -85,8 +87,8 @@ public class CursorInterceptorServerTest {
     dbManager.setAccessible(true);
     dbManager.set(interceptor, manager);
 
-    int port = freePort();
-    Server server = ServerBuilder.forPort(port)
+    // port 0 lets the server bind a free port itself; reserving one first would race other tests
+    Server server = ServerBuilder.forPort(0)
         .executor(executor)
         .addService(new DatabaseImplBase() {
           @Override
@@ -100,7 +102,7 @@ public class CursorInterceptorServerTest {
         .build()
         .start();
 
-    ManagedChannel channel = ManagedChannelBuilder.forAddress("127.0.0.1", port)
+    ManagedChannel channel = ManagedChannelBuilder.forAddress("127.0.0.1", server.getPort())
         .usePlaintext().directExecutor().build();
     try {
       DatabaseGrpc.newBlockingStub(channel).getNowBlock(EmptyMessage.getDefaultInstance());
@@ -120,12 +122,6 @@ public class CursorInterceptorServerTest {
       channel.shutdownNow();
       server.shutdownNow();
       server.awaitTermination(5, TimeUnit.SECONDS);
-    }
-  }
-
-  private static int freePort() throws Exception {
-    try (ServerSocket socket = new ServerSocket(0)) {
-      return socket.getLocalPort();
     }
   }
 }

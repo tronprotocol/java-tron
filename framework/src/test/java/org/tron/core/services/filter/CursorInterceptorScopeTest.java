@@ -27,6 +27,9 @@ import org.tron.core.db2.core.Chainbase;
  * {@code onHalfClose()} on a different thread B, which is what gRPC's {@code SerializingExecutor}
  * is free to do. An implementation that scoped the cursor around {@code interceptCall} instead of
  * {@code onHalfClose} then fails here by construction rather than by luck.
+ *
+ * <p>The interceptor under test is not a singleton: each test builds its own instance, so nothing
+ * needs resetting between tests; {@code tearDown} only stops this test's threads.
  */
 public class CursorInterceptorScopeTest {
 
