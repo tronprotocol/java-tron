@@ -139,9 +139,9 @@ crypto    → common
 - Never call `String.toLowerCase()` / `toUpperCase()` without an explicit `Locale` — ErrorProne enforces this as a compile error (`StringCaseLocaleUsage`).
 
 **DB / Store:**
-- All writes must happen inside a revocable session — `try (ISession session = revokingStore.buildSession())` — never a bare `put()`.
-- A new store must extend `TronStoreWithRevoking<T>` and register with the `RevokingDatabase`.
-- Multi-store updates must roll back fully on exception.
+- State changes run inside the revoking session that `Manager` opens per transaction and per block; it is `merge()`d / `commit()`ted on success and revoked otherwise.
+- Actuators, the VM and stores call `put()` / `delete()` directly and must never open their own session: an `ISession` closed without `merge()` / `commit()` discards its writes, and `buildSession()` moves the snapshot head of every store.
+- A new consensus-state store extends `TronStoreWithRevoking<T>`, which registers itself in `@PostConstruct init()`; never call `revokingDatabase.add()` yourself. Auxiliary, non-revocable stores extend `TronDatabase<T>`.
 
 **Actuator:**
 - New actuators are registered automatically: place the class in the `org.tron.core.actuator` package, extend `AbstractActuator`, and pass the `ContractType` to `super(...)` from a no-arg constructor. `TransactionRegister.registerActuator()` discovers it by reflection at startup — there is no manual registration step.
