@@ -163,6 +163,7 @@ public class Args extends CommonParameter {
       Args.printHelp(arguments.getCommander());
       exit(0);
     }
+    cmd.validateRemovedOptions();
     List<ParameterDescription> assignedParameters = arguments.getAssignedParameters();
 
     // Resolve config file path
@@ -870,9 +871,6 @@ public class Args extends CommonParameter {
     if (assigned.contains("--solidity")) {
       PARAMETER.solidityNode = cmd.solidityNode;
     }
-    if (assigned.contains("--keystore-factory")) {
-      PARAMETER.keystoreFactory = cmd.keystoreFactory;
-    }
     if (assigned.contains("--rpc-thread")) {
       PARAMETER.rpcThreadNum = cmd.rpcThreadNum;
     }
@@ -1304,8 +1302,7 @@ public class Args extends CommonParameter {
 
   private static Map<String, String[]> getOptionGroup() {
     String[] tronOption = new String[] {"version", "help", "shellConfFileName", "logbackPath",
-        "eventSubscribe", "solidityNode", "keystoreFactory", "ipcSocketFile",
-        "ipcExecCommand"};
+        "eventSubscribe", "solidityNode", "ipcSocketFile", "ipcExecCommand"};
     String[] dbOption = new String[] {"outputDirectory"};
     String[] witnessOption = new String[] {"witness", "privateKey"};
     String[] vmOption = new String[] {"debug"};

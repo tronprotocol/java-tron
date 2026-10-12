@@ -26,10 +26,14 @@ import org.mockito.Mockito;
 import org.newsclub.net.unix.AFUNIXServerSocket;
 import org.newsclub.net.unix.AFUNIXSocket;
 import org.newsclub.net.unix.AFUNIXSocketAddress;
+import org.tron.common.application.Application;
+import org.tron.common.application.ApplicationFactory;
+import org.tron.common.application.TronApplicationContext;
 import org.tron.common.arch.Arch;
 import org.tron.common.exit.ExitManager;
 import org.tron.common.log.LogService;
 import org.tron.common.parameter.CommonParameter;
+import org.tron.common.prometheus.Metrics;
 import org.tron.core.config.args.Args;
 import org.tron.core.config.args.CommandLineArguments;
 import org.tron.core.services.admin.ipc.client.IpcClient;
@@ -63,25 +67,34 @@ public class FullNodeTest {
   @Test
   public void testNodeModeRetainsInitialization() {
     CommonParameter parameter = new CommonParameter();
-    parameter.keystoreFactory = true;
     parameter.logbackPath = "node-logback.xml";
+    Application application = Mockito.mock(Application.class);
     try (MockedStatic<ExitManager> exitManager = Mockito.mockStatic(ExitManager.class);
         MockedStatic<Arch> arch = Mockito.mockStatic(Arch.class);
         MockedStatic<Args> args = Mockito.mockStatic(Args.class);
         MockedStatic<CommonParameter> parameters = Mockito.mockStatic(CommonParameter.class);
         MockedStatic<LogService> logService = Mockito.mockStatic(LogService.class);
-        MockedStatic<KeystoreFactory> keystore = Mockito.mockStatic(KeystoreFactory.class);
+        MockedStatic<Metrics> metrics = Mockito.mockStatic(Metrics.class);
+        MockedStatic<ApplicationFactory> factory = Mockito.mockStatic(ApplicationFactory.class);
+        MockedConstruction<TronApplicationContext> contexts =
+            Mockito.mockConstruction(TronApplicationContext.class);
         MockedConstruction<IpcClient> ipcClients = Mockito.mockConstruction(IpcClient.class)) {
       parameters.when(CommonParameter::getInstance).thenReturn(parameter);
+      factory.when(() -> ApplicationFactory.create(Mockito.any())).thenReturn(application);
 
-      FullNode.main(new String[] {"--keystore-factory"});
+      FullNode.main(new String[] {"--log-config", "node-logback.xml"});
 
       exitManager.verify(ExitManager::initExceptionHandler);
       arch.verify(Arch::throwIfUnsupportedJavaVersion);
       args.verify(() -> Args.setParam(Mockito.argThat((CommandLineArguments parsed) ->
-          parsed.getParameters().keystoreFactory), Mockito.eq("config.conf")));
+          "node-logback.xml".equals(parsed.getParameters().logbackPath)),
+          Mockito.eq("config.conf")));
       logService.verify(() -> LogService.load("node-logback.xml"));
-      keystore.verify(KeystoreFactory::start);
+      metrics.verify(Metrics::init);
+      Assert.assertEquals(1, contexts.constructed().size());
+      Mockito.verify(contexts.constructed().get(0)).refresh();
+      Mockito.verify(application).startup();
+      Mockito.verify(application).blockUntilShutdown();
       Assert.assertTrue(ipcClients.constructed().isEmpty());
     }
   }
@@ -102,6 +115,14 @@ public class FullNodeTest {
         "--attach", "missing.sock", "--config", "config.conf");
     runClientWithoutNodeLogs(1, "--exec requires --attach <socket-path>", "",
         "--exec", "help");
+  }
+
+  @Test(timeout = 60_000)
+  public void testRemovedOptionsInAttachModeDoNotCreateNodeLogs() throws Exception {
+    runClientWithoutNodeLogs(1, "Toolkit.jar keystore <new|import|list|update>", "",
+        "--attach", "missing.sock", "--keystore-factory");
+    runClientWithoutNodeLogs(1, "Toolkit.jar keystore <new|import|list|update>", "",
+        "--attach", "missing.sock", "--keystore-factory", "--keystore-factory");
   }
 
   @Test(timeout = 30_000)

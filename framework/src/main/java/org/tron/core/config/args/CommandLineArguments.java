@@ -37,6 +37,7 @@ public final class CommandLineArguments {
       }
       return false;
     }
+    parameters.validateRemovedOptions();
     if (isAssigned("shellConfFileName")) {
       throwAttachParameterError("Error: --attach cannot be combined with: --config");
     }
