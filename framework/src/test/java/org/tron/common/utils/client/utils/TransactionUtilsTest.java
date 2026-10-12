@@ -9,13 +9,11 @@ import com.google.protobuf.ByteString;
 import java.math.BigInteger;
 import java.security.SignatureException;
 import java.util.Arrays;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.crypto.Hash;
-import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
@@ -24,20 +22,12 @@ import org.tron.protos.contract.BalanceContract.TransferContract;
 
 public class TransactionUtilsTest {
 
-  private String originalCryptoEngine;
   private Transaction signed;
 
   @Before
   public void setUp() {
-    originalCryptoEngine = CommonParameter.getInstance().getCryptoEngine();
-    CommonParameter.getInstance().setCryptoEngine("ECKey");
     ECKey key = ECKey.fromPrivate(BigInteger.TEN);
     signed = TransactionUtils.sign(createTransaction(key.getAddress()), key);
-  }
-
-  @After
-  public void tearDown() {
-    CommonParameter.getInstance().setCryptoEngine(originalCryptoEngine);
   }
 
   @Test
@@ -83,7 +73,7 @@ public class TransactionUtilsTest {
   public void testPointAtInfinity() throws SignatureException {
     byte[] owner = Hash.computeAddress(new byte[]{0});
     Transaction transaction = createTransaction(owner);
-    byte[] hash = Sha256Hash.hash(true, transaction.getRawData().toByteArray());
+    byte[] hash = Sha256Hash.hash(transaction.getRawData().toByteArray());
     ECDSASignature signature = new ECDSASignature(
         ECKey.CURVE.getG().getAffineXCoord().toBigInteger(),
         new BigInteger(1, hash).mod(ECKey.CURVE.getN()));

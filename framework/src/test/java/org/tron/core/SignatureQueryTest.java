@@ -17,7 +17,6 @@ import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.util.Arrays;
 import java.util.Collection;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -28,7 +27,6 @@ import org.tron.api.GrpcAPI.TransactionApprovedList;
 import org.tron.api.GrpcAPI.TransactionSignWeight;
 import org.tron.common.crypto.SignInterface;
 import org.tron.common.crypto.SignUtils;
-import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ForkController;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.AccountCapsule;
@@ -48,20 +46,16 @@ import org.tron.protos.contract.BalanceContract.TransferContract;
 @RunWith(Parameterized.class)
 public class SignatureQueryTest {
 
-  @Parameterized.Parameters(name = "engine={0}, strict={1}")
+  @Parameterized.Parameters(name = "strict={0}")
   public static Collection<Object[]> parameters() {
     return Arrays.asList(new Object[][] {
-        {"ECKey", false}, {"ECKey", true}, {"SM2", false}, {"SM2", true}
+        {false}, {true}
     });
   }
 
   @Parameterized.Parameter
-  public String cryptoEngine;
-
-  @Parameterized.Parameter(1)
   public boolean strict;
 
-  private String originalCryptoEngine;
   private Wallet wallet;
   private TransactionUtil transactionUtil;
   private AccountStore accountStore;
@@ -71,8 +65,6 @@ public class SignatureQueryTest {
 
   @Before
   public void setUp() {
-    originalCryptoEngine = CommonParameter.getInstance().getCryptoEngine();
-    CommonParameter.getInstance().setCryptoEngine(cryptoEngine);
     DynamicPropertiesStore properties = mock(DynamicPropertiesStore.class);
     when(properties.getTotalSignNum()).thenReturn(5);
     when(properties.allowStrictEcdsaValidation()).thenReturn(strict);
@@ -88,7 +80,7 @@ public class SignatureQueryTest {
 
     byte[] privateKey = new byte[32];
     privateKey[31] = 10;
-    SignInterface signer = SignUtils.fromPrivate(privateKey, "ECKey".equals(cryptoEngine));
+    SignInterface signer = SignUtils.fromPrivate(privateKey);
     ByteString address = ByteString.copyFrom(signer.getAddress());
     permission = Permission.newBuilder().setThreshold(1)
         .addKeys(Key.newBuilder().setAddress(address).setWeight(1)).build();
@@ -101,11 +93,6 @@ public class SignatureQueryTest {
     capsule.sign(privateKey);
     signed = capsule.getInstance();
     assertEquals(65, signed.getSignature(0).size());
-  }
-
-  @After
-  public void tearDown() {
-    CommonParameter.getInstance().setCryptoEngine(originalCryptoEngine);
   }
 
   @Test
@@ -234,8 +221,7 @@ public class SignatureQueryTest {
     assertEquals(approvedCount, approved.getApprovedListCount());
     assertEquals(input, weight.getTransaction().getTransaction());
     assertEquals(input, approved.getTransaction().getTransaction());
-    ByteString txId = ByteString.copyFrom(Sha256Hash.hash("ECKey".equals(cryptoEngine),
-        input.getRawData().toByteArray()));
+    ByteString txId = ByteString.copyFrom(Sha256Hash.hash(input.getRawData().toByteArray()));
     assertEquals(txId, weight.getTransaction().getTxid());
     assertEquals(txId, approved.getTransaction().getTxid());
   }

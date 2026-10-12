@@ -25,7 +25,6 @@ import org.slf4j.LoggerFactory;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.crypto.SignUtils;
-import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.TransactionCapsule;
@@ -57,8 +56,7 @@ public class TransactionUtils {
   public static byte[] getHash(Transaction transaction) {
     Transaction.Builder tmp = transaction.toBuilder();
     //tmp.clearId();
-    return Sha256Hash.hash(CommonParameter
-        .getInstance().isECKeyCryptoEngine(), tmp.build().toByteArray());
+    return Sha256Hash.hash(tmp.build().toByteArray());
   }
 
   /**
@@ -134,8 +132,7 @@ public class TransactionUtils {
     assert (signedTransaction.getSignatureCount()
         == signedTransaction.getRawData().getContractCount());
     List<Transaction.Contract> listContract = signedTransaction.getRawData().getContractList();
-    byte[] hash = Sha256Hash.hash(CommonParameter
-        .getInstance().isECKeyCryptoEngine(), signedTransaction.getRawData().toByteArray());
+    byte[] hash = Sha256Hash.hash(signedTransaction.getRawData().toByteArray());
     int count = signedTransaction.getSignatureCount();
     if (count == 0) {
       return false;
@@ -149,8 +146,7 @@ public class TransactionUtils {
         Transaction.Contract contract = listContract.get(i);
         byte[] owner = getOwner(contract);
         byte[] address = SignUtils.signatureToAddress(hash,
-            getBase64FromByteString(signature), CommonParameter
-                .getInstance().isECKeyCryptoEngine(), true);
+            getBase64FromByteString(signature), true);
         if (!Arrays.equals(owner, address)) {
           return false;
         }
@@ -169,8 +165,7 @@ public class TransactionUtils {
   public static Transaction sign(Transaction transaction, ECKey myKey) {
     Transaction.Builder transactionBuilderSigned = transaction.toBuilder();
 
-    byte[] hash = Sha256Hash.hash(CommonParameter
-        .getInstance().isECKeyCryptoEngine(), transaction.getRawData().toByteArray());
+    byte[] hash = Sha256Hash.hash(transaction.getRawData().toByteArray());
     List<Contract> listContract = transaction.getRawData().getContractList();
     for (int i = 0; i < listContract.size(); i++) {
       ECDSASignature signature = myKey.sign(hash);

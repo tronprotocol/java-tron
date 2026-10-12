@@ -16,7 +16,6 @@ import org.tron.common.BaseTest;
 import org.tron.common.TestConstants;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.Hash;
-import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Sha256Hash;
@@ -68,15 +67,12 @@ public class ValidateMultiSignContractTest extends BaseTest {
 
   @Test
   public void testStrictValidationRejectsInfinityPermissionSigner() {
-    String previousEngine = CommonParameter.getInstance().getCryptoEngine();
     boolean previousStrict = VMConfig.allowStrictEcdsaValidation();
     try {
-      CommonParameter.getInstance().setCryptoEngine("ECKey");
       ECKey key = ECKey.fromPrivate(BigInteger.TEN);
       byte[] address = key.getAddress();
       byte[] data = DataWord.ONE().getData();
-      byte[] hash = Sha256Hash.hash(true,
-          ByteUtil.merge(address, ByteArray.fromInt(0), data));
+      byte[] hash = Sha256Hash.hash(ByteUtil.merge(address, ByteArray.fromInt(0), data));
       // R = G and s = hash mod n make sR - hash*G the point at infinity.
       ECKey.ECDSASignature infinity = new ECKey.ECDSASignature(
           ECKey.CURVE.getG().getAffineXCoord().toBigInteger(),
@@ -111,7 +107,6 @@ public class ValidateMultiSignContractTest extends BaseTest {
       }
     } finally {
       VMConfig.initAllowStrictEcdsaValidation(previousStrict ? 1 : 0);
-      CommonParameter.getInstance().setCryptoEngine(previousEngine);
     }
   }
 
@@ -153,14 +148,12 @@ public class ValidateMultiSignContractTest extends BaseTest {
 
     byte[] address = key.getAddress();
     int permissionId = 2;
-    byte[] data = Sha256Hash.hash(CommonParameter
-        .getInstance().isECKeyCryptoEngine(), longData);
+    byte[] data = Sha256Hash.hash(longData);
 
     //combine data
     byte[] merged = ByteUtil.merge(address, ByteArray.fromInt(permissionId), data);
     //sha256 of it
-    byte[] toSign = Sha256Hash.hash(CommonParameter
-        .getInstance().isECKeyCryptoEngine(), merged);
+    byte[] toSign = Sha256Hash.hash(merged);
 
     //sign data
 
@@ -269,9 +262,9 @@ public class ValidateMultiSignContractTest extends BaseTest {
         Collections.singletonList(activePermission));
     dbManager.getAccountStore().put(key.getAddress(), toAccount);
 
-    byte[] data = Sha256Hash.hash(CommonParameter.getInstance().isECKeyCryptoEngine(), longData);
+    byte[] data = Sha256Hash.hash(longData);
     byte[] merged = ByteUtil.merge(key.getAddress(), ByteArray.fromInt(2), data);
-    byte[] toSign = Sha256Hash.hash(CommonParameter.getInstance().isECKeyCryptoEngine(), merged);
+    byte[] toSign = Sha256Hash.hash(merged);
     List<Object> signs = new ArrayList<>();
     signs.add(Hex.toHexString(key1.sign(toSign).toByteArray()));
     signs.add(Hex.toHexString(key2.sign(toSign).toByteArray()));

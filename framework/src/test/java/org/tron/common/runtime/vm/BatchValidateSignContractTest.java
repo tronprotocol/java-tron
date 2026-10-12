@@ -11,7 +11,6 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.Hash;
-import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.client.utils.AbiUtil;
@@ -48,10 +47,8 @@ public class BatchValidateSignContractTest {
   }
 
   private void assertStrictValidationMixedBatch(boolean constantCall) {
-    String previousEngine = CommonParameter.getInstance().getCryptoEngine();
     boolean previousStrict = VMConfig.allowStrictEcdsaValidation();
     try {
-      CommonParameter.getInstance().setCryptoEngine("ECKey");
       contract.setConstantCall(constantCall);
       byte[] hash = DataWord.ONE().getData();
       ECKey first = ECKey.fromPrivate(BigInteger.ONE);
@@ -84,7 +81,6 @@ public class BatchValidateSignContractTest {
       }
     } finally {
       VMConfig.initAllowStrictEcdsaValidation(previousStrict ? 1 : 0);
-      CommonParameter.getInstance().setCryptoEngine(previousEngine);
     }
   }
 

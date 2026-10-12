@@ -253,9 +253,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
             "Signature size is " + sig.size());
       }
       String base64 = TransactionCapsule.getBase64FromByteString(sig);
-      byte[] address = SignUtils
-          .signatureToAddress(hash, base64, CommonParameter.getInstance().isECKeyCryptoEngine(),
-              strictEcdsaValidation);
+      byte[] address = SignUtils.signatureToAddress(hash, base64, strictEcdsaValidation);
       long weight = getWeight(permission, address);
       if (weight == 0) {
         throw new PermissionException(
@@ -323,11 +321,10 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     Transaction transaction = tx.toBuilder().clearRawData()
         .setRawData(rawBuilder).build();
 
-    byte[] mergedByte = Bytes.concat(Sha256Hash
-            .of(CommonParameter.getInstance().isECKeyCryptoEngine(), tokenId.getBytes()).getBytes(),
+    byte[] mergedByte = Bytes.concat(
+        Sha256Hash.of(tokenId.getBytes()).getBytes(),
         transaction.getRawData().toByteArray());
-    return Sha256Hash.of(CommonParameter
-        .getInstance().isECKeyCryptoEngine(), mergedByte).getBytes();
+    return Sha256Hash.of(mergedByte).getBytes();
   }
 
   // todo mv this static function to capsule util
@@ -496,8 +493,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
       throw new PermissionException("permission isn't exit");
     }
     checkPermission(permissionId, permission, contract);
-    boolean strictEcdsaValidation = CommonParameter.getInstance().isECKeyCryptoEngine()
-        && dynamicPropertiesStore.allowStrictEcdsaValidation();
+    boolean strictEcdsaValidation = dynamicPropertiesStore.allowStrictEcdsaValidation();
     long weight = checkWeight(permission, transaction.getSignatureList(), hash, null,
         strictEcdsaValidation);
     if (weight >= permission.getThreshold()) {
@@ -588,18 +584,15 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
 
   public Sha256Hash getMerkleHash() {
     byte[] transBytes = this.transaction.toByteArray();
-    return Sha256Hash.of(CommonParameter.getInstance().isECKeyCryptoEngine(),
-        transBytes);
+    return Sha256Hash.of(transBytes);
   }
 
   private Sha256Hash getRawHash() {
-    return Sha256Hash.of(CommonParameter.getInstance().isECKeyCryptoEngine(),
-        this.transaction.getRawData().toByteArray());
+    return Sha256Hash.of(this.transaction.getRawData().toByteArray());
   }
 
   public void sign(byte[] privateKey) {
-    SignInterface cryptoEngine = SignUtils
-        .fromPrivate(privateKey, CommonParameter.getInstance().isECKeyCryptoEngine());
+    SignInterface cryptoEngine = SignUtils.fromPrivate(privateKey);
     ByteString sig = ByteString.copyFrom(cryptoEngine.Base64toBytes(cryptoEngine
         .signHash(getTransactionId().getBytes())));
     this.transaction = this.transaction.toBuilder().addSignature(sig).build();
@@ -620,8 +613,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     }
     checkPermission(permissionId, permission, contract);
     List<ByteString> approveList = new ArrayList<>();
-    SignInterface cryptoEngine = SignUtils
-        .fromPrivate(privateKey, CommonParameter.getInstance().isECKeyCryptoEngine());
+    SignInterface cryptoEngine = SignUtils.fromPrivate(privateKey);
     byte[] address = cryptoEngine.getAddress();
     if (this.transaction.getSignatureCount() > 0) {
       checkWeight(permission, this.transaction.getSignatureList(),

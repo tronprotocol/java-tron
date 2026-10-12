@@ -280,7 +280,6 @@ public class BlockMsgHandlerTest extends BaseTest {
   }
 
   private TronNetDelegate witnessDelegate(boolean strict, ByteString witness) throws Exception {
-    Assert.assertTrue(Args.getInstance().isECKeyCryptoEngine());
     DynamicPropertiesStore properties = Mockito.mock(DynamicPropertiesStore.class);
     Mockito.when(properties.allowStrictEcdsaValidation()).thenReturn(strict);
     Manager manager = Mockito.mock(Manager.class);

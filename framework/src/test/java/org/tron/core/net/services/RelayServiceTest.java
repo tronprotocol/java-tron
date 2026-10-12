@@ -185,14 +185,11 @@ public class RelayServiceTest extends BaseTest {
     Node node = new Node(NetUtil.getNodeId(), a1.getAddress().getHostAddress(),
         null, a1.getPort());
 
-    SignInterface cryptoEngine = SignUtils.fromPrivate(ByteArray.fromHexString(key),
-            Args.getInstance().isECKeyCryptoEngine());
+    SignInterface cryptoEngine = SignUtils.fromPrivate(ByteArray.fromHexString(key));
     HelloMessage helloMessage = new HelloMessage(node, System.currentTimeMillis(),
         ChainBaseManager.getChainBaseManager());
     ByteString sig = ByteString.copyFrom(cryptoEngine.Base64toBytes(cryptoEngine
-        .signHash(Sha256Hash.of(CommonParameter.getInstance()
-            .isECKeyCryptoEngine(), ByteArray.fromLong(helloMessage
-            .getTimestamp())).getBytes())));
+        .signHash(Sha256Hash.of(ByteArray.fromLong(helloMessage.getTimestamp())).getBytes())));
     helloMessage.setHelloMessage(helloMessage.getHelloMessage().toBuilder()
         .setAddress(address)
         .setSignature(sig)
@@ -260,9 +257,8 @@ public class RelayServiceTest extends BaseTest {
 
   @Test
   public void testStrictHelloAuthentication() throws Exception {
-    Assert.assertTrue(Args.getInstance().isECKeyCryptoEngine());
     long timestamp = 1720000000000L;
-    byte[] hash = Sha256Hash.of(true, ByteArray.fromLong(timestamp)).getBytes();
+    byte[] hash = Sha256Hash.of(ByteArray.fromLong(timestamp)).getBytes();
     ECKey key = ECKey.fromPrivate(BigInteger.TEN);
     ByteString address = ByteString.copyFrom(key.getAddress());
     ByteString signature = ByteString.copyFrom(key.sign(hash).toByteArray());
@@ -277,7 +273,7 @@ public class RelayServiceTest extends BaseTest {
     ByteString infinitySignature = ByteString.copyFrom(infinity.toByteArray());
     ByteString infinityAddress = getFromHexString("41dcc703c0e500b653ca82273b7bfad8045d85a470");
     Assert.assertArrayEquals(infinityAddress.toByteArray(), SignUtils.signatureToAddress(hash,
-        infinity.toBase64(), true, false));
+        infinity.toBase64(), false));
 
     RelayService relay = new RelayService();
     P2pConfig previousConfig = TronNetService.getP2pConfig();

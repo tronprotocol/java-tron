@@ -1,6 +1,8 @@
 package org.tron.core.exception;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
@@ -14,7 +16,9 @@ import ch.qos.logback.core.joran.spi.JoranException;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import com.typesafe.config.ConfigObject;
+import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.nio.file.Path;
 import java.util.Collections;
@@ -33,6 +37,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import org.slf4j.LoggerFactory;
 import org.tron.common.TestConstants;
 import org.tron.common.arch.Arch;
+import org.tron.common.exit.ExitManager;
 import org.tron.common.log.LogService;
 import org.tron.common.parameter.RateLimiterInitialization;
 import org.tron.common.utils.ReflectUtils;
@@ -85,6 +90,37 @@ public class TronErrorTest {
       assertEquals(TronError.ErrCode.ZCASH_INIT, thrown.getErrCode());
     } finally {
       atomicBoolean.set(originalValue);
+    }
+  }
+
+  @Test
+  public void testMissingZksnarkParams() throws IllegalAccessException, NoSuchFieldException {
+    Field field = ZksnarkInitService.class.getDeclaredField("initialized");
+    field.setAccessible(true);
+    AtomicBoolean initialized = (AtomicBoolean) field.get(null);
+    boolean originalValue = initialized.get();
+    Thread thread = Thread.currentThread();
+    ClassLoader originalClassLoader = thread.getContextClassLoader();
+
+    try {
+      initialized.set(false);
+      thread.setContextClassLoader(new ClassLoader(originalClassLoader) {
+        @Override
+        public InputStream getResourceAsStream(String name) {
+          return null;
+        }
+      });
+      TronError thrown = assertThrows(TronError.class,
+          ZksnarkInitService::librustzcashInitZksnarkParams);
+      assertEquals(TronError.ErrCode.ZCASH_INIT, thrown.getErrCode());
+      assertEquals(1, thrown.getErrCode().getCode());
+      assertEquals("Resource not found: params" + File.separator + "sapling-spend.params",
+          thrown.getMessage());
+      assertFalse(initialized.get());
+      assertSame(thrown, ExitManager.findTronError(new RuntimeException(thrown)).get());
+    } finally {
+      thread.setContextClassLoader(originalClassLoader);
+      initialized.set(originalValue);
     }
   }
 

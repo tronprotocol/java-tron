@@ -5,7 +5,6 @@ import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -21,8 +20,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.FutureTask;
 import org.junit.Test;
-import org.mockito.MockedStatic;
-import org.tron.common.parameter.CommonParameter;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.exception.ValidateSignatureException;
@@ -43,14 +40,12 @@ public class ManagerSignaturePreValidationTest {
     when(dynamicPropertiesStore.allowStrictEcdsaValidation()).thenReturn(true);
     runSubmittedTasks(validateSignService);
 
-    try (MockedStatic<CommonParameter> commonParameter = mockEcKeyEngine(true)) {
-      InvocationTargetException exception = assertThrows(InvocationTargetException.class,
-          () -> invokePreValidate(manager, Arrays.asList(valid, invalidMultiSign)));
+    InvocationTargetException exception = assertThrows(InvocationTargetException.class,
+        () -> invokePreValidate(manager, Arrays.asList(valid, invalidMultiSign)));
 
-      assertTrue(exception.getCause() instanceof ValidateSignatureException);
-      assertEquals("Signature size is 66", exception.getCause().getMessage());
-      verify(validateSignService, never()).submit(any(Callable.class));
-    }
+    assertTrue(exception.getCause() instanceof ValidateSignatureException);
+    assertEquals("Signature size is 66", exception.getCause().getMessage());
+    verify(validateSignService, never()).submit(any(Callable.class));
   }
 
   @Test
@@ -63,14 +58,12 @@ public class ManagerSignaturePreValidationTest {
     when(dynamicPropertiesStore.allowStrictEcdsaValidation()).thenReturn(false);
     runSubmittedTasks(validateSignService);
 
-    try (MockedStatic<CommonParameter> commonParameter = mockEcKeyEngine(true)) {
-      InvocationTargetException exception = assertThrows(InvocationTargetException.class,
-          () -> invokePreValidate(manager, Collections.singletonList(transaction)));
+    InvocationTargetException exception = assertThrows(InvocationTargetException.class,
+        () -> invokePreValidate(manager, Collections.singletonList(transaction)));
 
-      assertTrue(exception.getCause() instanceof ValidateSignatureException);
-      assertEquals("Signature size is 64", exception.getCause().getMessage());
-      verify(validateSignService, never()).submit(any(Callable.class));
-    }
+    assertTrue(exception.getCause() instanceof ValidateSignatureException);
+    assertEquals("Signature size is 64", exception.getCause().getMessage());
+    verify(validateSignService, never()).submit(any(Callable.class));
   }
 
   @Test
@@ -83,11 +76,9 @@ public class ManagerSignaturePreValidationTest {
     when(dynamicPropertiesStore.allowStrictEcdsaValidation()).thenReturn(false);
     runSubmittedTasks(validateSignService);
 
-    try (MockedStatic<CommonParameter> commonParameter = mockEcKeyEngine(true)) {
-      invokePreValidate(manager, Collections.singletonList(transaction));
+    invokePreValidate(manager, Collections.singletonList(transaction));
 
-      verify(validateSignService).submit(any(Callable.class));
-    }
+    verify(validateSignService).submit(any(Callable.class));
   }
 
   @Test
@@ -100,11 +91,9 @@ public class ManagerSignaturePreValidationTest {
     when(dynamicPropertiesStore.allowStrictEcdsaValidation()).thenReturn(true);
     runSubmittedTasks(validateSignService);
 
-    try (MockedStatic<CommonParameter> commonParameter = mockEcKeyEngine(true)) {
-      invokePreValidate(manager, Collections.singletonList(transaction));
+    invokePreValidate(manager, Collections.singletonList(transaction));
 
-      verify(validateSignService).submit(any(Callable.class));
-    }
+    verify(validateSignService).submit(any(Callable.class));
   }
 
   private Manager createManager(ExecutorService validateSignService,
@@ -138,14 +127,6 @@ public class ManagerSignaturePreValidationTest {
       future.run();
       return future;
     });
-  }
-
-  private MockedStatic<CommonParameter> mockEcKeyEngine(boolean ecKeyEngine) {
-    CommonParameter parameter = mock(CommonParameter.class);
-    when(parameter.isECKeyCryptoEngine()).thenReturn(ecKeyEngine);
-    MockedStatic<CommonParameter> mockedStatic = mockStatic(CommonParameter.class);
-    mockedStatic.when(CommonParameter::getInstance).thenReturn(parameter);
-    return mockedStatic;
   }
 
   private void invokePreValidate(Manager manager, List<TransactionCapsule> transactions)
