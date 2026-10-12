@@ -114,8 +114,8 @@ public class GetTransactionByIdSolidityServletTest {
     assertEquals(0, rawData.getJSONArray("contract").size());
     assertEquals(ByteArray.toHexString(transaction.getRawData().toByteArray()),
         body.getString("raw_data_hex"));
-    assertEquals(Sha256Hash.of(Args.getInstance().isECKeyCryptoEngine(),
-        transaction.getRawData().toByteArray()).toString(), body.getString("txID"));
+    assertEquals(Sha256Hash.of(transaction.getRawData().toByteArray()).toString(),
+        body.getString("txID"));
     assertEquals(1, body.getJSONArray("signature").size());
     assertEquals(ByteArray.toHexString(signature.toByteArray()),
         body.getJSONArray("signature").getString(0));
