@@ -358,8 +358,11 @@ public class RpcApiService extends RpcService {
 
   /**
    * WalletSolidityApi is the full implementation of the {@code protocol.WalletSolidity} gRPC
-   * service. Every method here is read-only and also present on {@link WalletApi}, so each one
-   * delegates to the shared {@code WalletApi} singleton instead of repeating its body.
+   * service. Every method here is read-only and also present on {@link WalletApi}, so none repeats
+   * its body: most delegate to the shared {@code WalletApi} singleton, and six
+   * ({@code getTransactionCountByBlockNum}, {@code getRewardInfo}, {@code getBrokerageInfo},
+   * {@code getBurnTrx}, {@code triggerConstantContract}, {@code getBlock}) call the same
+   * {@code *Common} / {@code callContract} helpers {@code WalletApi} uses.
    */
   public class WalletSolidityApi extends WalletSolidityImplBase {
 

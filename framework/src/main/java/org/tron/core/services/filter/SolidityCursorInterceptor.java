@@ -10,6 +10,6 @@ import org.tron.core.db2.core.Chainbase;
 public class SolidityCursorInterceptor extends CursorServerInterceptor {
 
   public SolidityCursorInterceptor() {
-    this.cursor = Chainbase.Cursor.SOLIDITY;
+    super(Chainbase.Cursor.SOLIDITY);
   }
 }

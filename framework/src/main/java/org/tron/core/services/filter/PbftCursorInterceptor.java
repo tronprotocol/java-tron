@@ -10,6 +10,6 @@ import org.tron.core.db2.core.Chainbase;
 public class PbftCursorInterceptor extends CursorServerInterceptor {
 
   public PbftCursorInterceptor() {
-    this.cursor = Chainbase.Cursor.PBFT;
+    super(Chainbase.Cursor.PBFT);
   }
 }

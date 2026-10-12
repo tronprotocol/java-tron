@@ -25,14 +25,24 @@ import org.tron.core.db2.core.Chainbase;
  *
  * <p>The {@code finally} reset is mandatory: the fixed thread pool is reused, so a leftover cursor
  * leaks into the next call on that thread.
+ *
+ * <p>The SOLIDITY and PBFT ports register the shared {@code protocol.Database} and
+ * {@code protocol.WalletSolidity} services through this interceptor, so their method sets are
+ * defined by those proto services alone: a method added to {@code protocol.Database} is served on
+ * the HEAD, SOLIDITY and PBFT ports, and one added to {@code protocol.WalletSolidity} on both the
+ * SOLIDITY and PBFT ports. Keeping a method off one of these ports must be implemented explicitly.
  */
 public abstract class CursorServerInterceptor implements ServerInterceptor {
 
   @Autowired
   protected Manager dbManager;
 
-  /** Snapshot every call on this server reads from; set by the subclass. */
-  protected Chainbase.Cursor cursor;
+  /** Snapshot every call on this server reads from; fixed for the interceptor's lifetime. */
+  private final Chainbase.Cursor cursor;
+
+  protected CursorServerInterceptor(Chainbase.Cursor cursor) {
+    this.cursor = cursor;
+  }
 
   @Override
   public <Q, A> ServerCall.Listener<Q> interceptCall(
