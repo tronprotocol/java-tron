@@ -646,21 +646,21 @@ public class Util {
       throw new InvalidHttpParameterException(INVALID_ADDRESS_MSG);
     }
 
-    boolean hex = StringUtils.startsWith(addressStr, Constant.ADD_PRE_FIX_STRING_MAINNET);
+    boolean isHex = StringUtils.startsWith(addressStr, Constant.ADD_PRE_FIX_STRING_MAINNET);
     // bound the hex input before decoding, mirroring the base58 length short-circuit
-    if (hex && addressStr.length() != DecodeUtil.ADDRESS_SIZE) {
+    if (isHex && addressStr.length() != DecodeUtil.ADDRESS_SIZE) {
       throw new InvalidHttpParameterException(INVALID_ADDRESS_MSG);
     }
 
     byte[] address;
     try {
-      address = hex ? Hex.decode(addressStr) : decodeFromBase58Check(addressStr);
+      address = isHex ? Hex.decode(addressStr) : decodeFromBase58Check(addressStr);
     } catch (DecoderException | IllegalArgumentException exception) {
       // both decoders name the offending character and its offset, which is caller input
       throw new InvalidHttpParameterException(INVALID_ADDRESS_MSG);
     }
     // base58 is validated inside the decoder; hex used to be returned unchecked
-    if (address == null || (hex && !DecodeUtil.addressValid(address))) {
+    if (address == null || (isHex && !DecodeUtil.addressValid(address))) {
       throw new InvalidHttpParameterException(INVALID_ADDRESS_MSG);
     }
     return address;
