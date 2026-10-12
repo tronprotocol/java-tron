@@ -96,7 +96,8 @@ jobs:
 
       - name: Build
         # Bound worker concurrency while retaining parallelism within the 60-minute job limit.
-        run: ./gradlew clean build --no-daemon --max-workers=2 --info --stacktrace
+        # Execute tests on every retry instead of restoring their outputs from the build cache.
+        run: ./gradlew clean build --no-daemon --max-workers=2 --rerun-tasks --info --stacktrace
 
       - name: Toolkit jar smoke test
         run: |
@@ -153,7 +154,8 @@ jobs:
 
       - name: Build
         # Bound worker concurrency while retaining parallelism within the 60-minute job limit.
-        run: ./gradlew clean build --no-daemon --max-workers=2 --info --stacktrace
+        # Execute tests on every retry instead of restoring their outputs from the build cache.
+        run: ./gradlew clean build --no-daemon --max-workers=2 --rerun-tasks --info --stacktrace
 
       - name: Toolkit jar smoke test
         run: |
@@ -165,7 +167,7 @@ jobs:
           java -jar "$JAR" keystore --help
 
       - name: Test with RocksDB engine
-        run: ./gradlew :framework:testWithRocksDb --no-daemon --max-workers=2 --info --stacktrace
+        run: ./gradlew :framework:testWithRocksDb --no-daemon --max-workers=2 --rerun-tasks --info --stacktrace
 
       - name: Upload test diagnostics
         if: failure()
