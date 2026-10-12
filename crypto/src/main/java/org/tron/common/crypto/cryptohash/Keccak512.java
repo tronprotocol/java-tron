@@ -37,16 +37,14 @@ public class Keccak512 extends KeccakCore {
 
   @Override
   protected byte[] engineDigest() {
-    return digest();
+    return null;
   }
 
   @Override
   protected void engineUpdate(byte input) {
-    update(input);
   }
 
   @Override
   protected void engineUpdate(byte[] input, int offset, int len) {
-    update(input, offset, len);
   }
 }
