@@ -19,6 +19,7 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.jsonrpc.JsonRpcExecutionRevertedException;
 import org.tron.core.exception.jsonrpc.JsonRpcInternalException;
+import org.tron.core.exception.jsonrpc.JsonRpcInvalidParamsException;
 import org.tron.core.services.NodeInfoService;
 import org.tron.core.services.jsonrpc.TronJsonRpcImpl;
 import org.tron.core.services.jsonrpc.types.CallArguments;
@@ -52,6 +53,36 @@ public class JsonRpcCallAndEstimateGasTest {
       mockRpc = null;
     }
     CommonParameter.getInstance().setEstimateEnergy(originalEstimateEnergy);
+  }
+
+  @Test
+  public void testNullCallArgumentsRejectedAsInvalidParams() throws Exception {
+    mockRpc = new TronJsonRpcImpl(
+        mock(NodeInfoService.class), mock(Wallet.class), mock(Manager.class));
+
+    JsonRpcInvalidParamsException callError = assertThrows(JsonRpcInvalidParamsException.class,
+        () -> mockRpc.getCall(null, "latest"));
+    Assert.assertEquals("invalid params", callError.getMessage());
+
+    JsonRpcInvalidParamsException estimateError = assertThrows(JsonRpcInvalidParamsException.class,
+        () -> mockRpc.estimateGas(null));
+    Assert.assertEquals("invalid params", estimateError.getMessage());
+  }
+
+  @Test
+  public void testEstimateGasKeepsInvalidQuantityAndDataAsInvalidParams() throws Exception {
+    mockRpc = new TronJsonRpcImpl(
+        mock(NodeInfoService.class), mock(Wallet.class), mock(Manager.class));
+
+    CallArguments invalidQuantity = newCallArgs();
+    invalidQuantity.setValue("0xzz");
+    assertThrows(JsonRpcInvalidParamsException.class,
+        () -> mockRpc.estimateGas(invalidQuantity));
+
+    CallArguments invalidData = newCallArgs();
+    invalidData.setData("0xzz");
+    assertThrows(JsonRpcInvalidParamsException.class,
+        () -> mockRpc.estimateGas(invalidData));
   }
 
   @Test
@@ -291,8 +322,7 @@ public class JsonRpcCallAndEstimateGasTest {
           });
     }
 
-    TronJsonRpcImpl rpc = new TronJsonRpcImpl(mockNodeInfo, mockWallet);
-    rpc.setManager(mockManager);
+    TronJsonRpcImpl rpc = new TronJsonRpcImpl(mockNodeInfo, mockWallet, mockManager);
     return rpc;
   }
 
@@ -308,8 +338,7 @@ public class JsonRpcCallAndEstimateGasTest {
     when(mockWallet.triggerConstantContract(any(), any(), any(), any()))
         .thenThrow(vmException);
 
-    TronJsonRpcImpl rpc = new TronJsonRpcImpl(mockNodeInfo, mockWallet);
-    rpc.setManager(mockManager);
+    TronJsonRpcImpl rpc = new TronJsonRpcImpl(mockNodeInfo, mockWallet, mockManager);
     return rpc;
   }
 
@@ -336,8 +365,7 @@ public class JsonRpcCallAndEstimateGasTest {
               .build();
         });
 
-    TronJsonRpcImpl rpc = new TronJsonRpcImpl(mockNodeInfo, mockWallet);
-    rpc.setManager(mockManager);
+    TronJsonRpcImpl rpc = new TronJsonRpcImpl(mockNodeInfo, mockWallet, mockManager);
     return rpc;
   }
 
@@ -373,8 +401,7 @@ public class JsonRpcCallAndEstimateGasTest {
           });
     }
 
-    TronJsonRpcImpl rpc = new TronJsonRpcImpl(mockNodeInfo, mockWallet);
-    rpc.setManager(mockManager);
+    TronJsonRpcImpl rpc = new TronJsonRpcImpl(mockNodeInfo, mockWallet, mockManager);
     return rpc;
   }
 }

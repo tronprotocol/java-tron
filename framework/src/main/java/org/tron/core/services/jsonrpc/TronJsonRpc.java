@@ -78,9 +78,17 @@ public interface TronJsonRpc {
       throws JsonRpcInvalidParamsException, JsonRpcPrunedHistoryException;
 
   @JsonRpcMethod("net_version")
+  @JsonRpcErrors({
+      @JsonRpcError(exception = JsonRpcInternalException.class, code = -32001,
+          message = "Chain identity unavailable", data = "{}"),
+  })
   String getNetVersion() throws JsonRpcInternalException;
 
   @JsonRpcMethod("eth_chainId")
+  @JsonRpcErrors({
+      @JsonRpcError(exception = JsonRpcInternalException.class, code = -32001,
+          message = "Chain identity unavailable", data = "{}"),
+  })
   String ethChainId() throws JsonRpcInternalException;
 
   @JsonRpcMethod("net_listening")
@@ -319,10 +327,9 @@ public interface TronJsonRpc {
   @JsonRpcErrors({
       @JsonRpcError(exception = JsonRpcMethodNotFoundException.class, code = -32601, data = "{}"),
       @JsonRpcError(exception = JsonRpcInvalidParamsException.class, code = -32602, data = "{}"),
-      @JsonRpcError(exception = ItemNotFoundException.class, code = -32000, data = "{}"),
   })
   boolean uninstallFilter(String filterId) throws JsonRpcInvalidParamsException,
-      JsonRpcMethodNotFoundException, ItemNotFoundException;
+      JsonRpcMethodNotFoundException;
 
   @JsonRpcMethod("eth_getFilterChanges")
   @JsonRpcErrors({
@@ -341,8 +348,10 @@ public interface TronJsonRpc {
       @JsonRpcError(exception = JsonRpcTooManyResultException.class, code = -32005, data = "{}"),
       @JsonRpcError(exception = JsonRpcPrunedHistoryException.class, code = 4444, data = "{}"),
       @JsonRpcError(exception = BadItemException.class, code = -32000, data = "{}"),
-      @JsonRpcError(exception = ExecutionException.class, code = -32000, data = "{}"),
-      @JsonRpcError(exception = InterruptedException.class, code = -32000, data = "{}"),
+      @JsonRpcError(exception = ExecutionException.class, code = -32000,
+          message = "Internal error", data = "{}"),
+      @JsonRpcError(exception = InterruptedException.class, code = -32000,
+          message = "Internal error", data = "{}"),
       @JsonRpcError(exception = ItemNotFoundException.class, code = -32000, data = "{}"),
   })
   LogFilterElement[] getLogs(FilterRequest fr) throws JsonRpcInvalidParamsException,
@@ -356,8 +365,10 @@ public interface TronJsonRpc {
       @JsonRpcError(exception = JsonRpcMethodNotFoundException.class, code = -32601, data = "{}"),
       @JsonRpcError(exception = JsonRpcTooManyResultException.class, code = -32005, data = "{}"),
       @JsonRpcError(exception = BadItemException.class, code = -32000, data = "{}"),
-      @JsonRpcError(exception = ExecutionException.class, code = -32000, data = "{}"),
-      @JsonRpcError(exception = InterruptedException.class, code = -32000, data = "{}"),
+      @JsonRpcError(exception = ExecutionException.class, code = -32000,
+          message = "Internal error", data = "{}"),
+      @JsonRpcError(exception = InterruptedException.class, code = -32000,
+          message = "Internal error", data = "{}"),
       @JsonRpcError(exception = ItemNotFoundException.class, code = -32000, data = "{}"),
   })
   LogFilterElement[] getFilterLogs(String filterId) throws JsonRpcInvalidParamsException,

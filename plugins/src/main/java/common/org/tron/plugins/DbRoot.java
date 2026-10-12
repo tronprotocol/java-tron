@@ -109,8 +109,7 @@ public class DbRoot implements Callable<Integer> {
   }
 
   private Sha256Hash getHash(Map.Entry<byte[], byte[]> entry) {
-    return Sha256Hash.of(true,
-        Bytes.concat(entry.getKey(), entry.getValue()));
+    return Sha256Hash.of(Bytes.concat(entry.getKey(), entry.getValue()));
   }
 
   private void printInfo(Ret ret) {
