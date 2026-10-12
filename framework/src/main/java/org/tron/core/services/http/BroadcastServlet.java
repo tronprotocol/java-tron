@@ -28,7 +28,8 @@ public class BroadcastServlet extends RateLimiterServlet {
       String transactionID = ByteArray
           .toHexString(transactionCapsule.getTransactionId().getBytes());
       GrpcAPI.Return result = wallet.broadcastTransaction(transaction);
-      JSONObject res = JSONObject.parseObject(JsonFormat.printToString(result, params.isVisible()));
+      JSONObject res = JSONObject.outboundParseObject(
+          JsonFormat.printToString(result, params.isVisible()));
       res.put("txid", transactionID);
       response.getWriter().println(res.toJSONString());
     } catch (Exception e) {

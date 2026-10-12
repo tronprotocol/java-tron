@@ -6,13 +6,16 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.tron.common.es.ExecutorServiceManager;
 import org.tron.common.logsfilter.nativequeue.NativeMessageQueue;
+import org.tron.common.utils.PublicMethod;
 import org.zeromq.SocketType;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
 
 public class NativeMessageQueueTest {
 
-  public int bindPort = 5555;
+  // Random port avoids fixed 5555 conflicts; note invalidBindPort/invalidSendLength still
+  // remap to DEFAULT_BIND_PORT (5555) in production start() — known low-risk residual.
+  public int bindPort = PublicMethod.chooseRandomPort();
   public String dataToSend = "################";
   public String topic = "testTopic";
 

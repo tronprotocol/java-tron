@@ -38,12 +38,12 @@ public class KeystoreUpdateTest {
     String newPassword = "newpass456";
 
     SignInterface keyPair = SignUtils.getGeneratedRandomSign(
-        SecureRandom.getInstance("NativePRNG"), true);
+        SecureRandom.getInstance("NativePRNG"));
     byte[] originalKey = keyPair.getPrivateKey();
     String fileName = WalletUtils.generateWalletFile(oldPassword, keyPair, dir, true);
 
     Credentials creds = WalletUtils.loadCredentials(oldPassword,
-        new File(dir, fileName), true);
+        new File(dir, fileName));
     String address = creds.getAddress();
 
     File pwFile = tempFolder.newFile("passwords.txt");
@@ -60,7 +60,7 @@ public class KeystoreUpdateTest {
 
     // Verify: new password works and key survives
     Credentials updated = WalletUtils.loadCredentials(newPassword,
-        new File(dir, fileName), true);
+        new File(dir, fileName));
     assertArrayEquals("Key must survive password change",
         originalKey, updated.getSignInterface().getPrivateKey());
 
@@ -76,11 +76,11 @@ public class KeystoreUpdateTest {
     String password = "correct123";
 
     SignInterface keyPair = SignUtils.getGeneratedRandomSign(
-        SecureRandom.getInstance("NativePRNG"), true);
+        SecureRandom.getInstance("NativePRNG"));
     String fileName = WalletUtils.generateWalletFile(password, keyPair, dir, true);
 
     Credentials creds = WalletUtils.loadCredentials(password,
-        new File(dir, fileName), true);
+        new File(dir, fileName));
     String address = creds.getAddress();
 
     File pwFile = tempFolder.newFile("wrong.txt");
@@ -101,7 +101,7 @@ public class KeystoreUpdateTest {
 
     // Verify: original password still works (file unchanged)
     Credentials unchanged = WalletUtils.loadCredentials(password,
-        new File(dir, fileName), true);
+        new File(dir, fileName));
     assertEquals(address, unchanged.getAddress());
   }
 
@@ -111,7 +111,7 @@ public class KeystoreUpdateTest {
     String password = "test123456";
 
     SignInterface keyPair = SignUtils.getGeneratedRandomSign(
-        SecureRandom.getInstance("NativePRNG"), true);
+        SecureRandom.getInstance("NativePRNG"));
     WalletUtils.generateWalletFile(password, keyPair, dir, true);
 
     File pwFile = tempFolder.newFile("pw.txt");
@@ -137,11 +137,11 @@ public class KeystoreUpdateTest {
     String password = "test123456";
 
     SignInterface keyPair = SignUtils.getGeneratedRandomSign(
-        SecureRandom.getInstance("NativePRNG"), true);
+        SecureRandom.getInstance("NativePRNG"));
     String fileName = WalletUtils.generateWalletFile(password, keyPair, dir, true);
 
     Credentials creds = WalletUtils.loadCredentials(password,
-        new File(dir, fileName), true);
+        new File(dir, fileName));
 
     File pwFile = tempFolder.newFile("shortpw.txt");
     Files.write(pwFile.toPath(),
@@ -167,11 +167,11 @@ public class KeystoreUpdateTest {
     String newPassword = "newpass456";
 
     SignInterface keyPair = SignUtils.getGeneratedRandomSign(
-        SecureRandom.getInstance("NativePRNG"), true);
+        SecureRandom.getInstance("NativePRNG"));
     byte[] originalKey = keyPair.getPrivateKey();
     String fileName = WalletUtils.generateWalletFile(oldPassword, keyPair, dir, true);
     Credentials creds = WalletUtils.loadCredentials(oldPassword,
-        new File(dir, fileName), true);
+        new File(dir, fileName));
 
     File pwFile = tempFolder.newFile("crlf.txt");
     Files.write(pwFile.toPath(),
@@ -186,7 +186,7 @@ public class KeystoreUpdateTest {
     assertEquals("Update with CRLF password file should succeed", 0, exitCode);
 
     Credentials updated = WalletUtils.loadCredentials(newPassword,
-        new File(dir, fileName), true);
+        new File(dir, fileName));
     assertArrayEquals("Key must survive update with CRLF passwords",
         originalKey, updated.getSignInterface().getPrivateKey());
   }
@@ -198,10 +198,10 @@ public class KeystoreUpdateTest {
     String newPassword = "newpass456";
 
     SignInterface keyPair = SignUtils.getGeneratedRandomSign(
-        SecureRandom.getInstance("NativePRNG"), true);
+        SecureRandom.getInstance("NativePRNG"));
     String fileName = WalletUtils.generateWalletFile(oldPassword, keyPair, dir, true);
     Credentials creds = WalletUtils.loadCredentials(oldPassword,
-        new File(dir, fileName), true);
+        new File(dir, fileName));
 
     File pwFile = tempFolder.newFile("pw-json.txt");
     Files.write(pwFile.toPath(),
@@ -234,10 +234,10 @@ public class KeystoreUpdateTest {
     String password = "test123456";
 
     SignInterface keyPair = SignUtils.getGeneratedRandomSign(
-        SecureRandom.getInstance("NativePRNG"), true);
+        SecureRandom.getInstance("NativePRNG"));
     String fileName = WalletUtils.generateWalletFile(password, keyPair, dir, true);
     Credentials creds = WalletUtils.loadCredentials(password,
-        new File(dir, fileName), true);
+        new File(dir, fileName));
 
     Files.write(new File(dir, "corrupted.json").toPath(),
         "not valid json{{{".getBytes(StandardCharsets.UTF_8));
@@ -267,10 +267,10 @@ public class KeystoreUpdateTest {
     String password = "test123456";
 
     SignInterface keyPair = SignUtils.getGeneratedRandomSign(
-        SecureRandom.getInstance("NativePRNG"), true);
+        SecureRandom.getInstance("NativePRNG"));
     String fileName = WalletUtils.generateWalletFile(password, keyPair, dir, true);
     Credentials creds = WalletUtils.loadCredentials(password,
-        new File(dir, fileName), true);
+        new File(dir, fileName));
 
     File pwFile = tempFolder.newFile("oneline.txt");
     Files.write(pwFile.toPath(),
@@ -299,11 +299,11 @@ public class KeystoreUpdateTest {
     String oldPassword = "oldpass123";
 
     SignInterface keyPair = SignUtils.getGeneratedRandomSign(
-        SecureRandom.getInstance("NativePRNG"), true);
+        SecureRandom.getInstance("NativePRNG"));
     byte[] originalKey = keyPair.getPrivateKey();
     String fileName = WalletUtils.generateWalletFile(oldPassword, keyPair, dir, true);
     Credentials creds = WalletUtils.loadCredentials(oldPassword,
-        new File(dir, fileName), true);
+        new File(dir, fileName));
 
     // Snapshot the keystore bytes so we can verify the file is untouched.
     byte[] beforeBytes = Files.readAllBytes(new File(dir, fileName).toPath());
@@ -331,7 +331,7 @@ public class KeystoreUpdateTest {
 
     // Verify: original password still decrypts the keystore
     Credentials unchanged = WalletUtils.loadCredentials(oldPassword,
-        new File(dir, fileName), true);
+        new File(dir, fileName));
     assertArrayEquals("Original key must still be recoverable with old password",
         originalKey, unchanged.getSignInterface().getPrivateKey());
   }
@@ -342,10 +342,10 @@ public class KeystoreUpdateTest {
     String password = "test123456";
 
     SignInterface keyPair = SignUtils.getGeneratedRandomSign(
-        SecureRandom.getInstance("NativePRNG"), true);
+        SecureRandom.getInstance("NativePRNG"));
     String fileName = WalletUtils.generateWalletFile(password, keyPair, dir, true);
     Credentials creds = WalletUtils.loadCredentials(password,
-        new File(dir, fileName), true);
+        new File(dir, fileName));
 
     StringWriter err = new StringWriter();
     CommandLine cmd = new CommandLine(new Toolkit());
@@ -364,10 +364,10 @@ public class KeystoreUpdateTest {
     String password = "test123456";
 
     SignInterface keyPair = SignUtils.getGeneratedRandomSign(
-        SecureRandom.getInstance("NativePRNG"), true);
+        SecureRandom.getInstance("NativePRNG"));
     String fileName = WalletUtils.generateWalletFile(password, keyPair, dir, true);
     Credentials creds = WalletUtils.loadCredentials(password,
-        new File(dir, fileName), true);
+        new File(dir, fileName));
 
     StringWriter err = new StringWriter();
     CommandLine cmd = new CommandLine(new Toolkit());
@@ -382,44 +382,12 @@ public class KeystoreUpdateTest {
   }
 
   @Test
-  public void testUpdateSm2Keystore() throws Exception {
-    File dir = tempFolder.newFolder("keystore-sm2");
-    String oldPassword = "oldpass123";
-    String newPassword = "newpass456";
-
-    SignInterface keyPair = SignUtils.getGeneratedRandomSign(
-        SecureRandom.getInstance("NativePRNG"), false);
-    byte[] originalKey = keyPair.getPrivateKey();
-    String fileName = WalletUtils.generateWalletFile(oldPassword, keyPair, dir, true);
-    Credentials creds = WalletUtils.loadCredentials(oldPassword,
-        new File(dir, fileName), false);
-
-    File pwFile = tempFolder.newFile("pw-sm2.txt");
-    Files.write(pwFile.toPath(),
-        (oldPassword + "\n" + newPassword).getBytes(StandardCharsets.UTF_8));
-    makeOwnerOnly(pwFile);
-
-    CommandLine cmd = new CommandLine(new Toolkit());
-    int exitCode = cmd.execute("keystore", "update", creds.getAddress(),
-        "--keystore-dir", dir.getAbsolutePath(),
-        "--password-file", pwFile.getAbsolutePath(),
-        "--sm2");
-
-    assertEquals("SM2 keystore update should succeed", 0, exitCode);
-
-    Credentials updated = WalletUtils.loadCredentials(newPassword,
-        new File(dir, fileName), false);
-    assertArrayEquals("SM2 key must survive password change",
-        originalKey, updated.getSignInterface().getPrivateKey());
-  }
-
-  @Test
   public void testUpdateMultipleKeystoresSameAddress() throws Exception {
     File dir = tempFolder.newFolder("keystore-multi");
     String password = "test123456";
 
     SignInterface keyPair = SignUtils.getGeneratedRandomSign(
-        SecureRandom.getInstance("NativePRNG"), true);
+        SecureRandom.getInstance("NativePRNG"));
     String address = Credentials.create(keyPair).getAddress();
 
     // Create two keystores for the same address via direct API
@@ -453,10 +421,10 @@ public class KeystoreUpdateTest {
     String password = "test123456";
 
     SignInterface keyPair = SignUtils.getGeneratedRandomSign(
-        SecureRandom.getInstance("NativePRNG"), true);
+        SecureRandom.getInstance("NativePRNG"));
     String fileName = WalletUtils.generateWalletFile(password, keyPair, dir, true);
     Credentials creds = WalletUtils.loadCredentials(password,
-        new File(dir, fileName), true);
+        new File(dir, fileName));
 
     // Create a password file > 1KB
     File pwFile = tempFolder.newFile("bigpw.txt");
@@ -484,11 +452,11 @@ public class KeystoreUpdateTest {
     String newPassword = "newpass456";
 
     SignInterface keyPair = SignUtils.getGeneratedRandomSign(
-        SecureRandom.getInstance("NativePRNG"), true);
+        SecureRandom.getInstance("NativePRNG"));
     byte[] originalKey = keyPair.getPrivateKey();
     String fileName = WalletUtils.generateWalletFile(oldPassword, keyPair, dir, true);
     Credentials creds = WalletUtils.loadCredentials(oldPassword,
-        new File(dir, fileName), true);
+        new File(dir, fileName));
 
     // Password file with UTF-8 BOM
     File pwFile = tempFolder.newFile("bom.txt");
@@ -504,7 +472,7 @@ public class KeystoreUpdateTest {
     assertEquals("Update with BOM password file should succeed", 0, exitCode);
 
     Credentials updated = WalletUtils.loadCredentials(newPassword,
-        new File(dir, fileName), true);
+        new File(dir, fileName));
     assertArrayEquals("Key must survive update with BOM password file",
         originalKey, updated.getSignInterface().getPrivateKey());
   }
@@ -558,11 +526,11 @@ public class KeystoreUpdateTest {
     String newPassword = "newpass456";
 
     SignInterface keyPair = SignUtils.getGeneratedRandomSign(
-        SecureRandom.getInstance("NativePRNG"), true);
+        SecureRandom.getInstance("NativePRNG"));
     byte[] originalKey = keyPair.getPrivateKey();
     String fileName = WalletUtils.generateWalletFile(oldPassword, keyPair, dir, true);
     Credentials creds = WalletUtils.loadCredentials(oldPassword,
-        new File(dir, fileName), true);
+        new File(dir, fileName));
 
     // Password file with old Mac line endings (\r only)
     File pwFile = tempFolder.newFile("cr.txt");
@@ -578,7 +546,7 @@ public class KeystoreUpdateTest {
     assertEquals("Update with old Mac CR line endings should succeed", 0, exitCode);
 
     Credentials updated = WalletUtils.loadCredentials(newPassword,
-        new File(dir, fileName), true);
+        new File(dir, fileName));
     assertArrayEquals("Key must survive update with CR passwords",
         originalKey, updated.getSignInterface().getPrivateKey());
   }
@@ -589,7 +557,7 @@ public class KeystoreUpdateTest {
     String password = "test123456";
 
     SignInterface keyPair = SignUtils.getGeneratedRandomSign(
-        SecureRandom.getInstance("NativePRNG"), true);
+        SecureRandom.getInstance("NativePRNG"));
     String address = Credentials.create(keyPair).getAddress();
 
     // Create a JSON file with correct address but wrong version
@@ -623,7 +591,7 @@ public class KeystoreUpdateTest {
     // Create a real keystore, then tamper with the address field to simulate
     // a spoofed keystore that claims a different address than its encrypted key.
     SignInterface keyPair = SignUtils.getGeneratedRandomSign(
-        SecureRandom.getInstance("NativePRNG"), true);
+        SecureRandom.getInstance("NativePRNG"));
     String fileName = WalletUtils.generateWalletFile(password, keyPair, dir, true);
     File keystoreFile = new File(dir, fileName);
 
@@ -666,7 +634,7 @@ public class KeystoreUpdateTest {
     String newPassword = "newpass456";
 
     SignInterface keyPair = SignUtils.getGeneratedRandomSign(
-        SecureRandom.getInstance("NativePRNG"), true);
+        SecureRandom.getInstance("NativePRNG"));
     String fileName = WalletUtils.generateWalletFile(oldPassword, keyPair, dir, true);
     String originalAddress = Credentials.create(keyPair).getAddress();
 
@@ -705,10 +673,10 @@ public class KeystoreUpdateTest {
     String newPassword = "newpass456";
 
     SignInterface keyPair = SignUtils.getGeneratedRandomSign(
-        SecureRandom.getInstance("NativePRNG"), true);
+        SecureRandom.getInstance("NativePRNG"));
     String fileName = WalletUtils.generateWalletFile(oldPassword, keyPair, dir, true);
     Credentials creds = WalletUtils.loadCredentials(oldPassword,
-        new File(dir, fileName), true);
+        new File(dir, fileName));
 
     // Deliberately loosen to 0644 before update
     java.nio.file.Path keystorePath = new File(dir, fileName).toPath();
@@ -750,10 +718,10 @@ public class KeystoreUpdateTest {
     String realPassword = "realpass123";
 
     SignInterface keyPair = SignUtils.getGeneratedRandomSign(
-        SecureRandom.getInstance("NativePRNG"), true);
+        SecureRandom.getInstance("NativePRNG"));
     String fileName = WalletUtils.generateWalletFile(realPassword, keyPair, dir, true);
     Credentials creds = WalletUtils.loadCredentials(realPassword,
-        new File(dir, fileName), true);
+        new File(dir, fileName));
 
     // Password with internal whitespace that is NOT the real password
     File pwFile = tempFolder.newFile("pw-ws.txt");
@@ -782,10 +750,10 @@ public class KeystoreUpdateTest {
     String realPassword = "realpass123";
 
     SignInterface keyPair = SignUtils.getGeneratedRandomSign(
-        SecureRandom.getInstance("NativePRNG"), true);
+        SecureRandom.getInstance("NativePRNG"));
     String fileName = WalletUtils.generateWalletFile(realPassword, keyPair, dir, true);
     Credentials creds = WalletUtils.loadCredentials(realPassword,
-        new File(dir, fileName), true);
+        new File(dir, fileName));
 
     // Wrong password with no whitespace
     File pwFile = tempFolder.newFile("pw-nows.txt");
@@ -817,10 +785,10 @@ public class KeystoreUpdateTest {
     String newPassword = "newpass456";
 
     SignInterface keyPair = SignUtils.getGeneratedRandomSign(
-        SecureRandom.getInstance("NativePRNG"), true);
+        SecureRandom.getInstance("NativePRNG"));
     String fileName = WalletUtils.generateWalletFile(oldPassword, keyPair, dir, true);
     Credentials creds = WalletUtils.loadCredentials(oldPassword,
-        new File(dir, fileName), true);
+        new File(dir, fileName));
 
     File target = tempFolder.newFile("outside.json");
     Files.write(target.toPath(),

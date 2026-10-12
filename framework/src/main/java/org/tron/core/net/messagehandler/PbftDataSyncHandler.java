@@ -130,7 +130,7 @@ public class PbftDataSyncHandler implements TronMsgHandler, Closeable {
             Param.getInstance().getAgreeNodeCount());
         return false;
       }
-      byte[] dataHash = Sha256Hash.hash(true, raw.toByteArray());
+      byte[] dataHash = Sha256Hash.hash(raw.toByteArray());
       Set<ByteString> srSet = Sets.newHashSet(currentSrList);
       List<Future<Boolean>> futureList = new ArrayList<>();
       for (ByteString sign : srSignList) {

@@ -173,7 +173,7 @@ public class WalletDecryptBoundsTest {
       fail("missing kdfparams must be tolerated, got: " + e.getMessage());
     }
     assertThrows(CipherException.class,
-        () -> Wallet.decrypt("password123", walletFile, true));
+        () -> Wallet.decrypt("password123", walletFile));
   }
 
   @Test
@@ -185,7 +185,7 @@ public class WalletDecryptBoundsTest {
       fail("missing kdfparams must be tolerated, got: " + e.getMessage());
     }
     assertThrows(CipherException.class,
-        () -> Wallet.decrypt("password123", walletFile, true));
+        () -> Wallet.decrypt("password123", walletFile));
   }
 
   // ---------- hostile pbkdf2 ----------
@@ -256,7 +256,7 @@ public class WalletDecryptBoundsTest {
     Wallet.validate(walletFile);
 
     CipherException err = assertThrows(CipherException.class,
-        () -> Wallet.decrypt("password123", walletFile, true));
+        () -> Wallet.decrypt("password123", walletFile));
     assertEquals("Invalid password provided", err.getMessage());
   }
 
@@ -267,7 +267,7 @@ public class WalletDecryptBoundsTest {
     // p=16 exceeds the SCRYPT_P_MAX=8 bound that validate()/decrypt() enforce,
     // so create(n=2^18, p=16) would previously produce a wallet file that only
     // this class would later refuse to decrypt. Must throw before any KDF run.
-    SignInterface keyPair = SignUtils.getGeneratedRandomSign(Utils.getRandom(), true);
+    SignInterface keyPair = SignUtils.getGeneratedRandomSign(Utils.getRandom());
 
     CipherException err = assertThrows(CipherException.class,
         () -> Wallet.create("password123", keyPair, 1 << 18, 16));
@@ -278,13 +278,13 @@ public class WalletDecryptBoundsTest {
   public void testCreateAcceptsInBoundsKdfParams() throws Exception {
     // n=2^12 (4096), p=1 is well within the enforced bounds; create must
     // succeed and the resulting file must pass validate() and decrypt().
-    SignInterface keyPair = SignUtils.getGeneratedRandomSign(Utils.getRandom(), true);
+    SignInterface keyPair = SignUtils.getGeneratedRandomSign(Utils.getRandom());
     byte[] originalKey = keyPair.getPrivateKey();
 
     WalletFile walletFile = Wallet.create("password123", keyPair, 1 << 12, 1);
     Wallet.validate(walletFile);
 
-    SignInterface recovered = Wallet.decrypt("password123", walletFile, true);
+    SignInterface recovered = Wallet.decrypt("password123", walletFile);
     assertArrayEquals(originalKey, recovered.getPrivateKey());
   }
 }
