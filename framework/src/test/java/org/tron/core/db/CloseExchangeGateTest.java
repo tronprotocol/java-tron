@@ -119,7 +119,7 @@ public class CloseExchangeGateTest extends BaseTest {
     // Provide a valid local witness key (see OWNER_PRIVATE_KEY javadoc).
     LocalWitnesses localWitnesses = new LocalWitnesses();
     localWitnesses.setPrivateKeys(Arrays.asList(OWNER_PRIVATE_KEY));
-    localWitnesses.initWitnessAccountAddress(null, true);
+    localWitnesses.initWitnessAccountAddress(null);
     Args.setLocalWitnesses(localWitnesses);
     registerLocalWitnessForConsensus();
     AccountCapsule ownerAccountFirstCapsule =
