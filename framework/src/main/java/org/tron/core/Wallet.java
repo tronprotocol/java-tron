@@ -4336,7 +4336,7 @@ public class Wallet {
     try {
       value = getBigIntegerFromString(request.getAmount());
     } catch (IllegalArgumentException e) {
-      throw new ContractValidateException("invalid amount");
+      throw new ContractValidateException("invalid amount", e);
     }
     checkBigIntegerRange(value);
     byte[] transparentToAddress = request.getTransparentToAddress().toByteArray();

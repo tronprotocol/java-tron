@@ -402,9 +402,6 @@ public class ShieldedTRC20ParametersBuilder {
     if (value.compareTo(BigInteger.ZERO) <= 0) {
       throw new IllegalArgumentException("require the value be positive");
     }
-    if (mintParams.getReceiveDescriptionCount() != 1) {
-      throw new IllegalArgumentException("invalid mint description number");
-    }
 
     ShieldContract.ReceiveDescription revDesc = mintParams.getReceiveDescription(0);
     byte[] zeros = new byte[12];

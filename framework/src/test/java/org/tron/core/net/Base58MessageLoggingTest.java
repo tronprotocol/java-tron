@@ -53,6 +53,7 @@ public class Base58MessageLoggingTest {
 
   private final Logger logger = (Logger) LoggerFactory.getLogger("net");
   private final List<String> logMessages = new ArrayList<>();
+  private final Thread testThread = Thread.currentThread();
   private Level oldLevel;
   private P2pConfig oldConfig;
   private PbftInterface oldPbftInterface;
@@ -65,6 +66,10 @@ public class Base58MessageLoggingTest {
     appender = new AppenderBase<ILoggingEvent>() {
       @Override
       protected void append(ILoggingEvent event) {
+        // Background threads left by other tests in the same JVM also log to "net".
+        if (Thread.currentThread() != testThread) {
+          return;
+        }
         // Force formatting inside the receive path, as a normal logging appender does.
         logMessages.add(event.getFormattedMessage());
       }

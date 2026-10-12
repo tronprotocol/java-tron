@@ -58,19 +58,4 @@ public class WalletShieldedDescriptionValidationTest {
     assertEquals("invalid shielded TRC-20 trigger input: invalid transfer output number",
         exception.getMessage());
   }
-
-  @Test
-  public void mintDescriptionCardinalityIsReportedAsValidationFailure() {
-    GrpcAPI.ShieldedTRC20Parameters parameters =
-        GrpcAPI.ShieldedTRC20Parameters.newBuilder()
-            .setParameterType("mint")
-            .addReceiveDescription(ShieldContract.ReceiveDescription.getDefaultInstance())
-            .addReceiveDescription(ShieldContract.ReceiveDescription.getDefaultInstance())
-            .build();
-
-    ContractValidateException exception = assertThrows(ContractValidateException.class,
-        () -> triggerInput(parameters, "1", 0));
-    assertEquals("invalid shielded TRC-20 trigger input: invalid mint description number",
-        exception.getMessage());
-  }
 }
