@@ -17,6 +17,7 @@ import org.tron.common.application.TronApplicationContext;
 import org.tron.common.crypto.SignInterface;
 import org.tron.common.crypto.SignUtils;
 import org.tron.common.utils.FileUtil;
+import org.tron.common.utils.PeerManagerStateResetter;
 import org.tron.common.utils.PublicMethod;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.common.utils.Sha256Hash;
@@ -46,6 +47,7 @@ public class PbftMsgHandlerTest {
 
   @BeforeClass
   public static void init() {
+    PeerManagerStateResetter.reset();
     Args.setParam(new String[] {"--output-directory", dbPath, "--debug"},
         TestConstants.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);
@@ -92,10 +94,9 @@ public class PbftMsgHandlerTest {
         .setData(blockCapsule.getBlockId().getByteString());
     Protocol.PBFTMessage.Raw raw = rawBuilder.build();
     builder.setRawData(raw);
-    SignInterface sign = SignUtils.fromPrivate(Hex.decode(PublicMethod.getRandomPrivateKey()),
-        true);
+    SignInterface sign = SignUtils.fromPrivate(Hex.decode(PublicMethod.getRandomPrivateKey()));
     builder.setSignature(ByteString.copyFrom(sign.Base64toBytes(sign.signHash(
-        Sha256Hash.hash(true, raw.toByteArray())))));
+        Sha256Hash.hash(raw.toByteArray())))));
     Protocol.PBFTMessage message = builder.build();
     pbftMessage.setType(MessageTypes.PBFT_MSG.asByte());
     pbftMessage.setPbftMessage(message);

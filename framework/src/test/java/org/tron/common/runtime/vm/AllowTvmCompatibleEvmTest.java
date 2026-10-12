@@ -306,6 +306,7 @@ public class AllowTvmCompatibleEvmTest extends VMTestBase {
     VMConfig.initAllowTvmConstantinople(0);
     VMConfig.initAllowTvmSolidity059(0);
     VMConfig.initAllowTvmIstanbul(0);
+    VMConfig.initAllowTvmLondon(0);
     VMConfig.initAllowTvmCompatibleEvm(0);
   }
 

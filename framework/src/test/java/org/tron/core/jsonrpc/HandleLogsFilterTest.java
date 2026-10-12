@@ -27,7 +27,7 @@ public class HandleLogsFilterTest {
 
   @Before
   public void setUp() {
-    jsonRpc = new TronJsonRpcImpl(null, null);
+    jsonRpc = new TronJsonRpcImpl(null, null, null);
   }
 
   @After

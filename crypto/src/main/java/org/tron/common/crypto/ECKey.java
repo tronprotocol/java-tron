@@ -871,7 +871,7 @@ public class ECKey implements Serializable, SignInterface {
     return Arrays.hashCode(getPubKey());
   }
 
-  public static class ECDSASignature implements SignatureInterface {
+  public static class ECDSASignature {
 
     /**
      * The two components of the signature.

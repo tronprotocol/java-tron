@@ -1,11 +1,10 @@
 apply plugin: 'com.google.protobuf'
 apply from: 'protoLint.gradle'
 
-def protobufVersion = '3.25.8'
 
 dependencies {
-    api group: 'com.google.protobuf', name: 'protobuf-java', version: protobufVersion
-    api group: 'com.google.protobuf', name: 'protobuf-java-util', version: protobufVersion
+    api group: 'com.google.protobuf', name: 'protobuf-java', version: rootProject.protobufVersion
+    api group: 'com.google.protobuf', name: 'protobuf-java-util', version: rootProject.protobufVersion
     api group: 'net.jcip', name: 'jcip-annotations', version: '1.0'
 
 //    checkstyleConfig "com.puppycrawl.tools:checkstyle:${versions.checkstyle}"
@@ -41,7 +40,7 @@ sourceSets {
 protobuf {
     generatedFilesBaseDir = "$projectDir/src/"
     protoc {
-        artifact = "com.google.protobuf:protoc:${protobufVersion}"
+        artifact = "com.google.protobuf:protoc:${rootProject.protobufVersion}"
     }
 
     plugins {

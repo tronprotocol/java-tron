@@ -12,6 +12,8 @@ import static org.mockito.Mockito.mock;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.googlecode.jsonrpc4j.JsonRpcServer;
 import java.io.IOException;
 import java.io.InputStream;
@@ -413,6 +415,40 @@ public class JsonRpcServletTest {
     assertNotEquals("JSON parse error", message);
     assertTrue("expected a token-count constraint message, got: " + message,
         message.contains("Token count") && message.contains("exceeds the maximum allowed"));
+  }
+
+  @Test
+  public void batchResponse_preservesResultsWithinByteLimit() throws Exception {
+    CommonParameter.getInstance().jsonRpcMaxBatchSize = 2;
+    ObjectNode scalarResponse = MAPPER.createObjectNode();
+    scalarResponse.put("jsonrpc", "2.0");
+    scalarResponse.put("result", "ok");
+    scalarResponse.put("id", 41);
+    ObjectNode arrayResponse = MAPPER.createObjectNode();
+    arrayResponse.put("jsonrpc", "2.0");
+    ArrayNode result = arrayResponse.putArray("result");
+    result.add(0).add(1).add(2);
+    arrayResponse.put("id", 42);
+    byte[] scalarBytes = MAPPER.writeValueAsBytes(scalarResponse);
+    byte[] arrayBytes = MAPPER.writeValueAsBytes(arrayResponse);
+    // Include the batch brackets and comma; the response fits the byte limit exactly.
+    CommonParameter.getInstance().jsonRpcMaxResponseSize =
+        scalarBytes.length + arrayBytes.length + 3;
+    doAnswer(inv -> {
+      InputStream in = inv.getArgument(0);
+      OutputStream out = inv.getArgument(1);
+      JsonNode request = MAPPER.readTree(in);
+      out.write(request.get("id").asInt() == 41 ? scalarBytes : arrayBytes);
+      return 0;
+    }).when(mockRpcServer).handleRequest(any(InputStream.class), any(OutputStream.class));
+
+    MockHttpServletResponse resp = doPost("[{\"id\":41},{\"id\":42}]");
+    assertEquals(200, resp.getStatus());
+    JsonNode body = MAPPER.readTree(resp.getContentAsByteArray());
+    assertTrue(body.isArray());
+    assertEquals(2, body.size());
+    assertEquals(scalarResponse, body.get(0));
+    assertEquals(arrayResponse, body.get(1));
   }
 
   // --- helpers ---

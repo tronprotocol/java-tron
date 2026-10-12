@@ -26,7 +26,6 @@ public class NodeConfig {
 
   // ---- Flat scalar fields (auto-bound by ConfigBeanFactory) ----
   private String trustNode = "";
-  private boolean walletExtensionApi = false;
   private int syncFetchBatchNum = 2000;
   private int maxPendingBlockSize = 500;
   private int validateSignThreadNum = 0; // 0 = auto (availableProcessors)
@@ -325,6 +324,12 @@ public class NodeConfig {
       logger.warn("Configuring [node.maxActiveNodesWithSameIp] is deprecated and will be removed "
           + "in a future release. Please use [node.maxConnectionsWithSameIp] instead.");
       nc.maxConnectionsWithSameIp = section.getInt("maxActiveNodesWithSameIp");
+    }
+
+    // node.walletExtensionApi (removed): the WalletExtension gRPC service no longer exists
+    if (section.hasPath("walletExtensionApi")) {
+      logger.warn("Configuring [node.walletExtensionApi] has been removed and is ignored. "
+          + "The WalletExtension gRPC service no longer exists.");
     }
 
     // Legacy key fallback: node.allowShieldedTransactionApi wins fullNodeAllowShieldedTransaction

@@ -7,7 +7,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.api.GrpcAPI.PrivateParametersWithoutAsk;
 import org.tron.core.Wallet;
-import org.tron.json.JSON;
 import org.tron.json.JSONObject;
 import org.tron.protos.Protocol.Transaction;
 
@@ -32,7 +31,7 @@ public class CreateShieldedTransactionWithoutSpendAuthSigServlet extends RateLim
           .createShieldedTransactionWithoutSpendAuthSig(build.build())
           .getInstance();
       String txString = Util.printCreateTransaction(tx, params.isVisible());
-      JSONObject jsonObject = JSON.parseObject(txString);
+      JSONObject jsonObject = JSONObject.outboundParseObject(txString);
       if (jsonObject.containsKey("txID")) {
         jsonObject.remove("txID");
       }

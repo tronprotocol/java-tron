@@ -1336,6 +1336,10 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     this.account = builder.build();
   }
 
+  public boolean hasInvalidDelegatedV2() {
+    return getDelegatedFrozenV2BalanceForBandwidth() < 0 || getDelegatedFrozenV2BalanceForEnergy() < 0;
+  }
+
   public void importAsset(byte[] key) {
     this.account = AssetUtil.importAsset(this.account, key);
   }

@@ -5,8 +5,8 @@ import static org.junit.Assert.assertThrows;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.nio.charset.StandardCharsets;
+import java.time.ZonedDateTime;
 import lombok.extern.slf4j.Slf4j;
-import org.joda.time.DateTime;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -64,8 +64,8 @@ public class BandwidthProcessorTest extends BaseTest {
     TO_ADDRESS = Wallet.getAddressPreFixString() + "abd4b9367799eaa3197fecb144eb71de1e049abc";
     ASSET_ADDRESS = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a3456";
     ASSET_ADDRESS_V2 = Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a7890";
-    START_TIME = DateTime.now().minusDays(1).getMillis();
-    END_TIME = DateTime.now().getMillis();
+    START_TIME = ZonedDateTime.now().minusDays(1).toInstant().toEpochMilli();
+    END_TIME = System.currentTimeMillis();
   }
 
   /**
@@ -616,7 +616,7 @@ public class BandwidthProcessorTest extends BaseTest {
             AccountType.Normal,
             chainBaseManager.getDynamicPropertiesStore().getAssetIssueFee());
     ownerCapsule.setBalance(10_000_000L);
-    long expireTime = DateTime.now().getMillis() + 6 * 86_400_000;
+    long expireTime = System.currentTimeMillis() + 6 * 86_400_000;
     ownerCapsule.setFrozenForBandwidth(2_000_000L, expireTime);
     chainBaseManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
 
@@ -627,7 +627,7 @@ public class BandwidthProcessorTest extends BaseTest {
             AccountType.Normal,
             chainBaseManager.getDynamicPropertiesStore().getAssetIssueFee());
     toAddressCapsule.setBalance(10_000_000L);
-    long expireTime2 = DateTime.now().getMillis() + 6 * 86_400_000;
+    long expireTime2 = System.currentTimeMillis() + 6 * 86_400_000;
     toAddressCapsule.setFrozenForBandwidth(2_000_000L, expireTime2);
     chainBaseManager.getAccountStore().put(toAddressCapsule.getAddress().toByteArray(),
         toAddressCapsule);
@@ -731,7 +731,7 @@ public class BandwidthProcessorTest extends BaseTest {
             AccountType.Normal,
             chainBaseManager.getDynamicPropertiesStore().getAssetIssueFee());
     ownerCapsule.setBalance(10_000_000L);
-    long expireTime = DateTime.now().getMillis() + 6 * 86_400_000;
+    long expireTime = System.currentTimeMillis() + 6 * 86_400_000;
     ownerCapsule.setFrozenForBandwidth(2_000_000L, expireTime);
     chainBaseManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
 
@@ -742,7 +742,7 @@ public class BandwidthProcessorTest extends BaseTest {
             AccountType.Normal,
             chainBaseManager.getDynamicPropertiesStore().getAssetIssueFee());
     toAddressCapsule.setBalance(10_000_000L);
-    long expireTime2 = DateTime.now().getMillis() + 6 * 86_400_000;
+    long expireTime2 = System.currentTimeMillis() + 6 * 86_400_000;
     toAddressCapsule.setFrozenForBandwidth(2_000_000L, expireTime2);
     chainBaseManager.getAccountStore().put(toAddressCapsule.getAddress().toByteArray(),
         toAddressCapsule);
@@ -816,7 +816,7 @@ public class BandwidthProcessorTest extends BaseTest {
             AccountType.Normal,
             chainBaseManager.getDynamicPropertiesStore().getAssetIssueFee());
     ownerCapsule.setBalance(10_000_000L);
-    long expireTime = DateTime.now().getMillis() + 6 * 86_400_000;
+    long expireTime = System.currentTimeMillis() + 6 * 86_400_000;
     ownerCapsule.setFrozenForBandwidth(2_000_000L, expireTime);
     chainBaseManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
 
@@ -827,7 +827,7 @@ public class BandwidthProcessorTest extends BaseTest {
             AccountType.Normal,
             chainBaseManager.getDynamicPropertiesStore().getAssetIssueFee());
     toAddressCapsule.setBalance(10_000_000L);
-    long expireTime2 = DateTime.now().getMillis() + 6 * 86_400_000;
+    long expireTime2 = System.currentTimeMillis() + 6 * 86_400_000;
     toAddressCapsule.setFrozenForBandwidth(2_000_000L, expireTime2);
     chainBaseManager.getAccountStore().delete(toAddressCapsule.getAddress().toByteArray());
 
