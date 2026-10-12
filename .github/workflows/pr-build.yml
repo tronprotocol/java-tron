@@ -63,6 +63,10 @@ jobs:
           java -jar "$JAR" db archive -h
           java -jar "$JAR" keystore --help
 
+      - name: Upload test diagnostics
+        if: failure()
+        uses: ./.github/actions/upload-test-diagnostics
+
   build-ubuntu:
     name: Build ubuntu24 (JDK 17 / aarch64)
     if: ${{ github.event_name == 'pull_request' || inputs.job == 'all' || inputs.job == 'ubuntu' }}
@@ -91,7 +95,8 @@ jobs:
           restore-keys: ubuntu24-aarch64-gradle-
 
       - name: Build
-        run: ./gradlew clean build --no-daemon
+        # Bound worker concurrency while retaining parallelism within the 60-minute job limit.
+        run: ./gradlew clean build --no-daemon --max-workers=2 --info --stacktrace
 
       - name: Toolkit jar smoke test
         run: |
@@ -101,6 +106,10 @@ jobs:
           java -jar "$JAR" db --help
           java -jar "$JAR" db archive -h
           java -jar "$JAR" keystore --help
+
+      - name: Upload test diagnostics
+        if: failure()
+        uses: ./.github/actions/upload-test-diagnostics
 
   docker-build-rockylinux:
     name: Build rockylinux (JDK 8 / x86_64)
@@ -143,7 +152,8 @@ jobs:
         run: ./gradlew --stop || true
 
       - name: Build
-        run: ./gradlew clean build --no-daemon
+        # Bound worker concurrency while retaining parallelism within the 60-minute job limit.
+        run: ./gradlew clean build --no-daemon --max-workers=2 --info --stacktrace
 
       - name: Toolkit jar smoke test
         run: |
@@ -155,7 +165,11 @@ jobs:
           java -jar "$JAR" keystore --help
 
       - name: Test with RocksDB engine
-        run: ./gradlew :framework:testWithRocksDb --no-daemon
+        run: ./gradlew :framework:testWithRocksDb --no-daemon --max-workers=2 --info --stacktrace
+
+      - name: Upload test diagnostics
+        if: failure()
+        uses: ./.github/actions/upload-test-diagnostics
 
   docker-build-debian11:
     name: Build debian11 (JDK 8 / x86_64)
@@ -221,6 +235,10 @@ jobs:
           path: |
             **/build/reports/jacoco/test/jacocoTestReport.xml
           if-no-files-found: error
+
+      - name: Upload test diagnostics
+        if: failure()
+        uses: ./.github/actions/upload-test-diagnostics
 
   coverage-base:
     name: Coverage Base (JDK 8 / x86_64)

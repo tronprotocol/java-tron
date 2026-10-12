@@ -136,6 +136,10 @@ def configureTestTask = { Task t ->
     }
     t.maxHeapSize = "512m"
     t.maxParallelForks = Math.max(1, Math.min(4, Runtime.runtime.availableProcessors()))
+    if ('true'.equalsIgnoreCase(System.getenv('CI'))) {
+        // Keep fatal test-JVM diagnostics in the task output directory for CI artifacts.
+        t.jvmArgs "-XX:ErrorFile=${t.temporaryDir}/hs_err_pid%p.log"
+    }
     t.systemProperty 'runPrecompileBenchmark',
             System.getProperty('runPrecompileBenchmark', 'false')
     t.doFirst {

@@ -1,0 +1,36 @@
+name: Upload test diagnostics
+description: Preserve test reports, application logs, and JVM crash reports after a failed build.
+
+runs:
+  using: composite
+  steps:
+    - name: Report available memory and process limits
+      if: always()
+      shell: bash
+      run: |
+        ulimit -a
+        if command -v free >/dev/null 2>&1; then
+          free -m
+        elif command -v vm_stat >/dev/null 2>&1; then
+          vm_stat
+        fi
+        for counter in /sys/fs/cgroup/memory.events /sys/fs/cgroup/memory.current /sys/fs/cgroup/memory.max; do
+          if [ -r "$counter" ]; then
+            echo "$counter"
+            cat "$counter"
+          fi
+        done
+
+    - name: Upload diagnostic files
+      if: always()
+      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+      with:
+        name: test-diagnostics-${{ github.job }}-${{ github.run_attempt }}
+        path: |
+          **/build/test-results/**
+          **/build/reports/tests/**
+          **/logs/tron-test*.log*
+          **/hs_err_pid*.log
+        if-no-files-found: warn
+        retention-days: 7
+        compression-level: 1
