@@ -114,23 +114,9 @@ public class WalletUtilsInputPasswordTest {
         TronError.ErrCode.WITNESS_KEYSTORE_LOAD, err.getErrCode());
   }
 
-  @Test(timeout = 10000)
-  public void testInputPassword2TwicePipedPreservesInternalWhitespace() {
-    // M1: verifies the double-read path (inputPassword2Twice → inputPassword()
-    // called twice) works correctly when both lines arrive on the same
-    // piped stdin. Guards against regressions from Scanner lifecycle issues
-    // where a newly-constructed Scanner could miss bytes buffered by an
-    // earlier Scanner on the same InputStream.
-    System.setIn(new ByteArrayInputStream(
-        ("correct horse battery staple\n"
-            + "correct horse battery staple\n").getBytes(StandardCharsets.UTF_8)));
-
-    String pw = WalletUtils.inputPassword2Twice();
-
-    assertEquals("Full passphrase must survive the double-read path",
-        "correct horse battery staple", pw);
-  }
-
+  // Note: the M1 double-read test (inputPassword2Twice) was dropped in
+  // the 4.8.3 rebase - upstream #6978 removed inputPassword2Twice()
+  // along with its only caller KeystoreFactory.
   // ---------- stripPasswordLine() direct unit tests (M3) ----------
 
   @Test
