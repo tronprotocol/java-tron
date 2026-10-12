@@ -12,7 +12,7 @@ import org.tron.protos.Protocol.Transaction;
 
 @Component
 @Slf4j(topic = "API")
-@HttpApiExcluded("shielded note API disabled on every surface (commented out upstream)")
+@HttpApiExcluded("shielded note API disabled on every surface")
 public class CreateShieldedTransactionServlet extends RateLimiterServlet {
 
   @Autowired
