@@ -57,19 +57,18 @@ jobs:
         timeout-minutes: 45
         shell: bash
         run: |
-          set -euo pipefail
-          mkdir -p ci-logs
-          ./gradlew clean build --no-daemon --console=plain 2>&1 | tee ci-logs/build.log
+          .github/ci/ci-run.sh build ./gradlew clean build --no-daemon --console=plain
 
       - name: Toolkit jar smoke test
         timeout-minutes: 2
+        shell: bash
         run: |
-          set -e
-          JAR=plugins/build/libs/Toolkit.jar
-          java -jar "$JAR" help
-          java -jar "$JAR" db --help
-          java -jar "$JAR" db archive -h
-          java -jar "$JAR" keystore --help
+          .github/ci/ci-run.sh toolkit-smoke bash -euo pipefail -c '
+            JAR=plugins/build/libs/Toolkit.jar
+            java -jar "$JAR" help
+            java -jar "$JAR" db --help
+            java -jar "$JAR" db archive -h
+            java -jar "$JAR" keystore --help'
 
       - name: Upload test diagnostics
         if: ${{ failure() || cancelled() }}
@@ -79,7 +78,8 @@ jobs:
           name: tron-test-logs-${{ github.job }}-jdk${{ matrix.java }}-${{ matrix.arch }}
           path: |
             **/logs/tron-test.log
-            ci-logs/*.log
+            ci-logs/
+            **/build/test-results/**/*.xml
           if-no-files-found: warn
           retention-days: 7
 
@@ -114,19 +114,18 @@ jobs:
         timeout-minutes: 45
         shell: bash
         run: |
-          set -euo pipefail
-          mkdir -p ci-logs
-          ./gradlew clean build --no-daemon --console=plain 2>&1 | tee ci-logs/build.log
+          .github/ci/ci-run.sh build ./gradlew clean build --no-daemon --console=plain
 
       - name: Toolkit jar smoke test
         timeout-minutes: 2
+        shell: bash
         run: |
-          set -e
-          JAR=plugins/build/libs/Toolkit.jar
-          java -jar "$JAR" help
-          java -jar "$JAR" db --help
-          java -jar "$JAR" db archive -h
-          java -jar "$JAR" keystore --help
+          .github/ci/ci-run.sh toolkit-smoke bash -euo pipefail -c '
+            JAR=plugins/build/libs/Toolkit.jar
+            java -jar "$JAR" help
+            java -jar "$JAR" db --help
+            java -jar "$JAR" db archive -h
+            java -jar "$JAR" keystore --help'
 
       - name: Upload test diagnostics
         if: ${{ failure() || cancelled() }}
@@ -136,7 +135,8 @@ jobs:
           name: tron-test-logs-${{ github.job }}
           path: |
             **/logs/tron-test.log
-            ci-logs/*.log
+            ci-logs/
+            **/build/test-results/**/*.xml
           if-no-files-found: warn
           retention-days: 7
 
@@ -202,27 +202,24 @@ jobs:
         timeout-minutes: 30
         shell: bash
         run: |
-          set -euo pipefail
-          mkdir -p ci-logs
-          ./gradlew clean build --no-daemon --console=plain 2>&1 | tee ci-logs/build.log
+          .github/ci/ci-run.sh build ./gradlew clean build --no-daemon --console=plain
 
       - name: Toolkit jar smoke test
         timeout-minutes: 2
+        shell: bash
         run: |
-          set -e
-          JAR=plugins/build/libs/Toolkit.jar
-          java -jar "$JAR" help
-          java -jar "$JAR" db --help
-          java -jar "$JAR" db archive -h
-          java -jar "$JAR" keystore --help
+          .github/ci/ci-run.sh toolkit-smoke bash -euo pipefail -c '
+            JAR=plugins/build/libs/Toolkit.jar
+            java -jar "$JAR" help
+            java -jar "$JAR" db --help
+            java -jar "$JAR" db archive -h
+            java -jar "$JAR" keystore --help'
 
       - name: Test with RocksDB engine
         timeout-minutes: 10
         shell: bash
         run: |
-          set -euo pipefail
-          mkdir -p ci-logs
-          ./gradlew :framework:testWithRocksDb --no-daemon --console=plain 2>&1 | tee ci-logs/rocksdb-test.log
+          .github/ci/ci-run.sh rocksdb-test ./gradlew :framework:testWithRocksDb --no-daemon --console=plain
 
       - name: Upload test diagnostics
         if: ${{ failure() || cancelled() }}
@@ -232,7 +229,8 @@ jobs:
           name: tron-test-logs-${{ github.job }}
           path: |
             **/logs/tron-test.log
-            ci-logs/*.log
+            ci-logs/
+            **/build/test-results/**/*.xml
           if-no-files-found: warn
           retention-days: 7
 
@@ -279,35 +277,30 @@ jobs:
         timeout-minutes: 30
         shell: bash
         run: |
-          set -euo pipefail
-          mkdir -p ci-logs
-          ./gradlew clean build --no-daemon --console=plain 2>&1 | tee ci-logs/build.log
+          .github/ci/ci-run.sh build ./gradlew clean build --no-daemon --console=plain
 
       - name: Toolkit jar smoke test
         timeout-minutes: 2
+        shell: bash
         run: |
-          set -e
-          JAR=plugins/build/libs/Toolkit.jar
-          java -jar "$JAR" help
-          java -jar "$JAR" db --help
-          java -jar "$JAR" db archive -h
-          java -jar "$JAR" keystore --help
+          .github/ci/ci-run.sh toolkit-smoke bash -euo pipefail -c '
+            JAR=plugins/build/libs/Toolkit.jar
+            java -jar "$JAR" help
+            java -jar "$JAR" db --help
+            java -jar "$JAR" db archive -h
+            java -jar "$JAR" keystore --help'
 
       - name: Test with RocksDB engine
         timeout-minutes: 10
         shell: bash
         run: |
-          set -euo pipefail
-          mkdir -p ci-logs
-          ./gradlew :framework:testWithRocksDb --no-daemon --console=plain 2>&1 | tee ci-logs/rocksdb-test.log
+          .github/ci/ci-run.sh rocksdb-test ./gradlew :framework:testWithRocksDb --no-daemon --console=plain
 
       - name: Generate module coverage reports
         timeout-minutes: 5
         shell: bash
         run: |
-          set -euo pipefail
-          mkdir -p ci-logs
-          ./gradlew jacocoTestReport --no-daemon --console=plain 2>&1 | tee ci-logs/coverage.log
+          .github/ci/ci-run.sh coverage ./gradlew jacocoTestReport --no-daemon --console=plain
 
       - name: Upload PR coverage reports
         timeout-minutes: 2
@@ -326,7 +319,8 @@ jobs:
           name: tron-test-logs-${{ github.job }}
           path: |
             **/logs/tron-test.log
-            ci-logs/*.log
+            ci-logs/
+            **/build/test-results/**/*.xml
           if-no-files-found: warn
           retention-days: 7
 
@@ -357,6 +351,14 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.base.sha }}
 
+      # The base commit may predate the CI diagnostic scripts; take them from the PR.
+      - name: Checkout CI diagnostic scripts
+        uses: actions/checkout@v5
+        with:
+          path: ci-tools
+          sparse-checkout: .github/ci
+          sparse-checkout-cone-mode: false
+
       - name: Cache Gradle packages
         uses: actions/cache@v5
         with:
@@ -377,27 +379,25 @@ jobs:
         # coverage diffing, so we must not let a stale test failure block it.
         continue-on-error: true
         shell: bash
+        env:
+          CI_DIAG_ANNOTATION: warning
         run: |
-          set -euo pipefail
-          mkdir -p ci-logs
-          ./gradlew clean build --no-daemon --console=plain 2>&1 | tee ci-logs/build.log
+          ci-tools/.github/ci/ci-run.sh build ./gradlew clean build --no-daemon --console=plain
 
       - name: Test with RocksDB engine (base)
         id: base_rocksdb_test
         continue-on-error: true
         shell: bash
+        env:
+          CI_DIAG_ANNOTATION: warning
         run: |
-          set -euo pipefail
-          mkdir -p ci-logs
-          ./gradlew :framework:testWithRocksDb --no-daemon --console=plain 2>&1 | tee ci-logs/rocksdb-test.log
+          ci-tools/.github/ci/ci-run.sh rocksdb-test ./gradlew :framework:testWithRocksDb --no-daemon --console=plain
 
       - name: Generate module coverage reports (base)
         timeout-minutes: 5
         shell: bash
         run: |
-          set -euo pipefail
-          mkdir -p ci-logs
-          ./gradlew jacocoTestReport --no-daemon --console=plain 2>&1 | tee ci-logs/coverage.log
+          ci-tools/.github/ci/ci-run.sh coverage ./gradlew jacocoTestReport --no-daemon --console=plain
 
       - name: Upload base coverage reports
         timeout-minutes: 2
@@ -420,7 +420,8 @@ jobs:
           name: tron-test-logs-${{ github.job }}
           path: |
             **/logs/tron-test.log
-            ci-logs/*.log
+            ci-logs/
+            **/build/test-results/**/*.xml
           if-no-files-found: warn
           retention-days: 7
 
