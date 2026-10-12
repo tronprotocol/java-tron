@@ -747,7 +747,7 @@ public class ProposalUtilTest extends BaseTest {
   }
 
   /**
-   * CLOSE_EXCHANGE(100): fork gate, step-by-step progression, and the close-level lockout of
+   * CLOSE_EXCHANGE(101): fork gate, step-by-step progression, and the close-level lockout of
    * the legacy exchange parameters 12 (EXCHANGE_CREATE_FEE) and 98
    * (ALLOW_HARDEN_EXCHANGE_CALCULATION): freely proposable at level 0, rejected once the
    * level reaches 1.
