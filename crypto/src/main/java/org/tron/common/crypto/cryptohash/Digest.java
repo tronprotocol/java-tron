@@ -59,9 +59,12 @@ public interface Digest {
   /**
    * Insert some more bytes.
    *
+   * <p>Invalid input is rejected before consuming any bytes, preserving the current hash state.
+   *
    * @param inbuf the data buffer
    * @param off the data offset in {@code inbuf}
    * @param len the data length (in bytes)
+   * @throws IllegalArgumentException if the input buffer is null or the input range is invalid
    */
   void update(byte[] inbuf, int off, int len);
 

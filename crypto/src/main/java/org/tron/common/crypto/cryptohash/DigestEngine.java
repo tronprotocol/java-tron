@@ -145,6 +145,12 @@ public abstract class DigestEngine extends MessageDigest implements Digest {
    * @see Digest
    */
   public void update(byte[] input, int offset, int len) {
+    if (input == null) {
+      throw new IllegalArgumentException("Input buffer is null");
+    }
+    if (offset < 0 || len < 0 || offset > input.length || len > input.length - offset) {
+      throw new IllegalArgumentException("Invalid input buffer range");
+    }
     while (len > 0) {
       int copyLen = blockLen - inputLen;
       if (copyLen > len) {

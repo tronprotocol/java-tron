@@ -92,6 +92,56 @@ public class KeccakTest {
   }
 
   @Test
+  public void testInvalidUpdateRangePreservesState() throws Exception {
+    byte[] input = inputBytes();
+    byte[] invalidInput = Arrays.copyOf(input, 200);
+    int[][] ranges = {
+        {-1, 1}, {-1, 0}, {0, -1}, {invalidInput.length + 1, 0},
+        {invalidInput.length, 1}, {0, 300},
+        {Integer.MAX_VALUE, 1}, {1, Integer.MAX_VALUE}
+    };
+    for (int prefixLength : new int[]{0, 17, 200}) {
+      for (int[] range : ranges) {
+        MessageDigest digest = newDigest();
+        digest.update(input, 0, prefixLength);
+
+        assertThrows(IllegalArgumentException.class,
+            () -> digest.update(invalidInput, range[0], range[1]));
+
+        digest.update(input, prefixLength, input.length - prefixLength);
+        assertArrayEquals(referenceDigest(input), digest.digest());
+      }
+    }
+  }
+
+  @Test
+  public void testNullUpdatePreservesState() throws Exception {
+    byte[] input = inputBytes();
+    for (int length : new int[]{0, 1, -1}) {
+      MessageDigest digest = newDigest();
+      digest.update(input, 0, 17);
+
+      assertThrows(IllegalArgumentException.class, () -> digest.update(null, 0, length));
+
+      digest.update(input, 17, input.length - 17);
+      assertArrayEquals(referenceDigest(input), digest.digest());
+    }
+  }
+
+  @Test
+  public void testEmptyUpdateRangePreservesState() throws Exception {
+    byte[] input = inputBytes();
+    MessageDigest digest = newDigest();
+    digest.update(input, 0, 17);
+
+    digest.update(input, input.length, 0);
+    digest.update(new byte[0], 0, 0);
+
+    digest.update(input, 17, input.length - 17);
+    assertArrayEquals(referenceDigest(input), digest.digest());
+  }
+
+  @Test
   public void testDigestOutputRange() throws Exception {
     byte[] input = inputBytes();
     byte[] expected = referenceDigest(input);
