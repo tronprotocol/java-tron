@@ -222,6 +222,7 @@ Thank you for considering to help out with the source code! If you'd like to con
   pub: 1254 F859 D2B1 BD9F 66E7 107D F859 BCB4 4A28 290B
   uid: build@tron.network
   ```
+- `start.sh` only accepts release jars signed by this key, whose fingerprint is written into the script. This protects against tampered release files, but not against a compromise of this repository, which hosts both the script and the release files: a `start.sh` taken from a compromised repository could carry a different fingerprint.
 
 # License
 
