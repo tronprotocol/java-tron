@@ -36,6 +36,7 @@ import org.tron.common.parameter.CommonParameter;
 import org.tron.common.prometheus.Metrics;
 import org.tron.core.config.args.Args;
 import org.tron.core.config.args.CommandLineArguments;
+import org.tron.core.exception.TronError;
 import org.tron.core.services.admin.ipc.client.IpcClient;
 import org.tron.core.services.jsonrpc.JsonRpcMapper;
 
@@ -107,22 +108,50 @@ public class FullNodeTest {
 
   @Test(timeout = 60_000)
   public void testInvalidAttachOptionsDoNotCreateNodeLogs() throws Exception {
-    runClientWithoutNodeLogs(1, "--attach requires a non-empty <socket-path>", "",
+    assertArgumentError("Error: --attach requires a non-empty <socket-path>",
         "--attach", "");
-    runClientWithoutNodeLogs(1, "--attach requires a non-empty <socket-path>", "",
+    assertArgumentError("Error: --attach requires a non-empty <socket-path>",
         "--attach", " ");
-    runClientWithoutNodeLogs(1, "--attach cannot be combined with: --config", "",
+    assertArgumentError("Error: --attach cannot be combined with: --config",
         "--attach", "missing.sock", "--config", "config.conf");
-    runClientWithoutNodeLogs(1, "--exec requires --attach <socket-path>", "",
+    assertArgumentError("Error: --exec requires --attach <socket-path>",
         "--exec", "help");
   }
 
   @Test(timeout = 60_000)
+  public void testArgumentParsingErrorsDoNotPrintStackTraces() throws Exception {
+    assertArgumentError("Error: Expected a value after parameter --attach", "--attach");
+    assertArgumentError("Error: Expected a value after parameter --exec",
+        "--attach", "missing.sock", "--exec");
+    String invalidInteger =
+        "Error: \"--rpc-thread\": couldn't convert \"not-a-number\" to an integer";
+    assertArgumentError(invalidInteger,
+        "--attach", "missing.sock", "--rpc-thread", "not-a-number");
+    assertArgumentError(invalidInteger, "--rpc-thread", "not-a-number");
+  }
+
+  @Test(timeout = 60_000)
   public void testRemovedOptionsInAttachModeDoNotCreateNodeLogs() throws Exception {
-    runClientWithoutNodeLogs(1, "Toolkit.jar keystore <new|import|list|update>", "",
+    String migration = "--keystore-factory was removed." + System.lineSeparator()
+        + "Use: java -jar Toolkit.jar keystore <new|import|list|update>";
+    assertArgumentError(migration,
         "--attach", "missing.sock", "--keystore-factory");
-    runClientWithoutNodeLogs(1, "Toolkit.jar keystore <new|import|list|update>", "",
+    assertArgumentError(migration,
         "--attach", "missing.sock", "--keystore-factory", "--keystore-factory");
+  }
+
+  @Test
+  public void testUnexpectedArgumentFailuresAreNotSuppressed() {
+    for (Throwable failure : new Throwable[] {new IllegalStateException("unexpected failure"),
+        new TronError("unexpected node error", TronError.ErrCode.JDK_VERSION)}) {
+      try (MockedConstruction<CommandLineArguments> arguments = Mockito.mockConstruction(
+          CommandLineArguments.class, (parsed, context) ->
+              Mockito.when(parsed.isAttachMode()).thenThrow(failure))) {
+        Assert.assertSame(failure,
+            Assert.assertThrows(failure.getClass(), () -> FullNode.main(new String[0])));
+        Assert.assertEquals(1, arguments.constructed().size());
+      }
+    }
   }
 
   @Test(timeout = 30_000)
@@ -177,12 +206,18 @@ public class FullNodeTest {
     }
   }
 
-  private void runClientWithoutNodeLogs(int expectedExitCode, String expectedOutput,
+  private void assertArgumentError(String expectedError, String... args) throws Exception {
+    String errorOutput = runClientWithoutNodeLogs(1, expectedError, "", args);
+    Assert.assertEquals(expectedError + System.lineSeparator(), errorOutput);
+  }
+
+  private String runClientWithoutNodeLogs(int expectedExitCode, String expectedOutput,
       String input, String... args) throws Exception {
     String classpath = System.getProperty("fullNode.runtimeClasspath");
     Assert.assertNotNull("The child JVM must use the production runtime classpath", classpath);
     Path directory = temporaryFolder.newFolder().toPath();
     File outputFile = directory.resolve("console.txt").toFile();
+    File errorFile = directory.resolve("stderr.txt").toFile();
     List<String> command = new ArrayList<>();
     command.add(Paths.get(System.getProperty("java.home"), "bin", "java").toString());
     command.add("-cp");
@@ -190,18 +225,24 @@ public class FullNodeTest {
     command.add(FullNode.class.getName());
     command.addAll(Arrays.asList(args));
     Process process = new ProcessBuilder(command).directory(directory.toFile())
-        .redirectErrorStream(true).redirectOutput(outputFile).start();
+        .redirectError(errorFile).redirectOutput(outputFile).start();
     try {
       process.getOutputStream().write(input.getBytes(StandardCharsets.UTF_8));
       process.getOutputStream().close();
       Assert.assertTrue("Attach subprocess did not exit", process.waitFor(20, TimeUnit.SECONDS));
-      String output = new String(Files.readAllBytes(outputFile.toPath()), StandardCharsets.UTF_8);
+      String stdout = new String(Files.readAllBytes(outputFile.toPath()), StandardCharsets.UTF_8);
+      String stderr = new String(Files.readAllBytes(errorFile.toPath()), StandardCharsets.UTF_8);
+      String output = stdout + stderr;
       Assert.assertEquals(output, expectedExitCode, process.exitValue());
       Assert.assertTrue(output, output.contains(expectedOutput));
+      if (expectedExitCode != 0) {
+        Assert.assertEquals("Errors must be written to stderr", "", stdout);
+      }
       Assert.assertFalse("Attach created node log files: " + output,
           Files.exists(directory.resolve("logs")));
       Assert.assertFalse("Attach initialized the node data directory",
           Files.exists(directory.resolve("output-directory")));
+      return stderr;
     } finally {
       process.destroyForcibly();
       Assert.assertTrue("Attach subprocess did not terminate",
