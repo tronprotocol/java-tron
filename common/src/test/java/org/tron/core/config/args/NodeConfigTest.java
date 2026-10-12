@@ -107,10 +107,11 @@ public class NodeConfigTest {
     assertEquals(NodeConfig.RpcConfig.DEFAULT_MAX_CONCURRENT_CALLS_PER_CONNECTION,
         rpc.getMaxConcurrentCallsPerConnection());
     assertEquals(1048576, rpc.getFlowControlWindow());
-    // reference.conf keeps 0 (the default marker); postProcess converts 0 to
-    // the secure built-in 60s default, so the effective default is 60s.
+    // reference.conf keeps 0 (the default marker); postProcess converts
+    // idle 0 to the secure built-in 60s default, while age 0 keeps its
+    // legacy unlimited meaning.
     assertEquals(60000L, rpc.getMaxConnectionIdleInMillis());
-    assertEquals(60000L, rpc.getMaxConnectionAgeInMillis());
+    assertEquals(Long.MAX_VALUE, rpc.getMaxConnectionAgeInMillis());
     assertEquals(4194304, rpc.getMaxMessageSize());
     assertEquals(8192, rpc.getMaxHeaderListSize());
     assertEquals(1, rpc.getMinEffectiveConnection());
@@ -171,16 +172,15 @@ public class NodeConfigTest {
   }
 
   @Test
-  public void testRpcExplicitZeroIdleAndAgeFallsBackToSecureDefault() {
-    // Explicit 0 no longer means unlimited: postProcess converts 0 to the
-    // secure built-in 60s default. Operators wanting a longer lifetime must
-    // set an explicit positive value.
+  public void testRpcExplicitZeroIdleAndAgeFallsBackToDefaults() {
+    // Idle 0 falls back to the secure built-in 60s default; age 0 keeps its
+    // legacy unlimited meaning (Long.MAX_VALUE).
     Config config = withRef(
         "node { rpc { maxConnectionIdleInMillis = 0, maxConnectionAgeInMillis = 0 } }");
     NodeConfig nc = NodeConfig.fromConfig(config);
     assertEquals(NodeConfig.RpcConfig.DEFAULT_MAX_CONNECTION_LIFETIME_IN_MILLIS,
         nc.getRpc().getMaxConnectionIdleInMillis());
-    assertEquals(NodeConfig.RpcConfig.DEFAULT_MAX_CONNECTION_LIFETIME_IN_MILLIS,
+    assertEquals(Long.MAX_VALUE,
         nc.getRpc().getMaxConnectionAgeInMillis());
   }
 
@@ -242,7 +242,9 @@ public class NodeConfigTest {
             + " maxConcurrentCallsPerConnection = 50,"
             + " flowControlWindow = 2097152,"
             + " maxMessageSize = 8388608,"
-            + " maxHeaderListSize = 16384 } }");
+            + " maxHeaderListSize = 16384,"
+            + " maxConnectionIdleInMillis = 3600000,"
+            + " maxConnectionAgeInMillis = 7200000 } }");
     NodeConfig nc = NodeConfig.fromConfig(config);
     NodeConfig.RpcConfig rpc = nc.getRpc();
     assertEquals(32, rpc.getThread());
@@ -250,6 +252,9 @@ public class NodeConfigTest {
     assertEquals(2097152, rpc.getFlowControlWindow());
     assertEquals(8388608, rpc.getMaxMessageSize());
     assertEquals(16384, rpc.getMaxHeaderListSize());
+    // Explicit positive idle/age values must be honored, not overwritten.
+    assertEquals(3600000L, rpc.getMaxConnectionIdleInMillis());
+    assertEquals(7200000L, rpc.getMaxConnectionAgeInMillis());
   }
 
   // ===========================================================================

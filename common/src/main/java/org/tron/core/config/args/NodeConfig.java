@@ -208,8 +208,9 @@ public class NodeConfig {
   public static class RpcConfig {
 
     public static final int DEFAULT_MAX_CONCURRENT_CALLS_PER_CONNECTION = 100;
-    // Secure built-in default for gRPC connection lifetime (idle & max age).
-    // Applied by postProcess() when the configured value is 0 (the default).
+    // Secure built-in default for the gRPC idle timeout. Applied by
+    // postProcess() when maxConnectionIdleInMillis is 0 (the default).
+    // maxConnectionAgeInMillis keeps its legacy meaning: 0 = unlimited.
     public static final long DEFAULT_MAX_CONNECTION_LIFETIME_IN_MILLIS = 60_000L;
 
     private boolean enable = true;
@@ -399,16 +400,19 @@ public class NodeConfig {
           + "must be non-negative, got: maxConnectionIdleInMillis=" + rpc.maxConnectionIdleInMillis
           + ", maxConnectionAgeInMillis=" + rpc.maxConnectionAgeInMillis, PARAMETER_INIT);
     }
-    // 0 (the default) means "use the secure built-in default" (60s), NOT
-    // unlimited: the old 0 -> Long.MAX_VALUE conversion silently turned an
-    // unset or explicitly-zero value into an unbounded connection lifetime.
-    // Negative values are rejected outright. Operators who want a longer
-    // lifetime must set an explicit positive value.
+    // maxConnectionIdleInMillis: 0 (the default) means "use the secure
+    // built-in default" (60s), NOT unlimited: the old 0 -> Long.MAX_VALUE
+    // conversion silently turned an unset or explicitly-zero idle value into
+    // an unbounded idle timeout. Operators who want a longer idle timeout
+    // must set an explicit positive value.
+    // maxConnectionAgeInMillis: keeps the legacy gRPC semantic where
+    // 0 = unlimited (converted to Long.MAX_VALUE); positive values are
+    // honored as-is.
     if (rpc.maxConnectionIdleInMillis == 0) {
       rpc.maxConnectionIdleInMillis = RpcConfig.DEFAULT_MAX_CONNECTION_LIFETIME_IN_MILLIS;
     }
     if (rpc.maxConnectionAgeInMillis == 0) {
-      rpc.maxConnectionAgeInMillis = RpcConfig.DEFAULT_MAX_CONNECTION_LIFETIME_IN_MILLIS;
+      rpc.maxConnectionAgeInMillis = Long.MAX_VALUE;
     }
 
     // validateSignThreadNum: 0 = auto-detect

@@ -108,9 +108,9 @@ public class ArgsTest {
         .assertEquals(NettyServerBuilder
             .DEFAULT_FLOW_CONTROL_WINDOW, parameter.getFlowControlWindow());
     Assert.assertEquals(60000L, parameter.getMaxConnectionIdleInMillis());
-    // config-test.conf leaves maxConnectionAgeInMillis unset; postProcess
-    // converts the 0 default to the secure built-in 60s lifetime default.
-    Assert.assertEquals(60000L, parameter.getMaxConnectionAgeInMillis());
+    // config-test.conf leaves maxConnectionAgeInMillis unset; 0 keeps its
+    // legacy unlimited meaning (Long.MAX_VALUE).
+    Assert.assertEquals(Long.MAX_VALUE, parameter.getMaxConnectionAgeInMillis());
     Assert.assertEquals(GrpcUtil.DEFAULT_MAX_MESSAGE_SIZE, parameter.getMaxMessageSize());
     Assert.assertEquals(GrpcUtil.DEFAULT_MAX_MESSAGE_SIZE, parameter.getHttpMaxMessageSize());
     Assert.assertEquals(GrpcUtil.DEFAULT_MAX_MESSAGE_SIZE, parameter.getJsonRpcMaxMessageSize());
