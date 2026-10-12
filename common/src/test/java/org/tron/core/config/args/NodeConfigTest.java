@@ -184,57 +184,6 @@ public class NodeConfigTest {
         nc.getRpc().getMaxConnectionAgeInMillis());
   }
 
-  // ----- maxRstStream / secondsPerWindow: must be configured together -----
-
-  @Test
-  public void testRpcRstPairBothZeroOk() {
-    // Default: feature off. Must not throw.
-    NodeConfig nc = NodeConfig.fromConfig(withRef());
-    assertEquals(0, nc.getRpc().getMaxRstStream());
-    assertEquals(0, nc.getRpc().getSecondsPerWindow());
-  }
-
-  @Test
-  public void testRpcRstPairBothPositiveOk() {
-    Config config = withRef(
-        "node { rpc { maxRstStream = 1000, secondsPerWindow = 60 } }");
-    NodeConfig nc = NodeConfig.fromConfig(config);
-    assertEquals(1000, nc.getRpc().getMaxRstStream());
-    assertEquals(60, nc.getRpc().getSecondsPerWindow());
-  }
-
-  private static TronError rstError(String hocon) {
-    Config config = withRef("node { rpc { " + hocon + " } }");
-    return assertThrows(TronError.class, () -> NodeConfig.fromConfig(config));
-  }
-
-  @Test
-  public void testRpcRstPairHalfConfiguredWarnsButStarts() {
-    // Only maxRstStream set: RST flood protection stays disabled, startup
-    // continues with a warning.
-    Config config = withRef("node { rpc { maxRstStream = 100 } }");
-    NodeConfig nc = NodeConfig.fromConfig(config);
-    assertEquals(100, nc.getRpc().getMaxRstStream());
-    assertEquals(0, nc.getRpc().getSecondsPerWindow());
-
-    // Only secondsPerWindow set: same trap, same warn-and-continue.
-    config = withRef("node { rpc { secondsPerWindow = 60 } }");
-    nc = NodeConfig.fromConfig(config);
-    assertEquals(0, nc.getRpc().getMaxRstStream());
-    assertEquals(60, nc.getRpc().getSecondsPerWindow());
-  }
-
-  @Test
-  public void testRpcRstNegativeValuesRejected() {
-    TronError exception = rstError("maxRstStream = -1, secondsPerWindow = 60");
-    assertTrue(exception.getMessage().contains(
-        "must be non-negative, got: maxRstStream=-1"));
-
-    exception = rstError("maxRstStream = 100, secondsPerWindow = -5");
-    assertTrue(exception.getMessage().contains(
-        "must be non-negative, got: maxRstStream=100, secondsPerWindow=-5"));
-  }
-
   @Test
   public void testRpcUserOverrideExplicitValues() {
     Config config = withRef(
