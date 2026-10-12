@@ -7,7 +7,9 @@ import javax.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.springframework.test.annotation.DirtiesContext;
@@ -17,6 +19,7 @@ import org.tron.common.application.Application;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.Commons;
+import org.tron.common.utils.PeerManagerStateResetter;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.consensus.base.Param;
 import org.tron.core.ChainBaseManager;
@@ -64,6 +67,9 @@ public abstract class BaseTest {
   @ClassRule
   public static final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
+  @Rule
+  public final VMConfigRule vmConfigRule = new VMConfigRule();
+
   @Resource
   protected Manager dbManager;
   @Resource
@@ -74,6 +80,11 @@ public abstract class BaseTest {
 
   private static Application appT1;
 
+
+  @Before
+  public void resetPeerManagerState() {
+    PeerManagerStateResetter.reset();
+  }
 
   @PostConstruct
   private void prepare() {
@@ -127,8 +138,7 @@ public abstract class BaseTest {
 
     ECKey ecKey = ECKey.fromPrivate(privateKey);
     assert ecKey != null;
-    ECKey.ECDSASignature signature = ecKey.sign(Sha256Hash.of(CommonParameter
-        .getInstance().isECKeyCryptoEngine(), raw.toByteArray()).getBytes());
+    ECKey.ECDSASignature signature = ecKey.sign(Sha256Hash.of(raw.toByteArray()).getBytes());
     ByteString sign = ByteString.copyFrom(signature.toByteArray());
 
     Protocol.BlockHeader blockHeader = block.getBlockHeader().toBuilder()

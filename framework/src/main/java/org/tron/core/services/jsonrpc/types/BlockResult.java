@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
-import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Wallet;
@@ -141,9 +140,7 @@ public class BlockResult {
         gasLimitInBlock += transactionsList.get(i).getRawData().getFeeLimit();
         gasUsedInBlock += getEnergyUsageTotal(transactionInfoList, i, blockCapsule.getNum());
 
-        byte[] txHash = Sha256Hash
-            .hash(CommonParameter.getInstance().isECKeyCryptoEngine(),
-                transactionsList.get(i).getRawData().toByteArray());
+        byte[] txHash = Sha256Hash.hash(transactionsList.get(i).getRawData().toByteArray());
         txes.add(ByteArray.toJsonHex(txHash));
       }
     }

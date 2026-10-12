@@ -28,7 +28,7 @@ public class GetTransactionInfoByBlockNumServlet extends RateLimiterServlet {
       transactionInfo = transactionInfo.toBuilder().clearLog().addAllLog(newLogList).build();
     }
 
-    return JSONObject.parseObject(JsonFormat.printToString(transactionInfo, visible));
+    return JSONObject.outboundParseObject(JsonFormat.printToString(transactionInfo, visible));
   }
 
   private String printTransactionInfoList(TransactionInfoList list, boolean selfType) {
