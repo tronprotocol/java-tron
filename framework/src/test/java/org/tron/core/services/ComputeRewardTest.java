@@ -251,13 +251,14 @@ public class ComputeRewardTest extends BaseMethodTest {
 
   @Test
   public void query() throws InterruptedException {
-    Assert.assertEquals(3189, mortgageService.queryReward(OWNER_ADDRESS));
+    long reward = mortgageService.queryReward(OWNER_ADDRESS);
     // queryReward() can return before the background Merkle-root calculation finishes.
-    // Wait for it before modifying or closing the store used by that calculation.
+    // Wait before asserting or mutating the store; a failed assertion triggers teardown.
     ExecutorService rewardExecutor = ReflectUtils.getFieldValue(rewardViCalService, "es");
     rewardExecutor.shutdownNow();
     Assert.assertTrue("Reward calculation did not terminate before modifying its store",
         rewardExecutor.awaitTermination(10, TimeUnit.SECONDS));
+    Assert.assertEquals(3189L, reward);
 
     // mock root is error
     rewardViStore.put("test".getBytes(), "test".getBytes());
