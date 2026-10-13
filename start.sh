@@ -64,6 +64,8 @@ REBUILD_MANIFEST=true
 REBUILD_DIR="output-directory/database"
 REBUILD_MANIFEST_SIZE=128
 REBUILD_BATCH_SIZE=80000
+# Release asset that rewrites LevelDB manifests, fetched on first use by ensureArchiveJar.
+ARCHIVE_JAR='ArchiveManifest.jar'
 
 # Download and upgrade
 DOWNLOAD=false
@@ -243,12 +245,16 @@ download() {
   local url=$1
   local file_name=$2
   if type wget >/dev/null 2>&1; then
-    # wget follows redirects by default.
-    wget -q -O "$file_name" "$url" || { rm -f "$file_name"; return 1; }
+    # wget follows redirects by default. --timeout bounds a stalled connection and --tries
+    # retries once, so a hang cannot keep the node stopped indefinitely.
+    wget --tries=2 --timeout=30 -q -O "$file_name" "$url" || { rm -f "$file_name"; return 1; }
   elif type curl >/dev/null 2>&1; then
     # -f fails on HTTP errors instead of saving the error page, -L follows redirects.
+    # --connect-timeout bounds the initial connect, and --speed-time/--speed-limit abort a
+    # transfer stuck below 1 KB/s for 30s, while a slow but progressing download still finishes.
     echo "curl -fsSL -o $file_name $url"
-    curl -fsSL -o "$file_name" "$url" || { rm -f "$file_name"; return 1; }
+    curl --connect-timeout 10 --speed-time 30 --speed-limit 1024 --retry 2 \
+      -fsSL -o "$file_name" "$url" || { rm -f "$file_name"; return 1; }
   else
     echo 'info: no exists wget or curl, make sure the system can use the "wget" or "curl" command'
     return 1
@@ -280,7 +286,10 @@ quickStart() {
     mkdirFullNode
     echo "info: check latest version: $full_node_version"
     echo 'info: download config'
-    download "$MAIN_NET_CONFIG_URL" config.conf || exit 1
+    # Download to a temporary name first and move it into place only on success, so a failed
+    # re-download in an existing FullNode/ leaves the current config.conf untouched instead of
+    # a later start silently falling back to the config bundled in the jar.
+    download "$MAIN_NET_CONFIG_URL" config.conf.download && mv config.conf.download config.conf || exit 1
 
     # Download to a temporary name first, so that a failed download or signature check leaves
     # an existing $JAR_NAME untouched.
@@ -330,17 +339,26 @@ cloneBuild() {
   fi
 }
 
-# Prints the process ids of the "java ... -jar <JAR_NAME>" lines in the ps output on stdin.
-# The jar may be given with a directory, only its file name is compared.
+# Prints the process ids of the "java ... -jar <JAR_NAME>" lines in the ps output on stdin, where
+# each line is "<pid> <args...>". The jar given exactly as $JAR_NAME is matched as a whole token,
+# so a path containing spaces still matches; otherwise the jar file name is matched right after
+# -jar, whether it was given plain or with a directory.
 matchNodePid() {
-  awk -v name="${JAR_NAME##*/}" '{
-    for (i = 3; i <= NF; i++) {
-      if ($(i - 1) == "-jar" && ($i == name || substr($i, length($i) - length(name)) == "/" name)) {
-        print $1
+  local name=${JAR_NAME##*/}
+  local pid rest fields i
+  while read -r pid rest; do
+    if [[ " $rest " == *" -jar "$JAR_NAME" "* ]]; then
+      echo "$pid"
+      continue
+    fi
+    read -ra fields <<< "$rest"
+    for ((i = 1; i < ${#fields[@]}; i++)); do
+      if [[ ${fields[i - 1]} == -jar && ( ${fields[i]} == "$name" || ${fields[i]} == */"$name" ) ]]; then
+        echo "$pid"
         break
-      }
-    }
-  }'
+      fi
+    done
+  done
 }
 
 # Sets $pid to the process id recorded in <jar name>.pid; empty when that process is gone. A
@@ -366,15 +384,21 @@ checkPid() {
   fi
 }
 
+# A node set up by --release or -cb runs in $FULL_NODE_DIR. When no node was started from the
+# current directory but one was from $FULL_NODE_DIR, change into it so stop, rebuild and start
+# all act on that node. Idempotent: once inside the node directory there is nothing to enter.
+enterNodeDir() {
+  local pidFile="${JAR_NAME##*/}.pid"
+  if [ ! -f "$pidFile" ] && [ ! -f start.log ] && [ -f "$FULL_NODE_DIR/$pidFile" ]; then
+    cd "$FULL_NODE_DIR" || exit 1
+  fi
+}
+
 # Stops the running node: sends SIGTERM once per second for up to MAX_STOP_TIME seconds,
 # then SIGKILL. Returns 1 when no node was ever started from this directory.
 stopService() {
   local pidFile="${JAR_NAME##*/}.pid"
-  # A node set up by --release or -cb runs in $FULL_NODE_DIR. Handle it from the parent
-  # directory as well, as long as no node was started from the parent itself.
-  if [ ! -f "$pidFile" ] && [ ! -f start.log ] && [ -f "$FULL_NODE_DIR/$pidFile" ]; then
-    cd "$FULL_NODE_DIR" || exit 1
-  fi
+  enterNodeDir
   if [ ! -f "$pidFile" ] && [ ! -f start.log ]; then
     echo "info: no node was started from $PWD"
     return 1
@@ -520,9 +544,43 @@ startService() {
   echo "info: if you need to stop the service, execute in this directory: sh start.sh --stop"
 }
 
+# Fetches and verifies the LevelDB manifest rebuild tool on first use, while the node is still
+# running, so the download and key-server lookup are not added to the stop-to-start downtime.
+# Shares the skip conditions of rebuildManifest. Without gpg the download cannot be verified, so
+# it is skipped rather than fetched in full and then discarded; a download or verification
+# failure leaves the tool absent and rebuildManifest then skips the rewrite.
+ensureArchiveJar() {
+  if [[ $REBUILD_MANIFEST = false ]]; then
+    return
+  fi
+  # The tool handles LevelDB only, and ARM64 runs RocksDB only.
+  if [[ -n $RELEASE_ARCH_SUFFIX ]]; then
+    return
+  fi
+  if [[ ! -d $REBUILD_DIR ]]; then
+    return
+  fi
+  if [[ -f $ARCHIVE_JAR ]]; then
+    return
+  fi
+  if ! type gpg >/dev/null 2>&1; then
+    echo 'warn: gpg is required to verify the rebuild manifest plugin, skip rebuild manifest'
+    return
+  fi
+  echo 'info: download the rebuild manifest plugin from the github'
+  # Download to a temporary name first, so an interrupted download never leaves a partial or
+  # unverified jar that a later start would run; move it into place only once verified.
+  if downloadRelease "$(getLatestReleaseVersion)" "$RELEASE_ARCHIVE_JAR" "$ARCHIVE_JAR.download" \
+      && mv "$ARCHIVE_JAR.download" "$ARCHIVE_JAR"; then
+    echo 'info: download rebuild manifest plugin success'
+  else
+    echo 'warn: skip rebuild manifest'
+  fi
+}
+
 # Rewrites LevelDB manifests of at least REBUILD_MANIFEST_SIZE MB under $REBUILD_DIR before
-# a start, so the databases open faster (TIP-298). Downloads and verifies ArchiveManifest.jar
-# when it is missing. Skipped with -dr, on ARM64 (RocksDB only) and without a database.
+# a start, so the databases open faster (TIP-298), using the tool fetched by ensureArchiveJar.
+# Skipped with -dr, on ARM64 (RocksDB only), without a database, or when the tool is absent.
 rebuildManifest() {
   if [[ $REBUILD_MANIFEST = false ]]; then
     echo 'info: disable rebuild manifest!'
@@ -540,15 +598,12 @@ rebuildManifest() {
     return
   fi
 
-  ARCHIVE_JAR='ArchiveManifest.jar'
-  # Download and verify the tool on first use. If that fails, the rebuild is skipped and the
-  # start goes on.
+  # ensureArchiveJar fetched and verified the tool before the node was stopped. When it is
+  # absent (no gpg, or a failed download or verification) the rewrite is skipped and the start
+  # goes on.
   if [[ ! -f $ARCHIVE_JAR ]]; then
-    echo 'info: download the rebuild manifest plugin from the github'
-    if ! downloadRelease "$(getLatestReleaseVersion)" $RELEASE_ARCHIVE_JAR $ARCHIVE_JAR; then
-      echo 'warn: skip rebuild manifest'
-      return
-    fi
+    echo 'warn: rebuild manifest plugin not available, skip rebuild manifest'
+    return
   fi
   echo 'info: execute rebuild manifest.'
   # A failed rebuild does not block the start either. The tool writes its log to logs/toolkit.log.
@@ -608,8 +663,10 @@ checkSign() {
     gnupg_home=$(mktemp -d)
     # Fetch the release key from the first key server that answers.
     for server in $RELEASE_KEY_SERVERS; do
+      # timeout=10 bounds an unresponsive key server so verification cannot hang; an
+      # unreachable server just falls through to the next one.
       gpg --homedir "$gnupg_home" --batch --quiet --keyserver "$server" \
-        --recv-keys "$RELEASE_KEY_FINGERPRINT" >/dev/null 2>&1 && break
+        --keyserver-options timeout=10 --recv-keys "$RELEASE_KEY_FINGERPRINT" >/dev/null 2>&1 && break
     done
     # Download the detached signature. Only a VALIDSIG status line that carries the release
     # key fingerprint counts as verified.
@@ -638,6 +695,10 @@ checkSign() {
 # Stops a running node and starts it again with the current settings.
 restart() {
   checkJava
+  # Enter the node directory (if needed) and fetch the rebuild tool while the node is still
+  # running, so its download and key-server lookup do not add to the stop-to-start downtime.
+  enterNodeDir
+  ensureArchiveJar
   stopService
   if [[ $IS_BACKUP_GC_LOG = true ]]; then
     backupGCLog
