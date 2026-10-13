@@ -20,8 +20,6 @@ concurrency:
 
 jobs:
 
-  # Bound build/test/report steps to leave time for diagnostics before the job limit.
-  # Uploads after job cancellation are best-effort only.
   build-macos:
     name: Build macos26 (JDK ${{ matrix.java }} / ${{ matrix.arch }})
     if: ${{ github.event_name == 'pull_request' || inputs.job == 'all' || inputs.job == 'macos' }}
@@ -54,13 +52,11 @@ jobs:
           restore-keys: macos26-${{ matrix.arch }}-gradle-
 
       - name: Build
-        timeout-minutes: 45
         shell: bash
         run: |
           .github/ci/ci-run.sh build ./gradlew clean build --no-daemon --console=plain
 
       - name: Toolkit jar smoke test
-        timeout-minutes: 2
         shell: bash
         run: |
           .github/ci/ci-run.sh toolkit-smoke bash -euo pipefail -c '
@@ -71,8 +67,7 @@ jobs:
             java -jar "$JAR" keystore --help'
 
       - name: Upload test diagnostics
-        if: ${{ failure() || cancelled() }}
-        timeout-minutes: 4
+        if: ${{ !cancelled() && failure() }}
         uses: actions/upload-artifact@v6
         with:
           name: tron-test-logs-${{ github.job }}-jdk${{ matrix.java }}-${{ matrix.arch }}
@@ -111,13 +106,11 @@ jobs:
           restore-keys: ubuntu24-aarch64-gradle-
 
       - name: Build
-        timeout-minutes: 45
         shell: bash
         run: |
           .github/ci/ci-run.sh build ./gradlew clean build --no-daemon --console=plain
 
       - name: Toolkit jar smoke test
-        timeout-minutes: 2
         shell: bash
         run: |
           .github/ci/ci-run.sh toolkit-smoke bash -euo pipefail -c '
@@ -128,8 +121,7 @@ jobs:
             java -jar "$JAR" keystore --help'
 
       - name: Upload test diagnostics
-        if: ${{ failure() || cancelled() }}
-        timeout-minutes: 4
+        if: ${{ !cancelled() && failure() }}
         uses: actions/upload-artifact@v6
         with:
           name: tron-test-logs-${{ github.job }}
@@ -194,18 +186,14 @@ jobs:
             rockylinux-x86_64-gradle-
 
       - name: Stop Gradle daemon
-        timeout-minutes: 2
-        continue-on-error: true
         run: ./gradlew --stop || true
 
       - name: Build
-        timeout-minutes: 30
         shell: bash
         run: |
           .github/ci/ci-run.sh build ./gradlew clean build --no-daemon --console=plain
 
       - name: Toolkit jar smoke test
-        timeout-minutes: 2
         shell: bash
         run: |
           .github/ci/ci-run.sh toolkit-smoke bash -euo pipefail -c '
@@ -216,14 +204,12 @@ jobs:
             java -jar "$JAR" keystore --help'
 
       - name: Test with RocksDB engine
-        timeout-minutes: 10
         shell: bash
         run: |
           .github/ci/ci-run.sh rocksdb-test ./gradlew :framework:testWithRocksDb --no-daemon --console=plain
 
       - name: Upload test diagnostics
-        if: ${{ failure() || cancelled() }}
-        timeout-minutes: 4
+        if: ${{ !cancelled() && failure() }}
         uses: actions/upload-artifact@v6
         with:
           name: tron-test-logs-${{ github.job }}
@@ -274,13 +260,11 @@ jobs:
             debian11-x86_64-gradle-
 
       - name: Build
-        timeout-minutes: 30
         shell: bash
         run: |
           .github/ci/ci-run.sh build ./gradlew clean build --no-daemon --console=plain
 
       - name: Toolkit jar smoke test
-        timeout-minutes: 2
         shell: bash
         run: |
           .github/ci/ci-run.sh toolkit-smoke bash -euo pipefail -c '
@@ -291,19 +275,16 @@ jobs:
             java -jar "$JAR" keystore --help'
 
       - name: Test with RocksDB engine
-        timeout-minutes: 10
         shell: bash
         run: |
           .github/ci/ci-run.sh rocksdb-test ./gradlew :framework:testWithRocksDb --no-daemon --console=plain
 
       - name: Generate module coverage reports
-        timeout-minutes: 5
         shell: bash
         run: |
           .github/ci/ci-run.sh coverage ./gradlew jacocoTestReport --no-daemon --console=plain
 
       - name: Upload PR coverage reports
-        timeout-minutes: 2
         uses: actions/upload-artifact@v6
         with:
           name: jacoco-coverage-pr
@@ -312,8 +293,7 @@ jobs:
           if-no-files-found: error
 
       - name: Upload test diagnostics
-        if: ${{ failure() || cancelled() }}
-        timeout-minutes: 4
+        if: ${{ !cancelled() && failure() }}
         uses: actions/upload-artifact@v6
         with:
           name: tron-test-logs-${{ github.job }}
@@ -369,8 +349,6 @@ jobs:
           restore-keys: |
             coverage-base-x86_64-gradle-
 
-      # Use the job timeout for both base test steps. A tolerated step timeout
-      # could let incomplete coverage become the comparison baseline.
       - name: Build (base)
         id: base_build
         # Test failures on the base branch are tolerated: merge-order races can
@@ -394,13 +372,11 @@ jobs:
           ci-tools/.github/ci/ci-run.sh rocksdb-test ./gradlew :framework:testWithRocksDb --no-daemon --console=plain
 
       - name: Generate module coverage reports (base)
-        timeout-minutes: 5
         shell: bash
         run: |
           ci-tools/.github/ci/ci-run.sh coverage ./gradlew jacocoTestReport --no-daemon --console=plain
 
       - name: Upload base coverage reports
-        timeout-minutes: 2
         uses: actions/upload-artifact@v6
         with:
           name: jacoco-coverage-base
@@ -411,10 +387,10 @@ jobs:
       - name: Upload test diagnostics
         # Preserve logs for test failures tolerated by continue-on-error above.
         if: >-
-          failure() || cancelled() ||
-          steps.base_build.outcome == 'failure' ||
-          steps.base_rocksdb_test.outcome == 'failure'
-        timeout-minutes: 4
+          ${{ !cancelled() &&
+              (failure() ||
+               steps.base_build.outcome == 'failure' ||
+               steps.base_rocksdb_test.outcome == 'failure') }}
         uses: actions/upload-artifact@v6
         with:
           name: tron-test-logs-${{ github.job }}
