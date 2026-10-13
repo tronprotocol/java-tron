@@ -574,7 +574,8 @@ public class Wallet {
       }
       trx.checkExpiration(chainBaseManager.getNextBlockSlotTime());
       if (!dbManager.pushTransaction(trx)) {
-        logger.info("Broadcast transaction {} has failed, transaction was rejected locally.", txID);
+        logger.debug("Broadcast transaction {} has failed, transaction was rejected locally.",
+            txID);
         return builder.setResult(false).setCode(response_code.SERVER_BUSY)
             .setMessage(ByteString.copyFromUtf8(
                 "Transaction was rejected locally."))

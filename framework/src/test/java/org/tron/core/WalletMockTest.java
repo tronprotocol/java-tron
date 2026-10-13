@@ -1,6 +1,7 @@
 package org.tron.core;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThrows;
@@ -311,7 +312,7 @@ public class WalletMockTest {
   }
 
   @Test
-  public void testBroadcastTransactionShieldedPendingPoolFull() throws Exception {
+  public void testBroadcastTransactionLocallyRejected() throws Exception {
     long now = System.currentTimeMillis();
     BalanceContract.TransferContract transferContract =
         BalanceContract.TransferContract.newBuilder()
@@ -352,6 +353,7 @@ public class WalletMockTest {
 
     GrpcAPI.Return result = wallet.broadcastTransaction(transaction);
 
+    assertFalse(result.getResult());
     assertEquals(GrpcAPI.Return.response_code.SERVER_BUSY, result.getCode());
     assertEquals("Transaction was rejected locally.",
         result.getMessage().toStringUtf8());
