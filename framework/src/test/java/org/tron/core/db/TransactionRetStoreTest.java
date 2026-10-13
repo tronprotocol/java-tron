@@ -60,18 +60,18 @@ public class TransactionRetStoreTest extends BaseTest {
   }
 
   @Test
-  public void getLowestBlockNum() {
-    Assert.assertEquals(1L, transactionRetStore.getLowestBlockNum().getAsLong());
+  public void getLowestReceiptBlockNum() {
+    Assert.assertEquals(1L, transactionRetStore.getLowestReceiptBlockNum().getAsLong());
   }
 
   @Test
-  public void getLowestBlockNumPicksMinimumKey() {
+  public void getLowestReceiptBlockNumPicksMinimumKey() {
     transactionRetStore.put(ByteArray.fromLong(7), transactionRetCapsule);
     transactionRetStore.put(ByteArray.fromLong(3), transactionRetCapsule);
     try {
-      Assert.assertEquals(1L, transactionRetStore.getLowestBlockNum().getAsLong());
+      Assert.assertEquals(1L, transactionRetStore.getLowestReceiptBlockNum().getAsLong());
       transactionRetStore.delete(blockNum);
-      Assert.assertEquals(3L, transactionRetStore.getLowestBlockNum().getAsLong());
+      Assert.assertEquals(3L, transactionRetStore.getLowestReceiptBlockNum().getAsLong());
     } finally {
       transactionRetStore.delete(ByteArray.fromLong(3));
       transactionRetStore.delete(ByteArray.fromLong(7));
@@ -79,9 +79,9 @@ public class TransactionRetStoreTest extends BaseTest {
   }
 
   @Test
-  public void getLowestBlockNumOnEmptyStore() {
+  public void getLowestReceiptBlockNumOnEmptyStore() {
     transactionRetStore.delete(blockNum);
-    Assert.assertFalse(transactionRetStore.getLowestBlockNum().isPresent());
+    Assert.assertFalse(transactionRetStore.getLowestReceiptBlockNum().isPresent());
   }
 
   @Test
@@ -99,6 +99,20 @@ public class TransactionRetStoreTest extends BaseTest {
       Assert.assertEquals(6L, chainBaseManager.getLowestBlockNumOfReceiptStore());
     } finally {
       chainBaseManager.getDynamicPropertiesStore().saveLatestBlockHeaderNumber(0);
+    }
+  }
+
+  @Test
+  public void initLowestBlockNumOfReceiptStoreWithHistoryOff() {
+    String historySwitch = Args.getInstance().getStorage().getTransactionHistorySwitch();
+    Args.getInstance().getStorage().setTransactionHistorySwitch("off");
+    try {
+      chainBaseManager.initLowestBlockNumOfReceiptStore();
+      Assert.assertTrue(transactionRetStore.getLowestReceiptBlockNum().isPresent());
+      Assert.assertEquals(Long.MAX_VALUE, chainBaseManager.getLowestBlockNumOfReceiptStore());
+    } finally {
+      Args.getInstance().getStorage().setTransactionHistorySwitch(historySwitch);
+      chainBaseManager.initLowestBlockNumOfReceiptStore();
     }
   }
 

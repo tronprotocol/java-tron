@@ -46,7 +46,7 @@ public class TransactionRetStore extends TronStoreWithRevoking<TransactionRetCap
    * <p>Startup use only — must run before any session is built. With in-flight snapshot
    * layers, {@code getNext} does not merge deletions correctly.
    */
-  public OptionalLong getLowestBlockNum() {
+  public OptionalLong getLowestReceiptBlockNum() {
     return revokingDB.getNext(ByteArray.fromLong(0), 1).keySet().stream()
         .mapToLong(Longs::fromByteArray).findFirst();
   }

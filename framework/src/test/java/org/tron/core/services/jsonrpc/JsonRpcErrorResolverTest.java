@@ -9,8 +9,12 @@ import com.googlecode.jsonrpc4j.JsonRpcError;
 import com.googlecode.jsonrpc4j.JsonRpcErrors;
 import com.googlecode.jsonrpc4j.JsonRpcMethod;
 import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.concurrent.ExecutionException;
 import org.junit.Assert;
 import org.junit.Test;
@@ -20,6 +24,7 @@ import org.tron.core.exception.jsonrpc.JsonRpcExecutionRevertedException;
 import org.tron.core.exception.jsonrpc.JsonRpcInternalException;
 import org.tron.core.exception.jsonrpc.JsonRpcInvalidParamsException;
 import org.tron.core.exception.jsonrpc.JsonRpcInvalidRequestException;
+import org.tron.core.exception.jsonrpc.JsonRpcPrunedHistoryException;
 
 public class JsonRpcErrorResolverTest {
 
@@ -105,6 +110,51 @@ public class JsonRpcErrorResolverTest {
     Assert.assertEquals(-1, error.code);
     Assert.assertEquals(message, error.message);
     Assert.assertNull(error.data);
+  }
+
+  @Test
+  public void testPrunedHistoryMapsTo4444OnEveryDeclaringMethod() {
+    Map<String, Method> methods = getMethodsDeclaring(JsonRpcPrunedHistoryException.class);
+    Assert.assertEquals(new TreeSet<>(Arrays.asList("eth_getBlockByNumber",
+        "eth_getBlockReceipts", "eth_getBlockTransactionCountByNumber", "eth_getLogs",
+        "eth_getTransactionByBlockNumberAndIndex", "eth_newFilter")), methods.keySet());
+    for (Map.Entry<String, Method> entry : methods.entrySet()) {
+      JsonError error = resolver.resolveError(
+          new JsonRpcPrunedHistoryException(JsonRpcApiUtil.PRUNED_HISTORY_ERROR),
+          entry.getValue(), NO_ARGUMENTS);
+
+      Assert.assertEquals(entry.getKey(), 4444, error.code);
+      Assert.assertEquals(entry.getKey(), JsonRpcApiUtil.PRUNED_HISTORY_ERROR, error.message);
+      Assert.assertEquals(entry.getKey(), "{}", error.data);
+    }
+  }
+
+  @Test
+  public void testExecutionRevertedMapsTo3OnEveryDeclaringMethod() {
+    Map<String, Method> methods = getMethodsDeclaring(JsonRpcExecutionRevertedException.class);
+    Assert.assertEquals(new TreeSet<>(Arrays.asList("eth_call", "eth_estimateGas")),
+        methods.keySet());
+    String revertData = "0x08c379a0";
+    for (Map.Entry<String, Method> entry : methods.entrySet()) {
+      JsonError error = resolver.resolveError(
+          new JsonRpcExecutionRevertedException("REVERT opcode executed", revertData),
+          entry.getValue(), NO_ARGUMENTS);
+
+      Assert.assertEquals(entry.getKey(), 3, error.code);
+      Assert.assertEquals(entry.getKey(), "REVERT opcode executed", error.message);
+      Assert.assertEquals(entry.getKey(), revertData, error.data);
+    }
+  }
+
+  private Map<String, Method> getMethodsDeclaring(Class<? extends Exception> exception) {
+    Map<String, Method> methods = new TreeMap<>();
+    for (Method method : TronJsonRpc.class.getMethods()) {
+      if (Arrays.asList(method.getExceptionTypes()).contains(exception)) {
+        JsonRpcMethod rpcMethod = method.getAnnotation(JsonRpcMethod.class);
+        methods.put(rpcMethod == null ? method.getName() : rpcMethod.value(), method);
+      }
+    }
+    return methods;
   }
 
   @Test

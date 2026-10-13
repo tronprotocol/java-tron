@@ -274,7 +274,7 @@ public class ChainBaseManager {
     boolean persistReceipts = BooleanUtils.toBoolean(CommonParameter.getInstance()
         .getStorage().getTransactionHistorySwitch());
     this.lowestBlockNumOfReceiptStore = persistReceipts
-        ? this.transactionRetStore.getLowestBlockNum().orElseGet(() -> getHeadBlockNum() + 1)
+        ? this.transactionRetStore.getLowestReceiptBlockNum().orElseGet(() -> getHeadBlockNum() + 1)
         : Long.MAX_VALUE;
   }
 
