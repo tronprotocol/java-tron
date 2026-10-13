@@ -1,3 +1,5 @@
+> ⚠️ **本副本已过时（最后更新于 2022 年）。** 当前的协议说明见 [`docs/protobuf-protocol-document.md`](../../../../docs/protobuf-protocol-document.md)，字段定义以本目录下的 `.proto` 文件为准；此副本仅作历史参考保留。
+
 # TRON protobuf protocol
 
 ## TRON使用Google protobuf协议，协议内容涉及到账户，区块，传输多个层面。

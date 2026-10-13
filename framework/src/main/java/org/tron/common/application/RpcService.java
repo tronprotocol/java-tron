@@ -92,8 +92,8 @@ public abstract class RpcService extends AbstractService {
   }
 
   protected NettyServerBuilder initServerBuilder() {
-    NettyServerBuilder serverBuilder = NettyServerBuilder.forPort(this.port);
     CommonParameter parameter = Args.getInstance();
+    NettyServerBuilder serverBuilder = NettyServerBuilder.forPort(this.port);
     if (parameter.getRpcThreadNum() > 0) {
       this.executorService = ExecutorServiceManager.newFixedThreadPool(
           this.executorName, parameter.getRpcThreadNum());
@@ -106,11 +106,9 @@ public abstract class RpcService extends AbstractService {
         .maxConnectionIdle(parameter.getMaxConnectionIdleInMillis(), TimeUnit.MILLISECONDS)
         .maxConnectionAge(parameter.getMaxConnectionAgeInMillis(), TimeUnit.MILLISECONDS)
         .maxInboundMessageSize(parameter.getMaxMessageSize())
-        .maxHeaderListSize(parameter.getMaxHeaderListSize());
-    if (parameter.getRpcMaxRstStream() > 0 && parameter.getRpcSecondsPerWindow() > 0) {
-      serverBuilder.maxRstFramesPerWindow(
-          parameter.getRpcMaxRstStream(), parameter.getRpcSecondsPerWindow());
-    }
+        .maxHeaderListSize(parameter.getMaxHeaderListSize())
+        .maxRstFramesPerWindow(
+            parameter.getRpcMaxRstStream(), parameter.getRpcSecondsPerWindow());
 
     if (parameter.isRpcReflectionServiceEnable()) {
       serverBuilder.addService(ProtoReflectionService.newInstance());
