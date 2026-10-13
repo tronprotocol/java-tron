@@ -260,6 +260,24 @@ public class WalletDecryptBoundsTest {
     assertEquals("Invalid password provided", err.getMessage());
   }
 
+  @Test
+  public void testDecryptWrapsScryptRuntimeException() throws Exception {
+    // r=1 with n=131072 passes every validation bound (n is a power of 2 in
+    // [2^12, 2^20], r=1, p=1, 128*r*n = 16 MiB, dklen=32), but Bouncy
+    // Castle's SCrypt.generate itself rejects r==1 with n >= 65536 and throws
+    // a raw IllegalArgumentException. decrypt() must wrap that runtime KDF
+    // engine failure into a clean CipherException, preserving the cause.
+    WalletFile walletFile = parseKeystore(String.format(SCRYPT_TEMPLATE,
+        32, 1 << 17, 1, 1));
+    Wallet.validate(walletFile);
+
+    CipherException err = assertThrows(CipherException.class,
+        () -> Wallet.decrypt("password123", walletFile));
+    assertEquals("Scrypt key derivation failed", err.getMessage());
+    assertTrue("cause must be the SCrypt IllegalArgumentException",
+        err.getCause() instanceof IllegalArgumentException);
+  }
+
   // ---------- create(): KDF params validated symmetric with decrypt() ----------
 
   @Test
