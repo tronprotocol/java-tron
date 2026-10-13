@@ -5,7 +5,6 @@ import static org.tron.common.math.Maths.max;
 import static org.tron.common.math.Maths.min;
 import static org.tron.common.utils.Commons.adjustBalance;
 import static org.tron.core.Constant.TRANSACTION_MAX_BYTE_SIZE;
-import static org.tron.core.exception.BadBlockException.TypeEnum.CALC_MERKLE_ROOT_FAILED;
 import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferContract;
 import static org.tron.protos.Protocol.Transaction.Result.contractResult.SUCCESS;
 
@@ -49,7 +48,6 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.bouncycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.TransactionInfoList;
 import org.tron.common.args.GenesisBlock;
 import org.tron.common.bloom.Bloom;

@@ -13,11 +13,10 @@ import static org.tron.common.utils.client.utils.AbiUtil.generateOccupationConst
 
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
-import java.security.KeyPairGenerator;
-import java.security.Security;
 import java.security.SignatureException;
 import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
+import org.bouncycastle.asn1.sec.SECNamedCurves;
 import org.bouncycastle.util.BigIntegers;
 import org.bouncycastle.util.encoders.Base64;
 import org.bouncycastle.util.encoders.Hex;
@@ -73,10 +72,76 @@ public class ECKeyTest {
     assertTrue(key.hasPrivKey());
     assertArrayEquals(pubKey, key.getPubKey());
 
-    key =  ECKey.fromPrivate((byte[]) null);
-    assertNull(key);
-    key = ECKey.fromPrivate(new byte[0]);
-    assertNull(key);
+    assertThrows(IllegalArgumentException.class,
+        () -> ECKey.fromPrivate((byte[]) null));
+    assertThrows(IllegalArgumentException.class,
+        () -> ECKey.fromPrivate(new byte[0]));
+  }
+
+  @Test
+  public void testValidatePrivateKey() {
+    assertTrue(ECKey.isValidPrivateKey(privateKey));
+    assertTrue(ECKey.isValidPrivateKey(Hex.decode(privString)));
+    assertFalse(ECKey.isValidPrivateKey((BigInteger) null));
+    assertFalse(ECKey.isValidPrivateKey((byte[]) null));
+    assertFalse(ECKey.isValidPrivateKey(new byte[0]));
+    assertFalse(ECKey.isValidPrivateKey(new byte[33]));
+    assertFalse(ECKey.isValidPrivateKey(BigInteger.ZERO));
+    assertFalse(ECKey.isValidPrivateKey(ECKey.CURVE.getN()));
+
+    BigInteger highBitPrivateKey = ECKey.CURVE.getN().subtract(BigInteger.ONE);
+    byte[] signPaddedPrivateKey = highBitPrivateKey.toByteArray();
+    assertEquals(33, signPaddedPrivateKey.length);
+    assertEquals(0, signPaddedPrivateKey[0]);
+    assertTrue(ECKey.isValidPrivateKey(signPaddedPrivateKey));
+    assertEquals(highBitPrivateKey, ECKey.fromPrivate(signPaddedPrivateKey).getPrivKey());
+
+    byte[] redundantSignPaddedPrivateKey = new byte[33];
+    redundantSignPaddedPrivateKey[32] = 1;
+    assertFalse(ECKey.isValidPrivateKey(redundantSignPaddedPrivateKey));
+
+    byte[] nonZeroLeadingPrivateKey = Arrays.copyOf(signPaddedPrivateKey,
+        signPaddedPrivateKey.length);
+    nonZeroLeadingPrivateKey[0] = 1;
+    assertFalse(ECKey.isValidPrivateKey(nonZeroLeadingPrivateKey));
+
+    byte[] doubleSignPaddedPrivateKey = new byte[34];
+    System.arraycopy(signPaddedPrivateKey, 0, doubleSignPaddedPrivateKey, 1,
+        signPaddedPrivateKey.length);
+    assertFalse(ECKey.isValidPrivateKey(doubleSignPaddedPrivateKey));
+
+    assertThrows(IllegalArgumentException.class,
+        () -> ECKey.fromPrivate(BigInteger.ZERO));
+    assertThrows(IllegalArgumentException.class,
+        () -> ECKey.fromPrivate(ECKey.CURVE.getN()));
+    assertThrows(IllegalArgumentException.class,
+        () -> ECKey.fromPrivate(new byte[1024 * 1024]));
+    assertThrows(IllegalArgumentException.class,
+        () -> ECKey.publicKeyFromPrivate(null, false));
+  }
+
+  @Test
+  public void testRejectInvalidPublicKey() {
+    assertTrue(ECKey.isValidPublicKey(pubKey));
+    assertTrue(ECKey.isValidPublicKey(compressedPubKey));
+    assertFalse(ECKey.isValidPublicKey(null));
+    assertFalse(ECKey.isValidPublicKey(new byte[0]));
+    assertFalse(ECKey.isValidPublicKey(new byte[]{0}));
+    assertFalse(ECKey.isValidPublicKey(new byte[66]));
+
+    byte[] oversizedPublicKey = new byte[1024 * 1024];
+    oversizedPublicKey[0] = 0x04;
+    assertFalse(ECKey.isValidPublicKey(oversizedPublicKey));
+
+    assertThrows(IllegalArgumentException.class,
+        () -> ECKey.fromPublicOnly((byte[]) null));
+    assertThrows(IllegalArgumentException.class,
+        () -> ECKey.fromPublicOnly(ECKey.CURVE.getCurve().getInfinity()));
+    assertThrows(IllegalArgumentException.class,
+        () -> ECKey.fromPublicOnly(
+            ECKey.CURVE.getCurve().createPoint(BigInteger.ZERO, BigInteger.ZERO)));
+    assertThrows(IllegalArgumentException.class,
+        () -> ECKey.fromPublicOnly(SECNamedCurves.getByName("secp256r1").getG()));
   }
 
   @Test(expected = IllegalArgumentException.class)
@@ -85,12 +150,21 @@ public class ECKeyTest {
     fail("Expecting an IllegalArgumentException for using only null-parameters");
   }
 
-  @Test(expected = IllegalArgumentException.class)
-  public void testInvalidPrivateKey() throws Exception {
-    new ECKey(Security.getProvider("SunEC"),
-        KeyPairGenerator.getInstance("RSA").generateKeyPair().getPrivate(),
-        ECKey.fromPublicOnly(pubKey).getPubKeyPoint());
-    fail("Expecting an IllegalArgumentException for using an non EC private key");
+  @Test
+  public void testRejectMismatchedKeyPair() {
+    BigInteger otherPrivateKey = privateKey.add(BigInteger.ONE);
+    ECKey otherKey = ECKey.fromPrivate(otherPrivateKey);
+
+    assertThrows(IllegalArgumentException.class,
+        () -> new ECKey(privateKey, otherKey.getPubKeyPoint()));
+  }
+
+  @Test
+  public void testAcceptMatchingKeyPair() {
+    ECKey key = new ECKey(privateKey, ECKey.CURVE.getG().multiply(privateKey));
+
+    assertArrayEquals(pubKey, key.getPubKey());
+    assertTrue(key.hasPrivKey());
   }
 
   @Test
@@ -226,7 +300,9 @@ public class ECKeyTest {
     assertArrayEquals(new byte[]{0},
         ECKey.recoverPubBytesFromSignature(0, signature, messageHash, false));
     assertNotNull(ECKey.recoverAddressFromSignature(0, signature, messageHash));
-    assertNotNull(ECKey.recoverFromSignature(0, signature, messageHash));
+    // Key construction rejects infinity independently of the consensus recovery mode.
+    assertThrows(IllegalArgumentException.class,
+        () -> ECKey.recoverFromSignature(0, signature, messageHash));
     assertNull(ECKey.recoverPubBytesFromSignature(0, signature, messageHash, true));
     assertNull(ECKey.recoverAddressFromSignature(0, signature, messageHash, true));
     assertNull(ECKey.recoverFromSignature(0, signature, messageHash, true));
@@ -334,6 +410,8 @@ public class ECKeyTest {
     // Test wrong prefix 3, right length 33
     byte[] nonCanonicalPubkey6 = new byte[33];
     assertFalse(ECKey.isPubKeyCanonical(nonCanonicalPubkey6));
+    assertFalse(ECKey.isPubKeyCanonical(null));
+    assertFalse(ECKey.isPubKeyCanonical(new byte[0]));
   }
 
   @Test
@@ -348,10 +426,28 @@ public class ECKeyTest {
     ECKey key0 = new ECKey();
     ECKey key1 = ECKey.fromPrivate(privateKey);
     ECKey key2 = ECKey.fromPrivate(privateKey);
+    ECKey publicOnlyKey = ECKey.fromPublicOnly(key1.getPubKey());
 
     assertFalse(key0.equals(key1));
     assertTrue(key1.equals(key1));
     assertTrue(key1.equals(key2));
+    assertTrue(key1.equals(publicOnlyKey));
+    assertTrue(publicOnlyKey.equals(key1));
+    assertEquals(key1.hashCode(), publicOnlyKey.hashCode());
+  }
+
+  @Test
+  public void testDefensiveCopy() {
+    ECKey key = ECKey.fromPrivate(privateKey);
+    byte[] expectedAddress = Arrays.copyOf(key.getAddress(), key.getAddress().length);
+    byte[] returnedAddress = key.getAddress();
+    returnedAddress[0] ^= 1;
+    assertArrayEquals(expectedAddress, key.getAddress());
+
+    byte[] expectedNodeId = Arrays.copyOf(key.getNodeId(), key.getNodeId().length);
+    byte[] returnedNodeId = key.getNodeId();
+    returnedNodeId[0] ^= 1;
+    assertArrayEquals(expectedNodeId, key.getNodeId());
   }
 
 

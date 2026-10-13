@@ -61,7 +61,6 @@ import org.tron.core.store.AccountStore;
 import org.tron.p2p.P2pConfig;
 import org.tron.p2p.dns.update.DnsType;
 import org.tron.p2p.dns.update.PublishConfig;
-import org.tron.p2p.utils.NetUtil;
 import org.tron.program.Version;
 
 @Slf4j(topic = "app")
@@ -159,6 +158,7 @@ public class Args extends CommonParameter {
       Args.printHelp(jc);
       exit(0);
     }
+    cmd.validateRemovedOptions();
 
     // Resolve config file path
     configFilePath = StringUtils.isNoneBlank(cmd.shellConfFileName)
@@ -856,9 +856,6 @@ public class Args extends CommonParameter {
     if (assigned.contains("--solidity")) {
       PARAMETER.solidityNode = cmd.solidityNode;
     }
-    if (assigned.contains("--keystore-factory")) {
-      PARAMETER.keystoreFactory = cmd.keystoreFactory;
-    }
     if (assigned.contains("--rpc-thread")) {
       PARAMETER.rpcThreadNum = cmd.rpcThreadNum;
     }
@@ -1015,14 +1012,16 @@ public class Args extends CommonParameter {
       if (dns.getChangeThreshold() > 0) {
         publishConfig.setChangeThreshold(dns.getChangeThreshold());
       } else if (Double.compare(dns.getChangeThreshold(), 0.0) != 0) {
-        logger.error("Check node.dns.changeThreshold, should be bigger than 0, default 0.1");
+        throw new TronError("Check node.dns.changeThreshold, should be bigger than 0, default 0.1",
+            TronError.ErrCode.PARAMETER_INIT);
       }
 
       int maxMergeSize = dns.getMaxMergeSize();
       if (maxMergeSize >= 1 && maxMergeSize <= 5) {
         publishConfig.setMaxMergeSize(maxMergeSize);
       } else if (maxMergeSize != 0) {
-        logger.error("Check node.dns.maxMergeSize, should be [1~5], default 5");
+        throw new TronError("Check node.dns.maxMergeSize, should be [1~5], default 5",
+            TronError.ErrCode.PARAMETER_INIT);
       }
 
       if (StringUtils.isNotEmpty(dns.getDnsPrivate())) {
@@ -1290,7 +1289,7 @@ public class Args extends CommonParameter {
 
   private static Map<String, String[]> getOptionGroup() {
     String[] tronOption = new String[] {"version", "help", "shellConfFileName", "logbackPath",
-        "eventSubscribe", "solidityNode", "keystoreFactory"};
+        "eventSubscribe", "solidityNode"};
     String[] dbOption = new String[] {"outputDirectory"};
     String[] witnessOption = new String[] {"witness", "privateKey"};
     String[] vmOption = new String[] {"debug"};
