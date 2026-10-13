@@ -20,6 +20,7 @@
 - [Building the Source Code](#building-the-source-code)
 - [Executables](#executables)
 - [Running java-tron](#running-java-tron)
+- [Documentation](#documentation)
 - [Community](#community)
 - [Contribution](#contribution)
 - [Resources](#resources)
@@ -80,6 +81,7 @@ The java-tron project comes with several runnable artifacts and helper scripts f
 | :---------------------- | :---------- |
 | **`FullNode.jar`**      | Main TRON node executable (generated in `build/libs/` after a successful build following the above guidance). Runs as a full node by default. `java -jar FullNode.jar --help` for command line options|
 | **`Toolkit.jar`** | Node management utility (generated in `build/libs/`): partition, prune, copy, convert DBs; shadow-fork tool. [Usage](https://tronprotocol.github.io/documentation-en/using_javatron/toolkit/#toolkit-a-java-tron-node-maintenance-suite) |
+| **`p2p-standalone.jar`** | Peer discovery, connection management and DNS-based node lists (generated in `build/libs/`). See the [p2p guide](./p2p/README.md). |
 | **`start.sh`**          | Quick start script (x86_64, JDK 8) to download/build/run `FullNode.jar`. See the tool [guide](./shell.md). |
 | **`start.sh.simple`**   | Quick start script template (ARM64, JDK 17). See usage notes inside the script. |
 
@@ -194,6 +196,24 @@ node {
 When exposing any of these APIs to a public interface, ensure the node is protected with appropriate authentication, rate limiting, and network access controls in line with your security requirements.
 
 Public hosted HTTP endpoints for both mainnet and testnet are provided by TronGrid. Please refer to the [TRON Network HTTP Endpoints](https://developers.tron.network/docs/connect-to-the-tron-network#tron-network-http-endpoints) for the latest list. For supported methods and request formats, see the HTTP API reference above.
+
+# Documentation
+
+More detailed guides live in the [`docs/`](./docs) directory:
+
+- **Configuration**
+  - [Configuration Reference](./docs/configuration.md) — full `config.conf` option reference
+  - [Configuration Conventions](./docs/configuration-conventions.md)
+- **Modular architecture & deployment**
+  - [Modular Introduction](./docs/modular-introduction-en.md) · [中文版](./docs/modular-introduction-zh.md)
+  - [Modular Deployment](./docs/modular-deployment-en.md) · [中文版](./docs/modular-deployment-zh.md)
+  - [P2P Module](./p2p/README.md) — peer discovery, connection management and DNS-based node lists
+- **Extending java-tron**
+  - [Implement a Customized Actuator](./docs/implement-a-customized-actuator-en.md) · [中文版](./docs/implement-a-customized-actuator-zh.md)
+- **Protocol**
+  - [TRON Protobuf Protocol Document](./docs/protobuf-protocol-document.md) — guide to the main Protobuf messages; the `.proto` files under [`protocol/src/main/protos`](./protocol/src/main/protos) are the source of truth
+- **Observability**
+  - [Metrics Changelog](./docs/metrics-changelog.md) — Prometheus metric additions, changes, and removals across java-tron releases
 
 # Community
 
