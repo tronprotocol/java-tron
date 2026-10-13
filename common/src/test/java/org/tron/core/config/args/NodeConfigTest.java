@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
+import static org.tron.core.exception.TronError.ErrCode.PARAMETER_INIT;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
@@ -111,6 +112,8 @@ public class NodeConfigTest {
     assertEquals(9223372036854775807L, rpc.getMaxConnectionAgeInMillis());
     assertEquals(4194304, rpc.getMaxMessageSize());
     assertEquals(8192, rpc.getMaxHeaderListSize());
+    assertEquals(NodeConfig.RpcConfig.DEFAULT_MAX_RST_STREAM, rpc.getMaxRstStream());
+    assertEquals(NodeConfig.RpcConfig.DEFAULT_SECONDS_PER_WINDOW, rpc.getSecondsPerWindow());
     assertEquals(1, rpc.getMinEffectiveConnection());
     // thread=0 in reference.conf triggers auto-detect in postProcess
     assertTrue(rpc.getThread() > 0);
@@ -144,6 +147,63 @@ public class NodeConfigTest {
 
     assertTrue(exception.getMessage().contains(
         "node.rpc.maxConcurrentCallsPerConnection must be non-negative, got: -1"));
+  }
+
+  @Test
+  public void testRpcRstDefaultsMatchReference() {
+    NodeConfig.RpcConfig rpc = new NodeConfig.RpcConfig();
+    assertEquals(1000, rpc.getMaxRstStream());
+    assertEquals(5, rpc.getSecondsPerWindow());
+
+    Config reference = withRef();
+    assertEquals(rpc.getMaxRstStream(), reference.getInt("node.rpc.maxRstStream"));
+    assertEquals(rpc.getSecondsPerWindow(), reference.getInt("node.rpc.secondsPerWindow"));
+  }
+
+  @Test
+  public void testRpcZeroRstLimitsUseSecureDefaultsIndependently() {
+    int[][] cases = {
+        {0, 0, NodeConfig.RpcConfig.DEFAULT_MAX_RST_STREAM,
+            NodeConfig.RpcConfig.DEFAULT_SECONDS_PER_WINDOW},
+        {0, 10, NodeConfig.RpcConfig.DEFAULT_MAX_RST_STREAM, 10},
+        {5, 0, 5, NodeConfig.RpcConfig.DEFAULT_SECONDS_PER_WINDOW}
+    };
+    for (int[] values : cases) {
+      NodeConfig.RpcConfig rpc = NodeConfig.fromConfig(withRef(
+          "node.rpc { maxRstStream = " + values[0]
+              + ", secondsPerWindow = " + values[1] + " }")).getRpc();
+      assertEquals(values[2], rpc.getMaxRstStream());
+      assertEquals(values[3], rpc.getSecondsPerWindow());
+    }
+  }
+
+  @Test
+  public void testRpcInvalidRstLimitsRejectedBeforeFallback() {
+    int[][] cases = {
+        {-1, 5}, {1000, -1}, {-1, 0}, {0, -1},
+        {Integer.MIN_VALUE, 5}, {1000, Integer.MIN_VALUE},
+        {Integer.MAX_VALUE, 5}, {Integer.MAX_VALUE, 0}
+    };
+    for (int[] values : cases) {
+      Config config = withRef("node.rpc { maxRstStream = " + values[0]
+          + ", secondsPerWindow = " + values[1] + " }");
+      TronError exception = assertThrows(TronError.class, () -> NodeConfig.fromConfig(config));
+      assertEquals(PARAMETER_INIT, exception.getErrCode());
+      assertTrue(exception.getMessage().contains(values[1] < 0
+          ? "node.rpc.secondsPerWindow" : "node.rpc.maxRstStream"));
+    }
+  }
+
+  @Test
+  public void testRpcExplicitPositiveRstLimitsPreserved() {
+    int[][] cases = {{5, 10}, {200, 30}, {1, 1}, {Integer.MAX_VALUE - 1, Integer.MAX_VALUE}};
+    for (int[] values : cases) {
+      NodeConfig.RpcConfig rpc = NodeConfig.fromConfig(withRef(
+          "node.rpc { maxRstStream = " + values[0]
+              + ", secondsPerWindow = " + values[1] + " }")).getRpc();
+      assertEquals(values[0], rpc.getMaxRstStream());
+      assertEquals(values[1], rpc.getSecondsPerWindow());
+    }
   }
 
   @Test
