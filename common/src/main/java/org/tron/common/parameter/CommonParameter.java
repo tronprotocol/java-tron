@@ -13,7 +13,6 @@ import org.tron.common.cron.CronExpression;
 import org.tron.common.logsfilter.EventPluginConfig;
 import org.tron.common.logsfilter.FilterQuery;
 import org.tron.common.setting.RocksDbSettings;
-import org.tron.core.Constant;
 import org.tron.core.config.args.SeedNode;
 import org.tron.core.config.args.Storage;
 import org.tron.p2p.P2pConfig;
@@ -175,12 +174,6 @@ public class CommonParameter {
   @Getter
   @Setter
   public boolean solidityNode = false;
-
-  // If you are running KeystoreFactory,
-  // this flag is set to true
-  @Getter
-  @Setter
-  public boolean keystoreFactory = false;
 
   // -- RPC / HTTP --
   @Getter
@@ -435,10 +428,6 @@ public class CommonParameter {
   public FilterQuery eventFilter;
   @Getter
   @Setter
-  public String cryptoEngine = Constant.ECKey_ENGINE;
-
-  @Getter
-  @Setter
   public boolean rpcEnable = true;
   @Getter
   @Setter
@@ -664,10 +653,6 @@ public class CommonParameter {
       PARAMETER.storage.deleteAllStoragePaths();
     }
     PARAMETER = new CommonParameter();
-  }
-
-  public boolean isECKeyCryptoEngine() {
-    return cryptoEngine.equalsIgnoreCase(Constant.ECKey_ENGINE);
   }
 
   public boolean isJsonRpcFilterEnabled() {
