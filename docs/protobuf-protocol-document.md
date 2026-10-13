@@ -1829,7 +1829,7 @@ message `SmartContract` has multiple attributes and nested message `ABI`
   
   `trx_hash`:  transactionId of Deploying contract transaction.
 
-  `version`: contract version; `1` for contracts created while EVM compatibility (`getAllowTvmCompatibleEvm`) is enabled, otherwise `0`.
+  `version`: contract version. `1` for contracts deployed by a `CreateSmartContract` transaction while EVM compatibility (`getAllowTvmCompatibleEvm`) is enabled, otherwise `0`; contracts created by `CREATE` / `CREATE2` inherit the creating contract's version.
   
   ```java
     message SmartContract {

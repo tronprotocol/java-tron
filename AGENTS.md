@@ -52,7 +52,7 @@ Run exactly what CI runs (`.github/workflows/pr-check.yml`):
 ./gradlew :framework:checkstyleMain :framework:checkstyleTest :plugins:checkstyleMain
 ```
 
-CI runs Checkstyle only for `framework` and `plugins`; `protocol` is checked by `protoLint` instead (see Protobuf below). `p2p` has its own Checkstyle configuration (`./gradlew :p2p:checkstyleMain :p2p:checkstyleTest`) that is not part of the CI gate. A bare `./gradlew checkstyleMain` does not reproduce the CI gate.
+The `pr-check.yml` Checkstyle gate covers only `framework` and `plugins`; `protocol` is checked by `protoLint` instead (see Protobuf below). `p2p` also applies Checkstyle, but with a separate config at the repo root (`config/checkstyle/checkStyleAll.xml`, distinct from the `framework/config/checkstyle/` one that `framework` and `plugins` use) — it is still enforced, by `./gradlew clean build` in `pr-build.yml`, just not part of the `pr-check.yml` command. A bare `./gradlew checkstyleMain` does not reproduce the gate.
 
 ### 4. Forbidden `Math` usage
 
@@ -119,15 +119,15 @@ No `*.jar`, `build/`, logs, or database files — whether produced by the main b
 **Module dependency direction is one-way — do not introduce reverse dependencies:**
 
 ```text
-framework → chainbase → common → protocol
-actuator  → chainbase
-consensus → chainbase / common   (only via ConsensusDelegate; never call Manager directly)
+framework → chainbase, protocol, actuator, consensus, p2p
+chainbase → protocol, common, crypto
+common    → protocol, p2p, platform
+actuator  → chainbase, protocol, crypto
+consensus → chainbase, protocol   (only via ConsensusDelegate; never call Manager directly)
 crypto    → common
 ```
 
-`platform` is a leaf module (no project dependencies of its own) that `common`, `framework`, and `plugins` depend on for architecture-specific code.
-
-`p2p` is also a leaf module. 
+`platform` and `p2p` are leaf modules with no dependencies of their own. `platform` holds the architecture-specific code; `common` and `plugins` depend on it directly, while `framework` picks it up only transitively through `common`. `plugins` depends on `crypto`, `platform`, and `protocol`.
 
 ## Hard Constraints
 
