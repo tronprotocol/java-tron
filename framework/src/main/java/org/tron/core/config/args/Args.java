@@ -61,7 +61,6 @@ import org.tron.core.store.AccountStore;
 import org.tron.p2p.P2pConfig;
 import org.tron.p2p.dns.update.DnsType;
 import org.tron.p2p.dns.update.PublishConfig;
-import org.tron.p2p.utils.NetUtil;
 import org.tron.program.Version;
 
 @Slf4j(topic = "app")
@@ -159,6 +158,7 @@ public class Args extends CommonParameter {
       Args.printHelp(jc);
       exit(0);
     }
+    cmd.validateRemovedOptions();
 
     // Resolve config file path
     configFilePath = StringUtils.isNoneBlank(cmd.shellConfFileName)
@@ -298,7 +298,6 @@ public class Args extends CommonParameter {
    * Bridge MiscConfig bean values to CommonParameter fields.
    */
   private static void applyMiscConfig(MiscConfig mc) {
-    PARAMETER.cryptoEngine = mc.getCryptoEngine();
     PARAMETER.needToUpdateAsset = mc.isNeedToUpdateAsset();
     PARAMETER.historyBalanceLookup = mc.isHistoryBalanceLookup();
     PARAMETER.trxReferenceBlock = mc.getTrxReferenceBlock();
@@ -598,7 +597,6 @@ public class Args extends CommonParameter {
     PARAMETER.trustNodeAddr = nc.getTrustNode();
 
     PARAMETER.validateSignThreadNum = nc.getValidateSignThreadNum();
-    PARAMETER.walletExtensionApi = nc.isWalletExtensionApi();
     PARAMETER.isOpenFullTcpDisconnect = nc.isOpenFullTcpDisconnect();
     PARAMETER.nodeDetectEnable = nc.isNodeDetectEnable();
 
@@ -695,10 +693,11 @@ public class Args extends CommonParameter {
   public static void applyConfigParams(
       final Config config) {
 
+    // Reject legacy crypto engines before storage or witness/keystore initialization.
+    miscConfig = MiscConfig.fromConfig(config);
+
     Wallet.setAddressPreFixByte(ADD_PRE_FIX_BYTE_MAINNET);
     Wallet.setAddressPreFixString(Constant.ADD_PRE_FIX_STRING_MAINNET);
-
-    // crypto.engine handled by MiscConfig
 
     // VM config: bind from config.conf "vm" section
     vmConfig = VmConfig.fromConfig(config);
@@ -729,7 +728,6 @@ public class Args extends CommonParameter {
     // node discovery, legacy fallback, p2p, dns — all handled in applyNodeConfig
 
     // Misc config: storage, trx, energy — small domains, read via beans
-    miscConfig = MiscConfig.fromConfig(config);
     applyMiscConfig(miscConfig);
 
     // vm, committee already handled above
@@ -857,9 +855,6 @@ public class Args extends CommonParameter {
     }
     if (assigned.contains("--solidity")) {
       PARAMETER.solidityNode = cmd.solidityNode;
-    }
-    if (assigned.contains("--keystore-factory")) {
-      PARAMETER.keystoreFactory = cmd.keystoreFactory;
     }
     if (assigned.contains("--rpc-thread")) {
       PARAMETER.rpcThreadNum = cmd.rpcThreadNum;
@@ -1017,14 +1012,16 @@ public class Args extends CommonParameter {
       if (dns.getChangeThreshold() > 0) {
         publishConfig.setChangeThreshold(dns.getChangeThreshold());
       } else if (Double.compare(dns.getChangeThreshold(), 0.0) != 0) {
-        logger.error("Check node.dns.changeThreshold, should be bigger than 0, default 0.1");
+        throw new TronError("Check node.dns.changeThreshold, should be bigger than 0, default 0.1",
+            TronError.ErrCode.PARAMETER_INIT);
       }
 
       int maxMergeSize = dns.getMaxMergeSize();
       if (maxMergeSize >= 1 && maxMergeSize <= 5) {
         publishConfig.setMaxMergeSize(maxMergeSize);
       } else if (maxMergeSize != 0) {
-        logger.error("Check node.dns.maxMergeSize, should be [1~5], default 5");
+        throw new TronError("Check node.dns.maxMergeSize, should be [1~5], default 5",
+            TronError.ErrCode.PARAMETER_INIT);
       }
 
       if (StringUtils.isNotEmpty(dns.getDnsPrivate())) {
@@ -1188,9 +1185,8 @@ public class Args extends CommonParameter {
   private static void printVersion() {
     Properties properties = new Properties();
     boolean noGitProperties = true;
-    try {
-      InputStream in = Thread.currentThread()
-          .getContextClassLoader().getResourceAsStream("git.properties");
+    try (InputStream in = Thread.currentThread()
+        .getContextClassLoader().getResourceAsStream("git.properties")) {
       if (in != null) {
         noGitProperties = false;
         properties.load(in);
@@ -1278,9 +1274,8 @@ public class Args extends CommonParameter {
 
   private static String getCommitIdAbbrev() {
     Properties properties = new Properties();
-    try {
-      InputStream in = Thread.currentThread()
-          .getContextClassLoader().getResourceAsStream("git.properties");
+    try (InputStream in = Thread.currentThread()
+        .getContextClassLoader().getResourceAsStream("git.properties")) {
       if (in == null) {
         logger.warn("git.properties not found on classpath");
         return "";
@@ -1294,7 +1289,7 @@ public class Args extends CommonParameter {
 
   private static Map<String, String[]> getOptionGroup() {
     String[] tronOption = new String[] {"version", "help", "shellConfFileName", "logbackPath",
-        "eventSubscribe", "solidityNode", "keystoreFactory"};
+        "eventSubscribe", "solidityNode"};
     String[] dbOption = new String[] {"outputDirectory"};
     String[] witnessOption = new String[] {"witness", "privateKey"};
     String[] vmOption = new String[] {"debug"};
