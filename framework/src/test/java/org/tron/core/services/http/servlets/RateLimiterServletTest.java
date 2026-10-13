@@ -509,4 +509,49 @@ public class RateLimiterServletTest {
     f.setAccessible(true);
     f.set(target, value);
   }
+
+  @Test
+  public void testResponseFailureIsLoggedAndPermitStillReleased() throws Exception {
+    // A failure from the response itself stays inside the handler's own catch clauses: it is
+    // logged rather than propagated, and the cleanup still runs.
+    IPreemptibleRateLimiter perEndpoint = Mockito.mock(IPreemptibleRateLimiter.class);
+    when(perEndpoint.acquirePermit(any(RuntimeData.class))).thenReturn(true);
+    container.add(KEY_HTTP, "TestServlet", perEndpoint);
+    MockHttpServletResponse failing = new MockHttpServletResponse() {
+      @Override
+      public void setContentType(String contentType) {
+        throw new IllegalStateException("response already committed");
+      }
+    };
+
+    try (MockedStatic<GlobalRateLimiter> globalMock = mockStatic(GlobalRateLimiter.class)) {
+      globalMock.when(() -> GlobalRateLimiter.acquirePermit(any())).thenReturn(true);
+
+      servlet.service(request, failing);
+
+      verify(perEndpoint, times(1)).release();
+    }
+  }
+
+  @Test
+  public void testGetReleasesPermitWhenParameterAccessThrows() throws Exception {
+    IPreemptibleRateLimiter perEndpoint = Mockito.mock(IPreemptibleRateLimiter.class);
+    when(perEndpoint.acquirePermit(any(RuntimeData.class))).thenReturn(true);
+    container.add(KEY_HTTP, "TestServlet", perEndpoint);
+    MockHttpServletRequest getRequest = new MockHttpServletRequest("GET", "/test") {
+      @Override
+      public String getParameter(String name) {
+        throw new BadMessageException();
+      }
+    };
+    getRequest.setRemoteAddr("10.0.0.1");
+
+    try (MockedStatic<GlobalRateLimiter> globalMock = mockStatic(GlobalRateLimiter.class)) {
+      globalMock.when(() -> GlobalRateLimiter.acquirePermit(any())).thenReturn(true);
+
+      assertThrows(BadMessageException.class, () -> servlet.service(getRequest, response));
+
+      verify(perEndpoint, times(1)).release();
+    }
+  }
 }

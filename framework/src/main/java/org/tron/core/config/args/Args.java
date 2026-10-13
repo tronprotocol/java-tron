@@ -599,6 +599,7 @@ public class Args extends CommonParameter {
     PARAMETER.validateSignThreadNum = nc.getValidateSignThreadNum();
     PARAMETER.isOpenFullTcpDisconnect = nc.isOpenFullTcpDisconnect();
     PARAMETER.nodeDetectEnable = nc.isNodeDetectEnable();
+    PARAMETER.nodeAllowNumericFieldAlias = nc.isAllowNumericFieldAlias();
 
     PARAMETER.inactiveThreshold = nc.getInactiveThreshold();
 

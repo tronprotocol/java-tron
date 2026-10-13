@@ -59,6 +59,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.Constant;
+import org.tron.core.config.args.Args;
 import org.tron.core.services.http.HttpSelfFormatFieldName;
 import org.tron.protos.contract.BalanceContract;
 
@@ -593,9 +594,12 @@ public class JsonFormat {
       field = null;
     }
 
-    // Last try to lookup by field-index if 'name' is numeric,
-    // which indicates a possible unknown field
-    if (field == null && DIGITS.matcher(name).matches()) {
+    // Optionally resolve a single-digit key by protobuf field number.
+    // Resolved message fields use the legacy hex-encoded protobuf value format,
+    // rather than the JSON object format used with field names.
+    // Disabled or unresolved numeric keys follow the existing unknown-field rules.
+    if (field == null && DIGITS.matcher(name).matches()
+        && Args.getInstance().isNodeAllowNumericFieldAlias()) {
       field = type.findFieldByNumber(Integer.parseInt(name));
       unknown = true;
     }
