@@ -79,6 +79,7 @@ abstract class KeccakCore extends DigestEngine {
   }
 
   protected void engineReset() {
+    super.engineReset();
     doReset();
   }
 

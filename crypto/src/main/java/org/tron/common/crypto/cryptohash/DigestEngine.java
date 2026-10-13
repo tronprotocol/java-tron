@@ -41,9 +41,13 @@ public abstract class DigestEngine extends MessageDigest implements Digest {
   }
 
   /**
-   * Reset the hash algorithm state.
+   * Reset the buffered input state. Subclasses must call this method and reset their algorithm
+   * state.
    */
-  protected abstract void engineReset();
+  protected void engineReset() {
+    inputLen = 0;
+    blockCount = 0;
+  }
 
   /**
    * Process one block of data.
@@ -111,6 +115,11 @@ public abstract class DigestEngine extends MessageDigest implements Digest {
     doPadding(buf, offset);
     reset();
     return digestLen;
+  }
+
+  @Override
+  protected int engineDigest(byte[] buf, int offset, int len) throws DigestException {
+    return digest(buf, offset, len);
   }
 
   /**

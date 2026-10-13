@@ -235,6 +235,61 @@ public class KeccakTest {
   }
 
   @Test
+  public void testShortSpiDigestPreservesState() throws Exception {
+    for (int inputLength : new int[]{17, 8193}) {
+      byte[] input = Arrays.copyOf(inputBytes(), inputLength);
+      byte[] expected = referenceDigest(input);
+      for (int available : new int[]{0, 1, expected.length - 1}) {
+        DigestEngine digest = bits == 256 ? new TestKeccak256() : new TestKeccak512();
+        digest.update(input);
+        byte[] output = new byte[expected.length + 6];
+        Arrays.fill(output, (byte) 0x5a);
+        byte[] expectedOutput = output.clone();
+
+        assertThrows(DigestException.class, () -> spiDigest(digest, output, 3, available));
+        assertArrayEquals(expectedOutput, output);
+
+        assertEquals(expected.length, spiDigest(digest, output, 3, expected.length));
+        System.arraycopy(expected, 0, expectedOutput, 3, expected.length);
+        assertArrayEquals(expectedOutput, output);
+        assertArrayEquals(referenceDigest(new byte[0]), digest.digest());
+      }
+    }
+  }
+
+  @Test
+  public void testSpiResetClearsBufferedState() throws Exception {
+    DigestEngine digest = (DigestEngine) newDigest();
+    int blockLength = digest.getBlockLength();
+    for (int length : new int[]{0, 1, blockLength - 1, blockLength, blockLength + 1,
+        2 * blockLength + 3}) {
+      byte[] input = Arrays.copyOf(inputBytes(), length);
+      if (bits == 256) {
+        ((Keccak256) digest).engineUpdate(input, 0, input.length);
+      } else {
+        ((Keccak512) digest).engineUpdate(input, 0, input.length);
+      }
+      digest.engineReset();
+      assertEquals("Buffered bytes after reset for length " + length, 0, digest.flush());
+      assertEquals("Processed blocks after reset for length " + length, 0, digest.getBlockCount());
+      byte[] afterReset = bits == 256
+          ? ((Keccak256) digest).engineDigest() : ((Keccak512) digest).engineDigest();
+      assertArrayEquals(referenceDigest(new byte[0]), afterReset);
+    }
+  }
+
+  @Test
+  public void testSpiResetBeforeNewInput() throws Exception {
+    DigestEngine digest = (DigestEngine) newDigest();
+    digest.update(inputBytes());
+    digest.engineReset();
+    digest.engineReset();
+    byte[] nextInput = {1, 2, 3};
+    digest.update(nextInput);
+    assertArrayEquals(referenceDigest(nextInput), digest.digest());
+  }
+
+  @Test
   public void testCopy() throws Exception {
     DigestEngine digest = (DigestEngine) newDigest();
     byte[] input = inputBytes();
@@ -247,6 +302,29 @@ public class KeccakTest {
 
   private MessageDigest newDigest() throws Exception {
     return MessageDigest.getInstance("TRON-KECCAK-" + bits, TronCastleProvider.getInstance());
+  }
+
+  private int spiDigest(DigestEngine digest, byte[] output, int offset, int len)
+      throws DigestException {
+    return bits == 256
+        ? ((TestKeccak256) digest).engineDigest(output, offset, len)
+        : ((TestKeccak512) digest).engineDigest(output, offset, len);
+  }
+
+  private static class TestKeccak256 extends Keccak256 {
+
+    @Override
+    protected int engineDigest(byte[] output, int offset, int len) throws DigestException {
+      return super.engineDigest(output, offset, len);
+    }
+  }
+
+  private static class TestKeccak512 extends Keccak512 {
+
+    @Override
+    protected int engineDigest(byte[] output, int offset, int len) throws DigestException {
+      return super.engineDigest(output, offset, len);
+    }
   }
 
   private byte[] referenceDigest(byte[] input) {
