@@ -10,7 +10,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
@@ -248,8 +250,16 @@ public class ComputeRewardTest extends BaseMethodTest {
   }
 
   @Test
-  public void query() {
-    Assert.assertEquals(3189, mortgageService.queryReward(OWNER_ADDRESS));
+  public void query() throws InterruptedException {
+    long reward = mortgageService.queryReward(OWNER_ADDRESS);
+    // queryReward() can return before the background Merkle-root calculation finishes.
+    // Wait before asserting or mutating the store; a failed assertion triggers teardown.
+    ExecutorService rewardExecutor = ReflectUtils.getFieldValue(rewardViCalService, "es");
+    rewardExecutor.shutdownNow();
+    Assert.assertTrue("Reward calculation did not terminate before modifying its store",
+        rewardExecutor.awaitTermination(10, TimeUnit.SECONDS));
+    Assert.assertEquals(3189L, reward);
+
     // mock root is error
     rewardViStore.put("test".getBytes(), "test".getBytes());
     ReflectUtils.invokeMethod(rewardViCalService,"maybeRun");
