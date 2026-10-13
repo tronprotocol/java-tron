@@ -24,7 +24,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.core.services.filter.BufferedResponseWrapper;
-import org.tron.core.services.http.RateLimiterServlet;
+import org.tron.core.services.http.servlets.RateLimiterServlet;
 
 @Component
 @Slf4j(topic = "API")
