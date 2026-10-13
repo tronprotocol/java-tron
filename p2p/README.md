@@ -10,36 +10,6 @@ Peer discovery, connection management and DNS-based node lists for java-tron.
 > internalizing changed the facts; treat this file as the module's docs rather
 > than as a mirror of upstream.
 
-## Upstream synchronization
-
-The initial import in [java-tron #6992](https://github.com/tronprotocol/java-tron/pull/6992)
-used libp2p `v2.2.9` (`c564f263d310d7a964035d3b597634aba6bda86d`). The next
-synchronization uses java-tron `release_v4.8.3` at
-`a901f85a4abaec4cc65a7a2e1cff7d499d57134f` and the following merged libp2p changes:
-
-| Upstream PR | Commit | Applied change |
-|---|---|---|
-| [#152](https://github.com/tronprotocol/libp2p/pull/152) | `bdb10d9` | Protobuf source directory alignment was already included in #6992. |
-| [#147](https://github.com/tronprotocol/libp2p/pull/147) | `b223c3f` | Log the UDP packet sender; retain local deterministic IP and connection-pool tests. |
-| [#151](https://github.com/tronprotocol/libp2p/pull/151) | `f8fd2ad` | Propagate initial TCP/UDP bind failures, clean up startup resources, and exit the standalone CLI with failure status. |
-| [#157](https://github.com/tronprotocol/libp2p/pull/157) | `826dc1f` | Discard unknown Protobuf fields when parsing P2P messages, including compressed envelopes. |
-| [#149](https://github.com/tronprotocol/libp2p/pull/149) | `38db102` | Validate advertised ports before discovery admission, address construction, and connection-pool selection. |
-| [#146](https://github.com/tronprotocol/libp2p/pull/146) | `5516b62` | Limit pending inbound connections to 32 globally and 2 per IP, with a 10-second HELLO deadline. |
-| [#123](https://github.com/tronprotocol/libp2p/pull/123) | `a6c64db` | Select Okio 1.17.6 for the Aliyun SDK dependency chain and update dependency verification. |
-| [#145](https://github.com/tronprotocol/libp2p/pull/145) | `1e26de4` | Reject application messages before the P2P handshake; validate network ID and peer identity before registration. |
-| [#150](https://github.com/tronprotocol/libp2p/pull/150) | `eb1d59f` | Close established peers sending STATUS and make disconnect cleanup idempotent and channel-instance aware. |
-
-The accompanying upstream regression tests are included alongside the existing
-java-tron tests. Local logging names, locale handling, deterministic math,
-standalone packaging, dependency versions other than Okio, and the CLI trust-IP
-parsing fix remain in place. Protobuf schemas and consensus rules are unchanged.
-Peers must complete the P2P HELLO exchange with the configured `networkId` before
-sending application messages; the legacy version-only admission path is removed.
-
-For the next synchronization, compare upstream against the full `eb1d59fa...`
-commit above and review this table before applying changes. Open upstream PRs
-are not included in this synchronization.
-
 ## Running it on its own
 
 `./gradlew :p2p:build` produces two jars:
