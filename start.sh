@@ -90,6 +90,31 @@ case "`uname`" in
   Darwin*) darwin=true ;;
 esac
 
+# Logging helpers: print a timestamped, colored line to the terminal and append the same line
+# without color codes to start.log, so stop, download, signature-check, rebuild and start
+# messages survive when the script runs from cron, systemd or nohup. INFO and WARN go to
+# stdout, ERROR to stderr; start.log is the one in the current directory, beside the JVM output.
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m'
+LOG_FILE='start.log'
+log() {
+  local level="$1"; shift
+  local color='' timestamp
+  timestamp=$(date '+%Y-%m-%d %H:%M:%S')
+  case "$level" in
+    INFO) color="$GREEN" ;;
+    WARN) color="$YELLOW" ;;
+    ERROR) color="$RED" ;;
+  esac
+  printf '%b[%s] [%s]:%b %s\n' "$color" "$timestamp" "$level" "$NC" "$*"
+  printf '[%s] [%s]: %s\n' "$timestamp" "$level" "$*" >> "$LOG_FILE" 2>/dev/null
+}
+info() { log INFO "$@"; }
+warn() { log WARN "$@"; }
+error() { log ERROR "$@" >&2; }
+
 # Determine the Java command to use to start the JVM.
 # A JAVA_HOME from the environment is used as is. Otherwise it is derived from the installed JDK.
 if [ -z "$JAVA_HOME" ]; then
@@ -132,13 +157,13 @@ if [ -z "$JAVACMD" ] ; then
 fi
 
 if [ ! -x "$JAVACMD" ] ; then
-  echo "Error: JAVA_HOME is not defined correctly." >&2
-  echo "  We cannot execute $JAVACMD" >&2
+  error "JAVA_HOME is not defined correctly."
+  error "We cannot execute $JAVACMD"
   exit 1
 fi
 
 if [ -z "$JAVA_HOME" ] ; then
-  echo "Warning: JAVA_HOME environment variable is not set."
+  warn "JAVA_HOME environment variable is not set."
 fi
 
 # JVM system properties of $JAVACMD, read once and looked up by javaProperty. JAVA_ERROR holds
@@ -169,11 +194,11 @@ RELEASE_ARCHIVE_JAR="ArchiveManifest$RELEASE_ARCH_SUFFIX.jar"
 # java, so that --stop still works with a broken JDK.
 checkJava() {
   if [ -n "$JAVA_ERROR" ]; then
-    echo "Error: $JAVACMD cannot run: $JAVA_ERROR" >&2
+    error "$JAVACMD cannot run: $JAVA_ERROR"
     exit 1
   fi
   if [ -z "$JAVA_SPEC_VERSION" ]; then
-    echo "Error: cannot determine the Java version of $JAVACMD" >&2
+    error "cannot determine the Java version of $JAVACMD"
     exit 1
   fi
 }
@@ -188,7 +213,7 @@ backupGCLog() {
   mkdir -p "$gcLogDir"
 
   if [ -f 'gc.log' ]; then
-    echo '[info] backup gc.log'
+    info 'backup gc.log'
     dateformat=$(date "+%Y-%m-%d_%H-%M-%S")
     tar -czf "$gcLogDir/gc.log_$dateformat.tar.gz" gc.log && rm -f gc.log
 
@@ -216,26 +241,26 @@ getLatestReleaseVersion() {
 # keeps the previous file as ${JAR_NAME}_bak. Exits without touching $JAR_NAME if that fails.
 upgrade() {
   latest_version=$(getLatestReleaseVersion)
-  echo "info: latest version: $latest_version"
+  info "latest version: $latest_version"
   if [[ -n $latest_version ]]; then
     # Download to a temporary name first, so that a failed download or signature check leaves
     # $JAR_NAME untouched.
     if downloadRelease "$latest_version" "$RELEASE_JAR" "$JAR_NAME.download"; then
       # Verified: keep the previous jar as ${JAR_NAME}_bak and move the new one into place.
       if [[ -f $JAR_NAME ]]; then
-        echo "info: backup $JAR_NAME"
+        info "backup $JAR_NAME"
         mv "$JAR_NAME" "${JAR_NAME}_bak"
       fi
       mv "$JAR_NAME.download" "$JAR_NAME"
-      echo "info: download version $latest_version success"
+      info "download version $latest_version success"
     else
       # download or checkSign has already removed the temporary file.
-      echo "warn: upgrade aborted, $JAR_NAME is unchanged"
+      warn "upgrade aborted, $JAR_NAME is unchanged"
       exit 1
     fi
   else
     # No release tag could be listed. The current jar is kept.
-    echo 'info: nothing to upgrade'
+    info 'nothing to upgrade'
   fi
 }
 
@@ -256,7 +281,7 @@ download() {
     curl --connect-timeout 10 --speed-time 30 --speed-limit 1024 --retry 2 \
       -fsSL -o "$file_name" "$url" || { rm -f "$file_name"; return 1; }
   else
-    echo 'info: no exists wget or curl, make sure the system can use the "wget" or "curl" command'
+    info 'no exists wget or curl, make sure the system can use the "wget" or "curl" command'
     return 1
   fi
 }
@@ -269,7 +294,7 @@ downloadRelease() {
 # Creates the $FULL_NODE_DIR directory with a copy of this script and changes into it.
 mkdirFullNode() {
   if [ ! -d "$FULL_NODE_DIR" ]; then
-    echo "info: create $FULL_NODE_DIR"
+    info "create $FULL_NODE_DIR"
     mkdir "$FULL_NODE_DIR"
     cp "$0" "$FULL_NODE_DIR"
   fi
@@ -284,8 +309,8 @@ quickStart() {
     # Enter $FULL_NODE_DIR, then download the mainnet config and the signed release jar for
     # this architecture.
     mkdirFullNode
-    echo "info: check latest version: $full_node_version"
-    echo 'info: download config'
+    info "check latest version: $full_node_version"
+    info 'download config'
     # Download to a temporary name first and move it into place only on success, so a failed
     # re-download in an existing FullNode/ leaves the current config.conf untouched instead of
     # a later start silently falling back to the config bundled in the jar.
@@ -293,12 +318,12 @@ quickStart() {
 
     # Download to a temporary name first, so that a failed download or signature check leaves
     # an existing $JAR_NAME untouched.
-    echo "info: download $full_node_version"
+    info "download $full_node_version"
     downloadRelease "$full_node_version" "$RELEASE_JAR" "$JAR_NAME.download" || exit 1
     mv "$JAR_NAME.download" "$JAR_NAME"
   else
     # Without a release tag there is nothing to download.
-    echo 'info: not getting the latest version'
+    info 'not getting the latest version'
     exit 1
   fi
 }
@@ -308,13 +333,13 @@ cloneCode() {
   if type git >/dev/null 2>&1; then
     # The checkout goes to ./java-tron.
     if git clone -b $GITHUB_BRANCH $GITHUB_REPOSITORY; then
-      echo 'info: git clone java-tron success'
+      info 'git clone java-tron success'
     else
-      echo 'warn: git clone java-tron failed'
+      warn 'git clone java-tron failed'
       return 1
     fi
   else
-    echo 'info: no exists git, make sure the system can use the "git" command'
+    info 'no exists git, make sure the system can use the "git" command'
     return 1
   fi
 }
@@ -323,10 +348,10 @@ cloneCode() {
 # $FULL_NODE_DIR. Exits when the clone or the build fails.
 cloneBuild() {
   local currentPwd=$PWD
-  echo 'info: clone java-tron'
+  info 'clone java-tron'
   cloneCode || exit 1
 
-  echo 'info: build java-tron'
+  info 'build java-tron'
   cd java-tron || exit 1
   sh gradlew clean build -x test
   if [[ $? == 0 ]];then
@@ -400,7 +425,7 @@ stopService() {
   local pidFile="${JAR_NAME##*/}.pid"
   enterNodeDir
   if [ ! -f "$pidFile" ] && [ ! -f start.log ]; then
-    echo "info: no node was started from $PWD"
+    info "no node was started from $PWD"
     return 1
   fi
   count=1
@@ -410,7 +435,7 @@ stopService() {
       kill -15 $pid
       sleep 1
     else
-      echo "info: java-tron stop"
+      info "java-tron stop"
       return
     fi
     count=$(($count + 1))
@@ -433,12 +458,12 @@ checkAllowMemory() {
   fi
 
   if [[ $total -lt $ALLOW_MIN_MEMORY ]]; then
-    echo "warn: the memory $total MB cannot be smaller than the minimum memory $ALLOW_MIN_MEMORY MB"
+    warn "the memory $total MB cannot be smaller than the minimum memory $ALLOW_MIN_MEMORY MB"
     exit 1
   elif [[ $SPECIFY_MEMORY -gt 0 ]] &&
    [[ $SPECIFY_MEMORY -lt $ALLOW_MIN_MEMORY ]]; then
-    echo "warn: the specified memory $SPECIFY_MEMORY MB cannot be smaller than the minimum memory $ALLOW_MIN_MEMORY MB"
-    echo 'warn: start abort'
+    warn "the specified memory $SPECIFY_MEMORY MB cannot be smaller than the minimum memory $ALLOW_MIN_MEMORY MB"
+    warn 'start abort'
     exit 1
   fi
 }
@@ -452,7 +477,7 @@ setTCMalloc() {
       export LD_PRELOAD="$lib_tc_malloc"
       export TCMALLOC_RELEASE_RATE=10
     else
-      echo 'info: recommended for linux systems using tcmalloc as the default memory management tool'
+      info 'recommended for linux systems using tcmalloc as the default memory management tool'
     fi
   fi
 }
@@ -503,7 +528,7 @@ setJVMMemory() {
 # to start.log, the process id to <jar name>.pid.
 startService() {
   if [[ ! -f $JAR_NAME ]]; then
-    echo "warn: jar file $JAR_NAME not exist"
+    warn "jar file $JAR_NAME not exist"
     exit 1
   fi
   echo $(date) >>start.log
@@ -521,7 +546,7 @@ startService() {
   # 65535 when it is lower; a higher soft limit and the hard limit are kept.
   local openFiles=$(ulimit -S -n)
   if [[ $openFiles != unlimited && $openFiles -lt 65535 ]]; then
-    ulimit -S -n 65535 2>/dev/null || echo 'warn: failed to set ulimit -n 65535'
+    ulimit -S -n 65535 2>/dev/null || warn 'failed to set ulimit -n 65535'
   fi
   # Run in the background, immune to hangups, appending all output to start.log.
   nohup "$JAVACMD" -Xms$JVM_MS -Xmx$JVM_MX $gc_opts -XX:ReservedCodeCacheSize=256m -XX:+UseCodeCacheFlushing \
@@ -536,12 +561,12 @@ startService() {
   # moments. Report that instead of a successful start.
   sleep 3
   if ! kill -0 "$pid" 2>/dev/null; then
-    echo "warn: java-tron exited right after the start, see start.log"
+    warn "java-tron exited right after the start, see start.log"
     : > "${JAR_NAME##*/}.pid"
     exit 1
   fi
-  echo "info: start java-tron with pid $pid on $HOSTNAME"
-  echo "info: if you need to stop the service, execute in this directory: sh start.sh --stop"
+  info "start java-tron with pid $pid on $HOSTNAME"
+  info "if you need to stop the service, execute in this directory: sh start.sh --stop"
 }
 
 # Fetches and verifies the LevelDB manifest rebuild tool on first use, while the node is still
@@ -564,17 +589,17 @@ ensureArchiveJar() {
     return
   fi
   if ! type gpg >/dev/null 2>&1; then
-    echo 'warn: gpg is required to verify the rebuild manifest plugin, skip rebuild manifest'
+    warn 'gpg is required to verify the rebuild manifest plugin, skip rebuild manifest'
     return
   fi
-  echo 'info: download the rebuild manifest plugin from the github'
+  info 'download the rebuild manifest plugin from the github'
   # Download to a temporary name first, so an interrupted download never leaves a partial or
   # unverified jar that a later start would run; move it into place only once verified.
   if downloadRelease "$(getLatestReleaseVersion)" "$RELEASE_ARCHIVE_JAR" "$ARCHIVE_JAR.download" \
       && mv "$ARCHIVE_JAR.download" "$ARCHIVE_JAR"; then
-    echo 'info: download rebuild manifest plugin success'
+    info 'download rebuild manifest plugin success'
   else
-    echo 'warn: skip rebuild manifest'
+    warn 'skip rebuild manifest'
   fi
 }
 
@@ -583,18 +608,18 @@ ensureArchiveJar() {
 # Skipped with -dr, on ARM64 (RocksDB only), without a database, or when the tool is absent.
 rebuildManifest() {
   if [[ $REBUILD_MANIFEST = false ]]; then
-    echo 'info: disable rebuild manifest!'
+    info 'disable rebuild manifest!'
     return
   fi
 
   # The tool handles LevelDB only, and ARM64 runs RocksDB only.
   if [[ -n $RELEASE_ARCH_SUFFIX ]]; then
-    echo 'info: ARM64 only supports RocksDB, skip rebuild manifest'
+    info 'ARM64 only supports RocksDB, skip rebuild manifest'
     return
   fi
 
   if [[ ! -d $REBUILD_DIR ]]; then
-    echo "info: database not exists, skip rebuild manifest"
+    info "database not exists, skip rebuild manifest"
     return
   fi
 
@@ -602,15 +627,15 @@ rebuildManifest() {
   # absent (no gpg, or a failed download or verification) the rewrite is skipped and the start
   # goes on.
   if [[ ! -f $ARCHIVE_JAR ]]; then
-    echo 'warn: rebuild manifest plugin not available, skip rebuild manifest'
+    warn 'rebuild manifest plugin not available, skip rebuild manifest'
     return
   fi
-  echo 'info: execute rebuild manifest.'
+  info 'execute rebuild manifest.'
   # A failed rebuild does not block the start either. The tool writes its log to logs/toolkit.log.
   if "$JAVACMD" -jar "$ARCHIVE_JAR" -d "$REBUILD_DIR" -m "$REBUILD_MANIFEST_SIZE" -b "$REBUILD_BATCH_SIZE"; then
-    echo 'info: rebuild manifest success'
+    info 'rebuild manifest success'
   else
-    echo 'info: rebuild manifest fail, log in logs/toolkit.log'
+    info 'rebuild manifest fail, log in logs/toolkit.log'
   fi
 }
 
@@ -618,7 +643,7 @@ rebuildManifest() {
 # downloading it when the file does not exist yet. Exits on an unknown network or a failed
 # download.
 specifyConfig(){
-  echo "info: specify the net: $1"
+  info "specify the net: $1"
   local netType=$1
   local configName;
   local configUrl;
@@ -631,7 +656,7 @@ specifyConfig(){
     configName=$FULL_NODE_CONFIG_PRIVATE_NET
     configUrl=https://raw.githubusercontent.com/tronprotocol/tron-deployment/$GITHUB_BRANCH/$configName
   else
-    echo "warn: no support config $netType"
+    warn "no support config $netType"
     exit 1
   fi
 
@@ -651,7 +676,7 @@ specifyConfig(){
 # Verifies file $3 against the signature of asset $2 in release $1, which must be made
 # by the release key. Removes $3 if the signature is missing or invalid.
 checkSign() {
-  echo 'info: verify signature'
+  info 'verify signature'
   local version=$1
   local asset=$2
   local file=$3
@@ -680,14 +705,14 @@ checkSign() {
     rm -rf "$gnupg_home" "$file.sig"
   else
     # Without gpg the file cannot be verified and is removed below.
-    echo 'warn: gpg is required to verify the release signature'
+    warn 'gpg is required to verify the release signature'
   fi
   # Anything other than a verified signature removes the file.
   if [[ $verified == true ]]; then
-    echo 'info: signature verified'
+    info 'signature verified'
     return 0
   fi
-  echo "warn: signature verification failed, remove $file"
+  warn "signature verification failed, remove $file"
   rm -f "$file"
   return 1
 }
@@ -713,7 +738,7 @@ restart() {
 # Exits when option $1 was given without a value.
 needValue() {
   if [ -z "$2" ]; then
-    echo "error: option $1 needs a value" >&2
+    error "option $1 needs a value"
     exit 1
   fi
 }
@@ -854,7 +879,7 @@ if [[ $DOWNLOAD == true ]]; then
     downloadRelease "$latest" "$RELEASE_JAR" "$JAR_NAME.download" && mv "$JAR_NAME.download" "$JAR_NAME"
     exit
   else
-    echo 'info: not getting the latest version'
+    info 'not getting the latest version'
     exit 1
   fi
 fi
