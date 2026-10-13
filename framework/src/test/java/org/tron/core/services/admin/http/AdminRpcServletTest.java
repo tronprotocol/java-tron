@@ -3,13 +3,16 @@ package org.tron.core.services.admin.http;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.clearInvocations;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -273,6 +276,120 @@ public class AdminRpcServletTest {
   }
 
   @Test
+  public void fatalDispatchCommitsEmpty500AndRethrowsOriginal() throws Exception {
+    MockHttpServletResponse response = new MockHttpServletResponse();
+
+    assertFatalDispatch(new StackOverflowError("fatal-dispatch-marker"), response);
+
+    assertEmptyInternalServerError(response);
+  }
+
+  @Test
+  public void fatalReadCommitsEmpty500BeforeDispatch() throws Exception {
+    ServletInputStream input = mock(ServletInputStream.class);
+    OutOfMemoryError fatal = new OutOfMemoryError("fatal-read-marker");
+    when(input.read(any(byte[].class), anyInt(), anyInt())).thenThrow(fatal);
+    MockHttpServletRequest request = new MockHttpServletRequest("POST", "/admin") {
+      @Override
+      public ServletInputStream getInputStream() {
+        return input;
+      }
+    };
+    request.setContentType("application/json");
+    MockHttpServletResponse response = new MockHttpServletResponse();
+
+    Error thrown = assertThrows(Error.class, () -> servlet.service(request, response));
+
+    assertSame(fatal, thrown);
+    assertEmptyInternalServerError(response);
+    verifyNoInteractions(adminJsonRpc);
+  }
+
+  @Test
+  public void cleanupIOExceptionDoesNotReplaceFatalError() throws Exception {
+    HttpServletResponse response = mock(HttpServletResponse.class);
+    doThrow(new IOException("cleanup-io-marker")).when(response).flushBuffer();
+
+    assertFatalDispatch(new StackOverflowError("original-fatal-marker"), response);
+
+    verify(response).flushBuffer();
+  }
+
+  @Test
+  public void cleanupErrorDoesNotReplaceFatalError() throws Exception {
+    HttpServletResponse response = mock(HttpServletResponse.class);
+    doThrow(new OutOfMemoryError("cleanup-error-marker")).when(response).flushBuffer();
+
+    assertFatalDispatch(new StackOverflowError("original-fatal-marker"), response);
+
+    verify(response).flushBuffer();
+  }
+
+  @Test
+  public void fatalErrorDiscardsUncommittedOutput() throws Exception {
+    MockHttpServletResponse response = new MockHttpServletResponse();
+    byte[] partial = "partial-response-marker".getBytes(StandardCharsets.UTF_8);
+    response.setContentLength(partial.length);
+    response.getOutputStream().write(partial);
+    assertFalse(response.isCommitted());
+
+    assertFatalDispatch(new StackOverflowError("fatal-marker"), response);
+
+    assertEmptyInternalServerError(response);
+  }
+
+  @Test
+  public void fatalErrorLeavesCommittedResponseUntouched() throws Exception {
+    HttpServletResponse response = mock(HttpServletResponse.class);
+    when(response.isCommitted()).thenReturn(true);
+
+    assertFatalDispatch(new StackOverflowError("fatal-marker"), response);
+
+    verify(response, never()).resetBuffer();
+    verify(response, never()).setStatus(anyInt());
+    verify(response, never()).setContentLength(anyInt());
+    verify(response, never()).flushBuffer();
+  }
+
+  @Test(timeout = 30_000)
+  public void fatalErrorWithProductionFilterReturnsEmpty500() throws Exception {
+    TestAdminRpcHttpService service = new TestAdminRpcHttpService();
+    service.setMaxRequestSize(REQUEST_LIMIT);
+    ReflectionTestUtils.setField(service, "adminRpcServlet", servlet);
+    try {
+      service.start().get(5, TimeUnit.SECONDS);
+      for (String accept : new String[] {"application/json", "text/html", "text/plain"}) {
+        clearInvocations(adminJsonRpc);
+        when(adminJsonRpc.adminExample("a", "b"))
+            .thenThrow(new StackOverflowError("fatal-response-marker"))
+            .thenReturn("a:b");
+
+        String response = service.post(REQUEST_PREFIX + "0}", false, accept);
+
+        assertTrue(response, response.startsWith("HTTP/1.1 500 "));
+        assertTrue(response, response.contains("\r\nContent-Length: 0\r\n"));
+        int headerEnd = response.indexOf("\r\n\r\n");
+        assertTrue("Response must include complete headers", headerEnd >= 0);
+        assertEquals(accept, "", response.substring(headerEnd + 4));
+        verify(adminJsonRpc).adminExample("a", "b");
+
+        // A later successful request must still return its JSON-RPC result.
+        String success = service.post(REQUEST_PREFIX + "0}", false, accept);
+        assertTrue(success, success.startsWith("HTTP/1.1 200 "));
+        int successHeaderEnd = success.indexOf("\r\n\r\n");
+        assertTrue("Response must include complete headers", successHeaderEnd >= 0);
+        JsonNode result = MAPPER.readTree(success.substring(successHeaderEnd + 4));
+        assertEquals("a:b", result.path("result").asText());
+        assertEquals(7, result.path("id").asInt());
+        verify(adminJsonRpc, times(2)).adminExample("a", "b");
+        verifyNoMoreInteractions(adminJsonRpc);
+      }
+    } finally {
+      service.stop().get(5, TimeUnit.SECONDS);
+    }
+  }
+
+  @Test
   public void nonJsonContentTypeIsRejected() throws Exception {
     MockHttpServletResponse response = doPost(
         "{\"jsonrpc\":\"2.0\",\"method\":\"admin_example\",\"id\":1}", "text/plain");
@@ -414,6 +531,23 @@ public class AdminRpcServletTest {
     field.set(servlet, value);
   }
 
+  private void assertFatalDispatch(Error fatal, HttpServletResponse response) throws Exception {
+    when(adminJsonRpc.adminExample("a", "b")).thenThrow(fatal);
+
+    Error thrown = assertThrows(Error.class,
+        () -> doPost(REQUEST_PREFIX + "0}", "application/json", "localhost", response));
+
+    assertSame(fatal, thrown);
+    verify(adminJsonRpc).adminExample("a", "b");
+  }
+
+  private void assertEmptyInternalServerError(MockHttpServletResponse response) {
+    assertEquals(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, response.getStatus());
+    assertEquals(0, response.getContentLength());
+    assertEquals(0, response.getContentAsByteArray().length);
+    assertTrue(response.isCommitted());
+  }
+
   private void assertValidRequestWithExtra() throws Exception {
     when(adminJsonRpc.adminExample("a", "b")).thenReturn("a:b");
     MockHttpServletResponse response = doPost(REQUEST_PREFIX + "[0]}");
@@ -465,6 +599,13 @@ public class AdminRpcServletTest {
 
   private MockHttpServletResponse doPost(String body, String contentType, String host)
       throws Exception {
+    MockHttpServletResponse response = new MockHttpServletResponse();
+    doPost(body, contentType, host, response);
+    return response;
+  }
+
+  private void doPost(String body, String contentType, String host, HttpServletResponse response)
+      throws Exception {
     MockHttpServletRequest request = new MockHttpServletRequest("POST", "/admin");
     request.setServletPath("/admin");
     request.setRemoteAddr("127.0.0.1");
@@ -473,9 +614,7 @@ public class AdminRpcServletTest {
     if (host != null) {
       request.addHeader("Host", host);
     }
-    MockHttpServletResponse response = new MockHttpServletResponse();
     servlet.service(request, response);
-    return response;
   }
 
   private void setVirtualHosts(String... hosts) throws Exception {
@@ -495,6 +634,10 @@ public class AdminRpcServletTest {
     }
 
     String post(String body, boolean chunked) throws Exception {
+      return post(body, chunked, null);
+    }
+
+    String post(String body, boolean chunked, String accept) throws Exception {
       String framing = chunked ? "Transfer-Encoding: chunked\r\n"
           : "Content-Length: " + body.length() + "\r\n";
       String content = chunked ? Integer.toHexString(body.length()) + "\r\n"
@@ -502,6 +645,7 @@ public class AdminRpcServletTest {
       String request = "POST /admin HTTP/1.1\r\n"
           + "Host: 127.0.0.1\r\n"
           + "Content-Type: application/json\r\n"
+          + (accept == null ? "" : "Accept: " + accept + "\r\n")
           + "Connection: close\r\n" + framing + "\r\n" + content;
       return connector.getResponse(request, 5, TimeUnit.SECONDS);
     }

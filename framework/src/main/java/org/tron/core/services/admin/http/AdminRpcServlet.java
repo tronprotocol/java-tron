@@ -18,6 +18,7 @@ import org.tron.common.prometheus.MetricKeys;
 import org.tron.common.prometheus.Metrics;
 import org.tron.core.services.admin.AdminJsonRpc;
 import org.tron.core.services.admin.AdminJsonRpcRequestHandler;
+import org.tron.core.services.jsonrpc.JsonRpcHttpResponse;
 import org.tron.core.services.jsonrpc.JsonRpcMapper;
 import org.tron.core.services.jsonrpc.JsonRpcMediaType;
 
@@ -84,6 +85,15 @@ public class AdminRpcServlet extends HttpServlet {
    */
   @Override
   protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+    try {
+      doPostInternal(req, resp);
+    } catch (Error fatal) {
+      JsonRpcHttpResponse.commitBareInternalServerError(resp);
+      throw fatal;
+    }
+  }
+
+  private void doPostInternal(HttpServletRequest req, HttpServletResponse resp) throws IOException {
     // Check the requested hostname before dispatch to guard against DNS rebinding.
     if (!virtualHostValidator.isAllowedHost(req.getHeader("Host"))) {
       resp.sendError(HttpServletResponse.SC_FORBIDDEN, "Invalid Host header");
