@@ -16,7 +16,7 @@ import org.tron.p2p.utils.ByteArray;
 import org.tron.p2p.utils.NetUtil;
 
 /**
- * processPeer is the admission decision for every inbound connection: ban list,
+ * checkPeer is the admission decision for every inbound connection: ban list,
  * global cap, per-IP cap, then duplicate-nodeId resolution. Each branch here is
  * what stops a single host from taking every slot.
  */
@@ -49,6 +49,16 @@ public class ChannelManagerAdmissionTest {
     field.set(channel, startTime);
   }
 
+  private static DisconnectCode admitPeer(Channel channel) {
+    synchronized (ChannelManager.class) {
+      DisconnectCode code = ChannelManager.checkPeer(channel);
+      if (code == DisconnectCode.NORMAL) {
+        ChannelManager.addPeer(channel);
+      }
+      return code;
+    }
+  }
+
   @Before
   public void setUp() {
     saved = Parameter.p2pConfig;
@@ -72,7 +82,7 @@ public class ChannelManagerAdmissionTest {
   @Test
   public void aFreshPeerIsAdmitted() throws Exception {
     Channel channel = channelAt("127.0.0.1", 10001);
-    Assert.assertEquals(DisconnectCode.NORMAL, ChannelManager.processPeer(channel));
+    Assert.assertEquals(DisconnectCode.NORMAL, admitPeer(channel));
     Assert.assertSame(channel, channels.get(channel.getInetSocketAddress()));
   }
 
@@ -81,7 +91,7 @@ public class ChannelManagerAdmissionTest {
     Channel channel = channelAt("127.0.0.1", 10001);
     ChannelManager.banNode(channel.getInetAddress(), 60_000L);
 
-    Assert.assertEquals(DisconnectCode.TIME_BANNED, ChannelManager.processPeer(channel));
+    Assert.assertEquals(DisconnectCode.TIME_BANNED, admitPeer(channel));
     Assert.assertTrue(channels.isEmpty());
   }
 
@@ -91,36 +101,36 @@ public class ChannelManagerAdmissionTest {
     // banNode stores an absolute expiry; a zero ban is already in the past.
     ChannelManager.banNode(channel.getInetAddress(), 0L);
 
-    Assert.assertEquals(DisconnectCode.NORMAL, ChannelManager.processPeer(channel));
+    Assert.assertEquals(DisconnectCode.NORMAL, admitPeer(channel));
   }
 
   @Test
   public void theGlobalCapIsEnforced() throws Exception {
     Assert.assertEquals(DisconnectCode.NORMAL,
-        ChannelManager.processPeer(channelAt("127.0.0.1", 10001)));
+        admitPeer(channelAt("127.0.0.1", 10001)));
     Assert.assertEquals(DisconnectCode.NORMAL,
-        ChannelManager.processPeer(channelAt("127.0.0.2", 10002)));
+        admitPeer(channelAt("127.0.0.2", 10002)));
 
     // maxConnections is 2, so the third is refused.
     Assert.assertEquals(DisconnectCode.TOO_MANY_PEERS,
-        ChannelManager.processPeer(channelAt("127.0.0.3", 10003)));
+        admitPeer(channelAt("127.0.0.3", 10003)));
   }
 
   @Test
   public void thePerIpCapIsEnforced() throws Exception {
     Parameter.p2pConfig.setMaxConnections(10);
     Assert.assertEquals(DisconnectCode.NORMAL,
-        ChannelManager.processPeer(channelAt("127.0.0.1", 10001)));
+        admitPeer(channelAt("127.0.0.1", 10001)));
 
     // maxConnectionsWithSameIp is 1, so a second socket from the same host is
     // refused even though the global cap has room.
     Assert.assertEquals(DisconnectCode.MAX_CONNECTION_WITH_SAME_IP,
-        ChannelManager.processPeer(channelAt("127.0.0.1", 10002)));
+        admitPeer(channelAt("127.0.0.1", 10002)));
   }
 
   @Test
   public void connectionNumCountsOnlyTheSameAddress() throws Exception {
-    ChannelManager.processPeer(channelAt("127.0.0.1", 10001));
+    admitPeer(channelAt("127.0.0.1", 10001));
     Assert.assertEquals(1,
         ChannelManager.getConnectionNum(InetAddress.getByName("127.0.0.1")));
     Assert.assertEquals(0,
@@ -136,13 +146,13 @@ public class ChannelManagerAdmissionTest {
     Channel first = channelAt("127.0.0.1", 10001);
     setNodeId(first, nodeId);
     setStartTime(first, 1000L);
-    Assert.assertEquals(DisconnectCode.NORMAL, ChannelManager.processPeer(first));
+    Assert.assertEquals(DisconnectCode.NORMAL, admitPeer(first));
 
     // The newcomer started later, so it is the duplicate and is refused.
     Channel later = channelAt("127.0.0.2", 10002);
     setNodeId(later, nodeId);
     setStartTime(later, 2000L);
-    Assert.assertEquals(DisconnectCode.DUPLICATE_PEER, ChannelManager.processPeer(later));
+    Assert.assertEquals(DisconnectCode.DUPLICATE_PEER, admitPeer(later));
   }
 
   @Test

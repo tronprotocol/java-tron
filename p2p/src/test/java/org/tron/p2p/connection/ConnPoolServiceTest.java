@@ -61,19 +61,10 @@ public class ConnPoolServiceTest {
   }
 
   @Test
-  public void getNodes_orderByUpdateTimeDesc() throws Exception {
+  public void getNodes_respectsLimit() {
     clearChannels();
     Node node1 = new Node(new InetSocketAddress(localIp, 90));
-    Field field = node1.getClass().getDeclaredField("updateTime");
-    field.setAccessible(true);
-    field.set(node1, System.currentTimeMillis());
-
     Node node2 = new Node(new InetSocketAddress(localIp, 100));
-    field = node2.getClass().getDeclaredField("updateTime");
-    field.setAccessible(true);
-    field.set(node2, System.currentTimeMillis() + 10);
-
-    Assert.assertTrue(node1.getUpdateTime() < node2.getUpdateTime());
 
     List<Node> connectableNodes = new ArrayList<>();
     connectableNodes.add(node1);
@@ -83,22 +74,14 @@ public class ConnPoolServiceTest {
     List<Node> nodes = connPoolService.getNodes(new HashSet<>(), new HashSet<>(), connectableNodes,
         2);
     Assert.assertEquals(2, nodes.size());
-    // getNodes() sorts candidates by updateTime descending, but then calls
-    // Collections.shuffle() before truncating to `limit`, so the order of the
-    // returned list is deliberately randomised. Assert membership, not order —
-    // asserting order here is a coin flip with two nodes. The effect of the
-    // descending sort is covered by getNodes_prefersNewestAboveCandidateSize().
-    Set<Long> returnedTimes = new HashSet<>();
-    for (Node node : nodes) {
-      returnedTimes.add(node.getUpdateTime());
-    }
-    Assert.assertTrue(returnedTimes.contains(node1.getUpdateTime()));
-    Assert.assertTrue(returnedTimes.contains(node2.getUpdateTime()));
+    // getNodes shuffles candidates, so compare their contents without assuming an order.
+    Assert.assertEquals(new HashSet<>(connectableNodes), new HashSet<>(nodes));
 
     int limit = 1;
     List<Node> nodes2 = connPoolService.getNodes(new HashSet<>(), new HashSet<>(), connectableNodes,
         limit);
     Assert.assertEquals(limit, nodes2.size());
+    Assert.assertTrue(connectableNodes.containsAll(nodes2));
   }
 
   /**

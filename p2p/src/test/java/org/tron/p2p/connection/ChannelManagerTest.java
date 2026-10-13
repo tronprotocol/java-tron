@@ -84,7 +84,7 @@ public class ChannelManagerTest {
   }
 
   @Test
-  public synchronized void testProcessPeer() throws Exception {
+  public synchronized void testCheckPeer() throws Exception {
     clearChannels();
     Parameter.p2pConfig = new P2pConfig();
 
@@ -98,8 +98,13 @@ public class ChannelManagerTest {
     field.setAccessible(true);
     field.set(c1, a1.getAddress());
 
-    DisconnectCode code = ChannelManager.processPeer(c1);
-    Assert.assertTrue(code.equals(DisconnectCode.NORMAL));
+    DisconnectCode code;
+    synchronized (ChannelManager.class) {
+      code = ChannelManager.checkPeer(c1);
+      Assert.assertTrue(code.equals(DisconnectCode.NORMAL));
+      Assert.assertTrue(ChannelManager.getChannels().isEmpty());
+      ChannelManager.addPeer(c1);
+    }
 
     Thread.sleep(5);
 
@@ -115,18 +120,18 @@ public class ChannelManagerTest {
     field.setAccessible(true);
     field.set(c2, a2.getAddress());
 
-    code = ChannelManager.processPeer(c2);
+    code = ChannelManager.checkPeer(c2);
     Assert.assertTrue(code.equals(DisconnectCode.TOO_MANY_PEERS));
 
     Parameter.p2pConfig.setMaxConnections(2);
     Parameter.p2pConfig.setMaxConnectionsWithSameIp(1);
-    code = ChannelManager.processPeer(c2);
+    code = ChannelManager.checkPeer(c2);
     Assert.assertTrue(code.equals(DisconnectCode.MAX_CONNECTION_WITH_SAME_IP));
 
     Parameter.p2pConfig.setMaxConnectionsWithSameIp(2);
     c1.setNodeId("cc");
     c2.setNodeId("cc");
-    code = ChannelManager.processPeer(c2);
+    code = ChannelManager.checkPeer(c2);
     Assert.assertTrue(code.equals(DisconnectCode.DUPLICATE_PEER));
   }
 

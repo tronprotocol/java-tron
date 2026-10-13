@@ -113,12 +113,19 @@ public class ConnPoolService extends P2pEventHandler {
     Set<String> nodesInUse = new HashSet<>();
     nodesInUse.add(Hex.toHexString(p2pConfig.getNodeID()));
     ChannelManager.getChannels().values().forEach(channel -> {
+      Node node = channel.getNode();
+      if (node != null && !NetUtil.validPort(node.getPort())) {
+        logger.warn("Close peer {} with invalid advertised port {}",
+            channel.getInetSocketAddress(), node.getPort());
+        channel.close();
+        return;
+      }
       if (StringUtils.isNotEmpty(channel.getNodeId())) {
         nodesInUse.add(channel.getNodeId());
       }
       addressInUse.add(channel.getInetAddress());
       inetInUse.add(channel.getInetSocketAddress());
-      addNode(inetInUse, channel.getNode());
+      addNode(inetInUse, node);
     });
 
     addNode(inetInUse, new Node(Parameter.p2pConfig.getNodeID(), Parameter.p2pConfig.getIp(),
@@ -228,8 +235,14 @@ public class ConnPoolService extends P2pEventHandler {
 
   private boolean validNode(Node node, Set<String> nodesInUse, Set<InetSocketAddress> inetInUse,
       Set<InetSocketAddress> dynamicInet) {
+    if (node == null || !NetUtil.validPort(node.getPort())) {
+      return false;
+    }
     long now = System.currentTimeMillis();
     InetSocketAddress inetSocketAddress = node.getPreferInetSocketAddress();
+    if (inetSocketAddress == null || inetSocketAddress.isUnresolved()) {
+      return false;
+    }
     InetAddress inetAddress = inetSocketAddress.getAddress();
     Long forbiddenTime = ChannelManager.getBannedNodes().getIfPresent(inetAddress);
     if ((forbiddenTime != null && now <= forbiddenTime)

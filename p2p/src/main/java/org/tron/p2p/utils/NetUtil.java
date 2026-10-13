@@ -72,11 +72,15 @@ public class NetUtil {
     return PATTERN_IPv6.matcher(ip).matches();
   }
 
+  public static boolean validPort(int port) {
+    return port > 0 && port <= 0xFFFF;
+  }
+
   public static boolean validNode(Node node) {
     if (node == null || node.getId() == null) {
       return false;
     }
-    if (node.getId().length != Constant.NODE_ID_LEN) {
+    if (node.getId().length != Constant.NODE_ID_LEN || !validPort(node.getPort())) {
       return false;
     }
     if (StringUtils.isEmpty(node.getHostV4()) && StringUtils.isEmpty(node.getHostV6())) {
