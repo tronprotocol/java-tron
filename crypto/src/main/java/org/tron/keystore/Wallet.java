@@ -207,31 +207,48 @@ public class Wallet {
       throw new CipherException("Unable to deserialize params: " + crypto.getKdf());
     }
 
-    byte[] derivedMac = generateMac(derivedKey, cipherText);
+    byte[] encryptKey = null;
+    byte[] privateKey = null;
+    try {
+      byte[] derivedMac = generateMac(derivedKey, cipherText);
 
-    if (!java.security.MessageDigest.isEqual(derivedMac, mac)) {
-      throw new CipherException("Invalid password provided");
-    }
+      if (!java.security.MessageDigest.isEqual(derivedMac, mac)) {
+        throw new CipherException("Invalid password provided");
+      }
 
-    byte[] encryptKey = Arrays.copyOfRange(derivedKey, 0, 16);
-    byte[] privateKey = performCipherOperation(Cipher.DECRYPT_MODE, iv, encryptKey, cipherText);
+      encryptKey = Arrays.copyOfRange(derivedKey, 0, 16);
+      privateKey = performCipherOperation(Cipher.DECRYPT_MODE, iv, encryptKey, cipherText);
 
-    SignInterface keyPair = SignUtils.fromPrivate(privateKey);
+      SignInterface keyPair;
+      try {
+        keyPair = SignUtils.fromPrivate(privateKey);
+      } catch (IllegalArgumentException e) {
+        throw new CipherException("Invalid private key in keystore", e);
+      }
 
-    // Enforce address consistency: if the keystore declares an address, it MUST match
-    // the address derived from the decrypted private key. Prevents address spoofing
-    // where a crafted keystore displays one address but encrypts a different key.
-    String declared = walletFile.getAddress();
-    if (declared != null && !declared.isEmpty()) {
-      String derived = StringUtil.encode58Check(keyPair.getAddress());
-      if (!declared.equals(derived)) {
-        throw new CipherException(
-            "Keystore address mismatch: file declares " + declared
-                + " but private key derives " + derived);
+      // Enforce address consistency: if the keystore declares an address, it MUST match
+      // the address derived from the decrypted private key. Prevents address spoofing
+      // where a crafted keystore displays one address but encrypts a different key.
+      String declared = walletFile.getAddress();
+      if (declared != null && !declared.isEmpty()) {
+        String derived = StringUtil.encode58Check(keyPair.getAddress());
+        if (!declared.equals(derived)) {
+          throw new CipherException(
+              "Keystore address mismatch: file declares " + declared
+                  + " but private key derives " + derived);
+        }
+      }
+
+      return keyPair;
+    } finally {
+      Arrays.fill(derivedKey, (byte) 0);
+      if (encryptKey != null) {
+        Arrays.fill(encryptKey, (byte) 0);
+      }
+      if (privateKey != null) {
+        Arrays.fill(privateKey, (byte) 0);
       }
     }
-
-    return keyPair;
   }
 
   /**
