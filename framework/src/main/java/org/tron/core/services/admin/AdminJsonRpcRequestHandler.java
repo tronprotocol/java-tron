@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.exc.MismatchedInputException;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.googlecode.jsonrpc4j.ErrorResolver.JsonError;
 import com.googlecode.jsonrpc4j.JsonRpcBasicServer;
@@ -28,10 +29,7 @@ public final class AdminJsonRpcRequestHandler extends JsonRpcBasicServer {
 
   public AdminJsonRpcRequestHandler(AdminJsonRpc adminJsonRpc) {
     super(OBJECT_MAPPER, adminJsonRpc, AdminJsonRpc.class);
-    setErrorResolver((exception, method, arguments) -> {
-      JsonError error = JsonRpcErrorResolver.INSTANCE.resolveError(exception, method, arguments);
-      return error == null ? JsonError.INTERNAL_ERROR : error;
-    });
+    setErrorResolver(JsonRpcErrorResolver.INSTANCE);
     setShouldLogInvocationErrors(false);
   }
 
@@ -99,7 +97,13 @@ public final class AdminJsonRpcRequestHandler extends JsonRpcBasicServer {
       if (id != null && id.isNull()) {
         request.put("id", 0);
       }
-      JsonNode response = super.handleJsonNodeRequest(request).getResponse();
+      JsonNode response;
+      try {
+        response = super.handleJsonNodeRequest(request).getResponse();
+      } catch (MismatchedInputException e) {
+        // jsonrpc4j propagates input conversion failures before invoking the method.
+        response = errorResponse(JsonError.METHOD_PARAMS_INVALID, id);
+      }
       if (notification) {
         return null;
       }
@@ -107,7 +111,7 @@ public final class AdminJsonRpcRequestHandler extends JsonRpcBasicServer {
       return response;
     } catch (Exception e) {
       logger.debug("Failed to dispatch Admin request");
-      return notification ? null : JsonRpcMapper.createErrorResponse(-32603, "Internal error", id);
+      return notification ? null : errorResponse(JsonRpcErrorResolver.INTERNAL_ERROR, id);
     } finally {
       if (id != null && id.isNull()) {
         request.set("id", id);
