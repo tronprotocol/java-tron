@@ -255,7 +255,7 @@ public class ComputeRewardTest extends BaseMethodTest {
     // queryReward() can return before the background Merkle-root calculation finishes.
     // Wait for it before modifying or closing the store used by that calculation.
     ExecutorService rewardExecutor = ReflectUtils.getFieldValue(rewardViCalService, "es");
-    rewardExecutor.shutdown();
+    rewardExecutor.shutdownNow();
     Assert.assertTrue("Reward calculation did not terminate before modifying its store",
         rewardExecutor.awaitTermination(10, TimeUnit.SECONDS));
 
