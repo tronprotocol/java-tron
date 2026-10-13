@@ -10,13 +10,8 @@ apply plugin: 'checkstyle'
 
 mainClassName = 'org.tron.program.FullNode'
 
-
-
-
-
 configurations {
     checkstyleConfig
-
 }
 
 configurations.getByName('checkstyleConfig') {
@@ -61,7 +56,8 @@ dependencies {
 
     implementation group: 'org.zeromq', name: 'jeromq', version: '0.5.3'
     implementation group: 'com.kohlschutter.junixsocket', name: 'junixsocket-core', version: '2.10.1'
-    implementation group: 'org.jline', name: 'jline', version: '3.21.0'
+    // Exclude the Java 22 FFM provider so both JDK 8 and JDK 17 can use the console.
+    implementation group: 'org.jline', name: 'jline', version: '3.30.17', classifier: 'jdk8'
     api project(":chainbase")
     api project(":protocol")
     api project(":actuator")
