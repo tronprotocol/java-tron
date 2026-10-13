@@ -61,7 +61,6 @@ import org.tron.core.store.AccountStore;
 import org.tron.p2p.P2pConfig;
 import org.tron.p2p.dns.update.DnsType;
 import org.tron.p2p.dns.update.PublishConfig;
-import org.tron.p2p.utils.NetUtil;
 import org.tron.program.Version;
 
 @Slf4j(topic = "app")
