@@ -570,13 +570,29 @@ public class TransactionsMsgHandlerTest extends BaseTest {
   }
 
   @Test
-  public void testRedundantResultsTrimmedBeforeQueueAdmission() throws Exception {
+  public void testResultsClearedBeforeQueueAdmission() throws Exception {
     for (boolean smart : new boolean[] {false, true}) {
       Protocol.Transaction expected = admissionTransaction(smart).toBuilder()
-          .addRet(Protocol.Transaction.Result.newBuilder()
-              .setContractRet(Protocol.Transaction.Result.contractResult.SUCCESS)).build();
+          .addSignature(ByteString.copyFrom(new byte[65])).build();
+      // Even a single result must be discarded, including its known and unknown fields.
+      Protocol.Transaction.Result result = Protocol.Transaction.Result.newBuilder()
+          .setFee(123456).setWithdrawAmount(77)
+          .setContractRet(Protocol.Transaction.Result.contractResult.REVERT)
+          .setUnknownFields(padding(32)).build();
+      assertAdmission(expected.toBuilder().addRet(result).build(), expected);
+      assertAdmission(expected.toBuilder().addRet(result).addRet(result).build(), expected);
+    }
+  }
+
+  @Test
+  public void testOversizedResultsClearedBeforeQueueAdmission() throws Exception {
+    for (boolean smart : new boolean[] {false, true}) {
+      Protocol.Transaction expected = admissionTransaction(smart).toBuilder()
+          .addSignature(ByteString.copyFrom(new byte[65])).build();
+      // Padding in the first result must be removed before the transaction size check.
       Protocol.Transaction padded = expected.toBuilder().addRet(
           Protocol.Transaction.Result.newBuilder().setUnknownFields(padding(600 * 1024))).build();
+      Assert.assertTrue(padded.getSerializedSize() > Constant.TRANSACTION_MAX_BYTE_SIZE);
       assertAdmission(padded, expected);
     }
   }
@@ -587,8 +603,9 @@ public class TransactionsMsgHandlerTest extends BaseTest {
     ExecutorService originalPool = null;
     try {
       ExecutorService pool = Mockito.mock(ExecutorService.class);
+      List<Runnable> tasks = new ArrayList<>();
       Mockito.when(pool.submit(Mockito.any(Runnable.class))).thenAnswer(call -> {
-        ((Runnable) call.getArgument(0)).run();
+        tasks.add(call.getArgument(0));
         return Mockito.mock(Future.class);
       });
       originalPool = replaceTrxHandlePool(handler, pool);
@@ -613,12 +630,22 @@ public class TransactionsMsgHandlerTest extends BaseTest {
           Assert.assertEquals(1, smartQueue.size());
           admitted = (TransactionMessage) ReflectUtils.getFieldObject(smartQueue.peek(), "msg");
         } else {
+          Assert.assertEquals(1, tasks.size());
+          // Run only after admission completes, exercising the transaction retained by the task.
+          tasks.get(0).run();
           org.mockito.ArgumentCaptor<TransactionMessage> captured =
               org.mockito.ArgumentCaptor.forClass(TransactionMessage.class);
           Mockito.verify(adv).broadcast(captured.capture());
           admitted = captured.getValue();
         }
-        Assert.assertEquals(expected, admitted.getTransactionCapsule().getInstance());
+        Protocol.Transaction retained = admitted.getTransactionCapsule().getInstance();
+        Protocol.Transaction serialized = Protocol.Transaction.parseFrom(admitted.getData());
+        Assert.assertEquals(expected, retained);
+        Assert.assertEquals(0, retained.getRetCount());
+        Assert.assertEquals(0, serialized.getRetCount());
+        Assert.assertArrayEquals(input.getRawData().toByteArray(),
+            retained.getRawData().toByteArray());
+        Assert.assertEquals(input.getSignatureList(), retained.getSignatureList());
         Assert.assertArrayEquals(expected.toByteArray(), admitted.getData());
         Assert.assertEquals(new TransactionMessage(input).getMessageId(), admitted.getMessageId());
       }

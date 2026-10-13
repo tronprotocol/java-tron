@@ -106,7 +106,7 @@ public class TransactionsMsgHandler implements TronMsgHandler {
       }
       TransactionCapsule capsule = new TransactionCapsule(trx);
       capsule.sanitize();
-      capsule.removeRedundantRet();
+      capsule.resetResult();
       if (capsule.getSerializedSize() > Constant.TRANSACTION_MAX_BYTE_SIZE) {
         oversizedCount++;
         continue;
