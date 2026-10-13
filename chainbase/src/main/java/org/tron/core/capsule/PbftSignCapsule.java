@@ -2,7 +2,6 @@ package org.tron.core.capsule;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
-import java.util.Deque;
 import java.util.List;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
