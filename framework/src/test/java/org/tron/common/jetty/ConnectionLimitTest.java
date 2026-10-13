@@ -6,7 +6,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
-import java.net.SocketException;
+import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -30,9 +30,11 @@ import org.tron.core.config.args.Args;
 
 /**
  * Tests the connection limit configured in {@link HttpService}: once connections that send
- * nothing hold every slot, the server closes them after the limit's idle timeout and serves
- * new clients, instead of waiting for the connector's 30-second idle timeout. The test shortens
- * the limit's idle timeout to one second (production uses ten) so it finishes in a few seconds.
+ * nothing hold every slot, the limit's idle timeout closes idle connections and frees a slot for
+ * a new client, instead of waiting for the connector's 30-second idle timeout. As soon as a slot
+ * is free, Jetty restores the connector's timeout on the remaining connections, so only one idle
+ * connection is guaranteed to be closed. The test shortens the limit's idle timeout to one
+ * second (production uses ten) so it finishes in a few seconds.
  */
 public class ConnectionLimitTest {
 
@@ -42,8 +44,11 @@ public class ConnectionLimitTest {
 
   // Well above the limit's idle timeout applied twice (Jetty half-closes an idle connection
   // before closing it), and below the connector's default 30-second idle timeout, so the test
-  // fails if only the connector's timeout frees the slots.
+  // fails if only the connector's timeout frees a slot.
   private static final int TIMEOUT_MS = 10_000;
+
+  // How long a connection that is still open is read before it counts as not closed.
+  private static final int CLOSE_CHECK_TIMEOUT_MS = 1_000;
 
   @ClassRule
   public static final TemporaryFolder temporaryFolder = new TemporaryFolder();
@@ -108,10 +113,10 @@ public class ConnectionLimitTest {
         awaitConnectedEndPoints(i + 1);
       }
 
+      // The new request is only served once the limit's idle timeout frees a slot.
       Assert.assertEquals("HTTP/1.1 200 OK", get());
-      for (Socket socket : idleSockets) {
-        assertClosedByServer(socket);
-      }
+      Assert.assertTrue("no idle connection was closed by the server",
+          idleSockets.stream().anyMatch(ConnectionLimitTest::isClosedByServer));
     } finally {
       for (Socket socket : idleSockets) {
         socket.close();
@@ -142,12 +147,17 @@ public class ConnectionLimitTest {
     }
   }
 
-  private static void assertClosedByServer(Socket socket) throws IOException {
-    socket.setSoTimeout(TIMEOUT_MS);
+  // A connection the server closed reads end-of-stream, or fails with a reset, right away; one
+  // that is still open times out.
+  private static boolean isClosedByServer(Socket socket) {
     try {
-      Assert.assertEquals(-1, socket.getInputStream().read());
-    } catch (SocketException e) {
+      socket.setSoTimeout(CLOSE_CHECK_TIMEOUT_MS);
+      return socket.getInputStream().read() == -1;
+    } catch (SocketTimeoutException e) {
+      return false;
+    } catch (IOException e) {
       // a reset also means the server dropped the connection
+      return true;
     }
   }
 }
