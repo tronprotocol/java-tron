@@ -11,10 +11,10 @@ import org.tron.common.utils.StorageUtils;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.RevokingDatabase;
 import org.tron.core.db2.core.SnapshotManager;
+import org.tron.core.services.interfaceOnPBFT.HttpApiOnPBFTService;
 import org.tron.core.services.interfaceOnPBFT.RpcApiServiceOnPBFT;
-import org.tron.core.services.interfaceOnPBFT.http.PBFT.HttpApiOnPBFTService;
+import org.tron.core.services.interfaceOnSolidity.HttpApiOnSolidityService;
 import org.tron.core.services.interfaceOnSolidity.RpcApiServiceOnSolidity;
-import org.tron.core.services.interfaceOnSolidity.http.solidity.HttpApiOnSolidityService;
 
 @Slf4j(topic = "app")
 @Configuration
