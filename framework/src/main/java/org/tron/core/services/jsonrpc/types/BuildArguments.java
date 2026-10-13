@@ -6,6 +6,8 @@ import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.paramStringIsNull;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.parseQuantityValue;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.requireValidHex;
 
+import com.fasterxml.jackson.annotation.JsonSetter;
+import com.fasterxml.jackson.annotation.Nulls;
 import com.google.protobuf.ByteString;
 import java.util.Arrays;
 import lombok.AllArgsConstructor;
@@ -23,6 +25,13 @@ import org.tron.core.services.jsonrpc.JsonRpcApiUtil.HexMode;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 
+/**
+ * Arguments for {@code buildTransaction}.
+ *
+ * <p>Fields annotated with {@link JsonSetter} retain their defaults when an explicit JSON
+ * {@code null} is deserialized. This protection applies to Jackson input only; direct setter calls
+ * may still assign {@code null} and callers must preserve the DTO invariants.
+ */
 @NoArgsConstructor
 @AllArgsConstructor
 @ToString
@@ -65,18 +74,22 @@ public class BuildArguments {
 
   @Getter
   @Setter
+  @JsonSetter(nulls = Nulls.SKIP)
   private Long tokenId = 0L;
   @Getter
   @Setter
+  @JsonSetter(nulls = Nulls.SKIP)
   private Long tokenValue = 0L;
   @Getter
   @Setter
   private String abi = "";
   @Getter
   @Setter
+  @JsonSetter(nulls = Nulls.SKIP)
   private Long consumeUserResourcePercent = 0L;
   @Getter
   @Setter
+  @JsonSetter(nulls = Nulls.SKIP)
   private Long originEnergyLimit = 0L;
   @Getter
   @Setter
@@ -84,9 +97,11 @@ public class BuildArguments {
 
   @Getter
   @Setter
+  @JsonSetter(nulls = Nulls.SKIP)
   private Integer permissionId = 0;
   @Getter
   @Setter
+  @JsonSetter(nulls = Nulls.SKIP)
   private String extraData = "";
 
   @Getter
