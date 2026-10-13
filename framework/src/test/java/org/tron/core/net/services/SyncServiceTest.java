@@ -18,6 +18,8 @@ import org.tron.common.utils.ReflectUtils;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.net.P2pEventHandlerImpl;
+import org.tron.core.net.TronNetDelegate;
+import org.tron.core.net.messagehandler.PbftDataSyncHandler;
 import org.tron.core.net.message.adv.BlockMessage;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.PeerManager;
@@ -220,6 +222,48 @@ public class SyncServiceTest extends BaseMethodTest {
     // retryBlockId MUST be requested: remainNum <= 0 but num=50 <= maxRequestedBlockNum=100
     Assert.assertNotNull(peer.getSyncBlockRequested().get(retryBlockId));
     blockWaitToProcess.clear();
+  }
+
+  @Test
+  public void testProcessingBlockResumesThrottledFetch() throws Exception {
+    SyncService sync = new SyncService();
+    TronNetDelegate delegate = mock(TronNetDelegate.class);
+    ReflectUtils.setFieldValue(sync, "tronNetDelegate", delegate);
+    ReflectUtils.setFieldValue(sync, "pbftDataSyncHandler", mock(PbftDataSyncHandler.class));
+    ReflectUtils.setFieldValue(sync, "maxPendingBlockSize", 1);
+    PeerConnection syncingPeer = context.getBean(PeerConnection.class);
+    Channel channel = mock(Channel.class);
+    Mockito.when(channel.getInetSocketAddress()).thenReturn(inetSocketAddress);
+    Mockito.when(channel.getInetAddress()).thenReturn(inetSocketAddress.getAddress());
+    syncingPeer.setChannel(channel);
+    syncingPeer.setNeedSyncFromPeer(true);
+    syncingPeer.setFetchAble(true);
+    Mockito.when(delegate.getActivePeer()).thenReturn(Collections.singletonList(syncingPeer));
+    Mockito.when(delegate.getSolidBlockId())
+        .thenReturn(new BlockCapsule.BlockId(Sha256Hash.ZERO_HASH, 0));
+    Mockito.when(delegate.getBlockLock()).thenReturn(new Object());
+    BlockCapsule block = new BlockCapsule(Protocol.Block.newBuilder().setBlockHeader(
+        Protocol.BlockHeader.newBuilder().setRawData(
+            Protocol.BlockHeader.raw.newBuilder().setNumber(1))).build());
+    BlockCapsule.BlockId next = new BlockCapsule.BlockId(Sha256Hash.ZERO_HASH, 2);
+    syncingPeer.getSyncBlockToFetch().add(block.getBlockId());
+    syncingPeer.getSyncBlockToFetch().add(next);
+    syncingPeer.getSyncBlockInProcess().add(block.getBlockId());
+    Map<UnparsedBlock, PeerConnection> waiting = (Map<UnparsedBlock, PeerConnection>)
+        ReflectUtils.getFieldObject(sync, "blockWaitToProcess");
+    waiting.put(new UnparsedBlock(block.getBlockId(), block.getData()), syncingPeer);
+    Method fetch = SyncService.class.getDeclaredMethod("startFetchSyncBlock");
+    fetch.setAccessible(true);
+    fetch.invoke(sync);
+    Assert.assertTrue(syncingPeer.getSyncBlockRequested().isEmpty());
+    Method handle = SyncService.class.getDeclaredMethod("handleSyncBlock");
+    handle.setAccessible(true);
+    handle.invoke(sync);
+    Assert.assertTrue("Freeing the window must wake the fetch scheduler",
+        (boolean) ReflectUtils.getFieldObject(sync, "fetchFlag"));
+    fetch.invoke(sync);
+    Assert.assertEquals(Collections.singleton(next), syncingPeer.getSyncBlockRequested().keySet());
+    sync.close();
   }
 
   @Test
