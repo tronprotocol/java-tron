@@ -99,6 +99,13 @@ public class PeerConnection {
    * each new sample contributes
    * 1 / FETCH_LATENCY_EWMA_FACTOR (alpha = 0.1), balancing smoothing against
    * responsiveness, in the same order as TCP's SRTT gain (1/8, RFC 6298).
+   *
+   * <p>Blend-then-clamp is intentional: samples blend at their measured value and are
+   * clamped to fetchBlock.timeout only afterwards, so sustained degradation saturates
+   * within 1-3 samples (issue #6923). Accepted cost: one transient outlier (~10x a
+   * healthy estimate) can jump the estimate straight to the clamp, needing ~9 healthy
+   * samples to decay; hard-timeout fallback and the saturation gate (one secondary
+   * fetch per tick) bound the impact meanwhile.
    */
   private static final int FETCH_LATENCY_EWMA_FACTOR = 10;
 
@@ -204,6 +211,7 @@ public class PeerConnection {
    * The first measured sample directly replaces the placeholder; subsequent samples are
    * blended with alpha = 1 / FETCH_LATENCY_EWMA_FACTOR. A single fetch worker reads while
    * the channel event loop writes, so volatile suffices and no lock should be added.
+   * Clamping applies only after blending, by design (see {@link #FETCH_LATENCY_EWMA_FACTOR}).
    *
    * @param latencyMillis measured fetch latency in milliseconds
    */
