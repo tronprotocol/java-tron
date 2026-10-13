@@ -402,6 +402,9 @@ public class ShieldedTRC20ParametersBuilder {
     if (value.compareTo(BigInteger.ZERO) <= 0) {
       throw new IllegalArgumentException("require the value be positive");
     }
+    if (mintParams.getReceiveDescriptionCount() != 1) {
+      throw new IllegalArgumentException("invalid mint output number");
+    }
 
     ShieldContract.ReceiveDescription revDesc = mintParams.getReceiveDescription(0);
     byte[] zeros = new byte[12];
@@ -511,6 +514,9 @@ public class ShieldedTRC20ParametersBuilder {
     byte[] payTo = new byte[32];
     if (value.compareTo(BigInteger.ZERO) <= 0) {
       throw new IllegalArgumentException("the value must be positive");
+    }
+    if (burnParams.getReceiveDescriptionCount() > 1) {
+      throw new IllegalArgumentException("invalid burn output number");
     }
 
     byte[] transparentToAddressTvm = normalizeTransparentToAddress(transparentToAddress);

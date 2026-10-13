@@ -37,6 +37,11 @@ public class WalletUtilTest {
   }
 
   @Test
+  public void formatsNullAsInvalidAddress() {
+    assertEquals("invalid-address(null)", WalletUtil.getAddressString(null));
+  }
+
+  @Test
   public void formatsOversizedInputsWithoutHashingOrBase58Conversion() {
     for (int size : new int[]{22, 4096, 16384, 65536}) {
       byte[] input = bytes(size);

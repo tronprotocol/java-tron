@@ -120,6 +120,9 @@ public class WalletUtil {
   }
 
   public static String getAddressString(byte[] address) {
+    if (address == null) {
+      return INVALID_ADDRESS + "(null)";
+    }
     if (address.length == Constant.STANDARD_ADDRESS_SIZE
         || address.length == Constant.TRON_ADDRESS_SIZE) {
       return encode58Check(address);
