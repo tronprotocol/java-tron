@@ -1,8 +1,8 @@
 package org.tron.core.services.jsonrpc;
 
 import static org.tron.core.Wallet.CONTRACT_VALIDATE_ERROR;
-import static org.tron.core.services.http.Util.setTransactionExtraData;
-import static org.tron.core.services.http.Util.setTransactionPermissionId;
+import static org.tron.core.services.http.servlets.Util.setTransactionExtraData;
+import static org.tron.core.services.http.servlets.Util.setTransactionPermissionId;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.FINALIZED_STR;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.HASH_REGEX;
 import static org.tron.core.services.jsonrpc.JsonRpcApiUtil.LATEST_STR;
@@ -81,8 +81,8 @@ import org.tron.core.exception.jsonrpc.JsonRpcInvalidRequestException;
 import org.tron.core.exception.jsonrpc.JsonRpcMethodNotFoundException;
 import org.tron.core.exception.jsonrpc.JsonRpcTooManyResultException;
 import org.tron.core.services.NodeInfoService;
-import org.tron.core.services.http.JsonFormat;
-import org.tron.core.services.http.Util;
+import org.tron.core.services.http.servlets.JsonFormat;
+import org.tron.core.services.http.servlets.Util;
 import org.tron.core.services.jsonrpc.filters.BlockFilterAndResult;
 import org.tron.core.services.jsonrpc.filters.LogBlockQuery;
 import org.tron.core.services.jsonrpc.filters.LogFilter;
@@ -491,7 +491,12 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
       byte[] chainId = wallet.getBlockCapsuleByNum(0).getBlockId().getBytes();
       return ByteArray.toJsonHex(Arrays.copyOfRange(chainId, chainId.length - 4, chainId.length));
     } catch (Exception e) {
-      throw new JsonRpcInternalException(e.getMessage());
+      Error fatal = JsonRpcErrorResolver.findFatalCause(e);
+      if (fatal != null) {
+        throw fatal;
+      }
+      logger.debug("Chain identity lookup failed", e);
+      throw new JsonRpcInternalException("Chain identity unavailable", e);
     }
   }
 

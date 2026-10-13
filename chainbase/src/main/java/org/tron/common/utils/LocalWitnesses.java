@@ -86,6 +86,9 @@ public class LocalWitnesses {
       throw new TronError("private key must be hex string",
           TronError.ErrCode.WITNESS_INIT);
     }
+    if (!ECKey.isValidPrivateKey(ByteArray.fromHexString(privateKey))) {
+      throw new TronError("Invalid ECDSA witness private key", TronError.ErrCode.WITNESS_INIT);
+    }
   }
 
   public void addPrivateKeys(String privateKey) {
