@@ -518,7 +518,7 @@ public class Wallet {
               MetricLabels.Counter.TX_REJECT_API,
               MetricLabels.Counter.TX_REJECT_INVALID_SIGNATURE_LENGTH);
           String info = "Signature size is " + sig.size();
-          logger.warn("Broadcast transaction {} has failed, {}.", txID, info);
+          logger.debug("Broadcast transaction {} has failed, {}.", txID, info);
           return builder.setResult(false).setCode(response_code.SIGERROR)
               .setMessage(ByteString.copyFromUtf8("Validate signature error: " + info))
               .build();
