@@ -146,7 +146,7 @@ public class NodeInfo {
       peerInfoBuilder.setLastBlockUpdateTime(peerInfo.getLastBlockUpdateTime());
       peerInfoBuilder.setSyncFlag(peerInfo.isSyncFlag());
       peerInfoBuilder.setHeadBlockTimeWeBothHave(peerInfo.getHeadBlockTimeWeBothHave());
-      peerInfoBuilder.setNeedSyncFromPeer(peerInfo.isSyncFlag());
+      peerInfoBuilder.setNeedSyncFromPeer(peerInfo.isNeedSyncFromPeer());
       peerInfoBuilder.setNeedSyncFromUs(peerInfo.isNeedSyncFromUs());
       peerInfoBuilder.setHost(peerInfo.getHost());
       peerInfoBuilder.setPort(peerInfo.getPort());

@@ -1,0 +1,37 @@
+package org.tron.core.services.http.servlets;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+import org.tron.api.GrpcAPI.PricesResponseMessage;
+import org.tron.core.Wallet;
+import org.tron.core.services.http.HttpApi;
+import org.tron.core.services.http.HttpApi.Access;
+import org.tron.core.services.http.HttpApi.Surface;
+
+@Component
+@Slf4j(topic = "API")
+@HttpApi(value = "getmemofee", access = Access.READ,
+    surfaces = {Surface.FULL})
+public class GetMemoFeePricesServlet extends RateLimiterServlet {
+
+  @Autowired
+  private Wallet wallet;
+
+  @Override
+  protected void doGet(HttpServletRequest request, HttpServletResponse response) {
+    try {
+      PricesResponseMessage reply = wallet.getMemoFeePrices();
+      response.getWriter().println(reply == null ? "{}" : JsonFormat.printToString(reply));
+    } catch (Exception e) {
+      Util.processError(e, response);
+    }
+  }
+
+  @Override
+  protected void doPost(HttpServletRequest request, HttpServletResponse response) {
+    doGet(request, response);
+  }
+}

@@ -76,22 +76,6 @@ public class Blake2bfMessageDigest extends BCMessageDigest implements Cloneable 
       v = new long[16];
     }
 
-    // for tests
-    Blake2bfDigest(
-        final long[] h, final long[] m, final long[] t, final boolean f, final long rounds) {
-      assert rounds <= 4294967295L; // uint max value
-      buffer = new byte[MESSAGE_LENGTH_BYTES];
-      bufferPos = 0;
-
-      this.h = h;
-      this.m = m;
-      this.t = t;
-      this.f = f;
-      this.rounds = rounds;
-
-      v = new long[16];
-    }
-
     @Override
     public String getAlgorithmName() {
       return "BLAKE2f";

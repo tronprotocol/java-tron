@@ -277,6 +277,7 @@ public class RpcApiServicesTest {
         .setOffset(0).setLimit(5).build();
     assertNotNull(blockingStubFull.getPaginatedNowWitnessList(paginatedMessage));
     assertNotNull(blockingStubSolidity.getPaginatedNowWitnessList(paginatedMessage));
+    assertNotNull(blockingStubPBFT.getPaginatedNowWitnessList(paginatedMessage));
   }
 
   @Test
@@ -673,6 +674,7 @@ public class RpcApiServicesTest {
     NumberMessage message = NumberMessage.newBuilder().setNum(1).build();
     assertNotNull(blockingStubFull.getTransactionInfoByBlockNum(message));
     assertNotNull(blockingStubSolidity.getTransactionInfoByBlockNum(message));
+    assertNotNull(blockingStubPBFT.getTransactionInfoByBlockNum(message));
   }
 
   @Test
@@ -806,8 +808,7 @@ public class RpcApiServicesTest {
     Block nowBlock = blockingStubFull.getNowBlock(EmptyMessage.newBuilder().build());
     raw rawData = nowBlock.getBlockHeader().getRawData();
     BlockCapsule.BlockId blockId =
-        new BlockCapsule.BlockId(Sha256Hash.of(getInstance().isECKeyCryptoEngine(),
-            rawData.toByteArray()),
+        new BlockCapsule.BlockId(Sha256Hash.of(rawData.toByteArray()),
             rawData.getNumber());
     return BlockIdentifier.newBuilder()
         .setNumber(rawData.getNumber())

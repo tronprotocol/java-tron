@@ -37,7 +37,7 @@ import java.util.List;
  * success, 0 as fail <br/> <br/>
  *
  * Usage: <ul> <li>add pairs sequentially with {@link #addPair(BN128G1, BN128G2)}</li> <li>run check
- * with {@link #run()} after all paris have been added</li> <li>get result with {@link
+ * with {@link #run(long)} after all paris have been added</li> <li>get result with {@link
  * #result()}</li> </ul>
  *
  * Arithmetic has been ported from <a href="https://github.com/scipr-lab/libff/blob/master/libff/algebra/curves/alt_bn128/alt_bn128_pairing.cpp">libff</a>
@@ -228,7 +228,7 @@ public class PairingCheck {
     pairs.add(Pair.of(g1, g2));
   }
 
-  public void run() {
+  public boolean run(long vmShouldEndInNs) {
 
     for (Pair pair : pairs) {
 
@@ -238,10 +238,16 @@ public class PairingCheck {
       {
         product = product.mul(miller);
       }
+
+      if (vmShouldEndInNs < System.nanoTime()) {
+        return false;
+      }
     }
 
     // finalize
     product = finalExponentiation(product);
+
+    return vmShouldEndInNs >= System.nanoTime();
   }
 
   public int result() {

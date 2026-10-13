@@ -47,14 +47,12 @@ public class LocalWitnesses {
     setPrivateKeys(privateKeys);
   }
 
-  public void initWitnessAccountAddress(final byte[] witnessAddress,
-      boolean isECKeyCryptoEngine) {
+  public void initWitnessAccountAddress(final byte[] witnessAddress) {
     if (witnessAddress != null) {
       this.witnessAccountAddress = witnessAddress;
     } else if (!CollectionUtils.isEmpty(privateKeys)) {
       byte[] privateKey = ByteArray.fromHexString(getPrivateKey());
-      final SignInterface ecKey = SignUtils.fromPrivate(privateKey,
-          isECKeyCryptoEngine);
+      final SignInterface ecKey = SignUtils.fromPrivate(privateKey);
       this.witnessAccountAddress = ecKey.getAddress();
     }
   }
@@ -87,6 +85,9 @@ public class LocalWitnesses {
     if (!StringUtil.isHexadecimal(privateKey)) {
       throw new TronError("private key must be hex string",
           TronError.ErrCode.WITNESS_INIT);
+    }
+    if (!ECKey.isValidPrivateKey(ByteArray.fromHexString(privateKey))) {
+      throw new TronError("Invalid ECDSA witness private key", TronError.ErrCode.WITNESS_INIT);
     }
   }
 

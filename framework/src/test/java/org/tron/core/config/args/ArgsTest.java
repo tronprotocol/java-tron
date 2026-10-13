@@ -15,11 +15,17 @@
 
 package org.tron.core.config.args;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import com.google.common.collect.Lists;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import io.grpc.internal.GrpcUtil;
 import io.grpc.netty.NettyServerBuilder;
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.InetAddress;
@@ -27,10 +33,12 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.slf4j.LoggerFactory;
 import org.tron.common.TestConstants;
 import org.tron.common.args.GenesisBlock;
 import org.tron.common.parameter.CommonParameter;
@@ -48,9 +56,53 @@ public class ArgsTest {
   @Rule
   public ExpectedException thrown = ExpectedException.none();
 
+  @After
+  public void tearDown() {
+    Args.clearParam();
+  }
+
+  @Test
+  public void testRemovedKeystoreFactoryExitsWithMigrationGuidance() throws Exception {
+    ByteArrayOutputStream errorOutput = new ByteArrayOutputStream();
+    PrintStream capturedError = new PrintStream(errorOutput, true, "UTF-8");
+    PrintStream originalError = System.err;
+
+    try {
+      System.setErr(capturedError);
+
+      TronError exception = Assert.assertThrows(TronError.class,
+          () -> Args.setParam(new String[] {"--keystore-factory"}, TestConstants.TEST_CONF));
+
+      Assert.assertEquals(TronError.ErrCode.PARAMETER_INIT, exception.getErrCode());
+    } finally {
+      System.setErr(originalError);
+      capturedError.close();
+    }
+
+    String errorMessage = errorOutput.toString("UTF-8");
+    Assert.assertTrue(errorMessage.contains("--keystore-factory was removed."));
+    Assert.assertTrue(errorMessage.contains("Toolkit.jar keystore <new|import|list|update>"));
+  }
+
+  @Test
+  public void testRemovedKeystoreFactoryRepeatedFlagStillExits() {
+    Assert.assertThrows(TronError.class,
+        () -> Args.setParam(new String[] {"--keystore-factory", "--keystore-factory"},
+            TestConstants.TEST_CONF));
+  }
+
+  @Test
+  public void testRemovedKeystoreFactoryTakesPrecedenceOverInvalidConfig() {
+    TronError exception = Assert.assertThrows(TronError.class,
+        () -> Args.setParam(new String[] {"--keystore-factory", "-c", "no-such-file.conf"},
+            TestConstants.TEST_CONF));
+
+    Assert.assertEquals(TronError.ErrCode.PARAMETER_INIT, exception.getErrCode());
+  }
+
   @Test
   public void get() {
-    Args.setParam(new String[] {"--keystore-factory"}, TestConstants.TEST_CONF);
+    Args.setParam(new String[] {}, TestConstants.TEST_CONF);
 
     CommonParameter parameter = Args.getInstance();
 
@@ -58,7 +110,7 @@ public class ArgsTest {
 
     LocalWitnesses localWitnesses = new LocalWitnesses();
     localWitnesses.setPrivateKeys(Arrays.asList(privateKey));
-    localWitnesses.initWitnessAccountAddress(null, true);
+    localWitnesses.initWitnessAccountAddress(null);
     Args.setLocalWitnesses(localWitnesses);
     String address = ByteArray.toHexString(Args.getLocalWitnesses()
         .getWitnessAccountAddress());
@@ -122,8 +174,6 @@ public class ArgsTest {
     Assert.assertEquals(address,
         ByteArray.toHexString(Args.getLocalWitnesses()
             .getWitnessAccountAddress()));
-
-    Assert.assertTrue(parameter.isKeystoreFactory());
   }
 
   @Test
@@ -369,6 +419,46 @@ public class ArgsTest {
     Args.clearParam();
   }
 
+  /**
+   * The removed node.walletExtensionApi key must stay harmless in operator configs:
+   * binding ignores it and fromConfig logs a removal warning. Lives here rather than
+   * NodeConfigTest because module jacoco reports only aggregate framework execution data.
+   */
+  @Test
+  public void testRemovedWalletExtensionApiKeyWarnsWhenTrue() {
+    Assert.assertEquals(1, countWalletExtensionApiWarnings("node { walletExtensionApi = true }"));
+  }
+
+  @Test
+  public void testRemovedWalletExtensionApiKeyWarnsWhenFalse() {
+    Assert.assertEquals(1, countWalletExtensionApiWarnings("node { walletExtensionApi = false }"));
+  }
+
+  @Test
+  public void testNoWalletExtensionApiWarningWhenKeyAbsent() {
+    Assert.assertEquals(0, countWalletExtensionApiWarnings(""));
+  }
+
+  private static long countWalletExtensionApiWarnings(String hocon) {
+    Config config = ConfigFactory.parseString(hocon)
+        .withFallback(ConfigFactory.defaultReference());
+    Logger logger = (Logger) LoggerFactory.getLogger(NodeConfig.class);
+    ListAppender<ILoggingEvent> appender = new ListAppender<>();
+    appender.start();
+    logger.addAppender(appender);
+    try {
+      Assert.assertNotNull(NodeConfig.fromConfig(config));
+    } finally {
+      logger.detachAppender(appender);
+      appender.stop();
+    }
+    return appender.list.stream()
+        .filter(e -> e.getLevel() == Level.WARN)
+        .filter(e -> e.getFormattedMessage()
+            .contains("[node.walletExtensionApi] has been removed and is ignored"))
+        .count();
+  }
+
   // ===========================================================================
   // Boundary tests for node.fetchBlock.timeout clamping.
   //
@@ -517,6 +607,101 @@ public class ArgsTest {
       Assert.assertEquals(TronError.ErrCode.PARAMETER_INIT, e.getErrCode());
       Args.clearParam();
     }
+  }
+
+  @Test
+  public void testDnsPublishRejectsInvalidServerTypeWithParameterInitError() {
+    Config config = dnsPublishConfig(
+        "node.dns.serverType", "unsupported");
+
+    TronError error = Assert.assertThrows(TronError.class,
+        () -> Args.loadDnsPublishConfig(NodeConfig.fromConfig(config)));
+
+    Assert.assertEquals(TronError.ErrCode.PARAMETER_INIT, error.getErrCode());
+    Assert.assertEquals("Check node.dns.serverType, must be aws or aliyun",
+        error.getMessage());
+  }
+
+  @Test
+  public void testDnsPublishRejectsEmptyRequiredParameterWithParameterInitError() {
+    Config config = dnsPublishConfig("node.dns.dnsDomain", "");
+
+    TronError error = Assert.assertThrows(TronError.class,
+        () -> Args.loadDnsPublishConfig(NodeConfig.fromConfig(config)));
+
+    Assert.assertEquals(TronError.ErrCode.PARAMETER_INIT, error.getErrCode());
+    Assert.assertEquals("Check node.dns.dnsDomain, must not be null or empty",
+        error.getMessage());
+  }
+
+  @Test
+  public void testDnsPublishRejectsInvalidChangeThresholdWithParameterInitError() {
+    Config config = dnsPublishConfig("node.dns.changeThreshold", "-0.1");
+
+    TronError error = Assert.assertThrows(TronError.class,
+        () -> Args.loadDnsPublishConfig(NodeConfig.fromConfig(config)));
+
+    Assert.assertEquals(TronError.ErrCode.PARAMETER_INIT, error.getErrCode());
+    Assert.assertEquals("Check node.dns.changeThreshold, should be bigger than 0, default 0.1",
+        error.getMessage());
+  }
+
+  @Test
+  public void testDnsPublishRejectsInvalidMaxMergeSizeWithParameterInitError() {
+    Config config = dnsPublishConfig("node.dns.maxMergeSize", "6");
+
+    TronError error = Assert.assertThrows(TronError.class,
+        () -> Args.loadDnsPublishConfig(NodeConfig.fromConfig(config)));
+
+    Assert.assertEquals(TronError.ErrCode.PARAMETER_INIT, error.getErrCode());
+    Assert.assertEquals("Check node.dns.maxMergeSize, should be [1~5], default 5",
+        error.getMessage());
+  }
+
+  @Test
+  public void testDnsPublishDisabledIgnoresInvalidPublishParameters() {
+    Map<String, Object> configMap = new HashMap<>();
+    configMap.put("node.dns.publish", false);
+    configMap.put("node.dns.changeThreshold", -0.1);
+    configMap.put("node.dns.maxMergeSize", 6);
+    Config config = ConfigFactory.parseMap(configMap)
+        .withFallback(ConfigFactory.defaultReference());
+
+    Assert.assertFalse(Args.loadDnsPublishConfig(NodeConfig.fromConfig(config))
+        .isDnsPublishEnable());
+  }
+
+  @Test
+  public void testCommitteeConfigRejectsOldRewardOptimizationWithoutPrerequisite() {
+    Map<String, Object> configMap = new HashMap<>();
+    configMap.put("storage.db.directory", "database");
+    configMap.put("committee.allowOldRewardOpt", 1);
+    Config config = ConfigFactory.parseMap(configMap)
+        .withFallback(ConfigFactory.defaultReference());
+
+    try {
+      TronError error = Assert.assertThrows(TronError.class,
+          () -> Args.applyConfigParams(config));
+
+      Assert.assertEquals(TronError.ErrCode.PARAMETER_INIT, error.getErrCode());
+    } finally {
+      Args.clearParam();
+    }
+  }
+
+  private Config dnsPublishConfig(String key, String value) {
+    Map<String, Object> configMap = new HashMap<>();
+    configMap.put("node.dns.publish", true);
+    configMap.put("node.dns.dnsDomain", "nodes.example.org");
+    configMap.put("node.dns.dnsPrivate",
+        "1234567890123456789012345678901234567890123456789012345678901234");
+    configMap.put("node.dns.serverType", "aliyun");
+    configMap.put("node.dns.accessKeyId", "access-key-id");
+    configMap.put("node.dns.accessKeySecret", "access-key-secret");
+    configMap.put("node.dns.aliyunDnsEndpoint", "dns.aliyuncs.com");
+    configMap.put(key, value);
+    return ConfigFactory.parseMap(configMap)
+        .withFallback(ConfigFactory.defaultReference());
   }
 
   @Test

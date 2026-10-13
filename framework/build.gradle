@@ -11,9 +11,7 @@ apply plugin: 'checkstyle'
 
 mainClassName = 'org.tron.program.FullNode'
 
-def versions = [
-        checkstyle: '8.7',
-]
+
 
 
 
@@ -40,7 +38,7 @@ dependencies {
     // end local libraries
     implementation group: 'com.beust', name: 'jcommander', version: '1.78'
     implementation group: 'io.dropwizard.metrics', name: 'metrics-core', version: '3.1.2'
-    implementation('io.netty:netty-codec-protobuf:4.2.15.Final') {
+    implementation("io.netty:netty-codec-protobuf:${rootProject.nettyVersion}") {
         exclude group: 'com.google.protobuf'
         exclude group: 'com.google.protobuf.nano'
     }
@@ -61,17 +59,28 @@ dependencies {
 
     testImplementation group: 'org.springframework', name: 'spring-test', version: "${springVersion}"
     testImplementation group: 'javax.portlet', name: 'portlet-api', version: '3.0.1'
+
     implementation group: 'org.zeromq', name: 'jeromq', version: '0.5.3'
     api project(":chainbase")
     api project(":protocol")
     api project(":actuator")
     api project(":consensus")
+    // org.tron.p2p is used directly in 17 files under src/main/java (org.tron.core.net
+    // and org.tron.core.config.args). It currently arrives only transitively, three
+    // hops away, because :common exposes it via `api project(":p2p")` -- and :common
+    // has to, since CommonParameter publishes P2pConfig/PublishConfig in its own API.
+    // Declare the direct use here as well, so framework keeps compiling if that
+    // transitive chain is ever narrowed. api, not implementation: framework does
+    // re-export p2p types -- P2pEventHandlerImpl extends org.tron.p2p.P2pEventHandler,
+    // HelloMessage.getFrom() returns org.tron.p2p.discover.Node, PeerManager takes
+    // org.tron.p2p.connection.Channel, Args.loadDnsPublishConfig returns PublishConfig.
+    api project(":p2p")
 }
 
 check.dependsOn 'lint'
 
 checkstyle {
-    toolVersion = "${versions.checkstyle}"
+    toolVersion = "${rootProject.checkstyleVersion}"
     configFile = file("config/checkstyle/checkStyleAll.xml")
     maxWarnings = 0
 }
@@ -187,8 +196,14 @@ def binaryRelease(taskName, jarName, mainClass) {
         }
 
         // explicit_dependency
+        // :p2p is included because :common now exposes it via `api project(":p2p")`,
+        // so p2p-1.0.0.jar is on runtimeClasspath and gets zipped into the fat jar.
+        // Without it Gradle reports an implicit_dependency and disables execution
+        // optimizations, and a parallel build could assemble FullNode.jar before
+        // :p2p:jar has been written.
         dependsOn (project(':actuator').jar, project(':consensus').jar, project(':chainbase').jar,
-                project(':crypto').jar, project(':common').jar, project(':protocol').jar, project(':platform').jar)
+                project(':crypto').jar, project(':common').jar, project(':protocol').jar,
+                project(':platform').jar, project(':p2p').jar)
 
         from {
             configurations.runtimeClasspath.collect {
