@@ -43,6 +43,17 @@ public abstract class HttpService extends AbstractService {
 
   protected long maxRequestSize = 4 * 1024 * 1024; // 4MB
 
+  // Once maxHttpConnectNumber is reached, Jetty applies this idle timeout to every open
+  // connection, so connections that send nothing cannot hold every slot. While the limit is
+  // reached, a keep-alive connection that stays idle this long between two requests is closed
+  // as well; time spent processing a request does not count as idle.
+  private long connectionLimitIdleTimeoutMs = 10_000;
+
+  @VisibleForTesting
+  protected void setConnectionLimitIdleTimeoutMs(long connectionLimitIdleTimeoutMs) {
+    this.connectionLimitIdleTimeoutMs = connectionLimitIdleTimeoutMs;
+  }
+
   @VisibleForTesting
   public long getMaxRequestSize() {
     return this.maxRequestSize;
@@ -80,7 +91,9 @@ public abstract class HttpService extends AbstractService {
     this.apiServer = new Server(this.port);
     int maxHttpConnectNumber = Args.getInstance().getMaxHttpConnectNumber();
     if (maxHttpConnectNumber > 0) {
-      this.apiServer.addBean(new ConnectionLimit(maxHttpConnectNumber, this.apiServer));
+      ConnectionLimit connectionLimit = new ConnectionLimit(maxHttpConnectNumber, this.apiServer);
+      connectionLimit.setIdleTimeout(connectionLimitIdleTimeoutMs);
+      this.apiServer.addBean(connectionLimit);
     }
     this.apiServer.setErrorHandler(new OversizedRequestErrorHandler());
   }
