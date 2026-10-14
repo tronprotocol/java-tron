@@ -47,7 +47,7 @@ dependencies {
     // end http
 
     // https://mvnrepository.com/artifact/com.github.briandilley.jsonrpc4j/jsonrpc4j
-    implementation group: 'com.github.briandilley.jsonrpc4j', name: 'jsonrpc4j', version: '1.6'
+    implementation group: 'com.github.briandilley.jsonrpc4j', name: 'jsonrpc4j', version: '1.7'
 
     // https://mvnrepository.com/artifact/javax.portlet/portlet-api
     compileOnly group: 'javax.portlet', name: 'portlet-api', version: '3.0.1'
@@ -58,6 +58,8 @@ dependencies {
 
     testImplementation group: 'org.springframework', name: 'spring-test', version: "${springVersion}"
     testImplementation group: 'javax.portlet', name: 'portlet-api', version: '3.0.1'
+    // Mockito inspects JsonRpcServer's Jakarta servlet overload when creating mocks
+    testImplementation group: 'jakarta.servlet', name: 'jakarta.servlet-api', version: '5.0.0'
 
     implementation group: 'org.zeromq', name: 'jeromq', version: '0.5.3'
     api project(":chainbase")

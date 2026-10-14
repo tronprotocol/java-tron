@@ -182,27 +182,33 @@ public abstract class RateLimiterServlet extends HttpServlet {
     String contextPath = req.getContextPath();
     String url = Strings.isNullOrEmpty(req.getServletPath())
         ? MetricLabels.UNDEFINED : contextPath + req.getServletPath();
-    // int64_as_string is honored only on GET requests (URL query). POST is intentionally
-    // unsupported because reading the body here would consume request.getReader() and
-    // break downstream servlets that read it themselves.
-    if ("GET".equalsIgnoreCase(req.getMethod())) {
-      JsonFormat.setInt64AsString(Util.getInt64AsString(req));
-    }
+    // The outer try only pairs the GET setup below with the cleanup in the finally block; it
+    // deliberately has no catch, so that setup keeps propagating its exceptions as before.
+    // Everything the inner try holds keeps the catch clauses it already had.
     try {
-      resp.setContentType("application/json; charset=utf-8");
-
-      if (acquireResource) {
-        Histogram.Timer requestTimer = Metrics.histogramStartTimer(
-            MetricKeys.Histogram.HTTP_SERVICE_LATENCY, url);
-        serviceOnSurface(surface, req, resp);
-        Metrics.histogramObserve(requestTimer);
-      } else {
-        Util.writeAuditedError(Util.RATE_LIMITER_ERROR_MSG, resp);
+      // int64_as_string is honored only on GET requests (URL query). POST is intentionally
+      // unsupported because reading the body here would consume request.getReader() and
+      // break downstream servlets that read it themselves.
+      if ("GET".equalsIgnoreCase(req.getMethod())) {
+        JsonFormat.setInt64AsString(Util.getInt64AsString(req));
       }
-    } catch (ServletException | IOException | BadMessageException e) {
-      throw e;
-    } catch (Exception unexpected) {
-      logger.error("Http Api {}, Method:{}. Error：", url, req.getMethod(), unexpected);
+
+      try {
+        resp.setContentType("application/json; charset=utf-8");
+
+        if (acquireResource) {
+          Histogram.Timer requestTimer = Metrics.histogramStartTimer(
+              MetricKeys.Histogram.HTTP_SERVICE_LATENCY, url);
+          serviceOnSurface(surface, req, resp);
+          Metrics.histogramObserve(requestTimer);
+        } else {
+          Util.writeAuditedError(Util.RATE_LIMITER_ERROR_MSG, resp);
+        }
+      } catch (ServletException | IOException | BadMessageException e) {
+        throw e;
+      } catch (Exception unexpected) {
+        logger.error("Http Api {}, Method:{}. Error：", url, req.getMethod(), unexpected);
+      }
     } finally {
       // CRITICAL: this clear pairs with the setInt64AsString call above. Removing it
       // will leak int64_as_string state across requests on reused Tomcat threads,
