@@ -318,18 +318,24 @@ public class ChainInventoryMsgHandlerTest {
   }
 
   @Test
-  public void testKnownMultiBlockResponseRequestsNextSummary() throws Exception {
-    for (long helloHead : new long[]{51, 52}) {
-      resetFixture();
-      peer.setHelloMessageReceive(helloMessage(helloHead));
+  public void testKnownMultiBlockTerminalResponseCompletesDownload() throws Exception {
+    for (List<BlockId> blockIds : Arrays.asList(
+        Arrays.asList(blockId(50), blockId(51)),
+        Arrays.asList(blockId(50), blockId(51), blockId(52)))) {
+      for (boolean needSyncFromUs : new boolean[]{false, true}) {
+        resetFixture();
+        BlockId lastBlock = blockIds.get(blockIds.size() - 1);
+        peer.setHelloMessageReceive(helloMessage(lastBlock.getNum()));
+        peer.setNeedSyncFromUs(needSyncFromUs);
 
-      respond(0, blockId(50), blockId(51), blockId(52));
+        handler.processMessage(peer, new ChainInventoryMessage(blockIds, 0L));
 
-      Assert.assertTrue(peer.getSyncBlockToFetch().isEmpty());
-      Assert.assertEquals(blockId(52), peer.getBlockBothHave());
-      Assert.assertTrue(peer.isNeedSyncFromPeer());
-      Assert.assertEquals(7, peer.getBlockRcvTime());
-      verify(sync).syncNext(peer);
+        assertDownloadCompleted();
+        Assert.assertTrue(peer.getSyncBlockToFetch().isEmpty());
+        Assert.assertEquals(lastBlock, peer.getBlockBothHave());
+        Assert.assertEquals(needSyncFromUs, peer.isNeedSyncFromUs());
+        Assert.assertEquals(!needSyncFromUs, peer.isSyncFinish());
+      }
     }
   }
 
