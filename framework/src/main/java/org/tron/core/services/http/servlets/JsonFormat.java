@@ -83,7 +83,7 @@ public class JsonFormat {
       = "Writing to a StringBuilder threw an IOException (should never happen).";
   private static final String EXPECTED_STRING = "Expected string.";
   private static final String MISSING_END_QUOTE = "String missing ending quote.";
-  // Must stay above the 116-byte genesis witness_address, which is served in Base58Check.
+  // Keeps the genesis block addresses compatible with their Base58Check rendering.
   private static final int MAX_BASE58_ADDRESS_SIZE = 128;
 
   public static final boolean ALWAYS_OUTPUT_DEFAULT_VALUE_FIELDS = true;
