@@ -920,23 +920,15 @@ public class ProposalUtilTest extends BaseTest {
 
   @Test
   public void blockVersionCheck() {
-    // Merged tree: VERSION_4_8_3(39) is deliberately dormant — CLOSE_EXCHANGE must not be
-    // activatable until a future release bumps BLOCK_VERSION to 39. It is the only fork
-    // allowed to exceed the current BLOCK_VERSION (38).
-    for (ForkBlockVersionEnum forkVersion : ForkBlockVersionEnum.values()) {
-      if (forkVersion == ForkBlockVersionEnum.VERSION_4_8_3) {
-        Assert.assertEquals(39, forkVersion.getValue());
-        Assert.assertTrue("VERSION_4_8_3 gate must exceed BLOCK_VERSION while dormant",
-            forkVersion.getValue() > Parameter.ChainConstant.BLOCK_VERSION);
-        continue;
-      }
-      if (forkVersion.getValue() > Parameter.ChainConstant.BLOCK_VERSION) {
-        Assert.fail("ForkBlockVersion must be less than BLOCK_VERSION");
-      }
-    }
-    // Upstream consensus fork preserved verbatim: VERSION_4_8_2_3 == BLOCK_VERSION == 38.
-    Assert.assertEquals(38, ForkBlockVersionEnum.VERSION_4_8_2_3.getValue());
+    // Block version 39 advertises VERSION_4_8_3 (aligned with PR #7001): the CLOSE_EXCHANGE
+    // fork is live-ready. Activation still requires the 80% witness fork voting of
+    // VERSION_4_8_3, and closing exchanges additionally requires a committee proposal, so
+    // the version bump alone does not change consensus behaviour.
+    Assert.assertEquals(39, Parameter.ChainConstant.BLOCK_VERSION);
     Assert.assertEquals(Parameter.ChainConstant.BLOCK_VERSION,
-        ForkBlockVersionEnum.VERSION_4_8_2_3.getValue());
+        ForkBlockVersionEnum.VERSION_4_8_3.getValue());
+    // The previous hard fork stays strictly below the advertised block version.
+    Assert.assertTrue("VERSION_4_8_2_3 must be below BLOCK_VERSION",
+        ForkBlockVersionEnum.VERSION_4_8_2_3.getValue() < Parameter.ChainConstant.BLOCK_VERSION);
   }
 }
