@@ -275,3 +275,5 @@ When using `--password-file` with `update`, the file must contain exactly two li
 - `--force`: For `keystore import`, allow importing a private key whose address already has a keystore in the directory (creates an additional file).
 - `--json`: Output in JSON format for scripting.
 - `-h | --help`: Provide the help info.
+
+> **Note:** `--password-file` and `--key-file` must be owner-only (`chmod 600`). Files readable or writable by group/other are rejected — create them with a restrictive umask or run `chmod 600 <file>` before use.
