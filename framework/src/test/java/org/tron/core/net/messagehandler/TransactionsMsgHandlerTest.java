@@ -618,6 +618,7 @@ public class TransactionsMsgHandlerTest extends BaseTest {
       });
       originalPool = replaceTrxHandlePool(handler, pool);
       TronNetDelegate delegate = Mockito.mock(TronNetDelegate.class);
+      Mockito.when(delegate.pushTransaction(Mockito.any())).thenReturn(true);
       AdvService adv = Mockito.mock(AdvService.class);
       ReflectUtils.setFieldValue(handler, "tronNetDelegate", delegate);
       ReflectUtils.setFieldValue(handler, "advService", adv);
