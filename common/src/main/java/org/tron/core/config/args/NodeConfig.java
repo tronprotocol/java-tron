@@ -207,10 +207,6 @@ public class NodeConfig {
   public static class RpcConfig {
 
     public static final int DEFAULT_MAX_CONCURRENT_CALLS_PER_CONNECTION = 100;
-    // Secure built-in default for the gRPC idle timeout. Applied by
-    // postProcess() when maxConnectionIdleInMillis is 0 (the default).
-    // maxConnectionAgeInMillis keeps its legacy meaning: 0 = unlimited.
-    public static final long DEFAULT_MAX_CONNECTION_LIFETIME_IN_MILLIS = 60_000L;
     public static final int DEFAULT_MAX_RST_STREAM = 1000;
     public static final int DEFAULT_SECONDS_PER_WINDOW = 5;
 
@@ -407,21 +403,8 @@ public class NodeConfig {
           + "protection; using the secure default of {}.", RpcConfig.DEFAULT_SECONDS_PER_WINDOW);
       rpc.secondsPerWindow = RpcConfig.DEFAULT_SECONDS_PER_WINDOW;
     }
-    if (rpc.maxConnectionIdleInMillis < 0 || rpc.maxConnectionAgeInMillis < 0) {
-      throw new TronError("node.rpc.maxConnectionIdleInMillis and node.rpc.maxConnectionAgeInMillis "
-          + "must be non-negative, got: maxConnectionIdleInMillis=" + rpc.maxConnectionIdleInMillis
-          + ", maxConnectionAgeInMillis=" + rpc.maxConnectionAgeInMillis, PARAMETER_INIT);
-    }
-    // maxConnectionIdleInMillis: 0 (the default) means "use the secure
-    // built-in default" (60s), NOT unlimited: the old 0 -> Long.MAX_VALUE
-    // conversion silently turned an unset or explicitly-zero idle value into
-    // an unbounded idle timeout. Operators who want a longer idle timeout
-    // must set an explicit positive value.
-    // maxConnectionAgeInMillis: keeps the legacy gRPC semantic where
-    // 0 = unlimited (converted to Long.MAX_VALUE); positive values are
-    // honored as-is.
     if (rpc.maxConnectionIdleInMillis == 0) {
-      rpc.maxConnectionIdleInMillis = RpcConfig.DEFAULT_MAX_CONNECTION_LIFETIME_IN_MILLIS;
+      rpc.maxConnectionIdleInMillis = Long.MAX_VALUE;
     }
     if (rpc.maxConnectionAgeInMillis == 0) {
       rpc.maxConnectionAgeInMillis = Long.MAX_VALUE;

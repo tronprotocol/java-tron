@@ -126,8 +126,8 @@ node {
     maxRstStream = 1000
     # RST_STREAM counting window in seconds. 0 uses the default of 5.
     secondsPerWindow = 5
-    # Idle connection timeout (ms). 0 = secure default (60 s).
-    maxConnectionIdleInMillis = 0
+    # Idle connection timeout (ms). 0 = no limit.
+    maxConnectionIdleInMillis = 60000
     # Minimum active connections required before broadcasting transactions.
     minEffectiveConnection = 1
   }

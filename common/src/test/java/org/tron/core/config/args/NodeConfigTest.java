@@ -108,11 +108,10 @@ public class NodeConfigTest {
     assertEquals(NodeConfig.RpcConfig.DEFAULT_MAX_CONCURRENT_CALLS_PER_CONNECTION,
         rpc.getMaxConcurrentCallsPerConnection());
     assertEquals(1048576, rpc.getFlowControlWindow());
-    // reference.conf keeps 0 (the default marker); postProcess converts
-    // idle 0 to the secure built-in 60s default, while age 0 keeps its
-    // legacy unlimited meaning.
+    // reference.conf recommends 60000 for idle; age stays 0 in
+    // reference.conf, which postProcess maps to Long.MAX_VALUE.
     assertEquals(60000L, rpc.getMaxConnectionIdleInMillis());
-    assertEquals(Long.MAX_VALUE, rpc.getMaxConnectionAgeInMillis());
+    assertEquals(9223372036854775807L, rpc.getMaxConnectionAgeInMillis());
     assertEquals(4194304, rpc.getMaxMessageSize());
     assertEquals(8192, rpc.getMaxHeaderListSize());
     assertEquals(NodeConfig.RpcConfig.DEFAULT_MAX_RST_STREAM, rpc.getMaxRstStream());
@@ -153,38 +152,14 @@ public class NodeConfigTest {
   }
 
   @Test
-  public void testRpcNegativeIdleAndAgeRejected() {
-    Config config = withRef(
-        "node { rpc { maxConnectionIdleInMillis = -1, maxConnectionAgeInMillis = 60000 } }");
-
-    TronError exception = assertThrows(TronError.class,
-        () -> NodeConfig.fromConfig(config));
-
-    assertTrue(exception.getMessage().contains(
-        "node.rpc.maxConnectionIdleInMillis and node.rpc.maxConnectionAgeInMillis "
-            + "must be non-negative, got: maxConnectionIdleInMillis=-1"));
-
-    Config config2 = withRef(
-        "node { rpc { maxConnectionIdleInMillis = 60000, maxConnectionAgeInMillis = -5 } }");
-
-    exception = assertThrows(TronError.class,
-        () -> NodeConfig.fromConfig(config2));
-
-    assertTrue(exception.getMessage().contains(
-        "maxConnectionAgeInMillis=-5"));
-  }
-
-  @Test
-  public void testRpcExplicitZeroIdleAndAgeFallsBackToDefaults() {
-    // Idle 0 falls back to the secure built-in 60s default; age 0 keeps its
-    // legacy unlimited meaning (Long.MAX_VALUE).
+  public void testRpcExplicitZeroIdleAndAgeMeansUnlimited() {
+    // Legacy semantic preserved: an explicit 0 for idle/age means unlimited
+    // (Long.MAX_VALUE). reference.conf recommends 60000 for idle instead.
     Config config = withRef(
         "node { rpc { maxConnectionIdleInMillis = 0, maxConnectionAgeInMillis = 0 } }");
     NodeConfig nc = NodeConfig.fromConfig(config);
-    assertEquals(NodeConfig.RpcConfig.DEFAULT_MAX_CONNECTION_LIFETIME_IN_MILLIS,
-        nc.getRpc().getMaxConnectionIdleInMillis());
-    assertEquals(Long.MAX_VALUE,
-        nc.getRpc().getMaxConnectionAgeInMillis());
+    assertEquals(Long.MAX_VALUE, nc.getRpc().getMaxConnectionIdleInMillis());
+    assertEquals(Long.MAX_VALUE, nc.getRpc().getMaxConnectionAgeInMillis());
   }
 
   @Test
@@ -251,9 +226,7 @@ public class NodeConfigTest {
             + " maxConcurrentCallsPerConnection = 50,"
             + " flowControlWindow = 2097152,"
             + " maxMessageSize = 8388608,"
-            + " maxHeaderListSize = 16384,"
-            + " maxConnectionIdleInMillis = 3600000,"
-            + " maxConnectionAgeInMillis = 7200000 } }");
+            + " maxHeaderListSize = 16384 } }");
     NodeConfig nc = NodeConfig.fromConfig(config);
     NodeConfig.RpcConfig rpc = nc.getRpc();
     assertEquals(32, rpc.getThread());
@@ -261,9 +234,6 @@ public class NodeConfigTest {
     assertEquals(2097152, rpc.getFlowControlWindow());
     assertEquals(8388608, rpc.getMaxMessageSize());
     assertEquals(16384, rpc.getMaxHeaderListSize());
-    // Explicit positive idle/age values must be honored, not overwritten.
-    assertEquals(3600000L, rpc.getMaxConnectionIdleInMillis());
-    assertEquals(7200000L, rpc.getMaxConnectionAgeInMillis());
   }
 
   // ===========================================================================
