@@ -1,5 +1,6 @@
 package org.tron.p2p.connection;
 
+import io.netty.channel.ChannelFuture;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
@@ -12,8 +13,10 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.mockito.Mockito;
 import org.tron.p2p.P2pConfig;
 import org.tron.p2p.base.Parameter;
+import org.tron.p2p.connection.business.detect.NodeDetectService;
 import org.tron.p2p.connection.business.pool.ConnPoolService;
 import org.tron.p2p.connection.socket.PeerClient;
 import org.tron.p2p.discover.Node;
@@ -197,14 +200,58 @@ public class ConnPoolServiceTest {
     }
   }
 
+  @Test
+  public void poolScanTracksOnlyScheduledDials() throws Exception {
+    clearChannels();
+    ConnectionPolicy.replaceBlockedIps(Collections.emptySet());
+    P2pConfig isolatedConfig = new P2pConfig();
+    isolatedConfig.setMinConnections(1);
+    isolatedConfig.setMinActiveConnections(0);
+    InetSocketAddress address = new InetSocketAddress("192.0.2.20", 18888);
+    NodeDetectService nodeDetectService = Mockito.mock(NodeDetectService.class);
+    Mockito.when(nodeDetectService.getConnectableNodes())
+        .thenReturn(Collections.singletonList(new Node(address)));
+    Field detectServiceField = ChannelManager.class.getDeclaredField("nodeDetectService");
+    detectServiceField.setAccessible(true);
+    Object originalDetectService = detectServiceField.get(null);
+
+    CountingPeerClient peerClient = new CountingPeerClient();
+    ConnPoolService connPoolService = new ConnPoolService();
+    connPoolService.p2pConfig = isolatedConfig;
+    Field peerClientField = ConnPoolService.class.getDeclaredField("peerClient");
+    peerClientField.setAccessible(true);
+    peerClientField.set(connPoolService, peerClient);
+    Method connect = ConnPoolService.class.getDeclaredMethod("connect", boolean.class);
+    connect.setAccessible(true);
+
+    try {
+      detectServiceField.set(null, nodeDetectService);
+      connect.invoke(connPoolService, false);
+      Assert.assertEquals(1, peerClient.connectCount);
+      Assert.assertEquals(0, connPoolService.getConnectingPeersCount().get());
+
+      peerClient.future = Mockito.mock(ChannelFuture.class);
+      connect.invoke(connPoolService, false);
+      Assert.assertEquals(2, peerClient.connectCount);
+      Assert.assertEquals(1, connPoolService.getConnectingPeersCount().get());
+
+      connect.invoke(connPoolService, false);
+      Assert.assertEquals(2, peerClient.connectCount);
+      Assert.assertEquals(1, connPoolService.getConnectingPeersCount().get());
+    } finally {
+      detectServiceField.set(null, originalDetectService);
+    }
+  }
+
   private static class CountingPeerClient extends PeerClient {
 
     private int connectCount;
+    private ChannelFuture future;
 
     @Override
-    public io.netty.channel.ChannelFuture connectAsync(Node node, boolean discoveryMode) {
+    public ChannelFuture connectAsync(Node node, boolean discoveryMode) {
       connectCount++;
-      return null;
+      return future;
     }
   }
 
