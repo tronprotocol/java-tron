@@ -221,7 +221,7 @@ public class NodeConfig {
     private int maxConcurrentCallsPerConnection =
         DEFAULT_MAX_CONCURRENT_CALLS_PER_CONNECTION;
     private int flowControlWindow = 1048576;
-    private long maxConnectionIdleInMillis = 0;
+    private long maxConnectionIdleInMillis = 60000L;
     private long maxConnectionAgeInMillis = 0;
     private int maxMessageSize = 4194304;
     private int maxHeaderListSize = 8192;

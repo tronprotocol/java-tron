@@ -127,7 +127,7 @@ node {
     # RST_STREAM counting window in seconds. 0 uses the default of 5.
     secondsPerWindow = 5
     # Idle connection timeout (ms). 0 = no limit.
-    maxConnectionIdleInMillis = 0
+    maxConnectionIdleInMillis = 60000
     # Minimum active connections required before broadcasting transactions.
     minEffectiveConnection = 1
   }
@@ -180,12 +180,13 @@ storage.properties = [
 ### Block Production (Super Representatives)
 
 ```hocon
-# Plain private key (use localwitnesskeystore for production)
+# DEPRECATED: plain private key, insecure (anyone reading the config file
+# sees the keys). Use localwitnesskeystore for production.
 localwitness = [
   "your-private-key-hex"
 ]
 
-# Recommended: keystore file
+# Recommended: encrypted keystore file
 # localwitnesskeystore = [
 #   "/path/to/localwitnesskeystore.json"
 # ]
