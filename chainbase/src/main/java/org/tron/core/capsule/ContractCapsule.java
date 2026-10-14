@@ -28,7 +28,6 @@ import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract.ABI;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContractDataWrapper;
-import org.tron.protos.contract.SmartContractOuterClass.SmartContractDataWrapperOrBuilder;
 import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 
 @Slf4j(topic = "capsule")

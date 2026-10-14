@@ -6,7 +6,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.ChainBaseManager;
-import org.tron.core.ChainBaseManager.NodeType;
 import org.tron.core.config.args.Args;
 import org.tron.core.net.TronNetService;
 import org.tron.core.net.message.handshake.HelloMessage;

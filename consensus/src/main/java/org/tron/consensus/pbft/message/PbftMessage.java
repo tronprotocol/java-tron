@@ -5,7 +5,6 @@ import java.util.List;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.utils.Sha256Hash;
-import org.tron.consensus.base.Param;
 import org.tron.consensus.base.Param.Miner;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.net.message.MessageTypes;
