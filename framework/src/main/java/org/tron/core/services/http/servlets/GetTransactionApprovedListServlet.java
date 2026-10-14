@@ -11,7 +11,6 @@ import org.tron.core.exception.ContractSizeNotEqualToOneException;
 import org.tron.core.services.http.HttpApi;
 import org.tron.core.services.http.HttpApi.Access;
 import org.tron.core.services.http.HttpApi.Surface;
-import org.tron.protos.Protocol.Transaction;
 
 @Component
 @Slf4j(topic = "API")
@@ -29,17 +28,9 @@ public class GetTransactionApprovedListServlet extends RateLimiterServlet {
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
       PostParams params = PostParams.getPostParams(request);
-      TransactionApprovedList reply;
-      try {
-        Transaction transaction = Util.packTransaction(params.getParams(), params.isVisible());
-        reply = wallet.getTransactionApprovedList(transaction);
-      } catch (ContractSizeNotEqualToOneException e) {
-        TransactionApprovedList.Result result = TransactionApprovedList.Result.newBuilder()
-            .setCode(TransactionApprovedList.Result.response_code.OTHER_ERROR)
-            .setMessage("Invalid transaction: " + e.getMessage())
-            .build();
-        reply = TransactionApprovedList.newBuilder().setResult(result).build();
-      }
+      TransactionApprovedList reply = Util.withPackedTransaction(params,
+          wallet::getTransactionApprovedList,
+          GetTransactionApprovedListServlet::contractSizeError);
       if (reply != null) {
         response.getWriter().println(Util.printTransactionApprovedList(reply, params.isVisible()));
       } else {
@@ -48,5 +39,13 @@ public class GetTransactionApprovedListServlet extends RateLimiterServlet {
     } catch (Exception e) {
       Util.processError(e, response);
     }
+  }
+
+  private static TransactionApprovedList contractSizeError(ContractSizeNotEqualToOneException e) {
+    TransactionApprovedList.Result result = TransactionApprovedList.Result.newBuilder()
+        .setCode(TransactionApprovedList.Result.response_code.OTHER_ERROR)
+        .setMessage("Invalid transaction: " + e.getMessage())
+        .build();
+    return TransactionApprovedList.newBuilder().setResult(result).build();
   }
 }

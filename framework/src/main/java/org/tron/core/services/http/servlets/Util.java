@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Function;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -147,6 +148,7 @@ public class Util {
     }
     if (type == ParseException.class
         || type == ContractValidateException.class
+        || type == ContractSizeNotEqualToOneException.class
         || type == MaintenanceUnavailableException.class
         || type == InvalidHttpParameterException.class) {
       String message = e.getMessage();
@@ -388,6 +390,17 @@ public class Util {
       logger.debug("ParseException: {}", e.getMessage());
       return null;
     }
+  }
+
+  static <T> T withPackedTransaction(PostParams params, Function<Transaction, T> onTransaction,
+      Function<ContractSizeNotEqualToOneException, T> onContractSizeError) {
+    Transaction transaction;
+    try {
+      transaction = packTransaction(params.getParams(), params.isVisible());
+    } catch (ContractSizeNotEqualToOneException e) {
+      return onContractSizeError.apply(e);
+    }
+    return onTransaction.apply(transaction);
   }
 
   @Deprecated

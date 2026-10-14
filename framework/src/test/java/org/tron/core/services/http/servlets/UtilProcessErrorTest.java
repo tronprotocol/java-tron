@@ -9,6 +9,7 @@ import org.bouncycastle.util.encoders.DecoderException;
 import org.bouncycastle.util.encoders.Hex;
 import org.junit.Test;
 import org.springframework.mock.web.MockHttpServletResponse;
+import org.tron.core.exception.ContractSizeNotEqualToOneException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.HeaderNotFound;
 import org.tron.core.exception.InvalidHttpParameterException;
@@ -28,6 +29,9 @@ public class UtilProcessErrorTest {
         "1:2: invalid \"field\"\nvalue");
     assertError(new ContractValidateException("balance is not sufficient"),
         "balance is not sufficient");
+    assertError(new ContractSizeNotEqualToOneException(
+            "contract size should be exactly 1, this is extend feature ,actual :2"),
+        "contract size should be exactly 1, this is extend feature ,actual :2");
     assertError(new MaintenanceUnavailableException("maintenance in progress"),
         "maintenance in progress");
     assertError(new InvalidHttpParameterException("invalid key [id]: expect a 64-bit integer"),

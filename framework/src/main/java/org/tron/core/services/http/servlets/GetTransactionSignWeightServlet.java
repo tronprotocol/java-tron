@@ -11,7 +11,6 @@ import org.tron.core.services.http.HttpApi;
 import org.tron.core.services.http.HttpApi.Access;
 import org.tron.core.services.http.HttpApi.Surface;
 import org.tron.core.utils.TransactionUtil;
-import org.tron.protos.Protocol.Transaction;
 
 @Component
 @Slf4j(topic = "API")
@@ -29,17 +28,9 @@ public class GetTransactionSignWeightServlet extends RateLimiterServlet {
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
       PostParams params = PostParams.getPostParams(request);
-      TransactionSignWeight reply;
-      try {
-        Transaction transaction = Util.packTransaction(params.getParams(), params.isVisible());
-        reply = transactionUtil.getTransactionSignWeight(transaction);
-      } catch (ContractSizeNotEqualToOneException e) {
-        TransactionSignWeight.Result result = TransactionSignWeight.Result.newBuilder()
-            .setCode(TransactionSignWeight.Result.response_code.OTHER_ERROR)
-            .setMessage("Invalid transaction: " + e.getMessage())
-            .build();
-        reply = TransactionSignWeight.newBuilder().setResult(result).build();
-      }
+      TransactionSignWeight reply = Util.withPackedTransaction(params,
+          transactionUtil::getTransactionSignWeight,
+          GetTransactionSignWeightServlet::contractSizeError);
       if (reply != null) {
         response.getWriter().println(Util.printTransactionSignWeight(reply, params.isVisible()));
       } else {
@@ -48,5 +39,13 @@ public class GetTransactionSignWeightServlet extends RateLimiterServlet {
     } catch (Exception e) {
       Util.processError(e, response);
     }
+  }
+
+  private static TransactionSignWeight contractSizeError(ContractSizeNotEqualToOneException e) {
+    TransactionSignWeight.Result result = TransactionSignWeight.Result.newBuilder()
+        .setCode(TransactionSignWeight.Result.response_code.OTHER_ERROR)
+        .setMessage("Invalid transaction: " + e.getMessage())
+        .build();
+    return TransactionSignWeight.newBuilder().setResult(result).build();
   }
 }
