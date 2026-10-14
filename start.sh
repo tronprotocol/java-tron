@@ -90,15 +90,19 @@ case "`uname`" in
   Darwin*) darwin=true ;;
 esac
 
-# Logging helpers: print a timestamped, colored line to the terminal and append the same line
-# without color codes to start.log, so stop, download, signature-check, rebuild and start
+# Logging helpers: print a timestamped, colored line to the terminal and keep the same line,
+# without color codes, in start.log, so stop, download, signature-check, rebuild and start
 # messages survive when the script runs from cron, systemd or nohup. INFO and WARN go to
-# stdout, ERROR to stderr; start.log is the one in the current directory, beside the JVM output.
+# stdout, ERROR to stderr. start.log also marks a directory a node was started from
+# (enterNodeDir, stopService and checkPid rely on it), so these helpers never create it: lines
+# are queued and written only to an existing start.log in the current directory, at the latest
+# when startService creates it.
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m'
 LOG_FILE='start.log'
+PENDING_LOG_LINES=()
 log() {
   local level="$1"; shift
   local color='' timestamp
@@ -109,7 +113,18 @@ log() {
     ERROR) color="$RED" ;;
   esac
   printf '%b[%s] [%s]:%b %s\n' "$color" "$timestamp" "$level" "$NC" "$*"
-  printf '[%s] [%s]: %s\n' "$timestamp" "$level" "$*" >> "$LOG_FILE" 2>/dev/null
+  PENDING_LOG_LINES+=("[$timestamp] [$level]: $*")
+  if [ -f "$LOG_FILE" ]; then
+    flushLog
+  fi
+}
+# Appends the queued lines to start.log in the current directory, creating it when missing.
+# Called by log once start.log exists, and by startService before it starts a node.
+flushLog() {
+  if [ ${#PENDING_LOG_LINES[@]} -gt 0 ]; then
+    printf '%s\n' "${PENDING_LOG_LINES[@]}" >> "$LOG_FILE" 2>/dev/null
+    PENDING_LOG_LINES=()
+  fi
 }
 info() { log INFO "$@"; }
 warn() { log WARN "$@"; }
@@ -531,6 +546,9 @@ startService() {
     warn "jar file $JAR_NAME not exist"
     exit 1
   fi
+  # A node is started from this directory, so start.log may be created here: write the queued
+  # log lines first, then the date line that precedes the JVM output.
+  flushLog
   echo $(date) >>start.log
 
   # ZGC with unified GC logging by default. JDK 8 has no ZGC, so it uses CMS with the JDK 8
