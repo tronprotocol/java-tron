@@ -7,6 +7,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
@@ -165,6 +166,7 @@ public class KeystoreCliUtilsTest {
   public void testReadPasswordFromFile() throws Exception {
     File pwFile = tempFolder.newFile("pw.txt");
     Files.write(pwFile.toPath(), "goodpassword".getBytes(StandardCharsets.UTF_8));
+    makeOwnerOnly(pwFile);
     StringWriter err = new StringWriter();
     String pw = KeystoreCliUtils.readPassword(pwFile, new PrintWriter(err));
     assertEquals("goodpassword", pw);
@@ -174,6 +176,7 @@ public class KeystoreCliUtilsTest {
   public void testReadPasswordFromFileWithLineEndings() throws Exception {
     File pwFile = tempFolder.newFile("pw-crlf.txt");
     Files.write(pwFile.toPath(), "goodpassword\r\n".getBytes(StandardCharsets.UTF_8));
+    makeOwnerOnly(pwFile);
     StringWriter err = new StringWriter();
     String pw = KeystoreCliUtils.readPassword(pwFile, new PrintWriter(err));
     assertEquals("goodpassword", pw);
@@ -184,6 +187,7 @@ public class KeystoreCliUtilsTest {
     File pwFile = tempFolder.newFile("pw-bom.txt");
     Files.write(pwFile.toPath(),
         "\uFEFFgoodpassword".getBytes(StandardCharsets.UTF_8));
+    makeOwnerOnly(pwFile);
     StringWriter err = new StringWriter();
     String pw = KeystoreCliUtils.readPassword(pwFile, new PrintWriter(err));
     assertEquals("goodpassword", pw);
@@ -205,6 +209,7 @@ public class KeystoreCliUtilsTest {
   public void testReadPasswordFileShort() throws Exception {
     File pwFile = tempFolder.newFile("pw-short.txt");
     Files.write(pwFile.toPath(), "abc".getBytes(StandardCharsets.UTF_8));
+    makeOwnerOnly(pwFile);
     StringWriter err = new StringWriter();
     String pw = KeystoreCliUtils.readPassword(pwFile, new PrintWriter(err));
     assertNull(pw);
@@ -270,6 +275,7 @@ public class KeystoreCliUtilsTest {
   public void testReadRegularFileSuccess() throws Exception {
     File f = tempFolder.newFile("regular.txt");
     Files.write(f.toPath(), "hello".getBytes(StandardCharsets.UTF_8));
+    makeOwnerOnly(f);
     StringWriter err = new StringWriter();
 
     byte[] bytes = KeystoreCliUtils.readRegularFile(f, 1024, "File",
@@ -339,11 +345,51 @@ public class KeystoreCliUtilsTest {
   @Test
   public void testReadRegularFileEmptyFile() throws Exception {
     File f = tempFolder.newFile("empty.txt");
+    makeOwnerOnly(f);
     StringWriter err = new StringWriter();
 
     byte[] bytes = KeystoreCliUtils.readRegularFile(f, 1024, "File",
         new PrintWriter(err));
     assertNotNull(bytes);
     assertEquals(0, bytes.length);
+  }
+
+  private static void makeOwnerOnly(File f) throws IOException {
+    if (Files.getFileAttributeView(f.toPath(),
+        java.nio.file.attribute.PosixFileAttributeView.class) == null) {
+      return; // non-POSIX FS: skip chmod, mirroring KeystoreCliUtils runtime behavior
+    }
+    Files.setPosixFilePermissions(f.toPath(),
+        java.nio.file.attribute.PosixFilePermissions.fromString("rw-------"));
+  }
+
+  @Test
+  public void testReadRegularFileRejectsGroupReadable() throws Exception {
+    File f = tempFolder.newFile("group-readable.txt");
+    Files.write(f.toPath(), "hello".getBytes(StandardCharsets.UTF_8));
+    org.junit.Assume.assumeTrue("POSIX permissions test, skip on Windows",
+        Files.getFileAttributeView(f.toPath(),
+            java.nio.file.attribute.PosixFileAttributeView.class) != null);
+    makeOwnerOnly(f);
+    Files.setPosixFilePermissions(f.toPath(),
+        java.nio.file.attribute.PosixFilePermissions.fromString("rw-r-----"));
+    StringWriter err = new StringWriter();
+    byte[] bytes = KeystoreCliUtils.readRegularFile(f, 1024,
+        "Password file", new PrintWriter(err));
+    assertNull(bytes);
+    assertTrue("expected owner-only error, got: " + err,
+        err.toString().contains("owner-only"));
+  }
+
+  @Test
+  public void testReadRegularFileAcceptsOwnerOnly() throws Exception {
+    File f = tempFolder.newFile("owner-only.txt");
+    Files.write(f.toPath(), "hello".getBytes(StandardCharsets.UTF_8));
+    makeOwnerOnly(f);
+    StringWriter err = new StringWriter();
+    byte[] bytes = KeystoreCliUtils.readRegularFile(f, 1024,
+        "Password file", new PrintWriter(err));
+    assertNotNull(bytes);
+    assertEquals("hello", new String(bytes, StandardCharsets.UTF_8));
   }
 }
