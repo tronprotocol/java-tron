@@ -215,6 +215,9 @@ public class JsonRpcServletTest {
 
     assertInvalidRequest(MAPPER.readTree(resp.getContentAsByteArray()),
         "Invalid Request: jsonrpc must be \"2.0\"", "null");
+    resp = doPost("{\"jsonrpc\":\"2.0\",\"params\":[]}");
+    assertInvalidRequest(MAPPER.readTree(resp.getContentAsByteArray()),
+        "Invalid Request", "null");
     verifyNoInteractions(mockRpcServer);
   }
 
@@ -235,16 +238,18 @@ public class JsonRpcServletTest {
         + "{\"method\":\"web3_clientVersion\",\"id\":2},"
         + "{\"jsonrpc\":\"2.0\",\"method\":3,\"id\":3},"
         + "{\"jsonrpc\":\"2.0\",\"method\":\"web3_clientVersion\",\"id\":null},"
+        + "{\"jsonrpc\":\"2.0\",\"params\":[]},"
         + "{\"jsonrpc\":\"2.0\",\"method\":\"web3_clientVersion\",\"id\":5}"
         + "]");
 
     JsonNode body = MAPPER.readTree(resp.getContentAsByteArray());
-    assertEquals(5, body.size());
+    assertEquals(6, body.size());
     assertEquals("ok", body.get(0).get("result").asText());
     assertInvalidRequest(body.get(1), "Invalid Request: jsonrpc must be \"2.0\"", "2");
     assertInvalidRequest(body.get(2), "Invalid Request", "3");
     assertInvalidRequest(body.get(3), "Invalid Request", "null");
-    assertEquals("ok", body.get(4).get("result").asText());
+    assertInvalidRequest(body.get(4), "Invalid Request", "null");
+    assertEquals("ok", body.get(5).get("result").asText());
     assertEquals("only valid requests should reach jsonrpc4j", 2, dispatched.size());
     assertEquals(1, dispatched.get(0).get("id").asInt());
     assertEquals(5, dispatched.get(1).get("id").asInt());
@@ -998,6 +1003,35 @@ public class JsonRpcServletTest {
     assertEquals(-32003, body.get(0).get("error").get("code").asInt());
     assertEquals(1, body.get(0).get("id").asInt());
     assertInvalidRequestWithNullId(body.get(1));
+    assertEquals("invalid requests must not be dispatched after overflow", 1, callCount[0]);
+  }
+
+  @Test
+  public void batchInvalidEnvelope_afterOverflowStillReturnsInvalidRequest() throws Exception {
+    int limit = 50;
+    CommonParameter.getInstance().jsonRpcMaxResponseSize = limit;
+    int[] callCount = {0};
+    doAnswer(inv -> {
+      OutputStream out = inv.getArgument(1);
+      out.write(new byte[limit + 1]);
+      callCount[0]++;
+      return 0;
+    }).when(mockRpcServer).handleRequest(any(InputStream.class), any(OutputStream.class));
+
+    MockHttpServletResponse resp = doPost("["
+        + "{\"jsonrpc\":\"2.0\",\"method\":\"eth_getLogs\",\"id\":1},"
+        + "{\"jsonrpc\":\"1.0\",\"method\":\"eth_getLogs\",\"id\":2},"
+        + "{\"jsonrpc\":\"2.0\",\"method\":5,\"id\":3},"
+        + "{\"jsonrpc\":\"2.0\",\"method\":\"eth_getLogs\",\"id\":null}"
+        + "]");
+
+    JsonNode body = MAPPER.readTree(resp.getContentAsByteArray());
+    assertEquals(4, body.size());
+    assertEquals(-32003, body.get(0).get("error").get("code").asInt());
+    assertEquals(1, body.get(0).get("id").asInt());
+    assertInvalidRequest(body.get(1), "Invalid Request: jsonrpc must be \"2.0\"", "2");
+    assertInvalidRequest(body.get(2), "Invalid Request", "3");
+    assertInvalidRequest(body.get(3), "Invalid Request", "null");
     assertEquals("invalid requests must not be dispatched after overflow", 1, callCount[0]);
   }
 
