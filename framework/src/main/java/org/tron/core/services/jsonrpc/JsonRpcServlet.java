@@ -1,8 +1,6 @@
 package org.tron.core.services.jsonrpc;
 
-import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.StreamReadConstraints;
 import com.fasterxml.jackson.core.exc.StreamConstraintsException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -25,7 +23,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.parameter.CommonParameter;
-import org.tron.core.Constant;
 import org.tron.core.services.filter.BufferedResponseWrapper;
 import org.tron.core.services.http.servlets.RateLimiterServlet;
 
@@ -33,18 +30,8 @@ import org.tron.core.services.http.servlets.RateLimiterServlet;
 @Slf4j(topic = "API")
 public class JsonRpcServlet extends RateLimiterServlet {
 
-  private static final ObjectMapper MAPPER = buildMapper();
+  private static final ObjectMapper MAPPER = JsonRpcMapper.create();
   private static final ObjectMapper OUTBOUND_MAPPER = new ObjectMapper();
-
-  private static ObjectMapper buildMapper() {
-    JsonFactory factory = JsonFactory.builder()
-        .streamReadConstraints(StreamReadConstraints.builder()
-            .maxNestingDepth(Constant.MAX_NESTING_DEPTH)
-            .maxTokenCount(Constant.MAX_TOKEN_COUNT)
-            .build())
-        .build();
-    return new ObjectMapper(factory);
-  }
 
   private enum JsonRpcError {
     PARSE_ERROR(-32700),
@@ -98,7 +85,7 @@ public class JsonRpcServlet extends RateLimiterServlet {
     try {
       doPostInternal(req, resp);
     } catch (Error fatal) {
-      commitBareInternalServerError(resp);
+      JsonRpcHttpResponse.commitBareInternalServerError(resp);
       throw fatal;
     }
   }
@@ -326,22 +313,6 @@ public class JsonRpcServlet extends RateLimiterServlet {
     Error fatal = JsonRpcErrorResolver.findFatalCause(exception);
     if (fatal != null) {
       throw fatal;
-    }
-  }
-
-  private static void commitBareInternalServerError(HttpServletResponse resp) {
-    try {
-      if (resp.isCommitted()) {
-        return;
-      }
-      // Best effort: commit an empty response before rethrowing the Error so the container does
-      // not render its default error page, which may expose Throwable details.
-      resp.resetBuffer();
-      resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-      resp.setContentLength(0);
-      resp.flushBuffer();
-    } catch (Throwable ignored) {
-      // Cleanup must never replace the original fatal Error.
     }
   }
 
