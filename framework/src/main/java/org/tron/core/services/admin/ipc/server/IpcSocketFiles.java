@@ -17,6 +17,8 @@ import org.tron.core.exception.TronError.ErrCode;
 /**
  * Resolves and manages IPC socket files and their private directory.
  * The service owns the socket and decides when to prepare or remove these files.
+ * Operators must ensure the root and its path cannot be replaced by untrusted users; these checks
+ * do not validate ownership, ancestor permissions, ACLs, or symlink targets.
  */
 final class IpcSocketFiles {
 
@@ -76,7 +78,8 @@ final class IpcSocketFiles {
           EnumSet.of(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE,
               PosixFilePermission.OWNER_EXECUTE)));
     } catch (FileAlreadyExistsException e) {
-      throw new TronError("IPC directory already exists. Startup aborted. "
+      // Local startup diagnostics identify the operator-managed path for manual recovery.
+      throw new TronError("IPC directory already exists: " + socketDirectory + ". Startup aborted. "
           + "Confirm that no node is using it, then remove it manually and retry.",
           ErrCode.API_SERVER_INIT);
     }

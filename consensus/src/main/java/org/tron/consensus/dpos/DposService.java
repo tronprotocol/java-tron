@@ -6,7 +6,6 @@ import static org.tron.core.config.Parameter.ChainConstant.SOLIDIFIED_THRESHOLD;
 
 import com.google.protobuf.ByteString;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;

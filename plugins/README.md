@@ -2,6 +2,10 @@
 
 This package contains a set of tools for TRON, the followings are the documentation for each tool.
 
+NOTE: All `db` tools operate directly on the database files. Before performing a database
+operation (archive, convert, copy, lite, mv, root), you must stop the currently running
+FullNode service.
+
 ## DB Archive(Requires x86 + LevelDB)
 
 DB archive provides the ability to reformat the manifest according to the current `database`, parameters are compatible with the previous `ArchiveManifest`.
@@ -202,7 +206,7 @@ Performance depends on the number of logs, storage engine, disk, CPU, and databa
 
 Keystore provides commands for managing account keystore files (Web3 Secret Storage format).
 
-> **Migrating from `--keystore-factory`**: The legacy `FullNode.jar --keystore-factory` interactive mode is deprecated. Use the Toolkit keystore commands below instead. The mapping is:
+> **Migrating from `--keystore-factory`**: The legacy `FullNode.jar --keystore-factory` interactive mode has been removed. Use the Toolkit keystore commands below instead. The mapping is:
 > - `GenKeystore` → `keystore new`
 > - `ImportPrivateKey` → `keystore import`
 > - (new) `keystore list` — list all keystores in a directory
@@ -271,3 +275,5 @@ When using `--password-file` with `update`, the file must contain exactly two li
 - `--force`: For `keystore import`, allow importing a private key whose address already has a keystore in the directory (creates an additional file).
 - `--json`: Output in JSON format for scripting.
 - `-h | --help`: Provide the help info.
+
+> **Note:** `--password-file` and `--key-file` must be owner-only (`chmod 600`). Files readable or writable by group/other are rejected — create them with a restrictive umask or run `chmod 600 <file>` before use.

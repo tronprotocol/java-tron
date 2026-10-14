@@ -1,8 +1,11 @@
 package org.tron.core.services.admin.ipc.server;
 
+import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.exc.InvalidDefinitionException;
+import com.fasterxml.jackson.databind.exc.MismatchedInputException;
 import com.googlecode.jsonrpc4j.JsonRpcInterceptor;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
@@ -183,6 +186,23 @@ public class AdminJsonRpcRequestTest {
   }
 
   @Test
+  public void parameterBindingFailuresRetainIdsAndSilenceNotifications() throws Exception {
+    for (String params : new String[] {"[{}]", "{\"endpoint\":{}}"}) {
+      String request = REQUEST.replace(PARAMS, params);
+      for (String id : new String[] {"9", "null", "\"request\"", "9223372036854775807",
+          "0.12345678901234567890123456789"}) {
+        JsonNode error = assertError(sender.send(request + ",\"id\":" + id + "}"), -32602, id)
+            .get("error");
+        Assert.assertEquals("Failed to read method parameter at index 0",
+            error.path("message").asText());
+        Assert.assertEquals(2, error.size());
+      }
+      Assert.assertEquals("", sender.send(request + "}"));
+      Mockito.verifyNoInteractions(adminJsonRpc);
+    }
+  }
+
+  @Test
   public void businessErrorNotificationHasNoResponse() throws Exception {
     Mockito.when(adminJsonRpc.addPeer(ENDPOINT))
         .thenThrow(new JsonRpcInvalidParamsException("Invalid admin parameters"));
@@ -199,6 +219,7 @@ public class AdminJsonRpcRequestTest {
       JsonNode response = assertError(sender.send(REQUEST + ",\"id\":" + id + "}"), -32602, id);
       Assert.assertEquals("Invalid admin parameters", response.path("error").path("message")
           .asText());
+      Assert.assertEquals("{}", response.path("error").path("data").asText());
       Mockito.verify(adminJsonRpc).addPeer(ENDPOINT);
       Mockito.clearInvocations(adminJsonRpc);
       assertError(sender.send(REQUEST.replace("admin_addPeer", "admin_missing")
@@ -222,6 +243,45 @@ public class AdminJsonRpcRequestTest {
     Assert.assertEquals("", sender.send(REQUEST + "}"));
     Mockito.verify(interceptor, Mockito.times(4)).preHandleJson(Mockito.any(JsonNode.class));
     Mockito.verifyNoInteractions(adminJsonRpc);
+  }
+
+  @Test
+  public void unmappedInvocationFailureIsSanitizedAndSilencesNotifications() throws Exception {
+    for (Exception failure : new Exception[] {new IllegalStateException("sensitive-detail"),
+        MismatchedInputException.from(null, String.class, "sensitive-detail")}) {
+      Mockito.doAnswer(invocation -> {
+        throw failure;
+      }).when(adminJsonRpc).addPeer(ENDPOINT);
+      for (String id : new String[] {"9", "null", "\"request\""}) {
+        String body = sender.send(REQUEST + ",\"id\":" + id + "}");
+        JsonNode error = assertError(body, -32603, id).get("error");
+        Assert.assertEquals("Internal error", error.path("message").asText());
+        Assert.assertEquals(2, error.size());
+        Assert.assertFalse(body.contains("sensitive-detail"));
+        Assert.assertFalse(body.contains(failure.getClass().getName()));
+      }
+      Assert.assertEquals("", sender.send(REQUEST + "}"));
+      Mockito.verify(adminJsonRpc, Mockito.times(4)).addPeer(ENDPOINT);
+      Mockito.clearInvocations(adminJsonRpc);
+    }
+  }
+
+  @Test
+  public void serverMappingDefinitionFailureRemainsInternalError() throws Exception {
+    JsonRpcInterceptor interceptor = Mockito.mock(JsonRpcInterceptor.class);
+    Mockito.doAnswer(invocation -> {
+      throw InvalidDefinitionException.from((JsonParser) null, "sensitive-detail",
+          MAPPER.constructType(String.class));
+    }).when(interceptor).postHandleJson(Mockito.any(JsonNode.class));
+    requestHandler.setInterceptorList(Collections.singletonList(interceptor));
+
+    String body = sender.send(REQUEST + ",\"id\":\"request\"}");
+    JsonNode error = assertError(body, -32603, "\"request\"").get("error");
+    Assert.assertEquals("Internal error", error.path("message").asText());
+    Assert.assertEquals(2, error.size());
+    Assert.assertFalse(body.contains("sensitive-detail"));
+    Mockito.verify(adminJsonRpc).addPeer(ENDPOINT);
+    Mockito.verify(interceptor, Mockito.atLeastOnce()).postHandleJson(Mockito.any(JsonNode.class));
   }
 
   @Test

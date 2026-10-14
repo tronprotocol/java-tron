@@ -3,27 +3,36 @@ package org.tron.core.services.admin.http;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.clearInvocations;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.base.Strings;
 import com.googlecode.jsonrpc4j.JsonRpcInterceptor;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.concurrent.TimeUnit;
 import javax.servlet.ServletInputStream;
 import javax.servlet.http.HttpServletResponse;
+import org.eclipse.jetty.server.Connector;
+import org.eclipse.jetty.server.LocalConnector;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.MockedStatic;
@@ -31,8 +40,10 @@ import org.mockito.Mockito;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.mock.web.MockServletConfig;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.core.Constant;
+import org.tron.core.config.args.Args;
 import org.tron.core.exception.jsonrpc.JsonRpcInvalidParamsException;
 import org.tron.core.net.service.peermanagement.BlockedIpInfo;
 import org.tron.core.net.service.peermanagement.PeerOperationResult;
@@ -43,6 +54,8 @@ import org.tron.core.services.ratelimiter.GlobalRateLimiter;
 
 public class AdminRpcServletTest {
 
+  private static final int REQUEST_LIMIT = 1024;
+  private static final ObjectMapper MAPPER = JsonRpcMapper.create();
   private static final String REQUEST_PREFIX =
       "{\"jsonrpc\":\"2.0\",\"method\":\"admin_addPeer\","
           + "\"params\":[\"a\"],\"id\":7,\"extra\":";
@@ -381,6 +394,202 @@ public class AdminRpcServletTest {
     Mockito.verify(adminJsonRpc).addPeer("192.0.2.20:18888");
   }
 
+  @Test
+  public void fatalDispatchCommitsEmpty500AndRethrowsOriginal() throws Exception {
+    MockHttpServletResponse response = new MockHttpServletResponse();
+
+    assertFatalDispatch(new StackOverflowError("fatal-dispatch-marker"), response);
+
+    assertEmptyInternalServerError(response);
+  }
+
+  @Test
+  public void fatalReadCommitsEmpty500BeforeDispatch() throws Exception {
+    ServletInputStream input = mock(ServletInputStream.class);
+    OutOfMemoryError fatal = new OutOfMemoryError("fatal-read-marker");
+    when(input.read(any(byte[].class), anyInt(), anyInt())).thenThrow(fatal);
+    MockHttpServletRequest request = new MockHttpServletRequest("POST", "/admin") {
+      @Override
+      public ServletInputStream getInputStream() {
+        return input;
+      }
+    };
+    request.setContentType("application/json");
+    MockHttpServletResponse response = new MockHttpServletResponse();
+
+    Error thrown = assertThrows(Error.class, () -> servlet.service(request, response));
+
+    assertSame(fatal, thrown);
+    assertEmptyInternalServerError(response);
+    verifyNoInteractions(adminJsonRpc);
+  }
+
+  @Test
+  public void cleanupIOExceptionDoesNotReplaceFatalError() throws Exception {
+    HttpServletResponse response = mock(HttpServletResponse.class);
+    doThrow(new IOException("cleanup-io-marker")).when(response).flushBuffer();
+
+    assertFatalDispatch(new StackOverflowError("original-fatal-marker"), response);
+
+    verify(response).flushBuffer();
+  }
+
+  @Test
+  public void cleanupErrorDoesNotReplaceFatalError() throws Exception {
+    HttpServletResponse response = mock(HttpServletResponse.class);
+    doThrow(new OutOfMemoryError("cleanup-error-marker")).when(response).flushBuffer();
+
+    assertFatalDispatch(new StackOverflowError("original-fatal-marker"), response);
+
+    verify(response).flushBuffer();
+  }
+
+  @Test
+  public void fatalErrorDiscardsUncommittedOutput() throws Exception {
+    MockHttpServletResponse response = new MockHttpServletResponse();
+    byte[] partial = "partial-response-marker".getBytes(StandardCharsets.UTF_8);
+    response.setContentLength(partial.length);
+    response.getOutputStream().write(partial);
+    assertFalse(response.isCommitted());
+
+    assertFatalDispatch(new StackOverflowError("fatal-marker"), response);
+
+    assertEmptyInternalServerError(response);
+  }
+
+  @Test
+  public void fatalErrorLeavesCommittedResponseUntouched() throws Exception {
+    HttpServletResponse response = mock(HttpServletResponse.class);
+    when(response.isCommitted()).thenReturn(true);
+
+    assertFatalDispatch(new StackOverflowError("fatal-marker"), response);
+
+    verify(response, never()).resetBuffer();
+    verify(response, never()).setStatus(anyInt());
+    verify(response, never()).setContentLength(anyInt());
+    verify(response, never()).flushBuffer();
+  }
+
+  @Test(timeout = 30_000)
+  public void fatalErrorWithProductionFilterReturnsEmpty500() throws Exception {
+    TestAdminRpcHttpService service = new TestAdminRpcHttpService();
+    service.setMaxRequestSize(REQUEST_LIMIT);
+    ReflectionTestUtils.setField(service, "adminRpcServlet", servlet);
+    try {
+      service.start().get(5, TimeUnit.SECONDS);
+      for (String accept : new String[] {"application/json", "text/html", "text/plain"}) {
+        clearInvocations(adminJsonRpc);
+        when(adminJsonRpc.addPeer("a"))
+            .thenThrow(new StackOverflowError("fatal-response-marker"))
+            .thenReturn(new PeerOperationResult(true, true, 0, ""));
+
+        String response = service.post(REQUEST_PREFIX + "0}", false, accept);
+
+        assertTrue(response, response.startsWith("HTTP/1.1 500 "));
+        assertTrue(response, response.contains("\r\nContent-Length: 0\r\n"));
+        int headerEnd = response.indexOf("\r\n\r\n");
+        assertTrue("Response must include complete headers", headerEnd >= 0);
+        assertEquals(accept, "", response.substring(headerEnd + 4));
+        verify(adminJsonRpc).addPeer("a");
+
+        // A later successful request must still return its JSON-RPC result.
+        String success = service.post(REQUEST_PREFIX + "0}", false, accept);
+        assertTrue(success, success.startsWith("HTTP/1.1 200 "));
+        int successHeaderEnd = success.indexOf("\r\n\r\n");
+        assertTrue("Response must include complete headers", successHeaderEnd >= 0);
+        JsonNode result = MAPPER.readTree(success.substring(successHeaderEnd + 4));
+        assertTrue(result.path("result").path("success").asBoolean());
+        assertEquals(7, result.path("id").asInt());
+        verify(adminJsonRpc, times(2)).addPeer("a");
+        verifyNoMoreInteractions(adminJsonRpc);
+      }
+    } finally {
+      service.stop().get(5, TimeUnit.SECONDS);
+    }
+  }
+
+  @Test(timeout = 10_000)
+  public void testContentLengthRequestsUseJsonRpcLimit() throws Exception {
+    assertRequestLimit(false, REQUEST_LIMIT - 1, REQUEST_LIMIT, REQUEST_LIMIT + 1);
+  }
+
+  @Test(timeout = 10_000)
+  public void testChunkedRequestsUseJsonRpcLimit() throws Exception {
+    // Jetty 9's streaming interceptor can count the same content more than once.
+    // Check a small valid body and an oversized body; exact boundaries are covered above.
+    assertRequestLimit(true, REQUEST_LIMIT / 4, REQUEST_LIMIT + 1);
+  }
+
+  private void assertRequestLimit(boolean chunked, int... sizes) throws Exception {
+    CommonParameter parameter = Args.getInstance();
+    long originalJsonRpcLimit = parameter.getJsonRpcMaxMessageSize();
+    long originalHttpLimit = parameter.getHttpMaxMessageSize();
+    TestAdminRpcHttpService service = null;
+    try {
+      parameter.setJsonRpcMaxMessageSize(REQUEST_LIMIT);
+      parameter.setHttpMaxMessageSize(REQUEST_LIMIT * 2);
+      when(adminJsonRpc.addPeer("a")).thenReturn(new PeerOperationResult(true, true, 0, ""));
+      service = new TestAdminRpcHttpService();
+      ReflectionTestUtils.setField(service, "adminRpcServlet", servlet);
+      service.start().get(5, TimeUnit.SECONDS);
+
+      for (int size : sizes) {
+        clearInvocations(adminJsonRpc);
+        String response = service.post(requestBody(size), chunked);
+        if (size <= REQUEST_LIMIT) {
+          assertTrue(response, response.startsWith("HTTP/1.1 200 "));
+          int headerEnd = response.indexOf("\r\n\r\n");
+          assertTrue("Response must include complete headers", headerEnd >= 0);
+          JsonNode result = MAPPER.readTree(response.substring(headerEnd + 4));
+          assertEquals(1, result.path("id").asInt());
+          assertTrue(result.path("result").path("success").asBoolean());
+          verify(adminJsonRpc).addPeer("a");
+          verifyNoMoreInteractions(adminJsonRpc);
+        } else {
+          assertTrue(response, response.startsWith("HTTP/1.1 413 "));
+          verifyNoInteractions(adminJsonRpc);
+        }
+      }
+    } finally {
+      try {
+        if (service != null) {
+          service.stop().get(5, TimeUnit.SECONDS);
+        }
+      } finally {
+        parameter.setJsonRpcMaxMessageSize(originalJsonRpcLimit);
+        parameter.setHttpMaxMessageSize(originalHttpLimit);
+      }
+    }
+  }
+
+  private String requestBody(int size) throws Exception {
+    ObjectNode request = MAPPER.createObjectNode();
+    request.put("jsonrpc", "2.0");
+    request.put("method", "admin_addPeer");
+    request.putArray("params").add("a");
+    request.put("id", 1);
+    String json = MAPPER.writeValueAsString(request);
+    // The ASCII body is padded with valid JSON whitespace to exercise exact byte boundaries.
+    return json + Strings.repeat(" ", size - json.length());
+  }
+
+  private void assertFatalDispatch(Error fatal, HttpServletResponse response) throws Exception {
+    when(adminJsonRpc.addPeer("a")).thenThrow(fatal);
+
+    Error thrown = assertThrows(Error.class,
+        () -> doPost(REQUEST_PREFIX + "0}", "application/json", "localhost", response));
+
+    assertSame(fatal, thrown);
+    verify(adminJsonRpc).addPeer("a");
+  }
+
+  private void assertEmptyInternalServerError(MockHttpServletResponse response) {
+    assertEquals(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, response.getStatus());
+    assertEquals(0, response.getContentLength());
+    assertEquals(0, response.getContentAsByteArray().length);
+    assertTrue(response.isCommitted());
+  }
+
   private void setField(String name, Object value) throws Exception {
     Field field = AdminRpcServlet.class.getDeclaredField(name);
     field.setAccessible(true);
@@ -458,6 +667,13 @@ public class AdminRpcServletTest {
 
   private MockHttpServletResponse doPost(String body, String contentType, String host)
       throws Exception {
+    MockHttpServletResponse response = new MockHttpServletResponse();
+    doPost(body, contentType, host, response);
+    return response;
+  }
+
+  private void doPost(String body, String contentType, String host, HttpServletResponse response)
+      throws Exception {
     MockHttpServletRequest request = new MockHttpServletRequest("POST", "/admin");
     request.setServletPath("/admin");
     request.setRemoteAddr("127.0.0.1");
@@ -466,13 +682,43 @@ public class AdminRpcServletTest {
     if (host != null) {
       request.addHeader("Host", host);
     }
-    MockHttpServletResponse response = new MockHttpServletResponse();
     servlet.service(request, response);
-    return response;
   }
 
   private void setVirtualHosts(String... hosts) throws Exception {
     setField("virtualHostValidator", new VirtualHostValidator(Arrays.asList(hosts)));
   }
+
+  private static class TestAdminRpcHttpService extends AdminRpcHttpService {
+
+    private LocalConnector connector;
+
+    @Override
+    protected void initServer() {
+      super.initServer();
+      // Keep the production handler, servlet and filters, without binding a network port.
+      connector = new LocalConnector(apiServer);
+      apiServer.setConnectors(new Connector[] {connector});
+    }
+
+    String post(String body, boolean chunked) throws Exception {
+      return post(body, chunked, null);
+    }
+
+    String post(String body, boolean chunked, String accept) throws Exception {
+      String framing = chunked ? "Transfer-Encoding: chunked\r\n"
+          : "Content-Length: " + body.length() + "\r\n";
+      String content = chunked ? Integer.toHexString(body.length()) + "\r\n"
+          + body + "\r\n0\r\n\r\n" : body;
+      String request = "POST /admin HTTP/1.1\r\n"
+          + "Host: 127.0.0.1\r\n"
+          + "Content-Type: application/json\r\n"
+          + (accept == null ? "" : "Accept: " + accept + "\r\n")
+          + "Connection: close\r\n" + framing + "\r\n" + content;
+      return connector.getResponse(request, 5, TimeUnit.SECONDS);
+    }
+  }
+
+
 
 }

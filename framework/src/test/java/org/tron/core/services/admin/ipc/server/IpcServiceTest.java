@@ -752,6 +752,20 @@ public class IpcServiceTest {
     }
   }
 
+  private void assertStartupRejectsExistingDirectory(IpcService service, Path directory)
+      throws Exception {
+    try {
+      service.innerStart();
+      Assert.fail("Expected startup to reject an existing IPC directory");
+    } catch (TronError e) {
+      Assert.assertEquals(TronError.ErrCode.API_SERVER_INIT, e.getErrCode());
+      Assert.assertTrue(e.getMessage().contains("IPC directory already exists"));
+      Assert.assertTrue(e.getMessage().contains(directory.toString()));
+      Assert.assertTrue(e.getMessage().contains("remove it manually"));
+      Assert.assertFalse(isRunning(service));
+    }
+  }
+
   private void assertNewConnectionSucceeds(Path socketFile) throws IOException {
     try (AFUNIXSocket client = AFUNIXSocket.newInstance()) {
       client.connect(AFUNIXSocketAddress.of(socketFile.toFile()));

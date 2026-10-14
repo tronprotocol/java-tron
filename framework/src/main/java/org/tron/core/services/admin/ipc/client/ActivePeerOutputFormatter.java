@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import org.apache.commons.lang3.StringUtils;
+import org.tron.common.math.StrictMathWrapper;
 
 final class ActivePeerOutputFormatter {
 
@@ -65,7 +66,7 @@ final class ActivePeerOutputFormatter {
     for (int i = 0; i < TABLE_HEADERS.length; i++) {
       widths[i] = TABLE_HEADERS[i].length();
       for (List<String> row : rows) {
-        widths[i] = Math.max(widths[i], row.get(i).length());
+        widths[i] = StrictMathWrapper.max(widths[i], row.get(i).length());
       }
     }
 
@@ -129,7 +130,8 @@ final class ActivePeerOutputFormatter {
   }
 
   private String sanitizeTableCell(String text) {
-    StringBuilder sanitized = new StringBuilder(Math.min(text.length(), MAX_TABLE_CELL_LENGTH));
+    StringBuilder sanitized = new StringBuilder(
+        StrictMathWrapper.min(text.length(), MAX_TABLE_CELL_LENGTH));
     for (int i = 0; i < text.length() && sanitized.length() < MAX_TABLE_CELL_LENGTH; i++) {
       char character = text.charAt(i);
       // Limit cells to printable ASCII to prevent terminal control-sequence injection.

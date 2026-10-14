@@ -253,12 +253,17 @@ public class IpcRequestHandlerTest {
 
   @Test
   public void testReadRequestAcceptsMaximumSize() throws Exception {
-    byte[] request = new byte[MAX_REQUEST_SIZE + 1];
-    Arrays.fill(request, 0, MAX_REQUEST_SIZE, (byte) '1');
-    request[MAX_REQUEST_SIZE] = '\n';
+    byte[] payload = new byte[MAX_REQUEST_SIZE];
+    Arrays.fill(payload, (byte) '1');
+    for (String terminator : new String[] {"\n", "\r\n"}) {
+      String frames = new String(payload, StandardCharsets.UTF_8) + terminator + "next\n";
+      ByteArrayInputStream input =
+          new ByteArrayInputStream(frames.getBytes(StandardCharsets.UTF_8));
 
-    Assert.assertEquals(MAX_REQUEST_SIZE,
-        handler.readRequest(new ByteArrayInputStream(request)).length());
+      Assert.assertEquals(MAX_REQUEST_SIZE, handler.readRequest(input).length());
+      Assert.assertEquals("next", handler.readRequest(input));
+      Assert.assertNull(handler.readRequest(input));
+    }
   }
 
   @Test(expected = RequestTooLargeException.class)
@@ -292,16 +297,37 @@ public class IpcRequestHandlerTest {
   }
 
   @Test
+  public void testReadRequestCountsCarriageReturnsOutsideCrlf() throws Exception {
+    IpcRequestHandler limited = new IpcRequestHandler(Mockito.mock(AdminJsonRpc.class), 3);
+    for (String terminator : new String[] {"\n", "\r\n", ""}) {
+      Assert.assertEquals("a\rb", limited.readRequest(new ByteArrayInputStream(
+          ("a\rb" + terminator).getBytes(StandardCharsets.UTF_8))));
+    }
+    Assert.assertEquals("ab\r", limited.readRequest(new ByteArrayInputStream(
+        "ab\r".getBytes(StandardCharsets.UTF_8))));
+  }
+
+  @Test
+  public void testReadRequestRejectsOversizedPayloadsWithCarriageReturns() {
+    IpcRequestHandler limited = new IpcRequestHandler(Mockito.mock(AdminJsonRpc.class), 3);
+    for (String frame : new String[] {"abcd\n", "abcd\r\n", "abc\rX\n", "abc\r\r\n",
+        "abc\r", "abcd"}) {
+      Assert.assertThrows(RequestTooLargeException.class, () -> limited.readRequest(
+          new ByteArrayInputStream(frame.getBytes(StandardCharsets.UTF_8))));
+    }
+  }
+
+  @Test
   public void testZeroLimitOnlyAcceptsEmptyLines() throws Exception {
     IpcRequestHandler zeroLimit = new IpcRequestHandler(Mockito.mock(AdminJsonRpc.class), 0);
     Assert.assertEquals(0, zeroLimit.getMaxRequestSize());
     Assert.assertEquals("", zeroLimit.readRequest(new ByteArrayInputStream(new byte[] {'\n'})));
+    Assert.assertEquals("", zeroLimit.readRequest(
+        new ByteArrayInputStream(new byte[] {'\r', '\n'})));
     Assert.assertNull(zeroLimit.readRequest(new ByteArrayInputStream(new byte[0])));
-    try {
-      zeroLimit.readRequest(new ByteArrayInputStream(new byte[] {'a'}));
-      Assert.fail("Expected a configured zero limit to reject nonempty input");
-    } catch (RequestTooLargeException expected) {
-      // Zero must not silently fall back to a default limit.
+    for (String frame : new String[] {"a", "\r", "\r\r\n", "a\r\n"}) {
+      Assert.assertThrows(RequestTooLargeException.class, () -> zeroLimit.readRequest(
+          new ByteArrayInputStream(frame.getBytes(StandardCharsets.UTF_8))));
     }
   }
 

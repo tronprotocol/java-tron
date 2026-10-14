@@ -18,6 +18,7 @@ import org.tron.common.prometheus.MetricKeys;
 import org.tron.common.prometheus.Metrics;
 import org.tron.core.services.admin.AdminJsonRpc;
 import org.tron.core.services.admin.AdminJsonRpcRequestHandler;
+import org.tron.core.services.jsonrpc.JsonRpcHttpResponse;
 import org.tron.core.services.jsonrpc.JsonRpcMapper;
 import org.tron.core.services.jsonrpc.JsonRpcMediaType;
 
@@ -25,12 +26,16 @@ import org.tron.core.services.jsonrpc.JsonRpcMediaType;
  * Serves the {@link AdminJsonRpc} API at {@code POST /admin} through jsonrpc4j.
  *
  * <p>This endpoint is intended for trusted node operators. Deployments must restrict access to
- * loopback or a controlled management network. This low-frequency management endpoint intentionally
- * bypasses public API rate limiting and JSON-RPC response-size limits.
+ * loopback or a controlled management network and enforce access control externally. There is no
+ * built-in authentication; Host validation protects against DNS rebinding and does not authenticate
+ * callers.
+ * Missing or empty Host headers are accepted for HTTP/1.0 compatibility.
+ * This low-frequency management endpoint intentionally bypasses public API rate limiting and
+ * JSON-RPC response-size limits.
  * Only individual request objects are supported; batch requests are rejected.
- * HTTP request-size limits are enforced by
- * {@link org.tron.common.application.HttpService}; JSON parser limits come from
- * {@link JsonRpcMapper}.
+ * HTTP request-size limits use {@code node.jsonrpc.maxMessageSize}, shared with Admin IPC and
+ * public JSON-RPC HTTP, and are enforced by {@link org.tron.common.application.HttpService};
+ * JSON parser limits come from {@link JsonRpcMapper}.
  */
 @Component
 @Slf4j(topic = "API")
@@ -80,6 +85,15 @@ public class AdminRpcServlet extends HttpServlet {
    */
   @Override
   protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+    try {
+      doPostInternal(req, resp);
+    } catch (Error fatal) {
+      JsonRpcHttpResponse.commitBareInternalServerError(resp);
+      throw fatal;
+    }
+  }
+
+  private void doPostInternal(HttpServletRequest req, HttpServletResponse resp) throws IOException {
     // Check the requested hostname before dispatch to guard against DNS rebinding.
     if (!virtualHostValidator.isAllowedHost(req.getHeader("Host"))) {
       resp.sendError(HttpServletResponse.SC_FORBIDDEN, "Invalid Host header");

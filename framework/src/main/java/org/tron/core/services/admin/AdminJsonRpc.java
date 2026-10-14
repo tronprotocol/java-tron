@@ -11,6 +11,10 @@ import org.tron.core.net.service.peermanagement.ActivePeerListResult;
 import org.tron.core.net.service.peermanagement.BlockedIpInfo;
 import org.tron.core.net.service.peermanagement.PeerOperationResult;
 
+/**
+ * Shared Admin API. Explicit error mappings are client-visible: their messages and data, including
+ * exception-derived values, must be safe to disclose. Unmapped invocation errors are sanitized.
+ */
 public interface AdminJsonRpc {
 
   String BATCH_NOT_SUPPORTED_MESSAGE = "Batch requests are not supported";

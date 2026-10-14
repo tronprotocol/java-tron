@@ -61,7 +61,6 @@ import org.tron.core.store.AccountStore;
 import org.tron.p2p.P2pConfig;
 import org.tron.p2p.dns.update.DnsType;
 import org.tron.p2p.dns.update.PublishConfig;
-import org.tron.p2p.utils.NetUtil;
 import org.tron.program.Version;
 
 @Slf4j(topic = "app")
@@ -163,6 +162,7 @@ public class Args extends CommonParameter {
       Args.printHelp(arguments.getCommander());
       exit(0);
     }
+    cmd.validateRemovedOptions();
     List<ParameterDescription> assignedParameters = arguments.getAssignedParameters();
 
     // Resolve config file path
@@ -614,6 +614,7 @@ public class Args extends CommonParameter {
     PARAMETER.validateSignThreadNum = nc.getValidateSignThreadNum();
     PARAMETER.isOpenFullTcpDisconnect = nc.isOpenFullTcpDisconnect();
     PARAMETER.nodeDetectEnable = nc.isNodeDetectEnable();
+    PARAMETER.nodeAllowNumericFieldAlias = nc.isAllowNumericFieldAlias();
 
     PARAMETER.inactiveThreshold = nc.getInactiveThreshold();
 
@@ -870,9 +871,6 @@ public class Args extends CommonParameter {
     if (assigned.contains("--solidity")) {
       PARAMETER.solidityNode = cmd.solidityNode;
     }
-    if (assigned.contains("--keystore-factory")) {
-      PARAMETER.keystoreFactory = cmd.keystoreFactory;
-    }
     if (assigned.contains("--rpc-thread")) {
       PARAMETER.rpcThreadNum = cmd.rpcThreadNum;
     }
@@ -917,6 +915,9 @@ public class Args extends CommonParameter {
 
     // path 1: CLI --private-key
     if (StringUtils.isNotBlank(cmd.privateKey)) {
+      logger.warn("Passing the witness private key via -p/--private-key is deprecated and "
+          + "insecure: the key is visible in the process list and shell history. Use "
+          + "localwitnesskeystore in the config file instead.");
       localWitnesses = WitnessInitializer.initFromCLIPrivateKey(
           cmd.privateKey, cmd.witnessAddress);
       return;
@@ -926,6 +927,8 @@ public class Args extends CommonParameter {
 
     // path 2: config localwitness (private key list)
     if (!lwConfig.getPrivateKeys().isEmpty()) {
+      logger.warn("Storing plain witness private keys in 'localwitness' is insecure: any "
+          + "reader of the config file sees the keys. Use localwitnesskeystore instead.");
       localWitnesses = WitnessInitializer.initFromCFGPrivateKey(
           lwConfig.getPrivateKeys(), lwConfig.getAccountAddress());
       return;
@@ -1029,14 +1032,16 @@ public class Args extends CommonParameter {
       if (dns.getChangeThreshold() > 0) {
         publishConfig.setChangeThreshold(dns.getChangeThreshold());
       } else if (Double.compare(dns.getChangeThreshold(), 0.0) != 0) {
-        logger.error("Check node.dns.changeThreshold, should be bigger than 0, default 0.1");
+        throw new TronError("Check node.dns.changeThreshold, should be bigger than 0, default 0.1",
+            TronError.ErrCode.PARAMETER_INIT);
       }
 
       int maxMergeSize = dns.getMaxMergeSize();
       if (maxMergeSize >= 1 && maxMergeSize <= 5) {
         publishConfig.setMaxMergeSize(maxMergeSize);
       } else if (maxMergeSize != 0) {
-        logger.error("Check node.dns.maxMergeSize, should be [1~5], default 5");
+        throw new TronError("Check node.dns.maxMergeSize, should be [1~5], default 5",
+            TronError.ErrCode.PARAMETER_INIT);
       }
 
       if (StringUtils.isNotEmpty(dns.getDnsPrivate())) {
@@ -1304,8 +1309,7 @@ public class Args extends CommonParameter {
 
   private static Map<String, String[]> getOptionGroup() {
     String[] tronOption = new String[] {"version", "help", "shellConfFileName", "logbackPath",
-        "eventSubscribe", "solidityNode", "keystoreFactory", "ipcSocketFile",
-        "ipcExecCommand"};
+        "eventSubscribe", "solidityNode", "ipcSocketFile", "ipcExecCommand"};
     String[] dbOption = new String[] {"outputDirectory"};
     String[] witnessOption = new String[] {"witness", "privateKey"};
     String[] vmOption = new String[] {"debug"};

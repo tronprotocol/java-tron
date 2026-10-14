@@ -177,12 +177,6 @@ public class CommonParameter {
   @Setter
   public boolean solidityNode = false;
 
-  // If you are running KeystoreFactory,
-  // this flag is set to true
-  @Getter
-  @Setter
-  public boolean keystoreFactory = false;
-
   // -- RPC / HTTP --
   @Getter
   @Setter
@@ -321,6 +315,10 @@ public class CommonParameter {
   @Getter
   @Setter
   public boolean nodeDetectEnable;
+
+  @Getter
+  @Setter
+  public boolean nodeAllowNumericFieldAlias = true;
   @Getter
   @Setter
   public int allowMultiSign;
