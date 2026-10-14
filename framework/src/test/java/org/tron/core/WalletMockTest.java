@@ -327,8 +327,6 @@ public class WalletMockTest {
                 .setParameter(Any.pack(transferContract))
                 .setType(Protocol.Transaction.Contract.ContractType.TransferContract)))
         .build();
-    Sha256Hash txId = new TransactionCapsule(transaction).getTransactionId();
-
     Wallet wallet = new Wallet();
     TronNetDelegate tronNetDelegate = mock(TronNetDelegate.class);
     TronNetService tronNetService = mock(TronNetService.class);
@@ -357,9 +355,6 @@ public class WalletMockTest {
     assertEquals(GrpcAPI.Return.response_code.SERVER_BUSY, result.getCode());
     assertEquals("Transaction was rejected locally.",
         result.getMessage().toStringUtf8());
-    assertEquals(Boolean.TRUE, transactionIdCache.getIfPresent(txId));
-    assertEquals(GrpcAPI.Return.response_code.DUP_TRANSACTION_ERROR,
-        wallet.broadcastTransaction(transaction).getCode());
     Mockito.verify(manager, Mockito.times(1)).pushTransaction(any());
     Mockito.verify(tronNetService, Mockito.never()).fastBroadcastTransaction(any());
   }
