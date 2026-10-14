@@ -6,6 +6,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
+import com.google.common.base.Strings;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.UnknownFieldSet;
 import java.io.CharArrayReader;
@@ -253,6 +254,34 @@ public class JsonFormatTest {
     });
     cause = thrown.getCause();
     assertTrue(cause instanceof NumberFormatException);
+  }
+
+  @Test
+  public void testFloatParseErrorDoesNotForwardInput() {
+    Protocol.MetricsInfo.RateInfo.Builder builder =
+        Protocol.MetricsInfo.RateInfo.newBuilder();
+    String value = Strings.repeat("9", 100_000) + "q";
+
+    JsonFormat.ParseException error = assertThrows(JsonFormat.ParseException.class,
+        () -> JsonFormat.merge("{\"meanRate\":" + value + "}", builder, false));
+
+    assertTrue(error.getMessage().matches(
+        "^\\d+:\\d+: Couldn't parse number: token length \\d+$"));
+    assertFalse(error.getMessage().contains("For input string"));
+    assertFalse(error.getMessage().contains(Strings.repeat("9", 8)));
+    assertTrue("Unexpectedly long error message", error.getMessage().length() < 128);
+  }
+
+  @Test
+  public void testTruncateDoesNotSplitSurrogatePair() throws Exception {
+    Method privateMethod = JsonFormat.class.getDeclaredMethod("truncate", String.class, int.class);
+    privateMethod.setAccessible(true);
+    String supplementaryCharacter = new String(Character.toChars(0x1F600));
+    String text = "A" + supplementaryCharacter + "B";
+
+    assertEquals("A...(truncated)", privateMethod.invoke(null, text, 2));
+    assertEquals("A" + supplementaryCharacter + "...(truncated)",
+        privateMethod.invoke(null, text, 3));
   }
 
   /*

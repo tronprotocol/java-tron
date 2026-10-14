@@ -39,6 +39,7 @@ public class CLIParameter {
   @Parameter(names = {"-w", "--witness"}, description = "Is witness node")
   public boolean witness;
 
+  @Deprecated
   @Parameter(names = {"-p", "--private-key"}, description = "Witness private key")
   public String privateKey;
 
