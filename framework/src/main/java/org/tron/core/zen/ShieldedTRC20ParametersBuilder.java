@@ -429,10 +429,10 @@ public class ShieldedTRC20ParametersBuilder {
     List<ShieldContract.ReceiveDescription> recvDescs = transferParams.getReceiveDescriptionList();
     long spendCount = spendDescs.size();
     long recvCount = recvDescs.size();
-    if (spendCount < 1 || spendCount > 2) {
+    if (spendCount != 1 && spendCount != 2) {
       throw new IllegalArgumentException("invalid transfer input number");
     }
-    if (recvCount < 1 || recvCount > 2) {
+    if (recvCount != 1 && recvCount != 2) {
       throw new IllegalArgumentException("invalid transfer output number");
     }
 
