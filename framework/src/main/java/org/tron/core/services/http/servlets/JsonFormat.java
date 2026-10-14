@@ -83,6 +83,8 @@ public class JsonFormat {
       = "Writing to a StringBuilder threw an IOException (should never happen).";
   private static final String EXPECTED_STRING = "Expected string.";
   private static final String MISSING_END_QUOTE = "String missing ending quote.";
+  // Must stay above the 116-byte genesis witness_address, which is served in Base58Check.
+  private static final int MAX_BASE58_ADDRESS_SIZE = 128;
 
   public static final boolean ALWAYS_OUTPUT_DEFAULT_VALUE_FIELDS = true;
   public static final Set<Class<? extends Message>> MESSAGES = ImmutableSet.of(
@@ -863,7 +865,7 @@ public class JsonFormat {
   static String escapeBytesSelfType(ByteString input, final String fieldName) {
     //Address
     if (HttpSelfFormatFieldName.isAddressFormat(fieldName)) {
-      if (input.size() > Constant.TRON_ADDRESS_SIZE) {
+      if (input.size() > MAX_BASE58_ADDRESS_SIZE) {
         return ByteArray.toHexString(input.toByteArray());
       }
       return StringUtil.encode58Check(input.toByteArray());

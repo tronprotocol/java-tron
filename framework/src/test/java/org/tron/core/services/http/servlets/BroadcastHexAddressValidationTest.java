@@ -34,7 +34,7 @@ public class BroadcastHexAddressValidationTest {
 
   @Test
   public void rendersOversizedAuthAddressAsHexWithoutBase58Conversion() throws Exception {
-    for (int size : new int[]{22, 4096, 16384, 65536}) {
+    for (int size : new int[]{129, 4096, 16384, 65536}) {
       Wallet wallet = mock(Wallet.class);
       Transaction transaction = transaction(size);
       when(wallet.broadcastTransaction(transaction)).thenReturn(Return.newBuilder()
@@ -75,12 +75,31 @@ public class BroadcastHexAddressValidationTest {
         .setAddress(address).build();
     JSONObject json = JSONObject.parseObject(JsonFormat.printToString(log, true));
     assertEquals(StringUtil.encode58Check(address.toByteArray()), json.getString("address"));
-    assertEquals(ByteArray.toHexString(bytes(22).toByteArray()), JSONObject.parseObject(
-        JsonFormat.printToString(log.toBuilder().setAddress(bytes(22)).build(), true))
+    assertEquals(StringUtil.encode58Check(bytes(128).toByteArray()), JSONObject.parseObject(
+        JsonFormat.printToString(log.toBuilder().setAddress(bytes(128)).build(), true))
         .getString("address"));
-    assertEquals(ByteArray.toHexString(bytes(22).toByteArray()), JSONObject.parseObject(
-        JsonFormat.printToString(log.toBuilder().setAddress(bytes(22)).build(), false))
+    assertEquals(ByteArray.toHexString(bytes(129).toByteArray()), JSONObject.parseObject(
+        JsonFormat.printToString(log.toBuilder().setAddress(bytes(129)).build(), true))
         .getString("address"));
+    assertEquals(ByteArray.toHexString(bytes(129).toByteArray()), JSONObject.parseObject(
+        JsonFormat.printToString(log.toBuilder().setAddress(bytes(129)).build(), false))
+        .getString("address"));
+  }
+
+  @Test
+  public void preservesGenesisAddressRendering() {
+    ByteString witness = ByteString.copyFromUtf8("A new system must allow existing systems to be "
+        + "linked together without requiring any central control or coordination");
+    JSONObject header = JSONObject.parseObject(JsonFormat.printToString(
+        Protocol.BlockHeader.raw.newBuilder().setWitnessAddress(witness).build(), true));
+    assertEquals("A2aRHeJL17i55Nd5FWdtaXJL4RuhcBPnZGSqvDZnw2Qcadhh9hhFBwAkHM52Tuv6d15wMcMgrUc3hi1Hp"
+        + "CCyAefw5kDgbvbGWjKgJoyER8ZY1w6sy3pxp56YdtiW4LtbCKaWyRpxzXv4mEmh88Y2ipZP8VFpSy8YLqnj",
+        header.getString("witness_address"));
+
+    ByteString owner = ByteString.copyFromUtf8("0x000000000000000000000");
+    JSONObject transfer = JSONObject.parseObject(JsonFormat.printToString(
+        TransferContract.newBuilder().setOwnerAddress(owner).build(), true));
+    assertEquals("7YxAaK71utTpYJ8u4Zna7muWxd1pQwimpGxy8", transfer.getString("owner_address"));
   }
 
   @Test
