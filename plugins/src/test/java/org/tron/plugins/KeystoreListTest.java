@@ -31,7 +31,7 @@ public class KeystoreListTest {
     // Create 3 keystores
     for (int i = 0; i < 3; i++) {
       SignInterface key = SignUtils.getGeneratedRandomSign(
-          SecureRandom.getInstance("NativePRNG"), true);
+          SecureRandom.getInstance("NativePRNG"));
       WalletUtils.generateWalletFile(password, key, dir, false);
     }
 
@@ -125,7 +125,7 @@ public class KeystoreListTest {
     File dir = tempFolder.newFolder("keystore-json");
     String password = "test123456";
     SignInterface key = SignUtils.getGeneratedRandomSign(
-        SecureRandom.getInstance("NativePRNG"), true);
+        SecureRandom.getInstance("NativePRNG"));
     WalletUtils.generateWalletFile(password, key, dir, false);
 
     StringWriter out = new StringWriter();
@@ -151,7 +151,7 @@ public class KeystoreListTest {
 
     // Create one valid keystore
     SignInterface key = SignUtils.getGeneratedRandomSign(
-        SecureRandom.getInstance("NativePRNG"), true);
+        SecureRandom.getInstance("NativePRNG"));
     WalletUtils.generateWalletFile(password, key, dir, false);
 
     // Create non-keystore files
@@ -183,7 +183,7 @@ public class KeystoreListTest {
 
     // Create one valid keystore
     SignInterface key = SignUtils.getGeneratedRandomSign(
-        SecureRandom.getInstance("NativePRNG"), true);
+        SecureRandom.getInstance("NativePRNG"));
     WalletUtils.generateWalletFile(password, key, dir, false);
 
     // Create a corrupted JSON file
@@ -215,7 +215,7 @@ public class KeystoreListTest {
 
     // Create one valid keystore
     SignInterface key = SignUtils.getGeneratedRandomSign(
-        SecureRandom.getInstance("NativePRNG"), true);
+        SecureRandom.getInstance("NativePRNG"));
     WalletUtils.generateWalletFile(password, key, dir, false);
 
     // Create a JSON with address and crypto but wrong version
@@ -251,7 +251,7 @@ public class KeystoreListTest {
     String password = "test123456";
 
     SignInterface key = SignUtils.getGeneratedRandomSign(
-        SecureRandom.getInstance("NativePRNG"), true);
+        SecureRandom.getInstance("NativePRNG"));
     WalletUtils.generateWalletFile(password, key, dir, false);
 
     // A JSON file elsewhere (simulates "target we should not be tricked

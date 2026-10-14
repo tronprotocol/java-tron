@@ -4,6 +4,7 @@ import com.beust.jcommander.Parameter;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.NoArgsConstructor;
+import org.tron.core.exception.TronError;
 
 /**
  * CLI parameter definitions parsed by JCommander.
@@ -38,6 +39,7 @@ public class CLIParameter {
   @Parameter(names = {"-w", "--witness"}, description = "Is witness node")
   public boolean witness;
 
+  @Deprecated
   @Parameter(names = {"-p", "--private-key"}, description = "Witness private key")
   public String privateKey;
 
@@ -50,8 +52,15 @@ public class CLIParameter {
   @Parameter(names = {"--solidity"}, description = "running a solidity node for java tron")
   public boolean solidityNode;
 
-  @Parameter(names = {"--keystore-factory"}, description = "running KeystoreFactory")
-  public boolean keystoreFactory;
+  /**
+   * Tombstone for the removed --keystore-factory, rejected by {@link #validateRemovedOptions()}.
+   * Keep declared — undeclared, JCommander parses the flag into seedNodes. Boxed so null means
+   * absent: JCommander toggles arity-0 booleans per occurrence, so a repeated flag parses back
+   * to false.
+   */
+  @Deprecated
+  @Parameter(names = {"--keystore-factory"}, description = "removed; use Toolkit.jar keystore")
+  public Boolean keystoreFactory;
 
   @Deprecated
   @Parameter(names = {"--fast-forward"})
@@ -181,4 +190,23 @@ public class CLIParameter {
   @Deprecated
   @Parameter(names = {"--history-balance-lookup"})
   public boolean historyBalanceLookup;
+
+  /**
+   * Rejects removed options before config loading. A removed option keeps a nullable tombstone
+   * field and adds one line here.
+   */
+  public void validateRemovedOptions() {
+    rejectIfPresent(keystoreFactory, "--keystore-factory",
+        "Use: java -jar Toolkit.jar keystore <new|import|list|update>");
+  }
+
+  private void rejectIfPresent(Object value, String option, String migration) {
+    if (value == null) {
+      return;
+    }
+    // stderr, not logger: the default logback config has no console appender
+    System.err.println(option + " was removed.");
+    System.err.println(migration);
+    throw new TronError(option + " was removed. " + migration, TronError.ErrCode.PARAMETER_INIT);
+  }
 }
