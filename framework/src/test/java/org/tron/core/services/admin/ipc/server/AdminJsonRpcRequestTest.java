@@ -183,18 +183,24 @@ public class AdminJsonRpcRequestTest {
 
   @Test
   public void parameterBindingFailuresRetainIdsAndSilenceNotifications() throws Exception {
-    for (String params : new String[] {"[{},\"b\"]", "[\"a\",[]]",
-        "{\"param1\":{},\"param2\":\"b\"}", "{\"param1\":\"a\",\"param2\":[]}"}) {
-      String request = REQUEST.replace("[\"a\",\"b\"]", params);
-      for (String id : new String[] {"9", "null", "\"request\"", "9223372036854775807",
-          "0.12345678901234567890123456789"}) {
-        JsonNode error = assertError(sender.send(request + ",\"id\":" + id + "}"), -32602, id)
-            .get("error");
-        Assert.assertEquals("method parameters invalid", error.get("message").asText());
-        Assert.assertEquals(2, error.size());
+    String[][] invalidParams = {
+        {"[{},\"b\"]", "{\"param1\":{},\"param2\":\"b\"}"},
+        {"[\"a\",[]]", "{\"param1\":\"a\",\"param2\":[]}"}
+    };
+    for (int index = 0; index < invalidParams.length; index++) {
+      for (String params : invalidParams[index]) {
+        String request = REQUEST.replace("[\"a\",\"b\"]", params);
+        for (String id : new String[] {"9", "null", "\"request\"", "9223372036854775807",
+            "0.12345678901234567890123456789"}) {
+          JsonNode error = assertError(sender.send(request + ",\"id\":" + id + "}"), -32602, id)
+              .get("error");
+          Assert.assertEquals("Failed to read method parameter at index " + index,
+              error.get("message").asText());
+          Assert.assertEquals(2, error.size());
+        }
+        Assert.assertEquals("", sender.send(request + "}"));
+        Mockito.verifyNoInteractions(adminJsonRpc);
       }
-      Assert.assertEquals("", sender.send(request + "}"));
-      Mockito.verifyNoInteractions(adminJsonRpc);
     }
   }
 
