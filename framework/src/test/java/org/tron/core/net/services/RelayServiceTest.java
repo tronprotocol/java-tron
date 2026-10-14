@@ -262,7 +262,6 @@ public class RelayServiceTest extends BaseTest {
     ECKey key = ECKey.fromPrivate(BigInteger.TEN);
     ByteString address = ByteString.copyFrom(key.getAddress());
     ByteString signature = ByteString.copyFrom(key.sign(hash).toByteArray());
-    ByteString paddedSignature = signature.concat(ByteString.copyFrom(new byte[3]));
 
     // R = G and s = e mod n make sR - eG the point at infinity for this HELLO digest.
     BigInteger s = new BigInteger(1, hash).mod(ECKey.CURVE.getN());
@@ -300,8 +299,12 @@ public class RelayServiceTest extends BaseTest {
         Mockito.when(properties.allowStrictEcdsaValidation()).thenReturn(flag == 1);
         assertHelloAuthentication(relay, timestamp, address, signature,
             "127.0." + flag + ".1", true);
-        assertHelloAuthentication(relay, timestamp, address, paddedSignature,
-            "127.0." + flag + ".2", false);
+        for (int length = 66; length <= 69; length++) {
+          ByteString paddedSignature = signature.concat(
+              ByteString.copyFrom(new byte[length - 65]));
+          assertHelloAuthentication(relay, timestamp, address, paddedSignature,
+              "127.0." + flag + "." + length, length <= 68);
+        }
         assertHelloAuthentication(relay, timestamp, infinityAddress, infinitySignature,
             "127.0." + flag + ".3", false);
       }

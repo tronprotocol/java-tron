@@ -99,7 +99,7 @@ public class SignatureQueryTest {
   public void rejectsEveryInvalidLengthBeforeConversionOrRecovery() {
     try (MockedStatic<TransactionCapsule> capsules =
         mockStatic(TransactionCapsule.class, CALLS_REAL_METHODS)) {
-      for (int length : new int[] {0, 64, 66, 68}) {
+      for (int length : new int[] {0, 64, 69, 96}) {
         ByteString invalid = ByteString.copyFrom(new byte[length]);
         assertFormatError(unsigned.toBuilder().addSignature(invalid).build());
         assertFormatError(signed.toBuilder().addSignature(invalid).build());
@@ -112,16 +112,21 @@ public class SignatureQueryTest {
   }
 
   @Test
-  public void rejectsPaddingWithoutRewritingTransactionOrChangingId() {
-    Transaction padded = signed.toBuilder().setSignature(0,
-        signed.getSignature(0).concat(ByteString.copyFrom(new byte[] {1}))).build();
+  public void acceptsSupportedPaddingWithoutRewritingTransactionOrChangingId() {
     try (MockedStatic<ForkController> forks = mockStatic(ForkController.class)) {
       forks.when(ForkController::instance).thenReturn(mock(ForkController.class));
       assertQueryResults(signed, TransactionSignWeight.Result.response_code.ENOUGH_PERMISSION,
           TransactionApprovedList.Result.response_code.SUCCESS, 1);
-      assertFormatError(padded);
-      assertEquals(new TransactionCapsule(signed).getTransactionId(),
-          new TransactionCapsule(padded).getTransactionId());
+      for (int length = 66; length <= 68; length++) {
+        byte[] padding = new byte[length - 65];
+        Arrays.fill(padding, (byte) 0x7f);
+        Transaction padded = signed.toBuilder().setSignature(0,
+            signed.getSignature(0).concat(ByteString.copyFrom(padding))).build();
+        assertQueryResults(padded, TransactionSignWeight.Result.response_code.ENOUGH_PERMISSION,
+            TransactionApprovedList.Result.response_code.SUCCESS, 1);
+        assertEquals(new TransactionCapsule(signed).getTransactionId(),
+            new TransactionCapsule(padded).getTransactionId());
+      }
     }
   }
 

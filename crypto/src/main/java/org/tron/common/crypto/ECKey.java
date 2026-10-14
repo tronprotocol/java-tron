@@ -391,9 +391,8 @@ public class ECKey implements Serializable, SignInterface {
     }
     // Parse the signature bytes into r/s and the selector value.
     if (signatureEncoded.length < 65
-        || (strictValidation && signatureEncoded.length != 65)) {
-      throw new SignatureException("Signature has invalid length " + signatureEncoded.length
-          + ", expected " + (strictValidation ? "exactly " : "at least ") + "65 bytes");
+        || (strictValidation && !SignUtils.isValidLength(signatureEncoded.length))) {
+      throw new SignatureException("Signature has invalid length " + signatureEncoded.length);
     }
 
     return signatureToKeyBytes(

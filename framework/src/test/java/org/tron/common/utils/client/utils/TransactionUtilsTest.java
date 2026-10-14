@@ -1,6 +1,7 @@
 package org.tron.common.utils.client.utils;
 
 import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -46,11 +47,11 @@ public class TransactionUtilsTest {
 
   @Test
   public void testPaddedSignatures() {
-    for (int length : new int[]{66, 68, 69}) {
+    for (int length : new int[]{65, 66, 67, 68, 69, 96}) {
       byte[] signature = Arrays.copyOf(signed.getSignature(0).toByteArray(), length);
       Transaction transaction = signed.toBuilder()
           .setSignature(0, ByteString.copyFrom(signature)).build();
-      assertFalse(TransactionUtils.validTransaction(transaction));
+      assertEquals(length <= 68, TransactionUtils.validTransaction(transaction));
     }
   }
 

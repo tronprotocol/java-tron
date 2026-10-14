@@ -238,6 +238,50 @@ public class ManagerStrictEcdsaActivationTest extends BaseMethodTest {
     }
   }
 
+  @Test
+  public void shouldPreserveSupportedPaddingAcrossActivation() throws Exception {
+    prepareProposal(true);
+    AccountCapsule owner = dbManager.getAccountStore().get(ownerKey.getAddress());
+    owner.setInstance(owner.getInstance().toBuilder().setOwnerPermission(
+        AccountCapsule.getDefaultPermission(ByteString.copyFrom(ownerKey.getAddress()))).build());
+    dbManager.getAccountStore().put(ownerKey.getAddress(), owner);
+
+    // Legacy block validation also accepts padding beyond the new strict upper bound.
+    TransactionCapsule[] inH = new TransactionCapsule[5];
+    for (int i = 0; i < inH.length; i++) {
+      inH[i] = paddedTransaction(i + 1, 65 + i);
+    }
+    dbManager.pushBlock(nextBlock(ACTIVATION_TIME, inH));
+    assertTrue(properties.allowStrictEcdsaValidation());
+
+    TransactionCapsule overlong = paddedTransaction(10, 69);
+    assertThrows(ValidateSignatureException.class,
+        () -> dbManager.pushBlock(nextBlock(ACTIVATION_TIME + 3000, overlong)));
+    assertFalse(dbManager.getTransactionStore().has(overlong.getTransactionId().getBytes()));
+
+    TransactionCapsule[] inNext = new TransactionCapsule[4];
+    for (int i = 0; i < inNext.length; i++) {
+      inNext[i] = paddedTransaction(20 + i, 65 + i);
+    }
+    BlockCapsule next = nextBlock(ACTIVATION_TIME + 3000, inNext);
+    dbManager.pushBlock(next);
+    assertEquals(next.getBlockId(), chainBaseManager.getHeadBlockId());
+    for (TransactionCapsule[] transactions : Arrays.asList(inH, inNext)) {
+      for (TransactionCapsule tx : transactions) {
+        assertEquals(tx.getInstance().getSignatureList(), dbManager.getTransactionStore()
+            .get(tx.getTransactionId().getBytes()).getInstance().getSignatureList());
+      }
+    }
+  }
+
+  private TransactionCapsule paddedTransaction(long amount, int length) throws Exception {
+    TransactionCapsule tx = unsignedTransaction(amount);
+    byte[] signature = Arrays.copyOf(
+        ownerKey.sign(tx.getTransactionId().getBytes()).toByteArray(), length);
+    Arrays.fill(signature, 65, length, (byte) 0x7f);
+    return signedTransaction(tx, signature);
+  }
+
   private void prepareProposal(boolean approved) throws Exception {
     parent = nextBlock(ACTIVATION_TIME - 3000);
     dbManager.pushBlock(parent);

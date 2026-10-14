@@ -404,9 +404,9 @@ public class TransactionsMsgHandlerTest extends BaseTest {
   @Test
   public void testInvalidSigLength() throws Exception {
     Protocol.Transaction base = buildTransferMessage(1).getTransactions().getTransactions(0);
-    for (int length : new int[]{0, 64, 65, 66, 67, 68, 96}) {
+    for (int length : new int[]{0, 64, 65, 66, 67, 68, 69, 96}) {
       Protocol.Transaction transaction = withSignatures(base, length);
-      List<Protocol.Transaction> expected = length == 65
+      List<Protocol.Transaction> expected = length >= 65 && length <= 68
           ? Collections.singletonList(transaction) : Collections.emptyList();
       assertSignatureBatch(Collections.singletonList(transaction), expected,
           Collections.emptyList());
@@ -424,7 +424,7 @@ public class TransactionsMsgHandlerTest extends BaseTest {
       List<Protocol.Transaction> expected = new ArrayList<>();
       for (int i = 0; i < base.size(); i++) {
         Protocol.Transaction transaction = i == invalidIndex
-            ? withSignatures(base.get(i), 65, 66 + invalidIndex)
+            ? withSignatures(base.get(i), 65, 69 + invalidIndex)
             : withSignatures(base.get(i), 65);
         transactions.add(transaction);
         if (i != invalidIndex) {
@@ -444,7 +444,7 @@ public class TransactionsMsgHandlerTest extends BaseTest {
           .getTransactionsList();
       Protocol.Transaction valid = withSignatures(base.get(0), 65);
       Protocol.Transaction shortSignature = withSignatures(base.get(1), 64);
-      Protocol.Transaction invalidMultiSign = withSignatures(base.get(2), 65, 66, 68);
+      Protocol.Transaction invalidMultiSign = withSignatures(base.get(2), 65, 69, 70);
       double before = droppedTransactions();
 
       for (int batch = 1; batch <= 2; batch++) {
@@ -465,7 +465,7 @@ public class TransactionsMsgHandlerTest extends BaseTest {
       List<Protocol.Transaction> base = buildTransferMessage(2).getTransactions()
           .getTransactionsList();
       List<Protocol.Transaction> transactions = Arrays.asList(
-          withSignatures(base.get(0), 65, 65), base.get(1));
+          withSignatures(base.get(0), 65, 66, 67, 68), base.get(1));
       double before = droppedTransactions();
 
       assertSignatureBatch(transactions, transactions, Collections.emptyList());
@@ -484,7 +484,7 @@ public class TransactionsMsgHandlerTest extends BaseTest {
       List<Protocol.Transaction> base = buildTransferMessage(2).getTransactions()
           .getTransactionsList();
       Protocol.Transaction valid = withSignatures(base.get(0), 65);
-      Protocol.Transaction invalid = withSignatures(base.get(1), 68);
+      Protocol.Transaction invalid = withSignatures(base.get(1), 69);
       double before = droppedTransactions();
 
       assertSignatureBatch(Arrays.asList(invalid, valid),
@@ -509,10 +509,10 @@ public class TransactionsMsgHandlerTest extends BaseTest {
     byte[] address = ByteArray.fromHexString("121212a9cf");
     Protocol.Transaction valid = withSignatures(
         TvmTestUtils.generateTriggerSmartContractAndGetTransaction(address, address,
-            ByteArray.fromHexString("123456"), 100, 100000000, 0, 0), 65);
+            ByteArray.fromHexString("123456"), 100, 100000000, 0, 0), 65, 66, 67, 68);
     Protocol.Transaction invalid = withSignatures(
         TvmTestUtils.generateTriggerSmartContractAndGetTransaction(address, address,
-            ByteArray.fromHexString("123457"), 100, 100000000, 0, 0), 65, 68);
+            ByteArray.fromHexString("123457"), 100, 100000000, 0, 0), 65, 69);
     Protocol.Transaction transfer = withSignatures(
         buildTransferMessage(1).getTransactions().getTransactions(0), 65);
     assertSignatureBatch(Arrays.asList(invalid, valid, transfer),
@@ -527,7 +527,7 @@ public class TransactionsMsgHandlerTest extends BaseTest {
       double before = droppedTransactions();
       List<Protocol.Transaction> base = buildTransferMessage(2).getTransactions()
           .getTransactionsList();
-      Protocol.Transaction padded = withSignatures(base.get(0), 68);
+      Protocol.Transaction padded = withSignatures(base.get(0), 69);
       Protocol.Transaction valid = withSignatures(base.get(1), 65);
       assertProtocolRejection(Arrays.asList(padded, valid), 1, TypeEnum.BAD_MESSAGE);
       assertProtocolRejection(Arrays.asList(padded, withSignatures(base.get(0), 65)), 2,

@@ -1,5 +1,6 @@
 package org.tron.common.crypto;
 
+import static org.tron.core.Constant.MAX_PER_SIGN_LENGTH;
 import static org.tron.core.Constant.PER_SIGN_LENGTH;
 
 import java.security.SecureRandom;
@@ -9,16 +10,16 @@ import org.tron.common.crypto.ECKey.ECDSASignature;
 public class SignUtils {
 
   /**
-   * Strict signature-length check for admission entry-points (RPC broadcast,
-   * P2P transaction ingress, peer hello handshake). Accepts exactly
-   * {@link org.tron.core.Constant#PER_SIGN_LENGTH PER_SIGN_LENGTH} bytes.
+   * Signature-length check for admission, auxiliary queries, peer HELLO and strict consensus.
+   * Accepts {@link org.tron.core.Constant#PER_SIGN_LENGTH PER_SIGN_LENGTH} through
+   * {@link org.tron.core.Constant#MAX_PER_SIGN_LENGTH MAX_PER_SIGN_LENGTH} bytes, inclusive.
    *
    * <p>Consensus paths use the governance-controlled strict-validation flag. Their
    * legacy behavior remains compatible with historical on-chain signatures that
    * carry trailing padding bytes.
    */
   public static boolean isValidLength(int size) {
-    return size == PER_SIGN_LENGTH;
+    return size >= PER_SIGN_LENGTH && size <= MAX_PER_SIGN_LENGTH;
   }
 
   public static SignInterface getGeneratedRandomSign(SecureRandom secureRandom) {

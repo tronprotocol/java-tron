@@ -188,7 +188,7 @@ public class WalletMockTest {
     GrpcAPI.Return ret = wallet.broadcastTransaction(shortSig);
     assertEquals(GrpcAPI.Return.response_code.SIGERROR, ret.getCode());
 
-    // signature longer than 65 bytes → SIGERROR
+    // signature longer than 68 bytes → SIGERROR
     Protocol.Transaction longSig = Protocol.Transaction.newBuilder()
         .addSignature(ByteString.copyFrom(new byte[69]))
         .build();
@@ -213,12 +213,14 @@ public class WalletMockTest {
     ret = wallet.broadcastTransaction(validSig);
     assertEquals(GrpcAPI.Return.response_code.BLOCK_UNSOLIDIFIED, ret.getCode());
 
-    // padded signatures are rejected even when the first 65 bytes are present
-    Protocol.Transaction paddedSig = Protocol.Transaction.newBuilder()
-        .addSignature(ByteString.copyFrom(new byte[68]))
-        .build();
-    ret = wallet.broadcastTransaction(paddedSig);
-    assertEquals(GrpcAPI.Return.response_code.SIGERROR, ret.getCode());
+    // All supported padded lengths pass admission and reach downstream validation.
+    for (int length : new int[]{66, 67, 68}) {
+      Protocol.Transaction paddedSig = Protocol.Transaction.newBuilder()
+          .addSignature(ByteString.copyFrom(new byte[length]))
+          .build();
+      ret = wallet.broadcastTransaction(paddedSig);
+      assertEquals(GrpcAPI.Return.response_code.BLOCK_UNSOLIDIFIED, ret.getCode());
+    }
   }
 
   @Test
@@ -230,11 +232,11 @@ public class WalletMockTest {
       double before = rejectedTransactions(MetricLabels.Counter.TX_REJECT_API);
       double p2pBefore = rejectedTransactions(MetricLabels.Counter.TX_REJECT_P2P);
       int rejected = 0;
-      for (int length : new int[]{0, 64, 66, 68, 69}) {
+      for (int length : new int[]{0, 64, 69, 96}) {
         Protocol.Transaction transaction = Protocol.Transaction.newBuilder()
             .addSignature(ByteString.copyFrom(new byte[65]))
             .addSignature(ByteString.copyFrom(new byte[length]))
-            .addSignature(ByteString.copyFrom(new byte[67]))
+            .addSignature(ByteString.copyFrom(new byte[70]))
             .build();
         GrpcAPI.Return ret = wallet.broadcastTransaction(transaction);
         assertEquals(GrpcAPI.Return.response_code.SIGERROR, ret.getCode());
@@ -264,13 +266,15 @@ public class WalletMockTest {
       field.set(wallet, delegate);
       double before = rejectedTransactions(MetricLabels.Counter.TX_REJECT_API);
       for (int signatureCount : new int[]{0, 1, 2}) {
-        Protocol.Transaction.Builder builder = Protocol.Transaction.newBuilder();
-        for (int i = 0; i < signatureCount; i++) {
-          builder.addSignature(ByteString.copyFrom(new byte[65]));
+        for (int length = 65; length <= 68; length++) {
+          Protocol.Transaction.Builder builder = Protocol.Transaction.newBuilder();
+          for (int i = 0; i < signatureCount; i++) {
+            builder.addSignature(ByteString.copyFrom(new byte[length]));
+          }
+          GrpcAPI.Return ret = wallet.broadcastTransaction(builder.build());
+          assertEquals(GrpcAPI.Return.response_code.BLOCK_UNSOLIDIFIED, ret.getCode());
+          assertEquals(before, rejectedTransactions(MetricLabels.Counter.TX_REJECT_API), 0);
         }
-        GrpcAPI.Return ret = wallet.broadcastTransaction(builder.build());
-        assertEquals(GrpcAPI.Return.response_code.BLOCK_UNSOLIDIFIED, ret.getCode());
-        assertEquals(before, rejectedTransactions(MetricLabels.Counter.TX_REJECT_API), 0);
       }
     } finally {
       Args.getInstance().setMetricsPrometheusEnable(metricsEnabled);
@@ -284,7 +288,7 @@ public class WalletMockTest {
     try {
       double before = rejectedTransactions(MetricLabels.Counter.TX_REJECT_API);
       Protocol.Transaction transaction = Protocol.Transaction.newBuilder()
-          .addSignature(ByteString.copyFrom(new byte[68]))
+          .addSignature(ByteString.copyFrom(new byte[69]))
           .build();
       GrpcAPI.Return ret = new Wallet().broadcastTransaction(transaction);
       assertEquals(GrpcAPI.Return.response_code.SIGERROR, ret.getCode());

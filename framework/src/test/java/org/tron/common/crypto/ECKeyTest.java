@@ -202,13 +202,24 @@ public class ECKeyTest {
     byte[] messageHash = new byte[32];
     ECKey key = ECKey.fromPrivate(BigInteger.ONE);
     byte[] signature = Base64.decode(key.signHash(messageHash));
-    byte[] padded = Arrays.copyOf(signature, 66);
-    String paddedBase64 = new String(Base64.encode(padded), StandardCharsets.UTF_8);
-
-    assertArrayEquals(key.getPubKey(),
-        ECKey.signatureToKeyBytes(messageHash, paddedBase64, false));
-    assertThrows(SignatureException.class,
-        () -> ECKey.signatureToKeyBytes(messageHash, paddedBase64, true));
+    for (int length : new int[]{0, 64, 65, 66, 67, 68, 69, 96}) {
+      byte[] padded = Arrays.copyOf(signature, length);
+      if (length > 65) {
+        Arrays.fill(padded, 65, length, (byte) 0x7f);
+      }
+      String paddedBase64 = new String(Base64.encode(padded), StandardCharsets.UTF_8);
+      if (length >= 65) {
+        assertArrayEquals(key.getPubKey(),
+            ECKey.signatureToKeyBytes(messageHash, paddedBase64, false));
+      }
+      if (length >= 65 && length <= 68) {
+        assertArrayEquals(key.getPubKey(),
+            ECKey.signatureToKeyBytes(messageHash, paddedBase64, true));
+      } else {
+        assertThrows(SignatureException.class,
+            () -> ECKey.signatureToKeyBytes(messageHash, paddedBase64, true));
+      }
+    }
   }
 
   @Test

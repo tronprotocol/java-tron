@@ -251,23 +251,26 @@ public class BlockCapsuleTest {
     block.sign(ByteArray.fromHexString(key));
 
     ByteString signature = block.getInstance().getBlockHeader().getWitnessSignature();
-    BlockHeader paddedHeader = block.getInstance().getBlockHeader().toBuilder()
-        .setWitnessSignature(signature.concat(ByteString.copyFrom(new byte[3])))
-        .build();
-    BlockCapsule paddedBlock = new BlockCapsule(block.getInstance().toBuilder()
-        .setBlockHeader(paddedHeader)
-        .build());
-
     DynamicPropertiesStore dps = mock(DynamicPropertiesStore.class);
     when(dps.getAllowMultiSign()).thenReturn(0L);
     AccountStore accountStore = mock(AccountStore.class);
 
-    Assert.assertTrue(paddedBlock.validateSignature(dps, accountStore));
-
-    when(dps.allowStrictEcdsaValidation()).thenReturn(true);
-    Assert.assertTrue(block.validateSignature(dps, accountStore));
-    Assert.assertThrows(ValidateSignatureException.class,
-        () -> paddedBlock.validateSignature(dps, accountStore));
+    for (int length = 65; length <= 69; length++) {
+      BlockHeader paddedHeader = block.getInstance().getBlockHeader().toBuilder()
+          .setWitnessSignature(signature.concat(ByteString.copyFrom(new byte[length - 65])))
+          .build();
+      BlockCapsule paddedBlock = new BlockCapsule(block.getInstance().toBuilder()
+          .setBlockHeader(paddedHeader).build());
+      when(dps.allowStrictEcdsaValidation()).thenReturn(false);
+      Assert.assertTrue(paddedBlock.validateSignature(dps, accountStore));
+      when(dps.allowStrictEcdsaValidation()).thenReturn(true);
+      if (length <= 68) {
+        Assert.assertTrue(paddedBlock.validateSignature(dps, accountStore));
+      } else {
+        Assert.assertThrows(ValidateSignatureException.class,
+            () -> paddedBlock.validateSignature(dps, accountStore));
+      }
+    }
   }
 
   /**

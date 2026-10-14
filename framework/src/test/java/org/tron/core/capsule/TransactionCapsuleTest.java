@@ -83,7 +83,16 @@ public class TransactionCapsuleTest extends BaseTest {
     ECKey key = ECKey.fromPrivate(BigInteger.TEN);
     Permission permission = permissionFor(key);
     ByteString signature = ByteString.copyFrom(key.Base64toBytes(key.signHash(hash)));
-    ByteString padded = signature.concat(ByteString.copyFrom(new byte[3]));
+    for (int length = 65; length <= 68; length++) {
+      ByteString padded = signature.concat(ByteString.copyFrom(new byte[length - 65]));
+      for (boolean strict : new boolean[]{false, true}) {
+        Assert.assertEquals(1L, TransactionCapsule.checkWeight(
+            permission, Arrays.asList(padded), hash, null, strict));
+      }
+      Assert.assertEquals(1L, TransactionCapsule.checkWeight(
+          permission, Arrays.asList(padded), hash, null));
+    }
+    ByteString padded = signature.concat(ByteString.copyFrom(new byte[4]));
 
     Assert.assertEquals(1L, TransactionCapsule.checkWeight(
         permission, Arrays.asList(signature), hash, null, true));

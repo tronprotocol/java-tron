@@ -35,7 +35,7 @@ public class ManagerSignaturePreValidationTest {
     DynamicPropertiesStore dynamicPropertiesStore = mock(DynamicPropertiesStore.class);
     Manager manager = createManager(validateSignService, dynamicPropertiesStore);
     TransactionCapsule valid = transactionWithSignatures(65);
-    TransactionCapsule invalidMultiSign = transactionWithSignatures(65, 66);
+    TransactionCapsule invalidMultiSign = transactionWithSignatures(65, 69);
 
     when(dynamicPropertiesStore.allowStrictEcdsaValidation()).thenReturn(true);
     runSubmittedTasks(validateSignService);
@@ -44,7 +44,7 @@ public class ManagerSignaturePreValidationTest {
         () -> invokePreValidate(manager, Arrays.asList(valid, invalidMultiSign)));
 
     assertTrue(exception.getCause() instanceof ValidateSignatureException);
-    assertEquals("Signature size is 66", exception.getCause().getMessage());
+    assertEquals("Signature size is 69", exception.getCause().getMessage());
     verify(validateSignService, never()).submit(any(Callable.class));
   }
 
@@ -82,11 +82,11 @@ public class ManagerSignaturePreValidationTest {
   }
 
   @Test
-  public void testSubmitCanonicalStrictSignature() throws Exception {
+  public void testSubmitSupportedStrictSignatureLengths() throws Exception {
     ExecutorService validateSignService = mock(ExecutorService.class);
     DynamicPropertiesStore dynamicPropertiesStore = mock(DynamicPropertiesStore.class);
     Manager manager = createManager(validateSignService, dynamicPropertiesStore);
-    TransactionCapsule transaction = transactionWithSignatures(65);
+    TransactionCapsule transaction = transactionWithSignatures(65, 66, 67, 68);
 
     when(dynamicPropertiesStore.allowStrictEcdsaValidation()).thenReturn(true);
     runSubmittedTasks(validateSignService);
