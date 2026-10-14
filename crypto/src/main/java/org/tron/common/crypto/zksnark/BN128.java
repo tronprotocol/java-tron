@@ -30,8 +30,8 @@ import java.math.BigInteger;
  * specific field <br/> Point at infinity is encoded as <code>(0, 0, 0)</code> <br/> <br/>
  *
  * This curve has embedding degree 12 with respect to "r" (see {@link Params#R}), which means that
- * "r" is a multiple of "p ^ 12 - 1", this condition is important for pairing operation implemented
- * in {@link PairingCheck}<br/> <br/>
+ * 12 is the smallest positive integer k such that "r" divides "p ^ k - 1". This condition is
+ * important for the pairing operation implemented in {@link PairingCheck}<br/> <br/>
  *
  * Code of curve arithmetic has been ported from <a href="https://github.com/scipr-lab/libff/blob/master/libff/algebra/curves/alt_bn128/alt_bn128_g1.cpp">libff</a>
  * <br/> <br/>
