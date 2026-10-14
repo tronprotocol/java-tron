@@ -42,8 +42,7 @@ public class ChainInventoryMsgHandler implements TronMsgHandler {
 
     ChainInventoryMessage chainInventoryMessage = (ChainInventoryMessage) msg;
 
-    Pair<Deque<BlockId>, Long> requested = peer.getSyncChainRequested();
-    check(peer, requested, chainInventoryMessage);
+    check(peer, chainInventoryMessage);
 
     peer.setFetchAble(false);
 
@@ -102,8 +101,8 @@ public class ChainInventoryMsgHandler implements TronMsgHandler {
     }
   }
 
-  private void check(PeerConnection peer, Pair<Deque<BlockId>, Long> requested,
-      ChainInventoryMessage msg) throws P2pException {
+  private void check(PeerConnection peer, ChainInventoryMessage msg) throws P2pException {
+    Pair<Deque<BlockId>, Long> requested = peer.getSyncChainRequested();
     if (requested == null) {
       throw new P2pException(TypeEnum.BAD_MESSAGE, "not send syncBlockChainMsg");
     }
