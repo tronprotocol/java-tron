@@ -7,7 +7,6 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.tron.common.parameter.RateLimiterInitialization.createHttpItem;
 import static org.tron.common.parameter.RateLimiterInitialization.createRpcItem;
-import static org.tron.core.Constant.ECKey_ENGINE;
 
 import com.google.common.collect.Lists;
 import com.typesafe.config.ConfigFactory;
@@ -168,8 +167,6 @@ public class ParameterTest {
     assertEquals(1, parameter.getForbidTransferToContract());
     parameter.setTrustNodeAddr("address");
     assertEquals("address", parameter.getTrustNodeAddr());
-    parameter.setWalletExtensionApi(false);
-    assertFalse(parameter.isWalletExtensionApi());
     parameter.setEstimateEnergy(false);
     assertFalse(parameter.isEstimateEnergy());
     parameter.setEstimateEnergyMaxRetry(2);
@@ -216,8 +213,6 @@ public class ParameterTest {
     assertEquals(100, parameter.getRateLimiterGlobalIpQps());
     assertNull(parameter.getEventPluginConfig());
     assertNull(parameter.getEventFilter());
-    parameter.setCryptoEngine(ECKey_ENGINE);
-    assertEquals(ECKey_ENGINE, parameter.getCryptoEngine());
     parameter.setFullNodeHttpEnable(false);
     assertFalse(parameter.isFullNodeHttpEnable());
     parameter.setSolidityNodeHttpEnable(false);

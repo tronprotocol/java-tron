@@ -38,6 +38,22 @@ java-tron-1.0.0/bin/FullNode -c /path/to/node.conf -w
 
 If `-c` is omitted, the node loads the `config.conf` bundled inside the jar (the same file shipped with the distribution) merged with `reference.conf` as fallback. The bundled file already enables discovery/persist for mainnet operation. For production, copy it out, edit, and pass the edited copy via `-c` to make your configuration visible to operators.
 
+## Migrating legacy `crypto.engine` settings
+
+SM2/SM3 support has been removed. The node always uses ECKey/secp256k1 and SHA-256;
+`crypto.engine` no longer selects a runtime cryptographic engine.
+
+| Existing setting | Startup behavior | Operator action |
+|------------------|------------------|-----------------|
+| Key absent | Uses ECKey and SHA-256 | No change needed |
+| `crypto.engine = "eckey"` (case-insensitive) | Starts with a deprecation warning | Remove the redundant setting |
+| Any other value, including `"sm2"`, an empty string, `null`, or a non-string value | Fails before database or keystore initialization | Verify the network's cryptographic suite before upgrading |
+
+An existing SM2/SM3 deployment must remain on a compatible release until it has a
+separately planned migration. Removing the setting or changing it to `eckey` does
+not convert its chain data, addresses, keys, or signatures. Do not open an existing
+SM2/SM3 chain database with this ECKey/SHA-256-only node.
+
 ## Minimal Config File
 
 Your config file only needs to contain what you want to change. The following is sufficient for a mainnet full node:
@@ -106,8 +122,12 @@ node {
     solidityPort = 50061
     # Maximum concurrent calls per connection. 0 uses the secure default of 100.
     maxConcurrentCallsPerConnection = 100
+    # Maximum RST_STREAM frames per connection per window. 0 uses the default of 1000.
+    maxRstStream = 1000
+    # RST_STREAM counting window in seconds. 0 uses the default of 5.
+    secondsPerWindow = 5
     # Idle connection timeout (ms). 0 = no limit.
-    maxConnectionIdleInMillis = 0
+    maxConnectionIdleInMillis = 60000
     # Minimum active connections required before broadcasting transactions.
     minEffectiveConnection = 1
   }
@@ -117,6 +137,15 @@ node {
 > **Upgrade note:** `node.rpc.maxConcurrentCallsPerConnection = 0` previously meant no limit.
 > It now selects the secure default of 100. Configure an explicit positive value if a client
 > needs more than 100 concurrent calls on one connection.
+
+> **Upgrade note:** `node.rpc.maxRstStream = 0` and `node.rpc.secondsPerWindow = 0`
+> no longer disable RST_STREAM flood protection. Each zero independently falls back to its
+> secure default (1000 frames / 5 seconds), with a startup warning. Negative values and
+> `maxRstStream = 2147483647` (`Integer.MAX_VALUE`, grpc-java's disable sentinel) are rejected.
+> These are java-tron defaults; grpc-java itself defaults to no limit.
+> Exceeding the limit closes that connection with `GOAWAY(ENHANCE_YOUR_CALM)`.
+> Clients that frequently cancel calls, including deadline cancellations, may need explicit
+> positive limits tuned to their workload; keep `maxRstStream` below `2147483647`.
 
 To disable an API endpoint that you do not want to expose publicly, set its `Enable` flag to `false` or add endpoints to `node.disabledApi`:
 
@@ -151,12 +180,13 @@ storage.properties = [
 ### Block Production (Super Representatives)
 
 ```hocon
-# Plain private key (use localwitnesskeystore for production)
+# DEPRECATED: plain private key, insecure (anyone reading the config file
+# sees the keys). Use localwitnesskeystore for production.
 localwitness = [
   "your-private-key-hex"
 ]
 
-# Recommended: keystore file
+# Recommended: encrypted keystore file
 # localwitnesskeystore = [
 #   "/path/to/localwitnesskeystore.json"
 # ]
@@ -164,6 +194,10 @@ localwitness = [
 # Required when the witness account has delegated block-signing to a separate key
 # localWitnessAccountAddress = "T..."
 ```
+
+> **Security — protect the block-producing key.** A Super Representative's key can produce blocks and control the account's funds. Prefer the encrypted `localwitnesskeystore` over a plaintext `localwitness` key, and:
+> - Restrict the key/keystore file so other users on the host cannot read it: `chmod 600 <key-or-keystore-file>`.
+> - **Never commit a config file that contains a real private key to Git** — it stays in the history permanently. Add such files to `.gitignore` and keep the key file **outside** the repository directory.
 
 ### JSON-RPC (Ethereum-compatible, `node.jsonrpc`)
 
@@ -233,7 +267,6 @@ Not all parameters support hot-reload. Parameters that affect node identity, gen
 
 | Parameter | Reason |
 |-----------|--------|
-| `crypto.engine` | Changing the key-derivation algorithm will fork the node |
 | `genesis.block.*` | Must be identical on every node in the network |
 | `committee.*` | Controlled by on-chain governance proposals; manual overrides are for private chains only |
 | `node.p2p.version` | Must match the network (11111 for mainnet) |

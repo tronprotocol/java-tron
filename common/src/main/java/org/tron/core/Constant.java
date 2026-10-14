@@ -58,9 +58,6 @@ public class Constant {
   public static final String MARKET_PAIR_PRICE_TO_ORDER = "market_pair_price_to_order";
   public static final String ROCKSDB = "ROCKSDB";
 
-  // Crypto engine
-  public static final String ECKey_ENGINE = "ECKey";
-
   // Network
   public static final String LOCAL_HOST = "127.0.0.1";
 

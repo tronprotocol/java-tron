@@ -7,6 +7,17 @@ plugins {
 
 ext {
     grpcVersion = "1.83.1"
+    // Netty 4.2 split io.netty.handler.codec.protobuf out of netty-codec into its
+    // own artifact. Both :framework and :p2p put the varint32 framing codecs on
+    // their channel pipelines and so must declare it explicitly. Netty itself
+    // arrives transitively through grpc-netty, so this version has to move with
+    // grpcVersion above — keeping it here makes that coupling visible instead of
+    // leaving two literals to drift apart.
+    nettyVersion = "4.2.15.Final"
+    // Shared by :protocol and :p2p, which both generate from .proto files.
+    protobufVersion = "3.25.8"
+    // Shared by :framework, :plugins and :p2p.
+    checkstyleVersion = "8.7"
 }
 
 allprojects {
@@ -107,8 +118,6 @@ subprojects {
 
         // https://www.oracle.com/java/technologies/javase/11-relnote-issues.html#JDK-8190378
         implementation group: 'javax.annotation', name: 'javax.annotation-api', version: '1.3.2'
-        // for json-rpc, see https://github.com/briandilley/jsonrpc4j/issues/278
-        implementation group: 'javax.jws', name: 'javax.jws-api', version: '1.1'
 
         testImplementation group: 'junit', name: 'junit', version: '4.13.2'
         testImplementation "org.mockito:mockito-inline:4.11.0"
