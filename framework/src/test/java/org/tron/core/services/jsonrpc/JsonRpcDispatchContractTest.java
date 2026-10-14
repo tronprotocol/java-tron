@@ -57,10 +57,13 @@ public class JsonRpcDispatchContractTest {
   @Test
   public void testStringParameterConversionContract() throws Exception {
     JsonNode objectResponse = handle(request("callStr", "[\"args\",{\"blockNumber\":\"0x1\"}]"));
-    assertParseErrorWithLostId(objectResponse);
+    assertParameterConversionError(objectResponse, 1);
 
     JsonNode arrayResponse = handle(request("callStr", "[\"args\",[1,2]]"));
-    assertParseErrorWithLostId(arrayResponse);
+    assertParameterConversionError(arrayResponse, 1);
+
+    JsonNode firstIndexResponse = handle(request("oneArg", "[{\"a\":1}]"));
+    assertParameterConversionError(firstIndexResponse, 0);
 
     JsonNode numberResponse = handle(request("callStr", "[\"args\",123]"));
     Assert.assertEquals("str:123", numberResponse.get("result").asText());
@@ -127,6 +130,16 @@ public class JsonRpcDispatchContractTest {
     JsonNode error = response.get("error");
     Assert.assertEquals(-32602, error.get("code").asInt());
     Assert.assertEquals("method parameters invalid", error.get("message").asText());
+    Assert.assertEquals(7, response.get("id").asInt());
+  }
+
+  private static void assertParameterConversionError(JsonNode response, int index) {
+    JsonNode error = response.get("error");
+    Assert.assertEquals(-32602, error.get("code").asInt());
+    Assert.assertEquals("Failed to read method parameter at index " + index,
+        error.get("message").asText());
+    Assert.assertFalse(error.has("data"));
+    Assert.assertTrue(response.get("id").isInt());
     Assert.assertEquals(7, response.get("id").asInt());
   }
 

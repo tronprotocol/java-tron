@@ -21,6 +21,8 @@ import org.tron.common.prometheus.MetricLabels;
 import org.tron.common.prometheus.Metrics;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.ChainBaseManager;
+import org.tron.core.Constant;
+import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.P2pException;
 import org.tron.core.exception.P2pException.TypeEnum;
@@ -91,15 +93,16 @@ public class TransactionsMsgHandler implements TronMsgHandler {
       return;
     }
     TransactionsMessage transactionsMessage = (TransactionsMessage) msg;
-    check(peer, transactionsMessage);
-    for (Transaction trx : transactionsMessage.getTransactions().getTransactionsList()) {
-      Item item = new Item(new TransactionMessage(trx).getMessageId(), InventoryType.TRX);
+    Set<Sha256Hash> ids = check(peer, transactionsMessage);
+    for (Sha256Hash id : ids) {
+      Item item = new Item(id, InventoryType.TRX);
       peer.getAdvInvRequest().remove(item);
     }
     int smartContractQueueSize = 0;
     int trxHandlePoolQueueSize = 0;
     int dropSmartContractCount = 0;
     int invalidSignatureCount = 0;
+    int oversizedCount = 0;
     for (Transaction trx : transactionsMessage.getTransactions().getTransactionsList()) {
       if (isClosed) {
         logger.info("TransactionsMsgHandler is closed during processing, stop submit");
@@ -109,10 +112,19 @@ public class TransactionsMsgHandler implements TronMsgHandler {
         invalidSignatureCount++;
         continue;
       }
-      int type = trx.getRawData().getContract(0).getType().getNumber();
+      TransactionCapsule capsule = new TransactionCapsule(trx);
+      capsule.sanitize();
+      capsule.resetResult();
+      if (capsule.getSerializedSize() > Constant.TRANSACTION_MAX_BYTE_SIZE) {
+        oversizedCount++;
+        continue;
+      }
+      // Both queues must retain the cleaned transaction, including its serialized bytes.
+      Transaction cleanTrx = capsule.getInstance();
+      int type = cleanTrx.getRawData().getContract(0).getType().getNumber();
       if (type == ContractType.TriggerSmartContract_VALUE
           || type == ContractType.CreateSmartContract_VALUE) {
-        if (!smartContractQueue.offer(new TrxEvent(peer, new TransactionMessage(trx)))) {
+        if (!smartContractQueue.offer(new TrxEvent(peer, new TransactionMessage(cleanTrx)))) {
           smartContractQueueSize = smartContractQueue.size();
           trxHandlePoolQueueSize = queue.size();
           dropSmartContractCount++;
@@ -120,7 +132,7 @@ public class TransactionsMsgHandler implements TronMsgHandler {
       } else {
         try {
           ExecutorServiceManager.submit(
-              trxHandlePool, () -> handleTransaction(peer, new TransactionMessage(trx)));
+              trxHandlePool, () -> handleTransaction(peer, new TransactionMessage(cleanTrx)));
         } catch (RejectedExecutionException e) {
           logger.warn("Submit task to {} failed", trxEsName);
           break;
@@ -139,13 +151,17 @@ public class TransactionsMsgHandler implements TronMsgHandler {
       logger.warn("Add smart contract failed, drop count: {}, queueSize {}:{}",
           dropSmartContractCount, smartContractQueueSize, trxHandlePoolQueueSize);
     }
+    if (oversizedCount > 0) {
+      logger.warn("Drop oversized transactions, count: {}", oversizedCount);
+    }
   }
 
-  private void check(PeerConnection peer, TransactionsMessage msg) throws P2pException {
+  private Set<Sha256Hash> check(PeerConnection peer, TransactionsMessage msg)
+      throws P2pException {
     List<Transaction> list = msg.getTransactions().getTransactionsList();
     Set<Sha256Hash> seen = new HashSet<>(list.size() * 2);
     for (Transaction trx : list) {
-      Sha256Hash id = new TransactionMessage(trx).getMessageId();
+      Sha256Hash id = new TransactionCapsule(trx).getTransactionId();
       if (!seen.add(id)) {
         throw new P2pException(TypeEnum.BAD_MESSAGE,
             "TransactionsMessage contains duplicate transaction: " + id);
@@ -160,6 +176,7 @@ public class TransactionsMsgHandler implements TronMsgHandler {
             "tx " + item.getHash() + " contract size should be greater than 0");
       }
     }
+    return seen;
   }
 
   private boolean hasValidSignatureLengths(Transaction trx) {
