@@ -90,25 +90,28 @@ public class AdminJsonRpcRequestTest {
 
   @Test
   public void invalidIdTypesAreRejectedBeforeInvocation() throws Exception {
-    for (String id : new String[] {"true", "false", "{}", "[]"}) {
+    for (String id : new String[] {"null", "true", "false", "{}", "[]"}) {
       assertError(sender.send(REQUEST + ",\"id\":" + id + "}"), -32600, "null");
     }
     Mockito.verifyNoInteractions(adminJsonRpc);
   }
 
   @Test
-  public void outOfRangeNumericIdsAreRejectedBeforeInvocation() throws Exception {
+  public void numericIdsOutsideLongRangeRetainTheirValue() throws Exception {
     for (String id : new String[] {"9223372036854775808", "-9223372036854775809",
         "18446744073709551617", "9223372036854775807.1", "-9223372036854775808.1",
         "1e40", "-1e40"}) {
-      assertError(sender.send(REQUEST + ",\"id\":" + id + "}"), -32600, "null");
+      JsonNode response = parse(sender.send(REQUEST + ",\"id\":" + id + "}"));
+      assertId(id, response.get("id"));
+      Assert.assertTrue(response.path("result").path("success").asBoolean());
+      Mockito.verify(adminJsonRpc).addPeer(ENDPOINT);
+      Mockito.clearInvocations(adminJsonRpc);
     }
-    Mockito.verifyNoInteractions(adminJsonRpc);
   }
 
   @Test
   public void acceptedIdsRetainTheirValueAndType() throws Exception {
-    for (String id : new String[] {"null", "\"null\"", "\"\"", "\"请求-7\"", "7", "0",
+    for (String id : new String[] {"\"null\"", "\"\"", "\"请求-7\"", "7", "0",
         "9223372036854775807", "-9223372036854775808", "9007199254740993",
         "0.12345678901234567890123456789", "9223372036854775807.0", "-0.5", "1e-20"}) {
       JsonNode response = parse(sender.send(REQUEST + ",\"id\":" + id + "}"));
@@ -123,17 +126,22 @@ public class AdminJsonRpcRequestTest {
   @Test
   public void invalidVersionsAreRejectedBeforeInvocation() throws Exception {
     for (String version : new String[] {"\"3.0\"", "2.0", "null", "true", "{}", "[]"}) {
-      assertError(sender.send(REQUEST.replace("\"2.0\"", version) + ",\"id\":7}"),
-          -32600, "7");
+      JsonNode response = assertError(
+          sender.send(REQUEST.replace("\"2.0\"", version) + ",\"id\":7}"), -32600, "7");
+      Assert.assertEquals("Invalid Request: jsonrpc must be \"2.0\"",
+          response.path("error").path("message").asText());
     }
-    assertError(sender.send("{\"method\":\"admin_addPeer\",\"params\":" + PARAMS + ",\"id\":7}"),
+    JsonNode response = assertError(
+        sender.send("{\"method\":\"admin_addPeer\",\"params\":" + PARAMS + ",\"id\":7}"),
         -32600, "7");
+    Assert.assertEquals("Invalid Request: jsonrpc must be \"2.0\"",
+        response.path("error").path("message").asText());
     Mockito.verifyNoInteractions(adminJsonRpc);
   }
 
   @Test
   public void invalidMethodsAreRejectedBeforeInvocation() throws Exception {
-    for (String method : new String[] {"7", "null", "true", "{}", "[]"}) {
+    for (String method : new String[] {"\"\"", "7", "null", "true", "{}", "[]"}) {
       assertError(sender.send(REQUEST.replace("\"admin_addPeer\"", method) + ",\"id\":7}"),
           -32600, "7");
     }
@@ -143,11 +151,17 @@ public class AdminJsonRpcRequestTest {
 
   @Test
   public void scalarParamsAreRejectedBeforeInvocation() throws Exception {
-    for (String params : new String[] {"\"text\"", "null", "7", "true"}) {
+    for (String params : new String[] {"\"text\"", "7", "true"}) {
       assertError(sender.send(REQUEST.replace(PARAMS, params) + ",\"id\":7}"),
           -32600, "7");
     }
     Mockito.verifyNoInteractions(adminJsonRpc);
+  }
+
+  @Test
+  public void nullParamsReachTheDispatcher() throws Exception {
+    JsonNode response = parse(sender.send(REQUEST.replace(PARAMS, "null") + ",\"id\":7}"));
+    Assert.assertNotEquals(-32600, response.path("error").path("code").asInt());
   }
 
   @Test
@@ -189,7 +203,7 @@ public class AdminJsonRpcRequestTest {
   public void parameterBindingFailuresRetainIdsAndSilenceNotifications() throws Exception {
     for (String params : new String[] {"[{}]", "{\"endpoint\":{}}"}) {
       String request = REQUEST.replace(PARAMS, params);
-      for (String id : new String[] {"9", "null", "\"request\"", "9223372036854775807",
+      for (String id : new String[] {"9", "\"request\"", "9223372036854775807",
           "0.12345678901234567890123456789"}) {
         JsonNode error = assertError(sender.send(request + ",\"id\":" + id + "}"), -32602, id)
             .get("error");
@@ -214,7 +228,7 @@ public class AdminJsonRpcRequestTest {
   public void errorResponsesRetainAcceptedIds() throws Exception {
     Mockito.when(adminJsonRpc.addPeer(ENDPOINT))
         .thenThrow(new JsonRpcInvalidParamsException("Invalid admin parameters"));
-    for (String id : new String[] {"null", "\"null\"", "9223372036854775807",
+    for (String id : new String[] {"\"null\"", "9223372036854775807",
         "0.12345678901234567890123456789"}) {
       JsonNode response = assertError(sender.send(REQUEST + ",\"id\":" + id + "}"), -32602, id);
       Assert.assertEquals("Invalid admin parameters", response.path("error").path("message")
@@ -234,14 +248,14 @@ public class AdminJsonRpcRequestTest {
     Mockito.doThrow(new IllegalStateException("sensitive-detail"))
         .when(interceptor).preHandleJson(Mockito.any(JsonNode.class));
     requestHandler.setInterceptorList(Collections.singletonList(interceptor));
-    for (String id : new String[] {"9", "null", "\"request\""}) {
+    for (String id : new String[] {"9", "\"request\""}) {
       String body = sender.send(REQUEST + ",\"id\":" + id + "}");
       JsonNode response = assertError(body, -32603, id);
       Assert.assertEquals("Internal error", response.path("error").path("message").asText());
       Assert.assertFalse(body.contains("sensitive-detail"));
     }
     Assert.assertEquals("", sender.send(REQUEST + "}"));
-    Mockito.verify(interceptor, Mockito.times(4)).preHandleJson(Mockito.any(JsonNode.class));
+    Mockito.verify(interceptor, Mockito.times(3)).preHandleJson(Mockito.any(JsonNode.class));
     Mockito.verifyNoInteractions(adminJsonRpc);
   }
 
@@ -252,7 +266,7 @@ public class AdminJsonRpcRequestTest {
       Mockito.doAnswer(invocation -> {
         throw failure;
       }).when(adminJsonRpc).addPeer(ENDPOINT);
-      for (String id : new String[] {"9", "null", "\"request\""}) {
+      for (String id : new String[] {"9", "\"request\""}) {
         String body = sender.send(REQUEST + ",\"id\":" + id + "}");
         JsonNode error = assertError(body, -32603, id).get("error");
         Assert.assertEquals("Internal error", error.path("message").asText());
@@ -261,7 +275,7 @@ public class AdminJsonRpcRequestTest {
         Assert.assertFalse(body.contains(failure.getClass().getName()));
       }
       Assert.assertEquals("", sender.send(REQUEST + "}"));
-      Mockito.verify(adminJsonRpc, Mockito.times(4)).addPeer(ENDPOINT);
+      Mockito.verify(adminJsonRpc, Mockito.times(3)).addPeer(ENDPOINT);
       Mockito.clearInvocations(adminJsonRpc);
     }
   }
