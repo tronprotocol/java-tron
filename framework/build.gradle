@@ -10,13 +10,8 @@ apply plugin: 'checkstyle'
 
 mainClassName = 'org.tron.program.FullNode'
 
-
-
-
-
 configurations {
     checkstyleConfig
-
 }
 
 configurations.getByName('checkstyleConfig') {
@@ -67,6 +62,9 @@ dependencies {
     testImplementation group: 'jakarta.servlet', name: 'jakarta.servlet-api', version: '5.0.0'
 
     implementation group: 'org.zeromq', name: 'jeromq', version: '0.5.3'
+    implementation group: 'com.kohlschutter.junixsocket', name: 'junixsocket-core', version: '2.11.1'
+    // Exclude the Java 22 FFM provider so both JDK 8 and JDK 17 can use the console.
+    implementation group: 'org.jline', name: 'jline', version: '3.30.17', classifier: 'jdk8'
     api project(":chainbase")
     api project(":protocol")
     api project(":actuator")
@@ -146,6 +144,8 @@ def configureTestTask = { Task t ->
             System.getProperty('runPrecompileBenchmark', 'false')
     t.doFirst {
         t.forkEvery = 100
+        // Fresh-JVM startup tests must use production resources, including logback.xml.
+        t.systemProperty 'fullNode.runtimeClasspath', sourceSets.main.runtimeClasspath.asPath
     }
 }
 
