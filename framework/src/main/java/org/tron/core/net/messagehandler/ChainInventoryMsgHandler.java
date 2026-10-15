@@ -108,14 +108,14 @@ public class ChainInventoryMsgHandler implements TronMsgHandler {
   }
 
   private void check(PeerConnection peer, ChainInventoryMessage msg) throws P2pException {
-    Pair<Deque<BlockId>, Long> requested = peer.getSyncChainRequested();
-    if (requested == null) {
-      throw new P2pException(TypeEnum.BAD_MESSAGE, "not send syncBlockChainMsg");
-    }
-
     HelloMessage hello = peer.getHelloMessageReceive();
     if (hello == null) {
       throw new P2pException(TypeEnum.BAD_MESSAGE, "hello message not received");
+    }
+
+    Pair<Deque<BlockId>, Long> requested = peer.getSyncChainRequested();
+    if (requested == null) {
+      throw new P2pException(TypeEnum.BAD_MESSAGE, "not send syncBlockChainMsg");
     }
 
     List<BlockId> blockIds = msg.getBlockIds();
