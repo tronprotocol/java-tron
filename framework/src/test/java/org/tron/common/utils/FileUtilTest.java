@@ -2,24 +2,20 @@ package org.tron.common.utils;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.tron.common.utils.FileUtil.readData;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.nio.file.FileVisitResult;
-import java.nio.file.FileVisitor;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Stream;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -39,15 +35,16 @@ public class FileUtilTest {
 
   @After
   public void tearDown() throws IOException {
-    Files.walk(tempDir)
-        .sorted(Comparator.reverseOrder())
-        .forEach(path -> {
-          try {
-            Files.delete(path);
-          } catch (IOException e) {
-            e.printStackTrace();
-          }
-        });
+    try (Stream<Path> paths = Files.walk(tempDir)) {
+      paths.sorted(Comparator.reverseOrder())
+          .forEach(path -> {
+            try {
+              Files.delete(path);
+            } catch (IOException e) {
+              e.printStackTrace();
+            }
+          });
+    }
   }
 
   @Test
@@ -87,24 +84,15 @@ public class FileUtilTest {
 
   @Test
   public void testCreateFileIfNotExists() {
-    String existFile = "existsfile.txt";
-    File file1 = new File(existFile);
-    try {
-      file1.createNewFile();
-    } catch (IOException e) {
-      System.out.println("ignore this exception.");
-    }
-    assertTrue(file1.exists());
-    assertTrue(FileUtil.createDirIfNotExists(existFile));
-    assertTrue(file1.exists());
+    Path existingFile = tempDir.resolve("file1.txt");
+    assertTrue(Files.isRegularFile(existingFile));
+    assertTrue(FileUtil.createFileIfNotExists(existingFile.toString()));
+    assertTrue(Files.isRegularFile(existingFile));
 
-    String notExistFile = "notexistsfile.txt";
-    File file2 = new File(notExistFile);
-    assertTrue(!file2.exists());
-    assertTrue(FileUtil.createDirIfNotExists(notExistFile));
-    assertTrue(file2.exists());
-    file1.delete();
-    file2.delete();
+    Path newFile = tempDir.resolve("new-file.txt");
+    assertFalse(Files.exists(newFile));
+    assertTrue(FileUtil.createFileIfNotExists(newFile.toString()));
+    assertTrue(Files.isRegularFile(newFile));
   }
 
   @Test

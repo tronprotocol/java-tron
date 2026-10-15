@@ -20,11 +20,8 @@ import static org.tron.common.math.Maths.max;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
-import org.tron.common.BaseTest;
-import org.tron.common.TestConstants;
+import org.tron.common.BaseMethodTest;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.RuntimeImpl;
 import org.tron.common.runtime.TvmTestUtils;
@@ -34,7 +31,6 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.ReceiptCapsule;
 import org.tron.core.capsule.TransactionCapsule;
-import org.tron.core.config.args.Args;
 import org.tron.core.db.TransactionTrace;
 import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.exception.ContractExeException;
@@ -54,34 +50,24 @@ import org.tron.protos.Protocol.Transaction.raw;
 import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 
-public class BandWidthRuntimeTest extends BaseTest {
+public class BandWidthRuntimeTest extends BaseMethodTest {
 
   public static final long totalBalance = 1000_0000_000_000L;
   private static final String dbDirectory = "db_BandWidthRuntimeTest_test";
   private static final String OwnerAddress = "TCWHANtDDdkZCTo2T2peyEq3Eg9c2XB7ut";
   private static final String TriggerOwnerAddress = "TCSgeWapPJhCqgWRxXCKb6jJ5AgNWSGjPA";
   private static final String TriggerOwnerTwoAddress = "TPMBUANrTwwQAPwShn7ZZjTJz1f3F8jknj";
-  private static boolean init;
 
-  @BeforeClass
-  public static void init() {
-    Args.setParam(
-        new String[]{
-            "--output-directory", dbPath(),
-            "--storage-db-directory", dbDirectory,
-        },
-        TestConstants.TEST_CONF
-    );
+  @Override
+  protected String[] extraArgs() {
+    return new String[]{"--storage-db-directory", dbDirectory, "--debug"};
   }
 
   /**
    * Init data.
    */
-  @Before
-  public void before() {
-    if (init) {
-      return;
-    }
+  @Override
+  protected void afterInit() {
     //init energy
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(1526547838000L);
     dbManager.getDynamicPropertiesStore().saveTotalEnergyWeight(10_000_000L);
@@ -117,7 +103,6 @@ public class BandWidthRuntimeTest extends BaseTest {
 
     dbManager.getDynamicPropertiesStore()
         .saveLatestBlockHeaderTimestamp(System.currentTimeMillis() / 1000);
-    init = true;
   }
 
   @Test
@@ -147,7 +132,7 @@ public class BandWidthRuntimeTest extends BaseTest {
       Assert.assertEquals(45706, energy);
       Assert.assertEquals(totalBalance, balance);
     } catch (TronException e) {
-      Assert.assertNotNull(e);
+      throw new AssertionError("Unexpected transaction failure", e);
     }
   }
 
@@ -189,7 +174,7 @@ public class BandWidthRuntimeTest extends BaseTest {
       Assert.assertEquals(totalBalance - receipt.getEnergyFee(),
           balance);
     } catch (TronException e) {
-      Assert.assertNotNull(e);
+      throw new AssertionError("Unexpected transaction failure", e);
     } finally {
       CommonParameter.getInstance().setDebug(originalDebug);
     }

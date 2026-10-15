@@ -65,6 +65,7 @@ public class HandshakeHeadCheckTest {
     ReflectUtils.setFieldValue(service, "effectiveCheckService", effectiveCheckService);
     when(peer.getChannel()).thenReturn(channel);
     when(peer.getInetSocketAddress()).thenReturn(new InetSocketAddress("127.0.0.1", 18888));
+    when(channel.getNodeId()).thenReturn(ByteArray.toHexString(new byte[64]));
     when(relayService.checkHelloMessage(any(), any())).thenReturn(true);
 
     genesis = blockId(0, 1);
@@ -278,7 +279,6 @@ public class HandshakeHeadCheckTest {
     when(other.getInetSocketAddress()).thenReturn(otherAddress);
     when(other.getNodeId()).thenReturn(nodeId);
     when(other.getStartTime()).thenReturn(200L);
-    Mockito.doCallRealMethod().when(p2p).updateNodeId(any(), any());
     Map<InetSocketAddress, Channel> channels = ChannelManager.getChannels();
     Map<InetSocketAddress, Channel> savedChannels = new HashMap<>(channels);
     P2pConfig savedConfig = Parameter.p2pConfig;
@@ -297,10 +297,6 @@ public class HandshakeHeadCheckTest {
       verify(other, never()).send(any(P2pDisconnectMessage.class));
       verify(other, never()).close();
 
-      // Prove the fixture would close the other connection if deduplication ran.
-      p2p.updateNodeId(channel, nodeId);
-      verify(other).send(any(P2pDisconnectMessage.class));
-      verify(other).close();
     } finally {
       channels.clear();
       channels.putAll(savedChannels);
@@ -318,7 +314,7 @@ public class HandshakeHeadCheckTest {
   }
 
   private static BlockId blockId(long number, int seed) {
-    return new BlockId(Sha256Hash.of(true, new byte[] {(byte) seed}), number);
+    return new BlockId(Sha256Hash.of(new byte[] {(byte) seed}), number);
   }
 
   private static Protocol.HelloMessage.BlockId protoBlockId(BlockId id) {

@@ -22,7 +22,7 @@ public class P2pPacketDecoder extends MessageToMessageDecoder<DatagramPacket> {
     ByteBuf buf = packet.content();
     int length = buf.readableBytes();
     if (length <= 1 || length >= MAXSIZE) {
-      logger.warn("UDP rcv bad packet, from {} length = {}", ctx.channel().remoteAddress(), length);
+      logger.warn("UDP rcv bad packet, from {} length = {}", packet.sender(), length);
       return;
     }
     byte[] encoded = new byte[length];

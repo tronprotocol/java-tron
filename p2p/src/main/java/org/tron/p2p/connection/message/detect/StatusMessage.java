@@ -8,13 +8,14 @@ import org.tron.p2p.discover.Node;
 import org.tron.p2p.protos.Connect;
 import org.tron.p2p.protos.Discover;
 import org.tron.p2p.utils.NetUtil;
+import org.tron.p2p.utils.ProtoUtil;
 
 public class StatusMessage extends Message {
   private Connect.StatusMessage statusMessage;
 
   public StatusMessage(byte[] data) throws Exception {
     super(MessageType.STATUS, data);
-    this.statusMessage = Connect.StatusMessage.parseFrom(data);
+    this.statusMessage = ProtoUtil.parseFrom(Connect.StatusMessage.parser(), data);
   }
 
   public StatusMessage() {
@@ -23,7 +24,7 @@ public class StatusMessage extends Message {
     this.statusMessage = Connect.StatusMessage.newBuilder()
       .setFrom(endpoint)
       .setMaxConnections(Parameter.p2pConfig.getMaxConnections())
-      .setCurrentConnections(ChannelManager.getChannels().size())
+      .setCurrentConnections(ChannelManager.getChannelCount())
       .setNetworkId(Parameter.p2pConfig.getNetworkId())
       .setTimestamp(System.currentTimeMillis()).build();
     this.data = statusMessage.toByteArray();

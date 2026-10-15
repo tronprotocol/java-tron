@@ -7,10 +7,12 @@ import com.typesafe.config.Config;
 import com.typesafe.config.ConfigBeanFactory;
 import com.typesafe.config.ConfigValueFactory;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.tron.core.Constant;
 import org.tron.core.exception.TronError;
 
 // Node configuration bean for the "node" section of config.conf.
@@ -26,7 +28,6 @@ public class NodeConfig {
 
   // ---- Flat scalar fields (auto-bound by ConfigBeanFactory) ----
   private String trustNode = "";
-  private boolean walletExtensionApi = false;
   private int syncFetchBatchNum = 2000;
   private int maxPendingBlockSize = 500;
   private int validateSignThreadNum = 0; // 0 = auto (availableProcessors)
@@ -74,6 +75,7 @@ public class NodeConfig {
   private boolean nodeDetectEnable = false;
   private boolean enableIpv6 = false;
   private boolean effectiveCheckEnable = false;
+  private boolean allowNumericFieldAlias = true;
   private int maxFastForwardNum = 4;
   private ValidContractProtoConfig validContractProto = new ValidContractProtoConfig();
   private int shieldedTransInPendingMaxCounts = 10;
@@ -128,6 +130,7 @@ public class NodeConfig {
   private HttpConfig http = new HttpConfig();
   private RpcConfig rpc = new RpcConfig();
   private JsonRpcConfig jsonrpc = new JsonRpcConfig();
+  private AdminConfig admin = new AdminConfig();
   private NodeBackupConfig backup = new NodeBackupConfig();
   private DynamicConfigSection dynamicConfig = new DynamicConfigSection();
   private DnsConfig dns = new DnsConfig();
@@ -208,6 +211,8 @@ public class NodeConfig {
   public static class RpcConfig {
 
     public static final int DEFAULT_MAX_CONCURRENT_CALLS_PER_CONNECTION = 100;
+    public static final int DEFAULT_MAX_RST_STREAM = 1000;
+    public static final int DEFAULT_SECONDS_PER_WINDOW = 5;
 
     private boolean enable = true;
     private int port = 50051;
@@ -220,12 +225,12 @@ public class NodeConfig {
     private int maxConcurrentCallsPerConnection =
         DEFAULT_MAX_CONCURRENT_CALLS_PER_CONNECTION;
     private int flowControlWindow = 1048576;
-    private long maxConnectionIdleInMillis = 0;
+    private long maxConnectionIdleInMillis = 60000L;
     private long maxConnectionAgeInMillis = 0;
     private int maxMessageSize = 4194304;
     private int maxHeaderListSize = 8192;
-    private int maxRstStream = 0;
-    private int secondsPerWindow = 0;
+    private int maxRstStream = DEFAULT_MAX_RST_STREAM;
+    private int secondsPerWindow = DEFAULT_SECONDS_PER_WINDOW;
     private int minEffectiveConnection = 1;
     private boolean reflectionService = false;
     private boolean trxCacheEnable = false;
@@ -250,6 +255,32 @@ public class NodeConfig {
     private int maxAddressSize = 1000;
     private int maxLogFilterNum = 20000;
     private long maxMessageSize = 4194304;
+  }
+
+  @Getter
+  @Setter
+  public static class AdminConfig {
+
+    private AdminIpcConfig ipc = new AdminIpcConfig();
+    private AdminHttpConfig http = new AdminHttpConfig();
+  }
+
+  @Getter
+  @Setter
+  public static class AdminIpcConfig {
+
+    private boolean enable = false;
+    private String socketDirectory = "";
+  }
+
+  @Getter
+  @Setter
+  public static class AdminHttpConfig {
+
+    private boolean enable = false;
+    private String listenAddress = Constant.LOCAL_HOST;
+    private int port = 8575;
+    private List<String> virtualHosts = new ArrayList<>(Collections.singletonList("localhost"));
   }
 
   @Getter
@@ -327,6 +358,12 @@ public class NodeConfig {
       nc.maxConnectionsWithSameIp = section.getInt("maxActiveNodesWithSameIp");
     }
 
+    // node.walletExtensionApi (removed): the WalletExtension gRPC service no longer exists
+    if (section.hasPath("walletExtensionApi")) {
+      logger.warn("Configuring [node.walletExtensionApi] has been removed and is ignored. "
+          + "The WalletExtension gRPC service no longer exists.");
+    }
+
     // Legacy key fallback: node.allowShieldedTransactionApi wins fullNodeAllowShieldedTransaction
     if (section.hasPath("allowShieldedTransactionApi")) {
       nc.allowShieldedTransactionApi =
@@ -372,6 +409,29 @@ public class NodeConfig {
           RpcConfig.DEFAULT_MAX_CONCURRENT_CALLS_PER_CONNECTION);
       rpc.maxConcurrentCallsPerConnection =
           RpcConfig.DEFAULT_MAX_CONCURRENT_CALLS_PER_CONNECTION;
+    }
+    if (rpc.maxRstStream < 0) {
+      throw new TronError("node.rpc.maxRstStream must be non-negative, got: "
+          + rpc.maxRstStream, PARAMETER_INIT);
+    }
+    if (rpc.secondsPerWindow < 0) {
+      throw new TronError("node.rpc.secondsPerWindow must be non-negative, got: "
+          + rpc.secondsPerWindow, PARAMETER_INIT);
+    }
+    // Only the frame count has a grpc-java disable sentinel; the window does not.
+    if (rpc.maxRstStream == Integer.MAX_VALUE) {
+      throw new TronError("node.rpc.maxRstStream must not be Integer.MAX_VALUE because grpc-java "
+          + "treats it as disabling RST_STREAM flood protection", PARAMETER_INIT);
+    }
+    if (rpc.maxRstStream == 0) {
+      logger.warn("Configuring [node.rpc.maxRstStream] as 0 no longer disables RST_STREAM flood "
+          + "protection; using the secure default of {}.", RpcConfig.DEFAULT_MAX_RST_STREAM);
+      rpc.maxRstStream = RpcConfig.DEFAULT_MAX_RST_STREAM;
+    }
+    if (rpc.secondsPerWindow == 0) {
+      logger.warn("Configuring [node.rpc.secondsPerWindow] as 0 no longer disables RST_STREAM flood "
+          + "protection; using the secure default of {}.", RpcConfig.DEFAULT_SECONDS_PER_WINDOW);
+      rpc.secondsPerWindow = RpcConfig.DEFAULT_SECONDS_PER_WINDOW;
     }
     if (rpc.maxConnectionIdleInMillis == 0) {
       rpc.maxConnectionIdleInMillis = Long.MAX_VALUE;

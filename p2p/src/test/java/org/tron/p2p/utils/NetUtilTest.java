@@ -90,6 +90,20 @@ public class NetUtilTest {
   }
 
   @Test
+  public void testValidPort() {
+    for (int port : new int[]{0, -1, 65536, 70000, Integer.MIN_VALUE, Integer.MAX_VALUE}) {
+      Assert.assertFalse("port=" + port, NetUtil.validPort(port));
+      Assert.assertFalse(NetUtil.validNode(new Node(new byte[64], "1.2.3.4", "", port)));
+      Assert.assertFalse(NetUtil.validNode(new Node(new byte[64], "", "2001:db8::1", port)));
+    }
+    for (int port : new int[]{1, 65535}) {
+      Assert.assertTrue("port=" + port, NetUtil.validPort(port));
+      Assert.assertTrue(NetUtil.validNode(new Node(new byte[64], "1.2.3.4", "", port)));
+      Assert.assertTrue(NetUtil.validNode(new Node(new byte[64], "", "2001:db8::1", port)));
+    }
+  }
+
+  @Test
   public void testGetNode() {
     Discover.Endpoint endpoint = Discover.Endpoint.newBuilder()
         .setPort(100).build();

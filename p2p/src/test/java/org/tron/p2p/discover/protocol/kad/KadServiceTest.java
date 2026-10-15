@@ -30,7 +30,6 @@ public class KadServiceTest {
 
   @Test
   public void test() {
-    Assert.assertNotNull(kadService.getPongTimer());
     Assert.assertNotNull(kadService.getPublicHomeNode());
     Assert.assertEquals(0, kadService.getAllNodes().size());
 

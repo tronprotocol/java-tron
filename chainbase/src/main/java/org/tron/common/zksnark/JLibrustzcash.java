@@ -1,8 +1,6 @@
 package org.tron.common.zksnark;
 
 import lombok.extern.slf4j.Slf4j;
-import org.tron.common.parameter.CommonParameter;
-import org.tron.common.utils.ByteUtil;
 import org.tron.common.zksnark.LibrustzcashParam.BindingSigParams;
 import org.tron.common.zksnark.LibrustzcashParam.CheckOutputNewParams;
 import org.tron.common.zksnark.LibrustzcashParam.CheckOutputParams;

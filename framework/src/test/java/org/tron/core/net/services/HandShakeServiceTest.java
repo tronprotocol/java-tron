@@ -13,6 +13,7 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.Appender;
 import ch.qos.logback.core.read.ListAppender;
 import com.google.protobuf.ByteString;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
@@ -54,6 +55,7 @@ import org.tron.p2p.P2pConfig;
 import org.tron.p2p.P2pService;
 import org.tron.p2p.base.Parameter;
 import org.tron.p2p.connection.Channel;
+import org.tron.p2p.connection.ChannelManager;
 import org.tron.p2p.discover.Node;
 import org.tron.p2p.utils.NetUtil;
 import org.tron.program.Version;
@@ -114,6 +116,7 @@ public class HandShakeServiceTest {
 
     //ok
     Node node = new Node(NetUtil.getNodeId(), a1.getAddress().getHostAddress(), null, a1.getPort());
+    Mockito.when(c1.getNodeId()).thenReturn(node.getHexId());
     HelloMessage helloMessage = new HelloMessage(node, System.currentTimeMillis(),
         ChainBaseManager.getChainBaseManager());
     Assert.assertNotNull(helloMessage.toString());
@@ -121,6 +124,8 @@ public class HandShakeServiceTest {
     Assert.assertEquals(Version.getVersion(),
         new String(helloMessage.getHelloMessage().getCodeVersion().toByteArray()));
     method.invoke(p2pEventHandler, peer, helloMessage.getSendBytes());
+    Assert.assertNotNull(peer.getHelloMessageReceive());
+    Mockito.verify(c1, Mockito.never()).setNodeId(Mockito.anyString());
 
     //dup hello message
     peer.setHelloMessageReceive(helloMessage);
@@ -216,6 +221,7 @@ public class HandShakeServiceTest {
     Args.getInstance().fastForward = true;
     clearPeers();
     Node node2 = new Node(NetUtil.getNodeId(), a1.getAddress().getHostAddress(), null, 10002);
+    Mockito.when(c1.getNodeId()).thenReturn(node2.getHexId());
     Protocol.HelloMessage.Builder builder =
         getHelloMessageBuilder(node2, System.currentTimeMillis(),
             ChainBaseManager.getChainBaseManager());
@@ -243,6 +249,7 @@ public class HandShakeServiceTest {
     method.setAccessible(true);
 
     Node node2 = new Node(NetUtil.getNodeId(), a1.getAddress().getHostAddress(), null, 10002);
+    Mockito.when(c1.getNodeId()).thenReturn(node2.getHexId());
 
     //peer's lowestBlockNum > my headBlockNum => peer is light, LIGHT_NODE_SYNC_FAIL
     Protocol.HelloMessage.Builder builder =
@@ -318,6 +325,7 @@ public class HandShakeServiceTest {
     try {
       Node node = new Node(NetUtil.getNodeId(), a1.getAddress().getHostAddress(),
           null, a1.getPort());
+      Mockito.when(c1.getNodeId()).thenReturn(node.getHexId());
       Protocol.HelloMessage.Builder builder =
           getHelloMessageBuilder(node, System.currentTimeMillis(),
               ChainBaseManager.getChainBaseManager());
@@ -455,6 +463,55 @@ public class HandShakeServiceTest {
     byte[] hash = new byte[length];
     Arrays.fill(hash, value);
     return Protocol.HelloMessage.BlockId.newBuilder().setHash(ByteString.copyFrom(hash)).build();
+  }
+
+  @Test
+  public void testMismatchedHelloNodeIdPreservesEstablishedIdentity() throws Exception {
+    String establishedNodeId = StringUtils.repeat("01", 64);
+    String helloNodeId = StringUtils.repeat("02", 64);
+    Channel channel = new Channel();
+    channel.setNodeId(establishedNodeId);
+    Channel otherChannel = new Channel();
+    otherChannel.setNodeId(helloNodeId);
+    PeerConnection connection = mock(PeerConnection.class);
+    Mockito.when(connection.getChannel()).thenReturn(channel);
+    HelloMessage message = mock(HelloMessage.class);
+    Mockito.when(message.valid()).thenReturn(true);
+    byte[] helloNodeIdBytes = new byte[64];
+    Arrays.fill(helloNodeIdBytes, (byte) 2);
+    Mockito.when(message.getFrom()).thenReturn(new Node(helloNodeIdBytes, null, null, 0));
+
+    Field channelsField = ChannelManager.class.getDeclaredField("channels");
+    channelsField.setAccessible(true);
+    List<Channel> channels = (List<Channel>) channelsField.get(null);
+    channels.add(channel);
+    channels.add(otherChannel);
+    try {
+      new HandshakeService().processHelloMessage(connection, message);
+
+      Mockito.verify(connection).disconnect(Protocol.ReasonCode.UNEXPECTED_IDENTITY);
+      Mockito.verify(connection, Mockito.never()).setHelloMessageReceive(Mockito.any());
+      Mockito.verify(message).valid();
+      Assert.assertEquals(establishedNodeId, channel.getNodeId());
+      Assert.assertEquals(helloNodeId, otherChannel.getNodeId());
+      Assert.assertFalse(otherChannel.isDisconnect());
+    } finally {
+      channels.removeIf(registered -> registered == channel || registered == otherChannel);
+    }
+  }
+
+  @Test
+  public void testAlreadyDisconnectedPeerIgnoresHello() {
+    PeerConnection connection = mock(PeerConnection.class);
+    Mockito.when(connection.isDisconnect()).thenReturn(true);
+    HelloMessage message = mock(HelloMessage.class);
+
+    new HandshakeService().processHelloMessage(connection, message);
+
+    Mockito.verify(connection, Mockito.never()).disconnect(Mockito.any());
+    Mockito.verify(connection, Mockito.never()).getHelloMessageReceive();
+    Mockito.verify(connection, Mockito.never()).getChannel();
+    Mockito.verifyNoInteractions(message);
   }
 
   private Protocol.HelloMessage.Builder getHelloMessageBuilder(Node from, long timestamp,
