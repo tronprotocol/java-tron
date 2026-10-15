@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.googlecode.jsonrpc4j.JsonRpcError;
 import com.googlecode.jsonrpc4j.JsonRpcErrors;
 import com.googlecode.jsonrpc4j.JsonRpcMethod;
-import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
@@ -338,8 +337,7 @@ public interface TronJsonRpc {
       @JsonRpcError(exception = ItemNotFoundException.class, code = -32000, data = "{}"),
   })
   Object[] getFilterChanges(String filterId)
-      throws JsonRpcInvalidParamsException, IOException, ExecutionException, InterruptedException,
-      JsonRpcMethodNotFoundException, ItemNotFoundException;
+      throws JsonRpcInvalidParamsException, JsonRpcMethodNotFoundException, ItemNotFoundException;
 
   @JsonRpcMethod("eth_getLogs")
   @JsonRpcErrors({

@@ -1408,11 +1408,17 @@ public class WalletTest extends BaseTest {
     TransactionCapsule trxCap = wallet.createTransactionCapsule(contract,
         ContractType.TriggerSmartContract);
 
-    Transaction tx = wallet.triggerConstantContract(contract, trxCap,
-        GrpcAPI.TransactionExtention.newBuilder(), GrpcAPI.Return.newBuilder());
-    Assert.assertEquals(Transaction.Result.code.FAILED, tx.getRet(0).getRet());
-    Assert.assertEquals(Transaction.Result.contractResult.REVERT,
-        tx.getRet(0).getContractRet());
+    boolean preDebug = CommonParameter.getInstance().debug;
+    CommonParameter.getInstance().debug = true;
+    try {
+      Transaction tx = wallet.triggerConstantContract(contract, trxCap,
+          GrpcAPI.TransactionExtention.newBuilder(), GrpcAPI.Return.newBuilder());
+      Assert.assertEquals(Transaction.Result.code.FAILED, tx.getRet(0).getRet());
+      Assert.assertEquals(Transaction.Result.contractResult.REVERT,
+          tx.getRet(0).getContractRet());
+    } finally {
+      CommonParameter.getInstance().debug = preDebug;
+    }
   }
 
   @Test
