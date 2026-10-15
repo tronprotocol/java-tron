@@ -32,7 +32,9 @@ public final class ConnectionPolicy {
   }
 
   public static boolean isBlocked(InetAddress address) {
-    return address != null && blockedIps.contains(normalize(address));
+    Set<InetAddress> currentBlockedIps = blockedIps;
+    return address != null && !currentBlockedIps.isEmpty()
+        && currentBlockedIps.contains(normalize(address));
   }
 
   /**

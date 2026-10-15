@@ -1,5 +1,6 @@
 package org.tron.p2p.utils;
 
+import com.google.common.net.InetAddresses;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -71,6 +72,14 @@ public class NetUtil {
       return false;
     }
     return PATTERN_IPv6.matcher(ip).matches();
+  }
+
+  /** Parses an unscoped IPv4 or IPv6 literal without resolving a hostname. */
+  public static InetAddress parseIpAddress(String ip) {
+    if (StringUtils.isEmpty(ip) || ip.indexOf('%') >= 0) {
+      throw new IllegalArgumentException("Invalid IP address");
+    }
+    return InetAddresses.forString(ip);
   }
 
   public static boolean validNode(Node node) {

@@ -2,7 +2,6 @@ package org.tron.core.net.service.peermanagement;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.net.InetAddresses;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -279,11 +278,14 @@ public class PeerManagementService {
   }
 
   private InetAddress parseIp(String ip) throws JsonRpcInvalidParamsException {
-    if (StringUtils.isEmpty(ip) || ip.length() > MAX_IP_LENGTH
-        || !InetAddresses.isInetAddress(ip)) {
+    if (StringUtils.isEmpty(ip) || ip.length() > MAX_IP_LENGTH) {
       throw new JsonRpcInvalidParamsException("IP must be an IPv4 or IPv6 literal");
     }
-    return InetAddresses.forString(ip);
+    try {
+      return NetUtil.parseIpAddress(ip);
+    } catch (IllegalArgumentException e) {
+      throw new JsonRpcInvalidParamsException("IP must be an IPv4 or IPv6 literal", e);
+    }
   }
 
   private InetSocketAddress parseEndpoint(String endpoint)
@@ -329,13 +331,16 @@ public class PeerManagementService {
         throw new IOException("Invalid blocked IP record");
       }
       String valueText = ip.textValue();
-      if (valueText == null || valueText.length() > MAX_IP_LENGTH
-          || !InetAddresses.isInetAddress(valueText)) {
+      if (valueText == null || valueText.length() > MAX_IP_LENGTH) {
         throw new IOException("Invalid blocked IP entry");
       }
       // Equivalent IP spellings describe one record; retain the earliest creation time.
-      entries.merge(InetAddresses.forString(valueText), blockedAtMillis.longValue(),
-          StrictMath::min);
+      try {
+        entries.merge(NetUtil.parseIpAddress(valueText), blockedAtMillis.longValue(),
+            StrictMath::min);
+      } catch (IllegalArgumentException e) {
+        throw new IOException("Invalid blocked IP entry", e);
+      }
     }
     return entries;
   }

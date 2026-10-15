@@ -88,6 +88,26 @@ public class StartAppArgsTest {
     }
   }
 
+  @Test
+  public void blockedIpsAcceptsIpv4AnyAddress() throws Exception {
+    Set<InetAddress> blockedIps = app.parseInetAddressSet("0.0.0.0");
+
+    Assert.assertEquals(1, blockedIps.size());
+    Assert.assertTrue(blockedIps.contains(InetAddress.getByName("0.0.0.0")));
+  }
+
+  @Test
+  public void rejectScopedAndAmbiguousBlockedIps() {
+    for (String ip : new String[] {"fe80::1%eth0", "fe80::1%1", "192.0.02.1"}) {
+      try {
+        app.parseInetAddressSet(ip);
+        Assert.fail("Expected invalid blocked IP: " + ip);
+      } catch (IllegalArgumentException expected) {
+        Assert.assertTrue(expected.getMessage().startsWith("Invalid blocked IP: "));
+      }
+    }
+  }
+
   @Test(expected = IllegalArgumentException.class)
   public void rejectHostNameAsBlockedIp() {
     app.parseInetAddressSet("malicious.example.com");

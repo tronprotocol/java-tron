@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.util.Collections;
 import java.util.Map;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -31,19 +30,11 @@ final class IpcResponse {
    * A result field, including a null value, marks a valid response as successful. Text results
    * are unquoted and other values are formatted as JSON. Invalid responses use a fixed message.
    */
-  static IpcResponse parse(String response) {
-    return parse(response, null, Collections.emptyMap());
-  }
-
-  /** Also verifies the numeric request ID when called for single-command execution. */
-  static IpcResponse parse(String response, Integer expectedId) {
-    return parse(response, expectedId, Collections.emptyMap());
-  }
-
   static IpcResponse parse(String response, Map<Integer, OutputFormat> pendingOutputFormats) {
     return parse(response, null, pendingOutputFormats);
   }
 
+  /** Also verifies the numeric request ID when called for single-command execution. */
   static IpcResponse parse(String response, Integer expectedId,
       Map<Integer, OutputFormat> pendingOutputFormats) {
     try {

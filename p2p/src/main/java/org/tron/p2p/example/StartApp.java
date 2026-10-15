@@ -4,7 +4,6 @@ import static java.lang.Thread.sleep;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
@@ -422,12 +421,9 @@ public class StartApp {
     Set<InetAddress> addresses = new LinkedHashSet<>();
     for (String para : paras.split(",", -1)) {
       String ip = para.trim();
-      if (!NetUtil.validIpV4(ip) && !NetUtil.validIpV6(ip)) {
-        throw new IllegalArgumentException("Invalid blocked IP: " + ip);
-      }
       try {
-        addresses.add(InetAddress.getByName(ip));
-      } catch (UnknownHostException e) {
+        addresses.add(NetUtil.parseIpAddress(ip));
+      } catch (IllegalArgumentException e) {
         throw new IllegalArgumentException("Invalid blocked IP: " + ip, e);
       }
     }

@@ -300,6 +300,28 @@ public class PeerManagementServiceTest {
   }
 
   @Test
+  public void scopedIpv6CannotChangeExistingBlock() throws Exception {
+    stubStoredBlockedIps(OBJECT_MAPPER.writeValueAsString(
+        Collections.singletonList(new BlockedIpInfo("fe80::1", BLOCKED_AT_MILLIS))));
+    configureAndInit();
+
+    for (String scopedIp : Arrays.asList("fe80::1%eth0", "fe80::1%1", "fe80::1%2")) {
+      assertInvalidIp(scopedIp);
+      try {
+        service.unblockIp(scopedIp);
+        Assert.fail("Expected invalid IP: " + scopedIp);
+      } catch (JsonRpcInvalidParamsException expected) {
+        Assert.assertNotNull(expected.getMessage());
+      }
+    }
+
+    Assert.assertEquals(Collections.singletonList("fe80:0:0:0:0:0:0:1"), listedIps());
+    Assert.assertEquals(BLOCKED_AT_MILLIS, service.listBlockedIps().get(0).getBlockedAtMillis());
+    Mockito.verifyNoInteractions(p2pService);
+    Mockito.verify(commonStore, Mockito.never()).put(Mockito.any(), Mockito.any());
+  }
+
+  @Test
   public void blockIpRejectsOnlyNewEntriesWhenLimitIsReached() throws Exception {
     stubStoredBlockedIps(buildBlockedIpJson(PeerManagementService.MAX_BLOCKED_IPS));
     configureAndInit();
@@ -639,7 +661,9 @@ public class PeerManagementServiceTest {
         "{\"ip\":\"192.0.2.20\",\"blockedAtMillis\":9223372036854775808}",
         "{\"ip\":null,\"blockedAtMillis\":1000}",
         "{\"ip\":1234,\"blockedAtMillis\":1000}",
-        "{\"ip\":\"peer.example\",\"blockedAtMillis\":1000}")) {
+        "{\"ip\":\"peer.example\",\"blockedAtMillis\":1000}",
+        "{\"ip\":\"fe80::1%eth0\",\"blockedAtMillis\":1000}",
+        "{\"ip\":\"fe80::1%1\",\"blockedAtMillis\":1000}")) {
       Mockito.clearInvocations(commonStore);
       stubStoredBlockedIps("[{\"ip\":\"192.0.2.21\",\"blockedAtMillis\":1000}," + entry + "]");
       P2pConfig config = new P2pConfig();

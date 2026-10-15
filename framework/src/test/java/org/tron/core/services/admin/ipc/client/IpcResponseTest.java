@@ -1,5 +1,6 @@
 package org.tron.core.services.admin.ipc.client;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import org.junit.Assert;
@@ -93,7 +94,8 @@ public class IpcResponseTest {
   @Test
   public void testStructuredResultIsPrettyPrinted() {
     IpcResponse response = IpcResponse.parse(
-        "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"height\":10,\"ready\":true}}");
+        "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"height\":10,\"ready\":true}}",
+        Collections.emptyMap());
 
     Assert.assertTrue(response.isSuccessful());
     Assert.assertEquals(String.join(System.lineSeparator(),
@@ -164,12 +166,13 @@ public class IpcResponseTest {
   public void testExpectedIdMustMatchWithoutCoercion() {
     for (String id : new String[] {"2", "\"1\"", "null", "4294967297", "1.5"}) {
       IpcResponse response = IpcResponse.parse(
-          "{\"jsonrpc\":\"2.0\",\"id\":" + id + ",\"result\":true}", 1);
+          "{\"jsonrpc\":\"2.0\",\"id\":" + id + ",\"result\":true}", 1,
+          Collections.emptyMap());
       Assert.assertFalse(response.isSuccessful());
       Assert.assertEquals("IPC response ID does not match request.", response.getFormatted());
     }
     IpcResponse matching = IpcResponse.parse(
-        "{\"jsonrpc\":\"2.0\",\"id\":2,\"result\":null}", 2);
+        "{\"jsonrpc\":\"2.0\",\"id\":2,\"result\":null}", 2, Collections.emptyMap());
     Assert.assertTrue(matching.isSuccessful());
     Assert.assertEquals("null", matching.getFormatted());
     assertResponse("{\"jsonrpc\":\"2.0\",\"id\":\"one\",\"result\":true}", "true", true);
@@ -179,23 +182,23 @@ public class IpcResponseTest {
   public void testErrorIdMustAlsoMatchRequest() {
     String error = "{\"jsonrpc\":\"2.0\",\"id\":2,"
         + "\"error\":{\"code\":-32602,\"message\":\"Invalid params\"}}";
-    IpcResponse mismatched = IpcResponse.parse(error, 1);
+    IpcResponse mismatched = IpcResponse.parse(error, 1, Collections.emptyMap());
     Assert.assertFalse(mismatched.isSuccessful());
     Assert.assertEquals("IPC response ID does not match request.", mismatched.getFormatted());
-    IpcResponse matching = IpcResponse.parse(error, 2);
+    IpcResponse matching = IpcResponse.parse(error, 2, Collections.emptyMap());
     Assert.assertFalse(matching.isSuccessful());
     Assert.assertEquals("Error -32602: Invalid params", matching.getFormatted());
   }
 
   private void assertInvalidResponse(String input) {
     assertResponse(input, "Invalid IPC response.", false);
-    IpcResponse response = IpcResponse.parse(input, 1);
+    IpcResponse response = IpcResponse.parse(input, 1, Collections.emptyMap());
     Assert.assertFalse(response.isSuccessful());
     Assert.assertEquals("Invalid IPC response.", response.getFormatted());
   }
 
   private void assertResponse(String input, String formatted, boolean successful) {
-    IpcResponse response = IpcResponse.parse(input);
+    IpcResponse response = IpcResponse.parse(input, Collections.emptyMap());
     Assert.assertEquals(formatted, response.getFormatted());
     Assert.assertEquals(successful, response.isSuccessful());
   }
