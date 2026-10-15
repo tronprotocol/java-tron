@@ -112,7 +112,7 @@ public class ChannelCoreTest {
     EmbeddedChannel netty = new EmbeddedChannel(new ChannelInboundHandlerAdapter());
     Channel channel = new Channel();
     attach(channel, netty);
-    channel.setDisconnect(true);
+    channel.markDisconnected();
 
     channel.send(new P2pDisconnectMessage(DisconnectReason.PEER_QUITING));
     netty.flushOutbound();

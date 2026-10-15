@@ -167,7 +167,6 @@ public class AliClientDeployTest {
         .thenReturn(records(new DescribeDomainRecordsResponseBodyDomainRecordsRecord()
             .setRR("n0").setValue(enr).setRecordId("r0").setTTL(86400L)));
 
-    Set<DnsNode> seen = new HashSet<>();
     Field field = AliClient.class.getDeclaredField("serverNodes");
     field.setAccessible(true);
 
@@ -175,8 +174,7 @@ public class AliClientDeployTest {
 
     // 10.0.0.99 was never in DNS, so it must be gone; and the set is emptied at
     // the end of a successful deploy.
-    seen.addAll((Set<DnsNode>) field.get(client));
-    Assert.assertTrue(seen.isEmpty());
+    Assert.assertEquals(Collections.emptySet(), field.get(client));
   }
 
   @Test

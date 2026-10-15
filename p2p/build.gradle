@@ -119,6 +119,9 @@ dependencies {
         exclude group: 'io.netty', module: 'netty-transport-native-unix-common'
         exclude group: 'software.amazon.awssdk', module: 'netty-nio-client'
     }
+    implementation('com.squareup.okio:okio:1.17.6') {
+        because 'Fix CVE-2023-3635 in the Aliyun SDK HTTP dependency chain'
+    }
     implementation('com.aliyun:alidns20150109:3.0.1') {
         exclude group: 'org.bouncycastle', module: 'bcprov-jdk15on'
         exclude group: 'org.bouncycastle', module: 'bcpkix-jdk15on'

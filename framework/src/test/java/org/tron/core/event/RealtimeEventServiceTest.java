@@ -7,12 +7,14 @@ import java.util.ArrayList;
 import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
+import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 import org.tron.common.logsfilter.EventPluginLoader;
 import org.tron.common.logsfilter.capsule.BlockLogTriggerCapsule;
 import org.tron.common.logsfilter.capsule.TransactionLogTriggerCapsule;
 import org.tron.common.logsfilter.trigger.ContractEventTrigger;
 import org.tron.common.logsfilter.trigger.ContractLogTrigger;
+import org.tron.common.logsfilter.trigger.Trigger;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
@@ -91,24 +93,28 @@ public class RealtimeEventServiceTest {
     SmartContractTrigger contractTrigger = new SmartContractTrigger();
     be2.setSmartContractTrigger(contractTrigger);
 
-    contractTrigger.getContractEventTriggers().add(mock(ContractEventTrigger.class));
-    Mockito.when(instance.isContractLogTriggerEnable()).thenReturn(true);
-    try {
-      realtimeEventService.flush(be2, event.isRemove());
-    } catch (Exception e) {
-      Assert.assertTrue(e instanceof NullPointerException);
-    }
-
-    contractTrigger.getContractEventTriggers().clear();
-
-    realtimeEventService.flush(be2, event.isRemove());
-
-    contractTrigger.getContractLogTriggers().add(mock(ContractLogTrigger.class));
+    ContractEventTrigger eventTrigger = new ContractEventTrigger();
+    contractTrigger.getContractEventTriggers().add(eventTrigger);
     Mockito.when(instance.isContractEventTriggerEnable()).thenReturn(true);
-    try {
+    try (MockedStatic<EventPluginLoader> loader = Mockito.mockStatic(EventPluginLoader.class)) {
+      loader.when(EventPluginLoader::getInstance).thenReturn(instance);
       realtimeEventService.flush(be2, event.isRemove());
-    } catch (Exception e) {
-      Assert.assertTrue(e instanceof NullPointerException);
+      Assert.assertEquals(Trigger.CONTRACTEVENT_TRIGGER_NAME, eventTrigger.getTriggerName());
+      Assert.assertTrue(eventTrigger.isRemoved());
+      Mockito.verify(instance).postContractEventTrigger(eventTrigger);
+
+      contractTrigger.getContractEventTriggers().clear();
+
+      realtimeEventService.flush(be2, event.isRemove());
+
+      ContractLogTrigger logTrigger = new ContractLogTrigger();
+      contractTrigger.getContractLogTriggers().add(logTrigger);
+      Mockito.when(instance.isContractEventTriggerEnable()).thenReturn(false);
+      Mockito.when(instance.isContractLogTriggerEnable()).thenReturn(true);
+      realtimeEventService.flush(be2, event.isRemove());
+      Assert.assertEquals(Trigger.CONTRACTLOG_TRIGGER_NAME, logTrigger.getTriggerName());
+      Assert.assertTrue(logTrigger.isRemoved());
+      Mockito.verify(instance).postContractLogTrigger(logTrigger);
     }
   }
 }

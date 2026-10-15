@@ -1,4 +1,6 @@
    
+> ⚠️ **This copy is outdated (last updated 2022).** See [`docs/protobuf-protocol-document.md`](../../../../docs/protobuf-protocol-document.md) for the current guide; the `.proto` files in this directory are the source of truth. This copy is kept only for historical reference.
+
 # Protobuf protocol
 
 ## The protocol of TRON is defined by Google Protobuf and contains a range of layers, from account, block to transfer.

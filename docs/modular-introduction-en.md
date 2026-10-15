@@ -16,7 +16,7 @@ The aim of java-tron modularization is to enable developers to easily build a de
 
 ![modular-structure](https://github.com/tronprotocol/java-tron/blob/develop/docs/images/module.png)
 
-A modularized java-tron consists of nine modules: framework, protocol, common, chainbase, consensus, actuator, crypto, plugins and platform. The function of each module is elaborated below.
+A modularized java-tron consists of ten modules: framework, protocol, common, p2p, chainbase, consensus, actuator, crypto, plugins and platform. The function of each module is elaborated below.
 
 ### framework
 
@@ -32,6 +32,10 @@ A concise and efficient data transfer protocol is essential to a distributed net
 ### common
 
 Common module encapsulates common components and tools for other modules to access.
+
+### p2p
+
+The p2p module handles peer discovery, connection management and DNS-based node lists: nodes discover each other over UDP and connect over TCP, and a node list can be published as DNS TXT records for other nodes to fetch. The module is vendored from [tronprotocol/libp2p](https://github.com/tronprotocol/libp2p) and depends on no other module of the project. See [p2p/README.md](../p2p/README.md) for standalone use and the API.
 
 ### chainbase
 

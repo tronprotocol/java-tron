@@ -1745,6 +1745,8 @@ public class ExchangeTransactionActuatorTest extends BaseTest {
    */
   @Test
   public void isExchangeTransactionPush() {
+    long originalHarden = dbManager.getDynamicPropertiesStore().getAllowHardenExchangeCalculation();
+    dbManager.getDynamicPropertiesStore().saveAllowHardenExchangeCalculation(0);
     try {
       TransactionCapsule transactionCap = new TransactionCapsule(
           ExchangeTransactionContract.newBuilder()
@@ -1754,10 +1756,11 @@ public class ExchangeTransactionActuatorTest extends BaseTest {
               .setQuant(1)
               .setExpected(1)
               .build(), ContractType.ExchangeTransactionContract);
-      dbManager.pushTransaction(transactionCap);
-
-    } catch (Exception e) {
-      Assert.assertTrue(true);
+      ContractValidateException exception = assertThrows(ContractValidateException.class,
+          () -> dbManager.pushTransaction(transactionCap));
+      Assert.assertEquals("ExchangeTransactionContract is rejected", exception.getMessage());
+    } finally {
+      dbManager.getDynamicPropertiesStore().saveAllowHardenExchangeCalculation(originalHarden);
     }
   }
 

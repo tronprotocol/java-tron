@@ -50,7 +50,7 @@ import org.tron.common.application.HttpService;
 import org.tron.common.utils.PublicMethod;
 import org.tron.core.config.args.Args;
 import org.tron.core.services.filter.HttpInterceptor;
-import org.tron.core.services.http.RateLimiterServlet;
+import org.tron.core.services.http.servlets.RateLimiterServlet;
 import org.tron.core.services.ratelimiter.RateLimiterContainer;
 
 public class JsonRpcServletJettyTest {

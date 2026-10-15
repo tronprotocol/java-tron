@@ -26,12 +26,20 @@ public class P2pService {
 
   public void start(P2pConfig p2pConfig) {
     Parameter.p2pConfig = p2pConfig;
-    NodeManager.init();
-    ChannelManager.init();
-    DnsManager.init();
-    logger.info("P2p service started");
-
-    Runtime.getRuntime().addShutdownHook(new Thread(this::close));
+    try {
+      NodeManager.init();
+      ChannelManager.init();
+      DnsManager.init();
+      Runtime.getRuntime().addShutdownHook(new Thread(this::close));
+      logger.info("P2p service started");
+    } catch (RuntimeException e) {
+      try {
+        close();
+      } catch (RuntimeException cleanupError) {
+        e.addSuppressed(cleanupError);
+      }
+      throw e;
+    }
   }
 
   public void close() {
@@ -80,6 +88,12 @@ public class P2pService {
     return new ArrayList<>(nodes);
   }
 
+  /**
+   * @deprecated Node IDs are set during the libp2p handshake, and self-connection and
+   *     duplicate-peer checks are handled by {@link ChannelManager#checkPeer(Channel)} before
+   *     registration. Application code should validate node ID consistency instead of updating it.
+   */
+  @Deprecated
   public void updateNodeId(Channel channel, String nodeId) {
     ChannelManager.updateNodeId(channel, nodeId);
   }

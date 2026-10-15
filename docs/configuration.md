@@ -122,8 +122,12 @@ node {
     solidityPort = 50061
     # Maximum concurrent calls per connection. 0 uses the secure default of 100.
     maxConcurrentCallsPerConnection = 100
+    # Maximum RST_STREAM frames per connection per window. 0 uses the default of 1000.
+    maxRstStream = 1000
+    # RST_STREAM counting window in seconds. 0 uses the default of 5.
+    secondsPerWindow = 5
     # Idle connection timeout (ms). 0 = no limit.
-    maxConnectionIdleInMillis = 0
+    maxConnectionIdleInMillis = 60000
     # Minimum active connections required before broadcasting transactions.
     minEffectiveConnection = 1
   }
@@ -133,6 +137,15 @@ node {
 > **Upgrade note:** `node.rpc.maxConcurrentCallsPerConnection = 0` previously meant no limit.
 > It now selects the secure default of 100. Configure an explicit positive value if a client
 > needs more than 100 concurrent calls on one connection.
+
+> **Upgrade note:** `node.rpc.maxRstStream = 0` and `node.rpc.secondsPerWindow = 0`
+> no longer disable RST_STREAM flood protection. Each zero independently falls back to its
+> secure default (1000 frames / 5 seconds), with a startup warning. Negative values and
+> `maxRstStream = 2147483647` (`Integer.MAX_VALUE`, grpc-java's disable sentinel) are rejected.
+> These are java-tron defaults; grpc-java itself defaults to no limit.
+> Exceeding the limit closes that connection with `GOAWAY(ENHANCE_YOUR_CALM)`.
+> Clients that frequently cancel calls, including deadline cancellations, may need explicit
+> positive limits tuned to their workload; keep `maxRstStream` below `2147483647`.
 
 To disable an API endpoint that you do not want to expose publicly, set its `Enable` flag to `false` or add endpoints to `node.disabledApi`:
 
@@ -167,12 +180,13 @@ storage.properties = [
 ### Block Production (Super Representatives)
 
 ```hocon
-# Plain private key (use localwitnesskeystore for production)
+# DEPRECATED: plain private key, insecure (anyone reading the config file
+# sees the keys). Use localwitnesskeystore for production.
 localwitness = [
   "your-private-key-hex"
 ]
 
-# Recommended: keystore file
+# Recommended: encrypted keystore file
 # localwitnesskeystore = [
 #   "/path/to/localwitnesskeystore.json"
 # ]
@@ -180,6 +194,10 @@ localwitness = [
 # Required when the witness account has delegated block-signing to a separate key
 # localWitnessAccountAddress = "T..."
 ```
+
+> **Security — protect the block-producing key.** A Super Representative's key can produce blocks and control the account's funds. Prefer the encrypted `localwitnesskeystore` over a plaintext `localwitness` key, and:
+> - Restrict the key/keystore file so other users on the host cannot read it: `chmod 600 <key-or-keystore-file>`.
+> - **Never commit a config file that contains a real private key to Git** — it stays in the history permanently. Add such files to `.gitignore` and keep the key file **outside** the repository directory.
 
 ### JSON-RPC (Ethereum-compatible, `node.jsonrpc`)
 
@@ -191,6 +209,34 @@ node.jsonrpc {
   maxResponseSize = 26214400  # 25 MB
 }
 ```
+
+### Administrative API (`node.admin`)
+
+Admin HTTP and IPC are FullNode services, independently enabled and disabled by default.
+Configure `node.admin.http` and `node.admin.ipc` using the settings in
+[reference.conf](../common/src/main/resources/reference.conf).
+
+- **HTTP:** `POST /admin` defaults to `127.0.0.1:8575` and has no built-in authentication.
+  Remote access requires external access control on a trusted management network. The Host
+  allowlist guards against DNS rebinding; it is not authentication. IP literals are allowed,
+  as are missing or empty Host headers for HTTP/1.0 compatibility.
+- **IPC:** `socketDirectory` must be an existing absolute directory on a POSIX filesystem;
+  empty uses `output-directory`. The endpoint is `<socket-root>/ipc/<pid>.sock`, with a full
+  path limit of 100 encoded bytes. Use a root controlled by the node user or a trusted administrator.
+  Its path must not be replaceable by untrusted users through ancestor permissions, ACLs or
+  symlinks. Trusted root-owned ancestors are acceptable. These trust requirements are not
+  automatically checked; mode `0700` on `ipc` does not protect against parent-directory replacement.
+- **Request size:** both transports use `node.jsonrpc.maxMessageSize` (default 4 MiB).
+  IPC counts UTF-8 message bytes excluding LF or CRLF terminators; other CR bytes count as payload.
+
+An unclean exit can leave `ipc` behind and block automatic restart. Recovery is manual:
+
+1. Stop automatic restarts and prevent concurrent starts using the same socket root.
+2. Check the directory shown in the startup error and confirm no running node uses it.
+   A missing PID or refused connection alone does not establish that it is safe to remove.
+3. Remove only verified stale socket files and the empty `ipc` directory, preserving unrelated
+   files. Restart one node, verify IPC access, then resume supervision. Do not use unconditional
+   recursive deletion in startup hooks.
 
 ### Event Subscription (`event.subscribe`)
 

@@ -1452,7 +1452,7 @@ public class ExchangeWithdrawActuatorTest extends BaseTest {
     try {
       actuator.validate();
       actuator.execute(ret);
-      Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
+      fail("Expected imprecise withdrawal to be rejected");
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals("Not precise enough",
@@ -1507,7 +1507,7 @@ public class ExchangeWithdrawActuatorTest extends BaseTest {
     try {
       actuator.validate();
       actuator.execute(ret);
-      Assert.assertEquals(ret.getInstance().getRet(), code.SUCESS);
+      fail("Expected imprecise withdrawal to be rejected");
     } catch (ContractValidateException e) {
       Assert.assertTrue(e instanceof ContractValidateException);
       Assert.assertEquals("Not precise enough",
@@ -1866,16 +1866,14 @@ public class ExchangeWithdrawActuatorTest extends BaseTest {
   }
 
   /**
-   * Hardened mode: subtractExact in execute() throws on underflow.
+   * With zero withdrawal fee, a zero TRX balance still permits a TRC10 withdrawal.
    */
   @Test
-  public void hardenedSubtractExactUnderflow() {
+  public void hardenedWithdrawWithZeroTrxBalance() throws Exception {
     dbManager.getDynamicPropertiesStore().saveAllowSameTokenName(1);
     dbManager.getDynamicPropertiesStore().saveAllowHardenExchangeCalculation(1);
     InitExchangeSameTokenNameActive();
 
-    // Corrupt account: balance < calcFee triggers subtractExact underflow
-    // (this is unrealistic but exercises the addExact/subtractExact path)
     byte[] ownerAddress = ByteArray.fromHexString(OWNER_ADDRESS_FIRST);
     AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress);
     accountCapsule.setBalance(0L);
@@ -1888,12 +1886,20 @@ public class ExchangeWithdrawActuatorTest extends BaseTest {
         OWNER_ADDRESS_FIRST, 1L, firstTokenId, firstTokenQuant));
 
     try {
-      // calcFee() returns 0 in this actuator, so this won't actually underflow.
-      // The test still exercises the subtractExact code path with hardened on.
-      actuator.validate();
-      actuator.execute(new TransactionResultCapsule());
-    } catch (Exception ignore) {
-      // any outcome is acceptable; we just need execute() exercised under hardened
+      Assert.assertEquals(0L, actuator.calcFee());
+      Assert.assertTrue(actuator.validate());
+      TransactionResultCapsule ret = new TransactionResultCapsule();
+      Assert.assertTrue(actuator.execute(ret));
+      Assert.assertEquals(code.SUCESS, ret.getInstance().getRet());
+      Assert.assertEquals(200000000L, ret.getExchangeWithdrawAnotherAmount());
+
+      AccountCapsule updated = dbManager.getAccountStore().get(ownerAddress);
+      Assert.assertEquals(0L, updated.getBalance());
+      Assert.assertEquals(firstTokenQuant, updated.getAssetV2MapForTest().get("123").longValue());
+      Assert.assertEquals(200000000L, updated.getAssetV2MapForTest().get("456").longValue());
+      ExchangeCapsule exchange = dbManager.getExchangeV2Store().get(ByteArray.fromLong(1L));
+      Assert.assertEquals(0L, exchange.getFirstTokenBalance());
+      Assert.assertEquals(0L, exchange.getSecondTokenBalance());
     } finally {
       dbManager.getExchangeStore().delete(ByteArray.fromLong(1L));
       dbManager.getExchangeStore().delete(ByteArray.fromLong(2L));

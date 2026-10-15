@@ -1,7 +1,6 @@
 package org.tron.core.net.message;
 
 import org.apache.commons.lang3.ArrayUtils;
-import org.tron.consensus.pbft.message.PbftMessage;
 import org.tron.core.exception.P2pException;
 import org.tron.core.metrics.MetricsKey;
 import org.tron.core.metrics.MetricsUtil;
