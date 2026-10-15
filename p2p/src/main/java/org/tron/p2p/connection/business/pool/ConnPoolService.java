@@ -42,6 +42,8 @@ import org.tron.p2p.utils.NetUtil;
 @Slf4j(topic = "net")
 public class ConnPoolService extends P2pEventHandler {
 
+  // A remote host supporting TCP port reuse can connect from its listening port.
+  // Incoming and outgoing channels can then share a remote address; track instances separately.
   private final List<Channel> activePeers = Collections.synchronizedList(new ArrayList<>());
   private final Cache<InetAddress, Long> peerClientCache = CacheBuilder.newBuilder()
       .maximumSize(1000).expireAfterWrite(120, TimeUnit.SECONDS).recordStats().build();
@@ -112,7 +114,7 @@ public class ConnPoolService extends P2pEventHandler {
     Set<InetSocketAddress> inetInUse = new HashSet<>();
     Set<String> nodesInUse = new HashSet<>();
     nodesInUse.add(Hex.toHexString(p2pConfig.getNodeID()));
-    ChannelManager.getChannels().values().forEach(channel -> {
+    ChannelManager.getAllChannels().forEach(channel -> {
       Node node = channel.getNode();
       if (node != null && !NetUtil.validPort(node.getPort())) {
         logger.warn("Close peer {} with invalid advertised port {}",
@@ -260,7 +262,7 @@ public class ConnPoolService extends P2pEventHandler {
   }
 
   private void check() {
-    if (ChannelManager.getChannels().size() < p2pConfig.getMaxConnections()) {
+    if (ChannelManager.getChannelCount() < p2pConfig.getMaxConnections()) {
       return;
     }
 
@@ -283,7 +285,7 @@ public class ConnPoolService extends P2pEventHandler {
 
   private synchronized void logActivePeers() {
     logger.info("Peer stats: channels {}, activePeers {}, active {}, passive {}",
-        ChannelManager.getChannels().size(), activePeers.size(), activePeersCount.get(),
+        ChannelManager.getChannelCount(), activePeers.size(), activePeersCount.get(),
         passivePeersCount.get());
   }
 
@@ -321,7 +323,8 @@ public class ConnPoolService extends P2pEventHandler {
 
   @Override
   public synchronized void onConnect(Channel peer) {
-    if (!activePeers.contains(peer)) {
+    // Channel.equals() compares remote addresses; membership must compare channel instances.
+    if (activePeers.stream().noneMatch(channel -> channel == peer)) {
       if (!peer.isActive()) {
         passivePeersCount.incrementAndGet();
       } else {
@@ -334,13 +337,12 @@ public class ConnPoolService extends P2pEventHandler {
 
   @Override
   public synchronized void onDisconnect(Channel peer) {
-    if (activePeers.contains(peer)) {
+    if (activePeers.removeIf(channel -> channel == peer)) {
       if (!peer.isActive()) {
         passivePeersCount.decrementAndGet();
       } else {
         activePeersCount.decrementAndGet();
       }
-      activePeers.remove(peer);
     }
     logActivePeers();
   }

@@ -65,7 +65,6 @@ public class PendingInboundConnectionHandlerTest {
   private NioEventLoopGroup nioGroup;
   private P2pConfig previousConfig;
   private List<P2pEventHandler> previousHandlers;
-  private Map<InetSocketAddress, Channel> previousChannels;
   private Map<InetAddress, Long> previousBans;
   private Object previousHandshakeService;
   private Object previousKeepAliveService;
@@ -84,18 +83,17 @@ public class PendingInboundConnectionHandlerTest {
   public void setUp() throws Exception {
     previousConfig = Parameter.p2pConfig;
     previousHandlers = Parameter.handlerList;
-    previousChannels = new HashMap<>(ChannelManager.getChannels());
     previousBans = new HashMap<>(ChannelManager.getBannedNodes().asMap());
     Parameter.p2pConfig = config;
     config.setMaxConnections(50);
     config.setMaxConnectionsWithSameIp(2);
     config.getTrustNodes().clear();
-    ChannelManager.getChannels().clear();
+    Parameter.handlerList = new ArrayList<>();
+    ChannelManager.getAllChannels().forEach(ChannelManager::notifyDisconnect);
     ChannelManager.getBannedNodes().invalidateAll();
     previousHandshakeService = setService("handshakeService", new HandshakeService());
     previousKeepAliveService = setService("keepAliveService", new KeepAliveService());
     previousNodeDetectService = setService("nodeDetectService", new NodeDetectService());
-    Parameter.handlerList = new ArrayList<>();
     Parameter.handlerList.add(new P2pEventHandler() {
       @Override
       public void onConnect(Channel channel) {
@@ -126,10 +124,9 @@ public class PendingInboundConnectionHandlerTest {
       counts.setAccessible(true);
       Assert.assertTrue("Per-IP reservations leaked", ((Map<?, ?>) counts.get(null)).isEmpty());
     } finally {
+      ChannelManager.getAllChannels().forEach(ChannelManager::notifyDisconnect);
       Parameter.p2pConfig = previousConfig;
       Parameter.handlerList = previousHandlers;
-      ChannelManager.getChannels().clear();
-      ChannelManager.getChannels().putAll(previousChannels);
       ChannelManager.getBannedNodes().invalidateAll();
       ChannelManager.getBannedNodes().putAll(previousBans);
       setService("handshakeService", previousHandshakeService);
@@ -145,7 +142,7 @@ public class PendingInboundConnectionHandlerTest {
       Assert.assertTrue(inbound("192.0.2." + (i + 1)).isOpen());
     }
     Assert.assertFalse(inbound("198.51.100.1").isOpen());
-    Assert.assertTrue(ChannelManager.getChannels().isEmpty());
+    Assert.assertTrue(ChannelManager.getAllChannels().isEmpty());
     Assert.assertEquals(0, connectCallbacks);
   }
 
@@ -156,7 +153,7 @@ public class PendingInboundConnectionHandlerTest {
     }
     Assert.assertFalse(inbound(REMOTE_IP).isOpen());
     Assert.assertTrue(inbound("192.0.2.2").isOpen());
-    Assert.assertTrue(ChannelManager.getChannels().isEmpty());
+    Assert.assertTrue(ChannelManager.getAllChannels().isEmpty());
   }
 
   @Test
@@ -231,7 +228,7 @@ public class PendingInboundConnectionHandlerTest {
     }
     advance(socket, 1);
     Assert.assertFalse(socket.isOpen());
-    Assert.assertTrue(ChannelManager.getChannels().isEmpty());
+    Assert.assertTrue(ChannelManager.getAllChannels().isEmpty());
     Assert.assertEquals(0, connectCallbacks);
   }
 
@@ -243,7 +240,7 @@ public class PendingInboundConnectionHandlerTest {
     receive(socket, new PongMessage().getSendData());
     advance(socket, 1);
     Assert.assertFalse(socket.isOpen());
-    Assert.assertTrue(ChannelManager.getChannels().isEmpty());
+    Assert.assertTrue(ChannelManager.getAllChannels().isEmpty());
   }
 
   @Test
@@ -261,7 +258,7 @@ public class PendingInboundConnectionHandlerTest {
     advance(socket, 1);
     Assert.assertFalse(socket.isOpen());
     Assert.assertEquals(0, partial.refCnt());
-    Assert.assertTrue(ChannelManager.getChannels().isEmpty());
+    Assert.assertTrue(ChannelManager.getAllChannels().isEmpty());
     Assert.assertEquals(0, connectCallbacks);
   }
 
@@ -293,7 +290,7 @@ public class PendingInboundConnectionHandlerTest {
     receive(socket, hello(config.getNetworkId()));
     Assert.assertFalse(socket.isOpen());
     Assert.assertEquals(0, connectCallbacks);
-    Assert.assertTrue(ChannelManager.getChannels().isEmpty());
+    Assert.assertTrue(ChannelManager.getAllChannels().isEmpty());
   }
 
   @Test
@@ -344,7 +341,7 @@ public class PendingInboundConnectionHandlerTest {
 
     Assert.assertTrue(channel.isFinishHandshake());
     Assert.assertEquals(1, connectCallbacks);
-    Assert.assertEquals(1, ChannelManager.getChannels().size());
+    Assert.assertEquals(1, ChannelManager.getChannelCount());
     Assert.assertEquals(MessageType.HANDSHAKE_HELLO, Message.parse(readOutbound(socket)).getType());
     Assert.assertTrue(inbound(REMOTE_IP).isOpen());
     Assert.assertFalse(inbound(REMOTE_IP).isOpen());
@@ -424,7 +421,7 @@ public class PendingInboundConnectionHandlerTest {
     Assert.assertNull(socket.pipeline().get(MessageHandler.class));
     Assert.assertNull(socket.pipeline().get(P2pProtobufVarint32FrameDecoder.class));
     Assert.assertEquals(0, connectCallbacks);
-    Assert.assertTrue(ChannelManager.getChannels().isEmpty());
+    Assert.assertTrue(ChannelManager.getAllChannels().isEmpty());
   }
 
   @Test(timeout = 15000)
@@ -480,7 +477,7 @@ public class PendingInboundConnectionHandlerTest {
       Assert.assertNotNull(first.pipeline().get(PendingInboundConnectionHandler.class));
       Assert.assertTrue(rejected.closeFuture().await(5, TimeUnit.SECONDS));
       Assert.assertNull(rejected.pipeline().get(MessageHandler.class));
-      Assert.assertTrue(ChannelManager.getChannels().isEmpty());
+      Assert.assertTrue(ChannelManager.getAllChannels().isEmpty());
       Assert.assertEquals(0, connectCallbacks);
 
       clients.get(0).close();
@@ -531,7 +528,7 @@ public class PendingInboundConnectionHandlerTest {
     channel.setChannelHandlerContext(socket.pipeline().context("messageHandler"));
     socket.closeFuture().addListener(future -> {
       channel.markDisconnected();
-      ChannelManager.getChannels().remove(channel.getInetSocketAddress(), channel);
+      ChannelManager.notifyDisconnect(channel);
     });
     return channel;
   }

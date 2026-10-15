@@ -38,7 +38,6 @@ public class ConnPoolPortValidationTest {
   private final List<EmbeddedChannel> sockets = new ArrayList<>();
   private P2pConfig previousConfig;
   private List<P2pEventHandler> previousHandlers;
-  private Map<InetSocketAddress, Channel> previousChannels;
   private Map<InetAddress, Long> previousBans;
   private ConnPoolService pool;
 
@@ -46,7 +45,6 @@ public class ConnPoolPortValidationTest {
   public void init() throws Exception {
     previousConfig = Parameter.p2pConfig;
     previousHandlers = Parameter.handlerList;
-    previousChannels = new HashMap<>(ChannelManager.getChannels());
     previousBans = new HashMap<>(ChannelManager.getBannedNodes().asMap());
     Parameter.p2pConfig = new P2pConfig();
     Parameter.p2pConfig.setIp("127.0.0.1");
@@ -55,7 +53,7 @@ public class ConnPoolPortValidationTest {
     Parameter.p2pConfig.setMinActiveConnections(0);
     Parameter.p2pConfig.getActiveNodes().add(candidate);
     Parameter.handlerList = new ArrayList<>();
-    ChannelManager.getChannels().clear();
+    ChannelManager.getAllChannels().forEach(ChannelManager::notifyDisconnect);
     ChannelManager.getBannedNodes().invalidateAll();
     pool = new ConnPoolService();
     Field client = ConnPoolService.class.getDeclaredField("peerClient");
@@ -75,8 +73,7 @@ public class ConnPoolPortValidationTest {
     if (pool != null) {
       pool.close();
     }
-    ChannelManager.getChannels().clear();
-    ChannelManager.getChannels().putAll(previousChannels);
+    ChannelManager.getAllChannels().forEach(ChannelManager::notifyDisconnect);
     ChannelManager.getBannedNodes().invalidateAll();
     ChannelManager.getBannedNodes().putAll(previousBans);
     Parameter.handlerList = previousHandlers;
@@ -94,9 +91,11 @@ public class ConnPoolPortValidationTest {
 
       Assert.assertTrue(poisoned.isDisconnect());
       Assert.assertFalse(poisoned.getCtx().channel().isOpen());
-      Assert.assertFalse(ChannelManager.getChannels().containsKey(poisoned.getInetSocketAddress()));
+      Assert.assertFalse(ChannelManager.getAllChannels().stream()
+          .anyMatch(channel -> channel == poisoned));
       Assert.assertTrue(healthy.getCtx().channel().isOpen());
-      Assert.assertSame(healthy, ChannelManager.getChannels().get(healthy.getInetSocketAddress()));
+      Assert.assertTrue(ChannelManager.getAllChannels().stream()
+          .anyMatch(channel -> channel == healthy));
       Assert.assertEquals(candidate, dialed.get(dialed.size() - 1).getPreferInetSocketAddress());
       ChannelManager.getBannedNodes().invalidateAll();
       // The next tick may redial this active node only after a failed connection.

@@ -59,7 +59,6 @@ public class StatusLifecycleTest {
   private NodeDetectService detect;
   private P2pConfig previousConfig;
   private List<P2pEventHandler> previousHandlers;
-  private Map<InetSocketAddress, Channel> previousChannels;
   private Map<InetAddress, Long> previousBans;
   private Map<InetAddress, Long> previousBadNodes;
   private NodeDetectService previousDetect;
@@ -69,7 +68,6 @@ public class StatusLifecycleTest {
   public void init() throws Exception {
     previousConfig = Parameter.p2pConfig;
     previousHandlers = Parameter.handlerList;
-    previousChannels = new HashMap<>(ChannelManager.getChannels());
     previousBans = new HashMap<>(ChannelManager.getBannedNodes().asMap());
     previousBadNodes = new HashMap<>(NodeDetectService.getBadNodesCache().asMap());
     previousDetect = ChannelManager.getNodeDetectService();
@@ -79,7 +77,7 @@ public class StatusLifecycleTest {
     Parameter.p2pConfig.setIpv6("");
     Parameter.p2pConfig.setNodeDetectEnable(false);
     Parameter.handlerList = new ArrayList<>();
-    ChannelManager.getChannels().clear();
+    ChannelManager.getAllChannels().forEach(ChannelManager::notifyDisconnect);
     ChannelManager.getBannedNodes().invalidateAll();
     NodeDetectService.getBadNodesCache().invalidateAll();
     pool = new ConnPoolService();
@@ -124,8 +122,7 @@ public class StatusLifecycleTest {
     if (detect != null) {
       detect.close();
     }
-    ChannelManager.getChannels().clear();
-    ChannelManager.getChannels().putAll(previousChannels);
+    ChannelManager.getAllChannels().forEach(ChannelManager::notifyDisconnect);
     ChannelManager.getBannedNodes().invalidateAll();
     ChannelManager.getBannedNodes().putAll(previousBans);
     NodeDetectService.getBadNodesCache().invalidateAll();
@@ -231,7 +228,7 @@ public class StatusLifecycleTest {
     Channel replacement = new Channel();
     set(Channel.class, replacement, "inetSocketAddress", old.getInetSocketAddress());
     Assert.assertEquals(old, replacement); // equals() is not an ownership check.
-    ChannelManager.getChannels().put(old.getInetSocketAddress(), replacement);
+    ChannelManager.addPeer(replacement);
     old.close();
     awaitClosed(old);
     Assert.assertSame(replacement, ChannelManager.getChannels().get(old.getInetSocketAddress()));

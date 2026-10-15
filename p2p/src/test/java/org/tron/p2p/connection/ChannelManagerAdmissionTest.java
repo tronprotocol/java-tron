@@ -3,7 +3,6 @@ package org.tron.p2p.connection;
 import java.lang.reflect.Field;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.util.Map;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -23,7 +22,6 @@ import org.tron.p2p.utils.NetUtil;
 public class ChannelManagerAdmissionTest {
 
   private P2pConfig saved;
-  private Map<InetSocketAddress, Channel> channels;
 
   private static Channel channelAt(String ip, int port) throws Exception {
     Channel channel = new Channel();
@@ -67,14 +65,13 @@ public class ChannelManagerAdmissionTest {
     config.setMaxConnectionsWithSameIp(1);
     Parameter.p2pConfig = config;
 
-    channels = ChannelManager.getChannels();
-    channels.clear();
+    ChannelManager.getAllChannels().forEach(ChannelManager::notifyDisconnect);
     ChannelManager.getBannedNodes().invalidateAll();
   }
 
   @After
   public void tearDown() {
-    channels.clear();
+    ChannelManager.getAllChannels().forEach(ChannelManager::notifyDisconnect);
     ChannelManager.getBannedNodes().invalidateAll();
     Parameter.p2pConfig = saved;
   }
@@ -83,7 +80,7 @@ public class ChannelManagerAdmissionTest {
   public void aFreshPeerIsAdmitted() throws Exception {
     Channel channel = channelAt("127.0.0.1", 10001);
     Assert.assertEquals(DisconnectCode.NORMAL, admitPeer(channel));
-    Assert.assertSame(channel, channels.get(channel.getInetSocketAddress()));
+    Assert.assertSame(channel, ChannelManager.getChannels().get(channel.getInetSocketAddress()));
   }
 
   @Test
@@ -92,7 +89,7 @@ public class ChannelManagerAdmissionTest {
     ChannelManager.banNode(channel.getInetAddress(), 60_000L);
 
     Assert.assertEquals(DisconnectCode.TIME_BANNED, admitPeer(channel));
-    Assert.assertTrue(channels.isEmpty());
+    Assert.assertTrue(ChannelManager.getAllChannels().isEmpty());
   }
 
   @Test

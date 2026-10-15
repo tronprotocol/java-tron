@@ -24,7 +24,7 @@ public class StatusMessage extends Message {
     this.statusMessage = Connect.StatusMessage.newBuilder()
       .setFrom(endpoint)
       .setMaxConnections(Parameter.p2pConfig.getMaxConnections())
-      .setCurrentConnections(ChannelManager.getChannels().size())
+      .setCurrentConnections(ChannelManager.getChannelCount())
       .setNetworkId(Parameter.p2pConfig.getNetworkId())
       .setTimestamp(System.currentTimeMillis()).build();
     this.data = statusMessage.toByteArray();

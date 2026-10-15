@@ -42,7 +42,6 @@ public class HandshakeAdmissionTest {
   private int previousVersion;
   private List<P2pEventHandler> previousHandlers;
   private Map<Byte, P2pEventHandler> previousHandlerMap;
-  private Map<InetSocketAddress, Channel> previousChannels;
   private Map<InetAddress, Long> previousBans;
   private HandshakeService previousHandshakeService;
   private final List<EmbeddedChannel> sockets = new ArrayList<>();
@@ -63,7 +62,6 @@ public class HandshakeAdmissionTest {
     previousVersion = Parameter.version;
     previousHandlers = Parameter.handlerList;
     previousHandlerMap = Parameter.handlerMap;
-    previousChannels = new HashMap<>(ChannelManager.getChannels());
     previousBans = new HashMap<>(ChannelManager.getBannedNodes().asMap());
     previousHandshakeService = ChannelManager.getHandshakeService();
     Parameter.p2pConfig = config;
@@ -71,7 +69,7 @@ public class HandshakeAdmissionTest {
     config.setMaxConnections(50);
     config.setMaxConnectionsWithSameIp(2);
     config.getTrustNodes().clear();
-    ChannelManager.getChannels().clear();
+    ChannelManager.getAllChannels().forEach(ChannelManager::notifyDisconnect);
     ChannelManager.getBannedNodes().invalidateAll();
     Parameter.handlerList = new ArrayList<>();
     Parameter.handlerMap = new HashMap<>();
@@ -103,12 +101,11 @@ public class HandshakeAdmissionTest {
         socket.finishAndReleaseAll();
       }
     } finally {
+      ChannelManager.getAllChannels().forEach(ChannelManager::notifyDisconnect);
       Parameter.p2pConfig = previousConfig;
       Parameter.version = previousVersion;
       Parameter.handlerList = previousHandlers;
       Parameter.handlerMap = previousHandlerMap;
-      ChannelManager.getChannels().clear();
-      ChannelManager.getChannels().putAll(previousChannels);
       ChannelManager.getBannedNodes().invalidateAll();
       ChannelManager.getBannedNodes().putAll(previousBans);
       setHandshakeService(previousHandshakeService);

@@ -12,12 +12,14 @@ import java.util.Set;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import org.junit.AfterClass;
+import org.junit.After;
 import org.junit.Assert;
-import org.junit.BeforeClass;
+import org.junit.Before;
 import org.junit.Test;
 import org.tron.p2p.P2pConfig;
+import org.tron.p2p.P2pEventHandler;
 import org.tron.p2p.base.Parameter;
+import org.tron.p2p.connection.business.detect.NodeDetectService;
 import org.tron.p2p.connection.business.pool.ConnPoolService;
 import org.tron.p2p.connection.socket.PeerClient;
 import org.tron.p2p.discover.DiscoverService;
@@ -33,6 +35,11 @@ public class ConnPoolServiceTest {
   // PeerServer.start only logs on bind failure, so a collision used to let this
   // class pass while exercising nothing.
   private static int port = TestPort.choose();
+  private static final InetSocketAddress REMOTE = new InetSocketAddress("127.0.0.2", 18888);
+  private final List<Channel> channels = new ArrayList<>();
+  private P2pConfig previousConfig;
+  private List<P2pEventHandler> previousHandlers;
+  private ConnPoolService pool;
 
   private static class CountingPeerClient extends PeerClient {
 
@@ -45,19 +52,30 @@ public class ConnPoolServiceTest {
     }
   }
 
-  @BeforeClass
-  public static void init() {
+  @Before
+  public void setUp() {
+    previousConfig = Parameter.p2pConfig;
+    previousHandlers = Parameter.handlerList;
     Parameter.p2pConfig = new P2pConfig();
+    Parameter.p2pConfig.setIp(localIp);
+    Parameter.p2pConfig.setIpv6("");
     Parameter.p2pConfig.setDiscoverEnable(false);
     Parameter.p2pConfig.setPort(port);
-
-    NodeManager.init();
-    ChannelManager.init();
+    Parameter.handlerList = new ArrayList<>();
+    clearChannels();
+    pool = new ConnPoolService();
   }
 
-  private void clearChannels() {
-    ChannelManager.getChannels().clear();
-    ChannelManager.getBannedNodes().invalidateAll();
+  @After
+  public void tearDown() {
+    try {
+      channels.forEach(Channel::markDisconnected);
+      pool.close();
+      clearChannels();
+    } finally {
+      Parameter.p2pConfig = previousConfig;
+      Parameter.handlerList = previousHandlers;
+    }
   }
 
   private static Method setPeerClientAndGetConnectMethod(ConnPoolService connPoolService,
@@ -182,8 +200,12 @@ public class ConnPoolServiceTest {
     Field discoveryField = NodeManager.class.getDeclaredField("discoverService");
     discoveryField.setAccessible(true);
     DiscoverService previousDiscovery = (DiscoverService) discoveryField.get(null);
+    Field detectField = ChannelManager.class.getDeclaredField("nodeDetectService");
+    detectField.setAccessible(true);
+    NodeDetectService previousDetect = (NodeDetectService) detectField.get(null);
     ConnPoolService connPoolService = null;
     try {
+      detectField.set(null, new NodeDetectService());
       connPoolService = new ConnPoolService();
       InetSocketAddress activeNode = new InetSocketAddress("127.0.0.6", 18888);
       activeNodes.add(activeNode);
@@ -222,6 +244,7 @@ public class ConnPoolServiceTest {
         connPoolService.close();
       }
       discoveryField.set(null, previousDiscovery);
+      detectField.set(null, previousDetect);
       Parameter.p2pConfig.setActiveNodes(Collections.emptyList());
       Parameter.p2pConfig.setMinConnections(8);
       Parameter.p2pConfig.setMinActiveConnections(2);
@@ -236,21 +259,20 @@ public class ConnPoolServiceTest {
     inetInUse.add(localAddress);
 
     List<Node> connectableNodes = new ArrayList<>();
-    connectableNodes.add(NodeManager.getHomeNode());
+    connectableNodes.add(new Node(Parameter.p2pConfig.getNodeID(),
+        Parameter.p2pConfig.getIp(), Parameter.p2pConfig.getIpv6(), Parameter.p2pConfig.getPort()));
 
-    ConnPoolService connPoolService = new ConnPoolService();
-    List<Node> nodes = connPoolService.getNodes(new HashSet<>(), inetInUse, connectableNodes,
+    List<Node> nodes = pool.getNodes(new HashSet<>(), inetInUse, connectableNodes,
         1);
     Assert.assertEquals(0, nodes.size());
 
-    nodes = connPoolService.getNodes(new HashSet<>(), new HashSet<>(), connectableNodes,
+    nodes = pool.getNodes(new HashSet<>(), new HashSet<>(), connectableNodes,
         1);
     Assert.assertEquals(1, nodes.size());
   }
 
   @Test
   public void getNodes_respectsLimit() {
-    clearChannels();
     Node node1 = new Node(new InetSocketAddress(localIp, 90));
     Node node2 = new Node(new InetSocketAddress(localIp, 100));
 
@@ -258,15 +280,14 @@ public class ConnPoolServiceTest {
     connectableNodes.add(node1);
     connectableNodes.add(node2);
 
-    ConnPoolService connPoolService = new ConnPoolService();
-    List<Node> nodes = connPoolService.getNodes(new HashSet<>(), new HashSet<>(), connectableNodes,
+    List<Node> nodes = pool.getNodes(new HashSet<>(), new HashSet<>(), connectableNodes,
         2);
     Assert.assertEquals(2, nodes.size());
     // getNodes shuffles candidates, so compare their contents without assuming an order.
     Assert.assertEquals(new HashSet<>(connectableNodes), new HashSet<>(nodes));
 
     int limit = 1;
-    List<Node> nodes2 = connPoolService.getNodes(new HashSet<>(), new HashSet<>(), connectableNodes,
+    List<Node> nodes2 = pool.getNodes(new HashSet<>(), new HashSet<>(), connectableNodes,
         limit);
     Assert.assertEquals(limit, nodes2.size());
     Assert.assertTrue(connectableNodes.containsAll(nodes2));
@@ -343,15 +364,134 @@ public class ConnPoolServiceTest {
     Assert.assertEquals(0, nodes.size());
   }
 
-  @AfterClass
-  public static void destroy() {
-    NodeManager.close();
-    ChannelManager.close();
-    // ChannelManager.close() latches isShutdown, and init() does not clear it. In
-    // libp2p's own module that was harmless (one class per run, and its CI never ran
-    // tests); here framework reuses a JVM across up to 100 classes, so leaving it set
-    // makes every later PeerClient.connect() return null and ConnPoolService skip
-    // reconnection. Reset it so the next class starts from a clean state.
-    ChannelManager.isShutdown = false;
+  @Test
+  public void sameAddressPeersAreTrackedSeparatelyInEitherCloseOrder() throws Exception {
+    for (boolean firstActive : new boolean[]{false, true}) {
+      for (boolean closeFirst : new boolean[]{false, true}) {
+        Channel first = channel(firstActive);
+        Channel second = channel(!firstActive);
+        Assert.assertNotSame(first, second);
+        Assert.assertEquals(first, second);
+        pool.onConnect(first);
+        pool.onConnect(second);
+        assertCounts(1, 1);
+        assertPeers(first, second);
+
+        pool.onDisconnect(closeFirst ? first : second);
+        Channel survivor = closeFirst ? second : first;
+        assertCounts(survivor.isActive() ? 1 : 0, survivor.isActive() ? 0 : 1);
+        assertPeers(survivor);
+        pool.onDisconnect(survivor);
+        assertCounts(0, 0);
+        assertPeers();
+      }
+    }
+  }
+
+  @Test
+  public void unregisteredSameAddressDisconnectDoesNotRemoveRegisteredPeer() throws Exception {
+    for (boolean active : new boolean[]{false, true}) {
+      Channel registered = channel(active);
+      Channel unregistered = channel(!active);
+      pool.onConnect(registered);
+      Assert.assertFalse(unregistered.isFinishHandshake());
+
+      pool.onDisconnect(unregistered);
+      pool.onDisconnect(unregistered);
+      assertCounts(active ? 1 : 0, active ? 0 : 1);
+      assertPeers(registered);
+      pool.onDisconnect(registered);
+      assertCounts(0, 0);
+      assertPeers();
+    }
+  }
+
+  @Test
+  public void duplicateCallbacksCountEachInstanceOnce() throws Exception {
+    Channel inbound = channel(false);
+    Channel outbound = channel(true);
+    pool.onConnect(inbound);
+    pool.onConnect(inbound);
+    pool.onConnect(outbound);
+    pool.onConnect(outbound);
+    assertCounts(1, 1);
+    assertPeers(inbound, outbound);
+
+    pool.onDisconnect(inbound);
+    pool.onDisconnect(inbound);
+    assertCounts(1, 0);
+    assertPeers(outbound);
+    pool.onDisconnect(outbound);
+    pool.onDisconnect(outbound);
+    assertCounts(0, 0);
+    assertPeers();
+  }
+
+  @Test
+  public void lateDisconnectDoesNotRemoveReplacementAtSameAddress() throws Exception {
+    for (boolean active : new boolean[]{false, true}) {
+      Channel old = channel(active);
+      pool.onConnect(old);
+      pool.onDisconnect(old);
+      Channel replacement = channel(!active);
+      pool.onConnect(replacement);
+
+      pool.onDisconnect(old);
+      assertCounts(active ? 0 : 1, active ? 1 : 0);
+      assertPeers(replacement);
+      pool.onDisconnect(replacement);
+      assertCounts(0, 0);
+      assertPeers();
+    }
+  }
+
+  @Test
+  public void repeatedSameAddressLifecyclesDoNotAccumulateCounterDrift() throws Exception {
+    for (int i = 0; i < 100; i++) {
+      Channel first = channel(i % 2 == 0);
+      Channel second = channel(!first.isActive());
+      pool.onConnect(first);
+      pool.onConnect(second);
+      pool.onDisconnect(second);
+      pool.onDisconnect(first);
+      assertCounts(0, 0);
+      assertPeers();
+    }
+  }
+
+  private Channel channel(boolean active) throws Exception {
+    Channel channel = new Channel();
+    set(channel, "inetSocketAddress", REMOTE);
+    set(channel, "inetAddress", REMOTE.getAddress());
+    set(channel, "isActive", active);
+    channels.add(channel);
+    return channel;
+  }
+
+  private void assertCounts(int active, int passive) {
+    Assert.assertEquals(active, pool.getActivePeersCount().get());
+    Assert.assertEquals(passive, pool.getPassivePeersCount().get());
+  }
+
+  @SuppressWarnings("unchecked")
+  private void assertPeers(Channel... expected) throws Exception {
+    Field field = ConnPoolService.class.getDeclaredField("activePeers");
+    field.setAccessible(true);
+    List<Channel> actual = (List<Channel>) field.get(pool);
+    Assert.assertEquals(expected.length, actual.size());
+    for (int i = 0; i < expected.length; i++) {
+      Assert.assertSame(expected[i], actual.get(i));
+    }
+  }
+
+  private void set(Channel channel, String name, Object value) throws Exception {
+    Field field = Channel.class.getDeclaredField(name);
+    field.setAccessible(true);
+    field.set(channel, value);
+  }
+
+  private void clearChannels() {
+    ChannelManager.getAllChannels().forEach(ChannelManager::notifyDisconnect);
+    ChannelManager.getBannedNodes().invalidateAll();
   }
 }
