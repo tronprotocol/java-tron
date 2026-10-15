@@ -29,7 +29,7 @@ message AccountCreateContract {
   AccountType type = 3;
 }
 
-// Update account name. Account name is not unique now.
+// Update account name. ALLOW_UPDATE_ACCOUNT_NAME is not enabled on Mainnet, so account names are currently unique.
 message AccountUpdateContract {
   bytes account_name = 1;
   bytes owner_address = 2;
@@ -47,4 +47,3 @@ message AccountPermissionUpdateContract {
   Permission witness = 3; //Can be empty
   repeated Permission actives = 4; //Empty is invalidate
 }
-

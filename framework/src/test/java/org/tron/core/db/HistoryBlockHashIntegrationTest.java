@@ -57,17 +57,21 @@ public class HistoryBlockHashIntegrationTest extends BaseTest {
     // Storage.commit() translates a zero write into a row delete (see
     // Storage#commit), so writing ZERO to every slot the suite touches is
     // the cheapest way to clear leftover state between tests.
-    Storage storage = new Storage(addr, chainBaseManager.getStorageRowStore());
+    Storage storage = openStorage();
     for (long slot : new long[]{0L, 99L, 499L, 776L}) {
       storage.put(new DataWord(slot), DataWord.ZERO());
     }
     storage.commit();
   }
 
+  private Storage openStorage() {
+    return new Storage(HistoryBlockHashUtil.HISTORY_STORAGE_ADDRESS,
+        dbManager.getStorageRowStore(),
+        dbManager.getDynamicPropertiesStore().allowOptimizeTvmStorage());
+  }
+
   private DataWord readSlot(long slot) {
-    Storage storage = new Storage(
-        HistoryBlockHashUtil.HISTORY_STORAGE_ADDRESS,
-        chainBaseManager.getStorageRowStore());
+    Storage storage = openStorage();
     return storage.getValue(new DataWord(slot));
   }
 
@@ -285,9 +289,7 @@ public class HistoryBlockHashIntegrationTest extends BaseTest {
     AccountStateCallBack spy = Mockito.spy(realCb);
     AtomicReference<DataWord> captured = new AtomicReference<>();
     Mockito.doAnswer(inv -> {
-      Storage st = new Storage(
-          HistoryBlockHashUtil.HISTORY_STORAGE_ADDRESS,
-          chainBaseManager.getStorageRowStore());
+      Storage st = openStorage();
       captured.set(st.getValue(new DataWord(expectedSlot)));
       return inv.callRealMethod();
     }).when(spy).executeGenerateFinish();

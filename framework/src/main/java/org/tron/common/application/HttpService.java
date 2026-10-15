@@ -28,6 +28,7 @@ import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.ConnectionLimit;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.handler.ErrorHandler;
 import org.eclipse.jetty.server.handler.SizeLimitHandler;
 import org.eclipse.jetty.servlet.ServletContextHandler;
@@ -39,9 +40,22 @@ public abstract class HttpService extends AbstractService {
 
   protected Server apiServer;
 
+  protected String listenAddress;
+
   protected String contextPath;
 
   protected long maxRequestSize = 4 * 1024 * 1024; // 4MB
+
+  // Once maxHttpConnectNumber is reached, Jetty applies this idle timeout to every open
+  // connection, so connections that send nothing cannot hold every slot. While the limit is
+  // reached, a keep-alive connection that stays idle this long between two requests is closed
+  // as well; time spent processing a request does not count as idle.
+  private long connectionLimitIdleTimeoutMs = 10_000;
+
+  @VisibleForTesting
+  protected void setConnectionLimitIdleTimeoutMs(long connectionLimitIdleTimeoutMs) {
+    this.connectionLimitIdleTimeoutMs = connectionLimitIdleTimeoutMs;
+  }
 
   @VisibleForTesting
   public long getMaxRequestSize() {
@@ -77,10 +91,18 @@ public abstract class HttpService extends AbstractService {
   }
 
   protected void initServer() {
-    this.apiServer = new Server(this.port);
+    this.apiServer = new Server();
+    ServerConnector connector = new ServerConnector(this.apiServer);
+    connector.setPort(this.port);
+    if (this.listenAddress != null) {
+      connector.setHost(this.listenAddress);
+    }
+    this.apiServer.addConnector(connector);
     int maxHttpConnectNumber = Args.getInstance().getMaxHttpConnectNumber();
     if (maxHttpConnectNumber > 0) {
-      this.apiServer.addBean(new ConnectionLimit(maxHttpConnectNumber, this.apiServer));
+      ConnectionLimit connectionLimit = new ConnectionLimit(maxHttpConnectNumber, this.apiServer);
+      connectionLimit.setIdleTimeout(connectionLimitIdleTimeoutMs);
+      this.apiServer.addBean(connectionLimit);
     }
     this.apiServer.setErrorHandler(new OversizedRequestErrorHandler());
   }

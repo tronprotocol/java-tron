@@ -25,7 +25,7 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.CommonDataBase;
 import org.tron.core.db2.ISession;
-import org.tron.core.services.interfaceOnPBFT.http.PBFT.HttpApiOnPBFTService;
+import org.tron.core.services.interfaceOnPBFT.HttpApiOnPBFTService;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.json.JSON;
 import org.tron.json.JSONObject;

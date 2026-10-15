@@ -59,6 +59,10 @@ public interface Repository {
 
   boolean isNewContract(byte[] address);
 
+  void markSelfDestruct(byte[] address);
+
+  boolean isSelfDestructed(byte[] address);
+
   void updateAccount(byte[] address, AccountCapsule accountCapsule);
 
   void updateDynamicProperty(byte[] word, BytesCapsule bytesCapsule);

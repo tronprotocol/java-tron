@@ -19,6 +19,7 @@ import org.mockito.Mockito;
 import org.springframework.context.ApplicationContext;
 import org.tron.common.TestConstants;
 import org.tron.common.parameter.CommonParameter;
+import org.tron.common.utils.PeerManagerStateResetter;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.core.config.args.Args;
 import org.tron.p2p.connection.Channel;
@@ -27,6 +28,7 @@ public class PeerManagerTest {
 
   @BeforeClass
   public static void initArgs() {
+    PeerManagerStateResetter.reset();
     Args.setParam(new String[]{}, TestConstants.TEST_CONF);
     CommonParameter.getInstance().setRateLimiterSyncBlockChain(10);
     CommonParameter.getInstance().setRateLimiterFetchInvData(10);
@@ -117,6 +119,85 @@ public class PeerManagerTest {
     PeerManager.add(ctx, c1);
     PeerConnection p = PeerManager.getPeerConnection(c1);
     Assert.assertTrue(p != null);
+  }
+
+  @Test
+  public void sameAddressChannelsRemainDistinctInEitherRemovalOrder() {
+    for (boolean removeFirst : new boolean[]{false, true}) {
+      PeerManagerStateResetter.reset();
+      InetSocketAddress address = new InetSocketAddress("127.0.0.2", 10001);
+      Channel first = new Channel();
+      Channel second = new Channel();
+      ReflectUtils.setFieldValue(first, "inetSocketAddress", address);
+      ReflectUtils.setFieldValue(first, "inetAddress", address.getAddress());
+      ReflectUtils.setFieldValue(first, "isActive", true);
+      ReflectUtils.setFieldValue(second, "inetSocketAddress", address);
+      ReflectUtils.setFieldValue(second, "inetAddress", address.getAddress());
+      ReflectUtils.setFieldValue(second, "isActive", false);
+
+      PeerConnection firstPeer = new PeerConnection();
+      PeerConnection secondPeer = new PeerConnection();
+      ApplicationContext ctx = mock(ApplicationContext.class);
+      Mockito.when(ctx.getBean(PeerConnection.class)).thenReturn(firstPeer, secondPeer);
+      Assert.assertSame(firstPeer, PeerManager.add(ctx, first));
+      Assert.assertSame(secondPeer, PeerManager.add(ctx, second));
+      Assert.assertNull(PeerManager.add(ctx, first));
+      Assert.assertSame(firstPeer, PeerManager.getPeerConnection(first));
+      Assert.assertSame(secondPeer, PeerManager.getPeerConnection(second));
+      Assert.assertEquals(2, PeerManager.getPeers().size());
+      Assert.assertEquals(1, PeerManager.getActivePeersCount().get());
+      Assert.assertEquals(1, PeerManager.getPassivePeersCount().get());
+
+      Channel removed = removeFirst ? first : second;
+      Channel survivor = removeFirst ? second : first;
+      PeerConnection survivorPeer = removeFirst ? secondPeer : firstPeer;
+      Assert.assertNotNull(PeerManager.remove(removed));
+      Assert.assertNull(PeerManager.remove(removed));
+      Assert.assertSame(survivorPeer, PeerManager.getPeerConnection(survivor));
+      Assert.assertEquals(1, PeerManager.getPeers().size());
+      Assert.assertEquals(survivor.isActive() ? 1 : 0,
+          PeerManager.getActivePeersCount().get());
+      Assert.assertEquals(survivor.isActive() ? 0 : 1,
+          PeerManager.getPassivePeersCount().get());
+      Assert.assertSame(survivorPeer, PeerManager.remove(survivor));
+      Assert.assertTrue(PeerManager.getPeers().isEmpty());
+      Assert.assertEquals(0, PeerManager.getActivePeersCount().get());
+      Assert.assertEquals(0, PeerManager.getPassivePeersCount().get());
+    }
+  }
+
+  @Test
+  public void timedOutSameAddressPeerDoesNotRemoveItsSurvivor() throws Exception {
+    PeerManagerStateResetter.reset();
+    InetSocketAddress address = new InetSocketAddress("127.0.0.2", 10001);
+    Channel survivor = new Channel();
+    Channel timedOut = new Channel();
+    ReflectUtils.setFieldValue(survivor, "inetSocketAddress", address);
+    ReflectUtils.setFieldValue(survivor, "inetAddress", address.getAddress());
+    ReflectUtils.setFieldValue(survivor, "isActive", true);
+    ReflectUtils.setFieldValue(timedOut, "inetSocketAddress", address);
+    ReflectUtils.setFieldValue(timedOut, "inetAddress", address.getAddress());
+    ReflectUtils.setFieldValue(timedOut, "disconnectTime", System.currentTimeMillis() - 61_000);
+
+    PeerConnection survivorPeer = new PeerConnection();
+    PeerConnection timedOutPeer = Mockito.spy(new PeerConnection());
+    Mockito.doNothing().when(timedOutPeer).onDisconnect();
+    ApplicationContext ctx = mock(ApplicationContext.class);
+    Mockito.when(ctx.getBean(PeerConnection.class)).thenReturn(survivorPeer, timedOutPeer);
+    PeerManager.add(ctx, survivor);
+    PeerManager.add(ctx, timedOut);
+
+    Method check = PeerManager.class.getDeclaredMethod("check");
+    check.setAccessible(true);
+    check.invoke(null);
+
+    Assert.assertSame(survivorPeer, PeerManager.getPeerConnection(survivor));
+    Assert.assertNull(PeerManager.getPeerConnection(timedOut));
+    Assert.assertEquals(1, PeerManager.getPeers().size());
+    Assert.assertEquals(1, PeerManager.getActivePeersCount().get());
+    Assert.assertEquals(0, PeerManager.getPassivePeersCount().get());
+    Mockito.verify(timedOutPeer).onDisconnect();
+    PeerManager.remove(survivor);
   }
 
   @Test

@@ -12,13 +12,13 @@ import java.util.Optional;
 import java.util.stream.IntStream;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.Time;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.db.TronStoreWithRevoking;
@@ -255,8 +255,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] ALLOW_HARDEN_EXCHANGE_CALCULATION =
       "ALLOW_HARDEN_EXCHANGE_CALCULATION".getBytes();
 
+  private static final byte[] CLOSE_EXCHANGE = "CLOSE_EXCHANGE".getBytes();
+
   private static final byte[] TURKISH_KEY_MIGRATION_DONE =
       "TURKISH_KEY_MIGRATION_DONE".getBytes();
+
+  private static final byte[] ALLOW_OPTIMIZE_TVM_STORAGE = "ALLOW_OPTIMIZE_TVM_STORAGE".getBytes();
 
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
@@ -1628,6 +1632,18 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
             () -> new IllegalArgumentException("not found EXCHANGE_CREATE_FEE"));
   }
 
+  public void saveCloseExchange(int level) {
+    this.put(CLOSE_EXCHANGE, new BytesCapsule(ByteArray.fromLong(level)));
+  }
+
+  public int getCloseExchange() {
+    return Optional.ofNullable(getUnchecked(CLOSE_EXCHANGE))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElse(0L)
+        .intValue();
+  }
+
   public void saveExchangeBalanceLimit(long limit) {
     this.put(EXCHANGE_BALANCE_LIMIT,
         new BytesCapsule(ByteArray.fromLong(limit)));
@@ -2261,8 +2277,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     logger.info(
         "Do update nextMaintenanceTime, currentMaintenanceTime: {}, blockTime: {}, "
             + "nextMaintenanceTime: {}.",
-        new DateTime(currentMaintenanceTime), new DateTime(blockTime),
-        new DateTime(nextMaintenanceTime)
+        Time.getIsoTimeString(currentMaintenanceTime), Time.getIsoTimeString(blockTime),
+        Time.getIsoTimeString(nextMaintenanceTime)
     );
   }
 
@@ -3081,6 +3097,21 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
         .orElse(0L);
+  }
+
+  public long getAllowOptimizeTvmStorage() {
+    return Optional.ofNullable(getUnchecked(ALLOW_OPTIMIZE_TVM_STORAGE))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElse(0L);
+  }
+
+  public void saveAllowOptimizeTvmStorage(long value) {
+    this.put(ALLOW_OPTIMIZE_TVM_STORAGE, new BytesCapsule(ByteArray.fromLong(value)));
+  }
+
+  public boolean allowOptimizeTvmStorage() {
+    return getAllowOptimizeTvmStorage() == 1L;
   }
 
   private static class DynamicResourceProperties {

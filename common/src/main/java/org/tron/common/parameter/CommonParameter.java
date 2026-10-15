@@ -4,6 +4,7 @@ import com.google.common.annotations.VisibleForTesting;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
@@ -176,12 +177,6 @@ public class CommonParameter {
   @Setter
   public boolean solidityNode = false;
 
-  // If you are running KeystoreFactory,
-  // this flag is set to true
-  @Getter
-  @Setter
-  public boolean keystoreFactory = false;
-
   // -- RPC / HTTP --
   @Getter
   @Setter
@@ -295,9 +290,6 @@ public class CommonParameter {
   public String trustNodeAddr; // clearParam: ""
   @Getter
   @Setter
-  public boolean walletExtensionApi;
-  @Getter
-  @Setter
   public boolean estimateEnergy;
   @Getter
   @Setter
@@ -323,6 +315,10 @@ public class CommonParameter {
   @Getter
   @Setter
   public boolean nodeDetectEnable;
+
+  @Getter
+  @Setter
+  public boolean nodeAllowNumericFieldAlias = true;
   @Getter
   @Setter
   public int allowMultiSign;
@@ -438,10 +434,6 @@ public class CommonParameter {
   public FilterQuery eventFilter;
   @Getter
   @Setter
-  public String cryptoEngine = Constant.ECKey_ENGINE;
-
-  @Getter
-  @Setter
   public boolean rpcEnable = true;
   @Getter
   @Setter
@@ -488,6 +480,25 @@ public class CommonParameter {
   @Getter
   @Setter
   public int jsonRpcMaxLogFilterNum = 20000;
+  @Getter
+  @Setter
+  public boolean adminHttpEnable = false;
+  @Getter
+  @Setter
+  public String adminHttpListenAddress = Constant.LOCAL_HOST;
+  @Getter
+  @Setter
+  public int adminHttpListenPort = 8575;
+  @Getter
+  @Setter
+  public List<String> adminHttpVirtualHosts =
+      new ArrayList<>(Collections.singletonList("localhost"));
+  @Getter
+  @Setter
+  public boolean ipcEnable = false;
+  @Getter
+  @Setter
+  public String ipcSocketDirectory = "";
   @Getter
   @Setter
   public int maxTransactionPendingSize;
@@ -667,10 +678,6 @@ public class CommonParameter {
       PARAMETER.storage.deleteAllStoragePaths();
     }
     PARAMETER = new CommonParameter();
-  }
-
-  public boolean isECKeyCryptoEngine() {
-    return cryptoEngine.equalsIgnoreCase(Constant.ECKey_ENGINE);
   }
 
   public boolean isJsonRpcFilterEnabled() {

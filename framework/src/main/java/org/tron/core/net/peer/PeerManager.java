@@ -85,7 +85,7 @@ public class PeerManager {
   }
 
   private static synchronized boolean remove(PeerConnection peerConnection) {
-    if (!peers.remove(peerConnection)) {
+    if (!peers.removeIf(peer -> peer == peerConnection)) {
       return false;
     }
     if (peerConnection.getChannel().isActive()) {
@@ -106,7 +106,7 @@ public class PeerManager {
 
   public static PeerConnection getPeerConnection(Channel channel) {
     for (PeerConnection peer : new ArrayList<>(peers)) {
-      if (peer.getChannel().equals(channel)) {
+      if (peer.getChannel() == channel) {
         return peer;
       }
     }
@@ -123,7 +123,7 @@ public class PeerManager {
     return peers;
   }
 
-  private static void check() {
+  private static synchronized void check() {
     long now = System.currentTimeMillis();
     for (PeerConnection peer : new ArrayList<>(peers)) {
       long disconnectTime = peer.getChannel().getDisconnectTime();
