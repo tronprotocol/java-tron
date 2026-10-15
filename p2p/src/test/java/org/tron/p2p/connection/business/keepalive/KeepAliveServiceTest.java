@@ -4,7 +4,6 @@ import java.lang.reflect.Field;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -39,7 +38,6 @@ public class KeepAliveServiceTest {
   }
 
   private P2pConfig saved;
-  private Map<InetSocketAddress, Channel> channels;
 
   private static RecordingChannel channelAt(InetSocketAddress address) throws Exception {
     RecordingChannel channel = new RecordingChannel();
@@ -53,13 +51,12 @@ public class KeepAliveServiceTest {
   public void setUp() {
     saved = Parameter.p2pConfig;
     Parameter.p2pConfig = new P2pConfig();
-    channels = ChannelManager.getChannels();
-    channels.clear();
+    ChannelManager.getAllChannels().forEach(ChannelManager::notifyDisconnect);
   }
 
   @After
   public void tearDown() {
-    channels.clear();
+    ChannelManager.getAllChannels().forEach(ChannelManager::notifyDisconnect);
     Parameter.p2pConfig = saved;
   }
 

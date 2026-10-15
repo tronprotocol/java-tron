@@ -18,10 +18,8 @@ package org.tron.common.runtime.vm;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
-import org.tron.common.BaseTest;
-import org.tron.common.TestConstants;
+import org.tron.common.BaseMethodTest;
 import org.tron.common.runtime.RuntimeImpl;
 import org.tron.common.runtime.TvmTestUtils;
 import org.tron.common.utils.Commons;
@@ -29,7 +27,6 @@ import org.tron.core.Constant;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.ReceiptCapsule;
 import org.tron.core.capsule.TransactionCapsule;
-import org.tron.core.config.args.Args;
 import org.tron.core.db.TransactionTrace;
 import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.exception.ContractExeException;
@@ -60,7 +57,7 @@ import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
  * function fibonacciNotify(uint number) returns(uint result) { result = fibonacci(number);
  * Notify(number, result); } }
  */
-public class BandWidthRuntimeWithCheckTest extends BaseTest {
+public class BandWidthRuntimeWithCheckTest extends BaseMethodTest {
 
   public static final long totalBalance = 1000_0000_000_000L;
   private static final String dbDirectory = "db_BandWidthRuntimeWithCheckTest_test";
@@ -68,26 +65,17 @@ public class BandWidthRuntimeWithCheckTest extends BaseTest {
   private static final String TriggerOwnerAddress = "TCSgeWapPJhCqgWRxXCKb6jJ5AgNWSGjPA";
   private static final String TriggerOwnerTwoAddress = "TPMBUANrTwwQAPwShn7ZZjTJz1f3F8jknj";
 
-  private static boolean init;
 
-  static {
-    Args.setParam(
-        new String[]{
-            "--output-directory", dbPath(),
-            "--storage-db-directory", dbDirectory,
-        },
-        TestConstants.TEST_CONF
-    );
+  @Override
+  protected String[] extraArgs() {
+    return new String[]{"--storage-db-directory", dbDirectory, "--debug"};
   }
 
   /**
    * Init data.
    */
-  @Before
-  public void init() {
-    if (init) {
-      return;
-    }
+  @Override
+  protected void afterInit() {
     //init energy
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(1526647838000L);
     dbManager.getDynamicPropertiesStore().saveTotalEnergyWeight(10_000_000L);
@@ -117,7 +105,6 @@ public class BandWidthRuntimeWithCheckTest extends BaseTest {
     accountCapsule3.setFrozenForEnergy(10_000_000L, 0L);
     dbManager.getAccountStore()
         .put(Commons.decodeFromBase58Check(TriggerOwnerTwoAddress), accountCapsule3);
-    init = true;
   }
 
   @Test
@@ -135,13 +122,16 @@ public class BandWidthRuntimeWithCheckTest extends BaseTest {
           Contract.newBuilder().setParameter(Any.pack(triggerContract))
               .setType(ContractType.TriggerSmartContract)).setFeeLimit(1000000000)).build();
       TransactionCapsule trxCap = new TransactionCapsule(transaction);
+      trxCap.setResultCode(contractResult.SUCCESS);
       TransactionTrace trace = new TransactionTrace(trxCap, StoreFactory.getInstance(),
           new RuntimeImpl());
       dbManager.consumeBandwidth(trxCap, trace);
 
       trace.init(null);
       trace.exec();
+      trace.setResult();
       trace.finalization();
+      trace.check();
 
       triggerOwner = dbManager.getAccountStore()
           .get(Commons.decodeFromBase58Check(TriggerOwnerAddress));
@@ -153,7 +143,7 @@ public class BandWidthRuntimeWithCheckTest extends BaseTest {
       Assert.assertEquals(624668 * Constant.SUN_PER_ENERGY,
           balance + energy * Constant.SUN_PER_ENERGY);
     } catch (TronException | ReceiptCheckErrException e) {
-      Assert.assertNotNull(e);
+      throw new AssertionError("Unexpected transaction failure", e);
     }
 
   }
@@ -173,9 +163,11 @@ public class BandWidthRuntimeWithCheckTest extends BaseTest {
       TransactionTrace trace = new TransactionTrace(trxCap, StoreFactory.getInstance(),
           new RuntimeImpl());
       dbManager.consumeBandwidth(trxCap, trace);
-      long bandWidth = trxCap.getSerializedSize() + Constant.MAX_RESULT_SIZE_IN_TX;
+      // VM bandwidth excludes ret and reserves its maximum size once.
+      long bandWidth = transaction.getSerializedSize() + Constant.MAX_RESULT_SIZE_IN_TX;
       trace.init(null);
       trace.exec();
+      trace.setResult();
       trace.finalization();
       trace.check();
       AccountCapsule triggerOwnerTwo = dbManager.getAccountStore()
@@ -190,7 +182,7 @@ public class BandWidthRuntimeWithCheckTest extends BaseTest {
       Assert.assertEquals(totalBalance,
           balance);
     } catch (TronException | ReceiptCheckErrException e) {
-      Assert.assertNotNull(e);
+      throw new AssertionError("Unexpected transaction failure", e);
     }
   }
 
@@ -240,6 +232,7 @@ public class BandWidthRuntimeWithCheckTest extends BaseTest {
 
     trace.init(null);
     trace.exec();
+    trace.setResult();
     trace.finalization();
     trace.check();
 

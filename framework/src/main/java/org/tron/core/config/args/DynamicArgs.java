@@ -73,8 +73,12 @@ public class DynamicArgs {
         Args.filterInetSocketAddress(nodeConfig.getActive(), true);
     parameter.setActiveNodes(newActiveNodes);
     List<InetSocketAddress> activeNodes = TronNetService.getP2pConfig().getActiveNodes();
-    activeNodes.clear();
-    activeNodes.addAll(newActiveNodes);
+    activeNodes.removeIf(node -> !newActiveNodes.contains(node));
+    newActiveNodes.forEach(node -> {
+      if (!activeNodes.contains(node)) {
+        activeNodes.add(node);
+      }
+    });
     logger.debug("p2p active nodes : {}",
         TronNetService.getP2pConfig().getActiveNodes().toString());
   }

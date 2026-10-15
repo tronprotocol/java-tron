@@ -6,6 +6,7 @@ import org.tron.p2p.discover.message.MessageType;
 import org.tron.p2p.protos.Discover;
 import org.tron.p2p.protos.Discover.Endpoint;
 import org.tron.p2p.utils.NetUtil;
+import org.tron.p2p.utils.ProtoUtil;
 
 public class PingMessage extends KadMessage {
 
@@ -13,7 +14,7 @@ public class PingMessage extends KadMessage {
 
   public PingMessage(byte[] data) throws Exception {
     super(MessageType.KAD_PING, data);
-    this.pingMessage = Discover.PingMessage.parseFrom(data);
+    this.pingMessage = ProtoUtil.parseFrom(Discover.PingMessage.parser(), data);
   }
 
   public PingMessage(Node from, Node to) {

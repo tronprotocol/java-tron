@@ -20,6 +20,9 @@ import org.tron.core.exception.jsonrpc.JsonRpcException;
 public enum JsonRpcErrorResolver implements ErrorResolver {
   INSTANCE;
 
+  public static final JsonError INTERNAL_ERROR =
+      new JsonError(JsonError.INTERNAL_ERROR.code, "Internal error", null);
+
   /**
    * {@inheritDoc}
    */
@@ -35,7 +38,7 @@ public enum JsonRpcErrorResolver implements ErrorResolver {
         ? null : getResolverForException(thrownException, method);
     if (resolver == null) {
       logUnhandledException(method, thrownException);
-      return new JsonError(JsonError.INTERNAL_ERROR.code, "Internal error", null);
+      return INTERNAL_ERROR;
     }
 
     String message = hasErrorMessage(resolver) ? resolver.message() : thrownException.getMessage();
@@ -124,7 +127,7 @@ public enum JsonRpcErrorResolver implements ErrorResolver {
       case -32602:
         return "Invalid params";
       default:
-        return "Internal error";
+        return INTERNAL_ERROR.message;
     }
   }
 

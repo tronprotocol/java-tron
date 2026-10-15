@@ -8,6 +8,8 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.embedded.EmbeddedChannel;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,7 +33,7 @@ import org.tron.p2p.protos.Connect.DisconnectReason;
  * admits peers that should be refused or drops peers that are fine, so each branch is
  * pinned separately.
  *
- * <p>ChannelManager is stubbed statically because processPeer/updateNodeId consult
+ * <p>ChannelManager is stubbed statically because checkPeer/addPeer consult
  * process-wide connection state; the logic under test is HandshakeService's own.
  */
 public class HandshakeServiceTest {
@@ -41,11 +43,14 @@ public class HandshakeServiceTest {
   private MockedStatic<ChannelManager> channelManager;
   private HandshakeService service;
   private Channel channel;
+  private EmbeddedChannel socket;
+  private P2pConfig priorConfig;
   private HelloMessage msg;
   private List<P2pEventHandler> priorHandlers;
 
   @Before
   public void setUp() {
+    priorConfig = Parameter.p2pConfig;
     Parameter.p2pConfig = new P2pConfig();
     Parameter.p2pConfig.setNetworkId(NETWORK_ID);
 
@@ -62,7 +67,11 @@ public class HandshakeServiceTest {
 
     service = new HandshakeService();
 
+    socket = new EmbeddedChannel();
+    ChannelHandlerContext ctx = mock(ChannelHandlerContext.class);
+    when(ctx.channel()).thenReturn(socket);
     channel = mock(Channel.class);
+    when(channel.getCtx()).thenReturn(ctx);
     when(channel.getInetSocketAddress()).thenReturn(new InetSocketAddress("127.0.0.1", 18888));
     when(channel.getStartTime()).thenReturn(System.currentTimeMillis());
 
@@ -77,13 +86,15 @@ public class HandshakeServiceTest {
 
   @After
   public void tearDown() {
+    socket.finishAndReleaseAll();
     channelManager.close();
+    Parameter.p2pConfig = priorConfig;
     Parameter.handlerList.clear();
     Parameter.handlerList.addAll(priorHandlers);
   }
 
   private void acceptPeer() {
-    channelManager.when(() -> ChannelManager.processPeer(any(Channel.class)))
+    channelManager.when(() -> ChannelManager.checkPeer(any(Channel.class)))
         .thenReturn(DisconnectCode.NORMAL);
   }
 
@@ -101,7 +112,7 @@ public class HandshakeServiceTest {
 
   @Test
   public void closesWhenChannelManagerRejectsThePeer() {
-    channelManager.when(() -> ChannelManager.processPeer(any(Channel.class)))
+    channelManager.when(() -> ChannelManager.checkPeer(any(Channel.class)))
         .thenReturn(DisconnectCode.TOO_MANY_PEERS);
     when(channel.isActive()).thenReturn(false);
 
@@ -115,7 +126,7 @@ public class HandshakeServiceTest {
 
   @Test
   public void rejectedActiveChannelIsNotSentAHelloBack() {
-    channelManager.when(() -> ChannelManager.processPeer(any(Channel.class)))
+    channelManager.when(() -> ChannelManager.checkPeer(any(Channel.class)))
         .thenReturn(DisconnectCode.TOO_MANY_PEERS);
     when(channel.isActive()).thenReturn(true);
 
@@ -127,13 +138,13 @@ public class HandshakeServiceTest {
   }
 
   @Test
-  public void stopsWhenUpdateNodeIdDisconnectedTheChannel() {
+  public void ignoresHandshakeOnAnAlreadyDisconnectedChannel() {
     acceptPeer();
     when(channel.isDisconnect()).thenReturn(true);
 
     service.processMessage(channel, msg);
 
-    // updateNodeId dropped it as a duplicate; no handshake completion, no close here
+    // A previously disconnected channel cannot complete another handshake.
     verify(channel, never()).setFinishHandshake(true);
     verify(channel, never()).close();
   }
@@ -204,8 +215,8 @@ public class HandshakeServiceTest {
   }
 
   @Test
-  public void acceptsOutboundPeerWhenVersionMatchesEvenIfNetworkIdDoesNot() {
-    // v0.1 peers carry only a version; the check accepts a match on either field
+  public void rejectsOutboundPeerWhenOnlyLegacyVersionMatches() {
+    // The negotiated network ID must match even if the legacy version matches.
     acceptPeer();
     when(channel.isActive()).thenReturn(true);
     when(msg.getNetworkId()).thenReturn(NETWORK_ID + 1);
@@ -213,8 +224,8 @@ public class HandshakeServiceTest {
 
     service.processMessage(channel, msg);
 
-    verify(channel).setFinishHandshake(true);
-    verify(channel, never()).close();
+    verify(channel, never()).setFinishHandshake(true);
+    verify(channel).close();
   }
 
   @Test

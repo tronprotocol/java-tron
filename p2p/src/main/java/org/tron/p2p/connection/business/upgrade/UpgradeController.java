@@ -24,7 +24,7 @@ public class UpgradeController {
     }
     CompressMessage compressMessage;
     try {
-      compressMessage = CompressMessage.parseFrom(data);
+      compressMessage = ProtoUtil.parseFrom(CompressMessage.parser(), data);
     } catch (InvalidProtocolBufferException e) {
       throw new P2pException(TypeEnum.PARSE_MESSAGE_FAILED, e);
     }
