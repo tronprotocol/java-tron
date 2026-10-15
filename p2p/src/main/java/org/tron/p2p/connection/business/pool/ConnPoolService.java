@@ -132,8 +132,10 @@ public class ConnPoolService extends P2pEventHandler {
         Parameter.p2pConfig.getIpv6(), Parameter.p2pConfig.getPort()));
 
     p2pConfig.getActiveNodes().forEach(address -> {
-      if (!isFilterActiveNodes && !inetInUse.contains(address) && !addressInUse.contains(
-          address.getAddress())) {
+      if (!isFilterActiveNodes
+          && !inetInUse.contains(address)
+          && !addressInUse.contains(address.getAddress())
+          && peerClientCache.getIfPresent(address.getAddress()) == null) {
         addressInUse.add(address.getAddress());
         inetInUse.add(address);
         Node node = new Node(address); //use a random NodeId for config activeNodes
@@ -203,9 +205,9 @@ public class ConnPoolService extends P2pEventHandler {
     {
       connectNodes.forEach(n -> {
         logger.info("Connect to peer {}", n.getPreferInetSocketAddress());
-        peerClient.connectAsync(n, false);
         peerClientCache.put(n.getPreferInetSocketAddress().getAddress(),
             System.currentTimeMillis());
+        peerClient.connectAsync(n, false);
         if (!configActiveNodes.contains(n.getPreferInetSocketAddress())) {
           connectingPeersCount.incrementAndGet();
         }
@@ -286,10 +288,17 @@ public class ConnPoolService extends P2pEventHandler {
   }
 
   public void triggerConnect(InetSocketAddress address) {
+    boolean activeNode = p2pConfig.getActiveNodes().contains(address);
+    if (activeNode) {
+      peerClientCache.invalidate(address.getAddress());
+    }
     if (configActiveNodes.contains(address)) {
       return;
     }
     connectingPeersCount.decrementAndGet();
+    if (activeNode) {
+      return;
+    }
     if (poolLoopExecutor.getQueue().size() >= Parameter.CONN_MAX_QUEUE_SIZE) {
       logger.warn("ConnPool task' size is greater than or equal to {}",
           Parameter.CONN_MAX_QUEUE_SIZE);

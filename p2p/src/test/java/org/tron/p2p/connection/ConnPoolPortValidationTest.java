@@ -99,6 +99,8 @@ public class ConnPoolPortValidationTest {
       Assert.assertSame(healthy, ChannelManager.getChannels().get(healthy.getInetSocketAddress()));
       Assert.assertEquals(candidate, dialed.get(dialed.size() - 1).getPreferInetSocketAddress());
       ChannelManager.getBannedNodes().invalidateAll();
+      // The next tick may redial this active node only after a failed connection.
+      pool.triggerConnect(candidate);
     }
     Assert.assertEquals(6, dialed.size());
   }
