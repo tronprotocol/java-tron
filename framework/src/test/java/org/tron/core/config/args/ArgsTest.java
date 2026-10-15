@@ -330,6 +330,34 @@ public class ArgsTest {
     Args.clearParam();
   }
 
+  @Test
+  public void testAdminHttpAndIpcConfigBinding() {
+    Map<String, Object> override = new HashMap<>();
+    override.put("storage.db.directory", "database");
+    override.put("node.admin.ipc.enable", "true");
+    override.put("node.admin.ipc.socketDirectory", "/tmp/tron-ipc");
+    override.put("node.admin.http.enable", "true");
+    override.put("node.admin.http.listenAddress", "127.0.0.2");
+    override.put("node.admin.http.port", "18575");
+    override.put("node.admin.http.virtualHosts",
+        Arrays.asList("admin.example.com", "localhost"));
+    Config config = ConfigFactory.parseMap(override)
+        .withFallback(ConfigFactory.defaultReference());
+
+    try {
+      Args.applyConfigParams(config);
+      Assert.assertTrue(Args.getInstance().isIpcEnable());
+      Assert.assertEquals("/tmp/tron-ipc", Args.getInstance().getIpcSocketDirectory());
+      Assert.assertTrue(Args.getInstance().isAdminHttpEnable());
+      Assert.assertEquals("127.0.0.2", Args.getInstance().getAdminHttpListenAddress());
+      Assert.assertEquals(18575, Args.getInstance().getAdminHttpListenPort());
+      Assert.assertEquals(Arrays.asList("admin.example.com", "localhost"),
+          Args.getInstance().getAdminHttpVirtualHosts());
+    } finally {
+      Args.clearParam();
+    }
+  }
+
   /**
    * Verify that CLI storage parameters correctly override config file values.
    *
@@ -632,6 +660,43 @@ public class ArgsTest {
     Assert.assertEquals(TronError.ErrCode.PARAMETER_INIT, error.getErrCode());
     Assert.assertEquals("Check node.dns.dnsDomain, must not be null or empty",
         error.getMessage());
+  }
+
+  @Test
+  public void testDnsPublishRejectsInvalidChangeThresholdWithParameterInitError() {
+    Config config = dnsPublishConfig("node.dns.changeThreshold", "-0.1");
+
+    TronError error = Assert.assertThrows(TronError.class,
+        () -> Args.loadDnsPublishConfig(NodeConfig.fromConfig(config)));
+
+    Assert.assertEquals(TronError.ErrCode.PARAMETER_INIT, error.getErrCode());
+    Assert.assertEquals("Check node.dns.changeThreshold, should be bigger than 0, default 0.1",
+        error.getMessage());
+  }
+
+  @Test
+  public void testDnsPublishRejectsInvalidMaxMergeSizeWithParameterInitError() {
+    Config config = dnsPublishConfig("node.dns.maxMergeSize", "6");
+
+    TronError error = Assert.assertThrows(TronError.class,
+        () -> Args.loadDnsPublishConfig(NodeConfig.fromConfig(config)));
+
+    Assert.assertEquals(TronError.ErrCode.PARAMETER_INIT, error.getErrCode());
+    Assert.assertEquals("Check node.dns.maxMergeSize, should be [1~5], default 5",
+        error.getMessage());
+  }
+
+  @Test
+  public void testDnsPublishDisabledIgnoresInvalidPublishParameters() {
+    Map<String, Object> configMap = new HashMap<>();
+    configMap.put("node.dns.publish", false);
+    configMap.put("node.dns.changeThreshold", -0.1);
+    configMap.put("node.dns.maxMergeSize", 6);
+    Config config = ConfigFactory.parseMap(configMap)
+        .withFallback(ConfigFactory.defaultReference());
+
+    Assert.assertFalse(Args.loadDnsPublishConfig(NodeConfig.fromConfig(config))
+        .isDnsPublishEnable());
   }
 
   @Test

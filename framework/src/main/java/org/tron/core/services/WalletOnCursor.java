@@ -31,6 +31,22 @@ public abstract class WalletOnCursor {
     }
   }
 
+  /**
+   * Selects this view's cursor on the current thread until the returned scope is closed, for a
+   * body that throws checked exceptions and so cannot run through {@link #futureGet}.
+   */
+  public CursorScope selectCursor() {
+    dbManager.setCursor(cursor);
+    return dbManager::resetCursor;
+  }
+
+  /** Resets the current thread's cursor to HEAD when closed. */
+  public interface CursorScope extends AutoCloseable {
+
+    @Override
+    void close();
+  }
+
   public interface TronCallable<T> extends Callable<T> {
 
     @Override

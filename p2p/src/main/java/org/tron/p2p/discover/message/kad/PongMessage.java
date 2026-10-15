@@ -6,6 +6,7 @@ import org.tron.p2p.discover.message.MessageType;
 import org.tron.p2p.protos.Discover;
 import org.tron.p2p.protos.Discover.Endpoint;
 import org.tron.p2p.utils.NetUtil;
+import org.tron.p2p.utils.ProtoUtil;
 
 public class PongMessage extends KadMessage {
 
@@ -13,7 +14,7 @@ public class PongMessage extends KadMessage {
 
   public PongMessage(byte[] data) throws Exception {
     super(MessageType.KAD_PONG, data);
-    this.pongMessage = Discover.PongMessage.parseFrom(data);
+    this.pongMessage = ProtoUtil.parseFrom(Discover.PongMessage.parser(), data);
   }
 
   public PongMessage(Node from) {

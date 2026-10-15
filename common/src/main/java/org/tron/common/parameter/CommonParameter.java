@@ -4,6 +4,7 @@ import com.google.common.annotations.VisibleForTesting;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
@@ -13,6 +14,7 @@ import org.tron.common.cron.CronExpression;
 import org.tron.common.logsfilter.EventPluginConfig;
 import org.tron.common.logsfilter.FilterQuery;
 import org.tron.common.setting.RocksDbSettings;
+import org.tron.core.Constant;
 import org.tron.core.config.args.SeedNode;
 import org.tron.core.config.args.Storage;
 import org.tron.p2p.P2pConfig;
@@ -313,6 +315,10 @@ public class CommonParameter {
   @Getter
   @Setter
   public boolean nodeDetectEnable;
+
+  @Getter
+  @Setter
+  public boolean nodeAllowNumericFieldAlias = true;
   @Getter
   @Setter
   public int allowMultiSign;
@@ -474,6 +480,25 @@ public class CommonParameter {
   @Getter
   @Setter
   public int jsonRpcMaxLogFilterNum = 20000;
+  @Getter
+  @Setter
+  public boolean adminHttpEnable = false;
+  @Getter
+  @Setter
+  public String adminHttpListenAddress = Constant.LOCAL_HOST;
+  @Getter
+  @Setter
+  public int adminHttpListenPort = 8575;
+  @Getter
+  @Setter
+  public List<String> adminHttpVirtualHosts =
+      new ArrayList<>(Collections.singletonList("localhost"));
+  @Getter
+  @Setter
+  public boolean ipcEnable = false;
+  @Getter
+  @Setter
+  public String ipcSocketDirectory = "";
   @Getter
   @Setter
   public int maxTransactionPendingSize;

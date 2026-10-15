@@ -16,6 +16,7 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -52,7 +53,6 @@ public class Channel {
   @Getter
   private volatile long disconnectTime;
   @Getter
-  @Setter
   private volatile boolean isDisconnect = false;
   @Getter
   @Setter
@@ -66,6 +66,10 @@ public class Channel {
   @Getter
   @Setter
   private volatile boolean finishHandshake;
+  // Remains true once registered as a peer, ensuring peer cleanup even if discoveryMode changes.
+  @Getter
+  private volatile boolean registeredPeer;
+  private final AtomicBoolean disconnectNotified = new AtomicBoolean();
   @Getter
   @Setter
   private String nodeId;
@@ -124,9 +128,24 @@ public class Channel {
     this.isTrustPeer = Parameter.p2pConfig.getTrustNodes().contains(inetAddress);
   }
 
+  void markRegisteredPeer() {
+    registeredPeer = true;
+  }
+
+  boolean markDisconnectNotified() {
+    return disconnectNotified.compareAndSet(false, true);
+  }
+
+  /** Marks the channel as disconnected and records the first disconnect time. */
+  public synchronized void markDisconnected() {
+    isDisconnect = true;
+    if (disconnectTime == 0) {
+      disconnectTime = System.currentTimeMillis();
+    }
+  }
+
   public void close(long banTime) {
-    this.isDisconnect = true;
-    this.disconnectTime = System.currentTimeMillis();
+    markDisconnected();
     ChannelManager.banNode(this.inetAddress, banTime);
     ctx.close();
   }

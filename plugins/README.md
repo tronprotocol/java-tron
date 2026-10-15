@@ -2,6 +2,10 @@
 
 This package contains a set of tools for TRON, the followings are the documentation for each tool.
 
+NOTE: All `db` tools operate directly on the database files. Before performing a database
+operation (archive, convert, copy, lite, mv, root), you must stop the currently running
+FullNode service.
+
 ## DB Archive(Requires x86 + LevelDB)
 
 DB archive provides the ability to reformat the manifest according to the current `database`, parameters are compatible with the previous `ArchiveManifest`.
@@ -271,3 +275,5 @@ When using `--password-file` with `update`, the file must contain exactly two li
 - `--force`: For `keystore import`, allow importing a private key whose address already has a keystore in the directory (creates an additional file).
 - `--json`: Output in JSON format for scripting.
 - `-h | --help`: Provide the help info.
+
+> **Note:** `--password-file` and `--key-file` must be owner-only (`chmod 600`). Files readable or writable by group/other are rejected — create them with a restrictive umask or run `chmod 600 <file>` before use.

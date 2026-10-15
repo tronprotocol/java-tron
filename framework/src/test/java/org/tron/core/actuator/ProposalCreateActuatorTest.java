@@ -292,9 +292,9 @@ public class ProposalCreateActuatorTest extends BaseTest {
     actuator.setChainBaseManager(dbManager.getChainBaseManager())
         .setForkUtils(dbManager.getChainBaseManager().getForkController())
         .setAny(getContract(OWNER_ADDRESS_FIRST, paras));
-    assertThrows(
+    Assert.assertEquals(
         "Bad chain parameter id [MAX_DELEGATE_LOCK_PERIOD]",
-        ContractValidateException.class, actuator::validate);
+        assertThrows(ContractValidateException.class, actuator::validate).getMessage());
 
     actuator = new ProposalCreateActuator();
     ForkController forkController = Mockito.mock(ForkController.class);
@@ -304,10 +304,10 @@ public class ProposalCreateActuatorTest extends BaseTest {
         .setAny(getContract(OWNER_ADDRESS_FIRST, paras));
     dbManager.getDynamicPropertiesStore().saveMaxDelegateLockPeriod(86400L);
     long maxDelegateLockPeriod = dbManager.getDynamicPropertiesStore().getMaxDelegateLockPeriod();
-    assertThrows(
+    Assert.assertEquals(
         "This value[MAX_DELEGATE_LOCK_PERIOD] is only allowed to be greater than "
-            + maxDelegateLockPeriod + " and less than or equal to " + ONE_YEAR_BLOCK_NUMBERS + "!",
-        ContractValidateException.class, actuator::validate);
+            + maxDelegateLockPeriod + " and less than or equal to " + ONE_YEAR_BLOCK_NUMBERS + " !",
+        assertThrows(ContractValidateException.class, actuator::validate).getMessage());
 
     // verify Proposal No. 82
     paras = new HashMap<>();
@@ -316,19 +316,19 @@ public class ProposalCreateActuatorTest extends BaseTest {
     actuator.setChainBaseManager(dbManager.getChainBaseManager())
         .setForkUtils(dbManager.getChainBaseManager().getForkController())
         .setAny(getContract(OWNER_ADDRESS_FIRST, paras));
-    assertThrows(
-        "Bad chain parameter id [ALLOW_ENERGY_ADJUSTMENT]",
-        ContractValidateException.class, actuator::validate);
+    Assert.assertEquals(
+        "Bad chain parameter id [MAX_CREATE_ACCOUNT_TX_SIZE]",
+        assertThrows(ContractValidateException.class, actuator::validate).getMessage());
 
     actuator = new ProposalCreateActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager())
         .setForkUtils(forkController)
         .setAny(getContract(OWNER_ADDRESS_FIRST, paras));
-    assertThrows(
+    Assert.assertEquals(
         "This value[MAX_CREATE_ACCOUNT_TX_SIZE] is only allowed to be greater than or equal "
             + "to " + CREATE_ACCOUNT_TRANSACTION_MIN_BYTE_SIZE + " and less than or equal to "
             + CREATE_ACCOUNT_TRANSACTION_MAX_BYTE_SIZE + "!",
-        ContractValidateException.class, actuator::validate);
+        assertThrows(ContractValidateException.class, actuator::validate).getMessage());
   }
 
   /**

@@ -7,8 +7,10 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import lombok.Getter;
@@ -31,6 +33,7 @@ public class KadService implements DiscoverService {
 
   private static final int MAX_NODES = 2000;
   private static final int NODES_TRIM_THRESHOLD = 3000;
+  static final int MAX_PENDING_PONG_TASKS = 20000;
   @Getter
   @Setter
   private static long pingTimeout = 15_000;
@@ -43,10 +46,11 @@ public class KadService implements DiscoverService {
 
   private Consumer<UdpEvent> messageSender;
 
+  @Getter
   private NodeTable table;
   private Node homeNode;
 
-  private ScheduledExecutorService pongTimer;
+  private ScheduledThreadPoolExecutor pongTimer;
   private DiscoverTask discoverTask;
 
   public void init() {
@@ -56,8 +60,9 @@ public class KadService implements DiscoverService {
     for (InetSocketAddress address : Parameter.p2pConfig.getActiveNodes()) {
       bootNodes.add(new Node(address));
     }
-    this.pongTimer = Executors.newSingleThreadScheduledExecutor(
+    this.pongTimer = new ScheduledThreadPoolExecutor(1,
         BasicThreadFactory.builder().namingPattern("pongTimer").build());
+    pongTimer.setRemoveOnCancelPolicy(true);
     this.homeNode = new Node(Parameter.p2pConfig.getNodeID(), Parameter.p2pConfig.getIp(),
         Parameter.p2pConfig.getIpv6(), Parameter.p2pConfig.getPort());
     this.table = new NodeTable(homeNode);
@@ -66,6 +71,14 @@ public class KadService implements DiscoverService {
       discoverTask = new DiscoverTask(this);
       discoverTask.init();
     }
+  }
+
+  synchronized ScheduledFuture<?> schedulePongTimeout(Runnable task) {
+    // Keep the capacity check and enqueue atomic across discovery and retry threads.
+    if (pongTimer.getQueue().size() >= MAX_PENDING_PONG_TASKS) {
+      throw new RejectedExecutionException("Pong timer queue is full");
+    }
+    return pongTimer.schedule(task, pingTimeout, TimeUnit.MILLISECONDS);
   }
 
   public void close() {
@@ -179,10 +192,6 @@ public class KadService implements DiscoverService {
     return ret;
   }
 
-  public NodeTable getTable() {
-    return table;
-  }
-
   public Node getPublicHomeNode() {
     return homeNode;
   }
@@ -191,10 +200,6 @@ public class KadService implements DiscoverService {
     if (Parameter.p2pConfig.isDiscoverEnable() && messageSender != null) {
       messageSender.accept(udpEvent);
     }
-  }
-
-  public ScheduledExecutorService getPongTimer() {
-    return pongTimer;
   }
 
   private void trimTable() {

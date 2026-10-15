@@ -1,6 +1,10 @@
 package org.tron.p2p.utils;
 
 import com.google.protobuf.ByteString;
+import com.google.protobuf.DiscardUnknownFieldsParser;
+import com.google.protobuf.InvalidProtocolBufferException;
+import com.google.protobuf.Message;
+import com.google.protobuf.Parser;
 import java.io.IOException;
 import org.tron.p2p.base.Parameter;
 import org.tron.p2p.exception.P2pException;
@@ -8,6 +12,16 @@ import org.tron.p2p.protos.Connect;
 import org.xerial.snappy.Snappy;
 
 public class ProtoUtil {
+
+  /**
+   * Parse protobuf bytes while discarding unknown fields, so that any padding an
+   * attacker appends to a message is dropped at parse time instead of being retained
+   * in memory (and later amplified by toString/serialization).
+   */
+  public static <T extends Message> T parseFrom(Parser<T> parser, byte[] data)
+      throws InvalidProtocolBufferException {
+    return DiscardUnknownFieldsParser.wrap(parser).parseFrom(data);
+  }
 
   public static Connect.CompressMessage compressMessage(byte[] data) throws IOException {
     Connect.CompressMessage.CompressType type = Connect.CompressMessage.CompressType.uncompress;

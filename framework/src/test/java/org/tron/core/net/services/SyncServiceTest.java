@@ -7,19 +7,23 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.springframework.context.ApplicationContext;
 import org.tron.common.BaseMethodTest;
+import org.tron.common.overlay.message.Message;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.net.P2pEventHandlerImpl;
 import org.tron.core.net.TronNetDelegate;
 import org.tron.core.net.message.adv.BlockMessage;
+import org.tron.core.net.message.adv.FetchInvDataMessage;
 import org.tron.core.net.messagehandler.PbftDataSyncHandler;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.PeerManager;
@@ -264,6 +268,96 @@ public class SyncServiceTest extends BaseMethodTest {
     fetch.invoke(sync);
     Assert.assertEquals(Collections.singleton(next), syncingPeer.getSyncBlockRequested().keySet());
     sync.close();
+  }
+
+  @Test
+  public void sameAddressPeersKeepSyncRequestsAndResponsesIndependent() throws Exception {
+    InetSocketAddress address = new InetSocketAddress("127.0.0.2", 10001);
+    Channel firstChannel = new Channel();
+    Channel secondChannel = new Channel();
+    ReflectUtils.setFieldValue(firstChannel, "inetSocketAddress", address);
+    ReflectUtils.setFieldValue(firstChannel, "inetAddress", address.getAddress());
+    ReflectUtils.setFieldValue(secondChannel, "inetSocketAddress", address);
+    ReflectUtils.setFieldValue(secondChannel, "inetAddress", address.getAddress());
+
+    List<Message> firstMessages = new ArrayList<>();
+    List<Message> secondMessages = new ArrayList<>();
+    PeerConnection first = new PeerConnection() {
+      @Override
+      public void sendMessage(Message message) {
+        firstMessages.add(message);
+      }
+    };
+    PeerConnection second = new PeerConnection() {
+      @Override
+      public void sendMessage(Message message) {
+        secondMessages.add(message);
+      }
+    };
+    first.setChannel(firstChannel);
+    second.setChannel(secondChannel);
+    Assert.assertEquals(firstChannel, secondChannel);
+    Assert.assertNotEquals(first, second);
+    first.setFetchAble(true);
+    second.setFetchAble(true);
+
+    BlockMessage firstBlock = new BlockMessage(new BlockCapsule(1, Sha256Hash.ZERO_HASH,
+        System.currentTimeMillis(), Sha256Hash.ZERO_HASH.getByteString()));
+    BlockMessage secondBlock = new BlockMessage(new BlockCapsule(2, Sha256Hash.ZERO_HASH,
+        System.currentTimeMillis(), Sha256Hash.ZERO_HASH.getByteString()));
+    BlockCapsule.BlockId firstId = firstBlock.getBlockId();
+    BlockCapsule.BlockId secondId = secondBlock.getBlockId();
+    first.getSyncBlockToFetch().add(firstId);
+    second.getSyncBlockToFetch().add(secondId);
+
+    TronNetDelegate delegate = mock(TronNetDelegate.class);
+    Mockito.when(delegate.getActivePeer()).thenReturn(Arrays.asList(first, second));
+    SyncService isolated = new SyncService();
+    ReflectUtils.setFieldValue(isolated, "tronNetDelegate", delegate);
+    try {
+      Method fetch = SyncService.class.getDeclaredMethod("startFetchSyncBlock");
+      fetch.setAccessible(true);
+      fetch.invoke(isolated);
+
+      Assert.assertEquals(1, firstMessages.size());
+      Assert.assertEquals(1, secondMessages.size());
+      Assert.assertTrue(firstMessages.get(0) instanceof FetchInvDataMessage);
+      Assert.assertTrue(secondMessages.get(0) instanceof FetchInvDataMessage);
+      Assert.assertEquals(Collections.singletonList(firstId),
+          ((FetchInvDataMessage) firstMessages.get(0)).getHashList());
+      Assert.assertEquals(Collections.singletonList(secondId),
+          ((FetchInvDataMessage) secondMessages.get(0)).getHashList());
+
+      Cache<BlockCapsule.BlockId, PeerConnection> requests =
+          (Cache<BlockCapsule.BlockId, PeerConnection>)
+              ReflectUtils.getFieldObject(isolated, "requestBlockIds");
+      Assert.assertSame(first, requests.getIfPresent(firstId));
+      Assert.assertSame(second, requests.getIfPresent(secondId));
+
+      isolated.processBlock(first, firstBlock);
+      isolated.processBlock(second, secondBlock);
+      Map<UnparsedBlock, PeerConnection> received =
+          (Map<UnparsedBlock, PeerConnection>)
+              ReflectUtils.getFieldObject(isolated, "blockJustReceived");
+      Assert.assertEquals(2, received.size());
+      received.forEach((block, owner) -> {
+        if (block.getBlockId().equals(firstId)) {
+          Assert.assertSame(first, owner);
+        } else {
+          Assert.assertEquals(secondId, block.getBlockId());
+          Assert.assertSame(second, owner);
+        }
+      });
+
+      // A stale entry on the closing peer must not clear the survivor's request.
+      first.getSyncBlockRequested().put(secondId, System.currentTimeMillis());
+      isolated.onDisconnect(first);
+      Assert.assertNull(requests.getIfPresent(firstId));
+      Assert.assertSame(second, requests.getIfPresent(secondId));
+      Assert.assertTrue(second.getSyncBlockRequested().containsKey(secondId));
+    } finally {
+      isolated.close();
+    }
   }
 
   @Test
