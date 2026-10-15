@@ -18,7 +18,7 @@ public class AdminJsonRpcImpl implements AdminJsonRpc {
   private final PeerManagementService peerManagementService;
 
   @Autowired
-  public AdminJsonRpcImpl(@Autowired PeerManagementService peerManagementService) {
+  public AdminJsonRpcImpl(PeerManagementService peerManagementService) {
     this.peerManagementService = peerManagementService;
   }
 

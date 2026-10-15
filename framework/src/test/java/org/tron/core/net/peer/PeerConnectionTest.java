@@ -4,6 +4,7 @@ import static org.mockito.Mockito.mock;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
@@ -300,6 +301,23 @@ public class PeerConnectionTest {
     String remoteAddress = peerConnection.getActivePeerInfo().getRemoteAddress();
 
     Assert.assertEquals("[2001:db8:0:0:0:0:0:20]:10001", remoteAddress);
+    Assert.assertEquals(inetSocketAddress, NetUtil.parseIpSocketAddress(remoteAddress));
+  }
+
+  @Test
+  public void testActivePeerInfoFormatsScopedIpv6Endpoint() throws Exception {
+    PeerConnection peerConnection = new PeerConnection();
+    Inet6Address scopedAddress = Inet6Address.getByAddress(null,
+        InetAddress.getByName("fe80::1").getAddress(), 2);
+    InetSocketAddress inetSocketAddress = new InetSocketAddress(scopedAddress, 10001);
+    Channel channel = new Channel();
+    ReflectUtils.setFieldValue(channel, "inetSocketAddress", inetSocketAddress);
+    ReflectUtils.setFieldValue(channel, "inetAddress", scopedAddress);
+    peerConnection.setChannel(channel);
+
+    String remoteAddress = peerConnection.getActivePeerInfo().getRemoteAddress();
+
+    Assert.assertEquals("[fe80:0:0:0:0:0:0:1]:10001", remoteAddress);
     Assert.assertEquals(inetSocketAddress, NetUtil.parseIpSocketAddress(remoteAddress));
   }
 

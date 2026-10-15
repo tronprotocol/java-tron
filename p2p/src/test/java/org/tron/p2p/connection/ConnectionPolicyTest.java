@@ -151,21 +151,26 @@ public class ConnectionPolicyTest {
 
   @Test
   public void messageHandlerClosesBlockedTcpChannelBeforeHandshake() {
-    Parameter.p2pConfig = new P2pConfig();
-    final InetSocketAddress address = new InetSocketAddress("192.0.2.41", 18888);
-    ConnectionPolicy.replaceBlockedIps(Collections.singleton(address.getAddress()));
-    Channel channel = new Channel();
-    EmbeddedChannel embeddedChannel = new EmbeddedChannel() {
-      @Override
-      protected SocketAddress remoteAddress0() {
-        return address;
-      }
-    };
+    P2pConfig previousConfig = Parameter.p2pConfig;
+    try {
+      Parameter.p2pConfig = new P2pConfig();
+      final InetSocketAddress address = new InetSocketAddress("192.0.2.41", 18888);
+      ConnectionPolicy.replaceBlockedIps(Collections.singleton(address.getAddress()));
+      Channel channel = new Channel();
+      EmbeddedChannel embeddedChannel = new EmbeddedChannel() {
+        @Override
+        protected SocketAddress remoteAddress0() {
+          return address;
+        }
+      };
 
-    Assert.assertTrue(embeddedChannel.isOpen());
-    embeddedChannel.pipeline().addLast(new MessageHandler(channel));
-    embeddedChannel.pipeline().fireChannelActive();
+      Assert.assertTrue(embeddedChannel.isOpen());
+      embeddedChannel.pipeline().addLast(new MessageHandler(channel));
+      embeddedChannel.pipeline().fireChannelActive();
 
-    Assert.assertFalse(embeddedChannel.isOpen());
+      Assert.assertFalse(embeddedChannel.isOpen());
+    } finally {
+      Parameter.p2pConfig = previousConfig;
+    }
   }
 }
