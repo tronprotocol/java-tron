@@ -61,7 +61,6 @@ import org.tron.core.store.AccountStore;
 import org.tron.p2p.P2pConfig;
 import org.tron.p2p.dns.update.DnsType;
 import org.tron.p2p.dns.update.PublishConfig;
-import org.tron.p2p.utils.NetUtil;
 import org.tron.program.Version;
 
 @Slf4j(topic = "app")
@@ -146,19 +145,25 @@ public class Args extends CommonParameter {
    * set parameters.
    */
   public static void setParam(final String[] args, final String confFileName) {
-    // 1. Parse CLI args into a separate object
-    CLIParameter cmd = new CLIParameter();
-    JCommander jc = JCommander.newBuilder().addObject(cmd).build();
-    jc.parse(args);
+    setParam(new CommandLineArguments(args), confFileName);
+  }
+
+  /**
+   * Initializes node configuration from parsed options. FullNode handles attach mode separately.
+   */
+  public static void setParam(CommandLineArguments arguments, final String confFileName) {
+    CLIParameter cmd = arguments.getParameters();
 
     if (cmd.version) {
       printVersion();
       exit(0);
     }
     if (cmd.help) {
-      Args.printHelp(jc);
+      Args.printHelp(arguments.getCommander());
       exit(0);
     }
+    cmd.validateRemovedOptions();
+    List<ParameterDescription> assignedParameters = arguments.getAssignedParameters();
 
     // Resolve config file path
     configFilePath = StringUtils.isNoneBlank(cmd.shellConfFileName)
@@ -169,7 +174,7 @@ public class Args extends CommonParameter {
     applyConfigParams(config);
 
     // 3. CLI overrides Config (highest priority, including --es → eventSubscribe)
-    applyCLIParams(cmd, jc);
+    applyCLIParams(cmd, assignedParameters);
 
     // 4. Apply event config after CLI
     applyEventConfig(eventConfig);
@@ -298,7 +303,6 @@ public class Args extends CommonParameter {
    * Bridge MiscConfig bean values to CommonParameter fields.
    */
   private static void applyMiscConfig(MiscConfig mc) {
-    PARAMETER.cryptoEngine = mc.getCryptoEngine();
     PARAMETER.needToUpdateAsset = mc.isNeedToUpdateAsset();
     PARAMETER.historyBalanceLookup = mc.isHistoryBalanceLookup();
     PARAMETER.trxReferenceBlock = mc.getTrxReferenceBlock();
@@ -561,6 +565,16 @@ public class Args extends CommonParameter {
     PARAMETER.jsonRpcMaxLogFilterNum = jsonrpc.getMaxLogFilterNum();
     PARAMETER.jsonRpcMaxMessageSize = jsonrpc.getMaxMessageSize();
 
+    // ---- Admin HTTP / IPC ----
+    NodeConfig.AdminIpcConfig adminIpc = nc.getAdmin().getIpc();
+    NodeConfig.AdminHttpConfig adminHttp = nc.getAdmin().getHttp();
+    PARAMETER.adminHttpEnable = adminHttp.isEnable();
+    PARAMETER.adminHttpListenAddress = adminHttp.getListenAddress();
+    PARAMETER.adminHttpListenPort = adminHttp.getPort();
+    PARAMETER.adminHttpVirtualHosts = new ArrayList<>(adminHttp.getVirtualHosts());
+    PARAMETER.ipcEnable = adminIpc.isEnable();
+    PARAMETER.ipcSocketDirectory = adminIpc.getSocketDirectory();
+
     // ---- P2P sub-bean ----
     PARAMETER.nodeP2pVersion = nc.getP2p().getVersion();
 
@@ -598,9 +612,9 @@ public class Args extends CommonParameter {
     PARAMETER.trustNodeAddr = nc.getTrustNode();
 
     PARAMETER.validateSignThreadNum = nc.getValidateSignThreadNum();
-    PARAMETER.walletExtensionApi = nc.isWalletExtensionApi();
     PARAMETER.isOpenFullTcpDisconnect = nc.isOpenFullTcpDisconnect();
     PARAMETER.nodeDetectEnable = nc.isNodeDetectEnable();
+    PARAMETER.nodeAllowNumericFieldAlias = nc.isAllowNumericFieldAlias();
 
     PARAMETER.inactiveThreshold = nc.getInactiveThreshold();
 
@@ -695,10 +709,11 @@ public class Args extends CommonParameter {
   public static void applyConfigParams(
       final Config config) {
 
+    // Reject legacy crypto engines before storage or witness/keystore initialization.
+    miscConfig = MiscConfig.fromConfig(config);
+
     Wallet.setAddressPreFixByte(ADD_PRE_FIX_BYTE_MAINNET);
     Wallet.setAddressPreFixString(Constant.ADD_PRE_FIX_STRING_MAINNET);
-
-    // crypto.engine handled by MiscConfig
 
     // VM config: bind from config.conf "vm" section
     vmConfig = VmConfig.fromConfig(config);
@@ -729,7 +744,6 @@ public class Args extends CommonParameter {
     // node discovery, legacy fallback, p2p, dns — all handled in applyNodeConfig
 
     // Misc config: storage, trx, energy — small domains, read via beans
-    miscConfig = MiscConfig.fromConfig(config);
     applyMiscConfig(miscConfig);
 
     // vm, committee already handled above
@@ -769,14 +783,13 @@ public class Args extends CommonParameter {
    * Apply CLI parameters that were explicitly passed.
    * Only assigned parameters override Config values.
    */
-  private static void applyCLIParams(CLIParameter cmd, JCommander jc) {
-    Set<String> assigned = jc.getParameters().stream()
-        .filter(ParameterDescription::isAssigned)
+  private static void applyCLIParams(CLIParameter cmd,
+      List<ParameterDescription> assignedParameters) {
+    Set<String> assigned = assignedParameters.stream()
         .map(ParameterDescription::getLongestName)
         .collect(Collectors.toSet());
 
-    jc.getParameters().stream()
-        .filter(ParameterDescription::isAssigned)
+    assignedParameters.stream()
         .filter(pd -> {
           try {
             return CLIParameter.class.getDeclaredField(pd.getParameterized().getName())
@@ -858,9 +871,6 @@ public class Args extends CommonParameter {
     if (assigned.contains("--solidity")) {
       PARAMETER.solidityNode = cmd.solidityNode;
     }
-    if (assigned.contains("--keystore-factory")) {
-      PARAMETER.keystoreFactory = cmd.keystoreFactory;
-    }
     if (assigned.contains("--rpc-thread")) {
       PARAMETER.rpcThreadNum = cmd.rpcThreadNum;
     }
@@ -905,6 +915,9 @@ public class Args extends CommonParameter {
 
     // path 1: CLI --private-key
     if (StringUtils.isNotBlank(cmd.privateKey)) {
+      logger.warn("Passing the witness private key via -p/--private-key is deprecated and "
+          + "insecure: the key is visible in the process list and shell history. Use "
+          + "localwitnesskeystore in the config file instead.");
       localWitnesses = WitnessInitializer.initFromCLIPrivateKey(
           cmd.privateKey, cmd.witnessAddress);
       return;
@@ -914,6 +927,8 @@ public class Args extends CommonParameter {
 
     // path 2: config localwitness (private key list)
     if (!lwConfig.getPrivateKeys().isEmpty()) {
+      logger.warn("Storing plain witness private keys in 'localwitness' is insecure: any "
+          + "reader of the config file sees the keys. Use localwitnesskeystore instead.");
       localWitnesses = WitnessInitializer.initFromCFGPrivateKey(
           lwConfig.getPrivateKeys(), lwConfig.getAccountAddress());
       return;
@@ -1017,14 +1032,16 @@ public class Args extends CommonParameter {
       if (dns.getChangeThreshold() > 0) {
         publishConfig.setChangeThreshold(dns.getChangeThreshold());
       } else if (Double.compare(dns.getChangeThreshold(), 0.0) != 0) {
-        logger.error("Check node.dns.changeThreshold, should be bigger than 0, default 0.1");
+        throw new TronError("Check node.dns.changeThreshold, should be bigger than 0, default 0.1",
+            TronError.ErrCode.PARAMETER_INIT);
       }
 
       int maxMergeSize = dns.getMaxMergeSize();
       if (maxMergeSize >= 1 && maxMergeSize <= 5) {
         publishConfig.setMaxMergeSize(maxMergeSize);
       } else if (maxMergeSize != 0) {
-        logger.error("Check node.dns.maxMergeSize, should be [1~5], default 5");
+        throw new TronError("Check node.dns.maxMergeSize, should be [1~5], default 5",
+            TronError.ErrCode.PARAMETER_INIT);
       }
 
       if (StringUtils.isNotEmpty(dns.getDnsPrivate())) {
@@ -1045,8 +1062,9 @@ public class Args extends CommonParameter {
       String serverType = dns.getServerType();
       if (StringUtils.isNotEmpty(serverType)) {
         if (!"aws".equalsIgnoreCase(serverType) && !"aliyun".equalsIgnoreCase(serverType)) {
-          throw new IllegalArgumentException(
-              "Check node.dns.serverType, must be aws or aliyun");
+          throw new TronError(
+              "Check node.dns.serverType, must be aws or aliyun",
+              TronError.ErrCode.PARAMETER_INIT);
         }
         if ("aws".equalsIgnoreCase(serverType)) {
           publishConfig.setDnsType(DnsType.AwsRoute53);
@@ -1088,7 +1106,8 @@ public class Args extends CommonParameter {
   }
 
   private static void logEmptyError(String arg) {
-    throw new IllegalArgumentException(String.format("Check %s, must not be null or empty", arg));
+    throw new TronError(String.format("Check %s, must not be null or empty", arg),
+        TronError.ErrCode.PARAMETER_INIT);
   }
 
   // createTriggerConfig removed — logic moved to applyEventConfig()
@@ -1186,9 +1205,8 @@ public class Args extends CommonParameter {
   private static void printVersion() {
     Properties properties = new Properties();
     boolean noGitProperties = true;
-    try {
-      InputStream in = Thread.currentThread()
-          .getContextClassLoader().getResourceAsStream("git.properties");
+    try (InputStream in = Thread.currentThread()
+        .getContextClassLoader().getResourceAsStream("git.properties")) {
       if (in != null) {
         noGitProperties = false;
         properties.load(in);
@@ -1276,9 +1294,8 @@ public class Args extends CommonParameter {
 
   private static String getCommitIdAbbrev() {
     Properties properties = new Properties();
-    try {
-      InputStream in = Thread.currentThread()
-          .getContextClassLoader().getResourceAsStream("git.properties");
+    try (InputStream in = Thread.currentThread()
+        .getContextClassLoader().getResourceAsStream("git.properties")) {
       if (in == null) {
         logger.warn("git.properties not found on classpath");
         return "";
@@ -1292,7 +1309,7 @@ public class Args extends CommonParameter {
 
   private static Map<String, String[]> getOptionGroup() {
     String[] tronOption = new String[] {"version", "help", "shellConfFileName", "logbackPath",
-        "eventSubscribe", "solidityNode", "keystoreFactory"};
+        "eventSubscribe", "solidityNode", "ipcSocketFile", "ipcExecCommand"};
     String[] dbOption = new String[] {"outputDirectory"};
     String[] witnessOption = new String[] {"witness", "privateKey"};
     String[] vmOption = new String[] {"debug"};
@@ -1315,4 +1332,3 @@ public class Args extends CommonParameter {
     return optionGroupMap;
   }
 }
-

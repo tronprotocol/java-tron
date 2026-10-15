@@ -299,6 +299,10 @@ public class VMActuator implements Actuator2 {
         result.setRuntimeError(result.getException().getMessage());
       }
       logger.info("runtime result is :{}", result.getException().getMessage());
+    } finally {
+      if (isConstantCall) {
+        VMConfig.clearLocalSnapshot();
+      }
     }
     //use program returned fill context
     context.setProgramResult(result);
@@ -308,10 +312,6 @@ public class VMActuator implements Actuator2 {
           .result(result.getHReturn())
           .error(result.getException())
           .toString();
-
-      if (VMConfig.vmTraceCompressed()) {
-        traceContent = VMUtils.zipAndEncode(traceContent);
-      }
 
       String txHash = Hex.toHexString(rootInternalTx.getHash());
       VMUtils.saveProgramTraceFile(txHash, traceContent);
