@@ -4,6 +4,7 @@ import static org.mockito.Mockito.mock;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.util.Arrays;
 
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -22,7 +23,10 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.net.P2pEventHandlerImpl;
+import org.tron.core.net.TronNetDelegate;
 import org.tron.core.net.message.adv.BlockMessage;
+import org.tron.core.net.message.adv.FetchInvDataMessage;
+import org.tron.core.net.message.adv.InventoryMessage;
 import org.tron.core.net.message.adv.TransactionMessage;
 import org.tron.core.net.peer.Item;
 import org.tron.core.net.peer.PeerConnection;
@@ -138,6 +142,49 @@ public class AdvServiceTest {
     service.broadcast(msg);
     Item item1 = new Item(msg1.getMessageId(), InventoryType.TRX);
     Assert.assertNull(service.getMessage(item1));
+  }
+
+  @Test
+  public void sameAddressPeersReceiveBroadcastAndDisconnectRetryIndependently() {
+    InetSocketAddress address = new InetSocketAddress("127.0.0.2", 10001);
+    Channel firstChannel = mock(Channel.class);
+    Channel secondChannel = mock(Channel.class);
+    Mockito.when(firstChannel.getInetSocketAddress()).thenReturn(address);
+    Mockito.when(firstChannel.getInetAddress()).thenReturn(address.getAddress());
+    Mockito.when(secondChannel.getInetSocketAddress()).thenReturn(address);
+    Mockito.when(secondChannel.getInetAddress()).thenReturn(address.getAddress());
+
+    PeerConnection first = Mockito.spy(new PeerConnection());
+    PeerConnection second = Mockito.spy(new PeerConnection());
+    first.setChannel(firstChannel);
+    second.setChannel(secondChannel);
+    first.setNeedSyncFromPeer(false);
+    first.setNeedSyncFromUs(false);
+    second.setNeedSyncFromPeer(false);
+    second.setNeedSyncFromUs(false);
+    Mockito.doNothing().when(first).sendMessage(Mockito.any());
+    Mockito.doNothing().when(second).sendMessage(Mockito.any());
+
+    TronNetDelegate delegate = mock(TronNetDelegate.class);
+    Mockito.when(delegate.getActivePeer()).thenReturn(Arrays.asList(first, second));
+    AdvService isolated = new AdvService();
+    ReflectUtils.setFieldValue(isolated, "tronNetDelegate", delegate);
+    try {
+      BlockCapsule block = new BlockCapsule(1, Sha256Hash.ZERO_HASH,
+          System.currentTimeMillis(), Sha256Hash.ZERO_HASH.getByteString());
+      isolated.broadcast(new BlockMessage(block));
+      Mockito.verify(first).sendMessage(Mockito.isA(InventoryMessage.class));
+      Mockito.verify(second).sendMessage(Mockito.isA(InventoryMessage.class));
+
+      Item item = new Item(Sha256Hash.ZERO_HASH, InventoryType.TRX);
+      first.getAdvInvRequest().put(item, System.currentTimeMillis());
+      second.getAdvInvReceive().put(item, System.currentTimeMillis());
+      isolated.onDisconnect(first);
+      Assert.assertTrue(second.getAdvInvRequest().containsKey(item));
+      Mockito.verify(second).sendMessage(Mockito.isA(FetchInvDataMessage.class));
+    } finally {
+      isolated.close();
+    }
   }
 
 }
