@@ -1317,13 +1317,12 @@ public class Manager {
                       "******** Before switchFork ******* push block: {}, new block: {}, "
                           + "dynamic head num: {}, dynamic head hash: {}, "
                           + "dynamic head timestamp: {}, khaosDb head: {}, "
-                          + "khaosDb miniStore size: {}, khaosDb unlinkMiniStore size: {}.",
+                          + "khaosDb miniStore size: {}.",
                   block, newBlock,
                   chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber(),
                   chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderHash(),
                   chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp(),
-                  khaosDb.getHead(), khaosDb.getMiniStore().size(),
-                  khaosDb.getMiniUnlinkedStore().size());
+                  khaosDb.getHead(), khaosDb.getMiniStore().size());
               synchronized (forkLock) {
                 switchFork(newBlock);
               }
@@ -1333,13 +1332,12 @@ public class Manager {
                   "******** After switchFork ******* push block: {}, new block: {}, "
                       + "dynamic head num: {}, dynamic head hash: {}, "
                       + "dynamic head timestamp: {}, khaosDb head: {}, "
-                      + "khaosDb miniStore size: {}, khaosDb unlinkMiniStore size: {}.",
+                      + "khaosDb miniStore size: {}.",
                   block, newBlock,
                   chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber(),
                   chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderHash(),
                   chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp(),
-                  khaosDb.getHead(), khaosDb.getMiniStore().size(),
-                  khaosDb.getMiniUnlinkedStore().size());
+                  khaosDb.getHead(), khaosDb.getMiniStore().size());
 
               return;
             }
