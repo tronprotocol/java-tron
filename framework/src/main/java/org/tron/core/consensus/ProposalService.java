@@ -89,7 +89,23 @@ public class ProposalService extends ProposalUtil {
           break;
         }
         case EXCHANGE_CREATE_FEE: {
+          if (manager.getDynamicPropertiesStore().getCloseExchange() >= 1) {
+            // Exchange creation is locked once the close level reaches 1; skip
+            // this entry but keep processing the remaining parameters in the same
+            // proposal (level 0 application is unaffected).
+            break;
+          }
           manager.getDynamicPropertiesStore().saveExchangeCreateFee(entry.getValue());
+          break;
+        }
+        case CLOSE_EXCHANGE: {
+          int current = manager.getDynamicPropertiesStore().getCloseExchange();
+          // Defense-in-depth: only apply the next step of the graded {0,1,2} ladder.
+          // A crafted/historical proposal capsule must never push the level past 2
+          // (creation-side validation would never allow it; the apply side mirrors it).
+          if (entry.getValue() == current + 1 && entry.getValue() <= 2) {
+            manager.getDynamicPropertiesStore().saveCloseExchange(entry.getValue().intValue());
+          }
           break;
         }
         case MAX_CPU_TIME_OF_ONE_TX: {
@@ -408,6 +424,12 @@ public class ProposalService extends ProposalUtil {
           break;
         }
         case ALLOW_HARDEN_EXCHANGE_CALCULATION: {
+          if (manager.getDynamicPropertiesStore().getCloseExchange() >= 1) {
+            // This parameter is rejected at creation once the close level
+            // reaches 1; skip application here but keep processing the remaining
+            // parameters in the same proposal (level 0 application is unaffected).
+            break;
+          }
           manager.getDynamicPropertiesStore()
               .saveAllowHardenExchangeCalculation(entry.getValue());
           break;

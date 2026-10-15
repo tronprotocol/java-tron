@@ -3,6 +3,17 @@ Metrics Changelog
 
 This file tracks Prometheus metric additions, changes, and removals in java-tron. For the full set of metrics emitted today, see the references at the bottom.
 
+**4.8.3**
+
+### New Metrics
+
+#### Core
+
+- `tron:node_info` (Info, labels `version`, `genesis_block_id`) — static node identity: the running node version string plus the full genesis block hash as the canonical chain identifier, for fleet dashboards and version/chain alert rules. ([#6923](https://github.com/tronprotocol/java-tron/issues/6923))
+- `tron:block_fetch_armed` (Counter) — incremented when `FetchBlockService` arms a fetch tracking for a block; denominator for secondary-fetch rates. ([#6923](https://github.com/tronprotocol/java-tron/issues/6923))
+- `tron:block_fetch_secondary` (Counter) — incremented when a secondary fetch request is sent to an alternate peer. ([#6923](https://github.com/tronprotocol/java-tron/issues/6923))
+- `tron:block_already_known` (Counter) — incremented when a block response matches an outstanding adv request whose exact block ID is already known before that response is processed (best-effort signal; concurrent arrivals may be missed). ([#6923](https://github.com/tronprotocol/java-tron/issues/6923))
+
 **4.8.2**
 
 ### New Metrics

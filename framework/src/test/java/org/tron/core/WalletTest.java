@@ -1163,6 +1163,23 @@ public class WalletTest extends BaseTest {
   }
 
   @Test
+  public void testGetCloseExchangeChainParameter() {
+    Protocol.ChainParameters params = wallet.getChainParameters();
+    // CLOSE_EXCHANGE adds one ProposalType and one chain parameter, keeping the +2 invariant.
+    Assert.assertEquals(ProposalType.values().length + 2, params.getChainParameterCount());
+
+    dbManager.getDynamicPropertiesStore().saveCloseExchange(2);
+    params = wallet.getChainParameters();
+    Protocol.ChainParameters.ChainParameter closeExchange = params.getChainParameterList()
+        .stream()
+        .filter(parameter -> "getCloseExchange".equals(parameter.getKey()))
+        .findFirst()
+        .orElse(null);
+    Assert.assertNotNull("getCloseExchange chain parameter must be exposed", closeExchange);
+    Assert.assertEquals(2L, closeExchange.getValue());
+  }
+
+  @Test
   public void testGetAccountById() {
     AccountCapsule ownerCapsule =
         dbManager.getAccountStore().get(ByteArray.fromHexString(OWNER_ADDRESS));

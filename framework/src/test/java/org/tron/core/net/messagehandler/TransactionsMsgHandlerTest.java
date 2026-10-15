@@ -145,28 +145,29 @@ public class TransactionsMsgHandlerTest extends BaseTest {
       Assert.assertTrue("smart-contract scheduler did not submit work",
           smartContractSubmitted.await(3, TimeUnit.SECONDS));
 
-      // test 0 contract
+      // Unrequested transactions are rejected before their contract count is checked.
       Protocol.Transaction trx2 = Protocol.Transaction.newBuilder().setRawData(
           Protocol.Transaction.raw.newBuilder().setTimestamp(transactionTimestamp)
               .setRefBlockNum(1).build())
           .build();
       List<Protocol.Transaction> transactionList2 = new ArrayList<>();
       transactionList2.add(trx2);
-      try {
-        transactionsMsgHandler.processMessage(peer, new TransactionsMessage(transactionList2));
-      } catch (Exception ep) {
-        Assert.assertTrue(true);
-      }
+      P2pException unrequested = Assert.assertThrows(P2pException.class,
+          () -> transactionsMsgHandler.processMessage(peer,
+              new TransactionsMessage(transactionList2)));
+      Assert.assertEquals(P2pException.TypeEnum.BAD_MESSAGE, unrequested.getType());
+      Assert.assertTrue(unrequested.getMessage().contains("without request"));
       Map<Item, Long> advInvRequest2 = new ConcurrentHashMap<>();
       Item item2 = new Item(new TransactionMessage(trx2).getMessageId(),
           Protocol.Inventory.InventoryType.TRX);
       advInvRequest2.put(item2, 0L);
       Mockito.when(peer.getAdvInvRequest()).thenReturn(advInvRequest2);
-      try {
-        transactionsMsgHandler.processMessage(peer, new TransactionsMessage(transactionList2));
-      } catch (Exception ep) {
-        Assert.assertTrue(true);
-      }
+      P2pException emptyContract = Assert.assertThrows(P2pException.class,
+          () -> transactionsMsgHandler.processMessage(peer,
+              new TransactionsMessage(transactionList2)));
+      Assert.assertEquals(P2pException.TypeEnum.BAD_TRX, emptyContract.getType());
+      Assert.assertTrue(emptyContract.getMessage()
+          .contains("contract size should be greater than 0"));
     } catch (Exception e) {
       Assert.fail(e.getMessage());
     } finally {
@@ -345,8 +346,16 @@ public class TransactionsMsgHandlerTest extends BaseTest {
 
       // happy path → push and broadcast
       Mockito.when(chainBaseManager.getNextBlockSlotTime()).thenReturn(now);
+      Mockito.when(tronNetDelegate.pushTransaction(Mockito.any())).thenReturn(true);
       handleTx.invoke(handler, peer, trxMsg);
       Mockito.verify(advService).broadcast(trxMsg);
+
+      // local capacity rejection → do not broadcast or penalize the peer
+      Mockito.when(tronNetDelegate.pushTransaction(Mockito.any())).thenReturn(false);
+      handleTx.invoke(handler, peer, trxMsg);
+      Mockito.verify(advService, Mockito.times(1)).broadcast(trxMsg);
+      Mockito.verify(peer, Mockito.never()).setBadPeer(true);
+      Mockito.verify(peer, Mockito.never()).disconnect(Mockito.any());
 
       // P2pException BAD_TRX → disconnect
       Mockito.doThrow(new P2pException(TypeEnum.BAD_TRX, "bad"))
@@ -591,6 +600,7 @@ public class TransactionsMsgHandlerTest extends BaseTest {
     ExecutorService originalPool = null;
     try {
       TronNetDelegate delegate = Mockito.mock(TronNetDelegate.class);
+      Mockito.when(delegate.pushTransaction(Mockito.any())).thenReturn(true);
       AdvService advService = Mockito.mock(AdvService.class);
       ChainBaseManager chainBaseManager = Mockito.mock(ChainBaseManager.class);
       setField(handler, "tronNetDelegate", delegate);
@@ -790,6 +800,7 @@ public class TransactionsMsgHandlerTest extends BaseTest {
       });
       originalPool = replaceTrxHandlePool(handler, pool);
       TronNetDelegate delegate = Mockito.mock(TronNetDelegate.class);
+      Mockito.when(delegate.pushTransaction(Mockito.any())).thenReturn(true);
       AdvService adv = Mockito.mock(AdvService.class);
       ReflectUtils.setFieldValue(handler, "tronNetDelegate", delegate);
       ReflectUtils.setFieldValue(handler, "advService", adv);

@@ -4,6 +4,7 @@ import org.tron.p2p.base.Parameter;
 import org.tron.p2p.connection.message.Message;
 import org.tron.p2p.connection.message.MessageType;
 import org.tron.p2p.protos.Connect;
+import org.tron.p2p.utils.ProtoUtil;
 
 public class PongMessage extends Message {
 
@@ -11,7 +12,7 @@ public class PongMessage extends Message {
 
   public PongMessage(byte[] data) throws Exception {
     super(MessageType.KEEP_ALIVE_PONG, data);
-    this.keepAliveMessage = Connect.KeepAliveMessage.parseFrom(data);
+    this.keepAliveMessage = ProtoUtil.parseFrom(Connect.KeepAliveMessage.parser(), data);
   }
 
   public PongMessage() {

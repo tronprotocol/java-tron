@@ -27,7 +27,7 @@ public class KeepAliveService implements MessageProcess {
     executor.scheduleWithFixedDelay(() -> {
       try {
         long now = System.currentTimeMillis();
-        ChannelManager.getChannels().values().stream()
+        ChannelManager.getAllChannels().stream()
             .filter(p -> !p.isDisconnect())
             .forEach(p -> {
               if (p.waitForPong) {
