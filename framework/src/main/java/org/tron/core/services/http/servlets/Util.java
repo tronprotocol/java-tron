@@ -325,13 +325,14 @@ public class Util {
   }
 
   /**
-   * Note: the contracts of the returned transaction may be empty, or more than one when a
-   * field-number key replaces raw_data; null is returned when the transaction cannot be parsed.
+   * Note: contracts that cannot be parsed are dropped, so the contracts of the returned
+   * transaction may be empty, or more than one when a field-number key replaces raw_data.
    *
    * @throws ContractSizeNotEqualToOneException if raw_data.contract has more than one element
+   * @throws ParseException if the transaction outside its contracts cannot be parsed
    */
   public static Transaction packTransaction(String strTransaction, boolean selfType)
-      throws ContractSizeNotEqualToOneException {
+      throws ContractSizeNotEqualToOneException, ParseException {
     JSONObject jsonTransaction = JSON.parseObject(strTransaction);
     JSONObject rawData = jsonTransaction.getJSONObject("raw_data");
     JSONArray contracts = new JSONArray();
@@ -383,17 +384,12 @@ public class Util {
     rawData.put("contract", contracts);
     jsonTransaction.put("raw_data", rawData);
     Transaction.Builder transactionBuilder = Transaction.newBuilder();
-    try {
-      JsonFormat.merge(jsonTransaction.toJSONString(), transactionBuilder, selfType);
-      return transactionBuilder.build();
-    } catch (ParseException e) {
-      logger.debug("ParseException: {}", e.getMessage());
-      return null;
-    }
+    JsonFormat.merge(jsonTransaction.toJSONString(), transactionBuilder, selfType);
+    return transactionBuilder.build();
   }
 
   static <T> T withPackedTransaction(PostParams params, Function<Transaction, T> onTransaction,
-      Function<ContractSizeNotEqualToOneException, T> onContractSizeError) {
+      Function<ContractSizeNotEqualToOneException, T> onContractSizeError) throws ParseException {
     Transaction transaction;
     try {
       transaction = packTransaction(params.getParams(), params.isVisible());

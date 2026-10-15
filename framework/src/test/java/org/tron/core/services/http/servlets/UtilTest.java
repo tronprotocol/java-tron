@@ -21,6 +21,7 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.ContractSizeNotEqualToOneException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.services.http.servlets.JsonFormat.ParseException;
 import org.tron.core.utils.TransactionUtil;
 import org.tron.json.JSONObject;
 import org.tron.protos.Protocol;
@@ -532,20 +533,29 @@ public class UtilTest extends BaseTest {
   }
 
   @Test
-  public void testServletsReportErrorWhenTransactionCannotBeParsed() throws Exception {
+  public void testServletsReportParseErrorWhenTransactionCannotBeParsed() throws Exception {
     String unparsable = "{\"raw_data\":{\"contract\":[{}],\"timestamp\":\"bad\"}}";
-    String error = "{\"Error\":\"internal server error\"}";
+    ParseException e = Assert.assertThrows(ParseException.class,
+        () -> Util.packTransaction(unparsable, false));
+    Assert.assertTrue(e.getMessage().startsWith("1:40: Couldn't parse integer"));
 
     MockHttpServletResponse response = BaseHttpTest.newResponse();
     broadcastServlet.doPost(BaseHttpTest.postRequest(unparsable), response);
-    Assert.assertEquals(error, response.getContentAsString().trim());
+    assertParseError(e.getMessage(), response);
 
     response = BaseHttpTest.newResponse();
     getTransactionSignWeightServlet.doPost(BaseHttpTest.postRequest(unparsable), response);
-    Assert.assertEquals(error, response.getContentAsString().trim());
+    assertParseError(e.getMessage(), response);
 
     response = BaseHttpTest.newResponse();
     getTransactionApprovedListServlet.doPost(BaseHttpTest.postRequest(unparsable), response);
-    Assert.assertEquals(error, response.getContentAsString().trim());
+    assertParseError(e.getMessage(), response);
+  }
+
+  private static void assertParseError(String message, MockHttpServletResponse response)
+      throws Exception {
+    JSONObject reply = JSONObject.parseObject(response.getContentAsString());
+    Assert.assertEquals(1, reply.size());
+    Assert.assertEquals(message, reply.getString("Error"));
   }
 }
