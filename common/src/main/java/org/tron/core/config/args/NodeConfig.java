@@ -75,7 +75,7 @@ public class NodeConfig {
   private boolean nodeDetectEnable = false;
   private boolean enableIpv6 = false;
   private boolean effectiveCheckEnable = false;
-  private boolean allowNumericFieldAlias = true;
+  private boolean allowNumericFieldAlias = false;
   private int maxFastForwardNum = 4;
   private ValidContractProtoConfig validContractProto = new ValidContractProtoConfig();
   private int shieldedTransInPendingMaxCounts = 10;
