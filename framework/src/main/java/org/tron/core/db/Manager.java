@@ -1475,10 +1475,11 @@ public class Manager {
       return null;
     }
     Sha256Hash txId = trxCap.getTransactionId();
-    if (trxCap.getInstance().getRawData().getContractList().size() != 1) {
+    int contractCount = trxCap.getInstance().getRawData().getContractCount();
+    if (contractCount != 1) {
       throw new ContractSizeNotEqualToOneException(
           String.format("tx %s " + ActuatorConstant.CONTRACT_SIZE_NOT_EQUAL_TO_ONE,
-              txId, trxCap.getInstance().getRawData().getContractList().size()));
+              txId, contractCount));
     }
     Contract contract = trxCap.getInstance().getRawData().getContract(0);
     final Histogram.Timer requestTimer = Metrics.histogramStartTimer(
