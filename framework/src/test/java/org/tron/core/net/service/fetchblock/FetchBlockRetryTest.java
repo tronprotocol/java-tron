@@ -1,18 +1,14 @@
 package org.tron.core.net.service.fetchblock;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.codahale.metrics.MetricRegistry;
 import java.lang.reflect.Method;
-import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -23,7 +19,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
-import org.mockito.MockedStatic;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.common.utils.Sha256Hash;
@@ -33,8 +28,6 @@ import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.config.Parameter.NetConstants;
 import org.tron.core.exception.P2pException;
 import org.tron.core.exception.P2pException.TypeEnum;
-import org.tron.core.metrics.MetricsKey;
-import org.tron.core.metrics.MetricsUtil;
 import org.tron.core.net.PeerBlockTestSupport;
 import org.tron.core.net.TronNetDelegate;
 import org.tron.core.net.message.adv.BlockMessage;
@@ -150,9 +143,8 @@ public class FetchBlockRetryTest {
     second.getAdvInvReceive().put(item, now);
     Assert.assertTrue(adv.addInv(transaction));
 
-    try (MockedStatic<MetricsUtil> metrics = mockBlockLatencies(first, 10L, second, 500L)) {
-      Assert.assertTrue(adv.addInv(item));
-    }
+    setBlockLatencies(first, 10L, second, 500L);
+    Assert.assertTrue(adv.addInv(item));
 
     assertBlockRequests(second, item);
     Assert.assertTrue(first.getAdvInvRequest().containsKey(transaction));
@@ -167,9 +159,8 @@ public class FetchBlockRetryTest {
     first.getAdvInvReceive().put(item, now);
     second.getAdvInvReceive().put(item, now);
 
-    try (MockedStatic<MetricsUtil> metrics = mockBlockLatencies(first, 500L, second, null)) {
-      Assert.assertTrue(adv.addInv(item));
-    }
+    setBlockLatencies(first, 500L, second, null);
+    Assert.assertTrue(adv.addInv(item));
 
     assertBlockRequests(first, item);
     verify(second, never()).sendMessage(any());
@@ -188,9 +179,8 @@ public class FetchBlockRetryTest {
     Item transaction = new Item(Sha256Hash.ZERO_HASH, InventoryType.TRX);
     faster.getAdvInvRequest().put(transaction, now);
 
-    try (MockedStatic<MetricsUtil> metrics = mockBlockLatencies(second, 500L, faster, 10L)) {
-      tick(state());
-    }
+    setBlockLatencies(second, 500L, faster, 10L);
+    tick(state());
 
     assertBlockRequests(faster, item);
     verify(second, never()).sendMessage(any());
@@ -209,21 +199,19 @@ public class FetchBlockRetryTest {
     beginAgedFetch(2_000);
     Long originalRequestTime = first.getAdvInvRequest().get(item);
 
-    try (MockedStatic<MetricsUtil> metrics = mockBlockLatencies(peers,
-        2_000L, 2_000L, 2_000L, 2_000L, 2_000L, 2_000L)) {
+    setBlockLatencies(peers, 2_000L, 2_000L, 2_000L, 2_000L, 2_000L, 2_000L);
+    tick(state());
+    Assert.assertSame(second, ReflectUtils.getFieldObject(state(), "peer"));
+    ageState(2_000);
+    Object backupState = state();
+    Long backupRequestTime = second.getAdvInvRequest().get(item);
+    for (int i = 0; i < 10; i++) {
+      // An eligible third provider and an expired short timeout must not bypass the cap.
+      Assert.assertTrue(fetch.canFetchBlock(peers.get(2), item, System.currentTimeMillis()));
       tick(state());
-      Assert.assertSame(second, ReflectUtils.getFieldObject(state(), "peer"));
-      ageState(2_000);
-      Object backupState = state();
-      Long backupRequestTime = second.getAdvInvRequest().get(item);
-      for (int i = 0; i < 10; i++) {
-        // An eligible third provider and an expired short timeout must not bypass the cap.
-        Assert.assertTrue(fetch.canFetchBlock(peers.get(2), item, System.currentTimeMillis()));
-        tick(state());
-      }
-      Assert.assertSame(backupState, state());
-      Assert.assertEquals(backupRequestTime, second.getAdvInvRequest().get(item));
     }
+    Assert.assertSame(backupState, state());
+    Assert.assertEquals(backupRequestTime, second.getAdvInvRequest().get(item));
 
     assertBlockRequests(second, item);
     verify(first, never()).sendMessage(any());
@@ -239,42 +227,42 @@ public class FetchBlockRetryTest {
   public void testSlowBackupWaitsForActualTimeout() throws Exception {
     // Leave enough time for assertions without relying on sleeps or a sub-second test run.
     ReflectUtils.setFieldValue(fetch, "fetchTimeOut", 10_000L);
+    CommonParameter.getInstance().fetchBlockTimeout = 10_000;
     second.getAdvInvReceive().put(item, System.currentTimeMillis());
 
-    try (MockedStatic<MetricsUtil> metrics = mockBlockLatencies(first, 15_000L, second, 15_000L)) {
-      beginAgedFetch(100);
-      Object originalState = state();
-      tick(state());
+    setBlockLatencies(first, 15_000L, second, 15_000L);
+    beginAgedFetch(100);
+    Object originalState = state();
+    tick(state());
 
-      Assert.assertSame(originalState, state());
-      Assert.assertFalse(second.getAdvInvRequest().containsKey(item));
-      verify(second, never()).sendMessage(any());
+    Assert.assertSame(originalState, state());
+    Assert.assertFalse(second.getAdvInvRequest().containsKey(item));
+    verify(second, never()).sendMessage(any());
 
-      ageState(11_000);
-      Long originalRequestTime = first.getAdvInvRequest().get(item);
-      tick(state());
+    ageState(11_000);
+    Long originalRequestTime = first.getAdvInvRequest().get(item);
+    tick(state());
 
-      assertBlockRequests(second, item);
-      Assert.assertSame(second, ReflectUtils.getFieldObject(state(), "peer"));
-      Assert.assertEquals(originalRequestTime, first.getAdvInvRequest().get(item));
-    }
+    assertBlockRequests(second, item);
+    Assert.assertSame(second, ReflectUtils.getFieldObject(state(), "peer"));
+    Assert.assertEquals(originalRequestTime, first.getAdvInvRequest().get(item));
   }
 
   @Test
   public void testFasterBackupCanStartBeforeTimeout() throws Exception {
     ReflectUtils.setFieldValue(fetch, "fetchTimeOut", 10_000L);
+    CommonParameter.getInstance().fetchBlockTimeout = 10_000;
     second.getAdvInvReceive().put(item, System.currentTimeMillis());
 
-    try (MockedStatic<MetricsUtil> metrics = mockBlockLatencies(first, 8_000L, second, 100L)) {
-      beginAgedFetch(100);
-      Long originalRequestTime = first.getAdvInvRequest().get(item);
-      tick(state());
+    setBlockLatencies(first, 8_000L, second, 100L);
+    beginAgedFetch(100);
+    Long originalRequestTime = first.getAdvInvRequest().get(item);
+    tick(state());
 
-      assertBlockRequests(second, item);
-      Assert.assertTrue(System.currentTimeMillis() - originalRequestTime < 10_000);
-      Assert.assertEquals(originalRequestTime, first.getAdvInvRequest().get(item));
-      Assert.assertSame(second, ReflectUtils.getFieldObject(state(), "peer"));
-    }
+    assertBlockRequests(second, item);
+    Assert.assertTrue(System.currentTimeMillis() - originalRequestTime < 10_000);
+    Assert.assertEquals(originalRequestTime, first.getAdvInvRequest().get(item));
+    Assert.assertSame(second, ReflectUtils.getFieldObject(state(), "peer"));
   }
 
   @Test
@@ -646,30 +634,19 @@ public class FetchBlockRetryTest {
     }
   }
 
-  private MockedStatic<MetricsUtil> mockBlockLatencies(PeerConnection left, Long leftLatency,
+  private void setBlockLatencies(PeerConnection left, Long leftLatency,
       PeerConnection right, Long rightLatency) {
-    return mockBlockLatencies(Arrays.asList(left, right), leftLatency, rightLatency);
+    setBlockLatencies(Arrays.asList(left, right), leftLatency, rightLatency);
   }
 
-  private MockedStatic<MetricsUtil> mockBlockLatencies(List<PeerConnection> candidates,
+  private void setBlockLatencies(List<PeerConnection> candidates,
       Long... latencies) {
     Assert.assertEquals(candidates.size(), latencies.length);
-    MetricRegistry registry = new MetricRegistry();
     for (int i = 0; i < candidates.size(); i++) {
-      PeerConnection peer = candidates.get(i);
-      InetSocketAddress address = new InetSocketAddress("127.0.0." + (i + 2),
-          peer.getInetSocketAddress().getPort());
-      when(peer.getChannel().getInetAddress()).thenReturn(address.getAddress());
-      when(peer.getChannel().getInetSocketAddress()).thenReturn(address);
       if (latencies[i] != null) {
-        registry.histogram(MetricsKey.NET_LATENCY_FETCH_BLOCK + peer.getInetAddress())
-            .update(latencies[i]);
+        candidates.get(i).updateFetchLatency(latencies[i]);
       }
     }
-    MockedStatic<MetricsUtil> metrics = mockStatic(MetricsUtil.class);
-    metrics.when(() -> MetricsUtil.getHistogram(anyString()))
-        .thenAnswer(call -> registry.histogram(call.getArgument(0)));
-    return metrics;
   }
 
   private void ageState(long age) {

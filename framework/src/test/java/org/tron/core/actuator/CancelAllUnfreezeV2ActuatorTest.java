@@ -114,8 +114,8 @@ public class CancelAllUnfreezeV2ActuatorTest extends BaseTest {
     } catch (ContractValidateException e) {
       fail();
     }
-    assertThrows(ActuatorConstant.TX_RESULT_NULL,
-        RuntimeException.class, () -> actuator.execute(null));
+    assertEquals(ActuatorConstant.TX_RESULT_NULL,
+        assertThrows(RuntimeException.class, () -> actuator.execute(null)).getMessage());
   }
 
   @Test
@@ -123,7 +123,8 @@ public class CancelAllUnfreezeV2ActuatorTest extends BaseTest {
     CancelAllUnfreezeV2Actuator actuator = new CancelAllUnfreezeV2Actuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager())
         .setAny(getCancelAllUnfreezeV2ContractInvalidAddress());
-    assertThrows("Invalid address", ContractValidateException.class, actuator::validate);
+    assertEquals("Invalid address",
+        assertThrows(ContractValidateException.class, actuator::validate).getMessage());
   }
 
   @Test
@@ -131,8 +132,8 @@ public class CancelAllUnfreezeV2ActuatorTest extends BaseTest {
     CancelAllUnfreezeV2Actuator actuator = new CancelAllUnfreezeV2Actuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager())
         .setAny(getCancelAllUnfreezeV2ContractInvalidAccount());
-    assertThrows("Account[" + OWNER_ACCOUNT_INVALID + "] does not exist",
-        ContractValidateException.class, actuator::validate);
+    assertEquals("Account[" + OWNER_ACCOUNT_INVALID + "] not exists",
+        assertThrows(ContractValidateException.class, actuator::validate).getMessage());
   }
 
   @Test
@@ -140,24 +141,24 @@ public class CancelAllUnfreezeV2ActuatorTest extends BaseTest {
     CancelAllUnfreezeV2Actuator actuator = new CancelAllUnfreezeV2Actuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager())
         .setAny(getCancelAllUnfreezeV2Contract());
-    assertThrows("no unfreezeV2 list to cancel",
-        ContractValidateException.class, actuator::validate);
+    assertEquals("No unfreezeV2 list to cancel",
+        assertThrows(ContractValidateException.class, actuator::validate).getMessage());
   }
 
   @Test
   public void testInvalidCancelAllUnfreezeV2Contract() {
     CancelAllUnfreezeV2Actuator actuator = new CancelAllUnfreezeV2Actuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(null);
-    assertThrows(ActuatorConstant.CONTRACT_NOT_EXIST,
-        ContractValidateException.class, actuator::validate);
+    assertEquals(ActuatorConstant.CONTRACT_NOT_EXIST,
+        assertThrows(ContractValidateException.class, actuator::validate).getMessage());
   }
 
   @Test
   public void testInvalidAccountStore() {
     CancelAllUnfreezeV2Actuator actuator = new CancelAllUnfreezeV2Actuator();
     actuator.setChainBaseManager(null).setAny(getCancelAllUnfreezeV2Contract());
-    assertThrows(ActuatorConstant.STORE_NOT_EXIST,
-        ContractValidateException.class, actuator::validate);
+    assertEquals(ActuatorConstant.STORE_NOT_EXIST,
+        assertThrows(ContractValidateException.class, actuator::validate).getMessage());
   }
 
   @Test
@@ -166,9 +167,9 @@ public class CancelAllUnfreezeV2ActuatorTest extends BaseTest {
     CancelAllUnfreezeV2Actuator actuator = new CancelAllUnfreezeV2Actuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager())
         .setAny(getCancelAllUnfreezeV2Contract());
-    assertThrows(
+    assertEquals(
         "Not support CancelAllUnfreezeV2 transaction, need to be opened by the committee",
-        ContractValidateException.class, actuator::validate);
+        assertThrows(ContractValidateException.class, actuator::validate).getMessage());
   }
 
   @Test
@@ -176,10 +177,10 @@ public class CancelAllUnfreezeV2ActuatorTest extends BaseTest {
     dbManager.getDynamicPropertiesStore().saveAllowCancelAllUnfreezeV2(1);
     CancelAllUnfreezeV2Actuator actuator = new CancelAllUnfreezeV2Actuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getErrorContract());
-    assertThrows(
+    assertEquals(
         "contract type error, expected type [CancelAllUnfreezeV2Contract], "
-            + "real type[WithdrawExpireUnfreezeContract]",
-        ContractValidateException.class, actuator::validate);
+            + "real type[class com.google.protobuf.Any]",
+        assertThrows(ContractValidateException.class, actuator::validate).getMessage());
   }
 
   private Any getCancelAllUnfreezeV2Contract() {

@@ -5,7 +5,6 @@ import java.util.List;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.utils.Sha256Hash;
-import org.tron.consensus.base.Param;
 import org.tron.consensus.base.Param.Miner;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.net.message.MessageTypes;
@@ -62,7 +61,7 @@ public class PbftMessage extends PbftBaseMessage {
     rawBuilder.setViewN(viewN).setEpoch(epoch).setDataType(dataType)
         .setMsgType(MsgType.PREPREPARE).setData(data);
     Raw raw = rawBuilder.build();
-    byte[] hash = Sha256Hash.hash(true, raw.toByteArray());
+    byte[] hash = Sha256Hash.hash(raw.toByteArray());
     ECDSASignature signature = ecKey.sign(hash);
     builder.setRawData(raw).setSignature(ByteString.copyFrom(signature.toByteArray()));
     PBFTMessage message = builder.build();
@@ -104,7 +103,7 @@ public class PbftMessage extends PbftBaseMessage {
         .setMsgType(type).setEpoch(getPbftMessage().getRawData().getEpoch())
         .setData(getPbftMessage().getRawData().getData());
     Raw raw = rawBuilder.build();
-    byte[] hash = Sha256Hash.hash(true, raw.toByteArray());
+    byte[] hash = Sha256Hash.hash(raw.toByteArray());
     ECDSASignature signature = ecKey.sign(hash);
     builder.setRawData(raw).setSignature(ByteString.copyFrom(signature.toByteArray()));
     PBFTMessage message = builder.build();

@@ -1,6 +1,5 @@
 package org.tron.core.store;
 
-import java.util.Arrays;
 import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;

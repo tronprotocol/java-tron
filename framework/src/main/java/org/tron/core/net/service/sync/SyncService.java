@@ -291,6 +291,7 @@ public class SyncService {
     }
 
     final boolean[] isProcessed = {true};
+    final boolean[] capacityReleased = {false};
     long solidNum = tronNetDelegate.getSolidBlockId().getNum();
 
     while (isProcessed[0]) {
@@ -302,11 +303,13 @@ public class SyncService {
           BlockId blockId = unparsedBlock.getBlockId();
           if (peerConnection.isDisconnect()) {
             blockWaitToProcess.remove(unparsedBlock);
+            capacityReleased[0] = true;
             invalid(blockId, peerConnection);
             return;
           }
           if (blockId.getNum() <= solidNum) {
             blockWaitToProcess.remove(unparsedBlock);
+            capacityReleased[0] = true;
             peerConnection.getSyncBlockInProcess().remove(blockId);
             return;
           }
@@ -318,6 +321,7 @@ public class SyncService {
               });
           if (isFound[0]) {
             blockWaitToProcess.remove(unparsedBlock);
+            capacityReleased[0] = true;
             isProcessed[0] = true;
             BlockCapsule block;
             try {
@@ -331,6 +335,10 @@ public class SyncService {
           }
         }
       });
+    }
+    if (capacityReleased[0]) {
+      // A full window may have consumed the last fetch trigger before processing freed capacity.
+      fetchFlag = true;
     }
   }
 

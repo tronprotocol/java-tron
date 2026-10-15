@@ -3,15 +3,19 @@ package org.tron.program;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 
+import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.protobuf.ByteString;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
@@ -28,6 +32,7 @@ import org.springframework.core.type.AnnotatedTypeMetadata;
 import org.tron.common.BaseTest;
 import org.tron.common.TestConstants;
 import org.tron.common.client.DatabaseGrpcClient;
+import org.tron.common.es.ExecutorServiceManager;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.PublicMethod;
 import org.tron.core.ChainBaseManager;
@@ -553,17 +558,15 @@ public class SolidityNodeTest extends BaseTest {
    *   instead of logging ERROR and retrying.
    */
   @Test(timeout = 8000)
-  @SuppressWarnings("unchecked")
   public void testGetBlockShutdownPaths() throws Exception {
-    long origID     = atomicLong("ID").get();
-    long origRemote = atomicLong("remoteBlockNum").get();
-    Field clientField   = getField("databaseGrpcClient");
-    Field delegateField = getField("tronNetDelegate");
-    Object origClient   = clientField.get(solidityNode);
-    Object origDelegate = delegateField.get(solidityNode);
-
-    LinkedBlockingDeque<Block> queue =
-        (LinkedBlockingDeque<Block>) getField("blockQueue").get(solidityNode);
+    SolidityNode node = new SolidityNode();
+    InterruptibleBlockQueue queue = new InterruptibleBlockQueue();
+    getField("blockQueue").set(node, queue);
+    getField("flag").setBoolean(node, true);
+    AtomicLong id = (AtomicLong) getField("ID").get(node);
+    AtomicLong remote = (AtomicLong) getField("remoteBlockNum").get(node);
+    ExecutorService executor =
+        ExecutorServiceManager.newSingleThreadExecutor("test-get-block-interrupt");
     try {
       // ── Part 1: interrupt during blockQueue.put() ──────────────────────────
       // Fill the queue to capacity so the next put() call blocks.
@@ -572,54 +575,48 @@ public class SolidityNodeTest extends BaseTest {
       }
       assertEquals(100, queue.size());
 
-      atomicLong("ID").set(0L);
-      atomicLong("remoteBlockNum").set(10L);
+      id.set(0L);
+      remote.set(10L);
 
       DatabaseGrpcClient putClient = mock(DatabaseGrpcClient.class);
       Mockito.when(putClient.getBlock(1L)).thenReturn(blockWithNum(1L));
       TronNetDelegate mockDelegate = mock(TronNetDelegate.class);
       Mockito.when(mockDelegate.isHitDown()).thenReturn(false);
-      clientField.set(solidityNode, putClient);
-      delegateField.set(solidityNode, mockDelegate);
+      getField("databaseGrpcClient").set(node, putClient);
+      getField("tronNetDelegate").set(node, mockDelegate);
 
       Method getBlockM = SolidityNode.class.getDeclaredMethod("getBlock");
       getBlockM.setAccessible(true);
-      Thread t = new Thread(() -> {
-        try {
-          getBlockM.invoke(solidityNode);
-        } catch (Exception e) {
-          Thread.currentThread().interrupt();
-        }
+      Future<?> worker = executor.submit(() -> {
+        getBlockM.invoke(node);
+        return null;
       });
-      t.start();
-      Thread.sleep(200); // let the thread block inside blockQueue.put()
-      t.interrupt();     // simulate ExecutorService.shutdownNow()
-      t.join(4000);
-      assertFalse("getBlock must exit cleanly when interrupted during put()", t.isAlive());
+      assertTrue("getBlock must reach blockQueue.put()",
+          queue.operationStarted.await(2, TimeUnit.SECONDS));
+      executor.shutdownNow();
+      worker.get(2, TimeUnit.SECONDS);
+      assertEquals("put() must be interrupted", 0L, queue.operationInterrupted.getCount());
+      Mockito.verify(putClient).getBlock(1L);
       queue.clear();
-      setFlag(true);
+      getField("flag").setBoolean(node, true);
 
       // ── Part 2: exception while flag is false ──────────────────────────────
-      atomicLong("ID").set(0L);
-      atomicLong("remoteBlockNum").set(10L);
+      id.set(0L);
+      remote.set(10L);
 
       DatabaseGrpcClient closingClient = mock(DatabaseGrpcClient.class);
       Mockito.when(closingClient.getBlock(1L)).thenAnswer(inv -> {
-        setFlag(false); // shutdown races with this gRPC call
+        getField("flag").setBoolean(node, false); // shutdown races with this gRPC call
         throw new RuntimeException("channel closed during shutdown");
       });
-      clientField.set(solidityNode, closingClient);
-      delegateField.set(solidityNode, mockDelegate);
+      getField("databaseGrpcClient").set(node, closingClient);
 
       // Must return without throwing and without infinite retry.
-      getBlockM.invoke(solidityNode);
+      getBlockM.invoke(node);
+      Mockito.verify(closingClient).getBlock(1L);
     } finally {
-      setFlag(true);
-      queue.clear();
-      atomicLong("ID").set(origID);
-      atomicLong("remoteBlockNum").set(origRemote);
-      clientField.set(solidityNode, origClient);
-      delegateField.set(solidityNode, origDelegate);
+      getField("flag").setBoolean(node, false);
+      stopTestExecutor(executor);
     }
   }
 
@@ -670,35 +667,76 @@ public class SolidityNodeTest extends BaseTest {
    */
   @Test(timeout = 8000)
   public void testProcessSolidityBlockHandlesInterrupt() throws Exception {
+    SolidityNode node = new SolidityNode();
+    InterruptibleBlockQueue queue = new InterruptibleBlockQueue();
+    getField("blockQueue").set(node, queue);
+    getField("flag").setBoolean(node, true);
     TronNetDelegate mockDelegate = mock(TronNetDelegate.class);
     Mockito.when(mockDelegate.isHitDown()).thenReturn(false);
-
-    Field delegateField = getField("tronNetDelegate");
-    Object origDelegate = delegateField.get(solidityNode);
-    delegateField.set(solidityNode, mockDelegate);
+    getField("tronNetDelegate").set(node, mockDelegate);
 
     Method m = SolidityNode.class.getDeclaredMethod("processSolidityBlock");
     m.setAccessible(true);
-    Thread t = new Thread(() -> {
-      try {
-        m.invoke(solidityNode);
-      } catch (Exception ignored) {
-        // InvocationTargetException should not happen; the method handles interrupt internally
-      }
-    });
+    ExecutorService executor =
+        ExecutorServiceManager.newSingleThreadExecutor("test-process-solidity-block-interrupt");
     try {
-      t.start();
-      Thread.sleep(150); // let the thread enter blockQueue.poll(1000 ms)
-      t.interrupt();
-      t.join(5000);
-      assertFalse("processSolidityBlock must exit after interrupt", t.isAlive());
+      Future<?> worker = executor.submit(() -> {
+        m.invoke(node);
+        return null;
+      });
+      assertTrue("processSolidityBlock must reach blockQueue.poll()",
+          queue.operationStarted.await(2, TimeUnit.SECONDS));
+      executor.shutdownNow();
+      worker.get(2, TimeUnit.SECONDS);
+      assertEquals("poll() must be interrupted", 0L, queue.operationInterrupted.getCount());
     } finally {
-      setFlag(true);
-      delegateField.set(solidityNode, origDelegate);
+      getField("flag").setBoolean(node, false);
+      stopTestExecutor(executor);
     }
   }
 
   // ── private helpers ──────────────────────────────────────────────────────────
+
+  private static void stopTestExecutor(ExecutorService executor) {
+    executor.shutdown();
+    if (!Uninterruptibles.awaitTerminationUninterruptibly(executor, 1, TimeUnit.SECONDS)) {
+      executor.shutdownNow();
+      assertTrue("test executor must terminate before cleanup finishes",
+          Uninterruptibles.awaitTerminationUninterruptibly(executor, 1, TimeUnit.SECONDS));
+    }
+  }
+
+  private static class InterruptibleBlockQueue extends LinkedBlockingDeque<Block> {
+
+    private final CountDownLatch operationStarted = new CountDownLatch(1);
+    private final CountDownLatch operationInterrupted = new CountDownLatch(1);
+
+    private InterruptibleBlockQueue() {
+      super(100);
+    }
+
+    @Override
+    public void put(Block block) throws InterruptedException {
+      operationStarted.countDown();
+      try {
+        super.put(block);
+      } catch (InterruptedException e) {
+        operationInterrupted.countDown();
+        throw e;
+      }
+    }
+
+    @Override
+    public Block poll(long timeout, TimeUnit unit) throws InterruptedException {
+      operationStarted.countDown();
+      try {
+        return super.poll(timeout, unit);
+      } catch (InterruptedException e) {
+        operationInterrupted.countDown();
+        throw e;
+      }
+    }
+  }
 
   private static Field getField(String name) throws Exception {
     Field f = SolidityNode.class.getDeclaredField(name);

@@ -6,15 +6,21 @@ import picocli.CommandLine;
     mixinStandardHelpOptions = true,
     version = "db command 1.0",
     description = "An rich command set that provides high-level operations  for dbs.",
+    header = Db.STOP_NODE_HEADER,
     subcommands = {CommandLine.HelpCommand.class,
         DbMove.class,
         DbArchive.class,
         DbConvert.class,
         DbLite.class,
         DbCopy.class,
+        DbBackfillBloom.class,
         DbRoot.class
     },
     commandListHeading = "%nCommands:%n%nThe most commonly used db commands are:%n"
 )
 public class Db {
+
+  static final String STOP_NODE_HEADER = "All db tools operate directly on the database files.\n"
+      + "Before performing a database operation,\n"
+      + "you must stop the currently running FullNode service.\n";
 }

@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -96,8 +97,14 @@ public class Node implements Serializable, Cloneable {
         this.hostV6 = null;
         return;
       }
-      InetAddress address = new InetSocketAddress(hostV6, port).getAddress();
-      this.hostV6 = address == null ? null : address.getHostAddress();
+      try {
+        // The literal check above prevents DNS lookups; getByName is used here only to
+        // parse and canonicalize the IPv6 text, independently of the remote service port.
+        InetAddress address = InetAddress.getByName(hostV6);
+        this.hostV6 = address.getHostAddress();
+      } catch (UnknownHostException e) {
+        this.hostV6 = null;
+      }
     }
   }
 
@@ -177,11 +184,13 @@ public class Node implements Serializable, Cloneable {
   }
 
   public InetSocketAddress getInetSocketAddressV4() {
-    return StringUtils.isNotEmpty(hostV4) ? new InetSocketAddress(hostV4, port) : null;
+    return StringUtils.isNotEmpty(hostV4) && NetUtil.validPort(port)
+        ? new InetSocketAddress(hostV4, port) : null;
   }
 
   public InetSocketAddress getInetSocketAddressV6() {
-    return StringUtils.isNotEmpty(hostV6) ? new InetSocketAddress(hostV6, port) : null;
+    return StringUtils.isNotEmpty(hostV6) && NetUtil.validPort(port)
+        ? new InetSocketAddress(hostV6, port) : null;
   }
 
   @Override

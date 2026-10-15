@@ -10,6 +10,7 @@ import org.tron.core.consensus.ConsensusService;
 import org.tron.core.db.Manager;
 import org.tron.core.net.TronNetService;
 import org.tron.core.services.event.EventService;
+import org.tron.core.services.jsonrpc.TronJsonRpcImpl;
 import org.tron.program.SolidityNode;
 
 @Slf4j(topic = "app")
@@ -37,6 +38,9 @@ public class ApplicationImpl implements Application {
   @Autowired(required = false)
   private SolidityNode solidityNode;
 
+  @Autowired
+  private TronJsonRpcImpl tronJsonRpc;
+
   private final CountDownLatch shutdown = new CountDownLatch(1);
 
   /**
@@ -62,6 +66,9 @@ public class ApplicationImpl implements Application {
     if (solidityNode != null) {
       solidityNode.close();
     }
+    // Stop the json-rpc filter consumer explicitly, once the producers above are stopped,
+    // rather than in Spring's destroy phase.
+    tronJsonRpc.close();
     dbManager.close();
     shutdown.countDown();
   }

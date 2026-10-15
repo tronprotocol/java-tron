@@ -20,6 +20,7 @@ import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Commons;
+import org.tron.core.exception.jsonrpc.JsonRpcException;
 import org.tron.core.exception.jsonrpc.JsonRpcInvalidParamsException;
 import org.tron.core.services.jsonrpc.JsonRpcApiUtil;
 import org.tron.core.services.jsonrpc.TronJsonRpc.FilterRequest;
@@ -229,14 +230,16 @@ public class JsonRpcTest {
       Assert.assertTrue(e.getMessage().contains("invalid topic"));
     }
 
-    // not empty topic and null cannot be in same level
-    try {
-      new LogFilter(new FilterRequest(null, null, null, new String[][] {
-          {"0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef", null},
-      }, null));
-    } catch (JsonRpcInvalidParamsException e) {
-      Assert.assertTrue(e.getMessage().contains("invalid topic"));
-    }
+    // null is invalid inside an OR-list. Use ArrayList to match Jackson's nested-array binding.
+    ArrayList<Object> invalidOrTopics = new ArrayList<>();
+    invalidOrTopics.add(
+        "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef");
+    invalidOrTopics.add(null);
+    JsonRpcInvalidParamsException invalidOrTopic = Assert.assertThrows(
+        JsonRpcInvalidParamsException.class,
+        () -> new LogFilter(new FilterRequest(
+            null, null, null, new Object[] {invalidOrTopics}, null)));
+    Assert.assertEquals("invalid topic(s): null", invalidOrTopic.getMessage());
 
     // non-string element in address array -> -32602, not a leaked ClassCastException
     JsonRpcInvalidParamsException badAddrElement = Assert.assertThrows(
@@ -408,7 +411,7 @@ public class JsonRpcTest {
       Assert.assertArrayEquals(conditions[2][4],
           getBloomIndex("0x00000000000000000000000056178a0d5f301baf6cf3e1cd53d9863437345bf9"));
 
-    } catch (JsonRpcInvalidParamsException e) {
+    } catch (JsonRpcException e) {
       Assert.fail();
     }
   }
@@ -448,7 +451,7 @@ public class JsonRpcTest {
       Assert.assertArrayEquals(conditions[0][1],
           getBloomIndex("0x3038114c1a1e72c5bfa8b003bc3650ad2ba254a0"));
 
-    } catch (JsonRpcInvalidParamsException e) {
+    } catch (JsonRpcException e) {
       Assert.fail();
     }
   }
