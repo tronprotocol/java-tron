@@ -1,6 +1,7 @@
 package org.tron.core.net.service.handshake;
 
 import java.util.Arrays;
+import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -34,16 +35,20 @@ public class HandshakeService {
   }
 
   public void processHelloMessage(PeerConnection peer, HelloMessage msg) {
+    if (peer.isDisconnect()) {
+      return;
+    }
+
     if (peer.getHelloMessageReceive() != null) {
       logger.warn("Peer {} receive dup hello message", peer.getInetSocketAddress());
       peer.disconnect(ReasonCode.BAD_PROTOCOL);
       return;
     }
 
-    TronNetService.getP2pService().updateNodeId(peer.getChannel(), msg.getFrom().getHexId());
-    if (peer.isDisconnect()) {
-      logger.info("Duplicate Peer {}", peer.getInetSocketAddress());
-      peer.disconnect(ReasonCode.DUPLICATE_PEER);
+    if (!Objects.equals(peer.getChannel().getNodeId(), msg.getFrom().getHexId())) {
+      logger.warn("Peer {} sent an application HELLO with a different node ID",
+          peer.getInetSocketAddress());
+      peer.disconnect(ReasonCode.UNEXPECTED_IDENTITY);
       return;
     }
 
