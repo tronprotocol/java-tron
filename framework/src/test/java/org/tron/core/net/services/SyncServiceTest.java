@@ -9,12 +9,14 @@ import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.springframework.context.ApplicationContext;
 import org.tron.common.BaseMethodTest;
+import org.tron.common.overlay.message.Message;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
@@ -228,21 +230,33 @@ public class SyncServiceTest extends BaseMethodTest {
   @Test
   public void sameAddressPeersKeepSyncRequestsAndResponsesIndependent() throws Exception {
     InetSocketAddress address = new InetSocketAddress("127.0.0.2", 10001);
-    Channel firstChannel = mock(Channel.class);
-    Channel secondChannel = mock(Channel.class);
-    Mockito.when(firstChannel.getInetSocketAddress()).thenReturn(address);
-    Mockito.when(firstChannel.getInetAddress()).thenReturn(address.getAddress());
-    Mockito.when(secondChannel.getInetSocketAddress()).thenReturn(address);
-    Mockito.when(secondChannel.getInetAddress()).thenReturn(address.getAddress());
+    Channel firstChannel = new Channel();
+    Channel secondChannel = new Channel();
+    ReflectUtils.setFieldValue(firstChannel, "inetSocketAddress", address);
+    ReflectUtils.setFieldValue(firstChannel, "inetAddress", address.getAddress());
+    ReflectUtils.setFieldValue(secondChannel, "inetSocketAddress", address);
+    ReflectUtils.setFieldValue(secondChannel, "inetAddress", address.getAddress());
 
-    PeerConnection first = Mockito.spy(new PeerConnection());
-    PeerConnection second = Mockito.spy(new PeerConnection());
+    List<Message> firstMessages = new ArrayList<>();
+    List<Message> secondMessages = new ArrayList<>();
+    PeerConnection first = new PeerConnection() {
+      @Override
+      public void sendMessage(Message message) {
+        firstMessages.add(message);
+      }
+    };
+    PeerConnection second = new PeerConnection() {
+      @Override
+      public void sendMessage(Message message) {
+        secondMessages.add(message);
+      }
+    };
     first.setChannel(firstChannel);
     second.setChannel(secondChannel);
+    Assert.assertEquals(firstChannel, secondChannel);
+    Assert.assertNotEquals(first, second);
     first.setFetchAble(true);
     second.setFetchAble(true);
-    Mockito.doNothing().when(first).sendMessage(Mockito.any());
-    Mockito.doNothing().when(second).sendMessage(Mockito.any());
 
     BlockMessage firstBlock = new BlockMessage(new BlockCapsule(1, Sha256Hash.ZERO_HASH,
         System.currentTimeMillis(), Sha256Hash.ZERO_HASH.getByteString()));
@@ -262,14 +276,14 @@ public class SyncServiceTest extends BaseMethodTest {
       fetch.setAccessible(true);
       fetch.invoke(isolated);
 
-      Mockito.verify(first).sendMessage(Mockito.argThat(message ->
-          message instanceof FetchInvDataMessage
-              && ((FetchInvDataMessage) message).getHashList()
-                  .equals(Collections.singletonList(firstId))));
-      Mockito.verify(second).sendMessage(Mockito.argThat(message ->
-          message instanceof FetchInvDataMessage
-              && ((FetchInvDataMessage) message).getHashList()
-                  .equals(Collections.singletonList(secondId))));
+      Assert.assertEquals(1, firstMessages.size());
+      Assert.assertEquals(1, secondMessages.size());
+      Assert.assertTrue(firstMessages.get(0) instanceof FetchInvDataMessage);
+      Assert.assertTrue(secondMessages.get(0) instanceof FetchInvDataMessage);
+      Assert.assertEquals(Collections.singletonList(firstId),
+          ((FetchInvDataMessage) firstMessages.get(0)).getHashList());
+      Assert.assertEquals(Collections.singletonList(secondId),
+          ((FetchInvDataMessage) secondMessages.get(0)).getHashList());
 
       Cache<BlockCapsule.BlockId, PeerConnection> requests =
           (Cache<BlockCapsule.BlockId, PeerConnection>)

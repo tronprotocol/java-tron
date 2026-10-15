@@ -4,7 +4,10 @@ import static org.mockito.Mockito.mock;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -16,6 +19,7 @@ import org.mockito.Mockito;
 import org.springframework.context.ApplicationContext;
 import org.tron.common.TestConstants;
 import org.tron.common.application.TronApplicationContext;
+import org.tron.common.overlay.message.Message;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.common.utils.Sha256Hash;
@@ -147,23 +151,35 @@ public class AdvServiceTest {
   @Test
   public void sameAddressPeersReceiveBroadcastAndDisconnectRetryIndependently() {
     InetSocketAddress address = new InetSocketAddress("127.0.0.2", 10001);
-    Channel firstChannel = mock(Channel.class);
-    Channel secondChannel = mock(Channel.class);
-    Mockito.when(firstChannel.getInetSocketAddress()).thenReturn(address);
-    Mockito.when(firstChannel.getInetAddress()).thenReturn(address.getAddress());
-    Mockito.when(secondChannel.getInetSocketAddress()).thenReturn(address);
-    Mockito.when(secondChannel.getInetAddress()).thenReturn(address.getAddress());
+    Channel firstChannel = new Channel();
+    Channel secondChannel = new Channel();
+    ReflectUtils.setFieldValue(firstChannel, "inetSocketAddress", address);
+    ReflectUtils.setFieldValue(firstChannel, "inetAddress", address.getAddress());
+    ReflectUtils.setFieldValue(secondChannel, "inetSocketAddress", address);
+    ReflectUtils.setFieldValue(secondChannel, "inetAddress", address.getAddress());
 
-    PeerConnection first = Mockito.spy(new PeerConnection());
-    PeerConnection second = Mockito.spy(new PeerConnection());
+    List<Message> firstMessages = new ArrayList<>();
+    List<Message> secondMessages = new ArrayList<>();
+    PeerConnection first = new PeerConnection() {
+      @Override
+      public void sendMessage(Message message) {
+        firstMessages.add(message);
+      }
+    };
+    PeerConnection second = new PeerConnection() {
+      @Override
+      public void sendMessage(Message message) {
+        secondMessages.add(message);
+      }
+    };
     first.setChannel(firstChannel);
     second.setChannel(secondChannel);
+    Assert.assertEquals(firstChannel, secondChannel);
+    Assert.assertNotEquals(first, second);
     first.setNeedSyncFromPeer(false);
     first.setNeedSyncFromUs(false);
     second.setNeedSyncFromPeer(false);
     second.setNeedSyncFromUs(false);
-    Mockito.doNothing().when(first).sendMessage(Mockito.any());
-    Mockito.doNothing().when(second).sendMessage(Mockito.any());
 
     TronNetDelegate delegate = mock(TronNetDelegate.class);
     Mockito.when(delegate.getActivePeer()).thenReturn(Arrays.asList(first, second));
@@ -173,15 +189,25 @@ public class AdvServiceTest {
       BlockCapsule block = new BlockCapsule(1, Sha256Hash.ZERO_HASH,
           System.currentTimeMillis(), Sha256Hash.ZERO_HASH.getByteString());
       isolated.broadcast(new BlockMessage(block));
-      Mockito.verify(first).sendMessage(Mockito.isA(InventoryMessage.class));
-      Mockito.verify(second).sendMessage(Mockito.isA(InventoryMessage.class));
+      Assert.assertEquals(1, firstMessages.size());
+      Assert.assertEquals(1, secondMessages.size());
+      Assert.assertTrue(firstMessages.get(0) instanceof InventoryMessage);
+      Assert.assertTrue(secondMessages.get(0) instanceof InventoryMessage);
+      Assert.assertEquals(Collections.singletonList(block.getBlockId()),
+          ((InventoryMessage) firstMessages.get(0)).getHashList());
+      Assert.assertEquals(Collections.singletonList(block.getBlockId()),
+          ((InventoryMessage) secondMessages.get(0)).getHashList());
 
       Item item = new Item(Sha256Hash.ZERO_HASH, InventoryType.TRX);
       first.getAdvInvRequest().put(item, System.currentTimeMillis());
       second.getAdvInvReceive().put(item, System.currentTimeMillis());
       isolated.onDisconnect(first);
       Assert.assertTrue(second.getAdvInvRequest().containsKey(item));
-      Mockito.verify(second).sendMessage(Mockito.isA(FetchInvDataMessage.class));
+      Assert.assertEquals(1, firstMessages.size());
+      Assert.assertEquals(2, secondMessages.size());
+      Assert.assertTrue(secondMessages.get(1) instanceof FetchInvDataMessage);
+      Assert.assertEquals(Collections.singletonList(item.getHash()),
+          ((FetchInvDataMessage) secondMessages.get(1)).getHashList());
     } finally {
       isolated.close();
     }
