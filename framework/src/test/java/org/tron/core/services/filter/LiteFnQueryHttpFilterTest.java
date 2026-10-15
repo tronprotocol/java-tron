@@ -1,128 +1,81 @@
 package org.tron.core.services.filter;
 
-import static org.tron.core.ChainBaseManager.NodeType.FULL;
-import static org.tron.core.ChainBaseManager.NodeType.LITE;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.when;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.Set;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
-import org.junit.Assert;
+import javax.servlet.FilterChain;
+import javax.servlet.ServletException;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.tron.common.BaseTest;
-import org.tron.common.TestConstants;
-import org.tron.common.utils.PublicMethod;
-import org.tron.core.config.args.Args;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.test.util.ReflectionTestUtils;
+import org.tron.common.parameter.CommonParameter;
+import org.tron.core.ChainBaseManager;
 
-@Slf4j
-public class LiteFnQueryHttpFilterTest extends BaseTest {
+public class LiteFnQueryHttpFilterTest {
 
-  private final String ip = "127.0.0.1";
-  private int fullHttpPort;
-  private final CloseableHttpClient httpClient = HttpClients.createDefault();
+  private final ChainBaseManager chainBaseManager = mock(ChainBaseManager.class);
+  private final LiteFnQueryHttpFilter filter = new LiteFnQueryHttpFilter();
+  private boolean historyQueryWasEnabled;
 
-  static {
-    Args.setParam(new String[]{"-d", dbPath()}, TestConstants.TEST_CONF);
-    Args.getInstance().setAllowShieldedTransactionApi(false);
-    Args.getInstance().setRpcEnable(false);
-    Args.getInstance().setRpcSolidityEnable(false);
-    Args.getInstance().setRpcPBFTEnable(false);
-    Args.getInstance().setFullNodeHttpEnable(true);
-    Args.getInstance().setFullNodeHttpPort(PublicMethod.chooseRandomPort());
-    Args.getInstance().setPBFTHttpEnable(true);
-    Args.getInstance().setPBFTHttpPort(PublicMethod.chooseRandomPort());
-    Args.getInstance().setSolidityNodeHttpEnable(true);
-    Args.getInstance().setSolidityHttpPort(PublicMethod.chooseRandomPort());
-    Args.getInstance().setJsonRpcHttpFullNodeEnable(false);
-    Args.getInstance().setJsonRpcHttpSolidityNodeEnable(false);
-    Args.getInstance().setJsonRpcHttpPBFTNodeEnable(false);
-    Args.getInstance().setP2pDisable(true);
-  }
-
-  /**
-   * init dependencies.
-   */
   @Before
   public void init() {
-    appT.startup();
+    historyQueryWasEnabled = CommonParameter.getInstance().openHistoryQueryWhenLiteFN;
+    ReflectionTestUtils.setField(filter, "chainBaseManager", chainBaseManager);
+  }
+
+  @After
+  public void tearDown() {
+    CommonParameter.getInstance().setOpenHistoryQueryWhenLiteFN(historyQueryWasEnabled);
   }
 
   @Test
-  public void testHttpFilter() {
-    Set<String> urlPathSets = LiteFnQueryHttpFilter.getFilterPaths();
-    urlPathSets.forEach(urlPath -> {
-      if (urlPath.contains("/walletsolidity")) {
-        fullHttpPort = Args.getInstance().getSolidityHttpPort();
-      } else if (urlPath.contains("/walletpbft")) {
-        fullHttpPort = Args.getInstance().getPBFTHttpPort();
-      } else {
-        fullHttpPort = Args.getInstance().getFullNodeHttpPort();
-      }
-      String url = String.format("http://%s:%d%s", ip, fullHttpPort, urlPath);
-      // test lite fullnode with history query closed
-      chainBaseManager.setNodeType(LITE);
-      Args.getInstance().setOpenHistoryQueryWhenLiteFN(false);
-      String response = sendGetRequest(url);
-      logger.info("response:{}", response);
-
-      // test lite fullnode with history query opened
-      chainBaseManager.setNodeType(FULL);
-      Args.getInstance().setOpenHistoryQueryWhenLiteFN(true);
-      response = sendGetRequest(url);
-      Assert.assertNotEquals("this API is closed because this node is a lite fullnode",
-              response);
-
-      // test normal fullnode
-      chainBaseManager.setNodeType(FULL);
-      Args.getInstance().setOpenHistoryQueryWhenLiteFN(true);
-      response = sendGetRequest(url);
-      Assert.assertNotEquals("this API is closed because this node is a lite fullnode",
-              response);
-    });
-
+  public void testHttpFilter() throws IOException, ServletException {
+    Set<String> urlPaths = LiteFnQueryHttpFilter.getFilterPaths();
+    assertFalse(urlPaths.isEmpty());
+    for (String urlPath : urlPaths) {
+      assertFilterResult(urlPath, true, false, false);
+      assertFilterResult(urlPath, true, true, true);
+      assertFilterResult(urlPath, false, false, true);
+      assertFilterResult(urlPath, false, true, true);
+    }
   }
 
-  private String sendGetRequest(String url) {
-    HttpGet request = new HttpGet(url);
-    request.setHeader("User-Agent", "Java client");
-    HttpResponse response;
-    try {
-      response = httpClient.execute(request);
-      BufferedReader rd = new BufferedReader(
-              new InputStreamReader(response.getEntity().getContent()));
-      StringBuilder result = new StringBuilder();
-      String line;
-      while ((line = rd.readLine()) != null) {
-        result.append(line);
-      }
-      return result.toString();
-    } catch (IOException e) {
-      e.printStackTrace();
+  @Test
+  public void testNonHistoryQueriesAreAllowedOnLiteNode() throws IOException, ServletException {
+    for (String prefix : new String[]{"/wallet", "/walletsolidity", "/walletpbft"}) {
+      assertFilterResult(prefix + "/getnowblock", true, false, true);
     }
-    return null;
   }
 
-  private String sendPostRequest(String url, String body) throws IOException {
-    HttpPost request = new HttpPost(url);
-    request.setHeader("User-Agent", "Java client");
-    StringEntity entity = new StringEntity(body);
-    request.setEntity(entity);
-    HttpResponse response = httpClient.execute(request);
-    BufferedReader rd = new BufferedReader(
-            new InputStreamReader(response.getEntity().getContent()));
-    StringBuilder result = new StringBuilder();
-    String line;
-    while ((line = rd.readLine()) != null) {
-      result.append(line);
+  private void assertFilterResult(String urlPath, boolean liteNode, boolean historyQueryEnabled,
+      boolean allowed) throws IOException, ServletException {
+    when(chainBaseManager.isLiteNode()).thenReturn(liteNode);
+    CommonParameter.getInstance().setOpenHistoryQueryWhenLiteFN(historyQueryEnabled);
+    MockHttpServletRequest request = new MockHttpServletRequest("GET", urlPath);
+    request.setServletPath(urlPath);
+    MockHttpServletResponse response = new MockHttpServletResponse();
+    FilterChain filterChain = mock(FilterChain.class);
+
+    filter.doFilter(request, response, filterChain);
+
+    if (allowed) {
+      verify(filterChain).doFilter(request, response);
+      verifyNoMoreInteractions(filterChain);
+      assertEquals(urlPath, "", response.getContentAsString());
+    } else {
+      verifyNoInteractions(filterChain);
+      assertEquals(urlPath, "this API is closed because this node is a lite fullnode",
+          response.getContentAsString());
     }
-    return result.toString();
   }
 }

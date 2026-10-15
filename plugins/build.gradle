@@ -54,7 +54,6 @@ dependencies {
     }
     // Use the same Java 8-compatible bundle as the Admin console, without Java 22 FFM classes.
     implementation group: 'org.jline', name: 'jline', version: '3.30.17', classifier: 'jdk8'
-    implementation group: 'org.bouncycastle', name: 'bcprov-jdk18on', version: '1.84'
     if (rootProject.archInfo.isArm64) {
         testRuntimeOnly group: 'org.fusesource.hawtjni', name: 'hawtjni-runtime', version: '1.18' // for test
         implementation project(":platform")

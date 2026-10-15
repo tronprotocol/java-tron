@@ -450,8 +450,9 @@ public class DelegateResourceActuatorTest extends BaseTest {
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(
         getMaxDelegateLockPeriodContractForBandwidth(
             delegateBalance, 370 * 24 * 3600));
-    assertThrows("The lock period of delegate resources cannot exceed 1 year!",
-        ContractValidateException.class, actuator::validate);
+    assertEquals("The lock period of delegate resource cannot be less than 0 and cannot exceed "
+            + "86401!",
+        assertThrows(ContractValidateException.class, actuator::validate).getMessage());
     dbManager.getDynamicPropertiesStore().saveMaxDelegateLockPeriod(DELEGATE_PERIOD / 3000);
   }
 
@@ -478,9 +479,9 @@ public class DelegateResourceActuatorTest extends BaseTest {
     actuator1.setChainBaseManager(dbManager.getChainBaseManager()).setAny(
         getMaxDelegateLockPeriodContractForBandwidth(
             delegateBalance, 30));
-    assertThrows("The lock period for bandwidth this time cannot be less than the remaining"
-            + " time[60000s] of the last lock period for bandwidth!",
-        ContractValidateException.class, actuator1::validate);
+    assertEquals("The lock period for BANDWIDTH this time cannot be less than the remaining"
+            + " time[180000ms] of the last lock period for BANDWIDTH!",
+        assertThrows(ContractValidateException.class, actuator1::validate).getMessage());
     dbManager.getDynamicPropertiesStore().saveMaxDelegateLockPeriod(DELEGATE_PERIOD / 3000);
   }
 
@@ -589,9 +590,9 @@ public class DelegateResourceActuatorTest extends BaseTest {
     actuator1.setChainBaseManager(dbManager.getChainBaseManager()).setAny(
         getMaxDelegateLockPeriodContractForEnergy(
             delegateBalance, 30));
-    assertThrows("The lock period for energy this time cannot be less than the remaining"
-            + " time[60000s] of the last lock period for energy!",
-        ContractValidateException.class, actuator1::validate);
+    assertEquals("The lock period for ENERGY this time cannot be less than the remaining"
+            + " time[180000ms] of the last lock period for ENERGY!",
+        assertThrows(ContractValidateException.class, actuator1::validate).getMessage());
   }
 
   @Test
@@ -743,7 +744,8 @@ public class DelegateResourceActuatorTest extends BaseTest {
     actuator.setChainBaseManager(dbManager.getChainBaseManager())
         .setAny(getDelegateContractForBandwidth(
             OWNER_ADDRESS, OWNER_ADDRESS_INVALID, 1_000_000_000L));
-    assertThrows("Invalid receiverAddress", ContractValidateException.class, actuator::validate);
+    assertEquals("Invalid receiverAddress",
+        assertThrows(ContractValidateException.class, actuator::validate).getMessage());
   }
 
   @Test
@@ -797,9 +799,9 @@ public class DelegateResourceActuatorTest extends BaseTest {
                 OWNER_ADDRESS,
                 RECEIVER_ADDRESS,
                 1_000_000_000L));
-    assertThrows(
+    assertEquals(
         "No support for resource delegate",
-        ContractValidateException.class, actuator::validate);
+        assertThrows(ContractValidateException.class, actuator::validate).getMessage());
   }
 
   @Test
@@ -811,19 +813,19 @@ public class DelegateResourceActuatorTest extends BaseTest {
             OWNER_ADDRESS,
             RECEIVER_ADDRESS,
             1_000_000_000L));
-    assertThrows(
+    assertEquals(
         "Not support Delegate resource transaction, need to be opened by the committee",
-        ContractValidateException.class, actuator::validate);
+        assertThrows(ContractValidateException.class, actuator::validate).getMessage());
   }
 
   @Test
   public void testErrorContract() {
     DelegateResourceActuator actuator = new DelegateResourceActuator();
     actuator.setChainBaseManager(dbManager.getChainBaseManager()).setAny(getErrorContract());
-    assertThrows(
-        "contract type error, expected type [DelegateResourceContract], "
-            + "real type[WithdrawExpireUnfreezeContract]",
-        ContractValidateException.class, actuator::validate);
+    assertEquals(
+        "contract type error,expected type [DelegateResourceContract],"
+            + "real type[class com.google.protobuf.Any]",
+        assertThrows(ContractValidateException.class, actuator::validate).getMessage());
   }
 
   private Any getErrorContract() {
