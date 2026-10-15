@@ -39,6 +39,7 @@ public class CLIParameter {
   @Parameter(names = {"-w", "--witness"}, description = "Is witness node")
   public boolean witness;
 
+  @Deprecated
   @Parameter(names = {"-p", "--private-key"}, description = "Witness private key")
   public String privateKey;
 
@@ -60,6 +61,14 @@ public class CLIParameter {
   @Deprecated
   @Parameter(names = {"--keystore-factory"}, description = "removed; use Toolkit.jar keystore")
   public Boolean keystoreFactory;
+
+  @Parameter(names = {"--attach"},
+      description = "running an IPC client to interact with FullNode")
+  public String ipcSocketFile;
+
+  @Parameter(names = {"--exec"},
+      description = "execute one Admin IPC command and exit (requires --attach)")
+  public String ipcExecCommand;
 
   @Deprecated
   @Parameter(names = {"--fast-forward"})

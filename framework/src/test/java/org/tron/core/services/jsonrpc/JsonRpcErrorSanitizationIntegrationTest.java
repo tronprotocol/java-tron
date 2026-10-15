@@ -150,17 +150,43 @@ public class JsonRpcErrorSanitizationIntegrationTest {
 
   @Test
   public void testServletForwardsUnknownMethodNotificationError() throws Exception {
-    assertNotificationErrorIsForwarded("test_missing", -32601, "method not found");
+    assertNotificationErrorIsForwarded("test_missing", "[]", -32601, "method not found");
   }
 
   @Test
   public void testServletForwardsArityNotificationError() throws Exception {
-    assertNotificationErrorIsForwarded("test_echo", -32602, "method parameters invalid");
+    assertNotificationErrorIsForwarded("test_echo", "[]", -32602, "method parameters invalid");
   }
 
   @Test
   public void testServletForwardsUnmappedNotificationError() throws Exception {
-    assertNotificationErrorIsForwarded("test_unhandled", -32603, "Internal error");
+    assertNotificationErrorIsForwarded("test_unhandled", "[]", -32603, "Internal error");
+  }
+
+  @Test
+  public void testServletForwardsParameterConversionNotificationError() throws Exception {
+    assertNotificationErrorIsForwarded("test_echo", "[{\"a\":1}]", -32602,
+        "Failed to read method parameter at index 0");
+  }
+
+  @Test
+  public void testServletSingleParameterConversionErrorKeepsId() throws Exception {
+    TestableServlet servlet = newServlet(new ErrorServiceImpl());
+
+    assertJsonRpcResponse(post(servlet, request("test_echo", "[{\"a\":1}]", 7)),
+        errorResponse(-32602, "Failed to read method parameter at index 0", "7"));
+  }
+
+  @Test
+  public void testServletBatchParameterConversionErrorKeepsIdAndSibling() throws Exception {
+    TestableServlet servlet = newServlet(new ErrorServiceImpl());
+
+    MockHttpServletResponse response = post(servlet,
+        "[" + request("test_echo", "[{\"a\":1}]", 1) + "," + request("test_ok", "[]", 2) + "]");
+
+    assertJsonRpcResponse(response, MAPPER.createArrayNode()
+        .add(errorResponse(-32602, "Failed to read method parameter at index 0", "1"))
+        .add(MAPPER.readTree("{\"jsonrpc\":\"2.0\",\"result\":\"ok\",\"id\":2}")));
   }
 
   @Test
@@ -523,10 +549,11 @@ public class JsonRpcErrorSanitizationIntegrationTest {
         + "\",\"params\":" + params + ",\"id\":" + id + "}";
   }
 
-  private static void assertNotificationErrorIsForwarded(String method, int code, String message)
-      throws Exception {
+  private static void assertNotificationErrorIsForwarded(String method, String params, int code,
+      String message) throws Exception {
     TestableServlet servlet = newServlet(new ErrorServiceImpl());
-    String notification = "{\"jsonrpc\":\"2.0\",\"method\":\"" + method + "\",\"params\":[]}";
+    String notification = "{\"jsonrpc\":\"2.0\",\"method\":\"" + method
+        + "\",\"params\":" + params + "}";
     JsonNode expected = errorResponse(code, message, "null");
 
     assertJsonRpcResponse(post(servlet, notification), expected);

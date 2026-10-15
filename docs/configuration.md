@@ -127,7 +127,7 @@ node {
     # RST_STREAM counting window in seconds. 0 uses the default of 5.
     secondsPerWindow = 5
     # Idle connection timeout (ms). 0 = no limit.
-    maxConnectionIdleInMillis = 0
+    maxConnectionIdleInMillis = 60000
     # Minimum active connections required before broadcasting transactions.
     minEffectiveConnection = 1
   }
@@ -180,12 +180,13 @@ storage.properties = [
 ### Block Production (Super Representatives)
 
 ```hocon
-# Plain private key (use localwitnesskeystore for production)
+# DEPRECATED: plain private key, insecure (anyone reading the config file
+# sees the keys). Use localwitnesskeystore for production.
 localwitness = [
   "your-private-key-hex"
 ]
 
-# Recommended: keystore file
+# Recommended: encrypted keystore file
 # localwitnesskeystore = [
 #   "/path/to/localwitnesskeystore.json"
 # ]
@@ -208,6 +209,34 @@ node.jsonrpc {
   maxResponseSize = 26214400  # 25 MB
 }
 ```
+
+### Administrative API (`node.admin`)
+
+Admin HTTP and IPC are FullNode services, independently enabled and disabled by default.
+Configure `node.admin.http` and `node.admin.ipc` using the settings in
+[reference.conf](../common/src/main/resources/reference.conf).
+
+- **HTTP:** `POST /admin` defaults to `127.0.0.1:8575` and has no built-in authentication.
+  Remote access requires external access control on a trusted management network. The Host
+  allowlist guards against DNS rebinding; it is not authentication. IP literals are allowed,
+  as are missing or empty Host headers for HTTP/1.0 compatibility.
+- **IPC:** `socketDirectory` must be an existing absolute directory on a POSIX filesystem;
+  empty uses `output-directory`. The endpoint is `<socket-root>/ipc/<pid>.sock`, with a full
+  path limit of 100 encoded bytes. Use a root controlled by the node user or a trusted administrator.
+  Its path must not be replaceable by untrusted users through ancestor permissions, ACLs or
+  symlinks. Trusted root-owned ancestors are acceptable. These trust requirements are not
+  automatically checked; mode `0700` on `ipc` does not protect against parent-directory replacement.
+- **Request size:** both transports use `node.jsonrpc.maxMessageSize` (default 4 MiB).
+  IPC counts UTF-8 message bytes excluding LF or CRLF terminators; other CR bytes count as payload.
+
+An unclean exit can leave `ipc` behind and block automatic restart. Recovery is manual:
+
+1. Stop automatic restarts and prevent concurrent starts using the same socket root.
+2. Check the directory shown in the startup error and confirm no running node uses it.
+   A missing PID or refused connection alone does not establish that it is safe to remove.
+3. Remove only verified stale socket files and the empty `ipc` directory, preserving unrelated
+   files. Restart one node, verify IPC access, then resume supervision. Do not use unconditional
+   recursive deletion in startup hooks.
 
 ### Event Subscription (`event.subscribe`)
 

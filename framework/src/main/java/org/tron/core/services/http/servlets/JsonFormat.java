@@ -59,6 +59,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.Constant;
+import org.tron.core.config.args.Args;
 import org.tron.core.services.http.HttpSelfFormatFieldName;
 import org.tron.protos.contract.BalanceContract;
 
@@ -83,6 +84,21 @@ public class JsonFormat {
       = "Writing to a StringBuilder threw an IOException (should never happen).";
   private static final String EXPECTED_STRING = "Expected string.";
   private static final String MISSING_END_QUOTE = "String missing ending quote.";
+
+  // Bounds all work and error messages performed by parseInteger after tokenization.
+  static final int MAX_INTEGER_TOKEN_LENGTH = 256;
+
+  // Enum identifiers are schema-defined and small. This is an input-contract and performance
+  // limit, not the error-response bound; abbreviateIdentifier() bounds errors independently.
+  // Keep it separate from generic identifiers, strings and bytes so large values remain valid.
+  static final int MAX_ENUM_TOKEN_LENGTH = 256;
+
+  private static final int MAX_IDENTIFIER_ECHO_PREFIX_LENGTH = 64;
+
+  // Caps only the JDK NumberFormatException detail retained for integer syntax errors. The detail
+  // may contain an input prefix. Supported JDKs emit shorter messages in tested cases, but their
+  // message format is not a stable contract, so keep this limit as a defensive boundary.
+  private static final int MAX_INTEGER_ERROR_DETAIL_PREFIX_LENGTH = 256;
 
   public static final boolean ALWAYS_OUTPUT_DEFAULT_VALUE_FIELDS = true;
   public static final Set<Class<? extends Message>> MESSAGES = ImmutableSet.of(
@@ -593,9 +609,12 @@ public class JsonFormat {
       field = null;
     }
 
-    // Last try to lookup by field-index if 'name' is numeric,
-    // which indicates a possible unknown field
-    if (field == null && DIGITS.matcher(name).matches()) {
+    // Optionally resolve a single-digit key by protobuf field number.
+    // Resolved message fields use the legacy hex-encoded protobuf value format,
+    // rather than the JSON object format used with field names.
+    // Disabled or unresolved numeric keys follow the existing unknown-field rules.
+    if (field == null && DIGITS.matcher(name).matches()
+        && Args.getInstance().isNodeAllowNumericFieldAlias()) {
       field = type.findFieldByNumber(Integer.parseInt(name));
       unknown = true;
     }
@@ -768,6 +787,13 @@ public class JsonFormat {
                 + number + ".");
           }
         } else {
+          String enumToken = tokenizer.currentToken();
+          // Reject before case normalization and descriptor lookup. Error echo is bounded
+          // independently by abbreviateIdentifier().
+          if (enumToken.length() > MAX_ENUM_TOKEN_LENGTH) {
+            throw tokenizer.parseException("Enum token is too long: length "
+                + enumToken.length() + ", max " + MAX_ENUM_TOKEN_LENGTH);
+          }
           String id = tokenizer.consumeIdentifier();
           if (StringUtils.isAllLowerCase(id)) {
             char b = id.charAt(0);
@@ -780,7 +806,7 @@ public class JsonFormat {
             throw tokenizer.parseExceptionPreviousToken("Enum type \""
                 + enumType.getFullName()
                 + "\" has no value named \""
-                + id + "\".");
+                + abbreviateIdentifier(id) + "\".");
           }
         }
 
@@ -1140,14 +1166,50 @@ public class JsonFormat {
     return parseInteger(text, false, true);
   }
 
+  private static String truncate(String text, int maxPrefixLength) {
+    if (text == null) {
+      return "null";
+    }
+    if (text.length() <= maxPrefixLength) {
+      return text;
+    }
+    int prefixEnd = maxPrefixLength;
+    if (prefixEnd > 0
+        && Character.isHighSurrogate(text.charAt(prefixEnd - 1))
+        && Character.isLowSurrogate(text.charAt(prefixEnd))) {
+      --prefixEnd;
+    }
+    return text.substring(0, prefixEnd) + "...(truncated)";
+  }
+
+  private static String integerOutOfRangeMessage(boolean isSigned, boolean isLong) {
+    return "Number out of range for " + (isLong ? "64" : "32") + "-bit "
+        + (isSigned ? "signed" : "unsigned") + " integer.";
+  }
+
+  private static String abbreviateIdentifier(String text) {
+    return truncate(text, MAX_IDENTIFIER_ECHO_PREFIX_LENGTH);
+  }
+
+  private static String abbreviateIntegerError(String text) {
+    return truncate(text, MAX_INTEGER_ERROR_DETAIL_PREFIX_LENGTH);
+  }
+
   private static long parseInteger(String text, boolean isSigned, boolean isLong)
       throws NumberFormatException {
+    // This must remain the first operation: no substring, large error message or BigInteger
+    // construction may happen before the raw token is bounded.
+    if (text.length() > MAX_INTEGER_TOKEN_LENGTH) {
+      throw new NumberFormatException("Integer token is too long: length " + text.length()
+          + ", max " + MAX_INTEGER_TOKEN_LENGTH);
+    }
+
     int pos = 0;
 
     boolean negative = false;
     if (text.startsWith("-", pos)) {
       if (!isSigned) {
-        throw new NumberFormatException("Number must be positive: " + text);
+        throw new NumberFormatException("Number must be positive.");
       }
       ++pos;
       negative = true;
@@ -1177,17 +1239,17 @@ public class JsonFormat {
       if (!isLong) {
         if (isSigned) {
           if ((result > Integer.MAX_VALUE) || (result < Integer.MIN_VALUE)) {
-            throw new NumberFormatException("Number out of range for 32-bit signed integer: "
-                + text);
+            throw new NumberFormatException(integerOutOfRangeMessage(isSigned, isLong));
           }
         } else {
           if ((result >= (1L << 32)) || (result < 0)) {
-            throw new NumberFormatException("Number out of range for 32-bit unsigned integer: "
-                + text);
+            throw new NumberFormatException(integerOutOfRangeMessage(isSigned, isLong));
           }
         }
       }
     } else {
+      // Preserve existing syntax behavior by passing numberText to BigInteger without additional
+      // normalization.
       BigInteger bigValue = new BigInteger(numberText, radix);
       if (negative) {
         bigValue = bigValue.negate();
@@ -1197,25 +1259,21 @@ public class JsonFormat {
       if (!isLong) {
         if (isSigned) {
           if (bigValue.bitLength() > 31) {
-            throw new NumberFormatException("Number out of range for 32-bit signed integer: "
-                + text);
+            throw new NumberFormatException(integerOutOfRangeMessage(isSigned, isLong));
           }
         } else {
           if (bigValue.bitLength() > 32) {
-            throw new NumberFormatException("Number out of range for 32-bit unsigned integer: "
-                + text);
+            throw new NumberFormatException(integerOutOfRangeMessage(isSigned, isLong));
           }
         }
       } else {
         if (isSigned) {
           if (bigValue.bitLength() > 63) {
-            throw new NumberFormatException("Number out of range for 64-bit signed integer: "
-                + text);
+            throw new NumberFormatException(integerOutOfRangeMessage(isSigned, isLong));
           }
         } else {
           if (bigValue.bitLength() > 64) {
-            throw new NumberFormatException("Number out of range for 64-bit unsigned integer: "
-                + text);
+            throw new NumberFormatException(integerOutOfRangeMessage(isSigned, isLong));
           }
         }
       }
@@ -1606,8 +1664,8 @@ public class JsonFormat {
         double result = Double.parseDouble(currentToken);
         nextToken();
         return result;
-      } catch (NumberFormatException e) {
-        throw floatParseException(e);
+      } catch (NumberFormatException ignored) {
+        throw floatParseException();
       }
     }
 
@@ -1631,8 +1689,8 @@ public class JsonFormat {
         float result = Float.parseFloat(currentToken);
         nextToken();
         return result;
-      } catch (NumberFormatException e) {
-        throw floatParseException(e);
+      } catch (NumberFormatException ignored) {
+        throw floatParseException();
       }
     }
 
@@ -1752,15 +1810,12 @@ public class JsonFormat {
      * when trying to parse an integer.
      */
     private ParseException integerParseException(NumberFormatException e) {
-      return parseException("Couldn't parse integer: " + e.getMessage());
+      return parseException("Couldn't parse integer: " + abbreviateIntegerError(e.getMessage()));
     }
 
-    /**
-     * Constructs an appropriate {@link ParseException} for the given {@code NumberFormatException}
-     * when trying to parse a float or double.
-     */
-    private ParseException floatParseException(NumberFormatException e) {
-      return parseException("Couldn't parse number: " + e.getMessage());
+    /** Constructs a bounded {@link ParseException} without forwarding the JDK parse error text. */
+    private ParseException floatParseException() {
+      return parseException("Couldn't parse number: token length " + currentToken.length());
     }
   }
 

@@ -1,7 +1,9 @@
 package org.tron.program;
 
-import lombok.extern.slf4j.Slf4j;
+import com.beust.jcommander.ParameterException;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
@@ -13,21 +15,28 @@ import org.tron.common.parameter.CommonParameter;
 import org.tron.common.prometheus.Metrics;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
+import org.tron.core.config.args.CLIParameter;
+import org.tron.core.config.args.CommandLineArguments;
 import org.tron.core.exception.TronError;
+import org.tron.core.services.admin.ipc.client.IpcClient;
 
-@Slf4j(topic = "app")
 public class FullNode {
 
   /**
    * Start the FullNode.
    */
   public static void main(String[] args) {
+    CommandLineArguments arguments = handleCommandLine(args);
+    if (arguments == null) {
+      return;
+    }
+
     ExitManager.initExceptionHandler();
     checkJdkVersion();
-    Args.setParam(args, "config.conf");
+    Args.setParam(arguments, "config.conf");
     CommonParameter parameter = Args.getInstance();
-
     LogService.load(parameter.getLogbackPath());
+    Logger logger = LoggerFactory.getLogger("app");
 
     if (parameter.isSolidityNode()) {
       logger.info("Solidity node is running.");
@@ -61,6 +70,39 @@ public class FullNode {
       node.run();
     }
     appT.blockUntilShutdown();
+  }
+
+  /** Returns node arguments, or null when command-line handling has completed. */
+  private static CommandLineArguments handleCommandLine(String[] args) {
+    // Do not initialize loggers, Args, Arch, or ExitManager before dispatching attach mode:
+    // their static initializers open the node's Logback appenders.
+    CommandLineArguments arguments;
+    boolean attachMode;
+    try {
+      arguments = new CommandLineArguments(args);
+      attachMode = arguments.isAttachMode();
+    } catch (ParameterException e) {
+      System.err.println("Error: " + e.getMessage());
+      System.exit(1);
+      return null;
+    } catch (TronError e) {
+      if (e.getErrCode() != TronError.ErrCode.PARAMETER_INIT) {
+        throw e;
+      }
+      // Argument validators already printed the error; do not initialize node logging here.
+      System.exit(1);
+      return null;
+    }
+    if (!attachMode) {
+      return arguments;
+    }
+    CLIParameter clientParameters = arguments.getParameters();
+    IpcClient ipcClient = new IpcClient(clientParameters.ipcSocketFile);
+    int exitCode = ipcClient.start(clientParameters.ipcExecCommand);
+    if (exitCode != 0) {
+      System.exit(exitCode);
+    }
+    return null;
   }
 
   private static void checkJdkVersion() {
