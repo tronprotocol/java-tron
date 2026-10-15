@@ -47,6 +47,29 @@ public class NodeTest {
   }
 
   @Test
+  public void invalidPortDoesNotBreakIpv6Normalization() {
+    Parameter.p2pConfig.setIp("127.0.0.1");
+    Parameter.p2pConfig.setIpv6("::1");
+    for (int port : new int[]{0, -1, 65536, 70000, Integer.MIN_VALUE, Integer.MAX_VALUE}) {
+      Node node = new Node(new byte[64], "1.2.3.4", "2001:db8::1", port);
+      Assert.assertEquals("2001:db8:0:0:0:0:0:1", node.getHostV6());
+      Assert.assertEquals(port, node.getPort());
+      Assert.assertNull(node.getInetSocketAddressV4());
+      Assert.assertNull(node.getInetSocketAddressV6());
+      Assert.assertNull(node.getPreferInetSocketAddress());
+    }
+  }
+
+  @Test
+  public void validBoundaryPortsProduceSocketAddresses() {
+    for (int port : new int[]{1, 65535}) {
+      Node node = new Node(new byte[64], "1.2.3.4", "2001:db8::1", port);
+      Assert.assertEquals(port, node.getInetSocketAddressV4().getPort());
+      Assert.assertEquals(port, node.getInetSocketAddressV6().getPort());
+    }
+  }
+
+  @Test
   public void ipV4CompatibleTest() {
     Parameter.p2pConfig.setIp("127.0.0.1");
     Parameter.p2pConfig.setIpv6(null);

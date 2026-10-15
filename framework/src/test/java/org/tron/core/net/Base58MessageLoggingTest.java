@@ -29,6 +29,7 @@ import org.mockito.MockedStatic;
 import org.slf4j.LoggerFactory;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.utils.Base58;
+import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.StringUtil;
 import org.tron.consensus.base.Param;
 import org.tron.consensus.base.PbftInterface;
@@ -178,7 +179,9 @@ public class Base58MessageLoggingTest {
   private static PeerConnection peer() {
     PeerConnection peer = mock(PeerConnection.class);
     when(peer.getPeerStatistics()).thenReturn(new PeerStatistics());
-    when(peer.getChannel()).thenReturn(mock(Channel.class));
+    Channel channel = mock(Channel.class);
+    when(channel.getNodeId()).thenReturn(ByteArray.toHexString(new byte[64]));
+    when(peer.getChannel()).thenReturn(channel);
     when(peer.getInetSocketAddress()).thenReturn(new InetSocketAddress("127.0.0.1", 18888));
     return peer;
   }

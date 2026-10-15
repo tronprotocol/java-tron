@@ -26,12 +26,12 @@ public class StatusMessageTest {
     config.setNetworkId(11111);
     config.setMaxConnections(30);
     Parameter.p2pConfig = config;
-    ChannelManager.getChannels().clear();
+    ChannelManager.getAllChannels().forEach(ChannelManager::notifyDisconnect);
   }
 
   @After
   public void tearDown() {
-    ChannelManager.getChannels().clear();
+    ChannelManager.getAllChannels().forEach(ChannelManager::notifyDisconnect);
     Parameter.p2pConfig = saved;
   }
 

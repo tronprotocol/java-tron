@@ -1258,18 +1258,29 @@ public class ManagerTest extends BaseMethodTest {
             .setType(ContractType.TransferContract))).build();
     TransactionCapsule trx = new TransactionCapsule(transaction);
     trx.setInBlock(false);
-    assertThrows(
-        "Too big transaction with result, "
-            + "TxId 1c05e9fca6a2d0c366ed4430456527eb40198e70c8b20f5ceca4739c68a79af8, "
-            + "the size is 533483 bytes, maxTxSize 512000",
-        TooBigTransactionException.class, () -> dbManager.validateCommon(trx));
+    TooBigTransactionException pendingError = assertThrows(TooBigTransactionException.class,
+        () -> dbManager.validateCommon(trx));
+    long sizeWithResult = transaction.getSerializedSize() + 2 * Constant.MAX_RESULT_SIZE_IN_TX;
+    Assert.assertEquals(String.format(
+        "Too big transaction with result, TxId %s, the size is %d bytes, maxTxSize %d",
+        trx.getTransactionId(), sizeWithResult, Constant.TRANSACTION_MAX_BYTE_SIZE),
+        pendingError.getMessage());
 
     trx.setInBlock(true);
-    assertThrows(
-        "Too big transaction, "
-            + "TxId 1c05e9fca6a2d0c366ed4430456527eb40198e70c8b20f5ceca4739c68a79af8, "
-            + "the size is 1066643 bytes, maxTxSize 512000",
-        TooBigTransactionException.class, () -> dbManager.validateCommon(trx));
+    long originalOptimization = dbManager.getDynamicPropertiesStore()
+        .getConsensusLogicOptimization();
+    dbManager.getDynamicPropertiesStore().saveConsensusLogicOptimization(0);
+    try {
+      TooBigTransactionException blockError = assertThrows(TooBigTransactionException.class,
+          () -> dbManager.validateCommon(trx));
+      Assert.assertEquals(String.format(
+          "Too big transaction, TxId %s, the size is %d bytes, maxTxSize %d",
+          trx.getTransactionId(), transaction.getSerializedSize(),
+          Constant.TRANSACTION_MAX_BYTE_SIZE),
+          blockError.getMessage());
+    } finally {
+      dbManager.getDynamicPropertiesStore().saveConsensusLogicOptimization(originalOptimization);
+    }
 
   }
 

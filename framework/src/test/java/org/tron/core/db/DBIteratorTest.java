@@ -47,11 +47,7 @@ public class DBIteratorTest {
       Assert.assertArrayEquals("2".getBytes(StandardCharsets.UTF_8), iterator.next().getKey());
       Assert.assertFalse(iterator.hasNext());
 
-      try {
-        iterator.seekToLast();
-      } catch (Exception e) {
-        Assert.assertTrue(e instanceof  IllegalStateException);
-      }
+      Assert.assertThrows(IllegalStateException.class, iterator::seekToLast);
 
       iterator = new StoreIterator(db.iterator());
       iterator.seekToLast();
@@ -62,16 +58,8 @@ public class DBIteratorTest {
         iterator.next();
       }
       Assert.assertFalse(iterator.hasNext());
-      try {
-        iterator.getKey();
-      } catch (Exception e) {
-        Assert.assertTrue(e instanceof IllegalStateException);
-      }
-      try {
-        iterator.getValue();
-      } catch (Exception e) {
-        Assert.assertTrue(e instanceof IllegalStateException);
-      }
+      Assert.assertThrows(IllegalStateException.class, iterator::getKey);
+      Assert.assertThrows(IllegalStateException.class, iterator::getValue);
       thrown.expect(NoSuchElementException.class);
       iterator.next();
     }
