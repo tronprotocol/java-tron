@@ -208,6 +208,14 @@ public class FullNodeTest {
 
   private void assertArgumentError(String expectedError, String... args) throws Exception {
     String errorOutput = runClientWithoutNodeLogs(1, expectedError, "", args);
+    // Keep inherited JVM diagnostics enabled, but exclude their startup notice from the CLI error.
+    String javaToolOptions = System.getenv("JAVA_TOOL_OPTIONS");
+    if (javaToolOptions != null) {
+      String notice = "Picked up JAVA_TOOL_OPTIONS: " + javaToolOptions + System.lineSeparator();
+      if (errorOutput.startsWith(notice)) {
+        errorOutput = errorOutput.substring(notice.length());
+      }
+    }
     Assert.assertEquals(expectedError + System.lineSeparator(), errorOutput);
   }
 
