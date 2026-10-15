@@ -224,8 +224,11 @@ public class FullNodeTest {
     command.add(classpath);
     command.add(FullNode.class.getName());
     command.addAll(Arrays.asList(args));
-    Process process = new ProcessBuilder(command).directory(directory.toFile())
-        .redirectError(errorFile).redirectOutput(outputFile).start();
+    ProcessBuilder processBuilder = new ProcessBuilder(command).directory(directory.toFile())
+        .redirectError(errorFile).redirectOutput(outputFile);
+    // CI sets JAVA_TOOL_OPTIONS, whose JVM startup notice would pollute exact stderr checks.
+    processBuilder.environment().remove("JAVA_TOOL_OPTIONS");
+    Process process = processBuilder.start();
     try {
       process.getOutputStream().write(input.getBytes(StandardCharsets.UTF_8));
       process.getOutputStream().close();

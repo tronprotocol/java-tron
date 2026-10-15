@@ -146,6 +146,13 @@ public class NodeDetectService implements MessageProcess {
   public synchronized void processMessage(Channel channel, Message message) {
     StatusMessage statusMessage = (StatusMessage) message;
 
+    if (channel.isRegisteredPeer() || channel.isFinishHandshake()) {
+      logger.debug("Peer channel {} received unexpected status, close it",
+          channel.getInetSocketAddress());
+      channel.close();
+      return;
+    }
+
     if (!channel.isActive()) {
       channel.setDiscoveryMode(true);
       channel.send(new StatusMessage());

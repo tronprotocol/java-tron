@@ -43,7 +43,7 @@ public class NodeDetectServiceTest {
     config.setIp("127.0.0.1");
     config.setMaxConnections(30);
     Parameter.p2pConfig = config;
-    ChannelManager.getChannels().clear();
+    ChannelManager.getAllChannels().forEach(ChannelManager::notifyDisconnect);
     NodeDetectService.getBadNodesCache().invalidateAll();
     service = new NodeDetectService();
   }
@@ -51,7 +51,7 @@ public class NodeDetectServiceTest {
   @After
   public void tearDown() {
     NodeDetectService.getBadNodesCache().invalidateAll();
-    ChannelManager.getChannels().clear();
+    ChannelManager.getAllChannels().forEach(ChannelManager::notifyDisconnect);
     Parameter.p2pConfig = saved;
   }
 

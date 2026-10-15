@@ -57,13 +57,13 @@ public class ConnPoolLifecycleTest {
     config.setMaxConnections(10);
     config.setMaxConnectionsWithSameIp(5);
     Parameter.p2pConfig = config;
-    ChannelManager.getChannels().clear();
+    ChannelManager.getAllChannels().forEach(ChannelManager::notifyDisconnect);
     service = new ConnPoolService();
   }
 
   @After
   public void tearDown() {
-    ChannelManager.getChannels().clear();
+    ChannelManager.getAllChannels().forEach(ChannelManager::notifyDisconnect);
     Parameter.p2pConfig = saved;
   }
 
