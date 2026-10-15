@@ -19,8 +19,8 @@ import org.tron.protos.Protocol.ReasonCode;
  * static executor, and tests share one JVM across Spring contexts.
  *
  * <p>The old executor is drained to termination <em>before</em> touching any state: {@code
- * check()} is not synchronized (it snapshots peers, then removes entries and decrements
- * counters), so a task left running would decrement the counters zeroed in step 4 and leave
+ * check()} may still be running while state is reset, so a task left running could decrement
+ * the counters zeroed in step 4 and leave
  * them negative; shutdown alone does not guarantee that, so reset fails if termination cannot
  * be confirmed.
  * Residual peers are disconnected before the raw list is cleared because {@code close()} may
@@ -42,8 +42,7 @@ public final class PeerManagerStateResetter {
   public static synchronized void reset() {
     // 1) Drain the old executor first: let running/queued check() tasks die out so they
     // cannot interleave with the list/counter reset below. Gate on isTerminated(), not
-    // isShutdown(): shutdown() still lets a running check() finish asynchronously, and
-    // check() decrements the counters even when its peers.remove() is a no-op. If
+    // isShutdown(): shutdown() still lets a running check() finish asynchronously. If
     // termination cannot be confirmed, fail the setup instead of resetting anyway.
     ScheduledExecutorService executor = getFieldValue("executor");
     if (executor != null && !executor.isTerminated()) {

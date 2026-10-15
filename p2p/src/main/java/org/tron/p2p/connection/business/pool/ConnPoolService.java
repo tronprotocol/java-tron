@@ -43,6 +43,8 @@ import org.tron.p2p.utils.NetUtil;
 @Slf4j(topic = "net")
 public class ConnPoolService extends P2pEventHandler {
 
+  // A remote host supporting TCP port reuse can connect from its listening port.
+  // Incoming and outgoing channels can then share a remote address; track instances separately.
   private final List<Channel> activePeers = Collections.synchronizedList(new ArrayList<>());
   private final Cache<InetAddress, Long> peerClientCache = CacheBuilder.newBuilder()
       .maximumSize(1000).expireAfterWrite(120, TimeUnit.SECONDS).recordStats().build();
@@ -60,12 +62,14 @@ public class ConnPoolService extends P2pEventHandler {
 
   public P2pConfig p2pConfig = Parameter.p2pConfig;
   private PeerClient peerClient;
+  private final List<InetSocketAddress> configActiveNodes = new ArrayList<>();
   private int minCandidateSize = 50;
 
   public ConnPoolService() {
     this.messageTypes = new HashSet<>(); //no message type registers
     try {
       Parameter.addP2pEventHandle(this);
+      configActiveNodes.addAll(p2pConfig.getActiveNodes());
     } catch (P2pException e) {
       //no exception will throw
     }
@@ -113,21 +117,31 @@ public class ConnPoolService extends P2pEventHandler {
     Set<InetSocketAddress> inetInUse = new HashSet<>();
     Set<String> nodesInUse = new HashSet<>();
     nodesInUse.add(Hex.toHexString(p2pConfig.getNodeID()));
-    ChannelManager.getChannels().values().forEach(channel -> {
+    ChannelManager.getAllChannels().forEach(channel -> {
+      Node node = channel.getNode();
+      if (node != null && !NetUtil.validPort(node.getPort())) {
+        logger.warn("Close peer {} with invalid advertised port {}",
+            channel.getInetSocketAddress(), node.getPort());
+        channel.close();
+        return;
+      }
       if (StringUtils.isNotEmpty(channel.getNodeId())) {
         nodesInUse.add(channel.getNodeId());
       }
       addressInUse.add(channel.getInetAddress());
       inetInUse.add(channel.getInetSocketAddress());
-      addNode(inetInUse, channel.getNode());
+      addNode(inetInUse, node);
     });
 
     addNode(inetInUse, new Node(Parameter.p2pConfig.getNodeID(), Parameter.p2pConfig.getIp(),
         Parameter.p2pConfig.getIpv6(), Parameter.p2pConfig.getPort()));
 
     p2pConfig.getActiveNodes().forEach(address -> {
-      if (!isFilterActiveNodes && !inetInUse.contains(address) && !addressInUse.contains(
-          address.getAddress()) && !ConnectionPolicy.isBlocked(address)) {
+      if (!isFilterActiveNodes
+          && !inetInUse.contains(address)
+          && !addressInUse.contains(address.getAddress())
+          && !ConnectionPolicy.isBlocked(address)
+          && peerClientCache.getIfPresent(address.getAddress()) == null) {
         addressInUse.add(address.getAddress());
         inetInUse.add(address);
         Node node = new Node(address); //use a random NodeId for config activeNodes
@@ -206,11 +220,12 @@ public class ConnPoolService extends P2pEventHandler {
           return;
         }
         logger.info("Connect to peer {}", address);
+        peerClientCache.put(address.getAddress(), System.currentTimeMillis());
         if (peerClient.connectAsync(n, false) == null) {
+          peerClientCache.invalidate(address.getAddress());
           return;
         }
-        peerClientCache.put(address.getAddress(), System.currentTimeMillis());
-        if (!activeNode) {
+        if (!configActiveNodes.contains(address)) {
           connectingPeersCount.incrementAndGet();
         }
       });
@@ -239,8 +254,14 @@ public class ConnPoolService extends P2pEventHandler {
 
   private boolean validNode(Node node, Set<String> nodesInUse, Set<InetSocketAddress> inetInUse,
       Set<InetSocketAddress> dynamicInet) {
+    if (node == null || !NetUtil.validPort(node.getPort())) {
+      return false;
+    }
     long now = System.currentTimeMillis();
     InetSocketAddress inetSocketAddress = node.getPreferInetSocketAddress();
+    if (inetSocketAddress == null || inetSocketAddress.isUnresolved()) {
+      return false;
+    }
     InetAddress inetAddress = inetSocketAddress.getAddress();
     Long forbiddenTime = ChannelManager.getBannedNodes().getIfPresent(inetAddress);
     if (ConnectionPolicy.isBlocked(inetAddress)
@@ -257,7 +278,7 @@ public class ConnPoolService extends P2pEventHandler {
   }
 
   private void check() {
-    if (ChannelManager.getChannels().size() < p2pConfig.getMaxConnections()) {
+    if (ChannelManager.getChannelCount() < p2pConfig.getMaxConnections()) {
       return;
     }
 
@@ -280,15 +301,22 @@ public class ConnPoolService extends P2pEventHandler {
 
   private synchronized void logActivePeers() {
     logger.info("Peer stats: channels {}, activePeers {}, active {}, passive {}",
-        ChannelManager.getChannels().size(), activePeers.size(), activePeersCount.get(),
+        ChannelManager.getChannelCount(), activePeers.size(), activePeersCount.get(),
         passivePeersCount.get());
   }
 
   public void triggerConnect(InetSocketAddress address) {
-    if (p2pConfig.getActiveNodes().contains(address)) {
+    boolean activeNode = p2pConfig.getActiveNodes().contains(address);
+    if (activeNode) {
+      peerClientCache.invalidate(address.getAddress());
+    }
+    if (configActiveNodes.contains(address)) {
       return;
     }
     connectingPeersCount.decrementAndGet();
+    if (activeNode) {
+      return;
+    }
     if (poolLoopExecutor.getQueue().size() >= Parameter.CONN_MAX_QUEUE_SIZE) {
       logger.warn("ConnPool task' size is greater than or equal to {}",
           Parameter.CONN_MAX_QUEUE_SIZE);
@@ -311,7 +339,8 @@ public class ConnPoolService extends P2pEventHandler {
 
   @Override
   public synchronized void onConnect(Channel peer) {
-    if (!activePeers.contains(peer)) {
+    // Channel.equals() compares remote addresses; membership must compare channel instances.
+    if (activePeers.stream().noneMatch(channel -> channel == peer)) {
       if (!peer.isActive()) {
         passivePeersCount.incrementAndGet();
       } else {
@@ -324,13 +353,12 @@ public class ConnPoolService extends P2pEventHandler {
 
   @Override
   public synchronized void onDisconnect(Channel peer) {
-    if (activePeers.contains(peer)) {
+    if (activePeers.removeIf(channel -> channel == peer)) {
       if (!peer.isActive()) {
         passivePeersCount.decrementAndGet();
       } else {
         activePeersCount.decrementAndGet();
       }
-      activePeers.remove(peer);
     }
     logActivePeers();
   }

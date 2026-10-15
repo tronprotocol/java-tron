@@ -107,7 +107,15 @@ public class StartApp {
 
     app.checkDnsOption(cli);
 
-    p2pService.start(Parameter.p2pConfig);
+    try {
+      p2pService.start(Parameter.p2pConfig);
+    } catch (RuntimeException e) {
+      logger.error("P2P service startup failed", e);
+      // The standalone app may run without an SLF4J logging implementation.
+      System.err.println("P2P service startup failed: " + e.getMessage());
+      System.exit(1);
+      return;
+    }
 
     while (true) {
       try {

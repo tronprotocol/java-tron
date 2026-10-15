@@ -7,9 +7,10 @@ import io.netty.channel.ChannelFutureListener;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -52,8 +53,9 @@ public class ChannelManager {
   @Getter
   private static HandshakeService handshakeService;
 
-  @Getter
-  private static final Map<InetSocketAddress, Channel> channels = new ConcurrentHashMap<>();
+  // Channel.equals() compares remote addresses, which can be shared by distinct connections.
+  // Register and remove by identity; snapshot iteration permits concurrent close callbacks.
+  private static final CopyOnWriteArrayList<Channel> channels = new CopyOnWriteArrayList<>();
 
   @Getter
   private static final Cache<InetAddress, Long> bannedNodes = CacheBuilder
@@ -90,12 +92,43 @@ public class ChannelManager {
     return peerClient.connect(node, future);
   }
 
+  /**
+   * Returns a detached snapshot of all registered channel instances, including address collisions.
+   */
+  public static List<Channel> getAllChannels() {
+    return new ArrayList<>(channels);
+  }
+
+  public static int getChannelCount() {
+    return channels.size();
+  }
+
+  /**
+   * Returns a detached address-indexed snapshot. When addresses collide, only the most recently
+   * registered instance is included. Changes to this map do not affect the registry.
+   *
+   * @deprecated Use {@link #getAllChannels()} or {@link #getChannelCount()} to include every
+   *     instance.
+   */
+  @Deprecated
+  public static Map<InetSocketAddress, Channel> getChannels() {
+    Map<InetSocketAddress, Channel> result = new HashMap<>();
+    channels.forEach(channel -> result.put(channel.getInetSocketAddress(), channel));
+    return result;
+  }
+
   public static void notifyDisconnect(Channel channel) {
     if (channel.getInetSocketAddress() == null) {
       logger.warn("Notify Disconnect peer has no address.");
       return;
     }
-    channels.remove(channel.getInetSocketAddress());
+    if (!channel.markDisconnectNotified()) {
+      return;
+    }
+    // Share the registration lock in addPeer to keep removal by identity atomic.
+    synchronized (ChannelManager.class) {
+      channels.removeIf(registered -> registered == channel);
+    }
     Parameter.handlerList.forEach(h -> h.onDisconnect(channel));
     InetAddress inetAddress = channel.getInetAddress();
     if (inetAddress != null) {
@@ -105,7 +138,7 @@ public class ChannelManager {
 
   public static int getConnectionNum(InetAddress inetAddress) {
     int cnt = 0;
-    for (Channel channel : channels.values()) {
+    for (Channel channel : channels) {
       if (channel.getInetAddress().equals(inetAddress)) {
         cnt++;
       }
@@ -114,6 +147,21 @@ public class ChannelManager {
   }
 
   public static synchronized DisconnectCode processPeer(Channel channel) {
+    DisconnectCode code = checkPeer(channel);
+    if (code == DisconnectCode.NORMAL) {
+      addPeer(channel);
+    }
+    return code;
+  }
+
+  /**
+   * Checks peer admission. Callers must hold the ChannelManager class lock until addPeer
+   * to prevent another connection from taking the checked capacity.
+   */
+  public static synchronized DisconnectCode checkPeer(Channel channel) {
+    if (channels.stream().anyMatch(registered -> registered == channel)) {
+      return DisconnectCode.NORMAL;
+    }
 
     if (ConnectionPolicy.isBlocked(channel.getInetAddress())) {
       logger.info("Reject peer {} because its IP is manually blocked", channel);
@@ -141,7 +189,11 @@ public class ChannelManager {
     }
 
     if (StringUtils.isNotEmpty(channel.getNodeId())) {
-      for (Channel c : channels.values()) {
+      if (channel.getNodeId().equals(Hex.toHexString(Parameter.p2pConfig.getNodeID()))) {
+        logger.info("Channel {} is myself", channel.getInetSocketAddress());
+        return DisconnectCode.DUPLICATE_PEER;
+      }
+      for (Channel c : channels) {
         if (channel.getNodeId().equals(c.getNodeId())) {
           if (c.getStartTime() > channel.getStartTime()) {
             c.close();
@@ -153,10 +205,17 @@ public class ChannelManager {
       }
     }
 
-    channels.put(channel.getInetSocketAddress(), channel);
+    return DisconnectCode.NORMAL;
+  }
+
+  public static synchronized void addPeer(Channel channel) {
+    if (channels.stream().anyMatch(registered -> registered == channel)) {
+      return;
+    }
+    channel.markRegisteredPeer();
+    channels.add(channel);
 
     logger.info("Add peer {}, total channels: {}", channel.getInetSocketAddress(), channels.size());
-    return DisconnectCode.NORMAL;
   }
 
   public static DisconnectReason getDisconnectReason(DisconnectCode code) {
@@ -265,20 +324,22 @@ public class ChannelManager {
     }
 
     if (!channel.isFinishHandshake()) {
-      channel.setFinishHandshake(true);
-      DisconnectCode code = processPeer(channel);
-      if (!DisconnectCode.NORMAL.equals(code)) {
-        DisconnectReason disconnectReason = getDisconnectReason(code);
-        channel.send(new P2pDisconnectMessage(disconnectReason));
-        channel.getCtx().close();
-        return;
-      }
-      Parameter.handlerList.forEach(h -> h.onConnect(channel));
+      logger.warn("Close channel {}, application message received before handshake",
+          channel.getInetSocketAddress());
+      channel.send(new P2pDisconnectMessage(DisconnectReason.BAD_PROTOCOL));
+      channel.close();
+      return;
     }
 
     handler.onMessage(channel, data);
   }
 
+  /**
+   * @deprecated Node IDs are set during the libp2p handshake, and self-connection and
+   *     duplicate-peer checks are handled by {@link #checkPeer(Channel)} before registration.
+   *     Application code should validate node ID consistency instead of updating it.
+   */
+  @Deprecated
   public static synchronized void updateNodeId(Channel channel, String nodeId) {
     channel.setNodeId(nodeId);
     if (nodeId.equals(Hex.toHexString(Parameter.p2pConfig.getNodeID()))) {
@@ -289,7 +350,7 @@ public class ChannelManager {
     }
 
     List<Channel> list = new ArrayList<>();
-    channels.values().forEach(c -> {
+    channels.forEach(c -> {
       if (nodeId.equals(c.getNodeId())) {
         list.add(c);
       }
@@ -315,18 +376,20 @@ public class ChannelManager {
   }
 
   public static int disconnect(InetSocketAddress address) {
-    Channel channel = channels.get(address);
-    if (channel == null || channel.isDisconnect()) {
-      return 0;
+    int disconnectedCount = 0;
+    for (Channel channel : getAllChannels()) {
+      if (address.equals(channel.getInetSocketAddress()) && !channel.isDisconnect()) {
+        channel.send(new P2pDisconnectMessage(DisconnectReason.REQUESTED));
+        channel.close();
+        disconnectedCount++;
+      }
     }
-    channel.send(new P2pDisconnectMessage(DisconnectReason.REQUESTED));
-    channel.close();
-    return 1;
+    return disconnectedCount;
   }
 
-  public static int disconnectBlockedIps() {
+  public static synchronized int disconnectBlockedIps() {
     int disconnectedCount = 0;
-    for (Channel channel : new ArrayList<>(channels.values())) {
+    for (Channel channel : getAllChannels()) {
       if (ConnectionPolicy.isBlocked(channel.getInetAddress()) && !channel.isDisconnect()) {
         // Do not send a DisconnectReason because it would reveal the manual blacklist policy
         // to a potentially malicious peer.

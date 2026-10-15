@@ -8,6 +8,7 @@ import org.tron.p2p.discover.Node;
 import org.tron.p2p.protos.Connect;
 import org.tron.p2p.protos.Discover;
 import org.tron.p2p.utils.NetUtil;
+import org.tron.p2p.utils.ProtoUtil;
 
 public class HelloMessage extends Message {
 
@@ -15,7 +16,7 @@ public class HelloMessage extends Message {
 
   public HelloMessage(byte[] data) throws Exception {
     super(MessageType.HANDSHAKE_HELLO, data);
-    this.helloMessage = Connect.HelloMessage.parseFrom(data);
+    this.helloMessage = ProtoUtil.parseFrom(Connect.HelloMessage.parser(), data);
   }
 
   public HelloMessage(DisconnectCode code, long time) {

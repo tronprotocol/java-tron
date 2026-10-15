@@ -29,8 +29,10 @@ public class PeerClient {
   }
 
   public void close() {
-    workerGroup.shutdownGracefully();
-    workerGroup.terminationFuture().syncUninterruptibly();
+    if (workerGroup != null) {
+      workerGroup.shutdownGracefully();
+      workerGroup.terminationFuture().syncUninterruptibly();
+    }
   }
 
   public void connect(String host, int port, String remoteId) {

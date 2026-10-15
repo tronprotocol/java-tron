@@ -369,17 +369,4 @@ public class PeerConnection {
     return true;
   }
 
-  @Override
-  public boolean equals(Object o) {
-    if (!(o instanceof PeerConnection)) {
-      return false;
-    }
-    return this.channel.equals(((PeerConnection) o).getChannel());
-  }
-
-  @Override
-  public int hashCode() {
-    return this.channel.hashCode();
-  }
-
 }

@@ -8,26 +8,72 @@ import io.netty.channel.embedded.EmbeddedChannel;
 import java.lang.reflect.Field;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
-import lombok.extern.slf4j.Slf4j;
+import java.util.List;
+import java.util.Map;
 import org.apache.commons.lang3.ArrayUtils;
 import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.tron.p2p.P2pConfig;
+import org.tron.p2p.P2pEventHandler;
 import org.tron.p2p.base.Parameter;
 import org.tron.p2p.connection.business.handshake.DisconnectCode;
+import org.tron.p2p.connection.business.handshake.HandshakeService;
+import org.tron.p2p.connection.business.pool.ConnPoolService;
 import org.tron.p2p.connection.message.MessageType;
+import org.tron.p2p.connection.message.detect.StatusMessage;
+import org.tron.p2p.connection.message.handshake.HelloMessage;
 import org.tron.p2p.protos.Connect;
 import org.tron.p2p.protos.Discover;
 
-@Slf4j(topic = "net")
 public class ChannelManagerTest {
 
-  @After
-  public void cleanUp() {
+  private static final InetSocketAddress REMOTE = new InetSocketAddress("127.0.0.2", 18888);
+  private final long startTime = System.currentTimeMillis() - 10000;
+  private final List<EmbeddedChannel> sockets = new ArrayList<>();
+  private P2pConfig previousConfig;
+  private List<P2pEventHandler> previousHandlers;
+  private ConnPoolService pool;
+  private HandshakeService handshake;
+
+  @Before
+  public void setUp() {
+    previousConfig = Parameter.p2pConfig;
+    previousHandlers = Parameter.handlerList;
+    Parameter.p2pConfig = new P2pConfig();
+    Parameter.p2pConfig.setNetworkId(11111);
+    Parameter.p2pConfig.setMaxConnectionsWithSameIp(10);
+    Parameter.handlerList = new ArrayList<>();
     clearChannels();
-    ConnectionPolicy.replaceBlockedIps(Collections.emptySet());
+    pool = new ConnPoolService();
+    handshake = new HandshakeService();
+  }
+
+  @After
+  public void tearDown() {
+    try {
+      sockets.forEach(EmbeddedChannel::finishAndReleaseAll);
+    } finally {
+      try {
+        pool.close();
+        clearChannels();
+        ConnectionPolicy.replaceBlockedIps(Collections.emptySet());
+      } finally {
+        Parameter.p2pConfig = previousConfig;
+        Parameter.handlerList = previousHandlers;
+      }
+    }
+  }
+
+  private void register(Channel channel, InetSocketAddress address) throws Exception {
+    Field field = Channel.class.getDeclaredField("inetSocketAddress");
+    field.setAccessible(true);
+    field.set(channel, address);
+    Assert.assertEquals(DisconnectCode.NORMAL, ChannelManager.processPeer(channel));
   }
 
   @Test
@@ -53,15 +99,15 @@ public class ChannelManagerTest {
     int cnt = ChannelManager.getConnectionNum(a1.getAddress());
     Assert.assertTrue(cnt == 0);
 
-    ChannelManager.getChannels().put(a1, c1);
+    register(c1, a1);
     cnt = ChannelManager.getConnectionNum(a1.getAddress());
     Assert.assertTrue(cnt == 1);
 
-    ChannelManager.getChannels().put(a2, c2);
+    register(c2, a2);
     cnt = ChannelManager.getConnectionNum(a2.getAddress());
     Assert.assertTrue(cnt == 1);
 
-    ChannelManager.getChannels().put(a3, c3);
+    register(c3, a3);
     cnt = ChannelManager.getConnectionNum(a3.getAddress());
     Assert.assertTrue(cnt == 2);
   }
@@ -80,20 +126,20 @@ public class ChannelManagerTest {
     field.setAccessible(true);
     field.set(c1, inetAddress);
 
-    ChannelManager.getChannels().put(a1, c1);
+    register(c1, a1);
 
     Long time = ChannelManager.getBannedNodes().getIfPresent(a1.getAddress());
-    Assert.assertTrue(ChannelManager.getChannels().size() == 1);
+    Assert.assertEquals(1, ChannelManager.getChannelCount());
     Assert.assertTrue(time == null);
 
     ChannelManager.notifyDisconnect(c1);
     time = ChannelManager.getBannedNodes().getIfPresent(a1.getAddress());
     Assert.assertTrue(time != null);
-    Assert.assertTrue(ChannelManager.getChannels().size() == 0);
+    Assert.assertEquals(0, ChannelManager.getChannelCount());
   }
 
   @Test
-  public synchronized void testProcessPeer() throws Exception {
+  public synchronized void testCheckPeer() throws Exception {
     clearChannels();
     Parameter.p2pConfig = new P2pConfig();
 
@@ -107,8 +153,13 @@ public class ChannelManagerTest {
     field.setAccessible(true);
     field.set(c1, a1.getAddress());
 
-    DisconnectCode code = ChannelManager.processPeer(c1);
-    Assert.assertTrue(code.equals(DisconnectCode.NORMAL));
+    DisconnectCode code;
+    synchronized (ChannelManager.class) {
+      code = ChannelManager.checkPeer(c1);
+      Assert.assertTrue(code.equals(DisconnectCode.NORMAL));
+      Assert.assertTrue(ChannelManager.getChannels().isEmpty());
+      ChannelManager.addPeer(c1);
+    }
 
     Thread.sleep(5);
 
@@ -124,36 +175,32 @@ public class ChannelManagerTest {
     field.setAccessible(true);
     field.set(c2, a2.getAddress());
 
-    code = ChannelManager.processPeer(c2);
+    code = ChannelManager.checkPeer(c2);
     Assert.assertTrue(code.equals(DisconnectCode.TOO_MANY_PEERS));
 
     Parameter.p2pConfig.setMaxConnections(2);
     Parameter.p2pConfig.setMaxConnectionsWithSameIp(1);
-    code = ChannelManager.processPeer(c2);
+    code = ChannelManager.checkPeer(c2);
     Assert.assertTrue(code.equals(DisconnectCode.MAX_CONNECTION_WITH_SAME_IP));
 
     Parameter.p2pConfig.setMaxConnectionsWithSameIp(2);
     c1.setNodeId("cc");
     c2.setNodeId("cc");
-    code = ChannelManager.processPeer(c2);
+    code = ChannelManager.checkPeer(c2);
     Assert.assertTrue(code.equals(DisconnectCode.DUPLICATE_PEER));
   }
 
   @Test
-  public synchronized void testProcessPeerRejectsManuallyBlockedIp() throws Exception {
-    Parameter.p2pConfig = new P2pConfig();
-    InetSocketAddress address = new InetSocketAddress("192.0.2.30", 18888);
-    Channel channel = newChannel(address);
-    ConnectionPolicy.replaceBlockedIps(Collections.singleton(address.getAddress()));
+  public void processPeerRejectsManuallyBlockedIp() throws Exception {
+    Channel channel = channel(true, 1);
+    ConnectionPolicy.replaceBlockedIps(Collections.singleton(REMOTE.getAddress()));
 
-    DisconnectCode code = ChannelManager.processPeer(channel);
-
-    Assert.assertEquals(DisconnectCode.UNKNOWN, code);
-    Assert.assertFalse(ChannelManager.getChannels().containsKey(address));
+    Assert.assertEquals(DisconnectCode.UNKNOWN, ChannelManager.processPeer(channel));
+    Assert.assertEquals(0, ChannelManager.getChannelCount());
   }
 
   @Test
-  public void testConnectRejectsUnresolvedAddressBeforeNetworkAccess() {
+  public void connectRejectsUnresolvedAddressBeforeNetworkAccess() {
     try {
       ChannelManager.connect(InetSocketAddress.createUnresolved("peer.example", 18888));
       Assert.fail("Expected unresolved address to be rejected");
@@ -163,18 +210,22 @@ public class ChannelManagerTest {
   }
 
   @Test
-  public synchronized void testDisconnectUsesEndpointAndBlockedReplacementUsesIp()
-      throws Exception {
-    Parameter.p2pConfig = new P2pConfig();
+  public void disconnectUsesEndpointAndBlockedReplacementUsesIp() throws Exception {
     InetSocketAddress firstAddress = new InetSocketAddress("192.0.2.31", 18888);
     InetSocketAddress secondAddress = new InetSocketAddress("192.0.2.31", 18889);
     InetSocketAddress otherAddress = new InetSocketAddress("192.0.2.32", 18888);
-    Channel first = newChannel(firstAddress);
-    Channel second = newChannel(secondAddress);
-    Channel other = newChannel(otherAddress);
-    ChannelManager.getChannels().put(firstAddress, first);
-    ChannelManager.getChannels().put(secondAddress, second);
-    ChannelManager.getChannels().put(otherAddress, other);
+    Channel first = channel(true, 1);
+    Channel second = channel(true, 2);
+    Channel other = channel(true, 3);
+    set(first, "inetSocketAddress", firstAddress);
+    set(first, "inetAddress", firstAddress.getAddress());
+    set(second, "inetSocketAddress", secondAddress);
+    set(second, "inetAddress", secondAddress.getAddress());
+    set(other, "inetSocketAddress", otherAddress);
+    set(other, "inetAddress", otherAddress.getAddress());
+    ChannelManager.addPeer(first);
+    ChannelManager.addPeer(second);
+    ChannelManager.addPeer(other);
 
     Assert.assertEquals(1, ChannelManager.disconnect(firstAddress));
     Assert.assertTrue(first.isDisconnect());
@@ -200,23 +251,21 @@ public class ChannelManagerTest {
     Assert.assertNull(((EmbeddedChannel) second.getCtx().channel()).readOutbound());
   }
 
-  private Channel newChannel(InetSocketAddress address) throws Exception {
-    Channel channel = new Channel();
-    Field field = channel.getClass().getDeclaredField("inetSocketAddress");
-    field.setAccessible(true);
-    field.set(channel, address);
-    field = channel.getClass().getDeclaredField("inetAddress");
-    field.setAccessible(true);
-    field.set(channel, address.getAddress());
-    EmbeddedChannel embeddedChannel = new EmbeddedChannel(new ChannelInboundHandlerAdapter());
-    field = channel.getClass().getDeclaredField("ctx");
-    field.setAccessible(true);
-    field.set(channel, embeddedChannel.pipeline().firstContext());
-    return channel;
+  @Test
+  public void disconnectClosesAllChannelsAtTheSameEndpoint() throws Exception {
+    Channel first = channel(true, 1);
+    Channel second = channel(true, 2);
+    ChannelManager.addPeer(first);
+    ChannelManager.addPeer(second);
+
+    Assert.assertEquals(2, ChannelManager.disconnect(REMOTE));
+    Assert.assertTrue(first.isDisconnect());
+    Assert.assertTrue(second.isDisconnect());
+    Assert.assertEquals(0, ChannelManager.getChannelCount());
   }
 
   private void clearChannels() {
-    ChannelManager.getChannels().clear();
+    ChannelManager.getAllChannels().forEach(ChannelManager::notifyDisconnect);
     ChannelManager.getBannedNodes().invalidateAll();
   }
 
@@ -237,6 +286,7 @@ public class ChannelManagerTest {
     f.set(channel, addr.getAddress());
 
     EmbeddedChannel ec = new EmbeddedChannel(new ChannelInboundHandlerAdapter());
+    sockets.add(ec);
     ChannelHandlerContext ctx = ec.pipeline().firstContext();
     f = channel.getClass().getDeclaredField("ctx");
     f.setAccessible(true);
@@ -249,7 +299,182 @@ public class ChannelManagerTest {
     Assert.assertTrue(channel.isDisconnect());
     Assert.assertNull(channel.getHelloMessage());
     Assert.assertFalse(channel.isFinishHandshake());
-    Assert.assertFalse(ChannelManager.getChannels().containsKey(addr));
+    Assert.assertTrue(ChannelManager.getAllChannels().isEmpty());
+  }
+
+  @Test
+  public void sameAddressHandshakesRemainRegisteredInBothCloseOrders() throws Exception {
+    for (boolean firstActive : new boolean[]{false, true}) {
+      for (boolean closeFirst : new boolean[]{false, true}) {
+        ChannelManager.getBannedNodes().invalidateAll();
+        Channel first = channel(firstActive, 1);
+        Channel second = channel(!firstActive, 2);
+        hello(first, 1);
+        hello(second, 2);
+        Assert.assertNotSame(first, second);
+        Assert.assertEquals(first, second);
+        Assert.assertTrue(first.isFinishHandshake());
+        Assert.assertTrue(second.isFinishHandshake());
+        assertRegistered(first, second);
+        assertCounts(1, 1);
+
+        Channel closed = closeFirst ? first : second;
+        Channel survivor = closeFirst ? second : first;
+        closed.close();
+        Assert.assertTrue(survivor.getCtx().channel().isOpen());
+        assertRegistered(survivor);
+        assertCounts(survivor.isActive() ? 1 : 0, survivor.isActive() ? 0 : 1);
+
+        ChannelManager.notifyDisconnect(closed);
+        assertRegistered(survivor);
+        assertCounts(survivor.isActive() ? 1 : 0, survivor.isActive() ? 0 : 1);
+        survivor.close();
+        assertRegistered();
+        assertCounts(0, 0);
+      }
+    }
+  }
+
+  @Test
+  public void rejectedDuplicateHandshakeKeepsEstablishedChannel() throws Exception {
+    Channel established = channel(true, 1);
+    Channel rejected = channel(false, 2);
+    hello(established, 1);
+    hello(rejected, 1);
+    Assert.assertTrue(established.isFinishHandshake());
+    Assert.assertTrue(established.getCtx().channel().isOpen());
+    Assert.assertFalse(rejected.isFinishHandshake());
+    Assert.assertTrue(rejected.isDisconnect());
+    assertRegistered(established);
+    assertCounts(1, 0);
+  }
+
+  @Test
+  public void lateCloseNotificationKeepsSameNodeReplacement() throws Exception {
+    Channel newer = channel(true, 2);
+    Channel earlier = channel(false, 1);
+    hello(newer, 1);
+    hello(earlier, 1);
+    Assert.assertTrue(newer.isDisconnect());
+    Assert.assertTrue(earlier.isFinishHandshake());
+    Assert.assertTrue(earlier.getCtx().channel().isOpen());
+    assertRegistered(earlier);
+    assertCounts(0, 1);
+
+    ChannelManager.notifyDisconnect(newer);
+    assertRegistered(earlier);
+    assertCounts(0, 1);
+  }
+
+  @Test
+  public void unregisteredSameAddressCloseKeepsEstablishedChannel() throws Exception {
+    Channel established = channel(true, 1);
+    hello(established, 1);
+    Channel unregistered = channel(false, 2);
+    unregistered.close();
+    ChannelManager.notifyDisconnect(unregistered);
+    assertRegistered(established);
+    assertCounts(1, 0);
+  }
+
+  @Test
+  public void repeatedAdmissionOfSameInstanceDoesNotDoubleCount() throws Exception {
+    Channel established = channel(false, 1);
+    hello(established, 1);
+    Assert.assertEquals(DisconnectCode.NORMAL, ChannelManager.processPeer(established));
+    assertRegistered(established);
+    assertCounts(0, 1);
+  }
+
+  @Test
+  public void connectionLimitsCountAllInstancesAtSameAddress() throws Exception {
+    Channel first = channel(false, 1);
+    Channel second = channel(true, 2);
+    hello(first, 1);
+    hello(second, 2);
+    Channel candidate = channel(false, 3);
+    candidate.setNodeId("third-node");
+
+    Parameter.p2pConfig.setMaxConnections(2);
+    Assert.assertEquals(DisconnectCode.TOO_MANY_PEERS, ChannelManager.processPeer(candidate));
+    Parameter.p2pConfig.setMaxConnections(3);
+    Parameter.p2pConfig.setMaxConnectionsWithSameIp(2);
+    Assert.assertEquals(DisconnectCode.MAX_CONNECTION_WITH_SAME_IP,
+        ChannelManager.processPeer(candidate));
+    assertRegistered(first, second);
+  }
+
+  @SuppressWarnings("deprecation")
+  @Test
+  public void snapshotsAreDetachedAndStatusCountsInstances() throws Exception {
+    Channel first = channel(false, 1);
+    Channel second = channel(true, 2);
+    hello(first, 1);
+    hello(second, 2);
+
+    Connect.StatusMessage status = Connect.StatusMessage.parseFrom(new StatusMessage().getData());
+    Assert.assertEquals(2, status.getCurrentConnections());
+    List<Channel> snapshot = ChannelManager.getAllChannels();
+    Map<InetSocketAddress, Channel> addresses = ChannelManager.getChannels();
+    Assert.assertEquals(1, addresses.size());
+    Assert.assertSame(second, addresses.get(REMOTE));
+    addresses.clear();
+    snapshot.clear();
+    assertRegistered(first, second);
+
+    second.close();
+    Assert.assertSame(first, ChannelManager.getChannels().get(REMOTE));
+    status = Connect.StatusMessage.parseFrom(new StatusMessage().getData());
+    Assert.assertEquals(1, status.getCurrentConnections());
+  }
+
+  private Channel channel(boolean active, long order) throws Exception {
+    Channel channel = new Channel();
+    EmbeddedChannel socket = new EmbeddedChannel(new ChannelInboundHandlerAdapter());
+    sockets.add(socket);
+    set(channel, "inetSocketAddress", REMOTE);
+    set(channel, "inetAddress", REMOTE.getAddress());
+    set(channel, "isActive", active);
+    set(channel, "startTime", startTime + order);
+    set(channel, "ctx", socket.pipeline().firstContext());
+    // Mirror P2pChannelInitializer's normal-channel close callback without opening real sockets.
+    socket.closeFuture().addListener(future -> {
+      channel.markDisconnected();
+      ChannelManager.notifyDisconnect(channel);
+    });
+    return channel;
+  }
+
+  private void hello(Channel channel, int idByte) throws Exception {
+    byte[] id = new byte[64];
+    Arrays.fill(id, (byte) idByte);
+    Discover.Endpoint endpoint = Discover.Endpoint.newBuilder()
+        .setNodeId(ByteString.copyFrom(id)).setAddress(ByteString.copyFromUtf8("127.0.0.2"))
+        .setPort(18888).build();
+    Connect.HelloMessage hello = Connect.HelloMessage.newBuilder().setFrom(endpoint)
+        .setNetworkId(11111).setVersion(1).setTimestamp(System.currentTimeMillis()).build();
+    handshake.processMessage(channel, new HelloMessage(hello.toByteArray()));
+  }
+
+  private void assertRegistered(Channel... expected) {
+    List<Channel> actual = ChannelManager.getAllChannels();
+    Assert.assertEquals(expected.length, actual.size());
+    Assert.assertEquals(expected.length, ChannelManager.getChannelCount());
+    Assert.assertEquals(expected.length, ChannelManager.getConnectionNum(REMOTE.getAddress()));
+    for (Channel channel : expected) {
+      Assert.assertTrue(actual.stream().anyMatch(registered -> registered == channel));
+    }
+  }
+
+  private void assertCounts(int active, int passive) {
+    Assert.assertEquals(active, pool.getActivePeersCount().get());
+    Assert.assertEquals(passive, pool.getPassivePeersCount().get());
+  }
+
+  private static void set(Channel channel, String name, Object value) throws Exception {
+    Field field = Channel.class.getDeclaredField(name);
+    field.setAccessible(true);
+    field.set(channel, value);
   }
 
   private byte[] buildHelloMessageBytes() {
