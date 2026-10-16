@@ -9,13 +9,49 @@ import java.util.Map;
 import org.junit.Assert;
 import org.junit.Test;
 import org.tron.core.services.admin.AdminJsonRpc;
+import org.tron.core.services.admin.ipc.client.ActivePeerOutputFormatter.OutputFormat;
 import org.tron.core.services.admin.ipc.client.IpcConsoleCommands.Action;
 import org.tron.core.services.admin.ipc.client.IpcConsoleCommands.Command;
 
 public class IpcConsoleCommandsTest {
 
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
-  private final IpcConsoleCommands commands = new IpcConsoleCommands(AdminJsonRpc.class);
+  private final IpcConsoleCommands commands = new IpcConsoleCommands(ExampleApi.class);
+
+  @Test
+  public void testPeerManagementHelpAndCompletionUseSupportedMethods() {
+    IpcConsoleCommands peerCommands = new IpcConsoleCommands(AdminJsonRpc.class);
+
+    Assert.assertArrayEquals(new String[] {
+        "admin_addPeer", "admin_blockIp", "admin_disconnectPeer", "admin_listActivePeers",
+        "admin_listBlockedIps", "admin_removePeer", "admin_unblockIp"
+    }, peerCommands.getCompletionCommandNames());
+    Assert.assertEquals(String.join(System.lineSeparator(), "Available commands:",
+        "  admin_addPeer <endpoint:string>",
+        "  admin_blockIp <ip:string>",
+        "  admin_disconnectPeer <endpoint:string>",
+        "  admin_listActivePeers [format:json|text]",
+        "  admin_listBlockedIps",
+        "  admin_removePeer <endpoint:string>",
+        "  admin_unblockIp <ip:string>",
+        "  help [command]", "  exit/quit"), peerCommands.prepare("help").getOutput());
+  }
+
+  @Test
+  public void testPeerOutputFormatIsLocalAndDoesNotConsumeRpcParameters() throws Exception {
+    IpcConsoleCommands peerCommands = new IpcConsoleCommands(AdminJsonRpc.class);
+    Command text = peerCommands.prepare("ADMIN_LISTACTIVEPEERS TEXT");
+    JsonNode wire = request(text);
+
+    Assert.assertEquals("admin_listActivePeers", wire.get("method").asText());
+    Assert.assertEquals(OBJECT_MAPPER.readTree("[]"), wire.get("params"));
+    Assert.assertEquals(wire.get("id").asInt(), text.getRequestId().intValue());
+    Assert.assertEquals(OutputFormat.TEXT, text.getOutputFormat());
+    Assert.assertEquals(OutputFormat.JSON,
+        peerCommands.prepare("admin_listActivePeers").getOutputFormat());
+    assertError(peerCommands.prepare("admin_listActivePeers text extra"),
+        "Invalid parameter, usage: admin_listActivePeers [format:json|text]");
+  }
 
   @Test
   public void testHelpUsesAnnotatedParameters() {
@@ -190,6 +226,12 @@ public class IpcConsoleCommandsTest {
     Assert.assertNull(command.getRequest());
     Assert.assertNull(command.getRequestId());
     Assert.assertEquals(error, command.getError());
+  }
+
+  private interface ExampleApi {
+
+    @JsonRpcMethod("admin_example")
+    String example(@JsonRpcParam("param1") String first, @JsonRpcParam("param2") String second);
   }
 
   private enum Mode {

@@ -52,6 +52,7 @@ enum DisconnectReason {
   TOO_MANY_PEERS_WITH_SAME_IP = 0x0C;
   RECENT_DISCONNECT = 0x0D;
   DUP_HANDSHAKE = 0x0E;
+  REQUESTED = 0x0F;
   UNKNOWN = 0xFF;
 }
 
