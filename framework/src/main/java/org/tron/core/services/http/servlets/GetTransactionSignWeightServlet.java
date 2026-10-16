@@ -11,6 +11,7 @@ import org.tron.core.services.http.HttpApi;
 import org.tron.core.services.http.HttpApi.Access;
 import org.tron.core.services.http.HttpApi.Surface;
 import org.tron.core.utils.TransactionUtil;
+import org.tron.protos.Protocol.Transaction;
 
 @Component
 @Slf4j(topic = "API")
@@ -28,24 +29,25 @@ public class GetTransactionSignWeightServlet extends RateLimiterServlet {
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
       PostParams params = PostParams.getPostParams(request);
-      TransactionSignWeight reply = Util.withPackedTransaction(params,
-          transactionUtil::getTransactionSignWeight,
-          GetTransactionSignWeightServlet::contractSizeError);
+      Transaction transaction = Util.packTransaction(params.getParams(), params.isVisible());
+      TransactionSignWeight reply = transactionUtil.getTransactionSignWeight(transaction);
       if (reply != null) {
         response.getWriter().println(Util.printTransactionSignWeight(reply, params.isVisible()));
       } else {
         response.getWriter().println("{}");
       }
     } catch (Exception e) {
-      Util.processError(e, response);
+      Util.processError(e, response, ContractSizeNotEqualToOneException.class,
+          GetTransactionSignWeightServlet::contractSizeError);
     }
   }
 
-  private static TransactionSignWeight contractSizeError(ContractSizeNotEqualToOneException e) {
+  private static String contractSizeError(ContractSizeNotEqualToOneException e) {
     TransactionSignWeight.Result result = TransactionSignWeight.Result.newBuilder()
         .setCode(TransactionSignWeight.Result.response_code.OTHER_ERROR)
         .setMessage("Invalid transaction: " + e.getMessage())
         .build();
-    return TransactionSignWeight.newBuilder().setResult(result).build();
+    TransactionSignWeight reply = TransactionSignWeight.newBuilder().setResult(result).build();
+    return Util.printTransactionSignWeight(reply, false);
   }
 }

@@ -473,6 +473,32 @@ public class UtilTest extends BaseTest {
   }
 
   @Test
+  public void testServletsRejectMultipleContractsWhenVisible() throws Exception {
+    String twoContracts =
+        transactionJson("[" + TRANSFER_CONTRACT + "," + TRANSFER_CONTRACT + "]");
+    String visible = "{\"visible\":true," + twoContracts.substring(1);
+
+    MockHttpServletResponse response = BaseHttpTest.newResponse();
+    broadcastServlet.doPost(BaseHttpTest.postRequest(visible), response);
+    JSONObject broadcast = JSONObject.parseObject(response.getContentAsString());
+    Assert.assertEquals("Contract validate error : " + TWO_CONTRACTS_MESSAGE,
+        broadcast.getString("message"));
+    Assert.assertEquals("", broadcast.getString("txid"));
+
+    MockHttpServletResponse hidden = BaseHttpTest.newResponse();
+    MockHttpServletResponse shown = BaseHttpTest.newResponse();
+    getTransactionSignWeightServlet.doPost(BaseHttpTest.postRequest(twoContracts), hidden);
+    getTransactionSignWeightServlet.doPost(BaseHttpTest.postRequest(visible), shown);
+    Assert.assertEquals(hidden.getContentAsString(), shown.getContentAsString());
+
+    hidden = BaseHttpTest.newResponse();
+    shown = BaseHttpTest.newResponse();
+    getTransactionApprovedListServlet.doPost(BaseHttpTest.postRequest(twoContracts), hidden);
+    getTransactionApprovedListServlet.doPost(BaseHttpTest.postRequest(visible), shown);
+    Assert.assertEquals(hidden.getContentAsString(), shown.getContentAsString());
+  }
+
+  @Test
   public void testPackTransactionKeepsEmptyContractList() throws Exception {
     Transaction transaction = Util.packTransaction(transactionJson("[]"), false);
     Assert.assertEquals(0, transaction.getRawData().getContractCount());

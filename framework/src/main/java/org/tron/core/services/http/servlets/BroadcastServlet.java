@@ -27,23 +27,24 @@ public class BroadcastServlet extends RateLimiterServlet {
   private Wallet wallet;
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
+    PostParams params;
     try {
-      PostParams params = PostParams.getPostParams(request);
-      boolean visible = params.isVisible();
-      JSONObject res = Util.withPackedTransaction(params,
-          transaction -> broadcast(transaction, visible),
-          e -> toResponse(contractSizeError(e), "", visible));
-      response.getWriter().println(res.toJSONString());
+      params = PostParams.getPostParams(request);
     } catch (Exception e) {
       Util.processError(e, response);
+      return;
     }
-  }
-
-  private JSONObject broadcast(Transaction transaction, boolean visible) {
-    TransactionCapsule transactionCapsule = new TransactionCapsule(transaction);
-    String transactionID = ByteArray.toHexString(transactionCapsule.getTransactionId().getBytes());
-    GrpcAPI.Return result = wallet.broadcastTransaction(transaction);
-    return toResponse(result, transactionID, visible);
+    try {
+      Transaction transaction = Util.packTransaction(params.getParams(), params.isVisible());
+      TransactionCapsule transactionCapsule = new TransactionCapsule(transaction);
+      String transactionID = ByteArray
+          .toHexString(transactionCapsule.getTransactionId().getBytes());
+      GrpcAPI.Return result = wallet.broadcastTransaction(transaction);
+      response.getWriter().println(toResponse(result, transactionID, params.isVisible()));
+    } catch (Exception e) {
+      Util.processError(e, response, ContractSizeNotEqualToOneException.class,
+          ex -> toResponse(contractSizeError(ex), "", params.isVisible()));
+    }
   }
 
   private static GrpcAPI.Return contractSizeError(ContractSizeNotEqualToOneException e) {
@@ -54,9 +55,9 @@ public class BroadcastServlet extends RateLimiterServlet {
         .build();
   }
 
-  private static JSONObject toResponse(GrpcAPI.Return result, String txid, boolean visible) {
+  private static String toResponse(GrpcAPI.Return result, String txid, boolean visible) {
     JSONObject res = JSONObject.outboundParseObject(JsonFormat.printToString(result, visible));
     res.put("txid", txid);
-    return res;
+    return res.toJSONString();
   }
 }

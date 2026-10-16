@@ -11,6 +11,7 @@ import org.tron.core.exception.ContractSizeNotEqualToOneException;
 import org.tron.core.services.http.HttpApi;
 import org.tron.core.services.http.HttpApi.Access;
 import org.tron.core.services.http.HttpApi.Surface;
+import org.tron.protos.Protocol.Transaction;
 
 @Component
 @Slf4j(topic = "API")
@@ -28,24 +29,25 @@ public class GetTransactionApprovedListServlet extends RateLimiterServlet {
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
       PostParams params = PostParams.getPostParams(request);
-      TransactionApprovedList reply = Util.withPackedTransaction(params,
-          wallet::getTransactionApprovedList,
-          GetTransactionApprovedListServlet::contractSizeError);
+      Transaction transaction = Util.packTransaction(params.getParams(), params.isVisible());
+      TransactionApprovedList reply = wallet.getTransactionApprovedList(transaction);
       if (reply != null) {
         response.getWriter().println(Util.printTransactionApprovedList(reply, params.isVisible()));
       } else {
         response.getWriter().println("{}");
       }
     } catch (Exception e) {
-      Util.processError(e, response);
+      Util.processError(e, response, ContractSizeNotEqualToOneException.class,
+          GetTransactionApprovedListServlet::contractSizeError);
     }
   }
 
-  private static TransactionApprovedList contractSizeError(ContractSizeNotEqualToOneException e) {
+  private static String contractSizeError(ContractSizeNotEqualToOneException e) {
     TransactionApprovedList.Result result = TransactionApprovedList.Result.newBuilder()
         .setCode(TransactionApprovedList.Result.response_code.OTHER_ERROR)
         .setMessage("Invalid transaction: " + e.getMessage())
         .build();
-    return TransactionApprovedList.newBuilder().setResult(result).build();
+    TransactionApprovedList reply = TransactionApprovedList.newBuilder().setResult(result).build();
+    return Util.printTransactionApprovedList(reply, false);
   }
 }

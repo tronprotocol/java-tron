@@ -388,17 +388,6 @@ public class Util {
     return transactionBuilder.build();
   }
 
-  static <T> T withPackedTransaction(PostParams params, Function<Transaction, T> onTransaction,
-      Function<ContractSizeNotEqualToOneException, T> onContractSizeError) throws ParseException {
-    Transaction transaction;
-    try {
-      transaction = packTransaction(params.getParams(), params.isVisible());
-    } catch (ContractSizeNotEqualToOneException e) {
-      return onContractSizeError.apply(e);
-    }
-    return onTransaction.apply(transaction);
-  }
-
   @Deprecated
   public static void checkBodySize(String body) throws Exception {
     CommonParameter parameter = Args.getInstance();
@@ -603,8 +592,20 @@ public class Util {
     writeAuditedError(clientMessage(e), response);
   }
 
+  // For handledType (exact class) onError returns the whole response body, bypassing
+  // clientMessage, so it must return audited client texts only and must not throw.
+  static <E extends Exception> void processError(Exception e, HttpServletResponse response,
+      Class<E> handledType, Function<E, String> onError) {
+    if (e == null || e.getClass() != handledType) {
+      processError(e, response);
+      return;
+    }
+    logger.debug("HTTP request failed", e);
+    writeResponse(onError.apply(handledType.cast(e)), response);
+  }
+
   // For catch blocks that cover server-side work only, so the failure stays visible at the
-  // default log level. The Exception entry point above keeps debug because its callers also
+  // default log level. The processError entry points above keep debug because their callers also
   // cover request parsing, which an unauthenticated client can fail cheaply and repeatedly.
   static void processServerError(Exception e, HttpServletResponse response) {
     logger.error("HTTP request failed", e);
@@ -613,8 +614,12 @@ public class Util {
 
   // Bypasses clientMessage: callers must pass audited fixed or pre-existing client texts only.
   static void writeAuditedError(String msg, HttpServletResponse response) {
+    writeResponse(Util.printErrorMsg(msg), response);
+  }
+
+  private static void writeResponse(String body, HttpServletResponse response) {
     try {
-      response.getWriter().println(Util.printErrorMsg(msg));
+      response.getWriter().println(body);
     } catch (IOException ioe) {
       logger.debug("Failed to write HTTP error response", ioe);
     }

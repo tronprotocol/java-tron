@@ -102,6 +102,20 @@ public class UtilProcessErrorTest {
         "balance is not sufficient");
   }
 
+  @Test
+  public void customErrorHandlerReplacesOnlyTheHandledType() throws Exception {
+    MockHttpServletResponse response = new MockHttpServletResponse();
+    Util.processError(new ContractSizeNotEqualToOneException("size"), response,
+        ContractSizeNotEqualToOneException.class, e -> "{\"custom\":\"" + e.getMessage() + "\"}");
+    assertEquals("{\"custom\":\"size\"}", response.getContentAsString().trim());
+
+    response = new MockHttpServletResponse();
+    Util.processError(new ContractValidateException("balance is not sufficient"), response,
+        ContractSizeNotEqualToOneException.class, e -> "unused");
+    assertEquals("balance is not sufficient",
+        JSONObject.parseObject(response.getContentAsString()).getString("Error"));
+  }
+
   private static void assertServerError(Exception error, String expected) throws Exception {
     MockHttpServletResponse response = new MockHttpServletResponse();
     Util.processServerError(error, response);
