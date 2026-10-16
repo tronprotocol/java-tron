@@ -1,7 +1,9 @@
 package org.tron.core.services.http.servlets;
 
 import com.google.protobuf.ByteString;
+import java.security.InvalidParameterException;
 import javax.annotation.Resource;
+import org.apache.commons.lang3.StringUtils;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -236,7 +238,7 @@ public class UtilTest extends BaseTest {
     Assert.assertEquals(0, contract.getNewContract().getAbi().getEntrys(0).getOutputsCount());
   }
 
-  private Transaction buildTooManySigsTransaction() {
+  private Transaction buildTransferTransaction() {
     String strTransaction = "{\n"
         + "    \"visible\": false,\n"
         + "    \"txID\": \"fc33817936b06e50d4b6f1797e62f52d69af6c0da580a607241a9c03a48e390e\",\n"
@@ -264,7 +266,11 @@ public class UtilTest extends BaseTest {
         + "0a1541c076305e35aea1fe45a772fcaaab8a36e87bdb551215415624c12e308b03a1a6b21d9b86e3942fac1a"
         + "b92b180a70b2ccb8ea8930\"\n"
         + "}";
-    Transaction transaction = Util.packTransaction(strTransaction, false);
+    return Util.packTransaction(strTransaction, false);
+  }
+
+  private Transaction buildTooManySigsTransaction() {
+    Transaction transaction = buildTransferTransaction();
     int totalSignNum = dbManager.getDynamicPropertiesStore().getTotalSignNum();
     ByteString dummySig = ByteString.copyFrom(new byte[65]);
     Transaction.Builder builder = transaction.toBuilder();
@@ -300,5 +306,90 @@ public class UtilTest extends BaseTest {
     Assert.assertNull(jsonObject.getJSONObject("transaction"));
     Assert.assertTrue(jsonObject.getJSONObject("result").getString("message")
         .contains("too many signatures"));
+  }
+
+  @Test
+  public void testPermissionIdRejectsNonNumericTypes() {
+    assertRejected("[" + StringUtils.repeat('9', 128) + "]");
+    assertRejected("{\"a\":" + StringUtils.repeat('9', 128) + "}");
+    assertRejected("true");
+  }
+
+  private Transaction applyPermissionId(String rawJsonValue) {
+    JSONObject jsonObject =
+        JSONObject.parseObject("{\"" + Util.PERMISSION_ID + "\":" + rawJsonValue + "}");
+    return Util.setTransactionPermissionId(jsonObject, buildTransferTransaction());
+  }
+
+  private int permissionIdOf(Transaction transaction) {
+    return transaction.getRawData().getContract(0).getPermissionId();
+  }
+
+  @Test
+  public void testPermissionIdAcceptsExactIntegerRepresentations() {
+    Assert.assertEquals(2, permissionIdOf(applyPermissionId("2")));
+    Assert.assertEquals(2, permissionIdOf(applyPermissionId("\"2\"")));
+  }
+
+  private void assertRejected(String rawJsonValue) {
+    InvalidParameterException e = Assert.assertThrows(InvalidParameterException.class,
+        () -> applyPermissionId(rawJsonValue));
+    Assert.assertTrue(e.getMessage().contains(Util.PERMISSION_ID));
+    Assert.assertFalse("the message must not echo the submitted value",
+        e.getMessage().contains(rawJsonValue));
+  }
+
+  @Test
+  public void testPermissionIdRejectsNonIntegerNumbers() {
+    assertRejected("1.9");
+    assertRejected("2.999");
+    assertRejected("1.0");
+    assertRejected("1e2");
+    assertRejected("\"1e2\"");
+    assertRejected("\"1.9\"");
+    assertRejected("\"2.5\"");
+    assertRejected("\"1.90\"");
+    assertRejected("\"1.0\"");
+    assertRejected("\"1.\"");
+    assertRejected("\"1,000\"");
+  }
+
+  @Test
+  public void testPermissionIdRejectsIntOverflow() {
+    assertRejected("4294967297");
+    assertRejected("99999999999");
+    assertRejected("\"4294967297\"");
+    assertRejected("\"2147483648\"");
+    assertRejected("\"-2147483649\"");
+    assertRejected("9" + StringUtils.repeat('9', 64));
+    assertRejected("\"" + StringUtils.repeat('9', 10_000) + "\"");
+  }
+
+  @Test
+  public void testPermissionIdRejectsNonNumber() {
+    assertRejected("\"abc\"");
+    assertRejected("true");
+    assertRejected("[1]");
+  }
+
+  @Test
+  public void testPermissionIdRejectsExplicitNull() {
+    InvalidParameterException e = Assert.assertThrows(InvalidParameterException.class,
+        () -> applyPermissionId("null"));
+    Assert.assertTrue(e.getMessage().contains(Util.PERMISSION_ID));
+  }
+
+  @Test
+  public void testAbsentPermissionIdLeavesTransactionUnchanged() {
+    JSONObject jsonObject = JSONObject.parseObject("{\"amount\":1}");
+    Transaction transaction = buildTransferTransaction();
+    Assert.assertEquals(0,
+        permissionIdOf(Util.setTransactionPermissionId(jsonObject, transaction)));
+  }
+
+  @Test
+  public void testPermissionIdNotPositiveLeavesTransactionUnchanged() {
+    Assert.assertEquals(0, permissionIdOf(applyPermissionId("0")));
+    Assert.assertEquals(0, permissionIdOf(applyPermissionId("-1")));
   }
 }
