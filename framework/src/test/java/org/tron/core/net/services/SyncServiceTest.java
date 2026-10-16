@@ -28,6 +28,7 @@ import org.tron.core.net.messagehandler.PbftDataSyncHandler;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.PeerManager;
 import org.tron.core.net.peer.TronState;
+import org.tron.core.net.service.adv.AdvService;
 import org.tron.core.net.service.sync.SyncService;
 import org.tron.core.net.service.sync.UnparsedBlock;
 import org.tron.p2p.connection.Channel;
@@ -234,6 +235,7 @@ public class SyncServiceTest extends BaseMethodTest {
     TronNetDelegate delegate = mock(TronNetDelegate.class);
     ReflectUtils.setFieldValue(sync, "tronNetDelegate", delegate);
     ReflectUtils.setFieldValue(sync, "pbftDataSyncHandler", mock(PbftDataSyncHandler.class));
+    ReflectUtils.setFieldValue(sync, "advService", mock(AdvService.class));
     ReflectUtils.setFieldValue(sync, "maxPendingBlockSize", 1);
     PeerConnection syncingPeer = context.getBean(PeerConnection.class);
     Channel channel = mock(Channel.class);
@@ -243,8 +245,9 @@ public class SyncServiceTest extends BaseMethodTest {
     syncingPeer.setNeedSyncFromPeer(true);
     syncingPeer.setFetchAble(true);
     Mockito.when(delegate.getActivePeer()).thenReturn(Collections.singletonList(syncingPeer));
-    Mockito.when(delegate.getSolidBlockId())
-        .thenReturn(new BlockCapsule.BlockId(Sha256Hash.ZERO_HASH, 0));
+    BlockCapsule.BlockId head = new BlockCapsule.BlockId(Sha256Hash.ZERO_HASH, 0);
+    Mockito.when(delegate.getSolidBlockId()).thenReturn(head);
+    Mockito.when(delegate.getHeadBlockId()).thenReturn(head);
     Mockito.when(delegate.getBlockLock()).thenReturn(new Object());
     BlockCapsule block = new BlockCapsule(Protocol.Block.newBuilder().setBlockHeader(
         Protocol.BlockHeader.newBuilder().setRawData(
@@ -263,6 +266,10 @@ public class SyncServiceTest extends BaseMethodTest {
     Method handle = SyncService.class.getDeclaredMethod("handleSyncBlock");
     handle.setAccessible(true);
     handle.invoke(sync);
+    Mockito.verify(delegate).processBlock(Mockito.argThat(processed ->
+        processed.getBlockId().equals(block.getBlockId())), Mockito.eq(true));
+    Mockito.verify(channel, Mockito.never()).close(Mockito.anyLong());
+    Mockito.verify(channel, Mockito.never()).close();
     Assert.assertTrue("Freeing the window must wake the fetch scheduler",
         (boolean) ReflectUtils.getFieldObject(sync, "fetchFlag"));
     fetch.invoke(sync);
