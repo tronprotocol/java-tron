@@ -271,6 +271,55 @@ public class SyncServiceTest extends BaseMethodTest {
   }
 
   @Test
+  public void testKnownBlockWithoutSyncHeadReleasesPendingState() throws Exception {
+    SyncService sync = new SyncService();
+    try {
+      TronNetDelegate delegate = mock(TronNetDelegate.class);
+      ReflectUtils.setFieldValue(sync, "tronNetDelegate", delegate);
+      Mockito.when(delegate.getBlockLock()).thenReturn(new Object());
+      Mockito.when(delegate.getSolidBlockId())
+          .thenReturn(new BlockCapsule.BlockId(Sha256Hash.ZERO_HASH, 0));
+      peer = context.getBean(PeerConnection.class);
+      Channel channel = mock(Channel.class);
+      Mockito.when(channel.getInetAddress()).thenReturn(inetSocketAddress.getAddress());
+      peer.setChannel(channel);
+      Mockito.when(delegate.getActivePeer()).thenReturn(Collections.singletonList(peer));
+
+      BlockCapsule.BlockId known = new BlockCapsule.BlockId(Sha256Hash.ZERO_HASH, 1);
+      BlockCapsule.BlockId unknown = new BlockCapsule.BlockId(Sha256Hash.ZERO_HASH, 2);
+      BlockCapsule.BlockId queued = new BlockCapsule.BlockId(Sha256Hash.ZERO_HASH, 3);
+      BlockCapsule.BlockId preceding = new BlockCapsule.BlockId(Sha256Hash.ZERO_HASH, 4);
+      Mockito.when(delegate.containBlock(known)).thenReturn(true);
+      Mockito.when(delegate.containBlock(queued)).thenReturn(true);
+      peer.getSyncBlockToFetch().add(preceding);
+      peer.getSyncBlockToFetch().add(queued);
+      peer.getSyncBlockInProcess().add(known);
+      peer.getSyncBlockInProcess().add(unknown);
+      peer.getSyncBlockInProcess().add(queued);
+      Map<UnparsedBlock, PeerConnection> waiting = (Map<UnparsedBlock, PeerConnection>)
+          ReflectUtils.getFieldObject(sync, "blockWaitToProcess");
+      waiting.put(new UnparsedBlock(known, new byte[0]), peer);
+      waiting.put(new UnparsedBlock(unknown, new byte[0]), peer);
+      waiting.put(new UnparsedBlock(queued, new byte[0]), peer);
+
+      Method handle = SyncService.class.getDeclaredMethod("handleSyncBlock");
+      handle.setAccessible(true);
+      handle.invoke(sync);
+
+      Assert.assertEquals(2, waiting.size());
+      Assert.assertFalse(waiting.containsKey(new UnparsedBlock(known, new byte[0])));
+      Assert.assertTrue(waiting.containsKey(new UnparsedBlock(unknown, new byte[0])));
+      Assert.assertTrue(waiting.containsKey(new UnparsedBlock(queued, new byte[0])));
+      Assert.assertFalse(peer.getSyncBlockInProcess().contains(known));
+      Assert.assertTrue(peer.getSyncBlockInProcess().contains(unknown));
+      Assert.assertTrue(peer.getSyncBlockInProcess().contains(queued));
+      Assert.assertTrue((boolean) ReflectUtils.getFieldObject(sync, "fetchFlag"));
+    } finally {
+      sync.close();
+    }
+  }
+
+  @Test
   public void sameAddressPeersKeepSyncRequestsAndResponsesIndependent() throws Exception {
     InetSocketAddress address = new InetSocketAddress("127.0.0.2", 10001);
     Channel firstChannel = new Channel();

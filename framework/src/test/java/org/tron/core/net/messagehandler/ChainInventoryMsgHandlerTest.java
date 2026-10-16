@@ -1,5 +1,6 @@
 package org.tron.core.net.messagehandler;
 
+import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -23,6 +24,7 @@ import org.tron.core.net.message.keepalive.PingMessage;
 import org.tron.core.net.message.sync.ChainInventoryMessage;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.service.sync.SyncService;
+import org.tron.p2p.connection.Channel;
 
 public class ChainInventoryMsgHandlerTest {
 
@@ -153,6 +155,39 @@ public class ChainInventoryMsgHandlerTest {
 
     Assert.assertTrue(fetchAbleSetUnderLock.get());
     Assert.assertTrue(syncNextCalledUnderLock.get());
+  }
+
+  @Test
+  public void testPruningKnownBlockWakesPendingSyncBlockHandler() throws Exception {
+    Object blockLock = new Object();
+    TronNetDelegate tronNetDelegate = Mockito.mock(TronNetDelegate.class);
+    SyncService syncService = Mockito.mock(SyncService.class);
+    BlockId known = new BlockId(Sha256Hash.ZERO_HASH, 1);
+    BlockId next = new BlockId(Sha256Hash.ZERO_HASH, 2);
+    AtomicBoolean handlerWokenUnderLock = new AtomicBoolean();
+
+    Mockito.when(tronNetDelegate.getBlockLock()).thenReturn(blockLock);
+    Mockito.when(tronNetDelegate.getHeadBlockId())
+        .thenReturn(new BlockId(Sha256Hash.ZERO_HASH, 0));
+    Mockito.when(tronNetDelegate.containBlock(known)).thenReturn(true);
+    Mockito.doAnswer(invocation -> {
+      handlerWokenUnderLock.set(Thread.holdsLock(blockLock));
+      return null;
+    }).when(syncService).setHandleFlag(true);
+    ReflectUtils.setFieldValue(handler, "tronNetDelegate", tronNetDelegate);
+    ReflectUtils.setFieldValue(handler, "syncService", syncService);
+    Channel channel = Mockito.mock(Channel.class);
+    Mockito.when(channel.getInetAddress())
+        .thenReturn(new InetSocketAddress("127.0.0.2", 10001).getAddress());
+    peer.setChannel(channel);
+    peer.setSyncChainRequested(new Pair<>(new LinkedList<>(Arrays.asList(known)),
+        System.currentTimeMillis()));
+    peer.getSyncBlockToFetch().add(known);
+
+    handler.processMessage(peer, new ChainInventoryMessage(Arrays.asList(known, next), 0L));
+
+    Assert.assertEquals(next, peer.getSyncBlockToFetch().peek());
+    Assert.assertTrue(handlerWokenUnderLock.get());
   }
 
 }

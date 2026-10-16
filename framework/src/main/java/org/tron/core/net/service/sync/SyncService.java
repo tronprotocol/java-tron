@@ -67,6 +67,8 @@ public class SyncService {
   private final ScheduledExecutorService blockHandleExecutor = ExecutorServiceManager
       .newSingleThreadScheduledExecutor(handleEsName);
 
+  // When true, the scheduled task calls handleSyncBlock() to process pending sync blocks.
+  @Setter
   private volatile boolean handleFlag = false;
 
   @Setter
@@ -331,6 +333,14 @@ public class SyncService {
               return;
             }
             processSyncBlock(block, peerConnection);
+            peerConnection.getSyncBlockInProcess().remove(blockId);
+          } else if (tronNetDelegate.getActivePeer().stream()
+              .noneMatch(peer -> peer.getSyncBlockToFetch().contains(blockId))
+              && tronNetDelegate.containBlock(blockId)) {
+            // The block is already local and no sync queue still needs this response.
+            // Release the pending slot and the provider's in-process marker.
+            blockWaitToProcess.remove(unparsedBlock);
+            capacityReleased[0] = true;
             peerConnection.getSyncBlockInProcess().remove(blockId);
           }
         }
