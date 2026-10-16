@@ -4,12 +4,14 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
 
 import com.google.protobuf.InvalidProtocolBufferException;
+import java.security.InvalidParameterException;
 import org.bouncycastle.util.encoders.DecoderException;
 import org.bouncycastle.util.encoders.Hex;
 import org.junit.Test;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.HeaderNotFound;
+import org.tron.core.exception.InvalidHttpParameterException;
 import org.tron.core.exception.MaintenanceUnavailableException;
 import org.tron.core.exception.ZkProofValidateException;
 import org.tron.json.JSONException;
@@ -28,6 +30,8 @@ public class UtilProcessErrorTest {
         "balance is not sufficient");
     assertError(new MaintenanceUnavailableException("maintenance in progress"),
         "maintenance in progress");
+    assertError(new InvalidHttpParameterException("invalid key [id]: expect a 64-bit integer"),
+        "invalid key [id]: expect a 64-bit integer");
   }
 
   @Test
@@ -40,6 +44,7 @@ public class UtilProcessErrorTest {
         decoder,
         new HeaderNotFound("latest block not found"),
         new IllegalArgumentException("No enum constant internal.Type.VALUE"),
+        new InvalidParameterException("base parameter detail"),
         new IllegalAccessException(RATE_LIMITER_ERROR_MSG),
         new IllegalAccessException("other access failure"),
         new ZkProofValidateException("wrapped validation detail", true)
@@ -65,6 +70,8 @@ public class UtilProcessErrorTest {
     assertError(new JsonFormat.ParseException(""), INTERNAL_SERVER_ERROR);
     assertError(new JsonFormat.ParseException("  "), INTERNAL_SERVER_ERROR);
     assertError(new ContractValidateException("subclass message") { }, INTERNAL_SERVER_ERROR);
+    assertError(new InvalidHttpParameterException(null), INTERNAL_SERVER_ERROR);
+    assertError(new InvalidHttpParameterException(" "), INTERNAL_SERVER_ERROR);
   }
 
   @Test

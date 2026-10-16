@@ -86,15 +86,15 @@ public class ChainInventoryMsgHandler implements TronMsgHandler {
         peer.setFetchAble(true);
         return;
       }
-    }
 
-    peer.setFetchAble(true);
-    if ((chainInventoryMessage.getRemainNum() == 0 && !peer.getSyncBlockToFetch().isEmpty())
-        || (chainInventoryMessage.getRemainNum() != 0
-        && peer.getSyncBlockToFetch().size() > syncFetchBatchNum)) {
-      syncService.setFetchFlag(true);
-    } else {
-      syncService.syncNext(peer);
+      peer.setFetchAble(true);
+      if ((chainInventoryMessage.getRemainNum() == 0 && !peer.getSyncBlockToFetch().isEmpty())
+          || (chainInventoryMessage.getRemainNum() != 0
+          && peer.getSyncBlockToFetch().size() > syncFetchBatchNum)) {
+        syncService.setFetchFlag(true);
+      } else {
+        syncService.syncNext(peer);
+      }
     }
   }
 

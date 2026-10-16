@@ -127,7 +127,7 @@ public class PeerConnection {
 
   @Setter
   @Getter
-  private HelloMessage helloMessageReceive;
+  private volatile HelloMessage helloMessageReceive;
 
   @Setter
   @Getter
