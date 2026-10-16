@@ -5,7 +5,6 @@ import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERV
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.NoSuchElementException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,7 +56,7 @@ public class ChainInventoryMsgHandler implements TronMsgHandler {
     }
 
     while (!peer.getSyncBlockToFetch().isEmpty()) {
-      if (peer.getSyncBlockToFetch().peekLast().equals(blockIdWeGet.peekFirst())) {
+      if (blockIdWeGet.peekFirst().equals(peer.getSyncBlockToFetch().peekLast())) {
         break;
       }
       peer.getSyncBlockToFetch().pollLast();
@@ -69,22 +68,18 @@ public class ChainInventoryMsgHandler implements TronMsgHandler {
     peer.getSyncBlockToFetch().addAll(blockIdWeGet);
 
     synchronized (tronNetDelegate.getBlockLock()) {
-      try {
-        BlockId blockId = null;
-        while (!peer.getSyncBlockToFetch().isEmpty() && tronNetDelegate
-                .containBlock(peer.getSyncBlockToFetch().peek())) {
-          blockId = peer.getSyncBlockToFetch().pop();
+      Deque<BlockId> toFetch = peer.getSyncBlockToFetch();
+      BlockId blockId = null;
+      BlockId next;
+      while ((next = toFetch.peek()) != null && tronNetDelegate.containBlock(next)) {
+        if (toFetch.remove(next)) {
+          blockId = next;
           peer.setBlockBothHave(blockId);
         }
-        if (blockId != null) {
-          logger.info("Block {} from {} is processed",
-              blockId.getString(), peer.getInetAddress());
-        }
-      } catch (NoSuchElementException e) {
-        logger.warn("Process ChainInventoryMessage failed, peer {}, isDisconnect:{}",
-                peer.getInetAddress(), peer.isDisconnect());
-        peer.setFetchAble(true);
-        return;
+      }
+      if (blockId != null) {
+        logger.info("Block {} from {} is processed",
+            blockId.getString(), peer.getInetAddress());
       }
     }
 
