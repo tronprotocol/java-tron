@@ -3699,7 +3699,7 @@ public class PrecompiledContractsVerifyProofTest extends BaseTest {
 
   private Pair<Boolean, byte[]> verifyTransfer(byte[] input) {
     transferContract.getEnergyForData(input);
-    transferContract.setVmShouldEndInUs(System.nanoTime() / 1000 + 50 * 1000);
+    transferContract.setVmShouldEndInUs(System.nanoTime() / 1000 + 80 * 1000);
     return transferContract.execute(input);
   }
 

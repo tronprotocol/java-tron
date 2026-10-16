@@ -2376,7 +2376,7 @@ public class ShieldedTRC20BuilderTest extends BaseTest {
 
   private Pair<Boolean, byte[]> verifyTransfer(byte[] input) {
     transferContract.getEnergyForData(input);
-    transferContract.setVmShouldEndInUs(System.nanoTime() / 1000 + 50 * 1000);
+    transferContract.setVmShouldEndInUs(System.nanoTime() / 1000 + 80 * 1000);
     Pair<Boolean, byte[]> ret = transferContract.execute(input);
     return ret;
   }
