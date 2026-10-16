@@ -6,6 +6,7 @@ import com.google.protobuf.UnknownFieldSet;
 import io.prometheus.client.CollectorRegistry;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.net.InetSocketAddress;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -33,18 +34,23 @@ import org.tron.common.prometheus.MetricLabels;
 import org.tron.common.runtime.TvmTestUtils;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ReflectUtils;
+import org.tron.common.utils.Sha256Hash;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.P2pException;
 import org.tron.core.exception.P2pException.TypeEnum;
+import org.tron.core.net.P2pEventHandlerImpl;
 import org.tron.core.net.TronNetDelegate;
+import org.tron.core.net.message.adv.FetchInvDataMessage;
 import org.tron.core.net.message.adv.TransactionMessage;
 import org.tron.core.net.message.adv.TransactionsMessage;
 import org.tron.core.net.peer.Item;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.service.adv.AdvService;
+import org.tron.core.net.service.sync.SyncService;
+import org.tron.p2p.connection.Channel;
 import org.tron.protos.Protocol;
 import org.tron.protos.contract.BalanceContract;
 
@@ -450,10 +456,12 @@ public class TransactionsMsgHandlerTest extends BaseTest {
     Protocol.Transaction base = buildTransferMessage(1).getTransactions().getTransactions(0);
     for (int length : new int[]{0, 64, 65, 66, 67, 68, 69, 96}) {
       Protocol.Transaction transaction = withSignatures(base, length);
-      List<Protocol.Transaction> expected = length >= 65 && length <= 68
-          ? Collections.singletonList(transaction) : Collections.emptyList();
-      assertSignatureBatch(Collections.singletonList(transaction), expected,
-          Collections.emptyList());
+      if (length >= 65 && length <= 68) {
+        assertSignatureBatch(Collections.singletonList(transaction),
+            Collections.singletonList(transaction), Collections.emptyList());
+      } else {
+        assertRejectedSignatureBatch(Collections.singletonList(transaction));
+      }
     }
     assertSignatureBatch(Collections.singletonList(base), Collections.singletonList(base),
         Collections.emptyList());
@@ -465,22 +473,18 @@ public class TransactionsMsgHandlerTest extends BaseTest {
         .getTransactionsList();
     for (int invalidIndex = 0; invalidIndex < base.size(); invalidIndex++) {
       List<Protocol.Transaction> transactions = new ArrayList<>();
-      List<Protocol.Transaction> expected = new ArrayList<>();
       for (int i = 0; i < base.size(); i++) {
         Protocol.Transaction transaction = i == invalidIndex
             ? withSignatures(base.get(i), 65, 69 + invalidIndex)
             : withSignatures(base.get(i), 65);
         transactions.add(transaction);
-        if (i != invalidIndex) {
-          expected.add(transaction);
-        }
       }
-      assertSignatureBatch(transactions, expected, Collections.emptyList());
+      assertRejectedSignatureBatch(transactions);
     }
   }
 
   @Test
-  public void testDroppedTransactionMetricCountsTransactions() throws Exception {
+  public void testDropMetricCountsFirstInvalidTransaction() throws Exception {
     boolean metricsEnabled = Args.getInstance().isMetricsPrometheusEnable();
     Args.getInstance().setMetricsPrometheusEnable(true);
     try {
@@ -492,9 +496,8 @@ public class TransactionsMsgHandlerTest extends BaseTest {
       double before = droppedTransactions();
 
       for (int batch = 1; batch <= 2; batch++) {
-        assertSignatureBatch(Arrays.asList(shortSignature, valid, invalidMultiSign),
-            Collections.singletonList(valid), Collections.emptyList());
-        Assert.assertEquals(before + 2 * batch, droppedTransactions(), 0);
+        assertRejectedSignatureBatch(Arrays.asList(shortSignature, valid, invalidMultiSign));
+        Assert.assertEquals(before + batch, droppedTransactions(), 0);
       }
     } finally {
       Args.getInstance().setMetricsPrometheusEnable(metricsEnabled);
@@ -531,13 +534,163 @@ public class TransactionsMsgHandlerTest extends BaseTest {
       Protocol.Transaction invalid = withSignatures(base.get(1), 69);
       double before = droppedTransactions();
 
-      assertSignatureBatch(Arrays.asList(invalid, valid),
-          Collections.singletonList(valid), Collections.emptyList());
+      assertRejectedSignatureBatch(Arrays.asList(invalid, valid));
 
       Assert.assertEquals(before, droppedTransactions(), 0);
     } finally {
       Args.getInstance().setMetricsPrometheusEnable(metricsEnabled);
     }
+  }
+
+  @Test
+  public void testInvalidSignatureDisconnectRetriesAnotherAnnouncer() throws Exception {
+    assertDisconnectRecovery(true, false);
+  }
+
+  @Test
+  public void testInvalidSignatureDisconnectWaitsForBusyAnnouncer() throws Exception {
+    assertDisconnectRecovery(true, true);
+  }
+
+  @Test
+  public void testInvalidSignatureDisconnectReleasesFetchCache() throws Exception {
+    assertDisconnectRecovery(false, false);
+  }
+
+  private void assertDisconnectRecovery(boolean announced, boolean busy) throws Exception {
+    TransactionsMsgHandler handler = new TransactionsMsgHandler();
+    AdvService adv = new AdvService();
+    ExecutorService originalPool = null;
+    try {
+      TronNetDelegate delegate = Mockito.mock(TronNetDelegate.class);
+      Mockito.when(delegate.pushTransaction(Mockito.any())).thenReturn(true);
+      PeerConnection source = recoveryPeer("127.0.0.11", adv);
+      PeerConnection other = recoveryPeer("127.0.0.12", adv);
+      List<PeerConnection> activePeers = new ArrayList<>(Collections.singletonList(source));
+      Mockito.when(delegate.getActivePeer()).thenReturn(activePeers);
+      ReflectUtils.setFieldValue(adv, "tronNetDelegate", delegate);
+      setField(handler, "tronNetDelegate", delegate);
+      setField(handler, "advService", adv);
+      setField(handler, "chainBaseManager", Mockito.mock(ChainBaseManager.class));
+
+      List<Runnable> tasks = new ArrayList<>();
+      ExecutorService pool = Mockito.mock(ExecutorService.class);
+      Mockito.when(pool.submit(Mockito.any(Runnable.class))).thenAnswer(call -> {
+        tasks.add(call.getArgument(0));
+        return Mockito.mock(Future.class);
+      });
+      originalPool = replaceTrxHandlePool(handler, pool);
+
+      long now = System.currentTimeMillis();
+      List<Protocol.Transaction> transfers = buildTransferMessage(2).getTransactions()
+          .getTransactionsList();
+      Protocol.Transaction retry = withSignatures(transfers.get(0).toBuilder().setRawData(
+          transfers.get(0).getRawData().toBuilder().setExpiration(now + 60_000)).build(), 65);
+      Protocol.Transaction transfer = withSignatures(transfers.get(1), 65);
+      Protocol.Transaction smart = withSignatures(admissionTransaction(true), 65);
+      List<Protocol.Transaction> valid = Arrays.asList(retry, transfer, smart);
+      List<Item> items = new ArrayList<>();
+      for (Protocol.Transaction transaction : valid) {
+        Item item = new Item(new TransactionMessage(transaction).getMessageId(),
+            Protocol.Inventory.InventoryType.TRX);
+        items.add(item);
+        source.getAdvInvReceive().put(item, now);
+        Assert.assertTrue(adv.addInv(item));
+      }
+      Method fetch = AdvService.class.getDeclaredMethod("consumerInvToFetch");
+      fetch.setAccessible(true);
+      fetch.invoke(adv);
+      Map<Item, Long> requests = new ConcurrentHashMap<>(source.getAdvInvRequest());
+      Assert.assertEquals(3, requests.size());
+      if (announced) {
+        activePeers.add(other);
+        items.forEach(item -> other.getAdvInvReceive().put(item, now));
+      }
+      Item busyItem = new Item(Sha256Hash.ZERO_HASH, Protocol.Inventory.InventoryType.TRX);
+      if (busy) {
+        other.getAdvInvRequest().put(busyItem, now);
+      }
+
+      P2pEventHandlerImpl events = new P2pEventHandlerImpl();
+      ReflectUtils.setFieldValue(events, "transactionsMsgHandler", handler);
+      Method dispatch = P2pEventHandlerImpl.class.getDeclaredMethod("processMessage",
+          PeerConnection.class, byte[].class);
+      dispatch.setAccessible(true);
+      TransactionsMessage response = new TransactionsMessage(
+          Arrays.asList(transfer, withSignatures(retry, 69), smart));
+      dispatch.invoke(events, source, response.getSendBytes());
+
+      Mockito.verify(source).disconnect(Protocol.ReasonCode.BAD_TX);
+      Mockito.verify(source.getChannel()).close(Mockito.anyLong());
+      Assert.assertEquals(requests, source.getAdvInvRequest());
+      Assert.assertTrue(tasks.isEmpty());
+      Mockito.verify(delegate, Mockito.never()).pushTransaction(Mockito.any());
+      BlockingQueue<?> contracts = (BlockingQueue<?>)
+          ReflectUtils.getFieldObject(handler, "smartContractQueue");
+      Assert.assertTrue(contracts.isEmpty());
+
+      // The transport removes the source before invoking its disconnect cleanup.
+      activePeers.remove(source);
+      source.onDisconnect();
+      Assert.assertTrue(source.getAdvInvRequest().isEmpty());
+      if (!announced) {
+        for (Item item : items) {
+          Assert.assertTrue("rejected batch must be fetchable again", adv.addInv(item));
+          other.getAdvInvReceive().put(item, now);
+        }
+        activePeers.add(other);
+        fetch.invoke(adv);
+      } else if (busy) {
+        Mockito.verify(other, Mockito.never()).sendMessage(Mockito.any());
+        other.getAdvInvRequest().remove(busyItem);
+        fetch.invoke(adv);
+      }
+      Assert.assertEquals(requests.keySet(), other.getAdvInvRequest().keySet());
+      ArgumentCaptor<FetchInvDataMessage> requested =
+          ArgumentCaptor.forClass(FetchInvDataMessage.class);
+      Mockito.verify(other).sendMessage(requested.capture());
+      Assert.assertEquals(3, requested.getValue().getHashList().size());
+      for (Item item : items) {
+        Assert.assertTrue(requested.getValue().getHashList().contains(item.getHash()));
+      }
+
+      dispatch.invoke(events, other, new TransactionsMessage(valid).getSendBytes());
+      Assert.assertTrue(other.getAdvInvRequest().isEmpty());
+      Assert.assertEquals(2, tasks.size());
+      tasks.forEach(Runnable::run);
+      Assert.assertEquals(1, contracts.size());
+      TransactionsMsgHandler.TrxEvent contract =
+          (TransactionsMsgHandler.TrxEvent) contracts.remove();
+      Method handle = TransactionsMsgHandler.class.getDeclaredMethod("handleTransaction",
+          PeerConnection.class, TransactionMessage.class);
+      handle.setAccessible(true);
+      handle.invoke(handler, contract.getPeer(), contract.getMsg());
+      ArgumentCaptor<TransactionCapsule> pushed = ArgumentCaptor.forClass(TransactionCapsule.class);
+      Mockito.verify(delegate, Mockito.times(3)).pushTransaction(pushed.capture());
+      List<Protocol.Transaction> accepted = new ArrayList<>();
+      pushed.getAllValues().forEach(transaction -> accepted.add(transaction.getInstance()));
+      Assert.assertEquals(valid, accepted);
+      for (Item item : items) {
+        Assert.assertNotNull(adv.getMessage(item));
+      }
+      Mockito.verify(other, Mockito.never()).disconnect(Mockito.any());
+    } finally {
+      closeHandlerAndOriginalPool(handler, originalPool);
+      adv.close();
+    }
+  }
+
+  private PeerConnection recoveryPeer(String host, AdvService adv) {
+    InetSocketAddress address = new InetSocketAddress(host, 18888);
+    Channel channel = Mockito.mock(Channel.class);
+    Mockito.when(channel.getInetSocketAddress()).thenReturn(address);
+    Mockito.when(channel.getInetAddress()).thenReturn(address.getAddress());
+    PeerConnection peer = Mockito.spy(new PeerConnection());
+    peer.setChannel(channel);
+    Mockito.doNothing().when(peer).sendMessage(Mockito.any());
+    ReflectUtils.setFieldValue(peer, "advService", adv);
+    ReflectUtils.setFieldValue(peer, "syncService", Mockito.mock(SyncService.class));
+    return peer;
   }
 
   private double droppedTransactions() {
@@ -559,8 +712,9 @@ public class TransactionsMsgHandlerTest extends BaseTest {
             ByteArray.fromHexString("123457"), 100, 100000000, 0, 0), 65, 69);
     Protocol.Transaction transfer = withSignatures(
         buildTransferMessage(1).getTransactions().getTransactions(0), 65);
-    assertSignatureBatch(Arrays.asList(invalid, valid, transfer),
-        Collections.singletonList(transfer), Collections.singletonList(valid));
+    assertRejectedSignatureBatch(Arrays.asList(invalid, valid, transfer));
+    assertSignatureBatch(Arrays.asList(valid, transfer), Collections.singletonList(transfer),
+        Collections.singletonList(valid));
   }
 
   @Test
@@ -593,9 +747,20 @@ public class TransactionsMsgHandlerTest extends BaseTest {
     return builder.build();
   }
 
+  private void assertRejectedSignatureBatch(List<Protocol.Transaction> transactions)
+      throws Exception {
+    assertSignatureBatch(transactions, Collections.emptyList(), Collections.emptyList(), true);
+  }
+
   private void assertSignatureBatch(List<Protocol.Transaction> transactions,
       List<Protocol.Transaction> expectedTransfers, List<Protocol.Transaction> expectedContracts)
       throws Exception {
+    assertSignatureBatch(transactions, expectedTransfers, expectedContracts, false);
+  }
+
+  private void assertSignatureBatch(List<Protocol.Transaction> transactions,
+      List<Protocol.Transaction> expectedTransfers, List<Protocol.Transaction> expectedContracts,
+      boolean rejected) throws Exception {
     TransactionsMsgHandler handler = new TransactionsMsgHandler();
     ExecutorService originalPool = null;
     try {
@@ -624,9 +789,18 @@ public class TransactionsMsgHandlerTest extends BaseTest {
           Protocol.Inventory.InventoryType.TRX);
       requests.put(unrelatedItem, 0L);
 
-      handler.processMessage(peer, message);
-
-      Assert.assertEquals(Collections.singletonMap(unrelatedItem, 0L), requests);
+      if (rejected) {
+        Map<Item, Long> originalRequests = new ConcurrentHashMap<>(requests);
+        P2pException error = Assert.assertThrows(P2pException.class,
+            () -> handler.processMessage(peer, message));
+        Assert.assertEquals(TypeEnum.BAD_TRX, error.getType());
+        Assert.assertTrue(error.getMessage().contains("invalid signature lengths"));
+        Assert.assertEquals(originalRequests, requests);
+        Mockito.verify(pool, Mockito.never()).submit(Mockito.any(Runnable.class));
+      } else {
+        handler.processMessage(peer, message);
+        Assert.assertEquals(Collections.singletonMap(unrelatedItem, 0L), requests);
+      }
       Mockito.verify(peer, Mockito.never()).disconnect(Mockito.any());
       Mockito.verify(peer, Mockito.never()).setBadPeer(Mockito.anyBoolean());
       ArgumentCaptor<TransactionCapsule> pushed = ArgumentCaptor.forClass(TransactionCapsule.class);
@@ -707,10 +881,11 @@ public class TransactionsMsgHandlerTest extends BaseTest {
                 .setData(ByteString.copyFrom(new byte[600 * 1024]))).build(), 68);
         double before = droppedTransactions();
 
-        assertSignatureBatch(Arrays.asList(invalid, padded, oversized),
+        assertRejectedSignatureBatch(Arrays.asList(invalid, padded, oversized));
+        Assert.assertEquals(before + 1, droppedTransactions(), 0);
+        assertSignatureBatch(Arrays.asList(padded, oversized),
             smart ? Collections.emptyList() : Collections.singletonList(expected),
             smart ? Collections.singletonList(expected) : Collections.emptyList());
-
         Assert.assertEquals(before + 1, droppedTransactions(), 0);
       }
     } finally {

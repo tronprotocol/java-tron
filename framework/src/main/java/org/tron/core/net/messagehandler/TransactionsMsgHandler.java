@@ -101,16 +101,11 @@ public class TransactionsMsgHandler implements TronMsgHandler {
     int smartContractQueueSize = 0;
     int trxHandlePoolQueueSize = 0;
     int dropSmartContractCount = 0;
-    int invalidSignatureCount = 0;
     int oversizedCount = 0;
     for (Transaction trx : transactionsMessage.getTransactions().getTransactionsList()) {
       if (isClosed) {
         logger.info("TransactionsMsgHandler is closed during processing, stop submit");
         break;
-      }
-      if (!hasValidSignatureLengths(trx)) {
-        invalidSignatureCount++;
-        continue;
       }
       TransactionCapsule capsule = new TransactionCapsule(trx);
       capsule.sanitize();
@@ -140,13 +135,6 @@ public class TransactionsMsgHandler implements TronMsgHandler {
       }
     }
 
-    if (invalidSignatureCount > 0) {
-      Metrics.counterInc(MetricKeys.Counter.TX_REJECT, invalidSignatureCount,
-          MetricLabels.Counter.TX_REJECT_P2P,
-          MetricLabels.Counter.TX_REJECT_INVALID_SIGNATURE_LENGTH);
-      logger.debug("Drop {} transactions with invalid signature lengths from {}",
-          invalidSignatureCount, peer.getInetSocketAddress());
-    }
     if (dropSmartContractCount > 0) {
       logger.warn("Add smart contract failed, drop count: {}, queueSize {}:{}",
           dropSmartContractCount, smartContractQueueSize, trxHandlePoolQueueSize);
@@ -174,6 +162,15 @@ public class TransactionsMsgHandler implements TronMsgHandler {
       if (trx.getRawData().getContractCount() < 1) {
         throw new P2pException(TypeEnum.BAD_TRX,
             "tx " + item.getHash() + " contract size should be greater than 0");
+      }
+    }
+    for (Transaction trx : list) {
+      if (!hasValidSignatureLengths(trx)) {
+        Metrics.counterInc(MetricKeys.Counter.TX_REJECT, 1,
+            MetricLabels.Counter.TX_REJECT_P2P,
+            MetricLabels.Counter.TX_REJECT_INVALID_SIGNATURE_LENGTH);
+        throw new P2pException(TypeEnum.BAD_TRX,
+            "TransactionsMessage contains a transaction with invalid signature lengths");
       }
     }
     return seen;
