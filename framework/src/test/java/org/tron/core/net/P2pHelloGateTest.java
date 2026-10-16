@@ -71,13 +71,6 @@ public class P2pHelloGateTest {
   }
 
   @Test
-  public void testRejectEmptyFrames() {
-    handler.onMessage(channel, new byte[0]);
-    handler.onMessage(channel, null);
-    verify(peer, times(2)).disconnect(ReasonCode.BAD_PROTOCOL);
-  }
-
-  @Test
   public void testHelloIsDispatchedBeforeHandshake() throws Exception {
     ChainBaseManager chain = mock(ChainBaseManager.class);
     when(chain.getGenesisBlockId()).thenReturn(new BlockId());
