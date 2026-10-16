@@ -66,7 +66,7 @@ public class PeerStatusCheckMockTest {
     when(delegate.getForkLock()).thenReturn(new Object());
     when(delegate.getBlockIdByNum(anyLong()))
         .thenAnswer(invocation -> blockId(invocation.getArgument(0)));
-    request(peer, System.currentTimeMillis() - 6_000);
+    request(peer, System.currentTimeMillis() - NetConstants.SYNC_TIME_OUT - 1_000);
   }
 
   @After
@@ -166,8 +166,18 @@ public class PeerStatusCheckMockTest {
   }
 
   @Test
-  public void testRequestWithinFiveSecondsDoesNotTimeOut() {
-    request(peer, System.currentTimeMillis() - 1_000);
+  public void testChainSummaryRequestAtSixSecondsDoesNotTimeOut() {
+    request(peer, System.currentTimeMillis() - 6_000);
+
+    check.statusCheck();
+
+    verify(peer, never()).disconnect(any());
+  }
+
+  @Test
+  public void testSyncBlockRequestAtSixSecondsDoesNotTimeOut() {
+    peer.setSyncChainRequested(null);
+    peer.getSyncBlockRequested().put(blockId(21), System.currentTimeMillis() - 6_000);
 
     check.statusCheck();
 
@@ -232,7 +242,8 @@ public class PeerStatusCheckMockTest {
         System.currentTimeMillis() - NetConstants.ADV_TIME_OUT - 1_000);
     PeerConnection other = PeerSyncTestSupport.peer(11002);
     other.setNeedSyncFromPeer(false);
-    other.getSyncBlockRequested().put(blockId(21), System.currentTimeMillis() - 6_000);
+    other.getSyncBlockRequested().put(blockId(21),
+        System.currentTimeMillis() - NetConstants.SYNC_TIME_OUT - 1_000);
     when(delegate.getActivePeer()).thenReturn(Arrays.asList(peer, other));
 
     check.statusCheck();
