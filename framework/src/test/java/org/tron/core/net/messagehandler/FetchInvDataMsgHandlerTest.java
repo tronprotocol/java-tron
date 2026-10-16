@@ -153,6 +153,54 @@ public class FetchInvDataMsgHandlerTest {
   }
 
   @Test
+  public void testSyncBlockIdCacheRejectsDuplicatesAcrossAdvancingWindows() throws Exception {
+    PeerConnection peer = new PeerConnection();
+    peer.setNeedSyncFromUs(true);
+    FetchInvDataMsgHandler handler = new FetchInvDataMsgHandler();
+    TronNetDelegate delegate = Mockito.mock(TronNetDelegate.class);
+    ReflectUtils.setFieldValue(handler, "tronNetDelegate", delegate);
+    Mockito.when(delegate.getBlockIdByNum(Mockito.anyLong())).thenAnswer(invocation -> {
+      long height = invocation.getArgument(0);
+      return new BlockCapsule.BlockId(createHash((int) height), height);
+    });
+    Method check = FetchInvDataMsgHandler.class.getDeclaredMethod(
+        "check", PeerConnection.class, FetchInvDataMessage.class, boolean.class);
+    check.setAccessible(true);
+
+    // Fetch the highest block first so older heights become more recent cache entries.
+    // Continue beyond the cache capacity to exercise eviction over several windows.
+    for (long lastHeight = 10000; lastHeight <= 22000; lastHeight += 2000) {
+      BlockCapsule.BlockId lastId =
+          new BlockCapsule.BlockId(createHash((int) lastHeight), lastHeight);
+      peer.setLastSyncBlockId(lastId);
+      check.invoke(handler, peer, new FetchInvDataMessage(Collections.singletonList(lastId),
+          Protocol.Inventory.InventoryType.BLOCK), false);
+      long firstNewHeight = lastHeight == 10000 ? 6000 : lastHeight - 1999;
+      for (long height = firstNewHeight; height < lastHeight; height++) {
+        BlockCapsule.BlockId id = new BlockCapsule.BlockId(createHash((int) height), height);
+        check.invoke(handler, peer, new FetchInvDataMessage(Collections.singletonList(id),
+            Protocol.Inventory.InventoryType.BLOCK), false);
+      }
+
+      // containsKey does not refresh access order, preserving the adversarial request order.
+      for (long height = lastHeight - 4000; height <= lastHeight; height++) {
+        BlockCapsule.BlockId id = new BlockCapsule.BlockId(createHash((int) height), height);
+        Assert.assertTrue("Missing eligible block " + height + " at window " + lastHeight,
+            peer.getSyncBlockIdCache().asMap().containsKey(id));
+      }
+      long firstHeight = lastHeight - 4000;
+      BlockCapsule.BlockId firstId =
+          new BlockCapsule.BlockId(createHash((int) firstHeight), firstHeight);
+      InvocationTargetException exception = Assert.assertThrows(InvocationTargetException.class,
+          () -> check.invoke(handler, peer, new FetchInvDataMessage(
+              Collections.singletonList(firstId), Protocol.Inventory.InventoryType.BLOCK), false));
+      Assert.assertTrue(exception.getCause() instanceof P2pException);
+      Assert.assertEquals(P2pException.TypeEnum.BAD_MESSAGE,
+          ((P2pException) exception.getCause()).getType());
+    }
+  }
+
+  @Test
   public void testPreviouslyFetchedBlockAfterReorgIsSyncFailure() throws Exception {
     FetchInvDataMsgHandler handler = new FetchInvDataMsgHandler();
     TronNetDelegate delegate = Mockito.mock(TronNetDelegate.class);
