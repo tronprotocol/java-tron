@@ -4,9 +4,17 @@ import static org.tron.core.net.message.MessageTypes.FETCH_INV_DATA;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import com.google.protobuf.ByteString;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import org.junit.Assert;
 import org.junit.Test;
@@ -41,6 +49,7 @@ public class FetchInvDataMsgHandlerTest {
     Mockito.when(tronNetDelegate.allowPBFT()).thenReturn(false);
 
     BlockCapsule.BlockId blockId = new BlockCapsule.BlockId();
+    Mockito.when(tronNetDelegate.getBlockIdByNum(blockId.getNum())).thenReturn(blockId);
     List<Sha256Hash> blockIds = new LinkedList<>();
     blockIds.add(blockId);
 
@@ -66,6 +75,184 @@ public class FetchInvDataMsgHandlerTest {
     fetchInvDataMsgHandler.processMessage(peer,
         new FetchInvDataMessage(blockIds, Protocol.Inventory.InventoryType.BLOCK));
     Assert.assertNotNull(syncBlockIdCache.getIfPresent(blockId));
+  }
+
+  @Test
+  public void testSyncBlockIdCacheRetainsFullWindowAndRejectsDuplicates() throws Exception {
+    assertFullWindowRetainedAndDuplicatesRejected(false);
+  }
+
+  @Test
+  public void testSyncBlockIdCacheRetainsShuffledWindowAndRejectsDuplicates() throws Exception {
+    assertFullWindowRetainedAndDuplicatesRejected(true);
+  }
+
+  private void assertFullWindowRetainedAndDuplicatesRejected(boolean shuffled) throws Exception {
+    PeerConnection peer = Mockito.spy(new PeerConnection());
+    Mockito.doNothing().when(peer).sendMessage(Mockito.any());
+    int windowSize = 2 * (int) Parameter.NetConstants.SYNC_FETCH_BATCH_NUM + 1;
+    long lastHeight = 10000L;
+    peer.setNeedSyncFromUs(true);
+    peer.setLastSyncBlockId(new BlockCapsule.BlockId(Sha256Hash.ZERO_HASH, lastHeight));
+
+    FetchInvDataMsgHandler handler = new FetchInvDataMsgHandler();
+    TronNetDelegate delegate = Mockito.mock(TronNetDelegate.class);
+    ReflectUtils.setFieldValue(handler, "tronNetDelegate", delegate);
+    ReflectUtils.setFieldValue(handler, "advService", Mockito.mock(AdvService.class));
+    Method check = FetchInvDataMsgHandler.class.getDeclaredMethod(
+        "check", PeerConnection.class, FetchInvDataMessage.class, boolean.class);
+    check.setAccessible(true);
+    List<Sha256Hash> hashes = new ArrayList<>();
+    Map<Long, BlockCapsule.BlockId> mainChain = new HashMap<>();
+    for (int i = 0; i < windowSize; i++) {
+      BlockCapsule.BlockId id =
+          new BlockCapsule.BlockId(createHash(i), lastHeight - windowSize + 1 + i);
+      hashes.add(id);
+      mainChain.put(id.getNum(), id);
+    }
+    Mockito.when(delegate.getBlockIdByNum(Mockito.anyLong()))
+        .thenAnswer(invocation -> mainChain.get(invocation.getArgument(0)));
+    if (shuffled) {
+      Collections.shuffle(hashes, new Random(6966L));
+    }
+
+    for (Sha256Hash hash : hashes) {
+      check.invoke(handler, peer, new FetchInvDataMessage(Collections.singletonList(hash),
+          Protocol.Inventory.InventoryType.BLOCK), false);
+    }
+    peer.getSyncBlockIdCache().cleanUp();
+
+    // A retained fork at the same height must not become a 4,002nd cache key.
+    BlockCapsule fork = new BlockCapsule(lastHeight, Sha256Hash.ZERO_HASH, 1,
+        ByteString.EMPTY);
+    Mockito.when(delegate.getData(fork.getBlockId(), Protocol.Inventory.InventoryType.BLOCK))
+        .thenReturn(new BlockMessage(fork));
+    P2pException forkException = Assert.assertThrows(P2pException.class,
+        () -> handler.processMessage(peer, new FetchInvDataMessage(
+            Collections.singletonList(fork.getBlockId()), Protocol.Inventory.InventoryType.BLOCK)));
+    Assert.assertEquals(P2pException.TypeEnum.SYNC_FAILED, forkException.getType());
+    Assert.assertNull(peer.getSyncBlockIdCache().getIfPresent(fork.getBlockId()));
+    Mockito.verify(delegate, Mockito.never()).getData(Mockito.any(), Mockito.any());
+    Mockito.verify(peer, Mockito.never()).sendMessage(Mockito.any());
+
+    for (Sha256Hash hash : hashes) {
+      Assert.assertNotNull("Missing block " + new BlockCapsule.BlockId(hash).getNum(),
+          peer.getSyncBlockIdCache().getIfPresent(hash));
+    }
+    for (Sha256Hash hash : hashes) {
+      FetchInvDataMessage message = new FetchInvDataMessage(Collections.singletonList(hash),
+          Protocol.Inventory.InventoryType.BLOCK);
+      InvocationTargetException exception = Assert.assertThrows(InvocationTargetException.class,
+          () -> check.invoke(handler, peer, message, false));
+      Assert.assertTrue(exception.getCause() instanceof P2pException);
+      P2pException cause = (P2pException) exception.getCause();
+      Assert.assertEquals(P2pException.TypeEnum.BAD_MESSAGE, cause.getType());
+      Assert.assertEquals(new BlockCapsule.BlockId(hash).getString() + " is exist",
+          cause.getMessage());
+    }
+  }
+
+  @Test
+  public void testSyncBlockIdCacheRejectsDuplicatesAcrossAdvancingWindows() throws Exception {
+    PeerConnection peer = new PeerConnection();
+    peer.setNeedSyncFromUs(true);
+    FetchInvDataMsgHandler handler = new FetchInvDataMsgHandler();
+    TronNetDelegate delegate = Mockito.mock(TronNetDelegate.class);
+    ReflectUtils.setFieldValue(handler, "tronNetDelegate", delegate);
+    Mockito.when(delegate.getBlockIdByNum(Mockito.anyLong())).thenAnswer(invocation -> {
+      long height = invocation.getArgument(0);
+      return new BlockCapsule.BlockId(createHash((int) height), height);
+    });
+    Method check = FetchInvDataMsgHandler.class.getDeclaredMethod(
+        "check", PeerConnection.class, FetchInvDataMessage.class, boolean.class);
+    check.setAccessible(true);
+
+    // Fetch the highest block first so older heights become more recent cache entries.
+    // Continue beyond the cache capacity to exercise eviction over several windows.
+    for (long lastHeight = 10000; lastHeight <= 22000; lastHeight += 2000) {
+      BlockCapsule.BlockId lastId =
+          new BlockCapsule.BlockId(createHash((int) lastHeight), lastHeight);
+      peer.setLastSyncBlockId(lastId);
+      check.invoke(handler, peer, new FetchInvDataMessage(Collections.singletonList(lastId),
+          Protocol.Inventory.InventoryType.BLOCK), false);
+      long firstNewHeight = lastHeight == 10000 ? 6000 : lastHeight - 1999;
+      for (long height = firstNewHeight; height < lastHeight; height++) {
+        BlockCapsule.BlockId id = new BlockCapsule.BlockId(createHash((int) height), height);
+        check.invoke(handler, peer, new FetchInvDataMessage(Collections.singletonList(id),
+            Protocol.Inventory.InventoryType.BLOCK), false);
+      }
+
+      // containsKey does not refresh access order, preserving the adversarial request order.
+      for (long height = lastHeight - 4000; height <= lastHeight; height++) {
+        BlockCapsule.BlockId id = new BlockCapsule.BlockId(createHash((int) height), height);
+        Assert.assertTrue("Missing eligible block " + height + " at window " + lastHeight,
+            peer.getSyncBlockIdCache().asMap().containsKey(id));
+      }
+      long firstHeight = lastHeight - 4000;
+      BlockCapsule.BlockId firstId =
+          new BlockCapsule.BlockId(createHash((int) firstHeight), firstHeight);
+      InvocationTargetException exception = Assert.assertThrows(InvocationTargetException.class,
+          () -> check.invoke(handler, peer, new FetchInvDataMessage(
+              Collections.singletonList(firstId), Protocol.Inventory.InventoryType.BLOCK), false));
+      Assert.assertTrue(exception.getCause() instanceof P2pException);
+      Assert.assertEquals(P2pException.TypeEnum.BAD_MESSAGE,
+          ((P2pException) exception.getCause()).getType());
+    }
+  }
+
+  @Test
+  public void testPreviouslyFetchedBlockAfterReorgIsSyncFailure() throws Exception {
+    FetchInvDataMsgHandler handler = new FetchInvDataMsgHandler();
+    TronNetDelegate delegate = Mockito.mock(TronNetDelegate.class);
+    ReflectUtils.setFieldValue(handler, "tronNetDelegate", delegate);
+    PeerConnection peer = new PeerConnection();
+    BlockCapsule.BlockId oldId = new BlockCapsule.BlockId(createHash(1), 10000L);
+    BlockCapsule.BlockId newId = new BlockCapsule.BlockId(createHash(2), 10000L);
+    peer.setNeedSyncFromUs(true);
+    peer.setLastSyncBlockId(oldId);
+    peer.getSyncBlockIdCache().put(oldId, 1L);
+    Mockito.when(delegate.getBlockIdByNum(10000L)).thenReturn(newId);
+
+    P2pException exception = Assert.assertThrows(P2pException.class,
+        () -> handler.processMessage(peer, new FetchInvDataMessage(
+            Collections.singletonList(oldId), Protocol.Inventory.InventoryType.BLOCK)));
+
+    Assert.assertEquals(P2pException.TypeEnum.SYNC_FAILED, exception.getType());
+    Mockito.verify(delegate, Mockito.never()).getData(Mockito.any(), Mockito.any());
+  }
+
+  @Test
+  public void testAdvertisedForkBlockCanStillBeFetched() throws Exception {
+    FetchInvDataMsgHandler handler = new FetchInvDataMsgHandler();
+    TronNetDelegate delegate = Mockito.mock(TronNetDelegate.class);
+    ReflectUtils.setFieldValue(handler, "tronNetDelegate", delegate);
+    ReflectUtils.setFieldValue(handler, "advService", Mockito.mock(AdvService.class));
+    PeerConnection peer = Mockito.spy(new PeerConnection());
+    Mockito.doNothing().when(peer).sendMessage(Mockito.any());
+    BlockCapsule fork = new BlockCapsule(10000L, Sha256Hash.ZERO_HASH, 1,
+        ByteString.EMPTY);
+    Item item = new Item(fork.getBlockId(), Protocol.Inventory.InventoryType.BLOCK);
+    peer.getAdvInvSpread().put(item, 1L);
+    BlockMessage message = new BlockMessage(fork);
+    Mockito.when(delegate.getData(fork.getBlockId(), Protocol.Inventory.InventoryType.BLOCK))
+        .thenReturn(message);
+
+    handler.processMessage(peer, new FetchInvDataMessage(
+        Collections.singletonList(fork.getBlockId()), Protocol.Inventory.InventoryType.BLOCK));
+
+    Mockito.verify(peer).sendMessage(message);
+    Mockito.verify(delegate, Mockito.never()).getBlockIdByNum(Mockito.anyLong());
+    Assert.assertNull(peer.getAdvInvSpread().getIfPresent(item));
+    Assert.assertEquals(0, peer.getSyncBlockIdCache().size());
+  }
+
+  private Sha256Hash createHash(int value) {
+    byte[] bytes = new byte[Sha256Hash.LENGTH];
+    bytes[28] = (byte) (value >>> 24);
+    bytes[29] = (byte) (value >>> 16);
+    bytes[30] = (byte) (value >>> 8);
+    bytes[31] = (byte) value;
+    return Sha256Hash.wrap(bytes);
   }
 
   @Test
