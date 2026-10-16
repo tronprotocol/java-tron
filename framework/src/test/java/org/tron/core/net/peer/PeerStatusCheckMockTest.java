@@ -3,6 +3,7 @@ package org.tron.core.net.peer;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -32,6 +33,7 @@ import org.tron.core.net.P2pEventHandlerImpl;
 import org.tron.core.net.PeerSyncTestSupport;
 import org.tron.core.net.TronNetDelegate;
 import org.tron.core.net.message.TronMessage;
+import org.tron.core.net.message.handshake.HelloMessage;
 import org.tron.core.net.message.keepalive.PingMessage;
 import org.tron.core.net.message.keepalive.PongMessage;
 import org.tron.core.net.message.sync.ChainInventoryMessage;
@@ -40,6 +42,7 @@ import org.tron.core.net.messagehandler.ChainInventoryMsgHandler;
 import org.tron.core.net.messagehandler.SyncBlockChainMsgHandler;
 import org.tron.core.net.service.keepalive.KeepAliveService;
 import org.tron.core.net.service.sync.SyncService;
+import org.tron.p2p.connection.Channel;
 import org.tron.protos.Protocol.Inventory.InventoryType;
 import org.tron.protos.Protocol.ReasonCode;
 
@@ -55,6 +58,7 @@ public class PeerStatusCheckMockTest {
     delegate = mock(TronNetDelegate.class);
     ReflectUtils.setFieldValue(check, "tronNetDelegate", delegate);
     peer = PeerSyncTestSupport.peer(11001);
+    peer.setHelloMessageReceive(mock(HelloMessage.class));
     peer.setNeedSyncFromPeer(false);
     peer.setNeedSyncFromUs(false);
     peer.setLastInteractiveTime(1);
@@ -103,6 +107,7 @@ public class PeerStatusCheckMockTest {
   @Test
   public void testExpiredSummaryDisconnectsOnlyResponsiblePeer() {
     PeerConnection other = PeerSyncTestSupport.peer(11002);
+    other.setHelloMessageReceive(mock(HelloMessage.class));
     other.setNeedSyncFromPeer(false);
     other.setNeedSyncFromUs(false);
     request(other, System.currentTimeMillis());
@@ -241,6 +246,7 @@ public class PeerStatusCheckMockTest {
     peer.getAdvInvRequest().put(new Item(blockId(21), InventoryType.BLOCK),
         System.currentTimeMillis() - NetConstants.ADV_TIME_OUT - 1_000);
     PeerConnection other = PeerSyncTestSupport.peer(11002);
+    other.setHelloMessageReceive(mock(HelloMessage.class));
     other.setNeedSyncFromPeer(false);
     other.getSyncBlockRequested().put(blockId(21),
         System.currentTimeMillis() - NetConstants.SYNC_TIME_OUT - 1_000);
@@ -260,5 +266,35 @@ public class PeerStatusCheckMockTest {
   private void dispatch(P2pEventHandlerImpl events, TronMessage message) {
     ReflectUtils.invokeMethod(events, "processMessage",
         new Class<?>[]{PeerConnection.class, byte[].class}, peer, message.getSendBytes());
+  }
+
+  @Test
+  public void testHelloTimeout() {
+    PeerStatusCheck check = new PeerStatusCheck();
+    PeerConnection peer = mock(PeerConnection.class);
+    Channel channel = mock(Channel.class);
+    TronNetDelegate delegate = mock(TronNetDelegate.class);
+    when(delegate.getActivePeer()).thenReturn(Collections.singletonList(peer));
+    when(peer.getChannel()).thenReturn(channel);
+    when(peer.getAdvInvRequest()).thenReturn(Collections.emptyMap());
+    when(peer.getSyncBlockRequested()).thenReturn(Collections.emptyMap());
+    ReflectUtils.setFieldValue(check, "tronNetDelegate", delegate);
+    try {
+      long now = System.currentTimeMillis();
+      when(channel.getStartTime()).thenReturn(now);
+      check.statusCheck();
+      verify(peer, never()).disconnect(any());
+
+      when(channel.getStartTime()).thenReturn(now - NetConstants.HELLO_TIME_OUT - 1);
+      check.statusCheck();
+      verify(peer).disconnect(ReasonCode.TIME_OUT);
+
+      clearInvocations(peer);
+      when(peer.getHelloMessageReceive()).thenReturn(mock(HelloMessage.class));
+      check.statusCheck();
+      verify(peer, never()).disconnect(any());
+    } finally {
+      check.close();
+    }
   }
 }
