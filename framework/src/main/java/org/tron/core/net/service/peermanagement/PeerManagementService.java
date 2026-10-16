@@ -227,17 +227,9 @@ public class PeerManagementService {
     try {
       return deserializeBlockedIps(storedValue);
     } catch (IOException e) {
-      logger.warn("Invalid blocked IP data in CommonStore key blocked-ips; deleting it", e);
-      deleteInvalidBlockedIps();
+      logger.warn("Invalid blocked IP data in CommonStore key blocked-ips; starting with an empty "
+          + "manual blocklist and retaining the stored value until the next update", e);
       return Collections.emptyMap();
-    }
-  }
-
-  private void deleteInvalidBlockedIps() {
-    try {
-      commonStore.delete(DB_KEY_BLOCKED_IPS);
-    } catch (RuntimeException e) {
-      logger.warn("Failed to delete invalid CommonStore key blocked-ips", e);
     }
   }
 
