@@ -101,7 +101,7 @@ public class Parameter {
 
     public static final long SYNC_FETCH_BATCH_NUM = 2000;
     public static final long ADV_TIME_OUT = 20000L;
-    public static final long SYNC_TIME_OUT = 5000L;
+    public static final long SYNC_TIME_OUT = 10000L;
     public static final long NET_MAX_TRX_PER_SECOND = 700L;
     public static final int MSG_CACHE_DURATION_IN_BLOCKS = 5;
     public static final int MAX_BLOCK_FETCH_PER_PEER = 100;
