@@ -5,7 +5,7 @@ import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
-import org.tron.common.utils.StringUtil;
+import org.tron.common.utils.WalletUtil;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.config.args.Args;
@@ -132,7 +132,7 @@ public class HelloMessage extends TronMessage {
     ByteString address = helloMessage.getAddress();
     if (!address.isEmpty()) {
       builder.append("address:")
-              .append(StringUtil.encode58Check(address.toByteArray())).append("\n");
+              .append(WalletUtil.getAddressString(address.toByteArray())).append("\n");
     }
 
     ByteString signature = helloMessage.getSignature();
