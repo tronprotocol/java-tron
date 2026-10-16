@@ -157,14 +157,8 @@ public class FetchBlockService {
     double newPeerLatency = getPeerLatency(newPeer);
     double oldPeerLatency = getPeerLatency(fetchBlock.getPeer());
     long oldPeerSpendTime = System.currentTimeMillis() - fetchBlock.getTime();
-    // Switch unconditionally on a hard timeout: an unseeded or saturated old peer must not
-    // permanently wedge fetchBlockInfo.
+    // After the actual request timeout, allow a backup without a useful latency estimate.
     if (oldPeerSpendTime >= fetchTimeOut) {
-      return true;
-    }
-
-    // Require a strictly better peer for the latency saturation gate to prevent 500v500 flapping.
-    if (oldPeerLatency >= fetchTimeOut && newPeerLatency < oldPeerLatency) {
       return true;
     }
 

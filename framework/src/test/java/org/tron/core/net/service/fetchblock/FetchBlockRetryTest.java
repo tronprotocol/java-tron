@@ -249,6 +249,16 @@ public class FetchBlockRetryTest {
   }
 
   @Test
+  public void testSaturatedLatencyDoesNotDispatchBackupWithNoTimeBenefit() throws Exception {
+    assertSaturatedOldPeerWaitsForBenefit(9_950L);
+  }
+
+  @Test
+  public void testSaturatedLatencyRequiresSufficientSpeedup() throws Exception {
+    assertSaturatedOldPeerWaitsForBenefit(6_000L);
+  }
+
+  @Test
   public void testFasterBackupCanStartBeforeTimeout() throws Exception {
     ReflectUtils.setFieldValue(fetch, "fetchTimeOut", 10_000L);
     CommonParameter.getInstance().fetchBlockTimeout = 10_000;
@@ -416,6 +426,9 @@ public class FetchBlockRetryTest {
     beginAgedFetch(2_000);
     second.getAdvInvReceive().put(item, System.currentTimeMillis());
     tick(state());
+    long connectedAt = System.currentTimeMillis();
+    when(first.getChannel().getStartTime()).thenReturn(connectedAt);
+    when(second.getChannel().getStartTime()).thenReturn(connectedAt);
     first.getAdvInvRequest().put(item,
         System.currentTimeMillis() - NetConstants.ADV_TIME_OUT - 1_000);
     PeerStatusCheck status = new PeerStatusCheck();
@@ -647,6 +660,21 @@ public class FetchBlockRetryTest {
         candidates.get(i).updateFetchLatency(latencies[i]);
       }
     }
+  }
+
+  private void assertSaturatedOldPeerWaitsForBenefit(long candidateLatency) throws Exception {
+    ReflectUtils.setFieldValue(fetch, "fetchTimeOut", 10_000L);
+    CommonParameter.getInstance().fetchBlockTimeout = 10_000;
+    second.getAdvInvReceive().put(item, System.currentTimeMillis());
+    setBlockLatencies(first, 10_000L, second, candidateLatency);
+    beginAgedFetch(100);
+    Object originalState = state();
+
+    tick(originalState);
+
+    Assert.assertSame(originalState, state());
+    Assert.assertFalse(second.getAdvInvRequest().containsKey(item));
+    verify(second, never()).sendMessage(any());
   }
 
   private void ageState(long age) {

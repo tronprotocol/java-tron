@@ -108,11 +108,9 @@ public class FetchBlockServiceTest extends BaseMethodTest {
     assertTrackedPeer(newPeer);
   }
 
-  /**
-   * A 600ms seed is clamped to 500ms, and >= timeout triggers fast-switch.
-   */
+  /** A much faster peer can still be selected before the actual timeout. */
   @Test
-  public void testSwitchOnOldPeerTimeout() throws Exception {
+  public void testSwitchToMuchFasterPeerBeforeTimeout() throws Exception {
     InetSocketAddress oldAddr = new InetSocketAddress("127.0.0.3", 10001);
     InetSocketAddress newAddr = new InetSocketAddress("127.0.0.4", 10001);
 

@@ -103,8 +103,8 @@ public class PeerConnection {
    * clamped to fetchBlock.timeout only afterwards, so sustained degradation saturates
    * within 1-3 samples (issue #6923). Accepted cost: one transient outlier (~10x a
    * healthy estimate) can jump the estimate straight to the clamp, needing ~9 healthy
-   * samples to decay; hard-timeout fallback and the saturation gate (one secondary
-   * fetch per tick) bound the impact meanwhile.
+   * samples to decay; backup dispatch still requires an elapsed timeout or sufficient
+   * expected benefit.
    */
   private static final int FETCH_LATENCY_EWMA_FACTOR = 10;
 
@@ -243,7 +243,7 @@ public class PeerConnection {
   }
 
   private long clampFetchLatency(long latency) {
-    // Saturation intentionally makes the >= timeout gate in FetchBlockService trigger.
+    // Bound measured latency without treating saturation as an elapsed fetch timeout.
     return StrictMathWrapper.max(0,
         StrictMathWrapper.min(CommonParameter.getInstance().fetchBlockTimeout, latency));
   }
