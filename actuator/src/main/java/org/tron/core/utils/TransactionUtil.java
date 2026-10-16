@@ -40,6 +40,7 @@ import org.tron.api.GrpcAPI.TransactionSignWeight;
 import org.tron.api.GrpcAPI.TransactionSignWeight.Result;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.ChainBaseManager;
+import org.tron.core.actuator.ActuatorConstant;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.exception.PermissionException;
@@ -197,6 +198,14 @@ public class TransactionUtil {
   public TransactionSignWeight getTransactionSignWeight(Transaction trx) {
     TransactionSignWeight.Builder tswBuilder = TransactionSignWeight.newBuilder();
     Result.Builder resultBuilder = Result.newBuilder();
+    int contractCount = trx.getRawData().getContractCount();
+    if (contractCount > 1) {
+      resultBuilder.setCode(Result.response_code.OTHER_ERROR);
+      resultBuilder.setMessage("Invalid transaction: "
+          + String.format(ActuatorConstant.CONTRACT_SIZE_NOT_EQUAL_TO_ONE, contractCount));
+      tswBuilder.setResult(resultBuilder);
+      return tswBuilder.build();
+    }
     if (trx.getSignatureCount() > chainBaseManager.getDynamicPropertiesStore()
         .getTotalSignNum()) {
       resultBuilder.setCode(Result.response_code.OTHER_ERROR);

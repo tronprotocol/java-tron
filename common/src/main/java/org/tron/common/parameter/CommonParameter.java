@@ -318,7 +318,7 @@ public class CommonParameter {
 
   @Getter
   @Setter
-  public boolean nodeAllowNumericFieldAlias = true;
+  public boolean nodeAllowNumericFieldAlias = false;
   @Getter
   @Setter
   public int allowMultiSign;
