@@ -32,6 +32,7 @@ import org.tron.core.net.message.sync.SyncBlockChainMessage;
 import org.tron.core.net.messagehandler.PbftDataSyncHandler;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.TronState;
+import org.tron.core.net.service.adv.AdvService;
 import org.tron.protos.Protocol.Inventory.InventoryType;
 import org.tron.protos.Protocol.ReasonCode;
 
@@ -44,6 +45,9 @@ public class SyncService {
 
   @Autowired
   private PbftDataSyncHandler pbftDataSyncHandler;
+
+  @Autowired
+  private AdvService advService;
 
   private Map<UnparsedBlock, PeerConnection> blockWaitToProcess = new ConcurrentHashMap<>();
 
@@ -63,6 +67,8 @@ public class SyncService {
   private final ScheduledExecutorService blockHandleExecutor = ExecutorServiceManager
       .newSingleThreadScheduledExecutor(handleEsName);
 
+  // When true, the scheduled task calls handleSyncBlock() to process pending sync blocks.
+  @Setter
   private volatile boolean handleFlag = false;
 
   @Setter
@@ -328,6 +334,14 @@ public class SyncService {
             }
             processSyncBlock(block, peerConnection);
             peerConnection.getSyncBlockInProcess().remove(blockId);
+          } else if (tronNetDelegate.getActivePeer().stream()
+              .noneMatch(peer -> peer.getSyncBlockToFetch().contains(blockId))
+              && tronNetDelegate.containBlock(blockId)) {
+            // The block is already local and no sync queue still needs this response.
+            // Release the pending slot and the provider's in-process marker.
+            blockWaitToProcess.remove(unparsedBlock);
+            capacityReleased[0] = true;
+            peerConnection.getSyncBlockInProcess().remove(blockId);
           }
         }
       });
@@ -344,8 +358,17 @@ public class SyncService {
     BlockId blockId = block.getBlockId();
     try {
       tronNetDelegate.validSignature(block);
+      boolean useful = block.getNum() >= tronNetDelegate.getHeadBlockId().getNum()
+          && !tronNetDelegate.containBlock(blockId);
       tronNetDelegate.processBlock(block, true);
-      peerConnection.setBlockRcvTime(System.currentTimeMillis());
+      if (tronNetDelegate.isHitDown()) {
+        return;
+      }
+      advService.confirmBlockInventory(blockId);
+      peerConnection.updateLastInteractiveTime(System.currentTimeMillis());
+      if (useful) {
+        peerConnection.setBlockRcvTime(System.currentTimeMillis());
+      }
       pbftDataSyncHandler.processPBFTCommitData(block);
     } catch (P2pException p2pException) {
       logger.error("Process sync block {} failed, type: {}",

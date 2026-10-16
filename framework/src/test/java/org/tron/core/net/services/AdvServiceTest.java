@@ -36,6 +36,7 @@ import org.tron.core.net.peer.Item;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.PeerManager;
 import org.tron.core.net.service.adv.AdvService;
+import org.tron.core.net.service.fetchblock.FetchBlockService;
 import org.tron.p2p.connection.Channel;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Inventory.InventoryType;
@@ -185,6 +186,7 @@ public class AdvServiceTest {
     Mockito.when(delegate.getActivePeer()).thenReturn(Arrays.asList(first, second));
     AdvService isolated = new AdvService();
     ReflectUtils.setFieldValue(isolated, "tronNetDelegate", delegate);
+    ReflectUtils.setFieldValue(isolated, "fetchBlockService", mock(FetchBlockService.class));
     try {
       BlockCapsule block = new BlockCapsule(1, Sha256Hash.ZERO_HASH,
           System.currentTimeMillis(), Sha256Hash.ZERO_HASH.getByteString());

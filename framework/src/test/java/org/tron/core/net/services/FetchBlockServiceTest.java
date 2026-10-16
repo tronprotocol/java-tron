@@ -7,7 +7,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.google.protobuf.ByteString;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
@@ -19,6 +18,8 @@ import org.junit.Test;
 import org.tron.common.BaseMethodTest;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.core.ChainBaseManager;
+import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.net.TronNetDelegate;
 import org.tron.core.net.peer.Item;
 import org.tron.core.net.peer.PeerConnection;
@@ -36,6 +37,7 @@ public class FetchBlockServiceTest extends BaseMethodTest {
     service = context.getBean(FetchBlockService.class);
     tronNetDelegate = mock(TronNetDelegate.class);
     ReflectUtils.setFieldValue(service, "tronNetDelegate", tronNetDelegate);
+    ReflectUtils.setFieldValue(service, "chainBaseManager", mock(ChainBaseManager.class));
   }
 
   /**
@@ -67,9 +69,10 @@ public class FetchBlockServiceTest extends BaseMethodTest {
     oldPeer.updateFetchLatency(200L);
     PeerConnection newPeer = context.getBean(PeerConnection.class);
     newPeer.setChannel(newChannel);
+    allowBlockFetch(newPeer);
     newPeer.updateFetchLatency(50L);
 
-    Sha256Hash hash = Sha256Hash.wrap(ByteString.copyFrom(new byte[32]));
+    Sha256Hash hash = new BlockId(Sha256Hash.ZERO_HASH, 1);
     Item item = new Item(hash, InventoryType.BLOCK);
 
     // both peers advertise having the block
@@ -101,15 +104,13 @@ public class FetchBlockServiceTest extends BaseMethodTest {
     verify(newChannel).send(any(byte[].class));
     // old peer should not be re-requested
     verify(oldChannel, never()).send(any(byte[].class));
-    // fetchBlockInfo should be cleared after successful dispatch
-    Assert.assertNull(ReflectUtils.getFieldObject(service, "fetchBlockInfo"));
+    // Keep tracking the backup so a third request cannot amplify this fetch.
+    assertTrackedPeer(newPeer);
   }
 
-  /**
-   * A 600ms seed is clamped to 500ms, and >= timeout triggers fast-switch.
-   */
+  /** A much faster peer can still be selected before the actual timeout. */
   @Test
-  public void testSwitchOnOldPeerTimeout() throws Exception {
+  public void testSwitchToMuchFasterPeerBeforeTimeout() throws Exception {
     InetSocketAddress oldAddr = new InetSocketAddress("127.0.0.3", 10001);
     InetSocketAddress newAddr = new InetSocketAddress("127.0.0.4", 10001);
 
@@ -132,9 +133,10 @@ public class FetchBlockServiceTest extends BaseMethodTest {
 
     PeerConnection newPeer = context.getBean(PeerConnection.class);
     newPeer.setChannel(newChannel);
+    allowBlockFetch(newPeer);
     newPeer.updateFetchLatency(50L);
 
-    Sha256Hash hash = Sha256Hash.wrap(ByteString.copyFrom(new byte[32]));
+    Sha256Hash hash = new BlockId(Sha256Hash.ZERO_HASH, 1);
     Item item = new Item(hash, InventoryType.BLOCK);
 
     newPeer.getAdvInvReceive().put(item, System.currentTimeMillis());
@@ -159,7 +161,7 @@ public class FetchBlockServiceTest extends BaseMethodTest {
     method.invoke(service, fetchBlockInfo);
 
     verify(newChannel).send(any(byte[].class));
-    Assert.assertNull(ReflectUtils.getFieldObject(service, "fetchBlockInfo"));
+    assertTrackedPeer(newPeer);
   }
 
   @Test
@@ -172,10 +174,11 @@ public class FetchBlockServiceTest extends BaseMethodTest {
     when(candidateChannel.getAvgLatency()).thenReturn(50L);
     ReflectUtils.setFieldValue(oldPeer, "channel", oldChannel);
     ReflectUtils.setFieldValue(candidate, "channel", candidateChannel);
+    allowBlockFetch(candidate);
     candidate.updateFetchLatency(50L);
     doNothing().when(candidateChannel).send(any(byte[].class));
 
-    Sha256Hash hash = Sha256Hash.wrap(ByteString.copyFrom(new byte[32]));
+    Sha256Hash hash = new BlockId(Sha256Hash.ZERO_HASH, 1);
     Item item = new Item(hash, InventoryType.BLOCK);
     candidate.getAdvInvReceive().put(item, System.currentTimeMillis());
     when(tronNetDelegate.getActivePeer()).thenReturn(Arrays.asList(oldPeer, candidate));
@@ -194,7 +197,7 @@ public class FetchBlockServiceTest extends BaseMethodTest {
     method.invoke(service, fetchBlockInfo);
 
     verify(candidateChannel).send(any(byte[].class));
-    Assert.assertNull(ReflectUtils.getFieldObject(service, "fetchBlockInfo"));
+    assertTrackedPeer(candidate);
   }
 
   /**
@@ -225,10 +228,11 @@ public class FetchBlockServiceTest extends BaseMethodTest {
 
     PeerConnection newPeer = context.getBean(PeerConnection.class);
     newPeer.setChannel(newChannel);
+    allowBlockFetch(newPeer);
     // first real sample replaces the unsampled state, then clamps 999 to 500
     newPeer.updateFetchLatency(999L);
 
-    Sha256Hash hash = Sha256Hash.wrap(ByteString.copyFrom(new byte[32]));
+    Sha256Hash hash = new BlockId(Sha256Hash.ZERO_HASH, 1);
     Item item = new Item(hash, InventoryType.BLOCK);
 
     oldPeer.getAdvInvReceive().put(item, System.currentTimeMillis());
@@ -286,8 +290,9 @@ public class FetchBlockServiceTest extends BaseMethodTest {
     oldPeer.setChannel(oldChannel);
     PeerConnection newPeer = context.getBean(PeerConnection.class);
     newPeer.setChannel(newChannel);
+    allowBlockFetch(newPeer);
 
-    Sha256Hash hash = Sha256Hash.wrap(ByteString.copyFrom(new byte[32]));
+    Sha256Hash hash = new BlockId(Sha256Hash.ZERO_HASH, 1);
     Item item = new Item(hash, InventoryType.BLOCK);
 
     oldPeer.getAdvInvReceive().put(item, System.currentTimeMillis());
@@ -314,7 +319,7 @@ public class FetchBlockServiceTest extends BaseMethodTest {
 
     // failover: unsampled candidate reads channel fallback 0 and wins the comparison
     verify(newChannel).send(any(byte[].class));
-    Assert.assertNull(ReflectUtils.getFieldObject(service, "fetchBlockInfo"));
+    assertTrackedPeer(newPeer);
   }
 
   /**
@@ -332,9 +337,10 @@ public class FetchBlockServiceTest extends BaseMethodTest {
     ReflectUtils.setFieldValue(oldPeer, "channel", oldChannel);
     oldPeer.updateFetchLatency(200L);
     ReflectUtils.setFieldValue(candidate, "channel", candidateChannel);
+    allowBlockFetch(candidate);
     doNothing().when(candidateChannel).send(any(byte[].class));
 
-    Sha256Hash hash = Sha256Hash.wrap(ByteString.copyFrom(new byte[32]));
+    Sha256Hash hash = new BlockId(Sha256Hash.ZERO_HASH, 1);
     Item item = new Item(hash, InventoryType.BLOCK);
     candidate.getAdvInvReceive().put(item, System.currentTimeMillis());
     when(tronNetDelegate.getActivePeer()).thenReturn(Arrays.asList(oldPeer, candidate));
@@ -351,7 +357,7 @@ public class FetchBlockServiceTest extends BaseMethodTest {
     method.invoke(service, info);
 
     verify(candidateChannel).send(any(byte[].class));
-    Assert.assertNull(ReflectUtils.getFieldObject(service, "fetchBlockInfo"));
+    assertTrackedPeer(candidate);
   }
 
   /**
@@ -475,5 +481,16 @@ public class FetchBlockServiceTest extends BaseMethodTest {
     // the fresh connection is unsampled: it reads its own channel fallback (50),
     // not the first connection's estimate (500) and not a cross-connection value
     Assert.assertEquals(50L, second.getFetchLatency());
+  }
+
+  private void assertTrackedPeer(PeerConnection expected) {
+    Object fetchBlockInfo = ReflectUtils.getFieldObject(service, "fetchBlockInfo");
+    Assert.assertNotNull(fetchBlockInfo);
+    Assert.assertSame(expected, ReflectUtils.getFieldObject(fetchBlockInfo, "peer"));
+  }
+
+  private void allowBlockFetch(PeerConnection peer) {
+    peer.setNeedSyncFromPeer(false);
+    peer.setNeedSyncFromUs(false);
   }
 }
