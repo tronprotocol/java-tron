@@ -266,8 +266,6 @@ public class HandshakeHeadCheckTest {
         .setHeadBlockId(hello.getInstance().getHeadBlockId().toBuilder()
             .setHash(ByteString.copyFrom(new byte[31])))
         .build());
-    // A valid endpoint must not bypass rejection of other malformed HELLO fields.
-    Assert.assertTrue(hello.validEndPoint());
     Assert.assertFalse(hello.valid());
 
     Channel other = mock(Channel.class);

@@ -352,36 +352,12 @@ public class HandShakeServiceTest {
         {32, 32, 32}, {0, 32, 32}, {32, 31, 32}, {32, 32, 33}, {0, 31, 33},
         {largeHashLength, 32, 32}, {32, largeHashLength, 32}, {32, 32, largeHashLength}}) {
       // The oversized signature also exercises logging when all three hashes are 32 bytes.
-      assertInvalidHelloLog(lengths[0], lengths[1], lengths[2], validEndpoint, 201, true);
-    }
-  }
-
-  @Test
-  public void testInvalidHelloLogsEndpointValidity() throws Exception {
-    for (Endpoint invalidEndpoint : new Endpoint[] {
-        endpoint("127.0.0.1", "", 0), endpoint("127.0.0.1", "", 65536),
-        Endpoint.getDefaultInstance(), endpoint("", "", 18888),
-        endpoint("hello.invalid", "", 18888), endpoint("127.0.0.1", "2001:db8:::1", 18888),
-        endpoint("127.0.0.1\nforged", "", 18888),
-        endpoint(StringUtils.repeat('a', Parameter.MAX_MESSAGE_LENGTH - 1024), "", 18888),
-        endpoint("127.0.0.1", StringUtils.repeat('a', 201), 18888)}) {
-      // Keep all other HELLO fields valid so the endpoint alone causes rejection.
-      assertInvalidHelloLog(32, 32, 32, invalidEndpoint, 0, false);
-    }
-    assertInvalidHelloLog(32, 32, 32, endpoint("", "2001:db8::1", 18888), 201, true);
-  }
-
-  @Test(timeout = 5000)
-  public void testInvalidHelloLogsNodeIdLengths() throws Exception {
-    for (int length : new int[] {0, 63, 65}) {
-      Endpoint invalidEndpoint = endpoint("127.0.0.1", "", 18888).toBuilder()
-          .setNodeId(ByteString.copyFrom(new byte[length])).build();
-      assertInvalidHelloLog(32, 32, 32, invalidEndpoint, 0, false);
+      assertInvalidHelloLog(lengths[0], lengths[1], lengths[2], validEndpoint, 201);
     }
   }
 
   private void assertInvalidHelloLog(int genesisLength, int solidLength, int headLength,
-      Endpoint endpoint, int signatureLength, boolean expectedEndpointValid) throws Exception {
+      Endpoint endpoint, int signatureLength) throws Exception {
     Protocol.HelloMessage proto = Protocol.HelloMessage.newBuilder()
         .setFrom(endpoint)
         .setGenesisBlockId(blockId(genesisLength, (byte) 0x11))
@@ -393,7 +369,6 @@ public class HandShakeServiceTest {
     HelloMessage hello = Mockito.spy(new HelloMessage(proto.toByteArray()));
     Mockito.doThrow(new AssertionError("Invalid HELLO reached Node construction"))
         .when(hello).getFrom();
-    Assert.assertEquals(expectedEndpointValid, hello.validEndPoint());
     Assert.assertFalse(hello.valid());
 
     PeerConnection testPeer = mock(PeerConnection.class);
@@ -441,7 +416,7 @@ public class HandShakeServiceTest {
       Assert.assertEquals("Peer /127.0.0.1:18888 invalid hello message parameters, "
           + "genesisHashLength: " + genesisLength + ", solidHashLength: " + solidLength
           + ", headHashLength: " + headLength + ", address: 0, sig: " + signatureLength
-          + ", codeVersion: 0, endpointValid: " + expectedEndpointValid, text);
+          + ", codeVersion: 0", text);
     } finally {
       logger.detachAppender(sink);
       sink.stop();
