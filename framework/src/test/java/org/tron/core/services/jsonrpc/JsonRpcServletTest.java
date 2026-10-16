@@ -64,7 +64,7 @@ public class JsonRpcServletTest {
   public void setUp() throws Exception {
     servlet = new TestableServlet();
     mockRpcServer = mock(JsonRpcServer.class);
-    servlet.setRpcServer(mockRpcServer);
+    servlet.setRpcServer(mockRpcServer, TronJsonRpc.class);
     savedMaxBatchSize = CommonParameter.getInstance().jsonRpcMaxBatchSize;
     savedMaxResponseSize = CommonParameter.getInstance().jsonRpcMaxResponseSize;
   }
@@ -207,6 +207,34 @@ public class JsonRpcServletTest {
     }
 
     verifyNoInteractions(mockRpcServer);
+  }
+
+  @Test
+  public void unknownMethod_singleIsAnsweredWithoutDispatch() throws Exception {
+    MockHttpServletResponse resp = doPost(
+        "{\"jsonrpc\":\"2.0\",\"method\":\"eth_unknownMethod\",\"id\":7}");
+
+    assertEquals(200, resp.getStatus());
+    assertEquals("application/json-rpc", resp.getContentType());
+    assertEquals(methodNotFound("7"), MAPPER.readTree(resp.getContentAsByteArray()));
+    verifyNoInteractions(mockRpcServer);
+  }
+
+  @Test
+  public void unknownMethod_batchIsAnsweredWithoutDispatch() throws Exception {
+    List<Integer> dispatched = stubSuccessfulDispatch();
+
+    MockHttpServletResponse resp = doPost("["
+        + "{\"jsonrpc\":\"2.0\",\"method\":\"eth_unknownMethod\",\"id\":1},"
+        + "{\"jsonrpc\":\"2.0\",\"method\":\"eth_blockNumber\",\"id\":2},"
+        + "{\"jsonrpc\":\"2.0\",\"method\":\"eth_unknownMethod\"}]");
+
+    ArrayNode expected = MAPPER.createArrayNode()
+        .add(methodNotFound("1"))
+        .add(MAPPER.readTree(successResponse(2)))
+        .add(methodNotFound("null"));
+    assertEquals(expected, MAPPER.readTree(resp.getContentAsByteArray()));
+    assertEquals(Arrays.asList(2), dispatched);
   }
 
   @Test
@@ -1258,7 +1286,7 @@ public class JsonRpcServletTest {
   private TronJsonRpc useRealRpcServer() {
     TronJsonRpc rpc = mock(TronJsonRpc.class);
     when(rpc.getLatestBlockNum()).thenReturn("0x1");
-    servlet.setRpcServer(new JsonRpcServer(rpc, TronJsonRpc.class));
+    servlet.setRpcServer(new JsonRpcServer(rpc, TronJsonRpc.class), TronJsonRpc.class);
     return rpc;
   }
 
@@ -1398,6 +1426,23 @@ public class JsonRpcServletTest {
       return 0;
     }).when(mockRpcServer).handleRequest(any(InputStream.class), any(OutputStream.class));
     return dispatched;
+  }
+
+  private List<Integer> stubSuccessfulDispatch() throws Exception {
+    List<Integer> dispatched = new ArrayList<>();
+    doAnswer(inv -> {
+      int id = MAPPER.readTree((InputStream) inv.getArgument(0)).get("id").asInt();
+      dispatched.add(id);
+      OutputStream out = inv.getArgument(1);
+      out.write(successResponse(id));
+      return 0;
+    }).when(mockRpcServer).handleRequest(any(InputStream.class), any(OutputStream.class));
+    return dispatched;
+  }
+
+  private static JsonNode methodNotFound(String id) throws IOException {
+    return MAPPER.readTree("{\"jsonrpc\":\"2.0\",\"error\":{\"code\":-32601,"
+        + "\"message\":\"method not found\"},\"id\":" + id + "}");
   }
 
   private static byte[] successResponse(int id) {
