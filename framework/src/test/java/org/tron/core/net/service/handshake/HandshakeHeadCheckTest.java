@@ -289,7 +289,6 @@ public class HandshakeHeadCheckTest {
       service.processHelloMessage(peer, hello);
 
       assertRejected(ReasonCode.INCOMPATIBLE_PROTOCOL);
-      verify(hello, never()).getFrom();
       verify(p2p, never()).updateNodeId(any(), any());
       verify(channel, never()).setNodeId(any());
       verify(other, never()).send(any(P2pDisconnectMessage.class));

@@ -139,6 +139,8 @@ public class Base58MessageLoggingTest {
         .addSrAddress(bytes(16384)).build().toByteString());
     for (boolean enabled : new boolean[]{false, true}) {
       PeerConnection peer = peer();
+      // PBFT messages reach this handler only after the HELLO handshake.
+      when(peer.getHelloMessageReceive()).thenReturn(mock(HelloMessage.class));
       Channel channel = peer.getChannel();
       P2pEventHandlerImpl handler = new P2pEventHandlerImpl();
       PbftMsgHandler pbftHandler = new PbftMsgHandler();
