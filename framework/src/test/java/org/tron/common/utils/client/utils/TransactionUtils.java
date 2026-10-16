@@ -24,6 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
+import org.tron.common.crypto.SignUtils;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.TransactionCapsule;
@@ -138,10 +139,14 @@ public class TransactionUtils {
     }
     for (int i = 0; i < count; ++i) {
       try {
+        ByteString signature = signedTransaction.getSignature(i);
+        if (!SignUtils.isValidLength(signature.size())) {
+          return false;
+        }
         Transaction.Contract contract = listContract.get(i);
         byte[] owner = getOwner(contract);
-        byte[] address = ECKey
-            .signatureToAddress(hash, getBase64FromByteString(signedTransaction.getSignature(i)));
+        byte[] address = SignUtils.signatureToAddress(hash,
+            getBase64FromByteString(signature), true);
         if (!Arrays.equals(owner, address)) {
           return false;
         }

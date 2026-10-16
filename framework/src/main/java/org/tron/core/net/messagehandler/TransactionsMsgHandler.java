@@ -16,6 +16,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.crypto.SignUtils;
 import org.tron.common.es.ExecutorServiceManager;
+import org.tron.common.prometheus.MetricKeys;
+import org.tron.common.prometheus.MetricLabels;
+import org.tron.common.prometheus.Metrics;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
@@ -160,14 +163,26 @@ public class TransactionsMsgHandler implements TronMsgHandler {
         throw new P2pException(TypeEnum.BAD_TRX,
             "tx " + item.getHash() + " contract size should be greater than 0");
       }
-      for (ByteString sig : trx.getSignatureList()) {
-        if (!SignUtils.isValidLength(sig.size())) {
-          throw new P2pException(TypeEnum.BAD_TRX,
-              "tx " + item.getHash() + " signature size is " + sig.size());
-        }
+    }
+    for (Transaction trx : list) {
+      if (!hasValidSignatureLengths(trx)) {
+        Metrics.counterInc(MetricKeys.Counter.TX_REJECT, 1,
+            MetricLabels.Counter.TX_REJECT_P2P,
+            MetricLabels.Counter.TX_REJECT_INVALID_SIGNATURE_LENGTH);
+        throw new P2pException(TypeEnum.BAD_TRX,
+            "TransactionsMessage contains a transaction with invalid signature lengths");
       }
     }
     return seen;
+  }
+
+  private boolean hasValidSignatureLengths(Transaction trx) {
+    for (ByteString sig : trx.getSignatureList()) {
+      if (!SignUtils.isValidLength(sig.size())) {
+        return false;
+      }
+    }
+    return true;
   }
 
   private void handleSmartContract() {

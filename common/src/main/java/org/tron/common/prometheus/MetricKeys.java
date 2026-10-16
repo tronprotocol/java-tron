@@ -20,6 +20,7 @@ public class MetricKeys {
     public static final String SR_SET_CHANGE = "tron:sr_set_change";
     public static final String P2P_ERROR = "tron:p2p_error";
     public static final String P2P_DISCONNECT = "tron:p2p_disconnect";
+    public static final String TX_REJECT = "tron:tx_reject";
     public static final String INTERNAL_SERVICE_FAIL = "tron:internal_service_fail";
     // verification counters for the bounded fetch latency estimator rollout
     public static final String BLOCK_FETCH_ARMED = "tron:block_fetch_armed";

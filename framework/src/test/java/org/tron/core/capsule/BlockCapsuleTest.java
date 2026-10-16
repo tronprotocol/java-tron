@@ -239,6 +239,40 @@ public class BlockCapsuleTest {
     Assert.assertTrue(block.validateSignature(dps, accountStore));
   }
 
+  @Test
+  public void shouldGateStrictWitnessSignatureLength() throws Exception {
+    String key = PublicMethod.getRandomPrivateKey();
+    byte[] witnessAddress = PublicMethod.getAddressByteByPrivateKey(key);
+    BlockCapsule block = new BlockCapsule(4,
+        Sha256Hash.wrap(ByteString.copyFrom(ByteArray.fromHexString(
+            "9938a342238077182498b464ac0292229938a342238077182498b464ac029222"))),
+        6789,
+        ByteString.copyFrom(witnessAddress));
+    block.sign(ByteArray.fromHexString(key));
+
+    ByteString signature = block.getInstance().getBlockHeader().getWitnessSignature();
+    DynamicPropertiesStore dps = mock(DynamicPropertiesStore.class);
+    when(dps.getAllowMultiSign()).thenReturn(0L);
+    AccountStore accountStore = mock(AccountStore.class);
+
+    for (int length = 65; length <= 69; length++) {
+      BlockHeader paddedHeader = block.getInstance().getBlockHeader().toBuilder()
+          .setWitnessSignature(signature.concat(ByteString.copyFrom(new byte[length - 65])))
+          .build();
+      BlockCapsule paddedBlock = new BlockCapsule(block.getInstance().toBuilder()
+          .setBlockHeader(paddedHeader).build());
+      when(dps.allowStrictEcdsaValidation()).thenReturn(false);
+      Assert.assertTrue(paddedBlock.validateSignature(dps, accountStore));
+      when(dps.allowStrictEcdsaValidation()).thenReturn(true);
+      if (length <= 68) {
+        Assert.assertTrue(paddedBlock.validateSignature(dps, accountStore));
+      } else {
+        Assert.assertThrows(ValidateSignatureException.class,
+            () -> paddedBlock.validateSignature(dps, accountStore));
+      }
+    }
+  }
+
   /**
    * The other failure mode switchFork must handle: signature bytes are
    * malformed (cannot recover a public key). validateSignature wraps the

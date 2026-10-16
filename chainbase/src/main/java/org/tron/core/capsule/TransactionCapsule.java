@@ -100,8 +100,8 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   private static final long SLOW_SIG_VERIFY_MS = 50;
 
   private Transaction transaction;
-  @Setter
-  private boolean isVerified = false;
+  @Getter
+  private volatile boolean isVerified = false;
   @Setter
   @Getter
   private long blockNum = -1;
@@ -233,6 +233,12 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   public static long checkWeight(Permission permission, List<ByteString> sigs, byte[] hash,
       List<ByteString> approveList)
       throws SignatureException, PermissionException, SignatureFormatException {
+    return checkWeight(permission, sigs, hash, approveList, true);
+  }
+
+  public static long checkWeight(Permission permission, List<ByteString> sigs, byte[] hash,
+      List<ByteString> approveList, boolean strictEcdsaValidation)
+      throws SignatureException, PermissionException, SignatureFormatException {
     long currentWeight = 0;
     if (sigs.size() > permission.getKeysCount()) {
       throw new PermissionException(
@@ -241,12 +247,13 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     }
     HashMap addMap = new HashMap();
     for (ByteString sig : sigs) {
-      if (sig.size() < 65) {
+      if (sig.size() < 65
+          || (strictEcdsaValidation && !SignUtils.isValidLength(sig.size()))) {
         throw new SignatureFormatException(
             "Signature size is " + sig.size());
       }
       String base64 = TransactionCapsule.getBase64FromByteString(sig);
-      byte[] address = SignUtils.signatureToAddress(hash, base64);
+      byte[] address = SignUtils.signatureToAddress(hash, base64, strictEcdsaValidation);
       long weight = getWeight(permission, address);
       if (weight == 0) {
         throw new PermissionException(
@@ -486,7 +493,9 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
       throw new PermissionException("permission isn't exit");
     }
     checkPermission(permissionId, permission, contract);
-    long weight = checkWeight(permission, transaction.getSignatureList(), hash, null);
+    boolean strictEcdsaValidation = dynamicPropertiesStore.allowStrictEcdsaValidation();
+    long weight = checkWeight(permission, transaction.getSignatureList(), hash, null,
+        strictEcdsaValidation);
     if (weight >= permission.getThreshold()) {
       return true;
     }
@@ -689,7 +698,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   /**
    * validate signature
    */
-  public boolean validateSignature(AccountStore accountStore,
+  public synchronized boolean validateSignature(AccountStore accountStore,
       DynamicPropertiesStore dynamicPropertiesStore) throws ValidateSignatureException {
     if (!isVerified) {
       //Do not support multi contracts in one transaction
@@ -710,6 +719,10 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
       isVerified = true;
     }
     return true;
+  }
+
+  public synchronized void setVerified(boolean verified) {
+    isVerified = verified;
   }
 
   public Sha256Hash getTransactionId() {

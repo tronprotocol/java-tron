@@ -377,7 +377,8 @@ public class PrecompiledContracts {
       Rsv rsv = Rsv.fromSignature(sign);
       ECDSASignature signature = SignUtils.fromComponents(rsv.getR(), rsv.getS(), rsv.getV());
       if (signature.validateComponents()) {
-        out = SignUtils.signatureToAddress(hash, signature);
+        out = SignUtils.signatureToAddress(hash, signature,
+            VMConfig.allowStrictEcdsaValidation());
       }
     } catch (Throwable any) {
       logger.info("ECRecover error", any.getMessage());
@@ -609,7 +610,8 @@ public class PrecompiledContracts {
 
         ECDSASignature signature = SignUtils.fromComponents(r, s, v[31]);
         if (validateV(v) && signature.validateComponents()) {
-          out = new DataWord(SignUtils.signatureToAddress(h, signature));
+          out = new DataWord(SignUtils.signatureToAddress(h, signature,
+              VMConfig.allowStrictEcdsaValidation()));
         }
       } catch (Throwable any) {
       }
@@ -1093,6 +1095,9 @@ public class PrecompiledContracts {
             List<byte[]> executedSignList = new ArrayList<>();
             for (byte[] sign : signatures) {
               byte[] recoveredAddr = recoverAddrBySign(sign, hash);
+              if (recoveredAddr == null) {
+                return Pair.of(true, DATA_FALSE);
+              }
 
               sign = merge(recoveredAddr, sign);
               if (ByteArray.matrixContains(executedSignList, recoveredAddr)) {
