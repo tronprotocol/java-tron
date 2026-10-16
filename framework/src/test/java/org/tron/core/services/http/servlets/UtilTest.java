@@ -13,7 +13,6 @@ import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.config.args.Args;
-import org.tron.core.utils.TransactionUtil;
 import org.tron.json.JSONObject;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Transaction;
@@ -25,8 +24,6 @@ public class UtilTest extends BaseTest {
 
   @Resource
   private Wallet wallet;
-  @Resource
-  private TransactionUtil transactionUtil;
 
   static {
     OWNER_ADDRESS = Wallet.getAddressPreFixString() + "c076305e35aea1fe45a772fcaaab8a36e87bdb55";
@@ -86,7 +83,7 @@ public class UtilTest extends BaseTest {
     Assert.assertEquals("Invalid transaction: no valid contract",
         transactionApprovedList.getResult().getMessage());
 
-    TransactionSignWeight txSignWeight = transactionUtil.getTransactionSignWeight(transaction);
+    TransactionSignWeight txSignWeight = wallet.getTransactionSignWeight(transaction);
     Assert.assertEquals("Invalid transaction: no valid contract",
         txSignWeight.getResult().getMessage());
 
@@ -126,7 +123,7 @@ public class UtilTest extends BaseTest {
     Assert.assertEquals("Invalid transaction: no valid contract",
         transactionApprovedList.getResult().getMessage());
 
-    txSignWeight = transactionUtil.getTransactionSignWeight(transaction);
+    txSignWeight = wallet.getTransactionSignWeight(transaction);
     Assert.assertEquals("Invalid transaction: no valid contract",
         txSignWeight.getResult().getMessage());
   }
@@ -188,7 +185,7 @@ public class UtilTest extends BaseTest {
         + "b92b180a70b2ccb8ea8930\"\n"
         + "}";
     Transaction transaction = Util.packTransaction(strTransaction, false);
-    TransactionSignWeight txSignWeight = transactionUtil.getTransactionSignWeight(transaction);
+    TransactionSignWeight txSignWeight = wallet.getTransactionSignWeight(transaction);
     Assert.assertNotNull(txSignWeight);
   }
 
@@ -291,7 +288,7 @@ public class UtilTest extends BaseTest {
   @Test
   public void testPrintSignWeightTooManySigsHttpPath() {
     Transaction transaction = buildTooManySigsTransaction();
-    TransactionSignWeight reply = transactionUtil.getTransactionSignWeight(transaction);
+    TransactionSignWeight reply = wallet.getTransactionSignWeight(transaction);
     Assert.assertEquals(TransactionSignWeight.Result.response_code.OTHER_ERROR,
         reply.getResult().getCode());
     // The early-return reply has no transaction; the HTTP print helper must not throw.

@@ -20,7 +20,6 @@ public class SignUtilsTest {
     ECKey key = ECKey.fromPrivate(BigInteger.TEN);
     ECDSASignature signature = key.sign(hash);
 
-    assertArrayEquals(key.getAddress(), SignUtils.signatureToAddress(hash, signature));
     for (boolean strictValidation : new boolean[]{false, true}) {
       assertArrayEquals(key.getAddress(),
           SignUtils.signatureToAddress(hash, signature, strictValidation));
@@ -33,7 +32,6 @@ public class SignUtilsTest {
     ECKey key = ECKey.fromPrivate(BigInteger.TEN);
     String signature = key.sign(hash).toBase64();
 
-    assertArrayEquals(key.getAddress(), SignUtils.signatureToAddress(hash, signature));
     for (boolean strictValidation : new boolean[]{false, true}) {
       assertArrayEquals(key.getAddress(),
           SignUtils.signatureToAddress(hash, signature, strictValidation));
@@ -69,7 +67,7 @@ public class SignUtilsTest {
     for (ECDSASignature signature : Arrays.asList(null,
         new ECDSASignature(null, BigInteger.ONE), new ECDSASignature(BigInteger.ONE, null))) {
       SignatureException legacyError = assertThrows(SignatureException.class,
-          () -> SignUtils.signatureToAddress(hash, signature));
+          () -> SignUtils.signatureToAddress(hash, signature, false));
       SignatureException strictError = assertThrows(SignatureException.class,
           () -> SignUtils.signatureToAddress(hash, signature, true));
       assertTrue(legacyError.getCause() instanceof IllegalArgumentException);

@@ -94,7 +94,6 @@ import org.tron.core.exception.VMIllegalException;
 import org.tron.core.exception.ZksnarkException;
 import org.tron.core.metrics.MetricsApiService;
 import org.tron.core.services.http.servlets.Util;
-import org.tron.core.utils.TransactionUtil;
 import org.tron.core.zen.address.DiversifierT;
 import org.tron.core.zen.address.IncomingViewingKey;
 import org.tron.protos.Protocol;
@@ -171,8 +170,6 @@ public class RpcApiService extends RpcService {
   private ChainBaseManager chainBaseManager;
   @Autowired
   private Wallet wallet;
-  @Autowired
-  private TransactionUtil transactionUtil;
   @Autowired
   private NodeInfoService nodeInfoService;
   @Autowired
@@ -761,7 +758,7 @@ public class RpcApiService extends RpcService {
     @Override
     public void getTransactionSignWeight(Transaction req,
         StreamObserver<TransactionSignWeight> responseObserver) {
-      TransactionSignWeight tsw = transactionUtil.getTransactionSignWeight(req);
+      TransactionSignWeight tsw = wallet.getTransactionSignWeight(req);
       responseObserver.onNext(tsw);
       responseObserver.onCompleted();
     }

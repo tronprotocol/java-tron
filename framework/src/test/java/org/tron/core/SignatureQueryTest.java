@@ -34,7 +34,6 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.services.http.servlets.Util;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.DynamicPropertiesStore;
-import org.tron.core.utils.TransactionUtil;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Key;
 import org.tron.protos.Protocol.Permission;
@@ -57,7 +56,6 @@ public class SignatureQueryTest {
   public boolean strict;
 
   private Wallet wallet;
-  private TransactionUtil transactionUtil;
   private AccountStore accountStore;
   private Transaction unsigned;
   private Transaction signed;
@@ -74,9 +72,7 @@ public class SignatureQueryTest {
     when(manager.getDynamicPropertiesStore()).thenReturn(properties);
     when(manager.getAccountStore()).thenReturn(accountStore);
     wallet = new Wallet();
-    transactionUtil = new TransactionUtil();
     ReflectionTestUtils.setField(wallet, "chainBaseManager", manager);
-    ReflectionTestUtils.setField(transactionUtil, "chainBaseManager", manager);
 
     byte[] privateKey = new byte[32];
     privateKey[31] = 10;
@@ -138,6 +134,14 @@ public class SignatureQueryTest {
   }
 
   @Test
+  public void rejectsMalformedComponentsRegardlessOfProposalActivation() {
+    Transaction malformed = unsigned.toBuilder()
+        .addSignature(ByteString.copyFrom(new byte[65])).build();
+    assertQueryResults(malformed, TransactionSignWeight.Result.response_code.COMPUTE_ADDRESS_ERROR,
+        TransactionApprovedList.Result.response_code.COMPUTE_ADDRESS_ERROR, 0);
+  }
+
+  @Test
   public void validLengthStillRequiresPermission() {
     Permission differentSigner = permission.toBuilder().setKeys(0,
         permission.getKeys(0).toBuilder().setAddress(ByteString.copyFrom(new byte[21]))).build();
@@ -165,7 +169,7 @@ public class SignatureQueryTest {
     for (Transaction input : Arrays.asList(tooMany.build(),
         tooMany.addSignature(ByteString.EMPTY).build())) {
       Transaction transaction = spy(input);
-      TransactionSignWeight weight = transactionUtil.getTransactionSignWeight(transaction);
+      TransactionSignWeight weight = wallet.getTransactionSignWeight(transaction);
       TransactionApprovedList approved = wallet.getTransactionApprovedList(transaction);
       assertEquals(TransactionSignWeight.Result.response_code.OTHER_ERROR,
           weight.getResult().getCode());
@@ -186,7 +190,7 @@ public class SignatureQueryTest {
     Transaction input = unsigned.toBuilder()
         .addSignature(ByteString.copyFrom(new byte[1024 * 1024])).build();
     assertFormatError(input);
-    TransactionSignWeight weight = transactionUtil.getTransactionSignWeight(input);
+    TransactionSignWeight weight = wallet.getTransactionSignWeight(input);
     TransactionApprovedList approved = wallet.getTransactionApprovedList(input);
     assertTrue(Util.printTransactionSignWeight(weight, false).length() < 256);
     assertTrue(Util.printTransactionApprovedList(approved, false).length() < 256);
@@ -200,7 +204,7 @@ public class SignatureQueryTest {
 
   private void assertFormatError(Transaction input) {
     Transaction transaction = spy(input);
-    TransactionSignWeight weight = transactionUtil.getTransactionSignWeight(transaction);
+    TransactionSignWeight weight = wallet.getTransactionSignWeight(transaction);
     TransactionApprovedList approved = wallet.getTransactionApprovedList(transaction);
     assertEquals(TransactionSignWeight.Result.response_code.SIGNATURE_FORMAT_ERROR,
         weight.getResult().getCode());
@@ -218,7 +222,7 @@ public class SignatureQueryTest {
   private void assertQueryResults(Transaction input,
       TransactionSignWeight.Result.response_code weightCode,
       TransactionApprovedList.Result.response_code approvedCode, int approvedCount) {
-    TransactionSignWeight weight = transactionUtil.getTransactionSignWeight(input);
+    TransactionSignWeight weight = wallet.getTransactionSignWeight(input);
     TransactionApprovedList approved = wallet.getTransactionApprovedList(input);
     assertEquals(weightCode, weight.getResult().getCode());
     assertEquals(approvedCode, approved.getResult().getCode());

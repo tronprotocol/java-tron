@@ -499,33 +499,18 @@ public class ECKey implements Serializable, SignInterface {
   }
 
   /**
-   * <p>Given the components of a signature and a selector value, recover and return the public key
-   * that generated the signature according to the algorithm in SEC1v2 section 4.1.6.</p>
+   * Recovers the public key using SEC1v2 section 4.1.6.
    *
-   * <p> <p>The recId is an index from 0 to 3 which indicates which of the 4 possible allKeys is
-   * the
-   * correct one. Because the key recovery operation yields multiple potential allKeys, the correct
-   * key must either be stored alongside the signature, or you must be willing to try each recId in
-   * turn until you find one that outputs the key you are expecting.</p>
+   * <p>Replaces the three-argument overload; pass {@code false} for legacy recovery and rebuild
+   * downstream callers.</p>
    *
-   * <p> <p>If this method returns null it means recovery was not possible and recId should be
-   * iterated.</p>
-   *
-   * <p> <p>Given the above two points, a correct usage of this method is inside a for loop from 0
-   * to 3, and if the output is null OR a key that is not the one you expect, you try again with the
-   * next recId.</p>
-   *
-   * @param recId Which possible key to recover.
-   * @param sig the R and S components of the signature, wrapped.
-   * @param messageHash Hash of the data that was signed.
-   * @return 65-byte encoded public key
+   * @param recId recovery selector, from 0 to 3
+   * @param sig signature components
+   * @param messageHash hash of the signed data
+   * @param strictValidation whether to enforce strict ECDSA validation; consensus callers use
+   *     the applicable proposal state
+   * @return encoded public key, or {@code null} if recovery is not possible
    */
-  @Nullable
-  public static byte[] recoverPubBytesFromSignature(int recId,
-      ECDSASignature sig, byte[] messageHash) {
-    return recoverPubBytesFromSignature(recId, sig, messageHash, false);
-  }
-
   @Nullable
   public static byte[] recoverPubBytesFromSignature(int recId,
       ECDSASignature sig, byte[] messageHash, boolean strictValidation) {

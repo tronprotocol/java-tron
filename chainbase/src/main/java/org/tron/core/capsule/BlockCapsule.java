@@ -357,6 +357,10 @@ public class BlockCapsule implements ProtoCapsule<Block> {
       builder.setBlockHeader(headerBuilder.build());
     }
     this.block = builder.build();
+    logger.debug("Sanitized block {}, removed unknown fields: block={}, header={}, "
+            + "witness signature length: {} -> {}",
+        getBlockId().getString(), blockHasUnknown, headerHasUnknown,
+        witnessSignature.size(), this.block.getBlockHeader().getWitnessSignature().size());
     return true;
   }
 

@@ -52,7 +52,7 @@ public class TransactionUtilTest extends BaseTest {
   private static String OWNER_ADDRESS;
 
   @Resource
-  private TransactionUtil transactionUtil;
+  private Wallet wallet;
 
   /**
    * Init .
@@ -492,7 +492,7 @@ public class TransactionUtilTest extends BaseTest {
         ByteString.copyFrom(new byte[] {1, 2, 3, 4, 5}));
     assertEquals(70, oversized.size());
 
-    TransactionSignWeight reply = transactionUtil.getTransactionSignWeight(
+    TransactionSignWeight reply = wallet.getTransactionSignWeight(
         unsigned.toBuilder().addSignature(oversized).build());
 
     assertEquals(TransactionSignWeight.Result.response_code.SIGNATURE_FORMAT_ERROR,
@@ -530,7 +530,7 @@ public class TransactionUtilTest extends BaseTest {
       overLimit.addSignature(oneSig);
     }
 
-    TransactionSignWeight reply = transactionUtil.getTransactionSignWeight(
+    TransactionSignWeight reply = wallet.getTransactionSignWeight(
         overLimit.build());
     assertEquals(TransactionSignWeight.Result.response_code.OTHER_ERROR,
         reply.getResult().getCode());

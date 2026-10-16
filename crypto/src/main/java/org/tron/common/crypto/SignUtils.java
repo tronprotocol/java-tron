@@ -30,11 +30,6 @@ public class SignUtils {
     return ECKey.fromPrivate(privKeyBytes);
   }
 
-  public static byte[] signatureToAddress(byte[] messageHash, String signatureBase64)
-      throws SignatureException {
-    return signatureToAddress(messageHash, signatureBase64, false);
-  }
-
   public static byte[] signatureToAddress(
       byte[] messageHash, String signatureBase64, boolean strictEcdsaValidation)
       throws SignatureException {
@@ -47,11 +42,6 @@ public class SignUtils {
 
   public static ECDSASignature fromComponents(byte[] r, byte[] s, byte v) {
     return ECDSASignature.fromComponents(r, s, v);
-  }
-
-  public static byte[] signatureToAddress(byte[] messageHash, ECDSASignature signature)
-      throws SignatureException {
-    return signatureToAddress(messageHash, signature, false);
   }
 
   public static byte[] signatureToAddress(
