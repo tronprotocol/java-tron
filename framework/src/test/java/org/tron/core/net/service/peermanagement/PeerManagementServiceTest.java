@@ -310,6 +310,8 @@ public class PeerManagementServiceTest {
     assertInvalidIp("192.0.2.20:18888");
     assertInvalidIp("peer.example");
     assertInvalidIp("1111111111111111111111111111111111111111111111");
+    Mockito.verify(commonStore, Mockito.never()).put(Mockito.any(), Mockito.any());
+    Mockito.verifyNoInteractions(p2pService);
   }
 
   @Test
@@ -358,7 +360,7 @@ public class PeerManagementServiceTest {
   }
 
   @Test
-  public void blockIpAppliesBeforePersistingAndPublishesSnapshot() throws Exception {
+  public void blockIpPersistsBeforeApplyingAndPublishesSnapshot() throws Exception {
     configureAndInit();
     Mockito.when(p2pService.replaceBlockedIps(Mockito.anySet())).thenReturn(2);
 
@@ -375,10 +377,10 @@ public class PeerManagementServiceTest {
 
     ArgumentCaptor<BytesCapsule> capsuleCaptor = ArgumentCaptor.forClass(BytesCapsule.class);
     InOrder inOrder = Mockito.inOrder(p2pService, commonStore);
-    inOrder.verify(p2pService).replaceBlockedIps(Mockito.argThat(
-        addresses -> addresses.contains(InetAddresses.forString("2001:db8::20"))));
     inOrder.verify(commonStore).put(AdditionalMatchers.aryEq(
         DB_KEY_BLOCKED_IPS), capsuleCaptor.capture());
+    inOrder.verify(p2pService).replaceBlockedIps(Mockito.argThat(
+        addresses -> addresses.contains(InetAddresses.forString("2001:db8::20"))));
     JsonNode stored = new ObjectMapper().readTree(capsuleCaptor.getValue().getData());
     Assert.assertEquals("2001:db8:0:0:0:0:0:20", stored.get(0).get("ip").asText());
     Assert.assertTrue(stored.get(0).get("blockedAtMillis").isIntegralNumber());
@@ -424,6 +426,7 @@ public class PeerManagementServiceTest {
       Assert.assertEquals("Failed to persist blocked IP snapshot", e.getMessage());
     }
     Assert.assertEquals(Collections.emptyList(), listedIps());
+    Mockito.verifyNoInteractions(p2pService);
 
     long before = System.currentTimeMillis();
     PeerOperationResult retryResult = service.blockIp("192.0.2.20");
@@ -435,7 +438,7 @@ public class PeerManagementServiceTest {
     long blockedAtMillis = service.listBlockedIps().get(0).getBlockedAtMillis();
     Assert.assertTrue(blockedAtMillis >= before);
     Assert.assertTrue(blockedAtMillis <= after);
-    Mockito.verify(p2pService, Mockito.times(2)).replaceBlockedIps(Mockito.argThat(
+    Mockito.verify(p2pService, Mockito.times(1)).replaceBlockedIps(Mockito.argThat(
         addresses -> addresses.contains(InetAddresses.forString("192.0.2.20"))));
     ArgumentCaptor<BytesCapsule> stored = ArgumentCaptor.forClass(BytesCapsule.class);
     Mockito.verify(commonStore, Mockito.times(2))
@@ -462,18 +465,19 @@ public class PeerManagementServiceTest {
     Assert.assertEquals(Collections.singletonList("192.0.2.20"),
         listedIps());
     Assert.assertEquals(BLOCKED_AT_MILLIS, service.listBlockedIps().get(0).getBlockedAtMillis());
+    Mockito.verifyNoInteractions(p2pService);
 
     PeerOperationResult retryResult = service.unblockIp("192.0.2.20");
 
     Assert.assertTrue(retryResult.isSuccess());
     Assert.assertTrue(retryResult.isChanged());
     Assert.assertEquals(Collections.emptyList(), listedIps());
-    Mockito.verify(p2pService, Mockito.times(2)).replaceBlockedIps(Collections.emptySet());
+    Mockito.verify(p2pService, Mockito.times(1)).replaceBlockedIps(Collections.emptySet());
     Mockito.verify(commonStore, Mockito.times(2)).put(Mockito.any(), Mockito.any());
   }
 
   @Test
-  public void libp2pFailureDoesNotPersistOrPublishSnapshot() throws Exception {
+  public void libp2pFailureAfterPersistDoesNotPublishJavaSnapshot() throws Exception {
     configureAndInit();
     Mockito.doThrow(new IllegalStateException("apply failed")).when(p2pService)
         .replaceBlockedIps(Mockito.anySet());
@@ -484,7 +488,8 @@ public class PeerManagementServiceTest {
     } catch (JsonRpcInternalException e) {
       Assert.assertEquals("Failed to apply blocked IP snapshot", e.getMessage());
     }
-    Mockito.verify(commonStore, Mockito.never()).put(Mockito.any(), Mockito.any());
+    Mockito.verify(commonStore).put(AdditionalMatchers.aryEq(DB_KEY_BLOCKED_IPS),
+        Mockito.any());
     Assert.assertEquals(Collections.emptyList(), listedIps());
   }
 

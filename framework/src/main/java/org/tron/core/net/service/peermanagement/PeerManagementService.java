@@ -14,6 +14,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
@@ -237,14 +238,15 @@ public class PeerManagementService {
       InetAddress changedAddress, boolean blocked, P2pService p2pService)
       throws JsonRpcInternalException {
     Map<InetAddress, Long> snapshot = immutableCopy(nextBlockedIps);
+    Set<InetAddress> addresses = new HashSet<>(snapshot.keySet());
+    saveBlockedIps(snapshot);
     int disconnectedCount;
     try {
-      disconnectedCount = p2pService.replaceBlockedIps(new HashSet<>(snapshot.keySet()));
+      disconnectedCount = p2pService.replaceBlockedIps(addresses);
     } catch (RuntimeException e) {
       logger.error("Failed to apply blocked IP snapshot", e);
       throw new JsonRpcInternalException("Failed to apply blocked IP snapshot", e);
     }
-    saveBlockedIps(snapshot);
     blockedIps = snapshot;
     logger.info("Admin {} IP {}, disconnected channels {}",
         blocked ? "blocked" : "unblocked", changedAddress.getHostAddress(), disconnectedCount);
