@@ -84,7 +84,7 @@ public class PeerManager {
     return peerConnection;
   }
 
-  private static boolean remove(PeerConnection peerConnection) {
+  private static synchronized boolean remove(PeerConnection peerConnection) {
     if (!peers.removeIf(peer -> peer == peerConnection)) {
       return false;
     }

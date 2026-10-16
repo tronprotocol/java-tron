@@ -14,12 +14,14 @@ import java.util.Collections;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Mockito;
 import org.tron.common.TestConstants;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.utils.Pair;
@@ -392,6 +394,54 @@ public class ChainInventoryMsgHandlerTest {
   @Test
   public void testDiscontinuousResponseIsRejected() throws Exception {
     assertRejected(new ChainInventoryMessage(Arrays.asList(blockId(100), blockId(102)), 0L));
+  }
+
+  @Test
+  public void testFetchFlagDecisionIsMadeUnderBlockLock() throws Exception {
+    Object blockLock = new Object();
+    AtomicBoolean fetchAbleSetUnderLock = new AtomicBoolean();
+    AtomicBoolean fetchFlagSetUnderLock = new AtomicBoolean();
+    when(delegate.getBlockLock()).thenReturn(blockLock);
+    Mockito.doAnswer(invocation -> {
+      if (invocation.getArgument(0)) {
+        fetchAbleSetUnderLock.set(Thread.holdsLock(blockLock));
+      }
+      return invocation.callRealMethod();
+    }).when(peer).setFetchAble(Mockito.anyBoolean());
+    Mockito.doAnswer(invocation -> {
+      fetchFlagSetUnderLock.set(Thread.holdsLock(blockLock));
+      return null;
+    }).when(sync).setFetchFlag(true);
+
+    respond(0, blockId(100), blockId(101));
+
+    Assert.assertTrue(fetchAbleSetUnderLock.get());
+    Assert.assertTrue(fetchFlagSetUnderLock.get());
+  }
+
+  @Test
+  public void testSyncNextDecisionIsMadeUnderBlockLock() throws Exception {
+    Object blockLock = new Object();
+    AtomicBoolean fetchAbleSetUnderLock = new AtomicBoolean();
+    AtomicBoolean syncNextCalledUnderLock = new AtomicBoolean();
+    when(delegate.getBlockLock()).thenReturn(blockLock);
+    ReflectUtils.setFieldValue(handler, "syncFetchBatchNum", Long.MAX_VALUE);
+    Mockito.doAnswer(invocation -> {
+      if (invocation.getArgument(0)) {
+        fetchAbleSetUnderLock.set(Thread.holdsLock(blockLock));
+      }
+      return invocation.callRealMethod();
+    }).when(peer).setFetchAble(Mockito.anyBoolean());
+    Mockito.doAnswer(invocation -> {
+      syncNextCalledUnderLock.set(Thread.holdsLock(blockLock));
+      return null;
+    }).when(sync).syncNext(peer);
+
+    handler.processMessage(peer, new ChainInventoryMessage(
+        range(100, (int) NetConstants.SYNC_FETCH_BATCH_NUM), 1L));
+
+    Assert.assertTrue(fetchAbleSetUnderLock.get());
+    Assert.assertTrue(syncNextCalledUnderLock.get());
   }
 
   private void request(BlockId... ids) {
