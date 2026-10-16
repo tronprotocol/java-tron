@@ -84,6 +84,8 @@ public class JsonFormat {
       = "Writing to a StringBuilder threw an IOException (should never happen).";
   private static final String EXPECTED_STRING = "Expected string.";
   private static final String MISSING_END_QUOTE = "String missing ending quote.";
+  // Keeps the genesis block addresses compatible with their Base58Check rendering.
+  private static final int MAX_BASE58_ADDRESS_SIZE = 128;
 
   // Bounds all work and error messages performed by parseInteger after tokenization.
   static final int MAX_INTEGER_TOKEN_LENGTH = 256;
@@ -889,6 +891,9 @@ public class JsonFormat {
   static String escapeBytesSelfType(ByteString input, final String fieldName) {
     //Address
     if (HttpSelfFormatFieldName.isAddressFormat(fieldName)) {
+      if (input.size() > MAX_BASE58_ADDRESS_SIZE) {
+        return ByteArray.toHexString(input.toByteArray());
+      }
       return StringUtil.encode58Check(input.toByteArray());
     }
     //Normal String
