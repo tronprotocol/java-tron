@@ -1,10 +1,6 @@
 package org.tron.core.net.services;
 
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 import static org.tron.core.net.message.handshake.HelloMessage.getEndpointFromNode;
 
 import com.google.protobuf.ByteString;
@@ -12,10 +8,8 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
-import org.apache.commons.lang3.StringUtils;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -333,18 +327,14 @@ public class HandShakeServiceTest {
 
   @Test
   public void testMismatchedHelloNodeIdPreservesEstablishedIdentity() throws Exception {
-    String establishedNodeId = StringUtils.repeat("01", 64);
-    String helloNodeId = StringUtils.repeat("02", 64);
     Channel channel = new Channel();
-    channel.setNodeId(establishedNodeId);
+    channel.setNodeId("010203");
     Channel otherChannel = new Channel();
-    otherChannel.setNodeId(helloNodeId);
+    otherChannel.setNodeId("020304");
     PeerConnection connection = mock(PeerConnection.class);
     Mockito.when(connection.getChannel()).thenReturn(channel);
     HelloMessage message = mock(HelloMessage.class);
-    byte[] helloNodeIdBytes = new byte[64];
-    Arrays.fill(helloNodeIdBytes, (byte) 2);
-    Mockito.when(message.getFrom()).thenReturn(new Node(helloNodeIdBytes, null, null, 0));
+    Mockito.when(message.getFrom()).thenReturn(new Node(new byte[]{2, 3, 4}, null, null, 0));
 
     Field channelsField = ChannelManager.class.getDeclaredField("channels");
     channelsField.setAccessible(true);
@@ -356,8 +346,9 @@ public class HandShakeServiceTest {
 
       Mockito.verify(connection).disconnect(Protocol.ReasonCode.UNEXPECTED_IDENTITY);
       Mockito.verify(connection, Mockito.never()).setHelloMessageReceive(Mockito.any());
-      Assert.assertEquals(establishedNodeId, channel.getNodeId());
-      Assert.assertEquals(helloNodeId, otherChannel.getNodeId());
+      Mockito.verify(message, Mockito.never()).valid();
+      Assert.assertEquals("010203", channel.getNodeId());
+      Assert.assertEquals("020304", otherChannel.getNodeId());
       Assert.assertFalse(otherChannel.isDisconnect());
     } finally {
       channels.removeIf(registered -> registered == channel || registered == otherChannel);
