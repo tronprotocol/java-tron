@@ -90,12 +90,6 @@ public class ChainInventoryMsgHandler implements TronMsgHandler {
         return;
       }
 
-      if (chainInventoryMessage.getRemainNum() == 0 && peer.getSyncBlockToFetch().isEmpty()) {
-        peer.setTronState(TronState.SYNC_COMPLETED);
-        peer.setNeedSyncFromPeer(false);
-        return;
-      }
-
       peer.setFetchAble(true);
       if ((chainInventoryMessage.getRemainNum() == 0 && !peer.getSyncBlockToFetch().isEmpty())
           || (chainInventoryMessage.getRemainNum() != 0
@@ -160,7 +154,8 @@ public class ChainInventoryMsgHandler implements TronMsgHandler {
     }
 
     if (msg.getRemainNum() == 0) {
-      long lastNum = blockIds.get(blockIds.size() - 1).getNum();
+      BlockId lastBlockId = blockIds.get(blockIds.size() - 1);
+      long lastNum = lastBlockId.getNum();
       long helloHeadNum = hello.getHeadBlockId().getNum();
       if (lastNum < helloHeadNum) {
         // In rare cases, a fork rollback can put an honest peer below its HELLO head.
@@ -168,6 +163,11 @@ public class ChainInventoryMsgHandler implements TronMsgHandler {
         // HELLO after the default one-minute cooldown.
         throw new P2pException(TypeEnum.SYNC_FAILED,
             "lastNum " + lastNum + " (remainNum=0) is below hello head " + helloHeadNum);
+      }
+      // A peer that has the terminal block in our summary should reply with that block alone.
+      if (blockIds.size() > 1 && requested.getKey().contains(lastBlockId)) {
+        throw new P2pException(TypeEnum.BAD_MESSAGE,
+            "terminal block already in summary: " + lastBlockId.getString());
       }
     }
   }
