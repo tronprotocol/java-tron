@@ -7,6 +7,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.exc.InvalidDefinitionException;
 import com.fasterxml.jackson.databind.exc.MismatchedInputException;
 import com.googlecode.jsonrpc4j.JsonRpcInterceptor;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collection;
@@ -65,7 +67,7 @@ public class AdminJsonRpcRequestTest {
         request.setServletPath("/admin");
         request.setContentType("application/json");
         request.addHeader("Host", "127.0.0.1:8575");
-        request.setContent(body.getBytes(StandardCharsets.UTF_8));
+        request.setContent(body);
         MockHttpServletResponse response = new MockHttpServletResponse();
         new HttpInterceptor().doFilter(request, response, servlet::service);
         Assert.assertEquals(200, response.getStatus());
@@ -302,6 +304,30 @@ public class AdminJsonRpcRequestTest {
     Mockito.verifyNoInteractions(adminJsonRpc);
   }
 
+  @Test
+  public void malformedRequestBytesAreRejectedBeforeInvocation() throws Exception {
+    byte[] head = "{\"jsonrpc\":\"2.0\",\"method\":\"admin_example\",\"params\":[\"a"
+        .getBytes(StandardCharsets.UTF_8);
+    byte[] tail = "\",\"b\"],\"id\":1}".getBytes(StandardCharsets.UTF_8);
+    byte[] valid = (REQUEST + ",\"id\":1}").getBytes(StandardCharsets.UTF_8);
+    for (byte[] body : new byte[][] {
+        concat(head, new byte[] {(byte) 0xff}, tail),
+        concat(head, new byte[] {(byte) 0xc3}, tail),
+        concat(valid, new byte[] {0}),
+        concat(new byte[] {0x0b}, valid)}) {
+      assertError(sender.send(body), -32700, "null");
+    }
+    Mockito.verifyNoInteractions(adminJsonRpc);
+  }
+
+  private byte[] concat(byte[]... parts) throws IOException {
+    ByteArrayOutputStream joined = new ByteArrayOutputStream();
+    for (byte[] part : parts) {
+      joined.write(part);
+    }
+    return joined.toByteArray();
+  }
+
   private JsonNode assertError(String body, int code, String id) throws Exception {
     JsonNode response = parse(body);
     Assert.assertEquals(code, response.path("error").path("code").asInt());
@@ -333,6 +359,10 @@ public class AdminJsonRpcRequestTest {
 
   @FunctionalInterface
   private interface RequestSender {
-    String send(String body) throws Exception;
+    String send(byte[] body) throws Exception;
+
+    default String send(String body) throws Exception {
+      return send(body.getBytes(StandardCharsets.UTF_8));
+    }
   }
 }

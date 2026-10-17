@@ -161,11 +161,10 @@ public class IpcService extends AbstractService {
         BufferedWriter writer = new BufferedWriter(
             new OutputStreamWriter(client.getOutputStream(), StandardCharsets.UTF_8))) {
 
-      String line;
-      while ((line = requestHandler.readRequest(input)) != null) {
-        String cmd = line.trim();
+      byte[] request;
+      while ((request = requestHandler.readRequest(input)) != null) {
         logger.debug("Received IPC request");
-        String response = requestHandler.handleCommand(cmd);
+        String response = requestHandler.handleCommand(request);
         if (!response.isEmpty()) {
           writer.write(response);
           writer.newLine();
