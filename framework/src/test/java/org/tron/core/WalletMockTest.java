@@ -953,6 +953,7 @@ public class WalletMockTest {
     GrpcAPI.ShieldedTRC20Parameters shieldedTRC20Parameters =
         GrpcAPI.ShieldedTRC20Parameters.newBuilder()
             .addSpendDescription(spendDescription)
+            .addReceiveDescription(ShieldContract.ReceiveDescription.getDefaultInstance())
             .setParameterType("transfer")
             .build();
     GrpcAPI.BytesMessage bytesMessage =

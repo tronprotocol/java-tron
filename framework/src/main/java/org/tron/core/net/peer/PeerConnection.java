@@ -11,7 +11,6 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.util.Deque;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -129,7 +128,7 @@ public class PeerConnection {
 
   @Setter
   @Getter
-  private HelloMessage helloMessageReceive;
+  private volatile HelloMessage helloMessageReceive;
 
   @Setter
   @Getter
@@ -180,7 +179,7 @@ public class PeerConnection {
   private volatile Pair<Deque<BlockId>, Long> syncChainRequested = null;
   @Setter
   @Getter
-  private Set<BlockId> syncBlockInProcess = new HashSet<>();
+  private Set<BlockId> syncBlockInProcess = ConcurrentHashMap.newKeySet();
   @Setter
   @Getter
   private volatile boolean needSyncFromPeer = true;

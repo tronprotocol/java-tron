@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -61,6 +62,14 @@ public class PeerConnectionTest {
     Assert.assertTrue(peerConnection.isNeedSyncFromPeer());
     Assert.assertTrue(peerConnection.isNeedSyncFromUs());
     Assert.assertTrue(!peerConnection.isSyncFinish());
+  }
+
+  @Test
+  public void testSyncBlockInProcessUsesConcurrentSet() {
+    PeerConnection peerConnection = new PeerConnection();
+
+    Assert.assertTrue(peerConnection.getSyncBlockInProcess()
+        instanceof ConcurrentHashMap.KeySetView);
   }
 
   @Test
