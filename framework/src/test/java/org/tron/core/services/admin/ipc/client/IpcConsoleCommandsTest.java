@@ -35,6 +35,10 @@ public class IpcConsoleCommandsTest {
         "  admin_removePeer <endpoint:string>",
         "  admin_unblockIp <ip:string>",
         "  help [command]", "  exit/quit"), peerCommands.prepare("help").getOutput());
+    Assert.assertEquals(String.join(System.lineSeparator(),
+        "List blocked IPs and their block times in Unix epoch milliseconds.",
+        "usage: admin_listBlockedIps"),
+        peerCommands.prepare("help admin_listBlockedIps").getOutput());
   }
 
   @Test

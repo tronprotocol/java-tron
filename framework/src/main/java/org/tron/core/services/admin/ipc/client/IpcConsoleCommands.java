@@ -22,6 +22,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.jline.reader.Parser;
 import org.jline.reader.SyntaxError;
 import org.jline.reader.impl.DefaultParser;
+import org.tron.core.services.admin.AdminCommandDescription;
 import org.tron.core.services.admin.ipc.client.ActivePeerOutputFormatter.OutputFormat;
 
 /**
@@ -78,7 +79,7 @@ final class IpcConsoleCommands {
     if ("help".equals(name)) {
       AdminCommand command = words.size() == 2
           ? adminCommands.get(words.get(1).toLowerCase(Locale.ROOT)) : null;
-      String help = command == null ? buildHelp() : "usage: " + formatUsage(command);
+      String help = command == null ? buildHelp() : formatHelp(command);
       return new Command(Action.HELP, null, null, help, null, OutputFormat.JSON);
     }
     AdminCommand command = adminCommands.get(name);
@@ -146,8 +147,9 @@ final class IpcConsoleCommands {
         }
         parameters.add(new Parameter(name, OBJECT_MAPPER.getTypeFactory().constructType(types[i])));
       }
-      commands.put(rpcMethod.value().toLowerCase(Locale.ROOT),
-          new AdminCommand(rpcMethod.value(), parameters));
+      AdminCommandDescription description = method.getAnnotation(AdminCommandDescription.class);
+      commands.put(rpcMethod.value().toLowerCase(Locale.ROOT), new AdminCommand(rpcMethod.value(),
+          parameters, description == null ? null : description.value()));
     }
     return commands;
   }
@@ -160,6 +162,12 @@ final class IpcConsoleCommands {
     }
     return help.append(System.lineSeparator()).append("  help [command]")
         .append(System.lineSeparator()).append("  exit/quit").toString();
+  }
+
+  private String formatHelp(AdminCommand command) {
+    String usage = "usage: " + formatUsage(command);
+    return StringUtils.isEmpty(command.description) ? usage
+        : command.description + System.lineSeparator() + usage;
   }
 
   private String formatUsage(AdminCommand command) {
@@ -256,6 +264,7 @@ final class IpcConsoleCommands {
 
     private final String name;
     private final List<Parameter> parameters;
+    private final String description;
   }
 
   @RequiredArgsConstructor(access = AccessLevel.PRIVATE)

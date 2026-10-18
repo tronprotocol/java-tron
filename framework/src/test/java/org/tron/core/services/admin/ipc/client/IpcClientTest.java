@@ -193,7 +193,9 @@ public class IpcClientTest {
   @Test
   public void testExecHelpAndExitSucceedWithoutSendingRequest() throws Exception {
     assertLocalExec("HELP ADMIN_ADDPEER", IpcClient.EXIT_SUCCESS,
-        "usage: admin_addPeer <endpoint:string>" + System.lineSeparator(), "");
+        "Add an endpoint to the active-node set without marking it trusted."
+            + System.lineSeparator()
+            + "usage: admin_addPeer <endpoint:string>" + System.lineSeparator(), "");
     assertLocalExec("QUIT", IpcClient.EXIT_SUCCESS, "", "");
   }
 
@@ -415,7 +417,8 @@ public class IpcClientTest {
       System.setErr(originalErr);
     }
 
-    Assert.assertEquals("usage: admin_addPeer <endpoint:string>"
+    Assert.assertEquals("Add an endpoint to the active-node set without marking it trusted."
+        + System.lineSeparator() + "usage: admin_addPeer <endpoint:string>"
         + System.lineSeparator(), consoleOutput.toString("UTF-8"));
     Assert.assertEquals(String.join(System.lineSeparator(),
         "Invalid command syntax.", "Invalid command syntax.",
