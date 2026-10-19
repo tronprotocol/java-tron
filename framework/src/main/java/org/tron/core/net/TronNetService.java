@@ -92,7 +92,7 @@ public class TronNetService {
     try {
       init = true;
       P2pConfig config = getConfig();
-      peerManagementService.configure(config, p2pService);
+      peerManagementService.configure(config);
       setP2pConfig(config);
       p2pService.start(p2pConfig);
       p2pService.register(p2pEventHandler);
@@ -107,7 +107,7 @@ public class TronNetService {
       PeerManager.init();
       relayService.init();
       effectiveCheckService.init();
-      peerManagementService.init();
+      peerManagementService.init(p2pService);
       logger.info("Net service start successfully");
     } catch (Exception e) {
       throw new TronError(e, TronError.ErrCode.TRON_NET_SERVICE_INIT);

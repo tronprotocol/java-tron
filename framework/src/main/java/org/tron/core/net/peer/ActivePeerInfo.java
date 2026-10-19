@@ -24,5 +24,6 @@ public class ActivePeerInfo {
   private final long remainNum;
   private final long syncChainRequestedMillis;
   private final long inactiveSeconds;
-  private final int blockInProcess;
+  // Number of sync blocks received from this peer that have not finished processing.
+  private final int syncBlockInProcessSize;
 }

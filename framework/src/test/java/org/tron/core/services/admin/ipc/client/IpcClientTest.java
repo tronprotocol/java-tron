@@ -81,7 +81,7 @@ public class IpcClientTest {
         "remoteAddress", "connectSeconds", "averageLatencyMillis", "lastKnownBlockNum",
         "needSyncFromPeer", "needSyncFromUs", "syncToFetchSize", "syncToFetchSizePeekNum",
         "syncBlockRequestedSize", "remainNum", "syncChainRequestedMillis", "inactiveSeconds",
-        "blockInProcess")) {
+        "syncBlockInProcessSize")) {
       Assert.assertTrue(field, execution.standardOutput.contains(field));
     }
     Assert.assertTrue(execution.standardOutput,
@@ -625,7 +625,7 @@ public class IpcClientTest {
     peer.put("remainNum", 7);
     peer.put("syncChainRequestedMillis", 450);
     peer.put("inactiveSeconds", 2);
-    peer.put("blockInProcess", 1);
+    peer.put("syncBlockInProcessSize", 1);
     return OBJECT_MAPPER.writeValueAsString(response);
   }
 

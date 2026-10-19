@@ -263,7 +263,7 @@ public class PeerConnectionTest {
     Assert.assertEquals(1, peerInfo.getSyncBlockRequestedSize());
     Assert.assertEquals(9L, peerInfo.getRemainNum());
     Assert.assertTrue(peerInfo.getSyncChainRequestedMillis() >= 2_000L);
-    Assert.assertEquals(1, peerInfo.getBlockInProcess());
+    Assert.assertEquals(1, peerInfo.getSyncBlockInProcessSize());
     Assert.assertTrue(log, log.contains("Peer /" + peerInfo.getRemoteAddress()));
     int connectTimeIndex = log.indexOf("connect time/avg latency:");
     int lastKnownBlockIndex = log.indexOf("last know block num:");
@@ -275,6 +275,8 @@ public class PeerConnectionTest {
     Assert.assertTrue(log.contains("remainNum:9"));
 
     JsonNode serialized = new ObjectMapper().valueToTree(peerInfo);
+    Assert.assertNull(serialized.get("blockInProcess"));
+    Assert.assertEquals(1, serialized.path("syncBlockInProcessSize").asInt());
     Assert.assertNull(serialized.get("lastKnownBlock"));
     Assert.assertTrue(serialized.get("lastKnownBlockNum").isIntegralNumber());
     Assert.assertEquals(11L, serialized.get("lastKnownBlockNum").asLong());

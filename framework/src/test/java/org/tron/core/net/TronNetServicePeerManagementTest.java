@@ -37,11 +37,11 @@ public class TronNetServicePeerManagementTest {
       InOrder startOrder = Mockito.inOrder(context.peerManagementService, context.p2pService,
           context.effectiveCheckService);
       startOrder.verify(context.peerManagementService)
-          .configure(context.p2pConfig, context.p2pService);
+          .configure(context.p2pConfig);
       startOrder.verify(context.p2pService).start(context.p2pConfig);
       startOrder.verify(context.p2pService).register(Mockito.any(P2pEventHandlerImpl.class));
       startOrder.verify(context.effectiveCheckService).init();
-      startOrder.verify(context.peerManagementService).init();
+      startOrder.verify(context.peerManagementService).init(context.p2pService);
       Assert.assertSame(context.p2pConfig, TronNetService.getP2pConfig());
 
       context.service.close();
@@ -71,9 +71,9 @@ public class TronNetServicePeerManagementTest {
     }
 
     Mockito.verify(context.peerManagementService)
-        .configure(context.p2pConfig, context.p2pService);
+        .configure(context.p2pConfig);
     Mockito.verify(context.peerManagementService, Mockito.never()).close();
-    Mockito.verify(context.peerManagementService, Mockito.never()).init();
+    Mockito.verify(context.peerManagementService, Mockito.never()).init(Mockito.any());
   }
 
   private static class TestContext {

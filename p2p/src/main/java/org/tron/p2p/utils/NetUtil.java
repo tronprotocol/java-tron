@@ -12,7 +12,6 @@ import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.net.URL;
 import java.net.URLConnection;
-import java.net.UnknownHostException;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.List;
@@ -271,7 +270,7 @@ public class NetUtil {
       }
       host = endpoint.substring(1, closingBracket);
       portText = endpoint.substring(closingBracket + 2);
-      if (host.indexOf('%') >= 0 || !validIpV6(host)) {
+      if (host.indexOf(':') < 0) {
         throw invalidInetSocketAddress();
       }
     } else {
@@ -282,9 +281,6 @@ public class NetUtil {
       }
       host = endpoint.substring(0, separator);
       portText = endpoint.substring(separator + 1);
-      if (!validIpV4(host)) {
-        throw invalidInetSocketAddress();
-      }
     }
     if (portText.isEmpty() || portText.length() > 5) {
       throw invalidInetSocketAddress();
@@ -295,22 +291,13 @@ public class NetUtil {
         throw invalidInetSocketAddress();
       }
     }
-    int port;
-    try {
-      port = Integer.parseInt(portText);
-    } catch (NumberFormatException e) {
-      throw invalidInetSocketAddress();
-    }
+    int port = Integer.parseInt(portText);
     if (port <= 0 || port > 65535) {
       throw invalidInetSocketAddress();
     }
-    try {
-      InetSocketAddress address = new InetSocketAddress(InetAddress.getByName(host), port);
-      validateInetSocketAddress(address);
-      return address;
-    } catch (UnknownHostException e) {
-      throw new IllegalArgumentException("Invalid inetSocketAddress", e);
-    }
+    InetSocketAddress address = new InetSocketAddress(parseIpAddress(host), port);
+    validateInetSocketAddress(address);
+    return address;
   }
 
   private static IllegalArgumentException invalidInetSocketAddress() {

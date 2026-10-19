@@ -17,7 +17,7 @@ final class ActivePeerOutputFormatter {
       "Sync P/U = needSyncFromPeer / needSyncFromUs (Y/N)",
       "Fetch Size/Head = syncToFetchSize / syncToFetchSizePeekNum",
       "Req/Remain = syncBlockRequestedSize / remainNum",
-      "Chain = syncChainRequestedMillis; Idle = inactiveSeconds; Proc = blockInProcess"
+      "Chain = syncChainRequestedMillis; Idle = inactiveSeconds; Proc = syncBlockInProcessSize"
   };
   private static final String[] TABLE_HEADERS = {
       "Address", "Conn", "Latency", "Block", "Sync P/U", "Fetch Size/Head", "Req/Remain",
@@ -104,7 +104,7 @@ final class ActivePeerOutputFormatter {
         formatPair(peer.get("syncBlockRequestedSize"), peer.get("remainNum")),
         formatTableCell(peer.get("syncChainRequestedMillis")),
         formatTableCell(peer.get("inactiveSeconds")),
-        formatTableCell(peer.get("blockInProcess")));
+        formatTableCell(peer.get("syncBlockInProcessSize")));
   }
 
   private String formatBooleanPair(JsonNode fromPeer, JsonNode fromUs) {

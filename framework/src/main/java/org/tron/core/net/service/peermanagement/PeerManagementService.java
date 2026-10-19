@@ -54,25 +54,20 @@ public class PeerManagementService {
   private final Object managementLock = new Object();
   private volatile Map<InetAddress, Long> blockedIps = Collections.emptyMap();
   private volatile P2pService p2pService;
-  private volatile boolean ready;
 
-  public void configure(P2pConfig p2pConfig, P2pService p2pService) {
-    ready = false;
+  public void configure(P2pConfig p2pConfig) {
     this.p2pService = null;
     Objects.requireNonNull(p2pConfig, "p2pConfig must not be null");
-    Objects.requireNonNull(p2pService, "p2pService must not be null");
     Map<InetAddress, Long> loadedBlockedIps = loadBlockedIps();
     blockedIps = immutableCopy(loadedBlockedIps);
     p2pConfig.setBlockedIps(new HashSet<>(loadedBlockedIps.keySet()));
-    this.p2pService = p2pService;
   }
 
-  public void init() {
-    ready = true;
+  public void init(P2pService p2pService) {
+    this.p2pService = Objects.requireNonNull(p2pService, "p2pService must not be null");
   }
 
   public void close() {
-    ready = false;
     p2pService = null;
   }
 
@@ -94,13 +89,14 @@ public class PeerManagementService {
     int activeCount = 0;
     int validCount = 0;
     for (PeerConnection peer : peers) {
+      ActivePeerInfo peerInfo = peer.getActivePeerInfo();
       if (peer.getChannel().isActive()) {
         activeCount++;
       }
-      if (peer.isSyncFinish()) {
+      if (!peerInfo.isNeedSyncFromPeer() && !peerInfo.isNeedSyncFromUs()) {
         validCount++;
       }
-      peerInfos.add(peer.getActivePeerInfo());
+      peerInfos.add(peerInfo);
     }
     return new ActivePeerListResult(peers.size(), activeCount, peers.size() - activeCount,
         validCount, peerInfos);
@@ -265,7 +261,7 @@ public class PeerManagementService {
 
   private P2pService requireP2pService() throws JsonRpcInternalException {
     P2pService service = p2pService;
-    if (!ready || service == null) {
+    if (service == null) {
       throw new JsonRpcInternalException("P2P service is not ready");
     }
     return service;
@@ -305,7 +301,7 @@ public class PeerManagementService {
   }
 
   private Map<InetAddress, Long> deserializeBlockedIps(byte[] value) throws IOException {
-    if (value == null || value.length == 0 || value.length > MAX_BLOCKED_IPS_VALUE_BYTES) {
+    if (value.length == 0 || value.length > MAX_BLOCKED_IPS_VALUE_BYTES) {
       throw new IOException("Invalid blocked IP value size");
     }
     JsonNode root = OBJECT_MAPPER.readTree(value);
@@ -314,24 +310,16 @@ public class PeerManagementService {
     }
     Map<InetAddress, Long> entries = new HashMap<>();
     for (JsonNode element : root) {
-      if (!element.isObject()) {
-        throw new IOException("Blocked IP entry must be an object");
-      }
-      JsonNode ip = element.get("ip");
-      JsonNode blockedAtMillis = element.get("blockedAtMillis");
-      if (ip == null || !ip.isTextual() || blockedAtMillis == null
-          || !blockedAtMillis.isIntegralNumber() || !blockedAtMillis.canConvertToLong()
-          || blockedAtMillis.longValue() < 0) {
-        throw new IOException("Invalid blocked IP record");
-      }
-      String valueText = ip.textValue();
-      if (valueText == null || valueText.length() > MAX_IP_LENGTH) {
+      JsonNode ip = element.path("ip");
+      if (!ip.isTextual() || ip.textValue().length() > MAX_IP_LENGTH) {
         throw new IOException("Invalid blocked IP entry");
       }
-      // Equivalent IP spellings describe one record; retain the earliest creation time.
+      // Creation time is display metadata; an unavailable timestamp must not discard the block.
+      JsonNode blockedAtMillis = element.path("blockedAtMillis");
+      long timestamp = blockedAtMillis.isIntegralNumber() && blockedAtMillis.canConvertToLong()
+          ? blockedAtMillis.longValue() : 0;
       try {
-        entries.merge(NetUtil.parseIpAddress(valueText), blockedAtMillis.longValue(),
-            StrictMath::min);
+        entries.put(NetUtil.parseIpAddress(ip.textValue()), timestamp);
       } catch (IllegalArgumentException e) {
         throw new IOException("Invalid blocked IP entry", e);
       }

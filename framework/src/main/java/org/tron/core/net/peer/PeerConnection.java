@@ -326,7 +326,7 @@ public class PeerConnection {
         peerInfo.getRemainNum(),
         peerInfo.getSyncChainRequestedMillis() / Constant.ONE_THOUSAND,
         peerInfo.getInactiveSeconds(),
-        peerInfo.getBlockInProcess());
+        peerInfo.getSyncBlockInProcessSize());
   }
 
   public ActivePeerInfo getActivePeerInfo() {
