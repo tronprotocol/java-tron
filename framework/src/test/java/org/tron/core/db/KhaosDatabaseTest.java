@@ -54,7 +54,8 @@ public class KhaosDatabaseTest extends BaseTest {
     khaosDatabase.start(blockCapsule);
     khaosDatabase.push(blockCapsule2);
 
-    Assert.assertEquals(blockCapsule2, khaosDatabase.getBlock(blockCapsule2.getBlockId()));
+    Assert.assertEquals(blockCapsule2.getInstance(),
+        khaosDatabase.getBlock(blockCapsule2.getBlockId()).getInstance());
     Assert.assertTrue("contain is error",
         khaosDatabase.containBlockInMiniStore(blockCapsule2.getBlockId()));
 
@@ -81,9 +82,11 @@ public class KhaosDatabaseTest extends BaseTest {
     khaosDatabase.push(parent);
     Assert.assertNull(khaosDatabase.getBlock(child.getBlockId()));
     Assert.assertSame(child, khaosDatabase.push(child));
-    Assert.assertSame(child, khaosDatabase.getBlock(child.getBlockId()));
-    Assert.assertSame(parent,
-        khaosDatabase.getMiniStore().getByHash(child.getBlockId()).getParent().getBlk());
+    Assert.assertEquals(child.getInstance(),
+        khaosDatabase.getBlock(child.getBlockId()).getInstance());
+    Assert.assertEquals(parent.getInstance(),
+        khaosDatabase.getMiniStore().getByHash(child.getBlockId())
+            .getParent().getBlk().getInstance());
 
     BlockCapsule fork = new BlockCapsule(101, root.getBlockId(), 103, ByteString.EMPTY);
     khaosDatabase.push(fork);

@@ -19,6 +19,7 @@ import org.tron.common.utils.Pair;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
+import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.BadNumberBlockException;
 import org.tron.core.exception.NonCommonBlockException;
 import org.tron.core.exception.UnLinkedBlockException;
@@ -33,7 +34,7 @@ public class KhaosDatabase {
   private KhaosStore miniStore = new KhaosStore();
 
   void start(BlockCapsule blk) {
-    this.head = new KhaosBlock(blk);
+    this.head = new KhaosBlock(blk, true);
     miniStore.insert(this.head);
   }
 
@@ -59,7 +60,7 @@ public class KhaosDatabase {
    */
   public BlockCapsule getBlock(Sha256Hash hash) {
     KhaosBlock block = miniStore.getByHash(hash);
-    return block == null ? null : block.blk;
+    return block == null ? null : block.getBlk();
   }
 
   /**
@@ -88,11 +89,15 @@ public class KhaosDatabase {
     if (head == null || block.num > head.num) {
       head = block;
     }
-    return head.blk;
+    return head == block ? blk : head.getBlk();
   }
 
   public BlockCapsule getHead() {
-    return head.blk;
+    return head.getBlk();
+  }
+
+  public BlockId getHeadId() {
+    return head.id;
   }
 
   void setHead(KhaosBlock blk) {
@@ -168,20 +173,58 @@ public class KhaosDatabase {
 
   public static class KhaosBlock {
 
-    @Getter
     private BlockCapsule blk;
+    private byte[] rawData;
     private Reference<KhaosBlock> parent = new WeakReference<>(null);
-    private BlockId id;
-    private long num;
+    @Getter
+    private final BlockId id;
+    @Getter
+    private final long num;
+    @Getter
+    private final Sha256Hash parentHash;
+    private final boolean generatedByMyself;
 
     public KhaosBlock(BlockCapsule blk) {
-      this.blk = blk;
-      this.id = blk.getBlockId();
-      this.num = blk.getNum();
+      this(blk, false);
     }
 
-    public Sha256Hash getParentHash() {
-      return this.blk.getParentHash();
+    private KhaosBlock(BlockCapsule blk, boolean processed) {
+      this.id = blk.getBlockId();
+      this.num = blk.getNum();
+      this.parentHash = blk.getParentHash();
+      this.generatedByMyself = blk.generatedByMyself;
+      if (processed) {
+        this.blk = blk;
+      } else {
+        this.rawData = blk.getData();
+      }
+    }
+
+    /** Queries must not retain decoded objects for an unprocessed block. */
+    public synchronized BlockCapsule getBlk() {
+      if (blk != null) {
+        return blk;
+      }
+      try {
+        BlockCapsule block = new BlockCapsule(rawData);
+        block.generatedByMyself = generatedByMyself;
+        return block;
+      } catch (BadItemException e) {
+        throw new IllegalStateException("Cannot decode cached block " + id, e);
+      }
+    }
+
+    public synchronized boolean isProcessed() {
+      return blk != null;
+    }
+
+    /** Retain the executed capsule only after its database session commits successfully. */
+    synchronized void commit(BlockCapsule block) {
+      if (!id.equals(block.getBlockId())) {
+        throw new IllegalArgumentException("Committed block ID does not match " + id);
+      }
+      blk = block;
+      rawData = null;
     }
 
     public KhaosBlock getParent() {

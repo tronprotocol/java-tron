@@ -315,10 +315,6 @@ public class ChainBaseManager {
     }
   }
 
-  public BlockCapsule getKhaosDbHead(){
-    return this.khaosDb.getHead();
-  }
-
   /**
    * Get a BlockCapsule by id.
    */
