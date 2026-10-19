@@ -265,41 +265,38 @@ public class AdvService {
   public void onDisconnect(PeerConnection peer) {
     // Release this peer's retry tracking before looking for another outstanding request.
     fetchBlockService.onDisconnect(peer);
-    if (!peer.getAdvInvRequest().isEmpty()) {
-      peer.getAdvInvRequest().keySet().forEach(item -> {
-        synchronized (this) {
-          Collection<PeerConnection> peers = tronNetDelegate.getActivePeer().stream()
-              .filter(p -> !p.equals(peer) && !p.isDisconnect()).collect(Collectors.toList());
-          // Another provider may have already delivered the block.
-          if (item.getType() == InventoryType.BLOCK
-              && (blockCache.getIfPresent(item) != null
-              || tronNetDelegate.containBlock(new BlockId(item.getHash())))) {
-            return;
-          }
-          if (item.getType() == InventoryType.BLOCK) {
-            Optional<PeerConnection> pending = peers.stream()
-                .filter(p -> p.getAdvInvRequest().containsKey(item)).findFirst();
-            if (pending.isPresent()) {
-              // Reuse the pending request and its original timestamp instead of sending it again.
-              fetchBlockService.fetchBlock(Collections.singletonList(item.getHash()),
-                  pending.get());
-              return;
-            }
-          }
-          if (peers.stream().anyMatch(p -> p.getAdvInvReceive().getIfPresent(item) != null)) {
-            // Let normal scheduling select a replacement from the remaining advertisers.
-            invToFetch.put(item, System.currentTimeMillis());
-          } else {
-            // Allow future announcements to enqueue the item again when no source remains.
-            invToFetch.remove(item);
-            invToFetchCache.invalidate(item);
-          }
-        }
-      });
-    }
+    peer.getAdvInvRequest().keySet().forEach(item -> recoverFetchOnDisconnect(peer, item));
 
     if (!invToFetch.isEmpty()) {
       consumerInvToFetch();
+    }
+  }
+
+  private synchronized void recoverFetchOnDisconnect(PeerConnection peer, Item item) {
+    Collection<PeerConnection> peers = tronNetDelegate.getActivePeer().stream()
+        .filter(p -> !p.equals(peer) && !p.isDisconnect()).collect(Collectors.toList());
+    // Another provider may have already delivered the block.
+    if (item.getType() == InventoryType.BLOCK
+        && (blockCache.getIfPresent(item) != null
+        || tronNetDelegate.containBlock(new BlockId(item.getHash())))) {
+      return;
+    }
+    if (item.getType() == InventoryType.BLOCK) {
+      Optional<PeerConnection> pending = peers.stream()
+          .filter(p -> p.getAdvInvRequest().containsKey(item)).findFirst();
+      if (pending.isPresent()) {
+        // Reuse the pending request and its original timestamp instead of sending it again.
+        fetchBlockService.fetchBlock(Collections.singletonList(item.getHash()), pending.get());
+        return;
+      }
+    }
+    if (peers.stream().anyMatch(p -> p.getAdvInvReceive().getIfPresent(item) != null)) {
+      // Let normal scheduling select a replacement from the remaining advertisers.
+      invToFetch.put(item, System.currentTimeMillis());
+    } else {
+      // Allow future announcements to enqueue the item again when no source remains.
+      invToFetch.remove(item);
+      invToFetchCache.invalidate(item);
     }
   }
 
