@@ -16,7 +16,7 @@ public class IpcResponseTest {
     Map<Integer, OutputFormat> formats = new HashMap<>();
     formats.put(1, OutputFormat.TEXT);
     String result = "\"result\":{\"allCount\":0,\"activeCount\":0,\"passiveCount\":0,"
-        + "\"validCount\":0,\"peers\":[]}}";
+        + "\"effectiveCount\":0,\"peers\":[]}}";
     for (String prefix : new String[] {"{\"id\":1,",
         "{\"jsonrpc\":\"2.0\",\"id\":2,", "{\"jsonrpc\":\"2.0\",\"id\":4294967297,"}) {
       Assert.assertFalse(IpcResponse.parse(prefix + result, 1, formats).isSuccessful());
@@ -47,7 +47,7 @@ public class IpcResponseTest {
     Map<Integer, OutputFormat> pendingFormats = new HashMap<>();
     pendingFormats.put(1, OutputFormat.TEXT);
     String peers = "\"result\":{\"allCount\":0,\"activeCount\":0,\"passiveCount\":0,"
-        + "\"validCount\":0,\"peers\":[]}}";
+        + "\"effectiveCount\":0,\"peers\":[]}}";
 
     IpcResponse unrelated = IpcResponse.parse(
         "{\"jsonrpc\":\"2.0\",\"id\":2," + peers, pendingFormats);
@@ -61,7 +61,7 @@ public class IpcResponseTest {
         RESPONSE_PREFIX + peers, pendingFormats);
     Assert.assertTrue(matched.isSuccessful());
     Assert.assertTrue(matched.getFormatted().startsWith(
-        "Peers: all=0, active=0, passive=0, valid=0"));
+        "Peers: all=0, active=0, passive=0, effective=0"));
     Assert.assertTrue(pendingFormats.isEmpty());
     Assert.assertTrue(IpcResponse.parse("{\"jsonrpc\":\"2.0\",\"id\":1," + peers, pendingFormats)
         .getFormatted().contains("\"peers\""));

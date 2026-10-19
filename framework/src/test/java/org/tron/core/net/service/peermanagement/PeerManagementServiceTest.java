@@ -587,10 +587,13 @@ public class PeerManagementServiceTest {
       Assert.assertEquals(2, result.getAllCount());
       Assert.assertEquals(1, result.getActiveCount());
       Assert.assertEquals(1, result.getPassiveCount());
-      Assert.assertEquals(1, result.getValidCount());
+      Assert.assertEquals(1, result.getEffectiveCount());
       Assert.assertEquals(2, result.getPeers().size());
       Assert.assertEquals("192.0.2.20:18888", result.getPeers().get(0).getRemoteAddress());
       Assert.assertEquals(42L, result.getPeers().get(0).getAverageLatencyMillis());
+      JsonNode serialized = OBJECT_MAPPER.valueToTree(result);
+      Assert.assertFalse(serialized.has("validCount"));
+      Assert.assertEquals(1, serialized.path("effectiveCount").asInt());
     }
   }
 
@@ -604,13 +607,13 @@ public class PeerManagementServiceTest {
       Assert.assertEquals(0, result.getAllCount());
       Assert.assertEquals(0, result.getActiveCount());
       Assert.assertEquals(0, result.getPassiveCount());
-      Assert.assertEquals(0, result.getValidCount());
+      Assert.assertEquals(0, result.getEffectiveCount());
       Assert.assertEquals(Collections.emptyList(), result.getPeers());
     }
   }
 
   @Test
-  public void listActivePeersCountsValidPeersFromReturnedSnapshots() {
+  public void listActivePeersCountsEffectivePeersFromReturnedSnapshots() {
     PeerConnection peer = mockPeer(true, false, "192.0.2.20:18888", 42L);
     // The live state can differ from the snapshot returned to the caller.
     Mockito.when(peer.isSyncFinish()).thenReturn(true);
@@ -622,7 +625,7 @@ public class PeerManagementServiceTest {
 
       ActivePeerListResult result = service.listActivePeers();
 
-      Assert.assertEquals(0, result.getValidCount());
+      Assert.assertEquals(0, result.getEffectiveCount());
       Assert.assertTrue(result.getPeers().get(0).isNeedSyncFromUs());
     }
   }

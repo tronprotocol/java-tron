@@ -12,15 +12,16 @@ public class ActivePeerListResult {
   private final int allCount;
   private final int activeCount;
   private final int passiveCount;
-  private final int validCount;
+  // Peers with neither sync flag set, as counted by the minEffectiveConnection broadcast check.
+  private final int effectiveCount;
   private final List<ActivePeerInfo> peers;
 
-  public ActivePeerListResult(int allCount, int activeCount, int passiveCount, int validCount,
+  public ActivePeerListResult(int allCount, int activeCount, int passiveCount, int effectiveCount,
       List<ActivePeerInfo> peers) {
     this.allCount = allCount;
     this.activeCount = activeCount;
     this.passiveCount = passiveCount;
-    this.validCount = validCount;
+    this.effectiveCount = effectiveCount;
     this.peers = Collections.unmodifiableList(new ArrayList<>(peers));
   }
 }

@@ -75,7 +75,7 @@ final class ActivePeerOutputFormatter {
     table.append("Peers: all=").append(formatTableCell(result.get("allCount")))
         .append(", active=").append(formatTableCell(result.get("activeCount")))
         .append(", passive=").append(formatTableCell(result.get("passiveCount")))
-        .append(", valid=").append(formatTableCell(result.get("validCount")))
+        .append(", effective=").append(formatTableCell(result.get("effectiveCount")))
         .append(lineSeparator).append(lineSeparator);
     table.append("Fields:").append(lineSeparator);
     for (String mapping : FIELD_MAPPINGS) {

@@ -76,7 +76,7 @@ public class IpcClientTest {
     Assert.assertEquals("admin_listActivePeers", request.get("method").asText());
     Assert.assertEquals(0, request.get("params").size());
     Assert.assertTrue(execution.standardOutput,
-        execution.standardOutput.contains("Peers: all=1, active=1, passive=0, valid=1"));
+        execution.standardOutput.contains("Peers: all=1, active=1, passive=0, effective=1"));
     for (String field : Arrays.asList(
         "remoteAddress", "connectSeconds", "averageLatencyMillis", "lastKnownBlockNum",
         "needSyncFromPeer", "needSyncFromUs", "syncToFetchSize", "syncToFetchSizePeekNum",
@@ -610,7 +610,7 @@ public class IpcClientTest {
     result.put("allCount", 1);
     result.put("activeCount", 1);
     result.put("passiveCount", 0);
-    result.put("validCount", 1);
+    result.put("effectiveCount", 1);
     ArrayNode peers = result.putArray("peers");
     ObjectNode peer = peers.addObject();
     peer.put("remoteAddress", remoteAddress);

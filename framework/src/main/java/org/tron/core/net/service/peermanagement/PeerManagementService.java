@@ -87,19 +87,19 @@ public class PeerManagementService {
     List<PeerConnection> peers = PeerManager.getPeers();
     List<ActivePeerInfo> peerInfos = new ArrayList<>(peers.size());
     int activeCount = 0;
-    int validCount = 0;
+    int effectiveCount = 0;
     for (PeerConnection peer : peers) {
       ActivePeerInfo peerInfo = peer.getActivePeerInfo();
       if (peer.getChannel().isActive()) {
         activeCount++;
       }
       if (!peerInfo.isNeedSyncFromPeer() && !peerInfo.isNeedSyncFromUs()) {
-        validCount++;
+        effectiveCount++;
       }
       peerInfos.add(peerInfo);
     }
     return new ActivePeerListResult(peers.size(), activeCount, peers.size() - activeCount,
-        validCount, peerInfos);
+        effectiveCount, peerInfos);
   }
 
   /**
