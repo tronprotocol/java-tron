@@ -7,6 +7,7 @@ import org.tron.p2p.discover.message.MessageType;
 import org.tron.p2p.protos.Discover;
 import org.tron.p2p.protos.Discover.Endpoint;
 import org.tron.p2p.utils.NetUtil;
+import org.tron.p2p.utils.ProtoUtil;
 
 public class FindNodeMessage extends KadMessage {
 
@@ -14,7 +15,7 @@ public class FindNodeMessage extends KadMessage {
 
   public FindNodeMessage(byte[] data) throws Exception {
     super(MessageType.KAD_FIND_NODE, data);
-    this.findNeighbours = Discover.FindNeighbours.parseFrom(data);
+    this.findNeighbours = ProtoUtil.parseFrom(Discover.FindNeighbours.parser(), data);
   }
 
   public FindNodeMessage(Node from, byte[] targetId) {

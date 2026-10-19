@@ -4,6 +4,7 @@ import org.tron.p2p.connection.message.Message;
 import org.tron.p2p.connection.message.MessageType;
 import org.tron.p2p.protos.Connect;
 import org.tron.p2p.protos.Connect.DisconnectReason;
+import org.tron.p2p.utils.ProtoUtil;
 
 
 public class P2pDisconnectMessage extends Message {
@@ -12,7 +13,7 @@ public class P2pDisconnectMessage extends Message {
 
   public P2pDisconnectMessage(byte[] data) throws Exception {
     super(MessageType.DISCONNECT, data);
-    this.p2pDisconnectMessage = Connect.P2pDisconnectMessage.parseFrom(data);
+    this.p2pDisconnectMessage = ProtoUtil.parseFrom(Connect.P2pDisconnectMessage.parser(), data);
   }
 
   public P2pDisconnectMessage(DisconnectReason disconnectReason) {

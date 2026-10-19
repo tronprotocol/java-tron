@@ -37,14 +37,16 @@ public class Keccak256 extends KeccakCore {
 
   @Override
   protected byte[] engineDigest() {
-    return null;
+    return digest();
   }
 
   @Override
-  protected void engineUpdate(byte arg0) {
+  protected void engineUpdate(byte input) {
+    update(input);
   }
 
   @Override
-  protected void engineUpdate(byte[] arg0, int arg1, int arg2) {
+  protected void engineUpdate(byte[] input, int offset, int len) {
+    update(input, offset, len);
   }
 }

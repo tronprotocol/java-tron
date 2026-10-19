@@ -10,6 +10,7 @@ import org.tron.p2p.protos.Discover.Endpoint;
 import org.tron.p2p.protos.Discover.Neighbours;
 import org.tron.p2p.protos.Discover.Neighbours.Builder;
 import org.tron.p2p.utils.NetUtil;
+import org.tron.p2p.utils.ProtoUtil;
 
 public class NeighborsMessage extends KadMessage {
 
@@ -17,7 +18,7 @@ public class NeighborsMessage extends KadMessage {
 
   public NeighborsMessage(byte[] data) throws Exception {
     super(MessageType.KAD_NEIGHBORS, data);
-    this.neighbours = Discover.Neighbours.parseFrom(data);
+    this.neighbours = ProtoUtil.parseFrom(Discover.Neighbours.parser(), data);
   }
 
   public NeighborsMessage(Node from, List<Node> neighbours, long sequence) {

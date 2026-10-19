@@ -17,16 +17,22 @@
 #
 ##############################################################################
 
+# The script needs bash. Rerun under bash when it was started with sh and sh is another shell,
+# such as dash on Debian and Ubuntu.
+if [ -z "$BASH_VERSION" ]; then
+  exec bash "$0" "$@"
+fi
+
 # Build FullNode config
 FULL_NODE_DIR="FullNode"
 FULL_NODE_CONFIG_DIR="config"
 # config file
-FULL_NODE_CONFIG_MAIN_NET="main_net_config.conf"
 FULL_NODE_CONFIG_TEST_NET="test_net_config.conf"
 FULL_NODE_CONFIG_PRIVATE_NET="private_net_config.conf"
 DEFAULT_FULL_NODE_CONFIG='config.conf'
 JAR_NAME="FullNode.jar"
-FULL_START_OPT=''
+# FullNode options given on the command line, passed on as they are.
+FULL_START_OPT=()
 
 # Github
 GITHUB_BRANCH='master'
@@ -42,25 +48,33 @@ MAX_STOP_TIME=60
 # Modify this option to allow the minimum memory to be started, unit MB
 ALLOW_MIN_MEMORY=8192
 
-# JVM option
+# JVM option, adjust as needed
 MAX_DIRECT_MEMORY=1g
 JVM_MS=4g
-JVM_MX=4g
+JVM_MX=9g
 IS_BACKUP_GC_LOG=true
 
 SPECIFY_MEMORY=0
-RUN=false
 UPGRADE=false
 
 # Rebuild manifest
+# REBUILD_DIR is relative to the directory the node is started from, like the -d option of
+# FullNode, so it stays right after --release or -cb change into $FULL_NODE_DIR.
 REBUILD_MANIFEST=true
-REBUILD_DIR="$PWD/output-directory/database"
-REBUILD_MANIFEST_SIZE=0
+REBUILD_DIR="output-directory/database"
+REBUILD_MANIFEST_SIZE=128
 REBUILD_BATCH_SIZE=80000
+# Release asset that rewrites LevelDB manifests, fetched on first use by ensureArchiveJar.
+ARCHIVE_JAR='ArchiveManifest.jar'
 
 # Download and upgrade
 DOWNLOAD=false
 RELEASE_URL='https://github.com/tronprotocol/java-tron/releases'
+# Release jars are signed with this key, see "Integrity Check" in README.md
+RELEASE_KEY_FINGERPRINT='1254F859D2B1BD9F66E7107DF859BCB44A28290B'
+RELEASE_KEY_SERVERS='hkps://keys.openpgp.org hkps://keyserver.ubuntu.com'
+MAIN_NET_CONFIG_URL='https://raw.githubusercontent.com/tronprotocol/java-tron/master/framework/src/main/resources/config.conf'
+TEST_NET_CONFIG_URL='https://raw.githubusercontent.com/tron-nile-testnet/nile-testnet/master/framework/src/main/resources/config-nile.conf'
 QUICK_START=false
 CLONE_BUILD=false
 
@@ -70,27 +84,80 @@ else
   GITHUB_REPOSITORY=$GITHUB_REPOSITORY_SSH_URL
 fi
 
+# macOS derives JAVA_HOME in its own way, see below.
+darwin=false
+case "`uname`" in
+  Darwin*) darwin=true ;;
+esac
+
+# Logging helpers: print a timestamped, colored line to the terminal and keep the same line,
+# without color codes, in start.log, so stop, download, signature-check, rebuild and start
+# messages survive when the script runs from cron, systemd or nohup. INFO and WARN go to
+# stdout, ERROR to stderr. start.log also marks a directory a node was started from
+# (enterNodeDir, stopService and checkPid rely on it), so these helpers never create it: lines
+# are queued and written only to an existing start.log in the current directory, at the latest
+# when startService creates it.
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m'
+LOG_FILE='start.log'
+PENDING_LOG_LINES=()
+log() {
+  local level="$1"; shift
+  local color='' timestamp
+  timestamp=$(date '+%Y-%m-%d %H:%M:%S')
+  case "$level" in
+    INFO) color="$GREEN" ;;
+    WARN) color="$YELLOW" ;;
+    ERROR) color="$RED" ;;
+  esac
+  printf '%b[%s] [%s]:%b %s\n' "$color" "$timestamp" "$level" "$NC" "$*"
+  PENDING_LOG_LINES+=("[$timestamp] [$level]: $*")
+  if [ -f "$LOG_FILE" ]; then
+    flushLog
+  fi
+}
+# Appends the queued lines to start.log in the current directory, creating it when missing.
+# Called by log once start.log exists, and by startService before it starts a node.
+flushLog() {
+  if [ ${#PENDING_LOG_LINES[@]} -gt 0 ]; then
+    printf '%s\n' "${PENDING_LOG_LINES[@]}" >> "$LOG_FILE" 2>/dev/null
+    PENDING_LOG_LINES=()
+  fi
+}
+info() { log INFO "$@"; }
+warn() { log WARN "$@"; }
+error() { log ERROR "$@" >&2; }
+
 # Determine the Java command to use to start the JVM.
+# A JAVA_HOME from the environment is used as is. Otherwise it is derived from the installed JDK.
 if [ -z "$JAVA_HOME" ]; then
-  javaExecutable="`which javac`"
-  if [ -n "$javaExecutable" ] && ! [ "`expr \"$javaExecutable\" : '\([^ ]*\)'`" = "no" ]; then
-    # readlink(1) is not available as standard on Solaris 10.
-    readLink=`which readlink`
-    if [ ! `expr "$readLink" : '\([^ ]*\)'` = "no" ]; then
-      if $darwin ; then
-        javaHome="`dirname \"$javaExecutable\"`"
-        javaExecutable="`cd \"$javaHome\" && pwd -P`/javac"
-      else
+  if $darwin ; then
+    # /usr/bin/java and /usr/bin/javac are stubs that run the JDK selected by
+    # /usr/libexec/java_home. Deriving JAVA_HOME from their path gives /usr, and the
+    # stub then runs itself forever.
+    JAVA_HOME="`/usr/libexec/java_home 2>/dev/null`"
+  else
+    javaExecutable="`which javac`"
+    if [ -n "$javaExecutable" ] && ! [ "`expr \"$javaExecutable\" : '\([^ ]*\)'`" = "no" ]; then
+      # readlink(1) is not available as standard on Solaris 10.
+      readLink=`which readlink`
+      if [ ! `expr "$readLink" : '\([^ ]*\)'` = "no" ]; then
         javaExecutable="`readlink -f \"$javaExecutable\"`"
+        javaHome="`dirname \"$javaExecutable\"`"
+        JAVA_HOME=`expr "$javaHome" : '\(.*\)/bin'`
       fi
-      javaHome="`dirname \"$javaExecutable\"`"
-      javaHome=`expr "$javaHome" : '\(.*\)/bin'`
-      JAVA_HOME="$javaHome"
-      export JAVA_HOME
     fi
+  fi
+  # Export it so that child processes, such as the gradle build of -cb, use the same JDK.
+  if [ -n "$JAVA_HOME" ]; then
+    export JAVA_HOME
   fi
 fi
 
+# A JAVACMD from the environment is used as is. Otherwise it is java under JAVA_HOME when JAVA_HOME
+# is set, else java on PATH.
 if [ -z "$JAVACMD" ] ; then
   if [ -n "$JAVA_HOME"  ] ; then
     if [ -x "$JAVA_HOME/jre/sh/java" ] ; then
@@ -105,168 +172,285 @@ if [ -z "$JAVACMD" ] ; then
 fi
 
 if [ ! -x "$JAVACMD" ] ; then
-  echo "Error: JAVA_HOME is not defined correctly." >&2
-  echo "  We cannot execute $JAVACMD" >&2
+  error "JAVA_HOME is not defined correctly."
+  error "We cannot execute $JAVACMD"
   exit 1
 fi
 
 if [ -z "$JAVA_HOME" ] ; then
-  echo "Warning: JAVA_HOME environment variable is not set."
+  warn "JAVA_HOME environment variable is not set."
 fi
 
+# JVM system properties of $JAVACMD, read once and looked up by javaProperty. JAVA_ERROR holds
+# the first line of output when java cannot run, for example a JDK built for another CPU.
+JAVA_ERROR=''
+if ! JAVA_PROPERTIES=$("$JAVACMD" -XshowSettings:properties -version 2>&1); then
+  JAVA_ERROR=$(echo "$JAVA_PROPERTIES" | head -n 1)
+  JAVA_PROPERTIES=''
+fi
+# Prints one JVM system property from the -XshowSettings output above.
+javaProperty() {
+  echo "$JAVA_PROPERTIES" | awk -F ' = ' -v key="$1" '$1 ~ "^ *" key "$" {print $2; exit}'
+}
+
+# x86_64 runs on JDK 8 and ARM64 on JDK 17, each with its own release jars
+# JAVA_SPEC_VERSION selects the GC options in startService. ARM64 release assets carry the
+# -aarch64 suffix, and x86_64 assets have none.
+JAVA_SPEC_VERSION=$(javaProperty java.specification.version)
+case "$(javaProperty os.arch)" in
+  aarch64|arm64) RELEASE_ARCH_SUFFIX='-aarch64' ;;
+  *) RELEASE_ARCH_SUFFIX='' ;;
+esac
+# Release asset names of the node jar and of the manifest rebuild tool for this architecture.
+RELEASE_JAR="FullNode$RELEASE_ARCH_SUFFIX.jar"
+RELEASE_ARCHIVE_JAR="ArchiveManifest$RELEASE_ARCH_SUFFIX.jar"
+
+# Exits when $JAVACMD cannot run or its version is unknown. Called before anything that needs
+# java, so that --stop still works with a broken JDK.
+checkJava() {
+  if [ -n "$JAVA_ERROR" ]; then
+    error "$JAVACMD cannot run: $JAVA_ERROR"
+    exit 1
+  fi
+  if [ -z "$JAVA_SPEC_VERSION" ]; then
+    error "cannot determine the Java version of $JAVACMD"
+    exit 1
+  fi
+}
+
+# Archives the gc.log of the stopped node into logs/gc_logs/ and keeps the newest 5 archives.
 backupGCLog() {
   local maxFile=5
-  local gcLogDir=logs/gc_logs/
-  if [ ! -d "$gcLogDir" ];then
-    mkdir -p 'logs/gc_logs'
-  fi
+  local gcLogDir=logs/gc_logs
+  local dateformat
+  local archives
+  local count
+  mkdir -p "$gcLogDir"
 
   if [ -f 'gc.log' ]; then
-    echo '[info] backup gc.log'
-    local dateformat=`date "+%Y-%m-%d_%H-%M-%S"`
-    tar -czvf gc.log_$dateformat'.tar.gz' gc.log
-    mv gc.log_$dateformat'.tar.gz' $gcLogDir
-    rm -rf gc.log
+    info 'backup gc.log'
+    dateformat=$(date "+%Y-%m-%d_%H-%M-%S")
+    tar -czf "$gcLogDir/gc.log_$dateformat.tar.gz" gc.log && rm -f gc.log
 
-    # checking the number of backups
-    local currentDirCount=`ls -l $gcLogDir | grep "gc.log*" | wc -l`
-    if [ $currentDirCount -gt $maxFile ]; then
-      local oldFileSize=`expr $currentDirCount - $maxFile`
-      local oldGcLogFiles=(`ls -1 $gcLogDir |head -n $oldFileSize`)
+    # Archive names sort by their timestamp, so the first ones listed are the oldest. Other
+    # files in the directory are left alone.
+    archives=$(ls -1 "$gcLogDir" | grep '^gc\.log_.*\.tar\.gz$')
+    count=$(echo "$archives" | grep -c .)
+    if [ "$count" -gt "$maxFile" ]; then
+      echo "$archives" | head -n $((count - maxFile)) | while read -r fileName; do
+        rm -f "$gcLogDir/$fileName"
+      done
     fi
-
-    for fileName in ${oldGcLogFiles[@]}; do
-      rm -rf $gcLogDir$fileName
-    done
   fi
 }
 
+# Prints the newest GreatVoyage release tag of the java-tron repository; prints nothing when
+# the tags cannot be listed.
 getLatestReleaseVersion() {
-  full_node_version=`git ls-remote --tags $GITHUB_REPOSITORY |grep GreatVoyage- | awk -F '/' 'END{print $3}'`
-  if [[ -n $full_node_version ]]; then
-   echo $full_node_version
-  else
-   echo ''
-  fi
+  # List the remote tags, keep the GreatVoyage-vX.Y.Z ones and take the highest version.
+  git ls-remote --tags --refs $GITHUB_REPOSITORY 2>/dev/null | awk -F '/' '{print $3}' \
+    | grep -E '^GreatVoyage-v[0-9]+(\.[0-9]+)*$' | sort -V | tail -1
 }
 
-checkVersion() {
- github_release_version=$(`echo getLatestReleaseVersion`)
- if [[ -n $github_release_version ]]; then
-  echo "info: github latest version: $github_release_version"
-  echo $github_release_version
- else
-    echo 'info: not getting the latest version'
-    exit
- fi
-}
-
+# --upgrade: downloads and verifies the latest release jar, then replaces $JAR_NAME with it and
+# keeps the previous file as ${JAR_NAME}_bak. Exits without touching $JAR_NAME if that fails.
 upgrade() {
-  latest_version=$(`echo getLatestReleaseVersion`)
-  echo "info: latest version: $latest_version"
+  latest_version=$(getLatestReleaseVersion)
+  info "latest version: $latest_version"
   if [[ -n $latest_version ]]; then
-    old_jar="$PWD/$JAR_NAME"
-    if [[ -f $old_jar ]]; then
-      echo "info: backup $old_jar"
-      mv $PWD/$JAR_NAME $PWD/$JAR_NAME'_bak'
-    fi
-    download $RELEASE_URL/download/$latest_version/$JAR_NAME $JAR_NAME
-    if [[ $? == 0 ]]; then
-      echo "info: download version $latest_version success"
+    # Download to a temporary name first, so that a failed download or signature check leaves
+    # $JAR_NAME untouched.
+    if downloadRelease "$latest_version" "$RELEASE_JAR" "$JAR_NAME.download"; then
+      # Verified: keep the previous jar as ${JAR_NAME}_bak and move the new one into place.
+      if [[ -f $JAR_NAME ]]; then
+        info "backup $JAR_NAME"
+        mv "$JAR_NAME" "${JAR_NAME}_bak"
+      fi
+      mv "$JAR_NAME.download" "$JAR_NAME"
+      info "download version $latest_version success"
+    else
+      # download or checkSign has already removed the temporary file.
+      warn "upgrade aborted, $JAR_NAME is unchanged"
+      exit 1
     fi
   else
-    echo 'info: nothing to upgrade'
+    # No release tag could be listed. The current jar is kept.
+    info 'nothing to upgrade'
   fi
 }
 
+# Downloads $1 to file $2 with wget or curl, verifying the TLS certificate. Returns 1 and
+# leaves no file behind when the download fails.
 download() {
   local url=$1
   local file_name=$2
   if type wget >/dev/null 2>&1; then
-    wget --no-check-certificate -q $url
+    # wget follows redirects by default. --timeout bounds a stalled connection and --tries
+    # retries once, so a hang cannot keep the node stopped indefinitely.
+    wget --tries=2 --timeout=30 -q -O "$file_name" "$url" || { rm -f "$file_name"; return 1; }
   elif type curl >/dev/null 2>&1; then
-    echo "curl -OLJ $url"
-    curl -OLJ $url
+    # -f fails on HTTP errors instead of saving the error page, -L follows redirects.
+    # --connect-timeout bounds the initial connect, and --speed-time/--speed-limit abort a
+    # transfer stuck below 1 KB/s for 30s, while a slow but progressing download still finishes.
+    echo "curl -fsSL -o $file_name $url"
+    curl --connect-timeout 10 --speed-time 30 --speed-limit 1024 --retry 2 \
+      -fsSL -o "$file_name" "$url" || { rm -f "$file_name"; return 1; }
   else
-    echo 'info: no exists wget or curl, make sure the system can use the "wget" or "curl" command'
+    info 'no exists wget or curl, make sure the system can use the "wget" or "curl" command'
+    return 1
   fi
 }
 
+# Downloads asset $2 of release $1 to file $3 and verifies its signature.
+downloadRelease() {
+  download "$RELEASE_URL/download/$1/$2" "$3" && checkSign "$1" "$2" "$3"
+}
+
+# Creates the $FULL_NODE_DIR directory with a copy of this script and changes into it.
 mkdirFullNode() {
-  if [ ! -d $FULL_NODE_DIR ]; then
-    echo "info: create $FULL_NODE_DIR"
-    mkdir $FULL_NODE_DIR
-    $(cp $0 $FULL_NODE_DIR)
-    cd $FULL_NODE_DIR
-  elif [ -d $FULL_NODE_DIR ]; then
-    cd $FULL_NODE_DIR
+  if [ ! -d "$FULL_NODE_DIR" ]; then
+    info "create $FULL_NODE_DIR"
+    mkdir "$FULL_NODE_DIR"
+    cp "$0" "$FULL_NODE_DIR"
   fi
+  cd "$FULL_NODE_DIR" || exit 1
 }
 
+# --release / --deploy: sets up $FULL_NODE_DIR with the mainnet config and the latest verified
+# release jar. Exits when the version, the config or the jar cannot be fetched.
 quickStart() {
-  full_node_version=$(`echo getLatestReleaseVersion`)
+  full_node_version=$(getLatestReleaseVersion)
   if [[ -n $full_node_version ]]; then
+    # Enter $FULL_NODE_DIR, then download the mainnet config and the signed release jar for
+    # this architecture.
     mkdirFullNode
-    echo "info: check latest version: $full_node_version"
-    echo 'info: download config'
-    download https://raw.githubusercontent.com/tronprotocol/tron-deployment/$GITHUB_BRANCH/$FULL_NODE_CONFIG_MAIN_NET $FULL_NODE_CONFIG_MAIN_NET
-    mv $FULL_NODE_CONFIG_MAIN_NET 'config.conf'
+    info "check latest version: $full_node_version"
+    info 'download config'
+    # Download to a temporary name first and move it into place only on success, so a failed
+    # re-download in an existing FullNode/ leaves the current config.conf untouched instead of
+    # a later start silently falling back to the config bundled in the jar.
+    download "$MAIN_NET_CONFIG_URL" config.conf.download && mv config.conf.download config.conf || exit 1
 
-    echo "info: download $full_node_version"
-    download $RELEASE_URL/download/$full_node_version/$JAR_NAME $JAR_NAME
-    checkSign
+    # Download to a temporary name first, so that a failed download or signature check leaves
+    # an existing $JAR_NAME untouched.
+    info "download $full_node_version"
+    downloadRelease "$full_node_version" "$RELEASE_JAR" "$JAR_NAME.download" || exit 1
+    mv "$JAR_NAME.download" "$JAR_NAME"
   else
-    echo 'info: not getting the latest version'
-    exit
+    # Without a release tag there is nothing to download.
+    info 'not getting the latest version'
+    exit 1
   fi
 }
 
+# --clone: clones branch $GITHUB_BRANCH of java-tron into the current directory.
 cloneCode() {
   if type git >/dev/null 2>&1; then
-    git_clone=$(git clone -b $GITHUB_BRANCH $GITHUB_REPOSITORY)
-    if [[ git_clone == 0 ]]; then
-      echo 'info: git clone java-tron success'
+    # The checkout goes to ./java-tron.
+    if git clone -b $GITHUB_BRANCH $GITHUB_REPOSITORY; then
+      info 'git clone java-tron success'
+    else
+      warn 'git clone java-tron failed'
+      return 1
     fi
   else
-    echo 'info: no exists git, make sure the system can use the "git" command'
+    info 'no exists git, make sure the system can use the "git" command'
+    return 1
   fi
 }
 
+# -cb: clones and builds java-tron, then copies FullNode.jar and config.conf into
+# $FULL_NODE_DIR. Exits when the clone or the build fails.
 cloneBuild() {
   local currentPwd=$PWD
-  echo 'info: clone java-tron'
-  cloneCode
+  info 'clone java-tron'
+  cloneCode || exit 1
 
-  echo 'info: build java-tron'
-  cd java-tron
+  info 'build java-tron'
+  cd java-tron || exit 1
   sh gradlew clean build -x test
   if [[ $? == 0 ]];then
-    cd $currentPwd
+    cd "$currentPwd" || exit 1
     mkdirFullNode
-    cp '../java-tron/build/libs/FullNode.jar' $PWD
-    cp '../java-tron/framework/src/main/resources/config.conf' $PWD
+    cp '../java-tron/build/libs/FullNode.jar' "$PWD"
+    cp '../java-tron/framework/src/main/resources/config.conf' "$PWD"
   else
-    exit
+    exit 1
   fi
 }
 
+# Prints the process ids of the "java ... -jar <JAR_NAME>" lines in the ps output on stdin, where
+# each line is "<pid> <args...>". The jar given exactly as $JAR_NAME is matched as a whole token,
+# so a path containing spaces still matches; otherwise the jar file name is matched right after
+# -jar, whether it was given plain or with a directory.
+matchNodePid() {
+  local name=${JAR_NAME##*/}
+  local pid rest fields i
+  while read -r pid rest; do
+    if [[ " $rest " == *" -jar "$JAR_NAME" "* ]]; then
+      echo "$pid"
+      continue
+    fi
+    read -ra fields <<< "$rest"
+    for ((i = 1; i < ${#fields[@]}; i++)); do
+      if [[ ${fields[i - 1]} == -jar && ( ${fields[i]} == "$name" || ${fields[i]} == */"$name" ) ]]; then
+        echo "$pid"
+        break
+      fi
+    done
+  done
+}
+
+# Sets $pid to the process id recorded in <jar name>.pid; empty when that process is gone. A
+# directory that has a start.log but no pid file was used by an earlier version of this script,
+# which kept no pid file; there every process on the machine that runs the jar name is taken,
+# as that version did, so $pid may hold several ids.
 checkPid() {
-  if [[ $JAR_NAME =~ '/' ]]; then
-    JAR_NAME=$(echo $JAR_NAME |awk -F '/' '{print $NF}')
+  local pidFile="${JAR_NAME##*/}.pid"
+  local saved
+  pid=''
+  if [ -f "$pidFile" ]; then
+    # Only the recorded process counts, and only while it still runs the jar. Once it is found
+    # gone the file is emptied, so its id is not looked up again.
+    saved=$(cat "$pidFile" 2>/dev/null)
+    if [ -n "$saved" ]; then
+      pid=$(ps -o pid=,args= -p "$saved" 2>/dev/null | matchNodePid)
+      if [ -z "$pid" ]; then
+        : > "$pidFile"
+      fi
+    fi
+  elif [ -f start.log ]; then
+    pid=$(ps -A -o pid=,args= 2>/dev/null | matchNodePid)
   fi
-  pid=$(ps -ef | grep -v start | grep $JAR_NAME | grep -v grep | awk '{print $2}')
-  return $pid
 }
 
+# A node set up by --release or -cb runs in $FULL_NODE_DIR. When no node was started from the
+# current directory but one was from $FULL_NODE_DIR, change into it so stop, rebuild and start
+# all act on that node. Idempotent: once inside the node directory there is nothing to enter.
+enterNodeDir() {
+  local pidFile="${JAR_NAME##*/}.pid"
+  if [ ! -f "$pidFile" ] && [ ! -f start.log ] && [ -f "$FULL_NODE_DIR/$pidFile" ]; then
+    cd "$FULL_NODE_DIR" || exit 1
+  fi
+}
+
+# Stops the running node: sends SIGTERM once per second for up to MAX_STOP_TIME seconds,
+# then SIGKILL. Returns 1 when no node was ever started from this directory.
 stopService() {
+  local pidFile="${JAR_NAME##*/}.pid"
+  enterNodeDir
+  if [ ! -f "$pidFile" ] && [ ! -f start.log ]; then
+    info "no node was started from $PWD"
+    return 1
+  fi
   count=1
   while [ $count -le $MAX_STOP_TIME ]; do
     checkPid
-    if [ $pid ]; then
+    if [ -n "$pid" ]; then
       kill -15 $pid
       sleep 1
     else
-      echo "info: java-tron stop"
+      info "java-tron stop"
       return
     fi
     count=$(($count + 1))
@@ -278,6 +462,8 @@ stopService() {
   sleep 5
 }
 
+# Linux only: refuses to start with less than ALLOW_MIN_MEMORY MB of memory, or when -mem
+# asks for less than that.
 checkAllowMemory() {
   os=`uname`
   totalMemory=$(`echo getTotalMemory`)
@@ -287,16 +473,17 @@ checkAllowMemory() {
   fi
 
   if [[ $total -lt $ALLOW_MIN_MEMORY ]]; then
-    echo "warn: the memory $total MB cannot be smaller than the minimum memory $ALLOW_MIN_MEMORY MB"
-    exit
+    warn "the memory $total MB cannot be smaller than the minimum memory $ALLOW_MIN_MEMORY MB"
+    exit 1
   elif [[ $SPECIFY_MEMORY -gt 0 ]] &&
    [[ $SPECIFY_MEMORY -lt $ALLOW_MIN_MEMORY ]]; then
-    echo "warn: the specified memory $SPECIFY_MEMORY MB cannot be smaller than the minimum memory $ALLOW_MIN_MEMORY MB"
-    echo 'warn: start abort'
-    exit
+    warn "the specified memory $SPECIFY_MEMORY MB cannot be smaller than the minimum memory $ALLOW_MIN_MEMORY MB"
+    warn 'start abort'
+    exit 1
   fi
 }
 
+# Linux only: preloads tcmalloc when it is installed at /usr/lib64/libtcmalloc.so.
 setTCMalloc() {
   os=`uname`
   if [[ $os == 'Linux' ]] || [[ $os == 'linux' ]] ; then
@@ -305,11 +492,12 @@ setTCMalloc() {
       export LD_PRELOAD="$lib_tc_malloc"
       export TCMALLOC_RELEASE_RATE=10
     else
-      echo 'info: recommended for linux systems using tcmalloc as the default memory management tool'
+      info 'recommended for linux systems using tcmalloc as the default memory management tool'
     fi
   fi
 }
 
+# Prints the total memory of the machine in KB.
 getTotalMemory() {
   os=`uname`
   if [[ $os == 'Linux' ]] || [[ $os == 'linux' ]] ; then
@@ -317,143 +505,247 @@ getTotalMemory() {
     echo $total
     return
   elif [[  $os == 'Darwin' ]]; then
-    total=$(sysctl -a | grep mem |grep hw.memsize |awk -F ' ' '{print $2}')
-    echo `expr $total / 1024`
+    total=$(sysctl -n hw.memsize)
+    echo $((total / 1024))
   fi
 }
 
+# Linux only: sizes the heap to 60% and the direct memory to 10% of the total memory, or of
+# the -mem value when given. macOS keeps JVM_MS / JVM_MX and uses 1g of direct memory.
 setJVMMemory() {
   os=`uname`
   if [[ $os == 'Linux' ]] || [[ $os == 'linux' ]] ; then
-    if [[ $SPECIFY_MEMORY >0 ]]; then
-      max_direct=$(echo "$SPECIFY_MEMORY/1024*0.1" | bc | awk -F. '{print $1"g"}')
-      if [[ "$max_direct" != "g" ]]; then
-        MAX_DIRECT_MEMORY=$max_direct
-      fi
-      JVM_MX=$(echo "$SPECIFY_MEMORY/1024*0.6" | bc | awk -F. '{print $1"g"}')
-      JVM_MS=$JVM_MX
+    local total_gb
+    # The base is -mem when given, otherwise the total memory, in whole GB.
+    if [[ $SPECIFY_MEMORY -gt 0 ]]; then
+      total_gb=$((SPECIFY_MEMORY / 1024))
     else
-      total=$(`echo getTotalMemory`)
-      MAX_DIRECT_MEMORY=$(echo "$total/1024/1024*0.1" | bc | awk -F. '{print $1"g"}')
-      JVM_MX=$(echo "$total/1024/1024*0.6" | bc | awk -F. '{print $1"g"}')
+      total_gb=$(($(getTotalMemory) / 1024 / 1024))
+    fi
+    # Direct memory gets 10% and the heap 60%, with -Xms equal to -Xmx. A share that rounds
+    # down to 0 GB keeps its default.
+    if [[ $((total_gb / 10)) -gt 0 ]]; then
+      MAX_DIRECT_MEMORY="$((total_gb / 10))g"
+    fi
+    if [[ $((total_gb * 6 / 10)) -gt 0 ]]; then
+      JVM_MX="$((total_gb * 6 / 10))g"
       JVM_MS=$JVM_MX
     fi
 
   elif [[ $os == 'Darwin' ]]; then
+    # macOS keeps JVM_MS / JVM_MX and uses 1g of direct memory.
     MAX_DIRECT_MEMORY='1g'
   fi
 }
 
+# Starts $JAR_NAME in the background with the JVM options for the detected Java version
+# (CMS on JDK 8, ZGC on JDK 17), passing the FullNode options and the config file. Output goes
+# to start.log, the process id to <jar name>.pid.
 startService() {
-  echo $(date) >>start.log
-  if [[ ! $JAR_NAME =~ '-c' ]]; then
-     FULL_START_OPT="$FULL_START_OPT -c $DEFAULT_FULL_NODE_CONFIG"
-  fi
-
   if [[ ! -f $JAR_NAME ]]; then
-    echo "warn: jar file $JAR_NAME not exist"
-    exit
+    warn "jar file $JAR_NAME not exist"
+    exit 1
+  fi
+  # A node is started from this directory, so start.log may be created here: write the queued
+  # log lines first, then the date line that precedes the JVM output.
+  flushLog
+  echo $(date) >>start.log
+
+  # ZGC with unified GC logging by default. JDK 8 has no ZGC, so it uses CMS with the JDK 8
+  # GC log flags and NewRatio=2.
+  local gc_opts='-XX:+UseZGC -Xlog:gc,gc+heap:file=gc.log:time,tags,level:filecount=10,filesize=100M'
+  local tail_opts=''
+  if [[ $JAVA_SPEC_VERSION == '1.8' ]]; then
+    gc_opts='-XX:+UseConcMarkSweepGC -XX:+PrintGCDetails -Xloggc:./gc.log -XX:+PrintGCDateStamps -XX:+CMSParallelRemarkEnabled'
+    tail_opts='-XX:NewRatio=2'
   fi
 
-  nohup $JAVACMD -Xms$JVM_MS -Xmx$JVM_MX -XX:+UseConcMarkSweepGC -XX:+PrintGCDetails -Xloggc:./gc.log \
-    -XX:+PrintGCDateStamps -XX:+CMSParallelRemarkEnabled -XX:ReservedCodeCacheSize=256m -XX:+UseCodeCacheFlushing \
+  # The node keeps many database and network files open. Raise the soft open file limit to
+  # 65535 when it is lower; a higher soft limit and the hard limit are kept.
+  local openFiles=$(ulimit -S -n)
+  if [[ $openFiles != unlimited && $openFiles -lt 65535 ]]; then
+    ulimit -S -n 65535 2>/dev/null || warn 'failed to set ulimit -n 65535'
+  fi
+  # Run in the background, immune to hangups, appending all output to start.log.
+  nohup "$JAVACMD" -Xms$JVM_MS -Xmx$JVM_MX $gc_opts -XX:ReservedCodeCacheSize=256m -XX:+UseCodeCacheFlushing \
     -XX:MetaspaceSize=256m -XX:MaxMetaspaceSize=512m \
     -XX:MaxDirectMemorySize=$MAX_DIRECT_MEMORY -Dio.netty.allocator.type=pooled \
     -XX:+HeapDumpOnOutOfMemoryError \
-    -XX:NewRatio=2 -jar \
-    $JAR_NAME $FULL_START_OPT >>start.log 2>&1 &
-  checkPid
-  echo "info: start java-tron with pid $pid on $HOSTNAME"
-  echo "info: if you need to stop the service, execute: sh start.sh --stop"
+    $tail_opts -jar \
+    "$JAR_NAME" "${FULL_START_OPT[@]}" -c "$DEFAULT_FULL_NODE_CONFIG" >>start.log 2>&1 &
+  pid=$!
+  echo "$pid" > "${JAR_NAME##*/}.pid"
+  # A JVM that cannot start, for example on a bad option or a locked database, exits within
+  # moments. Report that instead of a successful start.
+  sleep 3
+  if ! kill -0 "$pid" 2>/dev/null; then
+    warn "java-tron exited right after the start, see start.log"
+    : > "${JAR_NAME##*/}.pid"
+    exit 1
+  fi
+  info "start java-tron with pid $pid on $HOSTNAME"
+  info "if you need to stop the service, execute in this directory: sh start.sh --stop"
 }
 
+# Fetches and verifies the LevelDB manifest rebuild tool on first use, while the node is still
+# running, so the download and key-server lookup are not added to the stop-to-start downtime.
+# Shares the skip conditions of rebuildManifest. Without gpg the download cannot be verified, so
+# it is skipped rather than fetched in full and then discarded; a download or verification
+# failure leaves the tool absent and rebuildManifest then skips the rewrite.
+ensureArchiveJar() {
+  if [[ $REBUILD_MANIFEST = false ]]; then
+    return
+  fi
+  # The tool handles LevelDB only, and ARM64 runs RocksDB only.
+  if [[ -n $RELEASE_ARCH_SUFFIX ]]; then
+    return
+  fi
+  if [[ ! -d $REBUILD_DIR ]]; then
+    return
+  fi
+  if [[ -f $ARCHIVE_JAR ]]; then
+    return
+  fi
+  if ! type gpg >/dev/null 2>&1; then
+    warn 'gpg is required to verify the rebuild manifest plugin, skip rebuild manifest'
+    return
+  fi
+  info 'download the rebuild manifest plugin from the github'
+  # Download to a temporary name first, so an interrupted download never leaves a partial or
+  # unverified jar that a later start would run; move it into place only once verified.
+  if downloadRelease "$(getLatestReleaseVersion)" "$RELEASE_ARCHIVE_JAR" "$ARCHIVE_JAR.download" \
+      && mv "$ARCHIVE_JAR.download" "$ARCHIVE_JAR"; then
+    info 'download rebuild manifest plugin success'
+  else
+    warn 'skip rebuild manifest'
+  fi
+}
+
+# Rewrites LevelDB manifests of at least REBUILD_MANIFEST_SIZE MB under $REBUILD_DIR before
+# a start, so the databases open faster (TIP-298), using the tool fetched by ensureArchiveJar.
+# Skipped with -dr, on ARM64 (RocksDB only), without a database, or when the tool is absent.
 rebuildManifest() {
   if [[ $REBUILD_MANIFEST = false ]]; then
-    echo 'info: disable rebuild manifest!'
+    info 'disable rebuild manifest!'
+    return
+  fi
+
+  # The tool handles LevelDB only, and ARM64 runs RocksDB only.
+  if [[ -n $RELEASE_ARCH_SUFFIX ]]; then
+    info 'ARM64 only supports RocksDB, skip rebuild manifest'
     return
   fi
 
   if [[ ! -d $REBUILD_DIR ]]; then
-    echo "info: database not exists, skip rebuild manifest"
+    info "database not exists, skip rebuild manifest"
     return
   fi
 
-  ARCHIVE_JAR='ArchiveManifest.jar'
-  if [[ -f $ARCHIVE_JAR ]]; then
-    echo 'info: execute rebuild manifest.'
-    $JAVACMD -jar $ARCHIVE_JAR -d $REBUILD_DIR -m $REBUILD_MANIFEST_SIZE -b $REBUILD_BATCH_SIZE
-  else
-    echo 'info: download the rebuild manifest plugin from the github'
-    local latest=$(`echo getLatestReleaseVersion`)
-    download $RELEASE_URL/download/GreatVoyage-v"$latest"/$ARCHIVE_JAR $ARCHIVE_JAR
-    if [[ $download == 0 ]]; then
-      echo 'info: download success, rebuild manifest'
-      $JAVACMD -jar $ARCHIVE_JAR $REBUILD_DIR -m $REBUILD_MANIFEST_SIZE -b $REBUILD_BATCH_SIZE
-    fi
+  # ensureArchiveJar fetched and verified the tool before the node was stopped. When it is
+  # absent (no gpg, or a failed download or verification) the rewrite is skipped and the start
+  # goes on.
+  if [[ ! -f $ARCHIVE_JAR ]]; then
+    warn 'rebuild manifest plugin not available, skip rebuild manifest'
+    return
   fi
-  if [[ $? == 0 ]]; then
-    echo 'info: rebuild manifest success'
+  info 'execute rebuild manifest.'
+  # A failed rebuild does not block the start either. The tool writes its log to logs/toolkit.log.
+  if "$JAVACMD" -jar "$ARCHIVE_JAR" -d "$REBUILD_DIR" -m "$REBUILD_MANIFEST_SIZE" -b "$REBUILD_BATCH_SIZE"; then
+    info 'rebuild manifest success'
   else
-    echo 'info: rebuild manifest fail, log in logs/archive.log'
+    info 'rebuild manifest fail, log in logs/toolkit.log'
   fi
 }
 
+# --net: selects the test (Nile) or private network config under $FULL_NODE_CONFIG_DIR,
+# downloading it when the file does not exist yet. Exits on an unknown network or a failed
+# download.
 specifyConfig(){
-  echo "info: specify the net: $1"
+  info "specify the net: $1"
   local netType=$1
   local configName;
+  local configUrl;
   if [[ "$netType" = 'test' ]]; then
+    # Nile testnet config from the nile-testnet repository.
     configName=$FULL_NODE_CONFIG_TEST_NET
+    configUrl=$TEST_NET_CONFIG_URL
   elif [[ "$netType" = 'private' ]]; then
+    # Private network config from the tron-deployment repository.
     configName=$FULL_NODE_CONFIG_PRIVATE_NET
+    configUrl=https://raw.githubusercontent.com/tronprotocol/tron-deployment/$GITHUB_BRANCH/$configName
   else
-    echo "warn: no support config $nodeType"
-    exit
+    warn "no support config $netType"
+    exit 1
   fi
 
   if [[ ! -d $FULL_NODE_CONFIG_DIR ]]; then
-    mkdir -p $FULL_NODE_CONFIG_DIR
+    mkdir -p "$FULL_NODE_CONFIG_DIR"
   fi
 
-  if [[ -d $FULL_NODE_CONFIG_DIR/$configName ]]; then
-    DEFAULT_FULL_NODE_CONFIG=$FULL_NODE_CONFIG_DIR/$configName
-    break
-  fi
-
+  # Download only when the file is missing. An existing file is used as is.
   if [[ ! -f $FULL_NODE_CONFIG_DIR/$configName ]]; then
-    download https://raw.githubusercontent.com/tronprotocol/tron-deployment/$GITHUB_BRANCH/$configName $configName
-    mv  $configName $FULL_NODE_CONFIG_DIR/$configName
-    DEFAULT_FULL_NODE_CONFIG=$FULL_NODE_CONFIG_DIR/$configName
+    download "$configUrl" "$FULL_NODE_CONFIG_DIR/$configName" || exit 1
   fi
+  # The selected config is passed to FullNode when it is started. The path is absolute, so it
+  # stays valid after --release or -cb change into $FULL_NODE_DIR.
+  DEFAULT_FULL_NODE_CONFIG=$PWD/$FULL_NODE_CONFIG_DIR/$configName
 }
 
+# Verifies file $3 against the signature of asset $2 in release $1, which must be made
+# by the release key. Removes $3 if the signature is missing or invalid.
 checkSign() {
-  echo 'info: verify signature'
-  local latest_version=$(`echo getLatestReleaseVersion`)
-  download $RELEASE_URL/download/$latest_version/sha256sum.txt sha256sum.txt
-  fullNodeSha256=$(cat sha256sum.txt|grep 'FullNode'| awk -F ' ' '{print $1}')
-
-  os=`uname`
-  if [[ $os == 'Linux' ]] || [[ $os == 'linux' ]] ; then
-    releaseFullNodeSha256=$(sha256sum FullNode.jar| grep FullNode | awk -F ' ' '{print $1}')
-  elif [[ $os == 'Darwin' ]]; then
-    releaseFullNodeSha256=$(shasum -a 256 FullNode.jar| grep FullNode | awk -F ' ' '{print $1}')
-    cat $releaseFullNodeSha256 | awk -F ' ' '{print $0}'
-  fi
-
-  echo "info:      release sha256sum sign: $releaseFullNodeSha256"
-  echo "info: FullNode.jar sha256sum sign: $fullNodeSha256"
-
-  if [[ "$fullNodeSha256" == "$releaseFullNodeSha256" ]]; then
-    echo 'info: sha256 signatures pass'
+  info 'verify signature'
+  local version=$1
+  local asset=$2
+  local file=$3
+  local gnupg_home
+  local server
+  local verified=false
+  if type gpg >/dev/null 2>&1; then
+    # Use a temporary keyring, so that the user's keyring is neither read nor changed.
+    gnupg_home=$(mktemp -d)
+    # Fetch the release key from the first key server that answers.
+    for server in $RELEASE_KEY_SERVERS; do
+      # timeout=10 bounds an unresponsive key server so verification cannot hang; an
+      # unreachable server just falls through to the next one.
+      gpg --homedir "$gnupg_home" --batch --quiet --keyserver "$server" \
+        --keyserver-options timeout=10 --recv-keys "$RELEASE_KEY_FINGERPRINT" >/dev/null 2>&1 && break
+    done
+    # Download the detached signature. Only a VALIDSIG status line that carries the release
+    # key fingerprint counts as verified.
+    if download "$RELEASE_URL/download/$version/$asset.sig" "$file.sig" \
+        && gpg --homedir "$gnupg_home" --batch --status-fd 1 --verify "$file.sig" "$file" 2>/dev/null \
+          | grep '^\[GNUPG:\] VALIDSIG ' | grep -q -w "$RELEASE_KEY_FINGERPRINT"; then
+      verified=true
+    fi
+    # Stop the gpg daemons of the temporary keyring, then remove the keyring and the signature.
+    gpgconf --homedir "$gnupg_home" --kill all >/dev/null 2>&1
+    rm -rf "$gnupg_home" "$file.sig"
   else
-    echo 'info: sha256 signature exception!!!'
-    echo 'info: please compile from the code or download the latest version from https://github.com/tronprotocol/java-tron'
+    # Without gpg the file cannot be verified and is removed below.
+    warn 'gpg is required to verify the release signature'
   fi
+  # Anything other than a verified signature removes the file.
+  if [[ $verified == true ]]; then
+    info 'signature verified'
+    return 0
+  fi
+  warn "signature verification failed, remove $file"
+  rm -f "$file"
+  return 1
 }
 
+# Stops a running node and starts it again with the current settings.
 restart() {
+  checkJava
+  # Enter the node directory (if needed) and fetch the rebuild tool while the node is still
+  # running, so its download and key-server lookup do not add to the stop-to-start downtime.
+  enterNodeDir
+  ensureArchiveJar
   stopService
+  if [[ $IS_BACKUP_GC_LOG = true ]]; then
+    backupGCLog
+  fi
   checkAllowMemory
   rebuildManifest
   setTCMalloc
@@ -461,46 +753,61 @@ restart() {
   startService
 }
 
+# Exits when option $1 was given without a value.
+needValue() {
+  if [ -z "$2" ]; then
+    error "option $1 needs a value"
+    exit 1
+  fi
+}
+
+# Command line options. Anything else is passed to FullNode as is, except a single word given
+# as the only argument, which names the jar to start. Everything after -- goes to FullNode
+# unchanged.
 while [ -n "$1" ]; do
   case "$1" in
+  --)
+    shift 1
+    FULL_START_OPT+=("$@")
+    break
+    ;;
   -c)
+    needValue "$1" "$2"
     DEFAULT_FULL_NODE_CONFIG=$2
     shift 2
     ;;
   -d)
+    needValue "$1" "$2"
     REBUILD_DIR=$2/database
-    FULL_START_OPT="$FULL_START_OPT $1 $2"
+    FULL_START_OPT+=("$1" "$2")
     shift 2
     ;;
-  -j)
+  -j|-n)
+    needValue "$1" "$2"
     JAR_NAME=$2
     shift 2
     ;;
   -p)
-    FULL_START_OPT="$FULL_START_OPT $1 $2"
+    needValue "$1" "$2"
+    FULL_START_OPT+=("$1" "$2")
     shift 2
     ;;
-  -w)
-    FULL_START_OPT="$FULL_START_OPT $1"
-    shift 1
-    ;;
-  --witness)
-    FULL_START_OPT="$FULL_START_OPT $1"
+  -w|--witness)
+    FULL_START_OPT+=("$1")
     shift 1
     ;;
   --net)
-    specifyConfig $2
+    needValue "$1" "$2"
+    specifyConfig "$2"
     shift 2
     ;;
   -m)
+    needValue "$1" "$2"
     REBUILD_MANIFEST_SIZE=$2
     shift 2
     ;;
-  -n)
-    JAR_NAME=$2
-    shift 2
-    ;;
   -b)
+    needValue "$1" "$2"
     REBUILD_BATCH_SIZE=$2
     shift 2
     ;;
@@ -512,11 +819,7 @@ while [ -n "$1" ]; do
     DOWNLOAD=true
     shift 1
     ;;
-  --deploy)
-    QUICK_START=true
-    shift 1
-    ;;
-  --release)
+  --deploy|--release)
     QUICK_START=true
     shift 1
     ;;
@@ -525,14 +828,12 @@ while [ -n "$1" ]; do
     exit
     ;;
   -mem)
+    needValue "$1" "$2"
     SPECIFY_MEMORY=$2
     shift 2
     ;;
-  --disable-rewrite-manifes)
-    REBUILD_MANIFEST=false
-    shift 1
-    ;;
-  -dr)
+  # --disable-rewrite-manifes is the spelling of earlier versions and stays accepted.
+  --disable-rewrite-manifest|--disable-rewrite-manifes|-dr)
     REBUILD_MANIFEST=false
     shift 1
     ;;
@@ -541,25 +842,17 @@ while [ -n "$1" ]; do
     shift 1
     ;;
   --run)
-    if [[ $ALL_OPT_LENGTH -eq 1 ]]; then
-      restart
-    fi
-    RUN=true
     shift 1
     ;;
-  --stop)
+  --stop|-s)
     stopService
+    exit $?
     ;;
-  FullNode)
-    RUN=true
-    shift 1
-    ;;
-  FullNode.jar)
-    RUN=true
+  FullNode|FullNode.jar)
     shift 1
     ;;
   *.jar)
-    RUN=true
+    JAR_NAME=$1
     shift 1
     ;;
   *)
@@ -574,15 +867,17 @@ while [ -n "$1" ]; do
         exit
       fi
     fi
-    FULL_START_OPT="$FULL_START_OPT $@"
-    break
+    # A FullNode option, passed on as is. Parsing goes on, so script options may follow it.
+    FULL_START_OPT+=("$1")
+    shift 1
     ;;
   esac
 done
 
-if [[ $IS_BACKUP_GC_LOG = true ]]; then
-  backupGCLog
-fi
+# Main flow: optional clone / download steps, then one start of the node. Everything from here
+# on runs java or picks release assets by the architecture that java reports, so a broken JDK
+# is reported first.
+checkJava
 
 if [[ $CLONE_BUILD == true ]];then
   cloneBuild
@@ -590,13 +885,6 @@ fi
 
 if [[ $QUICK_START == true ]]; then
   quickStart
-  if [[ $? == 0 ]] ; then
-    if [[ $RUN == true ]]; then
-      cd $FULL_NODE_DIR
-      FULL_START_OPT=''
-      restart
-    fi
-  fi
 fi
 
 if [[ $UPGRADE == true ]]; then
@@ -604,20 +892,15 @@ if [[ $UPGRADE == true ]]; then
 fi
 
 if [[ $DOWNLOAD == true ]]; then
-  latest=$(`echo getLatestReleaseVersion`)
+  latest=$(getLatestReleaseVersion)
   if [[ -n $latest ]]; then
-    download $RELEASE_URL/download/$latest/$JAR_NAME $latest
+    downloadRelease "$latest" "$RELEASE_JAR" "$JAR_NAME.download" && mv "$JAR_NAME.download" "$JAR_NAME"
     exit
   else
-    echo 'info: not getting the latest version'
+    info 'not getting the latest version'
+    exit 1
   fi
 fi
 
-if [[ $ALL_OPT_LENGTH -eq 0 || $ALL_OPT_LENGTH -gt 0 ]]; then
-  restart
-fi
-
-if [[ $RUN == true ]]; then
-  restart
-fi
+restart
 

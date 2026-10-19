@@ -108,7 +108,7 @@ class Fp12 implements Field<Fp12> {
 
   @Override
   public Fp12 dbl() {
-    return null;
+    return this.add(this);
   }
 
   Fp12 mulBy024(Fp2 ell0, Fp2 ellVW, Fp2 ellVV) {

@@ -123,8 +123,8 @@ public class JsonFormatUnicodeErrorTest {
 
     assertEquals("1:12: Couldn't parse integer: For input string: \"\"bad\"\"",
         invalid.getMessage());
-    assertEquals("1:12: Couldn't parse integer: Number out of range for 64-bit signed integer: "
-        + "9223372036854775808", overflow.getMessage());
+    assertEquals("1:12: Couldn't parse integer: Number out of range for 64-bit signed integer.",
+        overflow.getMessage());
   }
 
   private static String requestError(RateLimiterServlet servlet, String path, JSONObject input)

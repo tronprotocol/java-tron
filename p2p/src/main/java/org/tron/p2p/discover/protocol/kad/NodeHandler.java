@@ -2,8 +2,11 @@ package org.tron.p2p.discover.protocol.kad;
 
 import java.net.InetSocketAddress;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.atomic.AtomicInteger;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.p2p.base.Parameter;
 import org.tron.p2p.discover.Node;
@@ -17,12 +20,20 @@ import org.tron.p2p.discover.socket.UdpEvent;
 @Slf4j(topic = "net")
 public class NodeHandler {
 
+  @Setter
+  @Getter
   private Node node;
+  @Getter
   private volatile State state;
   private KadService kadService;
   private NodeHandler replaceCandidate;
   private AtomicInteger pingTrials = new AtomicInteger(3);
   private volatile boolean waitForPong = false;
+  // Guarded by this monitor together with Ping scheduling and Pong acceptance.
+  private ScheduledFuture<?> pongTimeout;
+  // Incremented for each Ping so a callback already running when cancelled
+  // cannot time out a newer probe.
+  private long pingSequence;
   private volatile boolean waitForNeighbors = false;
   private volatile int findNodeFail;
   private static int maxFindNodeFailures = 5;
@@ -34,18 +45,6 @@ public class NodeHandler {
     if (node.getPreferInetSocketAddress() != null) {
       changeState(State.DISCOVERED);
     }
-  }
-
-  public Node getNode() {
-    return node;
-  }
-
-  public void setNode(Node node) {
-    this.node = node;
-  }
-
-  public State getState() {
-    return state;
   }
 
   private void challengeWith(NodeHandler replaceCandidate) {
@@ -116,14 +115,18 @@ public class NodeHandler {
   }
 
   public void handlePong(PongMessage msg) {
-    if (waitForPong) {
-      waitForPong = false;
-      node.setP2pVersion(msg.getNetworkId());
-      if (!node.isConnectible(Parameter.p2pConfig.getNetworkId())) {
-        changeState(State.DEAD);
-      } else {
-        changeState(State.ALIVE);
+    synchronized (this) {
+      if (!waitForPong) {
+        return;
       }
+      waitForPong = false;
+      cancelPongTimeout();
+    }
+    node.setP2pVersion(msg.getNetworkId());
+    if (!node.isConnectible(Parameter.p2pConfig.getNetworkId())) {
+      changeState(State.DEAD);
+    } else {
+      changeState(State.ALIVE);
     }
   }
 
@@ -146,8 +149,9 @@ public class NodeHandler {
     sendNeighbours(closest, msg.getTimestamp());
   }
 
-  public void handleTimedOut() {
+  public synchronized void handleTimedOut() {
     waitForPong = false;
+    cancelPongTimeout();
     if (pingTrials.getAndDecrement() > 0) {
       sendPing();
     } else {
@@ -159,24 +163,37 @@ public class NodeHandler {
     }
   }
 
-  public void sendPing() {
+  public synchronized void sendPing() {
+    cancelPongTimeout();
+    long sequence = ++pingSequence;
     PingMessage msg = new PingMessage(kadService.getPublicHomeNode(), getNode());
     waitForPong = true;
     sendMessage(msg);
 
-    if (kadService.getPongTimer().isShutdown()) {
-      return;
-    }
-    kadService.getPongTimer().schedule(() -> {
-      try {
-        if (waitForPong) {
-          waitForPong = false;
-          handleTimedOut();
+    try {
+      pongTimeout = kadService.schedulePongTimeout(() -> {
+        try {
+          synchronized (NodeHandler.this) {
+            // A callback already running when cancelled must not time out a newer Ping.
+            if (waitForPong && sequence == pingSequence) {
+              handleTimedOut();
+            }
+          }
+        } catch (Exception e) {
+          logger.error("Unhandled exception in pong timer schedule", e);
         }
-      } catch (Exception e) {
-        logger.error("Unhandled exception in pong timer schedule", e);
-      }
-    }, KadService.getPingTimeout(), TimeUnit.MILLISECONDS);
+      });
+    } catch (RejectedExecutionException e) {
+      logger.debug("Skip pong timeout for {}, timer stopped or queue full",
+          node.getPreferInetSocketAddress());
+    }
+  }
+
+  private void cancelPongTimeout() {
+    if (pongTimeout != null) {
+      pongTimeout.cancel(false);
+      pongTimeout = null;
+    }
   }
 
   public void sendPong() {
