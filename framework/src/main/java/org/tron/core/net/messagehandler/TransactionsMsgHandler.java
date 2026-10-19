@@ -1,6 +1,5 @@
 package org.tron.core.net.messagehandler;
 
-import com.google.protobuf.ByteString;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -177,12 +176,8 @@ public class TransactionsMsgHandler implements TronMsgHandler {
   }
 
   private boolean hasValidSignatureLengths(Transaction trx) {
-    for (ByteString sig : trx.getSignatureList()) {
-      if (!SignUtils.isValidLength(sig.size())) {
-        return false;
-      }
-    }
-    return true;
+    return trx.getSignatureList().stream()
+        .allMatch(sig -> SignUtils.isValidLength(sig.size()));
   }
 
   private void handleSmartContract() {

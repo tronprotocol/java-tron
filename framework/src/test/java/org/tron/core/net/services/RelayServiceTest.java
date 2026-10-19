@@ -257,7 +257,15 @@ public class RelayServiceTest extends BaseTest {
 
   @Test
   public void testStrictHelloAuthentication() throws Exception {
-    long timestamp = 1720000000000L;
+    for (long flag : new long[]{0, 1}) {
+      for (int length = 65; length <= 69; length++) {
+        assertStrictHelloAuthentication(flag, length);
+      }
+    }
+  }
+
+  private void assertStrictHelloAuthentication(long flag, int length) throws Exception {
+    long timestamp = System.currentTimeMillis();
     byte[] hash = Sha256Hash.of(ByteArray.fromLong(timestamp)).getBytes();
     ECKey key = ECKey.fromPrivate(BigInteger.TEN);
     ByteString address = ByteString.copyFrom(key.getAddress());
@@ -274,6 +282,7 @@ public class RelayServiceTest extends BaseTest {
     Assert.assertArrayEquals(infinityAddress.toByteArray(), SignUtils.signatureToAddress(hash,
         infinity.toBase64(), false));
 
+    // Each signature-length case starts with an empty HELLO replay cache.
     RelayService relay = new RelayService();
     P2pConfig previousConfig = TronNetService.getP2pConfig();
     try {
@@ -294,20 +303,14 @@ public class RelayServiceTest extends BaseTest {
       ReflectUtils.setFieldValue(relay, "tronNetDelegate", delegate);
       ReflectUtils.setFieldValue(tronNetService, "p2pConfig", new P2pConfig());
 
-      for (long flag : new long[]{0, 1}) {
-        Mockito.when(properties.getAllowStrictEcdsaValidation()).thenReturn(flag);
-        Mockito.when(properties.allowStrictEcdsaValidation()).thenReturn(flag == 1);
-        assertHelloAuthentication(relay, timestamp, address, signature,
-            "127.0." + flag + ".1", true);
-        for (int length = 66; length <= 69; length++) {
-          ByteString paddedSignature = signature.concat(
-              ByteString.copyFrom(new byte[length - 65]));
-          assertHelloAuthentication(relay, timestamp, address, paddedSignature,
-              "127.0." + flag + "." + length, length <= 68);
-        }
-        assertHelloAuthentication(relay, timestamp, infinityAddress, infinitySignature,
-            "127.0." + flag + ".3", false);
-      }
+      Mockito.when(properties.getAllowStrictEcdsaValidation()).thenReturn(flag);
+      Mockito.when(properties.allowStrictEcdsaValidation()).thenReturn(flag == 1);
+      ByteString paddedSignature = signature.concat(
+          ByteString.copyFrom(new byte[length - 65]));
+      assertHelloAuthentication(relay, timestamp, address, paddedSignature,
+          "127.0." + flag + "." + length, length <= 68);
+      assertHelloAuthentication(relay, timestamp, infinityAddress, infinitySignature,
+          "127.0." + flag + ".3", false);
     } finally {
       ReflectUtils.setFieldValue(tronNetService, "p2pConfig", previousConfig);
       relay.close();
