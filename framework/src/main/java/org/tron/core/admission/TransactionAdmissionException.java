@@ -4,6 +4,7 @@ package org.tron.core.admission;
 public class TransactionAdmissionException extends RuntimeException {
 
   public static final String REJECTION_MESSAGE = "transaction rejected by admission check";
+  public static final String REQUEST_REJECTION_MESSAGE = "request rejected by admission check";
 
   public enum Reason {
     MALFORMED,

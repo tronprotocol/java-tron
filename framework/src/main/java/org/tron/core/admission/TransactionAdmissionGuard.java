@@ -20,16 +20,17 @@ import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.contract.ShieldContract.ShieldedTransferContract;
 
 /**
- * Counts every field occurrence of an externally submitted {@code Transaction}, including the
- * contract payload that {@code TransactionCapsule.getOwner} unpacks, and rejects it before parsing
- * once the budget is exceeded.
+ * Counts every field occurrence (wire tag) of an externally submitted request, including the
+ * contract payload of a {@code Transaction} that {@code TransactionCapsule.getOwner} unpacks, and
+ * rejects it before parsing once the budget is exceeded. A packed repeated field is one occurrence.
  *
  * <p>Never use it for block, database or P2P parsing: a valid block must not fail a local,
  * non-consensus limit.
  */
 public final class TransactionAdmissionGuard {
 
-  // About 12.7 times the largest count in mainnet history (3,926, a contract deployment).
+  // About 12.7 times the largest mainnet transaction (3,926, a contract deployment) and
+  // 7 times the largest mainnet account (7,065).
   public static final int MAX_TX_OCCURRENCES = 50_000;
 
   static final int MAX_DEPTH = 32;

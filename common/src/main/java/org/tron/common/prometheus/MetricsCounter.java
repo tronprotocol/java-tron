@@ -30,6 +30,8 @@ class MetricsCounter {
             + "was already known when the response was handled (best-effort: concurrent "
             + "arrivals may be missed; a duplicate is not attributed to secondary "
             + "fetches).");
+    init(MetricKeys.Counter.GRPC_ADMISSION_REJECT, "gRPC requests rejected by admission check.",
+        "method", "reason");
   }
 
   private MetricsCounter() {

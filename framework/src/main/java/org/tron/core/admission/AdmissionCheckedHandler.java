@@ -8,48 +8,54 @@ import io.grpc.ServerCallHandler;
 import io.grpc.Status;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.core.admission.TransactionAdmissionException.Reason;
-import org.tron.protos.Protocol.Transaction;
 
 /**
- * Closes the call with {@code INVALID_ARGUMENT} when {@link GuardedTransactionMarshaller} hands
+ * Closes the call with {@code INVALID_ARGUMENT} when {@link GuardedRequestMarshaller} hands
  * over a rejection sentinel; the service method is never invoked.
  */
 @Slf4j(topic = "rpc")
-public final class AdmissionCheckedHandler<RespT> implements ServerCallHandler<Transaction, RespT> {
+public final class AdmissionCheckedHandler<ReqT, RespT> implements ServerCallHandler<ReqT, RespT> {
 
-  private final ServerCallHandler<Transaction, RespT> delegate;
+  private final ServerCallHandler<ReqT, RespT> delegate;
+  private final GuardedRequestMarshaller<ReqT> marshaller;
 
-  public AdmissionCheckedHandler(ServerCallHandler<Transaction, RespT> delegate) {
+  AdmissionCheckedHandler(ServerCallHandler<ReqT, RespT> delegate,
+      GuardedRequestMarshaller<ReqT> marshaller) {
     this.delegate = delegate;
+    this.marshaller = marshaller;
   }
 
-  public ServerCallHandler<Transaction, RespT> getDelegate() {
+  public ServerCallHandler<ReqT, RespT> getDelegate() {
     return delegate;
   }
 
+  public GuardedRequestMarshaller<ReqT> getMarshaller() {
+    return marshaller;
+  }
+
   @Override
-  public ServerCall.Listener<Transaction> startCall(ServerCall<Transaction, RespT> call,
-      Metadata headers) {
-    ServerCall.Listener<Transaction> next = delegate.startCall(call, headers);
-    return new SimpleForwardingServerCallListener<Transaction>(next) {
+  public ServerCall.Listener<ReqT> startCall(ServerCall<ReqT, RespT> call, Metadata headers) {
+    ServerCall.Listener<ReqT> next = delegate.startCall(call, headers);
+    return new SimpleForwardingServerCallListener<ReqT>(next) {
       // Listener callbacks of one call are serialized by grpc.
       private boolean rejected;
 
       @Override
-      public void onMessage(Transaction message) {
+      public void onMessage(ReqT message) {
         if (rejected) {
           return;
         }
-        Reason reason = GuardedTransactionMarshaller.rejectionReason(message);
+        Reason reason = marshaller.rejectionReason(message);
         if (reason != null) {
           rejected = true;
+          String method = call.getMethodDescriptor().getFullMethodName();
           if (logger.isDebugEnabled()) {
-            logger.debug("gRPC {} from {} rejected by admission check: {}",
-                call.getMethodDescriptor().getFullMethodName(),
+            logger.debug("gRPC {} from {} rejected by admission check: {}", method,
                 call.getAttributes().get(Grpc.TRANSPORT_ATTR_REMOTE_ADDR), reason);
           }
-          call.close(Status.INVALID_ARGUMENT
-              .withDescription(TransactionAdmissionException.REJECTION_MESSAGE), new Metadata());
+          GuardedRequestMarshaller.countRejection(method, reason);
+          call.close(Status.INVALID_ARGUMENT.withDescription(marshaller.rejectionMessage()),
+              new Metadata());
           return;
         }
         super.onMessage(message);

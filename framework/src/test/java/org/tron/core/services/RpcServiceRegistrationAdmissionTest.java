@@ -35,12 +35,13 @@ import org.tron.core.services.interfaceOnSolidity.RpcApiServiceOnSolidity;
 
 /**
  * Captures what the production RpcService subclasses actually register, for every branch of
- * their addService, and checks that each Transaction request method is guarded and that no
- * service is registered unwrapped.
+ * their addService, and checks that every method is guarded and that no service is registered
+ * unwrapped.
  */
 public class RpcServiceRegistrationAdmissionTest {
 
   private static final int MAX_MESSAGE_SIZE = 256 * 1024;
+  // Methods per service in api.proto: Database 4, Wallet 147, WalletSolidity 47, Monitor 1.
 
   private boolean solidityNode;
   private boolean nodeMetricsEnable;
@@ -64,12 +65,12 @@ public class RpcServiceRegistrationAdmissionTest {
   }
 
   @Test
-  public void fullNodeRegistersTheFiveTransactionMethodsGuarded() throws Exception {
+  public void fullNodeRegistersEveryMethodGuarded() throws Exception {
     CommonParameter.getInstance().setSolidityNode(false);
     CommonParameter.getInstance().nodeMetricsEnable = true;
     List<ServerServiceDefinition> registered = register(new RpcApiService());
     assertEquals(names(registered).toString(), 3, registered.size());   // database, wallet, monitor
-    assertEquals(5, guardedMethods(registered));
+    assertEquals(4 + 147 + 1, guardedMethods(registered));
   }
 
   @Test
@@ -79,7 +80,7 @@ public class RpcServiceRegistrationAdmissionTest {
     List<ServerServiceDefinition> registered = register(new RpcApiService());
     // database, walletSolidity, monitor
     assertEquals(names(registered).toString(), 3, registered.size());
-    assertEquals(0, guardedMethods(registered));
+    assertEquals(4 + 47 + 1, guardedMethods(registered));
   }
 
   @Test
@@ -89,7 +90,7 @@ public class RpcServiceRegistrationAdmissionTest {
         inject(new RpcApiServiceOnPBFT(), new PbftCursorInterceptor()))) {
       List<ServerServiceDefinition> registered = register(service);
       assertEquals(names(registered).toString(), 2, registered.size());   // database, wallet
-      assertEquals(0, guardedMethods(registered));
+      assertEquals(4 + 47, guardedMethods(registered));
     }
   }
 
@@ -128,7 +129,7 @@ public class RpcServiceRegistrationAdmissionTest {
         NettyServerBuilder.class);
     addService.setAccessible(true);
     addService.invoke(service, builder);
-    // Every registration must go through guardTransactionMethods, which yields a definition.
+    // Every registration must go through guardRequestMethods, which yields a definition.
     verify(builder, never()).addService(any(BindableService.class));
     ArgumentCaptor<ServerServiceDefinition> captor =
         ArgumentCaptor.forClass(ServerServiceDefinition.class);
@@ -141,7 +142,7 @@ public class RpcServiceRegistrationAdmissionTest {
   private static int guardedMethods(List<ServerServiceDefinition> definitions) {
     int guarded = 0;
     for (ServerServiceDefinition definition : definitions) {
-      guarded += RpcServiceAdmissionTest.assertAllTransactionMethodsGuarded(definition,
+      guarded += RpcServiceAdmissionTest.assertAllMethodsGuarded(definition,
           TransactionAdmissionGuard.MAX_TX_OCCURRENCES, MAX_MESSAGE_SIZE);
     }
     return guarded;

@@ -27,9 +27,9 @@ public class RpcApiServiceOnPBFT extends RpcService {
   /** PBFT cursor bound at the service level, so it brackets only these two read services. */
   @Override
   protected void addService(NettyServerBuilder serverBuilder) {
-    serverBuilder.addService(guardTransactionMethods(ServerInterceptors.intercept(
+    serverBuilder.addService(guardRequestMethods(ServerInterceptors.intercept(
         rpcApiService.getDatabaseApi(), pbftCursorInterceptor)));
-    serverBuilder.addService(guardTransactionMethods(ServerInterceptors.intercept(
+    serverBuilder.addService(guardRequestMethods(ServerInterceptors.intercept(
         rpcApiService.getWalletSolidityApi(), pbftCursorInterceptor)));
   }
 

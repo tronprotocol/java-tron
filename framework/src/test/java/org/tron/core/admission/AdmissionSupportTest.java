@@ -37,50 +37,52 @@ public class AdmissionSupportTest {
   public void readBoundedReturnsExactlyTheBytesRead() throws IOException {
     byte[] data = new byte[1000];
     data[999] = 7;
-    assertArrayEquals(data, GuardedTransactionMarshaller.readBounded(
+    assertArrayEquals(data, GuardedRequestMarshaller.readBounded(
         new HintStream(data, 0), 1000));                         // no hint
-    assertArrayEquals(data, GuardedTransactionMarshaller.readBounded(
+    assertArrayEquals(data, GuardedRequestMarshaller.readBounded(
         new HintStream(data, 1000), 1000));                      // exact hint
-    assertArrayEquals(data, GuardedTransactionMarshaller.readBounded(
+    assertArrayEquals(data, GuardedRequestMarshaller.readBounded(
         new HintStream(data, 1), 1000));                         // decompressing stream
-    assertArrayEquals(data, GuardedTransactionMarshaller.readBounded(
+    assertArrayEquals(data, GuardedRequestMarshaller.readBounded(
         new HintStream(data, Integer.MAX_VALUE), 4096));         // huge hint, short content
-    assertArrayEquals(data, GuardedTransactionMarshaller.readBounded(
+    assertArrayEquals(data, GuardedRequestMarshaller.readBounded(
         new HintStream(data, 10), Integer.MAX_VALUE));           // no overflow at max int
-    assertArrayEquals(new byte[0], GuardedTransactionMarshaller.readBounded(
+    assertArrayEquals(new byte[0], GuardedRequestMarshaller.readBounded(
         new HintStream(new byte[0], 0), 0));
   }
 
   @Test
   public void readBoundedRejectsMoreThanMax() throws IOException {
     byte[] data = new byte[1001];
-    assertNull(GuardedTransactionMarshaller.readBounded(new HintStream(data, 0), 1000));
-    assertNull(GuardedTransactionMarshaller.readBounded(new HintStream(data, 1001), 1000));
-    assertNull(GuardedTransactionMarshaller.readBounded(new HintStream(new byte[1], 0), 0));
+    assertNull(GuardedRequestMarshaller.readBounded(new HintStream(data, 0), 1000));
+    assertNull(GuardedRequestMarshaller.readBounded(new HintStream(data, 1001), 1000));
+    assertNull(GuardedRequestMarshaller.readBounded(new HintStream(new byte[1], 0), 0));
   }
 
   @Test
   public void readBoundedReadsAKnownLengthStream() throws IOException {
     int max = 4 << 20;
-    for (int size : new int[] {0, 1, GuardedTransactionMarshaller.MAX_INITIAL_BUFFER + 1, max}) {
+    for (int size : new int[] {0, 1, GuardedRequestMarshaller.MAX_INITIAL_BUFFER + 1, max}) {
       byte[] data = new byte[size];
       if (size > 0) {
         data[size - 1] = 7;
       }
-      assertArrayEquals(data, GuardedTransactionMarshaller.readBounded(
+      assertArrayEquals(data, GuardedRequestMarshaller.readBounded(
           new KnownStream(data, Integer.MAX_VALUE, -1), max));
-      assertArrayEquals(data, GuardedTransactionMarshaller.readBounded(
+      assertArrayEquals(data, GuardedRequestMarshaller.readBounded(
           new KnownStream(data, 1000, -1), max));                     // short reads
     }
     byte[] data = new byte[1000];
     data[999] = 7;
-    assertArrayEquals(data, GuardedTransactionMarshaller.readBounded(
+    assertArrayEquals(data, GuardedRequestMarshaller.readBounded(
         new KnownStream(data, Integer.MAX_VALUE, 0), 1000));          // size understated
-    assertArrayEquals(data, GuardedTransactionMarshaller.readBounded(
+    assertArrayEquals(data, GuardedRequestMarshaller.readBounded(
         new KnownStream(data, Integer.MAX_VALUE, 5000), 4096));       // size overstated
-    assertNull(GuardedTransactionMarshaller.readBounded(
+    assertArrayEquals(data, GuardedRequestMarshaller.readBounded(
+        new KnownStream(data, Integer.MAX_VALUE, Integer.MAX_VALUE), 4096));  // capped at max
+    assertNull(GuardedRequestMarshaller.readBounded(
         new KnownStream(new byte[1001], Integer.MAX_VALUE, -1), 1000));
-    assertNull(GuardedTransactionMarshaller.readBounded(
+    assertNull(GuardedRequestMarshaller.readBounded(
         new KnownStream(new byte[1001], Integer.MAX_VALUE, 0), 1000));
   }
 
@@ -93,10 +95,10 @@ public class AdmissionSupportTest {
         && threads.isThreadAllocatedMemoryEnabled());
     long thread = Thread.currentThread().getId();
     byte[] data = new byte[3 << 20];
-    GuardedTransactionMarshaller.readBounded(new KnownStream(data, Integer.MAX_VALUE, -1), 4 << 20);
+    GuardedRequestMarshaller.readBounded(new KnownStream(data, Integer.MAX_VALUE, -1), 4 << 20);
     KnownStream stream = new KnownStream(data, Integer.MAX_VALUE, -1);
     long before = threads.getThreadAllocatedBytes(thread);
-    byte[] read = GuardedTransactionMarshaller.readBounded(stream, 4 << 20);
+    byte[] read = GuardedRequestMarshaller.readBounded(stream, 4 << 20);
     long allocated = threads.getThreadAllocatedBytes(thread) - before;
     assertEquals(data.length, read.length);
     // Growing from the 1 MiB initial buffer would allocate about 10 MiB here.
@@ -108,17 +110,17 @@ public class AdmissionSupportTest {
   @Test
   public void marshallerReturnsTheSentinelBeforeTheDelegateParses() throws Exception {
     CountingMarshaller delegate = new CountingMarshaller();
-    GuardedTransactionMarshaller marshaller = new GuardedTransactionMarshaller(delegate, 4096, 10);
+    GuardedRequestMarshaller<Transaction> marshaller = transactionMarshaller(delegate, 4096, 10);
 
     byte[] flood = new byte[2 * 11];
     for (int i = 0; i < flood.length; i += 2) {
       flood[i] = 0x2a;
     }
-    assertNotNull(GuardedTransactionMarshaller.rejectionReason(
+    assertNotNull(marshaller.rejectionReason(
         marshaller.parse(new ByteArrayInputStream(flood))));                 // over budget
-    assertNotNull(GuardedTransactionMarshaller.rejectionReason(
+    assertNotNull(marshaller.rejectionReason(
         marshaller.parse(new ByteArrayInputStream(new byte[4097]))));        // over max size
-    assertNotNull(GuardedTransactionMarshaller.rejectionReason(
+    assertNotNull(marshaller.rejectionReason(
         marshaller.parse(new ByteArrayInputStream(new byte[] {0x0b, 0x0c}))));  // malformed
     assertEquals(0, delegate.parsed.get());
 
@@ -126,25 +128,26 @@ public class AdmissionSupportTest {
         com.google.protobuf.ByteString.copyFrom(new byte[65])).build();
     Transaction parsed = marshaller.parse(new ByteArrayInputStream(tx.toByteArray()));
     assertEquals(tx, parsed);
-    assertNull(GuardedTransactionMarshaller.rejectionReason(parsed));
+    assertNull(marshaller.rejectionReason(parsed));
     assertEquals(1, delegate.parsed.get());
   }
 
   @Test
   public void sentinelIsNeverAParsedOrDefaultTransaction() throws Exception {
-    assertNull(GuardedTransactionMarshaller.rejectionReason(Transaction.getDefaultInstance()));
-    assertNull(GuardedTransactionMarshaller.rejectionReason(Transaction.parseFrom(new byte[0])));
-    assertNull(GuardedTransactionMarshaller.rejectionReason(Transaction.newBuilder().build()));
+    assertNull(transactionMarshaller(new CountingMarshaller(), 4096, 10).rejectionReason(
+        Transaction.getDefaultInstance()));
     CountingMarshaller delegate = new CountingMarshaller();
-    GuardedTransactionMarshaller marshaller = new GuardedTransactionMarshaller(delegate, 4096, 10);
-    assertNull(GuardedTransactionMarshaller.rejectionReason(
+    GuardedRequestMarshaller<Transaction> marshaller = transactionMarshaller(delegate, 4096, 10);
+    assertNull(marshaller.rejectionReason(Transaction.parseFrom(new byte[0])));
+    assertNull(marshaller.rejectionReason(Transaction.newBuilder().build()));
+    assertNull(marshaller.rejectionReason(
         marshaller.parse(new ByteArrayInputStream(new byte[0]))));
   }
 
   @Test
   public void eachRejectionMapsToItsReason() throws Exception {
     CountingMarshaller delegate = new CountingMarshaller();
-    GuardedTransactionMarshaller marshaller = new GuardedTransactionMarshaller(delegate, 4096, 10);
+    GuardedRequestMarshaller<Transaction> marshaller = transactionMarshaller(delegate, 4096, 10);
     byte[] flood = new byte[2 * 11];
     for (int i = 0; i < flood.length; i += 2) {
       flood[i] = 0x2a;
@@ -154,13 +157,13 @@ public class AdmissionSupportTest {
     assertEquals(Reason.MALFORMED,
         reason(marshaller, new ByteArrayInputStream(new byte[] {0x0b, 0x0c})));
     assertEquals(0, delegate.parsed.get());
-    assertNull(GuardedTransactionMarshaller.rejectionReason(Transaction.getDefaultInstance()));
+    assertNull(marshaller.rejectionReason(Transaction.getDefaultInstance()));
   }
 
   @Test
   public void decodingErrorOfTheDelegateIsAMalformedRejection() {
     CountingMarshaller delegate = new CountingMarshaller();
-    GuardedTransactionMarshaller marshaller = new GuardedTransactionMarshaller(delegate, 4096, 10);
+    GuardedRequestMarshaller<Transaction> marshaller = transactionMarshaller(delegate, 4096, 10);
     // Well-formed wire within budget, but Any.type_url is not valid UTF-8.
     assertEquals(Reason.MALFORMED,
         reason(marshaller, new ByteArrayInputStream(INVALID_UTF8_TYPE_URL)));
@@ -170,7 +173,7 @@ public class AdmissionSupportTest {
   @Test
   public void corruptOrTruncatedCompressedInputIsAMalformedRejection() throws Exception {
     CountingMarshaller delegate = new CountingMarshaller();
-    GuardedTransactionMarshaller marshaller = new GuardedTransactionMarshaller(delegate, 4096, 10);
+    GuardedRequestMarshaller<Transaction> marshaller = transactionMarshaller(delegate, 4096, 10);
     byte[] corrupt = {0x1f, (byte) 0x8b, 8, 0, 0, 0, 0, 0, 0, (byte) 0xff, (byte) 0xff, 0, 0};
     assertEquals(Reason.MALFORMED,
         reason(marshaller, new GZIPInputStream(new ByteArrayInputStream(corrupt))));
@@ -187,7 +190,7 @@ public class AdmissionSupportTest {
   @Test
   public void otherReadFailuresAreThrownWithTheirCause() {
     CountingMarshaller delegate = new CountingMarshaller();
-    GuardedTransactionMarshaller marshaller = new GuardedTransactionMarshaller(delegate, 4096, 10);
+    GuardedRequestMarshaller<Transaction> marshaller = transactionMarshaller(delegate, 4096, 10);
     IOException failure = new IOException("read failed");
     InputStream failsOnAvailable = new InputStream() {
       @Override
@@ -241,8 +244,7 @@ public class AdmissionSupportTest {
               throw failure;
             }
           };
-      GuardedTransactionMarshaller marshaller =
-          new GuardedTransactionMarshaller(failing, 4096, 10);
+      GuardedRequestMarshaller<Transaction> marshaller = transactionMarshaller(failing, 4096, 10);
       try {
         marshaller.parse(new ByteArrayInputStream(new byte[0]));
         fail("expected the delegate failure");
@@ -270,7 +272,7 @@ public class AdmissionSupportTest {
         }
       }
     };
-    GuardedTransactionMarshaller marshaller = new GuardedTransactionMarshaller(plain, 4096, 10);
+    GuardedRequestMarshaller<Transaction> marshaller = transactionMarshaller(plain, 4096, 10);
     Transaction tx = Transaction.newBuilder().addSignature(
         com.google.protobuf.ByteString.copyFrom(new byte[65])).build();
     assertEquals(tx, marshaller.parse(new ByteArrayInputStream(tx.toByteArray())));
@@ -299,7 +301,7 @@ public class AdmissionSupportTest {
         }
       }
     };
-    GuardedTransactionMarshaller marshaller = new GuardedTransactionMarshaller(recording, 4096, 10);
+    GuardedRequestMarshaller<Transaction> marshaller = transactionMarshaller(recording, 4096, 10);
     Transaction tx = Transaction.newBuilder().addSignature(
         com.google.protobuf.ByteString.copyFrom(new byte[65])).build();
     assertEquals(tx, marshaller.parse(new ByteArrayInputStream(tx.toByteArray())));
@@ -314,28 +316,28 @@ public class AdmissionSupportTest {
 
   @Test
   public void emptyRequestsAreParsedPlainAndGzip() throws Exception {
-    GuardedTransactionMarshaller marshaller = new GuardedTransactionMarshaller(
+    GuardedRequestMarshaller<Transaction> marshaller = transactionMarshaller(
         ProtoUtils.marshaller(Transaction.getDefaultInstance()), 4096, 10);
     for (InputStream empty : Arrays.asList(
         new KnownStream(new byte[0], Integer.MAX_VALUE, -1),
         new ByteArrayInputStream(new byte[0]),
         new GZIPInputStream(new ByteArrayInputStream(gzip(new byte[0]))))) {
       Transaction parsed = marshaller.parse(empty);
-      assertNull(GuardedTransactionMarshaller.rejectionReason(parsed));
+      assertNull(marshaller.rejectionReason(parsed));
       assertEquals(Transaction.getDefaultInstance(), parsed);
     }
   }
 
   @Test
   public void protoMarshallerResultsAreUnchanged() throws Exception {
-    GuardedTransactionMarshaller marshaller = new GuardedTransactionMarshaller(
+    GuardedRequestMarshaller<Transaction> marshaller = transactionMarshaller(
         ProtoUtils.marshaller(Transaction.getDefaultInstance()), 4 << 20, Integer.MAX_VALUE);
     Transaction.Builder builder = Transaction.newBuilder();
     for (int i = 0; i < 20_000; i++) {
       builder.addSignature(com.google.protobuf.ByteString.copyFrom(new byte[65]));
     }
     Transaction large = builder.build();                              // above 1 MiB
-    assertTrue(large.getSerializedSize() > GuardedTransactionMarshaller.MAX_INITIAL_BUFFER);
+    assertTrue(large.getSerializedSize() > GuardedRequestMarshaller.MAX_INITIAL_BUFFER);
     assertEquals(large, marshaller.parse(
         new KnownStream(large.toByteArray(), Integer.MAX_VALUE, -1)));
     assertEquals(large, marshaller.parse(new GZIPInputStream(
@@ -356,8 +358,15 @@ public class AdmissionSupportTest {
   static final byte[] INVALID_UTF8_TYPE_URL =
       {0x0a, 0x08, 0x5a, 0x06, 0x12, 0x04, 0x0a, 0x02, (byte) 0xc3, 0x28};
 
-  private static Reason reason(GuardedTransactionMarshaller marshaller, InputStream stream) {
-    return GuardedTransactionMarshaller.rejectionReason(marshaller.parse(stream));
+  private static GuardedRequestMarshaller<Transaction> transactionMarshaller(
+      MethodDescriptor.Marshaller<Transaction> delegate, int maxMessageSize, int maxOccurrences) {
+    return new GuardedRequestMarshaller<>(delegate, Transaction.getDefaultInstance(),
+        maxMessageSize, maxOccurrences);
+  }
+
+  private static Reason reason(GuardedRequestMarshaller<Transaction> marshaller,
+      InputStream stream) {
+    return marshaller.rejectionReason(marshaller.parse(stream));
   }
 
   private static final class CountingMarshaller
