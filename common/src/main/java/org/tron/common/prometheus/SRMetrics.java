@@ -10,6 +10,20 @@ public class SRMetrics {
     throw new IllegalStateException("SRMetrics");
   }
 
+  private static volatile byte[] localWitnessAddress;
+
+  /**
+   * Caches the local witness address once it is resolved at startup, so maintenance-time
+   * recording can read it without reaching back into node configuration.
+   */
+  public static void setLocalWitnessAddress(byte[] address) {
+    localWitnessAddress = address;
+  }
+
+  public static byte[] getLocalWitnessAddress() {
+    return localWitnessAddress;
+  }
+
   public static void recordNodeInfo(String version, String chainId, String address,
       String role) {
     if (!Metrics.enabled()) {

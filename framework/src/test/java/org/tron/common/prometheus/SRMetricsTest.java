@@ -23,7 +23,6 @@ import org.tron.core.capsule.VotesCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.consensus.ConsensusService;
-import org.tron.core.metrics.SrMetricsService;
 import org.tron.program.Version;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Vote;
@@ -184,7 +183,8 @@ public class SRMetricsTest extends BaseTest {
   public void testSrStatusFullNode() {
     Args.setLocalWitnesses(new LocalWitnesses());
 
-    SrMetricsService.recordNodeStatus(chainBaseManager, backupManager);
+    backupManager.recordNodeInfo();
+    maintenanceManager.recordWitnessMetrics();
 
     Assert.assertEquals(0.0, gauge(MetricKeys.Gauge.SR_IS_ACTIVE), 0.0);
     Assert.assertEquals(0.0, gauge(MetricKeys.Gauge.SR_VOTES), 0.0);
@@ -200,7 +200,7 @@ public class SRMetricsTest extends BaseTest {
   public void testSrStatusMaster() {
     backupManager.setStatus(BackupManager.BackupStatusEnum.MASTER);
     Args.setLocalWitnesses(new LocalWitnesses());
-    SrMetricsService.recordNodeStatus(chainBaseManager, backupManager);
+    backupManager.recordNodeInfo();
     Assert.assertEquals(1.0, info("", MetricLabels.Info.ROLE_FULLNODE), 0.0);
 
     ByteString witness = registerWitnessWithVotes(1000);
@@ -212,7 +212,8 @@ public class SRMetricsTest extends BaseTest {
     localWitnesses.initWitnessAccountAddress(witness.toByteArray());
     Args.setLocalWitnesses(localWitnesses);
 
-    SrMetricsService.recordNodeStatus(chainBaseManager, backupManager);
+    backupManager.recordNodeInfo();
+    maintenanceManager.recordWitnessMetrics();
 
     String address = StringUtil.encode58Check(witness.toByteArray());
     Assert.assertEquals(1.0, gauge(MetricKeys.Gauge.SR_IS_ACTIVE), 0.0);
@@ -237,7 +238,8 @@ public class SRMetricsTest extends BaseTest {
     localWitnesses.initWitnessAccountAddress(witness.toByteArray());
     Args.setLocalWitnesses(localWitnesses);
 
-    SrMetricsService.recordNodeStatus(chainBaseManager, backupManager);
+    backupManager.recordNodeInfo();
+    maintenanceManager.recordWitnessMetrics();
 
     String address = StringUtil.encode58Check(witness.toByteArray());
     Assert.assertEquals(0.0, gauge(MetricKeys.Gauge.SR_IS_ACTIVE), 0.0);

@@ -25,8 +25,14 @@ import org.tron.common.backup.socket.MessageHandler;
 import org.tron.common.backup.socket.UdpEvent;
 import org.tron.common.es.ExecutorServiceManager;
 import org.tron.common.parameter.CommonParameter;
-import org.tron.core.metrics.SrMetricsService;
+import org.tron.common.prometheus.MetricLabels;
+import org.tron.common.prometheus.Metrics;
+import org.tron.common.prometheus.SRMetrics;
+import org.tron.common.utils.LocalWitnesses;
+import org.tron.common.utils.StringUtil;
+import org.tron.core.config.args.Args;
 import org.tron.p2p.utils.NetUtil;
+import org.tron.program.Version;
 
 @Slf4j(topic = "backup")
 @Component
@@ -68,7 +74,34 @@ public class BackupManager implements EventHandler {
   public void setStatus(BackupStatusEnum status) {
     logger.info("Change backup status to {}", status);
     this.status = status;
-    SrMetricsService.onRoleChanged(status);
+    recordNodeInfo();
+  }
+
+  /**
+   * Publishes the {@code node_info} labels (version, chain id, local witness address,
+   * role derived from the current backup status) and caches the local witness address
+   * for maintenance-time gauge recording. Called once at node startup and on every
+   * backup-status change.
+   */
+  public void recordNodeInfo() {
+    if (!Metrics.enabled()) {
+      return;
+    }
+    byte[] witnessAddress = localWitnessAddress();
+    SRMetrics.setLocalWitnessAddress(witnessAddress);
+    String witnessAddress58 = "";
+    String role = MetricLabels.Info.ROLE_FULLNODE;
+    if (witnessAddress != null && witnessAddress.length > 0) {
+      witnessAddress58 = StringUtil.encode58Check(witnessAddress);
+      role = status == MASTER ? MetricLabels.Info.ROLE_MASTER : MetricLabels.Info.ROLE_SLAVER;
+    }
+    SRMetrics.recordNodeInfo(Version.getVersion(), Args.getInstance().getChainId(),
+        witnessAddress58, role);
+  }
+
+  private byte[] localWitnessAddress() {
+    LocalWitnesses localWitnesses = Args.getLocalWitnesses();
+    return localWitnesses == null ? null : localWitnesses.getWitnessAccountAddress();
   }
 
   public void init() {

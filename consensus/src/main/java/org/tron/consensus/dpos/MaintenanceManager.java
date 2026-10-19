@@ -16,6 +16,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.bouncycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.common.prometheus.Metrics;
 import org.tron.common.prometheus.SRMetrics;
 import org.tron.consensus.ConsensusDelegate;
 import org.tron.consensus.pbft.PbftManager;
@@ -26,6 +27,7 @@ import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.store.DelegationStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.VotesStore;
+import org.tron.core.store.WitnessStore;
 
 @Slf4j(topic = "consensus")
 @Component
@@ -160,6 +162,47 @@ public class MaintenanceManager {
         delegationStore.setWitnessVote(nextCycle, witness.createDbKey(), witness.getVoteCount());
       });
     }
+
+    recordWitnessMetrics();
+  }
+
+  /**
+   * Records the witness gauges (active-set membership, settled votes, settled rank) for
+   * the locally configured witness. Runs at the end of every maintenance and once at
+   * node startup. Never throws: a metrics failure must not affect maintenance or block
+   * processing.
+   */
+  public void recordWitnessMetrics() {
+    if (!Metrics.enabled()) {
+      return;
+    }
+    try {
+      byte[] witnessAddress = SRMetrics.getLocalWitnessAddress();
+      boolean active = false;
+      long votes = 0;
+      long rank = 0;
+      if (witnessAddress != null && witnessAddress.length > 0) {
+        ByteString witnessAddressBs = ByteString.copyFrom(witnessAddress);
+        active = consensusDelegate.getActiveWitnesses().contains(witnessAddressBs);
+        WitnessCapsule witness = consensusDelegate.getWitness(witnessAddress);
+        votes = witness == null ? 0 : witness.getVoteCount();
+        rank = witnessRank(witnessAddressBs);
+      }
+      SRMetrics.recordSrStatus(active, votes, rank);
+    } catch (Exception e) {
+      logger.warn("Failed to record witness metrics", e);
+    }
+  }
+
+  private long witnessRank(ByteString witnessAddress) {
+    List<WitnessCapsule> witnesses = consensusDelegate.getAllWitnesses();
+    WitnessStore.sortWitnesses(witnesses, false);
+    for (int i = 0; i < witnesses.size(); i++) {
+      if (witnesses.get(i).getAddress().equals(witnessAddress)) {
+        return i + 1L;
+      }
+    }
+    return 0L;
   }
 
   private Map<ByteString, Long> countVote(VotesStore votesStore) {
