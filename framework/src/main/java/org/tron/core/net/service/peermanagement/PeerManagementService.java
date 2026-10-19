@@ -276,7 +276,7 @@ public class PeerManagementService {
       throw new JsonRpcInvalidParamsException("IP must be an IPv4 or IPv6 literal");
     }
     try {
-      return NetUtil.parseIpAddress(ip);
+      return NetUtil.parseIpAddress(ip.trim());
     } catch (IllegalArgumentException e) {
       throw new JsonRpcInvalidParamsException("IP must be an IPv4 or IPv6 literal", e);
     }

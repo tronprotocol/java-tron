@@ -315,6 +315,20 @@ public class PeerManagementServiceTest {
   }
 
   @Test
+  public void blockAndUnblockIpTrimSurroundingWhitespace() throws Exception {
+    configureAndInit();
+    InetAddress address = InetAddresses.forString("192.0.2.20");
+
+    Assert.assertTrue(service.blockIp(" 192.0.2.20 ").isChanged());
+    Assert.assertEquals(Collections.singletonList("192.0.2.20"), listedIps());
+    Mockito.verify(p2pService).replaceBlockedIps(Collections.singleton(address));
+
+    Assert.assertTrue(service.unblockIp("\t192.0.2.20 ").isChanged());
+    Assert.assertEquals(Collections.emptyList(), listedIps());
+    Mockito.verify(p2pService).replaceBlockedIps(Collections.emptySet());
+  }
+
+  @Test
   public void scopedIpv6CannotChangeExistingBlock() throws Exception {
     stubStoredBlockedIps(OBJECT_MAPPER.writeValueAsString(
         Collections.singletonList(new BlockedIpInfo("fe80::1", BLOCKED_AT_MILLIS))));
