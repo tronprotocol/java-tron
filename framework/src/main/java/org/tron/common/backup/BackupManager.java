@@ -25,6 +25,7 @@ import org.tron.common.backup.socket.MessageHandler;
 import org.tron.common.backup.socket.UdpEvent;
 import org.tron.common.es.ExecutorServiceManager;
 import org.tron.common.parameter.CommonParameter;
+import org.tron.core.metrics.SrMetricsService;
 import org.tron.p2p.utils.NetUtil;
 
 @Slf4j(topic = "backup")
@@ -67,6 +68,7 @@ public class BackupManager implements EventHandler {
   public void setStatus(BackupStatusEnum status) {
     logger.info("Change backup status to {}", status);
     this.status = status;
+    SrMetricsService.onRoleChanged(status);
   }
 
   public void init() {

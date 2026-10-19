@@ -57,6 +57,28 @@ public final class SrMetricsService {
     SRMetrics.recordSrStatus(active, votes, rank);
   }
 
+  /**
+   * Publishes the {@code node_info} role immediately after a backup-election state change.
+   * Reads no store: votes, rank and active-set membership only change at maintenance blocks
+   * and are refreshed there.
+   */
+  public static void onRoleChanged(BackupManager.BackupStatusEnum status) {
+    if (!Metrics.enabled()) {
+      return;
+    }
+    LocalWitnesses localWitnesses = Args.getLocalWitnesses();
+    byte[] address = localWitnesses == null ? null : localWitnesses.getWitnessAccountAddress();
+    String address58 = "";
+    String role = MetricLabels.Info.ROLE_FULLNODE;
+    if (address != null && address.length > 0) {
+      address58 = StringUtil.encode58Check(address);
+      role = status == BackupManager.BackupStatusEnum.MASTER
+          ? MetricLabels.Info.ROLE_MASTER : MetricLabels.Info.ROLE_SLAVER;
+    }
+    SRMetrics.recordNodeInfo(Version.getVersion(), Args.getInstance().getChainId(),
+        address58, role);
+  }
+
   private static long rankOf(WitnessStore witnessStore, ByteString address) {
     List<WitnessCapsule> witnesses = witnessStore.getAllWitnesses();
     WitnessStore.sortWitnesses(witnesses, false);

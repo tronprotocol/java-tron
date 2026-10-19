@@ -246,6 +246,27 @@ public class SRMetricsTest extends BaseTest {
     Assert.assertEquals(1.0, info(address, MetricLabels.Info.ROLE_SLAVER), 0.0);
   }
 
+  /**
+   * setStatus() itself republishes the node_info role without touching any store, so a
+   * backup-election transition is reflected immediately instead of at the next maintenance.
+   */
+  @Test
+  public void testRoleRefreshOnBackupStatusChange() {
+    ByteString witness = registerWitnessWithVotes(9);
+    LocalWitnesses localWitnesses = new LocalWitnesses();
+    localWitnesses.initWitnessAccountAddress(witness.toByteArray());
+    Args.setLocalWitnesses(localWitnesses);
+    String address = StringUtil.encode58Check(witness.toByteArray());
+
+    backupManager.setStatus(BackupManager.BackupStatusEnum.SLAVER);
+    Assert.assertEquals(1.0, info(address, MetricLabels.Info.ROLE_SLAVER), 0.0);
+    Assert.assertNull(info(address, MetricLabels.Info.ROLE_MASTER));
+
+    backupManager.setStatus(BackupManager.BackupStatusEnum.MASTER);
+    Assert.assertEquals(1.0, info(address, MetricLabels.Info.ROLE_MASTER), 0.0);
+    Assert.assertNull(info(address, MetricLabels.Info.ROLE_SLAVER));
+  }
+
   private ByteString registerWitnessWithVotes(long votes) {
     ByteString address = uniqueAddress();
     chainBaseManager.getWitnessStore().put(address.toByteArray(),
