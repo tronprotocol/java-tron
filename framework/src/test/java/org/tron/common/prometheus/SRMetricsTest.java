@@ -184,7 +184,7 @@ public class SRMetricsTest extends BaseTest {
   public void testSrStatusFullNode() {
     Args.setLocalWitnesses(new LocalWitnesses());
 
-    SrMetricsService.refresh(chainBaseManager, backupManager);
+    SrMetricsService.recordNodeStatus(chainBaseManager, backupManager);
 
     Assert.assertEquals(0.0, gauge(MetricKeys.Gauge.SR_IS_ACTIVE), 0.0);
     Assert.assertEquals(0.0, gauge(MetricKeys.Gauge.SR_VOTES), 0.0);
@@ -200,7 +200,7 @@ public class SRMetricsTest extends BaseTest {
   public void testSrStatusMaster() {
     backupManager.setStatus(BackupManager.BackupStatusEnum.MASTER);
     Args.setLocalWitnesses(new LocalWitnesses());
-    SrMetricsService.refresh(chainBaseManager, backupManager);
+    SrMetricsService.recordNodeStatus(chainBaseManager, backupManager);
     Assert.assertEquals(1.0, info("", MetricLabels.Info.ROLE_FULLNODE), 0.0);
 
     ByteString witness = registerWitnessWithVotes(1000);
@@ -212,7 +212,7 @@ public class SRMetricsTest extends BaseTest {
     localWitnesses.initWitnessAccountAddress(witness.toByteArray());
     Args.setLocalWitnesses(localWitnesses);
 
-    SrMetricsService.refresh(chainBaseManager, backupManager);
+    SrMetricsService.recordNodeStatus(chainBaseManager, backupManager);
 
     String address = StringUtil.encode58Check(witness.toByteArray());
     Assert.assertEquals(1.0, gauge(MetricKeys.Gauge.SR_IS_ACTIVE), 0.0);
@@ -237,7 +237,7 @@ public class SRMetricsTest extends BaseTest {
     localWitnesses.initWitnessAccountAddress(witness.toByteArray());
     Args.setLocalWitnesses(localWitnesses);
 
-    SrMetricsService.refresh(chainBaseManager, backupManager);
+    SrMetricsService.recordNodeStatus(chainBaseManager, backupManager);
 
     String address = StringUtil.encode58Check(witness.toByteArray());
     Assert.assertEquals(0.0, gauge(MetricKeys.Gauge.SR_IS_ACTIVE), 0.0);

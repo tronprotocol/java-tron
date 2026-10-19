@@ -27,33 +27,34 @@ public final class SrMetricsService {
   }
 
   /**
-   * Recomputes and publishes the local SR status. Called once at startup and at maintenance
-   * blocks, where the active witness set and the witness vote counts are updated.
+   * Records the local node status (witness identity, backup role, active-set membership,
+   * votes, rank) into the metrics. Called once at startup and at maintenance blocks,
+   * where the active witness set and the witness vote counts are updated.
    */
-  public static void refresh(ChainBaseManager chainBaseManager, BackupManager backupManager) {
+  public static void recordNodeStatus(ChainBaseManager chainBaseManager,
+      BackupManager backupManager) {
     if (!Metrics.enabled()) {
       return;
     }
-    LocalWitnesses localWitnesses = Args.getLocalWitnesses();
-    byte[] address = localWitnesses == null ? null : localWitnesses.getWitnessAccountAddress();
-    String address58 = "";
+    byte[] witnessAddress = localWitnessAddress();
+    String witnessAddress58 = "";
     String role = MetricLabels.Info.ROLE_FULLNODE;
     boolean active = false;
     long votes = 0;
     long rank = 0;
-    if (address != null && address.length > 0) {
-      address58 = StringUtil.encode58Check(address);
-      ByteString witnessAddress = ByteString.copyFrom(address);
+    if (witnessAddress != null && witnessAddress.length > 0) {
+      witnessAddress58 = StringUtil.encode58Check(witnessAddress);
+      ByteString witnessAddressBs = ByteString.copyFrom(witnessAddress);
       active = chainBaseManager.getWitnessScheduleStore().getActiveWitnesses()
-          .contains(witnessAddress);
-      WitnessCapsule witness = chainBaseManager.getWitnessStore().get(address);
+          .contains(witnessAddressBs);
+      WitnessCapsule witness = chainBaseManager.getWitnessStore().get(witnessAddress);
       votes = witness == null ? 0 : witness.getVoteCount();
-      rank = rankOf(chainBaseManager.getWitnessStore(), witnessAddress);
+      rank = witnessRank(chainBaseManager.getWitnessStore(), witnessAddressBs);
       role = backupManager.getStatus() == BackupManager.BackupStatusEnum.MASTER
           ? MetricLabels.Info.ROLE_MASTER : MetricLabels.Info.ROLE_SLAVER;
     }
     SRMetrics.recordNodeInfo(Version.getVersion(), Args.getInstance().getChainId(),
-        address58, role);
+        witnessAddress58, role);
     SRMetrics.recordSrStatus(active, votes, rank);
   }
 
@@ -66,24 +67,28 @@ public final class SrMetricsService {
     if (!Metrics.enabled()) {
       return;
     }
-    LocalWitnesses localWitnesses = Args.getLocalWitnesses();
-    byte[] address = localWitnesses == null ? null : localWitnesses.getWitnessAccountAddress();
-    String address58 = "";
+    byte[] witnessAddress = localWitnessAddress();
+    String witnessAddress58 = "";
     String role = MetricLabels.Info.ROLE_FULLNODE;
-    if (address != null && address.length > 0) {
-      address58 = StringUtil.encode58Check(address);
+    if (witnessAddress != null && witnessAddress.length > 0) {
+      witnessAddress58 = StringUtil.encode58Check(witnessAddress);
       role = status == BackupManager.BackupStatusEnum.MASTER
           ? MetricLabels.Info.ROLE_MASTER : MetricLabels.Info.ROLE_SLAVER;
     }
     SRMetrics.recordNodeInfo(Version.getVersion(), Args.getInstance().getChainId(),
-        address58, role);
+        witnessAddress58, role);
   }
 
-  private static long rankOf(WitnessStore witnessStore, ByteString address) {
+  private static byte[] localWitnessAddress() {
+    LocalWitnesses localWitnesses = Args.getLocalWitnesses();
+    return localWitnesses == null ? null : localWitnesses.getWitnessAccountAddress();
+  }
+
+  private static long witnessRank(WitnessStore witnessStore, ByteString witnessAddress) {
     List<WitnessCapsule> witnesses = witnessStore.getAllWitnesses();
     WitnessStore.sortWitnesses(witnesses, false);
     for (int i = 0; i < witnesses.size(); i++) {
-      if (witnesses.get(i).getAddress().equals(address)) {
+      if (witnesses.get(i).getAddress().equals(witnessAddress)) {
         return i + 1L;
       }
     }

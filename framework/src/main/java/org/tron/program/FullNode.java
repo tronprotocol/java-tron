@@ -75,7 +75,7 @@ public class FullNode {
     appT.startup();
     // the genesis block id (chainId) is only available after the context refresh
     // (Manager.initGenesis); this also publishes the local SR identity and status
-    SrMetricsService.refresh(context.getBean(ChainBaseManager.class),
+    SrMetricsService.recordNodeStatus(context.getBean(ChainBaseManager.class),
         context.getBean(BackupManager.class));
     if (parameter.isSolidityNode()) {
       SolidityNode node = context.getBean(SolidityNode.class);

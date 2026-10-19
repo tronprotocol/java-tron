@@ -1906,7 +1906,7 @@ public class Manager {
     block.setBloom(blockBloom);
 
     if (flag) {
-      SrMetricsService.refresh(chainBaseManager, backupManager);
+      SrMetricsService.recordNodeStatus(chainBaseManager, backupManager);
     }
   }
 
