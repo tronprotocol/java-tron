@@ -27,46 +27,58 @@ public final class SrMetricsService {
   }
 
   /**
-   * Records the local node status (witness identity, backup role, active-set membership,
-   * votes, rank) into the metrics. Called once at startup and at maintenance blocks,
-   * where the active witness set and the witness vote counts are updated.
+   * Records the full node status. Called once at startup; afterwards each part refreshes
+   * at its own point of change: the role on backup-status switches
+   * ({@link #onRoleChanged}), the witness gauges at maintenance blocks
+   * ({@link #recordWitnessStatus}).
    */
   public static void recordNodeStatus(ChainBaseManager chainBaseManager,
       BackupManager backupManager) {
     if (!Metrics.enabled()) {
       return;
     }
+    recordNodeInfoLabels(backupManager.getStatus());
+    recordWitnessStatus(chainBaseManager);
+  }
+
+  /**
+   * Records the witness gauges (active-set membership, settled votes, settled rank).
+   * Called at maintenance blocks, where the active witness set and the settled vote
+   * counts are updated. Reads no backup state: the role only changes on backup-status
+   * switches and is refreshed by {@link #onRoleChanged}.
+   */
+  public static void recordWitnessStatus(ChainBaseManager chainBaseManager) {
+    if (!Metrics.enabled()) {
+      return;
+    }
     byte[] witnessAddress = localWitnessAddress();
-    String witnessAddress58 = "";
-    String role = MetricLabels.Info.ROLE_FULLNODE;
     boolean active = false;
     long votes = 0;
     long rank = 0;
     if (witnessAddress != null && witnessAddress.length > 0) {
-      witnessAddress58 = StringUtil.encode58Check(witnessAddress);
       ByteString witnessAddressBs = ByteString.copyFrom(witnessAddress);
       active = chainBaseManager.getWitnessScheduleStore().getActiveWitnesses()
           .contains(witnessAddressBs);
       WitnessCapsule witness = chainBaseManager.getWitnessStore().get(witnessAddress);
       votes = witness == null ? 0 : witness.getVoteCount();
       rank = witnessRank(chainBaseManager.getWitnessStore(), witnessAddressBs);
-      role = backupManager.getStatus() == BackupManager.BackupStatusEnum.MASTER
-          ? MetricLabels.Info.ROLE_MASTER : MetricLabels.Info.ROLE_SLAVER;
     }
-    SRMetrics.recordNodeInfo(Version.getVersion(), Args.getInstance().getChainId(),
-        witnessAddress58, role);
     SRMetrics.recordSrStatus(active, votes, rank);
   }
 
   /**
-   * Publishes the {@code node_info} role immediately after a backup-election state change.
-   * Reads no store: votes, rank and active-set membership only change at maintenance blocks
-   * and are refreshed there.
+   * Publishes the {@code node_info} labels immediately after a backup-election state
+   * change. Reads no store: votes, rank and active-set membership only change at
+   * maintenance blocks and are refreshed there.
    */
   public static void onRoleChanged(BackupManager.BackupStatusEnum status) {
     if (!Metrics.enabled()) {
       return;
     }
+    recordNodeInfoLabels(status);
+  }
+
+  private static void recordNodeInfoLabels(BackupManager.BackupStatusEnum status) {
     byte[] witnessAddress = localWitnessAddress();
     String witnessAddress58 = "";
     String role = MetricLabels.Info.ROLE_FULLNODE;

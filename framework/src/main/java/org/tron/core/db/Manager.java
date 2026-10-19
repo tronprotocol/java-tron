@@ -50,7 +50,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.api.GrpcAPI.TransactionInfoList;
 import org.tron.common.args.GenesisBlock;
-import org.tron.common.backup.BackupManager;
 import org.tron.common.bloom.Bloom;
 import org.tron.common.cron.CronExpression;
 import org.tron.common.es.ExecutorServiceManager;
@@ -239,8 +238,6 @@ public class Manager {
   @Autowired
   @Getter
   private ChainBaseManager chainBaseManager;
-  @Autowired
-  private BackupManager backupManager;
   // transactions cache
   private BlockingQueue<TransactionCapsule> pendingTransactions;
   @Getter
@@ -1906,7 +1903,7 @@ public class Manager {
     block.setBloom(blockBloom);
 
     if (flag) {
-      SrMetricsService.recordNodeStatus(chainBaseManager, backupManager);
+      SrMetricsService.recordWitnessStatus(chainBaseManager);
     }
   }
 
