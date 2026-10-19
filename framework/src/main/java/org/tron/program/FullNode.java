@@ -12,13 +12,14 @@ import org.tron.common.arch.Arch;
 import org.tron.common.exit.ExitManager;
 import org.tron.common.log.LogService;
 import org.tron.common.parameter.CommonParameter;
-import org.tron.common.prometheus.MetricKeys;
 import org.tron.common.prometheus.Metrics;
+import org.tron.core.ChainBaseManager;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.config.args.CLIParameter;
 import org.tron.core.config.args.CommandLineArguments;
 import org.tron.core.exception.TronError;
+import org.tron.core.metrics.SrMetricsService;
 import org.tron.core.services.admin.ipc.client.IpcClient;
 
 public class FullNode {
@@ -72,9 +73,8 @@ public class FullNode {
     context.registerShutdownHook();
     appT.startup();
     // the genesis block id (chainId) is only available after the context refresh
-    // (Manager.initGenesis)
-    Metrics.info(MetricKeys.Info.NODE_INFO, Version.getVersion(),
-        Args.getInstance().getChainId());
+    // (Manager.initGenesis); this also publishes the local SR identity and status
+    SrMetricsService.refresh(context.getBean(ChainBaseManager.class));
     if (parameter.isSolidityNode()) {
       SolidityNode node = context.getBean(SolidityNode.class);
       node.run();

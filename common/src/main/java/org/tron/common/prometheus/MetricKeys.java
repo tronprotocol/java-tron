@@ -41,6 +41,11 @@ public class MetricKeys {
     public static final String DB_SST_LEVEL = "tron:db_sst_level";
     public static final String MANAGER_QUEUE = "tron:manager_queue_size";
     public static final String TX_CACHE = "tron:tx_cache";
+    // status of the SR configured locally (witness address), refreshed at startup and on
+    // maintenance blocks, when the vote counts and the active witness set are updated
+    public static final String SR_IS_ACTIVE = "tron:sr_is_active";
+    public static final String SR_VOTES = "tron:sr_votes";
+    public static final String SR_RANK = "tron:sr_rank";
 
     private Gauge() {
       throw new IllegalStateException("Gauge");

@@ -10,6 +10,23 @@ public class SRMetrics {
     throw new IllegalStateException("SRMetrics");
   }
 
+  public static void recordNodeInfo(String version, String chainId, String address,
+      String role) {
+    if (!Metrics.enabled()) {
+      return;
+    }
+    Metrics.info(MetricKeys.Info.NODE_INFO, version, chainId, address, role);
+  }
+
+  public static void recordSrStatus(boolean active, long votes, long rank) {
+    if (!Metrics.enabled()) {
+      return;
+    }
+    Metrics.gaugeSet(MetricKeys.Gauge.SR_IS_ACTIVE, active ? 1 : 0);
+    Metrics.gaugeSet(MetricKeys.Gauge.SR_VOTES, votes);
+    Metrics.gaugeSet(MetricKeys.Gauge.SR_RANK, rank);
+  }
+
   public static void recordSrSetChange(List<ByteString> currentWits, List<ByteString> newWits) {
     if (!Metrics.enabled()) {
       return;

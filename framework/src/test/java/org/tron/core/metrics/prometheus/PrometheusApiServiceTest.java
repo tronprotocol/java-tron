@@ -214,12 +214,13 @@ public class PrometheusApiServiceTest extends BaseTest {
     String version = Version.getVersion();
     String testGenesisBlockId =
         "00000000000000001ebf88508a03865c71d452e25f4d51194196a1d22b6653dc";
-    Metrics.info(MetricKeys.Info.NODE_INFO, version, testGenesisBlockId);
+    Metrics.info(MetricKeys.Info.NODE_INFO, version, testGenesisBlockId, "", "fullnode");
     // Prometheus Info collector appends "_info" to the sample name
     Double value = CollectorRegistry.defaultRegistry.getSampleValue(
         "tron:node_info",
-        new String[] {MetricLabels.Info.VERSION, MetricLabels.Info.CHAIN_ID},
-        new String[] {version, testGenesisBlockId});
+        new String[] {MetricLabels.Info.VERSION, MetricLabels.Info.CHAIN_ID,
+            MetricLabels.Info.ADDRESS, MetricLabels.Info.ROLE},
+        new String[] {version, testGenesisBlockId, "", "fullnode"});
     Assert.assertNotNull("tron:node_info sample should exist", value);
     Assert.assertEquals(1.0, value, 0.0);
   }

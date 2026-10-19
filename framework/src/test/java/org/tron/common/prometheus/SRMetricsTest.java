@@ -13,6 +13,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.BaseTest;
 import org.tron.common.TestConstants;
+import org.tron.common.utils.LocalWitnesses;
 import org.tron.common.utils.PublicMethod;
 import org.tron.common.utils.StringUtil;
 import org.tron.consensus.dpos.MaintenanceManager;
@@ -21,6 +22,8 @@ import org.tron.core.capsule.VotesCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.consensus.ConsensusService;
+import org.tron.core.metrics.SrMetricsService;
+import org.tron.program.Version;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Vote;
 
@@ -52,6 +55,7 @@ public class SRMetricsTest extends BaseTest {
   @After
   public void tearDown() {
     Args.getInstance().setMetricsPrometheusEnable(true);
+    Args.setLocalWitnesses(new LocalWitnesses());
   }
 
   /**
@@ -167,6 +171,94 @@ public class SRMetricsTest extends BaseTest {
     Assert.assertEquals(1, sample(MetricLabels.Counter.SR_REMOVE, removedWit).intValue());
     Assert.assertNull(sample(MetricLabels.Counter.SR_ADD, removedWit));
     Assert.assertNull(sample(MetricLabels.Counter.SR_REMOVE, stableWit));
+  }
+
+  /**
+   * No witness configured: role is fullnode, gauges are zero, address label is empty.
+   */
+  @Test
+  public void testSrStatusFullNode() {
+    Args.setLocalWitnesses(new LocalWitnesses());
+
+    SrMetricsService.refresh(chainBaseManager);
+
+    Assert.assertEquals(0.0, gauge(MetricKeys.Gauge.SR_IS_ACTIVE), 0.0);
+    Assert.assertEquals(0.0, gauge(MetricKeys.Gauge.SR_VOTES), 0.0);
+    Assert.assertEquals(0.0, gauge(MetricKeys.Gauge.SR_RANK), 0.0);
+    Assert.assertEquals(1.0, info("", MetricLabels.Info.ROLE_FULLNODE), 0.0);
+  }
+
+  /**
+   * Witness in the active set: role is primary, gauges expose its votes and 1-based rank, and
+   * the previously published fullnode series is dropped when the label values change.
+   */
+  @Test
+  public void testSrStatusPrimary() {
+    Args.setLocalWitnesses(new LocalWitnesses());
+    SrMetricsService.refresh(chainBaseManager);
+    Assert.assertEquals(1.0, info("", MetricLabels.Info.ROLE_FULLNODE), 0.0);
+
+    ByteString witness = registerWitnessWithVotes(1000);
+    registerWitnessWithVotes(50);
+    chainBaseManager.getWitnessScheduleStore()
+        .saveActiveWitnesses(Collections.singletonList(witness));
+
+    LocalWitnesses localWitnesses = new LocalWitnesses();
+    localWitnesses.initWitnessAccountAddress(witness.toByteArray());
+    Args.setLocalWitnesses(localWitnesses);
+
+    SrMetricsService.refresh(chainBaseManager);
+
+    String address = StringUtil.encode58Check(witness.toByteArray());
+    Assert.assertEquals(1.0, gauge(MetricKeys.Gauge.SR_IS_ACTIVE), 0.0);
+    Assert.assertEquals(1000.0, gauge(MetricKeys.Gauge.SR_VOTES), 0.0);
+    Assert.assertEquals(1.0, gauge(MetricKeys.Gauge.SR_RANK), 0.0);
+    Assert.assertEquals(1.0, info(address, MetricLabels.Info.ROLE_PRIMARY), 0.0);
+    Assert.assertNull(info("", MetricLabels.Info.ROLE_FULLNODE));
+  }
+
+  /**
+   * Witness registered but not in the active set: role is backup and is_active stays 0.
+   */
+  @Test
+  public void testSrStatusBackup() {
+    ByteString activeWitness = registerWitnessWithVotes(10);
+    ByteString witness = registerWitnessWithVotes(7);
+    chainBaseManager.getWitnessScheduleStore()
+        .saveActiveWitnesses(Collections.singletonList(activeWitness));
+
+    LocalWitnesses localWitnesses = new LocalWitnesses();
+    localWitnesses.initWitnessAccountAddress(witness.toByteArray());
+    Args.setLocalWitnesses(localWitnesses);
+
+    SrMetricsService.refresh(chainBaseManager);
+
+    String address = StringUtil.encode58Check(witness.toByteArray());
+    Assert.assertEquals(0.0, gauge(MetricKeys.Gauge.SR_IS_ACTIVE), 0.0);
+    Assert.assertEquals(7.0, gauge(MetricKeys.Gauge.SR_VOTES), 0.0);
+    Assert.assertTrue(gauge(MetricKeys.Gauge.SR_RANK) > 0);
+    Assert.assertEquals(1.0, info(address, MetricLabels.Info.ROLE_BACKUP), 0.0);
+  }
+
+  private ByteString registerWitnessWithVotes(long votes) {
+    ByteString address = uniqueAddress();
+    chainBaseManager.getWitnessStore().put(address.toByteArray(),
+        new WitnessCapsule(address, votes, ""));
+    chainBaseManager.getAccountStore().put(address.toByteArray(),
+        new AccountCapsule(Protocol.Account.newBuilder().setAddress(address).build()));
+    return address;
+  }
+
+  private Double gauge(String name) {
+    return CollectorRegistry.defaultRegistry.getSampleValue(name);
+  }
+
+  private Double info(String address, String role) {
+    return CollectorRegistry.defaultRegistry.getSampleValue(
+        "tron:node_info",
+        new String[] {MetricLabels.Info.VERSION, MetricLabels.Info.CHAIN_ID,
+            MetricLabels.Info.ADDRESS, MetricLabels.Info.ROLE},
+        new String[] {Version.getVersion(), Args.getInstance().getChainId(), address, role});
   }
 
   private ByteString registerWitness() {

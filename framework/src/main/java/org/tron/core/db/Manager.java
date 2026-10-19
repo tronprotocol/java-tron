@@ -137,6 +137,7 @@ import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.exception.ZksnarkException;
 import org.tron.core.metrics.MetricsKey;
 import org.tron.core.metrics.MetricsUtil;
+import org.tron.core.metrics.SrMetricsService;
 import org.tron.core.service.MortgageService;
 import org.tron.core.service.RewardViCalService;
 import org.tron.core.services.event.exception.EventException;
@@ -1900,6 +1901,10 @@ public class Manager {
         .initBlockSection(transactionRetCapsule);
     chainBaseManager.getSectionBloomStore().write(block.getNum());
     block.setBloom(blockBloom);
+
+    if (flag) {
+      SrMetricsService.refresh(chainBaseManager);
+    }
   }
 
   private void payReward(BlockCapsule block) {

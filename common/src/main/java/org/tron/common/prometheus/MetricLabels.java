@@ -84,6 +84,11 @@ public class MetricLabels {
     // identifies the genesis block: the label value is the chain id derived from the
     // genesis block hash, so the label is named genesis_block_id
     public static final String CHAIN_ID = "genesis_block_id";
+    public static final String ADDRESS = "address";
+    public static final String ROLE = "role";
+    public static final String ROLE_PRIMARY = "primary";
+    public static final String ROLE_BACKUP = "backup";
+    public static final String ROLE_FULLNODE = "fullnode";
 
     private Info() {
       throw new IllegalStateException("Info");

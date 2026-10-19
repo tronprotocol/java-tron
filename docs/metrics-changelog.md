@@ -9,7 +9,10 @@ This file tracks Prometheus metric additions, changes, and removals in java-tron
 
 #### Core
 
-- `tron:node_info` (Info, labels `version`, `genesis_block_id`) — static node identity: the running node version string plus the full genesis block hash as the canonical chain identifier, for fleet dashboards and version/chain alert rules. ([#6923](https://github.com/tronprotocol/java-tron/issues/6923))
+- `tron:node_info` (Info, labels `version`, `genesis_block_id`, `address`, `role`) — static node identity: the running node version string, the full genesis block hash as the canonical chain identifier, the locally configured SR witness address in base58 (empty when the node is not configured as a witness), and the node role: `primary` when that witness is in the active witness set, `backup` when it is registered but not active, `fullnode` when no witness is configured. ([#6923](https://github.com/tronprotocol/java-tron/issues/6923))
+- `tron:sr_is_active` (Gauge) — 1 when the locally configured witness address is in the active witness set, 0 otherwise. Refreshed at startup and on maintenance blocks, together with the vote counts. ([#6923](https://github.com/tronprotocol/java-tron/issues/6923))
+- `tron:sr_votes` (Gauge) — vote count of the locally configured witness, as of the last maintenance block. ([#6923](https://github.com/tronprotocol/java-tron/issues/6923))
+- `tron:sr_rank` (Gauge) — 1-based rank of the locally configured witness by vote count, 0 when no witness is configured. ([#6923](https://github.com/tronprotocol/java-tron/issues/6923))
 - `tron:block_fetch_armed` (Counter) — incremented when `FetchBlockService` arms a fetch tracking for a block; denominator for secondary-fetch rates. ([#6923](https://github.com/tronprotocol/java-tron/issues/6923))
 - `tron:block_fetch_secondary` (Counter) — incremented when a secondary fetch request is sent to an alternate peer. ([#6923](https://github.com/tronprotocol/java-tron/issues/6923))
 - `tron:block_already_known` (Counter) — incremented when a block response matches an outstanding adv request whose exact block ID is already known before that response is processed (best-effort signal; concurrent arrivals may be missed). ([#6923](https://github.com/tronprotocol/java-tron/issues/6923))
