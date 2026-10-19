@@ -1,6 +1,7 @@
 package org.tron.core.admission;
 
 import com.google.protobuf.InvalidProtocolBufferException;
+import io.grpc.KnownLength;
 import io.grpc.MethodDescriptor;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
@@ -74,7 +75,7 @@ public final class GuardedTransactionMarshaller
       return REJECTED.get(e.getReason());
     }
     try {
-      return delegate.parse(new ByteArrayInputStream(bytes));
+      return delegate.parse(new KnownLengthInputStream(bytes));
     } catch (StatusRuntimeException e) {
       if (e.getCause() instanceof InvalidProtocolBufferException) {
         return REJECTED.get(Reason.MALFORMED);
@@ -109,10 +110,16 @@ public final class GuardedTransactionMarshaller
     }
     long limit = (long) max + 1;
     int hint = stream.available();
-    // A decompressing stream reports 1 until it reaches the end, which says nothing about size.
-    long initial = hint > 1 ? hint : DEFAULT_INITIAL_BUFFER;
-    initial = StrictMathWrapper.min(initial, StrictMathWrapper.min(limit, MAX_INITIAL_BUFFER));
-    byte[] buffer = new byte[(int) StrictMathWrapper.max(initial, 1)];
+    long initial;
+    if (stream instanceof KnownLength) {
+      // The exact remaining size, so one allocation is enough.
+      initial = StrictMathWrapper.min(StrictMathWrapper.max(hint, 0), limit);
+    } else {
+      // A decompressing stream reports 1 until it reaches the end, which says nothing about size.
+      initial = hint > 1 ? hint : DEFAULT_INITIAL_BUFFER;
+      initial = StrictMathWrapper.min(initial, StrictMathWrapper.min(limit, MAX_INITIAL_BUFFER));
+    }
+    byte[] buffer = new byte[(int) initial];
     int size = 0;
     while (true) {
       if (size == buffer.length) {
@@ -122,7 +129,8 @@ public final class GuardedTransactionMarshaller
           break;
         }
         long grown = StrictMathWrapper.min(
-            StrictMathWrapper.min((long) buffer.length * 2, limit), Integer.MAX_VALUE - 8);
+            StrictMathWrapper.min(StrictMathWrapper.max((long) buffer.length * 2,
+                DEFAULT_INITIAL_BUFFER), limit), Integer.MAX_VALUE - 8);
         if (grown <= buffer.length) {
           return null;   // cannot hold more than this; the message is over the bound
         }
@@ -143,5 +151,14 @@ public final class GuardedTransactionMarshaller
       }
     }
     return size == buffer.length ? buffer : Arrays.copyOf(buffer, size);
+  }
+
+  // Lets the delegate read the bytes into an array instead of parsing a stream.
+  private static final class KnownLengthInputStream extends ByteArrayInputStream
+      implements KnownLength {
+
+    KnownLengthInputStream(byte[] bytes) {
+      super(bytes);
+    }
   }
 }
