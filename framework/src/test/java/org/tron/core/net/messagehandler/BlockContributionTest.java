@@ -173,14 +173,14 @@ public class BlockContributionTest {
   }
 
   @Test
-  public void testExecutionFailureStartsSyncWithoutBlamingProvider() throws Exception {
-    doThrow(new P2pException(TypeEnum.BAD_BLOCK, "local execution state"))
+  public void testExecutionFailureDoesNotStartSyncOrDisconnectProvider() throws Exception {
+    doThrow(new P2pException(TypeEnum.BAD_BLOCK, "block execution failed"))
         .when(delegate).processBlock(block, false);
 
     handler.processMessage(provider, new BlockMessage(block));
 
     verify(adv).broadcast(any(BlockMessage.class));
-    verify(sync).startSync(provider);
+    verify(sync, never()).startSync(any());
     verify(provider, never()).disconnect(any());
     Assert.assertTrue(provider.getLastInteractiveTime() > 1);
     Assert.assertEquals(0, provider.getBlockRcvTime());
