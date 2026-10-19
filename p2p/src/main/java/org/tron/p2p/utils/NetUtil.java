@@ -230,23 +230,8 @@ public class NetUtil {
    * <p>Use {@link #parseIpSocketAddress(String)} when the input must not trigger DNS resolution.
    */
   public static InetSocketAddress parseInetSocketAddress(String para) {
-    int index = para.trim().lastIndexOf(":");
-    if (index > 0) {
-      String host = para.substring(0, index);
-      if (host.startsWith("[") && host.endsWith("]")) {
-        host = host.substring(1, host.length() - 1);
-      } else {
-        if (host.contains(":")) {
-          throw new RuntimeException(String.format("Invalid inetSocketAddress: \"%s\", "
-              + "use ipv4:port or [ipv6]:port", para));
-        }
-      }
-      int port = Integer.parseInt(para.substring(index + 1));
-      return new InetSocketAddress(host, port);
-    } else {
-      throw new RuntimeException(String.format("Invalid inetSocketAddress: \"%s\", "
-          + "use ipv4:port or [ipv6]:port", para));
-    }
+    String[] parts = splitEndpoint(para);
+    return new InetSocketAddress(parts[0], Integer.parseInt(parts[1]));
   }
 
   /**
@@ -255,32 +240,11 @@ public class NetUtil {
    * <p>Only {@code ipv4:port} and {@code [ipv6]:port} are accepted.
    */
   public static InetSocketAddress parseIpSocketAddress(String para) {
-    if (para == null) {
+    String[] parts = splitEndpoint(para);
+    String host = parts[0];
+    String portText = parts[1];
+    if (para.trim().startsWith("[") && host.indexOf(':') < 0) {
       throw invalidInetSocketAddress();
-    }
-    String endpoint = para.trim();
-    String host;
-    String portText;
-    if (endpoint.startsWith("[")) {
-      // ipv6
-      int closingBracket = endpoint.indexOf(']');
-      if (closingBracket <= 1 || closingBracket + 1 >= endpoint.length()
-          || endpoint.charAt(closingBracket + 1) != ':') {
-        throw invalidInetSocketAddress();
-      }
-      host = endpoint.substring(1, closingBracket);
-      portText = endpoint.substring(closingBracket + 2);
-      if (host.indexOf(':') < 0) {
-        throw invalidInetSocketAddress();
-      }
-    } else {
-      // ipv4
-      int separator = endpoint.indexOf(':');
-      if (separator <= 0 || separator != endpoint.lastIndexOf(':')) {
-        throw invalidInetSocketAddress();
-      }
-      host = endpoint.substring(0, separator);
-      portText = endpoint.substring(separator + 1);
     }
     if (portText.isEmpty() || portText.length() > 5) {
       throw invalidInetSocketAddress();
@@ -292,12 +256,31 @@ public class NetUtil {
       }
     }
     int port = Integer.parseInt(portText);
-    if (port <= 0 || port > 65535) {
+    if (port <= 0 || port > 0xFFFF) {
       throw invalidInetSocketAddress();
     }
     InetSocketAddress address = new InetSocketAddress(parseIpAddress(host), port);
     validateInetSocketAddress(address);
     return address;
+  }
+
+  /** Splits host and port without DNS resolution or caller-specific address validation. */
+  private static String[] splitEndpoint(String para) {
+    if (para == null) {
+      throw invalidInetSocketAddress();
+    }
+    String endpoint = para.trim();
+    int separator = endpoint.lastIndexOf(':');
+    if (separator <= 0) {
+      throw invalidInetSocketAddress();
+    }
+    String host = endpoint.substring(0, separator);
+    if (host.startsWith("[") && host.endsWith("]")) {
+      host = host.substring(1, host.length() - 1);
+    } else if (host.indexOf(':') >= 0) {
+      throw invalidInetSocketAddress();
+    }
+    return new String[] {host, endpoint.substring(separator + 1)};
   }
 
   private static IllegalArgumentException invalidInetSocketAddress() {
