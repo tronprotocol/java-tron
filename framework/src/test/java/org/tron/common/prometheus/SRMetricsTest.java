@@ -13,6 +13,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.tron.common.BaseTest;
 import org.tron.common.TestConstants;
+import org.tron.common.backup.BackupManager;
 import org.tron.common.utils.LocalWitnesses;
 import org.tron.common.utils.PublicMethod;
 import org.tron.common.utils.StringUtil;
@@ -37,6 +38,8 @@ public class SRMetricsTest extends BaseTest {
   private MaintenanceManager maintenanceManager;
   @Resource
   private ConsensusService consensusService;
+  @Resource
+  private BackupManager backupManager;
 
   static {
     Args.setParam(new String[]{"-d", dbPath()}, TestConstants.TEST_CONF);
@@ -56,6 +59,7 @@ public class SRMetricsTest extends BaseTest {
   public void tearDown() {
     Args.getInstance().setMetricsPrometheusEnable(true);
     Args.setLocalWitnesses(new LocalWitnesses());
+    backupManager.setStatus(BackupManager.BackupStatusEnum.MASTER);
   }
 
   /**
@@ -180,7 +184,7 @@ public class SRMetricsTest extends BaseTest {
   public void testSrStatusFullNode() {
     Args.setLocalWitnesses(new LocalWitnesses());
 
-    SrMetricsService.refresh(chainBaseManager);
+    SrMetricsService.refresh(chainBaseManager, backupManager);
 
     Assert.assertEquals(0.0, gauge(MetricKeys.Gauge.SR_IS_ACTIVE), 0.0);
     Assert.assertEquals(0.0, gauge(MetricKeys.Gauge.SR_VOTES), 0.0);
@@ -189,13 +193,14 @@ public class SRMetricsTest extends BaseTest {
   }
 
   /**
-   * Witness in the active set: role is primary, gauges expose its votes and 1-based rank, and
+   * Witness in the active set: role is master, gauges expose its votes and 1-based rank, and
    * the previously published fullnode series is dropped when the label values change.
    */
   @Test
-  public void testSrStatusPrimary() {
+  public void testSrStatusMaster() {
+    backupManager.setStatus(BackupManager.BackupStatusEnum.MASTER);
     Args.setLocalWitnesses(new LocalWitnesses());
-    SrMetricsService.refresh(chainBaseManager);
+    SrMetricsService.refresh(chainBaseManager, backupManager);
     Assert.assertEquals(1.0, info("", MetricLabels.Info.ROLE_FULLNODE), 0.0);
 
     ByteString witness = registerWitnessWithVotes(1000);
@@ -207,21 +212,22 @@ public class SRMetricsTest extends BaseTest {
     localWitnesses.initWitnessAccountAddress(witness.toByteArray());
     Args.setLocalWitnesses(localWitnesses);
 
-    SrMetricsService.refresh(chainBaseManager);
+    SrMetricsService.refresh(chainBaseManager, backupManager);
 
     String address = StringUtil.encode58Check(witness.toByteArray());
     Assert.assertEquals(1.0, gauge(MetricKeys.Gauge.SR_IS_ACTIVE), 0.0);
     Assert.assertEquals(1000.0, gauge(MetricKeys.Gauge.SR_VOTES), 0.0);
     Assert.assertEquals(1.0, gauge(MetricKeys.Gauge.SR_RANK), 0.0);
-    Assert.assertEquals(1.0, info(address, MetricLabels.Info.ROLE_PRIMARY), 0.0);
+    Assert.assertEquals(1.0, info(address, MetricLabels.Info.ROLE_MASTER), 0.0);
     Assert.assertNull(info("", MetricLabels.Info.ROLE_FULLNODE));
   }
 
   /**
-   * Witness registered but not in the active set: role is backup and is_active stays 0.
+   * Backup election slaver: role is slaver and is_active reflects the active witness set.
    */
   @Test
-  public void testSrStatusBackup() {
+  public void testSrStatusSlaver() {
+    backupManager.setStatus(BackupManager.BackupStatusEnum.SLAVER);
     ByteString activeWitness = registerWitnessWithVotes(10);
     ByteString witness = registerWitnessWithVotes(7);
     chainBaseManager.getWitnessScheduleStore()
@@ -231,13 +237,13 @@ public class SRMetricsTest extends BaseTest {
     localWitnesses.initWitnessAccountAddress(witness.toByteArray());
     Args.setLocalWitnesses(localWitnesses);
 
-    SrMetricsService.refresh(chainBaseManager);
+    SrMetricsService.refresh(chainBaseManager, backupManager);
 
     String address = StringUtil.encode58Check(witness.toByteArray());
     Assert.assertEquals(0.0, gauge(MetricKeys.Gauge.SR_IS_ACTIVE), 0.0);
     Assert.assertEquals(7.0, gauge(MetricKeys.Gauge.SR_VOTES), 0.0);
     Assert.assertTrue(gauge(MetricKeys.Gauge.SR_RANK) > 0);
-    Assert.assertEquals(1.0, info(address, MetricLabels.Info.ROLE_BACKUP), 0.0);
+    Assert.assertEquals(1.0, info(address, MetricLabels.Info.ROLE_SLAVER), 0.0);
   }
 
   private ByteString registerWitnessWithVotes(long votes) {

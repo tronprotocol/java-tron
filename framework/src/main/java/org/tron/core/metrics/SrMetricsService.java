@@ -2,6 +2,7 @@ package org.tron.core.metrics;
 
 import com.google.protobuf.ByteString;
 import java.util.List;
+import org.tron.common.backup.BackupManager;
 import org.tron.common.prometheus.MetricLabels;
 import org.tron.common.prometheus.Metrics;
 import org.tron.common.prometheus.SRMetrics;
@@ -15,8 +16,9 @@ import org.tron.program.Version;
 
 /**
  * Publishes the status of the super representative (SR) configured locally: whether the node
- * runs as a witness, whether that witness is in the active set (primary) or only registered as a
- * candidate (backup), its vote count and vote-count rank, plus the local address itself.
+ * runs as a witness, its role in the backup election ({@code master} when it currently produces
+ * blocks, {@code slaver} when it stands by for a master), whether that witness is in the active
+ * witness set, its vote count and vote-count rank, plus the local address itself.
  */
 public final class SrMetricsService {
 
@@ -28,7 +30,7 @@ public final class SrMetricsService {
    * Recomputes and publishes the local SR status. Called once at startup and at maintenance
    * blocks, where the active witness set and the witness vote counts are updated.
    */
-  public static void refresh(ChainBaseManager chainBaseManager) {
+  public static void refresh(ChainBaseManager chainBaseManager, BackupManager backupManager) {
     if (!Metrics.enabled()) {
       return;
     }
@@ -47,7 +49,8 @@ public final class SrMetricsService {
       WitnessCapsule witness = chainBaseManager.getWitnessStore().get(address);
       votes = witness == null ? 0 : witness.getVoteCount();
       rank = rankOf(chainBaseManager.getWitnessStore(), witnessAddress);
-      role = active ? MetricLabels.Info.ROLE_PRIMARY : MetricLabels.Info.ROLE_BACKUP;
+      role = backupManager.getStatus() == BackupManager.BackupStatusEnum.MASTER
+          ? MetricLabels.Info.ROLE_MASTER : MetricLabels.Info.ROLE_SLAVER;
     }
     SRMetrics.recordNodeInfo(Version.getVersion(), Args.getInstance().getChainId(),
         address58, role);

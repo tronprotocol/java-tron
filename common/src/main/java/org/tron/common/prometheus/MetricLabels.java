@@ -86,8 +86,8 @@ public class MetricLabels {
     public static final String CHAIN_ID = "genesis_block_id";
     public static final String ADDRESS = "address";
     public static final String ROLE = "role";
-    public static final String ROLE_PRIMARY = "primary";
-    public static final String ROLE_BACKUP = "backup";
+    public static final String ROLE_MASTER = "master";
+    public static final String ROLE_SLAVER = "slaver";
     public static final String ROLE_FULLNODE = "fullnode";
 
     private Info() {

@@ -9,6 +9,7 @@ import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.arch.Arch;
+import org.tron.common.backup.BackupManager;
 import org.tron.common.exit.ExitManager;
 import org.tron.common.log.LogService;
 import org.tron.common.parameter.CommonParameter;
@@ -74,7 +75,8 @@ public class FullNode {
     appT.startup();
     // the genesis block id (chainId) is only available after the context refresh
     // (Manager.initGenesis); this also publishes the local SR identity and status
-    SrMetricsService.refresh(context.getBean(ChainBaseManager.class));
+    SrMetricsService.refresh(context.getBean(ChainBaseManager.class),
+        context.getBean(BackupManager.class));
     if (parameter.isSolidityNode()) {
       SolidityNode node = context.getBean(SolidityNode.class);
       node.run();
