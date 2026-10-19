@@ -546,14 +546,27 @@ public class RpcServiceAdmissionTest {
         .addSignature(ByteString.copyFrom(new byte[MAX_MESSAGE + 1])).build();
     int before = HANDLER_CALLS.get();
     int severeBefore = GRPC_SEVERE.size();
-    // Uncompressed: rejected by the deframer before the marshaller.
-    assertCode(Status.Code.RESOURCE_EXHAUSTED, () -> stub().broadcastTransaction(big));
-    // Compressed: the decompressed size check fires while the marshaller reads. This path is
-    // unchanged grpc behaviour (UNKNOWN plus a SEVERE log), which also shows that the SEVERE
-    // capture used above works.
-    assertCode(Status.Code.UNKNOWN, () -> stub().withCompression("gzip").broadcastTransaction(big));
+    CommonParameter parameter = CommonParameter.getInstance();
+    boolean metrics = parameter.metricsPrometheusEnable;
+    parameter.metricsPrometheusEnable = true;
+    try {
+      String name = WalletGrpc.getBroadcastTransactionMethod().getFullMethodName();
+      double tooLarge = rejections(name, Reason.TOO_LARGE);
+      // Uncompressed: rejected by the deframer before the marshaller, not counted here.
+      assertCode(Status.Code.RESOURCE_EXHAUSTED, () -> stub().broadcastTransaction(big));
+      assertEquals(tooLarge, rejections(name, Reason.TOO_LARGE), 0);
+      // Compressed: the decompressed size check of grpc fires while the marshaller reads; it is
+      // turned into the same status without an error log.
+      assertCode(Status.Code.RESOURCE_EXHAUSTED,
+          () -> stub().withCompression("gzip").broadcastTransaction(big));
+      assertEquals(tooLarge + 1, rejections(name, Reason.TOO_LARGE), 0);
+    } finally {
+      parameter.metricsPrometheusEnable = metrics;
+    }
     assertEquals(before, HANDLER_CALLS.get());
-    awaitTrue(() -> GRPC_SEVERE.size() > severeBefore);
+    awaitTrue(() -> STARTED.get() == FINISHED.get());
+    Thread.sleep(500);
+    assertEquals(severeBefore, GRPC_SEVERE.size());
   }
 
   @Test

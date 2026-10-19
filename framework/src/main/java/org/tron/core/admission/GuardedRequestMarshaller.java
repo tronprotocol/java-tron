@@ -160,6 +160,12 @@ public final class GuardedRequestMarshaller<T> implements MethodDescriptor.Proto
       bytes = readBounded(stream, maxMessageSize);
     } catch (ZipException | EOFException e) {
       throw new TransactionAdmissionException(Reason.MALFORMED, null);
+    } catch (StatusRuntimeException e) {
+      // The decompressing stream of grpc enforces the inbound size limit while it is read.
+      if (e.getStatus().getCode() == Status.Code.RESOURCE_EXHAUSTED) {
+        throw new TransactionAdmissionException(Reason.TOO_LARGE, null);
+      }
+      throw e;
     } catch (IOException e) {
       throw Status.INTERNAL.withDescription("failed to read request").withCause(e)
           .asRuntimeException();

@@ -10,8 +10,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.tron.core.admission.TransactionAdmissionException.Reason;
 
 /**
- * Closes the call with {@code INVALID_ARGUMENT} when {@link GuardedRequestMarshaller} hands
- * over a rejection sentinel; the service method is never invoked.
+ * Closes the call with {@code INVALID_ARGUMENT}, or {@code RESOURCE_EXHAUSTED} for a request over
+ * the size limit, when {@link GuardedRequestMarshaller} hands over a rejection sentinel; the
+ * service method is never invoked.
  */
 @Slf4j(topic = "rpc")
 public final class AdmissionCheckedHandler<ReqT, RespT> implements ServerCallHandler<ReqT, RespT> {
@@ -54,8 +55,10 @@ public final class AdmissionCheckedHandler<ReqT, RespT> implements ServerCallHan
                 call.getAttributes().get(Grpc.TRANSPORT_ATTR_REMOTE_ADDR), reason);
           }
           GuardedRequestMarshaller.countRejection(method, reason);
-          call.close(Status.INVALID_ARGUMENT.withDescription(marshaller.rejectionMessage()),
-              new Metadata());
+          // The same status grpc gives an uncompressed message over the size limit.
+          Status status = reason == Reason.TOO_LARGE
+              ? Status.RESOURCE_EXHAUSTED : Status.INVALID_ARGUMENT;
+          call.close(status.withDescription(marshaller.rejectionMessage()), new Metadata());
           return;
         }
         super.onMessage(message);

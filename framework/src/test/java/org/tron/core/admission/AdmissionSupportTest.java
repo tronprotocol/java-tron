@@ -188,6 +188,29 @@ public class AdmissionSupportTest {
   }
 
   @Test
+  public void theSizeLimitOfADecompressingStreamIsATooLargeRejection() {
+    GuardedRequestMarshaller<Transaction> marshaller =
+        transactionMarshaller(new CountingMarshaller(), 4096, 10);
+    StatusRuntimeException other = Status.INTERNAL.asRuntimeException();
+    for (StatusRuntimeException failure : Arrays.asList(
+        Status.RESOURCE_EXHAUSTED.withDescription("decompressed message too large")
+            .asRuntimeException(), other)) {
+      InputStream stream = new InputStream() {
+        @Override
+        public int read() {
+          throw failure;
+        }
+      };
+      try {
+        assertEquals(Reason.TOO_LARGE, reason(marshaller, stream));
+        assertSame(Status.Code.RESOURCE_EXHAUSTED, failure.getStatus().getCode());
+      } catch (StatusRuntimeException e) {
+        assertSame(other, e);
+      }
+    }
+  }
+
+  @Test
   public void otherReadFailuresAreThrownWithTheirCause() {
     CountingMarshaller delegate = new CountingMarshaller();
     GuardedRequestMarshaller<Transaction> marshaller = transactionMarshaller(delegate, 4096, 10);
