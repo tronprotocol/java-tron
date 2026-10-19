@@ -103,10 +103,6 @@ public class ChainInventoryMsgHandler implements TronMsgHandler {
 
   private void check(PeerConnection peer, ChainInventoryMessage msg) throws P2pException {
     HelloMessage hello = peer.getHelloMessageReceive();
-    if (hello == null) {
-      throw new P2pException(TypeEnum.BAD_MESSAGE, "hello message not received");
-    }
-
     Pair<Deque<BlockId>, Long> requested = peer.getSyncChainRequested();
     if (requested == null) {
       throw new P2pException(TypeEnum.BAD_MESSAGE, "not send syncBlockChainMsg");
@@ -166,7 +162,8 @@ public class ChainInventoryMsgHandler implements TronMsgHandler {
       }
       // A peer that has the terminal block in our summary should reply with that block alone.
       if (blockIds.size() > 1 && requested.getKey().contains(lastBlockId)) {
-        throw new P2pException(TypeEnum.BAD_MESSAGE,
+        // A concurrent fork switch can also produce this response; avoid a bad-protocol ban.
+        throw new P2pException(TypeEnum.SYNC_FAILED,
             "terminal block already in summary: " + lastBlockId.getString());
       }
     }

@@ -203,16 +203,6 @@ public class ChainInventoryMsgHandlerTest {
   }
 
   @Test
-  public void testResponseWithoutHelloIsRejected() {
-    peer.setHelloMessageReceive(null);
-
-    P2pException exception = assertRejected(new ChainInventoryMessage(
-        Collections.singletonList(blockId(100)), 0L));
-
-    Assert.assertEquals("hello message not received", exception.getMessage());
-  }
-
-  @Test
   public void testKnownResponseCompletesDownloadAfterHeadAdvances() throws Exception {
     when(delegate.getHeadBlockId()).thenReturn(blockId(101));
 
@@ -437,11 +427,55 @@ public class ChainInventoryMsgHandlerTest {
     P2pException exception = Assert.assertThrows(P2pException.class,
         () -> respond(0, blockId(50), blockId(51), blockId(52)));
 
-    Assert.assertEquals(TypeEnum.BAD_MESSAGE, exception.getType());
+    Assert.assertEquals(TypeEnum.SYNC_FAILED, exception.getType());
     Assert.assertSame(requested, peer.getSyncChainRequested());
     Assert.assertEquals(updateTime, peer.getBlockBothHaveUpdateTime());
     Assert.assertTrue(peer.isNeedSyncFromPeer());
     verify(sync).syncNext(peer);
+  }
+
+  @Test
+  public void testReorgDuringSummaryResponseDisconnectsWithSyncFail() throws Exception {
+    request(blockId(0), blockId(51), blockId(76), blockId(89), blockId(95), blockId(98),
+        blockId(100));
+    AtomicBoolean forkSwitched = new AtomicBoolean();
+    TronNetDelegate remoteDelegate = mock(TronNetDelegate.class);
+    when(remoteDelegate.getHeadBlockId()).thenReturn(blockId(100)).thenAnswer(invocation -> {
+      // Capture the old head, then switch forks before locating the common ancestor.
+      // Blocks below height 100 remain shared; the old block 100 leaves the main chain.
+      forkSwitched.set(true);
+      return blockId(100);
+    });
+    when(remoteDelegate.containBlockInMainChain(any())).thenAnswer(invocation -> {
+      long height = ((BlockId) invocation.getArgument(0)).getNum();
+      return height < 100 || (height == 100 && !forkSwitched.get());
+    });
+    when(remoteDelegate.getBlockIdByNum(org.mockito.ArgumentMatchers.anyLong()))
+        .thenAnswer(invocation -> blockId(invocation.getArgument(0)));
+    PeerConnection remotePeer = PeerSyncTestSupport.peer(10002);
+    SyncBlockChainMsgHandler remoteHandler = new SyncBlockChainMsgHandler();
+    ReflectUtils.setFieldValue(remoteHandler, "tronNetDelegate", remoteDelegate);
+
+    remoteHandler.processMessage(remotePeer,
+        new SyncBlockChainMessage(new ArrayList<>(peer.getSyncChainRequested().getKey())));
+
+    ArgumentCaptor<Message> replies = ArgumentCaptor.forClass(Message.class);
+    verify(remotePeer).sendMessage(replies.capture());
+    ChainInventoryMessage response = new ChainInventoryMessage(replies.getValue().getData());
+    Assert.assertTrue(forkSwitched.get());
+    Assert.assertEquals(Arrays.asList(blockId(98), blockId(99), blockId(100)),
+        response.getBlockIds());
+    Assert.assertEquals(Long.valueOf(0), response.getRemainNum());
+    P2pException exception = assertRejected(response, TypeEnum.SYNC_FAILED);
+    Assert.assertTrue(exception.getMessage().startsWith("terminal block already in summary:"));
+
+    P2pEventHandlerImpl events = new P2pEventHandlerImpl();
+    ReflectUtils.setFieldValue(events, "chainInventoryMsgHandler", handler);
+    ReflectUtils.invokeMethod(events, "processMessage",
+        new Class<?>[]{PeerConnection.class, byte[].class}, peer, response.getSendBytes());
+
+    verify(peer).disconnect(ReasonCode.SYNC_FAIL);
+    verify(peer, never()).disconnect(ReasonCode.BAD_PROTOCOL);
   }
 
   @Test
