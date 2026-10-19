@@ -11,6 +11,10 @@ import com.googlecode.jsonrpc4j.JsonRpcBasicServer;
 import com.googlecode.jsonrpc4j.JsonRpcInterceptor;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.nio.ByteBuffer;
+import java.nio.charset.CharacterCodingException;
+import java.nio.charset.CodingErrorAction;
+import java.nio.charset.StandardCharsets;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.core.services.jsonrpc.JsonRpcErrorResolver;
 import org.tron.core.services.jsonrpc.JsonRpcMapper;
@@ -37,10 +41,13 @@ public final class AdminJsonRpcRequestHandler extends JsonRpcBasicServer {
   public byte[] handleRequest(byte[] body) throws IOException {
     JsonNode request;
     try {
+      // Jackson accepts overlong and surrogate UTF-8 sequences, so check the encoding first.
+      StandardCharsets.UTF_8.newDecoder().onMalformedInput(CodingErrorAction.REPORT)
+          .decode(ByteBuffer.wrap(body));
       request = OBJECT_MAPPER.reader()
           .with(DeserializationFeature.FAIL_ON_TRAILING_TOKENS)
           .with(DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS).readTree(body);
-    } catch (JsonProcessingException e) {
+    } catch (CharacterCodingException | JsonProcessingException e) {
       return OBJECT_MAPPER.writeValueAsBytes(errorResponse(JsonError.PARSE_ERROR, null));
     }
 

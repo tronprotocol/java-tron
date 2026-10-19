@@ -306,18 +306,43 @@ public class AdminJsonRpcRequestTest {
 
   @Test
   public void malformedRequestBytesAreRejectedBeforeInvocation() throws Exception {
-    byte[] head = "{\"jsonrpc\":\"2.0\",\"method\":\"admin_example\",\"params\":[\"a"
-        .getBytes(StandardCharsets.UTF_8);
-    byte[] tail = "\",\"b\"],\"id\":1}".getBytes(StandardCharsets.UTF_8);
     byte[] valid = (REQUEST + ",\"id\":1}").getBytes(StandardCharsets.UTF_8);
     for (byte[] body : new byte[][] {
-        concat(head, new byte[] {(byte) 0xff}, tail),
-        concat(head, new byte[] {(byte) 0xc3}, tail),
+        withFirstParamBytes(0xff),
+        withFirstParamBytes(0xc3),
+        withFirstParamBytes(0xc1, 0xa1),
+        withFirstParamBytes(0xc1, 0xbf),
+        withFirstParamBytes(0xe0, 0x9f, 0xbf),
+        withFirstParamBytes(0xed, 0xa0, 0x80),
+        withFirstParamBytes(0xed, 0xbf, 0xbf),
+        withFirstParamBytes(0xf0, 0x8f, 0xbf, 0xbf),
+        withFirstParamBytes(0xf4, 0x90, 0x80, 0x80),
         concat(valid, new byte[] {0}),
         concat(new byte[] {0x0b}, valid)}) {
       assertError(sender.send(body), -32700, "null");
     }
     Mockito.verifyNoInteractions(adminJsonRpc);
+  }
+
+  @Test
+  public void validUtf8BoundarySequencesReachTheMethod() throws Exception {
+    for (String param : new String[] {"a\u0080", "aࠀ", "a퟿", "a",
+        "a𐀀", "a􏿿"}) {
+      Mockito.when(adminJsonRpc.adminExample(param, "b")).thenReturn("ok");
+      String request = REQUEST.replace("\"a\"", "\"" + param + "\"") + ",\"id\":7}";
+      Assert.assertEquals("ok", parse(sender.send(request)).path("result").asText());
+      Mockito.verify(adminJsonRpc).adminExample(param, "b");
+    }
+  }
+
+  private byte[] withFirstParamBytes(int... sequence) throws IOException {
+    byte[] bytes = new byte[sequence.length];
+    for (int i = 0; i < sequence.length; i++) {
+      bytes[i] = (byte) sequence[i];
+    }
+    return concat("{\"jsonrpc\":\"2.0\",\"method\":\"admin_example\",\"params\":[\"a"
+        .getBytes(StandardCharsets.UTF_8), bytes, "\",\"b\"],\"id\":1}"
+        .getBytes(StandardCharsets.UTF_8));
   }
 
   private byte[] concat(byte[]... parts) throws IOException {
