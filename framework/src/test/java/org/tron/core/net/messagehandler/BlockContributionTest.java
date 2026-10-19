@@ -230,6 +230,29 @@ public class BlockContributionTest {
   }
 
   @Test
+  public void testFastForwardAndRelayRejectInvalidParentHeight() throws Exception {
+    provider.getAdvInvRequest().clear();
+    BlockCapsule invalid = new BlockCapsule(block.getInstance().toBuilder()
+        .setBlockHeader(block.getInstance().getBlockHeader().toBuilder()
+            .setRawData(block.getInstance().getBlockHeader().getRawData().toBuilder()
+                .setNumber(block.getNum() + 1))).build());
+
+    for (boolean fastForward : new boolean[] {true, false}) {
+      ReflectUtils.setFieldValue(handler, "fastForward", fastForward);
+      provider.setRelayPeer(!fastForward);
+      P2pException error = Assert.assertThrows(P2pException.class,
+          () -> handler.processMessage(provider, new BlockMessage(invalid)));
+      Assert.assertEquals(TypeEnum.BAD_BLOCK, error.getType());
+    }
+
+    verify(delegate, never()).validBlock(any());
+    verify(fetch, never()).blockFetchSuccess(any());
+    verify(adv, never()).broadcast(any());
+    Assert.assertEquals(1, provider.getLastInteractiveTime());
+    Assert.assertEquals(0, provider.getBlockRcvTime());
+  }
+
+  @Test
   public void testDispatcherDoesNotUnconditionallyCreditBlocks() throws Exception {
     Method update = P2pEventHandlerImpl.class.getDeclaredMethod("updateLastInteractiveTime",
         PeerConnection.class, TronMessage.class);
