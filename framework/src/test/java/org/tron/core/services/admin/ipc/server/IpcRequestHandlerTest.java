@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import org.junit.Assert;
@@ -27,7 +28,7 @@ public class IpcRequestHandlerTest {
 
   @Test
   public void testHandleCommandReturnsSingleLineJsonResponse() throws Exception {
-    String response = handler.handleCommand(
+    String response = handle(handler,
         "{\"jsonrpc\":\"2.0\",\"method\":\"admin_example\","
             + "\"params\":[\"a\\nb\",\"c\\rd\"],\"id\":7}");
 
@@ -45,7 +46,7 @@ public class IpcRequestHandlerTest {
         .thenThrow(new JsonRpcInvalidParamsException("Invalid admin parameters"));
     IpcRequestHandler errorHandler = new IpcRequestHandler(adminJsonRpc, MAX_REQUEST_SIZE);
 
-    String response = errorHandler.handleCommand(
+    String response = handle(errorHandler,
         "{\"jsonrpc\":\"2.0\",\"method\":\"admin_example\","
             + "\"params\":[\"a\",\"b\"],\"id\":10}");
     JsonNode responseNode = OBJECT_MAPPER.readTree(response);
@@ -61,7 +62,7 @@ public class IpcRequestHandlerTest {
     AdminJsonRpc adminJsonRpc = Mockito.mock(AdminJsonRpc.class);
     IpcRequestHandler notificationHandler = new IpcRequestHandler(adminJsonRpc, MAX_REQUEST_SIZE);
 
-    Assert.assertEquals("", notificationHandler.handleCommand(
+    Assert.assertEquals("", handle(notificationHandler,
         "{\"jsonrpc\":\"2.0\",\"method\":\"admin_example\",\"params\":[\"a\",\"b\"]}"));
     Mockito.verify(adminJsonRpc).adminExample("a", "b");
   }
@@ -106,7 +107,7 @@ public class IpcRequestHandlerTest {
     Mockito.when(adminJsonRpc.adminExample("a", "b")).thenReturn("a:b");
     IpcRequestHandler constrainedHandler = new IpcRequestHandler(adminJsonRpc, MAX_REQUEST_SIZE);
     JsonNode valid = OBJECT_MAPPER.readTree(
-        constrainedHandler.handleCommand(REQUEST_PREFIX + "[0]}"));
+        handle(constrainedHandler, REQUEST_PREFIX + "[0]}"));
     Assert.assertEquals("a:b", valid.get("result").asText());
     Mockito.verify(adminJsonRpc).adminExample("a", "b");
     Mockito.clearInvocations(adminJsonRpc);
@@ -119,7 +120,7 @@ public class IpcRequestHandlerTest {
     for (int i = 0; i <= Constant.MAX_NESTING_DEPTH; i++) {
       nested.append(']');
     }
-    assertParseError(constrainedHandler.handleCommand(REQUEST_PREFIX + nested + "}"));
+    assertParseError(handle(constrainedHandler, REQUEST_PREFIX + nested + "}"));
     Mockito.verifyNoInteractions(adminJsonRpc);
   }
 
@@ -129,7 +130,7 @@ public class IpcRequestHandlerTest {
     Mockito.when(adminJsonRpc.adminExample("a", "b")).thenReturn("a:b");
     IpcRequestHandler constrainedHandler = new IpcRequestHandler(adminJsonRpc, MAX_REQUEST_SIZE);
     JsonNode valid = OBJECT_MAPPER.readTree(
-        constrainedHandler.handleCommand(REQUEST_PREFIX + "[0]}"));
+        handle(constrainedHandler, REQUEST_PREFIX + "[0]}"));
     Assert.assertEquals("a:b", valid.get("result").asText());
     Mockito.verify(adminJsonRpc).adminExample("a", "b");
     Mockito.clearInvocations(adminJsonRpc);
@@ -143,7 +144,7 @@ public class IpcRequestHandlerTest {
     }
     request.append("]}");
 
-    assertParseError(constrainedHandler.handleCommand(request.toString()));
+    assertParseError(handle(constrainedHandler, request.toString()));
     Mockito.verifyNoInteractions(adminJsonRpc);
   }
 
@@ -155,14 +156,14 @@ public class IpcRequestHandlerTest {
     for (String body : new String[] {"", " \t\r\n", "{broken-sensitive-detail", REQUEST_PREFIX,
         valid + " {broken", valid + " " + valid, "[" + valid,
         "[" + valid + ",{broken]", "[" + valid + "] " + valid}) {
-      assertParseError(constrainedHandler.handleCommand(body));
+      assertParseError(handle(constrainedHandler, body));
     }
     Mockito.verifyNoInteractions(adminJsonRpc);
   }
 
   @Test
   public void testStringNullRequestIdIsPreserved() throws Exception {
-    JsonNode response = OBJECT_MAPPER.readTree(handler.handleCommand(
+    JsonNode response = OBJECT_MAPPER.readTree(handle(handler,
         "{\"jsonrpc\":\"2.0\",\"method\":\"admin_example\","
             + "\"params\":[\"a\",\"b\"],\"id\":\"null\"}"));
 
@@ -180,15 +181,15 @@ public class IpcRequestHandlerTest {
       ByteArrayInputStream input =
           new ByteArrayInputStream(frames.getBytes(StandardCharsets.UTF_8));
 
-      Assert.assertEquals(MAX_REQUEST_SIZE, handler.readRequest(input).length());
-      Assert.assertEquals("next", handler.readRequest(input));
-      Assert.assertNull(handler.readRequest(input));
+      Assert.assertEquals(MAX_REQUEST_SIZE, read(handler, input).length());
+      Assert.assertEquals("next", read(handler, input));
+      Assert.assertNull(read(handler, input));
     }
   }
 
   @Test(expected = RequestTooLargeException.class)
   public void testReadRequestRejectsOversizedInputWithoutNewline() throws Exception {
-    handler.readRequest(new ByteArrayInputStream(new byte[MAX_REQUEST_SIZE + 1]));
+    read(handler, new ByteArrayInputStream(new byte[MAX_REQUEST_SIZE + 1]));
   }
 
   @Test
@@ -196,22 +197,33 @@ public class IpcRequestHandlerTest {
     ByteArrayInputStream input = new ByteArrayInputStream(
         "first\r\n\n  second  \nlast".getBytes(StandardCharsets.UTF_8));
 
-    Assert.assertEquals("first", handler.readRequest(input));
-    Assert.assertEquals("", handler.readRequest(input));
-    Assert.assertEquals("  second  ", handler.readRequest(input));
-    Assert.assertEquals("last", handler.readRequest(input));
+    Assert.assertEquals("first", read(handler, input));
+    Assert.assertEquals("", read(handler, input));
+    Assert.assertEquals("  second  ", read(handler, input));
+    Assert.assertEquals("last", read(handler, input));
+    Assert.assertNull(read(handler, input));
+  }
+
+  @Test
+  public void testReadRequestReturnsBytesUnchanged() throws Exception {
+    ByteArrayInputStream input = new ByteArrayInputStream(
+        new byte[] {0x0b, 'a', (byte) 0xff, (byte) 0xc3, 0, '\r', '\n', ' ', '\n'});
+
+    Assert.assertArrayEquals(new byte[] {0x0b, 'a', (byte) 0xff, (byte) 0xc3, 0},
+        handler.readRequest(input));
+    Assert.assertArrayEquals(new byte[] {' '}, handler.readRequest(input));
     Assert.assertNull(handler.readRequest(input));
   }
 
   @Test
-  public void testReadRequestCountsBytesAndDecodesUtf8() throws Exception {
+  public void testReadRequestCountsUtf8Bytes() throws Exception {
     IpcRequestHandler limited = new IpcRequestHandler(new AdminJsonRpcImpl(), 3);
     for (String terminator : new String[] {"\n", "\r\n"}) {
-      Assert.assertEquals("中", limited.readRequest(new ByteArrayInputStream(
+      Assert.assertEquals("中", read(limited, new ByteArrayInputStream(
           ("中" + terminator).getBytes(StandardCharsets.UTF_8))));
     }
     try {
-      limited.readRequest(new ByteArrayInputStream("中文\n".getBytes(StandardCharsets.UTF_8)));
+      read(limited, new ByteArrayInputStream("中文\n".getBytes(StandardCharsets.UTF_8)));
       Assert.fail("Expected multi-byte input to exceed the byte limit");
     } catch (RequestTooLargeException expected) {
       // A character count would incorrectly accept both characters.
@@ -222,10 +234,10 @@ public class IpcRequestHandlerTest {
   public void testReadRequestCountsCarriageReturnsOutsideCrlf() throws Exception {
     IpcRequestHandler limited = new IpcRequestHandler(new AdminJsonRpcImpl(), 3);
     for (String terminator : new String[] {"\n", "\r\n", ""}) {
-      Assert.assertEquals("a\rb", limited.readRequest(new ByteArrayInputStream(
+      Assert.assertEquals("a\rb", read(limited, new ByteArrayInputStream(
           ("a\rb" + terminator).getBytes(StandardCharsets.UTF_8))));
     }
-    Assert.assertEquals("ab\r", limited.readRequest(new ByteArrayInputStream(
+    Assert.assertEquals("ab\r", read(limited, new ByteArrayInputStream(
         "ab\r".getBytes(StandardCharsets.UTF_8))));
   }
 
@@ -234,7 +246,7 @@ public class IpcRequestHandlerTest {
     IpcRequestHandler limited = new IpcRequestHandler(new AdminJsonRpcImpl(), 3);
     for (String frame : new String[] {"abcd\n", "abcd\r\n", "abc\rX\n", "abc\r\r\n",
         "abc\r", "abcd"}) {
-      Assert.assertThrows(RequestTooLargeException.class, () -> limited.readRequest(
+      Assert.assertThrows(RequestTooLargeException.class, () -> read(limited,
           new ByteArrayInputStream(frame.getBytes(StandardCharsets.UTF_8))));
     }
   }
@@ -243,14 +255,23 @@ public class IpcRequestHandlerTest {
   public void testZeroLimitOnlyAcceptsEmptyLines() throws Exception {
     IpcRequestHandler zeroLimit = new IpcRequestHandler(new AdminJsonRpcImpl(), 0);
     Assert.assertEquals(0, zeroLimit.getMaxRequestSize());
-    Assert.assertEquals("", zeroLimit.readRequest(new ByteArrayInputStream(new byte[] {'\n'})));
-    Assert.assertEquals("", zeroLimit.readRequest(
+    Assert.assertEquals("", read(zeroLimit, new ByteArrayInputStream(new byte[] {'\n'})));
+    Assert.assertEquals("", read(zeroLimit,
         new ByteArrayInputStream(new byte[] {'\r', '\n'})));
-    Assert.assertNull(zeroLimit.readRequest(new ByteArrayInputStream(new byte[0])));
+    Assert.assertNull(read(zeroLimit, new ByteArrayInputStream(new byte[0])));
     for (String frame : new String[] {"a", "\r", "\r\r\n", "a\r\n"}) {
-      Assert.assertThrows(RequestTooLargeException.class, () -> zeroLimit.readRequest(
+      Assert.assertThrows(RequestTooLargeException.class, () -> read(zeroLimit,
           new ByteArrayInputStream(frame.getBytes(StandardCharsets.UTF_8))));
     }
+  }
+
+  private static String handle(IpcRequestHandler handler, String request) throws IOException {
+    return handler.handleCommand(request.getBytes(StandardCharsets.UTF_8));
+  }
+
+  private static String read(IpcRequestHandler handler, InputStream input) throws IOException {
+    byte[] request = handler.readRequest(input);
+    return request == null ? null : new String(request, StandardCharsets.UTF_8);
   }
 
   private void assertParseError(String response) throws Exception {
@@ -269,7 +290,7 @@ public class IpcRequestHandlerTest {
     AdminJsonRpc adminJsonRpc = Mockito.mock(AdminJsonRpc.class);
     IpcRequestHandler rejectingHandler = new IpcRequestHandler(adminJsonRpc, MAX_REQUEST_SIZE);
 
-    String response = rejectingHandler.handleCommand(body);
+    String response = handle(rejectingHandler, body);
 
     Assert.assertFalse(response.contains("\n"));
     Assert.assertFalse(response.contains("\r"));
