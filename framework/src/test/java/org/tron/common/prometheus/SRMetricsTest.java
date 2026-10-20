@@ -57,6 +57,8 @@ public class SRMetricsTest extends BaseTest {
   @After
   public void tearDown() {
     Args.getInstance().setMetricsPrometheusEnable(true);
+    Args.getInstance().setBackupPort(0);
+    Args.getInstance().setBackupMembers(Collections.emptyList());
     Args.setLocalWitnesses(new LocalWitnesses());
     backupManager.setStatus(BackupManager.BackupStatusEnum.MASTER);
   }
@@ -177,32 +179,34 @@ public class SRMetricsTest extends BaseTest {
   }
 
   /**
-   * No witness configured: role is fullnode, gauges are zero, address label is empty.
+   * No witness configured: no node_role series is exposed at all, while the sr gauges
+   * still report zeros and node_info keeps its two static labels.
    */
   @Test
   public void testSrStatusFullNode() {
     Args.setLocalWitnesses(new LocalWitnesses());
 
-    backupManager.recordNodeInfo();
+    backupManager.recordNodeRole();
     maintenanceManager.recordWitnessMetrics();
 
     Assert.assertEquals(0.0, gauge(MetricKeys.Gauge.SR_IS_ACTIVE), 0.0);
     Assert.assertEquals(0.0, gauge(MetricKeys.Gauge.SR_VOTES), 0.0);
     Assert.assertEquals(0.0, gauge(MetricKeys.Gauge.SR_RANK), 0.0);
-    Assert.assertEquals(1.0, info("", MetricLabels.Info.ROLE_FULLNODE), 0.0);
+    for (String role : roles()) {
+      Assert.assertNull("no " + role + " series without a witness", roleGauge("", role));
+    }
+    Metrics.info(MetricKeys.Info.NODE_INFO, Version.getVersion(),
+        Args.getInstance().getChainId());
+    Assert.assertEquals(1.0, info(), 0.0);
   }
 
   /**
-   * Witness in the active set: role is master, gauges expose its votes and 1-based rank, and
-   * the previously published fullnode series is dropped when the label values change.
+   * Witness configured without a backup election (backup members unset): the node always
+   * produces blocks, so the role gauge reports master; node_info stays a static
+   * two-label identity record.
    */
   @Test
   public void testSrStatusMaster() {
-    backupManager.setStatus(BackupManager.BackupStatusEnum.MASTER);
-    Args.setLocalWitnesses(new LocalWitnesses());
-    backupManager.recordNodeInfo();
-    Assert.assertEquals(1.0, info("", MetricLabels.Info.ROLE_FULLNODE), 0.0);
-
     ByteString witness = registerWitnessWithVotes(1000);
     registerWitnessWithVotes(50);
     chainBaseManager.getWitnessScheduleStore()
@@ -212,22 +216,28 @@ public class SRMetricsTest extends BaseTest {
     localWitnesses.initWitnessAccountAddress(witness.toByteArray());
     Args.setLocalWitnesses(localWitnesses);
 
-    backupManager.recordNodeInfo();
+    backupManager.recordNodeRole();
     maintenanceManager.recordWitnessMetrics();
 
     String address = StringUtil.encode58Check(witness.toByteArray());
     Assert.assertEquals(1.0, gauge(MetricKeys.Gauge.SR_IS_ACTIVE), 0.0);
     Assert.assertEquals(1000.0, gauge(MetricKeys.Gauge.SR_VOTES), 0.0);
     Assert.assertEquals(1.0, gauge(MetricKeys.Gauge.SR_RANK), 0.0);
-    Assert.assertEquals(1.0, info(address, MetricLabels.Info.ROLE_MASTER), 0.0);
-    Assert.assertNull(info("", MetricLabels.Info.ROLE_FULLNODE));
+    Assert.assertEquals(1.0, roleGauge(address, MetricLabels.Gauge.ROLE_MASTER), 0.0);
+    Assert.assertEquals(0.0, roleGauge(address, MetricLabels.Gauge.ROLE_SLAVER), 0.0);
+    Assert.assertEquals(0.0, roleGauge(address, MetricLabels.Gauge.ROLE_INIT), 0.0);
+    Metrics.info(MetricKeys.Info.NODE_INFO, Version.getVersion(),
+        Args.getInstance().getChainId());
+    Assert.assertEquals(1.0, info(), 0.0);
   }
 
   /**
-   * Backup election slaver: role is slaver and is_active reflects the active witness set.
+   * Backup election slaver: the role gauge reports slaver while is_active reflects the
+   * active witness set.
    */
   @Test
-  public void testSrStatusSlaver() {
+  public void testSrStatusSlaver() throws Exception {
+    configureBackup();
     backupManager.setStatus(BackupManager.BackupStatusEnum.SLAVER);
     ByteString activeWitness = registerWitnessWithVotes(10);
     ByteString witness = registerWitnessWithVotes(7);
@@ -237,36 +247,103 @@ public class SRMetricsTest extends BaseTest {
     LocalWitnesses localWitnesses = new LocalWitnesses();
     localWitnesses.initWitnessAccountAddress(witness.toByteArray());
     Args.setLocalWitnesses(localWitnesses);
+    markBackupInitiated(backupManager);
 
-    backupManager.recordNodeInfo();
+    backupManager.recordNodeRole();
     maintenanceManager.recordWitnessMetrics();
 
     String address = StringUtil.encode58Check(witness.toByteArray());
     Assert.assertEquals(0.0, gauge(MetricKeys.Gauge.SR_IS_ACTIVE), 0.0);
     Assert.assertEquals(7.0, gauge(MetricKeys.Gauge.SR_VOTES), 0.0);
     Assert.assertTrue(gauge(MetricKeys.Gauge.SR_RANK) > 0);
-    Assert.assertEquals(1.0, info(address, MetricLabels.Info.ROLE_SLAVER), 0.0);
+    Assert.assertEquals(1.0, roleGauge(address, MetricLabels.Gauge.ROLE_SLAVER), 0.0);
+    Assert.assertEquals(0.0, roleGauge(address, MetricLabels.Gauge.ROLE_MASTER), 0.0);
+    Assert.assertEquals(0.0, roleGauge(address, MetricLabels.Gauge.ROLE_INIT), 0.0);
   }
 
   /**
-   * setStatus() itself republishes the node_info role without touching any store, so a
-   * backup-election transition is reflected immediately instead of at the next maintenance.
+   * Before the first election round (backup configured, BackupManager.init() not yet run,
+   * which in production only happens after the first fresh block) the node must report
+   * init instead of falling back to the MASTER field default; the first real status
+   * after init() switches the same series to the elected role.
    */
   @Test
-  public void testRoleRefreshOnBackupStatusChange() {
-    ByteString witness = registerWitnessWithVotes(9);
+  public void testRoleInitBeforeBackupElectionRuns() throws Exception {
+    configureBackup();
+    ByteString witness = registerWitnessWithVotes(1);
     LocalWitnesses localWitnesses = new LocalWitnesses();
     localWitnesses.initWitnessAccountAddress(witness.toByteArray());
     Args.setLocalWitnesses(localWitnesses);
     String address = StringUtil.encode58Check(witness.toByteArray());
 
+    // a directly constructed manager has not gone through init(): pre-election window
+    BackupManager fresh = new BackupManager();
+    try {
+      fresh.recordNodeRole();
+      Assert.assertEquals(1.0, roleGauge(address, MetricLabels.Gauge.ROLE_INIT), 0.0);
+      Assert.assertEquals(0.0, roleGauge(address, MetricLabels.Gauge.ROLE_MASTER), 0.0);
+      Assert.assertEquals(0.0, roleGauge(address, MetricLabels.Gauge.ROLE_SLAVER), 0.0);
+
+      // a status change while init() has not run stays inside the window
+      fresh.setStatus(BackupManager.BackupStatusEnum.SLAVER);
+      Assert.assertEquals(1.0, roleGauge(address, MetricLabels.Gauge.ROLE_INIT), 0.0);
+
+      // once the election has run, the status maps to the elected role
+      markBackupInitiated(fresh);
+      fresh.setStatus(BackupManager.BackupStatusEnum.SLAVER);
+      Assert.assertEquals(1.0, roleGauge(address, MetricLabels.Gauge.ROLE_SLAVER), 0.0);
+      Assert.assertEquals(0.0, roleGauge(address, MetricLabels.Gauge.ROLE_INIT), 0.0);
+    } finally {
+      fresh.stop();
+    }
+  }
+
+  /**
+   * setStatus() itself republishes the node_role gauge without touching any store, so a
+   * backup-election transition is reflected immediately instead of at the next maintenance.
+   */
+  @Test
+  public void testRoleRefreshOnBackupStatusChange() throws Exception {
+    configureBackup();
+    ByteString witness = registerWitnessWithVotes(9);
+    LocalWitnesses localWitnesses = new LocalWitnesses();
+    localWitnesses.initWitnessAccountAddress(witness.toByteArray());
+    Args.setLocalWitnesses(localWitnesses);
+    markBackupInitiated(backupManager);
+    String address = StringUtil.encode58Check(witness.toByteArray());
+
     backupManager.setStatus(BackupManager.BackupStatusEnum.SLAVER);
-    Assert.assertEquals(1.0, info(address, MetricLabels.Info.ROLE_SLAVER), 0.0);
-    Assert.assertNull(info(address, MetricLabels.Info.ROLE_MASTER));
+    Assert.assertEquals(1.0, roleGauge(address, MetricLabels.Gauge.ROLE_SLAVER), 0.0);
+    Assert.assertEquals(0.0, roleGauge(address, MetricLabels.Gauge.ROLE_MASTER), 0.0);
 
     backupManager.setStatus(BackupManager.BackupStatusEnum.MASTER);
-    Assert.assertEquals(1.0, info(address, MetricLabels.Info.ROLE_MASTER), 0.0);
-    Assert.assertNull(info(address, MetricLabels.Info.ROLE_SLAVER));
+    Assert.assertEquals(1.0, roleGauge(address, MetricLabels.Gauge.ROLE_MASTER), 0.0);
+    Assert.assertEquals(0.0, roleGauge(address, MetricLabels.Gauge.ROLE_SLAVER), 0.0);
+  }
+
+  /**
+   * Backup must be seen as configured the same way BackupServer.initServer() decides to
+   * start the election transport, otherwise the pre-election window is unreachable.
+   */
+  private void configureBackup() {
+    Args.getInstance().setBackupPort(PublicMethod.chooseRandomPort());
+    Args.getInstance().setBackupMembers(Collections.singletonList("127.0.0.2"));
+  }
+
+  /**
+   * Simulates that BackupManager.init() has run: in production the backup server only
+   * starts after the first fresh block, so tests drive the isInit flag directly instead
+   * of spinning up the election transport.
+   */
+  private void markBackupInitiated(BackupManager manager) throws Exception {
+    java.lang.reflect.Field isInit = BackupManager.class.getDeclaredField("isInit");
+    isInit.setAccessible(true);
+    isInit.setBoolean(manager, true);
+  }
+
+  private String[] roles() {
+    return new String[] {MetricLabels.Gauge.ROLE_INIT, MetricLabels.Gauge.ROLE_MASTER,
+        MetricLabels.Gauge.ROLE_SLAVER};
   }
 
   private ByteString registerWitnessWithVotes(long votes) {
@@ -282,12 +359,18 @@ public class SRMetricsTest extends BaseTest {
     return CollectorRegistry.defaultRegistry.getSampleValue(name);
   }
 
-  private Double info(String address, String role) {
+  private Double info() {
     return CollectorRegistry.defaultRegistry.getSampleValue(
         "tron:node_info",
-        new String[] {MetricLabels.Info.VERSION, MetricLabels.Info.CHAIN_ID,
-            MetricLabels.Info.ADDRESS, MetricLabels.Info.ROLE},
-        new String[] {Version.getVersion(), Args.getInstance().getChainId(), address, role});
+        new String[] {MetricLabels.Info.VERSION, MetricLabels.Info.CHAIN_ID},
+        new String[] {Version.getVersion(), Args.getInstance().getChainId()});
+  }
+
+  private Double roleGauge(String address, String role) {
+    return CollectorRegistry.defaultRegistry.getSampleValue(
+        MetricKeys.Gauge.NODE_ROLE,
+        new String[] {MetricLabels.Gauge.ADDRESS, MetricLabels.Gauge.ROLE},
+        new String[] {address, role});
   }
 
   private ByteString registerWitness() {

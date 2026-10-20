@@ -24,6 +24,7 @@ import org.tron.common.parameter.CommonParameter;
 import org.tron.common.prometheus.MetricKeys;
 import org.tron.common.prometheus.MetricLabels;
 import org.tron.common.prometheus.Metrics;
+import org.tron.common.prometheus.SRMetrics;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.PublicMethod;
 import org.tron.common.utils.Sha256Hash;
@@ -214,15 +215,36 @@ public class PrometheusApiServiceTest extends BaseTest {
     String version = Version.getVersion();
     String testGenesisBlockId =
         "00000000000000001ebf88508a03865c71d452e25f4d51194196a1d22b6653dc";
-    Metrics.info(MetricKeys.Info.NODE_INFO, version, testGenesisBlockId, "", "fullnode");
+    Metrics.info(MetricKeys.Info.NODE_INFO, version, testGenesisBlockId);
     // Prometheus Info collector appends "_info" to the sample name
     Double value = CollectorRegistry.defaultRegistry.getSampleValue(
         "tron:node_info",
-        new String[] {MetricLabels.Info.VERSION, MetricLabels.Info.CHAIN_ID,
-            MetricLabels.Info.ADDRESS, MetricLabels.Info.ROLE},
-        new String[] {version, testGenesisBlockId, "", "fullnode"});
+        new String[] {MetricLabels.Info.VERSION, MetricLabels.Info.CHAIN_ID},
+        new String[] {version, testGenesisBlockId});
     Assert.assertNotNull("tron:node_info sample should exist", value);
     Assert.assertEquals(1.0, value, 0.0);
+  }
+
+  @Test
+  public void testNodeRoleMetric() {
+    String address = "TLyqz8V6CR3s9nNote9u1NoxKZ8NqBSbn1";
+    SRMetrics.recordNodeRole(address, MetricLabels.Gauge.ROLE_MASTER);
+    // the current role reports 1, the other two series report 0
+    Double master = CollectorRegistry.defaultRegistry.getSampleValue(
+        MetricKeys.Gauge.NODE_ROLE,
+        new String[] {MetricLabels.Gauge.ADDRESS, MetricLabels.Gauge.ROLE},
+        new String[] {address, MetricLabels.Gauge.ROLE_MASTER});
+    Double slaver = CollectorRegistry.defaultRegistry.getSampleValue(
+        MetricKeys.Gauge.NODE_ROLE,
+        new String[] {MetricLabels.Gauge.ADDRESS, MetricLabels.Gauge.ROLE},
+        new String[] {address, MetricLabels.Gauge.ROLE_SLAVER});
+    Double init = CollectorRegistry.defaultRegistry.getSampleValue(
+        MetricKeys.Gauge.NODE_ROLE,
+        new String[] {MetricLabels.Gauge.ADDRESS, MetricLabels.Gauge.ROLE},
+        new String[] {address, MetricLabels.Gauge.ROLE_INIT});
+    Assert.assertEquals(1.0, master, 0.0);
+    Assert.assertEquals(0.0, slaver, 0.0);
+    Assert.assertEquals(0.0, init, 0.0);
   }
 
   @Test

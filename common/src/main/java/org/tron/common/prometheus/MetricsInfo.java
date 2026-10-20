@@ -1,7 +1,6 @@
 package org.tron.common.prometheus;
 
 import io.prometheus.client.Info;
-import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import lombok.extern.slf4j.Slf4j;
@@ -11,12 +10,9 @@ class MetricsInfo {
 
   private static final Map<String, Info> container = new ConcurrentHashMap<>();
 
-  private static final Map<String, String[]> lastLabels = new ConcurrentHashMap<>();
-
   static {
     init(MetricKeys.Info.NODE_INFO, "tron node info.",
-        MetricLabels.Info.VERSION, MetricLabels.Info.CHAIN_ID,
-        MetricLabels.Info.ADDRESS, MetricLabels.Info.ROLE);
+        MetricLabels.Info.VERSION, MetricLabels.Info.CHAIN_ID);
   }
 
   private MetricsInfo() {
@@ -37,12 +33,6 @@ class MetricsInfo {
       if (info == null) {
         logger.info("{} not exist", key);
         return;
-      }
-      String[] oldLabels = lastLabels.put(key, labels);
-      if (oldLabels != null && !Arrays.equals(oldLabels, labels)) {
-        // label values are part of the series identity: drop the previous one so an
-        // address or role change does not leave a stale series behind
-        info.remove(oldLabels);
       }
       info.labels(labels);
     }

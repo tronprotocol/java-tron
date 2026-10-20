@@ -59,6 +59,18 @@ public class MetricLabels {
 
     public static final String PEERS_VALID = "valid";
 
+    // node_role labels: the gauge publishes one series per backup-election role and
+    // sets the current one to 1, so dashboards filter on role="..." value == 1
+    public static final String ADDRESS = "address";
+
+    public static final String ROLE = "role";
+
+    public static final String ROLE_INIT = "init";
+
+    public static final String ROLE_MASTER = "master";
+
+    public static final String ROLE_SLAVER = "slaver";
+
     private Gauge() {
       throw new IllegalStateException("Gauge");
     }
@@ -84,11 +96,6 @@ public class MetricLabels {
     // identifies the genesis block: the label value is the chain id derived from the
     // genesis block hash, so the label is named genesis_block_id
     public static final String CHAIN_ID = "genesis_block_id";
-    public static final String ADDRESS = "address";
-    public static final String ROLE = "role";
-    public static final String ROLE_MASTER = "master";
-    public static final String ROLE_SLAVER = "slaver";
-    public static final String ROLE_FULLNODE = "fullnode";
 
     private Info() {
       throw new IllegalStateException("Info");

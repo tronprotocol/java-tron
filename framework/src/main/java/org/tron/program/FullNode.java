@@ -9,10 +9,10 @@ import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.arch.Arch;
-import org.tron.common.backup.BackupManager;
 import org.tron.common.exit.ExitManager;
 import org.tron.common.log.LogService;
 import org.tron.common.parameter.CommonParameter;
+import org.tron.common.prometheus.MetricKeys;
 import org.tron.common.prometheus.Metrics;
 import org.tron.consensus.dpos.MaintenanceManager;
 import org.tron.core.config.DefaultConfig;
@@ -73,9 +73,9 @@ public class FullNode {
     context.registerShutdownHook();
     appT.startup();
     // the genesis block id (chainId) is only available after the context refresh
-    // (Manager.initGenesis); this also publishes the local node identity and the
-    // initial witness gauges
-    context.getBean(BackupManager.class).recordNodeInfo();
+    // (Manager.initGenesis)
+    Metrics.info(MetricKeys.Info.NODE_INFO, Version.getVersion(),
+        Args.getInstance().getChainId());
     context.getBean(MaintenanceManager.class).recordWitnessMetrics();
     if (parameter.isSolidityNode()) {
       SolidityNode node = context.getBean(SolidityNode.class);

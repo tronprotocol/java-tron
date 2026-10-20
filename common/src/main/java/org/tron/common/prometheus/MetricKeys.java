@@ -46,6 +46,9 @@ public class MetricKeys {
     public static final String SR_IS_ACTIVE = "tron:sr_is_active";
     public static final String SR_VOTES = "tron:sr_votes";
     public static final String SR_RANK = "tron:sr_rank";
+    // one-hot role indicator of the local node in the backup election, refreshed at
+    // startup and on every backup-status change; witness-configured nodes only
+    public static final String NODE_ROLE = "tron:node_role";
 
     private Gauge() {
       throw new IllegalStateException("Gauge");

@@ -28,7 +28,6 @@ import org.mockito.MockedStatic;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
-import org.tron.common.backup.BackupManager;
 import org.tron.common.exit.ExitManager;
 import org.tron.common.log.LogService;
 import org.tron.common.prometheus.Metrics;
@@ -94,7 +93,6 @@ public class FullNodeCryptoEngineTest {
     File config = writeConfig(cryptoConfig);
     File output = new File(temporaryFolder.newFolder(), "chain");
     Application application = mock(Application.class);
-    BackupManager backupManager = mock(BackupManager.class);
     MaintenanceManager maintenanceManager = mock(MaintenanceManager.class);
     // Exercise the real entry point and config loader, while isolating services and chain stores.
     try (MockedStatic<ExitManager> exit = mockStatic(ExitManager.class);
@@ -103,16 +101,14 @@ public class FullNodeCryptoEngineTest {
          MockedStatic<ApplicationFactory> factory = mockStatic(ApplicationFactory.class);
          MockedConstruction<TronApplicationContext> contexts =
              mockConstruction(TronApplicationContext.class, (context, constructionContext) -> {
-               when(context.getBean(BackupManager.class)).thenReturn(backupManager);
                when(context.getBean(MaintenanceManager.class)).thenReturn(maintenanceManager);
              })) {
       factory.when(() -> ApplicationFactory.create(any())).thenReturn(application);
       FullNode.main(new String[]{"-c", config.toString(), "-d", output.toString()});
       assertEquals(1, contexts.constructed().size());
       verify(contexts.constructed().get(0)).refresh();
-      InOrder inOrder = inOrder(application, backupManager, maintenanceManager);
+      InOrder inOrder = inOrder(application, maintenanceManager);
       inOrder.verify(application).startup();
-      inOrder.verify(backupManager).recordNodeInfo();
       inOrder.verify(maintenanceManager).recordWitnessMetrics();
       inOrder.verify(application).blockUntilShutdown();
     }

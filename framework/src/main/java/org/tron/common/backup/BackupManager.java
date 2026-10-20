@@ -14,6 +14,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -32,7 +33,6 @@ import org.tron.common.utils.LocalWitnesses;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.config.args.Args;
 import org.tron.p2p.utils.NetUtil;
-import org.tron.program.Version;
 
 @Slf4j(topic = "backup")
 @Component
@@ -74,29 +74,46 @@ public class BackupManager implements EventHandler {
   public void setStatus(BackupStatusEnum status) {
     logger.info("Change backup status to {}", status);
     this.status = status;
-    recordNodeInfo();
+    recordNodeRole();
   }
 
   /**
-   * Publishes the {@code node_info} labels (version, chain id, local witness address,
-   * role derived from the current backup status) and caches the local witness address
-   * for maintenance-time gauge recording. Called once at node startup and on every
-   * backup-status change.
+   * Publishes the {@code tron:node_role} gauge for the locally configured witness and
+   * caches that address for maintenance-time gauge recording. Runs once when the bean is
+   * created — covering the window before the backup election first runs — and again on
+   * every backup-status change. No role series is written when no witness is configured.
    */
-  public void recordNodeInfo() {
+  @PostConstruct
+  public void recordNodeRole() {
     if (!Metrics.enabled()) {
       return;
     }
     byte[] witnessAddress = localWitnessAddress();
     SRMetrics.setLocalWitnessAddress(witnessAddress);
-    String witnessAddress58 = "";
-    String role = MetricLabels.Info.ROLE_FULLNODE;
-    if (witnessAddress != null && witnessAddress.length > 0) {
-      witnessAddress58 = StringUtil.encode58Check(witnessAddress);
-      role = status == MASTER ? MetricLabels.Info.ROLE_MASTER : MetricLabels.Info.ROLE_SLAVER;
+    if (witnessAddress == null || witnessAddress.length == 0) {
+      return;
     }
-    SRMetrics.recordNodeInfo(Version.getVersion(), Args.getInstance().getChainId(),
-        witnessAddress58, role);
+    SRMetrics.recordNodeRole(StringUtil.encode58Check(witnessAddress), currentRole());
+  }
+
+  private String currentRole() {
+    if (!isBackupConfigured()) {
+      // no backup election to take part in: this node produces blocks itself
+      return MetricLabels.Gauge.ROLE_MASTER;
+    }
+    if (!isInit) {
+      // the backup server only starts after the first fresh block, so between startup
+      // and the first election round the status default (MASTER) is not a real result;
+      // report init instead of pretending the election chose a master
+      return MetricLabels.Gauge.ROLE_INIT;
+    }
+    return status == MASTER ? MetricLabels.Gauge.ROLE_MASTER : MetricLabels.Gauge.ROLE_SLAVER;
+  }
+
+  private boolean isBackupConfigured() {
+    // same condition BackupServer.initServer() uses to start the election transport,
+    // i.e. the only way init() -- and with it the first real status -- can be reached
+    return parameter.getBackupPort() > 0 && !parameter.getBackupMembers().isEmpty();
   }
 
   private byte[] localWitnessAddress() {

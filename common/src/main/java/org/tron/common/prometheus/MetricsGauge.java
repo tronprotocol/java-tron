@@ -24,6 +24,11 @@ class MetricsGauge {
     init(MetricKeys.Gauge.SR_VOTES, "Vote count of this node's witness.");
     init(MetricKeys.Gauge.SR_RANK,
         "Vote-count rank of this node's witness (1-based, 0 when not configured).");
+    init(MetricKeys.Gauge.NODE_ROLE,
+        "Role of this node in the backup election: the current role reports 1 and the "
+            + "other two report 0 (init: before the first election round; master: "
+            + "producing blocks; slaver: standing by). Witness-configured nodes only.",
+        MetricLabels.Gauge.ADDRESS, MetricLabels.Gauge.ROLE);
   }
 
   private MetricsGauge() {
