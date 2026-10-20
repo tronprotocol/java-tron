@@ -6,6 +6,7 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.UnknownFieldSet;
 import org.junit.Assert;
 import org.junit.Test;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.tron.common.backup.message.KeepAliveMessage;
 import org.tron.protos.Discover;
 
@@ -26,9 +27,12 @@ public class KeepAliveMessageTest {
     byte[] padded = backupMessage.toBuilder().setUnknownFields(unknown).build().toByteArray();
     Assert.assertTrue(padded.length > backupMessage.toByteArray().length + 8000);
 
-    // Parsing uses DiscardUnknownFieldsParser, so the padded message still parses and its known
-    // fields are intact while the unknown padding is discarded from the parsed proto.
     KeepAliveMessage m = new KeepAliveMessage(padded);
+    Discover.BackupMessage parsed =
+        (Discover.BackupMessage) ReflectionTestUtils.getField(m, "backupMessage");
+    Assert.assertNotNull(parsed);
+    Assert.assertTrue(parsed.getUnknownFields().asMap().isEmpty());
+    Assert.assertEquals(backupMessage, parsed);
     Assert.assertTrue(m.getFlag());
     Assert.assertEquals(10, m.getPriority());
   }

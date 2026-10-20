@@ -5,11 +5,15 @@ import com.google.protobuf.Message;
 import com.google.protobuf.UnknownFieldSet;
 import org.junit.Assert;
 import org.junit.Test;
+import org.springframework.test.util.ReflectionTestUtils;
+import org.tron.core.net.message.MessageTypes;
 import org.tron.core.net.message.adv.FetchInvDataMessage;
 import org.tron.core.net.message.adv.InventoryMessage;
 import org.tron.core.net.message.base.DisconnectMessage;
 import org.tron.core.net.message.handshake.HelloMessage;
+import org.tron.core.net.message.sync.BlockInventoryMessage;
 import org.tron.core.net.message.sync.ChainInventoryMessage;
+import org.tron.core.net.message.sync.SyncBlockChainMessage;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Inventory.InventoryType;
 import org.tron.protos.Protocol.ReasonCode;
@@ -81,7 +85,11 @@ public class MessageUnknownFieldTest {
         .setRemainNum(0)
         .build();
     ChainInventoryMessage msg = new ChainInventoryMessage(withUnknown(chainInv));
-    // Known fields survive; padding is dropped so the message re-serializes to its clean size.
+    Protocol.ChainInventory parsed =
+        (Protocol.ChainInventory) ReflectionTestUtils.getField(msg, "chainInventory");
+    Assert.assertNotNull(parsed);
+    Assert.assertTrue(parsed.getUnknownFields().asMap().isEmpty());
+    Assert.assertEquals(chainInv, parsed);
     Assert.assertEquals(1, msg.getBlockIds().size());
     Assert.assertEquals(Long.valueOf(0L), msg.getRemainNum());
   }
@@ -92,6 +100,58 @@ public class MessageUnknownFieldTest {
         .setReason(ReasonCode.TOO_MANY_PEERS)
         .build();
     DisconnectMessage msg = new DisconnectMessage(withUnknown(disconnect));
+    Protocol.DisconnectMessage parsed =
+        (Protocol.DisconnectMessage) ReflectionTestUtils.getField(msg, "disconnectMessage");
+    Assert.assertNotNull(parsed);
+    Assert.assertTrue(parsed.getUnknownFields().asMap().isEmpty());
+    Assert.assertEquals(disconnect, parsed);
     Assert.assertEquals(ReasonCode.TOO_MANY_PEERS, msg.getReason());
+  }
+
+  @Test
+  public void disconnectMessageWithTypeDiscardsUnknownFields() throws Exception {
+    Protocol.DisconnectMessage disconnect = Protocol.DisconnectMessage.newBuilder()
+        .setReason(ReasonCode.TOO_MANY_PEERS)
+        .build();
+    DisconnectMessage msg = new DisconnectMessage(
+        MessageTypes.P2P_DISCONNECT.asByte(), withUnknown(disconnect));
+    Protocol.DisconnectMessage parsed =
+        (Protocol.DisconnectMessage) ReflectionTestUtils.getField(msg, "disconnectMessage");
+    Assert.assertNotNull(parsed);
+    Assert.assertTrue(parsed.getUnknownFields().asMap().isEmpty());
+    Assert.assertEquals(disconnect, parsed);
+    Assert.assertEquals(ReasonCode.TOO_MANY_PEERS, msg.getReason());
+  }
+
+  @Test
+  public void blockInventoryDiscardsUnknownFields() throws Exception {
+    Protocol.BlockInventory inventory = Protocol.BlockInventory.newBuilder()
+        .addIds(Protocol.BlockInventory.BlockId.newBuilder()
+            .setHash(ByteString.copyFrom(new byte[32])).setNumber(1).build())
+        .setType(Protocol.BlockInventory.Type.ADVTISE)
+        .build();
+    BlockInventoryMessage msg = new BlockInventoryMessage(withUnknown(inventory));
+    Protocol.BlockInventory parsed =
+        (Protocol.BlockInventory) ReflectionTestUtils.getField(msg, "blockInventory");
+    Assert.assertNotNull(parsed);
+    Assert.assertTrue(parsed.getUnknownFields().asMap().isEmpty());
+    Assert.assertEquals(inventory, parsed);
+    Assert.assertEquals(1, msg.getBlockIds().size());
+  }
+
+  @Test
+  public void syncBlockChainDiscardsUnknownFields() throws Exception {
+    Protocol.BlockInventory inventory = Protocol.BlockInventory.newBuilder()
+        .addIds(Protocol.BlockInventory.BlockId.newBuilder()
+            .setHash(ByteString.copyFrom(new byte[32])).setNumber(1).build())
+        .setType(Protocol.BlockInventory.Type.SYNC)
+        .build();
+    SyncBlockChainMessage msg = new SyncBlockChainMessage(withUnknown(inventory));
+    Protocol.BlockInventory parsed =
+        (Protocol.BlockInventory) ReflectionTestUtils.getField(msg, "blockInventory");
+    Assert.assertNotNull(parsed);
+    Assert.assertTrue(parsed.getUnknownFields().asMap().isEmpty());
+    Assert.assertEquals(inventory, parsed);
+    Assert.assertEquals(1, msg.getBlockIds().size());
   }
 }
