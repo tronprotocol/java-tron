@@ -75,6 +75,29 @@ public class MessageUnknownFieldTest {
     Assert.assertTrue(msg.getHelloMessage().getUnknownFields().asMap().isEmpty());
     Assert.assertEquals(1, msg.getVersion());
     Assert.assertEquals(123456789L, msg.getTimestamp());
+    assertCleanHelloBytes(hello, msg);
+  }
+
+  @Test
+  public void helloMessageWithTypeDiscardsUnknownFields() throws Exception {
+    Protocol.HelloMessage hello = Protocol.HelloMessage.newBuilder()
+        .setVersion(1)
+        .setTimestamp(123456789L)
+        .build();
+    HelloMessage msg = new HelloMessage(
+        MessageTypes.P2P_HELLO.asByte(), withUnknown(hello));
+    Assert.assertTrue(msg.getHelloMessage().getUnknownFields().asMap().isEmpty());
+    assertCleanHelloBytes(hello, msg);
+  }
+
+  private static void assertCleanHelloBytes(Protocol.HelloMessage hello, HelloMessage msg) {
+    Assert.assertEquals(hello, msg.getHelloMessage());
+    byte[] clean = hello.toByteArray();
+    Assert.assertArrayEquals(clean, msg.getData());
+    byte[] expectedSendBytes = new byte[clean.length + 1];
+    expectedSendBytes[0] = MessageTypes.P2P_HELLO.asByte();
+    System.arraycopy(clean, 0, expectedSendBytes, 1, clean.length);
+    Assert.assertArrayEquals(expectedSendBytes, msg.getSendBytes());
   }
 
   @Test
