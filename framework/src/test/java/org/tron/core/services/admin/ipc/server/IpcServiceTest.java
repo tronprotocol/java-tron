@@ -141,7 +141,9 @@ public class IpcServiceTest {
           concat(head.getBytes(StandardCharsets.UTF_8), new byte[] {(byte) 0xc3},
               tail.getBytes(StandardCharsets.UTF_8)),
           concat((head + tail).getBytes(StandardCharsets.UTF_8), new byte[] {0}),
-          concat(new byte[] {0x0b}, (head + tail).getBytes(StandardCharsets.UTF_8))}) {
+          concat(new byte[] {0x0b}, (head + tail).getBytes(StandardCharsets.UTF_8)),
+          new byte[] {0x00, 0x7b, 0x00, 0x00},
+          new byte[] {0x00, 0x00, 0x7b, 0x00}}) {
         frames.write(frame);
         frames.write('\n');
       }
@@ -155,7 +157,7 @@ public class IpcServiceTest {
             new OutputStreamWriter(client.getOutputStream(), StandardCharsets.UTF_8));
         BufferedReader reader = new BufferedReader(
             new InputStreamReader(client.getInputStream(), StandardCharsets.UTF_8));
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < 6; i++) {
           String response = reader.readLine();
           Assert.assertNotNull(response);
           Assert.assertTrue(response, response.contains("\"id\":null"));

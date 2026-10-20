@@ -1,12 +1,12 @@
 package org.tron.core.services.admin;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.exc.MismatchedInputException;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Utf8;
+import com.google.common.primitives.Bytes;
 import com.googlecode.jsonrpc4j.ErrorResolver.JsonError;
 import com.googlecode.jsonrpc4j.JsonRpcBasicServer;
 import com.googlecode.jsonrpc4j.JsonRpcInterceptor;
@@ -36,8 +36,9 @@ public final class AdminJsonRpcRequestHandler extends JsonRpcBasicServer {
 
   /** Parses the complete input before dispatch, returning an empty body for valid notifications. */
   public byte[] handleRequest(byte[] body) throws IOException {
-    // Jackson accepts overlong and surrogate UTF-8 sequences, so check the encoding first.
-    if (!Utf8.isWellFormed(body)) {
+    // Jackson accepts overlong and surrogate UTF-8 sequences and treats NUL bytes as a sign of
+    // UTF-16 or UTF-32, so check the bytes first.
+    if (!Utf8.isWellFormed(body) || Bytes.contains(body, (byte) 0)) {
       return OBJECT_MAPPER.writeValueAsBytes(errorResponse(JsonError.PARSE_ERROR, null));
     }
     JsonNode request;
@@ -45,7 +46,7 @@ public final class AdminJsonRpcRequestHandler extends JsonRpcBasicServer {
       request = OBJECT_MAPPER.reader()
           .with(DeserializationFeature.FAIL_ON_TRAILING_TOKENS)
           .with(DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS).readTree(body);
-    } catch (JsonProcessingException e) {
+    } catch (IOException e) {
       return OBJECT_MAPPER.writeValueAsBytes(errorResponse(JsonError.PARSE_ERROR, null));
     }
 

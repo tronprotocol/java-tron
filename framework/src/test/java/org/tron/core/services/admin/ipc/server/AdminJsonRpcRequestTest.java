@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.exc.MismatchedInputException;
 import com.googlecode.jsonrpc4j.JsonRpcInterceptor;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collection;
@@ -306,7 +307,8 @@ public class AdminJsonRpcRequestTest {
 
   @Test
   public void malformedRequestBytesAreRejectedBeforeInvocation() throws Exception {
-    byte[] valid = (REQUEST + ",\"id\":1}").getBytes(StandardCharsets.UTF_8);
+    String request = REQUEST + ",\"id\":1}";
+    byte[] valid = request.getBytes(StandardCharsets.UTF_8);
     for (byte[] body : new byte[][] {
         withFirstParamBytes(0xff),
         withFirstParamBytes(0xc3),
@@ -318,7 +320,13 @@ public class AdminJsonRpcRequestTest {
         withFirstParamBytes(0xf0, 0x8f, 0xbf, 0xbf),
         withFirstParamBytes(0xf4, 0x90, 0x80, 0x80),
         concat(valid, new byte[] {0}),
-        concat(new byte[] {0x0b}, valid)}) {
+        concat(new byte[] {0x0b}, valid),
+        new byte[] {0x00, 0x7b, 0x00, 0x00},
+        new byte[] {0x00, 0x00, 0x7b, 0x00},
+        request.getBytes(StandardCharsets.UTF_16BE),
+        request.getBytes(StandardCharsets.UTF_16LE),
+        request.getBytes(Charset.forName("UTF-32BE")),
+        request.getBytes(Charset.forName("UTF-32LE"))}) {
       assertError(sender.send(body), -32700, "null");
     }
     Mockito.verifyNoInteractions(adminJsonRpc);
