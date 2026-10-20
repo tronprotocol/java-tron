@@ -133,7 +133,7 @@ public class BlockContributionTest {
     Assert.assertEquals(1, provider.getLastInteractiveTime());
     Assert.assertEquals(0, provider.getBlockRcvTime());
     Assert.assertFalse(provider.getAdvInvRequest().containsKey(item));
-    verify(sync).startSync(provider);
+    verify(sync, never()).startSync(any());
     verify(adv, never()).broadcast(any());
     verify(provider, never()).disconnect(any());
   }
