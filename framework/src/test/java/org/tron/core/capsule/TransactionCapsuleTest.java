@@ -89,15 +89,11 @@ public class TransactionCapsuleTest extends BaseTest {
         Assert.assertEquals(1L, TransactionCapsule.checkWeight(
             permission, Arrays.asList(padded), hash, null, strict));
       }
-      Assert.assertEquals(1L, TransactionCapsule.checkWeight(
-          permission, Arrays.asList(padded), hash, null));
     }
     ByteString padded = signature.concat(ByteString.copyFrom(new byte[4]));
 
     Assert.assertEquals(1L, TransactionCapsule.checkWeight(
         permission, Arrays.asList(signature), hash, null, true));
-    Assert.assertEquals(1L, TransactionCapsule.checkWeight(
-        permission, Arrays.asList(signature), hash, null));
     Assert.assertEquals(1L, TransactionCapsule.checkWeight(
         permission, Arrays.asList(padded), hash, null, false));
     Assert.assertThrows(SignatureFormatException.class,
@@ -129,7 +125,7 @@ public class TransactionCapsuleTest extends BaseTest {
   }
 
   @Test
-  public void testCheckWeightRejectsInfinityByDefault() throws Exception {
+  public void testCheckWeightRejectsInfinityInStrictMode() throws Exception {
     byte[] hash = new byte[32];
     hash[31] = 1;
     byte[] signature = new byte[65];
@@ -148,7 +144,7 @@ public class TransactionCapsuleTest extends BaseTest {
     Assert.assertEquals(1L, TransactionCapsule.checkWeight(
         permission, signatures, hash, null, false));
     Assert.assertThrows(SignatureException.class,
-        () -> TransactionCapsule.checkWeight(permission, signatures, hash, null));
+        () -> TransactionCapsule.checkWeight(permission, signatures, hash, null, true));
   }
 
   private byte[] replaceScalar(byte[] signature, int offset, BigInteger scalar) {

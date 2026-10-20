@@ -231,12 +231,6 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
    *  @see ForkController#init(org.tron.core.ChainBaseManager)
    */
   public static long checkWeight(Permission permission, List<ByteString> sigs, byte[] hash,
-      List<ByteString> approveList)
-      throws SignatureException, PermissionException, SignatureFormatException {
-    return checkWeight(permission, sigs, hash, approveList, true);
-  }
-
-  public static long checkWeight(Permission permission, List<ByteString> sigs, byte[] hash,
       List<ByteString> approveList, boolean strictEcdsaValidation)
       throws SignatureException, PermissionException, SignatureFormatException {
     long currentWeight = 0;
@@ -593,43 +587,6 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
 
   public void sign(byte[] privateKey) {
     SignInterface cryptoEngine = SignUtils.fromPrivate(privateKey);
-    ByteString sig = ByteString.copyFrom(cryptoEngine.Base64toBytes(cryptoEngine
-        .signHash(getTransactionId().getBytes())));
-    this.transaction = this.transaction.toBuilder().addSignature(sig).build();
-  }
-
-  public void addSign(byte[] privateKey, AccountStore accountStore)
-      throws PermissionException, SignatureException, SignatureFormatException {
-    Transaction.Contract contract = this.transaction.getRawData().getContract(0);
-    int permissionId = contract.getPermissionId();
-    byte[] owner = getOwnerAddress();
-    AccountCapsule account = accountStore.get(owner);
-    if (account == null) {
-      throw new PermissionException("Account is not exist!");
-    }
-    Permission permission = account.getPermissionById(permissionId);
-    if (permission == null) {
-      throw new PermissionException("permission isn't exit");
-    }
-    checkPermission(permissionId, permission, contract);
-    List<ByteString> approveList = new ArrayList<>();
-    SignInterface cryptoEngine = SignUtils.fromPrivate(privateKey);
-    byte[] address = cryptoEngine.getAddress();
-    if (this.transaction.getSignatureCount() > 0) {
-      checkWeight(permission, this.transaction.getSignatureList(),
-          this.getTransactionId().getBytes(),
-          approveList);
-      if (approveList.contains(ByteString.copyFrom(address))) {
-        throw new PermissionException(encode58Check(address) + " had signed!");
-      }
-    }
-
-    long weight = getWeight(permission, address);
-    if (weight == 0) {
-      throw new PermissionException(
-          ByteArray.toHexString(privateKey) + "'s address is " + encode58Check(address)
-              + " but it is not contained of permission.");
-    }
     ByteString sig = ByteString.copyFrom(cryptoEngine.Base64toBytes(cryptoEngine
         .signHash(getTransactionId().getBytes())));
     this.transaction = this.transaction.toBuilder().addSignature(sig).build();

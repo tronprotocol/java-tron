@@ -729,7 +729,7 @@ public class Wallet {
         if (trx.getSignatureCount() > 0) {
           List<ByteString> approveList = new ArrayList<>();
           long currentWeight = TransactionCapsule.checkWeight(permission, trx.getSignatureList(),
-              Sha256Hash.hash(trx.getRawData().toByteArray()), approveList);
+              Sha256Hash.hash(trx.getRawData().toByteArray()), approveList, true);
           tswBuilder.addAllApprovedList(approveList);
           tswBuilder.setCurrentWeight(currentWeight);
         }
@@ -822,7 +822,8 @@ public class Wallet {
         if (trx.getSignatureCount() > 0) {
           List<ByteString> approveList = new ArrayList<>();
           byte[] hash = Sha256Hash.hash(trx.getRawData().toByteArray());
-          TransactionCapsule.checkWeight(permission, trx.getSignatureList(), hash, approveList);
+          TransactionCapsule.checkWeight(permission, trx.getSignatureList(), hash,
+              approveList, true);
           tswBuilder.addAllApprovedList(approveList);
         }
         resultBuilder.setCode(TransactionApprovedList.Result.response_code.SUCCESS);
