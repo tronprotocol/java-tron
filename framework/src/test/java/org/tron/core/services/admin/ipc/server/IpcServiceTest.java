@@ -2,6 +2,7 @@ package org.tron.core.services.admin.ipc.server;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
@@ -109,6 +110,66 @@ public class IpcServiceTest {
         cleanupIpcService(service, started, parameter, originalOutputDirectory, socketFile,
             outputDirectory);
       }
+    }
+  }
+
+  @Test(timeout = 10_000)
+  public void testMalformedRequestBytesGetParseErrorBeforeInvocation() throws Exception {
+    assumePosixFileSystem();
+    CommonParameter parameter = Args.getInstance();
+    String originalOutputDirectory = parameter.outputDirectory;
+    String originalSocketDirectory = parameter.ipcSocketDirectory;
+    Path outputDirectory = Files.createTempDirectory(Paths.get("/tmp"), "ipc-bytes-");
+    AdminJsonRpc adminJsonRpc = Mockito.mock(AdminJsonRpc.class);
+    IpcService service = new IpcService(adminJsonRpc);
+    boolean started = false;
+    Path socketFile = null;
+    try {
+      parameter.outputDirectory = outputDirectory.toString();
+      parameter.ipcSocketDirectory = "";
+      service.innerStart();
+      started = true;
+      socketFile = resolveSocketFilePath(parameter, getPid(service));
+
+      String head = "{\"jsonrpc\":\"2.0\",\"method\":\"admin_addPeer\",\"params\":[\"a";
+      String tail = "\"],\"id\":1}";
+      ByteArrayOutputStream frames = new ByteArrayOutputStream();
+      for (byte[] frame : new byte[][] {
+          concat(head.getBytes(StandardCharsets.UTF_8), new byte[] {(byte) 0xff},
+              tail.getBytes(StandardCharsets.UTF_8)),
+          concat(head.getBytes(StandardCharsets.UTF_8), new byte[] {(byte) 0xc3},
+              tail.getBytes(StandardCharsets.UTF_8)),
+          concat((head + tail).getBytes(StandardCharsets.UTF_8), new byte[] {0}),
+          concat(new byte[] {0x0b}, (head + tail).getBytes(StandardCharsets.UTF_8)),
+          new byte[] {0x00, 0x7b, 0x00, 0x00},
+          new byte[] {0x00, 0x00, 0x7b, 0x00}}) {
+        frames.write(frame);
+        frames.write('\n');
+      }
+
+      try (AFUNIXSocket client = AFUNIXSocket.newInstance()) {
+        client.connect(AFUNIXSocketAddress.of(socketFile.toFile()));
+        client.setSoTimeout(2_000);
+        client.getOutputStream().write(frames.toByteArray());
+        client.getOutputStream().flush();
+        BufferedWriter writer = new BufferedWriter(
+            new OutputStreamWriter(client.getOutputStream(), StandardCharsets.UTF_8));
+        BufferedReader reader = new BufferedReader(
+            new InputStreamReader(client.getInputStream(), StandardCharsets.UTF_8));
+        for (int i = 0; i < 6; i++) {
+          String response = reader.readLine();
+          Assert.assertNotNull(response);
+          Assert.assertTrue(response, response.contains("\"id\":null"));
+          Assert.assertTrue(response, response.contains("\"code\":-32700"));
+        }
+        assertSuccessfulResponse(sendRequest(writer, reader, 2), 2);
+      }
+      Mockito.verify(adminJsonRpc).listBlockedIps();
+      Mockito.verifyNoMoreInteractions(adminJsonRpc);
+    } finally {
+      parameter.ipcSocketDirectory = originalSocketDirectory;
+      cleanupIpcService(service, started, parameter, originalOutputDirectory, socketFile,
+          outputDirectory);
     }
   }
 
@@ -879,6 +940,14 @@ public class IpcServiceTest {
     writer.newLine();
     writer.flush();
     return reader.readLine();
+  }
+
+  private byte[] concat(byte[]... parts) throws IOException {
+    ByteArrayOutputStream joined = new ByteArrayOutputStream();
+    for (byte[] part : parts) {
+      joined.write(part);
+    }
+    return joined.toByteArray();
   }
 
   private void assertSuccessfulResponse(String response, int requestId) {
