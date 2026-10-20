@@ -77,6 +77,7 @@ import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.Wallet;
+import org.tron.core.actuator.ActuatorConstant;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
@@ -2239,6 +2240,18 @@ public class RpcApiService extends RpcService {
     @Override
     public void createCommonTransaction(Transaction request,
         StreamObserver<TransactionExtention> responseObserver) {
+      int contractCount = request.getRawData().getContractCount();
+      if (contractCount != 1) {
+        String message = contractCount == 0 ? ActuatorConstant.CONTRACT_NOT_EXIST
+            : String.format(ActuatorConstant.CONTRACT_SIZE_NOT_EQUAL_TO_ONE, contractCount);
+        Return result = Return.newBuilder().setResult(false)
+            .setCode(response_code.CONTRACT_VALIDATE_ERROR)
+            .setMessage(ByteString.copyFromUtf8(Wallet.CONTRACT_VALIDATE_ERROR + message))
+            .build();
+        responseObserver.onNext(TransactionExtention.newBuilder().setResult(result).build());
+        responseObserver.onCompleted();
+        return;
+      }
       Transaction.Contract contract = request.getRawData().getContract(0);
       createTransactionExtention(contract.getParameter(), contract.getType(),
           responseObserver);

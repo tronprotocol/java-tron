@@ -169,6 +169,8 @@ public class SignatureQueryTest {
     for (Transaction input : Arrays.asList(tooMany.build(),
         tooMany.addSignature(ByteString.EMPTY).build())) {
       Transaction transaction = spy(input);
+      Transaction.raw rawData = spy(input.getRawData());
+      when(transaction.getRawData()).thenReturn(rawData);
       TransactionSignWeight weight = wallet.getTransactionSignWeight(transaction);
       TransactionApprovedList approved = wallet.getTransactionApprovedList(transaction);
       assertEquals(TransactionSignWeight.Result.response_code.OTHER_ERROR,
@@ -180,7 +182,7 @@ public class SignatureQueryTest {
       assertFalse(weight.hasTransaction());
       assertFalse(approved.hasTransaction());
       verify(transaction, never()).getSignatureList();
-      verify(transaction, never()).getRawData();
+      verify(rawData, never()).toByteArray();
     }
     verifyNoInteractions(accountStore);
   }
@@ -204,6 +206,8 @@ public class SignatureQueryTest {
 
   private void assertFormatError(Transaction input) {
     Transaction transaction = spy(input);
+    Transaction.raw rawData = spy(input.getRawData());
+    when(transaction.getRawData()).thenReturn(rawData);
     TransactionSignWeight weight = wallet.getTransactionSignWeight(transaction);
     TransactionApprovedList approved = wallet.getTransactionApprovedList(transaction);
     assertEquals(TransactionSignWeight.Result.response_code.SIGNATURE_FORMAT_ERROR,
@@ -216,7 +220,7 @@ public class SignatureQueryTest {
     assertEquals(0, approved.getApprovedListCount());
     assertFalse(weight.hasTransaction());
     assertFalse(approved.hasTransaction());
-    verify(transaction, never()).getRawData();
+    verify(rawData, never()).toByteArray();
   }
 
   private void assertQueryResults(Transaction input,

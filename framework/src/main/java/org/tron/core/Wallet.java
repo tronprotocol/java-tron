@@ -174,6 +174,7 @@ import org.tron.core.db2.core.Chainbase.Cursor;
 import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ContractExeException;
+import org.tron.core.exception.ContractSizeNotEqualToOneException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.DupTransactionException;
 import org.tron.core.exception.HeaderNotFound;
@@ -579,8 +580,13 @@ public class Wallet {
       if (chainBaseManager.getDynamicPropertiesStore().supportVM()) {
         trx.resetResult();
       }
-      if (trx.getInstance().getRawData().getContractCount() == 0) {
+      int contractCount = trx.getInstance().getRawData().getContractCount();
+      if (contractCount == 0) {
         throw new ContractValidateException(ActuatorConstant.CONTRACT_NOT_EXIST);
+      }
+      if (contractCount > 1) {
+        throw new ContractSizeNotEqualToOneException(String.format(
+            "tx %s " + ActuatorConstant.CONTRACT_SIZE_NOT_EQUAL_TO_ONE, txID, contractCount));
       }
       trx.checkExpiration(chainBaseManager.getNextBlockSlotTime());
       if (!dbManager.pushTransaction(trx)) {
@@ -662,6 +668,14 @@ public class Wallet {
   public TransactionSignWeight getTransactionSignWeight(Transaction trx) {
     TransactionSignWeight.Builder tswBuilder = TransactionSignWeight.newBuilder();
     TransactionSignWeight.Result.Builder resultBuilder = TransactionSignWeight.Result.newBuilder();
+    int contractCount = trx.getRawData().getContractCount();
+    if (contractCount > 1) {
+      resultBuilder.setCode(TransactionSignWeight.Result.response_code.OTHER_ERROR);
+      resultBuilder.setMessage("Invalid transaction: "
+          + String.format(ActuatorConstant.CONTRACT_SIZE_NOT_EQUAL_TO_ONE, contractCount));
+      tswBuilder.setResult(resultBuilder);
+      return tswBuilder.build();
+    }
     if (trx.getSignatureCount() > chainBaseManager.getDynamicPropertiesStore()
         .getTotalSignNum()) {
       resultBuilder.setCode(TransactionSignWeight.Result.response_code.OTHER_ERROR);
@@ -747,6 +761,14 @@ public class Wallet {
     TransactionApprovedList.Builder tswBuilder = TransactionApprovedList.newBuilder();
     TransactionApprovedList.Result.Builder resultBuilder = TransactionApprovedList.Result
         .newBuilder();
+    int contractCount = trx.getRawData().getContractCount();
+    if (contractCount > 1) {
+      resultBuilder.setCode(TransactionApprovedList.Result.response_code.OTHER_ERROR);
+      resultBuilder.setMessage("Invalid transaction: "
+          + String.format(ActuatorConstant.CONTRACT_SIZE_NOT_EQUAL_TO_ONE, contractCount));
+      tswBuilder.setResult(resultBuilder);
+      return tswBuilder.build();
+    }
     if (trx.getSignatureCount() > chainBaseManager.getDynamicPropertiesStore()
         .getTotalSignNum()) {
       resultBuilder.setCode(TransactionApprovedList.Result.response_code.OTHER_ERROR);
@@ -2902,6 +2924,10 @@ public class Wallet {
     List<Contract> contract = transaction.getRawData().getContractList();
     if (contract == null || contract.isEmpty()) {
       throw new ContractValidateException("Contract is null");
+    }
+    if (contract.size() > 1) {
+      throw new ContractValidateException(
+          String.format(ActuatorConstant.CONTRACT_SIZE_NOT_EQUAL_TO_ONE, contract.size()));
     }
     ContractType contractType = contract.get(0).getType();
     if (contractType != ContractType.ShieldedTransferContract) {
