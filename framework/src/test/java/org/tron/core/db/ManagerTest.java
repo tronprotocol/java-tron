@@ -929,6 +929,39 @@ public class ManagerTest extends BaseMethodTest {
   }
 
   @Test
+  public void eraseBlockMarksPermissionUpdateOwnerForVerification() throws Exception {
+    byte[] owner = ByteArray.fromHexString(Wallet.getAddressPreFixString()
+        + "548794500882809695A8A687866E76D4271A1ABC");
+    AccountContract.AccountPermissionUpdateContract contract =
+        AccountContract.AccountPermissionUpdateContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(owner))
+            .build();
+    TransactionCapsule permissionUpdate = new TransactionCapsule(contract,
+        ContractType.AccountPermissionUpdateContract);
+    BlockCapsule rolledBackBlock = new BlockCapsule(1, Sha256Hash.ZERO_HASH.getByteString(), 0,
+        Arrays.asList(permissionUpdate.getInstance()));
+    rolledBackBlock.setMerkleRoot();
+
+    Manager manager = new Manager();
+    ChainBaseManager mockedChainManager = mock(ChainBaseManager.class);
+    DynamicPropertiesStore mockedDynamicPropertiesStore = mock(DynamicPropertiesStore.class);
+    when(mockedChainManager.getDynamicPropertiesStore()).thenReturn(mockedDynamicPropertiesStore);
+    when(mockedDynamicPropertiesStore.getLatestBlockHeaderHash())
+        .thenReturn(Sha256Hash.wrap(new byte[32]));
+    when(mockedChainManager.getBlockById(any(Sha256Hash.class))).thenReturn(rolledBackBlock);
+    ReflectUtils.setFieldValue(manager, "chainBaseManager", mockedChainManager);
+    ReflectUtils.setFieldValue(manager, "khaosDb", mock(KhaosDatabase.class));
+    ReflectUtils.setFieldValue(manager, "revokingStore", mock(RevokingDatabase.class));
+
+    manager.eraseBlock();
+
+    @SuppressWarnings("unchecked")
+    Set<String> ownerAddressSet =
+        (Set<String>) ReflectUtils.getFieldObject(manager, "ownerAddressSet");
+    Assert.assertTrue(ownerAddressSet.contains(ByteArray.toHexString(owner)));
+  }
+
+  @Test
   public void doNotSwitch()
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       UnLinkedBlockException, ValidateScheduleException, BadItemException,

@@ -128,12 +128,21 @@ public class AdvServiceTest {
         .setRawData(
         Protocol.Transaction.raw.newBuilder()
             .setRefBlockNum(1)
-            .setExpiration(System.currentTimeMillis() + 3000).build()).build();
+            .setExpiration(System.currentTimeMillis() + 3000).build())
+        .addRet(Protocol.Transaction.Result.newBuilder().setFee(123L).build())
+        .build();
     CommonParameter.getInstance().setValidContractProtoThreadNum(1);
     TransactionMessage msg = new TransactionMessage(trx);
     service.broadcast(msg);
     Item item = new Item(msg.getMessageId(), InventoryType.TRX);
-    Assert.assertNotNull(service.getMessage(item));
+    TransactionMessage cached = (TransactionMessage) service.getMessage(item);
+    Assert.assertNotNull(cached);
+    Assert.assertEquals(0, msg.getTransactionCapsule().getInstance().getRetCount());
+    Assert.assertEquals(0, cached.getTransactionCapsule().getInstance().getRetCount());
+
+    TransactionMessage fastMsg = new TransactionMessage(trx);
+    service.fastBroadcastTransaction(fastMsg);
+    Assert.assertEquals(0, fastMsg.getTransactionCapsule().getInstance().getRetCount());
 
     Protocol.Transaction expiredTrx = Protocol.Transaction.newBuilder()
         .setRawData(
