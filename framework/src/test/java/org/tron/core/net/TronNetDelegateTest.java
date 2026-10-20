@@ -4,6 +4,7 @@ import static org.mockito.Mockito.mock;
 
 import com.google.protobuf.ByteString;
 import java.lang.reflect.Field;
+import java.util.Collections;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -17,9 +18,13 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
+import org.tron.core.exception.BadBlockException;
 import org.tron.core.exception.P2pException;
 import org.tron.core.exception.P2pException.TypeEnum;
+import org.tron.core.exception.ValidateScheduleException;
+import org.tron.core.metrics.MetricsService;
 import org.tron.core.store.DynamicPropertiesStore;
+import org.tron.core.store.WitnessScheduleStore;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.contract.BalanceContract.TransferContract;
 
@@ -184,6 +189,59 @@ public class TronNetDelegateTest {
       Assert.fail("Expected P2pException for tampered merkle root");
     } catch (P2pException e) {
       Assert.assertEquals(TypeEnum.BLOCK_MERKLE_INVALID, e.getType());
+    }
+  }
+
+  @Test
+  public void testValidBlockRejectsInactiveWitness() throws Exception {
+    TronNetDelegate delegate = Mockito.spy(new TronNetDelegate());
+    WitnessScheduleStore schedule = mock(WitnessScheduleStore.class);
+    setField(delegate, "witnessScheduleStore", schedule);
+    BlockCapsule block = new BlockCapsule(1, Sha256Hash.ZERO_HASH, 0,
+        ByteString.copyFromUtf8("witness"));
+    block.setMerkleRoot();
+    Mockito.doNothing().when(delegate).validSignature(block);
+    Mockito.when(schedule.getActiveWitnesses()).thenReturn(Collections.emptyList());
+    try {
+      delegate.validBlock(block);
+      Assert.fail("An inactive witness must be rejected instead of silently dropped");
+    } catch (P2pException e) {
+      Assert.assertEquals(TypeEnum.BAD_BLOCK, e.getType());
+    }
+    Mockito.when(schedule.getActiveWitnesses())
+        .thenReturn(Collections.singletonList(block.getWitnessAddress()));
+    delegate.validBlock(block);
+  }
+
+  @Test
+  public void testProcessBlockWrapsScheduleFailureWithCause() throws Exception {
+    assertProcessBlockFailure(new ValidateScheduleException("invalid scheduled witness"));
+  }
+
+  @Test
+  public void testProcessBlockWrapsMerkleFailureWithCause() throws Exception {
+    assertProcessBlockFailure(new BadBlockException(
+        BadBlockException.TypeEnum.CALC_MERKLE_ROOT_FAILED, "invalid merkle root"));
+  }
+
+  private void assertProcessBlockFailure(Exception failure) throws Exception {
+    TronNetDelegate delegate = new TronNetDelegate();
+    Manager manager = mock(Manager.class);
+    ChainBaseManager chainManager = mock(ChainBaseManager.class);
+    setField(delegate, "dbManager", manager);
+    setField(delegate, "chainBaseManager", chainManager);
+    setField(delegate, "metricsService", mock(MetricsService.class));
+    Mockito.when(manager.getBlockedTimer()).thenReturn(new ThreadLocal<>());
+    Mockito.when(chainManager.getHeadBlockId())
+        .thenReturn(new BlockCapsule.BlockId(Sha256Hash.ZERO_HASH, 0));
+    BlockCapsule block = new BlockCapsule(1, Sha256Hash.ZERO_HASH, 0, ByteString.EMPTY);
+    Mockito.doThrow(failure).when(manager).pushBlock(block);
+    try {
+      delegate.processBlock(block, true);
+      Assert.fail("Expected block validation failure");
+    } catch (P2pException e) {
+      Assert.assertEquals(TypeEnum.BAD_BLOCK, e.getType());
+      Assert.assertSame(failure, e.getCause());
     }
   }
 }
