@@ -14,6 +14,7 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -57,6 +58,7 @@ public class JsonRpcServletTest {
 
   private TestableServlet servlet;
   private JsonRpcServer mockRpcServer;
+  private JsonRpcServer realRpcServer;
   private int savedMaxBatchSize;
   private int savedMaxResponseSize;
 
@@ -211,12 +213,12 @@ public class JsonRpcServletTest {
 
   @Test
   public void unknownMethod_singleIsAnsweredWithoutDispatch() throws Exception {
-    MockHttpServletResponse resp = doPost(
-        "{\"jsonrpc\":\"2.0\",\"method\":\"eth_unknownMethod\",\"id\":7}");
-
-    assertEquals(200, resp.getStatus());
-    assertEquals("application/json-rpc", resp.getContentType());
-    assertEquals(methodNotFound("7"), MAPPER.readTree(resp.getContentAsByteArray()));
+    for (int maxResponseSize : new int[] {savedMaxResponseSize, 0}) {
+      CommonParameter.getInstance().jsonRpcMaxResponseSize = maxResponseSize;
+      assertUnknownMethodAnswered(",\"id\":7", "7");
+      assertUnknownMethodAnswered(",\"id\":\"a\"", "\"a\"");
+      assertUnknownMethodAnswered("", "null");
+    }
     verifyNoInteractions(mockRpcServer);
   }
 
@@ -235,6 +237,79 @@ public class JsonRpcServletTest {
         .add(methodNotFound("null"));
     assertEquals(expected, MAPPER.readTree(resp.getContentAsByteArray()));
     assertEquals(Arrays.asList(2), dispatched);
+  }
+
+  @Test
+  public void duplicateMethod_unknownLastValueIsAnsweredWithoutDispatch() throws Exception {
+    TronJsonRpc rpc = useRealRpcServer();
+
+    MockHttpServletResponse resp = doPost("{\"jsonrpc\":\"2.0\",\"method\":\"eth_blockNumber\","
+        + "\"method\":\"eth_unknownMethod\",\"id\":1}");
+
+    assertEquals(methodNotFound("1"), MAPPER.readTree(resp.getContentAsByteArray()));
+    verify(realRpcServer, never()).handleRequest(any(InputStream.class), any(OutputStream.class));
+    verify(rpc, never()).getLatestBlockNum();
+  }
+
+  @Test
+  public void duplicateMethod_knownLastValueIsTheOnlyMethodInvoked() throws Exception {
+    TronJsonRpc rpc = useRealRpcServer();
+
+    MockHttpServletResponse resp = doPost("{\"jsonrpc\":\"2.0\",\"method\":\"eth_unknownMethod\","
+        + "\"method\":\"eth_blockNumber\",\"id\":1}");
+
+    JsonNode body = MAPPER.readTree(resp.getContentAsByteArray());
+    assertEquals("0x1", body.get("result").asText());
+    assertEquals(1, body.get("id").asInt());
+    verify(rpc).getLatestBlockNum();
+  }
+
+  @Test
+  public void duplicateMethod_batchUsesLastValueOfEachElement() throws Exception {
+    TronJsonRpc rpc = useRealRpcServer();
+
+    MockHttpServletResponse resp = doPost("["
+        + "{\"jsonrpc\":\"2.0\",\"method\":\"eth_blockNumber\","
+        + "\"method\":\"eth_unknownMethod\",\"id\":1},"
+        + "{\"jsonrpc\":\"2.0\",\"method\":\"eth_unknownMethod\","
+        + "\"method\":\"eth_blockNumber\",\"id\":2}]");
+
+    ArrayNode expected = MAPPER.createArrayNode()
+        .add(methodNotFound("1"))
+        .add(MAPPER.readTree("{\"jsonrpc\":\"2.0\",\"result\":\"0x1\",\"id\":2}"));
+    assertEquals(expected, MAPPER.readTree(resp.getContentAsByteArray()));
+    verify(realRpcServer).handleRequest(any(InputStream.class), any(OutputStream.class));
+    verify(rpc).getLatestBlockNum();
+  }
+
+  @Test
+  public void methodNameVariants_areAnsweredWithoutDispatch() throws Exception {
+    TronJsonRpc rpc = useRealRpcServer();
+
+    for (String method : Arrays.asList("ETH_BLOCKNUMBER", "eth_blocknumber", " eth_blockNumber",
+        "eth_blockNumber ")) {
+      MockHttpServletResponse resp = doPost(
+          "{\"jsonrpc\":\"2.0\",\"method\":\"" + method + "\",\"id\":1}");
+      assertEquals(methodNotFound("1"), MAPPER.readTree(resp.getContentAsByteArray()));
+    }
+    verify(realRpcServer, never()).handleRequest(any(InputStream.class), any(OutputStream.class));
+    verify(rpc, never()).getLatestBlockNum();
+  }
+
+  @Test
+  public void allowedNameOutsideTopLevelMethod_isNotDispatched() throws Exception {
+    TronJsonRpc rpc = useRealRpcServer();
+    String unknown = "{\"jsonrpc\":\"2.0\",\"method\":\"eth_unknownMethod\"";
+    List<String> bodies = Arrays.asList(
+        unknown + ",\"params\":[{\"method\":\"eth_blockNumber\"}],\"id\":1}",
+        unknown + ",\"id\":1}{\"jsonrpc\":\"2.0\",\"method\":\"eth_blockNumber\",\"id\":2}");
+
+    for (String body : bodies) {
+      MockHttpServletResponse resp = doPost(body);
+      assertEquals(methodNotFound("1"), MAPPER.readTree(resp.getContentAsByteArray()));
+    }
+    verify(realRpcServer, never()).handleRequest(any(InputStream.class), any(OutputStream.class));
+    verify(rpc, never()).getLatestBlockNum();
   }
 
   @Test
@@ -1286,7 +1361,8 @@ public class JsonRpcServletTest {
   private TronJsonRpc useRealRpcServer() {
     TronJsonRpc rpc = mock(TronJsonRpc.class);
     when(rpc.getLatestBlockNum()).thenReturn("0x1");
-    servlet.setRpcServer(new JsonRpcServer(rpc, TronJsonRpc.class), TronJsonRpc.class);
+    realRpcServer = spy(new JsonRpcServer(rpc, TronJsonRpc.class));
+    servlet.setRpcServer(realRpcServer, TronJsonRpc.class);
     return rpc;
   }
 
@@ -1438,6 +1514,15 @@ public class JsonRpcServletTest {
       return 0;
     }).when(mockRpcServer).handleRequest(any(InputStream.class), any(OutputStream.class));
     return dispatched;
+  }
+
+  private void assertUnknownMethodAnswered(String idMember, String expectedId) throws Exception {
+    MockHttpServletResponse resp = doPost(
+        "{\"jsonrpc\":\"2.0\",\"method\":\"eth_unknownMethod\"" + idMember + "}");
+
+    assertEquals(200, resp.getStatus());
+    assertEquals("application/json-rpc", resp.getContentType());
+    assertEquals(methodNotFound(expectedId), MAPPER.readTree(resp.getContentAsByteArray()));
   }
 
   private static JsonNode methodNotFound(String id) throws IOException {
