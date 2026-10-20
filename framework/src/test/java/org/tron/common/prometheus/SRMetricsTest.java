@@ -192,9 +192,7 @@ public class SRMetricsTest extends BaseTest {
     Assert.assertEquals(0.0, gauge(MetricKeys.Gauge.SR_IS_ACTIVE), 0.0);
     Assert.assertEquals(0.0, gauge(MetricKeys.Gauge.SR_VOTES), 0.0);
     Assert.assertEquals(0.0, gauge(MetricKeys.Gauge.SR_RANK), 0.0);
-    for (String role : roles()) {
-      Assert.assertNull("no " + role + " series without a witness", roleGauge("", role));
-    }
+    Assert.assertNull("no node_role series without a witness", roleGauge(""));
     Metrics.info(MetricKeys.Info.NODE_INFO, Version.getVersion(),
         Args.getInstance().getChainId());
     Assert.assertEquals(1.0, info(), 0.0);
@@ -202,7 +200,7 @@ public class SRMetricsTest extends BaseTest {
 
   /**
    * Witness configured without a backup election (backup members unset): the node always
-   * produces blocks, so the role gauge reports master; node_info stays a static
+   * produces blocks, so the role gauge reports master (1); node_info stays a static
    * two-label identity record.
    */
   @Test
@@ -223,17 +221,15 @@ public class SRMetricsTest extends BaseTest {
     Assert.assertEquals(1.0, gauge(MetricKeys.Gauge.SR_IS_ACTIVE), 0.0);
     Assert.assertEquals(1000.0, gauge(MetricKeys.Gauge.SR_VOTES), 0.0);
     Assert.assertEquals(1.0, gauge(MetricKeys.Gauge.SR_RANK), 0.0);
-    Assert.assertEquals(1.0, roleGauge(address, MetricLabels.Gauge.ROLE_MASTER), 0.0);
-    Assert.assertEquals(0.0, roleGauge(address, MetricLabels.Gauge.ROLE_SLAVER), 0.0);
-    Assert.assertEquals(0.0, roleGauge(address, MetricLabels.Gauge.ROLE_INIT), 0.0);
+    Assert.assertEquals(SRMetrics.NODE_ROLE_MASTER, roleGauge(address), 0.0);
     Metrics.info(MetricKeys.Info.NODE_INFO, Version.getVersion(),
         Args.getInstance().getChainId());
     Assert.assertEquals(1.0, info(), 0.0);
   }
 
   /**
-   * Backup election slaver: the role gauge reports slaver while is_active reflects the
-   * active witness set.
+   * Backup election slaver: the role gauge reports slaver (2) while is_active reflects
+   * the active witness set.
    */
   @Test
   public void testSrStatusSlaver() throws Exception {
@@ -256,16 +252,14 @@ public class SRMetricsTest extends BaseTest {
     Assert.assertEquals(0.0, gauge(MetricKeys.Gauge.SR_IS_ACTIVE), 0.0);
     Assert.assertEquals(7.0, gauge(MetricKeys.Gauge.SR_VOTES), 0.0);
     Assert.assertTrue(gauge(MetricKeys.Gauge.SR_RANK) > 0);
-    Assert.assertEquals(1.0, roleGauge(address, MetricLabels.Gauge.ROLE_SLAVER), 0.0);
-    Assert.assertEquals(0.0, roleGauge(address, MetricLabels.Gauge.ROLE_MASTER), 0.0);
-    Assert.assertEquals(0.0, roleGauge(address, MetricLabels.Gauge.ROLE_INIT), 0.0);
+    Assert.assertEquals(SRMetrics.NODE_ROLE_SLAVER, roleGauge(address), 0.0);
   }
 
   /**
    * Before the first election round (backup configured, BackupManager.init() not yet run,
    * which in production only happens after the first fresh block) the node must report
-   * init instead of falling back to the MASTER field default; the first real status
-   * after init() switches the same series to the elected role.
+   * init (0) instead of falling back to the MASTER field default; the first real status
+   * after init() rewrites the same series to the elected role.
    */
   @Test
   public void testRoleInitBeforeBackupElectionRuns() throws Exception {
@@ -280,19 +274,16 @@ public class SRMetricsTest extends BaseTest {
     BackupManager fresh = new BackupManager();
     try {
       fresh.recordNodeRole();
-      Assert.assertEquals(1.0, roleGauge(address, MetricLabels.Gauge.ROLE_INIT), 0.0);
-      Assert.assertEquals(0.0, roleGauge(address, MetricLabels.Gauge.ROLE_MASTER), 0.0);
-      Assert.assertEquals(0.0, roleGauge(address, MetricLabels.Gauge.ROLE_SLAVER), 0.0);
+      Assert.assertEquals(SRMetrics.NODE_ROLE_INIT, roleGauge(address), 0.0);
 
       // a status change while init() has not run stays inside the window
       fresh.setStatus(BackupManager.BackupStatusEnum.SLAVER);
-      Assert.assertEquals(1.0, roleGauge(address, MetricLabels.Gauge.ROLE_INIT), 0.0);
+      Assert.assertEquals(SRMetrics.NODE_ROLE_INIT, roleGauge(address), 0.0);
 
       // once the election has run, the status maps to the elected role
       markBackupInitiated(fresh);
       fresh.setStatus(BackupManager.BackupStatusEnum.SLAVER);
-      Assert.assertEquals(1.0, roleGauge(address, MetricLabels.Gauge.ROLE_SLAVER), 0.0);
-      Assert.assertEquals(0.0, roleGauge(address, MetricLabels.Gauge.ROLE_INIT), 0.0);
+      Assert.assertEquals(SRMetrics.NODE_ROLE_SLAVER, roleGauge(address), 0.0);
     } finally {
       fresh.stop();
     }
@@ -313,12 +304,10 @@ public class SRMetricsTest extends BaseTest {
     String address = StringUtil.encode58Check(witness.toByteArray());
 
     backupManager.setStatus(BackupManager.BackupStatusEnum.SLAVER);
-    Assert.assertEquals(1.0, roleGauge(address, MetricLabels.Gauge.ROLE_SLAVER), 0.0);
-    Assert.assertEquals(0.0, roleGauge(address, MetricLabels.Gauge.ROLE_MASTER), 0.0);
+    Assert.assertEquals(SRMetrics.NODE_ROLE_SLAVER, roleGauge(address), 0.0);
 
     backupManager.setStatus(BackupManager.BackupStatusEnum.MASTER);
-    Assert.assertEquals(1.0, roleGauge(address, MetricLabels.Gauge.ROLE_MASTER), 0.0);
-    Assert.assertEquals(0.0, roleGauge(address, MetricLabels.Gauge.ROLE_SLAVER), 0.0);
+    Assert.assertEquals(SRMetrics.NODE_ROLE_MASTER, roleGauge(address), 0.0);
   }
 
   /**
@@ -341,11 +330,6 @@ public class SRMetricsTest extends BaseTest {
     isInit.setBoolean(manager, true);
   }
 
-  private String[] roles() {
-    return new String[] {MetricLabels.Gauge.ROLE_INIT, MetricLabels.Gauge.ROLE_MASTER,
-        MetricLabels.Gauge.ROLE_SLAVER};
-  }
-
   private ByteString registerWitnessWithVotes(long votes) {
     ByteString address = uniqueAddress();
     chainBaseManager.getWitnessStore().put(address.toByteArray(),
@@ -366,11 +350,11 @@ public class SRMetricsTest extends BaseTest {
         new String[] {Version.getVersion(), Args.getInstance().getChainId()});
   }
 
-  private Double roleGauge(String address, String role) {
+  private Double roleGauge(String address) {
     return CollectorRegistry.defaultRegistry.getSampleValue(
         MetricKeys.Gauge.NODE_ROLE,
-        new String[] {MetricLabels.Gauge.ADDRESS, MetricLabels.Gauge.ROLE},
-        new String[] {address, role});
+        new String[] {MetricLabels.Gauge.ADDRESS},
+        new String[] {address});
   }
 
   private ByteString registerWitness() {

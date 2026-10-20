@@ -24,21 +24,39 @@ public class SRMetrics {
     return localWitnessAddress;
   }
 
+  // numeric encoding of the backup-election role in the tron:node_role gauge:
+  // 0 = init (before the first election round), 1 = master (producing blocks),
+  // 2 = slaver (standing by). Kept package-visible for tests; the mapping is
+  // documented for operators in docs/metrics-changelog.md
+  static final int NODE_ROLE_INIT = 0;
+  static final int NODE_ROLE_MASTER = 1;
+  static final int NODE_ROLE_SLAVER = 2;
+
   /**
-   * Publishes the node-role gauge as three one-hot series (init, master, slaver) for the
-   * given witness address, with the current role set to 1, so a role change rewrites the
-   * same series instead of leaving stale ones behind. A no-op when no witness address is
-   * given: nodes without a local witness expose no role series.
+   * Publishes the node-role gauge as a single series per witness address, encoding the
+   * current role as a number (0 = init, 1 = master, 2 = slaver). A role change rewrites
+   * the value of the same series, so no stale series are left behind. A no-op when no
+   * witness address is given: nodes without a local witness expose no role series.
    */
   public static void recordNodeRole(String address, String role) {
     if (!Metrics.enabled() || address.isEmpty()) {
       return;
     }
-    String[] roles = {MetricLabels.Gauge.ROLE_INIT, MetricLabels.Gauge.ROLE_MASTER,
-        MetricLabels.Gauge.ROLE_SLAVER};
-    for (String r : roles) {
-      Metrics.gaugeSet(MetricKeys.Gauge.NODE_ROLE, r.equals(role) ? 1 : 0, address, r);
+    Metrics.gaugeSet(MetricKeys.Gauge.NODE_ROLE, roleValue(role), address);
+  }
+
+  /**
+   * Maps a role name to its {@code tron:node_role} value; an unknown role falls back to
+   * init so a bad argument can never fake an elected state.
+   */
+  private static int roleValue(String role) {
+    if (MetricLabels.Gauge.ROLE_MASTER.equals(role)) {
+      return NODE_ROLE_MASTER;
     }
+    if (MetricLabels.Gauge.ROLE_SLAVER.equals(role)) {
+      return NODE_ROLE_SLAVER;
+    }
+    return NODE_ROLE_INIT;
   }
 
   public static void recordSrStatus(boolean active, long votes, long rank) {
