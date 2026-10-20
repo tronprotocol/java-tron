@@ -6,15 +6,12 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.exc.MismatchedInputException;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.base.Utf8;
 import com.googlecode.jsonrpc4j.ErrorResolver.JsonError;
 import com.googlecode.jsonrpc4j.JsonRpcBasicServer;
 import com.googlecode.jsonrpc4j.JsonRpcInterceptor;
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.nio.ByteBuffer;
-import java.nio.charset.CharacterCodingException;
-import java.nio.charset.CodingErrorAction;
-import java.nio.charset.StandardCharsets;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.core.services.jsonrpc.JsonRpcErrorResolver;
 import org.tron.core.services.jsonrpc.JsonRpcMapper;
@@ -39,15 +36,16 @@ public final class AdminJsonRpcRequestHandler extends JsonRpcBasicServer {
 
   /** Parses the complete input before dispatch, returning an empty body for valid notifications. */
   public byte[] handleRequest(byte[] body) throws IOException {
+    // Jackson accepts overlong and surrogate UTF-8 sequences, so check the encoding first.
+    if (!Utf8.isWellFormed(body)) {
+      return OBJECT_MAPPER.writeValueAsBytes(errorResponse(JsonError.PARSE_ERROR, null));
+    }
     JsonNode request;
     try {
-      // Jackson accepts overlong and surrogate UTF-8 sequences, so check the encoding first.
-      StandardCharsets.UTF_8.newDecoder().onMalformedInput(CodingErrorAction.REPORT)
-          .decode(ByteBuffer.wrap(body));
       request = OBJECT_MAPPER.reader()
           .with(DeserializationFeature.FAIL_ON_TRAILING_TOKENS)
           .with(DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS).readTree(body);
-    } catch (CharacterCodingException | JsonProcessingException e) {
+    } catch (JsonProcessingException e) {
       return OBJECT_MAPPER.writeValueAsBytes(errorResponse(JsonError.PARSE_ERROR, null));
     }
 
