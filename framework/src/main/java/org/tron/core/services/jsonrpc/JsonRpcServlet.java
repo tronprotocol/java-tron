@@ -72,8 +72,10 @@ public class JsonRpcServlet extends RateLimiterServlet {
   private static Set<String> collectMethodNames(Class<?> serviceInterface) {
     Set<String> names = new HashSet<>();
     for (Method method : serviceInterface.getMethods()) {
-      names.add(method.getName());
       JsonRpcMethod annotation = method.getAnnotation(JsonRpcMethod.class);
+      if (annotation == null || !annotation.required()) {
+        names.add(method.getName());
+      }
       if (annotation != null) {
         names.add(annotation.value());
       }

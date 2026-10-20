@@ -32,6 +32,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.googlecode.jsonrpc4j.JsonRpcMethod;
 import com.googlecode.jsonrpc4j.JsonRpcServer;
 import java.io.IOException;
 import java.io.InputStream;
@@ -280,6 +281,25 @@ public class JsonRpcServletTest {
     assertEquals(expected, MAPPER.readTree(resp.getContentAsByteArray()));
     verify(realRpcServer).handleRequest(any(InputStream.class), any(OutputStream.class));
     verify(rpc).getLatestBlockNum();
+  }
+
+  @Test
+  public void requiredMethodName_javaNameIsAnsweredWithoutDispatch() throws Exception {
+    RequiredNameService service = mock(RequiredNameService.class);
+    when(service.requiredName()).thenReturn("ok");
+    JsonRpcServer server = spy(new JsonRpcServer(service, RequiredNameService.class));
+    servlet.setRpcServer(server, RequiredNameService.class);
+
+    MockHttpServletResponse javaName = doPost(
+        "{\"jsonrpc\":\"2.0\",\"method\":\"requiredName\",\"id\":1}");
+    assertEquals(methodNotFound("1"), MAPPER.readTree(javaName.getContentAsByteArray()));
+    verify(server, never()).handleRequest(any(InputStream.class), any(OutputStream.class));
+
+    MockHttpServletResponse annotatedName = doPost(
+        "{\"jsonrpc\":\"2.0\",\"method\":\"test_required\",\"id\":2}");
+    JsonNode body = MAPPER.readTree(annotatedName.getContentAsByteArray());
+    assertEquals("ok", body.get("result").asText());
+    verify(service).requiredName();
   }
 
   @Test
@@ -1680,6 +1700,12 @@ public class JsonRpcServletTest {
         + "\"message\":\"Internal error\"},\"id\":" + id + "}"),
         MAPPER.reader().with(DeserializationFeature.FAIL_ON_TRAILING_TOKENS)
             .readTree(response.getContentAsByteArray()));
+  }
+
+  public interface RequiredNameService {
+
+    @JsonRpcMethod(value = "test_required", required = true)
+    String requiredName();
   }
 
   private static class TestableServlet extends JsonRpcServlet {
