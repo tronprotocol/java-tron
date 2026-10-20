@@ -153,6 +153,30 @@ public class AdminJsonRpcRequestTest {
   }
 
   @Test
+  public void onlyAnnotatedMethodNamesAreDispatched() throws Exception {
+    for (String[] method : new String[][] {
+        {"addPeer", PARAMS},
+        {"removePeer", PARAMS},
+        {"disconnectPeer", PARAMS},
+        {"listActivePeers", "[]"},
+        {"blockIp", "[\"192.0.2.20\"]"},
+        {"unblockIp", "[\"192.0.2.20\"]"},
+        {"listBlockedIps", "[]"}}) {
+      String request = "{\"jsonrpc\":\"2.0\",\"method\":\"" + method[0]
+          + "\",\"params\":" + method[1];
+      assertError(sender.send(request + ",\"id\":7}"), -32601, "7");
+      Assert.assertEquals("", sender.send(request + "}"));
+      Mockito.verifyNoInteractions(adminJsonRpc);
+
+      String canonical = request.replace("\"method\":\"", "\"method\":\"admin_");
+      JsonNode response = parse(sender.send(canonical + ",\"id\":7}"));
+      Assert.assertTrue(response.has("result"));
+      Assert.assertFalse(response.has("error"));
+      Mockito.clearInvocations(adminJsonRpc);
+    }
+  }
+
+  @Test
   public void scalarParamsAreRejectedBeforeInvocation() throws Exception {
     for (String params : new String[] {"\"text\"", "7", "true"}) {
       assertError(sender.send(REQUEST.replace(PARAMS, params) + ",\"id\":7}"),

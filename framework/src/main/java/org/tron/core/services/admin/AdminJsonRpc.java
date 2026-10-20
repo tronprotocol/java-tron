@@ -20,7 +20,7 @@ public interface AdminJsonRpc {
   String BATCH_NOT_SUPPORTED_MESSAGE = "Batch requests are not supported";
 
   @AdminCommandDescription("Add an endpoint to the active-node set without marking it trusted.")
-  @JsonRpcMethod("admin_addPeer")
+  @JsonRpcMethod(value = "admin_addPeer", required = true)
   @JsonRpcErrors({
       @JsonRpcError(exception = JsonRpcInvalidParamsException.class, code = -32602, data = "{}"),
       @JsonRpcError(exception = JsonRpcInternalException.class, code = -32000, data = "{}"),
@@ -29,7 +29,7 @@ public interface AdminJsonRpc {
       throws JsonRpcInvalidParamsException, JsonRpcInternalException;
 
   @AdminCommandDescription("Remove an endpoint from the active-node set and disconnect it.")
-  @JsonRpcMethod("admin_removePeer")
+  @JsonRpcMethod(value = "admin_removePeer", required = true)
   @JsonRpcErrors({
       @JsonRpcError(exception = JsonRpcInvalidParamsException.class, code = -32602, data = "{}"),
       @JsonRpcError(exception = JsonRpcInternalException.class, code = -32000, data = "{}"),
@@ -38,7 +38,7 @@ public interface AdminJsonRpc {
       throws JsonRpcInvalidParamsException, JsonRpcInternalException;
 
   @AdminCommandDescription("Disconnect an endpoint without removing it from the active-node set.")
-  @JsonRpcMethod("admin_disconnectPeer")
+  @JsonRpcMethod(value = "admin_disconnectPeer", required = true)
   @JsonRpcErrors({
       @JsonRpcError(exception = JsonRpcInvalidParamsException.class, code = -32602, data = "{}"),
       @JsonRpcError(exception = JsonRpcInternalException.class, code = -32000, data = "{}"),
@@ -47,11 +47,11 @@ public interface AdminJsonRpc {
       throws JsonRpcInvalidParamsException, JsonRpcInternalException;
 
   @AdminCommandDescription("List peer connections, aggregate counts, and sync statistics.")
-  @JsonRpcMethod("admin_listActivePeers")
+  @JsonRpcMethod(value = "admin_listActivePeers", required = true)
   ActivePeerListResult listActivePeers();
 
   @AdminCommandDescription("Persistently block an IP and disconnect its TCP connections.")
-  @JsonRpcMethod("admin_blockIp")
+  @JsonRpcMethod(value = "admin_blockIp", required = true)
   @JsonRpcErrors({
       @JsonRpcError(exception = JsonRpcInvalidParamsException.class, code = -32602, data = "{}"),
       @JsonRpcError(exception = JsonRpcInternalException.class, code = -32000, data = "{}"),
@@ -60,7 +60,7 @@ public interface AdminJsonRpc {
       throws JsonRpcInvalidParamsException, JsonRpcInternalException;
 
   @AdminCommandDescription("Remove an IP from the persistent manual blocklist.")
-  @JsonRpcMethod("admin_unblockIp")
+  @JsonRpcMethod(value = "admin_unblockIp", required = true)
   @JsonRpcErrors({
       @JsonRpcError(exception = JsonRpcInvalidParamsException.class, code = -32602, data = "{}"),
       @JsonRpcError(exception = JsonRpcInternalException.class, code = -32000, data = "{}"),
@@ -69,6 +69,6 @@ public interface AdminJsonRpc {
       throws JsonRpcInvalidParamsException, JsonRpcInternalException;
 
   @AdminCommandDescription("List blocked IPs and their block times in Unix epoch milliseconds.")
-  @JsonRpcMethod("admin_listBlockedIps")
+  @JsonRpcMethod(value = "admin_listBlockedIps", required = true)
   List<BlockedIpInfo> listBlockedIps();
 }
