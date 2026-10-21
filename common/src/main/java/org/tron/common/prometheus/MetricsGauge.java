@@ -20,10 +20,14 @@ class MetricsGauge {
     init(MetricKeys.Gauge.DB_SST_LEVEL, "tron  db  files .", "type", "db", "level");
     init(MetricKeys.Gauge.TX_CACHE, "tron tx cache info.", "type");
     init(MetricKeys.Gauge.SR_IS_ACTIVE,
-        "1 if this node's witness is in the active witness set.");
-    init(MetricKeys.Gauge.SR_VOTES, "Vote count of this node's witness.");
+        "1 if the witness with this address is in the active witness set.",
+        MetricLabels.Gauge.ADDRESS);
+    init(MetricKeys.Gauge.SR_VOTES, "Vote count of the witness with this address.",
+        MetricLabels.Gauge.ADDRESS);
     init(MetricKeys.Gauge.SR_RANK,
-        "Vote-count rank of this node's witness (1-based, 0 when not configured).");
+        "Vote-count rank of the witness with this address (1-based, 0 when the "
+            + "witness is unknown).",
+        MetricLabels.Gauge.ADDRESS);
     init(MetricKeys.Gauge.NODE_ROLE,
         "Role of this node in the backup election, encoded as a number: 0 = init "
             + "(before the first election round), 1 = master (producing blocks), "

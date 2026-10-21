@@ -182,7 +182,8 @@ public class SRMetricsTest extends BaseTest {
 
   /**
    * No witness configured: no node_role series is exposed at all, while the sr gauges
-   * still report zeros and node_info keeps its two static labels.
+   * keep their zero series under an empty address label and node_info keeps its two
+   * static labels.
    */
   @Test
   public void testSrStatusFullNode() {
@@ -191,9 +192,9 @@ public class SRMetricsTest extends BaseTest {
     backupManager.recordNodeRole();
     maintenanceManager.recordWitnessMetrics();
 
-    Assert.assertEquals(0.0, gauge(MetricKeys.Gauge.SR_IS_ACTIVE), 0.0);
-    Assert.assertEquals(0.0, gauge(MetricKeys.Gauge.SR_VOTES), 0.0);
-    Assert.assertEquals(0.0, gauge(MetricKeys.Gauge.SR_RANK), 0.0);
+    Assert.assertEquals(0.0, srGauge(MetricKeys.Gauge.SR_IS_ACTIVE, ""), 0.0);
+    Assert.assertEquals(0.0, srGauge(MetricKeys.Gauge.SR_VOTES, ""), 0.0);
+    Assert.assertEquals(0.0, srGauge(MetricKeys.Gauge.SR_RANK, ""), 0.0);
     Assert.assertNull("no node_role series without a witness", roleGauge(""));
     Metrics.info(MetricKeys.Info.NODE_INFO, Version.getVersion(),
         Args.getInstance().getChainId());
@@ -220,9 +221,9 @@ public class SRMetricsTest extends BaseTest {
     maintenanceManager.recordWitnessMetrics();
 
     String address = StringUtil.encode58Check(witness.toByteArray());
-    Assert.assertEquals(1.0, gauge(MetricKeys.Gauge.SR_IS_ACTIVE), 0.0);
-    Assert.assertEquals(1000.0, gauge(MetricKeys.Gauge.SR_VOTES), 0.0);
-    Assert.assertEquals(1.0, gauge(MetricKeys.Gauge.SR_RANK), 0.0);
+    Assert.assertEquals(1.0, srGauge(MetricKeys.Gauge.SR_IS_ACTIVE, address), 0.0);
+    Assert.assertEquals(1000.0, srGauge(MetricKeys.Gauge.SR_VOTES, address), 0.0);
+    Assert.assertEquals(1.0, srGauge(MetricKeys.Gauge.SR_RANK, address), 0.0);
     Assert.assertEquals(SRMetrics.NODE_ROLE_MASTER, roleGauge(address), 0.0);
     Metrics.info(MetricKeys.Info.NODE_INFO, Version.getVersion(),
         Args.getInstance().getChainId());
@@ -251,9 +252,9 @@ public class SRMetricsTest extends BaseTest {
     maintenanceManager.recordWitnessMetrics();
 
     String address = StringUtil.encode58Check(witness.toByteArray());
-    Assert.assertEquals(0.0, gauge(MetricKeys.Gauge.SR_IS_ACTIVE), 0.0);
-    Assert.assertEquals(7.0, gauge(MetricKeys.Gauge.SR_VOTES), 0.0);
-    Assert.assertTrue(gauge(MetricKeys.Gauge.SR_RANK) > 0);
+    Assert.assertEquals(0.0, srGauge(MetricKeys.Gauge.SR_IS_ACTIVE, address), 0.0);
+    Assert.assertEquals(7.0, srGauge(MetricKeys.Gauge.SR_VOTES, address), 0.0);
+    Assert.assertTrue(srGauge(MetricKeys.Gauge.SR_RANK, address) > 0);
     Assert.assertEquals(SRMetrics.NODE_ROLE_SLAVER, roleGauge(address), 0.0);
   }
 
@@ -333,10 +334,11 @@ public class SRMetricsTest extends BaseTest {
 
   /**
    * Testnet multi-key setup: with several witness private keys configured and no witness
-   * account address, node_role writes one series per derived address, all carrying the
-   * same node-level role value, and a status change flips every series together. Role
-   * recording never touches the single-identity sr_* gauges, and maintenance-time
-   * recording never touches the role series.
+   * account address, every sr gauge and the node_role gauge are written as one series
+   * per derived address. Role recording only touches the role series; maintenance-time
+   * recording gives each address its own sr values (here distinct votes, activity and
+   * rank) and leaves the role series alone. A status change flips every role series
+   * together without touching the sr series.
    */
   @Test
   public void testRoleMultiWitnessKeys() throws Exception {
@@ -347,30 +349,43 @@ public class SRMetricsTest extends BaseTest {
     Args.setLocalWitnesses(localWitnesses);
     String address1 = derivedAddress(key1);
     String address2 = derivedAddress(key2);
+    ByteString witness1 = registerWitnessWithVotes(
+        ByteArray.fromHexString(hexAddress(key1)), 100);
+    ByteString witness2 = registerWitnessWithVotes(
+        ByteArray.fromHexString(hexAddress(key2)), 40);
+    chainBaseManager.getWitnessScheduleStore()
+        .saveActiveWitnesses(Collections.singletonList(witness1));
     markBackupInitiated(backupManager);
 
-    Double activeBefore = gauge(MetricKeys.Gauge.SR_IS_ACTIVE);
-    Double votesBefore = gauge(MetricKeys.Gauge.SR_VOTES);
-    Double rankBefore = gauge(MetricKeys.Gauge.SR_RANK);
-
     backupManager.recordNodeRole();
-    Assert.assertEquals(roleGauge(address1), roleGauge(address2));
-
-    backupManager.setStatus(BackupManager.BackupStatusEnum.MASTER);
     Assert.assertEquals(SRMetrics.NODE_ROLE_MASTER, roleGauge(address1), 0.0);
     Assert.assertEquals(SRMetrics.NODE_ROLE_MASTER, roleGauge(address2), 0.0);
+    // role recording never writes sr_* series
+    Assert.assertNull(srGauge(MetricKeys.Gauge.SR_IS_ACTIVE, address1));
+    Assert.assertNull(srGauge(MetricKeys.Gauge.SR_IS_ACTIVE, address2));
 
+    // one sr series per address, with per-address values: witness1 is active with the
+    // higher vote count, witness2 stands inactive on the lower rank
+    maintenanceManager.recordWitnessMetrics();
+    Assert.assertEquals(1.0, srGauge(MetricKeys.Gauge.SR_IS_ACTIVE, address1), 0.0);
+    Assert.assertEquals(100.0, srGauge(MetricKeys.Gauge.SR_VOTES, address1), 0.0);
+    Assert.assertEquals(0.0, srGauge(MetricKeys.Gauge.SR_IS_ACTIVE, address2), 0.0);
+    Assert.assertEquals(40.0, srGauge(MetricKeys.Gauge.SR_VOTES, address2), 0.0);
+    // rank is absolute within the full witness store, which also holds genesis
+    // witnesses; the two local series must at least order by their votes
+    Assert.assertTrue(srGauge(MetricKeys.Gauge.SR_RANK, address1) > 0);
+    Assert.assertTrue(srGauge(MetricKeys.Gauge.SR_RANK, address2) > 0);
+    Assert.assertTrue("higher votes must give the better rank",
+        srGauge(MetricKeys.Gauge.SR_RANK, address1)
+            < srGauge(MetricKeys.Gauge.SR_RANK, address2));
+
+    // sr recording never touches the role series; a status change flips every
+    // role series together and leaves the sr series alone
     backupManager.setStatus(BackupManager.BackupStatusEnum.SLAVER);
     Assert.assertEquals(SRMetrics.NODE_ROLE_SLAVER, roleGauge(address1), 0.0);
     Assert.assertEquals(SRMetrics.NODE_ROLE_SLAVER, roleGauge(address2), 0.0);
-
-    Assert.assertEquals(activeBefore, gauge(MetricKeys.Gauge.SR_IS_ACTIVE));
-    Assert.assertEquals(votesBefore, gauge(MetricKeys.Gauge.SR_VOTES));
-    Assert.assertEquals(rankBefore, gauge(MetricKeys.Gauge.SR_RANK));
-
-    maintenanceManager.recordWitnessMetrics();
-    Assert.assertEquals(SRMetrics.NODE_ROLE_SLAVER, roleGauge(address1), 0.0);
-    Assert.assertEquals(SRMetrics.NODE_ROLE_SLAVER, roleGauge(address2), 0.0);
+    Assert.assertEquals(100.0, srGauge(MetricKeys.Gauge.SR_VOTES, address1), 0.0);
+    Assert.assertEquals(40.0, srGauge(MetricKeys.Gauge.SR_VOTES, address2), 0.0);
   }
 
   /**
@@ -411,8 +426,33 @@ public class SRMetricsTest extends BaseTest {
     return address;
   }
 
-  private Double gauge(String name) {
-    return CollectorRegistry.defaultRegistry.getSampleValue(name);
+  /**
+   * Registers a witness for a locally configured private key's derived address so the
+   * multi-key test can assert distinguishable per-address sr values.
+   */
+  private ByteString registerWitnessWithVotes(byte[] addressBytes, long votes) {
+    ByteString address = ByteString.copyFrom(addressBytes);
+    chainBaseManager.getWitnessStore().put(address.toByteArray(),
+        new WitnessCapsule(address, votes, ""));
+    chainBaseManager.getAccountStore().put(address.toByteArray(),
+        new AccountCapsule(Protocol.Account.newBuilder().setAddress(address).build()));
+    return address;
+  }
+
+  /**
+   * Hex form of the address derived from a private key, matching what the node derives
+   * when no witness account address is configured.
+   */
+  private String hexAddress(String privateKeyHex) {
+    return ByteArray.toHexString(
+        SignUtils.fromPrivate(ByteArray.fromHexString(privateKeyHex)).getAddress());
+  }
+
+  private Double srGauge(String name, String address) {
+    return CollectorRegistry.defaultRegistry.getSampleValue(
+        name,
+        new String[] {MetricLabels.Gauge.ADDRESS},
+        new String[] {address});
   }
 
   private Double info() {

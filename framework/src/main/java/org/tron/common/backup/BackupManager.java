@@ -85,7 +85,7 @@ public class BackupManager implements EventHandler {
 
   /**
    * Publishes the {@code tron:node_role} gauge for every locally configured witness
-   * address and caches the primary witness address for maintenance-time gauge recording.
+   * address and caches the full address set for maintenance-time sr gauge recording.
    * Runs once when the bean is created — covering the window before the backup election
    * first runs — and again on every backup-status change. No role series is written when
    * no witness is configured.
@@ -95,9 +95,9 @@ public class BackupManager implements EventHandler {
     if (!Metrics.enabled()) {
       return;
     }
-    byte[] witnessAddress = localWitnessAddress();
-    SRMetrics.setLocalWitnessAddress(witnessAddress);
-    for (String address : localWitnessAddresses()) {
+    List<String> addresses = localWitnessAddresses();
+    SRMetrics.setLocalWitnessAddresses(addresses);
+    for (String address : addresses) {
       SRMetrics.recordNodeRole(address, currentRole());
     }
   }
@@ -130,11 +130,6 @@ public class BackupManager implements EventHandler {
     // same condition BackupServer.initServer() uses to start the election transport,
     // i.e. the only way init() -- and with it the first real status -- can be reached
     return parameter.getBackupPort() > 0 && !parameter.getBackupMembers().isEmpty();
-  }
-
-  private byte[] localWitnessAddress() {
-    LocalWitnesses localWitnesses = Args.getLocalWitnesses();
-    return localWitnesses == null ? null : localWitnesses.getWitnessAccountAddress();
   }
 
   /**

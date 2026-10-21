@@ -9,6 +9,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -18,6 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.prometheus.Metrics;
 import org.tron.common.prometheus.SRMetrics;
+import org.tron.common.utils.Commons;
 import org.tron.consensus.ConsensusDelegate;
 import org.tron.consensus.pbft.PbftManager;
 import org.tron.core.capsule.AccountCapsule;
@@ -168,29 +170,39 @@ public class MaintenanceManager {
 
   /**
    * Records the witness gauges (active-set membership, settled votes, settled rank) for
-   * the locally configured witness. Runs at the end of every maintenance and once at
-   * node startup. Never throws: a metrics failure must not affect maintenance or block
+   * every locally configured witness address, one series per address. With several
+   * private keys configured (testnet setups without a witness account address) each
+   * derived address gets its own series; a node without a witness keeps the zero series
+   * with an empty address label. Runs at the end of every maintenance and once at node
+   * startup. Never throws: a metrics failure must not affect maintenance or block
    * processing.
    */
   public void recordWitnessMetrics() {
     if (!Metrics.enabled()) {
       return;
     }
-    try {
-      byte[] witnessAddress = SRMetrics.getLocalWitnessAddress();
-      boolean active = false;
-      long votes = 0;
-      long rank = 0;
-      if (witnessAddress != null && witnessAddress.length > 0) {
-        ByteString witnessAddressBs = ByteString.copyFrom(witnessAddress);
-        active = consensusDelegate.getActiveWitnesses().contains(witnessAddressBs);
-        WitnessCapsule witness = consensusDelegate.getWitness(witnessAddress);
-        votes = witness == null ? 0 : witness.getVoteCount();
-        rank = witnessRank(witnessAddressBs);
+    Set<String> addresses = SRMetrics.getLocalWitnessAddresses();
+    if (addresses.isEmpty()) {
+      SRMetrics.recordSrStatus("", false, 0, 0);
+      return;
+    }
+    for (String address : addresses) {
+      try {
+        boolean active = false;
+        long votes = 0;
+        long rank = 0;
+        byte[] witnessAddress = Commons.decode58Check(address);
+        if (witnessAddress != null && witnessAddress.length > 0) {
+          ByteString witnessAddressBs = ByteString.copyFrom(witnessAddress);
+          active = consensusDelegate.getActiveWitnesses().contains(witnessAddressBs);
+          WitnessCapsule witness = consensusDelegate.getWitness(witnessAddress);
+          votes = witness == null ? 0 : witness.getVoteCount();
+          rank = witnessRank(witnessAddressBs);
+        }
+        SRMetrics.recordSrStatus(address, active, votes, rank);
+      } catch (Exception e) {
+        logger.warn("Failed to record witness metrics for {}", address, e);
       }
-      SRMetrics.recordSrStatus(active, votes, rank);
-    } catch (Exception e) {
-      logger.warn("Failed to record witness metrics", e);
     }
   }
 
