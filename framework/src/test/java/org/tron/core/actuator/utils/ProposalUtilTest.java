@@ -349,6 +349,8 @@ public class ProposalUtilTest extends BaseTest {
 
     testAllowHardenExchangeCalculationProposal();
 
+    testAllowOptimizeTvmStorageKeyProposal();
+
     forkUtils.getManager().getDynamicPropertiesStore()
         .statsByVersion(ForkBlockVersionEnum.ENERGY_LIMIT.getValue(), stats);
     forkUtils.reset();
@@ -742,6 +744,79 @@ public class ProposalUtilTest extends BaseTest {
     } catch (Throwable e) {
       Assert.fail("Should pass when toggling 1 -> 0: " + e.getMessage());
     }
+  }
+
+  private void testAllowOptimizeTvmStorageKeyProposal() {
+    long legacy = ProposalType.ALLOW_OPTIMIZE_TVM_STORAGE.getCode();
+    long code = ProposalType.ALLOW_OPTIMIZE_TVM_STORAGE_KEY.getCode();
+    byte[] cleared = new byte[27];
+    forkUtils.getManager().getDynamicPropertiesStore()
+        .statsByVersion(ForkBlockVersionEnum.VERSION_4_8_2_3.getValue(), cleared);
+    forkUtils.getManager().getDynamicPropertiesStore()
+        .statsByVersion(ForkBlockVersionEnum.VERSION_4_8_2_4.getValue(), cleared);
+    dynamicPropertiesStore.saveAllowOptimizeTvmStorage(0);
+
+    ContractValidateException bannedEx = assertThrows(ContractValidateException.class,
+        () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils, legacy, 1));
+    assertEquals("Bad chain parameter id [ALLOW_OPTIMIZE_TVM_STORAGE]", bannedEx.getMessage());
+
+    activateFork(ForkBlockVersionEnum.VERSION_4_8_2_3);
+    ContractValidateException newBeforeFork = assertThrows(ContractValidateException.class,
+        () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils, code, 1));
+    assertEquals("Bad chain parameter id [ALLOW_OPTIMIZE_TVM_STORAGE_KEY]",
+        newBeforeFork.getMessage());
+    ContractValidateException legacyValue = assertThrows(ContractValidateException.class,
+        () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils, legacy, 0));
+    assertEquals("This value[ALLOW_OPTIMIZE_TVM_STORAGE] is only allowed to be 1",
+        legacyValue.getMessage());
+    try {
+      ProposalUtil.validator(dynamicPropertiesStore, forkUtils, legacy, 1);
+    } catch (ContractValidateException e) {
+      Assert.fail(e.getMessage());
+    }
+    Protocol.Proposal legacyProposal = Protocol.Proposal.newBuilder()
+        .putParameters(legacy, 1).build();
+    Assert.assertTrue(ProposalService.process(dbManager, new ProposalCapsule(legacyProposal)));
+    Assert.assertEquals(1L, dynamicPropertiesStore.getAllowOptimizeTvmStorage());
+    Assert.assertTrue(dynamicPropertiesStore.allowTvmStorageOptimization());
+    Assert.assertFalse(dynamicPropertiesStore.allowOptimizeTvmStorageKey());
+    ContractValidateException legacyAgain = assertThrows(ContractValidateException.class,
+        () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils, legacy, 1));
+    assertEquals("[ALLOW_OPTIMIZE_TVM_STORAGE] has been valid, no need to propose again",
+        legacyAgain.getMessage());
+
+    dynamicPropertiesStore.saveAllowOptimizeTvmStorage(0);
+    activateFork(ForkBlockVersionEnum.VERSION_4_8_2_4);
+
+    try {
+      ProposalUtil.validator(dynamicPropertiesStore, forkUtils, legacy, 1);
+    } catch (ContractValidateException e) {
+      Assert.fail(e.getMessage());
+    }
+    Assert.assertTrue(ProposalService.process(dbManager, new ProposalCapsule(legacyProposal)));
+    Assert.assertEquals(1L, dynamicPropertiesStore.getAllowOptimizeTvmStorage());
+
+    ContractValidateException badValue = assertThrows(ContractValidateException.class,
+        () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils, code, 0));
+    assertEquals("This value[ALLOW_OPTIMIZE_TVM_STORAGE_KEY] is only allowed to be 1",
+        badValue.getMessage());
+
+    try {
+      ProposalUtil.validator(dynamicPropertiesStore, forkUtils, code, 1);
+    } catch (ContractValidateException e) {
+      Assert.fail(e.getMessage());
+    }
+
+    Protocol.Proposal proposal = Protocol.Proposal.newBuilder().putParameters(code, 1).build();
+    ProposalService.process(dbManager, new ProposalCapsule(proposal));
+    Assert.assertEquals(1L, dynamicPropertiesStore.getAllowOptimizeTvmStorageKey());
+    Assert.assertTrue(dynamicPropertiesStore.allowTvmStorageOptimization());
+
+    ContractValidateException again = assertThrows(ContractValidateException.class,
+        () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils, code, 1));
+    assertEquals(
+        "[ALLOW_OPTIMIZE_TVM_STORAGE_KEY] has been valid, no need to propose again",
+        again.getMessage());
   }
 
   private void testAllowMarketTransaction() {

@@ -23,6 +23,7 @@ import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.utils.ForkController;
 import org.tron.core.capsule.StorageRowCapsule;
 import org.tron.core.config.Parameter.ForkBlockVersionEnum;
+import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.StorageRowStore;
 import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.program.Program.OutOfTimeException;
@@ -44,7 +45,7 @@ public class StorageAliasTest {
     when(controller.pass(ForkBlockVersionEnum.VERSION_4_8_2_3)).thenReturn(true);
     VMConfig.setLocalSnapshot(new VMConfig.Snapshot());
     store = mock(StorageRowStore.class);
-    storage = new Storage(new byte[21], store, false);
+    storage = createStorage(0, 0);
   }
 
   @After
@@ -86,7 +87,7 @@ public class StorageAliasTest {
   @Test
   public void aliasedReadsRemainAllowedBeforeFork() {
     when(controller.pass(ForkBlockVersionEnum.VERSION_4_8_2_3)).thenReturn(false);
-    Storage before = new Storage(new byte[21], store, false);
+    Storage before = createStorage(0, 0);
     when(store.get(any(byte[].class))).thenAnswer(
         invocation -> new StorageRowCapsule(new DataWord(5).getData()));
     assertEquals(new DataWord(5), before.getValue(slot));
@@ -99,7 +100,7 @@ public class StorageAliasTest {
   public void forkFlagIsCapturedOnceAtConstruction() {
     clearInvocations(controller);
     when(controller.pass(ForkBlockVersionEnum.VERSION_4_8_2_3)).thenReturn(false);
-    Storage before = new Storage(new byte[21], store, false);
+    Storage before = createStorage(0, 0);
     before.put(slot, new DataWord(5));
 
     when(controller.pass(ForkBlockVersionEnum.VERSION_4_8_2_3)).thenReturn(true);
@@ -109,24 +110,28 @@ public class StorageAliasTest {
     child.put(slot, new DataWord(1));
     child.put(alias, new DataWord(2));
     verify(controller, times(1)).pass(ForkBlockVersionEnum.VERSION_4_8_2_3);
+    verify(controller, never()).pass(ForkBlockVersionEnum.VERSION_4_8_2_4);
 
-    Storage after = new Storage(new byte[21], store, false);
+    Storage after = createStorage(0, 0);
     after.put(alias, new DataWord(8));
     assertThrows(OutOfTimeException.class, () -> after.put(slot, new DataWord(7)));
     verify(controller, times(2)).pass(ForkBlockVersionEnum.VERSION_4_8_2_3);
+    verify(controller, never()).pass(ForkBlockVersionEnum.VERSION_4_8_2_4);
 
     clearInvocations(controller);
-    Storage optimized = new Storage(new byte[21], store, true);
+    Storage optimized = optimizedStorage();
     optimized.put(slot, new DataWord(1));
     optimized.put(alias, new DataWord(2));
     assertEquals(new DataWord(2), optimized.getValue(alias));
+    new Storage(optimized).put(slot, new DataWord(3));
     verify(controller, times(1)).pass(ForkBlockVersionEnum.VERSION_4_8_2_3);
+    verify(controller, never()).pass(ForkBlockVersionEnum.VERSION_4_8_2_4);
   }
 
   @Test
   public void aliasedWritesRemainAllowedBeforeFork() {
     when(controller.pass(ForkBlockVersionEnum.VERSION_4_8_2_3)).thenReturn(false);
-    Storage before = new Storage(new byte[21], store, false);
+    Storage before = createStorage(0, 0);
     before.put(slot, new DataWord(5));
     before.put(alias, new DataWord(8));
     assertEquals(new DataWord(5), before.getValue(slot));
@@ -165,7 +170,7 @@ public class StorageAliasTest {
 
   @Test
   public void migratedNewKeysDoNotConflict() {
-    Storage optimized = new Storage(new byte[21], store, true);
+    Storage optimized = optimizedStorage();
     when(store.get(argThat(key -> key != null && key.length == 48)))
         .thenReturn(new StorageRowCapsule(new DataWord(4).getData()));
     assertEquals(new DataWord(4), optimized.getValue(slot));
@@ -177,37 +182,35 @@ public class StorageAliasTest {
   }
 
   @Test
-  public void optimizedWritesDoNotTimeoutAndCollidingReadIsEmpty() {
-    Storage optimized = new Storage(new byte[21], store, true);
+  public void optimizedWritesDoNotTimeout() {
+    Storage optimized = optimizedStorage();
     when(store.get(argThat(key -> key != null && key.length == 32)))
         .thenReturn(new StorageRowCapsule(new DataWord(7).getData()));
     optimized.put(slot, new DataWord(5));
-    assertNull(optimized.getValue(alias));
     optimized.put(alias, new DataWord(8));
     assertEquals(48, optimized.getRowCache().get(slot).getRowKey().length);
     assertEquals(48, optimized.getRowCache().get(alias).getRowKey().length);
     assertEquals(new DataWord(5), optimized.getValue(slot));
     assertEquals(new DataWord(8), optimized.getValue(alias));
-    assertNull(optimized.getValue(anotherAlias()));
+    assertThrows(OutOfTimeException.class, () -> optimized.getValue(anotherAlias()));
   }
 
   @Test
   public void oldKeyIsReturnedOnlyToTheFirstCachedSlot() {
-    Storage optimized = new Storage(new byte[21], store, true);
+    Storage optimized = optimizedStorage();
     when(store.get(argThat(key -> key != null && key.length == 32)))
         .thenReturn(new StorageRowCapsule(new DataWord(7).getData()));
     assertEquals(new DataWord(7), optimized.getValue(slot));
-    assertNull(optimized.getValue(alias));
+    assertThrows(OutOfTimeException.class, () -> optimized.getValue(alias));
     assertEquals(new DataWord(7), optimized.getValue(slot.clone()));
     optimized.commit();
-    verify(store, times(1)).put(argThat(key -> key != null && key.length == 48),
-        argThat(row -> new DataWord(row.getValue()).longValue() == 7L));
-    verify(store).delete(argThat(key -> key != null && key.length == 32));
+    verify(store, never()).put(any(), any());
+    verify(store, never()).delete(any());
   }
 
   @Test
   public void newKeyWinsOverACachedOldKeyCollision() {
-    Storage optimized = new Storage(new byte[21], store, true);
+    Storage optimized = optimizedStorage();
     boolean[] serveNewKey = {true};
     when(store.get(any(byte[].class))).thenAnswer(invocation -> {
       byte[] key = invocation.getArgument(0);
@@ -221,14 +224,14 @@ public class StorageAliasTest {
     });
     assertEquals(new DataWord(4), optimized.getValue(slot));
     serveNewKey[0] = false;
-    assertNull(optimized.getValue(alias));
+    assertThrows(OutOfTimeException.class, () -> optimized.getValue(alias));
     serveNewKey[0] = true;
     assertEquals(new DataWord(4), optimized.getValue(alias));
   }
 
   @Test
   public void optimizedCommitDeletesLegacyKey() {
-    Storage optimized = new Storage(new byte[21], store, true);
+    Storage optimized = optimizedStorage();
     optimized.put(slot, new DataWord(5));
     optimized.commit();
     verify(store).put(argThat(key -> key != null && key.length == 48), any());
@@ -236,20 +239,45 @@ public class StorageAliasTest {
   }
 
   @Test
-  public void readOfOldKeyMigratesOnCommit() {
-    Storage optimized = new Storage(new byte[21], store, true);
+  public void readOfOldKeyDoesNotMigrateOnCommit() {
+    Storage optimized = optimizedStorage();
     when(store.get(argThat(key -> key != null && key.length == 32)))
         .thenReturn(new StorageRowCapsule(new DataWord(7).getData()));
     assertEquals(new DataWord(7), optimized.getValue(slot));
     optimized.commit();
+    verify(store, never()).put(any(), any());
+    verify(store, never()).delete(any());
+  }
+
+  @Test
+  public void proposal99SecondReadIsEmptyAndPureReadMigrates() {
+    Storage proposal99 = createStorage(1, 0);
+    when(store.get(argThat(key -> key != null && key.length == 32)))
+        .thenReturn(new StorageRowCapsule(new DataWord(7).getData()));
+    assertEquals(new DataWord(7), proposal99.getValue(slot));
+    assertNull(proposal99.getValue(alias));
+    proposal99.commit();
     verify(store).put(argThat(key -> key != null && key.length == 48),
         argThat(row -> new DataWord(row.getValue()).longValue() == 7L));
     verify(store).delete(argThat(key -> key != null && key.length == 32));
   }
 
   @Test
+  public void proposal99ChildCopyDoesNotTimeout() {
+    Storage parent = createStorage(1, 0);
+    when(store.get(argThat(key -> key != null && key.length == 32)))
+        .thenReturn(new StorageRowCapsule(new DataWord(7).getData()));
+    assertEquals(new DataWord(7), parent.getValue(slot));
+    Storage child = new Storage(parent);
+    assertNull(child.getValue(alias));
+    child.commit();
+    verify(store).put(argThat(key -> key != null && key.length == 48), any());
+    verify(store).delete(argThat(key -> key != null && key.length == 32));
+  }
+
+  @Test
   public void readOfMissingKeyDoesNotWriteAndRepeatReadSkipsStore() {
-    Storage optimized = new Storage(new byte[21], store, true);
+    Storage optimized = optimizedStorage();
     assertNull(optimized.getValue(slot));
     assertNull(optimized.getValue(slot));
     optimized.commit();
@@ -260,7 +288,7 @@ public class StorageAliasTest {
 
   @Test
   public void readOfNewKeyDoesNotRewrite() {
-    Storage optimized = new Storage(new byte[21], store, true);
+    Storage optimized = optimizedStorage();
     when(store.get(argThat(key -> key != null && key.length == 48)))
         .thenReturn(new StorageRowCapsule(new DataWord(4).getData()));
     assertEquals(new DataWord(4), optimized.getValue(slot));
@@ -271,7 +299,7 @@ public class StorageAliasTest {
 
   @Test
   public void writeAfterReadKeepsWrittenValueAndDeletesOldKey() {
-    Storage optimized = new Storage(new byte[21], store, true);
+    Storage optimized = optimizedStorage();
     when(store.get(argThat(key -> key != null && key.length == 32)))
         .thenReturn(new StorageRowCapsule(new DataWord(7).getData()));
     assertEquals(new DataWord(7), optimized.getValue(slot));
@@ -284,7 +312,7 @@ public class StorageAliasTest {
 
   @Test
   public void readThenWriteOfExistingNewKeyDoesNotDeleteOld() {
-    Storage optimized = new Storage(new byte[21], store, true);
+    Storage optimized = optimizedStorage();
     when(store.get(argThat(key -> key != null && key.length == 48)))
         .thenReturn(new StorageRowCapsule(new DataWord(4).getData()));
     assertEquals(new DataWord(4), optimized.getValue(slot));
@@ -297,7 +325,7 @@ public class StorageAliasTest {
 
   @Test
   public void writeThenCacheHitDeletesOldKey() {
-    Storage optimized = new Storage(new byte[21], store, true);
+    Storage optimized = optimizedStorage();
     when(store.get(argThat(key -> key != null && key.length == 48)))
         .thenReturn(new StorageRowCapsule(new DataWord(4).getData()));
     optimized.put(slot, new DataWord(9));
@@ -309,7 +337,7 @@ public class StorageAliasTest {
 
   @Test
   public void storedZeroOnNewKeyReadsAsEmptyAndSkipsOldKey() {
-    Storage optimized = new Storage(new byte[21], store, true);
+    Storage optimized = optimizedStorage();
     when(store.get(any(byte[].class))).thenAnswer(invocation -> {
       byte[] key = invocation.getArgument(0);
       if (key.length == 48) {
@@ -333,7 +361,7 @@ public class StorageAliasTest {
 
   @Test
   public void writeAfterStoredZeroHitsCacheAndDoesNotDeleteOldKey() {
-    Storage optimized = new Storage(new byte[21], store, true);
+    Storage optimized = optimizedStorage();
     when(store.get(argThat(key -> key != null && key.length == 48)))
         .thenReturn(new StorageRowCapsule(DataWord.ZERO().getData()));
     assertNull(optimized.getValue(slot));
@@ -348,7 +376,7 @@ public class StorageAliasTest {
 
   @Test
   public void putZeroOverStoredZeroStaysInCache() {
-    Storage optimized = new Storage(new byte[21], store, true);
+    Storage optimized = optimizedStorage();
     when(store.get(argThat(key -> key != null && key.length == 48)))
         .thenReturn(new StorageRowCapsule(DataWord.ZERO().getData()));
     assertNull(optimized.getValue(slot));
@@ -356,6 +384,173 @@ public class StorageAliasTest {
     assertEquals(DataWord.ZERO(), optimized.getValue(slot));
     assertEquals(DataWord.ZERO(), optimized.getValue(slot.clone()));
     verify(store, times(1)).get(any());
+  }
+
+  @Test
+  public void collidingReadTimesOutAndDoesNotMigrate() {
+    Storage optimized = optimizedStorage();
+    when(store.get(argThat(key -> key != null && key.length == 32)))
+        .thenReturn(new StorageRowCapsule(new DataWord(7).getData()));
+    assertEquals(new DataWord(7), optimized.getValue(slot));
+    OutOfTimeException ex = assertThrows(OutOfTimeException.class,
+        () -> optimized.getValue(alias));
+    assertEquals("CPU timeout for storage check", ex.getMessage());
+    optimized.commit();
+    verify(store, never()).put(any(), any());
+    verify(store, never()).delete(any());
+  }
+
+  @Test
+  public void pureReadDoesNotMigrateAndLegacyValueStays() {
+    Storage optimized = optimizedStorage();
+    when(store.get(argThat(key -> key != null && key.length == 32)))
+        .thenReturn(new StorageRowCapsule(new DataWord(7).getData()));
+    assertEquals(new DataWord(7), optimized.getValue(alias));
+    assertEquals(new DataWord(7), optimized.getValue(alias.clone()));
+    optimized.commit();
+    verify(store, never()).put(any(), any());
+    verify(store, never()).delete(any());
+    Storage later = optimizedStorage();
+    assertEquals(new DataWord(7), later.getValue(slot));
+  }
+
+  @Test
+  public void unrelatedWriteDoesNotMigrateAPureRead() {
+    Storage optimized = optimizedStorage();
+    when(store.get(argThat(key -> key != null && key.length == 32)))
+        .thenReturn(new StorageRowCapsule(new DataWord(7).getData()));
+    assertEquals(new DataWord(7), optimized.getValue(slot));
+    optimized.put(new DataWord(2), new DataWord(3));
+    optimized.commit();
+    verify(store, times(1)).put(argThat(key -> key != null && key.length == 48), any());
+    verify(store, times(1)).delete(argThat(key -> key != null && key.length == 32));
+    Storage later = optimizedStorage();
+    assertEquals(new DataWord(7), later.getValue(slot));
+  }
+
+  @Test
+  public void writeAfterReadStillMigrates() {
+    Storage optimized = optimizedStorage();
+    when(store.get(argThat(key -> key != null && key.length == 32)))
+        .thenReturn(new StorageRowCapsule(new DataWord(7).getData()));
+    assertEquals(new DataWord(7), optimized.getValue(slot));
+    optimized.put(slot, new DataWord(9));
+    optimized.commit();
+    verify(store).put(argThat(key -> key != null && key.length == 48),
+        argThat(row -> new DataWord(row.getValue()).longValue() == 9L));
+    verify(store).delete(argThat(key -> key != null && key.length == 32));
+  }
+
+  @Test
+  public void directPutDoesNotThrowAndStillDeletesOldKey() {
+    Storage optimized = optimizedStorage();
+    optimized.put(slot, new DataWord(5));
+    optimized.put(alias, new DataWord(8));
+    optimized.commit();
+    verify(store, times(2)).put(argThat(key -> key != null && key.length == 48), any());
+    verify(store, times(2)).delete(argThat(key -> key != null && key.length == 32));
+  }
+
+  @Test
+  public void readAfterAliasPutTimesOutWhileLegacyRowExists() {
+    Storage optimized = optimizedStorage();
+    when(store.get(argThat(key -> key != null && key.length == 32)))
+        .thenReturn(new StorageRowCapsule(new DataWord(7).getData()));
+    optimized.put(slot, new DataWord(5));
+    OutOfTimeException ex = assertThrows(OutOfTimeException.class,
+        () -> optimized.getValue(alias));
+    assertEquals("CPU timeout for storage check", ex.getMessage());
+  }
+
+  @Test
+  public void aliasReadOfAbsentLegacyRowStaysEmpty() {
+    Storage optimized = optimizedStorage();
+    optimized.put(slot, new DataWord(5));
+    assertNull(optimized.getValue(alias));
+  }
+
+  @Test
+  public void aliasReadAfterMigrationDoesNotThrow() {
+    Storage optimized = optimizedStorage();
+    int[] newKeyReads = {0};
+    when(store.get(any(byte[].class))).thenAnswer(invocation -> {
+      byte[] key = invocation.getArgument(0);
+      if (key.length == 48 && newKeyReads[0]++ == 0) {
+        return new StorageRowCapsule(new DataWord(4).getData());
+      }
+      return null;
+    });
+    assertEquals(new DataWord(4), optimized.getValue(slot));
+    assertNull(optimized.getValue(alias));
+    optimized.commit();
+    verify(store, never()).put(any(), any());
+    verify(store, never()).delete(any());
+  }
+
+  @Test
+  public void liveLegacyRowStillTimesOutAfterANewKeyHit() {
+    Storage optimized = optimizedStorage();
+    int[] newKeyReads = {0};
+    when(store.get(any(byte[].class))).thenAnswer(invocation -> {
+      byte[] key = invocation.getArgument(0);
+      if (key.length == 48 && newKeyReads[0]++ == 0) {
+        return new StorageRowCapsule(new DataWord(4).getData());
+      }
+      if (key.length == 32) {
+        return new StorageRowCapsule(new DataWord(7).getData());
+      }
+      return null;
+    });
+    assertEquals(new DataWord(4), optimized.getValue(slot));
+    assertThrows(OutOfTimeException.class, () -> optimized.getValue(alias));
+  }
+
+  @Test
+  public void migratedNewKeysDoNotTimeout() {
+    Storage optimized = optimizedStorage();
+    when(store.get(argThat(key -> key != null && key.length == 48)))
+        .thenReturn(new StorageRowCapsule(new DataWord(4).getData()));
+    assertEquals(new DataWord(4), optimized.getValue(slot));
+    assertEquals(new DataWord(4), optimized.getValue(alias));
+    optimized.commit();
+    verify(store, never()).delete(any());
+  }
+
+  @Test
+  public void childCopyInheritsOwner() {
+    Storage parent = optimizedStorage();
+    when(store.get(argThat(key -> key != null && key.length == 32)))
+        .thenReturn(new StorageRowCapsule(new DataWord(7).getData()));
+    assertEquals(new DataWord(7), parent.getValue(slot));
+    Storage child = new Storage(parent);
+    assertThrows(OutOfTimeException.class, () -> child.getValue(alias));
+    child.commit();
+    verify(store, never()).put(any(), any());
+    verify(store, never()).delete(any());
+  }
+
+  @Test
+  public void versionOneAliasesDoNotTimeout() {
+    Storage optimized = optimizedStorage();
+    optimized.setContractVersion(1);
+    when(store.get(argThat(key -> key != null && key.length == 32)))
+        .thenReturn(new StorageRowCapsule(new DataWord(7).getData()));
+    assertEquals(new DataWord(7), optimized.getValue(slot));
+    assertEquals(new DataWord(7), optimized.getValue(alias));
+    optimized.commit();
+    verify(store, never()).put(any(), any());
+    verify(store, never()).delete(any());
+  }
+
+  private Storage optimizedStorage() {
+    return createStorage(0, 1);
+  }
+
+  private Storage createStorage(int proposal99, int proposal102) {
+    DynamicPropertiesStore dynamicStore = mock(DynamicPropertiesStore.class);
+    when(dynamicStore.allowTvmStorageOptimization()).thenReturn(proposal99 == 1 || proposal102 == 1);
+    when(dynamicStore.allowOptimizeTvmStorageKey()).thenReturn(proposal102 == 1);
+    return new Storage(new byte[21], store, dynamicStore);
   }
 
   private static DataWord aliasedSlot(int value) {
