@@ -79,8 +79,8 @@ public class KhaosDatabase {
         }
         block.setParent(kblock);
       } else {
-        logger.error("Unlinked block: {}, parent: {}.", blk.getBlockId(), blk.getParentHash());
-        throw new UnLinkedBlockException();
+        throw new UnLinkedBlockException(String.format(
+            "Unlinked block: %s, parent: %s.", blk.getBlockId(), blk.getParentHash()));
       }
     }
 
