@@ -150,7 +150,8 @@ public class HistoryBlockHashUtil {
       return;
     }
     long slot = (block.getNum() - 1) % HISTORY_SERVE_WINDOW;
-    Storage storage = new Storage(HISTORY_STORAGE_ADDRESS, manager.getStorageRowStore());
+    Storage storage = new Storage(HISTORY_STORAGE_ADDRESS, manager.getStorageRowStore(),
+        manager.getDynamicPropertiesStore().allowOptimizeTvmStorage());
     storage.put(new DataWord(slot), new DataWord(block.getParentHash().getBytes()));
     storage.commit();
   }

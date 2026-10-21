@@ -36,6 +36,9 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
+      - name: Validate Gradle wrapper
+        uses: gradle/actions/wrapper-validation@v6
+
       - name: Set up JDK ${{ matrix.java }}
         uses: actions/setup-java@v5
         with:
@@ -52,16 +55,31 @@ jobs:
           restore-keys: macos26-${{ matrix.arch }}-gradle-
 
       - name: Build
-        run: ./gradlew clean build --no-daemon
+        shell: bash
+        run: |
+          .github/ci/ci-run.sh build ./gradlew clean build --no-daemon --console=plain
 
       - name: Toolkit jar smoke test
+        shell: bash
         run: |
-          set -e
-          JAR=plugins/build/libs/Toolkit.jar
-          java -jar "$JAR" help
-          java -jar "$JAR" db --help
-          java -jar "$JAR" db archive -h
-          java -jar "$JAR" keystore --help
+          .github/ci/ci-run.sh toolkit-smoke bash -euo pipefail -c '
+            JAR=plugins/build/libs/Toolkit.jar
+            java -jar "$JAR" help
+            java -jar "$JAR" db --help
+            java -jar "$JAR" db archive -h
+            java -jar "$JAR" keystore --help'
+
+      - name: Upload test diagnostics
+        if: ${{ !cancelled() && failure() }}
+        uses: actions/upload-artifact@v6
+        with:
+          name: tron-test-logs-${{ github.job }}-jdk${{ matrix.java }}-${{ matrix.arch }}
+          path: |
+            **/logs/tron-test.log
+            ci-logs/
+            **/build/test-results/**/*.xml
+          if-no-files-found: warn
+          retention-days: 7
 
   build-ubuntu:
     name: Build ubuntu24 (JDK 17 / aarch64)
@@ -71,6 +89,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v5
+
+      - name: Validate Gradle wrapper
+        uses: gradle/actions/wrapper-validation@v6
 
       - name: Set up JDK 17
         uses: actions/setup-java@v5
@@ -91,16 +112,31 @@ jobs:
           restore-keys: ubuntu24-aarch64-gradle-
 
       - name: Build
-        run: ./gradlew clean build --no-daemon
+        shell: bash
+        run: |
+          .github/ci/ci-run.sh build ./gradlew clean build --no-daemon --console=plain
 
       - name: Toolkit jar smoke test
+        shell: bash
         run: |
-          set -e
-          JAR=plugins/build/libs/Toolkit.jar
-          java -jar "$JAR" help
-          java -jar "$JAR" db --help
-          java -jar "$JAR" db archive -h
-          java -jar "$JAR" keystore --help
+          .github/ci/ci-run.sh toolkit-smoke bash -euo pipefail -c '
+            JAR=plugins/build/libs/Toolkit.jar
+            java -jar "$JAR" help
+            java -jar "$JAR" db --help
+            java -jar "$JAR" db archive -h
+            java -jar "$JAR" keystore --help'
+
+      - name: Upload test diagnostics
+        if: ${{ !cancelled() && failure() }}
+        uses: actions/upload-artifact@v6
+        with:
+          name: tron-test-logs-${{ github.job }}
+          path: |
+            **/logs/tron-test.log
+            ci-logs/
+            **/build/test-results/**/*.xml
+          if-no-files-found: warn
+          retention-days: 7
 
   docker-build-rockylinux:
     name: Build rockylinux (JDK 8 / x86_64)
@@ -113,18 +149,37 @@ jobs:
 
     env:
       GRADLE_USER_HOME: /github/home/.gradle
-      LANG: en_US.UTF-8
-      LC_ALL: en_US.UTF-8
+      LANG: C.utf8
+      LC_ALL: C.utf8
 
     steps:
       - name: Install dependencies (Rocky 8 + JDK8)
         run: |
           set -euxo pipefail
-          dnf -y install java-1.8.0-openjdk-devel git wget unzip which jq bc curl glibc-langpack-en
-          dnf -y groupinstall "Development Tools"
+          # Rocky 8 already provides CA certificates, JNI runtime libraries, tar and gzip.
+          # Its built-in C.utf8 locale provides UTF-8 without an extra language pack.
+          # git-core provides checkout commands; zstd supports actions/cache compression.
+          # Abandon connections below 256 KiB/s for 30 seconds so DNF can try another mirror.
+          dnf -y \
+            --setopt=install_weak_deps=False \
+            --setopt=max_parallel_downloads=10 \
+            --setopt=minrate=256k \
+            --setopt=timeout=30 \
+            install java-1.8.0-openjdk-devel git-core zstd
+          # Set JAVA_HOME so the Gradle wrapper does not need which.
+          javac_path=$(command -v javac)
+          javac_real=$(readlink -f "$javac_path")
+          jdk_bin=$(dirname "$javac_real")
+          jdk_home=$(dirname "$jdk_bin")
+          test -x "$jdk_home/bin/java"
+          test -x "$jdk_home/bin/javac"
+          printf 'JAVA_HOME=%s\n' "$jdk_home" >> "$GITHUB_ENV"
 
       - name: Checkout code
         uses: actions/checkout@v5
+
+      - name: Validate Gradle wrapper
+        uses: gradle/actions/wrapper-validation@v6
 
       - name: Check Java version
         run: java -version
@@ -143,19 +198,36 @@ jobs:
         run: ./gradlew --stop || true
 
       - name: Build
-        run: ./gradlew clean build --no-daemon
+        shell: bash
+        run: |
+          .github/ci/ci-run.sh build ./gradlew clean build --no-daemon --console=plain
 
       - name: Toolkit jar smoke test
+        shell: bash
         run: |
-          set -e
-          JAR=plugins/build/libs/Toolkit.jar
-          java -jar "$JAR" help
-          java -jar "$JAR" db --help
-          java -jar "$JAR" db archive -h
-          java -jar "$JAR" keystore --help
+          .github/ci/ci-run.sh toolkit-smoke bash -euo pipefail -c '
+            JAR=plugins/build/libs/Toolkit.jar
+            java -jar "$JAR" help
+            java -jar "$JAR" db --help
+            java -jar "$JAR" db archive -h
+            java -jar "$JAR" keystore --help'
 
       - name: Test with RocksDB engine
-        run: ./gradlew :framework:testWithRocksDb --no-daemon
+        shell: bash
+        run: |
+          .github/ci/ci-run.sh rocksdb-test ./gradlew :framework:testWithRocksDb --no-daemon --console=plain
+
+      - name: Upload test diagnostics
+        if: ${{ !cancelled() && failure() }}
+        uses: actions/upload-artifact@v6
+        with:
+          name: tron-test-logs-${{ github.job }}
+          path: |
+            **/logs/tron-test.log
+            ci-logs/
+            **/build/test-results/**/*.xml
+          if-no-files-found: warn
+          retention-days: 7
 
   docker-build-debian11:
     name: Build debian11 (JDK 8 / x86_64)
@@ -183,6 +255,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v5
 
+      - name: Validate Gradle wrapper
+        uses: gradle/actions/wrapper-validation@v6
+
       - name: Check Java version
         run: java -version
 
@@ -197,22 +272,29 @@ jobs:
             debian11-x86_64-gradle-
 
       - name: Build
-        run: ./gradlew clean build --no-daemon --no-build-cache
+        shell: bash
+        run: |
+          .github/ci/ci-run.sh build ./gradlew clean build --no-daemon --console=plain
 
       - name: Toolkit jar smoke test
+        shell: bash
         run: |
-          set -e
-          JAR=plugins/build/libs/Toolkit.jar
-          java -jar "$JAR" help
-          java -jar "$JAR" db --help
-          java -jar "$JAR" db archive -h
-          java -jar "$JAR" keystore --help
+          .github/ci/ci-run.sh toolkit-smoke bash -euo pipefail -c '
+            JAR=plugins/build/libs/Toolkit.jar
+            java -jar "$JAR" help
+            java -jar "$JAR" db --help
+            java -jar "$JAR" db archive -h
+            java -jar "$JAR" keystore --help'
 
       - name: Test with RocksDB engine
-        run: ./gradlew :framework:testWithRocksDb --no-daemon --no-build-cache
+        shell: bash
+        run: |
+          .github/ci/ci-run.sh rocksdb-test ./gradlew :framework:testWithRocksDb --no-daemon --console=plain
 
       - name: Generate module coverage reports
-        run: ./gradlew jacocoTestReport --no-daemon
+        shell: bash
+        run: |
+          .github/ci/ci-run.sh coverage ./gradlew jacocoTestReport --no-daemon --console=plain
 
       - name: Upload PR coverage reports
         uses: actions/upload-artifact@v6
@@ -221,6 +303,18 @@ jobs:
           path: |
             **/build/reports/jacoco/test/jacocoTestReport.xml
           if-no-files-found: error
+
+      - name: Upload test diagnostics
+        if: ${{ !cancelled() && failure() }}
+        uses: actions/upload-artifact@v6
+        with:
+          name: tron-test-logs-${{ github.job }}
+          path: |
+            **/logs/tron-test.log
+            ci-logs/
+            **/build/test-results/**/*.xml
+          if-no-files-found: warn
+          retention-days: 7
 
   coverage-base:
     name: Coverage Base (JDK 8 / x86_64)
@@ -249,6 +343,17 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.base.sha }}
 
+      - name: Validate Gradle wrapper
+        uses: gradle/actions/wrapper-validation@v6
+
+      # The base commit may predate the CI diagnostic scripts; take them from the PR.
+      - name: Checkout CI diagnostic scripts
+        uses: actions/checkout@v5
+        with:
+          path: ci-tools
+          sparse-checkout: .github/ci
+          sparse-checkout-cone-mode: false
+
       - name: Cache Gradle packages
         uses: actions/cache@v5
         with:
@@ -260,19 +365,31 @@ jobs:
             coverage-base-x86_64-gradle-
 
       - name: Build (base)
+        id: base_build
         # Test failures on the base branch are tolerated: merge-order races can
         # leave the base with a pre-existing failing test that is unrelated to
         # this PR.  The only output we need from this job is the jacoco XML for
         # coverage diffing, so we must not let a stale test failure block it.
         continue-on-error: true
-        run: ./gradlew clean build --no-daemon --no-build-cache
+        shell: bash
+        env:
+          CI_DIAG_ANNOTATION: warning
+        run: |
+          ci-tools/.github/ci/ci-run.sh build ./gradlew clean build --no-daemon --console=plain
 
       - name: Test with RocksDB engine (base)
+        id: base_rocksdb_test
         continue-on-error: true
-        run: ./gradlew :framework:testWithRocksDb --no-daemon --no-build-cache
+        shell: bash
+        env:
+          CI_DIAG_ANNOTATION: warning
+        run: |
+          ci-tools/.github/ci/ci-run.sh rocksdb-test ./gradlew :framework:testWithRocksDb --no-daemon --console=plain
 
       - name: Generate module coverage reports (base)
-        run: ./gradlew jacocoTestReport --no-daemon
+        shell: bash
+        run: |
+          ci-tools/.github/ci/ci-run.sh coverage ./gradlew jacocoTestReport --no-daemon --console=plain
 
       - name: Upload base coverage reports
         uses: actions/upload-artifact@v6
@@ -281,6 +398,23 @@ jobs:
           path: |
             **/build/reports/jacoco/test/jacocoTestReport.xml
           if-no-files-found: warn
+
+      - name: Upload test diagnostics
+        # Preserve logs for test failures tolerated by continue-on-error above.
+        if: >-
+          ${{ !cancelled() &&
+              (failure() ||
+               steps.base_build.outcome == 'failure' ||
+               steps.base_rocksdb_test.outcome == 'failure') }}
+        uses: actions/upload-artifact@v6
+        with:
+          name: tron-test-logs-${{ github.job }}
+          path: |
+            **/logs/tron-test.log
+            ci-logs/
+            **/build/test-results/**/*.xml
+          if-no-files-found: warn
+          retention-days: 7
 
   coverage-gate:
     name: Coverage Gate

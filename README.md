@@ -20,6 +20,7 @@
 - [Building the Source Code](#building-the-source-code)
 - [Executables](#executables)
 - [Running java-tron](#running-java-tron)
+- [Documentation](#documentation)
 - [Community](#community)
 - [Contribution](#contribution)
 - [Resources](#resources)
@@ -80,8 +81,8 @@ The java-tron project comes with several runnable artifacts and helper scripts f
 | :---------------------- | :---------- |
 | **`FullNode.jar`**      | Main TRON node executable (generated in `build/libs/` after a successful build following the above guidance). Runs as a full node by default. `java -jar FullNode.jar --help` for command line options|
 | **`Toolkit.jar`** | Node management utility (generated in `build/libs/`): partition, prune, copy, convert DBs; shadow-fork tool. [Usage](https://tronprotocol.github.io/documentation-en/using_javatron/toolkit/#toolkit-a-java-tron-node-maintenance-suite) |
-| **`start.sh`**          | Quick start script (x86_64, JDK 8) to download/build/run `FullNode.jar`. See the tool [guide](./shell.md). |
-| **`start.sh.simple`**   | Quick start script template (ARM64, JDK 17). See usage notes inside the script. |
+| **`p2p-standalone.jar`** | Peer discovery, connection management and DNS-based node lists (generated in `build/libs/`). See the [p2p guide](./p2p/README.md). |
+| **`start.sh`**          | Quick start script to download/build/run `FullNode.jar` on x86_64 (JDK 8) and ARM64 (JDK 17). See the tool [guide](./shell.md). |
 
 # Running java-tron
 
@@ -161,6 +162,9 @@ Fill in the private key of your SR account into the `localwitness` list in the c
     <your_private_key>
  ]
 ```
+
+> **Note**: Plain private keys in `localwitness` (and the `-p/--private-key` CLI flag) are deprecated and insecure — they are readable by anyone with access to the config file, process list, or shell history. Use the encrypted [`localwitnesskeystore`](https://tronprotocol.github.io/documentation-en/using_javatron/toolkit/) instead.
+
 Check [Starting a Block Production Node](https://tronprotocol.github.io/documentation-en/using_javatron/installing_javatron/#starting-a-block-production-node) for more details.
 You could also test the process by connecting to a testnet or setting up a private network.
 
@@ -195,6 +199,24 @@ When exposing any of these APIs to a public interface, ensure the node is protec
 
 Public hosted HTTP endpoints for both mainnet and testnet are provided by TronGrid. Please refer to the [TRON Network HTTP Endpoints](https://developers.tron.network/docs/connect-to-the-tron-network#tron-network-http-endpoints) for the latest list. For supported methods and request formats, see the HTTP API reference above.
 
+# Documentation
+
+More detailed guides live in the [`docs/`](./docs) directory:
+
+- **Configuration**
+  - [Configuration Reference](./docs/configuration.md) — full `config.conf` option reference
+  - [Configuration Conventions](./docs/configuration-conventions.md)
+- **Modular architecture & deployment**
+  - [Modular Introduction](./docs/modular-introduction-en.md) · [中文版](./docs/modular-introduction-zh.md)
+  - [Modular Deployment](./docs/modular-deployment-en.md) · [中文版](./docs/modular-deployment-zh.md)
+  - [P2P Module](./p2p/README.md) — peer discovery, connection management and DNS-based node lists
+- **Extending java-tron**
+  - [Implement a Customized Actuator](./docs/implement-a-customized-actuator-en.md) · [中文版](./docs/implement-a-customized-actuator-zh.md)
+- **Protocol**
+  - [TRON Protobuf Protocol Document](./docs/protobuf-protocol-document.md) — guide to the main Protobuf messages; the `.proto` files under [`protocol/src/main/protos`](./protocol/src/main/protos) are the source of truth
+- **Observability**
+  - [Metrics Changelog](./docs/metrics-changelog.md) — Prometheus metric additions, changes, and removals across java-tron releases
+
 # Community
 
 [TRON Developers & SRs](https://discord.gg/hqKvyAM) is TRON's official Discord channel. Feel free to join this channel if you have any questions.
@@ -223,6 +245,7 @@ Thank you for considering to help out with the source code! If you'd like to con
   pub: 1254 F859 D2B1 BD9F 66E7 107D F859 BCB4 4A28 290B
   uid: build@tron.network
   ```
+- `start.sh` only accepts release jars signed by this key, whose fingerprint is written into the script. This protects against tampered release files, but not against a compromise of this repository, which hosts both the script and the release files: a `start.sh` taken from a compromised repository could carry a different fingerprint.
 
 # License
 

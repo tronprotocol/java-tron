@@ -6,6 +6,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.security.SecureRandom;
@@ -31,15 +32,17 @@ public class KeystoreImportTest {
 
     // Generate a known private key
     SignInterface keyPair = SignUtils.getGeneratedRandomSign(
-        SecureRandom.getInstance("NativePRNG"), true);
+        SecureRandom.getInstance("NativePRNG"));
     String privateKeyHex = ByteArray.toHexString(keyPair.getPrivateKey());
     String expectedAddress = Credentials.create(keyPair).getAddress();
 
     File keyFile = tempFolder.newFile("private.key");
     Files.write(keyFile.toPath(), privateKeyHex.getBytes(StandardCharsets.UTF_8));
+    makeOwnerOnly(keyFile);
 
     File pwFile = tempFolder.newFile("password.txt");
     Files.write(pwFile.toPath(), "test123456".getBytes(StandardCharsets.UTF_8));
+    makeOwnerOnly(pwFile);
 
     CommandLine cmd = new CommandLine(new Toolkit());
     int exitCode = cmd.execute("keystore", "import",
@@ -54,7 +57,7 @@ public class KeystoreImportTest {
     assertEquals(1, files.length);
 
     // Verify roundtrip: decrypt should recover the same private key
-    Credentials creds = WalletUtils.loadCredentials("test123456", files[0], true);
+    Credentials creds = WalletUtils.loadCredentials("test123456", files[0]);
     assertEquals("Address must match", expectedAddress, creds.getAddress());
     assertArrayEquals("Private key must survive import roundtrip",
         keyPair.getPrivateKey(), creds.getSignInterface().getPrivateKey());
@@ -65,9 +68,11 @@ public class KeystoreImportTest {
     File dir = tempFolder.newFolder("keystore-bad");
     File keyFile = tempFolder.newFile("bad.key");
     Files.write(keyFile.toPath(), "abcdef1234".getBytes(StandardCharsets.UTF_8));
+    makeOwnerOnly(keyFile);
 
     File pwFile = tempFolder.newFile("pw.txt");
     Files.write(pwFile.toPath(), "test123456".getBytes(StandardCharsets.UTF_8));
+    makeOwnerOnly(pwFile);
 
     CommandLine cmd = new CommandLine(new Toolkit());
     int exitCode = cmd.execute("keystore", "import",
@@ -85,9 +90,11 @@ public class KeystoreImportTest {
     Files.write(keyFile.toPath(),
         "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz"
             .getBytes(StandardCharsets.UTF_8));
+    makeOwnerOnly(keyFile);
 
     File pwFile = tempFolder.newFile("pw.txt");
     Files.write(pwFile.toPath(), "test123456".getBytes(StandardCharsets.UTF_8));
+    makeOwnerOnly(pwFile);
 
     CommandLine cmd = new CommandLine(new Toolkit());
     int exitCode = cmd.execute("keystore", "import",
@@ -103,6 +110,7 @@ public class KeystoreImportTest {
     File dir = tempFolder.newFolder("keystore-notty");
     File pwFile = tempFolder.newFile("pw2.txt");
     Files.write(pwFile.toPath(), "test123456".getBytes(StandardCharsets.UTF_8));
+    makeOwnerOnly(pwFile);
 
     // No --key-file and System.console() is null in CI
     CommandLine cmd = new CommandLine(new Toolkit());
@@ -114,49 +122,20 @@ public class KeystoreImportTest {
   }
 
   @Test
-  public void testImportWithSm2() throws Exception {
-    File dir = tempFolder.newFolder("keystore-sm2");
-    // SM2 uses same 32-byte private key format
-    SignInterface keyPair = SignUtils.getGeneratedRandomSign(
-        SecureRandom.getInstance("NativePRNG"), false);
-    String privateKeyHex = ByteArray.toHexString(keyPair.getPrivateKey());
-
-    File keyFile = tempFolder.newFile("sm2.key");
-    Files.write(keyFile.toPath(), privateKeyHex.getBytes(StandardCharsets.UTF_8));
-    File pwFile = tempFolder.newFile("pw-sm2.txt");
-    Files.write(pwFile.toPath(), "test123456".getBytes(StandardCharsets.UTF_8));
-
-    CommandLine cmd = new CommandLine(new Toolkit());
-    int exitCode = cmd.execute("keystore", "import",
-        "--keystore-dir", dir.getAbsolutePath(),
-        "--key-file", keyFile.getAbsolutePath(),
-        "--password-file", pwFile.getAbsolutePath(),
-        "--sm2");
-
-    assertEquals("SM2 import should succeed", 0, exitCode);
-    File[] files = dir.listFiles((d, name) -> name.endsWith(".json"));
-    assertNotNull(files);
-    assertEquals(1, files.length);
-
-    // Verify SM2 keystore can be decrypted
-    Credentials creds = WalletUtils.loadCredentials("test123456", files[0], false);
-    assertArrayEquals("SM2 key must survive import roundtrip",
-        keyPair.getPrivateKey(), creds.getSignInterface().getPrivateKey());
-  }
-
-  @Test
   public void testImportKeyFileWithWhitespace() throws Exception {
     File dir = tempFolder.newFolder("keystore-ws");
     SignInterface keyPair = SignUtils.getGeneratedRandomSign(
-        SecureRandom.getInstance("NativePRNG"), true);
+        SecureRandom.getInstance("NativePRNG"));
     String privateKeyHex = ByteArray.toHexString(keyPair.getPrivateKey());
 
     // Key file with leading/trailing whitespace and newlines
     File keyFile = tempFolder.newFile("ws.key");
     Files.write(keyFile.toPath(),
         ("  " + privateKeyHex + "  \n\n").getBytes(StandardCharsets.UTF_8));
+    makeOwnerOnly(keyFile);
     File pwFile = tempFolder.newFile("pw-ws.txt");
     Files.write(pwFile.toPath(), "test123456".getBytes(StandardCharsets.UTF_8));
+    makeOwnerOnly(pwFile);
 
     CommandLine cmd = new CommandLine(new Toolkit());
     int exitCode = cmd.execute("keystore", "import",
@@ -169,7 +148,7 @@ public class KeystoreImportTest {
     File[] files = dir.listFiles((d, name) -> name.endsWith(".json"));
     assertNotNull(files);
     assertEquals(1, files.length);
-    Credentials creds = WalletUtils.loadCredentials("test123456", files[0], true);
+    Credentials creds = WalletUtils.loadCredentials("test123456", files[0]);
     assertArrayEquals("Key must survive whitespace-trimmed import",
         keyPair.getPrivateKey(), creds.getSignInterface().getPrivateKey());
   }
@@ -178,13 +157,15 @@ public class KeystoreImportTest {
   public void testImportDuplicateAddressBlocked() throws Exception {
     File dir = tempFolder.newFolder("keystore-dup");
     SignInterface keyPair = SignUtils.getGeneratedRandomSign(
-        SecureRandom.getInstance("NativePRNG"), true);
+        SecureRandom.getInstance("NativePRNG"));
     String privateKeyHex = ByteArray.toHexString(keyPair.getPrivateKey());
 
     File keyFile = tempFolder.newFile("dup.key");
     Files.write(keyFile.toPath(), privateKeyHex.getBytes(StandardCharsets.UTF_8));
+    makeOwnerOnly(keyFile);
     File pwFile = tempFolder.newFile("pw-dup.txt");
     Files.write(pwFile.toPath(), "test123456".getBytes(StandardCharsets.UTF_8));
+    makeOwnerOnly(pwFile);
 
     // First import succeeds
     CommandLine cmd1 = new CommandLine(new Toolkit());
@@ -214,13 +195,15 @@ public class KeystoreImportTest {
   public void testImportDuplicateAddressWithForce() throws Exception {
     File dir = tempFolder.newFolder("keystore-force");
     SignInterface keyPair = SignUtils.getGeneratedRandomSign(
-        SecureRandom.getInstance("NativePRNG"), true);
+        SecureRandom.getInstance("NativePRNG"));
     String privateKeyHex = ByteArray.toHexString(keyPair.getPrivateKey());
 
     File keyFile = tempFolder.newFile("force.key");
     Files.write(keyFile.toPath(), privateKeyHex.getBytes(StandardCharsets.UTF_8));
+    makeOwnerOnly(keyFile);
     File pwFile = tempFolder.newFile("pw-force.txt");
     Files.write(pwFile.toPath(), "test123456".getBytes(StandardCharsets.UTF_8));
+    makeOwnerOnly(pwFile);
 
     // First import
     CommandLine cmd1 = new CommandLine(new Toolkit());
@@ -247,6 +230,7 @@ public class KeystoreImportTest {
     File dir = tempFolder.newFolder("keystore-nokey");
     File pwFile = tempFolder.newFile("pw-nokey.txt");
     Files.write(pwFile.toPath(), "test123456".getBytes(StandardCharsets.UTF_8));
+    makeOwnerOnly(pwFile);
 
     CommandLine cmd = new CommandLine(new Toolkit());
     int exitCode = cmd.execute("keystore", "import",
@@ -261,15 +245,17 @@ public class KeystoreImportTest {
   public void testImportWith0xPrefix() throws Exception {
     File dir = tempFolder.newFolder("keystore-0x");
     SignInterface keyPair = SignUtils.getGeneratedRandomSign(
-        SecureRandom.getInstance("NativePRNG"), true);
+        SecureRandom.getInstance("NativePRNG"));
     String privateKeyHex = ByteArray.toHexString(keyPair.getPrivateKey());
     String expectedAddress = Credentials.create(keyPair).getAddress();
 
     File keyFile = tempFolder.newFile("0x.key");
     Files.write(keyFile.toPath(),
         ("0x" + privateKeyHex).getBytes(StandardCharsets.UTF_8));
+    makeOwnerOnly(keyFile);
     File pwFile = tempFolder.newFile("pw-0x.txt");
     Files.write(pwFile.toPath(), "test123456".getBytes(StandardCharsets.UTF_8));
+    makeOwnerOnly(pwFile);
 
     CommandLine cmd = new CommandLine(new Toolkit());
     int exitCode = cmd.execute("keystore", "import",
@@ -281,7 +267,7 @@ public class KeystoreImportTest {
     File[] files = dir.listFiles((d, name) -> name.endsWith(".json"));
     assertNotNull(files);
     assertEquals(1, files.length);
-    Credentials creds = WalletUtils.loadCredentials("test123456", files[0], true);
+    Credentials creds = WalletUtils.loadCredentials("test123456", files[0]);
     assertEquals("Address must match", expectedAddress, creds.getAddress());
   }
 
@@ -289,14 +275,16 @@ public class KeystoreImportTest {
   public void testImportWith0XUppercasePrefix() throws Exception {
     File dir = tempFolder.newFolder("keystore-0X");
     SignInterface keyPair = SignUtils.getGeneratedRandomSign(
-        SecureRandom.getInstance("NativePRNG"), true);
+        SecureRandom.getInstance("NativePRNG"));
     String privateKeyHex = ByteArray.toHexString(keyPair.getPrivateKey());
 
     File keyFile = tempFolder.newFile("0X.key");
     Files.write(keyFile.toPath(),
         ("0X" + privateKeyHex).getBytes(StandardCharsets.UTF_8));
+    makeOwnerOnly(keyFile);
     File pwFile = tempFolder.newFile("pw-0X.txt");
     Files.write(pwFile.toPath(), "test123456".getBytes(StandardCharsets.UTF_8));
+    makeOwnerOnly(pwFile);
 
     CommandLine cmd = new CommandLine(new Toolkit());
     int exitCode = cmd.execute("keystore", "import",
@@ -311,7 +299,7 @@ public class KeystoreImportTest {
   public void testImportWarnsOnCorruptedFile() throws Exception {
     File dir = tempFolder.newFolder("keystore-corrupt");
     SignInterface keyPair = SignUtils.getGeneratedRandomSign(
-        SecureRandom.getInstance("NativePRNG"), true);
+        SecureRandom.getInstance("NativePRNG"));
     String privateKeyHex = ByteArray.toHexString(keyPair.getPrivateKey());
 
     // Create a corrupted JSON in the keystore dir
@@ -320,8 +308,10 @@ public class KeystoreImportTest {
 
     File keyFile = tempFolder.newFile("warn.key");
     Files.write(keyFile.toPath(), privateKeyHex.getBytes(StandardCharsets.UTF_8));
+    makeOwnerOnly(keyFile);
     File pwFile = tempFolder.newFile("pw-warn.txt");
     Files.write(pwFile.toPath(), "test123456".getBytes(StandardCharsets.UTF_8));
+    makeOwnerOnly(pwFile);
 
     java.io.StringWriter out = new java.io.StringWriter();
     java.io.StringWriter err = new java.io.StringWriter();
@@ -347,13 +337,15 @@ public class KeystoreImportTest {
 
     File dir = tempFolder.newFolder("keystore-perms");
     SignInterface keyPair = SignUtils.getGeneratedRandomSign(
-        SecureRandom.getInstance("NativePRNG"), true);
+        SecureRandom.getInstance("NativePRNG"));
     String privateKeyHex = ByteArray.toHexString(keyPair.getPrivateKey());
 
     File keyFile = tempFolder.newFile("perm.key");
     Files.write(keyFile.toPath(), privateKeyHex.getBytes(StandardCharsets.UTF_8));
+    makeOwnerOnly(keyFile);
     File pwFile = tempFolder.newFile("pw-perm.txt");
     Files.write(pwFile.toPath(), "test123456".getBytes(StandardCharsets.UTF_8));
+    makeOwnerOnly(pwFile);
 
     CommandLine cmd = new CommandLine(new Toolkit());
     int exitCode = cmd.execute("keystore", "import",
@@ -384,7 +376,7 @@ public class KeystoreImportTest {
     // Create a real key file and a symlink pointing to it
     File target = tempFolder.newFile("real.key");
     SignInterface keyPair = SignUtils.getGeneratedRandomSign(
-        SecureRandom.getInstance("NativePRNG"), true);
+        SecureRandom.getInstance("NativePRNG"));
     Files.write(target.toPath(),
         ByteArray.toHexString(keyPair.getPrivateKey()).getBytes(StandardCharsets.UTF_8));
 
@@ -393,6 +385,7 @@ public class KeystoreImportTest {
 
     File pwFile = tempFolder.newFile("pw-symlink.txt");
     Files.write(pwFile.toPath(), "test123456".getBytes(StandardCharsets.UTF_8));
+    makeOwnerOnly(pwFile);
 
     java.io.StringWriter err = new java.io.StringWriter();
     CommandLine cmd = new CommandLine(new Toolkit());
@@ -414,13 +407,15 @@ public class KeystoreImportTest {
 
     File dir = tempFolder.newFolder("keystore-pwsymlink");
     SignInterface keyPair = SignUtils.getGeneratedRandomSign(
-        SecureRandom.getInstance("NativePRNG"), true);
+        SecureRandom.getInstance("NativePRNG"));
     File keyFile = tempFolder.newFile("sym-pw.key");
     Files.write(keyFile.toPath(),
         ByteArray.toHexString(keyPair.getPrivateKey()).getBytes(StandardCharsets.UTF_8));
+    makeOwnerOnly(keyFile);
 
     File realPwFile = tempFolder.newFile("real-pw.txt");
     Files.write(realPwFile.toPath(), "test123456".getBytes(StandardCharsets.UTF_8));
+    makeOwnerOnly(realPwFile);
     File pwSymlink = new File(tempFolder.getRoot(), "pw-symlink.txt");
     Files.createSymbolicLink(pwSymlink.toPath(), realPwFile.toPath());
 
@@ -441,7 +436,7 @@ public class KeystoreImportTest {
   public void testImportDuplicateCheckSkipsInvalidVersion() throws Exception {
     File dir = tempFolder.newFolder("keystore-badver");
     SignInterface keyPair = SignUtils.getGeneratedRandomSign(
-        SecureRandom.getInstance("NativePRNG"), true);
+        SecureRandom.getInstance("NativePRNG"));
     String privateKeyHex = ByteArray.toHexString(keyPair.getPrivateKey());
     String address = Credentials.create(keyPair).getAddress();
 
@@ -453,8 +448,10 @@ public class KeystoreImportTest {
 
     File keyFile = tempFolder.newFile("ver.key");
     Files.write(keyFile.toPath(), privateKeyHex.getBytes(StandardCharsets.UTF_8));
+    makeOwnerOnly(keyFile);
     File pwFile = tempFolder.newFile("pw-ver.txt");
     Files.write(pwFile.toPath(), "test123456".getBytes(StandardCharsets.UTF_8));
+    makeOwnerOnly(pwFile);
 
     CommandLine cmd = new CommandLine(new Toolkit());
     int exitCode = cmd.execute("keystore", "import",
@@ -474,7 +471,7 @@ public class KeystoreImportTest {
     File dir = tempFolder.newFolder("keystore-dup-symlink");
 
     SignInterface keyPair = SignUtils.getGeneratedRandomSign(
-        SecureRandom.getInstance("NativePRNG"), true);
+        SecureRandom.getInstance("NativePRNG"));
     String privateKeyHex = ByteArray.toHexString(keyPair.getPrivateKey());
 
     File target = tempFolder.newFile("outside.json");
@@ -486,8 +483,10 @@ public class KeystoreImportTest {
     File keyFile = tempFolder.newFile("dup-sym.key");
     Files.write(keyFile.toPath(),
         privateKeyHex.getBytes(StandardCharsets.UTF_8));
+    makeOwnerOnly(keyFile);
     File pwFile = tempFolder.newFile("pw-dup-sym.txt");
     Files.write(pwFile.toPath(), "test123456".getBytes(StandardCharsets.UTF_8));
+    makeOwnerOnly(pwFile);
 
     java.io.StringWriter err = new java.io.StringWriter();
     CommandLine cmd = new CommandLine(new Toolkit());
@@ -510,14 +509,16 @@ public class KeystoreImportTest {
     // "old\nnew" becomes the password.
     File dir = tempFolder.newFolder("keystore-multi-pw");
     SignInterface keyPair = SignUtils.getGeneratedRandomSign(
-        SecureRandom.getInstance("NativePRNG"), true);
+        SecureRandom.getInstance("NativePRNG"));
     String privateKeyHex = ByteArray.toHexString(keyPair.getPrivateKey());
 
     File keyFile = tempFolder.newFile("multi.key");
     Files.write(keyFile.toPath(), privateKeyHex.getBytes(StandardCharsets.UTF_8));
+    makeOwnerOnly(keyFile);
     File pwFile = tempFolder.newFile("multi-pw.txt");
     Files.write(pwFile.toPath(),
         "oldpass123\nnewpass456".getBytes(StandardCharsets.UTF_8));
+    makeOwnerOnly(pwFile);
 
     java.io.StringWriter err = new java.io.StringWriter();
     CommandLine cmd = new CommandLine(new Toolkit());
@@ -533,5 +534,14 @@ public class KeystoreImportTest {
     File[] files = dir.listFiles((d, name) -> name.endsWith(".json"));
     assertTrue("No keystore should have been created",
         files == null || files.length == 0);
+  }
+
+  private static void makeOwnerOnly(File f) throws IOException {
+    if (Files.getFileAttributeView(f.toPath(),
+        java.nio.file.attribute.PosixFileAttributeView.class) == null) {
+      return; // non-POSIX FS: skip chmod, mirroring KeystoreCliUtils runtime behavior
+    }
+    Files.setPosixFilePermissions(f.toPath(),
+        java.nio.file.attribute.PosixFilePermissions.fromString("rw-------"));
   }
 }

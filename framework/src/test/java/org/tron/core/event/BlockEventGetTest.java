@@ -16,11 +16,13 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.mockito.Mockito;
 import org.tron.api.GrpcAPI;
 import org.tron.common.TestConstants;
+import org.tron.common.VMConfigRule;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.logsfilter.EventPluginConfig;
 import org.tron.common.logsfilter.EventPluginLoader;
@@ -52,6 +54,9 @@ public class BlockEventGetTest extends BlockGenerate {
 
   @ClassRule
   public static final TemporaryFolder temporaryFolder = new TemporaryFolder();
+
+  @Rule
+  public final VMConfigRule vmConfigRule = new VMConfigRule();
 
   static ChainBaseManager chainManager;
 
@@ -125,6 +130,10 @@ public class BlockEventGetTest extends BlockGenerate {
 
   @AfterClass
   public static void after() throws IOException {
+    // stopPlugin() is safe when never started: it null-checks pluginManager, and
+    // NativeMessageQueue.stop() null-checks publisher/context. Ensures the native
+    // queue socket bound in test() is released even when assertions fail earlier.
+    EventPluginLoader.getInstance().stopPlugin();
     context.destroy();
     Args.clearParam();
   }
@@ -174,7 +183,7 @@ public class BlockEventGetTest extends BlockGenerate {
 
     EventPluginConfig config = new EventPluginConfig();
     config.setSendQueueLength(1000);
-    config.setBindPort(5555);
+    config.setBindPort(PublicMethod.chooseRandomPort());
     config.setUseNativeQueue(true);
     config.setTriggerConfigList(new ArrayList<>());
 

@@ -5,7 +5,6 @@ import static org.tron.common.math.Maths.max;
 import static org.tron.common.math.Maths.min;
 import static org.tron.common.utils.Commons.adjustBalance;
 import static org.tron.core.Constant.TRANSACTION_MAX_BYTE_SIZE;
-import static org.tron.core.exception.BadBlockException.TypeEnum.CALC_MERKLE_ROOT_FAILED;
 import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferContract;
 import static org.tron.protos.Protocol.Transaction.Result.contractResult.SUCCESS;
 
@@ -48,9 +47,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.bouncycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
-import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.TransactionInfoList;
 import org.tron.common.args.GenesisBlock;
 import org.tron.common.bloom.Bloom;
@@ -62,11 +59,11 @@ import org.tron.common.logsfilter.FilterQuery;
 import org.tron.common.logsfilter.capsule.BlockFilterCapsule;
 import org.tron.common.logsfilter.capsule.BlockLogTriggerCapsule;
 import org.tron.common.logsfilter.capsule.ContractTriggerCapsule;
-import org.tron.common.logsfilter.capsule.FilterTriggerCapsule;
 import org.tron.common.logsfilter.capsule.LogsFilterCapsule;
 import org.tron.common.logsfilter.capsule.SolidityTriggerCapsule;
 import org.tron.common.logsfilter.capsule.TransactionLogTriggerCapsule;
 import org.tron.common.logsfilter.capsule.TriggerCapsule;
+import org.tron.common.logsfilter.queue.FilterCapsuleQueue;
 import org.tron.common.logsfilter.trigger.ContractEventTrigger;
 import org.tron.common.logsfilter.trigger.ContractLogTrigger;
 import org.tron.common.logsfilter.trigger.ContractTrigger;
@@ -89,6 +86,7 @@ import org.tron.consensus.base.Param.Miner;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
+import org.tron.core.actuator.ActuatorConstant;
 import org.tron.core.actuator.ActuatorCreator;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockBalanceTraceCapsule;
@@ -143,7 +141,6 @@ import org.tron.core.metrics.MetricsUtil;
 import org.tron.core.service.MortgageService;
 import org.tron.core.service.RewardViCalService;
 import org.tron.core.services.event.exception.EventException;
-import org.tron.core.services.jsonrpc.TronJsonRpcImpl;
 import org.tron.core.store.AccountAssetStore;
 import org.tron.core.store.AccountIdIndexStore;
 import org.tron.core.store.AccountIndexStore;
@@ -253,8 +250,8 @@ public class Manager {
   @Getter
   private BlockingQueue<TriggerCapsule> triggerCapsuleQueue;
   // log filter
-  private boolean isRunFilterProcessThread = true;
-  private BlockingQueue<FilterTriggerCapsule> filterCapsuleQueue;
+  @Autowired
+  private FilterCapsuleQueue filterCapsuleQueue;
 
   @Getter
   private volatile long latestSolidityNumShutDown;
@@ -273,15 +270,9 @@ public class Manager {
   private static final String rePushEsName = "repush";
   private ExecutorService triggerEs;
   private static final String triggerEsName = "event-trigger";
-  private ExecutorService filterEs;
-  private static final String filterEsName = "filter";
 
   @Autowired
   private RewardViCalService rewardViCalService;
-
-  @Lazy
-  @Autowired
-  private TronJsonRpcImpl tronJsonRpcImpl;
 
   /**
    * Cycle thread to rePush Transactions
@@ -330,26 +321,6 @@ public class Manager {
             Thread.currentThread().interrupt();
           } catch (Throwable throwable) {
             logger.error("Unknown throwable happened in process capsule loop.", throwable);
-          }
-        }
-      };
-
-  private Runnable filterProcessLoop =
-      () -> {
-        while (isRunFilterProcessThread) {
-          try {
-            FilterTriggerCapsule filterCapsule = filterCapsuleQueue.poll(1, TimeUnit.SECONDS);
-            if (filterCapsule instanceof LogsFilterCapsule) {
-              tronJsonRpcImpl.handleLogsFilter((LogsFilterCapsule) filterCapsule);
-            } else if (filterCapsule instanceof BlockFilterCapsule) {
-              tronJsonRpcImpl.handleBLockFilter((BlockFilterCapsule) filterCapsule);
-            }
-          } catch (InterruptedException e) {
-            logger.error("FilterProcessLoop get InterruptedException, error is {}.",
-                    e.getMessage());
-            Thread.currentThread().interrupt();
-          } catch (Throwable throwable) {
-            logger.error("Unknown throwable happened in filterProcessLoop. ", throwable);
           }
         }
       };
@@ -476,11 +447,6 @@ public class Manager {
     ExecutorServiceManager.shutdownAndAwaitTermination(triggerEs, triggerEsName);
   }
 
-  public void stopFilterProcessThread() {
-    isRunFilterProcessThread = false;
-    ExecutorServiceManager.shutdownAndAwaitTermination(filterEs, filterEsName);
-  }
-
   public void stopValidateSignThread() {
     ExecutorServiceManager.shutdownAndAwaitTermination(validateSignService, "validate-sign");
   }
@@ -496,6 +462,7 @@ public class Manager {
     trieService.setChainBaseManager(chainBaseManager);
     revokingStore.disable();
     revokingStore.check();
+    chainBaseManager.initLowestBlockNumOfReceiptStore();
     transactionCache.initCache();
     rewardViCalService.init();
     this.setProposalController(ProposalController.createInstance(this));
@@ -510,7 +477,6 @@ public class Manager {
       this.rePushTransactions = new LinkedBlockingQueue<>();
     }
     this.triggerCapsuleQueue = new LinkedBlockingQueue<>();
-    this.filterCapsuleQueue = new LinkedBlockingQueue<>();
     chainBaseManager.setMerkleContainer(getMerkleContainer());
     chainBaseManager.setMortgageService(mortgageService);
     this.initGenesis();
@@ -582,12 +548,6 @@ public class Manager {
       startEventSubscribing();
       triggerEs = ExecutorServiceManager.newSingleThreadExecutor(triggerEsName, true);
       ExecutorServiceManager.submit(triggerEs, triggerCapsuleProcessLoop);
-    }
-
-    // start json rpc filter process
-    if (CommonParameter.getInstance().isJsonRpcFilterEnabled()) {
-      filterEs = ExecutorServiceManager.newSingleThreadExecutor(filterEsName);
-      ExecutorServiceManager.submit(filterEs, filterProcessLoop);
     }
 
     //initStoreFactory
@@ -1515,11 +1475,11 @@ public class Manager {
       return null;
     }
     Sha256Hash txId = trxCap.getTransactionId();
-    if (trxCap.getInstance().getRawData().getContractList().size() != 1) {
+    int contractCount = trxCap.getInstance().getRawData().getContractCount();
+    if (contractCount != 1) {
       throw new ContractSizeNotEqualToOneException(
-          String.format(
-              "tx %s contract size should be exactly 1, this is extend feature ,actual :%d",
-              txId, trxCap.getInstance().getRawData().getContractList().size()));
+          String.format("tx %s " + ActuatorConstant.CONTRACT_SIZE_NOT_EQUAL_TO_ONE,
+              txId, contractCount));
     }
     Contract contract = trxCap.getInstance().getRawData().getContract(0);
     final Histogram.Timer requestTimer = Metrics.histogramStartTimer(
@@ -2344,9 +2304,7 @@ public class Manager {
   private void postBlockFilter(final BlockCapsule blockCapsule, boolean solidified) {
     BlockFilterCapsule blockFilterCapsule =
         new BlockFilterCapsule(blockCapsule, solidified);
-    if (!filterCapsuleQueue.offer(blockFilterCapsule)) {
-      logger.info("Too many filters, block filter lost: {}.", blockCapsule.getBlockId());
-    }
+    filterCapsuleQueue.offer(blockFilterCapsule);
   }
 
   private void postLogsFilter(final BlockCapsule blockCapsule, boolean solidified,
@@ -2359,9 +2317,7 @@ public class Manager {
           blockCapsule.getBlockId().toString(), blockCapsule.getBloom(), transactionInfoList,
           solidified, removed);
 
-      if (!filterCapsuleQueue.offer(logsFilterCapsule)) {
-        logger.info("Too many filters, logs filter lost: {}.", blockNumber);
-      }
+      filterCapsuleQueue.offer(logsFilterCapsule);
     }
   }
 
@@ -2638,8 +2594,7 @@ public class Manager {
           List<Transaction> listTransaction = block.getTransactionsList();
           for (Transaction transaction : listTransaction) {
             TransactionInfoCapsule transactionInfoCapsule = getTransactionHistoryStore()
-                    .get(Sha256Hash.hash(CommonParameter.getInstance()
-                            .isECKeyCryptoEngine(), transaction.getRawData().toByteArray()));
+                    .get(Sha256Hash.hash(transaction.getRawData().toByteArray()));
 
             if (transactionInfoCapsule != null) {
               transactionInfoList.addTransactionInfo(transactionInfoCapsule.getInstance());
@@ -2658,7 +2613,6 @@ public class Manager {
     stopRePushThread();
     stopRePushTriggerThread();
     EventPluginLoader.getInstance().stopPlugin();
-    stopFilterProcessThread();
     stopValidateSignThread();
     chainBaseManager.shutdown();
     revokingStore.shutdown();

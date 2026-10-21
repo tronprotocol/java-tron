@@ -61,7 +61,7 @@ public class CrossImplTest {
   @Test
   public void testDecryptEthPbkdf2Keystore() throws Exception {
     WalletFile walletFile = MAPPER.readValue(ETH_PBKDF2_KEYSTORE, WalletFile.class);
-    SignInterface recovered = Wallet.decrypt(ETH_PASSWORD, walletFile, true);
+    SignInterface recovered = Wallet.decrypt(ETH_PASSWORD, walletFile);
     assertEquals("Private key must match Ethereum test vector",
         ETH_PRIVATE_KEY,
         org.tron.common.utils.ByteArray.toHexString(recovered.getPrivateKey()));
@@ -70,7 +70,7 @@ public class CrossImplTest {
   @Test
   public void testDecryptEthScryptKeystore() throws Exception {
     WalletFile walletFile = MAPPER.readValue(ETH_SCRYPT_KEYSTORE, WalletFile.class);
-    SignInterface recovered = Wallet.decrypt(ETH_PASSWORD, walletFile, true);
+    SignInterface recovered = Wallet.decrypt(ETH_PASSWORD, walletFile);
     assertEquals("Private key must match Ethereum test vector",
         ETH_PRIVATE_KEY,
         org.tron.common.utils.ByteArray.toHexString(recovered.getPrivateKey()));
@@ -80,7 +80,7 @@ public class CrossImplTest {
 
   @Test
   public void testKeystoreFormatCompatibility() throws Exception {
-    SignInterface keyPair = SignUtils.getGeneratedRandomSign(Utils.getRandom(), true);
+    SignInterface keyPair = SignUtils.getGeneratedRandomSign(Utils.getRandom());
     byte[] originalKey = keyPair.getPrivateKey();
     String password = "dynamicTest123";
 
@@ -101,7 +101,7 @@ public class CrossImplTest {
     MAPPER.writeValue(tempFile, walletFile);
     WalletFile loaded = MAPPER.readValue(tempFile, WalletFile.class);
 
-    SignInterface recovered = Wallet.decrypt(password, loaded, true);
+    SignInterface recovered = Wallet.decrypt(password, loaded);
     assertArrayEquals("Key must survive file roundtrip",
         originalKey, recovered.getPrivateKey());
 
@@ -113,7 +113,7 @@ public class CrossImplTest {
 
   @Test
   public void testLightScryptFormatCompatibility() throws Exception {
-    SignInterface keyPair = SignUtils.getGeneratedRandomSign(Utils.getRandom(), true);
+    SignInterface keyPair = SignUtils.getGeneratedRandomSign(Utils.getRandom());
     byte[] originalKey = keyPair.getPrivateKey();
     String password = "lightCompat456";
 
@@ -122,7 +122,7 @@ public class CrossImplTest {
     MAPPER.writeValue(tempFile, walletFile);
     WalletFile loaded = MAPPER.readValue(tempFile, WalletFile.class);
 
-    SignInterface recovered = Wallet.decrypt(password, loaded, true);
+    SignInterface recovered = Wallet.decrypt(password, loaded);
     assertArrayEquals("Key must survive light scrypt file roundtrip",
         originalKey, recovered.getPrivateKey());
   }
@@ -130,14 +130,14 @@ public class CrossImplTest {
   @Test
   public void testKeystoreAddressConsistency() throws Exception {
     String password = "addresscheck";
-    SignInterface keyPair = SignUtils.getGeneratedRandomSign(Utils.getRandom(), true);
+    SignInterface keyPair = SignUtils.getGeneratedRandomSign(Utils.getRandom());
     Credentials original = Credentials.create(keyPair);
 
     WalletFile walletFile = Wallet.createLight(password, keyPair);
     assertEquals("WalletFile address must match credentials address",
         original.getAddress(), walletFile.getAddress());
 
-    SignInterface recovered = Wallet.decrypt(password, walletFile, true);
+    SignInterface recovered = Wallet.decrypt(password, walletFile);
     Credentials recoveredCreds = Credentials.create(recovered);
     assertEquals("Recovered address must match original",
         original.getAddress(), recoveredCreds.getAddress());
@@ -146,7 +146,7 @@ public class CrossImplTest {
   @Test
   public void testLoadCredentialsIntegration() throws Exception {
     String password = "integration789";
-    SignInterface keyPair = SignUtils.getGeneratedRandomSign(Utils.getRandom(), true);
+    SignInterface keyPair = SignUtils.getGeneratedRandomSign(Utils.getRandom());
     byte[] originalKey = keyPair.getPrivateKey();
     String originalAddress = Credentials.create(keyPair).getAddress();
 
@@ -155,7 +155,7 @@ public class CrossImplTest {
     assertNotNull(fileName);
 
     File keystoreFile = new File(tempDir, fileName);
-    Credentials loaded = WalletUtils.loadCredentials(password, keystoreFile, true);
+    Credentials loaded = WalletUtils.loadCredentials(password, keystoreFile);
 
     assertEquals("Address must survive full WalletUtils roundtrip",
         originalAddress, loaded.getAddress());

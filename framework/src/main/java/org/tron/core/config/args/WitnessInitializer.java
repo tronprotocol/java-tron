@@ -36,8 +36,7 @@ public class WitnessInitializer {
       logger.debug("Got localWitnessAccountAddress from cmd");
     }
 
-    witnesses.initWitnessAccountAddress(
-        address, Args.getInstance().isECKeyCryptoEngine());
+    witnesses.initWitnessAccountAddress(address);
     logger.debug("Got privateKey from cmd");
     return witnesses;
   }
@@ -52,8 +51,7 @@ public class WitnessInitializer {
     logger.debug("Got privateKey from config.conf");
 
     byte[] address = resolveWitnessAddress(witnesses, witnessAccountAddress);
-    witnesses.initWitnessAccountAddress(
-        address, Args.getInstance().isECKeyCryptoEngine());
+    witnesses.initWitnessAccountAddress(address);
     return witnesses;
   }
 
@@ -79,8 +77,7 @@ public class WitnessInitializer {
 
     List<String> privateKeys = new ArrayList<>();
     try {
-      Credentials credentials = WalletUtils.loadCredentials(pwd, new File(fileName),
-          Args.getInstance().isECKeyCryptoEngine());
+      Credentials credentials = WalletUtils.loadCredentials(pwd, new File(fileName));
       SignInterface sign = credentials.getSignInterface();
       String prikey = ByteArray.toHexString(sign.getPrivateKey());
       privateKeys.add(prikey);
@@ -97,8 +94,8 @@ public class WitnessInitializer {
             "Tip: keystores created via `FullNode.jar --keystore-factory` in "
                 + "non-TTY mode were encrypted with only the first "
                 + "whitespace-separated word of the password. Try restarting "
-                + "with only that first word as `-p`, then reset the password "
-                + "via `java -jar Toolkit.jar keystore update`.");
+                + "with only that first word as the password, then reset the "
+                + "password via `java -jar Toolkit.jar keystore update`.");
       }
       throw new TronError(e, TronError.ErrCode.WITNESS_KEYSTORE_LOAD);
     }
@@ -106,8 +103,7 @@ public class WitnessInitializer {
     LocalWitnesses witnesses = new LocalWitnesses();
     witnesses.setPrivateKeys(privateKeys);
     byte[] address = resolveWitnessAddress(witnesses, witnessAccountAddress);
-    witnesses.initWitnessAccountAddress(
-        address, Args.getInstance().isECKeyCryptoEngine());
+    witnesses.initWitnessAccountAddress(address);
     logger.debug("Got privateKey from keystore");
     return witnesses;
   }

@@ -3,8 +3,10 @@ package org.tron.core.net.messagehandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -21,6 +23,7 @@ import org.tron.core.exception.P2pException;
 import org.tron.core.net.TronNetDelegate;
 import org.tron.core.net.message.sync.ChainInventoryMessage;
 import org.tron.core.net.peer.PeerConnection;
+import org.tron.core.net.service.sync.SyncService;
 
 public class ChainInventoryMsgHandlerTest {
 
@@ -81,6 +84,76 @@ public class ChainInventoryMsgHandlerTest {
     }
     Assert.assertNotNull(msg.toString());
     Assert.assertNull(msg.getAnswerMessage());
+  }
+
+  @Test
+  public void testFetchFlagDecisionIsMadeUnderBlockLock() throws Exception {
+    Object blockLock = new Object();
+    TronNetDelegate tronNetDelegate = Mockito.mock(TronNetDelegate.class);
+    SyncService syncService = Mockito.mock(SyncService.class);
+    PeerConnection testPeer = Mockito.spy(new PeerConnection());
+    AtomicBoolean fetchAbleSetUnderLock = new AtomicBoolean();
+    AtomicBoolean fetchFlagSetUnderLock = new AtomicBoolean();
+    BlockId firstBlock = new BlockId(Sha256Hash.ZERO_HASH, 1);
+    BlockId secondBlock = new BlockId(Sha256Hash.ZERO_HASH, 2);
+
+    Mockito.when(tronNetDelegate.getBlockLock()).thenReturn(blockLock);
+    Mockito.when(tronNetDelegate.getHeadBlockId()).thenReturn(new BlockId(Sha256Hash.ZERO_HASH, 0));
+    Mockito.when(tronNetDelegate.containBlock(Mockito.any())).thenReturn(false);
+    Mockito.doAnswer(invocation -> {
+      if (invocation.getArgument(0)) {
+        fetchAbleSetUnderLock.set(Thread.holdsLock(blockLock));
+      }
+      return invocation.callRealMethod();
+    }).when(testPeer).setFetchAble(Mockito.anyBoolean());
+    Mockito.doAnswer(invocation -> {
+      fetchFlagSetUnderLock.set(Thread.holdsLock(blockLock));
+      return null;
+    }).when(syncService).setFetchFlag(true);
+    ReflectUtils.setFieldValue(handler, "tronNetDelegate", tronNetDelegate);
+    ReflectUtils.setFieldValue(handler, "syncService", syncService);
+    testPeer.setSyncChainRequested(new Pair<>(new LinkedList<>(Arrays.asList(firstBlock)),
+        System.currentTimeMillis()));
+
+    handler.processMessage(testPeer,
+        new ChainInventoryMessage(Arrays.asList(firstBlock, secondBlock), 0L));
+
+    Assert.assertTrue(fetchAbleSetUnderLock.get());
+    Assert.assertTrue(fetchFlagSetUnderLock.get());
+  }
+
+  @Test
+  public void testSyncNextDecisionIsMadeUnderBlockLock() throws Exception {
+    Object blockLock = new Object();
+    TronNetDelegate tronNetDelegate = Mockito.mock(TronNetDelegate.class);
+    SyncService syncService = Mockito.mock(SyncService.class);
+    PeerConnection testPeer = Mockito.spy(new PeerConnection());
+    AtomicBoolean fetchAbleSetUnderLock = new AtomicBoolean();
+    AtomicBoolean syncNextCalledUnderLock = new AtomicBoolean();
+    BlockId firstBlock = new BlockId(Sha256Hash.ZERO_HASH, 1);
+
+    Mockito.when(tronNetDelegate.getBlockLock()).thenReturn(blockLock);
+    Mockito.when(tronNetDelegate.getHeadBlockId()).thenReturn(new BlockId(Sha256Hash.ZERO_HASH, 0));
+    Mockito.when(tronNetDelegate.containBlock(Mockito.any())).thenReturn(false);
+    Mockito.doAnswer(invocation -> {
+      if (invocation.getArgument(0)) {
+        fetchAbleSetUnderLock.set(Thread.holdsLock(blockLock));
+      }
+      return invocation.callRealMethod();
+    }).when(testPeer).setFetchAble(Mockito.anyBoolean());
+    Mockito.doAnswer(invocation -> {
+      syncNextCalledUnderLock.set(Thread.holdsLock(blockLock));
+      return null;
+    }).when(syncService).syncNext(testPeer);
+    ReflectUtils.setFieldValue(handler, "tronNetDelegate", tronNetDelegate);
+    ReflectUtils.setFieldValue(handler, "syncService", syncService);
+    testPeer.setSyncChainRequested(new Pair<>(new LinkedList<>(Arrays.asList(firstBlock)),
+        System.currentTimeMillis()));
+
+    handler.processMessage(testPeer, new ChainInventoryMessage(Arrays.asList(firstBlock), 0L));
+
+    Assert.assertTrue(fetchAbleSetUnderLock.get());
+    Assert.assertTrue(syncNextCalledUnderLock.get());
   }
 
   @Test

@@ -18,12 +18,13 @@
 
 package org.tron.common.crypto.cryptohash;
 
+import java.security.DigestException;
 import java.security.MessageDigest;
 
 public abstract class DigestEngine extends MessageDigest implements Digest {
 
   private int digestLen, blockLen, inputLen;
-  private byte[] inputBuf, outputBuf;
+  private byte[] inputBuf;
   private long blockCount;
 
   /**
@@ -35,15 +36,18 @@ public abstract class DigestEngine extends MessageDigest implements Digest {
     digestLen = engineGetDigestLength();
     blockLen = getInternalBlockLength();
     inputBuf = new byte[blockLen];
-    outputBuf = new byte[digestLen];
     inputLen = 0;
     blockCount = 0;
   }
 
   /**
-   * Reset the hash algorithm state.
+   * Reset the buffered input state. Subclasses must call this method and reset their algorithm
+   * state.
    */
-  protected abstract void engineReset();
+  protected void engineReset() {
+    inputLen = 0;
+    blockCount = 0;
+  }
 
   /**
    * Process one block of data.
@@ -72,7 +76,6 @@ public abstract class DigestEngine extends MessageDigest implements Digest {
   private void adjustDigestLen() {
     if (digestLen == 0) {
       digestLen = engineGetDigestLength();
-      outputBuf = new byte[digestLen];
     }
   }
 
@@ -82,7 +85,8 @@ public abstract class DigestEngine extends MessageDigest implements Digest {
   public byte[] digest() {
     adjustDigestLen();
     byte[] result = new byte[digestLen];
-    digest(result, 0, digestLen);
+    doPadding(result, 0);
+    reset();
     return result;
   }
 
@@ -97,18 +101,25 @@ public abstract class DigestEngine extends MessageDigest implements Digest {
   /**
    * @see Digest
    */
-  public int digest(byte[] buf, int offset, int len) {
-    adjustDigestLen();
-    if (len >= digestLen) {
-      doPadding(buf, offset);
-      reset();
-      return digestLen;
-    } else {
-      doPadding(outputBuf, 0);
-      System.arraycopy(outputBuf, 0, buf, offset, len);
-      reset();
-      return len;
+  public int digest(byte[] buf, int offset, int len) throws DigestException {
+    if (buf == null) {
+      throw new IllegalArgumentException("Output buffer is null");
     }
+    if (offset < 0 || len < 0 || offset > buf.length || len > buf.length - offset) {
+      throw new IllegalArgumentException("Invalid output buffer range");
+    }
+    adjustDigestLen();
+    if (len < digestLen) {
+      throw new DigestException("Partial digests are not returned");
+    }
+    doPadding(buf, offset);
+    reset();
+    return digestLen;
+  }
+
+  @Override
+  protected int engineDigest(byte[] buf, int offset, int len) throws DigestException {
+    return digest(buf, offset, len);
   }
 
   /**
@@ -143,6 +154,12 @@ public abstract class DigestEngine extends MessageDigest implements Digest {
    * @see Digest
    */
   public void update(byte[] input, int offset, int len) {
+    if (input == null) {
+      throw new IllegalArgumentException("Input buffer is null");
+    }
+    if (offset < 0 || len < 0 || offset > input.length || len > input.length - offset) {
+      throw new IllegalArgumentException("Invalid input buffer range");
+    }
     while (len > 0) {
       int copyLen = blockLen - inputLen;
       if (copyLen > len) {
@@ -222,8 +239,6 @@ public abstract class DigestEngine extends MessageDigest implements Digest {
         inputBuf.length);
     adjustDigestLen();
     dest.adjustDigestLen();
-    System.arraycopy(outputBuf, 0, dest.outputBuf, 0,
-        outputBuf.length);
     return dest;
   }
 }

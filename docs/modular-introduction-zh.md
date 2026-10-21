@@ -14,7 +14,7 @@ java-tron 模块化的目的是为了帮助开发者方便地构建出特定应�
 
 ![modular-structure](https://github.com/tronprotocol/java-tron/blob/develop/docs/images/module.png)
 
-模块化后的 java-tron 目前分为9个模块：framework、protocol、common、chainbase、consensus、actuator、crypto、plugins、platform，下面分别简单介绍一下各个模块的作用。
+模块化后的 java-tron 目前分为10个模块：framework、protocol、common、p2p、chainbase、consensus、actuator、crypto、plugins、platform，下面分别简单介绍一下各个模块的作用。
 
 ### framework
 
@@ -29,6 +29,10 @@ framework 是 java-tron 的核心模块，不仅是整个链的入口模块，�
 ### common
 
 common 模块对公共组件和一些工具类进行了封装，以方便其他模块调用。
+
+### p2p
+
+p2p 模块负责节点发现、连接管理和基于 DNS 的节点列表：节点之间通过 UDP 相互发现、通过 TCP 建立连接；节点列表还可以发布为 DNS TXT 记录，供其他节点获取。该模块内置自 [tronprotocol/libp2p](https://github.com/tronprotocol/libp2p)，不依赖项目中的其他模块。单独运行方式和接口说明见 [p2p/README.md](../p2p/README.md)。
 
 ### chainbase
 

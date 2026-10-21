@@ -206,12 +206,6 @@ public class FetchInvDataMsgHandler implements TronMsgHandler {
           throw new P2pException(TypeEnum.BAD_MESSAGE,
                   "maxBlockNum: " + peer.getLastSyncBlockId().getNum() + ", blockNum: " + blockNum);
         }
-        if (!hash.equals(tronNetDelegate.getBlockIdByNum(blockNum))) {
-          // The main chain may have changed since we sent the sync inventory.
-          // Fail synchronization without treating a stale request as bad protocol.
-          throw new P2pException(TypeEnum.SYNC_FAILED,
-              "Requested sync block is not in the main chain: " + new BlockId(hash).getString());
-        }
         if (peer.getSyncBlockIdCache().getIfPresent(hash) != null) {
           throw new P2pException(TypeEnum.BAD_MESSAGE,
                   new BlockId(hash).getString() + " is exist");

@@ -29,7 +29,6 @@ import java.io.Serializable;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
-import org.bouncycastle.crypto.digests.SM3Digest;
 
 
 /**
@@ -71,8 +70,8 @@ public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
    * @param contents the bytes on which the hash value is calculated
    * @return a new instance containing the calculated (one-time) hash
    */
-  public static Sha256Hash of(boolean isSha256, byte[] contents) {
-    return wrap(hash(isSha256, contents));
+  public static Sha256Hash of(byte[] contents) {
+    return wrap(hash(contents));
   }
 
   /**
@@ -84,10 +83,10 @@ public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
    * @return a new instance containing the calculated (one-time) hash
    * @throws IOException if an error occurs while reading the file
    */
-  public static Sha256Hash of(boolean isSha256, File file) throws IOException {
+  public static Sha256Hash of(File file) throws IOException {
 
     try (FileInputStream in = new FileInputStream(file)) {
-      return of(isSha256, ByteStreams.toByteArray(in));
+      return of(ByteStreams.toByteArray(in));
     }
   }
 
@@ -107,23 +106,13 @@ public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
   }
 
   /**
-   * Returns a new SM3 MessageDigest instance. This is a convenience method which wraps the checked
-   * exception that can never occur with a RuntimeException.
-   *
-   * @return a new SM3 MessageDigest instance
-   */
-  public static SM3Digest newSM3Digest() {
-    return new SM3Digest();
-  }
-
-  /**
    * Calculates the SHA-256 hash of the given bytes.
    *
    * @param input the bytes to hash
    * @return the hash (in big-endian order)
    */
-  public static byte[] hash(boolean isSha256, byte[] input) {
-    return hash(isSha256, input, 0, input.length);
+  public static byte[] hash(byte[] input) {
+    return hash(input, 0, input.length);
   }
 
   /**
@@ -134,19 +123,10 @@ public class Sha256Hash implements Serializable, Comparable<Sha256Hash> {
    * @param length the number of bytes to hash
    * @return the hash (in big-endian order)
    */
-  public static byte[] hash(boolean isSha256, byte[] input, int offset, int length) {
-    if (isSha256) {
-      MessageDigest digest = newDigest();
-      digest.update(input, offset, length);
-      return digest.digest();
-    } else {
-      SM3Digest digest = newSM3Digest();
-      digest.update(input, offset, length);
-      byte[] eHash = new byte[digest.getDigestSize()];
-      digest.doFinal(eHash, 0);
-      return eHash;
-    }
-
+  public static byte[] hash(byte[] input, int offset, int length) {
+    MessageDigest digest = newDigest();
+    digest.update(input, offset, length);
+    return digest.digest();
   }
 
   @Override

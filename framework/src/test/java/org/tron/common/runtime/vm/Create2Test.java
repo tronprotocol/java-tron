@@ -209,8 +209,7 @@ public class Create2Test extends VMTestBase {
     NodeInfoService nodeInfoService;
     nodeInfoService = context.getBean(NodeInfoService.class);
     Wallet wallet = context.getBean(Wallet.class);
-    tronJsonRpc = new TronJsonRpcImpl(nodeInfoService, wallet);
-    tronJsonRpc.setManager(manager);
+    tronJsonRpc = new TronJsonRpcImpl(nodeInfoService, wallet, manager);
     try {
       String res =
           tronJsonRpc.getStorageAt(ByteArray.toHexString(actualContract), "0", "latest");

@@ -6,7 +6,18 @@ plugins {
 }
 
 ext {
-    grpcVersion = "1.83.0"
+    grpcVersion = "1.83.1"
+    // Netty 4.2 split io.netty.handler.codec.protobuf out of netty-codec into its
+    // own artifact. Both :framework and :p2p put the varint32 framing codecs on
+    // their channel pipelines and so must declare it explicitly. Netty itself
+    // arrives transitively through grpc-netty, so this version has to move with
+    // grpcVersion above — keeping it here makes that coupling visible instead of
+    // leaving two literals to drift apart.
+    nettyVersion = "4.2.15.Final"
+    // Shared by :protocol and :p2p, which both generate from .proto files.
+    protobufVersion = "3.25.8"
+    // Shared by :framework, :plugins and :p2p.
+    checkstyleVersion = "8.7"
 }
 
 allprojects {
@@ -79,7 +90,6 @@ subprojects {
         }
         dependencies {
             classpath 'com.google.protobuf:protobuf-gradle-plugin:0.9.1'
-            classpath "gradle.plugin.com.github.johnrengelman:shadow:7.1.2"
         }
     }
 
@@ -91,16 +101,14 @@ subprojects {
     }
 
     dependencies {
-        implementation group: 'org.slf4j', name: 'slf4j-api', version: '1.7.36'
-        implementation group: 'org.slf4j', name: 'jcl-over-slf4j', version: '1.7.36'
-        implementation group: 'org.slf4j', name: 'jul-to-slf4j', version: '1.7.36'
-        implementation group: 'ch.qos.logback', name: 'logback-classic', version: '1.2.13'
+        implementation group: 'org.slf4j', name: 'slf4j-api', version: '2.0.17'
+        implementation group: 'org.slf4j', name: 'jcl-over-slf4j', version: '2.0.17'
+        implementation group: 'org.slf4j', name: 'jul-to-slf4j', version: '2.0.17'
+        implementation group: 'ch.qos.logback', name: 'logback-classic', version: '1.3.16'
         implementation "com.google.code.findbugs:jsr305:3.0.0"
         implementation group: 'org.springframework', name: 'spring-context', version: "${springVersion}"
-        implementation "org.apache.commons:commons-lang3:3.4"
-        implementation group: 'org.apache.commons', name: 'commons-math', version: '2.2'
-        implementation "org.apache.commons:commons-collections4:4.1"
-        implementation group: 'joda-time', name: 'joda-time', version: '2.3'
+        implementation "org.apache.commons:commons-lang3:3.20.0"
+        implementation "org.apache.commons:commons-collections4:4.6.0"
         implementation group: 'org.bouncycastle', name: 'bcprov-jdk18on', version: '1.84'
 
         compileOnly 'org.projectlombok:lombok:1.18.34'
@@ -110,12 +118,8 @@ subprojects {
 
         // https://www.oracle.com/java/technologies/javase/11-relnote-issues.html#JDK-8190378
         implementation group: 'javax.annotation', name: 'javax.annotation-api', version: '1.3.2'
-        // for json-rpc, see https://github.com/briandilley/jsonrpc4j/issues/278
-        implementation group: 'javax.jws', name: 'javax.jws-api', version: '1.1'
-        annotationProcessor group: 'javax.annotation', name: 'javax.annotation-api', version: '1.3.2'
 
         testImplementation group: 'junit', name: 'junit', version: '4.13.2'
-        testImplementation "org.mockito:mockito-core:4.11.0"
         testImplementation "org.mockito:mockito-inline:4.11.0"
     }
     if (project.name != 'protocol' && project.name != 'errorprone'
