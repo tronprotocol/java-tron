@@ -1,8 +1,6 @@
 package org.tron.core.admission;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
@@ -17,23 +15,15 @@ import io.grpc.ServerCall;
 import io.grpc.ServerCallHandler;
 import io.grpc.ServerMethodDefinition;
 import io.grpc.Status;
-import io.grpc.StatusRuntimeException;
 import io.grpc.protobuf.ProtoUtils;
-import io.prometheus.client.CollectorRegistry;
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.IdentityHashMap;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 import org.tron.api.GrpcAPI;
 import org.tron.api.WalletGrpc;
 import org.tron.api.ZksnarkGrpcAPI.ZksnarkRequest;
-import org.tron.common.parameter.CommonParameter;
-import org.tron.common.prometheus.MetricKeys;
 import org.tron.core.admission.TransactionAdmissionException.Reason;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
@@ -45,19 +35,6 @@ public class GuardedRequestMarshallerTest {
   private static final int BUDGET = 10;
   private static final ServerCallHandler<Object, Object> HANDLER =
       (call, headers) -> new ServerCall.Listener<Object>() { };
-
-  private boolean metricsEnabled;
-
-  @Before
-  public void enableMetrics() {
-    metricsEnabled = CommonParameter.getInstance().metricsPrometheusEnable;
-    CommonParameter.getInstance().metricsPrometheusEnable = true;
-  }
-
-  @After
-  public void restoreMetrics() {
-    CommonParameter.getInstance().metricsPrometheusEnable = metricsEnabled;
-  }
 
   @Test
   public void rootAndSentinelsFollowTheRequestType() {
@@ -99,28 +76,41 @@ public class GuardedRequestMarshallerTest {
   }
 
   @Test
-  public void aNonPrototypeDelegateGivesItsTypeOnceWhenWrapped() {
-    Counting<GrpcAPI.EmptyMessage> delegate =
-        new Counting<>(plain(GrpcAPI.EmptyMessage.getDefaultInstance()));
-    ServerMethodDefinition<GrpcAPI.EmptyMessage, Object> method = method(delegate,
-        GrpcAPI.EmptyMessage.getDefaultInstance());
-    ServerMethodDefinition<GrpcAPI.EmptyMessage, Object> wrapped = GuardedRequestMarshaller.guard(
-        method, GrpcAPI.EmptyMessage.getDescriptor(), MAX, BUDGET);
-    assertEquals(1, delegate.parsed.get());      // the empty-bytes parse when wrapping
+  public void wrappingUsesTheMarshallerPrototype() {
+    ServerMethodDefinition<GrpcAPI.EmptyMessage, Object> method =
+        method(proto(GrpcAPI.EmptyMessage.getDefaultInstance()),
+            GrpcAPI.EmptyMessage.getDefaultInstance());
+    ServerMethodDefinition<GrpcAPI.EmptyMessage, Object> wrapped =
+        GuardedRequestMarshaller.guard(method, MAX, BUDGET);
     MethodDescriptor.Marshaller<GrpcAPI.EmptyMessage> request =
         wrapped.getMethodDescriptor().getRequestMarshaller();
     assertTrue(request instanceof GuardedRequestMarshaller);
     assertTrue(wrapped.getServerCallHandler() instanceof AdmissionCheckedHandler);
     assertSame(request,
         ((AdmissionCheckedHandler<?, ?>) wrapped.getServerCallHandler()).getMarshaller());
-    GuardedRequestMarshaller<GrpcAPI.EmptyMessage> guarded =
-        (GuardedRequestMarshaller<GrpcAPI.EmptyMessage>) request;
-    assertEquals(GrpcAPI.EmptyMessage.getDescriptor(), guarded.getRoot());
-    assertEquals(Reason.OVER_BUDGET, guarded.rejectionReason(
-        guarded.parse(new ByteArrayInputStream(distinctUnknownFields(BUDGET + 1)))));
-    assertEquals(1, delegate.parsed.get());
-    assertNull(guarded.rejectionReason(guarded.parse(new ByteArrayInputStream(new byte[0]))));
-    assertEquals(2, delegate.parsed.get());
+    assertSame(method.getServerCallHandler(),
+        ((AdmissionCheckedHandler<?, ?>) wrapped.getServerCallHandler()).getDelegate());
+    assertEquals(GrpcAPI.EmptyMessage.getDescriptor(),
+        ((GuardedRequestMarshaller<?>) request).getRoot());
+  }
+
+  @Test
+  public void wrappingFailsWithoutAProtobufPrototype() {
+    assertWrappingFails(plain(GrpcAPI.EmptyMessage.getDefaultInstance()));
+    assertWrappingFails(prototypeMarshaller(null));
+    assertWrappingFails(prototypeMarshaller("not a message"));
+  }
+
+  private static <T> void assertWrappingFails(MethodDescriptor.Marshaller<T> request) {
+    ServerMethodDefinition<T, Object> method =
+        method(request, GrpcAPI.EmptyMessage.getDefaultInstance());
+    String name = method.getMethodDescriptor().getFullMethodName();
+    try {
+      GuardedRequestMarshaller.guard(method, MAX, BUDGET);
+      fail("expected a wiring failure for " + name);
+    } catch (IllegalStateException e) {
+      assertEquals("no protobuf request prototype: " + name, e.getMessage());
+    }
   }
 
   @Test
@@ -133,10 +123,10 @@ public class GuardedRequestMarshallerTest {
     }
     byte[] data = Transaction.newBuilder().setRawData(raw).build().toByteArray();
 
-    // Schema BytesMessage, delegate Transaction: scanned as the Transaction it becomes.
+    // A Transaction delegate: scanned as the Transaction it becomes.
     ServerMethodDefinition<Transaction, Object> declaredBytes = GuardedRequestMarshaller.guard(
-        method(proto(Transaction.getDefaultInstance()), Transaction.getDefaultInstance()),
-        GrpcAPI.BytesMessage.getDescriptor(), MAX, BUDGET);
+        method(proto(Transaction.getDefaultInstance()), GrpcAPI.BytesMessage.getDefaultInstance()),
+        MAX, BUDGET);
     GuardedRequestMarshaller<Transaction> asTransaction =
         (GuardedRequestMarshaller<Transaction>)
             declaredBytes.getMethodDescriptor().getRequestMarshaller();
@@ -144,10 +134,10 @@ public class GuardedRequestMarshallerTest {
     assertEquals(Reason.OVER_BUDGET,
         asTransaction.rejectionReason(asTransaction.parse(new ByteArrayInputStream(data))));
 
-    // Schema Transaction, delegate BytesMessage: one bytes field, nothing is materialized.
+    // A BytesMessage delegate: one bytes field, nothing is materialized.
     ServerMethodDefinition<GrpcAPI.BytesMessage, Object> declaredTransaction =
         GuardedRequestMarshaller.guard(method(proto(GrpcAPI.BytesMessage.getDefaultInstance()),
-            GrpcAPI.BytesMessage.getDefaultInstance()), Transaction.getDescriptor(), MAX, BUDGET);
+            Transaction.getDefaultInstance()), MAX, BUDGET);
     GuardedRequestMarshaller<GrpcAPI.BytesMessage> asBytes =
         (GuardedRequestMarshaller<GrpcAPI.BytesMessage>)
             declaredTransaction.getMethodDescriptor().getRequestMarshaller();
@@ -155,58 +145,6 @@ public class GuardedRequestMarshallerTest {
     GrpcAPI.BytesMessage parsed = asBytes.parse(new ByteArrayInputStream(data));
     assertNull(asBytes.rejectionReason(parsed));
     assertEquals(data.length - 2, parsed.getValue().size());
-  }
-
-  @Test
-  public void withoutAnInstanceTheSchemaTypeIsCheckedAndARejectionIsThrownAndCounted() {
-    Counting<GrpcAPI.EmptyMessage> delegate = new Counting<>(
-        new MethodDescriptor.Marshaller<GrpcAPI.EmptyMessage>() {
-          @Override
-          public InputStream stream(GrpcAPI.EmptyMessage value) {
-            return new ByteArrayInputStream(value.toByteArray());
-          }
-
-          @Override
-          public GrpcAPI.EmptyMessage parse(InputStream stream) {
-            try {
-              if (stream.available() == 0) {
-                throw new IllegalStateException("no empty requests");
-              }
-              return GrpcAPI.EmptyMessage.parseFrom(stream);
-            } catch (IOException e) {
-              throw new IllegalStateException(e);
-            }
-          }
-        });
-    ServerMethodDefinition<GrpcAPI.EmptyMessage, Object> method = method(delegate,
-        GrpcAPI.EmptyMessage.getDefaultInstance());
-    String name = method.getMethodDescriptor().getFullMethodName();
-    double before = rejections(name, Reason.OVER_BUDGET);
-    ServerMethodDefinition<GrpcAPI.EmptyMessage, Object> wrapped = GuardedRequestMarshaller.guard(
-        method, GrpcAPI.EmptyMessage.getDescriptor(), MAX, BUDGET);
-    // Failing to get an instance while wrapping is not a rejection.
-    assertEquals(before, rejections(name, Reason.OVER_BUDGET), 0);
-    MethodDescriptor.Marshaller<GrpcAPI.EmptyMessage> request =
-        wrapped.getMethodDescriptor().getRequestMarshaller();
-    assertTrue(request instanceof GuardedRequestMarshaller.Plain);
-    assertFalse(request instanceof MethodDescriptor.PrototypeMarshaller);
-    assertSame(method.getServerCallHandler(), wrapped.getServerCallHandler());
-    assertEquals(GrpcAPI.EmptyMessage.getDescriptor(),
-        ((GuardedRequestMarshaller.Plain<?>) request).getRoot());
-    delegate.parsed.set(0);
-    try {
-      request.parse(new ByteArrayInputStream(distinctUnknownFields(BUDGET + 1)));
-      fail("expected a rejection");
-    } catch (StatusRuntimeException e) {
-      assertEquals(Status.Code.INVALID_ARGUMENT, e.getStatus().getCode());
-      assertEquals(TransactionAdmissionException.REQUEST_REJECTION_MESSAGE,
-          e.getStatus().getDescription());
-    }
-    assertEquals(0, delegate.parsed.get());
-    assertEquals(before + 1, rejections(name, Reason.OVER_BUDGET), 0);
-    assertNotNull(request.parse(new ByteArrayInputStream(distinctUnknownFields(BUDGET))));
-    assertEquals(1, delegate.parsed.get());
-    assertEquals(before + 1, rejections(name, Reason.OVER_BUDGET), 0);
   }
 
   @Test
@@ -231,36 +169,6 @@ public class GuardedRequestMarshallerTest {
     assertTrue(TransactionAdmissionGuard.count(request.toBuilder().setTransaction(
         tx.toBuilder().setRawData(tx.getRawData().toBuilder().clearContract())).build()
         .toByteArray(), ZksnarkRequest.getDescriptor()) < BUDGET);
-  }
-
-  @Test
-  public void prototypeOfAcceptsOnlyAProtobufInstance() {
-    assertSame(Transaction.getDefaultInstance(),
-        GuardedRequestMarshaller.prototypeOf(proto(Transaction.getDefaultInstance())));
-    assertEquals(GrpcAPI.EmptyMessage.getDefaultInstance(),
-        GuardedRequestMarshaller.prototypeOf(plain(GrpcAPI.EmptyMessage.getDefaultInstance())));
-    assertNull(GuardedRequestMarshaller.prototypeOf(new MethodDescriptor.Marshaller<String>() {
-      @Override
-      public InputStream stream(String value) {
-        throw new UnsupportedOperationException();
-      }
-
-      @Override
-      public String parse(InputStream stream) {
-        return "not a message";
-      }
-    }));
-    assertNull(GuardedRequestMarshaller.prototypeOf(new MethodDescriptor.Marshaller<Message>() {
-      @Override
-      public InputStream stream(Message value) {
-        throw new UnsupportedOperationException();
-      }
-
-      @Override
-      public Message parse(InputStream stream) {
-        return null;
-      }
-    }));
   }
 
   // ---------------------------------------------------------------- helpers
@@ -295,6 +203,31 @@ public class GuardedRequestMarshallerTest {
     };
   }
 
+  private static <T> MethodDescriptor.Marshaller<T> prototypeMarshaller(T prototype) {
+    return new MethodDescriptor.PrototypeMarshaller<T>() {
+      @Override
+      public T getMessagePrototype() {
+        return prototype;
+      }
+
+      @Override
+      @SuppressWarnings("unchecked")
+      public Class<T> getMessageClass() {
+        return (Class<T>) Object.class;
+      }
+
+      @Override
+      public InputStream stream(T value) {
+        throw new UnsupportedOperationException();
+      }
+
+      @Override
+      public T parse(InputStream stream) {
+        throw new UnsupportedOperationException();
+      }
+    };
+  }
+
   @SuppressWarnings("unchecked")
   private static <T> ServerMethodDefinition<T, Object> method(
       MethodDescriptor.Marshaller<T> request, Message prototype) {
@@ -325,31 +258,4 @@ public class GuardedRequestMarshallerTest {
     return out.toByteArray();
   }
 
-  private static double rejections(String method, Reason reason) {
-    Double value = CollectorRegistry.defaultRegistry.getSampleValue(
-        MetricKeys.Counter.GRPC_ADMISSION_REJECT + "_total", new String[] {"method", "reason"},
-        new String[] {method, reason.name()});
-    return value == null ? 0 : value;
-  }
-
-  private static final class Counting<T> implements MethodDescriptor.Marshaller<T> {
-
-    private final MethodDescriptor.Marshaller<T> real;
-    private final AtomicInteger parsed = new AtomicInteger();
-
-    Counting(MethodDescriptor.Marshaller<T> real) {
-      this.real = real;
-    }
-
-    @Override
-    public InputStream stream(T value) {
-      return real.stream(value);
-    }
-
-    @Override
-    public T parse(InputStream stream) {
-      parsed.incrementAndGet();
-      return real.parse(stream);
-    }
-  }
 }

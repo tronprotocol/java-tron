@@ -59,39 +59,31 @@ public final class GuardedRequestMarshaller<T> implements MethodDescriptor.Proto
 
   /**
    * Wraps {@code method}. The scan root is the type its request marshaller parses into, taken
-   * once here and never from a real request; {@code schemaType} is used only when that
-   * marshaller gives no protobuf instance, see {@link Plain}.
+   * once here from the marshaller's protobuf prototype and never from a real request.
+   *
+   * @throws IllegalStateException if the request marshaller gives no protobuf prototype
    */
   public static <ReqT, RespT> ServerMethodDefinition<ReqT, RespT> guard(
-      ServerMethodDefinition<ReqT, RespT> method, Descriptor schemaType, int maxMessageSize,
-      int maxOccurrences) {
+      ServerMethodDefinition<ReqT, RespT> method, int maxMessageSize, int maxOccurrences) {
     MethodDescriptor<ReqT, RespT> descriptor = method.getMethodDescriptor();
-    MethodDescriptor.Marshaller<ReqT> original = descriptor.getRequestMarshaller();
-    Message prototype = prototypeOf(original);
-    if (prototype == null) {
-      Plain<ReqT> plain = new Plain<>(original, schemaType, descriptor.getFullMethodName(),
-          maxMessageSize, maxOccurrences);
-      return ServerMethodDefinition.create(
-          descriptor.toBuilder(plain, descriptor.getResponseMarshaller()).build(),
-          method.getServerCallHandler());
-    }
-    GuardedRequestMarshaller<ReqT> guarded =
-        new GuardedRequestMarshaller<>(original, prototype, maxMessageSize, maxOccurrences);
+    GuardedRequestMarshaller<ReqT> guarded = new GuardedRequestMarshaller<>(
+        descriptor.getRequestMarshaller(), prototypeOf(descriptor), maxMessageSize,
+        maxOccurrences);
     return ServerMethodDefinition.create(
         descriptor.toBuilder(guarded, descriptor.getResponseMarshaller()).build(),
         new AdmissionCheckedHandler<>(method.getServerCallHandler(), guarded));
   }
 
-  static Message prototypeOf(MethodDescriptor.Marshaller<?> marshaller) {
-    Object prototype;
-    try {
-      prototype = marshaller instanceof MethodDescriptor.PrototypeMarshaller
-          ? ((MethodDescriptor.PrototypeMarshaller<?>) marshaller).getMessagePrototype()
-          : marshaller.parse(new KnownLengthInputStream(new byte[0]));
-    } catch (RuntimeException e) {
-      return null;
+  static Message prototypeOf(MethodDescriptor<?, ?> descriptor) {
+    MethodDescriptor.Marshaller<?> marshaller = descriptor.getRequestMarshaller();
+    Object prototype = marshaller instanceof MethodDescriptor.PrototypeMarshaller
+        ? ((MethodDescriptor.PrototypeMarshaller<?>) marshaller).getMessagePrototype()
+        : null;
+    if (!(prototype instanceof Message)) {
+      throw new IllegalStateException(
+          "no protobuf request prototype: " + descriptor.getFullMethodName());
     }
-    return prototype instanceof Message ? (Message) prototype : null;
+    return (Message) prototype;
   }
 
   @Override
@@ -181,51 +173,6 @@ public final class GuardedRequestMarshaller<T> implements MethodDescriptor.Proto
         throw new TransactionAdmissionException(Reason.MALFORMED, null);
       }
       throw e;
-    }
-  }
-
-  /**
-   * For a request type known only from the schema, when the original marshaller gives no
-   * protobuf instance: there is no sentinel, so a rejection is thrown before the original
-   * marshaller parses. grpc then closes the call with UNKNOWN and logs the exception at SEVERE,
-   * and no handler sees it, so the rejection is counted here.
-   */
-  static final class Plain<T> implements MethodDescriptor.Marshaller<T> {
-
-    private final MethodDescriptor.Marshaller<T> delegate;
-    private final Descriptor root;
-    private final String fullMethodName;
-    private final int maxMessageSize;
-    private final int maxOccurrences;
-
-    Plain(MethodDescriptor.Marshaller<T> delegate, Descriptor root, String fullMethodName,
-        int maxMessageSize, int maxOccurrences) {
-      this.delegate = delegate;
-      this.root = root;
-      this.fullMethodName = fullMethodName;
-      this.maxMessageSize = maxMessageSize;
-      this.maxOccurrences = maxOccurrences;
-    }
-
-    @Override
-    public InputStream stream(T value) {
-      return delegate.stream(value);
-    }
-
-    @Override
-    public T parse(InputStream stream) {
-      try {
-        return parseChecked(stream, delegate, root, maxMessageSize, maxOccurrences);
-      } catch (TransactionAdmissionException e) {
-        countRejection(fullMethodName, e.getReason());
-        // Thrown from parse, so grpc reports it to the client as UNKNOWN.
-        throw Status.INVALID_ARGUMENT.withDescription(rejectionMessage(root))
-            .asRuntimeException();
-      }
-    }
-
-    Descriptor getRoot() {
-      return root;
     }
   }
 

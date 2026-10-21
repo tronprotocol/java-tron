@@ -1,7 +1,6 @@
 package org.tron.common.application;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
@@ -38,7 +37,6 @@ import io.grpc.netty.NettyServerBuilder;
 import io.grpc.protobuf.ProtoMethodDescriptorSupplier;
 import io.grpc.protobuf.ProtoUtils;
 import io.grpc.stub.ClientCalls;
-import io.grpc.stub.ServerCalls;
 import io.grpc.stub.StreamObserver;
 import io.prometheus.client.CollectorRegistry;
 import java.io.ByteArrayInputStream;
@@ -387,92 +385,6 @@ public class RpcServiceAdmissionTest {
   }
 
   @Test
-  public void withoutAPrototypeARejectionReachesTheClientAsUnknownAndIsCountedOnce()
-      throws Exception {
-    CommonParameter parameter = CommonParameter.getInstance();
-    boolean metrics = parameter.metricsPrometheusEnable;
-    parameter.metricsPrometheusEnable = true;
-    try {
-      rejectionWithoutAPrototype();
-    } finally {
-      parameter.metricsPrometheusEnable = metrics;
-    }
-  }
-
-  private void rejectionWithoutAPrototype() throws Exception {
-    MethodDescriptor<GrpcAPI.EmptyMessage, Block> generated = WalletGrpc.getGetNowBlockMethod();
-    AtomicInteger parsed = new AtomicInteger();
-    AtomicInteger served = new AtomicInteger();
-    // Not a PrototypeMarshaller, and it cannot parse empty bytes, so no instance is available
-    // when wrapping and only the schema type is known.
-    MethodDescriptor.Marshaller<GrpcAPI.EmptyMessage> noPrototype =
-        new MethodDescriptor.Marshaller<GrpcAPI.EmptyMessage>() {
-          @Override
-          public InputStream stream(GrpcAPI.EmptyMessage value) {
-            return generated.getRequestMarshaller().stream(value);
-          }
-
-          @Override
-          public GrpcAPI.EmptyMessage parse(InputStream stream) {
-            parsed.incrementAndGet();
-            try {
-              if (stream.available() == 0) {
-                throw new IllegalStateException("no instance");
-              }
-            } catch (IOException e) {
-              throw new IllegalStateException(e);
-            }
-            return generated.getRequestMarshaller().parse(stream);
-          }
-        };
-    MethodDescriptor<GrpcAPI.EmptyMessage, Block> method =
-        generated.toBuilder(noPrototype, generated.getResponseMarshaller()).build();
-    ServerCallHandler<GrpcAPI.EmptyMessage, Block> handler =
-        ServerCalls.asyncUnaryCall((request, observer) -> {
-          served.incrementAndGet();
-          observer.onNext(Block.getDefaultInstance());
-          observer.onCompleted();
-        });
-    ServerServiceDefinition guarded = RpcService.guardRequestMethods(
-        ServerServiceDefinition.builder(ServiceDescriptor.newBuilder(WalletGrpc.SERVICE_NAME)
-            .addMethod(method).build()).addMethod(method, handler).build(),
-        MAX_MESSAGE, BUDGET);
-    String name = method.getFullMethodName();
-    ServerMethodDefinition<?, ?> wrapped = guarded.getMethod(name);
-    assertFalse(wrapped.getMethodDescriptor().getRequestMarshaller()
-        instanceof MethodDescriptor.PrototypeMarshaller);
-    assertSame(handler, wrapped.getServerCallHandler());
-    Server plainServer = NettyServerBuilder.forAddress(new InetSocketAddress("127.0.0.1", 0))
-        .maxInboundMessageSize(MAX_MESSAGE).addService(guarded)
-        .intercept(new PermitLikeInterceptor()).build().start();
-    ManagedChannel plainChannel = NettyChannelBuilder
-        .forAddress("127.0.0.1", plainServer.getPort()).usePlaintext().build();
-    try {
-      parsed.set(0);   // the empty-bytes attempt when wrapping
-      double before = rejections(name, Reason.OVER_BUDGET);
-      int severeBefore = GRPC_SEVERE.size();
-
-      Status status = rawCall(plainChannel, method, distinctUnknownFields(BUDGET + 1), null);
-      assertEquals(Status.Code.UNKNOWN, status.getCode());
-      assertEquals(0, parsed.get());
-      assertEquals(0, served.get());
-      assertEquals(before + 1, rejections(name, Reason.OVER_BUDGET), 0);
-      awaitTrue(() -> STARTED.get() == FINISHED.get());
-      awaitTrue(() -> GRPC_SEVERE.size() > severeBefore);
-
-      assertEquals(Status.Code.OK,
-          rawCall(plainChannel, method, distinctUnknownFields(BUDGET), null).getCode());
-      assertEquals(1, parsed.get());
-      assertEquals(1, served.get());
-      assertEquals(before + 1, rejections(name, Reason.OVER_BUDGET), 0);
-      awaitTrue(() -> STARTED.get() == FINISHED.get());
-    } finally {
-      plainChannel.shutdownNow().awaitTermination(5, TimeUnit.SECONDS);
-      plainServer.shutdownNow().awaitTermination(5, TimeUnit.SECONDS);
-    }
-  }
-
-  @Test
   public void laterMessagesOnARejectedUnaryCallAreIgnored() throws Exception {
     Transaction flood = Transaction.parseFrom(retFlood(BUDGET + 1));
     int before = HANDLER_CALLS.get();
@@ -600,32 +512,6 @@ public class RpcServiceAdmissionTest {
     }
   }
 
-  @Test
-  public void transactionMethodWithANonPrototypeMarshallerIsStillGuarded() {
-    MethodDescriptor<Transaction, GrpcAPI.Return> generated =
-        WalletGrpc.getBroadcastTransactionMethod();
-    MethodDescriptor.Marshaller<Transaction> plain =
-        new MethodDescriptor.Marshaller<Transaction>() {
-      @Override
-      public InputStream stream(Transaction value) {
-        return generated.getRequestMarshaller().stream(value);
-      }
-
-      @Override
-      public Transaction parse(InputStream stream) {
-        return generated.getRequestMarshaller().parse(stream);
-      }
-    };
-    MethodDescriptor<Transaction, GrpcAPI.Return> method =
-        generated.toBuilder(plain, generated.getResponseMarshaller()).build();
-    ServerServiceDefinition definition = ServerServiceDefinition.builder(
-        ServiceDescriptor.newBuilder(WalletGrpc.SERVICE_NAME).addMethod(method).build())
-        .addMethod(method, (call, headers) -> new ServerCall.Listener<Transaction>() { })
-        .build();
-    assertEquals(1, assertAllMethodsGuarded(
-        RpcService.guardRequestMethods(definition, MAX_MESSAGE, BUDGET), BUDGET, MAX_MESSAGE));
-  }
-
   /**
    * The guard counts a packed repeated scalar field once and only unpacks the Any of
    * Transaction.Contract, so no request type, including contract payloads, may have a packable
@@ -677,54 +563,21 @@ public class RpcServiceAdmissionTest {
   }
 
   @Test
-  public void theSchemaDecidesWhetherToGuardWhenThereIsOne() {
-    MethodDescriptor<Transaction, GrpcAPI.Return> broadcast =
-        WalletGrpc.getBroadcastTransactionMethod();
-    MethodDescriptor<GrpcAPI.BytesMessage, Transaction> byId =
-        WalletGrpc.getGetTransactionByIdMethod();
-    MethodDescriptor.Marshaller<Transaction> transaction =
-        ProtoUtils.marshaller(Transaction.getDefaultInstance());
-    MethodDescriptor.Marshaller<GrpcAPI.BytesMessage> bytes =
-        ProtoUtils.marshaller(GrpcAPI.BytesMessage.getDefaultInstance());
-
-    assertEquals(Transaction.getDescriptor(), RpcService.requestType(broadcast));
-    assertEquals(GrpcAPI.BytesMessage.getDescriptor(), RpcService.requestType(byId));
-    // The schema wins over a conflicting request prototype for this decision.
-    assertEquals(GrpcAPI.BytesMessage.getDescriptor(), RpcService.requestType(
-        byId.toBuilder(transaction, byId.getResponseMarshaller()).build()));
-    assertEquals(Transaction.getDescriptor(), RpcService.requestType(
-        broadcast.toBuilder(bytes, broadcast.getResponseMarshaller()).build()));
-    // Without a schema the request prototype decides.
-    assertEquals(Transaction.getDescriptor(), RpcService.requestType(
-        broadcast.toBuilder().setSchemaDescriptor(null).build()));
-    assertEquals(GrpcAPI.BytesMessage.getDescriptor(), RpcService.requestType(
-        byId.toBuilder().setSchemaDescriptor(null).build()));
-  }
-
-  @Test
-  public void aMethodOfUnknownRequestTypeIsKeptAndFailsTheRegistrationCheck() {
-    MethodDescriptor<byte[], GrpcAPI.Return> unknown = MethodDescriptor.<byte[], GrpcAPI.Return>
+  public void aMethodWithoutAProtobufPrototypeFailsTheWiring() {
+    MethodDescriptor<byte[], GrpcAPI.Return> raw = MethodDescriptor.<byte[], GrpcAPI.Return>
         newBuilder().setType(MethodDescriptor.MethodType.UNARY)
-        .setFullMethodName(MethodDescriptor.generateFullMethodName("test.Unknown", "Call"))
+        .setFullMethodName(MethodDescriptor.generateFullMethodName("test.Raw", "Call"))
         .setRequestMarshaller(RAW)
         .setResponseMarshaller(ProtoUtils.marshaller(GrpcAPI.Return.getDefaultInstance()))
         .build();
-    ServerCallHandler<byte[], GrpcAPI.Return> handler =
-        (call, headers) -> new ServerCall.Listener<byte[]>() { };
     ServerServiceDefinition definition = ServerServiceDefinition.builder(
-        ServiceDescriptor.newBuilder("test.Unknown").addMethod(unknown).build())
-        .addMethod(unknown, handler).build();
-    assertNull(RpcService.requestType(unknown));
-    ServerServiceDefinition guarded = RpcService.guardRequestMethods(definition, MAX_MESSAGE,
-        BUDGET);
-    ServerMethodDefinition<?, ?> kept = guarded.getMethod(unknown.getFullMethodName());
-    assertSame(unknown, kept.getMethodDescriptor());
-    assertSame(handler, kept.getServerCallHandler());
+        ServiceDescriptor.newBuilder("test.Raw").addMethod(raw).build())
+        .addMethod(raw, (call, headers) -> new ServerCall.Listener<byte[]>() { }).build();
     try {
-      assertAllMethodsGuarded(guarded, BUDGET, MAX_MESSAGE);
-      fail("an unguarded method must fail the registration check");
-    } catch (AssertionError expected) {
-      assertTrue(expected.getMessage(), expected.getMessage().contains("test.Unknown/Call"));
+      RpcService.guardRequestMethods(definition, MAX_MESSAGE, BUDGET);
+      fail("expected a wiring failure");
+    } catch (IllegalStateException e) {
+      assertEquals("no protobuf request prototype: test.Raw/Call", e.getMessage());
     }
   }
 

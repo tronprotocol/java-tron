@@ -15,15 +15,11 @@
 
 package org.tron.common.application;
 
-import com.google.protobuf.Descriptors.Descriptor;
-import com.google.protobuf.Message;
-import io.grpc.MethodDescriptor;
 import io.grpc.Server;
 import io.grpc.ServerMethodDefinition;
 import io.grpc.ServerServiceDefinition;
 import io.grpc.ServiceDescriptor;
 import io.grpc.netty.NettyServerBuilder;
-import io.grpc.protobuf.ProtoMethodDescriptorSupplier;
 import io.grpc.protobuf.services.ProtoReflectionService;
 import java.util.ArrayList;
 import java.util.List;
@@ -129,7 +125,7 @@ public abstract class RpcService extends AbstractService {
 
   protected abstract void addService(NettyServerBuilder serverBuilder);
 
-  /** Guards every method whose request type is known; other methods are kept as they are. */
+  /** Guards every method; fails if a request marshaller gives no protobuf prototype. */
   protected static ServerServiceDefinition guardRequestMethods(
       ServerServiceDefinition definition) {
     return guardRequestMethods(definition, Args.getInstance().getMaxMessageSize(),
@@ -143,9 +139,7 @@ public abstract class RpcService extends AbstractService {
         .setSchemaDescriptor(service.getSchemaDescriptor());
     List<ServerMethodDefinition<?, ?>> methods = new ArrayList<>();
     for (ServerMethodDefinition<?, ?> method : definition.getMethods()) {
-      Descriptor type = requestType(method.getMethodDescriptor());
-      methods.add(type == null ? method
-          : GuardedRequestMarshaller.guard(method, type, maxMessageSize, maxOccurrences));
+      methods.add(GuardedRequestMarshaller.guard(method, maxMessageSize, maxOccurrences));
     }
     // grpc requires the same MethodDescriptor instances in both descriptors.
     for (ServerMethodDefinition<?, ?> method : methods) {
@@ -157,22 +151,6 @@ public abstract class RpcService extends AbstractService {
       builder.addMethod(method);
     }
     return builder.build();
-  }
-
-  // The schema decides when there is one; otherwise the request marshaller's prototype.
-  static Descriptor requestType(MethodDescriptor<?, ?> descriptor) {
-    Object schema = descriptor.getSchemaDescriptor();
-    if (schema instanceof ProtoMethodDescriptorSupplier) {
-      return ((ProtoMethodDescriptorSupplier) schema).getMethodDescriptor().getInputType();
-    }
-    MethodDescriptor.Marshaller<?> request = descriptor.getRequestMarshaller();
-    if (request instanceof MethodDescriptor.PrototypeMarshaller) {
-      Object prototype = ((MethodDescriptor.PrototypeMarshaller<?>) request).getMessagePrototype();
-      if (prototype instanceof Message) {
-        return ((Message) prototype).getDescriptorForType();
-      }
-    }
-    return null;
   }
 
   protected void addInterceptor(NettyServerBuilder serverBuilder) {
