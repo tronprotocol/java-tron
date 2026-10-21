@@ -91,7 +91,7 @@ public class DynamicArgsTest extends BaseMethodTest {
           }
         };
     P2pConfig p2pConfig = new P2pConfig();
-    p2pConfig.setActiveNodes(activeNodes);
+    ReflectUtils.setFieldValue(p2pConfig, "activeNodes", activeNodes);
     NodeConfig nodeConfig = new NodeConfig();
     nodeConfig.setActive(Arrays.asList("192.0.2.10:18888", "192.0.2.12:18888"));
     List<InetSocketAddress> previousActiveNodes = Args.getInstance().getActiveNodes();

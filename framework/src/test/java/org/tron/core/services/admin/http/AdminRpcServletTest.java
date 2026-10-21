@@ -36,6 +36,7 @@ import org.eclipse.jetty.server.LocalConnector;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.mock.web.MockServletConfig;
@@ -44,6 +45,8 @@ import org.tron.common.parameter.CommonParameter;
 import org.tron.core.Constant;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.jsonrpc.JsonRpcInvalidParamsException;
+import org.tron.core.net.service.peermanagement.BlockedIpInfo;
+import org.tron.core.net.service.peermanagement.PeerOperationResult;
 import org.tron.core.services.admin.AdminJsonRpc;
 import org.tron.core.services.jsonrpc.JsonRpcMapper;
 import org.tron.core.services.jsonrpc.JsonRpcMediaType;
@@ -54,8 +57,8 @@ public class AdminRpcServletTest {
   private static final int REQUEST_LIMIT = 1024;
   private static final ObjectMapper MAPPER = JsonRpcMapper.create();
   private static final String REQUEST_PREFIX =
-      "{\"jsonrpc\":\"2.0\",\"method\":\"admin_example\","
-          + "\"params\":[\"a\",\"b\"],\"id\":7,\"extra\":";
+      "{\"jsonrpc\":\"2.0\",\"method\":\"admin_addPeer\","
+          + "\"params\":[\"a\"],\"id\":7,\"extra\":";
 
   private AdminRpcServlet servlet;
   private AdminJsonRpc adminJsonRpc;
@@ -72,9 +75,10 @@ public class AdminRpcServletTest {
 
   @Test
   public void publicRateLimitDoesNotBlockAdminRequests() throws Exception {
-    when(adminJsonRpc.adminExample("left", "right")).thenReturn("left:right");
-    String body = "{\"jsonrpc\":\"2.0\",\"method\":\"admin_example\","
-        + "\"params\":[\"left\",\"right\"],\"id\":7}";
+    when(adminJsonRpc.addPeer("left"))
+        .thenReturn(new PeerOperationResult(false, false, 0, "left:right"));
+    String body = "{\"jsonrpc\":\"2.0\",\"method\":\"admin_addPeer\","
+        + "\"params\":[\"left\"],\"id\":7}";
     CommonParameter parameter = CommonParameter.getInstance();
     boolean previousNonBlocking = parameter.isRateLimiterApiNonBlocking();
     try (MockedStatic<GlobalRateLimiter> global = mockStatic(GlobalRateLimiter.class)) {
@@ -90,10 +94,10 @@ public class AdminRpcServletTest {
         JsonNode result = JsonRpcMapper.create().readTree(response.getContentAsString());
         assertEquals("2.0", result.get("jsonrpc").asText());
         assertEquals(7, result.get("id").asInt());
-        assertEquals("left:right", result.get("result").asText());
+        assertEquals("left:right", result.get("result").get("errorMessage").asText());
       }
       global.verifyNoInteractions();
-      verify(adminJsonRpc, times(2)).adminExample("left", "right");
+      verify(adminJsonRpc, times(2)).addPeer("left");
     } finally {
       parameter.setRateLimiterApiNonBlocking(previousNonBlocking);
     }
@@ -147,8 +151,8 @@ public class AdminRpcServletTest {
   @Test
   public void batchRequestsAreRejectedBeforeInvocation() throws Exception {
     String first = REQUEST_PREFIX + "0}";
-    String second = "{\"jsonrpc\":\"2.0\",\"method\":\"admin_example\","
-        + "\"params\":[\"c\",\"d\"],\"id\":8}";
+    String second = "{\"jsonrpc\":\"2.0\",\"method\":\"admin_addPeer\","
+        + "\"params\":[\"c\"],\"id\":8}";
 
     assertBatchRejected("[" + first + "]");
     assertBatchRejected("[" + first + "," + second + "]");
@@ -156,8 +160,8 @@ public class AdminRpcServletTest {
 
   @Test
   public void notificationOnlyBatchIsRejectedBeforeInvocation() throws Exception {
-    String notification = "{\"jsonrpc\":\"2.0\",\"method\":\"admin_example\","
-        + "\"params\":[\"a\",\"b\"]}";
+    String notification = "{\"jsonrpc\":\"2.0\",\"method\":\"admin_addPeer\","
+        + "\"params\":[\"a\"]}";
 
     assertBatchRejected("[" + notification + "]");
     assertBatchRejected("[" + notification + "," + notification + "]");
@@ -165,8 +169,8 @@ public class AdminRpcServletTest {
 
   @Test
   public void mixedBatchIsRejectedBeforeInvocation() throws Exception {
-    String notification = "{\"jsonrpc\":\"2.0\",\"method\":\"admin_example\","
-        + "\"params\":[\"c\",\"d\"]}";
+    String notification = "{\"jsonrpc\":\"2.0\",\"method\":\"admin_addPeer\","
+        + "\"params\":[\"c\"]}";
     String request = REQUEST_PREFIX + "0}";
 
     assertBatchRejected("[" + notification + "," + request + "]");
@@ -175,47 +179,49 @@ public class AdminRpcServletTest {
 
   @Test
   public void stringNullRequestIdIsPreserved() throws Exception {
-    when(adminJsonRpc.adminExample("a", "b")).thenReturn("a:b");
+    when(adminJsonRpc.addPeer("a"))
+        .thenReturn(new PeerOperationResult(false, false, 0, "a:b"));
     MockHttpServletResponse response = doPost(
-        "{\"jsonrpc\":\"2.0\",\"method\":\"admin_example\","
-            + "\"params\":[\"a\",\"b\"],\"id\":\"null\"}");
+        "{\"jsonrpc\":\"2.0\",\"method\":\"admin_addPeer\","
+            + "\"params\":[\"a\"],\"id\":\"null\"}");
 
     assertEquals(HttpServletResponse.SC_OK, response.getStatus());
     JsonNode result = JsonRpcMapper.create().readTree(response.getContentAsString());
     assertTrue(result.get("id").isTextual());
     assertEquals("null", result.get("id").asText());
-    assertEquals("a:b", result.get("result").asText());
-    verify(adminJsonRpc).adminExample("a", "b");
+    assertEquals("a:b", result.get("result").get("errorMessage").asText());
+    verify(adminJsonRpc).addPeer("a");
   }
 
   @Test
   public void notificationInvokesMethodWithoutResponse() throws Exception {
     MockHttpServletResponse response = doPost(
-        "{\"jsonrpc\":\"2.0\",\"method\":\"admin_example\",\"params\":[\"a\",\"b\"]}");
+        "{\"jsonrpc\":\"2.0\",\"method\":\"admin_addPeer\",\"params\":[\"a\"]}");
 
     assertEquals(HttpServletResponse.SC_OK, response.getStatus());
     assertEquals(0, response.getContentAsByteArray().length);
     assertEquals(0, response.getContentLength());
     assertTrue(JsonRpcMediaType.isSupported(response.getContentType()));
-    verify(adminJsonRpc).adminExample("a", "b");
+    verify(adminJsonRpc).addPeer("a");
   }
 
   @Test
   public void utf8ResponseUsesByteContentLength() throws Exception {
-    when(adminJsonRpc.adminExample("左", "右")).thenReturn("左:右");
+    when(adminJsonRpc.addPeer("左"))
+        .thenReturn(new PeerOperationResult(false, false, 0, "左:右"));
 
     MockHttpServletResponse response = doPost(
-        "{\"jsonrpc\":\"2.0\",\"method\":\"admin_example\","
-            + "\"params\":[\"左\",\"右\"],\"id\":8}");
+        "{\"jsonrpc\":\"2.0\",\"method\":\"admin_addPeer\","
+            + "\"params\":[\"左\"],\"id\":8}");
 
     assertEquals(HttpServletResponse.SC_OK, response.getStatus());
     assertTrue(JsonRpcMediaType.isSupported(response.getContentType()));
     assertEquals("UTF-8", response.getCharacterEncoding());
     assertEquals(response.getContentAsByteArray().length, response.getContentLength());
     JsonNode result = JsonRpcMapper.create().readTree(response.getContentAsByteArray());
-    assertEquals("左:右", result.get("result").asText());
+    assertEquals("左:右", result.get("result").get("errorMessage").asText());
     assertEquals(8, result.get("id").asInt());
-    verify(adminJsonRpc).adminExample("左", "右");
+    verify(adminJsonRpc).addPeer("左");
   }
 
   @Test
@@ -237,7 +243,7 @@ public class AdminRpcServletTest {
 
   @Test
   public void annotatedBusinessErrorIsPreserved() throws Exception {
-    when(adminJsonRpc.adminExample("a", "b"))
+    when(adminJsonRpc.addPeer("a"))
         .thenThrow(new JsonRpcInvalidParamsException("Invalid admin parameters"));
 
     MockHttpServletResponse response = doPost(REQUEST_PREFIX + "0}");
@@ -249,7 +255,7 @@ public class AdminRpcServletTest {
     assertEquals("Invalid admin parameters", result.get("error").get("message").asText());
     assertEquals(7, result.get("id").asInt());
     assertFalse(result.has("result"));
-    verify(adminJsonRpc).adminExample("a", "b");
+    verify(adminJsonRpc).addPeer("a");
   }
 
   @Test
@@ -273,6 +279,119 @@ public class AdminRpcServletTest {
     }
     assertEquals(0, response.getContentAsByteArray().length);
     verifyNoInteractions(adminJsonRpc);
+  }
+
+  @Test
+  public void nonJsonContentTypeIsRejected() throws Exception {
+    MockHttpServletResponse response = doPost(
+        "{\"jsonrpc\":\"2.0\",\"method\":\"admin_listBlockedIps\",\"id\":1}",
+        "text/plain");
+
+    assertEquals(HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE, response.getStatus());
+    assertEquals(0, response.getContentAsByteArray().length);
+  }
+
+  @Test
+  public void missingContentTypeIsRejected() throws Exception {
+    MockHttpServletResponse response = doPost(
+        "{\"jsonrpc\":\"2.0\",\"method\":\"admin_listBlockedIps\",\"id\":1}", null);
+
+    assertEquals(HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE, response.getStatus());
+    assertEquals(0, response.getContentAsByteArray().length);
+  }
+
+  @Test
+  public void jsonContentTypesAreAccepted() throws Exception {
+    String body = "{\"jsonrpc\":\"2.0\",\"method\":\"admin_listBlockedIps\",\"id\":1}";
+
+    assertEquals(HttpServletResponse.SC_OK,
+        doPost(body, "application/json; charset=UTF-8").getStatus());
+    assertEquals(HttpServletResponse.SC_OK,
+        doPost(body, "application/json-rpc").getStatus());
+    assertEquals(HttpServletResponse.SC_OK,
+        doPost(body, "application/vnd.tron+json").getStatus());
+  }
+
+  @Test
+  public void unlistedVirtualHostIsRejected() throws Exception {
+    MockHttpServletResponse response = doPost(
+        "{\"jsonrpc\":\"2.0\",\"method\":\"admin_listBlockedIps\",\"id\":1}",
+        "application/json", "evil.example:8575");
+
+    assertEquals(HttpServletResponse.SC_FORBIDDEN, response.getStatus());
+  }
+
+  @Test
+  public void listedVirtualHostIsAcceptedCaseInsensitivelyAndWithoutPort() throws Exception {
+    setVirtualHosts("admin.example.com");
+
+    MockHttpServletResponse response = doPost(
+        "{\"jsonrpc\":\"2.0\",\"method\":\"admin_listBlockedIps\",\"id\":1}",
+        "application/json", "ADMIN.EXAMPLE.COM:8575");
+
+    assertEquals(HttpServletResponse.SC_OK, response.getStatus());
+  }
+
+  @Test
+  public void ipLiteralHostsAreAccepted() throws Exception {
+    String body = "{\"jsonrpc\":\"2.0\",\"method\":\"admin_listBlockedIps\",\"id\":1}";
+
+    assertEquals(HttpServletResponse.SC_OK,
+        doPost(body, "application/json", "127.0.0.1:8575").getStatus());
+    assertEquals(HttpServletResponse.SC_OK,
+        doPost(body, "application/json", "[::1]:8575").getStatus());
+  }
+
+  @Test
+  public void wildcardVirtualHostAcceptsAnyHostname() throws Exception {
+    setVirtualHosts("*");
+
+    MockHttpServletResponse response = doPost(
+        "{\"jsonrpc\":\"2.0\",\"method\":\"admin_listBlockedIps\",\"id\":1}",
+        "application/json", "any.example:8575");
+
+    assertEquals(HttpServletResponse.SC_OK, response.getStatus());
+  }
+
+  @Test
+  public void peerManagementMethodIsAvailableOverHttp() throws Exception {
+    Mockito.when(adminJsonRpc.addPeer("192.0.2.20:18888"))
+        .thenReturn(new PeerOperationResult(true, true, 0, ""));
+
+    MockHttpServletResponse response = doPost(
+        "{\"jsonrpc\":\"2.0\",\"method\":\"admin_addPeer\","
+            + "\"params\":[\"192.0.2.20:18888\"],\"id\":8}");
+    JsonNode result = new ObjectMapper().readTree(response.getContentAsByteArray()).get("result");
+
+    assertEquals(HttpServletResponse.SC_OK, response.getStatus());
+    assertEquals(true, result.get("success").asBoolean());
+    assertEquals(true, result.get("changed").asBoolean());
+    assertEquals("", result.get("errorMessage").asText());
+    assertFalse(result.has("message"));
+    Mockito.verify(adminJsonRpc).addPeer("192.0.2.20:18888");
+  }
+
+  @Test
+  public void peerOperationFailureUsesErrorMessageOverHttp() throws Exception {
+    String errorMessage = "Peer modification is unavailable; update node.active instead.";
+    Mockito.when(adminJsonRpc.addPeer("192.0.2.20:18888"))
+        .thenReturn(new PeerOperationResult(false, false, 0, errorMessage));
+
+    MockHttpServletResponse response = doPost(
+        "{\"jsonrpc\":\"2.0\",\"method\":\"admin_addPeer\","
+            + "\"params\":[\"192.0.2.20:18888\"],\"id\":10}");
+    JsonNode responseNode = new ObjectMapper().readTree(response.getContentAsByteArray());
+    JsonNode result = responseNode.get("result");
+
+    assertEquals(HttpServletResponse.SC_OK, response.getStatus());
+    assertEquals(10, responseNode.get("id").asInt());
+    assertEquals(false, result.get("success").asBoolean());
+    assertEquals(false, result.get("changed").asBoolean());
+    assertEquals(0, result.get("disconnectedCount").asInt());
+    assertEquals(errorMessage, result.get("errorMessage").asText());
+    assertFalse(result.has("message"));
+    assertFalse(responseNode.has("error"));
+    Mockito.verify(adminJsonRpc).addPeer("192.0.2.20:18888");
   }
 
   @Test
@@ -360,9 +479,9 @@ public class AdminRpcServletTest {
       service.start().get(5, TimeUnit.SECONDS);
       for (String accept : new String[] {"application/json", "text/html", "text/plain"}) {
         clearInvocations(adminJsonRpc);
-        when(adminJsonRpc.adminExample("a", "b"))
+        when(adminJsonRpc.addPeer("a"))
             .thenThrow(new StackOverflowError("fatal-response-marker"))
-            .thenReturn("a:b");
+            .thenReturn(new PeerOperationResult(true, true, 0, ""));
 
         String response = service.post(REQUEST_PREFIX + "0}", false, accept);
 
@@ -371,7 +490,7 @@ public class AdminRpcServletTest {
         int headerEnd = response.indexOf("\r\n\r\n");
         assertTrue("Response must include complete headers", headerEnd >= 0);
         assertEquals(accept, "", response.substring(headerEnd + 4));
-        verify(adminJsonRpc).adminExample("a", "b");
+        verify(adminJsonRpc).addPeer("a");
 
         // A later successful request must still return its JSON-RPC result.
         String success = service.post(REQUEST_PREFIX + "0}", false, accept);
@@ -379,85 +498,14 @@ public class AdminRpcServletTest {
         int successHeaderEnd = success.indexOf("\r\n\r\n");
         assertTrue("Response must include complete headers", successHeaderEnd >= 0);
         JsonNode result = MAPPER.readTree(success.substring(successHeaderEnd + 4));
-        assertEquals("a:b", result.path("result").asText());
+        assertTrue(result.path("result").path("success").asBoolean());
         assertEquals(7, result.path("id").asInt());
-        verify(adminJsonRpc, times(2)).adminExample("a", "b");
+        verify(adminJsonRpc, times(2)).addPeer("a");
         verifyNoMoreInteractions(adminJsonRpc);
       }
     } finally {
       service.stop().get(5, TimeUnit.SECONDS);
     }
-  }
-
-  @Test
-  public void nonJsonContentTypeIsRejected() throws Exception {
-    MockHttpServletResponse response = doPost(
-        "{\"jsonrpc\":\"2.0\",\"method\":\"admin_example\",\"id\":1}", "text/plain");
-
-    assertEquals(HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE, response.getStatus());
-    assertEquals(0, response.getContentAsByteArray().length);
-  }
-
-  @Test
-  public void missingContentTypeIsRejected() throws Exception {
-    MockHttpServletResponse response = doPost(
-        "{\"jsonrpc\":\"2.0\",\"method\":\"admin_example\",\"id\":1}", null);
-
-    assertEquals(HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE, response.getStatus());
-    assertEquals(0, response.getContentAsByteArray().length);
-  }
-
-  @Test
-  public void jsonContentTypesAreAccepted() throws Exception {
-    String body = "{\"jsonrpc\":\"2.0\",\"method\":\"admin_example\",\"id\":1}";
-
-    assertEquals(HttpServletResponse.SC_OK,
-        doPost(body, "application/json; charset=UTF-8").getStatus());
-    assertEquals(HttpServletResponse.SC_OK,
-        doPost(body, "application/json-rpc").getStatus());
-    assertEquals(HttpServletResponse.SC_OK,
-        doPost(body, "application/vnd.tron+json").getStatus());
-  }
-
-  @Test
-  public void unlistedVirtualHostIsRejected() throws Exception {
-    MockHttpServletResponse response = doPost(
-        "{\"jsonrpc\":\"2.0\",\"method\":\"admin_example\",\"id\":1}",
-        "application/json", "evil.example:8575");
-
-    assertEquals(HttpServletResponse.SC_FORBIDDEN, response.getStatus());
-  }
-
-  @Test
-  public void listedVirtualHostIsAcceptedCaseInsensitivelyAndWithoutPort() throws Exception {
-    setVirtualHosts("admin.example.com");
-
-    MockHttpServletResponse response = doPost(
-        "{\"jsonrpc\":\"2.0\",\"method\":\"admin_example\",\"id\":1}",
-        "application/json", "ADMIN.EXAMPLE.COM:8575");
-
-    assertEquals(HttpServletResponse.SC_OK, response.getStatus());
-  }
-
-  @Test
-  public void ipLiteralHostsAreAccepted() throws Exception {
-    String body = "{\"jsonrpc\":\"2.0\",\"method\":\"admin_example\",\"id\":1}";
-
-    assertEquals(HttpServletResponse.SC_OK,
-        doPost(body, "application/json", "127.0.0.1:8575").getStatus());
-    assertEquals(HttpServletResponse.SC_OK,
-        doPost(body, "application/json", "[::1]:8575").getStatus());
-  }
-
-  @Test
-  public void wildcardVirtualHostAcceptsAnyHostname() throws Exception {
-    setVirtualHosts("*");
-
-    MockHttpServletResponse response = doPost(
-        "{\"jsonrpc\":\"2.0\",\"method\":\"admin_example\",\"id\":1}",
-        "application/json", "any.example:8575");
-
-    assertEquals(HttpServletResponse.SC_OK, response.getStatus());
   }
 
   @Test(timeout = 10_000)
@@ -480,7 +528,7 @@ public class AdminRpcServletTest {
     try {
       parameter.setJsonRpcMaxMessageSize(REQUEST_LIMIT);
       parameter.setHttpMaxMessageSize(REQUEST_LIMIT * 2);
-      when(adminJsonRpc.adminExample("a", "b")).thenReturn("a:b");
+      when(adminJsonRpc.addPeer("a")).thenReturn(new PeerOperationResult(true, true, 0, ""));
       service = new TestAdminRpcHttpService();
       ReflectionTestUtils.setField(service, "adminRpcServlet", servlet);
       service.start().get(5, TimeUnit.SECONDS);
@@ -494,8 +542,8 @@ public class AdminRpcServletTest {
           assertTrue("Response must include complete headers", headerEnd >= 0);
           JsonNode result = MAPPER.readTree(response.substring(headerEnd + 4));
           assertEquals(1, result.path("id").asInt());
-          assertEquals("a:b", result.path("result").asText());
-          verify(adminJsonRpc).adminExample("a", "b");
+          assertTrue(result.path("result").path("success").asBoolean());
+          verify(adminJsonRpc).addPeer("a");
           verifyNoMoreInteractions(adminJsonRpc);
         } else {
           assertTrue(response, response.startsWith("HTTP/1.1 413 "));
@@ -517,28 +565,22 @@ public class AdminRpcServletTest {
   private String requestBody(int size) throws Exception {
     ObjectNode request = MAPPER.createObjectNode();
     request.put("jsonrpc", "2.0");
-    request.put("method", "admin_example");
-    request.putArray("params").add("a").add("b");
+    request.put("method", "admin_addPeer");
+    request.putArray("params").add("a");
     request.put("id", 1);
     String json = MAPPER.writeValueAsString(request);
     // The ASCII body is padded with valid JSON whitespace to exercise exact byte boundaries.
     return json + Strings.repeat(" ", size - json.length());
   }
 
-  private void setField(String name, Object value) throws Exception {
-    Field field = AdminRpcServlet.class.getDeclaredField(name);
-    field.setAccessible(true);
-    field.set(servlet, value);
-  }
-
   private void assertFatalDispatch(Error fatal, HttpServletResponse response) throws Exception {
-    when(adminJsonRpc.adminExample("a", "b")).thenThrow(fatal);
+    when(adminJsonRpc.addPeer("a")).thenThrow(fatal);
 
     Error thrown = assertThrows(Error.class,
         () -> doPost(REQUEST_PREFIX + "0}", "application/json", "localhost", response));
 
     assertSame(fatal, thrown);
-    verify(adminJsonRpc).adminExample("a", "b");
+    verify(adminJsonRpc).addPeer("a");
   }
 
   private void assertEmptyInternalServerError(MockHttpServletResponse response) {
@@ -548,13 +590,39 @@ public class AdminRpcServletTest {
     assertTrue(response.isCommitted());
   }
 
+  private void setField(String name, Object value) throws Exception {
+    Field field = AdminRpcServlet.class.getDeclaredField(name);
+    field.setAccessible(true);
+    field.set(servlet, value);
+  }
+
+  @Test
+  public void blockedIpQueryIncludesCreationTimeOverHttp() throws Exception {
+    Mockito.when(adminJsonRpc.listBlockedIps()).thenReturn(Arrays.asList(
+        new BlockedIpInfo("192.0.2.20", 1_790_000_000_000L),
+        new BlockedIpInfo("2001:db8:0:0:0:0:0:20", 1_790_000_001_000L)));
+
+    MockHttpServletResponse response = doPost(
+        "{\"jsonrpc\":\"2.0\",\"method\":\"admin_listBlockedIps\",\"id\":9}");
+    ObjectMapper mapper = new ObjectMapper();
+    JsonNode result = mapper.readTree(response.getContentAsByteArray());
+
+    assertEquals(HttpServletResponse.SC_OK, response.getStatus());
+    assertEquals(9, result.get("id").asInt());
+    assertEquals(mapper.readTree("[{\"ip\":\"192.0.2.20\",\"blockedAtMillis\":1790000000000},"
+        + "{\"ip\":\"2001:db8:0:0:0:0:0:20\",\"blockedAtMillis\":1790000001000}]"),
+        result.get("result"));
+    Mockito.verify(adminJsonRpc).listBlockedIps();
+  }
+
   private void assertValidRequestWithExtra() throws Exception {
-    when(adminJsonRpc.adminExample("a", "b")).thenReturn("a:b");
+    when(adminJsonRpc.addPeer("a"))
+        .thenReturn(new PeerOperationResult(false, false, 0, "a:b"));
     MockHttpServletResponse response = doPost(REQUEST_PREFIX + "[0]}");
     JsonNode result = JsonRpcMapper.create().readTree(response.getContentAsString());
-    assertEquals("a:b", result.get("result").asText());
+    assertEquals("a:b", result.get("result").get("errorMessage").asText());
     assertEquals(7, result.get("id").asInt());
-    verify(adminJsonRpc).adminExample("a", "b");
+    verify(adminJsonRpc).addPeer("a");
     clearInvocations(adminJsonRpc);
   }
 
@@ -650,5 +718,7 @@ public class AdminRpcServletTest {
       return connector.getResponse(request, 5, TimeUnit.SECONDS);
     }
   }
+
+
 
 }

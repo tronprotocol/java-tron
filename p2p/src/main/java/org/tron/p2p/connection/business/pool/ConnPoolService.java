@@ -28,6 +28,7 @@ import org.tron.p2p.P2pEventHandler;
 import org.tron.p2p.base.Parameter;
 import org.tron.p2p.connection.Channel;
 import org.tron.p2p.connection.ChannelManager;
+import org.tron.p2p.connection.ConnectionPolicy;
 import org.tron.p2p.connection.message.base.P2pDisconnectMessage;
 import org.tron.p2p.connection.socket.PeerClient;
 import org.tron.p2p.discover.Node;
@@ -108,6 +109,8 @@ public class ConnPoolService extends P2pEventHandler {
 
   private void connect(boolean isFilterActiveNodes) {
     List<Node> connectNodes = new ArrayList<>();
+    // Active nodes selected in this scan, used to skip nodes removed before dialing.
+    Set<InetSocketAddress> activeCandidates = new HashSet<>();
 
     //collect already used nodes in channelManager
     Set<InetAddress> addressInUse = new HashSet<>();
@@ -137,12 +140,14 @@ public class ConnPoolService extends P2pEventHandler {
       if (!isFilterActiveNodes
           && !inetInUse.contains(address)
           && !addressInUse.contains(address.getAddress())
+          && !ConnectionPolicy.isBlocked(address)
           && peerClientCache.getIfPresent(address.getAddress()) == null) {
         addressInUse.add(address.getAddress());
         inetInUse.add(address);
         Node node = new Node(address); //use a random NodeId for config activeNodes
         if (node.getPreferInetSocketAddress() != null) {
           connectNodes.add(node);
+          activeCandidates.add(address);
         }
       }
     });
@@ -206,11 +211,21 @@ public class ConnPoolService extends P2pEventHandler {
     //establish tcp connection with chose nodes by peerClient
     {
       connectNodes.forEach(n -> {
-        logger.info("Connect to peer {}", n.getPreferInetSocketAddress());
-        peerClientCache.put(n.getPreferInetSocketAddress().getAddress(),
-            System.currentTimeMillis());
-        peerClient.connectAsync(n, false);
-        if (!configActiveNodes.contains(n.getPreferInetSocketAddress())) {
+        InetSocketAddress address = n.getPreferInetSocketAddress();
+        boolean activeCandidate = activeCandidates.contains(address);
+        boolean activeNode = p2pConfig.getActiveNodes().contains(address);
+        // Recheck mutable runtime state before dialing because an active node may be removed,
+        // or its IP may be blocked, after candidate collection.
+        if (ConnectionPolicy.isBlocked(address) || (activeCandidate && !activeNode)) {
+          return;
+        }
+        logger.info("Connect to peer {}", address);
+        peerClientCache.put(address.getAddress(), System.currentTimeMillis());
+        if (peerClient.connectAsync(n, false) == null) {
+          peerClientCache.invalidate(address.getAddress());
+          return;
+        }
+        if (!configActiveNodes.contains(address)) {
           connectingPeersCount.incrementAndGet();
         }
       });
@@ -249,7 +264,8 @@ public class ConnPoolService extends P2pEventHandler {
     }
     InetAddress inetAddress = inetSocketAddress.getAddress();
     Long forbiddenTime = ChannelManager.getBannedNodes().getIfPresent(inetAddress);
-    if ((forbiddenTime != null && now <= forbiddenTime)
+    if (ConnectionPolicy.isBlocked(inetAddress)
+        || (forbiddenTime != null && now <= forbiddenTime)
         || (ChannelManager.getConnectionNum(inetAddress)
         >= p2pConfig.getMaxConnectionsWithSameIp())
         || (node.getId() != null && nodesInUse.contains(node.getHexId()))

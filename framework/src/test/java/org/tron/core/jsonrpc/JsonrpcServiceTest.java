@@ -2086,6 +2086,27 @@ public class JsonrpcServiceTest extends BaseTest {
     }
   }
 
+  @Test
+  public void testDuplicateMethodFieldDispatchesLastValue() throws Exception {
+    fullNodeJsonRpcHttpService.start();
+    try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
+      HttpPost httpPost = new HttpPost("http://127.0.0.1:"
+          + CommonParameter.getInstance().getJsonRpcHttpFullNodePort() + "/jsonrpc");
+      httpPost.addHeader("Content-Type", "application/json");
+      String requestBody = "{\"jsonrpc\":\"2.0\",\"method\":\"eth_unknownMethod\","
+          + "\"method\":\"web3_clientVersion\",\"id\":1}";
+      httpPost.setEntity(new StringEntity(requestBody));
+      try (CloseableHttpResponse response = httpClient.execute(httpPost)) {
+        String resp = EntityUtils.toString(response.getEntity());
+        JSONObject json = JSON.parseObject(resp);
+        Assert.assertFalse(resp, json.containsKey("error"));
+        Assert.assertNotNull(resp, json.getString("result"));
+      }
+    } finally {
+      fullNodeJsonRpcHttpService.stop();
+    }
+  }
+
   private static JsonRpcServer newJsonRpcServer() {
     ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
     Object compositeService = ProxyUtil.createCompositeServiceProxy(
