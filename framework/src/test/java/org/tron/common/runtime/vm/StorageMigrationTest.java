@@ -1,5 +1,6 @@
 package org.tron.common.runtime.vm;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -15,6 +16,7 @@ import org.bouncycastle.util.encoders.Hex;
 import org.junit.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.tron.common.crypto.Hash;
+import org.tron.common.runtime.Runtime;
 import org.tron.common.runtime.TvmTestUtils;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.ForkController;
@@ -120,6 +122,69 @@ public class StorageMigrationTest extends VMTestBase {
   @Test
   public void bothProposalsUse102ReadProtection() throws Exception {
     assertProposalMode(1, 1);
+  }
+
+  @Test
+  public void extCodeHashSkipsEmptyCodeWriteWhenProposal102() throws Exception {
+    // Non-empty code is written back even when 102 is on. Only empty code skips the write.
+    for (boolean emptyCode : new boolean[]{false, true}) {
+      byte[] targetCode = emptyCode ? new byte[0] : Hex.decode("600160005500");
+      for (int proposal99 : new int[]{0, 1}) {
+        for (int proposal102 : new int[]{0, 1}) {
+          setMode(proposal99, proposal102);
+          boolean skipWrite = proposal102 == 1 && emptyCode;
+          for (byte[] initialHash : new byte[][]{new byte[0], new byte[32],
+              new DataWord(123).getData()}) {
+            String scenario = "empty=" + emptyCode + ", 99=" + proposal99 + ", 102=" + proposal102
+                + ", initialHash=" + Hex.toHexString(initialHash);
+            byte[] target = install(emptyCode ? "00" : Hex.toHexString(targetCode));
+            if (emptyCode) {
+              dbManager.getCodeStore().delete(target);
+            }
+            setCodeHash(target, initialHash);
+            byte[] reader = install(readCodeHash(target) + "60005260206000f3");
+            boolean missing = ByteUtil.isNullOrZeroArray(initialHash);
+            byte[] returned = missing ? Hash.sha3(targetCode) : initialHash;
+            byte[] stored = missing && !skipWrite ? Hash.sha3(targetCode) : initialHash;
+
+            for (int read = 0; read < 2; read++) {
+              Runtime result = TvmTestUtils.processTransactionAndReturnRuntime(
+                  transaction(reader), dbManager, null);
+              assertEquals(scenario, SUCCESS, result.getResult().getResultCode());
+              assertArrayEquals(scenario, returned, result.getResult().getHReturn());
+              assertArrayEquals(scenario, stored,
+                  repository().getContract(target).getCodeHash());
+            }
+          }
+        }
+      }
+    }
+  }
+
+  @Test
+  public void extCodeHashMetadataRespectsTransactionAndSessionRollback() throws Exception {
+    byte[] targetCode = Hex.decode("600160005500");
+    for (int proposal99 : new int[]{0, 1}) {
+      for (int proposal102 : new int[]{0, 1}) {
+        setMode(proposal99, proposal102);
+        String scenario = "99=" + proposal99 + ", 102=" + proposal102;
+        byte[] target = install(Hex.toHexString(targetCode));
+        setCodeHash(target, new byte[0]);
+        for (String end : new String[]{REVERT_CODE, INVALID}) {
+          byte[] reader = install(readCodeHash(target) + "50" + end);
+          assertResult(scenario + ", end=" + end, resultFor(end), reader);
+          assertArrayEquals(scenario, new byte[0], repository().getContract(target).getCodeHash());
+        }
+
+        byte[] reader = install(readCodeHash(target) + "50" + STOP);
+        try (ISession ignored = dbManager.getRevokingStore().buildSession()) {
+          assertResult(scenario + " before session rollback", SUCCESS, reader);
+          assertArrayEquals(scenario, Hash.sha3(targetCode),
+              repository().getContract(target).getCodeHash());
+        }
+        assertArrayEquals(scenario, new byte[0], repository().getContract(target).getCodeHash());
+      }
+    }
   }
 
   private void assertProposalMode(int proposal99, int proposal102) throws Exception {
@@ -400,6 +465,18 @@ public class StorageMigrationTest extends VMTestBase {
     Repository repository = repository();
     repository.saveCode(address, Hex.decode(bytecode));
     repository.commit();
+  }
+
+  private void setCodeHash(byte[] address, byte[] codeHash) {
+    Repository repository = repository();
+    ContractCapsule contract = repository.getContract(address);
+    contract.setCodeHash(codeHash);
+    repository.updateContract(address, contract);
+    repository.commit();
+  }
+
+  private String readCodeHash(byte[] address) {
+    return "73" + Hex.toHexString(Arrays.copyOfRange(address, 1, 21)) + "3f";
   }
 
   private Transaction transaction(byte[] address) {
