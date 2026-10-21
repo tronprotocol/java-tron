@@ -1,12 +1,12 @@
 package org.tron.core.net.message.sync;
 
-import com.google.protobuf.DiscardUnknownFieldsParser;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.net.message.MessageTypes;
 import org.tron.core.net.message.TronMessage;
+import org.tron.p2p.utils.ProtoUtil;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.BlockInventory;
 
@@ -17,8 +17,7 @@ public class BlockInventoryMessage extends TronMessage {
   public BlockInventoryMessage(byte[] data) throws Exception {
     super(data);
     this.type = MessageTypes.BLOCK_INVENTORY.asByte();
-    this.blockInventory = DiscardUnknownFieldsParser.wrap(Protocol.BlockInventory.parser())
-        .parseFrom(data);
+    this.blockInventory = ProtoUtil.parseFrom(Protocol.BlockInventory.parser(), data);
   }
 
   public BlockInventoryMessage(List<BlockId> blockIds, BlockInventory.Type type) {

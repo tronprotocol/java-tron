@@ -1,7 +1,6 @@
 package org.tron.core.net.message.handshake;
 
 import com.google.protobuf.ByteString;
-import com.google.protobuf.DiscardUnknownFieldsParser;
 import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
 import org.tron.common.utils.ByteArray;
@@ -13,6 +12,7 @@ import org.tron.core.config.args.Args;
 import org.tron.core.net.message.MessageTypes;
 import org.tron.core.net.message.TronMessage;
 import org.tron.p2p.discover.Node;
+import org.tron.p2p.utils.ProtoUtil;
 import org.tron.program.Version;
 import org.tron.protos.Discover.Endpoint;
 import org.tron.protos.Protocol;
@@ -25,8 +25,7 @@ public class HelloMessage extends TronMessage {
 
   public HelloMessage(byte[] data) throws Exception {
     super(MessageTypes.P2P_HELLO.asByte(), data);
-    this.helloMessage = DiscardUnknownFieldsParser.wrap(Protocol.HelloMessage.parser())
-        .parseFrom(data);
+    this.helloMessage = ProtoUtil.parseFrom(Protocol.HelloMessage.parser(), data);
     this.data = this.helloMessage.toByteArray();
   }
 
