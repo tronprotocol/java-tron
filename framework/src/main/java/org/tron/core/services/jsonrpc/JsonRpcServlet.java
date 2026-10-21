@@ -7,14 +7,20 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.annotations.VisibleForTesting;
+import com.googlecode.jsonrpc4j.ErrorResolver.JsonError;
 import com.googlecode.jsonrpc4j.JsonRpcInterceptor;
+import com.googlecode.jsonrpc4j.JsonRpcMethod;
 import com.googlecode.jsonrpc4j.JsonRpcServer;
 import com.googlecode.jsonrpc4j.ProxyUtil;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.lang.reflect.Method;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -49,6 +55,7 @@ public class JsonRpcServlet extends RateLimiterServlet {
   }
 
   private JsonRpcServer rpcServer = null;
+  private Set<String> methodNames = Collections.emptySet();
 
   @Autowired
   private TronJsonRpc tronJsonRpc;
@@ -57,8 +64,23 @@ public class JsonRpcServlet extends RateLimiterServlet {
   private JsonRpcInterceptor interceptor;
 
   @VisibleForTesting
-  void setRpcServer(JsonRpcServer rpcServer) {
+  void setRpcServer(JsonRpcServer rpcServer, Class<?> serviceInterface) {
     this.rpcServer = rpcServer;
+    this.methodNames = collectMethodNames(serviceInterface);
+  }
+
+  private static Set<String> collectMethodNames(Class<?> serviceInterface) {
+    Set<String> names = new HashSet<>();
+    for (Method method : serviceInterface.getMethods()) {
+      JsonRpcMethod annotation = method.getAnnotation(JsonRpcMethod.class);
+      if (annotation == null || !annotation.required()) {
+        names.add(method.getName());
+      }
+      if (annotation != null) {
+        names.add(annotation.value());
+      }
+    }
+    return Collections.unmodifiableSet(names);
   }
 
   @Override
@@ -72,13 +94,14 @@ public class JsonRpcServlet extends RateLimiterServlet {
         new Class[] {TronJsonRpc.class},
         true);
 
-    rpcServer = new JsonRpcServer(compositeService);
-    rpcServer.setErrorResolver(JsonRpcErrorResolver.INSTANCE);
+    JsonRpcServer server = new JsonRpcServer(compositeService);
+    server.setErrorResolver(JsonRpcErrorResolver.INSTANCE);
 
-    rpcServer.setShouldLogInvocationErrors(false);
+    server.setShouldLogInvocationErrors(false);
     if (CommonParameter.getInstance().isMetricsPrometheusEnable()) {
-      rpcServer.setInterceptorList(Collections.singletonList(interceptor));
+      server.setInterceptorList(Collections.singletonList(interceptor));
     }
+    setRpcServer(server, TronJsonRpc.class);
   }
 
   @Override
@@ -155,7 +178,7 @@ public class JsonRpcServlet extends RateLimiterServlet {
     try {
       // JsonRpcServer.handle catches Throwable and would swallow fatal errors rethrown by the
       // resolver. Use the lower-level entry point so single and batch requests share a boundary.
-      rpcServer.handleRequest(new ByteArrayInputStream(body), bufferedResp.getOutputStream());
+      dispatch(rootNode, body, bufferedResp.getOutputStream());
     } catch (RuntimeException | IOException | Error e) {
       rethrowIfFatal(e);
       logger.error("RPC execution failed", e);
@@ -288,13 +311,24 @@ public class JsonRpcServlet extends RateLimiterServlet {
 
     ByteArrayOutputStream subOutput = new ByteArrayOutputStream();
     try {
-      rpcServer.handleRequest(new ByteArrayInputStream(subBody), subOutput);
+      dispatch(subRequest, subBody, subOutput);
     } catch (RuntimeException | IOException | Error e) {
       rethrowIfFatal(e);
       failureLog.record(index, e);
       return internalErrorResponse(subRequest.get("id"));
     }
     return subOutput.toByteArray();
+  }
+
+  private void dispatch(JsonNode request, byte[] body, OutputStream output) throws IOException {
+    if (methodNames.contains(request.get("method").asText())) {
+      rpcServer.handleRequest(new ByteArrayInputStream(body), output);
+      return;
+    }
+    ObjectNode error = JsonRpcMapper.createErrorResponse(JsonError.METHOD_NOT_FOUND.code,
+        JsonError.METHOD_NOT_FOUND.message, request.get("id"));
+    output.write(MAPPER.writeValueAsBytes(error));
+    output.write('\n');
   }
 
   private static class BatchFailureLog {

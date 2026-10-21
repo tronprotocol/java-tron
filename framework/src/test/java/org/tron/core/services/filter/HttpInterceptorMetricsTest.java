@@ -3,11 +3,18 @@ package org.tron.core.services.filter;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import com.codahale.metrics.Meter;
+import io.prometheus.client.Collector;
 import io.prometheus.client.CollectorRegistry;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.EnumSet;
+import java.util.Enumeration;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import javax.servlet.DispatcherType;
@@ -21,7 +28,9 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.RequestBuilder;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
@@ -115,6 +124,14 @@ public class HttpInterceptorMetricsTest {
     }
   }
 
+  public static class ServerErrorServlet extends HttpServlet {
+    @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+      resp.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+      resp.getWriter().print(BODY);
+    }
+  }
+
   public static class CompletionLatchFilter implements Filter {
 
     private static volatile CountDownLatch latch = new CountDownLatch(0);
@@ -160,6 +177,8 @@ public class HttpInterceptorMetricsTest {
       context.addServlet(new ServletHolder(new Utf8Servlet()), "/wallet/utf8");
       context.addServlet(new ServletHolder(new BigBodyServlet()), "/wallet/big");
       context.addServlet(new ServletHolder(new ErrorStatusServlet()), "/wallet/error");
+      context.addServlet(new ServletHolder(new ServerErrorServlet()), "/wallet/servererror");
+      context.addServlet(new ServletHolder(new PrintServlet()), "/jsonrpc");
     }
 
     @Override
@@ -260,6 +279,165 @@ public class HttpInterceptorMetricsTest {
         histogramBefore + wire.length, httpBytesSum(MetricLabels.UNDEFINED, "400"), 0.0);
   }
 
+  @Test
+  public void testUnknownPathsAreAttributedToUndefined() throws Exception {
+    CommonParameter parameter = CommonParameter.getInstance();
+    boolean nodeMetrics = parameter.isNodeMetricsEnable();
+    boolean prometheus = parameter.isMetricsPrometheusEnable();
+    try {
+      for (boolean nodeEnabled : new boolean[] {true, false}) {
+        for (boolean prometheusEnabled : new boolean[] {true, false}) {
+          parameter.setNodeMetricsEnable(nodeEnabled);
+          parameter.setMetricsPrometheusEnable(prometheusEnabled);
+          assertUnknownPathsUseUndefinedEndpoint(nodeEnabled, prometheusEnabled);
+        }
+      }
+    } finally {
+      parameter.setNodeMetricsEnable(nodeMetrics);
+      parameter.setMetricsPrometheusEnable(prometheus);
+    }
+  }
+
+  @Test
+  public void testRegisteredMethodsAndServerErrorsRetainEndpointMetrics() throws Exception {
+    assertRegisteredRequest("OPTIONS", "/wallet/print", 200);
+    assertRegisteredRequest("PATCH", "/wallet/print", 501);
+    assertRegisteredRequest("GET", "/wallet/servererror", 500);
+    assertRegisteredRequest("GET", "/jsonrpc", 200);
+  }
+
+  @Test
+  public void testRegisteredPathVariantsUseCanonicalEndpoint() throws Exception {
+    String path = "/wallet/print";
+    requestAndAwait("GET", path, 200);
+    Set<String> metersBefore = meterNames();
+    Set<String> seriesBefore = httpBytesSeries();
+    long callsBefore = meterCount(MetricsKey.NET_API_DETAIL_QPS + path);
+    double observationsBefore = httpBytesCount(path, "200");
+    String[] variants = {
+        path + "?request=first", path + "?request=second", "/wallet/%70rint",
+        path + ";request=first", path + ";request=second"
+    };
+    for (String variant : variants) {
+      byte[] wire = requestAndAwait("GET", variant, 200);
+      assertEquals(BODY, new String(wire, StandardCharsets.UTF_8));
+    }
+    assertEquals(callsBefore + variants.length,
+        meterCount(MetricsKey.NET_API_DETAIL_QPS + path));
+    assertEquals(observationsBefore + variants.length, httpBytesCount(path, "200"), 0.0);
+    assertEquals("path variants must reuse the registered meter keys", metersBefore, meterNames());
+    assertEquals("path variants must reuse the registered histogram labels",
+        seriesBefore, httpBytesSeries());
+  }
+
+  private void assertUnknownPathsUseUndefinedEndpoint(boolean nodeEnabled,
+      boolean prometheusEnabled) throws Exception {
+    String[] methods = {
+        "GET", "HEAD", "POST", "PUT", "DELETE", "CONNECT", "OPTIONS", "TRACE", "PATCH", "CUSTOM"
+    };
+    int[] statuses = {404, 404, 405, 405, 405, 501, 200, 200, 501, 501};
+    String prefix = "/unknown/http-metrics-" + nodeEnabled + "-" + prometheusEnabled + "/";
+    Set<String> detailBefore = new TreeSet<>(MetricsUtil.getMeters("net.api.detail.").keySet());
+    for (int method = 0; method < methods.length; method++) {
+      requestAndAwait(methods[method], prefix + "warmup-" + method, statuses[method]);
+    }
+    assertEquals("unknown paths must not be attributed to their own endpoint",
+        detailBefore, MetricsUtil.getMeters("net.api.detail.").keySet());
+    Set<String> metersBefore = meterNames();
+    Set<String> seriesBefore = httpBytesSeries();
+    long callsBefore = meterCount(MetricsKey.NET_API_QPS);
+    long failedBefore = meterCount(MetricsKey.NET_API_FAIL_QPS);
+    Map<Integer, Integer> methodsPerStatus = new TreeMap<>();
+    Map<Integer, Double> observationsBefore = new TreeMap<>();
+    int failedMethods = 0;
+    for (int status : statuses) {
+      methodsPerStatus.merge(status, 1, Integer::sum);
+      observationsBefore.put(status,
+          httpBytesCount(MetricLabels.UNDEFINED, String.valueOf(status)));
+      if (status != 200) {
+        failedMethods++;
+      }
+    }
+    int pathsPerMethod = 24;
+    for (int path = 0; path < pathsPerMethod; path++) {
+      for (int method = 0; method < methods.length; method++) {
+        requestAndAwait(methods[method], prefix + method + "/" + path, statuses[method]);
+      }
+    }
+    assertEquals("unknown paths must be attributed to the undefined endpoint",
+        metersBefore, meterNames());
+    assertEquals("unknown paths must reuse the undefined histogram series",
+        seriesBefore, httpBytesSeries());
+    assertEquals(callsBefore + (nodeEnabled ? pathsPerMethod * methods.length : 0),
+        meterCount(MetricsKey.NET_API_QPS));
+    assertEquals(failedBefore + (nodeEnabled ? pathsPerMethod * failedMethods : 0),
+        meterCount(MetricsKey.NET_API_FAIL_QPS));
+    for (Map.Entry<Integer, Integer> status : methodsPerStatus.entrySet()) {
+      assertEquals("unknown paths must share undefined labels for each response status",
+          observationsBefore.get(status.getKey())
+              + (prometheusEnabled ? pathsPerMethod * status.getValue() : 0),
+          httpBytesCount(MetricLabels.UNDEFINED, String.valueOf(status.getKey())), 0.0);
+    }
+  }
+
+  private void assertRegisteredRequest(String method, String path, int status) throws Exception {
+    long callsBefore = meterCount(MetricsKey.NET_API_QPS);
+    long failedBefore = meterCount(MetricsKey.NET_API_FAIL_QPS);
+    long detailBefore = meterCount(MetricsKey.NET_API_DETAIL_QPS + path);
+    long detailFailedBefore = meterCount(MetricsKey.NET_API_DETAIL_FAIL_QPS + path);
+    long trafficBefore = meterCount(MetricsKey.NET_API_OUT_TRAFFIC);
+    long detailTrafficBefore = meterCount(MetricsKey.NET_API_DETAIL_OUT_TRAFFIC + path);
+    double observationsBefore = httpBytesCount(path, String.valueOf(status));
+    double bytesBefore = httpBytesSum(path, String.valueOf(status));
+    requestAndAwait(method, path, status);
+    assertEquals(callsBefore + 1, meterCount(MetricsKey.NET_API_QPS));
+    assertEquals(failedBefore + (status == 200 ? 0 : 1),
+        meterCount(MetricsKey.NET_API_FAIL_QPS));
+    assertEquals(detailBefore + (status == 200 ? 1 : 0),
+        meterCount(MetricsKey.NET_API_DETAIL_QPS + path));
+    assertEquals(detailFailedBefore + (status == 200 ? 0 : 1),
+        meterCount(MetricsKey.NET_API_DETAIL_FAIL_QPS + path));
+    long recordedBytes = meterCount(MetricsKey.NET_API_OUT_TRAFFIC) - trafficBefore;
+    assertTrue("registered endpoints must retain their traffic meter",
+        MetricsUtil.getMeters(MetricsKey.NET_API_DETAIL_OUT_TRAFFIC)
+            .containsKey(MetricsKey.NET_API_DETAIL_OUT_TRAFFIC + path));
+    assertEquals(detailTrafficBefore + recordedBytes,
+        meterCount(MetricsKey.NET_API_DETAIL_OUT_TRAFFIC + path));
+    assertEquals(observationsBefore + 1, httpBytesCount(path, String.valueOf(status)), 0.0);
+    assertEquals(bytesBefore + recordedBytes, httpBytesSum(path, String.valueOf(status)), 0.0);
+  }
+
+  private byte[] requestAndAwait(String method, String path, int expectedStatus) throws Exception {
+    CompletionLatchFilter.expectOneRequest();
+    try (CloseableHttpResponse response = client.execute(RequestBuilder.create(method)
+        .setUri(serverUri.resolve(path)).build())) {
+      assertEquals(expectedStatus, response.getStatusLine().getStatusCode());
+      byte[] wire = response.getEntity() == null
+          ? new byte[0] : EntityUtils.toByteArray(response.getEntity());
+      assertTrue("the filter must finish accounting before the metrics are read",
+          CompletionLatchFilter.awaitRequestAccounted());
+      return wire;
+    }
+  }
+
+  private Set<String> meterNames() {
+    return new TreeSet<>(MetricsUtil.getMeters("net.api.").keySet());
+  }
+
+  private Set<String> httpBytesSeries() {
+    Set<String> series = new TreeSet<>();
+    Enumeration<Collector.MetricFamilySamples> families =
+        CollectorRegistry.defaultRegistry.metricFamilySamples();
+    while (families.hasMoreElements()) {
+      for (Collector.MetricFamilySamples.Sample sample : families.nextElement().samples) {
+        if (sample.name.startsWith(MetricKeys.Histogram.HTTP_BYTES + "_")) {
+          series.add(sample.name + sample.labelNames + sample.labelValues);
+        }
+      }
+    }
+    return series;
+  }
+
   private void assertTrafficMatchesWire(String path, String expectedBody) throws Exception {
     String detailKey = MetricsKey.NET_API_DETAIL_OUT_TRAFFIC + path;
     long trafficBefore = meterCount(MetricsKey.NET_API_OUT_TRAFFIC);
@@ -287,7 +465,8 @@ public class HttpInterceptorMetricsTest {
   }
 
   private long meterCount(String key) {
-    return MetricsUtil.getMeter(key).getCount();
+    Meter meter = MetricsUtil.getMeters(key).get(key);
+    return meter == null ? 0L : meter.getCount();
   }
 
   private double httpBytesSum(String url, String status) {

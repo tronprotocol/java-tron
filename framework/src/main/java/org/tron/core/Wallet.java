@@ -118,7 +118,6 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.Sha256Hash;
-import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.Utils;
 import org.tron.common.utils.WalletUtil;
 import org.tron.common.zksnark.IncrementalMerkleTreeContainer;
@@ -171,6 +170,7 @@ import org.tron.core.db2.core.Chainbase.Cursor;
 import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ContractExeException;
+import org.tron.core.exception.ContractSizeNotEqualToOneException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.DupTransactionException;
 import org.tron.core.exception.HeaderNotFound;
@@ -236,6 +236,7 @@ import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
+import org.tron.protos.Protocol.Transaction.Result.contractResult;
 import org.tron.protos.Protocol.TransactionInfo;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 import org.tron.protos.contract.BalanceContract;
@@ -261,6 +262,9 @@ public class Wallet {
       "Shielded transaction API is disabled; "
           + "set node.allowShieldedTransactionApi=true to enable.";
   private static final String PAYMENT_ADDRESS_FORMAT_WRONG = "paymentAddress format is wrong";
+  // the authoritative bound is checkBigIntegerRange: uint256 max is 78 decimal digits,
+  // this only keeps the string short enough to convert cheaply
+  private static final int MAX_SHIELDED_AMOUNT_LENGTH = 80;
   private static final String SHIELDED_TRANSACTION_SCAN_RANGE =
       "request requires start_block_index >= 0 && end_block_index > "
           + "start_block_index && end_block_index - start_block_index <= 1000";
@@ -569,8 +573,13 @@ public class Wallet {
       if (chainBaseManager.getDynamicPropertiesStore().supportVM()) {
         trx.resetResult();
       }
-      if (trx.getInstance().getRawData().getContractCount() == 0) {
+      int contractCount = trx.getInstance().getRawData().getContractCount();
+      if (contractCount == 0) {
         throw new ContractValidateException(ActuatorConstant.CONTRACT_NOT_EXIST);
+      }
+      if (contractCount > 1) {
+        throw new ContractSizeNotEqualToOneException(String.format(
+            "tx %s " + ActuatorConstant.CONTRACT_SIZE_NOT_EQUAL_TO_ONE, txID, contractCount));
       }
       trx.checkExpiration(chainBaseManager.getNextBlockSlotTime());
       if (!dbManager.pushTransaction(trx)) {
@@ -641,6 +650,14 @@ public class Wallet {
     TransactionApprovedList.Builder tswBuilder = TransactionApprovedList.newBuilder();
     TransactionApprovedList.Result.Builder resultBuilder = TransactionApprovedList.Result
         .newBuilder();
+    int contractCount = trx.getRawData().getContractCount();
+    if (contractCount > 1) {
+      resultBuilder.setCode(TransactionApprovedList.Result.response_code.OTHER_ERROR);
+      resultBuilder.setMessage("Invalid transaction: "
+          + String.format(ActuatorConstant.CONTRACT_SIZE_NOT_EQUAL_TO_ONE, contractCount));
+      tswBuilder.setResult(resultBuilder);
+      return tswBuilder.build();
+    }
     if (trx.getSignatureCount() > chainBaseManager.getDynamicPropertiesStore()
         .getTotalSignNum()) {
       resultBuilder.setCode(TransactionApprovedList.Result.response_code.OTHER_ERROR);
@@ -741,6 +758,18 @@ public class Wallet {
 
   public long getHeadBlockNum() {
     return chainBaseManager.getHeadBlockNum();
+  }
+
+  public boolean isLiteNode() {
+    return chainBaseManager.isLiteNode();
+  }
+
+  public long getLowestBlockNum() {
+    return chainBaseManager.getLowestBlockNum();
+  }
+
+  public long getLowestBlockNumOfReceiptStore() {
+    return chainBaseManager.getLowestBlockNumOfReceiptStore();
   }
 
   public BlockCapsule getBlockCapsuleByNum(long blockNum) {
@@ -2773,6 +2802,10 @@ public class Wallet {
     if (contract == null || contract.isEmpty()) {
       throw new ContractValidateException("Contract is null");
     }
+    if (contract.size() > 1) {
+      throw new ContractValidateException(
+          String.format(ActuatorConstant.CONTRACT_SIZE_NOT_EQUAL_TO_ONE, contract.size()));
+    }
     ContractType contractType = contract.get(0).getType();
     if (contractType != ContractType.ShieldedTransferContract) {
       throw new ContractValidateException("Not a shielded transaction");
@@ -3208,6 +3241,7 @@ public class Wallet {
     }
     if (result.isRevert()) {
       ret.setStatus(0, code.FAILED);
+      ret.setResultCode(contractResult.REVERT);
       retBuilder.setMessage(ByteString.copyFromUtf8("REVERT opcode executed"))
           .build();
     }
@@ -3221,7 +3255,7 @@ public class Wallet {
     if (accountCapsule == null) {
       logger.warn(
           "Get contract failed, the account {} does not exist or the account "
-              + "does not have a code hash!", StringUtil.encode58Check(address));
+              + "does not have a code hash!", WalletUtil.getAddressString(address));
       return null;
     }
 
@@ -3250,7 +3284,7 @@ public class Wallet {
     if (accountCapsule == null) {
       logger.warn(
           "Get contract failed, the account {} does not exist or the account does not have a code "
-              + "hash!", StringUtil.encode58Check(address));
+              + "hash!", WalletUtil.getAddressString(address));
       return null;
     }
 
@@ -4226,6 +4260,9 @@ public class Wallet {
     if (trimmedIn.length() == 0) {
       return BigInteger.ZERO;
     }
+    if (trimmedIn.length() > MAX_SHIELDED_AMOUNT_LENGTH) {
+      throw new IllegalArgumentException("invalid shielded amount");
+    }
     return new BigInteger(trimmedIn, 10);
   }
 
@@ -4337,7 +4374,12 @@ public class Wallet {
 
     ShieldedTRC20Parameters shieldedTRC20Parameters = request.getShieldedTRC20Parameters();
     List<BytesMessage> spendAuthoritySignature = request.getSpendAuthoritySignatureList();
-    BigInteger value = getBigIntegerFromString(request.getAmount());
+    BigInteger value;
+    try {
+      value = getBigIntegerFromString(request.getAmount());
+    } catch (IllegalArgumentException e) {
+      throw new ContractValidateException("invalid amount", e);
+    }
     checkBigIntegerRange(value);
     byte[] transparentToAddress = request.getTransparentToAddress().toByteArray();
     byte[] transparentToAddressTvm = new byte[20];
@@ -4402,9 +4444,16 @@ public class Wallet {
       }
       parametersBuilder.setBurnCiphertext(burnCiper);
     }
-    String input = parametersBuilder
-        .getTriggerContractInput(shieldedTRC20Parameters, spendAuthoritySignature, value, false,
-            transparentToAddressTvm);
+    String input;
+    try {
+      input = parametersBuilder
+          .getTriggerContractInput(shieldedTRC20Parameters, spendAuthoritySignature, value, false,
+              transparentToAddressTvm);
+    } catch (IllegalArgumentException e) {
+      // the builder names the offending argument in fixed strings; none of them echoes an input
+      throw new ContractValidateException(
+          "invalid shielded TRC-20 trigger input: " + e.getMessage(), e);
+    }
     if (Objects.isNull(input)) {
       throw new ZksnarkException("generate the trigger contract parameters error");
     }

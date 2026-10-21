@@ -7,6 +7,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.exc.InvalidDefinitionException;
 import com.fasterxml.jackson.databind.exc.MismatchedInputException;
 import com.googlecode.jsonrpc4j.JsonRpcInterceptor;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collection;
@@ -65,7 +68,7 @@ public class AdminJsonRpcRequestTest {
         request.setServletPath("/admin");
         request.setContentType("application/json");
         request.addHeader("Host", "127.0.0.1:8575");
-        request.setContent(body.getBytes(StandardCharsets.UTF_8));
+        request.setContent(body);
         MockHttpServletResponse response = new MockHttpServletResponse();
         new HttpInterceptor().doFilter(request, response, servlet::service);
         Assert.assertEquals(200, response.getStatus());
@@ -302,6 +305,62 @@ public class AdminJsonRpcRequestTest {
     Mockito.verifyNoInteractions(adminJsonRpc);
   }
 
+  @Test
+  public void malformedRequestBytesAreRejectedBeforeInvocation() throws Exception {
+    String request = REQUEST + ",\"id\":1}";
+    byte[] valid = request.getBytes(StandardCharsets.UTF_8);
+    for (byte[] body : new byte[][] {
+        withFirstParamBytes(0xff),
+        withFirstParamBytes(0xc3),
+        withFirstParamBytes(0xc1, 0xa1),
+        withFirstParamBytes(0xc1, 0xbf),
+        withFirstParamBytes(0xe0, 0x9f, 0xbf),
+        withFirstParamBytes(0xed, 0xa0, 0x80),
+        withFirstParamBytes(0xed, 0xbf, 0xbf),
+        withFirstParamBytes(0xf0, 0x8f, 0xbf, 0xbf),
+        withFirstParamBytes(0xf4, 0x90, 0x80, 0x80),
+        concat(valid, new byte[] {0}),
+        concat(new byte[] {0x0b}, valid),
+        new byte[] {0x00, 0x7b, 0x00, 0x00},
+        new byte[] {0x00, 0x00, 0x7b, 0x00},
+        request.getBytes(StandardCharsets.UTF_16BE),
+        request.getBytes(StandardCharsets.UTF_16LE),
+        request.getBytes(Charset.forName("UTF-32BE")),
+        request.getBytes(Charset.forName("UTF-32LE"))}) {
+      assertError(sender.send(body), -32700, "null");
+    }
+    Mockito.verifyNoInteractions(adminJsonRpc);
+  }
+
+  @Test
+  public void validUtf8BoundarySequencesReachTheMethod() throws Exception {
+    for (String param : new String[] {"a\u0080", "aࠀ", "a퟿", "a",
+        "a𐀀", "a􏿿"}) {
+      Mockito.when(adminJsonRpc.adminExample(param, "b")).thenReturn("ok");
+      String request = REQUEST.replace("\"a\"", "\"" + param + "\"") + ",\"id\":7}";
+      Assert.assertEquals("ok", parse(sender.send(request)).path("result").asText());
+      Mockito.verify(adminJsonRpc).adminExample(param, "b");
+    }
+  }
+
+  private byte[] withFirstParamBytes(int... sequence) throws IOException {
+    byte[] bytes = new byte[sequence.length];
+    for (int i = 0; i < sequence.length; i++) {
+      bytes[i] = (byte) sequence[i];
+    }
+    return concat("{\"jsonrpc\":\"2.0\",\"method\":\"admin_example\",\"params\":[\"a"
+        .getBytes(StandardCharsets.UTF_8), bytes, "\",\"b\"],\"id\":1}"
+        .getBytes(StandardCharsets.UTF_8));
+  }
+
+  private byte[] concat(byte[]... parts) throws IOException {
+    ByteArrayOutputStream joined = new ByteArrayOutputStream();
+    for (byte[] part : parts) {
+      joined.write(part);
+    }
+    return joined.toByteArray();
+  }
+
   private JsonNode assertError(String body, int code, String id) throws Exception {
     JsonNode response = parse(body);
     Assert.assertEquals(code, response.path("error").path("code").asInt());
@@ -333,6 +392,10 @@ public class AdminJsonRpcRequestTest {
 
   @FunctionalInterface
   private interface RequestSender {
-    String send(String body) throws Exception;
+    String send(byte[] body) throws Exception;
+
+    default String send(String body) throws Exception {
+      return send(body.getBytes(StandardCharsets.UTF_8));
+    }
   }
 }

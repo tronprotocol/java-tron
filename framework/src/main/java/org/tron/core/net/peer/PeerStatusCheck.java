@@ -57,6 +57,14 @@ public class PeerStatusCheck {
       }
 
       if (!isDisconnected) {
+        isDisconnected = peer.getHelloMessageReceive() == null
+            && peer.getChannel().getStartTime() <= now - NetConstants.HELLO_TIME_OUT;
+        if (isDisconnected) {
+          logger.warn("Peer {} hello message timeout", peer.getInetAddress());
+        }
+      }
+
+      if (!isDisconnected) {
         isDisconnected = peer.getAdvInvRequest().values().stream()
             .anyMatch(time -> time < now - NetConstants.ADV_TIME_OUT);
         if (isDisconnected) {
