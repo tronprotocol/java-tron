@@ -4,8 +4,10 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.Map;
 import lombok.AccessLevel;
 import lombok.Getter;
+import org.tron.core.services.admin.ipc.client.ActivePeerOutputFormatter.OutputFormat;
 
 /** A console-ready JSON-RPC response, parsed without initializing node logging. */
 @Getter(AccessLevel.PACKAGE)
@@ -28,12 +30,13 @@ final class IpcResponse {
    * A result field, including a null value, marks a valid response as successful. Text results
    * are unquoted and other values are formatted as JSON. Invalid responses use a fixed message.
    */
-  static IpcResponse parse(String response) {
-    return parse(response, null);
+  static IpcResponse parse(String response, Map<Integer, OutputFormat> pendingOutputFormats) {
+    return parse(response, null, pendingOutputFormats);
   }
 
   /** Also verifies the numeric request ID when called for single-command execution. */
-  static IpcResponse parse(String response, Integer expectedId) {
+  static IpcResponse parse(String response, Integer expectedId,
+      Map<Integer, OutputFormat> pendingOutputFormats) {
     try {
       JsonNode root = OBJECT_MAPPER.reader()
           .with(DeserializationFeature.FAIL_ON_TRAILING_TOKENS).readTree(response);
@@ -45,8 +48,16 @@ final class IpcResponse {
           || id.intValue() != expectedId)) {
         return new IpcResponse("IPC response ID does not match request.", false);
       }
+      OutputFormat outputFormat = id.isIntegralNumber() && id.canConvertToInt()
+          ? pendingOutputFormats.remove(id.intValue()) : OutputFormat.JSON;
       if (root.has("error")) {
         return parseError(root.get("error"));
+      }
+      if (outputFormat == OutputFormat.TEXT) {
+        String table = new ActivePeerOutputFormatter().formatText(root.get("result"));
+        if (table != null) {
+          return new IpcResponse(table, true);
+        }
       }
       // only output column "result" of jsonrpc and ignore other columns
       return new IpcResponse(formatJsonValue(root.get("result")), true);

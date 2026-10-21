@@ -7,6 +7,7 @@ import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.p2p.connection.Channel;
 import org.tron.p2p.connection.ChannelManager;
+import org.tron.p2p.connection.ConnectionPolicy;
 import org.tron.p2p.connection.business.upgrade.UpgradeController;
 import org.tron.p2p.connection.message.base.P2pDisconnectMessage;
 import org.tron.p2p.connection.message.detect.StatusMessage;
@@ -31,6 +32,10 @@ public class MessageHandler extends ByteToMessageDecoder {
   public void channelActive(ChannelHandlerContext ctx) {
     logger.debug("Channel active, {}", ctx.channel().remoteAddress());
     channel.setChannelHandlerContext(ctx);
+    if (ConnectionPolicy.isBlocked(channel.getInetAddress())) {
+      ctx.close();
+      return;
+    }
     if (channel.isActive()) {
       if (channel.isDiscoveryMode()) {
         channel.send(new StatusMessage());

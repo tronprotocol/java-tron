@@ -9,6 +9,8 @@ import java.io.OutputStreamWriter;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.jline.reader.Completer;
 import org.jline.reader.EndOfFileException;
@@ -23,6 +25,7 @@ import org.jline.terminal.TerminalBuilder;
 import org.newsclub.net.unix.AFUNIXSocket;
 import org.newsclub.net.unix.AFUNIXSocketAddress;
 import org.tron.core.services.admin.AdminJsonRpc;
+import org.tron.core.services.admin.ipc.client.ActivePeerOutputFormatter.OutputFormat;
 import org.tron.core.services.admin.ipc.client.IpcConsoleCommands.Action;
 import org.tron.core.services.admin.ipc.client.IpcConsoleCommands.Command;
 import org.tron.program.Version;
@@ -43,6 +46,8 @@ public class IpcClient {
 
   private final String socketFilePath;
   private final IpcConsoleCommands commands = new IpcConsoleCommands(AdminJsonRpc.class);
+  private final ConcurrentMap<Integer, OutputFormat> pendingOutputFormats =
+      new ConcurrentHashMap<>();
 
   public IpcClient(String socketFilePath) {
     this.socketFilePath = socketFilePath;
@@ -104,7 +109,7 @@ public class IpcClient {
         new OutputStreamWriter(socket.getOutputStream(), StandardCharsets.UTF_8));
         BufferedReader serverReader = new BufferedReader(
             new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8))) {
-      sendRequest(serverWriter, command.getRequest());
+      sendRequest(serverWriter, command);
 
       String response;
       do {
@@ -119,13 +124,16 @@ public class IpcClient {
         System.err.println("Disconnected from server before receiving a response.");
         return EXIT_FAILURE;
       }
-      IpcResponse parsedResponse = IpcResponse.parse(response, command.getRequestId());
+      IpcResponse parsedResponse = IpcResponse.parse(
+          response, command.getRequestId(), pendingOutputFormats);
       if (parsedResponse.isSuccessful()) {
         System.out.println(parsedResponse.getFormatted());
         return EXIT_SUCCESS;
       }
       System.err.println(parsedResponse.getFormatted());
       return EXIT_FAILURE;
+    } finally {
+      pendingOutputFormats.clear();
     }
   }
 
@@ -137,6 +145,7 @@ public class IpcClient {
     } finally {
       // Mark a local exit before run() closes the socket, so it cannot look like a remote loss.
       connected.set(false);
+      pendingOutputFormats.clear();
     }
   }
 
@@ -151,7 +160,7 @@ public class IpcClient {
         String response;
         while ((response = serverReader.readLine()) != null) {
           if (!response.trim().isEmpty()) {
-            reader.printAbove(IpcResponse.parse(response).getFormatted());
+            reader.printAbove(IpcResponse.parse(response, pendingOutputFormats).getFormatted());
           }
         }
       } catch (IOException e) {
@@ -204,7 +213,7 @@ public class IpcClient {
             break;
           }
           if (command.getAction() == Action.REQUEST) {
-            sendRequest(serverWriter, command.getRequest());
+            sendRequest(serverWriter, command);
           }
         } catch (SyntaxError e) {
           // JLine can reject input before returning a line to the command parser.
@@ -231,8 +240,11 @@ public class IpcClient {
     return command;
   }
 
-  private void sendRequest(BufferedWriter writer, String request) throws IOException {
-    writer.write(request);
+  private void sendRequest(BufferedWriter writer, Command command) throws IOException {
+    if (command.getOutputFormat() != OutputFormat.JSON) {
+      pendingOutputFormats.put(command.getRequestId(), command.getOutputFormat());
+    }
+    writer.write(command.getRequest());
     writer.newLine();
     writer.flush();
   }

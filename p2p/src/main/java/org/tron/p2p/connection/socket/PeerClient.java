@@ -8,11 +8,13 @@ import io.netty.channel.DefaultMessageSizeEstimator;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import java.net.InetSocketAddress;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.bouncycastle.util.encoders.Hex;
 import org.tron.p2p.base.Parameter;
 import org.tron.p2p.connection.ChannelManager;
+import org.tron.p2p.connection.ConnectionPolicy;
 import org.tron.p2p.discover.Node;
 import org.tron.p2p.utils.NetUtil;
 
@@ -45,9 +47,13 @@ public class PeerClient {
   }
 
   public ChannelFuture connect(Node node, ChannelFutureListener future) {
+    InetSocketAddress address = node.getPreferInetSocketAddress();
+    if (ConnectionPolicy.isBlocked(address)) {
+      logger.info("Reject connection to {} because its IP is manually blocked", address);
+      return null;
+    }
     ChannelFuture channelFuture = connectAsync(
-        node.getPreferInetSocketAddress().getAddress().getHostAddress(),
-        node.getPort(),
+        address.getAddress().getHostAddress(), node.getPort(),
         node.getId() == null ? Hex.toHexString(NetUtil.getNodeId()) : node.getHexId(), false,
         false);
     if (ChannelManager.isShutdown) {
@@ -60,9 +66,13 @@ public class PeerClient {
   }
 
   public ChannelFuture connectAsync(Node node, boolean discoveryMode) {
+    InetSocketAddress address = node.getPreferInetSocketAddress();
+    if (ConnectionPolicy.isBlocked(address)) {
+      logger.info("Reject connection to {} because its IP is manually blocked", address);
+      return null;
+    }
     ChannelFuture channelFuture =
-        connectAsync(node.getPreferInetSocketAddress().getAddress().getHostAddress(),
-            node.getPort(),
+        connectAsync(address.getAddress().getHostAddress(), node.getPort(),
             node.getId() == null ? Hex.toHexString(NetUtil.getNodeId()) : node.getHexId(),
             discoveryMode, true);
     if (ChannelManager.isShutdown) {
