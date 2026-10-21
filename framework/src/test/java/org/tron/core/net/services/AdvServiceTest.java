@@ -69,7 +69,7 @@ public class AdvServiceTest {
   }
 
   @Test
-  public void test() {
+  public void test() throws IOException {
     testAddInv();
     testBroadcast();
     testTrxBroadcast();
@@ -123,7 +123,7 @@ public class AdvServiceTest {
     Assert.assertNotNull(peer.getAdvInvSpread().getIfPresent(item));
   }
 
-  private void testTrxBroadcast() {
+  private void testTrxBroadcast() throws IOException {
     Protocol.Transaction trx = Protocol.Transaction.newBuilder()
         .setRawData(
         Protocol.Transaction.raw.newBuilder()
@@ -137,12 +137,13 @@ public class AdvServiceTest {
     Item item = new Item(msg.getMessageId(), InventoryType.TRX);
     TransactionMessage cached = (TransactionMessage) service.getMessage(item);
     Assert.assertNotNull(cached);
-    Assert.assertEquals(0, msg.getTransactionCapsule().getInstance().getRetCount());
-    Assert.assertEquals(0, cached.getTransactionCapsule().getInstance().getRetCount());
+    assertRelayPreservesOriginal(trx, msg, cached);
 
     TransactionMessage fastMsg = new TransactionMessage(trx);
     service.fastBroadcastTransaction(fastMsg);
-    Assert.assertEquals(0, fastMsg.getTransactionCapsule().getInstance().getRetCount());
+    TransactionMessage fastCached = (TransactionMessage) service.getMessage(item);
+    Assert.assertNotSame(cached, fastCached);
+    assertRelayPreservesOriginal(trx, fastMsg, fastCached);
 
     Protocol.Transaction expiredTrx = Protocol.Transaction.newBuilder()
         .setRawData(
@@ -155,6 +156,20 @@ public class AdvServiceTest {
     service.broadcast(msg);
     Item item1 = new Item(msg1.getMessageId(), InventoryType.TRX);
     Assert.assertNull(service.getMessage(item1));
+  }
+
+  private void assertRelayPreservesOriginal(Protocol.Transaction original,
+      TransactionMessage message, TransactionMessage cached) throws IOException {
+    Assert.assertNotNull(cached);
+    Assert.assertEquals(original, message.getTransactionCapsule().getInstance());
+    Assert.assertArrayEquals(original.toByteArray(), message.getData());
+    Assert.assertNotSame(message.getTransactionCapsule(), cached.getTransactionCapsule());
+    Protocol.Transaction relay = Protocol.Transaction.parseFrom(cached.getData());
+    Assert.assertEquals(0, relay.getRetCount());
+    Assert.assertEquals(original.getRawData(), relay.getRawData());
+    Assert.assertEquals(original.getSignatureList(), relay.getSignatureList());
+    Assert.assertEquals(relay, cached.getTransactionCapsule().getInstance());
+    Assert.assertEquals(message.getMessageId(), cached.getMessageId());
   }
 
   @Test
