@@ -1096,6 +1096,7 @@ public class Manager {
     if (CollectionUtils.isNotEmpty(binaryTree.getKey())) {
       List<KhaosBlock> first = new ArrayList<>(binaryTree.getKey());
       Collections.reverse(first);
+      Sha256Hash parentHash = first.get(0).getParentHash();
       for (KhaosBlock item : first) {
         try (ISession tmpSession = revokingStore.buildSession()) {
           BlockCapsule forkBlock = item.getId().equals(newHead.getBlockId())
@@ -1128,11 +1129,11 @@ public class Manager {
 
           while (!getDynamicPropertiesStore()
               .getLatestBlockHeaderHash()
-              .equals(binaryTree.getValue().peekLast().getParentHash())) {
+              .equals(parentHash)) {
             eraseBlock();
           }
 
-          khaosDb.setHead(binaryTree.getValue().peekFirst());
+          khaosDb.setHead(khaosDb.getMiniStore().getByHash(parentHash));
 
           List<KhaosBlock> second = new ArrayList<>(binaryTree.getValue());
           Collections.reverse(second);
@@ -1140,6 +1141,7 @@ public class Manager {
             try (ISession tmpSession = revokingStore.buildSession()) {
               applyBlock(khaosBlock.getBlk().setSwitch(true));
               tmpSession.commit();
+              khaosDb.setHead(khaosBlock);
             } catch (Exception restoreException) {
               restoreException.addSuppressed(switchException);
               logger.error("Failed to restore previous chain at block {}.",

@@ -569,7 +569,8 @@ public class ManagerMockTest {
     ChainBaseManager cbm = mock(ChainBaseManager.class);
     DynamicPropertiesStore dps = mock(DynamicPropertiesStore.class);
     AccountStore accountStore = mock(AccountStore.class);
-    Sha256Hash sharedHash = Sha256Hash.ZERO_HASH;
+    BlockCapsule ancestor = new BlockCapsule(99, Sha256Hash.ZERO_HASH, 0, ByteString.EMPTY);
+    Sha256Hash sharedHash = ancestor.getBlockId();
     when(cbm.getDynamicPropertiesStore()).thenReturn(dps);
     when(cbm.getAccountStore()).thenReturn(accountStore);
     when(dps.getLatestBlockHeaderHash()).thenReturn(sharedHash);
@@ -585,12 +586,16 @@ public class ManagerMockTest {
     // The bad block goes into the apply loop; the old block lets the while
     // loops in the rollback/switchback paths exit immediately by matching
     // parent hash to the current head hash.
+    KhaosDatabase ancestorDb = new KhaosDatabase();
+    ancestorDb.start(ancestor);
     KhaosDatabase khaosDb = mock(KhaosDatabase.class);
+    when(khaosDb.getMiniStore()).thenReturn(ancestorDb.getMiniStore());
     setField(dbManager, "khaosDb", khaosDb);
 
     BlockCapsule badBlock = mock(BlockCapsule.class);
     BlockCapsule.BlockId badBlockId = mock(BlockCapsule.BlockId.class);
     when(badBlock.getBlockId()).thenReturn(badBlockId);
+    when(badBlock.getParentHash()).thenReturn(sharedHash);
     when(badBlock.getNum()).thenReturn(100L);
     when(badBlock.validateSignature(any(DynamicPropertiesStore.class),
         any(AccountStore.class))).thenReturn(false);
@@ -638,7 +643,8 @@ public class ManagerMockTest {
     ChainBaseManager cbm = mock(ChainBaseManager.class);
     DynamicPropertiesStore dps = mock(DynamicPropertiesStore.class);
     AccountStore accountStore = mock(AccountStore.class);
-    Sha256Hash sharedHash = Sha256Hash.ZERO_HASH;
+    BlockCapsule ancestor = new BlockCapsule(99, Sha256Hash.ZERO_HASH, 0, ByteString.EMPTY);
+    Sha256Hash sharedHash = ancestor.getBlockId();
     when(cbm.getDynamicPropertiesStore()).thenReturn(dps);
     when(cbm.getAccountStore()).thenReturn(accountStore);
     when(dps.getLatestBlockHeaderHash()).thenReturn(sharedHash);
@@ -649,12 +655,16 @@ public class ManagerMockTest {
     when(revokingStore.buildSession()).thenReturn(session);
     setField(dbManager, "revokingStore", revokingStore);
 
+    KhaosDatabase ancestorDb = new KhaosDatabase();
+    ancestorDb.start(ancestor);
     KhaosDatabase khaosDb = mock(KhaosDatabase.class);
+    when(khaosDb.getMiniStore()).thenReturn(ancestorDb.getMiniStore());
     setField(dbManager, "khaosDb", khaosDb);
 
     BlockCapsule goodBlock = mock(BlockCapsule.class);
     BlockCapsule.BlockId goodBlockId = mock(BlockCapsule.BlockId.class);
     when(goodBlock.getBlockId()).thenReturn(goodBlockId);
+    when(goodBlock.getParentHash()).thenReturn(sharedHash);
     when(goodBlock.getNum()).thenReturn(100L);
     when(goodBlock.validateSignature(any(DynamicPropertiesStore.class),
         any(AccountStore.class))).thenReturn(true);
