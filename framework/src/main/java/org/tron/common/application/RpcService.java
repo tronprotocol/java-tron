@@ -91,7 +91,7 @@ public abstract class RpcService extends AbstractService {
   @Override
   public CompletableFuture<Boolean> start() {
     NettyServerBuilder serverBuilder = initServerBuilder();
-    addService(serverBuilder);
+    addServices(serverBuilder);
     addInterceptor(serverBuilder);
     initServer(serverBuilder);
     this.rateLimiterInterceptor.init(this.apiServer);
@@ -123,15 +123,18 @@ public abstract class RpcService extends AbstractService {
     return serverBuilder;
   }
 
-  protected abstract void addService(NettyServerBuilder serverBuilder);
+  /** The services this port serves; {@link #addServices} guards and registers each of them. */
+  protected abstract List<ServerServiceDefinition> services();
 
-  /** Guards every method; fails if a request marshaller gives no protobuf prototype. */
-  protected static ServerServiceDefinition guardRequestMethods(
-      ServerServiceDefinition definition) {
-    return guardRequestMethods(definition, Args.getInstance().getMaxMessageSize(),
-        TransactionAdmissionGuard.MAX_TX_OCCURRENCES);
+  private void addServices(NettyServerBuilder serverBuilder) {
+    int maxMessageSize = Args.getInstance().getMaxMessageSize();
+    for (ServerServiceDefinition service : services()) {
+      serverBuilder.addService(guardRequestMethods(service, maxMessageSize,
+          TransactionAdmissionGuard.MAX_TX_OCCURRENCES));
+    }
   }
 
+  /** Guards every method; fails if a request marshaller gives no protobuf prototype. */
   static ServerServiceDefinition guardRequestMethods(ServerServiceDefinition definition,
       int maxMessageSize, int maxOccurrences) {
     ServiceDescriptor service = definition.getServiceDescriptor();

@@ -17,6 +17,7 @@ import io.grpc.ManagedChannel;
 import io.grpc.MethodDescriptor;
 import io.grpc.Server;
 import io.grpc.ServerInterceptors;
+import io.grpc.ServerServiceDefinition;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import io.grpc.netty.NettyChannelBuilder;
@@ -28,6 +29,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetSocketAddress;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.AfterClass;
@@ -97,7 +100,8 @@ public class RpcServiceInterceptorChainAdmissionTest {
 
     RpcService service = new RpcService() {
       @Override
-      protected void addService(NettyServerBuilder serverBuilder) {
+      protected List<ServerServiceDefinition> services() {
+        return Collections.emptyList();
       }
     };
     ReflectionTestUtils.setField(service, "rateLimiterInterceptor", rateLimiter);

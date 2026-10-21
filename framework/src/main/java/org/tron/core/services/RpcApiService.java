@@ -5,10 +5,12 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
 import com.google.protobuf.ProtocolStringList;
+import io.grpc.ServerServiceDefinition;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
-import io.grpc.netty.NettyServerBuilder;
 import io.grpc.stub.StreamObserver;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.Getter;
@@ -192,18 +194,16 @@ public class RpcApiService extends RpcService {
   }
 
   @Override
-  protected void addService(NettyServerBuilder serverBuilder) {
-    serverBuilder.addService(guardRequestMethods(databaseApi.bindService()));
+  protected List<ServerServiceDefinition> services() {
     CommonParameter parameter = Args.getInstance();
-    if (parameter.isSolidityNode()) {
-      serverBuilder.addService(guardRequestMethods(walletSolidityApi.bindService()));
-    } else {
-      serverBuilder.addService(guardRequestMethods(walletApi.bindService()));
-    }
-
+    List<ServerServiceDefinition> services = new ArrayList<>();
+    services.add(databaseApi.bindService());
+    services.add(parameter.isSolidityNode()
+        ? walletSolidityApi.bindService() : walletApi.bindService());
     if (parameter.isNodeMetricsEnable()) {
-      serverBuilder.addService(guardRequestMethods(monitorApi.bindService()));
+      services.add(monitorApi.bindService());
     }
+    return services;
   }
 
 

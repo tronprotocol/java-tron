@@ -1,7 +1,9 @@
 package org.tron.core.services.interfaceOnSolidity;
 
 import io.grpc.ServerInterceptors;
-import io.grpc.netty.NettyServerBuilder;
+import io.grpc.ServerServiceDefinition;
+import java.util.Arrays;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.common.application.RpcService;
@@ -26,11 +28,11 @@ public class RpcApiServiceOnSolidity extends RpcService {
 
   /** SOLIDITY cursor bound at the service level, so it brackets only these two read services. */
   @Override
-  protected void addService(NettyServerBuilder serverBuilder) {
-    serverBuilder.addService(guardRequestMethods(ServerInterceptors.intercept(
-        rpcApiService.getDatabaseApi(), solidityCursorInterceptor)));
-    serverBuilder.addService(guardRequestMethods(ServerInterceptors.intercept(
-        rpcApiService.getWalletSolidityApi(), solidityCursorInterceptor)));
+  protected List<ServerServiceDefinition> services() {
+    return Arrays.asList(
+        ServerInterceptors.intercept(rpcApiService.getDatabaseApi(), solidityCursorInterceptor),
+        ServerInterceptors.intercept(
+            rpcApiService.getWalletSolidityApi(), solidityCursorInterceptor));
   }
 
 }

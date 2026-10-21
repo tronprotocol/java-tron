@@ -35,7 +35,7 @@ import org.tron.core.services.interfaceOnSolidity.RpcApiServiceOnSolidity;
 
 /**
  * Captures what the production RpcService subclasses actually register, for every branch of
- * their addService, and checks that every method is guarded and that no service is registered
+ * their services, and checks that every method is guarded and that no service is registered
  * unwrapped.
  */
 public class RpcServiceRegistrationAdmissionTest {
@@ -125,10 +125,10 @@ public class RpcServiceRegistrationAdmissionTest {
 
   private static List<ServerServiceDefinition> register(RpcService service) throws Exception {
     NettyServerBuilder builder = mock(NettyServerBuilder.class);
-    Method addService = service.getClass().getDeclaredMethod("addService",
+    Method addServices = RpcService.class.getDeclaredMethod("addServices",
         NettyServerBuilder.class);
-    addService.setAccessible(true);
-    addService.invoke(service, builder);
+    addServices.setAccessible(true);
+    addServices.invoke(service, builder);
     // Every registration must go through guardRequestMethods, which yields a definition.
     verify(builder, never()).addService(any(BindableService.class));
     ArgumentCaptor<ServerServiceDefinition> captor =

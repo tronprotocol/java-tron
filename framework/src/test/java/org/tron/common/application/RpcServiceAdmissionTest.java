@@ -1,6 +1,7 @@
 package org.tron.common.application;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
@@ -229,7 +230,7 @@ public class RpcServiceAdmissionTest {
    * Shared with the production registration tests. Every method must have a proto schema, be
    * wrapped with a {@link GuardedRequestMarshaller} whose scan root is the schema's request type
    * (so schema and request marshaller agree), be handled by the matching
-   * {@link AdmissionCheckedHandler}, and apply exactly {@code budget} and
+   * {@link AdmissionCheckedHandler} once, and apply exactly {@code budget} and
    * {@code maxMessageSize}. Returns the number of methods checked.
    */
   @SuppressWarnings("unchecked")
@@ -252,8 +253,11 @@ public class RpcServiceAdmissionTest {
       assertEquals(name, input,
           ((Message) marshaller.getMessagePrototype()).getDescriptorForType());
       assertTrue(name, method.getServerCallHandler() instanceof AdmissionCheckedHandler);
-      assertSame(name, marshaller,
-          ((AdmissionCheckedHandler<?, ?>) method.getServerCallHandler()).getMarshaller());
+      AdmissionCheckedHandler<?, ?> handler =
+          (AdmissionCheckedHandler<?, ?>) method.getServerCallHandler();
+      assertSame(name, marshaller, handler.getMarshaller());
+      assertFalse(name + " is guarded twice",
+          handler.getDelegate() instanceof AdmissionCheckedHandler);
       assertLimits(name, marshaller, budget, maxMessageSize);
       guarded++;
     }
