@@ -4,6 +4,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 
+import com.google.common.cache.Cache;
 import com.google.protobuf.ByteString;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -13,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.encoders.Hex;
@@ -26,7 +28,6 @@ import org.tron.common.BaseTest;
 import org.tron.common.TestConstants;
 import org.tron.common.crypto.SignInterface;
 import org.tron.common.crypto.SignUtils;
-import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.common.utils.Sha256Hash;
@@ -73,6 +74,11 @@ public class RelayServiceTest extends BaseTest {
   @After
   public void clearPeers() {
     closePeer();
+    Cache<?, ?> cache =
+        (Cache<?, ?>) ReflectUtils.getFieldObject(service, "helloReplayCache");
+    if (cache != null) {
+      cache.invalidateAll();
+    }
   }
 
   @Test
@@ -177,14 +183,11 @@ public class RelayServiceTest extends BaseTest {
     Node node = new Node(NetUtil.getNodeId(), a1.getAddress().getHostAddress(),
         null, a1.getPort());
 
-    SignInterface cryptoEngine = SignUtils.fromPrivate(ByteArray.fromHexString(key),
-            Args.getInstance().isECKeyCryptoEngine());
+    SignInterface cryptoEngine = SignUtils.fromPrivate(ByteArray.fromHexString(key));
     HelloMessage helloMessage = new HelloMessage(node, System.currentTimeMillis(),
         ChainBaseManager.getChainBaseManager());
     ByteString sig = ByteString.copyFrom(cryptoEngine.Base64toBytes(cryptoEngine
-        .signHash(Sha256Hash.of(CommonParameter.getInstance()
-            .isECKeyCryptoEngine(), ByteArray.fromLong(helloMessage
-            .getTimestamp())).getBytes())));
+        .signHash(Sha256Hash.of(ByteArray.fromLong(helloMessage.getTimestamp())).getBytes())));
     helloMessage.setHelloMessage(helloMessage.getHelloMessage().toBuilder()
         .setAddress(address)
         .setSignature(sig)
@@ -248,6 +251,128 @@ public class RelayServiceTest extends BaseTest {
       logger.info("", e);
       assert false;
     }
+  }
+
+  private HelloMessage buildSignedHello(long timestamp) throws Exception {
+    String key = "0154435f065a57fec6af1e12eaa2fa600030639448d7809f4c65bdcf8baed7e5";
+    ByteString address = getFromHexString("418A8D690BF36806C36A7DAE3AF796643C1AA9CC01");
+    Node node = new Node(NetUtil.getNodeId(), "127.0.0.1", null, 10001);
+    HelloMessage msg = new HelloMessage(node, timestamp,
+        ChainBaseManager.getChainBaseManager());
+    SignInterface engine = SignUtils.fromPrivate(ByteArray.fromHexString(key));
+    ByteString sig = ByteString.copyFrom(engine.Base64toBytes(engine
+        .signHash(Sha256Hash.of(ByteArray.fromLong(timestamp)).getBytes())));
+    msg.setHelloMessage(msg.getHelloMessage().toBuilder()
+        .setAddress(address)
+        .setSignature(sig)
+        .build());
+    return msg;
+  }
+
+  private Channel buildChannel() {
+    InetSocketAddress addr = new InetSocketAddress("127.0.0.1", 10001);
+    Channel c = mock(Channel.class);
+    Mockito.when(c.getInetSocketAddress()).thenReturn(addr);
+    Mockito.when(c.getInetAddress()).thenReturn(addr.getAddress());
+    return c;
+  }
+
+  private void setupRelayServiceDeps() throws Exception {
+    Field f1 = service.getClass().getDeclaredField("witnessScheduleStore");
+    f1.setAccessible(true);
+    f1.set(service, chainBaseManager.getWitnessScheduleStore());
+    Field f2 = service.getClass().getDeclaredField("manager");
+    f2.setAccessible(true);
+    f2.set(service, dbManager);
+    ReflectUtils.setFieldValue(tronNetService, "p2pConfig", new P2pConfig());
+  }
+
+  @Test
+  public void testCheckHelloMessage_staleTimestamp() throws Exception {
+    initWitness();
+    setupRelayServiceDeps();
+    Args.getInstance().fastForward = true;
+    long threshold = TimeUnit.MINUTES.toMillis(5);
+    long staleTimestamp = System.currentTimeMillis() - threshold - 1000;
+    HelloMessage msg = buildSignedHello(staleTimestamp);
+    boolean result = service.checkHelloMessage(msg, buildChannel());
+    Assert.assertFalse(result);
+  }
+
+  @Test
+  public void testCheckHelloMessage_futureTimestampDoesNotPoisonCache() throws Exception {
+    assertTimestampRejectedWithoutPoisoningCache(
+        System.currentTimeMillis() + TimeUnit.HOURS.toMillis(1));
+  }
+
+  @Test
+  public void testCheckHelloMessage_maxTimestampDoesNotPoisonCache() throws Exception {
+    assertTimestampRejectedWithoutPoisoningCache(Long.MAX_VALUE);
+  }
+
+  @Test
+  public void testCheckHelloMessage_minTimestampDoesNotPoisonCache() throws Exception {
+    assertTimestampRejectedWithoutPoisoningCache(Long.MIN_VALUE);
+  }
+
+  private void assertTimestampRejectedWithoutPoisoningCache(long timestamp) throws Exception {
+    initWitness();
+    setupRelayServiceDeps();
+    Args.getInstance().fastForward = true;
+    Channel channel = buildChannel();
+    Assert.assertFalse(service.checkHelloMessage(buildSignedHello(timestamp), channel));
+    Assert.assertFalse(TronNetService.getP2pConfig().getTrustNodes()
+        .contains(channel.getInetAddress()));
+    Assert.assertTrue(service.checkHelloMessage(
+        buildSignedHello(System.currentTimeMillis()), channel));
+  }
+
+  @Test
+  public void testCheckHelloMessage_freshTimestamp() throws Exception {
+    initWitness();
+    setupRelayServiceDeps();
+    Args.getInstance().fastForward = true;
+    long freshTimestamp = System.currentTimeMillis();
+    HelloMessage msg = buildSignedHello(freshTimestamp);
+    boolean result = service.checkHelloMessage(msg, buildChannel());
+    Assert.assertTrue(result);
+  }
+
+  @Test
+  public void testCheckHelloMessage_replayRejected() throws Exception {
+    initWitness();
+    setupRelayServiceDeps();
+    Args.getInstance().fastForward = true;
+    long t = System.currentTimeMillis();
+    HelloMessage msg1 = buildSignedHello(t);
+    Assert.assertTrue(service.checkHelloMessage(msg1, buildChannel()));
+    HelloMessage msg2 = buildSignedHello(t);
+    Assert.assertFalse(service.checkHelloMessage(msg2, buildChannel()));
+  }
+
+  @Test
+  public void testCheckHelloMessage_strictlyLargerTimestampPasses() throws Exception {
+    initWitness();
+    setupRelayServiceDeps();
+    Args.getInstance().fastForward = true;
+    long t = System.currentTimeMillis();
+    Assert.assertTrue(service.checkHelloMessage(buildSignedHello(t), buildChannel()));
+    Assert.assertTrue(service.checkHelloMessage(buildSignedHello(t + 1), buildChannel()));
+  }
+
+  @Test
+  public void testCheckHelloMessage_badSigDoesNotPoisonCache() throws Exception {
+    initWitness();
+    setupRelayServiceDeps();
+    Args.getInstance().fastForward = true;
+    long t = System.currentTimeMillis();
+    HelloMessage badMsg = buildSignedHello(t);
+    badMsg.setHelloMessage(badMsg.getHelloMessage().toBuilder()
+        .setSignature(ByteString.copyFrom(new byte[65]))
+        .build());
+    Assert.assertFalse(service.checkHelloMessage(badMsg, buildChannel()));
+    HelloMessage goodMsg = buildSignedHello(t);
+    Assert.assertTrue(service.checkHelloMessage(goodMsg, buildChannel()));
   }
 
   @Test

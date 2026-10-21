@@ -2,6 +2,7 @@ package org.tron.keystore;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThrows;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -9,6 +10,7 @@ import java.nio.charset.StandardCharsets;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.tron.core.exception.TronError;
 
 /**
  * Verifies that {@link WalletUtils#inputPassword()} preserves the full
@@ -95,23 +97,26 @@ public class WalletUtilsInputPasswordTest {
         "  with spaces  ", pw);
   }
 
-  @Test(timeout = 10000)
-  public void testInputPassword2TwicePipedPreservesInternalWhitespace() {
-    // M1: verifies the double-read path (inputPassword2Twice → inputPassword()
-    // called twice) works correctly when both lines arrive on the same
-    // piped stdin. Guards against regressions from Scanner lifecycle issues
-    // where a newly-constructed Scanner could miss bytes buffered by an
-    // earlier Scanner on the same InputStream.
-    System.setIn(new ByteArrayInputStream(
-        ("correct horse battery staple\n"
-            + "correct horse battery staple\n").getBytes(StandardCharsets.UTF_8)));
+  // ---------- EOF fail-fast tests ----------
 
-    String pw = WalletUtils.inputPassword2Twice();
+  @Test(timeout = 5000)
+  public void testInputPasswordPipedStdinEofThrowsTronError() {
+    // Non-TTY branch: Scanner.nextLine() throws NoSuchElementException at
+    // EOF; it must be translated into a fail-fast TronError.
+    // (The TTY branch's Console.readPassword() null-on-EOF check cannot be
+    // exercised under JUnit, where System.console() is always null and
+    // java.io.Console is final — covered by code review only.)
+    System.setIn(new ByteArrayInputStream(new byte[0]));
 
-    assertEquals("Full passphrase must survive the double-read path",
-        "correct horse battery staple", pw);
+    TronError err = assertThrows(TronError.class, WalletUtils::inputPassword);
+
+    assertEquals("Piped stdin EOF must map to the keystore-load error code",
+        TronError.ErrCode.WITNESS_KEYSTORE_LOAD, err.getErrCode());
   }
 
+  // Note: the M1 double-read test (inputPassword2Twice) was dropped in
+  // the 4.8.3 rebase - upstream #6978 removed inputPassword2Twice()
+  // along with its only caller KeystoreFactory.
   // ---------- stripPasswordLine() direct unit tests (M3) ----------
 
   @Test

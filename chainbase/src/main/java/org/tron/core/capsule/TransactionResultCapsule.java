@@ -147,6 +147,10 @@ public class TransactionResultCapsule implements ProtoCapsule<Result> {
     this.transactionResult = this.transactionResult.toBuilder().setRet(code).build();
   }
 
+  public void setResultCode(contractResult code) {
+    this.transactionResult = this.transactionResult.toBuilder().setContractRet(code).build();
+  }
+
   public long getShieldedTransactionFee() {
     return transactionResult.getShieldedTransactionFee();
   }

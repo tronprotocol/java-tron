@@ -4,8 +4,11 @@ import static org.mockito.Mockito.mock;
 
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -54,6 +57,14 @@ public class PeerConnectionTest {
     Assert.assertTrue(peerConnection.isNeedSyncFromPeer());
     Assert.assertTrue(peerConnection.isNeedSyncFromUs());
     Assert.assertTrue(!peerConnection.isSyncFinish());
+  }
+
+  @Test
+  public void testSyncBlockInProcessUsesConcurrentSet() {
+    PeerConnection peerConnection = new PeerConnection();
+
+    Assert.assertTrue(peerConnection.getSyncBlockInProcess()
+        instanceof ConcurrentHashMap.KeySetView);
   }
 
   @Test
@@ -264,11 +275,11 @@ public class PeerConnectionTest {
 
     Assert.assertTrue(p1.equals(p1));
     Assert.assertTrue(!p1.equals(p2));
-    Assert.assertTrue(p2.equals(p3));
+    Assert.assertTrue(!p2.equals(p3));
   }
 
   @Test
-  public void testHashCode() {
+  public void testMapSeparatesPeerConnections() {
     PeerConnection p1 = new PeerConnection();
     InetSocketAddress inetSocketAddress1 =
         new InetSocketAddress("127.0.0.2", 10001);
@@ -293,8 +304,13 @@ public class PeerConnectionTest {
     ReflectUtils.setFieldValue(c3, "inetAddress", inetSocketAddress3.getAddress());
     p3.setChannel(c3);
 
-    Assert.assertTrue(p1.hashCode() != p2.hashCode());
-    Assert.assertTrue(p2.hashCode() == p3.hashCode());
+    Map<PeerConnection, String> peers = new HashMap<>();
+    peers.put(p1, "first");
+    peers.put(p2, "second");
+    peers.put(p3, "third");
+    Assert.assertEquals(3, peers.size());
+    Assert.assertEquals("second", peers.get(p2));
+    Assert.assertEquals("third", peers.get(p3));
   }
 
   @Test

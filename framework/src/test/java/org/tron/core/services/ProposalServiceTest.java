@@ -20,6 +20,7 @@ import org.tron.common.parameter.CommonParameter;
 import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.consensus.ProposalService;
+import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.utils.ProposalUtil.ProposalType;
 import org.tron.protos.Protocol.Proposal;
 
@@ -149,6 +150,136 @@ public class ProposalServiceTest extends BaseTest {
 
     long window = dbManager.getDynamicPropertiesStore().getProposalExpireTime();
     Assert.assertEquals(MAX_PROPOSAL_EXPIRE_TIME - 3000, window);
+  }
+
+  // -------------------------------------------------------------------------------------------
+  // CLOSE_EXCHANGE application-side regression tests
+  // -------------------------------------------------------------------------------------------
+
+  private static final long CLOSE_EXCHANGE_CODE =
+      ProposalType.CLOSE_EXCHANGE.getCode();
+  private static final long EXCHANGE_CREATE_FEE_CODE =
+      ProposalType.EXCHANGE_CREATE_FEE.getCode();
+  private static final long HARDEN_EXCHANGE_CODE =
+      ProposalType.ALLOW_HARDEN_EXCHANGE_CALCULATION.getCode();
+  private static final long CREATE_ACCOUNT_FEE_CODE =
+      ProposalType.CREATE_ACCOUNT_FEE.getCode();
+  private static final long WITNESS_PAY_PER_BLOCK_CODE =
+      ProposalType.WITNESS_PAY_PER_BLOCK.getCode();
+
+  private DynamicPropertiesStore dps() {
+    return dbManager.getDynamicPropertiesStore();
+  }
+
+  private void apply(long code, long value) {
+    Proposal proposal = Proposal.newBuilder().putParameters(code, value).build();
+    Assert.assertTrue(ProposalService.process(dbManager, new ProposalCapsule(proposal)));
+  }
+
+  /**
+   * The dynamic property starts at 0 (missing key) and only ever moves forward one level at
+   * a time; duplicate, downgrade and jump proposals are silently ignored.
+   */
+  @Test
+  public void testApplyCloseExchangeStepwiseAndIdempotent() {
+    dps().saveCloseExchange(0);
+
+    apply(CLOSE_EXCHANGE_CODE, 1);
+    Assert.assertEquals(1, dps().getCloseExchange());
+
+    // duplicate re-application of the same level in the same maintenance window: no-op
+    apply(CLOSE_EXCHANGE_CODE, 1);
+    Assert.assertEquals(1, dps().getCloseExchange());
+
+    apply(CLOSE_EXCHANGE_CODE, 2);
+    Assert.assertEquals(2, dps().getCloseExchange());
+
+    // stale lower proposal: no-op
+    apply(CLOSE_EXCHANGE_CODE, 1);
+    Assert.assertEquals(2, dps().getCloseExchange());
+
+    // jump beyond the highest level: no-op
+    apply(CLOSE_EXCHANGE_CODE, 3);
+    Assert.assertEquals(2, dps().getCloseExchange());
+
+    // reset proposals: no-op
+    apply(CLOSE_EXCHANGE_CODE, 0);
+    Assert.assertEquals(2, dps().getCloseExchange());
+  }
+
+  /**
+   * A CLOSE_EXCHANGE entry whose value does not match current + 1 must not block the other
+   * parameters carried by the same proposal.
+   */
+  @Test
+  public void testApplyCloseExchangeDoesNotBlockOtherParameters() {
+    dps().saveCloseExchange(1);
+    dps().saveCreateAccountFee(1000L);
+    dps().saveWitnessPayPerBlock(100L);
+
+    Proposal proposal = Proposal.newBuilder()
+        .putParameters(CLOSE_EXCHANGE_CODE, 3L)      // jump: ignored
+        .putParameters(CREATE_ACCOUNT_FEE_CODE, 2000L)
+        .putParameters(WITNESS_PAY_PER_BLOCK_CODE, 300L)
+        .build();
+    Assert.assertTrue(ProposalService.process(dbManager, new ProposalCapsule(proposal)));
+
+    Assert.assertEquals("invalid CLOSE_EXCHANGE entry must be a no-op",
+        1, dps().getCloseExchange());
+    Assert.assertEquals(2000L, dps().getCreateAccountFee());
+    Assert.assertEquals(300L, dps().getWitnessPayPerBlock());
+  }
+
+  /**
+   * While the close level is 0, EXCHANGE_CREATE_FEE(12) and
+   * ALLOW_HARDEN_EXCHANGE_CALCULATION(98) proposals apply as before; once the level
+   * reaches 1 their application becomes a no-op while unrelated parameters of the same
+   * proposal still apply. Historical level-0 applications are preserved (the stored
+   * value is never reverted).
+   */
+  @Test
+  public void testApplyLegacyExchangeParametersAroundCloseLevel() {
+    // ensure level 0: prior tests in this class may have left the level raised
+    dps().saveCloseExchange(0);
+    // close level 0: both legacy parameters still apply
+    dps().saveExchangeCreateFee(1024_000_000L);
+    dps().saveAllowHardenExchangeCalculation(0);
+    apply(EXCHANGE_CREATE_FEE_CODE, 2_048_000_000L);
+    Assert.assertEquals(2_048_000_000L, dps().getExchangeCreateFee());
+    apply(HARDEN_EXCHANGE_CODE, 1);
+    Assert.assertEquals(1, dps().getAllowHardenExchangeCalculation());
+
+    dps().saveCloseExchange(1);
+    try {
+      // close level >= 1: legacy exchange parameters are skipped...
+      apply(EXCHANGE_CREATE_FEE_CODE, 3_072_000_000L);
+      Assert.assertEquals("EXCHANGE_CREATE_FEE must not be applied at close level >= 1",
+          2_048_000_000L, dps().getExchangeCreateFee());
+      apply(HARDEN_EXCHANGE_CODE, 0);
+      Assert.assertEquals("ALLOW_HARDEN_EXCHANGE_CALCULATION must not be applied at "
+              + "close level >= 1",
+          1, dps().getAllowHardenExchangeCalculation());
+
+      // ...without blocking unrelated parameters of the same proposal
+      dps().saveCreateAccountFee(1000L);
+      Proposal proposal = Proposal.newBuilder()
+          .putParameters(EXCHANGE_CREATE_FEE_CODE, 4_096_000_000L)
+          .putParameters(HARDEN_EXCHANGE_CODE, 0L)
+          .putParameters(CREATE_ACCOUNT_FEE_CODE, 5000L)
+          .build();
+      Assert.assertTrue(ProposalService.process(dbManager, new ProposalCapsule(proposal)));
+      Assert.assertEquals(2_048_000_000L, dps().getExchangeCreateFee());
+      Assert.assertEquals(1, dps().getAllowHardenExchangeCalculation());
+      Assert.assertEquals(5000L, dps().getCreateAccountFee());
+
+      // CLOSE_EXCHANGE application itself still works at close level >= 1
+      dps().saveCloseExchange(0);
+      apply(CLOSE_EXCHANGE_CODE, 1);
+      Assert.assertEquals(1, dps().getCloseExchange());
+    } finally {
+      dps().saveCloseExchange(0);
+      dps().saveAllowHardenExchangeCalculation(0);
+    }
   }
 
 }

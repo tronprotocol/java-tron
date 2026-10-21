@@ -255,8 +255,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] ALLOW_HARDEN_EXCHANGE_CALCULATION =
       "ALLOW_HARDEN_EXCHANGE_CALCULATION".getBytes();
 
+  private static final byte[] CLOSE_EXCHANGE = "CLOSE_EXCHANGE".getBytes();
+
   private static final byte[] TURKISH_KEY_MIGRATION_DONE =
       "TURKISH_KEY_MIGRATION_DONE".getBytes();
+
+  private static final byte[] ALLOW_OPTIMIZE_TVM_STORAGE = "ALLOW_OPTIMIZE_TVM_STORAGE".getBytes();
 
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
@@ -1626,6 +1630,18 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .map(ByteArray::toLong)
         .orElseThrow(
             () -> new IllegalArgumentException("not found EXCHANGE_CREATE_FEE"));
+  }
+
+  public void saveCloseExchange(int level) {
+    this.put(CLOSE_EXCHANGE, new BytesCapsule(ByteArray.fromLong(level)));
+  }
+
+  public int getCloseExchange() {
+    return Optional.ofNullable(getUnchecked(CLOSE_EXCHANGE))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElse(0L)
+        .intValue();
   }
 
   public void saveExchangeBalanceLimit(long limit) {
@@ -3081,6 +3097,21 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
         .orElse(0L);
+  }
+
+  public long getAllowOptimizeTvmStorage() {
+    return Optional.ofNullable(getUnchecked(ALLOW_OPTIMIZE_TVM_STORAGE))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElse(0L);
+  }
+
+  public void saveAllowOptimizeTvmStorage(long value) {
+    this.put(ALLOW_OPTIMIZE_TVM_STORAGE, new BytesCapsule(ByteArray.fromLong(value)));
+  }
+
+  public boolean allowOptimizeTvmStorage() {
+    return getAllowOptimizeTvmStorage() == 1L;
   }
 
   private static class DynamicResourceProperties {

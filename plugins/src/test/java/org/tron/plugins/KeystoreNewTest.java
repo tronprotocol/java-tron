@@ -5,6 +5,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
@@ -23,10 +24,20 @@ public class KeystoreNewTest {
   public TemporaryFolder tempFolder = new TemporaryFolder();
 
   @Test
+  public void testSm2OptionIsRejected() {
+    CommandLine cmd = new CommandLine(new Toolkit());
+
+    int exitCode = cmd.execute("keystore", "new", "--sm2");
+
+    assertEquals("Removed --sm2 option must be rejected", 2, exitCode);
+  }
+
+  @Test
   public void testNewKeystoreWithPasswordFile() throws Exception {
     File dir = tempFolder.newFolder("keystore");
     File pwFile = tempFolder.newFile("password.txt");
     Files.write(pwFile.toPath(), "test123456".getBytes(StandardCharsets.UTF_8));
+    makeOwnerOnly(pwFile);
 
     StringWriter out = new StringWriter();
     StringWriter err = new StringWriter();
@@ -45,7 +56,7 @@ public class KeystoreNewTest {
     assertEquals("Should create exactly one keystore file", 1, files.length);
 
     // Verify the file is a valid keystore
-    Credentials creds = WalletUtils.loadCredentials("test123456", files[0], true);
+    Credentials creds = WalletUtils.loadCredentials("test123456", files[0]);
     assertNotNull(creds.getAddress());
     assertTrue(creds.getAddress().startsWith("T"));
   }
@@ -55,6 +66,7 @@ public class KeystoreNewTest {
     File dir = tempFolder.newFolder("keystore-json");
     File pwFile = tempFolder.newFile("password-json.txt");
     Files.write(pwFile.toPath(), "test123456".getBytes(StandardCharsets.UTF_8));
+    makeOwnerOnly(pwFile);
 
     StringWriter out = new StringWriter();
     StringWriter err = new StringWriter();
@@ -79,6 +91,7 @@ public class KeystoreNewTest {
     File dir = tempFolder.newFolder("keystore-bad");
     File pwFile = tempFolder.newFile("short.txt");
     Files.write(pwFile.toPath(), "abc".getBytes(StandardCharsets.UTF_8));
+    makeOwnerOnly(pwFile);
 
     StringWriter err = new StringWriter();
     CommandLine cmd = new CommandLine(new Toolkit());
@@ -97,6 +110,7 @@ public class KeystoreNewTest {
     File dir = new File(tempFolder.getRoot(), "custom/nested/dir");
     File pwFile = tempFolder.newFile("pw.txt");
     Files.write(pwFile.toPath(), "test123456".getBytes(StandardCharsets.UTF_8));
+    makeOwnerOnly(pwFile);
 
     CommandLine cmd = new CommandLine(new Toolkit());
     int exitCode = cmd.execute("keystore", "new",
@@ -128,6 +142,7 @@ public class KeystoreNewTest {
     File dir = tempFolder.newFolder("keystore-empty");
     File pwFile = tempFolder.newFile("empty.txt");
     Files.write(pwFile.toPath(), "".getBytes(StandardCharsets.UTF_8));
+    makeOwnerOnly(pwFile);
 
     StringWriter err = new StringWriter();
     CommandLine cmd = new CommandLine(new Toolkit());
@@ -142,34 +157,12 @@ public class KeystoreNewTest {
   }
 
   @Test
-  public void testNewKeystoreWithSm2() throws Exception {
-    File dir = tempFolder.newFolder("keystore-sm2");
-    File pwFile = tempFolder.newFile("pw-sm2.txt");
-    Files.write(pwFile.toPath(), "test123456".getBytes(StandardCharsets.UTF_8));
-
-    CommandLine cmd = new CommandLine(new Toolkit());
-    int exitCode = cmd.execute("keystore", "new",
-        "--keystore-dir", dir.getAbsolutePath(),
-        "--password-file", pwFile.getAbsolutePath(),
-        "--sm2");
-
-    assertEquals("SM2 keystore creation should succeed", 0, exitCode);
-    File[] files = dir.listFiles((d, name) -> name.endsWith(".json"));
-    assertNotNull(files);
-    assertEquals(1, files.length);
-
-    // Verify SM2 keystore can be decrypted with ecKey=false
-    org.tron.keystore.Credentials creds =
-        org.tron.keystore.WalletUtils.loadCredentials("test123456", files[0], false);
-    assertNotNull(creds.getAddress());
-  }
-
-  @Test
   public void testNewKeystoreSpecialCharPassword() throws Exception {
     File dir = tempFolder.newFolder("keystore-special");
     File pwFile = tempFolder.newFile("pw-special.txt");
     String password = "p@$$w0rd!#%^&*()_+-=[]{}";
     Files.write(pwFile.toPath(), password.getBytes(StandardCharsets.UTF_8));
+    makeOwnerOnly(pwFile);
 
     CommandLine cmd = new CommandLine(new Toolkit());
     int exitCode = cmd.execute("keystore", "new",
@@ -182,7 +175,7 @@ public class KeystoreNewTest {
     assertEquals(1, files.length);
 
     // Verify can decrypt with same special-char password
-    Credentials creds = WalletUtils.loadCredentials(password, files[0], true);
+    Credentials creds = WalletUtils.loadCredentials(password, files[0]);
     assertNotNull(creds.getAddress());
   }
 
@@ -203,6 +196,7 @@ public class KeystoreNewTest {
     File notADir = tempFolder.newFile("not-a-dir");
     File pwFile = tempFolder.newFile("pw-dir.txt");
     Files.write(pwFile.toPath(), "test123456".getBytes(StandardCharsets.UTF_8));
+    makeOwnerOnly(pwFile);
 
     CommandLine cmd = new CommandLine(new Toolkit());
     int exitCode = cmd.execute("keystore", "new",
@@ -219,6 +213,7 @@ public class KeystoreNewTest {
     byte[] bigContent = new byte[1025];
     java.util.Arrays.fill(bigContent, (byte) 'a');
     Files.write(pwFile.toPath(), bigContent);
+    makeOwnerOnly(pwFile);
 
     StringWriter err = new StringWriter();
     CommandLine cmd = new CommandLine(new Toolkit());
@@ -238,6 +233,7 @@ public class KeystoreNewTest {
     File pwFile = tempFolder.newFile("bom.txt");
     Files.write(pwFile.toPath(),
         ("\uFEFF" + "test123456").getBytes(StandardCharsets.UTF_8));
+    makeOwnerOnly(pwFile);
 
     CommandLine cmd = new CommandLine(new Toolkit());
     int exitCode = cmd.execute("keystore", "new",
@@ -259,6 +255,7 @@ public class KeystoreNewTest {
     File dir = tempFolder.newFolder("keystore-perms");
     File pwFile = tempFolder.newFile("pw-perms.txt");
     Files.write(pwFile.toPath(), "test123456".getBytes(StandardCharsets.UTF_8));
+    makeOwnerOnly(pwFile);
 
     CommandLine cmd = new CommandLine(new Toolkit());
     int exitCode = cmd.execute("keystore", "new",
@@ -289,6 +286,7 @@ public class KeystoreNewTest {
     File pwFile = tempFolder.newFile("multi-line.txt");
     Files.write(pwFile.toPath(),
         "oldpass123\nnewpass456".getBytes(StandardCharsets.UTF_8));
+    makeOwnerOnly(pwFile);
 
     StringWriter err = new StringWriter();
     CommandLine cmd = new CommandLine(new Toolkit());
@@ -304,5 +302,14 @@ public class KeystoreNewTest {
     File[] files = dir.listFiles((d, name) -> name.endsWith(".json"));
     assertTrue("No keystore should have been created",
         files == null || files.length == 0);
+  }
+
+  private static void makeOwnerOnly(File f) throws IOException {
+    if (Files.getFileAttributeView(f.toPath(),
+        java.nio.file.attribute.PosixFileAttributeView.class) == null) {
+      return; // non-POSIX FS: skip chmod, mirroring KeystoreCliUtils runtime behavior
+    }
+    Files.setPosixFilePermissions(f.toPath(),
+        java.nio.file.attribute.PosixFilePermissions.fromString("rw-------"));
   }
 }

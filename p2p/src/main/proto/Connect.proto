@@ -1,0 +1,60 @@
+syntax = "proto3";
+
+import "Discover.proto";
+
+option java_package = "org.tron.p2p.protos";
+option java_outer_classname = "Connect";
+
+message KeepAliveMessage {
+  int64 timestamp = 1;
+}
+
+message HelloMessage {
+  Endpoint from = 1;
+  int32 network_id = 2;
+  int32 code = 3;
+  int64 timestamp = 4;
+  int32 version = 5;
+}
+
+message StatusMessage {
+  Endpoint from = 1;
+  int32 version = 2;
+  int32 network_id = 3;
+  int32 maxConnections = 4;
+  int32 currentConnections = 5;
+  int64 timestamp = 6;
+}
+
+message CompressMessage {
+  enum CompressType {
+    uncompress = 0;
+    snappy = 1;
+  }
+
+  CompressType type = 1;
+  bytes data = 2;
+}
+
+enum DisconnectReason {
+  PEER_QUITING = 0x00;
+  BAD_PROTOCOL = 0x01;
+  TOO_MANY_PEERS = 0x02;
+  DUPLICATE_PEER = 0x03;
+  DIFFERENT_VERSION = 0x04;
+  RANDOM_ELIMINATION = 0x05;
+  EMPTY_MESSAGE = 0X06;
+  PING_TIMEOUT = 0x07;
+  DISCOVER_MODE = 0x08;
+  //DETECT_COMPLETE = 0x09;
+  NO_SUCH_MESSAGE = 0x0A;
+  BAD_MESSAGE = 0x0B;
+  TOO_MANY_PEERS_WITH_SAME_IP = 0x0C;
+  RECENT_DISCONNECT = 0x0D;
+  DUP_HANDSHAKE = 0x0E;
+  UNKNOWN = 0xFF;
+}
+
+message P2pDisconnectMessage {
+  DisconnectReason reason = 1;
+}

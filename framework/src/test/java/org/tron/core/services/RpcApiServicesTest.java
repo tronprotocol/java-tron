@@ -49,6 +49,8 @@ import org.tron.api.GrpcAPI.OvkDecryptTRC20Parameters;
 import org.tron.api.GrpcAPI.PaginatedMessage;
 import org.tron.api.GrpcAPI.PrivateParameters;
 import org.tron.api.GrpcAPI.PrivateParametersWithoutAsk;
+import org.tron.api.GrpcAPI.Return;
+import org.tron.api.GrpcAPI.Return.response_code;
 import org.tron.api.GrpcAPI.ViewingKeyMessage;
 import org.tron.api.WalletGrpc;
 import org.tron.api.WalletGrpc.WalletBlockingStub;
@@ -277,6 +279,7 @@ public class RpcApiServicesTest {
         .setOffset(0).setLimit(5).build();
     assertNotNull(blockingStubFull.getPaginatedNowWitnessList(paginatedMessage));
     assertNotNull(blockingStubSolidity.getPaginatedNowWitnessList(paginatedMessage));
+    assertNotNull(blockingStubPBFT.getPaginatedNowWitnessList(paginatedMessage));
   }
 
   @Test
@@ -651,21 +654,46 @@ public class RpcApiServicesTest {
     assertNotNull(blockingStubFull.updateBrokerage(message));
   }
 
+  private static Transaction.Contract brokerageContract() {
+    UpdateBrokerageContract updateBrokerageContract = UpdateBrokerageContract.newBuilder()
+        .setOwnerAddress(ByteString.copyFrom(Objects
+            .requireNonNull(decodeFromBase58Check("TN3zfjYUmMFK3ZsHSsrdJoNRtGkQmZLBLz"))))
+        .setBrokerage(10)
+        .build();
+    return Transaction.Contract.newBuilder()
+        .setType(Transaction.Contract.ContractType.UpdateBrokerageContract)
+        .setParameter(Any.pack(updateBrokerageContract))
+        .build();
+  }
+
   @Test
   public void testCreateCommonTransaction() {
-    UpdateBrokerageContract.Builder updateBrokerageContract = UpdateBrokerageContract.newBuilder();
-    updateBrokerageContract.setOwnerAddress(
-            ByteString.copyFrom(Objects
-                .requireNonNull(decodeFromBase58Check("TN3zfjYUmMFK3ZsHSsrdJoNRtGkQmZLBLz"))))
-        .setBrokerage(10);
-    Transaction.Builder transaction = Transaction.newBuilder();
-    Transaction.raw.Builder raw = Transaction.raw.newBuilder();
-    Transaction.Contract.Builder contract = Transaction.Contract.newBuilder();
-    contract.setType(Transaction.Contract.ContractType.UpdateBrokerageContract)
-        .setParameter(Any.pack(updateBrokerageContract.build()));
-    raw.addContract(contract.build());
-    transaction.setRawData(raw.build());
-    assertNotNull(blockingStubFull.createCommonTransaction(transaction.build()));
+    Transaction transaction = Transaction.newBuilder()
+        .setRawData(Transaction.raw.newBuilder().addContract(brokerageContract()))
+        .build();
+    assertNotNull(blockingStubFull.createCommonTransaction(transaction));
+  }
+
+  @Test
+  public void testCreateCommonTransactionRejectsMultipleContracts() {
+    Transaction transaction = Transaction.newBuilder()
+        .setRawData(Transaction.raw.newBuilder()
+            .addContract(brokerageContract())
+            .addContract(brokerageContract()))
+        .build();
+    Return result = blockingStubFull.createCommonTransaction(transaction).getResult();
+    Assert.assertEquals(response_code.CONTRACT_VALIDATE_ERROR, result.getCode());
+    Assert.assertEquals("Contract validate error : contract size should be exactly 1,"
+        + " this is extend feature ,actual :2", result.getMessage().toStringUtf8());
+  }
+
+  @Test
+  public void testCreateCommonTransactionRejectsEmptyContractList() {
+    Return result = blockingStubFull.createCommonTransaction(Transaction.getDefaultInstance())
+        .getResult();
+    Assert.assertEquals(response_code.CONTRACT_VALIDATE_ERROR, result.getCode());
+    Assert.assertEquals("Contract validate error : No contract!",
+        result.getMessage().toStringUtf8());
   }
 
   @Test
@@ -673,6 +701,7 @@ public class RpcApiServicesTest {
     NumberMessage message = NumberMessage.newBuilder().setNum(1).build();
     assertNotNull(blockingStubFull.getTransactionInfoByBlockNum(message));
     assertNotNull(blockingStubSolidity.getTransactionInfoByBlockNum(message));
+    assertNotNull(blockingStubPBFT.getTransactionInfoByBlockNum(message));
   }
 
   @Test
@@ -806,8 +835,7 @@ public class RpcApiServicesTest {
     Block nowBlock = blockingStubFull.getNowBlock(EmptyMessage.newBuilder().build());
     raw rawData = nowBlock.getBlockHeader().getRawData();
     BlockCapsule.BlockId blockId =
-        new BlockCapsule.BlockId(Sha256Hash.of(getInstance().isECKeyCryptoEngine(),
-            rawData.toByteArray()),
+        new BlockCapsule.BlockId(Sha256Hash.of(rawData.toByteArray()),
             rawData.getNumber());
     return BlockIdentifier.newBuilder()
         .setNumber(rawData.getNumber())

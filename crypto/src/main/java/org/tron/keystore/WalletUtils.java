@@ -19,12 +19,14 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.NoSuchElementException;
 import java.util.Scanner;
 import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.tron.common.crypto.SignInterface;
 import org.tron.core.exception.CipherException;
+import org.tron.core.exception.TronError;
 
 /**
  * Utility functions for working with Wallet files.
@@ -119,11 +121,11 @@ public class WalletUtils {
     }
   }
 
-  public static Credentials loadCredentials(String password, File source, boolean ecKey)
+  public static Credentials loadCredentials(String password, File source)
       throws IOException, CipherException {
     warnIfSymbolicLink(source);
     WalletFile walletFile = objectMapper.readValue(source, WalletFile.class);
-    return Credentials.create(Wallet.decrypt(password, walletFile, ecKey));
+    return Credentials.create(Wallet.decrypt(password, walletFile));
   }
 
   /**
@@ -201,13 +203,10 @@ public class WalletUtils {
 
   /**
    * Lazily-initialized Scanner shared across successive
-   * {@link #inputPassword()} calls on the non-TTY path so that
-   * {@link #inputPassword2Twice()} can read two lines in sequence
-   * without losing data. Each call to {@code new Scanner(System.in)}
-   * internally buffers bytes from the underlying {@link BufferedReader};
-   * constructing a second Scanner after the first has been discarded
-   * drops any buffered bytes the first pulled from stdin, causing
-   * {@code NoSuchElementException}.
+   * {@link #inputPassword()} calls on the non-TTY path. Each call to
+   * {@code new Scanner(System.in)} buffers ahead from stdin; constructing
+   * a second Scanner after the first has been discarded drops any bytes
+   * the first pulled, causing {@code NoSuchElementException}.
    */
   private static Scanner sharedStdinScanner;
 
@@ -233,6 +232,14 @@ public class WalletUtils {
     while (true) {
       if (cons != null) {
         char[] pwd = cons.readPassword("password: ");
+        // Console EOF (e.g. Ctrl+D) returns null; fail fast instead of
+        // crashing with a raw NullPointerException.
+        if (pwd == null) {
+          throw new TronError(
+              "password input closed (EOF) while reading from the console; "
+                  + "restart with --password or provide an interactive TTY",
+              TronError.ErrCode.WITNESS_KEYSTORE_LOAD);
+        }
         password = String.valueOf(pwd);
       } else {
         // Preserve the full password including embedded whitespace.
@@ -241,7 +248,18 @@ public class WalletUtils {
         // staple" to "correct" when piped via stdin (e.g. echo ... | java).
         // stripPasswordLine only removes the UTF-8 BOM and trailing line
         // terminators — internal whitespace is part of the password.
-        password = stripPasswordLine(in.nextLine());
+        String line;
+        try {
+          line = in.nextLine();
+        } catch (NoSuchElementException e) {
+          // Piped stdin reached EOF before a password line was available;
+          // fail fast instead of leaking a raw NoSuchElementException.
+          throw new TronError(
+              "password input closed (EOF): piped stdin provided no password "
+                  + "line; restart with --password or provide an interactive TTY",
+              e, TronError.ErrCode.WITNESS_KEYSTORE_LOAD);
+        }
+        password = stripPasswordLine(line);
       }
       if (passwordValid(password)) {
         return password;
@@ -250,18 +268,4 @@ public class WalletUtils {
     }
   }
 
-  public static String inputPassword2Twice() {
-    String password0;
-    while (true) {
-      System.out.println("Please input password.");
-      password0 = inputPassword();
-      System.out.println("Please input password again.");
-      String password1 = inputPassword();
-      if (password0.equals(password1)) {
-        break;
-      }
-      System.out.println("Two passwords do not match, please input again.");
-    }
-    return password0;
-  }
 }
