@@ -24,6 +24,7 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.VotesCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.args.Args;
+import org.tron.core.config.args.WitnessInitializer;
 import org.tron.core.consensus.ConsensusService;
 import org.tron.program.Version;
 import org.tron.protos.Protocol;
@@ -386,6 +387,26 @@ public class SRMetricsTest extends BaseTest {
     Assert.assertEquals(SRMetrics.NODE_ROLE_SLAVER, roleGauge(address2), 0.0);
     Assert.assertEquals(100.0, srGauge(MetricKeys.Gauge.SR_VOTES, address1), 0.0);
     Assert.assertEquals(40.0, srGauge(MetricKeys.Gauge.SR_VOTES, address2), 0.0);
+  }
+
+  /**
+   * Regression for the production assembly path: multi-key nodes are built through
+   * WitnessInitializer.initFromCFGPrivateKey, which always derives the witness account
+   * address from the first key and therefore leaves it non-null. localWitnessAddresses
+   * must still publish one role series per key instead of stopping at that derived
+   * address.
+   */
+  @Test
+  public void testRoleMultiWitnessKeysProductionAssembly() {
+    String key1 = PublicMethod.getRandomPrivateKey();
+    String key2 = PublicMethod.getRandomPrivateKey();
+    Args.setLocalWitnesses(
+        WitnessInitializer.initFromCFGPrivateKey(Arrays.asList(key1, key2), null));
+
+    backupManager.recordNodeRole();
+
+    Assert.assertEquals(SRMetrics.NODE_ROLE_MASTER, roleGauge(derivedAddress(key1)), 0.0);
+    Assert.assertEquals(SRMetrics.NODE_ROLE_MASTER, roleGauge(derivedAddress(key2)), 0.0);
   }
 
   /**

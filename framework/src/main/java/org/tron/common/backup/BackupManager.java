@@ -134,28 +134,45 @@ public class BackupManager implements EventHandler {
 
   /**
    * Resolves every locally configured witness identity to a 58check-encoded address:
-   * the witness account address when set, otherwise one address per configured private
-   * key, derived the same way {@link LocalWitnesses#initWitnessAccountAddress(byte[])}
-   * derives the default witness account address. Returns an empty list when the node has
-   * no witness configured. Multi-key setups are a testnet convenience: the role is a
-   * node-level status, so every configured identity gets its own series carrying the
-   * same value.
+   * one address per configured private key when several keys are set, otherwise the
+   * witness account address (explicit, or derived from the single key). Returns an
+   * empty list when the node has no witness configured. Multi-key setups are a testnet
+   * convenience: the role is a node-level status, so every configured identity gets
+   * its own series carrying the same value.
    */
   private List<String> localWitnessAddresses() {
     LocalWitnesses localWitnesses = Args.getLocalWitnesses();
     if (localWitnesses == null) {
       return Collections.emptyList();
     }
+    List<String> privateKeys = localWitnesses.getPrivateKeys();
+    if (privateKeys.size() > 1) {
+      // A multi-key setup is only valid without an explicit witness account address
+      // (WitnessInitializer rejects the combination), so every key is its own SR
+      // identity. getWitnessAccountAddress() cannot detect this case: the production
+      // assembly path always derives it from the first key
+      // (LocalWitnesses.initWitnessAccountAddress), leaving it non-null.
+      List<String> addresses = new ArrayList<>(privateKeys.size());
+      for (String privateKey : privateKeys) {
+        addresses.add(deriveAddress(privateKey));
+      }
+      return addresses;
+    }
     byte[] accountAddress = localWitnesses.getWitnessAccountAddress();
     if (accountAddress != null && accountAddress.length > 0) {
       return Collections.singletonList(StringUtil.encode58Check(accountAddress));
     }
+    // single key without an account address (unit-test construction)
     List<String> addresses = new ArrayList<>();
-    for (String privateKey : localWitnesses.getPrivateKeys()) {
-      SignInterface ecKey = SignUtils.fromPrivate(ByteArray.fromHexString(privateKey));
-      addresses.add(StringUtil.encode58Check(ecKey.getAddress()));
+    for (String privateKey : privateKeys) {
+      addresses.add(deriveAddress(privateKey));
     }
     return addresses;
+  }
+
+  private static String deriveAddress(String privateKey) {
+    SignInterface ecKey = SignUtils.fromPrivate(ByteArray.fromHexString(privateKey));
+    return StringUtil.encode58Check(ecKey.getAddress());
   }
 
   public void init() {
