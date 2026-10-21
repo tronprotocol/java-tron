@@ -14,6 +14,8 @@ import org.junit.Test;
 import org.tron.common.BaseTest;
 import org.tron.common.TestConstants;
 import org.tron.common.backup.BackupManager;
+import org.tron.common.crypto.SignUtils;
+import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.LocalWitnesses;
 import org.tron.common.utils.PublicMethod;
 import org.tron.common.utils.StringUtil;
@@ -311,6 +313,67 @@ public class SRMetricsTest extends BaseTest {
   }
 
   /**
+   * After init() has run, status INIT is a real election state — the transport is up but
+   * no keep-alive timeout has been judged yet — and maps 1:1 to init (0). It must not be
+   * misreported as slaver (2), the pre-fix behavior.
+   */
+  @Test
+  public void testRoleInitAfterElectionStarted() throws Exception {
+    configureBackup();
+    ByteString witness = registerWitnessWithVotes(3);
+    LocalWitnesses localWitnesses = new LocalWitnesses();
+    localWitnesses.initWitnessAccountAddress(witness.toByteArray());
+    Args.setLocalWitnesses(localWitnesses);
+    markBackupInitiated(backupManager);
+    String address = StringUtil.encode58Check(witness.toByteArray());
+
+    backupManager.setStatus(BackupManager.BackupStatusEnum.INIT);
+    Assert.assertEquals(SRMetrics.NODE_ROLE_INIT, roleGauge(address), 0.0);
+  }
+
+  /**
+   * Testnet multi-key setup: with several witness private keys configured and no witness
+   * account address, node_role writes one series per derived address, all carrying the
+   * same node-level role value, and a status change flips every series together. Role
+   * recording never touches the single-identity sr_* gauges, and maintenance-time
+   * recording never touches the role series.
+   */
+  @Test
+  public void testRoleMultiWitnessKeys() throws Exception {
+    configureBackup();
+    String key1 = PublicMethod.getRandomPrivateKey();
+    String key2 = PublicMethod.getRandomPrivateKey();
+    LocalWitnesses localWitnesses = new LocalWitnesses(Arrays.asList(key1, key2));
+    Args.setLocalWitnesses(localWitnesses);
+    String address1 = derivedAddress(key1);
+    String address2 = derivedAddress(key2);
+    markBackupInitiated(backupManager);
+
+    Double activeBefore = gauge(MetricKeys.Gauge.SR_IS_ACTIVE);
+    Double votesBefore = gauge(MetricKeys.Gauge.SR_VOTES);
+    Double rankBefore = gauge(MetricKeys.Gauge.SR_RANK);
+
+    backupManager.recordNodeRole();
+    Assert.assertEquals(roleGauge(address1), roleGauge(address2));
+
+    backupManager.setStatus(BackupManager.BackupStatusEnum.MASTER);
+    Assert.assertEquals(SRMetrics.NODE_ROLE_MASTER, roleGauge(address1), 0.0);
+    Assert.assertEquals(SRMetrics.NODE_ROLE_MASTER, roleGauge(address2), 0.0);
+
+    backupManager.setStatus(BackupManager.BackupStatusEnum.SLAVER);
+    Assert.assertEquals(SRMetrics.NODE_ROLE_SLAVER, roleGauge(address1), 0.0);
+    Assert.assertEquals(SRMetrics.NODE_ROLE_SLAVER, roleGauge(address2), 0.0);
+
+    Assert.assertEquals(activeBefore, gauge(MetricKeys.Gauge.SR_IS_ACTIVE));
+    Assert.assertEquals(votesBefore, gauge(MetricKeys.Gauge.SR_VOTES));
+    Assert.assertEquals(rankBefore, gauge(MetricKeys.Gauge.SR_RANK));
+
+    maintenanceManager.recordWitnessMetrics();
+    Assert.assertEquals(SRMetrics.NODE_ROLE_SLAVER, roleGauge(address1), 0.0);
+    Assert.assertEquals(SRMetrics.NODE_ROLE_SLAVER, roleGauge(address2), 0.0);
+  }
+
+  /**
    * Backup must be seen as configured the same way BackupServer.initServer() decides to
    * start the election transport, otherwise the pre-election window is unreachable.
    */
@@ -328,6 +391,15 @@ public class SRMetricsTest extends BaseTest {
     java.lang.reflect.Field isInit = BackupManager.class.getDeclaredField("isInit");
     isInit.setAccessible(true);
     isInit.setBoolean(manager, true);
+  }
+
+  /**
+   * Derives the 58check address the same way BackupManager.localWitnessAddresses()
+   * derives one from a configured private key.
+   */
+  private String derivedAddress(String privateKeyHex) {
+    return StringUtil.encode58Check(
+        SignUtils.fromPrivate(ByteArray.fromHexString(privateKeyHex)).getAddress());
   }
 
   private ByteString registerWitnessWithVotes(long votes) {

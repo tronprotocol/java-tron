@@ -9,6 +9,9 @@ import static org.tron.core.config.args.InetUtil.resolveInetAddress;
 import io.netty.util.internal.ConcurrentSet;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -24,11 +27,14 @@ import org.tron.common.backup.message.Message;
 import org.tron.common.backup.socket.EventHandler;
 import org.tron.common.backup.socket.MessageHandler;
 import org.tron.common.backup.socket.UdpEvent;
+import org.tron.common.crypto.SignInterface;
+import org.tron.common.crypto.SignUtils;
 import org.tron.common.es.ExecutorServiceManager;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.prometheus.MetricLabels;
 import org.tron.common.prometheus.Metrics;
 import org.tron.common.prometheus.SRMetrics;
+import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.LocalWitnesses;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.config.args.Args;
@@ -78,10 +84,11 @@ public class BackupManager implements EventHandler {
   }
 
   /**
-   * Publishes the {@code tron:node_role} gauge for the locally configured witness and
-   * caches that address for maintenance-time gauge recording. Runs once when the bean is
-   * created — covering the window before the backup election first runs — and again on
-   * every backup-status change. No role series is written when no witness is configured.
+   * Publishes the {@code tron:node_role} gauge for every locally configured witness
+   * address and caches the primary witness address for maintenance-time gauge recording.
+   * Runs once when the bean is created — covering the window before the backup election
+   * first runs — and again on every backup-status change. No role series is written when
+   * no witness is configured.
    */
   @PostConstruct
   public void recordNodeRole() {
@@ -90,10 +97,9 @@ public class BackupManager implements EventHandler {
     }
     byte[] witnessAddress = localWitnessAddress();
     SRMetrics.setLocalWitnessAddress(witnessAddress);
-    if (witnessAddress == null || witnessAddress.length == 0) {
-      return;
+    for (String address : localWitnessAddresses()) {
+      SRMetrics.recordNodeRole(address, currentRole());
     }
-    SRMetrics.recordNodeRole(StringUtil.encode58Check(witnessAddress), currentRole());
   }
 
   private String currentRole() {
@@ -107,7 +113,17 @@ public class BackupManager implements EventHandler {
       // report init instead of pretending the election chose a master
       return MetricLabels.Gauge.ROLE_INIT;
     }
-    return status == MASTER ? MetricLabels.Gauge.ROLE_MASTER : MetricLabels.Gauge.ROLE_SLAVER;
+    // post-init the status is a real election outcome, so map every state 1:1; the
+    // pre-init window is already gated by the isInit check above, so INIT here only
+    // means the election transport is up but no keep-alive timeout has been judged yet
+    switch (status) {
+      case MASTER:
+        return MetricLabels.Gauge.ROLE_MASTER;
+      case SLAVER:
+        return MetricLabels.Gauge.ROLE_SLAVER;
+      default:
+        return MetricLabels.Gauge.ROLE_INIT;
+    }
   }
 
   private boolean isBackupConfigured() {
@@ -119,6 +135,32 @@ public class BackupManager implements EventHandler {
   private byte[] localWitnessAddress() {
     LocalWitnesses localWitnesses = Args.getLocalWitnesses();
     return localWitnesses == null ? null : localWitnesses.getWitnessAccountAddress();
+  }
+
+  /**
+   * Resolves every locally configured witness identity to a 58check-encoded address:
+   * the witness account address when set, otherwise one address per configured private
+   * key, derived the same way {@link LocalWitnesses#initWitnessAccountAddress(byte[])}
+   * derives the default witness account address. Returns an empty list when the node has
+   * no witness configured. Multi-key setups are a testnet convenience: the role is a
+   * node-level status, so every configured identity gets its own series carrying the
+   * same value.
+   */
+  private List<String> localWitnessAddresses() {
+    LocalWitnesses localWitnesses = Args.getLocalWitnesses();
+    if (localWitnesses == null) {
+      return Collections.emptyList();
+    }
+    byte[] accountAddress = localWitnesses.getWitnessAccountAddress();
+    if (accountAddress != null && accountAddress.length > 0) {
+      return Collections.singletonList(StringUtil.encode58Check(accountAddress));
+    }
+    List<String> addresses = new ArrayList<>();
+    for (String privateKey : localWitnesses.getPrivateKeys()) {
+      SignInterface ecKey = SignUtils.fromPrivate(ByteArray.fromHexString(privateKey));
+      addresses.add(StringUtil.encode58Check(ecKey.getAddress()));
+    }
+    return addresses;
   }
 
   public void init() {
