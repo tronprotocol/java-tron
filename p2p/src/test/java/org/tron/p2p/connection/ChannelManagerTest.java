@@ -1,6 +1,7 @@
 package org.tron.p2p.connection;
 
 import com.google.protobuf.ByteString;
+import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.embedded.EmbeddedChannel;
@@ -9,6 +10,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import org.apache.commons.lang3.ArrayUtils;
@@ -59,6 +61,7 @@ public class ChannelManagerTest {
       try {
         pool.close();
         clearChannels();
+        ConnectionPolicy.replaceBlockedIps(Collections.emptySet());
       } finally {
         Parameter.p2pConfig = previousConfig;
         Parameter.handlerList = previousHandlers;
@@ -185,6 +188,80 @@ public class ChannelManagerTest {
     c2.setNodeId("cc");
     code = ChannelManager.checkPeer(c2);
     Assert.assertTrue(code.equals(DisconnectCode.DUPLICATE_PEER));
+  }
+
+  @Test
+  public void processPeerRejectsManuallyBlockedIp() throws Exception {
+    Channel channel = channel(true, 1);
+    ConnectionPolicy.replaceBlockedIps(Collections.singleton(REMOTE.getAddress()));
+
+    Assert.assertEquals(DisconnectCode.UNKNOWN, ChannelManager.processPeer(channel));
+    Assert.assertEquals(0, ChannelManager.getChannelCount());
+  }
+
+  @Test
+  public void connectRejectsUnresolvedAddressBeforeNetworkAccess() {
+    try {
+      ChannelManager.connect(InetSocketAddress.createUnresolved("peer.example", 18888));
+      Assert.fail("Expected unresolved address to be rejected");
+    } catch (IllegalArgumentException expected) {
+      Assert.assertTrue(expected.getMessage().contains("must be resolved"));
+    }
+  }
+
+  @Test
+  public void disconnectUsesEndpointAndBlockedReplacementUsesIp() throws Exception {
+    InetSocketAddress firstAddress = new InetSocketAddress("192.0.2.31", 18888);
+    InetSocketAddress secondAddress = new InetSocketAddress("192.0.2.31", 18889);
+    InetSocketAddress otherAddress = new InetSocketAddress("192.0.2.32", 18888);
+    Channel first = channel(true, 1);
+    Channel second = channel(true, 2);
+    Channel other = channel(true, 3);
+    set(first, "inetSocketAddress", firstAddress);
+    set(first, "inetAddress", firstAddress.getAddress());
+    set(second, "inetSocketAddress", secondAddress);
+    set(second, "inetAddress", secondAddress.getAddress());
+    set(other, "inetSocketAddress", otherAddress);
+    set(other, "inetAddress", otherAddress.getAddress());
+    ChannelManager.addPeer(first);
+    ChannelManager.addPeer(second);
+    ChannelManager.addPeer(other);
+
+    Assert.assertEquals(1, ChannelManager.disconnect(firstAddress));
+    Assert.assertTrue(first.isDisconnect());
+    Assert.assertFalse(second.isDisconnect());
+    Assert.assertFalse(other.isDisconnect());
+    ByteBuf disconnectData = ((EmbeddedChannel) first.getCtx().channel()).readOutbound();
+    Assert.assertNotNull(disconnectData);
+    try {
+      byte[] encodedMessage = new byte[disconnectData.readableBytes()];
+      disconnectData.readBytes(encodedMessage);
+      Assert.assertEquals(MessageType.DISCONNECT.getType(), encodedMessage[0]);
+      Connect.P2pDisconnectMessage disconnectMessage = Connect.P2pDisconnectMessage.parseFrom(
+          ArrayUtils.subarray(encodedMessage, 1, encodedMessage.length));
+      Assert.assertEquals(Connect.DisconnectReason.REQUESTED, disconnectMessage.getReason());
+    } finally {
+      disconnectData.release();
+    }
+
+    ConnectionPolicy.replaceBlockedIps(Collections.singleton(secondAddress.getAddress()));
+    Assert.assertEquals(1, ChannelManager.disconnectBlockedIps());
+    Assert.assertTrue(second.isDisconnect());
+    Assert.assertFalse(other.isDisconnect());
+    Assert.assertNull(((EmbeddedChannel) second.getCtx().channel()).readOutbound());
+  }
+
+  @Test
+  public void disconnectClosesAllChannelsAtTheSameEndpoint() throws Exception {
+    Channel first = channel(true, 1);
+    Channel second = channel(true, 2);
+    ChannelManager.addPeer(first);
+    ChannelManager.addPeer(second);
+
+    Assert.assertEquals(2, ChannelManager.disconnect(REMOTE));
+    Assert.assertTrue(first.isDisconnect());
+    Assert.assertTrue(second.isDisconnect());
+    Assert.assertEquals(0, ChannelManager.getChannelCount());
   }
 
   private void clearChannels() {
