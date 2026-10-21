@@ -23,15 +23,11 @@ public class HelloMessage extends TronMessage {
   @Getter
   private Protocol.HelloMessage helloMessage;
 
-  public HelloMessage(byte type, byte[] rawData) throws Exception {
-    super(type, rawData);
-    this.helloMessage = DiscardUnknownFieldsParser.wrap(Protocol.HelloMessage.parser())
-        .parseFrom(rawData);
-    this.data = this.helloMessage.toByteArray();
-  }
-
   public HelloMessage(byte[] data) throws Exception {
-    this(MessageTypes.P2P_HELLO.asByte(), data);
+    super(MessageTypes.P2P_HELLO.asByte(), data);
+    this.helloMessage = DiscardUnknownFieldsParser.wrap(Protocol.HelloMessage.parser())
+        .parseFrom(data);
+    this.data = this.helloMessage.toByteArray();
   }
 
   public HelloMessage(Node from, long timestamp, ChainBaseManager chainBaseManager) {

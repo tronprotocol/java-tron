@@ -78,18 +78,6 @@ public class MessageUnknownFieldTest {
     assertCleanHelloBytes(hello, msg);
   }
 
-  @Test
-  public void helloMessageWithTypeDiscardsUnknownFields() throws Exception {
-    Protocol.HelloMessage hello = Protocol.HelloMessage.newBuilder()
-        .setVersion(1)
-        .setTimestamp(123456789L)
-        .build();
-    HelloMessage msg = new HelloMessage(
-        MessageTypes.P2P_HELLO.asByte(), withUnknown(hello));
-    Assert.assertTrue(msg.getHelloMessage().getUnknownFields().asMap().isEmpty());
-    assertCleanHelloBytes(hello, msg);
-  }
-
   private static void assertCleanHelloBytes(Protocol.HelloMessage hello, HelloMessage msg) {
     Assert.assertEquals(hello, msg.getHelloMessage());
     byte[] clean = hello.toByteArray();
@@ -123,21 +111,6 @@ public class MessageUnknownFieldTest {
         .setReason(ReasonCode.TOO_MANY_PEERS)
         .build();
     DisconnectMessage msg = new DisconnectMessage(withUnknown(disconnect));
-    Protocol.DisconnectMessage parsed =
-        (Protocol.DisconnectMessage) ReflectionTestUtils.getField(msg, "disconnectMessage");
-    Assert.assertNotNull(parsed);
-    Assert.assertTrue(parsed.getUnknownFields().asMap().isEmpty());
-    Assert.assertEquals(disconnect, parsed);
-    Assert.assertEquals(ReasonCode.TOO_MANY_PEERS, msg.getReason());
-  }
-
-  @Test
-  public void disconnectMessageWithTypeDiscardsUnknownFields() throws Exception {
-    Protocol.DisconnectMessage disconnect = Protocol.DisconnectMessage.newBuilder()
-        .setReason(ReasonCode.TOO_MANY_PEERS)
-        .build();
-    DisconnectMessage msg = new DisconnectMessage(
-        MessageTypes.P2P_DISCONNECT.asByte(), withUnknown(disconnect));
     Protocol.DisconnectMessage parsed =
         (Protocol.DisconnectMessage) ReflectionTestUtils.getField(msg, "disconnectMessage");
     Assert.assertNotNull(parsed);

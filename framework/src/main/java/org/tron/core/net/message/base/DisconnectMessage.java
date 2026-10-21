@@ -10,12 +10,6 @@ public class DisconnectMessage extends TronMessage {
 
   private Protocol.DisconnectMessage disconnectMessage;
 
-  public DisconnectMessage(byte type, byte[] rawData) throws Exception {
-    super(type, rawData);
-    this.disconnectMessage = DiscardUnknownFieldsParser.wrap(Protocol.DisconnectMessage.parser())
-        .parseFrom(this.data);
-  }
-
   public DisconnectMessage(byte[] data) throws Exception {
     super(MessageTypes.P2P_DISCONNECT.asByte(), data);
     this.disconnectMessage = DiscardUnknownFieldsParser.wrap(Protocol.DisconnectMessage.parser())
