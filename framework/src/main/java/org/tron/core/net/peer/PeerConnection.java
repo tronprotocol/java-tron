@@ -9,7 +9,6 @@ import com.google.common.cache.CacheBuilder;
 import com.google.protobuf.ByteString;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.UnknownHostException;
 import java.util.Deque;
 import java.util.List;
 import java.util.Locale;
@@ -355,11 +354,10 @@ public class PeerConnection {
   }
 
   private static String formatEndpoint(InetSocketAddress address) {
-    String host;
-    try {
-      host = InetAddress.getByAddress(address.getAddress().getAddress()).getHostAddress();
-    } catch (UnknownHostException e) {
-      throw new IllegalStateException("Invalid peer address", e);
+    String host = address.getAddress().getHostAddress();
+    int scopeIndex = host.indexOf('%');
+    if (scopeIndex >= 0) {
+      host = host.substring(0, scopeIndex);
     }
     if (host.indexOf(':') >= 0) {
       return "[" + host + "]:" + address.getPort();
