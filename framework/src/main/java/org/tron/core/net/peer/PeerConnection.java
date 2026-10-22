@@ -33,7 +33,6 @@ import org.tron.common.utils.Sha256Hash;
 import org.tron.consensus.pbft.message.PbftBaseMessage;
 import org.tron.core.Constant;
 import org.tron.core.capsule.BlockCapsule.BlockId;
-import org.tron.core.config.Parameter.NetConstants;
 import org.tron.core.config.args.Args;
 import org.tron.core.metrics.MetricsKey;
 import org.tron.core.metrics.MetricsUtil;
@@ -57,6 +56,10 @@ import org.tron.protos.Protocol;
 @Component
 @Scope("prototype")
 public class PeerConnection {
+
+  private static final int INV_CACHE_SIZE = 20_000;
+  private static final int SYNC_BLOCK_ID_CACHE_SIZE = 10_000;
+  private static final long BAD_PEER_BAN_TIME = 3_600_000L;
 
   private static List<InetSocketAddress> relayNodes = Args.getInstance().getFastForwardNodes();
 
@@ -133,18 +136,14 @@ public class PeerConnection {
   @Getter
   private HelloMessage helloMessageSend;
 
-  private int invCacheSize = 20_000;
-
-  private long BAD_PEER_BAN_TIME = 3_600_000;
-
   @Setter
   @Getter
-  private Cache<Item, Long> advInvReceive = CacheBuilder.newBuilder().maximumSize(invCacheSize)
+  private Cache<Item, Long> advInvReceive = CacheBuilder.newBuilder().maximumSize(INV_CACHE_SIZE)
       .expireAfterWrite(1, TimeUnit.HOURS).recordStats().build();
 
   @Setter
   @Getter
-  private Cache<Item, Long> advInvSpread = CacheBuilder.newBuilder().maximumSize(invCacheSize)
+  private Cache<Item, Long> advInvSpread = CacheBuilder.newBuilder().maximumSize(INV_CACHE_SIZE)
       .expireAfterWrite(1, TimeUnit.HOURS).recordStats().build();
 
   @Setter
@@ -166,7 +165,8 @@ public class PeerConnection {
   private volatile long remainNum;
   @Getter
   private Cache<Sha256Hash, Long> syncBlockIdCache = CacheBuilder.newBuilder()
-      .maximumSize(2 * NetConstants.SYNC_FETCH_BATCH_NUM).recordStats().build();
+      .concurrencyLevel(1)
+      .maximumSize(SYNC_BLOCK_ID_CACHE_SIZE).recordStats().build();
   @Setter
   @Getter
   private Deque<BlockId> syncBlockToFetch = new ConcurrentLinkedDeque<>();
