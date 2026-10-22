@@ -370,14 +370,18 @@ public class PrecompiledContracts {
 
   private static byte[] recoverAddrBySign(byte[] sign, byte[] hash) {
     byte[] out = null;
+    // The 65-68-byte limit applies to outer transaction signatures, not call-data signatures:
+    // in signed calls, caller-supplied call data is covered by the transaction's signing hash.
     if (ArrayUtils.isEmpty(sign) || sign.length < 65) {
       return new byte[0];
     }
     try {
+      // Preserve the precompile ABI's 65-byte-prefix recovery in both validation modes.
       Rsv rsv = Rsv.fromSignature(sign);
       ECDSASignature signature = SignUtils.fromComponents(rsv.getR(), rsv.getS(), rsv.getV());
       if (signature.validateComponents()) {
-        out = SignUtils.signatureToAddress(hash, signature);
+        out = SignUtils.signatureToAddress(hash, signature,
+            VMConfig.allowStrictEcdsaValidation());
       }
     } catch (Throwable any) {
       logger.info("ECRecover error", any.getMessage());
@@ -609,7 +613,8 @@ public class PrecompiledContracts {
 
         ECDSASignature signature = SignUtils.fromComponents(r, s, v[31]);
         if (validateV(v) && signature.validateComponents()) {
-          out = new DataWord(SignUtils.signatureToAddress(h, signature));
+          out = new DataWord(SignUtils.signatureToAddress(h, signature,
+              VMConfig.allowStrictEcdsaValidation()));
         }
       } catch (Throwable any) {
       }
@@ -1093,6 +1098,9 @@ public class PrecompiledContracts {
             List<byte[]> executedSignList = new ArrayList<>();
             for (byte[] sign : signatures) {
               byte[] recoveredAddr = recoverAddrBySign(sign, hash);
+              if (recoveredAddr == null) {
+                return Pair.of(true, DATA_FALSE);
+              }
 
               sign = merge(recoveredAddr, sign);
               if (ByteArray.matrixContains(executedSignList, recoveredAddr)) {

@@ -6,11 +6,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.api.GrpcAPI.TransactionSignWeight;
+import org.tron.core.Wallet;
 import org.tron.core.exception.ContractSizeNotEqualToOneException;
 import org.tron.core.services.http.HttpApi;
 import org.tron.core.services.http.HttpApi.Access;
 import org.tron.core.services.http.HttpApi.Surface;
-import org.tron.core.utils.TransactionUtil;
 import org.tron.protos.Protocol.Transaction;
 
 @Component
@@ -20,7 +20,7 @@ import org.tron.protos.Protocol.Transaction;
 public class GetTransactionSignWeightServlet extends RateLimiterServlet {
 
   @Autowired
-  private TransactionUtil transactionUtil;
+  private Wallet wallet;
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
 
@@ -30,7 +30,7 @@ public class GetTransactionSignWeightServlet extends RateLimiterServlet {
     try {
       PostParams params = PostParams.getPostParams(request);
       Transaction transaction = Util.packTransaction(params.getParams(), params.isVisible());
-      TransactionSignWeight reply = transactionUtil.getTransactionSignWeight(transaction);
+      TransactionSignWeight reply = wallet.getTransactionSignWeight(transaction);
       if (reply != null) {
         response.getWriter().println(Util.printTransactionSignWeight(reply, params.isVisible()));
       } else {

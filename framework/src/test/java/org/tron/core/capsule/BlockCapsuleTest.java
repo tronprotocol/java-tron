@@ -5,6 +5,7 @@ import static org.mockito.Mockito.when;
 
 import com.google.protobuf.ByteString;
 import java.io.IOException;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -16,6 +17,8 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.tron.common.TestConstants;
+import org.tron.common.crypto.ECKey;
+import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.LocalWitnesses;
 import org.tron.common.utils.PublicMethod;
@@ -237,6 +240,71 @@ public class BlockCapsuleTest {
     AccountStore accountStore = mock(AccountStore.class);
 
     Assert.assertTrue(block.validateSignature(dps, accountStore));
+  }
+
+  @Test
+  public void shouldGateStrictWitnessSignatureLength() throws Exception {
+    String key = PublicMethod.getRandomPrivateKey();
+    byte[] witnessAddress = PublicMethod.getAddressByteByPrivateKey(key);
+    BlockCapsule block = new BlockCapsule(4,
+        Sha256Hash.wrap(ByteString.copyFrom(ByteArray.fromHexString(
+            "9938a342238077182498b464ac0292229938a342238077182498b464ac029222"))),
+        6789,
+        ByteString.copyFrom(witnessAddress));
+    block.sign(ByteArray.fromHexString(key));
+
+    ByteString signature = block.getInstance().getBlockHeader().getWitnessSignature();
+    DynamicPropertiesStore dps = mock(DynamicPropertiesStore.class);
+    when(dps.getAllowMultiSign()).thenReturn(0L);
+    AccountStore accountStore = mock(AccountStore.class);
+
+    for (int length = 65; length <= 69; length++) {
+      BlockHeader paddedHeader = block.getInstance().getBlockHeader().toBuilder()
+          .setWitnessSignature(signature.concat(ByteString.copyFrom(new byte[length - 65])))
+          .build();
+      BlockCapsule paddedBlock = new BlockCapsule(block.getInstance().toBuilder()
+          .setBlockHeader(paddedHeader).build());
+      when(dps.allowStrictEcdsaValidation()).thenReturn(false);
+      Assert.assertTrue(paddedBlock.validateSignature(dps, accountStore));
+      when(dps.allowStrictEcdsaValidation()).thenReturn(true);
+      if (length <= 68) {
+        Assert.assertTrue(paddedBlock.validateSignature(dps, accountStore));
+      } else {
+        Assert.assertThrows(ValidateSignatureException.class,
+            () -> paddedBlock.validateSignature(dps, accountStore));
+      }
+    }
+  }
+
+  @Test
+  public void shouldGateStrictWitnessSignatureRecovery() throws Exception {
+    byte[] infinityAddress =
+        ByteArray.fromHexString("41dcc703c0e500b653ca82273b7bfad8045d85a470");
+    BlockCapsule block = new BlockCapsule(4, Sha256Hash.ZERO_HASH, 6789,
+        ByteString.copyFrom(infinityAddress));
+    byte[] hash = Sha256Hash.of(block.getInstance().getBlockHeader().getRawData()
+        .toByteArray()).getBytes();
+    // R = G and s = hash mod n recover infinity; length checks accept this 65-byte signature.
+    ECDSASignature signature = new ECDSASignature(
+        ECKey.CURVE.getG().getAffineXCoord().toBigInteger(),
+        new BigInteger(1, hash).mod(ECKey.CURVE.getN()));
+    signature.v = 27;
+    ByteString signatureBytes = ByteString.copyFrom(signature.toByteArray());
+    Assert.assertEquals(65, signatureBytes.size());
+    BlockHeader header = block.getInstance().getBlockHeader().toBuilder()
+        .setWitnessSignature(signatureBytes).build();
+    BlockCapsule signedBlock = new BlockCapsule(block.getInstance().toBuilder()
+        .setBlockHeader(header).build());
+
+    DynamicPropertiesStore dps = mock(DynamicPropertiesStore.class);
+    when(dps.getAllowMultiSign()).thenReturn(0L);
+    AccountStore accountStore = mock(AccountStore.class);
+
+    when(dps.allowStrictEcdsaValidation()).thenReturn(false);
+    Assert.assertTrue(signedBlock.validateSignature(dps, accountStore));
+    when(dps.allowStrictEcdsaValidation()).thenReturn(true);
+    Assert.assertThrows(ValidateSignatureException.class,
+        () -> signedBlock.validateSignature(dps, accountStore));
   }
 
   /**

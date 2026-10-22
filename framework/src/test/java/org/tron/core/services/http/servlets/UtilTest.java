@@ -22,7 +22,6 @@ import org.tron.core.config.args.Args;
 import org.tron.core.exception.ContractSizeNotEqualToOneException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.services.http.servlets.JsonFormat.ParseException;
-import org.tron.core.utils.TransactionUtil;
 import org.tron.json.JSONObject;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Transaction;
@@ -41,8 +40,6 @@ public class UtilTest extends BaseTest {
 
   @Resource
   private Wallet wallet;
-  @Resource
-  private TransactionUtil transactionUtil;
   @Resource
   private BroadcastServlet broadcastServlet;
   @Resource
@@ -109,7 +106,7 @@ public class UtilTest extends BaseTest {
     Assert.assertEquals("Invalid transaction: no valid contract",
         transactionApprovedList.getResult().getMessage());
 
-    TransactionSignWeight txSignWeight = transactionUtil.getTransactionSignWeight(transaction);
+    TransactionSignWeight txSignWeight = wallet.getTransactionSignWeight(transaction);
     Assert.assertEquals("Invalid transaction: no valid contract",
         txSignWeight.getResult().getMessage());
 
@@ -149,7 +146,7 @@ public class UtilTest extends BaseTest {
     Assert.assertEquals("Invalid transaction: no valid contract",
         transactionApprovedList.getResult().getMessage());
 
-    txSignWeight = transactionUtil.getTransactionSignWeight(transaction);
+    txSignWeight = wallet.getTransactionSignWeight(transaction);
     Assert.assertEquals("Invalid transaction: no valid contract",
         txSignWeight.getResult().getMessage());
   }
@@ -211,7 +208,7 @@ public class UtilTest extends BaseTest {
         + "b92b180a70b2ccb8ea8930\"\n"
         + "}";
     Transaction transaction = Util.packTransaction(strTransaction, false);
-    TransactionSignWeight txSignWeight = transactionUtil.getTransactionSignWeight(transaction);
+    TransactionSignWeight txSignWeight = wallet.getTransactionSignWeight(transaction);
     Assert.assertNotNull(txSignWeight);
   }
 
@@ -318,7 +315,7 @@ public class UtilTest extends BaseTest {
   @Test
   public void testPrintSignWeightTooManySigsHttpPath() throws Exception {
     Transaction transaction = buildTooManySigsTransaction();
-    TransactionSignWeight reply = transactionUtil.getTransactionSignWeight(transaction);
+    TransactionSignWeight reply = wallet.getTransactionSignWeight(transaction);
     Assert.assertEquals(TransactionSignWeight.Result.response_code.OTHER_ERROR,
         reply.getResult().getCode());
     // The early-return reply has no transaction; the HTTP print helper must not throw.
@@ -503,7 +500,7 @@ public class UtilTest extends BaseTest {
     Transaction transaction = Util.packTransaction(transactionJson("[]"), false);
     Assert.assertEquals(0, transaction.getRawData().getContractCount());
 
-    TransactionSignWeight signWeight = transactionUtil.getTransactionSignWeight(transaction);
+    TransactionSignWeight signWeight = wallet.getTransactionSignWeight(transaction);
     Assert.assertEquals("Invalid transaction: no valid contract",
         signWeight.getResult().getMessage());
     Assert.assertTrue(signWeight.hasTransaction());
@@ -518,7 +515,28 @@ public class UtilTest extends BaseTest {
   public void testSignWeightAndApprovedListRejectMultipleContracts() throws Exception {
     Transaction transaction = twoContractTransaction();
 
-    TransactionSignWeight signWeight = transactionUtil.getTransactionSignWeight(transaction);
+    TransactionSignWeight signWeight = wallet.getTransactionSignWeight(transaction);
+    Assert.assertEquals(TransactionSignWeight.Result.response_code.OTHER_ERROR,
+        signWeight.getResult().getCode());
+    Assert.assertEquals("Invalid transaction: " + TWO_CONTRACTS_MESSAGE,
+        signWeight.getResult().getMessage());
+    Assert.assertFalse(signWeight.hasTransaction());
+
+    TransactionApprovedList approvedList = wallet.getTransactionApprovedList(transaction);
+    Assert.assertEquals(TransactionApprovedList.Result.response_code.OTHER_ERROR,
+        approvedList.getResult().getCode());
+    Assert.assertEquals("Invalid transaction: " + TWO_CONTRACTS_MESSAGE,
+        approvedList.getResult().getMessage());
+    Assert.assertFalse(approvedList.hasTransaction());
+  }
+
+  @Test
+  public void testMultipleContractsRejectedBeforeSignatureValidation() throws Exception {
+    Transaction transaction = twoContractTransaction().toBuilder()
+        .addSignature(ByteString.copyFrom(new byte[69]))
+        .build();
+
+    TransactionSignWeight signWeight = wallet.getTransactionSignWeight(transaction);
     Assert.assertEquals(TransactionSignWeight.Result.response_code.OTHER_ERROR,
         signWeight.getResult().getCode());
     Assert.assertEquals("Invalid transaction: " + TWO_CONTRACTS_MESSAGE,
