@@ -302,9 +302,7 @@ public class AdvService {
 
   private void consumerInvToFetch() {
     // Snapshot connected peers; block fetching can still use peers with pending TRX requests.
-    Collection<PeerConnection> peers = tronNetDelegate.getActivePeer().stream()
-        .filter(peer -> !peer.isDisconnect())
-        .collect(Collectors.toList());
+    Collection<PeerConnection> peers = tronNetDelegate.getActivePeer();
     Collection<PeerConnection> trxPeers = peers.stream().filter(PeerConnection::isIdle)
         .collect(Collectors.toList());
     // Batch sizes count requests assigned in this pass, not all outstanding requests on a peer.
