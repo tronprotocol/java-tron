@@ -141,9 +141,12 @@ public class ChainInventoryMsgHandler implements TronMsgHandler {
       long maxFutureNum =
           maxRemainTime / BLOCK_PRODUCED_INTERVAL + tronNetDelegate.getSolidBlockId().getNum();
       long lastNum = blockIds.get(blockIds.size() - 1).getNum();
-      if (lastNum > maxFutureNum || msg.getRemainNum() > maxFutureNum - lastNum) {
-        throw new P2pException(TypeEnum.BAD_MESSAGE, "lastNum: " + lastNum + " + remainNum: "
-            + msg.getRemainNum() + " > futureMaxNum: " + maxFutureNum);
+      long declaredHighestNum = lastNum + msg.getRemainNum();
+      if (declaredHighestNum < 0 || lastNum > maxFutureNum || declaredHighestNum > maxFutureNum) {
+        throw new P2pException(TypeEnum.BAD_MESSAGE,
+            "Invalid declared highest block number: " + declaredHighestNum
+                + ", lastNum: " + lastNum + ", remainNum: " + msg.getRemainNum()
+                + ", futureMaxNum: " + maxFutureNum);
       }
     }
 
