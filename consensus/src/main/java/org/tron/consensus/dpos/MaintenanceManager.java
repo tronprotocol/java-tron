@@ -9,7 +9,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -19,8 +18,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.prometheus.Metrics;
 import org.tron.common.prometheus.SRMetrics;
-import org.tron.common.utils.Commons;
+import org.tron.common.utils.StringUtil;
 import org.tron.consensus.ConsensusDelegate;
+import org.tron.consensus.base.Param;
+import org.tron.consensus.base.Param.Miner;
 import org.tron.consensus.pbft.PbftManager;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
@@ -170,35 +171,32 @@ public class MaintenanceManager {
 
   /**
    * Records the witness gauges (active-set membership, settled votes, settled rank) for
-   * every locally configured witness address, one series per address. With several
-   * private keys configured (testnet setups without a witness account address) each
-   * derived address gets its own series; a node without a witness keeps the zero series
-   * with an empty address label. Runs at the end of every maintenance and once at node
-   * startup. Never throws: a metrics failure must not affect maintenance or block
-   * processing.
+   * every consensus miner the node assembles from its configured witness keys, one
+   * series per address. A node without a witness keeps the zero series with an empty
+   * address label, published once at startup by the caller. Runs at the end of every
+   * maintenance and once at node startup. Never throws: a metrics failure must not
+   * affect maintenance or block processing.
    */
   public void recordWitnessMetrics() {
     if (!Metrics.enabled()) {
       return;
     }
-    Set<String> addresses = SRMetrics.getLocalWitnessAddresses();
-    if (addresses.isEmpty()) {
-      SRMetrics.recordSrStatus("", false, 0, 0);
+    List<Miner> miners = Param.getInstance().getMiners();
+    if (miners == null) {
+      // consensus never started: nothing to publish (never the case on a running node)
       return;
     }
-    for (String address : addresses) {
+    for (Miner miner : miners) {
+      ByteString witnessAddressBs = miner.getWitnessAddress();
+      if (witnessAddressBs == null) {
+        continue;
+      }
+      String address = StringUtil.encode58Check(witnessAddressBs.toByteArray());
       try {
-        boolean active = false;
-        long votes = 0;
-        long rank = 0;
-        byte[] witnessAddress = Commons.decode58Check(address);
-        if (witnessAddress != null && witnessAddress.length > 0) {
-          ByteString witnessAddressBs = ByteString.copyFrom(witnessAddress);
-          active = consensusDelegate.getActiveWitnesses().contains(witnessAddressBs);
-          WitnessCapsule witness = consensusDelegate.getWitness(witnessAddress);
-          votes = witness == null ? 0 : witness.getVoteCount();
-          rank = witnessRank(witnessAddressBs);
-        }
+        boolean active = consensusDelegate.getActiveWitnesses().contains(witnessAddressBs);
+        WitnessCapsule witness = consensusDelegate.getWitness(witnessAddressBs.toByteArray());
+        long votes = witness == null ? 0 : witness.getVoteCount();
+        long rank = witnessRank(witnessAddressBs);
         SRMetrics.recordSrStatus(address, active, votes, rank);
       } catch (Exception e) {
         logger.warn("Failed to record witness metrics for {}", address, e);

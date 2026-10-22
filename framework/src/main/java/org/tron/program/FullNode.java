@@ -9,11 +9,14 @@ import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.arch.Arch;
+import org.tron.common.backup.BackupManager;
 import org.tron.common.exit.ExitManager;
 import org.tron.common.log.LogService;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.prometheus.MetricKeys;
 import org.tron.common.prometheus.Metrics;
+import org.tron.common.prometheus.SRMetrics;
+import org.tron.consensus.base.Param;
 import org.tron.consensus.dpos.MaintenanceManager;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
@@ -76,7 +79,15 @@ public class FullNode {
     // (Manager.initGenesis)
     Metrics.info(MetricKeys.Info.NODE_INFO, Version.getVersion(),
         Args.getInstance().getChainId());
+    // the sr snapshot and the initial node_role series read the consensus miners, which
+    // are assembled in ApplicationImpl.startup() via ConsensusService.start(), so they
+    // are available here; an empty miner list means a fullnode, whose zero sr series is
+    // published once at startup — gauge values persist until rewritten
+    if (Param.getInstance().getMiners().isEmpty()) {
+      SRMetrics.recordSrStatus("", false, 0, 0);
+    }
     context.getBean(MaintenanceManager.class).recordWitnessMetrics();
+    context.getBean(BackupManager.class).recordNodeRole();
     if (parameter.isSolidityNode()) {
       SolidityNode node = context.getBean(SolidityNode.class);
       node.run();

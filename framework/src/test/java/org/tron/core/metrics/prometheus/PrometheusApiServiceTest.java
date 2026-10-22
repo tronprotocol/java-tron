@@ -227,14 +227,13 @@ public class PrometheusApiServiceTest extends BaseTest {
 
   @Test
   public void testNodeRoleMetric() {
-    String address = "TLyqz8V6CR3s9nNote9u1NoxKZ8NqBSbn1";
-    SRMetrics.recordNodeRole(address, MetricLabels.Gauge.ROLE_MASTER);
-    // a single series per node; the value encodes the role (0 = init, 1 = master,
-    // 2 = slaver), here master after recording ROLE_MASTER
+    // a single label-less series per node; the value encodes the role (0 = init,
+    // 1 = master, 2 = slaver), here master after recording NODE_ROLE_MASTER
+    SRMetrics.recordNodeRole(SRMetrics.NODE_ROLE_MASTER);
     Double value = CollectorRegistry.defaultRegistry.getSampleValue(
         MetricKeys.Gauge.NODE_ROLE,
-        new String[] {MetricLabels.Gauge.ADDRESS},
-        new String[] {address});
+        new String[] {},
+        new String[] {});
     Assert.assertNotNull("tron:node_role sample should exist", value);
     Assert.assertEquals(1.0, value, 0.0);
   }

@@ -31,8 +31,7 @@ class MetricsGauge {
     init(MetricKeys.Gauge.NODE_ROLE,
         "Role of this node in the backup election, encoded as a number: 0 = init "
             + "(before the first election round), 1 = master (producing blocks), "
-            + "2 = slaver (standing by). Witness-configured nodes only.",
-        MetricLabels.Gauge.ADDRESS);
+            + "2 = slaver (standing by).");
   }
 
   private MetricsGauge() {

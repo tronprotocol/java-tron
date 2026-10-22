@@ -28,6 +28,7 @@ import org.tron.common.backup.socket.UdpEvent;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.PublicMethod;
 import org.tron.common.utils.ReflectUtils;
+import org.tron.consensus.base.Param;
 import org.tron.core.config.args.Args;
 import org.tron.core.config.args.InetUtil;
 
@@ -76,6 +77,9 @@ public class BackupManagerTest {
     });
     InetUtil.dnsLookup = previousDnsLookup;
     Args.clearParam();
+    // the consensus miner list is a process-wide singleton: reset it so this class
+    // cannot leak state into other tests of the same JVM
+    Param.getInstance().setMiners(new ArrayList<>());
     BackupTestUtils.throwIfAnyError(errors);
   }
 

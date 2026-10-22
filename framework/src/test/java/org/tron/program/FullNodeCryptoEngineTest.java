@@ -17,6 +17,7 @@ import com.typesafe.config.ConfigUtil;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.ArrayList;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -28,9 +29,11 @@ import org.mockito.MockedStatic;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
+import org.tron.common.backup.BackupManager;
 import org.tron.common.exit.ExitManager;
 import org.tron.common.log.LogService;
 import org.tron.common.prometheus.Metrics;
+import org.tron.consensus.base.Param;
 import org.tron.consensus.dpos.MaintenanceManager;
 import org.tron.core.config.args.Args;
 import org.tron.core.config.args.WitnessInitializer;
@@ -94,6 +97,11 @@ public class FullNodeCryptoEngineTest {
     File output = new File(temporaryFolder.newFolder(), "chain");
     Application application = mock(Application.class);
     MaintenanceManager maintenanceManager = mock(MaintenanceManager.class);
+    BackupManager backupManager = mock(BackupManager.class);
+    // the application startup is mocked, so ConsensusService.start() never fills the
+    // consensus miners; FullNode reads them right after startup to publish the fullnode
+    // zero series, so hand it the empty miner list of a witness-less node
+    Param.getInstance().setMiners(new ArrayList<>());
     // Exercise the real entry point and config loader, while isolating services and chain stores.
     try (MockedStatic<ExitManager> exit = mockStatic(ExitManager.class);
          MockedStatic<LogService> logs = mockStatic(LogService.class);
@@ -102,14 +110,16 @@ public class FullNodeCryptoEngineTest {
          MockedConstruction<TronApplicationContext> contexts =
              mockConstruction(TronApplicationContext.class, (context, constructionContext) -> {
                when(context.getBean(MaintenanceManager.class)).thenReturn(maintenanceManager);
+               when(context.getBean(BackupManager.class)).thenReturn(backupManager);
              })) {
       factory.when(() -> ApplicationFactory.create(any())).thenReturn(application);
       FullNode.main(new String[]{"-c", config.toString(), "-d", output.toString()});
       assertEquals(1, contexts.constructed().size());
       verify(contexts.constructed().get(0)).refresh();
-      InOrder inOrder = inOrder(application, maintenanceManager);
+      InOrder inOrder = inOrder(application, maintenanceManager, backupManager);
       inOrder.verify(application).startup();
       inOrder.verify(maintenanceManager).recordWitnessMetrics();
+      inOrder.verify(backupManager).recordNodeRole();
       inOrder.verify(application).blockUntilShutdown();
     }
   }

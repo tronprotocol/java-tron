@@ -59,18 +59,9 @@ public class MetricLabels {
 
     public static final String PEERS_VALID = "valid";
 
-    // node_role label: one gauge series per witness address, whose value encodes the
-    // current backup-election role as a number (0 = init, 1 = master, 2 = slaver);
-    // ADDRESS labels both tron:node_role and the tron:sr_* gauges
+    // ADDRESS is the label of the tron:sr_* gauges; tron:node_role carries no label
+    // (single series, the value encodes the role)
     public static final String ADDRESS = "address";
-
-    // ROLE_INIT/ROLE_MASTER/ROLE_SLAVER are the canonical role names produced by
-    // BackupManager and mapped to numbers in SRMetrics.recordNodeRole()
-    public static final String ROLE_INIT = "init";
-
-    public static final String ROLE_MASTER = "master";
-
-    public static final String ROLE_SLAVER = "slaver";
 
     private Gauge() {
       throw new IllegalStateException("Gauge");

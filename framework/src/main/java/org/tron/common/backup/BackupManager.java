@@ -9,15 +9,11 @@ import static org.tron.core.config.args.InetUtil.resolveInetAddress;
 import io.netty.util.internal.ConcurrentSet;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import javax.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -27,17 +23,10 @@ import org.tron.common.backup.message.Message;
 import org.tron.common.backup.socket.EventHandler;
 import org.tron.common.backup.socket.MessageHandler;
 import org.tron.common.backup.socket.UdpEvent;
-import org.tron.common.crypto.SignInterface;
-import org.tron.common.crypto.SignUtils;
 import org.tron.common.es.ExecutorServiceManager;
 import org.tron.common.parameter.CommonParameter;
-import org.tron.common.prometheus.MetricLabels;
 import org.tron.common.prometheus.Metrics;
 import org.tron.common.prometheus.SRMetrics;
-import org.tron.common.utils.ByteArray;
-import org.tron.common.utils.LocalWitnesses;
-import org.tron.common.utils.StringUtil;
-import org.tron.core.config.args.Args;
 import org.tron.p2p.utils.NetUtil;
 
 @Slf4j(topic = "backup")
@@ -84,45 +73,39 @@ public class BackupManager implements EventHandler {
   }
 
   /**
-   * Publishes the {@code tron:node_role} gauge for every locally configured witness
-   * address and caches the full address set for maintenance-time sr gauge recording.
-   * Runs once when the bean is created — covering the window before the backup election
-   * first runs — and again on every backup-status change. No role series is written when
-   * no witness is configured.
+   * Publishes the {@code tron:node_role} gauge — a single label-less series encoding
+   * the current backup-election role as a number (0 = init, 1 = master, 2 = slaver).
+   * Runs once after the application has started — covering the window before the backup
+   * election first runs — and again on every backup-status change.
    */
-  @PostConstruct
   public void recordNodeRole() {
     if (!Metrics.enabled()) {
       return;
     }
-    List<String> addresses = localWitnessAddresses();
-    SRMetrics.setLocalWitnessAddresses(addresses);
-    for (String address : addresses) {
-      SRMetrics.recordNodeRole(address, currentRole());
-    }
+    SRMetrics.recordNodeRole(currentRole());
   }
 
-  private String currentRole() {
+  private int currentRole() {
     if (!isBackupConfigured()) {
       // no backup election to take part in: this node produces blocks itself
-      return MetricLabels.Gauge.ROLE_MASTER;
+      return SRMetrics.NODE_ROLE_MASTER;
     }
     if (!isInit) {
       // the backup server only starts after the first fresh block, so between startup
       // and the first election round the status default (MASTER) is not a real result;
       // report init instead of pretending the election chose a master
-      return MetricLabels.Gauge.ROLE_INIT;
+      return SRMetrics.NODE_ROLE_INIT;
     }
     // post-init the status is a real election outcome, so map every state 1:1; the
     // pre-init window is already gated by the isInit check above, so INIT here only
     // means the election transport is up but no keep-alive timeout has been judged yet
     switch (status) {
       case MASTER:
-        return MetricLabels.Gauge.ROLE_MASTER;
+        return SRMetrics.NODE_ROLE_MASTER;
       case SLAVER:
-        return MetricLabels.Gauge.ROLE_SLAVER;
+        return SRMetrics.NODE_ROLE_SLAVER;
       default:
-        return MetricLabels.Gauge.ROLE_INIT;
+        return SRMetrics.NODE_ROLE_INIT;
     }
   }
 
@@ -130,49 +113,6 @@ public class BackupManager implements EventHandler {
     // same condition BackupServer.initServer() uses to start the election transport,
     // i.e. the only way init() -- and with it the first real status -- can be reached
     return parameter.getBackupPort() > 0 && !parameter.getBackupMembers().isEmpty();
-  }
-
-  /**
-   * Resolves every locally configured witness identity to a 58check-encoded address:
-   * one address per configured private key when several keys are set, otherwise the
-   * witness account address (explicit, or derived from the single key). Returns an
-   * empty list when the node has no witness configured. Multi-key setups are a testnet
-   * convenience: the role is a node-level status, so every configured identity gets
-   * its own series carrying the same value.
-   */
-  private List<String> localWitnessAddresses() {
-    LocalWitnesses localWitnesses = Args.getLocalWitnesses();
-    if (localWitnesses == null) {
-      return Collections.emptyList();
-    }
-    List<String> privateKeys = localWitnesses.getPrivateKeys();
-    if (privateKeys.size() > 1) {
-      // A multi-key setup is only valid without an explicit witness account address
-      // (WitnessInitializer rejects the combination), so every key is its own SR
-      // identity. getWitnessAccountAddress() cannot detect this case: the production
-      // assembly path always derives it from the first key
-      // (LocalWitnesses.initWitnessAccountAddress), leaving it non-null.
-      List<String> addresses = new ArrayList<>(privateKeys.size());
-      for (String privateKey : privateKeys) {
-        addresses.add(deriveAddress(privateKey));
-      }
-      return addresses;
-    }
-    byte[] accountAddress = localWitnesses.getWitnessAccountAddress();
-    if (accountAddress != null && accountAddress.length > 0) {
-      return Collections.singletonList(StringUtil.encode58Check(accountAddress));
-    }
-    // single key without an account address (unit-test construction)
-    List<String> addresses = new ArrayList<>();
-    for (String privateKey : privateKeys) {
-      addresses.add(deriveAddress(privateKey));
-    }
-    return addresses;
-  }
-
-  private static String deriveAddress(String privateKey) {
-    SignInterface ecKey = SignUtils.fromPrivate(ByteArray.fromHexString(privateKey));
-    return StringUtil.encode58Check(ecKey.getAddress());
   }
 
   public void init() {
