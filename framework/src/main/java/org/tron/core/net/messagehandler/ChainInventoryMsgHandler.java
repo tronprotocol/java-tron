@@ -78,8 +78,7 @@ public class ChainInventoryMsgHandler implements TronMsgHandler {
         }
       }
       if (blockId != null) {
-        logger.info("Block {} from {} is processed",
-            blockId.getString(), peer.getInetAddress());
+        logger.info("Block {} from {} is processed", blockId.getString(), peer.getInetAddress());
       }
 
       peer.setFetchAble(true);
