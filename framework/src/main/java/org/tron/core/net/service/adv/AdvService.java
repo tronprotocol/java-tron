@@ -358,11 +358,12 @@ public class AdvService {
           invToFetch.remove(item);
           return;
         }
-        // Recheck eligibility after earlier reservations. Initial fetches prefer smaller batches;
-        // latency ranking is reserved for backup fetches in FetchBlockService.
+        // Recheck eligibility after earlier reservations. Prefer fully idle providers, then
+        // smaller batches; providers with pending TRX requests remain eligible as a fallback.
         peers.stream()
             .filter(peer -> fetchBlockService.canFetchBlock(peer, item, now))
-            .min(Comparator.comparingInt(invSender::getSize))
+            .min(Comparator.comparing((PeerConnection peer) -> !peer.isIdle())
+                .thenComparingInt(invSender::getSize))
             .ifPresent(peer -> {
               if (peer.checkAndPutAdvInvRequest(item, now)) {
                 invSender.add(item, peer);

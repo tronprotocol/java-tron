@@ -135,6 +135,24 @@ public class FetchBlockRetryTest {
   }
 
   @Test
+  public void testInitialFetchPrefersIdleProviderOverPendingTransactions() {
+    Item transaction = new Item(Sha256Hash.ZERO_HASH, InventoryType.TRX);
+    long now = System.currentTimeMillis();
+    first.getAdvInvRequest().put(transaction, now);
+    first.getAdvInvReceive().put(item, now);
+    second.getAdvInvReceive().put(item, now);
+
+    Assert.assertTrue(adv.addInv(item));
+
+    assertBlockRequests(second, item);
+    verify(first, never()).sendMessage(any());
+    Assert.assertEquals(Long.valueOf(now), first.getAdvInvRequest().get(transaction));
+    Assert.assertFalse(first.getAdvInvRequest().containsKey(item));
+    Assert.assertTrue(second.getAdvInvRequest().containsKey(item));
+    Assert.assertSame(second, ReflectUtils.getFieldObject(state(), "peer"));
+  }
+
+  @Test
   public void testInitialFetchPrefersFewerBatchRequestsOverLatency() {
     Item transaction = new Item(Sha256Hash.ZERO_HASH, InventoryType.TRX);
     long now = System.currentTimeMillis();
