@@ -76,13 +76,14 @@ public class FullNode {
     // the genesis block id (chainId) is only available after context refresh (Manager.initGenesis)
     Metrics.info(MetricKeys.Info.NODE_INFO, Version.getVersion(),
         Args.getInstance().getChainId());
-    // the witness snapshot reads consensus miners, assembled during appT.startup()
-    context.getBean(MaintenanceManager.class).recordWitnessMetrics();
-    context.getBean(BackupManager.class).recordNodeRole();
     if (parameter.isSolidityNode()) {
       SolidityNode node = context.getBean(SolidityNode.class);
       node.run();
     }
+    // the witness snapshot reads consensus miners, assembled during appT.startup();
+    // solidity nodes never run as SRs, so the SR hooks stay on the fullnode path
+    context.getBean(MaintenanceManager.class).recordWitnessMetrics();
+    context.getBean(BackupManager.class).recordNodeRole();
     appT.blockUntilShutdown();
   }
 
