@@ -17,6 +17,7 @@ public class HelloMessage extends Message {
   public HelloMessage(byte[] data) throws Exception {
     super(MessageType.HANDSHAKE_HELLO, data);
     this.helloMessage = ProtoUtil.parseFrom(Connect.HelloMessage.parser(), data);
+    this.data = this.helloMessage.toByteArray();
   }
 
   public HelloMessage(DisconnectCode code, long time) {

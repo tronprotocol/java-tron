@@ -14,6 +14,7 @@ import org.tron.core.net.message.MessageTypes;
 import org.tron.core.net.message.TronMessage;
 import org.tron.p2p.discover.Node;
 import org.tron.p2p.utils.NetUtil;
+import org.tron.p2p.utils.ProtoUtil;
 import org.tron.program.Version;
 import org.tron.protos.Discover.Endpoint;
 import org.tron.protos.Protocol;
@@ -24,14 +25,10 @@ public class HelloMessage extends TronMessage {
   @Getter
   private Protocol.HelloMessage helloMessage;
 
-  public HelloMessage(byte type, byte[] rawData) throws Exception {
-    super(type, rawData);
-    this.helloMessage = Protocol.HelloMessage.parseFrom(rawData);
-  }
-
   public HelloMessage(byte[] data) throws Exception {
     super(MessageTypes.P2P_HELLO.asByte(), data);
-    this.helloMessage = Protocol.HelloMessage.parseFrom(data);
+    this.helloMessage = ProtoUtil.parseFrom(Protocol.HelloMessage.parser(), data);
+    this.data = this.helloMessage.toByteArray();
     if (!valid()) {
       throw new P2pException(P2pException.TypeEnum.BAD_MESSAGE, "invalid hello message");
     }
