@@ -26,6 +26,10 @@ public final class PeerSyncTestSupport {
 
   public static HelloMessage helloMessage(long headNum) throws Exception {
     return new HelloMessage(Protocol.HelloMessage.newBuilder()
+        .setGenesisBlockId(Protocol.HelloMessage.BlockId.newBuilder()
+            .setHash(blockId(0).getByteString()).setNumber(0))
+        .setSolidBlockId(Protocol.HelloMessage.BlockId.newBuilder()
+            .setHash(blockId(0).getByteString()).setNumber(0))
         .setHeadBlockId(Protocol.HelloMessage.BlockId.newBuilder()
             .setHash(blockId(headNum).getByteString()).setNumber(headNum))
         .build().toByteArray());

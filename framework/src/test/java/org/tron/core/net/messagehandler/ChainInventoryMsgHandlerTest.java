@@ -99,6 +99,39 @@ public class ChainInventoryMsgHandlerTest {
   }
 
   @Test
+  public void testQueueChangedDuringProcessing() throws Exception {
+    ChainInventoryMsgHandler handler = new ChainInventoryMsgHandler();
+    TronNetDelegate delegate = Mockito.mock(TronNetDelegate.class);
+    SyncService syncService = Mockito.mock(SyncService.class);
+    ReflectUtils.setFieldValue(handler, "tronNetDelegate", delegate);
+    ReflectUtils.setFieldValue(handler, "syncService", syncService);
+
+    BlockId parent = new BlockId(Sha256Hash.ZERO_HASH, 0);
+    BlockId next = new BlockId(Sha256Hash.ZERO_HASH, 1);
+    PeerConnection peer = Mockito.mock(PeerConnection.class);
+    Mockito.when(peer.getHelloMessageReceive()).thenReturn(helloMessage(0));
+    Deque<BlockId> toFetch = Mockito.mock(Deque.class);
+    LinkedList<BlockId> requested = new LinkedList<>();
+    requested.add(parent);
+    Mockito.when(peer.getSyncChainRequested())
+        .thenReturn(new Pair<>(requested, System.currentTimeMillis()));
+    Mockito.when(peer.getSyncBlockToFetch()).thenReturn(toFetch);
+    Mockito.when(toFetch.peek()).thenReturn(next, (BlockId) null);
+    Mockito.when(toFetch.isEmpty()).thenReturn(false, true);
+    Mockito.when(toFetch.peekLast()).thenReturn(null);
+    Mockito.when(delegate.getHeadBlockId()).thenReturn(parent);
+    Mockito.when(delegate.getBlockLock()).thenReturn(new Object());
+    Mockito.when(delegate.containBlock(next)).thenReturn(true);
+    Mockito.when(toFetch.remove(next)).thenReturn(false);
+
+    handler.processMessage(peer, new ChainInventoryMessage(
+        java.util.Arrays.asList(parent, next), 0L));
+
+    Mockito.verify(toFetch).pollLast();
+    Mockito.verify(peer, Mockito.never()).setBlockBothHave(Mockito.any());
+  }
+
+  @Test
   public void testProcessMessage() throws Exception {
     ChainInventoryMessage msg = new ChainInventoryMessage(Collections.emptyList(), 0L);
     peer.setSyncChainRequested(null);

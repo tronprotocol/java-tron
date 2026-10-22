@@ -20,6 +20,7 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
+import io.prometheus.client.CollectorRegistry;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -39,6 +40,8 @@ import org.mockito.Mockito;
 import org.tron.api.GrpcAPI;
 import org.tron.common.crypto.Hash;
 import org.tron.common.parameter.CommonParameter;
+import org.tron.common.prometheus.MetricKeys;
+import org.tron.common.prometheus.MetricLabels;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Sha256Hash;
@@ -211,12 +214,97 @@ public class WalletMockTest {
     ret = wallet.broadcastTransaction(validSig);
     assertEquals(GrpcAPI.Return.response_code.BLOCK_UNSOLIDIFIED, ret.getCode());
 
-    // 68-byte signature (upper bound) also passes the length check
-    Protocol.Transaction paddedSig = Protocol.Transaction.newBuilder()
-        .addSignature(ByteString.copyFrom(new byte[68]))
-        .build();
-    ret = wallet.broadcastTransaction(paddedSig);
-    assertEquals(GrpcAPI.Return.response_code.BLOCK_UNSOLIDIFIED, ret.getCode());
+    // All supported padded lengths pass admission and reach downstream validation.
+    for (int length : new int[]{66, 67, 68}) {
+      Protocol.Transaction paddedSig = Protocol.Transaction.newBuilder()
+          .addSignature(ByteString.copyFrom(new byte[length]))
+          .build();
+      ret = wallet.broadcastTransaction(paddedSig);
+      assertEquals(GrpcAPI.Return.response_code.BLOCK_UNSOLIDIFIED, ret.getCode());
+    }
+  }
+
+  @Test
+  public void testBroadcastSignatureRejectionMetric() {
+    boolean metricsEnabled = Args.getInstance().isMetricsPrometheusEnable();
+    Args.getInstance().setMetricsPrometheusEnable(true);
+    try {
+      Wallet wallet = new Wallet();
+      double before = rejectedTransactions(MetricLabels.Counter.TX_REJECT_API);
+      double p2pBefore = rejectedTransactions(MetricLabels.Counter.TX_REJECT_P2P);
+      int rejected = 0;
+      for (int length : new int[]{0, 64, 69, 96}) {
+        Protocol.Transaction transaction = Protocol.Transaction.newBuilder()
+            .addSignature(ByteString.copyFrom(new byte[65]))
+            .addSignature(ByteString.copyFrom(new byte[length]))
+            .addSignature(ByteString.copyFrom(new byte[70]))
+            .build();
+        GrpcAPI.Return ret = wallet.broadcastTransaction(transaction);
+        assertEquals(GrpcAPI.Return.response_code.SIGERROR, ret.getCode());
+        assertFalse(ret.getResult());
+        assertEquals("Validate signature error: Signature size is " + length,
+            ret.getMessage().toStringUtf8());
+        rejected++;
+        assertEquals(before + rejected,
+            rejectedTransactions(MetricLabels.Counter.TX_REJECT_API), 0);
+      }
+      assertEquals(p2pBefore, rejectedTransactions(MetricLabels.Counter.TX_REJECT_P2P), 0);
+    } finally {
+      Args.getInstance().setMetricsPrometheusEnable(metricsEnabled);
+    }
+  }
+
+  @Test
+  public void testBroadcastValidLengthsDoNotIncrementRejectionMetric() throws Exception {
+    boolean metricsEnabled = Args.getInstance().isMetricsPrometheusEnable();
+    Args.getInstance().setMetricsPrometheusEnable(true);
+    try {
+      Wallet wallet = new Wallet();
+      TronNetDelegate delegate = mock(TronNetDelegate.class);
+      when(delegate.isBlockUnsolidified()).thenReturn(true);
+      Field field = Wallet.class.getDeclaredField("tronNetDelegate");
+      field.setAccessible(true);
+      field.set(wallet, delegate);
+      double before = rejectedTransactions(MetricLabels.Counter.TX_REJECT_API);
+      for (int signatureCount : new int[]{0, 1, 2}) {
+        for (int length = 65; length <= 68; length++) {
+          Protocol.Transaction.Builder builder = Protocol.Transaction.newBuilder();
+          for (int i = 0; i < signatureCount; i++) {
+            builder.addSignature(ByteString.copyFrom(new byte[length]));
+          }
+          GrpcAPI.Return ret = wallet.broadcastTransaction(builder.build());
+          assertEquals(GrpcAPI.Return.response_code.BLOCK_UNSOLIDIFIED, ret.getCode());
+          assertEquals(before, rejectedTransactions(MetricLabels.Counter.TX_REJECT_API), 0);
+        }
+      }
+    } finally {
+      Args.getInstance().setMetricsPrometheusEnable(metricsEnabled);
+    }
+  }
+
+  @Test
+  public void testBroadcastDisabledMetricPreservesSignatureRejection() {
+    boolean metricsEnabled = Args.getInstance().isMetricsPrometheusEnable();
+    Args.getInstance().setMetricsPrometheusEnable(false);
+    try {
+      double before = rejectedTransactions(MetricLabels.Counter.TX_REJECT_API);
+      Protocol.Transaction transaction = Protocol.Transaction.newBuilder()
+          .addSignature(ByteString.copyFrom(new byte[69]))
+          .build();
+      GrpcAPI.Return ret = new Wallet().broadcastTransaction(transaction);
+      assertEquals(GrpcAPI.Return.response_code.SIGERROR, ret.getCode());
+      assertFalse(ret.getResult());
+      assertEquals(before, rejectedTransactions(MetricLabels.Counter.TX_REJECT_API), 0);
+    } finally {
+      Args.getInstance().setMetricsPrometheusEnable(metricsEnabled);
+    }
+  }
+
+  private double rejectedTransactions(String source) {
+    Double value = CollectorRegistry.defaultRegistry.getSampleValue(
+        MetricKeys.Counter.TX_REJECT + "_total", new String[]{"source", "reason"},
+        new String[]{source, MetricLabels.Counter.TX_REJECT_INVALID_SIGNATURE_LENGTH});
+    return value == null ? 0 : value;
   }
 
   @Test

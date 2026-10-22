@@ -18,35 +18,19 @@ package org.tron.core.utils;
 import static org.tron.common.crypto.Hash.sha3omit12;
 import static org.tron.common.math.Maths.max;
 import static org.tron.core.config.Parameter.ChainConstant.DELEGATE_COST_BASE_SIZE;
-import static org.tron.core.Constant.PER_SIGN_LENGTH;
 import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 
 import com.google.common.base.CaseFormat;
 import com.google.common.primitives.Longs;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
-import java.security.SignatureException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.tron.api.GrpcAPI.Return;
-import org.tron.api.GrpcAPI.Return.response_code;
-import org.tron.api.GrpcAPI.TransactionExtention;
-import org.tron.api.GrpcAPI.TransactionSignWeight;
-import org.tron.api.GrpcAPI.TransactionSignWeight.Result;
 import org.tron.common.utils.Sha256Hash;
-import org.tron.core.ChainBaseManager;
-import org.tron.core.capsule.AccountCapsule;
-import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.exception.PermissionException;
-import org.tron.core.exception.SignatureFormatException;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.protos.Protocol.Permission;
-import org.tron.protos.Protocol.Permission.PermissionType;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.Protocol.Transaction.Result.contractResult;
@@ -65,9 +49,6 @@ public class TransactionUtil {
   private static final int MAX_TOKEN_ABBR_NAME_LEN = 5;
   private static final int MAX_ASSET_DESCRIPTION_LEN = 200;
   private static final int MAX_URL_LEN = 256;
-
-  @Autowired
-  private ChainBaseManager chainBaseManager;
 
   public static boolean validAccountName(byte[] accountName) {
     return validBytes(accountName, MAX_ACCOUNT_NAME_LEN, true);
@@ -180,95 +161,6 @@ public class TransactionUtil {
   public static String makeUpperCamelMethod(String originName) {
     return "get" + CaseFormat.UPPER_UNDERSCORE.to(CaseFormat.UPPER_CAMEL, originName)
         .replace("_", "");
-  }
-
-  public static Transaction truncateSignatures(Transaction trx) {
-    Transaction.Builder builder = trx.toBuilder().clearSignature();
-    for (ByteString sig : trx.getSignatureList()) {
-      if (sig.size() > PER_SIGN_LENGTH) {
-        builder.addSignature(ByteString.copyFrom(sig.substring(0, PER_SIGN_LENGTH).toByteArray()));
-      } else {
-        builder.addSignature(sig);
-      }
-    }
-    return builder.build();
-  }
-
-  public TransactionSignWeight getTransactionSignWeight(Transaction trx) {
-    TransactionSignWeight.Builder tswBuilder = TransactionSignWeight.newBuilder();
-    Result.Builder resultBuilder = Result.newBuilder();
-    if (trx.getSignatureCount() > chainBaseManager.getDynamicPropertiesStore()
-        .getTotalSignNum()) {
-      resultBuilder.setCode(Result.response_code.OTHER_ERROR);
-      resultBuilder.setMessage("too many signatures");
-      tswBuilder.setResult(resultBuilder);
-      return tswBuilder.build();
-    }
-
-    trx = truncateSignatures(trx);
-    TransactionExtention.Builder trxExBuilder = TransactionExtention.newBuilder();
-    trxExBuilder.setTransaction(trx);
-    trxExBuilder.setTxid(ByteString.copyFrom(Sha256Hash.hash(trx.getRawData().toByteArray())));
-    Return.Builder retBuilder = Return.newBuilder();
-    retBuilder.setResult(true).setCode(response_code.SUCCESS);
-    trxExBuilder.setResult(retBuilder);
-    tswBuilder.setTransaction(trxExBuilder);
-
-    if (trx.getRawData().getContractCount() == 0) {
-      resultBuilder.setCode(Result.response_code.OTHER_ERROR);
-      resultBuilder.setMessage("Invalid transaction: no valid contract");
-    } else {
-      try {
-        Contract contract = trx.getRawData().getContract(0);
-        byte[] owner = TransactionCapsule.getOwner(contract);
-        AccountCapsule account = chainBaseManager.getAccountStore().get(owner);
-        if (Objects.isNull(account)) {
-          throw new PermissionException("Account does not exist!");
-        }
-        int permissionId = contract.getPermissionId();
-        Permission permission = account.getPermissionById(permissionId);
-        if (permission == null) {
-          throw new PermissionException("Permission for this, does not exist!");
-        }
-        if (permissionId != 0) {
-          if (permission.getType() != PermissionType.Active) {
-            throw new PermissionException("Permission type is wrong!");
-          }
-          //check operations
-          if (!checkPermissionOperations(permission, contract)) {
-            throw new PermissionException("Permission denied!");
-          }
-        }
-        tswBuilder.setPermission(permission);
-        if (trx.getSignatureCount() > 0) {
-          List<ByteString> approveList = new ArrayList<>();
-          long currentWeight = TransactionCapsule.checkWeight(permission, trx.getSignatureList(),
-              Sha256Hash.hash(trx.getRawData().toByteArray()), approveList);
-          tswBuilder.addAllApprovedList(approveList);
-          tswBuilder.setCurrentWeight(currentWeight);
-        }
-        if (tswBuilder.getCurrentWeight() >= permission.getThreshold()) {
-          resultBuilder.setCode(Result.response_code.ENOUGH_PERMISSION);
-        } else {
-          resultBuilder.setCode(Result.response_code.NOT_ENOUGH_PERMISSION);
-        }
-      } catch (SignatureFormatException signEx) {
-        resultBuilder.setCode(Result.response_code.SIGNATURE_FORMAT_ERROR);
-        resultBuilder.setMessage(signEx.getMessage());
-      } catch (SignatureException signEx) {
-        resultBuilder.setCode(Result.response_code.COMPUTE_ADDRESS_ERROR);
-        resultBuilder.setMessage(signEx.getMessage());
-      } catch (PermissionException permEx) {
-        resultBuilder.setCode(Result.response_code.PERMISSION_ERROR);
-        resultBuilder.setMessage(permEx.getMessage());
-      } catch (Exception ex) {
-        resultBuilder.setCode(Result.response_code.OTHER_ERROR);
-        resultBuilder.setMessage(ex.getClass() + " : " + ex.getMessage());
-      }
-    }
-
-    tswBuilder.setResult(resultBuilder);
-    return tswBuilder.build();
   }
 
   public static long estimateConsumeBandWidthSize(DynamicPropertiesStore dps, long balance) {

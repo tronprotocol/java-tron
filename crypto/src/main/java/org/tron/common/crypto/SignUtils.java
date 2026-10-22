@@ -10,15 +10,13 @@ import org.tron.common.crypto.ECKey.ECDSASignature;
 public class SignUtils {
 
   /**
-   * Strict signature-length check for admission entry-points (RPC broadcast,
-   * P2P transaction ingress, peer hello handshake). Accepts only sizes in
-   * [{@link org.tron.core.Constant#PER_SIGN_LENGTH PER_SIGN_LENGTH},
-   * {@link org.tron.core.Constant#MAX_PER_SIGN_LENGTH MAX_PER_SIGN_LENGTH}].
+   * Signature-length check for admission, auxiliary queries, peer HELLO and strict consensus.
+   * Accepts {@link org.tron.core.Constant#PER_SIGN_LENGTH PER_SIGN_LENGTH} through
+   * {@link org.tron.core.Constant#MAX_PER_SIGN_LENGTH MAX_PER_SIGN_LENGTH} bytes, inclusive.
    *
-   * <p>Consensus paths (e.g. {@code TransactionCapsule.checkWeight}) intentionally
-   * keep the looser {@code size < 65} check to remain compatible with historical
-   * on-chain signatures that carry trailing padding bytes; do not call this
-   * helper from those paths.
+   * <p>Consensus paths use the governance-controlled strict-validation flag. Their
+   * legacy behavior remains compatible with historical on-chain signatures that
+   * carry trailing padding bytes.
    */
   public static boolean isValidLength(int size) {
     return size >= PER_SIGN_LENGTH && size <= MAX_PER_SIGN_LENGTH;
@@ -32,10 +30,11 @@ public class SignUtils {
     return ECKey.fromPrivate(privKeyBytes);
   }
 
-  public static byte[] signatureToAddress(byte[] messageHash, String signatureBase64)
+  public static byte[] signatureToAddress(
+      byte[] messageHash, String signatureBase64, boolean strictEcdsaValidation)
       throws SignatureException {
     try {
-      return ECKey.signatureToAddress(messageHash, signatureBase64);
+      return ECKey.signatureToAddress(messageHash, signatureBase64, strictEcdsaValidation);
     } catch (Exception e) {
       throw new SignatureException(e);
     }
@@ -45,8 +44,13 @@ public class SignUtils {
     return ECDSASignature.fromComponents(r, s, v);
   }
 
-  public static byte[] signatureToAddress(byte[] messageHash, ECDSASignature signature)
+  public static byte[] signatureToAddress(
+      byte[] messageHash, ECDSASignature signature, boolean strictEcdsaValidation)
       throws SignatureException {
-    return ECKey.signatureToAddress(messageHash, signature);
+    try {
+      return ECKey.signatureToAddress(messageHash, signature, strictEcdsaValidation);
+    } catch (RuntimeException e) {
+      throw new SignatureException(e);
+    }
   }
 }

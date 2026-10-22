@@ -3,6 +3,7 @@ package org.tron.common.backup.message;
 import static org.tron.common.backup.message.UdpMessageTypeEnum.BACKUP_KEEP_ALIVE;
 
 import org.tron.p2p.discover.Node;
+import org.tron.p2p.utils.ProtoUtil;
 import org.tron.protos.Discover;
 
 public class KeepAliveMessage extends Message {
@@ -11,7 +12,7 @@ public class KeepAliveMessage extends Message {
 
   public KeepAliveMessage(byte[] data) throws Exception {
     super(BACKUP_KEEP_ALIVE, data);
-    backupMessage = Discover.BackupMessage.parseFrom(data);
+    backupMessage = ProtoUtil.parseFrom(Discover.BackupMessage.parser(), data);
   }
 
   public KeepAliveMessage(boolean flag, int priority) {

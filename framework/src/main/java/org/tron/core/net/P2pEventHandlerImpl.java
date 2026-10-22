@@ -164,7 +164,7 @@ public class P2pEventHandlerImpl extends P2pEventHandler {
 
       peer.getPeerStatistics().messageStatistics.addTcpInMessage(msg);
       if (PeerConnection.needToLog(msg)) {
-        logger.info("Receive message from  peer: {}, {}", peer.getInetSocketAddress(), msg);
+        logger.info("Receive message from peer: {}, {}", peer.getInetSocketAddress(), msg);
       }
 
       switch (type) {
@@ -307,13 +307,8 @@ public class P2pEventHandlerImpl extends P2pEventHandler {
           code = Protocol.ReasonCode.UNKNOWN;
           break;
       }
-      if (type.equals(P2pException.TypeEnum.BAD_MESSAGE)) {
-        logger.error("Message from {} process failed, {} \n type: ({})",
-            peer.getInetSocketAddress(), msg, type, ex);
-      } else {
-        logger.warn("Message from {} process failed, {} \n type: ({}), detail: {}",
-            peer.getInetSocketAddress(), msg, type, ex.getMessage());
-      }
+      logger.warn("Message from {} process failed, {} \n type: ({}), detail: {}",
+          peer.getInetSocketAddress(), msg, type, ex.getMessage());
     } else {
       code = Protocol.ReasonCode.UNKNOWN;
       logger.warn("Message from {} process failed, {}",

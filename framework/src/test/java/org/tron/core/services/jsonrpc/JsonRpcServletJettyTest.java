@@ -228,7 +228,7 @@ public class JsonRpcServletJettyTest {
 
     @Override
     public void init(ServletConfig config) throws ServletException {
-      setRpcServer(testRpcServer);
+      setRpcServer(testRpcServer, FatalService.class);
     }
   }
 
