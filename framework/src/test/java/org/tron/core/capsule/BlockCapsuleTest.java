@@ -5,6 +5,7 @@ import static org.mockito.Mockito.when;
 
 import com.google.protobuf.ByteString;
 import java.io.IOException;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -16,6 +17,8 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.tron.common.TestConstants;
+import org.tron.common.crypto.ECKey;
+import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.LocalWitnesses;
 import org.tron.common.utils.PublicMethod;
@@ -271,6 +274,37 @@ public class BlockCapsuleTest {
             () -> paddedBlock.validateSignature(dps, accountStore));
       }
     }
+  }
+
+  @Test
+  public void shouldGateStrictWitnessSignatureRecovery() throws Exception {
+    byte[] infinityAddress =
+        ByteArray.fromHexString("41dcc703c0e500b653ca82273b7bfad8045d85a470");
+    BlockCapsule block = new BlockCapsule(4, Sha256Hash.ZERO_HASH, 6789,
+        ByteString.copyFrom(infinityAddress));
+    byte[] hash = Sha256Hash.of(block.getInstance().getBlockHeader().getRawData()
+        .toByteArray()).getBytes();
+    // R = G and s = hash mod n recover infinity; length checks accept this 65-byte signature.
+    ECDSASignature signature = new ECDSASignature(
+        ECKey.CURVE.getG().getAffineXCoord().toBigInteger(),
+        new BigInteger(1, hash).mod(ECKey.CURVE.getN()));
+    signature.v = 27;
+    ByteString signatureBytes = ByteString.copyFrom(signature.toByteArray());
+    Assert.assertEquals(65, signatureBytes.size());
+    BlockHeader header = block.getInstance().getBlockHeader().toBuilder()
+        .setWitnessSignature(signatureBytes).build();
+    BlockCapsule signedBlock = new BlockCapsule(block.getInstance().toBuilder()
+        .setBlockHeader(header).build());
+
+    DynamicPropertiesStore dps = mock(DynamicPropertiesStore.class);
+    when(dps.getAllowMultiSign()).thenReturn(0L);
+    AccountStore accountStore = mock(AccountStore.class);
+
+    when(dps.allowStrictEcdsaValidation()).thenReturn(false);
+    Assert.assertTrue(signedBlock.validateSignature(dps, accountStore));
+    when(dps.allowStrictEcdsaValidation()).thenReturn(true);
+    Assert.assertThrows(ValidateSignatureException.class,
+        () -> signedBlock.validateSignature(dps, accountStore));
   }
 
   /**
