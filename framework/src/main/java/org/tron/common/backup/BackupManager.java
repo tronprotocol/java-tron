@@ -27,6 +27,7 @@ import org.tron.common.es.ExecutorServiceManager;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.prometheus.Metrics;
 import org.tron.common.prometheus.SRMetrics;
+import org.tron.core.config.args.Args;
 import org.tron.p2p.utils.NetUtil;
 
 @Slf4j(topic = "backup")
@@ -74,7 +75,7 @@ public class BackupManager implements EventHandler {
 
   /**
    * Publishes the {@code tron:node_role} gauge — a single label-less series encoding
-   * the current backup-election role as a number (0 = init, 1 = master, 2 = slaver).
+   * the current role as a number (0 = fullnode, 1 = init, 2 = master, 3 = slaver).
    * Runs once after the application has started — covering the window before the backup
    * election first runs — and again on every backup-status change.
    */
@@ -86,8 +87,14 @@ public class BackupManager implements EventHandler {
   }
 
   private int currentRole() {
+    if (!Args.getInstance().isWitness()) {
+      // started without witness mode: a fullnode plays no role in any election, even
+      // when witness keys are configured (the keys only feed the sr_* address series)
+      return SRMetrics.NODE_ROLE_FULLNODE;
+    }
     if (!isBackupConfigured()) {
-      // no backup election to take part in: this node produces blocks itself
+      // no backup election to take part in: this node holds the primary witness key
+      // itself
       return SRMetrics.NODE_ROLE_MASTER;
     }
     if (!isInit) {
@@ -96,9 +103,9 @@ public class BackupManager implements EventHandler {
       // report init instead of pretending the election chose a master
       return SRMetrics.NODE_ROLE_INIT;
     }
-    // post-init the status is a real election outcome, so map every state 1:1; the
-    // pre-init window is already gated by the isInit check above, so INIT here only
-    // means the election transport is up but no keep-alive timeout has been judged yet
+    // post-init the status is a real election outcome, so map every state 1:1; INIT
+    // here covers both the window where the transport is up but no keep-alive timeout
+    // has been judged yet and the re-election entered after the master lost keep-alive
     switch (status) {
       case MASTER:
         return SRMetrics.NODE_ROLE_MASTER;

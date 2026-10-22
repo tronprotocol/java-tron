@@ -63,6 +63,7 @@ public class SRMetricsTest extends BaseTest {
     Args.getInstance().setMetricsPrometheusEnable(true);
     Args.getInstance().setBackupPort(0);
     Args.getInstance().setBackupMembers(Collections.emptyList());
+    Args.getInstance().witness = false;
     Param.getInstance().setMiners(new ArrayList<>());
     backupManager.setStatus(BackupManager.BackupStatusEnum.MASTER);
   }
@@ -183,14 +184,13 @@ public class SRMetricsTest extends BaseTest {
   }
 
   /**
-   * No witness configured: with an empty miner list, recordWitnessMetrics() writes
-   * nothing and FullNode publishes the node-level zero sr series once at startup (the
-   * direct recordSrStatus call below — gauge values persist until rewritten); node_role
-   * is a single label-less series — this node takes no part in a backup election, so it
-   * reports master (1) — while node_info keeps its two static labels.
+   * No witness configured: with an empty miner list a plain fullnode publishes none of
+   * the sr_* series, and node_role reports 0 because the node started without witness
+   * mode, while node_info keeps its two static labels.
    */
   @Test
   public void testSrStatusFullNode() {
+    Args.getInstance().witness = false;
     Param.getInstance().setMiners(new ArrayList<>());
 
     maintenanceManager.recordWitnessMetrics();
@@ -198,26 +198,22 @@ public class SRMetricsTest extends BaseTest {
         srGauge(MetricKeys.Gauge.SR_IS_ACTIVE, ""));
 
     backupManager.recordNodeRole();
-    Assert.assertEquals("node_role is one label-less series",
-        SRMetrics.NODE_ROLE_MASTER, roleGauge(), 0.0);
+    Assert.assertEquals("a node started without witness mode reports role 0",
+        SRMetrics.NODE_ROLE_FULLNODE, roleGauge(), 0.0);
 
-    // the startup zero series, exactly what FullNode publishes when miners are empty
-    SRMetrics.recordSrStatus("", false, 0, 0);
-    Assert.assertEquals(0.0, srGauge(MetricKeys.Gauge.SR_IS_ACTIVE, ""), 0.0);
-    Assert.assertEquals(0.0, srGauge(MetricKeys.Gauge.SR_VOTES, ""), 0.0);
-    Assert.assertEquals(0.0, srGauge(MetricKeys.Gauge.SR_RANK, ""), 0.0);
     Metrics.info(MetricKeys.Info.NODE_INFO, Version.getVersion(),
         Args.getInstance().getChainId());
     Assert.assertEquals(1.0, info(), 0.0);
   }
 
   /**
-   * Witness configured without a backup election (backup members unset): the node always
-   * produces blocks, so the single role series reports master (1); node_info stays a
-   * static two-label identity record.
+   * Witness configured without a backup election (backup members unset): the node
+   * always holds the primary key itself, so the single role series reports master (2);
+   * node_info stays a static two-label identity record.
    */
   @Test
   public void testSrStatusMaster() {
+    Args.getInstance().witness = true;
     ByteString witness = registerWitnessWithVotes(1000);
     registerWitnessWithVotes(50);
     chainBaseManager.getWitnessScheduleStore()
@@ -239,11 +235,12 @@ public class SRMetricsTest extends BaseTest {
   }
 
   /**
-   * Backup election slaver: the single role series reports slaver (2) while is_active
+   * Backup election slaver: the single role series reports slaver (3) while is_active
    * reflects the active witness set.
    */
   @Test
   public void testSrStatusSlaver() throws Exception {
+    Args.getInstance().witness = true;
     configureBackup();
     backupManager.setStatus(BackupManager.BackupStatusEnum.SLAVER);
     ByteString activeWitness = registerWitnessWithVotes(10);
@@ -267,11 +264,12 @@ public class SRMetricsTest extends BaseTest {
   /**
    * Before the first election round (backup configured, BackupManager.init() not yet run,
    * which in production only happens after the first fresh block) the node must report
-   * init (0) instead of falling back to the MASTER field default; the first real status
+   * init (1) instead of falling back to the MASTER field default; the first real status
    * after init() rewrites the same single series to the elected role.
    */
   @Test
   public void testRoleInitBeforeBackupElectionRuns() throws Exception {
+    Args.getInstance().witness = true;
     configureBackup();
 
     // a directly constructed manager has not gone through init(): pre-election window
@@ -300,6 +298,7 @@ public class SRMetricsTest extends BaseTest {
    */
   @Test
   public void testRoleRefreshOnBackupStatusChange() throws Exception {
+    Args.getInstance().witness = true;
     configureBackup();
     markBackupInitiated(backupManager);
 
@@ -311,12 +310,14 @@ public class SRMetricsTest extends BaseTest {
   }
 
   /**
-   * After init() has run, status INIT is a real election state — the transport is up but
-   * no keep-alive timeout has been judged yet — and maps 1:1 to init (0). It must not be
-   * misreported as slaver (2), the pre-fix behavior.
+   * After init() has run, status INIT is a real election state — the transport is up
+   * but no keep-alive timeout has been judged yet, or the master lost keep-alive and a
+   * re-election is running — and maps 1:1 to init (1). It must not be misreported as
+   * slaver (3), the pre-fix behavior.
    */
   @Test
   public void testRoleInitAfterElectionStarted() throws Exception {
+    Args.getInstance().witness = true;
     configureBackup();
     markBackupInitiated(backupManager);
 
@@ -334,6 +335,7 @@ public class SRMetricsTest extends BaseTest {
    */
   @Test
   public void testRoleMultiWitnessKeys() throws Exception {
+    Args.getInstance().witness = true;
     configureBackup();
     String key1 = PublicMethod.getRandomPrivateKey();
     String key2 = PublicMethod.getRandomPrivateKey();

@@ -10,18 +10,20 @@ public class SRMetrics {
     throw new IllegalStateException("SRMetrics");
   }
 
-  // numeric encoding of the tron:node_role gauge value: 0 = init (before the first
-  // election round), 1 = master (producing blocks), 2 = slaver (standing by). Read by
-  // BackupManager when it reports the election state; documented for operators in
+  // numeric encoding of the tron:node_role gauge value: 0 = fullnode (started without
+  // witness mode), 1 = init (before the first election round, or during a re-election
+  // after the master lost keep-alive), 2 = master, 3 = slaver. Read by BackupManager
+  // when it reports the election state; documented for operators in
   // docs/metrics-changelog.md
-  public static final int NODE_ROLE_INIT = 0;
-  public static final int NODE_ROLE_MASTER = 1;
-  public static final int NODE_ROLE_SLAVER = 2;
+  public static final int NODE_ROLE_FULLNODE = 0;
+  public static final int NODE_ROLE_INIT = 1;
+  public static final int NODE_ROLE_MASTER = 2;
+  public static final int NODE_ROLE_SLAVER = 3;
 
   /**
    * Publishes the node-role gauge as a single label-less series, encoding the current
-   * role as a number (0 = init, 1 = master, 2 = slaver). A role change rewrites the
-   * value of the same series, so no stale series are left behind.
+   * role as a number (0 = fullnode, 1 = init, 2 = master, 3 = slaver). A role change
+   * rewrites the value of the same series, so no stale series are left behind.
    */
   public static void recordNodeRole(int role) {
     if (!Metrics.enabled()) {
