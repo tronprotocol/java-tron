@@ -132,8 +132,6 @@ public class EffectiveCheckService {
             // Connection attempt cancelled by user
             cur = null;
           } else if (!future.isSuccess()) {
-            // You might get a NullPointerException here because the future might not be
-            // completed yet.
             logger.warn("Connect to chosen peer {} fail, cause:{}",
                 cur, future.cause().getMessage());
             future.channel().close();
