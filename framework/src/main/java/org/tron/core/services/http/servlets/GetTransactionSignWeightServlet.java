@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.api.GrpcAPI.TransactionSignWeight;
+import org.tron.core.exception.ContractSizeNotEqualToOneException;
 import org.tron.core.services.http.HttpApi;
 import org.tron.core.services.http.HttpApi.Access;
 import org.tron.core.services.http.HttpApi.Surface;
@@ -36,7 +37,17 @@ public class GetTransactionSignWeightServlet extends RateLimiterServlet {
         response.getWriter().println("{}");
       }
     } catch (Exception e) {
-      Util.processError(e, response);
+      Util.processError(e, response, ContractSizeNotEqualToOneException.class,
+          GetTransactionSignWeightServlet::contractSizeError);
     }
+  }
+
+  private static String contractSizeError(ContractSizeNotEqualToOneException e) {
+    TransactionSignWeight.Result result = TransactionSignWeight.Result.newBuilder()
+        .setCode(TransactionSignWeight.Result.response_code.OTHER_ERROR)
+        .setMessage("Invalid transaction: " + e.getMessage())
+        .build();
+    TransactionSignWeight reply = TransactionSignWeight.newBuilder().setResult(result).build();
+    return Util.printTransactionSignWeight(reply, false);
   }
 }

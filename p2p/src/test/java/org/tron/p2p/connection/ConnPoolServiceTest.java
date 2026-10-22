@@ -16,6 +16,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
 import org.tron.p2p.P2pConfig;
 import org.tron.p2p.P2pEventHandler;
 import org.tron.p2p.base.Parameter;
@@ -44,11 +45,12 @@ public class ConnPoolServiceTest {
   private static class CountingPeerClient extends PeerClient {
 
     private final AtomicInteger connectCount = new AtomicInteger();
+    private ChannelFuture future = Mockito.mock(ChannelFuture.class);
 
     @Override
     public ChannelFuture connectAsync(Node node, boolean discoveryMode) {
       connectCount.incrementAndGet();
-      return null;
+      return future;
     }
   }
 
@@ -72,6 +74,7 @@ public class ConnPoolServiceTest {
       channels.forEach(Channel::markDisconnected);
       pool.close();
       clearChannels();
+      ConnectionPolicy.replaceBlockedIps(Collections.emptySet());
     } finally {
       Parameter.p2pConfig = previousConfig;
       Parameter.handlerList = previousHandlers;
@@ -145,7 +148,7 @@ public class ConnPoolServiceTest {
         public ChannelFuture connectAsync(Node node, boolean discoveryMode) {
           attempts.incrementAndGet();
           connPoolService.triggerConnect(node.getPreferInetSocketAddress());
-          return null;
+          return Mockito.mock(ChannelFuture.class);
         }
       };
       Method connect = setPeerClientAndGetConnectMethod(connPoolService, peerClient);
@@ -162,8 +165,7 @@ public class ConnPoolServiceTest {
 
   @Test
   public void runtimeAddedActiveNodeRetriesAfterFailure() throws Exception {
-    List<InetSocketAddress> activeNodes = new ArrayList<>();
-    Parameter.p2pConfig.setActiveNodes(activeNodes);
+    List<InetSocketAddress> activeNodes = Parameter.p2pConfig.getActiveNodes();
     Parameter.p2pConfig.setMinConnections(0);
     Parameter.p2pConfig.setMinActiveConnections(0);
     try {
@@ -176,7 +178,7 @@ public class ConnPoolServiceTest {
         public ChannelFuture connectAsync(Node node, boolean discoveryMode) {
           attempts.incrementAndGet();
           connPoolService.triggerConnect(node.getPreferInetSocketAddress());
-          return null;
+          return Mockito.mock(ChannelFuture.class);
         }
       };
       Method connect = setPeerClientAndGetConnectMethod(connPoolService, peerClient);
@@ -193,8 +195,7 @@ public class ConnPoolServiceTest {
 
   @Test
   public void runtimeAddedActiveNodeFailureWaitsForNextTick() throws Exception {
-    List<InetSocketAddress> activeNodes = new ArrayList<>();
-    Parameter.p2pConfig.setActiveNodes(activeNodes);
+    List<InetSocketAddress> activeNodes = Parameter.p2pConfig.getActiveNodes();
     Parameter.p2pConfig.setMinConnections(1);
     Parameter.p2pConfig.setMinActiveConnections(0);
     Field discoveryField = NodeManager.class.getDeclaredField("discoverService");
@@ -226,7 +227,7 @@ public class ConnPoolServiceTest {
           if (attempts.incrementAndGet() == 1) {
             pool.triggerConnect(node.getPreferInetSocketAddress());
           }
-          return null;
+          return Mockito.mock(ChannelFuture.class);
         }
       };
       Method connect = setPeerClientAndGetConnectMethod(pool, peerClient);
@@ -248,6 +249,76 @@ public class ConnPoolServiceTest {
       Parameter.p2pConfig.setActiveNodes(Collections.emptyList());
       Parameter.p2pConfig.setMinConnections(8);
       Parameter.p2pConfig.setMinActiveConnections(2);
+    }
+  }
+
+  @Test
+  public void poolScanUsesItsConfigAndSkipsBlockedActiveNodes() throws Exception {
+    P2pConfig isolatedConfig = new P2pConfig();
+    isolatedConfig.setMinConnections(0);
+    isolatedConfig.setMinActiveConnections(0);
+    InetSocketAddress address = new InetSocketAddress("192.0.2.10", 18888);
+    isolatedConfig.getActiveNodes().add(address);
+    Assert.assertFalse(Parameter.p2pConfig.getActiveNodes().contains(address));
+    CountingPeerClient peerClient = new CountingPeerClient();
+    peerClient.future = null;
+    ConnPoolService connPoolService = new ConnPoolService();
+    connPoolService.p2pConfig = isolatedConfig;
+    Method connect = setPeerClientAndGetConnectMethod(connPoolService, peerClient);
+    try {
+      connect.invoke(connPoolService, false);
+      connect.invoke(connPoolService, false);
+      Assert.assertEquals(2, peerClient.connectCount.get());
+
+      isolatedConfig.getActiveNodes().remove(address);
+      connect.invoke(connPoolService, false);
+      Assert.assertEquals(2, peerClient.connectCount.get());
+
+      InetSocketAddress blocked = new InetSocketAddress("192.0.2.12", 18888);
+      isolatedConfig.getActiveNodes().add(blocked);
+      ConnectionPolicy.replaceBlockedIps(Collections.singleton(blocked.getAddress()));
+      connect.invoke(connPoolService, false);
+      Assert.assertEquals(2, peerClient.connectCount.get());
+    } finally {
+      connPoolService.close();
+    }
+  }
+
+  @Test
+  public void poolScanCountsOnlyScheduledDials() throws Exception {
+    P2pConfig isolatedConfig = new P2pConfig();
+    isolatedConfig.setMinConnections(1);
+    isolatedConfig.setMinActiveConnections(0);
+    InetSocketAddress address = new InetSocketAddress("192.0.2.20", 18888);
+    NodeDetectService nodeDetectService = Mockito.mock(NodeDetectService.class);
+    Mockito.when(nodeDetectService.getConnectableNodes())
+        .thenReturn(Collections.singletonList(new Node(address)));
+    Field detectServiceField = ChannelManager.class.getDeclaredField("nodeDetectService");
+    detectServiceField.setAccessible(true);
+    Object originalDetectService = detectServiceField.get(null);
+
+    CountingPeerClient peerClient = new CountingPeerClient();
+    peerClient.future = null;
+    ConnPoolService connPoolService = new ConnPoolService();
+    connPoolService.p2pConfig = isolatedConfig;
+    Method connect = setPeerClientAndGetConnectMethod(connPoolService, peerClient);
+    try {
+      detectServiceField.set(null, nodeDetectService);
+      connect.invoke(connPoolService, false);
+      Assert.assertEquals(1, peerClient.connectCount.get());
+      Assert.assertEquals(0, connPoolService.getConnectingPeersCount().get());
+
+      peerClient.future = Mockito.mock(ChannelFuture.class);
+      connect.invoke(connPoolService, false);
+      Assert.assertEquals(2, peerClient.connectCount.get());
+      Assert.assertEquals(1, connPoolService.getConnectingPeersCount().get());
+
+      connect.invoke(connPoolService, false);
+      Assert.assertEquals(2, peerClient.connectCount.get());
+      Assert.assertEquals(1, connPoolService.getConnectingPeersCount().get());
+    } finally {
+      connPoolService.close();
+      detectServiceField.set(null, originalDetectService);
     }
   }
 

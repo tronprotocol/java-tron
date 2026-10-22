@@ -67,9 +67,15 @@ public class MessageUnknownFieldTest {
 
   @Test
   public void helloMessageDiscardsUnknownFields() throws Exception {
+    Protocol.HelloMessage.BlockId blockId = Protocol.HelloMessage.BlockId.newBuilder()
+        .setHash(ByteString.copyFrom(new byte[32]))
+        .build();
     Protocol.HelloMessage hello = Protocol.HelloMessage.newBuilder()
         .setVersion(1)
         .setTimestamp(123456789L)
+        .setGenesisBlockId(blockId)
+        .setSolidBlockId(blockId)
+        .setHeadBlockId(blockId)
         .build();
     HelloMessage msg = new HelloMessage(withUnknown(hello));
     Assert.assertTrue(msg.getHelloMessage().getUnknownFields().asMap().isEmpty());

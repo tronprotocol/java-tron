@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.api.GrpcAPI.TransactionApprovedList;
 import org.tron.core.Wallet;
+import org.tron.core.exception.ContractSizeNotEqualToOneException;
 import org.tron.core.services.http.HttpApi;
 import org.tron.core.services.http.HttpApi.Access;
 import org.tron.core.services.http.HttpApi.Surface;
@@ -36,7 +37,17 @@ public class GetTransactionApprovedListServlet extends RateLimiterServlet {
         response.getWriter().println("{}");
       }
     } catch (Exception e) {
-      Util.processError(e, response);
+      Util.processError(e, response, ContractSizeNotEqualToOneException.class,
+          GetTransactionApprovedListServlet::contractSizeError);
     }
+  }
+
+  private static String contractSizeError(ContractSizeNotEqualToOneException e) {
+    TransactionApprovedList.Result result = TransactionApprovedList.Result.newBuilder()
+        .setCode(TransactionApprovedList.Result.response_code.OTHER_ERROR)
+        .setMessage("Invalid transaction: " + e.getMessage())
+        .build();
+    TransactionApprovedList reply = TransactionApprovedList.newBuilder().setResult(result).build();
+    return Util.printTransactionApprovedList(reply, false);
   }
 }

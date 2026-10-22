@@ -1,5 +1,6 @@
 package org.tron.p2p.utils;
 
+import com.google.common.net.InetAddresses;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -70,6 +71,14 @@ public class NetUtil {
       return false;
     }
     return PATTERN_IPv6.matcher(ip).matches();
+  }
+
+  /** Parses an unscoped IPv4 or IPv6 literal without resolving a hostname. */
+  public static InetAddress parseIpAddress(String ip) {
+    if (StringUtils.isEmpty(ip) || ip.indexOf('%') >= 0) {
+      throw new IllegalArgumentException("Invalid IP address");
+    }
+    return InetAddresses.forString(ip);
   }
 
   public static boolean validPort(int port) {
@@ -214,24 +223,92 @@ public class NetUtil {
     return ipV6;
   }
 
+  /**
+   * Parses an endpoint using the legacy configuration behavior, which accepts both IP literals
+   * and hostnames.
+   *
+   * <p>Use {@link #parseIpSocketAddress(String)} when the input must not trigger DNS resolution.
+   */
   public static InetSocketAddress parseInetSocketAddress(String para) {
-    int index = para.trim().lastIndexOf(":");
-    if (index > 0) {
-      String host = para.substring(0, index);
-      if (host.startsWith("[") && host.endsWith("]")) {
-        host = host.substring(1, host.length() - 1);
-      } else {
-        if (host.contains(":")) {
-          throw new RuntimeException(String.format("Invalid inetSocketAddress: \"%s\", "
-              + "use ipv4:port or [ipv6]:port", para));
-        }
-      }
-      int port = Integer.parseInt(para.substring(index + 1));
-      return new InetSocketAddress(host, port);
-    } else {
-      throw new RuntimeException(String.format("Invalid inetSocketAddress: \"%s\", "
-          + "use ipv4:port or [ipv6]:port", para));
+    String[] parts = splitEndpoint(para);
+    return new InetSocketAddress(parts[0], Integer.parseInt(parts[1]));
+  }
+
+  /**
+   * Parses an IP endpoint without resolving hostnames.
+   *
+   * <p>Only {@code ipv4:port} and {@code [ipv6]:port} are accepted.
+   */
+  public static InetSocketAddress parseIpSocketAddress(String para) {
+    String[] parts = splitEndpoint(para);
+    String host = parts[0];
+    String portText = parts[1];
+    if (para.trim().startsWith("[") && host.indexOf(':') < 0) {
+      throw invalidInetSocketAddress();
     }
+    if (portText.isEmpty() || portText.length() > 5) {
+      throw invalidInetSocketAddress();
+    }
+    for (int i = 0; i < portText.length(); i++) {
+      char character = portText.charAt(i);
+      if (character < '0' || character > '9') {
+        throw invalidInetSocketAddress();
+      }
+    }
+    int port = Integer.parseInt(portText);
+    if (port <= 0 || port > 0xFFFF) {
+      throw invalidInetSocketAddress();
+    }
+    InetSocketAddress address = new InetSocketAddress(parseIpAddress(host), port);
+    validateInetSocketAddress(address);
+    return address;
+  }
+
+  /** Splits host and port without DNS resolution or caller-specific address validation. */
+  private static String[] splitEndpoint(String para) {
+    if (para == null) {
+      throw invalidInetSocketAddress();
+    }
+    String endpoint = para.trim();
+    int separator = endpoint.lastIndexOf(':');
+    if (separator <= 0) {
+      throw invalidInetSocketAddress();
+    }
+    String host = endpoint.substring(0, separator);
+    if (host.startsWith("[") && host.endsWith("]")) {
+      host = host.substring(1, host.length() - 1);
+    } else if (host.indexOf(':') >= 0) {
+      throw invalidInetSocketAddress();
+    }
+    return new String[] {host, endpoint.substring(separator + 1)};
+  }
+
+  private static IllegalArgumentException invalidInetSocketAddress() {
+    return new IllegalArgumentException(
+        "Invalid inetSocketAddress, use ipv4:port or [ipv6]:port");
+  }
+
+  public static void validateInetSocketAddress(InetSocketAddress address) {
+    if (address == null || address.isUnresolved() || address.getPort() <= 0) {
+      throw new IllegalArgumentException("address must be resolved and use a valid port");
+    }
+    InetAddress inetAddress = address.getAddress();
+    if (inetAddress.isAnyLocalAddress() || inetAddress.isMulticastAddress()
+        || isLimitedBroadcastAddress(inetAddress)) {
+      throw new IllegalArgumentException(
+          "address must not use an unspecified, multicast, or broadcast IP");
+    }
+  }
+
+  private static boolean isLimitedBroadcastAddress(InetAddress address) {
+    if (!(address instanceof Inet4Address)) {
+      return false;
+    }
+    byte[] bytes = address.getAddress();
+    return (bytes[0] & 0xFF) == 0xFF
+        && (bytes[1] & 0xFF) == 0xFF
+        && (bytes[2] & 0xFF) == 0xFF
+        && (bytes[3] & 0xFF) == 0xFF;
   }
 
   private static String getIp(List<String> multiSrcUrls, boolean isAskIpv4) {
