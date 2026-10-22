@@ -9,6 +9,8 @@ import static org.mockito.Mockito.when;
 import static org.tron.core.net.PeerSyncTestSupport.blockId;
 import static org.tron.core.net.PeerSyncTestSupport.helloMessage;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -670,4 +672,53 @@ public class ChainInventoryMsgHandlerTest {
     }
     return ids;
   }
+
+  @Test
+  public void testNegativeRemainNumRejected() throws Exception {
+    assertCheckRejects(createContinuousBlockIds(0L), -1L);
+  }
+
+  @Test
+  public void testRemainNumOverflowRejected() throws Exception {
+    assertCheckRejects(createContinuousBlockIds(
+        Long.MAX_VALUE - NetConstants.SYNC_FETCH_BATCH_NUM + 1), 1L);
+  }
+
+  private void assertCheckRejects(List<BlockId> ids, long remainNum) throws Exception {
+    ChainInventoryMsgHandler messageHandler = new ChainInventoryMsgHandler();
+    TronNetDelegate tronNetDelegate = Mockito.mock(TronNetDelegate.class);
+    ReflectUtils.setFieldValue(messageHandler, "tronNetDelegate", tronNetDelegate);
+    Mockito.when(tronNetDelegate.getHeadBlockId()).thenReturn(
+        new BlockId(Sha256Hash.ZERO_HASH, 1L));
+    Mockito.when(tronNetDelegate.getSolidBlockId()).thenReturn(
+        new BlockId(Sha256Hash.ZERO_HASH, 1L));
+    Mockito.when(tronNetDelegate.getBlockTime(Mockito.any())).thenReturn(0L);
+
+    PeerConnection connection = Mockito.mock(PeerConnection.class);
+    LinkedList<BlockId> requestedIds = new LinkedList<>();
+    requestedIds.add(ids.get(0));
+    Mockito.when(connection.getSyncChainRequested()).thenReturn(
+        new Pair<>(requestedIds, System.currentTimeMillis()));
+
+    Method check = ChainInventoryMsgHandler.class.getDeclaredMethod(
+        "check", PeerConnection.class, ChainInventoryMessage.class);
+    check.setAccessible(true);
+    try {
+      check.invoke(messageHandler, connection, new ChainInventoryMessage(ids, remainNum));
+      Assert.fail("Expected invalid remainNum to be rejected");
+    } catch (InvocationTargetException e) {
+      Assert.assertTrue(e.getCause() instanceof P2pException);
+      Assert.assertEquals(P2pException.TypeEnum.BAD_MESSAGE,
+          ((P2pException) e.getCause()).getType());
+    }
+  }
+
+  private List<BlockId> createContinuousBlockIds(long firstNum) {
+    List<BlockId> ids = new ArrayList<>();
+    for (int i = 0; i < NetConstants.SYNC_FETCH_BATCH_NUM; i++) {
+      ids.add(new BlockId(Sha256Hash.ZERO_HASH, firstNum + i));
+    }
+    return ids;
+  }
+
 }
