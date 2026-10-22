@@ -7,14 +7,20 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.annotations.VisibleForTesting;
+import com.googlecode.jsonrpc4j.ErrorResolver.JsonError;
 import com.googlecode.jsonrpc4j.JsonRpcInterceptor;
+import com.googlecode.jsonrpc4j.JsonRpcMethod;
 import com.googlecode.jsonrpc4j.JsonRpcServer;
 import com.googlecode.jsonrpc4j.ProxyUtil;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.lang.reflect.Method;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -32,7 +38,6 @@ public class JsonRpcServlet extends RateLimiterServlet {
 
   private static final ObjectMapper MAPPER = JsonRpcMapper.create();
   private static final ObjectMapper OUTBOUND_MAPPER = new ObjectMapper();
-  private static final String INVALID_REQUEST_MESSAGE = "Invalid Request";
 
   private enum JsonRpcError {
     PARSE_ERROR(-32700),
@@ -49,6 +54,7 @@ public class JsonRpcServlet extends RateLimiterServlet {
   }
 
   private JsonRpcServer rpcServer = null;
+  private Set<String> methodNames = Collections.emptySet();
 
   @Autowired
   private TronJsonRpc tronJsonRpc;
@@ -57,8 +63,23 @@ public class JsonRpcServlet extends RateLimiterServlet {
   private JsonRpcInterceptor interceptor;
 
   @VisibleForTesting
-  void setRpcServer(JsonRpcServer rpcServer) {
+  void setRpcServer(JsonRpcServer rpcServer, Class<?> serviceInterface) {
     this.rpcServer = rpcServer;
+    this.methodNames = collectMethodNames(serviceInterface);
+  }
+
+  private static Set<String> collectMethodNames(Class<?> serviceInterface) {
+    Set<String> names = new HashSet<>();
+    for (Method method : serviceInterface.getMethods()) {
+      JsonRpcMethod annotation = method.getAnnotation(JsonRpcMethod.class);
+      if (annotation == null || !annotation.required()) {
+        names.add(method.getName());
+      }
+      if (annotation != null) {
+        names.add(annotation.value());
+      }
+    }
+    return Collections.unmodifiableSet(names);
   }
 
   @Override
@@ -72,13 +93,14 @@ public class JsonRpcServlet extends RateLimiterServlet {
         new Class[] {TronJsonRpc.class},
         true);
 
-    rpcServer = new JsonRpcServer(compositeService);
-    rpcServer.setErrorResolver(JsonRpcErrorResolver.INSTANCE);
+    JsonRpcServer server = new JsonRpcServer(compositeService);
+    server.setErrorResolver(JsonRpcErrorResolver.INSTANCE);
 
-    rpcServer.setShouldLogInvocationErrors(false);
+    server.setShouldLogInvocationErrors(false);
     if (CommonParameter.getInstance().isMetricsPrometheusEnable()) {
-      rpcServer.setInterceptorList(Collections.singletonList(interceptor));
+      server.setInterceptorList(Collections.singletonList(interceptor));
     }
+    setRpcServer(server, TronJsonRpc.class);
   }
 
   @Override
@@ -113,24 +135,24 @@ public class JsonRpcServlet extends RateLimiterServlet {
     }
 
     if (!rootNode.isObject() && !rootNode.isArray()) {
-      writeJsonRpcError(resp, JsonRpcError.INVALID_REQUEST, INVALID_REQUEST_MESSAGE, null, false);
+      writeJsonRpcError(resp, JsonRpcError.INVALID_REQUEST,
+          JsonRpcRequestValidator.invalidRequestMessage(rootNode), null, false);
       return;
     }
 
     boolean isBatch = rootNode.isArray();
     if (isBatch && rootNode.isEmpty()) {
-      writeJsonRpcError(resp, JsonRpcError.INVALID_REQUEST, INVALID_REQUEST_MESSAGE, null, false);
-      return;
-    }
-    if (!isBatch && hasInvalidVersion(rootNode)) {
       writeJsonRpcError(resp, JsonRpcError.INVALID_REQUEST,
-          INVALID_REQUEST_MESSAGE + ": jsonrpc must be \"2.0\"", rootNode.get("id"), false);
+          JsonRpcRequestValidator.invalidRequestMessage(rootNode), null, false);
       return;
     }
-    if (!isBatch && isInvalidRequest(rootNode)) {
-      writeJsonRpcError(resp, JsonRpcError.INVALID_REQUEST, INVALID_REQUEST_MESSAGE,
-          rootNode.get("id"), false);
-      return;
+    if (!isBatch) {
+      String invalidRequest = JsonRpcRequestValidator.invalidRequestMessage(rootNode);
+      if (invalidRequest != null) {
+        writeJsonRpcError(resp, JsonRpcError.INVALID_REQUEST, invalidRequest,
+            rootNode.get("id"), false);
+        return;
+      }
     }
     int batchSize = parameter.getJsonRpcMaxBatchSize();
     if (isBatch && batchSize > 0 && rootNode.size() > batchSize) {
@@ -155,7 +177,7 @@ public class JsonRpcServlet extends RateLimiterServlet {
     try {
       // JsonRpcServer.handle catches Throwable and would swallow fatal errors rethrown by the
       // resolver. Use the lower-level entry point so single and batch requests share a boundary.
-      rpcServer.handleRequest(new ByteArrayInputStream(body), bufferedResp.getOutputStream());
+      dispatch(rootNode, body, bufferedResp.getOutputStream());
     } catch (RuntimeException | IOException | Error e) {
       rethrowIfFatal(e);
       logger.error("RPC execution failed", e);
@@ -191,12 +213,7 @@ public class JsonRpcServlet extends RateLimiterServlet {
     for (int i = 0; i < rootNode.size(); i++) {
       JsonNode subRequest = rootNode.get(i);
 
-      String invalidRequest = null;
-      if (subRequest.isObject() && hasInvalidVersion(subRequest)) {
-        invalidRequest = INVALID_REQUEST_MESSAGE + ": jsonrpc must be \"2.0\"";
-      } else if (isInvalidRequest(subRequest)) {
-        invalidRequest = INVALID_REQUEST_MESSAGE;
-      }
+      String invalidRequest = JsonRpcRequestValidator.invalidRequestMessage(subRequest);
       if (invalidRequest != null) {
         ObjectNode errNode = buildErrorNode(JsonRpcError.INVALID_REQUEST, invalidRequest,
             subRequest.get("id"));
@@ -288,13 +305,24 @@ public class JsonRpcServlet extends RateLimiterServlet {
 
     ByteArrayOutputStream subOutput = new ByteArrayOutputStream();
     try {
-      rpcServer.handleRequest(new ByteArrayInputStream(subBody), subOutput);
+      dispatch(subRequest, subBody, subOutput);
     } catch (RuntimeException | IOException | Error e) {
       rethrowIfFatal(e);
       failureLog.record(index, e);
       return internalErrorResponse(subRequest.get("id"));
     }
     return subOutput.toByteArray();
+  }
+
+  private void dispatch(JsonNode request, byte[] body, OutputStream output) throws IOException {
+    if (methodNames.contains(request.get("method").asText())) {
+      rpcServer.handleRequest(new ByteArrayInputStream(body), output);
+      return;
+    }
+    ObjectNode error = JsonRpcMapper.createErrorResponse(JsonError.METHOD_NOT_FOUND.code,
+        JsonError.METHOD_NOT_FOUND.message, request.get("id"));
+    output.write(MAPPER.writeValueAsBytes(error));
+    output.write('\n');
   }
 
   private static class BatchFailureLog {
@@ -339,48 +367,12 @@ public class JsonRpcServlet extends RateLimiterServlet {
     ObjectNode errNode = errorObj.putObject("error");
     errNode.put("code", error.code);
     errNode.put("message", message);
-    if (isValidRequestId(id) && !id.isNull()) {
+    if (JsonRpcRequestValidator.isValidResponseId(id)) {
       errorObj.set("id", id);
     } else {
       errorObj.putNull("id");
     }
     return errorObj;
-  }
-
-  private boolean hasInvalidVersion(JsonNode request) {
-    JsonNode version = request.get("jsonrpc");
-    return version == null || !version.isTextual() || !"2.0".equals(version.asText());
-  }
-
-  private boolean isInvalidRequest(JsonNode request) {
-    return !request.isObject() || hasInvalidRequestId(request) || hasNullRequestId(request)
-        || hasScalarParams(request) || hasInvalidMethod(request);
-  }
-
-  // Stricter than the spec and geth, which both answer a null id normally. jsonrpc4j invokes
-  // the method but treats a null id as a notification and discards a successful result, so the
-  // caller never sees the outcome of a call that took effect. Reject it before dispatch instead;
-  // a request without an id is still dispatched as a notification.
-  private boolean hasNullRequestId(JsonNode request) {
-    return request.has("id") && request.get("id").isNull();
-  }
-
-  private boolean hasInvalidMethod(JsonNode request) {
-    JsonNode method = request.get("method");
-    return method == null || !method.isTextual() || method.asText().isEmpty();
-  }
-
-  private static boolean hasInvalidRequestId(JsonNode request) {
-    return request.has("id") && !isValidRequestId(request.get("id"));
-  }
-
-  private static boolean hasScalarParams(JsonNode request) {
-    // Explicit null keeps the existing jsonrpc4j dispatch semantics.
-    return request.hasNonNull("params") && !request.get("params").isContainerNode();
-  }
-
-  private static boolean isValidRequestId(JsonNode id) {
-    return id != null && (id.isNull() || id.isTextual() || id.isNumber());
   }
 
   private void writeJsonRpcError(HttpServletResponse resp, JsonRpcError error, String message,

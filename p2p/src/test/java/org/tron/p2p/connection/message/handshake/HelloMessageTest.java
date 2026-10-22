@@ -50,13 +50,16 @@ public class HelloMessageTest {
         .setNetworkId(11111)
         .setVersion(1)
         .setTimestamp(123)
+        .build();
+    Connect.HelloMessage padded = hello.toBuilder()
         .setUnknownFields(UnknownFieldSet.newBuilder()
             .addField(1000, UnknownFieldSet.Field.newBuilder()
                 .addLengthDelimited(ByteString.copyFrom(new byte[8192]))
                 .build())
             .build())
         .build();
-    byte[] wire = ArrayUtils.add(hello.toByteArray(), 0, MessageType.HANDSHAKE_HELLO.getType());
+    Assert.assertTrue(padded.getSerializedSize() > hello.getSerializedSize() + 8192);
+    byte[] wire = ArrayUtils.add(padded.toByteArray(), 0, MessageType.HANDSHAKE_HELLO.getType());
 
     HelloMessage parsed = (HelloMessage) Message.parse(wire);
     Field field = HelloMessage.class.getDeclaredField("helloMessage");
@@ -64,9 +67,12 @@ public class HelloMessageTest {
     Connect.HelloMessage parsedProto = (Connect.HelloMessage) field.get(parsed);
 
     Assert.assertTrue(parsedProto.getUnknownFields().asMap().isEmpty());
+    Assert.assertEquals(hello, parsedProto);
     Assert.assertEquals(11111, parsed.getNetworkId());
     Assert.assertEquals(18888, parsed.getFrom().getPort());
     Assert.assertArrayEquals(hello.toByteArray(), parsed.getData());
-    Assert.assertArrayEquals(wire, parsed.getSendData());
+    Assert.assertArrayEquals(
+        ArrayUtils.add(hello.toByteArray(), 0, MessageType.HANDSHAKE_HELLO.getType()),
+        parsed.getSendData());
   }
 }

@@ -1,31 +1,30 @@
 package org.tron.core.services.admin;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.exc.MismatchedInputException;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.base.Utf8;
+import com.google.common.primitives.Bytes;
 import com.googlecode.jsonrpc4j.ErrorResolver.JsonError;
 import com.googlecode.jsonrpc4j.JsonRpcBasicServer;
 import com.googlecode.jsonrpc4j.JsonRpcInterceptor;
 import java.io.IOException;
-import java.math.BigDecimal;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.core.services.jsonrpc.JsonRpcErrorResolver;
 import org.tron.core.services.jsonrpc.JsonRpcMapper;
+import org.tron.core.services.jsonrpc.JsonRpcRequestValidator;
 
 /**
  * Validates and dispatches individual Admin JSON-RPC requests for both HTTP and IPC.
- * Numeric IDs must be within the signed 64-bit range; accepted IDs retain their JSON value.
- * Only requests without an ID member are notifications, including when invocation fails.
+ * Accepted IDs retain their JSON value. Only requests without an ID member are notifications,
+ * including when invocation fails.
  */
 @Slf4j(topic = "API")
 public final class AdminJsonRpcRequestHandler extends JsonRpcBasicServer {
 
   private static final ObjectMapper OBJECT_MAPPER = JsonRpcMapper.create();
-  private static final BigDecimal MIN_ID = BigDecimal.valueOf(Long.MIN_VALUE);
-  private static final BigDecimal MAX_ID = BigDecimal.valueOf(Long.MAX_VALUE);
 
   public AdminJsonRpcRequestHandler(AdminJsonRpc adminJsonRpc) {
     super(OBJECT_MAPPER, adminJsonRpc, AdminJsonRpc.class);
@@ -35,12 +34,17 @@ public final class AdminJsonRpcRequestHandler extends JsonRpcBasicServer {
 
   /** Parses the complete input before dispatch, returning an empty body for valid notifications. */
   public byte[] handleRequest(byte[] body) throws IOException {
+    // Jackson accepts overlong and surrogate UTF-8 sequences and treats NUL bytes as a sign of
+    // UTF-16 or UTF-32, so check the bytes first.
+    if (!Utf8.isWellFormed(body) || Bytes.contains(body, (byte) 0)) {
+      return OBJECT_MAPPER.writeValueAsBytes(errorResponse(JsonError.PARSE_ERROR, null));
+    }
     JsonNode request;
     try {
       request = OBJECT_MAPPER.reader()
           .with(DeserializationFeature.FAIL_ON_TRAILING_TOKENS)
           .with(DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS).readTree(body);
-    } catch (JsonProcessingException e) {
+    } catch (IOException e) {
       return OBJECT_MAPPER.writeValueAsBytes(errorResponse(JsonError.PARSE_ERROR, null));
     }
 
@@ -60,30 +64,13 @@ public final class AdminJsonRpcRequestHandler extends JsonRpcBasicServer {
       return JsonRpcMapper.createErrorResponse(
           JsonError.INVALID_REQUEST.code, AdminJsonRpc.BATCH_NOT_SUPPORTED_MESSAGE, null);
     }
-    JsonNode id = request.get("id");
-    if (!isValidId(id)) {
-      return errorResponse(JsonError.INVALID_REQUEST, null);
-    }
-    if (!isValidEnvelope(request)) {
-      return errorResponse(JsonError.INVALID_REQUEST, id);
+    String invalidRequest = JsonRpcRequestValidator.invalidRequestMessage(request);
+    if (invalidRequest != null) {
+      JsonNode id = request.get("id");
+      return JsonRpcMapper.createErrorResponse(JsonError.INVALID_REQUEST.code, invalidRequest,
+          JsonRpcRequestValidator.isValidResponseId(id) ? id : null);
     }
     return null;
-  }
-
-  private boolean isValidEnvelope(JsonNode request) {
-    JsonNode version = request.path("jsonrpc");
-    JsonNode params = request.get("params");
-    return request.isObject() && version.isTextual() && "2.0".equals(version.textValue())
-        && request.path("method").isTextual()
-        && (params == null || params.isArray() || params.isObject());
-  }
-
-  private boolean isValidId(JsonNode id) {
-    if (id == null || id.isNull() || id.isTextual()) {
-      return true;
-    }
-    return id.isNumber() && id.decimalValue().compareTo(MIN_ID) >= 0
-        && id.decimalValue().compareTo(MAX_ID) <= 0;
   }
 
   private JsonNode dispatch(ObjectNode request, JsonNode id) {
@@ -91,11 +78,6 @@ public final class AdminJsonRpcRequestHandler extends JsonRpcBasicServer {
     try {
       for (JsonRpcInterceptor interceptor : getInterceptorList()) {
         interceptor.preHandleJson(request);
-      }
-      // jsonrpc4j treats null IDs as notifications. Use a request-local ID during invocation,
-      // then restore the original value directly on the response without parsing it again.
-      if (id != null && id.isNull()) {
-        request.put("id", 0);
       }
       JsonNode response;
       try {
@@ -112,10 +94,6 @@ public final class AdminJsonRpcRequestHandler extends JsonRpcBasicServer {
     } catch (Exception e) {
       logger.debug("Failed to dispatch Admin request");
       return notification ? null : errorResponse(JsonRpcErrorResolver.INTERNAL_ERROR, id);
-    } finally {
-      if (id != null && id.isNull()) {
-        request.set("id", id);
-      }
     }
   }
 

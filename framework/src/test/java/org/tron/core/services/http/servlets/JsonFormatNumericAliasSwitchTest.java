@@ -31,7 +31,7 @@ public class JsonFormatNumericAliasSwitchTest {
 
   @Before
   public void setUp() {
-    // Load config without overriding the switch, so ON tests exercise the real default.
+    // Load config without overriding the switch, so OFF tests exercise the real default.
     Args.setParam(new String[0], TestConstants.TEST_CONF);
   }
 
@@ -47,9 +47,9 @@ public class JsonFormatNumericAliasSwitchTest {
   }
 
   @Test
-  public void testSwitchDefaultsToTrueWhenKeyAbsent() {
-    // config-test.conf does not set the key, so it must bind to the reference.conf default (true).
-    assertTrue(Args.getInstance().isNodeAllowNumericFieldAlias());
+  public void testSwitchDefaultsToFalseWhenKeyAbsent() {
+    // config-test.conf does not set the key, so it must bind to the reference.conf default (false).
+    assertFalse(Args.getInstance().isNodeAllowNumericFieldAlias());
   }
 
   @Test
@@ -63,16 +63,18 @@ public class JsonFormatNumericAliasSwitchTest {
     assertTrue(NodeConfig.fromConfig(on).isAllowNumericFieldAlias());
 
     Config absent = ConfigFactory.load(TestConstants.TEST_CONF);
-    assertTrue(NodeConfig.fromConfig(absent).isAllowNumericFieldAlias());
+    assertFalse(NodeConfig.fromConfig(absent).isAllowNumericFieldAlias());
   }
 
   @Test
   public void testOnHexAliasMaterializes() throws Exception {
+    Args.getInstance().setNodeAllowNumericFieldAlias(true);
     assertEquals(3, merge("{\"2\":\"2003\"}").getOwner().getThreshold());
   }
 
   @Test
   public void testOnObjectAliasRejected() {
+    Args.getInstance().setNodeAllowNumericFieldAlias(true);
     // The legacy numeric-alias path only accepts a hex string value, never an object.
     JsonFormat.ParseException e = assertThrows(JsonFormat.ParseException.class,
         () -> merge("{\"2\":{\"threshold\":3}}"));
@@ -109,19 +111,19 @@ public class JsonFormatNumericAliasSwitchTest {
   }
 
   @Test
-  public void testConfigFileDisablesAliasEndToEnd() throws Exception {
+  public void testConfigFileEnablesAliasEndToEnd() throws Exception {
     // Exercise the full config-file -> Args -> JsonFormat path, so a future omission in
     // Args.applyNodeConfig that drops the switch assignment is caught here, not only the
     // NodeConfig binding checked above.
-    File conf = File.createTempFile("numeric-alias-off", ".conf");
+    File conf = File.createTempFile("numeric-alias-on", ".conf");
     try {
       Files.write(conf.toPath(), ("include classpath(\"" + TestConstants.TEST_CONF
-          + "\")\nnode.allowNumericFieldAlias = false\n").getBytes(StandardCharsets.UTF_8));
+          + "\")\nnode.allowNumericFieldAlias = true\n").getBytes(StandardCharsets.UTF_8));
       Args.clearParam();
       Args.setParam(new String[] {"-c", conf.getAbsolutePath()}, TestConstants.TEST_CONF);
 
-      assertFalse(Args.getInstance().isNodeAllowNumericFieldAlias());
-      assertFalse(merge("{\"2\":\"2003\"}").hasOwner());
+      assertTrue(Args.getInstance().isNodeAllowNumericFieldAlias());
+      assertEquals(3, merge("{\"2\":\"2003\"}").getOwner().getThreshold());
       assertEquals(3, merge("{\"owner\":{\"threshold\":3}}").getOwner().getThreshold());
     } finally {
       conf.delete();

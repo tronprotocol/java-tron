@@ -17,6 +17,8 @@ class MetricsCounter {
     init(MetricKeys.Counter.SR_SET_CHANGE, "tron sr set change .", "action", "witness");
     init(MetricKeys.Counter.P2P_ERROR, "tron p2p error  info .", "type");
     init(MetricKeys.Counter.P2P_DISCONNECT, "tron p2p disconnect .", "type");
+    init(MetricKeys.Counter.TX_REJECT, "Transactions rejected at admission entry points.",
+        "source", "reason");
     init(MetricKeys.Counter.INTERNAL_SERVICE_FAIL, "internal Service fail.",
         "class", "method");
     init(MetricKeys.Counter.BLOCK_FETCH_ARMED,
