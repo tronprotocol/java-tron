@@ -132,9 +132,8 @@ public class EffectiveCheckService {
             // Connection attempt cancelled by user
             cur = null;
           } else if (!future.isSuccess()) {
-            Throwable cause = future.cause();
-            logger.warn("Connect to chosen peer {} fail, cause:{}", cur,
-                cause == null ? "unknown" : cause.getMessage());
+            logger.warn("Connect to chosen peer {} fail, cause:{}",
+                cur, future.cause().getMessage());
             future.channel().close();
             cur = null;
             triggerNext();
