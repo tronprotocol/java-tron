@@ -57,6 +57,8 @@ public class MaintenanceManager {
 
   public void init() {
     currentWitness.addAll(consensusDelegate.getActiveWitnesses());
+    // miners are assembled by ConsensusService before DposService.start() calls init()
+    recordWitnessMetrics();
   }
 
   public void applyBlock(BlockCapsule blockCapsule) {

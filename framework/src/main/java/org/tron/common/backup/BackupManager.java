@@ -14,6 +14,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -74,11 +75,17 @@ public class BackupManager implements EventHandler {
   }
 
   /** Publishes tron:node_role, once at startup and on every backup-status change. */
+  @PostConstruct
   public void recordNodeRole() {
     if (!Metrics.enabled()) {
       return;
     }
-    SRMetrics.recordNodeRole(currentRole());
+    try {
+      SRMetrics.recordNodeRole(currentRole());
+    } catch (Exception e) {
+      // a metrics failure must not abort startup or the backup election
+      logger.warn("Failed to record node role", e);
+    }
   }
 
   private int currentRole() {

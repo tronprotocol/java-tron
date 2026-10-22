@@ -31,13 +31,10 @@ import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.arch.Arch;
-import org.tron.common.backup.BackupManager;
 import org.tron.common.exit.ExitManager;
 import org.tron.common.log.LogService;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.prometheus.Metrics;
-import org.tron.consensus.base.Param;
-import org.tron.consensus.dpos.MaintenanceManager;
 import org.tron.core.config.args.Args;
 import org.tron.core.config.args.CommandLineArguments;
 import org.tron.core.exception.TronError;
@@ -74,12 +71,6 @@ public class FullNodeTest {
     CommonParameter parameter = new CommonParameter();
     parameter.logbackPath = "node-logback.xml";
     Application application = Mockito.mock(Application.class);
-    MaintenanceManager maintenanceManager = Mockito.mock(MaintenanceManager.class);
-    BackupManager backupManager = Mockito.mock(BackupManager.class);
-    // the application startup is mocked, so ConsensusService.start() never fills the
-    // consensus miners; FullNode reads them right after startup to publish the fullnode
-    // zero series, so hand it the empty miner list of a witness-less node
-    Param.getInstance().setMiners(new ArrayList<>());
     try (MockedStatic<ExitManager> exitManager = Mockito.mockStatic(ExitManager.class);
         MockedStatic<Arch> arch = Mockito.mockStatic(Arch.class);
         MockedStatic<Args> args = Mockito.mockStatic(Args.class);
@@ -88,13 +79,7 @@ public class FullNodeTest {
         MockedStatic<Metrics> metrics = Mockito.mockStatic(Metrics.class);
         MockedStatic<ApplicationFactory> factory = Mockito.mockStatic(ApplicationFactory.class);
         MockedConstruction<TronApplicationContext> contexts =
-            Mockito.mockConstruction(TronApplicationContext.class,
-                (context, constructionContext) -> {
-                  Mockito.when(context.getBean(MaintenanceManager.class))
-                      .thenReturn(maintenanceManager);
-                  Mockito.when(context.getBean(BackupManager.class))
-                      .thenReturn(backupManager);
-                });
+            Mockito.mockConstruction(TronApplicationContext.class);
         MockedConstruction<IpcClient> ipcClients = Mockito.mockConstruction(IpcClient.class)) {
       parameters.when(CommonParameter::getInstance).thenReturn(parameter);
       factory.when(() -> ApplicationFactory.create(Mockito.any())).thenReturn(application);
@@ -110,10 +95,8 @@ public class FullNodeTest {
       metrics.verify(Metrics::init);
       Assert.assertEquals(1, contexts.constructed().size());
       Mockito.verify(contexts.constructed().get(0)).refresh();
-      InOrder order = Mockito.inOrder(application, maintenanceManager, backupManager);
+      InOrder order = Mockito.inOrder(application);
       order.verify(application).startup();
-      order.verify(maintenanceManager).recordWitnessMetrics();
-      order.verify(backupManager).recordNodeRole();
       order.verify(application).blockUntilShutdown();
       Assert.assertTrue(ipcClients.constructed().isEmpty());
     }

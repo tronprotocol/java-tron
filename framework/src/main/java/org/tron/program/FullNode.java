@@ -9,13 +9,11 @@ import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.arch.Arch;
-import org.tron.common.backup.BackupManager;
 import org.tron.common.exit.ExitManager;
 import org.tron.common.log.LogService;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.prometheus.MetricKeys;
 import org.tron.common.prometheus.Metrics;
-import org.tron.consensus.dpos.MaintenanceManager;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.config.args.CLIParameter;
@@ -80,10 +78,6 @@ public class FullNode {
       SolidityNode node = context.getBean(SolidityNode.class);
       node.run();
     }
-    // the witness snapshot reads consensus miners, assembled during appT.startup();
-    // solidity nodes never run as SRs, so the SR hooks stay on the fullnode path
-    context.getBean(MaintenanceManager.class).recordWitnessMetrics();
-    context.getBean(BackupManager.class).recordNodeRole();
     appT.blockUntilShutdown();
   }
 
