@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Function;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -29,6 +30,7 @@ import org.bouncycastle.util.encoders.DecoderException;
 import org.bouncycastle.util.encoders.Hex;
 import org.eclipse.jetty.http.HttpMethod;
 import org.eclipse.jetty.http.MimeTypes;
+import org.eclipse.jetty.server.handler.ContextHandler;
 import org.eclipse.jetty.util.MultiMap;
 import org.eclipse.jetty.util.StringUtil;
 import org.eclipse.jetty.util.UrlEncoded;
@@ -44,11 +46,13 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Constant;
+import org.tron.core.actuator.ActuatorConstant;
 import org.tron.core.actuator.TransactionFactory;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.TransactionTrace;
+import org.tron.core.exception.ContractSizeNotEqualToOneException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.InvalidHttpParameterException;
 import org.tron.core.exception.MaintenanceUnavailableException;
@@ -144,6 +148,7 @@ public class Util {
     }
     if (type == ParseException.class
         || type == ContractValidateException.class
+        || type == ContractSizeNotEqualToOneException.class
         || type == MaintenanceUnavailableException.class
         || type == InvalidHttpParameterException.class) {
       String message = e.getMessage();
@@ -320,13 +325,22 @@ public class Util {
   }
 
   /**
-   * Note: the contracts of the returned transaction may be empty
+   * Note: contracts that cannot be parsed are dropped, so the contracts of the returned
+   * transaction may be empty, or more than one when a field-number key replaces raw_data.
+   *
+   * @throws ContractSizeNotEqualToOneException if raw_data.contract has more than one element
+   * @throws ParseException if the transaction outside its contracts cannot be parsed
    */
-  public static Transaction packTransaction(String strTransaction, boolean selfType) {
+  public static Transaction packTransaction(String strTransaction, boolean selfType)
+      throws ContractSizeNotEqualToOneException, ParseException {
     JSONObject jsonTransaction = JSON.parseObject(strTransaction);
     JSONObject rawData = jsonTransaction.getJSONObject("raw_data");
     JSONArray contracts = new JSONArray();
     JSONArray rawContractArray = rawData.getJSONArray("contract");
+    if (rawContractArray.size() > 1) {
+      throw new ContractSizeNotEqualToOneException(String.format(
+          ActuatorConstant.CONTRACT_SIZE_NOT_EQUAL_TO_ONE, rawContractArray.size()));
+    }
 
     String contractType = null;
     for (int i = 0; i < rawContractArray.size(); i++) {
@@ -364,19 +378,14 @@ public class Util {
       } catch (JSONException e) {
         logger.debug("JSONException: {}", e.getMessage());
       } catch (Exception e) {
-        logger.warn("{}", contractType, e);
+        logger.debug("Skip invalid contract: {}", contractType, e);
       }
     }
     rawData.put("contract", contracts);
     jsonTransaction.put("raw_data", rawData);
     Transaction.Builder transactionBuilder = Transaction.newBuilder();
-    try {
-      JsonFormat.merge(jsonTransaction.toJSONString(), transactionBuilder, selfType);
-      return transactionBuilder.build();
-    } catch (ParseException e) {
-      logger.debug("ParseException: {}", e.getMessage());
-      return null;
-    }
+    JsonFormat.merge(jsonTransaction.toJSONString(), transactionBuilder, selfType);
+    return transactionBuilder.build();
   }
 
   @Deprecated
@@ -583,8 +592,20 @@ public class Util {
     writeAuditedError(clientMessage(e), response);
   }
 
+  // For handledType (exact class) onError returns the whole response body, bypassing
+  // clientMessage, so it must return audited client texts only and must not throw.
+  static <E extends Exception> void processError(Exception e, HttpServletResponse response,
+      Class<E> handledType, Function<E, String> onError) {
+    if (e == null || e.getClass() != handledType) {
+      processError(e, response);
+      return;
+    }
+    logger.debug("HTTP request failed", e);
+    writeResponse(onError.apply(handledType.cast(e)), response);
+  }
+
   // For catch blocks that cover server-side work only, so the failure stays visible at the
-  // default log level. The Exception entry point above keeps debug because its callers also
+  // default log level. The processError entry points above keep debug because their callers also
   // cover request parsing, which an unauthenticated client can fail cheaply and repeatedly.
   static void processServerError(Exception e, HttpServletResponse response) {
     logger.error("HTTP request failed", e);
@@ -593,8 +614,12 @@ public class Util {
 
   // Bypasses clientMessage: callers must pass audited fixed or pre-existing client texts only.
   static void writeAuditedError(String msg, HttpServletResponse response) {
+    writeResponse(Util.printErrorMsg(msg), response);
+  }
+
+  private static void writeResponse(String body, HttpServletResponse response) {
     try {
-      response.getWriter().println(Util.printErrorMsg(msg));
+      response.getWriter().println(body);
     } catch (IOException ioe) {
       logger.debug("Failed to write HTTP error response", ioe);
     }
@@ -756,13 +781,14 @@ public class Util {
     }
   }
 
-  public static String getJsonString(String str) {
+  public static String getJsonString(String str) throws ParseException {
     if (StringUtils.isEmpty(str)) {
       return EMPTY;
     }
     if (isValidJson(str)) {
       return str;
     }
+    checkFormPairs(str);
     MultiMap<String> params = new MultiMap<>();
     UrlEncoded.decodeUtf8To(str, params);
     JSONObject json = new JSONObject();
@@ -776,6 +802,16 @@ public class Util {
       }
     }
     return json.toString();
+  }
+
+  private static void checkFormPairs(String form) throws ParseException {
+    int max = ContextHandler.DEFAULT_MAX_FORM_KEYS;
+    int pairs = 1;
+    for (int i = 0; i < form.length(); i++) {
+      if (form.charAt(i) == '&' && ++pairs > max) {
+        throw new ParseException("form has too many parameters, the limit is " + max);
+      }
+    }
   }
 
   public static boolean isValidJson(String json) {

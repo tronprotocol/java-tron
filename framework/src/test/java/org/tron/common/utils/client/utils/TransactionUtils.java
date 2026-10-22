@@ -14,23 +14,31 @@ package org.tron.common.utils.client.utils;
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+import static org.tron.common.utils.StringUtil.encode58Check;
+import static org.tron.common.utils.WalletUtil.checkPermissionOperations;
 import static org.tron.core.capsule.TransactionCapsule.getBase64FromByteString;
 
 import com.google.protobuf.ByteString;
 import java.security.SignatureException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
+import org.tron.common.crypto.SignInterface;
+import org.tron.common.crypto.SignUtils;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.exception.PermissionException;
 import org.tron.core.exception.SignatureFormatException;
 import org.tron.core.services.http.servlets.JsonFormat;
 import org.tron.core.store.AccountStore;
+import org.tron.protos.Protocol.Permission;
+import org.tron.protos.Protocol.Permission.PermissionType;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.contract.AccountContract.AccountCreateContract;
@@ -138,10 +146,14 @@ public class TransactionUtils {
     }
     for (int i = 0; i < count; ++i) {
       try {
+        ByteString signature = signedTransaction.getSignature(i);
+        if (!SignUtils.isValidLength(signature.size())) {
+          return false;
+        }
         Transaction.Contract contract = listContract.get(i);
         byte[] owner = getOwner(contract);
-        byte[] address = ECKey
-            .signatureToAddress(hash, getBase64FromByteString(signedTransaction.getSignature(i)));
+        byte[] address = SignUtils.signatureToAddress(hash,
+            getBase64FromByteString(signature), true);
         if (!Arrays.equals(owner, address)) {
           return false;
         }
@@ -193,7 +205,41 @@ public class TransactionUtils {
           throws PermissionException, SignatureException, SignatureFormatException {
     byte[] privateKey = ByteArray.fromHexString(priKey);
     TransactionCapsule trx = new TransactionCapsule(transaction);
-    trx.addSign(privateKey, accountStore);
+    Contract contract = transaction.getRawData().getContract(0);
+    int permissionId = contract.getPermissionId();
+    AccountCapsule account = accountStore.get(trx.getOwnerAddress());
+    if (account == null) {
+      throw new PermissionException("Account is not exist!");
+    }
+    Permission permission = account.getPermissionById(permissionId);
+    if (permission == null) {
+      throw new PermissionException("permission isn't exit");
+    }
+    if (permissionId != 0) {
+      if (permission.getType() != PermissionType.Active) {
+        throw new PermissionException("Permission type is error");
+      }
+      if (!checkPermissionOperations(permission, contract)) {
+        throw new PermissionException("Permission denied");
+      }
+    }
+    List<ByteString> approveList = new ArrayList<>();
+    SignInterface cryptoEngine = SignUtils.fromPrivate(privateKey);
+    byte[] address = cryptoEngine.getAddress();
+    if (transaction.getSignatureCount() > 0) {
+      TransactionCapsule.checkWeight(permission, transaction.getSignatureList(),
+          trx.getTransactionId().getBytes(), approveList, true);
+      if (approveList.contains(ByteString.copyFrom(address))) {
+        throw new PermissionException(encode58Check(address) + " had signed!");
+      }
+    }
+    long weight = TransactionCapsule.getWeight(permission, address);
+    if (weight == 0) {
+      throw new PermissionException(
+          ByteArray.toHexString(privateKey) + "'s address is " + encode58Check(address)
+              + " but it is not contained of permission.");
+    }
+    trx.sign(privateKey);
     return trx;
   }
 

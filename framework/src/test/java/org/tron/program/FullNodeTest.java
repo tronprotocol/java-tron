@@ -182,8 +182,8 @@ public class FullNodeTest {
       });
 
       runClientWithoutNodeLogs(0, "one:two", "", "--attach", socketFile.toString(),
-          "--exec", "admin_example one two");
-      Assert.assertEquals("admin_example",
+          "--exec", "admin_addPeer 192.0.2.20:18888");
+      Assert.assertEquals("admin_addPeer",
           JsonRpcMapper.create().readTree(request.get(5, TimeUnit.SECONDS)).get("method").asText());
     } finally {
       executor.shutdownNow();

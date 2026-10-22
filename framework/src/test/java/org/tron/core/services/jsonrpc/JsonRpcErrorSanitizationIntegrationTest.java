@@ -98,7 +98,7 @@ public class JsonRpcErrorSanitizationIntegrationTest {
     FailingInterceptor interceptor =
         new FailingInterceptor(2, new AssertionError(SENSITIVE_MARKER));
     TestableServlet servlet = newServlet(newServer(new ErrorServiceImpl(), ErrorService.class,
-        Collections.singletonList(interceptor)));
+        Collections.singletonList(interceptor)), ErrorService.class);
 
     MockHttpServletResponse response = post(servlet, request("test_ok", "[]", 2));
 
@@ -111,7 +111,7 @@ public class JsonRpcErrorSanitizationIntegrationTest {
     FailingInterceptor interceptor =
         new FailingInterceptor(2, new AssertionError(SENSITIVE_MARKER));
     TestableServlet servlet = newServlet(newServer(new ErrorServiceImpl(), ErrorService.class,
-        Collections.singletonList(interceptor)));
+        Collections.singletonList(interceptor)), ErrorService.class);
 
     MockHttpServletResponse response = post(servlet,
         "[" + request("test_ok", "[]", 1) + "," + request("test_ok", "[]", 2)
@@ -149,8 +149,27 @@ public class JsonRpcErrorSanitizationIntegrationTest {
   }
 
   @Test
-  public void testServletForwardsUnknownMethodNotificationError() throws Exception {
+  public void testServletAnswersUnknownMethodNotificationError() throws Exception {
     assertNotificationErrorIsForwarded("test_missing", "[]", -32601, "method not found");
+  }
+
+  @Test
+  public void testServletAnswersUnknownMethodWithJsonRpc4jBytes() throws Exception {
+    JsonRpcServer server = newServer(new ErrorServiceImpl(), ErrorService.class);
+    TestableServlet servlet = newServlet(server, ErrorService.class);
+    String withId = request("test_missing", "[]", 1);
+    String withStringId = "{\"jsonrpc\":\"2.0\",\"method\":\"test_missing\",\"params\":[],"
+        + "\"id\":\"a\"}";
+    String notification = "{\"jsonrpc\":\"2.0\",\"method\":\"test_missing\",\"params\":[]}";
+
+    for (String single : Arrays.asList(withId, withStringId, notification)) {
+      Assert.assertArrayEquals(handleBytes(server, single),
+          post(servlet, single).getContentAsByteArray());
+    }
+    String batch = "[" + withId + "," + withStringId + "," + notification + "]";
+    String expectedBatch = "[" + handleText(server, withId) + "," + handleText(server, withStringId)
+        + "," + handleText(server, notification) + "]";
+    Assert.assertEquals(expectedBatch, post(servlet, batch).getContentAsString());
   }
 
   @Test
@@ -514,20 +533,28 @@ public class JsonRpcErrorSanitizationIntegrationTest {
   }
 
   private static TestableServlet newServlet(Object service, Class<?> serviceInterface) {
-    return newServlet(newServer(service, serviceInterface));
+    return newServlet(newServer(service, serviceInterface), serviceInterface);
   }
 
-  private static TestableServlet newServlet(JsonRpcServer server) {
+  private static TestableServlet newServlet(JsonRpcServer server, Class<?> serviceInterface) {
     TestableServlet servlet = new TestableServlet();
-    servlet.setRpcServer(server);
+    servlet.setRpcServer(server, serviceInterface);
     return servlet;
   }
 
   private static JsonNode handle(JsonRpcServer server, String json) throws Exception {
+    return MAPPER.readTree(handleBytes(server, json));
+  }
+
+  private static String handleText(JsonRpcServer server, String json) throws Exception {
+    return new String(handleBytes(server, json), StandardCharsets.UTF_8).trim();
+  }
+
+  private static byte[] handleBytes(JsonRpcServer server, String json) throws Exception {
     ByteArrayOutputStream output = new ByteArrayOutputStream();
     server.handleRequest(
         new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8)), output);
-    return MAPPER.readTree(output.toByteArray());
+    return output.toByteArray();
   }
 
   private static MockHttpServletResponse post(TestableServlet servlet, String body)
@@ -582,7 +609,7 @@ public class JsonRpcErrorSanitizationIntegrationTest {
       throws Exception {
     FailingInterceptor interceptor = new FailingInterceptor(2, failure);
     TestableServlet servlet = newServlet(newServer(new ErrorServiceImpl(), ErrorService.class,
-        Collections.singletonList(interceptor)));
+        Collections.singletonList(interceptor)), ErrorService.class);
     MockHttpServletResponse response = new MockHttpServletResponse();
     String request = request("test_ok", "[]", 2);
     if (batch) {

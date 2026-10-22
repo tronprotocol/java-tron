@@ -17,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.tron.p2p.base.Parameter;
 import org.tron.p2p.connection.Channel;
+import org.tron.p2p.connection.ConnectionPolicy;
 import org.tron.p2p.connection.business.MessageProcess;
 import org.tron.p2p.connection.message.Message;
 import org.tron.p2p.connection.message.detect.StatusMessage;
@@ -104,7 +105,9 @@ public class NodeDetectService implements MessageProcess {
   public void trimNodeMap() {
     long now = System.currentTimeMillis();
     nodeStatMap.forEach((k, v) -> {
-      if (!v.finishDetect() && v.getLastDetectTime() < now - NODE_DETECT_TIMEOUT) {
+      if (ConnectionPolicy.isBlocked(k)) {
+        nodeStatMap.remove(k, v);
+      } else if (!v.finishDetect() && v.getLastDetectTime() < now - NODE_DETECT_TIMEOUT) {
         nodeStatMap.remove(k);
         badNodesCache.put(k.getAddress(), System.currentTimeMillis());
       }
@@ -118,6 +121,7 @@ public class NodeDetectService implements MessageProcess {
     for (Node node : nodes) {
       InetSocketAddress socketAddress = node.getPreferInetSocketAddress();
       if (socketAddress != null
+          && !ConnectionPolicy.isBlocked(socketAddress)
           && !nodeStatMap.containsKey(socketAddress)
           && badNodesCache.getIfPresent(socketAddress.getAddress()) == null) {
         NodeStat nodeStat = new NodeStat(node);
@@ -132,10 +136,16 @@ public class NodeDetectService implements MessageProcess {
   }
 
   private void detect(NodeStat stat) {
+    if (ConnectionPolicy.isBlocked(stat.getSocketAddress())) {
+      nodeStatMap.remove(stat.getSocketAddress(), stat);
+      return;
+    }
     try {
       stat.setTotalCount(stat.getTotalCount() + 1);
       setLastDetectTime(stat);
-      peerClient.connectAsync(stat.getNode(), true);
+      if (peerClient.connectAsync(stat.getNode(), true) == null) {
+        nodeStatMap.remove(stat.getSocketAddress(), stat);
+      }
     } catch (Exception e) {
       logger.warn("Detect node {} failed, {}",
           stat.getNode().getPreferInetSocketAddress(), e.getMessage());

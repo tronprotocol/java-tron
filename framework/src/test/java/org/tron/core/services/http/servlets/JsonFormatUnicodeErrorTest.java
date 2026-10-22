@@ -102,7 +102,7 @@ public class JsonFormatUnicodeErrorTest {
   }
 
   @Test
-  public void testParserErrorsPreserveValidDescriptions() {
+  public void testParserErrorsPreserveValidDescriptions() throws Exception {
     String description = "invalid " + (char) 0x4E2D + EMOJI;
     JsonFormat.Tokenizer tokenizer = new JsonFormat.Tokenizer("field");
 

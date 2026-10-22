@@ -31,6 +31,9 @@ public class MetricLabels {
     public static final String TXS_FAIL_SIG = "sig";
     public static final String TXS_FAIL_TAPOS = "tapos";
     public static final String TXS_FAIL_DUP = "dup";
+    public static final String TX_REJECT_P2P = "p2p";
+    public static final String TX_REJECT_API = "api";
+    public static final String TX_REJECT_INVALID_SIGNATURE_LENGTH = "invalid_signature_length";
     public static final String SR_ADD = "add";
     public static final String SR_REMOVE = "remove";
 

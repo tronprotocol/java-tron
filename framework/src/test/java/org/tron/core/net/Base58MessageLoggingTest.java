@@ -2,12 +2,14 @@ package org.tron.core.net;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.CALLS_REAL_METHODS;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import ch.qos.logback.classic.Level;
@@ -34,6 +36,7 @@ import org.tron.common.utils.StringUtil;
 import org.tron.consensus.base.Param;
 import org.tron.consensus.base.PbftInterface;
 import org.tron.consensus.pbft.message.PbftMessage;
+import org.tron.core.exception.P2pException;
 import org.tron.core.net.message.MessageTypes;
 import org.tron.core.net.message.handshake.HelloMessage;
 import org.tron.core.net.messagehandler.PbftMsgHandler;
@@ -42,7 +45,6 @@ import org.tron.core.net.peer.PeerManager;
 import org.tron.core.net.service.handshake.HandshakeService;
 import org.tron.core.net.service.statistics.PeerStatistics;
 import org.tron.p2p.P2pConfig;
-import org.tron.p2p.P2pService;
 import org.tron.p2p.base.Parameter;
 import org.tron.p2p.connection.Channel;
 import org.tron.protos.Discover;
@@ -94,27 +96,31 @@ public class Base58MessageLoggingTest {
   }
 
   @Test
-  public void helloReceiveLogCannotEncodeOversizedAddressBeforeHandshakeRejection()
+  public void helloReceiveRejectsOversizedAddressBeforeLoggingOrHandshake()
       throws Exception {
     for (Level level : new Level[]{Level.INFO, Level.OFF}) {
       logger.setLevel(level);
       logMessages.clear();
       PeerConnection peer = peer();
       P2pEventHandlerImpl handler = new P2pEventHandlerImpl();
-      setField(handler, "handshakeService", new HandshakeService());
+      HandshakeService handshake = mock(HandshakeService.class);
+      setField(handler, "handshakeService", handshake);
       Method process = P2pEventHandlerImpl.class.getDeclaredMethod("processMessage",
           PeerConnection.class, byte[].class);
       process.setAccessible(true);
-      HelloMessage message = hello(16384);
-      try (MockedStatic<TronNetService> network = mockStatic(TronNetService.class);
-           MockedStatic<Base58> base58 = mockStatic(Base58.class)) {
-        network.when(TronNetService::getP2pService).thenReturn(mock(P2pService.class));
-        process.invoke(handler, peer, message.getSendBytes());
-        verify(peer).disconnect(ReasonCode.INCOMPATIBLE_PROTOCOL);
+      byte[] payload = helloData(16384);
+      byte[] message = new byte[payload.length + 1];
+      message[0] = MessageTypes.P2P_HELLO.asByte();
+      System.arraycopy(payload, 0, message, 1, payload.length);
+      try (MockedStatic<Base58> base58 = mockStatic(Base58.class)) {
+        process.invoke(handler, peer, message);
+        verify(peer).disconnect(ReasonCode.BAD_PROTOCOL);
+        verifyNoInteractions(handshake);
         base58.verifyNoInteractions();
       }
       if (level == Level.INFO) {
-        assertTrue(logMessages.stream().anyMatch(s -> s.contains(",len=16384)")));
+        assertTrue(logMessages.stream().anyMatch(s -> s.contains("invalid hello message")));
+        assertFalse(logMessages.stream().anyMatch(s -> s.contains("Receive message from")));
       }
     }
   }
@@ -130,7 +136,8 @@ public class Base58MessageLoggingTest {
     HelloMessage unusual = hello(200);
     assertTrue(unusual.valid());
     assertTrue(unusual.toString().contains(",len=200)"));
-    assertFalse(hello(201).valid());
+    P2pException exception = assertThrows(P2pException.class, () -> hello(201));
+    assertEquals(P2pException.TypeEnum.BAD_MESSAGE, exception.getType());
   }
 
   @Test
@@ -189,6 +196,10 @@ public class Base58MessageLoggingTest {
   }
 
   private static HelloMessage hello(int size) throws Exception {
+    return new HelloMessage(helloData(size));
+  }
+
+  private static byte[] helloData(int size) {
     Protocol.HelloMessage.BlockId block = Protocol.HelloMessage.BlockId.newBuilder()
         .setHash(ByteString.copyFrom(new byte[32])).build();
     Protocol.HelloMessage value = Protocol.HelloMessage.newBuilder()
@@ -196,7 +207,7 @@ public class Base58MessageLoggingTest {
             .setPort(18888).setNodeId(ByteString.copyFrom(new byte[64])))
         .setGenesisBlockId(block).setSolidBlockId(block).setHeadBlockId(block)
         .setAddress(bytes(size)).build();
-    return new HelloMessage(value.toByteArray());
+    return value.toByteArray();
   }
 
   private static PbftMessage pbft(ByteString data) {

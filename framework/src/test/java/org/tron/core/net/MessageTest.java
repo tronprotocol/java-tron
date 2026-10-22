@@ -22,8 +22,7 @@ public class MessageTest {
   public void test1() {
     DisconnectMessageTest disconnectMessageTest = new DisconnectMessageTest();
     try {
-      disconnectMessage = new DisconnectMessage(MessageTypes.P2P_DISCONNECT.asByte(),
-          disconnectMessageTest.toByteArray());
+      disconnectMessage = new DisconnectMessage(disconnectMessageTest.toByteArray());
     } catch (Exception e) {
       Assert.assertTrue(e instanceof P2pException);
     }
