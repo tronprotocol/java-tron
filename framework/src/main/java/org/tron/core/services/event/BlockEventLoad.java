@@ -37,7 +37,7 @@ public class BlockEventLoad {
   public void init() {
     executor.scheduleWithFixedDelay(() -> {
       try {
-        if (!instance.isBusy()) {
+        if (!instance.isBusy() && !realtimeEventService.isBusy()) {
           load();
         }
       } catch (Exception e) {
