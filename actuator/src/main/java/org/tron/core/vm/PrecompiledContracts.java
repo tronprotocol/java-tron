@@ -483,7 +483,11 @@ public class PrecompiledContracts {
     }
 
     protected long getCPUTimeLeftInNanoSecond() {
-      long left = getVmShouldEndInUs() * VMConstant.ONE_THOUSAND - System.nanoTime();
+      return getCPUTimeLeftInNanoSecond(getVmShouldEndInUs());
+    }
+
+    private long getCPUTimeLeftInNanoSecond(long deadlineUs) {
+      long left = deadlineUs * VMConstant.ONE_THOUSAND - System.nanoTime();
       if (left <= 0) {
         throw Program.Exception.notEnoughTime("call");
       } else {
@@ -494,14 +498,19 @@ public class PrecompiledContracts {
     /**
      * Returns whether to collect results under the precompile's historical timeout policy.
      * DROP rejects any timed-out wait. MATCH_CPU_CHECK still accepts one when
-     * {@link #allowTimedOutResult()} is true. A budget exhausted before waiting is
+     * {@link #allowTimedOutResult(long)} is true. A budget exhausted before waiting is
      * rejected either way. Cancellation belongs to {@link #collectParallel}.
      */
     boolean awaitParallel(CountDownLatch latch, ParallelTimeout timeout)
         throws InterruptedException {
+      return awaitParallel(latch, timeout, getVmShouldEndInUs());
+    }
+
+    private boolean awaitParallel(CountDownLatch latch, ParallelTimeout timeout, long deadlineUs)
+        throws InterruptedException {
       boolean withNoTimeout;
       try {
-        withNoTimeout = latch.await(getCPUTimeLeftInNanoSecond(), TimeUnit.NANOSECONDS);
+        withNoTimeout = latch.await(getCPUTimeLeftInNanoSecond(deadlineUs), TimeUnit.NANOSECONDS);
       } catch (OutOfTimeException expired) {
         // Budget was already gone, so the historical path does not read results.
         return false;
@@ -510,11 +519,12 @@ public class PrecompiledContracts {
         throw interrupted;
       }
       return withNoTimeout
-          || (timeout == ParallelTimeout.MATCH_CPU_CHECK && allowTimedOutResult());
+          || (timeout == ParallelTimeout.MATCH_CPU_CHECK && allowTimedOutResult(deadlineUs));
     }
 
     /**
      * Returns null on timeout or cancellation; propagates interruption and worker failures.
+     * Capture the invocation deadline once for the latch wait and all result reads.
      * The latch opens before FutureTask publishes its result, so a bounded read uses the
      * same instant as {@link Program#checkCPUTimeLimit}. Values are copied into the
      * returned list before {@code finally} runs. Cancel is a no-op on a completed future
@@ -522,13 +532,14 @@ public class PrecompiledContracts {
      */
     <T> List<T> collectParallel(CountDownLatch latch, List<? extends Future<T>> futures,
         ParallelTimeout timeout) throws InterruptedException, ExecutionException {
+      final long deadlineUs = getVmShouldEndInUs();
       try {
-        if (!awaitParallel(latch, timeout)) {
+        if (!awaitParallel(latch, timeout, deadlineUs)) {
           return null;
         }
         List<T> results = new ArrayList<>(futures.size());
         for (Future<T> future : futures) {
-          results.add(readFuture(future));
+          results.add(readFuture(future, deadlineUs));
         }
         return results;
       } catch (TimeoutException | CancellationException ignored) {
@@ -541,12 +552,13 @@ public class PrecompiledContracts {
       }
     }
 
-    private <T> T readFuture(Future<T> future)
+    private <T> T readFuture(Future<T> future, long deadlineUs)
         throws InterruptedException, ExecutionException, TimeoutException {
       if (!boundsCollection()) {
         return future.get();
       }
-      long remainNs = (getVmShouldEndInUs() + 1) * VMConstant.ONE_THOUSAND - System.nanoTime();
+      // CPU checks reject only when floor(nowNs / 1000) is greater than deadlineUs.
+      long remainNs = (deadlineUs + 1) * VMConstant.ONE_THOUSAND - System.nanoTime();
       if (remainNs <= 0) {
         throw new TimeoutException();
       }
@@ -576,9 +588,9 @@ public class PrecompiledContracts {
      * end-of-transaction check, so a last opcode can still succeed. Otherwise the
      * same microsecond boundary as that opcode check applies.
      */
-    private boolean allowTimedOutResult() {
+    private boolean allowTimedOutResult(long deadlineUs) {
       return !boundsCollection()
-          || System.nanoTime() / VMConstant.ONE_THOUSAND <= getVmShouldEndInUs();
+          || System.nanoTime() / VMConstant.ONE_THOUSAND <= deadlineUs;
     }
 
     enum ParallelTimeout {

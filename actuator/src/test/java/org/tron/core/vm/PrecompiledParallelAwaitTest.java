@@ -26,6 +26,30 @@ import org.tron.core.vm.config.VMConfig;
 public class PrecompiledParallelAwaitTest {
 
   @Test
+  public void testCollectionCapturesDeadlineOnce() throws Exception {
+    AtomicInteger reads = new AtomicInteger();
+    long deadlineUs = System.nanoTime() / 1_000 + 5_000_000;
+    PrecompiledContract contract = new PrecompiledContracts.Identity() {
+      @Override
+      public long getVmShouldEndInUs() {
+        reads.incrementAndGet();
+        return deadlineUs;
+      }
+    };
+    FutureTask<Boolean> completed = new FutureTask<>(() -> Boolean.TRUE);
+    completed.run();
+    List<Future<Boolean>> futures = new ArrayList<>();
+    futures.add(completed);
+
+    withNode(true, false, false, () -> {
+      assertEquals(Boolean.TRUE,
+          contract.collectParallel(new CountDownLatch(0), futures, ParallelTimeout.MATCH_CPU_CHECK)
+              .get(0));
+      assertEquals(1, reads.get());
+    });
+  }
+
+  @Test
   public void testCompletedWaitCollectsResults() throws Exception {
     ExecutorService pool = Executors.newFixedThreadPool(3);
     try {
