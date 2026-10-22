@@ -59,8 +59,7 @@ public class MetricLabels {
 
     public static final String PEERS_VALID = "valid";
 
-    // ADDRESS is the label of the tron:sr_* gauges; tron:node_role carries no label
-    // (single series, the value encodes the role)
+    // ADDRESS is the label of the tron:sr_* gauges (node_role carries no label)
     public static final String ADDRESS = "address";
 
     private Gauge() {
@@ -85,8 +84,7 @@ public class MetricLabels {
   // Info
   public static class Info {
     public static final String VERSION = "version";
-    // identifies the genesis block: the label value is the chain id derived from the
-    // genesis block hash, so the label is named genesis_block_id
+    // identifies the genesis block: the value is the chain id from the genesis block hash
     public static final String CHAIN_ID = "genesis_block_id";
 
     private Info() {

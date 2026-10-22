@@ -10,21 +10,13 @@ public class SRMetrics {
     throw new IllegalStateException("SRMetrics");
   }
 
-  // numeric encoding of the tron:node_role gauge value: 0 = fullnode (started without
-  // witness mode), 1 = init (before the first election round, or during a re-election
-  // after the master lost keep-alive), 2 = master, 3 = slaver. Read by BackupManager
-  // when it reports the election state; documented for operators in
-  // docs/metrics-changelog.md
+  // node_role: 0 = fullnode, 1 = init (pre-election / re-election), 2 = master, 3 = slaver
   public static final int NODE_ROLE_FULLNODE = 0;
   public static final int NODE_ROLE_INIT = 1;
   public static final int NODE_ROLE_MASTER = 2;
   public static final int NODE_ROLE_SLAVER = 3;
 
-  /**
-   * Publishes the node-role gauge as a single label-less series, encoding the current
-   * role as a number (0 = fullnode, 1 = init, 2 = master, 3 = slaver). A role change
-   * rewrites the value of the same series, so no stale series are left behind.
-   */
+  /** Publishes node_role as one label-less series; role changes rewrite it in place. */
   public static void recordNodeRole(int role) {
     if (!Metrics.enabled()) {
       return;
@@ -32,10 +24,7 @@ public class SRMetrics {
     Metrics.gaugeSet(MetricKeys.Gauge.NODE_ROLE, role);
   }
 
-  /**
-   * Publishes the sr_* gauges as one series per local witness address. An empty address
-   * records the node-level zero series a fullnode exposes when no witness is configured.
-   */
+  /** Publishes one sr_* series per local witness address; none without keys. */
   public static void recordSrStatus(String address, boolean active, long votes, long rank) {
     if (!Metrics.enabled()) {
       return;

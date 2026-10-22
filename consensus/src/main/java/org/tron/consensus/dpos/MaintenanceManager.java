@@ -169,14 +169,7 @@ public class MaintenanceManager {
     recordWitnessMetrics();
   }
 
-  /**
-   * Records the witness gauges (active-set membership, settled votes, settled rank) for
-   * every consensus miner the node assembles from its configured witness keys, one
-   * series per address. A node without a witness keeps the zero series with an empty
-   * address label, published once at startup by the caller. Runs at the end of every
-   * maintenance and once at node startup. Never throws: a metrics failure must not
-   * affect maintenance or block processing.
-   */
+  /** Publishes one sr_* series per consensus miner, per maintenance and at startup; never throws. */
   public void recordWitnessMetrics() {
     if (!Metrics.enabled()) {
       return;

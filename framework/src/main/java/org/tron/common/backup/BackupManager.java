@@ -73,12 +73,7 @@ public class BackupManager implements EventHandler {
     recordNodeRole();
   }
 
-  /**
-   * Publishes the {@code tron:node_role} gauge — a single label-less series encoding
-   * the current role as a number (0 = fullnode, 1 = init, 2 = master, 3 = slaver).
-   * Runs once after the application has started — covering the window before the backup
-   * election first runs — and again on every backup-status change.
-   */
+  /** Publishes tron:node_role, once at startup and on every backup-status change. */
   public void recordNodeRole() {
     if (!Metrics.enabled()) {
       return;
@@ -87,25 +82,19 @@ public class BackupManager implements EventHandler {
   }
 
   private int currentRole() {
+    // started without -w: a plain fullnode; witness keys are not even loaded
     if (!Args.getInstance().isWitness()) {
-      // started without witness mode: a fullnode plays no role in any election, even
-      // when witness keys are configured (the keys only feed the sr_* address series)
       return SRMetrics.NODE_ROLE_FULLNODE;
     }
+    // no backup election to take part in: this node holds the primary key itself
     if (!isBackupConfigured()) {
-      // no backup election to take part in: this node holds the primary witness key
-      // itself
       return SRMetrics.NODE_ROLE_MASTER;
     }
+    // status still defaults to MASTER before backup init; not a real election result yet
     if (!isInit) {
-      // the backup server only starts after the first fresh block, so between startup
-      // and the first election round the status default (MASTER) is not a real result;
-      // report init instead of pretending the election chose a master
       return SRMetrics.NODE_ROLE_INIT;
     }
-    // post-init the status is a real election outcome, so map every state 1:1; INIT
-    // here covers both the window where the transport is up but no keep-alive timeout
-    // has been judged yet and the re-election entered after the master lost keep-alive
+    // post-init INIT covers the pre-keep-alive window and master-loss re-election
     switch (status) {
       case MASTER:
         return SRMetrics.NODE_ROLE_MASTER;
@@ -117,8 +106,7 @@ public class BackupManager implements EventHandler {
   }
 
   private boolean isBackupConfigured() {
-    // same condition BackupServer.initServer() uses to start the election transport,
-    // i.e. the only way init() -- and with it the first real status -- can be reached
+    // same condition BackupServer.initServer() uses to start the election transport
     return parameter.getBackupPort() > 0 && !parameter.getBackupMembers().isEmpty();
   }
 

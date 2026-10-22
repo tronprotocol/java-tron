@@ -73,13 +73,10 @@ public class FullNode {
     Application appT = ApplicationFactory.create(context);
     context.registerShutdownHook();
     appT.startup();
-    // the genesis block id (chainId) is only available after the context refresh
-    // (Manager.initGenesis)
+    // the genesis block id (chainId) is only available after context refresh (Manager.initGenesis)
     Metrics.info(MetricKeys.Info.NODE_INFO, Version.getVersion(),
         Args.getInstance().getChainId());
-    // the sr snapshot and the initial node_role series read the consensus miners, which
-    // are assembled in ApplicationImpl.startup() via ConsensusService.start(), so they
-    // are available here
+    // the witness snapshot reads consensus miners, assembled during appT.startup()
     context.getBean(MaintenanceManager.class).recordWitnessMetrics();
     context.getBean(BackupManager.class).recordNodeRole();
     if (parameter.isSolidityNode()) {

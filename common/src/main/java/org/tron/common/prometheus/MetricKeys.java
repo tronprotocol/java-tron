@@ -14,9 +14,7 @@ public class MetricKeys {
     public static final String TXS = "tron:txs";
     public static final String MINER = "tron:miner";
     public static final String BLOCK_FORK = "tron:block_fork";
-    // witness label: bounded cardinality -- SR candidate pool is finite, rotation is
-    // infrequent (at most once per maintenance interval); kept for at-a-glance SR
-    // identification in dashboards rather than requiring log cross-referencing.
+    // witness label: bounded cardinality (finite SR pool) for dashboard readability
     public static final String SR_SET_CHANGE = "tron:sr_set_change";
     public static final String P2P_ERROR = "tron:p2p_error";
     public static final String P2P_DISCONNECT = "tron:p2p_disconnect";
@@ -41,14 +39,11 @@ public class MetricKeys {
     public static final String DB_SST_LEVEL = "tron:db_sst_level";
     public static final String MANAGER_QUEUE = "tron:manager_queue_size";
     public static final String TX_CACHE = "tron:tx_cache";
-    // status of the SR configured locally (witness address), refreshed at startup and on
-    // maintenance blocks, when the vote counts and the active witness set are updated
+    // per local SR (witness address); refreshed at startup and on every maintenance block
     public static final String SR_IS_ACTIVE = "tron:sr_is_active";
     public static final String SR_VOTES = "tron:sr_votes";
     public static final String SR_RANK = "tron:sr_rank";
-    // numeric role gauge of the local node in the backup election (0=init, 1=master,
-    // 2=slaver), one series per local witness address, refreshed at startup and on
-    // every backup-status change; witness-configured nodes only
+    // numeric role of this node: 0 = fullnode, 1 = init, 2 = master, 3 = slaver
     public static final String NODE_ROLE = "tron:node_role";
 
     private Gauge() {
