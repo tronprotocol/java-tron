@@ -25,6 +25,7 @@ import org.tron.common.crypto.SignUtils;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.PublicMethod;
 import org.tron.common.utils.StringUtil;
+import org.tron.consensus.Consensus;
 import org.tron.consensus.base.Param;
 import org.tron.consensus.dpos.MaintenanceManager;
 import org.tron.core.capsule.AccountCapsule;
@@ -272,6 +273,33 @@ public class SRMetricsTest extends BaseTest {
     }
 
     Assert.assertEquals(1.0, witnessGauge(encode(address)), 0.0);
+  }
+
+  /**
+   * The identity metric must be published by {@link ConsensusService#start()} itself, not by a
+   * caller: with the election engine stubbed out, a real start() has to write tron:node_type from
+   * Args.isWitness(), even for a node with zero miners. Pre-setting the opposite value pins the
+   * call site, so dropping the publication from start() fails here.
+   */
+  @Test
+  public void testStartPublishesNodeTypeForZeroMiners() {
+    Consensus consensusMock = Mockito.mock(Consensus.class);
+    ConsensusService service = new ConsensusService();
+    ReflectionTestUtils.setField(service, "consensus", consensusMock);
+
+    for (boolean witness : new boolean[] {false, true}) {
+      Args.getInstance().witness = witness;
+      // opposite of the expected value, so a start() that skipped the publication cannot pass
+      SRMetrics.recordNodeType(witness ? SRMetrics.NODE_TYPE_FULLNODE
+          : SRMetrics.NODE_TYPE_WITNESS);
+
+      service.start();
+
+      int expected = witness ? SRMetrics.NODE_TYPE_WITNESS : SRMetrics.NODE_TYPE_FULLNODE;
+      Assert.assertEquals(expected, nodeTypeGauge(), 0.0);
+    }
+
+    Mockito.verify(consensusMock, Mockito.times(2)).start(Mockito.any(Param.class));
   }
 
   // ---- tron:node_role: the three states, the pre-election window and status transitions ----
