@@ -1003,6 +1003,21 @@ public class ProposalUtil {
         }
         break;
       }
+      case ALLOW_OPTIMIZE_TVM_STORAGE_KEY: {
+        if (!forkController.pass(ForkBlockVersionEnum.VERSION_4_8_2_4)) {
+          throw new ContractValidateException(
+              "Bad chain parameter id [ALLOW_OPTIMIZE_TVM_STORAGE_KEY]");
+        }
+        if (dynamicPropertiesStore.getAllowOptimizeTvmStorageKey() == 1) {
+          throw new ContractValidateException(
+              "[ALLOW_OPTIMIZE_TVM_STORAGE_KEY] has been valid, no need to propose again");
+        }
+        if (value != 1) {
+          throw new ContractValidateException(
+              "This value[ALLOW_OPTIMIZE_TVM_STORAGE_KEY] is only allowed to be 1");
+        }
+        break;
+      }
       default:
         break;
     }
@@ -1094,7 +1109,8 @@ public class ProposalUtil {
     ALLOW_HARDEN_EXCHANGE_CALCULATION(98), // 0, 1
     ALLOW_OPTIMIZE_TVM_STORAGE(99), // 0, 1
     ALLOW_STRICT_ECDSA_VALIDATION(100), // 0, 1
-    CLOSE_EXCHANGE(101); // 0, 1, 2
+    CLOSE_EXCHANGE(101), // 0, 1, 2
+    ALLOW_OPTIMIZE_TVM_STORAGE_KEY(102); // 0, 1
     private long code;
 
     ProposalType(long code) {

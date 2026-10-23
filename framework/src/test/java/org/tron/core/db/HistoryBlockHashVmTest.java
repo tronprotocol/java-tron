@@ -118,7 +118,7 @@ public class HistoryBlockHashVmTest extends BaseTest {
   private Storage openStorage() {
     return new Storage(HistoryBlockHashUtil.HISTORY_STORAGE_ADDRESS,
         dbManager.getStorageRowStore(),
-        dbManager.getDynamicPropertiesStore().allowOptimizeTvmStorage());
+        dbManager.getDynamicPropertiesStore());
   }
 
   private static byte[] uint256(long n) {
@@ -249,8 +249,9 @@ public class HistoryBlockHashVmTest extends BaseTest {
 
   @Test
   public void writeUsesDatabaseFlagWhenVmConfigIsOff() {
-    VMConfig.initAllowOptimizeTvmStorage(0);
-    chainBaseManager.getDynamicPropertiesStore().saveAllowOptimizeTvmStorage(1);
+    VMConfig.initAllowOptimizeTvmStorageKey(0);
+    DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
+    dynamicStore.saveAllowOptimizeTvmStorageKey(1);
     byte[] parent = new byte[32];
     Arrays.fill(parent, (byte) 0x11);
     BlockCapsule block = new BlockCapsule(
@@ -265,16 +266,16 @@ public class HistoryBlockHashVmTest extends BaseTest {
     Storage optimized = new Storage(
         HistoryBlockHashUtil.HISTORY_STORAGE_ADDRESS,
         chainBaseManager.getStorageRowStore(),
-        true);
+        dynamicStore);
+    dynamicStore.saveAllowOptimizeTvmStorageKey(0);
     Storage legacy = new Storage(
         HistoryBlockHashUtil.HISTORY_STORAGE_ADDRESS,
         chainBaseManager.getStorageRowStore(),
-        false);
+        dynamicStore);
     assertEquals(expected, optimized.getValue(new DataWord(slot)));
     assertNull(legacy.getValue(new DataWord(slot)));
-    assertFalse(VMConfig.allowOptimizeTvmStorage());
+    assertFalse(VMConfig.allowOptimizeTvmStorageKey());
 
-    chainBaseManager.getDynamicPropertiesStore().saveAllowOptimizeTvmStorage(0);
     optimized.put(new DataWord(slot), DataWord.ZERO());
     optimized.commit();
   }
