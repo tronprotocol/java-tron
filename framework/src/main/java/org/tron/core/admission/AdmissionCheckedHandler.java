@@ -7,6 +7,8 @@ import io.grpc.ServerCall;
 import io.grpc.ServerCallHandler;
 import io.grpc.Status;
 import lombok.extern.slf4j.Slf4j;
+import org.tron.common.prometheus.MetricKeys;
+import org.tron.common.prometheus.Metrics;
 import org.tron.core.admission.TransactionAdmissionException.Reason;
 
 /**
@@ -54,7 +56,7 @@ public final class AdmissionCheckedHandler<ReqT, RespT> implements ServerCallHan
             logger.debug("gRPC {} from {} rejected by admission check: {}", method,
                 call.getAttributes().get(Grpc.TRANSPORT_ATTR_REMOTE_ADDR), reason);
           }
-          GuardedRequestMarshaller.countRejection(method, reason);
+          Metrics.counterInc(MetricKeys.Counter.GRPC_ADMISSION_REJECT, 1, method, reason.name());
           // The same status grpc gives an uncompressed message over the size limit.
           Status status = reason == Reason.TOO_LARGE
               ? Status.RESOURCE_EXHAUSTED : Status.INVALID_ARGUMENT;

@@ -10,10 +10,14 @@ import static org.junit.Assert.fail;
 import com.google.protobuf.Any;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
+import io.grpc.Metadata;
 import io.grpc.MethodDescriptor;
 import io.grpc.ServerCall;
 import io.grpc.ServerCallHandler;
+import io.grpc.ServerInterceptor;
+import io.grpc.ServerInterceptors;
 import io.grpc.ServerMethodDefinition;
+import io.grpc.ServerServiceDefinition;
 import io.grpc.Status;
 import io.grpc.protobuf.ProtoUtils;
 import java.io.ByteArrayInputStream;
@@ -101,6 +105,58 @@ public class GuardedRequestMarshallerTest {
     assertWrappingFails(prototypeMarshaller("not a message"));
   }
 
+  @Test
+  public void wrappingFailsOnAnAlreadyGuardedRequest() {
+    ServerMethodDefinition<GrpcAPI.EmptyMessage, Object> method =
+        method(proto(GrpcAPI.EmptyMessage.getDefaultInstance()),
+            GrpcAPI.EmptyMessage.getDefaultInstance());
+    String name = method.getMethodDescriptor().getFullMethodName();
+    ServerMethodDefinition<GrpcAPI.EmptyMessage, Object> guarded =
+        GuardedRequestMarshaller.guard(method, MAX, BUDGET);
+
+    assertAlreadyGuarded(guarded, name);
+    // An interceptor keeps the request marshaller, so a guard inside it is still found.
+    assertAlreadyGuarded(intercepted(guarded), name);
+
+    ServerMethodDefinition<GrpcAPI.EmptyMessage, Object> interceptedFirst = intercepted(method);
+    ServerMethodDefinition<GrpcAPI.EmptyMessage, Object> wrapped =
+        GuardedRequestMarshaller.guard(interceptedFirst, MAX, BUDGET);
+    assertSame(interceptedFirst.getServerCallHandler(),
+        ((AdmissionCheckedHandler<?, ?>) wrapped.getServerCallHandler()).getDelegate());
+  }
+
+  private static <T> void assertAlreadyGuarded(ServerMethodDefinition<T, Object> method,
+      String name) {
+    try {
+      GuardedRequestMarshaller.guard(method, MAX, BUDGET);
+      fail("expected a wiring failure for " + name);
+    } catch (IllegalStateException e) {
+      assertEquals("request already guarded: " + name, e.getMessage());
+    }
+  }
+
+  @SuppressWarnings("unchecked")
+  private static <T> ServerMethodDefinition<T, Object> intercepted(
+      ServerMethodDefinition<T, Object> method) {
+    String name = method.getMethodDescriptor().getFullMethodName();
+    ServerServiceDefinition service = ServerInterceptors.intercept(
+        ServerServiceDefinition.builder(MethodDescriptor.extractFullServiceName(name))
+            .addMethod(method).build(),
+        new ServerInterceptor() {
+          @Override
+          public <ReqT, RespT> ServerCall.Listener<ReqT> interceptCall(
+              ServerCall<ReqT, RespT> call, Metadata headers, ServerCallHandler<ReqT, RespT> next) {
+            return next.startCall(call, headers);
+          }
+        });
+    ServerMethodDefinition<T, Object> result =
+        (ServerMethodDefinition<T, Object>) service.getMethod(name);
+    assertSame(method.getMethodDescriptor().getRequestMarshaller(),
+        result.getMethodDescriptor().getRequestMarshaller());
+    assertNotSame(method.getServerCallHandler(), result.getServerCallHandler());
+    return result;
+  }
+
   private static <T> void assertWrappingFails(MethodDescriptor.Marshaller<T> request) {
     ServerMethodDefinition<T, Object> method =
         method(request, GrpcAPI.EmptyMessage.getDefaultInstance());
@@ -124,23 +180,23 @@ public class GuardedRequestMarshallerTest {
     byte[] data = Transaction.newBuilder().setRawData(raw).build().toByteArray();
 
     // A Transaction delegate: scanned as the Transaction it becomes.
-    ServerMethodDefinition<Transaction, Object> declaredBytes = GuardedRequestMarshaller.guard(
+    ServerMethodDefinition<Transaction, Object> transactionMethod = GuardedRequestMarshaller.guard(
         method(proto(Transaction.getDefaultInstance()), GrpcAPI.BytesMessage.getDefaultInstance()),
         MAX, BUDGET);
     GuardedRequestMarshaller<Transaction> asTransaction =
         (GuardedRequestMarshaller<Transaction>)
-            declaredBytes.getMethodDescriptor().getRequestMarshaller();
+            transactionMethod.getMethodDescriptor().getRequestMarshaller();
     assertEquals(Transaction.getDescriptor(), asTransaction.getRoot());
     assertEquals(Reason.OVER_BUDGET,
         asTransaction.rejectionReason(asTransaction.parse(new ByteArrayInputStream(data))));
 
     // A BytesMessage delegate: one bytes field, nothing is materialized.
-    ServerMethodDefinition<GrpcAPI.BytesMessage, Object> declaredTransaction =
+    ServerMethodDefinition<GrpcAPI.BytesMessage, Object> bytesMethod =
         GuardedRequestMarshaller.guard(method(proto(GrpcAPI.BytesMessage.getDefaultInstance()),
             Transaction.getDefaultInstance()), MAX, BUDGET);
     GuardedRequestMarshaller<GrpcAPI.BytesMessage> asBytes =
         (GuardedRequestMarshaller<GrpcAPI.BytesMessage>)
-            declaredTransaction.getMethodDescriptor().getRequestMarshaller();
+            bytesMethod.getMethodDescriptor().getRequestMarshaller();
     assertEquals(GrpcAPI.BytesMessage.getDescriptor(), asBytes.getRoot());
     GrpcAPI.BytesMessage parsed = asBytes.parse(new ByteArrayInputStream(data));
     assertNull(asBytes.rejectionReason(parsed));

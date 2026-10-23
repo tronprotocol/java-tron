@@ -278,31 +278,6 @@ public class AdmissionSupportTest {
   }
 
   @Test
-  public void plainDelegateMarshallerIsSupported() {
-    MethodDescriptor.Marshaller<Transaction> plain =
-        new MethodDescriptor.Marshaller<Transaction>() {
-      @Override
-      public InputStream stream(Transaction value) {
-        return new ByteArrayInputStream(value.toByteArray());
-      }
-
-      @Override
-      public Transaction parse(InputStream stream) {
-        try {
-          return Transaction.parseFrom(stream);
-        } catch (IOException e) {
-          throw new IllegalStateException(e);
-        }
-      }
-    };
-    GuardedRequestMarshaller<Transaction> marshaller = transactionMarshaller(plain, 4096, 10);
-    Transaction tx = Transaction.newBuilder().addSignature(
-        com.google.protobuf.ByteString.copyFrom(new byte[65])).build();
-    assertEquals(tx, marshaller.parse(new ByteArrayInputStream(tx.toByteArray())));
-    assertSame(Transaction.getDefaultInstance(), marshaller.getMessagePrototype());
-  }
-
-  @Test
   public void delegateReadsAKnownLengthStreamOfTheExactSize() throws Exception {
     List<InputStream> streams = new ArrayList<>();
     List<Integer> sizes = new ArrayList<>();

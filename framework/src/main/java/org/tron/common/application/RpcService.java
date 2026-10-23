@@ -98,7 +98,7 @@ public abstract class RpcService extends AbstractService {
     return super.start();
   }
 
-  protected NettyServerBuilder initServerBuilder() {
+  protected final NettyServerBuilder initServerBuilder() {
     CommonParameter parameter = Args.getInstance();
     NettyServerBuilder serverBuilder = NettyServerBuilder.forPort(this.port);
     if (parameter.getRpcThreadNum() > 0) {
@@ -156,7 +156,7 @@ public abstract class RpcService extends AbstractService {
     return builder.build();
   }
 
-  protected void addInterceptor(NettyServerBuilder serverBuilder) {
+  protected final void addInterceptor(NettyServerBuilder serverBuilder) {
     // add a ratelimiter interceptor
     serverBuilder.intercept(this.rateLimiterInterceptor);
 
@@ -172,7 +172,7 @@ public abstract class RpcService extends AbstractService {
     }
   }
 
-  protected void initServer(NettyServerBuilder serverBuilder) {
+  protected final void initServer(NettyServerBuilder serverBuilder) {
     this.apiServer = serverBuilder.build();
   }
 

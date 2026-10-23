@@ -17,8 +17,6 @@ import java.util.EnumMap;
 import java.util.Map;
 import java.util.zip.ZipException;
 import org.tron.common.math.StrictMathWrapper;
-import org.tron.common.prometheus.MetricKeys;
-import org.tron.common.prometheus.Metrics;
 import org.tron.core.admission.TransactionAdmissionException.Reason;
 import org.tron.protos.Protocol.Transaction;
 
@@ -61,11 +59,16 @@ public final class GuardedRequestMarshaller<T> implements MethodDescriptor.Proto
    * Wraps {@code method}. The scan root is the type its request marshaller parses into, taken
    * once here from the marshaller's protobuf prototype and never from a real request.
    *
-   * @throws IllegalStateException if the request marshaller gives no protobuf prototype
+   * @throws IllegalStateException if the request marshaller gives no protobuf prototype or is
+   *     already guarded
    */
   public static <ReqT, RespT> ServerMethodDefinition<ReqT, RespT> guard(
       ServerMethodDefinition<ReqT, RespT> method, int maxMessageSize, int maxOccurrences) {
     MethodDescriptor<ReqT, RespT> descriptor = method.getMethodDescriptor();
+    if (descriptor.getRequestMarshaller() instanceof GuardedRequestMarshaller) {
+      throw new IllegalStateException(
+          "request already guarded: " + descriptor.getFullMethodName());
+    }
     GuardedRequestMarshaller<ReqT> guarded = new GuardedRequestMarshaller<>(
         descriptor.getRequestMarshaller(), prototypeOf(descriptor), maxMessageSize,
         maxOccurrences);
@@ -74,7 +77,7 @@ public final class GuardedRequestMarshaller<T> implements MethodDescriptor.Proto
         new AdmissionCheckedHandler<>(method.getServerCallHandler(), guarded));
   }
 
-  static Message prototypeOf(MethodDescriptor<?, ?> descriptor) {
+  private static Message prototypeOf(MethodDescriptor<?, ?> descriptor) {
     MethodDescriptor.Marshaller<?> marshaller = descriptor.getRequestMarshaller();
     Object prototype = marshaller instanceof MethodDescriptor.PrototypeMarshaller
         ? ((MethodDescriptor.PrototypeMarshaller<?>) marshaller).getMessagePrototype()
@@ -94,7 +97,7 @@ public final class GuardedRequestMarshaller<T> implements MethodDescriptor.Proto
   @Override
   public T parse(InputStream stream) {
     try {
-      return parseChecked(stream, delegate, root, maxMessageSize, maxOccurrences);
+      return parseChecked(stream);
     } catch (TransactionAdmissionException e) {
       return rejected.get(e.getReason());
     }
@@ -119,10 +122,6 @@ public final class GuardedRequestMarshaller<T> implements MethodDescriptor.Proto
   }
 
   String rejectionMessage() {
-    return rejectionMessage(root);
-  }
-
-  static String rejectionMessage(Descriptor root) {
     return Transaction.getDescriptor().equals(root)
         ? TransactionAdmissionException.REJECTION_MESSAGE
         : TransactionAdmissionException.REQUEST_REJECTION_MESSAGE;
@@ -139,14 +138,8 @@ public final class GuardedRequestMarshaller<T> implements MethodDescriptor.Proto
     return (Class<T>) prototype.getClass();
   }
 
-  static void countRejection(String fullMethodName, Reason reason) {
-    Metrics.counterInc(MetricKeys.Counter.GRPC_ADMISSION_REJECT, 1, fullMethodName,
-        reason.name());
-  }
-
   /** Throws {@link TransactionAdmissionException} for a rejection. */
-  private static <T> T parseChecked(InputStream stream, MethodDescriptor.Marshaller<T> delegate,
-      Descriptor root, int maxMessageSize, int maxOccurrences) {
+  private T parseChecked(InputStream stream) {
     byte[] bytes;
     try {
       bytes = readBounded(stream, maxMessageSize);
