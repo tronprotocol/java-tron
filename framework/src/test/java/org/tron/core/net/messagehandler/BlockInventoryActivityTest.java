@@ -2,8 +2,10 @@ package org.tron.core.net.messagehandler;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -63,6 +65,8 @@ public class BlockInventoryActivityTest {
   public void setUp() throws Exception {
     adv = spy(new AdvService());
     delegate = mock(TronNetDelegate.class);
+    doCallRealMethod().when(delegate).recordInventory(any(), any(), anyLong());
+    doCallRealMethod().when(delegate).confirmBlockInventory(any());
     inventory = new InventoryMsgHandler();
     blocks = new BlockMsgHandler();
     provider = PeerBlockTestSupport.peer(18888);
@@ -147,8 +151,8 @@ public class BlockInventoryActivityTest {
     Item lower = new Item(block.getParentBlockId(), InventoryType.BLOCK);
     inventory.processMessage(advertiser, inventory(lower));
 
-    adv.confirmBlockInventory(block.getBlockId());
-    adv.confirmBlockInventory(block.getParentBlockId());
+    delegate.confirmBlockInventory(block.getBlockId());
+    delegate.confirmBlockInventory(block.getParentBlockId());
 
     Assert.assertEquals(0, advertiser.getAdvBlockInvReceive().size());
     Assert.assertEquals(1, advertiser.getLastInteractiveTime());
@@ -190,15 +194,15 @@ public class BlockInventoryActivityTest {
     record(100);
     doAnswer(call -> {
       acceptBlock();
-      adv.recordInventory(advertiser, item, 200);
+      delegate.recordInventory(advertiser, item, 200);
       Assert.assertEquals(Long.valueOf(200), advertiser.getAdvInvReceive().getIfPresent(item));
       Assert.assertEquals(Long.valueOf(100), advertiser.getAdvBlockInvReceive().getIfPresent(item));
       return null;
     }).when(delegate).processBlock(block, false);
 
     processBlock();
-    adv.recordInventory(advertiser, item, 300);
-    adv.confirmBlockInventory(block.getBlockId());
+    delegate.recordInventory(advertiser, item, 300);
+    delegate.confirmBlockInventory(block.getBlockId());
 
     Assert.assertEquals(100, advertiser.getLastInteractiveTime());
     Assert.assertNull(advertiser.getAdvBlockInvReceive().getIfPresent(item));
@@ -210,7 +214,7 @@ public class BlockInventoryActivityTest {
     BlockId different = new BlockId(Sha256Hash.ZERO_HASH, block.getNum());
     Assert.assertNotEquals(block.getBlockId(), different);
 
-    adv.confirmBlockInventory(different);
+    delegate.confirmBlockInventory(different);
 
     Assert.assertEquals(1, advertiser.getLastInteractiveTime());
     Assert.assertEquals(Long.valueOf(100), advertiser.getAdvBlockInvReceive().getIfPresent(item));
@@ -278,7 +282,7 @@ public class BlockInventoryActivityTest {
     for (int i = 1; i <= 200; i++) {
       Item another = new Item(new BlockId(block.getBlockId(), block.getNum() + i),
           InventoryType.BLOCK);
-      adv.recordInventory(advertiser, another, 200);
+      delegate.recordInventory(advertiser, another, 200);
     }
     Assert.assertTrue(advertiser.getAdvBlockInvReceive().size() > 0);
     Assert.assertTrue(advertiser.getAdvBlockInvReceive().size() <= 100);
@@ -339,13 +343,14 @@ public class BlockInventoryActivityTest {
       return snapshot;
     });
     try {
-      Future<?> registration = executor.submit(() -> adv.recordInventory(advertiser, item, 100));
+      Future<?> registration = executor.submit(
+          () -> delegate.recordInventory(advertiser, item, 100));
       Assert.assertTrue(headRead.await(5, TimeUnit.SECONDS));
       Assert.assertNull(advertiser.getAdvInvReceive().getIfPresent(item));
       acceptBlock();
       Future<?> confirmation = executor.submit(() -> {
         confirmationStarted.countDown();
-        adv.confirmBlockInventory(block.getBlockId());
+        delegate.confirmBlockInventory(block.getBlockId());
       });
       Assert.assertTrue(confirmationStarted.await(5, TimeUnit.SECONDS));
       try {
@@ -369,7 +374,7 @@ public class BlockInventoryActivityTest {
   }
 
   private void record(long receivedAt) {
-    adv.recordInventory(advertiser, item, receivedAt);
+    delegate.recordInventory(advertiser, item, receivedAt);
     Assert.assertEquals(1, advertiser.getLastInteractiveTime());
     Assert.assertEquals(Long.valueOf(receivedAt),
         advertiser.getAdvBlockInvReceive().getIfPresent(item));

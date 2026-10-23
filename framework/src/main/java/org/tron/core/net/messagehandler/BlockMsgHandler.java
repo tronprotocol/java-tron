@@ -175,7 +175,7 @@ public class BlockMsgHandler implements TronMsgHandler {
     if (tronNetDelegate.isHitDown()) {
       return BlockResult.IGNORED;
     }
-    advService.confirmBlockInventory(blockId);
+    tronNetDelegate.confirmBlockInventory(blockId);
     witnessProductBlockService.validWitnessProductTwoBlock(block);
 
     Item item = new Item(blockId, InventoryType.BLOCK);

@@ -1,7 +1,9 @@
 package org.tron.core.net.service.fetchblock;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -64,6 +66,8 @@ public class FetchBlockRetryTest {
     adv = new AdvService();
     inventoryHandler = new InventoryMsgHandler();
     delegate = mock(TronNetDelegate.class);
+    doCallRealMethod().when(delegate).recordInventory(any(), any(), anyLong());
+    doCallRealMethod().when(delegate).confirmBlockInventory(any());
     chain = mock(ChainBaseManager.class);
     first = PeerBlockTestSupport.peer(18888);
     second = PeerBlockTestSupport.peer(18889);

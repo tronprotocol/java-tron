@@ -1,6 +1,8 @@
 package org.tron.core.net.service.sync;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -22,14 +24,12 @@ import org.tron.core.net.TronNetDelegate;
 import org.tron.core.net.messagehandler.PbftDataSyncHandler;
 import org.tron.core.net.peer.Item;
 import org.tron.core.net.peer.PeerConnection;
-import org.tron.core.net.service.adv.AdvService;
 import org.tron.protos.Protocol.Inventory.InventoryType;
 import org.tron.protos.Protocol.ReasonCode;
 
 public class SyncBlockContributionTest {
 
   private SyncService sync;
-  private AdvService adv;
   private TronNetDelegate delegate;
   private PeerConnection provider;
   private PeerConnection other;
@@ -38,8 +38,9 @@ public class SyncBlockContributionTest {
   @Before
   public void setUp() {
     sync = new SyncService();
-    adv = new AdvService();
     delegate = mock(TronNetDelegate.class);
+    doCallRealMethod().when(delegate).recordInventory(any(), any(), anyLong());
+    doCallRealMethod().when(delegate).confirmBlockInventory(any());
     provider = PeerBlockTestSupport.peer(18888);
     other = PeerBlockTestSupport.peer(18889);
     block = PeerBlockTestSupport.block(10);
@@ -48,15 +49,12 @@ public class SyncBlockContributionTest {
     when(delegate.getActivePeer()).thenReturn(Arrays.asList(provider, other));
     when(delegate.getHeadBlockId()).thenReturn(block.getParentBlockId());
     ReflectUtils.setFieldValue(sync, "tronNetDelegate", delegate);
-    ReflectUtils.setFieldValue(adv, "tronNetDelegate", delegate);
-    ReflectUtils.setFieldValue(sync, "advService", adv);
     ReflectUtils.setFieldValue(sync, "pbftDataSyncHandler", mock(PbftDataSyncHandler.class));
   }
 
   @After
   public void tearDown() {
     sync.close();
-    adv.close();
   }
 
   @Test
@@ -70,7 +68,7 @@ public class SyncBlockContributionTest {
 
   @Test
   public void testInvalidSignatureOnlyBlamesProvider() throws Exception {
-    adv.recordInventory(other, new Item(block.getBlockId(), InventoryType.BLOCK), 100);
+    delegate.recordInventory(other, new Item(block.getBlockId(), InventoryType.BLOCK), 100);
     doThrow(new P2pException(TypeEnum.BLOCK_SIGN_INVALID, "bad signature"))
         .when(delegate).validSignature(block);
     process();
@@ -83,7 +81,7 @@ public class SyncBlockContributionTest {
 
   @Test
   public void testStateFailureUsesBadBlockWithoutImprovingTimestamps() throws Exception {
-    adv.recordInventory(other, new Item(block.getBlockId(), InventoryType.BLOCK), 100);
+    delegate.recordInventory(other, new Item(block.getBlockId(), InventoryType.BLOCK), 100);
     doThrow(new P2pException(TypeEnum.BAD_BLOCK, "state failure"))
         .when(delegate).processBlock(block, true);
     process();
@@ -98,7 +96,7 @@ public class SyncBlockContributionTest {
 
   @Test
   public void testShutdownDoesNotImproveTimestamps() throws Exception {
-    adv.recordInventory(other, new Item(block.getBlockId(), InventoryType.BLOCK), 100);
+    delegate.recordInventory(other, new Item(block.getBlockId(), InventoryType.BLOCK), 100);
     when(delegate.isHitDown()).thenReturn(true);
     process();
     Assert.assertEquals(1, provider.getLastInteractiveTime());
@@ -109,7 +107,7 @@ public class SyncBlockContributionTest {
   @Test
   public void testSyncBlockConfirmsEligibleInventoryWithoutContribution() throws Exception {
     Item item = new Item(block.getBlockId(), InventoryType.BLOCK);
-    adv.recordInventory(other, item, 100);
+    delegate.recordInventory(other, item, 100);
     Assert.assertEquals(1, other.getLastInteractiveTime());
 
     process();

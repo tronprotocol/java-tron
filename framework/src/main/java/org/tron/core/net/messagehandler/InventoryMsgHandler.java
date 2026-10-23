@@ -41,7 +41,7 @@ public class InventoryMsgHandler implements TronMsgHandler {
 
     for (Sha256Hash id : inventoryMessage.getHashList()) {
       Item item = new Item(id, type);
-      advService.recordInventory(peer, item, System.currentTimeMillis());
+      tronNetDelegate.recordInventory(peer, item, System.currentTimeMillis());
       advService.addInv(item);
     }
   }

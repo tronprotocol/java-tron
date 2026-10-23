@@ -32,7 +32,6 @@ import org.tron.core.net.message.sync.SyncBlockChainMessage;
 import org.tron.core.net.messagehandler.PbftDataSyncHandler;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.TronState;
-import org.tron.core.net.service.adv.AdvService;
 import org.tron.protos.Protocol.Inventory.InventoryType;
 import org.tron.protos.Protocol.ReasonCode;
 
@@ -45,9 +44,6 @@ public class SyncService {
 
   @Autowired
   private PbftDataSyncHandler pbftDataSyncHandler;
-
-  @Autowired
-  private AdvService advService;
 
   private Map<UnparsedBlock, PeerConnection> blockWaitToProcess = new ConcurrentHashMap<>();
 
@@ -330,18 +326,19 @@ public class SyncService {
               block = new BlockCapsule(unparsedBlock.getData());
             } catch (Exception e) {
               logger.warn("Deserialize block {} failed", blockId.getString(), e);
+              peerConnection.getSyncBlockInProcess().remove(blockId);
+              invalid(blockId, peerConnection);
               return;
             }
             processSyncBlock(block, peerConnection);
             peerConnection.getSyncBlockInProcess().remove(blockId);
           } else if (tronNetDelegate.getActivePeer().stream()
-              .noneMatch(peer -> peer.getSyncBlockToFetch().contains(blockId))
-              && tronNetDelegate.containBlock(blockId)) {
-            // The block is already local and no sync queue still needs this response.
-            // Release the pending slot and the provider's in-process marker.
+              .noneMatch(peer -> peer.getSyncBlockToFetch().contains(blockId))) {
+            // No sync queue still needs this response; release it even if it is not local.
             blockWaitToProcess.remove(unparsedBlock);
             capacityReleased[0] = true;
             peerConnection.getSyncBlockInProcess().remove(blockId);
+            invalid(blockId, peerConnection);
           }
         }
       });
@@ -364,7 +361,7 @@ public class SyncService {
       if (tronNetDelegate.isHitDown()) {
         return;
       }
-      advService.confirmBlockInventory(blockId);
+      tronNetDelegate.confirmBlockInventory(blockId);
       peerConnection.updateLastInteractiveTime(System.currentTimeMillis());
       if (useful) {
         peerConnection.setBlockRcvTime(System.currentTimeMillis());
