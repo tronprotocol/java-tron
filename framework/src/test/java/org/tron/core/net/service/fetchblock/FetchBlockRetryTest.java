@@ -6,6 +6,7 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -16,11 +17,18 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
+import org.mockito.stubbing.Answer;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.common.utils.Sha256Hash;
@@ -391,8 +399,7 @@ public class FetchBlockRetryTest {
     Assert.assertTrue(first.getAdvInvRequest().containsKey(blocks.get(0)));
     Assert.assertFalse(first.getAdvInvRequest().containsKey(blocks.get(1)));
 
-    fetch.blockFetchSuccess(blocks.get(0).getHash());
-    first.getAdvInvRequest().remove(blocks.get(0));
+    fetch.blockFetchSuccess(blocks.get(0).getHash(), first);
     when(chain.getHeadBlockNum()).thenReturn(block.getNum());
     when(delegate.getHeadBlockId()).thenReturn(new BlockId(blocks.get(0).getHash()));
 
@@ -541,11 +548,21 @@ public class FetchBlockRetryTest {
     verify(first, never()).sendMessage(any());
   }
 
+  @Test(timeout = 10_000)
+  public void testRecoveryWaitsForCompletionRequestRemoval() throws Exception {
+    assertCompletionAndRecoveryAreSerialized(true);
+  }
+
+  @Test(timeout = 10_000)
+  public void testCompletionWaitsForRecoveryRequestLookup() throws Exception {
+    assertCompletionAndRecoveryAreSerialized(false);
+  }
+
   @Test
   public void testStaleWorkerCannotOverwriteNewFetch() throws Exception {
     beginAgedFetch(2_000);
     Object oldState = state();
-    fetch.blockFetchSuccess(item.getHash());
+    fetch.blockFetchSuccess(item.getHash(), first);
     Item next = new Item(PeerBlockTestSupport.block(block.getNum() + 1).getBlockId(),
         InventoryType.BLOCK);
     when(chain.getHeadBlockNum()).thenReturn(block.getNum());
@@ -554,7 +571,7 @@ public class FetchBlockRetryTest {
     Object newState = state();
 
     tick(oldState);
-    fetch.blockFetchSuccess(item.getHash());
+    fetch.blockFetchSuccess(item.getHash(), first);
 
     Assert.assertSame(newState, state());
     verify(second, never()).sendMessage(any());
@@ -564,8 +581,7 @@ public class FetchBlockRetryTest {
   public void testImmediateFirstResponseDoesNotResurrectCompletedFetch() throws Exception {
     doAnswer(call -> {
       Assert.assertNotNull(state());
-      fetch.blockFetchSuccess(item.getHash());
-      first.getAdvInvRequest().remove(item);
+      fetch.blockFetchSuccess(item.getHash(), first);
       return null;
     }).when(first).sendMessage(any(FetchInvDataMessage.class));
 
@@ -579,8 +595,7 @@ public class FetchBlockRetryTest {
     beginAgedFetch(2_000);
     second.getAdvInvReceive().put(item, System.currentTimeMillis());
     doAnswer(call -> {
-      fetch.blockFetchSuccess(item.getHash());
-      second.getAdvInvRequest().remove(item);
+      fetch.blockFetchSuccess(item.getHash(), second);
       return null;
     }).when(second).sendMessage(any(FetchInvDataMessage.class));
 
@@ -617,6 +632,58 @@ public class FetchBlockRetryTest {
 
     Assert.assertNull(state());
     Assert.assertTrue(first.getAdvInvRequest().containsKey(item));
+  }
+
+  private void assertCompletionAndRecoveryAreSerialized(boolean completeFirst) throws Exception {
+    beginAgedFetch(2_000);
+    second.getAdvInvRequest().put(item, first.getAdvInvRequest().get(item));
+    fetch.onDisconnect(first);
+    Map<Item, Long> requests = spy(second.getAdvInvRequest());
+    second.setAdvInvRequest(requests);
+    CountDownLatch requestAccessed = new CountDownLatch(1);
+    CountDownLatch finishAccess = new CountDownLatch(1);
+    CountDownLatch otherStarted = new CountDownLatch(1);
+    Answer<Long> pauseRequestAccess = invocation -> {
+      Long time = (Long) invocation.callRealMethod();
+      requestAccessed.countDown();
+      Assert.assertTrue(finishAccess.await(5, TimeUnit.SECONDS));
+      return time;
+    };
+    if (completeFirst) {
+      doAnswer(pauseRequestAccess).when(requests).remove(item);
+    } else {
+      doAnswer(pauseRequestAccess).when(requests).get(item);
+    }
+    Runnable complete = () -> fetch.blockFetchSuccess(item.getHash(), second);
+    // Recovery may already have selected this provider before the response completes.
+    Runnable recover = () -> fetch.fetchBlock(Collections.singletonList(item.getHash()), second);
+    ExecutorService executor = Executors.newFixedThreadPool(2);
+    try {
+      Future<?> initial = executor.submit(completeFirst ? complete : recover);
+      Assert.assertTrue(requestAccessed.await(5, TimeUnit.SECONDS));
+      Future<?> other = executor.submit(() -> {
+        otherStarted.countDown();
+        (completeFirst ? recover : complete).run();
+      });
+      Assert.assertTrue(otherStarted.await(5, TimeUnit.SECONDS));
+      try {
+        other.get(100, TimeUnit.MILLISECONDS);
+        Assert.fail("Completion and recovery must not interleave their request updates");
+      } catch (TimeoutException expected) {
+        // The competing operation must wait until the request access finishes.
+      }
+      finishAccess.countDown();
+      initial.get(5, TimeUnit.SECONDS);
+      other.get(5, TimeUnit.SECONDS);
+
+      Assert.assertNull(state());
+      Assert.assertFalse(second.getAdvInvRequest().containsKey(item));
+      Assert.assertTrue(first.getAdvInvRequest().containsKey(item));
+    } finally {
+      finishAccess.countDown();
+      executor.shutdownNow();
+      Assert.assertTrue(executor.awaitTermination(5, TimeUnit.SECONDS));
+    }
   }
 
   private void beginAgedFetch(long age) {

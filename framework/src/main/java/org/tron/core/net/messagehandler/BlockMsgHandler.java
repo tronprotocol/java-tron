@@ -140,8 +140,7 @@ public class BlockMsgHandler implements TronMsgHandler {
     boolean activeWitness = tronNetDelegate.validBlock(block);
     // Retain pending fetch/request state if validation throws so disconnect can retry.
     // Otherwise, complete the fetch.
-    fetchBlockService.blockFetchSuccess(blockId);
-    peer.getAdvInvRequest().remove(new Item(blockId, InventoryType.BLOCK));
+    fetchBlockService.blockFetchSuccess(blockId, peer);
     if (!activeWitness) {
       logger.warn("Receive a block from an inactive witness, peer {}, block {}, witness {}",
           peer.getInetSocketAddress(), blockId.getString(),

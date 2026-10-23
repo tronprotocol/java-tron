@@ -304,7 +304,9 @@ public class BlockMsgHandlerTest extends BaseTest {
     ReflectUtils.setFieldValue(ingress, "tronNetDelegate", delegate);
     ReflectUtils.setFieldValue(ingress, "advService", adv);
     ReflectUtils.setFieldValue(ingress, "syncService", sync);
-    ReflectUtils.setFieldValue(ingress, "fetchBlockService", Mockito.mock(FetchBlockService.class));
+    FetchBlockService fetch = Mockito.mock(FetchBlockService.class);
+    Mockito.doCallRealMethod().when(fetch).blockFetchSuccess(any(), any());
+    ReflectUtils.setFieldValue(ingress, "fetchBlockService", fetch);
     ReflectUtils.setFieldValue(ingress, "witnessProductBlockService",
         Mockito.mock(WitnessProductBlockService.class));
     ReflectUtils.setFieldValue(ingress, "fastForward", false);

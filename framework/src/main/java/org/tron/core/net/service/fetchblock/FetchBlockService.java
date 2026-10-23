@@ -88,7 +88,8 @@ public class FetchBlockService {
         });
   }
 
-  public synchronized void blockFetchSuccess(Sha256Hash sha256Hash) {
+  public synchronized void blockFetchSuccess(Sha256Hash sha256Hash, PeerConnection peer) {
+    peer.getAdvInvRequest().remove(new Item(sha256Hash, InventoryType.BLOCK));
     FetchBlockInfo fetchBlockInfoTemp = this.fetchBlockInfo;
     if (null == fetchBlockInfoTemp || !fetchBlockInfoTemp.getHash().equals(sha256Hash)) {
       return;
@@ -140,17 +141,15 @@ public class FetchBlockService {
         .filter(peer -> canFetchBlock(peer, item, now))
         .min(Comparator.comparingDouble(this::getPeerLatency));
 
-    if (optionalPeerConnection.isPresent()) {
-      optionalPeerConnection.ifPresent(firstPeer -> {
-        if (shouldFetchBlock(firstPeer, fetchBlock)
-            && firstPeer.checkAndPutAdvInvRequest(item, now)) {
-          this.fetchBlockInfo = new FetchBlockInfo(item.getHash(), firstPeer, now);
-          firstPeer.sendMessage(new FetchInvDataMessage(Collections.singletonList(item.getHash()),
-              item.getType()));
-          Metrics.counterInc(MetricKeys.Counter.BLOCK_FETCH_SECONDARY, 1);
-        }
-      });
-    }
+    optionalPeerConnection.ifPresent(firstPeer -> {
+      if (shouldFetchBlock(firstPeer, fetchBlock)
+          && firstPeer.checkAndPutAdvInvRequest(item, now)) {
+        this.fetchBlockInfo = new FetchBlockInfo(item.getHash(), firstPeer, now);
+        firstPeer.sendMessage(new FetchInvDataMessage(Collections.singletonList(item.getHash()),
+            item.getType()));
+        Metrics.counterInc(MetricKeys.Counter.BLOCK_FETCH_SECONDARY, 1);
+      }
+    });
   }
 
   private boolean shouldFetchBlock(PeerConnection newPeer, FetchBlockInfo fetchBlock) {

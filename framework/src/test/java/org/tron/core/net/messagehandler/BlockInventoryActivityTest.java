@@ -95,7 +95,9 @@ public class BlockInventoryActivityTest {
         mock(TransactionsMsgHandler.class));
     ReflectUtils.setFieldValue(blocks, "tronNetDelegate", delegate);
     ReflectUtils.setFieldValue(blocks, "advService", adv);
-    ReflectUtils.setFieldValue(blocks, "fetchBlockService", mock(FetchBlockService.class));
+    FetchBlockService fetch = mock(FetchBlockService.class);
+    doCallRealMethod().when(fetch).blockFetchSuccess(any(), any());
+    ReflectUtils.setFieldValue(blocks, "fetchBlockService", fetch);
     ReflectUtils.setFieldValue(blocks, "syncService", mock(SyncService.class));
     ReflectUtils.setFieldValue(blocks, "witnessProductBlockService",
         mock(WitnessProductBlockService.class));

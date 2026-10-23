@@ -3,6 +3,7 @@ package org.tron.core.net.messagehandler;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -56,6 +57,7 @@ public class BlockContributionTest {
     handler = new BlockMsgHandler();
     delegate = mock(TronNetDelegate.class);
     fetch = mock(FetchBlockService.class);
+    doCallRealMethod().when(fetch).blockFetchSuccess(any(), any());
     adv = mock(AdvService.class);
     sync = mock(SyncService.class);
     ReflectUtils.setFieldValue(handler, "tronNetDelegate", delegate);
@@ -80,11 +82,11 @@ public class BlockContributionTest {
   public void testValidationFetchBroadcastAndExecutionOrder() throws Exception {
     when(delegate.validBlock(block)).thenAnswer(call -> {
       Assert.assertEquals(Long.valueOf(requestTime), provider.getAdvInvRequest().get(item));
-      verify(fetch, never()).blockFetchSuccess(any());
+      verify(fetch, never()).blockFetchSuccess(any(), any());
       return true;
     });
     doAnswer(call -> {
-      verify(fetch).blockFetchSuccess(block.getBlockId());
+      verify(fetch).blockFetchSuccess(block.getBlockId(), provider);
       Assert.assertFalse(provider.getAdvInvRequest().containsKey(item));
       Assert.assertTrue(provider.getLastInteractiveTime() > 1);
       Assert.assertEquals(0, provider.getBlockRcvTime());
@@ -224,7 +226,7 @@ public class BlockContributionTest {
       Assert.assertEquals(TypeEnum.BAD_BLOCK, e.getType());
     }
     Assert.assertEquals(Long.valueOf(requestTime), provider.getAdvInvRequest().get(invalidItem));
-    verify(fetch, never()).blockFetchSuccess(any());
+    verify(fetch, never()).blockFetchSuccess(any(), any());
     verify(adv, never()).broadcast(any());
     Assert.assertEquals(1, provider.getLastInteractiveTime());
   }
@@ -246,7 +248,7 @@ public class BlockContributionTest {
     }
 
     verify(delegate, never()).validBlock(any());
-    verify(fetch, never()).blockFetchSuccess(any());
+    verify(fetch, never()).blockFetchSuccess(any(), any());
     verify(adv, never()).broadcast(any());
     Assert.assertEquals(1, provider.getLastInteractiveTime());
     Assert.assertEquals(0, provider.getBlockRcvTime());
@@ -274,7 +276,7 @@ public class BlockContributionTest {
     Assert.assertEquals(Long.valueOf(requestTime), provider.getAdvInvRequest().get(item));
     Assert.assertEquals(1, provider.getLastInteractiveTime());
     Assert.assertEquals(0, provider.getBlockRcvTime());
-    verify(fetch, never()).blockFetchSuccess(any());
+    verify(fetch, never()).blockFetchSuccess(any(), any());
     verify(adv, never()).broadcast(any());
   }
 
@@ -284,7 +286,7 @@ public class BlockContributionTest {
     handler.processMessage(provider, new BlockMessage(block));
     Assert.assertTrue(provider.getBlockRcvTime() > 0);
     Assert.assertFalse(provider.getAdvInvRequest().containsKey(item));
-    verify(fetch).blockFetchSuccess(block.getBlockId());
+    verify(fetch).blockFetchSuccess(block.getBlockId(), provider);
   }
 
   @Test(timeout = 20_000)
@@ -338,6 +340,6 @@ public class BlockContributionTest {
     Assert.assertEquals(Long.valueOf(requestTime), provider.getAdvInvRequest().get(item));
     Assert.assertEquals(1, provider.getLastInteractiveTime());
     Assert.assertEquals(0, provider.getBlockRcvTime());
-    verify(fetch, never()).blockFetchSuccess(any());
+    verify(fetch, never()).blockFetchSuccess(any(), any());
   }
 }
