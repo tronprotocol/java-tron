@@ -39,10 +39,13 @@ import java.util.stream.IntStream;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.junit.Test;
+import org.mockito.MockedStatic;
 import org.tron.api.GrpcAPI;
 import org.tron.common.BaseMethodTest;
 import org.tron.common.TestConstants;
 import org.tron.common.crypto.ECKey;
+import org.tron.common.exit.ExitManager;
+import org.tron.common.exit.ExitManagerTestUtil;
 import org.tron.common.logsfilter.EventPluginLoader;
 import org.tron.common.logsfilter.capsule.BlockFilterCapsule;
 import org.tron.common.logsfilter.capsule.BlockLogTriggerCapsule;
@@ -1408,9 +1411,12 @@ public class ManagerTest extends BaseMethodTest {
     Manager manager = spy(new Manager());
     doThrow(new RuntimeException("postBlockTrigger mock")).when(manager)
         .postBlockTrigger(any(), anyBoolean());
-    TronError thrown = Assert.assertThrows(TronError.class, () ->
-        manager.blockTrigger(new BlockCapsule(Block.newBuilder().build()), 1, 1));
-    Assert.assertEquals(TronError.ErrCode.EVENT_SUBSCRIBE_ERROR, thrown.getErrCode());
+    try (MockedStatic<ExitManager> exit = ExitManagerTestUtil.suppressExit()) {
+      TronError thrown = Assert.assertThrows(TronError.class, () ->
+          manager.blockTrigger(new BlockCapsule(Block.newBuilder().build()), 1, 1));
+      Assert.assertEquals(TronError.ErrCode.EVENT_SUBSCRIBE_ERROR, thrown.getErrCode());
+      exit.verify(() -> ExitManager.logAndExit(thrown));
+    }
   }
 
   @Test

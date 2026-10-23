@@ -1,5 +1,6 @@
 package org.tron.core.db2;
 
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
@@ -13,7 +14,10 @@ import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.junit.Test;
+import org.mockito.MockedStatic;
 import org.tron.common.BaseMethodTest;
+import org.tron.common.exit.ExitManager;
+import org.tron.common.exit.ExitManagerTestUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.db2.RevokingDbWithCacheNewValueTest.TestRevokingTronStore;
@@ -109,7 +113,25 @@ public class SnapshotManagerTest extends BaseMethodTest {
     manager.setUnChecked(false);
     when(manager.getCheckpointList()).thenReturn(Arrays.asList("check1", "check2"));
     when(manager.shouldBeRefreshed()).thenReturn(true);
-    TronError thrown = Assert.assertThrows(TronError.class, manager::flush);
-    Assert.assertEquals(TronError.ErrCode.DB_FLUSH, thrown.getErrCode());
+    try (MockedStatic<ExitManager> exit = ExitManagerTestUtil.suppressExit()) {
+      TronError thrown = Assert.assertThrows(TronError.class, manager::flush);
+      Assert.assertEquals(TronError.ErrCode.DB_FLUSH, thrown.getErrCode());
+      exit.verify(() -> ExitManager.logAndExit(thrown));
+    }
+  }
+
+  @Test
+  public void testCheckpointOpenErrorRequestsExit() {
+    SnapshotManager manager = spy(new SnapshotManager(""));
+    manager.setUnChecked(false);
+    when(manager.shouldBeRefreshed()).thenReturn(true);
+    TronError openError = new TronError("open failed", TronError.ErrCode.LEVELDB_INIT);
+    doThrow(openError).when(manager).createCheckpoint();
+    try (MockedStatic<ExitManager> exit = ExitManagerTestUtil.suppressExit()) {
+      TronError thrown = Assert.assertThrows(TronError.class, manager::flush);
+      Assert.assertEquals(TronError.ErrCode.DB_FLUSH, thrown.getErrCode());
+      Assert.assertSame(openError, thrown.getCause());
+      exit.verify(() -> ExitManager.logAndExit(thrown));
+    }
   }
 }

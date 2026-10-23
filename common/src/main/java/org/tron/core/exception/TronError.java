@@ -3,14 +3,19 @@ package org.tron.core.exception;
 import lombok.Getter;
 
 /**
- * If a {@link TronError} is thrown, the service will trigger {@link System#exit(int)} by
- * {@link Thread#setDefaultUncaughtExceptionHandler(Thread.UncaughtExceptionHandler)}.
- * NOTE: Do not attempt to catch {@link TronError}.
+ * A {@link TronError} terminates the process only if it reaches the default uncaught exception
+ * handler or an {@code ExecutorServiceManager} task wrapper. A site that runs after startup on a
+ * thread whose errors reach neither (a netty pipeline, a Jetty request, a plain executor task)
+ * must request the exit itself with {@code throw ExitManager.requestExit(...)}. Startup-only
+ * sites throw directly so that the main thread unwinds before the process exits.
+ * NOTE: Do not swallow {@link TronError}.
  */
 @Getter
 public class TronError extends Error {
 
   private final ErrCode errCode;
+
+  private volatile boolean exitRequested;
 
   public TronError(String message, ErrCode exitCode) {
     super(message);
@@ -25,6 +30,10 @@ public class TronError extends Error {
   public TronError(Throwable cause, ErrCode exitCode) {
     super(cause);
     this.errCode = exitCode;
+  }
+
+  public void markExitRequested() {
+    exitRequested = true;
   }
 
   @Getter
