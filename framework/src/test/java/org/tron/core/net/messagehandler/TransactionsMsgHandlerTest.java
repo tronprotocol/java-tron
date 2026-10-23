@@ -49,6 +49,7 @@ import org.tron.core.net.message.adv.TransactionsMessage;
 import org.tron.core.net.peer.Item;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.service.adv.AdvService;
+import org.tron.core.net.service.fetchblock.FetchBlockService;
 import org.tron.core.net.service.sync.SyncService;
 import org.tron.p2p.connection.Channel;
 import org.tron.protos.Protocol;
@@ -591,6 +592,7 @@ public class TransactionsMsgHandlerTest extends BaseTest {
       List<PeerConnection> activePeers = new ArrayList<>(Collections.singletonList(source));
       Mockito.when(delegate.getActivePeer()).thenReturn(activePeers);
       ReflectUtils.setFieldValue(adv, "tronNetDelegate", delegate);
+      ReflectUtils.setFieldValue(adv, "fetchBlockService", Mockito.mock(FetchBlockService.class));
       setField(handler, "tronNetDelegate", delegate);
       setField(handler, "advService", adv);
       setField(handler, "chainBaseManager", Mockito.mock(ChainBaseManager.class));

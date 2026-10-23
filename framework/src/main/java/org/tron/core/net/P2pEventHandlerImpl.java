@@ -259,7 +259,6 @@ public class P2pEventHandlerImpl extends P2pEventHandler {
     switch (type) {
       case SYNC_BLOCK_CHAIN:
       case BLOCK_CHAIN_INVENTORY:
-      case BLOCK:
         flag = true;
         break;
       case FETCH_INV_DATA:
@@ -269,7 +268,7 @@ public class P2pEventHandlerImpl extends P2pEventHandler {
         break;
     }
     if (flag) {
-      peer.setLastInteractiveTime(System.currentTimeMillis());
+      peer.updateLastInteractiveTime(System.currentTimeMillis());
     }
   }
 

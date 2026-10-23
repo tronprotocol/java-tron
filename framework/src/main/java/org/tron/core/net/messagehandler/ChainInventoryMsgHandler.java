@@ -52,6 +52,7 @@ public class ChainInventoryMsgHandler implements TronMsgHandler {
     if (blockIdWeGet.size() == 1 && tronNetDelegate.containBlock(blockIdWeGet.peek())) {
       peer.setTronState(TronState.SYNC_COMPLETED);
       peer.setNeedSyncFromPeer(false);
+      syncService.setHandleFlag(true);
       return;
     }
 
@@ -82,6 +83,7 @@ public class ChainInventoryMsgHandler implements TronMsgHandler {
       }
 
       peer.setFetchAble(true);
+      syncService.setHandleFlag(true);
       if ((chainInventoryMessage.getRemainNum() == 0 && !peer.getSyncBlockToFetch().isEmpty())
           || (chainInventoryMessage.getRemainNum() != 0
           && peer.getSyncBlockToFetch().size() > syncFetchBatchNum)) {

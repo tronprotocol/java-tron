@@ -63,6 +63,8 @@ public class SyncService {
   private final ScheduledExecutorService blockHandleExecutor = ExecutorServiceManager
       .newSingleThreadScheduledExecutor(handleEsName);
 
+  // When true, the scheduled task calls handleSyncBlock() to process pending sync blocks.
+  @Setter
   private volatile boolean handleFlag = false;
 
   @Setter
@@ -324,10 +326,19 @@ public class SyncService {
               block = new BlockCapsule(unparsedBlock.getData());
             } catch (Exception e) {
               logger.warn("Deserialize block {} failed", blockId.getString(), e);
+              peerConnection.getSyncBlockInProcess().remove(blockId);
+              invalid(blockId, peerConnection);
               return;
             }
             processSyncBlock(block, peerConnection);
             peerConnection.getSyncBlockInProcess().remove(blockId);
+          } else if (tronNetDelegate.getActivePeer().stream()
+              .noneMatch(peer -> peer.getSyncBlockToFetch().contains(blockId))) {
+            // No sync queue still needs this response; release it even if it is not local.
+            blockWaitToProcess.remove(unparsedBlock);
+            capacityReleased[0] = true;
+            peerConnection.getSyncBlockInProcess().remove(blockId);
+            invalid(blockId, peerConnection);
           }
         }
       });
@@ -344,8 +355,17 @@ public class SyncService {
     BlockId blockId = block.getBlockId();
     try {
       tronNetDelegate.validSignature(block);
+      boolean useful = block.getNum() >= tronNetDelegate.getHeadBlockId().getNum()
+          && !tronNetDelegate.containBlock(blockId);
       tronNetDelegate.processBlock(block, true);
-      peerConnection.setBlockRcvTime(System.currentTimeMillis());
+      if (tronNetDelegate.isHitDown()) {
+        return;
+      }
+      tronNetDelegate.confirmBlockInventory(blockId);
+      peerConnection.updateLastInteractiveTime(System.currentTimeMillis());
+      if (useful) {
+        peerConnection.setBlockRcvTime(System.currentTimeMillis());
+      }
       pbftDataSyncHandler.processPBFTCommitData(block);
     } catch (P2pException p2pException) {
       logger.error("Process sync block {} failed, type: {}",

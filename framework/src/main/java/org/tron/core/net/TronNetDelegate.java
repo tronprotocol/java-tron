@@ -59,6 +59,7 @@ import org.tron.core.metrics.MetricsService;
 import org.tron.core.net.message.MessageTypes;
 import org.tron.core.net.message.adv.BlockMessage;
 import org.tron.core.net.message.adv.TransactionMessage;
+import org.tron.core.net.peer.Item;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.store.WitnessScheduleStore;
 import org.tron.protos.Protocol.Inventory.InventoryType;
@@ -136,6 +137,35 @@ public class TronNetDelegate {
 
   public Collection<PeerConnection> getActivePeer() {
     return TronNetService.getPeers();
+  }
+
+  public void recordInventory(PeerConnection peer, Item item, long receivedAt) {
+    if (item.getType() != InventoryType.BLOCK) {
+      peer.getAdvInvReceive().put(item, receivedAt);
+      return;
+    }
+    synchronized (this) {
+      // Capture eligibility before fetching; validation may advance the head immediately.
+      if (peer.getAdvInvSpread().getIfPresent(item) == null
+          && new BlockId(item.getHash()).getNum() > getHeadBlockId().getNum()) {
+        peer.getAdvBlockInvReceive().put(item, receivedAt);
+      }
+      peer.getAdvInvReceive().put(item, receivedAt);
+    }
+  }
+
+  /**
+   * Confirms eligible announcements only after the block has been successfully processed.
+   */
+  public synchronized void confirmBlockInventory(BlockId blockId) {
+    Item item = new Item(blockId, InventoryType.BLOCK);
+    // Share the registration lock so confirmation cannot miss an eligible announcement.
+    getActivePeer().forEach(peer -> {
+      Long receivedAt = peer.getAdvBlockInvReceive().asMap().remove(item);
+      if (receivedAt != null) {
+        peer.updateLastInteractiveTime(receivedAt);
+      }
+    });
   }
 
   public long getSyncBeginNumber() {
