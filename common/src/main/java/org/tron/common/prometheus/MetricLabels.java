@@ -87,7 +87,8 @@ public class MetricLabels {
   // Info
   public static class Info {
     public static final String VERSION = "version";
-    // identifies the genesis block: the value is the chain id from the genesis block hash
+    // identifies the genesis block: the label value is the chain id derived from the
+    // genesis block hash, so the label is named genesis_block_id
     public static final String CHAIN_ID = "genesis_block_id";
 
     private Info() {
