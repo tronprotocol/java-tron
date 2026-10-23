@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.common.utils.Pair;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.Parameter.NetConstants;
@@ -17,6 +18,7 @@ import org.tron.core.exception.P2pException;
 import org.tron.core.exception.P2pException.TypeEnum;
 import org.tron.core.net.TronNetDelegate;
 import org.tron.core.net.message.TronMessage;
+import org.tron.core.net.message.handshake.HelloMessage;
 import org.tron.core.net.message.sync.ChainInventoryMessage;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.TronState;
@@ -50,6 +52,7 @@ public class ChainInventoryMsgHandler implements TronMsgHandler {
     Deque<BlockId> blockIdWeGet = new LinkedList<>(chainInventoryMessage.getBlockIds());
 
     if (blockIdWeGet.size() == 1 && tronNetDelegate.containBlock(blockIdWeGet.peek())) {
+      peer.setRemainNum(0);
       peer.setTronState(TronState.SYNC_COMPLETED);
       peer.setNeedSyncFromPeer(false);
       return;
@@ -93,7 +96,9 @@ public class ChainInventoryMsgHandler implements TronMsgHandler {
   }
 
   private void check(PeerConnection peer, ChainInventoryMessage msg) throws P2pException {
-    if (peer.getSyncChainRequested() == null) {
+    HelloMessage hello = peer.getHelloMessageReceive();
+    Pair<Deque<BlockId>, Long> requested = peer.getSyncChainRequested();
+    if (requested == null) {
       throw new P2pException(TypeEnum.BAD_MESSAGE, "not send syncBlockChainMsg");
     }
 
@@ -123,9 +128,9 @@ public class ChainInventoryMsgHandler implements TronMsgHandler {
       }
     }
 
-    if (!peer.getSyncChainRequested().getKey().contains(blockIds.get(0))) {
+    if (!requested.getKey().contains(blockIds.get(0))) {
       throw new P2pException(TypeEnum.BAD_MESSAGE, "unlinked block, my head: "
-          + peer.getSyncChainRequested().getKey().getLast().getString()
+          + requested.getKey().getLast().getString()
           + ", peer: " + blockIds.get(0).getString());
     }
 
@@ -137,11 +142,30 @@ public class ChainInventoryMsgHandler implements TronMsgHandler {
           maxRemainTime / BLOCK_PRODUCED_INTERVAL + tronNetDelegate.getSolidBlockId().getNum();
       long lastNum = blockIds.get(blockIds.size() - 1).getNum();
       long declaredHighestNum = lastNum + msg.getRemainNum();
-      if (declaredHighestNum < 0 || declaredHighestNum > maxFutureNum) {
+      if (declaredHighestNum < 0 || lastNum > maxFutureNum || declaredHighestNum > maxFutureNum) {
         throw new P2pException(TypeEnum.BAD_MESSAGE,
             "Invalid declared highest block number: " + declaredHighestNum
                 + ", lastNum: " + lastNum + ", remainNum: " + msg.getRemainNum()
                 + ", futureMaxNum: " + maxFutureNum);
+      }
+    }
+
+    if (msg.getRemainNum() == 0) {
+      BlockId lastBlockId = blockIds.get(blockIds.size() - 1);
+      long lastNum = lastBlockId.getNum();
+      long helloHeadNum = hello.getHeadBlockId().getNum();
+      if (lastNum < helloHeadNum) {
+        // In rare cases, a fork rollback can put an honest peer below its HELLO head.
+        // Accept the transient SYNC_FAIL disconnect; the peer can reconnect with a fresh
+        // HELLO after the default one-minute cooldown.
+        throw new P2pException(TypeEnum.SYNC_FAILED,
+            "lastNum " + lastNum + " (remainNum=0) is below hello head " + helloHeadNum);
+      }
+      // A peer that has the terminal block in our summary should reply with that block alone.
+      if (blockIds.size() > 1 && requested.getKey().contains(lastBlockId)) {
+        // A concurrent fork switch can also produce this response; avoid a bad-protocol ban.
+        throw new P2pException(TypeEnum.SYNC_FAILED,
+            "terminal block already in summary: " + lastBlockId.getString());
       }
     }
   }
