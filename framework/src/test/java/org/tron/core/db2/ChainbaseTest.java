@@ -122,6 +122,7 @@ public class ChainbaseTest extends BaseMethodTest {
     root.put(keyNotQuery1, valueNotQuery1);
     // advance head and put some data again
     head = head.advance();
+    chainbase.setHead(head);
     head.put(key4, value4);
     head.put(key5, value5);
     head.put(key9,value9);
@@ -129,6 +130,7 @@ public class ChainbaseTest extends BaseMethodTest {
     head.put(keyNotQuery2, valueNotQuery2);
 
     head = head.advance();
+    chainbase.setHead(head);
     head.remove(key9);
     root.remove(key3);
 

@@ -5,6 +5,8 @@ import com.google.common.collect.Iterators;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Streams;
 import com.google.common.primitives.Bytes;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -126,23 +128,19 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
   }
 
   synchronized void collect(Map<WrappedByteArray, WrappedByteArray> all) {
-    Snapshot next = getRoot().getNext();
-    while (next != null) {
-      Streams.stream(((SnapshotImpl) next).db)
+    for (SnapshotImpl layer : layersFromRoot()) {
+      Streams.stream(layer.db)
           .forEach(e -> all.put(WrappedByteArray.of(e.getKey().getBytes()),
               WrappedByteArray.of(e.getValue().getBytes())));
-      next = next.getNext();
     }
   }
 
   synchronized void collect(Map<WrappedByteArray, WrappedByteArray> all, byte[] prefix) {
-    Snapshot next = getRoot().getNext();
-    while (next != null) {
-      Streams.stream(((SnapshotImpl) next).db).filter(e -> Bytes.indexOf(
+    for (SnapshotImpl layer : layersFromRoot()) {
+      Streams.stream(layer.db).filter(e -> Bytes.indexOf(
               Objects.requireNonNull(e.getKey().getBytes()), prefix) == 0)
           .forEach(e -> all.put(WrappedByteArray.of(e.getKey().getBytes()),
               WrappedByteArray.of(e.getValue().getBytes())));
-      next = next.getNext();
     }
   }
 
@@ -155,13 +153,21 @@ public class SnapshotImpl extends AbstractSnapshot<Key, Value> {
    * so we need Operator value to determine next step.
    * */
   synchronized void collectUnique(Map<WrappedByteArray, Operator> all) {
-    Snapshot next = getRoot().getNext();
-    while (next != null) {
-      Streams.stream(((SnapshotImpl) next).db)
+    for (SnapshotImpl layer : layersFromRoot()) {
+      Streams.stream(layer.db)
           .forEach(e -> all.put(WrappedByteArray.of(e.getKey().getBytes()),
               e.getValue().getOperator()));
-      next = next.getNext();
     }
+  }
+
+  // Walk back from this snapshot: refreshOne relinks root.next past merged layers, and
+  // retreat() leaves next (a weak reference) pointing at dropped layers.
+  private Deque<SnapshotImpl> layersFromRoot() {
+    Deque<SnapshotImpl> layers = new ArrayDeque<>();
+    for (Snapshot s = this; Snapshot.isImpl(s); s = s.getPrevious()) {
+      layers.addFirst((SnapshotImpl) s);
+    }
+    return layers;
   }
 
 
