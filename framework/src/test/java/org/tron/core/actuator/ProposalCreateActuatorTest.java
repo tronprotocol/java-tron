@@ -481,82 +481,83 @@ public class ProposalCreateActuatorTest extends BaseTest {
   }
 
   /**
-   * A proposal containing CLOSE_EXCHANGE plus any other parameter must be rejected up
-   * front, regardless of the parameter order inside the capsule; unrelated
-   * multi-parameter proposals stay untouched.
+   * A proposal may combine CLOSE_EXCHANGE with unrelated parameters, but combining it with
+   * the legacy exchange parameters EXCHANGE_CREATE_FEE(12) or
+   * ALLOW_HARDEN_EXCHANGE_CALCULATION(98) is rejected up front, regardless of the parameter
+   * order inside the capsule; unrelated multi-parameter proposals stay untouched.
    */
   @Test
-  public void closeExchangeProposalMustBeSingleParameter() {
+  public void closeExchangeCannotBeCombinedWithExchangeParameters() {
     long closeExchange = ProposalType.CLOSE_EXCHANGE.getCode();
-    // CLOSE_EXCHANGE + one unrelated parameter -> rejected in both orders
-    HashMap<Long, Long> paras = new LinkedHashMap<>();
-    paras.put(closeExchange, 1L);
-    paras.put(0L, 1000000L);
-    ContractValidateException e = assertThrows(ContractValidateException.class,
-        () -> buildCreateActuator(paras).validate());
-    Assert.assertEquals("CLOSE_EXCHANGE proposal must contain only one parameter",
-        e.getMessage());
-
-    HashMap<Long, Long> parasReversed = new LinkedHashMap<>();
-    parasReversed.put(0L, 1000000L);
-    parasReversed.put(closeExchange, 1L);
-    e = assertThrows(ContractValidateException.class,
-        () -> buildCreateActuator(parasReversed).validate());
-    Assert.assertEquals("CLOSE_EXCHANGE proposal must contain only one parameter",
-        e.getMessage());
-
-    // CLOSE_EXCHANGE + EXCHANGE_CREATE_FEE(12) -> rejected in both orders
-    HashMap<Long, Long> withExchangeFee = new LinkedHashMap<>();
-    withExchangeFee.put(closeExchange, 1L);
-    withExchangeFee.put(12L, 1024_000_000L);
-    e = assertThrows(ContractValidateException.class,
-        () -> buildCreateActuator(withExchangeFee).validate());
-    Assert.assertEquals("CLOSE_EXCHANGE proposal must contain only one parameter",
-        e.getMessage());
-
-    HashMap<Long, Long> withExchangeFeeReversed = new LinkedHashMap<>();
-    withExchangeFeeReversed.put(12L, 1024_000_000L);
-    withExchangeFeeReversed.put(closeExchange, 1L);
-    e = assertThrows(ContractValidateException.class,
-        () -> buildCreateActuator(withExchangeFeeReversed).validate());
-    Assert.assertEquals("CLOSE_EXCHANGE proposal must contain only one parameter",
-        e.getMessage());
-
-    // CLOSE_EXCHANGE + ALLOW_HARDEN_EXCHANGE_CALCULATION(98) -> rejected in both orders
-    HashMap<Long, Long> withHarden = new LinkedHashMap<>();
-    withHarden.put(closeExchange, 1L);
-    withHarden.put(98L, 1L);
-    e = assertThrows(ContractValidateException.class,
-        () -> buildCreateActuator(withHarden).validate());
-    Assert.assertEquals("CLOSE_EXCHANGE proposal must contain only one parameter",
-        e.getMessage());
-
-    HashMap<Long, Long> withHardenReversed = new LinkedHashMap<>();
-    withHardenReversed.put(98L, 1L);
-    withHardenReversed.put(closeExchange, 1L);
-    e = assertThrows(ContractValidateException.class,
-        () -> buildCreateActuator(withHardenReversed).validate());
-    Assert.assertEquals("CLOSE_EXCHANGE proposal must contain only one parameter",
-        e.getMessage());
-
-    // CLOSE_EXCHANGE + two unrelated parameters -> rejected as well
-    HashMap<Long, Long> parasThree = new LinkedHashMap<>();
-    parasThree.put(closeExchange, 1L);
-    parasThree.put(0L, 1000000L);
-    parasThree.put(2L, 1000L);
-    e = assertThrows(ContractValidateException.class,
-        () -> buildCreateActuator(parasThree).validate());
-    Assert.assertEquals("CLOSE_EXCHANGE proposal must contain only one parameter",
-        e.getMessage());
+    long exchangeCreateFee = ProposalType.EXCHANGE_CREATE_FEE.getCode();
+    long hardenExchange = ProposalType.ALLOW_HARDEN_EXCHANGE_CALCULATION.getCode();
+    String expectedMessage = "CLOSE_EXCHANGE proposal cannot be combined with "
+        + "EXCHANGE_CREATE_FEE or ALLOW_HARDEN_EXCHANGE_CALCULATION";
 
     // unrelated multi-parameter proposals are unchanged (no CLOSE_EXCHANGE key)
     HashMap<Long, Long> unrelated = new HashMap<>();
-    unrelated.put(0L, 1000000L);
-    unrelated.put(2L, 1000L);
+    unrelated.put(ProposalType.MAINTENANCE_TIME_INTERVAL.getCode(), 1000000L);
+    unrelated.put(ProposalType.CREATE_ACCOUNT_FEE.getCode(), 1000L);
     try {
       buildCreateActuator(unrelated).validate();
     } catch (ContractValidateException ex) {
       Assert.fail("unrelated multi-parameter proposal must still validate: " + ex.getMessage());
+    }
+
+    activateCloseExchangeFork();
+    try {
+      // CLOSE_EXCHANGE + EXCHANGE_CREATE_FEE(12) -> rejected in both orders
+      HashMap<Long, Long> withExchangeFee = new LinkedHashMap<>();
+      withExchangeFee.put(closeExchange, 1L);
+      withExchangeFee.put(exchangeCreateFee, 1024_000_000L);
+      ContractValidateException e = assertThrows(ContractValidateException.class,
+          () -> buildCreateActuator(withExchangeFee).validate());
+      Assert.assertEquals(expectedMessage, e.getMessage());
+
+      HashMap<Long, Long> withExchangeFeeReversed = new LinkedHashMap<>();
+      withExchangeFeeReversed.put(exchangeCreateFee, 1024_000_000L);
+      withExchangeFeeReversed.put(closeExchange, 1L);
+      e = assertThrows(ContractValidateException.class,
+          () -> buildCreateActuator(withExchangeFeeReversed).validate());
+      Assert.assertEquals(expectedMessage, e.getMessage());
+
+      // CLOSE_EXCHANGE + ALLOW_HARDEN_EXCHANGE_CALCULATION(98) -> rejected in both orders
+      HashMap<Long, Long> withHarden = new LinkedHashMap<>();
+      withHarden.put(closeExchange, 1L);
+      withHarden.put(hardenExchange, 1L);
+      e = assertThrows(ContractValidateException.class,
+          () -> buildCreateActuator(withHarden).validate());
+      Assert.assertEquals(expectedMessage, e.getMessage());
+
+      HashMap<Long, Long> withHardenReversed = new LinkedHashMap<>();
+      withHardenReversed.put(hardenExchange, 1L);
+      withHardenReversed.put(closeExchange, 1L);
+      e = assertThrows(ContractValidateException.class,
+          () -> buildCreateActuator(withHardenReversed).validate());
+      Assert.assertEquals(expectedMessage, e.getMessage());
+
+      // CLOSE_EXCHANGE + one unrelated parameter -> now allowed in both orders
+      HashMap<Long, Long> withUnrelated = new LinkedHashMap<>();
+      withUnrelated.put(closeExchange, 1L);
+      withUnrelated.put(ProposalType.MAINTENANCE_TIME_INTERVAL.getCode(), 1000000L);
+      try {
+        buildCreateActuator(withUnrelated).validate();
+      } catch (ContractValidateException ex) {
+        Assert.fail("CLOSE_EXCHANGE + unrelated parameter must validate: " + ex.getMessage());
+      }
+
+      // CLOSE_EXCHANGE + CREATE_ACCOUNT_FEE + MAINTENANCE_TIME_INTERVAL -> now allowed as well
+      HashMap<Long, Long> threeParas = new LinkedHashMap<>();
+      threeParas.put(ProposalType.CREATE_ACCOUNT_FEE.getCode(), 1000L);
+      threeParas.put(closeExchange, 1L);
+      threeParas.put(ProposalType.MAINTENANCE_TIME_INTERVAL.getCode(), 1000000L);
+      try {
+        buildCreateActuator(threeParas).validate();
+      } catch (ContractValidateException ex) {
+        Assert.fail("CLOSE_EXCHANGE + unrelated parameters must validate: " + ex.getMessage());
+      }
+    } finally {
+      deactivateCloseExchangeFork();
     }
   }
 
