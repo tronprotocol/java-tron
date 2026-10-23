@@ -216,39 +216,40 @@ public class ProposalServiceTest extends BaseTest {
   }
 
   /**
-   * The dynamic property starts at 0 (missing key) and only ever moves forward one level at
-   * a time; duplicate, downgrade and jump proposals are silently ignored.
+   * The apply side stores every CLOSE_EXCHANGE value unconditionally: duplicate, stale,
+   * jump and reset proposals all write through. Creation-side validation (ProposalUtil) is
+   * the only gate.
    */
   @Test
-  public void testApplyCloseExchangeStepwiseAndIdempotent() {
+  public void testApplyCloseExchangeSavesUnconditionally() {
     dps().saveCloseExchange(0);
 
     apply(CLOSE_EXCHANGE_CODE, 1);
     Assert.assertEquals(1, dps().getCloseExchange());
 
-    // duplicate re-application of the same level in the same maintenance window: no-op
+    // duplicate re-application of the same value: still stored
     apply(CLOSE_EXCHANGE_CODE, 1);
     Assert.assertEquals(1, dps().getCloseExchange());
 
     apply(CLOSE_EXCHANGE_CODE, 2);
     Assert.assertEquals(2, dps().getCloseExchange());
 
-    // stale lower proposal: no-op
+    // stale lower value: applied unconditionally
     apply(CLOSE_EXCHANGE_CODE, 1);
-    Assert.assertEquals(2, dps().getCloseExchange());
+    Assert.assertEquals(1, dps().getCloseExchange());
 
-    // jump beyond the highest level: no-op
+    // jump beyond the highest level: applied unconditionally
     apply(CLOSE_EXCHANGE_CODE, 3);
-    Assert.assertEquals(2, dps().getCloseExchange());
+    Assert.assertEquals(3, dps().getCloseExchange());
 
-    // reset proposals: no-op
+    // reset: applied unconditionally
     apply(CLOSE_EXCHANGE_CODE, 0);
-    Assert.assertEquals(2, dps().getCloseExchange());
+    Assert.assertEquals(0, dps().getCloseExchange());
   }
 
   /**
-   * A CLOSE_EXCHANGE entry whose value does not match current + 1 must not block the other
-   * parameters carried by the same proposal.
+   * A CLOSE_EXCHANGE entry is applied unconditionally, and the sibling parameters carried by
+   * the same proposal are applied as well.
    */
   @Test
   public void testApplyCloseExchangeDoesNotBlockOtherParameters() {
@@ -257,30 +258,28 @@ public class ProposalServiceTest extends BaseTest {
     dps().saveWitnessPayPerBlock(100L);
 
     Proposal proposal = Proposal.newBuilder()
-        .putParameters(CLOSE_EXCHANGE_CODE, 3L)      // jump: ignored
+        .putParameters(CLOSE_EXCHANGE_CODE, 3L)      // applied unconditionally
         .putParameters(CREATE_ACCOUNT_FEE_CODE, 2000L)
         .putParameters(WITNESS_PAY_PER_BLOCK_CODE, 300L)
         .build();
     Assert.assertTrue(ProposalService.process(dbManager, new ProposalCapsule(proposal)));
 
-    Assert.assertEquals("invalid CLOSE_EXCHANGE entry must be a no-op",
-        1, dps().getCloseExchange());
+    Assert.assertEquals("CLOSE_EXCHANGE entry must be applied unconditionally",
+        3, dps().getCloseExchange());
     Assert.assertEquals(2000L, dps().getCreateAccountFee());
     Assert.assertEquals(300L, dps().getWitnessPayPerBlock());
   }
 
   /**
-   * While the close level is 0, EXCHANGE_CREATE_FEE(12) and
-   * ALLOW_HARDEN_EXCHANGE_CALCULATION(98) proposals apply as before; once the level
-   * reaches 1 their application becomes a no-op while unrelated parameters of the same
-   * proposal still apply. Historical level-0 applications are preserved (the stored
-   * value is never reverted).
+   * EXCHANGE_CREATE_FEE(12) and ALLOW_HARDEN_EXCHANGE_CALCULATION(98) apply unconditionally
+   * at any close level, together with the sibling parameters of the same proposal. The
+   * close-level lockout lives on the creation side only.
    */
   @Test
   public void testApplyLegacyExchangeParametersAroundCloseLevel() {
     // ensure level 0: prior tests in this class may have left the level raised
     dps().saveCloseExchange(0);
-    // close level 0: both legacy parameters still apply
+    // close level 0: both legacy parameters apply
     dps().saveExchangeCreateFee(1024_000_000L);
     dps().saveAllowHardenExchangeCalculation(0);
     apply(EXCHANGE_CREATE_FEE_CODE, 2_048_000_000L);
@@ -290,31 +289,25 @@ public class ProposalServiceTest extends BaseTest {
 
     dps().saveCloseExchange(1);
     try {
-      // close level >= 1: legacy exchange parameters are skipped...
+      // close level >= 1: legacy exchange parameters now apply unconditionally too
       apply(EXCHANGE_CREATE_FEE_CODE, 3_072_000_000L);
-      Assert.assertEquals("EXCHANGE_CREATE_FEE must not be applied at close level >= 1",
-          2_048_000_000L, dps().getExchangeCreateFee());
+      Assert.assertEquals("EXCHANGE_CREATE_FEE must apply at close level >= 1",
+          3_072_000_000L, dps().getExchangeCreateFee());
       apply(HARDEN_EXCHANGE_CODE, 0);
-      Assert.assertEquals("ALLOW_HARDEN_EXCHANGE_CALCULATION must not be applied at "
-              + "close level >= 1",
-          1, dps().getAllowHardenExchangeCalculation());
+      Assert.assertEquals("ALLOW_HARDEN_EXCHANGE_CALCULATION must apply at close level >= 1",
+          0, dps().getAllowHardenExchangeCalculation());
 
-      // ...without blocking unrelated parameters of the same proposal
+      // sibling parameters of the same proposal apply as well
       dps().saveCreateAccountFee(1000L);
       Proposal proposal = Proposal.newBuilder()
           .putParameters(EXCHANGE_CREATE_FEE_CODE, 4_096_000_000L)
-          .putParameters(HARDEN_EXCHANGE_CODE, 0L)
+          .putParameters(HARDEN_EXCHANGE_CODE, 1L)
           .putParameters(CREATE_ACCOUNT_FEE_CODE, 5000L)
           .build();
       Assert.assertTrue(ProposalService.process(dbManager, new ProposalCapsule(proposal)));
-      Assert.assertEquals(2_048_000_000L, dps().getExchangeCreateFee());
+      Assert.assertEquals(4_096_000_000L, dps().getExchangeCreateFee());
       Assert.assertEquals(1, dps().getAllowHardenExchangeCalculation());
       Assert.assertEquals(5000L, dps().getCreateAccountFee());
-
-      // CLOSE_EXCHANGE application itself still works at close level >= 1
-      dps().saveCloseExchange(0);
-      apply(CLOSE_EXCHANGE_CODE, 1);
-      Assert.assertEquals(1, dps().getCloseExchange());
     } finally {
       dps().saveCloseExchange(0);
       dps().saveAllowHardenExchangeCalculation(0);
