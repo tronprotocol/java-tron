@@ -1223,7 +1223,8 @@ public class Manager {
   }
 
   /**
-   * save a block.
+   * Save a block. Untrusted callers must first use network prevalidation to check its timestamp,
+   * transaction structure, Merkle root and block signature.
    */
   public void pushBlock(final BlockCapsule block)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
@@ -1265,7 +1266,6 @@ public class Manager {
         try (PendingManager pm = new PendingManager(this)) {
 
           if (!block.generatedByMyself) {
-            block.validateMerkleRoot();
             consensus.receiveBlock(block);
           }
 

@@ -2,7 +2,9 @@ package org.tron.core.net.services;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -13,6 +15,7 @@ import static org.mockito.Mockito.when;
 import com.google.common.cache.Cache;
 import com.google.protobuf.ByteString;
 import java.lang.reflect.Method;
+import java.math.BigInteger;
 import java.net.InetSocketAddress;
 import java.util.Arrays;
 import java.util.Collections;
@@ -23,12 +26,14 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.tron.common.TestConstants;
+import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
+import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.args.Args;
-import org.tron.core.exception.BadBlockException;
+import org.tron.core.db.Manager;
 import org.tron.core.exception.P2pException;
 import org.tron.core.exception.P2pException.TypeEnum;
 import org.tron.core.exception.ValidateScheduleException;
@@ -38,14 +43,19 @@ import org.tron.core.net.message.TronMessage;
 import org.tron.core.net.message.adv.BlockMessage;
 import org.tron.core.net.message.adv.FetchInvDataMessage;
 import org.tron.core.net.messagehandler.BlockMsgHandler;
+import org.tron.core.net.messagehandler.PbftDataSyncHandler;
 import org.tron.core.net.peer.Item;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.service.adv.AdvService;
 import org.tron.core.net.service.fetchblock.FetchBlockService;
 import org.tron.core.net.service.sync.SyncService;
+import org.tron.core.store.AccountStore;
+import org.tron.core.store.DynamicPropertiesStore;
+import org.tron.core.store.WitnessScheduleStore;
 import org.tron.p2p.connection.Channel;
 import org.tron.protos.Protocol.Inventory.InventoryType;
 import org.tron.protos.Protocol.ReasonCode;
+import org.tron.protos.Protocol.Transaction;
 
 public class BlockFetchFailureTest {
 
@@ -135,7 +145,7 @@ public class BlockFetchFailureTest {
     sender.getAdvInvReceive().put(item, System.currentTimeMillis());
     other.getAdvInvReceive().put(item, System.currentTimeMillis());
     P2pException failure = new P2pException(type, "invalid block");
-    doThrow(failure).when(delegate).validBlock(any(BlockCapsule.class));
+    doThrow(failure).when(delegate).validAdvBlock(any(BlockCapsule.class));
     try {
       Assert.assertTrue(adv.addInv(item));
       Assert.assertTrue(sender.getAdvInvRequest().containsKey(item));
@@ -144,6 +154,8 @@ public class BlockFetchFailureTest {
         Assert.fail("Invalid block must be rejected");
       } catch (P2pException e) {
         Assert.assertSame(failure, e);
+        verify(delegate).validAdvBlock(block);
+        verify(delegate, never()).processBlock(any(), anyBoolean());
         Method exceptionHandler = P2pEventHandlerImpl.class.getDeclaredMethod(
             "processException", PeerConnection.class, TronMessage.class, Exception.class);
         exceptionHandler.setAccessible(true);
@@ -173,14 +185,13 @@ public class BlockFetchFailureTest {
   @Test
   public void invalidSignatureReleasesSyncRequestWithoutDisconnectingOtherPeers() throws Exception {
     assertSyncFailure(new P2pException(TypeEnum.BLOCK_SIGN_INVALID, "signature"),
-        ReasonCode.BAD_BLOCK);
+        ReasonCode.BAD_BLOCK, true);
   }
 
   @Test
   public void invalidMerkleRootReleasesSyncRequestAndPreservesOtherPeers() throws Exception {
-    assertSyncFailure(new P2pException(TypeEnum.BAD_BLOCK, new BadBlockException(
-            BadBlockException.TypeEnum.CALC_MERKLE_ROOT_FAILED, "merkle")),
-        ReasonCode.BAD_BLOCK);
+    assertSyncFailure(new P2pException(TypeEnum.BLOCK_MERKLE_INVALID, "merkle"),
+        ReasonCode.BAD_BLOCK, true);
   }
 
   @Test
@@ -214,16 +225,23 @@ public class BlockFetchFailureTest {
     handler.processMessage(sender, message);
 
     verify(delegate, never()).validBlock(any());
+    verify(delegate, never()).validAdvBlock(any());
     verify(sync).processBlock(sender, message);
     Assert.assertFalse(sender.getSyncBlockRequested().containsKey(message.getBlockId()));
     Assert.assertTrue(sender.getSyncBlockInProcess().contains(message.getBlockId()));
   }
 
-  @SuppressWarnings("unchecked")
   private void assertSyncFailure(Exception failure, ReasonCode reason) throws Exception {
+    assertSyncFailure(failure, reason, false);
+  }
+
+  @SuppressWarnings("unchecked")
+  private void assertSyncFailure(Exception failure, ReasonCode reason, boolean prevalidation)
+      throws Exception {
     SyncService sync = new SyncService();
     TronNetDelegate delegate = mock(TronNetDelegate.class);
     ReflectUtils.setFieldValue(sync, "tronNetDelegate", delegate);
+    ReflectUtils.setFieldValue(sync, "pbftDataSyncHandler", mock(PbftDataSyncHandler.class));
     PeerConnection sender = newPeer(10001);
     PeerConnection other = newPeer(10002);
     BlockCapsule block = newBlock();
@@ -238,9 +256,8 @@ public class BlockFetchFailureTest {
     when(delegate.getActivePeer()).thenReturn(Arrays.asList(sender, other));
     when(delegate.getBlockLock()).thenReturn(new Object());
     when(delegate.getSolidBlockId()).thenReturn(previous);
-    if (failure instanceof P2pException
-        && ((P2pException) failure).getType() == TypeEnum.BLOCK_SIGN_INVALID) {
-      doThrow(failure).when(delegate).validSignature(any(BlockCapsule.class));
+    if (prevalidation) {
+      doThrow(failure).when(delegate).validBlock(any(BlockCapsule.class));
     } else {
       doThrow(failure).when(delegate).processBlock(any(BlockCapsule.class), anyBoolean());
     }
@@ -250,6 +267,13 @@ public class BlockFetchFailureTest {
     try {
       sync.processBlock(sender, new BlockMessage(block));
       invoke(sync, "handleSyncBlock");
+      verify(delegate).validBlock(any(BlockCapsule.class));
+      verify(delegate, never()).validAdvBlock(any());
+      if (prevalidation) {
+        verify(delegate, never()).processBlock(any(), anyBoolean());
+      } else {
+        verify(delegate).processBlock(any(BlockCapsule.class), eq(true));
+      }
       sync.onDisconnect(sender);
       Assert.assertNull("A failed response must release the global request",
           requests.getIfPresent(id));
@@ -263,6 +287,90 @@ public class BlockFetchFailureTest {
       Assert.assertSame(other, requests.getIfPresent(id));
       Assert.assertTrue(other.getSyncBlockRequested().containsKey(id));
       verify(other).sendMessage(any(FetchInvDataMessage.class));
+    } finally {
+      sync.close();
+    }
+  }
+
+  @Test
+  public void syncRejectsInvalidContractCountsBeforeProcessing() throws Exception {
+    for (int count : new int[]{0, 2}) {
+      assertRealSyncValidation(count, false);
+    }
+  }
+
+  @Test
+  public void syncAcceptsHistoricalWitnessOutsideCurrentSchedule() throws Exception {
+    assertRealSyncValidation(1, true);
+  }
+
+  @Test
+  public void syncRejectsInvalidMerkleRootBeforeProcessing() throws Exception {
+    assertRealSyncValidation(1, false, true);
+  }
+
+  private void assertRealSyncValidation(int count, boolean accepted) throws Exception {
+    assertRealSyncValidation(count, accepted, false);
+  }
+
+  private void assertRealSyncValidation(int count, boolean accepted, boolean staleRoot)
+      throws Exception {
+    ECKey key = ECKey.fromPrivate(BigInteger.TEN);
+    BlockCapsule block = new BlockCapsule(1, Sha256Hash.ZERO_HASH, 1234,
+        ByteString.copyFrom(key.getAddress()));
+    Transaction.raw.Builder raw = Transaction.raw.newBuilder();
+    for (int i = 0; i < count; i++) {
+      raw.addContract(Transaction.Contract.newBuilder()
+          .setType(Transaction.Contract.ContractType.TransferContract));
+    }
+    block.addTransaction(new TransactionCapsule(Transaction.newBuilder().setRawData(raw).build()));
+    block.setMerkleRoot();
+    if (staleRoot) {
+      block.addTransaction(new TransactionCapsule(Transaction.newBuilder()
+          .setRawData(Transaction.raw.newBuilder().setTimestamp(1).addContract(
+              Transaction.Contract.newBuilder()
+                  .setType(Transaction.Contract.ContractType.TransferContract))).build()));
+    }
+    block.sign(key.getPrivKeyBytes());
+    block = spy(block);
+    DynamicPropertiesStore properties = mock(DynamicPropertiesStore.class);
+    Manager manager = mock(Manager.class);
+    when(manager.getDynamicPropertiesStore()).thenReturn(properties);
+    when(manager.getAccountStore()).thenReturn(mock(AccountStore.class));
+    WitnessScheduleStore schedule = mock(WitnessScheduleStore.class);
+    when(schedule.getActiveWitnesses()).thenReturn(Collections.emptyList());
+    TronNetDelegate delegate = spy(new TronNetDelegate());
+    ReflectUtils.setFieldValue(delegate, "dbManager", manager);
+    ReflectUtils.setFieldValue(delegate, "witnessScheduleStore", schedule);
+    doReturn(Collections.emptyList()).when(delegate).getActivePeer();
+    doNothing().when(delegate).processBlock(any(), anyBoolean());
+    Assert.assertTrue(block.validateSignature(properties, manager.getAccountStore()));
+    SyncService sync = new SyncService();
+    PbftDataSyncHandler pbft = mock(PbftDataSyncHandler.class);
+    ReflectUtils.setFieldValue(sync, "tronNetDelegate", delegate);
+    ReflectUtils.setFieldValue(sync, "pbftDataSyncHandler", pbft);
+    PeerConnection sender = newPeer(10001);
+    try {
+      Method process = SyncService.class.getDeclaredMethod("processSyncBlock",
+          BlockCapsule.class, PeerConnection.class);
+      process.setAccessible(true);
+      process.invoke(sync, block, sender);
+
+      verify(delegate).validBlock(block);
+      verify(delegate, never()).validAdvBlock(any());
+      verify(schedule, never()).getActiveWitnesses();
+      if (accepted) {
+        verify(delegate).processBlock(block, true);
+        verify(pbft).processPBFTCommitData(block);
+        verify(sender, never()).disconnect(any());
+      } else {
+        if (staleRoot) {
+          verify(block).validateSignature(properties, manager.getAccountStore());
+        }
+        verify(delegate, never()).processBlock(any(), anyBoolean());
+        verify(pbft, never()).processPBFTCommitData(any());
+        verify(sender).disconnect(ReasonCode.BAD_BLOCK);
+      }
     } finally {
       sync.close();
     }

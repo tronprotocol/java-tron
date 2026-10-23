@@ -61,6 +61,7 @@ import org.tron.core.net.message.adv.TransactionMessage;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.store.WitnessScheduleStore;
 import org.tron.protos.Protocol.Inventory.InventoryType;
+import org.tron.protos.Protocol.Transaction;
 
 @Slf4j(topic = "net")
 @Component
@@ -337,35 +338,43 @@ public class TronNetDelegate {
     }
   }
 
-  public void validSignature(BlockCapsule block) throws P2pException {
-    boolean flag;
-    try {
-      flag = block.validateSignature(dbManager.getDynamicPropertiesStore(),
-              dbManager.getAccountStore());
-    } catch (Exception e) {
-      throw new P2pException(TypeEnum.BLOCK_SIGN_INVALID, e);
-    }
-    if (!flag) {
-      throw new P2pException(TypeEnum.BLOCK_SIGN_INVALID, "valid signature failed.");
-    }
-  }
-
   public void validBlock(BlockCapsule block) throws P2pException {
     long time = System.currentTimeMillis();
     if (block.getTimeStamp() - time > timeout) {
       throw new P2pException(TypeEnum.BAD_BLOCK,
-              "time:" + time + ",block time:" + block.getTimeStamp());
+          "time:" + time + ",block time:" + block.getTimeStamp());
+    }
+    for (Transaction transaction : block.getInstance().getTransactionsList()) {
+      int contractCount = transaction.getRawData().getContractCount();
+      if (contractCount != 1) {
+        throw new P2pException(TypeEnum.BAD_BLOCK,
+            "Invalid contract count: " + contractCount
+                + ", block: " + block.getBlockId().getString());
+      }
     }
     try {
       block.validateMerkleRoot();
     } catch (BadBlockException e) {
       throw new P2pException(TypeEnum.BLOCK_MERKLE_INVALID, e.getMessage());
     }
-    validSignature(block);
+    boolean signatureValid;
+    try {
+      signatureValid = block.validateSignature(dbManager.getDynamicPropertiesStore(),
+          dbManager.getAccountStore());
+    } catch (Exception e) {
+      throw new P2pException(TypeEnum.BLOCK_SIGN_INVALID, e);
+    }
+    if (!signatureValid) {
+      throw new P2pException(TypeEnum.BLOCK_SIGN_INVALID, "valid signature failed.");
+    }
+  }
+
+  public void validAdvBlock(BlockCapsule block) throws P2pException {
     if (!witnessScheduleStore.getActiveWitnesses().contains(block.getWitnessAddress())) {
       throw new P2pException(TypeEnum.BAD_BLOCK,
           "Block witness is not active: " + block.getBlockId().getString());
     }
+    validBlock(block);
   }
 
   public PbftSignCapsule getBlockPbftCommitData(long blockNum) {

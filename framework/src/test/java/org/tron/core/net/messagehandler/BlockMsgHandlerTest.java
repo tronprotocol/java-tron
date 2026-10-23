@@ -42,6 +42,7 @@ import org.tron.core.net.peer.Item;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.service.adv.AdvService;
 import org.tron.core.net.service.fetchblock.FetchBlockService;
+import org.tron.core.net.service.relay.RelayService;
 import org.tron.core.net.service.sync.SyncService;
 import org.tron.core.services.WitnessProductBlockService;
 import org.tron.core.store.AccountStore;
@@ -236,6 +237,83 @@ public class BlockMsgHandlerTest extends BaseTest {
   }
 
   @Test
+  public void testInvalidContractCountRejectedBeforeBroadcast() throws Exception {
+    for (boolean fastForward : new boolean[]{false, true}) {
+      for (int count : new int[]{0, 2}) {
+        ECKey key = ECKey.fromPrivate(BigInteger.TEN);
+        BlockCapsule block = new BlockCapsule(1, Sha256Hash.ZERO_HASH, 1234,
+            ByteString.copyFrom(key.getAddress()));
+        block.addTransaction(new TransactionCapsule(Transaction.newBuilder()
+            .setRawData(Transaction.raw.newBuilder().addContract(
+                Transaction.Contract.newBuilder()
+                    .setType(Transaction.Contract.ContractType.TransferContract))).build()));
+        Transaction.raw.Builder raw = Transaction.raw.newBuilder().setTimestamp(1235);
+        for (int i = 0; i < count; i++) {
+          raw.addContract(Transaction.Contract.newBuilder()
+              .setType(Transaction.Contract.ContractType.TransferContract));
+        }
+        block.addTransaction(new TransactionCapsule(
+            Transaction.newBuilder().setRawData(raw).build()));
+        block.setMerkleRoot();
+        block.sign(key.getPrivKeyBytes());
+        TronNetDelegate delegate = witnessDelegate(false, block.getWitnessAddress());
+        Manager manager = (Manager) ReflectUtils.getFieldObject(delegate, "dbManager");
+        Assert.assertTrue(block.validateSignature(manager.getDynamicPropertiesStore(),
+            manager.getAccountStore()));
+        AdvService adv = Mockito.mock(AdvService.class);
+        RelayService relay = Mockito.mock(RelayService.class);
+        BlockMsgHandler ingress = witnessHandler(delegate, adv, Mockito.mock(SyncService.class));
+        ReflectUtils.setFieldValue(ingress, "fastForward", fastForward);
+        ReflectUtils.setFieldValue(ingress, "relayService", relay);
+        BlockMessage message = new BlockMessage(block);
+        PeerConnection sender = witnessPeer();
+        sender.getAdvInvRequest().put(new Item(message.getBlockId(), InventoryType.BLOCK), 0L);
+
+        P2pException error = Assert.assertThrows(P2pException.class,
+            () -> ingress.processMessage(sender, message));
+
+        Assert.assertEquals(P2pException.TypeEnum.BAD_BLOCK, error.getType());
+        Mockito.verify(adv, Mockito.never()).broadcast(any());
+        Mockito.verify(relay, Mockito.never()).broadcast(any());
+        Mockito.verify(delegate, Mockito.never()).processBlock(any(BlockCapsule.class),
+            anyBoolean());
+      }
+    }
+  }
+
+  @Test
+  public void testInvalidMerkleRootRejectedBeforeBroadcast() throws Exception {
+    for (boolean fastForward : new boolean[]{false, true}) {
+      BlockCapsule block = signedWitnessBlock();
+      block.addTransaction(new TransactionCapsule(Transaction.newBuilder()
+          .setRawData(Transaction.raw.newBuilder().setTimestamp(1235).addContract(
+              Transaction.Contract.newBuilder()
+                  .setType(Transaction.Contract.ContractType.TransferContract))).build()));
+      TronNetDelegate delegate = witnessDelegate(false, block.getWitnessAddress());
+      Manager manager = (Manager) ReflectUtils.getFieldObject(delegate, "dbManager");
+      Assert.assertTrue(block.validateSignature(manager.getDynamicPropertiesStore(),
+          manager.getAccountStore()));
+      AdvService adv = Mockito.mock(AdvService.class);
+      RelayService relay = Mockito.mock(RelayService.class);
+      BlockMsgHandler ingress = witnessHandler(delegate, adv, Mockito.mock(SyncService.class));
+      ReflectUtils.setFieldValue(ingress, "fastForward", fastForward);
+      ReflectUtils.setFieldValue(ingress, "relayService", relay);
+      BlockMessage message = new BlockMessage(block);
+      PeerConnection sender = witnessPeer();
+      sender.getAdvInvRequest().put(new Item(message.getBlockId(), InventoryType.BLOCK), 0L);
+
+      P2pException error = Assert.assertThrows(P2pException.class,
+          () -> ingress.processMessage(sender, message));
+
+      Assert.assertEquals(P2pException.TypeEnum.BLOCK_MERKLE_INVALID, error.getType());
+      Mockito.verify(adv, Mockito.never()).broadcast(any());
+      Mockito.verify(relay, Mockito.never()).broadcast(any());
+      Mockito.verify(delegate, Mockito.never()).processBlock(any(BlockCapsule.class),
+          anyBoolean());
+    }
+  }
+
+  @Test
   public void testPaddedWitnessSyncHandoff() throws Exception {
     BlockCapsule canonical = signedWitnessBlock();
     ByteString signature = canonical.getInstance().getBlockHeader().getWitnessSignature();
@@ -263,7 +341,9 @@ public class BlockMsgHandlerTest extends BaseTest {
         ByteString.copyFrom(key.getAddress()));
     // A padded transaction signature must survive witness normalization, including sync handoff.
     Transaction transaction = Transaction.newBuilder()
-        .setRawData(Transaction.raw.newBuilder().setTimestamp(1234))
+        .setRawData(Transaction.raw.newBuilder().setTimestamp(1234)
+            .addContract(Transaction.Contract.newBuilder()
+                .setType(Transaction.Contract.ContractType.TransferContract)))
         .addSignature(ByteString.copyFrom(new byte[68])).build();
     block.addTransaction(new TransactionCapsule(transaction));
     block.setMerkleRoot();
