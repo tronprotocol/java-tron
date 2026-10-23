@@ -94,9 +94,6 @@ public class ConsensusService {
     }
     for (Miner miner : miners) {
       ByteString witnessAddress = miner.getWitnessAddress();
-      if (witnessAddress == null) {
-        continue;
-      }
       try {
         String address = StringUtil.encode58Check(witnessAddress.toByteArray());
         SRMetrics.recordWitnessAddress(address);
