@@ -62,6 +62,9 @@ public class MetricLabels {
 
     public static final String PEERS_VALID = "valid";
 
+    // ADDRESS is the label of tron:witness_address (node_role and is_witness carry no label)
+    public static final String ADDRESS = "address";
+
     private Gauge() {
       throw new IllegalStateException("Gauge");
     }

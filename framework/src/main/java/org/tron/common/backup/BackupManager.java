@@ -14,6 +14,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -25,6 +26,8 @@ import org.tron.common.backup.socket.MessageHandler;
 import org.tron.common.backup.socket.UdpEvent;
 import org.tron.common.es.ExecutorServiceManager;
 import org.tron.common.parameter.CommonParameter;
+import org.tron.common.prometheus.Metrics;
+import org.tron.common.prometheus.SRMetrics;
 import org.tron.p2p.utils.NetUtil;
 
 @Slf4j(topic = "backup")
@@ -67,6 +70,46 @@ public class BackupManager implements EventHandler {
   public void setStatus(BackupStatusEnum status) {
     logger.info("Change backup status to {}", status);
     this.status = status;
+    recordNodeRole();
+  }
+
+  /** Publishes tron:node_role once at startup, and again on every backup-status change. */
+  @PostConstruct
+  public void recordNodeRole() {
+    if (!Metrics.enabled()) {
+      return;
+    }
+    try {
+      SRMetrics.recordNodeRole(currentRole());
+    } catch (Exception e) {
+      // a metrics failure must not abort startup or the backup election
+      logger.warn("Failed to record node role", e);
+    }
+  }
+
+  private int currentRole() {
+    // no backup configured: default to master, for either identity
+    if (!isBackupConfigured()) {
+      return SRMetrics.NODE_ROLE_MASTER;
+    }
+    // status still defaults to MASTER before backup init; not a real election result yet
+    if (!isInit) {
+      return SRMetrics.NODE_ROLE_INIT;
+    }
+    // post-init INIT covers the pre-keep-alive window and master-loss re-election
+    switch (status) {
+      case MASTER:
+        return SRMetrics.NODE_ROLE_MASTER;
+      case SLAVER:
+        return SRMetrics.NODE_ROLE_SLAVER;
+      default:
+        return SRMetrics.NODE_ROLE_INIT;
+    }
+  }
+
+  private boolean isBackupConfigured() {
+    // same condition BackupServer.initServer() uses to start the election transport
+    return parameter.getBackupPort() > 0 && !parameter.getBackupMembers().isEmpty();
   }
 
   public void init() {
