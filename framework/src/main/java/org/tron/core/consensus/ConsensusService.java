@@ -11,6 +11,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.crypto.SignUtils;
 import org.tron.common.parameter.CommonParameter;
+import org.tron.common.prometheus.Metrics;
+import org.tron.common.prometheus.SRMetrics;
+import org.tron.common.utils.StringUtil;
 import org.tron.consensus.Consensus;
 import org.tron.consensus.base.Param;
 import org.tron.consensus.base.Param.Miner;
@@ -77,10 +80,29 @@ public class ConsensusService {
     }
 
     param.setMiners(miners);
+    recordWitnessAddresses(miners);
     param.setBlockHandle(blockHandle);
     param.setPbftInterface(pbftBaseImpl);
     consensus.start(param);
     logger.info("consensus service start success");
+  }
+
+  private void recordWitnessAddresses(List<Miner> miners) {
+    if (!Metrics.enabled() || miners == null) {
+      return;
+    }
+    for (Miner miner : miners) {
+      ByteString witnessAddress = miner.getWitnessAddress();
+      if (witnessAddress == null) {
+        continue;
+      }
+      try {
+        String address = StringUtil.encode58Check(witnessAddress.toByteArray());
+        SRMetrics.recordWitnessAddress(address);
+      } catch (Exception e) {
+        logger.warn("Failed to record witness address metrics.", e);
+      }
+    }
   }
 
   public void stop() {

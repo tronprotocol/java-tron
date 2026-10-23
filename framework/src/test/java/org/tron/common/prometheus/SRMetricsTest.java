@@ -13,6 +13,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.tron.common.BaseTest;
 import org.tron.common.TestConstants;
 import org.tron.common.backup.BackupManager;
@@ -372,12 +373,12 @@ public class SRMetricsTest extends BaseTest {
   }
 
   /**
-   * Drives the startup publication the way production does: the miners are assembled first and
-   * the maintenance manager publishes once from init().
+   * Drives the startup publication the way production does: the miners are assembled by
+   * ConsensusService, which publishes the witness identities once during startup.
    */
   private void recordWitnessMetrics(List<Param.Miner> miners) {
     Param.getInstance().setMiners(miners);
-    maintenanceManager.recordWitnessMetrics();
+    ReflectionTestUtils.invokeMethod(consensusService, "recordWitnessAddresses", miners);
   }
 
   /**
