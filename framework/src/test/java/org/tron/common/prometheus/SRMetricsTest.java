@@ -13,6 +13,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.tron.common.BaseTest;
 import org.tron.common.TestConstants;
 import org.tron.common.backup.BackupManager;
@@ -27,7 +28,6 @@ import org.tron.core.capsule.VotesCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.consensus.ConsensusService;
-import org.tron.program.Version;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Vote;
 
@@ -183,81 +183,38 @@ public class SRMetricsTest extends BaseTest {
     Assert.assertNull(sample(MetricLabels.Counter.SR_REMOVE, stableWit));
   }
 
+  // ---- node_role: the four states, the pre-election window and status transitions ----
+
   /**
-   * No witness configured: with an empty miner list a plain fullnode publishes none of
-   * the sr_* series, and node_role reports 0 because the node started without witness
-   * mode, while node_info keeps its two static labels.
+   * Started without witness mode: a plain fullnode reports role 0.
    */
   @Test
-  public void testSrStatusFullNode() {
+  public void testNodeRoleFullNode() {
     Args.getInstance().witness = false;
-    Param.getInstance().setMiners(new ArrayList<>());
-
-    maintenanceManager.recordWitnessMetrics();
-    Assert.assertNull("empty miner list must not write an empty-address sr series",
-        srGauge(MetricKeys.Gauge.SR_IS_ACTIVE, ""));
-
     backupManager.recordNodeRole();
-    Assert.assertEquals("a node started without witness mode reports role 0",
-        SRMetrics.NODE_ROLE_FULLNODE, roleGauge(), 0.0);
-
-    Metrics.info(MetricKeys.Info.NODE_INFO, Version.getVersion(),
-        Args.getInstance().getChainId());
-    Assert.assertEquals(1.0, info(), 0.0);
+    Assert.assertEquals(SRMetrics.NODE_ROLE_FULLNODE, roleGauge(), 0.0);
   }
 
   /**
-   * Witness configured without a backup election (backup members unset): the node
-   * always holds the primary key itself, so the single role series reports master (2);
-   * node_info stays a static two-label identity record.
+   * Witness configured without a backup election (backup members unset): the node always
+   * holds the primary key itself, so the single role series reports master (2).
    */
   @Test
-  public void testSrStatusMaster() {
+  public void testNodeRoleMaster() {
     Args.getInstance().witness = true;
-    ByteString witness = registerWitnessWithVotes(1000);
-    registerWitnessWithVotes(50);
-    chainBaseManager.getWitnessScheduleStore()
-        .saveActiveWitnesses(Collections.singletonList(witness));
-
-    seedMiners(witness);
-
     backupManager.recordNodeRole();
-    maintenanceManager.recordWitnessMetrics();
-
-    String address = StringUtil.encode58Check(witness.toByteArray());
-    Assert.assertEquals(1.0, srGauge(MetricKeys.Gauge.SR_IS_ACTIVE, address), 0.0);
-    Assert.assertEquals(1000.0, srGauge(MetricKeys.Gauge.SR_VOTES, address), 0.0);
-    Assert.assertEquals(1.0, srGauge(MetricKeys.Gauge.SR_RANK, address), 0.0);
     Assert.assertEquals(SRMetrics.NODE_ROLE_MASTER, roleGauge(), 0.0);
-    Metrics.info(MetricKeys.Info.NODE_INFO, Version.getVersion(),
-        Args.getInstance().getChainId());
-    Assert.assertEquals(1.0, info(), 0.0);
   }
 
   /**
-   * Backup election slaver: the single role series reports slaver (3) while is_active
-   * reflects the active witness set.
+   * Backup election slaver: the node stands by for a master and reports slaver (3).
    */
   @Test
-  public void testSrStatusSlaver() throws Exception {
+  public void testNodeRoleSlaver() throws Exception {
     Args.getInstance().witness = true;
     configureBackup();
-    backupManager.setStatus(BackupManager.BackupStatusEnum.SLAVER);
-    ByteString activeWitness = registerWitnessWithVotes(10);
-    ByteString witness = registerWitnessWithVotes(7);
-    chainBaseManager.getWitnessScheduleStore()
-        .saveActiveWitnesses(Collections.singletonList(activeWitness));
-
-    seedMiners(witness);
     markBackupInitiated(backupManager);
-
-    backupManager.recordNodeRole();
-    maintenanceManager.recordWitnessMetrics();
-
-    String address = StringUtil.encode58Check(witness.toByteArray());
-    Assert.assertEquals(0.0, srGauge(MetricKeys.Gauge.SR_IS_ACTIVE, address), 0.0);
-    Assert.assertEquals(7.0, srGauge(MetricKeys.Gauge.SR_VOTES, address), 0.0);
-    Assert.assertTrue(srGauge(MetricKeys.Gauge.SR_RANK, address) > 0);
+    backupManager.setStatus(BackupManager.BackupStatusEnum.SLAVER);
     Assert.assertEquals(SRMetrics.NODE_ROLE_SLAVER, roleGauge(), 0.0);
   }
 
@@ -268,7 +225,7 @@ public class SRMetricsTest extends BaseTest {
    * after init() rewrites the same single series to the elected role.
    */
   @Test
-  public void testRoleInitBeforeBackupElectionRuns() throws Exception {
+  public void testNodeRoleInitBeforeBackupElectionRuns() throws Exception {
     Args.getInstance().witness = true;
     configureBackup();
 
@@ -292,12 +249,25 @@ public class SRMetricsTest extends BaseTest {
   }
 
   /**
-   * setStatus() itself republishes the single label-less node_role series without
-   * touching any store, so a backup-election transition is reflected immediately instead
-   * of at the next maintenance.
+   * After init() has run, status INIT is a real election state — the transport is up but no
+   * keep-alive timeout has been judged yet, or the master lost keep-alive and a re-election
+   * is running — and maps 1:1 to init (1). It must not be misreported as slaver (3).
    */
   @Test
-  public void testRoleRefreshOnBackupStatusChange() throws Exception {
+  public void testNodeRoleInitAfterElectionStarted() throws Exception {
+    Args.getInstance().witness = true;
+    configureBackup();
+    markBackupInitiated(backupManager);
+    backupManager.setStatus(BackupManager.BackupStatusEnum.INIT);
+    Assert.assertEquals(SRMetrics.NODE_ROLE_INIT, roleGauge(), 0.0);
+  }
+
+  /**
+   * setStatus() itself republishes the single label-less node_role series, so a
+   * backup-election transition is reflected immediately.
+   */
+  @Test
+  public void testNodeRoleRefreshOnBackupStatusChange() throws Exception {
     Args.getInstance().witness = true;
     configureBackup();
     markBackupInitiated(backupManager);
@@ -309,74 +279,77 @@ public class SRMetricsTest extends BaseTest {
     Assert.assertEquals(SRMetrics.NODE_ROLE_MASTER, roleGauge(), 0.0);
   }
 
+  // ---- tron:witness_address: one series per consensus miner, value 1 ----
+
   /**
-   * After init() has run, status INIT is a real election state — the transport is up
-   * but no keep-alive timeout has been judged yet, or the master lost keep-alive and a
-   * re-election is running — and maps 1:1 to init (1). It must not be misreported as
-   * slaver (3), the pre-fix behavior.
+   * A single consensus miner publishes exactly one tron:witness_address series with value 1.
    */
   @Test
-  public void testRoleInitAfterElectionStarted() throws Exception {
-    Args.getInstance().witness = true;
-    configureBackup();
-    markBackupInitiated(backupManager);
-
-    backupManager.setStatus(BackupManager.BackupStatusEnum.INIT);
-    Assert.assertEquals(SRMetrics.NODE_ROLE_INIT, roleGauge(), 0.0);
+  public void testWitnessAddressValueOne() {
+    ByteString address = uniqueAddress();
+    publishWitnessIdentities(
+        Collections.singletonList(miner(address, address)));
+    Assert.assertEquals(1.0, witnessGauge(encode(address)), 0.0);
   }
 
   /**
-   * Testnet multi-key setup: the consensus layer assembles one miner per configured
-   * witness private key, so every sr gauge is written as one series per key address while
-   * node_role stays a single series regardless of the key count. Role recording only
-   * touches the role series; maintenance-time recording gives each address its own sr
-   * values (here distinct votes, activity and rank) and leaves the role series alone. A
-   * status change rewrites the single role series without touching the sr series.
+   * Multi-key setup: every consensus miner address gets its own series with value 1.
    */
   @Test
-  public void testRoleMultiWitnessKeys() throws Exception {
-    Args.getInstance().witness = true;
-    configureBackup();
-    String key1 = PublicMethod.getRandomPrivateKey();
-    String key2 = PublicMethod.getRandomPrivateKey();
-    ByteString miner1 = addressOf(key1);
-    ByteString miner2 = addressOf(key2);
-    seedMiners(miner1, miner2);
-    String address1 = StringUtil.encode58Check(miner1.toByteArray());
-    String address2 = StringUtil.encode58Check(miner2.toByteArray());
-    ByteString witness1 = registerWitnessWithVotes(miner1.toByteArray(), 100);
-    ByteString witness2 = registerWitnessWithVotes(miner2.toByteArray(), 40);
-    chainBaseManager.getWitnessScheduleStore()
-        .saveActiveWitnesses(Collections.singletonList(witness1));
-    markBackupInitiated(backupManager);
+  public void testWitnessAddressMultipleMiners() {
+    ByteString address1 = uniqueAddress();
+    ByteString address2 = uniqueAddress();
+    List<Param.Miner> miners = new ArrayList<>();
+    miners.add(miner(address1, address1));
+    miners.add(miner(address2, address2));
 
-    backupManager.recordNodeRole();
-    Assert.assertEquals(SRMetrics.NODE_ROLE_MASTER, roleGauge(), 0.0);
-    // role recording never writes sr_* series
-    Assert.assertNull(srGauge(MetricKeys.Gauge.SR_IS_ACTIVE, address1));
-    Assert.assertNull(srGauge(MetricKeys.Gauge.SR_IS_ACTIVE, address2));
+    publishWitnessIdentities(miners);
 
-    // one sr series per address, with per-address values: witness1 is active with the
-    // higher vote count, witness2 stands inactive on the lower rank
-    maintenanceManager.recordWitnessMetrics();
-    Assert.assertEquals(1.0, srGauge(MetricKeys.Gauge.SR_IS_ACTIVE, address1), 0.0);
-    Assert.assertEquals(100.0, srGauge(MetricKeys.Gauge.SR_VOTES, address1), 0.0);
-    Assert.assertEquals(0.0, srGauge(MetricKeys.Gauge.SR_IS_ACTIVE, address2), 0.0);
-    Assert.assertEquals(40.0, srGauge(MetricKeys.Gauge.SR_VOTES, address2), 0.0);
-    // rank is absolute within the full witness store, which also holds genesis
-    // witnesses; the two local series must at least order by their votes
-    Assert.assertTrue(srGauge(MetricKeys.Gauge.SR_RANK, address1) > 0);
-    Assert.assertTrue(srGauge(MetricKeys.Gauge.SR_RANK, address2) > 0);
-    Assert.assertTrue("higher votes must give the better rank",
-        srGauge(MetricKeys.Gauge.SR_RANK, address1)
-            < srGauge(MetricKeys.Gauge.SR_RANK, address2));
+    Assert.assertEquals(1.0, witnessGauge(encode(address1)), 0.0);
+    Assert.assertEquals(1.0, witnessGauge(encode(address2)), 0.0);
+  }
 
-    // sr recording never touches the role series; a status change flips the single
-    // role series and leaves the sr series alone
-    backupManager.setStatus(BackupManager.BackupStatusEnum.SLAVER);
-    Assert.assertEquals(SRMetrics.NODE_ROLE_SLAVER, roleGauge(), 0.0);
-    Assert.assertEquals(100.0, srGauge(MetricKeys.Gauge.SR_VOTES, address1), 0.0);
-    Assert.assertEquals(40.0, srGauge(MetricKeys.Gauge.SR_VOTES, address2), 0.0);
+  /**
+   * Single-key multisig: the witness account address may differ from the address derived
+   * from the signing key. Only the witness account address is published; the signing-key
+   * address must not appear.
+   */
+  @Test
+  public void testWitnessAddressUsesWitnessAccountNotSigningKey() {
+    ByteString signingKeyAddress = addressOf(PublicMethod.getRandomPrivateKey());
+    ByteString witnessAccountAddress = uniqueAddress();
+
+    publishWitnessIdentities(
+        Collections.singletonList(miner(signingKeyAddress, witnessAccountAddress)));
+
+    Assert.assertEquals(1.0, witnessGauge(encode(witnessAccountAddress)), 0.0);
+    Assert.assertNull(witnessGauge(encode(signingKeyAddress)));
+  }
+
+  /**
+   * No miner configured: a plain fullnode publishes no tron:witness_address series at all,
+   * not even one with an empty address label.
+   */
+  @Test
+  public void testNoWitnessAddressSeriesForEmptyMiners() {
+    publishWitnessIdentities(new ArrayList<>());
+    Assert.assertNull(witnessGauge(""));
+  }
+
+  /**
+   * Metrics disabled: no tron:witness_address series is published.
+   */
+  @Test
+  public void testWitnessAddressNotPublishedWhenMetricsDisabled() {
+    ByteString address = uniqueAddress();
+    Args.getInstance().setMetricsPrometheusEnable(false);
+    try {
+      publishWitnessIdentities(
+          Collections.singletonList(miner(address, address)));
+      Assert.assertNull(witnessGauge(encode(address)));
+    } finally {
+      Args.getInstance().setMetricsPrometheusEnable(true);
+    }
   }
 
   /**
@@ -400,62 +373,35 @@ public class SRMetricsTest extends BaseTest {
   }
 
   /**
-   * Builds the consensus-miner identity the node assembles from a configured private
-   * key: the address derived from that key.
+   * Drives the private startup hook directly; production publishes once from start(),
+   * the test exercises the same loop without starting consensus.
    */
+  private void publishWitnessIdentities(List<Param.Miner> miners) {
+    ReflectionTestUtils.invokeMethod(consensusService, "publishWitnessIdentities", miners);
+  }
+
+  /**
+   * Builds the consensus-miner identity the node assembles: the signing-key address and the
+   * witness account address are passed explicitly, exactly as ConsensusService does.
+   */
+  private Param.Miner miner(ByteString privateKeyAddress, ByteString witnessAddress) {
+    return Param.getInstance().new Miner(new byte[0], privateKeyAddress, witnessAddress);
+  }
+
   private ByteString addressOf(String privateKeyHex) {
     return ByteString.copyFrom(
         SignUtils.fromPrivate(ByteArray.fromHexString(privateKeyHex)).getAddress());
   }
 
-  /**
-   * Seeds the consensus miners the metrics path reads its identities from, one miner
-   * per address. The private key bytes are never read by the metrics path; tearDown
-   * clears the miner list again.
-   */
-  private void seedMiners(ByteString... addresses) {
-    Param param = Param.getInstance();
-    List<Param.Miner> miners = new ArrayList<>();
-    for (ByteString address : addresses) {
-      miners.add(param.new Miner(new byte[0], address, address));
-    }
-    param.setMiners(miners);
+  private String encode(ByteString address) {
+    return StringUtil.encode58Check(address.toByteArray());
   }
 
-  private ByteString registerWitnessWithVotes(long votes) {
-    ByteString address = uniqueAddress();
-    chainBaseManager.getWitnessStore().put(address.toByteArray(),
-        new WitnessCapsule(address, votes, ""));
-    chainBaseManager.getAccountStore().put(address.toByteArray(),
-        new AccountCapsule(Protocol.Account.newBuilder().setAddress(address).build()));
-    return address;
-  }
-
-  /**
-   * Registers a witness for a locally configured miner's address so the multi-key test
-   * can assert distinguishable per-address sr values.
-   */
-  private ByteString registerWitnessWithVotes(byte[] addressBytes, long votes) {
-    ByteString address = ByteString.copyFrom(addressBytes);
-    chainBaseManager.getWitnessStore().put(address.toByteArray(),
-        new WitnessCapsule(address, votes, ""));
-    chainBaseManager.getAccountStore().put(address.toByteArray(),
-        new AccountCapsule(Protocol.Account.newBuilder().setAddress(address).build()));
-    return address;
-  }
-
-  private Double srGauge(String name, String address) {
+  private Double witnessGauge(String address) {
     return CollectorRegistry.defaultRegistry.getSampleValue(
-        name,
+        MetricKeys.Gauge.WITNESS_ADDRESS,
         new String[] {MetricLabels.Gauge.ADDRESS},
         new String[] {address});
-  }
-
-  private Double info() {
-    return CollectorRegistry.defaultRegistry.getSampleValue(
-        "tron:node_info",
-        new String[] {MetricLabels.Info.VERSION, MetricLabels.Info.CHAIN_ID},
-        new String[] {Version.getVersion(), Args.getInstance().getChainId()});
   }
 
   private Double roleGauge() {

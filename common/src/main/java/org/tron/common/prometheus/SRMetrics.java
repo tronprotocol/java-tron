@@ -24,14 +24,12 @@ public class SRMetrics {
     Metrics.gaugeSet(MetricKeys.Gauge.NODE_ROLE, role);
   }
 
-  /** Publishes one sr_* series per local witness address; none without keys. */
-  public static void recordSrStatus(String address, boolean active, long votes, long rank) {
+  /** Publishes one tron:witness_address series (value 1) for a local witness address. */
+  public static void recordWitnessAddress(String address) {
     if (!Metrics.enabled()) {
       return;
     }
-    Metrics.gaugeSet(MetricKeys.Gauge.SR_IS_ACTIVE, active ? 1 : 0, address);
-    Metrics.gaugeSet(MetricKeys.Gauge.SR_VOTES, votes, address);
-    Metrics.gaugeSet(MetricKeys.Gauge.SR_RANK, rank, address);
+    Metrics.gaugeSet(MetricKeys.Gauge.WITNESS_ADDRESS, 1, address);
   }
 
   public static void recordSrSetChange(List<ByteString> currentWits, List<ByteString> newWits) {

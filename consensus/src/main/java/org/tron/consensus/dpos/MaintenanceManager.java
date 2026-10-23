@@ -16,12 +16,8 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.bouncycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.tron.common.prometheus.Metrics;
 import org.tron.common.prometheus.SRMetrics;
-import org.tron.common.utils.StringUtil;
 import org.tron.consensus.ConsensusDelegate;
-import org.tron.consensus.base.Param;
-import org.tron.consensus.base.Param.Miner;
 import org.tron.consensus.pbft.PbftManager;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
@@ -30,7 +26,6 @@ import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.store.DelegationStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.VotesStore;
-import org.tron.core.store.WitnessStore;
 
 @Slf4j(topic = "consensus")
 @Component
@@ -57,8 +52,6 @@ public class MaintenanceManager {
 
   public void init() {
     currentWitness.addAll(consensusDelegate.getActiveWitnesses());
-    // miners are assembled by ConsensusService before DposService.start() calls init()
-    recordWitnessMetrics();
   }
 
   public void applyBlock(BlockCapsule blockCapsule) {
@@ -167,47 +160,6 @@ public class MaintenanceManager {
         delegationStore.setWitnessVote(nextCycle, witness.createDbKey(), witness.getVoteCount());
       });
     }
-
-    recordWitnessMetrics();
-  }
-
-  /** Publishes one sr_* series per consensus miner, per maintenance and at startup; never throws. */
-  public void recordWitnessMetrics() {
-    if (!Metrics.enabled()) {
-      return;
-    }
-    List<Miner> miners = Param.getInstance().getMiners();
-    if (miners == null) {
-      // consensus never started: nothing to publish (never the case on a running node)
-      return;
-    }
-    for (Miner miner : miners) {
-      ByteString witnessAddressBs = miner.getWitnessAddress();
-      if (witnessAddressBs == null) {
-        continue;
-      }
-      String address = StringUtil.encode58Check(witnessAddressBs.toByteArray());
-      try {
-        boolean active = consensusDelegate.getActiveWitnesses().contains(witnessAddressBs);
-        WitnessCapsule witness = consensusDelegate.getWitness(witnessAddressBs.toByteArray());
-        long votes = witness == null ? 0 : witness.getVoteCount();
-        long rank = witnessRank(witnessAddressBs);
-        SRMetrics.recordSrStatus(address, active, votes, rank);
-      } catch (Exception e) {
-        logger.warn("Failed to record witness metrics for {}", address, e);
-      }
-    }
-  }
-
-  private long witnessRank(ByteString witnessAddress) {
-    List<WitnessCapsule> witnesses = consensusDelegate.getAllWitnesses();
-    WitnessStore.sortWitnesses(witnesses, false);
-    for (int i = 0; i < witnesses.size(); i++) {
-      if (witnesses.get(i).getAddress().equals(witnessAddress)) {
-        return i + 1L;
-      }
-    }
-    return 0L;
   }
 
   private Map<ByteString, Long> countVote(VotesStore votesStore) {

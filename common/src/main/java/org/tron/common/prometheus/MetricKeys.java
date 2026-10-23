@@ -40,10 +40,8 @@ public class MetricKeys {
     public static final String DB_SST_LEVEL = "tron:db_sst_level";
     public static final String MANAGER_QUEUE = "tron:manager_queue_size";
     public static final String TX_CACHE = "tron:tx_cache";
-    // per local SR (witness address); refreshed at startup and on every maintenance block
-    public static final String SR_IS_ACTIVE = "tron:sr_is_active";
-    public static final String SR_VOTES = "tron:sr_votes";
-    public static final String SR_RANK = "tron:sr_rank";
+    // per local consensus witness miner; value 1, label is the Base58Check witness address
+    public static final String WITNESS_ADDRESS = "tron:witness_address";
     // numeric role of this node: 0 = fullnode, 1 = init, 2 = master, 3 = slaver
     public static final String NODE_ROLE = "tron:node_role";
 
