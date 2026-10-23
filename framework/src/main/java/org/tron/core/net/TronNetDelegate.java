@@ -154,7 +154,7 @@ public class TronNetDelegate {
   }
 
   public BlockId getKhaosDbHeadBlockId() {
-    return chainBaseManager.getKhaosDbHead().getBlockId();
+    return chainBaseManager.getKhaosDb().getHeadId();
   }
 
   public long getSolidifiedBlockNum() {
