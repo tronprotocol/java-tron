@@ -241,32 +241,32 @@ public class PrometheusApiServiceTest extends BaseTest {
   }
 
   @Test
-  public void testNodeTypeMetric() {
-    // label-less identity series: 0 = fullnode, 1 = witness
-    SRMetrics.recordNodeType(SRMetrics.NODE_TYPE_WITNESS);
+  public void testIsWitnessMetric() {
+    // label-less flag series: 0 = not witness, 1 = witness
+    SRMetrics.recordIsWitness(SRMetrics.WITNESS);
     Double value = CollectorRegistry.defaultRegistry.getSampleValue(
-        MetricKeys.Gauge.NODE_TYPE,
+        MetricKeys.Gauge.IS_WITNESS,
         new String[] {},
         new String[] {});
-    Assert.assertNotNull("tron:node_type sample should exist", value);
-    Assert.assertEquals(SRMetrics.NODE_TYPE_WITNESS, value, 0.0);
+    Assert.assertNotNull("tron:is_witness sample should exist", value);
+    Assert.assertEquals(SRMetrics.WITNESS, value, 0.0);
   }
 
   @Test
   public void testNodeGaugesTextExport() throws Exception {
-    SRMetrics.recordNodeType(SRMetrics.NODE_TYPE_FULLNODE);
+    SRMetrics.recordIsWitness(SRMetrics.NOT_WITNESS);
     SRMetrics.recordNodeRole(SRMetrics.NODE_ROLE_INIT);
 
     StringWriter writer = new StringWriter();
     TextFormat.write004(writer, CollectorRegistry.defaultRegistry.metricFamilySamples());
     String text = writer.toString();
 
-    Assert.assertTrue("scrape output should expose tron:node_type",
-        text.contains("tron:node_type "));
+    Assert.assertTrue("scrape output should expose tron:is_witness",
+        text.contains("tron:is_witness "));
     Assert.assertTrue("scrape output should expose tron:node_role",
         text.contains("tron:node_role "));
-    Assert.assertTrue("tron:node_type should export the recorded value",
-        text.contains("tron:node_type 0.0"));
+    Assert.assertTrue("tron:is_witness should export the recorded value",
+        text.contains("tron:is_witness 0.0"));
     Assert.assertTrue("tron:node_role should export the recorded value",
         text.contains("tron:node_role 0.0"));
   }

@@ -46,8 +46,8 @@ public class MetricKeys {
     public static final String WITNESS_ADDRESS = "tron:witness_address";
     // numeric backup-election role of this node: 0 = init, 1 = master, 2 = slaver
     public static final String NODE_ROLE = "tron:node_role";
-    // numeric identity of this node: 0 = fullnode, 1 = witness
-    public static final String NODE_TYPE = "tron:node_type";
+    // witness flag of this node: 0 = not witness, 1 = witness
+    public static final String IS_WITNESS = "tron:is_witness";
 
     private Gauge() {
       throw new IllegalStateException("Gauge");

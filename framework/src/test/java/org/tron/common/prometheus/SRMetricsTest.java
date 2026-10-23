@@ -188,37 +188,37 @@ public class SRMetricsTest extends BaseTest {
     Assert.assertNull(sample(MetricLabels.Counter.SR_REMOVE, stableWit));
   }
 
-  // ---- tron:node_type: process identity, published at startup and independent of the role ----
+  // ---- tron:is_witness: process flag, published at startup and independent of the role ----
 
   /**
-   * Identity is published once at startup by ConsensusService: 0 for a node started without
+   * Flag is published once at startup by ConsensusService: 0 for a node started without
    * witness mode, 1 for a node started with -w.
    */
   @Test
-  public void testNodeTypeBothIdentities() {
+  public void testIsWitnessBothValues() {
     for (boolean witness : new boolean[] {false, true}) {
       Args.getInstance().witness = witness;
-      publishNodeType();
-      int expected = witness ? SRMetrics.NODE_TYPE_WITNESS : SRMetrics.NODE_TYPE_FULLNODE;
-      Assert.assertEquals(expected, nodeTypeGauge(), 0.0);
+      publishIsWitness();
+      int expected = witness ? SRMetrics.WITNESS : SRMetrics.NOT_WITNESS;
+      Assert.assertEquals(expected, isWitnessGauge(), 0.0);
     }
   }
 
   /**
-   * Metrics disabled: recordNodeType() short-circuits, so the previously published value stands
-   * even when the identity would have changed.
+   * Metrics disabled: recordIsWitness() short-circuits, so the previously published value stands
+   * even when the flag would have changed.
    */
   @Test
-  public void testNodeTypeNotPublishedWhenMetricsDisabled() {
+  public void testIsWitnessNotPublishedWhenMetricsDisabled() {
     Args.getInstance().witness = false;
-    publishNodeType();
-    Assert.assertEquals(SRMetrics.NODE_TYPE_FULLNODE, nodeTypeGauge(), 0.0);
+    publishIsWitness();
+    Assert.assertEquals(SRMetrics.NOT_WITNESS, isWitnessGauge(), 0.0);
 
     Args.getInstance().setMetricsPrometheusEnable(false);
     try {
       Args.getInstance().witness = true;
-      publishNodeType();
-      Assert.assertEquals(SRMetrics.NODE_TYPE_FULLNODE, nodeTypeGauge(), 0.0);
+      publishIsWitness();
+      Assert.assertEquals(SRMetrics.NOT_WITNESS, isWitnessGauge(), 0.0);
     } finally {
       Args.getInstance().setMetricsPrometheusEnable(true);
     }
@@ -250,23 +250,23 @@ public class SRMetricsTest extends BaseTest {
   }
 
   /**
-   * A failure while publishing node_type must not propagate: ConsensusService catches it, so it
+   * A failure while publishing is_witness must not propagate: ConsensusService catches it, so it
    * can neither skip the witness-address publication running right beside it nor abort startup.
    */
   @Test
-  public void testNodeTypeFailureDoesNotBlockWitnessPublication() {
+  public void testIsWitnessFailureDoesNotBlockWitnessPublication() {
     Args.getInstance().witness = false;
     ByteString address = uniqueAddress();
     List<Param.Miner> miners = Collections.singletonList(miner(address, address));
 
     try (MockedStatic<SRMetrics> mocked = Mockito.mockStatic(SRMetrics.class)) {
-      mocked.when(() -> SRMetrics.recordNodeType(Mockito.anyInt()))
-          .thenThrow(new RuntimeException("node_type failure"));
+      mocked.when(() -> SRMetrics.recordIsWitness(Mockito.anyInt()))
+          .thenThrow(new RuntimeException("is_witness failure"));
       mocked.when(() -> SRMetrics.recordWitnessAddress(Mockito.anyString()))
           .thenCallRealMethod();
 
-      // must not propagate the node_type failure
-      publishNodeType();
+      // must not propagate the is_witness failure
+      publishIsWitness();
 
       // the witness-address publication still runs independently on the same startup path
       ReflectionTestUtils.invokeMethod(consensusService, "recordWitnessAddresses", miners);
@@ -276,13 +276,13 @@ public class SRMetricsTest extends BaseTest {
   }
 
   /**
-   * The identity metric must be published by {@link ConsensusService#start()} itself, not by a
-   * caller: with the election engine stubbed out, a real start() has to write tron:node_type from
-   * Args.isWitness(), even for a node with zero miners. Pre-setting the opposite value pins the
-   * call site, so dropping the publication from start() fails here.
+   * The flag metric must be published by {@link ConsensusService#start()} itself, not by a
+   * caller: with the election engine stubbed out, a real start() has to write tron:is_witness
+   * from Args.isWitness(), even for a node with zero miners. Pre-setting the opposite value pins
+   * the call site, so dropping the publication from start() fails here.
    */
   @Test
-  public void testStartPublishesNodeTypeForZeroMiners() {
+  public void testStartPublishesIsWitnessForZeroMiners() {
     Consensus consensusMock = Mockito.mock(Consensus.class);
     ConsensusService service = new ConsensusService();
     ReflectionTestUtils.setField(service, "consensus", consensusMock);
@@ -290,13 +290,13 @@ public class SRMetricsTest extends BaseTest {
     for (boolean witness : new boolean[] {false, true}) {
       Args.getInstance().witness = witness;
       // opposite of the expected value, so a start() that skipped the publication cannot pass
-      SRMetrics.recordNodeType(witness ? SRMetrics.NODE_TYPE_FULLNODE
-          : SRMetrics.NODE_TYPE_WITNESS);
+      SRMetrics.recordIsWitness(witness ? SRMetrics.NOT_WITNESS
+          : SRMetrics.WITNESS);
 
       service.start();
 
-      int expected = witness ? SRMetrics.NODE_TYPE_WITNESS : SRMetrics.NODE_TYPE_FULLNODE;
-      Assert.assertEquals(expected, nodeTypeGauge(), 0.0);
+      int expected = witness ? SRMetrics.WITNESS : SRMetrics.NOT_WITNESS;
+      Assert.assertEquals(expected, isWitnessGauge(), 0.0);
     }
 
     Mockito.verify(consensusMock, Mockito.times(2)).start(Mockito.any(Param.class));
@@ -380,13 +380,13 @@ public class SRMetricsTest extends BaseTest {
   }
 
   /**
-   * Identity and role are fully independent: for both identities the startup publication is
-   * fullnode/witness + init, and the role then cycles INIT -> MASTER -> SLAVER -> MASTER while
-   * node_type never changes. Every publication rewrites the single label-less series in place,
+   * Flag and role are fully independent: for both flag values the startup publication is
+   * not-witness/witness + init, and the role then cycles INIT -> MASTER -> SLAVER -> MASTER while
+   * is_witness never changes. Every publication rewrites the single label-less series in place,
    * so no duplicate registration or stale role series accumulates.
    */
   @Test
-  public void testNodeTypeIndependentOfRoleBothIdentities() throws Exception {
+  public void testIsWitnessIndependentOfRoleBothValues() throws Exception {
     configureBackup();
 
     BackupManager.BackupStatusEnum[] statuses = {
@@ -404,28 +404,28 @@ public class SRMetricsTest extends BaseTest {
       BackupManager fresh = new BackupManager();
       try {
         Args.getInstance().witness = witness;
-        int expectedType = witness ? SRMetrics.NODE_TYPE_WITNESS : SRMetrics.NODE_TYPE_FULLNODE;
+        int expectedIsWitness = witness ? SRMetrics.WITNESS : SRMetrics.NOT_WITNESS;
 
-        // startup: node_type comes from ConsensusService, node_role from BackupManager;
+        // startup: is_witness comes from ConsensusService, node_role from BackupManager;
         // configured-but-not-init is INIT, not the MASTER default
-        publishNodeType();
+        publishIsWitness();
         fresh.recordNodeRole();
-        Assert.assertEquals(expectedType, nodeTypeGauge(), 0.0);
+        Assert.assertEquals(expectedIsWitness, isWitnessGauge(), 0.0);
         Assert.assertEquals(SRMetrics.NODE_ROLE_INIT, roleGauge(), 0.0);
 
-        // flip the startup identity: setStatus() must only republish the role, never recompute
-        // node_type, so the originally published identity has to keep standing
+        // flip the startup flag: setStatus() must only republish the role, never recompute
+        // is_witness, so the originally published flag has to keep standing
         Args.getInstance().witness = !witness;
         markBackupInitiated(fresh);
         for (int i = 0; i < statuses.length; i++) {
           fresh.setStatus(statuses[i]);
           Assert.assertEquals(roles[i], roleGauge(), 0.0);
-          Assert.assertEquals("identity must not change with the role", expectedType,
-              nodeTypeGauge(), 0.0);
+          Assert.assertEquals("is_witness must not change with the role", expectedIsWitness,
+              isWitnessGauge(), 0.0);
         }
 
         Assert.assertEquals(1, sampleCount(MetricKeys.Gauge.NODE_ROLE));
-        Assert.assertEquals(1, sampleCount(MetricKeys.Gauge.NODE_TYPE));
+        Assert.assertEquals(1, sampleCount(MetricKeys.Gauge.IS_WITNESS));
       } finally {
         fresh.stop();
       }
@@ -543,11 +543,11 @@ public class SRMetricsTest extends BaseTest {
   }
 
   /**
-   * Drives the startup identity publication the way production does: ConsensusService.start()
-   * calls its private recordNodeType() hook right after assembling the miners.
+   * Drives the startup flag publication the way production does: ConsensusService.start()
+   * calls its private recordIsWitness() hook right after assembling the miners.
    */
-  private void publishNodeType() {
-    ReflectionTestUtils.invokeMethod(consensusService, "recordNodeType");
+  private void publishIsWitness() {
+    ReflectionTestUtils.invokeMethod(consensusService, "recordIsWitness");
   }
 
   /**
@@ -590,9 +590,9 @@ public class SRMetricsTest extends BaseTest {
         new String[] {});
   }
 
-  private Double nodeTypeGauge() {
+  private Double isWitnessGauge() {
     return CollectorRegistry.defaultRegistry.getSampleValue(
-        MetricKeys.Gauge.NODE_TYPE,
+        MetricKeys.Gauge.IS_WITNESS,
         new String[] {},
         new String[] {});
   }
