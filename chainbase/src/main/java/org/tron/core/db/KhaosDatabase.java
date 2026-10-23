@@ -11,63 +11,35 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.common.utils.Pair;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
+import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.BadNumberBlockException;
 import org.tron.core.exception.NonCommonBlockException;
 import org.tron.core.exception.UnLinkedBlockException;
 
 @Component
 @Slf4j(topic = "DB")
-public class KhaosDatabase extends TronDatabase {
+public class KhaosDatabase {
 
   private KhaosBlock head;
+
   @Getter
   private KhaosStore miniStore = new KhaosStore();
-  @Getter
-  private KhaosStore miniUnlinkedStore = new KhaosStore();
-
-  @Autowired
-  protected KhaosDatabase(@Value("block_KDB") String dbName) {
-    super(dbName);
-  }
-
-  @Override
-  public void put(byte[] key, Object item) {
-  }
-
-  @Override
-  public void delete(byte[] key) {
-  }
-
-  @Override
-  public Object get(byte[] key) {
-    return null;
-  }
-
-  @Override
-  public boolean has(byte[] key) {
-    return false;
-  }
 
   void start(BlockCapsule blk) {
-    this.head = new KhaosBlock(blk);
+    this.head = new KhaosBlock(blk, true);
     miniStore.insert(this.head);
   }
 
   void removeBlk(Sha256Hash hash) {
-    if (!miniStore.remove(hash)) {
-      miniUnlinkedStore.remove(hash);
-    }
+    miniStore.remove(hash);
 
     head = miniStore.numKblkMap.entrySet().stream()
         .max(Comparator.comparingLong(Map.Entry::getKey))
@@ -79,10 +51,6 @@ public class KhaosDatabase extends TronDatabase {
   /**
    * check if the id is contained in the KhoasDB.
    */
-  public Boolean containBlock(Sha256Hash hash) {
-    return miniStore.getByHash(hash) != null || miniUnlinkedStore.getByHash(hash) != null;
-  }
-
   public Boolean containBlockInMiniStore(Sha256Hash hash) {
     return miniStore.getByHash(hash) != null;
   }
@@ -91,11 +59,8 @@ public class KhaosDatabase extends TronDatabase {
    * Get the Block from KhoasDB, if it doesn't exist ,return null.
    */
   public BlockCapsule getBlock(Sha256Hash hash) {
-    return Stream.of(miniStore.getByHash(hash), miniUnlinkedStore.getByHash(hash))
-        .filter(Objects::nonNull)
-        .map(block -> block.blk)
-        .findFirst()
-        .orElse(null);
+    KhaosBlock block = miniStore.getByHash(hash);
+    return block == null ? null : block.getBlk();
   }
 
   /**
@@ -114,13 +79,8 @@ public class KhaosDatabase extends TronDatabase {
         }
         block.setParent(kblock);
       } else {
-        miniUnlinkedStore.insert(block);
-        logger.error("Block: {}, head: {}, miniStore: {}, miniUnlinkedStore: {}.",
-            blk,
-            head,
-            miniStore,
-            miniUnlinkedStore);
-        throw new UnLinkedBlockException();
+        throw new UnLinkedBlockException(String.format(
+            "Unlinked block: %s, parent: %s.", blk.getBlockId(), blk.getParentHash()));
       }
     }
 
@@ -129,11 +89,15 @@ public class KhaosDatabase extends TronDatabase {
     if (head == null || block.num > head.num) {
       head = block;
     }
-    return head.blk;
+    return head == block ? blk : head.getBlk();
   }
 
   public BlockCapsule getHead() {
-    return head.blk;
+    return head.getBlk();
+  }
+
+  public BlockId getHeadId() {
+    return head.id;
   }
 
   void setHead(KhaosBlock blk) {
@@ -153,7 +117,6 @@ public class KhaosDatabase extends TronDatabase {
   }
 
   public void setMaxSize(int maxSize) {
-    miniUnlinkedStore.setMaxCapacity(maxSize);
     miniStore.setMaxCapacity(maxSize);
   }
 
@@ -204,38 +167,64 @@ public class KhaosDatabase extends TronDatabase {
     }
   }
 
-  // only for unit test
-  public BlockCapsule getParentBlock(Sha256Hash hash) {
-    return Stream.of(miniStore.getByHash(hash), miniUnlinkedStore.getByHash(hash))
-        .filter(Objects::nonNull)
-        .map(KhaosBlock::getParent)
-        .map(khaosBlock -> khaosBlock == null ? null : khaosBlock.blk)
-        .filter(Objects::nonNull)
-        .filter(b -> containBlock(b.getBlockId()))
-        .findFirst()
-        .orElse(null);
-  }
-
   public boolean hasData() {
     return !this.miniStore.hashKblkMap.isEmpty();
   }
 
   public static class KhaosBlock {
 
-    @Getter
     private BlockCapsule blk;
+    private byte[] rawData;
     private Reference<KhaosBlock> parent = new WeakReference<>(null);
-    private BlockId id;
-    private long num;
+    @Getter
+    private final BlockId id;
+    @Getter
+    private final long num;
+    @Getter
+    private final Sha256Hash parentHash;
+    private final boolean generatedByMyself;
 
     public KhaosBlock(BlockCapsule blk) {
-      this.blk = blk;
-      this.id = blk.getBlockId();
-      this.num = blk.getNum();
+      this(blk, false);
     }
 
-    public Sha256Hash getParentHash() {
-      return this.blk.getParentHash();
+    private KhaosBlock(BlockCapsule blk, boolean processed) {
+      this.id = blk.getBlockId();
+      this.num = blk.getNum();
+      this.parentHash = blk.getParentHash();
+      this.generatedByMyself = blk.generatedByMyself;
+      if (processed) {
+        this.blk = blk;
+      } else {
+        this.rawData = blk.getData();
+      }
+    }
+
+    /** Queries must not retain decoded objects for an unprocessed block. */
+    public synchronized BlockCapsule getBlk() {
+      if (blk != null) {
+        return blk;
+      }
+      try {
+        BlockCapsule block = new BlockCapsule(rawData);
+        block.generatedByMyself = generatedByMyself;
+        return block;
+      } catch (BadItemException e) {
+        throw new IllegalStateException("Cannot decode cached block " + id, e);
+      }
+    }
+
+    public synchronized boolean isProcessed() {
+      return blk != null;
+    }
+
+    /** Retain the executed capsule only after its database session commits successfully. */
+    synchronized void commit(BlockCapsule block) {
+      if (!id.equals(block.getBlockId())) {
+        throw new IllegalArgumentException("Committed block ID does not match " + id);
+      }
+      blk = block;
+      rawData = null;
     }
 
     public KhaosBlock getParent() {
@@ -260,18 +249,7 @@ public class KhaosDatabase extends TronDatabase {
 
     @Override
     public int hashCode() {
-
       return Objects.hash(id);
-    }
-
-    @Override
-    public String toString() {
-      return "KhaosBlock{" +
-          "blk=" + blk +
-          ", parent=" + (parent == null ? null : parent.get()) +
-          ", id=" + id +
-          ", num=" + num +
-          '}';
     }
   }
 
@@ -346,13 +324,5 @@ public class KhaosDatabase extends TronDatabase {
       return hashKblkMap.size();
     }
 
-    @Override
-    public String toString() {
-      return "KhaosStore{" +
-          "hashKblkMap=" + hashKblkMap +
-          ", maxCapacity=" + maxCapacity +
-          ", numKblkMap=" + numKblkMap +
-          '}';
-    }
   }
 }
