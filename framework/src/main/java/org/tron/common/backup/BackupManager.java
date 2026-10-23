@@ -28,7 +28,6 @@ import org.tron.common.es.ExecutorServiceManager;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.prometheus.Metrics;
 import org.tron.common.prometheus.SRMetrics;
-import org.tron.core.config.args.Args;
 import org.tron.p2p.utils.NetUtil;
 
 @Slf4j(topic = "backup")
@@ -74,7 +73,7 @@ public class BackupManager implements EventHandler {
     recordNodeRole();
   }
 
-  /** Publishes tron:node_role, once at startup and on every backup-status change. */
+  /** Publishes tron:node_role once at startup, and again on every backup-status change. */
   @PostConstruct
   public void recordNodeRole() {
     if (!Metrics.enabled()) {
@@ -89,11 +88,7 @@ public class BackupManager implements EventHandler {
   }
 
   private int currentRole() {
-    // started without -w: a plain fullnode; witness keys are not even loaded
-    if (!Args.getInstance().isWitness()) {
-      return SRMetrics.NODE_ROLE_FULLNODE;
-    }
-    // no backup election to take part in: this node holds the primary key itself
+    // no backup configured: default to master, for either identity
     if (!isBackupConfigured()) {
       return SRMetrics.NODE_ROLE_MASTER;
     }

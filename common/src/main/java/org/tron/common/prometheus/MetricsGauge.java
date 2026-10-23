@@ -22,9 +22,11 @@ class MetricsGauge {
     init(MetricKeys.Gauge.WITNESS_ADDRESS,
         "1 for each consensus witness address this node holds a miner for.",
         MetricLabels.Gauge.ADDRESS);
+    init(MetricKeys.Gauge.NODE_TYPE,
+        "Type of this node, encoded as a number: 0 = fullnode, 1 = witness.");
     init(MetricKeys.Gauge.NODE_ROLE,
-        "Role of this node, encoded as a number: 0 = fullnode, 1 = init, "
-            + "2 = master, 3 = slaver.");
+        "Backup-election role of this node, encoded as a number: 0 = init, "
+            + "1 = master, 2 = slaver.");
   }
 
   private MetricsGauge() {

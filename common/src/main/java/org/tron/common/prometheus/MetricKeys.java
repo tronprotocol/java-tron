@@ -42,8 +42,10 @@ public class MetricKeys {
     public static final String TX_CACHE = "tron:tx_cache";
     // per local consensus witness miner; value 1, label is the Base58Check witness address
     public static final String WITNESS_ADDRESS = "tron:witness_address";
-    // numeric role of this node: 0 = fullnode, 1 = init, 2 = master, 3 = slaver
+    // numeric backup-election role of this node: 0 = init, 1 = master, 2 = slaver
     public static final String NODE_ROLE = "tron:node_role";
+    // numeric identity of this node: 0 = fullnode, 1 = witness
+    public static final String NODE_TYPE = "tron:node_type";
 
     private Gauge() {
       throw new IllegalStateException("Gauge");

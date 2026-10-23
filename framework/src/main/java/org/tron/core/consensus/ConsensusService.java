@@ -81,6 +81,7 @@ public class ConsensusService {
 
     param.setMiners(miners);
     recordWitnessAddresses(miners);
+    recordNodeType();
     param.setBlockHandle(blockHandle);
     param.setPbftInterface(pbftBaseImpl);
     consensus.start(param);
@@ -102,6 +103,24 @@ public class ConsensusService {
       } catch (Exception e) {
         logger.warn("Failed to record witness address metrics.", e);
       }
+    }
+  }
+
+  /**
+   * Publishes tron:node_type once at consensus startup; 0 = fullnode, 1 = witness. It is
+   * published independently of the witness-address publication, and even when no miner is
+   * configured, so the identity series always exists. Catches its own failure so a metrics
+   * problem can neither skip the witness publication nor abort consensus startup.
+   */
+  private void recordNodeType() {
+    if (!Metrics.enabled()) {
+      return;
+    }
+    try {
+      SRMetrics.recordNodeType(Args.getInstance().isWitness()
+          ? SRMetrics.NODE_TYPE_WITNESS : SRMetrics.NODE_TYPE_FULLNODE);
+    } catch (Exception e) {
+      logger.warn("Failed to record node type metrics.", e);
     }
   }
 

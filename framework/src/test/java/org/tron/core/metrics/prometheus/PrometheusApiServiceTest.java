@@ -3,6 +3,8 @@ package org.tron.core.metrics.prometheus;
 import com.google.common.collect.Maps;
 import com.google.protobuf.ByteString;
 import io.prometheus.client.CollectorRegistry;
+import io.prometheus.client.exporter.common.TextFormat;
+import java.io.StringWriter;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -227,8 +229,8 @@ public class PrometheusApiServiceTest extends BaseTest {
 
   @Test
   public void testNodeRoleMetric() {
-    // a single label-less series per node; the value encodes the role (0 = fullnode,
-    // 1 = init, 2 = master, 3 = slaver), here master after recording NODE_ROLE_MASTER
+    // a single label-less series per node; the value encodes the role (0 = init,
+    // 1 = master, 2 = slaver), here master after recording NODE_ROLE_MASTER
     SRMetrics.recordNodeRole(SRMetrics.NODE_ROLE_MASTER);
     Double value = CollectorRegistry.defaultRegistry.getSampleValue(
         MetricKeys.Gauge.NODE_ROLE,
@@ -236,6 +238,37 @@ public class PrometheusApiServiceTest extends BaseTest {
         new String[] {});
     Assert.assertNotNull("tron:node_role sample should exist", value);
     Assert.assertEquals(SRMetrics.NODE_ROLE_MASTER, value, 0.0);
+  }
+
+  @Test
+  public void testNodeTypeMetric() {
+    // label-less identity series: 0 = fullnode, 1 = witness
+    SRMetrics.recordNodeType(SRMetrics.NODE_TYPE_WITNESS);
+    Double value = CollectorRegistry.defaultRegistry.getSampleValue(
+        MetricKeys.Gauge.NODE_TYPE,
+        new String[] {},
+        new String[] {});
+    Assert.assertNotNull("tron:node_type sample should exist", value);
+    Assert.assertEquals(SRMetrics.NODE_TYPE_WITNESS, value, 0.0);
+  }
+
+  @Test
+  public void testNodeGaugesTextExport() throws Exception {
+    SRMetrics.recordNodeType(SRMetrics.NODE_TYPE_FULLNODE);
+    SRMetrics.recordNodeRole(SRMetrics.NODE_ROLE_INIT);
+
+    StringWriter writer = new StringWriter();
+    TextFormat.write004(writer, CollectorRegistry.defaultRegistry.metricFamilySamples());
+    String text = writer.toString();
+
+    Assert.assertTrue("scrape output should expose tron:node_type",
+        text.contains("tron:node_type "));
+    Assert.assertTrue("scrape output should expose tron:node_role",
+        text.contains("tron:node_role "));
+    Assert.assertTrue("tron:node_type should export the recorded value",
+        text.contains("tron:node_type 0.0"));
+    Assert.assertTrue("tron:node_role should export the recorded value",
+        text.contains("tron:node_role 0.0"));
   }
 
   @Test

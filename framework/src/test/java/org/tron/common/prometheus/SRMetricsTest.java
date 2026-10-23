@@ -2,6 +2,8 @@ package org.tron.common.prometheus;
 
 import com.google.protobuf.ByteString;
 import io.prometheus.client.CollectorRegistry;
+import io.prometheus.client.exporter.common.TextFormat;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -13,6 +15,8 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.tron.common.BaseTest;
 import org.tron.common.TestConstants;
@@ -183,83 +187,221 @@ public class SRMetricsTest extends BaseTest {
     Assert.assertNull(sample(MetricLabels.Counter.SR_REMOVE, stableWit));
   }
 
-  // ---- node_role: the four states, the pre-election window and status transitions ----
+  // ---- tron:node_type: process identity, published at startup and independent of the role ----
 
   /**
-   * Started without witness mode: a plain fullnode reports role 0.
+   * Identity is published once at startup by ConsensusService: 0 for a node started without
+   * witness mode, 1 for a node started with -w.
    */
   @Test
-  public void testNodeRoleFullNode() {
-    Args.getInstance().witness = false;
-    backupManager.recordNodeRole();
-    Assert.assertEquals(SRMetrics.NODE_ROLE_FULLNODE, roleGauge(), 0.0);
+  public void testNodeTypeBothIdentities() {
+    for (boolean witness : new boolean[] {false, true}) {
+      Args.getInstance().witness = witness;
+      publishNodeType();
+      int expected = witness ? SRMetrics.NODE_TYPE_WITNESS : SRMetrics.NODE_TYPE_FULLNODE;
+      Assert.assertEquals(expected, nodeTypeGauge(), 0.0);
+    }
   }
 
   /**
-   * Witness configured without a backup election (backup members unset): the node always
-   * holds the primary key itself, so the single role series reports master (2).
+   * Metrics disabled: recordNodeType() short-circuits, so the previously published value stands
+   * even when the identity would have changed.
    */
   @Test
-  public void testNodeRoleMaster() {
+  public void testNodeTypeNotPublishedWhenMetricsDisabled() {
+    Args.getInstance().witness = false;
+    publishNodeType();
+    Assert.assertEquals(SRMetrics.NODE_TYPE_FULLNODE, nodeTypeGauge(), 0.0);
+
+    Args.getInstance().setMetricsPrometheusEnable(false);
+    try {
+      Args.getInstance().witness = true;
+      publishNodeType();
+      Assert.assertEquals(SRMetrics.NODE_TYPE_FULLNODE, nodeTypeGauge(), 0.0);
+    } finally {
+      Args.getInstance().setMetricsPrometheusEnable(true);
+    }
+  }
+
+  /**
+   * Metrics disabled: recordNodeRole() short-circuits, so the previously published role stands
+   * even when the backup configuration would resolve to a different one.
+   */
+  @Test
+  public void testNodeRoleNotPublishedWhenMetricsDisabled() {
+    Args.getInstance().witness = false;
+    // no backup configured: baseline master (1)
+    backupManager.recordNodeRole();
+    Assert.assertEquals(SRMetrics.NODE_ROLE_MASTER, roleGauge(), 0.0);
+
+    // a configuration that would resolve to init (0) if it were published
+    Args.getInstance().setBackupPort(PublicMethod.chooseRandomPort());
+    Args.getInstance().setBackupMembers(Collections.singletonList("127.0.0.2"));
+    Args.getInstance().setMetricsPrometheusEnable(false);
+    try {
+      backupManager.recordNodeRole();
+      Assert.assertEquals(SRMetrics.NODE_ROLE_MASTER, roleGauge(), 0.0);
+    } finally {
+      Args.getInstance().setMetricsPrometheusEnable(true);
+      Args.getInstance().setBackupPort(0);
+      Args.getInstance().setBackupMembers(Collections.emptyList());
+    }
+  }
+
+  /**
+   * A failure while publishing node_type must not propagate: ConsensusService catches it, so it
+   * can neither skip the witness-address publication running right beside it nor abort startup.
+   */
+  @Test
+  public void testNodeTypeFailureDoesNotBlockWitnessPublication() {
+    Args.getInstance().witness = false;
+    ByteString address = uniqueAddress();
+    List<Param.Miner> miners = Collections.singletonList(miner(address, address));
+
+    try (MockedStatic<SRMetrics> mocked = Mockito.mockStatic(SRMetrics.class)) {
+      mocked.when(() -> SRMetrics.recordNodeType(Mockito.anyInt()))
+          .thenThrow(new RuntimeException("node_type failure"));
+      mocked.when(() -> SRMetrics.recordWitnessAddress(Mockito.anyString()))
+          .thenCallRealMethod();
+
+      // must not propagate the node_type failure
+      publishNodeType();
+
+      // the witness-address publication still runs independently on the same startup path
+      ReflectionTestUtils.invokeMethod(consensusService, "recordWitnessAddresses", miners);
+    }
+
+    Assert.assertEquals(1.0, witnessGauge(encode(address)), 0.0);
+  }
+
+  // ---- tron:node_role: the three states, the pre-election window and status transitions ----
+
+  /**
+   * No backup configured: both identities report master (1) as the standalone default; the
+   * backup status defaults to MASTER before any election runs.
+   */
+  @Test
+  public void testNodeRoleMasterWhenNoBackupBothIdentities() {
+    Args.getInstance().witness = false;
+    backupManager.recordNodeRole();
+    Assert.assertEquals(SRMetrics.NODE_ROLE_MASTER, roleGauge(), 0.0);
+
     Args.getInstance().witness = true;
     backupManager.recordNodeRole();
     Assert.assertEquals(SRMetrics.NODE_ROLE_MASTER, roleGauge(), 0.0);
   }
 
   /**
-   * Backup election slaver: the node stands by for a master and reports slaver (3).
+   * A partial backup configuration — a usable port without members, or members without a usable
+   * port — is not an election setup (the same condition BackupServer.initServer() uses), so the
+   * node reports master (1) for both identities and no transport is started.
    */
   @Test
-  public void testNodeRoleSlaver() throws Exception {
-    Args.getInstance().witness = true;
-    configureBackup();
-    markBackupInitiated(backupManager);
-    backupManager.setStatus(BackupManager.BackupStatusEnum.SLAVER);
-    Assert.assertEquals(SRMetrics.NODE_ROLE_SLAVER, roleGauge(), 0.0);
-  }
+  public void testNodeRoleMasterWhenBackupPartiallyConfigured() {
+    for (boolean witness : new boolean[] {false, true}) {
+      for (boolean portUsable : new boolean[] {false, true}) {
+        Args.getInstance().witness = witness;
+        Args.getInstance().setBackupPort(portUsable ? PublicMethod.chooseRandomPort() : 0);
+        Args.getInstance().setBackupMembers(portUsable
+            ? Collections.emptyList() : Collections.singletonList("127.0.0.2"));
 
-  /**
-   * Before the first election round (backup configured, BackupManager.init() not yet run,
-   * which in production only happens after the first fresh block) the node must report
-   * init (1) instead of falling back to the MASTER field default; the first real status
-   * after init() rewrites the same single series to the elected role.
-   */
-  @Test
-  public void testNodeRoleInitBeforeBackupElectionRuns() throws Exception {
-    Args.getInstance().witness = true;
-    configureBackup();
-
-    // a directly constructed manager has not gone through init(): pre-election window
-    BackupManager fresh = new BackupManager();
-    try {
-      fresh.recordNodeRole();
-      Assert.assertEquals(SRMetrics.NODE_ROLE_INIT, roleGauge(), 0.0);
-
-      // a status change while init() has not run stays inside the window
-      fresh.setStatus(BackupManager.BackupStatusEnum.SLAVER);
-      Assert.assertEquals(SRMetrics.NODE_ROLE_INIT, roleGauge(), 0.0);
-
-      // once the election has run, the status maps to the elected role
-      markBackupInitiated(fresh);
-      fresh.setStatus(BackupManager.BackupStatusEnum.SLAVER);
-      Assert.assertEquals(SRMetrics.NODE_ROLE_SLAVER, roleGauge(), 0.0);
-    } finally {
-      fresh.stop();
+        // one half of the pair is always unset, so this is never a usable election config
+        BackupManager fresh = new BackupManager();
+        try {
+          fresh.recordNodeRole();
+          Assert.assertEquals(SRMetrics.NODE_ROLE_MASTER, roleGauge(), 0.0);
+          Assert.assertEquals(BackupManager.BackupStatusEnum.MASTER, fresh.getStatus());
+        } finally {
+          fresh.stop();
+        }
+      }
     }
   }
 
   /**
-   * After init() has run, status INIT is a real election state — the transport is up but no
-   * keep-alive timeout has been judged yet, or the master lost keep-alive and a re-election
-   * is running — and maps 1:1 to init (1). It must not be misreported as slaver (3).
+   * Backup configured but the election has not run yet: even though the status field still
+   * defaults to MASTER, the node reports init (0), for both identities; a status change before
+   * init() stays inside the window, and after init() the status maps to the elected role.
    */
   @Test
-  public void testNodeRoleInitAfterElectionStarted() throws Exception {
-    Args.getInstance().witness = true;
+  public void testNodeRoleInitBeforeBackupElectionBothIdentities() throws Exception {
     configureBackup();
-    markBackupInitiated(backupManager);
-    backupManager.setStatus(BackupManager.BackupStatusEnum.INIT);
-    Assert.assertEquals(SRMetrics.NODE_ROLE_INIT, roleGauge(), 0.0);
+
+    for (boolean witness : new boolean[] {false, true}) {
+      BackupManager fresh = new BackupManager();
+      try {
+        Args.getInstance().witness = witness;
+
+        // a directly constructed manager has not gone through init(): default status is MASTER
+        Assert.assertEquals(BackupManager.BackupStatusEnum.MASTER, fresh.getStatus());
+        fresh.recordNodeRole();
+        Assert.assertEquals(SRMetrics.NODE_ROLE_INIT, roleGauge(), 0.0);
+
+        // a status change before init() stays inside the window
+        fresh.setStatus(BackupManager.BackupStatusEnum.SLAVER);
+        Assert.assertEquals(SRMetrics.NODE_ROLE_INIT, roleGauge(), 0.0);
+
+        // once the election has run, the status maps to the elected role
+        markBackupInitiated(fresh);
+        fresh.setStatus(BackupManager.BackupStatusEnum.SLAVER);
+        Assert.assertEquals(SRMetrics.NODE_ROLE_SLAVER, roleGauge(), 0.0);
+      } finally {
+        fresh.stop();
+      }
+    }
+  }
+
+  /**
+   * Identity and role are fully independent: for both identities the startup publication is
+   * fullnode/witness + init, and the role then cycles INIT -> MASTER -> SLAVER -> MASTER while
+   * node_type never changes. Every publication rewrites the single label-less series in place,
+   * so no duplicate registration or stale role series accumulates.
+   */
+  @Test
+  public void testNodeTypeIndependentOfRoleBothIdentities() throws Exception {
+    configureBackup();
+
+    BackupManager.BackupStatusEnum[] statuses = {
+        BackupManager.BackupStatusEnum.INIT,
+        BackupManager.BackupStatusEnum.MASTER,
+        BackupManager.BackupStatusEnum.SLAVER,
+        BackupManager.BackupStatusEnum.MASTER};
+    int[] roles = {
+        SRMetrics.NODE_ROLE_INIT,
+        SRMetrics.NODE_ROLE_MASTER,
+        SRMetrics.NODE_ROLE_SLAVER,
+        SRMetrics.NODE_ROLE_MASTER};
+
+    for (boolean witness : new boolean[] {false, true}) {
+      BackupManager fresh = new BackupManager();
+      try {
+        Args.getInstance().witness = witness;
+        int expectedType = witness ? SRMetrics.NODE_TYPE_WITNESS : SRMetrics.NODE_TYPE_FULLNODE;
+
+        // startup: node_type comes from ConsensusService, node_role from BackupManager;
+        // configured-but-not-init is INIT, not the MASTER default
+        publishNodeType();
+        fresh.recordNodeRole();
+        Assert.assertEquals(expectedType, nodeTypeGauge(), 0.0);
+        Assert.assertEquals(SRMetrics.NODE_ROLE_INIT, roleGauge(), 0.0);
+
+        // flip the startup identity: setStatus() must only republish the role, never recompute
+        // node_type, so the originally published identity has to keep standing
+        Args.getInstance().witness = !witness;
+        markBackupInitiated(fresh);
+        for (int i = 0; i < statuses.length; i++) {
+          fresh.setStatus(statuses[i]);
+          Assert.assertEquals(roles[i], roleGauge(), 0.0);
+          Assert.assertEquals("identity must not change with the role", expectedType,
+              nodeTypeGauge(), 0.0);
+        }
+
+        Assert.assertEquals(1, sampleCount(MetricKeys.Gauge.NODE_ROLE));
+        Assert.assertEquals(1, sampleCount(MetricKeys.Gauge.NODE_TYPE));
+      } finally {
+        fresh.stop();
+      }
+    }
   }
 
   /**
@@ -373,6 +515,14 @@ public class SRMetricsTest extends BaseTest {
   }
 
   /**
+   * Drives the startup identity publication the way production does: ConsensusService.start()
+   * calls its private recordNodeType() hook right after assembling the miners.
+   */
+  private void publishNodeType() {
+    ReflectionTestUtils.invokeMethod(consensusService, "recordNodeType");
+  }
+
+  /**
    * Drives the startup publication the way production does: the miners are assembled by
    * ConsensusService, which publishes the witness identities once during startup.
    */
@@ -410,6 +560,30 @@ public class SRMetricsTest extends BaseTest {
         MetricKeys.Gauge.NODE_ROLE,
         new String[] {},
         new String[] {});
+  }
+
+  private Double nodeTypeGauge() {
+    return CollectorRegistry.defaultRegistry.getSampleValue(
+        MetricKeys.Gauge.NODE_TYPE,
+        new String[] {},
+        new String[] {});
+  }
+
+  /** Counts the exported sample lines of a label-less metric, to detect duplicate registration. */
+  private int sampleCount(String metricName) {
+    StringWriter writer = new StringWriter();
+    try {
+      TextFormat.write004(writer, CollectorRegistry.defaultRegistry.metricFamilySamples());
+    } catch (Exception e) {
+      throw new IllegalStateException(e);
+    }
+    int count = 0;
+    for (String line : writer.toString().split("\n")) {
+      if (line.startsWith(metricName + " ") || line.startsWith(metricName + "{")) {
+        count++;
+      }
+    }
+    return count;
   }
 
   private ByteString registerWitness() {

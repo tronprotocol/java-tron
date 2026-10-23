@@ -10,11 +10,22 @@ public class SRMetrics {
     throw new IllegalStateException("SRMetrics");
   }
 
-  // node_role: 0 = fullnode, 1 = init (pre-election / re-election), 2 = master, 3 = slaver
-  public static final int NODE_ROLE_FULLNODE = 0;
-  public static final int NODE_ROLE_INIT = 1;
-  public static final int NODE_ROLE_MASTER = 2;
-  public static final int NODE_ROLE_SLAVER = 3;
+  // node_type: 0 = fullnode, 1 = witness
+  public static final int NODE_TYPE_FULLNODE = 0;
+  public static final int NODE_TYPE_WITNESS = 1;
+
+  // node_role: 0 = init (pre-election / re-election), 1 = master, 2 = slaver
+  public static final int NODE_ROLE_INIT = 0;
+  public static final int NODE_ROLE_MASTER = 1;
+  public static final int NODE_ROLE_SLAVER = 2;
+
+  /** Publishes node_type as one label-less series; 0 = fullnode, 1 = witness. */
+  public static void recordNodeType(int nodeType) {
+    if (!Metrics.enabled()) {
+      return;
+    }
+    Metrics.gaugeSet(MetricKeys.Gauge.NODE_TYPE, nodeType);
+  }
 
   /** Publishes node_role as one label-less series; role changes rewrite it in place. */
   public static void recordNodeRole(int role) {
