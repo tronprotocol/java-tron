@@ -13,7 +13,6 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.springframework.test.util.ReflectionTestUtils;
 import org.tron.common.BaseTest;
 import org.tron.common.TestConstants;
 import org.tron.common.backup.BackupManager;
@@ -287,7 +286,7 @@ public class SRMetricsTest extends BaseTest {
   @Test
   public void testWitnessAddressValueOne() {
     ByteString address = uniqueAddress();
-    publishWitnessIdentities(
+    recordWitnessMetrics(
         Collections.singletonList(miner(address, address)));
     Assert.assertEquals(1.0, witnessGauge(encode(address)), 0.0);
   }
@@ -303,7 +302,7 @@ public class SRMetricsTest extends BaseTest {
     miners.add(miner(address1, address1));
     miners.add(miner(address2, address2));
 
-    publishWitnessIdentities(miners);
+    recordWitnessMetrics(miners);
 
     Assert.assertEquals(1.0, witnessGauge(encode(address1)), 0.0);
     Assert.assertEquals(1.0, witnessGauge(encode(address2)), 0.0);
@@ -319,7 +318,7 @@ public class SRMetricsTest extends BaseTest {
     ByteString signingKeyAddress = addressOf(PublicMethod.getRandomPrivateKey());
     ByteString witnessAccountAddress = uniqueAddress();
 
-    publishWitnessIdentities(
+    recordWitnessMetrics(
         Collections.singletonList(miner(signingKeyAddress, witnessAccountAddress)));
 
     Assert.assertEquals(1.0, witnessGauge(encode(witnessAccountAddress)), 0.0);
@@ -332,7 +331,7 @@ public class SRMetricsTest extends BaseTest {
    */
   @Test
   public void testNoWitnessAddressSeriesForEmptyMiners() {
-    publishWitnessIdentities(new ArrayList<>());
+    recordWitnessMetrics(new ArrayList<>());
     Assert.assertNull(witnessGauge(""));
   }
 
@@ -344,7 +343,7 @@ public class SRMetricsTest extends BaseTest {
     ByteString address = uniqueAddress();
     Args.getInstance().setMetricsPrometheusEnable(false);
     try {
-      publishWitnessIdentities(
+      recordWitnessMetrics(
           Collections.singletonList(miner(address, address)));
       Assert.assertNull(witnessGauge(encode(address)));
     } finally {
@@ -373,11 +372,12 @@ public class SRMetricsTest extends BaseTest {
   }
 
   /**
-   * Drives the private startup hook directly; production publishes once from start(),
-   * the test exercises the same loop without starting consensus.
+   * Drives the startup publication the way production does: the miners are assembled first and
+   * the maintenance manager publishes once from init().
    */
-  private void publishWitnessIdentities(List<Param.Miner> miners) {
-    ReflectionTestUtils.invokeMethod(consensusService, "publishWitnessIdentities", miners);
+  private void recordWitnessMetrics(List<Param.Miner> miners) {
+    Param.getInstance().setMiners(miners);
+    maintenanceManager.recordWitnessMetrics();
   }
 
   /**

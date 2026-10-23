@@ -16,8 +16,12 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.bouncycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.common.prometheus.Metrics;
 import org.tron.common.prometheus.SRMetrics;
+import org.tron.common.utils.StringUtil;
 import org.tron.consensus.ConsensusDelegate;
+import org.tron.consensus.base.Param;
+import org.tron.consensus.base.Param.Miner;
 import org.tron.consensus.pbft.PbftManager;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
@@ -52,6 +56,8 @@ public class MaintenanceManager {
 
   public void init() {
     currentWitness.addAll(consensusDelegate.getActiveWitnesses());
+    // miners are assembled by ConsensusService before DposService.start() calls init()
+    recordWitnessMetrics();
   }
 
   public void applyBlock(BlockCapsule blockCapsule) {
@@ -159,6 +165,32 @@ public class MaintenanceManager {
             delegationStore.getBrokerage(witness.createDbKey()));
         delegationStore.setWitnessVote(nextCycle, witness.createDbKey(), witness.getVoteCount());
       });
+    }
+  }
+
+  /**
+   * Publishes one tron:witness_address series per consensus miner. The witness account address is
+   * immutable, so this runs once from {@link #init()} and is never refreshed.
+   */
+  public void recordWitnessMetrics() {
+    if (!Metrics.enabled()) {
+      return;
+    }
+    List<Miner> miners = Param.getInstance().getMiners();
+    if (miners == null) {
+      // miners are not assembled yet
+      return;
+    }
+    for (Miner miner : miners) {
+      if (miner.getWitnessAddress() == null) {
+        continue;
+      }
+      try {
+        String address = StringUtil.encode58Check(miner.getWitnessAddress().toByteArray());
+        SRMetrics.recordWitnessAddress(address);
+      } catch (Exception e) {
+        logger.warn("Failed to publish witness address metrics", e);
+      }
     }
   }
 

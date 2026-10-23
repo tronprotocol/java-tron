@@ -11,9 +11,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.crypto.SignUtils;
 import org.tron.common.parameter.CommonParameter;
-import org.tron.common.prometheus.Metrics;
-import org.tron.common.prometheus.SRMetrics;
-import org.tron.common.utils.StringUtil;
 import org.tron.consensus.Consensus;
 import org.tron.consensus.base.Param;
 import org.tron.consensus.base.Param.Miner;
@@ -83,30 +80,7 @@ public class ConsensusService {
     param.setBlockHandle(blockHandle);
     param.setPbftInterface(pbftBaseImpl);
     consensus.start(param);
-    publishWitnessIdentities(miners);
     logger.info("consensus service start success");
-  }
-
-  /**
-   * Publishes one tron:witness_address series per consensus miner, once at startup. The
-   * witness account address is used (not the signing-key address, which differs in the
-   * single-key multisig setup). Never throws: a metrics failure must not abort startup.
-   */
-  private void publishWitnessIdentities(List<Miner> miners) {
-    if (!Metrics.enabled()) {
-      return;
-    }
-    for (Miner miner : miners) {
-      ByteString witnessAddress = miner.getWitnessAddress();
-      if (witnessAddress == null) {
-        continue;
-      }
-      try {
-        SRMetrics.recordWitnessAddress(StringUtil.encode58Check(witnessAddress.toByteArray()));
-      } catch (Exception e) {
-        logger.warn("Failed to record witness address metric", e);
-      }
-    }
   }
 
   public void stop() {
