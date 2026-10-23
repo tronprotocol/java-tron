@@ -469,7 +469,7 @@ public class ProposalCreateActuatorTest extends BaseTest {
   }
 
   // -------------------------------------------------------------------------------------------
-  // CLOSE_EXCHANGE single-parameter constraint regression tests
+  // CLOSE_EXCHANGE combination regression tests
   // -------------------------------------------------------------------------------------------
 
   private ProposalCreateActuator buildCreateActuator(HashMap<Long, Long> paras) {
@@ -481,83 +481,61 @@ public class ProposalCreateActuatorTest extends BaseTest {
   }
 
   /**
-   * A proposal may combine CLOSE_EXCHANGE with unrelated parameters, but combining it with
-   * the legacy exchange parameters EXCHANGE_CREATE_FEE(12) or
-   * ALLOW_HARDEN_EXCHANGE_CALCULATION(98) is rejected up front, regardless of the parameter
-   * order inside the capsule; unrelated multi-parameter proposals stay untouched.
+   * Mixing CLOSE_EXCHANGE with any other parameter is allowed after the fork: there is no
+   * creation-side combination restriction, each parameter is validated on its own.
    */
   @Test
-  public void closeExchangeCannotBeCombinedWithExchangeParameters() {
+  public void closeExchangeCanBeCombinedWithOtherParameters() {
     long closeExchange = ProposalType.CLOSE_EXCHANGE.getCode();
     long exchangeCreateFee = ProposalType.EXCHANGE_CREATE_FEE.getCode();
     long hardenExchange = ProposalType.ALLOW_HARDEN_EXCHANGE_CALCULATION.getCode();
-    String expectedMessage = "CLOSE_EXCHANGE proposal cannot be combined with "
-        + "EXCHANGE_CREATE_FEE or ALLOW_HARDEN_EXCHANGE_CALCULATION";
-
-    // unrelated multi-parameter proposals are unchanged (no CLOSE_EXCHANGE key)
-    HashMap<Long, Long> unrelated = new HashMap<>();
-    unrelated.put(ProposalType.MAINTENANCE_TIME_INTERVAL.getCode(), 1000000L);
-    unrelated.put(ProposalType.CREATE_ACCOUNT_FEE.getCode(), 1000L);
-    try {
-      buildCreateActuator(unrelated).validate();
-    } catch (ContractValidateException ex) {
-      Assert.fail("unrelated multi-parameter proposal must still validate: " + ex.getMessage());
-    }
 
     activateCloseExchangeFork();
     try {
-      // CLOSE_EXCHANGE + EXCHANGE_CREATE_FEE(12) -> rejected in both orders
+      // CLOSE_EXCHANGE + EXCHANGE_CREATE_FEE(12) -> allowed in both orders
       HashMap<Long, Long> withExchangeFee = new LinkedHashMap<>();
       withExchangeFee.put(closeExchange, 1L);
       withExchangeFee.put(exchangeCreateFee, 1024_000_000L);
-      ContractValidateException e = assertThrows(ContractValidateException.class,
-          () -> buildCreateActuator(withExchangeFee).validate());
-      Assert.assertEquals(expectedMessage, e.getMessage());
+      validateOk(withExchangeFee);
 
       HashMap<Long, Long> withExchangeFeeReversed = new LinkedHashMap<>();
       withExchangeFeeReversed.put(exchangeCreateFee, 1024_000_000L);
       withExchangeFeeReversed.put(closeExchange, 1L);
-      e = assertThrows(ContractValidateException.class,
-          () -> buildCreateActuator(withExchangeFeeReversed).validate());
-      Assert.assertEquals(expectedMessage, e.getMessage());
+      validateOk(withExchangeFeeReversed);
 
-      // CLOSE_EXCHANGE + ALLOW_HARDEN_EXCHANGE_CALCULATION(98) -> rejected in both orders
+      // CLOSE_EXCHANGE + ALLOW_HARDEN_EXCHANGE_CALCULATION(98) -> allowed in both orders
       HashMap<Long, Long> withHarden = new LinkedHashMap<>();
       withHarden.put(closeExchange, 1L);
       withHarden.put(hardenExchange, 1L);
-      e = assertThrows(ContractValidateException.class,
-          () -> buildCreateActuator(withHarden).validate());
-      Assert.assertEquals(expectedMessage, e.getMessage());
+      validateOk(withHarden);
 
       HashMap<Long, Long> withHardenReversed = new LinkedHashMap<>();
       withHardenReversed.put(hardenExchange, 1L);
       withHardenReversed.put(closeExchange, 1L);
-      e = assertThrows(ContractValidateException.class,
-          () -> buildCreateActuator(withHardenReversed).validate());
-      Assert.assertEquals(expectedMessage, e.getMessage());
+      validateOk(withHardenReversed);
 
-      // CLOSE_EXCHANGE + one unrelated parameter -> now allowed in both orders
+      // CLOSE_EXCHANGE + unrelated parameters -> allowed
       HashMap<Long, Long> withUnrelated = new LinkedHashMap<>();
       withUnrelated.put(closeExchange, 1L);
       withUnrelated.put(ProposalType.MAINTENANCE_TIME_INTERVAL.getCode(), 1000000L);
-      try {
-        buildCreateActuator(withUnrelated).validate();
-      } catch (ContractValidateException ex) {
-        Assert.fail("CLOSE_EXCHANGE + unrelated parameter must validate: " + ex.getMessage());
-      }
-
-      // CLOSE_EXCHANGE + CREATE_ACCOUNT_FEE + MAINTENANCE_TIME_INTERVAL -> now allowed as well
-      HashMap<Long, Long> threeParas = new LinkedHashMap<>();
-      threeParas.put(ProposalType.CREATE_ACCOUNT_FEE.getCode(), 1000L);
-      threeParas.put(closeExchange, 1L);
-      threeParas.put(ProposalType.MAINTENANCE_TIME_INTERVAL.getCode(), 1000000L);
-      try {
-        buildCreateActuator(threeParas).validate();
-      } catch (ContractValidateException ex) {
-        Assert.fail("CLOSE_EXCHANGE + unrelated parameters must validate: " + ex.getMessage());
-      }
+      withUnrelated.put(ProposalType.CREATE_ACCOUNT_FEE.getCode(), 1000L);
+      validateOk(withUnrelated);
     } finally {
       deactivateCloseExchangeFork();
+    }
+
+    // unrelated multi-parameter proposals without CLOSE_EXCHANGE stay valid
+    HashMap<Long, Long> unrelated = new HashMap<>();
+    unrelated.put(ProposalType.MAINTENANCE_TIME_INTERVAL.getCode(), 1000000L);
+    unrelated.put(ProposalType.CREATE_ACCOUNT_FEE.getCode(), 1000L);
+    validateOk(unrelated);
+  }
+
+  private void validateOk(HashMap<Long, Long> paras) {
+    try {
+      buildCreateActuator(paras).validate();
+    } catch (ContractValidateException ex) {
+      Assert.fail("proposal must validate: " + ex.getMessage());
     }
   }
 
@@ -663,8 +641,9 @@ public class ProposalCreateActuatorTest extends BaseTest {
   }
 
   /**
-   * VERSION_4_8_3: hardForkTime is long past, so the next maintenance interval activates
-   * it; filling all stats slots satisfies the rate threshold.
+   * VERSION_4_8_3 and its predecessor VERSION_4_8_2: hardForkTime is long past, so the next
+   * maintenance interval activates them; filling all stats slots satisfies the rate
+   * threshold. VERSION_4_8_2 is required to validate ALLOW_HARDEN_EXCHANGE_CALCULATION(98).
    */
   private void activateCloseExchangeFork() {
     long maintenanceTimeInterval =
@@ -677,14 +656,20 @@ public class ProposalCreateActuatorTest extends BaseTest {
     Arrays.fill(stats, (byte) 1);
     dbManager.getDynamicPropertiesStore()
         .statsByVersion(ForkBlockVersionEnum.VERSION_4_8_3.getValue(), stats);
+    dbManager.getDynamicPropertiesStore()
+        .statsByVersion(ForkBlockVersionEnum.VERSION_4_8_2.getValue(), stats);
     Assert.assertTrue(ForkController.instance()
         .pass(ForkBlockVersionEnum.VERSION_4_8_3));
+    Assert.assertTrue(ForkController.instance()
+        .pass(ForkBlockVersionEnum.VERSION_4_8_2));
   }
 
   private void deactivateCloseExchangeFork() {
     dbManager.getDynamicPropertiesStore().saveLatestBlockHeaderTimestamp(1000000);
     dbManager.getDynamicPropertiesStore()
         .statsByVersion(ForkBlockVersionEnum.VERSION_4_8_3.getValue(), new byte[27]);
+    dbManager.getDynamicPropertiesStore()
+        .statsByVersion(ForkBlockVersionEnum.VERSION_4_8_2.getValue(), new byte[27]);
   }
 
 }

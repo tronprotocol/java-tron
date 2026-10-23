@@ -111,17 +111,6 @@ public class ProposalCreateActuator extends AbstractActuator {
       throw new ContractValidateException("This proposal has no parameter.");
     }
 
-    if (contract.getParametersMap().containsKey(
-        ProposalUtil.ProposalType.CLOSE_EXCHANGE.getCode())
-        && (contract.getParametersMap().containsKey(
-            ProposalUtil.ProposalType.EXCHANGE_CREATE_FEE.getCode())
-        || contract.getParametersMap().containsKey(
-            ProposalUtil.ProposalType.ALLOW_HARDEN_EXCHANGE_CALCULATION.getCode()))) {
-      throw new ContractValidateException(
-          "CLOSE_EXCHANGE proposal cannot be combined with EXCHANGE_CREATE_FEE "
-              + "or ALLOW_HARDEN_EXCHANGE_CALCULATION");
-    }
-
     for (Map.Entry<Long, Long> entry : contract.getParametersMap().entrySet()) {
       validateValue(entry);
     }
