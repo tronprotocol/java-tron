@@ -22,6 +22,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.jline.reader.Parser;
 import org.jline.reader.SyntaxError;
 import org.jline.reader.impl.DefaultParser;
+import org.tron.core.services.admin.AdminCommandDescription;
+import org.tron.core.services.admin.ipc.client.ActivePeerOutputFormatter.OutputFormat;
 
 /**
  * Parses console commands using the annotated admin API, without console or socket I/O.
@@ -31,6 +33,8 @@ import org.jline.reader.impl.DefaultParser;
 final class IpcConsoleCommands {
 
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+  private final ActivePeerOutputFormatter activePeerOutputFormatter =
+      new ActivePeerOutputFormatter();
 
   private final Map<String, AdminCommand> adminCommands;
   private final DefaultParser parser = new DefaultParser().eofOnUnclosedQuote(true);
@@ -66,23 +70,32 @@ final class IpcConsoleCommands {
 
   private Command prepare(List<String> words) throws JsonProcessingException {
     if (words.isEmpty()) {
-      return new Command(Action.EMPTY, null, null, null, null);
+      return new Command(Action.EMPTY, null, null, null, null, OutputFormat.JSON);
     }
     String name = words.get(0).toLowerCase(Locale.ROOT);
     if ("exit".equals(name) || "quit".equals(name)) {
-      return new Command(Action.EXIT, null, null, null, null);
+      return new Command(Action.EXIT, null, null, null, null, OutputFormat.JSON);
     }
     if ("help".equals(name)) {
       AdminCommand command = words.size() == 2
           ? adminCommands.get(words.get(1).toLowerCase(Locale.ROOT)) : null;
-      String help = command == null ? buildHelp() : "usage: " + formatUsage(command);
-      return new Command(Action.HELP, null, null, help, null);
+      String help = command == null ? buildHelp() : formatHelp(command);
+      return new Command(Action.HELP, null, null, help, null, OutputFormat.JSON);
     }
     AdminCommand command = adminCommands.get(name);
     if (command == null) {
-      return new Command(Action.ERROR, null, null, buildHelp(), "Invalid command.");
+      return new Command(Action.ERROR, null, null, buildHelp(), "Invalid command.",
+          OutputFormat.JSON);
     }
-    if (words.size() - 1 != command.parameters.size()) {
+    OutputFormat outputFormat = OutputFormat.JSON;
+    if (activePeerOutputFormatter.supports(command.name)) {
+      if (words.size() > 2) {
+        return error("Invalid parameter, usage: " + formatUsage(command));
+      }
+      if (words.size() == 2) {
+        outputFormat = activePeerOutputFormatter.parseFormat(words.get(1));
+      }
+    } else if (words.size() - 1 != command.parameters.size()) {
       return error("Invalid parameter, usage: " + formatUsage(command));
     }
 
@@ -97,7 +110,8 @@ final class IpcConsoleCommands {
     request.put("params", values);
     int id = ++requestId;
     request.put("id", id);
-    return new Command(Action.REQUEST, OBJECT_MAPPER.writeValueAsString(request), id, null, null);
+    return new Command(Action.REQUEST, OBJECT_MAPPER.writeValueAsString(request), id, null, null,
+        outputFormat);
   }
 
   private List<String> parseCommandLine(String commandLine) {
@@ -133,8 +147,9 @@ final class IpcConsoleCommands {
         }
         parameters.add(new Parameter(name, OBJECT_MAPPER.getTypeFactory().constructType(types[i])));
       }
-      commands.put(rpcMethod.value().toLowerCase(Locale.ROOT),
-          new AdminCommand(rpcMethod.value(), parameters));
+      AdminCommandDescription description = method.getAnnotation(AdminCommandDescription.class);
+      commands.put(rpcMethod.value().toLowerCase(Locale.ROOT), new AdminCommand(rpcMethod.value(),
+          parameters, description == null ? null : description.value()));
     }
     return commands;
   }
@@ -149,7 +164,16 @@ final class IpcConsoleCommands {
         .append(System.lineSeparator()).append("  exit/quit").toString();
   }
 
+  private String formatHelp(AdminCommand command) {
+    String usage = "usage: " + formatUsage(command);
+    return StringUtils.isEmpty(command.description) ? usage
+        : command.description + System.lineSeparator() + usage;
+  }
+
   private String formatUsage(AdminCommand command) {
+    if (activePeerOutputFormatter.supports(command.name)) {
+      return activePeerOutputFormatter.usage();
+    }
     StringBuilder usage = new StringBuilder(command.name);
     for (Parameter parameter : command.parameters) {
       usage.append(" <").append(parameter.name).append(":")
@@ -215,7 +239,7 @@ final class IpcConsoleCommands {
   }
 
   private Command error(String message) {
-    return new Command(Action.ERROR, null, null, null, message);
+    return new Command(Action.ERROR, null, null, null, message, OutputFormat.JSON);
   }
 
   enum Action {
@@ -232,6 +256,7 @@ final class IpcConsoleCommands {
     private final Integer requestId;
     private final String output;
     private final String error;
+    private final OutputFormat outputFormat;
   }
 
   @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
@@ -239,6 +264,7 @@ final class IpcConsoleCommands {
 
     private final String name;
     private final List<Parameter> parameters;
+    private final String description;
   }
 
   @RequiredArgsConstructor(access = AccessLevel.PRIVATE)

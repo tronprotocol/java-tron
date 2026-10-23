@@ -7,7 +7,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.StringJoiner;
 import org.apache.commons.lang3.StringUtils;
+import org.eclipse.jetty.server.handler.ContextHandler;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
@@ -362,7 +364,7 @@ public class UtilMockTest  {
   }
 
   @Test
-  public void testGetJsonString() {
+  public void testGetJsonString() throws Exception {
     String str = "";
     String ret = Util.getJsonString(str);
     Assert.assertTrue(StringUtils.isEmpty(ret));
@@ -377,6 +379,46 @@ public class UtilMockTest  {
         "{\"owner_address\":\"owner_address\","
             + "\"contract_address\":\"contract_address\"}";
     Assert.assertEquals(expect, ret2);
+  }
+
+  private static String buildForm(int n, boolean distinct) {
+    StringJoiner joiner = new StringJoiner("&");
+    for (int i = 0; i < n; i++) {
+      joiner.add((distinct ? "k" + i : "k") + "=v");
+    }
+    return joiner.toString();
+  }
+
+  private static void assertRejectsTooManyFormPairs(boolean distinct) {
+    JsonFormat.ParseException e = Assert.assertThrows(JsonFormat.ParseException.class,
+        () -> Util.getJsonString(buildForm(ContextHandler.DEFAULT_MAX_FORM_KEYS + 1, distinct)));
+    Assert.assertEquals("form has too many parameters, the limit is "
+        + ContextHandler.DEFAULT_MAX_FORM_KEYS, e.getMessage());
+  }
+
+  @Test
+  public void testGetJsonStringRejectsTooManyDistinctKeys() {
+    assertRejectsTooManyFormPairs(true);
+  }
+
+  @Test
+  public void testGetJsonStringRejectsTooManyDuplicateKeys() {
+    assertRejectsTooManyFormPairs(false);
+  }
+
+  @Test
+  public void testGetJsonStringAcceptsMaxKeys() throws Exception {
+    int max = ContextHandler.DEFAULT_MAX_FORM_KEYS;
+    String ret = Util.getJsonString(buildForm(max, true));
+    Assert.assertTrue(ret.contains("\"k0\":\"v\""));
+    Assert.assertTrue(ret.contains("\"k" + (max - 1) + "\":\"v\""));
+  }
+
+  @Test
+  public void testGetJsonStringKeepsJsonWithManyAmpersands() throws Exception {
+    String json = "{\"k\":\"" + StringUtils.repeat('&', ContextHandler.DEFAULT_MAX_FORM_KEYS + 1)
+        + "\"}";
+    Assert.assertEquals(json, Util.getJsonString(json));
   }
 
 }

@@ -7,7 +7,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.mockStatic;
@@ -50,14 +49,27 @@ public class WalletAddressValidationTest {
 
     // Tamper with the address to simulate a spoofed keystore
     walletFile.setAddress("TTamperedAddressXXXXXXXXXXXXXXXXXX");
+    byte[] expectedPrivateKey = keyPair.getPrivateKey();
+    AtomicReference<byte[]> decryptedPrivateKey = new AtomicReference<>();
 
-    try {
-      Wallet.decrypt(password, walletFile);
-      fail("Expected CipherException due to address mismatch");
-    } catch (CipherException e) {
-      assertTrue("Error should mention address mismatch, got: " + e.getMessage(),
-          e.getMessage().contains("address mismatch"));
+    try (MockedStatic<SignUtils> mockedSignUtils = mockStatic(SignUtils.class)) {
+      mockedSignUtils.when(() -> SignUtils.fromPrivate(any(byte[].class)))
+          .thenAnswer(invocation -> {
+            byte[] privateKey = invocation.getArgument(0);
+            assertArrayEquals(expectedPrivateKey, privateKey);
+            decryptedPrivateKey.set(privateKey);
+            return invocation.callRealMethod();
+          });
+
+      CipherException exception = assertThrows(CipherException.class,
+          () -> Wallet.decrypt(password, walletFile));
+      assertTrue("Error should mention address mismatch, got: " + exception.getMessage(),
+          exception.getMessage().contains("address mismatch"));
     }
+
+    byte[] clearedPrivateKey = decryptedPrivateKey.get();
+    assertNotNull(clearedPrivateKey);
+    assertArrayEquals(new byte[clearedPrivateKey.length], clearedPrivateKey);
   }
 
   @Test

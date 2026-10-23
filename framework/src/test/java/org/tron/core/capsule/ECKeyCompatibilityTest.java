@@ -80,7 +80,7 @@ public class ECKeyCompatibilityTest {
     assertArrayEquals(ByteArray.fromHexString(TRANSACTION_SIGNATURE), signature.toByteArray());
     assertArrayEquals(ByteArray.fromHexString(ADDRESS), SignUtils.signatureToAddress(
         ByteArray.fromHexString(TRANSACTION_ID),
-        TransactionCapsule.getBase64FromByteString(signature)));
+        TransactionCapsule.getBase64FromByteString(signature), true));
     // Signing must not change the ID, which hashes only the transaction's raw data.
     assertArrayEquals(ByteArray.fromHexString(TRANSACTION_ID),
         new TransactionCapsule(transaction.getInstance()).getTransactionId().getBytes());
@@ -92,7 +92,7 @@ public class ECKeyCompatibilityTest {
     ECDSASignature signature = SignUtils.fromComponents(rsv.getR(), rsv.getS(), rsv.getV());
     assertTrue(signature.validateComponents());
     assertArrayEquals(ByteArray.fromHexString(ADDRESS),
-        SignUtils.signatureToAddress(ByteArray.fromHexString(TRANSACTION_ID), signature));
+        SignUtils.signatureToAddress(ByteArray.fromHexString(TRANSACTION_ID), signature, true));
   }
 
   @Test
@@ -111,7 +111,7 @@ public class ECKeyCompatibilityTest {
         signature.toByteArray());
     assertArrayEquals(ByteArray.fromHexString(ADDRESS), SignUtils.signatureToAddress(
         ByteArray.fromHexString(BLOCK_RAW_HASH),
-        TransactionCapsule.getBase64FromByteString(signature)));
+        TransactionCapsule.getBase64FromByteString(signature), true));
     assertArrayEquals(ByteArray.fromHexString(BLOCK_ID), block.getBlockId().getBytes());
   }
 

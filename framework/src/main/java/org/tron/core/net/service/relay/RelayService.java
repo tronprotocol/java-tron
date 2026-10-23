@@ -181,7 +181,7 @@ public class RelayService {
       Sha256Hash hash = Sha256Hash.of(ByteArray.fromLong(msg.getTimestamp()));
       String sig =
           TransactionCapsule.getBase64FromByteString(msg.getSignature());
-      byte[] sigAddress = SignUtils.signatureToAddress(hash.getBytes(), sig);
+      byte[] sigAddress = SignUtils.signatureToAddress(hash.getBytes(), sig, true);
       if (manager.getDynamicPropertiesStore().getAllowMultiSign() != 1) {
         flag = Arrays.equals(sigAddress, msg.getAddress().toByteArray());
       } else {

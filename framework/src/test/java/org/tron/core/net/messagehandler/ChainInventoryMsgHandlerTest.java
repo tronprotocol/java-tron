@@ -1,7 +1,10 @@
 package org.tron.core.net.messagehandler;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -19,7 +22,6 @@ import org.tron.core.config.Parameter.NetConstants;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.P2pException;
 import org.tron.core.net.TronNetDelegate;
-import org.tron.core.net.message.keepalive.PingMessage;
 import org.tron.core.net.message.sync.ChainInventoryMessage;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.service.sync.SyncService;
@@ -40,6 +42,38 @@ public class ChainInventoryMsgHandlerTest {
   private PeerConnection peer = new PeerConnection();
   private ChainInventoryMessage msg = new ChainInventoryMessage(new ArrayList<>(), 0L);
   private List<BlockId> blockIds = new ArrayList<>();
+
+  @Test
+  public void testQueueChangedDuringProcessing() throws Exception {
+    ChainInventoryMsgHandler handler = new ChainInventoryMsgHandler();
+    TronNetDelegate delegate = Mockito.mock(TronNetDelegate.class);
+    SyncService syncService = Mockito.mock(SyncService.class);
+    ReflectUtils.setFieldValue(handler, "tronNetDelegate", delegate);
+    ReflectUtils.setFieldValue(handler, "syncService", syncService);
+
+    BlockId parent = new BlockId(Sha256Hash.ZERO_HASH, 0);
+    BlockId next = new BlockId(Sha256Hash.ZERO_HASH, 1);
+    PeerConnection peer = Mockito.mock(PeerConnection.class);
+    Deque<BlockId> toFetch = Mockito.mock(Deque.class);
+    LinkedList<BlockId> requested = new LinkedList<>();
+    requested.add(parent);
+    Mockito.when(peer.getSyncChainRequested())
+        .thenReturn(new Pair<>(requested, System.currentTimeMillis()));
+    Mockito.when(peer.getSyncBlockToFetch()).thenReturn(toFetch);
+    Mockito.when(toFetch.peek()).thenReturn(next, (BlockId) null);
+    Mockito.when(toFetch.isEmpty()).thenReturn(false, true);
+    Mockito.when(toFetch.peekLast()).thenReturn(null);
+    Mockito.when(delegate.getHeadBlockId()).thenReturn(parent);
+    Mockito.when(delegate.getBlockLock()).thenReturn(new Object());
+    Mockito.when(delegate.containBlock(next)).thenReturn(true);
+    Mockito.when(toFetch.remove(next)).thenReturn(false);
+
+    handler.processMessage(peer, new ChainInventoryMessage(
+        java.util.Arrays.asList(parent, next), 0L));
+
+    Mockito.verify(toFetch).pollLast();
+    Mockito.verify(peer, Mockito.never()).setBlockBothHave(Mockito.any());
+  }
 
   @Test
   public void testProcessMessage() throws Exception {
@@ -153,6 +187,54 @@ public class ChainInventoryMsgHandlerTest {
 
     Assert.assertTrue(fetchAbleSetUnderLock.get());
     Assert.assertTrue(syncNextCalledUnderLock.get());
+  }
+
+  @Test
+  public void testNegativeRemainNumRejected() throws Exception {
+    assertCheckRejects(createContinuousBlockIds(0L), -1L);
+  }
+
+  @Test
+  public void testRemainNumOverflowRejected() throws Exception {
+    assertCheckRejects(createContinuousBlockIds(
+        Long.MAX_VALUE - NetConstants.SYNC_FETCH_BATCH_NUM + 1), 1L);
+  }
+
+  private void assertCheckRejects(List<BlockId> ids, long remainNum) throws Exception {
+    ChainInventoryMsgHandler messageHandler = new ChainInventoryMsgHandler();
+    TronNetDelegate tronNetDelegate = Mockito.mock(TronNetDelegate.class);
+    ReflectUtils.setFieldValue(messageHandler, "tronNetDelegate", tronNetDelegate);
+    Mockito.when(tronNetDelegate.getHeadBlockId()).thenReturn(
+        new BlockId(Sha256Hash.ZERO_HASH, 1L));
+    Mockito.when(tronNetDelegate.getSolidBlockId()).thenReturn(
+        new BlockId(Sha256Hash.ZERO_HASH, 1L));
+    Mockito.when(tronNetDelegate.getBlockTime(Mockito.any())).thenReturn(0L);
+
+    PeerConnection connection = Mockito.mock(PeerConnection.class);
+    LinkedList<BlockId> requestedIds = new LinkedList<>();
+    requestedIds.add(ids.get(0));
+    Mockito.when(connection.getSyncChainRequested()).thenReturn(
+        new Pair<>(requestedIds, System.currentTimeMillis()));
+
+    Method check = ChainInventoryMsgHandler.class.getDeclaredMethod(
+        "check", PeerConnection.class, ChainInventoryMessage.class);
+    check.setAccessible(true);
+    try {
+      check.invoke(messageHandler, connection, new ChainInventoryMessage(ids, remainNum));
+      Assert.fail("Expected invalid remainNum to be rejected");
+    } catch (InvocationTargetException e) {
+      Assert.assertTrue(e.getCause() instanceof P2pException);
+      Assert.assertEquals(P2pException.TypeEnum.BAD_MESSAGE,
+          ((P2pException) e.getCause()).getType());
+    }
+  }
+
+  private List<BlockId> createContinuousBlockIds(long firstNum) {
+    List<BlockId> ids = new ArrayList<>();
+    for (int i = 0; i < NetConstants.SYNC_FETCH_BATCH_NUM; i++) {
+      ids.add(new BlockId(Sha256Hash.ZERO_HASH, firstNum + i));
+    }
+    return ids;
   }
 
 }

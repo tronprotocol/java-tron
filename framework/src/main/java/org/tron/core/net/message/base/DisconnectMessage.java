@@ -2,6 +2,7 @@ package org.tron.core.net.message.base;
 
 import org.tron.core.net.message.MessageTypes;
 import org.tron.core.net.message.TronMessage;
+import org.tron.p2p.utils.ProtoUtil;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.ReasonCode;
 
@@ -9,14 +10,9 @@ public class DisconnectMessage extends TronMessage {
 
   private Protocol.DisconnectMessage disconnectMessage;
 
-  public DisconnectMessage(byte type, byte[] rawData) throws Exception {
-    super(type, rawData);
-    this.disconnectMessage = Protocol.DisconnectMessage.parseFrom(this.data);
-  }
-
   public DisconnectMessage(byte[] data) throws Exception {
     super(MessageTypes.P2P_DISCONNECT.asByte(), data);
-    this.disconnectMessage = Protocol.DisconnectMessage.parseFrom(data);
+    this.disconnectMessage = ProtoUtil.parseFrom(Protocol.DisconnectMessage.parser(), data);
   }
 
   public DisconnectMessage(ReasonCode reasonCode) {

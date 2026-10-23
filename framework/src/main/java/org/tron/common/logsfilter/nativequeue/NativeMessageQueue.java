@@ -27,22 +27,21 @@ public class NativeMessageQueue {
   }
 
   public boolean start(int bindPort, int sendQueueLength) {
+    if (bindPort <= 0) {
+      bindPort = DEFAULT_BIND_PORT;
+    }
+
+    if (sendQueueLength <= 0) {
+      sendQueueLength = DEFAULT_QUEUE_LENGTH;
+    }
+
     context = new ZContext();
+    context.setSndHWM(sendQueueLength);
     publisher = context.createSocket(SocketType.PUB);
 
     if (Objects.isNull(publisher)) {
       return false;
     }
-
-    if (bindPort == 0 || bindPort < 0) {
-      bindPort = DEFAULT_BIND_PORT;
-    }
-
-    if (sendQueueLength < 0) {
-      sendQueueLength = DEFAULT_QUEUE_LENGTH;
-    }
-
-    context.setSndHWM(sendQueueLength);
 
     String bindAddress = String.format("tcp://*:%d", bindPort);
     return publisher.bind(bindAddress);

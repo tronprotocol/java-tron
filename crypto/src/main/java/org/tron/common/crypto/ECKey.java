@@ -45,6 +45,7 @@ import org.bouncycastle.jce.spec.ECPrivateKeySpec;
 import org.bouncycastle.math.ec.ECAlgorithms;
 import org.bouncycastle.math.ec.ECCurve;
 import org.bouncycastle.math.ec.ECPoint;
+import org.bouncycastle.util.BigIntegers;
 import org.bouncycastle.util.encoders.Base64;
 import org.bouncycastle.util.encoders.Hex;
 import org.tron.common.crypto.jce.ECKeyFactory;
@@ -373,6 +374,13 @@ public class ECKey implements Serializable, SignInterface {
 
   public static byte[] signatureToKeyBytes(byte[] messageHash, String
       signatureBase64) throws SignatureException {
+    return signatureToKeyBytes(messageHash, signatureBase64, false);
+  }
+
+  public static byte[] signatureToKeyBytes(byte[] messageHash, String
+      signatureBase64, boolean strictValidation) throws SignatureException {
+    check(messageHash != null, "messageHash must not be null");
+    check(signatureBase64 != null, "signature must not be null");
     byte[] signatureEncoded;
     try {
       signatureEncoded = Base64.decode(signatureBase64);
@@ -382,9 +390,9 @@ public class ECKey implements Serializable, SignInterface {
       throw new SignatureException("Could not decode base64", e);
     }
     // Parse the signature bytes into r/s and the selector value.
-    if (signatureEncoded.length < 65) {
-      throw new SignatureException("Signature truncated, expected 65 " +
-          "bytes and got " + signatureEncoded.length);
+    if (signatureEncoded.length < 65
+        || (strictValidation && !SignUtils.isValidLength(signatureEncoded.length))) {
+      throw new SignatureException("Signature has invalid length " + signatureEncoded.length);
     }
 
     return signatureToKeyBytes(
@@ -392,11 +400,15 @@ public class ECKey implements Serializable, SignInterface {
         ECDSASignature.fromComponents(
             Arrays.copyOfRange(signatureEncoded, 1, 33),
             Arrays.copyOfRange(signatureEncoded, 33, 65),
-            (byte) (signatureEncoded[0] & 0xFF)));
+            (byte) (signatureEncoded[0] & 0xFF)),
+        strictValidation);
   }
 
   public static byte[] signatureToKeyBytes(byte[] messageHash,
-      ECDSASignature sig) throws SignatureException {
+      ECDSASignature sig, boolean strictValidation) throws SignatureException {
+    check(messageHash != null, "messageHash must not be null");
+    check(sig != null && sig.r != null && sig.s != null,
+        "signature and its components must not be null");
     check(messageHash.length == 32, "messageHash argument has length " +
         messageHash.length);
     int header = sig.v;
@@ -412,7 +424,7 @@ public class ECKey implements Serializable, SignInterface {
     }
     int recId = header - 27;
     byte[] key = ECKey.recoverPubBytesFromSignature(recId, sig,
-        messageHash);
+        messageHash, strictValidation);
     if (key == null) {
       throw new SignatureException("Could not recover public key from " +
           "signature");
@@ -429,8 +441,13 @@ public class ECKey implements Serializable, SignInterface {
    */
   public static byte[] signatureToAddress(byte[] messageHash, String
       signatureBase64) throws SignatureException {
+    return signatureToAddress(messageHash, signatureBase64, false);
+  }
+
+  public static byte[] signatureToAddress(byte[] messageHash, String
+      signatureBase64, boolean strictValidation) throws SignatureException {
     return Hash.computeAddress(signatureToKeyBytes(messageHash,
-        signatureBase64));
+        signatureBase64, strictValidation));
   }
 
   /**
@@ -441,9 +458,8 @@ public class ECKey implements Serializable, SignInterface {
    * @return 20-byte address
    */
   public static byte[] signatureToAddress(byte[] messageHash,
-      ECDSASignature sig) throws
-      SignatureException {
-    return Hash.computeAddress(signatureToKeyBytes(messageHash, sig));
+      ECDSASignature sig, boolean strictValidation) throws SignatureException {
+    return Hash.computeAddress(signatureToKeyBytes(messageHash, sig, strictValidation));
   }
 
   /**
@@ -454,9 +470,9 @@ public class ECKey implements Serializable, SignInterface {
    * @return ECKey
    */
   public static ECKey signatureToKey(byte[] messageHash, String
-      signatureBase64) throws SignatureException {
+      signatureBase64, boolean strictValidation) throws SignatureException {
     final byte[] keyBytes = signatureToKeyBytes(messageHash,
-        signatureBase64);
+        signatureBase64, strictValidation);
     return ECKey.fromPublicOnly(keyBytes);
   }
 
@@ -483,30 +499,23 @@ public class ECKey implements Serializable, SignInterface {
   }
 
   /**
-   * <p>Given the components of a signature and a selector value, recover and return the public key
-   * that generated the signature according to the algorithm in SEC1v2 section 4.1.6.</p>
+   * Recovers the public key using SEC1v2 section 4.1.6.
    *
-   * <p> <p>The recId is an index from 0 to 3 which indicates which of the 4 possible allKeys is
-   * the
-   * correct one. Because the key recovery operation yields multiple potential allKeys, the correct
-   * key must either be stored alongside the signature, or you must be willing to try each recId in
-   * turn until you find one that outputs the key you are expecting.</p>
+   * <p>Replaces the three-argument overload; pass {@code false} for legacy recovery and rebuild
+   * downstream callers.</p>
    *
-   * <p> <p>If this method returns null it means recovery was not possible and recId should be
-   * iterated.</p>
-   *
-   * <p> <p>Given the above two points, a correct usage of this method is inside a for loop from 0
-   * to 3, and if the output is null OR a key that is not the one you expect, you try again with the
-   * next recId.</p>
-   *
-   * @param recId Which possible key to recover.
-   * @param sig the R and S components of the signature, wrapped.
-   * @param messageHash Hash of the data that was signed.
-   * @return 65-byte encoded public key
+   * @param recId recovery selector, from 0 to 3
+   * @param sig signature components
+   * @param messageHash hash of the signed data
+   * @param strictValidation whether to enforce strict ECDSA validation; consensus callers use
+   *     the applicable proposal state
+   * @return encoded public key, or {@code null} if recovery is not possible
    */
   @Nullable
   public static byte[] recoverPubBytesFromSignature(int recId,
-      ECDSASignature sig, byte[] messageHash) {
+      ECDSASignature sig, byte[] messageHash, boolean strictValidation) {
+    check(sig != null && sig.r != null && sig.s != null,
+        "signature and its components must not be null");
     check(recId >= 0, "recId must be positive");
     check(sig.r.signum() >= 0, "r must be positive");
     check(sig.s.signum() >= 0, "s must be positive");
@@ -515,6 +524,14 @@ public class ECKey implements Serializable, SignInterface {
     // this function)
     //   1.1 Let x = r + jn
     BigInteger n = CURVE.getN();  // Curve order.
+    if (strictValidation) {
+      check(recId <= 3, "recId must be in the range [0, 3]");
+      check(sig.r.signum() > 0 && sig.r.compareTo(n) < 0,
+          "r must be in the range [1, n)");
+      check(sig.s.signum() > 0 && sig.s.compareTo(n) < 0,
+          "s must be in the range [1, n)");
+      check(messageHash.length == 32, "messageHash must be 32 bytes");
+    }
     BigInteger i = BigInteger.valueOf((long) recId / 2);
     BigInteger x = sig.r.add(i.multiply(n));
     //   1.2. Convert the integer x to an octet string X of length mlen
@@ -567,11 +584,16 @@ public class ECKey implements Serializable, SignInterface {
     // inverse of 3 modulo 11 is 8 because 3 + 8 mod 11 = 0, and -3 mod
     // 11 = 8.
     BigInteger eInv = BigInteger.ZERO.subtract(e).mod(n);
-    BigInteger rInv = sig.r.modInverse(n);
+    BigInteger rInv = strictValidation
+        ? BigIntegers.modOddInverse(n, sig.r)
+        : sig.r.modInverse(n);
     BigInteger srInv = rInv.multiply(sig.s).mod(n);
     BigInteger eInvrInv = rInv.multiply(eInv).mod(n);
     ECPoint.Fp q = (ECPoint.Fp) ECAlgorithms.sumOfTwoMultiplies(CURVE
         .getG(), eInvrInv, R, srInv);
+    if (strictValidation && q.isInfinity()) {
+      return null;
+    }
     return q.getEncoded(/* compressed */ false);
   }
 
@@ -584,8 +606,14 @@ public class ECKey implements Serializable, SignInterface {
   @Nullable
   public static byte[] recoverAddressFromSignature(int recId,
       ECDSASignature sig, byte[] messageHash) {
+    return recoverAddressFromSignature(recId, sig, messageHash, false);
+  }
+
+  @Nullable
+  public static byte[] recoverAddressFromSignature(int recId,
+      ECDSASignature sig, byte[] messageHash, boolean strictValidation) {
     final byte[] pubBytes = recoverPubBytesFromSignature(recId, sig,
-        messageHash);
+        messageHash, strictValidation);
     if (pubBytes == null) {
       return null;
     } else {
@@ -602,8 +630,14 @@ public class ECKey implements Serializable, SignInterface {
   @Nullable
   public static ECKey recoverFromSignature(int recId, ECDSASignature sig,
       byte[] messageHash) {
+    return recoverFromSignature(recId, sig, messageHash, false);
+  }
+
+  @Nullable
+  public static ECKey recoverFromSignature(int recId, ECDSASignature sig,
+      byte[] messageHash, boolean strictValidation) {
     final byte[] pubBytes = recoverPubBytesFromSignature(recId, sig,
-        messageHash);
+        messageHash, strictValidation);
     if (pubBytes == null) {
       return null;
     } else {
@@ -782,7 +816,7 @@ public class ECKey implements Serializable, SignInterface {
     int recId = -1;
     byte[] thisKey = this.pub.getEncoded(/* compressed */ false);
     for (int i = 0; i < 4; i++) {
-      byte[] k = ECKey.recoverPubBytesFromSignature(i, sig, messageHash);
+      byte[] k = ECKey.recoverPubBytesFromSignature(i, sig, messageHash, true);
       if (k != null && Arrays.equals(k, thisKey)) {
         recId = i;
         break;
@@ -912,7 +946,6 @@ public class ECKey implements Serializable, SignInterface {
       }
       return BIUtil.isLessThan(s, SECP256K1N);
     }
-
 
     public boolean validateComponents() {
       return validateComponents(r, s, v);

@@ -137,18 +137,15 @@ public class HandShakeServiceTest {
           .setNumber(hid.getNum())
           .build();
       builder.setHeadBlockId(invalidBlockId);
-      HelloMessage helloMessage = new HelloMessage(builder.build().toByteArray());
-      Assert.assertFalse(helloMessage.valid());
+      assertInvalidHello(builder);
 
       builder.setHeadBlockId(okBlockId);
       builder.setGenesisBlockId(invalidBlockId);
-      HelloMessage helloMessage2 = new HelloMessage(builder.build().toByteArray());
-      Assert.assertFalse(helloMessage2.valid());
+      assertInvalidHello(builder);
 
       builder.setGenesisBlockId(okBlockId);
       builder.setSolidBlockId(invalidBlockId);
-      HelloMessage helloMessage3 = new HelloMessage(builder.build().toByteArray());
-      Assert.assertFalse(helloMessage3.valid());
+      assertInvalidHello(builder);
     } catch (Exception e) {
       Assert.fail();
     }
@@ -160,30 +157,77 @@ public class HandShakeServiceTest {
     Assert.assertTrue(new HelloMessage(builder.build().toByteArray()).valid());
 
     builder.setAddress(ByteString.copyFrom(new byte[201]));
-    HelloMessage helloMessage = new HelloMessage(builder.build().toByteArray());
-    Assert.assertFalse(helloMessage.valid());
+    assertInvalidHello(builder);
 
     builder.setAddress(ByteString.copyFrom(new byte[200]));
-    helloMessage = new HelloMessage(builder.build().toByteArray());
-    Assert.assertTrue(helloMessage.valid());
+    Assert.assertTrue(new HelloMessage(builder.build().toByteArray()).valid());
 
     builder.setSignature(ByteString.copyFrom(new byte[201]));
-    helloMessage = new HelloMessage(builder.build().toByteArray());
-    Assert.assertFalse(helloMessage.valid());
+    assertInvalidHello(builder);
 
     builder.setSignature(ByteString.copyFrom(new byte[200]));
-    helloMessage = new HelloMessage(builder.build().toByteArray());
-    Assert.assertTrue(helloMessage.valid());
+    Assert.assertTrue(new HelloMessage(builder.build().toByteArray()).valid());
 
     builder.setCodeVersion(ByteString.copyFrom(new byte[201]));
-    helloMessage = new HelloMessage(builder.build().toByteArray());
-    Assert.assertFalse(helloMessage.valid());
+    assertInvalidHello(builder);
 
     builder.setCodeVersion(ByteString.copyFrom(new byte[200]));
-    helloMessage = new HelloMessage(builder.build().toByteArray());
-    Assert.assertTrue(helloMessage.valid());
+    Assert.assertTrue(new HelloMessage(builder.build().toByteArray()).valid());
   }
 
+
+  @Test
+  public void testInvalidHelloNode() throws Exception {
+    Protocol.HelloMessage.Builder builder = getTestHelloMessageBuilder();
+    Assert.assertTrue(new HelloMessage(builder.build().toByteArray()).valid());
+
+    Protocol.HelloMessage original = builder.build();
+    builder.setFrom(original.getFrom().toBuilder()
+        .setNodeId(ByteString.copyFrom(new byte[1])));
+    assertInvalidHello(builder);
+
+    builder.setFrom(original.getFrom().toBuilder()
+        .setAddress(ByteString.copyFromUtf8("not-an-ip")));
+    assertInvalidHello(builder);
+
+    builder.setFrom(original.getFrom());
+    builder.setAddress(ByteString.copyFrom(new byte[21]));
+    String logged = new HelloMessage(builder.build().toByteArray()).toString();
+    Assert.assertTrue(logged.contains("address:"));
+    Assert.assertFalse(logged.contains("from:"));
+  }
+
+  @Test
+  public void testMissingHelloNodeIsAllowed() throws Exception {
+    Protocol.HelloMessage.Builder builder = getTestHelloMessageBuilder();
+    builder.clearFrom();
+
+    HelloMessage message = new HelloMessage(builder.build().toByteArray());
+
+    Assert.assertTrue(message.valid());
+    Assert.assertFalse(message.getHelloMessage().hasFrom());
+
+    Channel channel = mock(Channel.class);
+    Mockito.when(channel.getNodeId()).thenReturn("established-node-id");
+    PeerConnection connection = mock(PeerConnection.class);
+    Mockito.when(connection.getChannel()).thenReturn(channel);
+
+    context.getBean(HandshakeService.class).processHelloMessage(connection, message);
+
+    Mockito.verify(connection).setHelloMessageReceive(message);
+    Mockito.verify(connection).onConnect();
+    Mockito.verify(connection, Mockito.never()).disconnect(Mockito.any());
+    Mockito.verify(channel, Mockito.never()).setNodeId(Mockito.anyString());
+  }
+
+  private void assertInvalidHello(Protocol.HelloMessage.Builder builder) throws Exception {
+    try {
+      new HelloMessage(builder.build().toByteArray());
+      Assert.fail("Expected invalid HELLO to be rejected during construction");
+    } catch (org.tron.core.exception.P2pException e) {
+      Assert.assertEquals(org.tron.core.exception.P2pException.TypeEnum.BAD_MESSAGE, e.getType());
+    }
+  }
 
   @Test
   public void testRelayHelloMessage() throws NoSuchMethodException {
@@ -295,34 +339,12 @@ public class HandShakeServiceTest {
   }
 
   @Test
-  public void testProcessHelloMessage() {
-    InetSocketAddress a1 = new InetSocketAddress("127.0.0.1", 10001);
-    Channel c1 = mock(Channel.class);
-    Mockito.when(c1.getInetSocketAddress()).thenReturn(a1);
-    Mockito.when(c1.getInetAddress()).thenReturn(a1.getAddress());
-    PeerManager.add(ctx, c1);
-    PeerConnection p = PeerManager.getPeers().get(0);
-
-    try {
-      Node node = new Node(NetUtil.getNodeId(), a1.getAddress().getHostAddress(),
-          null, a1.getPort());
-      Mockito.when(c1.getNodeId()).thenReturn(node.getHexId());
-      Protocol.HelloMessage.Builder builder =
-          getHelloMessageBuilder(node, System.currentTimeMillis(),
-              ChainBaseManager.getChainBaseManager());
-      BlockCapsule.BlockId hid = ChainBaseManager.getChainBaseManager().getHeadBlockId();
-      Protocol.HelloMessage.BlockId invalidBlockId = Protocol.HelloMessage.BlockId.newBuilder()
-          .setHash(ByteString.copyFrom(new byte[31]))
-          .setNumber(hid.getNum())
-          .build();
-      builder.setHeadBlockId(invalidBlockId);
-
-      HelloMessage helloMessage = new HelloMessage(builder.build().toByteArray());
-      HandshakeService handshakeService = new HandshakeService();
-      handshakeService.processHelloMessage(p, helloMessage);
-    } catch (Exception e) {
-      Assert.fail();
-    }
+  public void testInvalidHeaderRejectedDuringConstruction() throws Exception {
+    Protocol.HelloMessage.Builder builder = getTestHelloMessageBuilder();
+    builder.setHeadBlockId(Protocol.HelloMessage.BlockId.newBuilder()
+        .setHash(ByteString.copyFrom(new byte[31]))
+        .build());
+    assertInvalidHello(builder);
   }
 
   @Test
@@ -334,6 +356,8 @@ public class HandShakeServiceTest {
     PeerConnection connection = mock(PeerConnection.class);
     Mockito.when(connection.getChannel()).thenReturn(channel);
     HelloMessage message = mock(HelloMessage.class);
+    Mockito.when(message.getHelloMessage()).thenReturn(Protocol.HelloMessage.newBuilder()
+        .setFrom(Endpoint.getDefaultInstance()).build());
     Mockito.when(message.getFrom()).thenReturn(new Node(new byte[]{2, 3, 4}, null, null, 0));
 
     Field channelsField = ChannelManager.class.getDeclaredField("channels");

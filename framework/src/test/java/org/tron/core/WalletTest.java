@@ -1550,7 +1550,7 @@ public class WalletTest extends BaseTest {
   }
 
   @Test
-  public void testApprovedListSigTruncate() {
+  public void testApprovedListRejectsPaddedSignature() {
     ECKey ecKey = new ECKey(Utils.getRandom());
     AccountCapsule owner = new AccountCapsule(
         ByteString.copyFromUtf8("approved-owner-trunc"),
@@ -1581,15 +1581,10 @@ public class WalletTest extends BaseTest {
     GrpcAPI.TransactionApprovedList reply = wallet.getTransactionApprovedList(
         unsigned.toBuilder().addSignature(oversized).build());
 
-    // Recovery still succeeds and resolves the owner.
-    assertEquals(GrpcAPI.TransactionApprovedList.Result.response_code.SUCCESS,
+    assertEquals(GrpcAPI.TransactionApprovedList.Result.response_code.SIGNATURE_FORMAT_ERROR,
         reply.getResult().getCode());
-    assertEquals(1, reply.getApprovedListCount());
-    // The echoed-back transaction has the signature truncated to 65 bytes.
-    Transaction echoed = reply.getTransaction().getTransaction();
-    assertEquals(1, echoed.getSignatureCount());
-    assertEquals(65, echoed.getSignature(0).size());
-    assertEquals(validSig, echoed.getSignature(0));
+    assertEquals(0, reply.getApprovedListCount());
+    Assert.assertFalse(reply.hasTransaction());
   }
 
   @Test
@@ -1629,4 +1624,3 @@ public class WalletTest extends BaseTest {
     assertEquals(0, rejected.getApprovedListCount());
   }
 }
-
