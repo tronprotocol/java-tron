@@ -28,7 +28,7 @@ import org.junit.Test;
 import org.tron.api.GrpcAPI;
 import org.tron.api.WalletGrpc;
 import org.tron.api.ZksnarkGrpcAPI.ZksnarkRequest;
-import org.tron.core.admission.TransactionAdmissionException.Reason;
+import org.tron.core.admission.ProtobufAdmissionException.Reason;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
@@ -72,9 +72,9 @@ public class GuardedRequestMarshallerTest {
         marshaller.parse(new ByteArrayInputStream(distinctUnknownFields(BUDGET)))));
     assertEquals(Reason.OVER_BUDGET, marshaller.rejectionReason(
         marshaller.parse(new ByteArrayInputStream(distinctUnknownFields(BUDGET + 1)))));
-    assertEquals(TransactionAdmissionException.REQUEST_REJECTION_MESSAGE,
+    assertEquals(ProtobufAdmissionException.REQUEST_REJECTION_MESSAGE,
         marshaller.rejectionMessage());
-    assertEquals(TransactionAdmissionException.REJECTION_MESSAGE,
+    assertEquals(ProtobufAdmissionException.REJECTION_MESSAGE,
         guarded(proto(Transaction.getDefaultInstance()), Transaction.getDefaultInstance())
             .rejectionMessage());
   }
@@ -222,7 +222,7 @@ public class GuardedRequestMarshallerTest {
     assertEquals(Reason.OVER_BUDGET, marshaller.rejectionReason(
         marshaller.parse(new ByteArrayInputStream(request.toByteArray()))));
     // Without the contract payload the same request is far below the budget.
-    assertTrue(TransactionAdmissionGuard.count(request.toBuilder().setTransaction(
+    assertTrue(ProtobufAdmissionGuard.count(request.toBuilder().setTransaction(
         tx.toBuilder().setRawData(tx.getRawData().toBuilder().clearContract())).build()
         .toByteArray(), ZksnarkRequest.getDescriptor()) < BUDGET);
   }

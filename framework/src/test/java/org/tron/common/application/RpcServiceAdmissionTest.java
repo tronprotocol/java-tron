@@ -76,8 +76,8 @@ import org.tron.common.prometheus.MetricKeys;
 import org.tron.core.actuator.TransactionFactory;
 import org.tron.core.admission.AdmissionCheckedHandler;
 import org.tron.core.admission.GuardedRequestMarshaller;
-import org.tron.core.admission.TransactionAdmissionException;
-import org.tron.core.admission.TransactionAdmissionException.Reason;
+import org.tron.core.admission.ProtobufAdmissionException;
+import org.tron.core.admission.ProtobufAdmissionException.Reason;
 import org.tron.core.services.ratelimiter.RpcApiAccessInterceptor;
 import org.tron.core.utils.TransactionRegister;
 import org.tron.protos.Protocol.Block;
@@ -359,7 +359,7 @@ public class RpcServiceAdmissionTest {
         Status status = rawCall(channel, nowBlock, distinctUnknownFields(BUDGET + 1),
             compression);
         assertEquals(Status.Code.INVALID_ARGUMENT, status.getCode());
-        assertEquals(TransactionAdmissionException.REQUEST_REJECTION_MESSAGE,
+        assertEquals(ProtobufAdmissionException.REQUEST_REJECTION_MESSAGE,
             status.getDescription());
       }
       assertEquals(before + 2, rejections(name, Reason.OVER_BUDGET), 0);
@@ -367,7 +367,7 @@ public class RpcServiceAdmissionTest {
       // The Transaction methods keep their message.
       Status transaction = rawBytesCall(channel, retFlood(BUDGET + 1), null);
       assertEquals(Status.Code.INVALID_ARGUMENT, transaction.getCode());
-      assertEquals(TransactionAdmissionException.REJECTION_MESSAGE, transaction.getDescription());
+      assertEquals(ProtobufAdmissionException.REJECTION_MESSAGE, transaction.getDescription());
       assertEquals(transactionBefore + 1, rejections(
           WalletGrpc.getBroadcastTransactionMethod().getFullMethodName(), Reason.OVER_BUDGET), 0);
 

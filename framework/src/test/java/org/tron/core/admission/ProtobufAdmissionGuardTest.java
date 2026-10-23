@@ -31,7 +31,7 @@ import java.util.concurrent.TimeUnit;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.tron.core.actuator.TransactionFactory;
-import org.tron.core.admission.TransactionAdmissionException.Reason;
+import org.tron.core.admission.ProtobufAdmissionException.Reason;
 import org.tron.core.utils.TransactionRegister;
 import org.tron.protos.Protocol.Key;
 import org.tron.protos.Protocol.Permission;
@@ -47,7 +47,7 @@ import org.tron.protos.contract.SmartContractOuterClass.SmartContract.ABI;
 import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 import org.tron.protos.contract.WitnessContract.VoteWitnessContract;
 
-public class TransactionAdmissionGuardTest {
+public class ProtobufAdmissionGuardTest {
 
   private static final int LD = WireFormat.WIRETYPE_LENGTH_DELIMITED;
   private static final int VARINT = WireFormat.WIRETYPE_VARINT;
@@ -137,7 +137,7 @@ public class TransactionAdmissionGuardTest {
         ld(2, cat(ld(1, url("protocol.TransferContract")), ld(2, bytes(0x07)))),
         ld(2, ld(2, valid)));
     byte[] tx = txWithContract(contract);
-    TransactionAdmissionGuard.checkTransaction(tx, 1000);
+    ProtobufAdmissionGuard.checkTransaction(tx, 1000);
     assertEquals(1, unpack(tx, TransferContract.class).getAmount());
 
     // A flood in an overwritten value is a leaf; only the effective value is recursed.
@@ -241,7 +241,7 @@ public class TransactionAdmissionGuardTest {
     // 10000 unknown fields directly inside Contract are seen first by the first pass.
     byte[] tx = txWithContract(repeat(bytes(0x30, 0xff, 0x01), 10000));
     assertEquals(Reason.OVER_BUDGET,
-        reason(() -> TransactionAdmissionGuard.checkTransaction(tx, 100)));
+        reason(() -> ProtobufAdmissionGuard.checkTransaction(tx, 100)));
   }
 
   @Test
@@ -272,7 +272,7 @@ public class TransactionAdmissionGuardTest {
         ld(11, contract(VOTE, "protocol.VoteWitnessContract", repeat(bytes(0x12, 0x00), 10))),
         ld(11, contract(VOTE, "protocol.VoteWitnessContract", bytes(0x07)))));
     assertEquals(Reason.MALFORMED,
-        reason(() -> TransactionAdmissionGuard.checkTransaction(tx, 1000)));
+        reason(() -> ProtobufAdmissionGuard.checkTransaction(tx, 1000)));
     Transaction.raw raw = Transaction.parseFrom(tx).getRawData();
     raw.getContract(0).getParameter().unpack(VoteWitnessContract.class);
     try {
@@ -303,10 +303,10 @@ public class TransactionAdmissionGuardTest {
   @Test
   public void depthLimitAppliesToRecursiveTypes() {
     Descriptor recursive = DescriptorProto.getDescriptor();   // nested_type (3) is recursive
-    TransactionAdmissionGuard.check(nested(TransactionAdmissionGuard.MAX_DEPTH - 1), recursive,
+    ProtobufAdmissionGuard.check(nested(ProtobufAdmissionGuard.MAX_DEPTH - 1), recursive,
         1000);
-    assertEquals(Reason.TOO_DEEP, reason(() -> TransactionAdmissionGuard.check(
-        nested(TransactionAdmissionGuard.MAX_DEPTH), recursive, 1000)));
+    assertEquals(Reason.TOO_DEEP, reason(() -> ProtobufAdmissionGuard.check(
+        nested(ProtobufAdmissionGuard.MAX_DEPTH), recursive, 1000)));
   }
 
   @Test(timeout = 60_000)
@@ -323,11 +323,11 @@ public class TransactionAdmissionGuardTest {
       for (int i = 0; i < 64; i++) {
         results.add(pool.submit((Callable<Long>) () -> {
           start.await();
-          return TransactionAdmissionGuard.count(payload, fresh);
+          return ProtobufAdmissionGuard.count(payload, fresh);
         }));
       }
       start.countDown();
-      long expected = TransactionAdmissionGuard.count(payload, fresh);
+      long expected = ProtobufAdmissionGuard.count(payload, fresh);
       for (Future<Long> result : results) {
         assertEquals(expected, result.get(10, TimeUnit.SECONDS).longValue());
       }
@@ -365,7 +365,7 @@ public class TransactionAdmissionGuardTest {
   public void malformedEffectivePayloadIsRejectedWhileOuterParseSucceeds() throws Exception {
     byte[] tx = txWithContract(contract(VOTE, "protocol.VoteWitnessContract", bytes(0x07)));
     assertEquals(Reason.MALFORMED,
-        reason(() -> TransactionAdmissionGuard.checkTransaction(tx, 1000)));
+        reason(() -> ProtobufAdmissionGuard.checkTransaction(tx, 1000)));
     Transaction.parseFrom(tx);
     try {
       unpack(tx, VoteWitnessContract.class);
@@ -380,15 +380,15 @@ public class TransactionAdmissionGuardTest {
     byte[] tx = bytes(0x0b, 0x0c);   // field 1 start group, field 1 end group
     Transaction.parseFrom(tx);
     assertEquals(Reason.MALFORMED,
-        reason(() -> TransactionAdmissionGuard.checkTransaction(tx, 1000)));
+        reason(() -> ProtobufAdmissionGuard.checkTransaction(tx, 1000)));
   }
 
   @Test
   public void exceptionCarriesNoStackTrace() {
     try {
-      TransactionAdmissionGuard.checkTransaction(repeat(bytes(0x2a, 0x00), 10), 5);
+      ProtobufAdmissionGuard.checkTransaction(repeat(bytes(0x2a, 0x00), 10), 5);
       fail();
-    } catch (TransactionAdmissionException e) {
+    } catch (ProtobufAdmissionException e) {
       assertEquals(0, e.getStackTrace().length);
     }
   }
@@ -435,7 +435,7 @@ public class TransactionAdmissionGuardTest {
 
     for (Transaction tx : corpus) {
       byte[] bytes = tx.toByteArray();
-      TransactionAdmissionGuard.checkTransaction(bytes, 10_000);
+      ProtobufAdmissionGuard.checkTransaction(bytes, 10_000);
       Transaction.Contract contract = Transaction.parseFrom(bytes).getRawData().getContract(0);
       contract.getParameter().unpack(TransactionFactory.getContract(contract.getType()));
     }
@@ -485,7 +485,7 @@ public class TransactionAdmissionGuardTest {
     byte[] tx = txWithContract(contract);
     assertEquals(1000, unpack(tx, VoteWitnessContract.class).getVotesCount());
     assertEquals(Reason.OVER_BUDGET,
-        reason(() -> TransactionAdmissionGuard.checkTransaction(tx, 500)));
+        reason(() -> ProtobufAdmissionGuard.checkTransaction(tx, 500)));
   }
 
   @Test
@@ -524,17 +524,17 @@ public class TransactionAdmissionGuardTest {
     // The truncated varint at the end is only reached if the first pass ignores the budget.
     byte[] tx = txWithContract(cat(repeat(bytes(0x30, 0xff, 0x01), 10000), bytes(0x30, 0x80)));
     assertEquals(Reason.OVER_BUDGET,
-        reason(() -> TransactionAdmissionGuard.checkTransaction(tx, 100)));
+        reason(() -> ProtobufAdmissionGuard.checkTransaction(tx, 100)));
   }
 
   @Test
   public void productionBudgetIsPinned() {
-    assertEquals(50_000, TransactionAdmissionGuard.MAX_TX_OCCURRENCES);
+    assertEquals(50_000, ProtobufAdmissionGuard.MAX_OCCURRENCES);
   }
 
   @Test
   public void largeValidAbiDeployIsAcceptedUpToTheBudgetAndRejectedBeyond() throws Exception {
-    int budget = TransactionAdmissionGuard.MAX_TX_OCCURRENCES;
+    int budget = ProtobufAdmissionGuard.MAX_OCCURRENCES;
     // Largest ABI of ordinary entries that still fits the budget.
     int low = 0;
     int high = budget;
@@ -551,30 +551,30 @@ public class TransactionAdmissionGuardTest {
     assertTrue(countTx(within) <= budget);
     assertTrue(countTx(beyond) > budget);
 
-    TransactionAdmissionGuard.checkTransaction(within, budget);
+    ProtobufAdmissionGuard.checkTransaction(within, budget);
     assertEquals(low, unpack(within, CreateSmartContract.class)
         .getNewContract().getAbi().getEntrysCount());
     // Policy: a deploy whose ABI is beyond the budget is refused at the API.
     assertEquals(Reason.OVER_BUDGET,
-        reason(() -> TransactionAdmissionGuard.checkTransaction(beyond, budget)));
+        reason(() -> ProtobufAdmissionGuard.checkTransaction(beyond, budget)));
   }
 
   // ---------------------------------------------------------------- helpers
 
   private static long countTx(byte[] tx) {
-    return TransactionAdmissionGuard.countTransaction(tx);
+    return ProtobufAdmissionGuard.countTransaction(tx);
   }
 
   private static void assertExactBudget(byte[] tx) {
     long count = countTx(tx);
-    TransactionAdmissionGuard.checkTransaction(tx, (int) count);
+    ProtobufAdmissionGuard.checkTransaction(tx, (int) count);
     assertEquals(Reason.OVER_BUDGET,
-        reason(() -> TransactionAdmissionGuard.checkTransaction(tx, (int) count - 1)));
+        reason(() -> ProtobufAdmissionGuard.checkTransaction(tx, (int) count - 1)));
   }
 
   private static void assertMalformedLikeParser(byte[] tx) {
     assertEquals(Reason.MALFORMED,
-        reason(() -> TransactionAdmissionGuard.checkTransaction(tx, 1000)));
+        reason(() -> ProtobufAdmissionGuard.checkTransaction(tx, 1000)));
     try {
       Transaction.parseFrom(tx);
       fail("parser must reject it too");
@@ -586,10 +586,10 @@ public class TransactionAdmissionGuardTest {
   private static Reason reason(Runnable action) {
     try {
       action.run();
-    } catch (TransactionAdmissionException e) {
+    } catch (ProtobufAdmissionException e) {
       return e.getReason();
     }
-    fail("expected TransactionAdmissionException");
+    fail("expected ProtobufAdmissionException");
     return null;
   }
 

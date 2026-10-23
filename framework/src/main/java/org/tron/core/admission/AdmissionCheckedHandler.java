@@ -9,7 +9,7 @@ import io.grpc.Status;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.prometheus.MetricKeys;
 import org.tron.common.prometheus.Metrics;
-import org.tron.core.admission.TransactionAdmissionException.Reason;
+import org.tron.core.admission.ProtobufAdmissionException.Reason;
 
 /**
  * Closes the call with {@code INVALID_ARGUMENT}, or {@code RESOURCE_EXHAUSTED} for a request over

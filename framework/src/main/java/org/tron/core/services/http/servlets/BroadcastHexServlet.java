@@ -9,8 +9,8 @@ import org.springframework.stereotype.Component;
 import org.tron.api.GrpcAPI;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
-import org.tron.core.admission.TransactionAdmissionException;
-import org.tron.core.admission.TransactionAdmissionGuard;
+import org.tron.core.admission.ProtobufAdmissionException;
+import org.tron.core.admission.ProtobufAdmissionGuard;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.services.http.HttpApi;
 import org.tron.core.services.http.HttpApi.Access;
@@ -34,12 +34,12 @@ public class BroadcastHexServlet extends RateLimiterServlet {
       String trx = JSONObject.parseObject(input).getString("transaction");
       byte[] raw = ByteArray.fromHexString(trx);
       try {
-        TransactionAdmissionGuard.checkTransaction(raw,
-            TransactionAdmissionGuard.MAX_TX_OCCURRENCES);
-      } catch (TransactionAdmissionException e) {
+        ProtobufAdmissionGuard.checkTransaction(raw,
+            ProtobufAdmissionGuard.MAX_OCCURRENCES);
+      } catch (ProtobufAdmissionException e) {
         logger.debug("broadcasthex rejected by admission check: {}", e.getReason());
         // processError would render this client error as "internal server error".
-        Util.writeAuditedError(TransactionAdmissionException.REJECTION_MESSAGE, response);
+        Util.writeAuditedError(ProtobufAdmissionException.REJECTION_MESSAGE, response);
         return;
       }
       Transaction transaction = Transaction.parseFrom(raw);

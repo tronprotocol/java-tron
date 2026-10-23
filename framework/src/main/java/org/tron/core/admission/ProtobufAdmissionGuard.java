@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import org.tron.core.actuator.TransactionFactory;
-import org.tron.core.admission.TransactionAdmissionException.Reason;
+import org.tron.core.admission.ProtobufAdmissionException.Reason;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.contract.ShieldContract.ShieldedTransferContract;
@@ -27,11 +27,11 @@ import org.tron.protos.contract.ShieldContract.ShieldedTransferContract;
  * <p>Never use it for block, database or P2P parsing: a valid block must not fail a local,
  * non-consensus limit.
  */
-public final class TransactionAdmissionGuard {
+public final class ProtobufAdmissionGuard {
 
   // About 12.7 times the largest mainnet transaction (3,926, a contract deployment) and
   // 7 times the largest mainnet account (7,065).
-  public static final int MAX_TX_OCCURRENCES = 50_000;
+  public static final int MAX_OCCURRENCES = 50_000;
 
   static final int MAX_DEPTH = 32;
 
@@ -51,7 +51,7 @@ public final class TransactionAdmissionGuard {
   private static final ConcurrentMap<Descriptor, ChildTable> CHILDREN = new ConcurrentHashMap<>();
   private static final ConcurrentMap<ContractType, Payload> PAYLOADS = new ConcurrentHashMap<>();
 
-  private TransactionAdmissionGuard() {
+  private ProtobufAdmissionGuard() {
   }
 
   // WireFormat.makeTag is not public.
@@ -82,25 +82,25 @@ public final class TransactionAdmissionGuard {
 
   private static void run(byte[] data, Descriptor root, Budget budget) {
     if (data == null) {
-      throw new TransactionAdmissionException(Reason.MALFORMED, "null payload");
+      throw new ProtobufAdmissionException(Reason.MALFORMED, "null payload");
     }
     try {
       scan(data, CodedInputStream.newInstance(data), root, null, budget, 1);
     } catch (IOException e) {
-      throw new TransactionAdmissionException(Reason.MALFORMED, e.getMessage());
+      throw new ProtobufAdmissionException(Reason.MALFORMED, e.getMessage());
     }
   }
 
   private static void scan(byte[] data, CodedInputStream in, Descriptor descriptor,
       Effective effective, Budget budget, int depth) throws IOException {
     if (depth > MAX_DEPTH) {
-      throw new TransactionAdmissionException(Reason.TOO_DEEP, "depth " + depth);
+      throw new ProtobufAdmissionException(Reason.TOO_DEEP, "depth " + depth);
     }
     int tag;
     while ((tag = in.readTag()) != 0) {
       budget.consume();
       if (isGroup(tag)) {
-        throw new TransactionAdmissionException(Reason.MALFORMED, "group");
+        throw new ProtobufAdmissionException(Reason.MALFORMED, "group");
       }
       Descriptor child = null;
       if (WireFormat.getTagWireType(tag) == WireFormat.WIRETYPE_LENGTH_DELIMITED) {
@@ -115,7 +115,7 @@ public final class TransactionAdmissionGuard {
       }
       if (child == null) {
         if (!in.skipField(tag)) {
-          throw new TransactionAdmissionException(Reason.MALFORMED, "unexpected end group");
+          throw new ProtobufAdmissionException(Reason.MALFORMED, "unexpected end group");
         }
         continue;
       }
@@ -154,7 +154,7 @@ public final class TransactionAdmissionGuard {
     while ((tag = in.readTag()) != 0) {
       left = consumeLocal(left);
       if (isGroup(tag)) {
-        throw new TransactionAdmissionException(Reason.MALFORMED, "group");
+        throw new ProtobufAdmissionException(Reason.MALFORMED, "group");
       }
       if (tag == CONTRACT_TYPE_TAG) {
         type = in.readEnum();
@@ -166,7 +166,7 @@ public final class TransactionAdmissionGuard {
           while ((parameterTag = in.readTag()) != 0) {
             left = consumeLocal(left);
             if (isGroup(parameterTag)) {
-              throw new TransactionAdmissionException(Reason.MALFORMED, "group");
+              throw new ProtobufAdmissionException(Reason.MALFORMED, "group");
             }
             if (parameterTag == ANY_TYPE_URL_TAG) {
               int urlLength = in.readRawVarint32();
@@ -177,14 +177,14 @@ public final class TransactionAdmissionGuard {
               valueTagEnd = start + in.getTotalBytesRead();
               in.skipField(parameterTag);
             } else if (!in.skipField(parameterTag)) {
-              throw new TransactionAdmissionException(Reason.MALFORMED, "unexpected end group");
+              throw new ProtobufAdmissionException(Reason.MALFORMED, "unexpected end group");
             }
           }
         } finally {
           in.popLimit(oldLimit);
         }
       } else if (!in.skipField(tag)) {
-        throw new TransactionAdmissionException(Reason.MALFORMED, "unexpected end group");
+        throw new ProtobufAdmissionException(Reason.MALFORMED, "unexpected end group");
       }
     }
     Payload payload = payload(ContractType.forNumber(type));
@@ -197,7 +197,7 @@ public final class TransactionAdmissionGuard {
 
   private static long consumeLocal(long left) {
     if (left <= 0) {
-      throw new TransactionAdmissionException(Reason.OVER_BUDGET, null);
+      throw new ProtobufAdmissionException(Reason.OVER_BUDGET, null);
     }
     return left - 1;
   }
@@ -338,7 +338,7 @@ public final class TransactionAdmissionGuard {
 
     void consume() {
       if (used >= limit) {
-        throw new TransactionAdmissionException(Reason.OVER_BUDGET, null);
+        throw new ProtobufAdmissionException(Reason.OVER_BUDGET, null);
       }
       used++;
     }

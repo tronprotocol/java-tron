@@ -42,7 +42,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.tron.api.WalletSolidityGrpc;
 import org.tron.common.TestConstants;
 import org.tron.core.ChainBaseManager;
-import org.tron.core.admission.TransactionAdmissionException;
+import org.tron.core.admission.ProtobufAdmissionException;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.services.filter.LiteFnQueryGrpcInterceptor;
@@ -156,7 +156,7 @@ public class RpcServiceInterceptorChainAdmissionTest {
         fail("expected a rejection");
       } catch (StatusRuntimeException e) {
         assertEquals(Status.Code.INVALID_ARGUMENT, e.getStatus().getCode());
-        assertEquals(TransactionAdmissionException.REQUEST_REJECTION_MESSAGE,
+        assertEquals(ProtobufAdmissionException.REQUEST_REJECTION_MESSAGE,
             e.getStatus().getDescription());
       }
     }

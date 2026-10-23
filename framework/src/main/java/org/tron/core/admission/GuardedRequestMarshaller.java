@@ -17,11 +17,11 @@ import java.util.EnumMap;
 import java.util.Map;
 import java.util.zip.ZipException;
 import org.tron.common.math.StrictMathWrapper;
-import org.tron.core.admission.TransactionAdmissionException.Reason;
+import org.tron.core.admission.ProtobufAdmissionException.Reason;
 import org.tron.protos.Protocol.Transaction;
 
 /**
- * Reads the request with a size bound and runs {@link TransactionAdmissionGuard}, rooted at the
+ * Reads the request with a size bound and runs {@link ProtobufAdmissionGuard}, rooted at the
  * type the original marshaller parses into, before that marshaller parses the same bytes. A
  * rejection returns a per-{@link Reason} sentinel instead of throwing, because grpc logs every
  * marshaller exception at SEVERE; the {@link AdmissionCheckedHandler} closes the call.
@@ -98,7 +98,7 @@ public final class GuardedRequestMarshaller<T> implements MethodDescriptor.Proto
   public T parse(InputStream stream) {
     try {
       return parseChecked(stream);
-    } catch (TransactionAdmissionException e) {
+    } catch (ProtobufAdmissionException e) {
       return rejected.get(e.getReason());
     }
   }
@@ -123,8 +123,8 @@ public final class GuardedRequestMarshaller<T> implements MethodDescriptor.Proto
 
   String rejectionMessage() {
     return Transaction.getDescriptor().equals(root)
-        ? TransactionAdmissionException.REJECTION_MESSAGE
-        : TransactionAdmissionException.REQUEST_REJECTION_MESSAGE;
+        ? ProtobufAdmissionException.REJECTION_MESSAGE
+        : ProtobufAdmissionException.REQUEST_REJECTION_MESSAGE;
   }
 
   @Override
@@ -138,17 +138,17 @@ public final class GuardedRequestMarshaller<T> implements MethodDescriptor.Proto
     return (Class<T>) prototype.getClass();
   }
 
-  /** Throws {@link TransactionAdmissionException} for a rejection. */
+  /** Throws {@link ProtobufAdmissionException} for a rejection. */
   private T parseChecked(InputStream stream) {
     byte[] bytes;
     try {
       bytes = readBounded(stream, maxMessageSize);
     } catch (ZipException | EOFException e) {
-      throw new TransactionAdmissionException(Reason.MALFORMED, null);
+      throw new ProtobufAdmissionException(Reason.MALFORMED, null);
     } catch (StatusRuntimeException e) {
       // The decompressing stream of grpc enforces the inbound size limit while it is read.
       if (e.getStatus().getCode() == Status.Code.RESOURCE_EXHAUSTED) {
-        throw new TransactionAdmissionException(Reason.TOO_LARGE, null);
+        throw new ProtobufAdmissionException(Reason.TOO_LARGE, null);
       }
       throw e;
     } catch (IOException e) {
@@ -156,14 +156,14 @@ public final class GuardedRequestMarshaller<T> implements MethodDescriptor.Proto
           .asRuntimeException();
     }
     if (bytes == null) {
-      throw new TransactionAdmissionException(Reason.TOO_LARGE, null);
+      throw new ProtobufAdmissionException(Reason.TOO_LARGE, null);
     }
-    TransactionAdmissionGuard.check(bytes, root, maxOccurrences);
+    ProtobufAdmissionGuard.check(bytes, root, maxOccurrences);
     try {
       return delegate.parse(new KnownLengthInputStream(bytes));
     } catch (StatusRuntimeException e) {
       if (e.getCause() instanceof InvalidProtocolBufferException) {
-        throw new TransactionAdmissionException(Reason.MALFORMED, null);
+        throw new ProtobufAdmissionException(Reason.MALFORMED, null);
       }
       throw e;
     }

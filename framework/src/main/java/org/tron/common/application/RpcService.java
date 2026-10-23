@@ -31,7 +31,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.common.es.ExecutorServiceManager;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.core.admission.GuardedRequestMarshaller;
-import org.tron.core.admission.TransactionAdmissionGuard;
+import org.tron.core.admission.ProtobufAdmissionGuard;
 import org.tron.core.config.args.Args;
 import org.tron.core.services.filter.LiteFnQueryGrpcInterceptor;
 import org.tron.core.services.ratelimiter.PrometheusInterceptor;
@@ -130,7 +130,7 @@ public abstract class RpcService extends AbstractService {
     int maxMessageSize = Args.getInstance().getMaxMessageSize();
     for (ServerServiceDefinition service : services()) {
       serverBuilder.addService(guardRequestMethods(service, maxMessageSize,
-          TransactionAdmissionGuard.MAX_TX_OCCURRENCES));
+          ProtobufAdmissionGuard.MAX_OCCURRENCES));
     }
   }
 

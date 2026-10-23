@@ -26,7 +26,7 @@ import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 import org.junit.Assume;
 import org.junit.Test;
-import org.tron.core.admission.TransactionAdmissionException.Reason;
+import org.tron.core.admission.ProtobufAdmissionException.Reason;
 import org.tron.protos.Protocol.Transaction;
 
 public class AdmissionSupportTest {

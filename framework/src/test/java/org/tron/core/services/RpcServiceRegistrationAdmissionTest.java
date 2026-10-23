@@ -27,7 +27,7 @@ import org.reflections.Reflections;
 import org.tron.common.application.RpcService;
 import org.tron.common.application.RpcServiceAdmissionTest;
 import org.tron.common.parameter.CommonParameter;
-import org.tron.core.admission.TransactionAdmissionGuard;
+import org.tron.core.admission.ProtobufAdmissionGuard;
 import org.tron.core.services.filter.PbftCursorInterceptor;
 import org.tron.core.services.filter.SolidityCursorInterceptor;
 import org.tron.core.services.interfaceOnPBFT.RpcApiServiceOnPBFT;
@@ -143,7 +143,7 @@ public class RpcServiceRegistrationAdmissionTest {
     int guarded = 0;
     for (ServerServiceDefinition definition : definitions) {
       guarded += RpcServiceAdmissionTest.assertAllMethodsGuarded(definition,
-          TransactionAdmissionGuard.MAX_TX_OCCURRENCES, MAX_MESSAGE_SIZE);
+          ProtobufAdmissionGuard.MAX_OCCURRENCES, MAX_MESSAGE_SIZE);
     }
     return guarded;
   }

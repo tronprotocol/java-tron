@@ -24,15 +24,15 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.tron.api.GrpcAPI;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
-import org.tron.core.admission.TransactionAdmissionException;
-import org.tron.core.admission.TransactionAdmissionGuard;
+import org.tron.core.admission.ProtobufAdmissionException;
+import org.tron.core.admission.ProtobufAdmissionGuard;
 import org.tron.protos.Protocol.Transaction;
 
 public class BroadcastHexServletAdmissionTest {
 
   @Test
   public void overBudgetPayloadGetsTheFixedClientError() throws Exception {
-    byte[] flood = new byte[2 * (TransactionAdmissionGuard.MAX_TX_OCCURRENCES + 1)];
+    byte[] flood = new byte[2 * (ProtobufAdmissionGuard.MAX_OCCURRENCES + 1)];
     for (int i = 0; i < flood.length; i += 2) {
       flood[i] = 0x2a;
     }
@@ -98,7 +98,7 @@ public class BroadcastHexServletAdmissionTest {
       throws Exception {
     Wallet wallet = mock(Wallet.class);
     String body = post(servlet, wallet, ByteArray.toHexString(payload));
-    assertTrue(body, body.contains(TransactionAdmissionException.REJECTION_MESSAGE));
+    assertTrue(body, body.contains(ProtobufAdmissionException.REJECTION_MESSAGE));
     assertFalse(body, body.contains("internal server error"));
     verifyNoInteractions(wallet);
   }
