@@ -1001,8 +1001,12 @@ public class Manager {
       khaosDb.pop();
       revokingStore.fastPop();
       logger.info("End to erase block: {}.", oldHeadBlock);
-      oldHeadBlock.getTransactions().forEach(tc ->
-          poppedTransactions.add(new TransactionCapsule(tc.getInstance())));
+      oldHeadBlock.getTransactions().forEach(tc -> {
+        if (isMultiSignTransaction(tc.getInstance())) {
+          ownerAddressSet.add(ByteArray.toHexString(tc.getOwnerAddress()));
+        }
+        poppedTransactions.add(new TransactionCapsule(tc.getInstance()));
+      });
       Metrics.gaugeInc(MetricKeys.Gauge.MANAGER_QUEUE, oldHeadBlock.getTransactions().size(),
           MetricLabels.Gauge.QUEUE_POPPED);
 
