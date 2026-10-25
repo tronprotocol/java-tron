@@ -455,7 +455,9 @@ public class RelayServiceTest extends BaseTest {
     Protocol.HelloMessage.BlockId blockId = Protocol.HelloMessage.BlockId.newBuilder()
         .setHash(Sha256Hash.ZERO_HASH.getByteString()).build();
     HelloMessage message = new HelloMessage(Protocol.HelloMessage.newBuilder()
-        .setGenesisBlockId(blockId).setSolidBlockId(blockId).setHeadBlockId(blockId)
+        .setGenesisBlockId(blockId)
+        .setSolidBlockId(blockId)
+        .setHeadBlockId(blockId)
         .setTimestamp(timestamp).setAddress(address).setSignature(signature).build().toByteArray());
 
     Assert.assertFalse(TronNetService.getP2pConfig().getTrustNodes()
