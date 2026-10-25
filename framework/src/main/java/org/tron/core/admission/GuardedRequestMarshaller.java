@@ -38,7 +38,7 @@ public final class GuardedRequestMarshaller<T> implements MethodDescriptor.Proto
   private final Descriptor root;
   private final T prototype;
   // Compared by identity; never the default instance, which an empty request parses to.
-  private final Map<Reason, T> rejected = new EnumMap<>(Reason.class);
+  private final Map<Reason, T> rejectionSentinels = new EnumMap<>(Reason.class);
   private final int maxMessageSize;
   private final int maxOccurrences;
 
@@ -49,7 +49,7 @@ public final class GuardedRequestMarshaller<T> implements MethodDescriptor.Proto
     this.root = prototype.getDescriptorForType();
     this.prototype = (T) prototype.getDefaultInstanceForType();
     for (Reason reason : Reason.values()) {
-      rejected.put(reason, (T) prototype.newBuilderForType().build());
+      rejectionSentinels.put(reason, (T) prototype.newBuilderForType().build());
     }
     this.maxMessageSize = maxMessageSize;
     this.maxOccurrences = maxOccurrences;
@@ -99,22 +99,22 @@ public final class GuardedRequestMarshaller<T> implements MethodDescriptor.Proto
     try {
       return parseChecked(stream);
     } catch (ProtobufAdmissionException e) {
-      return rejected.get(e.getReason());
+      return rejectionSentinels.get(e.getReason());
     }
   }
 
   public Reason rejectionReason(T request) {
     // Called for every accepted request; iterating the map would allocate entries.
     for (Reason reason : REASONS) {
-      if (rejected.get(reason) == request) {
+      if (rejectionSentinels.get(reason) == request) {
         return reason;
       }
     }
     return null;
   }
 
-  T rejected(Reason reason) {
-    return rejected.get(reason);
+  T rejectionSentinel(Reason reason) {
+    return rejectionSentinels.get(reason);
   }
 
   public Descriptor getRoot() {
@@ -185,6 +185,7 @@ public final class GuardedRequestMarshaller<T> implements MethodDescriptor.Proto
       initial = hint > 1 ? hint : DEFAULT_INITIAL_BUFFER;
       initial = StrictMathWrapper.min(initial, StrictMathWrapper.min(limit, MAX_INITIAL_BUFFER));
     }
+    long maxCapacity = StrictMathWrapper.min(limit, Integer.MAX_VALUE - 8L);
     byte[] buffer = new byte[(int) initial];
     int size = 0;
     while (true) {
@@ -194,9 +195,8 @@ public final class GuardedRequestMarshaller<T> implements MethodDescriptor.Proto
         if (next < 0) {
           break;
         }
-        long grown = StrictMathWrapper.min(
-            StrictMathWrapper.min(StrictMathWrapper.max((long) buffer.length * 2,
-                DEFAULT_INITIAL_BUFFER), limit), Integer.MAX_VALUE - 8);
+        long grown = StrictMathWrapper.max((long) buffer.length * 2, DEFAULT_INITIAL_BUFFER);
+        grown = StrictMathWrapper.min(grown, maxCapacity);
         if (grown <= buffer.length) {
           return null;   // cannot hold more than this; the message is over the bound
         }

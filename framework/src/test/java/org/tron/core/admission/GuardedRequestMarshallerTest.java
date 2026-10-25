@@ -50,7 +50,7 @@ public class GuardedRequestMarshallerTest {
       assertSame(prototype.getClass(), marshaller.getMessageClass());
       Map<Object, Reason> seen = new IdentityHashMap<>();
       for (Reason reason : Reason.values()) {
-        Message sentinel = marshaller.rejected(reason);
+        Message sentinel = marshaller.rejectionSentinel(reason);
         assertNotSame(prototype, sentinel);
         assertEquals(prototype.getClass(), sentinel.getClass());
         assertEquals(reason, marshaller.rejectionReason(sentinel));

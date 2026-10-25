@@ -60,6 +60,34 @@ public class AdmissionSupportTest {
   }
 
   @Test
+  public void readBoundedReadsAtMostOneBytePastMax() throws IOException {
+    HintStream stream = new HintStream(new byte[12], 2);
+    assertNull(GuardedRequestMarshaller.readBounded(stream, 10));
+    assertEquals(11, stream.consumed());
+  }
+
+  @Test
+  public void readBoundedRejectsANegativeMaxBeforeTouchingTheStream() throws IOException {
+    InputStream untouchable = new InputStream() {
+      @Override
+      public int read() {
+        throw new AssertionError("stream read");
+      }
+
+      @Override
+      public int available() {
+        throw new AssertionError("stream queried");
+      }
+    };
+    try {
+      GuardedRequestMarshaller.readBounded(untouchable, -1);
+      fail();
+    } catch (IllegalArgumentException expected) {
+      // expected
+    }
+  }
+
+  @Test
   public void readBoundedReadsAKnownLengthStream() throws IOException {
     int max = 4 << 20;
     for (int size : new int[] {0, 1, GuardedRequestMarshaller.MAX_INITIAL_BUFFER + 1, max}) {
@@ -433,11 +461,17 @@ public class AdmissionSupportTest {
   private static final class HintStream extends InputStream {
 
     private final ByteArrayInputStream in;
+    private final int length;
     private final int hint;
 
     HintStream(byte[] data, int hint) {
       this.in = new ByteArrayInputStream(data);
+      this.length = data.length;
       this.hint = hint;
+    }
+
+    int consumed() {
+      return length - in.available();
     }
 
     @Override
