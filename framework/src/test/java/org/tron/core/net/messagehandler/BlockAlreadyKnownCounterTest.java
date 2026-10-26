@@ -58,10 +58,11 @@ public class BlockAlreadyKnownCounterTest {
   private boolean metricsEnabledBefore;
 
   @Before
-  public void setUp() {
+  public void setUp() throws P2pException {
     metricsEnabledBefore = CommonParameter.getInstance().isMetricsPrometheusEnable();
     CommonParameter.getInstance().setMetricsPrometheusEnable(true);
     delegate = mock(TronNetDelegate.class);
+    when(delegate.validAdvBlock(any(), any())).thenReturn(true);
     handler = new BlockMsgHandler();
     ReflectUtils.setFieldValue(handler, "tronNetDelegate", delegate);
     ReflectUtils.setFieldValue(handler, "advService", mock(AdvService.class));
@@ -90,7 +91,6 @@ public class BlockAlreadyKnownCounterTest {
   @Test
   public void testMatchedRequestAlreadyKnownBlockIncrements() throws P2pException {
     when(delegate.containBlock(any(BlockId.class))).thenReturn(true);
-    when(delegate.validBlock(any(BlockCapsule.class))).thenReturn(true);
     when(delegate.getHeadBlockId()).thenReturn(new BlockId(Sha256Hash.ZERO_HASH, HEAD_NUM));
 
     BlockMessage msg = newBlockMessage(1);
@@ -116,7 +116,6 @@ public class BlockAlreadyKnownCounterTest {
     assertNotEquals(msg.getBlockId(), msg.getBlockCapsule().getParentBlockId());
     when(delegate.containBlock(msg.getBlockId())).thenReturn(false);
     when(delegate.containBlock(msg.getBlockCapsule().getParentBlockId())).thenReturn(true);
-    when(delegate.validBlock(any(BlockCapsule.class))).thenReturn(true);
     when(delegate.getHeadBlockId()).thenReturn(new BlockId(Sha256Hash.ZERO_HASH, HEAD_NUM));
 
     double before = sample();
@@ -150,7 +149,6 @@ public class BlockAlreadyKnownCounterTest {
     // re-delivery of the current head block id counts: the id is exactly known even
     // though it is not below head.
     when(delegate.containBlock(any(BlockId.class))).thenReturn(true);
-    when(delegate.validBlock(any(BlockCapsule.class))).thenReturn(true);
     when(delegate.getHeadBlockId()).thenReturn(new BlockId(Sha256Hash.ZERO_HASH, HEAD_NUM));
     when(delegate.getActivePeer()).thenReturn(Collections.emptyList());
 
