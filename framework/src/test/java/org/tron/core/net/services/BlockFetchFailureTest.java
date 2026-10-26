@@ -47,7 +47,9 @@ import org.tron.core.net.peer.Item;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.service.adv.AdvService;
 import org.tron.core.net.service.fetchblock.FetchBlockService;
+import org.tron.core.net.service.relay.RelayService;
 import org.tron.core.net.service.sync.SyncService;
+import org.tron.core.services.WitnessProductBlockService;
 import org.tron.core.store.WitnessScheduleStore;
 import org.tron.p2p.connection.Channel;
 import org.tron.protos.Protocol.Inventory.InventoryType;
@@ -80,7 +82,7 @@ public class BlockFetchFailureTest {
   }
 
   @Test
-  public void firstInactiveAdvertisedWitnessContinuesWithoutDisconnecting() throws Exception {
+  public void firstInactiveAdvertisedWitnessIsIgnoredWithoutDisconnecting() throws Exception {
     TronNetDelegate delegate = inactiveWitnessDelegate(21_600_000L);
     BlockMsgHandler handler = new BlockMsgHandler();
     ReflectUtils.setFieldValue(handler, "tronNetDelegate", delegate);
@@ -96,8 +98,66 @@ public class BlockFetchFailureTest {
     handler.processMessage(sender, new BlockMessage(block));
 
     verify(sender, never()).disconnect(any());
-    verify(sync).startSync(sender);
+    verify(sync, never()).startSync(sender);
     verify(delegate, never()).processBlock(any(BlockCapsule.class), anyBoolean());
+  }
+
+  @Test
+  public void inactiveWitnessIsNotBroadcastWithKnownParent() throws Exception {
+    assertWitnessBroadcast(false, false);
+  }
+
+  @Test
+  public void inactiveWitnessIsNotRelayedWithKnownParent() throws Exception {
+    assertWitnessBroadcast(false, true);
+  }
+
+  @Test
+  public void activeWitnessIsBroadcastWithKnownParent() throws Exception {
+    assertWitnessBroadcast(true, false);
+  }
+
+  @Test
+  public void activeWitnessIsRelayedWithKnownParent() throws Exception {
+    assertWitnessBroadcast(true, true);
+  }
+
+  private void assertWitnessBroadcast(boolean active, boolean fastForward) throws Exception {
+    TronNetDelegate delegate = inactiveWitnessDelegate(21_600_000L);
+    BlockCapsule block = newBlock();
+    if (active) {
+      WitnessScheduleStore schedule = mock(WitnessScheduleStore.class);
+      when(schedule.getActiveWitnesses())
+          .thenReturn(Collections.singletonList(block.getWitnessAddress()));
+      ReflectUtils.setFieldValue(delegate, "witnessScheduleStore", schedule);
+    }
+    doReturn(true).when(delegate).containBlock(block.getParentBlockId());
+    doNothing().when(delegate).processBlock(any(BlockCapsule.class), anyBoolean());
+    doReturn(Collections.emptyList()).when(delegate).getActivePeer();
+    BlockMsgHandler handler = new BlockMsgHandler();
+    AdvService adv = mock(AdvService.class);
+    RelayService relay = mock(RelayService.class);
+    SyncService sync = mock(SyncService.class);
+    ReflectUtils.setFieldValue(handler, "tronNetDelegate", delegate);
+    ReflectUtils.setFieldValue(handler, "fetchBlockService", mock(FetchBlockService.class));
+    ReflectUtils.setFieldValue(handler, "advService", adv);
+    ReflectUtils.setFieldValue(handler, "relayService", relay);
+    ReflectUtils.setFieldValue(handler, "syncService", sync);
+    ReflectUtils.setFieldValue(handler, "witnessProductBlockService",
+        mock(WitnessProductBlockService.class));
+    ReflectUtils.setFieldValue(handler, "fastForward", fastForward);
+    PeerConnection sender = newPeer(10001);
+    Item item = new Item(block.getBlockId(), InventoryType.BLOCK);
+    sender.getAdvInvRequest().put(item, System.currentTimeMillis());
+
+    handler.processMessage(sender, new BlockMessage(block));
+
+    verify(adv, times(active && !fastForward ? 1 : 0)).broadcast(any(BlockMessage.class));
+    verify(relay, times(active && fastForward ? 1 : 0)).broadcast(any(BlockMessage.class));
+    verify(delegate, times(active ? 1 : 0)).processBlock(block, false);
+    verify(sync, never()).startSync(any());
+    verify(sender, never()).disconnect(any());
+    Assert.assertFalse(sender.getAdvInvRequest().containsKey(item));
   }
 
   @Test
@@ -175,7 +235,6 @@ public class BlockFetchFailureTest {
     ReflectUtils.setFieldValue(handler, "syncService", sync);
     PeerConnection sender = newPeer(10001);
     BlockMessage message = new BlockMessage(newBlock());
-    int allowed = 0;
     try (MockedStatic<Time> clock = mockStatic(Time.class)) {
       for (int i = 0; i < times.length; i++) {
         clock.when(Time::getCurrentMillis).thenReturn(times[i]);
@@ -185,7 +244,6 @@ public class BlockFetchFailureTest {
           handler.processMessage(sender, message);
           Assert.assertFalse("Repeated inactive witness must be rejected", disconnect[i]);
           verify(sender, never()).disconnect(any());
-          allowed++;
         } catch (P2pException e) {
           Assert.assertTrue("First or expired inactive witness must not disconnect",
               disconnect[i]);
@@ -201,7 +259,7 @@ public class BlockFetchFailureTest {
     }
     verify(delegate, never()).processBlock(any(BlockCapsule.class), anyBoolean());
     verify(adv, never()).broadcast(any());
-    verify(sync, times(allowed)).startSync(sender);
+    verify(sync, never()).startSync(sender);
   }
 
   @Test
@@ -220,6 +278,7 @@ public class BlockFetchFailureTest {
     BlockCapsule block = newBlock();
     Item item = new Item(block.getBlockId(), InventoryType.BLOCK);
     when(delegate.getHeadBlockId()).thenReturn(new BlockId(Sha256Hash.ZERO_HASH, 0));
+    when(delegate.validAdvBlock(sender, block)).thenReturn(true);
     when(delegate.containBlock(block.getParentBlockId())).thenReturn(true);
     when(delegate.getActivePeer()).thenReturn(Collections.singletonList(sender));
     sender.getAdvInvReceive().put(item, System.currentTimeMillis());

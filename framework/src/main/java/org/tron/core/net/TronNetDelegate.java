@@ -365,8 +365,10 @@ public class TronNetDelegate {
     validSignature(block);
   }
 
-  public void validAdvBlock(PeerConnection peer, BlockCapsule block) throws P2pException {
-    if (!witnessScheduleStore.getActiveWitnesses().contains(block.getWitnessAddress())) {
+  public boolean validAdvBlock(PeerConnection peer, BlockCapsule block) throws P2pException {
+    boolean activeWitness = witnessScheduleStore.getActiveWitnesses()
+        .contains(block.getWitnessAddress());
+    if (!activeWitness) {
       logger.warn("Block witness is not active, block: {}, peer: {}",
           block.getBlockId().getString(), peer.getInetSocketAddress());
       long now = Time.getCurrentMillis();
@@ -378,6 +380,7 @@ public class TronNetDelegate {
       }
     }
     validBlock(block);
+    return activeWitness;
   }
 
   public PbftSignCapsule getBlockPbftCommitData(long blockNum) {

@@ -278,7 +278,7 @@ public class TronNetDelegateTest {
     PeerConnection peer = new PeerConnection();
     peer.setLastInactiveWitnessBlockTime(86_400_000L);
 
-    delegate.validAdvBlock(peer, block);
+    Assert.assertTrue(delegate.validAdvBlock(peer, block));
 
     Mockito.verify(delegate).validSignature(block);
     Assert.assertEquals(86_400_000L, peer.getLastInactiveWitnessBlockTime());
