@@ -31,13 +31,15 @@ public class OptimizeTvmStorageTest extends VMTestBase {
 
   @Override
   protected void beforeDestroy() {
-    VMConfig.initAllowOptimizeTvmStorage(0);
+    VMConfig.initAllowOptimizeTvmStorageKey(0);
+    dbManager.getDynamicPropertiesStore().saveAllowOptimizeTvmStorageKey(0);
   }
 
   @Test
   public void optimizedKeyKeepsFullSlotAndTombstone() {
     activateFork();
-    VMConfig.initAllowOptimizeTvmStorage(1);
+    dbManager.getDynamicPropertiesStore().saveAllowOptimizeTvmStorageKey(1);
+    VMConfig.initAllowOptimizeTvmStorageKey(1);
     byte[] address = account("00000000000000000000000000000000000000c1");
     rootRepository.createAccount(address, AccountType.Normal);
     rootRepository.addBalance(address, 1_000_000L);
@@ -77,12 +79,14 @@ public class OptimizeTvmStorageTest extends VMTestBase {
     DataWord after = RepositoryImpl.createRoot(StoreFactory.getInstance())
         .getStorageValue(address, new DataWord(legacyOnly));
     Assert.assertEquals(9L, after.longValue());
+    dbManager.getDynamicPropertiesStore().saveAllowOptimizeTvmStorageKey(0);
   }
 
   @Test
   public void migratedWriteClearsSharedLegacyRow() {
     activateFork();
-    VMConfig.initAllowOptimizeTvmStorage(1);
+    dbManager.getDynamicPropertiesStore().saveAllowOptimizeTvmStorageKey(1);
+    VMConfig.initAllowOptimizeTvmStorageKey(1);
     byte[] address = account("00000000000000000000000000000000000000c3");
     rootRepository.createAccount(address, AccountType.Normal);
     rootRepository.commit();
@@ -106,6 +110,7 @@ public class OptimizeTvmStorageTest extends VMTestBase {
     byte[] stored = dbManager.getStorageRowStore()
         .get(optimizedKey(address, slotA)).getValue();
     Assert.assertTrue(new DataWord(stored).isZero());
+    dbManager.getDynamicPropertiesStore().saveAllowOptimizeTvmStorageKey(0);
   }
 
   @Test
@@ -122,7 +127,7 @@ public class OptimizeTvmStorageTest extends VMTestBase {
   @Test
   public void zeroThenNonZeroKeepsResetChargeWhenOptimized() throws Exception {
     activateFork();
-    dbManager.getDynamicPropertiesStore().saveAllowOptimizeTvmStorage(1);
+    dbManager.getDynamicPropertiesStore().saveAllowOptimizeTvmStorageKey(1);
     try {
       long fresh = deploy("FreshSet", "600160005500").getResult().getEnergyUsed();
       long zeroThenSet = deploy("ZeroThenSet", "6000600055600160005500")
@@ -131,7 +136,7 @@ public class OptimizeTvmStorageTest extends VMTestBase {
       // following non-zero write is RESET (5000), same as before the proposal.
       Assert.assertEquals(-9994L, zeroThenSet - fresh);
     } finally {
-      dbManager.getDynamicPropertiesStore().saveAllowOptimizeTvmStorage(0);
+      dbManager.getDynamicPropertiesStore().saveAllowOptimizeTvmStorageKey(0);
     }
   }
 
@@ -139,8 +144,8 @@ public class OptimizeTvmStorageTest extends VMTestBase {
   public void tombstoneThenNonZeroChargesAsFirstWrite() throws Exception {
     activateFork();
     dbManager.getDynamicPropertiesStore().saveAllowTvmConstantinople(1);
-    dbManager.getDynamicPropertiesStore().saveAllowOptimizeTvmStorage(1);
-    VMConfig.initAllowOptimizeTvmStorage(1);
+    dbManager.getDynamicPropertiesStore().saveAllowOptimizeTvmStorageKey(1);
+    VMConfig.initAllowOptimizeTvmStorageKey(1);
     try {
       String init = "6006600c60003960066000f3600160005500";
       Runtime seededRuntime = deploy("Seeded", init);
@@ -174,7 +179,7 @@ public class OptimizeTvmStorageTest extends VMTestBase {
           .getStorageValue(seeded, new DataWord(0));
       Assert.assertEquals(1L, written.longValue());
     } finally {
-      dbManager.getDynamicPropertiesStore().saveAllowOptimizeTvmStorage(0);
+      dbManager.getDynamicPropertiesStore().saveAllowOptimizeTvmStorageKey(0);
       dbManager.getDynamicPropertiesStore().saveAllowTvmConstantinople(0);
     }
   }

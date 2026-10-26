@@ -1693,6 +1693,11 @@ public class Wallet {
         .setValue(dbManager.getDynamicPropertiesStore().getCloseExchange())
         .build());
 
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAllowOptimizeTvmStorageKey")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowOptimizeTvmStorageKey())
+        .build());
+
     return builder.build();
   }
 
