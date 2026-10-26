@@ -3,10 +3,13 @@ package org.tron.core.net.services;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -22,9 +25,11 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.mockito.MockedStatic;
 import org.tron.common.TestConstants;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.Time;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.config.args.Args;
@@ -43,6 +48,7 @@ import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.service.adv.AdvService;
 import org.tron.core.net.service.fetchblock.FetchBlockService;
 import org.tron.core.net.service.sync.SyncService;
+import org.tron.core.store.WitnessScheduleStore;
 import org.tron.p2p.connection.Channel;
 import org.tron.protos.Protocol.Inventory.InventoryType;
 import org.tron.protos.Protocol.ReasonCode;
@@ -74,8 +80,128 @@ public class BlockFetchFailureTest {
   }
 
   @Test
-  public void inactiveAdvertisedWitnessIsBannedWithoutRetryingAnotherPeer() throws Exception {
-    assertAdvertisedBlockDoesNotRetry(TypeEnum.BAD_BLOCK);
+  public void firstInactiveAdvertisedWitnessContinuesWithoutDisconnecting() throws Exception {
+    TronNetDelegate delegate = inactiveWitnessDelegate(21_600_000L);
+    BlockMsgHandler handler = new BlockMsgHandler();
+    ReflectUtils.setFieldValue(handler, "tronNetDelegate", delegate);
+    ReflectUtils.setFieldValue(handler, "fetchBlockService", mock(FetchBlockService.class));
+    SyncService sync = mock(SyncService.class);
+    ReflectUtils.setFieldValue(handler, "syncService", sync);
+    PeerConnection sender = newPeer(10001);
+    BlockCapsule block = newBlock();
+    block.setMerkleRoot();
+    sender.getAdvInvRequest().put(new Item(block.getBlockId(), InventoryType.BLOCK),
+        System.currentTimeMillis());
+
+    handler.processMessage(sender, new BlockMessage(block));
+
+    verify(sender, never()).disconnect(any());
+    verify(sync).startSync(sender);
+    verify(delegate, never()).processBlock(any(BlockCapsule.class), anyBoolean());
+  }
+
+  @Test
+  public void inactiveWitnessWithinHalfMaintenanceDisconnects() throws Exception {
+    assertInactiveWitnessTiming(new long[]{86_400_000L, 97_199_999L},
+        new boolean[]{false, true});
+  }
+
+  @Test
+  public void inactiveWitnessAtHalfMaintenanceStartsNewWindow() throws Exception {
+    assertInactiveWitnessTiming(new long[]{86_400_000L, 97_200_000L, 97_200_001L},
+        new boolean[]{false, false, true});
+  }
+
+  @Test
+  public void inactiveWitnessAfterHalfMaintenanceStartsNewWindow() throws Exception {
+    assertInactiveWitnessTiming(new long[]{86_400_000L, 97_200_001L, 97_200_002L},
+        new boolean[]{false, false, true});
+  }
+
+  @Test
+  public void inactiveWitnessClockRollbackIsTreatedAsRepeat() throws Exception {
+    assertInactiveWitnessTiming(new long[]{86_400_000L, 86_399_999L},
+        new boolean[]{false, true});
+  }
+
+  @Test
+  public void inactiveWitnessBelowTruncatedHalfMaintenanceDisconnects() throws Exception {
+    assertInactiveWitnessTiming(new long[]{86_400_000L, 86_440_499L},
+        new boolean[]{false, true}, 81_001L);
+  }
+
+  @Test
+  public void inactiveWitnessAtTruncatedHalfMaintenanceStartsNewWindow() throws Exception {
+    assertInactiveWitnessTiming(new long[]{86_400_000L, 86_440_500L},
+        new boolean[]{false, false}, 81_001L);
+  }
+
+  @Test
+  public void inactiveWitnessTimesAreIndependentForEachPeer() throws Exception {
+    TronNetDelegate delegate = inactiveWitnessDelegate(21_600_000L);
+    BlockMsgHandler handler = new BlockMsgHandler();
+    ReflectUtils.setFieldValue(handler, "tronNetDelegate", delegate);
+    ReflectUtils.setFieldValue(handler, "fetchBlockService", mock(FetchBlockService.class));
+    ReflectUtils.setFieldValue(handler, "syncService", mock(SyncService.class));
+    PeerConnection first = newPeer(10001);
+    PeerConnection second = newPeer(10002);
+    BlockMessage message = new BlockMessage(newBlock());
+    try (MockedStatic<Time> clock = mockStatic(Time.class)) {
+      clock.when(Time::getCurrentMillis).thenReturn(86_400_000L);
+      for (PeerConnection peer : Arrays.asList(first, second)) {
+        peer.getAdvInvRequest().put(new Item(message.getBlockId(), InventoryType.BLOCK),
+            System.currentTimeMillis());
+        handler.processMessage(peer, message);
+        Assert.assertEquals(86_400_000L, peer.getLastInactiveWitnessBlockTime());
+        verify(peer, never()).disconnect(any());
+      }
+    }
+    verify(delegate, never()).processBlock(any(BlockCapsule.class), anyBoolean());
+  }
+
+  private void assertInactiveWitnessTiming(long[] times, boolean[] disconnect) throws Exception {
+    assertInactiveWitnessTiming(times, disconnect, 21_600_000L);
+  }
+
+  private void assertInactiveWitnessTiming(long[] times, boolean[] disconnect,
+      long maintenanceInterval) throws Exception {
+    TronNetDelegate delegate = inactiveWitnessDelegate(maintenanceInterval);
+    BlockMsgHandler handler = new BlockMsgHandler();
+    ReflectUtils.setFieldValue(handler, "tronNetDelegate", delegate);
+    ReflectUtils.setFieldValue(handler, "fetchBlockService", mock(FetchBlockService.class));
+    AdvService adv = mock(AdvService.class);
+    SyncService sync = mock(SyncService.class);
+    ReflectUtils.setFieldValue(handler, "advService", adv);
+    ReflectUtils.setFieldValue(handler, "syncService", sync);
+    PeerConnection sender = newPeer(10001);
+    BlockMessage message = new BlockMessage(newBlock());
+    int allowed = 0;
+    try (MockedStatic<Time> clock = mockStatic(Time.class)) {
+      for (int i = 0; i < times.length; i++) {
+        clock.when(Time::getCurrentMillis).thenReturn(times[i]);
+        sender.getAdvInvRequest().put(new Item(message.getBlockId(), InventoryType.BLOCK),
+            System.currentTimeMillis());
+        try {
+          handler.processMessage(sender, message);
+          Assert.assertFalse("Repeated inactive witness must be rejected", disconnect[i]);
+          verify(sender, never()).disconnect(any());
+          allowed++;
+        } catch (P2pException e) {
+          Assert.assertTrue("First or expired inactive witness must not disconnect",
+              disconnect[i]);
+          Assert.assertEquals(TypeEnum.BAD_BLOCK, e.getType());
+          Method exceptionHandler = P2pEventHandlerImpl.class.getDeclaredMethod(
+              "processException", PeerConnection.class, TronMessage.class, Exception.class);
+          exceptionHandler.setAccessible(true);
+          exceptionHandler.invoke(new P2pEventHandlerImpl(), sender, message, e);
+          verify(sender).disconnect(ReasonCode.BAD_BLOCK);
+        }
+        Assert.assertEquals(times[i], sender.getLastInactiveWitnessBlockTime());
+      }
+    }
+    verify(delegate, never()).processBlock(any(BlockCapsule.class), anyBoolean());
+    verify(adv, never()).broadcast(any());
+    verify(sync, times(allowed)).startSync(sender);
   }
 
   @Test
@@ -135,7 +261,7 @@ public class BlockFetchFailureTest {
     sender.getAdvInvReceive().put(item, System.currentTimeMillis());
     other.getAdvInvReceive().put(item, System.currentTimeMillis());
     P2pException failure = new P2pException(type, "invalid block");
-    doThrow(failure).when(delegate).validBlock(any(BlockCapsule.class));
+    doThrow(failure).when(delegate).validAdvBlock(any(), any(BlockCapsule.class));
     try {
       Assert.assertTrue(adv.addInv(item));
       Assert.assertTrue(sender.getAdvInvRequest().containsKey(item));
@@ -213,7 +339,7 @@ public class BlockFetchFailureTest {
 
     handler.processMessage(sender, message);
 
-    verify(delegate, never()).validBlock(any());
+    verify(delegate, never()).validAdvBlock(any(), any());
     verify(sync).processBlock(sender, message);
     Assert.assertFalse(sender.getSyncBlockRequested().containsKey(message.getBlockId()));
     Assert.assertTrue(sender.getSyncBlockInProcess().contains(message.getBlockId()));
@@ -268,8 +394,23 @@ public class BlockFetchFailureTest {
     }
   }
 
+  private static TronNetDelegate inactiveWitnessDelegate(long maintenanceInterval)
+      throws Exception {
+    TronNetDelegate delegate = spy(new TronNetDelegate());
+    WitnessScheduleStore schedule = mock(WitnessScheduleStore.class);
+    ReflectUtils.setFieldValue(delegate, "witnessScheduleStore", schedule);
+    when(schedule.getActiveWitnesses()).thenReturn(Collections.emptyList());
+    doNothing().when(delegate).validSignature(any(BlockCapsule.class));
+    doReturn(maintenanceInterval).when(delegate).getMaintenanceTimeInterval();
+    doReturn(new BlockId(Sha256Hash.ZERO_HASH, 0)).when(delegate).getHeadBlockId();
+    doReturn(false).when(delegate).containBlock(any());
+    return delegate;
+  }
+
   private static BlockCapsule newBlock() {
-    return new BlockCapsule(1, Sha256Hash.ZERO_HASH, 0, ByteString.EMPTY);
+    BlockCapsule block = new BlockCapsule(1, Sha256Hash.ZERO_HASH, 0, ByteString.EMPTY);
+    block.setMerkleRoot();
+    return block;
   }
 
   private static PeerConnection newPeer(int port) {

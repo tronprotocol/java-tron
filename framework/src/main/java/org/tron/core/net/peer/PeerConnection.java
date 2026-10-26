@@ -93,6 +93,10 @@ public class PeerConnection {
   @Getter
   private volatile long blockRcvTime;
 
+  @Getter
+  @Setter
+  private volatile long lastInactiveWitnessBlockTime;
+
   /**
    * Sliding factor of the fetch latency Exponentially Weighted Moving Average (EWMA):
    * each new sample contributes

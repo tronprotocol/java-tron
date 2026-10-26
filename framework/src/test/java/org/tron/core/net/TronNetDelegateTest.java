@@ -23,6 +23,7 @@ import org.tron.core.exception.P2pException;
 import org.tron.core.exception.P2pException.TypeEnum;
 import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.metrics.MetricsService;
+import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.WitnessScheduleStore;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
@@ -190,10 +191,18 @@ public class TronNetDelegateTest {
     } catch (P2pException e) {
       Assert.assertEquals(TypeEnum.BLOCK_MERKLE_INVALID, e.getType());
     }
+    PeerConnection peer = new PeerConnection();
+    try {
+      tronNetDelegate.validAdvBlock(peer, tampered);
+      Assert.fail("Invalid Merkle root must not reach witness activity handling");
+    } catch (P2pException e) {
+      Assert.assertEquals(TypeEnum.BLOCK_MERKLE_INVALID, e.getType());
+    }
+    Assert.assertEquals(0, peer.getLastInactiveWitnessBlockTime());
   }
 
   @Test
-  public void testValidBlockRejectsInactiveWitness() throws Exception {
+  public void testValidBlockDoesNotCheckWitnessActivity() throws Exception {
     TronNetDelegate delegate = Mockito.spy(new TronNetDelegate());
     WitnessScheduleStore schedule = mock(WitnessScheduleStore.class);
     setField(delegate, "witnessScheduleStore", schedule);
@@ -201,16 +210,45 @@ public class TronNetDelegateTest {
         ByteString.copyFromUtf8("witness"));
     block.setMerkleRoot();
     Mockito.doNothing().when(delegate).validSignature(block);
-    Mockito.when(schedule.getActiveWitnesses()).thenReturn(Collections.emptyList());
+    delegate.validBlock(block);
+    Mockito.verify(schedule, Mockito.never()).getActiveWitnesses();
+  }
+
+  @Test
+  public void testValidAdvBlockChecksSignatureBeforeWitnessActivity() throws Exception {
+    TronNetDelegate delegate = Mockito.spy(new TronNetDelegate());
+    BlockCapsule block = new BlockCapsule(1, Sha256Hash.ZERO_HASH, 0, ByteString.EMPTY);
+    block.setMerkleRoot();
+    P2pException failure = new P2pException(TypeEnum.BLOCK_SIGN_INVALID, "invalid signature");
+    Mockito.doThrow(failure).when(delegate).validSignature(block);
+    PeerConnection peer = new PeerConnection();
     try {
-      delegate.validBlock(block);
-      Assert.fail("An inactive witness must be rejected instead of silently dropped");
+      delegate.validAdvBlock(peer, block);
+      Assert.fail("Invalid signature must not reach witness activity handling");
     } catch (P2pException e) {
-      Assert.assertEquals(TypeEnum.BAD_BLOCK, e.getType());
+      Assert.assertSame(failure, e);
     }
+    Assert.assertEquals(0, peer.getLastInactiveWitnessBlockTime());
+  }
+
+  @Test
+  public void testValidAdvBlockAcceptsActiveWitnessWithoutChangingHistory() throws Exception {
+    TronNetDelegate delegate = Mockito.spy(new TronNetDelegate());
+    WitnessScheduleStore schedule = mock(WitnessScheduleStore.class);
+    setField(delegate, "witnessScheduleStore", schedule);
+    BlockCapsule block = new BlockCapsule(1, Sha256Hash.ZERO_HASH, 0,
+        ByteString.copyFromUtf8("witness"));
+    block.setMerkleRoot();
+    Mockito.doNothing().when(delegate).validSignature(block);
     Mockito.when(schedule.getActiveWitnesses())
         .thenReturn(Collections.singletonList(block.getWitnessAddress()));
-    delegate.validBlock(block);
+    PeerConnection peer = new PeerConnection();
+    peer.setLastInactiveWitnessBlockTime(86_400_000L);
+
+    delegate.validAdvBlock(peer, block);
+
+    Mockito.verify(delegate).validSignature(block);
+    Assert.assertEquals(86_400_000L, peer.getLastInactiveWitnessBlockTime());
   }
 
   @Test

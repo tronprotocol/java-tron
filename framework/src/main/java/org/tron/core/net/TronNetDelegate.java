@@ -23,6 +23,7 @@ import org.tron.common.prometheus.MetricKeys;
 import org.tron.common.prometheus.MetricLabels;
 import org.tron.common.prometheus.Metrics;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.Time;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
@@ -362,9 +363,20 @@ public class TronNetDelegate {
       throw new P2pException(TypeEnum.BLOCK_MERKLE_INVALID, e.getMessage());
     }
     validSignature(block);
+  }
+
+  public void validAdvBlock(PeerConnection peer, BlockCapsule block) throws P2pException {
+    validBlock(block);
     if (!witnessScheduleStore.getActiveWitnesses().contains(block.getWitnessAddress())) {
-      throw new P2pException(TypeEnum.BAD_BLOCK,
-          "Block witness is not active: " + block.getBlockId().getString());
+      logger.warn("Block witness is not active, block: {}, peer: {}",
+          block.getBlockId().getString(), peer.getInetSocketAddress());
+      long now = Time.getCurrentMillis();
+      long lastTime = peer.getLastInactiveWitnessBlockTime();
+      peer.setLastInactiveWitnessBlockTime(now);
+      if (now - lastTime < getMaintenanceTimeInterval() / 2) {
+        throw new P2pException(TypeEnum.BAD_BLOCK,
+            "Repeated block from an inactive witness: " + block.getBlockId().getString());
+      }
     }
   }
 
