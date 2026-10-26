@@ -847,7 +847,8 @@ public class ProposalUtilTest extends BaseTest {
     // 5) stepwise progression from current=0: jump to 2 is rejected
     thrown = assertThrows(ContractValidateException.class,
         () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils, code, 2));
-    assertEquals("This value[CLOSE_EXCHANGE] must be 1 and within [1,2]", thrown.getMessage());
+    assertEquals("This value[CLOSE_EXCHANGE] must be greater than the current value "
+        + "and within [1,2]", thrown.getMessage());
 
     // 6) proposing the current value again is rejected
     thrown = assertThrows(ContractValidateException.class,
@@ -858,11 +859,13 @@ public class ProposalUtilTest extends BaseTest {
     // 7) negative and out-of-range values are rejected
     thrown = assertThrows(ContractValidateException.class,
         () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils, code, -1));
-    assertEquals("This value[CLOSE_EXCHANGE] must be 1 and within [1,2]", thrown.getMessage());
+    assertEquals("This value[CLOSE_EXCHANGE] must be greater than the current value "
+        + "and within [1,2]", thrown.getMessage());
 
     thrown = assertThrows(ContractValidateException.class,
         () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils, code, LONG_VALUE + 1));
-    assertEquals("This value[CLOSE_EXCHANGE] must be 1 and within [1,2]", thrown.getMessage());
+    assertEquals("This value[CLOSE_EXCHANGE] must be greater than the current value "
+        + "and within [1,2]", thrown.getMessage());
 
     // 8) current=0 -> only value 1 passes; applying it makes 1 the current value
     try {
@@ -892,7 +895,8 @@ public class ProposalUtilTest extends BaseTest {
     // 9) current=1 -> only value 2 passes
     thrown = assertThrows(ContractValidateException.class,
         () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils, code, 3));
-    assertEquals("This value[CLOSE_EXCHANGE] must be 2 and within [1,2]", thrown.getMessage());
+    assertEquals("This value[CLOSE_EXCHANGE] must be greater than the current value "
+        + "and within [1,2]", thrown.getMessage());
 
     try {
       ProposalUtil.validator(dynamicPropertiesStore, forkUtils, code, 2);
@@ -907,7 +911,7 @@ public class ProposalUtilTest extends BaseTest {
     thrown = assertThrows(ContractValidateException.class,
         () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils, code, 1));
     assertEquals(
-        "[CLOSE_EXCHANGE] has reached its terminal value 2; no further change is allowed",
+        "This value[CLOSE_EXCHANGE] must be greater than the current value and within [1,2]",
         thrown.getMessage());
 
     thrown = assertThrows(ContractValidateException.class,

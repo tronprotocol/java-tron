@@ -993,13 +993,9 @@ public class ProposalUtil {
           throw new ContractValidateException(
               "[CLOSE_EXCHANGE] has been set to " + value + ", no need to propose again");
         }
-        if (current == 2) {
-          throw new ContractValidateException(
-              "[CLOSE_EXCHANGE] has reached its terminal value 2; no further change is allowed");
-        }
         if (value != current + 1 || value < 1 || value > 2) {
           throw new ContractValidateException(
-              "This value[CLOSE_EXCHANGE] must be " + (current + 1) + " and within [1,2]");
+              "This value[CLOSE_EXCHANGE] must be greater than the current value and within [1,2]");
         }
         break;
       }
