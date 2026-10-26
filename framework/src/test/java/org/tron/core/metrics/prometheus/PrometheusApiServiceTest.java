@@ -3,6 +3,8 @@ package org.tron.core.metrics.prometheus;
 import com.google.common.collect.Maps;
 import com.google.protobuf.ByteString;
 import io.prometheus.client.CollectorRegistry;
+import io.prometheus.client.exporter.common.TextFormat;
+import java.io.StringWriter;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -24,6 +26,7 @@ import org.tron.common.parameter.CommonParameter;
 import org.tron.common.prometheus.MetricKeys;
 import org.tron.common.prometheus.MetricLabels;
 import org.tron.common.prometheus.Metrics;
+import org.tron.common.prometheus.SRMetrics;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.PublicMethod;
 import org.tron.common.utils.Sha256Hash;
@@ -222,6 +225,50 @@ public class PrometheusApiServiceTest extends BaseTest {
         new String[] {version, testGenesisBlockId});
     Assert.assertNotNull("tron:node_info sample should exist", value);
     Assert.assertEquals(1.0, value, 0.0);
+  }
+
+  @Test
+  public void testNodeRoleMetric() {
+    // a single label-less series per node; the value encodes the role (0 = init,
+    // 1 = master, 2 = slaver), here master after recording NODE_ROLE_MASTER
+    SRMetrics.recordNodeRole(SRMetrics.NODE_ROLE_MASTER);
+    Double value = CollectorRegistry.defaultRegistry.getSampleValue(
+        MetricKeys.Gauge.NODE_ROLE,
+        new String[] {},
+        new String[] {});
+    Assert.assertNotNull("tron:node_role sample should exist", value);
+    Assert.assertEquals(SRMetrics.NODE_ROLE_MASTER, value, 0.0);
+  }
+
+  @Test
+  public void testIsWitnessMetric() {
+    // label-less flag series: 0 = not witness, 1 = witness
+    SRMetrics.recordIsWitness(SRMetrics.WITNESS);
+    Double value = CollectorRegistry.defaultRegistry.getSampleValue(
+        MetricKeys.Gauge.IS_WITNESS,
+        new String[] {},
+        new String[] {});
+    Assert.assertNotNull("tron:is_witness sample should exist", value);
+    Assert.assertEquals(SRMetrics.WITNESS, value, 0.0);
+  }
+
+  @Test
+  public void testNodeGaugesTextExport() throws Exception {
+    SRMetrics.recordIsWitness(SRMetrics.NOT_WITNESS);
+    SRMetrics.recordNodeRole(SRMetrics.NODE_ROLE_INIT);
+
+    StringWriter writer = new StringWriter();
+    TextFormat.write004(writer, CollectorRegistry.defaultRegistry.metricFamilySamples());
+    String text = writer.toString();
+
+    Assert.assertTrue("scrape output should expose tron:is_witness",
+        text.contains("tron:is_witness "));
+    Assert.assertTrue("scrape output should expose tron:node_role",
+        text.contains("tron:node_role "));
+    Assert.assertTrue("tron:is_witness should export the recorded value",
+        text.contains("tron:is_witness 0.0"));
+    Assert.assertTrue("tron:node_role should export the recorded value",
+        text.contains("tron:node_role 0.0"));
   }
 
   @Test

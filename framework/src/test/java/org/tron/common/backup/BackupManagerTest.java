@@ -1,6 +1,7 @@
 package org.tron.common.backup;
 
 import io.netty.channel.Channel;
+import io.prometheus.client.CollectorRegistry;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -20,14 +21,19 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.mockito.Mockito;
 import org.tron.common.TestConstants;
 import org.tron.common.backup.BackupManager.BackupStatusEnum;
 import org.tron.common.backup.message.KeepAliveMessage;
 import org.tron.common.backup.socket.BackupServer;
+import org.tron.common.backup.socket.MessageHandler;
 import org.tron.common.backup.socket.UdpEvent;
 import org.tron.common.parameter.CommonParameter;
+import org.tron.common.prometheus.MetricKeys;
+import org.tron.common.prometheus.SRMetrics;
 import org.tron.common.utils.PublicMethod;
 import org.tron.common.utils.ReflectUtils;
+import org.tron.consensus.base.Param;
 import org.tron.core.config.args.Args;
 import org.tron.core.config.args.InetUtil;
 
@@ -76,6 +82,9 @@ public class BackupManagerTest {
     });
     InetUtil.dnsLookup = previousDnsLookup;
     Args.clearParam();
+    // the consensus miner list is a process-wide singleton: reset it so this class
+    // cannot leak state into other tests of the same JVM
+    Param.getInstance().setMiners(new ArrayList<>());
     BackupTestUtils.throwIfAnyError(errors);
   }
 
@@ -181,6 +190,64 @@ public class BackupManagerTest {
     backupServerClosed = true;
     Assert.assertFalse("backup channel must close", channel.isOpen());
     BackupTestUtils.assertExecutorsTerminated(manager, backupServer);
+  }
+
+  /**
+   * A backup group whose only member is this node's own address is a "single-master" group:
+   * no peer ever answers a keep-alive, so the node must leave the pre-election INIT window and
+   * self-promote to MASTER once the keep-alive timeout elapses.
+   *
+   * <p>Drives the real {@link BackupManager#init()} and its real scheduled keep-alive task. The
+   * timeout condition is made deterministic by ageing the last keep-alive time, so the first
+   * (fixed 1s) scheduler tick is guaranteed to observe an expired keep-alive; recovery is then
+   * awaited by polling, so there is no fixed sleep. The published {@code tron:node_role} must
+   * track the transition (0 = init, 1 = master) and the manager executor must terminate.
+   */
+  @Test(timeout = 30000)
+  public void singleMasterGroupRecoversFromInitToMaster() throws Exception {
+    CommonParameter parameter = CommonParameter.getInstance();
+    parameter.setBackupPriority(8);
+    // the group's only member is ourselves, so init() drops it and no peer can answer
+    parameter.setBackupMembers(
+        Collections.singletonList(InetAddress.getLocalHost().getHostAddress()));
+
+    boolean previousMetrics = Args.getInstance().isMetricsPrometheusEnable();
+    Args.getInstance().setMetricsPrometheusEnable(true);
+    BackupManager single = new BackupManager();
+    // absorb any keep-alive send in case the local IP lookup behaves differently
+    single.setMessageHandler(Mockito.mock(MessageHandler.class));
+    try {
+      // backup configured but not yet init'ed: the pre-election window reports init (0)
+      Assert.assertEquals(BackupManager.BackupStatusEnum.MASTER, single.getStatus());
+      single.recordNodeRole();
+      Assert.assertEquals(SRMetrics.NODE_ROLE_INIT, nodeRoleGauge(), 0.0);
+
+      single.init();
+      Assert.assertEquals(BackupManager.BackupStatusEnum.INIT, single.getStatus());
+      Assert.assertEquals(SRMetrics.NODE_ROLE_INIT, nodeRoleGauge(), 0.0);
+
+      // no keep-alive has ever arrived, so the next keep-alive tick must self-promote.
+      // setStatus() flips the volatile status before it republishes the gauge, so wait on
+      // the published series (the externally visible result), not on the status field alone.
+      ReflectUtils.setFieldValue(single, "lastKeepAliveTime", 0L);
+      BackupTestUtils.awaitCondition("lone master to recover from INIT",
+          () -> single.getStatus() == BackupManager.BackupStatusEnum.MASTER
+              && Double.valueOf(SRMetrics.NODE_ROLE_MASTER).equals(nodeRoleGauge()));
+      Assert.assertEquals(BackupManager.BackupStatusEnum.MASTER, single.getStatus());
+      Assert.assertEquals(SRMetrics.NODE_ROLE_MASTER, nodeRoleGauge(), 0.0);
+    } finally {
+      single.stop();
+      Args.getInstance().setMetricsPrometheusEnable(previousMetrics);
+    }
+
+    ScheduledExecutorService executorService =
+        (ScheduledExecutorService) ReflectUtils.getFieldObject(single, "executorService");
+    Assert.assertTrue("single-master executor must terminate", executorService.isTerminated());
+  }
+
+  private Double nodeRoleGauge() {
+    return CollectorRegistry.defaultRegistry.getSampleValue(
+        MetricKeys.Gauge.NODE_ROLE, new String[] {}, new String[] {});
   }
 
   // ===== domain-handling tests for init() =====
