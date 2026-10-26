@@ -366,7 +366,6 @@ public class TronNetDelegate {
   }
 
   public void validAdvBlock(PeerConnection peer, BlockCapsule block) throws P2pException {
-    validBlock(block);
     if (!witnessScheduleStore.getActiveWitnesses().contains(block.getWitnessAddress())) {
       logger.warn("Block witness is not active, block: {}, peer: {}",
           block.getBlockId().getString(), peer.getInetSocketAddress());
@@ -378,6 +377,7 @@ public class TronNetDelegate {
             "Repeated block from an inactive witness: " + block.getBlockId().getString());
       }
     }
+    validBlock(block);
   }
 
   public PbftSignCapsule getBlockPbftCommitData(long blockNum) {
