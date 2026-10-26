@@ -47,7 +47,6 @@ import org.tron.core.net.peer.TronState;
 import org.tron.core.net.service.adv.AdvService;
 import org.tron.core.net.service.sync.SyncService;
 import org.tron.protos.Protocol.Inventory.InventoryType;
-import org.tron.protos.Protocol.ReasonCode;
 
 public class ChainInventoryMsgHandlerTest {
 
@@ -176,23 +175,37 @@ public class ChainInventoryMsgHandlerTest {
   }
 
   @Test
-  public void testSingleBlockBelowHelloHeadIsRejected() throws Exception {
+  public void testSingleBlockBelowHelloHeadUsesLocalBlockAvailability() throws Exception {
     for (long height : new long[]{50, 100, 199}) {
       for (boolean needSyncFromUs : new boolean[]{false, true}) {
         resetFixture();
         peer.setHelloMessageReceive(helloMessage(200));
         peer.setNeedSyncFromUs(needSyncFromUs);
         request(blockId(0), blockId(50), blockId(100), blockId(199));
+        if (height > 100) {
+          peer.getSyncBlockToFetch().add(blockId(height));
+        }
 
-        assertRejected(new ChainInventoryMessage(Collections.singletonList(blockId(height)), 0L),
-            TypeEnum.SYNC_FAILED);
-        Assert.assertFalse(peer.isSyncFinish());
+        respond(0, blockId(height));
+
+        Assert.assertEquals(needSyncFromUs, peer.isNeedSyncFromUs());
+        if (height <= 100) {
+          assertDownloadCompleted();
+          Assert.assertEquals(!needSyncFromUs, peer.isSyncFinish());
+        } else {
+          Assert.assertTrue(peer.isNeedSyncFromPeer());
+          Assert.assertEquals(Collections.singletonList(blockId(height)),
+              new ArrayList<>(peer.getSyncBlockToFetch()));
+          verify(sync).setFetchFlag(true);
+          verify(sync, never()).syncNext(any());
+        }
+        verify(peer, never()).disconnect(any());
       }
     }
   }
 
   @Test
-  public void testTerminalMultiBlockBelowHelloHeadIsRejected() throws Exception {
+  public void testTerminalMultiBlockBelowHelloHeadIsAccepted() throws Exception {
     for (int size : new int[]{2, 3, (int) NetConstants.SYNC_FETCH_BATCH_NUM + 1}) {
       resetFixture();
       List<BlockId> ids = range(50, size);
@@ -200,16 +213,28 @@ public class ChainInventoryMsgHandlerTest {
       peer.setBlockBothHave(blockId(50));
       peer.getSyncBlockToFetch().add(blockId(101));
 
-      assertRejected(new ChainInventoryMessage(ids, 0L), TypeEnum.SYNC_FAILED);
+      handler.processMessage(peer, new ChainInventoryMessage(ids, 0L));
+
+      List<BlockId> pending = new ArrayList<>(ids);
+      pending.removeIf(id -> id.getNum() <= 100);
+      Assert.assertEquals(pending, new ArrayList<>(peer.getSyncBlockToFetch()));
+      Assert.assertTrue(peer.isNeedSyncFromPeer());
+      Assert.assertNull(peer.getSyncChainRequested());
+      Assert.assertEquals(0, peer.getRemainNum());
+      if (pending.isEmpty()) {
+        verify(sync).syncNext(peer);
+      } else {
+        verify(sync).setFetchFlag(true);
+      }
+      verify(peer, never()).disconnect(any());
     }
   }
 
   @Test
-  public void testTerminalResponseBelowHelloHeadDisconnectsWithSyncFail() throws Exception {
+  public void testTerminalResponseBelowHelloHeadDoesNotDisconnect() throws Exception {
     for (int size : new int[]{1, 2, 3}) {
       resetFixture();
       peer.setHelloMessageReceive(helloMessage(200));
-      Pair<Deque<BlockId>, Long> requested = peer.getSyncChainRequested();
       P2pEventHandlerImpl events = new P2pEventHandlerImpl();
       ReflectUtils.setFieldValue(events, "chainInventoryMsgHandler", handler);
       ChainInventoryMessage response = new ChainInventoryMessage(range(50, size), 0L);
@@ -217,12 +242,15 @@ public class ChainInventoryMsgHandlerTest {
       ReflectUtils.invokeMethod(events, "processMessage",
           new Class<?>[]{PeerConnection.class, byte[].class}, peer, response.getSendBytes());
 
-      verify(peer).disconnect(ReasonCode.SYNC_FAIL);
-      verify(peer, never()).disconnect(ReasonCode.BAD_PROTOCOL);
-      Assert.assertSame(requested, peer.getSyncChainRequested());
-      Assert.assertTrue(peer.isNeedSyncFromPeer());
-      Assert.assertEquals(TronState.SYNCING, peer.getTronState());
-      verify(sync, never()).syncNext(any());
+      verify(peer, never()).disconnect(any());
+      Assert.assertNull(peer.getSyncChainRequested());
+      if (size == 1) {
+        assertDownloadCompleted();
+      } else {
+        Assert.assertTrue(peer.isNeedSyncFromPeer());
+        Assert.assertEquals(TronState.SYNCING, peer.getTronState());
+        verify(sync).syncNext(peer);
+      }
       verify(sync, never()).setFetchFlag(true);
     }
   }
@@ -451,26 +479,24 @@ public class ChainInventoryMsgHandlerTest {
   }
 
   @Test
-  public void testRepeatedKnownTerminalResponseIsRejected() throws Exception {
+  public void testRepeatedKnownTerminalResponseRequestsAnotherSummary() throws Exception {
     peer.setHelloMessageReceive(helloMessage(52));
     respond(0, blockId(50), blockId(51), blockId(52));
     verify(sync).syncNext(peer);
 
     request(blockId(0), blockId(50), blockId(52));
-    Pair<Deque<BlockId>, Long> requested = peer.getSyncChainRequested();
-    long updateTime = peer.getBlockBothHaveUpdateTime();
-    P2pException exception = Assert.assertThrows(P2pException.class,
-        () -> respond(0, blockId(50), blockId(51), blockId(52)));
+    respond(0, blockId(50), blockId(51), blockId(52));
 
-    Assert.assertEquals(TypeEnum.SYNC_FAILED, exception.getType());
-    Assert.assertSame(requested, peer.getSyncChainRequested());
-    Assert.assertEquals(updateTime, peer.getBlockBothHaveUpdateTime());
+    Assert.assertNull(peer.getSyncChainRequested());
+    Assert.assertEquals(blockId(52), peer.getBlockBothHave());
+    Assert.assertTrue(peer.getSyncBlockToFetch().isEmpty());
     Assert.assertTrue(peer.isNeedSyncFromPeer());
-    verify(sync).syncNext(peer);
+    verify(sync, times(2)).syncNext(peer);
+    verify(peer, never()).disconnect(any());
   }
 
   @Test
-  public void testReorgDuringSummaryResponseDisconnectsWithSyncFail() throws Exception {
+  public void testReorgDuringSummaryResponseRequestsAnotherSummary() throws Exception {
     request(blockId(0), blockId(51), blockId(76), blockId(89), blockId(95), blockId(98),
         blockId(100));
     AtomicBoolean forkSwitched = new AtomicBoolean();
@@ -501,16 +527,18 @@ public class ChainInventoryMsgHandlerTest {
     Assert.assertEquals(Arrays.asList(blockId(98), blockId(99), blockId(100)),
         response.getBlockIds());
     Assert.assertEquals(Long.valueOf(0), response.getRemainNum());
-    P2pException exception = assertRejected(response, TypeEnum.SYNC_FAILED);
-    Assert.assertTrue(exception.getMessage().startsWith("terminal block already in summary:"));
 
     P2pEventHandlerImpl events = new P2pEventHandlerImpl();
     ReflectUtils.setFieldValue(events, "chainInventoryMsgHandler", handler);
     ReflectUtils.invokeMethod(events, "processMessage",
         new Class<?>[]{PeerConnection.class, byte[].class}, peer, response.getSendBytes());
 
-    verify(peer).disconnect(ReasonCode.SYNC_FAIL);
-    verify(peer, never()).disconnect(ReasonCode.BAD_PROTOCOL);
+    verify(peer, never()).disconnect(any());
+    Assert.assertNull(peer.getSyncChainRequested());
+    Assert.assertEquals(blockId(100), peer.getBlockBothHave());
+    Assert.assertTrue(peer.getSyncBlockToFetch().isEmpty());
+    Assert.assertTrue(peer.isNeedSyncFromPeer());
+    verify(sync).syncNext(peer);
   }
 
   @Test
