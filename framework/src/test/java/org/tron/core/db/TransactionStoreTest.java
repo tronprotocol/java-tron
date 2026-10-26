@@ -11,6 +11,7 @@ import org.tron.common.TestConstants;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.PublicMethod;
+import org.tron.common.utils.ReflectUtils;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
@@ -43,6 +44,36 @@ public class TransactionStoreTest extends BaseTest {
   private static String dbDirectory = "db_TransactionStore_test";
   @Resource
   private TransactionStore transactionStore;
+
+  @Test
+  public void transactionLookupRetainsKhaosBlockOnlyAfterCommit() throws Exception {
+    KhaosDatabase original = (KhaosDatabase)
+        ReflectUtils.getFieldObject(transactionStore, "khaosDatabase");
+    KhaosDatabase database = new KhaosDatabase();
+    BlockCapsule root = new BlockCapsule(100000, Sha256Hash.ZERO_HASH, 1, ByteString.EMPTY);
+    database.start(root);
+    BlockCapsule block = new BlockCapsule(100001, root.getBlockId(), 2, ByteString.EMPTY);
+    TransactionCapsule transaction = new TransactionCapsule(
+        getContract(12345, OWNER_ADDRESS, TO_ADDRESS), ContractType.TransferContract);
+    block.addTransaction(transaction);
+    database.push(block);
+    KhaosDatabase.KhaosBlock stored = database.getMiniStore().getByHash(block.getBlockId());
+    byte[] key = transaction.getTransactionId().getBytes();
+    transaction.setBlockNum(block.getNum());
+    ReflectUtils.setFieldValue(transactionStore, "khaosDatabase", database);
+    try {
+      transactionStore.put(key, transaction);
+      Assert.assertEquals(transaction.getInstance(), transactionStore.get(key).getInstance());
+      Assert.assertNotSame(transaction, transactionStore.get(key));
+      Assert.assertNull(ReflectUtils.getFieldObject(stored, "blk"));
+      stored.commit(block);
+      Assert.assertSame(transaction, transactionStore.get(key));
+      Assert.assertNull(ReflectUtils.getFieldObject(stored, "rawData"));
+    } finally {
+      transactionStore.delete(key);
+      ReflectUtils.setFieldValue(transactionStore, "khaosDatabase", original);
+    }
+  }
 
   /**
    * Init data.
