@@ -739,8 +739,7 @@ public class RepositoryImpl implements Repository {
         storage = parentStorage;
       }
     } else {
-      storage = new Storage(address, getStorageRowStore(),
-          VMConfig.allowOptimizeTvmStorage());
+      storage = new Storage(address, getStorageRowStore(), getDynamicPropertiesStore());
     }
     ContractCapsule contract = getContract(address);
     if (contract != null) {

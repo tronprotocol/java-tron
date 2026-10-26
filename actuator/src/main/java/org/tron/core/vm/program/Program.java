@@ -1315,6 +1315,10 @@ public class Program {
         if (ByteUtil.isNullOrZeroArray(codeHash)) {
           byte[] code = getCodeAt(address);
           codeHash = Hash.sha3(code);
+          if (VMConfig.allowOptimizeTvmStorageKey()
+              && ByteUtil.isNullOrZeroArray(code)) {
+            return codeHash;
+          }
           contract.setCodeHash(codeHash);
           getContractState().updateContract(tronAddr, contract);
         }

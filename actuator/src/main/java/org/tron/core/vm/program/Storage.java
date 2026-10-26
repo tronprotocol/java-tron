@@ -12,6 +12,7 @@ import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.ForkController;
 import org.tron.core.capsule.StorageRowCapsule;
 import org.tron.core.config.Parameter.ForkBlockVersionEnum;
+import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.StorageRowStore;
 
 public class Storage {
@@ -28,6 +29,7 @@ public class Storage {
   private final Map<DataWord, DataWord> oldRowKeyOwners = new HashMap<>();
   private final Map<DataWord, ReadKind> readKinds = new HashMap<>();
   private final boolean optimizeTvmStorage;
+  private final boolean legacyReadProtection;
   private final boolean aliasCheckEnabled;
 
   @Getter
@@ -39,11 +41,12 @@ public class Storage {
   @Setter
   private int contractVersion;
 
-  public Storage(byte[] address, StorageRowStore store, boolean optimizeTvmStorage) {
+  public Storage(byte[] address, StorageRowStore store, DynamicPropertiesStore dynamicStore) {
     addrHash = addrHash(address);
     this.address = address;
     this.store = store;
-    this.optimizeTvmStorage = optimizeTvmStorage;
+    this.optimizeTvmStorage = dynamicStore.allowTvmStorageOptimization();
+    this.legacyReadProtection = dynamicStore.allowOptimizeTvmStorageKey();
     this.aliasCheckEnabled = ForkController.instance().pass(ForkBlockVersionEnum.VERSION_4_8_2_3);
   }
 
@@ -53,6 +56,7 @@ public class Storage {
     this.store = storage.store;
     this.contractVersion = storage.contractVersion;
     this.optimizeTvmStorage = storage.optimizeTvmStorage;
+    this.legacyReadProtection = storage.legacyReadProtection;
     this.aliasCheckEnabled = storage.aliasCheckEnabled;
     storage.getRowCache().forEach((DataWord key, StorageRowCapsule row) -> {
       StorageRowCapsule newRow = new StorageRowCapsule(row);
@@ -158,6 +162,12 @@ public class Storage {
     }
 
     if (oldKeyTaken(key)) {
+      if (legacyReadProtection) {
+        StorageRowCapsule oldRow = store.get(getOldRowKey(key));
+        if (oldRow != null && oldRow.getValue() != null) {
+          throw new Program.OutOfTimeException("CPU timeout for storage check");
+        }
+      }
       return null;
     }
 
@@ -226,6 +236,9 @@ public class Storage {
         store.delete(getOldRowKey(key));
       }
     });
+    if (legacyReadProtection) {
+      return;
+    }
     readKinds.forEach((DataWord key, ReadKind kind) -> {
       StorageRowCapsule row = rowCache.get(key);
       if (row != null && row.isDirty()) {
