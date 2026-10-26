@@ -36,8 +36,8 @@ public class MessageHandler extends ByteToMessageDecoder {
       ctx.close();
       return;
     }
-    if (channel.isActive()) {
-      if (channel.isDiscoveryMode()) {
+    if (channel.isOutbound()) {
+      if (channel.isNodeDetectMode()) {
         channel.send(new StatusMessage());
       } else {
         ChannelManager.getHandshakeService().startHandshake(channel);

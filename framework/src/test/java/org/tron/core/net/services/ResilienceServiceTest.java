@@ -162,7 +162,7 @@ public class ResilienceServiceTest extends BaseTest {
       Channel c1 = spy(Channel.class);
       ReflectUtils.setFieldValue(c1, "inetSocketAddress", inetSocketAddress);
       ReflectUtils.setFieldValue(c1, "inetAddress", inetSocketAddress.getAddress());
-      ReflectUtils.setFieldValue(c1, "isActive", true);
+      ReflectUtils.setFieldValue(c1, "outbound", true);
       ReflectUtils.setFieldValue(c1, "ctx", spy(ChannelHandlerContext.class));
       Mockito.doNothing().when(c1).send((byte[]) any());
 
@@ -220,7 +220,7 @@ public class ResilienceServiceTest extends BaseTest {
       ReflectUtils.setFieldValue(c1, "inetSocketAddress", inetSocketAddress);
       ReflectUtils.setFieldValue(c1, "inetAddress", inetSocketAddress.getAddress());
       // 1 ~ 3 is active, 4 ~ 26 is not active
-      ReflectUtils.setFieldValue(c1, "isActive", i <= 2);
+      ReflectUtils.setFieldValue(c1, "outbound", i <= 2);
       ReflectUtils.setFieldValue(c1, "ctx", spy(ChannelHandlerContext.class));
       Mockito.doNothing().when(c1).send((byte[]) any());
 

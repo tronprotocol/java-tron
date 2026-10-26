@@ -130,10 +130,10 @@ public class PeerManagerTest {
       Channel second = new Channel();
       ReflectUtils.setFieldValue(first, "inetSocketAddress", address);
       ReflectUtils.setFieldValue(first, "inetAddress", address.getAddress());
-      ReflectUtils.setFieldValue(first, "isActive", true);
+      ReflectUtils.setFieldValue(first, "outbound", true);
       ReflectUtils.setFieldValue(second, "inetSocketAddress", address);
       ReflectUtils.setFieldValue(second, "inetAddress", address.getAddress());
-      ReflectUtils.setFieldValue(second, "isActive", false);
+      ReflectUtils.setFieldValue(second, "outbound", false);
 
       PeerConnection firstPeer = new PeerConnection();
       PeerConnection secondPeer = new PeerConnection();
@@ -174,7 +174,7 @@ public class PeerManagerTest {
     Channel timedOut = new Channel();
     ReflectUtils.setFieldValue(survivor, "inetSocketAddress", address);
     ReflectUtils.setFieldValue(survivor, "inetAddress", address.getAddress());
-    ReflectUtils.setFieldValue(survivor, "isActive", true);
+    ReflectUtils.setFieldValue(survivor, "outbound", true);
     ReflectUtils.setFieldValue(timedOut, "inetSocketAddress", address);
     ReflectUtils.setFieldValue(timedOut, "inetAddress", address.getAddress());
     ReflectUtils.setFieldValue(timedOut, "disconnectTime", System.currentTimeMillis() - 61_000);

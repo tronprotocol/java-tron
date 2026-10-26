@@ -3,6 +3,8 @@ package org.tron.p2p.utils;
 import com.sun.net.httpserver.HttpServer;
 import java.io.OutputStream;
 import java.lang.reflect.Method;
+import java.net.Inet4Address;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.util.Set;
@@ -129,6 +131,43 @@ public class NetUtilTest {
     for (int second = 16; second <= 31; second++) {
       Assert.assertFalse("private address returned: " + ip,
           ip.startsWith("172." + second + "."));
+    }
+  }
+
+  @Test
+  public void testExternalIpNormalization() throws Exception {
+    Assert.assertEquals("198.51.100.7", readEchoReply("198.51.100.7", true));
+    Assert.assertEquals("1.1.1.1", readEchoReply("16843009", true));
+    Assert.assertEquals("1.0.0.1", readEchoReply("1.1", true));
+    Assert.assertEquals("2001:db8:0:0:0:0:0:1", readEchoReply("2001:DB8::1", false));
+
+    InetAddress localhost = InetAddress.getByName("localhost");
+    Assert.assertEquals(localhost.getHostAddress(),
+        readEchoReply("localhost", localhost instanceof Inet4Address));
+  }
+
+  @Test
+  public void testExternalIpAddressFamily() throws Exception {
+    Assert.assertNull(readEchoReply("198.51.100.7", false));
+    Assert.assertNull(readEchoReply("2001:db8::1", true));
+  }
+
+  private String readEchoReply(String reply, boolean ipv4) throws Exception {
+    byte[] body = (reply + "\n").getBytes(StandardCharsets.UTF_8);
+    HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+    server.createContext("/", exchange -> {
+      exchange.sendResponseHeaders(200, body.length);
+      try (OutputStream response = exchange.getResponseBody()) {
+        response.write(body);
+      }
+    });
+    server.start();
+    try {
+      Method method = NetUtil.class.getDeclaredMethod("getExternalIp", String.class, boolean.class);
+      method.setAccessible(true);
+      return (String) method.invoke(null, "http://127.0.0.1:" + server.getAddress().getPort(), ipv4);
+    } finally {
+      server.stop(0);
     }
   }
 

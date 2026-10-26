@@ -27,6 +27,9 @@ public class Parameter {
 
   public static final int NODE_CONNECTION_TIMEOUT = 2000;
 
+  // Node detection timeout in milliseconds.
+  public static final int NODE_DETECT_TIMEOUT = 2000;
+
   // Inbound connections waiting for HELLO use separate limits from admitted peers.
   public static final int MAX_PENDING_INBOUND_CONNECTIONS = 32;
 
@@ -34,9 +37,19 @@ public class Parameter {
 
   public static final int HANDSHAKE_TIMEOUT_SECONDS = 10;
 
-  public static final int KEEP_ALIVE_TIMEOUT = 20_000;
+  /** Send-idle threshold for sending a keepalive PING, in milliseconds. */
+  public static final int PING_IDLE_THRESHOLD_MILLIS = 20_000;
 
-  public static final int PING_TIMEOUT = 20_000;
+  /** Timeout for waiting for a keepalive PONG after sending a PING, in milliseconds. */
+  public static final int PONG_TIMEOUT_MILLIS = 20_000;
+
+  /** @deprecated Use {@link #PONG_TIMEOUT_MILLIS}. */
+  @Deprecated
+  public static final int KEEP_ALIVE_TIMEOUT = PONG_TIMEOUT_MILLIS;
+
+  /** @deprecated Use {@link #PING_IDLE_THRESHOLD_MILLIS}. */
+  @Deprecated
+  public static final int PING_TIMEOUT = PING_IDLE_THRESHOLD_MILLIS;
 
   public static final int NETWORK_TIME_DIFF = 1000;
 

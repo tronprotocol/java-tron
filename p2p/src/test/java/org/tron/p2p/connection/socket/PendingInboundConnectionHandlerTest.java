@@ -389,11 +389,11 @@ public class PendingInboundConnectionHandlerTest {
   }
 
   @Test
-  public void inboundDiscoveryClosesAndReleasesReservation() {
+  public void inboundNodeDetectClosesAndReleasesReservation() {
     EmbeddedChannel socket = inbound(REMOTE_IP);
     Channel channel = initializeProtocol(socket);
     receive(socket, new StatusMessage().getSendData());
-    Assert.assertTrue(channel.isDiscoveryMode());
+    Assert.assertTrue(channel.isNodeDetectMode());
     Assert.assertFalse(socket.isOpen());
     Assert.assertEquals(0, connectCallbacks);
     Assert.assertTrue(inbound(REMOTE_IP).isOpen());
@@ -438,13 +438,13 @@ public class PendingInboundConnectionHandlerTest {
   }
 
   @Test(timeout = 15000)
-  public void outboundAndDiscoveryInitializationDoNotConsumeInboundQuota() throws Exception {
+  public void outboundAndNodeDetectInitializationDoNotConsumeInboundQuota() throws Exception {
     Assert.assertTrue(inbound(REMOTE_IP).isOpen());
     Assert.assertTrue(inbound(REMOTE_IP).isOpen());
-    for (boolean discovery : new boolean[]{false, true}) {
+    for (boolean nodeDetectMode : new boolean[]{false, true}) {
       NioSocketChannel socket = nioSocket();
       socket.eventLoop().submit(() ->
-          new P2pChannelInitializer("outbound", discovery, false).initChannel(socket)).sync();
+          new P2pChannelInitializer("outbound", nodeDetectMode, false).initChannel(socket)).sync();
       Assert.assertTrue(socket.isOpen());
       Assert.assertNull(socket.pipeline().get(PendingInboundConnectionHandler.class));
       Assert.assertNotNull(socket.pipeline().get(MessageHandler.class));

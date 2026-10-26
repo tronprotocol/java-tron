@@ -3,7 +3,7 @@
 Peer discovery, connection management and DNS-based node lists for java-tron.
 
 > **Vendored from [tronprotocol/libp2p](https://github.com/tronprotocol/libp2p)
-> v2.2.9, synchronized through `release-v2.3.0` at `f13c67cdca73cec36eb5dd83bb5ef51f9ba7f9bc`.**
+> v2.2.9, synchronized through `release-v2.3.0` at `5bae7b902f45a9bbd71e492026b4c2c0b6ef0767`.**
 > It lives here as the `:p2p` Gradle module and is consumed as a
 > project dependency, not as a published artifact — `:common` exposes it via
 > `api project(":p2p")`. Upstream's own README follows, edited where
