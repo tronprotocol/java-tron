@@ -4,6 +4,7 @@ import static org.junit.Assert.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
@@ -1763,17 +1764,28 @@ public class ManagerTest extends BaseMethodTest {
         hasLogsFilterCapsule(queue, a, false));
     Assert.assertTrue("control: normal-path block A must reach the FULL block-filter stream",
         hasBlockFilterCapsule(queue, a));
+    KhaosDatabase khaos = chainManager.getKhaosDb();
+    Assert.assertSame(a, khaos.getBlock(a.getBlockId()));
+    Assert.assertNotNull(a.getResult());
 
     // heavier competing branch P -> B1 -> B2, each carrying a transfer, to force switchFork
     BlockCapsule b1 = blockWithTransfer(t + 6001, base + 2, p.getBlockId().getByteString(), keys,
         transfer(owner, address, 2L, p, expiration));
     dbManager.pushBlock(b1); // num <= head -> kept in khaosDb, no switch yet
+    KhaosDatabase.KhaosBlock storedB1 = khaos.getMiniStore().getByHash(b1.getBlockId());
+    Assert.assertNull(ReflectUtils.getFieldObject(storedB1, "blk"));
+    Assert.assertEquals(b1.getInstance(), khaos.getBlock(b1.getBlockId()).getInstance());
+    Assert.assertNull(ReflectUtils.getFieldObject(storedB1, "blk"));
     BlockCapsule b2 = blockWithTransfer(t + 9000, base + 3, b1.getBlockId().getByteString(), keys,
         transfer(owner, address, 3L, p, expiration));
     dbManager.pushBlock(b2); // num > head & parent != head -> triggers switchFork
 
     Assert.assertEquals("reorg must switch the canonical head to the competing branch (B2)",
         b2.getBlockId(), chainManager.getDynamicPropertiesStore().getLatestBlockHeaderHash());
+    Assert.assertNotNull(storedB1.getBlk().getResult());
+    Assert.assertNull(ReflectUtils.getFieldObject(storedB1, "rawData"));
+    Assert.assertSame(b2, khaos.getBlock(b2.getBlockId()));
+    Assert.assertEquals(b2.getBlockId(), khaos.getHeadId());
 
     // reorg withdraws the orphaned old-branch logs (removed=true)
     Assert.assertTrue("reorg: orphaned block A's logs must be withdrawn (removed=true)",
@@ -1858,6 +1870,239 @@ public class ManagerTest extends BaseMethodTest {
     // switchFork must clear the cached verification flag on the new branch's transaction so it
     // re-validates against the fork-chain state
     verify(spyTx, atLeastOnce()).setVerified(false);
+  }
+
+  @Test
+  public void switchForkShouldRestoreOldBranchAfterRuntimeException() throws Exception {
+    checkForkRecovery(false, false);
+  }
+
+  @Test
+  public void switchForkShouldPropagateOldBranchRestoreFailure() throws Exception {
+    checkForkRecovery(true, false);
+  }
+
+  @Test
+  public void switchForkShouldRetryOldBlockAfterRestoreFailure() throws Exception {
+    checkForkRecovery(true, true);
+  }
+
+  @Test
+  public void switchForkShouldRollBackCommittedPrefixWhenRetryFails() throws Exception {
+    checkForkRecovery(true, false, ForkRetryFailure.HEAD);
+  }
+
+  @Test
+  public void switchForkShouldKeepAncestorWhenFirstReplayFails() throws Exception {
+    checkForkRecovery(true, false, ForkRetryFailure.PREFIX);
+  }
+
+  private enum ForkRetryFailure {
+    NONE, PREFIX, HEAD
+  }
+
+  private void checkForkRecovery(boolean failRestore, boolean retryOldHead) throws Exception {
+    checkForkRecovery(failRestore, retryOldHead, ForkRetryFailure.NONE);
+  }
+
+  private void checkForkRecovery(boolean failRestore, boolean retryOldHead,
+      ForkRetryFailure retryFailure) throws Exception {
+    // Assert committed chain state without concurrently replaying pending transactions.
+    dbManager.stopRePushThread();
+    String key = PublicMethod.getRandomPrivateKey();
+    byte[] privateKey = ByteArray.fromHexString(key);
+    ByteString address = ByteString.copyFrom(ECKey.fromPrivate(privateKey).getAddress());
+    chainManager.getAccountStore().put(address.toByteArray(),
+        new AccountCapsule(Protocol.Account.newBuilder().setAddress(address).build()));
+    chainManager.getWitnessScheduleStore().saveActiveWitnesses(new ArrayList<>());
+    chainManager.addWitness(address);
+    chainManager.getWitnessStore().put(address.toByteArray(), new WitnessCapsule(address));
+    long time = 1533529947843L;
+    dbManager.pushBlock(new BlockCapsule(
+        blockGenerate.getSignedBlock(address, time, privateKey)));
+    Map<ByteString, String> keys = addTestWitnessAndAccount();
+    keys.put(address, key);
+
+    ECKey ownerKey = new ECKey(Utils.getRandom());
+    byte[] owner = ownerKey.getAddress();
+    byte[] receiver = new ECKey(Utils.getRandom()).getAddress();
+    AccountCapsule ownerAccount = new AccountCapsule(Account.newBuilder()
+        .setAddress(ByteString.copyFrom(owner)).setBalance(1_000_000_000L).build());
+    chainManager.getAccountStore().put(owner, ownerAccount);
+    chainManager.getAccountStore().put(receiver, new AccountCapsule(Account.newBuilder()
+        .setAddress(ByteString.copyFrom(receiver)).build()));
+
+    long base = chainManager.getHeadBlockNum();
+    BlockCapsule parent = createTestBlockCapsule(time + 3000, base + 1,
+        chainManager.getHeadBlockId().getByteString(), keys);
+    dbManager.pushBlock(parent);
+    long expiration = time + 1_000_000L;
+    TransactionCapsule oldTx = transfer(owner, receiver, 11L, parent, expiration);
+    TransactionCapsule forkTx = transfer(owner, receiver, 22L, parent, expiration);
+    TransactionCapsule newHeadTx = transfer(owner, receiver, 33L, parent, expiration);
+    for (TransactionCapsule tx : Arrays.asList(oldTx, forkTx, newHeadTx)) {
+      tx.sign(ownerKey.getPrivKeyBytes());
+    }
+    // Decode signed blocks as on the receive path; do not bypass transaction verification.
+    BlockCapsule oldHead = new BlockCapsule(blockWithTransfer(time + 6000, base + 2,
+        parent.getBlockId().getByteString(), keys, oldTx).getData());
+    dbManager.pushBlock(oldHead);
+    long oldOwnerBalance = chainManager.getAccountStore().get(owner).getBalance();
+    Assert.assertEquals(11L, chainManager.getAccountStore().get(receiver).getBalance());
+    BlockCapsule fork = new BlockCapsule(blockWithTransfer(time + 6001, base + 2,
+        parent.getBlockId().getByteString(), keys, forkTx).getData());
+    dbManager.pushBlock(fork);
+    BlockCapsule newHead = new BlockCapsule(blockWithTransfer(time + 9000, base + 3,
+        fork.getBlockId().getByteString(), keys, newHeadTx).getData());
+    RuntimeException failure = new IllegalStateException("injected fork block write failure");
+    RuntimeException restoreFailure =
+        new IllegalStateException("injected old block write failure");
+    RuntimeException replayFailure = new IllegalStateException("injected retry write failure");
+    BlockStore originalBlockStore = chainManager.getBlockStore();
+    BlockStore failingBlockStore = spy(originalBlockStore);
+    AtomicInteger forkWrites = new AtomicInteger();
+    AtomicInteger restoreWrites = new AtomicInteger();
+    AtomicInteger prefixWrites = new AtomicInteger();
+    // Inject failures after real execution and a snapshot write to exercise session rollback.
+    doAnswer(invocation -> {
+      invocation.callRealMethod();
+      BlockCapsule written = invocation.getArgument(1);
+      if (written.getBlockId().equals(newHead.getBlockId())) {
+        int writes = forkWrites.getAndIncrement();
+        if (writes == 0) {
+          throw failure;
+        }
+        if (writes == 1 && retryFailure == ForkRetryFailure.HEAD) {
+          throw replayFailure;
+        }
+      }
+      if (written.getBlockId().equals(fork.getBlockId())
+          && prefixWrites.getAndIncrement() == 1 && retryFailure == ForkRetryFailure.PREFIX) {
+        throw replayFailure;
+      }
+      if (failRestore && written.getBlockId().equals(oldHead.getBlockId())
+          && restoreWrites.getAndIncrement() == 0) {
+        throw restoreFailure;
+      }
+      return null;
+    }).when(failingBlockStore).put(any(byte[].class), any(BlockCapsule.class));
+    ReflectUtils.setFieldValue(chainManager, "blockStore", failingBlockStore);
+    boolean jsonRpcEnabled = CommonParameter.getInstance().jsonRpcHttpFullNodeEnable;
+    try {
+      RuntimeException thrown = assertThrows(RuntimeException.class,
+          () -> dbManager.pushBlock(newHead));
+      KhaosDatabase khaos = chainManager.getKhaosDb();
+      Assert.assertNotNull(khaos.getMiniStore().getByHash(fork.getBlockId()));
+      Assert.assertNull(khaos.getMiniStore().getByHash(newHead.getBlockId()));
+      Assert.assertFalse(originalBlockStore.has(newHead.getBlockId().getBytes()));
+      Assert.assertFalse(chainManager.getTransactionStore()
+          .has(forkTx.getTransactionId().getBytes()));
+      Assert.assertFalse(chainManager.getTransactionStore()
+          .has(newHeadTx.getTransactionId().getBytes()));
+
+      BlockCapsule retry;
+      if (failRestore) {
+        Assert.assertSame(restoreFailure, thrown);
+        Assert.assertArrayEquals(new Throwable[]{failure}, thrown.getSuppressed());
+        Assert.assertEquals(parent.getBlockId(), chainManager.getHeadBlockId());
+        Assert.assertEquals(parent.getBlockId(), khaos.getHeadId());
+        Assert.assertEquals(parent.getBlockId(), chainManager.getBlockIdByNum(parent.getNum()));
+        Assert.assertEquals(0L, chainManager.getAccountStore().get(receiver).getBalance());
+        Assert.assertEquals(1_000_000_000L, chainManager.getAccountStore().get(owner).getBalance());
+        Assert.assertFalse(originalBlockStore.has(oldHead.getBlockId().getBytes()));
+        Assert.assertFalse(chainManager.getTransactionStore()
+            .has(oldTx.getTransactionId().getBytes()));
+        retry = retryOldHead ? new BlockCapsule(oldHead.getData())
+            : new BlockCapsule(createTestBlockCapsule(time + 12000, base + 3,
+                oldHead.getBlockId().getByteString(), keys).getData());
+      } else {
+        Assert.assertSame(failure, thrown);
+        Assert.assertEquals(oldHead.getBlockId(), chainManager.getHeadBlockId());
+        Assert.assertEquals(oldHead.getBlockId(), khaos.getHeadId());
+        Assert.assertEquals(oldHead.getBlockId(), chainManager.getBlockIdByNum(oldHead.getNum()));
+        Assert.assertEquals(11L, chainManager.getAccountStore().get(receiver).getBalance());
+        Assert.assertEquals(oldOwnerBalance,
+            chainManager.getAccountStore().get(owner).getBalance());
+        Assert.assertTrue(chainManager.getTransactionStore()
+            .has(oldTx.getTransactionId().getBytes()));
+        retry = new BlockCapsule(newHead.getData());
+      }
+
+      if (retryFailure != ForkRetryFailure.NONE) {
+        // The database is at the ancestor, but the previously committed fork is still cached.
+        Assert.assertTrue(khaos.getMiniStore().getByHash(fork.getBlockId()).isProcessed());
+        Assert.assertTrue(khaos.getBranch(fork.getBlockId(), chainManager.getHeadBlockId())
+            .getValue().isEmpty());
+        CommonParameter.getInstance().jsonRpcHttpFullNodeEnable = true;
+        FilterCapsuleQueue queue = context.getBean(FilterCapsuleQueue.class);
+        RuntimeException retryThrown = assertThrows(RuntimeException.class,
+            () -> dbManager.pushBlock(new BlockCapsule(newHead.getData())));
+        Assert.assertSame(replayFailure, retryThrown);
+
+        Assert.assertEquals(parent.getBlockId(), chainManager.getHeadBlockId());
+        Assert.assertEquals(parent.getBlockId(), khaos.getHeadId());
+        Assert.assertEquals(parent.getBlockId(), chainManager.getBlockIdByNum(parent.getNum()));
+        Assert.assertEquals(0L, chainManager.getAccountStore().get(receiver).getBalance());
+        Assert.assertEquals(1_000_000_000L,
+            chainManager.getAccountStore().get(owner).getBalance());
+        Assert.assertFalse(originalBlockStore.has(fork.getBlockId().getBytes()));
+        Assert.assertFalse(chainManager.getTransactionStore()
+            .has(forkTx.getTransactionId().getBytes()));
+        Assert.assertFalse(originalBlockStore.has(newHead.getBlockId().getBytes()));
+        Assert.assertFalse(chainManager.getTransactionStore()
+            .has(newHeadTx.getTransactionId().getBytes()));
+        Assert.assertFalse(chainManager.getTransactionStore()
+            .has(oldTx.getTransactionId().getBytes()));
+        Assert.assertNull(khaos.getMiniStore().getByHash(newHead.getBlockId()));
+        Assert.assertFalse(hasBlockFilterCapsule(queue, fork));
+        Assert.assertFalse(hasLogsFilterCapsule(queue, fork, false));
+        Assert.assertFalse(hasBlockFilterCapsule(queue, newHead));
+        Assert.assertFalse(hasLogsFilterCapsule(queue, newHead, false));
+
+        // A later retry must continue from the actual head and apply each transfer once.
+        dbManager.pushBlock(new BlockCapsule(newHead.getData()));
+        Assert.assertEquals(newHead.getBlockId(), chainManager.getHeadBlockId());
+        Assert.assertEquals(newHead.getBlockId(), khaos.getHeadId());
+        Assert.assertEquals(55L, chainManager.getAccountStore().get(receiver).getBalance());
+        Assert.assertTrue(chainManager.getTransactionStore()
+            .has(newHeadTx.getTransactionId().getBytes()));
+        Assert.assertEquals(1L, queue.stream()
+            .filter(c -> c instanceof BlockFilterCapsule)
+            .map(c -> (BlockFilterCapsule) c)
+            .filter(c -> !c.isSolidified()
+                && fork.getBlockId().toString().equals(c.getBlockHash())).count());
+        return;
+      }
+
+      dbManager.pushBlock(retry);
+
+      Assert.assertEquals(retry.getBlockId(), chainManager.getHeadBlockId());
+      Assert.assertEquals(retry.getBlockId(), khaos.getHeadId());
+      Assert.assertEquals(retry.getBlockId(), chainManager.getBlockIdByNum(retry.getNum()));
+      Assert.assertTrue(originalBlockStore.has(retry.getBlockId().getBytes()));
+      Assert.assertEquals(failRestore ? oldHead.getBlockId() : fork.getBlockId(),
+          chainManager.getBlockIdByNum(oldHead.getNum()));
+      Assert.assertEquals(failRestore ? 11L : 55L,
+          chainManager.getAccountStore().get(receiver).getBalance());
+      Assert.assertEquals(failRestore,
+          chainManager.getTransactionStore().has(oldTx.getTransactionId().getBytes()));
+      Assert.assertEquals(!failRestore,
+          chainManager.getTransactionStore().has(forkTx.getTransactionId().getBytes()));
+      Assert.assertEquals(!failRestore,
+          chainManager.getTransactionStore().has(newHeadTx.getTransactionId().getBytes()));
+      GrpcAPI.TransactionInfoList receipts =
+          dbManager.getTransactionInfoByBlockNum(oldHead.getNum());
+      Assert.assertEquals(1, receipts.getTransactionInfoCount());
+      Assert.assertEquals(failRestore ? oldTx.getTransactionId().getByteString()
+          : forkTx.getTransactionId().getByteString(), receipts.getTransactionInfo(0).getId());
+      if (failRestore) {
+        Assert.assertEquals(oldOwnerBalance,
+            chainManager.getAccountStore().get(owner).getBalance());
+      }
+    } finally {
+      CommonParameter.getInstance().jsonRpcHttpFullNodeEnable = jsonRpcEnabled;
+      ReflectUtils.setFieldValue(chainManager, "blockStore", originalBlockStore);
+    }
   }
 
   private TransactionCapsule transfer(byte[] owner, byte[] to, long amount,
