@@ -2105,6 +2105,50 @@ public class ManagerTest extends BaseMethodTest {
     }
   }
 
+  @Test
+  public void authsRejectedFromPendingButAcceptedInBlock() throws Exception {
+    String key = PublicMethod.getRandomPrivateKey();
+    byte[] privateKey = ByteArray.fromHexString(key);
+    ByteString address = ByteString.copyFrom(ECKey.fromPrivate(privateKey).getAddress());
+    chainManager.getAccountStore().put(address.toByteArray(),
+        new AccountCapsule(Account.newBuilder().setAddress(address).build()));
+    chainManager.getWitnessScheduleStore().saveActiveWitnesses(new ArrayList<>());
+    chainManager.addWitness(address);
+    chainManager.getWitnessStore().put(address.toByteArray(), new WitnessCapsule(address));
+    long time = 1533529947843L;
+    dbManager.pushBlock(new BlockCapsule(
+        blockGenerate.getSignedBlock(address, time, privateKey)));
+    Map<ByteString, String> keys = addTestWitnessAndAccount();
+    keys.put(address, key);
+
+    ECKey ownerKey = new ECKey(Utils.getRandom());
+    byte[] owner = ownerKey.getAddress();
+    chainManager.getAccountStore().put(owner, new AccountCapsule(Account.newBuilder()
+        .setAddress(ByteString.copyFrom(owner)).setBalance(1_000_000_000L).build()));
+    BlockCapsule parent = createTestBlockCapsule(time + 3000, chainManager.getHeadBlockNum() + 1,
+        chainManager.getHeadBlockId().getByteString(), keys);
+    dbManager.pushBlock(parent);
+
+    Transaction base = transfer(owner, address.toByteArray(), 1L, parent, time + 1_000_000L)
+        .getInstance();
+    Transaction withAuths = base.toBuilder().setRawData(base.getRawData().toBuilder()
+        .addAuths(Protocol.authority.getDefaultInstance())).build();
+    ContractValidateException pending = assertThrows(ContractValidateException.class,
+        () -> dbManager.pushTransaction(new TransactionCapsule(withAuths)));
+    Assert.assertEquals(ContractValidateException.class, pending.getClass());
+    Assert.assertEquals("Transaction auths are not supported.", pending.getMessage());
+
+    TransactionCapsule signed = new TransactionCapsule(withAuths);
+    signed.sign(ownerKey.getPrivKeyBytes());
+    BlockCapsule block = new BlockCapsule(blockWithTransfer(time + 6000, parent.getNum() + 1,
+        parent.getBlockId().getByteString(), keys, signed).getData());
+    dbManager.pushBlock(block);
+
+    Assert.assertEquals(block.getBlockId(), chainManager.getHeadBlockId());
+    Assert.assertTrue(chainManager.getTransactionStore()
+        .has(signed.getTransactionId().getBytes()));
+  }
+
   private TransactionCapsule transfer(byte[] owner, byte[] to, long amount,
       BlockCapsule refBlock, long expiration) {
     TransferContract contract = TransferContract.newBuilder()

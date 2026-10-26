@@ -174,7 +174,7 @@ public class TransactionsMsgHandlerTest extends BaseTest {
               new TransactionsMessage(transactionList2)));
       Assert.assertEquals(P2pException.TypeEnum.BAD_TRX, emptyContract.getType());
       Assert.assertTrue(emptyContract.getMessage()
-          .contains("contract size should be greater than 0"));
+          .contains("contract size should be exactly 1"));
     } catch (Exception e) {
       Assert.fail(e.getMessage());
     } finally {
@@ -937,6 +937,28 @@ public class TransactionsMsgHandlerTest extends BaseTest {
           .setData(ByteString.copyFrom(new byte[600 * 1024]))).build();
       assertAdmission(oversized, null);
     }
+  }
+
+  @Test
+  public void testMultipleContractsRejectedBeforeAdmission() throws Exception {
+    Protocol.Transaction base = admissionTransaction(false);
+    Protocol.Transaction twoContracts = base.toBuilder().setRawData(base.getRawData().toBuilder()
+        .addContract(base.getRawData().getContract(0))).build();
+    assertProtocolRejection(Collections.singletonList(twoContracts), 1, TypeEnum.BAD_TRX);
+  }
+
+  @Test
+  public void testAuthsDropKeepsBatch() throws Exception {
+    List<Protocol.Transaction> base = buildTransferMessage(2).getTransactions()
+        .getTransactionsList();
+    Protocol.Transaction valid = base.get(1);
+    assertSignatureBatch(Arrays.asList(withAuths(base.get(0)), valid),
+        Collections.singletonList(valid), Collections.emptyList());
+  }
+
+  private Protocol.Transaction withAuths(Protocol.Transaction transaction) {
+    return transaction.toBuilder().setRawData(transaction.getRawData().toBuilder()
+        .addAuths(Protocol.authority.getDefaultInstance())).build();
   }
 
   @Test

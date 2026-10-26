@@ -21,6 +21,7 @@ import org.tron.common.prometheus.Metrics;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
+import org.tron.core.actuator.ActuatorConstant;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.P2pException;
@@ -107,6 +108,9 @@ public class TransactionsMsgHandler implements TronMsgHandler {
         break;
       }
       TransactionCapsule capsule = new TransactionCapsule(trx);
+      if (capsule.hasAuths()) {
+        continue;
+      }
       capsule.sanitize();
       capsule.resetResult();
       if (capsule.getSerializedSize() > Constant.TRANSACTION_MAX_BYTE_SIZE) {
@@ -158,9 +162,10 @@ public class TransactionsMsgHandler implements TronMsgHandler {
         throw new P2pException(TypeEnum.BAD_MESSAGE,
             "trx: " + id + " without request.");
       }
-      if (trx.getRawData().getContractCount() < 1) {
-        throw new P2pException(TypeEnum.BAD_TRX,
-            "tx " + item.getHash() + " contract size should be greater than 0");
+      int contractCount = trx.getRawData().getContractCount();
+      if (contractCount != 1) {
+        throw new P2pException(TypeEnum.BAD_TRX, String.format(
+            "tx %s " + ActuatorConstant.CONTRACT_SIZE_NOT_EQUAL_TO_ONE, id, contractCount));
       }
     }
     for (Transaction trx : list) {

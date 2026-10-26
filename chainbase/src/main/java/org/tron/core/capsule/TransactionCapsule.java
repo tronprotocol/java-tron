@@ -880,4 +880,8 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   public int getContractCount() {
     return this.getInstance().getRawData().getContractCount();
   }
+
+  public boolean hasAuths() {
+    return this.getInstance().getRawData().getAuthsCount() > 0;
+  }
 }
