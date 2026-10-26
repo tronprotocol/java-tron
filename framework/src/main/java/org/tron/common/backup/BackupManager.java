@@ -75,16 +75,11 @@ public class BackupManager implements EventHandler {
 
   /** Publishes tron:node_role once at startup, and again on every backup-status change. */
   @PostConstruct
-  public void recordNodeRole() {
+  public synchronized void recordNodeRole() {
     if (!Metrics.enabled()) {
       return;
     }
-    try {
-      SRMetrics.recordNodeRole(currentRole());
-    } catch (Exception e) {
-      // a metrics failure must not abort startup or the backup election
-      logger.warn("Failed to record node role", e);
-    }
+    SRMetrics.recordNodeRole(currentRole());
   }
 
   private int currentRole() {
