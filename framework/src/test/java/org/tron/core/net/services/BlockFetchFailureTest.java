@@ -492,16 +492,29 @@ public class BlockFetchFailureTest {
     assertRealSyncValidation(1, false, true);
   }
 
+  @Test
+  public void syncRejectsUndersizedTransactionsBeforeProcessing() throws Exception {
+    for (int dataSize : new int[]{56, 71}) {
+      assertRealSyncValidation(1, false, false, dataSize);
+    }
+  }
+
   private void assertRealSyncValidation(int count, boolean accepted) throws Exception {
     assertRealSyncValidation(count, accepted, false);
   }
 
   private void assertRealSyncValidation(int count, boolean accepted, boolean staleRoot)
       throws Exception {
+    assertRealSyncValidation(count, accepted, staleRoot, 80);
+  }
+
+  private void assertRealSyncValidation(int count, boolean accepted, boolean staleRoot,
+      int dataSize) throws Exception {
     ECKey key = ECKey.fromPrivate(BigInteger.TEN);
     BlockCapsule block = new BlockCapsule(1, Sha256Hash.ZERO_HASH, 1234,
         ByteString.copyFrom(key.getAddress()));
-    Transaction.raw.Builder raw = Transaction.raw.newBuilder();
+    Transaction.raw.Builder raw = Transaction.raw.newBuilder()
+        .setData(ByteString.copyFrom(new byte[dataSize]));
     for (int i = 0; i < count; i++) {
       raw.addContract(Transaction.Contract.newBuilder()
           .setType(Transaction.Contract.ContractType.TransferContract));
@@ -510,7 +523,8 @@ public class BlockFetchFailureTest {
     block.setMerkleRoot();
     if (staleRoot) {
       block.addTransaction(new TransactionCapsule(Transaction.newBuilder()
-          .setRawData(Transaction.raw.newBuilder().setTimestamp(1).addContract(
+          .setRawData(Transaction.raw.newBuilder().setTimestamp(1)
+              .setData(ByteString.copyFrom(new byte[80])).addContract(
               Transaction.Contract.newBuilder()
                   .setType(Transaction.Contract.ContractType.TransferContract))).build()));
     }

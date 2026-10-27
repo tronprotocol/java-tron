@@ -245,7 +245,8 @@ public class BlockMsgHandlerTest extends BaseTest {
         BlockCapsule block = new BlockCapsule(1, Sha256Hash.ZERO_HASH, 1234,
             ByteString.copyFrom(key.getAddress()));
         block.addTransaction(new TransactionCapsule(Transaction.newBuilder()
-            .setRawData(Transaction.raw.newBuilder().addContract(
+            .setRawData(Transaction.raw.newBuilder()
+                .setData(ByteString.copyFrom(new byte[80])).addContract(
                 Transaction.Contract.newBuilder()
                     .setType(Transaction.Contract.ContractType.TransferContract))).build()));
         Transaction.raw.Builder raw = Transaction.raw.newBuilder().setTimestamp(1235);
@@ -274,6 +275,44 @@ public class BlockMsgHandlerTest extends BaseTest {
             () -> ingress.processMessage(sender, message));
 
         Assert.assertEquals(P2pException.TypeEnum.BAD_BLOCK, error.getType());
+        Assert.assertTrue(error.getMessage().contains("count: " + count));
+        Mockito.verify(adv, Mockito.never()).broadcast(any());
+        Mockito.verify(relay, Mockito.never()).broadcast(any());
+        Mockito.verify(delegate, Mockito.never()).processBlock(any(BlockCapsule.class),
+            anyBoolean());
+      }
+    }
+  }
+
+  @Test
+  public void testUndersizedLaterTransactionRejectedBeforeBroadcast() throws Exception {
+    for (boolean fastForward : new boolean[]{false, true}) {
+      for (int size : new int[]{64, 79}) {
+        BlockCapsule block = signedWitnessBlock();
+        Transaction transaction = Transaction.newBuilder()
+            .setRawData(Transaction.raw.newBuilder()
+                .setData(ByteString.copyFrom(new byte[size - 8])).addContract(
+                    Transaction.Contract.newBuilder()
+                        .setType(Transaction.Contract.ContractType.TransferContract))).build();
+        Assert.assertEquals(size, transaction.getSerializedSize());
+        block.addTransaction(new TransactionCapsule(transaction));
+        block.setMerkleRoot();
+        block.sign(ECKey.fromPrivate(BigInteger.TEN).getPrivKeyBytes());
+        TronNetDelegate delegate = witnessDelegate(false, block.getWitnessAddress());
+        AdvService adv = Mockito.mock(AdvService.class);
+        RelayService relay = Mockito.mock(RelayService.class);
+        BlockMsgHandler ingress = witnessHandler(delegate, adv, Mockito.mock(SyncService.class));
+        ReflectUtils.setFieldValue(ingress, "fastForward", fastForward);
+        ReflectUtils.setFieldValue(ingress, "relayService", relay);
+        BlockMessage message = new BlockMessage(block);
+        PeerConnection sender = witnessPeer();
+        sender.getAdvInvRequest().put(new Item(message.getBlockId(), InventoryType.BLOCK), 0L);
+
+        P2pException error = Assert.assertThrows(P2pException.class,
+            () -> ingress.processMessage(sender, message));
+
+        Assert.assertEquals(P2pException.TypeEnum.BAD_BLOCK, error.getType());
+        Assert.assertTrue(error.getMessage().contains("size: " + size));
         Mockito.verify(adv, Mockito.never()).broadcast(any());
         Mockito.verify(relay, Mockito.never()).broadcast(any());
         Mockito.verify(delegate, Mockito.never()).processBlock(any(BlockCapsule.class),
@@ -287,7 +326,8 @@ public class BlockMsgHandlerTest extends BaseTest {
     for (boolean fastForward : new boolean[]{false, true}) {
       BlockCapsule block = signedWitnessBlock();
       block.addTransaction(new TransactionCapsule(Transaction.newBuilder()
-          .setRawData(Transaction.raw.newBuilder().setTimestamp(1235).addContract(
+          .setRawData(Transaction.raw.newBuilder().setTimestamp(1235)
+              .setData(ByteString.copyFrom(new byte[80])).addContract(
               Transaction.Contract.newBuilder()
                   .setType(Transaction.Contract.ContractType.TransferContract))).build()));
       TronNetDelegate delegate = witnessDelegate(false, block.getWitnessAddress());
@@ -343,6 +383,7 @@ public class BlockMsgHandlerTest extends BaseTest {
     // A padded transaction signature must survive witness normalization, including sync handoff.
     Transaction transaction = Transaction.newBuilder()
         .setRawData(Transaction.raw.newBuilder().setTimestamp(1234)
+            .setData(ByteString.copyFrom(new byte[80]))
             .addContract(Transaction.Contract.newBuilder()
                 .setType(Transaction.Contract.ContractType.TransferContract)))
         .addSignature(ByteString.copyFrom(new byte[68])).build();

@@ -32,6 +32,7 @@ import org.tron.core.store.WitnessScheduleStore;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.contract.BalanceContract.TransferContract;
+import org.tron.protos.contract.ShieldContract.ShieldedTransferContract;
 
 public class TronNetDelegateTest {
 
@@ -287,6 +288,83 @@ public class TronNetDelegateTest {
   }
 
   @Test
+  public void testValidBlockRejectsTransactionsBelow80Bytes() throws Exception {
+    for (int size : new int[]{64, 79}) {
+      for (boolean advertised : new boolean[]{false, true}) {
+        TronNetDelegate delegate = signatureDelegate();
+        BlockCapsule block = blockWithTransaction(sizedTransaction(size));
+        WitnessScheduleStore schedule = mock(WitnessScheduleStore.class);
+        Mockito.doReturn(Collections.singletonList(block.getWitnessAddress()))
+            .when(schedule).getActiveWitnesses();
+        setField(delegate, "witnessScheduleStore", schedule);
+
+        P2pException error = Assert.assertThrows(P2pException.class, () -> {
+          if (advertised) {
+            delegate.validAdvBlock(new PeerConnection(), block);
+          } else {
+            delegate.validBlock(block);
+          }
+        });
+
+        Assert.assertEquals(TypeEnum.BAD_BLOCK, error.getType());
+        Assert.assertTrue(error.getMessage().contains("size: " + size));
+        Mockito.verify(block, Mockito.never()).validateMerkleRoot();
+        Mockito.verify(block, Mockito.never()).validateSignature(Mockito.any(), Mockito.any());
+      }
+    }
+  }
+
+  @Test
+  public void testValidBlockAccepts80ByteBoundary() throws Exception {
+    for (int size : new int[]{80, 81}) {
+      BlockCapsule block = blockWithTransaction(sizedTransaction(size));
+      signatureDelegate().validBlock(block);
+      Mockito.verify(block).validateMerkleRoot();
+      Mockito.verify(block).validateSignature(Mockito.any(), Mockito.any());
+    }
+  }
+
+  @Test
+  public void testValidBlockSizeIncludesSignaturesAndResults() throws Exception {
+    Transaction small = sizedTransaction(78);
+    for (Transaction transaction : new Transaction[]{
+        small.toBuilder().addSignature(ByteString.copyFrom(new byte[1])).build(),
+        small.toBuilder().addRet(Transaction.Result.newBuilder().setFee(1)).build()}) {
+      Assert.assertTrue(transaction.getRawData().getSerializedSize() < 80);
+      Assert.assertTrue(transaction.getSerializedSize() >= 80);
+      signatureDelegate().validBlock(blockWithTransaction(transaction));
+    }
+  }
+
+  @Test
+  public void testValidBlockAcceptsShieldedTransactionWithoutOuterSignature() throws Exception {
+    Transaction transaction = new TransactionCapsule(ShieldedTransferContract.newBuilder()
+        .setBindingSignature(ByteString.copyFrom(new byte[64])).build(),
+        ContractType.ShieldedTransferContract).getInstance();
+    Assert.assertEquals(0, transaction.getSignatureCount());
+    Assert.assertTrue(transaction.getSerializedSize() >= 80);
+    signatureDelegate().validBlock(blockWithTransaction(transaction));
+  }
+
+  private Transaction sizedTransaction(int size) {
+    Transaction transaction = Transaction.newBuilder().setRawData(Transaction.raw.newBuilder()
+        .addContract(Transaction.Contract.newBuilder().setType(ContractType.TransferContract))
+        .setData(ByteString.copyFrom(new byte[size - 8]))).build();
+    Assert.assertEquals(size, transaction.getSerializedSize());
+    Assert.assertEquals(size, transaction.toByteArray().length);
+    return transaction;
+  }
+
+  private BlockCapsule blockWithTransaction(Transaction transaction) throws Exception {
+    BlockCapsule block = Mockito.spy(new BlockCapsule(1, Sha256Hash.ZERO_HASH, 0,
+        ByteString.copyFromUtf8("witness")));
+    block.addTransaction(new TransactionCapsule(transaction));
+    block.setMerkleRoot();
+    Mockito.doReturn(true).when(block).validateSignature(Mockito.any(), Mockito.any());
+    return block;
+  }
+
+  @Test
   public void testValidBlockRejectsInvalidContractCounts() throws Exception {
     for (int count : new int[]{0, 2}) {
       for (boolean laterTransaction : new boolean[]{false, true}) {
@@ -338,7 +416,8 @@ public class TronNetDelegateTest {
   }
 
   private TransactionCapsule contractCountTransaction(int count) {
-    Transaction.raw.Builder raw = Transaction.raw.newBuilder();
+    Transaction.raw.Builder raw = Transaction.raw.newBuilder()
+        .setData(ByteString.copyFrom(new byte[80]));
     for (int i = 0; i < count; i++) {
       raw.addContract(Transaction.Contract.newBuilder().setType(ContractType.TransferContract));
     }

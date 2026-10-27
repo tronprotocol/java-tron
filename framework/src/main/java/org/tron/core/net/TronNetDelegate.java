@@ -68,6 +68,9 @@ import org.tron.protos.Protocol.Transaction;
 @Component
 public class TronNetDelegate {
 
+  // Keep Merkle leaf encodings larger than the 64-byte internal-node input.
+  private static final int MIN_TRANSACTION_SIZE = 80;
+
   @Autowired
   private Manager dbManager;
 
@@ -363,6 +366,12 @@ public class TronNetDelegate {
       if (contractCount != 1) {
         throw new P2pException(TypeEnum.BAD_BLOCK,
             "Invalid contract count: " + contractCount
+                + ", block: " + block.getBlockId().getString());
+      }
+      int transactionSize = transaction.getSerializedSize();
+      if (transactionSize < MIN_TRANSACTION_SIZE) {
+        throw new P2pException(TypeEnum.BAD_BLOCK,
+            "Invalid transaction size: " + transactionSize
                 + ", block: " + block.getBlockId().getString());
       }
     }
