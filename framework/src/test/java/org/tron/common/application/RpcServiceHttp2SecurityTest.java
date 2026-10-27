@@ -46,6 +46,8 @@ import java.io.OutputStream;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import org.junit.After;
 import org.junit.Before;
@@ -400,7 +402,8 @@ public class RpcServiceHttp2SecurityTest {
     }
 
     @Override
-    protected void addService(NettyServerBuilder serverBuilder) {
+    protected List<ServerServiceDefinition> services() {
+      return Collections.emptyList();
     }
   }
 }
