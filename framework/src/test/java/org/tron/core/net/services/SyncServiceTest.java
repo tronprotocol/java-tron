@@ -243,8 +243,9 @@ public class SyncServiceTest extends BaseMethodTest {
     syncingPeer.setNeedSyncFromPeer(true);
     syncingPeer.setFetchAble(true);
     Mockito.when(delegate.getActivePeer()).thenReturn(Collections.singletonList(syncingPeer));
-    Mockito.when(delegate.getSolidBlockId())
-        .thenReturn(new BlockCapsule.BlockId(Sha256Hash.ZERO_HASH, 0));
+    BlockCapsule.BlockId head = new BlockCapsule.BlockId(Sha256Hash.ZERO_HASH, 0);
+    Mockito.when(delegate.getSolidBlockId()).thenReturn(head);
+    Mockito.when(delegate.getHeadBlockId()).thenReturn(head);
     Mockito.when(delegate.getBlockLock()).thenReturn(new Object());
     BlockCapsule block = new BlockCapsule(Protocol.Block.newBuilder().setBlockHeader(
         Protocol.BlockHeader.newBuilder().setRawData(
@@ -263,11 +264,130 @@ public class SyncServiceTest extends BaseMethodTest {
     Method handle = SyncService.class.getDeclaredMethod("handleSyncBlock");
     handle.setAccessible(true);
     handle.invoke(sync);
+    Mockito.verify(delegate).processBlock(Mockito.argThat(processed ->
+        processed.getBlockId().equals(block.getBlockId())), Mockito.eq(true));
+    Mockito.verify(channel, Mockito.never()).close(Mockito.anyLong());
+    Mockito.verify(channel, Mockito.never()).close();
     Assert.assertTrue("Freeing the window must wake the fetch scheduler",
         (boolean) ReflectUtils.getFieldObject(sync, "fetchFlag"));
     fetch.invoke(sync);
     Assert.assertEquals(Collections.singleton(next), syncingPeer.getSyncBlockRequested().keySet());
     sync.close();
+  }
+
+  @Test
+  public void testUnneededBlocksReleasePendingState() throws Exception {
+    SyncService sync = new SyncService();
+    try {
+      TronNetDelegate delegate = mock(TronNetDelegate.class);
+      ReflectUtils.setFieldValue(sync, "tronNetDelegate", delegate);
+      Mockito.when(delegate.getBlockLock()).thenReturn(new Object());
+      Mockito.when(delegate.getSolidBlockId())
+          .thenReturn(new BlockCapsule.BlockId(Sha256Hash.ZERO_HASH, 0));
+      peer = context.getBean(PeerConnection.class);
+      Channel channel = mock(Channel.class);
+      Mockito.when(channel.getInetAddress()).thenReturn(inetSocketAddress.getAddress());
+      peer.setChannel(channel);
+      peer.setNeedSyncFromPeer(false);
+      peer.setNeedSyncFromUs(false);
+      peer.setTronState(TronState.SYNC_COMPLETED);
+      Mockito.when(delegate.getActivePeer()).thenReturn(Collections.singletonList(peer));
+
+      BlockCapsule.BlockId known = new BlockCapsule.BlockId(Sha256Hash.ZERO_HASH, 1);
+      BlockCapsule.BlockId unknown = new BlockCapsule.BlockId(Sha256Hash.ZERO_HASH, 2);
+      BlockCapsule.BlockId queued = new BlockCapsule.BlockId(Sha256Hash.ZERO_HASH, 3);
+      BlockCapsule.BlockId preceding = new BlockCapsule.BlockId(Sha256Hash.ZERO_HASH, 4);
+      Mockito.when(delegate.containBlock(known)).thenReturn(true);
+      Mockito.when(delegate.containBlock(queued)).thenReturn(true);
+      peer.getSyncBlockToFetch().add(preceding);
+      peer.getSyncBlockToFetch().add(queued);
+      peer.getSyncBlockInProcess().add(known);
+      peer.getSyncBlockInProcess().add(unknown);
+      peer.getSyncBlockInProcess().add(queued);
+      Cache<BlockCapsule.BlockId, PeerConnection> requests =
+          (Cache<BlockCapsule.BlockId, PeerConnection>)
+              ReflectUtils.getFieldObject(sync, "requestBlockIds");
+      requests.put(known, peer);
+      requests.put(unknown, peer);
+      requests.put(queued, peer);
+      Map<UnparsedBlock, PeerConnection> waiting = (Map<UnparsedBlock, PeerConnection>)
+          ReflectUtils.getFieldObject(sync, "blockWaitToProcess");
+      waiting.put(new UnparsedBlock(known, new byte[0]), peer);
+      waiting.put(new UnparsedBlock(unknown, new byte[0]), peer);
+      waiting.put(new UnparsedBlock(queued, new byte[0]), peer);
+
+      Method handle = SyncService.class.getDeclaredMethod("handleSyncBlock");
+      handle.setAccessible(true);
+      handle.invoke(sync);
+
+      Assert.assertEquals(1, waiting.size());
+      Assert.assertFalse(waiting.containsKey(new UnparsedBlock(known, new byte[0])));
+      Assert.assertFalse(waiting.containsKey(new UnparsedBlock(unknown, new byte[0])));
+      Assert.assertTrue(waiting.containsKey(new UnparsedBlock(queued, new byte[0])));
+      Assert.assertFalse(peer.getSyncBlockInProcess().contains(known));
+      Assert.assertFalse(peer.getSyncBlockInProcess().contains(unknown));
+      Assert.assertTrue(peer.getSyncBlockInProcess().contains(queued));
+      Assert.assertNull(requests.getIfPresent(known));
+      Assert.assertNull(requests.getIfPresent(unknown));
+      Assert.assertSame(peer, requests.getIfPresent(queued));
+      Assert.assertTrue((boolean) ReflectUtils.getFieldObject(sync, "fetchFlag"));
+
+      peer.getSyncBlockToFetch().clear();
+      handle.invoke(sync);
+      Assert.assertTrue(waiting.isEmpty());
+      Assert.assertTrue(peer.isBlockFetchIdle());
+      Assert.assertNull(requests.getIfPresent(queued));
+    } finally {
+      sync.close();
+    }
+  }
+
+  @Test
+  public void testDeserializeFailureAllowsSyncBlockRetry() throws Exception {
+    SyncService sync = new SyncService();
+    try {
+      TronNetDelegate delegate = mock(TronNetDelegate.class);
+      ReflectUtils.setFieldValue(sync, "tronNetDelegate", delegate);
+      Mockito.when(delegate.getBlockLock()).thenReturn(new Object());
+      Mockito.when(delegate.getSolidBlockId())
+          .thenReturn(new BlockCapsule.BlockId(Sha256Hash.ZERO_HASH, 0));
+      PeerConnection provider = new PeerConnection();
+      Channel channel = mock(Channel.class);
+      Mockito.when(channel.getInetAddress()).thenReturn(inetSocketAddress.getAddress());
+      provider.setChannel(channel);
+      provider.setNeedSyncFromPeer(true);
+      provider.setFetchAble(true);
+      Mockito.when(delegate.getActivePeer()).thenReturn(Collections.singletonList(provider));
+      BlockCapsule.BlockId blockId = new BlockCapsule.BlockId(Sha256Hash.ZERO_HASH, 1);
+      provider.getSyncBlockToFetch().add(blockId);
+      provider.getSyncBlockInProcess().add(blockId);
+      Cache<BlockCapsule.BlockId, PeerConnection> requests =
+          (Cache<BlockCapsule.BlockId, PeerConnection>)
+              ReflectUtils.getFieldObject(sync, "requestBlockIds");
+      requests.put(blockId, provider);
+      Map<UnparsedBlock, PeerConnection> waiting = (Map<UnparsedBlock, PeerConnection>)
+          ReflectUtils.getFieldObject(sync, "blockWaitToProcess");
+      waiting.put(new UnparsedBlock(blockId, new byte[]{(byte) 0x80}), provider);
+
+      Method handle = SyncService.class.getDeclaredMethod("handleSyncBlock");
+      handle.setAccessible(true);
+      handle.invoke(sync);
+
+      Assert.assertTrue(waiting.isEmpty());
+      Assert.assertTrue(provider.getSyncBlockInProcess().isEmpty());
+      Assert.assertNull(requests.getIfPresent(blockId));
+      Assert.assertEquals(Collections.singletonList(blockId),
+          new ArrayList<>(provider.getSyncBlockToFetch()));
+      Assert.assertTrue((boolean) ReflectUtils.getFieldObject(sync, "fetchFlag"));
+
+      Method fetch = SyncService.class.getDeclaredMethod("startFetchSyncBlock");
+      fetch.setAccessible(true);
+      fetch.invoke(sync);
+      Assert.assertTrue(provider.getSyncBlockRequested().containsKey(blockId));
+      Assert.assertSame(provider, requests.getIfPresent(blockId));
+    } finally {
+      sync.close();
+    }
   }
 
   @Test

@@ -190,6 +190,7 @@ public class BlockMsgHandlerTest extends BaseTest {
     ByteString signature = canonical.getInstance().getBlockHeader().getWitnessSignature();
     for (boolean strict : new boolean[]{false, true}) {
       TronNetDelegate delegate = witnessDelegate(strict, canonical.getWitnessAddress());
+      Mockito.doReturn(false).when(delegate).containBlock(canonical.getBlockId());
       AdvService adv = Mockito.mock(AdvService.class);
       BlockMsgHandler ingress = witnessHandler(delegate, adv, Mockito.mock(SyncService.class));
       BlockMessage message = withWitnessSignature(canonical,
@@ -303,7 +304,9 @@ public class BlockMsgHandlerTest extends BaseTest {
     ReflectUtils.setFieldValue(ingress, "tronNetDelegate", delegate);
     ReflectUtils.setFieldValue(ingress, "advService", adv);
     ReflectUtils.setFieldValue(ingress, "syncService", sync);
-    ReflectUtils.setFieldValue(ingress, "fetchBlockService", Mockito.mock(FetchBlockService.class));
+    FetchBlockService fetch = Mockito.mock(FetchBlockService.class);
+    Mockito.doCallRealMethod().when(fetch).blockFetchSuccess(any(), any());
+    ReflectUtils.setFieldValue(ingress, "fetchBlockService", fetch);
     ReflectUtils.setFieldValue(ingress, "witnessProductBlockService",
         Mockito.mock(WitnessProductBlockService.class));
     ReflectUtils.setFieldValue(ingress, "fastForward", false);

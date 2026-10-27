@@ -1,6 +1,8 @@
 package org.tron.core.net.messagehandler;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -11,6 +13,7 @@ import static org.tron.core.net.PeerSyncTestSupport.helloMessage;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -46,6 +49,7 @@ import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.TronState;
 import org.tron.core.net.service.adv.AdvService;
 import org.tron.core.net.service.sync.SyncService;
+import org.tron.p2p.connection.Channel;
 import org.tron.protos.Protocol.Inventory.InventoryType;
 
 public class ChainInventoryMsgHandlerTest {
@@ -73,6 +77,7 @@ public class ChainInventoryMsgHandlerTest {
   private void resetFixture() throws Exception {
     handler = new ChainInventoryMsgHandler();
     delegate = mock(TronNetDelegate.class);
+    doCallRealMethod().when(delegate).recordInventory(any(), any(), anyLong());
     sync = mock(SyncService.class);
     ReflectUtils.setFieldValue(handler, "tronNetDelegate", delegate);
     ReflectUtils.setFieldValue(handler, "syncService", sync);
@@ -699,6 +704,39 @@ public class ChainInventoryMsgHandlerTest {
       ids.add(blockId(first + i));
     }
     return ids;
+  }
+
+  @Test
+  public void testPruningKnownBlockWakesPendingSyncBlockHandler() throws Exception {
+    Object blockLock = new Object();
+    TronNetDelegate tronNetDelegate = Mockito.mock(TronNetDelegate.class);
+    SyncService syncService = Mockito.mock(SyncService.class);
+    BlockId known = new BlockId(Sha256Hash.ZERO_HASH, 1);
+    BlockId next = new BlockId(Sha256Hash.ZERO_HASH, 2);
+    AtomicBoolean handlerWokenUnderLock = new AtomicBoolean();
+
+    Mockito.when(tronNetDelegate.getBlockLock()).thenReturn(blockLock);
+    Mockito.when(tronNetDelegate.getHeadBlockId())
+        .thenReturn(new BlockId(Sha256Hash.ZERO_HASH, 0));
+    Mockito.when(tronNetDelegate.containBlock(known)).thenReturn(true);
+    Mockito.doAnswer(invocation -> {
+      handlerWokenUnderLock.set(Thread.holdsLock(blockLock));
+      return null;
+    }).when(syncService).setHandleFlag(true);
+    ReflectUtils.setFieldValue(handler, "tronNetDelegate", tronNetDelegate);
+    ReflectUtils.setFieldValue(handler, "syncService", syncService);
+    Channel channel = Mockito.mock(Channel.class);
+    Mockito.when(channel.getInetAddress())
+        .thenReturn(new InetSocketAddress("127.0.0.2", 10001).getAddress());
+    peer.setChannel(channel);
+    peer.setSyncChainRequested(new Pair<>(new LinkedList<>(Arrays.asList(known)),
+        System.currentTimeMillis()));
+    peer.getSyncBlockToFetch().add(known);
+
+    handler.processMessage(peer, new ChainInventoryMessage(Arrays.asList(known, next), 0L));
+
+    Assert.assertEquals(next, peer.getSyncBlockToFetch().peek());
+    Assert.assertTrue(handlerWokenUnderLock.get());
   }
 
   @Test

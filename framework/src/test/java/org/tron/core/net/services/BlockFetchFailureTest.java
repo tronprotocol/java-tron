@@ -2,6 +2,8 @@ package org.tron.core.net.services;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
@@ -86,7 +88,7 @@ public class BlockFetchFailureTest {
     TronNetDelegate delegate = inactiveWitnessDelegate(21_600_000L);
     BlockMsgHandler handler = new BlockMsgHandler();
     ReflectUtils.setFieldValue(handler, "tronNetDelegate", delegate);
-    ReflectUtils.setFieldValue(handler, "fetchBlockService", mock(FetchBlockService.class));
+    ReflectUtils.setFieldValue(handler, "fetchBlockService", fetchService());
     SyncService sync = mock(SyncService.class);
     ReflectUtils.setFieldValue(handler, "syncService", sync);
     PeerConnection sender = newPeer(10001);
@@ -139,7 +141,7 @@ public class BlockFetchFailureTest {
     RelayService relay = mock(RelayService.class);
     SyncService sync = mock(SyncService.class);
     ReflectUtils.setFieldValue(handler, "tronNetDelegate", delegate);
-    ReflectUtils.setFieldValue(handler, "fetchBlockService", mock(FetchBlockService.class));
+    ReflectUtils.setFieldValue(handler, "fetchBlockService", fetchService());
     ReflectUtils.setFieldValue(handler, "advService", adv);
     ReflectUtils.setFieldValue(handler, "relayService", relay);
     ReflectUtils.setFieldValue(handler, "syncService", sync);
@@ -201,7 +203,7 @@ public class BlockFetchFailureTest {
     TronNetDelegate delegate = inactiveWitnessDelegate(21_600_000L);
     BlockMsgHandler handler = new BlockMsgHandler();
     ReflectUtils.setFieldValue(handler, "tronNetDelegate", delegate);
-    ReflectUtils.setFieldValue(handler, "fetchBlockService", mock(FetchBlockService.class));
+    ReflectUtils.setFieldValue(handler, "fetchBlockService", fetchService());
     ReflectUtils.setFieldValue(handler, "syncService", mock(SyncService.class));
     PeerConnection first = newPeer(10001);
     PeerConnection second = newPeer(10002);
@@ -228,7 +230,7 @@ public class BlockFetchFailureTest {
     TronNetDelegate delegate = inactiveWitnessDelegate(maintenanceInterval);
     BlockMsgHandler handler = new BlockMsgHandler();
     ReflectUtils.setFieldValue(handler, "tronNetDelegate", delegate);
-    ReflectUtils.setFieldValue(handler, "fetchBlockService", mock(FetchBlockService.class));
+    ReflectUtils.setFieldValue(handler, "fetchBlockService", fetchService());
     AdvService adv = mock(AdvService.class);
     SyncService sync = mock(SyncService.class);
     ReflectUtils.setFieldValue(handler, "advService", adv);
@@ -265,7 +267,7 @@ public class BlockFetchFailureTest {
   @Test
   public void advertisedScheduleFailureDoesNotDisconnectRelayingPeers() throws Exception {
     TronNetDelegate delegate = mock(TronNetDelegate.class);
-    FetchBlockService fetch = mock(FetchBlockService.class);
+    FetchBlockService fetch = fetchService();
     AdvService adv = new AdvService();
     ReflectUtils.setFieldValue(adv, "tronNetDelegate", delegate);
     ReflectUtils.setFieldValue(adv, "fetchBlockService", fetch);
@@ -277,6 +279,10 @@ public class BlockFetchFailureTest {
     PeerConnection other = newPeer(10002);
     BlockCapsule block = newBlock();
     Item item = new Item(block.getBlockId(), InventoryType.BLOCK);
+    sender.setNeedSyncFromPeer(false);
+    sender.setNeedSyncFromUs(false);
+    other.setNeedSyncFromPeer(false);
+    other.setNeedSyncFromUs(false);
     when(delegate.getHeadBlockId()).thenReturn(new BlockId(Sha256Hash.ZERO_HASH, 0));
     when(delegate.validAdvBlock(sender, block)).thenReturn(true);
     when(delegate.containBlock(block.getParentBlockId())).thenReturn(true);
@@ -304,7 +310,7 @@ public class BlockFetchFailureTest {
 
   private void assertAdvertisedBlockDoesNotRetry(TypeEnum type) throws Exception {
     TronNetDelegate delegate = mock(TronNetDelegate.class);
-    FetchBlockService fetch = mock(FetchBlockService.class);
+    FetchBlockService fetch = fetchService();
     AdvService adv = new AdvService();
     ReflectUtils.setFieldValue(adv, "tronNetDelegate", delegate);
     ReflectUtils.setFieldValue(adv, "fetchBlockService", fetch);
@@ -315,6 +321,10 @@ public class BlockFetchFailureTest {
     PeerConnection other = newPeer(10002);
     BlockCapsule block = newBlock();
     Item item = new Item(block.getBlockId(), InventoryType.BLOCK);
+    sender.setNeedSyncFromPeer(false);
+    sender.setNeedSyncFromUs(false);
+    other.setNeedSyncFromPeer(false);
+    other.setNeedSyncFromUs(false);
     when(delegate.getHeadBlockId()).thenReturn(new BlockId(Sha256Hash.ZERO_HASH, 0));
     when(delegate.getActivePeer()).thenReturn(Collections.singletonList(sender));
     sender.getAdvInvReceive().put(item, System.currentTimeMillis());
@@ -464,6 +474,13 @@ public class BlockFetchFailureTest {
     doReturn(new BlockId(Sha256Hash.ZERO_HASH, 0)).when(delegate).getHeadBlockId();
     doReturn(false).when(delegate).containBlock(any());
     return delegate;
+  }
+
+  private static FetchBlockService fetchService() {
+    FetchBlockService fetch = mock(FetchBlockService.class);
+    doCallRealMethod().when(fetch).blockFetchSuccess(any(), any());
+    doCallRealMethod().when(fetch).canFetchBlock(any(), any(), anyLong());
+    return fetch;
   }
 
   private static BlockCapsule newBlock() {

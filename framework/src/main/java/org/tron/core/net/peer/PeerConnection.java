@@ -110,8 +110,8 @@ public class PeerConnection {
    * clamped to fetchBlock.timeout only afterwards, so sustained degradation saturates
    * within 1-3 samples (issue #6923). Accepted cost: one transient outlier (~10x a
    * healthy estimate) can jump the estimate straight to the clamp, needing ~9 healthy
-   * samples to decay; hard-timeout fallback and the saturation gate (one secondary
-   * fetch per tick) bound the impact meanwhile.
+   * samples to decay; backup dispatch still requires an elapsed timeout or sufficient
+   * expected benefit.
    */
   private static final int FETCH_LATENCY_EWMA_FACTOR = 10;
 
@@ -144,6 +144,11 @@ public class PeerConnection {
   @Getter
   private Cache<Item, Long> advInvReceive = CacheBuilder.newBuilder().maximumSize(INV_CACHE_SIZE)
       .expireAfterWrite(1, TimeUnit.HOURS).recordStats().build();
+
+  // Eligible block INV receipt times, pending successful block processing before activity updates.
+  @Getter
+  private Cache<Item, Long> advBlockInvReceive = CacheBuilder.newBuilder().maximumSize(100)
+      .expireAfterWrite(1, TimeUnit.MINUTES).build();
 
   @Setter
   @Getter
@@ -199,7 +204,7 @@ public class PeerConnection {
       this.isRelayPeer = true;
     }
     this.nodeStatistics = TronStatsManager.getNodeStatistics(channel.getInetAddress());
-    lastInteractiveTime = System.currentTimeMillis();
+    updateLastInteractiveTime(System.currentTimeMillis());
     p2pRateLimiter.register(SYNC_BLOCK_CHAIN.asByte(),
         Args.getInstance().getRateLimiterSyncBlockChain());
     p2pRateLimiter.register(FETCH_INV_DATA.asByte(),
@@ -242,7 +247,7 @@ public class PeerConnection {
   }
 
   private long clampFetchLatency(long latency) {
-    // Saturation intentionally makes the >= timeout gate in FetchBlockService trigger.
+    // Bound measured latency without treating saturation as an elapsed fetch timeout.
     return StrictMathWrapper.max(0,
         StrictMathWrapper.min(CommonParameter.getInstance().fetchBlockTimeout, latency));
   }
@@ -252,10 +257,39 @@ public class PeerConnection {
     this.blockBothHaveUpdateTime = System.currentTimeMillis();
   }
 
+  public synchronized void updateLastInteractiveTime(long time) {
+    if (time > lastInteractiveTime) {
+      lastInteractiveTime = time;
+    }
+  }
+
+  /**
+   * Returns whether there are no outstanding inventory or sync requests.
+   *
+   * <p>Sync blocks already being processed and sync direction flags are not checked.
+   */
   public boolean isIdle() {
     return advInvRequest.isEmpty() && isSyncIdle();
   }
 
+  /**
+   * Returns whether there are no outstanding block or sync requests and no sync blocks
+   * being processed. Outstanding transaction inventory requests do not make this check fail.
+   *
+   * <p>Callers must check connection state and sync direction flags separately before fetching.
+   */
+  public boolean isBlockFetchIdle() {
+    return advInvRequest.keySet().stream()
+        .noneMatch(item -> item.getType() == Protocol.Inventory.InventoryType.BLOCK)
+        && isSyncIdle() && syncBlockInProcess.isEmpty();
+  }
+
+  /**
+   * Returns whether there are no outstanding sync block or chain-summary requests.
+   *
+   * <p>This does not mean synchronization is complete: received blocks may still be processing,
+   * and sync direction flags are not checked.
+   */
   public boolean isSyncIdle() {
     return syncBlockRequested.isEmpty() && syncChainRequested == null;
   }
@@ -288,6 +322,7 @@ public class PeerConnection {
     syncService.onDisconnect(this);
     advService.onDisconnect(this);
     advInvReceive.invalidateAll();
+    advBlockInvReceive.invalidateAll();
     advInvSpread.invalidateAll();
     advInvRequest.clear();
     syncBlockIdCache.invalidateAll();
