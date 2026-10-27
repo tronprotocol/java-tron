@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.After;
 import org.junit.Assert;
@@ -235,12 +236,20 @@ public class OutboundHandshakeTimeoutHandlerTest {
 
   @Test
   public void deadlineStartsWhenSocketBecomesActive() throws Exception {
-    EmbeddedChannel socket = new EmbeddedChannel(false, false);
+    AtomicBoolean active = new AtomicBoolean();
+    EmbeddedChannel socket = new EmbeddedChannel() {
+      @Override
+      public boolean isActive() {
+        return active.get() && super.isActive();
+      }
+    };
     sockets.add(socket);
-    socket.pipeline().addLast(new OutboundHandshakeTimeoutHandler());
-    Assert.assertTrue(socket.isOpen());
-    socket.register();
     socket.freezeTime();
+    socket.pipeline().addLast(new OutboundHandshakeTimeoutHandler());
+    advance(socket, Parameter.HANDSHAKE_TIMEOUT_SECONDS + 1);
+    Assert.assertTrue(socket.isOpen());
+    active.set(true);
+    socket.pipeline().fireChannelActive();
     advance(socket, Parameter.HANDSHAKE_TIMEOUT_SECONDS - 1);
     Assert.assertTrue(socket.isOpen());
     advance(socket, 1);
@@ -355,12 +364,20 @@ public class OutboundHandshakeTimeoutHandlerTest {
 
   @Test
   public void statusDeadlineStartsWhenSocketBecomesActive() throws Exception {
-    EmbeddedChannel socket = new EmbeddedChannel(false, false);
+    AtomicBoolean active = new AtomicBoolean();
+    EmbeddedChannel socket = new EmbeddedChannel() {
+      @Override
+      public boolean isActive() {
+        return active.get() && super.isActive();
+      }
+    };
     sockets.add(socket);
-    socket.pipeline().addLast(new OutboundStatusTimeoutHandler());
-    Assert.assertTrue(socket.isOpen());
-    socket.register();
     socket.freezeTime();
+    socket.pipeline().addLast(new OutboundStatusTimeoutHandler());
+    advance(socket, Parameter.NODE_DETECT_TIMEOUT, TimeUnit.MILLISECONDS);
+    Assert.assertTrue(socket.isOpen());
+    active.set(true);
+    socket.pipeline().fireChannelActive();
     advance(socket, Parameter.NODE_DETECT_TIMEOUT - 1, TimeUnit.MILLISECONDS);
     Assert.assertTrue(socket.isOpen());
     advance(socket, 1, TimeUnit.MILLISECONDS);

@@ -235,10 +235,10 @@ public class ResilienceServiceTest extends BaseTest {
 
     ReflectUtils.invokeMethod(service, "disconnectIsolated2");
     int activeNodeSize = (int) PeerManager.getPeers().stream()
-        .filter(p -> p.getChannel().isActive())
+        .filter(p -> p.getChannel().isOutbound())
         .count();
     int passiveSize = (int) PeerManager.getPeers().stream()
-        .filter(p -> !p.getChannel().isActive())
+        .filter(p -> !p.getChannel().isOutbound())
         .count();
     Assert.assertEquals(2, activeNodeSize);
     Assert.assertEquals((int) (maxConnection * ResilienceService.retentionPercent),

@@ -155,9 +155,9 @@ public class PeerManagerTest {
       Assert.assertNull(PeerManager.remove(removed));
       Assert.assertSame(survivorPeer, PeerManager.getPeerConnection(survivor));
       Assert.assertEquals(1, PeerManager.getPeers().size());
-      Assert.assertEquals(survivor.isActive() ? 1 : 0,
+      Assert.assertEquals(survivor.isOutbound() ? 1 : 0,
           PeerManager.getActivePeersCount().get());
-      Assert.assertEquals(survivor.isActive() ? 0 : 1,
+      Assert.assertEquals(survivor.isOutbound() ? 0 : 1,
           PeerManager.getPassivePeersCount().get());
       Assert.assertSame(survivorPeer, PeerManager.remove(survivor));
       Assert.assertTrue(PeerManager.getPeers().isEmpty());
@@ -281,7 +281,7 @@ public class PeerManagerTest {
     AtomicReference<PeerConnection> removedByCallback = new AtomicReference<>();
     Channel channel = new Channel() {
       @Override
-      public boolean isActive() {
+      public boolean isOutbound() {
         return active;
       }
 

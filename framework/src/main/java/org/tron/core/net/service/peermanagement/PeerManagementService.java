@@ -90,7 +90,7 @@ public class PeerManagementService {
     int effectiveCount = 0;
     for (PeerConnection peer : peers) {
       ActivePeerInfo peerInfo = peer.getActivePeerInfo();
-      if (peer.getChannel().isActive()) {
+      if (peer.getChannel().isOutbound()) {
         activeCount++;
       }
       if (!peerInfo.isNeedSyncFromPeer() && !peerInfo.isNeedSyncFromUs()) {
