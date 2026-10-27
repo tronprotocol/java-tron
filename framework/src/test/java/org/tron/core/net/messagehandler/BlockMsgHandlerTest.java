@@ -167,7 +167,7 @@ public class BlockMsgHandlerTest extends BaseTest {
           .put(new Item(blockCapsule0.getBlockId(), InventoryType.BLOCK),
               System.currentTimeMillis());
 
-      Mockito.doReturn(true).when(tronNetDelegate).validBlock(any(BlockCapsule.class));
+      Mockito.doReturn(true).when(tronNetDelegate).validAdvBlock(peer, blockCapsule0);
       Mockito.doReturn(true).when(tronNetDelegate).containBlock(any(BlockId.class));
       Mockito.doReturn(blockCapsule0.getBlockId()).when(tronNetDelegate).getHeadBlockId();
       Mockito.doNothing().when(tronNetDelegate).processBlock(any(BlockCapsule.class), anyBoolean());

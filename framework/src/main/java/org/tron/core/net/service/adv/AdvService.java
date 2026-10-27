@@ -173,7 +173,8 @@ public class AdvService {
 
     Item item = new Item(msg.getMessageId(), InventoryType.TRX);
     trxCount.add();
-    trxCache.put(item, new TransactionMessage(msg.getTransactionCapsule().getInstance()));
+    trxCache.put(item, new TransactionMessage(
+        msg.getTransactionCapsule().getInstance().toBuilder().clearRet().build()));
 
     List<Sha256Hash> list = new ArrayList<>();
     list.add(msg.getMessageId());
@@ -220,7 +221,8 @@ public class AdvService {
       TransactionMessage trxMsg = (TransactionMessage) msg;
       item = new Item(trxMsg.getMessageId(), InventoryType.TRX);
       trxCount.add();
-      trxCache.put(item, new TransactionMessage(trxMsg.getTransactionCapsule().getInstance()));
+      trxCache.put(item, new TransactionMessage(
+          trxMsg.getTransactionCapsule().getInstance().toBuilder().clearRet().build()));
     } else {
       logger.error("Adv item is neither block nor trx, type: {}", msg.getType());
       return;

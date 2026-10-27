@@ -350,8 +350,6 @@ public class SyncService {
   }
 
   private void processSyncBlock(BlockCapsule block, PeerConnection peerConnection) {
-    boolean flag = true;
-    boolean attackFlag = false;
     BlockId blockId = block.getBlockId();
     try {
       tronNetDelegate.validSignature(block);
@@ -367,18 +365,15 @@ public class SyncService {
         peerConnection.setBlockRcvTime(System.currentTimeMillis());
       }
       pbftDataSyncHandler.processPBFTCommitData(block);
-    } catch (P2pException p2pException) {
-      logger.error("Process sync block {} failed, type: {}",
-              blockId.getString(), p2pException.getType());
-      attackFlag = p2pException.getType().equals(TypeEnum.BLOCK_SIGN_INVALID)
-              || p2pException.getType().equals(TypeEnum.BLOCK_MERKLE_INVALID);
-      flag = false;
     } catch (Exception e) {
-      logger.error("Process sync block {} failed", blockId.getString(), e);
-      flag = false;
-    }
-
-    if (attackFlag) {
+      if (e instanceof P2pException) {
+        logger.error("Process sync block {} from {} failed, type: {}, reason: {}",
+            blockId.getString(), peerConnection.getInetSocketAddress(),
+            ((P2pException) e).getType(), e.getMessage());
+      } else {
+        logger.error("Process sync block {} from {} failed",
+            blockId.getString(), peerConnection.getInetSocketAddress(), e);
+      }
       invalid(blockId, peerConnection);
       peerConnection.disconnect(ReasonCode.BAD_BLOCK);
       return;
@@ -389,12 +384,8 @@ public class SyncService {
       if (blockId.equals(bid)) {
         peer.setBlockBothHave(blockId);
         peer.getSyncBlockToFetch().remove(bid);
-        if (flag) {
-          if (peer.getSyncBlockToFetch().isEmpty() && peer.isFetchAble()) {
-            syncNext(peer);
-          }
-        } else {
-          peer.disconnect(ReasonCode.BAD_BLOCK);
+        if (peer.getSyncBlockToFetch().isEmpty() && peer.isFetchAble()) {
+          syncNext(peer);
         }
       }
     }

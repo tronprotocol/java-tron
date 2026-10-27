@@ -80,7 +80,7 @@ public class BlockInventoryActivityTest {
     when(delegate.getHeadBlockId()).thenAnswer(call -> head.get());
     when(delegate.containBlock(block.getParentBlockId())).thenReturn(true);
     when(delegate.containBlock(block.getBlockId())).thenAnswer(call -> accepted.get());
-    when(delegate.validBlock(block)).thenReturn(true);
+    when(delegate.validAdvBlock(provider, block)).thenReturn(true);
     doAnswer(call -> {
       acceptBlock();
       return null;
@@ -237,7 +237,7 @@ public class BlockInventoryActivityTest {
   @Test
   public void testInactiveWitnessDoesNotConfirmInventory() throws Exception {
     record(100);
-    when(delegate.validBlock(block)).thenReturn(false);
+    when(delegate.validAdvBlock(provider, block)).thenReturn(false);
 
     processBlock();
 
@@ -397,7 +397,8 @@ public class BlockInventoryActivityTest {
 
   private void assertInvalidBlockDoesNotConfirm(TypeEnum type) throws Exception {
     record(100);
-    when(delegate.validBlock(block)).thenThrow(new P2pException(type, "invalid block"));
+    when(delegate.validAdvBlock(provider, block))
+        .thenThrow(new P2pException(type, "invalid block"));
     try {
       processBlock();
       Assert.fail("Expected block validation to fail");

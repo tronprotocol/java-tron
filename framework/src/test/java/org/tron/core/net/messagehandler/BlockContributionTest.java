@@ -75,14 +75,14 @@ public class BlockContributionTest {
     when(delegate.getHeadBlockId()).thenReturn(block.getParentBlockId());
     when(delegate.getActivePeer()).thenReturn(Collections.singletonList(provider));
     when(delegate.containBlock(block.getParentBlockId())).thenReturn(true);
-    when(delegate.validBlock(block)).thenReturn(true);
+    when(delegate.validAdvBlock(provider, block)).thenReturn(true);
   }
 
   @Test
-  public void testValidationFetchBroadcastAndExecutionOrder() throws Exception {
-    when(delegate.validBlock(block)).thenAnswer(call -> {
-      Assert.assertEquals(Long.valueOf(requestTime), provider.getAdvInvRequest().get(item));
-      verify(fetch, never()).blockFetchSuccess(any(), any());
+  public void testFetchCompletionValidationBroadcastAndExecutionOrder() throws Exception {
+    when(delegate.validAdvBlock(provider, block)).thenAnswer(call -> {
+      Assert.assertFalse(provider.getAdvInvRequest().containsKey(item));
+      verify(fetch).blockFetchSuccess(block.getBlockId(), provider);
       return true;
     });
     doAnswer(call -> {
@@ -117,18 +117,18 @@ public class BlockContributionTest {
   }
 
   @Test
-  public void testBadMerkleRetainsRequestAndDoesNotCompleteFetch() throws Exception {
+  public void testBadMerkleCompletesFetchWithoutContribution() throws Exception {
     assertInvalid(TypeEnum.BLOCK_MERKLE_INVALID);
   }
 
   @Test
-  public void testBadSignatureRetainsRequestAndDoesNotCompleteFetch() throws Exception {
+  public void testBadSignatureCompletesFetchWithoutContribution() throws Exception {
     assertInvalid(TypeEnum.BLOCK_SIGN_INVALID);
   }
 
   @Test
   public void testInactiveWitnessDoesNotImproveEitherTimestamp() throws Exception {
-    when(delegate.validBlock(block)).thenReturn(false);
+    when(delegate.validAdvBlock(provider, block)).thenReturn(false);
 
     handler.processMessage(provider, new BlockMessage(block));
 
@@ -206,7 +206,7 @@ public class BlockContributionTest {
     } catch (P2pException e) {
       Assert.assertEquals(TypeEnum.BAD_MESSAGE, e.getType());
     }
-    verify(delegate, never()).validBlock(any());
+    verify(delegate, never()).validAdvBlock(any(), any());
     Assert.assertEquals(1, provider.getLastInteractiveTime());
     Assert.assertEquals(0, provider.getBlockRcvTime());
   }
@@ -247,7 +247,7 @@ public class BlockContributionTest {
       Assert.assertEquals(TypeEnum.BAD_BLOCK, error.getType());
     }
 
-    verify(delegate, never()).validBlock(any());
+    verify(delegate, never()).validAdvBlock(any(), any());
     verify(fetch, never()).blockFetchSuccess(any(), any());
     verify(adv, never()).broadcast(any());
     Assert.assertEquals(1, provider.getLastInteractiveTime());
@@ -266,17 +266,18 @@ public class BlockContributionTest {
   }
 
   private void assertInvalid(TypeEnum type) throws Exception {
-    when(delegate.validBlock(block)).thenThrow(new P2pException(type, "invalid data"));
+    when(delegate.validAdvBlock(provider, block))
+        .thenThrow(new P2pException(type, "invalid data"));
     try {
       handler.processMessage(provider, new BlockMessage(block));
       Assert.fail("Expected invalid block to be rejected");
     } catch (P2pException e) {
       Assert.assertEquals(type, e.getType());
     }
-    Assert.assertEquals(Long.valueOf(requestTime), provider.getAdvInvRequest().get(item));
+    Assert.assertFalse(provider.getAdvInvRequest().containsKey(item));
     Assert.assertEquals(1, provider.getLastInteractiveTime());
     Assert.assertEquals(0, provider.getBlockRcvTime());
-    verify(fetch, never()).blockFetchSuccess(any(), any());
+    verify(fetch).blockFetchSuccess(block.getBlockId(), provider);
     verify(adv, never()).broadcast(any());
   }
 
@@ -290,7 +291,7 @@ public class BlockContributionTest {
   }
 
   @Test(timeout = 20_000)
-  public void testRealBadSignatureRetainsRequest() throws Exception {
+  public void testRealBadSignatureCompletesFetch() throws Exception {
     useRealValidation();
     block = new BlockCapsule(block.getInstance().toBuilder()
         .setBlockHeader(block.getInstance().getBlockHeader().toBuilder()
@@ -299,7 +300,7 @@ public class BlockContributionTest {
   }
 
   @Test(timeout = 20_000)
-  public void testRealTamperedBodyRetainsRequest() throws Exception {
+  public void testRealTamperedBodyCompletesFetch() throws Exception {
     useRealValidation();
     block = new BlockCapsule(block.getInstance().toBuilder()
         .addTransactions(Protocol.Transaction.newBuilder()
@@ -326,7 +327,8 @@ public class BlockContributionTest {
         .thenReturn(Collections.singletonList(block.getWitnessAddress()));
     ReflectUtils.setFieldValue(validator, "dbManager", manager);
     ReflectUtils.setFieldValue(validator, "witnessScheduleStore", witnesses);
-    when(delegate.validBlock(any())).thenAnswer(call -> validator.validBlock(call.getArgument(0)));
+    when(delegate.validAdvBlock(any(), any())).thenAnswer(call ->
+        validator.validAdvBlock(call.getArgument(0), call.getArgument(1)));
   }
 
   private void assertRealValidationFailure(TypeEnum type) throws Exception {
@@ -337,9 +339,9 @@ public class BlockContributionTest {
     } catch (P2pException e) {
       Assert.assertEquals(type, e.getType());
     }
-    Assert.assertEquals(Long.valueOf(requestTime), provider.getAdvInvRequest().get(item));
+    Assert.assertFalse(provider.getAdvInvRequest().containsKey(item));
     Assert.assertEquals(1, provider.getLastInteractiveTime());
     Assert.assertEquals(0, provider.getBlockRcvTime());
-    verify(fetch, never()).blockFetchSuccess(any(), any());
+    verify(fetch).blockFetchSuccess(block.getBlockId(), provider);
   }
 }

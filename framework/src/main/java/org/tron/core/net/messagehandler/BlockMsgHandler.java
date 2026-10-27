@@ -137,14 +137,10 @@ public class BlockMsgHandler implements TronMsgHandler {
 
   private BlockResult processBlock(PeerConnection peer, BlockCapsule block) throws P2pException {
     BlockId blockId = block.getBlockId();
-    boolean activeWitness = tronNetDelegate.validBlock(block);
-    // Retain pending fetch/request state if validation throws so disconnect can retry.
-    // Otherwise, complete the fetch.
+    // The response completes this advertised fetch even if witness, signature, or Merkle
+    // validation rejects it. Do not retry the same block ID from another advertiser.
     fetchBlockService.blockFetchSuccess(blockId, peer);
-    if (!activeWitness) {
-      logger.warn("Receive a block from an inactive witness, peer {}, block {}, witness {}",
-          peer.getInetSocketAddress(), blockId.getString(),
-          Hex.toHexString(block.getWitnessAddress().toByteArray()));
+    if (!tronNetDelegate.validAdvBlock(peer, block)) {
       return BlockResult.STATE_FAILED;
     }
 
@@ -154,7 +150,6 @@ public class BlockMsgHandler implements TronMsgHandler {
       logger.warn("Receive a low block {}, head {}", blockId.getString(), headNum);
       return BlockResult.IGNORED;
     }
-
     if (!tronNetDelegate.containBlock(block.getParentBlockId())) {
       logger.warn("Get unlink block {} from {}, head is {}", blockId.getString(),
               peer.getInetAddress(), tronNetDelegate.getHeadBlockId().getString());

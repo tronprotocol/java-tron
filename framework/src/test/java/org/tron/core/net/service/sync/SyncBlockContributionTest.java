@@ -86,7 +86,7 @@ public class SyncBlockContributionTest {
         .when(delegate).processBlock(block, true);
     process();
     verify(provider).disconnect(ReasonCode.BAD_BLOCK);
-    verify(other).disconnect(ReasonCode.BAD_BLOCK);
+    verify(other, never()).disconnect(any());
     verify(provider, never()).disconnect(ReasonCode.SYNC_FAIL);
     verify(other, never()).disconnect(ReasonCode.SYNC_FAIL);
     Assert.assertEquals(1, provider.getLastInteractiveTime());

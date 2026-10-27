@@ -20,6 +20,7 @@ import org.junit.Assume;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.mockito.InOrder;
 import org.mockito.MockedConstruction;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
@@ -94,8 +95,9 @@ public class FullNodeTest {
       metrics.verify(Metrics::init);
       Assert.assertEquals(1, contexts.constructed().size());
       Mockito.verify(contexts.constructed().get(0)).refresh();
-      Mockito.verify(application).startup();
-      Mockito.verify(application).blockUntilShutdown();
+      InOrder order = Mockito.inOrder(application);
+      order.verify(application).startup();
+      order.verify(application).blockUntilShutdown();
       Assert.assertTrue(ipcClients.constructed().isEmpty());
     }
   }

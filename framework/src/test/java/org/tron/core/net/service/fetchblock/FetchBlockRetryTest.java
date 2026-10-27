@@ -498,14 +498,14 @@ public class FetchBlockRetryTest {
   }
 
   @Test
-  public void testInvalidBlockDisconnectRetriesFromAlternative() throws Exception {
+  public void testInvalidMerkleCompletesFetchWithoutRetryingAlternative() throws Exception {
     inventoryHandler.processMessage(first, inventory());
     inventoryHandler.processMessage(second, inventory());
     BlockMsgHandler handler = new BlockMsgHandler();
     ReflectUtils.setFieldValue(handler, "tronNetDelegate", delegate);
     ReflectUtils.setFieldValue(handler, "fetchBlockService", fetch);
     ReflectUtils.setFieldValue(handler, "fastForward", false);
-    when(delegate.validBlock(block))
+    when(delegate.validAdvBlock(first, block))
         .thenThrow(new P2pException(TypeEnum.BLOCK_MERKLE_INVALID, "bad"));
     try {
       handler.processMessage(first, new BlockMessage(block));
@@ -513,13 +513,13 @@ public class FetchBlockRetryTest {
     } catch (P2pException e) {
       Assert.assertEquals(TypeEnum.BLOCK_MERKLE_INVALID, e.getType());
     }
-    Assert.assertTrue(first.getAdvInvRequest().containsKey(item));
+    Assert.assertFalse(first.getAdvInvRequest().containsKey(item));
 
     disconnect(first);
 
-    Assert.assertTrue(second.getAdvInvRequest().containsKey(item));
-    verify(second).sendMessage(any(FetchInvDataMessage.class));
-    Assert.assertNotNull(state());
+    Assert.assertFalse(second.getAdvInvRequest().containsKey(item));
+    verify(second, never()).sendMessage(any(FetchInvDataMessage.class));
+    Assert.assertNull(state());
   }
 
   @Test

@@ -67,7 +67,7 @@ public class HistoryBlockHashIntegrationTest extends BaseTest {
   private Storage openStorage() {
     return new Storage(HistoryBlockHashUtil.HISTORY_STORAGE_ADDRESS,
         dbManager.getStorageRowStore(),
-        dbManager.getDynamicPropertiesStore().allowOptimizeTvmStorage());
+        dbManager.getDynamicPropertiesStore());
   }
 
   private DataWord readSlot(long slot) {

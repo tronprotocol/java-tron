@@ -233,9 +233,6 @@ public class P2pEventHandlerImpl extends P2pEventHandler {
       if (count + currentSize > maxCountIn10s) {
         logger.warn("Drop TRX inv from {}, window:{}, cur:{}, max:{}",
             peer.getInetAddress(), count, currentSize, maxCountIn10s);
-        if (Args.getInstance().isOpenPrintLog()) {
-          logger.warn("[overload] Drop tx list: {}", msg.getHashList());
-        }
         return false;
       }
     } else if (invType == InventoryType.BLOCK) {

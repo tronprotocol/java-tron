@@ -6,6 +6,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockConstruction;
 import static org.mockito.Mockito.mockStatic;
@@ -20,6 +21,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.mockito.InOrder;
 import org.mockito.MockedConstruction;
 import org.mockito.MockedStatic;
 import org.tron.common.application.Application;
@@ -100,8 +102,9 @@ public class FullNodeCryptoEngineTest {
       FullNode.main(new String[]{"-c", config.toString(), "-d", output.toString()});
       assertEquals(1, contexts.constructed().size());
       verify(contexts.constructed().get(0)).refresh();
-      verify(application).startup();
-      verify(application).blockUntilShutdown();
+      InOrder inOrder = inOrder(application);
+      inOrder.verify(application).startup();
+      inOrder.verify(application).blockUntilShutdown();
     }
   }
 
