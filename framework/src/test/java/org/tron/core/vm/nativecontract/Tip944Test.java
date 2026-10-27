@@ -53,6 +53,7 @@ public class Tip944Test extends BaseTest {
   public void setup() {
     VMConfig.setGlobalSnapshot(new VMConfig.Snapshot());
     ConfigLoader.disable = true;
+    VMConfig.initAllowTvmVote(1);
     VMConfig.initAllowTvmFreezeV2(1);
     VMConfig.initAllowTvmSelfdestructRestriction(1);
     VMConfig.initAllowTvmVotePowerOptimization(1);
@@ -271,5 +272,24 @@ public class Tip944Test extends BaseTest {
     assertEquals(-1, child.getAccount(OWNER).getInstance().getOldTronPower());
     assertEquals(0, legacy(OWNER));
     assertEquals(0, repo.getAccount(BENEFICIARY).getFrozenV2BalanceForEnergy());
+  }
+
+  @Test
+  public void voteCleanupPreservesInitializedAndInvalidStatesWithoutStakeTransfer() {
+    for (long prior : new long[]{3 * TRX_PRECISION, -1}) {
+      setup();
+      AccountCapsule owner = repo.getAccount(OWNER);
+      owner.setOldTronPower(prior);
+      owner.addVotes(ByteString.copyFrom(WITNESS), 1);
+      owner.setAllowance(123);
+      repo.updateAccount(OWNER, owner);
+      program(repo, OWNER).suicide2(new DataWord(BENEFICIARY));
+      assertEquals(prior, legacy(OWNER));
+      assertTrue(repo.getAccount(OWNER).getVotesList().isEmpty());
+      assertTrue(repo.getVotes(OWNER).getNewVotes().isEmpty());
+      assertEquals(1, repo.getVotes(OWNER).getOldVotes().size());
+      assertEquals(0, repo.getAccount(OWNER).getAllowance());
+      assertEquals(123, repo.getAccount(BENEFICIARY).getBalance());
+    }
   }
 }
