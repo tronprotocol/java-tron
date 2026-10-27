@@ -67,7 +67,7 @@ public class PeerManager {
     peerConnection = ctx.getBean(PeerConnection.class);
     peerConnection.setChannel(channel);
     peers.add(peerConnection);
-    if (channel.isActive()) {
+    if (channel.isOutbound()) {
       activePeersCount.incrementAndGet();
     } else {
       passivePeersCount.incrementAndGet();
@@ -88,7 +88,7 @@ public class PeerManager {
     if (!peers.removeIf(peer -> peer == peerConnection)) {
       return false;
     }
-    if (peerConnection.getChannel().isActive()) {
+    if (peerConnection.getChannel().isOutbound()) {
       activePeersCount.decrementAndGet();
     } else {
       passivePeersCount.decrementAndGet();

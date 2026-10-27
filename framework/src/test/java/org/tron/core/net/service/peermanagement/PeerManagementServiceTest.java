@@ -820,7 +820,7 @@ public class PeerManagementServiceTest {
     PeerConnection peer = Mockito.mock(PeerConnection.class);
     Channel channel = Mockito.mock(Channel.class);
     ActivePeerInfo peerInfo = Mockito.mock(ActivePeerInfo.class);
-    Mockito.when(channel.isActive()).thenReturn(active);
+    Mockito.when(channel.isOutbound()).thenReturn(active);
     Mockito.when(peer.getChannel()).thenReturn(channel);
     Mockito.when(peerInfo.isNeedSyncFromPeer()).thenReturn(!syncFinished);
     Mockito.when(peer.getActivePeerInfo()).thenReturn(peerInfo);

@@ -15,14 +15,15 @@ public class P2pChannelInitializer extends ChannelInitializer<NioSocketChannel> 
 
   private final String remoteId;
 
-  //only be true when channel is activated by detect service
-  private boolean peerDiscoveryMode = false;
+  // TCP STATUS probe mode, independent of UDP discovery.
+  private boolean nodeDetectMode = false;
 
+  // Whether regular outbound connection closure notifies the connection pool.
   private boolean trigger = true;
 
-  public P2pChannelInitializer(String remoteId, boolean peerDiscoveryMode, boolean trigger) {
+  public P2pChannelInitializer(String remoteId, boolean nodeDetectMode, boolean trigger) {
     this.remoteId = remoteId;
-    this.peerDiscoveryMode = peerDiscoveryMode;
+    this.nodeDetectMode = nodeDetectMode;
     this.trigger = trigger;
   }
 
@@ -34,24 +35,24 @@ public class P2pChannelInitializer extends ChannelInitializer<NioSocketChannel> 
         return;
       }
       final Channel channel = new Channel();
-      channel.init(ch.pipeline(), remoteId, peerDiscoveryMode);
+      channel.init(ch.pipeline(), remoteId, nodeDetectMode);
 
       // limit the size of receiving buffer to 1024
       ch.config().setRecvByteBufAllocator(new FixedRecvByteBufAllocator(256 * 1024));
       ch.config().setOption(ChannelOption.SO_RCVBUF, 256 * 1024);
       ch.config().setOption(ChannelOption.SO_BACKLOG, 1024);
 
-      // be aware of channel closing
+      // Route STATUS-probe and regular peer cleanup separately.
       ch.closeFuture().addListener((ChannelFutureListener) future -> {
         channel.markDisconnected();
-        if (channel.isDiscoveryMode() && !channel.isRegisteredPeer()) {
+        if (channel.isNodeDetectMode() && !channel.isRegisteredPeer()) {
           ChannelManager.getNodeDetectService().notifyDisconnect(channel);
         } else {
           try {
             logger.info("Close channel:{}", channel.getInetSocketAddress());
             ChannelManager.notifyDisconnect(channel);
           } finally {
-            if (channel.getInetSocketAddress() != null && channel.isActive() && trigger) {
+            if (channel.getInetSocketAddress() != null && channel.isOutbound() && trigger) {
               ChannelManager.triggerConnect(channel.getInetSocketAddress());
             }
           }

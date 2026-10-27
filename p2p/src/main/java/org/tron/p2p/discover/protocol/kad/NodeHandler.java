@@ -106,7 +106,7 @@ public class NodeHandler {
     if (!kadService.getTable().getNode().equals(node)) {
       sendPong();
     }
-    node.setP2pVersion(msg.getNetworkId());
+    node.setNetworkId(msg.getNetworkId());
     if (!node.isConnectible(Parameter.p2pConfig.getNetworkId())) {
       changeState(State.DEAD);
     } else if (state.equals(State.DEAD)) {
@@ -122,7 +122,7 @@ public class NodeHandler {
       waitForPong = false;
       cancelPongTimeout();
     }
-    node.setP2pVersion(msg.getNetworkId());
+    node.setNetworkId(msg.getNetworkId());
     if (!node.isConnectible(Parameter.p2pConfig.getNetworkId())) {
       changeState(State.DEAD);
     } else {

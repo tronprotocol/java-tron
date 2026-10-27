@@ -160,12 +160,12 @@ public class ResilienceService {
 
     //disconnect from the node whose lastActiveTime is smallest
     int activePeerSize = (int) tronNetDelegate.getActivePeer().stream()
-        .filter(peer -> peer.getChannel().isActive())
+        .filter(peer -> peer.getChannel().isOutbound())
         .count();
     if (activePeerSize >= CommonParameter.getInstance().getMinActiveConnections()) {
       List<PeerConnection> peers = tronNetDelegate.getActivePeer().stream()
           .filter(peer -> !peer.getChannel().isTrustPeer())
-          .filter(peer -> peer.getChannel().isActive())
+          .filter(peer -> peer.getChannel().isOutbound())
           .collect(Collectors.toList());
 
       Optional<PeerConnection> one = getEarliestPeer(peers);
@@ -181,7 +181,7 @@ public class ResilienceService {
       int disconnectSize = peerSize - threshold;
       List<PeerConnection> peers = tronNetDelegate.getActivePeer().stream()
           .filter(peer -> !peer.getChannel().isTrustPeer())
-          .filter(peer -> !peer.getChannel().isActive())
+          .filter(peer -> !peer.getChannel().isOutbound())
           .collect(Collectors.toList());
       try {
         peers.sort(Comparator.comparing(PeerConnection::getLastInteractiveTime, Long::compareTo));
@@ -214,7 +214,7 @@ public class ResilienceService {
   private boolean isLanNode() {
     int peerSize = tronNetDelegate.getActivePeer().size();
     int activePeerSize = (int) tronNetDelegate.getActivePeer().stream()
-        .filter(peer -> peer.getChannel().isActive())
+        .filter(peer -> peer.getChannel().isOutbound())
         .count();
     return peerSize >= CommonParameter.getInstance().getMinActiveConnections()
         && peerSize == activePeerSize;

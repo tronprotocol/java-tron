@@ -57,12 +57,12 @@ public final class PendingInboundConnectionHandler extends ChannelInboundHandler
   /**
    * Called on the channel's event loop after HELLO validation and peer admission succeed.
    * Returns false if the connection has closed or its handshake deadline has elapsed.
+   * The caller closes the socket after releasing the admission lock on failure.
    */
   public static boolean handshakeCompleted(Channel socket) {
     PendingInboundConnectionHandler handler =
         socket.pipeline().get(PendingInboundConnectionHandler.class);
     if (!socket.isActive() || (handler != null && handler.isTimedOut())) {
-      socket.close();
       return false;
     }
     if (handler != null) {

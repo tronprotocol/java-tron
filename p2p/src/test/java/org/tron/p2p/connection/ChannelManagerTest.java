@@ -13,6 +13,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import org.apache.commons.lang3.ArrayUtils;
 import org.junit.After;
 import org.junit.Assert;
@@ -264,18 +265,83 @@ public class ChannelManagerTest {
     Assert.assertEquals(0, ChannelManager.getChannelCount());
   }
 
+  @Test
+  public void penaltyExtendsCooldownFromAnotherConnection() throws Exception {
+    Channel established = channel(false, 1);
+    hello(established, 1);
+    channel(false, 2).close();
+    Long cooldown = ChannelManager.getBannedNodes().getIfPresent(REMOTE.getAddress());
+    Assert.assertNotNull(cooldown);
+    Assert.assertTrue(established.getCtx().channel().isOpen());
+
+    long penalty = TimeUnit.HOURS.toMillis(1);
+    long before = System.currentTimeMillis();
+    established.close(penalty);
+
+    Long expiry = ChannelManager.getBannedNodes().getIfPresent(REMOTE.getAddress());
+    Assert.assertTrue(expiry >= before + penalty);
+    Assert.assertTrue(expiry > cooldown);
+    channel(false, 3).close();
+    Assert.assertEquals(expiry, ChannelManager.getBannedNodes().getIfPresent(REMOTE.getAddress()));
+  }
+
+  @Test
+  public void shorterPenaltyDoesNotShortenExistingBan() {
+    ChannelManager.banNode(REMOTE.getAddress(), TimeUnit.HOURS.toMillis(2));
+    Long expiry = ChannelManager.getBannedNodes().getIfPresent(REMOTE.getAddress());
+
+    ChannelManager.banNode(REMOTE.getAddress(), TimeUnit.HOURS.toMillis(1));
+
+    Assert.assertEquals(expiry, ChannelManager.getBannedNodes().getIfPresent(REMOTE.getAddress()));
+  }
+
+  @Test
+  public void ordinaryDisconnectsDoNotExtendCooldown() throws Exception {
+    Long expiry = System.currentTimeMillis() + Parameter.DEFAULT_BAN_TIME / 2;
+    ChannelManager.getBannedNodes().put(REMOTE.getAddress(), expiry);
+
+    channel(false, 1).close();
+    Assert.assertEquals(expiry, ChannelManager.getBannedNodes().getIfPresent(REMOTE.getAddress()));
+    // A raw socket close reaches notifyDisconnect without calling Channel.close().
+    channel(false, 2).getCtx().channel().close();
+    Assert.assertEquals(expiry, ChannelManager.getBannedNodes().getIfPresent(REMOTE.getAddress()));
+  }
+
+  @Test
+  public void expiredCooldownIsRenewedOnOrdinaryDisconnect() throws Exception {
+    long before = System.currentTimeMillis();
+    ChannelManager.getBannedNodes().put(REMOTE.getAddress(), before - 1);
+
+    channel(false, 1).close();
+
+    Assert.assertTrue(ChannelManager.getBannedNodes().getIfPresent(REMOTE.getAddress())
+        >= before + Parameter.DEFAULT_BAN_TIME);
+  }
+
+  @Test
+  public void expiredBanIsRenewedByPenalty() {
+    long before = System.currentTimeMillis();
+    ChannelManager.getBannedNodes().put(REMOTE.getAddress(), before - 1);
+    long penalty = TimeUnit.HOURS.toMillis(1);
+
+    ChannelManager.banNode(REMOTE.getAddress(), penalty);
+
+    Assert.assertTrue(ChannelManager.getBannedNodes().getIfPresent(REMOTE.getAddress())
+        >= before + penalty);
+  }
+
   private void clearChannels() {
     ChannelManager.getAllChannels().forEach(ChannelManager::notifyDisconnect);
     ChannelManager.getBannedNodes().invalidateAll();
   }
 
   @Test
-  public synchronized void testDiscoveryModeRejectsHelloMessage() throws Exception {
+  public synchronized void testNodeDetectModeRejectsHelloMessage() throws Exception {
     clearChannels();
     Parameter.p2pConfig = new P2pConfig();
 
     Channel channel = new Channel();
-    channel.setDiscoveryMode(true);
+    channel.setNodeDetectMode(true);
 
     InetSocketAddress addr = new InetSocketAddress("100.1.1.5", 18888);
     Field f = channel.getClass().getDeclaredField("inetSocketAddress");
@@ -304,11 +370,11 @@ public class ChannelManagerTest {
 
   @Test
   public void sameAddressHandshakesRemainRegisteredInBothCloseOrders() throws Exception {
-    for (boolean firstActive : new boolean[]{false, true}) {
+    for (boolean firstOutbound : new boolean[]{false, true}) {
       for (boolean closeFirst : new boolean[]{false, true}) {
         ChannelManager.getBannedNodes().invalidateAll();
-        Channel first = channel(firstActive, 1);
-        Channel second = channel(!firstActive, 2);
+        Channel first = channel(firstOutbound, 1);
+        Channel second = channel(!firstOutbound, 2);
         hello(first, 1);
         hello(second, 2);
         Assert.assertNotSame(first, second);
@@ -323,11 +389,11 @@ public class ChannelManagerTest {
         closed.close();
         Assert.assertTrue(survivor.getCtx().channel().isOpen());
         assertRegistered(survivor);
-        assertCounts(survivor.isActive() ? 1 : 0, survivor.isActive() ? 0 : 1);
+        assertCounts(survivor.isOutbound() ? 1 : 0, survivor.isOutbound() ? 0 : 1);
 
         ChannelManager.notifyDisconnect(closed);
         assertRegistered(survivor);
-        assertCounts(survivor.isActive() ? 1 : 0, survivor.isActive() ? 0 : 1);
+        assertCounts(survivor.isOutbound() ? 1 : 0, survivor.isOutbound() ? 0 : 1);
         survivor.close();
         assertRegistered();
         assertCounts(0, 0);
@@ -428,13 +494,13 @@ public class ChannelManagerTest {
     Assert.assertEquals(1, status.getCurrentConnections());
   }
 
-  private Channel channel(boolean active, long order) throws Exception {
+  private Channel channel(boolean outbound, long order) throws Exception {
     Channel channel = new Channel();
     EmbeddedChannel socket = new EmbeddedChannel(new ChannelInboundHandlerAdapter());
     sockets.add(socket);
     set(channel, "inetSocketAddress", REMOTE);
     set(channel, "inetAddress", REMOTE.getAddress());
-    set(channel, "isActive", active);
+    set(channel, "outbound", outbound);
     set(channel, "startTime", startTime + order);
     set(channel, "ctx", socket.pipeline().firstContext());
     // Mirror P2pChannelInitializer's normal-channel close callback without opening real sockets.
@@ -466,9 +532,9 @@ public class ChannelManagerTest {
     }
   }
 
-  private void assertCounts(int active, int passive) {
-    Assert.assertEquals(active, pool.getActivePeersCount().get());
-    Assert.assertEquals(passive, pool.getPassivePeersCount().get());
+  private void assertCounts(int outbound, int inbound) {
+    Assert.assertEquals(outbound, pool.getOutboundPeerCount().get());
+    Assert.assertEquals(inbound, pool.getInboundPeerCount().get());
   }
 
   private static void set(Channel channel, String name, Object value) throws Exception {
