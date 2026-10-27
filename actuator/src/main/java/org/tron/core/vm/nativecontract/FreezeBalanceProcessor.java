@@ -11,6 +11,7 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.DelegatedResourceCapsule;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.store.DynamicPropertiesStore;
+import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.nativecontract.param.FreezeBalanceParam;
 import org.tron.core.vm.repository.Repository;
 import org.tron.protos.Protocol;
@@ -80,6 +81,11 @@ public class FreezeBalanceProcessor {
     byte[] receiverAddress = param.getReceiverAddress();
     long frozenBalance = param.getFrozenBalance();
     AccountCapsule accountCapsule = repo.getAccount(ownerAddress);
+    if (VMConfig.allowTvmVotePowerOptimization()
+        && dynamicStore.supportAllowNewResourceModel()
+        && accountCapsule.oldTronPowerIsNotInitialized()) {
+      accountCapsule.initializeOldTronPower();
+    }
     // acquire or delegate resource
     if (param.isDelegating()) { // delegate resource
       switch (param.getResourceType()) {
