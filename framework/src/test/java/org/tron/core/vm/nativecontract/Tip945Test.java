@@ -36,6 +36,9 @@ import org.tron.core.consensus.ProposalService;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.store.StoreFactory;
 import org.tron.core.utils.ProposalUtil;
+import org.tron.core.vm.Op;
+import org.tron.core.vm.OperationRegistry;
+import org.tron.core.vm.VM;
 import org.tron.core.vm.config.ConfigLoader;
 import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.program.Program;
@@ -267,5 +270,83 @@ public class Tip945Test extends BaseTest {
     before = weights();
     program(repo, OWNER).suicide2(new DataWord(BENEFICIARY));
     assertArrayEquals(before, weights());
+  }
+
+  private Program opcodeProgram(boolean staticCall, long energy) {
+    VMConfig.initAllowTvmVote(1);
+    ProgramInvoke invoke = mock(ProgramInvoke.class);
+    when(invoke.getDeposit()).thenReturn(repo);
+    when(invoke.getContractAddress()).thenReturn(new DataWord(OWNER));
+    when(invoke.isStaticCall()).thenReturn(staticCall);
+    when(invoke.getEnergyLimit()).thenReturn(energy);
+    when(invoke.getVmShouldEndInUs()).thenReturn(Long.MAX_VALUE);
+    InternalTransaction transaction = mock(InternalTransaction.class);
+    when(transaction.getHash()).thenReturn(new byte[32]);
+    Program p = new Program(new byte[]{(byte) Op.VOTEWITNESS}, OWNER, invoke, transaction);
+    p.setRootTransactionId(new byte[32]);
+    p.memorySave(0, new DataWord(31).getData());
+    p.memorySave(2048, new DataWord(31).getData());
+    p.stackPush(new DataWord(0));
+    p.stackPush(new DataWord(31));
+    p.stackPush(new DataWord(2048));
+    p.stackPush(new DataWord(31));
+    return p;
+  }
+
+  @Test
+  public void actualVoteOpcodePushesZeroForOversizedInput() {
+    Program p = opcodeProgram(false, 1_000_000);
+    VM.play(p, OperationRegistry.prepareAndGetTable(false));
+    assertNull(p.getResult().getException());
+    assertEquals(1, p.getStack().size());
+    assertEquals(DataWord.ZERO(), p.getStack().peek());
+    assertEquals(1, p.getNonce());
+    assertTrue(p.getResult().getInternalTransactions().get(0).isRejected());
+    assertEquals("", p.getResult().getInternalTransactions().get(0).getExtra());
+    assertNull(repo.getVotes(OWNER));
+  }
+
+  @Test
+  public void actualOpcodeEnergyAndStaticChecksPrecedeCountRejection() {
+    for (long activation : new long[]{0, 1}) {
+      VMConfig.initAllowTvmResourceOptimization(activation);
+      Program insufficient = opcodeProgram(true, 1);
+      VM.play(insufficient, OperationRegistry.prepareAndGetTable(false));
+      assertTrue(insufficient.getResult().getException() instanceof Program.OutOfEnergyException);
+      assertEquals(0, insufficient.getNonce());
+      assertTrue(insufficient.getResult().getInternalTransactions().isEmpty());
+      Program staticCall = opcodeProgram(true, 1_000_000);
+      VM.play(staticCall, OperationRegistry.prepareAndGetTable(false));
+      assertTrue(staticCall.getResult().getException()
+          instanceof Program.StaticCallModificationException);
+      assertEquals(0, staticCall.getNonce());
+      assertTrue(staticCall.getResult().getInternalTransactions().isEmpty());
+      assertNull(repo.getVotes(OWNER));
+    }
+  }
+
+  @Test
+  public void independentActivationPreservesVotingStateAndWeightBoundaries() {
+    for (long power : new long[]{0, 1}) {
+      for (long resource : new long[]{0, 1}) {
+        setup();
+        VMConfig.initAllowTvmVotePowerOptimization(power);
+        VMConfig.initAllowTvmResourceOptimization(resource);
+        stake(OWNER, BANDWIDTH, 1_600_000);
+        stake(BENEFICIARY, BANDWIDTH, 2_600_000);
+        Program p = program(repo, OWNER);
+        p.memorySave(0, new DataWord(31).getData());
+        p.memorySave(2048, new DataWord(31).getData());
+        assertFalse(p.voteWitness(0, 31, 2048, 31));
+        assertEquals(0, legacy(OWNER));
+        assertEquals(resource == 1,
+            p.getResult().getInternalTransactions().get(0).getExtra().isEmpty());
+        long before = repo.getTotalNetWeight();
+        p.suicide2(new DataWord(BENEFICIARY));
+        assertEquals(before + resource, repo.getTotalNetWeight());
+        assertEquals(power == 1 ? -1 : 0, legacy(OWNER));
+        assertEquals(power == 1 ? 2_600_000 : 0, legacy(BENEFICIARY));
+      }
+    }
   }
 }
