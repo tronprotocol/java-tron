@@ -298,6 +298,8 @@ public class PendingInboundConnectionHandlerTest {
     EmbeddedChannel socket = inbound(REMOTE_IP);
     socket.advanceTimeBy(Parameter.HANDSHAKE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
     Assert.assertFalse(PendingInboundConnectionHandler.handshakeCompleted(socket));
+    Assert.assertTrue(socket.isOpen());
+    socket.close();
     Assert.assertFalse(socket.isOpen());
     Assert.assertTrue(inbound(REMOTE_IP).isOpen());
     Assert.assertTrue(inbound(REMOTE_IP).isOpen());
@@ -308,6 +310,8 @@ public class PendingInboundConnectionHandlerTest {
     EmbeddedChannel socket = inbound(REMOTE_IP);
     Channel channel = initializeProtocol(socket);
     int[] replies = {0};
+    boolean[] closeObserved = {false};
+    boolean[] closedUnderLock = {false};
     socket.pipeline().addFirst("delayHelloReply", new ChannelOutboundHandlerAdapter() {
       @Override
       public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) {
@@ -315,6 +319,13 @@ public class PendingInboundConnectionHandlerTest {
         // Let the deadline pass during the reply without running the scheduled timeout task.
         socket.advanceTimeBy(Parameter.HANDSHAKE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
         ctx.write(msg, promise);
+      }
+
+      @Override
+      public void close(ChannelHandlerContext ctx, ChannelPromise promise) {
+        closeObserved[0] = true;
+        closedUnderLock[0] |= Thread.holdsLock(ChannelManager.class);
+        ctx.close(promise);
       }
     });
 
@@ -324,6 +335,8 @@ public class PendingInboundConnectionHandlerTest {
     Assert.assertTrue(channel.isDisconnect());
     Assert.assertFalse(channel.isFinishHandshake());
     Assert.assertEquals(1, replies[0]);
+    Assert.assertTrue(closeObserved[0]);
+    Assert.assertFalse(closedUnderLock[0]);
     Assert.assertEquals(0, connectCallbacks);
     Assert.assertTrue(ChannelManager.getChannels().isEmpty());
     Assert.assertTrue(inbound(REMOTE_IP).isOpen());

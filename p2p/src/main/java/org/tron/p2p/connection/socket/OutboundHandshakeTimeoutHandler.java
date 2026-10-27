@@ -20,12 +20,14 @@ public final class OutboundHandshakeTimeoutHandler extends ChannelInboundHandler
   private ScheduledFuture<?> timeoutTask;
   private boolean handshakeComplete;
 
-  /** Called on the event loop after HELLO validation and peer admission succeed. */
+  /**
+   * Called on the event loop after HELLO validation and peer admission succeed.
+   * The caller closes the socket after releasing the admission lock if this returns false.
+   */
   public static boolean handshakeCompleted(Channel socket) {
     OutboundHandshakeTimeoutHandler handler =
         socket.pipeline().get(OutboundHandshakeTimeoutHandler.class);
     if (!socket.isActive() || (handler != null && handler.isTimedOut())) {
-      socket.close();
       return false;
     }
     if (handler != null) {
