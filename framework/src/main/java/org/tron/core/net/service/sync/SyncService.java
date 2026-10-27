@@ -341,7 +341,7 @@ public class SyncService {
   private void processSyncBlock(BlockCapsule block, PeerConnection peerConnection) {
     BlockId blockId = block.getBlockId();
     try {
-      tronNetDelegate.validSignature(block);
+      tronNetDelegate.validBlock(block);
       tronNetDelegate.processBlock(block, true);
       peerConnection.setBlockRcvTime(System.currentTimeMillis());
       pbftDataSyncHandler.processPBFTCommitData(block);

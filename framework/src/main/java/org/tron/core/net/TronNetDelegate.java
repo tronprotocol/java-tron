@@ -62,10 +62,14 @@ import org.tron.core.net.message.adv.TransactionMessage;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.store.WitnessScheduleStore;
 import org.tron.protos.Protocol.Inventory.InventoryType;
+import org.tron.protos.Protocol.Transaction;
 
 @Slf4j(topic = "net")
 @Component
 public class TronNetDelegate {
+
+  // Keep Merkle leaf encodings larger than the 64-byte internal-node input.
+  private static final int MIN_TRANSACTION_SIZE = 80;
 
   @Autowired
   private Manager dbManager;
@@ -88,8 +92,6 @@ public class TronNetDelegate {
   private volatile boolean backupServerStartFlag;
 
   private int blockIdCacheSize = 100;
-
-  private long timeout = 1000;
 
   @Getter // for test
   private volatile boolean  hitDown = false;
@@ -352,10 +354,19 @@ public class TronNetDelegate {
   }
 
   public void validBlock(BlockCapsule block) throws P2pException {
-    long time = System.currentTimeMillis();
-    if (block.getTimeStamp() - time > timeout) {
-      throw new P2pException(TypeEnum.BAD_BLOCK,
-              "time:" + time + ",block time:" + block.getTimeStamp());
+    for (Transaction transaction : block.getInstance().getTransactionsList()) {
+      int contractCount = transaction.getRawData().getContractCount();
+      if (contractCount != 1) {
+        throw new P2pException(TypeEnum.BAD_BLOCK,
+            "Invalid contract count: " + contractCount
+                + ", block: " + block.getBlockId().getString());
+      }
+      int transactionSize = transaction.getSerializedSize();
+      if (transactionSize < MIN_TRANSACTION_SIZE) {
+        throw new P2pException(TypeEnum.BAD_BLOCK,
+            "Invalid transaction size: " + transactionSize
+                + ", block: " + block.getBlockId().getString());
+      }
     }
     try {
       block.validateMerkleRoot();

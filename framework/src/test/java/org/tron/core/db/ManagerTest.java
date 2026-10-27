@@ -8,13 +8,13 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.tron.common.utils.Commons.adjustAssetBalanceV2;
 import static org.tron.common.utils.Commons.adjustTotalShieldedPoolValue;
 import static org.tron.common.utils.Commons.getExchangeStoreFinal;
 import static org.tron.common.utils.StringUtil.encode58Check;
-import static org.tron.core.exception.BadBlockException.TypeEnum.CALC_MERKLE_ROOT_FAILED;
 import static org.tron.protos.Protocol.Transaction.Result.contractResult.SUCCESS;
 
 import com.beust.jcommander.internal.Lists;
@@ -106,6 +106,7 @@ import org.tron.core.exception.VMIllegalException;
 import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.exception.ZksnarkException;
+import org.tron.core.net.TronNetDelegate;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.CodeStore;
 import org.tron.core.store.DynamicPropertiesStore;
@@ -506,23 +507,21 @@ public class ManagerTest extends BaseMethodTest {
   }
 
   @Test
-  public void pushBlockInvalidMerkelRoot() {
-    Transaction trx = Transaction.newBuilder().build();
-    TransactionCapsule moreTrans = new TransactionCapsule(trx);
-    blockCapsule2.addTransaction(moreTrans);  // add one more transaction will change merkroot
-    blockCapsule2.sign(ByteArray.fromHexString(Args.getLocalWitnesses()
-        .getPrivateKey()));
-    try {
-      dbManager.pushBlock(blockCapsule2);
-      Assert.assertTrue(false);
-    } catch (BadBlockException e) {
-      Assert.assertTrue(e instanceof BadBlockException);
-      Assert.assertTrue(e.getType().equals(CALC_MERKLE_ROOT_FAILED));
-      Assert.assertTrue(e.getMessage().startsWith(
-          "merkle root mismatch for block " + blockCapsule2.getNum() + ":"));
-    } catch (Exception e) {
-      Assert.assertFalse(e instanceof Exception);
-    }
+  public void pushPrevalidatedBlockDoesNotRepeatMerkleValidation() throws Exception {
+    byte[] witnessKey = ByteArray.fromHexString(Args.getLocalWitnesses().getPrivateKey());
+    BlockCapsule block = new BlockCapsule(1, chainManager.getGenesisBlockId(), 1,
+        ByteString.copyFrom(ECKey.fromPrivate(witnessKey).getAddress()));
+    block.setMerkleRoot();
+    block.sign(witnessKey);
+    BlockCapsule received = spy(block);
+
+    context.getBean(TronNetDelegate.class).validBlock(received);
+    dbManager.pushBlock(received);
+
+    Assert.assertEquals(received.getBlockId(), chainManager.getHeadBlockId());
+    Assert.assertEquals(received.getInstance(),
+        chainManager.getBlockStore().get(received.getBlockId().getBytes()).getInstance());
+    verify(received, times(1)).validateMerkleRoot();
   }
 
   @Test
