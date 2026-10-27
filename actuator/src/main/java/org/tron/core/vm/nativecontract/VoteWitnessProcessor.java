@@ -17,6 +17,7 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.VotesCapsule;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.nativecontract.param.VoteWitnessParam;
 import org.tron.core.vm.repository.Repository;
 import org.tron.core.vm.utils.VoteRewardUtil;
@@ -41,6 +42,11 @@ public class VoteWitnessProcessor {
     VoteRewardUtil.withdrawReward(ownerAddress, repo);
 
     AccountCapsule accountCapsule = repo.getAccount(ownerAddress);
+    if (VMConfig.allowTvmVotePowerOptimization()
+        && repo.getDynamicPropertiesStore().supportAllowNewResourceModel()
+        && accountCapsule.oldTronPowerIsNotInitialized()) {
+      accountCapsule.initializeOldTronPower();
+    }
 
     VotesCapsule votesCapsule = repo.getVotes(ownerAddress);
     if (votesCapsule == null) {
