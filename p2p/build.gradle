@@ -82,6 +82,7 @@ configurations.configureEach {
 }
 
 dependencies {
+    implementation platform("io.netty:netty-bom:${rootProject.nettyVersion}")
     // protobuf & grpc (implementation scope: not leaked to consumers)
     implementation "com.google.protobuf:protobuf-java:${rootProject.protobufVersion}"
     implementation "com.google.protobuf:protobuf-java-util:${rootProject.protobufVersion}"
