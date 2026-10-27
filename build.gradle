@@ -6,7 +6,7 @@ plugins {
 }
 
 ext {
-    grpcVersion = "1.85.1"
+    grpcVersion = "1.85.0"
     // Netty 4.2 split io.netty.handler.codec.protobuf out of netty-codec into its
     // own artifact. :framework and :p2p declare that codec directly, while the
     // Netty BOM in :protocol and :p2p aligns the modules brought in by grpc-netty.
