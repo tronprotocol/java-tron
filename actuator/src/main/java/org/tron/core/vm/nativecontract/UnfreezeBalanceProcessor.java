@@ -105,7 +105,15 @@ public class UnfreezeBalanceProcessor {
     byte[] ownerAddress = param.getOwnerAddress();
     byte[] receiverAddress = param.getReceiverAddress();
 
+    boolean optimizeVotePower = VMConfig.allowTvmVotePowerOptimization()
+        && repo.getDynamicPropertiesStore().supportAllowNewResourceModel();
+    if (optimizeVotePower) {
+      VoteRewardUtil.withdrawReward(ownerAddress, repo);
+    }
     AccountCapsule accountCapsule = repo.getAccount(ownerAddress);
+    if (optimizeVotePower && accountCapsule.oldTronPowerIsNotInitialized()) {
+      accountCapsule.initializeOldTronPower();
+    }
     long oldBalance = accountCapsule.getBalance();
     long unfreezeBalance = 0L;
 
@@ -201,6 +209,22 @@ public class UnfreezeBalanceProcessor {
     }
 
     repo.updateAccount(accountCapsule.createDbKey(), accountCapsule);
+
+    if (optimizeVotePower) {
+      if (!accountCapsule.oldTronPowerIsInvalid()) {
+        VotesCapsule votesCapsule = repo.getVotes(ownerAddress);
+        if (votesCapsule == null) {
+          votesCapsule = new VotesCapsule(ByteString.copyFrom(ownerAddress),
+              accountCapsule.getVotesList());
+        }
+        votesCapsule.clearNewVotes();
+        accountCapsule.clearVotes();
+        accountCapsule.invalidateOldTronPower();
+        repo.updateVotes(ownerAddress, votesCapsule);
+        repo.updateAccount(ownerAddress, accountCapsule);
+      }
+      return unfreezeBalance;
+    }
 
     if (VMConfig.allowTvmVote() && !accountCapsule.getVotesList().isEmpty()) {
       long usedTronPower = 0;
