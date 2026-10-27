@@ -238,6 +238,32 @@ public class BlockMsgHandlerTest extends BaseTest {
   }
 
   @Test
+  public void testFutureBlockRejectedBeforeAdvertisedOrSyncProcessing() throws Exception {
+    for (boolean syncResponse : new boolean[]{false, true}) {
+      BlockCapsule block = new BlockCapsule(1, Sha256Hash.ZERO_HASH,
+          System.currentTimeMillis() + 60000, ByteString.EMPTY);
+      BlockMessage message = new BlockMessage(block);
+      PeerConnection sender = witnessPeer();
+      if (syncResponse) {
+        sender.getSyncBlockRequested().put(message.getBlockId(), 0L);
+      } else {
+        sender.getAdvInvRequest().put(new Item(message.getBlockId(), InventoryType.BLOCK), 0L);
+      }
+      TronNetDelegate delegate = Mockito.mock(TronNetDelegate.class);
+      AdvService adv = Mockito.mock(AdvService.class);
+      SyncService sync = Mockito.mock(SyncService.class);
+      BlockMsgHandler ingress = witnessHandler(delegate, adv, sync);
+
+      P2pException error = Assert.assertThrows(P2pException.class,
+          () -> ingress.processMessage(sender, message));
+
+      Assert.assertEquals(P2pException.TypeEnum.BAD_MESSAGE, error.getType());
+      Assert.assertEquals("block time error", error.getMessage());
+      Mockito.verifyNoInteractions(delegate, adv, sync);
+    }
+  }
+
+  @Test
   public void testInvalidContractCountRejectedBeforeBroadcast() throws Exception {
     for (boolean fastForward : new boolean[]{false, true}) {
       for (int count : new int[]{0, 2}) {

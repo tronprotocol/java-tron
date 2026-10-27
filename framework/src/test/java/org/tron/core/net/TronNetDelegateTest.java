@@ -425,7 +425,7 @@ public class TronNetDelegateTest {
   }
 
   @Test
-  public void testFutureTimeCutoffAppliesToCommonAndAdvertisedBlocks() throws Exception {
+  public void testCommonAndAdvertisedValidationDoNotRepeatIngressClockCheck() throws Exception {
     TronNetDelegate delegate = signatureDelegate();
     BlockCapsule block = Mockito.spy(new BlockCapsule(1, Sha256Hash.ZERO_HASH,
         System.currentTimeMillis() + 60000, ByteString.copyFromUtf8("witness")));
@@ -436,16 +436,11 @@ public class TronNetDelegateTest {
         .when(schedule).getActiveWitnesses();
     setField(delegate, "witnessScheduleStore", schedule);
 
-    P2pException commonError = Assert.assertThrows(P2pException.class,
-        () -> delegate.validBlock(block));
-    P2pException advertisedError = Assert.assertThrows(P2pException.class,
-        () -> delegate.validAdvBlock(new PeerConnection(), block));
+    delegate.validBlock(block);
+    Assert.assertTrue(delegate.validAdvBlock(new PeerConnection(), block));
 
-    Assert.assertEquals(TypeEnum.BAD_BLOCK, commonError.getType());
-    Assert.assertEquals(TypeEnum.BAD_BLOCK, advertisedError.getType());
-    Assert.assertTrue(commonError.getMessage().contains("block time:"));
-    Assert.assertTrue(advertisedError.getMessage().contains("block time:"));
-    Mockito.verify(block, Mockito.never()).validateSignature(Mockito.any(), Mockito.any());
+    Mockito.verify(block, Mockito.times(2)).validateMerkleRoot();
+    Mockito.verify(block, Mockito.times(2)).validateSignature(Mockito.any(), Mockito.any());
   }
 
   @Test

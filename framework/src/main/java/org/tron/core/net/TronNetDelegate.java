@@ -93,8 +93,6 @@ public class TronNetDelegate {
 
   private int blockIdCacheSize = 100;
 
-  private long timeout = 1000;
-
   @Getter // for test
   private volatile boolean  hitDown = false;
 
@@ -356,11 +354,6 @@ public class TronNetDelegate {
   }
 
   public void validBlock(BlockCapsule block) throws P2pException {
-    long time = System.currentTimeMillis();
-    if (block.getTimeStamp() - time > timeout) {
-      throw new P2pException(TypeEnum.BAD_BLOCK,
-          "time:" + time + ",block time:" + block.getTimeStamp());
-    }
     for (Transaction transaction : block.getInstance().getTransactionsList()) {
       int contractCount = transaction.getRawData().getContractCount();
       if (contractCount != 1) {
