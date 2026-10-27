@@ -850,6 +850,10 @@ public class Manager {
       TooBigTransactionException, TransactionExpirationException,
       ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException {
 
+    if (trx.hasAuths()) {
+      throw new ContractValidateException("Transaction auths are not supported.");
+    }
+
     if (isShieldedTransaction(trx.getInstance()) && !chainBaseManager.getDynamicPropertiesStore()
         .supportShieldedTransaction()) {
       throw new ContractValidateException("ShieldedTransferContract is not supported.");
