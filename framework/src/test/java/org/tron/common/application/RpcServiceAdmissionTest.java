@@ -66,6 +66,8 @@ import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.Timeout;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mockito;
 import org.tron.api.DatabaseGrpc;
 import org.tron.api.GrpcAPI;
 import org.tron.api.MonitorGrpc;
@@ -389,30 +391,58 @@ public class RpcServiceAdmissionTest {
   }
 
   @Test
+  @SuppressWarnings("unchecked")
   public void laterMessagesOnARejectedUnaryCallAreIgnored() throws Exception {
     Transaction flood = Transaction.parseFrom(retFlood(BUDGET + 1));
-    int before = HANDLER_CALLS.get();
-    // A unary call that carries a rejected message followed by a valid one.
-    assertEquals(Status.Code.INVALID_ARGUMENT,
-        rawUnaryCall(Arrays.asList(flood, legitimate())).getCode());
-    // A valid message followed by a rejected one.
-    assertEquals(Status.Code.INVALID_ARGUMENT,
-        rawUnaryCall(Arrays.asList(legitimate(), flood)).getCode());
-    // Two rejected messages: one rejection, counted once.
+    AtomicInteger delivered = new AtomicInteger();
+    AtomicInteger halfClosed = new AtomicInteger();
+    ServerMethodDefinition<Transaction, GrpcAPI.Return> guarded = GuardedRequestMarshaller.guard(
+        ServerMethodDefinition.create(WalletGrpc.getBroadcastTransactionMethod(),
+            (call, headers) -> new ServerCall.Listener<Transaction>() {
+              @Override
+              public void onMessage(Transaction message) {
+                delivered.incrementAndGet();
+              }
+
+              @Override
+              public void onHalfClose() {
+                halfClosed.incrementAndGet();
+              }
+            }), MAX_MESSAGE, BUDGET);
+    GuardedRequestMarshaller<Transaction> marshaller =
+        (GuardedRequestMarshaller<Transaction>) guarded.getMethodDescriptor()
+            .getRequestMarshaller();
+
+    // A unary client cannot reliably send multiple messages after the server closes the call.
+    // Exercise the server listener directly to verify its behavior on later messages.
     CommonParameter parameter = CommonParameter.getInstance();
     boolean metrics = parameter.metricsPrometheusEnable;
     parameter.metricsPrometheusEnable = true;
     try {
       String name = WalletGrpc.getBroadcastTransactionMethod().getFullMethodName();
-      double rejected = rejections(name, Reason.OVER_BUDGET);
-      assertEquals(Status.Code.INVALID_ARGUMENT,
-          rawUnaryCall(Arrays.asList(flood, flood)).getCode());
-      assertEquals(rejected + 1, rejections(name, Reason.OVER_BUDGET), 0);
+      for (Transaction[] messages : new Transaction[][] {
+          {flood, legitimate()}, {legitimate(), flood}, {flood, flood}}) {
+        double rejected = rejections(name, Reason.OVER_BUDGET);
+        int deliveredBefore = delivered.get();
+        ServerCall<Transaction, GrpcAPI.Return> call = Mockito.mock(ServerCall.class);
+        Mockito.when(call.getMethodDescriptor()).thenReturn(guarded.getMethodDescriptor());
+        ServerCall.Listener<Transaction> listener =
+            guarded.getServerCallHandler().startCall(call, new Metadata());
+        for (Transaction message : messages) {
+          listener.onMessage(marshaller.parse(new ByteArrayInputStream(message.toByteArray())));
+        }
+        listener.onHalfClose();
+
+        ArgumentCaptor<Status> status = ArgumentCaptor.forClass(Status.class);
+        Mockito.verify(call).close(status.capture(), Mockito.any(Metadata.class));
+        assertEquals(Status.Code.INVALID_ARGUMENT, status.getValue().getCode());
+        assertEquals(messages[0] == flood ? 0 : 1, delivered.get() - deliveredBefore);
+        assertEquals(0, halfClosed.get());
+        assertEquals(rejected + 1, rejections(name, Reason.OVER_BUDGET), 0);
+      }
     } finally {
       parameter.metricsPrometheusEnable = metrics;
     }
-    assertEquals(before, HANDLER_CALLS.get());
-    awaitTrue(() -> STARTED.get() == FINISHED.get());
   }
 
   @Test
@@ -594,25 +624,6 @@ public class RpcServiceAdmissionTest {
 
   private static Transaction legitimate() {
     return Transaction.newBuilder().addSignature(ByteString.copyFrom(new byte[65])).build();
-  }
-
-  private static Status rawUnaryCall(List<Transaction> messages) throws Exception {
-    ClientCall<Transaction, GrpcAPI.Return> call = channel.newCall(
-        WalletGrpc.getBroadcastTransactionMethod(),
-        CallOptions.DEFAULT.withDeadlineAfter(DEADLINE_SECONDS, TimeUnit.SECONDS));
-    CompletableFuture<Status> closed = new CompletableFuture<>();
-    call.start(new ClientCall.Listener<GrpcAPI.Return>() {
-      @Override
-      public void onClose(Status status, Metadata trailers) {
-        closed.complete(status);
-      }
-    }, new Metadata());
-    call.request(1);
-    for (Transaction message : messages) {
-      call.sendMessage(message);
-    }
-    call.halfClose();
-    return closed.get(DEADLINE_SECONDS, TimeUnit.SECONDS);
   }
 
   private static final MethodDescriptor.Marshaller<byte[]> RAW =
