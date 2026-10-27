@@ -58,10 +58,11 @@ public class BlockAlreadyKnownCounterTest {
   private boolean metricsEnabledBefore;
 
   @Before
-  public void setUp() {
+  public void setUp() throws P2pException {
     metricsEnabledBefore = CommonParameter.getInstance().isMetricsPrometheusEnable();
     CommonParameter.getInstance().setMetricsPrometheusEnable(true);
     delegate = mock(TronNetDelegate.class);
+    when(delegate.validAdvBlock(any(), any())).thenReturn(true);
     handler = new BlockMsgHandler();
     ReflectUtils.setFieldValue(handler, "tronNetDelegate", delegate);
     ReflectUtils.setFieldValue(handler, "advService", mock(AdvService.class));

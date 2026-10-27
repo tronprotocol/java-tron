@@ -42,6 +42,12 @@ public class MetricKeys {
     public static final String DB_SST_LEVEL = "tron:db_sst_level";
     public static final String MANAGER_QUEUE = "tron:manager_queue_size";
     public static final String TX_CACHE = "tron:tx_cache";
+    // per local consensus witness miner; value 1, label is the Base58Check witness address
+    public static final String WITNESS_ADDRESS = "tron:witness_address";
+    // numeric backup-election role of this node: 0 = init, 1 = master, 2 = slaver
+    public static final String NODE_ROLE = "tron:node_role";
+    // witness flag of this node: 0 = not witness, 1 = witness
+    public static final String IS_WITNESS = "tron:is_witness";
 
     private Gauge() {
       throw new IllegalStateException("Gauge");
