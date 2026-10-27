@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 
 import java.io.ByteArrayOutputStream;
 import java.util.HashSet;
+import java.util.Random;
 import java.util.Set;
 import org.junit.Test;
 import org.tron.core.vm.Op;
@@ -26,12 +27,47 @@ public class JumpDestBitmapTest {
     assertEquals(false, analysis.hasJumpDest(Integer.MIN_VALUE));
   }
 
+  @Test
+  public void singleJumpDestDoesNotSetOtherBits() {
+    for (int length = 1; length <= 65; length++) {
+      for (int dest = 0; dest < length; dest++) {
+        byte[] ops = new byte[length];
+        ops[dest] = op(Op.JUMPDEST);
+        ProgramPrecompile analysis = ProgramPrecompile.compile(ops);
+        for (int pc = -1; pc <= length; pc++) {
+          assertEquals("length " + length + " dest " + dest + " pc " + pc,
+              pc == dest, analysis.hasJumpDest(pc));
+        }
+      }
+    }
+  }
+
+  @Test
+  public void randomBytecodeMatchesTheOldJumpDestSet() {
+    Random random = new Random(0x5b60617fL);
+    for (int sample = 0; sample < 10000; sample++) {
+      byte[] ops = new byte[random.nextInt(8193)];
+      random.nextBytes(ops);
+      // Exercise both arbitrary bytecode and bytecode with densely packed destinations.
+      if ((sample & 1) != 0) {
+        for (int pc = 0; pc < ops.length; pc++) {
+          if (random.nextInt(4) == 0) {
+            ops[pc] = op(Op.JUMPDEST);
+          }
+        }
+      }
+      assertSame(ops);
+    }
+  }
+
   private static void assertSame(byte[] ops) {
     ProgramPrecompile analysis = ProgramPrecompile.compile(ops);
     Set<Integer> expected = oldJumpDests(ops);
     for (int pc = -2; pc <= ops.length + 2; pc++) {
       assertEquals(ops.length + " pc " + pc, expected.contains(pc), analysis.hasJumpDest(pc));
     }
+    assertEquals(false, analysis.hasJumpDest(Integer.MIN_VALUE));
+    assertEquals(false, analysis.hasJumpDest(Integer.MAX_VALUE));
   }
 
   private static Set<Integer> oldJumpDests(byte[] ops) {
