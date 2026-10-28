@@ -36,7 +36,7 @@ dependencies {
         exclude group: 'com.google.protobuf'
         exclude group: 'com.google.protobuf.nano'
     }
-    // http
+    // http. the latest version supporting JDK1.8 is 9.x.x
     implementation 'org.eclipse.jetty:jetty-server:9.4.58.v20250814'
     implementation 'org.eclipse.jetty:jetty-servlet:9.4.58.v20250814'
     // end http
