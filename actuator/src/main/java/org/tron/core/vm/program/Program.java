@@ -2351,6 +2351,9 @@ public class Program {
     if (witnessArrayLength != amountArrayLength) {
       logger.warn("TVM VoteWitness: witness array length {} does not match amount array length {}",
           witnessArrayLength, amountArrayLength);
+      if (VMConfig.allowTvmResourceOptimization() && internalTx != null) {
+        internalTx.reject();
+      }
       return false;
     }
 

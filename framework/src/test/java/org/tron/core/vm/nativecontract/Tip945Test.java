@@ -173,10 +173,16 @@ public class Tip945Test extends BaseTest {
     Program p = arrays(32, 31);
     assertThrows(Program.BytecodeExecutionException.class,
         () -> p.voteWitness(0, 31, 2048, 31));
-    Program mismatch = arrays(31, 30);
-    assertFalse(mismatch.voteWitness(0, 31, 2048, 30));
-    assertFalse(mismatch.getResult().getInternalTransactions().get(0).isRejected());
-    verify(mismatch, never()).memoryChunk(anyInt(), anyInt());
+    for (long activation : new long[]{0, 1}) {
+      VMConfig.initAllowTvmResourceOptimization(activation);
+      Program mismatch = arrays(31, 30);
+      assertFalse(mismatch.voteWitness(0, 31, 2048, 30));
+      InternalTransaction tx = mismatch.getResult().getInternalTransactions().get(0);
+      assertEquals(activation == 1, tx.isRejected());
+      assertEquals("", tx.getExtra());
+      assertNull(repo.getVotes(OWNER));
+      verify(mismatch, never()).memoryChunk(anyInt(), anyInt());
+    }
   }
 
   @Test
