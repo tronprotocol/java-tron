@@ -2,12 +2,14 @@ package org.tron.p2p.connection;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.channel.ChannelOutboundBuffer;
 import io.netty.channel.embedded.EmbeddedChannel;
 import io.netty.handler.codec.CorruptedFrameException;
 import io.netty.handler.timeout.ReadTimeoutException;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.net.InetSocketAddress;
+import java.util.concurrent.TimeUnit;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -105,6 +107,36 @@ public class ChannelCoreTest {
     Assert.assertEquals(MessageType.KEEP_ALIVE_PING.getType(), written.getByte(0));
     Assert.assertTrue(channel.getLastSendTime() > 0);
     netty.finishAndReleaseAll();
+  }
+
+  @Test
+  public void stalledWriteClosesConnectionAfterTenSeconds() throws Exception {
+    EmbeddedChannel netty = new EmbeddedChannel() {
+      @Override
+      protected void doWrite(ChannelOutboundBuffer buffer) {
+        // A socket whose remote peer does not read: leave writes pending in Netty.
+      }
+    };
+    netty.freezeTime();
+    Channel channel = new Channel();
+    channel.init(netty.pipeline(), "", false);
+    attach(channel, netty);
+    Field ctx = Channel.class.getDeclaredField("ctx");
+    ctx.setAccessible(true);
+    ctx.set(channel, netty.pipeline().lastContext());
+    try {
+      channel.send(new PingMessage());
+      netty.advanceTimeBy(9, TimeUnit.SECONDS);
+      netty.runScheduledPendingTasks();
+      Assert.assertTrue(netty.isOpen());
+
+      netty.advanceTimeBy(1, TimeUnit.SECONDS);
+      netty.runScheduledPendingTasks();
+      Assert.assertFalse("a pending write must time out even without a business queue",
+          netty.isOpen());
+    } finally {
+      netty.finishAndReleaseAll();
+    }
   }
 
   @Test
