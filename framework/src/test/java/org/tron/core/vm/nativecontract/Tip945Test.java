@@ -278,6 +278,20 @@ public class Tip945Test extends BaseTest {
     assertArrayEquals(before, weights());
   }
 
+  @Test
+  public void correctedTransferDeltaPreservesPreExistingGlobalWeightOffset() {
+    stake(OWNER, ENERGY, 1_600_000);
+    stake(BENEFICIARY, ENERGY, 2_600_000);
+    // Per-account weights total 3; retain a pre-existing global shortfall of 1.
+    repo.addTotalEnergyWeight(2 - repo.getTotalEnergyWeight());
+    program(repo, OWNER).suicide2(new DataWord(BENEFICIARY));
+    assertEquals(0, repo.getAccount(OWNER).getFrozenV2BalanceForEnergy());
+    assertEquals(4_200_000, repo.getAccount(BENEFICIARY).getFrozenV2BalanceForEnergy());
+    assertEquals(3, repo.getTotalEnergyWeight());
+    assertEquals(1, repo.getAccount(BENEFICIARY).getFrozenV2BalanceForEnergy()
+        / TRX_PRECISION - repo.getTotalEnergyWeight());
+  }
+
   private Program opcodeProgram(boolean staticCall, long energy) {
     VMConfig.initAllowTvmVote(1);
     ProgramInvoke invoke = mock(ProgramInvoke.class);
