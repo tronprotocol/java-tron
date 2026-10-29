@@ -435,6 +435,11 @@ public class ProposalService extends ProposalUtil {
               .saveAllowTvmVotePowerOptimization(entry.getValue());
           break;
         }
+        case ALLOW_TVM_RESOURCE_OPTIMIZATION: {
+          manager.getDynamicPropertiesStore()
+              .saveAllowTvmResourceOptimization(entry.getValue());
+          break;
+        }
         default:
           find = false;
           break;
