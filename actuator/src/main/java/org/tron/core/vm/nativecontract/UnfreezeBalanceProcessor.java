@@ -210,7 +210,7 @@ public class UnfreezeBalanceProcessor {
 
     repo.updateAccount(accountCapsule.createDbKey(), accountCapsule);
 
-    if (optimizeVotePower) {
+    if (optimizeVotePower && repo.getDynamicPropertiesStore().supportUnfreezeDelay()) {
       if (!accountCapsule.oldTronPowerIsInvalid()) {
         VotesCapsule votesCapsule = repo.getVotes(ownerAddress);
         if (votesCapsule == null) {
@@ -245,6 +245,11 @@ public class UnfreezeBalanceProcessor {
         repo.updateVotes(ownerAddress, votesCapsule);
         repo.updateAccount(ownerAddress, accountCapsule);
       }
+    }
+
+    if (optimizeVotePower && !accountCapsule.oldTronPowerIsInvalid()) {
+      accountCapsule.invalidateOldTronPower();
+      repo.updateAccount(ownerAddress, accountCapsule);
     }
 
     return unfreezeBalance;
