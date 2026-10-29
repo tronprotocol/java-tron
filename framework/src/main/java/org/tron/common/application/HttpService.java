@@ -109,8 +109,8 @@ public abstract class HttpService extends AbstractService {
   protected ServletContextHandler initContextHandler() {
     ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
     context.setContextPath(this.contextPath);
-    AccurateSizeLimitHandler sizeLimitHandler =
-        new AccurateSizeLimitHandler(this.maxRequestSize);
+    RequestSizeLimitHandler sizeLimitHandler =
+        new RequestSizeLimitHandler(this.maxRequestSize);
     sizeLimitHandler.setHandler(context);
     this.apiServer.setHandler(sizeLimitHandler);
     return context;
@@ -123,7 +123,7 @@ public abstract class HttpService extends AbstractService {
   }
 
   /**
-   * For oversized requests (the 413 thrown by AccurateSizeLimitHandler during dispatch) logs the
+   * For oversized requests (the 413 thrown by RequestSizeLimitHandler during dispatch) logs the
    * detail server-side and returns the short, uniform bad-message page, instead of the
    * default error page that leaks the exception stack and internal request sizes. All
    * other errors keep Jetty's default handling.

@@ -43,8 +43,8 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.tron.common.TestConstants;
-import org.tron.common.application.AccurateSizeLimitHandler;
 import org.tron.common.application.HttpService;
+import org.tron.common.application.RequestSizeLimitHandler;
 import org.tron.common.utils.PublicMethod;
 import org.tron.core.Wallet;
 import org.tron.core.config.args.Args;
@@ -54,7 +54,7 @@ import org.tron.json.JSONObject;
 import org.tron.protos.Protocol.Block;
 
 /**
- * Tests {@link AccurateSizeLimitHandler} body-size enforcement configured in
+ * Tests {@link RequestSizeLimitHandler} body-size enforcement configured in
  * {@link HttpService}.
  *
  * Covers: accept/reject by size, UTF-8 byte counting, independent limits
@@ -433,11 +433,11 @@ public class SizeLimitHandlerTest {
   /**
    * Chunked oversized body hitting a servlet with broad catch(Exception).
    *
-   * AccurateSizeLimitHandler throws BadMessageException during streaming read,
+   * RequestSizeLimitHandler throws BadMessageException during streaming read,
    * but the servlet's catch(Exception) absorbs it and returns 200 + error JSON
    * instead of 413. This matches real TRON servlet behavior.
    *
-   * OOM protection still works: the body read is truncated at the limit.
+   * The size check rejects further reading; this does not establish an OOM guarantee.
    */
   @Test
   public void testChunkedBodyExceedsLimit() throws Exception {
@@ -451,7 +451,7 @@ public class SizeLimitHandlerTest {
     logger.info("Chunked oversized: status={}, body={}", status, body);
 
     // catch(Exception) absorbs BadMessageException -> 200 + error JSON, not 413.
-    // Body read IS truncated - OOM protection still effective.
+    // Verify the reading failure separately from the public HTTP status.
     Assert.assertEquals(200, status);
     Assert.assertTrue("Error should be surfaced in response body",
         body.contains("Error"));
