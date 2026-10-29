@@ -52,6 +52,7 @@ import org.tron.api.GrpcAPI.TransactionInfoList;
 import org.tron.common.args.GenesisBlock;
 import org.tron.common.bloom.Bloom;
 import org.tron.common.cron.CronExpression;
+import org.tron.common.crypto.SignUtils;
 import org.tron.common.es.ExecutorServiceManager;
 import org.tron.common.exit.ExitManager;
 import org.tron.common.logsfilter.EventPluginLoader;
@@ -86,6 +87,7 @@ import org.tron.consensus.base.Param.Miner;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
+import org.tron.core.actuator.ActuatorConstant;
 import org.tron.core.actuator.ActuatorCreator;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockBalanceTraceCapsule;
@@ -461,6 +463,7 @@ public class Manager {
     trieService.setChainBaseManager(chainBaseManager);
     revokingStore.disable();
     revokingStore.check();
+    chainBaseManager.initLowestBlockNumOfReceiptStore();
     transactionCache.initCache();
     rewardViCalService.init();
     this.setProposalController(ProposalController.createInstance(this));
@@ -847,6 +850,10 @@ public class Manager {
       TooBigTransactionException, TransactionExpirationException,
       ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException {
 
+    if (trx.hasAuths()) {
+      throw new ContractValidateException("Transaction auths are not supported.");
+    }
+
     if (isShieldedTransaction(trx.getInstance()) && !chainBaseManager.getDynamicPropertiesStore()
         .supportShieldedTransaction()) {
       throw new ContractValidateException("ShieldedTransferContract is not supported.");
@@ -998,8 +1005,12 @@ public class Manager {
       khaosDb.pop();
       revokingStore.fastPop();
       logger.info("End to erase block: {}.", oldHeadBlock);
-      oldHeadBlock.getTransactions().forEach(tc ->
-          poppedTransactions.add(new TransactionCapsule(tc.getInstance())));
+      oldHeadBlock.getTransactions().forEach(tc -> {
+        if (isMultiSignTransaction(tc.getInstance())) {
+          ownerAddressSet.add(ByteArray.toHexString(tc.getOwnerAddress()));
+        }
+        poppedTransactions.add(new TransactionCapsule(tc.getInstance()));
+      });
       Metrics.gaugeInc(MetricKeys.Gauge.MANAGER_QUEUE, oldHeadBlock.getTransactions().size(),
           MetricLabels.Gauge.QUEUE_POPPED);
 
@@ -1070,10 +1081,10 @@ public class Manager {
       logger.info(
           "This is not the most recent common ancestor, "
               + "need to remove all blocks in the fork chain.");
-      BlockCapsule tmp = newHead;
+      KhaosBlock tmp = khaosDb.getMiniStore().getByHash(newHead.getBlockId());
       while (tmp != null) {
-        khaosDb.removeBlk(tmp.getBlockId());
-        tmp = khaosDb.getBlock(tmp.getParentHash());
+        khaosDb.removeBlk(tmp.getId());
+        tmp = khaosDb.getMiniStore().getByHash(tmp.getParentHash());
       }
 
       throw e;
@@ -1095,79 +1106,64 @@ public class Manager {
     if (CollectionUtils.isNotEmpty(binaryTree.getKey())) {
       List<KhaosBlock> first = new ArrayList<>(binaryTree.getKey());
       Collections.reverse(first);
+      Sha256Hash parentHash = first.get(0).getParentHash();
       for (KhaosBlock item : first) {
-        Exception exception = null;
-        // todo  process the exception carefully later
         try (ISession tmpSession = revokingStore.buildSession()) {
-          if (!item.getBlk().validateSignature(
+          BlockCapsule forkBlock = item.getId().equals(newHead.getBlockId())
+              ? newHead : item.getBlk();
+          if (!forkBlock.validateSignature(
               getDynamicPropertiesStore(), getAccountStore())) {
             throw new ValidateSignatureException(
-                "switch fork: block " + item.getBlk().getNum() + " signature invalid");
+                "switch fork: block " + item.getNum() + " signature invalid");
           }
           // The new branch is applied on a rewound, diverged state where account permissions
           // may have changed, so a cached signature-verification result is no longer
           // trustworthy. Clear it to force every transaction to re-validate its signature
           // against the fork-chain state.
-          for (TransactionCapsule tx : item.getBlk().getTransactions()) {
+          for (TransactionCapsule tx : forkBlock.getTransactions()) {
             tx.setVerified(false);
           }
-          applyBlock(item.getBlk().setSwitch(true));
+          applyBlock(forkBlock.setSwitch(true));
           tmpSession.commit();
-        } catch (AccountResourceInsufficientException
-            | ValidateSignatureException
-            | ContractValidateException
-            | ContractExeException
-            | TaposException
-            | DupTransactionException
-            | TransactionExpirationException
-            | ReceiptCheckErrException
-            | TooBigTransactionException
-            | TooBigTransactionResultException
-            | ValidateScheduleException
-            | VMIllegalException
-            | ZksnarkException
-            | BadBlockException e) {
-          logger.warn(e.getMessage(), e);
-          exception = e;
-          throw e;
-        } finally {
-          if (exception != null) {
-            Metrics.counterInc(MetricKeys.Counter.BLOCK_FORK, 1, MetricLabels.FAIL);
-            MetricsUtil.meterMark(MetricsKey.BLOCKCHAIN_FAIL_FORK_COUNT);
-            logger.warn("Switch back because exception thrown while switching forks.", exception);
-            first.forEach(khaosBlock -> khaosDb.removeBlk(khaosBlock.getBlk().getBlockId()));
-            khaosDb.setHead(binaryTree.getValue().peekFirst());
+          item.commit(forkBlock);
+        } catch (Exception switchException) {
+          Metrics.counterInc(MetricKeys.Counter.BLOCK_FORK, 1, MetricLabels.FAIL);
+          MetricsUtil.meterMark(MetricsKey.BLOCKCHAIN_FAIL_FORK_COUNT);
 
-            while (!getDynamicPropertiesStore()
-                .getLatestBlockHeaderHash()
-                .equals(binaryTree.getValue().peekLast().getParentHash())) {
-              eraseBlock();
-            }
+          logger.warn("Failed to switch fork at block {}, restoring previous chain.",
+              item.getId().getString(), switchException);
 
-            List<KhaosBlock> second = new ArrayList<>(binaryTree.getValue());
-            Collections.reverse(second);
-            for (KhaosBlock khaosBlock : second) {
-              // todo  process the exception carefully later
-              try (ISession tmpSession = revokingStore.buildSession()) {
-                applyBlock(khaosBlock.getBlk().setSwitch(true));
-                tmpSession.commit();
-              } catch (AccountResourceInsufficientException
-                  | ValidateSignatureException
-                  | ContractValidateException
-                  | ContractExeException
-                  | TaposException
-                  | DupTransactionException
-                  | TransactionExpirationException
-                  | TooBigTransactionException
-                  | ValidateScheduleException
-                  | ZksnarkException e) {
-                logger.warn(e.getMessage(), e);
-              }
+          first.stream()
+              .filter(block -> !block.isProcessed())
+              .forEach(block -> khaosDb.removeBlk(block.getId()));
+
+          while (!getDynamicPropertiesStore()
+              .getLatestBlockHeaderHash()
+              .equals(parentHash)) {
+            eraseBlock();
+          }
+
+          khaosDb.setHead(khaosDb.getMiniStore().getByHash(parentHash));
+
+          List<KhaosBlock> second = new ArrayList<>(binaryTree.getValue());
+          Collections.reverse(second);
+          for (KhaosBlock khaosBlock : second) {
+            try (ISession tmpSession = revokingStore.buildSession()) {
+              applyBlock(khaosBlock.getBlk().setSwitch(true));
+              tmpSession.commit();
+              khaosDb.setHead(khaosBlock);
+            } catch (Exception restoreException) {
+              restoreException.addSuppressed(switchException);
+              logger.error("Failed to restore previous chain at block {}.",
+                  khaosBlock.getId().getString(), restoreException);
+              throw restoreException;
             }
           }
+          throw switchException;
         }
       }
       // only reached when the whole new branch applied cleanly; a failed switch rethrows above
+      khaosDb.setHead(binaryTree.getKey().peekFirst());
       reApplyBlockEvents(first);
     }
 
@@ -1218,7 +1214,9 @@ public class Manager {
     block.getTransactions().forEach(capsule -> {
       String address = Hex.toHexString(capsule.getOwnerAddress());
       String txId = Hex.toHexString(capsule.getTransactionId().getBytes());
-      if (multiAddresses.contains(address) || !isSameSig(capsule, txMap.get(txId))) {
+      TransactionCapsule pendingTx = txMap.get(txId);
+      if (multiAddresses.contains(address) || pendingTx == null || !pendingTx.isVerified()
+          || !isSameSig(capsule, pendingTx)) {
         txs.add(capsule);
       } else {
         capsule.setVerified(true);
@@ -1229,7 +1227,8 @@ public class Manager {
   }
 
   /**
-   * save a block.
+   * Save a block. Untrusted callers must first use network prevalidation to check its timestamp,
+   * transaction structure, Merkle root and block signature.
    */
   public void pushBlock(final BlockCapsule block)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
@@ -1271,7 +1270,6 @@ public class Manager {
         try (PendingManager pm = new PendingManager(this)) {
 
           if (!block.generatedByMyself) {
-            block.validateMerkleRoot();
             consensus.receiveBlock(block);
           }
 
@@ -1317,13 +1315,12 @@ public class Manager {
                       "******** Before switchFork ******* push block: {}, new block: {}, "
                           + "dynamic head num: {}, dynamic head hash: {}, "
                           + "dynamic head timestamp: {}, khaosDb head: {}, "
-                          + "khaosDb miniStore size: {}, khaosDb unlinkMiniStore size: {}.",
+                          + "khaosDb miniStore size: {}.",
                   block, newBlock,
                   chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber(),
                   chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderHash(),
                   chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp(),
-                  khaosDb.getHead(), khaosDb.getMiniStore().size(),
-                  khaosDb.getMiniUnlinkedStore().size());
+                  khaosDb.getHeadId(), khaosDb.getMiniStore().size());
               synchronized (forkLock) {
                 switchFork(newBlock);
               }
@@ -1333,13 +1330,12 @@ public class Manager {
                   "******** After switchFork ******* push block: {}, new block: {}, "
                       + "dynamic head num: {}, dynamic head hash: {}, "
                       + "dynamic head timestamp: {}, khaosDb head: {}, "
-                      + "khaosDb miniStore size: {}, khaosDb unlinkMiniStore size: {}.",
+                      + "khaosDb miniStore size: {}.",
                   block, newBlock,
                   chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber(),
                   chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderHash(),
                   chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderTimestamp(),
-                  khaosDb.getHead(), khaosDb.getMiniStore().size(),
-                  khaosDb.getMiniUnlinkedStore().size());
+                  khaosDb.getHeadId(), khaosDb.getMiniStore().size());
 
               return;
             }
@@ -1347,6 +1343,7 @@ public class Manager {
             try (ISession tmpSession = revokingStore.buildSession()) {
               applyBlock(newBlock, txs);
               tmpSession.commit();
+              khaosDb.getMiniStore().getByHash(newBlock.getBlockId()).commit(newBlock);
             } catch (Throwable throwable) {
               logger.error(throwable.getMessage(), throwable);
               khaosDb.removeBlk(block.getBlockId());
@@ -1409,7 +1406,7 @@ public class Manager {
     } catch (Exception e) {
       logger.error("Block trigger failed. head: {}, oldSolid: {}, newSolid: {}",
           block.getNum(), oldSolid, newSolid, e);
-      throw new TronError(e, TronError.ErrCode.EVENT_SUBSCRIBE_ERROR);
+      throw ExitManager.requestExit(new TronError(e, TronError.ErrCode.EVENT_SUBSCRIBE_ERROR));
     }
   }
 
@@ -1452,11 +1449,10 @@ public class Manager {
     }
 
     LinkedList<BlockId> result = blockCapsules.stream()
-        .map(KhaosBlock::getBlk)
-        .map(BlockCapsule::getBlockId)
+        .map(KhaosBlock::getId)
         .collect(Collectors.toCollection(LinkedList::new));
 
-    result.add(blockCapsules.peekLast().getBlk().getParentBlockId());
+    result.add(new BlockId(blockCapsules.peekLast().getParentHash()));
 
     return result;
   }
@@ -1473,11 +1469,11 @@ public class Manager {
       return null;
     }
     Sha256Hash txId = trxCap.getTransactionId();
-    if (trxCap.getInstance().getRawData().getContractList().size() != 1) {
+    int contractCount = trxCap.getInstance().getRawData().getContractCount();
+    if (contractCount != 1) {
       throw new ContractSizeNotEqualToOneException(
-          String.format(
-              "tx %s contract size should be exactly 1, this is extend feature ,actual :%d",
-              txId, trxCap.getInstance().getRawData().getContractList().size()));
+          String.format("tx %s " + ActuatorConstant.CONTRACT_SIZE_NOT_EQUAL_TO_ONE,
+              txId, contractCount));
     }
     Contract contract = trxCap.getInstance().getRawData().getContract(0);
     final Histogram.Timer requestTimer = Metrics.histogramStartTimer(
@@ -1877,7 +1873,14 @@ public class Manager {
     boolean flag = chainBaseManager.getDynamicPropertiesStore().getNextMaintenanceTime()
         <= block.getTimeStamp();
     if (flag) {
+      boolean strictEcdsaValidation = getDynamicPropertiesStore()
+          .allowStrictEcdsaValidation();
       proposalController.processProposals();
+      if (!strictEcdsaValidation && getDynamicPropertiesStore()
+          .allowStrictEcdsaValidation()) {
+        // Legacy verification results must not survive the consensus-rule activation boundary.
+        invalidateTransactionVerificationCache();
+      }
     }
 
     if (!consensus.applyBlock(block)) {
@@ -1899,6 +1902,13 @@ public class Manager {
         .initBlockSection(transactionRetCapsule);
     chainBaseManager.getSectionBloomStore().write(block.getNum());
     block.setBloom(blockBloom);
+  }
+
+  private void invalidateTransactionVerificationCache() {
+    pendingTransactions.forEach(tx -> tx.setVerified(false));
+    rePushTransactions.forEach(tx -> tx.setVerified(false));
+    poppedTransactions.forEach(tx -> tx.setVerified(false));
+    pushTransactionQueue.forEach(tx -> tx.setVerified(false));
   }
 
   private void payReward(BlockCapsule block) {
@@ -2067,6 +2077,7 @@ public class Manager {
     Histogram.Timer requestTimer = Metrics.histogramStartTimer(
         MetricKeys.Histogram.VERIFY_SIGN_LATENCY, MetricLabels.TRX);
     try {
+      validateTransactionSignatureLengths(txs);
       CountDownLatch countDownLatch = new CountDownLatch(transSize);
       List<Future<Boolean>> futures = new ArrayList<>(transSize);
 
@@ -2086,6 +2097,20 @@ public class Manager {
       }
     } finally {
       Metrics.histogramObserve(requestTimer);
+    }
+  }
+
+  private void validateTransactionSignatureLengths(List<TransactionCapsule> txs)
+      throws ValidateSignatureException {
+    boolean strictEcdsaValidation = chainBaseManager.getDynamicPropertiesStore()
+        .allowStrictEcdsaValidation();
+    for (TransactionCapsule transaction : txs) {
+      for (ByteString signature : transaction.getInstance().getSignatureList()) {
+        if (signature.size() < Constant.PER_SIGN_LENGTH
+            || (strictEcdsaValidation && !SignUtils.isValidLength(signature.size()))) {
+          throw new ValidateSignatureException("Signature size is " + signature.size());
+        }
+      }
     }
   }
 

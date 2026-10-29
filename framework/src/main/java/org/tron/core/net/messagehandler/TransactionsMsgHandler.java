@@ -1,6 +1,5 @@
 package org.tron.core.net.messagehandler;
 
-import com.google.protobuf.ByteString;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -16,9 +15,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.crypto.SignUtils;
 import org.tron.common.es.ExecutorServiceManager;
+import org.tron.common.prometheus.MetricKeys;
+import org.tron.common.prometheus.MetricLabels;
+import org.tron.common.prometheus.Metrics;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.Constant;
+import org.tron.core.actuator.ActuatorConstant;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.P2pException;
@@ -105,6 +108,9 @@ public class TransactionsMsgHandler implements TronMsgHandler {
         break;
       }
       TransactionCapsule capsule = new TransactionCapsule(trx);
+      if (capsule.hasAuths()) {
+        continue;
+      }
       capsule.sanitize();
       capsule.resetResult();
       if (capsule.getSerializedSize() > Constant.TRANSACTION_MAX_BYTE_SIZE) {
@@ -154,20 +160,29 @@ public class TransactionsMsgHandler implements TronMsgHandler {
       Item item = new Item(id, InventoryType.TRX);
       if (!peer.getAdvInvRequest().containsKey(item)) {
         throw new P2pException(TypeEnum.BAD_MESSAGE,
-            "trx: " + msg.getMessageId() + " without request.");
+            "trx: " + id + " without request.");
       }
-      if (trx.getRawData().getContractCount() < 1) {
+      int contractCount = trx.getRawData().getContractCount();
+      if (contractCount != 1) {
+        throw new P2pException(TypeEnum.BAD_TRX, String.format(
+            "tx %s " + ActuatorConstant.CONTRACT_SIZE_NOT_EQUAL_TO_ONE, id, contractCount));
+      }
+    }
+    for (Transaction trx : list) {
+      if (!hasValidSignatureLengths(trx)) {
+        Metrics.counterInc(MetricKeys.Counter.TX_REJECT, 1,
+            MetricLabels.Counter.TX_REJECT_P2P,
+            MetricLabels.Counter.TX_REJECT_INVALID_SIGNATURE_LENGTH);
         throw new P2pException(TypeEnum.BAD_TRX,
-            "tx " + item.getHash() + " contract size should be greater than 0");
-      }
-      for (ByteString sig : trx.getSignatureList()) {
-        if (!SignUtils.isValidLength(sig.size())) {
-          throw new P2pException(TypeEnum.BAD_TRX,
-              "tx " + item.getHash() + " signature size is " + sig.size());
-        }
+            "TransactionsMessage contains a transaction with invalid signature lengths");
       }
     }
     return seen;
+  }
+
+  private boolean hasValidSignatureLengths(Transaction trx) {
+    return trx.getSignatureList().stream()
+        .allMatch(sig -> SignUtils.isValidLength(sig.size()));
   }
 
   private void handleSmartContract() {

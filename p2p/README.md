@@ -3,7 +3,7 @@
 Peer discovery, connection management and DNS-based node lists for java-tron.
 
 > **Vendored from [tronprotocol/libp2p](https://github.com/tronprotocol/libp2p)
-> v2.2.9, synchronized through `release-v2.3.0` at `f13c67cdca73cec36eb5dd83bb5ef51f9ba7f9bc`.**
+> v2.2.9, synchronized through `release-v2.3.0` at `5bae7b902f45a9bbd71e492026b4c2c0b6ef0767`.**
 > It lives here as the `:p2p` Gradle module and is consumed as a
 > project dependency, not as a published artifact — `:common` exposes it via
 > `api project(":p2p")`. Upstream's own README follows, edited where
@@ -44,6 +44,7 @@ available cli options:
 usage: available p2p discovery cli options:
  -a,--active-nodes <arg>             active node(s),
                                      ip:port[,ip:port[...]]
+ -b,--blocked-ips <arg>              blocked IP(s), ip[,ip[...]], TCP only
  -d,--discover <arg>                 enable p2p discover, 0/1, default 1
  -h,--help                           print help message
  -M,--max-connection <arg>           max connection number, int, default
@@ -293,6 +294,25 @@ activeNodeList.add(new InetSocketAddress("127.0.0.3", 18888));
 config.setActiveNodes(activeNodeList);
 ```
 
+Set the initial blocked IPs. The blocked IP list applies to TCP connections and does not filter UDP
+discovery. The standalone CLI accepts literal IPv4/IPv6 addresses, separated by commas:
+
+```bash
+java -jar p2p/build/libs/p2p-standalone.jar --blocked-ips "192.0.2.1,2001:db8::1"
+```
+
+When embedding the module, set the initial list before calling `P2pService.start(config)`:
+
+```java
+Set<InetAddress> blockedIps = new HashSet<>();
+blockedIps.add(InetAddress.getByName("192.0.2.1"));
+blockedIps.add(InetAddress.getByName("2001:db8::1"));
+config.setBlockedIps(blockedIps);
+```
+
+After startup, use `P2pService.replaceBlockedIps(...)` to replace the runtime policy and close matching
+connections. Runtime changes do not update the initial list in `P2pConfig`.
+
 Set trust ips
 
 ```bash
@@ -450,5 +470,3 @@ The former `ImportUsing`, `DnsExample1` and `DnsExample2` reference classes have
 been replaced by
 [ExampleUsageTest](src/test/java/org/tron/p2p/example/ExampleUsageTest.java),
 which asserts the same configuration shapes instead of only compiling them.
-
-

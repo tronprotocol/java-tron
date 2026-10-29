@@ -1,7 +1,7 @@
 package org.tron.p2p.connection.business.keepalive;
 
-import static org.tron.p2p.base.Parameter.KEEP_ALIVE_TIMEOUT;
-import static org.tron.p2p.base.Parameter.PING_TIMEOUT;
+import static org.tron.p2p.base.Parameter.PING_IDLE_THRESHOLD_MILLIS;
+import static org.tron.p2p.base.Parameter.PONG_TIMEOUT_MILLIS;
 
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -31,12 +31,13 @@ public class KeepAliveService implements MessageProcess {
             .filter(p -> !p.isDisconnect())
             .forEach(p -> {
               if (p.waitForPong) {
-                if (now - p.pingSent > KEEP_ALIVE_TIMEOUT) {
+                if (now - p.pingSent > PONG_TIMEOUT_MILLIS) {
                   p.send(new P2pDisconnectMessage(DisconnectReason.PING_TIMEOUT));
                   p.close();
                 }
               } else {
-                if (now - p.getLastSendTime() > PING_TIMEOUT && p.isFinishHandshake()) {
+                if (now - p.getLastSendTime() > PING_IDLE_THRESHOLD_MILLIS
+                    && p.isFinishHandshake()) {
                   p.send(new PingMessage());
                   p.waitForPong = true;
                   p.pingSent = now;

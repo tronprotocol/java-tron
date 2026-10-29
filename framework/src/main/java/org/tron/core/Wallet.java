@@ -107,18 +107,21 @@ import org.tron.api.GrpcAPI.TransactionApprovedList;
 import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.GrpcAPI.TransactionExtention.Builder;
 import org.tron.api.GrpcAPI.TransactionInfoList;
+import org.tron.api.GrpcAPI.TransactionSignWeight;
 import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.common.crypto.Hash;
 import org.tron.common.crypto.SignInterface;
 import org.tron.common.crypto.SignUtils;
 import org.tron.common.parameter.CommonParameter;
+import org.tron.common.prometheus.MetricKeys;
+import org.tron.common.prometheus.MetricLabels;
+import org.tron.common.prometheus.Metrics;
 import org.tron.common.runtime.ProgramResult;
 import org.tron.common.runtime.vm.LogInfo;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.Sha256Hash;
-import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.Utils;
 import org.tron.common.utils.WalletUtil;
 import org.tron.common.zksnark.IncrementalMerkleTreeContainer;
@@ -171,6 +174,7 @@ import org.tron.core.db2.core.Chainbase.Cursor;
 import org.tron.core.exception.AccountResourceInsufficientException;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ContractExeException;
+import org.tron.core.exception.ContractSizeNotEqualToOneException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.DupTransactionException;
 import org.tron.core.exception.HeaderNotFound;
@@ -236,6 +240,7 @@ import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.protos.Protocol.Transaction.Result.code;
+import org.tron.protos.Protocol.Transaction.Result.contractResult;
 import org.tron.protos.Protocol.TransactionInfo;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
 import org.tron.protos.contract.BalanceContract;
@@ -261,6 +266,9 @@ public class Wallet {
       "Shielded transaction API is disabled; "
           + "set node.allowShieldedTransactionApi=true to enable.";
   private static final String PAYMENT_ADDRESS_FORMAT_WRONG = "paymentAddress format is wrong";
+  // the authoritative bound is checkBigIntegerRange: uint256 max is 78 decimal digits,
+  // this only keeps the string short enough to convert cheaply
+  private static final int MAX_SHIELDED_AMOUNT_LENGTH = 80;
   private static final String SHIELDED_TRANSACTION_SCAN_RANGE =
       "request requires start_block_index >= 0 && end_block_index > "
           + "start_block_index && end_block_index - start_block_index <= 1000";
@@ -513,8 +521,11 @@ public class Wallet {
     try {
       for (ByteString sig : signedTransaction.getSignatureList()) {
         if (!SignUtils.isValidLength(sig.size())) {
+          Metrics.counterInc(MetricKeys.Counter.TX_REJECT, 1,
+              MetricLabels.Counter.TX_REJECT_API,
+              MetricLabels.Counter.TX_REJECT_INVALID_SIGNATURE_LENGTH);
           String info = "Signature size is " + sig.size();
-          logger.warn("Broadcast transaction {} has failed, {}.", txID, info);
+          logger.debug("Broadcast transaction {} has failed, {}.", txID, info);
           return builder.setResult(false).setCode(response_code.SIGERROR)
               .setMessage(ByteString.copyFromUtf8("Validate signature error: " + info))
               .build();
@@ -569,8 +580,13 @@ public class Wallet {
       if (chainBaseManager.getDynamicPropertiesStore().supportVM()) {
         trx.resetResult();
       }
-      if (trx.getInstance().getRawData().getContractCount() == 0) {
+      int contractCount = trx.getInstance().getRawData().getContractCount();
+      if (contractCount == 0) {
         throw new ContractValidateException(ActuatorConstant.CONTRACT_NOT_EXIST);
+      }
+      if (contractCount > 1) {
+        throw new ContractSizeNotEqualToOneException(String.format(
+            "tx %s " + ActuatorConstant.CONTRACT_SIZE_NOT_EQUAL_TO_ONE, txID, contractCount));
       }
       trx.checkExpiration(chainBaseManager.getNextBlockSlotTime());
       if (!dbManager.pushTransaction(trx)) {
@@ -637,10 +653,122 @@ public class Wallet {
     }
   }
 
+  /**
+   * Applies the API query length policy independently of proposal activation, without rewriting.
+   * Consensus validation must use its proposal-controlled checks instead.
+   */
+  private static void validateSignatureLengths(Transaction trx) throws SignatureFormatException {
+    for (ByteString sig : trx.getSignatureList()) {
+      if (!SignUtils.isValidLength(sig.size())) {
+        throw new SignatureFormatException("Signature size is " + sig.size());
+      }
+    }
+  }
+
+  public TransactionSignWeight getTransactionSignWeight(Transaction trx) {
+    TransactionSignWeight.Builder tswBuilder = TransactionSignWeight.newBuilder();
+    TransactionSignWeight.Result.Builder resultBuilder = TransactionSignWeight.Result.newBuilder();
+    int contractCount = trx.getRawData().getContractCount();
+    if (contractCount > 1) {
+      resultBuilder.setCode(TransactionSignWeight.Result.response_code.OTHER_ERROR);
+      resultBuilder.setMessage("Invalid transaction: "
+          + String.format(ActuatorConstant.CONTRACT_SIZE_NOT_EQUAL_TO_ONE, contractCount));
+      tswBuilder.setResult(resultBuilder);
+      return tswBuilder.build();
+    }
+    if (trx.getSignatureCount() > chainBaseManager.getDynamicPropertiesStore()
+        .getTotalSignNum()) {
+      resultBuilder.setCode(TransactionSignWeight.Result.response_code.OTHER_ERROR);
+      resultBuilder.setMessage("too many signatures");
+      tswBuilder.setResult(resultBuilder);
+      return tswBuilder.build();
+    }
+
+    try {
+      validateSignatureLengths(trx);
+    } catch (SignatureFormatException e) {
+      return tswBuilder.setResult(resultBuilder
+          .setCode(TransactionSignWeight.Result.response_code.SIGNATURE_FORMAT_ERROR)
+          .setMessage(e.getMessage())).build();
+    }
+
+    TransactionExtention.Builder trxExBuilder = TransactionExtention.newBuilder();
+    trxExBuilder.setTransaction(trx);
+    trxExBuilder.setTxid(ByteString.copyFrom(Sha256Hash.hash(trx.getRawData().toByteArray())));
+    Return.Builder retBuilder = Return.newBuilder();
+    retBuilder.setResult(true).setCode(response_code.SUCCESS);
+    trxExBuilder.setResult(retBuilder);
+    tswBuilder.setTransaction(trxExBuilder);
+
+    if (trx.getRawData().getContractCount() == 0) {
+      resultBuilder.setCode(TransactionSignWeight.Result.response_code.OTHER_ERROR);
+      resultBuilder.setMessage("Invalid transaction: no valid contract");
+    } else {
+      try {
+        Contract contract = trx.getRawData().getContract(0);
+        byte[] owner = TransactionCapsule.getOwner(contract);
+        AccountCapsule account = chainBaseManager.getAccountStore().get(owner);
+        if (Objects.isNull(account)) {
+          throw new PermissionException("Account does not exist!");
+        }
+        int permissionId = contract.getPermissionId();
+        Permission permission = account.getPermissionById(permissionId);
+        if (permission == null) {
+          throw new PermissionException("Permission for this, does not exist!");
+        }
+        if (permissionId != 0) {
+          if (permission.getType() != PermissionType.Active) {
+            throw new PermissionException("Permission type is wrong!");
+          }
+          //check operations
+          if (!TransactionUtil.checkPermissionOperations(permission, contract)) {
+            throw new PermissionException("Permission denied!");
+          }
+        }
+        tswBuilder.setPermission(permission);
+        if (trx.getSignatureCount() > 0) {
+          List<ByteString> approveList = new ArrayList<>();
+          long currentWeight = TransactionCapsule.checkWeight(permission, trx.getSignatureList(),
+              Sha256Hash.hash(trx.getRawData().toByteArray()), approveList, true);
+          tswBuilder.addAllApprovedList(approveList);
+          tswBuilder.setCurrentWeight(currentWeight);
+        }
+        if (tswBuilder.getCurrentWeight() >= permission.getThreshold()) {
+          resultBuilder.setCode(TransactionSignWeight.Result.response_code.ENOUGH_PERMISSION);
+        } else {
+          resultBuilder.setCode(TransactionSignWeight.Result.response_code.NOT_ENOUGH_PERMISSION);
+        }
+      } catch (SignatureFormatException signEx) {
+        resultBuilder.setCode(TransactionSignWeight.Result.response_code.SIGNATURE_FORMAT_ERROR);
+        resultBuilder.setMessage(signEx.getMessage());
+      } catch (SignatureException signEx) {
+        resultBuilder.setCode(TransactionSignWeight.Result.response_code.COMPUTE_ADDRESS_ERROR);
+        resultBuilder.setMessage(signEx.getMessage());
+      } catch (PermissionException permEx) {
+        resultBuilder.setCode(TransactionSignWeight.Result.response_code.PERMISSION_ERROR);
+        resultBuilder.setMessage(permEx.getMessage());
+      } catch (Exception ex) {
+        resultBuilder.setCode(TransactionSignWeight.Result.response_code.OTHER_ERROR);
+        resultBuilder.setMessage(ex.getClass() + " : " + ex.getMessage());
+      }
+    }
+
+    tswBuilder.setResult(resultBuilder);
+    return tswBuilder.build();
+  }
+
   public TransactionApprovedList getTransactionApprovedList(Transaction trx) {
     TransactionApprovedList.Builder tswBuilder = TransactionApprovedList.newBuilder();
     TransactionApprovedList.Result.Builder resultBuilder = TransactionApprovedList.Result
         .newBuilder();
+    int contractCount = trx.getRawData().getContractCount();
+    if (contractCount > 1) {
+      resultBuilder.setCode(TransactionApprovedList.Result.response_code.OTHER_ERROR);
+      resultBuilder.setMessage("Invalid transaction: "
+          + String.format(ActuatorConstant.CONTRACT_SIZE_NOT_EQUAL_TO_ONE, contractCount));
+      tswBuilder.setResult(resultBuilder);
+      return tswBuilder.build();
+    }
     if (trx.getSignatureCount() > chainBaseManager.getDynamicPropertiesStore()
         .getTotalSignNum()) {
       resultBuilder.setCode(TransactionApprovedList.Result.response_code.OTHER_ERROR);
@@ -649,7 +777,14 @@ public class Wallet {
       return tswBuilder.build();
     }
 
-    trx = TransactionUtil.truncateSignatures(trx);
+    try {
+      validateSignatureLengths(trx);
+    } catch (SignatureFormatException e) {
+      return tswBuilder.setResult(resultBuilder
+          .setCode(TransactionApprovedList.Result.response_code.SIGNATURE_FORMAT_ERROR)
+          .setMessage(e.getMessage())).build();
+    }
+
     TransactionExtention.Builder trxExBuilder = TransactionExtention.newBuilder();
     trxExBuilder.setTransaction(trx);
     trxExBuilder.setTxid(ByteString.copyFrom(Sha256Hash.hash(trx.getRawData().toByteArray())));
@@ -687,7 +822,8 @@ public class Wallet {
         if (trx.getSignatureCount() > 0) {
           List<ByteString> approveList = new ArrayList<>();
           byte[] hash = Sha256Hash.hash(trx.getRawData().toByteArray());
-          TransactionCapsule.checkWeight(permission, trx.getSignatureList(), hash, approveList);
+          TransactionCapsule.checkWeight(permission, trx.getSignatureList(), hash,
+              approveList, true);
           tswBuilder.addAllApprovedList(approveList);
         }
         resultBuilder.setCode(TransactionApprovedList.Result.response_code.SUCCESS);
@@ -741,6 +877,18 @@ public class Wallet {
 
   public long getHeadBlockNum() {
     return chainBaseManager.getHeadBlockNum();
+  }
+
+  public boolean isLiteNode() {
+    return chainBaseManager.isLiteNode();
+  }
+
+  public long getLowestBlockNum() {
+    return chainBaseManager.getLowestBlockNum();
+  }
+
+  public long getLowestBlockNumOfReceiptStore() {
+    return chainBaseManager.getLowestBlockNumOfReceiptStore();
   }
 
   public BlockCapsule getBlockCapsuleByNum(long blockNum) {
@@ -1536,8 +1684,18 @@ public class Wallet {
         .build());
 
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAllowStrictEcdsaValidation")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowStrictEcdsaValidation())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
         .setKey("getCloseExchange")
         .setValue(dbManager.getDynamicPropertiesStore().getCloseExchange())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAllowOptimizeTvmStorageKey")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowOptimizeTvmStorageKey())
         .build());
 
     return builder.build();
@@ -2773,6 +2931,10 @@ public class Wallet {
     if (contract == null || contract.isEmpty()) {
       throw new ContractValidateException("Contract is null");
     }
+    if (contract.size() > 1) {
+      throw new ContractValidateException(
+          String.format(ActuatorConstant.CONTRACT_SIZE_NOT_EQUAL_TO_ONE, contract.size()));
+    }
     ContractType contractType = contract.get(0).getType();
     if (contractType != ContractType.ShieldedTransferContract) {
       throw new ContractValidateException("Not a shielded transaction");
@@ -3208,6 +3370,7 @@ public class Wallet {
     }
     if (result.isRevert()) {
       ret.setStatus(0, code.FAILED);
+      ret.setResultCode(contractResult.REVERT);
       retBuilder.setMessage(ByteString.copyFromUtf8("REVERT opcode executed"))
           .build();
     }
@@ -3221,7 +3384,7 @@ public class Wallet {
     if (accountCapsule == null) {
       logger.warn(
           "Get contract failed, the account {} does not exist or the account "
-              + "does not have a code hash!", StringUtil.encode58Check(address));
+              + "does not have a code hash!", WalletUtil.getAddressString(address));
       return null;
     }
 
@@ -3250,7 +3413,7 @@ public class Wallet {
     if (accountCapsule == null) {
       logger.warn(
           "Get contract failed, the account {} does not exist or the account does not have a code "
-              + "hash!", StringUtil.encode58Check(address));
+              + "hash!", WalletUtil.getAddressString(address));
       return null;
     }
 
@@ -4226,6 +4389,9 @@ public class Wallet {
     if (trimmedIn.length() == 0) {
       return BigInteger.ZERO;
     }
+    if (trimmedIn.length() > MAX_SHIELDED_AMOUNT_LENGTH) {
+      throw new IllegalArgumentException("invalid shielded amount");
+    }
     return new BigInteger(trimmedIn, 10);
   }
 
@@ -4337,7 +4503,12 @@ public class Wallet {
 
     ShieldedTRC20Parameters shieldedTRC20Parameters = request.getShieldedTRC20Parameters();
     List<BytesMessage> spendAuthoritySignature = request.getSpendAuthoritySignatureList();
-    BigInteger value = getBigIntegerFromString(request.getAmount());
+    BigInteger value;
+    try {
+      value = getBigIntegerFromString(request.getAmount());
+    } catch (IllegalArgumentException e) {
+      throw new ContractValidateException("invalid amount", e);
+    }
     checkBigIntegerRange(value);
     byte[] transparentToAddress = request.getTransparentToAddress().toByteArray();
     byte[] transparentToAddressTvm = new byte[20];
@@ -4402,9 +4573,16 @@ public class Wallet {
       }
       parametersBuilder.setBurnCiphertext(burnCiper);
     }
-    String input = parametersBuilder
-        .getTriggerContractInput(shieldedTRC20Parameters, spendAuthoritySignature, value, false,
-            transparentToAddressTvm);
+    String input;
+    try {
+      input = parametersBuilder
+          .getTriggerContractInput(shieldedTRC20Parameters, spendAuthoritySignature, value, false,
+              transparentToAddressTvm);
+    } catch (IllegalArgumentException e) {
+      // the builder names the offending argument in fixed strings; none of them echoes an input
+      throw new ContractValidateException(
+          "invalid shielded TRC-20 trigger input: " + e.getMessage(), e);
+    }
     if (Objects.isNull(input)) {
       throw new ZksnarkException("generate the trigger contract parameters error");
     }

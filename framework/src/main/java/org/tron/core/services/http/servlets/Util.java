@@ -21,13 +21,16 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Function;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.bouncycastle.util.encoders.DecoderException;
 import org.bouncycastle.util.encoders.Hex;
 import org.eclipse.jetty.http.HttpMethod;
 import org.eclipse.jetty.http.MimeTypes;
+import org.eclipse.jetty.server.handler.ContextHandler;
 import org.eclipse.jetty.util.MultiMap;
 import org.eclipse.jetty.util.StringUtil;
 import org.eclipse.jetty.util.UrlEncoded;
@@ -40,14 +43,18 @@ import org.tron.api.GrpcAPI.TransactionSignWeight;
 import org.tron.common.crypto.Hash;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Constant;
+import org.tron.core.actuator.ActuatorConstant;
 import org.tron.core.actuator.TransactionFactory;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.TransactionTrace;
+import org.tron.core.exception.ContractSizeNotEqualToOneException;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.InvalidHttpParameterException;
 import org.tron.core.exception.MaintenanceUnavailableException;
 import org.tron.core.services.http.servlets.JsonFormat.ParseException;
 import org.tron.json.JSON;
@@ -74,6 +81,10 @@ public class Util {
       "'events' field is deprecated and no longer supported";
 
   public static final String PERMISSION_ID = "Permission_id";
+  private static final String INVALID_PERMISSION_ID =
+      "invalid " + PERMISSION_ID + ": expect a 32-bit integer";
+  private static final int MAX_JSON_INTEGER_VALUE_LENGTH = 64;
+  private static final String INVALID_JSON_BODY = "INVALID JSON body";
   public static final String VISIBLE = "visible";
   public static final String INT64_AS_STRING_PARAM = "int64_as_string";
   public static final String TRANSACTION = "transaction";
@@ -137,7 +148,9 @@ public class Util {
     }
     if (type == ParseException.class
         || type == ContractValidateException.class
-        || type == MaintenanceUnavailableException.class) {
+        || type == ContractSizeNotEqualToOneException.class
+        || type == MaintenanceUnavailableException.class
+        || type == InvalidHttpParameterException.class) {
       String message = e.getMessage();
       return StringUtils.isBlank(message) ? INTERNAL_SERVER_ERROR : message;
     }
@@ -312,13 +325,22 @@ public class Util {
   }
 
   /**
-   * Note: the contracts of the returned transaction may be empty
+   * Note: contracts that cannot be parsed are dropped, so the contracts of the returned
+   * transaction may be empty, or more than one when a field-number key replaces raw_data.
+   *
+   * @throws ContractSizeNotEqualToOneException if raw_data.contract has more than one element
+   * @throws ParseException if the transaction outside its contracts cannot be parsed
    */
-  public static Transaction packTransaction(String strTransaction, boolean selfType) {
+  public static Transaction packTransaction(String strTransaction, boolean selfType)
+      throws ContractSizeNotEqualToOneException, ParseException {
     JSONObject jsonTransaction = JSON.parseObject(strTransaction);
     JSONObject rawData = jsonTransaction.getJSONObject("raw_data");
     JSONArray contracts = new JSONArray();
     JSONArray rawContractArray = rawData.getJSONArray("contract");
+    if (rawContractArray.size() > 1) {
+      throw new ContractSizeNotEqualToOneException(String.format(
+          ActuatorConstant.CONTRACT_SIZE_NOT_EQUAL_TO_ONE, rawContractArray.size()));
+    }
 
     String contractType = null;
     for (int i = 0; i < rawContractArray.size(); i++) {
@@ -356,19 +378,14 @@ public class Util {
       } catch (JSONException e) {
         logger.debug("JSONException: {}", e.getMessage());
       } catch (Exception e) {
-        logger.warn("{}", contractType, e);
+        logger.debug("Skip invalid contract: {}", contractType, e);
       }
     }
     rawData.put("contract", contracts);
     jsonTransaction.put("raw_data", rawData);
     Transaction.Builder transactionBuilder = Transaction.newBuilder();
-    try {
-      JsonFormat.merge(jsonTransaction.toJSONString(), transactionBuilder, selfType);
-      return transactionBuilder.build();
-    } catch (ParseException e) {
-      logger.debug("ParseException: {}", e.getMessage());
-      return null;
-    }
+    JsonFormat.merge(jsonTransaction.toJSONString(), transactionBuilder, selfType);
+    return transactionBuilder.build();
   }
 
   @Deprecated
@@ -441,14 +458,43 @@ public class Util {
     return ByteArray.toHexString(ByteString.copyFromUtf8(string).toByteArray());
   }
 
+  /**
+   * Rejects a json value that cannot be a bounded-length number, before anything converts it. A
+   * container is not a number and reaches the conversion as its full serialized form, so it has to
+   * be turned away by type rather than by length. An absent value is left to the caller, which is
+   * what distinguishes an optional key from a required one.
+   *
+   * @throws InvalidHttpParameterException if the value is not a number, or is longer than the bound
+   */
+  private static void checkJsonNumberValue(Object rawValue, String message) {
+    if (rawValue == null) {
+      return;
+    }
+    if (!(rawValue instanceof String || rawValue instanceof Number)
+        || rawValue.toString().length() > MAX_JSON_INTEGER_VALUE_LENGTH) {
+      throw new InvalidHttpParameterException(message);
+    }
+  }
+
   public static Transaction setTransactionPermissionId(JSONObject jsonObject,
       Transaction transaction) {
-    if (jsonObject.containsKey(PERMISSION_ID)) {
-      int permissionId = jsonObject.getInteger(PERMISSION_ID);
-      return setTransactionPermissionId(permissionId, transaction);
+    if (!jsonObject.containsKey(PERMISSION_ID)) {
+      return transaction;
     }
-
-    return transaction;
+    Object rawValue = jsonObject.get(PERMISSION_ID);
+    int permissionId;
+    try {
+      if (rawValue instanceof Integer) {
+        permissionId = (Integer) rawValue;
+      } else if (rawValue instanceof String) {
+        permissionId = Integer.parseInt((String) rawValue);
+      } else {
+        throw new InvalidHttpParameterException(INVALID_PERMISSION_ID);
+      }
+    } catch (NumberFormatException e) {
+      throw new InvalidHttpParameterException(INVALID_PERMISSION_ID, e);
+    }
+    return setTransactionPermissionId(permissionId, transaction);
   }
 
   public static Transaction setTransactionPermissionId(int permissionId, Transaction transaction) {
@@ -515,11 +561,17 @@ public class Util {
   }
 
   public static long getJsonLongValue(JSONObject jsonObject, String key, boolean required) {
-    BigDecimal bigDecimal = jsonObject.getBigDecimal(key);
-    if (required && bigDecimal == null) {
-      throw new InvalidParameterException("key [" + key + "] does not exist");
+    String invalid = "invalid key [" + key + "]: expect a 64-bit integer";
+    try {
+      checkJsonNumberValue(jsonObject.get(key), invalid);
+      BigDecimal bigDecimal = jsonObject.getBigDecimal(key);
+      if (required && bigDecimal == null) {
+        throw new InvalidHttpParameterException("key [" + key + "] does not exist");
+      }
+      return (bigDecimal == null) ? 0L : bigDecimal.longValueExact();
+    } catch (NumberFormatException | ArithmeticException | JSONException e) {
+      throw new InvalidHttpParameterException(invalid, e);
     }
-    return (bigDecimal == null) ? 0L : bigDecimal.longValueExact();
   }
 
   public static String getMemo(byte[] memo) {
@@ -540,8 +592,20 @@ public class Util {
     writeAuditedError(clientMessage(e), response);
   }
 
+  // For handledType (exact class) onError returns the whole response body, bypassing
+  // clientMessage, so it must return audited client texts only and must not throw.
+  static <E extends Exception> void processError(Exception e, HttpServletResponse response,
+      Class<E> handledType, Function<E, String> onError) {
+    if (e == null || e.getClass() != handledType) {
+      processError(e, response);
+      return;
+    }
+    logger.debug("HTTP request failed", e);
+    writeResponse(onError.apply(handledType.cast(e)), response);
+  }
+
   // For catch blocks that cover server-side work only, so the failure stays visible at the
-  // default log level. The Exception entry point above keeps debug because its callers also
+  // default log level. The processError entry points above keep debug because their callers also
   // cover request parsing, which an unauthenticated client can fail cheaply and repeatedly.
   static void processServerError(Exception e, HttpServletResponse response) {
     logger.error("HTTP request failed", e);
@@ -550,8 +614,12 @@ public class Util {
 
   // Bypasses clientMessage: callers must pass audited fixed or pre-existing client texts only.
   static void writeAuditedError(String msg, HttpServletResponse response) {
+    writeResponse(Util.printErrorMsg(msg), response);
+  }
+
+  private static void writeResponse(String body, HttpServletResponse response) {
     try {
-      response.getWriter().println(Util.printErrorMsg(msg));
+      response.getWriter().println(body);
     } catch (IOException ioe) {
       logger.debug("Failed to write HTTP error response", ioe);
     }
@@ -583,16 +651,42 @@ public class Util {
     }
   }
 
+  /**
+   * Returns the address the request carries. An address parameter that is missing or unusable,
+   * and a json body that cannot be parsed, are reported as an InvalidHttpParameterException whose
+   * message is a fixed text, so that the address-keyed endpoints and their solidity/PBFT mirrors
+   * answer a given malformed request identically without each having to classify the failure.
+   * Nothing derived from the request may go into that message. A query string or form body the
+   * container itself cannot parse is not classified here and propagates unchanged.
+   */
   public static byte[] getAddress(HttpServletRequest request) throws Exception {
-    byte[] address = null;
     String addressParam = "address";
-    String addressStr = checkGetParam(request, addressParam);
-    if (StringUtils.isNotBlank(addressStr)) {
-      if (StringUtils.startsWith(addressStr, Constant.ADD_PRE_FIX_STRING_MAINNET)) {
-        address = Hex.decode(addressStr);
-      } else {
-        address = decodeFromBase58Check(addressStr);
-      }
+    String addressStr;
+    try {
+      addressStr = checkGetParam(request, addressParam);
+    } catch (JSONException e) {
+      throw new InvalidHttpParameterException(INVALID_JSON_BODY);
+    }
+    if (StringUtils.isBlank(addressStr)) {
+      throw new InvalidHttpParameterException(INVALID_ADDRESS_MSG);
+    }
+
+    boolean isHex = StringUtils.startsWith(addressStr, Constant.ADD_PRE_FIX_STRING_MAINNET);
+    // bound the hex input before decoding, mirroring the base58 length short-circuit
+    if (isHex && addressStr.length() != DecodeUtil.ADDRESS_SIZE) {
+      throw new InvalidHttpParameterException(INVALID_ADDRESS_MSG);
+    }
+
+    byte[] address;
+    try {
+      address = isHex ? Hex.decode(addressStr) : decodeFromBase58Check(addressStr);
+    } catch (DecoderException | IllegalArgumentException exception) {
+      // both decoders name the offending character and its offset, which is caller input
+      throw new InvalidHttpParameterException(INVALID_ADDRESS_MSG);
+    }
+    // base58 is validated inside the decoder; hex used to be returned unchecked
+    if (address == null || (isHex && !DecodeUtil.addressValid(address))) {
+      throw new InvalidHttpParameterException(INVALID_ADDRESS_MSG);
     }
     return address;
   }
@@ -687,13 +781,14 @@ public class Util {
     }
   }
 
-  public static String getJsonString(String str) {
+  public static String getJsonString(String str) throws ParseException {
     if (StringUtils.isEmpty(str)) {
       return EMPTY;
     }
     if (isValidJson(str)) {
       return str;
     }
+    checkFormPairs(str);
     MultiMap<String> params = new MultiMap<>();
     UrlEncoded.decodeUtf8To(str, params);
     JSONObject json = new JSONObject();
@@ -707,6 +802,16 @@ public class Util {
       }
     }
     return json.toString();
+  }
+
+  private static void checkFormPairs(String form) throws ParseException {
+    int max = ContextHandler.DEFAULT_MAX_FORM_KEYS;
+    int pairs = 1;
+    for (int i = 0; i < form.length(); i++) {
+      if (form.charAt(i) == '&' && ++pairs > max) {
+        throw new ParseException("form has too many parameters, the limit is " + max);
+      }
+    }
   }
 
   public static boolean isValidJson(String json) {

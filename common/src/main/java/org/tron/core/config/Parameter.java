@@ -33,7 +33,8 @@ public class Parameter {
     VERSION_4_8_2(36, 1596780000000L, 80),
     VERSION_4_8_2_2(37, 1596780000000L, 70),
     VERSION_4_8_2_3(38, 1596780000000L, 70),
-    VERSION_4_8_3(39, 1596780000000L, 80);
+    VERSION_4_8_2_4(39, 1596780000000L, 70),
+    VERSION_4_8_3(40, 1596780000000L, 80);
     // if add a version, modify BLOCK_VERSION simultaneously
 
     @Getter
@@ -82,7 +83,7 @@ public class Parameter {
     public static final int SINGLE_REPEAT = 1;
     public static final int BLOCK_FILLED_SLOTS_NUMBER = 128;
     public static final int MAX_FROZEN_NUMBER = 1;
-    public static final int BLOCK_VERSION = 39;
+    public static final int BLOCK_VERSION = 40;
     public static final long FROZEN_PERIOD = 86_400_000L;
     public static final long DELEGATE_PERIOD = 3 * 86_400_000L;
     public static final long TRX_PRECISION = 1000_000L;
@@ -100,8 +101,9 @@ public class Parameter {
   public class NetConstants {
 
     public static final long SYNC_FETCH_BATCH_NUM = 2000;
-    public static final long ADV_TIME_OUT = 20000L;
-    public static final long SYNC_TIME_OUT = 5000L;
+    public static final long HELLO_TIME_OUT = 10000L;
+    public static final long ADV_TIME_OUT = 15000L;
+    public static final long SYNC_TIME_OUT = 10000L;
     public static final long NET_MAX_TRX_PER_SECOND = 700L;
     public static final int MSG_CACHE_DURATION_IN_BLOCKS = 5;
     public static final int MAX_BLOCK_FETCH_PER_PEER = 100;

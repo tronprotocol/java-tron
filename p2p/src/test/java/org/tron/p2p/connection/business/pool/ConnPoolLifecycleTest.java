@@ -31,7 +31,7 @@ public class ConnPoolLifecycleTest {
     Field inet = Channel.class.getDeclaredField("inetAddress");
     inet.setAccessible(true);
     inet.set(channel, address.getAddress());
-    Field isActive = Channel.class.getDeclaredField("isActive");
+    Field isActive = Channel.class.getDeclaredField("outbound");
     isActive.setAccessible(true);
     isActive.set(channel, active);
     return channel;
@@ -39,7 +39,7 @@ public class ConnPoolLifecycleTest {
 
   @SuppressWarnings("unchecked")
   private List<Channel> activePeers() throws Exception {
-    Field field = ConnPoolService.class.getDeclaredField("activePeers");
+    Field field = ConnPoolService.class.getDeclaredField("registeredPeers");
     field.setAccessible(true);
     return (List<Channel>) field.get(service);
   }
@@ -73,8 +73,8 @@ public class ConnPoolLifecycleTest {
     service.onConnect(peer);
 
     Assert.assertEquals(1, activePeers().size());
-    Assert.assertEquals(1, counter("activePeersCount"));
-    Assert.assertEquals(0, counter("passivePeersCount"));
+    Assert.assertEquals(1, counter("outboundPeerCount"));
+    Assert.assertEquals(0, counter("inboundPeerCount"));
   }
 
   @Test
@@ -82,8 +82,8 @@ public class ConnPoolLifecycleTest {
     Channel peer = channelAt("127.0.0.1", 10001, false);
     service.onConnect(peer);
 
-    Assert.assertEquals(1, counter("passivePeersCount"));
-    Assert.assertEquals(0, counter("activePeersCount"));
+    Assert.assertEquals(1, counter("inboundPeerCount"));
+    Assert.assertEquals(0, counter("outboundPeerCount"));
   }
 
   @Test
@@ -93,7 +93,7 @@ public class ConnPoolLifecycleTest {
     service.onConnect(peer);
 
     Assert.assertEquals(1, activePeers().size());
-    Assert.assertEquals(1, counter("activePeersCount"));
+    Assert.assertEquals(1, counter("outboundPeerCount"));
   }
 
   @Test
@@ -104,11 +104,11 @@ public class ConnPoolLifecycleTest {
     service.onConnect(passive);
 
     service.onDisconnect(active);
-    Assert.assertEquals(0, counter("activePeersCount"));
-    Assert.assertEquals(1, counter("passivePeersCount"));
+    Assert.assertEquals(0, counter("outboundPeerCount"));
+    Assert.assertEquals(1, counter("inboundPeerCount"));
 
     service.onDisconnect(passive);
-    Assert.assertEquals(0, counter("passivePeersCount"));
+    Assert.assertEquals(0, counter("inboundPeerCount"));
     Assert.assertTrue(activePeers().isEmpty());
   }
 
@@ -116,8 +116,8 @@ public class ConnPoolLifecycleTest {
   public void disconnectingAnUnknownPeerIsANoOp() throws Exception {
     service.onDisconnect(channelAt("127.0.0.9", 10009, true));
 
-    Assert.assertEquals(0, counter("activePeersCount"));
-    Assert.assertEquals(0, counter("passivePeersCount"));
+    Assert.assertEquals(0, counter("outboundPeerCount"));
+    Assert.assertEquals(0, counter("inboundPeerCount"));
     Assert.assertTrue(activePeers().isEmpty());
   }
 

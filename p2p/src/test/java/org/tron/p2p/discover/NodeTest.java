@@ -29,11 +29,11 @@ public class NodeTest {
     node1.touch();
     Assert.assertNotEquals(lastModifyTime, node1.getUpdateTime());
 
-    node1.setP2pVersion(11111);
+    node1.setNetworkId(11111);
     Assert.assertTrue(node1.isConnectible(11111));
     Assert.assertFalse(node1.isConnectible(11112));
     Node node3 = new Node(NetUtil.getNodeId(), "127.0.0.1", null, 10003, 10004);
-    node3.setP2pVersion(11111);
+    node3.setNetworkId(11111);
     Assert.assertFalse(node3.isConnectible(11111));
   }
 

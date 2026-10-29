@@ -11,6 +11,7 @@ import org.tron.p2p.connection.business.MessageProcess;
 import org.tron.p2p.connection.message.Message;
 import org.tron.p2p.connection.message.base.P2pDisconnectMessage;
 import org.tron.p2p.connection.message.handshake.HelloMessage;
+import org.tron.p2p.connection.socket.OutboundHandshakeTimeoutHandler;
 import org.tron.p2p.connection.socket.PendingInboundConnectionHandler;
 import org.tron.p2p.protos.Connect.DisconnectReason;
 
@@ -40,7 +41,7 @@ public class HandshakeService implements MessageProcess {
     if (msg.getNetworkId() != networkId) {
       logger.info("Peer {} different network id, peer->{}, me->{}",
           channel.getInetSocketAddress(), msg.getNetworkId(), networkId);
-      if (!channel.isActive()) {
+      if (!channel.isOutbound()) {
         sendHelloMsg(channel, DisconnectCode.DIFFERENT_VERSION, msg.getTimestamp());
       }
       logDisconnectReason(channel, DisconnectReason.DIFFERENT_VERSION);
@@ -48,7 +49,7 @@ public class HandshakeService implements MessageProcess {
       return;
     }
 
-    if (channel.isActive() && msg.getCode() != DisconnectCode.NORMAL.getValue()) {
+    if (channel.isOutbound() && msg.getCode() != DisconnectCode.NORMAL.getValue()) {
       DisconnectCode disconnectCode = DisconnectCode.forNumber(msg.getCode());
       logger.info("Handshake failed {}, code: {}, reason: {}, networkId: {}, version: {}",
           channel.getInetSocketAddress(), msg.getCode(), disconnectCode.name(),
@@ -61,7 +62,7 @@ public class HandshakeService implements MessageProcess {
     channel.setHelloMessage(msg);
     DisconnectCode code = finishHandshake(channel, msg);
     if (code != DisconnectCode.NORMAL) {
-      if (!channel.isActive() && code != DisconnectCode.UNKNOWN) {
+      if (!channel.isOutbound() && code != DisconnectCode.UNKNOWN) {
         sendHelloMsg(channel, code, msg.getTimestamp());
       }
       logDisconnectReason(channel, getDisconnectReason(code));
@@ -78,7 +79,7 @@ public class HandshakeService implements MessageProcess {
       if (code != DisconnectCode.NORMAL) {
         return code;
       }
-      if (!channel.isActive()) {
+      if (!channel.isOutbound()) {
         // Hello must be sent before enabling the negotiated message compression.
         sendHelloMsg(channel, DisconnectCode.NORMAL, msg.getTimestamp());
       }
@@ -86,6 +87,9 @@ public class HandshakeService implements MessageProcess {
         return DisconnectCode.UNKNOWN;
       }
       if (!PendingInboundConnectionHandler.handshakeCompleted(channel.getCtx().channel())) {
+        return DisconnectCode.UNKNOWN;
+      }
+      if (!OutboundHandshakeTimeoutHandler.handshakeCompleted(channel.getCtx().channel())) {
         return DisconnectCode.UNKNOWN;
       }
       channel.setFinishHandshake(true);

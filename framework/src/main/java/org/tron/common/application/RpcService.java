@@ -16,8 +16,13 @@
 package org.tron.common.application;
 
 import io.grpc.Server;
+import io.grpc.ServerMethodDefinition;
+import io.grpc.ServerServiceDefinition;
+import io.grpc.ServiceDescriptor;
 import io.grpc.netty.NettyServerBuilder;
 import io.grpc.protobuf.services.ProtoReflectionService;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -25,6 +30,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.common.es.ExecutorServiceManager;
 import org.tron.common.parameter.CommonParameter;
+import org.tron.core.admission.GuardedRequestMarshaller;
+import org.tron.core.admission.ProtobufAdmissionGuard;
 import org.tron.core.config.args.Args;
 import org.tron.core.services.filter.LiteFnQueryGrpcInterceptor;
 import org.tron.core.services.ratelimiter.PrometheusInterceptor;
@@ -84,14 +91,14 @@ public abstract class RpcService extends AbstractService {
   @Override
   public CompletableFuture<Boolean> start() {
     NettyServerBuilder serverBuilder = initServerBuilder();
-    addService(serverBuilder);
+    addServices(serverBuilder);
     addInterceptor(serverBuilder);
     initServer(serverBuilder);
     this.rateLimiterInterceptor.init(this.apiServer);
     return super.start();
   }
 
-  protected NettyServerBuilder initServerBuilder() {
+  protected final NettyServerBuilder initServerBuilder() {
     CommonParameter parameter = Args.getInstance();
     NettyServerBuilder serverBuilder = NettyServerBuilder.forPort(this.port);
     if (parameter.getRpcThreadNum() > 0) {
@@ -116,9 +123,40 @@ public abstract class RpcService extends AbstractService {
     return serverBuilder;
   }
 
-  protected abstract void addService(NettyServerBuilder serverBuilder);
+  /** The services this port serves; {@link #addServices} guards and registers each of them. */
+  protected abstract List<ServerServiceDefinition> services();
 
-  protected void addInterceptor(NettyServerBuilder serverBuilder) {
+  private void addServices(NettyServerBuilder serverBuilder) {
+    int maxMessageSize = Args.getInstance().getMaxMessageSize();
+    for (ServerServiceDefinition service : services()) {
+      serverBuilder.addService(guardRequestMethods(service, maxMessageSize,
+          ProtobufAdmissionGuard.MAX_OCCURRENCES));
+    }
+  }
+
+  /** Guards every method; fails if a request marshaller gives no protobuf prototype. */
+  static ServerServiceDefinition guardRequestMethods(ServerServiceDefinition definition,
+      int maxMessageSize, int maxOccurrences) {
+    ServiceDescriptor service = definition.getServiceDescriptor();
+    ServiceDescriptor.Builder serviceBuilder = ServiceDescriptor.newBuilder(service.getName())
+        .setSchemaDescriptor(service.getSchemaDescriptor());
+    List<ServerMethodDefinition<?, ?>> methods = new ArrayList<>();
+    for (ServerMethodDefinition<?, ?> method : definition.getMethods()) {
+      methods.add(GuardedRequestMarshaller.guard(method, maxMessageSize, maxOccurrences));
+    }
+    // grpc requires the same MethodDescriptor instances in both descriptors.
+    for (ServerMethodDefinition<?, ?> method : methods) {
+      serviceBuilder.addMethod(method.getMethodDescriptor());
+    }
+    ServerServiceDefinition.Builder builder =
+        ServerServiceDefinition.builder(serviceBuilder.build());
+    for (ServerMethodDefinition<?, ?> method : methods) {
+      builder.addMethod(method);
+    }
+    return builder.build();
+  }
+
+  protected final void addInterceptor(NettyServerBuilder serverBuilder) {
     // add a ratelimiter interceptor
     serverBuilder.intercept(this.rateLimiterInterceptor);
 
@@ -134,7 +172,7 @@ public abstract class RpcService extends AbstractService {
     }
   }
 
-  protected void initServer(NettyServerBuilder serverBuilder) {
+  protected final void initServer(NettyServerBuilder serverBuilder) {
     this.apiServer = serverBuilder.build();
   }
 

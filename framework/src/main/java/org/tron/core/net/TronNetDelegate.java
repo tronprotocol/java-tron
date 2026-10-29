@@ -1,7 +1,6 @@
 package org.tron.core.net;
 
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
-import static org.tron.core.exception.BadBlockException.TypeEnum.CALC_MERKLE_ROOT_FAILED;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
@@ -24,6 +23,7 @@ import org.tron.common.prometheus.MetricKeys;
 import org.tron.common.prometheus.MetricLabels;
 import org.tron.common.prometheus.Metrics;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.Time;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
@@ -62,10 +62,14 @@ import org.tron.core.net.message.adv.TransactionMessage;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.store.WitnessScheduleStore;
 import org.tron.protos.Protocol.Inventory.InventoryType;
+import org.tron.protos.Protocol.Transaction;
 
 @Slf4j(topic = "net")
 @Component
 public class TronNetDelegate {
+
+  // Keep Merkle leaf encodings larger than the 64-byte internal-node input.
+  private static final int MIN_TRANSACTION_SIZE = 80;
 
   @Autowired
   private Manager dbManager;
@@ -88,8 +92,6 @@ public class TronNetDelegate {
   private volatile boolean backupServerStartFlag;
 
   private int blockIdCacheSize = 100;
-
-  private long timeout = 1000;
 
   @Getter // for test
   private volatile boolean  hitDown = false;
@@ -155,7 +157,7 @@ public class TronNetDelegate {
   }
 
   public BlockId getKhaosDbHeadBlockId() {
-    return chainBaseManager.getKhaosDbHead().getBlockId();
+    return chainBaseManager.getKhaosDb().getHeadId();
   }
 
   public long getSolidifiedBlockNum() {
@@ -312,12 +314,7 @@ public class TronNetDelegate {
           | EventBloomException e) {
         metricsService.failProcessBlock(block.getNum(), e.getMessage());
         logger.error("Process block failed, {}, reason: {}", blockId.getString(), e.getMessage());
-        if (e instanceof BadBlockException
-                && ((BadBlockException) e).getType().equals(CALC_MERKLE_ROOT_FAILED)) {
-          throw new P2pException(TypeEnum.BLOCK_MERKLE_INVALID, e);
-        } else {
-          throw new P2pException(TypeEnum.BAD_BLOCK, e);
-        }
+        throw new P2pException(TypeEnum.BAD_BLOCK, e);
       }
     }
   }
@@ -356,11 +353,20 @@ public class TronNetDelegate {
     }
   }
 
-  public boolean validBlock(BlockCapsule block) throws P2pException {
-    long time = System.currentTimeMillis();
-    if (block.getTimeStamp() - time > timeout) {
-      throw new P2pException(TypeEnum.BAD_BLOCK,
-              "time:" + time + ",block time:" + block.getTimeStamp());
+  public void validBlock(BlockCapsule block) throws P2pException {
+    for (Transaction transaction : block.getInstance().getTransactionsList()) {
+      int contractCount = transaction.getRawData().getContractCount();
+      if (contractCount != 1) {
+        throw new P2pException(TypeEnum.BAD_BLOCK,
+            "Invalid contract count: " + contractCount
+                + ", block: " + block.getBlockId().getString());
+      }
+      int transactionSize = transaction.getSerializedSize();
+      if (transactionSize < MIN_TRANSACTION_SIZE) {
+        throw new P2pException(TypeEnum.BAD_BLOCK,
+            "Invalid transaction size: " + transactionSize
+                + ", block: " + block.getBlockId().getString());
+      }
     }
     try {
       block.validateMerkleRoot();
@@ -368,7 +374,24 @@ public class TronNetDelegate {
       throw new P2pException(TypeEnum.BLOCK_MERKLE_INVALID, e.getMessage());
     }
     validSignature(block);
-    return witnessScheduleStore.getActiveWitnesses().contains(block.getWitnessAddress());
+  }
+
+  public boolean validAdvBlock(PeerConnection peer, BlockCapsule block) throws P2pException {
+    boolean activeWitness = witnessScheduleStore.getActiveWitnesses()
+        .contains(block.getWitnessAddress());
+    if (!activeWitness) {
+      logger.warn("Block witness is not active, block: {}, peer: {}",
+          block.getBlockId().getString(), peer.getInetSocketAddress());
+      long now = Time.getCurrentMillis();
+      long lastTime = peer.getLastInactiveWitnessBlockTime();
+      peer.setLastInactiveWitnessBlockTime(now);
+      if (now - lastTime < getMaintenanceTimeInterval() / 2) {
+        throw new P2pException(TypeEnum.BAD_BLOCK,
+            "Repeated block from an inactive witness: " + block.getBlockId().getString());
+      }
+    }
+    validBlock(block);
+    return activeWitness;
   }
 
   public PbftSignCapsule getBlockPbftCommitData(long blockNum) {

@@ -29,6 +29,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -557,26 +559,20 @@ public class ManagerMockTest {
   }
 
   /**
-   * Covers the fork-replay signature recheck added in this PR:
-   * when a block being re-applied during switchFork fails witness signature
-   * validation, the new `if (!validateSignature) throw` block must fire,
-   * surfacing ValidateSignatureException through the existing catch list.
-   *
-   * The old branch fails schedule validation during rollback, which switchFork
-   * handles without replacing the new branch's signature-validation failure.
+   * Invalid fork signatures must be rejected before block application. A controlled
+   * restoration failure exposes the original validation error as a suppressed exception.
    */
   @SneakyThrows
   @Test
   public void testSwitchForkRejectsBlockWithInvalidSignature() {
     Manager dbManager = spy(new Manager());
-    Consensus consensus = mock(Consensus.class);
-    setField(dbManager, "consensus", consensus);
 
     // chainBaseManager + stores so getDynamicPropertiesStore() / getAccountStore() resolve.
     ChainBaseManager cbm = mock(ChainBaseManager.class);
     DynamicPropertiesStore dps = mock(DynamicPropertiesStore.class);
     AccountStore accountStore = mock(AccountStore.class);
-    Sha256Hash sharedHash = Sha256Hash.ZERO_HASH;
+    BlockCapsule ancestor = new BlockCapsule(99, Sha256Hash.ZERO_HASH, 0, ByteString.EMPTY);
+    Sha256Hash sharedHash = ancestor.getBlockId();
     when(cbm.getDynamicPropertiesStore()).thenReturn(dps);
     when(cbm.getAccountStore()).thenReturn(accountStore);
     when(dps.getLatestBlockHeaderHash()).thenReturn(sharedHash);
@@ -592,62 +588,65 @@ public class ManagerMockTest {
     // The bad block goes into the apply loop; the old block lets the while
     // loops in the rollback/switchback paths exit immediately by matching
     // parent hash to the current head hash.
+    KhaosDatabase ancestorDb = new KhaosDatabase();
+    ancestorDb.start(ancestor);
     KhaosDatabase khaosDb = mock(KhaosDatabase.class);
+    when(khaosDb.getMiniStore()).thenReturn(ancestorDb.getMiniStore());
     setField(dbManager, "khaosDb", khaosDb);
 
     BlockCapsule badBlock = mock(BlockCapsule.class);
     BlockCapsule.BlockId badBlockId = mock(BlockCapsule.BlockId.class);
     when(badBlock.getBlockId()).thenReturn(badBlockId);
+    when(badBlock.getParentHash()).thenReturn(sharedHash);
     when(badBlock.getNum()).thenReturn(100L);
     when(badBlock.validateSignature(any(DynamicPropertiesStore.class),
         any(AccountStore.class))).thenReturn(false);
 
-    BlockCapsule oldBlock = mock(BlockCapsule.class);
-    BlockCapsule.BlockId oldBlockId = mock(BlockCapsule.BlockId.class);
-    when(oldBlock.getBlockId()).thenReturn(oldBlockId);
-    when(oldBlock.getParentHash()).thenReturn(sharedHash);
-    when(oldBlock.setSwitch(true)).thenReturn(oldBlock);
+    BlockCapsule oldBlock = new BlockCapsule(100, sharedHash, 1, ByteString.EMPTY);
+    KhaosDatabase.KhaosBlock oldKhaosBlock = new KhaosDatabase.KhaosBlock(oldBlock);
+    oldKhaosBlock.commit(oldBlock);
+    Consensus consensus = mock(Consensus.class);
+    RuntimeException restoreFailure = new RuntimeException("reached old block restoration");
+    when(consensus.validBlock(oldBlock)).thenThrow(restoreFailure);
+    setField(dbManager, "consensus", consensus);
 
     LinkedList<KhaosDatabase.KhaosBlock> first = new LinkedList<>();
     first.add(new KhaosDatabase.KhaosBlock(badBlock));
     LinkedList<KhaosDatabase.KhaosBlock> value = new LinkedList<>();
-    value.add(new KhaosDatabase.KhaosBlock(oldBlock));
+    value.add(oldKhaosBlock);
     when(khaosDb.getBranch(any(BlockCapsule.BlockId.class), any(Sha256Hash.class)))
         .thenReturn(new Pair<>(first, value));
 
     Method switchFork = Manager.class.getDeclaredMethod("switchFork", BlockCapsule.class);
     switchFork.setAccessible(true);
 
-    InvocationTargetException exception = assertThrows(InvocationTargetException.class,
+    InvocationTargetException thrown = assertThrows(InvocationTargetException.class,
         () -> switchFork.invoke(dbManager, badBlock));
-    Assert.assertEquals(ValidateSignatureException.class, exception.getCause().getClass());
-    Assert.assertEquals("switch fork: block 100 signature invalid",
-        exception.getCause().getMessage());
-
-    // The fix's contract: validateSignature was invoked on the replayed block.
-    verify(badBlock, atLeastOnce()).validateSignature(
-        any(DynamicPropertiesStore.class), any(AccountStore.class));
+    Assert.assertSame(restoreFailure, thrown.getCause());
+    Assert.assertEquals(1, restoreFailure.getSuppressed().length);
+    Assert.assertTrue(restoreFailure.getSuppressed()[0] instanceof ValidateSignatureException);
+    verify(badBlock).validateSignature(dps, accountStore);
     verify(badBlock, never()).setSwitch(true);
-    verify(consensus, never()).validBlock(badBlock);
     verify(khaosDb).removeBlk(badBlockId);
+    verify(consensus, never()).validBlock(badBlock);
+    verify(consensus).validBlock(oldBlock);
+    verify(session, never()).commit();
   }
 
   /**
-   * Symmetric "happy path" coverage: when validateSignature returns true, the
-   * throw is skipped and execution continues to applyBlock. Pins that the
-   * new check correctly inverts the boolean (no off-by-one in the `!`).
+   * Valid fork signatures must reach block application. Both application and restoration
+   * fail at a controlled boundary so unexpected exceptions cannot make the test pass.
    */
   @SneakyThrows
   @Test
   public void testSwitchForkPassesValidSignatureBlockToApply() {
     Manager dbManager = spy(new Manager());
-    Consensus consensus = mock(Consensus.class);
-    setField(dbManager, "consensus", consensus);
 
     ChainBaseManager cbm = mock(ChainBaseManager.class);
     DynamicPropertiesStore dps = mock(DynamicPropertiesStore.class);
     AccountStore accountStore = mock(AccountStore.class);
-    Sha256Hash sharedHash = Sha256Hash.ZERO_HASH;
+    BlockCapsule ancestor = new BlockCapsule(99, Sha256Hash.ZERO_HASH, 0, ByteString.EMPTY);
+    Sha256Hash sharedHash = ancestor.getBlockId();
     when(cbm.getDynamicPropertiesStore()).thenReturn(dps);
     when(cbm.getAccountStore()).thenReturn(accountStore);
     when(dps.getLatestBlockHeaderHash()).thenReturn(sharedHash);
@@ -658,38 +657,84 @@ public class ManagerMockTest {
     when(revokingStore.buildSession()).thenReturn(session);
     setField(dbManager, "revokingStore", revokingStore);
 
+    KhaosDatabase ancestorDb = new KhaosDatabase();
+    ancestorDb.start(ancestor);
     KhaosDatabase khaosDb = mock(KhaosDatabase.class);
+    when(khaosDb.getMiniStore()).thenReturn(ancestorDb.getMiniStore());
     setField(dbManager, "khaosDb", khaosDb);
 
     BlockCapsule goodBlock = mock(BlockCapsule.class);
     BlockCapsule.BlockId goodBlockId = mock(BlockCapsule.BlockId.class);
     when(goodBlock.getBlockId()).thenReturn(goodBlockId);
+    when(goodBlock.getParentHash()).thenReturn(sharedHash);
     when(goodBlock.getNum()).thenReturn(100L);
     when(goodBlock.validateSignature(any(DynamicPropertiesStore.class),
         any(AccountStore.class))).thenReturn(true);
     // setSwitch returns self for chained call from applyBlock argument expression.
     when(goodBlock.setSwitch(true)).thenReturn(goodBlock);
-    RuntimeException reachedApply = new RuntimeException("reached block application");
-    when(consensus.validBlock(goodBlock)).thenThrow(reachedApply);
+
+    Consensus consensus = mock(Consensus.class);
+    RuntimeException applyFailure = new RuntimeException("reached block application");
+    when(consensus.validBlock(goodBlock)).thenThrow(applyFailure);
+    setField(dbManager, "consensus", consensus);
+
+    // switchFork restores a nonempty, already-processed old branch on application failure.
+    BlockCapsule oldBlock = new BlockCapsule(100, sharedHash, 1, ByteString.EMPTY);
+    KhaosDatabase.KhaosBlock oldKhaosBlock = new KhaosDatabase.KhaosBlock(oldBlock);
+    oldKhaosBlock.commit(oldBlock);
+    RuntimeException restoreFailure = new RuntimeException("reached old block restoration");
+    when(consensus.validBlock(oldBlock)).thenThrow(restoreFailure);
 
     LinkedList<KhaosDatabase.KhaosBlock> first = new LinkedList<>();
     first.add(new KhaosDatabase.KhaosBlock(goodBlock));
     LinkedList<KhaosDatabase.KhaosBlock> value = new LinkedList<>();
+    value.add(oldKhaosBlock);
     when(khaosDb.getBranch(any(BlockCapsule.BlockId.class), any(Sha256Hash.class)))
         .thenReturn(new Pair<>(first, value));
 
     Method switchFork = Manager.class.getDeclaredMethod("switchFork", BlockCapsule.class);
     switchFork.setAccessible(true);
-    InvocationTargetException exception = assertThrows(InvocationTargetException.class,
+    InvocationTargetException thrown = assertThrows(InvocationTargetException.class,
         () -> switchFork.invoke(dbManager, goodBlock));
-    Assert.assertSame(reachedApply, exception.getCause());
+    Assert.assertSame(restoreFailure, thrown.getCause());
+    Assert.assertArrayEquals(new Throwable[]{applyFailure}, restoreFailure.getSuppressed());
 
-    // Validation ran AND setSwitch was reached — proves the `if` did not short-circuit
-    // on the false branch when validateSignature returned true.
-    verify(goodBlock, atLeastOnce()).validateSignature(
-        any(DynamicPropertiesStore.class), any(AccountStore.class));
-    verify(goodBlock, atLeastOnce()).setSwitch(true);
+    verify(goodBlock).validateSignature(dps, accountStore);
+    verify(goodBlock).setSwitch(true);
     verify(consensus).validBlock(goodBlock);
+    verify(consensus).validBlock(oldBlock);
+    verify(session, never()).commit();
+  }
+
+  @Test
+  public void shouldInvalidateTransactionVerificationCacheAcrossAllQueues()
+      throws Exception {
+    Manager manager = new Manager();
+    TransactionCapsule pendingTx = mock(TransactionCapsule.class);
+    TransactionCapsule rePushTx = mock(TransactionCapsule.class);
+    TransactionCapsule poppedTx = mock(TransactionCapsule.class);
+    TransactionCapsule pushingTx = mock(TransactionCapsule.class);
+    BlockingQueue<TransactionCapsule> pending = new LinkedBlockingQueue<>();
+    BlockingQueue<TransactionCapsule> rePush = new LinkedBlockingQueue<>();
+    List<TransactionCapsule> popped = new ArrayList<>();
+    BlockingQueue<TransactionCapsule> pushing = new LinkedBlockingQueue<>();
+    pending.add(pendingTx);
+    rePush.add(rePushTx);
+    popped.add(poppedTx);
+    pushing.add(pushingTx);
+    setField(manager, "pendingTransactions", pending);
+    setField(manager, "rePushTransactions", rePush);
+    setField(manager, "poppedTransactions", popped);
+    setField(manager, "pushTransactionQueue", pushing);
+
+    Method method = Manager.class.getDeclaredMethod("invalidateTransactionVerificationCache");
+    method.setAccessible(true);
+    method.invoke(manager);
+
+    verify(pendingTx).setVerified(false);
+    verify(rePushTx).setVerified(false);
+    verify(poppedTx).setVerified(false);
+    verify(pushingTx).setVerified(false);
   }
 
   private static void setField(Object target, String name, Object value) throws Exception {

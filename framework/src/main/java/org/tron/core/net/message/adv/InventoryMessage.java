@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.net.message.MessageTypes;
 import org.tron.core.net.message.TronMessage;
+import org.tron.p2p.utils.ProtoUtil;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Inventory;
 import org.tron.protos.Protocol.Inventory.InventoryType;
@@ -19,7 +20,7 @@ public class InventoryMessage extends TronMessage {
   public InventoryMessage(byte[] data) throws Exception {
     super(data);
     this.type = MessageTypes.INVENTORY.asByte();
-    this.inv = Protocol.Inventory.parseFrom(data);
+    this.inv = ProtoUtil.parseFrom(Protocol.Inventory.parser(), data);
   }
 
   public InventoryMessage(Inventory inv) {

@@ -3,13 +3,12 @@ package org.tron.consensus.pbft.message;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.io.IOException;
 import java.security.SignatureException;
-import java.util.stream.Collectors;
 import org.bouncycastle.util.encoders.Hex;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Sha256Hash;
-import org.tron.common.utils.StringUtil;
+import org.tron.common.utils.WalletUtil;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.exception.P2pException;
 import org.tron.protos.Protocol.PBFTMessage;
@@ -119,8 +118,7 @@ public abstract class PbftBaseMessage extends Message {
   private String decode() {
     try {
       SRL srList = SRL.parseFrom(pbftMessage.getRawData().getData().toByteArray());
-      return "sr list = " + srList.getSrAddressList().stream().map(
-          bytes -> StringUtil.encode58Check(bytes.toByteArray())).collect(Collectors.toList());
+      return "sr list = " + WalletUtil.getAddressStringList(srList.getSrAddressList());
     } catch (InvalidProtocolBufferException e) {
     }
     return "decode error";

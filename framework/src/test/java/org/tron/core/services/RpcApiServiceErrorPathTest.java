@@ -20,7 +20,6 @@ import org.tron.core.Wallet;
 import org.tron.core.metrics.MetricsApiService;
 import org.tron.core.services.RpcApiService.WalletApi;
 import org.tron.core.services.RpcApiService.WalletSolidityApi;
-import org.tron.core.utils.TransactionUtil;
 
 /**
  * Pins the one-terminal-event rule on the gRPC error path: a handler that reports a failure through
@@ -123,8 +122,6 @@ public class RpcApiServiceErrorPathTest {
   private static void injectFailingCollaborators(RpcApiService service, Failure failure)
       throws Exception {
     set(service, "wallet", mock(Wallet.class, withSettings().defaultAnswer(failure)));
-    set(service, "transactionUtil",
-        mock(TransactionUtil.class, withSettings().defaultAnswer(failure)));
     set(service, "nodeInfoService",
         mock(NodeInfoService.class, withSettings().defaultAnswer(failure)));
     set(service, "metricsApiService",

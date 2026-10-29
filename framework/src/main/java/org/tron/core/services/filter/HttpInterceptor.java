@@ -1,8 +1,13 @@
 package org.tron.core.services.filter;
 
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
+import javax.servlet.ServletContext;
+import javax.servlet.ServletRegistration;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
@@ -24,8 +29,20 @@ public class HttpInterceptor implements Filter {
   private final int HTTP_BAD_REQUEST = 400;
   private final int HTTP_NOT_ACCEPTABLE = 406;
 
+  private Map<String, String> endpoints = Collections.emptyMap();
+
   @Override
   public void init(FilterConfig filterConfig) {
+    ServletContext context = filterConfig.getServletContext();
+    Map<String, String> registered = new HashMap<>();
+    for (ServletRegistration servlet : context.getServletRegistrations().values()) {
+      for (String mapping : servlet.getMappings()) {
+        if (isExactMapping(mapping)) {
+          registered.put(mapping, context.getContextPath() + mapping);
+        }
+      }
+    }
+    endpoints = Collections.unmodifiableMap(registered);
   }
 
   @Override
@@ -36,28 +53,31 @@ public class HttpInterceptor implements Filter {
         chain.doFilter(request, response);
         return;
       }
-      String contextPath = ((HttpServletRequest) request).getContextPath();
-      endpoint = contextPath + ((HttpServletRequest) request).getServletPath();
+      endpoint = endpoints.getOrDefault(((HttpServletRequest) request).getServletPath(),
+          MetricLabels.UNDEFINED);
       chain.doFilter(request, response);
       HttpServletResponse resp = (HttpServletResponse) response;
+      int status = resp.getStatus();
       long size = getContentCount(request);
       MetricsUtil.meterMark(MetricsKey.NET_API_OUT_TRAFFIC, size);
       MetricsUtil.meterMark(MetricsKey.NET_API_QPS);
-      if (resp.getStatus() >= HTTP_BAD_REQUEST && resp.getStatus() <= HTTP_NOT_ACCEPTABLE) {
+      if (status != HTTP_SUCCESS) {
         MetricsUtil.meterMark(MetricsKey.NET_API_FAIL_QPS);
+      }
+      if (MetricLabels.UNDEFINED.equals(endpoint)
+          || (status >= HTTP_BAD_REQUEST && status <= HTTP_NOT_ACCEPTABLE)) {
         Metrics.histogramObserve(MetricKeys.Histogram.HTTP_BYTES,
-            size, MetricLabels.UNDEFINED, String.valueOf(resp.getStatus()));
+            size, MetricLabels.UNDEFINED, String.valueOf(status));
         return;
       }
-      if (resp.getStatus() == HTTP_SUCCESS) {
+      if (status == HTTP_SUCCESS) {
         MetricsUtil.meterMark(MetricsKey.NET_API_DETAIL_QPS + endpoint);
       } else {
-        MetricsUtil.meterMark(MetricsKey.NET_API_FAIL_QPS);
         MetricsUtil.meterMark(MetricsKey.NET_API_DETAIL_FAIL_QPS + endpoint);
       }
       MetricsUtil.meterMark(MetricsKey.NET_API_DETAIL_OUT_TRAFFIC + endpoint, size);
       Metrics.histogramObserve(MetricKeys.Histogram.HTTP_BYTES,
-          size, endpoint, String.valueOf(resp.getStatus()));
+          size, endpoint, String.valueOf(status));
     } catch (Exception e) {
       String key = MetricsKey.NET_API_DETAIL_QPS + endpoint;
       if (MetricsUtil.getMeters(MetricsKey.NET_API_DETAIL_QPS).containsKey(key)) {
@@ -71,6 +91,10 @@ public class HttpInterceptor implements Filter {
         throw (BadMessageException) e;
       }
     }
+  }
+
+  private boolean isExactMapping(String mapping) {
+    return mapping.startsWith("/") && mapping.length() > 1 && mapping.indexOf('*') < 0;
   }
 
   private long getContentCount(ServletRequest request) {

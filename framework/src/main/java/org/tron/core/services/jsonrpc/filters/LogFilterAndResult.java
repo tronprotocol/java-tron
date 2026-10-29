@@ -6,6 +6,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import lombok.Getter;
 import org.tron.core.Wallet;
 import org.tron.core.exception.jsonrpc.JsonRpcInvalidParamsException;
+import org.tron.core.exception.jsonrpc.JsonRpcPrunedHistoryException;
 import org.tron.core.services.jsonrpc.TronJsonRpc.FilterRequest;
 import org.tron.core.services.jsonrpc.TronJsonRpc.LogFilterElement;
 
@@ -15,7 +16,7 @@ public class LogFilterAndResult extends FilterResult<LogFilterElement> {
   private final LogFilterWrapper logFilterWrapper;
 
   public LogFilterAndResult(FilterRequest fr, long currentMaxBlockNum, Wallet wallet)
-      throws JsonRpcInvalidParamsException {
+      throws JsonRpcInvalidParamsException, JsonRpcPrunedHistoryException {
     // eth_newFilter, no need to check block range
     this.logFilterWrapper = new LogFilterWrapper(fr, currentMaxBlockNum, wallet, false);
     result = new LinkedBlockingQueue<>();

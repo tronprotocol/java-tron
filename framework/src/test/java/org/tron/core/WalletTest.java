@@ -1404,6 +1404,41 @@ public class WalletTest extends BaseTest {
   }
 
   @Test
+  @SneakyThrows
+  public void testTriggerConstantRevertSetsContractRet() {
+    String contractAddress = "0x1A622D84ed49f01045f5f1a5AfcEb9c57e9cC3cd";
+
+    SmartContractOuterClass.SmartContract smartContract =
+        SmartContractOuterClass.SmartContract.newBuilder().build();
+    ContractCapsule capsule = new ContractCapsule(smartContract);
+    dbManager.getContractStore().put(ByteArray.fromHexString(contractAddress), capsule);
+
+    // PUSH1 0 PUSH1 0 REVERT
+    CodeCapsule codeCapsule = new CodeCapsule(ByteArray.fromHexString("60006000fd"));
+    dbManager.getCodeStore().put(ByteArray.fromHexString(contractAddress), codeCapsule);
+
+    SmartContractOuterClass.TriggerSmartContract contract =
+        SmartContractOuterClass.TriggerSmartContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)))
+            .setContractAddress(ByteString.copyFrom(ByteArray.fromHexString(contractAddress)))
+            .build();
+    TransactionCapsule trxCap = wallet.createTransactionCapsule(contract,
+        ContractType.TriggerSmartContract);
+
+    boolean preDebug = CommonParameter.getInstance().debug;
+    CommonParameter.getInstance().debug = true;
+    try {
+      Transaction tx = wallet.triggerConstantContract(contract, trxCap,
+          GrpcAPI.TransactionExtention.newBuilder(), GrpcAPI.Return.newBuilder());
+      Assert.assertEquals(Transaction.Result.code.FAILED, tx.getRet(0).getRet());
+      Assert.assertEquals(Transaction.Result.contractResult.REVERT,
+          tx.getRet(0).getContractRet());
+    } finally {
+      CommonParameter.getInstance().debug = preDebug;
+    }
+  }
+
+  @Test
   public void testListNodes() {
     try {
       wallet.listNodes();
@@ -1515,7 +1550,7 @@ public class WalletTest extends BaseTest {
   }
 
   @Test
-  public void testApprovedListSigTruncate() {
+  public void testApprovedListRejectsPaddedSignature() {
     ECKey ecKey = new ECKey(Utils.getRandom());
     AccountCapsule owner = new AccountCapsule(
         ByteString.copyFromUtf8("approved-owner-trunc"),
@@ -1546,15 +1581,10 @@ public class WalletTest extends BaseTest {
     GrpcAPI.TransactionApprovedList reply = wallet.getTransactionApprovedList(
         unsigned.toBuilder().addSignature(oversized).build());
 
-    // Recovery still succeeds and resolves the owner.
-    assertEquals(GrpcAPI.TransactionApprovedList.Result.response_code.SUCCESS,
+    assertEquals(GrpcAPI.TransactionApprovedList.Result.response_code.SIGNATURE_FORMAT_ERROR,
         reply.getResult().getCode());
-    assertEquals(1, reply.getApprovedListCount());
-    // The echoed-back transaction has the signature truncated to 65 bytes.
-    Transaction echoed = reply.getTransaction().getTransaction();
-    assertEquals(1, echoed.getSignatureCount());
-    assertEquals(65, echoed.getSignature(0).size());
-    assertEquals(validSig, echoed.getSignature(0));
+    assertEquals(0, reply.getApprovedListCount());
+    Assert.assertFalse(reply.hasTransaction());
   }
 
   @Test
@@ -1594,4 +1624,3 @@ public class WalletTest extends BaseTest {
     assertEquals(0, rejected.getApprovedListCount());
   }
 }
-

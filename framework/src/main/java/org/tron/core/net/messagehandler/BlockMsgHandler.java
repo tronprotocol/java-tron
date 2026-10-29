@@ -134,14 +134,9 @@ public class BlockMsgHandler implements TronMsgHandler {
 
   private void processBlock(PeerConnection peer, BlockCapsule block) throws P2pException {
     BlockId blockId = block.getBlockId();
-    boolean flag = tronNetDelegate.validBlock(block);
-    if (!flag) {
-      logger.warn("Receive a bad block from {}, {}, {}",
-          peer.getInetSocketAddress(), blockId.getString(),
-          Hex.toHexString(block.getWitnessAddress().toByteArray()));
+    if (!tronNetDelegate.validAdvBlock(peer, block)) {
       return;
     }
-
     if (!tronNetDelegate.containBlock(block.getParentBlockId())) {
       logger.warn("Get unlink block {} from {}, head is {}", blockId.getString(),
               peer.getInetAddress(), tronNetDelegate.getHeadBlockId().getString());

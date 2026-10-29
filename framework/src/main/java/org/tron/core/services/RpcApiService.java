@@ -5,10 +5,12 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
 import com.google.protobuf.ProtocolStringList;
+import io.grpc.ServerServiceDefinition;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
-import io.grpc.netty.NettyServerBuilder;
 import io.grpc.stub.StreamObserver;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.Getter;
@@ -77,6 +79,7 @@ import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.Wallet;
+import org.tron.core.actuator.ActuatorConstant;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
@@ -94,7 +97,6 @@ import org.tron.core.exception.VMIllegalException;
 import org.tron.core.exception.ZksnarkException;
 import org.tron.core.metrics.MetricsApiService;
 import org.tron.core.services.http.servlets.Util;
-import org.tron.core.utils.TransactionUtil;
 import org.tron.core.zen.address.DiversifierT;
 import org.tron.core.zen.address.IncomingViewingKey;
 import org.tron.protos.Protocol;
@@ -172,8 +174,6 @@ public class RpcApiService extends RpcService {
   @Autowired
   private Wallet wallet;
   @Autowired
-  private TransactionUtil transactionUtil;
-  @Autowired
   private NodeInfoService nodeInfoService;
   @Autowired
   private MetricsApiService metricsApiService;
@@ -194,18 +194,16 @@ public class RpcApiService extends RpcService {
   }
 
   @Override
-  protected void addService(NettyServerBuilder serverBuilder) {
-    serverBuilder.addService(databaseApi);
+  protected List<ServerServiceDefinition> services() {
     CommonParameter parameter = Args.getInstance();
-    if (parameter.isSolidityNode()) {
-      serverBuilder.addService(walletSolidityApi);
-    } else {
-      serverBuilder.addService(walletApi);
-    }
-
+    List<ServerServiceDefinition> services = new ArrayList<>();
+    services.add(databaseApi.bindService());
+    services.add(parameter.isSolidityNode()
+        ? walletSolidityApi.bindService() : walletApi.bindService());
     if (parameter.isNodeMetricsEnable()) {
-      serverBuilder.addService(monitorApi);
+      services.add(monitorApi.bindService());
     }
+    return services;
   }
 
 
@@ -761,7 +759,7 @@ public class RpcApiService extends RpcService {
     @Override
     public void getTransactionSignWeight(Transaction req,
         StreamObserver<TransactionSignWeight> responseObserver) {
-      TransactionSignWeight tsw = transactionUtil.getTransactionSignWeight(req);
+      TransactionSignWeight tsw = wallet.getTransactionSignWeight(req);
       responseObserver.onNext(tsw);
       responseObserver.onCompleted();
     }
@@ -2242,6 +2240,18 @@ public class RpcApiService extends RpcService {
     @Override
     public void createCommonTransaction(Transaction request,
         StreamObserver<TransactionExtention> responseObserver) {
+      int contractCount = request.getRawData().getContractCount();
+      if (contractCount != 1) {
+        String message = contractCount == 0 ? ActuatorConstant.CONTRACT_NOT_EXIST
+            : String.format(ActuatorConstant.CONTRACT_SIZE_NOT_EQUAL_TO_ONE, contractCount);
+        Return result = Return.newBuilder().setResult(false)
+            .setCode(response_code.CONTRACT_VALIDATE_ERROR)
+            .setMessage(ByteString.copyFromUtf8(Wallet.CONTRACT_VALIDATE_ERROR + message))
+            .build();
+        responseObserver.onNext(TransactionExtention.newBuilder().setResult(result).build());
+        responseObserver.onCompleted();
+        return;
+      }
       Transaction.Contract contract = request.getRawData().getContract(0);
       createTransactionExtention(contract.getParameter(), contract.getType(),
           responseObserver);

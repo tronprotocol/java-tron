@@ -80,6 +80,10 @@ public class ChannelManager {
   }
 
   public static void connect(InetSocketAddress address) {
+    NetUtil.validateInetSocketAddress(address);
+    if (ConnectionPolicy.isBlocked(address)) {
+      return;
+    }
     peerClient.connect(address.getAddress().getHostAddress(), address.getPort(),
         ByteArray.toHexString(NetUtil.getNodeId()));
   }
@@ -128,7 +132,7 @@ public class ChannelManager {
     Parameter.handlerList.forEach(h -> h.onDisconnect(channel));
     InetAddress inetAddress = channel.getInetAddress();
     if (inetAddress != null) {
-      banNode(inetAddress, Parameter.DEFAULT_BAN_TIME);
+      banNodeOnDisconnect(inetAddress);
     }
   }
 
@@ -142,6 +146,12 @@ public class ChannelManager {
     return cnt;
   }
 
+  /**
+   * @deprecated Peer registration is managed by the libp2p HELLO handshake. This method only
+   *     performs admission checks and registration; it does not complete the handshake or cancel
+   *     its timeout. Application code should let the handshake register peers instead.
+   */
+  @Deprecated
   public static synchronized DisconnectCode processPeer(Channel channel) {
     DisconnectCode code = checkPeer(channel);
     if (code == DisconnectCode.NORMAL) {
@@ -159,7 +169,12 @@ public class ChannelManager {
       return DisconnectCode.NORMAL;
     }
 
-    if (!channel.isActive() && !channel.isTrustPeer()) {
+    if (ConnectionPolicy.isBlocked(channel.getInetAddress())) {
+      logger.info("Reject peer {} because its IP is manually blocked", channel);
+      return DisconnectCode.UNKNOWN;
+    }
+
+    if (!channel.isOutbound() && !channel.isTrustPeer()) {
       InetAddress inetAddress = channel.getInetAddress();
       if (bannedNodes.getIfPresent(inetAddress) != null
           && bannedNodes.getIfPresent(inetAddress) > System.currentTimeMillis()) {
@@ -240,10 +255,18 @@ public class ChannelManager {
   }
 
   public static void banNode(InetAddress inetAddress, Long banTime) {
+    long expiry = System.currentTimeMillis() + banTime;
+    Long currentExpiry = bannedNodes.getIfPresent(inetAddress);
+    if (currentExpiry == null || currentExpiry < expiry) {
+      bannedNodes.put(inetAddress, expiry);
+    }
+  }
+
+  static void banNodeOnDisconnect(InetAddress inetAddress) {
     long now = System.currentTimeMillis();
-    if (bannedNodes.getIfPresent(inetAddress) == null
-        || bannedNodes.getIfPresent(inetAddress) < now) {
-      bannedNodes.put(inetAddress, now + banTime);
+    Long expiry = bannedNodes.getIfPresent(inetAddress);
+    if (expiry == null || expiry < now) {
+      bannedNodes.put(inetAddress, now + Parameter.DEFAULT_BAN_TIME);
     }
   }
 
@@ -277,8 +300,8 @@ public class ChannelManager {
       logger.debug("Receive message from channel {}, {}", channel.getInetSocketAddress(), message);
     }
 
-    if (channel.isDiscoveryMode() && message.getType() != MessageType.STATUS) {
-      logger.debug("Discovery channel {} received unexpected message {}, close it",
+    if (channel.isNodeDetectMode() && message.getType() != MessageType.STATUS) {
+      logger.debug("Node detection channel {} received unexpected message {}, close it",
           channel.getInetSocketAddress(), message.getType());
       channel.close();
       return;
@@ -308,7 +331,7 @@ public class ChannelManager {
     if (handler == null) {
       throw new P2pException(P2pException.TypeEnum.NO_SUCH_MESSAGE, "type:" + data[0]);
     }
-    if (channel.isDiscoveryMode()) {
+    if (channel.isNodeDetectMode()) {
       channel.send(new P2pDisconnectMessage(DisconnectReason.DISCOVER_MODE));
       channel.getCtx().close();
       return;
@@ -364,5 +387,30 @@ public class ChannelManager {
 
   public static void triggerConnect(InetSocketAddress address) {
     connPoolService.triggerConnect(address);
+  }
+
+  public static int disconnect(InetSocketAddress address) {
+    int disconnectedCount = 0;
+    for (Channel channel : getAllChannels()) {
+      if (address.equals(channel.getInetSocketAddress()) && !channel.isDisconnect()) {
+        channel.send(new P2pDisconnectMessage(DisconnectReason.REQUESTED));
+        channel.close();
+        disconnectedCount++;
+      }
+    }
+    return disconnectedCount;
+  }
+
+  public static synchronized int disconnectBlockedIps() {
+    int disconnectedCount = 0;
+    for (Channel channel : getAllChannels()) {
+      if (ConnectionPolicy.isBlocked(channel.getInetAddress()) && !channel.isDisconnect()) {
+        // Do not send a DisconnectReason because it would reveal the manual blacklist policy
+        // to a potentially malicious peer.
+        channel.close();
+        disconnectedCount++;
+      }
+    }
+    return disconnectedCount;
   }
 }

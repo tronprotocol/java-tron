@@ -2,6 +2,7 @@ package org.tron.core.services.admin.ipc.server;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
@@ -37,6 +38,7 @@ import org.newsclub.net.unix.AFUNIXSocketAddress;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.TronError;
+import org.tron.core.net.service.peermanagement.PeerManagementService;
 import org.tron.core.services.admin.AdminJsonRpc;
 import org.tron.core.services.admin.AdminJsonRpcImpl;
 
@@ -95,13 +97,12 @@ public class IpcServiceTest {
                 -1, client.getInputStream().read());
             Mockito.verifyNoInteractions(adminJsonRpc);
           } else {
-            Mockito.when(adminJsonRpc.adminExample("a", "b")).thenReturn("a:b");
             BufferedWriter writer = new BufferedWriter(
                 new OutputStreamWriter(client.getOutputStream(), StandardCharsets.UTF_8));
             BufferedReader reader = new BufferedReader(
                 new InputStreamReader(client.getInputStream(), StandardCharsets.UTF_8));
             assertSuccessfulResponse(sendRequest(writer, reader, 1), 1);
-            Mockito.verify(adminJsonRpc).adminExample("a", "b");
+            Mockito.verify(adminJsonRpc).listBlockedIps();
           }
         }
       } finally {
@@ -113,13 +114,73 @@ public class IpcServiceTest {
   }
 
   @Test(timeout = 10_000)
+  public void testMalformedRequestBytesGetParseErrorBeforeInvocation() throws Exception {
+    assumePosixFileSystem();
+    CommonParameter parameter = Args.getInstance();
+    String originalOutputDirectory = parameter.outputDirectory;
+    String originalSocketDirectory = parameter.ipcSocketDirectory;
+    Path outputDirectory = Files.createTempDirectory(Paths.get("/tmp"), "ipc-bytes-");
+    AdminJsonRpc adminJsonRpc = Mockito.mock(AdminJsonRpc.class);
+    IpcService service = new IpcService(adminJsonRpc);
+    boolean started = false;
+    Path socketFile = null;
+    try {
+      parameter.outputDirectory = outputDirectory.toString();
+      parameter.ipcSocketDirectory = "";
+      service.innerStart();
+      started = true;
+      socketFile = resolveSocketFilePath(parameter, getPid(service));
+
+      String head = "{\"jsonrpc\":\"2.0\",\"method\":\"admin_addPeer\",\"params\":[\"a";
+      String tail = "\"],\"id\":1}";
+      ByteArrayOutputStream frames = new ByteArrayOutputStream();
+      for (byte[] frame : new byte[][] {
+          concat(head.getBytes(StandardCharsets.UTF_8), new byte[] {(byte) 0xff},
+              tail.getBytes(StandardCharsets.UTF_8)),
+          concat(head.getBytes(StandardCharsets.UTF_8), new byte[] {(byte) 0xc3},
+              tail.getBytes(StandardCharsets.UTF_8)),
+          concat((head + tail).getBytes(StandardCharsets.UTF_8), new byte[] {0}),
+          concat(new byte[] {0x0b}, (head + tail).getBytes(StandardCharsets.UTF_8)),
+          new byte[] {0x00, 0x7b, 0x00, 0x00},
+          new byte[] {0x00, 0x00, 0x7b, 0x00}}) {
+        frames.write(frame);
+        frames.write('\n');
+      }
+
+      try (AFUNIXSocket client = AFUNIXSocket.newInstance()) {
+        client.connect(AFUNIXSocketAddress.of(socketFile.toFile()));
+        client.setSoTimeout(2_000);
+        client.getOutputStream().write(frames.toByteArray());
+        client.getOutputStream().flush();
+        BufferedWriter writer = new BufferedWriter(
+            new OutputStreamWriter(client.getOutputStream(), StandardCharsets.UTF_8));
+        BufferedReader reader = new BufferedReader(
+            new InputStreamReader(client.getInputStream(), StandardCharsets.UTF_8));
+        for (int i = 0; i < 6; i++) {
+          String response = reader.readLine();
+          Assert.assertNotNull(response);
+          Assert.assertTrue(response, response.contains("\"id\":null"));
+          Assert.assertTrue(response, response.contains("\"code\":-32700"));
+        }
+        assertSuccessfulResponse(sendRequest(writer, reader, 2), 2);
+      }
+      Mockito.verify(adminJsonRpc).listBlockedIps();
+      Mockito.verifyNoMoreInteractions(adminJsonRpc);
+    } finally {
+      parameter.ipcSocketDirectory = originalSocketDirectory;
+      cleanupIpcService(service, started, parameter, originalOutputDirectory, socketFile,
+          outputDirectory);
+    }
+  }
+
+  @Test(timeout = 10_000)
   public void testSocketFileUsesOwnerOnlyPermissions() throws Exception {
     assumePosixFileSystem();
     CommonParameter parameter = Args.getInstance();
     String originalOutputDirectory = parameter.outputDirectory;
     Path outputDirectory = Files.createTempDirectory(Paths.get("/tmp"), "ipc-permission-test-");
     IpcService service = new IpcService(
-        new AdminJsonRpcImpl());
+        new AdminJsonRpcImpl(Mockito.mock(PeerManagementService.class)));
     boolean started = false;
     Path socketFile = null;
     try {
@@ -164,7 +225,7 @@ public class IpcServiceTest {
           Files.createSymbolicLink(directory, target);
         }
         try {
-          assertStartupRejectsExistingDirectory(service, directory);
+          assertStartupRejectsExistingDirectory(service);
           service.innerStop();
 
           Assert.assertTrue(Files.exists(directory, LinkOption.NOFOLLOW_LINKS));
@@ -215,7 +276,7 @@ public class IpcServiceTest {
           ManagementFactory.class, Mockito.CALLS_REAL_METHODS)) {
         management.when(ManagementFactory::getRuntimeMXBean).thenReturn(secondRuntime);
         Assert.assertNotEquals(firstPid, getPid(second));
-        assertStartupRejectsExistingDirectory(second, root.resolve("ipc"));
+        assertStartupRejectsExistingDirectory(second);
       }
       assertNewConnectionSucceeds(socketFile);
       second.innerStop();
@@ -389,7 +450,7 @@ public class IpcServiceTest {
     String originalOutputDirectory = parameter.outputDirectory;
     Path outputDirectory = Files.createTempDirectory(Paths.get("/tmp"), "ipc-multi-client-test-");
     IpcService service = new IpcService(
-        new AdminJsonRpcImpl());
+        new AdminJsonRpcImpl(Mockito.mock(PeerManagementService.class)));
     boolean started = false;
     Path socketFile = null;
     try {
@@ -547,7 +608,7 @@ public class IpcServiceTest {
     String originalOutputDirectory = parameter.outputDirectory;
     Path outputDirectory = Files.createTempDirectory(Paths.get("/tmp"), "ipc-test-");
     IpcService service = new IpcService(
-        new AdminJsonRpcImpl());
+        new AdminJsonRpcImpl(Mockito.mock(PeerManagementService.class)));
     boolean started = false;
     Path socketFile = null;
     try {
@@ -564,8 +625,8 @@ public class IpcServiceTest {
             new OutputStreamWriter(client.getOutputStream(), StandardCharsets.UTF_8));
             BufferedReader reader = new BufferedReader(
                 new InputStreamReader(client.getInputStream(), StandardCharsets.UTF_8))) {
-          writer.write("{\"jsonrpc\":\"2.0\",\"method\":\"admin_example\","
-              + "\"params\":[\"a\",\"b\"],\"id\":1}");
+          writer.write("{\"jsonrpc\":\"2.0\",\"method\":\"admin_listBlockedIps\","
+              + "\"params\":[],\"id\":1}");
           writer.newLine();
           writer.flush();
           Assert.assertNotNull(reader.readLine());
@@ -737,7 +798,19 @@ public class IpcServiceTest {
   }
 
   private IpcService newIpcService() {
-    return new IpcService(new AdminJsonRpcImpl());
+    return new IpcService(new AdminJsonRpcImpl(Mockito.mock(PeerManagementService.class)));
+  }
+
+  private void assertStartupRejectsExistingDirectory(IpcService service) throws Exception {
+    try {
+      service.innerStart();
+      Assert.fail("Expected startup to reject an existing IPC directory");
+    } catch (TronError e) {
+      Assert.assertEquals(TronError.ErrCode.API_SERVER_INIT, e.getErrCode());
+      Assert.assertTrue(e.getMessage().contains("IPC directory already exists"));
+      Assert.assertTrue(e.getMessage().contains("remove it manually"));
+      Assert.assertFalse(isRunning(service));
+    }
   }
 
   private void assertStartupRejectsExistingDirectory(IpcService service, Path directory)
@@ -862,16 +935,24 @@ public class IpcServiceTest {
 
   private String sendRequest(BufferedWriter writer, BufferedReader reader, int requestId)
       throws IOException {
-    writer.write("{\"jsonrpc\":\"2.0\",\"method\":\"admin_example\","
-        + "\"params\":[\"a\",\"b\"],\"id\":" + requestId + "}");
+    writer.write("{\"jsonrpc\":\"2.0\",\"method\":\"admin_listBlockedIps\","
+        + "\"params\":[],\"id\":" + requestId + "}");
     writer.newLine();
     writer.flush();
     return reader.readLine();
   }
 
+  private byte[] concat(byte[]... parts) throws IOException {
+    ByteArrayOutputStream joined = new ByteArrayOutputStream();
+    for (byte[] part : parts) {
+      joined.write(part);
+    }
+    return joined.toByteArray();
+  }
+
   private void assertSuccessfulResponse(String response, int requestId) {
     Assert.assertNotNull(response);
-    Assert.assertTrue(response, response.contains("\"result\":\"a:b\""));
+    Assert.assertTrue(response, response.contains("\"result\":[]"));
     Assert.assertTrue(response, response.contains("\"id\":" + requestId));
   }
 

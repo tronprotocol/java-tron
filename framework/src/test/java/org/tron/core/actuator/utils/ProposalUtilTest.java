@@ -69,6 +69,9 @@ public class ProposalUtilTest extends BaseTest {
 
     long code = 32;
     Assert.assertEquals(ProposalType.ALLOW_TVM_SOLIDITY_059, ProposalType.getEnum(code));
+    Assert.assertEquals(ProposalType.ALLOW_OPTIMIZE_TVM_STORAGE, ProposalType.getEnum(99));
+    Assert.assertEquals(ProposalType.ALLOW_STRICT_ECDSA_VALIDATION, ProposalType.getEnum(100));
+    Assert.assertEquals(ProposalType.CLOSE_EXCHANGE, ProposalType.getEnum(101));
 
   }
 
@@ -349,7 +352,13 @@ public class ProposalUtilTest extends BaseTest {
 
     testAllowHardenExchangeCalculationProposal();
 
+    testAllowStrictEcdsaValidationProposal();
+
+    // Both proposals share the version-40 gate; restore its pre-activation voting state.
+    dynamicPropertiesStore.statsByVersion(ForkBlockVersionEnum.VERSION_4_8_3.getValue(),
+        new byte[27]);
     testCloseExchangeProposal();
+    testAllowOptimizeTvmStorageKeyProposal();
 
     forkUtils.getManager().getDynamicPropertiesStore()
         .statsByVersion(ForkBlockVersionEnum.ENERGY_LIMIT.getValue(), stats);
@@ -746,12 +755,47 @@ public class ProposalUtilTest extends BaseTest {
     }
   }
 
+  private void testAllowStrictEcdsaValidationProposal() {
+    long code = ProposalType.ALLOW_STRICT_ECDSA_VALIDATION.getCode();
+    ThrowingRunnable proposeZero = () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+        code, 0);
+    ThrowingRunnable proposeOne = () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils,
+        code, 1);
+
+    ContractValidateException thrown = assertThrows(ContractValidateException.class, proposeOne);
+    assertEquals("Bad chain parameter id [ALLOW_STRICT_ECDSA_VALIDATION]",
+        thrown.getMessage());
+
+    activateFork(ForkBlockVersionEnum.VERSION_4_8_2_4);
+    thrown = assertThrows(ContractValidateException.class, proposeOne);
+    assertEquals("Bad chain parameter id [ALLOW_STRICT_ECDSA_VALIDATION]",
+        thrown.getMessage());
+
+    activateFork(ForkBlockVersionEnum.VERSION_4_8_3);
+
+    thrown = assertThrows(ContractValidateException.class, proposeZero);
+    assertEquals("This value[ALLOW_STRICT_ECDSA_VALIDATION] is only allowed to be 1",
+        thrown.getMessage());
+
+    try {
+      proposeOne.run();
+    } catch (Throwable e) {
+      Assert.fail("Should allow one-way activation: " + e.getMessage());
+    }
+
+    dynamicPropertiesStore.saveAllowStrictEcdsaValidation(1);
+    thrown = assertThrows(ContractValidateException.class, proposeOne);
+    assertEquals(
+        "[ALLOW_STRICT_ECDSA_VALIDATION] has been valid, no need to propose again",
+        thrown.getMessage());
+  }
+
   /**
    * CLOSE_EXCHANGE(101): fork gate, step-by-step progression, and the close-level lockout of
    * the legacy exchange parameters 12 (EXCHANGE_CREATE_FEE) and 98
    * (ALLOW_HARDEN_EXCHANGE_CALCULATION): freely proposable at level 0, rejected once the
    * level reaches 1.
-   * Runs after testAllowHardenExchangeCalculationProposal, so VERSION_4_8_2 has passed but
+   * Runs after testAllowStrictEcdsaValidationProposal, so VERSION_4_8_2_4 has passed but
    * VERSION_4_8_3 has not when this method starts.
    */
   private void testCloseExchangeProposal() {
@@ -759,7 +803,7 @@ public class ProposalUtilTest extends BaseTest {
     long exchangeCreateFeeCode = ProposalType.EXCHANGE_CREATE_FEE.getCode();
     long hardenExchangeCode = ProposalType.ALLOW_HARDEN_EXCHANGE_CALCULATION.getCode();
 
-    // 1) fork VERSION_4_8_3 not passed yet -> rejected, even though 4.8.2 passed
+    // 1) fork VERSION_4_8_3 not passed yet -> rejected, even though 4.8.2.4 passed
     ContractValidateException thrown = assertThrows(ContractValidateException.class,
         () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils, code, 1));
     assertEquals("Bad chain parameter id [CLOSE_EXCHANGE]", thrown.getMessage());
@@ -804,7 +848,8 @@ public class ProposalUtilTest extends BaseTest {
     // 5) stepwise progression from current=0: jump to 2 is rejected
     thrown = assertThrows(ContractValidateException.class,
         () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils, code, 2));
-    assertEquals("This value[CLOSE_EXCHANGE] must be 1 and within [1,2]", thrown.getMessage());
+    assertEquals("This value[CLOSE_EXCHANGE] must be greater than the current value "
+        + "and within [1,2]", thrown.getMessage());
 
     // 6) proposing the current value again is rejected
     thrown = assertThrows(ContractValidateException.class,
@@ -815,11 +860,13 @@ public class ProposalUtilTest extends BaseTest {
     // 7) negative and out-of-range values are rejected
     thrown = assertThrows(ContractValidateException.class,
         () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils, code, -1));
-    assertEquals("This value[CLOSE_EXCHANGE] must be 1 and within [1,2]", thrown.getMessage());
+    assertEquals("This value[CLOSE_EXCHANGE] must be greater than the current value "
+        + "and within [1,2]", thrown.getMessage());
 
     thrown = assertThrows(ContractValidateException.class,
         () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils, code, LONG_VALUE + 1));
-    assertEquals("This value[CLOSE_EXCHANGE] must be 1 and within [1,2]", thrown.getMessage());
+    assertEquals("This value[CLOSE_EXCHANGE] must be greater than the current value "
+        + "and within [1,2]", thrown.getMessage());
 
     // 8) current=0 -> only value 1 passes; applying it makes 1 the current value
     try {
@@ -849,7 +896,8 @@ public class ProposalUtilTest extends BaseTest {
     // 9) current=1 -> only value 2 passes
     thrown = assertThrows(ContractValidateException.class,
         () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils, code, 3));
-    assertEquals("This value[CLOSE_EXCHANGE] must be 2 and within [1,2]", thrown.getMessage());
+    assertEquals("This value[CLOSE_EXCHANGE] must be greater than the current value "
+        + "and within [1,2]", thrown.getMessage());
 
     try {
       ProposalUtil.validator(dynamicPropertiesStore, forkUtils, code, 2);
@@ -864,13 +912,86 @@ public class ProposalUtilTest extends BaseTest {
     thrown = assertThrows(ContractValidateException.class,
         () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils, code, 1));
     assertEquals(
-        "[CLOSE_EXCHANGE] has reached its terminal value 2; no further change is allowed",
+        "This value[CLOSE_EXCHANGE] must be greater than the current value and within [1,2]",
         thrown.getMessage());
 
     thrown = assertThrows(ContractValidateException.class,
         () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils, code, 2));
     assertEquals("[CLOSE_EXCHANGE] has been set to 2, no need to propose again",
         thrown.getMessage());
+  }
+
+  private void testAllowOptimizeTvmStorageKeyProposal() {
+    long legacy = ProposalType.ALLOW_OPTIMIZE_TVM_STORAGE.getCode();
+    long code = ProposalType.ALLOW_OPTIMIZE_TVM_STORAGE_KEY.getCode();
+    byte[] cleared = new byte[27];
+    forkUtils.getManager().getDynamicPropertiesStore()
+        .statsByVersion(ForkBlockVersionEnum.VERSION_4_8_2_3.getValue(), cleared);
+    forkUtils.getManager().getDynamicPropertiesStore()
+        .statsByVersion(ForkBlockVersionEnum.VERSION_4_8_2_4.getValue(), cleared);
+    dynamicPropertiesStore.saveAllowOptimizeTvmStorage(0);
+
+    ContractValidateException bannedEx = assertThrows(ContractValidateException.class,
+        () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils, legacy, 1));
+    assertEquals("Bad chain parameter id [ALLOW_OPTIMIZE_TVM_STORAGE]", bannedEx.getMessage());
+
+    activateFork(ForkBlockVersionEnum.VERSION_4_8_2_3);
+    ContractValidateException newBeforeFork = assertThrows(ContractValidateException.class,
+        () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils, code, 1));
+    assertEquals("Bad chain parameter id [ALLOW_OPTIMIZE_TVM_STORAGE_KEY]",
+        newBeforeFork.getMessage());
+    ContractValidateException legacyValue = assertThrows(ContractValidateException.class,
+        () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils, legacy, 0));
+    assertEquals("This value[ALLOW_OPTIMIZE_TVM_STORAGE] is only allowed to be 1",
+        legacyValue.getMessage());
+    try {
+      ProposalUtil.validator(dynamicPropertiesStore, forkUtils, legacy, 1);
+    } catch (ContractValidateException e) {
+      Assert.fail(e.getMessage());
+    }
+    Protocol.Proposal legacyProposal = Protocol.Proposal.newBuilder()
+        .putParameters(legacy, 1).build();
+    Assert.assertTrue(ProposalService.process(dbManager, new ProposalCapsule(legacyProposal)));
+    Assert.assertEquals(1L, dynamicPropertiesStore.getAllowOptimizeTvmStorage());
+    Assert.assertTrue(dynamicPropertiesStore.allowTvmStorageOptimization());
+    Assert.assertFalse(dynamicPropertiesStore.allowOptimizeTvmStorageKey());
+    ContractValidateException legacyAgain = assertThrows(ContractValidateException.class,
+        () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils, legacy, 1));
+    assertEquals("[ALLOW_OPTIMIZE_TVM_STORAGE] has been valid, no need to propose again",
+        legacyAgain.getMessage());
+
+    dynamicPropertiesStore.saveAllowOptimizeTvmStorage(0);
+    activateFork(ForkBlockVersionEnum.VERSION_4_8_2_4);
+
+    try {
+      ProposalUtil.validator(dynamicPropertiesStore, forkUtils, legacy, 1);
+    } catch (ContractValidateException e) {
+      Assert.fail(e.getMessage());
+    }
+    Assert.assertTrue(ProposalService.process(dbManager, new ProposalCapsule(legacyProposal)));
+    Assert.assertEquals(1L, dynamicPropertiesStore.getAllowOptimizeTvmStorage());
+
+    ContractValidateException badValue = assertThrows(ContractValidateException.class,
+        () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils, code, 0));
+    assertEquals("This value[ALLOW_OPTIMIZE_TVM_STORAGE_KEY] is only allowed to be 1",
+        badValue.getMessage());
+
+    try {
+      ProposalUtil.validator(dynamicPropertiesStore, forkUtils, code, 1);
+    } catch (ContractValidateException e) {
+      Assert.fail(e.getMessage());
+    }
+
+    Protocol.Proposal proposal = Protocol.Proposal.newBuilder().putParameters(code, 1).build();
+    ProposalService.process(dbManager, new ProposalCapsule(proposal));
+    Assert.assertEquals(1L, dynamicPropertiesStore.getAllowOptimizeTvmStorageKey());
+    Assert.assertTrue(dynamicPropertiesStore.allowTvmStorageOptimization());
+
+    ContractValidateException again = assertThrows(ContractValidateException.class,
+        () -> ProposalUtil.validator(dynamicPropertiesStore, forkUtils, code, 1));
+    assertEquals(
+        "[ALLOW_OPTIMIZE_TVM_STORAGE_KEY] has been valid, no need to propose again",
+        again.getMessage());
   }
 
   private void testAllowMarketTransaction() {
@@ -920,15 +1041,16 @@ public class ProposalUtilTest extends BaseTest {
 
   @Test
   public void blockVersionCheck() {
-    // Block version 39 advertises VERSION_4_8_3 (aligned with PR #7001): the CLOSE_EXCHANGE
+    // Block version 40 advertises VERSION_4_8_3: the CLOSE_EXCHANGE
     // fork is live-ready. Activation still requires the 80% witness fork voting of
     // VERSION_4_8_3, and closing exchanges additionally requires a committee proposal, so
     // the version bump alone does not change consensus behaviour.
-    Assert.assertEquals(39, Parameter.ChainConstant.BLOCK_VERSION);
+    Assert.assertEquals(40, Parameter.ChainConstant.BLOCK_VERSION);
+    Assert.assertEquals(39, ForkBlockVersionEnum.VERSION_4_8_2_4.getValue());
     Assert.assertEquals(Parameter.ChainConstant.BLOCK_VERSION,
         ForkBlockVersionEnum.VERSION_4_8_3.getValue());
     // The previous hard fork stays strictly below the advertised block version.
-    Assert.assertTrue("VERSION_4_8_2_3 must be below BLOCK_VERSION",
-        ForkBlockVersionEnum.VERSION_4_8_2_3.getValue() < Parameter.ChainConstant.BLOCK_VERSION);
+    Assert.assertTrue("VERSION_4_8_2_4 must be below BLOCK_VERSION",
+        ForkBlockVersionEnum.VERSION_4_8_2_4.getValue() < Parameter.ChainConstant.BLOCK_VERSION);
   }
 }

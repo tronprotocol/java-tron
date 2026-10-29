@@ -1,5 +1,7 @@
 package org.tron.p2p.connection.business.detect;
 
+import static org.tron.p2p.base.Parameter.NODE_DETECT_TIMEOUT;
+
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import java.net.InetAddress;
@@ -17,9 +19,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.tron.p2p.base.Parameter;
 import org.tron.p2p.connection.Channel;
+import org.tron.p2p.connection.ConnectionPolicy;
 import org.tron.p2p.connection.business.MessageProcess;
 import org.tron.p2p.connection.message.Message;
 import org.tron.p2p.connection.message.detect.StatusMessage;
+import org.tron.p2p.connection.socket.OutboundStatusTimeoutHandler;
 import org.tron.p2p.connection.socket.PeerClient;
 import org.tron.p2p.discover.Node;
 import org.tron.p2p.discover.NodeManager;
@@ -41,8 +45,6 @@ public class NodeDetectService implements MessageProcess {
   private final long NODE_DETECT_THRESHOLD = 5 * 60 * 1000;
 
   private final long NODE_DETECT_MIN_THRESHOLD = 30 * 1000;
-
-  private final long NODE_DETECT_TIMEOUT = 2 * 1000;
 
   private final int MAX_NODE_SLOW_DETECT = 3;
 
@@ -104,7 +106,9 @@ public class NodeDetectService implements MessageProcess {
   public void trimNodeMap() {
     long now = System.currentTimeMillis();
     nodeStatMap.forEach((k, v) -> {
-      if (!v.finishDetect() && v.getLastDetectTime() < now - NODE_DETECT_TIMEOUT) {
+      if (ConnectionPolicy.isBlocked(k)) {
+        nodeStatMap.remove(k, v);
+      } else if (!v.finishDetect() && v.getLastDetectTime() < now - NODE_DETECT_TIMEOUT) {
         nodeStatMap.remove(k);
         badNodesCache.put(k.getAddress(), System.currentTimeMillis());
       }
@@ -118,6 +122,7 @@ public class NodeDetectService implements MessageProcess {
     for (Node node : nodes) {
       InetSocketAddress socketAddress = node.getPreferInetSocketAddress();
       if (socketAddress != null
+          && !ConnectionPolicy.isBlocked(socketAddress)
           && !nodeStatMap.containsKey(socketAddress)
           && badNodesCache.getIfPresent(socketAddress.getAddress()) == null) {
         NodeStat nodeStat = new NodeStat(node);
@@ -132,10 +137,16 @@ public class NodeDetectService implements MessageProcess {
   }
 
   private void detect(NodeStat stat) {
+    if (ConnectionPolicy.isBlocked(stat.getSocketAddress())) {
+      nodeStatMap.remove(stat.getSocketAddress(), stat);
+      return;
+    }
     try {
       stat.setTotalCount(stat.getTotalCount() + 1);
       setLastDetectTime(stat);
-      peerClient.connectAsync(stat.getNode(), true);
+      if (peerClient.connectAsync(stat.getNode(), true) == null) {
+        nodeStatMap.remove(stat.getSocketAddress(), stat);
+      }
     } catch (Exception e) {
       logger.warn("Detect node {} failed, {}",
           stat.getNode().getPreferInetSocketAddress(), e.getMessage());
@@ -153,35 +164,42 @@ public class NodeDetectService implements MessageProcess {
       return;
     }
 
-    if (!channel.isActive()) {
-      channel.setDiscoveryMode(true);
+    if (!channel.isOutbound()) {
+      channel.setNodeDetectMode(true);
       channel.send(new StatusMessage());
       channel.getCtx().close();
       return;
     }
 
-    InetSocketAddress socketAddress = channel.getInetSocketAddress();
-    NodeStat nodeStat = nodeStatMap.get(socketAddress);
-    if (nodeStat == null) {
-      return;
+    try {
+      // Recheck after dispatch in case the event loop's timeout task was delayed.
+      if (OutboundStatusTimeoutHandler.isTimedOut(channel.getCtx().channel())) {
+        return;
+      }
+      InetSocketAddress socketAddress = channel.getInetSocketAddress();
+      NodeStat nodeStat = nodeStatMap.get(socketAddress);
+      if (nodeStat == null) {
+        return;
+      }
+
+      long cost = System.currentTimeMillis() - nodeStat.getLastDetectTime();
+      if (cost > NODE_DETECT_TIMEOUT
+          || statusMessage.getRemainConnections() == 0) {
+        badNodesCache.put(socketAddress.getAddress(), cost);
+        nodeStatMap.remove(socketAddress);
+      }
+
+      nodeStat.setLastSuccessDetectTime(nodeStat.getLastDetectTime());
+      setStatusMessage(nodeStat, statusMessage);
+    } finally {
+      // STATUS is a one-shot probe, including when its record has already expired.
+      channel.getCtx().close();
     }
-
-    long cost = System.currentTimeMillis() - nodeStat.getLastDetectTime();
-    if (cost > NODE_DETECT_TIMEOUT
-        || statusMessage.getRemainConnections() == 0) {
-      badNodesCache.put(socketAddress.getAddress(), cost);
-      nodeStatMap.remove(socketAddress);
-    }
-
-    nodeStat.setLastSuccessDetectTime(nodeStat.getLastDetectTime());
-    setStatusMessage(nodeStat, statusMessage);
-
-    channel.getCtx().close();
   }
 
   public void notifyDisconnect(Channel channel) {
 
-    if (!channel.isActive()) {
+    if (!channel.isOutbound()) {
       return;
     }
 

@@ -25,11 +25,12 @@ public class AccountIdIndexStoreTest extends BaseTest {
   private static final byte[] ACCOUNT_ADDRESS_TWO = randomBytes(16);
   private static final byte[] ACCOUNT_ADDRESS_THREE = randomBytes(16);
   private static final byte[] ACCOUNT_ADDRESS_FOUR = randomBytes(16);
-  private static final byte[] ACCOUNT_NAME_ONE = randomBytes(6);
-  private static final byte[] ACCOUNT_NAME_TWO = randomBytes(6);
-  private static final byte[] ACCOUNT_NAME_THREE = randomBytes(6);
-  private static final byte[] ACCOUNT_NAME_FOUR = randomBytes(6);
-  private static final byte[] ACCOUNT_NAME_FIVE = randomBytes(6);
+  // Random bytes can collide after UTF-8 decoding and case normalization of account IDs.
+  private static final byte[] ACCOUNT_NAME_ONE = "account1".getBytes(StandardCharsets.UTF_8);
+  private static final byte[] ACCOUNT_NAME_TWO = "account2".getBytes(StandardCharsets.UTF_8);
+  private static final byte[] ACCOUNT_NAME_THREE = "account3".getBytes(StandardCharsets.UTF_8);
+  private static final byte[] ACCOUNT_NAME_FOUR = "account4".getBytes(StandardCharsets.UTF_8);
+  private static final byte[] ACCOUNT_NAME_FIVE = "account5".getBytes(StandardCharsets.UTF_8);
   private static final Locale TURKISH = Locale.forLanguageTag("tr");
   @Resource
   private AccountIdIndexStore accountIdIndexStore;

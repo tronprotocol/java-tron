@@ -255,12 +255,17 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] ALLOW_HARDEN_EXCHANGE_CALCULATION =
       "ALLOW_HARDEN_EXCHANGE_CALCULATION".getBytes();
 
+  private static final byte[] ALLOW_STRICT_ECDSA_VALIDATION =
+      "ALLOW_STRICT_ECDSA_VALIDATION".getBytes();
+
   private static final byte[] CLOSE_EXCHANGE = "CLOSE_EXCHANGE".getBytes();
 
   private static final byte[] TURKISH_KEY_MIGRATION_DONE =
       "TURKISH_KEY_MIGRATION_DONE".getBytes();
 
   private static final byte[] ALLOW_OPTIMIZE_TVM_STORAGE = "ALLOW_OPTIMIZE_TVM_STORAGE".getBytes();
+  private static final byte[] ALLOW_OPTIMIZE_TVM_STORAGE_KEY =
+      "ALLOW_OPTIMIZE_TVM_STORAGE_KEY".getBytes();
 
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
@@ -3087,6 +3092,21 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     return getAllowHardenExchangeCalculation() == 1L;
   }
 
+  public long getAllowStrictEcdsaValidation() {
+    return Optional.ofNullable(getUnchecked(ALLOW_STRICT_ECDSA_VALIDATION))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElse(0L);
+  }
+
+  public void saveAllowStrictEcdsaValidation(long value) {
+    this.put(ALLOW_STRICT_ECDSA_VALIDATION, new BytesCapsule(ByteArray.fromLong(value)));
+  }
+
+  public boolean allowStrictEcdsaValidation() {
+    return getAllowStrictEcdsaValidation() == 1L;
+  }
+
   public void saveTurkishKeyMigrationDone(long num) {
     this.put(TURKISH_KEY_MIGRATION_DONE,
         new BytesCapsule(ByteArray.fromLong(num)));
@@ -3112,6 +3132,25 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   public boolean allowOptimizeTvmStorage() {
     return getAllowOptimizeTvmStorage() == 1L;
+  }
+
+  public long getAllowOptimizeTvmStorageKey() {
+    return Optional.ofNullable(getUnchecked(ALLOW_OPTIMIZE_TVM_STORAGE_KEY))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElse(0L);
+  }
+
+  public void saveAllowOptimizeTvmStorageKey(long value) {
+    this.put(ALLOW_OPTIMIZE_TVM_STORAGE_KEY, new BytesCapsule(ByteArray.fromLong(value)));
+  }
+
+  public boolean allowOptimizeTvmStorageKey() {
+    return getAllowOptimizeTvmStorageKey() == 1L;
+  }
+
+  public boolean allowTvmStorageOptimization() {
+    return allowOptimizeTvmStorage() || allowOptimizeTvmStorageKey();
   }
 
   private static class DynamicResourceProperties {
