@@ -470,6 +470,44 @@ public class Tip944Test extends BaseTest {
   }
 
   @Test
+  public void stakeOneUnfreezeWithoutDelayUsesRemainingResourcePowerForVoteCleanup()
+      throws Exception {
+    for (ResourceCode type : new ResourceCode[]{BANDWIDTH, ENERGY}) {
+      for (boolean delegated : new boolean[]{false, true}) {
+        for (long prior : new long[]{0, 7 * TRX_PRECISION, -1}) {
+          for (long voteCount : new long[]{1, 2, 3}) {
+            setup();
+            VMConfig.initAllowTvmFreezeV2(0);
+            dbManager.getDynamicPropertiesStore().saveUnfreezeDelayDays(0);
+            byte[] receiver = stakeOneReceiver(delegated);
+            fundOwner();
+            freezeOne(repo, receiver, type, 5 * TRX_PRECISION);
+            stake(OWNER, TRON_POWER, 5 * TRX_PRECISION);
+            AccountCapsule owner = repo.getAccount(OWNER);
+            if (type == BANDWIDTH) {
+              owner.setFrozenForEnergy(2 * TRX_PRECISION, 0);
+            } else {
+              owner.setFrozenForBandwidth(2 * TRX_PRECISION, 0);
+            }
+            owner.setOldTronPower(prior);
+            owner.addVotes(ByteString.copyFrom(WITNESS), voteCount);
+            repo.updateAccount(OWNER, owner);
+            VotesCapsule votes = new VotesCapsule(ByteString.copyFrom(OWNER), owner.getVotesList());
+            votes.addAllNewVotes(owner.getVotesList());
+            repo.updateVotes(OWNER, votes);
+            unfreezeOne(repo, receiver, type);
+            assertEquals(-1, legacy(OWNER));
+            assertEquals(2 * TRX_PRECISION, repo.getAccount(OWNER).getTronPower());
+            assertEquals(voteCount > 2 ? 0 : 1, repo.getAccount(OWNER).getVotesList().size());
+            assertEquals(voteCount > 2 ? 0 : 1, repo.getVotes(OWNER).getNewVotes().size());
+            assertEquals(votes.getOldVotes(), repo.getVotes(OWNER).getOldVotes());
+          }
+        }
+      }
+    }
+  }
+
+  @Test
   public void invalidStakeOneOperationsDoNotInitializeLegacyPower() {
     VMConfig.initAllowTvmFreeze(1);
     VMConfig.initAllowTvmFreezeV2(0);

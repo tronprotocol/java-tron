@@ -205,6 +205,8 @@ public class Tip944VmTest extends TvmOptimizationVmTestBase {
     assertEquals(1, returnWord(unfrozen, 0));
     finish(unfrozen);
     assertEquals(-1, account(SOURCE).getInstance().getOldTronPower());
+    assertTrue(account(SOURCE).getVotesList().isEmpty());
+    assertTrue(dbManager.getVotesStore().get(SOURCE).getNewVotes().isEmpty());
     replaceCode(SOURCE, vote(1, 5));
     TransactionTrace rejectedVote = execute(SOURCE);
     assertSuccess(rejectedVote);
