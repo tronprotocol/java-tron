@@ -617,6 +617,12 @@ public class Program {
         ownerCapsule.getAccountResource().getFrozenBalanceForEnergy().getFrozenBalance();
     repo.addTotalEnergyWeight(-frozenBalanceForEnergyOfOwner / TRX_PRECISION);
 
+    if (optimizeVotePowerState(repo)
+        && (frozenBalanceForBandwidthOfOwner > 0 || frozenBalanceForEnergyOfOwner > 0)) {
+      ownerCapsule.invalidateOldTronPower();
+      repo.updateAccount(ownerAddr, ownerCapsule);
+    }
+
     // transfer all kinds of frozen balance to BlackHole
     repo.addBalance(inheritorAddr, frozenBalanceForBandwidthOfOwner + frozenBalanceForEnergyOfOwner);
 
@@ -630,6 +636,15 @@ public class Program {
     AccountCapsule ownerCapsule = repo.getAccount(ownerAddr);
     AccountCapsule inheritorCapsule = repo.getAccount(inheritorAddr);
     long now = repo.getHeadSlot();
+
+    if (optimizeVotePowerState(repo)
+        && ownerCapsule.getFrozenV2List().stream().anyMatch(frozen -> frozen.getAmount() > 0)) {
+      if (inheritorCapsule.oldTronPowerIsNotInitialized()) {
+        inheritorCapsule.initializeOldTronPower();
+      }
+      // Invalidate before returning, including accounts queued for deletion at finalization.
+      ownerCapsule.invalidateOldTronPower();
+    }
 
     // transfer frozen resource
     ownerCapsule.getFrozenV2List().stream()
@@ -703,6 +718,11 @@ public class Program {
     ownerCapsule.clearUnfrozenV2();
   }
 
+  private boolean optimizeVotePowerState(Repository repo) {
+    return VMConfig.allowTvmVotePowerOptimization()
+        && repo.getDynamicPropertiesStore().supportAllowNewResourceModel();
+  }
+
   private void withdrawRewardAndCancelVote(byte[] owner, Repository repo) {
     VoteRewardUtil.withdrawReward(owner, repo);
 
@@ -716,7 +736,9 @@ public class Program {
         votesCapsule.clearNewVotes();
       }
       ownerCapsule.clearVotes();
-      ownerCapsule.setOldTronPower(0);
+      if (!optimizeVotePowerState(repo)) {
+        ownerCapsule.setOldTronPower(0);
+      }
       repo.updateVotes(owner, votesCapsule);
     }
     try {
