@@ -1,7 +1,5 @@
 package org.tron.core.vm.program;
 
-import java.util.HashSet;
-import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.core.vm.Op;
@@ -10,15 +8,22 @@ import org.tron.core.vm.config.VMConfig;
 @Slf4j(topic = "VM")
 public class ProgramPrecompile {
 
-  private final Set<Integer> jumpDest = new HashSet<>();
+  // Bit 1 means compile() would have added this pc to the old HashSet.
+  private final byte[] jumpDestBits;
+  private final int codeLength;
+
+  private ProgramPrecompile(int codeLength) {
+    this.codeLength = codeLength;
+    this.jumpDestBits = new byte[(codeLength + 7) >>> 3];
+  }
 
   public static ProgramPrecompile compile(byte[] ops) {
-    ProgramPrecompile ret = new ProgramPrecompile();
+    ProgramPrecompile ret = new ProgramPrecompile(ops.length);
     for (int i = 0; i < ops.length; ++i) {
       int op = ops[i] & 0xff;
 
       if (op == Op.JUMPDEST) {
-        ret.jumpDest.add(i);
+        ret.setJumpDest(i);
       }
 
       if (op >= Op.PUSH1 && op <= Op.PUSH32) {
@@ -26,6 +31,10 @@ public class ProgramPrecompile {
       }
     }
     return ret;
+  }
+
+  private void setJumpDest(int pc) {
+    jumpDestBits[pc >>> 3] |= (byte) (1 << (pc & 7));
   }
 
   public static byte[] getCode(byte[] ops) {
@@ -54,6 +63,9 @@ public class ProgramPrecompile {
   }
 
   public boolean hasJumpDest(int pc) {
-    return jumpDest.contains(pc);
+    if (pc < 0 || pc >= codeLength) {
+      return false;
+    }
+    return (jumpDestBits[pc >>> 3] & (1 << (pc & 7))) != 0;
   }
 }
