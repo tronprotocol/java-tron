@@ -401,10 +401,31 @@ matchNodePid() {
   done
 }
 
+# Prints the process ids on stdin whose working directory is the current directory. This script
+# and its earlier versions start the node from its directory, and the JVM keeps that working
+# directory, so this tells the node started here from nodes in other directories that run the
+# same jar name. The working directory is read from /proc on Linux and with lsof on macOS; for
+# another user's process both work only as root, as does stopping it.
+matchDirPid() {
+  local here candidate dir
+  here=$(pwd -P)
+  while read -r candidate; do
+    if [ -d /proc/self ]; then
+      dir=$(readlink "/proc/$candidate/cwd" 2>/dev/null)
+    else
+      dir=$(lsof -a -p "$candidate" -d cwd -Fn 2>/dev/null | sed -n 's/^n//p')
+    fi
+    if [ "$dir" = "$here" ]; then
+      echo "$candidate"
+    fi
+  done
+}
+
 # Sets $pid to the process id recorded in <jar name>.pid; empty when that process is gone. A
 # directory that has a start.log but no pid file was used by an earlier version of this script,
-# which kept no pid file; there every process on the machine that runs the jar name is taken,
-# as that version did, so $pid may hold several ids.
+# which kept no pid file; there $pid holds the processes that run the jar name from this
+# directory. Without /proc or lsof they cannot be told from nodes in other directories, so the
+# script exits and asks for the node's process id in the pid file.
 checkPid() {
   local pidFile="${JAR_NAME##*/}.pid"
   local saved
@@ -420,7 +441,11 @@ checkPid() {
       fi
     fi
   elif [ -f start.log ]; then
-    pid=$(ps -A -o pid=,args= 2>/dev/null | matchNodePid)
+    if [ ! -d /proc/self ] && ! command -v lsof >/dev/null 2>&1; then
+      error "no $pidFile, and without /proc or lsof the node started here cannot be told from other $JAR_NAME processes; write its process id to $PWD/$pidFile and run again"
+      exit 1
+    fi
+    pid=$(ps -A -o pid=,args= 2>/dev/null | matchNodePid | matchDirPid)
   fi
 }
 

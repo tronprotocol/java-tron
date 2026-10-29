@@ -38,7 +38,7 @@ For each download the release key is fetched by its fingerprint from keys.openpg
   sh start.sh --stop
   ```
 
-  `--run` records the process id in `<jar name>.pid` (`FullNode.jar.pid` by default) next to `start.log`, and `--stop` reads it. Run `--stop` in the directory the node was started from, with the same `-j` name if one was given. After `--release` or `-cb` the node runs in `FullNode/`; `--stop` finds it there from the parent directory as well. A node started by an earlier version of the script (a `start.log` but no pid file) is still found by its jar name.
+  `--run` records the process id in `<jar name>.pid` (`FullNode.jar.pid` by default) next to `start.log`, and `--stop` reads it. Run `--stop` in the directory the node was started from, with the same `-j` name if one was given. After `--release` or `-cb` the node runs in `FullNode/`; `--stop` finds it there from the parent directory as well. A node started by an earlier version of the script (a `start.log` but no pid file) is found by its jar name among the processes running from that directory, read from `/proc` on Linux or with `lsof` on macOS, so nodes with the same jar name in other directories keep running. Where neither is available, `--stop` exits with an error; write the node's process id to the pid file and run it again.
 
 * Get the latest version of `FullNode.jar` and start it
 
