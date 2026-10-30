@@ -1228,7 +1228,8 @@ public class Manager {
 
   /**
    * Save a block. Untrusted callers must first use network prevalidation to check its timestamp,
-   * transaction structure, Merkle root and block signature.
+   * transaction structure and Merkle root. Check witness signatures before broadcast as well.
+   * Received block witness authorization is checked against committed state before admission.
    */
   public void pushBlock(final BlockCapsule block)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
@@ -1261,16 +1262,22 @@ public class Manager {
                 block.getNum(), rePushTransactions.size(), pendingTransactions.size(),
                 block.getTransactions().size(), txs.size());
 
-        if (CommonParameter.getInstance().getShutdownBlockTime() != null
-                && CommonParameter.getInstance().getShutdownBlockTime()
-                .isSatisfiedBy(new Date(block.getTimeStamp()))) {
-          latestSolidityNumShutDown = block.getNum();
-        }
-
         try (PendingManager pm = new PendingManager(this)) {
 
           if (!block.generatedByMyself) {
+            // Pending changes have been reset; use committed witness permissions for admission.
+            // switchFork also verifies admitted fork blocks against their own parent state.
+            if (!block.validateSignature(getDynamicPropertiesStore(), getAccountStore())) {
+              throw new ValidateSignatureException(
+                  "block " + block.getNum() + " signature invalid");
+            }
             consensus.receiveBlock(block);
+          }
+
+          if (CommonParameter.getInstance().getShutdownBlockTime() != null
+                  && CommonParameter.getInstance().getShutdownBlockTime()
+                  .isSatisfiedBy(new Date(block.getTimeStamp()))) {
+            latestSolidityNumShutDown = block.getNum();
           }
 
           if (block.getTransactions().stream()

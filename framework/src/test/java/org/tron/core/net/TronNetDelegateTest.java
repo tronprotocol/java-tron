@@ -220,6 +220,7 @@ public class TronNetDelegateTest {
     Mockito.doNothing().when(delegate).validSignature(block);
     delegate.validBlock(block);
     Mockito.verify(schedule, Mockito.never()).getActiveWitnesses();
+    Mockito.verify(delegate, Mockito.never()).validSignature(block);
   }
 
   @Test
@@ -320,7 +321,7 @@ public class TronNetDelegateTest {
       BlockCapsule block = blockWithTransaction(sizedTransaction(size));
       signatureDelegate().validBlock(block);
       Mockito.verify(block).validateMerkleRoot();
-      Mockito.verify(block).validateSignature(Mockito.any(), Mockito.any());
+      Mockito.verify(block, Mockito.never()).validateSignature(Mockito.any(), Mockito.any());
     }
   }
 
@@ -411,7 +412,8 @@ public class TronNetDelegateTest {
 
       delegate.validBlock(block);
 
-      Mockito.verify(block).validateSignature(Mockito.any(), Mockito.any());
+      Mockito.verify(block).validateMerkleRoot();
+      Mockito.verify(block, Mockito.never()).validateSignature(Mockito.any(), Mockito.any());
     }
   }
 
@@ -440,11 +442,11 @@ public class TronNetDelegateTest {
     Assert.assertTrue(delegate.validAdvBlock(new PeerConnection(), block));
 
     Mockito.verify(block, Mockito.times(2)).validateMerkleRoot();
-    Mockito.verify(block, Mockito.times(2)).validateSignature(Mockito.any(), Mockito.any());
+    Mockito.verify(block).validateSignature(Mockito.any(), Mockito.any());
   }
 
   @Test
-  public void testValidBlockRejectsFalseSignature() throws Exception {
+  public void testValidSignatureRejectsFalseSignature() throws Exception {
     TronNetDelegate delegate = signatureDelegate();
     BlockCapsule block = Mockito.spy(new BlockCapsule(1, Sha256Hash.ZERO_HASH, 0,
         ByteString.copyFromUtf8("witness")));
@@ -452,14 +454,14 @@ public class TronNetDelegateTest {
     Mockito.doReturn(false).when(block).validateSignature(Mockito.any(), Mockito.any());
 
     P2pException error = Assert.assertThrows(P2pException.class,
-        () -> delegate.validBlock(block));
+        () -> delegate.validSignature(block));
 
     Assert.assertEquals(TypeEnum.BLOCK_SIGN_INVALID, error.getType());
     Assert.assertEquals("valid signature failed.", error.getMessage());
   }
 
   @Test
-  public void testValidBlockWrapsSignatureFailureWithCause() throws Exception {
+  public void testValidSignatureWrapsFailureWithCause() throws Exception {
     for (Exception failure : new Exception[]{new ValidateSignatureException("invalid signature"),
         new IllegalStateException("signature validation unavailable")}) {
       TronNetDelegate delegate = signatureDelegate();
@@ -469,7 +471,7 @@ public class TronNetDelegateTest {
       Mockito.doThrow(failure).when(block).validateSignature(Mockito.any(), Mockito.any());
 
       P2pException error = Assert.assertThrows(P2pException.class,
-          () -> delegate.validBlock(block));
+          () -> delegate.validSignature(block));
 
       Assert.assertEquals(TypeEnum.BLOCK_SIGN_INVALID, error.getType());
       Assert.assertSame(failure, error.getCause());
