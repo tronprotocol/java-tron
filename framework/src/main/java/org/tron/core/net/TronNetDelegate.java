@@ -353,6 +353,10 @@ public class TronNetDelegate {
     }
   }
 
+  /**
+   * Validate block structure and Merkle root. Advertisement also checks witness authorization;
+   * sync defers it to Manager, which checks committed state and revalidates forks after rewind.
+   */
   public void validBlock(BlockCapsule block) throws P2pException {
     for (Transaction transaction : block.getInstance().getTransactionsList()) {
       int contractCount = transaction.getRawData().getContractCount();
@@ -373,7 +377,6 @@ public class TronNetDelegate {
     } catch (BadBlockException e) {
       throw new P2pException(TypeEnum.BLOCK_MERKLE_INVALID, e.getMessage());
     }
-    validSignature(block);
   }
 
   public boolean validAdvBlock(PeerConnection peer, BlockCapsule block) throws P2pException {
@@ -391,6 +394,7 @@ public class TronNetDelegate {
       }
     }
     validBlock(block);
+    validSignature(block);
     return activeWitness;
   }
 

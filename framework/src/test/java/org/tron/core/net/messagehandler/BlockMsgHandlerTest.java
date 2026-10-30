@@ -238,6 +238,58 @@ public class BlockMsgHandlerTest extends BaseTest {
   }
 
   @Test
+  public void testUnauthorizedWitnessRejectedBeforeBroadcast() throws Exception {
+    for (boolean fastForward : new boolean[]{false, true}) {
+      BlockCapsule block = signedWitnessBlock();
+      block.sign(ECKey.fromPrivate(BigInteger.valueOf(11)).getPrivKeyBytes());
+      TronNetDelegate delegate = witnessDelegate(false, block.getWitnessAddress());
+      AdvService adv = Mockito.mock(AdvService.class);
+      RelayService relay = Mockito.mock(RelayService.class);
+      BlockMsgHandler ingress = witnessHandler(delegate, adv, Mockito.mock(SyncService.class));
+      ReflectUtils.setFieldValue(ingress, "fastForward", fastForward);
+      ReflectUtils.setFieldValue(ingress, "relayService", relay);
+      BlockMessage message = new BlockMessage(block);
+      PeerConnection sender = witnessPeer();
+      sender.getAdvInvRequest().put(new Item(message.getBlockId(), InventoryType.BLOCK), 0L);
+
+      P2pException error = Assert.assertThrows(P2pException.class,
+          () -> ingress.processMessage(sender, message));
+
+      Assert.assertEquals(P2pException.TypeEnum.BLOCK_SIGN_INVALID, error.getType());
+      Mockito.verify(adv, Mockito.never()).broadcast(any());
+      Mockito.verify(relay, Mockito.never()).broadcast(any());
+      Mockito.verify(delegate, Mockito.never()).processBlock(any(BlockCapsule.class), anyBoolean());
+    }
+  }
+
+  @Test
+  public void testWitnessValidatedBeforeBroadcastAndProcessing() throws Exception {
+    for (boolean fastForward : new boolean[]{false, true}) {
+      BlockCapsule block = signedWitnessBlock();
+      TronNetDelegate delegate = witnessDelegate(false, block.getWitnessAddress());
+      AdvService adv = Mockito.mock(AdvService.class);
+      RelayService relay = Mockito.mock(RelayService.class);
+      BlockMsgHandler ingress = witnessHandler(delegate, adv, Mockito.mock(SyncService.class));
+      ReflectUtils.setFieldValue(ingress, "fastForward", fastForward);
+      ReflectUtils.setFieldValue(ingress, "relayService", relay);
+      BlockMessage message = new BlockMessage(block);
+      PeerConnection sender = witnessPeer();
+      sender.getAdvInvRequest().put(new Item(message.getBlockId(), InventoryType.BLOCK), 0L);
+
+      ingress.processMessage(sender, message);
+
+      org.mockito.InOrder order = Mockito.inOrder(delegate, adv, relay);
+      order.verify(delegate).validSignature(any(BlockCapsule.class));
+      if (fastForward) {
+        order.verify(relay).broadcast(any(BlockMessage.class));
+      } else {
+        order.verify(adv).broadcast(any(BlockMessage.class));
+      }
+      order.verify(delegate).processBlock(any(BlockCapsule.class), Mockito.eq(false));
+    }
+  }
+
+  @Test
   public void testFutureBlockRejectedBeforeAdvertisedOrSyncProcessing() throws Exception {
     for (boolean syncResponse : new boolean[]{false, true}) {
       BlockCapsule block = new BlockCapsule(1, Sha256Hash.ZERO_HASH,
