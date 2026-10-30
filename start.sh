@@ -401,51 +401,75 @@ matchNodePid() {
   done
 }
 
+# Prints the working directory of process $1, or nothing when it cannot be read: from /proc on
+# Linux and with lsof elsewhere (macOS). For another user's process both work only as root.
+processDir() {
+  if [ -d /proc/self ]; then
+    readlink "/proc/$1/cwd" 2>/dev/null
+  else
+    lsof -a -p "$1" -d cwd -Fn 2>/dev/null | sed -n 's/^n//p'
+  fi
+}
+
 # Prints the process ids on stdin whose working directory is the current directory. This script
 # and its earlier versions start the node from its directory, and the JVM keeps that working
 # directory, so this tells the node started here from nodes in other directories that run the
-# same jar name. The working directory is read from /proc on Linux and with lsof on macOS; for
-# another user's process both work only as root, as does stopping it.
+# same jar name. A process whose working directory cannot be read may be the node started here:
+# if this user can signal it, it is reported on stderr and the function returns 1. One that this
+# user cannot signal (another user's process, or one already gone) is left out.
 matchDirPid() {
-  local here candidate dir
+  local here candidate dir unread=''
   here=$(pwd -P)
   while read -r candidate; do
-    if [ -d /proc/self ]; then
-      dir=$(readlink "/proc/$candidate/cwd" 2>/dev/null)
-    else
-      dir=$(lsof -a -p "$candidate" -d cwd -Fn 2>/dev/null | sed -n 's/^n//p')
-    fi
+    dir=$(processDir "$candidate")
     if [ "$dir" = "$here" ]; then
       echo "$candidate"
+    elif [ -z "$dir" ]; then
+      if kill -0 "$candidate" 2>/dev/null; then
+        unread="$unread $candidate"
+      elif ps -p "$candidate" >/dev/null 2>&1; then
+        warn "process $candidate runs $JAR_NAME but cannot be inspected or signalled by this user, leaving it running" >&2
+      fi
     fi
   done
+  if [ -n "$unread" ]; then
+    error "cannot read the working directory of process$unread running $JAR_NAME, so the node started from $PWD cannot be told apart; write its process id to $PWD/${JAR_NAME##*/}.pid and run again"
+    return 1
+  fi
+  return 0
 }
 
-# Sets $pid to the process id recorded in <jar name>.pid; empty when that process is gone. A
-# directory that has a start.log but no pid file was used by an earlier version of this script,
-# which kept no pid file; there $pid holds the processes that run the jar name from this
-# directory. Without /proc or lsof they cannot be told from nodes in other directories, so the
-# script exits and asks for the node's process id in the pid file.
+# Sets $pid to the process id recorded in <jar name>.pid; empty when that process is gone or runs
+# from another directory. A directory that has a start.log but no pid file was used by an earlier
+# version of this script, which kept no pid file; there $pid holds the processes that run the jar
+# name from this directory, and the script exits when one of them cannot be told apart.
 checkPid() {
   local pidFile="${JAR_NAME##*/}.pid"
-  local saved
+  local saved dir
   pid=''
   if [ -f "$pidFile" ]; then
-    # Only the recorded process counts, and only while it still runs the jar. Once it is found
-    # gone the file is emptied, so its id is not looked up again.
+    # Only the recorded process counts, and only while it still runs the jar from this directory.
+    # Once it is found gone the file is emptied, so its id is not looked up again. A working
+    # directory read as another directory means the id now belongs to another node; one that
+    # cannot be read proves nothing, so the recorded process is kept.
     saved=$(cat "$pidFile" 2>/dev/null)
     if [ -n "$saved" ]; then
       pid=$(ps -o pid=,args= -p "$saved" 2>/dev/null | matchNodePid)
+      if [ -n "$pid" ]; then
+        dir=$(processDir "$pid")
+        if [ -n "$dir" ] && [ "$dir" != "$(pwd -P)" ]; then
+          warn "process $pid in $pidFile now runs from $dir, the node started from $PWD has stopped" >&2
+          pid=''
+        fi
+      fi
       if [ -z "$pid" ]; then
         : > "$pidFile"
       fi
     fi
   elif [ -f start.log ]; then
-    if [ ! -d /proc/self ] && ! command -v lsof >/dev/null 2>&1; then
-      error "no $pidFile, and without /proc or lsof the node started here cannot be told from other $JAR_NAME processes; write its process id to $PWD/$pidFile and run again"
+    if ! pid=$(ps -A -o pid=,args= 2>/dev/null | matchNodePid | matchDirPid); then
       exit 1
     fi
-    pid=$(ps -A -o pid=,args= 2>/dev/null | matchNodePid | matchDirPid)
   fi
 }
 
