@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
@@ -24,6 +25,7 @@ import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.InputStreamEntity;
@@ -68,6 +70,7 @@ public class SizeLimitHandlerTest {
 
   private static final int HTTP_MAX_BODY_SIZE = 1024;
   private static final int SECOND_SERVICE_MAX_BODY_SIZE = 512;
+  private static final int CLIENT_TIMEOUT_MILLIS = 15000;
 
   @ClassRule
   public static final TemporaryFolder temporaryFolder = new TemporaryFolder();
@@ -178,7 +181,13 @@ public class SizeLimitHandlerTest {
     secondService.start().get(10, TimeUnit.SECONDS);
     secondServerUri = new URI(String.format("http://localhost:%d/", secondPort));
 
-    client = HttpClients.createDefault();
+    client = HttpClients.custom()
+        .setDefaultRequestConfig(RequestConfig.custom()
+            .setConnectTimeout(CLIENT_TIMEOUT_MILLIS)
+            .setConnectionRequestTimeout(CLIENT_TIMEOUT_MILLIS)
+            .setSocketTimeout(CLIENT_TIMEOUT_MILLIS)
+            .build())
+        .build();
   }
 
   @AfterClass
@@ -598,6 +607,8 @@ public class SizeLimitHandlerTest {
   private String postChunked(URI uri, byte[] data, int chunkSize) throws Exception {
     HttpURLConnection connection = (HttpURLConnection) uri.toURL().openConnection();
     try {
+      connection.setConnectTimeout(CLIENT_TIMEOUT_MILLIS);
+      connection.setReadTimeout(CLIENT_TIMEOUT_MILLIS);
       connection.setRequestMethod("POST");
       connection.setDoOutput(true);
       connection.setChunkedStreamingMode(chunkSize);
@@ -643,7 +654,9 @@ public class SizeLimitHandlerTest {
 
   /** Sends a raw HTTP request over a socket and returns the full response (until EOF). */
   private static String sendRaw(URI uri, String rawRequest) throws Exception {
-    try (Socket socket = new Socket(uri.getHost(), uri.getPort())) {
+    try (Socket socket = new Socket()) {
+      socket.connect(new InetSocketAddress(uri.getHost(), uri.getPort()), CLIENT_TIMEOUT_MILLIS);
+      socket.setSoTimeout(CLIENT_TIMEOUT_MILLIS);
       socket.getOutputStream().write(rawRequest.getBytes(StandardCharsets.US_ASCII));
       socket.getOutputStream().flush();
       ByteArrayOutputStream out = new ByteArrayOutputStream();

@@ -4,24 +4,22 @@ import java.io.IOException;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import org.eclipse.jetty.http.BadMessageException;
 import org.eclipse.jetty.server.HttpInput;
 import org.eclipse.jetty.server.Request;
-import org.eclipse.jetty.server.handler.SizeLimitHandler;
+import org.eclipse.jetty.server.handler.HandlerWrapper;
 
 /**
  * Enforces request-body limits using Jetty's received-byte counter.
  *
- * <p>This handler intentionally bypasses {@link SizeLimitHandler#handle}: the parent installs
- * a request interceptor that can count the same unread content repeatedly. Bypassing it also
- * skips the parent's response interceptor, so this handler supports request limits only.
- * Adding a response-limit constructor argument alone would not enable response enforcement.
+ * <p>This request-only handler installs its own input interceptor to avoid counting the same
+ * unread content repeatedly. It does not install a response-limiting output interceptor.
  */
-public class RequestSizeLimitHandler extends SizeLimitHandler {
+public class RequestSizeLimitHandler extends HandlerWrapper {
 
   private final long requestLimit;
 
   public RequestSizeLimitHandler(long requestLimit) {
-    super(requestLimit, -1);
     this.requestLimit = requestLimit;
   }
 
@@ -45,6 +43,13 @@ public class RequestSizeLimitHandler extends SizeLimitHandler {
       }
     }
 
-    getHandler().handle(target, baseRequest, request, response);
+    super.handle(target, baseRequest, request, response);
+  }
+
+  private void checkRequestLimit(long size) {
+    if (requestLimit >= 0 && size > requestLimit) {
+      throw new BadMessageException(413,
+          "Request body is too large: " + size + ">" + requestLimit);
+    }
   }
 }
