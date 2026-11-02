@@ -107,4 +107,79 @@ public class Tip945VmTest extends TvmOptimizationVmTestBase {
     finish(trace);
     assertEquals(before + 2, weights()[1]);
   }
+
+  @Test
+  public void zeroEnergySuccessRestoresFrozenEnergyWindows() throws Exception {
+    prepareEnergyWindow();
+    stake(CALLER, ENERGY, 1_000L * TRX_PRECISION);
+    ownEnergyWeight(CALLER);
+    long callerUsage = account(CALLER).getEnergyUsage();
+    long callerWindow = account(CALLER).getWindowSize(ENERGY);
+    // Caller is also the origin, so only the caller object may be stored.
+    TransactionTrace sameAccount = execute(BENEFICIARY);
+    assertZeroEnergy(sameAccount);
+    assertTrue(account(CALLER).getEnergyUsage() > callerUsage);
+    finish(sameAccount);
+    assertEquals(callerUsage, account(CALLER).getEnergyUsage());
+    assertEquals(callerWindow, account(CALLER).getWindowSize(ENERGY));
+
+    install(SOURCE, "00");
+    stake(SOURCE, ENERGY, 1_000L * TRX_PRECISION);
+    install(OUTER, "00", SOURCE, 0L, 10_000_000L);
+    long callerBefore = account(CALLER).getEnergyUsage();
+    long originBefore = account(SOURCE).getEnergyUsage();
+    long callerWindowBefore = account(CALLER).getWindowSize(ENERGY);
+    long originWindowBefore = account(SOURCE).getWindowSize(ENERGY);
+    TransactionTrace shared = execute(OUTER);
+    assertZeroEnergy(shared);
+    assertTrue(account(CALLER).getEnergyUsage() > callerBefore);
+    assertTrue(account(SOURCE).getEnergyUsage() > originBefore);
+    finish(shared);
+    assertEquals(callerBefore, account(CALLER).getEnergyUsage());
+    assertEquals(originBefore, account(SOURCE).getEnergyUsage());
+    assertEquals(callerWindowBefore, account(CALLER).getWindowSize(ENERGY));
+    assertEquals(originWindowBefore, account(SOURCE).getWindowSize(ENERGY));
+    assertEquals(0, shared.getReceipt().getOriginEnergyUsage());
+  }
+
+  @Test
+  public void zeroEnergySuccessKeepsReservationBeforeProposal() throws Exception {
+    VMConfig.initAllowTvmResourceOptimization(0);
+    dbManager.getDynamicPropertiesStore().saveAllowTvmResourceOptimization(0);
+    prepareEnergyWindow();
+    install(SOURCE, "00");
+    stake(CALLER, ENERGY, 1_000L * TRX_PRECISION);
+    stake(SOURCE, ENERGY, 1_000L * TRX_PRECISION);
+    ownEnergyWeight(CALLER, SOURCE);
+    install(OUTER, "00", SOURCE, 0L, 10_000_000L);
+    TransactionTrace trace = execute(OUTER);
+    assertZeroEnergy(trace);
+    long callerReserved = account(CALLER).getEnergyUsage();
+    long originReserved = account(SOURCE).getEnergyUsage();
+    assertTrue(callerReserved > 0);
+    assertTrue(originReserved > 0);
+    finish(trace);
+    assertEquals(callerReserved, account(CALLER).getEnergyUsage());
+    assertEquals(originReserved, account(SOURCE).getEnergyUsage());
+  }
+
+  private void prepareEnergyWindow() {
+    dbManager.getDynamicPropertiesStore().saveEnergyFee(100);
+    dbManager.getDynamicPropertiesStore().saveTotalEnergyCurrentLimit(100_000_000L);
+  }
+
+  private void ownEnergyWeight(byte[]... addresses) {
+    long weight = 0;
+    for (byte[] address : addresses) {
+      weight += account(address).getFrozenV2BalanceForEnergy() / TRX_PRECISION;
+    }
+    dbManager.getDynamicPropertiesStore().saveTotalEnergyWeight(weight);
+  }
+
+  private void assertZeroEnergy(TransactionTrace trace) {
+    assertSuccess(trace);
+    assertEquals(0, trace.getReceipt().getEnergyUsageTotal());
+    assertEquals(0, trace.getReceipt().getEnergyUsage());
+    assertEquals(0, trace.getReceipt().getEnergyFee());
+  }
 }
