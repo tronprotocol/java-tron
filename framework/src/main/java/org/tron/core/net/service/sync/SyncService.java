@@ -13,7 +13,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -73,6 +75,8 @@ public class SyncService {
   private final int maxPendingBlockSize = Args.getInstance().getMaxPendingBlockSize();
 
   private volatile long maxRequestedBlockNum = 0;
+
+  private final AtomicReference<PeerConnection> syncPeerToRetry = new AtomicReference<>();
 
   public void init() {
     ExecutorServiceManager.scheduleWithFixedDelay(fetchExecutor, () -> {
@@ -159,6 +163,11 @@ public class SyncService {
     if (!peer.getSyncBlockRequested().isEmpty()) {
       peer.getSyncBlockRequested().keySet().forEach(blockId -> invalid(blockId, peer));
     }
+    if (peer.getTronState() == TronState.SYNCING) {
+      // A rejected chain summary can interrupt a download before any block was requested.
+      syncPeerToRetry.set(peer);
+      fetchFlag = true;
+    }
   }
 
   private void invalid(BlockId blockId, PeerConnection peerConnection) {
@@ -233,8 +242,31 @@ public class SyncService {
     return tronNetDelegate.getBlockIdByNum(num);
   }
 
+  private void retrySync(Collection<PeerConnection> activePeers) {
+    PeerConnection failedPeer = syncPeerToRetry.get();
+    if (failedPeer != null) {
+      List<PeerConnection> candidates = new ArrayList<>();
+      for (PeerConnection peer : activePeers) {
+        if (peer != failedPeer && !peer.isDisconnect() && peer.getHelloMessageReceive() != null
+            && peer.getTronState() != TronState.SYNCING && peer.isSyncIdle()) {
+          candidates.add(peer);
+        }
+      }
+      if (!candidates.isEmpty() && syncPeerToRetry.compareAndSet(failedPeer, null)) {
+        PeerConnection peer = candidates.get(
+            ThreadLocalRandom.current().nextInt(candidates.size()));
+        logger.info("Retry sync from {} after disconnecting {}",
+            peer.getInetSocketAddress(), failedPeer.getInetSocketAddress());
+        startSync(peer);
+      } else {
+        fetchFlag = true;
+      }
+    }
+  }
+
   private void startFetchSyncBlock() {
     Collection<PeerConnection> activePeers = tronNetDelegate.getActivePeer();
+    retrySync(activePeers);
     int reqNum = activePeers.stream()
         .mapToInt(p -> p.getSyncBlockRequested().size()).sum();
     int remainNum;
