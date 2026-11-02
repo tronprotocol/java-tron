@@ -1690,6 +1690,99 @@ public class ManagerTest extends BaseMethodTest {
   }
 
   @Test
+  public void rePushRejectsRevokedSignatureAfterRepushTimeout() throws Exception {
+    dbManager.stopRePushThread();
+    byte[] witnessKey = ByteArray.fromHexString(privateKey);
+    byte[] witness = ECKey.fromPrivate(witnessKey).getAddress();
+    chainManager.getWitnessScheduleStore().saveActiveWitnesses(new ArrayList<>());
+    chainManager.addWitness(ByteString.copyFrom(witness));
+    long time = 1533529947843L;
+    BlockCapsule parent = new BlockCapsule(blockGenerate.getSignedBlock(
+        ByteString.copyFrom(witness), time, witnessKey));
+    dbManager.pushBlock(parent);
+    chainManager.getDynamicPropertiesStore().saveAllowMultiSign(1);
+
+    ECKey oldKey = new ECKey(Utils.getRandom());
+    ECKey newKey = new ECKey(Utils.getRandom());
+    byte[] owner = oldKey.getAddress();
+    AccountCapsule account = new AccountCapsule(Protocol.Account.newBuilder()
+        .setAddress(ByteString.copyFrom(owner)).setBalance(1_000_000_000L).build());
+    chainManager.getAccountStore().put(owner, account);
+    TransactionCapsule tx = transfer(owner, witness, 1L, parent, time + 60_000L);
+    tx.sign(oldKey.getPrivKeyBytes());
+    Assert.assertTrue(dbManager.pushTransaction(tx));
+    Assert.assertTrue(tx.isVerified());
+    tx.setTime(0);
+    dbManager.getPendingTransactions().remove(tx);
+    dbManager.getRePushTransactions().add(tx);
+    // Model the reference retained by rePushLoop before it acquires the Manager monitor.
+    TransactionCapsule held = dbManager.getRePushTransactions().peek();
+    Assert.assertSame(tx, held);
+
+    ByteString newAddress = ByteString.copyFrom(newKey.getAddress());
+    AccountContract.AccountPermissionUpdateContract contract =
+        AccountContract.AccountPermissionUpdateContract.newBuilder()
+            .setOwnerAddress(ByteString.copyFrom(owner))
+            .setOwner(AccountCapsule.createDefaultOwnerPermission(newAddress))
+            .addActives(AccountCapsule.createDefaultActivePermission(newAddress,
+                chainManager.getDynamicPropertiesStore()))
+            .build();
+    TransactionCapsule update = new TransactionCapsule(contract,
+        ContractType.AccountPermissionUpdateContract);
+    update.setReference(parent.getNum(), parent.getBlockId().getBytes());
+    update.setExpiration(time + 60_000L);
+    update.sign(oldKey.getPrivKeyBytes());
+    Map<ByteString, String> keys = Maps.newHashMap();
+    keys.put(ByteString.copyFrom(witness), privateKey);
+    BlockCapsule block = blockWithTransfer(time + 3000, parent.getNum() + 1,
+        parent.getBlockId().getByteString(), keys, update);
+    dbManager.pushBlock(block);
+
+    Assert.assertEquals(block.getBlockId(), chainManager.getHeadBlockId());
+    Assert.assertEquals(newAddress, chainManager.getAccountStore().get(owner)
+        .getPermissionById(0).getKeys(0).getAddress());
+    Assert.assertTrue(dbManager.getPendingTransactions().isEmpty());
+    Assert.assertTrue(dbManager.getRePushTransactions().isEmpty());
+    Set<String> owners = (Set<String>) ReflectUtils.getFieldObject(dbManager, "ownerAddressSet");
+    Assert.assertFalse(owners.contains(ByteArray.toHexString(owner)));
+    TransactionCapsule uncached = new TransactionCapsule(held.getInstance());
+    assertThrows(ValidateSignatureException.class, () -> uncached.validateSignature(
+        chainManager.getAccountStore(), chainManager.getDynamicPropertiesStore()));
+
+    dbManager.rePush(held);
+
+    Assert.assertTrue("A timed-out cached transaction signed by the revoked key must not enter "
+        + "pending after its owner marker is pruned", dbManager.getPendingTransactions().isEmpty());
+    Assert.assertFalse(held.isVerified());
+  }
+
+  @Test
+  public void pendingManagerPreservesUnexpiredVerificationCache() throws Exception {
+    dbManager.stopRePushThread();
+    TransactionCapsule pending = new TransactionCapsule(TransferContract.newBuilder().build(),
+        ContractType.TransferContract);
+    TransactionCapsule repush = new TransactionCapsule(TransferContract.newBuilder().setAmount(1)
+        .build(), ContractType.TransferContract);
+    pending.setVerified(true);
+    repush.setVerified(true);
+    pending.setTime(Long.MAX_VALUE);
+    repush.setTime(Long.MAX_VALUE);
+    dbManager.getPendingTransactions().add(pending);
+    dbManager.getRePushTransactions().add(repush);
+
+    try (PendingManager ignored = new PendingManager(dbManager)) {
+      // Closing transfers the pending transaction and retains the unexpired repush entry.
+    }
+
+    Assert.assertTrue(dbManager.getPendingTransactions().isEmpty());
+    Assert.assertEquals(2, dbManager.getRePushTransactions().size());
+    Assert.assertTrue(dbManager.getRePushTransactions().contains(pending));
+    Assert.assertTrue(dbManager.getRePushTransactions().contains(repush));
+    Assert.assertTrue(pending.isVerified());
+    Assert.assertTrue(repush.isVerified());
+  }
+
+  @Test
   public void testGetCachedTransactionSize() throws Exception {
     BlockingQueue<TransactionCapsule> pushQ = new LinkedBlockingQueue<>();
     pushQ.add(new TransactionCapsule(Protocol.Transaction.getDefaultInstance()));
