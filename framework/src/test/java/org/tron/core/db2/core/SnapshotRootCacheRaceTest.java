@@ -18,7 +18,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -28,6 +27,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.tron.common.TestConstants;
 import org.tron.common.cache.TronCache;
+import org.tron.common.es.ExecutorServiceManager;
 import org.tron.core.config.args.Args;
 import org.tron.core.db2.common.DB;
 import org.tron.core.db2.common.Flusher;
@@ -45,21 +45,27 @@ public class SnapshotRootCacheRaceTest {
   private static final byte[] NEW = "NEW".getBytes();
   private static final String CACHED_DB = "storage-row";   // in CACHE_DBS → root cache on
   private static final String UNCACHED_DB = "block";        // not cached
+  private static final String EXECUTOR_NAME = "snapshot-root-cache-race";
 
   private static ExecutorService exec;
 
   @BeforeClass
   public static void init() {
     Args.setParam(new String[] {}, TestConstants.TEST_CONF);
-    exec = Executors.newCachedThreadPool();
+    exec = ExecutorServiceManager.newFixedThreadPool(EXECUTOR_NAME, 4, true);
   }
 
   @AfterClass
-  public static void destroy() {
-    if (exec != null) {
-      exec.shutdownNow();
+  public static void destroy() throws InterruptedException {
+    try {
+      if (exec != null) {
+        exec.shutdownNow();
+        assertTrue("race test workers did not terminate",
+            exec.awaitTermination(5, TimeUnit.SECONDS));
+      }
+    } finally {
+      Args.clearParam();
     }
-    Args.clearParam();
   }
 
   /** A reader that read OLD then paused must not overwrite the NEW a concurrent write published. */
