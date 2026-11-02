@@ -1,0 +1,472 @@
+package org.tron.core.db2.core;
+
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+
+import com.google.common.cache.Cache;
+import com.google.common.cache.ForwardingCache;
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.Test;
+import org.tron.common.TestConstants;
+import org.tron.common.cache.TronCache;
+import org.tron.core.config.args.Args;
+import org.tron.core.db2.common.DB;
+import org.tron.core.db2.common.Flusher;
+import org.tron.core.db2.common.WrappedByteArray;
+
+/**
+ * Deterministic concurrency tests for the SnapshotRoot read-miss refill vs flush publish race.
+ * A stale value a reader read before a flush must never end up (or be reintroduced) in the shared
+ * root cache, because block-processing reads consume that same cache.
+ */
+public class SnapshotRootCacheRaceTest {
+
+  private static final byte[] K = "key".getBytes();
+  private static final byte[] OLD = "OLD".getBytes();
+  private static final byte[] NEW = "NEW".getBytes();
+  private static final String CACHED_DB = "storage-row";   // in CACHE_DBS → root cache on
+  private static final String UNCACHED_DB = "block";        // not cached
+
+  private static ExecutorService exec;
+
+  @BeforeClass
+  public static void init() {
+    Args.setParam(new String[] {}, TestConstants.TEST_CONF);
+    exec = Executors.newCachedThreadPool();
+  }
+
+  @AfterClass
+  public static void destroy() {
+    if (exec != null) {
+      exec.shutdownNow();
+    }
+    Args.clearParam();
+  }
+
+  /** A reader that read OLD then paused must not overwrite the NEW a concurrent write published. */
+  @Test
+  public void staleReadDoesNotOverwriteNewPublish() throws Exception {
+    FakeFlushDB db = new FakeFlushDB(CACHED_DB);
+    db.seed(K, OLD);
+    SnapshotRoot root = new SnapshotRoot(db);
+
+    CountDownLatch entered = new CountDownLatch(1);
+    CountDownLatch release = new CountDownLatch(1);
+    db.arm(K, entered, release);
+
+    Future<byte[]> reader = exec.submit(() -> root.get(K));
+    try {
+      // reader parked inside db.get holding its observed gen; a timeout means the interleaving
+      // never formed and the assertions below would be vacuous, so fail loudly instead.
+      assertTrue("reader did not reach the DB gate", entered.await(30, TimeUnit.SECONDS));
+      root.put(K, NEW);                      // authoritative write: db=NEW, cache=NEW, gen++
+    } finally {
+      release.countDown();                   // always release the parked reader
+    }
+
+    // reader's own return may lag (benign; solidity view is read-only)
+    assertArrayEquals(OLD, reader.get(5, TimeUnit.SECONDS));
+    assertFalse("gate release timed out — interleaving not achieved", db.gateTimedOut());
+    WrappedByteArray cached = peek(root, K);
+    assertNotNull(cached);
+    assertArrayEquals(NEW, cached.getBytes());                 // cache holds NEW, not stale OLD
+    assertArrayEquals(NEW, root.get(K));
+  }
+
+  /** Even if NEW is evicted during the reader's pause, the late reader must not reinstate OLD. */
+  @Test
+  public void evictionDoesNotReintroduceStale() throws Exception {
+    FakeFlushDB db = new FakeFlushDB(CACHED_DB);
+    db.seed(K, OLD);
+    SnapshotRoot root = new SnapshotRoot(db);
+
+    CountDownLatch entered = new CountDownLatch(1);
+    CountDownLatch release = new CountDownLatch(1);
+    db.arm(K, entered, release);
+
+    Future<byte[]> reader = exec.submit(() -> root.get(K));
+    try {
+      assertTrue("reader did not reach the DB gate", entered.await(30, TimeUnit.SECONDS));
+      root.put(K, NEW);        // cache=NEW, gen++
+      evict(root, K);          // simulate capacity eviction of the NEW entry
+    } finally {
+      release.countDown();
+    }
+
+    reader.get(5, TimeUnit.SECONDS);
+    assertFalse("gate release timed out — interleaving not achieved", db.gateTimedOut());
+    assertNull("stale read must not reinstate a value", peek(root, K));  // reader skipped refill
+    assertArrayEquals(NEW, root.get(K));    // re-reads DB=NEW (no concurrent writer → refills)
+  }
+
+  /** New-account (OLD=null) negative value and delete go through the generation protocol. */
+  @Test
+  public void negativeValueAndDelete() throws Exception {
+    FakeFlushDB db = new FakeFlushDB(CACHED_DB);
+    db.seed(K, OLD);
+    SnapshotRoot root = new SnapshotRoot(db);
+    assertArrayEquals(OLD, root.get(K));           // warms cache
+
+    root.remove(K);                                 // db delete + negative cache publish
+    WrappedByteArray cached = peek(root, K);
+    assertNotNull(cached);                          // negative entry present
+    assertNull(cached.getBytes());
+    assertNull(root.get(K));
+  }
+
+  /** An uncached store must keep working (read-through) and never NPE through the protocol. */
+  @Test
+  public void uncachedStoreReadsThrough() {
+    FakeFlushDB db = new FakeFlushDB(UNCACHED_DB);
+    db.seed(K, OLD);
+    SnapshotRoot root = new SnapshotRoot(db);
+    assertArrayEquals(OLD, root.get(K));
+    root.put(K, NEW);
+    assertArrayEquals(NEW, root.get(K));
+    root.remove(K);
+    assertNull(root.get(K));
+  }
+
+  /**
+   * merge(Snapshot) is reached on the root only from SnapshotManager.recover() at startup. It
+   * must still publish NEW and bump the generation just like put, so a parked stale reader
+   * cannot overwrite it.
+   */
+  @Test
+  public void mergeFlushBeatsStaleRead() throws Exception {
+    FakeFlushDB db = new FakeFlushDB(CACHED_DB);
+    db.seed(K, OLD);
+    SnapshotRoot root = new SnapshotRoot(db);
+
+    CountDownLatch entered = new CountDownLatch(1);
+    CountDownLatch release = new CountDownLatch(1);
+    db.arm(K, entered, release);
+
+    Future<byte[]> reader = exec.submit(() -> root.get(K));
+    try {
+      assertTrue("reader did not reach the DB gate", entered.await(30, TimeUnit.SECONDS));
+      SnapshotImpl layer = new SnapshotImpl(root);
+      layer.put(K, NEW);
+      root.merge((Snapshot) layer);        // flush db=NEW, publish NEW, gen++
+    } finally {
+      release.countDown();
+    }
+
+    reader.get(5, TimeUnit.SECONDS);
+    assertFalse("gate release timed out — interleaving not achieved", db.gateTimedOut());
+    WrappedByteArray cached = peek(root, K);
+    assertNotNull(cached);
+    assertArrayEquals(NEW, cached.getBytes());
+    assertArrayEquals(NEW, root.get(K));
+  }
+
+  /**
+   * The batch flush path merge(List) is what SnapshotManager.refreshOne() actually drives on the
+   * flush-service thread — the one that genuinely races reads — and it is a separate method body
+   * from merge(Snapshot), so it needs its own interleaving test: it too must publish NEW and bump
+   * the generation, otherwise a parked stale reader would overwrite the flushed value.
+   */
+  @Test
+  public void mergeListFlushBeatsStaleRead() throws Exception {
+    FakeFlushDB db = new FakeFlushDB(CACHED_DB);
+    db.seed(K, OLD);
+    SnapshotRoot root = new SnapshotRoot(db);
+
+    CountDownLatch entered = new CountDownLatch(1);
+    CountDownLatch release = new CountDownLatch(1);
+    db.arm(K, entered, release);
+
+    Future<byte[]> reader = exec.submit(() -> root.get(K));
+    try {
+      assertTrue("reader did not reach the DB gate", entered.await(30, TimeUnit.SECONDS));
+      SnapshotImpl layer = new SnapshotImpl(root);
+      layer.put(K, NEW);
+      root.merge(Collections.singletonList((Snapshot) layer));   // refreshOne() path
+    } finally {
+      release.countDown();
+    }
+
+    reader.get(5, TimeUnit.SECONDS);
+    assertFalse("gate release timed out — interleaving not achieved", db.gateTimedOut());
+    WrappedByteArray cached = peek(root, K);
+    assertNotNull(cached);
+    assertArrayEquals(NEW, cached.getBytes());
+    assertArrayEquals(NEW, root.get(K));
+  }
+
+  /**
+   * The batch publish runs outside cacheLock, so a stale reader can resume while the writer is
+   * still publishing; the generation must already be bumped by then, or the reader overwrites NEW.
+   */
+  @Test
+  public void staleReadDuringBatchPublishIsSkipped() throws Exception {
+    FakeFlushDB db = new FakeFlushDB(CACHED_DB);
+    db.seed(K, OLD);
+    SnapshotRoot root = new SnapshotRoot(db);
+
+    CountDownLatch published = new CountDownLatch(1);
+    CountDownLatch resume = new CountDownLatch(1);
+    pauseAfterPublish(root, NEW, published, resume);
+
+    CountDownLatch entered = new CountDownLatch(1);
+    CountDownLatch release = new CountDownLatch(1);
+    db.arm(K, entered, release);
+
+    SnapshotImpl layer = new SnapshotImpl(root);
+    layer.put(K, NEW);
+    Future<byte[]> reader = exec.submit(() -> root.get(K));
+    Future<?> writer;
+    try {
+      assertTrue("reader did not reach the DB gate", entered.await(30, TimeUnit.SECONDS));
+      writer = exec.submit(() -> root.merge(Collections.singletonList((Snapshot) layer)));
+      assertTrue("writer did not publish NEW", published.await(30, TimeUnit.SECONDS));
+      release.countDown();                   // stale reader resumes mid-publish
+      assertArrayEquals(OLD, reader.get(5, TimeUnit.SECONDS));
+    } finally {
+      release.countDown();
+      resume.countDown();
+    }
+
+    writer.get(5, TimeUnit.SECONDS);
+    assertFalse("gate release timed out — interleaving not achieved", db.gateTimedOut());
+    WrappedByteArray cached = peek(root, K);
+    assertNotNull(cached);
+    assertArrayEquals(NEW, cached.getBytes());
+    assertArrayEquals(NEW, root.get(K));
+  }
+
+  /**
+   * Concurrent delete: a reader that read OLD then paused must not resurrect the key by refilling
+   * OLD over the negative (deleted) entry a concurrent remove published.
+   */
+  @Test
+  public void staleReadDoesNotOverwriteDelete() throws Exception {
+    FakeFlushDB db = new FakeFlushDB(CACHED_DB);
+    db.seed(K, OLD);
+    SnapshotRoot root = new SnapshotRoot(db);
+
+    CountDownLatch entered = new CountDownLatch(1);
+    CountDownLatch release = new CountDownLatch(1);
+    db.arm(K, entered, release);
+
+    Future<byte[]> reader = exec.submit(() -> root.get(K));
+    try {
+      assertTrue("reader did not reach the DB gate", entered.await(30, TimeUnit.SECONDS));
+      root.remove(K);                      // db delete + negative publish + gen++
+    } finally {
+      release.countDown();
+    }
+
+    assertArrayEquals(OLD, reader.get(5, TimeUnit.SECONDS));   // reader's own stale return (benign)
+    assertFalse("gate release timed out — interleaving not achieved", db.gateTimedOut());
+    WrappedByteArray cached = peek(root, K);
+    assertNotNull("delete must leave a negative cache entry", cached);
+    assertNull("stale read must not resurrect a deleted key", cached.getBytes());
+    assertNull(root.get(K));
+  }
+
+  /** No-regression: a cache miss with no concurrent write MUST still refill the cache. */
+  @Test
+  public void missWithoutConcurrentWriteRefills() throws Exception {
+    FakeFlushDB db = new FakeFlushDB(CACHED_DB);
+    db.seed(K, OLD);
+    SnapshotRoot root = new SnapshotRoot(db);
+
+    assertArrayEquals(OLD, root.get(K));
+    WrappedByteArray cached = peek(root, K);
+    assertNotNull("plain miss must refill", cached);
+    assertArrayEquals(OLD, cached.getBytes());
+  }
+
+  // ---- helpers ----
+
+  @SuppressWarnings("unchecked")
+  private static TronCache<WrappedByteArray, WrappedByteArray> tronCache(SnapshotRoot root)
+      throws Exception {
+    Field f = SnapshotRoot.class.getDeclaredField("cache");
+    f.setAccessible(true);
+    return (TronCache<WrappedByteArray, WrappedByteArray>) f.get(root);
+  }
+
+  private static WrappedByteArray peek(SnapshotRoot root, byte[] key) throws Exception {
+    return tronCache(root).getIfPresent(WrappedByteArray.of(key));
+  }
+
+  @SuppressWarnings("unchecked")
+  private static Cache<WrappedByteArray, WrappedByteArray> guava(SnapshotRoot root)
+      throws Exception {
+    return (Cache<WrappedByteArray, WrappedByteArray>) guavaField().get(tronCache(root));
+  }
+
+  private static Field guavaField() throws Exception {
+    Field f = TronCache.class.getDeclaredField("cache");
+    f.setAccessible(true);
+    return f;
+  }
+
+  private static void evict(SnapshotRoot root, byte[] key) throws Exception {
+    guava(root).invalidate(WrappedByteArray.of(key));
+  }
+
+  /** Parks the thread that puts {@code value} into the root cache right after the put lands. */
+  private static void pauseAfterPublish(SnapshotRoot root, byte[] value, CountDownLatch published,
+      CountDownLatch resume) throws Exception {
+    Cache<WrappedByteArray, WrappedByteArray> delegate = guava(root);
+    guavaField().set(tronCache(root),
+        new ForwardingCache.SimpleForwardingCache<WrappedByteArray, WrappedByteArray>(delegate) {
+          @Override
+          public void put(WrappedByteArray k, WrappedByteArray v) {
+            super.put(k, v);
+            if (Arrays.equals(value, v.getBytes())) {
+              published.countDown();
+              try {
+                resume.await(30, TimeUnit.SECONDS);
+              } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+              }
+            }
+          }
+        });
+  }
+
+  /** In-memory DB + Flusher with a one-shot latch gate on a chosen key's get(). */
+  private static final class FakeFlushDB implements DB<byte[], byte[]>, Flusher {
+
+    private final Map<WrappedByteArray, byte[]> map = new ConcurrentHashMap<>();
+    private final String name;
+    private volatile WrappedByteArray gateKey;
+    private volatile CountDownLatch entered;
+    private volatile CountDownLatch release;
+    private volatile boolean gateTimedOut;
+
+    private FakeFlushDB(String name) {
+      this.name = name;
+    }
+
+    private void seed(byte[] k, byte[] v) {
+      map.put(WrappedByteArray.of(k), v);
+    }
+
+    private void arm(byte[] k, CountDownLatch entered, CountDownLatch release) {
+      this.gateKey = WrappedByteArray.of(k);
+      this.entered = entered;
+      this.release = release;
+    }
+
+    private boolean gateTimedOut() {
+      return gateTimedOut;
+    }
+
+    @Override
+    public byte[] get(byte[] k) {
+      WrappedByteArray wk = WrappedByteArray.of(k);
+      // Capture the value at call entry (models LevelDB/RocksDB fixing its read sequence up front:
+      // a flush that commits during the pause below is invisible to this read), THEN park.
+      byte[] v = map.get(wk);
+      if (wk.equals(gateKey)) {
+        gateKey = null;                 // one-shot: later reads are not gated
+        CountDownLatch e = entered;
+        CountDownLatch r = release;
+        if (e != null) {
+          e.countDown();
+        }
+        if (r != null) {
+          try {
+            // A timeout here means the writer never released the gate, so the intended
+            // read-vs-write interleaving did not form; record it so the test fails loudly
+            // instead of passing vacuously.
+            if (!r.await(30, TimeUnit.SECONDS)) {
+              gateTimedOut = true;
+            }
+          } catch (InterruptedException ex) {
+            gateTimedOut = true;
+            Thread.currentThread().interrupt();
+          }
+        }
+      }
+      return v;
+    }
+
+    @Override
+    public void put(byte[] k, byte[] v) {
+      map.put(WrappedByteArray.of(k), v);
+    }
+
+    @Override
+    public void remove(byte[] k) {
+      map.remove(WrappedByteArray.of(k));
+    }
+
+    @Override
+    public long size() {
+      return map.size();
+    }
+
+    @Override
+    public boolean isEmpty() {
+      return map.isEmpty();
+    }
+
+    @Override
+    public String getDbName() {
+      return name;
+    }
+
+    @Override
+    public Iterator<Map.Entry<byte[], byte[]>> iterator() {
+      List<Map.Entry<byte[], byte[]>> entries = new ArrayList<>();
+      for (Map.Entry<WrappedByteArray, byte[]> e : map.entrySet()) {
+        entries.add(new java.util.AbstractMap.SimpleImmutableEntry<>(
+            e.getKey().getBytes(), e.getValue()));
+      }
+      return entries.iterator();
+    }
+
+    @Override
+    public void close() {
+      map.clear();
+    }
+
+    @Override
+    public void stat() {
+    }
+
+    @Override
+    public FakeFlushDB newInstance() {
+      return new FakeFlushDB(name);
+    }
+
+    @Override
+    public void flush(Map<WrappedByteArray, WrappedByteArray> batch) {
+      batch.forEach((k, v) -> {
+        if (v == null || v.getBytes() == null) {
+          map.remove(k);
+        } else {
+          map.put(k, v.getBytes());
+        }
+      });
+    }
+
+    @Override
+    public void reset() {
+      map.clear();
+    }
+  }
+}
