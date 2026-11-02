@@ -31,6 +31,12 @@ public class SnapshotRoot extends AbstractSnapshot<byte[], byte[]> {
   private static final List<String> CACHE_DBS = CommonParameter.getInstance()
       .getStorage().getCacheDbs();
 
+  // Refill protocol for the shared root cache. Writes to one root must stay serialized
+  // (SnapshotManager runs them one at a time); readers call get() concurrently.
+  // - get() captures cacheGen before db.get and refills only if cacheGen is unchanged.
+  // - A writer completes the db write, then advances cacheGen under cacheLock, then publishes
+  //   the cache entries.
+  // - The refill rechecks cacheGen and writes the cache while holding the same cacheLock.
   private final Object cacheLock = new Object();
   private volatile long cacheGen = 0L;
 

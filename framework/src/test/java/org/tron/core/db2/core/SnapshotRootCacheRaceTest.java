@@ -21,6 +21,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -217,26 +219,84 @@ public class SnapshotRootCacheRaceTest {
    */
   @Test
   public void staleReadDuringBatchPublishIsSkipped() throws Exception {
+    assertStaleReadDuringPublishIsSkipped(NEW, root -> {
+      SnapshotImpl layer = new SnapshotImpl(root);
+      layer.put(K, NEW);
+      root.merge(Collections.singletonList((Snapshot) layer));
+    });
+  }
+
+  /** Same as above for the single-key put(): the generation must advance before NEW is cached. */
+  @Test
+  public void staleReadDuringPutPublishIsSkipped() throws Exception {
+    assertStaleReadDuringPublishIsSkipped(NEW, root -> root.put(K, NEW));
+  }
+
+  /** Same for remove(): a stale reader must not overwrite the negative entry being published. */
+  @Test
+  public void staleReadDuringRemovePublishIsSkipped() throws Exception {
+    assertStaleReadDuringPublishIsSkipped(null, root -> root.remove(K));
+  }
+
+  /**
+   * A stale reader that passed the lock-free check and then waits on cacheLock must recheck the
+   * generation after acquiring it: a write may advance it while the reader is blocked.
+   */
+  @Test
+  public void staleReadWaitingOnLockIsSkipped() throws Exception {
+    FakeFlushDB db = new FakeFlushDB(CACHED_DB);
+    db.seed(K, OLD);
+    SnapshotRoot root = new SnapshotRoot(db);
+    Object lock = cacheLock(root);
+
+    CountDownLatch entered = new CountDownLatch(1);
+    CountDownLatch release = new CountDownLatch(1);
+    db.arm(K, entered, release);
+
+    AtomicReference<Thread> readerThread = new AtomicReference<>();
+    Future<byte[]> reader = exec.submit(() -> {
+      readerThread.set(Thread.currentThread());
+      return root.get(K);
+    });
+    try {
+      assertTrue("reader did not reach the DB gate", entered.await(30, TimeUnit.SECONDS));
+      synchronized (lock) {
+        release.countDown();                 // reader passes the lock-free check, then blocks
+        assertTrue("reader did not block on cacheLock", awaitBlocked(readerThread.get()));
+        root.put(K, NEW);                    // reentrant: advances the generation, caches NEW
+      }
+    } finally {
+      release.countDown();
+    }
+
+    assertArrayEquals(OLD, reader.get(5, TimeUnit.SECONDS));
+    assertFalse("gate release timed out — interleaving not achieved", db.gateTimedOut());
+    WrappedByteArray cached = peek(root, K);
+    assertNotNull(cached);
+    assertArrayEquals(NEW, cached.getBytes());
+    assertArrayEquals(NEW, root.get(K));
+  }
+
+  private void assertStaleReadDuringPublishIsSkipped(byte[] value, Consumer<SnapshotRoot> write)
+      throws Exception {
     FakeFlushDB db = new FakeFlushDB(CACHED_DB);
     db.seed(K, OLD);
     SnapshotRoot root = new SnapshotRoot(db);
 
     CountDownLatch published = new CountDownLatch(1);
     CountDownLatch resume = new CountDownLatch(1);
-    pauseAfterPublish(root, NEW, published, resume);
+    pauseAfterPublish(root, value, published, resume);
 
     CountDownLatch entered = new CountDownLatch(1);
     CountDownLatch release = new CountDownLatch(1);
     db.arm(K, entered, release);
 
-    SnapshotImpl layer = new SnapshotImpl(root);
-    layer.put(K, NEW);
     Future<byte[]> reader = exec.submit(() -> root.get(K));
     Future<?> writer;
     try {
       assertTrue("reader did not reach the DB gate", entered.await(30, TimeUnit.SECONDS));
-      writer = exec.submit(() -> root.merge(Collections.singletonList((Snapshot) layer)));
-      assertTrue("writer did not publish NEW", published.await(30, TimeUnit.SECONDS));
+      writer = exec.submit(() -> write.accept(root));
+      assertTrue("writer did not publish", published.await(30, TimeUnit.SECONDS));
       release.countDown();                   // stale reader resumes mid-publish
       assertArrayEquals(OLD, reader.get(5, TimeUnit.SECONDS));
     } finally {
@@ -248,8 +308,8 @@ public class SnapshotRootCacheRaceTest {
     assertFalse("gate release timed out — interleaving not achieved", db.gateTimedOut());
     WrappedByteArray cached = peek(root, K);
     assertNotNull(cached);
-    assertArrayEquals(NEW, cached.getBytes());
-    assertArrayEquals(NEW, root.get(K));
+    assertArrayEquals(value, cached.getBytes());
+    assertArrayEquals(value, root.get(K));
   }
 
   /**
@@ -313,6 +373,23 @@ public class SnapshotRootCacheRaceTest {
   private static Cache<WrappedByteArray, WrappedByteArray> guava(SnapshotRoot root)
       throws Exception {
     return (Cache<WrappedByteArray, WrappedByteArray>) guavaField().get(tronCache(root));
+  }
+
+  private static Object cacheLock(SnapshotRoot root) throws Exception {
+    Field f = SnapshotRoot.class.getDeclaredField("cacheLock");
+    f.setAccessible(true);
+    return f.get(root);
+  }
+
+  private static boolean awaitBlocked(Thread thread) throws InterruptedException {
+    long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(30);
+    while (thread.getState() != Thread.State.BLOCKED) {
+      if (System.nanoTime() > deadline) {
+        return false;
+      }
+      Thread.sleep(1);
+    }
+    return true;
   }
 
   private static Field guavaField() throws Exception {
