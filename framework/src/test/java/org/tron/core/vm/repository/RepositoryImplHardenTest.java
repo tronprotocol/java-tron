@@ -13,6 +13,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.config.args.Args;
+import org.tron.core.db.EnergyProcessor;
 import org.tron.core.store.StoreFactory;
 import org.tron.core.vm.config.VMConfig;
 import org.tron.protos.Protocol.AccountType;
@@ -276,5 +277,63 @@ public class RepositoryImplHardenTest extends BaseTest {
     VMConfig.initAllowHardenResourceCalculation(1);
     Assert.assertThrows(ArithmeticException.class,
         () -> repository.calculateGlobalEnergyLimit(account));
+  }
+
+  @Test
+  public void testResourceOptimizationKeepsFractionalEnergyWeight() {
+    long totalEnergyLimit = 50_000_000_000L;
+    long totalEnergyWeight = 2_000_000_000L;
+    long previousDelay = dbManager.getDynamicPropertiesStore().getUnfreezeDelayDays();
+    boolean previousOptimization = VMConfig.allowTvmResourceOptimization();
+    dbManager.getDynamicPropertiesStore().saveTotalEnergyCurrentLimit(totalEnergyLimit);
+    dbManager.getDynamicPropertiesStore().saveTotalEnergyWeight(totalEnergyWeight);
+    dbManager.getDynamicPropertiesStore().saveAllowHardenResourceCalculation(0);
+    VMConfig.initAllowHardenResourceCalculation(0);
+    EnergyProcessor energyProcessor = new EnergyProcessor(
+        dbManager.getDynamicPropertiesStore(), dbManager.getAccountStore());
+    try {
+      AccountCapsule partialTrx = energyAccount(500_000L);
+      AccountCapsule oneAndHalfTrx = energyAccount(1_500_000L);
+
+      dbManager.getDynamicPropertiesStore().saveUnfreezeDelayDays(14);
+      VMConfig.initAllowTvmResourceOptimization(0);
+      Assert.assertEquals(0L, repository.calculateGlobalEnergyLimit(partialTrx));
+      Assert.assertEquals(25L, repository.calculateGlobalEnergyLimit(oneAndHalfTrx));
+
+      VMConfig.initAllowTvmResourceOptimization(1);
+      Assert.assertEquals(energyProcessor.calculateGlobalEnergyLimit(partialTrx),
+          repository.calculateGlobalEnergyLimit(partialTrx));
+      Assert.assertEquals(energyProcessor.calculateGlobalEnergyLimit(oneAndHalfTrx),
+          repository.calculateGlobalEnergyLimit(oneAndHalfTrx));
+      Assert.assertEquals(12L, repository.calculateGlobalEnergyLimit(partialTrx));
+      Assert.assertEquals(37L, repository.calculateGlobalEnergyLimit(oneAndHalfTrx));
+
+      dbManager.getDynamicPropertiesStore().saveAllowHardenResourceCalculation(1);
+      VMConfig.initAllowHardenResourceCalculation(1);
+      Assert.assertEquals(energyProcessor.calculateGlobalEnergyLimit(partialTrx),
+          repository.calculateGlobalEnergyLimit(partialTrx));
+      Assert.assertEquals(12L, repository.calculateGlobalEnergyLimit(partialTrx));
+
+      dbManager.getDynamicPropertiesStore().saveUnfreezeDelayDays(0);
+      VMConfig.initAllowHardenResourceCalculation(0);
+      dbManager.getDynamicPropertiesStore().saveAllowHardenResourceCalculation(0);
+      Assert.assertEquals(0L, repository.calculateGlobalEnergyLimit(partialTrx));
+      Assert.assertEquals(25L, repository.calculateGlobalEnergyLimit(oneAndHalfTrx));
+    } finally {
+      dbManager.getDynamicPropertiesStore().saveUnfreezeDelayDays(previousDelay);
+      dbManager.getDynamicPropertiesStore().saveAllowHardenResourceCalculation(0);
+      VMConfig.initAllowTvmResourceOptimization(previousOptimization ? 1 : 0);
+      VMConfig.initAllowHardenResourceCalculation(0);
+    }
+  }
+
+  private AccountCapsule energyAccount(long frozeBalance) {
+    AccountCapsule account = new AccountCapsule(
+        ByteString.copyFromUtf8("owner"),
+        ByteString.copyFrom(ByteArray.fromHexString(
+            Wallet.getAddressPreFixString() + "548794500882809695a8a687866e76d4271a1abc")),
+        AccountType.Normal, 0L);
+    account.setFrozenForEnergy(frozeBalance, 0L);
+    return account;
   }
 }
