@@ -168,16 +168,17 @@ public class ChainInventoryMsgHandler implements TronMsgHandler {
       }
       long requestedAt = requested.getValue();
       // Only use recent announcements received before this request, not a newer head
-      // announced while the peer was preparing its response.
-      long advertisedNum = peer.getAdvInvReceive().asMap().entrySet().stream()
+      // announced while the peer was preparing its response. A concurrent fork switch also cause it
+      long maxAdvInvNum = peer.getAdvInvReceive().asMap().entrySet().stream()
           .filter(entry -> entry.getKey().getType() == InventoryType.BLOCK)
           .filter(entry -> entry.getValue() <= requestedAt
               && entry.getValue() >= requestedAt - NetConstants.ADV_TIME_OUT)
           .mapToLong(entry -> new BlockId(entry.getKey().getHash()).getNum())
-          .max().orElse(lastNum);
-      if (lastNum < advertisedNum) {
+          .max()
+          .orElse(lastNum);
+      if (lastNum < maxAdvInvNum) {
         throw new P2pException(TypeEnum.SYNC_FAILED,
-            "lastNum " + lastNum + " (remainNum=0) is below advertised block " + advertisedNum);
+            "lastNum " + lastNum + " (remainNum=0) is below advertised block " + maxAdvInvNum);
       }
     }
   }
