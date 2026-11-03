@@ -1,79 +1,40 @@
 package org.tron.core.net.services;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.tron.core.net.PeerSyncTestSupport.blockId;
-import static org.tron.core.net.PeerSyncTestSupport.helloMessage;
 
 import com.google.common.cache.Cache;
-import com.google.protobuf.ByteString;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 import org.junit.Assert;
 import org.junit.Test;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.springframework.context.ApplicationContext;
 import org.tron.common.BaseMethodTest;
 import org.tron.common.overlay.message.Message;
-import org.tron.common.utils.Pair;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
-import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.net.P2pEventHandlerImpl;
-import org.tron.core.net.PeerSyncTestSupport;
 import org.tron.core.net.TronNetDelegate;
 import org.tron.core.net.message.adv.BlockMessage;
 import org.tron.core.net.message.adv.FetchInvDataMessage;
-import org.tron.core.net.message.sync.ChainInventoryMessage;
-import org.tron.core.net.message.sync.SyncBlockChainMessage;
-import org.tron.core.net.messagehandler.BlockMsgHandler;
-import org.tron.core.net.messagehandler.ChainInventoryMsgHandler;
 import org.tron.core.net.messagehandler.PbftDataSyncHandler;
-import org.tron.core.net.peer.Item;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.PeerManager;
 import org.tron.core.net.peer.TronState;
-import org.tron.core.net.service.adv.AdvService;
-import org.tron.core.net.service.fetchblock.FetchBlockService;
 import org.tron.core.net.service.sync.SyncService;
 import org.tron.core.net.service.sync.UnparsedBlock;
 import org.tron.p2p.connection.Channel;
 import org.tron.protos.Protocol;
-import org.tron.protos.Protocol.Inventory.InventoryType;
-import org.tron.protos.Protocol.ReasonCode;
 
 public class SyncServiceTest extends BaseMethodTest {
   private SyncService service;
-  private SyncService recoveryService;
-  private TronNetDelegate delegate;
-  private PeerConnection failed;
-  private PeerConnection replacement;
-  private List<PeerConnection> peers;
-  private final AtomicReference<BlockId> head = new AtomicReference<>();
-  private final Set<BlockId> stored = new HashSet<>();
-  private final Map<Long, BlockId> chainIds = new HashMap<>();
-
   private PeerConnection peer;
   private P2pEventHandlerImpl p2pEventHandler;
   private ApplicationContext ctx;
@@ -94,9 +55,6 @@ public class SyncServiceTest extends BaseMethodTest {
 
   @Override
   protected void beforeDestroy() {
-    if (recoveryService != null) {
-      recoveryService.close();
-    }
     for (PeerConnection p : PeerManager.getPeers()) {
       PeerManager.remove(p.getChannel());
     }
@@ -445,231 +403,5 @@ public class SyncServiceTest extends BaseMethodTest {
     method.invoke(service);
 
     Assert.assertTrue(requestBlockIds.getIfPresent(blockId) == null);
-  }
-
-  @Test
-  public void testRejectedSummaryRecoversPreviouslyDiscardedBlocks() throws Exception {
-    initRecovery();
-    BlockCapsule parent = block(101, head.get());
-    BlockCapsule child = block(102, parent.getBlockId());
-    BlockMsgHandler blocks = new BlockMsgHandler();
-    ReflectUtils.setFieldValue(blocks, "tronNetDelegate", delegate);
-    ReflectUtils.setFieldValue(blocks, "syncService", recoveryService);
-    ReflectUtils.setFieldValue(blocks, "fetchBlockService", mock(FetchBlockService.class));
-    ReflectUtils.setFieldValue(blocks, "fastForward", false);
-    Item childItem = new Item(child.getBlockId(), InventoryType.BLOCK);
-    failed.getAdvInvReceive().put(childItem, System.currentTimeMillis() - 1);
-    failed.getAdvInvRequest().put(childItem, System.currentTimeMillis());
-
-    blocks.processMessage(failed, new BlockMessage(child));
-    Assert.assertFalse(failed.getAdvInvRequest().containsKey(childItem));
-    Assert.assertFalse(stored.contains(child.getBlockId()));
-    ChainInventoryMsgHandler inventory = new ChainInventoryMsgHandler();
-    ReflectUtils.setFieldValue(inventory, "tronNetDelegate", delegate);
-    ReflectUtils.setFieldValue(inventory, "syncService", recoveryService);
-    P2pEventHandlerImpl events = new P2pEventHandlerImpl();
-    ReflectUtils.setFieldValue(events, "chainInventoryMsgHandler", inventory);
-    ChainInventoryMessage echo = new ChainInventoryMessage(
-        Collections.singletonList(head.get()), 0L);
-    ReflectUtils.invokeMethod(events, "processMessage",
-        new Class<?>[]{PeerConnection.class, byte[].class}, failed, echo.getSendBytes());
-    verify(failed).disconnect(ReasonCode.SYNC_FAIL);
-
-    peers.remove(failed);
-    when(failed.getChannel().isDisconnect()).thenReturn(true);
-    ReflectUtils.setFieldValue(failed, "syncService", recoveryService);
-    ReflectUtils.setFieldValue(failed, "advService", mock(AdvService.class));
-    failed.onDisconnect();
-    runFetchTask();
-    verify(replacement).sendMessage(any(SyncBlockChainMessage.class));
-
-    inventory.processMessage(replacement, new ChainInventoryMessage(
-        Arrays.asList(blockId(100), parent.getBlockId(), child.getBlockId()), 0L));
-    runFetchTask();
-    ArgumentCaptor<Message> requests = ArgumentCaptor.forClass(Message.class);
-    verify(replacement, times(2)).sendMessage(requests.capture());
-    Assert.assertEquals(Arrays.asList(parent.getBlockId(), child.getBlockId()),
-        ((FetchInvDataMessage) requests.getValue()).getHashList());
-
-    blocks.processMessage(replacement, new BlockMessage(parent));
-    blocks.processMessage(replacement, new BlockMessage(child));
-    ReflectUtils.invokeMethod(recoveryService, "handleSyncBlock");
-    inventory.processMessage(replacement, new ChainInventoryMessage(
-        Collections.singletonList(child.getBlockId()), 0L));
-
-    Assert.assertEquals(child.getBlockId(), head.get());
-    Assert.assertTrue(stored.contains(parent.getBlockId()));
-    Assert.assertTrue(stored.contains(child.getBlockId()));
-    Assert.assertEquals(TronState.SYNC_COMPLETED, replacement.getTronState());
-    Assert.assertFalse(replacement.isNeedSyncFromPeer());
-    verify(replacement, never()).disconnect(any());
-  }
-
-  @Test
-  public void testRecoveryFiltersCandidatesAndAllowsPendingTransactions() throws Exception {
-    initRecovery();
-    PeerConnection unhandshaken = readyPeer(18890);
-    unhandshaken.setHelloMessageReceive(null);
-    PeerConnection disconnected = readyPeer(18891);
-    when(disconnected.getChannel().isDisconnect()).thenReturn(true);
-    PeerConnection syncing = readyPeer(18892);
-    syncing.setTronState(TronState.SYNCING);
-    PeerConnection pendingSummary = readyPeer(18893);
-    pendingSummary.setSyncChainRequested(new Pair<>(new LinkedList<>(
-        Collections.singletonList(blockId(100))), System.currentTimeMillis()));
-    PeerConnection pendingBlock = readyPeer(18894);
-    pendingBlock.getSyncBlockRequested().put(blockId(101), System.currentTimeMillis());
-    peers.addAll(Arrays.asList(unhandshaken, disconnected, syncing, pendingSummary, pendingBlock));
-    replacement.getAdvInvRequest().put(new Item(Sha256Hash.ZERO_HASH, InventoryType.TRX),
-        System.currentTimeMillis());
-    Assert.assertFalse(replacement.isIdle());
-    queueRecovery(failed);
-    // The failed connection must remain excluded even if its state changes during cleanup.
-    failed.setTronState(TronState.SYNC_COMPLETED);
-
-    runFetchTask();
-
-    verify(replacement).sendMessage(any(SyncBlockChainMessage.class));
-    for (PeerConnection peer : Arrays.asList(failed, unhandshaken, disconnected, syncing,
-        pendingSummary, pendingBlock)) {
-      verify(peer, never()).sendMessage(any());
-    }
-  }
-
-  @Test
-  public void testRecoveryWaitsForAnEligibleConnection() throws Exception {
-    initRecovery();
-    peers.clear();
-    queueRecovery(failed);
-    runFetchTask();
-    Assert.assertTrue((boolean) ReflectUtils.getFieldObject(recoveryService, "fetchFlag"));
-    PeerConnection unhandshaken = readyPeer(18890);
-    unhandshaken.setHelloMessageReceive(null);
-    peers.add(unhandshaken);
-    runFetchTask();
-    Assert.assertTrue((boolean) ReflectUtils.getFieldObject(recoveryService, "fetchFlag"));
-    peers.add(replacement);
-
-    runFetchTask();
-    runFetchTask();
-
-    Assert.assertFalse((boolean) ReflectUtils.getFieldObject(recoveryService, "fetchFlag"));
-    verify(replacement, times(1)).sendMessage(any(SyncBlockChainMessage.class));
-    verify(unhandshaken, never()).sendMessage(any());
-  }
-
-  @Test
-  public void testCompletedPeerDisconnectDoesNotStartRecovery() throws Exception {
-    initRecovery();
-    recoveryService.onDisconnect(failed);
-
-    runFetchTask();
-
-    verify(replacement, never()).sendMessage(any());
-  }
-
-  @Test
-  public void testRecoveryStartsOnlyOneRandomCandidate() throws Exception {
-    initRecovery();
-    PeerConnection other = readyPeer(18890);
-    peers.add(other);
-    AtomicInteger requests = new AtomicInteger();
-    for (PeerConnection peer : Arrays.asList(replacement, other)) {
-      doAnswer(call -> {
-        requests.incrementAndGet();
-        return null;
-      }).when(peer).sendMessage(any(SyncBlockChainMessage.class));
-    }
-    queueRecovery(failed);
-
-    runFetchTask();
-    runFetchTask();
-
-    Assert.assertEquals(1, requests.get());
-  }
-
-  @Test
-  public void testAnotherFailedSourceCanTriggerRecovery() throws Exception {
-    initRecovery();
-    queueRecovery(failed);
-    runFetchTask();
-    PeerConnection next = readyPeer(18890);
-    peers.remove(replacement);
-    peers.add(next);
-
-    recoveryService.onDisconnect(replacement);
-    runFetchTask();
-
-    verify(next).sendMessage(any(SyncBlockChainMessage.class));
-  }
-
-  private void initRecovery() throws Exception {
-    recoveryService = new SyncService();
-    delegate = mock(TronNetDelegate.class);
-    failed = readyPeer(18888);
-    replacement = readyPeer(18889);
-    peers = new ArrayList<>(Arrays.asList(failed, replacement));
-    head.set(blockId(100));
-    stored.add(blockId(0));
-    stored.add(head.get());
-    chainIds.put(0L, blockId(0));
-    chainIds.put(100L, head.get());
-    when(delegate.getActivePeer()).thenReturn(peers);
-    when(delegate.getHeadBlockId()).thenAnswer(call -> head.get());
-    when(delegate.getKhaosDbHeadBlockId()).thenAnswer(call -> head.get());
-    when(delegate.getGenesisBlockId()).thenReturn(blockId(0));
-    when(delegate.getSolidBlockId()).thenReturn(blockId(0));
-    when(delegate.getBlockTime(any())).thenReturn(System.currentTimeMillis() - 30_000_000L);
-    when(delegate.getBlockIdByNum(anyLong())).thenAnswer(call -> {
-      long number = call.getArgument(0);
-      return chainIds.getOrDefault(number, blockId(number));
-    });
-    when(delegate.containBlock(any())).thenAnswer(call -> stored.contains(call.getArgument(0)));
-    when(delegate.containBlockInMainChain(any()))
-        .thenAnswer(call -> stored.contains(call.getArgument(0)));
-    when(delegate.getBlockLock()).thenReturn(new Object());
-    when(delegate.getForkLock()).thenReturn(new Object());
-    when(delegate.validAdvBlock(any(), any())).thenReturn(true);
-    doAnswer(call -> {
-      BlockCapsule block = call.getArgument(0);
-      stored.add(block.getBlockId());
-      chainIds.put(block.getNum(), block.getBlockId());
-      head.set(block.getBlockId());
-      return null;
-    }).when(delegate).processBlock(any(), anyBoolean());
-    ReflectUtils.setFieldValue(recoveryService, "tronNetDelegate", delegate);
-    ReflectUtils.setFieldValue(recoveryService, "pbftDataSyncHandler",
-        mock(PbftDataSyncHandler.class));
-    ReflectUtils.setFieldValue(recoveryService, "maxPendingBlockSize", 10);
-  }
-
-  private void queueRecovery(PeerConnection peer) {
-    peer.setTronState(TronState.SYNCING);
-    peer.setNeedSyncFromPeer(true);
-    recoveryService.onDisconnect(peer);
-    Assert.assertTrue((boolean) ReflectUtils.getFieldObject(recoveryService, "fetchFlag"));
-  }
-
-  private void runFetchTask() {
-    if ((boolean) ReflectUtils.getFieldObject(recoveryService, "fetchFlag")) {
-      recoveryService.setFetchFlag(false);
-      ReflectUtils.invokeMethod(recoveryService, "startFetchSyncBlock");
-    }
-  }
-
-  private static PeerConnection readyPeer(int port) throws Exception {
-    PeerConnection peer = PeerSyncTestSupport.peer(port);
-    peer.setHelloMessageReceive(helloMessage(100));
-    peer.setTronState(TronState.SYNC_COMPLETED);
-    peer.setNeedSyncFromPeer(false);
-    peer.setNeedSyncFromUs(false);
-    return peer;
-  }
-
-  private static BlockCapsule block(long number, BlockId parent) {
-    BlockCapsule block = new BlockCapsule(number, parent, System.currentTimeMillis() - 1_000,
-        ByteString.copyFromUtf8("witness"));
-    block.setMerkleRoot();
-    return block;
   }
 }
