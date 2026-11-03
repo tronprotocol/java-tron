@@ -30,7 +30,6 @@ import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.handler.ErrorHandler;
-import org.eclipse.jetty.server.handler.SizeLimitHandler;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.util.BufferUtil;
 import org.tron.core.config.args.Args;
@@ -110,7 +109,8 @@ public abstract class HttpService extends AbstractService {
   protected ServletContextHandler initContextHandler() {
     ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
     context.setContextPath(this.contextPath);
-    SizeLimitHandler sizeLimitHandler = new SizeLimitHandler(this.maxRequestSize, -1);
+    RequestSizeLimitHandler sizeLimitHandler =
+        new RequestSizeLimitHandler(this.maxRequestSize);
     sizeLimitHandler.setHandler(context);
     this.apiServer.setHandler(sizeLimitHandler);
     return context;
@@ -123,7 +123,7 @@ public abstract class HttpService extends AbstractService {
   }
 
   /**
-   * For oversized requests (the 413 thrown by SizeLimitHandler during dispatch) logs the
+   * For oversized requests (the 413 thrown by RequestSizeLimitHandler during dispatch) logs the
    * detail server-side and returns the short, uniform bad-message page, instead of the
    * default error page that leaks the exception stack and internal request sizes. All
    * other errors keep Jetty's default handling.
