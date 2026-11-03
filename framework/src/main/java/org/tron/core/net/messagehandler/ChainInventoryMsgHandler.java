@@ -160,12 +160,14 @@ public class ChainInventoryMsgHandler implements TronMsgHandler {
         throw new P2pException(TypeEnum.SYNC_FAILED,
             "lastNum " + lastNum + " (remainNum=0) is below hello head " + helloHeadNum);
       }
+
       // A peer that has the terminal block in our summary should reply with that block alone.
       if (blockIds.size() > 1 && requested.getKey().contains(lastBlockId)) {
         // A concurrent fork switch can also produce this response; use a sync failure.
         throw new P2pException(TypeEnum.SYNC_FAILED,
             "terminal block already in summary: " + lastBlockId.getString());
       }
+
       long requestedAt = requested.getValue();
       // Only use recent announcements received before this request, not a newer head
       // announced while the peer was preparing its response. A concurrent fork switch also cause it
