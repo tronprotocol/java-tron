@@ -93,7 +93,8 @@ esac
 # Logging helpers: print a timestamped, colored line to the terminal and keep the same line,
 # without color codes, in start.log, so stop, download, signature-check, rebuild and start
 # messages survive when the script runs from cron, systemd or nohup. INFO and WARN go to
-# stdout, ERROR to stderr. start.log also marks a directory a node was started from
+# stdout, ERROR to stderr; WARN from the process lookup in checkPid goes to stderr too, keeping
+# it out of the captured ids. start.log also marks a directory a node was started from
 # (enterNodeDir, stopService and checkPid rely on it), so these helpers never create it: lines
 # are queued and written only to an existing start.log in the current directory, at the latest
 # when startService creates it.
@@ -401,13 +402,35 @@ matchNodePid() {
   done
 }
 
-# Prints the working directory of process $1, or nothing when it cannot be read: from /proc on
-# Linux and with lsof elsewhere (macOS). For another user's process both work only as root.
+# Prints "here" when process $1 runs from the current directory, the path of its working
+# directory when that is another one, and nothing when it cannot be read or was deleted.
+# Directories are compared by device and inode, so letter case and symlinks do not matter.
+# Read from /proc on Linux and with lsof elsewhere (macOS); another user's process needs root.
 processDir() {
+  local dir inode
   if [ -d /proc/self ]; then
-    readlink "/proc/$1/cwd" 2>/dev/null
+    # Compare through /proc/<pid>/cwd: the path may belong to another mount namespace.
+    dir=$(readlink "/proc/$1/cwd" 2>/dev/null)
+    if [ -z "$dir" ]; then
+      return 0
+    elif [ "/proc/$1/cwd" -ef . ]; then
+      echo here
+    elif [[ $dir != *" (deleted)" ]]; then
+      echo "$dir"
+    fi
   else
-    lsof -a -p "$1" -d cwd -Fn 2>/dev/null | sed -n 's/^n//p'
+    # Fields "i<inode>" and "n<path>". lsof keeps the last path of a deleted directory, so the
+    # path counts only while it still leads to that inode.
+    dir=$(lsof -a -p "$1" -d cwd -Fin 2>/dev/null)
+    inode=$(sed -n 's/^i//p' <<< "$dir")
+    dir=$(sed -n 's/^n//p' <<< "$dir")
+    if [ -z "$inode" ] || [ ! -d "$dir" ] || [ "$(stat -f %i "$dir" 2>/dev/null)" != "$inode" ]; then
+      return 0
+    elif [ "$dir" -ef . ]; then
+      echo here
+    else
+      echo "$dir"
+    fi
   fi
 }
 
@@ -416,24 +439,26 @@ processDir() {
 # directory, so this tells the node started here from nodes in other directories that run the
 # same jar name. A process whose working directory cannot be read may be the node started here:
 # if this user can signal it, it is reported on stderr and the function returns 1. One that this
-# user cannot signal (another user's process, or one already gone) is left out.
+# user cannot signal (another user's process, or one already gone) is left out, and so is one
+# that no longer runs the jar (it exited, or is a zombie).
 matchDirPid() {
-  local here candidate dir unread=''
-  here=$(pwd -P)
+  local candidate dir unread=''
   while read -r candidate; do
     dir=$(processDir "$candidate")
-    if [ "$dir" = "$here" ]; then
+    if [ "$dir" = here ]; then
       echo "$candidate"
-    elif [ -z "$dir" ]; then
-      if kill -0 "$candidate" 2>/dev/null; then
+    elif [ -n "$dir" ]; then
+      continue
+    elif kill -0 "$candidate" 2>/dev/null; then
+      if [ -n "$(ps -o pid=,args= -p "$candidate" 2>/dev/null | matchNodePid)" ]; then
         unread="$unread $candidate"
-      elif ps -p "$candidate" >/dev/null 2>&1; then
-        warn "process $candidate runs $JAR_NAME but cannot be inspected or signalled by this user, leaving it running" >&2
       fi
+    elif ps -p "$candidate" >/dev/null 2>&1; then
+      warn "process $candidate runs $JAR_NAME but cannot be inspected or signalled by this user, leaving it running" >&2
     fi
   done
   if [ -n "$unread" ]; then
-    error "cannot read the working directory of process$unread running $JAR_NAME, so the node started from $PWD cannot be told apart; write its process id to $PWD/${JAR_NAME##*/}.pid and run again"
+    error "the working directory of process$unread running $JAR_NAME cannot be read or no longer exists, so the node started from $PWD cannot be told apart; write its process id to $PWD/${JAR_NAME##*/}.pid and run again"
     return 1
   fi
   return 0
@@ -450,15 +475,16 @@ checkPid() {
   if [ -f "$pidFile" ]; then
     # Only the recorded process counts, and only while it still runs the jar from this directory.
     # Once it is found gone the file is emptied, so its id is not looked up again. A working
-    # directory read as another directory means the id now belongs to another node; one that
-    # cannot be read proves nothing, so the recorded process is kept.
+    # directory read as another directory means the id now belongs to a node there, which is
+    # left running; one that cannot be read or was deleted proves nothing, so the recorded
+    # process is kept.
     saved=$(cat "$pidFile" 2>/dev/null)
     if [ -n "$saved" ]; then
       pid=$(ps -o pid=,args= -p "$saved" 2>/dev/null | matchNodePid)
       if [ -n "$pid" ]; then
         dir=$(processDir "$pid")
-        if [ -n "$dir" ] && [ "$dir" != "$(pwd -P)" ]; then
-          warn "process $pid in $pidFile now runs from $dir, the node started from $PWD has stopped" >&2
+        if [ -n "$dir" ] && [ "$dir" != here ]; then
+          warn "process $pid in $pidFile now runs from $dir, not from $PWD, so it is left running; if it is the node started here, run --stop in $dir" >&2
           pid=''
         fi
       fi
