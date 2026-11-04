@@ -14,6 +14,8 @@ import com.google.common.collect.Lists;
 import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
 import io.prometheus.client.Histogram;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -24,7 +26,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -186,6 +190,9 @@ public class Manager {
   private static final int TX_ID_CACHE_SIZE = 100_000;
   private static final int SLEEP_FOR_WAIT_LOCK = 10;
   private static final int NO_BLOCK_WAITING_LOCK = 0;
+  private static final int AUTO_STOP_PREVIEW_COUNT = 3;
+  private static final DateTimeFormatter AUTO_STOP_TIME_FORMAT = DateTimeFormatter
+      .ofPattern("EEE yyyy-MM-dd HH:mm:ss 'UTC'", Locale.US).withZone(ZoneOffset.UTC);
   private final int shieldedTransInPendingMaxCounts =
       Args.getInstance().getShieldedTransInPendingMaxCounts();
   @Getter
@@ -559,8 +566,8 @@ public class Manager {
     // init auto-stop
     try {
       initAutoStop();
-    } catch (IllegalArgumentException e) {
-      logger.error("Auto-stop params error: {}", e.getMessage());
+    } catch (IllegalArgumentException | NoSuchElementException e) {
+      logger.error("Auto-stop params error: {}", e.toString());
       throw new TronError(e, TronError.ErrCode.AUTO_STOP_PARAMS);
     }
 
@@ -708,9 +715,16 @@ public class Manager {
           String.format("shutDownBlockCount %d is less than 1", exitCount));
     }
 
-    if (blockTime != null && blockTime.getNextValidTimeAfter(new Date(headTime)) == null) {
-      throw new IllegalArgumentException(
-          String.format("shutDownBlockTime %s is illegal", blockTime));
+    if (blockTime != null) {
+      List<String> matches = nextCronMatches(blockTime, headTime);
+      if (matches.isEmpty()) {
+        throw new IllegalArgumentException(
+            String.format("shutDownBlockTime %s is illegal", blockTime));
+      }
+      logger.info("Auto-stop: shutDownBlockTime {}, head block time {}, next cron matches {}. "
+              + "These are candidates: the node stops only if a block timestamp exactly matches "
+              + "one, and that is not guaranteed.",
+          blockTime, formatAutoStopTime(new Date(headTime)), matches);
     }
 
     if (exitHeight > 0 && exitCount > 0) {
@@ -742,6 +756,23 @@ public class Manager {
     }
     // init
     latestSolidityNumShutDown = CommonParameter.getInstance().getShutdownBlockHeight();
+  }
+
+  private List<String> nextCronMatches(CronExpression cron, long headTime) {
+    List<String> matches = new ArrayList<>(AUTO_STOP_PREVIEW_COUNT);
+    Date next = new Date(headTime);
+    for (int i = 0; i < AUTO_STOP_PREVIEW_COUNT; i++) {
+      next = cron.getNextValidTimeAfter(next);
+      if (next == null) {
+        break;
+      }
+      matches.add(formatAutoStopTime(next));
+    }
+    return matches;
+  }
+
+  private String formatAutoStopTime(Date time) {
+    return AUTO_STOP_TIME_FORMAT.format(time.toInstant());
   }
 
   public AccountStore getAccountStore() {
