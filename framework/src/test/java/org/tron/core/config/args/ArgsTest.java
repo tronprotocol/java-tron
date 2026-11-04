@@ -29,9 +29,12 @@ import java.io.PrintStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.InetAddress;
+import java.time.Instant;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TimeZone;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Assert;
@@ -41,6 +44,7 @@ import org.junit.rules.ExpectedException;
 import org.slf4j.LoggerFactory;
 import org.tron.common.TestConstants;
 import org.tron.common.args.GenesisBlock;
+import org.tron.common.cron.CronExpression;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.DecodeUtil;
@@ -194,6 +198,32 @@ public class ArgsTest {
     method2.invoke(Args.class, nc);
 
     Assert.assertNotEquals(configuredExternalIp, parameter.getNodeExternalIp());
+  }
+
+  @Test
+  public void testShutdownBlockTimeEvaluatedInUtc() {
+    TimeZone defaultZone = TimeZone.getDefault();
+    try {
+      TimeZone.setDefault(TimeZone.getTimeZone("Asia/Shanghai"));
+      Map<String, String> params = new HashMap<>();
+      params.put("node.shutdown.BlockTime", "0 0 0 L 4 ? 2027");
+      params.put("storage.db.directory", "database");
+      Config config = ConfigFactory.defaultOverrides()
+          .withFallback(ConfigFactory.parseMap(params))
+          .withFallback(ConfigFactory.defaultReference());
+      Args.applyConfigParams(config);
+
+      CronExpression blockTime = Args.getInstance().getShutdownBlockTime();
+      Assert.assertEquals("UTC", blockTime.getTimeZone().getID());
+      Date lastDay = Date.from(Instant.parse("2027-04-30T00:00:00Z"));
+      Assert.assertEquals(lastDay,
+          blockTime.getNextValidTimeAfter(Date.from(Instant.parse("2027-04-01T00:00:00Z"))));
+      Assert.assertTrue(blockTime.isSatisfiedBy(lastDay));
+      Assert.assertFalse(blockTime.isSatisfiedBy(
+          Date.from(Instant.parse("2027-04-29T16:00:00Z"))));
+    } finally {
+      TimeZone.setDefault(defaultZone);
+    }
   }
 
   @Test
