@@ -38,6 +38,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Method;
+import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -1290,6 +1291,55 @@ public class JsonRpcServletTest {
     for (int i = 0; i < 3; i++) {
       assertInvalidRequestWithNullId(body.get(i));
     }
+  }
+
+  // --- Numeric ids that are not long integers ---
+
+  @Test
+  public void invalidNumericId_isRejectedWithOriginalIdWithoutDispatch() throws Exception {
+    for (String id : new String[] {"9223372036854775808", "-9223372036854775809",
+        "18446744073709551617", "1.5", "9223372036854775807.1", "1e19", "-1e3"}) {
+      MockHttpServletResponse resp = doPost("{\"jsonrpc\":\"2.0\","
+          + "\"method\":\"web3_clientVersion\",\"params\":[],\"id\":" + id + "}");
+      assertEquals(200, resp.getStatus());
+      assertInvalidRequest(MAPPER.readTree(resp.getContentAsByteArray()),
+          JsonRpcRequestValidator.INVALID_NUMERIC_ID_MESSAGE, id);
+    }
+
+    verifyNoInteractions(mockRpcServer);
+  }
+
+  @Test
+  public void longRangeIds_areServedWhileLargerIdIsRejectedInBatch() throws Exception {
+    TronJsonRpc rpc = useRealRpcServer();
+
+    MockHttpServletResponse resp = doPost("["
+        + "{\"jsonrpc\":\"2.0\",\"method\":\"eth_blockNumber\",\"id\":9223372036854775807},"
+        + "{\"jsonrpc\":\"2.0\",\"method\":\"eth_blockNumber\",\"id\":9223372036854775808},"
+        + "{\"jsonrpc\":\"2.0\",\"method\":\"eth_blockNumber\",\"id\":-9223372036854775808}]");
+    JsonNode body = MAPPER.readTree(resp.getContentAsByteArray());
+    assertEquals(3, body.size());
+    assertEquals(Long.MAX_VALUE, body.get(0).get("id").asLong());
+    assertEquals("0x1", body.get(0).get("result").asText());
+    assertInvalidRequest(body.get(1), JsonRpcRequestValidator.INVALID_NUMERIC_ID_MESSAGE,
+        "9223372036854775808");
+    assertEquals(Long.MIN_VALUE, body.get(2).get("id").asLong());
+    assertEquals("0x1", body.get(2).get("result").asText());
+    verify(rpc, times(2)).getLatestBlockNum();
+  }
+
+  @Test
+  public void rejectedFractionalId_isEchoedWithoutPrecisionLoss() throws Exception {
+    for (String id : new String[] {"0.12345678901234567890123456789", "1e400"}) {
+      MockHttpServletResponse resp = doPost("{\"jsonrpc\":\"2.0\","
+          + "\"method\":\"web3_clientVersion\",\"params\":[],\"id\":" + id + "}");
+      JsonNode echoed = MAPPER.reader().with(DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS)
+          .readTree(resp.getContentAsByteArray()).get("id");
+      assertTrue(id, echoed.isNumber());
+      assertEquals(id, 0, new BigDecimal(id).compareTo(echoed.decimalValue()));
+    }
+
+    verifyNoInteractions(mockRpcServer);
   }
 
   // --- StreamReadConstraints: maxNestingDepth and maxTokenCount must be enforced ---
