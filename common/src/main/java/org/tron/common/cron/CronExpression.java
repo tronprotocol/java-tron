@@ -22,6 +22,7 @@ import java.io.Serializable;
 import java.text.ParseException;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -205,7 +206,7 @@ import java.util.TreeSet;
  */
 public final class CronExpression implements Serializable {
 
-  public static final int MAX_YEAR = Calendar.getInstance().get(Calendar.YEAR) + 100;
+  public static final int MAX_YEAR = new GregorianCalendar().get(Calendar.YEAR) + 100;
   private static final int SECOND = 0;
   private static final int MINUTE = 1;
   private static final int HOUR = 2;
