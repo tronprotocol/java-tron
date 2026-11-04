@@ -93,7 +93,8 @@ esac
 # Logging helpers: print a timestamped, colored line to the terminal and keep the same line,
 # without color codes, in start.log, so stop, download, signature-check, rebuild and start
 # messages survive when the script runs from cron, systemd or nohup. INFO and WARN go to
-# stdout, ERROR to stderr. start.log also marks a directory a node was started from
+# stdout, ERROR to stderr; WARN from the process lookup in checkPid goes to stderr too, keeping
+# it out of the captured ids. start.log also marks a directory a node was started from
 # (enterNodeDir, stopService and checkPid rely on it), so these helpers never create it: lines
 # are queued and written only to an existing start.log in the current directory, at the latest
 # when startService creates it.
@@ -401,26 +402,100 @@ matchNodePid() {
   done
 }
 
-# Sets $pid to the process id recorded in <jar name>.pid; empty when that process is gone. A
-# directory that has a start.log but no pid file was used by an earlier version of this script,
-# which kept no pid file; there every process on the machine that runs the jar name is taken,
-# as that version did, so $pid may hold several ids.
+# Prints "here" when process $1 runs from the current directory, the path of its working
+# directory when that is another one, and nothing when it cannot be read or was deleted.
+# Directories are compared by device and inode, so letter case and symlinks do not matter.
+# Read from /proc on Linux and with lsof elsewhere (macOS); another user's process needs root.
+processDir() {
+  local dir inode
+  if [ -d /proc/self ]; then
+    # Compare through /proc/<pid>/cwd: the path may belong to another mount namespace.
+    dir=$(readlink "/proc/$1/cwd" 2>/dev/null)
+    if [ -z "$dir" ]; then
+      return 0
+    elif [ "/proc/$1/cwd" -ef . ]; then
+      echo here
+    elif [[ $dir != *" (deleted)" ]]; then
+      echo "$dir"
+    fi
+  else
+    # Fields "i<inode>" and "n<path>". lsof keeps the last path of a deleted directory, so the
+    # path counts only while it still leads to that inode.
+    dir=$(lsof -a -p "$1" -d cwd -Fin 2>/dev/null)
+    inode=$(sed -n 's/^i//p' <<< "$dir")
+    dir=$(sed -n 's/^n//p' <<< "$dir")
+    if [ -z "$inode" ] || [ ! -d "$dir" ] || [ "$(stat -f %i "$dir" 2>/dev/null)" != "$inode" ]; then
+      return 0
+    elif [ "$dir" -ef . ]; then
+      echo here
+    else
+      echo "$dir"
+    fi
+  fi
+}
+
+# Prints the process ids on stdin whose working directory is the current directory. This script
+# and its earlier versions start the node from its directory, and the JVM keeps that working
+# directory, so this tells the node started here from nodes in other directories that run the
+# same jar name. A process whose working directory cannot be read may be the node started here:
+# if this user can signal it, it is reported on stderr and the function returns 1. One that this
+# user cannot signal (another user's process, or one already gone) is left out, and so is one
+# that no longer runs the jar (it exited, or is a zombie).
+matchDirPid() {
+  local candidate dir unread=''
+  while read -r candidate; do
+    dir=$(processDir "$candidate")
+    if [ "$dir" = here ]; then
+      echo "$candidate"
+    elif [ -n "$dir" ]; then
+      continue
+    elif kill -0 "$candidate" 2>/dev/null; then
+      if [ -n "$(ps -o pid=,args= -p "$candidate" 2>/dev/null | matchNodePid)" ]; then
+        unread="$unread $candidate"
+      fi
+    elif ps -p "$candidate" >/dev/null 2>&1; then
+      warn "process $candidate runs $JAR_NAME but cannot be inspected or signalled by this user, leaving it running" >&2
+    fi
+  done
+  if [ -n "$unread" ]; then
+    error "the working directory of process$unread running $JAR_NAME cannot be read or no longer exists, so the node started from $PWD cannot be told apart; write its process id to $PWD/${JAR_NAME##*/}.pid and run again"
+    return 1
+  fi
+  return 0
+}
+
+# Sets $pid to the process id recorded in <jar name>.pid; empty when that process is gone or runs
+# from another directory. A directory that has a start.log but no pid file was used by an earlier
+# version of this script, which kept no pid file; there $pid holds the processes that run the jar
+# name from this directory, and the script exits when one of them cannot be told apart.
 checkPid() {
   local pidFile="${JAR_NAME##*/}.pid"
-  local saved
+  local saved dir
   pid=''
   if [ -f "$pidFile" ]; then
-    # Only the recorded process counts, and only while it still runs the jar. Once it is found
-    # gone the file is emptied, so its id is not looked up again.
+    # Only the recorded process counts, and only while it still runs the jar from this directory.
+    # Once it is found gone the file is emptied, so its id is not looked up again. A working
+    # directory read as another directory means the id now belongs to a node there, which is
+    # left running; one that cannot be read or was deleted proves nothing, so the recorded
+    # process is kept.
     saved=$(cat "$pidFile" 2>/dev/null)
     if [ -n "$saved" ]; then
       pid=$(ps -o pid=,args= -p "$saved" 2>/dev/null | matchNodePid)
+      if [ -n "$pid" ]; then
+        dir=$(processDir "$pid")
+        if [ -n "$dir" ] && [ "$dir" != here ]; then
+          warn "process $pid in $pidFile now runs from $dir, not from $PWD, so it is left running; if it is the node started here, run --stop in $dir" >&2
+          pid=''
+        fi
+      fi
       if [ -z "$pid" ]; then
         : > "$pidFile"
       fi
     fi
   elif [ -f start.log ]; then
-    pid=$(ps -A -o pid=,args= 2>/dev/null | matchNodePid)
+    if ! pid=$(ps -A -o pid=,args= 2>/dev/null | matchNodePid | matchDirPid); then
+      exit 1
+    fi
   fi
 }
 
@@ -435,9 +510,11 @@ enterNodeDir() {
 }
 
 # Stops the running node: sends SIGTERM once per second for up to MAX_STOP_TIME seconds,
-# then SIGKILL. Returns 1 when no node was ever started from this directory.
+# then SIGKILL. Returns 1 when no node was ever started from this directory, and 2 when the node
+# cannot be stopped: this user cannot signal one of its processes, or it still runs after SIGKILL.
 stopService() {
   local pidFile="${JAR_NAME##*/}.pid"
+  local p denied
   enterNodeDir
   if [ ! -f "$pidFile" ] && [ ! -f start.log ]; then
     info "no node was started from $PWD"
@@ -446,20 +523,38 @@ stopService() {
   count=1
   while [ $count -le $MAX_STOP_TIME ]; do
     checkPid
-    if [ -n "$pid" ]; then
-      kill -15 $pid
-      sleep 1
-    else
+    if [ -z "$pid" ]; then
       info "java-tron stop"
-      return
+      return 0
     fi
+    # A failed kill counts only while the process still exists: it may have exited after
+    # checkPid found it.
+    denied=''
+    for p in $pid; do
+      if ! kill -15 "$p" 2>/dev/null && ps -p "$p" > /dev/null 2>&1; then
+        denied="$denied $p"
+      fi
+    done
+    if [ -n "$denied" ]; then
+      error "cannot signal process$denied of the node started from $PWD, stop it as its owner"
+      return 2
+    fi
+    sleep 1
     count=$(($count + 1))
     if [ $count -eq $MAX_STOP_TIME ]; then
-      kill -9 $pid
+      for p in $pid; do
+        kill -9 "$p" 2>/dev/null
+      done
       sleep 1
     fi
   done
   sleep 5
+  checkPid
+  if [ -n "$pid" ]; then
+    error "java-tron still runs with pid ${pid//$'\n'/ } after SIGKILL"
+    return 2
+  fi
+  info "java-tron stop"
 }
 
 # Linux only: refuses to start with less than ALLOW_MIN_MEMORY MB of memory, or when -mem
@@ -742,7 +837,11 @@ restart() {
   # running, so its download and key-server lookup do not add to the stop-to-start downtime.
   enterNodeDir
   ensureArchiveJar
+  # 1 only means that no node was started from this directory before, so this is its first start.
   stopService
+  if [ $? -eq 2 ]; then
+    exit 1
+  fi
   if [[ $IS_BACKUP_GC_LOG = true ]]; then
     backupGCLog
   fi
