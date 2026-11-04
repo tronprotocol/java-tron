@@ -1365,7 +1365,7 @@ public final class CronExpression implements Serializable {
     final int lastDay = getLastDayOfMonth(mon, year);
     // For "L", "L-1", etc.
     final int smallestDay = Optional.ofNullable(set.ceiling(LAST_DAY_OFFSET_END - (lastDay - day)))
-        .map(d -> d - LAST_DAY_OFFSET_START + 1)
+        .map(d -> lastDay - (LAST_DAY_OFFSET_END - d))
         .orElse(Integer.MAX_VALUE);
 
     // For "1", "2", etc.
@@ -1375,8 +1375,7 @@ public final class CronExpression implements Serializable {
       return Optional.of(st.first());
     }
 
-    return smallestDay == Integer.MAX_VALUE ? Optional.empty()
-        : Optional.of(smallestDay + lastDay - LAST_DAY_OFFSET_START + 1);
+    return smallestDay == Integer.MAX_VALUE ? Optional.empty() : Optional.of(smallestDay);
   }
 
   private int findNearestWeekday(int day, int mon, int year) {

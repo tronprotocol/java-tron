@@ -765,6 +765,14 @@ public class CronExpressionTest {
   }
 
   @Test
+  public void testLastDayOffsetBeforeFixedDayInShortMonth() throws Exception {
+    assertNextFireTimesInUtc("0 0 12 L-3,26 2 ? 2022", "2022-02-01T00:00:00Z",
+        "2022-02-25T12:00:00Z", "2022-02-26T12:00:00Z");
+    assertNextFireTimesInUtc("0 0 12 27W,L-3W 2 ? 2022", "2022-02-01T00:00:00Z",
+        "2022-02-25T12:00:00Z", "2022-02-28T12:00:00Z");
+  }
+
+  @Test
   public void testNearestWeekdayListDoesNotSkipMonth() throws Exception {
     assertNextFireTimesInUtc("0 0 10 3W,20W 4 ?", "2027-04-02T10:00:00Z",
         "2027-04-20T10:00:00Z", "2028-04-03T10:00:00Z");
