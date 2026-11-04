@@ -1053,11 +1053,13 @@ public class Manager {
     updateFork(block);
     if (System.currentTimeMillis() - block.getTimeStamp() >= 60_000) {
       revokingStore.setMaxFlushCount(maxFlushCount);
-      if (Args.getInstance().getShutdownBlockTime() != null
-          && Args.getInstance().getShutdownBlockTime().getNextValidTimeAfter(
-            new Date(block.getTimeStamp() - maxFlushCount * 1000 * 3L))
-          .compareTo(new Date(block.getTimeStamp())) <= 0) {
-        revokingStore.setMaxFlushCount(SnapshotManager.DEFAULT_MIN_FLUSH_COUNT);
+      CronExpression shutdownBlockTime = Args.getInstance().getShutdownBlockTime();
+      if (shutdownBlockTime != null) {
+        Date nextStopTime = shutdownBlockTime.getNextValidTimeAfter(
+            new Date(block.getTimeStamp() - maxFlushCount * 1000 * 3L));
+        if (nextStopTime != null && nextStopTime.compareTo(new Date(block.getTimeStamp())) <= 0) {
+          revokingStore.setMaxFlushCount(SnapshotManager.DEFAULT_MIN_FLUSH_COUNT);
+        }
       }
       if (latestSolidityNumShutDown > 0 && latestSolidityNumShutDown - block.getNum()
           <= maxFlushCount) {
