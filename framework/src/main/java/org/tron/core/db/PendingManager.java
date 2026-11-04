@@ -28,8 +28,6 @@ public class PendingManager implements AutoCloseable {
     while (iterator.hasNext()) {
       TransactionCapsule tx = iterator.next();
       if (now - tx.getTime() > timeout) {
-        // rePushLoop may still hold this transaction after its owner marker is pruned.
-        tx.setVerified(false);
         iterator.remove();
         Metrics.gaugeInc(MetricKeys.Gauge.MANAGER_QUEUE, -1,
             MetricLabels.Gauge.QUEUE_REPUSH);

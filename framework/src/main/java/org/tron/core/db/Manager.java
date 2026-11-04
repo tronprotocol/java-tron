@@ -283,7 +283,12 @@ public class Manager {
         while (isRunRePushThread) {
           TransactionCapsule tx = null;
           try {
-            tx = getRePushTransactions().peek();
+            synchronized (this) {
+              tx = getRePushTransactions().peek();
+              if (tx != null) {
+                pushTransactionQueue.add(tx);
+              }
+            }
             if (tx != null) {
               this.rePush(tx);
             } else {
@@ -302,9 +307,12 @@ public class Manager {
               throw e;
             });
           } finally {
-            if (tx != null && getRePushTransactions().remove(tx)) {
-              Metrics.gaugeInc(MetricKeys.Gauge.MANAGER_QUEUE, -1,
-                  MetricLabels.Gauge.QUEUE_REPUSH);
+            if (tx != null) {
+              if (getRePushTransactions().remove(tx)) {
+                Metrics.gaugeInc(MetricKeys.Gauge.MANAGER_QUEUE, -1,
+                    MetricLabels.Gauge.QUEUE_REPUSH);
+              }
+              pushTransactionQueue.remove(tx);
             }
           }
         }
@@ -896,6 +904,9 @@ public class Manager {
           }
 
           try (ISession tmpSession = revokingStore.buildSession()) {
+            if (ownerAddressSet.contains(ByteArray.toHexString(trx.getOwnerAddress()))) {
+              trx.setVerified(false);
+            }
             processTransaction(trx, null);
             trx.setTrxTrace(null);
             pendingTransactions.add(trx);
@@ -2125,13 +2136,6 @@ public class Manager {
   public void rePush(TransactionCapsule tx) {
     if (containsTransaction(tx)) {
       return;
-    }
-
-    String ownerAddress = ByteArray.toHexString(tx.getOwnerAddress());
-    synchronized (this) {
-      if (ownerAddressSet.contains(ownerAddress)) {
-        tx.setVerified(false);
-      }
     }
 
     try {
