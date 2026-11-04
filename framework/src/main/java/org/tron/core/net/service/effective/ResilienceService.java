@@ -31,7 +31,8 @@ public class ResilienceService {
 
   private static final long inactiveThreshold =
       CommonParameter.getInstance().getInactiveThreshold() * 1000L;
-  public static final long blockNotChangeThreshold = 60 * 1000L;
+  // Leave room for local GC pauses and disk stalls; a shorter threshold can evict healthy peers.
+  public static final long blockNotChangeThreshold = 30 * 1000L;
 
   //when node is isolated, retention percent peers will not be disconnected
   public static final double retentionPercent = 0.8;
@@ -68,13 +69,14 @@ public class ResilienceService {
       }
     }, initialDelay, 10, TimeUnit.SECONDS);
 
+    // Limit polling delay after the no-progress threshold is reached.
     executor.scheduleWithFixedDelay(() -> {
       try {
         disconnectIsolated2();
       } catch (Exception e) {
         logger.error("DisconnectIsolated node failed", e);
       }
-    }, initialDelay, 30, TimeUnit.SECONDS);
+    }, initialDelay, 10, TimeUnit.SECONDS);
   }
 
   private void disconnectRandom() {
