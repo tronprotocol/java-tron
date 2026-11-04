@@ -55,7 +55,7 @@ public class IpcService extends AbstractService {
 
   private final Set<AFUNIXSocket> activeClientSockets = ConcurrentHashMap.newKeySet();
   private AFUNIXServerSocket unixServerSocket;
-  // Record paths only after this instance successfully creates the corresponding resource.
+  // Track paths only after this instance exclusively creates the private IPC directory.
   private Path socketDirectoryPath;
   private Path socketFilePath;
 
@@ -90,15 +90,23 @@ public class IpcService extends AbstractService {
     try {
       socketFiles.createSocketDirectory(socketDirectory);
       socketDirectoryPath = socketDirectory;
+      // A failed bind may already have created the socket file in our private directory.
+      socketFilePath = resolvedSocketFile;
       File socketFile = resolvedSocketFile.toFile();
       AFUNIXSocketAddress address = AFUNIXSocketAddress.of(socketFile);
-      unixServerSocket = AFUNIXServerSocket.bindOn(address);
-      socketFilePath = resolvedSocketFile;
+      unixServerSocket = AFUNIXServerSocket.newInstance();
+      unixServerSocket.bind(address);
       socketFiles.setOwnerOnlyPermissions(socketFilePath);
       unixServerSocket.setShutdownOnClose(true);
 
       logger.info("IpcService started, listening on {}", socketFile.getAbsolutePath());
     } catch (IOException | RuntimeException e) {
+      logger.error("Admin IPC cannot start at {}: {}. Check socket-directory access permissions "
+              + "and filesystem support for Unix sockets and POSIX permission changes. Configure "
+              + "node.admin.ipc.socketDirectory to an existing absolute directory on a compatible "
+              + "local filesystem (in Docker, use a container-local directory such as /tmp). "
+              + "Alternatively, set node.admin.ipc.enable=false to start without Admin IPC.",
+          resolvedSocketFile, e.toString());
       throw rollbackStartup(e);
     }
     Runnable runnable = () -> {
