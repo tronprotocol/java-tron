@@ -189,6 +189,18 @@ public class TronErrorTest {
   }
 
   @Test
+  public void shutdownBlockTimeLastDayInSecondsTest() {
+    Map<String, String> params = new HashMap<>();
+    params.put("node.shutdown.BlockTime", "L 30 * * * ?");
+    params.put("storage.db.directory", "database");
+    Config config = ConfigFactory.defaultOverrides()
+        .withFallback(ConfigFactory.parseMap(params))
+        .withFallback(ConfigFactory.defaultReference());
+    TronError thrown = assertThrows(TronError.class, () -> Args.applyConfigParams(config));
+    assertEquals(TronError.ErrCode.AUTO_STOP_PARAMS, thrown.getErrCode());
+  }
+
+  @Test
   public void testThrowIfUnsupportedJavaVersion() {
     runArchTest("x86_64", "1.8", false);
     runArchTest("x86_64", "11", true);
