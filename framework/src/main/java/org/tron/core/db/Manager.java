@@ -904,9 +904,6 @@ public class Manager {
           }
 
           try (ISession tmpSession = revokingStore.buildSession()) {
-            if (ownerAddressSet.contains(ByteArray.toHexString(trx.getOwnerAddress()))) {
-              trx.setVerified(false);
-            }
             processTransaction(trx, null);
             trx.setTrxTrace(null);
             pendingTransactions.add(trx);
@@ -2140,6 +2137,13 @@ public class Manager {
   public void rePush(TransactionCapsule tx) {
     if (containsTransaction(tx)) {
       return;
+    }
+
+    String ownerAddress = ByteArray.toHexString(tx.getOwnerAddress());
+    synchronized (this) {
+      if (ownerAddressSet.contains(ownerAddress)) {
+        tx.setVerified(false);
+      }
     }
 
     try {

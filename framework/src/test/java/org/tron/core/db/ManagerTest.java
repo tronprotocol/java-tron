@@ -1671,6 +1671,40 @@ public class ManagerTest extends BaseMethodTest {
   }
 
   @Test
+  public void freshMarkedOwnerTransactionVerifiesOnceOutsideLocks() throws Exception {
+    dbManager.stopRePushThread();
+    byte[] witnessKey = ByteArray.fromHexString(privateKey);
+    byte[] witness = ECKey.fromPrivate(witnessKey).getAddress();
+    chainManager.getWitnessScheduleStore().saveActiveWitnesses(new ArrayList<>());
+    chainManager.addWitness(ByteString.copyFrom(witness));
+    long time = 1533529947843L;
+    BlockCapsule parent = new BlockCapsule(blockGenerate.getSignedBlock(
+        ByteString.copyFrom(witness), time, witnessKey));
+    dbManager.pushBlock(parent);
+    ECKey ownerKey = new ECKey(Utils.getRandom());
+    byte[] owner = ownerKey.getAddress();
+    chainManager.getAccountStore().put(owner, new AccountCapsule(Protocol.Account.newBuilder()
+        .setAddress(ByteString.copyFrom(owner)).setBalance(1_000_000_000L).build()));
+    Set<String> owners = (Set<String>) ReflectUtils.getFieldObject(dbManager, "ownerAddressSet");
+    owners.add(ByteArray.toHexString(owner));
+    TransactionCapsule tx = spy(transfer(owner, witness, 1L, parent, time + 60_000L));
+    tx.sign(ownerKey.getPrivKeyBytes());
+    Object transactionLock = ReflectUtils.getFieldObject(dbManager, "transactionLock");
+    List<Boolean> verificationLocks = new ArrayList<>();
+    doAnswer(invocation -> {
+      verificationLocks.add(Thread.holdsLock(dbManager) || Thread.holdsLock(transactionLock));
+      return invocation.callRealMethod();
+    }).when(tx).validatePubSignature(chainManager.getAccountStore(),
+        chainManager.getDynamicPropertiesStore());
+
+    Assert.assertTrue(dbManager.pushTransaction(tx));
+
+    Assert.assertTrue(dbManager.getPendingTransactions().contains(tx));
+    Assert.assertEquals("A fresh transaction must verify once outside both locks",
+        Collections.singletonList(false), verificationLocks);
+  }
+
+  @Test
   public void rePushPreservesVerificationCacheWhenPermissionUnchanged() throws Exception {
     dbManager.stopRePushThread();
     byte[] witnessKey = ByteArray.fromHexString(privateKey);
@@ -1862,7 +1896,7 @@ public class ManagerTest extends BaseMethodTest {
         chainManager.getDynamicPropertiesStore()));
     TransactionCapsule cachedReplacement = spy(replacement);
     doAnswer(invocation -> {
-      Assert.assertTrue("Repush must verify against permissions under the Manager lock",
+      Assert.assertFalse("Repush must preserve the original verification outside the Manager lock",
           Thread.holdsLock(dbManager));
       return invocation.callRealMethod();
     }).when(cachedReplacement).validatePubSignature(chainManager.getAccountStore(),
