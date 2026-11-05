@@ -96,6 +96,8 @@ public class AccountPermissionUpdateActuatorTest extends BaseTest {
     AccountCapsule ownerCapsule = new AccountCapsule(
         ByteString.copyFrom(ByteArray.fromHexString(OWNER_ADDRESS)),
         ByteString.copyFromUtf8("owner"), AccountType.Normal);
+    ownerCapsule.setBalance(
+        dbManager.getDynamicPropertiesStore().getUpdateAccountPermissionFee());
     dbManager.getAccountStore().put(ownerCapsule.getAddress().toByteArray(), ownerCapsule);
 
     AccountCapsule witnessCapsule = new AccountCapsule(
@@ -250,6 +252,32 @@ public class AccountPermissionUpdateActuatorTest extends BaseTest {
     } catch (ContractValidateException | ContractExeException e) {
       Assert.fail();
     }
+  }
+
+  @Test
+  public void insufficientBalanceToCoverFee() {
+    byte[] ownerNameArray = ByteArray.fromHexString(OWNER_ADDRESS);
+    long fee = dbManager.getDynamicPropertiesStore().getUpdateAccountPermissionFee();
+
+    AccountCapsule owner = dbManager.getAccountStore().get(ownerNameArray);
+    owner.setBalance(fee - 1);
+    dbManager.getAccountStore().put(ownerNameArray, owner);
+
+    Permission ownerPermissionBefore = owner.getInstance().getOwnerPermission();
+
+    AccountPermissionUpdateActuator actuator = new AccountPermissionUpdateActuator();
+    actuator.setChainBaseManager(dbManager.getChainBaseManager())
+        .setAny(getContract(OWNER_ADDRESS));
+
+    try {
+      actuator.validate();
+      fail("validate should fail for insufficient balance");
+    } catch (ContractValidateException e) {
+      Assert.assertTrue(e.getMessage().contains("insufficient balance"));
+    }
+
+    AccountCapsule ownerAfter = dbManager.getAccountStore().get(ownerNameArray);
+    Assert.assertEquals(ownerPermissionBefore, ownerAfter.getInstance().getOwnerPermission());
   }
 
   @Test
