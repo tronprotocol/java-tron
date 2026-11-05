@@ -16,6 +16,24 @@
  *
  */
 
+/*
+ * Local patches, absent from Quartz up to 2.5.2. The base is Quartz main 7b3b88bad8, whose
+ * CronExpression matches v2.5.0, plus selected 2.5.1 fixes.
+ *
+ * - Nearest weekday lookup (findNearestWeekday, getNearestWeekday): quartz-scheduler/quartz#1420,
+ *   quartz-scheduler/quartz#1444 and the time-of-day regression of quartz-scheduler/quartz#1424.
+ *   Tests: test1420, testNearestWeekday*, testLastWeekday*, testLastDayOffsetWeekday*. Remove when
+ *   an upstream release passes those tests with isSatisfiedBy asserted.
+ * - Gregorian MAX_YEAR: no upstream issue found as of 2026-11-04. Test: CronExpressionLocaleTest.
+ *   Remove when upstream uses the Gregorian year regardless of the default locale.
+ * - L-n lists compared as calendar days in findSmallestDay: no upstream issue found as of
+ *   2026-11-04. Test: testLastDayOffsetBeforeFixedDayInShortMonth. Remove when an upstream
+ *   release picks the earliest calendar day in mixed plain-day and L-n lists.
+ * - Increment messages keep ">" for day, month and weekday, taking quartz-scheduler/quartz#1346
+ *   only in part. Tests: testIncrementRangeBoundary, testQtz96. Take upstream's text once it says
+ *   ">" for those fields.
+ */
+
 package org.tron.common.cron;
 
 import java.io.Serializable;
