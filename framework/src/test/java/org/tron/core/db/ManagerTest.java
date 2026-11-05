@@ -116,6 +116,7 @@ import org.tron.core.store.IncrementalMerkleTreeStore;
 import org.tron.core.store.StoreFactory;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Account;
+import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
@@ -2185,6 +2186,24 @@ public class ManagerTest extends BaseMethodTest {
     Assert.assertEquals(block.getBlockId(), chainManager.getHeadBlockId());
     Assert.assertTrue(chainManager.getTransactionStore()
         .has(signed.getTransactionId().getBytes()));
+  }
+
+  @Test
+  public void accountCreateNonNormalTypeRejectedFromPending() {
+    Assert.assertTrue(accountCreate(AccountType.Contract).isAccountCreateNonNormalType());
+    Assert.assertTrue(accountCreate(AccountType.AssetIssue).isAccountCreateNonNormalType());
+    Assert.assertFalse(accountCreate(AccountType.Normal).isAccountCreateNonNormalType());
+
+    ContractValidateException thrown = assertThrows(ContractValidateException.class,
+        () -> dbManager.pushTransaction(accountCreate(AccountType.Contract)));
+    Assert.assertEquals("AccountCreateContract only supports the Normal account type.",
+        thrown.getMessage());
+  }
+
+  private TransactionCapsule accountCreate(AccountType type) {
+    AccountContract.AccountCreateContract contract =
+        AccountContract.AccountCreateContract.newBuilder().setType(type).build();
+    return new TransactionCapsule(contract, ContractType.AccountCreateContract);
   }
 
   private TransactionCapsule transfer(byte[] owner, byte[] to, long amount,
