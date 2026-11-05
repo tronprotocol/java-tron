@@ -1,24 +1,34 @@
 package org.tron.core.services.stop;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.Test;
+import org.tron.common.es.ExecutorServiceManager;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.core.capsule.BlockCapsule;
 
 public class BlockStopOverlapTest extends ConditionallyStopTest {
 
   private static final long HEIGHT = 5;
+  private static final String EXECUTOR_NAME = "waiting-block";
 
-  private final AtomicReference<Throwable> waitingError = new AtomicReference<>();
+  private final ExecutorService executor =
+      ExecutorServiceManager.newSingleThreadExecutor(EXECUTOR_NAME);
 
   @Override
   protected void initParameter(CommonParameter parameter) {
     parameter.setShutdownBlockHeight(HEIGHT);
     parameter.getStorage().setMaxFlushCount(1);
+  }
+
+  @Override
+  protected void beforeDestroy() {
+    ExecutorServiceManager.shutdownAndAwaitTermination(executor, EXECUTOR_NAME);
   }
 
   @Override
@@ -30,16 +40,15 @@ public class BlockStopOverlapTest extends ConditionallyStopTest {
   public void blockWaitingForTheLockStopsAtTheTargetHeight() throws Exception {
     BlockCapsule first = nextBlockBeforeTargetIsPersisted();
     BlockCapsule second = blockAfter(first);
-    Thread waiting;
+    Future<?> waiting;
 
     synchronized (tronNetDelegate.getBlockLock()) {
       waiting = startWaitingForTheLock(second);
       tronNetDelegate.processBlock(first, false);
       assertEquals(HEIGHT, persistedHeight());
     }
-    waiting.join();
+    waiting.get();
 
-    assertNull(waitingError.get());
     assertTrue(tronNetDelegate.isHitDown());
     assertStoppedAfter(first);
   }
@@ -48,7 +57,7 @@ public class BlockStopOverlapTest extends ConditionallyStopTest {
   public void blockWaitingForTheLockIsDroppedAfterTheStopSignal() throws Exception {
     BlockCapsule first = nextBlockBeforeTargetIsPersisted();
     BlockCapsule second = blockAfter(first);
-    Thread waiting;
+    Future<?> waiting;
 
     synchronized (tronNetDelegate.getBlockLock()) {
       waiting = startWaitingForTheLock(second);
@@ -56,9 +65,8 @@ public class BlockStopOverlapTest extends ConditionallyStopTest {
       tronNetDelegate.processBlock(second, false);
       assertTrue(tronNetDelegate.isHitDown());
     }
-    waiting.join();
+    waiting.get();
 
-    assertNull(waitingError.get());
     assertStoppedAfter(first);
   }
 
@@ -77,20 +85,18 @@ public class BlockStopOverlapTest extends ConditionallyStopTest {
         block.getBlockId().getByteString());
   }
 
-  private Thread startWaitingForTheLock(BlockCapsule block) throws InterruptedException {
-    Thread thread = new Thread(() -> {
-      try {
-        tronNetDelegate.processBlock(block, false);
-      } catch (Throwable t) {
-        waitingError.set(t);
-      }
-    }, "waiting-block");
-    thread.start();
-    while (thread.getState() != Thread.State.BLOCKED) {
-      assertTrue(thread.isAlive());
+  private Future<?> startWaitingForTheLock(BlockCapsule block) throws InterruptedException {
+    AtomicReference<Thread> worker = new AtomicReference<>();
+    Future<?> task = executor.submit(() -> {
+      worker.set(Thread.currentThread());
+      tronNetDelegate.processBlock(block, false);
+      return null;
+    });
+    while (worker.get() == null || worker.get().getState() != Thread.State.BLOCKED) {
+      assertFalse(task.isDone());
       Thread.sleep(1);
     }
-    return thread;
+    return task;
   }
 
   private void assertStoppedAfter(BlockCapsule block) {
