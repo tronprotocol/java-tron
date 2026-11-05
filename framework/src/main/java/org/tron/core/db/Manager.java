@@ -1280,18 +1280,6 @@ public class Manager {
             consensus.receiveBlock(block);
           }
 
-          if (Metrics.enabled()) {
-            Metrics.histogramObserve(MetricKeys.Histogram.BLOCK_TRANSACTION_COUNT,
-                block.getTransactions().size(),
-                StringUtil.encode58Check(block.getWitnessAddress().toByteArray()));
-          }
-
-          if (CommonParameter.getInstance().getShutdownBlockTime() != null
-                  && CommonParameter.getInstance().getShutdownBlockTime()
-                  .isSatisfiedBy(new Date(block.getTimeStamp()))) {
-            latestSolidityNumShutDown = block.getNum();
-          }
-
           if (block.getTransactions().stream()
                   .filter(tran -> isShieldedTransaction(tran.getInstance()))
                   .count() > SHIELDED_TRANS_IN_BLOCK_COUNTS) {
@@ -1343,6 +1331,7 @@ public class Manager {
               synchronized (forkLock) {
                 switchFork(newBlock);
               }
+              onBlockApplied(block);
               logger.info(SAVE_BLOCK, newBlock);
 
               logger.warn(
@@ -1372,6 +1361,7 @@ public class Manager {
             long newSolidNum = getDynamicPropertiesStore().getLatestSolidifiedBlockNum();
             blockTrigger(newBlock, oldSolidNum, newSolidNum);
           }
+          onBlockApplied(block);
           logger.info(SAVE_BLOCK, newBlock);
         }
         //clear ownerAddressSet
@@ -1397,6 +1387,20 @@ public class Manager {
       }
     } finally {
       setBlockWaitLock(false);
+    }
+  }
+
+  private void onBlockApplied(BlockCapsule block) {
+    if (Metrics.enabled()) {
+      Metrics.histogramObserve(MetricKeys.Histogram.BLOCK_TRANSACTION_COUNT,
+          block.getTransactions().size(),
+          StringUtil.encode58Check(block.getWitnessAddress().toByteArray()));
+    }
+
+    if (CommonParameter.getInstance().getShutdownBlockTime() != null
+        && CommonParameter.getInstance().getShutdownBlockTime()
+        .isSatisfiedBy(new Date(block.getTimeStamp()))) {
+      latestSolidityNumShutDown = block.getNum();
     }
   }
 

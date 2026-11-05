@@ -12,6 +12,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.google.protobuf.ByteString;
+import io.prometheus.client.CollectorRegistry;
 import java.lang.reflect.Method;
 import java.math.BigInteger;
 import java.net.InetSocketAddress;
@@ -31,8 +32,11 @@ import org.tron.common.BaseMethodTest;
 import org.tron.common.cron.CronExpression;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.parameter.CommonParameter;
+import org.tron.common.prometheus.MetricKeys;
+import org.tron.common.prometheus.MetricLabels;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
@@ -276,23 +280,82 @@ public class ManagerWitnessSignatureTest extends BaseMethodTest {
   public void validSyncWitnessUpdatesMatchingShutdownTarget() throws Exception {
     BlockCapsule block = nextBlock(signer);
     setMatchingShutdownTime(block);
+    boolean metricsEnabled = CommonParameter.getInstance().isMetricsPrometheusEnable();
+    CommonParameter.getInstance().setMetricsPrometheusEnable(true);
+    try {
+      Double count = blockTransactionCount();
 
-    processSyncBlock(block);
+      processSyncBlock(block);
 
-    assertEquals(block.getNum(), dbManager.getLatestSolidityNumShutDown());
-    assertEquals(block.getBlockId(), chainBaseManager.getHeadBlockId());
+      assertEquals((count == null ? 0 : count) + 1, blockTransactionCount(), 0);
+      assertEquals(block.getNum(), dbManager.getLatestSolidityNumShutDown());
+      assertEquals(block.getBlockId(), chainBaseManager.getHeadBlockId());
+    } finally {
+      CommonParameter.getInstance().setMetricsPrometheusEnable(metricsEnabled);
+    }
   }
 
   @Test
-  public void authorizedBlockRetainsShutdownSchedulingBeforeLaterAdmissionFailure()
+  public void unlinkedBlockCannotUpdateMetricsOrShutdownTarget()
       throws Exception {
     BlockCapsule block = signedBlock(1, Sha256Hash.of(new byte[]{1}), 1533529947000L, signer);
     setMatchingShutdownTime(block);
+    long shutdownTarget = dbManager.getLatestSolidityNumShutDown();
+    boolean metricsEnabled = CommonParameter.getInstance().isMetricsPrometheusEnable();
+    CommonParameter.getInstance().setMetricsPrometheusEnable(true);
+    try {
+      Double count = blockTransactionCount();
 
-    assertThrows(UnLinkedBlockException.class, () -> dbManager.pushBlock(block));
+      assertThrows(UnLinkedBlockException.class, () -> dbManager.pushBlock(block));
 
-    assertEquals(block.getNum(), dbManager.getLatestSolidityNumShutDown());
-    assertRejected(block);
+      assertEquals(count, blockTransactionCount());
+      assertEquals(shutdownTarget, dbManager.getLatestSolidityNumShutDown());
+      assertRejected(block);
+    } finally {
+      CommonParameter.getInstance().setMetricsPrometheusEnable(metricsEnabled);
+    }
+  }
+
+  @Test
+  public void updatesMetricsAndShutdownTargetOnceAfterSuccessfulFork() throws Exception {
+    BlockCapsule parent = nextBlock(signer);
+    dbManager.pushBlock(parent);
+    dbManager.pushBlock(nextBlock(signer));
+    BlockCapsule fork = signedBlock(parent.getNum() + 1, parent.getBlockId(),
+        parent.getTimeStamp() + 3001, signer);
+    BlockCapsule forkHead = signedBlock(fork.getNum() + 1, fork.getBlockId(),
+        parent.getTimeStamp() + 6000, signer);
+    CronExpression schedule = new CronExpression(
+        forkHead.getTimeStamp() / 1000 % 60 + " * * * * ?");
+    assertFalse(schedule.isSatisfiedBy(new Date(fork.getTimeStamp())));
+    assertTrue(schedule.isSatisfiedBy(new Date(forkHead.getTimeStamp())));
+    CommonParameter.getInstance().setShutdownBlockTime(schedule);
+    long shutdownTarget = dbManager.getLatestSolidityNumShutDown();
+    boolean metricsEnabled = CommonParameter.getInstance().isMetricsPrometheusEnable();
+    CommonParameter.getInstance().setMetricsPrometheusEnable(true);
+    try {
+      Double count = blockTransactionCount();
+      dbManager.pushBlock(fork);
+
+      assertEquals(count, blockTransactionCount());
+      assertEquals(shutdownTarget, dbManager.getLatestSolidityNumShutDown());
+      dbManager.pushBlock(forkHead);
+
+      assertEquals(forkHead.getNum(), dbManager.getLatestSolidityNumShutDown());
+      assertEquals((count == null ? 0 : count) + 1, blockTransactionCount(), 0);
+      assertEquals(forkHead.getBlockId(), chainBaseManager.getHeadBlockId());
+      dbManager.pushBlock(forkHead);
+      assertEquals((count == null ? 0 : count) + 1, blockTransactionCount(), 0);
+    } finally {
+      CommonParameter.getInstance().setMetricsPrometheusEnable(metricsEnabled);
+    }
+  }
+
+  private Double blockTransactionCount() {
+    return CollectorRegistry.defaultRegistry.getSampleValue(
+        MetricKeys.Histogram.BLOCK_TRANSACTION_COUNT + "_count",
+        new String[]{MetricLabels.Histogram.MINER},
+        new String[]{StringUtil.encode58Check(witness.toByteArray())});
   }
 
   @Test
