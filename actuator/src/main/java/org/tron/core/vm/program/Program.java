@@ -1814,7 +1814,13 @@ public class Program {
       contract.setResult(this.result);
       contract.setConstantCall(isConstantCall());
       contract.setVmShouldEndInUs(getVmShouldEndInUs());
-      Pair<Boolean, byte[]> out = contract.execute(data);
+      Pair<Boolean, byte[]> out;
+      try {
+        out = contract.execute(data);
+      } finally {
+        contract.setRepository(null);
+        contract.setResult(null);
+      }
 
       if (out.getLeft()) { // success
         this.refundEnergy(msg.getEnergy().longValue() - requiredEnergy, CALL_PRE_COMPILED);
