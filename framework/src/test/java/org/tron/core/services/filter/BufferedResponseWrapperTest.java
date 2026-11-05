@@ -7,6 +7,8 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import org.junit.Before;
 import org.junit.Test;
@@ -25,9 +27,11 @@ public class BufferedResponseWrapperTest {
 
   @Test
   public void noLimit_neverOverflows() throws IOException {
-    BufferedResponseWrapper w = new BufferedResponseWrapper(mockResp, 0);
-    w.getOutputStream().write(new byte[1024 * 1024]);
-    assertFalse(w.isOverflow());
+    for (int budget : new int[] {-1, Integer.MIN_VALUE}) {
+      BufferedResponseWrapper w = new BufferedResponseWrapper(mockResp, budget);
+      w.getOutputStream().write(new byte[1024 * 1024]);
+      assertFalse(w.isOverflow());
+    }
   }
 
   @Test
@@ -74,6 +78,52 @@ public class BufferedResponseWrapperTest {
     assertTrue(w.isOverflow());
   }
 
+  @Test
+  public void bufferedBody_isBoundedWhileWriting() throws IOException {
+    int limit = 128;
+    BufferedResponseWrapper w = new BufferedResponseWrapper(mockResp, limit);
+    OutputStream out = w.getOutputStream();
+    byte[] chunk = new byte[64];
+    for (int i = 0; i < 100; i++) {
+      out.write(chunk, 16, 32);
+      out.write('x');
+      assertTrue(w.getBufferedSize() <= limit);
+    }
+    assertTrue(w.isOverflow());
+    assertEquals(0, w.getBufferedSize());
+    assertEquals(-1, w.getBufferedInputStream().read());
+  }
+
+  @Test
+  public void zeroBudget_allowsEmptyOutputAndDiscardsNonEmptyOutput() throws IOException {
+    BufferedResponseWrapper w = new BufferedResponseWrapper(mockResp, 0);
+    w.getOutputStream().write(new byte[0]);
+    assertFalse(w.isOverflow());
+    assertEquals(0, w.getBufferedSize());
+
+    w.getOutputStream().write('x');
+    w.getOutputStream().write(new byte[100]);
+    assertTrue(w.isOverflow());
+    assertEquals(0, w.getBufferedSize());
+  }
+
+  @Test
+  public void bufferedInputStream_readsOnlyWrittenBytesWithoutCommitting() throws IOException {
+    BufferedResponseWrapper w = new BufferedResponseWrapper(mockResp, 3);
+    byte[] bytes = new byte[] {1, 2, 3};
+    w.getOutputStream().write(bytes);
+    assertEquals(bytes.length, w.getBufferedSize());
+    try (InputStream in = w.getBufferedInputStream()) {
+      byte[] actual = new byte[bytes.length];
+      assertEquals(bytes.length, in.read(actual));
+      assertArrayEquals(bytes, actual);
+      assertEquals(-1, in.read());
+    }
+    assertEquals(0, mockResp.getContentAsByteArray().length);
+    w.commitToResponse();
+    assertArrayEquals(bytes, mockResp.getContentAsByteArray());
+  }
+
   // --- isOverflow: true via setContentLength ---
 
   @Test
@@ -99,7 +149,7 @@ public class BufferedResponseWrapperTest {
 
   @Test
   public void setContentLength_noLimit_neverOverflows() {
-    BufferedResponseWrapper w = new BufferedResponseWrapper(mockResp, 0);
+    BufferedResponseWrapper w = new BufferedResponseWrapper(mockResp, -1);
     w.setContentLength(Integer.MAX_VALUE);
     assertFalse(w.isOverflow());
   }
@@ -120,7 +170,7 @@ public class BufferedResponseWrapperTest {
 
   @Test
   public void commitToResponse_writesBodyAndHeaders() throws IOException {
-    BufferedResponseWrapper w = new BufferedResponseWrapper(mockResp, 0);
+    BufferedResponseWrapper w = new BufferedResponseWrapper(mockResp, -1);
     byte[] data = "hello".getBytes(StandardCharsets.UTF_8);
     w.setStatus(200);
     w.setContentType("application/json");
@@ -134,7 +184,7 @@ public class BufferedResponseWrapperTest {
 
   @Test
   public void commitToResponse_setsCorrectContentLength() throws IOException {
-    BufferedResponseWrapper w = new BufferedResponseWrapper(mockResp, 0);
+    BufferedResponseWrapper w = new BufferedResponseWrapper(mockResp, -1);
     byte[] data = new byte[]{10, 20, 30};
     w.getOutputStream().write(data);
     w.commitToResponse();
@@ -255,7 +305,7 @@ public class BufferedResponseWrapperTest {
 
   @Test
   public void writeViaWriter_commitToResponse_flushesBody() throws IOException {
-    BufferedResponseWrapper w = new BufferedResponseWrapper(mockResp, 0);
+    BufferedResponseWrapper w = new BufferedResponseWrapper(mockResp, -1);
     w.getWriter().print("hello");
     w.getWriter().flush();
     w.commitToResponse();
@@ -266,7 +316,7 @@ public class BufferedResponseWrapperTest {
   public void writeViaWriter_noExplicitFlush_commitToResponse_flushesBody() throws IOException {
     // Regression: PrintWriter(autoFlush=true) does NOT flush on plain print(); bytes can sit
     // in the OutputStreamWriter encoder until commitToResponse() flushes the writer internally.
-    BufferedResponseWrapper w = new BufferedResponseWrapper(mockResp, 0);
+    BufferedResponseWrapper w = new BufferedResponseWrapper(mockResp, -1);
     w.getWriter().print("hello");
     w.commitToResponse();
     assertEquals("hello", mockResp.getContentAsString());
