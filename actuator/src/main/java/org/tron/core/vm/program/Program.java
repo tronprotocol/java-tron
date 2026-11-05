@@ -978,6 +978,11 @@ public class Program {
       // Reuse the table prepared by the top-level execution.
       VM.play(program, OperationRegistry.getTable(isConstantCall()));
       createResult = program.getResult();
+
+      if (VMConfig.allowTvmResourceOptimization()) {
+        checkCPUTimeLimit(isCreate2 ? "create2" : "create");
+      }
+
       getTrace().merge(program.getTrace());
       // always commit nonce
       this.nonce = program.nonce;
@@ -1211,6 +1216,10 @@ public class Program {
       // Reuse the table prepared by the top-level execution.
       VM.play(program, OperationRegistry.getTable(isConstantCall()));
       callResult = program.getResult();
+
+      if (VMConfig.allowTvmResourceOptimization()) {
+        checkCPUTimeLimit(Op.getNameOf(msg.getOpCode()));
+      }
 
       getTrace().merge(program.getTrace());
       getResult().merge(callResult);

@@ -61,11 +61,16 @@ public class Tip945Test extends BaseTest {
 
   @Before
   public void setup() {
+    setup(1);
+  }
+
+  private void setup(long resourceOptimization) {
+    // Select the proposal before creating repository keys, as transaction setup does.
     VMConfig.setGlobalSnapshot(new VMConfig.Snapshot());
     ConfigLoader.disable = true;
     VMConfig.initAllowTvmFreezeV2(1);
     VMConfig.initAllowTvmSelfdestructRestriction(1);
-    VMConfig.initAllowTvmResourceOptimization(1);
+    VMConfig.initAllowTvmResourceOptimization(resourceOptimization);
     dbManager.getDynamicPropertiesStore().saveAllowNewResourceModel(1);
     dbManager.getDynamicPropertiesStore().saveUnfreezeDelayDays(14);
     dbManager.getDynamicPropertiesStore().saveAllowTvmResourceOptimization(0);
@@ -262,9 +267,9 @@ public class Tip945Test extends BaseTest {
 
   @Test
   public void disabledFlagAndNonTransferredBalancesLeaveWeightsUnchanged() {
+    setup(0);
     stake(OWNER, BANDWIDTH, 1_600_000);
     stake(BENEFICIARY, BANDWIDTH, 2_600_000);
-    VMConfig.initAllowTvmResourceOptimization(0);
     long[] before = weights();
     program(repo, OWNER).suicide2(new DataWord(BENEFICIARY));
     assertArrayEquals(before, weights());
@@ -349,9 +354,8 @@ public class Tip945Test extends BaseTest {
   public void independentActivationPreservesVotingStateAndWeightBoundaries() {
     for (long power : new long[]{0, 1}) {
       for (long resource : new long[]{0, 1}) {
-        setup();
+        setup(resource);
         VMConfig.initAllowTvmVotePowerOptimization(power);
-        VMConfig.initAllowTvmResourceOptimization(resource);
         stake(OWNER, BANDWIDTH, 1_600_000);
         stake(BENEFICIARY, BANDWIDTH, 2_600_000);
         Program p = program(repo, OWNER);
