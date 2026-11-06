@@ -33,6 +33,8 @@ import org.tron.p2p.protos.Discover;
 @Slf4j(topic = "net")
 public class NetUtil {
 
+  private static final int MAX_IPV6_ADDRESS_LENGTH = 45;
+
   public static final Pattern PATTERN_IPv4 =
       Pattern.compile("^(1\\d{2}|2[0-4]\\d|25[0-5]|[1-9]\\d|[1-9])\\"
           + ".(1\\d{2}|2[0-4]\\d|25[0-5]|[1-9]\\d|\\d)\\"
@@ -67,7 +69,7 @@ public class NetUtil {
   }
 
   public static boolean validIpV6(String ip) {
-    if (StringUtils.isEmpty(ip)) {
+    if (StringUtils.isEmpty(ip) || ip.length() > MAX_IPV6_ADDRESS_LENGTH) {
       return false;
     }
     return PATTERN_IPv6.matcher(ip).matches();

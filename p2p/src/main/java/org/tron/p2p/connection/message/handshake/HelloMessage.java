@@ -1,5 +1,6 @@
 package org.tron.p2p.connection.message.handshake;
 
+import com.google.protobuf.ByteString;
 import org.tron.p2p.base.Parameter;
 import org.tron.p2p.connection.business.handshake.DisconnectCode;
 import org.tron.p2p.connection.message.Message;
@@ -61,6 +62,8 @@ public class HelloMessage extends Message {
 
   @Override
   public boolean valid() {
-    return NetUtil.validNode(getFrom());
+    ByteString ipv6 = helloMessage.getFrom().getAddressIpv6();
+    return (ipv6.isEmpty() || NetUtil.validIpV6(ipv6.toStringUtf8()))
+        && NetUtil.validNode(getFrom());
   }
 }

@@ -141,6 +141,75 @@ public class SyncServiceTest extends BaseMethodTest {
   }
 
   @Test
+  public void testDisconnectReleasesReceivedAndProcessedRequests() {
+    peer = context.getBean(PeerConnection.class);
+    PeerConnection other = context.getBean(PeerConnection.class);
+    Cache<BlockCapsule.BlockId, PeerConnection> requests =
+        (Cache<BlockCapsule.BlockId, PeerConnection>)
+            ReflectUtils.getFieldObject(service, "requestBlockIds");
+    BlockCapsule.BlockId received = new BlockCapsule.BlockId(Sha256Hash.ZERO_HASH, 1);
+    BlockCapsule.BlockId processed = new BlockCapsule.BlockId(Sha256Hash.ZERO_HASH, 2);
+    BlockCapsule.BlockId pending = new BlockCapsule.BlockId(Sha256Hash.ZERO_HASH, 3);
+    BlockCapsule.BlockId reassigned = new BlockCapsule.BlockId(Sha256Hash.ZERO_HASH, 4);
+    requests.put(received, peer);
+    requests.put(processed, peer);
+    requests.put(pending, peer);
+    requests.put(reassigned, other);
+    peer.getSyncBlockInProcess().add(received);
+    peer.getSyncBlockRequested().put(pending, System.currentTimeMillis());
+    peer.getSyncBlockRequested().put(reassigned, System.currentTimeMillis());
+
+    service.onDisconnect(peer);
+
+    Assert.assertNull(requests.getIfPresent(received));
+    Assert.assertNull(requests.getIfPresent(processed));
+    Assert.assertNull(requests.getIfPresent(pending));
+    Assert.assertSame(other, requests.getIfPresent(reassigned));
+    Assert.assertFalse(requests.asMap().containsValue(peer));
+    Assert.assertTrue((boolean) ReflectUtils.getFieldObject(service, "fetchFlag"));
+  }
+
+  @Test
+  public void testSolidBlockReleasesRequest() throws Exception {
+    SyncService sync = new SyncService();
+    try {
+      TronNetDelegate delegate = mock(TronNetDelegate.class);
+      ReflectUtils.setFieldValue(sync, "tronNetDelegate", delegate);
+      BlockCapsule block = new BlockCapsule(1, Sha256Hash.ZERO_HASH,
+          System.currentTimeMillis(), Sha256Hash.ZERO_HASH.getByteString());
+      BlockCapsule.BlockId blockId = block.getBlockId();
+      Mockito.when(delegate.getSolidBlockId()).thenReturn(blockId);
+      Mockito.when(delegate.getBlockLock()).thenReturn(new Object());
+      PeerConnection source = context.getBean(PeerConnection.class);
+      Channel channel = mock(Channel.class);
+      Mockito.when(channel.getInetAddress()).thenReturn(inetSocketAddress.getAddress());
+      Mockito.when(channel.getInetSocketAddress()).thenReturn(inetSocketAddress);
+      source.setChannel(channel);
+      source.getSyncBlockInProcess().add(blockId);
+      Cache<BlockCapsule.BlockId, PeerConnection> requests =
+          (Cache<BlockCapsule.BlockId, PeerConnection>)
+              ReflectUtils.getFieldObject(sync, "requestBlockIds");
+      requests.put(blockId, source);
+      sync.processBlock(source, new BlockMessage(block));
+      ReflectUtils.setFieldValue(sync, "fetchFlag", false);
+
+      ReflectUtils.invokeMethod(sync, "handleSyncBlock");
+
+      Assert.assertNull(requests.getIfPresent(blockId));
+      Assert.assertTrue(source.getSyncBlockInProcess().isEmpty());
+      Map<UnparsedBlock, PeerConnection> waiting =
+          (Map<UnparsedBlock, PeerConnection>)
+              ReflectUtils.getFieldObject(sync, "blockWaitToProcess");
+      Assert.assertTrue(waiting.isEmpty());
+      Assert.assertTrue((boolean) ReflectUtils.getFieldObject(sync, "fetchFlag"));
+      Mockito.verify(delegate, Mockito.never())
+          .processBlock(Mockito.any(BlockCapsule.class), Mockito.anyBoolean());
+    } finally {
+      sync.close();
+    }
+  }
+
+  @Test
   public void testStartFetchSyncBlock() throws Exception {
     Field field = PeerManager.class.getDeclaredField("peers");
     field.setAccessible(true);

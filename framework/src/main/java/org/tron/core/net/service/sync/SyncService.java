@@ -156,15 +156,16 @@ public class SyncService {
   }
 
   public void onDisconnect(PeerConnection peer) {
-    if (!peer.getSyncBlockRequested().isEmpty()) {
-      peer.getSyncBlockRequested().keySet().forEach(blockId -> invalid(blockId, peer));
-    }
+    // Received and processed blocks no longer appear in the peer's outstanding requests.
+    requestBlockIds.asMap().forEach((blockId, owner) -> {
+      if (peer.equals(owner)) {
+        invalid(blockId, peer);
+      }
+    });
   }
 
   private void invalid(BlockId blockId, PeerConnection peerConnection) {
-    PeerConnection p = requestBlockIds.getIfPresent(blockId);
-    if (peerConnection.equals(p)) {
-      requestBlockIds.invalidate(blockId);
+    if (requestBlockIds.asMap().remove(blockId, peerConnection)) {
       fetchFlag = true;
     }
   }
@@ -307,6 +308,7 @@ public class SyncService {
             blockWaitToProcess.remove(unparsedBlock);
             capacityReleased[0] = true;
             peerConnection.getSyncBlockInProcess().remove(blockId);
+            invalid(blockId, peerConnection);
             return;
           }
           final boolean[] isFound = {false};
