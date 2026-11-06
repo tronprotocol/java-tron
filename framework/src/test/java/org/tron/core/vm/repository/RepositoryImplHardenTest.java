@@ -285,6 +285,7 @@ public class RepositoryImplHardenTest extends BaseTest {
     long totalEnergyWeight = 2_000_000_000L;
     long previousDelay = dbManager.getDynamicPropertiesStore().getUnfreezeDelayDays();
     boolean previousOptimization = VMConfig.allowTvmResourceOptimization();
+    boolean previousFreezeV2 = VMConfig.allowTvmFreezeV2();
     dbManager.getDynamicPropertiesStore().saveTotalEnergyCurrentLimit(totalEnergyLimit);
     dbManager.getDynamicPropertiesStore().saveTotalEnergyWeight(totalEnergyWeight);
     dbManager.getDynamicPropertiesStore().saveAllowHardenResourceCalculation(0);
@@ -296,6 +297,7 @@ public class RepositoryImplHardenTest extends BaseTest {
       AccountCapsule oneAndHalfTrx = energyAccount(1_500_000L);
 
       dbManager.getDynamicPropertiesStore().saveUnfreezeDelayDays(14);
+      VMConfig.initAllowTvmFreezeV2(1);
       VMConfig.initAllowTvmResourceOptimization(0);
       Assert.assertEquals(0L, repository.calculateGlobalEnergyLimit(partialTrx));
       Assert.assertEquals(25L, repository.calculateGlobalEnergyLimit(oneAndHalfTrx));
@@ -315,6 +317,7 @@ public class RepositoryImplHardenTest extends BaseTest {
       Assert.assertEquals(12L, repository.calculateGlobalEnergyLimit(partialTrx));
 
       dbManager.getDynamicPropertiesStore().saveUnfreezeDelayDays(0);
+      VMConfig.initAllowTvmFreezeV2(0);
       VMConfig.initAllowHardenResourceCalculation(0);
       dbManager.getDynamicPropertiesStore().saveAllowHardenResourceCalculation(0);
       Assert.assertEquals(0L, repository.calculateGlobalEnergyLimit(partialTrx));
@@ -323,6 +326,7 @@ public class RepositoryImplHardenTest extends BaseTest {
       dbManager.getDynamicPropertiesStore().saveUnfreezeDelayDays(previousDelay);
       dbManager.getDynamicPropertiesStore().saveAllowHardenResourceCalculation(0);
       VMConfig.initAllowTvmResourceOptimization(previousOptimization ? 1 : 0);
+      VMConfig.initAllowTvmFreezeV2(previousFreezeV2 ? 1 : 0);
       VMConfig.initAllowHardenResourceCalculation(0);
     }
   }
@@ -332,8 +336,10 @@ public class RepositoryImplHardenTest extends BaseTest {
     long previousDelay = dbManager.getDynamicPropertiesStore().getUnfreezeDelayDays();
     long previousLimit = dbManager.getDynamicPropertiesStore().getTotalEnergyCurrentLimit();
     long previousWeight = dbManager.getDynamicPropertiesStore().getTotalEnergyWeight();
+    boolean previousFreezeV2 = VMConfig.allowTvmFreezeV2();
     try {
       dbManager.getDynamicPropertiesStore().saveUnfreezeDelayDays(14);
+      VMConfig.initAllowTvmFreezeV2(1);
       dbManager.getDynamicPropertiesStore().saveTotalEnergyCurrentLimit(100);
       dbManager.getDynamicPropertiesStore().saveTotalEnergyWeight(10);
       VMConfig.initAllowTvmResourceOptimization(1);
@@ -357,6 +363,41 @@ public class RepositoryImplHardenTest extends BaseTest {
         dbManager.getDynamicPropertiesStore().saveTotalEnergyWeight(10);
       }
     } finally {
+      dbManager.getDynamicPropertiesStore().saveUnfreezeDelayDays(previousDelay);
+      dbManager.getDynamicPropertiesStore().saveTotalEnergyCurrentLimit(previousLimit);
+      dbManager.getDynamicPropertiesStore().saveTotalEnergyWeight(previousWeight);
+      VMConfig.initAllowTvmFreezeV2(previousFreezeV2 ? 1 : 0);
+    }
+  }
+
+  @Test
+  public void testFractionalEnergyLimitUsesTheVmSnapshot() {
+    long previousDelay = dbManager.getDynamicPropertiesStore().getUnfreezeDelayDays();
+    long previousLimit = dbManager.getDynamicPropertiesStore().getTotalEnergyCurrentLimit();
+    long previousWeight = dbManager.getDynamicPropertiesStore().getTotalEnergyWeight();
+    boolean previousFreezeV2 = VMConfig.allowTvmFreezeV2();
+    try {
+      dbManager.getDynamicPropertiesStore().saveTotalEnergyCurrentLimit(50_000_000_000L);
+      dbManager.getDynamicPropertiesStore().saveTotalEnergyWeight(2_000_000_000L);
+      for (boolean freezeV2 : new boolean[]{false, true}) {
+        VMConfig.initAllowTvmFreezeV2(freezeV2 ? 0 : 1);
+        for (long storedDelay : new long[]{0, 14}) {
+          dbManager.getDynamicPropertiesStore().saveUnfreezeDelayDays(storedDelay);
+          for (boolean hardening : new boolean[]{false, true}) {
+            VMConfig.Snapshot snapshot = new VMConfig.Snapshot();
+            snapshot.allowTvmResourceOptimization = true;
+            snapshot.allowTvmFreezeV2 = freezeV2;
+            snapshot.allowHardenResourceCalculation = hardening;
+            VMConfig.setLocalSnapshot(snapshot);
+
+            Assert.assertEquals(freezeV2 ? 37L : 25L,
+                repository.calculateGlobalEnergyLimit(energyAccount(1_500_000L)));
+          }
+        }
+      }
+    } finally {
+      VMConfig.clearLocalSnapshot();
+      VMConfig.initAllowTvmFreezeV2(previousFreezeV2 ? 1 : 0);
       dbManager.getDynamicPropertiesStore().saveUnfreezeDelayDays(previousDelay);
       dbManager.getDynamicPropertiesStore().saveTotalEnergyCurrentLimit(previousLimit);
       dbManager.getDynamicPropertiesStore().saveTotalEnergyWeight(previousWeight);

@@ -993,7 +993,7 @@ public class RepositoryImpl implements Repository {
     // Resource queries use the fractional Stake 2.0 weight. Keep the truncated weight until
     // resource optimization so earlier executions do not change how much TRX is burned.
     if (VMConfig.allowTvmResourceOptimization()
-        && getDynamicPropertiesStore().supportUnfreezeDelay()) {
+        && VMConfig.allowTvmFreezeV2()) {
       return calculateGlobalEnergyLimitV2(frozeBalance);
     }
     if (frozeBalance < TRX_PRECISION) {
