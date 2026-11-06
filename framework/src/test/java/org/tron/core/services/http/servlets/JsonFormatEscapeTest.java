@@ -12,18 +12,28 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
+import com.google.protobuf.Message;
 import java.nio.CharBuffer;
 import java.nio.charset.StandardCharsets;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.services.http.HttpSelfFormatFieldName;
+import org.tron.core.utils.TransactionRegister;
+import org.tron.protos.Protocol.Permission;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
+import org.tron.protos.Protocol.Witness;
+import org.tron.protos.contract.AccountContract.AccountPermissionUpdateContract;
 import org.tron.protos.contract.AssetIssueContractOuterClass.AssetIssueContract;
+import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
+import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
+import org.tron.protos.contract.SmartContractOuterClass.SmartContract.ABI;
 
 /**
- * Escaping and decoding of name-string {@code bytes} fields.
+ * Escaping and decoding of name-string {@code bytes} fields and proto {@code string} fields.
  *
  * <p>Before this fix {@code escapeBytesSelfType} only escaped the double quote, leaving backslash
  * and control chars raw, and validated the result with a lenient parser. That let attacker
@@ -89,10 +99,22 @@ public class JsonFormatEscapeTest {
       "protocol.MarketPriceList.buy_token_id"
   };
 
+  private static final String NONCHAR_FFFF = String.valueOf((char) 0xFFFF);
+  private static final String NONCHAR_FFFE = String.valueOf((char) 0xFFFE);
+  private static final String HIGH = String.valueOf((char) 0xD83D);
+  private static final String LOW = String.valueOf((char) 0xDE00);
+  private static final String EMOJI_ESCAPED = "\\ud83d\\ude00";
+  private static final String UFFFF_VALUE = "Safe" + NONCHAR_FFFF + "Token";
+
   private static final byte[] OWNER = new byte[21];
 
   static {
     OWNER[0] = 0x41;
+  }
+
+  @BeforeClass
+  public static void registerContractTypes() {
+    TransactionRegister.registerActuator();
   }
 
   /**
@@ -212,8 +234,8 @@ public class JsonFormatEscapeTest {
 
   @Test
   public void testUnpairedSurrogateBytesFallBackToHexInsteadOfThrowing() {
-    // 0xED 0xA0 0x80 is the UTF-8 style encoding of an unpaired high surrogate. escapeText()
-    // would throw on it, so isValidUtf8() must divert it to hex first.
+    // 0xED 0xA0 0x80 is the UTF-8 style encoding of an unpaired high surrogate. It is not
+    // valid UTF-8, so isValidUtf8() must divert it to hex to keep the original bytes.
     byte[] raw = new byte[] {(byte) 0xed, (byte) 0xa0, (byte) 0x80};
 
     assertEquals("eda080", escapeName(raw, URL_FIELD));
@@ -543,7 +565,7 @@ public class JsonFormatEscapeTest {
 
   @Test
   public void testUffffDoesNotTruncateNameStringField() {
-    // EF BF BF is valid UTF-8, so it must remain text without reaching escapeText's sentinel.
+    // EF BF BF is valid UTF-8, so it must remain text instead of truncating the value.
     String value = "SAFE\uFFFF TAIL";
     assertTrue(ByteString.copyFromUtf8(value).isValidUtf8());
 
@@ -553,6 +575,193 @@ public class JsonFormatEscapeTest {
   @Test
   public void testUffffLeadingCharDoesNotEmptyTheValue() {
     assertEquals("\uFFFFwhole value", escapeName("\uFFFFwhole value", URL_FIELD));
+  }
+
+  // U+FFFF and surrogate handling on proto string fields
+
+  @Test
+  public void testEscapeTextKeepsNoncharacters() {
+    for (String value : new String[] {
+        "Safe" + NONCHAR_FFFF + "Token",
+        NONCHAR_FFFF + "Safe",
+        "Safe" + NONCHAR_FFFF,
+        "Safe" + NONCHAR_FFFF + NONCHAR_FFFF + "Token",
+        "Safe" + NONCHAR_FFFE + "Token"}) {
+      assertEquals(value, JsonFormat.escapeText(value));
+    }
+    assertEquals(EMOJI_ESCAPED + NONCHAR_FFFF + "Tail",
+        JsonFormat.escapeText(HIGH + LOW + NONCHAR_FFFF + "Tail"));
+  }
+
+  @Test
+  public void testLiteralBackslashUffffTextIsNotTheCodePoint() {
+    assertEquals("Safe\\\\uFFFFToken", JsonFormat.escapeText("Safe\\uFFFFToken"));
+  }
+
+  @Test
+  public void testUnpairedHighSurrogateIsReplaced() {
+    assertEquals("?" + NONCHAR_FFFF, JsonFormat.escapeText(HIGH + NONCHAR_FFFF));
+    assertEquals("a?", JsonFormat.escapeText("a" + HIGH));
+    assertEquals("?A", JsonFormat.escapeText(HIGH + "A"));
+    assertEquals("??", JsonFormat.escapeText(HIGH + HIGH));
+    assertEquals("?" + EMOJI_ESCAPED, JsonFormat.escapeText(HIGH + HIGH + LOW));
+  }
+
+  private static Transaction transactionOf(ContractType type, Message parameter) {
+    Transaction.Contract contract = Transaction.Contract.newBuilder()
+        .setType(type)
+        .setParameter(Any.pack(parameter))
+        .build();
+    return Transaction.newBuilder()
+        .setRawData(Transaction.raw.newBuilder()
+            .setTimestamp(1_234_567_890L)
+            .addContract(contract))
+        .build();
+  }
+
+  /** Renders the transaction as the HTTP API does and rebuilds it as broadcasttransaction does. */
+  private static Transaction assertRoundTrip(Transaction transaction, boolean visible)
+      throws Exception {
+    byte[] rawData = transaction.getRawData().toByteArray();
+    org.tron.json.JSONObject json = Util.printTransactionToJSON(transaction, visible);
+    String txId = json.getString("txID");
+    String where = " (visible=" + visible + ")";
+
+    assertEquals("sanity: raw_data_hex is derived from the original bytes" + where,
+        ByteArray.toHexString(rawData), json.getString("raw_data_hex"));
+    assertEquals("sanity: txID is the hash of the decoded raw_data_hex bytes" + where,
+        ByteArray.toHexString(Sha256Hash.hash(
+            ByteArray.fromHexString(json.getString("raw_data_hex")))), txId);
+
+    Transaction rebuilt = Util.packTransaction(json.toJSONString(), visible);
+    assertEquals("structured raw_data must rebuild the original bytes" + where,
+        transaction.getRawData().toByteString(), rebuilt.getRawData().toByteString());
+    return rebuilt;
+  }
+
+  private static <T extends Message> T firstParameter(Transaction transaction, Class<T> clazz)
+      throws Exception {
+    return transaction.getRawData().getContract(0).getParameter().unpack(clazz);
+  }
+
+  @Test
+  public void testCreateSmartContractWithUffffRoundTrips() throws Exception {
+    String mixed = "A" + HIGH + LOW + NONCHAR_FFFF + NONCHAR_FFFE + "B";
+    ABI.Entry.Param param = ABI.Entry.Param.newBuilder()
+        .setName(mixed)
+        .setType("uint256" + NONCHAR_FFFF + "Tail")
+        .build();
+    ABI abi = ABI.newBuilder()
+        .addEntrys(ABI.Entry.newBuilder()
+            .setName(UFFFF_VALUE)
+            .setType(ABI.Entry.EntryType.Function)
+            .addInputs(param)
+            .addOutputs(param))
+        .build();
+    CreateSmartContract create = CreateSmartContract.newBuilder()
+        .setOwnerAddress(ByteString.copyFrom(OWNER))
+        .setNewContract(SmartContract.newBuilder()
+            .setOriginAddress(ByteString.copyFrom(OWNER))
+            .setName(UFFFF_VALUE)
+            .setAbi(abi)
+            .setBytecode(ByteString.copyFrom(new byte[] {0x60, 0x00})))
+        .build();
+    Transaction transaction = transactionOf(ContractType.CreateSmartContract, create);
+
+    for (boolean visible : new boolean[] {true, false}) {
+      SmartContract rebuilt = firstParameter(assertRoundTrip(transaction, visible),
+          CreateSmartContract.class).getNewContract();
+      ABI.Entry entry = rebuilt.getAbi().getEntrys(0);
+
+      assertEquals(UFFFF_VALUE, rebuilt.getName());
+      assertEquals(UFFFF_VALUE, entry.getName());
+      assertEquals(mixed, entry.getInputs(0).getName());
+      assertEquals("uint256" + NONCHAR_FFFF + "Tail", entry.getInputs(0).getType());
+      assertEquals(mixed, entry.getOutputs(0).getName());
+      assertEquals("uint256" + NONCHAR_FFFF + "Tail", entry.getOutputs(0).getType());
+    }
+  }
+
+  @Test
+  public void testAccountPermissionUpdateWithUffffRoundTrips() throws Exception {
+    Permission permission = Permission.newBuilder()
+        .setPermissionName(UFFFF_VALUE)
+        .setThreshold(1)
+        .build();
+    AccountPermissionUpdateContract update = AccountPermissionUpdateContract.newBuilder()
+        .setOwnerAddress(ByteString.copyFrom(OWNER))
+        .setOwner(permission.toBuilder().setType(Permission.PermissionType.Owner))
+        .setWitness(permission.toBuilder().setType(Permission.PermissionType.Witness))
+        .addActives(permission.toBuilder().setType(Permission.PermissionType.Active))
+        .build();
+    Transaction transaction =
+        transactionOf(ContractType.AccountPermissionUpdateContract, update);
+
+    for (boolean visible : new boolean[] {true, false}) {
+      AccountPermissionUpdateContract rebuilt = firstParameter(
+          assertRoundTrip(transaction, visible), AccountPermissionUpdateContract.class);
+
+      assertEquals(UFFFF_VALUE, rebuilt.getOwner().getPermissionName());
+      assertEquals(UFFFF_VALUE, rebuilt.getWitness().getPermissionName());
+      assertEquals(UFFFF_VALUE, rebuilt.getActives(0).getPermissionName());
+    }
+  }
+
+  @Test
+  public void testAssetIssueIdWithUffffRoundTrips() throws Exception {
+    AssetIssueContract asset = AssetIssueContract.newBuilder()
+        .setOwnerAddress(ByteString.copyFrom(OWNER))
+        .setName(ByteString.copyFromUtf8("ASSET"))
+        .setId("Id" + NONCHAR_FFFF + "Tail")
+        .build();
+    Transaction transaction = transactionOf(ContractType.AssetIssueContract, asset);
+
+    for (boolean visible : new boolean[] {true, false}) {
+      AssetIssueContract rebuilt = firstParameter(assertRoundTrip(transaction, visible),
+          AssetIssueContract.class);
+
+      assertEquals("Id" + NONCHAR_FFFF + "Tail", rebuilt.getId());
+    }
+  }
+
+  @Test
+  public void testLoneHighSurrogateRendersAsStoredBytes() throws Exception {
+    SmartContract inMemory = SmartContract.newBuilder()
+        .setName("abc" + HIGH)
+        .build();
+    for (boolean visible : new boolean[] {true, false}) {
+      assertEquals("abc?", strict().readTree(JsonFormat.printToString(inMemory, visible))
+          .get("name").asText());
+    }
+
+    CreateSmartContract create = CreateSmartContract.newBuilder()
+        .setOwnerAddress(ByteString.copyFrom(OWNER))
+        .setNewContract(inMemory)
+        .build();
+    Transaction transaction = transactionOf(ContractType.CreateSmartContract, create);
+    for (boolean visible : new boolean[] {true, false}) {
+      assertEquals("abc?", firstParameter(assertRoundTrip(transaction, visible),
+          CreateSmartContract.class).getNewContract().getName());
+    }
+  }
+
+  @Test
+  public void testWitnessUrlWithUffffIsNotTruncated() throws Exception {
+    Witness witness = Witness.newBuilder()
+        .setAddress(ByteString.copyFrom(OWNER))
+        .setUrl(UFFFF_VALUE)
+        .setVoteCount(7)
+        .build();
+
+    for (boolean visible : new boolean[] {true, false}) {
+      String json = JsonFormat.printToString(witness, visible);
+      assertTrue(parsesStrictly(json));
+      assertEquals(UFFFF_VALUE, strict().readTree(json).get("url").asText());
+
+      Witness.Builder rebuilt = Witness.newBuilder();
+      JsonFormat.merge(json, rebuilt, visible);
+      assertEquals(witness, rebuilt.build());
+    }
   }
 
   // Proto string inbound compatibility

@@ -44,8 +44,6 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.CharBuffer;
 import java.nio.charset.StandardCharsets;
-import java.text.CharacterIterator;
-import java.text.StringCharacterIterator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
@@ -903,7 +901,7 @@ public class JsonFormat {
       if (!input.isValidUtf8()) {
         return ByteArray.toHexString(input.toByteArray());
       }
-      return escapeNameStringText(input.toStringUtf8());
+      return escapeText(input.toStringUtf8());
     }
     //HEX
     return ByteArray.toHexString(input.toByteArray());
@@ -935,40 +933,17 @@ public class JsonFormat {
   // them.
 
   /**
-   * Escapes a valid UTF-8 name-string without exposing it to the U+FFFF sentinel used by
-   * {@link StringCharacterIterator}. Keeping this workaround on the new bytes path avoids
-   * changing the established behavior of {@link #escapeText(String)} for proto string fields.
-   */
-  private static String escapeNameStringText(String input) {
-    int index = input.indexOf(Character.MAX_VALUE);
-    if (index < 0) {
-      return escapeText(input);
-    }
-
-    StringBuilder result = new StringBuilder(input.length());
-    int start = 0;
-    while (index >= 0) {
-      result.append(escapeText(input.substring(start, index)));
-      result.append(Character.MAX_VALUE);
-      start = index + 1;
-      index = input.indexOf(Character.MAX_VALUE, start);
-    }
-    result.append(escapeText(input.substring(start)));
-    return result.toString();
-  }
-
-  /**
    * Implements JSON string escaping as specified <a href="http://www.ietf.org/rfc/rfc4627.txt">here</a>.
    * <ul> <li>The following characters are escaped by prefixing them with a '\' :
    * \b,\f,\n,\r,\t,\,"</li> <li>Other control characters in the range 0x0000-0x001F are escaped
    * using the \\uXXXX notation</li> <li>UTF-16 surrogate pairs are encoded using the \\uXXXX\\uXXXX
-   * notation; isolated low surrogates are replaced with '?' as in the legacy UTF-8 writer</li>
-   * <li>any other character is printed as-is</li> </ul>
+   * notation; unpaired high or low surrogates are replaced with '?', matching their UTF-8
+   * encoding</li> <li>any other character, including U+FFFF, is printed as-is</li> </ul>
    */
   static String escapeText(String input) {
     StringBuilder builder = new StringBuilder(input.length());
-    CharacterIterator iter = new StringCharacterIterator(input);
-    for (char c = iter.first(); c != CharacterIterator.DONE; c = iter.next()) {
+    for (int i = 0; i < input.length(); i++) {
+      char c = input.charAt(i);
       switch (c) {
         case '\b':
           builder.append("\\b");
@@ -995,18 +970,12 @@ public class JsonFormat {
           // Check for other control characters
           if (c >= 0x0000 && c <= 0x001F) {
             appendEscapedUnicode(builder, c);
-          } else if (Character.isLowSurrogate(c)) {
-            builder.append(replaceMalformedSurrogates(String.valueOf(c)));
-          } else if (Character.isHighSurrogate(c)) {
-            // Encode the surrogate pair using 2 six-character sequence (\\uXXXX\\uXXXX)
+          } else if (Character.isHighSurrogate(c)
+              && i + 1 < input.length() && Character.isLowSurrogate(input.charAt(i + 1))) {
             appendEscapedUnicode(builder, c);
-            c = iter.next();
-            if (c == CharacterIterator.DONE) {
-              throw new IllegalArgumentException(
-                  "invalid unicode string: unexpected high surrogate pair value "
-                      + "without corresponding low value.");
-            }
-            appendEscapedUnicode(builder, c);
+            appendEscapedUnicode(builder, input.charAt(++i));
+          } else if (Character.isSurrogate(c)) {
+            builder.append('?');
           } else {
             // Anything else can be printed as-is
             builder.append(c);
