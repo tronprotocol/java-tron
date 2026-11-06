@@ -12,6 +12,11 @@ import org.tron.protos.contract.SmartContractOuterClass.SmartContract.ABI;
 @Slf4j(topic = "Parser")
 public class ContractEventParserAbi extends ContractEventParser {
 
+  public static final int MAX_ABI_ENTRIES = 1024;
+  public static final int MAX_ABI_EVENTS = 512;
+  public static final int MAX_ABI_ENTRY_PARAMS = 64;
+  public static final int MAX_ABI_IDENTIFIER_LENGTH = 256;
+
   /**
    * parse Event Topic into map NOTICE: In solidity, Indexed Dynamic types's topic is just
    * EVENT_INDEXED_ARGS
@@ -110,5 +115,45 @@ public class ContractEventParserAbi extends ContractEventParser {
       }
     }
     return inputSize == topicList.size();
+  }
+
+  /** True if the ABI declares more entries than {@link #MAX_ABI_ENTRIES}. */
+  public static boolean hasTooManyEntries(ABI abi) {
+    return abi.getEntrysCount() > MAX_ABI_ENTRIES;
+  }
+
+  /** True if the ABI declares more non-anonymous events than {@link #MAX_ABI_EVENTS}. */
+  public static boolean hasTooManyEvents(ABI abi) {
+    int events = 0;
+    for (ABI.Entry entry : abi.getEntrysList()) {
+      if (entry.getType() == ABI.Entry.EntryType.Event && !entry.getAnonymous()
+          && ++events > MAX_ABI_EVENTS) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * True if an entry exceeds the per-entry limits on parameter count
+   * ({@link #MAX_ABI_ENTRY_PARAMS}) or identifier length ({@link #MAX_ABI_IDENTIFIER_LENGTH}).
+   */
+  public static boolean isEntryTooLarge(ABI.Entry entry) {
+    if (entry.getInputsCount() > MAX_ABI_ENTRY_PARAMS) {
+      return true;
+    }
+    if (isIdentifierTooLong(entry.getName())) {
+      return true;
+    }
+    for (ABI.Entry.Param param : entry.getInputsList()) {
+      if (isIdentifierTooLong(param.getType()) || isIdentifierTooLong(param.getName())) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static boolean isIdentifierTooLong(String identifier) {
+    return identifier != null && identifier.length() > MAX_ABI_IDENTIFIER_LENGTH;
   }
 }
