@@ -38,7 +38,7 @@ public abstract class ConditionallyStopTest extends BaseMethodTest {
   private static DposSlot dposSlot;
   private final AtomicInteger port = new AtomicInteger(0);
   long currentHeader = -1;
-  private TronNetDelegate tronNetDelegate;
+  protected TronNetDelegate tronNetDelegate;
 
   private DposService dposService;
   private ConsensusDelegate consensusDelegate;
@@ -90,7 +90,7 @@ public abstract class ConditionallyStopTest extends BaseMethodTest {
     chainManager.getDynamicPropertiesStore().saveNextMaintenanceTime(time);
   }
 
-  private void generateBlock() throws Exception {
+  protected void generateBlock() throws Exception {
 
     BlockCapsule block =
         createTestBlockCapsule(
@@ -132,7 +132,7 @@ public abstract class ConditionallyStopTest extends BaseMethodTest {
         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
   }
 
-  private BlockCapsule createTestBlockCapsule(long time,
+  protected BlockCapsule createTestBlockCapsule(long time,
                                               long number, ByteString hash) {
     long slot = dposSlot.getSlot(time);
     ByteString witness = dposSlot.getScheduledWitness(slot);

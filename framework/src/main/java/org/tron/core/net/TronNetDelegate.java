@@ -251,23 +251,23 @@ public class TronNetDelegate {
   }
 
   public void processBlock(BlockCapsule block, boolean isSync) throws P2pException {
-    if (!hitDown && dbManager.getLatestSolidityNumShutDown() > 0
-        && dbManager.getLatestSolidityNumShutDown() == dbManager.getDynamicPropertiesStore()
-        .getLatestBlockHeaderNumberFromDB()) {
-
-      logger.info("Begin shutdown, currentBlockNum:{}, DbBlockNum:{}, solidifiedBlockNum:{}",
-          dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber(),
-          dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumberFromDB(),
-          dbManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum());
-      hitDown = true;
-      LockSupport.unpark(hitThread);
-      return;
-    }
-    if (hitDown) {
-      return;
-    }
     BlockId blockId = block.getBlockId();
     synchronized (blockLock) {
+      if (!hitDown && dbManager.getLatestSolidityNumShutDown() > 0
+          && dbManager.getLatestSolidityNumShutDown() == dbManager.getDynamicPropertiesStore()
+          .getLatestBlockHeaderNumberFromDB()) {
+
+        logger.info("Begin shutdown, currentBlockNum:{}, DbBlockNum:{}, solidifiedBlockNum:{}",
+            dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber(),
+            dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumberFromDB(),
+            dbManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum());
+        hitDown = true;
+        LockSupport.unpark(hitThread);
+        return;
+      }
+      if (hitDown) {
+        return;
+      }
       try {
         if (freshBlockId.getIfPresent(blockId) == null) {
           if (block.getNum() <= getHeadBlockId().getNum()) {
