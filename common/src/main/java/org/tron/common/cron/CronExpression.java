@@ -1396,6 +1396,9 @@ public final class CronExpression implements Serializable {
     return smallestDay == Integer.MAX_VALUE ? Optional.empty() : Optional.of(smallestDay);
   }
 
+  // A W adjustment moves a day by at most two days, and within a month the adjusted day never
+  // decreases as the nominal day grows. So only nominal days from day - 2 can land on or after
+  // day, and the first one that does is the earliest match.
   private int findNearestWeekday(int day, int mon, int year) {
     Optional<Integer> nominal = findSmallestDay(day > 3 ? day - 2 : 1, mon, year,
         nearestWeekdays);
