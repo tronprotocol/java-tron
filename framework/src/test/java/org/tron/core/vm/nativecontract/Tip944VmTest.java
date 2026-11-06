@@ -139,6 +139,30 @@ public class Tip944VmTest extends TvmOptimizationVmTestBase {
   }
 
   @Test
+  public void stakeOneUnfreezeSettlesRewardWhilePreservingExplicitPowerVotes() throws Exception {
+    VMConfig.initAllowTvmFreezeV2(0);
+    install(SOURCE, stakeOneCode(false));
+    pendingReward(SOURCE);
+    AccountCapsule source = account(SOURCE);
+    source.setFrozenForBandwidth(5 * TRX_PRECISION, 0);
+    source.addFrozenForTronPowerV2(2 * TRX_PRECISION);
+    source.setOldTronPower(-1);
+    save(source);
+    long votesBefore = source.getVotesList().get(0).getVoteCount();
+    TransactionTrace unfrozen = execute(SOURCE);
+    assertSuccess(unfrozen);
+    assertEquals(1, returnWord(unfrozen, 0));
+    finish(unfrozen);
+    assertEquals(0, account(SOURCE).getFrozenBalance());
+    assertEquals(-1, account(SOURCE).getInstance().getOldTronPower());
+    assertEquals(votesBefore, account(SOURCE).getVotesList().get(0).getVoteCount());
+    assertEquals(142, account(SOURCE).getAllowance());
+    assertEquals(2, dbManager.getDelegationStore().getBeginCycle(SOURCE));
+    assertEquals(3, dbManager.getDelegationStore().getEndCycle(SOURCE));
+    assertNotNull(dbManager.getDelegationStore().getAccountVote(2, SOURCE));
+  }
+
+  @Test
   public void stakeOneOpcodesUseSnapshotRulesWithIndependentVmFlags() throws Exception {
     // Override the VM flags independently to exercise the getAllTronPower path as well.
     VMConfig.initAllowTvmFreezeV2(0);
