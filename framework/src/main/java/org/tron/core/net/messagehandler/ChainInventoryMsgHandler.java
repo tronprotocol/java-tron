@@ -18,10 +18,12 @@ import org.tron.core.exception.P2pException;
 import org.tron.core.exception.P2pException.TypeEnum;
 import org.tron.core.net.TronNetDelegate;
 import org.tron.core.net.message.TronMessage;
+import org.tron.core.net.message.handshake.HelloMessage;
 import org.tron.core.net.message.sync.ChainInventoryMessage;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.TronState;
 import org.tron.core.net.service.sync.SyncService;
+import org.tron.protos.Protocol.Inventory.InventoryType;
 
 @Slf4j(topic = "net")
 @Component
@@ -95,6 +97,7 @@ public class ChainInventoryMsgHandler implements TronMsgHandler {
   }
 
   private void check(PeerConnection peer, ChainInventoryMessage msg) throws P2pException {
+    HelloMessage hello = peer.getHelloMessageReceive();
     Pair<Deque<BlockId>, Long> requested = peer.getSyncChainRequested();
     if (requested == null) {
       throw new P2pException(TypeEnum.BAD_MESSAGE, "not send syncBlockChainMsg");
@@ -145,6 +148,39 @@ public class ChainInventoryMsgHandler implements TronMsgHandler {
             "Invalid declared highest block number: " + declaredHighestNum
                 + ", lastNum: " + lastNum + ", remainNum: " + msg.getRemainNum()
                 + ", futureMaxNum: " + maxFutureNum);
+      }
+    }
+
+    if (msg.getRemainNum() == 0) {
+      BlockId lastBlockId = blockIds.get(blockIds.size() - 1);
+      long lastNum = lastBlockId.getNum();
+      long helloHeadNum = hello.getHeadBlockId().getNum();
+      if (lastNum < helloHeadNum) {
+        // A fork rollback can temporarily lower the head; allow a fresh HELLO on reconnect.
+        throw new P2pException(TypeEnum.SYNC_FAILED,
+            "lastNum " + lastNum + " (remainNum=0) is below hello head " + helloHeadNum);
+      }
+
+      // A peer that has the terminal block in our summary should reply with that block alone.
+      if (blockIds.size() > 1 && requested.getKey().contains(lastBlockId)) {
+        // A concurrent fork switch can also produce this response; use a sync failure.
+        throw new P2pException(TypeEnum.SYNC_FAILED,
+            "terminal block already in summary: " + lastBlockId.getString());
+      }
+
+      long requestedAt = requested.getValue();
+      // Only use recent announcements received before this request, not a newer head
+      // announced while the peer was preparing its response. A concurrent fork switch also cause it
+      long maxAdvInvNum = peer.getAdvInvReceive().asMap().entrySet().stream()
+          .filter(entry -> entry.getKey().getType() == InventoryType.BLOCK)
+          .filter(entry -> entry.getValue() <= requestedAt
+              && entry.getValue() >= requestedAt - NetConstants.ADV_TIME_OUT)
+          .mapToLong(entry -> new BlockId(entry.getKey().getHash()).getNum())
+          .max()
+          .orElse(lastNum);
+      if (lastNum < maxAdvInvNum) {
+        throw new P2pException(TypeEnum.SYNC_FAILED,
+            "lastNum " + lastNum + " (remainNum=0) is below advertised block " + maxAdvInvNum);
       }
     }
   }
