@@ -21,6 +21,7 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.es.ExecutorServiceManager;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ReflectUtils;
+import org.tron.common.utils.SessionOptional;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Utils;
 import org.tron.core.Constant;
@@ -268,6 +269,115 @@ public class BlockStopTransactionExecutionTest extends ConditionallyStopTest {
     trx.sign(owner.getPrivKeyBytes());
 
     assertThrows(TransactionExpirationException.class, () -> dbManager.pushTransaction(trx));
+  }
+
+  @Test(timeout = 240_000)
+  public void solidJumpsLandOnTheTarget() throws Exception {
+    fundAccounts();
+    for (int spacing : new int[] {1, 5, 1000}) {
+      for (int jump : new int[] {2, 3, 5, 15}) {
+        for (int offset = -4; offset <= 0; offset++) {
+          stopWithSolidJump(spacing, jump, offset);
+        }
+      }
+    }
+  }
+
+  @Test(timeout = 60_000)
+  public void flushContinuesWhenNoStopCheckRuns() throws Exception {
+    ReflectUtils.setFieldValue(dbManager, "latestSolidityNumShutDown", 100_000L);
+    while (headHeight() < 30) {
+      generateBlock();
+    }
+    long target = persistedHeight() + 1;
+    ReflectUtils.setFieldValue(dbManager, "latestSolidityNumShutDown", target);
+
+    for (int i = 0; i < 5; i++) {
+      dbManager.pushBlock(createTestBlockCapsule(chainManager.getNextBlockSlotTime(),
+          headHeight() + 1,
+          chainManager.getDynamicPropertiesStore().getLatestBlockHeaderHash().getByteString()));
+    }
+
+    assertEquals(target + 4, persistedHeight());
+  }
+
+  @Test(timeout = 60_000)
+  public void forkSwitchFromALaggingBranchLandsOnTheTarget() throws Exception {
+    ReflectUtils.setFieldValue(dbManager, "latestSolidityNumShutDown", 100_000L);
+    while (headHeight() < 40) {
+      generateBlock();
+    }
+    long head = headHeight();
+    long target = head - 17;
+    long slotTime = chainManager.getNextBlockSlotTime();
+    ByteString parent = chainManager.getDynamicPropertiesStore().getLatestBlockHeaderHash()
+        .getByteString();
+    // One witness per round keeps the solid height of the old branch flat.
+    long round = 27 * 3000L;
+    BlockCapsule old1 = createTestBlockCapsule(slotTime + 3000, head + 1, parent);
+    BlockCapsule old2 = createTestBlockCapsule(slotTime + 3000 + round, head + 2,
+        old1.getBlockId().getByteString());
+    BlockCapsule old3 = createTestBlockCapsule(slotTime + 3000 + 2 * round, head + 3,
+        old2.getBlockId().getByteString());
+    BlockCapsule new1 = createTestBlockCapsule(slotTime, head + 1, parent);
+    BlockCapsule new2 = createTestBlockCapsule(slotTime + 3000, head + 2,
+        new1.getBlockId().getByteString());
+    BlockCapsule new3 = createTestBlockCapsule(slotTime + 6000, head + 3,
+        new2.getBlockId().getByteString());
+    BlockCapsule new4 = createTestBlockCapsule(slotTime + 9000, head + 4,
+        new3.getBlockId().getByteString());
+    ReflectUtils.setFieldValue(dbManager, "latestSolidityNumShutDown", target);
+
+    for (BlockCapsule block : new BlockCapsule[] {old1, old2, old3}) {
+      tronNetDelegate.processBlock(block, false);
+    }
+    assertEquals(target - 1, persistedHeight());
+    for (BlockCapsule block : new BlockCapsule[] {new1, new2, new3, new4}) {
+      tronNetDelegate.processBlock(block, false);
+    }
+    assertEquals(new4.getBlockId(), chainManager.getHeadBlockId());
+    assertEquals(target, persistedHeight());
+
+    generateBlock();
+    assertTrue(tronNetDelegate.isHitDown());
+    assertEquals(target, persistedHeight());
+  }
+
+  private void stopWithSolidJump(int spacing, int jump, int offset) throws Exception {
+    // Let the solid height of an earlier jump fall behind head again.
+    ReflectUtils.setFieldValue(dbManager, "latestSolidityNumShutDown", 100_000L);
+    ReflectUtils.setFieldValue(tronNetDelegate, "hitDown", false);
+    while (headHeight() - solidHeight() < 18) {
+      generateBlock();
+    }
+    long target = persistedHeight() + 25;
+    ReflectUtils.setFieldValue(dbManager, "latestSolidityNumShutDown", target);
+    boolean jumped = false;
+    for (int i = 0; i < MAX_BLOCKS_PER_STOP && !tronNetDelegate.isHitDown(); i++) {
+      generateBlock();
+      if (tronNetDelegate.isHitDown()) {
+        break;
+      }
+      if (!jumped && solidHeight() >= target + offset) {
+        jumpSolidHeight(jump);
+        jumped = true;
+      }
+      if (i % spacing == 0) {
+        dbManager.pushTransaction(validTransaction());
+      }
+    }
+    String name = "spacing " + spacing + " jump " + jump + " offset " + offset;
+    assertTrue(name, jumped);
+    assertTrue(name, tronNetDelegate.isHitDown());
+    assertEquals(name, target, persistedHeight());
+  }
+
+  private void jumpSolidHeight(int jump) {
+    // A write on top of an open pending session would be revoked with that session.
+    synchronized (dbManager) {
+      SessionOptional.instance().reset();
+      dbManager.getDynamicPropertiesStore().saveLatestSolidifiedBlockNum(solidHeight() + jump);
+    }
   }
 
   private void fundAccounts() {
