@@ -787,7 +787,8 @@ specifyConfig(){
 }
 
 # Verifies file $3 against the signature of asset $2 in release $1, which must be made
-# by the release key. Removes $3 if the signature is missing or invalid.
+# by the release key. Removes $3 if the signature is missing or invalid, or if the release
+# key is revoked or expired.
 checkSign() {
   info 'verify signature'
   local version=$1
@@ -795,6 +796,9 @@ checkSign() {
   local file=$3
   local gnupg_home
   local server
+  local status
+  # gpg names the key of a signature by its long key id, the last 16 digits of the fingerprint.
+  local key="(${RELEASE_KEY_FINGERPRINT: -16}|$RELEASE_KEY_FINGERPRINT)"
   local verified=false
   if type gpg >/dev/null 2>&1; then
     # Use a temporary keyring, so that the user's keyring is neither read nor changed.
@@ -806,12 +810,20 @@ checkSign() {
       gpg --homedir "$gnupg_home" --batch --quiet --keyserver "$server" \
         --keyserver-options timeout=10 --recv-keys "$RELEASE_KEY_FINGERPRINT" >/dev/null 2>&1 && break
     done
-    # Download the detached signature. Only a VALIDSIG status line that carries the release
-    # key fingerprint counts as verified.
-    if download "$RELEASE_URL/download/$version/$asset.sig" "$file.sig" \
-        && gpg --homedir "$gnupg_home" --batch --status-fd 1 --verify "$file.sig" "$file" 2>/dev/null \
-          | grep '^\[GNUPG:\] VALIDSIG ' | grep -q -w "$RELEASE_KEY_FINGERPRINT"; then
-      verified=true
+    # Download the detached signature. It counts as verified only when gpg reports the release
+    # key's signature good and a VALIDSIG status line carries the release key fingerprint. gpg
+    # also prints VALIDSIG, and exits with 0, for a signature made by a revoked or expired key,
+    # which it reports as REVKEYSIG or EXPKEYSIG instead of GOODSIG.
+    if download "$RELEASE_URL/download/$version/$asset.sig" "$file.sig"; then
+      status=$(gpg --homedir "$gnupg_home" --batch --status-fd 1 --verify "$file.sig" "$file" 2>/dev/null)
+      if grep -q -E "^\[GNUPG:\] REVKEYSIG $key " <<< "$status"; then
+        warn 'the release key has been revoked'
+      elif grep -q -E "^\[GNUPG:\] EXPKEYSIG $key " <<< "$status"; then
+        warn 'the release key has expired'
+      elif grep -q -E "^\[GNUPG:\] GOODSIG $key " <<< "$status" \
+          && grep '^\[GNUPG:\] VALIDSIG ' <<< "$status" | grep -q -w "$RELEASE_KEY_FINGERPRINT"; then
+        verified=true
+      fi
     fi
     # Stop the gpg daemons of the temporary keyring, then remove the keyring and the signature.
     gpgconf --homedir "$gnupg_home" --kill all >/dev/null 2>&1
