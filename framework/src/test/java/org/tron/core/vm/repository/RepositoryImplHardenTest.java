@@ -327,6 +327,42 @@ public class RepositoryImplHardenTest extends BaseTest {
     }
   }
 
+  @Test
+  public void testFractionalEnergyLimitUsesEffectiveStakeAndHandlesZeroWeight() {
+    long previousDelay = dbManager.getDynamicPropertiesStore().getUnfreezeDelayDays();
+    long previousLimit = dbManager.getDynamicPropertiesStore().getTotalEnergyCurrentLimit();
+    long previousWeight = dbManager.getDynamicPropertiesStore().getTotalEnergyWeight();
+    try {
+      dbManager.getDynamicPropertiesStore().saveUnfreezeDelayDays(14);
+      dbManager.getDynamicPropertiesStore().saveTotalEnergyCurrentLimit(100);
+      dbManager.getDynamicPropertiesStore().saveTotalEnergyWeight(10);
+      VMConfig.initAllowTvmResourceOptimization(1);
+      for (long hardening : new long[]{0, 1}) {
+        VMConfig.initAllowHardenResourceCalculation(hardening);
+        for (long balance : new long[]{0, 500_000, 1_500_000}) {
+          Assert.assertEquals(balance / 100_000,
+              repository.calculateGlobalEnergyLimit(energyAccount(balance)));
+        }
+        AccountCapsule account = energyAccount(500_000);
+        account.addFrozenBalanceForEnergyV2(500_000);
+        Assert.assertEquals(10, repository.calculateGlobalEnergyLimit(account));
+        account.addAcquiredDelegatedFrozenBalanceForEnergy(500_000);
+        account.addAcquiredDelegatedFrozenV2BalanceForEnergy(500_000);
+        Assert.assertEquals(20, repository.calculateGlobalEnergyLimit(account));
+        account.addDelegatedFrozenBalanceForEnergy(1_000_000);
+        account.addDelegatedFrozenV2BalanceForEnergy(2_000_000);
+        Assert.assertEquals(20, repository.calculateGlobalEnergyLimit(account));
+        dbManager.getDynamicPropertiesStore().saveTotalEnergyWeight(0);
+        Assert.assertEquals(0, repository.calculateGlobalEnergyLimit(account));
+        dbManager.getDynamicPropertiesStore().saveTotalEnergyWeight(10);
+      }
+    } finally {
+      dbManager.getDynamicPropertiesStore().saveUnfreezeDelayDays(previousDelay);
+      dbManager.getDynamicPropertiesStore().saveTotalEnergyCurrentLimit(previousLimit);
+      dbManager.getDynamicPropertiesStore().saveTotalEnergyWeight(previousWeight);
+    }
+  }
+
   private AccountCapsule energyAccount(long frozeBalance) {
     AccountCapsule account = new AccountCapsule(
         ByteString.copyFromUtf8("owner"),

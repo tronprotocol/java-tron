@@ -9,6 +9,8 @@ import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 import static org.tron.protos.contract.Common.ResourceCode.ENERGY;
 
 import org.junit.Test;
+import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.db.EnergyProcessor;
 import org.tron.core.db.TransactionTrace;
 import org.tron.core.vm.config.VMConfig;
 
@@ -166,6 +168,110 @@ public class Tip945VmTest extends TvmOptimizationVmTestBase {
   private void prepareEnergyWindow() {
     dbManager.getDynamicPropertiesStore().saveEnergyFee(100);
     dbManager.getDynamicPropertiesStore().saveTotalEnergyCurrentLimit(100_000_000L);
+  }
+
+  @Test
+  public void zeroEnergyRestoresNonzeroUsageAndBothWindowRepresentations() throws Exception {
+    prepareEnergyWindow();
+    install(SOURCE, "00");
+    stake(CALLER, ENERGY, 1_000L * TRX_PRECISION);
+    stake(SOURCE, ENERGY, 1_000L * TRX_PRECISION);
+    ownEnergyWeight(CALLER, SOURCE);
+    for (boolean optimizedWindow : new boolean[]{false, true}) {
+      dbManager.getDynamicPropertiesStore().saveAllowCancelAllUnfreezeV2(optimizedWindow ? 1 : 0);
+      for (byte[] origin : new byte[][]{CALLER, SOURCE}) {
+        seedEnergyUsage(CALLER, optimizedWindow);
+        seedEnergyUsage(SOURCE, optimizedWindow);
+        install(OUTER, "00", origin, 0L, 10_000_000L);
+        long callerWindow = account(CALLER).getWindowSizeV2(ENERGY);
+        long originWindow = account(SOURCE).getWindowSizeV2(ENERGY);
+        TransactionTrace trace = execute(OUTER);
+        assertZeroEnergy(trace);
+        assertTrue(account(CALLER).getEnergyUsage() > 1000);
+        finish(trace);
+        assertEquals(1000, account(CALLER).getEnergyUsage());
+        assertEquals(callerWindow, account(CALLER).getWindowSizeV2(ENERGY));
+        assertEquals(1000, account(SOURCE).getEnergyUsage());
+        assertEquals(originWindow, account(SOURCE).getWindowSizeV2(ENERGY));
+      }
+    }
+  }
+
+  @Test
+  public void revertedExecutionKeepsExistingFinalizationBehavior() throws Exception {
+    prepareEnergyWindow();
+    dbManager.getDynamicPropertiesStore().saveAllowCancelAllUnfreezeV2(1);
+    stake(CALLER, ENERGY, 1_000L * TRX_PRECISION);
+    ownEnergyWeight(CALLER);
+    install(SOURCE, push(0) + push(0) + "fd");
+    long[] legacyState = null;
+    for (long enabled : new long[]{0, 1}) {
+      VMConfig.initAllowTvmResourceOptimization(enabled);
+      dbManager.getDynamicPropertiesStore().saveAllowTvmResourceOptimization(enabled);
+      seedEnergyUsage(CALLER, true);
+      TransactionTrace trace = execute(SOURCE);
+      assertTrue(trace.getRuntime().getResult().isRevert());
+      assertTrue(trace.getReceipt().getEnergyUsageTotal() > 0);
+      assertEquals(1000, account(CALLER).getEnergyUsage());
+      finish(trace);
+      long[] state = new long[]{account(CALLER).getEnergyUsage(),
+          account(CALLER).getWindowSizeV2(ENERGY), trace.getReceipt().getEnergyUsage()};
+      assertTrue(state[0] > 1000);
+      if (legacyState == null) {
+        legacyState = state;
+      } else {
+        assertArrayEquals(legacyState, state);
+      }
+    }
+  }
+
+  @Test
+  public void zeroEnergyWithoutOriginRestoresCallerUsageAndWindow() throws Exception {
+    prepareEnergyWindow();
+    dbManager.getDynamicPropertiesStore().saveAllowCancelAllUnfreezeV2(1);
+    stake(CALLER, ENERGY, 1_000L * TRX_PRECISION);
+    ownEnergyWeight(CALLER);
+    seedEnergyUsage(CALLER, true);
+    install(OUTER, "00", SOURCE, 0L, 10_000_000L);
+    assertNull(account(SOURCE));
+    long window = account(CALLER).getWindowSizeV2(ENERGY);
+    TransactionTrace trace = execute(OUTER);
+    assertZeroEnergy(trace);
+    finish(trace);
+    assertEquals(1000, account(CALLER).getEnergyUsage());
+    assertEquals(window, account(CALLER).getWindowSizeV2(ENERGY));
+    assertNull(account(SOURCE));
+  }
+
+  @Test
+  public void zeroEnergyWithoutStakeTwoKeepsExistingUsageAndWindow() throws Exception {
+    prepareEnergyWindow();
+    VMConfig.initAllowTvmFreezeV2(0);
+    dbManager.getDynamicPropertiesStore().saveUnfreezeDelayDays(0);
+    dbManager.getDynamicPropertiesStore().saveTotalEnergyWeight(1000);
+    AccountCapsule caller = account(CALLER);
+    caller.setFrozenForEnergy(1_000L * TRX_PRECISION, 0);
+    save(caller);
+    seedEnergyUsage(CALLER, false);
+    TransactionTrace trace = execute(BENEFICIARY);
+    assertZeroEnergy(trace);
+    finish(trace);
+    assertEquals(1000, account(CALLER).getEnergyUsage());
+    assertEquals(7200, account(CALLER).getWindowSize(ENERGY));
+  }
+
+  private void seedEnergyUsage(byte[] address, boolean optimizedWindow) {
+    AccountCapsule account = account(address);
+    account.setEnergyUsage(1000);
+    account.setLatestConsumeTimeForEnergy(
+        EnergyProcessor.getHeadSlot(dbManager.getDynamicPropertiesStore()));
+    account.setWindowOptimized(ENERGY, optimizedWindow);
+    if (optimizedWindow) {
+      account.setNewWindowSizeV2(ENERGY, 7_200_321);
+    } else {
+      account.setNewWindowSize(ENERGY, 7200);
+    }
+    save(account);
   }
 
   private void ownEnergyWeight(byte[]... addresses) {
