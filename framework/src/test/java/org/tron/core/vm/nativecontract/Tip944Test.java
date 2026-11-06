@@ -508,6 +508,42 @@ public class Tip944Test extends BaseTest {
   }
 
   @Test
+  public void stakeOneUnfreezeUsesTheVmSnapshotForVoteCleanup() throws Exception {
+    for (boolean freezeV2 : new boolean[]{false, true}) {
+      for (long storedDelay : new long[]{0, 14}) {
+        setup();
+        dbManager.getDynamicPropertiesStore().saveUnfreezeDelayDays(storedDelay);
+        VMConfig.initAllowTvmFreezeV2(freezeV2 ? 0 : 1);
+        VMConfig.Snapshot snapshot = new VMConfig.Snapshot();
+        snapshot.allowTvmVotePowerOptimization = true;
+        snapshot.allowTvmVote = true;
+        snapshot.allowTvmFreezeV2 = freezeV2;
+        VMConfig.setLocalSnapshot(snapshot);
+        try {
+          AccountCapsule owner = repo.getAccount(OWNER);
+          owner.setFrozenForBandwidth(5 * TRX_PRECISION, 0);
+          owner.setFrozenForEnergy(2 * TRX_PRECISION, 0);
+          owner.setOldTronPower(7 * TRX_PRECISION);
+          owner.addVotes(ByteString.copyFrom(WITNESS), 1);
+          repo.updateAccount(OWNER, owner);
+          VotesCapsule votes = new VotesCapsule(ByteString.copyFrom(OWNER), owner.getVotesList());
+          votes.addAllNewVotes(owner.getVotesList());
+          repo.updateVotes(OWNER, votes);
+
+          unfreezeOne(repo, OWNER, BANDWIDTH);
+
+          assertEquals(-1, legacy(OWNER));
+          assertEquals(freezeV2 ? 0 : 1, repo.getAccount(OWNER).getVotesList().size());
+          assertEquals(freezeV2 ? 0 : 1, repo.getVotes(OWNER).getNewVotes().size());
+          assertEquals(votes.getOldVotes(), repo.getVotes(OWNER).getOldVotes());
+        } finally {
+          VMConfig.clearLocalSnapshot();
+        }
+      }
+    }
+  }
+
+  @Test
   public void invalidStakeOneOperationsDoNotInitializeLegacyPower() {
     VMConfig.initAllowTvmFreeze(1);
     VMConfig.initAllowTvmFreezeV2(0);

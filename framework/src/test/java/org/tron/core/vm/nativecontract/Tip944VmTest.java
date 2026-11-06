@@ -140,7 +140,7 @@ public class Tip944VmTest extends TvmOptimizationVmTestBase {
 
   @Test
   public void stakeOneUnfreezeSettlesRewardWhilePreservingExplicitPowerVotes() throws Exception {
-    VMConfig.initAllowTvmFreezeV2(0);
+    VMConfig.initAllowTvmFreezeV2(1);
     install(SOURCE, stakeOneCode(false));
     pendingReward(SOURCE);
     AccountCapsule source = account(SOURCE);

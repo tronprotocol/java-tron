@@ -210,7 +210,7 @@ public class UnfreezeBalanceProcessor {
 
     repo.updateAccount(accountCapsule.createDbKey(), accountCapsule);
 
-    if (optimizeVotePower && repo.getDynamicPropertiesStore().supportUnfreezeDelay()) {
+    if (optimizeVotePower && VMConfig.allowTvmFreezeV2()) {
       if (!accountCapsule.oldTronPowerIsInvalid()) {
         VotesCapsule votesCapsule = repo.getVotes(ownerAddress);
         if (votesCapsule == null) {
