@@ -263,6 +263,7 @@ public class Manager {
 
   @Getter
   private volatile long latestSolidityNumShutDown;
+  private long autoStopTime = -1;
   @Getter
   private long lastUsedSolidityNum = -1;
   @Getter
@@ -716,15 +717,16 @@ public class Manager {
     }
 
     if (blockTime != null) {
-      List<String> matches = nextCronMatches(blockTime, headTime);
+      List<Date> matches = nextCronMatches(blockTime, headTime);
       if (matches.isEmpty()) {
         throw new IllegalArgumentException(
             String.format("shutDownBlockTime %s is illegal", blockTime));
       }
+      autoStopTime = matches.get(0).getTime();
       logger.info("Auto-stop: shutDownBlockTime {}, head block time {}, next cron matches {}. "
-              + "These are candidates: the node stops only if a block timestamp exactly matches "
-              + "one, and that is not guaranteed.",
-          blockTime, formatAutoStopTime(new Date(headTime)), matches);
+              + "The target is the first block at or after the first match.",
+          blockTime, formatAutoStopTime(new Date(headTime)),
+          matches.stream().map(this::formatAutoStopTime).collect(Collectors.toList()));
     }
 
     if (exitHeight > 0 && exitCount > 0) {
@@ -758,15 +760,15 @@ public class Manager {
     latestSolidityNumShutDown = CommonParameter.getInstance().getShutdownBlockHeight();
   }
 
-  private List<String> nextCronMatches(CronExpression cron, long headTime) {
-    List<String> matches = new ArrayList<>(AUTO_STOP_PREVIEW_COUNT);
+  private List<Date> nextCronMatches(CronExpression cron, long headTime) {
+    List<Date> matches = new ArrayList<>(AUTO_STOP_PREVIEW_COUNT);
     Date next = new Date(headTime);
     for (int i = 0; i < AUTO_STOP_PREVIEW_COUNT; i++) {
       next = cron.getNextValidTimeAfter(next);
       if (next == null) {
         break;
       }
-      matches.add(formatAutoStopTime(next));
+      matches.add(next);
     }
     return matches;
   }
@@ -1036,6 +1038,9 @@ public class Manager {
       khaosDb.pop();
       revokingStore.fastPop();
       logger.info("End to erase block: {}.", oldHeadBlock);
+      if (autoStopTime > 0 && oldHeadBlock.getNum() <= latestSolidityNumShutDown) {
+        latestSolidityNumShutDown = -1;
+      }
       oldHeadBlock.getTransactions().forEach(tc -> {
         if (isMultiSignTransaction(tc.getInstance())) {
           ownerAddressSet.add(ByteArray.toHexString(tc.getOwnerAddress()));
@@ -1074,6 +1079,10 @@ public class Manager {
     }
 
     updateFork(block);
+    if (autoStopTime > 0 && latestSolidityNumShutDown <= 0
+        && block.getTimeStamp() >= autoStopTime) {
+      latestSolidityNumShutDown = block.getNum();
+    }
     if (System.currentTimeMillis() - block.getTimeStamp() >= 60_000) {
       revokingStore.setMaxFlushCount(maxFlushCount);
       CronExpression shutdownBlockTime = Args.getInstance().getShutdownBlockTime();
@@ -1293,12 +1302,6 @@ public class Manager {
                         + "block-tx-size: {}, verify-tx-size: {}",
                 block.getNum(), rePushTransactions.size(), pendingTransactions.size(),
                 block.getTransactions().size(), txs.size());
-
-        if (CommonParameter.getInstance().getShutdownBlockTime() != null
-                && CommonParameter.getInstance().getShutdownBlockTime()
-                .isSatisfiedBy(new Date(block.getTimeStamp()))) {
-          latestSolidityNumShutDown = block.getNum();
-        }
 
         try (PendingManager pm = new PendingManager(this)) {
 
