@@ -114,6 +114,16 @@ public class AdminJsonRpcRequestTest {
   }
 
   @Test
+  public void exponentOverflowIsAParseError() throws Exception {
+    for (String literal : new String[] {"1e2147483648", "-1e2147483648", "1e-2147483649"}) {
+      assertError(sender.send(REQUEST + ",\"id\":" + literal + "}"), -32700, "null");
+      assertError(sender.send("{\"jsonrpc\":\"2.0\",\"method\":\"admin_addPeer\","
+          + "\"params\":[" + literal + "],\"id\":1}"), -32700, "null");
+    }
+    Mockito.verifyNoInteractions(adminJsonRpc);
+  }
+
+  @Test
   public void longRangeIdsRetainTheirValue() throws Exception {
     for (String id : new String[] {"9223372036854775807", "-9223372036854775808"}) {
       JsonNode response = parse(sender.send(REQUEST + ",\"id\":" + id + "}"));
