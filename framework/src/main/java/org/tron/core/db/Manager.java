@@ -854,6 +854,11 @@ public class Manager {
       throw new ContractValidateException("Transaction auths are not supported.");
     }
 
+    if (trx.isAccountCreateNonNormalType()) {
+      throw new ContractValidateException(
+          "AccountCreateContract only supports the Normal account type.");
+    }
+
     if (isShieldedTransaction(trx.getInstance()) && !chainBaseManager.getDynamicPropertiesStore()
         .supportShieldedTransaction()) {
       throw new ContractValidateException("ShieldedTransferContract is not supported.");

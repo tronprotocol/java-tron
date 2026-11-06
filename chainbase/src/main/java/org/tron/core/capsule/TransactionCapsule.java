@@ -66,6 +66,7 @@ import org.tron.core.exception.TransactionExpirationException;
 import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.DynamicPropertiesStore;
+import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Key;
 import org.tron.protos.Protocol.Permission;
 import org.tron.protos.Protocol.Permission.PermissionType;
@@ -883,5 +884,19 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
 
   public boolean hasAuths() {
     return this.getInstance().getRawData().getAuthsCount() > 0;
+  }
+
+  public boolean isAccountCreateNonNormalType() {
+    raw rawData = this.getInstance().getRawData();
+    if (rawData.getContractCount() == 0
+        || rawData.getContract(0).getType() != ContractType.AccountCreateContract) {
+      return false;
+    }
+    try {
+      return rawData.getContract(0).getParameter().unpack(AccountCreateContract.class)
+          .getType() != AccountType.Normal;
+    } catch (InvalidProtocolBufferException e) {
+      return false;
+    }
   }
 }
