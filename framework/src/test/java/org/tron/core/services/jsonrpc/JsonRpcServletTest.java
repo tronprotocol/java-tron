@@ -1074,6 +1074,89 @@ public class JsonRpcServletTest {
   }
 
   @Test
+  public void batchResponseBuffer_usesRemainingBudgetForSingleByteWrites() throws Exception {
+    byte[] response = successResponse(1);
+    // Both responses fit individually; the second exceeds the batch budget by one comma.
+    CommonParameter.getInstance().jsonRpcMaxResponseSize = response.length * 2 + 2;
+    int[] calls = {0};
+    doAnswer(inv -> {
+      OutputStream out = inv.getArgument(1);
+      calls[0]++;
+      for (byte b : response) {
+        out.write(b);
+      }
+      return 0;
+    }).when(mockRpcServer).handleRequest(any(InputStream.class), any(OutputStream.class));
+
+    JsonNode body = MAPPER.readTree(doPost(withEnvelope("[{\"id\":1},{\"id\":2},{\"id\":3}]"))
+        .getContentAsByteArray());
+
+    assertEquals(MAPPER.readTree(response), body.get(0));
+    assertEquals(-32003, body.get(1).get("error").get("code").asInt());
+    assertEquals(-32003, body.get(2).get("error").get("code").asInt());
+    assertEquals(2, calls[0]);
+  }
+
+  @Test
+  public void singleResponseLimitDisabled_preservesResults() throws Exception {
+    for (int limit : new int[] {0, -1}) {
+      CommonParameter.getInstance().jsonRpcMaxResponseSize = limit;
+      TronJsonRpc rpc = useRealRpcServer();
+
+      JsonNode body = MAPPER.readTree(doPost(
+          "{\"jsonrpc\":\"2.0\",\"method\":\"eth_blockNumber\",\"id\":1}")
+          .getContentAsByteArray());
+
+      assertEquals("0x1", body.get("result").asText());
+      verify(rpc).getLatestBlockNum();
+    }
+  }
+
+  @Test
+  public void batchResponseBuffer_tinyAndDisabledLimitsPreserveNotifications() throws Exception {
+    for (int limit : new int[] {1, 2, 0, -1}) {
+      CommonParameter.getInstance().jsonRpcMaxResponseSize = limit;
+      TronJsonRpc rpc = useRealRpcServer();
+
+      JsonNode body = MAPPER.readTree(doPost("["
+          + "{\"jsonrpc\":\"2.0\",\"method\":\"eth_blockNumber\"},"
+          + "{\"jsonrpc\":\"2.0\",\"method\":\"eth_blockNumber\",\"id\":1}]")
+          .getContentAsByteArray());
+
+      assertEquals(1, body.size());
+      assertEquals(1, body.get(0).get("id").asInt());
+      if (limit > 0) {
+        assertEquals(-32003, body.get(0).get("error").get("code").asInt());
+      } else {
+        assertEquals("0x1", body.get(0).get("result").asText());
+      }
+      verify(rpc, times(2)).getLatestBlockNum();
+    }
+  }
+
+  @Test
+  public void batchResponseBuffer_failureAfterOverflowPreservesRecovery() throws Exception {
+    CommonParameter.getInstance().jsonRpcMaxResponseSize = 256;
+    int[] calls = {0};
+    doAnswer(inv -> {
+      OutputStream out = inv.getArgument(1);
+      if (++calls[0] == 1) {
+        out.write(new byte[1024]);
+        throw new IOException("failure-after-overflow");
+      }
+      out.write(successResponse(2));
+      return 0;
+    }).when(mockRpcServer).handleRequest(any(InputStream.class), any(OutputStream.class));
+
+    JsonNode body = MAPPER.readTree(doPost(withEnvelope("[{\"id\":1},{\"id\":2}]"))
+        .getContentAsByteArray());
+
+    assertEquals(-32603, body.get(0).get("error").get("code").asInt());
+    assertEquals(MAPPER.readTree(successResponse(2)), body.get(1));
+    assertEquals(2, calls[0]);
+  }
+
+  @Test
   public void batchShortCircuitsOnOverflow() throws Exception {
     int limit = 50;
     CommonParameter.getInstance().jsonRpcMaxResponseSize = limit;

@@ -1,7 +1,9 @@
 package org.tron.core.services.filter;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
@@ -15,7 +17,7 @@ import lombok.Getter;
  * Buffers the response body without writing to the underlying response,
  * so the caller can replay it after the handler returns.
  *
- * <p>If {@code maxBytes > 0} and the response would exceed that limit, the
+ * <p>If a byte limit is enabled and the response would exceed that limit, the
  * {@link #isOverflow()} flag is set instead of throwing. The caller should check this flag after
  * the handler returns and write its own error response when true.
  *
@@ -25,7 +27,7 @@ import lombok.Getter;
 public class BufferedResponseWrapper extends HttpServletResponseWrapper {
 
   private final HttpServletResponse actual;
-  private final ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+  private ResponseBuffer buffer = new ResponseBuffer();
   private final int maxBytes;
   private int status = HttpServletResponse.SC_OK;
   private String contentType;
@@ -39,7 +41,7 @@ public class BufferedResponseWrapper extends HttpServletResponseWrapper {
       if (overflow) {
         return;
       }
-      if (maxBytes > 0 && buffer.size() >= maxBytes) {
+      if (maxBytes >= 0 && buffer.size() >= maxBytes) {
         markOverflow();
         return;
       }
@@ -51,7 +53,7 @@ public class BufferedResponseWrapper extends HttpServletResponseWrapper {
       if (overflow) {
         return;
       }
-      if (maxBytes > 0 && buffer.size() + len > maxBytes) {
+      if (maxBytes >= 0 && len > maxBytes - buffer.size()) {
         markOverflow();
         return;
       }
@@ -73,7 +75,8 @@ public class BufferedResponseWrapper extends HttpServletResponseWrapper {
 
   /**
    * @param response the wrapped response
-   * @param maxBytes max allowed response bytes; {@code 0} means no limit
+   * @param maxBytes max allowed response bytes; negative means no limit,
+   *     zero allows only empty output
    */
   public BufferedResponseWrapper(HttpServletResponse response, int maxBytes) {
     super(response);
@@ -83,7 +86,16 @@ public class BufferedResponseWrapper extends HttpServletResponseWrapper {
 
   private void markOverflow() {
     overflow = true;
-    buffer.reset();
+    buffer = new ResponseBuffer();
+  }
+
+  public int getBufferedSize() {
+    return buffer.size();
+  }
+
+  /** Returns a view of the buffered bytes without copying; finish writing before reading it. */
+  public InputStream getBufferedInputStream() {
+    return buffer.openInputStream();
   }
 
   /**
@@ -92,14 +104,14 @@ public class BufferedResponseWrapper extends HttpServletResponseWrapper {
    */
   @Override
   public void setContentLength(int len) {
-    if (maxBytes > 0 && len > maxBytes) {
+    if (maxBytes >= 0 && len > maxBytes) {
       markOverflow();
     }
   }
 
   @Override
   public void setContentLengthLong(long len) {
-    if (maxBytes > 0 && len > maxBytes) {
+    if (maxBytes >= 0 && len > maxBytes) {
       markOverflow();
     }
   }
@@ -174,5 +186,11 @@ public class BufferedResponseWrapper extends HttpServletResponseWrapper {
     actual.setContentLength(buffer.size());
     buffer.writeTo(actual.getOutputStream());
     actual.getOutputStream().flush();
+  }
+
+  private static class ResponseBuffer extends ByteArrayOutputStream {
+    private InputStream openInputStream() {
+      return new ByteArrayInputStream(buf, 0, count);
+    }
   }
 }
