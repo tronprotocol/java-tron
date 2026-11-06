@@ -38,7 +38,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Method;
-import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -1329,17 +1328,52 @@ public class JsonRpcServletTest {
   }
 
   @Test
-  public void rejectedFractionalId_isEchoedWithoutPrecisionLoss() throws Exception {
-    for (String id : new String[] {"0.12345678901234567890123456789", "1e400"}) {
+  public void rejectedFractionalId_isEchoedAsParsedDouble() throws Exception {
+    for (String id : new String[] {"0.12345678901234567890123456789", "1e-20", "1e300"}) {
       MockHttpServletResponse resp = doPost("{\"jsonrpc\":\"2.0\","
           + "\"method\":\"web3_clientVersion\",\"params\":[],\"id\":" + id + "}");
-      JsonNode echoed = MAPPER.reader().with(DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS)
-          .readTree(resp.getContentAsByteArray()).get("id");
-      assertTrue(id, echoed.isNumber());
-      assertEquals(id, 0, new BigDecimal(id).compareTo(echoed.decimalValue()));
+      assertInvalidRequest(MAPPER.readTree(resp.getContentAsByteArray()),
+          JsonRpcRequestValidator.INVALID_NUMERIC_ID_MESSAGE,
+          Double.toString(Double.parseDouble(id)));
     }
 
     verifyNoInteractions(mockRpcServer);
+  }
+
+  @Test
+  public void exponentOverflowId_isRejected() throws Exception {
+    for (String id : new String[] {"1e400", "-1e400", "1e2147483648"}) {
+      MockHttpServletResponse resp = doPost("{\"jsonrpc\":\"2.0\","
+          + "\"method\":\"web3_clientVersion\",\"params\":[],\"id\":" + id + "}");
+      assertEquals(200, resp.getStatus());
+      JsonNode body = MAPPER.readTree(resp.getContentAsByteArray());
+      assertEquals(-32600, body.get("error").get("code").asInt());
+      assertEquals(JsonRpcRequestValidator.INVALID_NUMERIC_ID_MESSAGE,
+          body.get("error").get("message").asText());
+      // Jackson writes the parsed double, which has no JSON number form, as a string.
+      assertEquals(Double.toString(Double.parseDouble(id)), body.get("id").asText());
+    }
+
+    verifyNoInteractions(mockRpcServer);
+  }
+
+  @Test
+  public void nonBooleanFloatParam_isRejectedInSingleAndBatch() throws Exception {
+    TronJsonRpc rpc = useRealRpcServer();
+
+    for (String literal : new String[] {"1.0", "0.0", "1e0", "0e0", "1e2147483648"}) {
+      String request = "{\"jsonrpc\":\"2.0\",\"method\":\"eth_getBlockByNumber\","
+          + "\"params\":[\"latest\"," + literal + "],\"id\":1}";
+      JsonNode single = MAPPER.readTree(doPost(request).getContentAsByteArray());
+      JsonNode batch = MAPPER.readTree(doPost("[" + request + "]").getContentAsByteArray());
+      assertEquals(literal, 1, batch.size());
+      for (JsonNode response : new JsonNode[] {single, batch.get(0)}) {
+        assertEquals(literal, 1, response.get("id").asInt());
+        assertEquals(literal, -32602, response.get("error").get("code").asInt());
+      }
+    }
+
+    verify(rpc, never()).ethGetBlockByNumber(any(), any());
   }
 
   // --- StreamReadConstraints: maxNestingDepth and maxTokenCount must be enforced ---
