@@ -72,12 +72,18 @@ public abstract class TvmOptimizationVmTestBase extends BaseMethodTest {
   protected abstract void enableOptimization();
 
   protected void install(byte[] address, String runtime) {
+    install(address, runtime, CALLER, 100L, 1_000_000L);
+  }
+
+  protected void install(byte[] address, String runtime, byte[] origin, long percent,
+      long originEnergyLimit) {
     Repository root = RepositoryImpl.createRoot(StoreFactory.getInstance());
     root.createAccount(address, Protocol.AccountType.Contract);
     root.createContract(address, new ContractCapsule(SmartContract.newBuilder()
         .setContractAddress(ByteString.copyFrom(address))
-        .setOriginAddress(ByteString.copyFrom(CALLER))
-        .setConsumeUserResourcePercent(100).setOriginEnergyLimit(1_000_000L).build()));
+        .setOriginAddress(ByteString.copyFrom(origin))
+        .setConsumeUserResourcePercent(percent)
+        .setOriginEnergyLimit(originEnergyLimit).build()));
     root.saveCode(address, Hex.decode(runtime));
     root.commit();
   }
