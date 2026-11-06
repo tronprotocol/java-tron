@@ -44,7 +44,7 @@ public final class AdminJsonRpcRequestHandler extends JsonRpcBasicServer {
       request = OBJECT_MAPPER.reader()
           .with(DeserializationFeature.FAIL_ON_TRAILING_TOKENS)
           .with(DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS).readTree(body);
-    } catch (IOException e) {
+    } catch (IOException | NumberFormatException e) {
       return OBJECT_MAPPER.writeValueAsBytes(errorResponse(JsonError.PARSE_ERROR, null));
     }
 
