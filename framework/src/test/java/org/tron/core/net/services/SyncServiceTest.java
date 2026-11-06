@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import org.junit.Assert;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.springframework.context.ApplicationContext;
 import org.tron.common.BaseMethodTest;
@@ -24,6 +25,7 @@ import org.tron.core.net.P2pEventHandlerImpl;
 import org.tron.core.net.TronNetDelegate;
 import org.tron.core.net.message.adv.BlockMessage;
 import org.tron.core.net.message.adv.FetchInvDataMessage;
+import org.tron.core.net.messagehandler.BlockMsgHandler;
 import org.tron.core.net.messagehandler.PbftDataSyncHandler;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.PeerManager;
@@ -268,6 +270,94 @@ public class SyncServiceTest extends BaseMethodTest {
     fetch.invoke(sync);
     Assert.assertEquals(Collections.singleton(next), syncingPeer.getSyncBlockRequested().keySet());
     sync.close();
+  }
+
+  @Test
+  public void testDeserializeFailureAllowsRetryFromAnotherPeer() throws Exception {
+    SyncService sync = new SyncService();
+    try {
+      TronNetDelegate delegate = mock(TronNetDelegate.class);
+      ReflectUtils.setFieldValue(sync, "tronNetDelegate", delegate);
+      ReflectUtils.setFieldValue(sync, "pbftDataSyncHandler", mock(PbftDataSyncHandler.class));
+      Mockito.when(delegate.getSolidBlockId())
+          .thenReturn(new BlockCapsule.BlockId(Sha256Hash.ZERO_HASH, 0));
+      Mockito.when(delegate.getBlockLock()).thenReturn(new Object());
+
+      PeerConnection badPeer = Mockito.spy(context.getBean(PeerConnection.class));
+      PeerConnection goodPeer = Mockito.spy(context.getBean(PeerConnection.class));
+      Channel badChannel = mock(Channel.class);
+      Channel goodChannel = mock(Channel.class);
+      Mockito.when(badChannel.getInetSocketAddress()).thenReturn(inetSocketAddress);
+      Mockito.when(badChannel.getInetAddress()).thenReturn(inetSocketAddress.getAddress());
+      Mockito.when(goodChannel.getInetSocketAddress()).thenReturn(inetSocketAddress);
+      Mockito.when(goodChannel.getInetAddress()).thenReturn(inetSocketAddress.getAddress());
+      badPeer.setChannel(badChannel);
+      goodPeer.setChannel(goodChannel);
+      badPeer.setFetchAble(true);
+      goodPeer.setFetchAble(true);
+      Mockito.when(delegate.getActivePeer()).thenReturn(Arrays.asList(badPeer, goodPeer));
+
+      BlockCapsule block = new BlockCapsule(1, Sha256Hash.ZERO_HASH,
+          System.currentTimeMillis(), Sha256Hash.ZERO_HASH.getByteString());
+      BlockCapsule.BlockId blockId = block.getBlockId();
+      byte[] data = block.getData();
+      byte[] malformed = Arrays.copyOf(data, data.length + 1);
+      // The network parser accepts END_GROUP, but the deferred byte[] parser rejects it.
+      malformed[data.length] = 0x0c;
+      BlockMessage message = new BlockMessage(malformed);
+      Assert.assertEquals(blockId, message.getBlockId());
+      badPeer.getSyncBlockToFetch().add(blockId);
+      goodPeer.getSyncBlockToFetch().add(blockId);
+
+      Method fetch = SyncService.class.getDeclaredMethod("startFetchSyncBlock");
+      fetch.setAccessible(true);
+      fetch.invoke(sync);
+      Assert.assertTrue(badPeer.getSyncBlockRequested().containsKey(blockId));
+      Assert.assertTrue(goodPeer.getSyncBlockRequested().isEmpty());
+      Cache<BlockCapsule.BlockId, PeerConnection> requests =
+          (Cache<BlockCapsule.BlockId, PeerConnection>)
+              ReflectUtils.getFieldObject(sync, "requestBlockIds");
+      Assert.assertSame(badPeer, requests.getIfPresent(blockId));
+
+      BlockMsgHandler handler = new BlockMsgHandler();
+      ReflectUtils.setFieldValue(handler, "syncService", sync);
+      handler.processMessage(badPeer, message);
+      Assert.assertTrue(badPeer.getSyncBlockRequested().isEmpty());
+      Assert.assertTrue(badPeer.getSyncBlockInProcess().contains(blockId));
+      Method handle = SyncService.class.getDeclaredMethod("handleSyncBlock");
+      handle.setAccessible(true);
+      ReflectUtils.setFieldValue(sync, "fetchFlag", false);
+      handle.invoke(sync);
+
+      Assert.assertNull("A failed parse must release the global request",
+          requests.getIfPresent(blockId));
+      Assert.assertFalse(badPeer.getSyncBlockInProcess().contains(blockId));
+      Mockito.verify(badPeer).disconnect(Protocol.ReasonCode.BAD_BLOCK);
+      Mockito.verify(delegate, Mockito.never())
+          .processBlock(Mockito.any(BlockCapsule.class), Mockito.anyBoolean());
+      Assert.assertTrue((boolean) ReflectUtils.getFieldObject(sync, "fetchFlag"));
+
+      Mockito.when(delegate.getActivePeer()).thenReturn(Collections.singletonList(goodPeer));
+      fetch.invoke(sync);
+      ArgumentCaptor<FetchInvDataMessage> request =
+          ArgumentCaptor.forClass(FetchInvDataMessage.class);
+      Mockito.verify(goodPeer).sendMessage(request.capture());
+      Assert.assertEquals(Collections.singletonList(blockId), request.getValue().getHashList());
+      Assert.assertSame(goodPeer, requests.getIfPresent(blockId));
+
+      // Leave a next block queued so successful processing does not request a chain summary.
+      BlockCapsule.BlockId next = new BlockCapsule.BlockId(Sha256Hash.ZERO_HASH, 2);
+      goodPeer.getSyncBlockToFetch().add(next);
+      handler.processMessage(goodPeer, new BlockMessage(block));
+      handle.invoke(sync);
+      Mockito.verify(delegate).processBlock(Mockito.any(BlockCapsule.class), Mockito.eq(true));
+      Assert.assertEquals(blockId, goodPeer.getBlockBothHave());
+      Assert.assertEquals(next, goodPeer.getSyncBlockToFetch().peek());
+      Assert.assertFalse(goodPeer.getSyncBlockInProcess().contains(blockId));
+      Mockito.verify(goodPeer, Mockito.never()).disconnect(Mockito.any(Protocol.ReasonCode.class));
+    } finally {
+      sync.close();
+    }
   }
 
   @Test

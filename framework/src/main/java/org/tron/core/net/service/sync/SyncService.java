@@ -323,7 +323,11 @@ public class SyncService {
             try {
               block = new BlockCapsule(unparsedBlock.getData());
             } catch (Exception e) {
-              logger.warn("Deserialize block {} failed", blockId.getString(), e);
+              logger.warn("Deserialize block {} from {} failed",
+                  blockId.getString(), peerConnection.getInetSocketAddress(), e);
+              peerConnection.getSyncBlockInProcess().remove(blockId);
+              invalid(blockId, peerConnection);
+              peerConnection.disconnect(ReasonCode.BAD_BLOCK);
               return;
             }
             processSyncBlock(block, peerConnection);
