@@ -283,7 +283,12 @@ public class Manager {
         while (isRunRePushThread) {
           TransactionCapsule tx = null;
           try {
-            tx = getRePushTransactions().peek();
+            synchronized (this) {
+              tx = getRePushTransactions().peek();
+              if (tx != null) {
+                pushTransactionQueue.add(tx);
+              }
+            }
             if (tx != null) {
               this.rePush(tx);
             } else {
@@ -302,9 +307,12 @@ public class Manager {
               throw e;
             });
           } finally {
-            if (tx != null && getRePushTransactions().remove(tx)) {
-              Metrics.gaugeInc(MetricKeys.Gauge.MANAGER_QUEUE, -1,
-                  MetricLabels.Gauge.QUEUE_REPUSH);
+            if (tx != null) {
+              if (getRePushTransactions().remove(tx)) {
+                Metrics.gaugeInc(MetricKeys.Gauge.MANAGER_QUEUE, -1,
+                    MetricLabels.Gauge.QUEUE_REPUSH);
+              }
+              pushTransactionQueue.remove(tx);
             }
           }
         }
@@ -1228,7 +1236,8 @@ public class Manager {
 
   /**
    * Save a block. Untrusted callers must first use network prevalidation to check its timestamp,
-   * transaction structure, Merkle root and block signature.
+   * transaction structure and Merkle root. Check witness signatures before broadcast as well.
+   * Received block witness authorization is checked against committed state before admission.
    */
   public void pushBlock(final BlockCapsule block)
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
@@ -1242,11 +1251,6 @@ public class Manager {
       synchronized (this) {
         Metrics.histogramObserve(blockedTimer.get());
         blockedTimer.remove();
-        if (Metrics.enabled()) {
-          Metrics.histogramObserve(MetricKeys.Histogram.BLOCK_TRANSACTION_COUNT,
-              block.getTransactions().size(),
-              StringUtil.encode58Check(block.getWitnessAddress().toByteArray()));
-        }
         long headerNumber = getDynamicPropertiesStore().getLatestBlockHeaderNumber();
         if (block.getNum() <= headerNumber && khaosDb.containBlockInMiniStore(block.getBlockId())) {
           logger.info("Block {} is already exist.", block.getBlockId().getString());
@@ -1261,15 +1265,15 @@ public class Manager {
                 block.getNum(), rePushTransactions.size(), pendingTransactions.size(),
                 block.getTransactions().size(), txs.size());
 
-        if (CommonParameter.getInstance().getShutdownBlockTime() != null
-                && CommonParameter.getInstance().getShutdownBlockTime()
-                .isSatisfiedBy(new Date(block.getTimeStamp()))) {
-          latestSolidityNumShutDown = block.getNum();
-        }
-
         try (PendingManager pm = new PendingManager(this)) {
 
           if (!block.generatedByMyself) {
+            // Pending changes have been reset; use committed witness permissions for admission.
+            // switchFork also verifies admitted fork blocks against their own parent state.
+            if (!block.validateSignature(getDynamicPropertiesStore(), getAccountStore())) {
+              throw new ValidateSignatureException(
+                  "block " + block.getNum() + " signature invalid");
+            }
             consensus.receiveBlock(block);
           }
 
@@ -1324,6 +1328,7 @@ public class Manager {
               synchronized (forkLock) {
                 switchFork(newBlock);
               }
+              onBlockApplied(block);
               logger.info(SAVE_BLOCK, newBlock);
 
               logger.warn(
@@ -1353,6 +1358,7 @@ public class Manager {
             long newSolidNum = getDynamicPropertiesStore().getLatestSolidifiedBlockNum();
             blockTrigger(newBlock, oldSolidNum, newSolidNum);
           }
+          onBlockApplied(block);
           logger.info(SAVE_BLOCK, newBlock);
         }
         //clear ownerAddressSet
@@ -1378,6 +1384,20 @@ public class Manager {
       }
     } finally {
       setBlockWaitLock(false);
+    }
+  }
+
+  private void onBlockApplied(BlockCapsule block) {
+    if (Metrics.enabled()) {
+      Metrics.histogramObserve(MetricKeys.Histogram.BLOCK_TRANSACTION_COUNT,
+          block.getTransactions().size(),
+          StringUtil.encode58Check(block.getWitnessAddress().toByteArray()));
+    }
+
+    if (CommonParameter.getInstance().getShutdownBlockTime() != null
+        && CommonParameter.getInstance().getShutdownBlockTime()
+        .isSatisfiedBy(new Date(block.getTimeStamp()))) {
+      latestSolidityNumShutDown = block.getNum();
     }
   }
 
