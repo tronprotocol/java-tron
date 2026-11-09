@@ -23,6 +23,7 @@ public class CronExpressionLocaleTest {
     cronExpression.setTimeZone(TimeZone.getTimeZone("UTC"));
     Date next = cronExpression.getNextValidTimeAfter(
         Date.from(Instant.parse("2026-06-01T00:00:00Z")));
+    // The parent test reads this result from the child JVM's stdout.
     System.out.print((CronExpression.MAX_YEAR - new GregorianCalendar().get(Calendar.YEAR))
         + " " + next.toInstant() + " " + cronExpression.isSatisfiedBy(next));
   }
