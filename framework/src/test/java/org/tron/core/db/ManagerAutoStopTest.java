@@ -49,8 +49,8 @@ import org.tron.core.exception.TronError;
 public class ManagerAutoStopTest {
 
   private static final String PREVIEW_PREFIX = "Auto-stop: shutDownBlockTime ";
-  private static final String CANDIDATE_NOTE = "These are candidates: the node stops only if "
-      + "a block timestamp exactly matches one, and that is not guaranteed.";
+  private static final String CANDIDATE_NOTE =
+      "The target is the first block at or after the first match.";
   private static final long HEAD_TIME = Instant.parse("2026-06-01T00:00:00Z").toEpochMilli();
   private static final String HEAD_TEXT = "Mon 2026-06-01 00:00:00 UTC";
 

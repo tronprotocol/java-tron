@@ -330,6 +330,7 @@ public class ManagerWitnessSignatureTest extends BaseMethodTest {
     assertFalse(schedule.isSatisfiedBy(new Date(fork.getTimeStamp())));
     assertTrue(schedule.isSatisfiedBy(new Date(forkHead.getTimeStamp())));
     CommonParameter.getInstance().setShutdownBlockTime(schedule);
+    ReflectUtils.setFieldValue(dbManager, "autoStopTime", forkHead.getTimeStamp());
     long shutdownTarget = dbManager.getLatestSolidityNumShutDown();
     boolean metricsEnabled = CommonParameter.getInstance().isMetricsPrometheusEnable();
     CommonParameter.getInstance().setMetricsPrometheusEnable(true);
@@ -388,6 +389,8 @@ public class ManagerWitnessSignatureTest extends BaseMethodTest {
     CronExpression schedule = new CronExpression("* * * * * ?");
     assertTrue(schedule.isSatisfiedBy(new Date(block.getTimeStamp())));
     CommonParameter.getInstance().setShutdownBlockTime(schedule);
+    // initAutoStop has already run, so set the first cron time it would have taken.
+    ReflectUtils.setFieldValue(dbManager, "autoStopTime", block.getTimeStamp());
   }
 
   private PeerConnection processSyncBlock(BlockCapsule block) throws Exception {
