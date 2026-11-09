@@ -41,6 +41,24 @@ public class LibrustzcashParam {
     validParamLength(value, 32);
   }
 
+  public static void validSpendAk(byte[] ak) throws ZksnarkException {
+    valid32Params(ak);
+    // Jubjub encodes y in little-endian order, with x's parity in the top bit of byte 31.
+    // The identity (x = 0, y = 1) has canonical encoding 01 00 ... 00 00.
+    // The current native decoder also accepts 01 00 ... 00 80: negating x = 0 still gives 0,
+    // and it does not reject this non-canonical sign bit. Mask it to catch both encodings.
+    // This only excludes the identity; native code still validates the point and subgroup.
+    if (ak[0] != 1 || (ak[31] & 0x7f) != 0) {
+      return;
+    }
+    for (int i = 1; i < 31; i++) {
+      if (ak[i] != 0) {
+        return;
+      }
+    }
+    throw new ZksnarkException("Invalid spend ak: identity point");
+  }
+
   public static void validVoucherPath(byte[] voucherPath) throws ZksnarkException {
     validParamLength(voucherPath, 1 + 33 * 32 + 8);
     validByteValue(voucherPath[0], (byte) 0x20);
@@ -117,6 +135,9 @@ public class LibrustzcashParam {
 
     @Override
     public void valid() throws ZksnarkException {
+      if (data == null || size < 0 || size > data.length) {
+        throw new ZksnarkException("Invalid ZIP32 seed length");
+      }
       validParamLength(m_bytes, 169);
     }
   }
@@ -129,7 +150,8 @@ public class LibrustzcashParam {
 
     @Override
     public void valid() throws ZksnarkException {
-
+      validParamLength(getData(), 169);
+      validParamLength(getM_bytes(), 169);
     }
   }
 
@@ -159,7 +181,10 @@ public class LibrustzcashParam {
 
     @Override
     public void valid() throws ZksnarkException {
-
+      validParamLength(xfvk, 169);
+      validParamLength(j, 11);
+      validParamLength(j_ret, 11);
+      validParamLength(addr_ret, 43);
     }
   }
 
@@ -451,7 +476,7 @@ public class LibrustzcashParam {
     @Override
     public void valid() throws ZksnarkException {
       validValueParams(value);
-      valid32Params(ak);
+      validSpendAk(ak);
       valid32Params(nsk);
       valid11Params(d);
       valid32Params(r);

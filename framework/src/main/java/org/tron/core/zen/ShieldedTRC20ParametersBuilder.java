@@ -222,11 +222,13 @@ public class ShieldedTRC20ParametersBuilder {
         throw new ZksnarkException("missing expanded spending key for spend authorization");
       }
       byte[] result = new byte[64];
-      JLibrustzcash.librustzcashSaplingSpendSig(
+      if (!JLibrustzcash.librustzcashSaplingSpendSig(
           new LibrustzcashParam.SpendSigParams(spends.get(i).expsk.getAsk(),
               spends.get(i).alpha,
               dataToBeSigned,
-              result));
+              result))) {
+        throw new ZksnarkException("Spend signature generation failed");
+      }
       builder.getSpendDescriptionBuilder(i)
           .setSpendAuthoritySignature(ByteString.copyFrom(result));
     }
@@ -354,12 +356,14 @@ public class ShieldedTRC20ParametersBuilder {
       builder.setMessageHash(ByteString.copyFrom(dataHashToBeSigned));
 
       byte[] bindingSig = new byte[64];
-      JLibrustzcash.librustzcashSaplingBindingSig(
+      if (!JLibrustzcash.librustzcashSaplingBindingSig(
           new LibrustzcashParam.BindingSigParams(ctx,
               valueBalance,
               dataHashToBeSigned,
               bindingSig)
-      );
+      )) {
+        throw new ZksnarkException("Binding signature generation failed");
+      }
       builder.setBindingSignature(ByteString.copyFrom(bindingSig));
     } catch (Exception e) {
       throw new ZksnarkException("build the shielded TRC-20 parameters error: " + e.getMessage());

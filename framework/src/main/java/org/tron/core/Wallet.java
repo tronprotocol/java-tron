@@ -2868,6 +2868,9 @@ public class Wallet {
         note.getRcm().toByteArray());
     byte[] nf = baseNote.nullifier(ak, nk, voucherContainer.position());
 
+    if (nf == null) {
+      throw new ZksnarkException("compute nullifier error");
+    }
     if (chainBaseManager.getNullifierStore().has(nf)) {
       result = SpendResult.newBuilder()
           .setResult(true)
@@ -2893,7 +2896,9 @@ public class Wallet {
         spendAuthSigParameters.getAlpha().toByteArray(),
         spendAuthSigParameters.getTxHash().toByteArray(),
         result);
-    JLibrustzcash.librustzcashSaplingSpendSig(spendSigParams);
+    if (!JLibrustzcash.librustzcashSaplingSpendSig(spendSigParams)) {
+      throw new ZksnarkException("Spend signature generation failed");
+    }
 
     return BytesMessage.newBuilder().setValue(ByteString.copyFrom(result)).build();
   }
@@ -2925,7 +2930,7 @@ public class Wallet {
         incrementalMerkleVoucherContainer.position(),
         result);
     if (!JLibrustzcash.librustzcashComputeNf(computeNfParams)) {
-      return null;
+      throw new ZksnarkException("compute nullifier error");
     }
 
     return BytesMessage.newBuilder()

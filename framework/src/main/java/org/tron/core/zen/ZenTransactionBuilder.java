@@ -170,12 +170,14 @@ public class ZenTransactionBuilder {
       }
 
       byte[] bindingSig = new byte[64];
-      JLibrustzcash.librustzcashSaplingBindingSig(
+      if (!JLibrustzcash.librustzcashSaplingBindingSig(
           new BindingSigParams(ctx,
               valueBalance,
               dataHashToBeSigned,
               bindingSig)
-      );
+      )) {
+        throw new ZksnarkException("Binding signature generation failed");
+      }
       contractBuilder.setBindingSignature(ByteString.copyFrom(bindingSig));
     } catch (ZksnarkException e) {
       throw e;
@@ -197,11 +199,13 @@ public class ZenTransactionBuilder {
   public void createSpendAuth(byte[] dataToBeSigned) throws ZksnarkException {
     for (int i = 0; i < spends.size(); i++) {
       byte[] result = new byte[64];
-      JLibrustzcash.librustzcashSaplingSpendSig(
+      if (!JLibrustzcash.librustzcashSaplingSpendSig(
           new SpendSigParams(spends.get(i).expsk.getAsk(),
               spends.get(i).alpha,
               dataToBeSigned,
-              result));
+              result))) {
+        throw new ZksnarkException("Spend signature generation failed");
+      }
       contractBuilder.getSpendDescriptionBuilder(i)
           .setSpendAuthoritySignature(ByteString.copyFrom(result));
     }
