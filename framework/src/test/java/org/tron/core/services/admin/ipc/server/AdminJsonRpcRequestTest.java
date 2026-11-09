@@ -32,6 +32,7 @@ import org.tron.core.services.admin.AdminJsonRpcRequestHandler;
 import org.tron.core.services.admin.http.AdminRpcServlet;
 import org.tron.core.services.filter.HttpInterceptor;
 import org.tron.core.services.jsonrpc.JsonRpcMediaType;
+import org.tron.core.services.jsonrpc.JsonRpcRequestValidator;
 
 /** Runs identical protocol assertions through the HTTP and IPC entry points. */
 @RunWith(Parameterized.class)
@@ -100,10 +101,31 @@ public class AdminJsonRpcRequestTest {
   }
 
   @Test
-  public void numericIdsOutsideLongRangeRetainTheirValue() throws Exception {
+  public void nonLongNumericIdsAreRejectedWithTheirValue() throws Exception {
     for (String id : new String[] {"9223372036854775808", "-9223372036854775809",
-        "18446744073709551617", "9223372036854775807.1", "-9223372036854775808.1",
-        "1e40", "-1e40"}) {
+        "18446744073709551617", "9223372036854775807.1", "-9223372036854775808.1", "1.5",
+        "9223372036854775807.0", "0.12345678901234567890123456789", "-0.5", "1e-20", "1e40",
+        "-1e40"}) {
+      JsonNode response = assertError(sender.send(REQUEST + ",\"id\":" + id + "}"), -32600, id);
+      Assert.assertEquals(JsonRpcRequestValidator.INVALID_NUMERIC_ID_MESSAGE,
+          response.path("error").path("message").asText());
+    }
+    Mockito.verifyNoInteractions(adminJsonRpc);
+  }
+
+  @Test
+  public void exponentOverflowIsAParseError() throws Exception {
+    for (String literal : new String[] {"1e2147483648", "-1e2147483648", "1e-2147483649"}) {
+      assertError(sender.send(REQUEST + ",\"id\":" + literal + "}"), -32700, "null");
+      assertError(sender.send("{\"jsonrpc\":\"2.0\",\"method\":\"admin_addPeer\","
+          + "\"params\":[" + literal + "],\"id\":1}"), -32700, "null");
+    }
+    Mockito.verifyNoInteractions(adminJsonRpc);
+  }
+
+  @Test
+  public void longRangeIdsRetainTheirValue() throws Exception {
+    for (String id : new String[] {"9223372036854775807", "-9223372036854775808"}) {
       JsonNode response = parse(sender.send(REQUEST + ",\"id\":" + id + "}"));
       assertId(id, response.get("id"));
       Assert.assertTrue(response.path("result").path("success").asBoolean());
@@ -115,8 +137,7 @@ public class AdminJsonRpcRequestTest {
   @Test
   public void acceptedIdsRetainTheirValueAndType() throws Exception {
     for (String id : new String[] {"\"null\"", "\"\"", "\"请求-7\"", "7", "0",
-        "9223372036854775807", "-9223372036854775808", "9007199254740993",
-        "0.12345678901234567890123456789", "9223372036854775807.0", "-0.5", "1e-20"}) {
+        "9223372036854775807", "-9223372036854775808", "9007199254740993"}) {
       JsonNode response = parse(sender.send(REQUEST + ",\"id\":" + id + "}"));
       assertId(id, response.get("id"));
       Assert.assertTrue(response.path("result").path("success").asBoolean());
@@ -230,8 +251,7 @@ public class AdminJsonRpcRequestTest {
   public void parameterBindingFailuresRetainIdsAndSilenceNotifications() throws Exception {
     for (String params : new String[] {"[{}]", "{\"endpoint\":{}}"}) {
       String request = REQUEST.replace(PARAMS, params);
-      for (String id : new String[] {"9", "\"request\"", "9223372036854775807",
-          "0.12345678901234567890123456789"}) {
+      for (String id : new String[] {"9", "\"request\"", "9223372036854775807"}) {
         JsonNode error = assertError(sender.send(request + ",\"id\":" + id + "}"), -32602, id)
             .get("error");
         Assert.assertEquals("Failed to read method parameter at index 0",
@@ -255,8 +275,7 @@ public class AdminJsonRpcRequestTest {
   public void errorResponsesRetainAcceptedIds() throws Exception {
     Mockito.when(adminJsonRpc.addPeer(ENDPOINT))
         .thenThrow(new JsonRpcInvalidParamsException("Invalid admin parameters"));
-    for (String id : new String[] {"\"null\"", "9223372036854775807",
-        "0.12345678901234567890123456789"}) {
+    for (String id : new String[] {"\"null\"", "9223372036854775807"}) {
       JsonNode response = assertError(sender.send(REQUEST + ",\"id\":" + id + "}"), -32602, id);
       Assert.assertEquals("Invalid admin parameters", response.path("error").path("message")
           .asText());
