@@ -276,6 +276,15 @@ public class TransactionTrace {
           receipt.getCallerEnergyMergedUsage(),
           receipt.getCallerEnergyMergedWindowSize(),
           receipt.getCallerEnergyWindowSizeV2());
+      // payEnergyBill returns before storing the account when usage is zero, which keeps the
+      // committed Stake 2.0 reservation. Same-address origin is a second unmodified load.
+      if (dynamicPropertiesStore.allowTvmResourceOptimization()
+          && receipt.getEnergyUsageTotal() <= 0) {
+        if (origin != null && !caller.getAddress().equals(origin.getAddress())) {
+          accountStore.put(origin.getAddress().toByteArray(), origin);
+        }
+        accountStore.put(caller.getAddress().toByteArray(), caller);
+      }
     }
     receipt.payEnergyBill(
         dynamicPropertiesStore, accountStore, forkController,

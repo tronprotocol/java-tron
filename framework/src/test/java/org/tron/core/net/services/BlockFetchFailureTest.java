@@ -587,7 +587,8 @@ public class BlockFetchFailureTest {
   }
 
   private static BlockCapsule newBlock() {
-    BlockCapsule block = new BlockCapsule(1, Sha256Hash.ZERO_HASH, 0, ByteString.EMPTY);
+    BlockCapsule block = new BlockCapsule(1, Sha256Hash.ZERO_HASH, 0,
+        ByteString.copyFrom(ECKey.fromPrivate(BigInteger.TEN).getAddress()));
     block.setMerkleRoot();
     return block;
   }

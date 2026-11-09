@@ -11,6 +11,7 @@ import static org.tron.common.math.Maths.max;
 import static org.tron.common.math.Maths.min;
 import static org.tron.common.math.Maths.multiplyExact;
 import static org.tron.common.utils.ByteUtil.stripLeadingZeroes;
+import static org.tron.core.config.Parameter.ChainConstant.MAX_VOTE_NUMBER;
 import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 import static org.tron.protos.contract.Common.ResourceCode.BANDWIDTH;
 import static org.tron.protos.contract.Common.ResourceCode.ENERGY;
@@ -617,6 +618,12 @@ public class Program {
         ownerCapsule.getAccountResource().getFrozenBalanceForEnergy().getFrozenBalance();
     repo.addTotalEnergyWeight(-frozenBalanceForEnergyOfOwner / TRX_PRECISION);
 
+    if (optimizeVotePowerState(repo)
+        && (frozenBalanceForBandwidthOfOwner > 0 || frozenBalanceForEnergyOfOwner > 0)) {
+      ownerCapsule.invalidateOldTronPower();
+      repo.updateAccount(ownerAddr, ownerCapsule);
+    }
+
     // transfer all kinds of frozen balance to BlackHole
     repo.addBalance(inheritorAddr, frozenBalanceForBandwidthOfOwner + frozenBalanceForEnergyOfOwner);
 
@@ -630,6 +637,19 @@ public class Program {
     AccountCapsule ownerCapsule = repo.getAccount(ownerAddr);
     AccountCapsule inheritorCapsule = repo.getAccount(inheritorAddr);
     long now = repo.getHeadSlot();
+
+    long[] weightsBefore = VMConfig.allowTvmResourceOptimization()
+        && ownerCapsule.getFrozenV2List().stream().anyMatch(frozen -> frozen.getAmount() > 0)
+        ? frozenV2Weights(ownerCapsule, inheritorCapsule) : null;
+
+    if (optimizeVotePowerState(repo)
+        && ownerCapsule.getFrozenV2List().stream().anyMatch(frozen -> frozen.getAmount() > 0)) {
+      if (inheritorCapsule.oldTronPowerIsNotInitialized()) {
+        inheritorCapsule.initializeOldTronPower();
+      }
+      // Invalidate before returning, including accounts queued for deletion at finalization.
+      ownerCapsule.invalidateOldTronPower();
+    }
 
     // transfer frozen resource
     ownerCapsule.getFrozenV2List().stream()
@@ -686,7 +706,32 @@ public class Program {
     clearOwnerFreezeV2(ownerCapsule);
     repo.updateAccount(ownerCapsule.createDbKey(), ownerCapsule);
     repo.updateAccount(inheritorCapsule.createDbKey(), inheritorCapsule);
+    if (weightsBefore != null) {
+      long[] weightsAfter = frozenV2Weights(repo.getAccount(ownerAddr), repo.getAccount(inheritorAddr));
+      repo.addTotalNetWeight(weightsAfter[0] - weightsBefore[0]);
+      repo.addTotalEnergyWeight(weightsAfter[1] - weightsBefore[1]);
+      repo.addTotalTronPowerWeight(weightsAfter[2] - weightsBefore[2]);
+    }
     return expireUnfrozenBalance;
+  }
+
+  private long[] frozenV2Weights(AccountCapsule source, AccountCapsule beneficiary) {
+    long[] weights = accountFrozenV2Weights(source);
+    if (!FastByteComparisons.isEqual(source.createDbKey(), beneficiary.createDbKey())) {
+      long[] beneficiaryWeights = accountFrozenV2Weights(beneficiary);
+      for (int i = 0; i < weights.length; i++) {
+        weights[i] = addExact(weights[i], beneficiaryWeights[i], VMConfig.disableJavaLangMath());
+      }
+    }
+    return weights;
+  }
+
+  private long[] accountFrozenV2Weights(AccountCapsule account) {
+    return new long[] {
+        account.getFrozenV2BalanceWithDelegated(BANDWIDTH) / TRX_PRECISION,
+        account.getFrozenV2BalanceWithDelegated(ENERGY) / TRX_PRECISION,
+        account.getTronPowerFrozenV2Balance() / TRX_PRECISION
+    };
   }
 
   private void clearOwnerFreeze(AccountCapsule ownerCapsule) {
@@ -703,6 +748,11 @@ public class Program {
     ownerCapsule.clearUnfrozenV2();
   }
 
+  private boolean optimizeVotePowerState(Repository repo) {
+    return VMConfig.allowTvmVotePowerOptimization()
+        && repo.getDynamicPropertiesStore().supportAllowNewResourceModel();
+  }
+
   private void withdrawRewardAndCancelVote(byte[] owner, Repository repo) {
     VoteRewardUtil.withdrawReward(owner, repo);
 
@@ -716,7 +766,9 @@ public class Program {
         votesCapsule.clearNewVotes();
       }
       ownerCapsule.clearVotes();
-      ownerCapsule.setOldTronPower(0);
+      if (!optimizeVotePowerState(repo)) {
+        ownerCapsule.setOldTronPower(0);
+      }
       repo.updateVotes(owner, votesCapsule);
     }
     try {
@@ -926,6 +978,11 @@ public class Program {
       // Reuse the table prepared by the top-level execution.
       VM.play(program, OperationRegistry.getTable(isConstantCall()));
       createResult = program.getResult();
+
+      if (VMConfig.allowTvmResourceOptimization()) {
+        checkCPUTimeLimit(isCreate2 ? "create2" : "create");
+      }
+
       getTrace().merge(program.getTrace());
       // always commit nonce
       this.nonce = program.nonce;
@@ -1159,6 +1216,10 @@ public class Program {
       // Reuse the table prepared by the top-level execution.
       VM.play(program, OperationRegistry.getTable(isConstantCall()));
       callResult = program.getResult();
+
+      if (VMConfig.allowTvmResourceOptimization()) {
+        checkCPUTimeLimit(Op.getNameOf(msg.getOpCode()));
+      }
 
       getTrace().merge(program.getTrace());
       getResult().merge(callResult);
@@ -1753,7 +1814,13 @@ public class Program {
       contract.setResult(this.result);
       contract.setConstantCall(isConstantCall());
       contract.setVmShouldEndInUs(getVmShouldEndInUs());
-      Pair<Boolean, byte[]> out = contract.execute(data);
+      Pair<Boolean, byte[]> out;
+      try {
+        out = contract.execute(data);
+      } finally {
+        contract.setRepository(null);
+        contract.setResult(null);
+      }
 
       if (out.getLeft()) { // success
         this.refundEnergy(msg.getEnergy().longValue() - requiredEnergy, CALL_PRE_COMPILED);
@@ -2299,6 +2366,16 @@ public class Program {
     if (witnessArrayLength != amountArrayLength) {
       logger.warn("TVM VoteWitness: witness array length {} does not match amount array length {}",
           witnessArrayLength, amountArrayLength);
+      if (VMConfig.allowTvmResourceOptimization() && internalTx != null) {
+        internalTx.reject();
+      }
+      return false;
+    }
+
+    if (VMConfig.allowTvmResourceOptimization() && witnessArrayLength > MAX_VOTE_NUMBER) {
+      if (internalTx != null) {
+        internalTx.reject();
+      }
       return false;
     }
 

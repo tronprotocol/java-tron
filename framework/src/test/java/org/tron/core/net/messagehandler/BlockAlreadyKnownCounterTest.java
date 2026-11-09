@@ -10,12 +10,15 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.google.protobuf.ByteString;
 import io.prometheus.client.CollectorRegistry;
+import java.math.BigInteger;
 import java.net.InetSocketAddress;
 import java.util.Collections;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.tron.common.crypto.ECKey;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.prometheus.MetricKeys;
 import org.tron.common.utils.ReflectUtils;
@@ -161,7 +164,8 @@ public class BlockAlreadyKnownCounterTest {
 
   private BlockMessage newBlockMessage(long number) {
     BlockCapsule capsule = new BlockCapsule(number, Sha256Hash.ZERO_HASH,
-        System.currentTimeMillis() - 60_000L, Sha256Hash.ZERO_HASH.getByteString());
+        System.currentTimeMillis() - 60_000L,
+        ByteString.copyFrom(ECKey.fromPrivate(BigInteger.TEN).getAddress()));
     return new BlockMessage(capsule);
   }
 

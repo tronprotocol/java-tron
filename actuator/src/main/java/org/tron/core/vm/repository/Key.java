@@ -1,7 +1,9 @@
 package org.tron.core.vm.repository;
 
+import java.security.SecureRandom;
 import java.util.Arrays;
 import org.apache.commons.lang3.ArrayUtils;
+import org.tron.core.vm.config.VMConfig;
 
 public class Key {
 
@@ -49,6 +51,46 @@ public class Key {
 
   @Override
   public int hashCode() {
-    return data != null ? ArrayUtils.hashCode(data) : 0;
+    if (!VMConfig.allowTvmResourceOptimization()) {
+      return data != null ? ArrayUtils.hashCode(data) : 0;
+    }
+    return optimizedHash(data, ResourceHashHolder.SEEDS, ResourceHashHolder.LENGTH_SEED);
+  }
+
+  private static class ResourceHashHolder {
+
+    // Twenty 32-bit words cover production keys, including the variable-length reward keys.
+    // Keep random initialization out of the pre-proposal path.
+    private static final long[] SEEDS = new long[20];
+    private static final long LENGTH_SEED;
+
+    static {
+      SecureRandom random = new SecureRandom();
+      LENGTH_SEED = random.nextLong();
+      for (int i = 0; i < SEEDS.length; i++) {
+        SEEDS[i] = random.nextLong();
+      }
+    }
+  }
+
+  static int optimizedHash(byte[] bytes, long[] seeds, long lengthSeed) {
+    if (bytes.length > seeds.length * 4) {
+      // Preserve arbitrary-length inputs without reusing coefficients or ignoring the tail.
+      return ArrayUtils.hashCode(bytes);
+    }
+    long hash = lengthSeed * bytes.length;
+    for (int offset = 0, index = 0; offset < bytes.length; offset += 4, index++) {
+      int length = bytes.length - offset;
+      if (length > 4) {
+        length = 4;
+      }
+      // Every unsigned 32-bit word, including the tail, has its own coefficient.
+      long word = 0L;
+      for (int i = 0; i < length; i++) {
+        word |= ((long) bytes[offset + i] & 0xff) << (8 * i);
+      }
+      hash += word * seeds[index];
+    }
+    return (int) (hash >>> 32);
   }
 }
