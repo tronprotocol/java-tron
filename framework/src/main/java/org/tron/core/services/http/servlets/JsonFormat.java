@@ -1041,11 +1041,17 @@ public class JsonFormat {
             case 'u':
               // read the next 4 chars
               if (i + 4 < array.length) {
-                ++i;
-                int code = Integer.parseInt(new String(array, i, 4), 16);
-                // this cast is safe because we know how many chars we read
+                int code = 0;
+                for (int k = 1; k <= 4; k++) {
+                  char h = array[i + k];
+                  if (!isHex(h)) {
+                    throw new InvalidEscapeSequence(
+                        "Invalid escape sequence: '\\u' must be followed by 4 hex digits.");
+                  }
+                  code = (code << 4) | digitValue(h);
+                }
                 builder.append((char) code);
-                i += 3;
+                i += 4;
               } else {
                 throw new InvalidEscapeSequence("Invalid escape sequence: '\\u' at end of string.");
               }
