@@ -9,6 +9,7 @@ import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.tron.common.utils.DecodeUtil;
+import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.exception.BalanceInsufficientException;
@@ -224,6 +225,14 @@ public class AccountPermissionUpdateActuator extends AbstractActuator {
         throw new ContractValidateException("active permission type is error");
       }
       checkPermission(permission);
+    }
+
+    long fee = calcFee();
+    if (accountCapsule.getBalance() < fee) {
+      throw new ContractValidateException(
+          String.format("%s insufficient balance, balance: %d, amount: %d",
+              StringUtil.createReadableString(accountCapsule.createDbKey()),
+              accountCapsule.getBalance(), fee));
     }
     return true;
   }
