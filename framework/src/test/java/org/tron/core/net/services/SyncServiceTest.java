@@ -3,8 +3,10 @@ package org.tron.core.net.services;
 import static org.mockito.Mockito.mock;
 
 import com.google.common.cache.Cache;
+import com.google.protobuf.ByteString;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.math.BigInteger;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -16,6 +18,7 @@ import org.junit.Test;
 import org.mockito.Mockito;
 import org.springframework.context.ApplicationContext;
 import org.tron.common.BaseMethodTest;
+import org.tron.common.crypto.ECKey;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.common.utils.Sha256Hash;
@@ -177,7 +180,8 @@ public class SyncServiceTest extends BaseMethodTest {
       TronNetDelegate delegate = mock(TronNetDelegate.class);
       ReflectUtils.setFieldValue(sync, "tronNetDelegate", delegate);
       BlockCapsule block = new BlockCapsule(1, Sha256Hash.ZERO_HASH,
-          System.currentTimeMillis(), Sha256Hash.ZERO_HASH.getByteString());
+          System.currentTimeMillis(),
+          ByteString.copyFrom(ECKey.fromPrivate(BigInteger.ONE).getAddress()));
       BlockCapsule.BlockId blockId = block.getBlockId();
       Mockito.when(delegate.getSolidBlockId()).thenReturn(blockId);
       Mockito.when(delegate.getBlockLock()).thenReturn(new Object());
