@@ -27,37 +27,55 @@ public class ContractEventParserAbiTest {
     return sb.toString();
   }
 
-  private ABI abiWithEntries(int count) {
+  /** Build an ABI with the given number of function and (non-anonymous) event entries. */
+  private ABI abiOf(int functions, int events) {
     ABI.Builder b = ABI.newBuilder();
-    for (int i = 0; i < count; i++) {
+    for (int i = 0; i < functions; i++) {
+      b.addEntrys(ABI.Entry.newBuilder().setType(ABI.Entry.EntryType.Function));
+    }
+    for (int i = 0; i < events; i++) {
       b.addEntrys(ABI.Entry.newBuilder().setType(ABI.Entry.EntryType.Event));
     }
     return b.build();
   }
 
+  // The entry-count limit and the event-count limit are exercised independently below: each case
+  // stays within one limit and crosses only the other, so a test cannot pass by accident if one
+  // of the two guards were removed.
+
   @Test
-  public void normalSizedAbiIsDecoded() {
-    assertFalse(hasTooManyEntries(abiWithEntries(MAX_ABI_ENTRIES)));
+  public void atBothBoundsIsDecoded() {
+    // 1,023 functions + 1 event = 1,024 entries, 1 event: within both limits.
+    ABI abi = abiOf(MAX_ABI_ENTRIES - 1, 1);
+    assertFalse(hasTooManyEntries(abi));
+    assertFalse(hasTooManyEvents(abi));
   }
 
   @Test
-  public void oversizedAbiIsNotDecoded() {
-    assertTrue(hasTooManyEntries(abiWithEntries(MAX_ABI_ENTRIES + 1)));
+  public void onlyEntryLimitExceeded() {
+    // 1,024 functions + 1 event = 1,025 entries, 1 event: only the entry limit is exceeded.
+    ABI abi = abiOf(MAX_ABI_ENTRIES, 1);
+    assertTrue(hasTooManyEntries(abi));
+    assertFalse(hasTooManyEvents(abi));
+  }
+
+  @Test
+  public void onlyEventLimitExceeded() {
+    // 513 events + 3 functions = 516 entries, 513 events: only the event limit is exceeded.
+    ABI abi = abiOf(3, MAX_ABI_EVENTS + 1);
+    assertFalse(hasTooManyEntries(abi));
+    assertTrue(hasTooManyEvents(abi));
+  }
+
+  @Test
+  public void eventCountAtBoundIsAllowed() {
+    assertFalse(hasTooManyEvents(abiOf(0, MAX_ABI_EVENTS)));
   }
 
   @Test
   public void emptyAbiIsWithinLimit() {
     assertFalse(hasTooManyEntries(ABI.getDefaultInstance()));
-  }
-
-  @Test
-  public void eventCountAtBoundIsAllowed() {
-    assertFalse(hasTooManyEvents(abiWithEntries(MAX_ABI_EVENTS)));
-  }
-
-  @Test
-  public void tooManyEventsIsRejected() {
-    assertTrue(hasTooManyEvents(abiWithEntries(MAX_ABI_EVENTS + 1)));
+    assertFalse(hasTooManyEvents(ABI.getDefaultInstance()));
   }
 
   @Test
