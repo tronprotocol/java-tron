@@ -266,7 +266,7 @@ public class JsonRpcServlet extends RateLimiterServlet {
         byte[] responseBytes = internalErrorResponse(subRequest.get("id"));
         responseNode = MAPPER.readTree(responseBytes);
         // Charge only the replacement, not the discarded malformed response bytes.
-        addition = responseBytes.length + (!batchResult.isEmpty() ? 1 : 0);
+        addition = responseBytes.length + separatorSize;
         // A replacement error can be larger than the malformed response it replaces.
         if (maxResponseSize > 0 && accumulatedSize + addition > maxResponseSize) {
           overflow = true;

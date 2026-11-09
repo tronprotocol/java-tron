@@ -37,6 +37,7 @@ import com.googlecode.jsonrpc4j.JsonRpcServer;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.management.ManagementFactory;
 import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -45,6 +46,7 @@ import java.util.List;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.junit.After;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.LoggerFactory;
@@ -1095,6 +1097,50 @@ public class JsonRpcServletTest {
     assertEquals(-32003, body.get(1).get("error").get("code").asInt());
     assertEquals(-32003, body.get(2).get("error").get("code").asInt());
     assertEquals(2, calls[0]);
+  }
+
+  @Test
+  public void batchResponseBuffer_largeStreamUsesBoundedAllocation() throws Exception {
+    java.lang.management.ThreadMXBean bean = ManagementFactory.getThreadMXBean();
+    Assume.assumeTrue(bean instanceof com.sun.management.ThreadMXBean);
+    com.sun.management.ThreadMXBean threads = (com.sun.management.ThreadMXBean) bean;
+    Assume.assumeTrue(threads.isThreadAllocatedMemorySupported()
+        && threads.isThreadAllocatedMemoryEnabled());
+    long thread = Thread.currentThread().getId();
+    CommonParameter.getInstance().jsonRpcMaxResponseSize = 64 << 10;
+
+    byte[] chunk = new byte[8192];
+    Arrays.fill(chunk, (byte) 'x');
+    byte[] prefix = "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":\""
+        .getBytes(StandardCharsets.UTF_8);
+    byte[] suffix = "\"}".getBytes(StandardCharsets.UTF_8);
+    doAnswer(inv -> {
+      OutputStream out = inv.getArgument(1);
+      out.write(prefix);
+      // Stream 32 MiB using one reusable chunk, without allocating the result in the mock.
+      for (int i = 0; i < 4096; i++) {
+        out.write(chunk);
+      }
+      out.write(suffix);
+      return 0;
+    }).when(mockRpcServer).handleRequest(any(InputStream.class), any(OutputStream.class));
+
+    String request = withEnvelope("[{\"id\":1}]");
+    doPost(request); // Warm the same path before measuring allocations.
+    long before = threads.getThreadAllocatedBytes(thread);
+    Assume.assumeTrue(before >= 0);
+    MockHttpServletResponse resp = doPost(request);
+    long allocated = threads.getThreadAllocatedBytes(thread) - before;
+
+    assertEquals(200, resp.getStatus());
+    JsonNode body = MAPPER.readTree(resp.getContentAsByteArray());
+    assertTrue(body.isArray());
+    assertEquals(1, body.size());
+    assertEquals(1, body.get(0).get("id").asInt());
+    assertEquals(-32003, body.get(0).get("error").get("code").asInt());
+    // Allow overhead while rejecting the old full-response buffering and toByteArray() copy.
+    assertTrue("allocated " + allocated + " bytes for oversized batch response",
+        allocated >= 0 && allocated < (4L << 20));
   }
 
   @Test
