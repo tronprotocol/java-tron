@@ -5,6 +5,7 @@ import static org.tron.core.capsule.TransactionCapsule.getShieldTransactionHashI
 import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
 import com.google.common.io.Files;
+import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.io.File;
@@ -1415,16 +1416,8 @@ public class SendCoinShieldTest extends BaseTest {
       addZeroValueOutputNote(builder);
       builder.setTransparentOutput(ByteArray.fromHexString(TO_ADDRESS), 10_000_000L);
 
-      TransactionCapsule transactionCap1 = builder.build();
-      try {
-        executeTx(transactionCap1);
-        Assert.fail();
-      } catch (ContractValidateException e) {
-        if (!e.getMessage().equals("librustzcashSaplingFinalCheck error")) {
-          throw e;
-        }
-        System.out.println("Done");
-      }
+      ZksnarkException error = Assert.assertThrows(ZksnarkException.class, builder::build);
+      Assert.assertEquals("Binding signature generation failed", error.getMessage());
 
       // 0L + 20_000_000L  =  0L + 10_000_000L +  10_000_000L
     }
@@ -1459,7 +1452,11 @@ public class SendCoinShieldTest extends BaseTest {
         public SpendDescriptionCapsule generateSpendProof(SpendDescriptionInfo spend, long ctx)
             throws ZksnarkException {
           long fakeCtx = JLibrustzcash.librustzcashSaplingProvingCtxInit();
-          return super.generateSpendProof(spend, fakeCtx);
+          try {
+            return super.generateSpendProof(spend, fakeCtx);
+          } finally {
+            JLibrustzcash.librustzcashSaplingProvingCtxFree(fakeCtx);
+          }
         }
       };
 
@@ -1474,16 +1471,8 @@ public class SendCoinShieldTest extends BaseTest {
       addZeroValueOutputNote(builder);
       builder.setTransparentOutput(ByteArray.fromHexString(TO_ADDRESS), 10_000_000L);
 
-      TransactionCapsule transactionCap1 = builder.build();
-      try {
-        executeTx(transactionCap1);
-        Assert.fail();
-      } catch (ContractValidateException e) {
-        if (!e.getMessage().equals("librustzcashSaplingFinalCheck error")) {
-          throw e;
-        }
-        System.out.println("Done");
-      }
+      ZksnarkException error = Assert.assertThrows(ZksnarkException.class, builder::build);
+      Assert.assertEquals("Binding signature generation failed", error.getMessage());
       // 0L + 20_000_000L  =  0L + 10_000_000L +  10_000_000L
     }
   }
@@ -1662,6 +1651,28 @@ public class SendCoinShieldTest extends BaseTest {
     ZenTransactionBuilder builder = new ZenTransactionBuilder(wallet);
     TransactionCapsule transactionCapsule = generateDefaultBuilder(builder);
     executeTx(transactionCapsule);
+  }
+
+  @Test
+  public void testInvalidBindingSignatureIsRejectedByVerifier() throws Exception {
+    dbManager.getDynamicPropertiesStore().saveAllowShieldedTransaction(1);
+    dbManager.getDynamicPropertiesStore().saveTotalShieldedPoolValue(1000 * 1000000L);
+
+    TransactionCapsule valid = generateDefaultBuilder(new ZenTransactionBuilder(wallet));
+    Protocol.Transaction.Contract contract = valid.getInstance().getRawData().getContract(0);
+    ShieldedTransferContract invalidSignature = contract.getParameter()
+        .unpack(ShieldedTransferContract.class).toBuilder()
+        .setBindingSignature(ByteString.copyFrom(new byte[64])).build();
+    TransactionCapsule invalid = new TransactionCapsule(valid.getInstance().toBuilder()
+        .setRawData(valid.getInstance().getRawData().toBuilder()
+            .setContract(0, contract.toBuilder().setParameter(Any.pack(invalidSignature))))
+        .build());
+
+    ContractValidateException error = Assert.assertThrows(ContractValidateException.class,
+        () -> executeTx(invalid));
+    Assert.assertEquals("librustzcashSaplingFinalCheck error", error.getMessage());
+    // The same transaction with its original signature must still pass validation and execution.
+    executeTx(valid);
   }
 
   @Test
