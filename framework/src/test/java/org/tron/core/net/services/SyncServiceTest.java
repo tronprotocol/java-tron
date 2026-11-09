@@ -24,6 +24,7 @@ import org.tron.core.net.P2pEventHandlerImpl;
 import org.tron.core.net.TronNetDelegate;
 import org.tron.core.net.message.adv.BlockMessage;
 import org.tron.core.net.message.adv.FetchInvDataMessage;
+import org.tron.core.net.messagehandler.BlockMsgHandler;
 import org.tron.core.net.messagehandler.PbftDataSyncHandler;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.PeerManager;
@@ -170,7 +171,7 @@ public class SyncServiceTest extends BaseMethodTest {
   }
 
   @Test
-  public void testSolidBlockReleasesRequest() throws Exception {
+  public void testSolidBlockDoesNotRefetchBeforeDisconnect() throws Exception {
     SyncService sync = new SyncService();
     try {
       TronNetDelegate delegate = mock(TronNetDelegate.class);
@@ -180,22 +181,41 @@ public class SyncServiceTest extends BaseMethodTest {
       BlockCapsule.BlockId blockId = block.getBlockId();
       Mockito.when(delegate.getSolidBlockId()).thenReturn(blockId);
       Mockito.when(delegate.getBlockLock()).thenReturn(new Object());
-      PeerConnection source = context.getBean(PeerConnection.class);
+      List<Message> sent = new ArrayList<>();
+      PeerConnection source = new PeerConnection() {
+        @Override
+        public void sendMessage(Message message) {
+          sent.add(message);
+        }
+      };
       Channel channel = mock(Channel.class);
       Mockito.when(channel.getInetAddress()).thenReturn(inetSocketAddress.getAddress());
       Mockito.when(channel.getInetSocketAddress()).thenReturn(inetSocketAddress);
       source.setChannel(channel);
-      source.getSyncBlockInProcess().add(blockId);
+      source.setFetchAble(true);
+      source.getSyncBlockToFetch().add(blockId);
+      Mockito.when(delegate.getActivePeer()).thenReturn(Collections.singletonList(source));
       Cache<BlockCapsule.BlockId, PeerConnection> requests =
           (Cache<BlockCapsule.BlockId, PeerConnection>)
               ReflectUtils.getFieldObject(sync, "requestBlockIds");
-      requests.put(blockId, source);
-      sync.processBlock(source, new BlockMessage(block));
+
+      ReflectUtils.invokeMethod(sync, "startFetchSyncBlock");
+      Assert.assertEquals(1, sent.size());
+      Assert.assertTrue(sent.get(0) instanceof FetchInvDataMessage);
+      Assert.assertEquals(Collections.singletonList(blockId),
+          ((FetchInvDataMessage) sent.get(0)).getHashList());
+      Assert.assertTrue(source.getSyncBlockRequested().containsKey(blockId));
+
+      BlockMsgHandler handler = new BlockMsgHandler();
+      ReflectUtils.setFieldValue(handler, "syncService", sync);
+      handler.processMessage(source, new BlockMessage(block));
+      Assert.assertTrue(source.getSyncBlockRequested().isEmpty());
+      Assert.assertTrue(source.getSyncBlockInProcess().contains(blockId));
       ReflectUtils.setFieldValue(sync, "fetchFlag", false);
 
       ReflectUtils.invokeMethod(sync, "handleSyncBlock");
 
-      Assert.assertNull(requests.getIfPresent(blockId));
+      Assert.assertSame(source, requests.getIfPresent(blockId));
       Assert.assertTrue(source.getSyncBlockInProcess().isEmpty());
       Map<UnparsedBlock, PeerConnection> waiting =
           (Map<UnparsedBlock, PeerConnection>)
@@ -204,6 +224,16 @@ public class SyncServiceTest extends BaseMethodTest {
       Assert.assertTrue((boolean) ReflectUtils.getFieldObject(sync, "fetchFlag"));
       Mockito.verify(delegate, Mockito.never())
           .processBlock(Mockito.any(BlockCapsule.class), Mockito.anyBoolean());
+
+      for (int i = 0; i < 3; i++) {
+        ReflectUtils.invokeMethod(sync, "startFetchSyncBlock");
+      }
+      Assert.assertEquals(1, sent.size());
+      Assert.assertTrue(source.getSyncBlockRequested().isEmpty());
+      Assert.assertEquals(blockId, source.getSyncBlockToFetch().peek());
+
+      sync.onDisconnect(source);
+      Assert.assertNull(requests.getIfPresent(blockId));
     } finally {
       sync.close();
     }

@@ -308,7 +308,6 @@ public class SyncService {
             blockWaitToProcess.remove(unparsedBlock);
             capacityReleased[0] = true;
             peerConnection.getSyncBlockInProcess().remove(blockId);
-            invalid(blockId, peerConnection);
             return;
           }
           final boolean[] isFound = {false};
