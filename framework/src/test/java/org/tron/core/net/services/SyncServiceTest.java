@@ -3,8 +3,10 @@ package org.tron.core.net.services;
 import static org.mockito.Mockito.mock;
 
 import com.google.common.cache.Cache;
+import com.google.protobuf.ByteString;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.math.BigInteger;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -17,6 +19,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.springframework.context.ApplicationContext;
 import org.tron.common.BaseMethodTest;
+import org.tron.common.crypto.ECKey;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.common.utils.Sha256Hash;
@@ -310,7 +313,8 @@ public class SyncServiceTest extends BaseMethodTest {
       Mockito.when(delegate.getActivePeer()).thenReturn(Arrays.asList(badPeer, goodPeer));
 
       BlockCapsule block = new BlockCapsule(1, Sha256Hash.ZERO_HASH,
-          System.currentTimeMillis(), Sha256Hash.ZERO_HASH.getByteString());
+          System.currentTimeMillis(),
+          ByteString.copyFrom(ECKey.fromPrivate(BigInteger.ONE).getAddress()));
       BlockCapsule.BlockId blockId = block.getBlockId();
       badPeer.getSyncBlockToFetch().add(blockId);
       goodPeer.getSyncBlockToFetch().add(blockId);
@@ -378,7 +382,8 @@ public class SyncServiceTest extends BaseMethodTest {
       Mockito.when(delegate.getActivePeer()).thenReturn(Arrays.asList(badPeer, goodPeer));
 
       BlockCapsule block = new BlockCapsule(1, Sha256Hash.ZERO_HASH,
-          System.currentTimeMillis(), Sha256Hash.ZERO_HASH.getByteString());
+          System.currentTimeMillis(),
+          ByteString.copyFrom(ECKey.fromPrivate(BigInteger.ONE).getAddress()));
       BlockCapsule.BlockId blockId = block.getBlockId();
       byte[] data = block.getData();
       byte[] malformed = Arrays.copyOf(data, data.length + 1);
