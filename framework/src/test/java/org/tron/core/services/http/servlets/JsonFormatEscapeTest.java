@@ -457,6 +457,14 @@ public class JsonFormatEscapeTest {
 
   // Inbound decoding and transaction ID derivation
 
+  private static final String[] MALFORMED_UNICODE_ESCAPES = {
+      "a\\uZZZZ", "a\\u+123", "a\\u-001", "a\\u004g", "a\\u 041", "\\u12G4b",
+      "a\\u41zz",
+      // Arabic-Indic digits and fullwidth letters are accepted by Character.digit
+      "a\\u" + (char) 0x0660 + (char) 0x0660 + (char) 0x0664 + (char) 0x0661,
+      "a\\u00" + (char) 0xFF21 + (char) 0xFF21
+  };
+
   private static AssetIssueContract mergeDescription(String rawJsonToken) throws Exception {
     AssetIssueContract.Builder builder = AssetIssueContract.newBuilder();
     JsonFormat.merge("{\"description\":\"" + rawJsonToken + "\"}", builder, true);
@@ -505,11 +513,14 @@ public class JsonFormatEscapeTest {
   @Test
   public void testInboundNameStringHandlesEscapesAndRejectsMalformedUnicode() throws Exception {
     assertDecodedInboundMapping("https:\\/\\/tron.network", "https://tron.network");
-    assertDecodedInboundMapping("a\\u+123", "a" + (char) 0x0123);
-    org.junit.Assert.assertThrows(
-        "non-hex unicode escapes must still be rejected",
-        JsonFormat.ParseException.class,
-        () -> mergeDescription("a\\uZZZZ"));
+    assertDecodedInboundMapping("a\\u00c9\\u00C9", "a" + (char) 0xC9 + (char) 0xC9);
+    for (String malformed : MALFORMED_UNICODE_ESCAPES) {
+      JsonFormat.ParseException e = org.junit.Assert.assertThrows(
+          "malformed unicode escape must be rejected: " + malformed,
+          JsonFormat.ParseException.class,
+          () -> mergeDescription(malformed));
+      assertTrue(e.getMessage(), e.getMessage().contains("4 hex digits"));
+    }
   }
 
   @Test
@@ -777,10 +788,88 @@ public class JsonFormatEscapeTest {
     for (boolean visible : new boolean[] {true, false}) {
       assertEquals("escaped solidus must be accepted as valid JSON",
           "a/b", mergeId("a\\/b", visible));
-      assertEquals("signed unicode escape must retain the develop-branch mapping",
-          "a" + (char) 0x0123, mergeId("a\\u+123", visible));
       assertEquals("standard unicode escape must remain unchanged",
           "aA", mergeId("a\\u0041", visible));
+      assertEquals("hex digits are case-insensitive",
+          "" + (char) 0xC9 + (char) 0xC9, mergeId("\\u00c9\\u00C9", visible));
+    }
+  }
+
+  @Test
+  public void testTruncatedUnicodeEscapeIsRejectedAsParseException() {
+    for (boolean visible : new boolean[] {true, false}) {
+      for (String truncated : new String[] {"a\\u41", "a\\u"}) {
+        JsonFormat.ParseException e = org.junit.Assert.assertThrows(
+            "string field must reject " + truncated,
+            JsonFormat.ParseException.class,
+            () -> mergeId(truncated, visible));
+        assertTrue(e.getMessage(), e.getMessage().contains("at end of string"));
+      }
+    }
+  }
+
+  @Test
+  public void testUnicodeEscapeConsumesExactlyFourCharacters() throws Exception {
+    for (boolean visible : new boolean[] {true, false}) {
+      assertEquals("A0", mergeId("\\u00410", visible));
+    }
+  }
+
+  @Test
+  public void testMalformedUnicodeEscapeInNestedAbiStringIsRejected() throws Exception {
+    for (boolean visible : new boolean[] {true, false}) {
+      for (String malformed : MALFORMED_UNICODE_ESCAPES) {
+        // A well-formed outer body can still carry a malformed escape inside the abi string.
+        String body = org.tron.json.JSON.toJSONString(java.util.Collections.singletonMap(
+            "abi", "[{\"name\":\"" + malformed + "\",\"type\":\"function\"}]"));
+        String abi = org.tron.json.JSON.parseObject(body).getString("abi");
+        JsonFormat.ParseException e = org.junit.Assert.assertThrows(
+            "abi entry name must reject " + malformed,
+            JsonFormat.ParseException.class,
+            () -> JsonFormat.merge("{\"entrys\":" + abi + "}", ABI.newBuilder(), visible));
+        assertTrue(e.getMessage(), e.getMessage().contains("4 hex digits"));
+      }
+      ABI.Builder valid = ABI.newBuilder();
+      JsonFormat.merge("{\"entrys\":[{\"name\":\"\\u0041b\",\"type\":\"function\"}]}",
+          valid, visible);
+      assertEquals("Ab", valid.getEntrys(0).getName());
+    }
+  }
+
+  @Test
+  public void testStoredLiteralEscapeTextRoundTrips() throws Exception {
+    String literal = "x\\uZZZZ\\u+123\\u-001";
+    AssetIssueContract stored = AssetIssueContract.newBuilder()
+        .setId(literal)
+        .setName(ByteString.copyFromUtf8(literal))
+        .setDescription(ByteString.copyFromUtf8(literal))
+        .build();
+    for (boolean visible : new boolean[] {true, false}) {
+      String json = JsonFormat.printToString(stored, visible);
+      AssetIssueContract.Builder reparsed = AssetIssueContract.newBuilder();
+      JsonFormat.merge(json, reparsed, visible);
+      assertEquals("stored literal escape text must print and re-parse unchanged",
+          stored.toByteString(), reparsed.build().toByteString());
+    }
+  }
+
+  @Test
+  public void testMalformedUnicodeEscapesAreRejectedAsParseException() {
+    for (boolean visible : new boolean[] {true, false}) {
+      for (String malformed : MALFORMED_UNICODE_ESCAPES) {
+        JsonFormat.ParseException stringField = org.junit.Assert.assertThrows(
+            "string field must reject " + malformed,
+            JsonFormat.ParseException.class,
+            () -> mergeId(malformed, visible));
+        assertTrue(stringField.getMessage(), stringField.getMessage().contains("4 hex digits"));
+
+        JsonFormat.ParseException unknownField = org.junit.Assert.assertThrows(
+            "unknown field must reject " + malformed,
+            JsonFormat.ParseException.class,
+            () -> JsonFormat.merge("{\"no_such_field\":\"" + malformed + "\"}",
+                AssetIssueContract.newBuilder(), visible));
+        assertTrue(unknownField.getMessage(), unknownField.getMessage().contains("4 hex digits"));
+      }
     }
   }
 
