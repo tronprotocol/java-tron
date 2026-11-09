@@ -73,6 +73,7 @@ import org.tron.common.logsfilter.trigger.ContractEventTrigger;
 import org.tron.common.logsfilter.trigger.ContractLogTrigger;
 import org.tron.common.logsfilter.trigger.ContractTrigger;
 import org.tron.common.logsfilter.trigger.Trigger;
+import org.tron.common.math.StrictMathWrapper;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.prometheus.MetricKeys;
@@ -1484,10 +1485,19 @@ public class Manager {
         .saveLatestBlockHeaderNumber(block.getNum());
     chainBaseManager.getDynamicPropertiesStore()
         .saveLatestBlockHeaderTimestamp(block.getTimeStamp());
-    revokingStore.setMaxSize((int) (
-        chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber()
-            - chainBaseManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum()
-            + 1));
+    long maxSize = chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber()
+        - chainBaseManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum() + 1;
+    // A solid height jump flushes several heights at once, so keep the layers above the auto-stop
+    // height until the persisted height reaches it. A fork switch applies several blocks under one
+    // stop check, so it also holds at that height. The next check can then see the exact height.
+    long stopHeight = latestSolidityNumShutDown;
+    if (stopHeight > 0) {
+      long persisted = getDynamicPropertiesStore().getLatestBlockHeaderNumberFromDB();
+      if (persisted < stopHeight || (persisted == stopHeight && block.isSwitch())) {
+        maxSize = StrictMathWrapper.max(maxSize, block.getNum() - stopHeight);
+      }
+    }
+    revokingStore.setMaxSize((int) maxSize);
     khaosDb.setMaxSize((int)
         (chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber()
             - chainBaseManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum()
