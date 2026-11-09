@@ -55,9 +55,9 @@ public class ContractTriggerCapsule extends TriggerCapsule {
 
     if (abi != null && abi.getEntrysCount() > 0 && topics != null && !topics.isEmpty()
         && !ArrayUtils.isEmpty(topics.get(0).getData())
+        && Args.getInstance().getStorage().isContractParseSwitch()
         && !ContractEventParserAbi.hasTooManyEntries(abi)
-        && !ContractEventParserAbi.hasTooManyEvents(abi)
-        && Args.getInstance().getStorage().isContractParseSwitch()) {
+        && !ContractEventParserAbi.hasTooManyEvents(abi)) {
       String logHash = topics.get(0).toString();
 
       for (ABI.Entry entry : abi.getEntrysList()) {
