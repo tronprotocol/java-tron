@@ -932,6 +932,15 @@ public class Manager {
                   && shieldedTransInPendingCounts.get() >= shieldedTransInPendingMaxCounts) {
             return false;
           }
+          // A transaction flushes at most up to the solidified height. Past the auto-stop height,
+          // only block pushes may move the persisted height, so the transaction is rejected
+          // before it can step over the target.
+          long stopHeight = latestSolidityNumShutDown;
+          if (stopHeight > 0
+              && getDynamicPropertiesStore().getLatestSolidifiedBlockNum() > stopHeight
+              && getDynamicPropertiesStore().getLatestBlockHeaderNumberFromDB() <= stopHeight) {
+            return false;
+          }
           if (!session.valid()) {
             session.setValue(revokingStore.buildSession());
           }
