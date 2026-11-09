@@ -33,6 +33,8 @@ import org.tron.p2p.protos.Discover;
 @Slf4j(topic = "net")
 public class NetUtil {
 
+  // Maximum unscoped IPv6 text length: ffff:ffff:ffff:ffff:ffff:ffff:255.255.255.255.
+  // Any scope suffix counts toward this limit.
   private static final int MAX_IPV6_ADDRESS_LENGTH = 45;
 
   public static final Pattern PATTERN_IPv4 =
