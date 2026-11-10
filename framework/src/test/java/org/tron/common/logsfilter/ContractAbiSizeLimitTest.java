@@ -87,7 +87,9 @@ public class ContractAbiSizeLimitTest {
   private ContractTrigger trigger(ABI abi, DataWord topic0) {
     byte[] address = new byte[20];
     List<DataWord> topics = Lists.newArrayList(topic0);
-    byte[] data = new byte[0];
+    byte[] data = new byte[64];
+    data[31] = 0x2a;
+    data[63] = 0x7b;
     ContractTrigger t = new ContractTrigger();
     t.setBlockNumber(1L);
     t.setRemoved(false);
@@ -209,6 +211,26 @@ public class ContractAbiSizeLimitTest {
     String bigName = repeatA(MAX_ABI_IDENTIFIER_LENGTH + 1);
     ABI abi = ABI.newBuilder().addEntrys(event(bigName)).build();
     v0AssertFallsBackToRawLog(abi, topic0(bigName));
+  }
+
+  @Test
+  public void v0_oversizedEntrySkippedButValidEntryMatches() throws Exception {
+    EventPluginLoader mock = contractTriggersEnabled();
+    EventPluginLoader original = swapLoader(mock);
+    try {
+      ABI abi = ABI.newBuilder()
+          .addEntrys(event(repeatA(MAX_ABI_IDENTIFIER_LENGTH + 1))) // oversized name, skipped
+          .addEntrys(event("Transfer", "address", "uint256"))       // valid, matches
+          .build();
+      new ContractTriggerCapsule(trigger(abi, topic0("Transfer", "address", "uint256")))
+          .processTrigger();
+      ArgumentCaptor<ContractEventTrigger> captor =
+          ArgumentCaptor.forClass(ContractEventTrigger.class);
+      verify(mock).postContractEventTrigger(captor.capture());
+      Assert.assertEquals("Transfer", captor.getValue().getEventName());
+    } finally {
+      swapLoader(original);
+    }
   }
 
   private void v0AssertFallsBackToRawLog(ABI abi, DataWord topic0) throws Exception {
