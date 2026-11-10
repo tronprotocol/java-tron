@@ -27,6 +27,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.tron.p2p.P2pConfig;
 import org.tron.p2p.P2pEventHandler;
+import org.tron.p2p.P2pService;
 import org.tron.p2p.base.Parameter;
 import org.tron.p2p.connection.business.handshake.DisconnectCode;
 import org.tron.p2p.connection.business.handshake.HandshakeService;
@@ -258,6 +259,35 @@ public class ChannelManagerTest {
     Assert.assertTrue(second.isDisconnect());
     Assert.assertFalse(other.isDisconnect());
     Assert.assertNull(((EmbeddedChannel) second.getCtx().channel()).readOutbound());
+  }
+
+  @Test
+  public void blockedReplacementFromEventLoopClosesOutsideAdmissionLock() throws Exception {
+    Channel blocked = channel(true, 1);
+    Channel other = channel(true, 2);
+    InetSocketAddress otherAddress = new InetSocketAddress("192.0.2.32", 18888);
+    set(other, "inetSocketAddress", otherAddress);
+    set(other, "inetAddress", otherAddress.getAddress());
+    ChannelManager.addPeer(blocked);
+    ChannelManager.addPeer(other);
+    List<Boolean> disconnectLocks = observeDisconnectLocks(blocked);
+    EmbeddedChannel socket = (EmbeddedChannel) blocked.getCtx().channel();
+
+    Future<Integer> replacement = socket.eventLoop().submit(() -> {
+      Assert.assertTrue(socket.eventLoop().inEventLoop());
+      return new P2pService().replaceBlockedIps(Collections.singleton(REMOTE.getAddress()));
+    });
+    socket.runPendingTasks();
+
+    Assert.assertEquals(1, replacement.get(5, TimeUnit.SECONDS).intValue());
+    Assert.assertEquals(Collections.singletonList(false), disconnectLocks);
+    Assert.assertTrue(ConnectionPolicy.isBlocked(REMOTE.getAddress()));
+    Assert.assertTrue(blocked.isDisconnect());
+    Assert.assertFalse(other.isDisconnect());
+    Assert.assertNull("Blacklist closure must remain silent", socket.readOutbound());
+    Assert.assertEquals(1, ChannelManager.getChannelCount());
+    Assert.assertSame(other, ChannelManager.getAllChannels().get(0));
+    Assert.assertEquals(DisconnectCode.UNKNOWN, ChannelManager.processPeer(channel(true, 3)));
   }
 
   @Test

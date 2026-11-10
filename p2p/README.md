@@ -10,24 +10,7 @@ Peer discovery, connection management and DNS-based node lists for java-tron.
 > internalizing changed the facts; treat this file as the module's docs rather
 > than as a mirror of upstream.
 
-## Changes synchronized after java-tron #7065
-
-This import covers libp2p `5bae7b9..94dbc75`, including all twelve merged PRs below.
-
-| Upstream PR | Change |
-|---|---|
-| [#169](https://github.com/tronprotocol/libp2p/pull/169) | Bound pending TCP writes and time out stalled writes. |
-| [#170](https://github.com/tronprotocol/libp2p/pull/170) | Preserve trusted inbound handshake capacity and report early admission failures. |
-| [#171](https://github.com/tronprotocol/libp2p/pull/171) | Upgrade snappy-java to 1.1.10.12 and Bouncy Castle to 1.86. |
-| [#172](https://github.com/tronprotocol/libp2p/pull/172) | Remove the handshake/disconnect lock inversion and handle registration races. |
-| [#173](https://github.com/tronprotocol/libp2p/pull/173) | Deduplicate DNS subtree traversal hashes. |
-| [#174](https://github.com/tronprotocol/libp2p/pull/174) | Discard buffered frames after connection closure. |
-| [#175](https://github.com/tronprotocol/libp2p/pull/175) | Harden DNS validation, resolver caches, public-key compression and publication. |
-| [#176](https://github.com/tronprotocol/libp2p/pull/176) | Publish DNS roots when links or signing keys change. |
-| [#177](https://github.com/tronprotocol/libp2p/pull/177) | Keep neighbor responses below the discovery packet size limit. |
-| [#178](https://github.com/tronprotocol/libp2p/pull/178) | Probe the least recently updated Kademlia bucket entry. |
-| [#179](https://github.com/tronprotocol/libp2p/pull/179) | Publish PING state before sending to avoid fast-PONG races. |
-| [#180](https://github.com/tronprotocol/libp2p/pull/180) | Bound raw HELLO/STATUS address fields and normalize retained payloads. |
+## Connection validation and limits
 
 java-tron's application-layer HELLO applies the same raw IPv4/IPv6 bounds and IPv6 validation.
 Its existing unknown-field normalization and the module's TCP blocked-IP policy are retained.

@@ -427,16 +427,18 @@ public class ChannelManager {
     return disconnectedCount;
   }
 
-  public static synchronized int disconnectBlockedIps() {
-    int disconnectedCount = 0;
-    for (Channel channel : getAllChannels()) {
-      if (ConnectionPolicy.isBlocked(channel.getInetAddress()) && !channel.isDisconnect()) {
-        // Do not send a DisconnectReason because it would reveal the manual blacklist policy
-        // to a potentially malicious peer.
-        channel.close();
-        disconnectedCount++;
+  public static int disconnectBlockedIps() {
+    List<Channel> blockedChannels = new ArrayList<>();
+    synchronized (ChannelManager.class) {
+      for (Channel channel : getAllChannels()) {
+        if (ConnectionPolicy.isBlocked(channel.getInetAddress()) && !channel.isDisconnect()) {
+          blockedChannels.add(channel);
+        }
       }
     }
-    return disconnectedCount;
+    // Closing can synchronously invoke application callbacks, so release the admission lock first.
+    // Do not send a DisconnectReason because it would reveal the manual blacklist policy.
+    blockedChannels.forEach(Channel::close);
+    return blockedChannels.size();
   }
 }

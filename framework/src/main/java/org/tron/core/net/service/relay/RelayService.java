@@ -3,6 +3,7 @@ package org.tron.core.net.service.relay;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.protobuf.ByteString;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -191,7 +192,12 @@ public class RelayService {
       }
       if (flag) {
         helloReplayCache.put(msg.getAddress(), msg.getTimestamp());
-        TronNetService.getP2pConfig().getTrustNodes().add(channel.getInetAddress());
+        List<InetAddress> trustNodes = TronNetService.getP2pConfig().getTrustNodes();
+        synchronized (trustNodes) {
+          if (!trustNodes.contains(channel.getInetAddress())) {
+            trustNodes.add(channel.getInetAddress());
+          }
+        }
         DesensitizedConverter.addSensitive(channel.getInetAddress().toString().substring(1),
             ByteArray.toHexString(msg.getAddress().toByteArray()));
       }

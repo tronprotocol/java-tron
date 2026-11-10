@@ -41,6 +41,7 @@ import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.mockito.Mockito;
 import org.slf4j.LoggerFactory;
 import org.tron.common.TestConstants;
 import org.tron.common.args.GenesisBlock;
@@ -52,6 +53,7 @@ import org.tron.common.utils.LocalWitnesses;
 import org.tron.common.utils.PublicMethod;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.TronError;
+import org.tron.p2p.P2pConfig;
 
 @Slf4j
 public class ArgsTest {
@@ -198,6 +200,65 @@ public class ArgsTest {
     method2.invoke(Args.class, nc);
 
     Assert.assertNotEquals(configuredExternalIp, parameter.getNodeExternalIp());
+  }
+
+  @Test
+  public void testExternalIpRejectsInvalidExplicitValues() throws Exception {
+    Method method = Args.class.getDeclaredMethod("externalIp", NodeConfig.class);
+    method.setAccessible(true);
+    Args.getInstance().setNodeExternalIp("192.0.2.10");
+    for (String ip : new String[]{"localhost", "nodes.example.org", "2001:db8::1", "1.2.3",
+        "256.1.2.3", "192.0.2.1 ", "192.0.2.1\n"}) {
+      NodeConfig config = new NodeConfig();
+      config.getDiscovery().getExternal().setIp(ip);
+
+      InvocationTargetException error = Assert.assertThrows(InvocationTargetException.class,
+          () -> method.invoke(null, config));
+
+      Assert.assertTrue(error.getCause() instanceof TronError);
+      Assert.assertEquals(TronError.ErrCode.PARAMETER_INIT,
+          ((TronError) error.getCause()).getErrCode());
+      Assert.assertTrue(error.getCause().getMessage().contains("node.discovery.external.ip"));
+      Assert.assertEquals("192.0.2.10", Args.getInstance().getNodeExternalIp());
+    }
+  }
+
+  @Test
+  public void testExternalIpAcceptsIpv4Literals() throws Exception {
+    Method method = Args.class.getDeclaredMethod("externalIp", NodeConfig.class);
+    method.setAccessible(true);
+    for (String ip : new String[]{"192.0.2.1", "255.255.255.255", "10.0.0.1"}) {
+      NodeConfig config = new NodeConfig();
+      config.getDiscovery().getExternal().setIp(ip);
+      method.invoke(null, config);
+      Assert.assertEquals(ip, Args.getInstance().getNodeExternalIp());
+    }
+  }
+
+  @Test
+  public void testEmptyExternalIpPreservesDetectionAndLanFallback() throws Exception {
+    CommonParameter parameter = Args.getInstance();
+    P2pConfig previousConfig = parameter.p2pConfig;
+    String previousLanIp = parameter.getNodeLanIp();
+    P2pConfig p2pConfig = Mockito.mock(P2pConfig.class);
+    Method method = Args.class.getDeclaredMethod("externalIp", NodeConfig.class);
+    method.setAccessible(true);
+    parameter.p2pConfig = p2pConfig;
+    try {
+      Mockito.when(p2pConfig.getIp()).thenReturn("192.0.2.1");
+      parameter.setNodeExternalIp(null);
+      method.invoke(null, new NodeConfig());
+      Assert.assertEquals("192.0.2.1", parameter.getNodeExternalIp());
+
+      Mockito.when(p2pConfig.getIp()).thenReturn(null);
+      parameter.setNodeExternalIp(null);
+      parameter.setNodeLanIp("192.168.0.1");
+      method.invoke(null, new NodeConfig());
+      Assert.assertEquals("192.168.0.1", parameter.getNodeExternalIp());
+    } finally {
+      parameter.p2pConfig = previousConfig;
+      parameter.setNodeLanIp(previousLanIp);
+    }
   }
 
   @Test
