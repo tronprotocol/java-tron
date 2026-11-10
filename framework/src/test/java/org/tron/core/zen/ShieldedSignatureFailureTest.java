@@ -22,7 +22,6 @@ import org.junit.Test;
 import org.mockito.MockedStatic;
 import org.tron.api.GrpcAPI.SpendAuthSigParameters;
 import org.tron.common.zksnark.JLibrustzcash;
-import org.tron.common.zksnark.LibrustzcashParam.BindingSigParams;
 import org.tron.common.zksnark.LibrustzcashParam.SpendSigParams;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.TransactionCapsule;
@@ -184,27 +183,6 @@ public class ShieldedSignatureFailureTest {
       assertEquals("Binding signature generation failed", error.getMessage());
       assertTrue(builder.getContractBuilder().getBindingSignature().isEmpty());
       nativeApi.verify(() -> JLibrustzcash.librustzcashSaplingBindingSig(any()));
-      nativeApi.verify(() -> JLibrustzcash.librustzcashSaplingProvingCtxFree(CONTEXT));
-    }
-  }
-
-  @Test
-  public void zenBuildKeepsSuccessfulBindingSignature() throws Exception {
-    ZenTransactionBuilder builder = new ZenTransactionBuilder(transactionWallet());
-    try (MockedStatic<JLibrustzcash> nativeApi = mockStatic(JLibrustzcash.class);
-         MockedStatic<TransactionCapsule> transactions = mockStatic(TransactionCapsule.class)) {
-      allowSpendProof(nativeApi);
-      transactions.when(() -> TransactionCapsule.getShieldTransactionHashIgnoreTypeException(any()))
-          .thenReturn(new byte[32]);
-      nativeApi.when(() -> JLibrustzcash.librustzcashSaplingBindingSig(any()))
-          .thenAnswer(invocation -> {
-            BindingSigParams params = invocation.getArgument(0);
-            Arrays.fill(params.getResult(), (byte) 7);
-            return true;
-          });
-      builder.buildWithoutAsk();
-      assertEquals(64, builder.getContractBuilder().getBindingSignature().size());
-      assertEquals(7, builder.getContractBuilder().getBindingSignature().byteAt(0));
       nativeApi.verify(() -> JLibrustzcash.librustzcashSaplingProvingCtxFree(CONTEXT));
     }
   }

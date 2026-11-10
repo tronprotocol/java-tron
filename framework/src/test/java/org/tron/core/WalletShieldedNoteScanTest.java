@@ -181,6 +181,13 @@ public class WalletShieldedNoteScanTest {
     return scanner;
   }
 
+  private static void assertScannedNote(Note expected, GrpcAPI.Note actual) {
+    assertEquals(expected.getValue(), actual.getValue());
+    assertEquals(ByteString.copyFrom(expected.getRcm()), actual.getRcm());
+    assertEquals(ByteString.copyFrom(new byte[]{7, 8, 9}), actual.getMemo());
+    assertEquals(KeyIo.encodePaymentAddress(address), actual.getPaymentAddress());
+  }
+
   @Test
   public void trc20ScansReturnValidNotesOnBothSidesOfMalformedNotes() throws Exception {
     byte[] contractAddress = new byte[21];
@@ -207,10 +214,7 @@ public class WalletShieldedNoteScanTest {
         GrpcAPI.DecryptNotesTRC20.NoteTx actual = result.getNoteTxs(i);
         assertEquals(txid, actual.getTxid());
         assertEquals(index, actual.getIndex());
-        assertEquals(notes[index].note.getValue(), actual.getNote().getValue());
-        assertEquals(ByteString.copyFrom(notes[index].note.getRcm()), actual.getNote().getRcm());
-        assertEquals(ByteString.copyFrom(new byte[]{7, 8, 9}), actual.getNote().getMemo());
-        assertEquals(KeyIo.encodePaymentAddress(address), actual.getNote().getPaymentAddress());
+        assertScannedNote(notes[index].note, actual.getNote());
       }
     }
     assertEquals(0, incoming.getNoteTxs(0).getPosition());
@@ -233,14 +237,11 @@ public class WalletShieldedNoteScanTest {
     GrpcAPI.DecryptNotes outgoing = scanner.scanNoteByOvk(0, 1, ovk);
     for (GrpcAPI.DecryptNotes result : new GrpcAPI.DecryptNotes[]{incoming, outgoing}) {
       assertEquals(2, result.getNoteTxsCount());
-      assertEquals(0, result.getNoteTxs(0).getIndex());
-      assertEquals(3, result.getNoteTxs(1).getIndex());
-      assertEquals(42, result.getNoteTxs(0).getNote().getValue());
-      assertEquals(84, result.getNoteTxs(1).getNote().getValue());
-      assertEquals(ByteString.copyFrom(notes[0].note.getRcm()),
-          result.getNoteTxs(0).getNote().getRcm());
-      assertEquals(ByteString.copyFrom(notes[3].note.getRcm()),
-          result.getNoteTxs(1).getNote().getRcm());
+      for (int i = 0; i < 2; i++) {
+        int index = i * 3;
+        assertEquals(index, result.getNoteTxs(i).getIndex());
+        assertScannedNote(notes[index].note, result.getNoteTxs(i).getNote());
+      }
     }
   }
 }

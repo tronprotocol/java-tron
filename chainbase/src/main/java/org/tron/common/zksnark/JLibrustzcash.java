@@ -133,7 +133,12 @@ public class JLibrustzcash {
         params.getZkproof());
   }
 
-  public static boolean librustzcashSaplingOutputProof(OutputProofParams params) {
+  public static boolean librustzcashSaplingOutputProof(OutputProofParams params)
+      throws ZksnarkException {
+    params.valid();
+    if (!librustzcashCheckDiversifier(params.getD())) {
+      throw new ZksnarkException("Invalid output diversifier");
+    }
     return INSTANCE.librustzcashSaplingOutputProof(params.getCtx(), params.getEsk(),
         params.getD(), params.getPkD(), params.getR(), params.getValue(), params.getCv(),
         params.getZkproof());

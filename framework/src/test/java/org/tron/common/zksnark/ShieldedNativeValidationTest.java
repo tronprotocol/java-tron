@@ -1,12 +1,14 @@
 package org.tron.common.zksnark;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import java.util.Arrays;
@@ -15,6 +17,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.tron.common.zksnark.LibrustzcashParam.OutputProofParams;
 import org.tron.common.zksnark.LibrustzcashParam.SpendProofParams;
 import org.tron.common.zksnark.LibrustzcashParam.Zip32XfvkAddressParams;
 import org.tron.common.zksnark.LibrustzcashParam.Zip32XskDeriveParams;
@@ -110,6 +113,55 @@ public class ShieldedNativeValidationTest {
     assertTrue(JLibrustzcash.librustzcashSaplingSpendProof(params));
     org.junit.Assert.assertFalse(JLibrustzcash.librustzcashSaplingSpendProof(params));
     org.junit.Assert.assertArrayEquals(validAk(), params.getAk());
+  }
+
+  private static OutputProofParams output() throws ZksnarkException {
+    return new OutputProofParams(1, new byte[32], new byte[11], new byte[32],
+        new byte[32], 0, new byte[32], new byte[192]);
+  }
+
+  @Test
+  public void revalidatesOutputParametersBeforeNativeCalls() throws Exception {
+    for (byte[] d : new byte[][]{null, new byte[10], new byte[12]}) {
+      OutputProofParams params = output();
+      params.setD(d);
+      assertThrows(ZksnarkException.class,
+          () -> JLibrustzcash.librustzcashSaplingOutputProof(params));
+    }
+    OutputProofParams shortProof = output();
+    shortProof.setZkproof(new byte[191]);
+    assertThrows(ZksnarkException.class,
+        () -> JLibrustzcash.librustzcashSaplingOutputProof(shortProof));
+    OutputProofParams negativeValue = output();
+    negativeValue.setValue(-1);
+    assertThrows(ZksnarkException.class,
+        () -> JLibrustzcash.librustzcashSaplingOutputProof(negativeValue));
+    verifyNoInteractions(nativeApi);
+  }
+
+  @Test
+  public void rejectsInvalidDiversifierBeforeNativeOutputProof() throws Exception {
+    OutputProofParams params = output();
+    when(nativeApi.librustzcashCheckDiversifier(params.getD())).thenReturn(false);
+
+    ZksnarkException error = assertThrows(ZksnarkException.class,
+        () -> JLibrustzcash.librustzcashSaplingOutputProof(params));
+
+    assertEquals("Invalid output diversifier", error.getMessage());
+    verify(nativeApi).librustzcashCheckDiversifier(params.getD());
+    verifyNoMoreInteractions(nativeApi);
+  }
+
+  @Test
+  public void acceptsValidDiversifierAndPreservesNativeOutputProofResult() throws Exception {
+    OutputProofParams params = output();
+    when(nativeApi.librustzcashCheckDiversifier(params.getD())).thenReturn(true);
+    when(nativeApi.librustzcashSaplingOutputProof(params.getCtx(), params.getEsk(),
+        params.getD(), params.getPkD(), params.getR(), params.getValue(), params.getCv(),
+        params.getZkproof())).thenReturn(true, false);
+
+    assertTrue(JLibrustzcash.librustzcashSaplingOutputProof(params));
+    assertFalse(JLibrustzcash.librustzcashSaplingOutputProof(params));
   }
 
   @Test
