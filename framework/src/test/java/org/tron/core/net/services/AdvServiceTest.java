@@ -8,6 +8,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -19,6 +23,7 @@ import org.mockito.Mockito;
 import org.springframework.context.ApplicationContext;
 import org.tron.common.TestConstants;
 import org.tron.common.application.TronApplicationContext;
+import org.tron.common.es.ExecutorServiceManager;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ReflectUtils;
@@ -36,6 +41,8 @@ import org.tron.core.net.peer.Item;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.PeerManager;
 import org.tron.core.net.service.adv.AdvService;
+import org.tron.core.net.service.effective.EffectiveCheckService;
+import org.tron.core.net.service.sync.SyncService;
 import org.tron.p2p.connection.Channel;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Inventory.InventoryType;
@@ -234,6 +241,105 @@ public class AdvServiceTest {
           ((FetchInvDataMessage) secondMessages.get(1)).getHashList());
     } finally {
       isolated.close();
+    }
+  }
+
+  @Test(timeout = 20_000)
+  public void inventorySendAllowsConcurrentDisconnectCleanup() throws Exception {
+    AdvService isolated = new AdvService();
+    P2pEventHandlerImpl handler = new P2pEventHandlerImpl();
+    ReflectUtils.setFieldValue(handler, "effectiveCheckService", mock(EffectiveCheckService.class));
+    SyncService syncService = mock(SyncService.class);
+    PeerConnection spreadingPeer = Mockito.spy(new PeerConnection());
+    PeerConnection disconnectingPeer = new PeerConnection();
+    for (PeerConnection peer : Arrays.asList(spreadingPeer, disconnectingPeer)) {
+      ReflectUtils.setFieldValue(peer, "advService", isolated);
+      ReflectUtils.setFieldValue(peer, "syncService", syncService);
+    }
+    spreadingPeer.setNeedSyncFromPeer(false);
+    spreadingPeer.setNeedSyncFromUs(false);
+
+    Channel spreadingChannel = mock(Channel.class);
+    Channel disconnectingChannel = mock(Channel.class);
+    InetSocketAddress address = new InetSocketAddress("127.0.0.3", 10001);
+    Mockito.when(spreadingChannel.getInetSocketAddress()).thenReturn(address);
+    Mockito.when(spreadingChannel.getInetAddress()).thenReturn(address.getAddress());
+    Mockito.when(disconnectingChannel.getInetSocketAddress()).thenReturn(address);
+    Mockito.when(disconnectingChannel.getInetAddress()).thenReturn(address.getAddress());
+    ApplicationContext peerContext = mock(ApplicationContext.class);
+    Mockito.when(peerContext.getBean(PeerConnection.class))
+        .thenReturn(spreadingPeer, disconnectingPeer);
+    TronNetDelegate delegate = mock(TronNetDelegate.class);
+    Mockito.when(delegate.getActivePeer()).thenReturn(Collections.singletonList(spreadingPeer));
+    ReflectUtils.setFieldValue(isolated, "tronNetDelegate", delegate);
+
+    CountDownLatch sending = new CountDownLatch(1);
+    CountDownLatch cleanupFinished = new CountDownLatch(1);
+    List<Message> sent = Collections.synchronizedList(new ArrayList<>());
+    ExecutorService executor = ExecutorServiceManager.newFixedThreadPool("adv-send-test", 2);
+    try {
+      Assert.assertSame(spreadingPeer, PeerManager.add(peerContext, spreadingChannel));
+      Assert.assertSame(disconnectingPeer, PeerManager.add(peerContext, disconnectingChannel));
+      Item fetchItem = new Item(Sha256Hash.ZERO_HASH, InventoryType.TRX);
+      spreadingPeer.getAdvInvReceive().put(fetchItem, System.currentTimeMillis());
+      Assert.assertTrue(isolated.addInv(fetchItem));
+      BlockCapsule block = new BlockCapsule(1, Sha256Hash.ZERO_HASH,
+          System.currentTimeMillis(), Sha256Hash.ZERO_HASH.getByteString());
+      Item spreadItem = new Item(block.getBlockId(), InventoryType.BLOCK);
+      Mockito.doAnswer(invocation -> {
+        handler.onDisconnect(spreadingChannel);
+        return null;
+      }).when(spreadingChannel).close();
+      Mockito.doAnswer(invocation -> {
+        Message message = invocation.getArgument(0);
+        sent.add(message);
+        if (!(message instanceof FetchInvDataMessage)) {
+          Assert.assertNotNull(spreadingPeer.getAdvInvSpread().getIfPresent(spreadItem));
+          sending.countDown();
+          // Bound the wait before entering a synchronous close callback, so a regression
+          // fails without leaving threads blocked on each other's monitors.
+          Assert.assertTrue("Disconnect cleanup must complete while inventory sending is paused",
+              cleanupFinished.await(5, TimeUnit.SECONDS));
+          spreadingChannel.close();
+        }
+        return null;
+      }).when(spreadingPeer).sendMessage(Mockito.any(Message.class));
+
+      Future<?> cleanup = executor.submit(() -> {
+        Assert.assertTrue(sending.await(5, TimeUnit.SECONDS));
+        handler.onDisconnect(disconnectingChannel);
+        cleanupFinished.countDown();
+        return null;
+      });
+      Future<?> spread = executor.submit(() -> isolated.broadcast(new BlockMessage(block)));
+      spread.get(10, TimeUnit.SECONDS);
+      cleanup.get(10, TimeUnit.SECONDS);
+
+      Assert.assertEquals(2, sent.size());
+      Assert.assertEquals(Collections.singletonList(block.getBlockId()),
+          ((InventoryMessage) sent.get(0)).getHashList());
+      Assert.assertTrue(sent.get(1) instanceof FetchInvDataMessage);
+      Assert.assertEquals(Collections.singletonList(fetchItem.getHash()),
+          ((FetchInvDataMessage) sent.get(1)).getHashList());
+      Mockito.verify(spreadingChannel).close();
+      Mockito.verify(syncService).onDisconnect(spreadingPeer);
+      Mockito.verify(syncService).onDisconnect(disconnectingPeer);
+      Assert.assertNull(PeerManager.getPeerConnection(spreadingChannel));
+      Assert.assertNull(PeerManager.getPeerConnection(disconnectingChannel));
+    } finally {
+      sending.countDown();
+      cleanupFinished.countDown();
+      executor.shutdown();
+      try {
+        if (!executor.awaitTermination(5, TimeUnit.SECONDS)) {
+          executor.shutdownNow();
+          Assert.assertTrue(executor.awaitTermination(5, TimeUnit.SECONDS));
+        }
+      } finally {
+        PeerManager.remove(spreadingChannel);
+        PeerManager.remove(disconnectingChannel);
+        isolated.close();
+      }
     }
   }
 
