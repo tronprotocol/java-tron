@@ -38,9 +38,10 @@ public class KeepAliveService implements MessageProcess {
               } else {
                 if (now - p.getLastSendTime() > PING_IDLE_THRESHOLD_MILLIS
                     && p.isFinishHandshake()) {
-                  p.send(new PingMessage());
-                  p.waitForPong = true;
+                  // Register before sending so a fast PONG cannot be overwritten.
                   p.pingSent = now;
+                  p.waitForPong = true;
+                  p.send(new PingMessage());
                 }
               }
             });

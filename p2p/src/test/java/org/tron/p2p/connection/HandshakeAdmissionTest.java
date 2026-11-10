@@ -189,6 +189,19 @@ public class HandshakeAdmissionTest {
   }
 
   @Test
+  public void closingBeforeRegistrationDoesNotNotifyOnConnect() throws Exception {
+    TestChannel channel = newChannel(false, 10001);
+    channel.closeOnHandshakeCompletion = true;
+    receive(channel, hello(NETWORK_ID, 1, DisconnectCode.NORMAL, 1));
+
+    Assert.assertFalse(channel.socket.isOpen());
+    Assert.assertTrue(channel.isDisconnect());
+    Assert.assertFalse(channel.isRegisteredPeer());
+    Assert.assertTrue(ChannelManager.getAllChannels().isEmpty());
+    Assert.assertTrue(events.isEmpty());
+  }
+
+  @Test
   public void closedChannelCannotCompleteHandshake() throws Exception {
     TestChannel channel = newChannel(true, 10001);
     channel.close();
@@ -385,6 +398,7 @@ public class HandshakeAdmissionTest {
     private int helloSendAttempts;
     private boolean registeredBeforeHandshake;
     private boolean closeOnHelloReply;
+    private boolean closeOnHandshakeCompletion;
 
     private TestChannel(EmbeddedChannel socket) {
       this.socket = socket;
@@ -410,6 +424,9 @@ public class HandshakeAdmissionTest {
             ChannelManager.getChannels().containsKey(getInetSocketAddress());
       }
       super.setFinishHandshake(finishHandshake);
+      if (finishHandshake && closeOnHandshakeCompletion) {
+        close();
+      }
     }
   }
 }

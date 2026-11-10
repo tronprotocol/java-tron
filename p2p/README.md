@@ -3,12 +3,44 @@
 Peer discovery, connection management and DNS-based node lists for java-tron.
 
 > **Vendored from [tronprotocol/libp2p](https://github.com/tronprotocol/libp2p)
-> v2.2.9, synchronized through `release-v2.3.0` at `5bae7b902f45a9bbd71e492026b4c2c0b6ef0767`.**
+> v2.2.9, synchronized through `release-v2.3.0` at `94dbc75896dc68c72934276c8d3143b4a3540363`.**
 > It lives here as the `:p2p` Gradle module and is consumed as a
 > project dependency, not as a published artifact — `:common` exposes it via
 > `api project(":p2p")`. Upstream's own README follows, edited where
 > internalizing changed the facts; treat this file as the module's docs rather
 > than as a mirror of upstream.
+
+## Changes synchronized after java-tron #7065
+
+This import covers libp2p `5bae7b9..94dbc75`, including all twelve merged PRs below.
+
+| Upstream PR | Change |
+|---|---|
+| [#169](https://github.com/tronprotocol/libp2p/pull/169) | Bound pending TCP writes and time out stalled writes. |
+| [#170](https://github.com/tronprotocol/libp2p/pull/170) | Preserve trusted inbound handshake capacity and report early admission failures. |
+| [#171](https://github.com/tronprotocol/libp2p/pull/171) | Upgrade snappy-java to 1.1.10.12 and Bouncy Castle to 1.86. |
+| [#172](https://github.com/tronprotocol/libp2p/pull/172) | Remove the handshake/disconnect lock inversion and handle registration races. |
+| [#173](https://github.com/tronprotocol/libp2p/pull/173) | Deduplicate DNS subtree traversal hashes. |
+| [#174](https://github.com/tronprotocol/libp2p/pull/174) | Discard buffered frames after connection closure. |
+| [#175](https://github.com/tronprotocol/libp2p/pull/175) | Harden DNS validation, resolver caches, public-key compression and publication. |
+| [#176](https://github.com/tronprotocol/libp2p/pull/176) | Publish DNS roots when links or signing keys change. |
+| [#177](https://github.com/tronprotocol/libp2p/pull/177) | Keep neighbor responses below the discovery packet size limit. |
+| [#178](https://github.com/tronprotocol/libp2p/pull/178) | Probe the least recently updated Kademlia bucket entry. |
+| [#179](https://github.com/tronprotocol/libp2p/pull/179) | Publish PING state before sending to avoid fast-PONG races. |
+| [#180](https://github.com/tronprotocol/libp2p/pull/180) | Bound raw HELLO/STATUS address fields and normalize retained payloads. |
+
+java-tron's application-layer HELLO applies the same raw IPv4/IPv6 bounds and IPv6 validation.
+Its existing unknown-field normalization and the module's TCP blocked-IP policy are retained.
+Bouncy Castle is upgraded in the root build as well as this module so all consumers use 1.86.
+
+Pending writes have a 200 MiB per-connection threshold and a 500 MiB shared eviction threshold;
+the latter triggers asynchronous eviction rather than enforcing a hard global admission limit.
+Writes that remain incomplete for 10 seconds close the connection. Ordinary inbound HELLOs are
+admitted while the total pending count is below 32; trusted IPs can use capacity up to 40 total.
+The per-IP pending limit remains two, and the absolute HELLO deadline remains 10 seconds.
+
+Previously generated DNS tree URLs may need updating; see the
+[migration notes](#124-migration-for-previously-generated-tree-urls).
 
 ## Running it on its own
 
@@ -170,6 +202,13 @@ tree://APFGGTFOBVE2ZNAB3CSMNNX6RRK3ODIRLP2AA5U4YFAA6MSYZUYTQ@nodes.example.org
 The compressed public Key APFGGTFOBVE2ZNAB3CSMNNX6RRK3ODIRLP2AA5U4YFAA6MSYZUYTQ is responsed to
 above dns-private key.
 
+#### Changing the DNS signing key
+
+Changing `dnsPrivate` republishes the root even when the node set is unchanged. Verify the new
+root using the new public key, then distribute the new tree URL and update subscribers'
+`treeUrls` and cross-tree `knownTreeUrls`. Account for DNS caching during the transition;
+clients retaining the old URL cannot verify roots signed by the new key.
+
 ### 1.2.3 Verify your dns txt records
 
 You can query dns record by following command and check if a TXT type record exists:
@@ -180,6 +219,14 @@ dig nodes.example.org TXT
 
 At last we can release the tree's url on anywhere later, such as github. So others can download this
 tree to get nodes dynamically.
+
+### 1.2.4 Migration for previously generated tree URLs
+
+The public-key compression fix changes tree URLs for keys whose public X coordinate has leading
+zero hexadecimal digits. Publishers should regenerate the URL with their existing private key and
+verify it against the signed root. If it differs from the old URL, update subscribers' `treeUrls`,
+cross-tree `knownTreeUrls`, and other distributed copies. Upgrading clients or republishing the
+root alone does not fix an incorrect URL. Key rotation is not required.
 
 # 2. Use as a dependency
 
@@ -361,6 +408,8 @@ String[] urls = new String[] {"tree://APFGGTFOBVE2ZNAB3CSMNNX6RRK3ODIRLP2AA5U4YF
 config.setTreeUrls(Arrays.asList(urls));
 ```
 After that, the module will download the nodes from nile.nftderby1.net periodically.
+
+For existing URLs, check the [migration notes](#124-migration-for-previously-generated-tree-urls).
 
 ### 2.3.3 TCP Handler
 

@@ -27,6 +27,8 @@ import org.tron.p2p.discover.Node;
 import org.tron.p2p.discover.message.MessageType;
 import org.tron.p2p.discover.message.kad.FindNodeMessage;
 import org.tron.p2p.discover.message.kad.PongMessage;
+import org.tron.p2p.discover.protocol.kad.table.KademliaOptions;
+import org.tron.p2p.discover.protocol.kad.table.NodeEntry;
 import org.tron.p2p.discover.socket.MessageHandler;
 import org.tron.p2p.discover.socket.P2pPacketDecoder;
 
@@ -111,14 +113,79 @@ public class PongTimerTest {
     // Execute each queued timeout explicitly instead of waiting for the configured delay.
     for (int i = 0; i < 4; i++) {
       Assert.assertEquals(NodeHandler.State.DISCOVERED, handler.getState());
-      Assert.assertEquals(1, timer.getQueue().size());
-      Runnable timeout = timer.getQueue().peek();
-      Assert.assertTrue(timer.remove(timeout));
-      timeout.run();
+      runNextTimeout();
     }
     Assert.assertEquals(4, pings.get());
     Assert.assertEquals(NodeHandler.State.DEAD, handler.getState());
     Assert.assertTrue(timer.getQueue().isEmpty());
+  }
+
+  @Test
+  public void acceptedPongRestoresRetriesForFullBucketChallenge() throws Exception {
+    NodeHandler incumbent = service.getNodeHandler(bucketNode(0));
+    for (int i = 0; i < 3; i++) {
+      runNextTimeout();
+    }
+    incumbent.handlePong(new PongMessage(incumbent.getNode()));
+    for (int i = 1; i < KademliaOptions.BUCKET_SIZE; i++) {
+      NodeHandler handler = service.getNodeHandler(bucketNode(i));
+      handler.handlePong(new PongMessage(handler.getNode()));
+    }
+    Assert.assertEquals(1, service.getTable().getBucketsCount());
+    Assert.assertEquals(KademliaOptions.BUCKET_SIZE, service.getTable().getNodesCount());
+    Field modified = NodeEntry.class.getDeclaredField("modified");
+    modified.setAccessible(true);
+    for (NodeEntry entry : service.getTable().getAllNodes()) {
+      modified.setLong(entry, entry.getNode().equals(incumbent.getNode()) ? 0 : 1);
+    }
+
+    AtomicInteger pings = new AtomicInteger();
+    config.setDiscoverEnable(true);
+    service.setMessageSender(event -> {
+      if (event.getMessage().getType() == MessageType.KAD_PING
+          && event.getAddress().equals(incumbent.getNode().getPreferInetSocketAddress())) {
+        pings.incrementAndGet();
+      }
+    });
+    NodeHandler candidate = service.getNodeHandler(bucketNode(KademliaOptions.BUCKET_SIZE));
+    candidate.handlePong(new PongMessage(candidate.getNode()));
+
+    for (int i = 0; i < 4; i++) {
+      Assert.assertEquals(NodeHandler.State.EVICTCANDIDATE, incumbent.getState());
+      Assert.assertTrue(service.getTable().contains(incumbent.getNode()));
+      Assert.assertFalse(service.getTable().contains(candidate.getNode()));
+      runNextTimeout();
+    }
+    Assert.assertEquals(4, pings.get());
+    Assert.assertEquals(NodeHandler.State.DEAD, incumbent.getState());
+    Assert.assertFalse(service.getTable().contains(incumbent.getNode()));
+    Assert.assertTrue(service.getTable().contains(candidate.getNode()));
+    Assert.assertEquals(KademliaOptions.BUCKET_SIZE, service.getTable().getNodesCount());
+    Assert.assertTrue(timer.getQueue().isEmpty());
+  }
+
+  @Test
+  public void incompatibleAndUnrequestedPongsDoNotRestoreRetries() {
+    Node node = new Node(new byte[64], "127.0.0.2", "", 18888);
+    NodeHandler handler = service.getNodeHandler(node);
+    for (int i = 0; i < 3; i++) {
+      runNextTimeout();
+    }
+    handler.handlePong(new PongMessage(node) {
+      @Override
+      public int getNetworkId() {
+        return config.getNetworkId() + 1;
+      }
+    });
+    Assert.assertEquals(NodeHandler.State.DEAD, handler.getState());
+    handler.handlePong(new PongMessage(node));
+    Assert.assertEquals(NodeHandler.State.DEAD, handler.getState());
+
+    handler.sendPing();
+    runNextTimeout();
+
+    Assert.assertTrue(timer.getQueue().isEmpty());
+    Assert.assertEquals(NodeHandler.State.DEAD, handler.getState());
   }
 
   @Test
@@ -265,6 +332,20 @@ public class PongTimerTest {
     } finally {
       pipeline.finishAndReleaseAll();
     }
+  }
+
+  private Node bucketNode(int index) {
+    byte[] id = service.getPublicHomeNode().getId().clone();
+    id[0] ^= (byte) 0x80;
+    id[id.length - 1] = (byte) index;
+    return new Node(id, "127.0.0." + (index + 2), "", 18888);
+  }
+
+  private void runNextTimeout() {
+    Assert.assertEquals(1, timer.getQueue().size());
+    Runnable timeout = timer.getQueue().peek();
+    Assert.assertTrue(timer.remove(timeout));
+    timeout.run();
   }
 
   private void submitDelayedTask() {

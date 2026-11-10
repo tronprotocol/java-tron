@@ -47,6 +47,39 @@ public class NodeTest {
   }
 
   @Test
+  public void invalidIpv4IsDiscardedWhileValidIpv6IsRetained() {
+    Parameter.p2pConfig.setIp("127.0.0.1");
+    Parameter.p2pConfig.setIpv6("::1");
+    for (String hostV4 : new String[]{"localhost", "peer.example.invalid", "256.1.1.1",
+        "127.1", "::1", "1.2.3.4\n", "", null}) {
+      Node[] nodes = {
+          new Node(new byte[64], hostV4, "2001:DB8::1", 18888),
+          new Node(new byte[64], hostV4, "2001:DB8::1", 18888, 18888)
+      };
+      for (Node node : nodes) {
+        Assert.assertNull(node.getHostV4());
+        Assert.assertNull(node.getInetSocketAddressV4());
+        Assert.assertEquals("2001:db8:0:0:0:0:0:1", node.getHostV6());
+        Assert.assertEquals(node.getInetSocketAddressV6(), node.getPreferInetSocketAddress());
+        Assert.assertTrue(NetUtil.validNode(node));
+      }
+    }
+  }
+
+  @Test
+  public void invalidIpv4WithoutIpv6LeavesNoUsableAddress() {
+    Node[] nodes = {
+        new Node(new byte[64], "localhost", null, 18888),
+        new Node(new byte[64], "localhost", null, 18888, 18888)
+    };
+    for (Node node : nodes) {
+      Assert.assertNull(node.getHostV4());
+      Assert.assertNull(node.getPreferInetSocketAddress());
+      Assert.assertFalse(NetUtil.validNode(node));
+    }
+  }
+
+  @Test
   public void invalidPortDoesNotBreakIpv6Normalization() {
     Parameter.p2pConfig.setIp("127.0.0.1");
     Parameter.p2pConfig.setIpv6("::1");

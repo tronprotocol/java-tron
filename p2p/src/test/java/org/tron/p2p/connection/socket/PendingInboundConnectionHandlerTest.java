@@ -2,6 +2,7 @@ package org.tron.p2p.connection.socket;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.CodedInputStream;
+import io.netty.bootstrap.Bootstrap;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -14,11 +15,13 @@ import io.netty.channel.embedded.EmbeddedChannel;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.util.ReferenceCountUtil;
 import java.lang.reflect.Field;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketAddress;
+import java.nio.channels.ClosedChannelException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -136,7 +139,7 @@ public class PendingInboundConnectionHandlerTest {
   }
 
   @Test
-  public void globalPendingLimitIsIndependentOfPeerLimit() {
+  public void ordinaryPendingLimitIsIndependentOfPeerLimit() {
     config.setMaxConnections(0);
     for (int i = 0; i < Parameter.MAX_PENDING_INBOUND_CONNECTIONS; i++) {
       Assert.assertTrue(inbound("192.0.2." + (i + 1)).isOpen());
@@ -165,7 +168,7 @@ public class PendingInboundConnectionHandlerTest {
   }
 
   @Test
-  public void trustedInboundConnectionsAlsoConsumePendingQuota() throws Exception {
+  public void trustedInboundConnectionsRespectSameIpLimit() throws Exception {
     config.getTrustNodes().add(InetAddress.getByName(REMOTE_IP));
     EmbeddedChannel socket = inbound(REMOTE_IP);
     Assert.assertTrue(initializeProtocol(socket).isTrustPeer());
@@ -173,9 +176,103 @@ public class PendingInboundConnectionHandlerTest {
     Assert.assertFalse(inbound(REMOTE_IP).isOpen());
   }
 
+  @Test
+  public void ordinarySaturationDoesNotBlockTrustedInboundConnections() throws Exception {
+    InetAddress trusted = InetAddress.getByName("198.51.100.1");
+    config.getTrustNodes().add(trusted);
+    for (int i = 1; i <= Parameter.MAX_PENDING_INBOUND_CONNECTIONS / 2; i++) {
+      Assert.assertTrue(inbound("192.0.2." + i).isOpen());
+      Assert.assertTrue(inbound("192.0.2." + i).isOpen());
+    }
+    Assert.assertFalse(inbound("203.0.113.1").isOpen());
+    Assert.assertTrue(inbound(trusted.getHostAddress()).isOpen());
+  }
+
+  @Test
+  public void trustedPendingConnectionsCountTowardOrdinaryThreshold() throws Exception {
+    fillTrustedPending(28);
+    for (int i = 1; i <= 4; i++) {
+      Assert.assertTrue(inbound("192.0.2." + i).isOpen());
+    }
+    Assert.assertFalse(inbound("203.0.113.1").isOpen());
+  }
+
+  @Test
+  public void trustedConnectionsUseHigherTotalPendingLimit() throws Exception {
+    for (int i = 1; i <= Parameter.MAX_PENDING_INBOUND_CONNECTIONS; i++) {
+      Assert.assertTrue(inbound("192.0.2." + i).isOpen());
+    }
+    fillTrustedPending(Parameter.MAX_TOTAL_PENDING_INBOUND_CONNECTIONS
+        - Parameter.MAX_PENDING_INBOUND_CONNECTIONS);
+    String extraTrustedIp = "198.51.100.100";
+    config.getTrustNodes().add(InetAddress.getByName(extraTrustedIp));
+    Assert.assertFalse(inbound(extraTrustedIp).isOpen());
+    Assert.assertFalse(inbound("203.0.113.1").isOpen());
+
+    EmbeddedChannel first = sockets.get(0);
+    first.close();
+    Assert.assertFalse(inbound("203.0.113.1").isOpen());
+    Assert.assertTrue(inbound(extraTrustedIp).isOpen());
+    first.close();
+    Assert.assertFalse(inbound(extraTrustedIp).isOpen());
+  }
+
+  @Test
+  public void trustedCloseReleasesPendingCapacityExactlyOnce() throws Exception {
+    fillTrustedPending(Parameter.MAX_PENDING_INBOUND_CONNECTIONS - 1);
+    String trustedIp = "198.51.100.100";
+    config.getTrustNodes().add(InetAddress.getByName(trustedIp));
+    EmbeddedChannel trusted = inbound(trustedIp);
+    Assert.assertTrue(trusted.isOpen());
+    Assert.assertFalse(inbound("203.0.113.1").isOpen());
+
+    trusted.close();
+    Assert.assertTrue(inbound("203.0.113.1").isOpen());
+    trusted.close();
+    Assert.assertFalse(inbound("203.0.113.2").isOpen());
+  }
+
+  @Test
+  public void trustedPendingCapacityIsReleasedAfterSuccessfulHello() throws Exception {
+    fillTrustedPending(Parameter.MAX_PENDING_INBOUND_CONNECTIONS - 1);
+    String trustedIp = "198.51.100.100";
+    config.getTrustNodes().add(InetAddress.getByName(trustedIp));
+    EmbeddedChannel trusted = inbound(trustedIp);
+    Assert.assertTrue(trusted.isOpen());
+    Assert.assertFalse(inbound("203.0.113.1").isOpen());
+    Channel channel = initializeProtocol(trusted);
+    receive(trusted, hello(config.getNetworkId()));
+    Assert.assertTrue(channel.isFinishHandshake());
+    Assert.assertTrue(inbound("203.0.113.1").isOpen());
+    Assert.assertFalse(inbound("203.0.113.2").isOpen());
+    trusted.close();
+    Assert.assertFalse(inbound("203.0.113.2").isOpen());
+  }
+
+  @Test
+  public void bannedOrdinaryIpCannotReservePendingCapacity() throws Exception {
+    InetAddress address = InetAddress.getByName(REMOTE_IP);
+    EmbeddedChannel timedOut = inbound(REMOTE_IP);
+    initializeProtocol(timedOut);
+    advance(timedOut, Parameter.HANDSHAKE_TIMEOUT_SECONDS);
+    Assert.assertFalse(timedOut.isOpen());
+    Assert.assertTrue(ChannelManager.isBanned(address));
+    Assert.assertFalse(inbound(REMOTE_IP).isOpen());
+    config.getTrustNodes().add(address);
+    Assert.assertTrue(inbound(REMOTE_IP).isOpen());
+  }
+
   @Test(timeout = 20000)
-  public void concurrentReservationsRespectGlobalLimit() throws Exception {
+  public void concurrentReservationsRespectOrdinaryPendingThreshold() throws Exception {
     assertConcurrentLimit(false, Parameter.MAX_PENDING_INBOUND_CONNECTIONS);
+  }
+
+  @Test(timeout = 20000)
+  public void concurrentTrustedReservationsRespectTotalLimit() throws Exception {
+    for (int i = 0; i < Parameter.MAX_PENDING_INBOUND_CONNECTIONS * 2; i++) {
+      config.getTrustNodes().add(InetAddress.getByName("192.0.2." + (i + 1)));
+    }
+    assertConcurrentLimit(false, Parameter.MAX_TOTAL_PENDING_INBOUND_CONNECTIONS);
   }
 
   @Test(timeout = 20000)
@@ -339,6 +436,7 @@ public class PendingInboundConnectionHandlerTest {
     Assert.assertFalse(closedUnderLock[0]);
     Assert.assertEquals(0, connectCallbacks);
     Assert.assertTrue(ChannelManager.getChannels().isEmpty());
+    clearDisconnectCooldown(REMOTE_IP);
     Assert.assertTrue(inbound(REMOTE_IP).isOpen());
     Assert.assertTrue(inbound(REMOTE_IP).isOpen());
     Assert.assertFalse(inbound(REMOTE_IP).isOpen());
@@ -361,6 +459,7 @@ public class PendingInboundConnectionHandlerTest {
     advance(socket, Parameter.HANDSHAKE_TIMEOUT_SECONDS + 1);
     Assert.assertTrue(socket.isOpen());
     socket.close();
+    clearDisconnectCooldown(REMOTE_IP);
     // Closing an already promoted peer must not release another pending connection's slot.
     Assert.assertFalse(inbound(REMOTE_IP).isOpen());
     waiting.close();
@@ -374,6 +473,7 @@ public class PendingInboundConnectionHandlerTest {
     receive(socket, hello(config.getNetworkId() + 1));
     Assert.assertFalse(socket.isOpen());
     Assert.assertEquals(0, connectCallbacks);
+    clearDisconnectCooldown(REMOTE_IP);
     Assert.assertTrue(inbound(REMOTE_IP).isOpen());
     Assert.assertTrue(inbound(REMOTE_IP).isOpen());
   }
@@ -386,6 +486,7 @@ public class PendingInboundConnectionHandlerTest {
     receive(socket, hello(config.getNetworkId()));
     Assert.assertFalse(socket.isOpen());
     Assert.assertEquals(0, connectCallbacks);
+    clearDisconnectCooldown(REMOTE_IP);
     Assert.assertTrue(inbound(REMOTE_IP).isOpen());
     Assert.assertTrue(inbound(REMOTE_IP).isOpen());
   }
@@ -397,6 +498,7 @@ public class PendingInboundConnectionHandlerTest {
     socket.writeInbound(Unpooled.wrappedBuffer(new byte[]{
         (byte) 0x80, (byte) 0x80, (byte) 0x80, (byte) 0x80, (byte) 0x80}));
     Assert.assertFalse(socket.isOpen());
+    clearDisconnectCooldown(REMOTE_IP);
     Assert.assertTrue(inbound(REMOTE_IP).isOpen());
     Assert.assertTrue(inbound(REMOTE_IP).isOpen());
   }
@@ -409,6 +511,7 @@ public class PendingInboundConnectionHandlerTest {
     Assert.assertTrue(channel.isNodeDetectMode());
     Assert.assertFalse(socket.isOpen());
     Assert.assertEquals(0, connectCallbacks);
+    clearDisconnectCooldown(REMOTE_IP);
     Assert.assertTrue(inbound(REMOTE_IP).isOpen());
     Assert.assertTrue(inbound(REMOTE_IP).isOpen());
   }
@@ -466,21 +569,110 @@ public class PendingInboundConnectionHandlerTest {
   }
 
   @Test(timeout = 20000)
+  public void bannedPeerReceivesHelloWithoutReservingCapacity() throws Exception {
+    for (int i = 1; i <= Parameter.MAX_PENDING_INBOUND_CONNECTIONS; i++) {
+      Assert.assertTrue(inbound("192.0.2." + i).isOpen());
+    }
+    InetAddress address = InetAddress.getByName("127.0.0.1");
+    ChannelManager.banNode(address, TimeUnit.MINUTES.toMillis(1));
+    Long expiry = ChannelManager.getBannedNodes().getIfPresent(address);
+    assertAdmissionRejection(DisconnectCode.TIME_BANNED);
+    Assert.assertEquals(expiry, ChannelManager.getBannedNodes().getIfPresent(address));
+  }
+
+  @Test(timeout = 20000)
+  public void ordinaryPendingThresholdReturnsTooManyPeers() throws Exception {
+    for (int i = 1; i <= Parameter.MAX_PENDING_INBOUND_CONNECTIONS; i++) {
+      Assert.assertTrue(inbound("192.0.2." + i).isOpen());
+    }
+    assertAdmissionRejection(DisconnectCode.TOO_MANY_PEERS);
+  }
+
+  private void assertAdmissionRejection(DisconnectCode expectedCode) throws Exception {
+    BlockingQueue<NioSocketChannel> accepted = new LinkedBlockingQueue<>();
+    BlockingQueue<HelloMessage> replies = new LinkedBlockingQueue<>();
+    io.netty.channel.Channel server = startServer(accepted, null);
+    try {
+      io.netty.channel.Channel client = new Bootstrap()
+          .group(nioGroup)
+          .channel(NioSocketChannel.class)
+          .handler(new ChannelInitializer<NioSocketChannel>() {
+            @Override
+            protected void initChannel(NioSocketChannel socket) {
+              new P2pChannelInitializer("outbound", false, false).initChannel(socket);
+              socket.pipeline().addBefore("messageHandler", "captureHello",
+                  new ChannelInboundHandlerAdapter() {
+                    @Override
+                    public void channelRead(ChannelHandlerContext ctx, Object msg)
+                        throws Exception {
+                      ByteBuf bytes = (ByteBuf) msg;
+                      byte[] data = new byte[bytes.readableBytes()];
+                      bytes.getBytes(bytes.readerIndex(), data);
+                      Message reply = Message.parse(data);
+                      if (reply instanceof HelloMessage) {
+                        replies.add((HelloMessage) reply);
+                      }
+                      ctx.fireChannelRead(msg);
+                    }
+                  });
+            }
+          })
+          .connect(server.localAddress()).sync().channel();
+      nioSockets.add((NioSocketChannel) client);
+      NioSocketChannel rejected = accepted.poll(5, TimeUnit.SECONDS);
+      Assert.assertNotNull(rejected);
+      nioSockets.add(rejected);
+      HelloMessage reply = replies.poll(5, TimeUnit.SECONDS);
+      Assert.assertNotNull("Peer did not receive a HELLO rejection", reply);
+      Assert.assertEquals(expectedCode.getValue().intValue(), reply.getCode());
+      Assert.assertTrue(client.closeFuture().await(5, TimeUnit.SECONDS));
+      Assert.assertTrue(rejected.closeFuture().await(5, TimeUnit.SECONDS));
+      Assert.assertTrue(ChannelManager.getAllChannels().isEmpty());
+      Assert.assertEquals(0, connectCallbacks);
+    } finally {
+      server.close().syncUninterruptibly();
+    }
+  }
+
+  @Test(timeout = 15000)
+  public void stalledRejectionClosesWithoutReservingCapacity() throws Exception {
+    ChannelManager.banNode(InetAddress.getByName("127.0.0.1"), TimeUnit.MINUTES.toMillis(1));
+    BlockingQueue<NioSocketChannel> accepted = new LinkedBlockingQueue<>();
+    CountDownLatch writeStarted = new CountDownLatch(1);
+    io.netty.channel.Channel server = startServer(accepted, new ChannelOutboundHandlerAdapter() {
+      @Override
+      public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) {
+        ctx.channel().closeFuture().addListener(future -> {
+          ReferenceCountUtil.release(msg);
+          promise.tryFailure(new ClosedChannelException());
+        });
+        writeStarted.countDown();
+      }
+    });
+    List<Socket> clients = new ArrayList<>();
+    try {
+      NioSocketChannel rejected = connectClient(server, clients, accepted);
+      Assert.assertTrue(writeStarted.await(1, TimeUnit.SECONDS));
+      Assert.assertTrue(rejected.isOpen());
+      Assert.assertNull(rejected.pipeline().get(PendingInboundConnectionHandler.class));
+      Assert.assertNull(rejected.pipeline().get(MessageHandler.class));
+      Field count = PendingInboundConnectionHandler.class.getDeclaredField("pendingConnections");
+      count.setAccessible(true);
+      Assert.assertEquals(0, count.getInt(null));
+      Assert.assertTrue(rejected.closeFuture().await(5, TimeUnit.SECONDS));
+    } finally {
+      for (Socket client : clients) {
+        client.close();
+      }
+      server.close().syncUninterruptibly();
+    }
+  }
+
+  @Test(timeout = 20000)
   public void realTcpConnectionsAreLimitedBeforeSendingAnyBytes() throws Exception {
-    nioGroup = new NioEventLoopGroup(1);
     BlockingQueue<NioSocketChannel> accepted = new LinkedBlockingQueue<>();
     List<Socket> clients = new ArrayList<>();
-    io.netty.channel.Channel server = new ServerBootstrap()
-        .group(nioGroup)
-        .channel(NioServerSocketChannel.class)
-        .childHandler(new ChannelInitializer<NioSocketChannel>() {
-          @Override
-          protected void initChannel(NioSocketChannel socket) {
-            new P2pChannelInitializer("", false, false).initChannel(socket);
-            accepted.add(socket);
-          }
-        })
-        .bind("127.0.0.1", 0).sync().channel();
+    io.netty.channel.Channel server = startServer(accepted, null);
     try {
       NioSocketChannel first = connectClient(server, clients, accepted);
       NioSocketChannel second = connectClient(server, clients, accepted);
@@ -489,12 +681,21 @@ public class PendingInboundConnectionHandlerTest {
       Assert.assertTrue(second.isActive());
       Assert.assertNotNull(first.pipeline().get(PendingInboundConnectionHandler.class));
       Assert.assertTrue(rejected.closeFuture().await(5, TimeUnit.SECONDS));
+      clients.get(2).setSoTimeout(3000);
+      CodedInputStream input = CodedInputStream.newInstance(clients.get(2).getInputStream());
+      HelloMessage reply = (HelloMessage) Message.parse(
+          input.readRawBytes(input.readRawVarint32()));
+      Assert.assertEquals(DisconnectCode.MAX_CONNECTION_WITH_SAME_IP.getValue().intValue(),
+          reply.getCode());
+      Assert.assertTrue(input.isAtEnd());
       Assert.assertNull(rejected.pipeline().get(MessageHandler.class));
       Assert.assertTrue(ChannelManager.getAllChannels().isEmpty());
       Assert.assertEquals(0, connectCallbacks);
 
       clients.get(0).close();
       Assert.assertTrue(first.closeFuture().await(5, TimeUnit.SECONDS));
+      first.eventLoop().submit(() -> { }).sync();
+      clearDisconnectCooldown("127.0.0.1");
       NioSocketChannel replacement = connectClient(server, clients, accepted);
       Assert.assertTrue(replacement.isActive());
       Assert.assertNotNull(replacement.pipeline().get(PendingInboundConnectionHandler.class));
@@ -504,6 +705,25 @@ public class PendingInboundConnectionHandlerTest {
       }
       server.close().syncUninterruptibly();
     }
+  }
+
+  private io.netty.channel.Channel startServer(BlockingQueue<NioSocketChannel> accepted,
+      ChannelOutboundHandlerAdapter writeHandler) throws Exception {
+    nioGroup = new NioEventLoopGroup(1);
+    return new ServerBootstrap()
+        .group(nioGroup)
+        .channel(NioServerSocketChannel.class)
+        .childHandler(new ChannelInitializer<NioSocketChannel>() {
+          @Override
+          protected void initChannel(NioSocketChannel socket) {
+            if (writeHandler != null) {
+              socket.pipeline().addLast(writeHandler);
+            }
+            new P2pChannelInitializer("", false, false).initChannel(socket);
+            accepted.add(socket);
+          }
+        })
+        .bind("127.0.0.1", 0).sync().channel();
   }
 
   private NioSocketChannel connectClient(io.netty.channel.Channel server, List<Socket> clients,
@@ -519,6 +739,19 @@ public class PendingInboundConnectionHandlerTest {
     return socket;
   }
 
+  private void fillTrustedPending(int count) throws Exception {
+    for (int i = 1; i <= count; i++) {
+      String ip = "198.51.100." + i;
+      config.getTrustNodes().add(InetAddress.getByName(ip));
+      Assert.assertTrue(inbound(ip).isOpen());
+    }
+  }
+
+  private void clearDisconnectCooldown(String ip) {
+    // Keep reservation-release checks independent of the new early ban check.
+    ChannelManager.getBannedNodes().invalidate(new InetSocketAddress(ip, 0).getAddress());
+  }
+
   private EmbeddedChannel inbound(String ip) {
     InetSocketAddress address = new InetSocketAddress(ip, 18888);
     EmbeddedChannel socket = new EmbeddedChannel() {
@@ -529,7 +762,7 @@ public class PendingInboundConnectionHandlerTest {
     };
     sockets.add(socket);
     socket.freezeTime();
-    if (!PendingInboundConnectionHandler.tryAdd(socket)) {
+    if (PendingInboundConnectionHandler.tryAdd(socket) != DisconnectCode.NORMAL) {
       socket.close();
     }
     return socket;

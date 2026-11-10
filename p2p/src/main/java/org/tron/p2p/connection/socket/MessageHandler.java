@@ -3,6 +3,7 @@ package org.tron.p2p.connection.socket;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
+import java.util.Arrays;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.p2p.connection.Channel;
@@ -47,6 +48,11 @@ public class MessageHandler extends ByteToMessageDecoder {
 
   @Override
   protected void decode(ChannelHandlerContext ctx, ByteBuf buffer, List<Object> out) {
+    if (channel.isDisconnect() || !ctx.channel().isActive()) {
+      buffer.skipBytes(buffer.readableBytes());
+      return;
+    }
+
     byte[] data = new byte[buffer.readableBytes()];
     buffer.readBytes(data);
     try {
@@ -81,8 +87,9 @@ public class MessageHandler extends ByteToMessageDecoder {
       }
       channel.processException(e);
     } catch (Throwable t) {
-      logger.error("Decode message from {} failed, message:{}", channel.getInetSocketAddress(),
-          ByteArray.toHexString(data));
+      byte[] prefix = Arrays.copyOf(data, StrictMath.min(data.length, 256));
+      logger.error("Decode message from {} failed, length:{}, prefix:{}",
+          channel.getInetSocketAddress(), data.length, ByteArray.toHexString(prefix));
       throw t;
     }
   }

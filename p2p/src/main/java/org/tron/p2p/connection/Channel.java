@@ -10,6 +10,7 @@ import io.netty.handler.codec.CorruptedFrameException;
 import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 import io.netty.handler.timeout.ReadTimeoutException;
 import io.netty.handler.timeout.ReadTimeoutHandler;
+import io.netty.handler.timeout.WriteTimeoutException;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -83,6 +84,7 @@ public class Channel {
   @Getter
   private long avgLatency;
   private long count;
+  private final WriteBufferHandler writeBufferHandler = new WriteBufferHandler(this);
 
   /** @deprecated Use {@link #isOutbound()} to query connection direction. */
   @Deprecated
@@ -118,6 +120,7 @@ public class Channel {
     pipeline.addLast(TrafficStats.tcp);
     pipeline.addLast("protoPrepend", new ProtobufVarint32LengthFieldPrepender());
     pipeline.addLast("protoDecode", new P2pProtobufVarint32FrameDecoder(this));
+    pipeline.addLast("writeTimeoutHandler", writeBufferHandler);
     pipeline.addLast("messageHandler", messageHandler);
   }
 
@@ -131,6 +134,7 @@ public class Channel {
     }
     SocketAddress address = ctx.channel().remoteAddress();
     if (throwable instanceof ReadTimeoutException
+        || throwable instanceof WriteTimeoutException
         || throwable instanceof IOException
         || throwable instanceof CorruptedFrameException) {
       logger.warn("Close peer {}, reason: {}", address, throwable.getMessage());
@@ -217,7 +221,7 @@ public class Channel {
       }
 
       ByteBuf byteBuf = Unpooled.wrappedBuffer(data);
-      ctx.writeAndFlush(byteBuf).addListener((ChannelFutureListener) future -> {
+      writeBufferHandler.writeAndFlush(ctx, byteBuf).addListener((ChannelFutureListener) future -> {
         if (!future.isSuccess() && !isDisconnect) {
           logger.warn("Send to {} failed, message-type:{}, cause:{}",
               ctx.channel().remoteAddress(), ByteArray.byte2int(type),
