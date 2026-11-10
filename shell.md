@@ -10,7 +10,7 @@ The script is available in the java-tron project at [github](https://github.com/
 
 The script runs on x86_64 with JDK 8 and on ARM64 with JDK 17. It picks the JVM options for the Java version it finds, and downloads the release jars built for that architecture (`FullNode-aarch64.jar` on ARM64).
 
-Downloaded release jars are verified against the GPG signature published with each release, made by the key listed under "Integrity Check" in the [README](./README.md), so `gpg` must be installed; a jar that fails verification is not used. A signature made by a revoked or expired release key fails verification. The mainnet config is downloaded from java-tron and the Nile testnet config from [nile-testnet](https://github.com/tron-nile-testnet/nile-testnet).
+Downloaded release jars are verified against the GPG signature published with each release, made by the key listed under "Integrity Check" in the [README](./README.md), so `gpg` must be installed; a jar that fails verification is not used. A signature made by a revoked release key fails verification. The mainnet config is downloaded from java-tron and the Nile testnet config from [nile-testnet](https://github.com/tron-nile-testnet/nile-testnet).
 
 For each download the release key is fetched by its fingerprint from keys.openpgp.org, or from keyserver.ubuntu.com if the first server does not answer, so installing a release jar needs outbound HTTPS access (port 443) to one of these key servers. If neither can be reached, the signature cannot be checked and the downloaded jar is removed.
 
