@@ -156,12 +156,8 @@ public class HelloMessage extends TronMessage {
   }
 
   public boolean valid() {
-    if (helloMessage.hasFrom()) {
-      ByteString ipv6 = helloMessage.getFrom().getAddressIpv6();
-      if ((!ipv6.isEmpty() && !NetUtil.validIpV6(ipv6.toStringUtf8()))
-          || !NetUtil.validNode(getFrom())) {
-        return false;
-      }
+    if (helloMessage.hasFrom() && !NetUtil.validNode(getFrom())) {
+      return false;
     }
 
     byte[] genesisBlockByte = this.helloMessage.getGenesisBlockId().getHash().toByteArray();

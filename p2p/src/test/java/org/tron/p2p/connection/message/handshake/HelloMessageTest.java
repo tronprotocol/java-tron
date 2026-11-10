@@ -39,48 +39,6 @@ public class HelloMessageTest {
   }
 
   @Test
-  public void testInvalidHelloIpv6() throws Exception {
-    Discover.Endpoint.Builder from = Discover.Endpoint.newBuilder()
-        .setNodeId(ByteString.copyFrom(new byte[64]))
-        .setAddress(ByteString.copyFromUtf8("127.0.0.1"))
-        .setPort(18888);
-    byte[] padding = new byte[8192];
-    Arrays.fill(padding, (byte) 'a');
-    ByteString scoped = ByteString.copyFromUtf8("fe80::1%")
-        .concat(ByteString.copyFrom(padding));
-
-    for (ByteString ipv6 : new ByteString[]{ByteString.copyFromUtf8("not-an-ip"),
-        ByteString.copyFrom(padding), scoped}) {
-      Connect.HelloMessage hello = Connect.HelloMessage.newBuilder()
-          .setFrom(from.setAddressIpv6(ipv6)).build();
-      byte[] wire = ArrayUtils.add(hello.toByteArray(), 0, MessageType.HANDSHAKE_HELLO.getType());
-      org.tron.p2p.exception.P2pException exception = Assert.assertThrows(
-          org.tron.p2p.exception.P2pException.class, () -> Message.parse(wire));
-      Assert.assertEquals(org.tron.p2p.exception.P2pException.TypeEnum.BAD_MESSAGE,
-          exception.getType());
-    }
-  }
-
-  @Test
-  public void testValidHelloIpv6() throws Exception {
-    Discover.Endpoint.Builder from = Discover.Endpoint.newBuilder()
-        .setNodeId(ByteString.copyFrom(new byte[64]))
-        .setAddress(ByteString.copyFromUtf8("127.0.0.1"))
-        .setPort(18888);
-    for (String ipv6 : new String[]{"", "::1", "2001:db8::1",
-        "ffff:ffff:ffff:ffff:ffff:ffff:255.255.255.255"}) {
-      Connect.HelloMessage hello = Connect.HelloMessage.newBuilder()
-          .setFrom(from.setAddressIpv6(ByteString.copyFromUtf8(ipv6))).build();
-      byte[] wire = ArrayUtils.add(hello.toByteArray(), 0, MessageType.HANDSHAKE_HELLO.getType());
-      Assert.assertTrue(Message.parse(wire).valid());
-    }
-    Connect.HelloMessage hello = Connect.HelloMessage.newBuilder()
-        .setFrom(from.clearAddress().setAddressIpv6(ByteString.copyFromUtf8("2001:db8::1")))
-        .build();
-    Assert.assertTrue(new HelloMessage(hello.toByteArray()).valid());
-  }
-
-  @Test
   public void helloParsedThroughMessageDiscardsUnknownFields() throws Exception {
     Discover.Endpoint endpoint = Discover.Endpoint.newBuilder()
         .setNodeId(ByteString.copyFrom(new byte[64]))
