@@ -158,10 +158,7 @@ public class HelloMessage extends TronMessage {
   public boolean valid() {
     if (helloMessage.hasFrom()) {
       Endpoint from = helloMessage.getFrom();
-      ByteString ipv6 = from.getAddressIpv6();
-      if (from.getAddress().size() > NetUtil.MAX_IPV4_ADDRESS_LENGTH
-          || ipv6.size() > NetUtil.MAX_IPV6_ADDRESS_LENGTH
-          || (!ipv6.isEmpty() && !NetUtil.validIpV6(ipv6.toStringUtf8()))
+      if (!NetUtil.validAddressFields(from.getAddress(), from.getAddressIpv6())
           || !NetUtil.validNode(getFrom())) {
         return false;
       }

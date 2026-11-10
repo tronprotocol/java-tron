@@ -1,6 +1,7 @@
 package org.tron.p2p.utils;
 
 import com.google.common.net.InetAddresses;
+import com.google.protobuf.ByteString;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -95,6 +96,13 @@ public class NetUtil {
 
   public static boolean validPort(int port) {
     return port > 0 && port <= 0xFFFF;
+  }
+
+  /** Checks raw address bounds and IPv6 syntax before constructing and validating a Node. */
+  public static boolean validAddressFields(ByteString ipv4, ByteString ipv6) {
+    return ipv4.size() <= MAX_IPV4_ADDRESS_LENGTH
+        && ipv6.size() <= MAX_IPV6_ADDRESS_LENGTH
+        && (ipv6.isEmpty() || validIpV6(ipv6.toStringUtf8()));
   }
 
   public static boolean validNode(Node node) {
