@@ -396,9 +396,9 @@ For existing URLs, check the [migration notes](#124-migration-for-previously-gen
 
 ### 2.3.3 TCP Handler
 
-Implement definition message
+Define `TestMessage.java` and `MessageTypes.java` in separate files:
 
-```bash
+```java
 public class TestMessage {
     protected MessageTypes type;
     protected byte[] data;
@@ -408,6 +408,11 @@ public class TestMessage {
     }
 
 }
+```
+
+```java
+import java.util.HashMap;
+import java.util.Map;
 
 public enum MessageTypes {
 
@@ -441,19 +446,29 @@ public enum MessageTypes {
   }
 ```
 
-Inheritance implements the P2pEventHandler class.
+Extend `P2pEventHandler` in `MyP2pEventHandler.java`.
 
 * `onConnect` is called back after the TCP connection is established.
 * `onDisconnect` is called back after the TCP connection is closed.
 * `onMessage` is called back after receiving a message on the channel. Note that `data[0]` is the
   message type.
 
-```bash
+```java
+import java.net.InetSocketAddress;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import org.apache.commons.lang3.ArrayUtils;
+import org.tron.p2p.P2pEventHandler;
+import org.tron.p2p.connection.Channel;
+
 public class MyP2pEventHandler extends P2pEventHandler {
 
+    private final Map<InetSocketAddress, Channel> channels = new ConcurrentHashMap<>();
+
     public MyP2pEventHandler() {
-      this.typeSet = new HashSet<>();
-      this.typeSet.add(MessageTypes.TEST.getType());
+      this.messageTypes = new HashSet<>();
+      this.messageTypes.add(MessageTypes.TEST.getType());
     }
 
     @Override
@@ -486,7 +501,7 @@ public class MyP2pEventHandler extends P2pEventHandler {
 
 Start p2p service with P2pConfig and P2pEventHandler
 
-```bash
+```java
 P2pService p2pService = new P2pService();
 MyP2pEventHandler myP2pEventHandler = new MyP2pEventHandler();
 try {
