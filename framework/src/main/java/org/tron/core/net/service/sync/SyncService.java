@@ -159,6 +159,7 @@ public class SyncService {
     // Received and processed blocks no longer appear in the peer's outstanding requests.
     requestBlockIds.asMap().forEach((blockId, owner) -> {
       if (peer.equals(owner)) {
+        // Another peer may refetch an already-solid queued block after its owner is released.
         invalid(blockId, peer);
       }
     });
