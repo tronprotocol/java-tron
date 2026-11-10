@@ -358,6 +358,7 @@ public class SyncServiceTest extends BaseMethodTest {
 
   @Test
   public void testDeserializeFailureAllowsRetryFromAnotherPeer() throws Exception {
+    chainBaseManager.getDynamicPropertiesStore().saveAllowProtoFilterNum(0);
     SyncService sync = new SyncService();
     try {
       TronNetDelegate delegate = mock(TronNetDelegate.class);
@@ -386,9 +387,11 @@ public class SyncServiceTest extends BaseMethodTest {
           ByteString.copyFrom(ECKey.fromPrivate(BigInteger.ONE).getAddress()));
       BlockCapsule.BlockId blockId = block.getBlockId();
       byte[] data = block.getData();
-      byte[] malformed = Arrays.copyOf(data, data.length + 1);
-      malformed[data.length] = 0x0c;
-      BlockMessage message = new BlockMessage(block);
+      // Repeating the singular header field preserves the block but changes its wire length.
+      byte[] nonCanonical = Arrays.copyOf(data, data.length * 2);
+      System.arraycopy(data, 0, nonCanonical, data.length, data.length);
+      BlockMessage message = new BlockMessage(nonCanonical);
+      Assert.assertEquals(block.getInstance(), message.getBlockCapsule().getInstance());
       badPeer.getSyncBlockToFetch().add(blockId);
       goodPeer.getSyncBlockToFetch().add(blockId);
 
@@ -407,12 +410,8 @@ public class SyncServiceTest extends BaseMethodTest {
       handler.processMessage(badPeer, message);
       Assert.assertTrue(badPeer.getSyncBlockRequested().isEmpty());
       Assert.assertTrue(badPeer.getSyncBlockInProcess().contains(blockId));
-      // The ingress decoder now rejects END_GROUP. Inject damaged queued data to exercise
-      // deferred-parse failure cleanup independently of the network validation.
-      Map<UnparsedBlock, PeerConnection> received = (Map<UnparsedBlock, PeerConnection>)
-          ReflectUtils.getFieldObject(sync, "blockJustReceived");
-      received.clear();
-      received.put(new UnparsedBlock(blockId, malformed), badPeer);
+      // A filter change while the block is queued can make deferred validation fail.
+      chainBaseManager.getDynamicPropertiesStore().saveAllowProtoFilterNum(1);
       Method handle = SyncService.class.getDeclaredMethod("handleSyncBlock");
       handle.setAccessible(true);
       ReflectUtils.setFieldValue(sync, "fetchFlag", false);
@@ -421,7 +420,7 @@ public class SyncServiceTest extends BaseMethodTest {
       Assert.assertNull("A failed parse must release the global request",
           requests.getIfPresent(blockId));
       Assert.assertFalse(badPeer.getSyncBlockInProcess().contains(blockId));
-      Mockito.verify(badPeer).disconnect(Protocol.ReasonCode.BAD_BLOCK);
+      Mockito.verify(badPeer, Mockito.never()).disconnect(Mockito.any(Protocol.ReasonCode.class));
       Mockito.verify(delegate, Mockito.never())
           .processBlock(Mockito.any(BlockCapsule.class), Mockito.anyBoolean());
       Assert.assertTrue((boolean) ReflectUtils.getFieldObject(sync, "fetchFlag"));

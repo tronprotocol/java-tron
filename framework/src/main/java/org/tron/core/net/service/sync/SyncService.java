@@ -321,13 +321,14 @@ public class SyncService {
             isProcessed[0] = true;
             BlockCapsule block;
             try {
-              block = new BlockCapsule(unparsedBlock.getData());
+              block = new BlockMessage(unparsedBlock.getData()).getBlockCapsule();
             } catch (Exception e) {
               logger.warn("Deserialize block {} from {} failed",
                   blockId.getString(), peerConnection.getInetSocketAddress(), e);
+              // Deferred validation may fail after ingress, e.g. on ALLOW_PROTO_FILTER_NUM changes
+              // or interruption. Release sync state so this block remains eligible for retry.
               peerConnection.getSyncBlockInProcess().remove(blockId);
               invalid(blockId, peerConnection);
-              peerConnection.disconnect(ReasonCode.BAD_BLOCK);
               return;
             }
             processSyncBlock(block, peerConnection);
