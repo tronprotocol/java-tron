@@ -28,6 +28,7 @@ import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.common.math.StrictMathWrapper;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.core.services.filter.BufferedResponseWrapper;
 import org.tron.core.services.http.servlets.RateLimiterServlet;
@@ -172,7 +173,7 @@ public class JsonRpcServlet extends RateLimiterServlet {
   private void handleSingle(HttpServletResponse resp, JsonNode rootNode, byte[] body,
       int maxResponseSize) throws IOException {
     BufferedResponseWrapper bufferedResp = new BufferedResponseWrapper(
-        resp, maxResponseSize);
+        resp, maxResponseSize > 0 ? maxResponseSize : -1);
 
     try {
       // JsonRpcServer.handle catches Throwable and would swallow fatal errors rethrown by the
@@ -240,30 +241,32 @@ public class JsonRpcServlet extends RateLimiterServlet {
         continue;
       }
 
-      byte[] responseBytes = executeBatchRequest(subRequest, i, failureLog);
-      if (responseBytes.length == 0) {
-        continue; // notification — no response
-      }
-
-      // comma(,) separator between array elements
-      int addition = responseBytes.length + (!batchResult.isEmpty() ? 1 : 0);
-      // Reject bytes beyond the remaining budget before parsing, even if they are malformed.
-      if (maxResponseSize > 0 && accumulatedSize + addition > maxResponseSize) {
+      int separatorSize = batchResult.isEmpty() ? 0 : 1;
+      int remainingBudget = maxResponseSize > 0
+          ? StrictMathWrapper.max(0, maxResponseSize - accumulatedSize - separatorSize) : -1;
+      BufferedResponseWrapper subResponse = executeBatchRequest(resp, subRequest, i, failureLog,
+          remainingBudget);
+      if (subResponse.isOverflow()) {
         overflow = true;
         batchResult.add(buildErrorNode(JsonRpcError.RESPONSE_TOO_LARGE,
             "Response exceeds the limit of " + maxResponseSize + " bytes",
             subRequest.get("id")));
         continue;
       }
+      if (subResponse.getBufferedSize() == 0) {
+        continue; // notification — no response
+      }
+
+      int addition = subResponse.getBufferedSize() + separatorSize;
       JsonNode responseNode;
       try {
-        responseNode = OUTBOUND_MAPPER.readTree(responseBytes);
+        responseNode = OUTBOUND_MAPPER.readTree(subResponse.getBufferedInputStream());
       } catch (IOException e) {
         logger.debug("RPC response parsing failed for batch sub-request {}", i, e);
-        responseBytes = internalErrorResponse(subRequest.get("id"));
+        byte[] responseBytes = internalErrorResponse(subRequest.get("id"));
         responseNode = MAPPER.readTree(responseBytes);
         // Charge only the replacement, not the discarded malformed response bytes.
-        addition = responseBytes.length + (!batchResult.isEmpty() ? 1 : 0);
+        addition = responseBytes.length + separatorSize;
         // A replacement error can be larger than the malformed response it replaces.
         if (maxResponseSize > 0 && accumulatedSize + addition > maxResponseSize) {
           overflow = true;
@@ -293,25 +296,27 @@ public class JsonRpcServlet extends RateLimiterServlet {
     resp.getOutputStream().flush();
   }
 
-  private byte[] executeBatchRequest(JsonNode subRequest, int index, BatchFailureLog failureLog)
-      throws IOException {
+  private BufferedResponseWrapper executeBatchRequest(HttpServletResponse resp, JsonNode subRequest,
+      int index, BatchFailureLog failureLog, int remainingBudget) throws IOException {
+    BufferedResponseWrapper subResponse = new BufferedResponseWrapper(resp, remainingBudget);
     byte[] subBody;
     try {
       subBody = MAPPER.writeValueAsBytes(subRequest);
     } catch (JsonProcessingException e) {
       logger.debug("RPC request serialization failed for batch sub-request {}", index, e);
-      return internalErrorResponse(subRequest.get("id"));
+      subResponse.getOutputStream().write(internalErrorResponse(subRequest.get("id")));
+      return subResponse;
     }
 
-    ByteArrayOutputStream subOutput = new ByteArrayOutputStream();
     try {
-      dispatch(subRequest, subBody, subOutput);
+      dispatch(subRequest, subBody, subResponse.getOutputStream());
     } catch (RuntimeException | IOException | Error e) {
       rethrowIfFatal(e);
       failureLog.record(index, e);
-      return internalErrorResponse(subRequest.get("id"));
+      subResponse = new BufferedResponseWrapper(resp, remainingBudget);
+      subResponse.getOutputStream().write(internalErrorResponse(subRequest.get("id")));
     }
-    return subOutput.toByteArray();
+    return subResponse;
   }
 
   private void dispatch(JsonNode request, byte[] body, OutputStream output) throws IOException {

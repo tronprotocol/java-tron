@@ -37,6 +37,7 @@ import com.googlecode.jsonrpc4j.JsonRpcServer;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.management.ManagementFactory;
 import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -45,6 +46,7 @@ import java.util.List;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.junit.After;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.LoggerFactory;
@@ -1071,6 +1073,133 @@ public class JsonRpcServletTest {
     JsonNode body = MAPPER.readTree(resp.getContentAsString());
     assertTrue("batch response-too-large must be an array", body.isArray());
     assertEquals(-32003, body.get(0).get("error").get("code").asInt());
+  }
+
+  @Test
+  public void batchResponseBuffer_usesRemainingBudgetForSingleByteWrites() throws Exception {
+    byte[] response = successResponse(1);
+    // Both responses fit individually; the second exceeds the batch budget by one comma.
+    CommonParameter.getInstance().jsonRpcMaxResponseSize = response.length * 2 + 2;
+    int[] calls = {0};
+    doAnswer(inv -> {
+      OutputStream out = inv.getArgument(1);
+      calls[0]++;
+      for (byte b : response) {
+        out.write(b);
+      }
+      return 0;
+    }).when(mockRpcServer).handleRequest(any(InputStream.class), any(OutputStream.class));
+
+    JsonNode body = MAPPER.readTree(doPost(withEnvelope("[{\"id\":1},{\"id\":2},{\"id\":3}]"))
+        .getContentAsByteArray());
+
+    assertEquals(MAPPER.readTree(response), body.get(0));
+    assertEquals(-32003, body.get(1).get("error").get("code").asInt());
+    assertEquals(-32003, body.get(2).get("error").get("code").asInt());
+    assertEquals(2, calls[0]);
+  }
+
+  @Test
+  public void batchResponseBuffer_largeStreamUsesBoundedAllocation() throws Exception {
+    java.lang.management.ThreadMXBean bean = ManagementFactory.getThreadMXBean();
+    Assume.assumeTrue(bean instanceof com.sun.management.ThreadMXBean);
+    com.sun.management.ThreadMXBean threads = (com.sun.management.ThreadMXBean) bean;
+    Assume.assumeTrue(threads.isThreadAllocatedMemorySupported()
+        && threads.isThreadAllocatedMemoryEnabled());
+    long thread = Thread.currentThread().getId();
+    CommonParameter.getInstance().jsonRpcMaxResponseSize = 64 << 10;
+
+    byte[] chunk = new byte[8192];
+    Arrays.fill(chunk, (byte) 'x');
+    byte[] prefix = "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":\""
+        .getBytes(StandardCharsets.UTF_8);
+    byte[] suffix = "\"}".getBytes(StandardCharsets.UTF_8);
+    doAnswer(inv -> {
+      OutputStream out = inv.getArgument(1);
+      out.write(prefix);
+      // Stream 32 MiB using one reusable chunk, without allocating the result in the mock.
+      for (int i = 0; i < 4096; i++) {
+        out.write(chunk);
+      }
+      out.write(suffix);
+      return 0;
+    }).when(mockRpcServer).handleRequest(any(InputStream.class), any(OutputStream.class));
+
+    String request = withEnvelope("[{\"id\":1}]");
+    doPost(request); // Warm the same path before measuring allocations.
+    long before = threads.getThreadAllocatedBytes(thread);
+    Assume.assumeTrue(before >= 0);
+    MockHttpServletResponse resp = doPost(request);
+    long allocated = threads.getThreadAllocatedBytes(thread) - before;
+
+    assertEquals(200, resp.getStatus());
+    JsonNode body = MAPPER.readTree(resp.getContentAsByteArray());
+    assertTrue(body.isArray());
+    assertEquals(1, body.size());
+    assertEquals(1, body.get(0).get("id").asInt());
+    assertEquals(-32003, body.get(0).get("error").get("code").asInt());
+    // Allow overhead while rejecting the old full-response buffering and toByteArray() copy.
+    assertTrue("allocated " + allocated + " bytes for oversized batch response",
+        allocated >= 0 && allocated < (4L << 20));
+  }
+
+  @Test
+  public void singleResponseLimitDisabled_preservesResults() throws Exception {
+    for (int limit : new int[] {0, -1}) {
+      CommonParameter.getInstance().jsonRpcMaxResponseSize = limit;
+      TronJsonRpc rpc = useRealRpcServer();
+
+      JsonNode body = MAPPER.readTree(doPost(
+          "{\"jsonrpc\":\"2.0\",\"method\":\"eth_blockNumber\",\"id\":1}")
+          .getContentAsByteArray());
+
+      assertEquals("0x1", body.get("result").asText());
+      verify(rpc).getLatestBlockNum();
+    }
+  }
+
+  @Test
+  public void batchResponseBuffer_tinyAndDisabledLimitsPreserveNotifications() throws Exception {
+    for (int limit : new int[] {1, 2, 0, -1}) {
+      CommonParameter.getInstance().jsonRpcMaxResponseSize = limit;
+      TronJsonRpc rpc = useRealRpcServer();
+
+      JsonNode body = MAPPER.readTree(doPost("["
+          + "{\"jsonrpc\":\"2.0\",\"method\":\"eth_blockNumber\"},"
+          + "{\"jsonrpc\":\"2.0\",\"method\":\"eth_blockNumber\",\"id\":1}]")
+          .getContentAsByteArray());
+
+      assertEquals(1, body.size());
+      assertEquals(1, body.get(0).get("id").asInt());
+      if (limit > 0) {
+        assertEquals(-32003, body.get(0).get("error").get("code").asInt());
+      } else {
+        assertEquals("0x1", body.get(0).get("result").asText());
+      }
+      verify(rpc, times(2)).getLatestBlockNum();
+    }
+  }
+
+  @Test
+  public void batchResponseBuffer_failureAfterOverflowPreservesRecovery() throws Exception {
+    CommonParameter.getInstance().jsonRpcMaxResponseSize = 256;
+    int[] calls = {0};
+    doAnswer(inv -> {
+      OutputStream out = inv.getArgument(1);
+      if (++calls[0] == 1) {
+        out.write(new byte[1024]);
+        throw new IOException("failure-after-overflow");
+      }
+      out.write(successResponse(2));
+      return 0;
+    }).when(mockRpcServer).handleRequest(any(InputStream.class), any(OutputStream.class));
+
+    JsonNode body = MAPPER.readTree(doPost(withEnvelope("[{\"id\":1},{\"id\":2}]"))
+        .getContentAsByteArray());
+
+    assertEquals(-32603, body.get(0).get("error").get("code").asInt());
+    assertEquals(MAPPER.readTree(successResponse(2)), body.get(1));
+    assertEquals(2, calls[0]);
   }
 
   @Test
