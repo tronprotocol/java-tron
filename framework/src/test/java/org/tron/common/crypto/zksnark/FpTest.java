@@ -1,11 +1,20 @@
 package org.tron.common.crypto.zksnark;
 
 import java.math.BigInteger;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.Arrays;
 import org.junit.Assert;
 import org.junit.Test;
 
 public class FpTest {
+
+  @Test
+  public void testFieldInitializationWithoutCurveParameters() throws Exception {
+    for (Class<?> field : new Class<?>[]{Fp.class, Fp2.class, Fp6.class, Fp12.class}) {
+      assertInitializesWithoutCurveParameters(field.getName());
+    }
+  }
 
   @Test(expected = NullPointerException.class)
   public void testConstructorRejectsNull() {
@@ -76,5 +85,23 @@ public class FpTest {
     Assert.assertNotNull(BN128Fp.create(one, two));
     Assert.assertNull(BN128Fp.create(outOfRange, two));
     Assert.assertNull(BN128Fp.create(one, outOfRange));
+  }
+
+  private void assertInitializesWithoutCurveParameters(String name) throws Exception {
+    URL location = Fp.class.getProtectionDomain().getCodeSource().getLocation();
+    // A fresh loader exercises first use even if another test already initialized these classes.
+    // Reject Params to detect the dependency that caused the initialization cycle.
+    try (URLClassLoader loader = new URLClassLoader(new URL[]{location}, null) {
+      @Override
+      protected Class<?> loadClass(String className, boolean resolve)
+          throws ClassNotFoundException {
+        if (className.equals(Params.class.getName())) {
+          throw new ClassNotFoundException("Field initialization must not load Params");
+        }
+        return super.loadClass(className, resolve);
+      }
+    }) {
+      Assert.assertNotNull(Class.forName(name, true, loader));
+    }
   }
 }

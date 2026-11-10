@@ -35,8 +35,6 @@ public class Fp implements Field<Fp> {
   static final Fp NON_RESIDUE = new Fp(new BigInteger(
       "21888242871839275222246405745257275088696311157297823662689037894645226208582"));
 
-  static final Fp _2_INV = new Fp(BigInteger.valueOf(2).modInverse(P));
-
   private final BigInteger v;
 
   Fp(BigInteger v) {
