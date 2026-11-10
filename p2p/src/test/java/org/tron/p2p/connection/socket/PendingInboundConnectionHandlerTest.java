@@ -40,11 +40,13 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.mockito.Mockito;
 import org.tron.p2p.P2pConfig;
 import org.tron.p2p.P2pEventHandler;
 import org.tron.p2p.base.Parameter;
 import org.tron.p2p.connection.Channel;
 import org.tron.p2p.connection.ChannelManager;
+import org.tron.p2p.connection.ConnectionPolicy;
 import org.tron.p2p.connection.business.detect.NodeDetectService;
 import org.tron.p2p.connection.business.handshake.DisconnectCode;
 import org.tron.p2p.connection.business.handshake.HandshakeService;
@@ -91,6 +93,7 @@ public class PendingInboundConnectionHandlerTest {
     config.setMaxConnections(50);
     config.setMaxConnectionsWithSameIp(2);
     config.getTrustNodes().clear();
+    ConnectionPolicy.replaceBlockedIps(Collections.emptySet());
     Parameter.handlerList = new ArrayList<>();
     ChannelManager.getAllChannels().forEach(ChannelManager::notifyDisconnect);
     ChannelManager.getBannedNodes().invalidateAll();
@@ -127,6 +130,7 @@ public class PendingInboundConnectionHandlerTest {
       counts.setAccessible(true);
       Assert.assertTrue("Per-IP reservations leaked", ((Map<?, ?>) counts.get(null)).isEmpty());
     } finally {
+      ConnectionPolicy.replaceBlockedIps(Collections.emptySet());
       ChannelManager.getAllChannels().forEach(ChannelManager::notifyDisconnect);
       Parameter.p2pConfig = previousConfig;
       Parameter.handlerList = previousHandlers;
@@ -586,6 +590,70 @@ public class PendingInboundConnectionHandlerTest {
       Assert.assertTrue(inbound("192.0.2." + i).isOpen());
     }
     assertAdmissionRejection(DisconnectCode.TOO_MANY_PEERS);
+  }
+
+  @Test(timeout = 15000)
+  public void blockedPeerIsRejectedBeforePendingAdmission() throws Exception {
+    P2pConfig observedConfig = Mockito.spy(config);
+    Parameter.p2pConfig = observedConfig;
+    ConnectionPolicy.replaceBlockedIps(Collections.singleton(InetAddress.getByName("127.0.0.1")));
+
+    assertSilentAdmissionRejection();
+
+    Mockito.verify(observedConfig, Mockito.never()).getTrustNodes();
+  }
+
+  @Test(timeout = 15000)
+  public void blockedBannedPeerDoesNotReceiveHello() throws Exception {
+    InetAddress address = InetAddress.getByName("127.0.0.1");
+    ChannelManager.banNode(address, TimeUnit.MINUTES.toMillis(1));
+    ConnectionPolicy.replaceBlockedIps(Collections.singleton(address));
+
+    assertSilentAdmissionRejection();
+  }
+
+  @Test(timeout = 15000)
+  public void blockedPeerAtSameIpLimitDoesNotReceiveHello() throws Exception {
+    for (int i = 0; i < Parameter.MAX_PENDING_INBOUND_CONNECTIONS_WITH_SAME_IP; i++) {
+      Assert.assertTrue(inbound("127.0.0.1").isOpen());
+    }
+    ConnectionPolicy.replaceBlockedIps(Collections.singleton(InetAddress.getByName("127.0.0.1")));
+
+    assertSilentAdmissionRejection();
+  }
+
+  @Test(timeout = 15000)
+  public void blockAddedDuringAdmissionSuppressesRejectionHello() throws Exception {
+    InetAddress address = InetAddress.getByName("127.0.0.1");
+    ChannelManager.banNode(address, TimeUnit.MINUTES.toMillis(1));
+    P2pConfig changingConfig = Mockito.spy(config);
+    Mockito.doAnswer(invocation -> {
+      ConnectionPolicy.replaceBlockedIps(Collections.singleton(address));
+      return config.getTrustNodes();
+    }).when(changingConfig).getTrustNodes();
+    Parameter.p2pConfig = changingConfig;
+
+    assertSilentAdmissionRejection();
+  }
+
+  private void assertSilentAdmissionRejection() throws Exception {
+    BlockingQueue<NioSocketChannel> accepted = new LinkedBlockingQueue<>();
+    List<Socket> clients = new ArrayList<>();
+    io.netty.channel.Channel server = startServer(accepted, null);
+    try {
+      NioSocketChannel rejected = connectClient(server, clients, accepted);
+      Assert.assertTrue(rejected.closeFuture().await(5, TimeUnit.SECONDS));
+      clients.get(0).setSoTimeout(3000);
+      Assert.assertEquals("Blocked source must receive no response", -1,
+          clients.get(0).getInputStream().read());
+      Assert.assertTrue(ChannelManager.getAllChannels().isEmpty());
+      Assert.assertEquals(0, connectCallbacks);
+    } finally {
+      for (Socket client : clients) {
+        client.close();
+      }
+      server.close().syncUninterruptibly();
+    }
   }
 
   private void assertAdmissionRejection(DisconnectCode expectedCode) throws Exception {

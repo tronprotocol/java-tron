@@ -12,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.tron.p2p.connection.Channel;
 import org.tron.p2p.connection.ChannelManager;
+import org.tron.p2p.connection.ConnectionPolicy;
 import org.tron.p2p.connection.business.handshake.DisconnectCode;
 import org.tron.p2p.connection.message.handshake.HelloMessage;
 
@@ -38,6 +39,10 @@ public class P2pChannelInitializer extends ChannelInitializer<NioSocketChannel> 
   public void initChannel(NioSocketChannel ch) {
     try {
       if (StringUtils.isEmpty(remoteId)) {
+        if (ConnectionPolicy.isBlocked(ch.remoteAddress())) {
+          ch.close();
+          return;
+        }
         DisconnectCode code = PendingInboundConnectionHandler.tryAdd(ch);
         if (code != DisconnectCode.NORMAL) {
           if (code == DisconnectCode.UNKNOWN) {
@@ -80,6 +85,10 @@ public class P2pChannelInitializer extends ChannelInitializer<NioSocketChannel> 
   }
 
   private void sendRejection(NioSocketChannel ch, DisconnectCode code) {
+    if (ConnectionPolicy.isBlocked(ch.remoteAddress())) {
+      ch.close();
+      return;
+    }
     ch.config().setAutoRead(false);
     ch.pipeline().addLast("rejectionEncoder", new ProtobufVarint32LengthFieldPrepender());
     ch.pipeline().addLast("rejectionWriteTimeout",
