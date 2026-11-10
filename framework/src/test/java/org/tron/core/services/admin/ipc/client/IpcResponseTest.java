@@ -103,6 +103,34 @@ public class IpcResponseTest {
   }
 
   @Test
+  public void testBusinessRejectionOnlyFailsExec() {
+    String response = RESPONSE_PREFIX + "\"result\":{\"success\":false,\"changed\":false,"
+        + "\"disconnectedCount\":0,\"errorMessage\":\"Operation rejected\"}}";
+
+    IpcResponse interactive = IpcResponse.parse(response, Collections.emptyMap());
+
+    Assert.assertTrue(interactive.isSuccessful());
+    Assert.assertTrue(interactive.getFormatted().contains("\"success\" : false"));
+    Assert.assertTrue(interactive.getFormatted()
+        .contains("\"errorMessage\" : \"Operation rejected\""));
+
+    IpcResponse exec = IpcResponse.parseForExec(response, 1, Collections.emptyMap());
+
+    Assert.assertFalse(exec.isSuccessful());
+    Assert.assertEquals("Operation rejected", exec.getFormatted());
+  }
+
+  @Test
+  public void testExecChecksResponseIdBeforeBusinessRejection() {
+    IpcResponse response = IpcResponse.parseForExec(
+        RESPONSE_PREFIX + "\"result\":{\"success\":false,\"errorMessage\":\"Operation rejected\"}}",
+        2, Collections.emptyMap());
+
+    Assert.assertFalse(response.isSuccessful());
+    Assert.assertEquals("IPC response ID does not match request.", response.getFormatted());
+  }
+
+  @Test
   public void testNullAndScalarResultsAreSuccessful() {
     assertResponse(RESPONSE_PREFIX + "\"result\":null}", "null", true);
     assertResponse(RESPONSE_PREFIX + "\"result\":false}", "false", true);
