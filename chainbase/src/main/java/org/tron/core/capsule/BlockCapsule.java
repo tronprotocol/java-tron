@@ -53,7 +53,6 @@ import org.tron.protos.Protocol.Transaction;
 public class BlockCapsule implements ProtoCapsule<Block> {
 
   public boolean generatedByMyself = false;
-  private volatile boolean merkleValidated = false;
   @Getter
   @Setter
   private TransactionRetCapsule result;
@@ -233,16 +232,12 @@ public class BlockCapsule implements ProtoCapsule<Block> {
   }
 
   public void validateMerkleRoot() throws BadBlockException {
-    if (merkleValidated) {
-      return;
-    }
     Sha256Hash actual = calcMerkleRoot();
     if (!actual.equals(getMerkleRoot())) {
       throw new BadBlockException(CALC_MERKLE_ROOT_FAILED,
           String.format("merkle root mismatch for block %d: expected %s, actual %s",
               getNum(), getMerkleRoot(), actual));
     }
-    merkleValidated = true;
   }
 
   public void setMerkleRoot() {

@@ -144,6 +144,17 @@ public class Client {
       return null;
     }
     String txt = LookUpTxt.joinTXTRecord(txtRecord);
+    return parseEntry(domain, hash, txt);
+  }
+
+  static Entry parseEntry(String domain, String hash, String txt) throws DnsException {
+    // Check the untrusted TXT before parsing nodes, which may resolve their addresses.
+    String wantHash = Algorithm.encode32AndTruncate(txt);
+    if (!wantHash.equals(hash)) {
+      throw new DnsException(TypeEnum.HASH_MISS_MATCH,
+          String.format("hash mismatch, want: [%s], really: [%s], content: [%s]", wantHash, hash,
+              txt));
+    }
 
     Entry entry = null;
     if (txt.startsWith(Entry.branchPrefix)) {
@@ -159,12 +170,6 @@ public class Client {
           String.format("hash:%s, domain:%s, txt:%s", hash, domain, txt));
     }
 
-    String wantHash = Algorithm.encode32AndTruncate(entry.toString());
-    if (!wantHash.equals(hash)) {
-      throw new DnsException(TypeEnum.HASH_MISS_MATCH,
-          String.format("hash mismatch, want: [%s], really: [%s], content: [%s]", wantHash, hash,
-              entry));
-    }
     return entry;
   }
 

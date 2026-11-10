@@ -45,7 +45,7 @@ public class RpcApiServiceLegacyWalletExtensionTest {
     Args.getInstance().setSolidityNode(true);
 
     NettyServerBuilder builder = NettyServerBuilder.forPort(0);
-    new RpcApiService().addService(builder);
+    new RpcApiService().services().forEach(builder::addService);
     server = builder.build().start();
     channel = ManagedChannelBuilder.forAddress("127.0.0.1", server.getPort())
         .usePlaintext()

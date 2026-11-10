@@ -333,9 +333,9 @@ public class HttpInterceptorMetricsTest {
   private void assertUnknownPathsUseUndefinedEndpoint(boolean nodeEnabled,
       boolean prometheusEnabled) throws Exception {
     String[] methods = {
-        "GET", "HEAD", "POST", "PUT", "DELETE", "CONNECT", "OPTIONS", "TRACE", "PATCH", "CUSTOM"
+        "GET", "HEAD", "POST", "PUT", "DELETE", "CONNECT", "OPTIONS", "PATCH", "CUSTOM"
     };
-    int[] statuses = {404, 404, 405, 405, 405, 501, 200, 200, 501, 501};
+    int[] statuses = {404, 404, 405, 405, 405, 501, 200, 501, 501};
     String prefix = "/unknown/http-metrics-" + nodeEnabled + "-" + prometheusEnabled + "/";
     Set<String> detailBefore = new TreeSet<>(MetricsUtil.getMeters("net.api.detail.").keySet());
     for (int method = 0; method < methods.length; method++) {
@@ -378,6 +378,16 @@ public class HttpInterceptorMetricsTest {
               + (prometheusEnabled ? pathsPerMethod * status.getValue() : 0),
           httpBytesCount(MetricLabels.UNDEFINED, String.valueOf(status.getKey())), 0.0);
     }
+    long callsAfter = meterCount(MetricsKey.NET_API_QPS);
+    try (CloseableHttpResponse trace = client.execute(RequestBuilder.create("TRACE")
+        .setUri(serverUri.resolve(prefix + "trace")).build())) {
+      assertEquals("TRACE must be rejected before it reaches the servlet context",
+          405, trace.getStatusLine().getStatusCode());
+    }
+    assertEquals("rejected TRACE requests must not be counted",
+        callsAfter, meterCount(MetricsKey.NET_API_QPS));
+    assertEquals("rejected TRACE requests must not create meters",
+        metersBefore, meterNames());
   }
 
   private void assertRegisteredRequest(String method, String path, int status) throws Exception {

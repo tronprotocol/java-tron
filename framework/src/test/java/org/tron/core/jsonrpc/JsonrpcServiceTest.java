@@ -2023,7 +2023,7 @@ public class JsonrpcServiceTest extends BaseTest {
   }
 
   /**
-   * Verifies SizeLimitHandler integration with the real JsonRpcServlet + jsonrpc4j stack.
+   * Verifies request size limit integration with the real JsonRpcServlet + jsonrpc4j stack.
    *
    * Covers: normal request no regression, Content-Length oversized 413,
    * and chunked oversized 413 during streaming body reads.

@@ -65,7 +65,7 @@ public class PeerClient {
     return channelFuture;
   }
 
-  public ChannelFuture connectAsync(Node node, boolean discoveryMode) {
+  public ChannelFuture connectAsync(Node node, boolean nodeDetectMode) {
     InetSocketAddress address = node.getPreferInetSocketAddress();
     if (ConnectionPolicy.isBlocked(address)) {
       logger.info("Reject connection to {} because its IP is manually blocked", address);
@@ -74,7 +74,7 @@ public class PeerClient {
     ChannelFuture channelFuture =
         connectAsync(address.getAddress().getHostAddress(), node.getPort(),
             node.getId() == null ? Hex.toHexString(NetUtil.getNodeId()) : node.getHexId(),
-            discoveryMode, true);
+            nodeDetectMode, true);
     if (ChannelManager.isShutdown) {
       return null;
     }
@@ -84,7 +84,7 @@ public class PeerClient {
           logger.warn("Connect to peer {} fail, cause:{}", node.getPreferInetSocketAddress(),
               future.cause().getMessage());
           future.channel().close();
-          if (!discoveryMode) {
+          if (!nodeDetectMode) {
             ChannelManager.triggerConnect(node.getPreferInetSocketAddress());
           }
         }
@@ -94,10 +94,10 @@ public class PeerClient {
   }
 
   private ChannelFuture connectAsync(String host, int port, String remoteId,
-      boolean discoveryMode, boolean trigger) {
+      boolean nodeDetectMode, boolean trigger) {
 
     P2pChannelInitializer p2pChannelInitializer = new P2pChannelInitializer(remoteId,
-        discoveryMode, trigger);
+        nodeDetectMode, trigger);
 
     Bootstrap b = new Bootstrap();
     b.group(workerGroup);

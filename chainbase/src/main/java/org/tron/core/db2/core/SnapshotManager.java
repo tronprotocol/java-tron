@@ -28,6 +28,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.common.error.TronDBException;
 import org.tron.common.es.ExecutorServiceManager;
+import org.tron.common.exit.ExitManager;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.FileUtil;
 import org.tron.common.utils.StorageUtils;
@@ -346,10 +347,10 @@ public class SnapshotManager implements RevokingDatabase {
             checkPointEnd - start,
             System.currentTimeMillis() - checkPointEnd
         );
-      } catch (TronDBException e) {
+      } catch (TronDBException | TronError e) {
         logger.error(" Find fatal error, program will be exited soon.", e);
         hitDown = true;
-        throw new TronError(e, TronError.ErrCode.DB_FLUSH);
+        throw ExitManager.requestExit(new TronError(e, TronError.ErrCode.DB_FLUSH));
       }
     }
   }

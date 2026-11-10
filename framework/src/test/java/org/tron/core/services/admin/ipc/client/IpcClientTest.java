@@ -310,6 +310,78 @@ public class IpcClientTest {
   }
 
   @Test
+  public void testExecReturnsFailureForBusinessRejection() throws Exception {
+    String dynamicConfigMessage = "Peer modification is unavailable while "
+        + "node.dynamicConfig.enable is true; "
+        + "update node.active in the configuration file instead.";
+    for (String[] scenario : new String[][] {
+        {"admin_blockIp 192.0.2.20", "Blocked IP limit of 10000 has been reached"},
+        {"admin_addPeer 192.0.2.20:18888", dynamicConfigMessage},
+        {"admin_removePeer 192.0.2.20:18888", dynamicConfigMessage},
+        {"admin_addPeer 192.0.2.20:18888",
+            "Cannot add active node because IP 192.0.2.20 is manually blocked"}}) {
+      ObjectNode response = OBJECT_MAPPER.createObjectNode();
+      response.put("jsonrpc", "2.0");
+      response.put("id", 1);
+      response.putObject("result").put("success", false).put("changed", false)
+          .put("disconnectedCount", 0).put("errorMessage", scenario[1]);
+
+      ExecResult execution = executeCommand(scenario[0], response.toString());
+
+      Assert.assertEquals(scenario[0], IpcClient.EXIT_FAILURE, execution.exitCode);
+      Assert.assertEquals("", execution.standardOutput);
+      Assert.assertEquals(scenario[1] + System.lineSeparator(), execution.errorOutput);
+    }
+  }
+
+  @Test
+  public void testExecKeepsUnchangedOperationsSuccessful() throws Exception {
+    String result = "{\"success\":true,\"changed\":false,\"disconnectedCount\":0,"
+        + "\"errorMessage\":\"\"}";
+    String response = "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":" + result + "}";
+    for (String command : new String[] {"admin_blockIp 192.0.2.20",
+        "admin_unblockIp 192.0.2.20"}) {
+      ExecResult execution = executeCommand(command, response);
+
+      Assert.assertEquals(IpcClient.EXIT_SUCCESS, execution.exitCode);
+      Assert.assertEquals(OBJECT_MAPPER.writerWithDefaultPrettyPrinter()
+          .writeValueAsString(OBJECT_MAPPER.readTree(result)) + System.lineSeparator(),
+          execution.standardOutput);
+      Assert.assertEquals("", execution.errorOutput);
+    }
+  }
+
+  @Test
+  public void testExecDoesNotCoerceBusinessSuccess() throws Exception {
+    for (String result : new String[] {"{}", "{\"success\":null}", "{\"success\":0}",
+        "{\"success\":\"false\"}"}) {
+      String response = "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":" + result + "}";
+      ExecResult execution = executeCommand("admin_listBlockedIps", response);
+
+      Assert.assertEquals(result, IpcClient.EXIT_SUCCESS, execution.exitCode);
+      Assert.assertEquals(OBJECT_MAPPER.writerWithDefaultPrettyPrinter()
+          .writeValueAsString(OBJECT_MAPPER.readTree(result)) + System.lineSeparator(),
+          execution.standardOutput);
+      Assert.assertEquals("", execution.errorOutput);
+    }
+  }
+
+  @Test
+  public void testExecBusinessRejectionHasFallbackMessage() throws Exception {
+    for (String message : new String[] {"", ",\"errorMessage\":null",
+        ",\"errorMessage\":\" \"", ",\"errorMessage\":7"}) {
+      String response = "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"success\":false"
+          + message + "}}";
+      ExecResult execution = executeCommand("admin_blockIp 192.0.2.20", response);
+
+      Assert.assertEquals(IpcClient.EXIT_FAILURE, execution.exitCode);
+      Assert.assertEquals("", execution.standardOutput);
+      Assert.assertEquals("Admin operation failed." + System.lineSeparator(),
+          execution.errorOutput);
+    }
+  }
+
+  @Test
   public void testExecAcceptsNullAndFalseResults() throws Exception {
     for (String value : new String[] {"null", "false"}) {
       String response = "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":" + value + "}";

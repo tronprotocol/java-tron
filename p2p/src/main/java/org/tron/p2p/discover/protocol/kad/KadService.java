@@ -146,6 +146,11 @@ public class KadService implements DiscoverService {
           sender.getPort(), m.getFrom().getPort());
     }
 
+    if (n.getPreferInetSocketAddress() == null) {
+      logger.debug("Drop discovery message from {}: no compatible reply address", sender);
+      return;
+    }
+
     NodeHandler nodeHandler = getNodeHandler(n);
     nodeHandler.getNode().setId(n.getId());
     nodeHandler.getNode().touch();

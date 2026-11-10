@@ -18,19 +18,22 @@ package org.tron.common.application;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.StringJoiner;
 import java.util.concurrent.CompletableFuture;
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.jetty.http.HttpHeader;
+import org.eclipse.jetty.http.HttpMethod;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.ConnectionLimit;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.handler.ErrorHandler;
-import org.eclipse.jetty.server.handler.SizeLimitHandler;
+import org.eclipse.jetty.server.handler.HandlerWrapper;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.util.BufferUtil;
 import org.tron.core.config.args.Args;
@@ -110,9 +113,12 @@ public abstract class HttpService extends AbstractService {
   protected ServletContextHandler initContextHandler() {
     ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
     context.setContextPath(this.contextPath);
-    SizeLimitHandler sizeLimitHandler = new SizeLimitHandler(this.maxRequestSize, -1);
+    RequestSizeLimitHandler sizeLimitHandler =
+        new RequestSizeLimitHandler(this.maxRequestSize);
     sizeLimitHandler.setHandler(context);
-    this.apiServer.setHandler(sizeLimitHandler);
+    TraceRejectHandler traceRejectHandler = new TraceRejectHandler();
+    traceRejectHandler.setHandler(sizeLimitHandler);
+    this.apiServer.setHandler(traceRejectHandler);
     return context;
   }
 
@@ -123,7 +129,45 @@ public abstract class HttpService extends AbstractService {
   }
 
   /**
-   * For oversized requests (the 413 thrown by SizeLimitHandler during dispatch) logs the
+   * Rejects TRACE before dispatch and removes it from the Allow header of OPTIONS responses. The
+   * servlet default {@code doTrace} echoes every request header, including Authorization and
+   * Cookie, back to the caller, and the default {@code doOptions} always advertises TRACE.
+   */
+  private static final class TraceRejectHandler extends HandlerWrapper {
+
+    @Override
+    public void handle(String target, Request baseRequest, HttpServletRequest request,
+        HttpServletResponse response) throws IOException, ServletException {
+      String method = baseRequest.getMethod();
+      if (HttpMethod.TRACE.is(method)) {
+        baseRequest.setHandled(true);
+        response.setStatus(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
+        response.setContentLength(0);
+        return;
+      }
+      super.handle(target, baseRequest, request, response);
+      if (HttpMethod.OPTIONS.is(method) && !response.isCommitted()) {
+        String allow = response.getHeader(HttpHeader.ALLOW.asString());
+        if (allow != null) {
+          response.setHeader(HttpHeader.ALLOW.asString(), withoutTrace(allow));
+        }
+      }
+    }
+
+    private String withoutTrace(String allow) {
+      StringJoiner methods = new StringJoiner(", ");
+      for (String token : allow.split(",")) {
+        String name = token.trim();
+        if (!name.isEmpty() && !HttpMethod.TRACE.is(name)) {
+          methods.add(name);
+        }
+      }
+      return methods.toString();
+    }
+  }
+
+  /**
+   * For oversized requests (the 413 thrown by RequestSizeLimitHandler during dispatch) logs the
    * detail server-side and returns the short, uniform bad-message page, instead of the
    * default error page that leaks the exception stack and internal request sizes. All
    * other errors keep Jetty's default handling.

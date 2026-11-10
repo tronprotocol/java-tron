@@ -7,7 +7,9 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
 import com.google.protobuf.ByteString;
+import java.math.BigInteger;
 import java.net.InetSocketAddress;
+import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
@@ -37,7 +39,8 @@ public final class PeerBlockTestSupport {
 
   public static BlockCapsule block(long number) {
     BlockCapsule block = new BlockCapsule(number, new BlockId(Sha256Hash.ZERO_HASH, number - 1),
-        System.currentTimeMillis() - 1_000, ByteString.copyFromUtf8("witness"));
+        System.currentTimeMillis() - 1_000,
+        ByteString.copyFrom(ECKey.fromPrivate(BigInteger.TEN).getAddress()));
     block.setMerkleRoot();
     return block;
   }

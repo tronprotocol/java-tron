@@ -8,6 +8,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.tron.p2p.base.Constant;
 import org.tron.p2p.base.Parameter;
 import org.tron.p2p.discover.Node;
 import org.tron.p2p.discover.message.Message;
@@ -106,7 +107,7 @@ public class NodeHandler {
     if (!kadService.getTable().getNode().equals(node)) {
       sendPong();
     }
-    node.setP2pVersion(msg.getNetworkId());
+    node.setNetworkId(msg.getNetworkId());
     if (!node.isConnectible(Parameter.p2pConfig.getNetworkId())) {
       changeState(State.DEAD);
     } else if (state.equals(State.DEAD)) {
@@ -115,19 +116,20 @@ public class NodeHandler {
   }
 
   public void handlePong(PongMessage msg) {
+    boolean compatible;
     synchronized (this) {
       if (!waitForPong) {
         return;
       }
       waitForPong = false;
       cancelPongTimeout();
+      node.setNetworkId(msg.getNetworkId());
+      compatible = node.isConnectible(Parameter.p2pConfig.getNetworkId());
+      if (compatible) {
+        pingTrials.set(3);
+      }
     }
-    node.setP2pVersion(msg.getNetworkId());
-    if (!node.isConnectible(Parameter.p2pConfig.getNetworkId())) {
-      changeState(State.DEAD);
-    } else {
-      changeState(State.ALIVE);
-    }
+    changeState(compatible ? State.ALIVE : State.DEAD);
   }
 
   public void handleNeighbours(NeighborsMessage msg, InetSocketAddress sender) {
@@ -217,8 +219,15 @@ public class NodeHandler {
   }
 
   public void sendNeighbours(List<Node> neighbours, long sequence) {
-    Message msg = new NeighborsMessage(kadService.getPublicHomeNode(), neighbours, sequence);
-    sendMessage(msg);
+    Node from = kadService.getPublicHomeNode();
+    for (int size = neighbours.size(); size >= 0; size--) {
+      Message msg = new NeighborsMessage(from, neighbours.subList(0, size), sequence);
+      if (msg.getSendData().length < Constant.MAX_DISCOVERY_PACKET_SIZE) {
+        sendMessage(msg);
+        return;
+      }
+    }
+    logger.warn("Skip neighbors response: sender endpoint exceeds discovery packet size limit");
   }
 
   private void sendMessage(Message msg) {

@@ -990,6 +990,12 @@ public class RepositoryImpl implements Repository {
 
   public long calculateGlobalEnergyLimit(AccountCapsule accountCapsule) {
     long frozeBalance = accountCapsule.getAllFrozenBalanceForEnergy();
+    // Resource queries use the fractional Stake 2.0 weight. Keep the truncated weight until
+    // resource optimization so earlier executions do not change how much TRX is burned.
+    if (VMConfig.allowTvmResourceOptimization()
+        && VMConfig.allowTvmFreezeV2()) {
+      return calculateGlobalEnergyLimitV2(frozeBalance);
+    }
     if (frozeBalance < TRX_PRECISION) {
       return 0;
     }
@@ -1003,6 +1009,27 @@ public class RepositoryImpl implements Repository {
           .divide(BigInteger.valueOf(totalEnergyWeight))
           .longValueExact();
     }
+    return (long) (energyWeight * ((double) totalEnergyLimit / totalEnergyWeight));
+  }
+
+  /**
+   * Same limit as {@code EnergyProcessor#calculateGlobalEnergyLimitV2}. Fractional suns count,
+   * and a balance below one TRX is not forced to zero.
+   */
+  private long calculateGlobalEnergyLimitV2(long frozeBalance) {
+    long totalEnergyLimit = getDynamicPropertiesStore().getTotalEnergyCurrentLimit();
+    long totalEnergyWeight = getDynamicPropertiesStore().getTotalEnergyWeight();
+    if (totalEnergyWeight == 0) {
+      return 0;
+    }
+    if (hardenResourceCalculation()) {
+      return BigInteger.valueOf(frozeBalance)
+          .multiply(BigInteger.valueOf(totalEnergyLimit))
+          .divide(BigInteger.valueOf(TRX_PRECISION)
+              .multiply(BigInteger.valueOf(totalEnergyWeight)))
+          .longValueExact();
+    }
+    double energyWeight = (double) frozeBalance / TRX_PRECISION;
     return (long) (energyWeight * ((double) totalEnergyLimit / totalEnergyWeight));
   }
 

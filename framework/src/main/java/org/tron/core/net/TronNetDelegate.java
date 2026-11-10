@@ -63,10 +63,14 @@ import org.tron.core.net.peer.Item;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.store.WitnessScheduleStore;
 import org.tron.protos.Protocol.Inventory.InventoryType;
+import org.tron.protos.Protocol.Transaction;
 
 @Slf4j(topic = "net")
 @Component
 public class TronNetDelegate {
+
+  // Keep Merkle leaf encodings larger than the 64-byte internal-node input.
+  private static final int MIN_TRANSACTION_SIZE = 80;
 
   @Autowired
   private Manager dbManager;
@@ -89,8 +93,6 @@ public class TronNetDelegate {
   private volatile boolean backupServerStartFlag;
 
   private int blockIdCacheSize = 100;
-
-  private long timeout = 1000;
 
   @Getter // for test
   private volatile boolean  hitDown = false;
@@ -279,23 +281,23 @@ public class TronNetDelegate {
   }
 
   public void processBlock(BlockCapsule block, boolean isSync) throws P2pException {
-    if (!hitDown && dbManager.getLatestSolidityNumShutDown() > 0
-        && dbManager.getLatestSolidityNumShutDown() == dbManager.getDynamicPropertiesStore()
-        .getLatestBlockHeaderNumberFromDB()) {
-
-      logger.info("Begin shutdown, currentBlockNum:{}, DbBlockNum:{}, solidifiedBlockNum:{}",
-          dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber(),
-          dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumberFromDB(),
-          dbManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum());
-      hitDown = true;
-      LockSupport.unpark(hitThread);
-      return;
-    }
-    if (hitDown) {
-      return;
-    }
     BlockId blockId = block.getBlockId();
     synchronized (blockLock) {
+      if (!hitDown && dbManager.getLatestSolidityNumShutDown() > 0
+          && dbManager.getLatestSolidityNumShutDown() == dbManager.getDynamicPropertiesStore()
+          .getLatestBlockHeaderNumberFromDB()) {
+
+        logger.info("Begin shutdown, currentBlockNum:{}, DbBlockNum:{}, solidifiedBlockNum:{}",
+            dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber(),
+            dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumberFromDB(),
+            dbManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum());
+        hitDown = true;
+        LockSupport.unpark(hitThread);
+        return;
+      }
+      if (hitDown) {
+        return;
+      }
       try {
         if (freshBlockId.getIfPresent(blockId) == null) {
           if (block.getNum() <= getHeadBlockId().getNum()) {
@@ -381,18 +383,30 @@ public class TronNetDelegate {
     }
   }
 
+  /**
+   * Validate block structure and Merkle root. Advertisement also checks witness authorization;
+   * sync defers it to Manager, which checks committed state and revalidates forks after rewind.
+   */
   public void validBlock(BlockCapsule block) throws P2pException {
-    long time = System.currentTimeMillis();
-    if (block.getTimeStamp() - time > timeout) {
-      throw new P2pException(TypeEnum.BAD_BLOCK,
-              "time:" + time + ",block time:" + block.getTimeStamp());
+    for (Transaction transaction : block.getInstance().getTransactionsList()) {
+      int contractCount = transaction.getRawData().getContractCount();
+      if (contractCount != 1) {
+        throw new P2pException(TypeEnum.BAD_BLOCK,
+            "Invalid contract count: " + contractCount
+                + ", block: " + block.getBlockId().getString());
+      }
+      int transactionSize = transaction.getSerializedSize();
+      if (transactionSize < MIN_TRANSACTION_SIZE) {
+        throw new P2pException(TypeEnum.BAD_BLOCK,
+            "Invalid transaction size: " + transactionSize
+                + ", block: " + block.getBlockId().getString());
+      }
     }
     try {
       block.validateMerkleRoot();
     } catch (BadBlockException e) {
       throw new P2pException(TypeEnum.BLOCK_MERKLE_INVALID, e.getMessage());
     }
-    validSignature(block);
   }
 
   public boolean validAdvBlock(PeerConnection peer, BlockCapsule block) throws P2pException {
@@ -410,6 +424,7 @@ public class TronNetDelegate {
       }
     }
     validBlock(block);
+    validSignature(block);
     return activeWitness;
   }
 

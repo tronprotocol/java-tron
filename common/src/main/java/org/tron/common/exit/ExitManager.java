@@ -44,10 +44,19 @@ public class ExitManager {
     return Optional.empty();
   }
 
+  public static TronError requestExit(TronError error) {
+    logAndExit(error);
+    return error;
+  }
+
   public static void logAndExit(TronError exit) {
+    if (exit.isExitRequested()) {
+      return;
+    }
     final int code = exit.getErrCode().getCode();
     logger.error("Shutting down with code: {}, reason: {}", exit.getErrCode(), exit.getMessage());
     Thread exitThread = exitThreadFactory.newThread(() -> System.exit(code));
     exitThread.start();
+    exit.markExitRequested();
   }
 }

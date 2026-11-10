@@ -122,17 +122,17 @@ public class ChannelManager {
       logger.warn("Notify Disconnect peer has no address.");
       return;
     }
+    channel.markDisconnected();
     if (!channel.markDisconnectNotified()) {
       return;
     }
-    // Share the registration lock in addPeer to keep removal by identity atomic.
-    synchronized (ChannelManager.class) {
-      channels.removeIf(registered -> registered == channel);
-    }
+    // A synchronous write failure can enter here while a caller holds the admission lock.
+    // Cleanup must not acquire that lock under an application handler's monitor.
+    channels.removeIf(registered -> registered == channel);
     Parameter.handlerList.forEach(h -> h.onDisconnect(channel));
     InetAddress inetAddress = channel.getInetAddress();
     if (inetAddress != null) {
-      banNode(inetAddress, Parameter.DEFAULT_BAN_TIME);
+      banNodeOnDisconnect(inetAddress);
     }
   }
 
@@ -146,12 +146,18 @@ public class ChannelManager {
     return cnt;
   }
 
+  /**
+   * @deprecated Peer registration is managed by the libp2p HELLO handshake. This method only
+   *     performs admission checks and registration; it does not complete the handshake or cancel
+   *     its timeout. Application code should let the handshake register peers instead.
+   */
+  @Deprecated
   public static synchronized DisconnectCode processPeer(Channel channel) {
     DisconnectCode code = checkPeer(channel);
     if (code == DisconnectCode.NORMAL) {
       addPeer(channel);
     }
-    return code;
+    return channel.isDisconnect() ? DisconnectCode.UNKNOWN : code;
   }
 
   /**
@@ -159,6 +165,9 @@ public class ChannelManager {
    * to prevent another connection from taking the checked capacity.
    */
   public static synchronized DisconnectCode checkPeer(Channel channel) {
+    if (channel.isDisconnect()) {
+      return DisconnectCode.UNKNOWN;
+    }
     if (channels.stream().anyMatch(registered -> registered == channel)) {
       return DisconnectCode.NORMAL;
     }
@@ -168,10 +177,9 @@ public class ChannelManager {
       return DisconnectCode.UNKNOWN;
     }
 
-    if (!channel.isActive() && !channel.isTrustPeer()) {
+    if (!channel.isOutbound() && !channel.isTrustPeer()) {
       InetAddress inetAddress = channel.getInetAddress();
-      if (bannedNodes.getIfPresent(inetAddress) != null
-          && bannedNodes.getIfPresent(inetAddress) > System.currentTimeMillis()) {
+      if (isBanned(inetAddress)) {
         logger.info("Peer {} recently disconnected", channel);
         return DisconnectCode.TIME_BANNED;
       }
@@ -196,7 +204,7 @@ public class ChannelManager {
       for (Channel c : channels) {
         if (channel.getNodeId().equals(c.getNodeId())) {
           if (c.getStartTime() > channel.getStartTime()) {
-            c.close();
+            disconnectDuplicatePeer(c);
           } else {
             logger.info("Duplicate peer {}, exist peer {}", channel, c);
             return DisconnectCode.DUPLICATE_PEER;
@@ -208,12 +216,34 @@ public class ChannelManager {
     return DisconnectCode.NORMAL;
   }
 
+  // Called under the admission lock. Always queue I/O, even on the current EventLoop.
+  private static void disconnectDuplicatePeer(Channel peer) {
+    peer.getCtx().executor().execute(() -> {
+      boolean sendReason;
+      // A different EventLoop may start this task before the admission caller returns.
+      synchronized (ChannelManager.class) {
+        sendReason = !peer.isDisconnect();
+      }
+      if (sendReason) {
+        peer.send(new P2pDisconnectMessage(DisconnectReason.DUPLICATE_PEER));
+      }
+      peer.close();
+    });
+    channels.removeIf(registered -> registered == peer);
+  }
+
   public static synchronized void addPeer(Channel channel) {
-    if (channels.stream().anyMatch(registered -> registered == channel)) {
+    if (channel.isDisconnect()
+        || channels.stream().anyMatch(registered -> registered == channel)) {
       return;
     }
     channel.markRegisteredPeer();
     channels.add(channel);
+    // Cleanup may have completed between the precheck and insertion, without taking this lock.
+    if (channel.isDisconnect()) {
+      channels.removeIf(registered -> registered == channel);
+      return;
+    }
 
     logger.info("Add peer {}, total channels: {}", channel.getInetSocketAddress(), channels.size());
   }
@@ -249,10 +279,23 @@ public class ChannelManager {
   }
 
   public static void banNode(InetAddress inetAddress, Long banTime) {
+    long expiry = System.currentTimeMillis() + banTime;
+    Long currentExpiry = bannedNodes.getIfPresent(inetAddress);
+    if (currentExpiry == null || currentExpiry < expiry) {
+      bannedNodes.put(inetAddress, expiry);
+    }
+  }
+
+  public static boolean isBanned(InetAddress inetAddress) {
+    Long expiry = bannedNodes.getIfPresent(inetAddress);
+    return expiry != null && expiry > System.currentTimeMillis();
+  }
+
+  static void banNodeOnDisconnect(InetAddress inetAddress) {
     long now = System.currentTimeMillis();
-    if (bannedNodes.getIfPresent(inetAddress) == null
-        || bannedNodes.getIfPresent(inetAddress) < now) {
-      bannedNodes.put(inetAddress, now + banTime);
+    Long expiry = bannedNodes.getIfPresent(inetAddress);
+    if (expiry == null || expiry < now) {
+      bannedNodes.put(inetAddress, now + Parameter.DEFAULT_BAN_TIME);
     }
   }
 
@@ -286,8 +329,8 @@ public class ChannelManager {
       logger.debug("Receive message from channel {}, {}", channel.getInetSocketAddress(), message);
     }
 
-    if (channel.isDiscoveryMode() && message.getType() != MessageType.STATUS) {
-      logger.debug("Discovery channel {} received unexpected message {}, close it",
+    if (channel.isNodeDetectMode() && message.getType() != MessageType.STATUS) {
+      logger.debug("Node detection channel {} received unexpected message {}, close it",
           channel.getInetSocketAddress(), message.getType());
       channel.close();
       return;
@@ -317,7 +360,7 @@ public class ChannelManager {
     if (handler == null) {
       throw new P2pException(P2pException.TypeEnum.NO_SUCH_MESSAGE, "type:" + data[0]);
     }
-    if (channel.isDiscoveryMode()) {
+    if (channel.isNodeDetectMode()) {
       channel.send(new P2pDisconnectMessage(DisconnectReason.DISCOVER_MODE));
       channel.getCtx().close();
       return;
@@ -344,8 +387,7 @@ public class ChannelManager {
     channel.setNodeId(nodeId);
     if (nodeId.equals(Hex.toHexString(Parameter.p2pConfig.getNodeID()))) {
       logger.warn("Channel {} is myself", channel.getInetSocketAddress());
-      channel.send(new P2pDisconnectMessage(DisconnectReason.DUPLICATE_PEER));
-      channel.close();
+      disconnectDuplicatePeer(channel);
       return;
     }
 
@@ -362,12 +404,10 @@ public class ChannelManager {
     Channel c2 = list.get(1);
     if (c1.getStartTime() > c2.getStartTime()) {
       logger.info("Close channel {}, other channel {} is earlier", c1, c2);
-      c1.send(new P2pDisconnectMessage(DisconnectReason.DUPLICATE_PEER));
-      c1.close();
+      disconnectDuplicatePeer(c1);
     } else {
       logger.info("Close channel {}, other channel {} is earlier", c2, c1);
-      c2.send(new P2pDisconnectMessage(DisconnectReason.DUPLICATE_PEER));
-      c2.close();
+      disconnectDuplicatePeer(c2);
     }
   }
 
@@ -387,16 +427,18 @@ public class ChannelManager {
     return disconnectedCount;
   }
 
-  public static synchronized int disconnectBlockedIps() {
-    int disconnectedCount = 0;
-    for (Channel channel : getAllChannels()) {
-      if (ConnectionPolicy.isBlocked(channel.getInetAddress()) && !channel.isDisconnect()) {
-        // Do not send a DisconnectReason because it would reveal the manual blacklist policy
-        // to a potentially malicious peer.
-        channel.close();
-        disconnectedCount++;
+  public static int disconnectBlockedIps() {
+    List<Channel> blockedChannels = new ArrayList<>();
+    synchronized (ChannelManager.class) {
+      for (Channel channel : getAllChannels()) {
+        if (ConnectionPolicy.isBlocked(channel.getInetAddress()) && !channel.isDisconnect()) {
+          blockedChannels.add(channel);
+        }
       }
     }
-    return disconnectedCount;
+    // Closing can synchronously invoke application callbacks, so release the admission lock first.
+    // Do not send a DisconnectReason because it would reveal the manual blacklist policy.
+    blockedChannels.forEach(Channel::close);
+    return blockedChannels.size();
   }
 }

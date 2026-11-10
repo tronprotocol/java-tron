@@ -28,6 +28,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.stubbing.Answer;
 import org.tron.api.DatabaseGrpc;
 import org.tron.api.WalletSolidityGrpc;
+import org.tron.common.application.RpcService;
 import org.tron.core.ChainBaseManager;
 import org.tron.core.Wallet;
 import org.tron.core.db.Manager;
@@ -42,7 +43,7 @@ import org.tron.core.services.interfaceOnSolidity.RpcApiServiceOnSolidity;
  * served and every response would still look well-formed, only resolved against HEAD instead of the
  * solidified or PBFT snapshot.
  *
- * <p>The production {@code addService} runs against a mock builder, and one unary call is driven
+ * <p>The production {@code addServices} runs against a mock builder, and one unary call is driven
  * through each definition it registers the way gRPC does: {@code startCall}, the request, then
  * {@code onHalfClose}. The handler's first read is recorded alongside the cursor calls, so the
  * port's cursor has to be selected before that read and reset after the handler returns. A
@@ -79,7 +80,7 @@ public class CursorInterceptorWiringTest {
   }
 
   /**
-   * Registers the services through the production addService, drives one call through each
+   * Registers the services through the production addServices, drives one call through each
    * registered definition, and asserts every handler read ran between the port's setCursor and
    * resetCursor.
    */
@@ -113,7 +114,7 @@ public class CursorInterceptorWiringTest {
   }
 
   /**
-   * Runs the service's real addService against a mock builder and returns the definitions it
+   * Runs the service's real addServices against a mock builder and returns the definitions it
    * registered. A service added through the {@code BindableService} overload is not among them, so
    * the count check below fails for it.
    */
@@ -136,9 +137,10 @@ public class CursorInterceptorWiringTest {
     inject(serviceClass, service, interceptor);
 
     NettyServerBuilder builder = mock(NettyServerBuilder.class);
-    Method addService = serviceClass.getDeclaredMethod("addService", NettyServerBuilder.class);
-    addService.setAccessible(true);
-    addService.invoke(service, builder);
+    Method addServices = RpcService.class.getDeclaredMethod("addServices",
+        NettyServerBuilder.class);
+    addServices.setAccessible(true);
+    addServices.invoke(service, builder);
 
     ArgumentCaptor<ServerServiceDefinition> registered =
         ArgumentCaptor.forClass(ServerServiceDefinition.class);

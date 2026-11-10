@@ -106,11 +106,13 @@ public class BlockCapsuleTest {
         1234,
         ByteString.copyFrom("1234567".getBytes()));
 
+    local.addTransaction(new TransactionCapsule(
+        TransferContract.newBuilder().setAmount(1).build(), ContractType.TransferContract));
+
     // valid block: setMerkleRoot then validate — should not throw
     local.setMerkleRoot();
     local.validateMerkleRoot(); // no exception
 
-    // flag is set — second call must be a no-op (no recomputation)
     local.validateMerkleRoot(); // still no exception
 
     // tamper with a transaction to break merkle
@@ -124,14 +126,29 @@ public class BlockCapsuleTest {
         new TransactionCapsule(transferContract, ContractType.TransferContract));
     // merkle root was set before adding the tx, so it is now stale/invalid
 
-    BlockCapsule tampered = new BlockCapsule(local.getInstance());
-    // tampered has no merkleValidated flag set
     try {
-      tampered.validateMerkleRoot();
+      local.validateMerkleRoot();
       Assert.fail("Expected BadBlockException for merkle mismatch");
     } catch (BadBlockException e) {
       Assert.assertTrue(e.getMessage().contains("merkle"));
     }
+    local.setMerkleRoot();
+    local.validateMerkleRoot();
+  }
+
+  @Test
+  public void testAddAllTransactionsMakesMerkleRootStale() throws Exception {
+    BlockCapsule block = new BlockCapsule(1, Sha256Hash.ZERO_HASH, 1234, ByteString.EMPTY);
+    block.setMerkleRoot();
+    block.validateMerkleRoot();
+    TransactionCapsule transaction = new TransactionCapsule(
+        TransferContract.newBuilder().setAmount(999).build(), ContractType.TransferContract);
+
+    block.addAllTransactions(Arrays.asList(transaction));
+
+    Assert.assertThrows(BadBlockException.class, block::validateMerkleRoot);
+    block.setMerkleRoot();
+    block.validateMerkleRoot();
   }
 
   /* @Test

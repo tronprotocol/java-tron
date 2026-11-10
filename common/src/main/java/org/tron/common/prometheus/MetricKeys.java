@@ -26,6 +26,7 @@ public class MetricKeys {
     public static final String BLOCK_FETCH_ARMED = "tron:block_fetch_armed";
     public static final String BLOCK_FETCH_SECONDARY = "tron:block_fetch_secondary";
     public static final String BLOCK_ALREADY_KNOWN = "tron:block_already_known";
+    public static final String GRPC_ADMISSION_REJECT = "tron:grpc_admission_reject";
 
     private Counter() {
       throw new IllegalStateException("Counter");

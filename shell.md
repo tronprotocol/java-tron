@@ -10,7 +10,7 @@ The script is available in the java-tron project at [github](https://github.com/
 
 The script runs on x86_64 with JDK 8 and on ARM64 with JDK 17. It picks the JVM options for the Java version it finds, and downloads the release jars built for that architecture (`FullNode-aarch64.jar` on ARM64).
 
-Downloaded release jars are verified against the GPG signature published with each release, made by the key listed under "Integrity Check" in the [README](./README.md), so `gpg` must be installed; a jar that fails verification is not used. The mainnet config is downloaded from java-tron and the Nile testnet config from [nile-testnet](https://github.com/tron-nile-testnet/nile-testnet).
+Downloaded release jars are verified against the GPG signature published with each release, made by the key listed under "Integrity Check" in the [README](./README.md), so `gpg` must be installed; a jar that fails verification is not used. A signature made by a revoked or expired release key fails verification. The mainnet config is downloaded from java-tron and the Nile testnet config from [nile-testnet](https://github.com/tron-nile-testnet/nile-testnet).
 
 For each download the release key is fetched by its fingerprint from keys.openpgp.org, or from keyserver.ubuntu.com if the first server does not answer, so installing a release jar needs outbound HTTPS access (port 443) to one of these key servers. If neither can be reached, the signature cannot be checked and the downloaded jar is removed.
 
@@ -38,7 +38,14 @@ For each download the release key is fetched by its fingerprint from keys.openpg
   sh start.sh --stop
   ```
 
-  `--run` records the process id in `<jar name>.pid` (`FullNode.jar.pid` by default) next to `start.log`, and `--stop` reads it. Run `--stop` in the directory the node was started from, with the same `-j` name if one was given. After `--release` or `-cb` the node runs in `FullNode/`; `--stop` finds it there from the parent directory as well. A node started by an earlier version of the script (a `start.log` but no pid file) is still found by its jar name.
+  `--run` records the process id in `<jar name>.pid` (`FullNode.jar.pid` by default) next to `start.log`, and `--stop` reads it. Run `--stop` in the directory the node was started from, with the same `-j` name if one was given. After `--release` or `-cb` the node runs in `FullNode/`; `--stop` finds it there from the parent directory as well.
+
+  `--stop` stops only a process whose working directory is that directory (read from `/proc` on Linux or with `lsof` on macOS), so nodes with the same jar name in other directories keep running, and a pid file whose process runs elsewhere counts as a stopped node. When the working directory cannot be read or was deleted:
+
+  - with a pid file, the recorded id is trusted, so it must belong to this node (for example, written into the pid file by hand);
+  - without one (a node started by an earlier script, which left only `start.log`), `--stop` exits with an error if this user can signal the process: write its id to the pid file and run `--stop` again. A process this user cannot signal, such as another user's, only gets a warning, and `--run` still starts the node.
+
+  If the node cannot be stopped (this user cannot signal it, or it still runs after `SIGKILL`), `--stop` exits with an error and `--run` does not start another node.
 
 * Get the latest version of `FullNode.jar` and start it
 

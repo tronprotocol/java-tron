@@ -35,8 +35,9 @@ public class Node implements Serializable, Cloneable {
   @Setter
   private int bindPort;
 
+  /** Network identifier learned from discovery PING/PONG messages. */
   @Setter
-  private int p2pVersion;
+  private int networkId;
 
   @Getter
   private long updateTime;
@@ -56,7 +57,7 @@ public class Node implements Serializable, Cloneable {
 
   public Node(byte[] id, String hostV4, String hostV6, int port) {
     this.id = id;
-    this.hostV4 = hostV4;
+    this.hostV4 = NetUtil.validIpV4(hostV4) ? hostV4 : null;
     this.hostV6 = hostV6;
     this.port = port;
     this.bindPort = port;
@@ -66,7 +67,7 @@ public class Node implements Serializable, Cloneable {
 
   public Node(byte[] id, String hostV4, String hostV6, int port, int bindPort) {
     this.id = id;
-    this.hostV4 = hostV4;
+    this.hostV4 = NetUtil.validIpV4(hostV4) ? hostV4 : null;
     this.hostV6 = hostV6;
     this.port = port;
     this.bindPort = bindPort;
@@ -108,8 +109,15 @@ public class Node implements Serializable, Cloneable {
     }
   }
 
-  public boolean isConnectible(int argsP2PVersion) {
-    return port == bindPort && p2pVersion == argsP2PVersion;
+  /** @deprecated Use {@link #setNetworkId(int)}. */
+  @Deprecated
+  public void setP2pVersion(int networkId) {
+    setNetworkId(networkId);
+  }
+
+  /** Whether the endpoint uses its advertised port and belongs to the expected network. */
+  public boolean isConnectible(int expectedNetworkId) {
+    return port == bindPort && networkId == expectedNetworkId;
   }
 
   public InetSocketAddress getPreferInetSocketAddress() {

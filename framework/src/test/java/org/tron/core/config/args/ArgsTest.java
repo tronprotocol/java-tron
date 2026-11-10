@@ -29,18 +29,23 @@ import java.io.PrintStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.InetAddress;
+import java.time.Instant;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TimeZone;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.mockito.Mockito;
 import org.slf4j.LoggerFactory;
 import org.tron.common.TestConstants;
 import org.tron.common.args.GenesisBlock;
+import org.tron.common.cron.CronExpression;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.DecodeUtil;
@@ -48,6 +53,7 @@ import org.tron.common.utils.LocalWitnesses;
 import org.tron.common.utils.PublicMethod;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.TronError;
+import org.tron.p2p.P2pConfig;
 
 @Slf4j
 public class ArgsTest {
@@ -194,6 +200,91 @@ public class ArgsTest {
     method2.invoke(Args.class, nc);
 
     Assert.assertNotEquals(configuredExternalIp, parameter.getNodeExternalIp());
+  }
+
+  @Test
+  public void testExternalIpRejectsInvalidExplicitValues() throws Exception {
+    Method method = Args.class.getDeclaredMethod("externalIp", NodeConfig.class);
+    method.setAccessible(true);
+    Args.getInstance().setNodeExternalIp("192.0.2.10");
+    for (String ip : new String[]{"localhost", "nodes.example.org", "2001:db8::1", "1.2.3",
+        "256.1.2.3", "192.0.2.1 ", "192.0.2.1\n"}) {
+      NodeConfig config = new NodeConfig();
+      config.getDiscovery().getExternal().setIp(ip);
+
+      InvocationTargetException error = Assert.assertThrows(InvocationTargetException.class,
+          () -> method.invoke(null, config));
+
+      Assert.assertTrue(error.getCause() instanceof TronError);
+      Assert.assertEquals(TronError.ErrCode.PARAMETER_INIT,
+          ((TronError) error.getCause()).getErrCode());
+      Assert.assertTrue(error.getCause().getMessage().contains("node.discovery.external.ip"));
+      Assert.assertEquals("192.0.2.10", Args.getInstance().getNodeExternalIp());
+    }
+  }
+
+  @Test
+  public void testExternalIpAcceptsIpv4Literals() throws Exception {
+    Method method = Args.class.getDeclaredMethod("externalIp", NodeConfig.class);
+    method.setAccessible(true);
+    for (String ip : new String[]{"192.0.2.1", "255.255.255.255", "10.0.0.1"}) {
+      NodeConfig config = new NodeConfig();
+      config.getDiscovery().getExternal().setIp(ip);
+      method.invoke(null, config);
+      Assert.assertEquals(ip, Args.getInstance().getNodeExternalIp());
+    }
+  }
+
+  @Test
+  public void testEmptyExternalIpPreservesDetectionAndLanFallback() throws Exception {
+    CommonParameter parameter = Args.getInstance();
+    P2pConfig previousConfig = parameter.p2pConfig;
+    String previousLanIp = parameter.getNodeLanIp();
+    P2pConfig p2pConfig = Mockito.mock(P2pConfig.class);
+    Method method = Args.class.getDeclaredMethod("externalIp", NodeConfig.class);
+    method.setAccessible(true);
+    parameter.p2pConfig = p2pConfig;
+    try {
+      Mockito.when(p2pConfig.getIp()).thenReturn("192.0.2.1");
+      parameter.setNodeExternalIp(null);
+      method.invoke(null, new NodeConfig());
+      Assert.assertEquals("192.0.2.1", parameter.getNodeExternalIp());
+
+      Mockito.when(p2pConfig.getIp()).thenReturn(null);
+      parameter.setNodeExternalIp(null);
+      parameter.setNodeLanIp("192.168.0.1");
+      method.invoke(null, new NodeConfig());
+      Assert.assertEquals("192.168.0.1", parameter.getNodeExternalIp());
+    } finally {
+      parameter.p2pConfig = previousConfig;
+      parameter.setNodeLanIp(previousLanIp);
+    }
+  }
+
+  @Test
+  public void testShutdownBlockTimeEvaluatedInUtc() {
+    TimeZone defaultZone = TimeZone.getDefault();
+    try {
+      TimeZone.setDefault(TimeZone.getTimeZone("Asia/Shanghai"));
+      Map<String, String> params = new HashMap<>();
+      params.put("node.shutdown.BlockTime", "0 0 0 L 4 ? 2027");
+      params.put("storage.db.directory", "database");
+      Config config = ConfigFactory.defaultOverrides()
+          .withFallback(ConfigFactory.parseMap(params))
+          .withFallback(ConfigFactory.defaultReference());
+      Args.applyConfigParams(config);
+
+      CronExpression blockTime = Args.getInstance().getShutdownBlockTime();
+      Assert.assertEquals("UTC", blockTime.getTimeZone().getID());
+      Date lastDay = Date.from(Instant.parse("2027-04-30T00:00:00Z"));
+      Assert.assertEquals(lastDay,
+          blockTime.getNextValidTimeAfter(Date.from(Instant.parse("2027-04-01T00:00:00Z"))));
+      Assert.assertTrue(blockTime.isSatisfiedBy(lastDay));
+      Assert.assertFalse(blockTime.isSatisfiedBy(
+          Date.from(Instant.parse("2027-04-29T16:00:00Z"))));
+    } finally {
+      TimeZone.setDefault(defaultZone);
+    }
   }
 
   @Test

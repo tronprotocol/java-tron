@@ -352,7 +352,7 @@ public class SyncService {
   private void processSyncBlock(BlockCapsule block, PeerConnection peerConnection) {
     BlockId blockId = block.getBlockId();
     try {
-      tronNetDelegate.validSignature(block);
+      tronNetDelegate.validBlock(block);
       boolean useful = block.getNum() >= tronNetDelegate.getHeadBlockId().getNum()
           && !tronNetDelegate.containBlock(blockId);
       tronNetDelegate.processBlock(block, true);

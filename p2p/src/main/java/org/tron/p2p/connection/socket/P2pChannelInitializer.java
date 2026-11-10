@@ -1,57 +1,77 @@
 package org.tron.p2p.connection.socket;
 
+import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.FixedRecvByteBufAllocator;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
+import io.netty.handler.timeout.WriteTimeoutHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.tron.p2p.connection.Channel;
 import org.tron.p2p.connection.ChannelManager;
+import org.tron.p2p.connection.ConnectionPolicy;
+import org.tron.p2p.connection.business.handshake.DisconnectCode;
+import org.tron.p2p.connection.message.handshake.HelloMessage;
 
 @Slf4j(topic = "net")
 public class P2pChannelInitializer extends ChannelInitializer<NioSocketChannel> {
 
+  private static final int REJECTION_WRITE_TIMEOUT_SECONDS = 2;
+
   private final String remoteId;
 
-  //only be true when channel is activated by detect service
-  private boolean peerDiscoveryMode = false;
+  // TCP STATUS probe mode, independent of UDP discovery.
+  private boolean nodeDetectMode = false;
 
+  // Whether regular outbound connection closure notifies the connection pool.
   private boolean trigger = true;
 
-  public P2pChannelInitializer(String remoteId, boolean peerDiscoveryMode, boolean trigger) {
+  public P2pChannelInitializer(String remoteId, boolean nodeDetectMode, boolean trigger) {
     this.remoteId = remoteId;
-    this.peerDiscoveryMode = peerDiscoveryMode;
+    this.nodeDetectMode = nodeDetectMode;
     this.trigger = trigger;
   }
 
   @Override
   public void initChannel(NioSocketChannel ch) {
     try {
-      if (StringUtils.isEmpty(remoteId) && !PendingInboundConnectionHandler.tryAdd(ch)) {
-        ch.close();
-        return;
+      if (StringUtils.isEmpty(remoteId)) {
+        if (ConnectionPolicy.isBlocked(ch.remoteAddress())) {
+          ch.close();
+          return;
+        }
+        DisconnectCode code = PendingInboundConnectionHandler.tryAdd(ch);
+        if (code != DisconnectCode.NORMAL) {
+          if (code == DisconnectCode.UNKNOWN) {
+            ch.close();
+          } else {
+            sendRejection(ch, code);
+          }
+          return;
+        }
       }
       final Channel channel = new Channel();
-      channel.init(ch.pipeline(), remoteId, peerDiscoveryMode);
+      channel.init(ch.pipeline(), remoteId, nodeDetectMode);
 
       // limit the size of receiving buffer to 1024
       ch.config().setRecvByteBufAllocator(new FixedRecvByteBufAllocator(256 * 1024));
       ch.config().setOption(ChannelOption.SO_RCVBUF, 256 * 1024);
       ch.config().setOption(ChannelOption.SO_BACKLOG, 1024);
 
-      // be aware of channel closing
+      // Route STATUS-probe and regular peer cleanup separately.
       ch.closeFuture().addListener((ChannelFutureListener) future -> {
         channel.markDisconnected();
-        if (channel.isDiscoveryMode() && !channel.isRegisteredPeer()) {
+        if (channel.isNodeDetectMode() && !channel.isRegisteredPeer()) {
           ChannelManager.getNodeDetectService().notifyDisconnect(channel);
         } else {
           try {
             logger.info("Close channel:{}", channel.getInetSocketAddress());
             ChannelManager.notifyDisconnect(channel);
           } finally {
-            if (channel.getInetSocketAddress() != null && channel.isActive() && trigger) {
+            if (channel.getInetSocketAddress() != null && channel.isOutbound() && trigger) {
               ChannelManager.triggerConnect(channel.getInetSocketAddress());
             }
           }
@@ -62,6 +82,21 @@ public class P2pChannelInitializer extends ChannelInitializer<NioSocketChannel> 
       logger.error("Unexpected initChannel error", e);
       ch.close();
     }
+  }
+
+  private void sendRejection(NioSocketChannel ch, DisconnectCode code) {
+    if (ConnectionPolicy.isBlocked(ch.remoteAddress())) {
+      ch.close();
+      return;
+    }
+    ch.config().setAutoRead(false);
+    ch.pipeline().addLast("rejectionEncoder", new ProtobufVarint32LengthFieldPrepender());
+    ch.pipeline().addLast("rejectionWriteTimeout",
+        new WriteTimeoutHandler(REJECTION_WRITE_TIMEOUT_SECONDS));
+    HelloMessage response = new HelloMessage(code, System.currentTimeMillis());
+    logger.debug("Reject inbound connection from {}, reason: {}", ch.remoteAddress(), code);
+    ch.writeAndFlush(Unpooled.wrappedBuffer(response.getSendData()))
+        .addListener(ChannelFutureListener.CLOSE);
   }
 
 }

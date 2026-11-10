@@ -70,7 +70,7 @@ public class SyncBlockContributionTest {
   public void testInvalidSignatureOnlyBlamesProvider() throws Exception {
     delegate.recordInventory(other, new Item(block.getBlockId(), InventoryType.BLOCK), 100);
     doThrow(new P2pException(TypeEnum.BLOCK_SIGN_INVALID, "bad signature"))
-        .when(delegate).validSignature(block);
+        .when(delegate).processBlock(block, true);
     process();
     verify(provider).disconnect(ReasonCode.BAD_BLOCK);
     verify(other, never()).disconnect(any());

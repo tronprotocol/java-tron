@@ -3,12 +3,27 @@
 Peer discovery, connection management and DNS-based node lists for java-tron.
 
 > **Vendored from [tronprotocol/libp2p](https://github.com/tronprotocol/libp2p)
-> v2.2.9, synchronized through `release-v2.3.0` at `f13c67cdca73cec36eb5dd83bb5ef51f9ba7f9bc`.**
+> v2.2.9, synchronized through `release-v2.3.0` at `94dbc75896dc68c72934276c8d3143b4a3540363`.**
 > It lives here as the `:p2p` Gradle module and is consumed as a
 > project dependency, not as a published artifact — `:common` exposes it via
 > `api project(":p2p")`. Upstream's own README follows, edited where
 > internalizing changed the facts; treat this file as the module's docs rather
 > than as a mirror of upstream.
+
+## Connection validation and limits
+
+java-tron's application-layer HELLO applies the same raw IPv4/IPv6 bounds and IPv6 validation.
+Its existing unknown-field normalization and the module's TCP blocked-IP policy are retained.
+Bouncy Castle is upgraded in the root build as well as this module so all consumers use 1.86.
+
+Pending writes have a 200 MiB per-connection threshold and a 500 MiB shared eviction threshold;
+the latter triggers asynchronous eviction rather than enforcing a hard global admission limit.
+Writes that remain incomplete for 10 seconds close the connection. Ordinary inbound HELLOs are
+admitted while the total pending count is below 32; trusted IPs can use capacity up to 40 total.
+The per-IP pending limit remains two, and the absolute HELLO deadline remains 10 seconds.
+
+Previously generated DNS tree URLs may need updating; see the
+[migration notes](#124-migration-for-previously-generated-tree-urls).
 
 ## Running it on its own
 
@@ -170,6 +185,13 @@ tree://APFGGTFOBVE2ZNAB3CSMNNX6RRK3ODIRLP2AA5U4YFAA6MSYZUYTQ@nodes.example.org
 The compressed public Key APFGGTFOBVE2ZNAB3CSMNNX6RRK3ODIRLP2AA5U4YFAA6MSYZUYTQ is responsed to
 above dns-private key.
 
+#### Changing the DNS signing key
+
+Changing `dnsPrivate` republishes the root even when the node set is unchanged. Verify the new
+root using the new public key, then distribute the new tree URL and update subscribers'
+`treeUrls` and cross-tree `knownTreeUrls`. Account for DNS caching during the transition;
+clients retaining the old URL cannot verify roots signed by the new key.
+
 ### 1.2.3 Verify your dns txt records
 
 You can query dns record by following command and check if a TXT type record exists:
@@ -180,6 +202,14 @@ dig nodes.example.org TXT
 
 At last we can release the tree's url on anywhere later, such as github. So others can download this
 tree to get nodes dynamically.
+
+### 1.2.4 Migration for previously generated tree URLs
+
+The public-key compression fix changes tree URLs for keys whose public X coordinate has leading
+zero hexadecimal digits. Publishers should regenerate the URL with their existing private key and
+verify it against the signed root. If it differs from the old URL, update subscribers' `treeUrls`,
+cross-tree `knownTreeUrls`, and other distributed copies. Upgrading clients or republishing the
+root alone does not fix an incorrect URL. Key rotation is not required.
 
 # 2. Use as a dependency
 
@@ -362,11 +392,13 @@ config.setTreeUrls(Arrays.asList(urls));
 ```
 After that, the module will download the nodes from nile.nftderby1.net periodically.
 
+For existing URLs, check the [migration notes](#124-migration-for-previously-generated-tree-urls).
+
 ### 2.3.3 TCP Handler
 
-Implement definition message
+Define `TestMessage.java` and `MessageTypes.java` in separate files:
 
-```bash
+```java
 public class TestMessage {
     protected MessageTypes type;
     protected byte[] data;
@@ -376,6 +408,11 @@ public class TestMessage {
     }
 
 }
+```
+
+```java
+import java.util.HashMap;
+import java.util.Map;
 
 public enum MessageTypes {
 
@@ -409,19 +446,29 @@ public enum MessageTypes {
   }
 ```
 
-Inheritance implements the P2pEventHandler class.
+Extend `P2pEventHandler` in `MyP2pEventHandler.java`.
 
 * `onConnect` is called back after the TCP connection is established.
 * `onDisconnect` is called back after the TCP connection is closed.
 * `onMessage` is called back after receiving a message on the channel. Note that `data[0]` is the
   message type.
 
-```bash
+```java
+import java.net.InetSocketAddress;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import org.apache.commons.lang3.ArrayUtils;
+import org.tron.p2p.P2pEventHandler;
+import org.tron.p2p.connection.Channel;
+
 public class MyP2pEventHandler extends P2pEventHandler {
 
+    private final Map<InetSocketAddress, Channel> channels = new ConcurrentHashMap<>();
+
     public MyP2pEventHandler() {
-      this.typeSet = new HashSet<>();
-      this.typeSet.add(MessageTypes.TEST.getType());
+      this.messageTypes = new HashSet<>();
+      this.messageTypes.add(MessageTypes.TEST.getType());
     }
 
     @Override
@@ -454,7 +501,7 @@ public class MyP2pEventHandler extends P2pEventHandler {
 
 Start p2p service with P2pConfig and P2pEventHandler
 
-```bash
+```java
 P2pService p2pService = new P2pService();
 MyP2pEventHandler myP2pEventHandler = new MyP2pEventHandler();
 try {

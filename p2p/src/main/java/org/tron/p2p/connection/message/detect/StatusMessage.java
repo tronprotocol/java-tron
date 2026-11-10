@@ -16,6 +16,7 @@ public class StatusMessage extends Message {
   public StatusMessage(byte[] data) throws Exception {
     super(MessageType.STATUS, data);
     this.statusMessage = ProtoUtil.parseFrom(Connect.StatusMessage.parser(), data);
+    this.data = this.statusMessage.toByteArray();
   }
 
   public StatusMessage() {
@@ -57,6 +58,8 @@ public class StatusMessage extends Message {
 
   @Override
   public boolean valid() {
-    return NetUtil.validNode(getFrom());
+    Discover.Endpoint from = statusMessage.getFrom();
+    return NetUtil.validAddressFields(from.getAddress(), from.getAddressIpv6())
+        && NetUtil.validNode(getFrom());
   }
 }

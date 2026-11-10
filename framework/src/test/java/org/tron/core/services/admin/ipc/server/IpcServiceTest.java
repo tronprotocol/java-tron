@@ -35,6 +35,7 @@ import org.mockito.Mockito;
 import org.newsclub.net.unix.AFUNIXServerSocket;
 import org.newsclub.net.unix.AFUNIXSocket;
 import org.newsclub.net.unix.AFUNIXSocketAddress;
+import org.newsclub.net.unix.InvalidArgumentSocketException;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.TronError;
@@ -307,12 +308,14 @@ public class IpcServiceTest {
     Path root = Files.createTempDirectory(Paths.get("/tmp"), "ipc-bind-fail-");
     Path directory = root.resolve("ipc");
     IpcService service = newIpcService();
+    AFUNIXServerSocket serverSocket = Mockito.mock(AFUNIXServerSocket.class);
+    Mockito.doThrow(new IOException("bind failed")).when(serverSocket)
+        .bind(Mockito.any(AFUNIXSocketAddress.class));
     try {
       parameter.ipcSocketDirectory = root.toString();
       try (MockedStatic<AFUNIXServerSocket> sockets = Mockito.mockStatic(
           AFUNIXServerSocket.class)) {
-        sockets.when(() -> AFUNIXServerSocket.bindOn(Mockito.any(AFUNIXSocketAddress.class)))
-            .thenThrow(new IOException("bind failed"));
+        sockets.when(AFUNIXServerSocket::newInstance).thenReturn(serverSocket);
         try {
           service.innerStart();
           Assert.fail("Expected bind failure");
@@ -320,6 +323,7 @@ public class IpcServiceTest {
           Assert.assertEquals("bind failed", e.getMessage());
         }
       }
+      Mockito.verify(serverSocket).close();
       Assert.assertFalse(Files.exists(directory));
       Files.createDirectory(directory);
       service.innerStop();
@@ -330,6 +334,65 @@ public class IpcServiceTest {
       service.innerStop();
       Files.deleteIfExists(directory);
       Files.deleteIfExists(root);
+    }
+  }
+
+  @Test(timeout = 15_000)
+  public void testPartialBindFailureCleansSocketAndAllowsNextStartup() throws Exception {
+    assumePosixFileSystem();
+    CommonParameter parameter = Args.getInstance();
+    String originalSocketDirectory = parameter.ipcSocketDirectory;
+    Path root = Files.createTempDirectory(Paths.get("/tmp"), "ipc-partial-bind-");
+    IpcService service = newIpcService();
+    IpcService nextService = newIpcService();
+    AFUNIXServerSocket serverSocket = Mockito.spy(AFUNIXServerSocket.newInstance());
+    // Explicit service cleanup must remove the file even when close does not unlink it.
+    serverSocket.setDeleteOnClose(false);
+    Path socketFile = null;
+    try {
+      parameter.ipcSocketDirectory = root.toString();
+      socketFile = resolveSocketFilePath(parameter, getPid(service));
+      Path expectedSocketFile = socketFile;
+      IOException failure = new InvalidArgumentSocketException("bind failed after socket creation");
+      Mockito.doAnswer(invocation -> {
+        invocation.callRealMethod();
+        Assert.assertTrue(Files.exists(expectedSocketFile));
+        throw failure;
+      }).when(serverSocket).bind(Mockito.any(AFUNIXSocketAddress.class));
+      try (MockedStatic<AFUNIXServerSocket> sockets = Mockito.mockStatic(
+          AFUNIXServerSocket.class)) {
+        sockets.when(AFUNIXServerSocket::newInstance).thenReturn(serverSocket);
+        try {
+          service.innerStart();
+          Assert.fail("Expected the partial bind failure to be preserved");
+        } catch (IOException e) {
+          Assert.assertSame(failure, e);
+          Assert.assertEquals(0, e.getSuppressed().length);
+        }
+      }
+      Mockito.verify(serverSocket).close();
+      Assert.assertTrue(serverSocket.isClosed());
+      Assert.assertFalse(Files.exists(socketFile));
+      Assert.assertFalse(Files.exists(socketFile.getParent()));
+
+      nextService.innerStart();
+      service.innerStop();
+      assertNewConnectionSucceeds(socketFile);
+      nextService.innerStop();
+      Assert.assertFalse(Files.exists(socketFile.getParent()));
+    } finally {
+      parameter.ipcSocketDirectory = originalSocketDirectory;
+      try {
+        service.innerStop();
+      } finally {
+        nextService.innerStop();
+        serverSocket.close();
+        if (socketFile != null) {
+          Files.deleteIfExists(socketFile);
+          Files.deleteIfExists(socketFile.getParent());
+        }
+        Files.deleteIfExists(root);
+      }
     }
   }
 

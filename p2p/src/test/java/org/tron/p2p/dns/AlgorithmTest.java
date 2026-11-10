@@ -8,6 +8,7 @@ import org.junit.Test;
 import org.tron.p2p.dns.tree.Algorithm;
 import org.tron.p2p.protos.Discover.DnsRoot.TreeRoot;
 import org.tron.p2p.utils.ByteArray;
+import org.web3j.crypto.Sign;
 
 public class AlgorithmTest {
 
@@ -24,6 +25,15 @@ public class AlgorithmTest {
     Assert.assertEquals("APFGGTFOBVE2ZNAB3CSMNNX6RRK3ODIRLP2AA5U4YFAA6MSYZUYTQ", base32PubKey);
     String unCompressPubKey = Algorithm.decompressPubKey(pubKeyCompressHex);
     Assert.assertEquals(publicKey, unCompressPubKey);
+
+    for (String testPrivateKey : new String[] {"2d", "77", "99"}) {
+      BigInteger scalar = new BigInteger(testPrivateKey, 16);
+      BigInteger expected = Sign.publicKeyFromPrivate(scalar);
+      String compressed = Algorithm.compressPubKey(expected);
+      Assert.assertEquals(
+          ByteArray.toHexString(Sign.publicPointFromPrivate(scalar).getEncoded(true)), compressed);
+      Assert.assertEquals(expected, new BigInteger(Algorithm.decompressPubKey(compressed), 16));
+    }
   }
 
   @Test

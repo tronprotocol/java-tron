@@ -1,7 +1,9 @@
 package org.tron.p2p.discover.protocol.kad.table;
 
+import java.lang.reflect.Field;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import org.junit.After;
@@ -124,12 +126,20 @@ public class NodeTableTest {
   @Test
   public void addNode_bucketFullTest() throws Exception {
     for (int i = 0; i < KademliaOptions.BUCKET_SIZE; i++) {
-      TimeUnit.MILLISECONDS.sleep(10);
       addNode(new Node(ids.get(i), ips[i], null, 18888, 18888));
     }
-    Node lastSeen = nodeTable.addNode(new Node(ids.get(16), ips[16], null, 18888, 18888));
-    Assert.assertTrue(null != lastSeen);
-    Assert.assertEquals(ips[15], lastSeen.getHostV4());
+    Field modified = NodeEntry.class.getDeclaredField("modified");
+    modified.setAccessible(true);
+    for (NodeEntry entry : nodeTable.getAllNodes()) {
+      modified.setLong(entry, Arrays.asList(ips).indexOf(entry.getNode().getHostV4()));
+    }
+    Node candidate = new Node(ids.get(16), ips[16], null, 18888, 18888);
+    Assert.assertEquals(ips[0], nodeTable.addNode(candidate).getHostV4());
+
+    nodeTable.touchNode(new Node(ids.get(0), ips[0], null, 18888, 18888));
+    Assert.assertEquals(ips[1], nodeTable.addNode(candidate).getHostV4());
+    Assert.assertEquals(KademliaOptions.BUCKET_SIZE, nodeTable.getNodesCount());
+    Assert.assertFalse(nodeTable.contains(candidate));
   }
 
   public void addNode(Node n) {

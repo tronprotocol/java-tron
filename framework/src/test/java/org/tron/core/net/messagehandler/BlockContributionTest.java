@@ -305,7 +305,10 @@ public class BlockContributionTest {
     block = new BlockCapsule(block.getInstance().toBuilder()
         .addTransactions(Protocol.Transaction.newBuilder()
             .setRawData(Protocol.Transaction.raw.newBuilder()
-                .setData(ByteString.copyFromUtf8("tampered body")))).build());
+                .setData(ByteString.copyFrom(new byte[80]))
+                .addContract(Protocol.Transaction.Contract.newBuilder()
+                    .setType(Protocol.Transaction.Contract.ContractType.TransferContract))))
+        .build());
     assertRealValidationFailure(TypeEnum.BLOCK_MERKLE_INVALID);
   }
 

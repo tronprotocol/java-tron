@@ -421,6 +421,46 @@ public class ManagerMockTest {
   }
 
   @Test
+  public void rePushLoopCleansRegistrationForKnownTransaction() throws Exception {
+    assertRePushLoopCleansRegistration(true);
+  }
+
+  @Test
+  public void rePushLoopCleansRegistrationForUnsupportedAuths() throws Exception {
+    assertRePushLoopCleansRegistration(false);
+  }
+
+  private void assertRePushLoopCleansRegistration(boolean alreadyKnown) throws Exception {
+    Manager manager = new Manager();
+    TransactionCapsule tx = new TransactionCapsule(Protocol.Transaction.newBuilder()
+        .setRawData(Protocol.Transaction.raw.newBuilder()
+            .addAuths(Protocol.authority.getDefaultInstance())).build());
+    BlockingQueue<TransactionCapsule> repush = new LinkedBlockingQueue<>();
+    BlockingQueue<TransactionCapsule> pushing = new LinkedBlockingQueue<>();
+    repush.add(tx);
+    setField(manager, "rePushTransactions", repush);
+    setField(manager, "pushTransactionQueue", pushing);
+    ChainBaseManager chain = mock(ChainBaseManager.class);
+    TransactionStore transactions = mock(TransactionStore.class);
+    setField(manager, "chainBaseManager", chain);
+    when(chain.getTransactionStore()).thenReturn(transactions);
+    List<TransactionCapsule> registeredAtLookup = new ArrayList<>();
+    when(transactions.has(any())).thenAnswer(invocation -> {
+      manager.stopRePushThread();
+      registeredAtLookup.addAll(pushing);
+      return alreadyKnown;
+    });
+    Field loop = Manager.class.getDeclaredField("rePushLoop");
+    loop.setAccessible(true);
+
+    ((Runnable) loop.get(manager)).run();
+
+    Assert.assertEquals(Collections.singletonList(tx), registeredAtLookup);
+    assertTrue(repush.isEmpty());
+    assertTrue(pushing.isEmpty());
+  }
+
+  @Test
   public void testPostSolidityFilter() throws Exception {
     Manager dbManager = spy(new Manager());
 

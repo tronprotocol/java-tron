@@ -124,7 +124,7 @@ public class IpcClient {
         System.err.println("Disconnected from server before receiving a response.");
         return EXIT_FAILURE;
       }
-      IpcResponse parsedResponse = IpcResponse.parse(
+      IpcResponse parsedResponse = IpcResponse.parseForExec(
           response, command.getRequestId(), pendingOutputFormats);
       if (parsedResponse.isSuccessful()) {
         System.out.println(parsedResponse.getFormatted());

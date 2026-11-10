@@ -4,6 +4,7 @@ apply from: 'protoLint.gradle'
 
 dependencies {
     api group: 'com.google.protobuf', name: 'protobuf-java', version: rootProject.protobufVersion
+    api platform("io.netty:netty-bom:${rootProject.nettyVersion}")
 
 //    checkstyleConfig "com.puppycrawl.tools:checkstyle:${versions.checkstyle}"
     // google grpc

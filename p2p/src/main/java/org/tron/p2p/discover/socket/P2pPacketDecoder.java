@@ -7,6 +7,7 @@ import io.netty.channel.socket.DatagramPacket;
 import io.netty.handler.codec.MessageToMessageDecoder;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
+import org.tron.p2p.base.Constant;
 import org.tron.p2p.discover.message.Message;
 import org.tron.p2p.exception.P2pException;
 import org.tron.p2p.utils.ByteArray;
@@ -14,14 +15,12 @@ import org.tron.p2p.utils.ByteArray;
 @Slf4j(topic = "net")
 public class P2pPacketDecoder extends MessageToMessageDecoder<DatagramPacket> {
 
-  private static final int MAXSIZE = 2048;
-
   @Override
   public void decode(ChannelHandlerContext ctx, DatagramPacket packet, List<Object> out)
       throws Exception {
     ByteBuf buf = packet.content();
     int length = buf.readableBytes();
-    if (length <= 1 || length >= MAXSIZE) {
+    if (length <= 1 || length >= Constant.MAX_DISCOVERY_PACKET_SIZE) {
       logger.warn("UDP rcv bad packet, from {} length = {}", packet.sender(), length);
       return;
     }

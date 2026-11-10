@@ -114,7 +114,7 @@ public class HandshakeServiceTest {
   public void closesWhenChannelManagerRejectsThePeer() {
     channelManager.when(() -> ChannelManager.checkPeer(any(Channel.class)))
         .thenReturn(DisconnectCode.TOO_MANY_PEERS);
-    when(channel.isActive()).thenReturn(false);
+    when(channel.isOutbound()).thenReturn(false);
 
     service.processMessage(channel, msg);
 
@@ -128,7 +128,7 @@ public class HandshakeServiceTest {
   public void rejectedActiveChannelIsNotSentAHelloBack() {
     channelManager.when(() -> ChannelManager.checkPeer(any(Channel.class)))
         .thenReturn(DisconnectCode.TOO_MANY_PEERS);
-    when(channel.isActive()).thenReturn(true);
+    when(channel.isOutbound()).thenReturn(true);
 
     service.processMessage(channel, msg);
 
@@ -152,7 +152,7 @@ public class HandshakeServiceTest {
   @Test
   public void completesHandshakeForAnInboundPeer() {
     acceptPeer();
-    when(channel.isActive()).thenReturn(false);
+    when(channel.isOutbound()).thenReturn(false);
 
     service.processMessage(channel, msg);
 
@@ -165,7 +165,7 @@ public class HandshakeServiceTest {
   @Test
   public void completesHandshakeForAnOutboundPeer() {
     acceptPeer();
-    when(channel.isActive()).thenReturn(true);
+    when(channel.isOutbound()).thenReturn(true);
 
     service.processMessage(channel, msg);
 
@@ -178,7 +178,7 @@ public class HandshakeServiceTest {
   @Test
   public void rejectsInboundPeerOnDifferentNetworkId() {
     acceptPeer();
-    when(channel.isActive()).thenReturn(false);
+    when(channel.isOutbound()).thenReturn(false);
     when(msg.getNetworkId()).thenReturn(NETWORK_ID + 1);
 
     service.processMessage(channel, msg);
@@ -192,7 +192,7 @@ public class HandshakeServiceTest {
   @Test
   public void rejectsOutboundPeerReportingANonNormalCode() {
     acceptPeer();
-    when(channel.isActive()).thenReturn(true);
+    when(channel.isOutbound()).thenReturn(true);
     when(msg.getCode()).thenReturn(DisconnectCode.TOO_MANY_PEERS.getValue());
 
     service.processMessage(channel, msg);
@@ -204,7 +204,7 @@ public class HandshakeServiceTest {
   @Test
   public void rejectsOutboundPeerWhenBothNetworkIdAndVersionDiffer() {
     acceptPeer();
-    when(channel.isActive()).thenReturn(true);
+    when(channel.isOutbound()).thenReturn(true);
     when(msg.getNetworkId()).thenReturn(NETWORK_ID + 1);
     when(msg.getVersion()).thenReturn(NETWORK_ID + 1);
 
@@ -218,7 +218,7 @@ public class HandshakeServiceTest {
   public void rejectsOutboundPeerWhenOnlyLegacyVersionMatches() {
     // The negotiated network ID must match even if the legacy version matches.
     acceptPeer();
-    when(channel.isActive()).thenReturn(true);
+    when(channel.isOutbound()).thenReturn(true);
     when(msg.getNetworkId()).thenReturn(NETWORK_ID + 1);
     when(msg.getVersion()).thenReturn(NETWORK_ID);
 

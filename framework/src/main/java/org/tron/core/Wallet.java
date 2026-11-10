@@ -1698,6 +1698,16 @@ public class Wallet {
         .setValue(dbManager.getDynamicPropertiesStore().getAllowOptimizeTvmStorageKey())
         .build());
 
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAllowTvmVotePowerOptimization")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowTvmVotePowerOptimization())
+        .build());
+
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAllowTvmResourceOptimization")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowTvmResourceOptimization())
+        .build());
+
     return builder.build();
   }
 

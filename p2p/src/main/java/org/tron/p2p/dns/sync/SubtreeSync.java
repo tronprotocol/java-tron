@@ -1,9 +1,10 @@
 package org.tron.p2p.dns.sync;
 
 import java.net.UnknownHostException;
-import java.util.Arrays;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.p2p.dns.tree.BranchEntry;
 import org.tron.p2p.dns.tree.Entry;
@@ -25,6 +26,7 @@ public class SubtreeSync {
   public int leaves;
 
   public LinkedList<String> missing;
+  private final Set<String> seen = new HashSet<>();
 
   public SubtreeSync(Client c, LinkEntry linkEntry, String root, boolean link) {
     this.client = c;
@@ -34,6 +36,7 @@ public class SubtreeSync {
     this.leaves = 0;
     missing = new LinkedList<>();
     missing.add(root);
+    seen.add(root);
   }
 
   public boolean done() {
@@ -67,7 +70,11 @@ public class SubtreeSync {
       leaves++;
     } else if (entry instanceof BranchEntry) {
       BranchEntry branchEntry = (BranchEntry) entry;
-      missing.addAll(Arrays.asList(branchEntry.getChildren()));
+      for (String child : branchEntry.getChildren()) {
+        if (seen.add(child)) {
+          missing.add(child);
+        }
+      }
     }
     return entry;
   }

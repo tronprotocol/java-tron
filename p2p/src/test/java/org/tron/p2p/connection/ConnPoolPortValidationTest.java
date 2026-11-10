@@ -60,7 +60,7 @@ public class ConnPoolPortValidationTest {
     client.setAccessible(true);
     client.set(pool, new PeerClient() {
       @Override
-      public ChannelFuture connectAsync(Node node, boolean discoveryMode) {
+      public ChannelFuture connectAsync(Node node, boolean nodeDetectMode) {
         dialed.add(node);
         return null;
       }

@@ -349,29 +349,31 @@ public class AdvService {
     invSender.sendFetch();
   }
 
-  private synchronized void consumerInvToSpread() {
+  private void consumerInvToSpread() {
 
     List<PeerConnection> peers = tronNetDelegate.getActivePeer().stream()
         .filter(peer -> !peer.isNeedSyncFromPeer() && !peer.isNeedSyncFromUs())
         .collect(Collectors.toList());
 
-    if (invToSpread.isEmpty() || peers.isEmpty()) {
-      return;
+    InvSender invSender = new InvSender();
+    synchronized (this) {
+      if (invToSpread.isEmpty() || peers.isEmpty()) {
+        return;
+      }
+
+      invToSpread.forEach((item, time) -> peers.forEach(peer -> {
+        if (peer.getAdvInvReceive().getIfPresent(item) == null
+            && peer.getAdvInvSpread().getIfPresent(item) == null
+            && !(item.getType().equals(InventoryType.BLOCK)
+            && System.currentTimeMillis() - time > BLOCK_PRODUCED_INTERVAL)) {
+          peer.getAdvInvSpread().put(item, Time.getCurrentMillis());
+          invSender.add(item, peer);
+        }
+        invToSpread.remove(item);
+      }));
     }
 
-    InvSender invSender = new InvSender();
-
-    invToSpread.forEach((item, time) -> peers.forEach(peer -> {
-      if (peer.getAdvInvReceive().getIfPresent(item) == null
-          && peer.getAdvInvSpread().getIfPresent(item) == null
-          && !(item.getType().equals(InventoryType.BLOCK)
-          && System.currentTimeMillis() - time > BLOCK_PRODUCED_INTERVAL)) {
-        peer.getAdvInvSpread().put(item, Time.getCurrentMillis());
-        invSender.add(item, peer);
-      }
-      invToSpread.remove(item);
-    }));
-
+    // Sending can synchronously invoke disconnect callbacks; release this monitor first.
     invSender.sendInv();
   }
 

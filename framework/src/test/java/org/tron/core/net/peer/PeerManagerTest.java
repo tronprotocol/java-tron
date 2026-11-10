@@ -130,10 +130,10 @@ public class PeerManagerTest {
       Channel second = new Channel();
       ReflectUtils.setFieldValue(first, "inetSocketAddress", address);
       ReflectUtils.setFieldValue(first, "inetAddress", address.getAddress());
-      ReflectUtils.setFieldValue(first, "isActive", true);
+      ReflectUtils.setFieldValue(first, "outbound", true);
       ReflectUtils.setFieldValue(second, "inetSocketAddress", address);
       ReflectUtils.setFieldValue(second, "inetAddress", address.getAddress());
-      ReflectUtils.setFieldValue(second, "isActive", false);
+      ReflectUtils.setFieldValue(second, "outbound", false);
 
       PeerConnection firstPeer = new PeerConnection();
       PeerConnection secondPeer = new PeerConnection();
@@ -155,9 +155,9 @@ public class PeerManagerTest {
       Assert.assertNull(PeerManager.remove(removed));
       Assert.assertSame(survivorPeer, PeerManager.getPeerConnection(survivor));
       Assert.assertEquals(1, PeerManager.getPeers().size());
-      Assert.assertEquals(survivor.isActive() ? 1 : 0,
+      Assert.assertEquals(survivor.isOutbound() ? 1 : 0,
           PeerManager.getActivePeersCount().get());
-      Assert.assertEquals(survivor.isActive() ? 0 : 1,
+      Assert.assertEquals(survivor.isOutbound() ? 0 : 1,
           PeerManager.getPassivePeersCount().get());
       Assert.assertSame(survivorPeer, PeerManager.remove(survivor));
       Assert.assertTrue(PeerManager.getPeers().isEmpty());
@@ -174,7 +174,7 @@ public class PeerManagerTest {
     Channel timedOut = new Channel();
     ReflectUtils.setFieldValue(survivor, "inetSocketAddress", address);
     ReflectUtils.setFieldValue(survivor, "inetAddress", address.getAddress());
-    ReflectUtils.setFieldValue(survivor, "isActive", true);
+    ReflectUtils.setFieldValue(survivor, "outbound", true);
     ReflectUtils.setFieldValue(timedOut, "inetSocketAddress", address);
     ReflectUtils.setFieldValue(timedOut, "inetAddress", address.getAddress());
     ReflectUtils.setFieldValue(timedOut, "disconnectTime", System.currentTimeMillis() - 61_000);
@@ -281,7 +281,7 @@ public class PeerManagerTest {
     AtomicReference<PeerConnection> removedByCallback = new AtomicReference<>();
     Channel channel = new Channel() {
       @Override
-      public boolean isActive() {
+      public boolean isOutbound() {
         return active;
       }
 
