@@ -275,6 +275,11 @@ public class SyncService {
         });
 
     send.forEach((peer, blockIds) -> {
+      if (peer.isDisconnect()) {
+        // Disconnect cleanup may have finished before this pass wrote its reservations.
+        blockIds.forEach(blockId -> invalid(blockId, peer));
+        return;
+      }
       if (!blockIds.isEmpty()) {
         peer.sendMessage(new FetchInvDataMessage(new LinkedList<>(blockIds), InventoryType.BLOCK));
       }

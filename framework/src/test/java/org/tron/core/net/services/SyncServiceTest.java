@@ -291,6 +291,65 @@ public class SyncServiceTest extends BaseMethodTest {
   }
 
   @Test
+  public void testDisconnectBeforeReservationReleasesRequestForRetry() throws Exception {
+    SyncService sync = new SyncService();
+    try {
+      TronNetDelegate delegate = mock(TronNetDelegate.class);
+      ReflectUtils.setFieldValue(sync, "tronNetDelegate", delegate);
+      PeerConnection closing = Mockito.spy(new PeerConnection());
+      PeerConnection survivor = Mockito.spy(new PeerConnection());
+      Channel channel = new Channel();
+      ReflectUtils.setFieldValue(channel, "inetSocketAddress", inetSocketAddress);
+      ReflectUtils.setFieldValue(channel, "inetAddress", inetSocketAddress.getAddress());
+      closing.setChannel(channel);
+      Channel otherChannel = mock(Channel.class);
+      InetSocketAddress otherAddress = new InetSocketAddress("127.0.0.3", 10001);
+      Mockito.when(otherChannel.getInetSocketAddress()).thenReturn(otherAddress);
+      Mockito.when(otherChannel.getInetAddress()).thenReturn(otherAddress.getAddress());
+      survivor.setChannel(otherChannel);
+      closing.setFetchAble(true);
+      survivor.setFetchAble(true);
+      Mockito.doNothing().when(closing).sendMessage(Mockito.any(Message.class));
+      Mockito.doNothing().when(survivor).sendMessage(Mockito.any(Message.class));
+      BlockCapsule.BlockId blockId = new BlockCapsule.BlockId(Sha256Hash.ZERO_HASH, 1);
+      closing.getSyncBlockToFetch().add(blockId);
+      survivor.getSyncBlockToFetch().add(blockId);
+      Mockito.when(delegate.getActivePeer()).thenReturn(Arrays.asList(closing, survivor));
+      Cache<BlockCapsule.BlockId, PeerConnection> requests = Mockito.spy(
+          (Cache<BlockCapsule.BlockId, PeerConnection>)
+              ReflectUtils.getFieldObject(sync, "requestBlockIds"));
+      ReflectUtils.setFieldValue(sync, "requestBlockIds", requests);
+      Mockito.doAnswer(call -> {
+        // Finish disconnect cleanup after selection but before the reservation is written.
+        channel.markDisconnected();
+        Mockito.when(delegate.getActivePeer()).thenReturn(Collections.singletonList(survivor));
+        sync.onDisconnect(closing);
+        closing.getSyncBlockToFetch().clear();
+        closing.getSyncBlockRequested().clear();
+        Assert.assertNull(requests.getIfPresent(blockId));
+        return call.callRealMethod();
+      }).when(requests).put(blockId, closing);
+
+      ReflectUtils.invokeMethod(sync, "startFetchSyncBlock");
+
+      Assert.assertTrue(closing.isDisconnect());
+      Assert.assertNull(requests.getIfPresent(blockId));
+      Assert.assertFalse(requests.asMap().containsValue(closing));
+      Assert.assertTrue((boolean) ReflectUtils.getFieldObject(sync, "fetchFlag"));
+      Mockito.verify(closing, Mockito.never()).sendMessage(Mockito.any(Message.class));
+      Mockito.verify(survivor, Mockito.never()).sendMessage(Mockito.any(Message.class));
+
+      ReflectUtils.invokeMethod(sync, "startFetchSyncBlock");
+
+      Assert.assertSame(survivor, requests.getIfPresent(blockId));
+      Assert.assertTrue(survivor.getSyncBlockRequested().containsKey(blockId));
+      Mockito.verify(survivor).sendMessage(Mockito.any(FetchInvDataMessage.class));
+    } finally {
+      sync.close();
+    }
+  }
+
+  @Test
   public void testStartFetchSyncBlock() throws Exception {
     Field field = PeerManager.class.getDeclaredField("peers");
     field.setAccessible(true);
