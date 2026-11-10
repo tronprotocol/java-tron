@@ -71,6 +71,12 @@ public class P2pProtobufVarint32FrameDecoder extends ByteToMessageDecoder {
 
   @Override
   protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) {
+    // Closing the socket does not stop decoding an already received batch.
+    if (channel.isDisconnect() || !ctx.channel().isActive()) {
+      in.skipBytes(in.readableBytes());
+      return;
+    }
+
     in.markReaderIndex();
     int preIndex = in.readerIndex();
     int length = readRawVarint32(in);

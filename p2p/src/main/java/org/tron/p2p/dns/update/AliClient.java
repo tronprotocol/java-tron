@@ -13,7 +13,10 @@ import com.aliyun.alidns20150109.models.DescribeDomainRecordsResponseBody.Descri
 import com.aliyun.alidns20150109.models.UpdateDomainRecordRequest;
 import com.aliyun.alidns20150109.models.UpdateDomainRecordResponse;
 import com.aliyun.teaopenapi.models.Config;
+import java.math.BigInteger;
 import java.text.NumberFormat;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -22,6 +25,7 @@ import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.tron.p2p.dns.DnsNode;
+import org.tron.p2p.dns.tree.Algorithm;
 import org.tron.p2p.dns.tree.LinkEntry;
 import org.tron.p2p.dns.tree.NodesEntry;
 import org.tron.p2p.dns.tree.RootEntry;
@@ -37,6 +41,8 @@ public class AliClient implements Publish {
   private final long retryWaitTime = 30;
   private final int treeNodeTTL = 24 * 60 * 60;
   private int lastSeq = 0;
+  private String serverLinkRoot;
+  private BigInteger serverPublicKey;
   private Set<DnsNode> serverNodes;
   private final Client aliDnsClient;
   private double changeThreshold;
@@ -78,8 +84,14 @@ public class AliClient implements Publish {
       treeNodes = new HashSet<>(t.getDnsNodes());
       set1.removeAll(treeNodes); // dns - tree
       int deleteNodeSize = set1.size();
+      RootEntry rootEntry = t.getRootEntry();
+      boolean linksChanged = !rootEntry.getLRoot().equals(serverLinkRoot);
+      // Sequence changes alter signatures even when the signer stays the same.
+      boolean signerChanged = serverPublicKey == null
+          || !serverPublicKey.equals(Algorithm.recoverPublicKey(rootEntry.toString(),
+              rootEntry.getSignature()));
 
-      if (serverNodes.isEmpty()
+      if (serverNodes.isEmpty() || linksChanged || signerChanged
           || (addNodeSize + deleteNodeSize) / (double) serverNodes.size() >= changeThreshold) {
         String comment = String.format("Tree update of %s at seq %d", domainName, t.getSeq());
         logger.info(comment);
@@ -106,7 +118,7 @@ public class AliClient implements Publish {
     return response.statusCode == successCode;
   }
 
-  // collects all TXT records below the given name. it also update lastSeq
+  // Collect TXT records and recover the published sequence, link root and signing public key.
   @Override
   public Map<String, DescribeDomainRecordsResponseBodyDomainRecordsRecord> collectRecords(
       String domain) throws Exception {
@@ -157,9 +169,19 @@ public class AliClient implements Publish {
       throw e;
     }
 
+    this.serverLinkRoot = null;
+    this.serverPublicKey = null;
     if (rootContent != null) {
       RootEntry rootEntry = RootEntry.parseEntry(rootContent);
       this.lastSeq = rootEntry.getSeq();
+      this.serverLinkRoot = rootEntry.getLRoot();
+      try {
+        this.serverPublicKey = Algorithm.recoverPublicKey(rootEntry.toString(),
+            rootEntry.getSignature());
+      } catch (Exception e) {
+        logger.warn("Cannot recover existing root signer for {}, treating signer as unknown: {}",
+            domain, e.getMessage());
+      }
     }
     this.serverNodes = collectServerNodes;
     return records;
@@ -173,7 +195,10 @@ public class AliClient implements Publish {
     long addCount = 0;
     long updateCount = 0;
     long deleteCount = 0;
-    for (Map.Entry<String, String> entry : records.entrySet()) {
+    // Publish all dependencies before switching the root.
+    List<Map.Entry<String, String>> orderedRecords = new ArrayList<>(records.entrySet());
+    orderedRecords.sort(Comparator.comparing(entry -> aliyunRoot.equals(entry.getKey())));
+    for (Map.Entry<String, String> entry : orderedRecords) {
       boolean result = true;
       ttl = treeNodeTTL;
       if (entry.getKey().equals(aliyunRoot)) {

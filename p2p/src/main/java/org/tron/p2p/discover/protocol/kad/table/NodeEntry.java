@@ -1,11 +1,15 @@
 package org.tron.p2p.discover.protocol.kad.table;
 
+import lombok.Getter;
 import org.tron.p2p.discover.Node;
 
 public class NodeEntry {
+  @Getter
   private Node node;
   private String entryId;
+  @Getter
   private int distance;
+  @Getter
   private long modified;
 
   public NodeEntry(byte[] ownerId, Node n) {
@@ -53,20 +57,8 @@ public class NodeEntry {
     modified = System.currentTimeMillis();
   }
 
-  public int getDistance() {
-    return distance;
-  }
-
   public String getId() {
     return entryId;
-  }
-
-  public Node getNode() {
-    return node;
-  }
-
-  public long getModified() {
-    return modified;
   }
 
   @Override

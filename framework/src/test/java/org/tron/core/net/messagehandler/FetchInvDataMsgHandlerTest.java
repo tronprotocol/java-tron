@@ -9,11 +9,13 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -26,12 +28,115 @@ import org.tron.core.net.P2pRateLimiter;
 import org.tron.core.net.TronNetDelegate;
 import org.tron.core.net.message.adv.BlockMessage;
 import org.tron.core.net.message.adv.FetchInvDataMessage;
+import org.tron.core.net.message.adv.TransactionMessage;
+import org.tron.core.net.message.adv.TransactionsMessage;
 import org.tron.core.net.peer.Item;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.service.adv.AdvService;
+import org.tron.core.net.service.statistics.MessageCount;
+import org.tron.core.net.service.statistics.PeerStatistics;
 import org.tron.protos.Protocol;
 
 public class FetchInvDataMsgHandlerTest {
+
+  @Test
+  public void testFetchStopsAfterBlockResponseDisconnect() throws Exception {
+    BlockMessage first = new BlockMessage(new BlockCapsule(1, Sha256Hash.ZERO_HASH, 1,
+        ByteString.EMPTY));
+    BlockMessage second = new BlockMessage(new BlockCapsule(2, Sha256Hash.ZERO_HASH, 2,
+        ByteString.EMPTY));
+    List<Sha256Hash> hashes = Arrays.asList(
+        first.getBlockCapsule().getBlockId(), second.getBlockCapsule().getBlockId());
+    FetchFixture fixture = new FetchFixture(Protocol.Inventory.InventoryType.BLOCK, hashes);
+    Mockito.when(fixture.delegate.getData(hashes.get(0), Protocol.Inventory.InventoryType.BLOCK))
+        .thenReturn(first);
+    Mockito.when(fixture.delegate.getData(hashes.get(1), Protocol.Inventory.InventoryType.BLOCK))
+        .thenReturn(second);
+    Mockito.doAnswer(call -> {
+      fixture.disconnected.set(true);
+      return null;
+    }).when(fixture.peer).sendMessage(first);
+
+    fixture.handler.processMessage(fixture.peer,
+        new FetchInvDataMessage(hashes, Protocol.Inventory.InventoryType.BLOCK));
+
+    Mockito.verify(fixture.peer).sendMessage(first);
+    Mockito.verify(fixture.peer, Mockito.never()).sendMessage(second);
+    Mockito.verify(fixture.delegate, Mockito.never())
+        .getData(hashes.get(1), Protocol.Inventory.InventoryType.BLOCK);
+    Mockito.verify(fixture.advService, Mockito.never())
+        .getMessage(new Item(hashes.get(1), Protocol.Inventory.InventoryType.BLOCK));
+  }
+
+  @Test
+  public void testFetchStopsAfterTransactionBatchDisconnect() throws Exception {
+    List<TransactionMessage> messages = new ArrayList<>();
+    List<Sha256Hash> hashes = new ArrayList<>();
+    for (int i = 0; i < 3; i++) {
+      TransactionMessage message = new TransactionMessage(Protocol.Transaction.newBuilder()
+          .setRawData(Protocol.Transaction.raw.newBuilder().setTimestamp(i)
+              .setData(ByteString.copyFrom(new byte[600_000])))
+          .build());
+      messages.add(message);
+      hashes.add(message.getMessageId());
+    }
+    FetchFixture fixture = new FetchFixture(Protocol.Inventory.InventoryType.TRX, hashes);
+    for (int i = 0; i < messages.size(); i++) {
+      Mockito.when(fixture.delegate.getData(hashes.get(i), Protocol.Inventory.InventoryType.TRX))
+          .thenReturn(messages.get(i));
+    }
+    Mockito.doAnswer(call -> {
+      fixture.disconnected.set(true);
+      return null;
+    }).when(fixture.peer).sendMessage(Mockito.any(TransactionsMessage.class));
+
+    fixture.handler.processMessage(fixture.peer,
+        new FetchInvDataMessage(hashes, Protocol.Inventory.InventoryType.TRX));
+
+    Mockito.verify(fixture.peer).sendMessage(Mockito.any(TransactionsMessage.class));
+    Mockito.verify(fixture.delegate, Mockito.never())
+        .getData(hashes.get(2), Protocol.Inventory.InventoryType.TRX);
+    Mockito.verify(fixture.advService, Mockito.never())
+        .getMessage(new Item(hashes.get(2), Protocol.Inventory.InventoryType.TRX));
+  }
+
+  @Test
+  public void testFetchSkipsFinalTransactionBatchAfterDisconnect() throws Exception {
+    TransactionMessage message = new TransactionMessage(Protocol.Transaction.newBuilder()
+        .setRawData(Protocol.Transaction.raw.newBuilder().setTimestamp(1)).build());
+    List<Sha256Hash> hashes = Collections.singletonList(message.getMessageId());
+    FetchFixture fixture = new FetchFixture(Protocol.Inventory.InventoryType.TRX, hashes);
+    Mockito.when(fixture.delegate.getData(hashes.get(0), Protocol.Inventory.InventoryType.TRX))
+        .thenAnswer(call -> {
+          fixture.disconnected.set(true);
+          return message;
+        });
+
+    fixture.handler.processMessage(fixture.peer,
+        new FetchInvDataMessage(hashes, Protocol.Inventory.InventoryType.TRX));
+
+    Mockito.verify(fixture.peer, Mockito.never()).sendMessage(Mockito.any());
+  }
+
+  private static class FetchFixture {
+    private final FetchInvDataMsgHandler handler = new FetchInvDataMsgHandler();
+    private final PeerConnection peer = Mockito.mock(PeerConnection.class);
+    private final TronNetDelegate delegate = Mockito.mock(TronNetDelegate.class);
+    private final AdvService advService = Mockito.mock(AdvService.class);
+    private final AtomicBoolean disconnected = new AtomicBoolean();
+
+    private FetchFixture(Protocol.Inventory.InventoryType type, List<Sha256Hash> hashes) {
+      ReflectUtils.setFieldValue(handler, "tronNetDelegate", delegate);
+      ReflectUtils.setFieldValue(handler, "advService", advService);
+      Cache<Item, Long> spread = CacheBuilder.newBuilder().build();
+      hashes.forEach(hash -> spread.put(new Item(hash, type), 1L));
+      Mockito.when(peer.getAdvInvSpread()).thenReturn(spread);
+      Mockito.when(peer.getBlockBothHave()).thenReturn(new BlockCapsule.BlockId());
+      Mockito.when(peer.getPeerStatistics()).thenReturn(new PeerStatistics());
+      Mockito.when(peer.isDisconnect()).thenAnswer(call -> disconnected.get());
+      Mockito.when(advService.getTrxCount()).thenReturn(new MessageCount());
+    }
+  }
 
   @Test
   public void testProcessMessage() throws Exception {
@@ -86,6 +191,7 @@ public class FetchInvDataMsgHandlerTest {
 
   private void assertFullWindowRetainedAndDuplicatesRejected(boolean shuffled) throws Exception {
     PeerConnection peer = Mockito.spy(new PeerConnection());
+    Mockito.doReturn(false).when(peer).isDisconnect();
     Mockito.doNothing().when(peer).sendMessage(Mockito.any());
     int windowSize = 2 * (int) Parameter.NetConstants.SYNC_FETCH_BATCH_NUM + 1;
     long lastHeight = 10000L;
@@ -192,6 +298,7 @@ public class FetchInvDataMsgHandlerTest {
     ReflectUtils.setFieldValue(handler, "tronNetDelegate", delegate);
     ReflectUtils.setFieldValue(handler, "advService", Mockito.mock(AdvService.class));
     PeerConnection peer = Mockito.spy(new PeerConnection());
+    Mockito.doReturn(false).when(peer).isDisconnect();
     Mockito.doNothing().when(peer).sendMessage(Mockito.any());
     BlockCapsule oldBlock = new BlockCapsule(10000L, Sha256Hash.ZERO_HASH, 1,
         ByteString.EMPTY);
@@ -227,6 +334,7 @@ public class FetchInvDataMsgHandlerTest {
     ReflectUtils.setFieldValue(handler, "tronNetDelegate", delegate);
     ReflectUtils.setFieldValue(handler, "advService", Mockito.mock(AdvService.class));
     PeerConnection peer = Mockito.spy(new PeerConnection());
+    Mockito.doReturn(false).when(peer).isDisconnect();
     Mockito.doNothing().when(peer).sendMessage(Mockito.any());
     BlockCapsule fork = new BlockCapsule(10000L, Sha256Hash.ZERO_HASH, 1,
         ByteString.EMPTY);

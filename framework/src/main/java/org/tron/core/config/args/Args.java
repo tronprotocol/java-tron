@@ -63,6 +63,7 @@ import org.tron.core.store.AccountStore;
 import org.tron.p2p.P2pConfig;
 import org.tron.p2p.dns.update.DnsType;
 import org.tron.p2p.dns.update.PublishConfig;
+import org.tron.p2p.utils.NetUtil;
 import org.tron.program.Version;
 
 @Slf4j(topic = "app")
@@ -1128,6 +1129,10 @@ public class Args extends CommonParameter {
         }
       }
     } else {
+      if (!NetUtil.validIpV4(externalIp)) {
+        throw new TronError("node.discovery.external.ip must be an IPv4 literal: " + externalIp,
+            TronError.ErrCode.PARAMETER_INIT);
+      }
       PARAMETER.nodeExternalIp = externalIp;
     }
   }

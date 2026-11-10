@@ -12,6 +12,14 @@ public abstract class P2pEventHandler {
   public void onConnect(Channel channel) {
   }
 
+  /**
+   * Called when a connection is disconnected.
+   *
+   * <p>This callback may run synchronously during connection closure, including while the
+   * {@link org.tron.p2p.connection.ChannelManager} class monitor is held.
+   *
+   * @param channel the disconnected connection
+   */
   public void onDisconnect(Channel channel) {
   }
 

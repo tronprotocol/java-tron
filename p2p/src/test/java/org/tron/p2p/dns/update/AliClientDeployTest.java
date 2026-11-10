@@ -121,6 +121,8 @@ public class AliClientDeployTest {
     Tree tree = signedTree(ips);
 
     List<DescribeDomainRecordsResponseBodyDomainRecordsRecord> published = new ArrayList<>();
+    published.add(new DescribeDomainRecordsResponseBodyDomainRecordsRecord()
+        .setRR("@").setValue(tree.getRootEntry().toFormat()).setRecordId("root").setTTL(60L));
     int index = 0;
     for (String entry : tree.getNodesEntry()) {
       published.add(new DescribeDomainRecordsResponseBodyDomainRecordsRecord()
@@ -132,8 +134,7 @@ public class AliClientDeployTest {
 
     client.deploy(DOMAIN, tree);
 
-    // The tree and DNS hold the same nodes, so add+delete is zero against a
-    // non-empty serverNodes set and the 0.1 threshold is not met.
+    // Nodes, links and signer are unchanged, so the 0.1 threshold is not met.
     verify(sdk, never()).addDomainRecord(any(AddDomainRecordRequest.class));
     verify(sdk, never()).updateDomainRecord(any(UpdateDomainRecordRequest.class));
     verify(sdk, never()).deleteDomainRecord(any(DeleteDomainRecordRequest.class));

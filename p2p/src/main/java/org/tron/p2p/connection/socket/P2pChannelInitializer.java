@@ -1,17 +1,25 @@
 package org.tron.p2p.connection.socket;
 
+import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.FixedRecvByteBufAllocator;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
+import io.netty.handler.timeout.WriteTimeoutHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.tron.p2p.connection.Channel;
 import org.tron.p2p.connection.ChannelManager;
+import org.tron.p2p.connection.ConnectionPolicy;
+import org.tron.p2p.connection.business.handshake.DisconnectCode;
+import org.tron.p2p.connection.message.handshake.HelloMessage;
 
 @Slf4j(topic = "net")
 public class P2pChannelInitializer extends ChannelInitializer<NioSocketChannel> {
+
+  private static final int REJECTION_WRITE_TIMEOUT_SECONDS = 2;
 
   private final String remoteId;
 
@@ -30,9 +38,20 @@ public class P2pChannelInitializer extends ChannelInitializer<NioSocketChannel> 
   @Override
   public void initChannel(NioSocketChannel ch) {
     try {
-      if (StringUtils.isEmpty(remoteId) && !PendingInboundConnectionHandler.tryAdd(ch)) {
-        ch.close();
-        return;
+      if (StringUtils.isEmpty(remoteId)) {
+        if (ConnectionPolicy.isBlocked(ch.remoteAddress())) {
+          ch.close();
+          return;
+        }
+        DisconnectCode code = PendingInboundConnectionHandler.tryAdd(ch);
+        if (code != DisconnectCode.NORMAL) {
+          if (code == DisconnectCode.UNKNOWN) {
+            ch.close();
+          } else {
+            sendRejection(ch, code);
+          }
+          return;
+        }
       }
       final Channel channel = new Channel();
       channel.init(ch.pipeline(), remoteId, nodeDetectMode);
@@ -63,6 +82,21 @@ public class P2pChannelInitializer extends ChannelInitializer<NioSocketChannel> 
       logger.error("Unexpected initChannel error", e);
       ch.close();
     }
+  }
+
+  private void sendRejection(NioSocketChannel ch, DisconnectCode code) {
+    if (ConnectionPolicy.isBlocked(ch.remoteAddress())) {
+      ch.close();
+      return;
+    }
+    ch.config().setAutoRead(false);
+    ch.pipeline().addLast("rejectionEncoder", new ProtobufVarint32LengthFieldPrepender());
+    ch.pipeline().addLast("rejectionWriteTimeout",
+        new WriteTimeoutHandler(REJECTION_WRITE_TIMEOUT_SECONDS));
+    HelloMessage response = new HelloMessage(code, System.currentTimeMillis());
+    logger.debug("Reject inbound connection from {}, reason: {}", ch.remoteAddress(), code);
+    ch.writeAndFlush(Unpooled.wrappedBuffer(response.getSendData()))
+        .addListener(ChannelFutureListener.CLOSE);
   }
 
 }
