@@ -158,15 +158,17 @@ public class SyncService {
   }
 
   public void onDisconnect(PeerConnection peer) {
-    if (!peer.getSyncBlockRequested().isEmpty()) {
-      peer.getSyncBlockRequested().keySet().forEach(blockId -> invalid(blockId, peer));
-    }
+    // Received and processed blocks no longer appear in the peer's outstanding requests.
+    requestBlockIds.asMap().forEach((blockId, owner) -> {
+      if (peer.equals(owner)) {
+        // Another peer may refetch an already-solid queued block after its owner is released.
+        invalid(blockId, peer);
+      }
+    });
   }
 
   private void invalid(BlockId blockId, PeerConnection peerConnection) {
-    PeerConnection p = requestBlockIds.getIfPresent(blockId);
-    if (peerConnection.equals(p)) {
-      requestBlockIds.invalidate(blockId);
+    if (requestBlockIds.asMap().remove(blockId, peerConnection)) {
       fetchFlag = true;
     }
   }
@@ -275,6 +277,11 @@ public class SyncService {
         });
 
     send.forEach((peer, blockIds) -> {
+      if (peer.isDisconnect()) {
+        // Disconnect cleanup may have finished before this pass wrote its reservations.
+        blockIds.forEach(blockId -> invalid(blockId, peer));
+        return;
+      }
       if (!blockIds.isEmpty()) {
         peer.sendMessage(new FetchInvDataMessage(new LinkedList<>(blockIds), InventoryType.BLOCK));
       }
@@ -323,9 +330,12 @@ public class SyncService {
             isProcessed[0] = true;
             BlockCapsule block;
             try {
-              block = new BlockCapsule(unparsedBlock.getData());
+              block = new BlockMessage(unparsedBlock.getData()).getBlockCapsule();
             } catch (Exception e) {
-              logger.warn("Deserialize block {} failed", blockId.getString(), e);
+              logger.warn("Deserialize block {} from {} failed",
+                  blockId.getString(), peerConnection.getInetSocketAddress(), e);
+              // Deferred validation may fail after ingress, e.g. on ALLOW_PROTO_FILTER_NUM changes
+              // or interruption. Release sync state so this block remains eligible for retry.
               peerConnection.getSyncBlockInProcess().remove(blockId);
               invalid(blockId, peerConnection);
               return;
