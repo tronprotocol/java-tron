@@ -13,18 +13,27 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.concurrent.BasicThreadFactory;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.tron.p2p.P2pConfig;
 import org.tron.p2p.P2pEventHandler;
+import org.tron.p2p.P2pService;
 import org.tron.p2p.base.Parameter;
 import org.tron.p2p.connection.business.handshake.DisconnectCode;
 import org.tron.p2p.connection.business.handshake.HandshakeService;
 import org.tron.p2p.connection.business.pool.ConnPoolService;
+import org.tron.p2p.connection.business.upgrade.UpgradeController;
+import org.tron.p2p.connection.message.Message;
 import org.tron.p2p.connection.message.MessageType;
 import org.tron.p2p.connection.message.detect.StatusMessage;
 import org.tron.p2p.connection.message.handshake.HelloMessage;
@@ -253,6 +262,35 @@ public class ChannelManagerTest {
   }
 
   @Test
+  public void blockedReplacementFromEventLoopClosesOutsideAdmissionLock() throws Exception {
+    Channel blocked = channel(true, 1);
+    Channel other = channel(true, 2);
+    InetSocketAddress otherAddress = new InetSocketAddress("192.0.2.32", 18888);
+    set(other, "inetSocketAddress", otherAddress);
+    set(other, "inetAddress", otherAddress.getAddress());
+    ChannelManager.addPeer(blocked);
+    ChannelManager.addPeer(other);
+    List<Boolean> disconnectLocks = observeDisconnectLocks(blocked);
+    EmbeddedChannel socket = (EmbeddedChannel) blocked.getCtx().channel();
+
+    Future<Integer> replacement = socket.eventLoop().submit(() -> {
+      Assert.assertTrue(socket.eventLoop().inEventLoop());
+      return new P2pService().replaceBlockedIps(Collections.singleton(REMOTE.getAddress()));
+    });
+    socket.runPendingTasks();
+
+    Assert.assertEquals(1, replacement.get(5, TimeUnit.SECONDS).intValue());
+    Assert.assertEquals(Collections.singletonList(false), disconnectLocks);
+    Assert.assertTrue(ConnectionPolicy.isBlocked(REMOTE.getAddress()));
+    Assert.assertTrue(blocked.isDisconnect());
+    Assert.assertFalse(other.isDisconnect());
+    Assert.assertNull("Blacklist closure must remain silent", socket.readOutbound());
+    Assert.assertEquals(1, ChannelManager.getChannelCount());
+    Assert.assertSame(other, ChannelManager.getAllChannels().get(0));
+    Assert.assertEquals(DisconnectCode.UNKNOWN, ChannelManager.processPeer(channel(true, 3)));
+  }
+
+  @Test
   public void disconnectClosesAllChannelsAtTheSameEndpoint() throws Exception {
     Channel first = channel(true, 1);
     Channel second = channel(true, 2);
@@ -433,6 +471,101 @@ public class ChannelManagerTest {
   }
 
   @Test
+  public void duplicateHandshakeDisconnectsOutsideAdmissionLock() throws Exception {
+    List<Boolean> writeLocks = new ArrayList<>();
+    Channel newer = channel(new Channel() {
+      @Override
+      public void send(Message message) {
+        if (message.getType() == MessageType.DISCONNECT) {
+          writeLocks.add(Thread.holdsLock(ChannelManager.class));
+        }
+        super.send(message);
+      }
+    }, false, 2);
+    Channel earlier = channel(false, 1);
+    hello(newer, 1);
+    ((EmbeddedChannel) newer.getCtx().channel()).releaseOutbound();
+    List<Boolean> disconnectLocks = observeDisconnectLocks(newer);
+
+    hello(earlier, 1);
+
+    Assert.assertEquals(Collections.singletonList(false), writeLocks);
+    Assert.assertEquals(Collections.singletonList(false), disconnectLocks);
+    Assert.assertTrue(newer.isDisconnect());
+    Assert.assertTrue(earlier.isFinishHandshake());
+    assertRegistered(earlier);
+    assertCounts(0, 1);
+    assertDuplicateDisconnect(newer);
+  }
+
+  @Test
+  public void failedReplacementStillDisconnectsOldPeerOutsideAdmissionLock() throws Exception {
+    Channel newer = channel(true, 2);
+    Channel earlier = channel(new Channel() {
+      @Override
+      public void send(Message message) {
+        if (message.getType() == MessageType.HANDSHAKE_HELLO) {
+          close();
+        } else {
+          super.send(message);
+        }
+      }
+    }, false, 1);
+    hello(newer, 1);
+    List<Boolean> disconnectLocks = observeDisconnectLocks(newer);
+
+    hello(earlier, 1);
+
+    Assert.assertEquals(Collections.singletonList(false), disconnectLocks);
+    Assert.assertTrue(newer.isDisconnect());
+    Assert.assertTrue(earlier.isDisconnect());
+    assertRegistered();
+    assertCounts(0, 0);
+  }
+
+  @Test(timeout = 10000)
+  public void queuedDuplicateDisconnectWaitsForOuterAdmissionLock() throws Exception {
+    Channel newer = channel(true, 2);
+    Channel earlier = channel(false, 1);
+    hello(newer, 1);
+    earlier.setNodeId(newer.getNodeId());
+    List<Boolean> disconnectLocks = observeDisconnectLocks(newer);
+    EmbeddedChannel socket = (EmbeddedChannel) newer.getCtx().channel();
+    ExecutorService worker = Executors.newSingleThreadExecutor(
+        BasicThreadFactory.builder().namingPattern("duplicate-disconnect").daemon(true).build());
+    AtomicReference<Thread> workerThread = new AtomicReference<>();
+    try {
+      Future<?> pending;
+      synchronized (ChannelManager.class) {
+        Assert.assertEquals(DisconnectCode.NORMAL, ChannelManager.checkPeer(earlier));
+        pending = worker.submit(() -> {
+          workerThread.set(Thread.currentThread());
+          socket.runPendingTasks();
+        });
+        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(2);
+        while ((workerThread.get() == null || workerThread.get().getState() != Thread.State.BLOCKED)
+            && System.nanoTime() < deadline) {
+          Thread.yield();
+        }
+        Assert.assertNotNull(workerThread.get());
+        Assert.assertEquals(Thread.State.BLOCKED, workerThread.get().getState());
+        Assert.assertTrue(socket.isOpen());
+        Assert.assertTrue(disconnectLocks.isEmpty());
+        assertRegistered();
+      }
+      pending.get(5, TimeUnit.SECONDS);
+      Assert.assertEquals(Collections.singletonList(false), disconnectLocks);
+      Assert.assertTrue(newer.isDisconnect());
+      assertDuplicateDisconnect(newer);
+    } finally {
+      worker.shutdown();
+      if (!worker.awaitTermination(5, TimeUnit.SECONDS)) {
+        worker.shutdownNow();
+      }
+    }
+  }
+
+  @Test
   public void unregisteredSameAddressCloseKeepsEstablishedChannel() throws Exception {
     Channel established = channel(true, 1);
     hello(established, 1);
@@ -450,6 +583,71 @@ public class ChannelManagerTest {
     Assert.assertEquals(DisconnectCode.NORMAL, ChannelManager.processPeer(established));
     assertRegistered(established);
     assertCounts(0, 1);
+  }
+
+  @Test(timeout = 10000)
+  public void handlerCanCloseWithoutWaitingForAdmissionLock() throws Exception {
+    Channel peer = channel(true, 1);
+    ChannelManager.addPeer(peer);
+    AtomicInteger notifications = new AtomicInteger();
+    P2pEventHandler handler = new P2pEventHandler() {
+      @Override
+      public synchronized void onConnect(Channel channel) {
+        channel.close();
+      }
+
+      @Override
+      public synchronized void onDisconnect(Channel channel) {
+        notifications.incrementAndGet();
+      }
+    };
+    Parameter.handlerList.add(handler);
+    ExecutorService executor = Executors.newSingleThreadExecutor();
+    try {
+      // Reproduce the reverse edge of the HELLO-write/close deadlock without leaving
+      // permanently blocked threads on the unfixed implementation.
+      synchronized (ChannelManager.class) {
+        Future<?> closed = executor.submit(() -> handler.onConnect(peer));
+        closed.get(2, TimeUnit.SECONDS);
+      }
+      Assert.assertTrue(peer.isDisconnect());
+      Assert.assertEquals(1, notifications.get());
+      assertRegistered();
+      ChannelManager.notifyDisconnect(peer);
+      Assert.assertEquals(1, notifications.get());
+    } finally {
+      executor.shutdown();
+      Assert.assertTrue(executor.awaitTermination(5, TimeUnit.SECONDS));
+    }
+  }
+
+  @Test
+  public void notifiedChannelCannotBeRegisteredAgain() throws Exception {
+    Channel peer = channel(false, 1);
+    ChannelManager.notifyDisconnect(peer);
+    ChannelManager.addPeer(peer);
+
+    assertRegistered();
+    Assert.assertTrue(peer.isDisconnect());
+    Assert.assertEquals(DisconnectCode.UNKNOWN, ChannelManager.processPeer(peer));
+    assertRegistered();
+  }
+
+  @Test
+  public void disconnectBeforeRegistryInsertionCannotLeaveAClosedPeer() throws Exception {
+    Channel peer = channel(new Channel() {
+      @Override
+      void markRegisteredPeer() {
+        super.markRegisteredPeer();
+        // Model a close notification completing after the registration precheck,
+        // but before the channel is inserted into the registry.
+        ChannelManager.notifyDisconnect(this);
+      }
+    }, false, 1);
+    ChannelManager.addPeer(peer);
+
+    Assert.assertTrue(peer.isDisconnect());
+    assertRegistered();
   }
 
   @Test
@@ -495,7 +693,10 @@ public class ChannelManagerTest {
   }
 
   private Channel channel(boolean outbound, long order) throws Exception {
-    Channel channel = new Channel();
+    return channel(new Channel(), outbound, order);
+  }
+
+  private Channel channel(Channel channel, boolean outbound, long order) throws Exception {
     EmbeddedChannel socket = new EmbeddedChannel(new ChannelInboundHandlerAdapter());
     sockets.add(socket);
     set(channel, "inetSocketAddress", REMOTE);
@@ -520,6 +721,8 @@ public class ChannelManagerTest {
     Connect.HelloMessage hello = Connect.HelloMessage.newBuilder().setFrom(endpoint)
         .setNetworkId(11111).setVersion(1).setTimestamp(System.currentTimeMillis()).build();
     handshake.processMessage(channel, new HelloMessage(hello.toByteArray()));
+    // Model the next EventLoop turn after the handshake releases the admission lock.
+    sockets.forEach(EmbeddedChannel::runPendingTasks);
   }
 
   private void assertRegistered(Channel... expected) {
@@ -535,6 +738,35 @@ public class ChannelManagerTest {
   private void assertCounts(int outbound, int inbound) {
     Assert.assertEquals(outbound, pool.getOutboundPeerCount().get());
     Assert.assertEquals(inbound, pool.getInboundPeerCount().get());
+  }
+
+  private List<Boolean> observeDisconnectLocks(Channel peer) {
+    List<Boolean> locks = new ArrayList<>();
+    Parameter.handlerList.add(new P2pEventHandler() {
+      @Override
+      public void onDisconnect(Channel channel) {
+        if (channel == peer) {
+          locks.add(Thread.holdsLock(ChannelManager.class));
+        }
+      }
+    });
+    return locks;
+  }
+
+  private void assertDuplicateDisconnect(Channel channel) throws Exception {
+    ByteBuf response = ((EmbeddedChannel) channel.getCtx().channel()).readOutbound();
+    Assert.assertNotNull("Replaced peer did not receive a disconnect reason", response);
+    try {
+      byte[] bytes = new byte[response.readableBytes()];
+      response.readBytes(bytes);
+      Message message = Message.parse(
+          UpgradeController.decodeReceiveData(channel.getVersion(), bytes));
+      Assert.assertEquals(MessageType.DISCONNECT, message.getType());
+      Assert.assertEquals(Connect.DisconnectReason.DUPLICATE_PEER,
+          Connect.P2pDisconnectMessage.parseFrom(message.getData()).getReason());
+    } finally {
+      response.release();
+    }
   }
 
   private static void set(Channel channel, String name, Object value) throws Exception {

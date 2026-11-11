@@ -126,6 +126,9 @@ public class P2pEventHandlerImpl extends P2pEventHandler {
       logger.warn("Receive msg from unknown peer {}", c.getInetSocketAddress());
       return;
     }
+    if (peerConnection.isDisconnect()) {
+      return;
+    }
 
     if (peerConnection.getHelloMessageReceive() == null
         && data[0] != MessageTypes.P2P_HELLO.asByte()

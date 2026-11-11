@@ -61,6 +61,8 @@ public class HelloMessage extends Message {
 
   @Override
   public boolean valid() {
-    return NetUtil.validNode(getFrom());
+    Discover.Endpoint from = helloMessage.getFrom();
+    return NetUtil.validAddressFields(from.getAddress(), from.getAddressIpv6())
+        && NetUtil.validNode(getFrom());
   }
 }

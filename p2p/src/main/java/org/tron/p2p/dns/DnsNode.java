@@ -27,11 +27,11 @@ public class DnsNode extends Node implements Comparable<DnsNode> {
 
   public DnsNode(byte[] id, String hostV4, String hostV6, int port) throws UnknownHostException {
     super(null, hostV4, hostV6, port);
-    if (StringUtils.isNotEmpty(hostV4)) {
-      this.v4Hex = ipToString(hostV4);
+    if (StringUtils.isNotEmpty(this.hostV4)) {
+      this.v4Hex = ipToString(this.hostV4);
     }
-    if (StringUtils.isNotEmpty(hostV6)) {
-      this.v6Hex = ipToString(hostV6);
+    if (StringUtils.isNotEmpty(this.hostV6)) {
+      this.v6Hex = ipToString(this.hostV6);
     }
   }
 

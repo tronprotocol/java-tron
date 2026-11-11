@@ -66,6 +66,9 @@ public class FetchInvDataMsgHandler implements TronMsgHandler {
     int size = 0;
 
     for (Sha256Hash hash : fetchInvDataMsg.getHashList()) {
+      if (peer.isDisconnect()) {
+        return;
+      }
       Item item = new Item(hash, type);
       /* Cache the Inventory sent to the peer.
       Once a FetchInvData message is received from the peer, remove this Inventory from the cache.
@@ -104,7 +107,7 @@ public class FetchInvDataMsgHandler implements TronMsgHandler {
         }
       }
     }
-    if (!transactions.isEmpty()) {
+    if (!peer.isDisconnect() && !transactions.isEmpty()) {
       peer.sendMessage(new TransactionsMessage(transactions));
     }
   }

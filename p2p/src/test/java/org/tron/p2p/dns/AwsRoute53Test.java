@@ -1,22 +1,42 @@
 package org.tron.p2p.dns;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Proxy;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.stream.Collectors;
 import org.junit.Assert;
 import org.junit.Test;
 import org.tron.p2p.P2pConfig;
+import org.tron.p2p.dns.tree.Entry;
 import org.tron.p2p.dns.tree.Tree;
 import org.tron.p2p.dns.update.AwsClient;
 import org.tron.p2p.dns.update.AwsClient.RecordSet;
+import org.tron.p2p.dns.update.Publish;
 import org.tron.p2p.dns.update.PublishConfig;
 import org.tron.p2p.exception.DnsException;
+import software.amazon.awssdk.services.route53.Route53Client;
 import software.amazon.awssdk.services.route53.model.Change;
 import software.amazon.awssdk.services.route53.model.ChangeAction;
+import software.amazon.awssdk.services.route53.model.HostedZone;
+import software.amazon.awssdk.services.route53.model.ListHostedZonesByNameResponse;
+import software.amazon.awssdk.services.route53.model.ListResourceRecordSetsRequest;
+import software.amazon.awssdk.services.route53.model.ListResourceRecordSetsResponse;
+import software.amazon.awssdk.services.route53.model.RRType;
+import software.amazon.awssdk.services.route53.model.ResourceRecord;
+import software.amazon.awssdk.services.route53.model.ResourceRecordSet;
 
 public class AwsRoute53Test {
+
+  private static final String DOMAIN = "nodes.example.invalid";
+  private static final String MIXED_DOMAIN = "Nodes.Example.INVALID.";
+  private static final String ZONE_ID = "ZTEST";
 
   @Test
   public void testChangeSort() {
@@ -165,5 +185,129 @@ public class AwsRoute53Test {
     //    }
     //    Assert.assertEquals(links.length, route53Tree.getLinksEntry().size());
     //    Assert.assertEquals(nodes.length, route53Tree.getDnsNodes().size());
+  }
+
+  @Test
+  public void subdomainComparisonIgnoresCaseButKeepsLabelBoundaries() {
+    Assert.assertTrue(AwsClient.isSubdomain("Leaf.Nodes.Example.INVALID.", DOMAIN));
+    Assert.assertTrue(AwsClient.isSubdomain(DOMAIN, "EXAMPLE.INVALID."));
+    Assert.assertTrue(AwsClient.isSubdomain(DOMAIN, MIXED_DOMAIN));
+    Assert.assertFalse(AwsClient.isSubdomain("othernodes.example.invalid", DOMAIN));
+    Assert.assertFalse(AwsClient.isSubdomain("nodes.example.invalid.other", DOMAIN));
+  }
+
+  @Test
+  public void collectedRecordKeysMatchCanonicalTreeNames() throws Exception {
+    RecordingAwsClient client = new RecordingAwsClient(ZONE_ID);
+    Tree tree = TreeTest.signedTree(new Tree(), "192.0.2.1");
+    client.records = sdkRecords(tree);
+
+    Map<String, RecordSet> existing = client.collectRecords(MIXED_DOMAIN);
+
+    Assert.assertEquals(tree.toTXT(DOMAIN).keySet(), existing.keySet());
+    Assert.assertTrue(client.computeChanges(MIXED_DOMAIN, tree.toTXT(MIXED_DOMAIN), existing)
+        .isEmpty());
+  }
+
+  @Test
+  public void mixedCaseDomainCanPublishTwiceWithoutDuplicateCreates() throws Exception {
+    RecordingAwsClient client = new RecordingAwsClient(ZONE_ID);
+    Tree first = TreeTest.signedTree(new Tree(), "192.0.2.1");
+    client.deploy(MIXED_DOMAIN, first);
+    client.records = sdkRecords(first);
+    Tree updated = TreeTest.signedTree(new Tree(), "192.0.2.2");
+
+    client.deploy(MIXED_DOMAIN, updated);
+
+    Assert.assertEquals(2, updated.getSeq());
+    Assert.assertEquals(3, client.changes.size());
+    Assert.assertTrue(client.changes.stream().anyMatch(change ->
+        change.action() == ChangeAction.UPSERT
+            && change.resourceRecordSet().name().equals(DOMAIN)));
+    for (Change change : client.changes) {
+      String name = change.resourceRecordSet().name();
+      if (change.action() == ChangeAction.CREATE) {
+        Assert.assertFalse(first.toTXT(DOMAIN).containsKey(name));
+      } else if (change.action() == ChangeAction.DELETE) {
+        Assert.assertFalse(updated.toTXT(DOMAIN).containsKey(name));
+      }
+    }
+  }
+
+  @Test
+  public void hostedZoneLookupIgnoresCaseAndTrailingDot() throws Exception {
+    RecordingAwsClient client = new RecordingAwsClient(null);
+
+    client.deploy(MIXED_DOMAIN, TreeTest.signedTree(new Tree(), "192.0.2.1"));
+
+    Assert.assertEquals(1, client.zoneQueries);
+    Assert.assertEquals(ZONE_ID, client.requestedZone);
+    Assert.assertTrue(client.changes.stream().anyMatch(change ->
+        change.action() == ChangeAction.CREATE
+            && change.resourceRecordSet().name().equals(DOMAIN)));
+  }
+
+  @Test
+  public void deleteDomainFindsMixedCaseRecordsWithoutMatchingOtherDomains() throws Exception {
+    RecordingAwsClient client = new RecordingAwsClient(ZONE_ID);
+    Tree tree = TreeTest.signedTree(new Tree(), "192.0.2.1");
+    client.records = sdkRecords(tree);
+    client.records.add(txt("other.invalid.", "unrelated TXT"));
+
+    Assert.assertTrue(client.deleteDomain(MIXED_DOMAIN));
+
+    Assert.assertEquals(tree.toTXT(DOMAIN).keySet(), client.changes.stream()
+        .map(change -> change.resourceRecordSet().name()).collect(Collectors.toSet()));
+    Assert.assertTrue(client.changes.stream().allMatch(change ->
+        change.action() == ChangeAction.DELETE));
+  }
+
+  private static List<ResourceRecordSet> sdkRecords(Tree tree) {
+    List<ResourceRecordSet> records = new ArrayList<>();
+    tree.toTXT(DOMAIN).forEach((name, value) ->
+        records.add(txt(name.toUpperCase(Locale.ROOT) + ".", value)));
+    return records;
+  }
+
+  private static ResourceRecordSet txt(String name, String value) {
+    return ResourceRecordSet.builder().name(name).type(RRType.TXT)
+        .ttl(name.equalsIgnoreCase(DOMAIN + ".")
+            ? (long) Publish.rootTTL : Publish.treeNodeTTL)
+        .resourceRecords(ResourceRecord.builder().value("\"" + value + "\"").build()).build();
+  }
+
+  private static class RecordingAwsClient extends AwsClient {
+    private List<ResourceRecordSet> records = Collections.emptyList();
+    private List<Change> changes = new ArrayList<>();
+    private int zoneQueries;
+    private String requestedZone;
+
+    private RecordingAwsClient(String zoneId) throws Exception {
+      super("test-key", "test-secret", zoneId, "us-east-1", 0.1);
+      Field field = AwsClient.class.getDeclaredField("route53Client");
+      field.setAccessible(true);
+      ((Route53Client) field.get(this)).close();
+      field.set(this, Proxy.newProxyInstance(Route53Client.class.getClassLoader(),
+          new Class<?>[]{Route53Client.class}, (proxy, method, args) -> {
+            if (method.getName().equals("listHostedZonesByName")) {
+              zoneQueries++;
+              return ListHostedZonesByNameResponse.builder().isTruncated(false)
+                  .hostedZones(HostedZone.builder().id("/hostedzone/" + ZONE_ID)
+                      .name("EXAMPLE.INVALID.").build()).build();
+            }
+            if (method.getName().equals("listResourceRecordSets")) {
+              requestedZone = ((ListResourceRecordSetsRequest) args[0]).hostedZoneId();
+              Assert.assertEquals(ZONE_ID, requestedZone);
+              return ListResourceRecordSetsResponse.builder().isTruncated(false)
+                  .resourceRecordSets(records).build();
+            }
+            throw new AssertionError("Unexpected Route53 call: " + method.getName());
+          }));
+    }
+
+    @Override
+    public void submitChanges(List<Change> changes, String comment) {
+      this.changes = new ArrayList<>(changes);
+    }
   }
 }

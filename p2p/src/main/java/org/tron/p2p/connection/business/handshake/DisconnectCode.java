@@ -2,6 +2,7 @@ package org.tron.p2p.connection.business.handshake;
 
 public enum DisconnectCode {
   NORMAL(0),
+  // Either the established peer limit or the pending inbound handshake limit was reached.
   TOO_MANY_PEERS(1),
   DIFFERENT_VERSION(2),
   TIME_BANNED(3),

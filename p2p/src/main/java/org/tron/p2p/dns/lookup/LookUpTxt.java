@@ -82,7 +82,7 @@ public class LookUpTxt {
   public static TXTRecord lookUpTxt(String name) throws TextParseException, UnknownHostException {
     TXTRecord txt = null;
     logger.info("LookUp name: {}", name);
-    Lookup lookup = new Lookup(name, Type.TXT);
+    Lookup lookup = createLookup(name, Type.TXT);
     int times = 0;
     Record[] records = null;
     long start = System.currentTimeMillis();
@@ -168,7 +168,7 @@ public class LookUpTxt {
     for (int times = 0; times < maxRetryTimes; times++) {
       String dns = publicDns[random.nextInt(publicDns.length)];
       try {
-        Lookup lookup = new Lookup(domain, recordType);
+        Lookup lookup = createLookup(domain, recordType);
         SimpleResolver simpleResolver = new SimpleResolver(InetAddress.getByName(dns));
         simpleResolver.setTimeout(Duration.ofMillis(1000));
         lookup.setResolver(simpleResolver);
@@ -192,6 +192,13 @@ public class LookUpTxt {
 
     logger.warn("Failed to resolve {} for domain: {}", useIPv4 ? "IPv4" : "IPv6", domain);
     return null;
+  }
+
+  static Lookup createLookup(String name, int type) throws TextParseException {
+    Lookup lookup = new Lookup(name, type);
+    // A temporary cache isolates lookups and is cleared before each retry.
+    lookup.setCache(null);
+    return lookup;
   }
 
   public static String joinTXTRecord(TXTRecord txtRecord) {

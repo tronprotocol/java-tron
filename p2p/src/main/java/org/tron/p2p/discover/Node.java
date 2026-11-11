@@ -57,7 +57,7 @@ public class Node implements Serializable, Cloneable {
 
   public Node(byte[] id, String hostV4, String hostV6, int port) {
     this.id = id;
-    this.hostV4 = hostV4;
+    this.hostV4 = NetUtil.validIpV4(hostV4) ? hostV4 : null;
     this.hostV6 = hostV6;
     this.port = port;
     this.bindPort = port;
@@ -67,7 +67,7 @@ public class Node implements Serializable, Cloneable {
 
   public Node(byte[] id, String hostV4, String hostV6, int port, int bindPort) {
     this.id = id;
-    this.hostV4 = hostV4;
+    this.hostV4 = NetUtil.validIpV4(hostV4) ? hostV4 : null;
     this.hostV6 = hostV6;
     this.port = port;
     this.bindPort = bindPort;
