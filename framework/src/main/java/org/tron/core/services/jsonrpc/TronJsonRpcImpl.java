@@ -1245,6 +1245,9 @@ public class TronJsonRpcImpl implements TronJsonRpc, Closeable {
           ByteString.copyFrom(ByteArray.fromHexString(args.resolveData())));
 
       if (StringUtils.isNotEmpty(args.getName())) {
+        if (JsonFormat.hasUnpairedSurrogate(args.getName())) {
+          throw new JsonRpcInvalidParamsException("invalid name");
+        }
         smartBuilder.setName(args.getName());
       }
 

@@ -2012,6 +2012,30 @@ public class JsonrpcServiceTest extends BaseTest {
   }
 
   @Test
+  public void testBuildTransactionRejectsUnpairedSurrogateName() {
+    BuildArguments args = new BuildArguments();
+    args.setFrom("0xabd4b9367799eaa3197fecb144eb71de1e049abc");
+    args.setData("60806040");
+    args.setName("a" + (char) 0xD800);
+
+    JsonRpcInvalidParamsException e = Assert.assertThrows(JsonRpcInvalidParamsException.class,
+        () -> tronJsonRpc.buildTransaction(args));
+    Assert.assertEquals("invalid name", e.getMessage());
+  }
+
+  @Test
+  public void testBuildTransactionRejectsUnpairedSurrogateInAbi() {
+    BuildArguments args = new BuildArguments();
+    args.setFrom("0xabd4b9367799eaa3197fecb144eb71de1e049abc");
+    args.setData("60806040");
+    args.setAbi("[{\"name\":\"\\ud800\"}]");
+
+    JsonRpcInvalidParamsException e = Assert.assertThrows(JsonRpcInvalidParamsException.class,
+        () -> tronJsonRpc.buildTransaction(args));
+    Assert.assertEquals("invalid abi", e.getMessage());
+  }
+
+  @Test
   public void testWeb3ClientVersion() {
     try {
       String[] versions = tronJsonRpc.web3ClientVersion().split("/");

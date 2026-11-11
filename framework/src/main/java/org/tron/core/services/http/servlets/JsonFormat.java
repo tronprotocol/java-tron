@@ -29,6 +29,7 @@ package org.tron.core.services.http.servlets;
   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+import com.google.common.base.Utf8;
 import com.google.common.collect.ImmutableSet;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Descriptors;
@@ -767,7 +768,7 @@ public class JsonFormat {
         break;
 
       case STRING:
-        value = tokenizer.consumeString();
+        value = consumeUtf8String(tokenizer, field);
         break;
 
       case BYTES:
@@ -1077,6 +1078,28 @@ public class JsonFormat {
     }
     // Match the legacy UTF-8 OutputStreamWriter's replacement of malformed surrogates.
     return new String(value.getBytes(StandardCharsets.UTF_8), StandardCharsets.UTF_8);
+  }
+
+  /**
+   * Returns whether the value cannot be encoded as UTF-8, which a protobuf string field requires.
+   */
+  public static boolean hasUnpairedSurrogate(String value) {
+    try {
+      Utf8.encodedLength(value);
+      return false;
+    } catch (IllegalArgumentException e) {
+      return true;
+    }
+  }
+
+  private static String consumeUtf8String(Tokenizer tokenizer, FieldDescriptor field)
+      throws ParseException {
+    String value = tokenizer.consumeString();
+    if (hasUnpairedSurrogate(value)) {
+      throw tokenizer.parseExceptionPreviousToken(
+          "String field " + field.getFullName() + " contains an unpaired surrogate");
+    }
+    return value;
   }
 
   /**

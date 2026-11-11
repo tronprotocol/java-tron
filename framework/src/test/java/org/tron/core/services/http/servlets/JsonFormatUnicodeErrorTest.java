@@ -1,6 +1,7 @@
 package org.tron.core.services.http.servlets;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
@@ -19,10 +20,60 @@ import org.tron.core.config.args.Args;
 import org.tron.core.services.ratelimiter.RateLimiterContainer;
 import org.tron.json.JSONObject;
 import org.tron.protos.Protocol.Account;
+import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 
 public class JsonFormatUnicodeErrorTest {
 
   private static final String EMOJI = new String(Character.toChars(0x1F600));
+  private static final String NAME_SURROGATE_ERROR =
+      "1:9: String field protocol.SmartContract.name contains an unpaired surrogate";
+
+  @Test
+  public void testUnpairedSurrogateDetection() {
+    assertTrue(JsonFormat.hasUnpairedSurrogate(String.valueOf((char) 0xD800)));
+    assertTrue(JsonFormat.hasUnpairedSurrogate(String.valueOf((char) 0xDC00)));
+    assertTrue(JsonFormat.hasUnpairedSurrogate("" + (char) 0xDC00 + (char) 0xD800));
+    assertTrue(JsonFormat.hasUnpairedSurrogate("a" + (char) 0xD83D));
+    assertFalse(JsonFormat.hasUnpairedSurrogate(""));
+    assertFalse(JsonFormat.hasUnpairedSurrogate(EMOJI));
+    assertFalse(JsonFormat.hasUnpairedSurrogate("" + (char) 0x4E2D + (char) 0xFFFF));
+  }
+
+  @Test
+  public void testStringFieldRejectsUnpairedSurrogates() {
+    assertNameRejected("\\ud800");
+    assertNameRejected("\\udc00");
+    assertNameRejected("a\\udc00\\ud800");
+    assertNameRejected("x\\uD83D");
+    assertNameRejected(String.valueOf((char) 0xD800));
+  }
+
+  @Test
+  public void testStringFieldKeepsWellFormedText() throws Exception {
+    SmartContract.Builder builder = SmartContract.newBuilder();
+    JsonFormat.merge("{\"name\":\"\\ud83d\\ude00\\u4e2d\\uffff" + EMOJI + "\"}", builder, false);
+
+    assertEquals(EMOJI + (char) 0x4E2D + (char) 0xFFFF + EMOJI, builder.getName());
+  }
+
+  @Test
+  public void testDeployContractRejectsUnpairedSurrogateInAbi() throws Exception {
+    String body = "{\"owner_address\":\"\",\"abi\":\"[{\\\"name\\\":\\\"\\\\ud800\\\"}]\"}";
+
+    String error = requestError(new DeployContractServlet(), "/wallet/deploycontract", body);
+
+    assertEquals("1:20: String field protocol.SmartContract.ABI.Entry.name"
+        + " contains an unpaired surrogate", error);
+  }
+
+  @Test
+  public void testDeployContractRejectsUnpairedSurrogateInName() throws Exception {
+    String body = "{\"owner_address\":\"\",\"bytecode\":\"00\",\"name\":\"\\ud800\"}";
+
+    String error = requestError(new DeployContractServlet(), "/wallet/deploycontract", body);
+
+    assertEquals("Invalid name: contains an unpaired surrogate", error);
+  }
 
   @Test
   public void testInvalidSupplementaryEscapeKeepsLegacyReplacement() {
@@ -129,6 +180,11 @@ public class JsonFormatUnicodeErrorTest {
 
   private static String requestError(RateLimiterServlet servlet, String path, JSONObject input)
       throws Exception {
+    return requestError(servlet, path, input.toJSONString());
+  }
+
+  private static String requestError(RateLimiterServlet servlet, String path, String requestBody)
+      throws Exception {
     CommonParameter args = Args.getInstance();
     long originalMaxSize = args.getHttpMaxMessageSize();
     boolean originalNonBlocking = args.isRateLimiterApiNonBlocking();
@@ -145,7 +201,7 @@ public class JsonFormatUnicodeErrorTest {
       args.setHttpMaxMessageSize(1_000_000L);
       args.setRateLimiterApiNonBlocking(false);
       server.start();
-      byte[] body = input.toJSONString().getBytes(StandardCharsets.UTF_8);
+      byte[] body = requestBody.getBytes(StandardCharsets.UTF_8);
       byte[] headers = ("POST " + path + " HTTP/1.1\r\n"
           + "Host: localhost\r\n"
           + "Connection: close\r\n"
@@ -175,6 +231,13 @@ public class JsonFormatUnicodeErrorTest {
         args.setRateLimiterApiNonBlocking(originalNonBlocking);
       }
     }
+  }
+
+  private static void assertNameRejected(String text) {
+    JsonFormat.ParseException error = assertThrows(JsonFormat.ParseException.class,
+        () -> JsonFormat.merge("{\"name\":\"" + text + "\"}", SmartContract.newBuilder(), false));
+
+    assertEquals(NAME_SURROGATE_ERROR, error.getMessage());
   }
 
   private static void assertEscapeError(String input, String expectedCharacter) {
