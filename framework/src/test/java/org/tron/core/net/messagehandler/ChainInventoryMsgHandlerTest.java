@@ -243,6 +243,29 @@ public class ChainInventoryMsgHandlerTest {
   }
 
   @Test
+  public void testKnownTerminalBlockRejectsUnknownIntermediateBlock() throws Exception {
+    BlockId unknown99 = new BlockId(Sha256Hash.of(new byte[]{1}), 99);
+    BlockId fork100 = new BlockId(Sha256Hash.of(new byte[]{2}), 100);
+    for (BlockId lastBlockId : Arrays.asList(blockId(100), fork100)) {
+      resetFixture();
+      when(delegate.containBlock(unknown99)).thenReturn(false);
+      when(delegate.containBlock(lastBlockId)).thenReturn(true);
+      when(delegate.containBlockInMainChain(lastBlockId))
+          .thenReturn(lastBlockId.equals(blockId(100)));
+      request(blockId(0), blockId(50), blockId(98));
+      peer.getAdvInvReceive().put(new Item(blockId(102), InventoryType.BLOCK),
+          peer.getSyncChainRequested().getValue() - 1);
+
+      P2pException exception = assertRejected(
+          new ChainInventoryMessage(Arrays.asList(blockId(98), unknown99, lastBlockId), 0L),
+          TypeEnum.SYNC_FAILED);
+
+      Assert.assertEquals("lastNum 100 (remainNum=0) is below advertised block 102",
+          exception.getMessage());
+    }
+  }
+
+  @Test
   public void testTerminalResponseBelowPriorInventoryFetchesUnknownForkBlocks() throws Exception {
     BlockId fork99 = new BlockId(Sha256Hash.of(new byte[]{1}), 99);
     BlockId fork100 = new BlockId(Sha256Hash.of(new byte[]{2}), 100);

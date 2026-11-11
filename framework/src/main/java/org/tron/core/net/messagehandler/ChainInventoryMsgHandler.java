@@ -178,9 +178,8 @@ public class ChainInventoryMsgHandler implements TronMsgHandler {
           .mapToLong(entry -> new BlockId(entry.getKey().getHash()).getNum())
           .max()
           .orElse(lastNum);
-      // Allow the existing fetch path to try any missing blocks before declaring no progress.
-      if (lastNum < maxAdvInvNum
-          && blockIds.stream().allMatch(tronNetDelegate::containBlock)) {
+      // Allow fetching when the terminal block is still unknown locally, including on a fork.
+      if (lastNum < maxAdvInvNum && tronNetDelegate.containBlock(lastBlockId)) {
         throw new P2pException(TypeEnum.SYNC_FAILED,
             "lastNum " + lastNum + " (remainNum=0) is below advertised block " + maxAdvInvNum);
       }
