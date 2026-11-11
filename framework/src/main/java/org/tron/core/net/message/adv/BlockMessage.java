@@ -1,5 +1,6 @@
 package org.tron.core.net.message.adv;
 
+import com.google.protobuf.CodedInputStream;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
@@ -15,7 +16,10 @@ public class BlockMessage extends TronMessage {
   public BlockMessage(byte[] data) throws Exception {
     super(data);
     this.type = MessageTypes.BLOCK.asByte();
-    this.block = new BlockCapsule(getCodedInputStream(data));
+    CodedInputStream input = getCodedInputStream(data);
+    this.block = new BlockCapsule(input);
+    // A top-level block must end at EOF, not at an unmatched END_GROUP tag.
+    input.checkLastTagWas(0);
     if (Message.isFilter()) {
       Message.compareBytes(data, block.getInstance().toByteArray());
       TransactionCapsule.validContractProto(block.getInstance().getTransactionsList());
