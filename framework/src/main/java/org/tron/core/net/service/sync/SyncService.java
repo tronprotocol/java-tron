@@ -156,15 +156,17 @@ public class SyncService {
   }
 
   public void onDisconnect(PeerConnection peer) {
-    if (!peer.getSyncBlockRequested().isEmpty()) {
-      peer.getSyncBlockRequested().keySet().forEach(blockId -> invalid(blockId, peer));
-    }
+    // Received and processed blocks no longer appear in the peer's outstanding requests.
+    requestBlockIds.asMap().forEach((blockId, owner) -> {
+      if (peer.equals(owner)) {
+        // Another peer may refetch an already-solid queued block after its owner is released.
+        invalid(blockId, peer);
+      }
+    });
   }
 
   private void invalid(BlockId blockId, PeerConnection peerConnection) {
-    PeerConnection p = requestBlockIds.getIfPresent(blockId);
-    if (peerConnection.equals(p)) {
-      requestBlockIds.invalidate(blockId);
+    if (requestBlockIds.asMap().remove(blockId, peerConnection)) {
       fetchFlag = true;
     }
   }
@@ -273,6 +275,11 @@ public class SyncService {
         });
 
     send.forEach((peer, blockIds) -> {
+      if (peer.isDisconnect()) {
+        // Disconnect cleanup may have finished before this pass wrote its reservations.
+        blockIds.forEach(blockId -> invalid(blockId, peer));
+        return;
+      }
       if (!blockIds.isEmpty()) {
         peer.sendMessage(new FetchInvDataMessage(new LinkedList<>(blockIds), InventoryType.BLOCK));
       }
