@@ -3,6 +3,7 @@ package org.tron.core.net.services;
 import static org.mockito.Mockito.mock;
 
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -173,7 +174,7 @@ public class AdvServiceTest {
   }
 
   @Test
-  public void sameAddressPeersReceiveBroadcastAndDisconnectRetryIndependently() {
+  public void sameAddressPeersReceiveBroadcastAndDisconnectRetryIndependently() throws Exception {
     InetSocketAddress address = new InetSocketAddress("127.0.0.2", 10001);
     Channel firstChannel = new Channel();
     Channel secondChannel = new Channel();
@@ -226,6 +227,11 @@ public class AdvServiceTest {
       first.getAdvInvRequest().put(item, System.currentTimeMillis());
       second.getAdvInvReceive().put(item, System.currentTimeMillis());
       isolated.onDisconnect(first);
+      Assert.assertTrue(second.getAdvInvRequest().isEmpty());
+      Assert.assertEquals(1, secondMessages.size());
+      Method fetch = AdvService.class.getDeclaredMethod("consumerInvToFetch");
+      fetch.setAccessible(true);
+      fetch.invoke(isolated);
       Assert.assertTrue(second.getAdvInvRequest().containsKey(item));
       Assert.assertEquals(1, firstMessages.size());
       Assert.assertEquals(2, secondMessages.size());

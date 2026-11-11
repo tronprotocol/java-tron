@@ -111,7 +111,7 @@ public class P2pEventHandlerImpl extends P2pEventHandler {
   }
 
   @Override
-  public synchronized void onDisconnect(Channel channel) {
+  public void onDisconnect(Channel channel) {
     PeerConnection peerConnection = PeerManager.remove(channel);
     if (peerConnection != null) {
       peerConnection.onDisconnect();
