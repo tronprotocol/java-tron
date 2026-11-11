@@ -193,10 +193,9 @@ public class ChainInventoryMsgHandlerTest {
   }
 
   @Test
-  public void testTerminalResponseBelowPriorBlockInventoryIsRejected() throws Exception {
+  public void testKnownTerminalResponseBelowPriorBlockInventoryIsRejected() throws Exception {
     for (List<BlockId> ids : Arrays.asList(Collections.singletonList(blockId(100)),
-        Arrays.asList(blockId(99), blockId(100)),
-        Arrays.asList(blockId(100), blockId(101)))) {
+        Arrays.asList(blockId(99), blockId(100)))) {
       resetFixture();
       request(blockId(0), blockId(50), ids.get(0));
       peer.getAdvInvReceive().put(new Item(blockId(102), InventoryType.BLOCK),
@@ -208,6 +207,59 @@ public class ChainInventoryMsgHandlerTest {
       Assert.assertEquals("lastNum " + ids.get(ids.size() - 1).getNum()
           + " (remainNum=0) is below advertised block 102", exception.getMessage());
     }
+  }
+
+  @Test
+  public void testTerminalResponseBelowPriorInventoryFetchesMissingBlocks() throws Exception {
+    peer.getAdvInvReceive().put(new Item(blockId(102), InventoryType.BLOCK),
+        peer.getSyncChainRequested().getValue() - 1);
+
+    respond(0, blockId(100), blockId(101));
+
+    Assert.assertEquals(Collections.singletonList(blockId(101)),
+        new ArrayList<>(peer.getSyncBlockToFetch()));
+    Assert.assertTrue(peer.isNeedSyncFromPeer());
+    Assert.assertEquals(TronState.SYNCING, peer.getTronState());
+    Assert.assertNull(peer.getSyncChainRequested());
+    verify(sync).setFetchFlag(true);
+    verify(sync, never()).syncNext(any());
+    verify(peer, never()).disconnect(any());
+  }
+
+  @Test
+  public void testKnownTerminalBlockOutsideSummaryBelowPriorInventoryIsRejected() throws Exception {
+    peer.setHelloMessageReceive(helloMessage(99));
+    request(blockId(0), blockId(51), blockId(76), blockId(89), blockId(95), blockId(98),
+        blockId(100));
+    peer.getAdvInvReceive().put(new Item(blockId(102), InventoryType.BLOCK),
+        peer.getSyncChainRequested().getValue() - 1);
+
+    P2pException exception = assertRejected(
+        new ChainInventoryMessage(Arrays.asList(blockId(98), blockId(99)), 0L),
+        TypeEnum.SYNC_FAILED);
+
+    Assert.assertEquals("lastNum 99 (remainNum=0) is below advertised block 102",
+        exception.getMessage());
+  }
+
+  @Test
+  public void testTerminalResponseBelowPriorInventoryFetchesUnknownForkBlocks() throws Exception {
+    BlockId fork99 = new BlockId(Sha256Hash.of(new byte[]{1}), 99);
+    BlockId fork100 = new BlockId(Sha256Hash.of(new byte[]{2}), 100);
+    when(delegate.containBlock(fork99)).thenReturn(false);
+    when(delegate.containBlock(fork100)).thenReturn(false);
+    request(blockId(0), blockId(50), blockId(98));
+    peer.getAdvInvReceive().put(new Item(blockId(102), InventoryType.BLOCK),
+        peer.getSyncChainRequested().getValue() - 1);
+
+    respond(0, blockId(98), fork99, fork100);
+
+    Assert.assertEquals(Arrays.asList(fork99, fork100),
+        new ArrayList<>(peer.getSyncBlockToFetch()));
+    Assert.assertTrue(peer.isNeedSyncFromPeer());
+    verify(sync).setFetchFlag(true);
+    verify(sync, never()).syncNext(any());
+    verify(peer, never()).disconnect(any());
   }
 
   @Test

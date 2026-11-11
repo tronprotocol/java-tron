@@ -178,7 +178,9 @@ public class ChainInventoryMsgHandler implements TronMsgHandler {
           .mapToLong(entry -> new BlockId(entry.getKey().getHash()).getNum())
           .max()
           .orElse(lastNum);
-      if (lastNum < maxAdvInvNum) {
+      // Allow the existing fetch path to try any missing blocks before declaring no progress.
+      if (lastNum < maxAdvInvNum
+          && blockIds.stream().allMatch(tronNetDelegate::containBlock)) {
         throw new P2pException(TypeEnum.SYNC_FAILED,
             "lastNum " + lastNum + " (remainNum=0) is below advertised block " + maxAdvInvNum);
       }
