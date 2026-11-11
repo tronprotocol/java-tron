@@ -20,6 +20,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.ZksnarkException;
 import org.tron.core.zen.note.NoteEncryption.Encryption;
 import org.tron.protos.contract.ShieldContract;
 
@@ -39,7 +40,8 @@ public class WalletShieldedDescriptionValidationTest {
             .setAmount(amount)
             .setShieldedTRC20Parameters(parameters);
     for (int i = 0; i < signatureCount; i++) {
-      request.addSpendAuthoritySignature(BytesMessage.getDefaultInstance());
+      request.addSpendAuthoritySignature(BytesMessage.newBuilder()
+          .setValue(ByteString.copyFrom(new byte[64])));
     }
 
     CommonParameter commonParameter = mock(Args.class);
@@ -53,9 +55,24 @@ public class WalletShieldedDescriptionValidationTest {
   private static GrpcAPI.ShieldedTRC20Parameters withReceives(
       GrpcAPI.ShieldedTRC20Parameters.Builder parameters, int receives) {
     for (int i = 0; i < receives; i++) {
-      parameters.addReceiveDescription(ShieldContract.ReceiveDescription.getDefaultInstance());
+      parameters.addReceiveDescription(ShieldContract.ReceiveDescription.newBuilder()
+          .setNoteCommitment(ByteString.copyFrom(new byte[32]))
+          .setValueCommitment(ByteString.copyFrom(new byte[32]))
+          .setEpk(ByteString.copyFrom(new byte[32]))
+          .setZkproof(ByteString.copyFrom(new byte[192]))
+          .setCEnc(ByteString.copyFrom(new byte[580]))
+          .setCOut(ByteString.copyFrom(new byte[80])));
     }
-    return parameters.build();
+    return parameters.setBindingSignature(ByteString.copyFrom(new byte[64])).build();
+  }
+
+  private static ShieldContract.SpendDescription.Builder spend() {
+    return ShieldContract.SpendDescription.newBuilder()
+        .setNullifier(ByteString.copyFrom(new byte[32]))
+        .setAnchor(ByteString.copyFrom(new byte[32]))
+        .setValueCommitment(ByteString.copyFrom(new byte[32]))
+        .setRk(ByteString.copyFrom(new byte[32]))
+        .setZkproof(ByteString.copyFrom(new byte[192]));
   }
 
   /**
@@ -76,7 +93,7 @@ public class WalletShieldedDescriptionValidationTest {
     return withReceives(GrpcAPI.ShieldedTRC20Parameters.newBuilder()
         .setParameterType("burn")
         .setTriggerContractInput(ByteArray.toHexString(record))
-        .addSpendDescription(ShieldContract.SpendDescription.newBuilder()
+        .addSpendDescription(spend()
             .setNullifier(ByteString.copyFrom(nullifier))), receives);
   }
 
@@ -85,6 +102,7 @@ public class WalletShieldedDescriptionValidationTest {
     GrpcAPI.ShieldedTRC20Parameters.Builder parameters =
         GrpcAPI.ShieldedTRC20Parameters.newBuilder()
             .setParameterType("transfer")
+            .setBindingSignature(ByteString.copyFrom(new byte[64]))
             .addSpendDescription(ShieldContract.SpendDescription.getDefaultInstance());
     for (int i = 0; i < 3; i++) {
       parameters.addReceiveDescription(ShieldContract.ReceiveDescription.getDefaultInstance());
@@ -94,6 +112,89 @@ public class WalletShieldedDescriptionValidationTest {
         () -> triggerInput(parameters.build(), "0", 1));
     assertEquals("invalid shielded TRC-20 trigger input: invalid transfer output number",
         exception.getMessage());
+  }
+
+  @Test
+  public void invalidBindingSignatureLengthsAreReportedAsValidationFailures() {
+    GrpcAPI.ShieldedTRC20Parameters[] parameters = {
+        withReceives(GrpcAPI.ShieldedTRC20Parameters.newBuilder().setParameterType("mint"), 1),
+        withReceives(GrpcAPI.ShieldedTRC20Parameters.newBuilder().setParameterType("transfer")
+            .addSpendDescription(spend()), 1),
+        burn(0, "1")
+    };
+    for (GrpcAPI.ShieldedTRC20Parameters parameter : parameters) {
+      for (int length : new int[]{0, 63, 65}) {
+        GrpcAPI.ShieldedTRC20Parameters invalid = parameter.toBuilder()
+            .setBindingSignature(ByteString.copyFrom(new byte[length])).build();
+        ContractValidateException exception = assertThrows(ContractValidateException.class,
+            () -> triggerInput(invalid, "1", invalid.getSpendDescriptionCount()));
+        assertEquals("invalid shielded TRC-20 trigger input: binding_signature must be 64 bytes",
+            exception.getMessage());
+      }
+    }
+  }
+
+  @Test
+  public void signatureCountValidationRetainsWalletError() {
+    GrpcAPI.ShieldedTRC20Parameters[] parameters = {
+        withReceives(GrpcAPI.ShieldedTRC20Parameters.newBuilder().setParameterType("transfer")
+            .addSpendDescription(spend()), 1),
+        burn(0, "1")
+    };
+    for (GrpcAPI.ShieldedTRC20Parameters parameter : parameters) {
+      for (int count : new int[]{0, 2}) {
+        ZksnarkException exception = assertThrows(ZksnarkException.class,
+            () -> triggerInput(parameter, "1", count));
+        assertEquals("the number of spendDescription and spendAuthoritySignature is not equal",
+            exception.getMessage());
+      }
+    }
+  }
+
+  @Test
+  public void burnInputValidationRetainsWalletErrors() {
+    GrpcAPI.ShieldedTRC20Parameters valid = burn(0, "1");
+    for (int count : new int[]{0, 2}) {
+      GrpcAPI.ShieldedTRC20Parameters.Builder parameters = valid.toBuilder()
+          .clearSpendDescription();
+      for (int i = 0; i < count; i++) {
+        parameters.addSpendDescription(valid.getSpendDescription(0));
+      }
+      ZksnarkException exception = assertThrows(ZksnarkException.class,
+          () -> triggerInput(parameters.build(), "1", count));
+      assertEquals("burn trigger input requires exactly one spendDescription for nf-bound nonce",
+          exception.getMessage());
+    }
+    for (int length : new int[]{0, 31, 33}) {
+      GrpcAPI.ShieldedTRC20Parameters.Builder parameters = valid.toBuilder();
+      parameters.getSpendDescriptionBuilder(0).setNullifier(ByteString.copyFrom(new byte[length]));
+      ZksnarkException exception = assertThrows(ZksnarkException.class,
+          () -> triggerInput(parameters.build(), "1", 1));
+      assertEquals("burn trigger input requires 32-byte spendDescription.nullifier",
+          exception.getMessage());
+    }
+  }
+
+  @Test
+  public void malformedDescriptionsAreReportedAsValidationFailures() {
+    GrpcAPI.ShieldedTRC20Parameters valid = withReceives(
+        GrpcAPI.ShieldedTRC20Parameters.newBuilder().setParameterType("transfer")
+            .addSpendDescription(spend()), 1);
+    GrpcAPI.ShieldedTRC20Parameters.Builder invalidSpend = valid.toBuilder();
+    invalidSpend.getSpendDescriptionBuilder(0).setZkproof(ByteString.copyFrom(new byte[191]));
+    ContractValidateException spendError = assertThrows(ContractValidateException.class,
+        () -> triggerInput(invalidSpend.build(), "0", 1));
+    assertEquals("invalid shielded TRC-20 trigger input: "
+            + "spend_description.zkproof must be 192 bytes",
+        spendError.getMessage());
+
+    GrpcAPI.ShieldedTRC20Parameters.Builder invalidReceive = valid.toBuilder();
+    invalidReceive.getReceiveDescriptionBuilder(0).setCEnc(ByteString.copyFrom(new byte[579]));
+    ContractValidateException receiveError = assertThrows(ContractValidateException.class,
+        () -> triggerInput(invalidReceive.build(), "0", 1));
+    assertEquals("invalid shielded TRC-20 trigger input: "
+            + "receive_description.c_enc must be 580 bytes",
+        receiveError.getMessage());
   }
 
   @Test
