@@ -1,5 +1,7 @@
 package org.tron.p2p.dns.tree;
 
+import static org.tron.p2p.utils.NetUtil.normalizeDomain;
+
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.math.BigInteger;
 import java.net.UnknownHostException;
@@ -150,6 +152,9 @@ public class Tree {
 
   // hash => lower(hash).domain
   public Map<String, String> toTXT(String rootDomain) {
+    if (StringUtils.isNoneEmpty(rootDomain)) {
+      rootDomain = normalizeDomain(rootDomain);
+    }
     Map<String, String> dnsRecords = new HashMap<>();
     if (StringUtils.isNoneEmpty(rootDomain)) {
       dnsRecords.put(rootDomain, rootEntry.toFormat());

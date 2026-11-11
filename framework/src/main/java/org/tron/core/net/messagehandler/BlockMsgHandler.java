@@ -60,17 +60,25 @@ public class BlockMsgHandler implements TronMsgHandler {
     BlockId blockId = blockMessage.getBlockId();
 
     BlockCapsule blockCapsule = blockMessage.getBlockCapsule();
+    int witnessAddressSize = blockCapsule.getWitnessAddress().size();
+    if (witnessAddressSize != Constant.TRON_ADDRESS_SIZE) {
+      throw new P2pException(TypeEnum.BAD_BLOCK,
+          "Invalid witness address size: " + witnessAddressSize);
+    }
+
     if (blockCapsule.getInstance().getSerializedSize() > maxBlockSize) {
       logger.error("Receive bad block {} from peer {}, block size over limit",
-          blockMessage.getBlockId(), peer.getInetSocketAddress());
+              blockId, peer.getInetSocketAddress());
       throw new P2pException(TypeEnum.BAD_MESSAGE, "block size over limit");
     }
+
     long gap = blockCapsule.getTimeStamp() - System.currentTimeMillis();
     if (gap >= BLOCK_PRODUCED_INTERVAL) {
       logger.error("Receive bad block {} from peer {}, block time error",
-          blockMessage.getBlockId(), peer.getInetSocketAddress());
+              blockId, peer.getInetSocketAddress());
       throw new P2pException(TypeEnum.BAD_MESSAGE, "block time error");
     }
+
     if (!fastForward && !peer.isRelayPeer()) {
       check(peer, blockMessage);
     }

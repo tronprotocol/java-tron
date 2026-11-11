@@ -37,6 +37,7 @@ import com.googlecode.jsonrpc4j.JsonRpcServer;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.management.ManagementFactory;
 import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -45,6 +46,7 @@ import java.util.List;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.junit.After;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.LoggerFactory;
@@ -1074,6 +1076,133 @@ public class JsonRpcServletTest {
   }
 
   @Test
+  public void batchResponseBuffer_usesRemainingBudgetForSingleByteWrites() throws Exception {
+    byte[] response = successResponse(1);
+    // Both responses fit individually; the second exceeds the batch budget by one comma.
+    CommonParameter.getInstance().jsonRpcMaxResponseSize = response.length * 2 + 2;
+    int[] calls = {0};
+    doAnswer(inv -> {
+      OutputStream out = inv.getArgument(1);
+      calls[0]++;
+      for (byte b : response) {
+        out.write(b);
+      }
+      return 0;
+    }).when(mockRpcServer).handleRequest(any(InputStream.class), any(OutputStream.class));
+
+    JsonNode body = MAPPER.readTree(doPost(withEnvelope("[{\"id\":1},{\"id\":2},{\"id\":3}]"))
+        .getContentAsByteArray());
+
+    assertEquals(MAPPER.readTree(response), body.get(0));
+    assertEquals(-32003, body.get(1).get("error").get("code").asInt());
+    assertEquals(-32003, body.get(2).get("error").get("code").asInt());
+    assertEquals(2, calls[0]);
+  }
+
+  @Test
+  public void batchResponseBuffer_largeStreamUsesBoundedAllocation() throws Exception {
+    java.lang.management.ThreadMXBean bean = ManagementFactory.getThreadMXBean();
+    Assume.assumeTrue(bean instanceof com.sun.management.ThreadMXBean);
+    com.sun.management.ThreadMXBean threads = (com.sun.management.ThreadMXBean) bean;
+    Assume.assumeTrue(threads.isThreadAllocatedMemorySupported()
+        && threads.isThreadAllocatedMemoryEnabled());
+    long thread = Thread.currentThread().getId();
+    CommonParameter.getInstance().jsonRpcMaxResponseSize = 64 << 10;
+
+    byte[] chunk = new byte[8192];
+    Arrays.fill(chunk, (byte) 'x');
+    byte[] prefix = "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":\""
+        .getBytes(StandardCharsets.UTF_8);
+    byte[] suffix = "\"}".getBytes(StandardCharsets.UTF_8);
+    doAnswer(inv -> {
+      OutputStream out = inv.getArgument(1);
+      out.write(prefix);
+      // Stream 32 MiB using one reusable chunk, without allocating the result in the mock.
+      for (int i = 0; i < 4096; i++) {
+        out.write(chunk);
+      }
+      out.write(suffix);
+      return 0;
+    }).when(mockRpcServer).handleRequest(any(InputStream.class), any(OutputStream.class));
+
+    String request = withEnvelope("[{\"id\":1}]");
+    doPost(request); // Warm the same path before measuring allocations.
+    long before = threads.getThreadAllocatedBytes(thread);
+    Assume.assumeTrue(before >= 0);
+    MockHttpServletResponse resp = doPost(request);
+    long allocated = threads.getThreadAllocatedBytes(thread) - before;
+
+    assertEquals(200, resp.getStatus());
+    JsonNode body = MAPPER.readTree(resp.getContentAsByteArray());
+    assertTrue(body.isArray());
+    assertEquals(1, body.size());
+    assertEquals(1, body.get(0).get("id").asInt());
+    assertEquals(-32003, body.get(0).get("error").get("code").asInt());
+    // Allow overhead while rejecting the old full-response buffering and toByteArray() copy.
+    assertTrue("allocated " + allocated + " bytes for oversized batch response",
+        allocated >= 0 && allocated < (4L << 20));
+  }
+
+  @Test
+  public void singleResponseLimitDisabled_preservesResults() throws Exception {
+    for (int limit : new int[] {0, -1}) {
+      CommonParameter.getInstance().jsonRpcMaxResponseSize = limit;
+      TronJsonRpc rpc = useRealRpcServer();
+
+      JsonNode body = MAPPER.readTree(doPost(
+          "{\"jsonrpc\":\"2.0\",\"method\":\"eth_blockNumber\",\"id\":1}")
+          .getContentAsByteArray());
+
+      assertEquals("0x1", body.get("result").asText());
+      verify(rpc).getLatestBlockNum();
+    }
+  }
+
+  @Test
+  public void batchResponseBuffer_tinyAndDisabledLimitsPreserveNotifications() throws Exception {
+    for (int limit : new int[] {1, 2, 0, -1}) {
+      CommonParameter.getInstance().jsonRpcMaxResponseSize = limit;
+      TronJsonRpc rpc = useRealRpcServer();
+
+      JsonNode body = MAPPER.readTree(doPost("["
+          + "{\"jsonrpc\":\"2.0\",\"method\":\"eth_blockNumber\"},"
+          + "{\"jsonrpc\":\"2.0\",\"method\":\"eth_blockNumber\",\"id\":1}]")
+          .getContentAsByteArray());
+
+      assertEquals(1, body.size());
+      assertEquals(1, body.get(0).get("id").asInt());
+      if (limit > 0) {
+        assertEquals(-32003, body.get(0).get("error").get("code").asInt());
+      } else {
+        assertEquals("0x1", body.get(0).get("result").asText());
+      }
+      verify(rpc, times(2)).getLatestBlockNum();
+    }
+  }
+
+  @Test
+  public void batchResponseBuffer_failureAfterOverflowPreservesRecovery() throws Exception {
+    CommonParameter.getInstance().jsonRpcMaxResponseSize = 256;
+    int[] calls = {0};
+    doAnswer(inv -> {
+      OutputStream out = inv.getArgument(1);
+      if (++calls[0] == 1) {
+        out.write(new byte[1024]);
+        throw new IOException("failure-after-overflow");
+      }
+      out.write(successResponse(2));
+      return 0;
+    }).when(mockRpcServer).handleRequest(any(InputStream.class), any(OutputStream.class));
+
+    JsonNode body = MAPPER.readTree(doPost(withEnvelope("[{\"id\":1},{\"id\":2}]"))
+        .getContentAsByteArray());
+
+    assertEquals(-32603, body.get(0).get("error").get("code").asInt());
+    assertEquals(MAPPER.readTree(successResponse(2)), body.get(1));
+    assertEquals(2, calls[0]);
+  }
+
+  @Test
   public void batchShortCircuitsOnOverflow() throws Exception {
     int limit = 50;
     CommonParameter.getInstance().jsonRpcMaxResponseSize = limit;
@@ -1290,6 +1419,90 @@ public class JsonRpcServletTest {
     for (int i = 0; i < 3; i++) {
       assertInvalidRequestWithNullId(body.get(i));
     }
+  }
+
+  // --- Numeric ids that are not long integers ---
+
+  @Test
+  public void invalidNumericId_isRejectedWithOriginalIdWithoutDispatch() throws Exception {
+    for (String id : new String[] {"9223372036854775808", "-9223372036854775809",
+        "18446744073709551617", "1.5", "9223372036854775807.1", "1e19", "-1e3"}) {
+      MockHttpServletResponse resp = doPost("{\"jsonrpc\":\"2.0\","
+          + "\"method\":\"web3_clientVersion\",\"params\":[],\"id\":" + id + "}");
+      assertEquals(200, resp.getStatus());
+      assertInvalidRequest(MAPPER.readTree(resp.getContentAsByteArray()),
+          JsonRpcRequestValidator.INVALID_NUMERIC_ID_MESSAGE, id);
+    }
+
+    verifyNoInteractions(mockRpcServer);
+  }
+
+  @Test
+  public void longRangeIds_areServedWhileLargerIdIsRejectedInBatch() throws Exception {
+    TronJsonRpc rpc = useRealRpcServer();
+
+    MockHttpServletResponse resp = doPost("["
+        + "{\"jsonrpc\":\"2.0\",\"method\":\"eth_blockNumber\",\"id\":9223372036854775807},"
+        + "{\"jsonrpc\":\"2.0\",\"method\":\"eth_blockNumber\",\"id\":9223372036854775808},"
+        + "{\"jsonrpc\":\"2.0\",\"method\":\"eth_blockNumber\",\"id\":-9223372036854775808}]");
+    JsonNode body = MAPPER.readTree(resp.getContentAsByteArray());
+    assertEquals(3, body.size());
+    assertEquals(Long.MAX_VALUE, body.get(0).get("id").asLong());
+    assertEquals("0x1", body.get(0).get("result").asText());
+    assertInvalidRequest(body.get(1), JsonRpcRequestValidator.INVALID_NUMERIC_ID_MESSAGE,
+        "9223372036854775808");
+    assertEquals(Long.MIN_VALUE, body.get(2).get("id").asLong());
+    assertEquals("0x1", body.get(2).get("result").asText());
+    verify(rpc, times(2)).getLatestBlockNum();
+  }
+
+  @Test
+  public void rejectedFractionalId_isEchoedAsParsedDouble() throws Exception {
+    for (String id : new String[] {"0.12345678901234567890123456789", "1e-20", "1e300"}) {
+      MockHttpServletResponse resp = doPost("{\"jsonrpc\":\"2.0\","
+          + "\"method\":\"web3_clientVersion\",\"params\":[],\"id\":" + id + "}");
+      assertInvalidRequest(MAPPER.readTree(resp.getContentAsByteArray()),
+          JsonRpcRequestValidator.INVALID_NUMERIC_ID_MESSAGE,
+          Double.toString(Double.parseDouble(id)));
+    }
+
+    verifyNoInteractions(mockRpcServer);
+  }
+
+  @Test
+  public void exponentOverflowId_isRejected() throws Exception {
+    for (String id : new String[] {"1e400", "-1e400", "1e2147483648"}) {
+      MockHttpServletResponse resp = doPost("{\"jsonrpc\":\"2.0\","
+          + "\"method\":\"web3_clientVersion\",\"params\":[],\"id\":" + id + "}");
+      assertEquals(200, resp.getStatus());
+      JsonNode body = MAPPER.readTree(resp.getContentAsByteArray());
+      assertEquals(-32600, body.get("error").get("code").asInt());
+      assertEquals(JsonRpcRequestValidator.INVALID_NUMERIC_ID_MESSAGE,
+          body.get("error").get("message").asText());
+      // Jackson writes the parsed double, which has no JSON number form, as a string.
+      assertEquals(Double.toString(Double.parseDouble(id)), body.get("id").asText());
+    }
+
+    verifyNoInteractions(mockRpcServer);
+  }
+
+  @Test
+  public void nonBooleanFloatParam_isRejectedInSingleAndBatch() throws Exception {
+    TronJsonRpc rpc = useRealRpcServer();
+
+    for (String literal : new String[] {"1.0", "0.0", "1e0", "0e0", "1e2147483648"}) {
+      String request = "{\"jsonrpc\":\"2.0\",\"method\":\"eth_getBlockByNumber\","
+          + "\"params\":[\"latest\"," + literal + "],\"id\":1}";
+      JsonNode single = MAPPER.readTree(doPost(request).getContentAsByteArray());
+      JsonNode batch = MAPPER.readTree(doPost("[" + request + "]").getContentAsByteArray());
+      assertEquals(literal, 1, batch.size());
+      for (JsonNode response : new JsonNode[] {single, batch.get(0)}) {
+        assertEquals(literal, 1, response.get("id").asInt());
+        assertEquals(literal, -32602, response.get("error").get("code").asInt());
+      }
+    }
+
+    verify(rpc, never()).ethGetBlockByNumber(any(), any());
   }
 
   // --- StreamReadConstraints: maxNestingDepth and maxTokenCount must be enforced ---

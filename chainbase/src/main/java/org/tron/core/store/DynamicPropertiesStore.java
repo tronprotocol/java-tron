@@ -267,6 +267,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] ALLOW_OPTIMIZE_TVM_STORAGE_KEY =
       "ALLOW_OPTIMIZE_TVM_STORAGE_KEY".getBytes();
 
+  private static final byte[] ALLOW_TVM_VOTE_POWER_OPTIMIZATION =
+      "ALLOW_TVM_VOTE_POWER_OPTIMIZATION".getBytes();
+
+  private static final byte[] ALLOW_TVM_RESOURCE_OPTIMIZATION =
+      "ALLOW_TVM_RESOURCE_OPTIMIZATION".getBytes();
+
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
     super(dbName);
@@ -3147,6 +3153,36 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   public boolean allowOptimizeTvmStorageKey() {
     return getAllowOptimizeTvmStorageKey() == 1L;
+  }
+
+  public long getAllowTvmVotePowerOptimization() {
+    return Optional.ofNullable(getUnchecked(ALLOW_TVM_VOTE_POWER_OPTIMIZATION))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElse(0L);
+  }
+
+  public void saveAllowTvmVotePowerOptimization(long value) {
+    this.put(ALLOW_TVM_VOTE_POWER_OPTIMIZATION, new BytesCapsule(ByteArray.fromLong(value)));
+  }
+
+  public boolean allowTvmVotePowerOptimization() {
+    return getAllowTvmVotePowerOptimization() == 1L;
+  }
+
+  public long getAllowTvmResourceOptimization() {
+    return Optional.ofNullable(getUnchecked(ALLOW_TVM_RESOURCE_OPTIMIZATION))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElse(0L);
+  }
+
+  public void saveAllowTvmResourceOptimization(long value) {
+    this.put(ALLOW_TVM_RESOURCE_OPTIMIZATION, new BytesCapsule(ByteArray.fromLong(value)));
+  }
+
+  public boolean allowTvmResourceOptimization() {
+    return getAllowTvmResourceOptimization() == 1L;
   }
 
   public boolean allowTvmStorageOptimization() {

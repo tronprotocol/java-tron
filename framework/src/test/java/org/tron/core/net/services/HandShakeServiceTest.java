@@ -8,6 +8,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import org.junit.After;
@@ -195,6 +196,58 @@ public class HandShakeServiceTest {
     String logged = new HelloMessage(builder.build().toByteArray()).toString();
     Assert.assertTrue(logged.contains("address:"));
     Assert.assertFalse(logged.contains("from:"));
+  }
+
+  @Test
+  public void testInvalidHelloIpv6() throws Exception {
+    Protocol.HelloMessage.Builder builder = getTestHelloMessageBuilder();
+    Endpoint from = builder.getFrom();
+    byte[] padding = new byte[8192];
+    Arrays.fill(padding, (byte) 'a');
+    for (ByteString ipv6 : new ByteString[]{ByteString.copyFromUtf8("not-an-ip"),
+        ByteString.copyFrom(padding), ByteString.copyFromUtf8("fe80::1%")
+            .concat(ByteString.copyFrom(padding)),
+        ByteString.copyFromUtf8("fe80::1%").concat(ByteString.copyFrom(padding, 0, 38))}) {
+      builder.setFrom(from.toBuilder().setAddressIpv6(ipv6));
+      assertInvalidHello(builder);
+    }
+  }
+
+  @Test
+  public void testValidHelloIpv6() throws Exception {
+    Protocol.HelloMessage.Builder builder = getTestHelloMessageBuilder();
+    Endpoint from = builder.getFrom();
+    for (String ipv6 : new String[]{"", "::1", "2001:db8::1",
+        "ffff:ffff:ffff:ffff:ffff:ffff:255.255.255.255"}) {
+      builder.setFrom(from.toBuilder().setAddressIpv6(ByteString.copyFromUtf8(ipv6)));
+      Assert.assertTrue(new HelloMessage(builder.build().toByteArray()).valid());
+    }
+    builder.setFrom(from.toBuilder().clearAddress()
+        .setAddressIpv6(ByteString.copyFromUtf8("2001:db8::1")));
+    Assert.assertTrue(new HelloMessage(builder.build().toByteArray()).valid());
+  }
+
+  @Test
+  public void testHelloIpv4BoundsAndIpv6Fallback() throws Exception {
+    Protocol.HelloMessage.Builder builder = getTestHelloMessageBuilder();
+    Endpoint from = builder.getFrom();
+    byte[] padding = new byte[1024 * 1024];
+    Arrays.fill(padding, (byte) 'a');
+    for (int length : new int[]{16, padding.length}) {
+      builder.setFrom(from.toBuilder().setAddress(ByteString.copyFrom(padding, 0, length))
+          .setAddressIpv6(ByteString.copyFromUtf8("2001:db8::1")));
+      assertInvalidHello(builder);
+    }
+    builder.setFrom(from.toBuilder().setAddress(ByteString.copyFromUtf8("255.255.255.255")));
+    Assert.assertTrue(new HelloMessage(builder.build().toByteArray()).valid());
+    for (String ipv4 : new String[]{"", "not-an-ip", "999.999.999.999"}) {
+      builder.setFrom(from.toBuilder().setAddress(ByteString.copyFromUtf8(ipv4))
+          .setAddressIpv6(ByteString.copyFromUtf8("2001:db8::1")));
+      HelloMessage parsed = new HelloMessage(builder.build().toByteArray());
+      Assert.assertTrue(parsed.valid());
+      Assert.assertNull(parsed.getFrom().getHostV4());
+      Assert.assertNotNull(parsed.getFrom().getHostV6());
+    }
   }
 
   @Test

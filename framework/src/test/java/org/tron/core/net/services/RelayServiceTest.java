@@ -370,6 +370,21 @@ public class RelayServiceTest extends BaseTest {
   }
 
   @Test
+  public void testCheckHelloMessageRepeatedReconnectDoesNotDuplicateTrust() throws Exception {
+    initWitness();
+    setupRelayServiceDeps();
+    Args.getInstance().fastForward = true;
+    long timestamp = System.currentTimeMillis();
+    Channel channel = buildChannel();
+    for (int i = 0; i < 3; i++) {
+      Assert.assertTrue(service.checkHelloMessage(buildSignedHello(timestamp + i), channel));
+    }
+
+    Assert.assertEquals(1, Collections.frequency(
+        TronNetService.getP2pConfig().getTrustNodes(), channel.getInetAddress()));
+  }
+
+  @Test
   public void testCheckHelloMessage_badSigDoesNotPoisonCache() throws Exception {
     initWitness();
     setupRelayServiceDeps();

@@ -46,6 +46,8 @@ public class VMConfig {
     public boolean allowHardenResourceCalculation;
     public boolean allowStrictEcdsaValidation;
     public boolean allowOptimizeTvmStorageKey;
+    public boolean allowTvmVotePowerOptimization;
+    public boolean allowTvmResourceOptimization;
   }
 
   // HEAD / block-processing config, written by the consensus path; read by everyone with no
@@ -204,6 +206,14 @@ public class VMConfig {
     globalSnapshot.allowOptimizeTvmStorageKey = allow == 1;
   }
 
+  public static void initAllowTvmVotePowerOptimization(long allow) {
+    globalSnapshot.allowTvmVotePowerOptimization = allow == 1;
+  }
+
+  public static void initAllowTvmResourceOptimization(long allow) {
+    globalSnapshot.allowTvmResourceOptimization = allow == 1;
+  }
+
   public static void initAllowStrictEcdsaValidation(long allow) {
     globalSnapshot.allowStrictEcdsaValidation = allow == 1;
   }
@@ -318,6 +328,14 @@ public class VMConfig {
 
   public static boolean allowOptimizeTvmStorageKey() {
     return current().allowOptimizeTvmStorageKey;
+  }
+
+  public static boolean allowTvmVotePowerOptimization() {
+    return current().allowTvmVotePowerOptimization;
+  }
+
+  public static boolean allowTvmResourceOptimization() {
+    return current().allowTvmResourceOptimization;
   }
 
   public static boolean allowStrictEcdsaValidation() {

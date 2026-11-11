@@ -300,16 +300,44 @@ public class AdminRpcServletTest {
     assertEquals(0, response.getContentAsByteArray().length);
   }
 
+  @Test(timeout = 30_000)
+  public void malformedJsonContentTypesAreRejectedBeforeInvocation() throws Exception {
+    TestAdminRpcHttpService service = new TestAdminRpcHttpService();
+    service.setMaxRequestSize(REQUEST_LIMIT);
+    ReflectionTestUtils.setField(service, "adminRpcServlet", servlet);
+    String body = "{\"jsonrpc\":\"2.0\",\"method\":\"admin_listBlockedIps\",\"id\":1}";
+    try {
+      service.start().get(5, TimeUnit.SECONDS);
+      for (String contentType : new String[] {"application/+json",
+          "APPLICATION/+JSON; charset=UTF-8", "application/ +json", "application/a b+json",
+          "application/a/b+json", "application/*+json", "application/.vendor+json",
+          "application/vnd.tron@+json", "application/vnd.troné+json",
+          "application/" + Strings.repeat("a", 123) + "+json"}) {
+        String response = service.postWithContentType(body, contentType);
+
+        assertTrue(contentType + ": " + response,
+            response.startsWith("HTTP/1.1 415 "));
+        assertTrue(response, response.contains("\r\nContent-Length: 0\r\n"));
+        assertEquals("", response.substring(response.indexOf("\r\n\r\n") + 4));
+        verifyNoInteractions(adminJsonRpc);
+      }
+    } finally {
+      service.stop().get(5, TimeUnit.SECONDS);
+    }
+  }
+
   @Test
   public void jsonContentTypesAreAccepted() throws Exception {
     String body = "{\"jsonrpc\":\"2.0\",\"method\":\"admin_listBlockedIps\",\"id\":1}";
-
-    assertEquals(HttpServletResponse.SC_OK,
-        doPost(body, "application/json; charset=UTF-8").getStatus());
-    assertEquals(HttpServletResponse.SC_OK,
-        doPost(body, "application/json-rpc").getStatus());
-    assertEquals(HttpServletResponse.SC_OK,
-        doPost(body, "application/vnd.tron+json").getStatus());
+    String[] contentTypes = {"application/json; charset=UTF-8", "application/json-rpc",
+        "application/vnd.tron+json", "Application/Vnd.Tron+Json; charset=UTF-8",
+        " application/vnd.tron+json ", "application/a+json", "application/1+json",
+        "application/a!#$&^_.+-+json", "application/" + Strings.repeat("a", 122) + "+json"};
+    for (String contentType : contentTypes) {
+      assertEquals(contentType, HttpServletResponse.SC_OK,
+          doPost(body, contentType).getStatus());
+    }
+    verify(adminJsonRpc, times(contentTypes.length)).listBlockedIps();
   }
 
   @Test
@@ -706,16 +734,25 @@ public class AdminRpcServletTest {
     }
 
     String post(String body, boolean chunked, String accept) throws Exception {
+      return post(body, chunked, accept, "application/json");
+    }
+
+    private String post(String body, boolean chunked, String accept, String contentType)
+        throws Exception {
       String framing = chunked ? "Transfer-Encoding: chunked\r\n"
           : "Content-Length: " + body.length() + "\r\n";
       String content = chunked ? Integer.toHexString(body.length()) + "\r\n"
           + body + "\r\n0\r\n\r\n" : body;
       String request = "POST /admin HTTP/1.1\r\n"
           + "Host: 127.0.0.1\r\n"
-          + "Content-Type: application/json\r\n"
+          + "Content-Type: " + contentType + "\r\n"
           + (accept == null ? "" : "Accept: " + accept + "\r\n")
           + "Connection: close\r\n" + framing + "\r\n" + content;
       return connector.getResponse(request, 5, TimeUnit.SECONDS);
+    }
+
+    String postWithContentType(String body, String contentType) throws Exception {
+      return post(body, false, null, contentType);
     }
   }
 

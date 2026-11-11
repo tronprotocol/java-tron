@@ -18,6 +18,7 @@ import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.text.ParseException;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -28,6 +29,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.TimeZone;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -61,6 +63,7 @@ import org.tron.core.store.AccountStore;
 import org.tron.p2p.P2pConfig;
 import org.tron.p2p.dns.update.DnsType;
 import org.tron.p2p.dns.update.PublishConfig;
+import org.tron.p2p.utils.NetUtil;
 import org.tron.program.Version;
 
 @Slf4j(topic = "app")
@@ -676,7 +679,9 @@ public class Args extends CommonParameter {
     String shutdownBlockTime = nc.getShutdownBlockTime();
     if (!shutdownBlockTime.isEmpty()) {
       try {
-        PARAMETER.shutdownBlockTime = new CronExpression(shutdownBlockTime);
+        CronExpression blockTime = new CronExpression(shutdownBlockTime);
+        blockTime.setTimeZone(TimeZone.getTimeZone(ZoneOffset.UTC));
+        PARAMETER.shutdownBlockTime = blockTime;
       } catch (ParseException e) {
         throw new TronError(e, TronError.ErrCode.AUTO_STOP_PARAMS);
       }
@@ -1124,6 +1129,10 @@ public class Args extends CommonParameter {
         }
       }
     } else {
+      if (!NetUtil.validIpV4(externalIp)) {
+        throw new TronError("node.discovery.external.ip must be an IPv4 literal: " + externalIp,
+            TronError.ErrCode.PARAMETER_INIT);
+      }
       PARAMETER.nodeExternalIp = externalIp;
     }
   }

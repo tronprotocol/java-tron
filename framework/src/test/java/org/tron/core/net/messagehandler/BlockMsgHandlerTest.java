@@ -83,9 +83,10 @@ public class BlockMsgHandlerTest extends BaseTest {
   public void testProcessMessage() {
     BlockCapsule blockCapsule;
     BlockMessage msg;
+    ByteString witness = ByteString.copyFrom(new byte[Constant.TRON_ADDRESS_SIZE]);
     try {
       blockCapsule = new BlockCapsule(1, Sha256Hash.ZERO_HASH,
-          System.currentTimeMillis(), Sha256Hash.ZERO_HASH.getByteString());
+          System.currentTimeMillis(), witness);
       msg = new BlockMessage(blockCapsule);
       handler.processMessage(peer, msg);
     } catch (P2pException e) {
@@ -100,8 +101,9 @@ public class BlockMsgHandlerTest extends BaseTest {
                       ByteString.copyFrom(
                           new byte[Parameter.ChainConstant.BLOCK_SIZE + Constant.ONE_THOUSAND])))
               .build());
-      blockCapsule = new BlockCapsule(1, Sha256Hash.ZERO_HASH.getByteString(),
-          System.currentTimeMillis() + 10000, transactionList);
+      blockCapsule = new BlockCapsule(1, Sha256Hash.ZERO_HASH,
+          System.currentTimeMillis() + 10000, witness);
+      blockCapsule.addTransaction(new TransactionCapsule(transactionList.get(0)));
       msg = new BlockMessage(blockCapsule);
       System.out.println("len = " + blockCapsule.getInstance().getSerializedSize());
       peer.getAdvInvRequest()
@@ -114,7 +116,7 @@ public class BlockMsgHandlerTest extends BaseTest {
 
     try {
       blockCapsule = new BlockCapsule(1, Sha256Hash.ZERO_HASH,
-          System.currentTimeMillis() + 10000, Sha256Hash.ZERO_HASH.getByteString());
+          System.currentTimeMillis() + 10000, witness);
       msg = new BlockMessage(blockCapsule);
       peer.getAdvInvRequest()
           .put(new Item(msg.getBlockId(), InventoryType.BLOCK), System.currentTimeMillis());
@@ -126,7 +128,7 @@ public class BlockMsgHandlerTest extends BaseTest {
 
     try {
       blockCapsule = new BlockCapsule(1, Sha256Hash.ZERO_HASH,
-          System.currentTimeMillis() + 1000, Sha256Hash.ZERO_HASH.getByteString());
+          System.currentTimeMillis() + 1000, witness);
       msg = new BlockMessage(blockCapsule);
       peer.getSyncBlockRequested()
           .put(msg.getBlockId(), System.currentTimeMillis());
@@ -137,7 +139,7 @@ public class BlockMsgHandlerTest extends BaseTest {
 
     try {
       blockCapsule = new BlockCapsule(1, Sha256Hash.ZERO_HASH,
-          System.currentTimeMillis() + 1000, Sha256Hash.ZERO_HASH.getByteString());
+          System.currentTimeMillis() + 1000, witness);
       msg = new BlockMessage(blockCapsule);
       peer.getAdvInvRequest()
           .put(new Item(msg.getBlockId(), InventoryType.BLOCK), System.currentTimeMillis());
@@ -238,10 +240,63 @@ public class BlockMsgHandlerTest extends BaseTest {
   }
 
   @Test
+  public void testUnauthorizedWitnessRejectedBeforeBroadcast() throws Exception {
+    for (boolean fastForward : new boolean[]{false, true}) {
+      BlockCapsule block = signedWitnessBlock();
+      block.sign(ECKey.fromPrivate(BigInteger.valueOf(11)).getPrivKeyBytes());
+      TronNetDelegate delegate = witnessDelegate(false, block.getWitnessAddress());
+      AdvService adv = Mockito.mock(AdvService.class);
+      RelayService relay = Mockito.mock(RelayService.class);
+      BlockMsgHandler ingress = witnessHandler(delegate, adv, Mockito.mock(SyncService.class));
+      ReflectUtils.setFieldValue(ingress, "fastForward", fastForward);
+      ReflectUtils.setFieldValue(ingress, "relayService", relay);
+      BlockMessage message = new BlockMessage(block);
+      PeerConnection sender = witnessPeer();
+      sender.getAdvInvRequest().put(new Item(message.getBlockId(), InventoryType.BLOCK), 0L);
+
+      P2pException error = Assert.assertThrows(P2pException.class,
+          () -> ingress.processMessage(sender, message));
+
+      Assert.assertEquals(P2pException.TypeEnum.BLOCK_SIGN_INVALID, error.getType());
+      Mockito.verify(adv, Mockito.never()).broadcast(any());
+      Mockito.verify(relay, Mockito.never()).broadcast(any());
+      Mockito.verify(delegate, Mockito.never()).processBlock(any(BlockCapsule.class), anyBoolean());
+    }
+  }
+
+  @Test
+  public void testWitnessValidatedBeforeBroadcastAndProcessing() throws Exception {
+    for (boolean fastForward : new boolean[]{false, true}) {
+      BlockCapsule block = signedWitnessBlock();
+      TronNetDelegate delegate = witnessDelegate(false, block.getWitnessAddress());
+      AdvService adv = Mockito.mock(AdvService.class);
+      RelayService relay = Mockito.mock(RelayService.class);
+      BlockMsgHandler ingress = witnessHandler(delegate, adv, Mockito.mock(SyncService.class));
+      ReflectUtils.setFieldValue(ingress, "fastForward", fastForward);
+      ReflectUtils.setFieldValue(ingress, "relayService", relay);
+      BlockMessage message = new BlockMessage(block);
+      PeerConnection sender = witnessPeer();
+      sender.getAdvInvRequest().put(new Item(message.getBlockId(), InventoryType.BLOCK), 0L);
+
+      ingress.processMessage(sender, message);
+
+      org.mockito.InOrder order = Mockito.inOrder(delegate, adv, relay);
+      order.verify(delegate).validSignature(any(BlockCapsule.class));
+      if (fastForward) {
+        order.verify(relay).broadcast(any(BlockMessage.class));
+      } else {
+        order.verify(adv).broadcast(any(BlockMessage.class));
+      }
+      order.verify(delegate).processBlock(any(BlockCapsule.class), Mockito.eq(false));
+    }
+  }
+
+  @Test
   public void testFutureBlockRejectedBeforeAdvertisedOrSyncProcessing() throws Exception {
     for (boolean syncResponse : new boolean[]{false, true}) {
       BlockCapsule block = new BlockCapsule(1, Sha256Hash.ZERO_HASH,
-          System.currentTimeMillis() + 60000, ByteString.EMPTY);
+          System.currentTimeMillis() + 60000,
+          ByteString.copyFrom(new byte[Constant.TRON_ADDRESS_SIZE]));
       BlockMessage message = new BlockMessage(block);
       PeerConnection sender = witnessPeer();
       if (syncResponse) {
@@ -377,6 +432,34 @@ public class BlockMsgHandlerTest extends BaseTest {
       Mockito.verify(relay, Mockito.never()).broadcast(any());
       Mockito.verify(delegate, Mockito.never()).processBlock(any(BlockCapsule.class),
           anyBoolean());
+    }
+  }
+
+  @Test
+  public void testRejectsInvalidWitnessAddressBeforeSyncOrAdvertisement() throws Exception {
+    for (int size : new int[] {0, 20, 22, 2_000_000}) {
+      for (boolean sync : new boolean[] {true, false}) {
+        BlockCapsule block = new BlockCapsule(1, Sha256Hash.ZERO_HASH, 1234,
+            ByteString.copyFrom(new byte[size]));
+        BlockMessage message = new BlockMessage(block);
+        PeerConnection sender = witnessPeer();
+        if (sync) {
+          sender.getSyncBlockRequested().put(message.getBlockId(), 0L);
+        } else {
+          sender.getAdvInvRequest().put(new Item(message.getBlockId(), InventoryType.BLOCK), 0L);
+        }
+        TronNetDelegate delegate = Mockito.mock(TronNetDelegate.class);
+        AdvService adv = Mockito.mock(AdvService.class);
+        SyncService syncService = Mockito.mock(SyncService.class);
+        BlockMsgHandler ingress = witnessHandler(delegate, adv, syncService);
+
+        P2pException error = Assert.assertThrows(P2pException.class,
+            () -> ingress.processMessage(sender, message));
+
+        Assert.assertEquals(P2pException.TypeEnum.BAD_BLOCK, error.getType());
+        Assert.assertTrue(sender.getSyncBlockInProcess().isEmpty());
+        Mockito.verifyNoInteractions(delegate, adv, syncService);
+      }
     }
   }
 

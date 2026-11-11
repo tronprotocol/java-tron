@@ -3,6 +3,7 @@ package org.tron.core.net.services;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.CALLS_REAL_METHODS;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
@@ -30,6 +31,7 @@ import org.junit.rules.TemporaryFolder;
 import org.mockito.MockedStatic;
 import org.tron.common.TestConstants;
 import org.tron.common.crypto.ECKey;
+import org.tron.common.overlay.message.Message;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Time;
@@ -447,7 +449,9 @@ public class BlockFetchFailureTest {
     Cache<BlockId, PeerConnection> requests =
         (Cache<BlockId, PeerConnection>) ReflectUtils.getFieldObject(sync, "requestBlockIds");
     requests.put(id, sender);
-    try {
+    try (MockedStatic<Message> messages = mockStatic(Message.class, CALLS_REAL_METHODS)) {
+      // These failure-policy tests do not initialize the global dynamic properties store.
+      messages.when(Message::isFilter).thenReturn(false);
       sync.processBlock(sender, new BlockMessage(block));
       invoke(sync, "handleSyncBlock");
       verify(delegate).validBlock(any(BlockCapsule.class));
@@ -587,7 +591,8 @@ public class BlockFetchFailureTest {
   }
 
   private static BlockCapsule newBlock() {
-    BlockCapsule block = new BlockCapsule(1, Sha256Hash.ZERO_HASH, 0, ByteString.EMPTY);
+    BlockCapsule block = new BlockCapsule(1, Sha256Hash.ZERO_HASH, 0,
+        ByteString.copyFrom(ECKey.fromPrivate(BigInteger.TEN).getAddress()));
     block.setMerkleRoot();
     return block;
   }

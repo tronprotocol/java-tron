@@ -34,9 +34,14 @@ final class IpcResponse {
     return parse(response, null, pendingOutputFormats);
   }
 
-  /** Also verifies the numeric request ID when called for single-command execution. */
+  /** Also verifies the numeric request ID without changing JSON-RPC result semantics. */
   static IpcResponse parse(String response, Integer expectedId,
       Map<Integer, OutputFormat> pendingOutputFormats) {
+    return parse(response, expectedId, pendingOutputFormats, false);
+  }
+
+  private static IpcResponse parse(String response, Integer expectedId,
+      Map<Integer, OutputFormat> pendingOutputFormats, boolean checkBusinessResult) {
     try {
       JsonNode root = OBJECT_MAPPER.reader()
           .with(DeserializationFeature.FAIL_ON_TRAILING_TOKENS).readTree(response);
@@ -53,17 +58,30 @@ final class IpcResponse {
       if (root.has("error")) {
         return parseError(root.get("error"));
       }
+      JsonNode result = root.get("result");
+      if (checkBusinessResult && result.isObject() && result.path("success").isBoolean()
+          && !result.get("success").booleanValue()) {
+        JsonNode message = result.path("errorMessage");
+        return new IpcResponse(message.isTextual() && !message.textValue().trim().isEmpty()
+            ? message.textValue() : "Admin operation failed.", false);
+      }
       if (outputFormat == OutputFormat.TEXT) {
-        String table = new ActivePeerOutputFormatter().formatText(root.get("result"));
+        String table = new ActivePeerOutputFormatter().formatText(result);
         if (table != null) {
           return new IpcResponse(table, true);
         }
       }
       // only output column "result" of jsonrpc and ignore other columns
-      return new IpcResponse(formatJsonValue(root.get("result")), true);
+      return new IpcResponse(formatJsonValue(result), true);
     } catch (JsonProcessingException e) {
       return invalidResponse();
     }
+  }
+
+  /** Formats a single-command response, treating a business rejection as a command failure. */
+  static IpcResponse parseForExec(String response, int expectedId,
+      Map<Integer, OutputFormat> pendingOutputFormats) {
+    return parse(response, expectedId, pendingOutputFormats, true);
   }
 
   private static boolean isValidEnvelope(JsonNode root) {

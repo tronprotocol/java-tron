@@ -27,7 +27,7 @@ public class Algorithm {
    */
   public static String compressPubKey(BigInteger pubKey) {
     String pubKeyYPrefix = pubKey.testBit(0) ? "03" : "02";
-    String pubKeyHex = pubKey.toString(16);
+    String pubKeyHex = StringUtils.leftPad(pubKey.toString(16), 128, '0');
     String pubKeyX = pubKeyHex.substring(0, 64);
     String hexPub = pubKeyYPrefix + pubKeyX;
     return hexPub;

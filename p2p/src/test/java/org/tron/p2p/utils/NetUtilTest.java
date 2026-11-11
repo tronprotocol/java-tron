@@ -1,5 +1,6 @@
 package org.tron.p2p.utils;
 
+import com.google.protobuf.ByteString;
 import com.sun.net.httpserver.HttpServer;
 import java.io.OutputStream;
 import java.lang.reflect.Method;
@@ -7,6 +8,7 @@ import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Set;
 import org.junit.Assert;
 import org.junit.Assume;
@@ -50,6 +52,17 @@ public class NetUtilTest {
     Assert.assertFalse(flag);
     flag = NetUtil.validIpV6("fe80::1%e t h0");
     Assert.assertFalse(flag);
+  }
+
+  @Test
+  public void testValidIpv6Length() {
+    String ipv6 = "ffff:ffff:ffff:ffff:ffff:ffff:255.255.255.255";
+    Assert.assertEquals(45, ipv6.length());
+    Assert.assertTrue(NetUtil.validIpV6(ipv6));
+
+    char[] scope = new char[38];
+    Arrays.fill(scope, 'a');
+    Assert.assertFalse(NetUtil.validIpV6("fe80::1%" + new String(scope)));
   }
 
   @Test
@@ -119,6 +132,32 @@ public class NetUtilTest {
    * NPE on a host with no egress. When the lookup does succeed the result must be a
    * routable address: a private one would be advertised to peers that cannot reach it.
    */
+  @Test
+  public void testGetNodeDiscardsRemoteIpv6Zones() {
+    for (String zone : new String[]{"1", "2147483647", "eth0"}) {
+      for (String ipv4 : new String[]{"192.0.2.1", "", "invalid"}) {
+        Discover.Endpoint endpoint = Discover.Endpoint.newBuilder()
+            .setNodeId(ByteString.copyFrom(new byte[64]))
+            .setAddress(ByteString.copyFromUtf8(ipv4))
+            .setAddressIpv6(ByteString.copyFromUtf8("2001:db8::1%" + zone))
+            .setPort(18888).build();
+
+        Node node = NetUtil.getNode(endpoint);
+
+        Assert.assertNotNull(node);
+        Assert.assertNull(node.getHostV6());
+        if ("192.0.2.1".equals(ipv4)) {
+          Assert.assertEquals(ipv4, node.getHostV4());
+        }
+        Assert.assertEquals(ipv4.equals("192.0.2.1"), NetUtil.validNode(node));
+      }
+    }
+
+    Node local = new Node(new byte[64], null, "2001:db8::1%2147483647", 18888);
+    Assert.assertTrue(local.getHostV6().endsWith("%2147483647"));
+    Assert.assertTrue(NetUtil.validNode(local));
+  }
+
   @Test
   public void testExternalIp() {
     String ip = NetUtil.getExternalIpV4();

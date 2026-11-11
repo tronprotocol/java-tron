@@ -1,26 +1,40 @@
 package org.tron.common.jetty;
 
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.ContentType;
 import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
+import org.eclipse.jetty.server.Request;
+import org.eclipse.jetty.server.handler.HandlerWrapper;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.junit.AfterClass;
@@ -29,15 +43,21 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.tron.common.TestConstants;
 import org.tron.common.application.HttpService;
+import org.tron.common.application.RequestSizeLimitHandler;
 import org.tron.common.utils.PublicMethod;
+import org.tron.core.Wallet;
 import org.tron.core.config.args.Args;
+import org.tron.core.services.http.servlets.GetBlockByNumServlet;
+import org.tron.core.services.ratelimiter.RateLimiterContainer;
 import org.tron.json.JSONObject;
+import org.tron.protos.Protocol.Block;
 
 /**
- * Tests {@link org.eclipse.jetty.server.handler.SizeLimitHandler} body-size
- * enforcement configured in {@link HttpService}.
+ * Tests {@link RequestSizeLimitHandler} body-size enforcement configured in
+ * {@link HttpService}.
  *
  * Covers: accept/reject by size, UTF-8 byte counting, independent limits
  * across HttpService instances, chunked transfer, and zero-limit behavior.
@@ -50,6 +70,7 @@ public class SizeLimitHandlerTest {
 
   private static final int HTTP_MAX_BODY_SIZE = 1024;
   private static final int SECOND_SERVICE_MAX_BODY_SIZE = 512;
+  private static final int CLIENT_TIMEOUT_MILLIS = 15000;
 
   @ClassRule
   public static final TemporaryFolder temporaryFolder = new TemporaryFolder();
@@ -78,7 +99,8 @@ public class SizeLimitHandlerTest {
         // Mimics RateLimiterServlet line 119-120: silently logs, does not rethrow
         resp.setStatus(HttpServletResponse.SC_OK);
         resp.setContentType("application/json");
-        resp.getWriter().println("{\"Error\":\"" + e.getClass().getSimpleName() + "\"}");
+        resp.getWriter().println("{\"Error\":\"" + e.getClass().getSimpleName()
+            + "\",\"detail\":\"" + e.getMessage() + "\"}");
       }
     }
   }
@@ -94,6 +116,37 @@ public class SizeLimitHandlerTest {
     @Override
     protected void addServlet(ServletContextHandler context) {
       context.addServlet(new ServletHolder(new BroadCatchServlet()), "/*");
+    }
+  }
+
+  static class ObserverHttpService extends TestHttpService {
+    private final AtomicInteger interceptions;
+
+    ObserverHttpService(int port, long maxRequestSize, AtomicInteger interceptions) {
+      super(port, maxRequestSize);
+      this.interceptions = interceptions;
+    }
+
+    @Override
+    protected ServletContextHandler initContextHandler() {
+      ServletContextHandler context = super.initContextHandler();
+      HandlerWrapper limitHandler = (HandlerWrapper) apiServer.getHandler();
+      HandlerWrapper observer = new HandlerWrapper() {
+        @Override
+        public void handle(String target, Request baseRequest, HttpServletRequest request,
+            HttpServletResponse response) throws IOException, ServletException {
+          baseRequest.getHttpInput().addInterceptor(content -> {
+            if (content != null) {
+              interceptions.incrementAndGet();
+            }
+            return content;
+          });
+          super.handle(target, baseRequest, request, response);
+        }
+      };
+      observer.setHandler(limitHandler);
+      apiServer.setHandler(observer);
+      return context;
     }
   }
 
@@ -128,7 +181,13 @@ public class SizeLimitHandlerTest {
     secondService.start().get(10, TimeUnit.SECONDS);
     secondServerUri = new URI(String.format("http://localhost:%d/", secondPort));
 
-    client = HttpClients.createDefault();
+    client = HttpClients.custom()
+        .setDefaultRequestConfig(RequestConfig.custom()
+            .setConnectTimeout(CLIENT_TIMEOUT_MILLIS)
+            .setConnectionRequestTimeout(CLIENT_TIMEOUT_MILLIS)
+            .setSocketTimeout(CLIENT_TIMEOUT_MILLIS)
+            .build())
+        .build();
   }
 
   @AfterClass
@@ -257,14 +316,137 @@ public class SizeLimitHandlerTest {
     Assert.assertEquals(200, post(httpServerUri, chunked));
   }
 
+  @Test
+  public void testLargeBodyWithinLimitMatchesContentLengthAndChunked() throws Exception {
+    int limit = 4 * 1024 * 1024;
+    int port = PublicMethod.chooseRandomPort();
+    TestHttpService service = new TestHttpService(port, limit);
+    try {
+      service.start().get(10, TimeUnit.SECONDS);
+      URI uri = new URI(String.format("http://localhost:%d/", port));
+      String body = repeat('a', 3 * 1024 * 1024);
+      byte[] data = body.getBytes("UTF-8");
+
+      String knownLengthResponse = postForBody(uri, new StringEntity(body));
+      String chunkedResponse = postForBody(uri,
+          new InputStreamEntity(new ByteArrayInputStream(data), -1));
+
+      Assert.assertEquals(knownLengthResponse, chunkedResponse);
+      Assert.assertEquals(data.length,
+          JSONObject.parseObject(chunkedResponse).getIntValue("bytes"));
+    } finally {
+      service.stop();
+    }
+  }
+
+  @Test
+  public void testGetBlockByNumAcceptsSameLargeBodyWithBothFramings() throws Exception {
+    int limit = 4 * 1024 * 1024;
+    long originalLimit = Args.getInstance().getHttpMaxMessageSize();
+    boolean originalNonBlocking = Args.getInstance().isRateLimiterApiNonBlocking();
+    Args.getInstance().setHttpMaxMessageSize(limit);
+    Args.getInstance().setRateLimiterApiNonBlocking(false);
+
+    Wallet wallet = mock(Wallet.class);
+    when(wallet.getBlockByNum(0)).thenReturn(Block.getDefaultInstance());
+    GetBlockByNumServlet servlet = new GetBlockByNumServlet();
+    ReflectionTestUtils.setField(servlet, "wallet", wallet);
+    ReflectionTestUtils.setField(servlet, "container", new RateLimiterContainer());
+
+    int port = PublicMethod.chooseRandomPort();
+    TestHttpService service = new TestHttpService(port, limit) {
+      @Override
+      protected void addServlet(ServletContextHandler context) {
+        context.addServlet(new ServletHolder(servlet), "/wallet/getblockbynum");
+      }
+    };
+    try {
+      service.start().get(10, TimeUnit.SECONDS);
+      URI uri = new URI(String.format("http://localhost:%d/wallet/getblockbynum", port));
+      String prefix = "{\"num\":0,\"_pad\":\"";
+      String suffix = "\"}";
+      String body = prefix + repeat('A', 3 * 1024 * 1024 - prefix.length() - suffix.length())
+          + suffix;
+      byte[] data = body.getBytes(StandardCharsets.UTF_8);
+      InputStreamEntity chunked = new InputStreamEntity(new ByteArrayInputStream(data), -1);
+      chunked.setContentType(ContentType.APPLICATION_JSON.getMimeType());
+
+      String knownLengthResponse = postForBody(uri,
+          new StringEntity(body, ContentType.APPLICATION_JSON));
+      String chunkedResponse = postForBody(uri, chunked);
+
+      Assert.assertEquals(knownLengthResponse, chunkedResponse);
+      Assert.assertFalse(chunkedResponse.contains("Error"));
+      verify(wallet, times(2)).getBlockByNum(0);
+    } finally {
+      try {
+        service.stop();
+      } finally {
+        Args.getInstance().setHttpMaxMessageSize(originalLimit);
+        Args.getInstance().setRateLimiterApiNonBlocking(originalNonBlocking);
+      }
+    }
+  }
+
+  @Test
+  public void testChunkedBodyAtLimitWithDifferentChunkSizes() throws Exception {
+    byte[] data = repeat('a', HTTP_MAX_BODY_SIZE).getBytes("UTF-8");
+    for (int chunkSize : new int[] {1, 7, 64, 1024, 4096}) {
+      String response = postChunked(httpServerUri, data, chunkSize);
+      Assert.assertEquals("chunk size " + chunkSize, data.length,
+          JSONObject.parseObject(response).getIntValue("bytes"));
+    }
+  }
+
+  @Test
+  public void testChunkedBodyOneByteOverLimitUsesActualSize() throws Exception {
+    byte[] data = repeat('a', HTTP_MAX_BODY_SIZE + 1).getBytes("UTF-8");
+    String response = postForBody(httpServerUri,
+        new InputStreamEntity(new ByteArrayInputStream(data), -1));
+
+    Assert.assertTrue(response, response.contains("BadMessageException"));
+    String detail = (HTTP_MAX_BODY_SIZE + 1) + ">" + HTTP_MAX_BODY_SIZE;
+    Assert.assertTrue(response, response.contains(detail));
+  }
+
+  @Test
+  public void testChunkedBodyCountResetBetweenRequests() throws Exception {
+    byte[] data = repeat('a', HTTP_MAX_BODY_SIZE).getBytes("UTF-8");
+    for (int i = 0; i < 2; i++) {
+      String response = postForBody(httpServerUri,
+          new InputStreamEntity(new ByteArrayInputStream(data), -1));
+      Assert.assertEquals(data.length, JSONObject.parseObject(response).getIntValue("bytes"));
+    }
+  }
+
+  @Test
+  public void testExistingInterceptorIsPreserved() throws Exception {
+    AtomicInteger interceptions = new AtomicInteger();
+    int port = PublicMethod.chooseRandomPort();
+    ObserverHttpService service = new ObserverHttpService(port, HTTP_MAX_BODY_SIZE,
+        interceptions);
+    try {
+      service.start().get(10, TimeUnit.SECONDS);
+      URI uri = new URI(String.format("http://localhost:%d/", port));
+      byte[] data = repeat('a', HTTP_MAX_BODY_SIZE).getBytes("UTF-8");
+      String response = postForBody(uri,
+          new InputStreamEntity(new ByteArrayInputStream(data), -1));
+
+      Assert.assertEquals(data.length, JSONObject.parseObject(response).getIntValue("bytes"));
+      Assert.assertTrue(interceptions.get() > 0);
+    } finally {
+      service.stop();
+    }
+  }
+
   /**
    * Chunked oversized body hitting a servlet with broad catch(Exception).
    *
-   * SizeLimitHandler's LimitInterceptor throws BadMessageException during
-   * streaming read, but the servlet's catch(Exception) absorbs it and returns
-   * 200 + error JSON instead of 413. This matches real TRON servlet behavior.
+   * RequestSizeLimitHandler throws BadMessageException during streaming read,
+   * but the servlet's catch(Exception) absorbs it and returns 200 + error JSON
+   * instead of 413. This matches real TRON servlet behavior.
    *
-   * OOM protection still works: the body read is truncated at the limit.
+   * The size check rejects further reading; this does not establish an OOM guarantee.
    */
   @Test
   public void testChunkedBodyExceedsLimit() throws Exception {
@@ -278,7 +460,7 @@ public class SizeLimitHandlerTest {
     logger.info("Chunked oversized: status={}, body={}", status, body);
 
     // catch(Exception) absorbs BadMessageException -> 200 + error JSON, not 413.
-    // Body read IS truncated - OOM protection still effective.
+    // Verify the reading failure separately from the public HTTP status.
     Assert.assertEquals(200, status);
     Assert.assertTrue("Error should be surfaced in response body",
         body.contains("Error"));
@@ -306,6 +488,61 @@ public class SizeLimitHandlerTest {
     } finally {
       zeroService.stop();
     }
+  }
+
+  @Test
+  public void testNegativeLimitDisablesRequestSizeCheck() throws Exception {
+    int port = PublicMethod.chooseRandomPort();
+    TestHttpService service = new TestHttpService(port, -1);
+    try {
+      service.start().get(10, TimeUnit.SECONDS);
+      URI uri = new URI(String.format("http://localhost:%d/", port));
+      String body = repeat('a', HTTP_MAX_BODY_SIZE * 2);
+      byte[] data = body.getBytes("UTF-8");
+
+      String knownLengthResponse = postForBody(uri, new StringEntity(body));
+      String chunkedResponse = postForBody(uri,
+          new InputStreamEntity(new ByteArrayInputStream(data), -1));
+
+      Assert.assertEquals(knownLengthResponse, chunkedResponse);
+      Assert.assertEquals(data.length,
+          JSONObject.parseObject(chunkedResponse).getIntValue("bytes"));
+    } finally {
+      service.stop();
+    }
+  }
+
+  @Test
+  public void testHttp10ContentLengthBoundaries() throws Exception {
+    String withinLimit = "POST / HTTP/1.0\r\nHost: localhost\r\nContent-Length: 3\r\n\r\nabc";
+    String response = sendRaw(httpServerUri, withinLimit);
+    Assert.assertTrue(response, response.startsWith("HTTP/1.1 200"));
+    Assert.assertTrue(response, response.contains("\"bytes\":3"));
+
+    String body = repeat('a', HTTP_MAX_BODY_SIZE + 1);
+    String overLimit = "POST / HTTP/1.0\r\nHost: localhost\r\nContent-Length: "
+        + body.length() + "\r\n\r\n" + body;
+    response = sendRaw(httpServerUri, overLimit);
+    Assert.assertTrue(response, response.startsWith("HTTP/1.1 413"));
+  }
+
+  @Test
+  public void testHttp10ChunkedRequestCompatibility() throws Exception {
+    String request = "POST / HTTP/1.0\r\nHost: localhost\r\nTransfer-Encoding: chunked\r\n\r\n"
+        + "1\r\na\r\n0\r\n\r\n";
+    String response = sendRaw(httpServerUri, request);
+    Assert.assertTrue(response, response.startsWith("HTTP/1.1 200"));
+    Assert.assertTrue(response, response.contains("\"bytes\":1"));
+  }
+
+  @Test
+  public void testMalformedChunkFailsDuringBodyRead() throws Exception {
+    String request = "POST / HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n"
+        + "Transfer-Encoding: chunked\r\n\r\nxyz\r\n";
+    String response = sendRaw(httpServerUri, request);
+    Assert.assertTrue(response, response.startsWith("HTTP/1.1 200"));
+    Assert.assertTrue(response, response.contains("UncheckedIOException"));
+    Assert.assertTrue(response, response.contains("Early EOF"));
   }
 
   /**
@@ -366,6 +603,33 @@ public class SizeLimitHandlerTest {
         wireBytes, servletBytes, wireBytes - servletBytes);
   }
 
+  /** POSTs with a specific client chunk size and returns the response body. */
+  private String postChunked(URI uri, byte[] data, int chunkSize) throws Exception {
+    HttpURLConnection connection = (HttpURLConnection) uri.toURL().openConnection();
+    try {
+      connection.setConnectTimeout(CLIENT_TIMEOUT_MILLIS);
+      connection.setReadTimeout(CLIENT_TIMEOUT_MILLIS);
+      connection.setRequestMethod("POST");
+      connection.setDoOutput(true);
+      connection.setChunkedStreamingMode(chunkSize);
+      try (OutputStream output = connection.getOutputStream()) {
+        output.write(data);
+      }
+      Assert.assertEquals(200, connection.getResponseCode());
+      ByteArrayOutputStream response = new ByteArrayOutputStream();
+      try (InputStream input = connection.getInputStream()) {
+        byte[] buffer = new byte[4096];
+        int read;
+        while ((read = input.read(buffer)) != -1) {
+          response.write(buffer, 0, read);
+        }
+      }
+      return new String(response.toByteArray(), StandardCharsets.UTF_8);
+    } finally {
+      connection.disconnect();
+    }
+  }
+
   /** POSTs with the given entity and returns the response body as a string. */
   private String postForBody(URI uri, HttpEntity entity) throws Exception {
     HttpPost req = new HttpPost(uri);
@@ -390,7 +654,9 @@ public class SizeLimitHandlerTest {
 
   /** Sends a raw HTTP request over a socket and returns the full response (until EOF). */
   private static String sendRaw(URI uri, String rawRequest) throws Exception {
-    try (Socket socket = new Socket(uri.getHost(), uri.getPort())) {
+    try (Socket socket = new Socket()) {
+      socket.connect(new InetSocketAddress(uri.getHost(), uri.getPort()), CLIENT_TIMEOUT_MILLIS);
+      socket.setSoTimeout(CLIENT_TIMEOUT_MILLIS);
       socket.getOutputStream().write(rawRequest.getBytes(StandardCharsets.US_ASCII));
       socket.getOutputStream().flush();
       ByteArrayOutputStream out = new ByteArrayOutputStream();

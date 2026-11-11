@@ -95,7 +95,7 @@ public class HandshakeService implements MessageProcess {
       channel.setFinishHandshake(true);
       channel.updateAvgLatency(System.currentTimeMillis() - channel.getStartTime());
       ChannelManager.addPeer(channel);
-      return DisconnectCode.NORMAL;
+      return channel.isDisconnect() ? DisconnectCode.UNKNOWN : DisconnectCode.NORMAL;
     }
   }
 
