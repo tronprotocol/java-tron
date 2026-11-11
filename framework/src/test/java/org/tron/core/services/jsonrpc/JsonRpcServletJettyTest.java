@@ -208,6 +208,16 @@ public class JsonRpcServletJettyTest {
     Assert.assertEquals(0, fatalService.okCalls.get());
   }
 
+  @Test
+  public void trailingContentReturnsJsonParseErrorOverHttp() throws Exception {
+    URI endpoint = startServer(true);
+    String request = "{\"jsonrpc\":\"2.0\",\"method\":\"test_ok\",\"params\":[],\"id\":7}";
+
+    assertParseErrorOverHttp(endpoint,
+        (request + " " + request).getBytes(StandardCharsets.UTF_8));
+    Assert.assertEquals(0, fatalService.okCalls.get());
+  }
+
   private void assertParseErrorOverHttp(URI endpoint, byte[] body) throws IOException {
     HttpPost request = new HttpPost(endpoint);
     request.setEntity(new ByteArrayEntity(body, ContentType.APPLICATION_JSON));

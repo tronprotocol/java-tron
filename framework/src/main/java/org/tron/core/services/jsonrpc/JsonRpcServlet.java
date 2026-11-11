@@ -2,8 +2,10 @@ package org.tron.core.services.jsonrpc;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.exc.StreamConstraintsException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.annotations.VisibleForTesting;
@@ -40,6 +42,8 @@ public class JsonRpcServlet extends RateLimiterServlet {
 
   private static final ObjectMapper MAPPER = JsonRpcMapper.create();
   private static final ObjectMapper OUTBOUND_MAPPER = new ObjectMapper();
+  private static final ObjectReader REQUEST_READER =
+      MAPPER.reader().with(DeserializationFeature.FAIL_ON_TRAILING_TOKENS);
 
   private enum JsonRpcError {
     PARSE_ERROR(-32700),
@@ -127,7 +131,7 @@ public class JsonRpcServlet extends RateLimiterServlet {
     }
     JsonNode rootNode;
     try {
-      rootNode = MAPPER.readTree(body);
+      rootNode = REQUEST_READER.readTree(body);
       if (rootNode == null || rootNode.isMissingNode()) {
         writeJsonRpcError(resp, JsonRpcError.PARSE_ERROR, "JSON parse error", null, false);
         return;

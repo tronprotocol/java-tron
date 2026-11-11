@@ -184,8 +184,6 @@ public class JsonRpcServletTest {
     verify(rpc, times(2)).web3Sha3("中");
   }
 
-  // --- batch size limit ---
-
   @Test
   public void utf16BodyThatIsNotWellFormedUtf8_isRejected() throws Exception {
     TronJsonRpc rpc = useRealRpcServer();
@@ -204,6 +202,62 @@ public class JsonRpcServletTest {
     verify(rpc, never()).getLatestBlockNum();
     verify(rpc, never()).web3Sha3(any());
   }
+
+  @Test
+  public void trailingContent_isRejectedBeforeDispatch() throws Exception {
+    TronJsonRpc rpc = useRealRpcServer();
+    String request = "{\"jsonrpc\":\"2.0\",\"method\":\"eth_blockNumber\",\"id\":1}";
+    String notification = "{\"jsonrpc\":\"2.0\",\"method\":\"eth_blockNumber\"}";
+    List<String> bodies = Arrays.asList(
+        request + " " + request,
+        request + "\n" + request,
+        request + request,
+        request + " xyz",
+        request + "}",
+        "[" + request + "] " + request,
+        "[" + request + "]]",
+        notification + " " + notification,
+        "1 2",
+        "\"x\" {");
+
+    for (String body : bodies) {
+      assertParseError(body, doPost(body));
+    }
+    verify(realRpcServer, never()).handleRequest(any(InputStream.class), any(OutputStream.class));
+    verify(rpc, never()).getLatestBlockNum();
+  }
+
+  @Test
+  public void trailingWhitespace_isAccepted() throws Exception {
+    TronJsonRpc rpc = useRealRpcServer();
+    String request = "{\"jsonrpc\":\"2.0\",\"method\":\"eth_blockNumber\",\"id\":1}";
+    JsonNode expected = MAPPER.readTree("{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":\"0x1\"}");
+
+    for (String whitespace : Arrays.asList(" ", "\n", "\r\n", "\t", " \r\n\t ")) {
+      MockHttpServletResponse resp = doPost(request + whitespace);
+      assertEquals(whitespace, expected, MAPPER.readTree(resp.getContentAsByteArray()));
+    }
+    MockHttpServletResponse batch = doPost("[" + request + "]\n");
+    assertEquals(MAPPER.createArrayNode().add(expected),
+        MAPPER.readTree(batch.getContentAsByteArray()));
+    MockHttpServletResponse withBom = doPost(concat(
+        new byte[] {(byte) 0xEF, (byte) 0xBB, (byte) 0xBF}, utf8(request + "\r\n")));
+    assertEquals(expected, MAPPER.readTree(withBom.getContentAsByteArray()));
+    verify(rpc, times(7)).getLatestBlockNum();
+  }
+
+  @Test
+  public void utf16WithoutByteOrderMark_rejectsTrailingContent() throws Exception {
+    TronJsonRpc rpc = useRealRpcServer();
+    String request = "{\"jsonrpc\":\"2.0\",\"method\":\"eth_blockNumber\",\"id\":1}";
+    for (Charset charset : Arrays.asList(StandardCharsets.UTF_16LE, StandardCharsets.UTF_16BE)) {
+      assertParseError(charset.name(), doPost((request + " " + request).getBytes(charset)));
+    }
+    verify(realRpcServer, never()).handleRequest(any(InputStream.class), any(OutputStream.class));
+    verify(rpc, never()).getLatestBlockNum();
+  }
+
+  // --- batch size limit ---
 
   @Test
   public void batchExceedsLimit_returnsExceedLimitAsArray() throws Exception {
@@ -422,14 +476,13 @@ public class JsonRpcServletTest {
   public void allowedNameOutsideTopLevelMethod_isNotDispatched() throws Exception {
     TronJsonRpc rpc = useRealRpcServer();
     String unknown = "{\"jsonrpc\":\"2.0\",\"method\":\"eth_unknownMethod\"";
-    List<String> bodies = Arrays.asList(
-        unknown + ",\"params\":[{\"method\":\"eth_blockNumber\"}],\"id\":1}",
-        unknown + ",\"id\":1}{\"jsonrpc\":\"2.0\",\"method\":\"eth_blockNumber\",\"id\":2}");
 
-    for (String body : bodies) {
-      MockHttpServletResponse resp = doPost(body);
-      assertEquals(methodNotFound("1"), MAPPER.readTree(resp.getContentAsByteArray()));
-    }
+    MockHttpServletResponse nested = doPost(
+        unknown + ",\"params\":[{\"method\":\"eth_blockNumber\"}],\"id\":1}");
+    assertEquals(methodNotFound("1"), MAPPER.readTree(nested.getContentAsByteArray()));
+    MockHttpServletResponse trailing = doPost(
+        unknown + ",\"id\":1}{\"jsonrpc\":\"2.0\",\"method\":\"eth_blockNumber\",\"id\":2}");
+    assertParseError("trailing request", trailing);
     verify(realRpcServer, never()).handleRequest(any(InputStream.class), any(OutputStream.class));
     verify(rpc, never()).getLatestBlockNum();
   }
