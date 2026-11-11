@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Utf8;
 import com.googlecode.jsonrpc4j.ErrorResolver.JsonError;
 import com.googlecode.jsonrpc4j.JsonRpcInterceptor;
 import com.googlecode.jsonrpc4j.JsonRpcMethod;
@@ -119,6 +120,11 @@ public class JsonRpcServlet extends RateLimiterServlet {
 
     // Transport IOException from readBody propagates as HTTP 500 (genuine IO failure).
     byte[] body = readBody(req.getInputStream());
+    // Jackson accepts overlong and surrogate UTF-8 sequences, so check the bytes first.
+    if (!Utf8.isWellFormed(body)) {
+      writeJsonRpcError(resp, JsonRpcError.PARSE_ERROR, "JSON parse error", null, false);
+      return;
+    }
     JsonNode rootNode;
     try {
       rootNode = MAPPER.readTree(body);
