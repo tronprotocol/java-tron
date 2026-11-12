@@ -3,6 +3,7 @@ package org.tron.core.net.services;
 import static org.mockito.Mockito.mock;
 
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -11,6 +12,7 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.AfterClass;
@@ -180,7 +182,7 @@ public class AdvServiceTest {
   }
 
   @Test
-  public void sameAddressPeersReceiveBroadcastAndDisconnectRetryIndependently() {
+  public void sameAddressPeersReceiveBroadcastAndDisconnectRetryIndependently() throws Exception {
     InetSocketAddress address = new InetSocketAddress("127.0.0.2", 10001);
     Channel firstChannel = new Channel();
     Channel secondChannel = new Channel();
@@ -233,6 +235,11 @@ public class AdvServiceTest {
       first.getAdvInvRequest().put(item, System.currentTimeMillis());
       second.getAdvInvReceive().put(item, System.currentTimeMillis());
       isolated.onDisconnect(first);
+      Assert.assertTrue(second.getAdvInvRequest().isEmpty());
+      Assert.assertEquals(1, secondMessages.size());
+      Method fetch = AdvService.class.getDeclaredMethod("consumerInvToFetch");
+      fetch.setAccessible(true);
+      fetch.invoke(isolated);
       Assert.assertTrue(second.getAdvInvRequest().containsKey(item));
       Assert.assertEquals(1, firstMessages.size());
       Assert.assertEquals(2, secondMessages.size());
@@ -272,6 +279,8 @@ public class AdvServiceTest {
     TronNetDelegate delegate = mock(TronNetDelegate.class);
     Mockito.when(delegate.getActivePeer()).thenReturn(Collections.singletonList(spreadingPeer));
     ReflectUtils.setFieldValue(isolated, "tronNetDelegate", delegate);
+    ScheduledExecutorService fetchExecutor =
+        ReflectUtils.getFieldValue(isolated, "fetchExecutor");
 
     CountDownLatch sending = new CountDownLatch(1);
     CountDownLatch cleanupFinished = new CountDownLatch(1);
@@ -300,6 +309,13 @@ public class AdvServiceTest {
           // fails without leaving threads blocked on each other's monitors.
           Assert.assertTrue("Disconnect cleanup must complete while inventory sending is paused",
               cleanupFinished.await(5, TimeUnit.SECONDS));
+          Assert.assertEquals("Disconnect cleanup must defer fetching to the executor",
+              1, sent.size());
+          // Run a fetch pass on its executor while inventory sending is still paused.
+          // This must complete without waiting for the advertisement monitor.
+          fetchExecutor.submit(() -> {
+            ReflectUtils.invokeMethod(isolated, "consumerInvToFetch");
+          }).get(5, TimeUnit.SECONDS);
           spreadingChannel.close();
         }
         return null;

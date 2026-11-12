@@ -699,6 +699,9 @@ public class TransactionsMsgHandlerTest extends BaseTest {
         Mockito.verify(other, Mockito.never()).sendMessage(Mockito.any());
         other.getAdvInvRequest().remove(busyItem);
         fetch.invoke(adv);
+      } else {
+        Assert.assertTrue(other.getAdvInvRequest().isEmpty());
+        fetch.invoke(adv);
       }
       Assert.assertEquals(requests.keySet(), other.getAdvInvRequest().keySet());
       ArgumentCaptor<FetchInvDataMessage> requested =

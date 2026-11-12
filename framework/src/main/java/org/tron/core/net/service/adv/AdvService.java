@@ -253,6 +253,7 @@ public class AdvService {
   */
 
   public void onDisconnect(PeerConnection peer) {
+    // Queue retries for the fetch executor; disconnect callbacks may hold lifecycle locks.
     if (!peer.getAdvInvRequest().isEmpty()) {
       peer.getAdvInvRequest().keySet().forEach(item -> {
         if (tronNetDelegate.getActivePeer().stream()
@@ -262,10 +263,6 @@ public class AdvService {
           invToFetchCache.invalidate(item);
         }
       });
-    }
-
-    if (invToFetch.size() > 0) {
-      consumerInvToFetch();
     }
   }
 

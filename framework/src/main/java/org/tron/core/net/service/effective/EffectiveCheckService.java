@@ -153,7 +153,7 @@ public class EffectiveCheckService {
     count.set(0);
   }
 
-  public void onDisconnect(InetSocketAddress inetSocketAddress) {
+  public synchronized void onDisconnect(InetSocketAddress inetSocketAddress) {
     if (inetSocketAddress.equals(cur)) {
       logger.warn("Close chosen peer: {}", cur);
       cur = null;
