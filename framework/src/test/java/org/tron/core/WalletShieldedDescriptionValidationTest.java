@@ -8,8 +8,11 @@ import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 
 import com.google.protobuf.ByteString;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.math.BigInteger;
 import java.util.Arrays;
+import javax.servlet.http.HttpServletResponse;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.MockedStatic;
@@ -21,6 +24,7 @@ import org.tron.common.utils.ByteUtil;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ZksnarkException;
+import org.tron.core.services.http.servlets.Util;
 import org.tron.core.zen.note.NoteEncryption.Encryption;
 import org.tron.protos.contract.ShieldContract;
 
@@ -148,6 +152,39 @@ public class WalletShieldedDescriptionValidationTest {
         assertEquals("the number of spendDescription and spendAuthoritySignature is not equal",
             exception.getMessage());
       }
+    }
+  }
+
+  @Test
+  public void malformedBurnHexIsReportedAsValidationFailure() throws Exception {
+    GrpcAPI.ShieldedTRC20Parameters valid = burn(0, "1");
+    for (String hex : new String[]{"gg", "0xgg", "g", "ĀĀ"}) {
+      GrpcAPI.ShieldedTRC20Parameters invalid = valid.toBuilder()
+          .setTriggerContractInput(hex).build();
+      ContractValidateException error = assertThrows(ContractValidateException.class,
+          () -> triggerInput(invalid, "1", 1));
+      assertEquals("invalid shielded TRC-20 trigger input: burn record must be valid hex",
+          error.getMessage());
+
+      HttpServletResponse response = mock(HttpServletResponse.class);
+      StringWriter output = new StringWriter();
+      when(response.getWriter()).thenReturn(new PrintWriter(output));
+      Util.processError(error, response);
+      assertEquals("{\"Error\":\"invalid shielded TRC-20 trigger input: "
+          + "burn record must be valid hex\"}", output.toString().trim());
+    }
+  }
+
+  @Test
+  public void burnHexPrefixesAndOddLengthsPreserveTriggerInput() throws Exception {
+    GrpcAPI.ShieldedTRC20Parameters valid = burn(0, "1");
+    String hex = valid.getTriggerContractInput();
+    assertEquals('0', hex.charAt(0));
+    BytesMessage expected = triggerInput(valid, "1", 1);
+    for (String compatible : new String[]{"0x" + hex, hex.substring(1),
+        "0x" + hex.substring(1)}) {
+      assertEquals(expected, triggerInput(valid.toBuilder()
+          .setTriggerContractInput(compatible).build(), "1", 1));
     }
   }
 

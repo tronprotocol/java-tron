@@ -73,6 +73,17 @@ public class ShieldedNativeValidationTest {
   }
 
   @Test
+  public void acceptsNonIdentityWithByte30SetForBothSignBits() throws ZksnarkException {
+    for (boolean sign : new boolean[]{false, true}) {
+      byte[] ak = identity(sign);
+      ak[30] = 1;
+      // Only the Java identity filter is under test, not native point or subgroup validity.
+      LibrustzcashParam.validSpendAk(ak);
+    }
+    verifyNoInteractions(nativeApi);
+  }
+
+  @Test
   public void rejectsInvalidAkLengths() {
     for (byte[] ak : new byte[][]{null, new byte[0], new byte[31], new byte[33]}) {
       assertThrows(ZksnarkException.class, () -> spend(ak));

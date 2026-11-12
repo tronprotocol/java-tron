@@ -4543,14 +4543,19 @@ public class Wallet {
     ShieldedTRC20ParametersBuilder parametersBuilder = new ShieldedTRC20ParametersBuilder(
         parameterType);
     if (parametersBuilder.getShieldedTRC20ParametersType() == ShieldedTRC20ParametersType.BURN) {
-      byte[] burnCiper = ByteArray.fromHexString(shieldedTRC20Parameters.getTriggerContractInput());
-      if (ArrayUtils.isEmpty(burnCiper)
-          || burnCiper.length != NoteEncryption.Encryption.BURN_CIPHER_RECORD_SIZE) {
-        if (!ArrayUtils.isEmpty(burnCiper) && burnCiper.length == 80) {
-          throw new ZksnarkException(
-              "legacy 80-byte burn cipher is deprecated and rejected; expected "
-                  + NoteEncryption.Encryption.BURN_CIPHER_RECORD_SIZE + "-byte burn record");
-        }
+      byte[] burnCiper;
+      try {
+        burnCiper = ByteArray.fromHexString(shieldedTRC20Parameters.getTriggerContractInput());
+      } catch (DecoderException e) {
+        throw new ContractValidateException(
+            "invalid shielded TRC-20 trigger input: burn record must be valid hex", e);
+      }
+      if (burnCiper.length == 80) {
+        throw new ZksnarkException(
+            "legacy 80-byte burn cipher is deprecated and rejected; expected "
+                + NoteEncryption.Encryption.BURN_CIPHER_RECORD_SIZE + "-byte burn record");
+      }
+      if (burnCiper.length != NoteEncryption.Encryption.BURN_CIPHER_RECORD_SIZE) {
         throw new ZksnarkException(
             "invalid shielded TRC-20 contract parameters for burn trigger input");
       }
