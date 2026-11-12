@@ -247,6 +247,28 @@ public class JsonRpcServletTest {
   }
 
   @Test
+  public void undecodableUtf32Body_returnsParseError() throws Exception {
+    TronJsonRpc rpc = useRealRpcServer();
+    byte[] request = "{\"jsonrpc\":\"2.0\",\"method\":\"eth_blockNumber\",\"id\":1}"
+        .getBytes(Charset.forName("UTF-32BE"));
+    byte[] padding = new byte[4096];
+    for (int i = 3; i < padding.length; i += 4) {
+      padding[i] = ' ';
+    }
+    // Jackson's UTF-32 decoder reports these as a CharConversionException, an IOException that
+    // is not a JsonProcessingException.
+    List<byte[]> bodies = Arrays.asList(
+        concat(request, new byte[] {'\n'}),
+        concat(request, new byte[] {0, 0, ' '}),
+        concat(request, padding, new byte[] {0, 0x11, 0, 0}));
+    for (byte[] body : bodies) {
+      assertParseError(Arrays.toString(body), doPost(body));
+    }
+    verify(realRpcServer, never()).handleRequest(any(InputStream.class), any(OutputStream.class));
+    verify(rpc, never()).getLatestBlockNum();
+  }
+
+  @Test
   public void utf16WithoutByteOrderMark_rejectsTrailingContent() throws Exception {
     TronJsonRpc rpc = useRealRpcServer();
     String request = "{\"jsonrpc\":\"2.0\",\"method\":\"eth_blockNumber\",\"id\":1}";

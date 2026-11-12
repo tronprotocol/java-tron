@@ -132,16 +132,15 @@ public class JsonRpcServlet extends RateLimiterServlet {
     JsonNode rootNode;
     try {
       rootNode = REQUEST_READER.readTree(body);
-      if (rootNode == null || rootNode.isMissingNode()) {
-        writeJsonRpcError(resp, JsonRpcError.PARSE_ERROR, "JSON parse error", null, false);
-        return;
-      }
-    } catch (JsonProcessingException e) {
-      if (e instanceof StreamConstraintsException) {
-        writeJsonRpcError(resp, JsonRpcError.PARSE_ERROR, e.getMessage(), null, false);
-      } else {
-        writeJsonRpcError(resp, JsonRpcError.PARSE_ERROR, "JSON parse error", null, false);
-      }
+    } catch (IOException e) {
+      // The body is already in memory, so an IOException here is a decoding failure.
+      String message = e instanceof StreamConstraintsException
+          ? e.getMessage() : "JSON parse error";
+      writeJsonRpcError(resp, JsonRpcError.PARSE_ERROR, message, null, false);
+      return;
+    }
+    if (rootNode == null || rootNode.isMissingNode()) {
+      writeJsonRpcError(resp, JsonRpcError.PARSE_ERROR, "JSON parse error", null, false);
       return;
     }
 
