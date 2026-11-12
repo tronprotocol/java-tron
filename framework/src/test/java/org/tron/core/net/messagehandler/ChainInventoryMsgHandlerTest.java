@@ -210,8 +210,51 @@ public class ChainInventoryMsgHandlerTest {
   }
 
   @Test
+  public void testKnownTerminalBlockOneBelowInventoryCompletesDownload() throws Exception {
+    peer.getAdvInvReceive().put(new Item(blockId(101), InventoryType.BLOCK),
+        peer.getSyncChainRequested().getValue() - 1);
+
+    respond(0, blockId(100));
+
+    assertDownloadCompleted();
+    verify(sync, never()).syncNext(any());
+    verify(sync, never()).setFetchFlag(true);
+    verify(peer, never()).disconnect(any());
+  }
+
+  @Test
+  public void testKnownMultiBlockOneBelowInventoryRequestsFinalSummary() throws Exception {
+    request(blockId(0), blockId(50), blockId(99));
+    peer.getAdvInvReceive().put(new Item(blockId(101), InventoryType.BLOCK),
+        peer.getSyncChainRequested().getValue() - 1);
+
+    respond(0, blockId(99), blockId(100));
+
+    Assert.assertTrue(peer.isNeedSyncFromPeer());
+    Assert.assertTrue(peer.getSyncBlockToFetch().isEmpty());
+    Assert.assertEquals(blockId(100), peer.getBlockBothHave());
+    verify(sync).syncNext(peer);
+    verify(sync, never()).setFetchFlag(true);
+    verify(peer, never()).disconnect(any());
+  }
+
+  @Test
+  public void testTerminalResponseIgnoresNegativeBlockInventory() throws Exception {
+    for (long height : new long[]{-1L, Long.MIN_VALUE}) {
+      resetFixture();
+      peer.getAdvInvReceive().put(new Item(blockId(height), InventoryType.BLOCK),
+          peer.getSyncChainRequested().getValue() - 1);
+
+      respond(0, blockId(100));
+
+      assertDownloadCompleted();
+      verify(peer, never()).disconnect(any());
+    }
+  }
+
+  @Test
   public void testTerminalResponseBelowPriorInventoryFetchesMissingBlocks() throws Exception {
-    peer.getAdvInvReceive().put(new Item(blockId(102), InventoryType.BLOCK),
+    peer.getAdvInvReceive().put(new Item(blockId(103), InventoryType.BLOCK),
         peer.getSyncChainRequested().getValue() - 1);
 
     respond(0, blockId(100), blockId(101));

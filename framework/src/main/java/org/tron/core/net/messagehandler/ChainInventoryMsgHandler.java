@@ -176,10 +176,11 @@ public class ChainInventoryMsgHandler implements TronMsgHandler {
           .filter(entry -> entry.getValue() <= requestedAt
               && entry.getValue() >= requestedAt - NetConstants.ADV_TIME_OUT)
           .mapToLong(entry -> new BlockId(entry.getKey().getHash()).getNum())
+          .filter(height -> height >= 0)
           .max()
           .orElse(lastNum);
-      // Allow fetching when the terminal block is still unknown locally, including on a fork.
-      if (lastNum < maxAdvInvNum && tronNetDelegate.containBlock(lastBlockId)) {
+      // Tolerate one block awaiting application, and allow fetching unknown terminal blocks.
+      if (lastNum < maxAdvInvNum - 1 && tronNetDelegate.containBlock(lastBlockId)) {
         throw new P2pException(TypeEnum.SYNC_FAILED,
             "lastNum " + lastNum + " (remainNum=0) is below advertised block " + maxAdvInvNum);
       }
