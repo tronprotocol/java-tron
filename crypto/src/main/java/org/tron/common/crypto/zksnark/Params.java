@@ -39,6 +39,9 @@ class Params {
   static final BigInteger R = new BigInteger(
       "21888242871839275222246405745257275088548364400416034343698204186575808495617");
 
+  // Field classes must not reference Params in static initializers.
+  static final Fp _2_INV = new Fp(BigInteger.valueOf(2).modInverse(P));
+
   /**
    * "b" curve parameter for {@link BN128Fp}
    */

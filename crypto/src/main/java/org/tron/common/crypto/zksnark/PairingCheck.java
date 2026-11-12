@@ -20,6 +20,7 @@ package org.tron.common.crypto.zksnark;
 import static org.tron.common.crypto.zksnark.Params.B_Fp2;
 import static org.tron.common.crypto.zksnark.Params.PAIRING_FINAL_EXPONENT_Z;
 import static org.tron.common.crypto.zksnark.Params.TWIST;
+import static org.tron.common.crypto.zksnark.Params._2_INV;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -162,13 +163,13 @@ public class PairingCheck {
 
     Fp2 x = g2.x, y = g2.y, z = g2.z;
 
-    Fp2 a = Fp._2_INV.mul(x.mul(y));            // a = x * y / 2
+    Fp2 a = _2_INV.mul(x.mul(y));               // a = x * y / 2
     Fp2 b = y.squared();                        // b = y^2
     Fp2 c = z.squared();                        // c = z^2
     Fp2 d = c.add(c).add(c);                    // d = 3 * c
     Fp2 e = B_Fp2.mul(d);                       // e = twist_b * d
     Fp2 f = e.add(e).add(e);                    // f = 3 * e
-    Fp2 g = Fp._2_INV.mul(b.add(f));            // g = (b + f) / 2
+    Fp2 g = _2_INV.mul(b.add(f));               // g = (b + f) / 2
     Fp2 h = y.add(z).squared().sub(b.add(c));   // h = (y + z)^2 - (b + c)
     Fp2 i = e.sub(b);                           // i = e - b
     Fp2 j = x.squared();                        // j = x^2
