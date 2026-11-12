@@ -67,6 +67,8 @@ public class FetchBlockServiceTest extends BaseMethodTest {
     oldPeer.updateFetchLatency(200L);
     PeerConnection newPeer = context.getBean(PeerConnection.class);
     newPeer.setChannel(newChannel);
+    newPeer.setNeedSyncFromPeer(false);
+    newPeer.setNeedSyncFromUs(false);
     newPeer.updateFetchLatency(50L);
 
     Sha256Hash hash = Sha256Hash.wrap(ByteString.copyFrom(new byte[32]));
@@ -132,6 +134,8 @@ public class FetchBlockServiceTest extends BaseMethodTest {
 
     PeerConnection newPeer = context.getBean(PeerConnection.class);
     newPeer.setChannel(newChannel);
+    newPeer.setNeedSyncFromPeer(false);
+    newPeer.setNeedSyncFromUs(false);
     newPeer.updateFetchLatency(50L);
 
     Sha256Hash hash = Sha256Hash.wrap(ByteString.copyFrom(new byte[32]));
@@ -172,6 +176,8 @@ public class FetchBlockServiceTest extends BaseMethodTest {
     when(candidateChannel.getAvgLatency()).thenReturn(50L);
     ReflectUtils.setFieldValue(oldPeer, "channel", oldChannel);
     ReflectUtils.setFieldValue(candidate, "channel", candidateChannel);
+    candidate.setNeedSyncFromPeer(false);
+    candidate.setNeedSyncFromUs(false);
     candidate.updateFetchLatency(50L);
     doNothing().when(candidateChannel).send(any(byte[].class));
 
@@ -225,6 +231,8 @@ public class FetchBlockServiceTest extends BaseMethodTest {
 
     PeerConnection newPeer = context.getBean(PeerConnection.class);
     newPeer.setChannel(newChannel);
+    newPeer.setNeedSyncFromPeer(false);
+    newPeer.setNeedSyncFromUs(false);
     // first real sample replaces the unsampled state, then clamps 999 to 500
     newPeer.updateFetchLatency(999L);
 
@@ -286,6 +294,8 @@ public class FetchBlockServiceTest extends BaseMethodTest {
     oldPeer.setChannel(oldChannel);
     PeerConnection newPeer = context.getBean(PeerConnection.class);
     newPeer.setChannel(newChannel);
+    newPeer.setNeedSyncFromPeer(false);
+    newPeer.setNeedSyncFromUs(false);
 
     Sha256Hash hash = Sha256Hash.wrap(ByteString.copyFrom(new byte[32]));
     Item item = new Item(hash, InventoryType.BLOCK);
@@ -332,6 +342,8 @@ public class FetchBlockServiceTest extends BaseMethodTest {
     ReflectUtils.setFieldValue(oldPeer, "channel", oldChannel);
     oldPeer.updateFetchLatency(200L);
     ReflectUtils.setFieldValue(candidate, "channel", candidateChannel);
+    candidate.setNeedSyncFromPeer(false);
+    candidate.setNeedSyncFromUs(false);
     doNothing().when(candidateChannel).send(any(byte[].class));
 
     Sha256Hash hash = Sha256Hash.wrap(ByteString.copyFrom(new byte[32]));

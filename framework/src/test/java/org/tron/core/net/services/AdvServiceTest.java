@@ -44,6 +44,7 @@ import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.PeerManager;
 import org.tron.core.net.service.adv.AdvService;
 import org.tron.core.net.service.effective.EffectiveCheckService;
+import org.tron.core.net.service.fetchblock.FetchBlockService;
 import org.tron.core.net.service.sync.SyncService;
 import org.tron.p2p.connection.Channel;
 import org.tron.protos.Protocol;
@@ -218,6 +219,7 @@ public class AdvServiceTest {
     Mockito.when(delegate.getActivePeer()).thenReturn(Arrays.asList(first, second));
     AdvService isolated = new AdvService();
     ReflectUtils.setFieldValue(isolated, "tronNetDelegate", delegate);
+    ReflectUtils.setFieldValue(isolated, "fetchBlockService", mock(FetchBlockService.class));
     try {
       BlockCapsule block = new BlockCapsule(1, Sha256Hash.ZERO_HASH,
           System.currentTimeMillis(), Sha256Hash.ZERO_HASH.getByteString());
@@ -254,6 +256,7 @@ public class AdvServiceTest {
   @Test(timeout = 20_000)
   public void inventorySendAllowsConcurrentDisconnectCleanup() throws Exception {
     AdvService isolated = new AdvService();
+    ReflectUtils.setFieldValue(isolated, "fetchBlockService", mock(FetchBlockService.class));
     P2pEventHandlerImpl handler = new P2pEventHandlerImpl();
     ReflectUtils.setFieldValue(handler, "effectiveCheckService", mock(EffectiveCheckService.class));
     SyncService syncService = mock(SyncService.class);

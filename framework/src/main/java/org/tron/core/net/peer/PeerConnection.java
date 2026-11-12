@@ -256,6 +256,12 @@ public class PeerConnection {
     return advInvRequest.isEmpty() && isSyncIdle();
   }
 
+  public boolean isBlockFetchIdle() {
+    return advInvRequest.keySet().stream()
+        .noneMatch(item -> item.getType() == Protocol.Inventory.InventoryType.BLOCK)
+        && isSyncIdle() && syncBlockInProcess.isEmpty();
+  }
+
   public boolean isSyncIdle() {
     return syncBlockRequested.isEmpty() && syncChainRequested == null;
   }

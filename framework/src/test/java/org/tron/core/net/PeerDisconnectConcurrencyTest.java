@@ -40,6 +40,7 @@ import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.PeerManager;
 import org.tron.core.net.service.adv.AdvService;
 import org.tron.core.net.service.effective.EffectiveCheckService;
+import org.tron.core.net.service.fetchblock.FetchBlockService;
 import org.tron.core.net.service.handshake.HandshakeService;
 import org.tron.p2p.connection.Channel;
 import org.tron.protos.Protocol.Inventory.InventoryType;
@@ -219,6 +220,7 @@ public class PeerDisconnectConcurrencyTest {
     Mockito.when(delegate.getActivePeer()).thenReturn(Collections.singletonList(replacement));
     AdvService adv = new AdvService();
     ReflectUtils.setFieldValue(adv, "tronNetDelegate", delegate);
+    ReflectUtils.setFieldValue(adv, "fetchBlockService", mock(FetchBlockService.class));
     ExecutorService worker = Executors.newSingleThreadExecutor();
     try {
       synchronized (adv) {
