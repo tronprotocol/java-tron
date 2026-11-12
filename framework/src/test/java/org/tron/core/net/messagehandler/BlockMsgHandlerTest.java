@@ -150,6 +150,85 @@ public class BlockMsgHandlerTest extends BaseTest {
   }
 
   @Test
+  public void testValidFastForwardAndRelayBlocksDoNotRequireRequest() throws Exception {
+    for (boolean fastForward : new boolean[]{false, true}) {
+      BlockCapsule block = signedWitnessBlock();
+      TronNetDelegate delegate = witnessDelegate(false, block.getWitnessAddress());
+      BlockMsgHandler ingress = witnessHandler(delegate, Mockito.mock(AdvService.class),
+          Mockito.mock(SyncService.class));
+      ReflectUtils.setFieldValue(ingress, "fastForward", fastForward);
+      ReflectUtils.setFieldValue(ingress, "relayService", Mockito.mock(RelayService.class));
+      PeerConnection sender = witnessPeer();
+      sender.setRelayPeer(!fastForward);
+
+      ingress.processMessage(sender, new BlockMessage(block));
+
+      Mockito.verify(delegate).processBlock(any(BlockCapsule.class), Mockito.eq(false));
+      Assert.assertTrue(sender.getAdvInvRequest().isEmpty());
+      Assert.assertTrue(sender.getSyncBlockRequested().isEmpty());
+    }
+  }
+
+  @Test
+  public void testInvalidBlockNumberRejectedBeforeRequestCompletion() throws Exception {
+    for (long number : new long[]{-1, 0, 2}) {
+      assertInvalidBlockHeader(number, Sha256Hash.ZERO_HASH.getByteString());
+    }
+    assertInvalidBlockHeader(1, new BlockId(Sha256Hash.ZERO_HASH, 1).getByteString());
+  }
+
+  @Test
+  public void testInvalidParentHashLengthRejectedBeforeRequestCompletion() throws Exception {
+    for (int size : new int[]{0, 7, Sha256Hash.LENGTH - 1, Sha256Hash.LENGTH + 1}) {
+      assertInvalidBlockHeader(1, ByteString.copyFrom(new byte[size]));
+    }
+  }
+
+  private void assertInvalidBlockHeader(long number, ByteString parentHash) throws Exception {
+    BlockCapsule canonical = signedWitnessBlock();
+    BlockCapsule invalid = new BlockCapsule(canonical.getInstance().toBuilder()
+        .setBlockHeader(canonical.getInstance().getBlockHeader().toBuilder()
+            .setRawData(canonical.getInstance().getBlockHeader().getRawData().toBuilder()
+                .setNumber(number).setParentHash(parentHash))).build());
+    // Cover requested advertisement/sync responses and unrequested fast-forward/relay ingress.
+    for (int mode = 0; mode < 4; mode++) {
+      TronNetDelegate delegate = Mockito.mock(TronNetDelegate.class);
+      AdvService adv = Mockito.mock(AdvService.class);
+      SyncService sync = Mockito.mock(SyncService.class);
+      RelayService relay = Mockito.mock(RelayService.class);
+      BlockMsgHandler ingress = witnessHandler(delegate, adv, sync);
+      ReflectUtils.setFieldValue(ingress, "fastForward", mode == 2);
+      ReflectUtils.setFieldValue(ingress, "relayService", relay);
+      PeerConnection sender = witnessPeer();
+      sender.setRelayPeer(mode == 3);
+      BlockMessage message = Mockito.spy(new BlockMessage(invalid));
+      Item requested = new Item(message.getBlockId(), InventoryType.BLOCK);
+      long requestTime = System.currentTimeMillis() - 1_000;
+      if (mode == 0) {
+        sender.getAdvInvRequest().put(requested, requestTime);
+      } else if (mode == 1) {
+        sender.getSyncBlockRequested().put(message.getBlockId(), requestTime);
+      }
+
+      P2pException error = Assert.assertThrows(P2pException.class,
+          () -> ingress.processMessage(sender, message));
+
+      Assert.assertEquals(P2pException.TypeEnum.BAD_BLOCK, error.getType());
+      Assert.assertEquals("block number does not follow parent", error.getMessage());
+      if (mode == 0) {
+        Assert.assertEquals(Long.valueOf(requestTime), sender.getAdvInvRequest().get(requested));
+      } else if (mode == 1) {
+        Assert.assertEquals(Long.valueOf(requestTime),
+            sender.getSyncBlockRequested().get(message.getBlockId()));
+      }
+      Assert.assertTrue(sender.getSyncBlockInProcess().isEmpty());
+      Mockito.verify(message, Mockito.never()).sanitize();
+      Mockito.verifyNoInteractions(delegate, adv, sync, relay,
+          ReflectUtils.getFieldObject(ingress, "fetchBlockService"));
+    }
+  }
+
+  @Test
   public void testProcessBlock() {
     TronNetDelegate tronNetDelegate = Mockito.mock(TronNetDelegate.class);
 
