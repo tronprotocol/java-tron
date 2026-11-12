@@ -136,11 +136,12 @@ public class JsonRpcServletTest {
   public void wellFormedNonAsciiInput_isDispatched() throws Exception {
     TronJsonRpc rpc = useRealRpcServer();
     when(rpc.web3Sha3(any())).thenReturn("0x1");
+    String twoBytes = new String(Character.toChars(0x7FF));
     String chinese = "中文";
-    String emoji = "😀";
-    String maxCodePoint = "􏿿";
-    String[] params = {chinese, emoji, maxCodePoint, "\\u00e9"};
-    String[] expected = {chinese, emoji, maxCodePoint, "é"};
+    String emoji = new String(Character.toChars(0x1F600));
+    String maxCodePoint = new String(Character.toChars(0x10FFFF));
+    String[] params = {twoBytes, chinese, emoji, maxCodePoint, "\\u00e9"};
+    String[] expected = {twoBytes, chinese, emoji, maxCodePoint, "é"};
     for (int i = 0; i < params.length; i++) {
       MockHttpServletResponse resp = doPost("{\"jsonrpc\":\"2.0\",\"method\":\"web3_sha3\","
           + "\"params\":[\"" + params[i] + "\"],\"id\":1}");
