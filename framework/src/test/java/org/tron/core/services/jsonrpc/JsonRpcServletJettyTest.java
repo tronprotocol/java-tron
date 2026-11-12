@@ -1,10 +1,11 @@
 package org.tron.core.services.jsonrpc;
 
+import static com.google.common.primitives.Bytes.concat;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.googlecode.jsonrpc4j.JsonRpcMethod;
 import com.googlecode.jsonrpc4j.JsonRpcServer;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.net.SocketException;
@@ -231,14 +232,6 @@ public class JsonRpcServletJettyTest {
               + "\"message\":\"JSON parse error\"},\"id\":null}"),
           mapper.readTree(EntityUtils.toByteArray(response.getEntity())));
     }
-  }
-
-  private static byte[] concat(byte[]... parts) {
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
-    for (byte[] part : parts) {
-      out.write(part, 0, part.length);
-    }
-    return out.toByteArray();
   }
 
   public interface FatalService {

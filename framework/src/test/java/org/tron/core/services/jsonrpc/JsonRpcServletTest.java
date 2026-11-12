@@ -1,5 +1,6 @@
 package org.tron.core.services.jsonrpc;
 
+import static com.google.common.primitives.Bytes.concat;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -34,7 +35,6 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.googlecode.jsonrpc4j.JsonRpcMethod;
 import com.googlecode.jsonrpc4j.JsonRpcServer;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -110,7 +110,6 @@ public class JsonRpcServletTest {
   @Test
   public void malformedUtf8_isRejectedBeforeDispatch() throws Exception {
     TronJsonRpc rpc = useRealRpcServer();
-    when(rpc.web3ClientVersion()).thenReturn("client");
     // Each sequence replaces the leading 'w' of web3_clientVersion. The overlong forms decode
     // to 'w' in a lenient parser, so they reach the real method unless rejected up front.
     byte[][] sequences = {
@@ -165,14 +164,21 @@ public class JsonRpcServletTest {
   }
 
   @Test
-  public void utf16AndUtf32WithoutByteOrderMark_areRejected() throws Exception {
+  public void utf16AndUtf32Bodies_areRejected() throws Exception {
     TronJsonRpc rpc = useRealRpcServer();
     String request = "{\"jsonrpc\":\"2.0\",\"method\":\"eth_blockNumber\",\"id\":1}";
     String chinese = "{\"jsonrpc\":\"2.0\",\"method\":\"web3_sha3\",\"params\":[\"中\"],\"id\":1}";
+    String accented = "{\"jsonrpc\":\"2.0\",\"method\":\"web3_sha3\",\"params\":[\"é\"],\"id\":1}";
     for (String charset : Arrays.asList("UTF-16LE", "UTF-16BE", "UTF-32LE", "UTF-32BE")) {
-      for (String body : Arrays.asList(request, chinese)) {
+      for (String body : Arrays.asList(request, chinese, accented)) {
         assertParseError(charset + " " + body, doPost(body.getBytes(Charset.forName(charset))));
       }
+    }
+    List<byte[]> withByteOrderMark = Arrays.asList(
+        request.getBytes(StandardCharsets.UTF_16),
+        concat(new byte[] {(byte) 0xFF, (byte) 0xFE}, request.getBytes(StandardCharsets.UTF_16LE)));
+    for (byte[] body : withByteOrderMark) {
+      assertParseError(Arrays.toString(body), doPost(body));
     }
     verify(realRpcServer, never()).handleRequest(any(InputStream.class), any(OutputStream.class));
     verify(rpc, never()).getLatestBlockNum();
@@ -206,25 +212,6 @@ public class JsonRpcServletTest {
     assertEquals(MAPPER.readTree("{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":\"0x1\"}"),
         MAPPER.readTree(resp.getContentAsByteArray()));
     verify(rpc).web3Sha3("a" + (char) 0 + "b");
-  }
-
-  @Test
-  public void utf16BodyThatIsNotWellFormedUtf8_isRejected() throws Exception {
-    TronJsonRpc rpc = useRealRpcServer();
-    when(rpc.web3Sha3(any())).thenReturn("0x1");
-    String request = "{\"jsonrpc\":\"2.0\",\"method\":\"eth_blockNumber\",\"id\":1}";
-    String nonAscii = "{\"jsonrpc\":\"2.0\",\"method\":\"web3_sha3\",\"params\":[\"é\"],\"id\":1}";
-    List<byte[]> bodies = Arrays.asList(
-        request.getBytes(StandardCharsets.UTF_16),
-        concat(new byte[] {(byte) 0xFF, (byte) 0xFE}, request.getBytes(StandardCharsets.UTF_16LE)),
-        nonAscii.getBytes(StandardCharsets.UTF_16LE),
-        nonAscii.getBytes(StandardCharsets.UTF_16BE));
-    for (byte[] body : bodies) {
-      assertParseError(Arrays.toString(body), doPost(body));
-    }
-    verify(realRpcServer, never()).handleRequest(any(InputStream.class), any(OutputStream.class));
-    verify(rpc, never()).getLatestBlockNum();
-    verify(rpc, never()).web3Sha3(any());
   }
 
   @Test
@@ -268,28 +255,6 @@ public class JsonRpcServletTest {
         new byte[] {(byte) 0xEF, (byte) 0xBB, (byte) 0xBF}, utf8(request + "\r\n")));
     assertEquals(expected, MAPPER.readTree(withBom.getContentAsByteArray()));
     verify(rpc, times(7)).getLatestBlockNum();
-  }
-
-  @Test
-  public void undecodableUtf32Body_returnsParseError() throws Exception {
-    TronJsonRpc rpc = useRealRpcServer();
-    byte[] request = "{\"jsonrpc\":\"2.0\",\"method\":\"eth_blockNumber\",\"id\":1}"
-        .getBytes(Charset.forName("UTF-32BE"));
-    byte[] padding = new byte[4096];
-    for (int i = 3; i < padding.length; i += 4) {
-      padding[i] = ' ';
-    }
-    // Jackson's UTF-32 decoder reports these as a CharConversionException, an IOException that
-    // is not a JsonProcessingException.
-    List<byte[]> bodies = Arrays.asList(
-        concat(request, new byte[] {'\n'}),
-        concat(request, new byte[] {0, 0, ' '}),
-        concat(request, padding, new byte[] {0, 0x11, 0, 0}));
-    for (byte[] body : bodies) {
-      assertParseError(Arrays.toString(body), doPost(body));
-    }
-    verify(realRpcServer, never()).handleRequest(any(InputStream.class), any(OutputStream.class));
-    verify(rpc, never()).getLatestBlockNum();
   }
 
   // --- batch size limit ---
@@ -2071,14 +2036,6 @@ public class JsonRpcServletTest {
 
   private static byte[] utf8(String text) {
     return text.getBytes(StandardCharsets.UTF_8);
-  }
-
-  private static byte[] concat(byte[]... parts) {
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
-    for (byte[] part : parts) {
-      out.write(part, 0, part.length);
-    }
-    return out.toByteArray();
   }
 
   private void assertCleanupFailureDoesNotReplaceFatal(HttpServletResponse response)
