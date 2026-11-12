@@ -55,11 +55,17 @@ public class ContractTriggerCapsule extends TriggerCapsule {
 
     if (abi != null && abi.getEntrysCount() > 0 && topics != null && !topics.isEmpty()
         && !ArrayUtils.isEmpty(topics.get(0).getData())
-        && Args.getInstance().getStorage().isContractParseSwitch()) {
+        && Args.getInstance().getStorage().isContractParseSwitch()
+        && !ContractEventParserAbi.hasTooManyEntries(abi)
+        && !ContractEventParserAbi.hasTooManyEvents(abi)) {
       String logHash = topics.get(0).toString();
 
       for (ABI.Entry entry : abi.getEntrysList()) {
         if (entry.getType() != ABI.Entry.EntryType.Event || entry.getAnonymous()) {
+          continue;
+        }
+        if (ContractEventParserAbi.isEntryTooLarge(entry)) {
+          // Entry outside the ABI size limits: skip it instead of building its signature.
           continue;
         }
 
