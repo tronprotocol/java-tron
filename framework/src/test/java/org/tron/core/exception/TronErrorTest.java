@@ -1,9 +1,11 @@
 package org.tron.core.exception;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mockStatic;
@@ -20,11 +22,15 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Field;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
+import org.apache.commons.io.FileUtils;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Rule;
@@ -42,6 +48,7 @@ import org.tron.common.log.LogService;
 import org.tron.common.parameter.RateLimiterInitialization;
 import org.tron.common.utils.ReflectUtils;
 import org.tron.common.zksnark.JLibrustzcash;
+import org.tron.common.zksnark.LibrustzcashParam.InitZksnarkParams;
 import org.tron.core.config.args.Args;
 import org.tron.core.services.http.servlets.GetBlockServlet;
 import org.tron.core.services.http.servlets.RateLimiterServlet;
@@ -120,6 +127,73 @@ public class TronErrorTest {
     } finally {
       thread.setContextClassLoader(originalClassLoader);
       initialized.set(originalValue);
+    }
+  }
+
+  @Test
+  public void spendCopyFailureStopsNativeInitializationAndAllowsRetry() throws Exception {
+    assertZksnarkCopyFailure(1);
+  }
+
+  @Test
+  public void outputCopyFailureStopsNativeInitializationAndAllowsRetry() throws Exception {
+    assertZksnarkCopyFailure(2);
+  }
+
+  private void assertZksnarkCopyFailure(int failedCopy) throws Exception {
+    Field field = ZksnarkInitService.class.getDeclaredField("initialized");
+    field.setAccessible(true);
+    AtomicBoolean initialized = (AtomicBoolean) field.get(null);
+    boolean originalValue = initialized.get();
+    List<File> destinations = new ArrayList<>();
+    byte[] contents = {1, 2, 3};
+    IOException failure = new IOException("Parameter copy failed");
+
+    try (MockedStatic<FileUtils> fileUtils = mockStatic(FileUtils.class);
+         MockedStatic<JLibrustzcash> nativeApi = mockStatic(JLibrustzcash.class)) {
+      initialized.set(false);
+      fileUtils.when(() -> FileUtils.copyToFile(any(InputStream.class), any(File.class)))
+          .thenAnswer(invocation -> {
+            File destination = invocation.getArgument(1);
+            destinations.add(destination);
+            Files.write(destination.toPath(), contents);
+            if (destinations.size() == failedCopy) {
+              throw failure;
+            }
+            return null;
+          });
+
+      TronError error = assertThrows(TronError.class,
+          ZksnarkInitService::librustzcashInitZksnarkParams);
+
+      assertEquals(TronError.ErrCode.ZCASH_INIT, error.getErrCode());
+      assertSame(failure, error.getCause());
+      assertEquals(failedCopy, destinations.size());
+      assertFalse(destinations.get(failedCopy - 1).exists());
+      assertFalse(initialized.get());
+      nativeApi.verifyNoInteractions();
+
+      nativeApi.when(() -> JLibrustzcash.librustzcashInitZksnarkParams(any()))
+          .thenAnswer(invocation -> {
+            InitZksnarkParams params = invocation.getArgument(0);
+            assertArrayEquals(contents,
+                Files.readAllBytes(new File(params.getSpend_path()).toPath()));
+            assertArrayEquals(contents,
+                Files.readAllBytes(new File(params.getOutput_path()).toPath()));
+            return null;
+          });
+      ZksnarkInitService.librustzcashInitZksnarkParams();
+      assertTrue(initialized.get());
+      assertEquals(failedCopy + 2, destinations.size());
+      nativeApi.verify(() -> JLibrustzcash.librustzcashInitZksnarkParams(any()));
+      ZksnarkInitService.librustzcashInitZksnarkParams();
+      assertEquals(failedCopy + 2, destinations.size());
+      nativeApi.verifyNoMoreInteractions();
+    } finally {
+      initialized.set(originalValue);
+      for (File destination : destinations) {
+        Files.deleteIfExists(destination.toPath());
+      }
     }
   }
 

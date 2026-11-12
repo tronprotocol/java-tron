@@ -25,6 +25,7 @@ import org.tron.core.Wallet;
 import org.tron.core.capsule.ReceiveDescriptionCapsule;
 import org.tron.core.capsule.SpendDescriptionCapsule;
 import org.tron.core.exception.ZksnarkException;
+import org.tron.core.utils.ZenChainParams;
 import org.tron.core.zen.address.DiversifierT;
 import org.tron.core.zen.address.ExpandedSpendingKey;
 import org.tron.core.zen.address.PaymentAddress;
@@ -222,11 +223,13 @@ public class ShieldedTRC20ParametersBuilder {
         throw new ZksnarkException("missing expanded spending key for spend authorization");
       }
       byte[] result = new byte[64];
-      JLibrustzcash.librustzcashSaplingSpendSig(
+      if (!JLibrustzcash.librustzcashSaplingSpendSig(
           new LibrustzcashParam.SpendSigParams(spends.get(i).expsk.getAsk(),
               spends.get(i).alpha,
               dataToBeSigned,
-              result));
+              result))) {
+        throw new ZksnarkException("Spend signature generation failed");
+      }
       builder.getSpendDescriptionBuilder(i)
           .setSpendAuthoritySignature(ByteString.copyFrom(result));
     }
@@ -354,12 +357,14 @@ public class ShieldedTRC20ParametersBuilder {
       builder.setMessageHash(ByteString.copyFrom(dataHashToBeSigned));
 
       byte[] bindingSig = new byte[64];
-      JLibrustzcash.librustzcashSaplingBindingSig(
+      if (!JLibrustzcash.librustzcashSaplingBindingSig(
           new LibrustzcashParam.BindingSigParams(ctx,
               valueBalance,
               dataHashToBeSigned,
               bindingSig)
-      );
+      )) {
+        throw new ZksnarkException("Binding signature generation failed");
+      }
       builder.setBindingSignature(ByteString.copyFrom(bindingSig));
     } catch (Exception e) {
       throw new ZksnarkException("build the shielded TRC-20 parameters error: " + e.getMessage());
@@ -380,10 +385,15 @@ public class ShieldedTRC20ParametersBuilder {
     return builder.build();
   }
 
+  /**
+   * Encodes generated parameters or an external request already checked by Wallet. For external
+   * requests (withAsk=false), Wallet checks signature counts and burn input count/nullifier size.
+   */
   public String getTriggerContractInput(ShieldedTRC20Parameters shieldedTRC20Parameters,
       List<BytesMessage> spendAuthoritySignature,
       BigInteger value, boolean withAsk,
       byte[] transparentToAddress) {
+    validateTriggerContractParameters(shieldedTRC20Parameters, spendAuthoritySignature, withAsk);
     switch (shieldedTRC20ParametersType) {
       case MINT:
         return mintParamsToHexString(shieldedTRC20Parameters, value);
@@ -397,13 +407,77 @@ public class ShieldedTRC20ParametersBuilder {
     }
   }
 
+  /** Validates the structure of the fields consumed by the ABI encoder, not their proofs. */
+  private void validateTriggerContractParameters(ShieldedTRC20Parameters parameters,
+      List<BytesMessage> spendAuthoritySignature, boolean withAsk) {
+    int spendCount = parameters.getSpendDescriptionCount();
+    int receiveCount = parameters.getReceiveDescriptionCount();
+    // Bound the lists before walking them or accessing individual descriptions.
+    switch (shieldedTRC20ParametersType) {
+      case MINT:
+        if (receiveCount != 1) {
+          throw new IllegalArgumentException("invalid mint output number");
+        }
+        break;
+      case TRANSFER:
+        if (spendCount != 1 && spendCount != 2) {
+          throw new IllegalArgumentException("invalid transfer input number");
+        }
+        if (receiveCount != 1 && receiveCount != 2) {
+          throw new IllegalArgumentException("invalid transfer output number");
+        }
+        break;
+      case BURN:
+        if (withAsk && spendCount != 1) {
+          throw new IllegalArgumentException("invalid burn input number");
+        }
+        if (receiveCount > 1) {
+          throw new IllegalArgumentException("invalid burn output number");
+        }
+        break;
+      default:
+        throw new IllegalArgumentException("invalid shielded TRC-20 parameters type");
+    }
+
+    validateFieldLength(parameters.getBindingSignature(), 64, "binding_signature");
+    if (shieldedTRC20ParametersType != ShieldedTRC20ParametersType.MINT) {
+      for (int i = 0; i < spendCount; i++) {
+        ShieldContract.SpendDescription spend = parameters.getSpendDescription(i);
+        if (withAsk || shieldedTRC20ParametersType != ShieldedTRC20ParametersType.BURN) {
+          validateFieldLength(spend.getNullifier(), 32, "spend_description.nullifier");
+        }
+        validateFieldLength(spend.getAnchor(), 32, "spend_description.anchor");
+        validateFieldLength(spend.getValueCommitment(), 32, "spend_description.value_commitment");
+        validateFieldLength(spend.getRk(), 32, "spend_description.rk");
+        validateFieldLength(spend.getZkproof(), 192, "spend_description.zkproof");
+        // Without ask, the caller supplies the signatures separately from the descriptions.
+        ByteString signature = withAsk ? spend.getSpendAuthoritySignature()
+            : spendAuthoritySignature.get(i).getValue();
+        validateFieldLength(signature, 64, "spend_authority_signature");
+      }
+    }
+    for (ReceiveDescription receive : parameters.getReceiveDescriptionList()) {
+      validateFieldLength(receive.getNoteCommitment(), 32, "receive_description.note_commitment");
+      validateFieldLength(receive.getValueCommitment(), 32, "receive_description.value_commitment");
+      validateFieldLength(receive.getEpk(), 32, "receive_description.epk");
+      validateFieldLength(receive.getZkproof(), 192, "receive_description.zkproof");
+      validateFieldLength(receive.getCEnc(), ZenChainParams.ZC_ENCCIPHERTEXT_SIZE,
+          "receive_description.c_enc");
+      validateFieldLength(receive.getCOut(), ZenChainParams.ZC_OUTCIPHERTEXT_SIZE,
+          "receive_description.c_out");
+    }
+  }
+
+  private static void validateFieldLength(ByteString value, int length, String field) {
+    if (value.size() != length) {
+      throw new IllegalArgumentException(field + " must be " + length + " bytes");
+    }
+  }
+
   private String mintParamsToHexString(GrpcAPI.ShieldedTRC20Parameters mintParams,
       BigInteger value) {
     if (value.compareTo(BigInteger.ZERO) <= 0) {
       throw new IllegalArgumentException("require the value be positive");
-    }
-    if (mintParams.getReceiveDescriptionCount() != 1) {
-      throw new IllegalArgumentException("invalid mint output number");
     }
 
     ShieldContract.ReceiveDescription revDesc = mintParams.getReceiveDescription(0);
@@ -429,12 +503,6 @@ public class ShieldedTRC20ParametersBuilder {
     List<ShieldContract.ReceiveDescription> recvDescs = transferParams.getReceiveDescriptionList();
     long spendCount = spendDescs.size();
     long recvCount = recvDescs.size();
-    if (spendCount != 1 && spendCount != 2) {
-      throw new IllegalArgumentException("invalid transfer input number");
-    }
-    if (recvCount != 1 && recvCount != 2) {
-      throw new IllegalArgumentException("invalid transfer output number");
-    }
 
     byte[] input = new byte[0];
     byte[] spendAuthSig = new byte[0];
@@ -514,9 +582,6 @@ public class ShieldedTRC20ParametersBuilder {
     byte[] payTo = new byte[32];
     if (value.compareTo(BigInteger.ZERO) <= 0) {
       throw new IllegalArgumentException("the value must be positive");
-    }
-    if (burnParams.getReceiveDescriptionCount() > 1) {
-      throw new IllegalArgumentException("invalid burn output number");
     }
 
     byte[] transparentToAddressTvm = normalizeTransparentToAddress(transparentToAddress);

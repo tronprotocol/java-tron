@@ -592,9 +592,14 @@ public class NoteEncDecryTest extends BaseTest {
   private GrpcAPI.ShieldedTRC20Parameters buildBurnTrc20Params(byte[] cipher, byte[] nf) {
     ShieldContract.SpendDescription spend = ShieldContract.SpendDescription.newBuilder()
         .setNullifier(ByteString.copyFrom(nf))
+        .setAnchor(ByteString.copyFrom(new byte[32]))
+        .setValueCommitment(ByteString.copyFrom(new byte[32]))
+        .setRk(ByteString.copyFrom(new byte[32]))
+        .setZkproof(ByteString.copyFrom(new byte[192]))
         .build();
     return GrpcAPI.ShieldedTRC20Parameters.newBuilder()
         .setParameterType("burn")
+        .setBindingSignature(ByteString.copyFrom(new byte[64]))
         .setTriggerContractInput(ByteArray.toHexString(cipher))
         .addSpendDescription(spend)
         .build();
@@ -606,7 +611,8 @@ public class NoteEncDecryTest extends BaseTest {
     toAddress[0] = Wallet.getAddressPreFixByte();
     return GrpcAPI.ShieldedTRC20TriggerContractParameters.newBuilder()
         .setShieldedTRC20Parameters(trc20Params)
-        .addSpendAuthoritySignature(GrpcAPI.BytesMessage.getDefaultInstance())
+        .addSpendAuthoritySignature(GrpcAPI.BytesMessage.newBuilder()
+            .setValue(ByteString.copyFrom(new byte[64])))
         .setAmount(value.toString())
         .setTransparentToAddress(ByteString.copyFrom(toAddress))
         .build();

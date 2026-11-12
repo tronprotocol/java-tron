@@ -29,7 +29,9 @@ public class JLibrustzcash {
 
   private static Librustzcash INSTANCE = LibrustzcashWrapper.getInstance();
 
-  public static void librustzcashZip32XskMaster(Zip32XskMasterParams params) {
+  public static void librustzcashZip32XskMaster(Zip32XskMasterParams params)
+      throws ZksnarkException {
+    params.valid();
     INSTANCE.librustzcashZip32XskMaster(params.getData(), params.getSize(), params.getM_bytes());
   }
 
@@ -38,11 +40,15 @@ public class JLibrustzcash {
         params.getSpend_hash(), params.getOutput_path(), params.getOutput_hash());
   }
 
-  public static void librustzcashZip32XskDerive(Zip32XskDeriveParams params) {
+  public static void librustzcashZip32XskDerive(Zip32XskDeriveParams params)
+      throws ZksnarkException {
+    params.valid();
     INSTANCE.librustzcashZip32XskDerive(params.getData(), params.getSize(), params.getM_bytes());
   }
 
-  public static boolean librustzcashZip32XfvkAddress(Zip32XfvkAddressParams params) {
+  public static boolean librustzcashZip32XfvkAddress(Zip32XfvkAddressParams params)
+      throws ZksnarkException {
+    params.valid();
     return INSTANCE.librustzcashZip32XfvkAddress(params.getXfvk(), params.getJ(),
         params.getJ_ret(), params.getAddr_ret());
   }
@@ -118,14 +124,21 @@ public class JLibrustzcash {
     return INSTANCE.librustzcashCheckDiversifier(d);
   }
 
-  public static boolean librustzcashSaplingSpendProof(SpendProofParams params) {
+  public static boolean librustzcashSaplingSpendProof(SpendProofParams params)
+      throws ZksnarkException {
+    params.valid();
     return INSTANCE.librustzcashSaplingSpendProof(params.getCtx(), params.getAk(),
         params.getNsk(), params.getD(), params.getR(), params.getAlpha(), params.getValue(),
         params.getAnchor(), params.getVoucherPath(), params.getCv(), params.getRk(),
         params.getZkproof());
   }
 
-  public static boolean librustzcashSaplingOutputProof(OutputProofParams params) {
+  public static boolean librustzcashSaplingOutputProof(OutputProofParams params)
+      throws ZksnarkException {
+    params.valid();
+    if (!librustzcashCheckDiversifier(params.getD())) {
+      throw new ZksnarkException("Invalid output diversifier");
+    }
     return INSTANCE.librustzcashSaplingOutputProof(params.getCtx(), params.getEsk(),
         params.getD(), params.getPkD(), params.getR(), params.getValue(), params.getCv(),
         params.getZkproof());

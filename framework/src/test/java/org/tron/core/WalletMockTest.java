@@ -1034,18 +1034,30 @@ public class WalletMockTest {
       throws ZksnarkException, ContractValidateException {
     Wallet wallet = new Wallet();
     ShieldContract.SpendDescription spendDescription =
-        ShieldContract.SpendDescription.newBuilder().build();
+        ShieldContract.SpendDescription.newBuilder()
+            .setNullifier(ByteString.copyFrom(new byte[32]))
+            .setAnchor(ByteString.copyFrom(new byte[32]))
+            .setValueCommitment(ByteString.copyFrom(new byte[32]))
+            .setRk(ByteString.copyFrom(new byte[32]))
+            .setZkproof(ByteString.copyFrom(new byte[192])).build();
     GrpcAPI.ShieldedTRC20TriggerContractParameters.Builder triggerParam =
         GrpcAPI.ShieldedTRC20TriggerContractParameters
             .newBuilder();
     GrpcAPI.ShieldedTRC20Parameters shieldedTRC20Parameters =
         GrpcAPI.ShieldedTRC20Parameters.newBuilder()
             .addSpendDescription(spendDescription)
-            .addReceiveDescription(ShieldContract.ReceiveDescription.getDefaultInstance())
+            .addReceiveDescription(ShieldContract.ReceiveDescription.newBuilder()
+                .setNoteCommitment(ByteString.copyFrom(new byte[32]))
+                .setValueCommitment(ByteString.copyFrom(new byte[32]))
+                .setEpk(ByteString.copyFrom(new byte[32]))
+                .setZkproof(ByteString.copyFrom(new byte[192]))
+                .setCEnc(ByteString.copyFrom(new byte[580]))
+                .setCOut(ByteString.copyFrom(new byte[80])))
             .setParameterType("transfer")
+            .setBindingSignature(ByteString.copyFrom(new byte[64]))
             .build();
     GrpcAPI.BytesMessage bytesMessage =
-        GrpcAPI.BytesMessage.newBuilder().build();
+        GrpcAPI.BytesMessage.newBuilder().setValue(ByteString.copyFrom(new byte[64])).build();
 
     triggerParam.setShieldedTRC20Parameters(shieldedTRC20Parameters);
     triggerParam.addSpendAuthoritySignature(bytesMessage);

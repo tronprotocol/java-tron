@@ -3,6 +3,7 @@ package org.tron.core.zen;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
@@ -67,7 +68,14 @@ public class ZksnarkInitService {
       }
       FileUtils.copyToFile(in, fileOut);
     } catch (IOException e) {
-      logger.error(e.getMessage(), e);
+      try {
+        Files.deleteIfExists(fileOut.toPath());
+      } catch (IOException cleanupFailure) {
+        e.addSuppressed(cleanupFailure);
+        fileOut.deleteOnExit();
+      }
+      throw new TronError("Failed to copy ZK-SNARK parameter file: " + resourcePath,
+          e, TronError.ErrCode.ZCASH_INIT);
     }
     if (fileOut.exists()) {
       fileOut.deleteOnExit();

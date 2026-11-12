@@ -121,6 +121,18 @@ public class Note {
     return ret;
   }
 
+  private static Optional<Note> decodeForDecryption(
+      NoteEncryption.Encryption.EncPlaintext plaintext) {
+    final Note note;
+    try {
+      note = decode(plaintext);
+    } catch (ZksnarkException e) {
+      return Optional.empty();
+    }
+    // Authenticated plaintext is still sender-controlled; invalid notes must not abort scanning.
+    return note.value < 0 ? Optional.empty() : Optional.of(note);
+  }
+
   /**
    * decrypt c_enc with ivk to plain_enc
    */
@@ -131,7 +143,11 @@ public class Note {
     if (!pt.isPresent()) {
       return Optional.empty();
     }
-    Note ret = decode(pt.get());
+    Optional<Note> decoded = decodeForDecryption(pt.get());
+    if (!decoded.isPresent()) {
+      return Optional.empty();
+    }
+    Note ret = decoded.get();
     byte[] pkD = new byte[32];
     if (!JLibrustzcash
         .librustzcashIvkToPkd(new IvkToPkdParams(ivk, ret.d.getData(), pkD))) {
@@ -160,7 +176,11 @@ public class Note {
     if (!pt.isPresent()) {
       return Optional.empty();
     }
-    Note ret = decode(pt.get());
+    Optional<Note> decoded = decodeForDecryption(pt.get());
+    if (!decoded.isPresent()) {
+      return Optional.empty();
+    }
+    Note ret = decoded.get();
     byte[] cmuExpected = new byte[32];
     if (!JLibrustzcash.librustzcashComputeCm(
         new ComputeCmParams(ret.d.getData(), pkD, ret.value, ret.rcm, cmuExpected))) {
