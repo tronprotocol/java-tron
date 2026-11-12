@@ -5,6 +5,7 @@ import java.util.Objects;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.tron.core.ChainBaseManager;
 import org.tron.core.actuator.Actuator;
 import org.tron.core.actuator.Actuator2;
 import org.tron.core.actuator.ActuatorCreator;
@@ -81,7 +82,9 @@ public class RuntimeImpl implements Runtime {
       result.setResultCode(contractResult.SUCCESS);
       return;
     }
-    if (result.isRevert()) {
+
+    if (result.isRevert() && !ChainBaseManager.getInstance().getDynamicPropertiesStore()
+        .allowTvmResourceOptimization()) {
       result.setResultCode(contractResult.REVERT);
       return;
     }
@@ -127,6 +130,10 @@ public class RuntimeImpl implements Runtime {
     }
     if (exception instanceof Program.InvalidCodeException) {
       result.setResultCode(contractResult.INVALID_CODE);
+      return;
+    }
+    if (result.isRevert()) {
+      result.setResultCode(contractResult.REVERT);
       return;
     }
     result.setResultCode(contractResult.UNKNOWN);

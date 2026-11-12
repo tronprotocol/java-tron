@@ -992,8 +992,9 @@ public class Program {
     byte[] code = createResult.getHReturn();
 
     if (code.length != 0 && VMConfig.allowTvmLondon() && code[0] == (byte) 0xEF) {
-      createResult.setException(Program.Exception
-          .invalidCodeException());
+      if (!createResult.isRevert() || !VMConfig.allowTvmResourceOptimization()) {
+        createResult.setException(Program.Exception.invalidCodeException());
+      }
     }
 
     long saveCodeEnergy = (long) getLength(code) * EnergyCost.getCreateData();
