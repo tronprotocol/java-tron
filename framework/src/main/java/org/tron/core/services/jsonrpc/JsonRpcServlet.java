@@ -10,6 +10,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Utf8;
+import com.google.common.primitives.Bytes;
 import com.googlecode.jsonrpc4j.ErrorResolver.JsonError;
 import com.googlecode.jsonrpc4j.JsonRpcInterceptor;
 import com.googlecode.jsonrpc4j.JsonRpcMethod;
@@ -124,8 +125,9 @@ public class JsonRpcServlet extends RateLimiterServlet {
 
     // Transport IOException from readBody propagates as HTTP 500 (genuine IO failure).
     byte[] body = readBody(req.getInputStream());
-    // Jackson accepts overlong and surrogate UTF-8 sequences, so check the bytes first.
-    if (!Utf8.isWellFormed(body)) {
+    // Jackson accepts overlong, surrogate and above-U+10FFFF UTF-8 sequences and treats NUL
+    // bytes as a sign of UTF-16 or UTF-32, so check the bytes first.
+    if (!Utf8.isWellFormed(body) || Bytes.contains(body, (byte) 0)) {
       writeJsonRpcError(resp, JsonRpcError.PARSE_ERROR, "JSON parse error", null, false);
       return;
     }
