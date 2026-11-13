@@ -1,5 +1,9 @@
 package org.tron.core.net.peer;
 
+import com.google.common.hash.HashFunction;
+import com.google.common.hash.Hashing;
+import java.security.SecureRandom;
+import lombok.AccessLevel;
 import lombok.Getter;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.protos.Protocol.Inventory.InventoryType;
@@ -7,18 +11,28 @@ import org.tron.protos.Protocol.Inventory.InventoryType;
 @Getter
 public class Item {
 
+  private static final HashFunction ID_HASH = newIdHash();
+
   @Getter
-  private Sha256Hash hash;
+  private final Sha256Hash hash;
   @Getter
-  private InventoryType type;
+  private final InventoryType type;
   @Getter
-  private long time;
+  private final long time;
+  @Getter(AccessLevel.NONE)
+  private final int idHash;
 
 
   public Item(Sha256Hash hash, InventoryType type) {
     this.hash = hash;
     this.type = type;
     this.time = System.currentTimeMillis();
+    this.idHash = ID_HASH.hashBytes(hash.getBytes()).asInt();
+  }
+
+  private static HashFunction newIdHash() {
+    SecureRandom random = new SecureRandom();
+    return Hashing.sipHash24(random.nextLong(), random.nextLong());
   }
 
   @Override
@@ -36,7 +50,7 @@ public class Item {
 
   @Override
   public int hashCode() {
-    return hash.hashCode();
+    return idHash;
   }
 
   @Override
