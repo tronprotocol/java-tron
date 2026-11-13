@@ -100,7 +100,7 @@ public class FetchBlockService {
 
   public boolean canFetchBlock(PeerConnection peer, Item item, long now) {
     if (peer.isDisconnect() || peer.isNeedSyncFromPeer() || peer.isNeedSyncFromUs()
-        || !peer.isBlockFetchIdle()) {
+        || !peer.isIdleForAdvBlockFetch()) {
       return false;
     }
     Long received = peer.getAdvInvReceive().getIfPresent(item);

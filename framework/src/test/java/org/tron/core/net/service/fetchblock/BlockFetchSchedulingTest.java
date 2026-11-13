@@ -1,6 +1,9 @@
 package org.tron.core.net.service.fetchblock;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -22,6 +25,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -129,7 +133,7 @@ public class BlockFetchSchedulingTest {
     Assert.assertFalse(first.isIdle());
     Assert.assertTrue(fetch.canFetchBlock(first, item, now));
     first.getAdvInvRequest().put(blockItem(102), now);
-    Assert.assertFalse(first.isBlockFetchIdle());
+    Assert.assertFalse(first.isIdleForAdvBlockFetch());
     first.getAdvInvRequest().remove(blockItem(102));
     first.getSyncBlockRequested().put(new BlockId(), now);
     Assert.assertFalse(fetch.canFetchBlock(first, item, now));
@@ -428,6 +432,63 @@ public class BlockFetchSchedulingTest {
     Assert.assertSame(second, ReflectUtils.getFieldObject(state(), "peer"));
     verify(second).sendMessage(any(FetchInvDataMessage.class));
     Assert.assertFalse(adv.addInv(item));
+  }
+
+  @Test
+  public void disconnectBeforeReservationRollsBackNewRequest() throws Exception {
+    assertDisconnectDuringReservation(false, false);
+  }
+
+  @Test
+  public void disconnectCleanupAfterReservationKeepsBlockQueued() throws Exception {
+    assertDisconnectDuringReservation(true, false);
+  }
+
+  @Test
+  public void disconnectedReservationRollbackPreservesNewerRequest() throws Exception {
+    assertDisconnectDuringReservation(false, true);
+  }
+
+  private void assertDisconnectDuringReservation(boolean clearAfterReservation,
+      boolean replaceReservation) throws Exception {
+    announce(first, item);
+    announce(second, item);
+    AtomicLong replacementTime = new AtomicLong();
+    doAnswer(invocation -> {
+      // Eligibility passed, but disconnect recovery snapshots before the request is inserted.
+      peers.remove(first);
+      when(first.getChannel().isDisconnect()).thenReturn(true);
+      Assert.assertTrue(first.getAdvInvRequest().isEmpty());
+      adv.onDisconnect(first);
+      awaitRecovery();
+      boolean reserved = (boolean) invocation.callRealMethod();
+      Assert.assertTrue(reserved);
+      if (clearAfterReservation) {
+        first.getAdvInvRequest().clear();
+      } else if (replaceReservation) {
+        replacementTime.set(invocation.<Long>getArgument(1) + 1);
+        first.getAdvInvRequest().put(item, replacementTime.get());
+      }
+      return reserved;
+    }).when(first).checkAndPutAdvInvRequest(eq(item), anyLong());
+
+    Assert.assertTrue(adv.addInv(item));
+
+    Assert.assertTrue(pending().containsKey(item));
+    Assert.assertNull(state());
+    verify(first, never()).sendMessage(any());
+    verify(second, never()).sendMessage(any());
+    if (replaceReservation) {
+      Assert.assertEquals(Long.valueOf(replacementTime.get()), first.getAdvInvRequest().get(item));
+    } else {
+      Assert.assertTrue(first.getAdvInvRequest().isEmpty());
+    }
+    consume();
+
+    Assert.assertTrue(second.getAdvInvRequest().containsKey(item));
+    Assert.assertFalse(pending().containsKey(item));
+    Assert.assertSame(second, ReflectUtils.getFieldObject(state(), "peer"));
+    verify(second).sendMessage(any(FetchInvDataMessage.class));
   }
 
   @Test

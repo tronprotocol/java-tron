@@ -356,10 +356,15 @@ public class AdvService {
             .min(Comparator.comparing((PeerConnection peer) -> !peer.isIdle())
                 .thenComparingInt(invSender::getSize))
             .ifPresent(peer -> {
-              if (peer.checkAndPutAdvInvRequest(item, now)) {
-                invSender.add(item, peer);
-                invToFetch.remove(item);
+              if (!peer.checkAndPutAdvInvRequest(item, now)) {
+                return;
               }
+              if (peer.isDisconnect()) {
+                peer.getAdvInvRequest().remove(item, now);
+                return;
+              }
+              invSender.add(item, peer);
+              invToFetch.remove(item);
             });
       });
     }
